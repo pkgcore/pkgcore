@@ -1,0 +1,6 @@
+- pkg_setup and sandbox
+^^^ either integrate useradd/groupadd hijacks, or just disable sandbox 
+   for setup till it's ready to go.
+- eclasses showing up in -vp
+^^^  Not an issue.  cleanse your cache, check the changelog.
+

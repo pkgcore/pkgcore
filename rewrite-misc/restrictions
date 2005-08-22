@@ -1,0 +1,48 @@
+# general info/commentary on restrictions.  see layout.txt for historical background.
+
+general protocol is simple,
+
+def match(self, pkginst) 
+
+is all that's expected.  pkginst being an instance like portage.ebuild.ebuild_package.
+all base restrictions chunks should support the negate option, usually via something akin to this in match
+return boolean-value-for-this-match ^ self.negate
+
+Individual restrictions are built up via portage.restrictions.restriction .  Str matches, package data matches, etc,
+are covered by that module.  More likely then not, people will need to be able to bind restrictions together via boolean ops;
+these 'sets' of restrictions (they're technically sequences) are in portage.restrictions.restrictionSet.
+
+AndRestrictionSet # boolean and
+OrRestrictionSet	# boolean or
+XorRestrictionSet	# boolean xor
+
+The sequences above support negate also (unless it makes no sense whatsoever, negation (effectively 'not restrict.match(blah)'), 
+should be supported.
+
+If you need another base boolean op, *please* generalize it in restrictionSet so that everyone can share the wealth. :)
+
+Keep an eye on not creating 101 different restriction types.  If possible, build up from basic chunks.
+
+Why?  For a remote repository implementation, it *will* have to translate the restrictions into it's own internal querying format 
+fex, an atom, AndRestrictionSet(pkg cat attribute strexact, pkg name attribute strexact, pkg ver attribute versmatch), 
+=dev-util/diffball-0.6.5,  for an rdbms backend would be *best* to translate into sql, 
+essentially `WHERE (category="dev-util" AND package="diffball" and version="0.6.5")`.
+
+If a lego like approach is used (eg, small blocks, building up more complex blocks from the original bases) translation of the 
+bases *should* make conversion from restriction elements to internal format *much* easier, mainly attainable.
+
+Aside from that, keep an eye on the restriction implementations; be aware that there may be *lots* of them.  As of the time of this writing,
+$PORTDIR/profiles/package.mask comes out to around 938 seperate restricts, with 353 boolean ands (1291 total).
+Use __slots__ for the classes, or consider implementing a flywheel design, point is, keep them as small as possible, with a careful
+eye on execution.
+
+Example: a simple error involving an extra set of unnecssary function calls in the restrict base, once corrected, accounted for a 150x
+reduction in run time on p.mask filtering of a repository (3.4s to 0.022s).  Effectivelly, you're defining chunks of executable code 
+thrown around to do verification, as such, keep in mind they'll be ran a *lot*.
+Profile the suckers, iow.
+
+Beyond that, restrict base classes probably are candidates for conversion to cpython, although experimenting with that should come down
+the line (prototype and get it running first, then see if you can shave 5-10% off from the conversion).
+
+
+Combining restrictions: (containment tests, ya ya)

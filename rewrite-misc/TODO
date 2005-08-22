@@ -1,0 +1,50 @@
+kindly check over HORKED; stuff here is "would be nice", but horked comes first.
+Difficulty estimate indicated by '*', based on either codebase in question, or knowledge of python tricks
+none == easy, >=5 of 'em, tricky.
+
+:p.mask visibility handler: *
+p.mask comes out to over 300 pkgs, current implementation is a OrRestriction; iow, worst case (the norm I'm afraid), it 
+does >300 match runs, in reality probably around >900 (atom == 3 restricts).  This fortunately is easily addressed; basically 
+need either 
+A) optimizer of RestrictionSets (complex)
+B) restrictionSet variation that is able to do containment tests, if matches, then look up remaining restrictions and apply.
+B is the easiest, and the one someone should do in the rather near future.  In short, collapse cat/pkg of a pkginst, do a lookup
+into a dict, if matched, run the restrictions returned, or return the negation val.
+This would knock it down to a dict lookup, then execution of returned remaining restrictions worst case, dict lookup best case.
+Bit faster.
+
+:portage.cache.multiplex:
+a master/slave cache implementation.  handed master cache (positionally), and secondary caches, this implementation would 
+do lookups in master normally, and multiplex the updates/deletetions across all caches handed in.
+Sounds odd I realize, but this would be useful so that the master cache generation for rsync could have it's updates slaved 
+into a common rdbms w/in gentoo infra, with mirror-dist, src_uri checker, and packages.g.o being able to access it.
+Right now they do their own thing, which is inneficient.  This should be pretty easy.
+
+:profiling everything: **
+just as it sounds.  profile the whole sucker, and point out areas of where improvement, conversion to cpython might be 
+advantageous.  This will be ongoing, initially probably pretty easy, getting harder as low franging fruit picked off.
+Why do this? Well, if you think portage is slow, this is how you can help us speed the sucker up.
+
+:portage.config.central features: ***
+These may or may not be picked off as development continues; the main requirement for this functionality is 
+plugins, which the framework intends... so... prior to a release, it will be added.
+1) needs introspection capabilities, looking at a callable to pull further required/section_ref/etc opts out of it.
+2) needs method to do lookups of further object restrictions/section_ref/etc from a common dir, based on name.
+   this one requires some thought;  essentially, if loading portage-mysql.cache, try 1, or try this opt, look in a dir
+   the plugins ebuild can install a section conf tweak, and use it.
+3) configuration 'types' , list, bool, str, etc, should be extendable, lifted from a config most likely.  Defaults should be
+   avail in code, but should have a method of extending it
+4) exec section implementation.  Any section of exec type is automatically executed, able to mangle the central config directly.
+   This *is* the hook for having configs stored on a central server, and it's nifty ;)
+5) integration of make.globals type data; defaults effectively, but a bit more complex.
+
+:portage.ebuild.gpgtree: ****
+derivative of portage.ebuild.ebuild_repository, this overloads ebuild_factory and eclass_cache so that gpg checks are done.
+This requires some hackery, partially dependant on config.central changes (see above).
+Need a way to specify the trust ring to use, 'severity' level (different class targets works for me).
+Anyone who implements this deserves massive cookies.
+
+:portage.ebuild.gpgprofile: ****
+Same as above.  Likely need a way to bind the trustring between these too, *or* the gpgprofile lifts it somehow from the gpgtree.
+Anyone who implements this deserves massive cookies.
+

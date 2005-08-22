@@ -1,0 +1,57 @@
+#!/bin/bash
+# Copyright 1999-2005 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+dir="${D}usr/share/doc"
+
+[ ! -d "${dir}" ] && exit 0
+
+z=$(find "${dir}" \
+	'(' -type f -or -type l ')' \
+	-not -name '*.gz' \
+	-not -name '*.bz2' \
+	-not -name '*.Z' \
+	-not -name '*.js' \
+	2>/dev/null)
+
+[ -z "${z}" ] && exit 0
+
+PORTAGE_COMPRESS=${PORTAGE_COMPRESS:-gzip}
+PORTAGE_COMPRESS_FLAGS=${PORTAGE_COMPRESS_FLAGS:--9}
+if [ -z "${PORTAGE_COMPRESS_SUFFIX}" ] ; then
+	case ${PORTAGE_COMPRESS} in
+		gzip)  suffix="gz";;
+		bzip2) suffix="bz2";;
+		*)     echo "prepalldocs error: please set PORTAGE_COMPRESS_SUFFIX in make.conf" 1>&2
+		       exit 1;;
+	esac
+fi
+
+echo "doc: ${PORTAGE_COMPRESS} ${PORTAGE_COMPRESS_FLAGS}"
+for y in ${z} ; do
+	if [ -L "${y}" ] ; then
+		# Symlink ...
+		mylink=${y}
+		linkto=$(readlink "${y}")
+
+		if [ "${linkto##*.}" != "${suffix}" ] ; then
+			linkto="${linkto}.${suffix}"
+		fi
+		if [ "${mylink##*.}" != "${suffix}" ] ; then
+			mylink="${mylink}.${suffix}"
+		fi
+
+		echo "   link fixed ${mylink##*/}"
+		ln -snf "${linkto}" "${mylink}"
+		if [ "${y}" != "${mylink}" ] ; then
+			echo "   link removed ${y##*/}"
+			rm -f "${y}"
+		fi
+	else
+		if [ "${y##*.}" != "${suffix}" ] ; then
+			echo "   compressing ${y##*/}"
+			"${PORTAGE_COMPRESS}" ${PORTAGE_COMPRESS_FLAGS} -f "${y}"
+		fi
+	fi	
+done

@@ -1,0 +1,4 @@
+ebuild KEYWORDS "-*" probably is going to be dropped unless somebody has a damn good arg for it.
+effectively, it blocks ACCEPT_KEYWORDS="whatever-arch" emerge some-ebuild
+it works cause of the stacked nature of config in stable; can do it in rewrite, but it's ugly and (personally) I don't think it's
+properly implemented (use package.mask)

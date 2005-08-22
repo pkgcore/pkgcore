@@ -1,0 +1,46 @@
+[metadata-cache]
+type = cache
+class = portage.cache.metadata.database
+location = /usr/portage
+readonly = true
+
+[rsync repo]
+type = repo 
+class = portage.ebuild.repository
+location = /usr/portage
+cache = 'metadata-cache'
+
+#[vdb]
+#type = repo
+#class = portage.installed_pkg.repository
+#location = /var/db/pkg
+
+[base config]
+USE = nptl nptlonly -gnome -oss mad matroska faad mpg avi -arts mmx mmxext flac bidi dvd ssl sdl xvid 3dnow 3dnowext 
+	sse sse2 mythtv rtc -svga -ipv6 win32codecs -esd
+DISTDIR = "/space/distfiles"
+FEATURES = confcache parallel-fetch
+#package.use = %(CONFDIR)/package.use
+#package.mask = %(CONFDIR)/package.mask
+#package.unmask = %(CONFDIR)/package.unmask
+#package.keywords = %(CONFDIR)/package.keywords
+
+[profile]
+type = profile
+base_repo = 'rsync repo'
+profile = default-linux/x86/2005.0
+
+[x86]
+CFLAGS = "-O2 -march=pentium4 -pipe"
+CHOST = "i686-pc-linux-gnu"
+profile = profile
+inherit = 'base config'
+ACCEPT_KEYWORDS = "x86"
+
+[livefs domain]
+type = domain
+inherit = x86
+default = yes
+repositories = "rsync repo" 
+#vdb
+

@@ -1,0 +1,42 @@
+So... got this thing, how do I develop it, how do I get it setup so I can actually work on this framework?
+PYTHONPATH is your friend, first of all.  Set it to the directory you place the portage directory in.
+So... gentoo-src/portage/portage <-- rewrite lives here, I place the portage directory in 
+/home/bharring/new/portage
+then export PYTHONPATH="/home/bharring/new/"
+
+
+Second, you're likely developing this in your home dir (I know I am).  everything hinges on PORTAGE_BASE_PATH
+
+if a portage_custom_path module exists, it is loaded.  it is the hook for defining your own constants-
+PORTAGE_BIN_PATH can be defined
+DEFAULT_CONF_FILE can be defined (this is the new config, the example config in this directory)
+CONF_DEFAULTS is the meta configuration definition, conf_default_types
+
+these settings all default to PORTAGE_BASE_PATH ; if you define it in portage_custom_path, the settings above will be based off of it.
+if no portage_custom_path, then it defaults to "/home/bharring/new/" which probably isn't what you want.
+
+So, how to set this sucker up?
+copy ../portage somewhere, copy ../bin somewhere , copy this directory somewhere.
+add a portage_custom_path.py to either /usr/lib/portage/pym/ , or /usr/lib/python-*/site-pkgs/ with paths defined to proper locations.
+from there, you'll need to mangle a config (in this directory).  If you have the usual defaults for a gentoo system, you won't have
+to modify it aside from cflags tweaking, etc.
+
+so... after you've done this, try this- load up the python interpretter, and try this.
+
+>>> import portage.config
+>>> conf=portage.config.load_config()
+>>> tree=conf.repo["rsync repo"]
+>>> pkg=tree["dev-util/diffball-0.6.5"]
+>>> print pkg.depends
+>=dev-libs/openssl-0.9.6j >=sys-libs/zlib-1.1.4 >=app-arch/bzip2-1.0.2
+
+
+If you've changed your tree name (my tree name is "rsync repo"), you'll have to change what you try above.
+if load_config() bails, then you have your paths wrong.  if you see an error msg upon the initial import stating you're going to get 
+/home/bharring/new/ , you've defined portage_custom_path.py incorrectly, or it can't be read/found in a python directory; or, you've 
+defined the vars wrong, look at portage/const.py and grok what's going on.
+
+If it fails in the pkg instantiation, either your tree is incomplete (no tree at defined path in config), or that version of diffball 
+no longer exists.
+Anything else, track down ferringb in #gentoo-portage on freenode, or email ferringb (at) gentoo.org , with the traceback, and I'll get 
+ya going.

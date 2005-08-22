@@ -1,0 +1,136 @@
+# so what the hell does this all mean?  It's section type definitions.
+# defaults specifies the name of default settings, which much exist in the section definition.
+# required specifies what settings are required in any user config for that section.
+# incrementals specifies what settings are stacked, orig_setting + new_setting.  not limited to list types only, but probably should be
+# list, str, bool are lists of settings, stating "this setting is of this type", so at runtime any config settings processed are 
+#  automatically converted to that type.
+# section_ref are a _special_ type of setting type.  must reference another section, and can be multiple (specified via list).
+#   not possible to do incrementals on section types, so don't attempt it (it will not act as you expect).
+# note defaults get passed through the setting type conversion mechanism also.
+# instantiate is the python namespace addie of a callable that does instantiation of that section (rather then a generic handler).
+# generic handler ignores any settings that don't fall aren't addressed/fscked with via default mangling mentioned above
+#  (change this later?)
+#
+# any defined section setting types that are in the config are verified to exist during config collapsing.
+# if a custom instantiation func is defined for that section type, the instantiation func is required to instantiate the sections 
+# (config.instantiate_section(section) effectively).  Otherwise, the generic handler does the instantiation are substition for 
+# callable instantiation on it's own.
+#
+# positional specifies positional args (which all must be required), only actually used if generic instantiator is used.
+# label is special setting name, akin to __name__ (literally, that's it value), *only* when stated as a default
+# 
+# iow, if you have your own instantiation func for a section, you have to instantiate any section types you define.  it's verified
+# to exist, but type is not verified (class type verification within specified callable should suffice however).
+#
+# custom instantiation func prototype (the actual instantiation handler):
+# def handler(config, callable, section_label, section_config)
+# 
+# config == portage.config.central.config instance, 
+# callable == class definition for that section, 
+# section_label == section's label/name (hard one I know).
+# section_config == collapsed section's config as a dict.
+#
+#
+# potential extensions:
+#
+# types are limited to what the generic parser knows of.  that should be extended.
+#
+# inter-section references should be handled (instantiation) via the generic parser also.
+# ex: instantiation of domain should be given instantiated repos/profiles instead of section names.
+#
+# there is no way to have defaults represented at the config level for specialized callables.
+# decide if this is good or bad.  in effect, require's are generalized for a section type, which may not apply
+#
+# there isn't any mechanism for noting what supports interop (think sync + repo), aside from instantiating
+# and having it complain.  fluid design/intention of the final parsing of user config, but this is a drawback of 
+# said design.
+# think about ways to curb that, lest users get too annoying with tracebacks ;)
+#
+# right now, there is now way to specify that a callable requires certain settings beyond section requirements.
+# there _should_ be an automated way to get that info, so that the generic parser can carry that load.
+#
+# this file also will be 'fun' for doing per keyword defaults as per the portage norm.
+# probably need to support exec within this file, with a default exec section pointing at
+# a location on the fs that defines further defaults, although that makes parsing this file fun.
+#
+# short version, with the rules established, you would need to define a metasection, and apply the 
+# inherit/incrementals cruft to constructing at run time the section definitions.
+# or you need a smarter parser/generator for this file.
+# leave that to the schmuck who writes the autotools integration for this
+# (why oh why do I suspect that's going to be my stupid ass? :)
+# ~harring
+#
+# ps.  a dpkg repo (fex) _should_ be a different section type imo, and whatever checks are done for 
+# assembling a domain should do isinstance checks on a repo base, rather then (potentially) enforcing
+# type restriction in the config specification (repositories = section label, and verifying that label's type)
+# or not.  think about it...
+#
+# pps: any such isinstance check _must_ do the check after an instantiation attempt.  remember that class is in reality
+# a callable, which can include functions that are _not_ classes, but return objects via whatever screwed up logic internal
+# to the func (think static factory func for accessing a singleton, although bad example since you can implement singleton
+# within the class definition via __new__, but I digress)...
+#
+# ppps: if it's required, state it.  don't assume just cause it is a default, that not listing a setting in required is valid
+# it's anal, but it _will_ help to catch screwups in section definition changes.
+#
+# pppps: Fairly sure at some point the town folk will come around with the pitchforks, torches and that special glimmer in their eyes
+#   if positional args for initialization isn't supported in someway (regardless of the fun of implementing it), so think about
+#   possibilities for pulling it off (required ordering lifted from section def and/or callable?)
+
+
+[profile]
+list = %(default_incrementals)s package.keywords package.use package.unmask package.mask
+defaults = class incrementals 
+incrementals = %(default_incrementals)s 
+class = portage.ebuild.profiles.OnDiskProfile
+required = class incrementals base_repo profile
+section_ref = base_repo
+positional = base_repo profile incrementals
+
+[domain]
+#instantiate = portage.config.parser.domain
+required = repositories profile root class incrementals ACCEPT_LICENSE
+section_ref = repositories profile
+list = %(default_incrementals)s %(package_filters)s package.unmask repositories
+incrementals = %(default_incrementals)s
+defaults = class root incrementals ACCEPT_LICENSE
+class =  portage.config.domain.domain
+root = /
+ACCEPT_LICENSE = 
+positional = incrementals root profile repositories 
+
+[repo]
+required = class location
+defaults = class
+class = portage.ebuild.repository
+section_ref = cache sync sync_cache
+
+#package.keywords = portage.config.handler.keywords
+#package.mask = portage.config.handler.mask
+#package.unmask = portage.config.handler.unmask
+
+[cache]
+required = class location label auxdbkeys
+defaults = class auxdbkeys location label readonly
+class = portage.cache.flat_list.database
+auxdbkeys = %(metadata_keys)s
+location = %(cache_base_loc)s
+readonly = false
+list = auxdbkeys
+positional = location label auxdbkeys
+bool = readonly
+
+[exec]
+autoexec = true
+
+[sync]
+required = class url
+defaults = class
+class = portage.sync.rsync
+
+[DEFAULT]
+metadata_keys = DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE DESCRIPTION KEYWORDS INHERITED IUSE CDEPEND
+   PDEPEND PROVIDE
+cache_base_loc = /var/cache/edb/dep/
+default_incrementals = USE FEATURES ACCEPT_KEYWORDS ACCEPT_LICENSE CONFIG_PROTECT_MASK CONFIG_PROTECT PRELINK_PATH PRELINK_PATH_MASK
+package_filters = package.mask package.keywords package.license package.use

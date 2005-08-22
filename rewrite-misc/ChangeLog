@@ -1,0 +1,17 @@
+06/11/05: harring: negate added to restriction base, work in package.* and ebuild.package
+06/07/05: harring: config.{repo,cache,domain,sync} works fine, new dict type.  portage.util.dicts holds the dict variants, including
+	IndexableSequence.  added portage.util.currying.  Use it.  it rocks.
+06/07/05: harring: config instantation of repo works now.  config.repo is a bit screwed up, but will be fixed.
+06/06/05: harring: ebuild depends works now.  config instantiation should work for base configurations, but nothing complex.
+   cache and location basically, nothing like package.* wrappers (which will be via a config callable)
+06/03/05: harring: changelog addition.  portage.ebuild.processor work namely, eclass_cache inclusive.
+More additions to intro, specifically re: avoiding race condition of gpg verification then using a file with open perms
+(short version, abuse preloaded_eclass type trick).
+Yanked *ROOTPATH.  it's a kludge, a bad one at that.  Will break uclibc profile, but it's a kludge to cover up portages shitty path handling.
+portage.ebuild.processor.processor.generic_handler is of note, generic waiting loop structure.  basically, any ebd interaction after setup
+is handled here, with command:callable dict handed in, etc.
+ebuild sourcing for metadata should be finished end of day, since I broke it all apart via namespace and killing off old ebuild.py.
+ebuild*.sh no longer has /usr/lib/portage/bin/ hardcoded in, if unset and not daemonize ebuild.sh sets it to the usual. ebd requests it
+from the processor, which returns portage.const.PORTAGE_BIN_PATH
+Broke inherit into two funcs, basically breaking the core of inherit out (the source call/semantics).  defaults to old behaviour, 
+but ebd will override it (look at eclass_cache.get_eclass_* and you'll understand, ellucidates in the intro ebd section)

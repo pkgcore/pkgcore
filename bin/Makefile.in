@@ -1,0 +1,15 @@
+PORTAGE_BASEDIR = @PORTAGE_BASE@
+INSTALL		= @INSTALL@
+INSTALL_script 	= @INSTALL_PROGRAM@ -D -o 0 -g portage -m 755
+
+all:
+install:
+	$(INSTALL) -d -m 755 -o 0-g portage $(DESTDIR)/$(PORTAGE_BASEDIR)/bin || exit 1
+	find . -type f -maxdepth 1 -exec $(INSTALL_script) {} $(DESTDIR)/$(PORTAGE_BASEDIR)/bin/{} \; || exit 1
+	rm $(DESTDIR)/$(PORTAGE_BASEDIR)/bin/Makefile* || exit 1
+
+distdir:
+	find . -type f -maxdepth 1 -exec $(INSTALL_script) {} $(distdir)/{} \;
+clean:
+
+.PHONY:	distdir	install	clean

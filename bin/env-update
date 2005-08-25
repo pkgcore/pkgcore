@@ -1,7 +1,7 @@
 #!/usr/bin/python -O
 # Copyright 1999-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
+# $Id: env-update 1912 2005-08-25 03:54:42Z ferringb $
 
 import os,sys
 os.environ["PORTAGE_CALLER"] = "env-update"

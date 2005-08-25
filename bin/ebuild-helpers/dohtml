@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Copyright 1999-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
+# $Id: dohtml 1912 2005-08-25 03:54:42Z ferringb $
 
 #
 # Typical usage:

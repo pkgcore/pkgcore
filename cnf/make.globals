@@ -1,6 +1,6 @@
 # Copyright 1999-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
+# $Id: make.globals 1912 2005-08-25 03:54:42Z ferringb $
 # System-wide defaults for the Portage system
 
 #            *****************************

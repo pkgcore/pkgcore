@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id: chflags.c 1912 2005-08-25 03:54:42Z ferringb $ */
 
 #include "Python.h"
 

@@ -2,7 +2,7 @@
 # ebuild.py; Ebuild classes/abstraction of phase processing, and communicating with a ebuild-daemon.sh instance
 # Copyright 2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-#$Header$
+#$Id: ebuild_internal.py 1912 2005-08-25 03:54:42Z ferringb $
 
 # this will die a horrible death soon.
 # held onto strictly for the doebuild type info.

@@ -1,4 +1,4 @@
-/* $Header$ */
+/* $Id: tbz2tool.c 1912 2005-08-25 03:54:42Z ferringb $ */
 
 #include <stdio.h>
 #include <stdlib.h>

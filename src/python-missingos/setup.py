@@ -1,5 +1,5 @@
 #! /usr/bin/env python2.2
-# $Header$
+# $Id: setup.py 1912 2005-08-25 03:54:42Z ferringb $
 
 from os import chdir, stat
 from distutils.core import setup, Extension

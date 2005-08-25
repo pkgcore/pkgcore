@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Copyright 1999-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
+# $Id: archive-conf 1912 2005-08-25 03:54:42Z ferringb $
 
 #
 # archive-conf -- save off a config file in the dispatch-conf archive dir

@@ -1,7 +1,7 @@
 #!/usr/bin/python -O
 # Copyright 1999-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
+# $Id: portageq 1912 2005-08-25 03:54:42Z ferringb $
 
 import sys
 sys.path = ["/usr/lib/portage/pym"]+sys.path
@@ -15,7 +15,7 @@ import portage,types, portageq
 #
 
 def usage():
-	rev="$Revision: 1652 $"
+	rev="$Revision: 1912 $"
 	ver=rev.split(' ')[1]
 	print ">>> Portage information query tool -- version "+ver
 	print ">>> Usage: portageq <command> [<option> ...]"

@@ -1,6 +1,6 @@
 # Copyright 1999-2004 Gentoo Technologies, Inc.
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
+# $Id: isolated-functions.sh 1912 2005-08-25 03:54:42Z ferringb $
 
 # Internal logging function, don't use this in ebuilds
 elog_base() {

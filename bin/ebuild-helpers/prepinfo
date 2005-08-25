@@ -1,0 +1,58 @@
+#!/bin/bash
+# Copyright 1999-2005 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+if [ -z "$1" ] ; then
+	z="${D}usr/share/info"
+else
+	if [ -d "${D}$1/share/info" ] ; then
+		z="${D}$1/share/info"
+	else
+		z="${D}$1/info"
+	fi
+fi
+
+[ ! -d "${z}" ] && exit 0
+
+rm -f "${z}"/dir{,.old}{,.info{,.gz,.bz2,.Z}}
+
+PORTAGE_COMPRESS=${PORTAGE_COMPRESS:-gzip}
+PORTAGE_COMPRESS_FLAGS=${PORTAGE_COMPRESS_FLAGS:--9}
+if [ -z "${PORTAGE_COMPRESS_SUFFIX}" ] ; then
+	case ${PORTAGE_COMPRESS} in
+		gzip)  suffix="gz";;
+		bzip2) suffix="bz2";;
+		*)     echo "prepinfo: error fixing links: please set PORTAGE_COMPRESS_SUFFIX in make.conf" 1>&2
+		       exit 1;;
+	esac
+fi
+
+echo "info: ${PORTAGE_COMPRESS} ${PORTAGE_COMPRESS_FLAGS}"
+
+for x in `find "${z}"/ \( -type f -or -type l \) -maxdepth 1 -mindepth 1 2>/dev/null` ; do
+	if [ -L "${x}" ] ; then
+		# Symlink ...
+		mylink=${x}
+		linkto=$(readlink "${x}")
+
+		if [ "${linkto##*.}" != "${suffix}" ] ; then
+			linkto="${linkto}.${suffix}"
+		fi
+		if [ "${mylink##*.}" != "${suffix}" ] ; then
+			mylink="${mylink}.${suffix}"
+		fi
+
+		echo "fixing GNU info symlink: ${mylink##*/}"
+		ln -snf "${linkto}" "${mylink}"
+		if [ "${x}" != "${mylink}" ] ; then
+			echo "removing old symlink: ${x##*/}"
+			rm -f "${x}"
+		fi
+	else
+		if [ "${x##*.}" != "${suffix}" ] ; then
+			echo "compressing GNU info page: ${x##*/}"
+			"${PORTAGE_COMPRESS}" ${PORTAGE_COMPRESS_FLAGS} -f "${x}"
+		fi
+	fi
+done

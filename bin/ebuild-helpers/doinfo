@@ -1,0 +1,27 @@
+#!/bin/bash
+# Copyright 1999-2005 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+if [ $# -lt 1 ] ; then
+	echo "$0: at least one argument needed" 1>&2
+	exit 1 	
+fi
+
+dir="${D}usr/share/info"
+if [ ! -d "${dir}" ] ; then
+	install -d "${dir}"
+fi
+
+PORTAGE_COMPRESS=${PORTAGE_COMPRESS:-gzip}
+PORTAGE_COMPRESS_FLAGS=${PORTAGE_COMPRESS_FLAGS:--9}
+
+for x in "$@" ; do
+	if [ -e "${x}" ] ; then
+		install -m0644 "${x}" "${dir}"
+		"${PORTAGE_COMPRESS}" ${PORTAGE_COMPRESS_FLAGS} -f \
+			"${dir}/${x##*/}"
+	else
+		echo "doinfo: ${x} does not exist" 1>&2
+	fi
+done

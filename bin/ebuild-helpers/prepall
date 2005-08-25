@@ -1,0 +1,48 @@
+#!/bin/bash
+# Copyright 1999-2005 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header$
+
+prepallman
+prepallinfo
+prepallstrip
+
+#this should help to ensure that all (most?) shared libraries are executable
+for i in "${D}"opt/*/lib{,32,64} \
+         "${D}"lib{,32,64}       \
+         "${D}"usr/lib{,32,64}   \
+         "${D}"usr/X11R6/lib{,32,64} ; do
+	[ ! -d "${i}" ] && continue
+
+	for j in "${i}"/*.so.* "${i}"/*.so ; do
+		[ ! -e "${j}" ] && continue
+		[ -L "${j}" ] && continue
+		[ -x "${j}" ] && continue
+		echo "making executable: /${j/${D}/}"
+		chmod +x "${j}"
+	done
+done
+
+# When installing static libraries into /usr/lib and shared libraries into 
+# /lib, we have to make sure we have a linker script in /usr/lib along side 
+# the static library, or gcc will utilize the static lib when linking :(.
+# http://bugs.gentoo.org/show_bug.cgi?id=4411
+for a in "${D}"/usr/lib/*.a ; do
+	s=${a%.a}.so
+	if [ ! -e "${s}" ] ; then
+		s=${s##*/}
+		if [ -e "${D}/lib/${s}" ] ; then
+			echo -e "\aQA Notice: missing gen_usr_ldscript for ${s}\a"
+			sleep 1
+		fi
+	fi
+done
+
+# Verify that the libtool files don't contain bogus $D entries.
+for a in "${D}"/usr/lib/*.la ; do
+	s=${a##*/}
+	if grep -qs "${PORTAGE_TMPDIR}" "${a}" ; then
+		echo -e "\aQA Notice: ${s} appears to contain PORTAGE_TMPDIR paths\a"
+		sleep 1
+	fi
+done

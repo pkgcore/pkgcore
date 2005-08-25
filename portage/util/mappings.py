@@ -1,9 +1,10 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: mappings.py 1927 2005-08-25 23:44:09Z ferringb $
+# $Id: mappings.py 1931 2005-08-26 00:24:30Z ferringb $
 
 from itertools import imap
+import UserDict
 
 class IndexableSequence(object):
 	def __init__(self, get_keys, get_values, recursive=False, returnEmpty=False, 
@@ -106,7 +107,7 @@ class IndexableSequence(object):
 		return
 
 
-class LazyValDict(object):
+class LazyValDict(UserDict.DictMixin):
 	"""
 	given a function to get keys, and to look up the val for those keys, it'll 
 	lazy load key definitions, and values as requested
@@ -154,9 +155,6 @@ class LazyValDict(object):
 		raise KeyError(key)
 
 
-	def iterkeys(self):
-		return iter(self.keys())
-
 	def keys(self):
 		if self.__keys_func != None:
 			self.__keys = set(self.__keys_func())
@@ -165,32 +163,15 @@ class LazyValDict(object):
 		l.extend(self.__vals.keys())
 		return l
 
-	def get(self, key, val=None):
-		try:
-			return self[key]
-		except KeyError:
-			return val
 
-	def __contains__(self, key):
+	def has_key(self, key):
 		if self.__keys_func != None:
 			map(self.__keys.setdefault, self.__keys_func())
 			self.__keys_func = None
 		return key in self.__keys or key in self.__vals
 
-	__iter__ = iterkeys
-	has_key 	= __contains__
 
-
-	def iteritems(self):
-		for k in self.keys():
-			yield k, self[k]
-
-
-	def items(self):
-		return list(self.iteritems())
-
-
-class ProtectedDict(object):
+class ProtectedDict(UserDict.DictMixin):
 	"""
 	given an initial dict, this wraps that dict storing changes in a secondary dict, protecting
 	the underlying dict from changes
@@ -227,7 +208,7 @@ class ProtectedDict(object):
 		raise KeyError(key)
 			
 
-	def iterkeys(self):
+	def __iter__(self):
 		for k in self.new.iterkeys():
 			yield k
 		for k in self.orig.iterkeys():
@@ -236,23 +217,12 @@ class ProtectedDict(object):
 
 
 	def keys(self):
-		return list(self.iterkeys())
+		return list(self.__iter__())
 
 
-	def __contains__(self, key):
+	def has_key(self, key):
 		return key in self.new or (key not in self.blacklist and key in self.orig)
 
-	__iter__ = iterkeys
-	has_key = __contains__
-
-
-	def iteritems(self):
-		for k in self.iterkeys():
-			yield k, self[k]
-
-
-	def items(self):
-		return list(self.iteritems())
 
 class Unchangable(Exception):
 	def __init__(self, key):	self.key = key

@@ -151,15 +151,27 @@ class buildable(base):
 
 			self.env["DISTDIR"] = normpath(os.path.join(self.builddir, "distdir"))+"/"
 
+			try:
+				if os.path.exists(self.env["DISTDIR"]):
+					if os.path.isdir(self.env["DISTDIR"]) and not os.path.islink(self.env["DISTDIR"]):
+						shutil.rmtree(self.env["DISTDIR"])
+					else:
+						os.unlink(self.env["DISTDIR"])
+
+			except OSError, oe:
+				raise FailedDirectory(self.env["DISTDIR"], "failed removing existing file/dir/link at: exception %s" % oe)
+				
 			if not ensure_dirs(self.env["DISTDIR"], mode=0770, gid=portage_gid):
-				raise FailedDirectory(d["DISTDIR"], "failed creating distdir symlink directory")
+				raise FailedDirectory(self.env["DISTDIR"], "failed creating distdir symlink directory")
 			files = self.env["A"].split()
 			src = map(lambda x: os.path.join(distdir, x), files)
 			for x in src:
 				if not os.path.exists(x):
 					raise GenericBuildError("required distfile %s: is missing from singular DISTDIR: %s" % (x, distdir))
 			try:
-				map(os.symlink, src, map(lambda x:os.path.join(self.env["DISTDIR"], x), files))
+				for s, d in izip(src, imap(lambda x:os.path.join(self.env["DISTDIR"], x), files)):
+					os.symlink(s,d)
+
 			except OSError, oe:
 				raise GenericBuildError("Failed symlinking in distfiles: %s" % str(oe))
 		

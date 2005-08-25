@@ -89,7 +89,7 @@ positional = base_repo profile incrementals
 
 [domain]
 #instantiate = portage.config.parser.domain
-required = repositories profile root class incrementals ACCEPT_LICENSE
+required = repositories profile root class incrementals ACCEPT_LICENSE vdb
 section_ref = repositories profile vdb
 list = %(default_incrementals)s %(package_filters)s package.unmask repositories vdb bashrc
 incrementals = %(default_incrementals)s
@@ -104,7 +104,7 @@ DISTCC_DIR	= ".distcc"
 CCACHE_PATH	= "/usr/lib/ccache/bin"
 CCACHE_DIR	= "/var/tmp/ccache"
 PATH		= %(default_path)s
-positional = incrementals root profile repositories
+positional = incrementals root profile repositories vdb
 
 [repo]
 required = class location

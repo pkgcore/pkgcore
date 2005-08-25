@@ -2,7 +2,7 @@
 # ebuild.sh; ebuild phase processing, env handling
 # Copyright 2004-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
+# $Header: /var/cvsroot/gentoo-src/portage/bin/ebuild.sh,v 1.214 2005/08/05 02:37:14 vapier Exp $
 
 # general phase execution path-
 # execute_phases is called, which sets EBUILD_PHASE, and then depending on the phase, 
@@ -27,7 +27,7 @@ ORIG_VARS=`declare | egrep '^[^[:space:]{}()]+=' | cut -s -d '=' -f 1`
 ORIG_FUNCS=`declare -F | cut -s -d ' ' -f 3`
 DONT_EXPORT_FUNCS='portageq speak'
 DONT_EXPORT_VARS="ORIG_VARS GROUPS ORIG_FUNCS FUNCNAME DAEMONIZED CCACHE.* DISTCC.* AUTOCLEAN CLEAN_DELAY SYNC
-COMPLETED_EBUILD_PHASES (TMP|)DIR FEATURES CONFIG_PROTECT.* (P|)WORKDIR (FETCH|RESUME) COMMAND RSYNC_.* GENTOO_MIRRORS 
+(TMP|)DIR FEATURES CONFIG_PROTECT.* (P|)WORKDIR (FETCH|RESUME) COMMAND RSYNC_.* GENTOO_MIRRORS 
 (DIST|FILES|RPM|ECLASS)DIR HOME MUST_EXPORT_ENV QA_CONTROLLED_EXTERNALLY COLORTERM COLS ROWS HOSTNAME
 myarg SANDBOX_.* BASH.* EUID PPID SHELLOPTS UID ACCEPT_(KEYWORDS|LICENSE) BUILD(_PREFIX|DIR) T DIRSTACK
 DISPLAY (EBUILD|)_PHASE PORTAGE_.* RC_.* SUDO_.* IFS PATH LD_PRELOAD ret line phases D EMERGE_FROM
@@ -44,8 +44,15 @@ fi
 reset_sandbox() {
 	export SANDBOX_ON="1"
 	export SANDBOX_PREDICT="${SANDBOX_PREDICT:+${SANDBOX_PREDICT}:}/proc/self/maps:/dev/console:/usr/lib/portage/pym:/dev/random"
-	export SANDBOX_WRITE="${SANDBOX_WRITE:+${SANDBOX_WRITE}:}/dev/shm:${PORTAGE_TMPDIR}"
-	export SANDBOX_READ="${SANDBOX_READ:+${SANDBOX_READ}:}/dev/shm:${PORTAGE_TMPDIR}"
+	export SANDBOX_WRITE="${SANDBOX_WRITE:+${SANDBOX_WRITE}:}/dev/shm"
+	export SANDBOX_READ="${SANDBOX_READ:+${SANDBOX_READ}:}/dev/shm"
+	local s
+	for x in CCACHE_DIR DISTCC_DIR D WORKDIR T; do
+		if [ -n "${!x}" ]; then
+			addread  "${!x}"
+			addwrite "${!x}"
+		fi
+	done
 }
 
 # Prevent aliases from causing portage to act inappropriately.
@@ -267,9 +274,6 @@ load_environ() {
 
 	if [ -n "$1" ]; then
 		src="$1"
-		local c=COMPLETED_EBUILD_PHASES
-		COMPLETED_EBUILD_PHASES="`cat ${BUILDDIR}/.completed_stages 2> /dev/null`"
-		[ -z "$COMPLETED_EBUILD_PHASES" ] && COMPLETED_EBUILD_PHASES="$c"
 	fi
 	[ ! -z $DEBUGGING ] && echo "loading environment from $src" >&2
 
@@ -293,19 +297,14 @@ load_environ() {
 		return 1
 	fi
 	unset declare
-	if [ -f "${BUILDDIR}/.completed_stages" ]; then
-		COMPLETED_EBUILD_PHASES=`cat ${BUILDDIR}/.completed_stages`
-	else
-		COMPLETED_EBUILD_PHASES=''
-	fi
 	return 0
 }
 
 # walk the cascaded profile src'ing it's various bashrcs.
+# overriden by daemon normally.
 source_profiles() {
 	local dir
 	save_IFS
-
 	# XXX: Given the following unset, is this set needed?
 	IFS=$'\n'
 	for dir in ${PROFILE_PATHS}; do
@@ -330,7 +329,7 @@ init_environ() {
 
 
 	# XXX this too, sucks.
-	export PATH="/sbin:/usr/sbin:/usr/lib/portage/bin:/bin:/usr/bin"
+#	export PATH="/sbin:/usr/sbin:/usr/lib/portage/bin:/bin:/usr/bin"
 	if [ "${EBUILD_PHASE}" == "setup" ]; then
 		#we specifically save the env so it's not stomped on by sourcing.
 		#bug 51552
@@ -436,7 +435,6 @@ init_environ() {
 
 #	declare -r DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE DESCRIPTION
 #	declare -r KEYWORDS INHERITED IUSE CDEPEND PDEPEND PROVIDE
-	COMPLETED_EBUILD_PHASES=''
 #	echo "DONT_EXPORT_FUNCS=$DONT_EXPORT_FUNCS" >&2
 }
 
@@ -509,7 +507,6 @@ execute_phases() {
 			ret=0
 			type -p post_src_${EBUILD_PHASE} &> /dev/null && post_src_${EBUILD_PHASE}
 			[ "$PORTAGE_DEBUG" == "1" ] && set +x
-			COMPLETED_EBUILD_PHASES="${COMPLETED_EBUILD_PHASES} ${EBUILD_PHASE}"
 			export SANDBOX_ON="0"
 			;;
 		setup)
@@ -519,100 +516,23 @@ execute_phases() {
 
 			export SANDBOX_ON="0"
 
-			temp_ebuild_phase=`cat "${BUILDDIR}/.completed_stages" 2> /dev/null`
-#			echo "temp_ebuild_phase=$temp_ebuild_phase"
-			if hasq setup ${temp_ebuild_phase}; then
-				unset temp_ebuild_phase
-				MUST_EXPORT_ENV="no"
-			else
-				unset temp_ebuild_phase
-				init_environ
-				MUST_EXPORT_ENV="yes"
+			[ ! -z "${DISTCC_LOG}" ] && addwrite "$(dirname ${DISTCC_LOG})"
 
-				[ "$PORTAGE_DEBUG" == "1" ] && set -x
-				type -p pre_pkg_${EBUILD_PHASE} &> /dev/null && pre_pkg_${EBUILD_PHASE}
-				dyn_${EBUILD_PHASE}
-				ret=0;
-				type -p post_pkg_${EBUILD_PHASE} &> /dev/null && post_pkg_${EBUILD_PHASE}
-				[ "$PORTAGE_DEBUG" == "1" ] && set +x
+			local x
+			# if they aren't set, then holy hell ensues.  deal.
 
-				if hasq distcc ${FEATURES} &>/dev/null; then
-					if [ -d /usr/lib/distcc/bin ]; then
-						#We can enable distributed compile support
-						if [ -z "${PATH/*distcc*/}" ]; then
-							# Remove the other reference.
-							remove_path_entry "distcc"
-						fi
-						export PATH="/usr/lib/distcc/bin:${PATH}"
-						[ ! -z "${DISTCC_LOG}" ] && addwrite "$(dirname ${DISTCC_LOG})"
-					elif type -p distcc &>/dev/null; then
-						export CC="distcc $CC"
-						export CXX="distcc $CXX"
-					fi
-				fi
-
-				if hasq ccache ${FEATURES} &>/dev/null; then
-					#We can enable compiler cache support
-					if [ -z "${PATH/*ccache*/}" ]; then
-						# Remove the other reference.
-						remove_path_entry "ccache"
-					fi
-
-					if [ -d /usr/lib/ccache/bin ]; then
-						export PATH="/usr/lib/ccache/bin:${PATH}"
-					elif [ -d /usr/bin/ccache ]; then
-						export PATH="/usr/bin/ccache:${PATH}"
-					fi
-
-					[ -z "${CCACHE_DIR}" ] && export CCACHE_DIR="/root/.ccache"
-
-					addread "${CCACHE_DIR}"
-					addwrite "${CCACHE_DIR}"
-
-					[ -z "${CCACHE_SIZE}" ] && export CCACHE_SIZE="500M"
-					ccache -M ${CCACHE_SIZE} &> /dev/null
-				fi
-			fi
-			COMPLETED_EBUILD_PHASES="${COMPLETED_EBUILD_PHASES} ${EBUILD_PHASE}"
-			;;
-
-	
-		help)
+			[ -z "${CCACHE_SIZE}" ] && export CCACHE_SIZE="500M"
+			ccache -M ${CCACHE_SIZE} &> /dev/null
 			init_environ
-			export SANDBOX_ON="1"
+			MUST_EXPORT_ENV="yes"
 
 			[ "$PORTAGE_DEBUG" == "1" ] && set -x
 			type -p pre_pkg_${EBUILD_PHASE} &> /dev/null && pre_pkg_${EBUILD_PHASE}
 			dyn_${EBUILD_PHASE}
-			ret=0
+			ret=0;
 			type -p post_pkg_${EBUILD_PHASE} &> /dev/null && post_pkg_${EBUILD_PHASE}
 			[ "$PORTAGE_DEBUG" == "1" ] && set +x
 
-			COMPLETED_EBUILD_PHASES="${COMPLETED_EBUILD_PHASES} ${EBUILD_PHASE}"
-			;;
-		package|rpm)
-			export SANDBOX_ON="0"
-
-			if ! load_environ ${T}/environment; then
-				ewarn 
-				ewarn "unable to load saved env for phase $EBUILD_PHASE"
-				ewarn "attempting to continue, although this could result in a broken/invalid"
-				ewarn "rpm/binpkg"
-				sleepbeep 10
-			fi
-
-			if type reinstate_loaded_env_attributes &> /dev/null; then
-				reinstate_loaded_env_attributes
-			fi
-
-			[ "$PORTAGE_DEBUG" == "1" ] && set -x
-			type -p pre_pkg_${EBUILD_PHASE} &> /dev/null && pre_pkg_${EBUILD_PHASE}
-			dyn_${EBUILD_PHASE}
-			ret=0
-			type -p post_pkg_${EBUILD_PHASE} &> /dev/null && post_pkg_${EBUILD_PHASE}
-			[ "$PORTAGE_DEBUG" == "1" ] && set +x
-
-			COMPLETED_EBUILD_PHASES="${COMPLETED_EBUILD_PHASES} ${EBUILD_PHASE}"
 			;;
 		depend)
 			SANDBOX_ON="1"
@@ -656,21 +576,9 @@ execute_phases() {
 			;;
 		esac
 
-		cd ${BUILDDIR} &> /dev/null
 		if [ "${MUST_EXPORT_ENV}" == "yes" ]; then
 #			echo "exporting environ ${EBUILD_PHASE} to ${T}/environment" >&2
 			export_environ "${T}/environment"
-			list=''
-			for x in ${COMPLETED_EBUILD_PHASES}; do
-				if ! hasq $x $list; then
-					list="${list} ${x}"
-				fi
-			done
-			COMPLETED_EBUILD_PHASES="${list}"
-			unset list
-			echo "$COMPLETED_EBUILD_PHASES" > "${BUILDDIR}/.completed_stages"
-			chown portage:portage "${BUILDDIR}/.completed_stages" &> /dev/null
-			chmod g+w "${BUILDDIR}/.completed_stages" &> /dev/null
 			MUST_EXPORT_ENV="no"
 		fi
 	done

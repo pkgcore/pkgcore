@@ -2,8 +2,7 @@
 # ebuild-daemon.sh; core ebuild processor handling code
 # Copyright 2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
-
+# $Header: /home/cvsrep/bharring/portage/bin/ebuild-daemon.sh,v 1.4 2005/07/07 05:28:27 bharring Exp $
 
 alias die='diefunc "$FUNCNAME" "$LINENO" "$?"'
 #alias listen='read -u 3 -t 10'
@@ -86,7 +85,7 @@ unset_colors
 
 
 # XXX this sucks even more then the rest, we're talking loss of chrome on a trailer hitch type suck.
-PATH='/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:${PORTAGE_BIN_PATH}'
+#PATH='/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:${PORTAGE_BIN_PATH}'
 while [ "$alive" == "1" ]; do
 	com=''
 	listen com
@@ -120,7 +119,7 @@ while [ "$alive" == "1" ]; do
 					restore_IFS
 					if [ $val != "0" ]; then
 					 	echo "err, env receiving threw an error for '$line': $?" >&2
-						echo "env_receiving_failed" >&2
+#						echo "env_receiving_failed" >&2
 						speak "env_receiving_failed"
 						cont=1
 						break
@@ -163,7 +162,7 @@ while [ "$alive" == "1" ]; do
 					addwrite "$PORTAGE_LOGFILE"
 				fi
 			fi
-			speak "starting ${phases}"
+#			speak "starting ${phases}"
 			if [ -z $RC_NOCOLOR ]; then
 				set_colors
 			fi

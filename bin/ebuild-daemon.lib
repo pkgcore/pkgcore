@@ -3,7 +3,7 @@
 # Copyright 2005 Gentoo Foundation
 # Author(s):	Brian Harring (ferringb@gentoo.org)
 # License:	GPL2
-$Header$
+$Header: /home/cvsrep/bharring/portage/bin/ebuild-daemon.lib,v 1.2 2005/07/07 05:28:27 bharring Exp $
  
 alias die='diefunc "$FUNCNAME" "$LINENO" "$?"'
 #alias listen='read -u 3 -t 10'
@@ -102,16 +102,16 @@ update_confcache() {
 }
 
 internal_inherit() {
-	local line x
+	local line
 	if [ "$#" != "1" ]; then
 		die "internal_inherit accepts one arg, requested eclass location.  $* is a bit much"
 	fi
 	speak "request_inherit $1"
 	listen line
-	if [ $line == "path" ]; then
+	if [ "$line" == "path" ]; then
 		listen line;
 		source "${line}" || die "failed sources inherit: ${line}"
-	elif [ $line == "transfer" ]; then
+	elif [ "$line" == "transfer" ]; then
 		listen line;
 		eval "$line" || die "failed evaluating eclass $x on an inherit transfer"
 	else
@@ -120,6 +120,25 @@ internal_inherit() {
 	fi
 }
 
+source_profiles() {
+	local line
+	speak request_profiles
+	listen line
+	while [ "$line" != end_request ]; do
+		if [ "$line" == "path" ]; then
+			listen line;
+			source "${line}" || die "failed sourcing profile bashrc: ${line}"
+		elif [ "$line" == "transfer" ]; then
+			listen line;
+			eval "$line" || die "failed evaluating profile bashrc: ${line}"
+		else
+			speak "failed"
+			die "unknown profile bashrc transfer mode from pythonic side, '$line'"
+		fi
+		speak "next"
+		listen line
+	done
+}
 DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $(declare -F | cut -s -d ' ' -f 3)"
 DONT_EXPORT_VARS="${DONT_EXPORT_VARS} ${DONT_EXPORT_VARS}"
 

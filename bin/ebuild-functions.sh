@@ -2,7 +2,7 @@
 # ebuild-functions.sh; ebuild env functions, saved with the ebuild (not specific to the portage version).
 # Copyright 2004-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
+# $Header: /var/cvsroot/gentoo-src/portage/bin/ebuild-functions.sh,v 1.15 2005/08/13 23:00:32 ferringb Exp $
 
 use()
 {

@@ -2,7 +2,7 @@
 # ebuild-default-functions.sh; default functions for ebuild env that aren't saved- specific to the portage instance.
 # Copyright 2004-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
+# $Header: /var/cvsroot/gentoo-src/portage/bin/ebuild-default-functions.sh,v 1.36 2005/08/16 23:36:17 vapier Exp $
 
 has_version()
 {
@@ -82,6 +82,7 @@ addpredict()
 
 unpack()
 {
+	echo "unpack called, cwd=$(pwd)"
 	local x y myfail tarvars srcdir
 
 	if [ "$USERLAND" == "BSD" ]; then
@@ -100,8 +101,9 @@ unpack()
 		if [ "${x:0:2}" == "./" ]; then
 			srcdir=''
 		else
-			srcdir="${DESTDIR}"
+			srcdir="${DISTDIR}"
 		fi
+
 		[ ! -s "${srcdir}/${x}" ] && die "$myfail"
 
 		case "${x##*.}" in
@@ -146,11 +148,6 @@ unpack()
 
 dyn_setup()
 {
-	if hasq setup ${COMPLETED_EBUILD_PHASES:-unset}; then
-		echo ">>> looks like ${PF} has already been setup, bypassing."
-		MUST_EXPORT_ENV="no"
-		return
-	fi
 	MUST_EXPORT_ENV="yes"
 	if [ "$USERLAND" == "Linux" ]; then
 		# The next bit is to ease the broken pkg_postrm()'s
@@ -176,12 +173,6 @@ dyn_setup()
 
 dyn_unpack()
 {
-	if hasq unpack ${COMPLETED_EBUILD_PHASES:-unset}; then
-		echo ">>> ${PF} has alreay been unpacked, bypassing."
-		MUST_EXPORT_ENV="no"
-		return
-	fi
-
 	trap "abort_unpack" SIGINT SIGQUIT
 	local newstuff="no"
 	MUST_EXPORT_ENV="yes"
@@ -201,10 +192,6 @@ dyn_unpack()
 			echo ">>> ${EBUILD} has been updated; recreating WORKDIR..."
 			newstuff="yes"
 			rm -rf "${WORKDIR}"
-		elif ! hasq unpack ${COMPLETED_EBUILD_PHASES}; then
-			echo ">>> Not marked as unpacked; recreating WORKDIR..."
-			newstuff="yes"
-			rm -rf "${WORKDIR}"
 		fi
 	fi
 	
@@ -213,7 +200,6 @@ dyn_unpack()
 	echo ">>> Unpacking source..."
 	src_unpack
 	echo ">>> Source unpacked."
-	cd "${PORTAGE_BUILDDIR}"
 	trap SIGINT SIGQUIT
 }
 
@@ -242,7 +228,6 @@ abort_compile()
 abort_unpack()
 {
 	abort_handler "src_unpack" $1
-	rm -rf "${PORTAGE_BUILDDIR}/work"
 	exit 1
 }
 
@@ -262,19 +247,11 @@ abort_test()
 abort_install()
 {
 	abort_handler "src_install" $1
-	rm -rf "${PORTAGE_BUILDDIR}/image"
 	exit 1
 }
 
 dyn_compile()
 {
-	if hasq compile ${COMPLETED_EBUILD_PHASES:-unset}; then
-		echo ">>> It appears that ${PN} is already compiled; skipping."
-		echo ">>> (clean to force compilation)"
-		MUST_EXPORT_ENV="no"
-		return
-	fi
-
 	MUST_EXPORT_ENV="yes"
 
 	trap "abort_compile" SIGINT SIGQUIT
@@ -285,30 +262,15 @@ dyn_compile()
 	[ "${LDFLAGS-unset}"     != "unset" ] && export LDFLAGS
 	[ "${ASFLAGS-unset}"     != "unset" ] && export ASFLAGS
 
-	[ "${CCACHE_DIR-unset}"  != "unset" ] && export CCACHE_DIR
-	[ "${CCACHE_SIZE-unset}" != "unset" ] && export CCACHE_SIZE
-
-	[ "${DISTCC_DIR-unset}"  == "unset" ] && export DISTCC_DIR="${PORTAGE_TMPDIR}/.distcc"
 	[ ! -z "${DISTCC_DIR}" ] && addwrite "${DISTCC_DIR}"
 
-	if hasq noauto $FEATURES &>/dev/null && ! hasq unpack ${COMPLETED_EBUILD_PHASES:-unpack}; then
-		echo
-		echo "!!! We apparently haven't unpacked... This is probably not what you"
-		echo "!!! want to be doing... You are using FEATURES=noauto so I'll assume"
-		echo "!!! that you know what you are doing... You have 5 seconds to abort..."
-		echo
-
-		sleepbeep 16
-		sleep 3
+	if [ ! -e "${T}/build-info" ];	then
+		mkdir "${T}/build-info"
 	fi
-
-	cd "${PORTAGE_BUILDDIR}"
-	if [ ! -e "build-info" ];	then
-		mkdir build-info
-	fi
-	cp "${EBUILD}" "build-info/${PF}.ebuild"
+	cp "${EBUILD}" "${T}/build-info/"
 	
 	if [ -d "${S}" ]; then
+		echo "it exists"
 		cd "${S}"
 	fi
 	#our custom version of libtool uses $S and $D to fix
@@ -319,8 +281,7 @@ dyn_compile()
 	export PWORKDIR="$WORKDIR"
 	src_compile 
 	#|| abort_compile "fail" 
-	cd "${PORTAGE_BUILDDIR}"
-	cd build-info
+	cd "${T}/build-info"
 
 	echo "$ASFLAGS"		> ASFLAGS
 	echo "$CATEGORY"	> CATEGORY
@@ -348,52 +309,24 @@ dyn_compile()
 	echo "$RESTRICT"	> RESTRICT
 	echo "$SLOT"		> SLOT
 	echo "$USE"		> USE
-	export_environ "${PORTAGE_BUILDDIR}/build-info/environment.bz2" 'bzip2 -c9'
-	cp "${EBUILD}" "${PF}.ebuild"
+	export_environ "${T}/build-info/environment.bz2" 'bzip2 -c9'
 	if hasq nostrip $FEATURES $RESTRICT; then
 		touch DEBUGBUILD
 	fi
 	trap SIGINT SIGQUIT
 }
 
-dyn_package()
-{
-	trap "abort_package" SIGINT SIGQUIT
-	cd "${PORTAGE_BUILDDIR}/image"
-	tar cpvf - ./ | bzip2 -f > ../bin.tar.bz2 || die "Failed to create tarball"
-	cd ..
-	xpak build-info inf.xpak
-	tbz2tool join bin.tar.bz2 inf.xpak "${PF}.tbz2"
-	echo ">>> Done."
-	cd "${PORTAGE_BUILDDIR}"
-	MUST_EXPORT_ENV="yes"
-	trap SIGINT SIGQUIT
-}
 
 dyn_test()
 {
-	if hasq test ${COMPLETED_EBUILD_PHASES}; then
-		echo ">>> TEST has already been run, skipping..." >&2
-		MUST_EXPORT_ENV="no"
-		return
-	fi
-
 	trap "abort_test" SIGINT SIGQUIT
 
-	if hasq maketest $RESTRICT || hasq test $RESTRICT; then
-		ewarn "Skipping make test/check due to ebiuld restriction."
-		echo ">>> Test phase [explicitly disabled]: ${CATEGORY}/${PF}"
-	elif ! hasq test $FEATURES; then
-		echo ">>> Test phase [not enabled]; ${CATEGORY}/${PF}"
-	else
 		echo ">>> Test phase [enabled]: ${CATEGORY}/${PF}"
 		MUST_EXPORT_ENV="yes"
 		if [ -d "${S}" ]; then
 			cd "${S}"
 		fi
 		src_test
-		cd "${PORTAGE_BUILDDIR}"
-	fi
 	trap SIGINT SIGQUIT
 }
 
@@ -410,8 +343,8 @@ stat_perms()
 dyn_install()
 {
 	trap "abort_install" SIGINT SIGQUIT
-	rm -rf "${PORTAGE_BUILDDIR}/image"
-	mkdir "${PORTAGE_BUILDDIR}/image"
+	rm -rf "${D}"
+	mkdir "${D}"
 	if [ -d "${S}" ]; then
 		cd "${S}"
 	fi
@@ -443,7 +376,7 @@ dyn_install()
 		# Don't want paths that point to the tree where the package was built
 		# (older, broken libtools would do this).  Also check for null paths
 		# because the loader will search $PWD when it finds null paths.
-		f=$(scanelf -qyRF '%r %p' "${D}" | grep -E "(${PORTAGE_BUILDDIR}|: |::|^ )")
+		f=$(scanelf -qyRF '%r %p' "${D}" | grep -E "(${WORKDIR}|${D}|: |::|^ )")
 		if [[ -n ${f} ]] ; then
 			echo -ne '\a\n'
 			echo "QA Notice: the following files contain insecure RUNPATH's"
@@ -502,7 +435,7 @@ dyn_install()
 		fi
 
 		# Save NEEDED information
-		scanelf -qyRF '%p %n' "${D}" | sed -e 's:^:/:' > "${PORTAGE_BUILDDIR}"/build-info/NEEDED
+		scanelf -qyRF '%p %n' "${D}" | sed -e 's:^:/:' > "${T}/build-info/NEEDED"
 	fi
 
 	if [[ $UNSAFE > 0 ]]; then
@@ -545,7 +478,6 @@ dyn_install()
 
 	echo ">>> Completed installing ${PF} into ${D}"
 	echo
-	cd ${PORTAGE_BUILDDIR}
 	MUST_EXPORT_ENV="yes"
 	trap SIGINT SIGQUIT
 }
@@ -672,105 +604,6 @@ dyn_preinst()
 	trap SIGINT SIGQUIT
 }
 
-dyn_spec()
-{
-#	tar czf "/usr/src/redhat/SOURCES/${PF}.tar.gz" "${O}/${PF}.ebuild" "${O}/files" || die "Failed to create base rpm tarball."
-	tar czf "${T}/${PF}.tar.gz" "${O}/${PF}.ebuild" "${O}/files" || die "Failed to create base rpm tarball."
-	echo "pwd=$(pwd)" >&2
-	cat <<__END1__ > ${PF}.spec
-Summary: ${DESCRIPTION}
-Name: ${PN}
-Version: ${PV}
-Release: ${PR}
-Copyright: GPL
-Group: portage/${CATEGORY}
-Source: ${PF}.tar.gz
-Buildroot: ${D}
-%description
-${DESCRIPTION}
-
-${HOMEPAGE}
-
-%prep
-%setup -c
-
-%build
-
-%install
-
-%clean
-
-%files
-/
-__END1__
-	MUST_EXPORT_ENV="yes"
-
-}
-
-dyn_rpm()
-{
-	dyn_spec
-	MUST_EXPORT_ENV="yes"
-}
-
-dyn_help()
-{
-	echo
-	echo "Portage"
-	echo "Copyright 1999-2005 Gentoo Foundation"
-	echo 
-	echo "How to use the ebuild command:"
-	echo 
-	echo "The first argument to ebuild should be an existing .ebuild file."
-	echo
-	echo "One or more of the following options can then be specified.  If more"
-	echo "than one option is specified, each will be executed in order."
-	echo
-	echo "  help        : show this help screen"
-	echo "  setup       : execute package specific setup actions"
-	echo "  fetch       : download source archive(s) and patches"
-	echo "  digest      : creates a digest and a manifest file for the package"
-	echo "  manifest    : creates a manifest file for the package"
-	echo "  unpack      : unpack/patch sources (auto-fetch if needed)"
-	echo "  compile     : compile sources (auto-fetch/unpack if needed)"
-	echo "  preinst     : execute pre-install instructions"
-	echo "  postinst    : execute post-install instructions"
-	echo "  install     : installs the package to the temporary install directory"
-	echo "  qmerge      : merge image into live filesystem, recording files in db"
-	echo "  merge       : does fetch, unpack, compile, install and qmerge"
-	echo "  prerm       : execute pre-removal instructions"
-	echo "  postrm      : execute post-removal instructions"
-	echo "  unmerge     : remove package from live filesystem"
-	echo "  config      : execute package specific configuration actions"
-	echo "  package     : create tarball package in ${PKGDIR}/All"
-	echo "  rpm         : builds a RedHat RPM package"
-	echo "  clean       : clean up all source and temporary files"
-	echo
-	echo "The following settings will be used for the ebuild process:"
-	echo
-	echo "  package     : ${PF}"
-	echo "  slot        : ${SLOT}"
-	echo "  category    : ${CATEGORY}"
-	echo "  description : ${DESCRIPTION}"
-	echo "  system      : ${CHOST}"
-	echo "  c flags     : ${CFLAGS}"
-	echo "  c++ flags   : ${CXXFLAGS}"
-	echo "  make flags  : ${MAKEOPTS}"
-	echo -n "  build mode  : "
-	if hasq nostrip $FEATURES $RESTRICT;	then
-		echo "debug (large)"
-	else
-		echo "production (stripped)"
-	fi
-	echo "  merge to    : ${ROOT}"
-	echo
-	if [ -n "$USE" ]; then
-		echo "Additionally, support for the following optional features will be enabled:"
-		echo 
-		echo "  ${USE}"
-	fi
-	echo
-}
 
 # debug-print() gets called from many places with verbose status information useful
 # for tracking down problems. The output is in $T/eclass-debug.log.
@@ -871,7 +704,7 @@ inherit()
 	local B_RDEPEND
 	local B_CDEPEND
 	local B_PDEPEND
-	while [ "$1" ]; do
+	while [ -n "$1" ]; do
 
 		# PECLASS is used to restore the ECLASS var after recursion.
 		PECLASS="$ECLASS"
@@ -901,7 +734,7 @@ inherit()
 		unset   IUSE   DEPEND   RDEPEND   CDEPEND   PDEPEND
 		#turn on glob expansion
 		set +f
-		if ! internal_inherit $1; then
+		if ! internal_inherit "$1"; then
 			die "failed sourcing $1 in inherit()"
 		fi
 

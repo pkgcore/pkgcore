@@ -1,0 +1,42 @@
+relevant list of features
+autoaddcvs
+buildpkg
+ccache
+collision-protect
+confcache
+cvs
+digest
+distcc
+distlocks
+fixpackages
+getbinpkg
+gpg
+keeptemp
+keepwork
+mirror
+noclean (keeptemp, keepwork)
+nodoc
+noinfo
+noman
+nostrip
+notitles
+sandbox
+severe
+severer (dumb spanky)
+sfperms
+sign
+strict
+suidctl
+test
+userpriv
+userpriv_fakeroot
+usersandbox
+
+[dead features]
+usersandbox
+noclean
+
+[build features]
+keeptemp, keepwork, noclean, ccache, distcc, 
+sandbox, userpriv, fakeroot
+userpriv_fakeroot becomes fakeroot

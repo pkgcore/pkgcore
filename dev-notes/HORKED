@@ -9,6 +9,11 @@ flesh out (need to get a solid kernel/core)
 portage.package.cpv.ver_cmp fails on this;
 dev-lang/icc-7.1.029 > dev-lang/icc-7.1.006 # thinks .006 is gt .029
 
+fetchables aren't implemented.
+hack in place but it should be done properly.
+portage.ebuild.package will need modification as will portage.ebuild.buildable once fetchable is in.
+
+
 [namespace fixes required, plus potentially a bit of rewrite]
 :portage.sync:
 :portage.transports:
@@ -58,3 +63,6 @@ the UI code (display, etc) can probably be held onto but will need to be refacto
 same thing.  might be able to just update it, but a full rewrite (with modular checks) is a *good* thing.
 Man how it's raining out...
 
+:quickpkg:
+Yanked it.  Implementation sucks, and it ought to be handled automatically by internal pkg transfers (grabbing a 
+package from the vdb, and adding it to binpkg resulting in creation of a binpkg)

@@ -217,14 +217,6 @@ domain = some-section-label
 							# nice aspect of the latter is you can just use .match with appropriate restrictions.  very simply interface
 							# imo, although should provide a way to pull individual repositories/labels of said repos from the set though.
 							# basically, mangle a .raw_repo indexablesequence type trick (hackish, but nail it down when reach that bridge)
-.configure_package()	# the contentious one.  either a package instance returned from repositories is configured already, or it's returned
-							# unconfigured, and passed through configure_package to get a configured_package.
-							# it's slightly uglier for the resolver to have to do the .configure_package route, but note that the configuration
-							# data _should not_ be bound to the repo (repo is just packages), it's bound to the domain.  so... either that config
-							# data is shoved down into some repo wrapper, or handled at this level.
-							# that said, if it's at this level, it makes the .repositories.match() with use restrictions a bit funky in terms of 
-							# the "is it configured?" special casing...
-							# debate and flesh this one out...
 
 
 :build plan creation:
@@ -373,23 +365,17 @@ continuing on...
 .files		# get a better name for this.  doesn't encompas files/*, but could be slipped in that way for remote.  encompasses 
 				# restrict fetch (files with urls), and chksum data.  seq.
 .description# usual meaning, although rememebr probably need a way to merge metadata.xml lond desc into the more mundane description key.
-.license		# usual meaning, seq.
+.license		# usual meaning, depset
 .homepage	# usual.  needed?
-.setup()		# name sucks.  gets ya the 
-setup operation, which does building/whatever.
+.setup()		# name sucks.  gets ya the setup operation, which does building/whatever.
 .data			# raw data.  may not exist, don't screw with it unless you know what it is, and know the instance's .data layout.
-
+.build()		# if this package is buildable, return a build operation, else return None
 
 :restriction:
 # see layout.txt for more fleshed out examples of the idea.
 # note, match and pmatch have been reversed namewise.
 .match()		# handed package instance, will return bool of whether or not this restriction matches.
-.pmatch()	# 'optimized' interface.  basically, you hand it the data it tests, rather then a package instance.
-				# basically, for a category restriction (fex), def match(self, p): return self.pmatch(p.category)
-				# get the jist?  it holds the actual test, if the restriction can be collapsed down to a test of a single value.
-				# .pmatch calling should only be done by self, or code that does isinstance checks and hands off data itself rather then
-				# doing an instantion.  .pmatch is exposing a bit of the match protocol so that optimizations are potentially possible in 
-				# executing match checks (think repo.match).  this one is still slightly up in the air.  naming sucks also.
+.cmatch()		# try to force the changes; this is dependant on the package being configurable.
 .itermatch() # new one, debatable.  short version, giving a sequence of package instances, yields true/false for them.
 				# why might this be desirable?  if setup of matching is expensive, this gives you a way to amoritize the cost.
 				# jason/marius/alec, thoughts?

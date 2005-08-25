@@ -46,3 +46,10 @@ the line (prototype and get it running first, then see if you can shave 5-10% of
 
 
 Combining restrictions: (containment tests, ya ya)
+
+
+force_{False,True}:
+replacement of cmatch design/concept; effectively, when operating in this matching mode, changes *are* pushed onto 
+the package, actively attempting to force a match (rather then just indicating if it matches or not, as match does).
+
+Beware the boolean ops; a force_Fail and has N^2 -1 potential returns, which should all be iterated over (or possible to do so at least).

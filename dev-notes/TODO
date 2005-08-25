@@ -48,3 +48,6 @@ Anyone who implements this deserves massive cookies.
 Same as above.  Likely need a way to bind the trustring between these too, *or* the gpgprofile lifts it somehow from the gpgtree.
 Anyone who implements this deserves massive cookies.
 
+:portage.config.domain:
+Redesign, seperation of it into ebuild specific chunk (domain class), and generic abstraction layer.
+cleanup needed already, imo :/

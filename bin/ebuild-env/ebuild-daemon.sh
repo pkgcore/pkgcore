@@ -2,7 +2,7 @@
 # ebuild-daemon.sh; core ebuild processor handling code
 # Copyright 2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /home/cvsrep/bharring/portage/bin/ebuild-daemon.sh,v 1.4 2005/07/07 05:28:27 bharring Exp $
+# $Id: ebuild-daemon.sh 1913 2005-08-25 03:58:27Z ferringb $
 
 alias die='diefunc "$FUNCNAME" "$LINENO" "$?"'
 #alias listen='read -u 3 -t 10'

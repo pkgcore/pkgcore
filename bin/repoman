@@ -1,7 +1,7 @@
 #!/usr/bin/python -O
 # Copyright 1999-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: repoman 1912 2005-08-25 03:54:42Z ferringb $
+# $Id: repoman 1913 2005-08-25 03:58:27Z ferringb $
 
 # Next to do: dep syntax checking in mask files
 # Then, check to make sure deps are satisfiable (to avoid "can't find match for" problems)
@@ -1031,7 +1031,7 @@ for x in scanlist:
 		myear = time.gmtime(os.stat(checkdir+"/"+y+".ebuild")[ST_MTIME])[0]
 		gentoo_copyright = re.compile(r'^# Copyright 1999-' + str(myear) + r' Gentoo Foundation')
 		gentoo_license = re.compile(r'^# Distributed under the terms of the GNU General Public License v2$')
-		cvs_header = re.compile(r'^#\s*\$Header.*\$$')
+		cvs_header = re.compile(r'^#\s*\$Id: repoman 1913 2005-08-25 03:58:27Z ferringb $$')
 		ignore_line = re.compile(r'(^$)|(^(\t)*#)')
 		leading_spaces = re.compile(r'^[\S\t]')
 		trailing_whitespace = re.compile(r'.*([\S]$)')

@@ -3,7 +3,7 @@
 # Copyright 2005 Gentoo Foundation
 # Author(s):	Brian Harring (ferringb@gentoo.org)
 # License:	GPL2
-$Header: /home/cvsrep/bharring/portage/bin/ebuild-daemon.lib,v 1.2 2005/07/07 05:28:27 bharring Exp $
+# $Id: ebuild-daemon.lib 1913 2005-08-25 03:58:27Z ferringb $
  
 alias die='diefunc "$FUNCNAME" "$LINENO" "$?"'
 #alias listen='read -u 3 -t 10'

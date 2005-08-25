@@ -2,7 +2,7 @@
 # ebuild-default-functions.sh; default functions for ebuild env that aren't saved- specific to the portage instance.
 # Copyright 2004-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: ebuild-default-functions.sh 1926 2005-08-25 23:42:39Z ferringb $
+# $Id: ebuild-default-functions.sh 1929 2005-08-26 00:12:11Z ferringb $
 
 has_version()
 {
@@ -269,7 +269,6 @@ dyn_compile()
 	cp "${EBUILD}" "${T}/build-info/"
 	
 	if [ -d "${S}" ]; then
-		echo "it exists"
 		cd "${S}"
 	fi
 	#our custom version of libtool uses $S and $D to fix

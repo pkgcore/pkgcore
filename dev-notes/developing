@@ -40,3 +40,16 @@ If it fails in the pkg instantiation, either your tree is incomplete (no tree at
 no longer exists.
 Anything else, track down ferringb in #gentoo-portage on freenode, or email ferringb (at) gentoo.org , with the traceback, and I'll get 
 ya going.
+
+Finally, you need filter-env for ebd.
+cd src/filter-env
+make filter-env
+cp filter-env ../../bin/
+
+Beyond that, you'll probably want to override path defaults; an example of this is in
+http://dev.gentoo.org/~ferringb/config
+as is an example of portage_custom_path.py
+http://dev.gentoo.org/~ferringb/portage_custom_path.py
+
+The required path override, and portage_custom_path override will be overriden once this beast is autotooled, and will have those 
+settings defined upon installation; in the meantime, this is the route since the source isn't autotooled (nor ready to be)

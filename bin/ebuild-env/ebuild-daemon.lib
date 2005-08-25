@@ -1,0 +1,145 @@
+#!/bin/bash 
+# ebuild-daemon.lib; daemon lib code.
+# Copyright 2005 Gentoo Foundation
+# Author(s):	Brian Harring (ferringb@gentoo.org)
+# License:	GPL2
+$Header: /home/cvsrep/bharring/portage/bin/ebuild-daemon.lib,v 1.2 2005/07/07 05:28:27 bharring Exp $
+ 
+alias die='diefunc "$FUNCNAME" "$LINENO" "$?"'
+#alias listen='read -u 3 -t 10'
+alias assert='_pipestatus="${PIPESTATUS[*]}"; [[ "${_pipestatus// /}" -eq 0 ]] || diefunc "$FUNCNAME" "$LINENO" "$_pipestatus"'
+
+
+# portageq hijack- redirects all requests back through the pipes and has the python side execute it.
+# much faster, also avoids the gpg/sandbox being active issues.
+portageq() {
+	local line e alive
+	if [ "${EBUILD_PHASE}" == "depend" ]; then
+		echo "QA Notice: portageq() in global scope for ${CATEGORY}/${PF}" >&2
+	fi
+	speak "portageq $*"
+	listen line
+	declare -i e
+	e=$(( ${line/return_code=} + 0 ))
+	alive=1
+	while [ $alive == 1 ]; do
+		listen line
+		if [ "$line" == "stop_text" ]; then
+			alive=0
+		else
+			echo "portageq: $line"
+		fi
+	done
+	return $e
+}
+	
+# ask the python side to display sandbox complaints.
+request_sandbox_summary() {
+	local line
+	speak "request_sandbox_summary ${SANDBOX_LOG}"
+	listen line
+	while [ "$line" != "end_sandbox_summary" ]; do	
+		echo "$line"
+		listen line
+	done
+}		
+
+# request the global confcache be transferred to $1 for usage.
+# flips the sandbox vars as needed.
+request_confcache() {
+	if ! hasq confcache $FEATURES || ! hasq sandbox $FEATURES || hasq confcache $RESTRICT; then
+		return 1
+	fi
+	local line
+	speak "request_confcache $1"
+	listen line s
+	while [ "${line#request}" != "${line}" ]; do
+		# var requests for updating the cache's ac_cv_env
+		# send set, then val
+		line="$(echo ${line#request})"
+		if [ "${!line:+set}" == "set" ]; then
+			speak set
+			speak "${!line}"
+		else
+			speak unset
+		fi
+		listen line
+	done
+	if [ "${line:0:9}" == "location:" ]; then
+		cp -v "${line:10}" $1
+	elif [ "${line}" == "empty" ]; then
+		echo ">>> Confcache is empty, starting anew"
+	fi
+	if hasq "${line/: *}" location empty; then
+		echo ">>> Temporary configure cache file is $1"
+		export PORTAGE_CONFCACHE_STATE=1
+		export SANDBOX_DEBUG_LOG="${T}/debug_log"
+		export SANDBOX_DEBUG=1
+		return 0
+	fi
+	return 1
+}
+
+# notify python side configure calls are finished.
+update_confcache() {
+	local line
+	if [ "$PORTAGE_CONFCACHE_STATE" != "1" ]; then
+		return 0
+	fi
+	unset SANDBOX_DEBUG
+	unset PORTAGE_CONFCACHE_STATE
+	if ! hasq sandbox $FEATURES; then
+		echo "not updating confcache, sandbox isn't set in features" >&2
+		return 1
+	fi
+	speak "update_confcache $SANDBOX_DEBUG_LOG $1"
+	unset SANDBOX_DEBUG_LOG
+	listen line
+	if [ "$line" == "updated" ]; then
+		return 0
+	fi
+	return 1
+}
+
+internal_inherit() {
+	local line
+	if [ "$#" != "1" ]; then
+		die "internal_inherit accepts one arg, requested eclass location.  $* is a bit much"
+	fi
+	speak "request_inherit $1"
+	listen line
+	if [ "$line" == "path" ]; then
+		listen line;
+		source "${line}" || die "failed sources inherit: ${line}"
+	elif [ "$line" == "transfer" ]; then
+		listen line;
+		eval "$line" || die "failed evaluating eclass $x on an inherit transfer"
+	else
+		speak "failed"
+		die "unknown inherit command from pythonic side, '$line' for eclass $x"
+	fi
+}
+
+source_profiles() {
+	local line
+	speak request_profiles
+	listen line
+	while [ "$line" != end_request ]; do
+		if [ "$line" == "path" ]; then
+			listen line;
+			source "${line}" || die "failed sourcing profile bashrc: ${line}"
+		elif [ "$line" == "transfer" ]; then
+			listen line;
+			eval "$line" || die "failed evaluating profile bashrc: ${line}"
+		else
+			speak "failed"
+			die "unknown profile bashrc transfer mode from pythonic side, '$line'"
+		fi
+		speak "next"
+		listen line
+	done
+}
+DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $(declare -F | cut -s -d ' ' -f 3)"
+DONT_EXPORT_VARS="${DONT_EXPORT_VARS} ${DONT_EXPORT_VARS}"
+
+:

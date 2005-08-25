@@ -2,7 +2,7 @@
 # ebuild-daemon.sh; core ebuild processor handling code
 # Copyright 2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: ebuild-daemon.sh 1913 2005-08-25 03:58:27Z ferringb $
+# $Id: ebuild-daemon.sh 1926 2005-08-25 23:42:39Z ferringb $
 
 alias die='diefunc "$FUNCNAME" "$LINENO" "$?"'
 #alias listen='read -u 3 -t 10'
@@ -144,6 +144,7 @@ while [ "$alive" == "1" ]; do
 #					echo "disabling sandbox due to '$line'" >&2
 				else
 					export SANDBOX_DISABLED=0
+					export SANDBOX_VERBOSE="no"
 #					echo "enabling sandbox" >&2
 				fi
 			elif [ "${line}" == "start_processing" ]; then
@@ -165,6 +166,9 @@ while [ "$alive" == "1" ]; do
 #			speak "starting ${phases}"
 			if [ -z $RC_NOCOLOR ]; then
 				set_colors
+			fi
+			if ! type -p filter-env &> /dev/null; then
+				die "can't find filter-env!"
 			fi
 			DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} ${PORTAGE_PRELOADED_ECLASSES}"
 			for x in $DONT_EXPORT_FUNCS; do

@@ -2,7 +2,7 @@
 # ebuild-default-functions.sh; default functions for ebuild env that aren't saved- specific to the portage instance.
 # Copyright 2004-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: ebuild-default-functions.sh 1913 2005-08-25 03:58:27Z ferringb $
+# $Id: ebuild-default-functions.sh 1926 2005-08-25 23:42:39Z ferringb $
 
 has_version()
 {
@@ -82,7 +82,6 @@ addpredict()
 
 unpack()
 {
-	echo "unpack called, cwd=$(pwd)"
 	local x y myfail tarvars srcdir
 
 	if [ "$USERLAND" == "BSD" ]; then

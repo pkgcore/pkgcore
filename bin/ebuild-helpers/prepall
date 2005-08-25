@@ -1,7 +1,7 @@
 #!/bin/bash
 # Copyright 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: prepall 1912 2005-08-25 03:54:42Z ferringb $
+# $Id: prepall 1926 2005-08-25 23:42:39Z ferringb $
 
 prepallman
 prepallinfo
@@ -41,7 +41,7 @@ done
 # Verify that the libtool files don't contain bogus $D entries.
 for a in "${D}"/usr/lib/*.la ; do
 	s=${a##*/}
-	if grep -qs "${PORTAGE_TMPDIR}" "${a}" ; then
+	if grep -qs "${D}" "${a}" ; then
 		echo -e "\aQA Notice: ${s} appears to contain PORTAGE_TMPDIR paths\a"
 		sleep 1
 	fi

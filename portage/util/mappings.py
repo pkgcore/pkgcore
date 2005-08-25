@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: mappings.py 1920 2005-08-25 19:41:29Z ferringb $
+# $Id: mappings.py 1927 2005-08-25 23:44:09Z ferringb $
 
 from itertools import imap
 
@@ -155,17 +155,15 @@ class LazyValDict(object):
 
 
 	def iterkeys(self):
+		return iter(self.keys())
+
+	def keys(self):
 		if self.__keys_func != None:
 			self.__keys = set(self.__keys_func())
 			self.__keys_func = None
-		for k in self.__keys:
-			yield k
-		for k in self.__vals.keys():
-			yield k
-
-
-	def keys(self):
-		return list(self.__keys)
+		l = list(self.__keys)
+		l.extend(self.__vals.keys())
+		return l
 
 	def get(self, key, val=None):
 		try:
@@ -184,7 +182,7 @@ class LazyValDict(object):
 
 
 	def iteritems(self):
-		for k in self.iterkeys():
+		for k in self.keys():
 			yield k, self[k]
 
 

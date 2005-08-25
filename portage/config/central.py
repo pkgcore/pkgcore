@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: central.py 1911 2005-08-25 03:44:21Z ferringb $
 
 import errors, new
 from portage.const import CONF_DEFAULTS
@@ -134,7 +134,7 @@ class config:
 							if not self._cparser.has_section(sect_label):
 								raise errors.SectionNotFound(section, var, sect_label)
 					elif not self._cparser.has_section(d[var]):
-								raise errors.SectionNotFound(section, var, sect_label)
+						raise errors.SectionNotFound(section, var, sect_label)
 		
 		return d
 
@@ -162,15 +162,14 @@ class config:
 		cls_name = conf["class"]
 		del conf["class"]
 
-		callable = load_attribute(cls_name)
-		from inspect import isclass, isroutine
-		if not (isclass(callable) or isroutine(callable)):
+		callable_obj = load_attribute(cls_name)
+		if not callable(callable_obj):
 			raise errors.InstantiationError(cls_name, [], conf,
-				TypeError("%s is not a class/callable" % type(callable)))
+				TypeError("%s is not a class/callable" % type(callable_obj)))
 
 		if "instantiate" in self.type_handler[type]:
 			inst = load_attribute(self.type_handler[type]["instantiate"])
-			if not (isclass(inst) or isroutine(inst)):
+			if not callable(inst):
 				raise errors.InstantiationError(self.type_handler[type]["instantiate"], [], conf,
 					TypeError("%s is not a class/callable" % type(inst)))
 		else:
@@ -189,15 +188,16 @@ class config:
 				del conf[var]
 		try:
 			if inst != None:	
-				obj=inst(self, callable, section, conf)
+				obj=inst(self, callable_obj, section, conf)
 			else:		
-				obj=callable(*pargs, **conf)
+				obj=callable_obj(*pargs, **conf)
 		except Exception, e:
 			if isinstance(e, RuntimeError) or isinstance(e, SystemExit) or isinstance(e, errors.InstantiationError):
 				raise
 			#else wrap and chuck.
-			raise errors.InstantiationError(cls_name, [], conf, e)
-
+			if not __debug__:
+				raise errors.InstantiationError(cls_name, [], conf, e)
+			raise
 		if obj == None:
 			raise errors.InstantiationError(cls_name, [], conf, errors.NoObjectReturned(cls_name))
 

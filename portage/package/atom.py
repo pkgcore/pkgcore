@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: atom.py 1911 2005-08-25 03:44:21Z ferringb $
 
 from portage.restrictions.values import StrExactMatch, StrGlobMatch, ContainmentMatch, StrMatch
 from portage.restrictions.packages import PackageRestriction, base

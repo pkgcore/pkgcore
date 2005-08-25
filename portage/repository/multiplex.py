@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: multiplex.py 1911 2005-08-25 03:44:21Z ferringb $
 
 import prototype, errors
 
@@ -12,7 +12,7 @@ class tree(prototype.tree):
 			if not isinstance(x, prototype.tree):
 				raise errors.InitializationError("%s is not a repository tree derivative" % str(x))
 		self.trees=trees
-
+		
 	def _get_categories(self, *optionalCategory):
 		d={}
 		failures=0
@@ -70,3 +70,4 @@ class tree(prototype.tree):
 			for m in t.match(atom):
 				d[m] = None
 		return d.keys()
+

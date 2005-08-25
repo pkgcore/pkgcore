@@ -1,7 +1,7 @@
 # Copyright 2004-2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: fs.py 1911 2005-08-25 03:44:21Z ferringb $
 
 
 # goofy set of classes representating the fs objects portage knows of.

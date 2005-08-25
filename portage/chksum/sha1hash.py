@@ -1,6 +1,6 @@
 # Copyright: 2004-2005 Gentoo Foundation
 # License: GPL2
-# $Header$
+# $Id: sha1hash.py 1911 2005-08-25 03:44:21Z ferringb $
 
 import sha
 

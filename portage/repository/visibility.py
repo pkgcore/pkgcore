@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: visibility.py 1911 2005-08-25 03:44:21Z ferringb $
 
 # icky.
 # ~harring
@@ -10,7 +10,6 @@ from portage.restrictions.restriction import base
 
 class filterTree(prototype.tree):
 	"""wrap an existing repository filtering results based upon passed in restrictions."""
-
 	def __init__(self, repo, restriction, sentinel_val=False):
 		self.raw_repo = repo
 		self.sentinel_val = sentinel_val
@@ -19,9 +18,12 @@ class filterTree(prototype.tree):
 		if not isinstance(restriction, base):
 			raise errors.InitializationError("%s is not a restriction" % str(restriction)) 
 		self.restriction = restriction
-
+		self.raw_repo = repo
 
 	def itermatch(self, atom):
 		for cpv in self.raw_repo.itermatch(atom):
 			if self.restriction.match(cpv) == self.sentinel_val:
 				yield cpv
+
+	def __getattr__(self, key):
+		return getattr(self.raw_repo, key)

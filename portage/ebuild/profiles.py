@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: profiles.py 1911 2005-08-25 03:44:21Z ferringb $
 
 from portage.config import profiles
 import os, logging
@@ -11,22 +11,24 @@ from portage.util.currying import pre_curry
 from portage.package.atom import atom
 from portage.config.central import list_parser
 from portage.util.mappings import ProtectedDict
+from portage.protocols import ebd_data_source
+from itertools import imap
 
-class OnDiskProfile(profiles.base):
+class OnDiskProfile(profiles.base, ebd_data_source.base):
 	positional = ("base_repo","profile")
 	required = ("base_repo", "profile")
 	section_ref = ("base_repo")
 
 	def __init__(self, base_repo, profile, incrementals=[]):
-		basepath = os.path.join(base_repo.base,"profiles")
+		self.basepath = os.path.join(base_repo.base,"profiles")
 
-		dep_path = os.path.join(basepath, profile, "deprecated")
+		dep_path = os.path.join(self.basepath, profile, "deprecated")
 		if os.path.isfile(dep_path):
 			logger.warn("profile '%s' is marked as deprecated, read '%s' please" % (profile, dep_path))
 		del dep_path
 
 		parents = [None]
-		stack = [os.path.join(basepath, profile.strip())]
+		stack = [os.path.join(self.basepath, profile.strip())]
 		idx = 0
 
 		while len(stack) > idx:
@@ -102,17 +104,19 @@ class OnDiskProfile(profiles.base):
 						logger.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
 				else:
 					use_mask.add(p)
+
 		self.use_mask = list(use_mask)
 		del use_mask
+		self.bashrc = filter(os.path.exists, imap(lambda x: os.path.join(x, "profile.bashrc"), stack))
 
-		fp = os.path.join(basepath, "thirdpartymirrors")
+		fp = os.path.join(self.basepath, "thirdpartymirrors")
 		if os.path.isfile(fp):
 			mirrors = read_dict(fp, splitter='\t')
 		else:
 			mirrors = {}
 
 		maskers = []
-		for fp, i in loop_iter_read(os.path.join(prof, "package.mask") for prof in stack + [basepath]):
+		for fp, i in loop_iter_read(os.path.join(prof, "package.mask") for prof in stack + [self.basepath]):
 			maskers.extend(map(atom,i))
 
 		self.maskers = maskers
@@ -140,4 +144,26 @@ class OnDiskProfile(profiles.base):
 		# collapsed make.defaults.  now chunkify the bugger.
 		self.conf = d
 
-		
+	def cleanse(self):
+		del self.visibility
+		del self.system
+		del self.use_mask
+		del self.maskers
+
+	def get_path(self, bashrc):
+		fp = os.path.join(self.basepath, bashrc)
+		if not os.path.exists(fp):
+			return None
+		return fp
+	
+	def get_data(self, bashrc):
+		fp = self.get_path(bashrc)
+		if fp == None:
+			return None
+		try:
+			f = open(fp, "r")
+			d = f.read()
+			f.close()
+		except OSError:
+			return None
+		return d

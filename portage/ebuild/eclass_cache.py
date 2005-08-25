@@ -1,20 +1,23 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: eclass_cache.py 1911 2005-08-25 03:44:21Z ferringb $
 
 from portage.util.fs import normpath
 import os, sys
+from portage.protocols import ebd_data_source
 
-class cache:
+class base(object):	pass
+
+class cache(base, ebd_data_source.base):
 	"""
 	Maintains the cache information about eclasses available to an ebuild.
-	get_eclass_path and get_eclass_data are special- one (and only one) can be set to None.
+	get_path and get_data are special- one (and only one) can be set to None.
 	Any code trying to get eclass data/path will choose which method it prefers, falling back to what's available if only one option
 	exists.
 
-	get_eclass_path should be defined when it's possible to state the actual on disk location 
-	get_eclass_data should be defined when it's not possible (or not preferable), as such 
+	get_path should be defined when it's possible to state the actual on disk location 
+	get_data should be defined when it's not possible (or not preferable), as such 
 	dumping the eclass down the pipe is required (think remote tree)
 
 	Base defaults to having both set.  Override as needed.
@@ -76,13 +79,10 @@ class cache:
 
 		return ec_dict
 
-	def get_eclass_path(self, eclass):
+	def get_path(self, eclass):
 		"""get local file path to an eclass.  remote implementations should set this to None, since the file isn't locally available"""
-		return os.path.join(self.eclasses[eclass][0],eclass+".eclass")
+		try:
+			return os.path.join(self.eclasses[eclass][0], eclass+".eclass")
+		except KeyError:
+			return None
 
-	def get_eclass_contents(self, eclass):
-		"""Get the actual contents of the eclass.  This should be overridden for remote implementations"""
-		f=file(os.path.join(self.eclasses[eclass][0], eclass+".eclass"),"r")
-		l=f.read()
-		f.close()
-		return l

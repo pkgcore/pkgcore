@@ -1,7 +1,7 @@
 # snapshot.py; provides the capability of fetching a portage tree snapshot, and syncing a tree with it.
 # Copyright 2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-#$Header$
+#$Id: snapshot.py 1911 2005-08-25 03:44:21Z ferringb $
 
 
 raise Exception("won't work. portage_checksum clean ups needed")

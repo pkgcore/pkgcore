@@ -1,7 +1,7 @@
 # Copyright 1998-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
-cvs_id_string="$Id: misc.py 1803 2005-07-13 05:51:35Z ferringb $"[5:-2]
+# $Id: misc.py 1911 2005-08-25 03:44:21Z ferringb $
+cvs_id_string="$Id: misc.py 1911 2005-08-25 03:44:21Z ferringb $"[5:-2]
 
 #clean this up.
 import sys,string,shlex,os.path,stat,types

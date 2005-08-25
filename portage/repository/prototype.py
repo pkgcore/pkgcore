@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: prototype.py 1911 2005-08-25 03:44:21Z ferringb $
 
 from portage.util.mappings import IndexableSequence
 from weakref import proxy
@@ -11,6 +11,9 @@ def ix_cat_callable(*cat):
 	return "/".join(cat)
 
 class tree(object):
+	"""
+	del raw_repo, and set it to the underlying repo if you're wrapping another repo"""
+	raw_repo = None
 	package_class = None
 	configured = True
 	configure = ()
@@ -22,7 +25,7 @@ class tree(object):
 			returnIterFunc=lambda x,y: str(x)+"/"+str(y), modifiable=(not frozen))
 		self.versions   = IndexableSequence(self.packages.__iter__, self._get_versions, \
 			returnIterFunc=lambda x,y: str(x)+"-"+str(y), modifiable=(not frozen))
-		self.raw_repo = proxy(self)
+#		self.raw_repo = proxy(self)
 		self.frozen = frozen
 
 

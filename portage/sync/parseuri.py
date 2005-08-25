@@ -1,7 +1,7 @@
 # parseuri.py; parses a SYNC uri, returning protocol/host_uri
 # Copyright 2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-#$Header$
+#$Id: parseuri.py 1911 2005-08-25 03:44:21Z ferringb $
 
 
 #sanitize this to use listdir

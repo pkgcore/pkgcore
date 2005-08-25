@@ -1,15 +1,15 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: ebuild_repository.py 1911 2005-08-25 03:44:21Z ferringb $
 
 import os, stat
-from portage.repository import prototype, errors
-#import ebuild_internal
 import ebuild_package
-
+from buildable import buildable
 from weakref import proxy
 from portage.package.conditionals import PackageWrapper
+from portage.repository import prototype, errors
+from portage.util.mappings import InvertedContains
 
 def convert_depset(instance, conditionals):
 	return instance.evaluate_depset(conditionals)
@@ -18,6 +18,7 @@ def convert_depset(instance, conditionals):
 class UnconfiguredTree(prototype.tree):
 	false_categories = set(["eclass","profiles","packages","distfiles","licenses","scripts"])
 	configured=False
+	configurables = ("settings",)
 	configure = None
 	def __init__(self, location, cache=None, eclass_cache=None):
 		super(UnconfiguredTree, self).__init__()
@@ -33,8 +34,10 @@ class UnconfiguredTree(prototype.tree):
 			raise errors.InitializationError("lstat failed on base %s" % self.base)
 		if eclass_cache == None:
 			import eclass_cache
-			eclass_cache = eclass_cache.cache(self.base)
-		self.package_class = ebuild_package.EbuildFactory(self, cache, eclass_cache).new_package
+			self.eclass_cache = eclass_cache.cache(self.base)
+		else:
+			self.eclass_cache = eclass_cache
+		self.package_class = ebuild_package.EbuildFactory(self, cache, self.eclass_cache).new_package
 
 
 	def _get_categories(self, *optionalCategory):
@@ -77,25 +80,28 @@ class UnconfiguredTree(prototype.tree):
 
 class ConfiguredTree(UnconfiguredTree):
 	configured = True
-	l=["license","depends","rdepends","bdepends", "fetchables", "license", "slot"]
+	l=["license","depends","rdepends","bdepends", "fetchables", "license", "slot", "src_uri"]
 	wrappables = dict(zip(l, len(l)*[convert_depset]))
 
 	def __init__(self, raw_repo, domain_settings):
-		for x in ("USE", "ARCH"):
-			if x not in domain_settings:
-				raise errors.InitializationError("%s requires the following settings: '%s', not supplied" % 
-					(str(self.__class__), x))
+		if "USE" not in domain_settings:
+			raise errors.InitializationError("%s requires the following settings: '%s', not supplied" % (str(self.__class__), x))
 
 		self.default_use = domain_settings["USE"][:]
-		self.arch = domain_settings["ARCH"]
-		self.default_use.append(self.arch)
+		self.domain_settings = domain_settings
 		self.raw_repo = raw_repo
+		r = raw_repo
+		self.eclass_cache = self.raw_repo.eclass_cache
 
 	def package_class(self, *a):
-		return PackageWrapper(self.raw_repo.package_class(*a), "use", initial_settings=self.default_use, unchangable_settings=self.arch,
-			attributes_to_wrap=self.wrappables)
+		pkg = self.raw_repo.package_class(*a)
+		return PackageWrapper(pkg, "use", initial_settings=self.default_use, unchangable_settings=InvertedContains(pkg.data["IUSE"]), 
+			attributes_to_wrap=self.wrappables, build_callback=self.generate_buildop)
 
-	def __getattr__(self, attr, default=None):
-		return getattr(self.raw_repo, attr, default)
+	def __getattr__(self, attr):
+		return getattr(self.raw_repo, attr)
+
+	def generate_buildop(self, pkg):
+		return buildable(pkg, self.domain_settings, self.eclass_cache)
 
 UnconfiguredTree.configure = ConfiguredTree

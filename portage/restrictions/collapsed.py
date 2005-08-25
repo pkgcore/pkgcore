@@ -1,10 +1,9 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: collapsed.py 1911 2005-08-25 03:44:21Z ferringb $
 
 __all__=("DictBased")
-from inspect import isroutine
 from boolean import base as bool_base
 from packages import AndRestriction, OrRestriction, AlwaysTrue, AlwaysFalse, base
 from portage.util.inheritance import check_for_base
@@ -34,7 +33,7 @@ class DictBased(base):
 		"""restriction_items is a source of restriction keys and remaining restriction (if none, set it to None)
 		get_key is a function to get the key from a pkg instance"""
 
-		if not isroutine(get_key_from_package):
+		if not callable(get_key_from_package):
 			raise TypeError(get_key_from_package)
 
 		super(DictBased, self).__init__(*args, **kwargs)

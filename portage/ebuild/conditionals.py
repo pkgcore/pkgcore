@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: conditionals.py 1911 2005-08-25 03:44:21Z ferringb $
 
 # TODO: move exceptions elsewhere, bind them to a base exception for portage
 
@@ -37,7 +37,7 @@ class DepSet(AndRestriction):
 
 		conditionals, depsets, has_conditionals = [], [self], [False]
 		raw_conditionals = []
-		words = iter_tokens(dep_str)
+		words = iter_tokens(dep_str, splitter=" \t\n")
 		try:
 			for k in words:
 				if k == ")":

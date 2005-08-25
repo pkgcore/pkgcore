@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: bash.py 1911 2005-08-25 03:44:21Z ferringb $
 
 # disclaimer.  this is basically a bastardization of filter-env's approach.
 # so... it's probably not perfect.

@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: conditionals.py 1911 2005-08-25 03:44:21Z ferringb $
 
 #from metadata import package as package_base
 from portage.util.mappings import LimitedChangeSet, Unchangable
@@ -27,7 +27,9 @@ class base(object):
 		return iter(self.restrictions)
 
 class PackageWrapper(object):
-	def __init__(self, pkg_instance, configurable_attribute_name, initial_settings=[], unchangable_settings=[], attributes_to_wrap={}):
+	def __init__(self, pkg_instance, configurable_attribute_name, initial_settings=[], unchangable_settings=[], attributes_to_wrap={},
+		build_callback=None):
+
 		"""pkg_instance should be an existing package instance
 		configurable_attribute_name is the attribute name to fake on this instance for accessing builtup conditional changes
 		use, fex, is valid for unconfigured ebuilds
@@ -46,6 +48,7 @@ class PackageWrapper(object):
 		self.__configurable_name = configurable_attribute_name
 		self.__reuse_pt = 0
 		self.__cached_wrapped = {}		
+		self.__buildable = build_callback
 
 	def __copy__(self):
 		return self.__class__(self.__wrapped_pkg, self.__configurable_name, initial_settings=set(self.__configurable), 
@@ -73,7 +76,7 @@ class PackageWrapper(object):
 					self.__reuse_pt += 1
 					return True
 				except Unchangable:
-					self.rollback_changes(entry_point)
+					self.rollback(entry_point)
 			return False
 		entry_point = self.changes_count()
 		a = getattr(self.__wrapped_pkg, attr)
@@ -99,7 +102,7 @@ class PackageWrapper(object):
 					map(self.__configurable.remove, vals)
 					return True
 				except Unchangable:
-					self.rollback_changes(entry_point)
+					self.rollback(entry_point)
 			return False
 		entry_point = self.changes_count()
 		a = getattr(self.__wrapped_pkg, attr)
@@ -140,3 +143,9 @@ class PackageWrapper(object):
 	def lock(self):
 		self.commit()
 		self.__configurable = list(self.__configurable)		
+
+		
+	def build(self):
+		if self.__buildable:
+			return self.__buildable(self)
+		return None

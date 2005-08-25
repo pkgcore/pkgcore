@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: packages.py 1911 2005-08-25 03:44:21Z ferringb $
 
 import restriction
 import boolean
@@ -107,7 +107,7 @@ class PackageRestriction(base):
 		return self.negate == self.negate and self.attr == other.attr and self.restriction == other.restriction
 
 	def __str__(self):
-		s = self.attr
+		s = self.attr+" "
 		if self.negate:	self.attr += "not "
 		return s + str(self.restriction)
 

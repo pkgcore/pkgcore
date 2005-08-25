@@ -1,10 +1,46 @@
 # Copyright 2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header$
-cvs_id_string="$Id: fs.py 1852 2005-08-09 07:43:43Z ferringb $"[5:-2]
+# $Id: fs.py 1911 2005-08-25 03:44:21Z ferringb $
+cvs_id_string="$Id: fs.py 1911 2005-08-25 03:44:21Z ferringb $"[5:-2]
 
 import os
 
+def ensure_dirs(path, gid=-1, uid=-1, mode=0777):
+	"""ensure dirs exist, creating as needed with (optional) gid, uid, and mode"""
+
+	try:
+		st = os.stat(path)
+	except OSError:
+		base = os.path.sep
+		try:
+			um = os.umask(0)
+			for dir in os.path.abspath(path).split(os.path.sep):
+				base = os.path.join(base,dir)
+				if not os.path.exists(base):
+					try:
+						os.mkdir(base, mode)
+						if gid != -1 or uid != -1:
+							os.chown(base, uid, gid)
+					except OSError:
+						return False
+		finally:
+			os.umask(um)
+		return True
+	try:
+		um = os.umask(0)
+		try:
+			if (gid != -1 and gid != st.st_gid) or (uid != -1 and uid != st.st_uid):
+				os.chown(path, uid, gid)
+			if mode != (st.st_mode & 04777):
+				os.chmod(path, mode)
+		except OSError:
+			return False
+	finally:
+		os.umask(um)
+	return True
+
+
+# XXX throw this out.
 try:
 	#XXX: This should get renamed to bsd_chflags, I think.
 	import chflags
@@ -16,7 +52,9 @@ except:
 	bsd_chflags = None
 
 
-# throw this out.
+
+
+# XXX throw this out.
 def movefile(src,dest,newmtime=None,sstat=None,mysettings=None):
 	"""moves a file from src to dest, preserving all permissions and attributes; mtime will
 	be preserved even when moving across filesystems.  Returns true on success and false on

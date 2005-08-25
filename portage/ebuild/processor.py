@@ -1,7 +1,7 @@
 # Copyright: 2004-2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: processor.py 1911 2005-08-25 03:44:21Z ferringb $
 
 # this needs work.  it's been pruned heavily from what ebd used originally, but it still isn't what 
 # I would define as 'right'
@@ -10,7 +10,6 @@ inactive_ebp_list = []
 active_ebp_list = []
 
 import portage.spawn, os, logging
-from inspect import isroutine, isclass
 from portage.util.currying import post_curry
 
 def shutdown_all_processors():
@@ -54,6 +53,9 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False, save_
 	if not fakeroot:
 		for x in inactive_ebp_list:
 			if x.userprived() == userpriv and (x.sandboxed() or not sandbox):
+				if not x.is_alive():
+					inactive_ebp_list.remove(x)
+					continue
 				inactive_ebp_list.remove(x)
 				active_ebp_list.append(x)
 				return x
@@ -133,7 +135,7 @@ class ebuild_processor:
 		
 		# since it's questionable which spawn method we'll use (if sandbox or fakeroot fex), 
 		# we ensure the bashrc is invalid.
-		env={"BASHRC":"/etc/portage/spork/not/valid/ha/ha", PORTAGE_BIN_PATH:PORTAGE_BIN_PATH}
+		env={"BASHRC":"/etc/portage/spork/not/valid/ha/ha"}
 		args = []
 		if sandbox:
 			if fakeroot:
@@ -141,7 +143,7 @@ class ebuild_processor:
 				sys.exit(1)
 			self.__sandbox = True
 			spawn_func = portage.spawn.spawn_sandbox
-			env.update({"SANDBOX_DEBUG":"1","SANDBOX_DEBUG_LOG":"/var/tmp/test"})
+#			env.update({"SANDBOX_DEBUG":"1","SANDBOX_DEBUG_LOG":"/var/tmp/test"})
 
 		elif fakeroot:
 			self.__fakeroot = True
@@ -314,7 +316,12 @@ class ebuild_processor:
 		exported_keys = ''
 		for x in env_dict.keys():
 			if x not in self.dont_export_vars:
-				self.write("%s=%s\n" % (x, env_dict[x]), flush=False)
+				if not x[0].isalpha():
+					raise KeyError(x)
+				s=env_dict[x].replace("\\","\\\\\\\\")
+				s=s.replace("'","\\\\'")
+				s=s.replace("\n","\\\n")
+				self.write("%s='%s'\n" % (x, s), flush=False)
 				exported_keys += x+' '
 		self.write("export "+exported_keys,flush=False)
 		self.write("end_receiving_env")
@@ -342,14 +349,8 @@ class ebuild_processor:
 		"""request the auxdbkeys from an ebuild
 		returns a dict when successful, None when failed"""
 
-		env={}
-		for x in ("P", "PN", "PR"):
-			env[x] = getattr(package_inst, x)
-
-		env["EBUILD"] = package_inst.path
-		env["CATEGORY"] = package_inst.category
 		self.write("process_ebuild depend")
-		self.send_env(env)
+		self.send_env(expected_ebuild_env(package_inst))
 		self.set_sandbox_state(True)
 		self.write("start_processing")
 
@@ -382,16 +383,16 @@ class ebuild_processor:
 			raise UnhandledCommand("inherit requires an eclass specified, none specified")
 		
 		line=line.strip()
-		if ecache.get_eclass_path != None:
-			value = ecache.get_eclass_path(line)
+		if ecache.get_path != None:
+			value = ecache.get_path(line)
 			self.write("path")
 			self.write(value)
-		elif ecache.get_eclass_data != None:
-			value = ecache.get_eclass_data(line)
+		elif ecache.get_data != None:
+			value = ecache.get_data(line)
 			self.write("transfer")
 			self.write(value)
 		else:
-			raise AttributeError("neither get_eclass_data nor get_eclass_path is usable on ecache!")
+			raise AttributeError("neither get_data nor get_path is usable on ecache!")
 		
 
 	# this basically handles all hijacks from the daemon, whether confcache or portageq.
@@ -420,7 +421,7 @@ class ebuild_processor:
 		handlers["phases"] = post_curry(chuck_StoppingCommand, lambda f: f.lower().strip()=="succeeded")
 
 		for x in additional_commands.keys():
-			if not isroutine(additional_commands[x]):
+			if not callable(additional_commands[x]):
 				raise TypeError(additional_commands[x])
 
 		handlers.update(additional_commands)
@@ -444,11 +445,10 @@ class ebuild_processor:
 
 
 def chuck_UnhandledCommand(processor, line):
-	print "chucking unhandled"
 	raise UnhandledCommand(line)
 
 def chuck_StoppingCommand(processor, val, *args):
-	if isroutine(val) or isclass(val):
+	if callable(val):
 		raise FinishedProcessing(val, args[0])
 	raise FinishedProcessing(val)
 
@@ -462,4 +462,21 @@ class FinishedProcessing(ProcessingInterruption):
 class UnhandledCommand(ProcessingInterruption):
 	def __init__(self, line=None):		self.line=line
 	def __str__(self):						return "unhandled command, %s" % self.line
+
+__all__ = ("request_ebuild_processor", "release_ebuild_processor", "ebuild_processor"
+	"UnhandledCommand", "expected_ebuild_env")
+
+def expected_ebuild_env(pkg, d={}):
+	d["CATEGORY"] = pkg.category
+	d["PF"] = "-".join((pkg.package, pkg.fullver))
+	d["P"]  = "-".join((pkg.package, pkg.version))
+	d["PN"] = pkg.package
+	d["PV"] = pkg.version
+	if pkg.revision != None:
+		d["PR"] = "-r" + str(pkg.revision)
+	else:
+		d["PR"] = ""
+	d["PVR"]= pkg.fullver
+	d["EBUILD"] = pkg.path
+	return d
 

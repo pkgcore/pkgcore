@@ -1,11 +1,11 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: domain.py 1911 2005-08-25 03:44:21Z ferringb $
 
+import os
 from portage.restrictions.collapsed import DictBased
 from portage.restrictions.packages import OrRestriction, AndRestriction, PackageRestriction
-import os
 from errors import BaseException
 from portage.util.file import iter_read_bash
 from portage.package.atom import atom
@@ -13,7 +13,9 @@ from portage.repository.visibility import filterTree
 from portage.restrictions.values import StrGlobMatch, StrExactMatch, ContainmentMatch
 from portage.util.currying import post_curry
 from portage.util.lists import unique
+from portage.util.mappings import ProtectedDict
 from itertools import imap
+from portage.protocols.ebd_data_source import local_source
 
 class MissingFile(BaseException):
 	def __init__(self, file, setting):	self.file, self.setting = file, setting
@@ -33,6 +35,7 @@ def get_key_from_package(pkg):
 def package_keywords_splitter(val):
 	v=val.split()
 	return atom(v[0]), unique(v[1:])
+
 
 # ow ow ow ow ow ow....
 # this manages a *lot* of crap.  so... this is fun.
@@ -159,13 +162,48 @@ class domain:
 
 		del master_license, license
 
+		settings["ROOT"] = root
+		# this should be handled via another means
+		if "default" in settings:
+			del settings["default"]
+		self.settings = settings
+			
+		if profile.get_path == None and profile.get_data == None:
+			raise Failure("profile instance '%s' lacks a usable ebd_data_source method" % profile)
+		bashrc = [(profile, x) for x in profile.bashrc]
+
+		if "bashrc" in self.settings:
+			l = local_source()
+			bashrc.extend([(l,x) for x in self.settings["bashrc"]])
+
+		self.settings["bashrc"] = bashrc
 		
 		self.repos = []
 		for repo in repositories:
 			if not repo.configured:
-				self.repos.append(repo.configure(repo, settings))
+				pargs = [repo]
+				try:
+					for x in repo.configurables:
+						if x == "domain":
+							pargs.append(self)
+						elif x == "settings":
+							pargs.append(ProtectedDict(settings))
+						elif x == "profile":
+							pargs.append(profile)
+						else:
+							pargs.append(getattr, self, x)
+				except AttributeError, ae:
+					raise Failure("failed configuring repo '%s': configurable missing: %s" % (repo, ae))
+				self.repos.append(repo.configure(*pargs))
 			else:
 				self.repos.append(repo)
 
 		self.repos = map(post_curry(filterTree, filter, False), self.repos)
-		self.settings = settings
+
+		#XXX remove once vdb is forced/required, kaiserfro's code.
+		if "vdb" in self.settings:
+			self.vdb = self.settings["vdb"]
+			del self.settings["vdb"]
+		else:
+			self.vdb = []
+		

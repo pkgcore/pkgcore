@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Header$
+# $Id: mappings.py 1911 2005-08-25 03:44:21Z ferringb $
 
 from itertools import imap
 
@@ -241,6 +241,13 @@ class Unchangable(Exception):
 	def __str__(self):			return "key '%s' is unchangable" % self.key
 
 
+class InvertedContains(set):
+	"""negate the __contains__ return from a set
+	mainly useful in conjuection with LimitedChangeSet for converting from blacklist to whitelist
+	"""
+	def __contains__(self, key):
+		return not set.__contains__(self, key)
+
 class LimitedChangeSet(object):
 	"""
 	set that supports limited changes, specifically deleting/adding a key only once per commit, 
@@ -249,9 +256,14 @@ class LimitedChangeSet(object):
 	_removed 	= 0
 	_added		= 1
 
-	def __init__(self, initial_keys, unchangable_keys=[]):
+	def __init__(self, initial_keys, unchangable_keys=None):
 		self.__new = set(initial_keys)
-		self.__blacklist = set(unchangable_keys)
+		if unchangable_keys == None:
+			self.__blacklist = []
+		else:
+			if isinstance(unchangable_keys, (list, tuple)):
+				unchangable_keys = set(unchangable_keys)
+			self.__blacklist = unchangable_keys
 		self.__changed = set()
 		self.__change_order = []
 		self.__orig = frozenset(self.__new)

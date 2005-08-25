@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: domain.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: domain.py 1914 2005-08-25 17:35:41Z ferringb $
 
 import os
 from portage.restrictions.collapsed import DictBased
@@ -45,7 +45,7 @@ def package_keywords_splitter(val):
 # ~harring
 
 class domain:
-	def __init__(self, incrementals, root, profile, repositories, **settings):
+	def __init__(self, incrementals, root, profile, repositories, vdb, **settings):
 		# voodoo, unfortunately (so it goes)
 		# break this up into chunks once it's stabilized (most of code here has already, but still more to add)
 		maskers, unmaskers, keywords, license = profile.maskers[:], [], [], []
@@ -199,11 +199,4 @@ class domain:
 				self.repos.append(repo)
 
 		self.repos = map(post_curry(filterTree, filter, False), self.repos)
-
-		#XXX remove once vdb is forced/required, kaiserfro's code.
-		if "vdb" in self.settings:
-			self.vdb = self.settings["vdb"]
-			del self.settings["vdb"]
-		else:
-			self.vdb = []
-		
+		self.vdb = vdb

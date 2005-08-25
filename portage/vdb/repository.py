@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
+# Author(s): Jeff Oliver (kaiserfro@yahoo.com)
 # License: GPL2
-# $Id: repository.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: repository.py 1914 2005-08-25 17:35:41Z ferringb $
 
 import os,stat
 from portage.repository import prototype, errors
@@ -9,12 +9,13 @@ from portage.repository import prototype, errors
 #needed to grab the PN
 from portage.package.cpv import CPV as cpv
 from portage.util.lists import unique
+from package import factory
 
 class tree(prototype.tree):
-	package_class = str
-	def __init__(self, base):
+#	package_class = str
+	def __init__(self, location):
 		super(tree,self).__init__()
-		self.base = base
+		self.base = self.location = location
 		try:
 			st = os.lstat(self.base)
 			if not stat.S_ISDIR(st.st_mode):
@@ -24,6 +25,9 @@ class tree(prototype.tree):
 
 		except OSError:
 			raise errors.InitializationError("lstat failed on base %s" % self.base)
+
+		self.package_class = factory(self).new_package
+
 
 
 	def _get_categories(self, *optionalCategory):
@@ -40,7 +44,7 @@ class tree(prototype.tree):
 	def _get_packages(self, category):
 		cpath = os.path.join(self.base,category.lstrip(os.path.sep))
 		l=set()
-		try:    
+		try:	
 			for x in os.listdir(cpath):
 				if stat.S_ISDIR(os.stat(os.path.join(cpath,x)).st_mode) and not x.endswith(".lockfile"):
 					l.add(cpv(x).package)

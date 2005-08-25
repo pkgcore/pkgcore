@@ -76,7 +76,7 @@ class factory(metadata.factory):
 				return None
 			data = f.read()
 			f.close()
-			return data
+			return data.strip()
 		
 		return LazyValDict(keys, load_data)
 		

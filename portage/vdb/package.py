@@ -4,11 +4,11 @@
 # $Id$
 
 import os
-from portage import package
+from portage.package import metadata
 from portage.ebuild.conditionals import DepSet
 from portage.package.atom import atom
 
-class package(package.metadata.package):
+class package(metadata.package):
 
 	def __getattr__ (self, key):
 		val = None
@@ -54,7 +54,7 @@ class package(package.metadata.package):
 		return data
 
 
-class factory(package.metadata.factory):
+class factory(metadata.factory):
 	child_class = package
 
 	def __init__(self, parent, *args, **kwargs):

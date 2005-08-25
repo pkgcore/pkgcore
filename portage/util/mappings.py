@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: mappings.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: mappings.py 1920 2005-08-25 19:41:29Z ferringb $
 
 from itertools import imap
 
@@ -112,10 +112,25 @@ class LazyValDict(object):
 	lazy load key definitions, and values as requested
 	"""
 	def __init__(self, get_keys_func, get_val_func):
+		"""
+		get_keys_func is a callable that is JIT called with no args  returns a tuple of keys, or is a list
+		get_val_func is a callable that is JIT called with the key requested
+		"""
+		if not callable(get_val_func):
+			raise TypeError("get_val_func isn't a callable")
+		if callable(get_keys_func):
+			self.__keys_func = get_keys_func
+		else:
+			try:
+				self.__keys = set(get_keys_func)
+				self.__keys_func = None
+			except TypeError:
+				if not callable(get_keys_func):
+					raise TypeError("get_keys_func isn't iterable nor is it callable")
+				self.__keys_func = get_keys_func
+				self.__keys = None
 		self.__val_func = get_val_func
-		self.__keys_func = get_keys_func
 		self.__vals = {}
-		self.__keys = {}
 
 
 	def __setitem__(self):
@@ -128,30 +143,35 @@ class LazyValDict(object):
 
 	def __getitem__(self, key):
 		if self.__keys_func != None:
-			map(self.__keys.setdefault, self.__keys_func())
+			self.__keys = set(self.__keys_func())
 			self.__keys_func = None
 		if key in self.__vals:
 			return self.__vals[key]
 		if key in self.__keys:
 			v = self.__vals[key] = self.__val_func(key)
-			del self.__keys[key]
+			self.__keys.remove(key)
 			return v
 		raise KeyError(key)
 
 
 	def iterkeys(self):
 		if self.__keys_func != None:
-			map(self.__keys.setdefault, self.__keys_func())
+			self.__keys = set(self.__keys_func())
 			self.__keys_func = None
-		for k in self.__keys.keys():
+		for k in self.__keys:
 			yield k
 		for k in self.__vals.keys():
 			yield k
 
 
 	def keys(self):
-		return list(self.iterkeys())
+		return list(self.__keys)
 
+	def get(self, key, val=None):
+		try:
+			return self[key]
+		except KeyError:
+			return val
 
 	def __contains__(self, key):
 		if self.__keys_func != None:

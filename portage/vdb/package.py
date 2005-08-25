@@ -7,6 +7,7 @@ import os
 from portage.package import metadata
 from portage.ebuild.conditionals import DepSet
 from portage.package.atom import atom
+from portage.util.mappings import LazyValDict
 
 class package(metadata.package):
 
@@ -62,17 +63,20 @@ class factory(metadata.factory):
 		self.base = self._parent_repo.base
 	
 	def _get_metadata(self, pkg):
-		mydict = {}
 		path = os.path.join(self.base, pkg.category, "%s-%s" % (pkg.package, pkg.fullver))
 		try:
 			keys = filter(lambda x: x.isupper(), os.listdir(path))
 		except OSError:
 			return None
-		if len(keys) == 0:
-			return None
-		for key in keys:
-			f = open(os.path.join(path, key))
-			mydict[key] = f.read()
+		
+		def load_data(key):
+			try:
+				f = open(os.path.join(path, key))
+			except OSError:
+				return None
+			data = f.read()
 			f.close()
-		return mydict
+			return data
+		
+		return LazyValDict(keys, load_data)
 		

@@ -1,17 +1,18 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: digest.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: digest.py 1935 2005-08-26 02:04:44Z ferringb $
 
-from portage.fetch import ChecksumUnavailable
-def parse_digest(path):
+from portage.chksum.errors import ParseChksumError
+def parse_digest(path, throw_errors=True):
 	d = {}
 	try:
 		f = open(path)
 		for line in f:
 			l = line.split()
 			if len(l) != 4:
-				raise ChecksumUnavailable("failed parsing " + path, l.strip())
+				if throw_errors:
+					raise ParseChksumError(path, "line count was not 4, was %i: '%s'" % (len(l), line))
 			#MD5 c08f3a71a51fff523d2cfa00f14fa939 diffball-0.6.2.tar.bz2 305567
 			d[l[2]] = {l[0].lower():l[1], "size":l[3]}
 		f.close()

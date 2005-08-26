@@ -51,3 +51,6 @@ Anyone who implements this deserves massive cookies.
 :portage.config.domain:
 Redesign, seperation of it into ebuild specific chunk (domain class), and generic abstraction layer.
 cleanup needed already, imo :/
+
+:portage.fetch.bundled_lib:
+clean this beast up.

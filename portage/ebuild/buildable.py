@@ -1,8 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id$
-
+# $Id: fetchcommand.py 1936 2005-08-26 05:37:15Z ferringb $
 
 import os, shutil
 # surprisingly this is clean, cause buildable defines __all__

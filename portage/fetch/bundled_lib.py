@@ -1,7 +1,7 @@
 # bundled_lib.py; implementation of a fetcher class useing httplib and ftplib.
 # Copyright 2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-#$Id: bundled_lib.py 1911 2005-08-25 03:44:21Z ferringb $
+#$Id: bundled_lib.py 1936 2005-08-26 05:37:15Z ferringb $
 
 import httplib, ftplib, urlparse, base64, re, sys, os
 

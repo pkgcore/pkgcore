@@ -1,0 +1,67 @@
+#!/usr/bin/python
+# Copyright: 2005 Gentoo Foundation
+# Author(s): Brian Harring (ferringb@gentoo.org)
+# License: GPL2
+# $Id:$
+
+if __name__ == "__main__":
+	import sys, portage.config
+	from portage.package.atom import atom
+	a = sys.argv[1:]
+	if "--raw" in a:
+		raw = True
+		del a[a.index("--raw")]
+	else: raw = False
+	if "--atomstr" in a:
+		def atomstr(a, l=False):
+			if l:
+				l = iter(a)
+			else:
+				l = [a]
+			s = []
+			for x in l:
+				if isinstance(x, atom):
+					s.append(x.atom_str())
+				else:
+					s.append(str(x))
+			return ' '.join(s)
+		del a[a.index("--atomstr")]
+	else:
+		atomstr = lambda x, y=False: str(x)
+
+	if len(a) != 2:
+		print "supported args: [--raw] [--atomstr] atom attr"
+		sys.exit(1)
+	conf = portage.config.load_config()
+	if len(conf.domain) != 1:
+		print "sorry, I don't know about domains aside from using the only one I find"
+		sys.exit(2)
+	domain = conf.domain.items()[0][1]
+	repos = []
+	if raw:
+		for r in domain.repos:
+			while r.raw_repo != None:
+				r = r.raw_repo
+			repos.append(r)
+	else:
+		repos.extend(domain.repos)
+
+	atoms = []
+	attr = a.pop(-1)
+	for x in a:
+		print "x=",x
+		atoms.append(atom(x))
+		# force evaluation
+		atoms[-1].category
+
+	for a in atoms:
+		print "trying atom == %s " % atomstr(a)
+		for repo in repos:
+			for pkg in repo.match(a):
+				try:	print "\nmatch %s" % atomstr(pkg)
+				except AttributeError:
+					print "\nmatch %s" % pkg
+				try:	print "attr == %s" % atomstr(getattr(pkg, attr), True)
+				except AttributeError, ae:
+					print "attr exception: %s" % ae
+	sys.exit(0)

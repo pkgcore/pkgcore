@@ -87,10 +87,11 @@ required = class incrementals base_repo profile
 section_ref = base_repo
 positional = base_repo profile incrementals
 
+
 [domain]
 #instantiate = portage.config.parser.domain
-required = repositories profile root class incrementals ACCEPT_LICENSE vdb
-section_ref = repositories profile vdb
+required = repositories profile root class incrementals ACCEPT_LICENSE vdb fetcher
+section_ref = repositories profile vdb fetcher
 list = %(default_incrementals)s %(package_filters)s package.unmask repositories vdb bashrc
 incrementals = %(default_incrementals)s
 defaults = class root incrementals ACCEPT_LICENSE PORTAGE_TMPDIR PATH DISTCC_PATH DISTCC_DIR CCACHE_PATH CCACHE_DIR
@@ -106,15 +107,13 @@ CCACHE_DIR	= "/var/tmp/ccache"
 PATH		= %(default_path)s
 positional = incrementals root profile repositories vdb
 
+
 [repo]
 required = class location
 defaults = class
 class = portage.ebuild.repository
-section_ref = cache sync sync_cache
+section_ref = cache sync sync_cache fetcher
 
-#package.keywords = portage.config.handler.keywords
-#package.mask = portage.config.handler.mask
-#package.unmask = portage.config.handler.unmask
 
 [cache]
 required = class location label auxdbkeys
@@ -127,13 +126,28 @@ list = auxdbkeys
 positional = location label auxdbkeys
 bool = readonly
 
+
 [exec]
 autoexec = true
+
 
 [sync]
 required = class url
 defaults = class
 class = portage.sync.rsync
+
+
+[fetcher]
+required = class command chksums
+bool = userpriv
+list = chksums
+defaults = class command userpriv chksums
+positional = command chksums
+class = portage.fetch.custom.fetcher
+command = "/usr/bin/wget -c -t 5 --passive-ftp -P '${DISTDIR}' '${URI}'"
+chksums = size md5
+userpriv = true
+
 
 [DEFAULT]
 metadata_keys = DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE DESCRIPTION KEYWORDS INHERITED IUSE CDEPEND

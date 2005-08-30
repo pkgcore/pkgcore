@@ -1,7 +1,7 @@
 # Copyright: 2004-2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: processor.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: processor.py 1944 2005-08-30 02:02:12Z ferringb $
 
 # this needs work.  it's been pruned heavily from what ebd used originally, but it still isn't what 
 # I would define as 'right'
@@ -354,7 +354,6 @@ class ebuild_processor:
 		self.set_sandbox_state(True)
 		self.write("start_processing")
 
-		self.expect("starting depend")
 		metadata_keys = {}
 		val=self.generic_handler(additional_commands={ \
 			"request_inherit":post_curry(self.__class__._inherit, eclass_cache), \
@@ -478,5 +477,9 @@ def expected_ebuild_env(pkg, d={}):
 		d["PR"] = ""
 	d["PVR"]= pkg.fullver
 	d["EBUILD"] = pkg.path
+
+	from portage.const import depends_phase_path
+
+	d["PATH"] = depends_phase_path
 	return d
 

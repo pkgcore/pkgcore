@@ -35,6 +35,9 @@ class database(fs_template.FsBased):
 			myf.close()
 			raise cache_errors.CacheCorruption(cpv, e)
 		myf.close()
+		for x in self._known_keys:
+			if x not in d:
+				d[x] = ''
 		return d
 
 

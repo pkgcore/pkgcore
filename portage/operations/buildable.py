@@ -45,7 +45,7 @@ class ForcedDepends(type):
 		return super(ForcedDepends, cls).__call__(*a, **kw)
 
 class base(object):
-	stage_depends = {"setup":None,			"unpack":"setup",
+	stage_depends = {"fetch":None, "setup":"fetch",		"unpack":"setup",
 					"configure":"unpack",	"compile":"configure", "test":"compile",
 					"install":"test", 	"run_all":"install"}
 
@@ -61,6 +61,22 @@ class base(object):
 	def cleanup(self):		return True
 	def run_all(self):		return True
 
+	def fetch(self):
+		if not "files" in self.__dict__:
+			self.files = {}
+		
+		# this is being anal, but protect against pkgs that don't collapse common uri down to a single file.
+		gotten_fetchables = set(map(lambda x: x.filename, self.files.values()))
+		for x in self.fetchables:
+			if x.filename in gotten_fetchables:
+				continue
+			fp = self.fetcher(x)
+			if fp == None:
+				return False
+			self.files[fp] = x
+			gotten_fetchables.add(x.filename)
+
+		return True
 
 class FailedDirectory(errors_mod.base):
 	def __init__(self, path, text):	self.path, self.text = path, text

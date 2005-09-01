@@ -138,14 +138,14 @@ class = portage.sync.rsync
 
 
 [fetcher]
-required = class command chksums distdir
+required = class command required_chksums distdir
 bool = userpriv
-list = chksums
-defaults = class command userpriv chksums
-positional = distdir command chksums
+list = required_chksums
+defaults = class command userpriv required_chksums
+positional = distdir command required_chksums
 class = portage.fetch.custom.fetcher
 command = "/usr/bin/wget -c -t 5 --passive-ftp -P '${DISTDIR}' '${URI}'"
-chksums = size md5
+required_chksums = all
 userpriv = true
 
 

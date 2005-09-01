@@ -28,7 +28,7 @@ class buildable(base):
 
 	# XXX this is unclean- should be handing in strictly what is build env, rather then
 	# dumping domain settings as env. 
-	def __init__(self, pkg, domain_settings, eclass_cache):
+	def __init__(self, pkg, domain_settings, eclass_cache, fetcher):
 		super(buildable, self).__init__()
 
 		# copy.
@@ -81,14 +81,13 @@ class buildable(base):
 						del d[s+y]
 		
 		d["PATH"] = ":".join(path)
-
-		# XXX src_uri hack.  removed once fetchables is in.
-		from urlparse import urlparse
-		d["A"] = ' '.join(map(lambda x: os.path.basename(urlparse(x)[2]), pkg.fetchables))
+		self.fetchables = pkg.fetchables[:]
+		d["A"] = ' '.join(map(lambda x: x.filename, self.fetchables))
 		d["XARGS"] = xargs
 
 		self.env = d
 		self.eclass_cache = eclass_cache
+		self.fetcher = fetcher
 		self.bashrc = d.get("bashrc", [])
 		for k,v in self.env.items():
 			if not isinstance(v, basestring):
@@ -144,11 +143,7 @@ class buildable(base):
 			raise FailedDirectory(self.env["PORT_LOGFILE"], "failed ensuring PORT_LOGDIR as 02770 and %i" % portage_gid)
 
 		# XXX src_uri hack.  fix when fetchables are integrated
-		if len(self.env["A"]):
-			distdir = self.env.get("DISTDIR", None)
-			if distdir == None:
-				raise FailedDirectory(self.env["DISTDIR"], "setting isn't defined")
-
+		if len(self.files):
 			self.env["DISTDIR"] = normpath(os.path.join(self.builddir, "distdir"))+"/"
 
 			try:
@@ -163,17 +158,13 @@ class buildable(base):
 				
 			if not ensure_dirs(self.env["DISTDIR"], mode=0770, gid=portage_gid):
 				raise FailedDirectory(self.env["DISTDIR"], "failed creating distdir symlink directory")
-			files = self.env["A"].split()
-			src = map(lambda x: os.path.join(distdir, x), files)
-			for x in src:
-				if not os.path.exists(x):
-					raise GenericBuildError("required distfile %s: is missing from singular DISTDIR: %s" % (x, distdir))
+
 			try:
-				for s, d in izip(src, imap(lambda x:os.path.join(self.env["DISTDIR"], x), files)):
-					os.symlink(s,d)
+				for src, dest in [(k, os.path.join(self.env["DISTDIR"], v.filename)) for (k,v) in self.files.items()]:
+					os.symlink(src,dest)
 
 			except OSError, oe:
-				raise GenericBuildError("Failed symlinking in distfiles: %s" % str(oe))
+				raise GenericBuildError("Failed symlinking in distfiles for src %s -> %s: %s" % (src, dest, str(oe)))
 		
 		ebd = request_ebuild_processor(userpriv=False, sandbox=self.sandbox)
 		try:

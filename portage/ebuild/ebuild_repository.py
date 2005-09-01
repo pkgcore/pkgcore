@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: ebuild_repository.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: ebuild_repository.py 1958 2005-09-01 11:33:32Z ferringb $
 
 import os, stat
 import ebuild_package
@@ -10,20 +10,23 @@ from weakref import proxy
 from portage.package.conditionals import PackageWrapper
 from portage.repository import prototype, errors
 from portage.util.mappings import InvertedContains
+from portage.util.file import read_dict
+
+metadata_offset = "profiles"
 
 def convert_depset(instance, conditionals):
 	return instance.evaluate_depset(conditionals)
-
 
 class UnconfiguredTree(prototype.tree):
 	false_categories = set(["eclass","profiles","packages","distfiles","licenses","scripts"])
 	configured=False
 	configurables = ("settings",)
 	configure = None
-	def __init__(self, location, cache=None, eclass_cache=None):
+
+	def __init__(self, location, cache=None, eclass_cache=None, mirrors_file=None):
 		super(UnconfiguredTree, self).__init__()
 		self.base = self.location = location
-		try:	
+		try:
 			st = os.lstat(self.base)
 			if not stat.S_ISDIR(st.st_mode):
 				raise errors.InitializationError("base not a dir: %s" % self.base)
@@ -37,7 +40,27 @@ class UnconfiguredTree(prototype.tree):
 			self.eclass_cache = eclass_cache.cache(self.base)
 		else:
 			self.eclass_cache = eclass_cache
-		self.package_class = ebuild_package.EbuildFactory(self, cache, self.eclass_cache).new_package
+		if mirrors_file:
+			mirrors = read_dict(os.path.join(self.base, metadata_offset, "thirdpartymirrors"))
+		else:
+			mirrors = {}
+		fp = os.path.join(self.base, metadata_offset, "thirdpartymirrors")
+		if os.path.exists(fp):
+			from random import shuffle
+			f = None
+			try:
+				f = open(os.path.join(self.base, metadata_offset, "thirdpartymirrors"), "r")
+				for k, v in read_dict(f, splitter="\t", source_isiter=True).items():
+					v = v.split()
+					shuffle(v)
+					mirrors.setdefault(k, []).extend(v)
+			except OSError:
+				if f != None:
+					f.close()
+				raise
+
+		self.mirrors = mirrors
+		self.package_class = ebuild_package.EbuildFactory(self, cache, self.eclass_cache, self.mirrors).new_package
 
 
 	def _get_categories(self, *optionalCategory):
@@ -83,12 +106,16 @@ class ConfiguredTree(UnconfiguredTree):
 	l=["license","depends","rdepends","bdepends", "fetchables", "license", "slot", "src_uri"]
 	wrappables = dict(zip(l, len(l)*[convert_depset]))
 
-	def __init__(self, raw_repo, domain_settings):
+	def __init__(self, raw_repo, domain_settings, fetcher=None):
 		if "USE" not in domain_settings:
 			raise errors.InitializationError("%s requires the following settings: '%s', not supplied" % (str(self.__class__), x))
 
 		self.default_use = domain_settings["USE"][:]
 		self.domain_settings = domain_settings
+		if fetcher == None:
+			self.fetcher = self.domain_settings["fetcher"]
+		else:
+			self.fetcher = fetcher
 		self.raw_repo = raw_repo
 		r = raw_repo
 		self.eclass_cache = self.raw_repo.eclass_cache
@@ -102,6 +129,6 @@ class ConfiguredTree(UnconfiguredTree):
 		return getattr(self.raw_repo, attr)
 
 	def generate_buildop(self, pkg):
-		return buildable(pkg, self.domain_settings, self.eclass_cache)
+		return buildable(pkg, self.domain_settings, self.eclass_cache, self.fetcher)
 
 UnconfiguredTree.configure = ConfiguredTree

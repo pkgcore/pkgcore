@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: ebuild_package.py 1935 2005-08-26 02:04:44Z ferringb $
+# $Id: ebuild_package.py 1958 2005-09-01 11:33:32Z ferringb $
 
 import os
 from portage import package
@@ -12,15 +12,26 @@ from portage.util.mappings import LazyValDict
 from portage.restrictions.values import StrExactMatch
 from portage.restrictions.packages import PackageRestriction
 from portage.chksum.errors import MissingChksum
-from portage.fetch import fetchable
+from portage.fetch.errors import UnknownMirror
+from portage.fetch import fetchable, mirror
 
-def create_fetchable_from_uri(chksums, uri):
+def create_fetchable_from_uri(chksums, mirrors, uri):
 	file = os.path.basename(uri)
 	if file == uri:
 		uri = []
+	else:
+		if uri.startswith("mirror://"):
+			# mirror:// is 9 chars.
+			tier, uri = uri[9:].split("/", 1)
+			if tier not in mirrors:
+				raise UnknownMirror(tier, uri)
+			uri = mirror(uri, mirrors[tier])
+			# XXX replace this with an iterable instead
+		else:
+			uri = [uri]
 	if file not in chksums:
 		raise MissingChksum(file)
-	return fetchable(file, [uri], chksums[file])
+	return fetchable(file, uri, chksums[file])
 
 
 class EbuildPackage(package.metadata.package):
@@ -28,7 +39,7 @@ class EbuildPackage(package.metadata.package):
 	def __getattr__(self, key):
 		val = None
 		if key == "path":
-			val = os.path.join(self.__dict__["_parent"].base, self.category, self.package, \
+			val = os.path.join(self.__dict__["_parent"]._base, self.category, self.package, \
 				"%s-%s.ebuild" % (self.package, self.fullver))
 		elif key == "_mtime_":
 			#XXX wrap this.
@@ -43,9 +54,9 @@ class EbuildPackage(package.metadata.package):
 			# drop the s, and upper it.
 			val = DepSet(self.data[key.upper()[:-1]], atom)
 		elif key == "fetchables":
-			chksums = parse_digest(os.path.join(self.__dict__["_parent"].base, self.category, self.package, "files",
+			chksums = parse_digest(os.path.join(self.__dict__["_parent"]._base, self.category, self.package, "files",
 				"digest-%s-%s" % (self.package, self.fullver)))
-			val = DepSet(self.data["SRC_URI"], lambda x:create_fetchable_from_uri(chksums, x), operators={})
+			val = DepSet(self.data["SRC_URI"], lambda x:create_fetchable_from_uri(chksums, self.__dict__["_parent"]._mirrors, x), operators={})
 		elif key in ("license", "slot"):
 			val = DepSet(self.data[key.upper()], str)
 		elif key == "description":
@@ -62,10 +73,9 @@ class EbuildPackage(package.metadata.package):
 		doregen = False
 		if data == None:
 			doregen = True
-
 		# got us a dict.  yay.
 		if not doregen:
-			if self._mtime_ != data.get("_mtime_"):
+			if self._mtime_ != long(data.get("_mtime_", -1)):
 				doregen = True
 			elif data.get("_eclasses_") != None and not self._parent._ecache.is_eclass_data_valid(data["_eclasses_"]):
 				doregen = True
@@ -80,11 +90,12 @@ class EbuildPackage(package.metadata.package):
 class EbuildFactory(package.metadata.factory):
 	child_class = EbuildPackage
 
-	def __init__(self, parent, cachedb, eclass_cache, *args,**kwargs):
+	def __init__(self, parent, cachedb, eclass_cache, mirrors, *args,**kwargs):
 		super(EbuildFactory, self).__init__(parent, *args,**kwargs)
 		self._cache = cachedb
 		self._ecache = eclass_cache
-		self.base = self._parent_repo.base
+		self._mirrors = mirrors
+		self._base = self._parent_repo.base
 
 	def _get_metadata(self, pkg):
 		if self._cache != None:
@@ -108,8 +119,8 @@ class EbuildFactory(package.metadata.factory):
 		else:
 			mydata["_eclasses_"] = {}
 
-		if self._cache != None:
-			self._cache[pkg.cpvstr] = mydata
+		if self.__cache != None:
+			self.__cache[pkg.cpvstr] = mydata
 
 		return mydata
 

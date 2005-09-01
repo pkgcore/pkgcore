@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: profiles.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: profiles.py 1958 2005-09-01 11:33:32Z ferringb $
 
 from portage.config import profiles
 import os, logging
@@ -109,11 +109,6 @@ class OnDiskProfile(profiles.base, ebd_data_source.base):
 		del use_mask
 		self.bashrc = filter(os.path.exists, imap(lambda x: os.path.join(x, "profile.bashrc"), stack))
 
-		fp = os.path.join(self.basepath, "thirdpartymirrors")
-		if os.path.isfile(fp):
-			mirrors = read_dict(fp, splitter='\t')
-		else:
-			mirrors = {}
 
 		maskers = []
 		for fp, i in loop_iter_read(os.path.join(prof, "package.mask") for prof in stack + [self.basepath]):

@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: central.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: central.py 1957 2005-09-01 11:29:12Z ferringb $
 
 import errors, new
 from portage.const import CONF_DEFAULTS
@@ -15,7 +15,9 @@ class config:
 	collapses configurations, instantiates objects dependant on section definitions (mislabled conf_defaults), and 
 	a ConfigParser (or object with such an api) that is passed in.
 
-	see conf_default_types for explanation of default sections and capabilities"""
+	see conf_default_types for explanation of default sections and capabilities
+	"""
+
 	def __init__(self, cparser, conf_defaults=CONF_DEFAULTS):
 		self._cparser = cparser
 		self.type_handler = load_conf_definitions(conf_defaults)

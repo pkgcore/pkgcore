@@ -1,25 +1,31 @@
-[metadata-cache]
+[/usr/portage]
 type = cache
 class = portage.cache.metadata.database
-location = /usr/portage
 readonly = true
+repo_location = /usr/portage
+#location = /tmp/blah
 
 [rsync repo]
 type = repo 
 class = portage.ebuild.repository
 location = /usr/portage
-cache = 'metadata-cache'
+cache = '/usr/portage'
 
-#[vdb]
-#type = repo
-#class = portage.installed_pkg.repository
-#location = /var/db/pkg
+[vdb]
+type = repo
+class = portage.vdb.repository
+location = /var/db/pkg
+
+[fetcher]
+type = fetcher
+distdir = "/usr/portage/distfiles"
+
 
 [base config]
-USE = nptl nptlonly -gnome -oss mad matroska faad mpg avi -arts mmx mmxext flac bidi dvd ssl sdl xvid 3dnow 3dnowext 
-	sse sse2 mythtv rtc -svga -ipv6 win32codecs -esd
-DISTDIR = "/space/distfiles"
-FEATURES = confcache parallel-fetch
+USE = -* 3dnow 3dnowext X a52 aac alsa bitmap-fonts bzip2 cjk crypt dga divx4linux doc dv encode ffmpeg flac glep lzo mad matroska mbox mmx mmxext mp3 mpeg mpeg2 ncurses nls nptl nptlonly ogg oggvorbis pam readline sandbox sdl slang sse sse2 ssl tcpd threads truetype truetype-fonts unicode usb vorbis win32codecs xml xml2 xvid zlib
+#nptl nptlonly -gnome -oss mad matroska faad mpg avi -arts mmx mmxext flac bidi dvd ssl sdl xvid 3dnow 3dnowext 
+#	sse sse2 mythtv rtc -svga -ipv6 win32codecs -esd
+#FEATURES = confcache parallel-fetch
 #package.use = %(CONFDIR)/package.use
 #package.mask = %(CONFDIR)/package.mask
 #package.unmask = %(CONFDIR)/package.unmask
@@ -36,11 +42,16 @@ CHOST = "i686-pc-linux-gnu"
 profile = profile
 inherit = 'base config'
 ACCEPT_KEYWORDS = "x86"
+bashrc = /etc/portage/bashrc
 
 [livefs domain]
 type = domain
+package.keywords = /etc/portage/package.keywords
 inherit = x86
 default = yes
 repositories = "rsync repo" 
-#vdb
+fetcher = fetcher
+# development override
+PATH	= /sbin:/bin:/home/bharring/savior/bin/ebuild-helpers:/home/bharring/savior/bin:/usr/lib/portage/bin:/usr/sbin:/usr/bin
+vdb = vdb
 

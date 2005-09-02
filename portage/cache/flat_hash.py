@@ -24,17 +24,24 @@ class database(fs_template.FsBased):
 	def _getitem(self, cpv):
 		try:
 			myf = open(os.path.join(self.location, cpv),"r")
-			d = dict(map(lambda x:x.rstrip().split("=", 1), myf))
 		except IOError:
 			raise KeyError(cpv)
 		except OSError, e:
 			raise cache_errors.CacheCorruption(cpv, e)
-
-		try:	d["_mtime_"] = os.fstat(myf.fileno()).st_mtime
+		try:
+			d = self._parse_data(myf, os.fstat(myf.fileno()).st_mtime)
 		except OSError, e:	
 			myf.close()
 			raise cache_errors.CacheCorruption(cpv, e)
 		myf.close()
+		return d
+
+
+	def _parse_data(self, data, mtime):
+		d = dict(map(lambda x:x.rstrip().split("=", 1), data))
+		d["_mtime_"] = long(mtime)
+		return d
+		
 		for x in self._known_keys:
 			if x not in d:
 				d[x] = ''

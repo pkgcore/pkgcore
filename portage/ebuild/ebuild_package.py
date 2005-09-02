@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: ebuild_package.py 1958 2005-09-01 11:33:32Z ferringb $
+# $Id: ebuild_package.py 1962 2005-09-02 08:06:00Z ferringb $
 
 import os
 from portage import package
@@ -119,8 +119,8 @@ class EbuildFactory(package.metadata.factory):
 		else:
 			mydata["_eclasses_"] = {}
 
-		if self.__cache != None:
-			self.__cache[pkg.cpvstr] = mydata
+		if self._cache != None:
+			self._cache[pkg.cpvstr] = mydata
 
 		return mydata
 

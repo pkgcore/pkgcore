@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: metadata.py 1963 2005-09-02 08:23:18Z ferringb $
+# $Id: metadata.py 1964 2005-09-03 00:16:16Z ferringb $
 
 import os, stat
 import flat_hash
@@ -23,10 +23,11 @@ class database(flat_hash.database):
 
 	autocommits = True
 
-	def __init__(self, *args, **config):
-		super(database, self).__init__(*args, **config)
-		self.location = os.path.join(self.location[:-len(self.label)], "metadata/cache")
-		self.ec = eclass_cache.cache(self.location)
+	def __init__(self, location, *args, **config):
+		loc = location
+		super(database, self).__init__(location, *args, **config)
+		self.location = os.path.join(loc, "metadata","cache")
+		self.ec = eclass_cache.cache(loc)
 
 	def __getitem__(self, cpv):
 		d = flat_hash.database.__getitem__(self, cpv)

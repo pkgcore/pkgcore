@@ -2,8 +2,7 @@
 type = cache
 class = portage.cache.metadata.database
 readonly = true
-repo_location = /usr/portage
-#location = /tmp/blah
+location = /usr/portage
 
 [rsync repo]
 type = repo 

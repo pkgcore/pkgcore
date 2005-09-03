@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: prototype.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: prototype.py 1965 2005-09-03 02:48:34Z ferringb $
 
 from portage.util.mappings import IndexableSequence
 from weakref import proxy
@@ -92,8 +92,9 @@ class tree(object):
 		#actual matching.
 		for catpkg in candidates:
 			for ver in self.versions[catpkg]:
-				if restrict.match(self.package_class(catpkg+"-"+ver)):
-					yield self[catpkg+"-"+ver]
+				pkg = self.package_class(catpkg+"-"+ver)
+				if restrict.match(pkg):
+					yield pkg
 		return
 
 

@@ -37,7 +37,6 @@ class fetcher(base.fetcher):
 		if readonly:
 			kw["mode"] = 0555
 		if userpriv:
-			kw["uid"] = portage_uid
 			kw["gid"] = portage_gid
 		if not ensure_dirs(self.distdir, **kw):
 			raise errors.distdirPerms(self.distdir, "if userpriv, uid must be %i, gid must be %i.  if not readonly, directory must be 0775, else 0555")

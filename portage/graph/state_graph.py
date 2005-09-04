@@ -14,6 +14,8 @@ class StateGraph(object):
 	def add_pkg(self, pkg):
 		assert(pkg not in self.pkgs)
 		self.dirty = True
+		if pkg.package == "xterm":
+			print pkg.rdepends
 		self.pkgs[pkg] = [combinations(pkg.rdepends), None, []]
 		for combination in self.pkgs[pkg][0]:
 			self._add_deps(pkg, combination)
@@ -85,6 +87,10 @@ class StateGraph(object):
 				self._remove_deps(pkg, combination)
 		for pkg in self.pkgs:
 			for atom in self.atoms:
+				# XXX: Comparing keys is a hack to make things a little quicker
+				# -- jstubbs
+				if atom.key != pkg.key:
+					continue
 				if atom.match(pkg):
 					self.pkgs[pkg][2].append(atom)
 					self.atoms[atom][1].append(pkg)
@@ -97,13 +103,26 @@ class StateGraph(object):
 			if not self.pkgs[pkg][2]:
 				yield pkg
 
-	def child_pkgs(self, pkg):
+	def child_atoms(self, pkg):
 		assert(pkg in self.pkgs)
 		if self.dirty:
 			self.calculate_deps()
 		for atom in self.pkgs[pkg][1]:
-			for child in self.atoms[atom][1]:
-				yield child
+			yield atom
+
+	def child_pkgs(self, atom):
+		assert(atom in self.atoms)
+		if self.dirty:
+			self.calculate_deps()
+		for pkg in self.atoms[atom][1]:
+			yield pkg
+
+	def parent_atoms(self, pkg):
+		assert(pkg in self.pkgs)
+		if self.dirty:
+			self.calculate_deps()
+		for atom in self.pkgs[pkg][2]:
+			yield atom
 
 	def parent_pkgs(self, atom):
 		assert(atom in self.atoms)
@@ -121,6 +140,14 @@ class StateGraph(object):
 			if not self.atoms[atom][1]:
 				yield atom
 
+	def blocking_atoms(self):
+		if self.dirty:
+			self.calculate_deps()
+		for atom in self.atoms:
+			if not atom.blocks:
+				continue
+			if self.atoms[atom][1]:
+				yield atom
 
 
 def combinations(restrict):

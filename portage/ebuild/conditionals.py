@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: conditionals.py 1971 2005-09-04 08:46:15Z jstubbs $
+# $Id: conditionals.py 1974 2005-09-04 15:12:06Z jstubbs $
 
 # TODO: move exceptions elsewhere, bind them to a base exception for portage
 
@@ -57,20 +57,27 @@ class DepSet(AndRestriction):
 						raw_conditionals.pop(0)
 						for x in depsets[-1]:
 							self.node_conds.setdefault(x, []).append(cond)
-					else:
+					elif conditionals[-1]:
 						depsets[-2].restrictions.append(operators[conditionals.pop(-1)](depsets[-1]))
+					else:
+						# XXX: This is not becoming a sublevel set...
+						# Need it to be for "|| ( ( a b ) c )" cases
+						depsets[-2].restrictions.append(depsets[-1])
+						conditionals.pop(-1)
 
 					depsets[-1].has_conditionals = has_conditionals.pop(-1)
 					depsets.pop(-1)
 
-				elif k.endswith('?') or k in operators:
-					# use conditional or custom op. no tokens left == bad dep_str.
-					try:							k2 = words.next()
-					except StopIteration:	k2 = ''
+				elif k.endswith('?') or k in operators or k=="(":
+					if k != "(":
+						# use conditional or custom op. no tokens left == bad dep_str.
+						try:							k2 = words.next()
+						except StopIteration:	k2 = ''
 
-					if k2 != "(":
-						raise ParseError(full_str)
-
+						if k2 != "(":
+							raise ParseError(full_str)
+					else:
+						k = ""
 					# push another frame on
 					depsets.append(self.__class__(None, element_func, empty=True, conditional_converter=conditional_converter,
 						conditional_class=self.conditional_class, full_str=full_str))
@@ -86,8 +93,6 @@ class DepSet(AndRestriction):
 
 
 		except IndexError:
-			# XXX: There's also an IndexError for a "|| ( ( foo bar ) baz )" construct.
-			# -- jstubbs
 			# [][-1] for a frame access, which means it was a parse error.
 			#raise ParseError(dep_str)
 			raise ParseError(full_str)
@@ -119,6 +124,9 @@ class DepSet(AndRestriction):
 					elif node.negate:
 						stack.append(node.restrictions)
 				else:
+					# XXX: OrRestrictioins seem to fall in here...
+					# Does "|| ( foo? ( bar ) baz )" work?
+					# -- jstubbs
 					flat_deps.restrictions.append(node)
 			stack.pop(0)
 		return flat_deps

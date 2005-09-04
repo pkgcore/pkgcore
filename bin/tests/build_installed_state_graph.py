@@ -14,8 +14,8 @@ print "\n\n===ADDING TO GRAPH===\n"
 
 for v in d.vdb:
 	for pkg in v:
-		if str(pkg) in ["x11-terms/xterm-204", "www-client/mozilla-launcher-1.45"]:
-			continue
+		#if str(pkg) in ["x11-terms/xterm-204", "www-client/mozilla-launcher-1.45"]:
+		#	continue
 		graph.add_pkg(pkg)
 
 print "\n\n===ROOT PACKAGES===\n"

@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jeff Oliver (kaiserfro@yahoo.com)
 # License: GPL2
-# $Id: repository.py 1914 2005-08-25 17:35:41Z ferringb $
+# $Id: repository.py 1969 2005-09-04 07:38:17Z jstubbs $
 
 import os,stat
 from portage.repository import prototype, errors
@@ -40,11 +40,11 @@ class tree(prototype.tree):
 
 		except (OSError, IOError), e:
 			raise KeyError("failed fetching categories: %s" % str(e))
-	
+
 	def _get_packages(self, category):
 		cpath = os.path.join(self.base,category.lstrip(os.path.sep))
 		l=set()
-		try:	
+		try:
 			for x in os.listdir(cpath):
 				if stat.S_ISDIR(os.stat(os.path.join(cpath,x)).st_mode) and not x.endswith(".lockfile"):
 					l.add(cpv(x).package)
@@ -61,10 +61,12 @@ class tree(prototype.tree):
 		try:
 			cpath=os.path.join(self.base, os.path.dirname(catpkg.lstrip("/").rstrip("/")))
 			for x in os.listdir(cpath):
-				if x.startswith(pkg) and stat.S_ISDIR(os.stat(os.path.join(cpath,x)).st_mode) and not x.endswith(".lockfile"):
+				# XXX: This matches foo to foo-bar-1.2.3 and creates an incorrect foo-1.2.3 in l
+				#if x.startswith(pkg) and stat.S_ISDIR(os.stat(os.path.join(cpath,x)).st_mode) and not x.endswith(".lockfile"):
+				if x.startswith(pkg) and x[len(pkg)+1].isdigit() and stat.S_ISDIR(os.stat(os.path.join(cpath,x)).st_mode) and not x.endswith(".lockfile"):
 					l.add(cpv(x).fullver)
 			return tuple(l)
 		except (OSError, IOError), e:
 			raise KeyError("failed fetching packages for package %s: %s" % \
 			(os.path.join(self.base,catpkg.lstrip(os.path.sep)), str(e)))
-			
+

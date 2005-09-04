@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: conditionals.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: conditionals.py 1969 2005-09-04 07:38:17Z jstubbs $
 
 # TODO: move exceptions elsewhere, bind them to a base exception for portage
 
@@ -16,11 +16,11 @@ def conditional_converter(node, payload):
 		return Conditional(node[1:], payload, negate=True)
 	return Conditional(node, payload)
 
-	
+
 class DepSet(AndRestriction):
 	__slots__ = ("has_conditionals", "conditional_class", "node_conds")
 	def __init__(self, dep_str, element_func, operators={"||":OrRestriction}, \
-		conditional_converter=conditional_converter, conditional_class=Conditional, empty=False):
+		conditional_converter=conditional_converter, conditional_class=Conditional, empty=False, full_str=None):
 
 		"""dep_str is a dep style syntax, element_func is a callable returning the obj for each element, and
 		cleanse_string controls whether or translation of tabs/newlines is required"""
@@ -28,10 +28,16 @@ class DepSet(AndRestriction):
 		super(DepSet, self).__init__()
 		self.conditional_class = conditional_class
 		self.node_conds = {}
-		
+
 		if empty:	return
 
-		# anyone who uses this routine as fodder for pushing a rewrite in lisp I reserve the right to deliver an 
+		# XXX: full_str will help to weed these out until the parsing is certain to be correct.
+		# See the IndexError below for an example
+		# -- jstubbs
+		if full_str is None:
+			full_str = dep_str
+
+		# anyone who uses this routine as fodder for pushing a rewrite in lisp I reserve the right to deliver an
 		# atomic wedgie upon.
 		# ~harring
 
@@ -67,7 +73,7 @@ class DepSet(AndRestriction):
 
 					# push another frame on
 					depsets.append(self.__class__(None, element_func, empty=True, conditional_converter=conditional_converter,
-						conditional_class=self.conditional_class))
+						conditional_class=self.conditional_class, full_str=full_str))
 					conditionals.append(k)
 					if k.endswith("?"):
 						has_conditionals[-1] = True
@@ -77,11 +83,14 @@ class DepSet(AndRestriction):
 				else:
 					# node/element.
 					depsets[-1].restrictions.append(element_func(k))
-		
+
 
 		except IndexError:
+			# XXX: There's also an IndexError for a "|| ( ( foo bar ) baz )" construct.
+			# -- jstubbs
 			# [][-1] for a frame access, which means it was a parse error.
-			raise ParseError(dep_str)
+			#raise ParseError(dep_str)
+			raise ParseError(full_str)
 
 		# check if any closures required
 		if len(depsets) != 1:
@@ -89,7 +98,7 @@ class DepSet(AndRestriction):
 		self.has_conditionals = has_conditionals[0]
 		for x in self.node_conds:
 			self.node_conds[x] = tuple(unique(flatten(self.node_conds[x])))
-			
+
 	def __str__(self):	return ' '.join(map(str,self.restrictions))
 
 	def evaluate_depset(self, cond_dict):
@@ -123,6 +132,6 @@ class DepSet(AndRestriction):
 
 class ParseError(Exception):
 	def __init__(self, s):	self.dep_str = s
-	def __str__(self):	return "%s is unparseable" % self.s
+	def __str__(self):	return "%s is unparseable" % self.dep_str
 
 

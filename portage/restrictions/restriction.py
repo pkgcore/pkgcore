@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: restriction.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: restriction.py 1969 2005-09-04 07:38:17Z jstubbs $
 
 import re, logging
 
@@ -11,7 +11,7 @@ class base(object):
 
 	__slots__ = ["negate"]
 	package_matching = False
-	
+
 	def __init__(self, negate=False):
 		self.negate = negate
 
@@ -19,7 +19,7 @@ class base(object):
 #		import traceback;traceback.print_stack()
 #		object.__setattr__(self, name, value)
 #		try:	getattr(self, name)
-#			
+#
 #		except AttributeError:
 #			object.__setattr__(self, name, value)
 #		else:	raise AttributeError
@@ -43,6 +43,18 @@ class base(object):
 
 	def __len__(self):
 		return 1
+
+	def __repr__(self):
+		return str(self)
+
+	def __hash__(self):
+		# XXX: This likely isn't actually unique. Something is needed
+		# to uniquely identify restrictions though otherwise the object
+		# pointer is used.
+		# -- jstubbs
+		if "_hash" not in self.__dict__:
+			self.__dict__["_hash"] = hash(str(self))
+		return self._hash
 
 class AlwaysBoolMatch(base):
 	__slots__ = base.__slots__

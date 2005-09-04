@@ -25,9 +25,15 @@ class package(metadata.package):
 			val = self.package
 		elif key == "PR":
 			val = "-r"+str(self.revision)
-		elif key in ("depends", "rdepends", "bdepends"):
-			# drop the s, and upper it.
-			val = DepSet(self.data[key.upper()[:-1]], atom)
+		elif key == "depends":
+			# XXX: vdb deps need to flattened and the current dep scheme needs to be supported
+			# or migrated somehow. Doing it here for the time being shouldn't hurt anything though
+			# (except perhaps speed). Dropping bdepend as well as this is not for certain yet even
+			# if the idea behind it is.
+			# -- jstubbs
+			val = DepSet(self.data["DEPEND"], atom).evaluate_depset(self.data["USE"].split())
+		elif key == "rdepends":
+			val = DepSet(self.data["RDEPEND"]+" "+self.data["PDEPEND"], atom).evaluate_depset(self.data["USE"].split())
 		elif key in ("license", "slot"):
 			val = DepSet(self.data[key.upper()], str)
 
@@ -61,14 +67,14 @@ class factory(metadata.factory):
 	def __init__(self, parent, *args, **kwargs):
 		super(factory, self).__init__(parent, *args, **kwargs)
 		self.base = self._parent_repo.base
-	
+
 	def _get_metadata(self, pkg):
 		path = os.path.join(self.base, pkg.category, "%s-%s" % (pkg.package, pkg.fullver))
 		try:
 			keys = filter(lambda x: x.isupper(), os.listdir(path))
 		except OSError:
 			return None
-		
+
 		def load_data(key):
 			try:
 				f = open(os.path.join(path, key))
@@ -77,6 +83,6 @@ class factory(metadata.factory):
 			data = f.read()
 			f.close()
 			return data.strip()
-		
+
 		return LazyValDict(keys, load_data)
-		
+

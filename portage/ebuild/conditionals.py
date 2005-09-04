@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: conditionals.py 1969 2005-09-04 07:38:17Z jstubbs $
+# $Id: conditionals.py 1971 2005-09-04 08:46:15Z jstubbs $
 
 # TODO: move exceptions elsewhere, bind them to a base exception for portage
 
@@ -69,7 +69,7 @@ class DepSet(AndRestriction):
 					except StopIteration:	k2 = ''
 
 					if k2 != "(":
-						raise ParseError(dep_str)
+						raise ParseError(full_str)
 
 					# push another frame on
 					depsets.append(self.__class__(None, element_func, empty=True, conditional_converter=conditional_converter,
@@ -94,7 +94,7 @@ class DepSet(AndRestriction):
 
 		# check if any closures required
 		if len(depsets) != 1:
-			raise ParseError(dep_str)
+			raise ParseError(full_str)
 		self.has_conditionals = has_conditionals[0]
 		for x in self.node_conds:
 			self.node_conds[x] = tuple(unique(flatten(self.node_conds[x])))

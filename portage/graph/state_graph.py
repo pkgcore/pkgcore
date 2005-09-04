@@ -127,6 +127,9 @@ def combinations(restrict):
 	ret = []
 
 	if isinstance(restrict, OrRestriction):
+		# XXX: OrRestrictions currently contain a single DepSet that contains
+		# the Or'd elements. This seems broken to me.
+		# -- jstubbs
 		for element in restrict[0]:
 			if isinstance(element, atom):
 				ret += [[element]]

@@ -39,9 +39,9 @@ for a in graph.unresolved_atoms():
 	for p in graph.pkgs:
 		if a.key != p.key:
 			continue
-		print p
+		print " *",p
 		for r in a.restrictions:
-			print r,"?",
+			print "  ",r,"?",
 			if r.match(p):
 				print "Yes"
 			else:
@@ -50,4 +50,9 @@ for a in graph.unresolved_atoms():
 
 print "\n\n===BLOCKS===\n"
 for a in graph.blocking_atoms():
-	print a, list(graph.child_pkgs(a)), "blocked by", list(graph.parent_pkgs(a))
+	print a
+	for p in graph.parent_pkgs(a):
+		for c in graph.child_pkgs(a):
+			if p is c:
+				continue
+			print "  ",p,"doesn't like",c

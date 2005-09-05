@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: atom.py 1974 2005-09-04 15:12:06Z jstubbs $
+# $Id: atom.py 1975 2005-09-05 14:08:54Z jstubbs $
 
 from portage.restrictions.values import StrExactMatch, StrGlobMatch, ContainmentMatch, StrMatch
 from portage.restrictions.packages import PackageRestriction, base
@@ -130,7 +130,7 @@ class atom(AndRestriction):
 	def __init__(self, atom, negate_vers=False):
 		super(self.__class__, self).__init__()
 
-		self._hash = hash(atom)
+		self.hash = hash(atom)
 
 		pos=0
 		while atom[pos] in ("<",">","=","~","!"):
@@ -211,10 +211,8 @@ class atom(AndRestriction):
 		raise AttributeError(attr)
 
 	def atom_str(self):
-		if self.blocks:
-			s = "!"
-		else:
-			s = ""
+		s = ""
+		if self.blocks:			s+="!"
 		s+=self.op+self.category+"/"+self.package
 		if self.version:		s+="-"+self.fullver
 		if self.glob:			s+="*"
@@ -224,7 +222,7 @@ class atom(AndRestriction):
 		return self.atom_str()
 
 	def __hash__(self):
-		return self._hash
+		return self.hash
 
 	def __iter__(self):
 		return iter(self.restrictions)

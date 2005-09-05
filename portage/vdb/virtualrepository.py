@@ -82,6 +82,8 @@ class package(metadata.package):
 		val = None
 		if key == "rdepends":
 			val = self.data
+		elif key == "metapkg":
+			val = True
 		else:
 			return super(package, self).__getattr__(key)
 		self.__dict__[key] = val

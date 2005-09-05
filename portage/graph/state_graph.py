@@ -14,8 +14,6 @@ class StateGraph(object):
 	def add_pkg(self, pkg):
 		assert(pkg not in self.pkgs)
 		self.dirty = True
-		if pkg.package == "xterm":
-			print pkg.rdepends
 		self.pkgs[pkg] = [combinations(pkg.rdepends), None, []]
 		for combination in self.pkgs[pkg][0]:
 			self._add_deps(pkg, combination)
@@ -64,6 +62,8 @@ class StateGraph(object):
 				for atom in combination:
 					satisfied = False
 					for p in self.pkgs:
+						# XXX: Comparing keys is a hack to make things a little quicker
+						# -- jstubbs
 						if p.key != atom.key:
 							continue
 						if atom.match(p):
@@ -94,6 +94,24 @@ class StateGraph(object):
 				if atom.match(pkg):
 					self.pkgs[pkg][2].append(atom)
 					self.atoms[atom][1].append(pkg)
+		for pkg in self.pkgs:
+			if not pkg.metapkg:
+				continue
+			redirected_atoms = []
+			for parent_atom in self.pkgs[pkg][2]:
+				if not parent_atom.blocks:
+					continue
+				redirected_atoms.append(parent_atom)
+				for parent_pkg in self.atoms[parent_atom][0]:
+					for child_atom in self.pkgs[pkg][1]:
+						if child_atom.blocks or child_atom.match(parent_pkg):
+							continue
+						for child_pkg in self.atoms[child_atom][1]:
+							self.pkgs[child_pkg][2].append(parent_atom)
+							self.atoms[parent_atom][1].append(child_pkg)
+			for atom in redirected_atoms:
+				self.pkgs[pkg][2].remove(atom)
+				self.atoms[atom][1].remove(pkg)
 		self.dirty = False
 
 	def root_pkgs(self):

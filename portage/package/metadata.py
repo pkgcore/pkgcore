@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: metadata.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: metadata.py 1975 2005-09-05 14:08:54Z jstubbs $
 
 import weakref
 from cpv import CPV
@@ -12,7 +12,7 @@ class package(CPV):
 		self.__dict__["_cpv_finalized"] = False
 #		self.__dict__["_finalized"] = False
 		self.__dict__["_parent"] = parent_repository
-        
+
 
 	def __setattr__(self, *args, **kwargs):
 		raise AttributeError
@@ -31,10 +31,16 @@ class package(CPV):
 	def __getattr__(self, attr):
 		if not self._cpv_finalized:
 			try:	return super(package,self).__getattr__(attr)
-			except AttributeError:	
+			except AttributeError:
 				#enable this when CPV does it.
 				#self.__cpv_finalized = True
 				pass
+
+		# adding this here for now as there doesn't
+		# seem to be a better place for it.
+		# -- jstubbs
+		if attr == "metapkg":
+			return False
 
 		# assuming they're doing super, if it ain't data it's an error (no other jit attr)
 		if attr != "data":
@@ -62,7 +68,7 @@ class factory(object):
 	def __init__(self, parent_repo):
 		self._parent_repo = parent_repo
 		self._cached_instances = weakref.WeakValueDictionary()
-	
+
 	def new_package(self, cpv):
 		if cpv in self._cached_instances:
 			return self._cached_instances[cpv]

@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: atom.py 1975 2005-09-05 14:08:54Z jstubbs $
+# $Id: atom.py 1976 2005-09-05 14:56:26Z jstubbs $
 
 from portage.restrictions.values import StrExactMatch, StrGlobMatch, ContainmentMatch, StrMatch
 from portage.restrictions.packages import PackageRestriction, base
@@ -178,7 +178,9 @@ class atom(AndRestriction):
 	def __getattr__(self, attr):
 		if attr in ("category", "package", "version", "revision", "cpvstr", "fullver", "key"):
 			g = getattr(self.cpv, attr)
-#			self.__dict__[attr] = g
+			# Commenting this doubles the time taken in StateGraph.recalculate_deps()
+			# -- jstubbs
+			setattr(self, attr, g)
 			return g
 		elif attr == "restrictions":
 			r = [PackageRestriction("package", StrExactMatch(self.package))]

@@ -15,10 +15,9 @@ class StateGraph(object):
 		assert(pkg not in self.pkgs)
 		self.dirty = True
 		self.pkgs[pkg] = [combinations(pkg.rdepends), None, []]
-		for combination in self.pkgs[pkg][0]:
-			self._add_deps(pkg, combination)
 		if len(self.pkgs[pkg][0]) == 1:
 			self.pkgs[pkg][1] = self.pkgs[pkg][0][0]
+			self._add_deps(pkg, self.pkgs[pkg][1])
 
 	def _add_deps(self, pkg, combination):
 		for atom in combination:
@@ -45,17 +44,9 @@ class StateGraph(object):
 			if self.pkgs[pkg][1] is not None and len(self.pkgs[pkg][0]) != 1:
 				self._remove_deps(pkg, self.pkgs[pkg][1])
 				self.pkgs[pkg][1] = None
-				for combination in self.pkgs[pkg][0]:
-					self._add_deps(pkg, combination)
-		multicomb = []
 		for pkg in self.pkgs:
-			if len(self.pkgs[pkg][0]) != 1:
-				multicomb.append(pkg)
+			if len(self.pkgs[pkg][0]) == 1:
 				continue
-			if self.pkgs[pkg][1] is not None:
-				continue
-			self.pkgs[pkg][1] = self.pkgs[pkg][0][0]
-		for pkg in multicomb:
 			unsatisfied_counts = {}
 			for combination in self.pkgs[pkg][0]:
 				count = 0
@@ -78,13 +69,13 @@ class StateGraph(object):
 					unsatisfied_counts[count] = [combination]
 				else:
 					unsatisfied_counts[count]+= [combination]
+			# This counts stuff should be replaced by package.prefer
+			# -- jstubbs
 			counts = unsatisfied_counts.keys()
 			counts.sort()
 			combination = unsatisfied_counts[counts[0]][0]
 			self.pkgs[pkg][1] = combination
 			self._add_deps(pkg, combination)
-			for combination in self.pkgs[pkg][0]:
-				self._remove_deps(pkg, combination)
 		for pkg in self.pkgs:
 			for atom in self.atoms:
 				# XXX: Comparing keys is a hack to make things a little quicker

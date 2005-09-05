@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org)
 # License: GPL2
-# $Id: cpv.py 1969 2005-09-04 07:38:17Z jstubbs $
+# $Id: cpv.py 1976 2005-09-05 14:56:26Z jstubbs $
 
 import re
 from base import base
@@ -110,6 +110,11 @@ class CPV(base):
 		if name in self.__dict__:
 			return self.__dict__[name]
 		raise AttributeError,name
+
+	def __eq__(self, other):
+		if not isinstance(other, self.__class__):
+			return False
+		return self.hash == other.hash
 
 	def __cmp__(self, other):
 

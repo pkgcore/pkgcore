@@ -15,8 +15,8 @@ class StateGraph(object):
 		assert(pkg not in self.pkgs)
 		self.dirty = True
 		self.pkgs[pkg] = [combinations(pkg.rdepends), None, []]
-		if len(self.pkgs[pkg][0]) == 1:
-			self.pkgs[pkg][1] = self.pkgs[pkg][0][0]
+		if self.pkgs[pkg][0][1] <= 1:
+			self.pkgs[pkg][1] = self.pkgs[pkg][0][0].keys()
 			self._add_deps(pkg, self.pkgs[pkg][1])
 
 	def _add_deps(self, pkg, combination):
@@ -41,39 +41,46 @@ class StateGraph(object):
 			self.atoms[atom][1] = []
 		for pkg in self.pkgs:
 			self.pkgs[pkg][2] = []
-			if self.pkgs[pkg][1] is not None and len(self.pkgs[pkg][0]) != 1:
+			if self.pkgs[pkg][1] is not None and self.pkgs[pkg][0][1] > 1:
 				self._remove_deps(pkg, self.pkgs[pkg][1])
 				self.pkgs[pkg][1] = None
 		for pkg in self.pkgs:
-			if len(self.pkgs[pkg][0]) == 1:
+			if self.pkgs[pkg][0][1] <= 1:
 				continue
-			unsatisfied_counts = {}
-			for combination in self.pkgs[pkg][0]:
-				count = 0
-				for atom in combination:
-					satisfied = False
-					for p in self.pkgs:
-						# XXX: Comparing keys is a hack to make things a little quicker
-						# -- jstubbs
-						if p.key != atom.key:
-							continue
-						if atom.match(p):
-							satisfied = True
-							break
-					if not satisfied:
-						count += 1
-				if not count:
-					unsatisfied_counts = {0:[combination]}
-					break
-				if count not in unsatisfied_counts:
-					unsatisfied_counts[count] = [combination]
+			indices = {}
+			for index in range(self.pkgs[pkg][0][1]):
+				indices[index] = 0
+			for atom in self.pkgs[pkg][0][0]:
+				for p in self.pkgs:
+					# XXX: Comparing keys is a hack to make things a little quicker
+					# -- jstubbs
+					if p.key != atom.key:
+						continue
+					b = atom.match(p)
+					if b and not atom.blocks:
+						continue
+					if atom.blocks: # Negatively weight existing blocks wrt choice
+						c = self.pkgs[pkg][0][1]
+					else:
+						c = 1
+					for index in self.pkgs[pkg][0][0][atom]:
+						indices[index] += c
+			reindexed = {}
+			for index in indices:
+				if indices[index] not in reindexed:
+					reindexed[indices[index]] = [index]
 				else:
-					unsatisfied_counts[count]+= [combination]
-			# This counts stuff should be replaced by package.prefer
+					reindexed[indices[index]]+= [index]
+			indices = reindexed.keys()
+			indices.sort()
+			# This arbitrarily choosing should be replaced by package.prefer
 			# -- jstubbs
-			counts = unsatisfied_counts.keys()
-			counts.sort()
-			combination = unsatisfied_counts[counts[0]][0]
+			reindexed[indices[0]].sort()
+			chosen_index = reindexed[indices[0]][0]
+			combination = []
+			for atom in self.pkgs[pkg][0][0]:
+				if chosen_index in self.pkgs[pkg][0][0][atom]:
+					combination.append(atom)
 			self.pkgs[pkg][1] = combination
 			self._add_deps(pkg, combination)
 		for pkg in self.pkgs:
@@ -159,8 +166,30 @@ class StateGraph(object):
 				yield atom
 
 
+def multiply_matrix(mat1, mat2):
+	mat3 = [ { }, mat1[1] * mat2[1] ]
+
+	for key in mat1[0]:
+		mat3[0][key] = {}
+		for x in mat1[0][key]:
+			offset = x * mat2[1]
+			for y in range(mat2[1]):
+				mat3[0][key][ offset + y ] = True
+
+	for key in mat2[0]:
+		if key not in mat3[0]:
+			mat3[0][key] = {}
+		for x in range(mat1[1]):
+			offset = x * mat2[1]
+			for y in mat2[0][key]:
+				mat3[0][key][ offset + y ] = True
+
+	return mat3
+
+
 def combinations(restrict):
-	ret = []
+	# [ { atom : [ combination index ] } , combination count ]
+	ret = [{}, 0]
 
 	if isinstance(restrict, OrRestriction):
 		# XXX: OrRestrictions currently contain a single DepSet that contains
@@ -168,44 +197,31 @@ def combinations(restrict):
 		# -- jstubbs
 		for element in restrict[0]:
 			if isinstance(element, atom):
-				ret += [[element]]
+				if element not in ret[0]:
+					ret[0][element] = {}
+				ret[0][element][ret[1]] = True
+				ret[1] += 1
 			else:
-				ret += combinations(element)
+				ret = multiply_matrix(ret, combinations(element))
 	else:
-		singles = []
-		others = []
-		seen = []
+		# already_seen hack kills off exponentialness from duplicate Or deps.
+		# Need a clean way to detect if the current matrix already contains
+		# the restriction to be added.
+		# -- jstubbs
+		already_seen = {}
+
+		nonatoms = []
 		for element in restrict:
-			if hash(element) in seen:
+			myhash = hash(element)
+			if myhash in already_seen:
 				continue
-			seen.append(hash(element))
+			already_seen[myhash] = True
 			if isinstance(element, atom):
-				singles += [element]
+				ret[0][element] = [0]
 			else:
-				others += [combinations(element)]
-		if others:
-			indexes = []
-			endindex = len(others)
-			for x in range(endindex):
-				indexes.append(0)
-			index = 0
-			while index != endindex:
-				if indexes[index] >= len(others[index]):
-					index += 1
-					if index == endindex:
-						continue
-					for x in range(index):
-						indexes[x] = 0
-					indexes[index] += 1
-					continue
-				else:
-					index = 0
-				newcomb = singles[:]
-				for x in range(endindex):
-					if others[x]:
-						newcomb.extend(others[x][indexes[x]])
-				ret.append(newcomb)
-				indexes[index] += 1
-		else:
-			ret = [singles]
+				nonatoms.append(element)
+		ret[1] = 1
+		for element in nonatoms:
+			ret = multiply_matrix(ret, combinations(element))
+
 	return ret

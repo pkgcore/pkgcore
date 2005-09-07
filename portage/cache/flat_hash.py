@@ -63,8 +63,8 @@ class database(fs_template.FsBased):
 			raise cache_errors.CacheCorruption(cpv, e)
 		
 		for k, v in values.items():
-			if x != "_mtime_":
-				myf.writeline("%s=%s\n" % (k, v))
+			if k != "_mtime_":
+				myf.writelines("%s=%s\n" % (k, v))
 
 		myf.close()
 		self._ensure_access(fp, mtime=values["_mtime_"])

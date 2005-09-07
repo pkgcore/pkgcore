@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: ebuild_package.py 1962 2005-09-02 08:06:00Z ferringb $
+# $Id: ebuild_package.py 1982 2005-09-07 10:59:17Z ferringb $
 
 import os
 from portage import package
@@ -35,7 +35,8 @@ def create_fetchable_from_uri(chksums, mirrors, uri):
 
 
 class EbuildPackage(package.metadata.package):
-
+	immutable = False
+	
 	def __getattr__(self, key):
 		val = None
 		if key == "path":
@@ -63,6 +64,10 @@ class EbuildPackage(package.metadata.package):
 			val = self.data["DESCRIPTION"]
 		elif key == "keywords":
 			val = self.data["KEYWORDS"].split()
+		elif key == "eapi":
+			val = self.data.get("EAPI", 0)
+			# XXX remove this once the arguement over "EAPI should be allowed as string!" is silenced, and int's rule. >:)
+			if val == '' :	val = 0
 		else:
 			return super(EbuildPackage, self).__getattr__(key)
 		self.__dict__[key] = val

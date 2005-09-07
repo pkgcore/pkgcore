@@ -24,15 +24,15 @@ useful for querying, about it.
 
 [Terminology]
 cp			= category/package
-cpv		= category/package-version
+cpv			= category/package-version
 ROOT		= livefs merge point, fex /home/bharring/embedded/arm-target or more commonly, root=/
-vdb		= /var/db/pkg , installed packages database.
-domain	= combination of repositories, root, and build information (use flags, cflags, etc).  config data + repositories effectively
-repository = tree's.  ebuild tree (/usr/portage), binpkg tree, vdb tree, etc.
+vdb			= /var/db/pkg , installed packages database.
+domain		= combination of repositories, root, and build information (use flags, cflags, etc).  config data + repositories effectively
+repository 	= tree's.  ebuild tree (/usr/portage), binpkg tree, vdb tree, etc.
 protocol	= python name for design/api.  iter() fex, is a protocol; it calls .next() on the passed in sequence, or wraps the sequence...
 			  hesitate to call it defined hook on a class/instance, but this (crappy) description should suffice.
-seq		= sequence, lists/tuples
-set		= list without order (think dict.keys())
+seq			= sequence, lists/tuples
+set			= list without order (think dict.keys())
 
 [General design/idea/approach]
 So... this round of "lets take another stab at gutting portage" seems to be proceeding, and not killed off by design flaws *again*
@@ -58,7 +58,7 @@ Encapsulation, extensibility/modularity, delegation, and allowing parallelizing 
 implementing/refining this high level design doc.
 Realize parallelizing is a funky statement, but it's apt; work on the repo implementations can proceed without being held up by 
 cache work, and vice versa.  Config is the central hold up, but that's mainly cause it instantiates everything, so the protocol for it
-needs to be nailed down so that you know what positiona/optional args your class/callable will be receiving (that said, positiona/optional
+needs to be nailed down so that you know what positional/optional args your class/callable will be receiving (that said, positiona/optional
 is configurable via section definitions too).
 
 Final comment re: design goals, defining chunks of callable code and plugging it into the framework is another bit of a goal.  
@@ -239,7 +239,7 @@ domain = some-section-label
 .test()			# guess.
 .install()		# install to tmp location.  may not be used dependant on the format.
 .finalize()		# good to go.  generate (jit?) contents/metadata attributes, or returns a finalized instance
-
+				# should generate a immutable package instance
 
 :repo change operation:
 # base class.

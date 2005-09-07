@@ -1,7 +1,7 @@
 # portage: Constants
 # Copyright 1998-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: const.py 1958 2005-09-01 11:33:32Z ferringb $
+# $Id: const.py 1980 2005-09-07 10:56:21Z ferringb $
 
 # note this is lifted out of portage 2.  so... it's held onto for the sake of having stuff we still need,
 # but it does need cleanup.
@@ -40,7 +40,7 @@ DEPSCAN_SH_BINARY       = "/sbin/depscan.sh"
 BASH_BINARY             = "/bin/bash"
 MOVE_BINARY             = "/bin/mv"
 PRELINK_BINARY          = "/usr/sbin/prelink"
-depends_phase_path		= PORTAGE_BIN_PATH+":/bin:/usr/bin:"
+depends_phase_path		= PORTAGE_BIN_PATH+":/bin:/usr/bin"
 
 WORLD_FILE              = PRIVATE_PATH+"/world"
 #MAKE_CONF_FILE          = "/etc/make.conf"

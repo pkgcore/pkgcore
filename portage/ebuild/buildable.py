@@ -80,6 +80,7 @@ class buildable(base):
 					if s+y in d:
 						del d[s+y]
 		
+		path = filter(None, path)
 		d["PATH"] = ":".join(path)
 		self.fetchables = pkg.fetchables[:]
 		d["A"] = ' '.join(map(lambda x: x.filename, self.fetchables))
@@ -214,12 +215,14 @@ class buildable(base):
 			ebd.write("start_processing")
 			if not ebd.generic_handler():
 				raise GenericBuildError(phase + ": Failed building (False/0 return from handler)")
+
 		except Exception, e:
 			ebd.shutdown_processor()
 			release_ebuild_processor(ebd)
 			if isinstance(e, (SystemExit, GenericBuildError)):
 				raise
 			raise GenericBuildError(phase + ": Caught exception while building: %s" % e)
+
 		release_ebuild_processor(ebd)
 		return True
 

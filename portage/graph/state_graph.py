@@ -17,9 +17,10 @@ class StateGraph(object):
 		assert(pkg not in self.pkgs)
 		self.dirty = True
 		self.pkgs[pkg] = (combinations(pkg.rdepends), sets.Set(), sets.Set())
-		if self.pkgs[pkg][0][1] <= 1:
-			self.pkgs[pkg][1].union_update(sets.Set(self.pkgs[pkg][0][0].keys()))
-			self._add_deps(pkg)
+		if len(self.pkgs[pkg][0]) <= 1:
+			for atomset in self.pkgs[pkg][0]:
+				self.pkgs[pkg][1].union_update(atomset)
+				self._add_deps(pkg)
 
 	def _add_deps(self, pkg):
 		for atom in self.pkgs[pkg][1]:
@@ -42,35 +43,30 @@ class StateGraph(object):
 			self.atoms[atom][1].clear()
 		for pkg in self.pkgs:
 			self.pkgs[pkg][2].clear()
-			if self.pkgs[pkg][1] and self.pkgs[pkg][0][1] > 1:
+			if self.pkgs[pkg][1] and len(self.pkgs[pkg][0]) > 1:
 				self._remove_deps(pkg)
 				self.pkgs[pkg][1].clear()
 		for pkg in self.pkgs:
-			if self.pkgs[pkg][0][1] <= 1:
+			if len(self.pkgs[pkg][0]) <= 1:
 				continue
-			usable = sets.Set(range(self.pkgs[pkg][0][1]))
-			for atom in self.pkgs[pkg][0][0]:
-				matched = False
+			all_atoms = sets.Set()
+			for atomset in self.pkgs[pkg][0]:
+				all_atoms.union_update(atomset)
+			okay_atoms = sets.Set()
+			for atom in all_atoms:
 				for child in self.pkgs:
-					# XXX: Comparing keys is a hack to make things a little quicker
-					# -- jstubbs
 					if atom.key != child.key:
 						continue
-					if atom.match(child):
-						matched = not atom.blocks
+					if atom.match(child) ^ atom.blocks:
+						okay_atoms.add(atom)
 						break
-				if not matched:
-					usable.difference_update(self.pkgs[pkg][0][0][atom])
-				if not usable:
+			for choice in self.pkgs[pkg][0]:
+				if choice.issubset(okay_atoms):
 					break
-			if usable:
-				index = usable.pop()
-				for atom in self.pkgs[pkg][0][0]:
-					if index in self.pkgs[pkg][0][0][atom]:
-						self.pkgs[pkg][1].add(atom)
-				self._add_deps(pkg)
-			else:
-				raise NotImplementedError("blocks and/or unresolvable atoms in all combinations")
+			# XXX: A random set will be chosen if there are no fully matching sets
+			# -- jstubbs
+			self.pkgs[pkg][1].union_update(choice)
+			self._add_deps(pkg)
 		for pkg in self.pkgs:
 			for atom in self.atoms:
 				# XXX: Comparing keys is a hack to make things a little quicker
@@ -154,66 +150,37 @@ class StateGraph(object):
 				yield atom
 
 
-def multiply_matrix(mat1, mat2):
-	mat3 = [ { }, mat1[1] * mat2[1] ]
+def extrapolate(set1, set2):
 
-	for key in mat1[0]:
-		mat3[0][key] = sets.Set()
-		for x in mat1[0][key]:
-			offset = x * mat2[1]
-			for y in range(mat2[1]):
-				mat3[0][key].add(offset)
+	final_set = set1.intersection(set2)
 
-	for key in mat2[0]:
-		if key not in mat3[0]:
-			mat3[0][key] = sets.Set()
-		for x in range(mat1[1]):
-			offset = x * mat2[1]
-			for y in mat2[0][key]:
-				mat3[0][key].add(offset + y)
+	set1 = set1.difference(final_set)
+	set2 = set2.difference(final_set)
 
-	return simplify_matrix(mat3)
+	combs = []
+	for subset1 in set1:
+		for subset2 in set2:
+			combs.append(subset1.union(subset2))
 
-
-def simplify_matrix(mat):
-	all_combs = {}
-	for key in mat[0]:
-		for index in mat[0][key]:
-			if index not in all_combs:
-				all_combs[index] = sets.Set([key])
-			else:
-				all_combs[index].add(key)
-
-	reqd_combs = []
-	for orig in all_combs:
-		comb = all_combs[orig]
-		index = 0
-		while index < len(reqd_combs):
-			if comb.issuperset(reqd_combs[index]):
+	for subset1 in combs:
+		required = True
+		removable = sets.Set()
+		for subset2 in final_set:
+			if subset1.issuperset(subset2):
+				required = False
 				break
-			elif comb.issubset(reqd_combs[index]):
-				del reqd_combs[index]
-			else:
-				index += 1
-		if index == len(reqd_combs):
-			reqd_combs.append(comb)
+			elif subset1.issubset(subset2):
+				removable.add(subset2)
+		for subset2 in removable:
+			final_set.remove(subset2)
+		if required:
+			final_set.add(subset1)
 
-	ret = [{}, len(reqd_combs)]
-	index = 0
-	for comb in reqd_combs:
-		for key in comb:
-			if key not in ret[0]:
-				ret[0][key] = sets.Set([index])
-			else:
-				ret[0][key].add(index)
-		index += 1
-
-	return ret
+	return final_set
 
 
 def combinations(restrict):
-	# [ { atom : Set( combination index ) } , combination count ]
-	ret = [{}, 0]
+	ret = sets.Set()
 
 	if isinstance(restrict, OrRestriction):
 		# XXX: OrRestrictions currently contain a single DepSet that contains
@@ -221,22 +188,21 @@ def combinations(restrict):
 		# -- jstubbs
 		for element in restrict[0]:
 			if isinstance(element, atom):
-				if element not in ret[0]:
-					ret[0][element] = sets.Set()
-				ret[0][element].add(ret[1])
-				ret[1] += 1
+				newset = sets.Set()
+				newset.add(element)
+				ret.add(newset)
 			else:
-				ret = multiply_matrix(ret, combinations(element))
+				ret = extrapolate(ret, combinations(element))
 	else:
-		nonatoms = []
+		newset = sets.Set()
+		subsets = sets.Set()
 		for element in restrict:
 			if isinstance(element, atom):
-				ret[0][element] = sets.Set([0])
+				newset.add(element)
 			else:
-				nonatoms.append(element)
-		ret[1] = 1
-		ret = simplify_matrix(ret)
-		for element in nonatoms:
-			ret = multiply_matrix(ret, combinations(element))
+				subsets.add(combinations(element))
+		ret.add(newset)
+		for comb in subsets:
+			ret = extrapolate(ret, comb)
 
 	return ret

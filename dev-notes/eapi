@@ -7,8 +7,12 @@ bit hard to do, but a version 0 doc (current internal implementation/behaviour) 
 
 [Version 1]
 EAPI=1 required, at some point likely assumed but not yet.
-configure phase exists; src_configure is the function.
-RDEPEND="${RDEPEND-${DEPEND}}" autosetting no longer exists.
-addition of elib function, which notes the file to source, then sources it post global ebuild sourcing.
+src_configure exists, any configuration calls must occur in that phase, not in src_compile
+RDEPEND="${RDEPEND-${DEPEND}}" autosetting no longer is done.
+addition of elib functionality, which notes the file to source, then sources it post global ebuild sourcing.
 (proposed) BDEPEND metadata addition.
+default IUSE support, IUSE="+gcj" == USE="gcj" unless the user disables it.
+default src_install function
 
+no more blocking on virtuals/metapkg.  See glep37 for the correct solution to this.
+test depend, test src_uri

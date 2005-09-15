@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: digest.py 1935 2005-08-26 02:04:44Z ferringb $
+# $Id: digest.py 1995 2005-09-15 23:42:21Z ferringb $
 
 from portage.chksum.errors import ParseChksumError
 def parse_digest(path, throw_errors=True):
@@ -10,6 +10,8 @@ def parse_digest(path, throw_errors=True):
 		f = open(path)
 		for line in f:
 			l = line.split()
+			if len(l) == 0:
+				continue
 			if len(l) != 4:
 				if throw_errors:
 					raise ParseChksumError(path, "line count was not 4, was %i: '%s'" % (len(l), line))

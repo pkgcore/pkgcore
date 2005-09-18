@@ -9,6 +9,8 @@ from fs import *
 from itertools import imap
 
 def gen_obj(path, stat=None):
+	"""given a fs path, and an optional stat, return an appropriate fs obj representing that file/dir/dev/fif/link
+	throws KeyError if no obj type matches the stat checks"""
 	if stat == None:
 		stat = os.lstat(path)
 	mode = stat.st_mode
@@ -35,7 +37,11 @@ def gen_obj(path, stat=None):
 # also, os.path.join is rather slow.
 # in this case, we know it's always pegging one more dir on, so it's fine doing it this way 
 # (specially since we're relying on os.path.sep, not '/' :P)
+
 def iter_scan(path):
+	"""generator that yield fs objects from recursively scanning a path.
+	Does not follow symlinks pointing at dirs, just merely yields an obj representing said symlink
+	"""
 	sep = os.path.sep
 	dirs = [path.rstrip(sep)]
 	try:
@@ -49,3 +55,6 @@ def iter_scan(path):
 					dirs.append(path)
 	except IndexError:
 		pass
+
+def scan(path):
+	return list(iter_scan(path))

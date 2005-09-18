@@ -3,18 +3,25 @@
 # License: GPL2
 # $Id: fs.py 1911 2005-08-25 03:44:21Z ferringb $
 
+from portage.util.mappings import ImmutableDict
 
 # goofy set of classes representating the fs objects portage knows of.
 
-_base_slots = ("location", "mtime", "perms", "uid", "gid")
+base_slots = ["mtime", "perms", "uid", "gid"]
 
 class fsBase(object):
-	__slots__=tuple(_base_slots)
-	def __init__(self, location, **d):
-		self.location = str(location)
+	__slots__ = ["location"]
+
+	def __init__(self, location, strict=True, **d):
+		d["location"] = location
 		s = object.__setattr__
-		for k,v in d.iteritems():
-			s(self, k, v)
+		if strict:
+			for k in self.__slots__:
+				s(self, k, d[k])
+		else:
+			for k,v in d.iteritems():
+				s(self, k, v)
+
 
 	def __setattr__(self, key, value):
 		try:	
@@ -22,6 +29,14 @@ class fsBase(object):
 			raise Exception("non modifiable")
 		except AttributeError:
 			object.__setattr__(self, key, value)
+
+
+	def __getattr__(self, attr):
+		# we would only get called if it doesn't exist.
+		if attr in self.__slots__:
+			return None
+		raise AttributeError(attr)
+
 
 	def __hash__(self):
 		mylist = [];
@@ -33,45 +48,57 @@ class fsBase(object):
 		mytup = tuple(mylist)
 		return hash(mytup)
 
+
 	def __eq__(self, other):
 		if not isinstance(other, self.__class__):
 			return False
 		return hash(self) == hash(other)
+
 
 	def __ne__(self, other):
 		return not self == other
 
 
 class fsFile(fsBase):
-	__slots__ = fsBase.__slots__ + ("md5", "size",)
-	def __init__(self, location, md5=None, size=0,**kwargs):
-		fsBase.__init__(self,location,**kwargs)
-		self.md5  = md5
-		self.size = size
+	__slots__ = tuple(base_slots + fsBase.__slots__ + ["chksums"])
+	def __init__(self, location, chksums={}, mtime=None, **kwds):
+		mtime = long(mtime)
+		kwds["mtime"] = mtime
+		if not isinstance(chksums, ImmutableDict):
+			chksums = ImmutableDict(chksums)
+		kwds["chksums"] = chksums
+		fsBase.__init__(self,location,**kwds)
 
 	def __repr__(self): return "file:%s" % self.location
+
 
 class fsDir(fsBase):
 	__slots__ = fsBase.__slots__
 
 	def __repr__(self): return "dir:%s" % self.location
 
+
 class fsLink(fsBase):
-	__slots__ = fsBase.__slots__ + ("target",)
+	__slots__ = tuple(base_slots + fsBase.__slots__  + ["target"])
+
 	def __init__(self, location, target, **kwargs):
+		kwargs["target"] = target
 		fsBase.__init__(self,location,**kwargs)
-		self.target = target
 
 	def __repr__(self): return "symlink:%s->%s" % (self.location, self.target)
 
+
 fsSymLink = fsLink
+
 
 class fsDev(fsBase):
 	__slots__ = fsBase.__slots__
 
 	def __repr__(self): return "device:%s" % self.location
 
+
 class fsFifo(fsBase):
 	__slots__ = fsBase.__slots__
 	def __repr__(self): return "fifo:%s" % self.location
 	
+

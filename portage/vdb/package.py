@@ -8,6 +8,7 @@ from portage.package import metadata
 from portage.ebuild.conditionals import DepSet
 from portage.package.atom import atom
 from portage.util.mappings import LazyValDict
+from contents import contentsFile
 
 class package(metadata.package):
 
@@ -41,6 +42,8 @@ class package(metadata.package):
 			val = DepSet(self.data.get("SRC_URI", ""), str, operators={})
 		elif key == "description":
 			val = self.data.get("DESCRIPTION", "")
+		elif key == "contents":
+			val = contentsFile(os.path.join(self.path, "CONTENTS"))
 #		elif key == "keywords":
 #			val = self.data["KEYWORDS"].split()
 		else:

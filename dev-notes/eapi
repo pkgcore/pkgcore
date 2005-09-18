@@ -8,6 +8,7 @@ bit hard to do, but a version 0 doc (current internal implementation/behaviour) 
 [Version 1]
 EAPI=1 required, at some point likely assumed but not yet.
 src_configure exists, any configuration calls must occur in that phase, not in src_compile
+default src_install
 RDEPEND="${RDEPEND-${DEPEND}}" autosetting no longer is done.
 addition of elib functionality, which notes the file to source, then sources it post global ebuild sourcing.
 (proposed) BDEPEND metadata addition.

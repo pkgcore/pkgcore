@@ -54,3 +54,7 @@ cleanup needed already, imo :/
 
 :portage.fetch.bundled_lib:
 clean this beast up.
+
+:IPV6 handling:
+bug 37124 # syncing
+check over BINHOST code replacement for any code that resolve to a specific IP

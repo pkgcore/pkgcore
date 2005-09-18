@@ -18,6 +18,7 @@ from portage.os_data import xargs
 from const import eapi_capable
 from built import built
 from portage.fs import scan
+from portage.protocols.data_source import local_source
 
 def feat_or_bool(d, name):
 	if name in d:
@@ -27,7 +28,8 @@ def feat_or_bool(d, name):
 	return name in d["FEATURES"]
 
 class buildable(base):
-
+	_built_class = built
+	
 	# XXX this is unclean- should be handing in strictly what is build env, rather then
 	# dumping domain settings as env. 
 	def __init__(self, pkg, domain_settings, eclass_cache, fetcher):
@@ -149,7 +151,6 @@ class buildable(base):
 		if self.logging and not ensure_dirs(os.path.dirname(self.env["PORT_LOGFILE"]), mode=02770, gid=portage_gid):
 			raise FailedDirectory(self.env["PORT_LOGFILE"], "failed ensuring PORT_LOGDIR as 02770 and %i" % portage_gid)
 
-		# XXX src_uri hack.  fix when fetchables are integrated
 		if len(self.files):
 			self.env["DISTDIR"] = normpath(os.path.join(self.builddir, "distdir"))+"/"
 
@@ -193,14 +194,15 @@ class buildable(base):
 		release_ebuild_processor(ebd)
 		return True
 
+
 	def _request_bashrcs(self, ebd, a):
 		if a != None:
 			chuck_UnhandledCommand("bashrc request with arg"+str(a))
-		for source, val in self.bashrc:
+		for source in self.bashrc:
 			if source.get_path != None:
-				ebd.write("path\n%s" % source.get_path(val))
+				ebd.write("path\n%s" % source.get_path())
 			elif source.get_data != None:
-				ebd.write("transfer\n%s" % source.get_data(val))
+				ebd.write("transfer\n%s" % source.get_data())
 			else:
 				chuck_UnhandledCommand("bashrc request: unable to process bashrc '%s' due to source '%s' due to lacking"+
 					"usable get_*" % (val, source))
@@ -234,20 +236,24 @@ class buildable(base):
 			return self._generic_phase("configure", True, True, False)
 		return True
 
+
 	unpack = post_curry(_generic_phase, "unpack", True, True, False)
 	compile = post_curry(_generic_phase, "compile", True, True, False)
 	test = post_curry(_generic_phase, "test", True, True, False)
 	
+
 	def install(self):
 		if self.fakeroot:
 			return self._generic_phase("install", True, False, True)
 		else:
 			return self._generic_phase("install", True, True, False)
 
+
 	def test(self):
 		if not self.run_test:
 			return True
 		return self._generic_phase("test", True, True, False)
+
 
 	def clean(self):
 		if not os.path.exists(self.builddir):
@@ -259,6 +265,5 @@ class buildable(base):
 		return True
 
 	def finalize(self):
-		return built(self.pkg, scan(self.env["IMAGE"]))
-		
+		return self._built_class(self.pkg, scan(self.env["IMAGE"]), environment=local_source(os.path.join(self.env["T"], "environment")))
 

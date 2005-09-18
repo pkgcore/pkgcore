@@ -18,6 +18,7 @@ def ensure_deps(name, func, self, *a, **kw):
 		self._stage_state = set()
 
 	if "raw" in kw:
+		del kw["raw"]
 		r=func(self, *a, **kw)
 
 	else:
@@ -47,7 +48,7 @@ class ForcedDepends(type):
 class base(object):
 	stage_depends = {"fetch":None, "setup":"fetch",		"unpack":"setup",
 					"configure":"unpack",	"compile":"configure", "test":"compile",
-					"install":"test", 	"run_all":"install"}
+					"install":"test", 	"finalize":"install"}
 
 	__metaclass__ = ForcedDepends
 
@@ -59,7 +60,6 @@ class base(object):
 	def install(self):		return True
 	def finalize(self):		return True
 	def cleanup(self):		return True
-	def run_all(self):		return True
 
 	def fetch(self):
 		if not "files" in self.__dict__:

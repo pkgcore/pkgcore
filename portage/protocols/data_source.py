@@ -11,14 +11,20 @@ class base(object):
 	get_path = get_data
 	
 class local_source(base):
+	__slots__ = ["path"]
 
-	def get_path(self, arg):
-		if os.path.exists(arg):
-			return arg
-		return False
+	def __init__(self, path):
+		self.path = path
+
+
+	def get_path(self):
+		if os.path.exists(self.path):
+			return self.path
+		return None
+
 		
-	def get_data(self, arg):
-		fp = self.get_path(arg)
+	def get_data(self):
+		fp = self.get_path(self.path)
 		if fp == None:
 			return None
 		try:

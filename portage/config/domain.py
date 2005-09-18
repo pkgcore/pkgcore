@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: domain.py 2002 2005-09-18 14:05:11Z ferringb $
+# $Id: domain.py 2007 2005-09-18 21:00:42Z ferringb $
 
 import os
 from portage.restrictions.collapsed import DictBased
@@ -170,11 +170,10 @@ class domain:
 			
 		if profile.get_path == None and profile.get_data == None:
 			raise Failure("profile instance '%s' lacks a usable ebd_data_source method" % profile)
-		bashrc = [(profile, x) for x in profile.bashrc]
+		bashrc = profile.bashrc[:]
 
 		if "bashrc" in self.settings:
-			l = local_source()
-			bashrc.extend([(l,x) for x in self.settings["bashrc"]])
+			bashrc.extend([local_source(x) for x in self.settings["bashrc"]])
 
 		self.settings["bashrc"] = bashrc
 		

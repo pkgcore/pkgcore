@@ -1,7 +1,7 @@
 # Copyright: 2004-2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: processor.py 1984 2005-09-07 11:01:04Z ferringb $
+# $Id: processor.py 2007 2005-09-18 21:00:42Z ferringb $
 
 # this needs work.  it's been pruned heavily from what ebd used originally, but it still isn't what 
 # I would define as 'right'
@@ -384,12 +384,12 @@ class ebuild_processor:
 			raise UnhandledCommand("inherit requires an eclass specified, none specified")
 		
 		line=line.strip()
-		if ecache.get_path != None:
-			value = ecache.get_path(line)
+		if ecache.get_eclass_path != None:
+			value = ecache.get_eclass_path(line)
 			self.write("path")
 			self.write(value)
-		elif ecache.get_data != None:
-			value = ecache.get_data(line)
+		elif ecache.get_eclass_data != None:
+			value = ecache.get_eclass_data(line)
 			self.write("transfer")
 			self.write(value)
 		else:

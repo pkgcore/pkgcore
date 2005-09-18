@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: domain.py 1914 2005-08-25 17:35:41Z ferringb $
+# $Id: domain.py 2002 2005-09-18 14:05:11Z ferringb $
 
 import os
 from portage.restrictions.collapsed import DictBased
@@ -15,7 +15,7 @@ from portage.util.currying import post_curry
 from portage.util.lists import unique
 from portage.util.mappings import ProtectedDict
 from itertools import imap
-from portage.protocols.ebd_data_source import local_source
+from portage.protocols.data_source import local_source
 
 class MissingFile(BaseException):
 	def __init__(self, file, setting):	self.file, self.setting = file, setting

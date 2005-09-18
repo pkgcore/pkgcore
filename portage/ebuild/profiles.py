@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: profiles.py 1958 2005-09-01 11:33:32Z ferringb $
+# $Id: profiles.py 2002 2005-09-18 14:05:11Z ferringb $
 
 from portage.config import profiles
 import os, logging
@@ -11,10 +11,10 @@ from portage.util.currying import pre_curry
 from portage.package.atom import atom
 from portage.config.central import list_parser
 from portage.util.mappings import ProtectedDict
-from portage.protocols import ebd_data_source
+from portage.protocols import data_source
 from itertools import imap
 
-class OnDiskProfile(profiles.base, ebd_data_source.base):
+class OnDiskProfile(profiles.base, data_source.base):
 	positional = ("base_repo","profile")
 	required = ("base_repo", "profile")
 	section_ref = ("base_repo")

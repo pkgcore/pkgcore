@@ -15,7 +15,9 @@ from portage.os_data import portage_gid
 from portage.spawn import spawn_bash, spawn
 from portage.util.currying import post_curry
 from portage.os_data import xargs
-from portage.protocols.ebd_data_source import local_source
+from const import eapi_capable
+from built import built
+from portage.fs import scan
 
 def feat_or_bool(d, name):
 	if name in d:
@@ -29,6 +31,8 @@ class buildable(base):
 	# XXX this is unclean- should be handing in strictly what is build env, rather then
 	# dumping domain settings as env. 
 	def __init__(self, pkg, domain_settings, eclass_cache, fetcher):
+		if pkg.eapi not in eapi_capable:
+			raise TypeError("pkg isn't of a supported eapi!, %i not in %s for %s" % (pkg.eapi, eapi_capable, pkg))
 		super(buildable, self).__init__()
 
 		# copy.
@@ -90,6 +94,8 @@ class buildable(base):
 		self.eclass_cache = eclass_cache
 		self.fetcher = fetcher
 		self.bashrc = d.get("bashrc", [])
+		self.pkg = pkg
+		self.eapi = pkg.eapi
 		for k,v in self.env.items():
 			if not isinstance(v, basestring):
 				del self.env[k]
@@ -203,10 +209,6 @@ class buildable(base):
 		ebd.write("end_request")
 		
 
-	def configure(self):
-		# XXX not eapi compliant yet.
-		return True
-
 	def _generic_phase(self, phase, userpriv, sandbox, fakeroot):
 		ebd = request_ebuild_processor(userpriv=(self.userpriv and userpriv), 
 			sandbox=(self.sandbox and sandbox), fakeroot=(self.fakeroot and fakeroot))
@@ -226,6 +228,12 @@ class buildable(base):
 		release_ebuild_processor(ebd)
 		return True
 
+
+	def configure(self):
+		if self.eapi > 0:
+			return self._generic_phase("configure", True, True, False)
+		return True
+
 	unpack = post_curry(_generic_phase, "unpack", True, True, False)
 	compile = post_curry(_generic_phase, "compile", True, True, False)
 	test = post_curry(_generic_phase, "test", True, True, False)
@@ -242,8 +250,15 @@ class buildable(base):
 		return self._generic_phase("test", True, True, False)
 
 	def clean(self):
+		if not os.path.exists(self.builddir):
+			return True
 		try:
 			shutil.rmtree(self.builddir)
 		except OSError, oe:
-			raise GenericBuildError("clean: Caught exception while cleansing: %s" % e)
+			raise GenericBuildError("clean: Caught exception while cleansing: %s" % oe)
+		return True
+
+	def finalize(self):
+		return built(self.pkg, scan(self.env["IMAGE"]))
+		
 

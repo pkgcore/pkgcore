@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: ebuild_package.py 2001 2005-09-18 13:56:06Z ferringb $
+# $Id: ebuild_package.py 2008 2005-09-19 01:37:22Z ferringb $
 
 import os
 from portage import package
@@ -52,9 +52,10 @@ class EbuildPackage(package.metadata.package):
 			val = self.package
 		elif key == "PR":
 			val = "-r"+str(self.revision)
-		elif key in ("depends", "rdepends", "bdepends"):
-			# drop the s, and upper it.
-			val = DepSet(self.data[key.upper()[:-1]], atom)
+		elif key == "depends":
+			val = DepSet(self.data.get("DEPEND",""), atom)
+		elif key == "rdepends":
+			val = DepSet(self.data.get("RDEPEND","") + " " + self.data.get("PDEPEND", ""), atom)
 		elif key == "fetchables":
 			chksums = parse_digest(os.path.join(self.__dict__["_parent"]._base, self.category, self.package, "files",
 				"digest-%s-%s" % (self.package, self.fullver)))

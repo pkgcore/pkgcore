@@ -34,10 +34,9 @@ class package(metadata.package):
 			# -- jstubbs
 			val = DepSet(self.data["DEPEND"], atom).evaluate_depset(self.data["USE"].split())
 		elif key == "rdepends":
-			val = DepSet(self.data["RDEPEND"]+" "+self.data["PDEPEND"], atom).evaluate_depset(self.data["USE"].split())
+			val = DepSet(self.data["RDEPEND"]+" "+self.get("PDEPEND",""), atom).evaluate_depset(self.get("USE","").split())
 		elif key in ("license", "slot"):
 			val = DepSet(self.data[key.upper()], str)
-
 		elif key == "fetchables":
 			val = DepSet(self.data.get("SRC_URI", ""), str, operators={})
 		elif key == "description":

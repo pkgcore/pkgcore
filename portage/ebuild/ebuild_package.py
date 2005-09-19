@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: ebuild_package.py 2008 2005-09-19 01:37:22Z ferringb $
+# $Id: ebuild_package.py 2009 2005-09-19 12:33:41Z ferringb $
 
 import os
 from portage import package
@@ -15,6 +15,7 @@ from portage.chksum.errors import MissingChksum
 from portage.fetch.errors import UnknownMirror
 from portage.fetch import fetchable, mirror
 import const
+import processor
 
 def create_fetchable_from_uri(chksums, mirrors, uri):
 	file = os.path.basename(uri)
@@ -120,7 +121,6 @@ class EbuildFactory(package.metadata.factory):
 
 	def _update_metadata(self, pkg):
 
-		import processor
 		ebp=processor.request_ebuild_processor()
 		mydata = ebp.get_keys(pkg, self._ecache)
 		processor.release_ebuild_processor(ebp)

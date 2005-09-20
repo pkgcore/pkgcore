@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: mappings.py 2013 2005-09-20 15:59:12Z ferringb $
+# $Id: mappings.py 2015 2005-09-20 23:14:26Z ferringb $
 
 from itertools import imap
 import UserDict
@@ -31,13 +31,6 @@ class IndexableSequence(object):
 	def keys(self):
 		return list(self.iterkeys())
 
-	def __len__(self):
-		if self.__cache_complete:
-			return len(self.__cache.keys())
-		count=0
-		for x in self.iterkeys():
-			count+=1
-		return count
 	
 	def __delitem__(self, key):
 		if self._frozen:
@@ -65,9 +58,22 @@ class IndexableSequence(object):
 
 	def iterkeys(self):
 		if self.__cache_complete:
-			return self.__cache.keys()
-		return self.__gen_keys()
+			for x in self.__cache.keys():
+				yield x
+			return
 
+		for x in self.__cache.keys():
+			yield x
+
+		for x in self.__gen_keys():
+			yield x
+
+
+	def __len__(self):
+		count = 0
+		for x in self.__iter__(disable_return=True):
+			count += 1
+		return count
 
 	def __gen_keys(self):
 		for key in self.__get_keys():
@@ -78,8 +84,8 @@ class IndexableSequence(object):
 		return
 
 
-	def __iter__(self):
-		if self.__returnFunc:
+	def __iter__(self, disable_return=False):
+		if self.__returnFunc and not disable_return:
 			for key, value in self.iteritems():
 				if len(value) == 0:
 					if self.__return_empty:

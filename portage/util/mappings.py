@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: mappings.py 2000 2005-09-18 13:54:10Z ferringb $
+# $Id: mappings.py 2013 2005-09-20 15:59:12Z ferringb $
 
 from itertools import imap
 import UserDict
@@ -31,6 +31,13 @@ class IndexableSequence(object):
 	def keys(self):
 		return list(self.iterkeys())
 
+	def __len__(self):
+		if self.__cache_complete:
+			return len(self.__cache.keys())
+		count=0
+		for x in self.iterkeys():
+			count+=1
+		return count
 	
 	def __delitem__(self, key):
 		if self._frozen:

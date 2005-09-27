@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: strings.py 2029 2005-09-27 20:22:28Z ferringb $
+# $Id: strings.py 2030 2005-09-27 20:38:44Z ferringb $
 from itertools import ifilter
 # so... this is massively slower then our little friend mister split, aparently :/
 def crappy_iter_tokens(s, splitter=" "):
@@ -22,7 +22,10 @@ def crappy_iter_tokens(s, splitter=" "):
 # ya know what's sad?  This is faster for majority of cases.
 # for it to be slower involves *massive* strings, and a >10 splitters.
 def iter_tokens(s, splitter=" "):
-	if len(splitter) > 1:
+	l = len(splitter)
+	if l > 1:
+		if l == 3 and "\n" in splitter and " " in splitter and "\t" in splitter:
+			return iter(s.split())
 		for x in splitter[:-1]:
 			s = s.replace(x, splitter[-1])
 	return ifilter(None, s.split(splitter[-1]))

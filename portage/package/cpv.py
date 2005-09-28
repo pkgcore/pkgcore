@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org)
 # License: GPL2
-# $Id: cpv.py 2038 2005-09-28 10:13:09Z jstubbs $
+# $Id: cpv.py 2039 2005-09-28 13:08:59Z jstubbs $
 
 import re
 from base import base
@@ -184,9 +184,9 @@ def ver_cmp(ver1, rev1, ver2, rev2):
 			# letter suffix, it wins. Otherwise, the other version wins.
 			if x in len_list:
 				if x == ver_parts1_len:
-					return letters[0]
+					return cmp(letters[0],0)
 				else:
-					return letters[1]
+					return cmp(0, letters[1])
 
 			# If the string components are equal, the numerical
 			# components will be equal too.
@@ -227,14 +227,14 @@ def ver_cmp(ver1, rev1, ver2, rev2):
 		# the next suffix from the other list to decide who wins.
 		if x == parts1_len:
 			match = suffix_regexp.match(parts2[x])
-			val = -suffix_value[match.group(1)]
-			if val:	return val
-			return -int("0"+match.group(2))
+			val = suffix_value[match.group(1)]
+			if val:	return cmp(0, val)
+			return cmp(0, int("0"+match.group(2)))
 		if x == parts2_len:
 			match = suffix_regexp.match(parts1[x])
 			val = suffix_value[match.group(1)]
-			if val:	return val
-			return int("0"+match.group(2))
+			if val:	return cmp(val, 0)
+			return cmp(int("0"+match.group(2)), 0)
 
 		# If the string values are equal, no need to parse them.
 		# Continue on to the next.

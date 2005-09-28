@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org)
 # License: GPL2
-# $Id: cpv.py 1976 2005-09-05 14:56:26Z jstubbs $
+# $Id: cpv.py 2036 2005-09-28 07:39:22Z jstubbs $
 
 import re
 from base import base
@@ -134,83 +134,80 @@ class CPV(base):
 
 def ver_cmp(ver1, rev1, ver2, rev2):
 	if ver1 == ver2:
-		return 0
+		return cmp(rev1, rev2)
 
-	match1 = ver_regexp.match(ver1)
-	match2 = ver_regexp.match(ver2)
+	parts1 = []
+	parts2 = []
 
-	# shortcut for cvs ebuilds (new style)
-	if match1.group(1) and not match2.group(1):
-		return 1
-	elif match2.group(1) and not match1.group(1):
-		return -1
+	for (ver, parts) in ((ver1, parts1), (ver2, parts2)):
+		parts += ver.split("_")
 
-	# building lists of the version parts before the suffix
-	# first part is simple
-	list1 = [int(match1.group(2))]
-	list2 = [int(match2.group(2))]
+	if parts1[0] != parts2[0]:
+		ver_parts1 = parts1[0].split(".")
+		ver_parts2 = parts2[0].split(".")
 
-	# this part would greatly benefit from a fixed-length version pattern
-	if len(match1.group(3)) or len(match2.group(3)):
-		vlist1 = match1.group(3)[1:].split(".")
-		vlist2 = match2.group(3)[1:].split(".")
-		for i in range(0, max(len(vlist1), len(vlist2))):
-			if len(vlist1) <= i or len(vlist1[i]) == 0:
-				list1.append(0)
-				list2.append(int(vlist2[i]))
-			elif len(vlist2) <= i or len(vlist2[i]) == 0:
-				list1.append(int(vlist1[i]))
-				list2.append(0)
-			# Let's make life easy and use integers unless we're forced to use floats
-			elif (vlist1[i][0] != "0" and vlist2[i][0] != "0"):
-				list1.append(int(vlist1[i]))
-				list2.append(int(vlist2[i]))
-			# now we have to use floats so 1.02 compares correctly against 1.1
-			else:
-				list1.append(float("0."+vlist1[i]))
-				list2.append(float("0."+vlist2[i]))
-
-	# and now the final letter
-	if len(match1.group(5)):
-		list1.append(ord(match1.group(5)))
-	if len(match2.group(5)):
-		list2.append(ord(match2.group(5)))
-
-	for i in range(0, max(len(list1), len(list2))):
-		if len(list1) <= i:
-			return -1
-		elif len(list2) <= i:
+		if ver_parts1[0] == "cvs" and ver_parts2[0] != "cvs":
 			return 1
-		elif list1[i] != list2[i]:
-			if list1[i] > list2[i]:
-				return 1
+		elif ver_parts1[0] != "cvs" and ver_parts2[0] == "cvs":
 			return -1
+		elif ver_parts1[0] == "cvs":
+			ver_parts1[0].pop(0)
+			ver_parts2[0].pop(0)
 
-	# main version is equal, so now compare the _suffix part
-	list1 = match1.group(6).split("_")[1:]
-	list2 = match2.group(6).split("_")[1:]
+		for ver_parts in (ver_parts1, ver_parts2):
+			while int(ver_parts[-1]) == 0:
+				del ver_parts[-1]
 
-	for i in range(0, max(len(list1), len(list2))):
-		if len(list1) <= i:
-			s1 = ("p","0")
-		else:
-			s1 = suffix_regexp.match(list1[i]).groups()
-		if len(list2) <= i:
-			s2 = ("p","0")
-		else:
-			s2 = suffix_regexp.match(list2[i]).groups()
-		if s1[0] != s2[0]:
-			if suffix_value[s1[0]] - suffix_value[s2[0]]:
+		for x in range(max(len(ver_parts1), len(ver_parts2))):
+
+			if x == len(ver_parts1):
+				return -1
+			elif x == len(ver_parts2):
 				return 1
-			return -1
-		if s1[1] != s2[1]:
-			# it's possible that the s(1|2)[1] == ''
-			# in such a case, fudge it.
-			try:			r1 = int(s1[1])
-			except ValueError:	r1 = 0
-			try:			r2 = int(s2[1])
-			except ValueError:	r2 = 0
-			if r1 > r2:
-				return 1
-			return -1
+
+			if ver_parts1[x] == ver_parts2[x]:
+				continue
+
+			if ver_parts1[x][0] == "0" or ver_parts2[x][0] == "0":
+				v1 = float("0."+ver_parts1[x])
+				v2 = float("0."+ver_parts2[x])
+			else:
+				v1 = int(ver_parts1[x])
+				v2 = int(ver_parts2[x])
+
+			if v1 == v2:
+				continue
+			return cmp(v1, v2)
+
+	parts1.pop(0)
+	parts2.pop(0)
+
+	for x in range(max(len(parts1), len(parts2))):
+
+		if x == len(parts1):
+			match = suffix_regexp.match(parts2[x])
+			val = -suffix_value[match.group(1)]
+			if val:
+				return val
+			return -int("0"+match.group(2))
+		if x == len(parts2):
+			match = suffix_regexp.match(parts1[x])
+			val = suffix_value[match.group(1)]
+			if val:
+				return val
+			return int("0"+match.group(2))
+
+		if parts1[x] == parts2[x]:
+			continue
+
+		match = suffix_regexp.match(parts1[x])
+		(s1, n1) = (suffix_value[match.group(1)], int("0"+match.group(2)))
+		match = suffix_regexp.match(parts2[x])
+		(s2, n2) = (suffix_value[match.group(1)], int("0"+match.group(2)))
+
+		if s1 != s2:
+			return cmp(s1, s2)
+		if n1 != n2:
+			return cmp(n1, n2)
+
 	return cmp(rev1, rev2)

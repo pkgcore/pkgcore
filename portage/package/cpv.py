@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org)
 # License: GPL2
-# $Id: cpv.py 2036 2005-09-28 07:39:22Z jstubbs $
+# $Id: cpv.py 2037 2005-09-28 07:54:27Z jstubbs $
 
 import re
 from base import base
@@ -144,7 +144,11 @@ def ver_cmp(ver1, rev1, ver2, rev2):
 
 	if parts1[0] != parts2[0]:
 		ver_parts1 = parts1[0].split(".")
+		if ver_parts1[-1][-1].isalpha():
+			ver_parts1[-1:] = [ver_parts1[-1][:-1], str(ord(ver_parts1[-1][-1]))]
 		ver_parts2 = parts2[0].split(".")
+		if ver_parts2[-1][-1].isalpha():
+			ver_parts2[-1:] = [ver_parts2[-1][:-1], str(ord(ver_parts2[-1][-1]))]
 
 		if ver_parts1[0] == "cvs" and ver_parts2[0] != "cvs":
 			return 1
@@ -155,7 +159,7 @@ def ver_cmp(ver1, rev1, ver2, rev2):
 			ver_parts2[0].pop(0)
 
 		for ver_parts in (ver_parts1, ver_parts2):
-			while int(ver_parts[-1]) == 0:
+			while len(ver_parts) and int(ver_parts[-1]) == 0:
 				del ver_parts[-1]
 
 		for x in range(max(len(ver_parts1), len(ver_parts2))):

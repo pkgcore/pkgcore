@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org)
 # License: GPL2
-# $Id: cpv.py 2037 2005-09-28 07:54:27Z jstubbs $
+# $Id: cpv.py 2038 2005-09-28 10:13:09Z jstubbs $
 
 import re
 from base import base
@@ -9,7 +9,7 @@ from base import base
 pkg_regexp = re.compile("^[a-zA-Z0-9]([-_+a-zA-Z0-9]*[+a-zA-Z0-9])?$")
 ver_regexp = re.compile("^(cvs\\.)?(\\d+)((\\.\\d+)*)([a-z]?)((_(pre|p|beta|alpha|rc)\\d*)*)(-r(\\d+))?$")
 suffix_regexp = re.compile("^(alpha|beta|rc|pre|p)(\\d*)$")
-suffix_value = {"pre": -2, "p": 0, "alpha": -4, "beta": -3, "rc": -1}
+suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 
 class CPV(base):
 
@@ -133,45 +133,68 @@ class CPV(base):
 
 
 def ver_cmp(ver1, rev1, ver2, rev2):
+
+	# If the versions are the same, comparing revisions will suffice.
 	if ver1 == ver2:
 		return cmp(rev1, rev2)
 
-	parts1 = []
-	parts2 = []
+	# Split up the versions into dotted strings and lists of suffixes.
+	parts1 = ver1.split("_")
+	parts2 = ver2.split("_")
 
-	for (ver, parts) in ((ver1, parts1), (ver2, parts2)):
-		parts += ver.split("_")
-
+	# If the dotted strings are equal, we can skip doing a detailed comparison.
 	if parts1[0] != parts2[0]:
+		
+		# First split up the dotted strings into their components.
 		ver_parts1 = parts1[0].split(".")
-		if ver_parts1[-1][-1].isalpha():
-			ver_parts1[-1:] = [ver_parts1[-1][:-1], str(ord(ver_parts1[-1][-1]))]
 		ver_parts2 = parts2[0].split(".")
-		if ver_parts2[-1][-1].isalpha():
-			ver_parts2[-1:] = [ver_parts2[-1][:-1], str(ord(ver_parts2[-1][-1]))]
-
+		
+		# And check if CVS ebuilds come into play. If there is only
+		# one it wins by default. Otherwise any CVS component can
+		# be ignored.
 		if ver_parts1[0] == "cvs" and ver_parts2[0] != "cvs":
 			return 1
 		elif ver_parts1[0] != "cvs" and ver_parts2[0] == "cvs":
 			return -1
 		elif ver_parts1[0] == "cvs":
-			ver_parts1[0].pop(0)
-			ver_parts2[0].pop(0)
+			del ver_parts1[0][0]
+			del ver_parts2[0][0]
 
+		# Pull out any letter suffix on the final components and keep
+		# them for later.
+		letters = []
 		for ver_parts in (ver_parts1, ver_parts2):
-			while len(ver_parts) and int(ver_parts[-1]) == 0:
-				del ver_parts[-1]
+			if ver_parts[-1][-1].isalpha():
+				letters.append(ord(ver_parts[-1][-1]))
+				ver_parts[-1] = ver_parts[-1][:-1]
+			else:
+				# Using -1 simplifies comparisons later
+				letters.append(-1)
 
-		for x in range(max(len(ver_parts1), len(ver_parts2))):
+		# OPT: Pull length calculation out of the loop
+		ver_parts1_len = len(ver_parts1)
+		ver_parts2_len = len(ver_parts2)
+		len_list = (ver_parts1_len, ver_parts2_len)
 
-			if x == len(ver_parts1):
-				return -1
-			elif x == len(ver_parts2):
-				return 1
+		# Iterate through the components
+		for x in range(max(len_list)):
 
+			# If we've run out components, we can figure out who wins
+			# now. If the version that ran out of components has a
+			# letter suffix, it wins. Otherwise, the other version wins.
+			if x in len_list:
+				if x == ver_parts1_len:
+					return letters[0]
+				else:
+					return letters[1]
+
+			# If the string components are equal, the numerical
+			# components will be equal too.
 			if ver_parts1[x] == ver_parts2[x]:
 				continue
 
+			# If one of the components begins with a "0" then they
+			# are compared as floats so that 1.1 > 1.02.
 			if ver_parts1[x][0] == "0" or ver_parts2[x][0] == "0":
 				v1 = float("0."+ver_parts1[x])
 				v2 = float("0."+ver_parts2[x])
@@ -179,39 +202,59 @@ def ver_cmp(ver1, rev1, ver2, rev2):
 				v1 = int(ver_parts1[x])
 				v2 = int(ver_parts2[x])
 
-			if v1 == v2:
-				continue
-			return cmp(v1, v2)
+			# If they are not equal, the higher value wins.
+			c = cmp(v1, v2)
+			if c:	return c
 
-	parts1.pop(0)
-	parts2.pop(0)
+		# The dotted components were equal. Let's compare any single
+		# letter suffixes.
+		if letters[0] != letters[1]:
+			return cmp(letters[0], letters[1])
 
-	for x in range(max(len(parts1), len(parts2))):
+	# The dotted components were equal, so remove them from our lists
+	# leaving only suffixes.
+	del parts1[0]
+	del parts2[0]
 
-		if x == len(parts1):
+	# OPT: Pull length calculation out of the loop
+	parts1_len = len(parts1)
+	parts2_len = len(parts2)
+
+	# Iterate through the suffixes
+	for x in range(max(parts1_len, parts2_len)):
+
+		# If we're at the end of one of our lists, we need to use
+		# the next suffix from the other list to decide who wins.
+		if x == parts1_len:
 			match = suffix_regexp.match(parts2[x])
 			val = -suffix_value[match.group(1)]
-			if val:
-				return val
+			if val:	return val
 			return -int("0"+match.group(2))
-		if x == len(parts2):
+		if x == parts2_len:
 			match = suffix_regexp.match(parts1[x])
 			val = suffix_value[match.group(1)]
-			if val:
-				return val
+			if val:	return val
 			return int("0"+match.group(2))
 
+		# If the string values are equal, no need to parse them.
+		# Continue on to the next.
 		if parts1[x] == parts2[x]:
 			continue
 
-		match = suffix_regexp.match(parts1[x])
-		(s1, n1) = (suffix_value[match.group(1)], int("0"+match.group(2)))
-		match = suffix_regexp.match(parts2[x])
-		(s2, n2) = (suffix_value[match.group(1)], int("0"+match.group(2)))
+		# Match against our regular expression to make a split between
+		# "beta" and "1" in "beta1"
+		match1 = suffix_regexp.match(parts1[x])
+		match2 = suffix_regexp.match(parts2[x])
 
-		if s1 != s2:
-			return cmp(s1, s2)
-		if n1 != n2:
-			return cmp(n1, n2)
+		# If our int'ified suffix names are different, use that as the basis
+		# for comparison.
+		c = cmp(suffix_value[match1.group(1)], suffix_value[match2.group(1)])
+		if c:	return c
+		
+		# Otherwise use the digit as the basis for comparison.
+		c = cmp(int("0"+match1.group(2)), int("0"+match2.group(2)))
+		if c:	return c
 
+	# Our versions had different strings but ended up being equal.
+	# The revision holds the final difference.
 	return cmp(rev1, rev2)

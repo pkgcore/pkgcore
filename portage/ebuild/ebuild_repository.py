@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: ebuild_repository.py 1958 2005-09-01 11:33:32Z ferringb $
+# $Id: ebuild_repository.py 2042 2005-09-29 06:16:39Z ferringb $
 
 import os, stat
 import ebuild_package
@@ -18,7 +18,7 @@ def convert_depset(instance, conditionals):
 	return instance.evaluate_depset(conditionals)
 
 class UnconfiguredTree(prototype.tree):
-	false_categories = set(["eclass","profiles","packages","distfiles","licenses","scripts"])
+	false_categories = set(["eclass","profiles","packages","distfiles","licenses","scripts", "CVS"])
 	configured=False
 	configurables = ("settings",)
 	configure = None

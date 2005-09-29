@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: prototype.py 1965 2005-09-03 02:48:34Z ferringb $
+# $Id: prototype.py 2043 2005-09-29 06:18:09Z ferringb $
 
 from portage.util.mappings import IndexableSequence
 from weakref import proxy
@@ -30,14 +30,17 @@ class tree(object):
 
 
 	def _get_categories(self, *arg):
+		"""this must return a list, or sequence"""
 		raise NotImplementedError
 
 
 	def _get_packages(self, category):
+		"""this must return a list, or sequence"""
 		raise NotImplementedError
 
 
 	def _get_versions(self, package):
+		"""this must return a list, or sequence"""
 		raise NotImplementedError
 
 

@@ -30,7 +30,7 @@ class database(fs_template.FsBased):
 			raise cache_errors.CacheCorruption(cpv, e)
 		try:
 			d = self._parse_data(myf, os.fstat(myf.fileno()).st_mtime)
-		except OSError, e:	
+		except (OSError, ValueError), e:	
 			myf.close()
 			raise cache_errors.CacheCorruption(cpv, e)
 		myf.close()

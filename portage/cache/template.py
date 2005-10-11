@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: template.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: template.py 2121 2005-10-11 04:49:44Z ferringb $
 
 import cache_errors, copy
 
@@ -115,9 +115,8 @@ class database(object):
 			self.commit()
 
 	def commit(self):
-		if self.autocommits:
-			pass
-		raise NotImplementedError
+		if not self.autocommits:
+			raise NotImplementedError
 
 	def get_matches(self, match_dict):
 		"""generic function for walking the entire cache db, matching restrictions to

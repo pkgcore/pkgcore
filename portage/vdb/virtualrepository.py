@@ -20,58 +20,46 @@ class tree(prototype.tree):
 		if not isinstance(parent, repository.tree):
 			raise errors.InitializationError("parent must be a portage.vdb.repository repo" + str(type(parent)))
 		self.parent = parent
-		self._initialized = False
 		self.package_class = factory(self).new_package
+		self._virtuals = None
 
 	def _grab_virtuals(self):
 		self._virtuals = {}
 		for pkg in self.parent:
 			try:
 				for virtual in DepSet(pkg.data["PROVIDE"], atom).evaluate_depset(pkg.data["USE"].split()):
-					if virtual.category not in self._virtuals:
-						self._virtuals[virtual.category] = {}
-					if virtual.package not in self._virtuals[virtual.category]:
-						self._virtuals[virtual.category][virtual.package] = {}
-					if pkg.fullver not in self._virtuals[virtual.category][virtual.package]:
-						self._virtuals[virtual.category][virtual.package][pkg.fullver] = OrRestriction(atom("="+str(pkg)))
+					if virtual.package not in self._virtuals:
+						self._virtuals[virtual.package] = {pkg.fullver:OrRestriction(atom("="+str(pkg)))}
+					elif not pkg.fullver in self._virtuals[virtual.package]:
+						self._virtuals[virtual.package][pkg.fullver] = OrRestriction(atom("="+str(pkg)))
 					else:
-						self._virtuals[virtual.category][virtual.package][pkg.fullver].add_restriction(atom("="+str(pkg)))
+						self._virtuals[virtual.package][pkg.fullver].add_restriction(atom("="+str(pkg)))
 			except KeyError:
 				pass
-		for cat in self._virtuals:
-			for pkg in self._virtuals[cat]:
-				for ver in self._virtuals[cat][pkg]:
-					self._virtuals[cat][pkg][ver] = OrRestriction(self._virtuals[cat][pkg][ver])
-					self._virtuals[cat][pkg][ver].finalize()
-		self._initialized = True
+
+		for pkg in self._virtuals:
+			map(lambda x: self._virtuals[pkg][x].finalize(), self._virtuals[pkg].keys())
 
 	def _fetch_metadata(self, pkg):
-		if not self._initialized:
+		if self._virtuals == None:
 			self._grab_virtuals()
-		return self._virtuals[pkg.category][pkg.package][pkg.fullver]
+		return self._virtuals[pkg.package][pkg.fullver]
 
 	def _get_categories(self, *optionalCategory):
 		# return if optionalCategory is passed... cause it's not yet supported
 		if len(optionalCategory):
-			return {}
+			return []
+		return ["virtual"]
 
-		if not self._initialized:
+	def _get_packages(self, category):
+		if self._virtuals == None:
 			self._grab_virtuals()
 
 		return self._virtuals.keys()
 
-	def _get_packages(self, category):
-		if not self._initialized:
-			self._grab_virtuals()
-
-		return self._virtuals[category].keys()
-
 	def _get_versions(self, catpkg):
-		if not self._initialized:
-			self._grab_virtuals()
-
 		cat,pkg = catpkg.split("/")
-		return self._virtuals[cat][pkg].keys()
+		return self._virtuals[pkg].keys()
 
 
 class package(metadata.package):

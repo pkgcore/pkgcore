@@ -11,18 +11,13 @@ from portage.package.atom import atom
 from portage.ebuild.conditionals import DepSet
 from portage.restrictions.packages import OrRestriction
 
-import portage.vdb.repository
-
+import repository
 
 class tree(prototype.tree):
 
-	def __init__(self, location, parent):
+	def __init__(self, parent):
 		super(tree,self).__init__()
-		# XXX: It'd be much nicer to receive the parent vdb repo directly.
-		# The following is too horrible to describe.
-		# -- jstubbs
-		parent = load_config().repo[parent]
-		if not isinstance(parent, portage.vdb.repository):
+		if not isinstance(parent, repository.tree):
 			raise errors.InitializationError("parent must be a portage.vdb.repository repo" + str(type(parent)))
 		self.parent = parent
 		self._initialized = False
@@ -31,15 +26,18 @@ class tree(prototype.tree):
 	def _grab_virtuals(self):
 		self._virtuals = {}
 		for pkg in self.parent:
-			for virtual in DepSet(pkg.data["PROVIDE"], atom).evaluate_depset(pkg.data["USE"].split()):
-				if virtual.category not in self._virtuals:
-					self._virtuals[virtual.category] = {}
-				if virtual.package not in self._virtuals[virtual.category]:
-					self._virtuals[virtual.category][virtual.package] = {}
-				if pkg.fullver not in self._virtuals[virtual.category][virtual.package]:
-					self._virtuals[virtual.category][virtual.package][pkg.fullver] = OrRestriction(atom("="+str(pkg)))
-				else:
-					self._virtuals[virtual.category][virtual.package][pkg.fullver].add_restriction(atom("="+str(pkg)))
+			try:
+				for virtual in DepSet(pkg.data["PROVIDE"], atom).evaluate_depset(pkg.data["USE"].split()):
+					if virtual.category not in self._virtuals:
+						self._virtuals[virtual.category] = {}
+					if virtual.package not in self._virtuals[virtual.category]:
+						self._virtuals[virtual.category][virtual.package] = {}
+					if pkg.fullver not in self._virtuals[virtual.category][virtual.package]:
+						self._virtuals[virtual.category][virtual.package][pkg.fullver] = OrRestriction(atom("="+str(pkg)))
+					else:
+						self._virtuals[virtual.category][virtual.package][pkg.fullver].add_restriction(atom("="+str(pkg)))
+			except KeyError:
+				pass
 		for cat in self._virtuals:
 			for pkg in self._virtuals[cat]:
 				for ver in self._virtuals[cat][pkg]:

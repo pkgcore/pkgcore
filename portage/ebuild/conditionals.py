@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: conditionals.py 1975 2005-09-05 14:08:54Z jstubbs $
+# $Id: conditionals.py 2128 2005-10-13 08:43:33Z ferringb $
 
 # TODO: move exceptions elsewhere, bind them to a base exception for portage
 
@@ -24,7 +24,6 @@ class DepSet(AndRestriction):
 
 		"""dep_str is a dep style syntax, element_func is a callable returning the obj for each element, and
 		cleanse_string controls whether or translation of tabs/newlines is required"""
-
 		super(DepSet, self).__init__()
 		self.conditional_class = conditional_class
 		self.node_conds = {}
@@ -58,12 +57,9 @@ class DepSet(AndRestriction):
 						for x in depsets[-1]:
 							self.node_conds.setdefault(x, []).append(cond)
 					elif conditionals[-1]:
-						depsets[-2].restrictions.append(operators[conditionals.pop(-1)](depsets[-1]))
+						depsets[-2].restrictions.append(operators[conditionals.pop(-1)](*depsets[-1].restrictions))
 					else:
-						# XXX: This DepSet does not become a sublevel set unless it's wrapped in its own.
-						# Not sure what is going on there...
-						# -- jstubbs
-						depsets[-2].restrictions.append(AndRestriction(depsets[-1]))
+						depsets[-2].restrictions.extend(depsets[-1].restrictions)
 						conditionals.pop(-1)
 
 					depsets[-1].has_conditionals = has_conditionals.pop(-1)

@@ -2,7 +2,7 @@
 # ebuild.sh; ebuild phase processing, env handling
 # Copyright 2004-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: ebuild.sh 1913 2005-08-25 03:58:27Z ferringb $
+# $Id: ebuild.sh 2131 2005-10-14 22:00:31Z ferringb $
 
 # general phase execution path-
 # execute_phases is called, which sets EBUILD_PHASE, and then depending on the phase, 
@@ -79,6 +79,11 @@ diefunc() {
         echo "!!! Function $funcname, Line $lineno, Exitcode $exitcode" >&2
         echo "!!! ${*:-(no error message)}" >&2
         echo "!!! If you need support, post the topmost build error, NOT this status message." >&2
+		if [ "${EBUILD_PHASE/depend}" == "${EBUILD_PHASE}" ]; then
+			for x in ${EBUILD_DEATH_HOOKS; do
+				${x} ${1} ${2} ${3} "${@}" >&2 1>&2 
+			done
+		fi
         echo >&2
         exit 1
 }
@@ -553,7 +558,7 @@ execute_phases() {
 			set -f
 			[ "${DEPEND:-unset}" != "unset" ] && 		speak "key DEPEND=$(echo $DEPEND)"
 			[ "${RDEPEND:-unset}" != "unset" ] && 		speak "key RDEPEND=$(echo $RDEPEND)"
-			[ "$SLOT:-unset}" != "unset" ] && 		speak "key SLOT=$(echo $SLOT)"
+			[ "$SLOT:-unset}" != "unset" ] && 			speak "key SLOT=$(echo $SLOT)"
 			[ "$SRC_URI:-unset}" != "unset" ] && 		speak "key SRC_URI=$(echo $SRC_URI)"
 			[ "$RESTRICT:-unset}" != "unset" ] && 		speak "key RESTRICT=$(echo $RESTRICT)"
 			[ "$HOMEPAGE:-unset}" != "unset" ] && 		speak "key HOMEPAGE=$(echo $HOMEPAGE)"
@@ -561,10 +566,11 @@ execute_phases() {
 			[ "$DESCRIPTION:-unset}" != "unset" ] && 	speak "key DESCRIPTION=$(echo $DESCRIPTION)"
 			[ "$KEYWORDS:-unset}" != "unset" ] && 		speak "key KEYWORDS=$(echo $KEYWORDS)"
 			[ "$INHERITED:-unset}" != "unset" ] && 		speak "key INHERITED=$(echo $INHERITED)"
-			[ "$IUSE:-unset}" != "unset" ] && 		speak "key IUSE=$(echo $IUSE)"
+			[ "$IUSE:-unset}" != "unset" ] && 			speak "key IUSE=$(echo $IUSE)"
 			[ "$CDEPEND:-unset}" != "unset" ] && 		speak "key CDEPEND=$(echo $CDEPEND)"
 			[ "$PDEPEND:-unset}" != "unset" ] && 		speak "key PDEPEND=$(echo $PDEPEND)"
 			[ "$PROVIDE:-unset}" != "unset" ] && 		speak "key PROVIDE=$(echo $PROVIDE)"
+			[ "$EAPI:-unset}" != "unset"] &&			speak "key EAPI=$(echo $EAPI)"
 			set +f
 			;;
 		*)

@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: mappings.py 2015 2005-09-20 23:14:26Z ferringb $
+# $Id: mappings.py 2143 2005-10-19 09:25:17Z ferringb $
 
 from itertools import imap
 import UserDict
@@ -77,7 +77,7 @@ class IndexableSequence(object):
 
 	def __gen_keys(self):
 		for key in self.__get_keys():
-			if not self.__cache.has_key(key):
+			if key not in self.__cache:
 				self.__cache[key] = self.__get_values(key)
 			yield key
 		self.__cache_complete = self.__cache_can_be_complete
@@ -110,14 +110,15 @@ class IndexableSequence(object):
 
 	def iteritems(self):
 		if self.__cache_complete:
-			return self.__cache.items()
-		return self.__gen_items()
-
-
-	def __gen_items(self):
-		for key in self.iterkeys():
+			for key, value in self.__cache.iteritems():
+				yield key, value
+			return
+		for key in self.__cache.keys():
 			yield key, self[key]
-		return
+		for key in self.__gen_keys():
+			yield key, self[key]
+
+
 
 
 class LazyValDict(UserDict.DictMixin):

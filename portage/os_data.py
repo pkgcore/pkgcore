@@ -1,8 +1,8 @@
 # portage_data.py -- Calculated/Discovered Data Values
 # Copyright 1998-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: os_data.py 1911 2005-08-25 03:44:21Z ferringb $
-cvs_id_string="$Id: os_data.py 1911 2005-08-25 03:44:21Z ferringb $"[5:-2]
+# $Id: os_data.py 2147 2005-10-19 09:31:11Z ferringb $
+cvs_id_string="$Id: os_data.py 2147 2005-10-19 09:31:11Z ferringb $"[5:-2]
 
 import os,pwd,grp
 
@@ -36,7 +36,9 @@ if not lchown:
 secpass=0
 
 uid=os.getuid()
-wheelgid=0
+# hard coding sucks.
+root_uid = 0
+wheelgid = 0
 
 if uid==0:
 	secpass=2

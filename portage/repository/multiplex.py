@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: multiplex.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: multiplex.py 2145 2005-10-19 09:29:51Z ferringb $
 
 import prototype, errors
 
@@ -14,55 +14,51 @@ class tree(prototype.tree):
 		self.trees=trees
 		
 	def _get_categories(self, *optionalCategory):
-		d={}
+		d=set()
 		failures=0
 		if len(optionalCategory):
 			optionalCategory=optionalCategory[0]
 			for x in self.trees:
 				try:
-					for y in x.categories[optionalCategory]:
-						d[y] = None
+					map(d.add, x.categories[optionalCategory])
 				except KeyError:
 					failures+=1
 		else:
 			for x in self.trees:
 				try:
-					for y in x.categories:
-						d[y] = None
+					map(d.add, x.categories)
 				except (errors.TreeCorruption, KeyError):
 					failures+=1
 		if failures == len(self.trees):
 			if optionalCategory:
 				raise KeyError("category base '%s' not found" % str(optionalCategory))
 			raise KeyError("failed getting categories")
-		return tuple(d.keys())
+		return tuple(d)
 
 	def _get_packages(self, category):
-		d={}
+		d = set()
 		failures=0
 		for x in self.trees:
 			try:
-				for y in x.packages[category]:
-					d[y] = None
+				map(d.add, x.packages[category])
 			except (errors.TreeCorruption, KeyError):
 				failures+=1
 		if failures == len(self.trees):
 			raise KeyError("category '%s' not found" % category)
-		return tuple(d.keys())
+		return tuple(d)
 
 	def _get_versions(self,package):
-		d={}
+		d = set()
 		failures=0
 		for x in self.trees:
 			try:
-				for y in x.versions[package]:
-					d[y] = None
+				map(d.add, x.versions[package])
 			except (errors.TreeCorruption, KeyError):
 				failures+=1
 
 		if failures == len(self.trees):
 			raise KeyError("category '%s' not found" % package)
-		return tuple(d.keys())
+		return tuple(d)
 
 	def itermatch(self, atom):
 		d={}

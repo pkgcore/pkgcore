@@ -48,18 +48,22 @@ class tree(prototype.tree):
 	def _get_categories(self, *optionalCategory):
 		# return if optionalCategory is passed... cause it's not yet supported
 		if len(optionalCategory):
-			return []
+			raise KeyError("no '%s' category" % optionalCategory[0])
 		return ["virtual"]
 
 	def _get_packages(self, category):
 		if self._virtuals == None:
 			self._grab_virtuals()
 
-		return self._virtuals.keys()
+		if category == "virtual":
+			return self._virtuals.keys()
+		raise KeyError("no %s category for this repository" % category)
 
 	def _get_versions(self, catpkg):
 		cat,pkg = catpkg.split("/")
-		return self._virtuals[pkg].keys()
+		if cat == "virtual":
+			return self._virtuals[pkg].keys()
+		raise KeyError("no '%s' package in this repository" % catpkg)
 
 
 class package(metadata.package):

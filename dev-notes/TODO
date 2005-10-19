@@ -58,3 +58,7 @@ clean this beast up.
 :IPV6 handling:
 bug 37124 # syncing
 check over BINHOST code replacement for any code that resolve to a specific IP
+
+:move portage uid/gid checks out of ebuild.sh, and into python side:
+
+:locking unification.  see plugins for an example of why it's needed

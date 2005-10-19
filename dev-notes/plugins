@@ -1,0 +1,49 @@
+plugins handling/layout
+
+First, usual statement that it's a work in progress, code is the true authority, not a doc dumped by a dev while he 
+was collecting his thoughts ;)
+
+plugins_dir = /var/lib/portage/plugins , tentatively.
+
+installation of a plugin that wants/needs to make it's capabilities known globally, must call portage.plugins.register
+prototype of register is
+
+def register(plugin_type, magic, version, namespace, replace=False)
+
+plugin_type is not restricted; it's effectively a categorization of the plugin.  Looking in the plugins module, either the types
+will be constants, or listed there (this needs to be nailed down as we progress, dependant on requirements)
+
+magic is just as it sounds, the magic identifier for that plugin.  Needs to be constant.
+
+Version is a fun one.  It's intention is for upgrading of a plugin, the plugin code doesn't use it, it's a way for during
+upgrading/removal of plugins, to see if something else has stepped up and now is in charge of that 'magic'.
+The plugin handling code doesn't know, nor care, about version, it merely stores it to make plugin (de|)registering easier
+for pluging code.
+
+namespace is the pythonic namespace lookup; this is where the instantiating func for that plugin must exist.
+fex, say I had a plugin for an move within an fs;
+register("os", "selinux_move", "selinux.movefile")
+
+Note there is no enforcement on args; plugin writers will have to handle that themselves to some degree.
+
+The intentions of this specific plugin system are strictly for objects/plugins that must be instanted but do not know, nor should
+it know of the code (seperation).
+An example, and main reason for this codes inclussion, is format registration.
+Via this, the installed package database can be unbundled from knowing each where in python namespace each installed package's 
+merge operation/package class code is, it just queries a global registry, which spits back the namespace lookup.
+
+replace is as it sounds, are we willing to replace or not.
+
+Nuking a plugin's global registration is similar.
+def deregister(plugin_type, magic, version)
+
+Version is included for the reasons listed above regarding its existance.
+It is _strongly_ suggested people use common sense for version, replacement code should bump version for each update.
+
+def query_plugins(plugin_type=None)
+	returns a dict of {type:{magic:[namespace, version, *additionals]}
+	if type is specified, limit to just that key.
+	
+def get_plugin(plugin_type, magic)
+	returns the namespace lookup for that plugin_type:magic combination.
+	else, throws an exception

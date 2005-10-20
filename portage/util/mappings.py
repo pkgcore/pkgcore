@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: mappings.py 2143 2005-10-19 09:25:17Z ferringb $
+# $Id: mappings.py 2154 2005-10-20 17:57:22Z ferringb $
 
 from itertools import imap
 import UserDict
@@ -148,11 +148,11 @@ class LazyValDict(UserDict.DictMixin):
 		self.__vals = {}
 
 
-	def __setitem__(self):
+	def __setitem__(self, key, value):
 		raise AttributeError
 
 
-	def __delitem__(self):
+	def __delitem__(self, key):
 		raise AttributeError
 
 
@@ -164,7 +164,6 @@ class LazyValDict(UserDict.DictMixin):
 			return self.__vals[key]
 		if key in self.__keys:
 			v = self.__vals[key] = self.__val_func(key)
-			self.__keys.remove(key)
 			return v
 		raise KeyError(key)
 
@@ -173,17 +172,16 @@ class LazyValDict(UserDict.DictMixin):
 		if self.__keys_func != None:
 			self.__keys = set(self.__keys_func())
 			self.__keys_func = None
-		l = list(self.__keys)
-		l.extend(self.__vals.keys())
-		return l
+		return list(self.__keys)
 
 
-	def has_key(self, key):
+	def __contains__(self, key):
 		if self.__keys_func != None:
-			map(self.__keys.setdefault, self.__keys_func())
+			self.__keys = set(self.__keys_func())
 			self.__keys_func = None
-		return key in self.__keys or key in self.__vals
+		return key in self.__keys
 
+	has_key = __contains__
 
 class ProtectedDict(UserDict.DictMixin):
 	"""
@@ -255,7 +253,7 @@ class LimitedChangeSet(object):
 	set that supports limited changes, specifically deleting/adding a key only once per commit, 
 	optionally blocking changes to certain keys.
 	"""
-	_removed 	= 0
+	_removed	= 0
 	_added		= 1
 
 	def __init__(self, initial_keys, unchangable_keys=None):

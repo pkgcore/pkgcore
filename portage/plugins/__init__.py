@@ -38,7 +38,12 @@ class PluginNotFound(RegistrationException):
 
 class GlobalPluginRegistry(object):
 	def register(self, plugin_type, magic, version, namespace, replace=False):
-
+		"""register a plugin
+		plugin_type is a string, the category of the plugin
+		magic is a string, magic constant of the plugin
+		version is the specific plugin version (only one can be installed at a time)
+		namespace is the pythonic namespace for that plugin
+		replace controls whether or not a plugin_type + magic conflict will be replaced, or error out"""
 		if not ensure_dirs(plugins_dir, uid=root_uid, gid=portage_gid, mode=0755):
 			raise FailedDir("Failed ensuring base plugins dir")
 
@@ -140,24 +145,23 @@ class GlobalPluginRegistry(object):
 
 
 registry = None
+from portage.util.currying import pre_curry, pretty_docs
 
-def register(*a, **kw):
-	"""calls registry.register(*a, **kw).  will instante the class if it's missing"""
+def proxy_it(method, *a, **kw):
 	global registry
 	if registry == None:
 		registry = GlobalPluginRegistry()
-	registry.register(*a, **kw)
-	
-def deregister(*a, **kw):
-	"""calls registry.register(*a, **kw).  will instante the class if it's missing"""
-	global registry
-	if registry == None:
-		registry = GlobalPluginRegistry()
-	registry.deregister(*a, **kw)
+	return getattr(registry, method)(*a, **kw)
 
-def query_plugins(*a, **kw):
-	"""calls registry.query_plugins(*a, **kw).  will instante the class if it's missing"""
-	global registry
-	if registry == None:
-		registry = GlobalPluginRegistry()
-	registry.query_plugins(*a, **kw)
+for x in ["register", "deregister", "query_plugins"]:
+	v = pre_curry(proxy_it, x)
+	doc = getattr(GlobalPluginRegistry, x).__doc__
+	if doc == None:
+		doc = ''
+	else:
+		# do this so indentation on pydoc __doc__ is sane
+		doc = "\n".join(map(lambda x:x.lstrip(), doc.split("\n"))) +"\n"
+	doc += "proxied call to module level registry instances %s method" % x
+	globals()[x] = pretty_docs(v, doc)
+
+del x, v, proxy_it, doc

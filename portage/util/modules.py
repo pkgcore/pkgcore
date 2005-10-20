@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: modules.py 2016 2005-09-20 23:40:33Z ferringb $
+# $Id: modules.py 2152 2005-10-20 11:13:24Z ferringb $
 
 import sys, threading
 
@@ -14,9 +14,9 @@ __import_lock = threading.Lock()
 def load_module(name):
 	"""load a module, throwing a FailedImport if __import__ fails"""
 	__import_lock.acquire()
-	if name in sys.modules:
-		return sys.modules[name]
 	try:
+		if name in sys.modules:
+			return sys.modules[name]
 		try:
 			m = __import__(name)
 			nl = name.split('.')

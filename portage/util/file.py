@@ -1,37 +1,38 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: file.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: file.py 2156 2005-10-23 23:48:48Z ferringb $
 
 import re
 from shlex import shlex
 from mappings import ProtectedDict
 
-def iter_read_bash(file):
+def iter_read_bash(bash_source):
 	"""read file honoring bash commenting rules.  Note that it's considered good behaviour to close filehandles, as such, 
 	either iterate fully through this, or use read_bash instead.
 	once the file object is no longer referenced, the handle will be closed, but be proactive instead of relying on the 
 	garbage collector."""
-	f = open(file)
-	for s in f:
+	if isinstance(bash_source, basestring):
+		bash_source = open(bash_source, 'r')
+	for s in bash_source:
 		s=s.strip()
 		if s.startswith("#") or s == "":
 			continue
 		yield s
-	f.close()
+	bash_source.close()
 
-def read_bash(file):
-	return list(iter_read_bash(file))
+def read_bash(bash_source):
+	return list(iter_read_bash(bash_source))
 
-def read_dict(file, splitter="=", ignore_malformed=False, source_isiter=False):
+def read_dict(bash_source, splitter="=", ignore_malformed=False, source_isiter=False):
 	"""
 	read key value pairs, splitting on specified splitter, using iter_read_bash for filtering comments
 	"""
 	d = {}
 	if not source_isiter:
-		i = iter_read_bash(file)
+		i = iter_read_bash(bash_source)
 	else:
-		i = file
+		i = bash_source
 	line_count = 1
 	try:
 		for k in i:
@@ -49,23 +50,21 @@ def read_dict(file, splitter="=", ignore_malformed=False, source_isiter=False):
 		del i
 	return d
 
-def read_bash_dict(file, vars_dict={}, ignore_malformed=False, sourcing_command=None):
+def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False, sourcing_command=None):
 	"""read bash source, yielding a dict of vars
 	vars_dict is the initial 'env' for the sourcing, and is protected from modification.
 	sourcing_command controls whether a source command exists, if one does and is encountered, then this func
 	recursively sources that file
 	"""
-	from shlex import shlex
-	from types import StringTypes
-	f = open(file, "r")
 
 	# quite possibly I'm missing something here, but the original portage_util getconfig/varexpand seemed like it 
 	# only went halfway.  The shlex posix mode *should* cover everything.
 
-	if len(vars_dict.keys()) != 0:
+	if vars_dict is not None:
 		d, protected = ProtectedDict(vars_dict), True
 	else:
-		d, protected = vars_dict, False
+		d, protected = {}, False
+	f = open(bash_source, 'r')
 	s = bash_parser(f, sourcing_command=sourcing_command, env=d)
 
 	try:
@@ -78,12 +77,12 @@ def read_bash_dict(file, vars_dict={}, ignore_malformed=False, sourcing_command=
 				eq, val = s.get_token(), s.get_token()
 				if eq != '=' or val == None:
 					if not ignore_malformed:
-						raise ParseError(file, s.lineno)
+						raise ParseError(bash_source, s.lineno)
 					else:
 						break
 				d[key] = val
 		except ValueError:
-			raise ParseError(file, s.lineno)
+			raise ParseError(bash_source, s.lineno)
 	finally:
 		f.close()
 	if protected:
@@ -101,12 +100,15 @@ def nuke_backslash(s):
 		return s[1]
 
 class bash_parser(shlex):
-	def __init__(self, source, sourcing_command=None, env={}):
+	def __init__(self, source, sourcing_command=None, env=None):
 		shlex.__init__(self, source, posix=True)
 		self.wordchars += "${}/."
-		if sourcing_command != None:
-			self.source = allow_sourcing
-		self.env = env
+		if sourcing_command is not None:
+			self.source = sourcing_command
+		if env is None:
+			self.env = {}
+		else:
+			self.env = env
 		self.__pos = 0
 
 	def __setattr__(self, attr, val):
@@ -138,7 +140,7 @@ class bash_parser(shlex):
 		while match != None:
 			pos = match.start()
 			if val[pos] == '\\':
-				# it's escaped.  either it's \\$ or \\${ , either way, skipping two ahead handles it.
+				# it's escaped.	 either it's \\$ or \\${ , either way, skipping two ahead handles it.
 				pos += 2
 			else:
 				var = val[match.start():match.end()].strip("${}")

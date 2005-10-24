@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: prototype.py 2043 2005-09-29 06:18:09Z ferringb $
+# $Id: prototype.py 2164 2005-10-24 20:18:04Z ferringb $
 
 from portage.util.mappings import IndexableSequence
 from weakref import proxy
@@ -65,6 +65,8 @@ class tree(object):
 			yield self.package_class(cpv)
 		return
 
+	def __len__(self):
+		return len(self.versions)
 
 	def match(self, atom):
 		return list(self.itermatch(atom))

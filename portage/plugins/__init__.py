@@ -11,6 +11,8 @@ from portage.const import plugins_dir
 from portage.util.fs import FsLock, ensure_dirs, NonExistant
 from portage.os_data import portage_gid, root_uid
 from ConfigParser import RawConfigParser
+from portage.util.modules import load_attribute
+
 
 PLUGINS_EXTENSION = ".plugins"
 
@@ -111,6 +113,11 @@ class GlobalPluginRegistry(object):
 		finally:
 			plug_lock.release_write_lock()
 
+	def get_plugin(self, plugin_type, magic):
+		try:	address = self.query_plugins(plugin_type)[magic]["namespace"]
+		except KeyError:
+			raise PluginNotFound(magic)
+		return load_attribute(address)
 
 	def query_plugins(self, plugin_type=None, locking=True, raw=False):
 		# designed this way to minimize lock holding time.
@@ -134,7 +141,7 @@ class GlobalPluginRegistry(object):
 				if raw:
 					d[x[:-len_exten]] = c
 				else:
-					d[x[:-len_exten]] = dict([(y, c.items(y)) for y in c.sections()])
+					d[x[:-len_exten]] = dict([(y, dict(c.items(y))) for y in c.sections()])
 		
 		finally:
 			if locking:
@@ -153,7 +160,7 @@ def proxy_it(method, *a, **kw):
 		registry = GlobalPluginRegistry()
 	return getattr(registry, method)(*a, **kw)
 
-for x in ["register", "deregister", "query_plugins"]:
+for x in ["register", "deregister", "query_plugins", "get_plugin"]:
 	v = pre_curry(proxy_it, x)
 	doc = getattr(GlobalPluginRegistry, x).__doc__
 	if doc == None:

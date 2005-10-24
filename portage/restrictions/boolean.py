@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: boolean.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: boolean.py 2162 2005-10-24 18:11:12Z ferringb $
 
 """
 This module provides classes that can be used to combine arbitrary collections of restrictions in AND, NAND, OR, NOR, XOR, XNOR 
@@ -16,18 +16,14 @@ import restriction
 
 class base(restriction.base):
 	__slots__ = tuple(["restrictions"] + restriction.base.__slots__)
-	required_base = None
+	required_base = restriction.base
 	
 	def __init__(self, *restrictions, **kwds):
 		"""Optionally hand in (positionally) restrictions to use as the basis of this restriction
 		finalize=False, set it to True to notify this instance to internally finalize itself (no way to reverse it yet)
 		negate=False, controls whether matching results are negated
 		"""
-		if "finalize" in kwds:
-			finalize = kwds["finalize"]
-			del kwds["finalize"]
-		else:
-			finalize = False
+		finalize = kwds.pop('finalize', False)
 		super(base, self).__init__(**kwds)
 		for x in restrictions:
 			if not isinstance(x, restriction.base):
@@ -129,19 +125,10 @@ class AndRestriction(base):
 	__slots__ = tuple(base.__slots__)
 
 	def match(self, vals):
-		if self.negate:
-			# 1|1 == 0, 1|0 == 0|1 == 0|0 == 1
-			missed = False
-			for rest in self.restrictions:
-				if not rest.match(vals):
-					missed = True
-				elif missed:
-					return True
-			return False
 		for rest in self.restrictions:
 			if not rest.match(vals):
-				return False
-		return True
+				return self.negate
+		return not self.negate
 	
 	def force_True(self, pkg, *vals):
 		pvals = [pkg]
@@ -200,16 +187,10 @@ class OrRestriction(base):
 	__slots__ = base.__slots__
 	
 	def match(self, vals):
-		if self.negate:
-			# 1|1 == 1|0 == 0|1 == 0, 0|0 == 1
-			for rest in self.restrictions:
-				if rest.match(vals):
-					return
-			return True
 		for rest in self.restrictions:
 			if rest.match(vals):
-				return True
-		return False
+				return not self.negate
+		return self.negate
 	
 	def force_True(self, pkg, *vals):
 		pvals = [pkg]
@@ -242,7 +223,7 @@ class OrRestriction(base):
 		# get the simple one out of the way first.
 		if not self.negate:
 			for r in self.restrictions:
-				if not r.force_False(*vals):
+				if not r.force_False(*pvals):
 					pkg.rollback(entry_point)
 					return
 			yield True

@@ -1,13 +1,15 @@
 # Copyright 2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: fs.py 2156 2005-10-23 23:48:48Z ferringb $
-cvs_id_string="$Id: fs.py 2156 2005-10-23 23:48:48Z ferringb $"[5:-2]
+# $Id: fs.py 2157 2005-10-24 14:19:20Z ferringb $
+cvs_id_string="$Id: fs.py 2157 2005-10-24 14:19:20Z ferringb $"[5:-2]
 
-import os
+import os, stat
 import fcntl
 
 def ensure_dirs(path, gid=-1, uid=-1, mode=0777):
-	"""ensure dirs exist, creating as needed with (optional) gid, uid, and mode"""
+	"""ensure dirs exist, creating as needed with (optional) gid, uid, and mode
+	be forewarned- if mode is specified to a mode that blocks the euid from accessing the dir, this 
+	code *will* try to create the dir"""
 
 	try:
 		st = os.stat(path)
@@ -15,24 +17,56 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777):
 		base = os.path.sep
 		try:
 			um = os.umask(0)
-			for dir in os.path.abspath(path).split(os.path.sep):
+			# if the dir perms would lack +wx, we have to force it
+			force_temp_perms = ((mode & 0300) != 0300)
+			resets = []
+			apath = normpath(os.path.abspath(path))
+			sticky_parent = False
+			creating = False
+			
+			for dir in apath.split(os.path.sep):
 				base = os.path.join(base,dir)
-				if not os.path.exists(base):
+				try:
+					st = os.stat(base)
+					# something exists.  why are we doing isdir?
+					if not stat.S_ISDIR(st.st_mode):
+						return False
+					
+					# if it's a subdir, we need +wx at least
+					if apath != base:
+						if ((st.st_mode & 0300) != 0300):
+							try:			os.chmod(base, (st.st_mode | 0300))
+							except OSError:	return False
+							resets.append((base, st.st_mode))
+						sticky_parent = (st.st_gid & stat.S_ISGID)
+
+				except OSError:
+					# nothing exists.
 					try:
-						os.mkdir(base, mode)
-						if gid != -1 or uid != -1:
-							os.chown(base, uid, gid)
+						if force_temp_perms:
+							os.mkdir(base, 0700)
+							resets.append((base, mode))
+						else:
+							os.mkdir(base, mode)
+							if base == apath and sticky_parent:
+								resets.append((base, mode))
+							if gid != -1 or uid != -1:
+								os.chown(base, uid, gid)
 					except OSError:
 						return False
+
+			try:
+				for base, m in reversed(resets):
+					os.chmod(base, m)
+				if uid != -1 or gid != -1:
+					os.chown(base, uid, gid)
+			except OSError:
+				return False
+		
 		finally:
 			os.umask(um)
-		# final one, since g+s can occur.
-		os.chmod(path, mode)
-		if uid != -1 or gid != -1:
-			os.chown(path, uid, gid)
 		return True
-	try:
-		um = os.umask(0)
+	else:
 		try:
 			if (gid != -1 and gid != st.st_gid) or (uid != -1 and uid != st.st_uid):
 				os.chown(path, uid, gid)
@@ -40,8 +74,6 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777):
 				os.chmod(path, mode)
 		except OSError:
 			return False
-	finally:
-		os.umask(um)
 	return True
 
 

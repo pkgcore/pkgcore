@@ -13,7 +13,7 @@ from portage.os_data import portage_gid
 from portage.util.fs import ensure_dirs, normpath
 from portage.os_data import portage_gid
 from portage.spawn import spawn_bash, spawn
-from portage.util.currying import post_curry
+from portage.util.currying import post_curry, pretty_docs
 from portage.os_data import xargs
 from const import eapi_capable
 from built import built
@@ -237,7 +237,9 @@ class buildable(base):
 		return True
 
 
-	unpack = post_curry(_generic_phase, "unpack", True, True, False)
+	unpack = pretty_docs(
+		post_curry(_generic_phase, "unpack", True, True, False),
+		"run the unpack phase")
 	compile = post_curry(_generic_phase, "compile", True, True, False)
 	test = post_curry(_generic_phase, "test", True, True, False)
 	

@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: ebuild_package.py 2009 2005-09-19 12:33:41Z ferringb $
+# $Id: ebuild_package.py 2165 2005-10-24 20:26:58Z ferringb $
 
 import os
 from portage import package
@@ -138,3 +138,5 @@ class EbuildFactory(package.metadata.factory):
 		return mydata
 
 
+def generate_new_factory(*a, **kw):
+	return EbuildFactory(*a, **kw).new_package

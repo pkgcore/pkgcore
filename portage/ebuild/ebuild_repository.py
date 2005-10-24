@@ -1,16 +1,17 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: ebuild_repository.py 2042 2005-09-29 06:16:39Z ferringb $
+# $Id: ebuild_repository.py 2165 2005-10-24 20:26:58Z ferringb $
 
 import os, stat
-import ebuild_package
 from buildable import buildable
 from weakref import proxy
 from portage.package.conditionals import PackageWrapper
 from portage.repository import prototype, errors
 from portage.util.mappings import InvertedContains
 from portage.util.file import read_dict
+from portage.plugins import get_plugin
+from portage.util.modules import load_attribute
 
 metadata_offset = "profiles"
 
@@ -22,6 +23,7 @@ class UnconfiguredTree(prototype.tree):
 	configured=False
 	configurables = ("settings",)
 	configure = None
+	ebuild_format_magic = "ebuild_src"
 
 	def __init__(self, location, cache=None, eclass_cache=None, mirrors_file=None):
 		super(UnconfiguredTree, self).__init__()
@@ -60,7 +62,7 @@ class UnconfiguredTree(prototype.tree):
 				raise
 
 		self.mirrors = mirrors
-		self.package_class = ebuild_package.EbuildFactory(self, cache, self.eclass_cache, self.mirrors).new_package
+		self.package_class = get_plugin("format", self.ebuild_format_magic)(self, cache, self.eclass_cache, self.mirrors)
 
 
 	def _get_categories(self, *optionalCategory):

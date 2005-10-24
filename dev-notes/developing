@@ -21,7 +21,13 @@ add a portage_custom_path.py to either /usr/lib/portage/pym/ , or /usr/lib/pytho
 from there, you'll need to mangle a config (in this directory).  If you have the usual defaults for a gentoo system, you won't have
 to modify it aside from cflags tweaking, etc.
 
-so... after you've done this, try this- load up the python interpretter, and try this.
+so... after you've done this, try this- need to register the ebuild plugin, running as root-
+/path/to/checkout/bin/utilities/register_plugin.py -s format ebuild_src 0.0 portage.ebuild.ebuild_package.generate_new_factory
+
+You'll need to have PYTHONPATH set as root, note that sudo cleanses the env normally.
+If that fails, you're PYTHONPATH is invalid; otherwise it'll spit back a registering message.  So far, good to go.
+
+Drop back to normal user, and try
 
 >>> import portage.config
 >>> conf=portage.config.load_config()

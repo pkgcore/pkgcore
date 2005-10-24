@@ -1,4 +1,9 @@
 #!/usr/bin/python
+# Copyright: 2005 Gentoo Foundation
+# Author(s): Brian Harring (ferringb@gentoo.org)
+# License: GPL2
+# $Id:$
+
 import portage.plugins
 from portage.util.modules import load_attribute
 import sys

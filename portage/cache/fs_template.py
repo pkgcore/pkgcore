@@ -1,11 +1,12 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: fs_template.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: fs_template.py 2161 2005-10-24 14:49:41Z ferringb $
 
 import os
 import template, cache_errors
 from portage.os_data import portage_gid
+from portage.util.fs import ensure_dirs
 
 class FsBased(template.database):
 	"""template wrapping fs needed options, and providing _ensure_access as a way to 
@@ -44,24 +45,12 @@ class FsBased(template.database):
 		return True
 
 	def _ensure_dirs(self, path=None):
-		"""with path!=None, ensure beyond self.location.  otherwise, ensure self.location"""
-		if path:
-			path = os.path.dirname(path)
-			base = self.location
+		"""if path != None, ensures self.location + '/' + path, else self.location"""
+		if path != None:
+			path = self.location + os.path.sep + os.path.dirname(path)
 		else:
 			path = self.location
-			base='/'
-
-		for dir in path.lstrip(os.path.sep).rstrip(os.path.sep).split(os.path.sep):
-			base = os.path.join(base,dir)
-			if not os.path.exists(base):
-				um=os.umask(0)
-				try:
-					os.mkdir(base, self._perms | 0111)
-					os.chown(base, -1, self._gid)
-				finally:
-					os.umask(um)
-
+		return ensure_dirs(path)
 	
 def gen_label(base, label):
 	"""if supplied label is a path, generate a unique label based upon label, and supplied base path"""

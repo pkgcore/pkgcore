@@ -1,8 +1,8 @@
 # Copyright 2004-2005 Gentoo Foundation
 # Author(s): Nicholas Carpaski (carpaski@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: spawn.py 2177 2005-10-25 15:46:38Z ferringb $
-cvs_id_string="$Id: spawn.py 2177 2005-10-25 15:46:38Z ferringb $"[5:-2]
+# $Id: spawn.py 2178 2005-10-25 15:52:57Z ferringb $
+cvs_id_string="$Id: spawn.py 2178 2005-10-25 15:52:57Z ferringb $"[5:-2]
 
 import os,types,string,sys
 import signal
@@ -97,7 +97,7 @@ def find_binary(myc):
 	return None
 
 
-def spawn_func(func,args=[],kwargs=None,exit_func=None,**keywords):
+def spawn_func(func,args=None,kwargs=None,exit_func=None,**keywords):
 	"""spawn a python function in a fork
 	func: python function
 	args: positional args to positionally expand for the function
@@ -107,7 +107,8 @@ def spawn_func(func,args=[],kwargs=None,exit_func=None,**keywords):
 	note exit_func should handle applicable exceptions.  Unhandled exemptions are caught,
 	and the process exits with a code of 1.
 	"""
-	
+	if args is None:
+		args = []
 	if kwargs is None:
 		kwargs == {}
 	if exit_func:

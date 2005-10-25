@@ -1,14 +1,14 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: conditionals.py 2175 2005-10-25 15:05:57Z ferringb $
+# $Id: conditionals.py 2178 2005-10-25 15:52:57Z ferringb $
 
 from portage.util.mappings import LimitedChangeSet, Unchangable
 from portage.util.lists import unique, flatten
 import copy
 
 class PackageWrapper(object):
-	def __init__(self, pkg_instance, configurable_attribute_name, initial_settings=[], unchangable_settings=[], 
+	def __init__(self, pkg_instance, configurable_attribute_name, initial_settings=None, unchangable_settings=None, 
 		attributes_to_wrap=None, build_callback=None):
 
 		"""pkg_instance should be an existing package instance
@@ -19,6 +19,11 @@ class PackageWrapper(object):
 		attributes_to_wrap should be a dict of attr_name:callable
 		the callable receives the 'base' attribute (unconfigured), with the built up conditionals as a second arg
 		"""
+		
+		if initial_settings is None:
+			initial_settings = []
+		if unchangable_settings is None:
+			unchangable_settings = []
 		self.__wrapped_pkg = pkg_instance
 		if attributes_to_wrap is None:
 			attributes_to_wrap = {}

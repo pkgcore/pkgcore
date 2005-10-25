@@ -8,12 +8,15 @@ import fs
 class contentsSet(set):
 	"""class wrapping a contents file"""
 
-	def __init__(self, initial=[]):
+	def __init__(self, initial=None):
 		l = set()
-		for x in initial:
-			if not isinstance(obj, fs.fsBase):
-				raise TypeError("'%s' is not a fs.fsBase deriviative" % x)
-			l.add(x.location)
+		if initial is not None:
+			for x in initial:
+				if not isinstance(obj, fs.fsBase):
+					raise TypeError("'%s' is not a fs.fsBase deriviative" % x)
+				l.add(x.location)
+		else:
+			initial = []
 		set.__init__(self, initial)
 		self.locations = l
 	

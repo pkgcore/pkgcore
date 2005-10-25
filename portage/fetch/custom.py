@@ -17,9 +17,12 @@ class MalformedCommand(errors.base):
 	def __str__(self):	return "fetchcommand is malformed: "+self.command
 
 class fetcher(base.fetcher):
-	def __init__(self, distdir, command, required_chksums=[], userpriv=True, attempts=10, readonly=False, **conf):
+	def __init__(self, distdir, command, required_chksums=None, userpriv=True, attempts=10, readonly=False, **conf):
 		self.distdir = distdir
-		required_chksums = map(lambda x: x.lower(), required_chksums)
+		if required_checksums is not None:
+			required_chksums = map(lambda x: x.lower(), required_chksums)
+		else:
+			required_checksums = []
 		if len(required_chksums) == 1 and required_chksums[0] == "all":
 			self.required_chksums = None
 		else:

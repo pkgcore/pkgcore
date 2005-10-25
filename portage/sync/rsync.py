@@ -1,7 +1,7 @@
 # rsync.py; module providing an abstraction over the rsync binary
 # Copyright 2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-#$Id: rsync.py 1911 2005-08-25 03:44:21Z ferringb $
+#$Id: rsync.py 2178 2005-10-25 15:52:57Z ferringb $
 
 from portage_const import RSYNC_BIN, RSYNC_HOST
 import os, portage_exec
@@ -65,15 +65,18 @@ class RsyncHost:
 			return None
 		return self.__ips
 	
-	def sync(self,settings, local_path,remote_path=None,verbosity=1,excludes=[],compress=True, \
+	def sync(self,settings, local_path,remote_path=None,verbosity=1,excludes=None,compress=True, \
 		timeout=180,ip=None,cleanup=True):
+		
 		"""sync up local_path with remote_path on host
 		settings is a portage.config, at some point hopefully removed and specific options
 		passed in instead.
 		verbosity ranges 0-4
 		0 is absolutely quiet, 1 is quiet, 2 is normal, 3 is noisy.
 		ip is used to control which ip of the host is used.
-		cleanup controls deletion."""
+		cleanup controls deletion.
+		"""
+
 
 		args=[self.__binary,
 			"--recursive",    # Recurse directories
@@ -93,8 +96,9 @@ class RsyncHost:
 
 		if compress:
 			args.append("--compress")
-		for x in excludes:
-			args.append("--exclude=%s" % str(x))
+		if excludes:
+			for x in excludes:
+				args.append("--exclude=%s" % str(x))
 		if verbosity >=3:
 			args.append("--progress")
 			args.append("--verbose")

@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: profiles.py 2007 2005-09-18 21:00:42Z ferringb $
+# $Id: profiles.py 2178 2005-10-25 15:52:57Z ferringb $
 
 from portage.config import profiles
 import os, logging
@@ -19,7 +19,11 @@ class OnDiskProfile(profiles.base):
 	required = ("base_repo", "profile")
 	section_ref = ("base_repo")
 
-	def __init__(self, base_repo, profile, incrementals=[]):
+	def __init__(self, base_repo, profile, incrementals=None):
+
+		if incrementals is None:
+			incrementals = []
+
 		self.basepath = os.path.join(base_repo.base,"profiles")
 
 		dep_path = os.path.join(self.basepath, profile, "deprecated")

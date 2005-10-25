@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: ebuild_repository.py 2165 2005-10-24 20:26:58Z ferringb $
+# $Id: ebuild_repository.py 2171 2005-10-25 14:35:50Z ferringb $
 
 import os, stat
 from buildable import buildable
@@ -101,6 +101,11 @@ class UnconfiguredTree(prototype.tree):
 		except (OSError, IOError), e:
 			raise KeyError("failed fetching versions for package %s: %s" % \
 			(os.path.join(self.base,catpkg.lstrip(os.path.sep)), str(e)))
+
+	def _get_ebuild_path(self, pkg):
+		return os.path.join(self.base, pkg.category, pkg.package, \
+			"%s-%s.ebuild" % (pkg.package, pkg.fullver))
+		           
 
 
 class ConfiguredTree(UnconfiguredTree):

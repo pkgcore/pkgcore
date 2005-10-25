@@ -1,8 +1,8 @@
 # Copyright 2004-2005 Gentoo Foundation
 # Author(s): Nicholas Carpaski (carpaski@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: spawn.py 1961 2005-09-01 20:09:01Z ferringb $
-cvs_id_string="$Id: spawn.py 1961 2005-09-01 20:09:01Z ferringb $"[5:-2]
+# $Id: spawn.py 2177 2005-10-25 15:46:38Z ferringb $
+cvs_id_string="$Id: spawn.py 2177 2005-10-25 15:46:38Z ferringb $"[5:-2]
 
 import os,types,string,sys
 import signal
@@ -51,11 +51,13 @@ def cleanup(pids,block_exceptions=True):
 		except IndexError:	pass
 
 
-def spawn_bash(mycommand,env={},debug=False,opt_name=None,**keywords):
+def spawn_bash(mycommand,env=None,debug=False,opt_name=None,**keywords):
 	"""spawn mycommand as an arguement to bash"""
 	args=[BASH_BINARY]
 	if not opt_name:
 		opt_name=mycommand.split()[0]
+	if env is None:
+		env = {}
 	if not env.has_key("BASH_ENV"):
 		env["BASH_ENV"] = "/etc/spork/is/not/valid/profile.env"
 	if debug:
@@ -95,7 +97,7 @@ def find_binary(myc):
 	return None
 
 
-def spawn_func(func,args=[],kwargs={},exit_func=None,**keywords):
+def spawn_func(func,args=[],kwargs=None,exit_func=None,**keywords):
 	"""spawn a python function in a fork
 	func: python function
 	args: positional args to positionally expand for the function
@@ -103,15 +105,20 @@ def spawn_func(func,args=[],kwargs={},exit_func=None,**keywords):
 	exit_func: optional function for parsing the return of func, and 
 	returning the desired exit code
 	note exit_func should handle applicable exceptions.  Unhandled exemptions are caught,
-	and the process exits with a code of 1."""
+	and the process exits with a code of 1.
+	"""
+	
+	if kwargs is None:
+		kwargs == {}
 	if exit_func:
 		return spawn((func,args,kwargs,exit_func), func_call=True,**keywords)
 	return spawn((func,args,kwargs), func_call=True,**keywords)
 
 # base spawn function
-def spawn(mycommand,env={},raw_exit_code=False,opt_name=None,fd_pipes=None,returnpid=False,\
+def spawn(mycommand,env=None,raw_exit_code=False,opt_name=None,fd_pipes=None,returnpid=False,\
 	uid=None,gid=None,groups=None,umask=None,logfile=None,path_lookup=True, selinux_context=None,
 	raise_signals=False, func_call=False):
+
 	"""base fork/execve function.
 	mycommand is the desired command- if you need a command to execute in a bash/sandbox/fakeroot
 	environment, use the appropriate spawn call.  This is a straight fork/exec code path.
@@ -132,8 +139,11 @@ def spawn(mycommand,env={},raw_exit_code=False,opt_name=None,fd_pipes=None,retur
 	returnpid returns the relevant pids (a list, including the logging process if logfile is on).
 	
 	non-returnpid calls to spawn will block till the process has exited, returning the exitcode/signal
-	raw_exit_code controls whether the actual waitpid result is returned, or intrepretted."""
+	raw_exit_code controls whether the actual waitpid result is returned, or intrepretted.
+	"""
 
+	if env is None:
+		nev = {}
 	myc=''
 	if not func_call:
 		if type(mycommand)==types.StringType:
@@ -335,8 +345,11 @@ def spawn_get_output(mycommand,spawn_type=spawn,raw_exit_code=False,emulate_gso=
 	retval=process_exit_code(retval)
 	return [retval, mydata]
 
-def spawn_fakeroot(mycommand, save_file, env={}, opt_name=None,**keywords):
+def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None,**keywords):
 	"""spawn a fakerooted process, saving/loading from save_file"""
+
+	if env is None:
+		env = {}
 	if opt_name == None:
 		opt_name = "fakeroot %s" % mycommand
 	myc=[FAKEROOT_PATH,"-u","-b","20","-s","%s" % save_file]

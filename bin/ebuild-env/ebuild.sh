@@ -2,7 +2,7 @@
 # ebuild.sh; ebuild phase processing, env handling
 # Copyright 2004-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: ebuild.sh 2131 2005-10-14 22:00:31Z ferringb $
+# $Id: ebuild.sh 2191 2005-10-25 22:54:18Z ferringb $
 
 # general phase execution path-
 # execute_phases is called, which sets EBUILD_PHASE, and then depending on the phase, 
@@ -80,7 +80,7 @@ diefunc() {
         echo "!!! ${*:-(no error message)}" >&2
         echo "!!! If you need support, post the topmost build error, NOT this status message." >&2
 		if [ "${EBUILD_PHASE/depend}" == "${EBUILD_PHASE}" ]; then
-			for x in ${EBUILD_DEATH_HOOKS; do
+			for x in ${EBUILD_DEATH_HOOKS}; do
 				${x} ${1} ${2} ${3} "${@}" >&2 1>&2 
 			done
 		fi
@@ -570,7 +570,7 @@ execute_phases() {
 			[ "$CDEPEND:-unset}" != "unset" ] && 		speak "key CDEPEND=$(echo $CDEPEND)"
 			[ "$PDEPEND:-unset}" != "unset" ] && 		speak "key PDEPEND=$(echo $PDEPEND)"
 			[ "$PROVIDE:-unset}" != "unset" ] && 		speak "key PROVIDE=$(echo $PROVIDE)"
-			[ "$EAPI:-unset}" != "unset"] &&			speak "key EAPI=$(echo $EAPI)"
+			[ "$EAPI:-unset}" != "unset" ] &&			speak "key EAPI=$(echo $EAPI)"
 			set +f
 			;;
 		*)

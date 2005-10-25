@@ -59,3 +59,5 @@ class package_factory(metadata.factory):
 	def _get_new_child_data(self, cpv):
 		return ([self._parent_repo._get_ebuild_path], {})
 
+def generate_new_factory(*a, **kw):
+	return package_factory(*a, **kw).new_package

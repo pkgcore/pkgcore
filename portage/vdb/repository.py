@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org) Jeff Oliver (kaiserfro@yahoo.com)
 # License: GPL2
-# $Id: repository.py 2189 2005-10-25 21:49:47Z ferringb $
+# $Id: repository.py 2192 2005-10-25 23:04:19Z ferringb $
 
 import os,stat
 from portage.repository import prototype, errors
@@ -11,9 +11,11 @@ from portage.package.cpv import CPV as cpv
 from portage.util.lists import unique
 from portage.util.mappings import LazyValDict
 from portage.vdb.contents import ContentsFile
+from portage.plugins import get_plugin
 
 class tree(prototype.tree):
-
+	ebuild_format_magic = "ebuild_built"
+	
 	def __init__(self, location):
 		super(tree,self).__init__()
 		self.base = self.location = location
@@ -27,8 +29,7 @@ class tree(prototype.tree):
 		except OSError:
 			raise errors.InitializationError("lstat failed on base %s" % self.base)
 
-		from portage.ebuild.ebuild_built import package_factory
-		self.package_class = package_factory(self).new_package
+		self.package_class = get_plugin("format", self.ebuild_format_magic)(self)
 
 
 

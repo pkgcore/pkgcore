@@ -6,9 +6,12 @@
 class fetchable(object):
 	__slots__ = ("filename", "uri", "chksums")
 
-	def __init__(self, filename, uri=None, chksums={}):
+	def __init__(self, filename, uri=None, chksums=None):
 		self.uri = uri
-		self.chksums = chksums
+		if chksums is None:
+			self.chksums = {}
+		else:
+			self.chksums = chksums
 		self.filename = filename
 
 	def __str__(self):

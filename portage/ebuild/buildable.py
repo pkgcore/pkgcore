@@ -16,7 +16,7 @@ from portage.spawn import spawn_bash, spawn
 from portage.util.currying import post_curry, pretty_docs
 from portage.os_data import xargs
 from const import eapi_capable
-from built import built
+from portage.ebuild.ebuild_built import built
 from portage.fs import scan
 from portage.protocols.data_source import local_source
 

@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: digest.py 2183 2005-10-25 21:27:27Z ferringb $
+# $Id: digest.py 2188 2005-10-25 21:44:53Z ferringb $
 
 from portage.chksum.errors import ParseChksumError
 def parse_digest(path, throw_errors=True):
@@ -19,5 +19,5 @@ def parse_digest(path, throw_errors=True):
 			d[l[2]] = {l[0].lower():l[1], "size":l[3]}
 		f.close()
 	except (OSError, IOError), e:
-			raise ParseChksumError("failed parsing " + path, e)
+		raise ParseChksumError("failed parsing " + path, e)
 	return d

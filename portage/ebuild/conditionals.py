@@ -1,26 +1,25 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: conditionals.py 2128 2005-10-13 08:43:33Z ferringb $
+# $Id: conditionals.py 2170 2005-10-25 10:33:35Z ferringb $
 
 # TODO: move exceptions elsewhere, bind them to a base exception for portage
 
 import logging
-from portage.restrictions.packages import OrRestriction, AndRestriction
-from portage.package.conditionals import base as Conditional
+from portage.restrictions import packages
 from portage.util.lists import unique, flatten
 from portage.util.strings import iter_tokens
 
 def conditional_converter(node, payload):
 	if node[0] == "!":
-		return Conditional(node[1:], payload, negate=True)
-	return Conditional(node, payload)
+		return packages.Conditional(node[1:], payload, negate=True)
+	return packages.Conditional(node, payload)
 
 
-class DepSet(AndRestriction):
+class DepSet(packages.AndRestriction):
 	__slots__ = ("has_conditionals", "conditional_class", "node_conds")
-	def __init__(self, dep_str, element_func, operators={"||":OrRestriction}, \
-		conditional_converter=conditional_converter, conditional_class=Conditional, empty=False, full_str=None):
+	def __init__(self, dep_str, element_func, operators={"||":packages.OrRestriction}, \
+		conditional_converter=conditional_converter, conditional_class=packages.Conditional, empty=False, full_str=None):
 
 		"""dep_str is a dep style syntax, element_func is a callable returning the obj for each element, and
 		cleanse_string controls whether or translation of tabs/newlines is required"""
@@ -53,7 +52,7 @@ class DepSet(AndRestriction):
 					elif conditionals[-1].endswith('?'):
 						cond = raw_conditionals[:]
 						depsets[-2].restrictions.append(conditional_converter(conditionals.pop(-1)[:-1], depsets[-1]))
-						raw_conditionals.pop(0)
+						raw_conditionals.pop(-1)
 						for x in depsets[-1]:
 							self.node_conds.setdefault(x, []).append(cond)
 					elif conditionals[-1]:

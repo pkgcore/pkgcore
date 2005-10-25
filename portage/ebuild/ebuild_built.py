@@ -5,9 +5,9 @@
 
 from portage.ebuild import ebuild_src
 from portage.util.mappings import ImmutableDict
-from portage.package import metadata
+from portage.package import metadata, base
 
-class built(portage.package.base.base):
+class built(base.base):
 	
 	def __init__(self, pkg, contents, environment):
 		import warnings

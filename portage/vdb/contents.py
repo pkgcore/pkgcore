@@ -7,7 +7,7 @@ import os
 from portage.fs.contents import contentsSet
 from portage.fs import fs
 
-class contentsFile(contentsSet):
+class ContentsFile(contentsSet):
 	"""class wrapping a contents file"""
 
 	def __init__(self, location, writable=False, empty=False):
@@ -98,7 +98,7 @@ class contentsFile(contentsSet):
 
 		finally:
 			try:	infile.close()
-			except (AttributeError, IOError):
+			except UnboundLocalError:
 				pass
 
 

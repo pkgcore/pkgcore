@@ -1,13 +1,14 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: metadata.py 1982 2005-09-07 10:59:17Z ferringb $
+# $Id: metadata.py 2182 2005-10-25 21:26:10Z ferringb $
 
 import weakref
 from cpv import CPV
 
 class package(CPV):
 	immutable = True
+	
 	def __init__(self, cpv, parent_repository):
 		super(package,self).__init__(cpv)
 		self.__dict__["_cpv_finalized"] = False

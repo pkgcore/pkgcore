@@ -1,5 +1,5 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Jeff Oliver (kaiserfro@yahoo.com)
+# Author(s): Jason Stubbs (jstubbs@gentoo.org)
 # License: GPL2
 # $Id: repository.py 1969 2005-09-04 07:38:17Z jstubbs $
 

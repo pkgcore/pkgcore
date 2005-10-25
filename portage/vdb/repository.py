@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Jeff Oliver (kaiserfro@yahoo.com)
+# Author(s): Brian Harring (ferringb@gentoo.org) Jeff Oliver (kaiserfro@yahoo.com)
 # License: GPL2
-# $Id: repository.py 2185 2005-10-25 21:36:01Z ferringb $
+# $Id: repository.py 2189 2005-10-25 21:49:47Z ferringb $
 
 import os,stat
 from portage.repository import prototype, errors

@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: __init__.py 1956 2005-09-01 11:24:09Z ferringb $
+# $Id: __init__.py 2174 2005-10-25 15:04:55Z ferringb $
 
 import os, sys
 from portage.util.modules import load_module
@@ -19,12 +19,12 @@ def get_handler(*requested):
 		d[x] = chksum_types[x]
 	return d
 
-def init(additional_handlers={}):
+def init(additional_handlers=None):
 	"""init the chksum subsystem.  scan the dir, find what handlers are available, etc.
 	if desired to register additional, or override existing, pass in a dict of type:func"""
 	import sys, os, logging
 
-	if not isinstance(additional_handlers, dict):
+	if additional_handlers is not None and not isinstance(additional_handlers, dict):
 		raise TypeError("additional handlers must be a dict!")
 
 	chksum_types.clear()
@@ -54,7 +54,8 @@ def init(additional_handlers={}):
 			logging.warn("%s.%s invalid chksum_types, ValueError Exception" % (__name__, f))
 			continue
 
-	chksum_types.update(additional_handlers)	
+	if additional_handlers is not None:
+		chksum_types.update(additional_handlers)	
 
 	__inited__ = True
 

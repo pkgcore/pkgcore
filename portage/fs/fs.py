@@ -61,9 +61,11 @@ class fsBase(object):
 
 class fsFile(fsBase):
 	__slots__ = tuple(base_slots + fsBase.__slots__ + ["chksums"])
-	def __init__(self, location, chksums={}, mtime=None, **kwds):
+	def __init__(self, location, chksums=None, mtime=None, **kwds):
 		mtime = long(mtime)
 		kwds["mtime"] = mtime
+		if chksums is None:
+			chksums = {}
 		if not isinstance(chksums, ImmutableDict):
 			chksums = ImmutableDict(chksums)
 		kwds["chksums"] = chksums

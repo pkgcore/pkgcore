@@ -1,7 +1,7 @@
 # Copyright: 2004-2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: processor.py 2007 2005-09-18 21:00:42Z ferringb $
+# $Id: processor.py 2172 2005-10-25 15:01:27Z ferringb $
 
 # this needs work.  it's been pruned heavily from what ebd used originally, but it still isn't what 
 # I would define as 'right'
@@ -397,7 +397,7 @@ class ebuild_processor:
 		
 
 	# this basically handles all hijacks from the daemon, whether confcache or portageq.
-	def generic_handler(self, additional_commands={}):
+	def generic_handler(self, additional_commands=None):
 		"""internal function that responds to the running ebuild processor's requests
 		
 		additional_commands is a dict of command:callable.  If you need to slip in extra args, look into portage.util.currying.
@@ -421,11 +421,12 @@ class ebuild_processor:
 
 		handlers["phases"] = post_curry(chuck_StoppingCommand, lambda f: f.lower().strip()=="succeeded")
 
-		for x in additional_commands.keys():
-			if not callable(additional_commands[x]):
-				raise TypeError(additional_commands[x])
+		if additional_commands is not None:
+			for x in additional_commands.keys():
+				if not callable(additional_commands[x]):
+					raise TypeError(additional_commands[x])
 
-		handlers.update(additional_commands)
+			handlers.update(additional_commands)
 
 		try:
 			while True:
@@ -467,7 +468,9 @@ class UnhandledCommand(ProcessingInterruption):
 __all__ = ("request_ebuild_processor", "release_ebuild_processor", "ebuild_processor"
 	"UnhandledCommand", "expected_ebuild_env")
 
-def expected_ebuild_env(pkg, d={}):
+def expected_ebuild_env(pkg, d=None):
+	if d is None:
+		d = {}
 	d["CATEGORY"] = pkg.category
 	d["PF"] = "-".join((pkg.package, pkg.fullver))
 	d["P"]  = "-".join((pkg.package, pkg.version))

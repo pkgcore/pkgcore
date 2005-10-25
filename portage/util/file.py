@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: file.py 2156 2005-10-23 23:48:48Z ferringb $
+# $Id: file.py 2181 2005-10-25 21:25:43Z ferringb $
 
 import re
 from shlex import shlex
@@ -129,8 +129,10 @@ class bash_parser(shlex):
 		self.changed_state.append((self.state, self.token[self.__pos:]))
 		tok = ''
 		for s, t in self.changed_state:
-			if s in ('"', "a"):		tok += self.var_expand(t)
-			else:							tok += t
+			if s in ('"', "a"):
+				tok += self.var_expand(t)
+			else:
+				tok += t
 		return tok
 
 	def var_expand(self, val):

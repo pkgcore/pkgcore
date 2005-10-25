@@ -1,15 +1,15 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: conditionals.py 2170 2005-10-25 10:33:35Z ferringb $
+# $Id: conditionals.py 2175 2005-10-25 15:05:57Z ferringb $
 
 from portage.util.mappings import LimitedChangeSet, Unchangable
 from portage.util.lists import unique, flatten
 import copy
 
 class PackageWrapper(object):
-	def __init__(self, pkg_instance, configurable_attribute_name, initial_settings=[], unchangable_settings=[], attributes_to_wrap={},
-		build_callback=None):
+	def __init__(self, pkg_instance, configurable_attribute_name, initial_settings=[], unchangable_settings=[], 
+		attributes_to_wrap=None, build_callback=None):
 
 		"""pkg_instance should be an existing package instance
 		configurable_attribute_name is the attribute name to fake on this instance for accessing builtup conditional changes
@@ -20,6 +20,8 @@ class PackageWrapper(object):
 		the callable receives the 'base' attribute (unconfigured), with the built up conditionals as a second arg
 		"""
 		self.__wrapped_pkg = pkg_instance
+		if attributes_to_wrap is None:
+			attributes_to_wrap = {}
 		self.__wrapped_attr = attributes_to_wrap
 		if configurable_attribute_name.find(".") != -1:
 			raise ValueError("can only wrap first level attributes, 'obj.dar' fex, not '%s'" % (configurable_attribute_name))

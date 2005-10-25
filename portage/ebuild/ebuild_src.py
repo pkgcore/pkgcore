@@ -1,10 +1,10 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: ebuild_package.py 2171 2005-10-25 14:35:50Z ferringb $
+# $Id: ebuild_src.py 2185 2005-10-25 21:36:01Z ferringb $
 
 import os
-from portage import package
+from portage.package import metadata
 from conditionals import DepSet
 from portage.package.atom import atom
 from digest import parse_digest
@@ -37,15 +37,20 @@ def create_fetchable_from_uri(chksums, mirrors, uri):
 	return fetchable(file, uri, chksums[file])
 
 
-class EbuildPackage(package.metadata.package):
+class package(metadata.package):
 	immutable = False
-
-	def __init__(self, cpv, parent, pull_path):
-		super(EbuildPackage, self).__init__(cpv, parent)
-		self.__dict__["_get_path"] = pull_path
+	allow_regen = True
 	
+	def __init__(self, cpv, parent, pull_path, mirrors=None):
+		super(package, self).__init__(cpv, parent)
+		self.__dict__["_get_path"] = pull_path
+		if mirrors is None:
+			mirrors = {}
+		self.__dict__["_mirrors"] = mirrors
+
 	def __getattr__(self, key):
 		val = None
+		# convert this into dict lookups.  func overhead may make this not worth the effort though
 		if key == "path":
 			val = self._get_path(self)
 		elif key == "_mtime_":
@@ -62,9 +67,11 @@ class EbuildPackage(package.metadata.package):
 		elif key == "rdepends":
 			val = DepSet(self.data.get("RDEPEND","") + " " + self.data.get("PDEPEND", ""), atom)
 		elif key == "fetchables":
-			chksums = parse_digest(os.path.join(self.__dict__["_parent"]._base, self.category, self.package, "files",
+			# XXX
+			# this is a hack.
+			chksums = parse_digest(os.path.join(os.path.dirname(self.path), "files", \
 				"digest-%s-%s" % (self.package, self.fullver)))
-			val = DepSet(self.data["SRC_URI"], lambda x:create_fetchable_from_uri(chksums, self.__dict__["_parent"]._mirrors, x), operators={})
+			val = DepSet(self.data["SRC_URI"], lambda x:create_fetchable_from_uri(chksums, self._mirrors, x), operators={})
 		elif key in ("license", "slot"):
 			val = DepSet(self.data[key.upper()], str)
 		elif key == "description":
@@ -82,12 +89,14 @@ class EbuildPackage(package.metadata.package):
 			except KeyError:
 				val = 0
 		else:
-			return super(EbuildPackage, self).__getattr__(key)
+			return super(package, self).__getattr__(key)
 		self.__dict__[key] = val
 		return val
 
 	def _fetch_metadata(self):
 		data = self._parent._get_metadata(self)
+		if not self.allow_regen:
+			return data
 		doregen = False
 		if data == None:
 			doregen = True
@@ -105,15 +114,14 @@ class EbuildPackage(package.metadata.package):
 		return data
 
 
-class EbuildFactory(package.metadata.factory):
-	child_class = EbuildPackage
+class package_factory(metadata.factory):
+	child_class = package
 
 	def __init__(self, parent, cachedb, eclass_cache, mirrors, *args,**kwargs):
-		super(EbuildFactory, self).__init__(parent, *args,**kwargs)
+		super(package_factory, self).__init__(parent, *args,**kwargs)
 		self._cache = cachedb
 		self._ecache = eclass_cache
 		self._mirrors = mirrors
-		self._base = self._parent_repo.base
 
 	def _get_metadata(self, pkg):
 		if self._cache != None:
@@ -142,8 +150,8 @@ class EbuildFactory(package.metadata.factory):
 		return mydata
 
 	def _get_new_child_data(self, cpv):
-		return ([self._parent_repo._get_ebuild_path], {})
+		return ([self._parent_repo._get_ebuild_path], {"mirrors":self._mirrors})
 
 
 def generate_new_factory(*a, **kw):
-	return EbuildFactory(*a, **kw).new_package
+	return package_factory(*a, **kw).new_package

@@ -5,9 +5,9 @@
 
 import os, shutil
 # surprisingly this is clean, cause buildable defines __all__
-from portage.operations.buildable import *
+from portage.operations.build import *
 from itertools import imap, izip
-from processor import request_ebuild_processor, release_ebuild_processor, UnhandledCommand, \
+from portage.ebuild.processor import request_ebuild_processor, release_ebuild_processor, UnhandledCommand, \
 	expected_ebuild_env, chuck_UnhandledCommand
 from portage.os_data import portage_gid
 from portage.util.fs import ensure_dirs, normpath

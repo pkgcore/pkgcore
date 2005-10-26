@@ -1,27 +1,33 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: values.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: values.py 2196 2005-10-26 22:23:18Z ferringb $
 
 import re, logging
-import restriction
-import boolean
+from portage.restrictions import restriction, boolean
+from portage.util.currying import pre_curry, pretty_docs
+
+value_type = "values"
 
 class base(restriction.base):
 	"""base restriction matching object; overrides setattr to provide the usual write once trickery
 	all derivatives *must* be __slot__ based"""
 
 	__slots__ = restriction.base.__slots__
-
+	type = value_type
 	def force_True(self, pkg, attr, val):
-		if self.match(val) ^ self.negate:	return True
-		elif self.negate:					return pkg.request_disable(attr, val)
-		else:								return pkg.request_enable(attr, val)
+		if self.match(val) ^ self.negate:
+			return True
+		elif self.negate:
+			return pkg.request_disable(attr, val)
+		return pkg.request_enable(attr, val)
 		
 	def force_False(self, pkg, attr, val):
-		if self.match(val) ^ self.negate:	return True
-		elif self.negate:					return pkg.request_enable(attr, val)
-		else:								return pkg.request_disable(attr, val)
+		if self.match(val) ^ self.negate:	
+			return True
+		elif self.negate:
+			return pkg.request_enable(attr, val)
+		return pkg.request_disable(attr, val)
 
 
 class VersionRestriction(base):
@@ -101,7 +107,9 @@ class StrExactMatch(StrMatch):
 
 
 class StrGlobMatch(StrMatch):
+
 	__slots__ = tuple(["glob"] + StrMatch.__slots__)
+
 	def __init__(self, glob, CaseSensitive=True, **kwds):
 		super(StrGlobMatch, self).__init__(**kwds)
 		if not CaseSensitive:
@@ -114,7 +122,6 @@ class StrGlobMatch(StrMatch):
 	def match(self, value):
 		if isinstance(value, (list, tuple)):
 			for x in value:
-				print "trying %s against %s" % (x,  self.glob)
 				if self.match(x):
 					return not self.negate
 			return self.negate
@@ -141,8 +148,10 @@ class StrGlobMatch(StrMatch):
 
 
 class ContainmentMatch(base):
+
 	"""used for an 'in' style operation, 'x86' in ['x86','~x86'] for example
 	note that negation of this *does* not result in a true NAND when all is on."""
+
 	__slots__ = tuple(["vals", "vals_len", "all"] + base.__slots__)
 	
 	def __init__(self, *vals, **kwds):
@@ -272,6 +281,7 @@ class ContainmentMatch(base):
 		else:			s="contains [%s]"
 		return s % ', '.join(map(str, self.vals))
 
+
 def get_val(pkg, attr):
 	attr_list = '.'.split(attr)
 	o=pkg
@@ -283,4 +293,24 @@ def get_val(pkg, attr):
 		logger.warn("impossible happened, unable to get attr '%s' from pkg '%s', yet it was handed into my parent" 
 			% (attr, pkg))
 		raise
+
+
+for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
+	[restriction, ["AlwaysBool"]]]:
+	for x in l:
+		o = getattr(m, x)
+		doc = o.__doc__
+		o = pre_curry(o, value_type)
+		if doc == None:
+			doc = ''
+		else:
+			# do this so indentation on pydoc __doc__ is sane
+			doc = "\n".join(map(lambda x:x.lstrip(), doc.split("\n"))) +"\n"
+			doc += "Automatically set to package type"
+		globals()[x] = pretty_docs(o, doc)
+
+del x, m, l, o, doc
+
+AlwaysTrue = AlwaysBool(True)
+AlwaysFalse = AlwaysBool(True)
 

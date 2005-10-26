@@ -1,14 +1,13 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: collapsed.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: collapsed.py 2196 2005-10-26 22:23:18Z ferringb $
 
 __all__=("DictBased")
-from boolean import base as bool_base
-from packages import AndRestriction, OrRestriction, AlwaysTrue, AlwaysFalse, base
-from portage.util.inheritance import check_for_base
+from portage.restrictions import packages
 
-class DictBased(base):
+class DictBased(packages.base):
+
 	"""Restrictions are (by default) executed in a depth/breadth method; for long chains of restrictions,
 	this grows inneficient.  For example, package.mask'ing has over 300 atoms, effectively over 1800 objects in use.
 	
@@ -27,8 +26,9 @@ class DictBased(base):
 	Aside from that, method of generating keys/collapsing restrictions is subject to change, still need to push metadata 
 	in re: what restriction types are being collapsed; short version, api isn't declared stable yet.
 	"""
-	__slots__ = tuple(["restricts_dict", "get_pkg_key", "get_atom_key"] + base.__slots__)
-	
+
+	__slots__ = tuple(["restricts_dict", "get_pkg_key", "get_atom_key"] + packages.base.__slots__)
+
 	def __init__(self, restriction_items, get_key_from_package, get_key_from_atom, *args, **kwargs):
 		"""restriction_items is a source of restriction keys and remaining restriction (if none, set it to None)
 		get_key is a function to get the key from a pkg instance"""
@@ -41,12 +41,12 @@ class DictBased(base):
 		for r in restriction_items:
 			key, remaining = get_key_from_atom(r)
 			if len(remaining) == 0:
-				remaining = AlwaysTrue
+				remaining = packages.AlwaysTrue
 			else:
 				if len(remaining) == 1 and (isinstance(remaining, list) or isinstance(remaining, tuple)):
 					remaining = remaining[0]
 				elif isinstance(remaining, (tuple, list)):
-					remaining = AndRestriction(*remaining)
+					remaining = packages.AndRestriction(*remaining)
 				elif not isinstance(remaining, base):
 					print "remaining=",remaining
 					print "base=",base
@@ -55,7 +55,7 @@ class DictBased(base):
 			if key in self.restricts_dict:
 				self.restricts_dict[key].add_restriction(remaining)
 			else:
-				self.restricts_dict[key] = OrRestriction(remaining)
+				self.restricts_dict[key] = packages.OrRestriction(remaining)
 
 		self.get_pkg_key, self.get_atom_key = get_key_from_package, get_key_from_atom
 
@@ -79,6 +79,9 @@ class DictBased(base):
 			return True
 		return False
 
+	def __str__(self):
+		return "%s: pkg_key(%s), atom_key(%s)" % (self.__class__, self.get_pkg_key, \
+			self.get_atom_key)
 
 #	def __getitem__(self, restriction, default=None):
 #		if isinstance(restriction, base):

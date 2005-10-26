@@ -1,11 +1,11 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: domain.py 2007 2005-09-18 21:00:42Z ferringb $
+# $Id: domain.py 2196 2005-10-26 22:23:18Z ferringb $
 
 import os
 from portage.restrictions.collapsed import DictBased
-from portage.restrictions.packages import OrRestriction, AndRestriction, PackageRestriction
+from portage.restrictions import packages, values #import OrRestriction, AndRestriction, PackageRestriction
 from errors import BaseException
 from portage.util.file import iter_read_bash
 from portage.package.atom import atom
@@ -80,10 +80,11 @@ class domain:
 		# visibility mask...
 		# if ((package.mask or visibility) and not package.unmask) or not (package.keywords or accept_keywords)
 
-		filter = OrRestriction()
+		filter = packages.OrRestriction()
 		masker_d = DictBased(maskers, get_key_from_package, split_atom)
+		# check this.
 		if len(unmaskers):
-			masker_d = AndRestriction(masker_d, DictBased(unmaskers, get_key_from_package, split_atom, negate=True))
+			masker_d = packages.AndRestriction(masker_d, DictBased(unmaskers, get_key_from_package, split_atom, negate=True))
 		filter.add_restriction(masker_d)
 
 		use, license, key = [], [], []
@@ -126,7 +127,7 @@ class domain:
 				# note that we created the atom above- so we can toy with it's innards if we want. :)
 				r = ContainmentMatch(ukey)
 			else:
-				r = OrRestriction()
+				r = values.OrRestriction()
 				per_node = []
 				exact = []
 				for x in v:
@@ -137,26 +138,26 @@ class domain:
 					r.add_restriction(ContainmentMatch(*exact))
 				if len(per_node):
 					r.add_restriction(*exact)
-			a.add_restriction(PackageRestriction("keywords", r))
+			a.add_restriction(packages.PackageRestriction("keywords", r))
 			keyword_filter.append(a)
 
 		key_filter = ContainmentMatch(*key)
 		if len(keyword_filter) != 0:
-			filter.add_restriction(OrRestriction(PackageRestriction("keywords", key_filter), 
+			filter.add_restriction(packages.OrRestriction(packages.PackageRestriction("keywords", key_filter), 
 				DictBased(keyword_filter, get_key_from_package, split_atom), negate=True))
 		else:
-			filter.add_restriction(PackageRestriction("keywords", key_filter, negate=True))
+			filter.add_restriction(packages.PackageRestriction("keywords", key_filter, negate=True))
 		del key_filter, keywords, keyword_filter, key, ukey, ukey_check
 
 		# we can finally close that fricking "DISALLOW NON FOSS LICENSES" bug via this >:)
 		if len(master_license) != 0:
 			if len(license) != 0:
-				r = OrRestriction(negate=True)
-				r.add_restriction(PackageRestriction("license", ContainmentMatch(*master_license)))
+				r = packages.OrRestriction(negate=True)
+				r.add_restriction(packages.PackageRestriction("license", ContainmentMatch(*master_license)))
 				r.add_restriction(DictBased(license, get_key_from_package, split_atom))
 				filter.add_restriction(r)
 			else:
-				filter.add_restriction(PackageRestriction("license", ContainmentMatch(*master_license), negate=True))
+				filter.add_restriction(packages.PackageRestriction("license", ContainmentMatch(*master_license), negate=True))
 		elif len(license):
 			filter.add_restriction(DictBased(license, get_key_from_package, split_atom, negate=True))
 

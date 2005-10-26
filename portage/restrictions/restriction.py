@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: restriction.py 2162 2005-10-24 18:11:12Z ferringb $
+# $Id: restriction.py 2196 2005-10-26 22:23:18Z ferringb $
 
 
 class base(object):
@@ -27,15 +27,6 @@ class base(object):
 		raise NotImplementedError
 
 	force_False = force_True = match
-	def cmatch(self, pkg, *val):
-		m=self.match(value)
-		if m ^ self.negate:
-			return True
-		elif pkg == None or attr == None:
-			return False
-		elif self.negate:
-			return pkg.request_disable(attr, value)
-		return pkg.request_enable(attr, value)
 
 	def intersect(self, other):
 		return None
@@ -59,12 +50,15 @@ class base(object):
 			self._hash = hash(str(self))
 		return self._hash
 
-class AlwaysBoolMatch(base):
-	__slots__ = base.__slots__
-	def match(self, *a, **kw):		return self.negate
-	def __str__(self):	return "always '%s'" % self.negate
-	def cmatch(self, *a, **kw):		return self.negate
 
-AlwaysFalse = AlwaysBoolMatch(False)
-AlwaysTrue  = AlwaysBoolMatch(True)
+class AlwaysBool(base):
+	__slots__ = ["type"] + base.__slots__
+	
+	def __init__(self, package_type, negate=False):
+		self.type, self.negate  = package_type, negate
 
+	def match(self, *a, **kw):
+		return self.negate
+
+	def __str__(self):
+		return "always '%s'" % self.negate

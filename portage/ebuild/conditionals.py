@@ -1,12 +1,12 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Jason Stubbs (jstubbs@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: conditionals.py 2170 2005-10-25 10:33:35Z ferringb $
+# $Id: conditionals.py 2196 2005-10-26 22:23:18Z ferringb $
 
 # TODO: move exceptions elsewhere, bind them to a base exception for portage
 
 import logging
-from portage.restrictions import packages
+from portage.restrictions import packages, boolean
 from portage.util.lists import unique, flatten
 from portage.util.strings import iter_tokens
 
@@ -16,14 +16,17 @@ def conditional_converter(node, payload):
 	return packages.Conditional(node, payload)
 
 
-class DepSet(packages.AndRestriction):
-	__slots__ = ("has_conditionals", "conditional_class", "node_conds")
+class DepSet(boolean.AndRestriction):
+	__slots__ = ("has_conditionals", "conditional_class", "node_conds") + boolean.AndRestriction.__slots__
+
 	def __init__(self, dep_str, element_func, operators={"||":packages.OrRestriction}, \
 		conditional_converter=conditional_converter, conditional_class=packages.Conditional, empty=False, full_str=None):
 
 		"""dep_str is a dep style syntax, element_func is a callable returning the obj for each element, and
 		cleanse_string controls whether or translation of tabs/newlines is required"""
-		super(DepSet, self).__init__()
+
+		boolean.AndRestriction.__init__(self, packages.package_type)
+
 		self.conditional_class = conditional_class
 		self.node_conds = {}
 

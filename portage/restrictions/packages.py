@@ -1,32 +1,36 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: packages.py 2170 2005-10-25 10:33:35Z ferringb $
+# $Id: packages.py 2196 2005-10-26 22:23:18Z ferringb $
 
-import restriction
-import boolean
 from portage.util.lists import unique
-import values
+from portage.util.currying import pre_curry, pretty_docs
+from portage.restrictions import values, restriction, boolean
 
+package_type = "package"
 class base(restriction.base):
-	package_matching = True
-
+	__slots__ = restriction.base.__slots__
+	type = package_type
 
 class Conditional(base):
 	"""base object representing a conditional node"""
-	package_matcing = False
+
+	__slots__ = ["cond", "negate", "restrictions"]
+	type = package_type
 	
 	def __init__(self, node, payload, negate=False):
 		self.negate, self.cond, self.restrictions = negate, node, payload
 
 	def __str__(self):	
-		if self.negate:	s="!"+self.cond
-		else:					s=self.cond
-		try:		s2=" ".join(self.restrictions)
+		if self.negate:
+			s = "!"+self.cond
+		else:
+			s = self.cond
+		try:
+			s2=" ".join(self.restrictions)
 		except TypeError:
-			s2=str(self.restrictions)
+			s2 = str(self.restrictions)
 		return "%s? ( %s )" % (s, s2)
-
 
 	def __iter__(self):
 		return iter(self.restrictions)
@@ -42,8 +46,8 @@ class PackageRestriction(base):
 		super(PackageRestriction, self).__init__(**kwds)
 		self.attr_split = attr.split(".")
 		self.attr = attr
-		if not isinstance(restriction, values.base):
-			raise TypeError("restriction must be of a restriction type")
+		if not restriction.type == values.value_type:
+			raise TypeError("restriction must be of a value type")
 		self.restriction = restriction
 
 	def __pull_attr(self, pkg):
@@ -133,31 +137,22 @@ class PackageRestriction(base):
 		if self.negate:	self.attr += "not "
 		return s + str(self.restriction)
 
+for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
+	[restriction, ["AlwaysBool"]]]:
+	for x in l:
+		o = getattr(m, x)
+		doc = o.__doc__
+		o = pre_curry(o, package_type)
+		if doc == None:
+			doc = ''
+		else:
+			# do this so indentation on pydoc __doc__ is sane
+			doc = "\n".join(map(lambda x:x.lstrip(), doc.split("\n"))) +"\n"
+			doc += "Automatically set to package type"
+		globals()[x] = pretty_docs(o, doc)
 
-class AndRestriction(base, boolean.AndRestriction):
-	__slots__ = tuple(unique(list(boolean.AndRestriction.__slots__) + base.__slots__))
-	required_base = base
-	
+del x, m, l, o, doc
 
-class OrRestriction(base, boolean.OrRestriction):
-	__slots__ = tuple(unique(list(boolean.OrRestriction.__slots__) + base.__slots__))
-	required_base = base
-
-class XorRestriction(base, boolean.XorRestriction):
-	__slots__ = tuple(unique(list(boolean.XorRestriction.__slots__) + base.__slots__))
-	required_base = base
-
-class AlwaysBoolRestriction(restriction.AlwaysBoolMatch, base):
-	__slots__=("negate")
-def __init__(self, val):
-	self.negate = val
-def match(self, *a):
-	return self.negate
-def force_False(self, *a):
-	return self.negate == False
-def force_True(self, *a):
-	return self.negate == True
-
-AlwaysTrue = AlwaysBoolRestriction(True)
-AlwaysFalse = AlwaysBoolRestriction(True)
+AlwaysTrue = AlwaysBool(True)
+AlwaysFalse = AlwaysBool(True)
 

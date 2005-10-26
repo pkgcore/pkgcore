@@ -53,7 +53,6 @@ class package_factory(metadata.factory):
 	child_class = package
 
 	def _get_metadata(self, pkg):
-		import pdb;pdb.set_trace()
 		return self._parent_repo._get_metadata(pkg)
 
 	def _get_new_child_data(self, cpv):

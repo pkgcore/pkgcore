@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
 # Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: values.py 2196 2005-10-26 22:23:18Z ferringb $
+# $Id: values.py 2197 2005-10-27 15:31:25Z ferringb $
 
 import re, logging
 from portage.restrictions import restriction, boolean
@@ -108,9 +108,9 @@ class StrExactMatch(StrMatch):
 
 class StrGlobMatch(StrMatch):
 
-	__slots__ = tuple(["glob"] + StrMatch.__slots__)
+	__slots__ = tuple(["glob", "prefix"] + StrMatch.__slots__)
 
-	def __init__(self, glob, CaseSensitive=True, **kwds):
+	def __init__(self, glob, CaseSensitive=True, prefix=True, **kwds):
 		super(StrGlobMatch, self).__init__(**kwds)
 		if not CaseSensitive:
 			self.flags = re.I
@@ -118,17 +118,17 @@ class StrGlobMatch(StrMatch):
 		else:
 			self.flags = 0
 			self.glob = str(glob)
+		self.prefix = prefix
 
 	def match(self, value):
-		if isinstance(value, (list, tuple)):
-			for x in value:
-				if self.match(x):
-					return not self.negate
-			return self.negate
+		value = str(value)
+		if self.flags & re.I:
+			value = value.lower()
+		if self.prefix:
+			f = value.startswith
 		else:
-			value = str(value)
-			if self.flags & re.I:	value = value.lower()
-			return value.startswith(self.glob) ^ self.negate
+			f = value.endswith
+		return f(self.glob) ^ self.negate
 
 	def intersect(self, other):
 		if self.match(other.glob):

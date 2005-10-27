@@ -7,6 +7,7 @@
 if __name__ == "__main__":
 	import sys, portage.config
 	from portage.package.atom import atom
+	from portage.restrictions import packages, values, boolean
 	a = sys.argv[1:]
 	if "--raw" in a:
 		raw = True
@@ -29,8 +30,8 @@ if __name__ == "__main__":
 	else:
 		atomstr = lambda x, y=False: str(x)
 
-	if len(a) != 2:
-		print "supported args: [--raw] [--atomstr] atom attr"
+	if len(a) == 0:
+		print "supported args: [--raw] [--atomstr] atom [ --attr attr ]"
 		sys.exit(1)
 	conf = portage.config.load_config()
 	if len(conf.domain) != 1:
@@ -47,21 +48,64 @@ if __name__ == "__main__":
 		repos.extend(domain.repos)
 
 	atoms = []
-	attr = a.pop(-1)
+	if "--attr" in a:
+		i = a.index("--attr")
+		a.pop(i)
+		try:
+			attr = a.pop(i)
+		except IndexError:
+			print "need an arg to --attr!"
+			sys.exit(1)
+	else:
+		attr = None
 	for x in a:
-		print "x=",x
-		atoms.append(atom(x))
-		# force evaluation
-		atoms[-1].category
-
+		if "*" in x:
+			x = x.split("/", 1)
+			if len(x) > 1:
+				r = packages.AndRestriction()
+				def check_glob_pos(x):
+					if x.startswith("*"):
+						prefix = True
+					elif x.endswith("*"):
+						prefix = False
+					else:
+						raise TypeError("'*' must be specified at the end or beginning of a matching field")
+					return x.strip("*")
+				if "*" in x[0]:
+					x[0] = check_glob_pos(x[0])
+					if len(x[0]):
+						cat = values.StrGlobMatch(x[0])
+					else:
+						cat = None
+				else:
+					cat = values.StrExactMatch(x[0])
+				if cat is not None:
+					r.add_restriction(packages.PackageRestriction("category", cat))
+				if "*" in x[1]:
+					x[1] = check_glob_pos(x[1])
+					if len(x[1]):
+						pkg = values.StrGlobMatch(x[1])
+					else:
+						pkg = None
+				else:
+					pkg = values.StrExactMatch(x[1])
+				if pkg is not None:
+					r.add_restriction(packages.PackageRestriction("package", pkg))
+			else:
+				r = packages.PackageRestriction("package", values.StrGlobMatch(x[0]))
+			atoms.append(r)
+		else:
+			atoms.append(atom(x))
+	if len(atoms) > 1:
+		atoms = packages.OrRestriction(*atoms)
 	for a in atoms:
-		print "trying atom == %s " % atomstr(a)
 		for repo in repos:
-			for pkg in repo.match(a):
-				try:	print "\nmatch %s" % atomstr(pkg)
+			for pkg in repo.itermatch(a):
+				try:	print str(atomstr(pkg))
 				except AttributeError:
-					print "\nmatch %s" % pkg
-				try:	print "attr == %s" % atomstr(getattr(pkg, attr), True)
-				except AttributeError, ae:
-					print "attr exception: %s" % ae
+					print str(pkg)
+				if attr is not None:
+					try:	print "attr == %s" % atomstr(getattr(pkg, attr), True)
+					except AttributeError, ae:
+						print "attr exception: %s" % ae
 	sys.exit(0)

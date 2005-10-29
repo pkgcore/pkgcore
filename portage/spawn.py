@@ -1,8 +1,8 @@
 # Copyright 2004-2005 Gentoo Foundation
 # Author(s): Nicholas Carpaski (carpaski@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: spawn.py 2178 2005-10-25 15:52:57Z ferringb $
-cvs_id_string="$Id: spawn.py 2178 2005-10-25 15:52:57Z ferringb $"[5:-2]
+# $Id: spawn.py 2200 2005-10-29 22:07:44Z ferringb $
+cvs_id_string="$Id: spawn.py 2200 2005-10-29 22:07:44Z ferringb $"[5:-2]
 
 import os,types,string,sys
 import signal
@@ -144,7 +144,7 @@ def spawn(mycommand,env=None,raw_exit_code=False,opt_name=None,fd_pipes=None,ret
 	"""
 
 	if env is None:
-		nev = {}
+		env = {}
 	myc=''
 	if not func_call:
 		if type(mycommand)==types.StringType:

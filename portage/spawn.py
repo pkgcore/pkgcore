@@ -1,13 +1,16 @@
 # Copyright 2004-2005 Gentoo Foundation
 # Author(s): Nicholas Carpaski (carpaski@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: spawn.py 2200 2005-10-29 22:07:44Z ferringb $
-cvs_id_string="$Id: spawn.py 2200 2005-10-29 22:07:44Z ferringb $"[5:-2]
+# $Id: spawn.py 2213 2005-10-31 09:05:49Z ferringb $
+cvs_id_string="$Id: spawn.py 2213 2005-10-31 09:05:49Z ferringb $"[5:-2]
 
 import os,types,string,sys
 import signal
 from const import SANDBOX_BINARY, BASH_BINARY, SANDBOX_BINARY, SANDBOX_PIDS_FILE, FAKEROOT_PATH
 from os_data import portage_gid
+
+
+__all__ = ["cleanup", "spawn","spawn_sandbox", "spawn_bash", "spawn_fakeroot", "spawn_func", "spawn_get_output"]
 
 selinux_capable = False
 sandbox_capable = os.path.exists(SANDBOX_BINARY)

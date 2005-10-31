@@ -29,12 +29,18 @@ if __name__ == "__main__":
 		for x in args:
 			print "querying %s" % str(x)
 			try:
-				for k,v in get_list(x).items():
+				i = get_list(x).items()
+				if x is not None:
+					i = [(x, dict(i))]
+				for k,v in i:
 					print
-					l = max(map(lambda y: len(y), v.keys())) + 4
-					print "%s => " % k
-					for y in v.keys():
-						print "%s:    %s, %s" % (y.rjust(l), v[y]["namespace"], v[y]["version"])
+					try:
+						l = max(map(lambda y: len(y), v.keys())) + 4
+						print "%s => " % k
+						for y in v.keys():
+							print "%s:    %s, %s" % (y.rjust(l), v[y]["namespace"], v[y]["version"])
+					except ValueError:
+						print "%s => no plugins found" % k
 				print
 			except Exception, e:
 				print "caught exception %s querying" % e

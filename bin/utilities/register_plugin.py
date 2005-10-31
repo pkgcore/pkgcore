@@ -29,7 +29,13 @@ if __name__ == "__main__":
 		for x in args:
 			print "querying %s" % str(x)
 			try:
-				print get_list(x)
+				for k,v in get_list(x).items():
+					print
+					l = max(map(lambda y: len(y), v.keys())) + 4
+					print "%s => " % k
+					for y in v.keys():
+						print "%s:    %s, %s" % (y.rjust(l), v[y]["namespace"], v[y]["version"])
+				print
 			except Exception, e:
 				print "caught exception %s querying" % e
 				ret = 1

@@ -18,10 +18,18 @@ class EnsureFsDirTest(TempDirMixin, unittest.TestCase):
 		self.failUnless(obj.gid == st.st_gid)
 		
 	def test_gen_obj_reg(self):
-		self.failUnless(fs.isdir(gen_obj("/etc")))
+		path = os.path.join(self.dir, "reg_obj")
+		open(path, "w")
+		o=gen_obj(path)
+		self.failUnless(fs.isreg(o))
+		self.check_attrs(o, path)
 
 	def test_gen_obj_dir(self):
-		self.failUnless(fs.isreg(gen_obj("/etc/passwd")))
+		path = os.path.join(self.dir, "dir_obj")
+		os.mkdir(path)
+		o=gen_obj(path)
+		self.failUnless(fs.isdir(o))
+		self.check_attrs(o, path)
 		
 	def test_gen_obj_sym(self):
 		path = os.path.join(self.dir, "test_sym")

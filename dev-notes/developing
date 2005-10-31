@@ -21,13 +21,20 @@ CONF_DEFAULTS is the meta configuration definition, conf_default_types
 these settings all default to PORTAGE_BASE_PATH ; if you define it in portage_custom_path, the settings above will be based off of it.
 if no portage_custom_path, then it defaults to "/home/bharring/new/" which probably isn't what you want.
 
-So, how to set this sucker up?
-copy ../portage somewhere, copy ../bin somewhere , copy this directory somewhere.
-add a portage_custom_path.py to either /usr/lib/portage/pym/ , or /usr/lib/python-*/site-pkgs/ with paths defined to proper locations.
-from there, you'll need to mangle a config (in this directory).  If you have the usual defaults for a gentoo system, you won't have
-to modify it aside from cflags tweaking, etc.
+an example portage_custom_path.py is available at
+http://dev.gentoo.org/~ferringb/portage_custom_path.py
 
-so... after you've done this, try this- need to register the ebuild plugin, running as root-
+So, where to place this file?  /usr/lib/portage/pym, or /usr/lib/python2.*/site-packages/ would suffice.
+
+Wherever your conf is assigned to, you need to have a configuration defined.
+Harring's configuration is available via
+
+http://dev.gentoo.org/~ferringb/config
+
+It's recommended you start with it as the base, and customize it.
+
+so... after you've done all this, few more setup steps- need to register the ebuild plugin, running as root-
+
 /path/to/checkout/bin/utilities/register_plugin.py -s format ebuild_src 0.0 portage.ebuild.ebuild_src.generate_new_factory
 /path/to/checkout/bin/utilities/register_plugin.py -s format ebuild_built 0.0 portage.ebuild.ebuild_built.generate_new_factory
 
@@ -59,10 +66,7 @@ cd src/filter-env
 make filter-env
 cp filter-env ../../bin/ebuild-env/
 
-Beyond that, you'll probably want to override path defaults; an example of this is in
-http://dev.gentoo.org/~ferringb/config
-as is an example of portage_custom_path.py
-http://dev.gentoo.org/~ferringb/portage_custom_path.py
+Beyond that, you'll probably want to override path defaults; an example of this is in my configuration in my devspace
 
-The required path override, and portage_custom_path override will be overriden once this beast is autotooled, and will have those 
+The required path override, and portage_custom_path override will be likely removed once this beast is autotooled, and will have those 
 settings defined upon installation; in the meantime, this is the route since the source isn't autotooled (nor ready to be)

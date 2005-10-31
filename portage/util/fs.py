@@ -1,12 +1,12 @@
 # Copyright 2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: fs.py 2157 2005-10-24 14:19:20Z ferringb $
-cvs_id_string="$Id: fs.py 2157 2005-10-24 14:19:20Z ferringb $"[5:-2]
+# $Id: fs.py 2207 2005-10-31 03:32:59Z ferringb $
+cvs_id_string="$Id: fs.py 2207 2005-10-31 03:32:59Z ferringb $"[5:-2]
 
 import os, stat
 import fcntl
 
-def ensure_dirs(path, gid=-1, uid=-1, mode=0777):
+def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
 	"""ensure dirs exist, creating as needed with (optional) gid, uid, and mode
 	be forewarned- if mode is specified to a mode that blocks the euid from accessing the dir, this 
 	code *will* try to create the dir"""
@@ -70,7 +70,10 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777):
 		try:
 			if (gid != -1 and gid != st.st_gid) or (uid != -1 and uid != st.st_uid):
 				os.chown(path, uid, gid)
-			if mode != (st.st_mode & 07777):
+			if minimal:
+				if mode != (st.st_mode & mode):
+					os.chmod(path, st.st_mode | mode)
+			elif mode != (st.st_mode & 07777):
 				os.chmod(path, mode)
 		except OSError:
 			return False
@@ -115,6 +118,7 @@ class GenericFailed(LockException):
 
 # should the fd be left open indefinitely?
 # IMO, it shouldn't, but opening/closing everytime around is expensive
+
 
 class FsLock(object):
 	__slots__ = ["path", "fd", "create"]

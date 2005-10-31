@@ -45,12 +45,18 @@ class EnsureDirsTest(TempDirMixin, unittest.TestCase):
 		self.failUnless(fs.ensure_dirs(path))
 		self.checkDir(path, os.geteuid(), os.getegid(), 0777)
 
-	def test_ensure_dirs_minimal(self):
+	def test_ensure_dirs_minimal_nonmodifying(self):
 		path = os.path.join(self.dir, 'foo', 'bar')
 		self.failUnless(fs.ensure_dirs(path, mode=0755))
 		os.chmod(path, 0777)
 		self.failUnless(fs.ensure_dirs(path, mode=0755, minimal=True))
-		self.failUnless(0777 == (os.stat(path).st_mode & 0777))
+		self.checkDir(path, os.geteuid(), os.getegid(), 0777)
+
+	def test_ensure_dirs_minimal_modifying(self):
+		path = os.path.join(self.dir, 'foo', 'bar')
+		self.failUnless(fs.ensure_dirs(path, mode=0750))
+		self.failUnless(fs.ensure_dirs(path, mode=0005, minimal=True))
+		self.checkDir(path, os.geteuid(), os.getegid(), 0755)
 
 	def test_create_unwritable_subdir(self):
 		path = os.path.join(self.dir, 'restricted', 'restricted')

@@ -10,7 +10,10 @@ from itertools import imap
 
 def gen_obj(path, stat=None, real_path=None):
 	"""given a fs path, and an optional stat, return an appropriate fs obj representing that file/dir/dev/fif/link
-	throws KeyError if no obj type matches the stat checks"""
+	throws KeyError if no obj type matches the stat checks
+	"""
+	if real_path is None:
+		real_path = path
 	if stat == None:
 		stat = os.lstat(real_path)
 	mode = stat.st_mode
@@ -39,7 +42,8 @@ def gen_obj(path, stat=None, real_path=None):
 # (specially since we're relying on os.path.sep, not '/' :P)
 
 def iter_scan(path, offset=None):
-	"""generator that yield fs objects from recursively scanning a path.
+	"""
+	generator that yield fs objects from recursively scanning a path.
 	Does not follow symlinks pointing at dirs, just merely yields an obj representing said symlink
 	offset is the prefix to filter from the generated objects
 	"""
@@ -62,7 +66,8 @@ def iter_scan(path, offset=None):
 		pass
 
 def scan(*a, **kw):
-	"""calls list(iter_scan(*a, **kw))
+	"""
+	calls list(iter_scan(*a, **kw))
 	Look at iter_scan for valid args
 	"""
 	

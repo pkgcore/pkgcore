@@ -1,9 +1,15 @@
-So... got this thing, how do I develop it, how do I get it setup so I can actually work on this framework?
-PYTHONPATH is your friend, first of all.  Set it to the directory you place the portage directory in.
-So... gentoo-src/portage/portage <-- rewrite lives here, I place the portage directory in 
-/home/bharring/new/portage
-then export PYTHONPATH="/home/bharring/new/"
+So... you've got a checkout, how do you hack on it, how do you get it setup so you can actually work on this framework?
 
+PYTHONPATH is your friend, first of all.  Set it to the directory you've checked savior/3.0 out to.
+for example, I've got /home/bharring/savior as my checkout- I want python to use the checkouts portage code, so
+export PYTHONPATH="/home/bharring/savior/"
+
+Upon a python -c'import portage', python will scan savior, see the portage directory in it (and that it has __init__.py), and use that.
+
+Stable portage still is accessible/usable via normal emerge/repoman calls; if you unset PYTHONPATH, python -c'import portage' will pull from
+/usr/lib/portage/pym/ (unless you have a portage.py in your current directory, or you're current dir is the savior checkout).
+
+PYTHONPATH makes the new code accessible to the python namespace; next you need to tweak the new portage code's default paths.
 
 Second, you're likely developing this in your home dir (I know I am).  everything hinges on PORTAGE_BASE_PATH
 

@@ -267,5 +267,5 @@ class buildable(base):
 		return True
 
 	def finalize(self):
-		return self._built_class(self.pkg, scan(self.env["IMAGE"]), environment=local_source(os.path.join(self.env["T"], "environment")))
+		return self._built_class(self.pkg, scan(self.env["IMAGE"], offset=self.env["IMAGE"]), environment=local_source(os.path.join(self.env["T"], "environment")))
 

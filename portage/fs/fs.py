@@ -7,13 +7,17 @@ from portage.util.mappings import ImmutableDict
 
 # goofy set of classes representating the fs objects portage knows of.
 
-base_slots = ["mtime", "perms", "uid", "gid"]
+__all__ = ["fsFile", "fsDir", "fsSymLink", "fsDev", "fsFifo", "isdir", "isreg", "isfs_obj"]
+base_slots = ["mtime", "mode", "uid", "gid"]
 
 class fsBase(object):
-	__slots__ = ["location"]
+	__slots__ = ["location", "real_path"]
 
-	def __init__(self, location, strict=True, **d):
+	def __init__(self, location, strict=True, real_path=None, **d):
 		d["location"] = location
+		if real_path is None:
+			real_path = location
+		d["real_path"] = real_path
 		s = object.__setattr__
 		if strict:
 			for k in self.__slots__:
@@ -22,7 +26,6 @@ class fsBase(object):
 			for k,v in d.iteritems():
 				s(self, k, v)
 
-
 	def __setattr__(self, key, value):
 		try:	
 			getattr(self, key)
@@ -30,13 +33,11 @@ class fsBase(object):
 		except AttributeError:
 			object.__setattr__(self, key, value)
 
-
 	def __getattr__(self, attr):
 		# we would only get called if it doesn't exist.
 		if attr in self.__slots__:
 			return None
 		raise AttributeError(attr)
-
 
 	def __hash__(self):
 		mylist = [];
@@ -48,12 +49,10 @@ class fsBase(object):
 		mytup = tuple(mylist)
 		return hash(mytup)
 
-
 	def __eq__(self, other):
 		if not isinstance(other, self.__class__):
 			return False
 		return hash(self) == hash(other)
-
 
 	def __ne__(self, other):
 		return not self == other
@@ -75,7 +74,7 @@ class fsFile(fsBase):
 
 
 class fsDir(fsBase):
-	__slots__ = fsBase.__slots__
+	__slots__ = tuple(base_slots + fsBase.__slots__)
 
 	def __repr__(self): return "dir:%s" % self.location
 
@@ -104,3 +103,6 @@ class fsFifo(fsBase):
 	def __repr__(self): return "fifo:%s" % self.location
 	
 
+isdir = lambda x: isinstance(x, fsDir)
+isreg = lambda x: isinstance(x, fsFile)
+isfs_obj = lambda x: isinstance(x, fsBase)

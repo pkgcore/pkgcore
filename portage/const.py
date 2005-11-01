@@ -1,7 +1,7 @@
 # portage: Constants
 # Copyright 1998-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: const.py 2148 2005-10-19 09:40:40Z ferringb $
+# $Id: const.py 2242 2005-11-01 06:34:24Z ferringb $
 
 # note this is lifted out of portage 2.  so... it's held onto for the sake of having stuff we still need,
 # but it does need cleanup.
@@ -39,6 +39,7 @@ if not os.path.exists(SANDBOX_BINARY):
 DEPSCAN_SH_BINARY		= "/sbin/depscan.sh"
 BASH_BINARY				= "/bin/bash"
 MOVE_BINARY				= "/bin/mv"
+COPY_BINARY				= "/bin/cp"
 PRELINK_BINARY			= "/usr/sbin/prelink"
 depends_phase_path		= PORTAGE_BIN_PATH+":/bin:/usr/bin"
 

@@ -4,21 +4,21 @@
 # $Id:$
 
 import fs
+from itertools import imap
+
+def check_instance(obj):
+	if not isinstance(obj, fs.fsBase):
+		raise TypeError("'%s' is not a fs.fsBase deriviative" % obj)
+	return obj
 
 class contentsSet(set):
 	"""class wrapping a contents file"""
 
 	def __init__(self, initial=None):
-		l = set()
-		if initial is not None:
-			for x in initial:
-				if not isinstance(obj, fs.fsBase):
-					raise TypeError("'%s' is not a fs.fsBase deriviative" % x)
-				l.add(x.location)
-		else:
+		if initial is None:
 			initial = []
-		set.__init__(self, initial)
-		self.locations = l
+		set.__init__(self, imap(check_instance, initial))
+		self.locations = set(o.location for o in self)
 	
 
 	def add(self, obj):
@@ -47,9 +47,8 @@ class contentsSet(set):
 			self.locations.remove(obj.location)
 			set.remove(self, obj)
 				
-
 	def __contains__(self, key):
-		if isinstance(obj, fs.fsBase):
+		if isinstance(key, fs.fsBase):
 			return set.__contains__(self, key)
 		return key in self.locations
 	
@@ -60,38 +59,29 @@ class contentsSet(set):
 	def iterfiles(self):
 		return (x for x in self if isinstance(x, fs.fsFile))
 
-
 	def files(self):
 		return list(self.iterfiles())
-
 
 	def iterdirs(self):
 		return (x for x in self if isinstance(x, fs.fsDir))
 
-
 	def dirs(self):
 		return list(self.iterdirs())
-
 
 	def iterlinks(self):
 		return (x for x in self if isinstance(x, fs.fsLink))
 
-
 	def links(self):
 		return list(self.iterlinks())
-
 
 	def devs(self):
 		return list(self.iterdevs())
 
-
 	def iterdevs(self):
 		return (x for x in self if isinstance(x, fs.fsDev))
 
-
 	def fifos(self):
 		return list(self.iterfifos())
-
 
 	def iterfifos(self):
 		return (x for x in self if isinstance(x, fs.fsFifo))

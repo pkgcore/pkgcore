@@ -1,7 +1,7 @@
 #!/bin/bash
 # Copyright 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: doman 1912 2005-08-25 03:54:42Z ferringb $
+# $Id: doman 2229 2005-11-01 01:35:45Z vapier $
 
 if [ $# -lt 1 ] ; then
 	echo "$0: at least one argument needed" 1>&2
@@ -17,6 +17,7 @@ i18n=""
 for x in "$@" ; do
 	if [ "${x:0:6}" == "-i18n=" ] ; then
 		i18n="${x:6}/"
+		continue
 	fi
 	if [ "${x}" == ".keep" ] ; then
 		continue

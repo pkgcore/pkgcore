@@ -2,4 +2,4 @@
 aparently distributed by Addison-Wesley Publishing Co. Inc, http://aw.com/
 */
 
-const char *bmh_search(const char *pat, const char *text, int n );
+const char *bmh_search(const unsigned char *, const unsigned char *, int);

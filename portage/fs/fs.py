@@ -4,6 +4,7 @@
 # $Id: fs.py 1911 2005-08-25 03:44:21Z ferringb $
 
 from portage.util.mappings import ImmutableDict
+from os.path import sep as path_seperator, abspath
 
 # goofy set of classes representating the fs objects portage knows of.
 
@@ -14,9 +15,14 @@ class fsBase(object):
 	__slots__ = ["location", "real_path"]
 
 	def __init__(self, location, strict=True, real_path=None, **d):
+			
 		d["location"] = location
 		if real_path is None:
 			real_path = location
+
+		if not real_path.startswith(path_seperator):
+			real_path = abspath(real_path)
+		
 		d["real_path"] = real_path
 		s = object.__setattr__
 		if strict:
@@ -25,6 +31,17 @@ class fsBase(object):
 		else:
 			for k,v in d.iteritems():
 				s(self, k, v)
+
+	def change_location(self, location):
+		if not location.startswith(path_seperator):
+			location = abspath(location)
+			
+		d = {}
+		for x in self.__slots__:
+			if hasattr(self, x):
+				d[x] = getattr(self, x)
+		del d["location"]
+		return self.__class__(location, **d)
 
 	def __setattr__(self, key, value):
 		try:	

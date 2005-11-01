@@ -4,68 +4,95 @@ That and aggregator of random ass crazy quotes should people get bored.
 
 [DISCLAIMER]
 This ain't the code.
-In other words, the actual design/code may be radically different, and this document probably will trail any major
-overhauls of the design/code (speaking from past experience).
+In other words, the actual design/code may be radically different, and this 
+document probably will trail any major overhauls of the design/code (speaking 
+from past experience).
 
-Updates welcome, as are suggestions and questions- please dig through all documentations in the dir this doc is in however, since
-there is a lot of info (both current and historical) related to it.  Collapsing info into this doc is attempted, but explanation of the 
-full restriction protocol (fex) is a _lot_ of info, and original idea is from previous redesign err... designs.
-Short version, historical, but still relevant info for restriction is in layout.txt.
-Other subsystems/design choices have their basis quite likely from other docs in this directory, so do your homework please :)
+Updates welcome, as are suggestions and questions- please dig through all 
+documentations in the dir this doc is in however, since there is a lot of info 
+(both current and historical) related to it.  Collapsing info into this doc is 
+attempted, but explanation of the full restriction protocol (fex) is a _lot_ 
+of info, and original idea is from previous redesign err... designs.  Short 
+version, historical, but still relevant info for restriction is in 
+layout.txt.  Other subsystems/design choices have their basis quite likely 
+from other docs in this directory, so do your homework please :)
 
 
 [FURTHER DISCLAIMER]
-If this is implemented, which is being attempted, this is going to break backwards compatibility for existing python api.
-Writing a translation layer doesn't really seem possible either, since things are pretty radically different (imho)
+If this is implemented, which is being attempted, this is going to break 
+backwards compatibility for existing python api.  Writing a translation layer 
+doesn't really seem possible either, since things are pretty radically 
+different (imho).
 
-Sorry, but thems the breaks.  Feel free to attempt it, but this docs author doesn't view it as a good use of time, since old api was 
-useful for querying, about it.
+Sorry, but thems the breaks.  Feel free to attempt it, but this docs author 
+doesn't view it as a good use of time, since old api was useful for querying, 
+about it.
 
 
 [Terminology]
-cp			= category/package
-cpv			= category/package-version
-ROOT		= livefs merge point, fex /home/bharring/embedded/arm-target or more commonly, root=/
-vdb			= /var/db/pkg , installed packages database.
-domain		= combination of repositories, root, and build information (use flags, cflags, etc).  config data + repositories effectively
-repository 	= tree's.  ebuild tree (/usr/portage), binpkg tree, vdb tree, etc.
-protocol	= python name for design/api.  iter() fex, is a protocol; it calls .next() on the passed in sequence, or wraps the sequence...
-			  hesitate to call it defined hook on a class/instance, but this (crappy) description should suffice.
-seq			= sequence, lists/tuples
-set			= list without order (think dict.keys())
+cp          = category/package
+cpv         = category/package-version
+ROOT        = livefs merge point, fex /home/bharring/embedded/arm-target or 
+              more commonly, root=/
+vdb         = /var/db/pkg , installed packages database.
+domain      = combination of repositories, root, and build information (use 
+              flags, cflags, etc).  config data + repositories effectively
+repository  = tree's.  ebuild tree (/usr/portage), binpkg tree, vdb tree, etc.
+protocol    = python name for design/api.  iter() fex, is a protocol; it 
+              calls .next() on the passed in sequence, or wraps the sequence...
+              hesitate to call it defined hook on a class/instance, but this 
+              (crappy) description should suffice.
+seq         = sequence, lists/tuples
+set         = list without order (think dict.keys())
 
 [General design/idea/approach]
-So... this round of "lets take another stab at gutting portage" seems to be proceeding, and not killed off by design flaws *again*
-(famous last words I assure you), but general jist.  All pythonic components installed by portage *must* be within portage.* namespace.
+So... this round of "lets take another stab at gutting portage" seems to be 
+proceeding, and not killed off by design flaws *again* (famous last words I 
+assure you), but general jist.  All pythonic components installed by portage 
+*must* be within portage.* namespace.
 
-No more polluting python's namespace, plain and simple.  Third party plugins to portage aren't bound by this however (their mess, not ours).
+No more polluting python's namespace, plain and simple.  Third party plugins 
+to portage aren't bound by this however (their mess, not ours).
 
-API flows from the config definitions, *everything* internal is effectively the same.  Basically, config crap gives you your starter objects 
-which from there, you dig deeper into the innards as needed action wise.
+API flows from the config definitions, *everything* internal is effectively 
+the same.  Basically, config crap gives you your starter objects which from 
+there, you dig deeper into the innards as needed action wise.
 
-The general design is intended to heavily abuse OOP, something portage has lacked thus far aside from the cache subsystem (cache was 
-pretty much only subsystem that used inheritance rather then duplication).  Further, delegation of actions down to components _must_ 
-be abided by, example being repo + cache interaction.  repo does what it can, but for searching the cache, let the cache do it.
-Assume what you're delegating to knows what the hell it's doing, and probably can do it's job better then some external caller (essentially).
+The general design is intended to heavily abuse OOP, something portage has 
+lacked thus far aside from the cache subsystem (cache was pretty much only 
+subsystem that used inheritance rather then duplication).  Further, 
+delegation of actions down to components _must_ be abided by, example being 
+repo + cache interaction.  repo does what it can, but for searching the 
+cache, let the cache do it.  Assume what you're delegating to knows what the 
+hell it's doing, and probably can do it's job better then some external 
+caller (essentially).
 
-Actual configuration is pretty heavily redesigned.  Look at conf_default_types (likely renamed at some point).
-It's the meta-definition of the config... sort of.  Basically the global config class knows jack, is generic, and is configured by the
-conf_default_type.  The intention is that the on disk configuration format is encapsulated, so it can be remote or completely different 
-from the win.ini format advocated by harring (mainly cause it's easiest since a functional and mostly not completely obnoxious parser 
-exists already).
+Actual configuration is pretty heavily redesigned.  Look at 
+conf_default_types (likely renamed at some point).  It's the meta-definition 
+of the config... sort of.  Basically the global config class knows jack, is 
+generic, and is configured by the conf_default_type.  The intention is that 
+the on disk configuration format is encapsulated, so it can be remote or 
+completely different from the win.ini format advocated by harring (mainly 
+cause it's easiest since a functional and mostly not completely obnoxious 
+parser exists already).
 
-Encapsulation, extensibility/modularity, delegation, and allowing parallelizing of development should be key focuses in 
-implementing/refining this high level design doc.
-Realize parallelizing is a funky statement, but it's apt; work on the repo implementations can proceed without being held up by 
-cache work, and vice versa.  Config is the central hold up, but that's mainly cause it instantiates everything, so the protocol for it
-needs to be nailed down so that you know what positional/optional args your class/callable will be receiving (that said, positiona/optional
-is configurable via section definitions too).
+Encapsulation, extensibility/modularity, delegation, and allowing 
+parallelizing of development should be key focuses in implementing/refining 
+this high level design doc.  Realize parallelizing is a funky statement, but 
+it's apt; work on the repo implementations can proceed without being held up 
+by cache work, and vice versa.  Config is the central hold up, but that's 
+mainly cause it instantiates everything, so the protocol for it needs to be 
+nailed down so that you know what positional/optional args your 
+class/callable will be receiving (that said, positiona/optional is 
+configurable via section definitions too).
 
-Final comment re: design goals, defining chunks of callable code and plugging it into the framework is another bit of a goal.  
-Think twisted, just not quite as prevalent (their needs/focus is much different from ours, twisted is the app, your code is the lib, 
-vice versa for portage).
+Final comment re: design goals, defining chunks of callable code and plugging 
+it into the framework is another bit of a goal.  Think twisted, just not 
+quite as prevalent (their needs/focus is much different from ours, twisted is 
+the app, your code is the lib, vice versa for portage).
 
-Back to config.  Here's general notion of config 'chunks' of the subsystem, (these map out to run time objects unless otherwise stated)
+Back to config.  Here's general notion of config 'chunks' of the subsystem, 
+(these map out to run time objects unless otherwise stated)
 
 domain
 +-- profile (optional)
@@ -87,89 +114,122 @@ profile
 +-- sets (system mainly).
 \-- visibility wrappers
 
-domain is configuration data, accept_(license|keywords), use, cflags, chost, features, etc.
-profile, dependant on the profile class you choose is either bound to a repository, or to user defined location on disk 
-(/etc/portage/profile fex).  Domain knows to do incremental crap upon profile settings, lifting package.* crap for visibility
-wrappers for repositories also.
+domain is configuration data, accept_(license|keywords), use, cflags, chost, 
+features, etc.  profile, dependant on the profile class you choose is either 
+bound to a repository, or to user defined location on disk 
+(/etc/portage/profile fex).  Domain knows to do incremental crap upon profile 
+settings, lifting package.* crap for visibility wrappers for repositories 
+also.
 
 repositories is pretty straightforward.  portdir, binpkg, vdb, etc.
 
-Back to domain.  Domain's are your definition of pretty much what can be done.  Can't do jack without a domain, period.
-Can have multiple domains also, and domains do *not* have to be local (remote domains being a different class type).
-Clarifying, think of 500 desktop boxes, and a master box that's responsible for managing them.  Define an appropriate domain class, 
-and appropriate repository classes, and have a config that holds the 500 domains (representing each box), and you can push updates out
-via standard api trickery.  In other words, the magic is hidden away, just define remote classes that match defined class rules
-(preferably inheriting from the base class, since isinstance sanity checks will become the norm), and you could do
-emerge --domain some-remote-domain -u glsa
-on the master box.  Emerge won't know it's doing remote crap.  Portagelib won't even.  It'll just load what you define in the config.
+Back to domain.  Domain's are your definition of pretty much what can be done.  
+Can't do jack without a domain, period.  Can have multiple domains also, and 
+domains do *not* have to be local (remote domains being a different class 
+type).  Clarifying, think of 500 desktop boxes, and a master box that's 
+responsible for managing them.  Define an appropriate domain class, and 
+appropriate repository classes, and have a config that holds the 500 domains 
+(representing each box), and you can push updates out via standard api 
+trickery.  In other words, the magic is hidden away, just define remote 
+classes that match defined class rules (preferably inheriting from the base 
+class, since isinstance sanity checks will become the norm), and you could do 
+emerge --domain some-remote-domain -u glsa on the master box.  Emerge won't 
+know it's doing remote crap.  Portagelib won't even.  It'll just load what 
+you define in the config.
 
-Ambitious?  Yeah, a bit.  Thing to note, the remote class additions will exist outside of portage proper most likely.  Develop the 
-code needed in parallel to fleshing portage proper out.
+Ambitious?  Yeah, a bit.  Thing to note, the remote class additions will 
+exist outside of portage proper most likely.  Develop the code needed in 
+parallel to fleshing portage proper out.
 
-Meanwhile, the remote bit + multiple domains + class overrides in config definition is _explicitly_ for the reasons above.  That 
-and x-compile/embedded target building, which is a bit funkier.
+Meanwhile, the remote bit + multiple domains + class overrides in config 
+definition is _explicitly_ for the reasons above.  That and 
+x-compile/embedded target building, which is a bit funkier.
 
-Currently, portage has DEPEND and RDEPEND.  How do you know what needs be native to that box to build the package, what must be chost atoms?  
-Literally, how do you know which atoms, say the toolchain, must be native vs what package's headers/libs must exist to build it?
-We need an additional metadata key, BDEPEND (build depends).
+Currently, portage has DEPEND and RDEPEND.  How do you know what needs be 
+native to that box to build the package, what must be chost atoms?  Literally, 
+how do you know which atoms, say the toolchain, must be native vs what 
+package's headers/libs must exist to build it?  We need an additional 
+metadata key, BDEPEND (build depends).
 
-If you have BDEPEND, you know what actually is ran locally in building a package, vs what headers/libs are required.
-Subtle difference, but BDEPEND would allow (with a sophisticated depresolver) toolchain to be represented in deps, rather then 
-the current unstated dep approach profiles allow.
+If you have BDEPEND, you know what actually is ran locally in building a 
+package, vs what headers/libs are required.  Subtle difference, but BDEPEND 
+would allow (with a sophisticated depresolver) toolchain to be represented in 
+deps, rather then the current unstated dep approach profiles allow.
 
-Aside from that, BDEPEND could be used for x-compile via inter-domain deps; a ppc target domain on a x86 box would require BDEPEND 
-from the default domain (x86).  So... that's useful.
+Aside from that, BDEPEND could be used for x-compile via inter-domain deps; a 
+ppc target domain on a x86 box would require BDEPEND from the default domain 
+(x86).  So... that's useful.
 
-So far, no one has shot this down, moreso, come up with reasons as to why it wouldn't work, the consensus thus far is mainly 
-"err, don't want to add the deps, too much work".  Regarding work, use indirection.
+So far, no one has shot this down, moreso, come up with reasons as to why it 
+wouldn't work, the consensus thus far is mainly "err, don't want to add the 
+deps, too much work".  Regarding work, use indirection.
 
 virtual/toolchain-c <-- metapkg (glep37) that expands out (dependant on arch) into whatever is required to do building of c sources
 virtual/toolchain-c++ <-- same thing, just c++
 virtual/autootols	<-- take a guess.
 virtual/libc		<-- this should be tagged into rdepends where applicable, packages that directly require it (compiled crap mainly)
 
-Yes it's extra work, but the metapkgs above should cover a large chunk of the tree, say >90%.
+Yes it's extra work, but the metapkgs above should cover a large chunk of the 
+tree, say >90%.
 
 [Config design]
-Portage thus far (<=2.0.51*) has had variable ROOT (livefs merge point), but no way to vary configuration data aside from via a buttload of 
-env vars.  Further, there has been only one repository allowed (overlays are just that, extensions of the 'master' repository).  
-Addition of support of any new format is mildly insane due to hardcoding up the wing wang in the code, and extension/modification 
-of existing formats (ebuild) has some issues (namely the doebuild block of code).
+Portage thus far (<=2.0.51*) has had variable ROOT (livefs merge point), but 
+no way to vary configuration data aside from via a buttload of env vars.  
+Further, there has been only one repository allowed (overlays are just that, 
+extensions of the 'master' repository).  Addition of support of any new 
+format is mildly insane due to hardcoding up the wing wang in the code, and 
+extension/modification of existing formats (ebuild) has some issues (namely 
+the doebuild block of code).
 
-Goal is to address all of this crap.  Format agnosticism at the repository level is via an abstracted repository design that should
-supply generic inspection attributes to match other formats.  Specialized searching is possible via match, thus extending the 
-extensibility of the prototype repository design.
+Goal is to address all of this crap.  Format agnosticism at the repository 
+level is via an abstracted repository design that should supply generic 
+inspection attributes to match other formats.  Specialized searching is 
+possible via match, thus extending the extensibility of the prototype 
+repository design.
 
-Format agnosticism for building/merging is somewhat reliant on the repo, namely package abstraction, and abstraction of building/merging
-operations.
+Format agnosticism for building/merging is somewhat reliant on the repo, 
+namely package abstraction, and abstraction of building/merging operations.
 
-On disk configurations for alternatives formats is extensible via changing section types, and plugging them into the domain definition.
+On disk configurations for alternatives formats is extensible via changing 
+section types, and plugging them into the domain definition.
 
-Note alt. formats quite likely will never be implemented in portage proper, that's kind of the domain of portage addons.  In other words,
-dpkg/rpm/whatever quite likely won't be worked on by portage developers, at least not in the near future (too many other things to do).
+Note alt. formats quite likely will never be implemented in portage proper, 
+that's kind of the domain of portage addons.  In other words, 
+dpkg/rpm/whatever quite likely won't be worked on by portage developers, at 
+least not in the near future (too many other things to do).
 
-The intention is to generalize the framework so it's possible for others to do so if they choose however.
+The intention is to generalize the framework so it's possible for others to 
+do so if they choose however.
 
-Why is this good?  Ebuild format has issues, as does our profile implementation.  At some point, alternative formats/non-backwards 
-compatible tweaks to the formats (ebuild or profile) will occur, and then people will be quite happy that the framework is generalized
-(seriously, nothing is lost from a proper abstracted design, and flexibility/power is gained).
+Why is this good?  Ebuild format has issues, as does our profile 
+implementation.  At some point, alternative formats/non-backwards compatible 
+tweaks to the formats (ebuild or profile) will occur, and then people will be 
+quite happy that the framework is generalized (seriously, nothing is lost 
+from a proper abstracted design, and flexibility/power is gained).
 
 
 [config's actions/operation]
-portage.config.load_config() is the entrance point, returns to you a config object (portage.config.central).
-This object gives you access to the user defined configs, although only interest/poking at it should be to get a domain object from it.
+portage.config.load_config() is the entrance point, returns to you a config 
+object (portage.config.central).  This object gives you access to the user 
+defined configs, although only interest/poking at it should be to get a 
+domain object from it.
 
-domain object is instantiated by config object via user defined configuration (/etc/portage/config namely).  domains hold instantiated 
-repositories, bind profile + user prefs (use/accept_keywords) together, and _should_ simplify this data into somewhat user friendly methods.
+domain object is instantiated by config object via user defined configuration 
+(/etc/portage/config namely).  domains hold instantiated repositories, bind 
+profile + user prefs (use/accept_keywords) together, and _should_ simplify 
+this data into somewhat user friendly methods.
 (define this better).
 
-Normal/default domain doesn't know about other domains, nor give a damn.  Embedded targets are domains, and _will_ need to know about the 
-livefs domain (root=/), so buildplan creation/handling may need to be bound into domains.
+Normal/default domain doesn't know about other domains, nor give a damn.  
+Embedded targets are domains, and _will_ need to know about the livefs domain 
+(root=/), so buildplan creation/handling may need to be bound into domains.
 
 
 [Objects/subsystems/stuff]
-So... this is general naming of pretty much top level view of things, stuff emerge would be interested in (and would fool with).
-hesitate to call it a general api, but it probably will be as such, exempting any abstraction layer/api over all of this 
+So... this is general naming of pretty much top level view of things, stuff 
+emerge would be interested in (and would fool with).  hesitate to call it a 
+general api, but it probably will be as such, exempting any abstraction 
+layer/api over all of this 
 (good luck on that one }:] ).
 
 

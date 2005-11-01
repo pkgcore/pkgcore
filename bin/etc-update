@@ -1,7 +1,7 @@
 #!/bin/bash
 # Copyright 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: etc-update 1912 2005-08-25 03:54:42Z ferringb $
+# $Id: etc-update 2221 2005-11-01 01:32:07Z vapier $
 
 # Author Brandon Low <lostlogic@gentoo.org>
 #
@@ -12,7 +12,7 @@
 
 export PORTAGE_CALLER="etc-update"
 
-if [ $(/usr/lib/portage/bin/portageq envvar USERLAND) = BSD ] ; then
+if type -p gsed >/dev/null ; then
 	function sed() { gsed "$@"; }
 fi
 
@@ -34,11 +34,19 @@ function scan() {
 	count=0
 	input=0
 	
-	for path in ${CONFIG_PROTECT}; do if [ -d ${path} ]; then
+	# Sanity check to make sure diff exists and works
+	if ! diff -v &>/dev/null ; then
+		echo "ERROR: 'diff' does not seem to work, aborting"
+		exit 1
+	fi
+
+	for path in ${CONFIG_PROTECT} ; do
+		[ ! -d ${path} ] && continue
+
 		ofile=""
 		for file in `find ${path}/ -iname "._cfg????_*" |
-			   sed -e "s:\(^.*/\)\(._cfg*_\)\(/.*$\):\1\2\3\%\2\%\3:" |
-			   sort -t'%' -k3 -k2 | cut -f1 -d'%'`; do
+			   sed -e "s:\(^.*/\)\(\._cfg[0-9]*_\)\(.*$\):\1\2\3\%\2\%\3:" |
+			   sort -t'%' -k3 -k2 | LANG=POSIX LC_ALL=POSIX cut -f1 -d'%'`; do
 			rpath=`echo "${file/\/\///}" | sed -e "s:/[^/]*$::"`
 			rfile=`echo "${file/\/\///}" | sed -e "s:^.*/::"`
 			for mpath in ${CONFIG_PROTECT_MASK}; do
@@ -88,7 +96,7 @@ function scan() {
 				opath="${rpath}"
 			fi
 		done
-	fi; done
+	done
 
 }
 
@@ -360,11 +368,13 @@ function die() {
 #
 # Run the script
 #
-scriptname=`basename $0`
+scriptname=$(basename $0)
 
 trap die term
 
-TMP=/tmp/$$
+export PORTAGE_TMPDIR=$(/usr/lib/portage/bin/portageq envvar PORTAGE_TMPDIR)
+
+TMP="${PORTAGE_TMPDIR}/$$"
 rm -rf ${TMP} 2> /dev/null
 mkdir ${TMP} || die "failed mkdir command!" 1
 

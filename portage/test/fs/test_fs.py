@@ -56,7 +56,7 @@ class EnsureFsDirTest(TempDirMixin, unittest.TestCase):
 		dirs = map(os.path.normpath, map(lambda x: os.path.join(path, x), ["a", "b", "c"]))
 		map(os.mkdir, dirs)
 		dirs.append(path)
-		for obj in iter_scan(self.dir):
+		for obj in iter_scan(path):
 			self.failUnless(isinstance(obj, fs.fsBase))
 			if fs.isreg(obj):
 				self.failUnless(obj.location in files)

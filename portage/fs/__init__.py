@@ -5,8 +5,9 @@
 
 import os
 from stat import *
-from fs import *
 from itertools import imap
+from portage.fs.fs import *
+from portage.util.fs import normpath
 
 def gen_obj(path, stat=None, real_path=None):
 	"""given a fs path, and an optional stat, return an appropriate fs obj representing that file/dir/dev/fif/link
@@ -50,20 +51,23 @@ def iter_scan(path, offset=None):
 	sep = os.path.sep
 	if offset is None:
 		offset = ""
+		dirs = [path.rstrip(sep)]
+		yield gen_obj(dirs[0])
 	else:
-		offset = offset.rstrip(sep)
-	dirs = [path.rstrip(sep)[len(offset):]]
-	try:
-		while 1:
-			base = dirs.pop(0) + sep
-			for x in os.listdir(offset+base):
-				path = base + x
-				o = gen_obj(path, real_path=offset+path)
-				yield o
-				if isinstance(o, fsDir):
-					dirs.append(path)
-	except IndexError:
-		pass
+		offset = normpath(offset.rstrip(sep))+sep
+		path = normpath(path)
+		dirs = [path.rstrip(sep)[len(offset):]]
+		if len(dirs[0]):
+			yield gen_obj(dirs[0])
+
+	while dirs:
+		base = dirs.pop(0) + sep
+		for x in os.listdir(offset + base):
+			path = base + x
+			o = gen_obj(path, real_path=offset+path)
+			yield o
+			if isinstance(o, fsDir):
+				dirs.append(path)
 
 def scan(*a, **kw):
 	"""

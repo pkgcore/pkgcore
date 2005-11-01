@@ -1,15 +1,15 @@
 #!/bin/bash
 # Copyright 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: prepstrip 1912 2005-08-25 03:54:42Z ferringb $
+# $Id: prepstrip 2228 2005-11-01 01:35:23Z vapier $
 
 if [ "${FEATURES//*nostrip*/true}" == "true" ] || [ "${RESTRICT//*nostrip*/true}" == "true" ] ; then
 	echo "nostrip"
 	STRIP="/bin/false"
 	PORTAGE_STRIP_FLAGS=""
 else
-	STRIP="${STRIP:-${CHOST}-strip}"
-	type -p ${STRIP} > /dev/null || STRIP=strip
+	STRIP=${STRIP:-${CHOST}-strip}
+	type -p -- ${STRIP} > /dev/null || STRIP=strip
 	PORTAGE_STRIP_FLAGS=${PORTAGE_STRIP_FLAGS:---strip-unneeded}
 fi
 

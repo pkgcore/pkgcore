@@ -59,6 +59,14 @@ if __name__ == "__main__":
 			sys.exit(1)
 		print "deregistering type(%s) constant(%s) ver(%s)" % (args[0], args[1], args[2])
 		cleanse(*args)
+	elif "-p" in args:
+		args.pop(args.index("-p"))
+		if len(args) != 0:
+			print "no args allowed currently"
+			sys.exit(1)
+		for ptype, v in get_list(None).iteritems():
+			for magic, vals in v.iteritems():
+				print "%s -s %s %s %s %s" % (sys.argv[0], ptype, magic, vals["version"], vals["namespace"])
 	else:
 		if "--help" not in args:
 			print "command required"

@@ -35,8 +35,11 @@ It's recommended you start with it as the base, and customize it.
 
 so... after you've done all this, few more setup steps- need to register the ebuild plugin, running as root-
 
-/path/to/checkout/bin/utilities/register_plugin.py -s format ebuild_src 0.0 portage.ebuild.ebuild_src.generate_new_factory
-/path/to/checkout/bin/utilities/register_plugin.py -s format ebuild_built 0.0 portage.ebuild.ebuild_built.generate_new_factory
+savior/bin/utilities/register_plugin.py -s fs_ops copyfile 1 portage.fs.ops.default_copyfile
+savior/bin/utilities/register_plugin.py -s fs_ops ensure_perms 1 portage.fs.ops.default_ensure_perms
+savior/bin/utilities/register_plugin.py -s fs_ops mkdir 1 portage.fs.ops.default_mkdir
+savior/bin/utilities/register_plugin.py -s format ebuild_built 0.0 portage.ebuild.ebuild_built.generate_new_factory
+savior/bin/utilities/register_plugin.py -s format ebuild_src 0.0 portage.ebuild.ebuild_src.generate_new_factory
 
 You'll need to have PYTHONPATH set as root, note that sudo cleanses the env normally.
 If that fails, you're PYTHONPATH is invalid; otherwise it'll spit back a registering message.  So far, good to go.
@@ -70,3 +73,4 @@ Beyond that, you'll probably want to override path defaults; an example of this 
 
 The required path override, and portage_custom_path override will be likely removed once this beast is autotooled, and will have those 
 settings defined upon installation; in the meantime, this is the route since the source isn't autotooled (nor ready to be)
+

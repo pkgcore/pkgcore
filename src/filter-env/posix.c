@@ -11,6 +11,12 @@
 #include <assert.h>
 #include "bmh_search.h"
 
+#ifdef __GNUC__
+# define no_return __attribute__ ((noreturn))
+#else
+# define no_return
+#endif
+
 #define USAGE_FAIL   1
 #define MEM_FAIL     2
 #define IO_FAIL      3
@@ -50,16 +56,22 @@ static int debugging;
 static void *xmalloc(size_t size);
 static void *xmalloc(size_t size) {
 	void *ret = malloc(size);
-	if (ret == NULL) {
-		fprintf(stderr, "Failed to allocate memory\n");
-		exit(MEM_FAIL);
-	}
+	if (ret == NULL)
+		err(MEM_FAIL, "could not malloc %zi bytes\n", size);
 	return ret;
 }
 
 
-int
-main(int argc, char *const *argv)
+no_return void usage(int exit_status);
+no_return void usage(int exit_status)
+{
+	fprintf((exit_status ? stderr : stdout),
+		"Usage: [-i file] [-f func1,func2,func3,...] [-v var1,var2,var3,...]\n");
+	exit(exit_status);
+}
+
+
+int main(int argc, char *const *argv)
 {
 	FILE *file_in = NULL;
 	FILE *file_out = NULL;
@@ -80,7 +92,7 @@ main(int argc, char *const *argv)
 	funcs = (char **)xmalloc(sizeof(char *) * 10);
 	vars = (char **)xmalloc(sizeof(char *) * 10);
 
-	while ((c = getopt(argc, argv, "hi:f:v:d")) != EOF) {
+	while ((c = getopt(argc, argv, "Vhi:f:v:d")) != EOF) {
 		d2printf("c = %i\n", c);
 
 		switch(c) {
@@ -99,18 +111,24 @@ main(int argc, char *const *argv)
 			break;
 		case 'f':
 			d2printf("wassube.  opt_art=%s\n", optarg);
-			if (append_to_filter_list(&funcs, &funcs_count, &funcs_alloced,optarg))
+			if (append_to_filter_list(&funcs, &funcs_count, &funcs_alloced, optarg))
 				err(USAGE_FAIL, "-f arg '%s', isn't valid.  must be comma delimited\n", optarg);
 			break;
 		case 'v':
-			if (append_to_filter_list(&vars, &vars_count, &vars_alloced,optarg))
+			if (append_to_filter_list(&vars, &vars_count, &vars_alloced, optarg))
 				err(USAGE_FAIL, "-v arg '%s', isn't valid.  must be comma delimited\n", optarg);
 			break;
+		case 'V':
+			printf("filter-env: compiled %s\n", __DATE__);
+			exit(EXIT_SUCCESS);
 		case 'h':
+			usage(EXIT_SUCCESS);
 		default:
-			err(USAGE_FAIL, "Usage [-i file] [-f func1,func2,func3,...] [-v var1,var2,var3,...]\n");
+			usage(USAGE_FAIL);
 		}
 	}
+	if (optind != argc)
+		usage(USAGE_FAIL);
 
 	if (file_size == 0)
 		file_in = stdin;
@@ -508,7 +526,7 @@ walk_command(const char *p, const char *end, char endchar, const char interpret_
 				temp_string = xmalloc(end_here -p + 1);
 				memcpy(temp_string, p, end_here - p);
 				temp_string[end_here - p] = '\0';
-				d2printf("matched len('%i')/'%s' for a here word\n", end_here - p, temp_string);
+				d2printf("matched len('%zi')/'%s' for a here word\n", end_here - p, temp_string);
 				// XXX watch this.  potential for horkage.  need to do the quote removal thing.
 				//this sucks.
 

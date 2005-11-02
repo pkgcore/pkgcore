@@ -85,6 +85,10 @@ AM_CONDITIONAL(BUILD_TBZ2TOOL, test "x$enable_tbz2tool" = "xtrue")
 AM_CONDITIONAL(BUILD_MISSINGOS, test "x$enable_missingos" = "xtrue")
 AM_CONDITIONAL(BUILD_FILTER_ENV, test "x$enable_filter_env" = "xtrue")
 
+if test "x$GCC" = "xyes" ; then
+	CFLAGS="$CFLAGS -Wall"
+fi
+
 AC_OUTPUT([
 Makefile
 src/Makefile

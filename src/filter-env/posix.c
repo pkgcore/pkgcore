@@ -32,13 +32,14 @@ static const char *walk_command(const char *p, const char *end, char endchar, co
 
 
 static int debugging;
-#define d1printf(fmt, args...) dprintf(1,fmt,args)
-#define d2printf(fmt, args...) dprintf(2,fmt,args)
+#define d1printf(fmt, args...) dprintf(1, fmt , ## args)
+#define d2printf(fmt, args...) dprintf(2, fmt , ## args)
 #define dprintf(level, fmt, args...) \
 	do { \
 		if (debugging >= level) \
-			fprintf(stderr, "%s:%i: " fmt, __FUNCTION__, __LINE__, args); \
+			fprintf(stderr, "%s:%i: " fmt, __FUNCTION__, __LINE__ , ## args); \
 	} while (0)
+
 #define err(exit_code, expr...) \
 	do { \
 		fprintf(stderr, expr); \
@@ -486,9 +487,14 @@ walk_command(const char *p, const char *end, char endchar, const char interpret_
 			++here_count;
 			if (2 == here_count && interpret_level == COMMAND_PARSING) {
 				++p;
+				d2printf("starting here processing for COMMAND and l2 at p == '%.10s'\n", p);
 				if (p >= end) {
 					fprintf(stderr, "bailing\n");
 					return p;
+				}
+				if ('<' == *p) {
+					d2printf("correction, it's a third level here.  Handing back to command parsing\n");
+					return ++p;
 				}
 				while (p < end && (isspace(*p) || '-' == *p))
 					++p;
@@ -499,10 +505,10 @@ walk_command(const char *p, const char *end, char endchar, const char interpret_
 					end_here = walk_command(p,end,' ',SPACE_PARSING);
 				}
 				/* d1printf("end_here=%.5s\n",end_here); */
-				d2printf("matched '%zi'/'%s' for a here word\n", end_here - p, p);
 				temp_string = xmalloc(end_here -p + 1);
 				memcpy(temp_string, p, end_here - p);
 				temp_string[end_here - p] = '\0';
+				d2printf("matched len('%i')/'%s' for a here word\n", end_here - p, temp_string);
 				// XXX watch this.  potential for horkage.  need to do the quote removal thing.
 				//this sucks.
 

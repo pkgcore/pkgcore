@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: template.py 2121 2005-10-11 04:49:44Z ferringb $
+# $Id: template.py 2270 2005-11-10 00:17:33Z ferringb $
 
 import cache_errors, copy
 

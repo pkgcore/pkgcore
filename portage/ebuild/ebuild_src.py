@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: ebuild_src.py 2185 2005-10-25 21:36:01Z ferringb $
+# $Id: ebuild_src.py 2273 2005-11-10 00:22:02Z ferringb $
 
 import os
 from portage.package import metadata

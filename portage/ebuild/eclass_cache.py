@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: eclass_cache.py 2007 2005-09-18 21:00:42Z ferringb $
+# $Id: eclass_cache.py 2273 2005-11-10 00:22:02Z ferringb $
 
 from portage.util.fs import normpath
 import os, sys

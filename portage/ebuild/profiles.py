@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: profiles.py 2178 2005-10-25 15:52:57Z ferringb $
+# $Id: profiles.py 2273 2005-11-10 00:22:02Z ferringb $
 
 from portage.config import profiles
 import os, logging

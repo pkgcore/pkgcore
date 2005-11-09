@@ -1,7 +1,6 @@
 # Copyright: 2004-2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: processor.py 2172 2005-10-25 15:01:27Z ferringb $
+# $Id: processor.py 2273 2005-11-10 00:22:02Z ferringb $
 
 # this needs work.  it's been pruned heavily from what ebd used originally, but it still isn't what 
 # I would define as 'right'

@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: file.py 2181 2005-10-25 21:25:43Z ferringb $
+# $Id: file.py 2284 2005-11-10 00:35:50Z ferringb $
 
 import re
 from shlex import shlex

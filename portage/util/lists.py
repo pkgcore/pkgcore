@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): 
 # License: GPL2
-# $Id: lists.py 2156 2005-10-23 23:48:48Z ferringb $
+# $Id: lists.py 2284 2005-11-10 00:35:50Z ferringb $
 
 def unique(s):
 	"""lifted from python cookbook, credit: Tim Peters

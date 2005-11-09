@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: strings.py 2031 2005-09-27 21:01:41Z ferringb $
+# $Id: strings.py 2284 2005-11-10 00:35:50Z ferringb $
 from itertools import ifilter
 
 def iter_tokens(s, splitter=" "):

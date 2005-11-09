@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: modules.py 2156 2005-10-23 23:48:48Z ferringb $
+# $Id: modules.py 2284 2005-11-10 00:35:50Z ferringb $
 
 import sys, threading
 

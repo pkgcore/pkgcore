@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: cparser.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: cparser.py 2272 2005-11-10 00:19:01Z ferringb $
 
 from ConfigParser import ConfigParser
 

@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: domain.py 2196 2005-10-26 22:23:18Z ferringb $
+# $Id: domain.py 2272 2005-11-10 00:19:01Z ferringb $
 
 import os
 from portage.restrictions.collapsed import DictBased

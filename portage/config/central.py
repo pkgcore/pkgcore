@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: central.py 1957 2005-09-01 11:29:12Z ferringb $
+# $Id: central.py 2272 2005-11-10 00:19:01Z ferringb $
 
 import errors, new
 from portage.const import CONF_DEFAULTS

@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: repository.py 1961 2005-09-01 20:09:01Z ferringb $
+# $Id: repository.py 2269 2005-11-10 00:15:56Z ferringb $
 
 import os,stat
 from portage.repository import prototype, errors

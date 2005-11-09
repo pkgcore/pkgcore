@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: packages.py 2196 2005-10-26 22:23:18Z ferringb $
+# $Id: packages.py 2282 2005-11-10 00:30:30Z ferringb $
 
 from portage.util.lists import unique
 from portage.util.currying import pre_curry, pretty_docs

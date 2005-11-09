@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: boolean.py 2196 2005-10-26 22:23:18Z ferringb $
+# $Id: boolean.py 2282 2005-11-10 00:30:30Z ferringb $
 
 """
 This module provides classes that can be used to combine arbitrary collections of restrictions in AND, NAND, OR, NOR, XOR, XNOR 

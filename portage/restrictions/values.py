@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: values.py 2197 2005-10-27 15:31:25Z ferringb $
+# $Id: values.py 2282 2005-11-10 00:30:30Z ferringb $
 
 import re, logging
 from portage.restrictions import restriction, boolean

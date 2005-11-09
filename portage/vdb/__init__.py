@@ -1,7 +1,7 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: __init__.py 2189 2005-10-25 21:49:47Z ferringb $
+# $Id: __init__.py 2285 2005-11-10 00:36:17Z ferringb $
+
 from portage.repository import multiplex
 from repository import tree as vdb_repository
 from virtualrepository import tree as virtualrepository

@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: multiplex.py 2145 2005-10-19 09:29:51Z ferringb $
+# $Id: multiplex.py 2278 2005-11-10 00:25:26Z ferringb $
 
 import prototype, errors
 

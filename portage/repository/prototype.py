@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: prototype.py 2164 2005-10-24 20:18:04Z ferringb $
+# $Id: prototype.py 2278 2005-11-10 00:25:26Z ferringb $
 
 from portage.util.mappings import IndexableSequence
 from weakref import proxy

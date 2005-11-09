@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: wrapper.py 1911 2005-08-25 03:44:21Z ferringb $
+# $Id: wrapper.py 2278 2005-11-10 00:25:26Z ferringb $
 
 # icky.
 # ~harring

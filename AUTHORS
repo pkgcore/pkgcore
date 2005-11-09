@@ -1,7 +1,8 @@
 Rough list of who has contributed to this source.
-Grep the headers if you're after specifics.
+svn annotate/log if you're curious about the gory details of who did what
 
 Brian Harring <ferringb@gentoo.org>
 Jason Stubbs <jstubbs@gentoo.og>
 Jeff Oliver (kaiserfro@yahoo.com)
+Marien Zwart <m_zwart@123mail.org>
 Nicholas Carpaski (carpaski@gentoo.org)

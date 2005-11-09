@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Jason Stubbs (jstubbs@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: atom.py 2196 2005-10-26 22:23:18Z ferringb $
+# $Id: atom.py 2279 2005-11-10 00:27:34Z ferringb $
 
 from portage.restrictions import values, packages, boolean
 from cpv import ver_cmp, CPV

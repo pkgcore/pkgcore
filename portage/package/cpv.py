@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Jason Stubbs (jstubbs@gentoo.org)
 # License: GPL2
-# $Id: cpv.py 2039 2005-09-28 13:08:59Z jstubbs $
+# $Id: cpv.py 2279 2005-11-10 00:27:34Z ferringb $
 
 import re
 from base import base

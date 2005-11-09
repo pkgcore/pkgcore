@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: conditionals.py 2212 2005-10-31 08:59:29Z ferringb $
+# $Id: conditionals.py 2279 2005-11-10 00:27:34Z ferringb $
 
 from portage.util.mappings import LimitedChangeSet, Unchangable
 from portage.util.lists import unique, flatten

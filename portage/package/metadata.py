@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: metadata.py 2182 2005-10-25 21:26:10Z ferringb $
+# $Id: metadata.py 2279 2005-11-10 00:27:34Z ferringb $
 
 import weakref
 from cpv import CPV

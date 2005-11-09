@@ -1,7 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: __init__.py 2174 2005-10-25 15:04:55Z ferringb $
+# $Id: __init__.py 2271 2005-11-10 00:18:09Z ferringb $
 
 import os, sys
 from portage.util.modules import load_module

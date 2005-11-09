@@ -1,8 +1,7 @@
 # portage_data.py -- Calculated/Discovered Data Values
 # Copyright 1998-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: os_data.py 2147 2005-10-19 09:31:11Z ferringb $
-cvs_id_string="$Id: os_data.py 2147 2005-10-19 09:31:11Z ferringb $"[5:-2]
+# $Id: os_data.py 2268 2005-11-10 00:14:06Z ferringb $
 
 import os,pwd,grp
 

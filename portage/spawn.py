@@ -1,8 +1,7 @@
 # Copyright 2004-2005 Gentoo Foundation
 # Author(s): Nicholas Carpaski (carpaski@gentoo.org), Brian Harring (ferringb@gentoo.org)
 # License: GPL2
-# $Id: spawn.py 2213 2005-10-31 09:05:49Z ferringb $
-cvs_id_string="$Id: spawn.py 2213 2005-10-31 09:05:49Z ferringb $"[5:-2]
+# $Id: spawn.py 2268 2005-11-10 00:14:06Z ferringb $
 
 import os,types,string,sys
 import signal

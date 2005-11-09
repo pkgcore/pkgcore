@@ -1,7 +1,6 @@
-# portage: Constants
-# Copyright 1998-2004 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
-# $Id: const.py 2242 2005-11-01 06:34:24Z ferringb $
+# Copyright: 2005 Gentoo Foundation
+# License: GPL2
+# $Id: const.py 2283 2005-11-10 00:35:14Z ferringb $
 
 # note this is lifted out of portage 2.  so... it's held onto for the sake of having stuff we still need,
 # but it does need cleanup.

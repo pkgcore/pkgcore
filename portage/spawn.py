@@ -1,7 +1,6 @@
-# Copyright 2004-2005 Gentoo Foundation
-# Author(s): Nicholas Carpaski (carpaski@gentoo.org), Brian Harring (ferringb@gentoo.org)
+# Copyright: 2005 Gentoo Foundation
 # License: GPL2
-# $Id: spawn.py 2268 2005-11-10 00:14:06Z ferringb $
+# $Id: spawn.py 2283 2005-11-10 00:35:14Z ferringb $
 
 import os,types,string,sys
 import signal

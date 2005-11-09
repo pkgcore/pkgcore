@@ -1,7 +1,6 @@
-# portage_data.py -- Calculated/Discovered Data Values
-# Copyright 1998-2004 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
-# $Id: os_data.py 2268 2005-11-10 00:14:06Z ferringb $
+# Copyright: 2005 Gentoo Foundation
+# License: GPL2
+# $Id: os_data.py 2283 2005-11-10 00:35:14Z ferringb $
 
 import os,pwd,grp
 

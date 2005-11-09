@@ -1,5 +1,4 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Jason Stubbs (jstubbs@gentoo.org)
 # License: GPL2
 # $Id:$
 

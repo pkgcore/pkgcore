@@ -1,5 +1,4 @@
 # Copyright: 2005 Gentoo Foundation
-# Author(s): Marien Zwart <m_zwart@123mail.org>
 # License: GPL2
 # $Id:$
 

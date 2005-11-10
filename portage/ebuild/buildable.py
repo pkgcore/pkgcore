@@ -227,26 +227,21 @@ class buildable(base):
 			return self._generic_phase("configure", True, True, False)
 		return True
 
-
-	unpack = pretty_docs(
-		post_curry(_generic_phase, "unpack", True, True, False),
-		"run the unpack phase")
-	compile = post_curry(_generic_phase, "compile", True, True, False)
-	test = post_curry(_generic_phase, "test", True, True, False)
-	
+	unpack = pretty_docs(post_curry(_generic_phase, "unpack", True, True, False), "run the unpack phase")
+	compile = pretty_docs(post_curry(_generic_phase, "compile", True, True, False), "run the compile phase")	
 
 	def install(self):
+		"""install phase"""
 		if self.fakeroot:
 			return self._generic_phase("install", True, False, True)
 		else:
 			return self._generic_phase("install", True, True, False)
 
-
 	def test(self):
+		"""run the test phase (if enabled)"""
 		if not self.run_test:
 			return True
 		return self._generic_phase("test", True, True, False)
-
 
 	def clean(self):
 		if not os.path.exists(self.builddir):

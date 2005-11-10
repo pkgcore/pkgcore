@@ -1,6 +1,6 @@
 # Copyright: 2004-2005 Gentoo Foundation
 # License: GPL2
-# $Id: processor.py 2273 2005-11-10 00:22:02Z ferringb $
+# $Id: processor.py 2288 2005-11-10 03:39:28Z ferringb $
 
 # this needs work.  it's been pruned heavily from what ebd used originally, but it still isn't what 
 # I would define as 'right'
@@ -171,6 +171,23 @@ class ebuild_processor:
 		self.dont_export_vars=self.read().split()
 		# locking isn't used much, but w/ threading this will matter
 
+
+	def prep_phase(self, phase, env, sandbox=None, logging=None):
+		"""
+		Utility function, combines multiple calls into one, leaving the processor in a state where all that 
+		remains is a call start_processing call, then generic_handler event loop.
+		
+		Returns True for success, false for everything else.
+		"""
+		
+		self.write("process_ebuild %s" % phase)
+		if not self.send_env(env):
+			return False
+		if sandbox:
+			self.set_sandbox_state(sandbox)
+		if logging:
+			self.set_logging(logging)
+		return True
 
 	def sandboxed(self):
 		"""is this instance sandboxed?"""

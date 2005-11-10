@@ -26,6 +26,7 @@ def feat_or_bool(d, name):
 		return bool(v)
 	return name in d["FEATURES"]
 
+
 class buildable(base):
 	_built_class = built
 	
@@ -102,15 +103,6 @@ class buildable(base):
 				del self.env[k]
 
 
-	def _prep_ebd(self, ebd, phase):
-		ebd.write("process_ebuild "+phase)
-		if not ebd.send_env(self.env):
-			raise GenericBuildError(phase + ": Failed sending env to the ebd processor")
-		ebd.set_sandbox_state(self.sandbox)
-		if self.logging and not ebd.set_logging(self.logging):
-			raise GenericBuildError(phase + ": Failed commanding ebd to log to " + self.logging)
-
-
 	def setup(self):
 		# ensure dirs.
 		for k, text in (("HOME", "home"), ("T", "temp"), ("WORKDIR", "work"), ("D", "image")):
@@ -175,7 +167,7 @@ class buildable(base):
 		
 		ebd = request_ebuild_processor(userpriv=False, sandbox=self.sandbox)
 		try:
-			self._prep_ebd(ebd, "setup")
+			ebd.prep_phase("setup", self.env, sandbox=self.sandbox, logging=self.logging)
 			ebd.write("start_processing")
 			if not ebd.generic_handler(additional_commands={"request_inherit":post_curry(ebd.__class__._inherit, self.eclass_cache),
 				"request_profiles":self._request_bashrcs}):
@@ -214,7 +206,7 @@ class buildable(base):
 		ebd = request_ebuild_processor(userpriv=(self.userpriv and userpriv), 
 			sandbox=(self.sandbox and sandbox), fakeroot=(self.fakeroot and fakeroot))
 		try:
-			self._prep_ebd(ebd, phase)
+			ebd.prep_phase(phase, self.env, sandbox=self.sandbox, logging=self.logging)
 			ebd.write("start_processing")
 			if not ebd.generic_handler():
 				raise GenericBuildError(phase + ": Failed building (False/0 return from handler)")

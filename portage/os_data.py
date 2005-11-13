@@ -1,6 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
 # License: GPL2
-# $Id: os_data.py 2303 2005-11-13 11:27:35Z vapier $
+# $Id: os_data.py 2305 2005-11-13 11:50:13Z vapier $
 
 import os,pwd,grp
 
@@ -13,9 +13,9 @@ if ostype=="Linux":
 elif ostype == "Darwin":
 	userland="Darwin"
 	os.environ["XARGS"]="xargs"
+	def lchown(*pos_args, **key_args):
+		pass
 elif ostype in ["FreeBSD","OpenBSD","NetBSD"]:
-	if ostype == "Darwin":
-		lchown=os.chown
 	userland="BSD"
 	xargs = os.environ["XARGS"]="xargs"
 else:

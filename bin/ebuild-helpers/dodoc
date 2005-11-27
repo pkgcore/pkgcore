@@ -1,7 +1,6 @@
 #!/bin/bash
 # Copyright 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: dodoc 1912 2005-08-25 03:54:42Z ferringb $
 
 if [ $# -lt 1 ] ; then
 	echo "$0: at least one argument needed" 1>&2
@@ -16,11 +15,15 @@ fi
 PORTAGE_COMPRESS=${PORTAGE_COMPRESS:-gzip}
 PORTAGE_COMPRESS_FLAGS=${PORTAGE_COMPRESS_FLAGS:--9}
 
+ret=0
 for x in "$@" ; do
 	if [ -s "${x}" ] ; then
 		install -m0644 "${x}" "${dir}"
 		"${PORTAGE_COMPRESS}" ${PORTAGE_COMPRESS_FLAGS} -f "${dir}/${x##*/}"
 	elif [ ! -e "${x}" ] ; then
 		echo "dodoc: ${x} does not exist" 1>&2
+		((++ret))
 	fi
 done
+
+exit ${ret}

@@ -1,7 +1,7 @@
 #!/usr/bin/python -O
 # Copyright 1999-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: ebuild 1912 2005-08-25 03:54:42Z ferringb $
+# $Id: ebuild 2323 2005-11-29 06:00:31Z vapier $
 
 import os,sys
 sys.path = ["/usr/lib/portage/pym"]+sys.path
@@ -19,9 +19,11 @@ def getroot():
 	return os.path.normpath(a)+'/'
 
 os.environ["PORTAGE_CALLER"]="ebuild"
-		
-if len(sys.argv)<=2:
-	print "expecting two arguments."
+
+if len(sys.argv) <= 2:
+	print "Usage: ebuild <ebuild file> <command> [command] ..."
+	print ""
+	print "See the ebuild(1) man page for more info"
 	sys.exit(1)
 
 import getopt

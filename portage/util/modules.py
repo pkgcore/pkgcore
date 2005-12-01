@@ -1,6 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
 # License: GPL2
-# $Id: modules.py 2284 2005-11-10 00:35:50Z ferringb $
+# $Id: modules.py 2327 2005-12-02 00:13:09Z marienz $
 
 import sys, threading
 
@@ -25,11 +25,9 @@ def load_module(name):
 				m = getattr(m, nl[0])
 				nl.pop(0)
 			return m
-		# * ferringb|afk hit it at some point, sure of that
-		# but no idea how, so commenting out to see if things break...
-		# except AttributeError, e:
-		#	raise FailedImport(name, e)
-		except ImportError, e:
+		except (KeyboardInterrupt, SystemExit):
+			raise
+		except Exception, e:
 			try:
 				del sys.modules[name]
 			except KeyError:
@@ -43,7 +41,7 @@ def load_attribute(name):
 	try:
 		i = name.rfind(".")
 		if i == -1:
-			raise ValueError("name isn't an attribute, it's a module... : %s" % name)
+			raise FailedImport(name, "it isn't an attribute, it's a module")
 		m = load_module(name[:i])
 		m = getattr(m, name[i+1:])
 		return m

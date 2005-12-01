@@ -27,6 +27,9 @@ class ModulesTest(unittest.TestCase):
                 testmod = open(os.path.join(dir, 'mod_test%s.py' % i), 'w')
                 testmod.write('def foo(): pass\n')
                 testmod.close()
+            horkedmod = open(os.path.join(dir, 'mod_horked.py'), 'w')
+            horkedmod.write('1/0\n')
+            horkedmod.close()
         
         # append them to path
         sys.path.insert(0, self.dir)
@@ -41,10 +44,10 @@ class ModulesTest(unittest.TestCase):
             sys.modules.pop('mod_test%s' % i, None)
             sys.modules.pop('mod_testpack.mod_test%s' % i, None)
         sys.modules.pop('mod_testpack', None)
+        sys.modules.pop('mod_horked', None)
+        sys.modules.pop('mod_testpack.mod_horked', None)
     
     def test_load_module(self):
-        # force an exception to make sure the locking doesn't lock up
-        self.assertRaises(TypeError, modules.load_module, None)
         # import an already-imported module
         self.assertIdentical(
             modules.load_module('portage.util.modules'), modules)
@@ -83,8 +86,13 @@ class ModulesTest(unittest.TestCase):
             'spork_does_not_exist.foo')
         # not an attr
         self.assertRaises(
-            ValueError, modules.load_attribute, 'sys')
+            modules.FailedImport, modules.load_attribute, 'sys')
         # not imported yet
         self.assertRaises(
             modules.FailedImport,
             modules.load_attribute, 'mod_testpack.mod_test3')
+
+    def test_broken_module(self):
+        self.assertRaises(
+            modules.FailedImport,
+            modules.load_module, 'mod_testpack.mod_horked')

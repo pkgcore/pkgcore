@@ -6,6 +6,10 @@ The current portage code uses many different configuration files, most of which
 are unknown to users and normal developers.  Here we will try to collect all 
 the odds and ends so as to help users more effectively utilize portage.  This 
 is a reference only for files which do not already have a man page.
+
+All files in the make.profile directory may be tweaked via parent profiles 
+when using cascading profiles.  For more info, please see 
+http://www.gentoo.org/proj/en/releng/docs/cascading-profiles.xml
 .IP Note:
 If you are looking for information on how to emerge something, please see 
 .BR emerge (1).
@@ -24,6 +28,7 @@ make.defaults
 packages
 packages.build
 package.provided
+parent
 use.defaults
 use.mask
 virtuals
@@ -47,7 +52,10 @@ site-specific overrides of \fB/etc/make.profile/\fR
 .nf
 arch.list
 categories
+info_pkgs
+info_vars
 package.mask
+profiles.desc
 thirdpartymirrors
 use.desc
 use.local.desc
@@ -110,8 +118,17 @@ overriding.
 .TP
 .BR deprecated
 The existence of this file marks a profile as deprecated, meaning it is 
-not supported by Gentoo anymore.  It contains the name of the profile 
-to which users are encouraged to upgrade.
+not supported by Gentoo anymore.  The first line must be the profile to which 
+users are encouraged to upgrade, optionally followed by some instructions 
+explaining how they can upgrade.
+
+.I Example:
+.nf
+default-linux/x86/2005.0
+# emerge -n '>=sys-apps/portage-2.0.51'
+# rm -f /etc/make.profile
+# ln -s /usr/portage/profiles/default-linux/alpha/2005.0 /etc/make.profile
+.fi
 .TP
 .BR make.defaults
 The profile default settings for Portage.  The general format is described 
@@ -202,6 +219,12 @@ sys-kernel/development-sources-2.6.7
 x11-libs/qt-3.3.0
 .fi
 .TP
+.BR parent
+This contains a path to the parent profile.  It may be either relative or 
+absolute.  The paths will be relative to the location of the profile.  Most 
+commonly this file contains '..' to indicate the directory above.  Utilized 
+only in cascading profiles.
+.TP
 .BR use.defaults
 Here we DO NOT define the default USE flags, but the so\-called auto\-USE 
 flags.  This rather unknown portage feature activates a USE flag if a 
@@ -230,7 +253,13 @@ tcltk      dev\-lang/tcl   dev\-lang/tk
 .TP
 .BR use.mask
 Some USE flags don't make sense on some archs (for example altivec on 
-non\-ppc or mmx on non\-x86).  Here we list the masked ones.
+non\-ppc or mmx on non\-x86), or haven't yet been tested.  Here we list 
+the masked ones.
+
+.I Note:
+In a cascading profile setup, you can remove USE flags in children 
+profiles which were added by parent profiles by prefixing the flag with 
+a '\-'.
 
 .I Format:
 .nf
@@ -299,19 +328,36 @@ Per\-package KEYWORDS.  Useful for mixing unstable packages in with a normally
 stable machine or vice versa.  This will allow you to augment ACCEPT_KEYWORDS 
 for a single package.
 
-.I Format:
 .nf
+\fINote:\fR There are two special KEYWORDS to help out here:
+\fB*\fR  Match any stable KEYWORD
+\fB~*\fR Match any unstable KEYWORD
+
+.I Format:
 \- comments begin with #
-\- one DEPEND atom per line followed by additional ACCEPT_KEYWORDS 
-.fi
+\- one DEPEND atom per line followed by additional KEYWORDS
+\- lines without any KEYWORDS imply unstable host arch
 
 .I Example:
-.nf
 # always use unstable libgd
 media\-libs/libgd ~x86
 # only use stable mplayer
 media\-video/mplayer \-~x86
+# always use unstable netcat
+net-analyzer/netcat
 .fi
+
+.I Additional Note:
+If you encounter the \fB-*\fR KEYWORD, this indicates that the package is known 
+to be broken on all systems which are not otherwise listed in KEYWORDS.  For 
+example, a binary only package which is built for x86 will look like:
+
+games-fps/quake3-demo-1.11.ebuild:KEYWORDS="-* x86"
+
+If you wish to accept this package anyways, then add \fB-*\fR to your 
+package.keywords like this:
+
+games-fps/quake3-demo -*
 .TP
 .BR package.use
 Per\-package USE flags.  Useful for tracking local USE flags or for 
@@ -322,7 +368,7 @@ documentation for QT.  Easy as pie my friend!
 .I Format:
 .nf
 \- comments begin with #
-\- one DEPEND atom per line with space-separated row of USE flags
+\- one DEPEND atom per line with space-delimited USE flags
 .fi
 
 .I Example:
@@ -374,30 +420,6 @@ categories to be created.
 app\-hackers
 media\-other
 .fi
-.TP
-.BR virtuals
-This controls what packages will provide a virtual by default.  For example, 
-if a package needs to send e\-mail, it will need virtual/mta.  In the absence 
-of a package that provides virtual/mta (like qmail, sendmail, postfix, etc...), 
-portage will look here to see what package to use.  In this case, Gentoo uses 
-net\-mail/ssmtp as the default (as defined in the virtuals file) because it's 
-the package that does the very bare minimum to send e\-mail.
-
-.I Format:
-.br
-\- comments begin with #
-.br
-\- one virtual and DEPEND atom base pair per line
-
-.I Example:
-.br
-# use net\-mail/ssmtp as the default mta
-.br
-virtual/mta           net\-mail/ssmtp
-.br
-# use app\-dicts/aspell\-en as the default dictionary
-.br
-virtual/aspell\-dict   app\-dicts/aspell\-en
 .RE
 .TP
 .BR /usr/portage/profiles/
@@ -437,6 +459,12 @@ games\-strategy
 sys\-kernel
 .fi
 .TP
+.BR info_pkgs
+A list of all the packages which will be displayed when you run `emerge info`.
+.TP
+.BR info_vars
+A list of all the variables which will be displayed when you run `emerge info`.
+.TP
 .BR package.mask
 This contains a list of DEPEND atoms for packages that should not be installed 
 in any profile.  Useful for adding the latest KDE betas and making sure no 
@@ -458,6 +486,27 @@ package has been masked and WHO is doing the masking.
 # new kde betas
 =kde\-base/kde\-3.2.0_beta1
 =kde\-base/kdeaccessibility\-3.2.0_beta1
+.fi
+.TP
+.BR profiles.desc
+List all the current stable and development profiles.  If a profile is listed 
+here, then it will be checked by repoman.  At the moment, only 1 profile is 
+allowed per stable/dev/KEYWORD; the last one found is the last one used.
+
+.I Format:
+.nf
+\- comments begin with #
+\- one profile list per line in format: arch dir status
+\- arch must be listed in arch.list
+\- dir is relative to profiles.desc
+\- status must be 'stable' or 'dev'
+.fi
+
+.I Example:
+.nf
+alpha default-linux/alpha/2004.3 stable
+m68k  default-linux/m68k         dev
+x86   default-linux/x86/2004.3   stable
 .fi
 .TP
 .BR thirdpartymirrors
@@ -499,16 +548,13 @@ doc \- Adds extra documentation
 All local USE flags must be listed here along with the package and a 
 description.
 
-.I Format:
 .nf
+.I Format:
 \- comments begin with #
 \- package:use flag \- description
-.fi
 
 .I Example:
-.nf
 app\-editors/nano:justify \- Toggles the justify option
-dev\-games/clanlib:clanJavaScript \- Enables javascript support
 dev\-libs/DirectFB:fusion \- Adds Multi Application support
 games\-emulation/xmess:net \- Adds network support
 .fi
@@ -538,18 +584,16 @@ dev\-libs/uclibc
 app\-cdr/cdemu
 .fi
 .RE
+.SH "REPORTING BUGS"
+Please report bugs via http://bugs.gentoo.org/
 .SH "AUTHORS"
 .nf
 Marius Mauch <genone@gentoo.org>
 Mike Frysinger <vapier@gentoo.org>
 Drake Wyrm <wyrm@haell.com>
 .fi
-.SH "REPORTING BUGS"
-Please report bugs via http://bugs.gentoo.org/
 .SH "SEE ALSO"
 .BR emerge (1),
 .BR ebuild (1),
 .BR ebuild (5),
 .BR make.conf (5)
-.SH "CVS HEADER"
-$Id: portage.5 1912 2005-08-25 03:54:42Z ferringb $

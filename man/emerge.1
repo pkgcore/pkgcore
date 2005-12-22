@@ -7,13 +7,13 @@ emerge \- Command\-line interface to the Portage system
 [\fIoptions\fR] [\fIaction\fR] [\fIebuild\fR | \fItbz2file\fR | \fIclass\fR | \fIdependency\fR] ...
 .TP
 .BR emerge
-\fB\-\-sync\fR | \fB\-\-info\fR | \fB\-\-search\fR
+\fB\-\-sync\fR | \fB\-\-info\fR | \fB\-\-version\fR
 .TP
 .BR emerge
-\fI\-\-help\fR [\fBsystem\fR | \fBconfig\fR | \fBsync\fR]
+\fB\-\-search\fR \fIsomestring\fR
 .TP
 .BR emerge
-\fI\-\-version\fR | \fI\-V\fR
+\fB\-\-help\fR [\fBsystem\fR | \fBconfig\fR | \fBsync\fR]
 .SH "DESCRIPTION"
 \fBemerge\fR is the definitive command\-line interface to the Portage
 system.  It is primarily used for installing packages, and \fBemerge\fR
@@ -53,18 +53,17 @@ and \fBworld\fR.  \fBsystem\fR refers to a set of packages
 deemed necessary for your system to run properly.  \fBworld\fR
 contains all of the packages in \fBsystem\fR, along with any
 other packages listed in \fB/var/lib/portage/world\fR.  [See
-\fBFILES\fR below for more information].  Note that these
+\fBFILES\fR below for more information.]  Note that these
 commands are generally used in conjunction with \fB\-\-update\fR.
 .TP
 .BR dependency
-A \fIdependency\fR describes bounds on a package that you wish
-to install. \fISee portage(5) for the details on these 'atoms'.\fR For
-example, \fB>=dev\-lang/python\-2.2.1\-r2\fR matches the latest
-available version of Python greater than or equal
-to 2.2.1\-r2.  Similarly, \fB<dev\-lang/python\-2.0\fR matches
-the latest available version of Python before 2.0.  Note that in many
-shells you will need to escape characters such as '<' and '=';
-use single\- or double\-quotes around the \fIdependency\fR
+A \fIdependency\fR describes bounds on a package that you wish to install.  
+\fISee portage(5) for the details on these 'atoms'.\fR  For example, 
+\fB>=dev\-lang/python\-2.2.1\-r2\fR matches the latest available version of 
+Python greater than or equal to 2.2.1\-r2.  Similarly, 
+\fB<dev\-lang/python\-2.0\fR matches the latest available version of Python 
+before 2.0.  Note that in many shells you will need to escape characters such 
+as '<' and '='; use single\- or double\-quotes around the \fIdependency\fR 
 to get around escaping problems.
 .SH "ACTIONS"
 .TP
@@ -101,10 +100,10 @@ Re\-emerge the complaining package to fix this issue.
 output of \-\-depclean.\fR
 .TP
 .BR \-\-info
-This is a list of information to include in bug reports which aids
-the developers with fixing any problems you may report.  \fBPlease
-include this information when submitting a bug report.\fR Expanded
-output can be obtained with the \fI\-\-verbose\fR option.
+This is a list of information to include in bug reports which aids the 
+developers with fixing any problems you may report.  \fBPlease include this 
+information when submitting a bug report.\fR  Expanded output can be obtained 
+with the \fI\-\-verbose\fR option.
 .TP
 .BR "\-\-inject " (\fB\-i\fR)
 Injecting a package inserts a 'stub' for that package so that Portage
@@ -115,32 +114,31 @@ version of a package for injecting.  For example,
 \fBemerge \-\-inject sys\-kernel/gentoo\-sources\-2.4.19\fR.
 .TP
 .BR \-\-metadata
-Causes portage to process all the metacache files as is normally done
-on the tail end of an rsync update using \fBemerge \-\-sync\fR. The processing
-creates the cache database that portage uses for pre\-parsed lookups of
+Causes portage to process all the metacache files as is normally done on the 
+tail end of an rsync update using \fBemerge \-\-sync\fR.  The processing 
+creates the cache database that portage uses for pre\-parsed lookups of 
 package data.
 .TP
 .BR "\-\-prune " (\fB\-P\fR)
-\fBWARNING: This action can remove important packages!\fR  Tries 
-to remove all but the last version installed.  Since the command 
-currently doesn't handle multiple versions of the same package 
-properly, beware !  This does not check dependencies, so it may also 
-remove packages necessary for the proper operation of your system.  
-\fBUse\fR \-\-clean \fBinstead unless you really know what you're 
-doing\fR.  Its arguments can be \fIebuilds\fR, \fIclasses\fR, or 
-\fIdependencies\fR \-\- see \fB\-\-clean\fR above for examples.  You 
-have been warned !
+\fBWARNING: This action can remove important packages!\fR  Tries to remove 
+all but the last version installed.  Since the command currently does not 
+handle multiple versions of the same package properly, beware!  This does not 
+check dependencies, so it may also remove packages necessary for the proper 
+operation of your system.  \fBUse\fR \-\-clean \fBinstead unless you really 
+know what you're doing\fR.  Its arguments can be \fIebuilds\fR, 
+\fIclasses\fR, or \fIdependencies\fR \-\- see \fB\-\-clean\fR above for 
+examples.  You have been warned!
 .TP
 .BR \-\-regen
-Causes portage to check and update the dependency cache of all 
-ebuilds in the portage tree.  The cache is used to speed up searches
-and the building of dependency trees.  This command is not recommended 
-for rsync users as rsync updates the cache using server\-side caches.  If
-you do not know the differences between a 'rsync user' and some other
-user, then you are a 'rsync user' :).  Rsync users should simply run 
-\fBemerge \-\-sync\fR to regenerate the cache. After a portage update, rsync
-users may find it convenient to run \fBemerge \-\-metadata\fR to rebuild the
-cache as portage does at the end of a sync operation.
+Causes portage to check and update the dependency cache of all ebuilds in the 
+portage tree.  The cache is used to speed up searches and the building of 
+dependency trees.  This command is not recommended for rsync users as rsync 
+updates the cache using server\-side caches.  If you do not know the 
+differences between a 'rsync user' and some other user, then you are a 'rsync 
+user' :).  Rsync users should simply run \fBemerge \-\-sync\fR to regenerate 
+the cache.  After a portage update, rsync users may find it convenient to run 
+\fBemerge \-\-metadata\fR to rebuild the cache as portage does at the end of 
+a sync operation.
 .TP
 .BR "\-\-search " (\fB\-s\fR)
 Searches for matches of the supplied string in the portage tree.
@@ -164,15 +162,19 @@ all matching packages.  This does no checking of dependencies, so
 it may remove packages necessary for the proper operation of your
 system.  Its arguments can be \fIebuilds\fR, \fIclasses\fR, or
 \fIdependencies\fR \-\- see \fB\-\-clean\fR above for examples.
+.TP
+.BR "\-\-config "
+Run package specific actions needed to  be  executed  after  the
+emerge  process  has completed.  This usually entails configuration
+file setup or other similar setups that the user  may  wish to run.
 .SH "OPTIONS"
 .TP
 .BR "\-\-ask " (\fB\-a\fR)
-Before performing the merge, display what ebuilds and tbz2s will
-be installed, in the same format as when using \fB\-\-pretend\fR; then
-ask whether to continue with the merge or abort. Using \fB\-\-ask\fR is
-more efficient than using \fB\-\-pretend\fR and then executing the same
-command without \fB\-\-pretend\fR, as dependencies will only need to be
-calculated once.
+Before performing the merge, display what ebuilds and tbz2s will be installed, 
+in the same format as when using \fB\-\-pretend\fR; then ask whether to 
+continue with the merge or abort.  Using \fB\-\-ask\fR is more efficient than 
+using \fB\-\-pretend\fR and then executing the same command without 
+\fB\-\-pretend\fR, as dependencies will only need to be calculated once.
 .TP
 .BR "\-\-buildpkg " (\fB\-b\fR)
 Tells emerge to build binary packages for all ebuilds processed in
@@ -219,7 +221,7 @@ sure the result is what you expect.
 Instead of doing any package building, just perform fetches for all
 packages (the main package as well as all dependencies).
 .TP
-.BR "\-\-fetch\-all\-uri " (\fB\-f\fR)
+.BR "\-\-fetch\-all\-uri " (\fB\-F\fR)
 Instead of doing any package building, just perform fetches for all
 packages (the main package as well as all dependencies), grabbing all potential
 files.
@@ -244,9 +246,12 @@ updated more frequently than this man page; check it out if you
 are having problems that this man page does not help resolve.
 .TP
 .BR "\-\-newuse " (\fB\-N\fR)
-Tells emerge to include installed packages where USE flags have changed
-since compilation. An asterisk marks when a USE flag has changed since
-the package was compiled.
+Tells emerge to include installed packages where USE flags have changed since 
+compilation.  An asterisk marks when a USE flag has changed since the package 
+was compiled.
+.TP
+.BR "\-\-nocolor "
+Make sure none of the output from portage contains color.
 .TP
 .BR "\-\-noconfmem"
 Causes portage to disregard merge records indicating that a config file
@@ -288,7 +293,7 @@ the printout,
 .br 
 \fIN\fR = new, (not yet installed)
 .br 
-\fIS\fR = new, Slot installation (side-by-side versions) 
+\fIS\fR = new, SLOT installation (side-by-side versions) 
 .br 
 \fIU\fR = updating, (changing versions)
 .br 
@@ -328,18 +333,16 @@ This is only really useful in combination with \fB\-\-emptytree\fR or
 \fB\-\-update\fR and \fB\-\-deep\fR.
 .TP
 .BR "\-\-update " (\fB\-u\fR)
-Updates packages to the best version available, which may not
-always be the highest version number due to masking for testing
-and development.  This will also update direct dependencies which
-may not be what you want.  In general, use this option only in 
-combination with the world or system target.
+Updates packages to the best version available, which may not always be the 
+highest version number due to masking for testing and development.  This will 
+also update direct dependencies which may not be what you want.  In general, 
+use this option only in combination with the world or system target.
 .TP
 .BR "\-\-upgradeonly " (\fB\-U\fR)
-Updates packages, but excludes updates that would result in a
-lower version of the package being installed.  \fBSLOT\fRs are
-considered at a basic level.
+Updates packages, but excludes updates that would result in a lower version of 
+the package being installed.  \fBSLOT\fRs are considered at a basic level.
 .br 
-This option is deprecated and shouldn't be used anymore. Please use the
+This option is deprecated and should not be used anymore.  Please use the 
 /etc/portage/package.* files from now on.
 .TP
 .BR "\-\-usepkg " (\fB\-k\fR) 
@@ -364,6 +367,7 @@ conjunction with other options.
 \fBROOT\fR = \fI[path]\fR
 Use \fBROOT\fR to specify the target root filesystem to be used for
 merging packages or ebuilds.
+.br
 Defaults to /.
 .SH "OUTPUT"
 When utilizing \fBemerge\fR with the \fB\-\-pretend\fR and \fB\-\-verbose\fR 
@@ -501,17 +505,16 @@ Please report any bugs you encounter through our website:
 .LP
 Please include the output of \fBemerge \-\-info\fR when you submit your
 bug report.
-.SH "SEE ALSO"
-.BR "emerge \-\-help",
-.BR ebuild (1),
-.BR ebuild (5),
-.BR make.conf (5),
-.BR portage (5)
-.LP
-A number of helper applications reside in \fI/usr/lib/portage/bin\fR.
-.LP
-The \fBapp\-admin/gentoolkit\fR package contains useful scripts such as \fBqpkg\fR
-(a package query tool).
+.SH "AUTHORS"
+.nf
+Daniel Robbins <drobbins@gentoo.org>
+Geert Bevin <gbevin@gentoo.org>
+Achim Gottinger <achim@gentoo.org>
+Nicholas Jones <carpaski@gentoo.org>
+Phil Bordelon <phil@thenexusproject.org>
+Mike Frysinger <vapier@gentoo.org>
+Marius Mauch <genone@gentoo.org>
+.fi
 .SH "FILES"
 .TP
 \fB/var/lib/portage/world\fR 
@@ -551,20 +554,14 @@ and \fBworld\fR classes consult this file.  \fBDo not edit this file\fR.
 \fB/etc/make.globals\fR 
 Contains the default variables for the build process.  \fBDo not edit
 this file\fR.
-.SH "AUTHORS"
-Daniel Robbins <drobbins@gentoo.org>
-.br 
-Geert Bevin <gbevin@gentoo.org>
-.br 
-Achim Gottinger <achim@gentoo.org>
-.br 
-Nicholas Jones <carpaski@gentoo.org>
-.br 
-Phil Bordelon <phil@thenexusproject.org>
-.br 
-Mike Frysinger <vapier@gentoo.org>
-.br 
-Marius Mauch <genone@gentoo.org>
-.br 
-.SH "CVS HEADER"
-$Id: emerge.1 1912 2005-08-25 03:54:42Z ferringb $
+.SH "SEE ALSO"
+.BR "emerge \-\-help",
+.BR ebuild (1),
+.BR ebuild (5),
+.BR make.conf (5),
+.BR portage (5)
+.LP
+A number of helper applications reside in \fI/usr/lib/portage/bin\fR.
+.LP
+The \fBapp\-portage/gentoolkit\fR package contains useful scripts such as 
+\fBequery\fR (a package query tool).

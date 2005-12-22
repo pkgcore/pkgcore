@@ -16,7 +16,7 @@ Here's a simple example ebuild:
 .nf
 # Copyright 1999\-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header:
+# $Header: $
 
 inherit some_eclass another_eclass
 
@@ -111,8 +111,7 @@ whatever you like.
 \fBD\fR = \fI"${PORTAGE_TMPDIR}/portage/${PF}/image"\fR
 Contains the path to the temporary \fIinstall directory\fR.  Every write 
 operation that does not involve the helper tools and functions (found below) 
-should be prefixed with ${D}.  Do not modify this variable.  This will not be 
-available inside of the pkg_* functions.
+should be prefixed with ${D}.  Do not modify this variable.
 .TP
 \fBDESCRIPTION\fR = \fI"A happy little package"\fR
 Should contain a short description of the package.
@@ -239,7 +238,7 @@ multiple Atoms and be nested to an infinite depth.
 To include the jpeg library when the user has jpeg in \fBUSE\fR, simply use the
 following syntax:
 .br
-.B jpeg? ( media-libs/jpeg)
+.B jpeg? ( media-libs/jpeg )
 .TP
 .B !usevar? ( Atom )
 If you want to include a package only if the user does not have a certain option
@@ -320,6 +319,12 @@ fetch from URL's in \fBSRC_URI\fR before \fBGENTOO_MIRRORS\fR.
 .TP
 .I strip
 final binaries/libraries will not be stripped of debug symbols.
+.TP
+.I sandbox
+disable sandbox (do not use without very good reason).
+.TP
+.I test
+do not run src_test even if user has \fBFEATURES\fR=test.
 .TP
 .I userpriv
 Disables userpriv for specific packages.
@@ -403,19 +408,19 @@ Causes the current emerge process to be aborted. The final display will
 include \fIreason\fR.
 .TP
 \fBuse\fR \fI<USE item>\fR
-If \fIUSE item\fR is in the \fBUSE\fR variable, \fIUSE item\fR will be
-echoed and the function will return 0.  If \fIUSE item\fR is not in the
-\fBUSE\fR variable, the function will return 1. \fBuseq\fR is a non-echoing
-version of \fBuse\fR.
+If \fIUSE item\fR is in the \fBUSE\fR variable, the function will silently 
+return 0 (aka shell true).  If \fIUSE item\fR is not in the \fBUSE\fR 
+variable, the function will silently return 1 (aka shell false).  \fBusev\fR 
+is a verbose version of \fBuse\fR.
 .RS
 .TP
 .I Example:
 .nf
-if useq gnome ; then
+if use gnome ; then
 	guiconf="--enable-gui=gnome --with-x"
-elif useq gtk ; then
+elif use gtk ; then
 	guiconf="--enable-gui=gtk --with-x"
-elif useq X ; then
+elif use X ; then
 	guiconf="--enable-gui=athena --with-x"
 else
 	# No gui version will be built
@@ -594,10 +599,6 @@ Strips all executable files of debugging symboles.  This includes libraries.
 .TP
 \fBprepinfo\fR \fI[dir]\fR
 .TP
-\fBpreplib\fR \fI[dir]\fR
-.TP
-\fBpreplib.so\fR \fI[dir]\fR
-.TP
 \fBprepman\fR \fI[dir]\fR
 .TP
 \fBprepstrip\fR \fI[dir]\fR
@@ -610,14 +611,6 @@ Similiar to the \fBprepall\fR functions, these are subtle in their differences.
 If a \fIdir\fR is not specified, then \fBprepinfo\fR will assume the dir
 \fIusr\fR. \fBprepinfo\fR will then compress all the files in
 ${D}/\fIdir\fR/info.
-.TP
-.B preplib:
-If a \fIdir\fR is not specified, then \fBpreplib\fR will assume the dir
-\fIusr\fR. \fBpreplib\fR will then run 'ldconfig -n -N' on ${D}/\fIdir\fR/lib.
-.TP
-.B preplib.so:
-All the files with '.so' in their name and are found in ${D}/\fIdir\fR will
-be stripped of their debug symbols.  You may specify multiple directories.
 .TP
 .B prepman:
 If a \fIdir\fR is not specified, then \fBprepman\fR will assume the dir
@@ -804,21 +797,6 @@ All these functions act like the do* functions, but they only work with one
 file and the file is installed as \fI[new filename]\fR.
 .SH "REPORTING BUGS"
 Please report bugs via http://bugs.gentoo.org/
-.SH "SEE ALSO"
-.BR ebuild (1),
-.BR make.conf (5)
-.TP
-The \fI/usr/sbin/ebuild.sh\fR script.
-.TP
-The helper apps in \fI/usr/lib/portage/bin\fR.
-.SH "FILES"
-.TP
-\fB/etc/make.conf\fR 
-Contains variables for the build\-process and overwrites those in make.defaults.
-.TP
-\fB/etc/make.globals\fR
-Contains the default variables for the build\-process, you should edit
-\fI/etc/make.conf\fR instead.
 .SH "AUTHORS"
 .nf
 Achim Gottinger <achim@gentoo.org>
@@ -826,5 +804,18 @@ Mark Guertin <gerk@gentoo.org>
 Nicholas Jones <carpaski@gentoo.org>
 Mike Frysinger <vapier@gentoo.org>
 .fi
-.SH "CVS HEADER"
-$Id: ebuild.5 1912 2005-08-25 03:54:42Z ferringb $
+.SH "FILES"
+.TP
+The \fI/usr/sbin/ebuild.sh\fR script.
+.TP
+The helper apps in \fI/usr/lib/portage/bin\fR.
+.TP
+\fB/etc/make.conf\fR 
+Contains variables for the build\-process and overwrites those in make.defaults.
+.TP
+\fB/etc/make.globals\fR
+Contains the default variables for the build\-process, you should edit
+\fI/etc/make.conf\fR instead.
+.SH "SEE ALSO"
+.BR ebuild (1),
+.BR make.conf (5)

@@ -64,6 +64,11 @@ Creates a digest file for the package in
 md5sum's of all the files found in the SRC_URI.  If the fetched source
 of the package is corrupt/bogus in some way, the md5sum will catch this.
 .TP
+.BR manifest
+Updates the manifest file for the package.  This performs the second half
+of the digest command, creating md5sums for the files in the files
+directory as well as the ebuild.
+.TP
 .BR unpack
 Extracts the sources to a subdirectory in the \fIbuild directory\fR
 (BUILD_PREFIX) by running the \fIsrc_unpack()\fR function in the ebuild
@@ -159,6 +164,18 @@ Builds a RedHat RPM package from the files in the temporary
 information is not incorporated into the RPM.
 .SH "REPORTING BUGS"
 Please report bugs via http://bugs.gentoo.org/
+.SH "AUTHORS"
+.nf
+Achim Gottinger <achim@gentoo.org>
+Daniel Robbins <drobbins@gentoo.org>
+Nicholas Jones <carpaski@gentoo.org>
+Mike Frysinger <vapier@gentoo.org>
+.fi
+.SH "FILES"
+.TP
+\fB/etc/make.conf\fR 
+Contains variables for the build\-process and overwrites those
+in make.globals.
 .SH "SEE ALSO"
 .BR emerge (1),
 .BR ebuild (5),
@@ -167,18 +184,3 @@ Please report bugs via http://bugs.gentoo.org/
 The \fI/usr/sbin/ebuild.sh\fR script. 
 .TP
 The helper apps in \fI/usr/lib/portage/bin\fR.
-.SH "FILES"
-.TP
-\fB/etc/make.conf\fR 
-Contains variables for the build\-process and overwrites those
-in make.globals.
-.SH "AUTHORS"
-Achim Gottinger <achim@gentoo.org>
-.br 
-Daniel Robbins <drobbins@gentoo.org>
-.br 
-Nicholas Jones <carpaski@gentoo.org>
-.br 
-Mike Frysinger <vapier@gentoo.org>
-.SH "CVS HEADER"
-$Id: ebuild.1 1912 2005-08-25 03:54:42Z ferringb $"

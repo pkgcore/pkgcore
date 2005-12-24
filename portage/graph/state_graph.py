@@ -6,7 +6,7 @@
 import sets
 
 from portage.package.atom import atom
-from portage.restrictions.packages import OrRestriction
+from portage.restrictions.boolean import OrRestriction
 
 class StateGraph(object):
 
@@ -58,12 +58,19 @@ class StateGraph(object):
 				all_atoms.union_update(atomset)
 			okay_atoms = sets.Set()
 			for atom in all_atoms:
+				have_blocker=False
 				for child in self.pkgs:
 					if atom.key != child.key:
 						continue
-					if atom.match(child) ^ atom.blocks:
-						okay_atoms.add(atom)
+					if atom.match(child):
+						if atom.blocks:
+							have_blocker=True
+						else:
+							okay_atoms.add(atom)
 						break
+				if atom.blocks and not have_blocker:
+					# block atom that does not match any packages
+					okay_atoms.add(atom)
 			for choice in self.pkgs[pkg][0]:
 				if choice.issubset(okay_atoms):
 					break
@@ -187,10 +194,7 @@ def combinations(restrict):
 	ret = sets.Set()
 
 	if isinstance(restrict, OrRestriction):
-		# XXX: OrRestrictions currently contain a single DepSet that contains
-		# the Or'd elements. This seems broken to me.
-		# -- jstubbs
-		for element in restrict[0]:
+		for element in restrict:
 			if isinstance(element, atom):
 				newset = sets.Set()
 				newset.add(element)

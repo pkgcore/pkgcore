@@ -1,6 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
 # License: GPL2
-# $Id: boolean.py 2282 2005-11-10 00:30:30Z ferringb $
+# $Id: boolean.py 2448 2005-12-25 03:03:00Z ferringb $
 
 """
 This module provides classes that can be used to combine arbitrary collections of restrictions in AND, NAND, OR, NOR, XOR, XNOR 
@@ -8,7 +8,6 @@ style operations.
 """
 
 from itertools import imap, islice
-from portage.util.iterate import enumerate
 
 __all__ = ("AndRestriction", "OrRestriction", "XorRestriction")
 import restriction
@@ -77,7 +76,7 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths, fil
 	if starting == 0:
 		if filter(truths):
 			yield True
-	for index, rest in enumerate(restrictions, starting, end):
+	for index, rest in islice(enumerate(restrictions), starting, end):
 		if reset:
 			entry = pkg.changes_count()
 		reset = False

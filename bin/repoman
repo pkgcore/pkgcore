@@ -1,7 +1,7 @@
 #!/usr/bin/python -O
 # Copyright 1999-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: repoman 1913 2005-08-25 03:58:27Z ferringb $
+# $Id: repoman 2491 2005-12-29 11:03:15Z vapier $
 
 # Next to do: dep syntax checking in mask files
 # Then, check to make sure deps are satisfiable (to avoid "can't find match for" problems)
@@ -265,7 +265,7 @@ def last():
 		print bold("Note: type \"repoman lfull\" for a complete listing of repomans last run.")
 		print
 	if dowarn and not dofail:
-		print green("RepoMan sez:"),"\"You only gave me a partial QA payment last time?\nI took it, but I wasn't happy.\""
+		print green("RepoMan sez:"),"\"You only gave me a partial QA payment last time?\n              I took it, but I wasn't happy.\""
 	elif not dofail:
 		print green("RepoMan sez:"),"\"If everyone were like you, I'd be out of business!\""
 	print
@@ -1031,7 +1031,7 @@ for x in scanlist:
 		myear = time.gmtime(os.stat(checkdir+"/"+y+".ebuild")[ST_MTIME])[0]
 		gentoo_copyright = re.compile(r'^# Copyright 1999-' + str(myear) + r' Gentoo Foundation')
 		gentoo_license = re.compile(r'^# Distributed under the terms of the GNU General Public License v2$')
-		cvs_header = re.compile(r'^#\s*\$Id: repoman 1913 2005-08-25 03:58:27Z ferringb $$')
+		cvs_header = re.compile(r'^#\s*\$Id: repoman 2491 2005-12-29 11:03:15Z vapier $$')
 		ignore_line = re.compile(r'(^$)|(^(\t)*#)')
 		leading_spaces = re.compile(r'^[\S\t]')
 		trailing_whitespace = re.compile(r'.*([\S]$)')
@@ -1185,7 +1185,7 @@ if mymode!="commit":
 		print bold("Note: type \"repoman full\" for a complete listing.")
 		print
 	if dowarn and not dofail:
-		print green("RepoMan sez:"),"\"You're only giving me a partial QA payment?\nI'll take it this time, but I'm not happy.\""
+		print green("RepoMan sez:"),"\"You're only giving me a partial QA payment?\n              I'll take it this time, but I'm not happy.\""
 	elif not dofail:
 		print green("RepoMan sez:"),"\"If everyone were like you, I'd be out of business!\""
 	print

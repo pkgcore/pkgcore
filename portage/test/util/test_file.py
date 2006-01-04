@@ -77,11 +77,38 @@ class ReadBashDictTest(unittest.TestCase):
 		self.sourcingFile = tempfile.NamedTemporaryFile()
 		self.sourcingFile.write('source "%s"\n' % self.validFile.name)
 		self.sourcingFile.flush()
+		self.advancedFile = tempfile.NamedTemporaryFile()
+		self.advancedFile.write(
+			'one1=1\n'
+			'one_=$one1\n'
+			'two1=2\n'
+			'two_=${two1}\n'
+			)
+		self.advancedFile.flush()
+		self.envFile = tempfile.NamedTemporaryFile()
+		self.envFile.write(
+			'imported=${external}\n'
+			)
+		self.envFile.flush()
+		self.escapedFile = tempfile.NamedTemporaryFile()
+		self.escapedFile.write(
+			'end=bye\n'
+			'quoteddollar="\${dollar}"\n'
+			'quotedexpansion="\${${end}}"\n'
+			)
+		self.escapedFile.flush()
+		self.unclosedFile = tempfile.NamedTemporaryFile()
+		self.unclosedFile.write('foo="bar')
+		self.unclosedFile.flush()
 
 	def tearDown(self):
 		del self.validFile
 		del self.invalidFile
 		del self.sourcingFile
+		del self.advancedFile
+		del self.envFile
+		del self.escapedFile
+		del self.unclosedFile
 	
 	def test_read_bash_dict(self):
 		# TODO this is not even close to complete
@@ -96,6 +123,36 @@ class ReadBashDictTest(unittest.TestCase):
 	def test_sourcing(self):
 		# TODO this is not even close to complete
 		self.assertEquals(
-            read_bash_dict(self.sourcingFile.name, sourcing_command='source'),
-            {'foo1': 'bar', 'foo2': 'bar', 'foo3': 'bar'})
-			
+			read_bash_dict(self.sourcingFile.name, sourcing_command='source'),
+			{'foo1': 'bar', 'foo2': 'bar', 'foo3': 'bar'})
+
+	def test_read_advanced(self):
+		self.assertEquals(
+			read_bash_dict(self.advancedFile.name),
+			{'one1': '1',
+			 'one_': '1',
+			 'two1': '2',
+			 'two_': '2',
+			 })
+
+	def test_env(self):
+		self.assertEquals(
+			read_bash_dict(self.envFile.name),
+			{'imported': ''})
+		env = {'external': 'imported foo'}
+		envBackup = env.copy()
+		self.assertEquals(
+			read_bash_dict(self.envFile.name, env),
+			{'imported': 'imported foo'})
+		self.assertEquals(envBackup, env)
+
+	def test_escaping(self):
+		self.assertEquals(
+			read_bash_dict(self.escapedFile.name), {
+				'end': 'bye',
+				'quoteddollar': '${dollar}',
+				'quotedexpansion': '${bye}',
+				})
+
+	def test_unclosed(self):
+		self.assertRaises(ParseError, read_bash_dict, self.unclosedFile.name)

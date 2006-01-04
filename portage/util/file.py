@@ -1,6 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
 # License: GPL2
-# $Id: file.py 2284 2005-11-10 00:35:50Z ferringb $
+# $Id: file.py 2523 2006-01-04 13:56:53Z marienz $
 
 import re
 from shlex import shlex
@@ -89,8 +89,8 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False, sourcing
 	return d
 
 
-var_find = re.compile("\\\\?(\${\w+}|\$\w+)")
-backslash_find = re.compile("\\\\.")
+var_find = re.compile(r'\\?(\${\w+}|\$\w+)')
+backslash_find = re.compile(r'\\.')
 def nuke_backslash(s):
 	s = s.group()
 	if s == "\\\n":	return "\n"
@@ -104,10 +104,7 @@ class bash_parser(shlex):
 		self.wordchars += "${}/."
 		if sourcing_command is not None:
 			self.source = sourcing_command
-		if env is None:
-			self.env = {}
-		else:
-			self.env = env
+		self.env = env
 		self.__pos = 0
 
 	def __setattr__(self, attr, val):

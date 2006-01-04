@@ -1,9 +1,10 @@
 # Copyright 2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: fs.py 2268 2005-11-10 00:14:06Z ferringb $
+# $Id: fs.py 2523 2006-01-04 13:56:53Z marienz $
 
 import os, stat
 import fcntl
+import errno
 
 def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
 	"""ensure dirs exist, creating as needed with (optional) gid, uid, and mode
@@ -27,7 +28,6 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
 				base = os.path.join(base,dir)
 				try:
 					st = os.stat(base)
-					# something exists.  why are we doing isdir?
 					if not stat.S_ISDIR(st.st_mode):
 						return False
 					
@@ -151,7 +151,7 @@ class FsLock(object):
 		if not blocking:
 			try:	fcntl.flock(self.fd, flags|fcntl.LOCK_NB)
 			except IOError, ie:
-				if ie.errno == 11:
+				if ie.errno == errno.EAGAIN:
 					return False
 				raise GenericFailed(self.path, ie)
 		else:

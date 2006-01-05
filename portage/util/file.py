@@ -1,6 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
 # License: GPL2
-# $Id: file.py 2523 2006-01-04 13:56:53Z marienz $
+# $Id: file.py 2530 2006-01-05 07:17:09Z ferringb $
 
 import re
 from shlex import shlex
@@ -104,6 +104,8 @@ class bash_parser(shlex):
 		self.wordchars += "${}/."
 		if sourcing_command is not None:
 			self.source = sourcing_command
+		if env is None:
+			env = {}
 		self.env = env
 		self.__pos = 0
 

@@ -4,7 +4,7 @@
 
 import os, shutil
 # surprisingly this is clean, cause buildable defines __all__
-from portage.operations.build import *
+from portage.operations import build, repo
 from itertools import imap, izip
 from portage.ebuild.processor import request_ebuild_processor, release_ebuild_processor, UnhandledCommand, \
 	expected_ebuild_env, chuck_UnhandledCommand
@@ -20,7 +20,69 @@ from portage.fs import scan
 from portage.protocols.data_source import local_source
 
 
-class ebd(base):
+class ebd(object):
+
+	def __init__(self, pkg, env=None, features=None):
+		if pkg.eapi not in eapi_capable:
+			raise TypeError("pkg isn't of a supported eapi!, %i not in %s for %s" % (pkg.eapi, eapi_capable, pkg))
+
+		if env is not None:
+			# copy.
+			self.env = dict(env)
+			for x in ("USE", "ACCEPT_LICENSE"):
+				if x in self.env:
+					del self.env[x]
+		else:
+			self.env = {}
+
+		if features is None:
+			features = self.env.get("FEATURES", [])
+
+		self.features = set(map(lambda x:x.lower(), features))
+
+		if "FEATURES" in self.env:
+			del self.env["FEATURES"]
+			
+		expected_ebuild_env(pkg, self.env)
+
+		self.env["USE"] = ' '.join(imap(str, pkg.use))
+		self.env["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", {}).keys())
+
+		self.restrict = pkg.data["RESTRICT"].split()
+		
+		for x in ("sandbox", "userpriv", "fakeroot"):
+			setattr(self, x, self.feat_or_bool(x) and not (x in self.restrict))
+		
+		if "PORT_LOGDIR" in self.env:
+			self.logging = os.path.join(self.env["PORT_LOGDIR"], pkg.category, pkg.cpvstr+".log")
+			del self.env["PORT_LOGDIR"]
+		else:
+			self.logging = False
+		
+		self.env["XARGS"] = xargs
+
+		self.bashrc = self.env.get("bashrc", [])
+		if self.bashrc:
+			del self.env["bashrc"]
+
+		self.pkg = pkg
+		self.eapi = pkg.eapi
+		for k,v in self.env.items():
+			if not isinstance(v, basestring):
+				del self.env[k]
+
+	def __init_workdir__(self):
+		# don't fool with this, without fooling with setup.
+		tmp = self.env["PORTAGE_TMPDIR"]
+		del self.env["PORTAGE_TMPDIR"]
+		prefix = normpath(os.path.join(tmp, "portage"))
+		self.env["HOME"] = os.path.join(prefix, "homedir")
+
+		self.builddir = os.path.join(prefix, self.env["CATEGORY"], self.env["PF"])
+		for x,y in (("T","temp"),("WORKDIR","work"), ("D","image")):
+			self.env[x] = os.path.join(self.builddir, y) +"/"
+		self.env["IMAGE"] = self.env["D"]
+
 
 	def setup_logging(self):
 		if self.logging and not ensure_dirs(os.path.dirname(self.env["PORT_LOGFILE"]), mode=02770, gid=portage_gid):
@@ -99,67 +161,6 @@ class ebd(base):
 			raise GenericBuildError("clean: Caught exception while cleansing: %s" % oe)
 		return True
 
-	def __init__(self, pkg, env=None, features=None):
-		if pkg.eapi not in eapi_capable:
-			raise TypeError("pkg isn't of a supported eapi!, %i not in %s for %s" % (pkg.eapi, eapi_capable, pkg))
-
-		if env is not None:
-			# copy.
-			self.env = dict(env)
-			for x in ("USE", "ACCEPT_LICENSE"):
-				if x in self.env:
-					del self.env[x]
-		else:
-			self.env = {}
-
-		if features is None:
-			features = self.env.get("FEATURES", [])
-
-		self.features = set(map(lambda x:x.lower(), features))
-
-		if "FEATURES" in self.env:
-			del self.env["FEATURES"]
-			
-		expected_ebuild_env(pkg, self.env)
-
-		self.env["USE"] = ' '.join(imap(str, pkg.use))
-		self.env["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", {}).keys())
-
-		self.restrict = pkg.data["RESTRICT"].split()
-		
-		for x in ("sandbox", "userpriv", "fakeroot"):
-			setattr(self, x, self.feat_or_bool(x) and not (x in self.restrict))
-		
-		if "PORT_LOGDIR" in self.env:
-			self.logging = os.path.join(self.env["PORT_LOGDIR"], pkg.category, pkg.cpvstr+".log")
-			del self.env["PORT_LOGDIR"]
-		else:
-			self.logging = False
-		
-		self.env["XARGS"] = xargs
-
-		self.bashrc = self.env.get("bashrc", [])
-		if self.bashrc:
-			del self.env["bashrc"]
-
-		self.pkg = pkg
-		self.eapi = pkg.eapi
-		for k,v in self.env.items():
-			if not isinstance(v, basestring):
-				del self.env[k]
-
-	def __init_workdir__(self):
-		# don't fool with this, without fooling with setup.
-		tmp = self.env["PORTAGE_TMPDIR"]
-		del self.env["PORTAGE_TMPDIR"]
-		prefix = normpath(os.path.join(tmp, "portage"))
-		self.env["HOME"] = os.path.join(prefix, "homedir")
-
-		self.builddir = os.path.join(prefix, self.env["CATEGORY"], self.env["PF"])
-		for x,y in (("T","temp"),("WORKDIR","work"), ("D","image")):
-			self.env[x] = os.path.join(self.builddir, y) +"/"
-		self.env["IMAGE"] = self.env["D"]
-
 
 	def feat_or_bool(self, name, extra_env=None):
 		if name in self.env:
@@ -183,13 +184,13 @@ class ebd(base):
 
 
 
-class buildable(ebd):
+class buildable(ebd, build.base):
 	_built_class = built
 	
 	# XXX this is unclean- should be handing in strictly what is build env, rather then
 	# dumping domain settings as env. 
 	def __init__(self, pkg, domain_settings, eclass_cache, fetcher):
-		base.__init__(self)
+		build.base.__init__(self)
 		ebd.__init__(self, pkg, env=domain_settings, features=domain_settings["FEATURES"])
 		self.__init_workdir__()
 		
@@ -309,3 +310,9 @@ class buildable(ebd):
 	def finalize(self):
 		return self._built_class(self.pkg, scan(self.env["IMAGE"], offset=self.env["IMAGE"]), environment=local_source(os.path.join(self.env["T"], "environment")))
 
+#class install(ebd):
+#	def __init__(self):
+#		pass
+#		
+#	def preinst(self):
+		

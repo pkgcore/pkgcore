@@ -3,7 +3,7 @@
 # $Id: ebuild_repository.py 2273 2005-11-10 00:22:02Z ferringb $
 
 import os, stat
-from buildable import buildable
+from portage.ebuild.ebd import buildable
 from weakref import proxy
 from portage.package.conditionals import PackageWrapper
 from portage.repository import prototype, errors

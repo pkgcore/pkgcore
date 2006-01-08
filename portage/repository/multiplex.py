@@ -75,3 +75,13 @@ class tree(prototype.tree):
 				if cpv not in s:
 					yield t.package_class(cpv)
 					s.add(cpv)
+
+	def __getitem__(self, key):
+		for t in self.trees:
+			try:
+				p = t[key]
+				return p
+			except KeyError:
+				pass
+		# made it here, no match.
+		raise KeyError("package %s not found" % key)

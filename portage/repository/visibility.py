@@ -20,6 +20,10 @@ class filterTree(prototype.tree):
 		self.raw_repo = repo
 
 	def itermatch(self, atom):
+		# note that this lets the repo do the initial filtering.
+		# better design would to analyze the restrictions, and inspect the repo,
+		# determine what can be done without cost (determined by repo's attributes)
+		# versus what does cost (metadata pull for example).
 		for cpv in self.raw_repo.itermatch(atom):
 			if self.restriction.match(cpv) == self.sentinel_val:
 				yield cpv

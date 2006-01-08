@@ -18,16 +18,20 @@ __all__ = ["merge_contents"]
 
 def default_ensure_perms(d1,d2=None):
 	m, o, g, t = d1.mode, d1.uid, d1.gid, d1.mtime
+	if o is None:
+		o = -1
+	if g is None:
+		g = -1
 	if d2 is None:
 		do_mode, do_chown, do_mtime = True, True, True
 	else:
 
 		do_mode = False
 		try:
-			do_mode = (m != d2.mode)
+			do_mode = (m is not None and m != d2.mode)
 		except AttributeError:
 			# yes.  this _is_ stupid.  vdb's don't always store all attributes
-			do_mode = True
+			do_mode = False
 
 		do_chown = False
 		try:
@@ -40,15 +44,19 @@ def default_ensure_perms(d1,d2=None):
 		except AttributeError:
 			do_mtime = True
 
-	if do_mode:
+	if do_mode and m is not None:
 		os.chmod(d1.location, m)
-	if do_chown:
+	if do_chown and (o != -1 or g != -1):
 		os.chown(d1.location, o, g)
-	if do_mtime:
+	if do_mtime and t is not None:
 		os.utime(d1.location, (t, t))
 
 def default_mkdir(d):
-	os.mkdir(d.location, d.mode)
+	if not d.mode:
+		mode = 0777
+	else:
+		mode = d.mode
+	os.mkdir(d.location, mode)
 	get_plugin("fs_ops", "ensure_perms")(d)	
 	return True
 
@@ -96,7 +104,7 @@ def merge_contents(cset, offset=None):
 	if not isinstance(cset, contents.contentsSet):
 		raise TypeError("cset must be a contentsSet")
 	if not os.path.exists(offset):
-		os.mkdir(offset)
+		mkdir(offset)
 	
 	if offset:
 		offset = normpath(offset.rstrip(os.path.sep))+os.path.sep

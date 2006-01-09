@@ -26,7 +26,7 @@ class tree(object):
 			returnIterFunc=lambda x,y: str(x)+"-"+str(y), modifiable=(not frozen))
 #		self.raw_repo = proxy(self)
 		self.frozen = frozen
-
+		self.lock = None
 
 	def _get_categories(self, *arg):
 		"""this must return a list, or sequence"""

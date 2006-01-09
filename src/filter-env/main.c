@@ -35,6 +35,8 @@ static const char *process_scope(FILE *out_fd, const char *buff, const char *end
 static int append_to_filter_list(char ***list, int *count, int *alloced, const char *string);
 static const char *build_regex_string(const char **list, size_t count);
 static const char *walk_command(const char *p, const char *end, char endchar, const char interpret_level);
+static void *xmalloc(size_t size);
+no_return void usage(int exit_status);
 
 
 static int debugging;
@@ -53,7 +55,6 @@ static int debugging;
 	} while (0)
 
 
-static void *xmalloc(size_t size);
 static void *xmalloc(size_t size) {
 	void *ret = malloc(size);
 	if (ret == NULL)
@@ -62,7 +63,6 @@ static void *xmalloc(size_t size) {
 }
 
 
-no_return void usage(int exit_status);
 no_return void usage(int exit_status)
 {
 	fprintf((exit_status ? stderr : stdout),

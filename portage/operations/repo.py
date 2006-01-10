@@ -40,7 +40,7 @@ class install(base):
 		self.status_obj = status_obj
 		if status_obj is not None:
 			for x in self.stage_hooks:
-				setattr(self, x, pre_curry(decoreate_uid_callback, x, status_obj, getattr(self, x)))
+				setattr(self, x, pre_curry(decoreate_ui_callback, x, status_obj, getattr(self, x)))
 
 	def preinst(self):
 		self.underway = True

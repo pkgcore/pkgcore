@@ -1,6 +1,8 @@
-# Copyright: 2005 Gentoo Foundation
-# License: GPL2
-# $Id:$
+/* 
+ Copyright: 2005 Gentoo Foundation
+ License: GPL2
+ $Id:$
+*/
 
 #include <sys/types.h>
 #include <sys/stat.h>

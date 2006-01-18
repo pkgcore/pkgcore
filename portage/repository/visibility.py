@@ -28,5 +28,11 @@ class filterTree(prototype.tree):
 			if self.restriction.match(cpv) == self.sentinel_val:
 				yield cpv
 
-	def __getattr__(self, key):
-		return getattr(self.raw_repo, key)
+	def __getattr__(self, attr):
+		return getattr(self.raw_repo, attr)
+
+	def __getitem__(self, key):
+		v = self.raw_repo[key]
+		if self.restriction.match(v) != self.sentinel_val:
+			raise KeyError(key)
+		return v		

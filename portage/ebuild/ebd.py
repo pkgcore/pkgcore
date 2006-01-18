@@ -239,7 +239,8 @@ class buildable(ebd, build.base):
 
 	def setup_distfiles(self):
 		if len(self.files):
-			self.env["PORTAGE_ACTUAL_DISTDIR"] = self.env["DISTDIR"]
+			# cvs/svn ebuilds need to die.
+			#self.env["PORTAGE_ACTUAL_DISTDIR"] = self.env["DISTDIR"]
 			self.env["DISTDIR"] = normpath(os.path.join(self.builddir, "distdir"))+"/"
 
 			try:

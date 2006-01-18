@@ -3,7 +3,6 @@
 # $Id: fetchcommand.py 1936 2005-08-26 05:37:15Z ferringb $
 
 import os, shutil
-# surprisingly this is clean, cause buildable defines __all__
 from portage.operations import build, repo
 from itertools import imap, izip
 from portage.ebuild.processor import request_ebuild_processor, release_ebuild_processor, UnhandledCommand, \
@@ -86,13 +85,13 @@ class ebd(object):
 
 	def setup_logging(self):
 		if self.logging and not ensure_dirs(os.path.dirname(self.env["PORT_LOGFILE"]), mode=02770, gid=portage_gid):
-			raise FailedDirectory(self.env["PORT_LOGFILE"], "failed ensuring PORT_LOGDIR as 02770 and %i" % portage_gid)
+			raise build.FailedDirectory(self.env["PORT_LOGFILE"], "failed ensuring PORT_LOGDIR as 02770 and %i" % portage_gid)
 
 	def setup_workdir(self):
 		# ensure dirs.
 		for k, text in (("HOME", "home"), ("T", "temp"), ("WORKDIR", "work"), ("D", "image")):
 			if not ensure_dirs(self.env[k], mode=0770, gid=portage_gid):
-				raise FailedDirectory(self.env[k], "required: %s directory" % text)
+				raise build.FailedDirectory(self.env[k], "required: %s directory" % text)
 
 	def setup(self):
 		self.setup_workdir()
@@ -183,6 +182,18 @@ class ebd(object):
 		return v
 
 
+class install_op(ebd):
+	preinst = pretty_docs(post_curry(ebd._generic_phase, "preinst", False, False, False), "run the preinst phase")
+	postinst = pretty_docs(post_curry(ebd._generic_phase, "postinst", False, False, False), "run the postinst phase")
+
+
+class remove_op(ebd):
+	prerm = pretty_docs(post_curry(ebd._generic_phase, "prerm", False, False, False), "run the prerm phase")
+	postrm = pretty_docs(post_curry(ebd._generic_phase, "postrm", False, False, False), "run the postrm phase")
+
+class replace_op(install_op, remove_op):
+	pass
+
 
 class buildable(ebd, build.base):
 	_built_class = built
@@ -239,10 +250,10 @@ class buildable(ebd, build.base):
 						os.unlink(self.env["DISTDIR"])
 
 			except OSError, oe:
-				raise FailedDirectory(self.env["DISTDIR"], "failed removing existing file/dir/link at: exception %s" % oe)
+				raise build.FailedDirectory(self.env["DISTDIR"], "failed removing existing file/dir/link at: exception %s" % oe)
 				
 			if not ensure_dirs(self.env["DISTDIR"], mode=0770, gid=portage_gid):
-				raise FailedDirectory(self.env["DISTDIR"], "failed creating distdir symlink directory")
+				raise build.FailedDirectory(self.env["DISTDIR"], "failed creating distdir symlink directory")
 
 			try:
 				for src, dest in [(k, os.path.join(self.env["DISTDIR"], v.filename)) for (k,v) in self.files.items()]:
@@ -256,7 +267,7 @@ class buildable(ebd, build.base):
 		if self.distcc:
 			for p in ("", "/lock", "/state"):
 				if not ensure_dirs(os.path.join(self.env["DISTCC_DIR"], p), mode=02775, gid=portage_gid):
-					raise FailedDirectory(os.path.join(self.env["DISTCC_DIR"], p), "failed creating needed distcc directory")
+					raise build.FailedDirectory(os.path.join(self.env["DISTCC_DIR"], p), "failed creating needed distcc directory")
 		if self.ccache:
 			# yuck.
 			st = None
@@ -264,7 +275,7 @@ class buildable(ebd, build.base):
 			except OSError:
 				st = None
 				if not ensure_dirs(self.env["CCACHE_DIR"], mode=02775, gid=portage_gid):
-					raise FailedDirectory(self.env["CCACHE_DIR"], "failed creation of ccache dir")
+					raise build.FailedDirectory(self.env["CCACHE_DIR"], "failed creation of ccache dir")
 			if st == None:
 				try:
 					if st.gid != portage_gid or (st.st_mode & 02070) != 02070:
@@ -276,13 +287,13 @@ class buildable(ebd, build.base):
 							os.chown(self.env["CCACHE_DIR"], -1, portage_gid)
 							os.chdir(cwd)
 							if 0 != spawn(["chgrp", "-R", str(portage_gid)]):
-								raise FailedDirectory(self.env["CCACHE_DIR"], "failed changing ownership for CCACHE_DIR")
+								raise build.FailedDirectory(self.env["CCACHE_DIR"], "failed changing ownership for CCACHE_DIR")
 							if 0 != spawn_bash("find . -type d | %s chmod 02775" % xargs):
-								raise FailedDirectory(self.env["CCACHE_DIR"], "failed correcting perms for CCACHE_DIR")
+								raise build.FailedDirectory(self.env["CCACHE_DIR"], "failed correcting perms for CCACHE_DIR")
 						finally:
 							os.chdir(cwd)
 				except OSError:
-					raise FailedDirectory(self.env["CCACHE_DIR"], "failed ensuring perms/group owner for CCACHE_DIR")
+					raise build.FailedDirectory(self.env["CCACHE_DIR"], "failed ensuring perms/group owner for CCACHE_DIR")
 
 		return ebd.setup(self)
 

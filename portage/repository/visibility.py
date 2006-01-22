@@ -28,6 +28,17 @@ class filterTree(prototype.tree):
 			if self.restriction.match(cpv) == self.sentinel_val:
 				yield cpv
 
+	def __iter__(self):
+		for cpv in self.raw_repo:
+			if self.restriction.match(cpv) == self.sentinel_val:
+				yield cpv
+	
+	def __len__(self):
+		count=0
+		for x in self:
+			count +=1
+		return count
+	
 	def __getattr__(self, attr):
 		return getattr(self.raw_repo, attr)
 

@@ -25,7 +25,7 @@ CONF_DEFAULTS			= getattr(portage_custom_path, "CONF_DEFAULTS", PORTAGE_BASE_PAT
 #PROFILE_PATH			= "/etc/make.profile"
 LOCALE_DATA_PATH		= PORTAGE_BASE_PATH+"/locale"
 
-EBUILD_DAEMON_PATH		= PORTAGE_BIN_PATH+"/ebuild-daemon.sh"
+EBUILD_DAEMON_PATH		= PORTAGE_BIN_PATH+"/ebuild-env/ebuild-daemon.sh"
 
 SANDBOX_BINARY			= "/usr/bin/sandbox"
 
@@ -41,6 +41,8 @@ MOVE_BINARY				= "/bin/mv"
 COPY_BINARY				= "/bin/cp"
 PRELINK_BINARY			= "/usr/sbin/prelink"
 depends_phase_path		= PORTAGE_BIN_PATH+":/bin:/usr/bin"
+EBUILD_ENV_PATH			= map(lambda x:PORTAGE_BIN_PATH+"/"+x, ["ebuild-env", "ebuild-helpers"])
+EBD_ENV_PATH			= PORTAGE_BIN_PATH+"/ebuild-env"
 
 WORLD_FILE				= PRIVATE_PATH+"/world"
 #MAKE_CONF_FILE			= "/etc/make.conf"

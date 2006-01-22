@@ -10,7 +10,7 @@ active_ebp_list = []
 
 import portage.spawn, os, logging
 from portage.util.currying import post_curry
-from portage.const import depends_phase_path, EBUILD_DAEMON_PATH, PORTAGE_BIN_PATH
+from portage.const import depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH
 
 
 def shutdown_all_processors():
@@ -106,7 +106,6 @@ class ebuild_processor:
 		"""
 
 		self.ebd = EBUILD_DAEMON_PATH
-		self.ebd_libs = PORTAGE_BIN_PATH
 		from portage_data import portage_uid, portage_gid
 		spawn_opts = {}
 
@@ -164,7 +163,7 @@ class ebuild_processor:
 		if not self.expect("dude!"):
 			print "error in server coms, bailing."
 			raise Exception("expected 'dude!' response from ebd, which wasn't received. likely a bug")
-		self.write(PORTAGE_BIN_PATH)
+		self.write(EBD_ENV_PATH)
 		if self.__sandbox:
 			self.write("sandbox_log?")
 			self.__sandbox_log = self.read().split()[0]
@@ -498,6 +497,6 @@ def expected_ebuild_env(pkg, d=None):
 		d["PR"] = ""
 	d["PVR"]= pkg.fullver
 	d["EBUILD"] = pkg.path
-
+	d["PATH"] = ":".join(EBUILD_ENV_PATH + d.get("PATH","").split(":"))
 	return d
 

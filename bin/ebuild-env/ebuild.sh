@@ -462,7 +462,7 @@ execute_phases() {
 		prerm|postrm|preinst|postinst|config)
 			export SANDBOX_ON="0"
 
-			if ! load_environ $PORT_ENV_FILE; then
+			if ! load_environ "${PORT_ENV_FILE}"; then
 				#hokay.  this sucks.
 				ewarn 
 				ewarn "failed to load env"
@@ -583,8 +583,7 @@ execute_phases() {
 		esac
 
 		if [ "${MUST_EXPORT_ENV}" == "yes" ]; then
-#			echo "exporting environ ${EBUILD_PHASE} to ${T}/environment" >&2
-			export_environ "${T}/environment"
+			export_environ "${PORT_ENV_FILE:-${T}/environment}"
 			MUST_EXPORT_ENV="no"
 		fi
 	done
@@ -651,4 +650,4 @@ else
 	export DAEMONIZED
 	readonly DAEMONIZED
 fi
-true
+:

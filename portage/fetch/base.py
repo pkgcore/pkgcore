@@ -3,7 +3,7 @@
 # $Id:$
 
 import os
-from portage.chksum import get_handler
+from portage.chksum import get_handlers
 import errors
 
 class fetcher(object):
@@ -20,7 +20,7 @@ class fetcher(object):
 		if not os.path.exists(file_location):
 			return -1
 
-		handlers = get_handler(*target.chksums.keys())
+		handlers = get_handlers(target.chksums.keys())
 		if required:
 			for x in target.chksums:
 				if x not in handlers:
@@ -33,7 +33,7 @@ class fetcher(object):
 
 		for x in handlers:
 			if x != "size" or x not in handlers:
-				if not handlers[x](file_location, target.chksums[x]):
+				if not handlers[x](file_location) == target.chksums[x]:
 					return 1
 				
 		return 0

@@ -8,14 +8,17 @@ from portage.util.modules import load_module
 chksum_types = {}
 __inited__ = False
 
-def get_handler(*requested):
+def get_handler(requested):
 	if not __inited__:
 		init()
-	d = {}	
+	if requested not in chksum_types:
+		raise KeyError("no handler for %s" % requested)
+	return chksum_types[requested]
+
+def get_handlers(requested):
+	d = {}
 	for x in requested:
-		if x not in chksum_types:
-			raise KeyError("no handler for %s" % x)
-		d[x] = chksum_types[x]
+		d[x] = get_handler(x)
 	return d
 
 def init(additional_handlers=None):

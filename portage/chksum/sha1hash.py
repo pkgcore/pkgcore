@@ -4,7 +4,7 @@
 
 import sha
 
-def sha1hash(filename, chksum):
+def sha1hash(filename):
 	f = open(filename, 'rb')
 	blocksize=32768
 	data = f.read(blocksize)
@@ -16,6 +16,6 @@ def sha1hash(filename, chksum):
 		data = f.read(blocksize)
 	f.close()
 
-	return sum.hexdigest() == chksum
+	return sum.hexdigest()
 
 chksum_types = (("sha1", sha1hash),)

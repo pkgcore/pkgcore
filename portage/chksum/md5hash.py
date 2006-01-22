@@ -7,12 +7,12 @@
 try:
 	import fchksum
 	
-	def md5hash(filename, chksum):
-		return fchksum.fmd5t(filename)[0] == chksum
+	def md5hash(filename):
+		return fchksum.fmd5t(filename)[0]
 
 except ImportError:
 	import md5
-	def md5hash(filename, chksum):
+	def md5hash(filename):
 		f = open(filename, 'rb')
 		blocksize=32768
 		data = f.read(blocksize)
@@ -24,6 +24,6 @@ except ImportError:
 			data = f.read(blocksize)
 		f.close()
 
-		return sum.hexdigest() == chksum
+		return sum.hexdigest()
 
 chksum_types = (("md5", md5hash),)

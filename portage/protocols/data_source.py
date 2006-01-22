@@ -23,8 +23,7 @@ class local_source(base):
 
 		
 	def get_data(self):
-		fp = self.get_path(self.path)
-		if fp == None:
+		if self.path == None:
 			return None
 		try:
 			f = open(fp, "r")

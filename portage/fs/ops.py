@@ -104,7 +104,7 @@ def merge_contents(cset, offset=None):
 	if not isinstance(cset, contents.contentsSet):
 		raise TypeError("cset must be a contentsSet")
 	if not os.path.exists(offset):
-		mkdir(offset)
+		mkdir(fs.fsDir(offset, strict=False))
 	
 	if offset:
 		offset = normpath(offset.rstrip(os.path.sep))+os.path.sep

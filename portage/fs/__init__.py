@@ -73,5 +73,5 @@ def scan(*a, **kw):
 	calls list(iter_scan(*a, **kw))
 	Look at iter_scan for valid args
 	"""
-	
-	return list(iter_scan(*a, **kw))
+	from portage.fs.contents import contentsSet	
+	return contentsSet(iter_scan(*a, **kw))

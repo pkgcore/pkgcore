@@ -13,20 +13,22 @@ def check_instance(obj):
 class contentsSet(set):
 	"""class wrapping a contents file"""
 
+	def __new__(cls, *a, **kw):
+		# override __new__ so set doesn't scream about opt args
+		return set.__new__(cls)
+
 	def __init__(self, initial=None):
 		if initial is None:
 			initial = []
 		set.__init__(self, imap(check_instance, initial))
 		self.locations = set(o.location for o in self)
 	
-
 	def add(self, obj):
 		if not isinstance(obj, fs.fsBase):
 			raise Exception("'%s' is not a fs.fsBase class" % str(obj))
 		self.locations.add(obj.location)
 		set.add(self, obj)
 		
-
 	def remove(self, obj):
 		if not isinstance(obj, fs.fsBase):
 			# why are we doing the loop and break?  try this
@@ -84,5 +86,3 @@ class contentsSet(set):
 
 	def iterfifos(self):
 		return (x for x in self if isinstance(x, fs.fsFifo))
-
-

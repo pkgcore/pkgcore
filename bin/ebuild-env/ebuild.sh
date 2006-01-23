@@ -72,20 +72,52 @@ alias save_IFS='[ "${IFS:-unset}" != "unset" ] && portage_old_IFS="${IFS}"'
 alias restore_IFS='if [ "${portage_old_IFS:-unset}" != "unset" ]; then IFS="${portage_old_IFS}"; unset portage_old_IFS; else unset IFS; fi'
 
 diefunc() {
-        local funcname="$1" lineno="$2" exitcode="$3"
-        shift 3
-        echo >&2
-        echo "!!! ERROR: $CATEGORY/$PF failed." >&2
-        echo "!!! Function $funcname, Line $lineno, Exitcode $exitcode" >&2
-        echo "!!! ${*:-(no error message)}" >&2
-        echo "!!! If you need support, post the topmost build error, NOT this status message." >&2
-		if [ "${EBUILD_PHASE/depend}" == "${EBUILD_PHASE}" ]; then
-			for x in ${EBUILD_DEATH_HOOKS}; do
-				${x} ${1} ${2} ${3} "${@}" >&2 1>&2 
+	local funcname="$1" lineno="$2" exitcode="$3"
+	shift 3
+	echo >&2
+	echo "!!! ERROR: $CATEGORY/$PF failed." >&2
+	dump_trace 2 >&2
+	echo "!!! ${*:-(no error message)}" >&2
+	echo "!!! If you need support, post the topmost build error, NOT this status message." >&2
+	if [ "${EBUILD_PHASE/depend}" == "${EBUILD_PHASE}" ]; then
+		for x in ${EBUILD_DEATH_HOOKS}; do
+			${x} ${1} ${2} ${3} "${@}" >&2 1>&2 
+		done
+	fi
+	echo >&2
+	exit 1
+}
+
+
+shopt -s extdebug
+
+# usage- first arg is the number of funcs on the stack to ignore.
+# defaults to 1 (ignoring dump_trace)
+dump_trace() {
+	local funcname="" sourcefile="" lineno="" n e s="yes"
+
+	declare -i strip=1
+
+	if [[ -n $1 ]]; then
+		strip=$(( $1 ))
+	fi
+
+	echo "Call stack:"
+	for (( n = ${#FUNCNAME[@]} - 1, p = ${#BASH_ARGV[@]} ; n > $strip ; n-- )) ; do
+		funcname=${FUNCNAME[${n} - 1]}
+		sourcefile=$(basename ${BASH_SOURCE[${n}]})
+		lineno=${BASH_LINENO[${n} - 1]}
+		# Display function arguments
+		args=
+		if [[ -n "${BASH_ARGV[@]}" ]]; then
+			for (( j = 0 ; j < ${BASH_ARGC[${n} - 1]} ; ++j )); do
+				newarg=${BASH_ARGV[$(( p - j - 1 ))]}
+				args="${args:+${args} }'${newarg}'"
 			done
+			(( p -= ${BASH_ARGC[${n} - 1]} ))
 		fi
-        echo >&2
-        exit 1
+		echo "  ${sourcefile}, line ${lineno}:   Called ${funcname}${args:+ ${args}}"
+	done
 }
 
 killparent() {

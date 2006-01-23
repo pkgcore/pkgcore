@@ -41,7 +41,7 @@ MOVE_BINARY				= "/bin/mv"
 COPY_BINARY				= "/bin/cp"
 PRELINK_BINARY			= "/usr/sbin/prelink"
 depends_phase_path		= PORTAGE_BIN_PATH+":/bin:/usr/bin"
-EBUILD_ENV_PATH			= map(lambda x:PORTAGE_BIN_PATH+"/"+x, ["ebuild-env", "ebuild-helpers"])
+EBUILD_ENV_PATH			= map(lambda x:PORTAGE_BIN_PATH+"/"+x, ["ebuild-env", "ebuild-helpers"])+["/sbin","/bin","/usr/sbin","/usr/bin"]
 EBD_ENV_PATH			= PORTAGE_BIN_PATH+"/ebuild-env"
 
 WORLD_FILE				= PRIVATE_PATH+"/world"

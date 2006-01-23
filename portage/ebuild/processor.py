@@ -9,7 +9,7 @@ inactive_ebp_list = []
 active_ebp_list = []
 
 import portage.spawn, os, logging
-from portage.util.currying import post_curry
+from portage.util.currying import post_curry, pre_curry
 from portage.const import depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH
 
 
@@ -434,7 +434,7 @@ class ebuild_processor:
 			handlers[x] = f
 		del f
 
-		handlers["phases"] = post_curry(chuck_StoppingCommand, lambda f: f.lower().strip()=="succeeded")
+		handlers["phases"] = pre_curry(chuck_StoppingCommand, lambda f: f.lower().strip()=="succeeded")
 
 		if additional_commands is not None:
 			for x in additional_commands.keys():
@@ -464,9 +464,9 @@ class ebuild_processor:
 def chuck_UnhandledCommand(processor, line):
 	raise UnhandledCommand(line)
 
-def chuck_StoppingCommand(processor, val, *args):
+def chuck_StoppingCommand(val, processor, *args):
 	if callable(val):
-		raise FinishedProcessing(val, args[0])
+		raise FinishedProcessing(val(args[0]))
 	raise FinishedProcessing(val)
 
 class ProcessingInterruption(Exception):

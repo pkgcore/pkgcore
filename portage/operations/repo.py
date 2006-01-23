@@ -27,26 +27,27 @@ def decorate_ui_callback(stage, status_obj, original, *a, **kw):
 	status_obj.phase(stage)
 	return original(*a, **kw)
 
-class install(base):
+class install(object):
+	__metaclass__ = ForcedDepends
 	
 	stage_depends = {"finish":"merge_metadata", "merge_metadata":"postinst", "postinst":"transfer", "transfer":"preinst"}
 	stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
 
 	def __init__(self, pkg, repo_lock, status_obj=None):
 		self.pkg = pkg
-		self.format = pkg.repo_ops()
+		self.op = pkg._repo_install()
 		self.lock = repo_lock
 		self.underway = False
 		self.status_obj = status_obj
 		if status_obj is not None:
 			for x in self.stage_hooks:
-				setattr(self, x, pre_curry(decoreate_ui_callback, x, status_obj, getattr(self, x)))
+				setattr(self, x, pre_curry(decorate_ui_callback, x, status_obj, getattr(self, x)))
 
 	def preinst(self):
 		self.underway = True
 		self.lock.acquire_write_lock()
 		try:
-			self.format.preinst()
+			self.op.preinst()
 		except:
 			self.lock.release_write_lock()
 			raise
@@ -56,7 +57,7 @@ class install(base):
 		raise NotImplementedError
 
 	def postinst(self):
-		self.format.postinst()
+		self.op.postinst()
 
 	def merge_metadata(self):
 		raise NotImplementedError

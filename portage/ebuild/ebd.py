@@ -103,16 +103,16 @@ class ebd(object):
 			ebd.write("start_processing")
 			if not ebd.generic_handler(additional_commands={"request_inherit":post_curry(ebd.__class__._inherit, self.eclass_cache),
 				"request_profiles":self._request_bashrcs}):
-				raise GenericBuildError("setup: Failed building (False/0 return from handler)")
+				raise build.GenericBuildError("setup: Failed building (False/0 return from handler)")
 		except Exception, e:
 			# regardless of what occured, we kill the processor.
 			ebd.shutdown_processor()
 			release_ebuild_processor(ebd)
 			# either we know what it is, or it's a shutdown.  re-raise
-			if isinstance(e, (SystemExit, GenericBuildError)):
+			if isinstance(e, (SystemExit, build.GenericBuildError)):
 				raise
 			# wrap.
-			raise GenericBuildError("setup: Caught exception while building: " + str(e))
+			raise build.GenericBuildError("setup: Caught exception while building: " + str(e))
 
 		release_ebuild_processor(ebd)
 		return True
@@ -139,14 +139,14 @@ class ebd(object):
 			ebd.prep_phase(phase, self.env, sandbox=self.sandbox, logging=self.logging)
 			ebd.write("start_processing")
 			if not ebd.generic_handler():
-				raise GenericBuildError(phase + ": Failed building (False/0 return from handler)")
+				raise build.GenericBuildError(phase + ": Failed building (False/0 return from handler)")
 
 		except Exception, e:
 			ebd.shutdown_processor()
 			release_ebuild_processor(ebd)
-			if isinstance(e, (SystemExit, GenericBuildError)):
+			if isinstance(e, (SystemExit, build.GenericBuildError)):
 				raise
-			raise GenericBuildError(phase + ": Caught exception while building: %s" % e)
+			raise build.GenericBuildError(phase + ": Caught exception while building: %s" % e)
 
 		release_ebuild_processor(ebd)
 		return True
@@ -157,7 +157,7 @@ class ebd(object):
 		try:
 			shutil.rmtree(self.builddir)
 		except OSError, oe:
-			raise GenericBuildError("clean: Caught exception while cleansing: %s" % oe)
+			raise build.GenericBuildError("clean: Caught exception while cleansing: %s" % oe)
 		return True
 
 
@@ -261,7 +261,7 @@ class buildable(ebd, build.base):
 					os.symlink(src,dest)
 
 			except OSError, oe:
-				raise GenericBuildError("Failed symlinking in distfiles for src %s -> %s: %s" % (src, dest, str(oe)))
+				raise build.GenericBuildError("Failed symlinking in distfiles for src %s -> %s: %s" % (src, dest, str(oe)))
 
 
 	def setup(self):
@@ -321,11 +321,6 @@ class buildable(ebd, build.base):
 		return self._generic_phase("test", True, True, False)
 
 	def finalize(self):
-		return self._built_class(self.pkg, scan(self.env["IMAGE"], offset=self.env["IMAGE"]), environment=local_source(os.path.join(self.env["T"], "environment")))
+		return self._built_class(self.pkg, scan(self.env["IMAGE"], offset=self.env["IMAGE"]), 
+			environment=local_source(os.path.join(self.env["T"], "environment")))
 
-#class install(ebd):
-#	def __init__(self):
-#		pass
-#		
-#	def preinst(self):
-		

@@ -32,16 +32,13 @@ class tree(object):
 		"""this must return a list, or sequence"""
 		raise NotImplementedError
 
-
 	def _get_packages(self, category):
 		"""this must return a list, or sequence"""
 		raise NotImplementedError
 
-
 	def _get_versions(self, package):
 		"""this must return a list, or sequence"""
 		raise NotImplementedError
-
 
 	def __getitem__(self, cpv):
 		cpv_inst = self.package_class(cpv)
@@ -50,14 +47,11 @@ class tree(object):
 			raise KeyError(cpv)
 		return cpv_inst
 
-
 	def __setitem__(self, *values):
 		raise AttributeError
 
-
 	def __delitem__(self, cpv):
 		raise AttributeError
-
 
 	def __iter__(self):
 		for cpv in self.versions:
@@ -69,7 +63,6 @@ class tree(object):
 
 	def match(self, atom):
 		return list(self.itermatch(atom))
-
 
 	def itermatch(self, restrict):
 		if isinstance(restrict, atom):
@@ -101,22 +94,26 @@ class tree(object):
 					yield pkg
 		return
 
-
-	def add_package(self, pkg):
+	def install(self, pkg):
 		if self.frozen:
-			raise AttributeError,"repo is frozen"
-		return self._add_new_package(self, pkg)
+			raise AttributeError("repo is frozen")
+		return self._install(pkg, self.lock)
 
-
-	def _add_new_package(self, pkg):
+	def _install(self, pkg):
 		raise NotImplementedError
 
-
-	def del_package(self, key):
+	def uninstall(self, key):
 		if self.frozen:
-			raise AttributeError,"repo is frozen"
-		return self._del_package(self,key)
+			raise AttributeError("repo is frozen")
+		return self._uninstall(key, self.lock)
 
+	def _uninstall(self,pkg):
+		raise NotImplementedError
 
-	def _del_package(self,pkg):
+	def replace(self, orig, new):
+		if self.frozen:
+			raise AttributeError("repo is frozen")
+		self._replace(orig, new, self.lock)
+
+	def _replace(self, orig, new):
 		raise NotImplementedError

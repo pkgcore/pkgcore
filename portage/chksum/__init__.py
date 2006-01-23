@@ -15,7 +15,11 @@ def get_handler(requested):
 		raise KeyError("no handler for %s" % requested)
 	return chksum_types[requested]
 
-def get_handlers(requested):
+def get_handlers(requested=None):
+	if requested is None:
+		if not __inited__:
+			init()
+		return dict(chksum_types)
 	d = {}
 	for x in requested:
 		d[x] = get_handler(x)
@@ -61,15 +65,9 @@ def init(additional_handlers=None):
 
 	__inited__ = True
 
-def size(file, required, cmp_syntax=False):
+def size(file):
 	try:
-		size = os.stat(file).st_size
+		size = os.lstat(file).st_size
 	except OSError:
-		if cmp_syntax:
-			return -1
-		return False
-
-	if cmp_syntax:
-		return cmp(long(size), long(required))
-
-	return long(size) == long(required)
+		return None
+	return size

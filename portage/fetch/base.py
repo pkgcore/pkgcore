@@ -27,7 +27,7 @@ class fetcher(object):
 					raise errors.RequiredChksumDataMissing(target, x)
 		
 		if "size" in handlers:
-			c = handlers["size"](file_location, target.chksums["size"], cmp_syntax=True)
+			c = cmp(handlers["size"](file_location), target.chksums["size"])
 			if c != 0:
 				return (c < 0 and -1) or 1
 

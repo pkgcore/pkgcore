@@ -7,15 +7,19 @@ from portage.repository import prototype, errors
 
 #needed to grab the PN
 from portage.package.cpv import CPV as cpv
+from portage.util.fs import ensure_dirs
 from portage.util.lists import unique
 from portage.util.mappings import LazyValDict
 from portage.util.fs import FsLock
 from portage.vdb.contents import ContentsFile
 from portage.plugins import get_plugin
+from portage.operations import repo as repo_ops
+from portage.fs.ops import merge_contents
+
 
 class tree(prototype.tree):
 	ebuild_format_magic = "ebuild_built"
-	
+
 	def __init__(self, location):
 		super(tree,self).__init__()
 		self.base = self.location = location
@@ -120,6 +124,41 @@ class tree(prototype.tree):
 				data = ContentsFile(os.path.join(path,key))
 			return data
 
-
 		return LazyValDict(keys, load_data)
 
+	def _install(self, pkg, *a, **kw):
+		# need to verify it's not in already...
+		return install(self.base, pkg, *a, **kw)
+
+
+class install(repo_ops.install):
+	def __init__(self, basepath, pkg, *a, **kw):
+		self.dirpath = os.path.join(basepath, pkg.category, pkg.package+"-"+pkg.fullver)
+		repo_ops.install.__init__(self, pkg, *a, **kw)
+		
+	def transfer(self):
+		# error checking? ;)
+		merge_contents(self.pkg.contents)
+
+	def merge_metadata(self):
+		# error checking?
+		ensure_dirs(self.dirpath)
+		rewrite = {"depend":"DEPENDS", "rdepends":"RDEPEND"}
+		md5_handler = get_handler("md5")
+		for k in self.pkg.tracked_attributes:
+			if k == "contents":
+				v = ContentsFile(os.path.join(self.dirpath, "contents"), writable=True, empty=True)
+				for x in self.pkg.contents:
+					v.add(x)
+				v.flush()
+			else:
+				v = getattr(self.pkg, k)
+				if not isinstance(v, basestring):
+					try:
+						s = ' '.join(v)
+					except TypeError:
+						s = str(v)
+				else:
+					s = v
+				open(os.path.join(self.dirpath, rewrite.get(k, k).upper()), "w").write(s)
+		

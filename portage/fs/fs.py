@@ -2,7 +2,8 @@
 # License: GPL2
 # $Id: fs.py 1911 2005-08-25 03:44:21Z ferringb $
 
-from portage.util.mappings import ImmutableDict
+from portage.util.mappings import ImmutableDict, LazyValDict
+from portage.chksum import get_handlers, get_handler
 from os.path import sep as path_seperator, abspath
 
 # goofy set of classes representating the fs objects portage knows of.
@@ -56,14 +57,7 @@ class fsBase(object):
 		raise AttributeError(attr)
 
 	def __hash__(self):
-		mylist = [];
-		for key in self.__slots__:
-			try:
-				mylist.append(getattr(self,key))
-			except AttributeError:
-				pass
-		mytup = tuple(mylist)
-		return hash(mytup)
+		return hash(self.location)
 
 	def __eq__(self, other):
 		if not isinstance(other, self.__class__):
@@ -80,14 +74,17 @@ class fsFile(fsBase):
 		mtime = long(mtime)
 		kwds["mtime"] = mtime
 		if chksums is None:
-			chksums = {}
-		if not isinstance(chksums, ImmutableDict):
+			# this can be problematic offhand if the file is modified but chksum not triggered
+			chksums = LazyValDict(get_handlers().keys(), self._chksum_callback)
+		elif not isinstance(chksums, ImmutableDict):
 			chksums = ImmutableDict(chksums)
 		kwds["chksums"] = chksums
 		fsBase.__init__(self,location,**kwds)
 
 	def __repr__(self): return "file:%s" % self.location
 
+	def _chksum_callback(self, chf_type):
+		return get_handler(chf_type)(self.real_path)
 
 class fsDir(fsBase):
 	__slots__ = tuple(base_slots + fsBase.__slots__)

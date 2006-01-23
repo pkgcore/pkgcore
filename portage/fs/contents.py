@@ -21,12 +21,10 @@ class contentsSet(set):
 		if initial is None:
 			initial = []
 		set.__init__(self, imap(check_instance, initial))
-		self.locations = set(o.location for o in self)
 	
 	def add(self, obj):
 		if not isinstance(obj, fs.fsBase):
 			raise Exception("'%s' is not a fs.fsBase class" % str(obj))
-		self.locations.add(obj.location)
 		set.add(self, obj)
 		
 	def remove(self, obj):
@@ -39,22 +37,22 @@ class contentsSet(set):
 			# ~harring
 			for x in self:
 				if obj == x.location:
-					self.locations.remove(x.location)
 					set.remove(self, x)
 					return
 			if key == None:
 				raise KeyError(obj)
 		else:
-			self.locations.remove(obj.location)
 			set.remove(self, obj)
 				
 	def __contains__(self, key):
 		if isinstance(key, fs.fsBase):
 			return set.__contains__(self, key)
-		return key in self.locations
+		for x in self:
+			if key == x.location:
+				return True
+		return False
 	
 	def clear(self):
-		self.locations.clear()
 		set.clear(self)
 
 	def iterfiles(self):

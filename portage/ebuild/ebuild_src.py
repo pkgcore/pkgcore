@@ -61,8 +61,8 @@ class package(metadata.package):
 			val = self.package
 		elif key == "PR":
 			val = "-r"+str(self.revision)
-		elif key == "depends":
-			val = DepSet(self.data.get("DEPEND",""), atom)
+		elif key in ("depends", "provides"):
+			val = DepSet(self.data.get(key[:-1].upper(),""), atom)
 		elif key == "rdepends":
 			val = DepSet(self.data.get("RDEPEND","") + " " + self.data.get("PDEPEND", ""), atom)
 		elif key == "fetchables":

@@ -62,12 +62,10 @@ class install(object):
 	def merge_metadata(self):
 		raise NotImplementedError
 		
-	def run(self):
-		return self.finish()
-
 	def finish(self):
 		self.lock.release_write_lock()
 		self.underway = False
+		return True
 
 	def __del__(self):
 		if self.underway:

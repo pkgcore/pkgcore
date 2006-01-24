@@ -95,7 +95,7 @@ class CPV(base):
 
 				for x in myparts:
 					if not ver_regexp.match(x):
-						raise ValueError(self.mycpv)
+						raise ValueError(self.cpvstr)
 
 				self.__dict__["version"] = "-".join(myparts)
 		if name == "fullver":

@@ -113,7 +113,7 @@ class ContentsFile(contentsSet):
 				elif isinstance(obj, fs.fsLink):
 					# write the tab, *and spaces*.  tab's for delimiting.
 					# spaces are for backwards compatability
-					s = "\t".join(("sym", " -> ", obj.location, obj.target, str(obj.mtime)))
+					s = "\t".join(("sym", obj.location, " -> ", obj.target, str(obj.mtime)))
 
 				elif isinstance(obj, fs.fsDir):
 					s = "dir\t" + obj.location

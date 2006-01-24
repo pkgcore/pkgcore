@@ -15,7 +15,8 @@ from portage.vdb.contents import ContentsFile
 from portage.plugins import get_plugin
 from portage.operations import repo as repo_ops
 from portage.fs.ops import merge_contents
-
+import shutil
+from portage.spawn import spawn
 
 class tree(prototype.tree):
 	ebuild_format_magic = "ebuild_built"
@@ -139,18 +140,21 @@ class install(repo_ops.install):
 	def transfer(self):
 		# error checking? ;)
 		merge_contents(self.pkg.contents)
+		return True
 
 	def merge_metadata(self):
 		# error checking?
 		ensure_dirs(self.dirpath)
 		rewrite = {"depend":"DEPENDS", "rdepends":"RDEPEND"}
-		md5_handler = get_handler("md5")
 		for k in self.pkg.tracked_attributes:
 			if k == "contents":
-				v = ContentsFile(os.path.join(self.dirpath, "contents"), writable=True, empty=True)
+				v = ContentsFile(os.path.join(self.dirpath, "CONTENTS"), writable=True, empty=True)
 				for x in self.pkg.contents:
 					v.add(x)
 				v.flush()
+			elif k == "environment":
+				shutil.copy(getattr(self.pkg, k).get_path(), os.path.join(self.dirpath, "environment"))
+				spawn(["bzip2", "-9", os.path.join(self.dirpath, "environment")], fd_pipes={})
 			else:
 				v = getattr(self.pkg, k)
 				if not isinstance(v, basestring):
@@ -161,4 +165,4 @@ class install(repo_ops.install):
 				else:
 					s = v
 				open(os.path.join(self.dirpath, rewrite.get(k, k).upper()), "w").write(s)
-		
+		return True

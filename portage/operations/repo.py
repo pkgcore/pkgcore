@@ -47,17 +47,17 @@ class install(object):
 		self.underway = True
 		self.lock.acquire_write_lock()
 		try:
-			self.op.preinst()
+			r = self.op.preinst()
 		except:
 			self.lock.release_write_lock()
 			raise
-		return True
+		return r
 
 	def transfer(self):	
 		raise NotImplementedError
 
 	def postinst(self):
-		self.op.postinst()
+		return self.op.postinst()
 
 	def merge_metadata(self):
 		raise NotImplementedError

@@ -22,11 +22,10 @@ def ensure_deps(name, func, self, *a, **kw):
 	else:
 		if name in self._stage_state:
 			return True
-		if not name in self._stage_state:
-			for x in self.stage_depends[name]:
-				r = getattr(self,x)(*a, **kw)
-				if not r:
-					return r
+		for x in self.stage_depends[name]:
+			r = getattr(self,x)(*a, **kw)
+			if not r:
+				return r
 		r = func(self, *a, **kw)
 	if r:
 		self._stage_state.add(name)

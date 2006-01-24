@@ -131,6 +131,7 @@ class atom(boolean.AndRestriction):
 	def __init__(self, atom, negate_vers=False):
 		boolean.AndRestriction.__init__(self, packages.package_type)
 
+		atom = atom.strip()
 		self.hash = hash(atom)
 
 		pos=0

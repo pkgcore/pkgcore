@@ -10,7 +10,7 @@ from portage.util.currying import pre_curry
 from portage.package.atom import atom
 from portage.config.central import list_parser
 from portage.util.mappings import ProtectedDict
-from portage.protocols.data_source import local_source
+from portage.interfaces.data_source import local_source
 from itertools import imap
 
 class OnDiskProfile(profiles.base):

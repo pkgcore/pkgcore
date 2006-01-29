@@ -4,7 +4,7 @@
 
 from portage.util.fs import normpath
 import os, sys
-from portage.protocols import data_source
+from portage.interfaces import data_source
 
 class base(object):	pass
 

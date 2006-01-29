@@ -16,7 +16,7 @@ from portage.os_data import xargs
 from const import eapi_capable
 from portage.ebuild.ebuild_built import built
 from portage.fs import scan
-from portage.protocols.data_source import local_source
+from portage.interfaces.data_source import local_source
 
 
 class ebd(object):

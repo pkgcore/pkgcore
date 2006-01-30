@@ -187,11 +187,12 @@ class install_op(ebd):
 	postinst = pretty_docs(post_curry(ebd._generic_phase, "postinst", False, False, False), "run the postinst phase")
 
 
-class remove_op(ebd):
+class uninstall_op(ebd):
 	prerm = pretty_docs(post_curry(ebd._generic_phase, "prerm", False, False, False), "run the prerm phase")
 	postrm = pretty_docs(post_curry(ebd._generic_phase, "postrm", False, False, False), "run the postrm phase")
 
-class replace_op(install_op, remove_op):
+
+class replace_op(install_op, uninstall_op):
 	pass
 
 

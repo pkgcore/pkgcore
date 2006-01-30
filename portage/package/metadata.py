@@ -81,9 +81,6 @@ class factory(object):
 	def clear(self):
 		self._cached_instances.clear()
 
-	def _load_package_metadata(self, inst):
-		raise NotImplementedError
-
 	def __del__(self):
 		self.clear()
 

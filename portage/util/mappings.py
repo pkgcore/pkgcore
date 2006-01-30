@@ -383,8 +383,8 @@ class IndeterminantDict(dict):
 		self.__pull = pull_func
 		
 	def __getitem__(self, key):
-		if key in self.starter_dict:
-			return self.starter_dict[key]
+		if key in self.__initial:
+			return self.__initial[key]
 		else:
 			return self.__pull(key)
 
@@ -395,5 +395,5 @@ class IndeterminantDict(dict):
 		raise TypeError("non modifiable")
 
 	clear = update = pop = popitem = setdefault = __setitem__ = __delitem__
-	__delattr__ = __setattr__ = __iter__ = keys = values = __len__ = __delitem__
+	__iter__ = keys = values = __len__ = __delitem__
 	

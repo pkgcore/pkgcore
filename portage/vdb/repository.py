@@ -2,7 +2,8 @@
 # License: GPL2
 # $Id: repository.py 2285 2005-11-10 00:36:17Z ferringb $
 
-import os,stat
+import os, stat, errno
+from itertools import ifilter
 from portage.repository import prototype, errors
 
 #needed to grab the PN
@@ -15,6 +16,7 @@ from portage.vdb.contents import ContentsFile
 from portage.plugins import get_plugin
 from portage.operations import repo as repo_ops
 from portage.fs.ops import merge_contents
+from portage.fs.fs import fsDir
 import shutil
 from portage.spawn import spawn
 
@@ -107,7 +109,7 @@ class tree(prototype.tree):
 			if key != "CONTENTS":
 				try:
 					f = open(os.path.join(path, key))
-				except OSError:
+				except (OSError, IOErrror):
 					return None
 				data = f.read()
 				f.close()
@@ -131,15 +133,18 @@ class tree(prototype.tree):
 		# need to verify it's not in already...
 		return install(self.base, pkg, *a, **kw)
 
+	def _uninstall(self, pkg, *a, **kw):
+		return uninstall(self.base, pkg, *a, **kw)
+
 
 class install(repo_ops.install):
 	def __init__(self, basepath, pkg, *a, **kw):
 		self.dirpath = os.path.join(basepath, pkg.category, pkg.package+"-"+pkg.fullver)
 		repo_ops.install.__init__(self, pkg, *a, **kw)
 		
-	def transfer(self):
+	def transfer(self, **kw):
 		# error checking? ;)
-		merge_contents(self.pkg.contents)
+		merge_contents(self.pkg.contents, **kw)
 		return True
 
 	def merge_metadata(self):
@@ -166,3 +171,26 @@ class install(repo_ops.install):
 					s = v
 				open(os.path.join(self.dirpath, rewrite.get(k, k).upper()), "w").write(s)
 		return True
+
+class uninstall(repo_ops.uninstall):
+	def __init__(self, basepath, pkg, *a, **kw):
+		self.dirpath = os.path.join(basepath, pkg.category, pkg.package+"-"+pkg.fullver)
+		repo_ops.uninstall.__init__(self, pkg, *a, **kw)
+
+	def remove(self):
+		for x in iterfilter(lambda x: not isinstance(x, fsDir), self.pkg.contents):
+			try:
+				os.unlink(x)
+			except OSError, e:
+				if e.errnor != errno.ENOENT:
+					raise
+		
+		for x in self.pkg.contents.iterdirs():
+			try:
+				os.rmdir(x)
+			except OSError, e:
+				if e.errno != errno.ENOTEMPTY:
+					raise
+
+	def unmerge_metadata(self):
+		shutil.rmtree(self.dirpath)

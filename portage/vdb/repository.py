@@ -17,6 +17,7 @@ from portage.plugins import get_plugin
 from portage.operations import repo as repo_ops
 from portage.fs.ops import merge_contents
 from portage.fs.fs import fsDir
+from portage.interfaces.data_source import local_source
 import shutil
 from portage.spawn import spawn
 
@@ -102,14 +103,19 @@ class tree(prototype.tree):
 		path = os.path.dirname(pkg.path)
 		try:
 			keys = filter(lambda x: x.isupper() and stat.S_ISREG(os.stat(path+os.path.sep+x).st_mode), os.listdir(path))
+			keys.append("environment")
 		except OSError:
 			return None
 
 		def load_data(key):
-			if key != "CONTENTS":
+			if key == "CONTENTS":
+				data = ContentsFile(os.path.join(path, key))
+			elif key == "environment":
+				data = local_source(os.path.join(path, key))
+			else:
 				try:
 					f = open(os.path.join(path, key))
-				except (OSError, IOErrror):
+				except (OSError, IOError):
 					return None
 				data = f.read()
 				f.close()
@@ -123,8 +129,6 @@ class tree(prototype.tree):
 					except OSError:
 						pass
 				
-			else:
-				data = ContentsFile(os.path.join(path,key))
 			return data
 
 		return LazyValDict(keys, load_data)

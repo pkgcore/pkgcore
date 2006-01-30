@@ -73,14 +73,18 @@ class install(object):
 			self.lock.release_write_lock()
 
 
-class uninstall(base):
-
+class uninstall(object):
+	__metaclass__ = ForcedDepends
+	
 	stage_depends = {"finish":"unmerge_metadata", "unmerge_metadata":"postrm", "postrm":"remove", "remove":"prerm"}
+	stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
 
 	def __init__(self, pkg, repo_lock, status_obj=None):
 		self.pkg = pkg
+		self.op = pkg._repo_uninstall_op()
 		self.lock = repo_lock
 		self.underway = False
+		self.status_obj = status_obj
 		if status_obj is not None:
 			for x in self.stage_hooks:
 				setattr(self, x, pre_curry(decorate_ui_callback, x, status_obj, getattr(self, x)))
@@ -89,26 +93,29 @@ class uninstall(base):
 		self.underway = True
 		self.lock.acquire_write_lock()
 		try:
-			self.format.prerm()
+			r = self.op.prerm()
 		except:
 			self.lock.release_write_lock()
 			raise
-		return True
-	
-	def unmerge_metadata(self):
+		return r
+
+	def remove(self):
 		raise NotImplementedError
 
 	def postrm(self):
-		self.format.postrm()
+		return self.op.postrm()
 
-	def run(self):
-		return self.finish()
-	
+	def unmerge_metadata(self):
+		raise NotImplementedError
+		
 	def finish(self):
 		self.lock.release_write_lock()
 		self.underway = False
+		return True
 
 	def __del__(self):
 		if self.underway:
+			print "warning: %s merge was underway, but wasn't completed" % self.pkg
 			self.lock.release_write_lock()
-		
+
+

@@ -372,3 +372,28 @@ class ImmutableDict(dict):
 	
 	__delattr__ = __setitem__
 	__setattr__ = __setitem__
+
+class IndeterminantDict(dict):
+	"""A wrapped dict with a constant dict, and a fallback function to pull keys"""
+	def __init__(self, pull_func, starter_dict=None):
+		if starter_dict is None:
+			self.__initial = {}
+		else:
+			self.__initial = starter_dict
+		self.__pull = pull_func
+		
+	def __getitem__(self, key):
+		if key in self.starter_dict:
+			return self.starter_dict[key]
+		else:
+			return self.__pull(key)
+
+	def __hash__(self):
+		raise TypeError("non hashable")
+	
+	def __delitem__(self, *args):
+		raise TypeError("non modifiable")
+
+	clear = update = pop = popitem = setdefault = __setitem__ = __delitem__
+	__delattr__ = __setattr__ = __iter__ = keys = values = __len__ = __delitem__
+	

@@ -13,8 +13,6 @@ class built(base.base):
 		"contents", "environment", "provides"]
 
 	def __init__(self, pkg, contents, environment):
-		import warnings
-		warnings.warn("%s is going to go away soon, please contact harring if you're using this" % str(self.__class__))
 		self.contents = contents
 		self.environment = environment
 		self.__pkg = pkg
@@ -28,6 +26,10 @@ class built(base.base):
 	def _repo_install(self, *a, **kw):
 		env = {"PORT_ENV_FILE":self.environment.get_path()}
 		return ebd.install_op(self, env=env, *a, **kw)
+
+	def _repo_uninstall(self, *a, **kw):
+		env = {"PORT_ENV_FILE":self.environment.get_path()}
+		return ebd.uninstall_op(self, env=env, *a, **kw)
 
 def passthrough(inst, attr):
 	return inst.data[attr.upper()]
@@ -61,8 +63,10 @@ class package(ebuild_src.package):
 		return obj
 
 	def _repo_install_op(self, features=None):
-		return ebd.install_op(self, pkg, self.environment, features=features)
-		
+		return ebd.install_op(self, self.environment, features=features)
+
+	def _repo_uninstall_op(self, features=None):
+		return ebd.uninstall_op(self, self.environment, features=features)
 
 class package_factory(metadata.factory):
 	child_class = package

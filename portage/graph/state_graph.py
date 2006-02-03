@@ -20,7 +20,7 @@ class StateGraph(object):
 	def add_pkg(self, pkg):
 		assert(pkg not in self.pkgs)
 		self.dirty = True
-		self.pkgs[pkg] = (combinations(pkg.rdepends), sets.Set(), sets.Set())
+		self.pkgs[pkg] = (combinations(pkg.rdepends, atom), sets.Set(), sets.Set())
 		if len(self.pkgs[pkg][0]) <= 1:
 			for atomset in self.pkgs[pkg][0]:
 				self.pkgs[pkg][1].union_update(atomset)
@@ -71,12 +71,18 @@ class StateGraph(object):
 				if atom.blocks and not have_blocker:
 					# block atom that does not match any packages
 					okay_atoms.add(atom)
+			differences={}
 			for choice in self.pkgs[pkg][0]:
-				if choice.issubset(okay_atoms):
+				difference = choice.difference(okay_atoms)
+				if len(difference) == 0:
 					break
-			# XXX: A random set will be chosen if there are no fully matching sets
-			# -- jstubbs
-			self.pkgs[pkg][1].union_update(choice)
+				differences[choice] = difference
+			best_choice = choice
+			if len(difference) != 0:
+				for choice, difference in differences.iteritems():
+					if len(difference) < len(differences[best_choice]):
+						best_choice = choice
+			self.pkgs[pkg][1].union_update(best_choice)
 			self._add_deps(pkg)
 		for pkg in self.pkgs:
 			for atom in self.atoms:
@@ -190,25 +196,25 @@ def extrapolate(set1, set2):
 	return final_set
 
 
-def combinations(restrict):
+def combinations(restrict, elem_type=atom):
 	ret = sets.Set()
 
 	if isinstance(restrict, OrRestriction):
 		for element in restrict:
-			if isinstance(element, atom):
+			if isinstance(element, elem_type):
 				newset = sets.Set()
 				newset.add(element)
 				ret.add(newset)
 			else:
-				ret = extrapolate(ret, combinations(element))
+				ret.union_update(combinations(element, elem_type))
 	else:
 		newset = sets.Set()
 		subsets = sets.Set()
 		for element in restrict:
-			if isinstance(element, atom):
+			if isinstance(element, elem_type):
 				newset.add(element)
 			else:
-				subsets.add(combinations(element))
+				subsets.add(combinations(element, elem_type))
 		ret.add(newset)
 		for comb in subsets:
 			ret = extrapolate(ret, comb)

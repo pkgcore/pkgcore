@@ -1,6 +1,6 @@
 # Copyright: 2005 Gentoo Foundation
 # License: GPL2
-# $Id: repository.py 2285 2005-11-10 00:36:17Z ferringb $
+# $Id: repository.py 2616 2006-02-01 08:18:43Z zmedico $
 
 import os, stat, errno
 from itertools import ifilter
@@ -120,14 +120,16 @@ class tree(prototype.tree):
 				data = f.read()
 				f.close()
 				data = data.strip()
-				if key == "USE":
-					# This is innefficient.
-					# it's implemented as a hack here, rather then in the general ebuild_built code however.
-					try:
-						iuse = set(load_data("IUSE").split())
-						data = " ".join(filter(lambda x: x in iuse, data.split()))
-					except OSError:
-						pass
+
+# disable use filtering
+#				if key == "USE":
+#					# This is innefficient.
+#					# it's implemented as a hack here, rather then in the general ebuild_built code however.
+#					try:
+#						iuse = set(load_data("IUSE").split())
+#						data = " ".join(filter(lambda x: x in iuse, data.split()))
+#					except OSError:
+#						pass
 				
 			return data
 

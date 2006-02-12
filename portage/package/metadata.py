@@ -41,6 +41,8 @@ class package(CPV):
 		# seem to be a better place for it.
 		# -- jstubbs
 		if attr == "metapkg":
+			import warnings
+			warnings.warn("metapkg hack will be removed.")
 			return False
 
 		# assuming they're doing super, if it ain't data it's an error (no other jit attr)

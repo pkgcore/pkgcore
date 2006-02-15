@@ -153,10 +153,10 @@ class FsLock(object):
 			except OSError, oe:	raise NonExistant(self.path, oe)
 		self.ino = os.fstat(self.fd).st_ino
 	
-	def release_fd(self):
-		if self.fd:
-			os.close(self.fd)
-			self.ino = self.fd = None
+	def _release_fd(self):
+		assert self.fd is not None
+		os.close(self.fd)
+		self.ino = self.fd = None
 	
 	def _enact_change(self, flags, blocking, mode, must_exist=False):
 		if self.fd is None:
@@ -179,10 +179,10 @@ class FsLock(object):
 			try:				val = os.stat(self.path).st_ino == self.ino
 			except OSError:		val = False
 			if not val:
-				self.release_fd()
+				self._release_fd()
 				self._enact_change(flags, blocking, must_exist=must_exist)
 
-		self.state ^= flags
+		self.state ^= mode
 
 		return True
 
@@ -222,10 +222,11 @@ class FsLock(object):
 		self._enact_change(fcntl.LOCK_UN, True, self.rstate)
 
 	def release_all(self):
+		""" release all locks held """
 		if self.state:
 			return self._enact_change(fcntl.LOCK_UN, True, self.state)
 		return True
 
 	def __del__(self):
-		# alright, it's 5:45am, yes this is weird code.
-		self.release_fd()
+		if self.fd is not None:
+			self._release_fd()

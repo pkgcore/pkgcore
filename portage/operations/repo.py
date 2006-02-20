@@ -5,27 +5,13 @@
 from portage.operations.dependant_methods import ForcedDepends
 from portage.util.currying import pre_curry
 
-class base(object):
-
-	__metaclass__ = ForcedDepends
-	
-
-	def __init__(self, pkg):
-		self.package = pkg
-	
-	def repo_lock(self):
-		raise NotImplementedError
-	
-	repo_unlock = repo_lock
-	update_repo = repo_lock
-
-	def run():
-		return True
-		
-
 def decorate_ui_callback(stage, status_obj, original, *a, **kw):
 	status_obj.phase(stage)
 	return original(*a, **kw)
+
+class fake_lock:
+	def __init__(self): pass
+	acquire_write_lock = acquire_read_lock = release_read_lock = release_write_lock = __init__
 
 class install(object):
 	__metaclass__ = ForcedDepends
@@ -33,11 +19,13 @@ class install(object):
 	stage_depends = {"finish":"merge_metadata", "merge_metadata":"postinst", "postinst":"transfer", "transfer":"preinst"}
 	stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
 
-	def __init__(self, pkg, repo_lock, status_obj=None):
+	def __init__(self, pkg, repo_lock=None, status_obj=None):
 		self.pkg = pkg
-		self.op = pkg._repo_install()
-		self.lock = repo_lock
 		self.underway = False
+		self.op = pkg._repo_install_op()
+		if repo_lock is None:
+			repo_lock = fake_lock()
+		self.lock = repo_lock
 		self.status_obj = status_obj
 		if status_obj is not None:
 			for x in self.stage_hooks:

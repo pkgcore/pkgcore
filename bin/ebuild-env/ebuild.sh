@@ -305,14 +305,15 @@ load_environ() {
 	SANDBOX_READ="/bin:${SANDBOX_READ}:/dev/urandom:/dev/random:$PORTAGE_BIN_PATH"
 	SANDBOX_ON=$SANDBOX_STATE
 
-	if [ ! -z $DEBUGGING ]; then
+	if [ -n "$DEBUGGING" ]; then
 		echo "loading env for $EBUILD_PHASE" >&2
 	fi
 
-	if [ -n "$1" ]; then
-		src="$1"
+	if [ -z "$1" ]; then
+		die "load_environ called with no args, need args"
 	fi
-	[ ! -z $DEBUGGING ] && echo "loading environment from $src" >&2
+	src="$1"
+	[ -n "$DEBUGGING" ] && echo "loading environment from $src" >&2
 
 	# XXX: note all of the *very careful* handling of bash env dumps through this code, and the fact 
 	# it took 4 months to get it right.  There's a reason you can't just pipe the $(export) to a file.

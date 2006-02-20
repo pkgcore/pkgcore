@@ -2,7 +2,7 @@
 # License: GPL2
 # $Id: eclass_cache.py 2273 2005-11-10 00:22:02Z ferringb $
 
-from portage.util.fs import normpath
+from portage.fs.util import normpath
 import os, sys
 from portage.interfaces import data_source
 

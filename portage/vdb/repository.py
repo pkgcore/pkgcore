@@ -8,10 +8,10 @@ from portage.repository import prototype, errors
 
 #needed to grab the PN
 from portage.package.cpv import CPV as cpv
-from portage.util.fs import ensure_dirs
+from portage.fs.util import ensure_dirs
 from portage.util.lists import unique
 from portage.util.mappings import LazyValDict
-from portage.util.fs import FsLock
+from portage.fs.util import FsLock
 from portage.vdb.contents import ContentsFile
 from portage.plugins import get_plugin
 from portage.operations import repo as repo_ops

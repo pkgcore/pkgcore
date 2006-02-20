@@ -9,7 +9,7 @@ from portage.chksum import get_handler
 from fetchable import fetchable
 import errors
 from portage.os_data import portage_uid, portage_gid
-from portage.util.fs import ensure_dirs
+from portage.fs.util import ensure_dirs
 
 class MalformedCommand(errors.base):
 	def __init__(self, command):	self.command = command

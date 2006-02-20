@@ -7,7 +7,7 @@
 
 import os
 from portage.const import plugins_dir
-from portage.util.fs import FsLock, ensure_dirs, NonExistant
+from portage.fs.util import FsLock, ensure_dirs, NonExistant
 from portage.os_data import portage_gid, root_uid
 from ConfigParser import RawConfigParser
 from portage.util.modules import load_attribute

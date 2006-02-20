@@ -5,7 +5,7 @@
 import os
 import template, cache_errors
 from portage.os_data import portage_gid
-from portage.util.fs import ensure_dirs
+from portage.fs.util import ensure_dirs
 
 class FsBased(template.database):
 	"""template wrapping fs needed options, and providing _ensure_access as a way to 

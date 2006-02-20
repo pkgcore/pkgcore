@@ -6,7 +6,7 @@ import os
 from stat import *
 from itertools import imap
 from portage.fs.fs import *
-from portage.util.fs import normpath
+from portage.fs.util import normpath
 
 def gen_obj(path, stat=None, real_path=None):
 	"""given a fs path, and an optional stat, return an appropriate fs obj representing that file/dir/dev/fif/link

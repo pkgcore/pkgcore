@@ -11,7 +11,7 @@ from itertools import ifilterfalse
 from portage.fs import gen_obj, contents, fs
 from portage.spawn import spawn
 from portage.const import COPY_BINARY
-from portage.util.fs import normpath
+from portage.fs.util import normpath
 from portage.plugins import get_plugin
 
 __all__ = ["merge_contents"]

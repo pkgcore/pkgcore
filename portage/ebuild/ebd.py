@@ -8,7 +8,7 @@ from itertools import imap, izip
 from portage.ebuild.processor import request_ebuild_processor, release_ebuild_processor, UnhandledCommand, \
 	expected_ebuild_env, chuck_UnhandledCommand
 from portage.os_data import portage_gid
-from portage.util.fs import ensure_dirs, normpath
+from portage.fs.util import ensure_dirs, normpath
 from portage.os_data import portage_gid
 from portage.spawn import spawn_bash, spawn
 from portage.util.currying import post_curry, pretty_docs

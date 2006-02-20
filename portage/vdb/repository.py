@@ -11,7 +11,6 @@ from portage.package.cpv import CPV as cpv
 from portage.fs.util import ensure_dirs
 from portage.util.lists import unique
 from portage.util.mappings import LazyValDict
-from portage.fs.util import FsLock
 from portage.vdb.contents import ContentsFile
 from portage.plugins import get_plugin
 from portage.operations import repo as repo_ops
@@ -38,14 +37,11 @@ class tree(prototype.tree):
 			raise errors.InitializationError("lstat failed on base %s" % self.base)
 
 		self.package_class = get_plugin("format", self.ebuild_format_magic)(self)
-		self.lock = FsLock(self.base)
-
 
 	def _get_categories(self, *optionalCategory):
 		# return if optionalCategory is passed... cause it's not yet supported
 		if len(optionalCategory):
 			return {}
-#		self.lock.acquire_read_lock()
 		try:
 			try:	return tuple([x for x in os.listdir(self.base) \
 				if stat.S_ISDIR(os.lstat(os.path.join(self.base,x)).st_mode)])
@@ -53,13 +49,11 @@ class tree(prototype.tree):
 			except (OSError, IOError), e:
 				raise KeyError("failed fetching categories: %s" % str(e))
 		finally:
-#			self.lock.release_read_lock()
 			pass
 
 	def _get_packages(self, category):
 		cpath = os.path.join(self.base,category.lstrip(os.path.sep))
 		l=set()
-#		self.lock.acquire_read_lock()
 		try:
 			try:
 				for x in os.listdir(cpath):
@@ -71,13 +65,11 @@ class tree(prototype.tree):
 				raise KeyError("failed fetching packages for category %s: %s" % \
 				(os.path.join(self.base,category.lstrip(os.path.sep)), str(e)))
 		finally:
-#			self.lock.release_read_lock()
 			pass
 
 	def _get_versions(self, catpkg):
 		pkg = catpkg.split("/")[-1]
 		l=set()
-#		self.lock.acquire_read_lock()
 		try:
 			try:
 				cpath=os.path.join(self.base, os.path.dirname(catpkg.lstrip("/").rstrip("/")))
@@ -92,7 +84,6 @@ class tree(prototype.tree):
 				raise KeyError("failed fetching packages for package %s: %s" % \
 				(os.path.join(self.base,catpkg.lstrip(os.path.sep)), str(e)))
 		finally:
-#			self.lock.release_read_lock()
 			pass
 
 	def _get_ebuild_path(self, pkg):

@@ -8,7 +8,7 @@
 # object being used to create instances of that class.
 # note python doesn't exactly have definitions, just executions, but analogy is close enough :P
 	
-
+from portage.util.lists import unique, flatten
 from portage.util.currying import pre_curry
 
 def ensure_deps(name, func, self, *a, **kw):
@@ -22,7 +22,7 @@ def ensure_deps(name, func, self, *a, **kw):
 	else:
 		if name in self._stage_state:
 			return True
-		for x in self.stage_depends[name]:
+		for x in self.stage_depends.get(name,[]):
 			r = getattr(self,x)(*a, **kw)
 			if not r:
 				return r
@@ -42,7 +42,7 @@ class ForcedDepends(type):
 				else:
 					cls.stage_depends[k] = [v]
 		
-		for x in cls.stage_depends.keys():
+		for x in unique(cls.stage_depends.keys() + flatten(cls.stage_depends.values())):
 			setattr(cls, x, pre_curry(ensure_deps, x, getattr(cls, x)))
 		return super(ForcedDepends, cls).__call__(*a, **kw)
 

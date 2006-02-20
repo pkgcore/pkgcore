@@ -121,33 +121,33 @@ class FsLockTest(TempDirMixin, unittest.TestCase):
 		# file should exist now
 		f = open(path)
 		# acquire and release a read lock
-		fcntl.lockf(f, fcntl.LOCK_SH | fcntl.LOCK_NB)
-		fcntl.lockf(f, fcntl.LOCK_UN | fcntl.LOCK_NB)
+		fcntl.flock(f, fcntl.LOCK_SH | fcntl.LOCK_NB)
+		fcntl.flock(f, fcntl.LOCK_UN | fcntl.LOCK_NB)
 		# we can't acquire an exclusive lock
 		self.assertRaises(
-			IOError, fcntl.lockf, f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+			IOError, fcntl.flock, f, fcntl.LOCK_EX | fcntl.LOCK_NB)
 		lock.release_read_lock()
 		# but now we can
-		fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+		fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
 		self.failIf(lock.acquire_read_lock(False))
 		self.failIf(lock.acquire_write_lock(False))
-		fcntl.lockf(f, fcntl.LOCK_UN | fcntl.LOCK_NB)
+		fcntl.flock(f, fcntl.LOCK_UN | fcntl.LOCK_NB)
 		# acquire an exclusive/write lock
 		self.failUnless(lock.acquire_write_lock(False))
 		self.assertRaises(
-			IOError, fcntl.lockf, f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+			IOError, fcntl.flock, f, fcntl.LOCK_EX | fcntl.LOCK_NB)
 		# downgrade to read lock
 		self.failUnless(lock.acquire_read_lock())
-		fcntl.lockf(f, fcntl.LOCK_SH | fcntl.LOCK_NB)
-		fcntl.lockf(f, fcntl.LOCK_UN | fcntl.LOCK_NB)
+		fcntl.flock(f, fcntl.LOCK_SH | fcntl.LOCK_NB)
+		fcntl.flock(f, fcntl.LOCK_UN | fcntl.LOCK_NB)
 		self.assertRaises(
-			IOError, fcntl.lockf, f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+			IOError, fcntl.flock, f, fcntl.LOCK_EX | fcntl.LOCK_NB)
 		# and release
 		lock.release_read_lock()
-		fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-		fcntl.lockf(f, fcntl.LOCK_UN | fcntl.LOCK_NB)
+		fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+		fcntl.flock(f, fcntl.LOCK_UN | fcntl.LOCK_NB)
 		
 		self.failUnless(lock.acquire_write_lock(False))
 		lock.release_write_lock()
-		fcntl.lockf(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
-		fcntl.lockf(f, fcntl.LOCK_UN | fcntl.LOCK_NB)
+		fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+		fcntl.flock(f, fcntl.LOCK_UN | fcntl.LOCK_NB)

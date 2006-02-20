@@ -120,113 +120,69 @@ class GenericFailed(LockException):
 
 
 class FsLock(object):
-	__slots__ = ["path", "fd", "ino", "state", "create"]
-
-	nostate = 0
-	wstate  = 1
-	rstate  = 2
-	
+	__slots__ = ["path", "fd", "create"]
 	def __init__(self, path, create=False):
 		"""path specifies the fs path for the lock
 		create controls whether the file will be create if the file doesn't exist
-		if create is true, the base dir must exist, and it will create a file- it will also
-		remove the file after locking is finished.
+		if create is true, the base dir must exist, and it will create a file
 		
 		If you want a directory yourself, create it.
 		"""
 		self.path = path
 		self.fd = None
 		self.create = create
-		self.ino = None
-		self.state = self.nostate
 		if not create:
 			if not os.path.exists(path):
 				raise NonExistant(path)
 
 	def _acquire_fd(self):
 		if self.create:
-			try:	self.fd = os.open(self.path, os.O_RDWR|os.O_CREAT)
+			try:	self.fd = os.open(self.path, os.R_OK|os.O_CREAT)
 			except OSError, oe:
 				raise GenericFailed(self.path, oe)
 		else:
-			try:	self.fd = os.open(self.path, os.O_RDWR)
+			try:	self.fd = os.open(self.path, os.R_OK)
 			except OSError, oe:	raise NonExistant(self.path, oe)
-		self.ino = os.fstat(self.fd).st_ino
 	
-	def _release_fd(self):
-		assert self.fd is not None
-		os.close(self.fd)
-		self.ino = self.fd = None
-	
-	def _enact_change(self, flags, blocking, mode, must_exist=False):
-		if self.fd is None:
+	def _enact_change(self, flags, blocking):
+		if self.fd == None:
 			self._acquire_fd()
 		# we do it this way, due to the fact try/except is a bit of a hit
 		if not blocking:
-			try:	
-				fcntl.lockf(self.fd, flags|fcntl.LOCK_NB)
+			try:	fcntl.flock(self.fd, flags|fcntl.LOCK_NB)
 			except IOError, ie:
 				if ie.errno == errno.EAGAIN:
 					return False
 				raise GenericFailed(self.path, ie)
 		else:
-			fcntl.lockf(self.fd, flags)
-
-		if must_exist:
-			# if the inode of our lock isn't the inode on disk... well,
-			# create race and must restart.  Note in extreme cases, it's
-			# possible for this to trigger a runtime recursion exception.
-			try:				val = os.stat(self.path).st_ino == self.ino
-			except OSError:		val = False
-			if not val:
-				self._release_fd()
-				self._enact_change(flags, blocking, must_exist=must_exist)
-
-		self.state ^= mode
-
+			fcntl.flock(self.fd, flags)
 		return True
 
 	def acquire_write_lock(self, blocking=True):
 		"""Acquire an exclusive lock
 		Returns True if lock is acquired, False if not.
-		Note if you have a read lock, it implicitly upgrades atomically
-		"""
-		return self._enact_change(fcntl.LOCK_EX, blocking, self.wstate, True)
+		Note if you have a read lock, it implicitly upgrades atomically"""
+		return self._enact_change(fcntl.LOCK_EX, blocking)
 
 	def acquire_read_lock(self, blocking=True):
 		"""Acquire a shared lock
 		Returns True if lock is acquired, False if not.
-		Note, if you have a write_lock already, write_lock release will downgrade to read_lock
-		"""
-
-		if self.state & self.wstate:
-			self.state |= self.rstate
-			return True
-		return self._enact_change(fcntl.LOCK_SH, blocking, self.rstate, True)
+		Note, if you have a write_lock already, it'll implicitly downgrade atomically"""
+		return self._enact_change(fcntl.LOCK_SH, blocking)
 	
 	def release_write_lock(self):
-		"""Release a write lock if held- if a read lock was held, is downgraded to it"""
-		if self.state & self.rstate:
-			mode = fcntl.LOCK_SH
-		else:
-			mode = fcntl.LOCK_UN
-		self._enact_change(mode, True, self.wstate)
+		"""Release an exclusive lock if held"""
+		self._enact_change(fcntl.LOCK_UN, False)
 		
 	def release_read_lock(self):
-		""" release read lock; if write lock is held, the lock will not be downgraded on write lock
-		release
-		"""
-		if self.state & self.wstate:
-			self.state &= ~self.rstate
-			return True
-		self._enact_change(fcntl.LOCK_UN, True, self.rstate)
-
-	def release_all(self):
-		""" release all locks held """
-		if self.state:
-			return self._enact_change(fcntl.LOCK_UN, True, self.state)
-		return True
+		self._enact_change(fcntl.LOCK_UN, False)
 
 	def __del__(self):
-		if self.fd is not None:
-			self._release_fd()
+		# alright, it's 5:45am, yes this is weird code.
+		try:
+			if self.fd != None:
+				self.release_read_lock()
+		finally:
+			if self.fd != None:
+				os.close(self.fd)
+

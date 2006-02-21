@@ -2,7 +2,7 @@
 # License: GPL2
 # $Id: spawn.py 2283 2005-11-10 00:35:14Z ferringb $
 
-__all__ = ["cleanup", "spawn","spawn_sandbox", "spawn_bash", "spawn_fakeroot", "spawn_func", "spawn_get_output"]
+__all__ = ["cleanup_pids", "spawn","spawn_sandbox", "spawn_bash", "spawn_fakeroot", "spawn_func", "spawn_get_output"]
 
 import os, atexit, signal, sys
 
@@ -77,9 +77,12 @@ atexit.register(run_exitfuncs)
 # we exit. spawn() takes care of adding and removing pids to this list
 # as it creates and cleans up processes.
 spawned_pids = []
-def cleanup():
-	while spawned_pids:
-		pid = spawned_pids.pop()
+def cleanup_pids(pids=None):
+	global spawned_pids
+	if pids == None:
+		pids = spawned_pids
+	while pids:
+		pid = pids.pop()
 		try:
 			if os.waitpid(pid, os.WNOHANG) == (0, 0):
 				os.kill(pid, signal.SIGTERM)
@@ -89,6 +92,12 @@ def cleanup():
 			# of spawn().
 			pass
 
+		if spawned_pids is not pids:
+			try:
+				spawned_pids.remove(pid)
+			except ValueError:
+				pass
+		
 def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
           uid=None, gid=None, groups=None, umask=None, logfile=None,
           path_lookup=True):
@@ -164,36 +173,39 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 	if returnpid:
 		return mypids
 
-	# Otherwise we clean them up.
-	while mypids:
+	try:
+		# Otherwise we clean them up.
+		while mypids:
 
-		# Pull the last reader in the pipe chain. If all processes
-		# in the pipe are well behaved, it will die when the process
-		# it is reading from dies.
-		pid = mypids.pop(0)
+			# Pull the last reader in the pipe chain. If all processes
+			# in the pipe are well behaved, it will die when the process
+			# it is reading from dies.
+			pid = mypids.pop(0)
 
-		# and wait for it.
-		retval = os.waitpid(pid, 0)[1]
+			# and wait for it.
+			retval = os.waitpid(pid, 0)[1]
 
-		# When it's done, we can remove it from the
-		# global pid list as well.
-		spawned_pids.remove(pid)
+			# When it's done, we can remove it from the
+			# global pid list as well.
+			spawned_pids.remove(pid)
 
-		if retval:
-			# If it failed, kill off anything else that
-			# isn't dead yet.
-			for pid in mypids:
-				if os.waitpid(pid, os.WNOHANG) == (0,0):
-					os.kill(pid, signal.SIGTERM)
-					os.waitpid(pid, 0)
-				spawned_pids.remove(pid)
+			if retval:
+				# If it failed, kill off anything else that
+				# isn't dead yet.
+				for pid in mypids:
+					if os.waitpid(pid, os.WNOHANG) == (0,0):
+						os.kill(pid, signal.SIGTERM)
+						os.waitpid(pid, 0)
+					spawned_pids.remove(pid)
 
-			# If it got a signal, return the signal that was sent.
-			if (retval & 0xff):
-				return ((retval & 0xff) << 8)
+				# If it got a signal, return the signal that was sent.
+				if (retval & 0xff):
+					return ((retval & 0xff) << 8)
 
-			# Otherwise, return its exit code.
-			return (retval >> 8)
+				# Otherwise, return its exit code.
+				return (retval >> 8)
+	finally:
+		cleanup_pids(mypids)
 
 	# Everything succeeded
 	return 0
@@ -298,7 +310,7 @@ def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_f
 			pw = None
 	
 		retval=os.waitpid(mypid[0],0)[1]
-		cleanup(mypid)
+		cleanup_pids(mypid)
 		if raw_exit_code:
 			return [retval,mydata]
 		retval=process_exit_code(retval)

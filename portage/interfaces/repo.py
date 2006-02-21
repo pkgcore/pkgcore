@@ -34,6 +34,11 @@ class base(object):
 			for x in self.stage_hooks:
 				setattr(self, x, pre_curry(decorate_ui_callback, x, status_obj, getattr(self, x)))
 
+	def start(self):
+		self.underway = True
+		self.lock.acquire_write_lock()
+		return True
+
 	def finish(self):
 		self.lock.release_write_lock()
 		self.underway = False
@@ -47,18 +52,12 @@ class base(object):
 
 class install(base):
 	
-	stage_depends = {"finish":"merge_metadata", "merge_metadata":"postinst", "postinst":"transfer", "transfer":"preinst"}
+	stage_depends = {"finish":"merge_metadata", "merge_metadata":"postinst", "postinst":"transfer", "transfer":"preinst", 
+		"preinst":"start"}
 	stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
 
 	def preinst(self):
-		self.underway = True
-		self.lock.acquire_write_lock()
-		try:
-			r = self.op.preinst()
-		except:
-			self.lock.release_write_lock()
-			raise
-		return r
+		return self.op.preinst()
 
 	def transfer(self):	
 		raise NotImplementedError
@@ -72,18 +71,12 @@ class install(base):
 
 class uninstall(base):
 	
-	stage_depends = {"finish":"unmerge_metadata", "unmerge_metadata":"postrm", "postrm":"remove", "remove":"prerm"}
+	stage_depends = {"finish":"unmerge_metadata", "unmerge_metadata":"postrm", "postrm":"remove", "remove":"prerm",
+		"prerm":"start"}
 	stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
 
 	def prerm(self):
-		self.underway = True
-		self.lock.acquire_write_lock()
-		try:
-			r = self.op.prerm()
-		except:
-			self.lock.release_write_lock()
-			raise
-		return r
+		return self.op.prerm()
 
 	def remove(self):
 		raise NotImplementedError
@@ -95,4 +88,12 @@ class uninstall(base):
 		raise NotImplementedError
 		
 
+class replace(install, uninstall):
+	stage_depends = {"finish":"unmerge_metadata",
+		"unmerge_metadata":"postrm", "postrm":"remove","remove":"prerm", "prerm":"merge_metadata", 
+		"merge_metadata":"postinst", "postinst":"transfer","transfer":"preinst",
+		"preinst":"start"}
+
+	stage_hooks = ["merge_metadata", "unmerge_metadata", "postrm", "prerm", "postinst", "preinst",
+		"unmerge_metadata", "merge_metadata"]
 	

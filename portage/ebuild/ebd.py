@@ -38,7 +38,6 @@ class ebd(object):
 
 		# XXX: hack.
 		if self.env_data_source:
-			import pdb;pdb.set_trace()
 			self.env["PORT_ENV_FILE"] = self.env_data_source.get_path()
 		
 		if features is None:

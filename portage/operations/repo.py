@@ -19,13 +19,14 @@ class install(object):
 	stage_depends = {"finish":"merge_metadata", "merge_metadata":"postinst", "postinst":"transfer", "transfer":"preinst"}
 	stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
 
-	def __init__(self, pkg, repo_lock=None, status_obj=None):
+	def __init__(self, repo, pkg, status_obj=None):
+		self.repo = repo
 		self.pkg = pkg
 		self.underway = False
 		self.op = pkg._repo_install_op()
-		if repo_lock is None:
-			repo_lock = fake_lock()
-		self.lock = repo_lock
+		self.lock = getattr(repo, "lock")
+		if self.lock is None:
+			self.lock = fake_lock()
 		self.status_obj = status_obj
 		if status_obj is not None:
 			for x in self.stage_hooks:
@@ -67,11 +68,14 @@ class uninstall(object):
 	stage_depends = {"finish":"unmerge_metadata", "unmerge_metadata":"postrm", "postrm":"remove", "remove":"prerm"}
 	stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
 
-	def __init__(self, pkg, repo_lock, status_obj=None):
+	def __init__(self, repo, pkg, status_obj=None):
+		self.repo = repo
 		self.pkg = pkg
-		self.op = pkg._repo_uninstall_op()
-		self.lock = repo_lock
 		self.underway = False
+		self.lock = getattr(repo, "lock")
+		if self.lock is None:
+			self.lock = fake_lock()
+		self.op = pkg._repo_uninstall_op()
 		self.status_obj = status_obj
 		if status_obj is not None:
 			for x in self.stage_hooks:

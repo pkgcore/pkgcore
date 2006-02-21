@@ -90,10 +90,14 @@ class tree(prototype.tree):
 		s = "%s-%s" % (pkg.package, pkg.fullver)
 		return os.path.join(self.base, pkg.category, s, s+".ebuild")
 
+
+	_metadata_rewrites = {"depends":"DEPEND", "rdepends":"RDEPEND", "use":"USE", "eapi":"EAPI"}
+	
 	def _get_metadata(self, pkg):
 		path = os.path.dirname(pkg.path)
 		try:
-			keys = filter(lambda x: x.isupper() and stat.S_ISREG(os.stat(path+os.path.sep+x).st_mode), os.listdir(path))
+			keys = [self._metadata_rewrites.get(x, x) for x in 
+				filter(lambda x: x.isupper() and stat.S_ISREG(os.stat(path+os.path.sep+x).st_mode), os.listdir(path))]
 			keys.append("environment")
 		except OSError:
 			return None
@@ -102,7 +106,13 @@ class tree(prototype.tree):
 			if key == "CONTENTS":
 				data = ContentsFile(os.path.join(path, key))
 			elif key == "environment":
-				data = local_source(os.path.join(path, key))
+				fp=os.path.join(path, key)
+				if not os.path.exists(fp):
+					if not os.path.exists(fp+".bz2"):
+						# icky.
+						raise KeyError("environment: no environment file found")
+					fp += ".bz2"
+				data =local_source(fp)
 			else:
 				try:
 					f = open(os.path.join(path, key))
@@ -111,33 +121,22 @@ class tree(prototype.tree):
 				data = f.read()
 				f.close()
 				data = data.strip()
-
-# disable use filtering
-#				if key == "USE":
-#					# This is innefficient.
-#					# it's implemented as a hack here, rather then in the general ebuild_built code however.
-#					try:
-#						iuse = set(load_data("IUSE").split())
-#						data = " ".join(filter(lambda x: x in iuse, data.split()))
-#					except OSError:
-#						pass
-				
 			return data
 
 		return LazyValDict(keys, load_data)
 
 	def _install(self, pkg, *a, **kw):
 		# need to verify it's not in already...
-		return install(self.base, pkg, *a, **kw)
+		return install(self, pkg, *a, **kw)
 
 	def _uninstall(self, pkg, *a, **kw):
-		return uninstall(self.base, pkg, *a, **kw)
+		return uninstall(self, pkg, *a, **kw)
 
 
 class install(repo_ops.install):
-	def __init__(self, basepath, pkg, *a, **kw):
-		self.dirpath = os.path.join(basepath, pkg.category, pkg.package+"-"+pkg.fullver)
-		repo_ops.install.__init__(self, pkg, *a, **kw)
+	def __init__(self, repo, pkg, *a, **kw):
+		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
+		repo_ops.install.__init__(self, repo, pkg, *a, **kw)
 		
 	def transfer(self, **kw):
 		# error checking? ;)
@@ -147,7 +146,7 @@ class install(repo_ops.install):
 	def merge_metadata(self):
 		# error checking?
 		ensure_dirs(self.dirpath)
-		rewrite = {"depend":"DEPENDS", "rdepends":"RDEPEND"}
+		rewrite = self.repo._metadata_rewrites
 		for k in self.pkg.tracked_attributes:
 			if k == "contents":
 				v = ContentsFile(os.path.join(self.dirpath, "CONTENTS"), writable=True, empty=True)
@@ -166,13 +165,15 @@ class install(repo_ops.install):
 						s = str(v)
 				else:
 					s = v
-				open(os.path.join(self.dirpath, rewrite.get(k, k).upper()), "w").write(s)
+				if not s.endswith("\n"):
+					s += "\n"
+				open(os.path.join(self.dirpath, rewrite.get(k, k.upper())), "w").write(s)
 		return True
 
 class uninstall(repo_ops.uninstall):
-	def __init__(self, basepath, pkg, *a, **kw):
-		self.dirpath = os.path.join(basepath, pkg.category, pkg.package+"-"+pkg.fullver)
-		repo_ops.uninstall.__init__(self, pkg, *a, **kw)
+	def __init__(self, repo, pkg, *a, **kw):
+		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
+		repo_ops.uninstall.__init__(self, repo, pkg, *a, **kw)
 
 	def remove(self):
 		for x in iterfilter(lambda x: not isinstance(x, fsDir), self.pkg.contents):
@@ -188,6 +189,8 @@ class uninstall(repo_ops.uninstall):
 			except OSError, e:
 				if e.errno != errno.ENOTEMPTY:
 					raise
-
+		return True
+		
 	def unmerge_metadata(self):
 		shutil.rmtree(self.dirpath)
+		return True

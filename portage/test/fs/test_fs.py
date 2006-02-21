@@ -6,7 +6,7 @@ import os
 from twisted.trial import unittest
 
 from portage.fs import fs, gen_obj, iter_scan
-from portage.test.util.test_fs import TempDirMixin
+from portage.test.fs.test_util import TempDirMixin
 
 class EnsureFsDirTest(TempDirMixin, unittest.TestCase):
 	

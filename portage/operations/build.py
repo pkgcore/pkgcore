@@ -7,7 +7,6 @@
 # object being used to create instances of that class.
 # note python doesn't exactly have definitions, just executions, but analogy is close enough :P
 
-from portage.operations import errors as errors_mod
 from portage.util.dependant_methods import ForcedDepends
 
 __all__ = ["base", "FailedDirectory", "GenericBuildError", "errors"]
@@ -45,11 +44,13 @@ class base(object):
 
 		return True
 
-class FailedDirectory(errors_mod.base):
+class BuildError(Exception): pass
+
+class FailedDirectory(BuildError):
 	def __init__(self, path, text):	self.path, self.text = path, text
 	def __str__(self):	return "failed creating/ensuring dir %s: %s" % (self.path, self.text)
 
-class GenericBuildError(errors_mod.base):
+class GenericBuildError(BuildError):
 	def __init__(self, err):	self.err = str(err)
 	def __str__(self):	return "Failed build operation: " + self.err
 

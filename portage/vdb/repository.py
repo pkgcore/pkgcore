@@ -97,14 +97,15 @@ class tree(prototype.tree):
 		path = os.path.dirname(pkg.path)
 		try:
 			keys = [self._metadata_rewrites.get(x, x) for x in 
-				filter(lambda x: x.isupper() and stat.S_ISREG(os.stat(path+os.path.sep+x).st_mode), os.listdir(path))]
-			keys.append("environment")
+				filter(lambda x: x.isupper() and stat.S_ISREG(os.stat(path+os.path.sep+x).st_mode) and x!="CONTENTS", 
+				os.listdir(path))]
+			keys.extend(["environment","contents"])
 		except OSError:
 			return None
 
 		def load_data(key):
-			if key == "CONTENTS":
-				data = ContentsFile(os.path.join(path, key))
+			if key == "contents":
+				data = ContentsFile(os.path.join(path, "CONTENTS"))
 			elif key == "environment":
 				fp=os.path.join(path, key)
 				if not os.path.exists(fp):
@@ -178,14 +179,14 @@ class uninstall(repo_interfaces.uninstall):
 	def remove(self):
 		for x in ifilter(lambda x: not isinstance(x, fsDir), self.pkg.contents):
 			try:
-				os.unlink(x)
+				os.unlink(x.location)
 			except OSError, e:
 				if e.errnor != errno.ENOENT:
 					raise
 		
 		for x in self.pkg.contents.iterdirs():
 			try:
-				os.rmdir(x)
+				os.rmdir(x.location)
 			except OSError, e:
 				if e.errno != errno.ENOTEMPTY:
 					raise

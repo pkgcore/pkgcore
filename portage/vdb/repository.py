@@ -13,7 +13,7 @@ from portage.util.lists import unique
 from portage.util.mappings import LazyValDict
 from portage.vdb.contents import ContentsFile
 from portage.plugins import get_plugin
-from portage.operations import repo as repo_ops
+from portage.interfaces import repo as repo_interfaces
 from portage.fs.ops import merge_contents
 from portage.fs.fs import fsDir
 from portage.interfaces.data_source import local_source
@@ -133,10 +133,10 @@ class tree(prototype.tree):
 		return uninstall(self, pkg, *a, **kw)
 
 
-class install(repo_ops.install):
+class install(repo_interfaces.install):
 	def __init__(self, repo, pkg, *a, **kw):
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
-		repo_ops.install.__init__(self, repo, pkg, *a, **kw)
+		repo_interfaces.install.__init__(self, repo, pkg, *a, **kw)
 		
 	def transfer(self, **kw):
 		# error checking? ;)
@@ -170,13 +170,13 @@ class install(repo_ops.install):
 				open(os.path.join(self.dirpath, rewrite.get(k, k.upper())), "w").write(s)
 		return True
 
-class uninstall(repo_ops.uninstall):
+class uninstall(repo_interfaces.uninstall):
 	def __init__(self, repo, pkg, *a, **kw):
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
-		repo_ops.uninstall.__init__(self, repo, pkg, *a, **kw)
+		repo_interfaces.uninstall.__init__(self, repo, pkg, *a, **kw)
 
 	def remove(self):
-		for x in iterfilter(lambda x: not isinstance(x, fsDir), self.pkg.contents):
+		for x in ifilter(lambda x: not isinstance(x, fsDir), self.pkg.contents):
 			try:
 				os.unlink(x)
 			except OSError, e:

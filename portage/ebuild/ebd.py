@@ -3,7 +3,7 @@
 # $Id: fetchcommand.py 1936 2005-08-26 05:37:15Z ferringb $
 
 import os, shutil
-from portage.operations import build, repo
+from portage.interfaces import build, repo
 from itertools import imap, izip
 from portage.ebuild.processor import request_ebuild_processor, release_ebuild_processor, UnhandledCommand, \
 	expected_ebuild_env, chuck_UnhandledCommand

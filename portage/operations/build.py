@@ -8,7 +8,7 @@
 # note python doesn't exactly have definitions, just executions, but analogy is close enough :P
 
 from portage.operations import errors as errors_mod
-from portage.operations.dependant_methods import ForcedDepends
+from portage.util.dependant_methods import ForcedDepends
 
 __all__ = ["base", "FailedDirectory", "GenericBuildError", "errors"]
 

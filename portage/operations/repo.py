@@ -2,7 +2,7 @@
 # License: GPL2
 # $Id$
 
-from portage.operations.dependant_methods import ForcedDepends
+from portage.util.dependant_methods import ForcedDepends
 from portage.util.currying import pre_curry
 
 def decorate_ui_callback(stage, status_obj, original, *a, **kw):

@@ -14,26 +14,33 @@ from portage.spawn import spawn_bash, spawn
 from portage.util.currying import post_curry, pretty_docs
 from portage.os_data import xargs
 from const import eapi_capable
-from portage.ebuild.ebuild_built import built
-from portage.fs import scan
-from portage.interfaces.data_source import local_source
-
+from portage.ebuild import ebuild_built
 
 class ebd(object):
 
-	def __init__(self, pkg, env=None, features=None):
+	def __init__(self, pkg, initial_env=None, env_data_source=None, features=None):
 		if pkg.eapi not in eapi_capable:
 			raise TypeError("pkg isn't of a supported eapi!, %i not in %s for %s" % (pkg.eapi, eapi_capable, pkg))
 
-		if env is not None:
+		if initial_env is not None:
 			# copy.
-			self.env = dict(env)
+			self.env = dict(initial_env)
 			for x in ("USE", "ACCEPT_LICENSE"):
 				if x in self.env:
 					del self.env[x]
 		else:
 			self.env = {}
 
+		self.env_data_source = env_data_source
+		if __debug__:
+			from portage.interfaces.data_source import local_source
+			assert env_data_source is None or isinstance(env_data_source, local_source)
+
+		# XXX: hack.
+		if self.env_data_source:
+			import pdb;pdb.set_trace()
+			self.env["PORT_ENV_FILE"] = self.env_data_source.get_path()
+		
 		if features is None:
 			features = self.env.get("FEATURES", [])
 
@@ -47,7 +54,7 @@ class ebd(object):
 		self.env["USE"] = ' '.join(imap(str, pkg.use))
 		self.env["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", {}).keys())
 
-		self.restrict = pkg.data["RESTRICT"].split()
+		self.restrict = pkg.restrict
 		
 		for x in ("sandbox", "userpriv", "fakeroot"):
 			setattr(self, x, self.feat_or_bool(x) and not (x in self.restrict))
@@ -124,7 +131,7 @@ class ebd(object):
 			if source.get_path != None:
 				ebd.write("path\n%s" % source.get_path())
 			elif source.get_data != None:
-				ebd.write("transfer\n%s" % source.get_data())
+				raise NotImplementedError
 			else:
 				chuck_UnhandledCommand("bashrc request: unable to process bashrc '%s' due to source '%s' due to lacking"+
 					"usable get_*" % (val, source))
@@ -197,13 +204,13 @@ class replace_op(install_op, uninstall_op):
 
 
 class buildable(ebd, build.base):
-	_built_class = built
+	_built_class = ebuild_built.package
 	
 	# XXX this is unclean- should be handing in strictly what is build env, rather then
 	# dumping domain settings as env. 
 	def __init__(self, pkg, domain_settings, eclass_cache, fetcher):
 		build.base.__init__(self)
-		ebd.__init__(self, pkg, env=domain_settings, features=domain_settings["FEATURES"])
+		ebd.__init__(self, pkg, initial_env=domain_settings, features=domain_settings["FEATURES"])
 		self.__init_workdir__()
 		
 		self.env["FILESDIR"] = os.path.join(os.path.dirname(pkg.path), "files")
@@ -322,6 +329,5 @@ class buildable(ebd, build.base):
 		return self._generic_phase("test", True, True, False)
 
 	def finalize(self):
-		return self._built_class(self.pkg, scan(self.env["IMAGE"], offset=self.env["IMAGE"]), 
-			environment=local_source(os.path.join(self.env["T"], "environment")))
-
+		return ebuild_built.fake_package_factory(self._built_class).new_package(self.pkg, 
+			self.env["IMAGE"], os.path.join(self.env["T"], "environment"))

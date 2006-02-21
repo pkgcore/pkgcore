@@ -12,17 +12,9 @@ import portage.spawn, os, logging
 from portage.util.currying import post_curry, pre_curry
 from portage.const import depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH
 
-
 def shutdown_all_processors():
 	"""kill off all known processors"""
 	global active_ebp_list, inactive_ebp_list
-	if type(active_ebp_list) != types.ListType:
-		print "warning, ebuild.active_ebp_list wasn't a list."
-		active_ebp_list = []
-
-	if type(inactive_ebp_list) != types.ListType:
-		print "warning, ebuild.inactive_ebp_list wasn't a list."
-		inactive_ebp_list = []
 
 	while len(active_ebp_list) > 0:
 		try:	active_ebp_list[0].shutdown_processor()
@@ -41,6 +33,7 @@ def shutdown_all_processors():
 		try:			inactive_ebp_list.pop(0)
 		except IndexError:	pass
 
+portage.spawn.atexit_register(shutdown_all_processors)
 
 def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False, save_file=None):
 	"""request an ebuild_processor instance from the pool, or create a new one

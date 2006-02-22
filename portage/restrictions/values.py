@@ -230,7 +230,6 @@ class ContainmentMatch(base):
 
 
 	def force_True(self, pkg, attr, val):
-		import pdb;pdb.set_trace()
 		if isinstance(val, (str, unicode)):
 			# unchangable
 			if self.all:

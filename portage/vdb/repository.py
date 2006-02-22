@@ -188,7 +188,7 @@ class uninstall(repo_interfaces.uninstall):
 			try:
 				os.unlink(x.location)
 			except OSError, e:
-				if e.errnor != errno.ENOENT:
+				if e.errno != errno.ENOENT:
 					raise
 		
 		for x in self.pkg.contents.iterdirs():

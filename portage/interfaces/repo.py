@@ -25,7 +25,8 @@ class base(object):
 		self.repo = repo
 		self.pkg = pkg
 		self.underway = False
-		self.op = pkg._repo_install_op()
+		assert getattr(self, "_op_name", None)
+		self.op = getattr(pkg, self._op_name)()
 		self.lock = getattr(repo, "lock")
 		if self.lock is None:
 			self.lock = fake_lock()
@@ -55,6 +56,7 @@ class install(base):
 	stage_depends = {"finish":"merge_metadata", "merge_metadata":"postinst", "postinst":"transfer", "transfer":"preinst", 
 		"preinst":"start"}
 	stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
+	_op_name = "_repo_install_op"
 
 	def preinst(self):
 		return self.op.preinst()
@@ -74,6 +76,7 @@ class uninstall(base):
 	stage_depends = {"finish":"unmerge_metadata", "unmerge_metadata":"postrm", "postrm":"remove", "remove":"prerm",
 		"prerm":"start"}
 	stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
+	_op_name = "_repo_uninstall_op"
 
 	def prerm(self):
 		return self.op.prerm()
@@ -96,4 +99,4 @@ class replace(install, uninstall):
 
 	stage_hooks = ["merge_metadata", "unmerge_metadata", "postrm", "prerm", "postinst", "preinst",
 		"unmerge_metadata", "merge_metadata"]
-	
+	_op_name = "_repo_replace_op"

@@ -8,7 +8,7 @@ from portage.util.lists import unique
 from portage.util.file import iter_read_bash, read_dict, read_bash_dict
 from portage.util.currying import pre_curry
 from portage.package.atom import atom
-from portage.config.central import list_parser
+from portage.config.basics import list_parser
 from portage.util.mappings import ProtectedDict
 from portage.interfaces.data_source import local_source
 from itertools import imap

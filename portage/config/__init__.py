@@ -1,24 +1,29 @@
 # Copyright: 2005 Gentoo Foundation
 # License: GPL2
-# $Id: __init__.py 2272 2005-11-10 00:19:01Z ferringb $
 
-from cparser import CaseSensitiveConfigParser
-import central, os
-from portage.const import DEFAULT_CONF_FILE
 
-def load_config(file=DEFAULT_CONF_FILE):
+import os
+
+from portage.config import central, cparser, errors
+from portage.const import DEFAULT_CONF_FILE, CONF_DEFAULTS
+
+
+def load_config(conf_file=DEFAULT_CONF_FILE, types_file=CONF_DEFAULTS):
 	"""the entry point for any code looking to use portagelib.
-	if file exists, loads it up, else defaults to trying to load portage 2 style configs (/etc/make.conf, /etc/make.profile)
+
+	if file exists, loads it up, else defaults to trying to load
+	portage 2 style configs (/etc/make.conf, /etc/make.profile)
 
 	returns the generated configuration object representing the system config.
 	"""
-	c = CaseSensitiveConfigParser()
-	if os.path.isfile(file):
-		c.read(file)
-		c = central.config(c)
+	if os.path.isfile(conf_file):
+		c = central.ConfigManager(
+			[cparser.configTypesFromIni(open(types_file))],
+			[cparser.configFromIni(open(conf_file))])
 	else:
 		# make.conf...
-		raise Exception("sorry, default '%s' doesn't exist, and I don't like make.conf currently (I'm working out my issues however)" %
-			file)
+		raise errors.BaseException(
+			"sorry, config file '%s' doesn't exist, and I don't like "
+			"make.conf currently (I'm working out my issues however)" %
+			conf_file)
 	return c
-

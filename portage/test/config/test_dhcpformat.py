@@ -20,18 +20,11 @@ from portage.config import central, basics, errors
 def passthrough(*args, **kwargs):
 	return args, kwargs
 
-class force_skipping(type):
-	def __call__(cls, *a, **kw):
-		def raise_skip(*a, **kw):
-			raise unittest.SkipTest("skipped due to missing pyparsing module")
-		for k in [x for x in dir(cls) if x.startswith("test_")]:
-			setattr(cls, k, raise_skip)
-		return super(force_skipping, cls).__call__(*a, **kw)
 
 class DHCPConfigTest(unittest.TestCase):
 	if skip_test:
-		__metaclass__ = force_skipping
-
+		skip = "skipped due to missing pyparsing module"
+	
 	def test_basics(self):
 		config = dhcpformat.configFromFile(StringIO('''
 test {

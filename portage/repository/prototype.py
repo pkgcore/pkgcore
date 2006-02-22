@@ -94,26 +94,26 @@ class tree(object):
 					yield pkg
 		return
 
-	def install(self, pkg):
+	def install(self, pkg, *a, **kw):
 		if self.frozen:
 			raise AttributeError("repo is frozen")
-		return self._install(pkg, self.lock)
+		return self._install(pkg, *a, **kw)
 
-	def _install(self, pkg):
+	def _install(self, pkg, *a, **kw):
 		raise NotImplementedError
 
-	def uninstall(self, key):
+	def uninstall(self, pkg, *a, **kw):
 		if self.frozen:
 			raise AttributeError("repo is frozen")
-		return self._uninstall(key, self.lock)
+		return self._uninstall(key, *a, **kw)
 
-	def _uninstall(self,pkg):
+	def _uninstall(self,pkg, *a, **kw):
 		raise NotImplementedError
 
-	def replace(self, orig, new):
+	def replace(self, orig, new, *a, **kw):
 		if self.frozen:
 			raise AttributeError("repo is frozen")
-		self._replace(orig, new, self.lock)
+		self._replace(orig, new, *a, **kw)
 
-	def _replace(self, orig, new):
+	def _replace(self, orig, new, *a, **kw):
 		raise NotImplementedError

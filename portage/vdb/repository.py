@@ -135,12 +135,16 @@ class tree(prototype.tree):
 
 
 class install(repo_interfaces.install):
-	def __init__(self, repo, pkg, *a, **kw):
+	def __init__(self, repo, pkg, offset=None, *a, **kw):
+		self.offset = offset
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
 		repo_interfaces.install.__init__(self, repo, pkg, *a, **kw)
 		
 	def transfer(self, **kw):
 		# error checking? ;)
+		import pdb;pdb.set_trace()
+		if self.offset:
+			kw["offset"] = self.offset
 		merge_contents(self.pkg.contents, **kw)
 		return True
 
@@ -152,7 +156,10 @@ class install(repo_interfaces.install):
 			if k == "contents":
 				v = ContentsFile(os.path.join(self.dirpath, "CONTENTS"), writable=True, empty=True)
 				for x in self.pkg.contents:
-					v.add(x)
+					if self.offset:
+						v.add(x.change_location(os.path.join(self.offset, x.location)))
+					else:
+						v.add(x)
 				v.flush()
 			elif k == "environment":
 				shutil.copy(getattr(self.pkg, k).get_path(), os.path.join(self.dirpath, "environment"))

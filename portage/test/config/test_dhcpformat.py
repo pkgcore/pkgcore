@@ -23,7 +23,7 @@ def passthrough(*args, **kwargs):
 
 class DHCPConfigTest(unittest.TestCase):
 	if skip_test:
-		skip = "skipped due to missing pyparsing module"
+		skip = "missing pyparsing module"
 	
 	def test_basics(self):
 		config = dhcpformat.configFromFile(StringIO('''

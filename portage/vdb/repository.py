@@ -178,13 +178,17 @@ class install(repo_interfaces.install):
 				open(os.path.join(self.dirpath, rewrite.get(k, k.upper())), "w").write(s)
 		return True
 
+
 class uninstall(repo_interfaces.uninstall):
-	def __init__(self, repo, pkg, *a, **kw):
+	def __init__(self, repo, pkg, offset=None, *a, **kw):
+		self.offset = offset
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
 		repo_interfaces.uninstall.__init__(self, repo, pkg, *a, **kw)
 
 	def remove(self):
 		for x in ifilter(lambda x: not isinstance(x, fsDir), self.pkg.contents):
+			if self.offset:
+				x = x.change_location(os.path.join(self.offset, x.location.lstrip(os.path.sep)))
 			try:
 				os.unlink(x.location)
 			except OSError, e:
@@ -192,6 +196,8 @@ class uninstall(repo_interfaces.uninstall):
 					raise
 		
 		for x in self.pkg.contents.iterdirs():
+			if self.offset:
+				x = x.change_location(os.path.join(self.offset, x.location.lstrip(os.path.sep)))
 			try:
 				os.rmdir(x.location)
 			except OSError, e:

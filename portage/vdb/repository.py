@@ -142,7 +142,6 @@ class install(repo_interfaces.install):
 		
 	def transfer(self, **kw):
 		# error checking? ;)
-		import pdb;pdb.set_trace()
 		if self.offset:
 			kw["offset"] = self.offset
 		merge_contents(self.pkg.contents, **kw)

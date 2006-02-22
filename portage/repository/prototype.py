@@ -105,7 +105,7 @@ class tree(object):
 	def uninstall(self, pkg, *a, **kw):
 		if self.frozen:
 			raise AttributeError("repo is frozen")
-		return self._uninstall(key, *a, **kw)
+		return self._uninstall(pkg, *a, **kw)
 
 	def _uninstall(self,pkg, *a, **kw):
 		raise NotImplementedError

@@ -2,8 +2,8 @@
 # License: GPL2
 # $Id:$
 
-
-import sets
+if not hasattr(__builtins__, "set"):
+	from sets import Set as set
 
 from portage.package.atom import atom
 from portage.restrictions.boolean import OrRestriction
@@ -20,7 +20,7 @@ class StateGraph(object):
 	def add_pkg(self, pkg):
 		assert(pkg not in self.pkgs)
 		self.dirty = True
-		self.pkgs[pkg] = (combinations(pkg.rdepends, atom), sets.Set(), sets.Set())
+		self.pkgs[pkg] = (combinations(pkg.rdepends, atom), set(), set())
 		if len(self.pkgs[pkg][0]) <= 1:
 			for atomset in self.pkgs[pkg][0]:
 				self.pkgs[pkg][1].union_update(atomset)
@@ -29,7 +29,7 @@ class StateGraph(object):
 	def _add_deps(self, pkg):
 		for atom in self.pkgs[pkg][1]:
 			if atom not in self.atoms:
-				self.atoms[atom] = [sets.Set(), sets.Set()]
+				self.atoms[atom] = [set(), set()]
 			self.atoms[atom][0].add(pkg)
 
 	def _remove_deps(self, pkg):
@@ -53,10 +53,10 @@ class StateGraph(object):
 		for pkg in self.pkgs:
 			if len(self.pkgs[pkg][0]) <= 1:
 				continue
-			all_atoms = sets.Set()
+			all_atoms = set()
 			for atomset in self.pkgs[pkg][0]:
 				all_atoms.union_update(atomset)
-			okay_atoms = sets.Set()
+			okay_atoms = set()
 			for atom in all_atoms:
 				have_blocker=False
 				for child in self.pkgs:
@@ -96,7 +96,7 @@ class StateGraph(object):
 		for pkg in self.pkgs:
 			if not pkg.metapkg:
 				continue
-			redirected_atoms = sets.Set()
+			redirected_atoms = set()
 			for parent_atom in self.pkgs[pkg][2]:
 				if not parent_atom.blocks:
 					continue
@@ -181,7 +181,7 @@ def extrapolate(set1, set2):
 
 	for subset1 in combs:
 		required = True
-		removable = sets.Set()
+		removable = set()
 		for subset2 in final_set:
 			if subset1.issuperset(subset2):
 				required = False
@@ -197,19 +197,19 @@ def extrapolate(set1, set2):
 
 
 def combinations(restrict, elem_type=atom):
-	ret = sets.Set()
+	ret = set()
 
 	if isinstance(restrict, OrRestriction):
 		for element in restrict:
 			if isinstance(element, elem_type):
-				newset = sets.Set()
+				newset = set()
 				newset.add(element)
 				ret.add(newset)
 			else:
 				ret.union_update(combinations(element, elem_type))
 	else:
-		newset = sets.Set()
-		subsets = sets.Set()
+		newset = set()
+		subsets = set()
 		for element in restrict:
 			if isinstance(element, elem_type):
 				newset.add(element)

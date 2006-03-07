@@ -155,10 +155,13 @@ def IndexableSequence(
 	
 
 class LazyValDict(UserDict.DictMixin):
-	"""
+
+	"""Mapping that loads values via a callable
+	
 	given a function to get keys, and to look up the val for those keys, it'll 
 	lazy load key definitions, and values as requested
 	"""
+	
 	def __init__(self, get_keys_func, get_val_func):
 		"""
 		get_keys_func is a callable that is JIT called with no args	 returns a tuple of keys, or is a list
@@ -177,14 +180,11 @@ class LazyValDict(UserDict.DictMixin):
 		self.__val_func = get_val_func
 		self.__vals = {}
 
-
 	def __setitem__(self, key, value):
 		raise AttributeError
 
-
 	def __delitem__(self, key):
 		raise AttributeError
-
 
 	def __getitem__(self, key):
 		if self.__keys_func != None:
@@ -197,13 +197,11 @@ class LazyValDict(UserDict.DictMixin):
 			return v
 		raise KeyError(key)
 
-
 	def keys(self):
 		if self.__keys_func != None:
 			self.__keys = set(self.__keys_func())
 			self.__keys_func = None
 		return list(self.__keys)
-
 
 	def __contains__(self, key):
 		if self.__keys_func != None:
@@ -215,10 +213,13 @@ class LazyValDict(UserDict.DictMixin):
 
 
 class ProtectedDict(UserDict.DictMixin):
-	"""
+
+	"""Mapping wrapper to store changes to a dict without modifying the initial dict
+	
 	given an initial dict, this wraps that dict storing changes in a secondary dict, protecting
 	the underlying dict from changes
 	"""
+	
 	__slots__=("orig","new","blacklist")
 
 	def __init__(self, orig):
@@ -226,12 +227,10 @@ class ProtectedDict(UserDict.DictMixin):
 		self.new = {}
 		self.blacklist = {}
 
-
 	def __setitem__(self, key, val):
 		self.new[key] = val
 		if key in self.blacklist:
 			del self.blacklist[key]
-
 
 	def __getitem__(self, key):
 		if key in self.new:
@@ -239,7 +238,6 @@ class ProtectedDict(UserDict.DictMixin):
 		if key in self.blacklist:
 			raise KeyError(key)
 		return self.orig[key]
-
 
 	def __delitem__(self, key):
 		if key in self.new:
@@ -250,7 +248,6 @@ class ProtectedDict(UserDict.DictMixin):
 				self.blacklist[key] = True
 				return
 		raise KeyError(key)
-			
 
 	def __iter__(self):
 		for k in self.new.iterkeys():
@@ -259,10 +256,8 @@ class ProtectedDict(UserDict.DictMixin):
 			if k not in self.blacklist and k not in self.new:
 				yield k
 
-
 	def keys(self):
 		return list(self.__iter__())
-
 
 	def has_key(self, key):
 		return key in self.new or (key not in self.blacklist and key in self.orig)
@@ -274,17 +269,24 @@ class Unchangable(Exception):
 
 
 class InvertedContains(set):
-	"""negate the __contains__ return from a set
+
+	"""Set that inverts all contains lookups results
+	
 	mainly useful in conjuection with LimitedChangeSet for converting from blacklist to whitelist
 	"""
+
 	def __contains__(self, key):
 		return not set.__contains__(self, key)
 
+
 class LimitedChangeSet(object):
-	"""
-	set that supports limited changes, specifically deleting/adding a key only once per commit, 
+	
+	"""Set used to limit the number of times a key can be removed/added
+	
+	specifically deleting/adding a key only once per commit, 
 	optionally blocking changes to certain keys.
 	"""
+	
 	_removed	= 0
 	_added		= 1
 
@@ -353,6 +355,7 @@ class LimitedChangeSet(object):
 
 
 class ImmutableDict(dict):
+
 	"""Immutable Dict, non changable after instantiating"""
 
 	def __delitem__(self, *args):
@@ -373,8 +376,11 @@ class ImmutableDict(dict):
 	__delattr__ = __setitem__
 	__setattr__ = __setitem__
 
+
 class IndeterminantDict(dict):
+
 	"""A wrapped dict with a constant dict, and a fallback function to pull keys"""
+
 	def __init__(self, pull_func, starter_dict=None):
 		if starter_dict is None:
 			self.__initial = {}

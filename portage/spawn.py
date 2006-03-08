@@ -296,6 +296,10 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, **keywords):
 	if os.path.exists(save_file):
 		args.extend(["-i", save_file])
 	args.append("--")
+	if isinstance(mycommand, basestring):
+		args.extend(mycommand.split())
+	else:
+		args.extend(mycommand)
 	return spawn(args, opt_name=opt_name, env=env, **keywords)
 
 def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=[1],

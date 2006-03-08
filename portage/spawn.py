@@ -21,7 +21,10 @@ sandbox_capable = (os.path.isfile(SANDBOX_BINARY) and
 userpriv_capable = (os.getuid() == 0)
 fakeroot_capable = False
 
+
 def spawn_bash(mycommand, debug=False, opt_name=None, **keywords):
+	"""spawn the command via bash -c"""
+	
 	args = [BASH_BINARY]
 	if not opt_name:
 		opt_name = os.path.basename(mycommand.split()[0])
@@ -33,6 +36,8 @@ def spawn_bash(mycommand, debug=False, opt_name=None, **keywords):
 	return spawn(args, opt_name=opt_name, **keywords)
 
 def spawn_sandbox(mycommand, opt_name=None, **keywords):
+	"""spawn the command under sandboxed"""
+	
 	if not sandbox_capable:
 		return spawn_bash(mycommand, opt_name=opt_name, **keywords)
 	args=[SANDBOX_BINARY]
@@ -78,6 +83,7 @@ atexit.register(run_exitfuncs)
 # as it creates and cleans up processes.
 spawned_pids = []
 def cleanup_pids(pids=None):
+	"""reap pids if specified, else all children"""
 	global spawned_pids
 	if pids == None:
 		pids = spawned_pids
@@ -102,6 +108,16 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
           uid=None, gid=None, groups=None, umask=None, logfile=None,
           path_lookup=True):
 
+	"""wrapper around execve
+	
+	mycommand must be either a list, or a string
+	env must be a dict with it's keys strictly strings, and values strictly strings
+	opt_name controls what the process is named (what it would show up as under top for example)
+	fd_pipes controls what fd's are left open in the spawned process- must be a dict mapping existing
+	fd to fd # inside the new process
+	returnpid controls whether spawn waits for the process to finish, or returns the pid.
+	
+	rest of the options are fairly self explanatory"""
 	global spawned_pids
 	# mycommand is either a str or a list
 	if isinstance(mycommand, str):
@@ -206,7 +222,8 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 	return 0
 
 def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask):
-
+	"""internal function to handle exec'ing the child process"""
+	
 	# If the process we're creating hasn't been given a name
 	# assign it the name of the executable.
 	if not opt_name:
@@ -249,6 +266,8 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask):
 	os.execve(binary, myargs, env)
 
 def find_binary(binary):
+	"""look through the PATH environment, finding the binary to execute"""
+	
 	for path in os.getenv("PATH", "").split(":"):
 		filename = "%s/%s" % (path, binary)
 		if os.access(filename, os.X_OK) and os.path.isfile(filename):
@@ -257,7 +276,11 @@ def find_binary(binary):
 	raise CommandNotFound(binary)
 
 def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, **keywords):
-
+	"""spawn a process via fakeroot
+	
+	refer to the fakeroot manpage for specifics of using fakeroot
+	"""
+	
 	if env is None:
 		env = {}
 	else:

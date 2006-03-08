@@ -29,6 +29,7 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 		self.assertRaises(spawn.CommandNotFound, spawn.find_binary, script_name)
 		os.chmod(fp, 0755)
 		self.failUnlessSubstring(self.dir, spawn.find_binary(script_name))
+		os.unlink(fp)
 	
 	def test_spawn_get_output(self):
 		fp = os.path.join(self.dir, "portage-spawn-getoutput.sh")
@@ -42,4 +43,6 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 			os.chmod(fp, 0775)
 			self.assertEqual([r,s], spawn.spawn_get_output(fp, spawn_type=spawn.spawn_bash, **args))
 
-	
+		os.unlink(fp)	
+
+

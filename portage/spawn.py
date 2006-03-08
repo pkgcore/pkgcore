@@ -198,12 +198,7 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 						os.waitpid(pid, 0)
 					spawned_pids.remove(pid)
 
-				# If it got a signal, return the signal that was sent.
-				if (retval & 0xff):
-					return ((retval & 0xff) << 8)
-
-				# Otherwise, return its exit code.
-				return (retval >> 8)
+				return process_exit_code(retval)
 	finally:
 		cleanup_pids(mypids)
 
@@ -309,12 +304,13 @@ def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_f
 			fd.close()
 			pw = None
 	
-		retval=os.waitpid(mypid[0],0)[1]
+		retval = os.waitpid(mypid[0],0)[1]
 		cleanup_pids(mypid)
 		if raw_exit_code:
 			return [retval,mydata]
-		retval=process_exit_code(retval)
+		retval = process_exit_code(retval)
 		return [retval, mydata]
+
 	finally:
 		if pr is not None:
 			try: os.close(pr)
@@ -322,6 +318,22 @@ def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_f
 		if pw is not None:
 			try: os.close(pw)
 			except OSError: pass
+
+def process_exit_code(retval):
+	"""process a waitpid returned exit code, returning exit code if it exit'd, or the
+	signal if it died from signalling
+	if throw_signals is on, it raises a SystemExit if the process was signaled.
+	This is intended for usage with threads, although at the moment you can't signal individual
+	threads in python, only the master thread, so it's a questionable option."""
+
+
+	# If it got a signal, return the signal that was sent.
+	if retval & 0xff:
+		return (retval & 0xff) << 8
+
+	# Otherwise, return its exit code.
+	return retval >> 8
+
 
 class ExecutionFailure(Exception):
 	pass
@@ -336,7 +348,7 @@ if os.path.exists(FAKEROOT_PATH):
 	try:
 		r,s = spawn_get_output((FAKEROOT_PATH, "--version"), fd_pipes={1:1,2:2})
 		fakeroot_capable = (r == 0) and (len(s) == 1) and ("version 1." in s[0])
-	except ExceutionFailure:
+	except ExecutionFailure:
 		fakeroot_capable = False
 				
 	

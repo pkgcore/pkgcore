@@ -83,10 +83,11 @@ atexit.register(run_exitfuncs)
 # as it creates and cleans up processes.
 spawned_pids = []
 def cleanup_pids(pids=None):
-	"""reap pids if specified, else all children"""
-	global spawned_pids
-	if pids == None:
+	"""reap list of pids if specified, else all children"""
+
+	if pids is None:
 		pids = spawned_pids
+
 	while pids:
 		pid = pids.pop()
 		try:

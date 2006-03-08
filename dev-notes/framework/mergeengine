@@ -1,0 +1,45 @@
+..incomplete..
+
+What is it?
+
+MergeEngine is abstraction containing bits that handle merging to the livefs.  Additionally, triggers are fired
+via the MergeEngine.
+
+rough notion;
+phases-
+1) determine feasibility- determine the changeset that will be applied to the livefs (effectively), strictly fstype determination.
+Q: if doing a replacement, does the changeset between old and new matter?
+
+if feasible..
+triggers.
+
+need a way to track what sets triggers work against, changeset, or the full cset?
+Don't much like the notion of having just a static set "these are the changesets we generate"; 
+
+Thinking of thus-
+IndeterminantDict that uses a func that pull froms a dict for key -> callable
+
+so... basically, register a name for a trigger set that is used/needed on trigger load up against the engine.
+Via the registration, can track how long a set needs to be cached; effectively a bastard form of refcounting.
+
+That's optimizing a bit, continuing...
+
+Need to discern the 'stack' for the triggers.  
+
+What order to trigger mutating triggers (triggers that modify the set, say renaming a file) ?
+
+Thinking thus-
+load mutators, apply mutators
+
+load pre triggers (non-mutating), apply
+
+merge files
+potentially a trigger here
+unmerge files (if applicable)
+potentially a trigger here
+
+
+ldconfig trigger
+ld.so.conf is directives of what directories to look in when trying to satisfy DL_NEEDED elf headers, should be updated, but 
+ldconfig calls per directory should still occur beyond just ld.so.conf
+

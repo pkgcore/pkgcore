@@ -126,11 +126,11 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 	# If an absolute path to an executable file isn't given
 	# search for it unless we've been told not to.
 	binary = mycommand[0]
-	if (not os.path.isabs(binary) or not os.path.isfile(binary)
-	    or not os.access(binary, os.X_OK)):
-		binary = path_lookup and find_binary(binary) or None
-		if not binary:
-			return -1
+	if not path_lookup:
+		if find_binary(binary) != binary:
+			raise CommandNotFound(binary)
+	else:
+		binary = find_binary(binary)
 
 	# If we haven't been told what file descriptors to use
 	# default to propogating our stdin, stdout and stderr.
@@ -268,6 +268,11 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask):
 def find_binary(binary):
 	"""look through the PATH environment, finding the binary to execute"""
 	
+	if os.path.isabs(binary):
+		if not (os.path.isfile(binary) and os.access(binary, os.X_OK)):
+			raise CommandNotFound(binary)
+		return binary
+
 	for path in os.getenv("PATH", "").split(":"):
 		filename = "%s/%s" % (path, binary)
 		if os.access(filename, os.X_OK) and os.path.isfile(filename):
@@ -288,7 +293,7 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, **keywords):
 	if opt_name is None:
 		opt_name = "fakeroot %s" % mycommand
 	args = [FAKEROOT_PATH, "-u", "-b", "20", "-s", save_file]
-	if os.path.exists(savefile):
+	if os.path.exists(save_file):
 		args.extend(["-i", save_file])
 	args.append("--")
 	return spawn(args, opt_name=opt_name, env=env, **keywords)

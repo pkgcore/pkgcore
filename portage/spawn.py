@@ -2,7 +2,7 @@
 # License: GPL2
 # $Id: spawn.py 2283 2005-11-10 00:35:14Z ferringb $
 
-__all__ = ["cleanup_pids", "spawn","spawn_sandbox", "spawn_bash", "spawn_fakeroot", "spawn_func", "spawn_get_output"]
+__all__ = ["cleanup_pids", "spawn","spawn_sandbox", "spawn_bash", "spawn_fakeroot", "spawn_get_output"]
 
 import os, atexit, signal, sys
 

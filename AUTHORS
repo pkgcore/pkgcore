@@ -1,7 +1,9 @@
-Rough list of who has contributed to this source.
-svn annotate/log if you're curious about the gory details of who did what
+Author
+Brian Harring <ferringb@gmail.com>
 
-Brian Harring <ferringb@gentoo.org>
-Marien Zwart <m_zwart@123mail.org>
-Jason Stubbs <jstubbs@gentoo.og>
+Contributors
+Marien Zwart <marienz@gentoo.org>
 Zac Medico <zmedico@gentoo.org>
+Jason Stubbs <jstubbs@gentoo.og>
+
+bzr annotate/log if you're curious about the gory details of who did what

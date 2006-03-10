@@ -1,4 +1,4 @@
-# Copyright: 2005 Gentoo Foundation
+# Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 # $Id: cparser.py 2272 2005-11-10 00:19:01Z ferringb $
 

@@ -1,4 +1,5 @@
-# Copyright: 2005 Gentoo Foundation
+# Copyright: 2005 Marien Zwart <marienz@gentoo.org>
+# Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 # $Id: errors.py 2272 2005-11-10 00:19:01Z ferringb $
 

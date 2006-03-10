@@ -1,4 +1,4 @@
-# Copyright: 2005 Gentoo Foundation
+# Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 # $Id: flat_list.py 1911 2005-08-25 03:44:21Z ferringb $
 

@@ -1,4 +1,4 @@
-# Copyright: 2004-2005 Gentoo Foundation
+# Copyright: 2004-2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 # $Id: processor.py 2288 2005-11-10 03:39:28Z ferringb $
 

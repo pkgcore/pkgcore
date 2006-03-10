@@ -7,7 +7,7 @@ __all__ = ["cleanup_pids", "spawn","spawn_sandbox", "spawn_bash", "spawn_fakeroo
 import os, atexit, signal, sys
 
 from portage.util.mappings import ProtectedDict
-from portage.const import BASH_BINARY, SANDBOX_BINARY, FAKEROOT_PATH
+from portage.const import BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH
 
 
 try:
@@ -281,27 +281,62 @@ def find_binary(binary):
 
 	raise CommandNotFound(binary)
 
-def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, **keywords):
+def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=False, **keywords):
 	"""spawn a process via fakeroot
 	
 	refer to the fakeroot manpage for specifics of using fakeroot
 	"""
-	
 	if env is None:
 		env = {}
 	else:
 		env = ProtectedDict(env)
+
 	if opt_name is None:
 		opt_name = "fakeroot %s" % mycommand
-	args = [FAKEROOT_PATH, "-u", "-b", "20", "-s", save_file]
+
+	args = [FAKED_PATH, "--unknown-is-real", "--foreground", "--save-file", save_file]
+
+	rd_fd, wr_fd = os.pipe()
+	daemon_fd_pipes = {1:wr_fd, 2:wr_fd}
 	if os.path.exists(save_file):
-		args.extend(["-i", save_file])
-	args.append("--")
-	if isinstance(mycommand, basestring):
-		args.extend(mycommand.split())
+		args.append("--load")
+		daemon_fd_pipes[0] = os.open(save_file, os.O_RDONLY)
 	else:
-		args.extend(mycommand)
-	return spawn(args, opt_name=opt_name, env=env, **keywords)
+		daemon_fd_pipes[0] = os.open("/dev/null", os.O_RDONLY)
+
+	try:
+		pid = spawn(args, fd_pipes=daemon_fd_pipes, returnpid=True)
+		rd_f = os.fdopen(rd_fd)
+		line = rd_f.readline()
+		rd_f.close()
+		rd_fd = None
+	finally:
+		for x in (rd_fd, wr_fd, daemon_fd_pipes[0]):
+			if x is not None:
+				try:
+					os.close(x)
+				except OSError:
+					pass
+	
+	line = line.strip()
+
+	try:
+		fakekey, fakepid = map(int, line.split(":"))
+	except ValueError:
+		raise ExecutionFailure("output from faked was unparsable- %s" % lines)
+
+	# by now we have our very own daemonized faked.  yay.
+	env["FAKEROOTKEY"] = str(fakekey)
+	env["LD_PRELOAD"] = ":".join([LIBFAKEROOT_PATH] + env.get("LD_PRELOAD", "").split(":"))
+
+	try:
+		ret = spawn(mycommand, opt_name=opt_name, env=env, returnpid=returnpid, **keywords)
+		if returnpid:
+			return ret + [fakepid]
+		return ret
+	finally:
+		if not returnpid:
+			cleanup_pids([fakepid])
 
 def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=[1],
 	fd_pipes=None, **keywords):
@@ -341,8 +376,7 @@ def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_f
 		cleanup_pids(mypid)
 		if raw_exit_code:
 			return [retval,mydata]
-		retval = process_exit_code(retval)
-		return [retval, mydata]
+		return [process_exit_code(retval), mydata]
 
 	finally:
 		if pr is not None:
@@ -369,7 +403,10 @@ def process_exit_code(retval):
 
 
 class ExecutionFailure(Exception):
-	pass
+	def __init__(self, msg):
+		self.msg = msg
+	def __str__(self): 
+		return "Execution Failure: %s" % self.msg
 
 class CommandNotFound(ExecutionFailure):
 	def __init__(self, command):
@@ -377,9 +414,9 @@ class CommandNotFound(ExecutionFailure):
 	def __str__(self):
 		return "CommandNotFound Exception: Couldn't find '%s'" % str(self.command)
 
-if os.path.exists(FAKEROOT_PATH):
+if os.path.exists(FAKED_PATH) and os.path.exists(LIBFAKEROOT_PATH):
 	try:
-		r,s = spawn_get_output((FAKEROOT_PATH, "--version"), fd_pipes={1:1,2:2})
+		r,s = spawn_get_output(["fakeroot", "--version"], fd_pipes={2:1, 1:1})
 		fakeroot_capable = (r == 0) and (len(s) == 1) and ("version 1." in s[0])
 	except ExecutionFailure:
 		fakeroot_capable = False

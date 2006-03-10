@@ -56,7 +56,7 @@ SANDBOX_PIDS_FILE		= "/tmp/sandboxpids.tmp"
 #CONFCACHE_LIST			= CACHE_PATH+"/confcache_files.anydbm"
 
 LIBFAKEROOT_PATH		= "/usr/lib/libfakeroot.so"
-FAKEROOT_PATH			= "/usr/bin/fakeroot"
+FAKED_PATH				= "/usr/bin/faked"
 
 RSYNC_BIN				= "/usr/bin/rsync"
 RSYNC_HOST				= "rsync.gentoo.org/gentoo-portage"

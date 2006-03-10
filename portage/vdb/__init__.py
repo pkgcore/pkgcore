@@ -1,4 +1,4 @@
-# Copyright: 2005 Gentoo Foundation
+# Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 # $Id: __init__.py 2285 2005-11-10 00:36:17Z ferringb $
 

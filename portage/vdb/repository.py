@@ -1,4 +1,4 @@
-# Copyright: 2005 Gentoo Foundation
+# Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 # $Id: repository.py 2616 2006-02-01 08:18:43Z zmedico $
 

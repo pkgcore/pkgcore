@@ -1,3 +1,4 @@
+# Copyright: 2004-2006 Brian Harring <ferringb@gmail.com>
 # Copyright: 2005 Gentoo Foundation
 # License: GPL2
 # $Id: spawn.py 2283 2005-11-10 00:35:14Z ferringb $

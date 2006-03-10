@@ -1,5 +1,5 @@
 # parseuri.py; parses a SYNC uri, returning protocol/host_uri
-# Copyright 2004 Gentoo Foundation
+# Copyright 2004 Brian Harring <ferringb@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 #$Id: parseuri.py 1911 2005-08-25 03:44:21Z ferringb $
 

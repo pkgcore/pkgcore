@@ -1,4 +1,4 @@
-# Copyright: 2005 Gentoo Foundation
+# Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
 from StringIO import StringIO

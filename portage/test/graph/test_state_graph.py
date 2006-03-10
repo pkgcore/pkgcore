@@ -1,4 +1,4 @@
-# Copyright: 2006 Gentoo Foundation
+# Copyright: 2006 Zac Medico <zmedico@gentoo.org>
 # License: GPL2
 # $Id:$
 

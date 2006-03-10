@@ -1,4 +1,4 @@
-# Copyright: 2005 Gentoo Foundation
+# Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 # $Id: file.py 2530 2006-01-05 07:17:09Z ferringb $
 

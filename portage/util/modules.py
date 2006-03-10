@@ -1,4 +1,4 @@
-# Copyright: 2005 Gentoo Foundation
+# Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 # $Id: modules.py 2327 2005-12-02 00:13:09Z marienz $
 

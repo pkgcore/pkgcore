@@ -90,25 +90,27 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 		if os.getuid() == 0:
 			kw = {"uid":l[2], "gid":l[3]}
 
+		fp2 = self.generate_script("portage-spawn-fakeroot2.sh",
+			"#!%s\nimport os\ns=os.stat('/tmp')\nprint s.st_uid\nprint s.st_gid\n" % 
+			spawn.find_binary("python"))
+		
 		fp1 = self.generate_script("portage-spawn-fakeroot.sh", 
-			"#!%s\nchown %i:%i /tmp" % (self.bash_path, nobody_uid, nobody_gid))
+			"#!%s\nchown %i:%i /tmp;%s;\n" % (self.bash_path, nobody_uid, nobody_gid, fp2))
 
 		savefile = os.path.join(self.dir, "fakeroot-savefile")
 		self.assertNotEqual(long(os.stat("/tmp").st_uid), long(nobody_uid))
-		self.assertEqual(0, spawn.spawn_fakeroot([self.bash_path, fp1], savefile, **kw))
+		self.assertEqual([0, ["%s\n" % x for x in (nobody_uid, nobody_gid)]],
+			spawn.spawn_get_output([self.bash_path, fp1], 
+			spawn_type=post_curry(spawn.spawn_fakeroot, savefile), **kw))
+		self.assertNotEqual(long(os.stat("/tmp").st_uid), long(nobody_uid), 
+			"bad voodoo; we managed to change /tmp to nobody- this shouldn't occur!")
 		self.assertEqual(True, os.path.exists(savefile), 
 			"no fakeroot file was created, either fakeroot differs or our" +
 			" args passed to it are bad")
-		self.assertNotEqual(long(os.stat("/tmp").st_uid), long(nobody_uid), 
-			"bad voodoo; we managed to change /tmp to nobody- this shouldn't occur!")
-		
-		fp2 = self.generate_script("portage-spawn-fakeroot2.sh",
-			"#!%s\nimport os;s=os.stat('/tmp');print s.st_uid;print s.st_gid" % 
-			spawn.find_binary("python"))
 
 		# yes this is a bit ugly, but fakeroot requires an arg- so we have to curry it
 		self.assertEqual([0, ["%s\n" % x for x in (nobody_uid, nobody_gid)]],
-			spawn.spawn_get_output([self.bash_path, "-c", fp2], 
+			spawn.spawn_get_output([fp2], 
 			spawn_type=post_curry(spawn.spawn_fakeroot, savefile), **kw))
 
 		os.unlink(fp1)

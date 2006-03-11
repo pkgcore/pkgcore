@@ -1,0 +1,86 @@
+python code guidelines.
+
+lingo-
+fex == for example
+imo == in my opinion; 'my' refering to the author
+
+Note not all of the existing code follows this.
+Doesn't mean existing code is correct however ;)
+
+---------------------------
+Follow pep8, with following exemptions-
+
+1) Use tabs for indentation
+2) <80 char limit is only applicable where it doesn't make the logic ugly.
+   This is not an excuse to have a 200 char if statement (fix your logic).  Use common sense.
+3) combining imports is ok.
+4) use absolute imports
+5) _simple_ try/except combined lines are acceptable, but not forced (your call)
+try: l.remove(blah)
+except IndexError: pass
+6) for comments. 2 spaces trailing is pointless- not needed.
+7) classes should be named SomeClass , functions/methods should be named some_func
+   Exceptions are classes.  Don't raise strings either.
+8) avoid __var 'private' attributes unless you absolutely have a reason to hide it, 
+   and the class won't be inherited (or that attribute must _not_ be accessed)
+9) use string module functions when you could use a string method is evil.  Don't do it.
+10) use isinstance(str_instance, basestring) unless you _really_ need to know if it's 
+   utf8/ascii
+   
+
+---------------------------
+Don't use len for list unless you need it. fex-
+
+l=[1]
+if l: blah
+# instead of
+if len(l): blah
+
+python looks for __nonzero__, then __len__.  It's a fair sight faster then if you try to
+be explicit there.
+len(l) > ~= 0.456us
+len(l) ~= 0.352us
+l ~= 0.134us
+
+So... be aware of how the interpretter will execute that code.
+
+
+---------------------------
+Do not use [] or {} as default args in function/method definitions.
+
+>>> def f(default=[]):
+>>>   default.append(1)
+>>>   return default
+>>> print f()
+[1]
+>>> print f()
+[1,1]
+
+When the function/class/method is defined, the default args are instantiated _then_, not per
+call.  End result is that if it's a mutable default arg, you should use None and test; this is 
+exempted if you _know_ the code doesn't managle the default.
+
+
+---------------------------
+Visible curried functions should have documentation.
+
+When using the currying methods (portage.util.currying) for function mangling, preserve the 
+documentation via pretty_docs.
+
+If this is exempted, pydoc output for objects isn't incredibly useful.
+
+
+---------------------------
+unit testing.
+
+All code _should_ have test case functionality.  We use twisted.trial; should
+be running >=2.2 (<2.2 results in false positives in the spawn tests).
+Regressions should be test cased, exempting idiot mistakes (typos fex).
+
+More then willing to look at code that lacks tests, but merging/integrating the code
+requires tests.
+
+One area that is (atm) exempted from this is the ebuild interaction; testing that interface
+is extremely hard, although it _does_ need to be implemented.
+
+If tests are missing from code (author didn't write tests initially), new tests desired. :)

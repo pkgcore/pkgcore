@@ -12,7 +12,7 @@ import portage_const
 def parseSyncUri(uri):
 	"""parse a SYNC uri, returning a tuple of protocol,host_uri"""
 	u=uri.lower()
-	if u.startswith("rsync") or len(u) == 0:
+	if u.startswith("rsync") or not u:
 		if len(u) <= 5:
 			return ('rsync',portage_const.RSYNC_HOST)
 		return ('rsync',u[8:])

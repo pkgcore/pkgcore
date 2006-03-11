@@ -18,7 +18,7 @@ def load_module(name):
 		nl = name.split('.')
 		# __import__ returns nl[0]... so.
 		nl.pop(0)
-		while len(nl):
+		while nl:
 			m = getattr(m, nl[0])
 			nl.pop(0)
 		return m

@@ -150,7 +150,7 @@ and be aware that exceptions in python code are costly due to machinery involved
 
 
 ---------------------------
-Cleanup after yourself, especially in exception handling.
+cpython sometimes 'leaks' vars into local namespace
 
 def f(s):
 	while True:

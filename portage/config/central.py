@@ -66,9 +66,7 @@ class ConfigManager(object):
 		slist = [(section, conf)]
 
 		# first map out inherits.
-		i = 0
-		while i < len(slist):
-			current_section, current_conf = slist[i]
+		for current_section, current_conf in slist:
 			if 'inherit' in current_conf:
 				for inherit in current_conf.get_value(
 					self, 'inherit', 'list'):
@@ -80,7 +78,6 @@ class ConfigManager(object):
 							(current_section, inherit))
 					else:
 						slist.append((inherit, inherited_conf))
-			i += 1
 		# collapse, honoring incrementals.
 		
 		# remember that inherit's are l->r.	 So the slist above works
@@ -88,7 +85,7 @@ class ConfigManager(object):
 		# but it does. tree isn't needed, list suffices)
 
 		conf = {}
-		while len(slist):
+		while slist:
 			inherit_name, inherit_conf = slist.pop(-1)
 			additions = {}
 			for x in inherit_conf.keys():

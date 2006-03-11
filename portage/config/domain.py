@@ -48,7 +48,7 @@ class domain:
 		# voodoo, unfortunately (so it goes)
 		# break this up into chunks once it's stabilized (most of code here has already, but still more to add)
 		maskers, unmaskers, keywords, license = profile.maskers[:], [], [], []
-		if len(profile.visibility):
+		if profile.visibility:
 			maskers.extend(profile.visibility)
 
 		for key, val, action in (("package.mask", maskers, atom), ("package.unmask", unmaskers, atom), 
@@ -82,7 +82,7 @@ class domain:
 		filter = packages.OrRestriction()
 		masker_d = DictBased(maskers, get_key_from_package, split_atom)
 		# check this.
-		if len(unmaskers):
+		if unmaskers:
 			masker_d = packages.AndRestriction(masker_d, DictBased(unmaskers, get_key_from_package, split_atom, negate=True))
 		filter.add_restriction(masker_d)
 
@@ -121,7 +121,7 @@ class domain:
 		ukey_check = ukey in key
 		keyword_filter = []
 		for a, v in keywords:
-			if len(v) == 0:
+			if not v:
 				if ukey_check:	continue
 				# note that we created the atom above- so we can toy with it's innards if we want. :)
 				r = ContainmentMatch(ukey)
@@ -133,15 +133,15 @@ class domain:
 					if x == "*":	per_node.append(StrGlobMatch("~", negate=True))
 					elif x == "~*":	per_node.append(StrGlobMatch("~"))
 					else:			exact.append(x)
-				if len(exact):
+				if exact:
 					r.add_restriction(ContainmentMatch(*exact))
-				if len(per_node):
+				if per_node:
 					r.add_restriction(*exact)
 			a.add_restriction(packages.PackageRestriction("keywords", r))
 			keyword_filter.append(a)
 
 		key_filter = ContainmentMatch(*key)
-		if len(keyword_filter) != 0:
+		if keyword_filter:
 			filter.add_restriction(packages.OrRestriction(packages.PackageRestriction("keywords", key_filter), 
 				DictBased(keyword_filter, get_key_from_package, split_atom), negate=True))
 		else:
@@ -149,15 +149,15 @@ class domain:
 		del key_filter, keywords, keyword_filter, key, ukey, ukey_check
 
 		# we can finally close that fricking "DISALLOW NON FOSS LICENSES" bug via this >:)
-		if len(master_license) != 0:
-			if len(license) != 0:
+		if master_license:
+			if license:
 				r = packages.OrRestriction(negate=True)
 				r.add_restriction(packages.PackageRestriction("license", ContainmentMatch(*master_license)))
 				r.add_restriction(DictBased(license, get_key_from_package, split_atom))
 				filter.add_restriction(r)
 			else:
 				filter.add_restriction(packages.PackageRestriction("license", ContainmentMatch(*master_license), negate=True))
-		elif len(license):
+		elif license:
 			filter.add_restriction(DictBased(license, get_key_from_package, split_atom, negate=True))
 
 		del master_license, license

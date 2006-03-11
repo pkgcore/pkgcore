@@ -15,7 +15,7 @@ class tree(prototype.tree):
 	def _get_categories(self, *optionalCategory):
 		d=set()
 		failures=0
-		if len(optionalCategory):
+		if optionalCategory:
 			optionalCategory=optionalCategory[0]
 			for x in self.trees:
 				try:

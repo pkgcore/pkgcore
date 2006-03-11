@@ -95,7 +95,7 @@ class database(fs_template.FsBased):
 		"""generator for walking the dir struct"""
 		dirs = [self.location]
 		len_base = len(self.location)
-		while len(dirs):
+		while dirs:
 			for l in os.listdir(dirs[0]):
 				if l.endswith(".cpickle"):
 					continue

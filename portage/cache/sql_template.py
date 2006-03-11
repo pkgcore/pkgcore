@@ -103,7 +103,7 @@ class SQLDatabase(template.database):
 
 		rows = self.con.fetchall()
 
-		if len(rows) == 0:
+		if not rows:
 			raise KeyError(cpv)
 
 		vals = dict([(k,"") for k in self._known_keys])
@@ -152,7 +152,7 @@ class SQLDatabase(template.database):
 				if values.has_key(key) and values[key] != '':
 					db_values.append({"key":key, "value":values[key]})
 
-			if len(db_values) > 0:
+			if db_values:
 				try:	self.con.executemany("INSERT INTO %s (pkgid, key, value) VALUES(\"%s\", %%(key)s, %%(value)s)" % \
 					(self.SCHEMA_VALUES_NAME, str(pkgid)), db_values)
 				except self._BaseError, e:
@@ -259,7 +259,7 @@ class SQLDatabase(template.database):
 			v = v.replace(".*","%")
 			query_list.append("(key=%s AND value LIKE %s)" % (self._sfilter(k), self._sfilter(v)))
 
-		if len(query_list):
+		if query_list:
 			query = " AND "+" AND ".join(query_list)
 		else:
 			query = ''

@@ -56,7 +56,7 @@ def iter_scan(path, offset=None):
 		offset = normpath(offset.rstrip(sep))+sep
 		path = normpath(path)
 		dirs = [path.rstrip(sep)[len(offset):]]
-		if len(dirs[0]):
+		if dirs[0]:
 			yield gen_obj(dirs[0])
 
 	while dirs:

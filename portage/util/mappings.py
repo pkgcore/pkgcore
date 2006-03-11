@@ -91,7 +91,7 @@ class FrozenIndexableSequence(object):
 			func = self._returnFunc
 			
 		for key, value in self.iteritems():
-			if len(value) == 0:
+			if not value:
 				if self._return_empty:
 					yield key
 			else:

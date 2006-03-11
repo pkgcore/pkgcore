@@ -245,7 +245,7 @@ class buildable(ebd, build.base):
 		self.env["A"] = ' '.join(map(lambda x: x.filename, self.fetchables))
 
 	def setup_distfiles(self):
-		if len(self.files):
+		if self.files:
 			# cvs/svn ebuilds need to die.
 			#self.env["PORTAGE_ACTUAL_DISTDIR"] = self.env["DISTDIR"]
 			self.env["DISTDIR"] = normpath(os.path.join(self.builddir, "distdir"))+"/"

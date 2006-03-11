@@ -77,7 +77,7 @@ Do not use [] or {} as default args in function/method definitions.
 
 When the function/class/method is defined, the default args are instantiated _then_, not per
 call.  End result is that if it's a mutable default arg, you should use None and test; this is 
-exempted if you _know_ the code doesn't managle the default.
+exempted if you _know_ the code doesn't mangle the default.
 
 
 ---------------------------

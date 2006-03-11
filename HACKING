@@ -15,7 +15,7 @@ Follow pep8, with following exemptions-
    This is not an excuse to have a 200 char if statement (fix your logic).  Use common sense.
 3) combining imports is ok.
 4) use absolute imports
-5) _simple_ try/except combined lines are acceptable, but not forced (your call)
+5) _simple_ try/except combined lines are acceptable, but not forced (your call)- example
 try: l.remove(blah)
 except IndexError: pass
 6) for comments. 2 spaces trailing is pointless- not needed.
@@ -23,26 +23,45 @@ except IndexError: pass
    Exceptions are classes.  Don't raise strings either.
 8) avoid __var 'private' attributes unless you absolutely have a reason to hide it, 
    and the class won't be inherited (or that attribute must _not_ be accessed)
-9) use string module functions when you could use a string method is evil.  Don't do it.
+9) using string module functions when you could use a string method is evil.  Don't do it.
 10) use isinstance(str_instance, basestring) unless you _really_ need to know if it's 
    utf8/ascii
    
 
 ---------------------------
-Don't use len for list unless you need it. fex-
+Be aware of what the interpretter is actually doing.
 
+1) Don't use len(list_instance) when you just want to know if it's nonempty/empty
 l=[1]
 if l: blah
 # instead of
 if len(l): blah
 
-python looks for __nonzero__, then __len__.  It's a fair sight faster then if you try to
-be explicit there.
+python looks for __nonzero__, then __len__.  It's a fair sight faster 
+then if you try to be explicit there.
+
 len(l) > ~= 0.456us
 len(l) ~= 0.352us
 l ~= 0.134us
 
-So... be aware of how the interpretter will execute that code.
+
+2) don't explicitly use has_key.  rely on the 'in' operator.
+
+python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' 'd.has_key(1999999)'
+1000000 loops, best of 3: 0.512 usec per loop
+
+python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' '1999999 in d'
+1000000 loops, best of 3: 0.279 usec per loop
+
+Python interprets the 'in' command by using __contains__ on the instance.  The interpretter
+is faster at doing getattr's then actual python code is; fex, the code above uses
+d.__contains__ , if you do d.has_key or d.__contains__, it's the same speed.  Using 
+'in' instead has the interpretter do the lookup, and is faster.
+
+So... be aware of how the interpretter will execute that code.  Python code specified attribute
+access is slower then the interpretter doing it on it's own.
+
+If in doubt, python -m timeit is your friend. ;-)
 
 
 ---------------------------
@@ -84,3 +103,76 @@ One area that is (atm) exempted from this is the ebuild interaction; testing tha
 is extremely hard, although it _does_ need to be implemented.
 
 If tests are missing from code (author didn't write tests initially), new tests desired. :)
+
+
+---------------------------
+If it's FS related code, it's _usually_ cheaper to try then to ask then try.
+...but you should verify it ;)
+
+
+python -m 'timeit' -s 'import os' 'os.path.exists("/etc/passwd") and open("/etc/passwd").read()'
+10000 loops, best of 3: 37.5 usec per loop
+
+	
+python -m 'timeit' -s 'import os' $'try:open("/etc/passwd").read()\nexcept OSError: pass'
+10000 loops, best of 3: 28.4 usec per loop
+
+8.9 usec doesn't seem like much, but it adds up- specifically, the extra stat there
+adds up.
+
+
+Note that I qualified this with "If it's FS related code"; syscalls aren't cheap- if it's 
+not triggering syscalls, next section is relevant.
+
+
+---------------------------
+Catching Exceptions in python code (rather then cpython) isn't cheap.
+
+When an exception is caught-
+python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'try: d[1999]\nexcept KeyError: pass'
+100000 loops, best of 3: 5.57 usec per loop
+
+python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'1999 in d and d[1999]'
+1000000 loops, best of 3: 0.287 usec per loop
+
+
+When no exception is caught, overhead of try/except setup
+
+python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'try: d[0]\nexcept KeyError: pass'
+1000000 loops, best of 3: 0.362 usec per loop
+
+python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'d[0]'
+1000000 loops, best of 3: 0.259 usec per loop
+
+
+Not advocating writing code that doesn't protect itself- just be aware of what the code is actually doing, 
+and be aware that exceptions in python code are costly due to machinery involved.
+
+
+---------------------------
+Cleanup after yourself, especially in exception handling.
+
+def f(s):
+	while True:
+		try:
+			some_func_that_throws_exception()
+		except Exception, e:
+			# e exists in this namespace now.
+			pass
+		# some other code here...
+
+from the code above, e bled into the f namespace- that's referenced memory that isn't used, 
+and will linger until the while loop exits.
+
+Python _does_ bleed variables into the local namespace- be aware of this, and explicitly
+delete references you don't need, especially dealing with exceptions.
+
+class c:
+	d = {}
+	for x in range(1000):
+		d[x] = x
+
+Granted the class above is contrived, but the thing to note is that c.x is now valid-
+the x from the for loop bleeds into the class namespace and stays put.
+
+It's uneeded in the namespace, so remove it. :)

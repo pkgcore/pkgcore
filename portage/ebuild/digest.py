@@ -9,7 +9,7 @@ def parse_digest(path, throw_errors=True):
 		f = open(path)
 		for line in f:
 			l = line.split()
-			if len(l) == 0:
+			if not l:
 				continue
 			if len(l) != 4:
 				if throw_errors:

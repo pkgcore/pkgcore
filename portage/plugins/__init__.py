@@ -98,7 +98,7 @@ class GlobalPluginRegistry(object):
 			
 			existing.remove_section(magic)
 			try:
-				if len(existing.sections()) == 0:
+				if not existing.sections():
 					os.unlink(ptype_fp)
 				else:
 					f = open(ptype_fp, "w")

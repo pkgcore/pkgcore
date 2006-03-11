@@ -14,6 +14,7 @@ class base(restriction.base):
 
 	__slots__ = restriction.base.__slots__
 	type = value_type
+
 	def force_True(self, pkg, attr, val):
 		if self.match(val) ^ self.negate:
 			return True
@@ -175,7 +176,7 @@ class ContainmentMatch(base):
 				if x in rem:
 					if self.all:
 						rem.remove(x)
-						if len(rem) == 0:
+						if not rem:
 							return not self.negate
 					else:
 						return not self.negate

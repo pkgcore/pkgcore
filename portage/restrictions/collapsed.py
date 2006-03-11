@@ -39,7 +39,7 @@ class DictBased(packages.base):
 		self.restricts_dict = {}
 		for r in restriction_items:
 			key, remaining = get_key_from_atom(r)
-			if len(remaining) == 0:
+			if not remaining:
 				remaining = packages.AlwaysTrue
 			else:
 				if len(remaining) == 1 and (isinstance(remaining, list) or isinstance(remaining, tuple)):

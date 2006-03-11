@@ -35,7 +35,7 @@ class base(restriction.base):
 	def add_restriction(self, *new_restrictions):
 		"""add restriction(s), must be isinstance of required_base
 		"""
-		if len(new_restrictions) == 0:
+		if not new_restrictions:
 			raise TypeError("need at least one restriction handed in")
 		try:
 			for r in new_restrictions:
@@ -49,11 +49,14 @@ class base(restriction.base):
 	def finalize(self):
 		self.restrictions = tuple(self.restrictions)
 
-	def total_len(self):	return sum(imap(lambda x: x.total_len(), self.restrictions)) + 1
+	def total_len(self):
+		return sum(imap(lambda x: x.total_len(), self.restrictions)) + 1
 
-	def __len__(self):	return len(self.restrictions)
+	def __len__(self):
+		return len(self.restrictions)
 
-	def __iter__(self):	return iter(self.restrictions)
+	def __iter__(self):
+		return iter(self.restrictions)
 
 	def match(self, action, *vals):
 		raise NotImplementedError
@@ -249,7 +252,7 @@ class XorRestriction(base):
 	__slots__ = tuple(base.__slots__)
 
 	def match(self, vals):
-		if len(self.restrictions) == 0:
+		if not self.restrictions:
 			return not self.negate
 
 		if self.negate:

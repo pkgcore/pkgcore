@@ -175,4 +175,7 @@ class c:
 Granted the class above is contrived, but the thing to note is that c.x is now valid-
 the x from the for loop bleeds into the class namespace and stays put.
 
-It's uneeded in the namespace, so remove it. :)
+Don't leave uneeded vars lingering in class namespace.
+
+Variables that leak from for loops _normally_ isn't an issue, just be aware it occurs- 
+especially if the var is referencing a large object (thus keeping it in memory).

@@ -75,11 +75,11 @@ class StateGraph(object):
 			differences={}
 			for choice in self.pkgs[pkg][0]:
 				difference = choice.difference(okay_atoms)
-				if len(difference) == 0:
+				if not difference:
 					break
 				differences[choice] = difference
 			best_choice = choice
-			if len(difference) != 0:
+			if difference:
 				for choice, difference in differences.iteritems():
 					if len(difference) < len(differences[best_choice]):
 						best_choice = choice

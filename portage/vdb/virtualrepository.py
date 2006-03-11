@@ -46,7 +46,7 @@ class tree(prototype.tree):
 
 	def _get_categories(self, *optionalCategory):
 		# return if optionalCategory is passed... cause it's not yet supported
-		if len(optionalCategory):
+		if optionalCategory:
 			return ()
 		return ("virtual",)
 

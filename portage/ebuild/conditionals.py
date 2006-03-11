@@ -49,7 +49,7 @@ class DepSet(boolean.AndRestriction):
 				if k == ")":
 					# no elements == error.  if closures don't map up, indexerror would be chucked from trying to pop the frame
 					# so that is addressed.
-					if len(depsets[-1].restrictions) == 0:
+					if not depsets[-1].restrictions:
 						raise ParseError(dep_str)
 					elif conditionals[-1].endswith('?'):
 						cond = raw_conditionals[:]
@@ -111,7 +111,7 @@ class DepSet(boolean.AndRestriction):
 		flat_deps = DepSet("", str)
 
 		stack = [self.restrictions]
-		while len(stack) != 0:
+		while stack:
 			for node in stack[0]:
 				if isinstance(node, self.conditional_class):
 					if node.cond in cond_dict:

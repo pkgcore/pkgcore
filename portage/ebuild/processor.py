@@ -16,22 +16,17 @@ def shutdown_all_processors():
 	"""kill off all known processors"""
 	global active_ebp_list, inactive_ebp_list
 
-	while len(active_ebp_list) > 0:
-		try:	active_ebp_list[0].shutdown_processor()
+	while active_ebp_list:
+		try:	
+			active_ebp_list.pop().shutdown_processor()
 		except (IOError,OSError):
-			active_ebp_list.pop(0)
-			continue
-		try:			active_ebp_list.pop(0)
-		except IndexError:	pass
+			pass
 
-	while len(inactive_ebp_list) > 0:
+	while inactive_ebp_list:
 		try:
-			inactive_ebp_list[0].shutdown_processor()
+			inactive_ebp_list.pop().shutdown_processor()
 		except (IOError,OSError):
-			inactive_ebp_list.pop(0)
-			continue
-		try:			inactive_ebp_list.pop(0)
-		except IndexError:	pass
+			pass
 
 portage.spawn.atexit_register(shutdown_all_processors)
 
@@ -233,7 +228,7 @@ class ebuild_processor:
 			self.write("end_sandbox_summary")
 			return 0
 		violations=portage_util.grabfile(self.__sandbox_log)
-		if len(violations)==0:
+		if not violations:
 			self.write("end_sandbox_summary")
 			return 0
 		if not move_log:
@@ -377,9 +372,8 @@ class ebuild_processor:
 
 
 	def _receive_key(self, line, keys_dict):
-		line=line.split("=",1)
-		l=len(line)
-		if l != 2:
+		line = line.split("=",1)
+		if len(line) != 2:
 			raise FinishedProcessing(True)
 		else:
 			keys_dict[line[0]] = line[1]

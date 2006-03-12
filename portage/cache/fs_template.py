@@ -2,7 +2,7 @@
 # License: GPL2
 
 import os
-import template, cache_errors
+from portage.cache import template, cache_errors
 from portage.os_data import portage_gid
 from portage.fs.util import ensure_dirs
 
@@ -36,7 +36,7 @@ class FsBased(template.database):
 			os.chown(path, -1, self._gid)
 			os.chmod(path, self._perms)
 			if mtime:
-				mtime=long(mtime)
+				mtime = long(mtime)
 				os.utime(path, (mtime, mtime))
 		except OSError, IOError:
 			return False

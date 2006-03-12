@@ -93,7 +93,9 @@ class database(object):
 	def has_key(self, cpv):
 		raise NotImplementedError
 
-
+	def __contains__(self, cpv):
+		return self.has_key(cpv)
+	
 	def keys(self):
 		return tuple(self.iterkeys())
 

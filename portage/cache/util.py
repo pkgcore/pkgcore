@@ -13,19 +13,18 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None, 
 	else:
 		noise=verbose_instance
 
-	dead_nodes = {}
-	dead_nodes.fromkeys(trg_cache.keys())
+	dead_nodes = set(trg_cache.iterkeys())
 	count=0
 
 	if not trg_cache.autocommits:
 		trg_cache.sync(100)
 
 	for x in valid_nodes_iterable:
-#		print "processing x=",x
 		count+=1
-		if dead_nodes.has_key(x):
-			del dead_nodes[x]
-		try:	entry = src_cache[x]
+		if x in dead_nodes:
+			dead_nodes.remove(x)
+		try:	
+			entry = src_cache[x]
 		except KeyError, e:
 			noise.missing_entry(x)
 			del e
@@ -47,11 +46,13 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None, 
 
 		# by this time, if it reaches here, the eclass has been validated, and the entry has 
 		# been updated/translated (if needs be, for metadata/cache mainly)
-		try:	trg_cache[x] = entry
+		try:
+			trg_cache[x] = entry
 		except cache_errors.CacheError, ce:
 			noise.exception(x, ce)
 			del ce
 			continue
+
 		if count >= noise.call_update_min:
 			noise.update(x)
 			count = 0
@@ -62,12 +63,11 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None, 
 	# ok.  by this time, the trg_cache is up to date, and we have a dict
 	# with a crapload of cpv's.  we now walk the target db, removing stuff if it's in the list.
 	for key in dead_nodes:
-		try:	del trg_cache[key]
+		try:
+			del trg_cache[key]
 		except cache_errors.CacheError, ce:
 			noise.exception(ce)
 			del ce
-	dead_nodes.clear()
-	del noise			
 
 
 class quiet_mirroring(object):

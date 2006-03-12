@@ -18,7 +18,6 @@ class database(fs_template.FsBased):
 		if not os.path.exists(self.location):
 			self._ensure_dirs()
 
-
 	def _getitem(self, cpv):
 		try:
 			myf = open(os.path.join(self.location, cpv),"r")
@@ -34,7 +33,6 @@ class database(fs_template.FsBased):
 		myf.close()
 		return d
 
-
 	def _parse_data(self, data, mtime):
 		d = dict(map(lambda x:x.rstrip().split("=", 1), data))
 		d["_mtime_"] = long(mtime)
@@ -45,11 +43,11 @@ class database(fs_template.FsBased):
 				d[x] = ''
 		return d
 
-
 	def _setitem(self, cpv, values):
 		s = cpv.rfind("/")
 		fp = os.path.join(self.location,cpv[:s],".update.%i.%s" % (os.getpid(), cpv[s+1:]))
-		try:	myf=open(fp, "w")
+		try:
+			myf=open(fp, "w")
 		except IOError, ie:
 			if ie.errno == 2:
 				try:
@@ -75,7 +73,6 @@ class database(fs_template.FsBased):
 			os.remove(fp)
 			raise cache_errors.CacheCorruption(cpv, e)
 
-
 	def _delitem(self, cpv):
 		try:
 			os.remove(os.path.join(self.location,cpv))
@@ -85,10 +82,8 @@ class database(fs_template.FsBased):
 			else:
 				raise cache_errors.CacheCorruption(cpv, e)
 
-
 	def __contains__(self, cpv):
 		return os.path.exists(os.path.join(self.location, cpv))
-
 
 	def iterkeys(self):
 		"""generator for walking the dir struct"""
@@ -105,4 +100,3 @@ class database(fs_template.FsBased):
 					continue
 				yield p[len_base+1:]
 			dirs.pop(0)
-

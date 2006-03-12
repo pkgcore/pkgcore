@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import cache_errors, copy
+from portage.cache import cache_errors
 
 class database(object):
 	# this is for metadata/cache transfer.
@@ -21,7 +21,6 @@ class database(object):
 		self.sync_rate = 0
 		self.updates = 0
 
-	
 	def __getitem__(self, cpv):
 		"""set a cpv to values
 		This shouldn't be overriden in derived classes since it handles the __eclasses__ conversion.
@@ -39,14 +38,13 @@ class database(object):
 		override this in derived classess"""
 		raise NotImplementedError
 
-
 	def __setitem__(self, cpv, values):
 		"""set a cpv to values
 		This shouldn't be overriden in derived classes since it handles the readonly checks"""
 		if self.readonly:
 			raise cache_errors.ReadOnlyRestriction()
 		if self.cleanse_keys:
-			d=copy.copy(values)
+			d=dict(values)
 			for k in d.keys():
 				if d[k] == '':
 					del d[k]
@@ -65,12 +63,10 @@ class database(object):
 				self.commit()
 				self.updates = 0
 
-
 	def _setitem(self, name, values):
 		"""__setitem__ calls this after readonly checks.  override it in derived classes
 		note _eclassees_ key *must* be handled"""
 		raise NotImplementedError
-
 
 	def __delitem__(self, cpv):
 		"""delete a key from the cache.
@@ -84,11 +80,9 @@ class database(object):
 			self.commit()
 			self.updates = 0
 
-
 	def _delitem(self,cpv):
 		"""__delitem__ calls this after readonly checks.  override it in derived classes"""
 		raise NotImplementedError
-
 
 	def __contains__(self, cpv):
 		raise NotImplementedError
@@ -148,7 +142,6 @@ class database(object):
 					cont = False
 					break
 			if cont:
-#				yield cpv,vals
 				yield cpv
 
 

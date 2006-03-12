@@ -90,11 +90,11 @@ class database(object):
 		raise NotImplementedError
 
 
-	def has_key(self, cpv):
+	def __contains__(self, cpv):
 		raise NotImplementedError
 
-	def __contains__(self, cpv):
-		return self.has_key(cpv)
+	def has_key(self, cpv):
+		return cpv in self
 	
 	def keys(self):
 		return tuple(self.iterkeys())

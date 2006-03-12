@@ -148,7 +148,7 @@ class SQLDatabase(template.database):
 			# so we store only what's handed to us and is a known key
 			db_values = []
 			for key in self._known_keys:
-				if values.has_key(key) and values[key] != '':
+				if values.get(key, "") != "":
 					db_values.append({"key":key, "value":values[key]})
 
 			if db_values:
@@ -194,7 +194,7 @@ class SQLDatabase(template.database):
 		return self.con.fetchone()[0]
 
 
-	def has_key(self, cpv):
+	def __contains__(self, cpv):
 		if not self.autocommits:
 			try:	self.commit()
 			except self._BaseError, e:

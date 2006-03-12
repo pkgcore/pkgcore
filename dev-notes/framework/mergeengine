@@ -43,3 +43,8 @@ ldconfig trigger
 ld.so.conf is directives of what directories to look in when trying to satisfy DL_NEEDED elf headers, should be updated, but 
 ldconfig calls per directory should still occur beyond just ld.so.conf
 
+trigger
+	required_cset = "cset id" || ("cset id", func) || callable
+	if string, then the cset generator must exist already (eg, default)
+	if tuple, then if the cset generator isn't defined, use that func (makes it a default for that instance)
+	if callable, then it's treated as a non-shared cset.

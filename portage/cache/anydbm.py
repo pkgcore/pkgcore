@@ -17,6 +17,7 @@ class database(fs_template.FsBased):
 	cleanse_keys = True
 
 	def __init__(self, *args, **config):
+		self._db = None
 		super(database,self).__init__(*args, **config)
 
 		default_db = config.get("dbtype","anydbm")
@@ -24,10 +25,10 @@ class database(fs_template.FsBased):
 			default_db = '.' + default_db
 
 		self._db_path = os.path.join(self.location, fs_template.gen_label(self.location, self.label)+default_db)
-		self.__db = None
+		self._db = None
+
 		try:
-			self.__db = anydbm_module.open(self._db_path, "w", self._perms)
-				
+			self._db = anydbm_module.open(self._db_path, "w", self._perms)
 		except anydbm_module.error:
 			# XXX handle this at some point
 			try:
@@ -39,35 +40,31 @@ class database(fs_template.FsBased):
 
 			# try again if failed
 			try:
-				if self.__db == None:
-					self.__db = anydbm_module.open(self._db_path, "c", self._perms)
+				if self._db == None:
+					self._db = anydbm_module.open(self._db_path, "c", self._perms)
 			except andbm_module.error, e:
 				raise cache_errors.InitializationError(self.__class__, e)
 
 	def iteritems(self):
-		return self.__db.iteritems()
+		return self._db.iteritems()
 
 	def __getitem__(self, cpv):
 		# we override getitem because it's just a cpickling of the data handed in.
-		return pickle.loads(self.__db[cpv])
-
+		return pickle.loads(self._db[cpv])
 
 	def _setitem(self, cpv, values):
-		self.__db[cpv] = pickle.dumps(values,pickle.HIGHEST_PROTOCOL)
+		self._db[cpv] = pickle.dumps(values,pickle.HIGHEST_PROTOCOL)
 
 	def _delitem(self, cpv):
-		del self.__db[cpv]
-
+		del self._db[cpv]
 
 	def iterkeys(self):
-		return iter(self.__db)
-
+		return iter(self._db)
 
 	def __contains__(self, cpv):
-		return cpv in self.__db
-
+		return cpv in self._db
 
 	def __del__(self):
-		if "__db" in self.__dict__ and self.__db != None:
-			self.__db.sync()
-			self.__db.close()
+		if self._db is not None:
+			self._db.sync()
+			self._db.close()

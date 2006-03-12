@@ -1,10 +1,9 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-sqlite_module =__import__("sqlite")
 import os
-import sql_template, fs_template
-import cache_errors
+from portage.cache import sql_template, fs_template, cache_errors
+sqlite_module =__import__("sqlite")
 
 class database(fs_template.FsBased, sql_template.SQLDatabase):
 
@@ -29,7 +28,6 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
 		except self._BaseError, e:
 			raise cache_errors.InitializationError(self.__class__, e)
 
-		
 	def _initdb_con(self, config):
 		sql_template.SQLDatabase._initdb_con(self, config)
 		try:
@@ -43,8 +41,9 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
 
 	def _table_exists(self, tbl):
 		"""return true/false dependant on a tbl existing"""
-		try:	self.con.execute("SELECT name FROM sqlite_master WHERE type=\"table\" AND name=%s" % 
-			self._sfilter(tbl))
+		try:
+			self.con.execute("SELECT name FROM sqlite_master WHERE type=\"table\" AND name=%s" % 
+				self._sfilter(tbl))
 		except self._BaseError, e:
 			# XXX crappy.
 			return False
@@ -53,7 +52,8 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
 	# we can do it minus a query via rowid.
 	def _insert_cpv(self, cpv):
 		cpv = self._sfilter(cpv)
-		try:	self.con.execute(self.SCHEMA_INSERT_CPV_INTO_PACKAGE.replace("INSERT","REPLACE",1) % \
+		try:
+			self.con.execute(self.SCHEMA_INSERT_CPV_INTO_PACKAGE.replace("INSERT","REPLACE",1) % \
 			(self.label, cpv))
 		except self._BaseError, e:
 			raise cache_errors.CacheCorruption(cpv, "tried to insert a cpv, but failed: %s" % str(e))
@@ -62,4 +62,3 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
 		if self.con.rowcount <= 0 or self.con.rowcount > 2:
 			raise cache_errors.CacheCorruption(cpv, "tried to insert a cpv, but failed- %i rows modified" % self.rowcount)
 		return self.con.lastrowid
-

@@ -2,8 +2,7 @@
 # License: GPL2
 
 import os, stat
-import flat_hash
-import cache_errors
+from portage.cache import flat_hash, cache_errors
 from portage.ebuild import eclass_cache 
 from template import reconstruct_eclasses, serialize_eclasses
 from portage.util.mappings import ProtectedDict
@@ -68,10 +67,9 @@ class database(flat_hash.database):
 				for idx, key in enumerate(self.auxdbkey_order):
 					d[key] = data[idx].strip()
 				break
+
 		d["_mtime_"] = mtime
 		return d
-
-
 		
 	def _setitem(self, cpv, values):
 		values = ProtectedDict(values)

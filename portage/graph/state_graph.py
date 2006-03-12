@@ -1,7 +1,6 @@
 # Copyright: 2005 Jason Stubbs <jstubbs@gentoo.org>
 # Copyright: 2005-2006 Zac Medico <zmedico@gentoo.org>
 # License: GPL2
-# $Id:$
 
 if not hasattr(__builtins__, "set"):
 	from sets import Set as set

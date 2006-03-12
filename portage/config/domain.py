@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: domain.py 2272 2005-11-10 00:19:01Z ferringb $
 
 import os
 from portage.restrictions.collapsed import DictBased

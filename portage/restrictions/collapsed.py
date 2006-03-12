@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: collapsed.py 2282 2005-11-10 00:30:30Z ferringb $
 
 __all__=("DictBased")
 from portage.restrictions import packages

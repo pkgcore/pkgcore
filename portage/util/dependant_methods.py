@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id:$
 
 
 # metaclasses, 101.  metaclass gets called to instantiate a class (creating a class instance).

@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: boolean.py 2448 2005-12-25 03:03:00Z ferringb $
 
 """
 This module provides classes that can be used to combine arbitrary collections of restrictions in AND, NAND, OR, NOR, XOR, XNOR 

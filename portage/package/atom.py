@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: atom.py 2279 2005-11-10 00:27:34Z ferringb $
 
 from portage.restrictions import values, packages, boolean
 from cpv import ver_cmp, CPV

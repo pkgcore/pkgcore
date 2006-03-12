@@ -1,7 +1,6 @@
 # cvs.py; provides cvs sync capabilities, encapsulates the necessary cvs binary calls
 # Copyright 2004 Brian Harring <ferringb@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
-#$Id: cvs.py 1911 2005-08-25 03:44:21Z ferringb $
 
 import os, stat
 from portage.spawn import spawn, spawn_bash, CommandNotFound

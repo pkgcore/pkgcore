@@ -1,6 +1,5 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
-# $Id:$
 
 
 from twisted.trial import unittest

@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: profiles.py 2272 2005-11-10 00:19:01Z ferringb $
 
 class base(object):
 	pass

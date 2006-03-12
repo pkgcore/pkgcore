@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: conditionals.py 2535 2006-01-05 12:16:11Z ferringb $
 
 # TODO: move exceptions elsewhere, bind them to a base exception for portage
 

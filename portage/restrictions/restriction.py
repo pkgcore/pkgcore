@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: restriction.py 2282 2005-11-10 00:30:30Z ferringb $
 
 
 class base(object):

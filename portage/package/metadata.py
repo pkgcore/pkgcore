@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: metadata.py 2279 2005-11-10 00:27:34Z ferringb $
 
 import weakref
 from cpv import CPV

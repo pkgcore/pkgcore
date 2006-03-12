@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id:$
 
 class fetchable(object):
 	__slots__ = ("filename", "uri", "chksums")

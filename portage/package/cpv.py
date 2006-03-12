@@ -1,7 +1,6 @@
 # Copyright: 2005 Jason Stubbs <ferringb@gentoo.org>
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: cpv.py 2279 2005-11-10 00:27:34Z ferringb $
 
 import re
 from base import base

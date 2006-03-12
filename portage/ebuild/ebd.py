@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: fetchcommand.py 1936 2005-08-26 05:37:15Z ferringb $
 
 import os, shutil
 from portage.interfaces import build, repo

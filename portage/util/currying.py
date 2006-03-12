@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: currying.py 2284 2005-11-10 00:35:50Z ferringb $
 
 def pre_curry(func, *args, **kwargs):
 	"""passed in args are prefixed, with further args appended"""

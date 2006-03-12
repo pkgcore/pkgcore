@@ -1,6 +1,5 @@
 # Copyright 2004-2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: fs.py 1911 2005-08-25 03:44:21Z ferringb $
 
 from portage.util.mappings import ImmutableDict, LazyValDict
 from portage.chksum import get_handlers, get_handler

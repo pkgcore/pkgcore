@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: fs_template.py 2270 2005-11-10 00:17:33Z ferringb $
 
 import os
 import template, cache_errors

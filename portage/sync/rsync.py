@@ -1,7 +1,6 @@
 # rsync.py; module providing an abstraction over the rsync binary
 # Copyright 2004 Brian Harring <ferringb@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
-#$Id: rsync.py 2178 2005-10-25 15:52:57Z ferringb $
 
 from portage_const import RSYNC_BIN, RSYNC_HOST
 import os, portage_exec

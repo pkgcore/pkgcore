@@ -1,6 +1,5 @@
 # Copyright: 2005 Gentoo Foundation
 # License: GPL2
-# $Id: os_data.py 2305 2005-11-13 11:50:13Z vapier $
 
 import os,pwd,grp
 

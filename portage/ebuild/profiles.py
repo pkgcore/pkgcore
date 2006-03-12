@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: profiles.py 2647 2006-02-04 01:15:36Z zmedico $
 
 from portage.config import profiles
 import os, logging

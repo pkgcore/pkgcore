@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: packages.py 2282 2005-11-10 00:30:30Z ferringb $
 
 from portage.util.lists import unique
 from portage.util.currying import pre_curry, pretty_docs

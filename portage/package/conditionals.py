@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: conditionals.py 2279 2005-11-10 00:27:34Z ferringb $
 
 from portage.util.mappings import LimitedChangeSet, Unchangable
 from portage.util.lists import unique, flatten

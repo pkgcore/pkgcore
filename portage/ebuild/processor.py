@@ -1,6 +1,5 @@
 # Copyright: 2004-2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: processor.py 2288 2005-11-10 03:39:28Z ferringb $
 
 # this needs work.  it's been pruned heavily from what ebd used originally, but it still isn't what 
 # I would define as 'right'

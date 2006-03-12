@@ -1,6 +1,5 @@
 # Copyright 2004 Brian Harring <ferringb@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
-# $Id: fs.py 2523 2006-01-04 13:56:53Z marienz $
 
 import os, stat
 import fcntl

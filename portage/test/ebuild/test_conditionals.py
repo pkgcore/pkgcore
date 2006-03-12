@@ -1,7 +1,6 @@
 # Copyright: 2005 Zac Medico <zmedico@gentoo.org>
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
-# $Id:$
 
 import os
 from itertools import imap

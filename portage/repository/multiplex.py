@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: multiplex.py 2442 2005-12-24 08:51:31Z ferringb $
 
 import prototype, errors
 

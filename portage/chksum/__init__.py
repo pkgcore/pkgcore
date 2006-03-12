@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: __init__.py 2271 2005-11-10 00:18:09Z ferringb $
 
 import os, sys
 from portage.util.modules import load_module

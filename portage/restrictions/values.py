@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: values.py 2523 2006-01-04 13:56:53Z marienz $
 
 import re
 from portage.restrictions import restriction, boolean

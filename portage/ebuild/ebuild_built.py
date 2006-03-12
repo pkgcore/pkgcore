@@ -1,6 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id:$
 
 from portage.ebuild import ebuild_src
 from portage.util.mappings import ImmutableDict, IndeterminantDict

@@ -1,6 +1,5 @@
 # Copyright: 2006 Zac Medico <zmedico@gentoo.org>
 # License: GPL2
-# $Id:$
 
 from twisted.trial import unittest
 from portage.restrictions.values import StrExactMatch

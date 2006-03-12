@@ -1,7 +1,6 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # Copyright: 2004-2005 Gentoo Foundation
 # License: GPL2
-# $Id: md5hash.py 1911 2005-08-25 03:44:21Z ferringb $
 
 
 # We _try_ to load this module. If it fails we do the slow fallback.

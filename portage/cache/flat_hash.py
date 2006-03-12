@@ -1,11 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import fs_template
-import cache_errors
-import os, stat
+import os, stat, errno
+from portage.cache import fs_template
+from portage.cache import cache_errors
 
-# store the current key order *here*.
 class database(fs_template.FsBased):
 
 	autocommits = True
@@ -47,18 +46,18 @@ class database(fs_template.FsBased):
 		s = cpv.rfind("/")
 		fp = os.path.join(self.location,cpv[:s],".update.%i.%s" % (os.getpid(), cpv[s+1:]))
 		try:
-			myf=open(fp, "w")
+			myf = open(fp, "w")
 		except IOError, ie:
-			if ie.errno == 2:
+			if ie.errno == errno.ENOENT:
 				try:
 					self._ensure_dirs(cpv)
-					myf=open(fp,"w")
+					myf = open(fp,"w")
 				except (OSError, IOError),e:
 					raise cache_errors.CacheCorruption(cpv, e)
 		except OSError, e:
 			raise cache_errors.CacheCorruption(cpv, e)
 		
-		for k, v in values.items():
+		for k, v in values.iteritems():
 			if k != "_mtime_":
 				myf.writelines("%s=%s\n" % (k, v))
 
@@ -68,7 +67,8 @@ class database(fs_template.FsBased):
 		#update written.  now we move it.
 
 		new_fp = os.path.join(self.location,cpv)
-		try:	os.rename(fp, new_fp)
+		try:
+			os.rename(fp, new_fp)
 		except (OSError, IOError), e:
 			os.remove(fp)
 			raise cache_errors.CacheCorruption(cpv, e)
@@ -77,7 +77,7 @@ class database(fs_template.FsBased):
 		try:
 			os.remove(os.path.join(self.location,cpv))
 		except OSError, e:
-			if e.errno == 2:
+			if e.errno == errno.ENOENT:
 				raise KeyError(cpv)
 			else:
 				raise cache_errors.CacheCorruption(cpv, e)
@@ -90,13 +90,13 @@ class database(fs_template.FsBased):
 		dirs = [self.location]
 		len_base = len(self.location)
 		while dirs:
-			for l in os.listdir(dirs[0]):
+			d = dirs.pop(0)
+			for l in os.listdir(d):
 				if l.endswith(".cpickle"):
 					continue
-				p = os.path.join(dirs[0],l)
+				p = os.path.join(d, l)
 				st = os.lstat(p)
 				if stat.S_ISDIR(st.st_mode):
 					dirs.append(p)
 					continue
 				yield p[len_base+1:]
-			dirs.pop(0)

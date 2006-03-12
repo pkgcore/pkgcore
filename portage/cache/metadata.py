@@ -4,7 +4,6 @@
 import os, stat
 from portage.cache import flat_hash, cache_errors
 from portage.ebuild import eclass_cache 
-from template import reconstruct_eclasses, serialize_eclasses
 from portage.util.mappings import ProtectedDict
 
 # this is the old cache format, flat_list.  count maintained here.
@@ -34,7 +33,7 @@ class database(flat_hash.database):
 				d["_eclasses_"] = self.ec.get_eclass_data(d["INHERITED"].split(), from_master_only=True)
 				del d["INHERITED"]
 		else:
-			d["_eclasses_"] = reconstruct_eclasses(cpv, d["_eclasses_"])
+			d["_eclasses_"] = self.reconstruct_eclasses(cpv, d["_eclasses_"])
 
 		return d
 
@@ -77,7 +76,7 @@ class database(flat_hash.database):
 		# hack.  proper solution is to make this a __setitem__ override, since template.__setitem__ 
 		# serializes _eclasses_, then we reconstruct it.
 		if "_eclasses_" in values:
-			values["INHERITED"] = ' '.join(reconstruct_eclasses(cpv, values["_eclasses_"]).keys())
+			values["INHERITED"] = ' '.join(self.reconstruct_eclasses(cpv, values["_eclasses_"]).keys())
 			del values["_eclasses_"]
 
 		flat_hash.database._setitem(self, cpv, values)

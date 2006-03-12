@@ -148,6 +148,35 @@ python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'d[0]'
 Not advocating writing code that doesn't protect itself- just be aware of what the code is actually doing, 
 and be aware that exceptions in python code are costly due to machinery involved.
 
+Another example is when to use or not to use dict's setdefault or get methods:
+
+Through exception handling, key is found:
+python -m timeit -s 'd=dict.fromkeys(range(100))' 'try: d[1]' 'except KeyError: 42'
+1000000 loops, best of 3: 0.238 usec per loop
+
+Through exception handling, key not found:
+python -m timeit -s 'd=dict.fromkeys(range(100))' 'try: d[101]' 'except KeyError: 42'
+100000 loops, best of 3: 4.73 usec per loop
+
+d.get, key is found:
+python -m timeit -s 'd=dict.fromkeys(range(100))' 'd.get(1, 42)'
+1000000 loops, best of 3: 0.459 usec per loop
+
+d.get, key is not found:
+python -m timeit -s 'd=dict.fromkeys(range(100))' 'd.get(101, 42)'
+1000000 loops, best of 3: 0.457 usec per loop
+
+So if the key is usually found using [] and exceptions is faster than
+using get (for the same reason "in" is faster than "has_key"). If the
+key is usually not there yet get wins.
+
+Of course this only considers the case where the default value is
+simple. If it's something more costly "except" will do relatively
+better since it's not constructing the default value if it's not
+needed. So if in doubt and in a performance-critical piece of code:
+benchmark parts of it with timeit instead of assuming "exceptions are
+slow" or "[] is fast".
+
 
 ---------------------------
 cpython sometimes 'leaks' vars into local namespace

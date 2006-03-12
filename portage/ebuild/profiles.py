@@ -1,6 +1,6 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: profiles.py 2273 2005-11-10 00:22:02Z ferringb $
+# $Id: profiles.py 2647 2006-02-04 01:15:36Z zmedico $
 
 from portage.config import profiles
 import os, logging
@@ -129,9 +129,9 @@ class OnDiskProfile(profiles.base):
 					else:				d[k] = v
 				else:					d[k] = v
 
-
-		# use_expand
-		d["USE_EXPAND"] = d.get("USE_EXPAND",'').split()
+		d.setdefault("USE_EXPAND",'')
+		if isinstance(d["USE_EXPAND"],str):
+			d["USE_EXPAND"] = d["USE_EXPAND"].split()
 		for u in d["USE_EXPAND"]:
 			u2 = u.lower()+"_"
 			if u in d:

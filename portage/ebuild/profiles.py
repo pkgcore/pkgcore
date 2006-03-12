@@ -13,6 +13,9 @@ from portage.util.mappings import ProtectedDict
 from portage.interfaces.data_source import local_source
 from itertools import imap
 
+# Harring sez-
+# This should be implemented as an auto-exec config addition.
+
 class OnDiskProfile(profiles.base):
 	positional = ("base_repo","profile")
 	required = ("base_repo", "profile")

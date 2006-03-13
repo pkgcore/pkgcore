@@ -15,9 +15,9 @@ const char *bmh_search(const unsigned char *pat, const unsigned char *text, int 
 {
 	int i, j, m, k, skip[MAXCHAR];
 
-	m = strlen(pat);
+	m = strlen((char *)pat);
 	if (m == 0)
-		return text;
+		return (char *)text;
 
 	for (k=0; k<MAXCHAR; ++k)
 		skip[k] = m;
@@ -28,7 +28,7 @@ const char *bmh_search(const unsigned char *pat, const unsigned char *text, int 
 		for (j=m-1, i=k; j>=0 && text[i] == pat[j]; --j)
 			--i;
 		if (j == -1)
-			return text+i+1;
+			return (char *)(text+i+1);
 	}
 
 	return NULL;

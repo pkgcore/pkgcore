@@ -1,9 +1,11 @@
 /* 
- Copyright: 2005 Gentoo Foundation
+ Copyright: 2004-2006 Brian Harring
+ Copyright: 2005 Mike Vapier
  License: GPL2
  $Id:$
 */
 
+#define _GNU_SOURCE
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <stdio.h>
@@ -34,15 +36,26 @@
 #define DOLLARED_QUOTE_PARSING   1
 #define NO_PARSING               0
 
-static inline void init_regexes(void);
-static inline void free_regexes(void);
-static int regex_matches(regex_t *re, const char *buff);
+#define DESIRED_MATCH 		-1
+#define DESIRED_NONMATCH	0
+
+static int regex_matches(regex_t *re, const char *buff, int desired_value);
 static const char *process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, regex_t *func_re, char endchar);
 static int append_to_filter_list(char ***list, int *count, int *alloced, const char *string);
 static const char *build_regex_string(const char **list, size_t count);
-static const char *walk_command(const char *p, const char *end, char endchar, const char interpret_level);
+static inline const char *walk_command_no_parsing(const char *p, const char *end, const char endchar);
+static inline const char *walk_command_dollared_parsing(const char *p, const char *end, const char endchar);
+static inline const char *walk_command_escaped_parsing(const char *p, const char *end, const char endchar);
+static inline const char *walk_command_pound(const char *p, const char endchar);
+static const char *walk_command_complex(const char *p, const char *end, char endchar, const char interpret_level);
+static inline const char *is_function(const char *p, char **start, char **end);
+static inline const char *is_envvar(const char *p, char **start, char **end);
 static void *xmalloc(size_t size);
 no_return void usage(int exit_status);
+
+/* hackity hack hack hackity hack. */
+static int desired_func_match = DESIRED_MATCH;
+static int desired_var_match = DESIRED_MATCH;
 
 
 static int debugging;
@@ -63,7 +76,7 @@ static int debugging;
 
 static void *xmalloc(size_t size) {
 	void *ret = malloc(size);
-	if (ret == NULL)
+	if (ret == NULL && size)
 		err(MEM_FAIL, "could not malloc %zi bytes\n", size);
 	return ret;
 }
@@ -72,10 +85,9 @@ static void *xmalloc(size_t size) {
 no_return void usage(int exit_status)
 {
 	fprintf((exit_status ? stderr : stdout),
-		"Usage: [-i file] [-f func1,func2,func3,...] [-v var1,var2,var3,...]\n");
+		"Usage: [-i file] [-F] [-f func1,func2,func3,...] [-V] [-v var1,var2,var3,...]\n");
 	exit(exit_status);
 }
-
 
 int main(int argc, char *const *argv)
 {
@@ -98,7 +110,7 @@ int main(int argc, char *const *argv)
 	funcs = (char **)xmalloc(sizeof(char *) * 10);
 	vars = (char **)xmalloc(sizeof(char *) * 10);
 
-	while ((c = getopt(argc, argv, "Vhi:f:v:d")) != EOF) {
+	while ((c = getopt(argc, argv, "VFhi:f:v:d")) != EOF) {
 		d2printf("c = %i\n", c);
 
 		switch(c) {
@@ -124,10 +136,14 @@ int main(int argc, char *const *argv)
 			if (append_to_filter_list(&vars, &vars_count, &vars_alloced, optarg))
 				err(USAGE_FAIL, "-v arg '%s', isn't valid.  must be comma delimited\n", optarg);
 			break;
+		case 'F':
+			desired_func_match = DESIRED_NONMATCH;
+			break;
 		case 'V':
-			printf("filter-env: compiled %s\n", __DATE__);
-			exit(EXIT_SUCCESS);
+			desired_var_match = DESIRED_NONMATCH;
+			break;
 		case 'h':
+			printf("filter-env: compiled %s\n", __DATE__);
 			usage(EXIT_SUCCESS);
 		default:
 			usage(USAGE_FAIL);
@@ -136,9 +152,12 @@ int main(int argc, char *const *argv)
 	if (optind != argc)
 		usage(USAGE_FAIL);
 
-	if (file_size == 0)
+	if (file_size == 0) {
+		/* print usage if user attempts to call filter-env from cmdline directly */         
+		if (ttyname(0) != NULL)
+			usage(EXIT_FAILURE);
 		file_in = stdin;
-	else
+	} else
 		fclose(stdin);
 	file_out = stdout;
 
@@ -201,13 +220,11 @@ int main(int argc, char *const *argv)
 	file_buff[file_size] = '\0';
 	fclose(file_in);
 
-	init_regexes();
 	end = process_scope(file_out,file_buff, file_buff + file_size,pvre, pfre, '\0');
 	d1printf("%zi == %zi\n", end - file_buff, file_size);
 
 	fflush(file_out);
 	fclose(file_out);
-	free_regexes();
 	free((void*)fsr);
 	free((void*)vsr);
 	free(file_buff);
@@ -295,29 +312,70 @@ build_regex_string(const char **list, size_t count)
 	return buff;
 }
 
-static regex_t func_r;
-static regex_t var_r;
 
-static inline void init_regexes(void)
+static const inline char *
+is_function(const char *p, char **start, char **end)
 {
-	regcomp(&func_r,"^(function[[:space:]]+|)([^\"'()=[:space:]]+)[[:space:]]*\\(\\)[[:space:]]*\\{",REG_EXTENDED);
-	regcomp(&var_r,"^([^=[:space:]$(]+)=",REG_EXTENDED);
-}
-static inline void free_regexes(void)
-{
-	regfree(&func_r);
-	regfree(&var_r);
+	#define SKIP_SPACES(p) while('\0' != *(p) && (' ' == *(p) || '\t' == *(p))) ++p;
+	#define FUNC_LEN 8
+	SKIP_SPACES(p);
+	if(strncmp(p, "function", FUNC_LEN) == 0)
+		p += FUNC_LEN;
+	while('\0' != *p && isspace(*p))
+		++p;
+	*start = (char *)p;
+	while('\0' != *p && ' ' != *p && '\t' != *p && '\n' != *p && '=' != *p && '"' != *p && '\'' != *p && '(' != *p && ')' != *p)
+		++p;
+	*end = (char *)p;
+	if(*end == *start)
+		return NULL;
+	SKIP_SPACES(p);
+	if('\0' == *p || '(' != *p)
+		return NULL;
+	++p;
+	SKIP_SPACES(p);
+	if('\0' == *p || ')' != *p)
+		return NULL;
+	++p;
+	while('\0' != *p && isspace(*p))
+		++p;
+	if('\0' == *p || '{' != *p)
+		return NULL;
+	return ++p;
 }
 
-/*
-fprintf(stderr,"REG_BADRPT:%i\nREG_BADBR:%i\nREG_EBRACE:%i\nREG_EBRACK:%i\nREG_ERANGE:%i\nREG_ECTYPE:%i\nREG_EPAREN:%i\nREG_ESUBREG:%i\nREG_EEND:%i\nREG_EESCAPE:%i\nREG_BADPAT:%i\nREG_ESIZE:%i\nREG_ESPACE:%i\n",
-REG_BADRPT,REG_BADBR,REG_EBRACE,REG_EBRACK,REG_ERANGE,REG_ECTYPE,REG_EPAREN,REG_ESUBREG,REG_EEND,REG_EESCAPE,
-REG_BADPAT,REG_ESIZE,REG_ESPACE);
-*/
+
+static inline const char *
+is_envvar(const char *p, char **start, char **end)
+{
+	SKIP_SPACES(p);
+	*start = (char *)p;
+	for(;;) {
+		switch(*p) {
+		case '\0':
+		case '"':
+		case '\'':
+		case '(':
+		case ')':
+		case '-':
+		case ' ':
+		case '\t':
+		case'\n':
+			return NULL;
+		case '=':
+			if(p == *start)
+				return NULL;
+			*end = (char *)p;
+			return ++p;
+		default:
+			++p;
+		}
+	}
+}
 
 // zero for doesn't match, !0 for matches.
 static int
-regex_matches(regex_t *re, const char *buff)
+regex_matches(regex_t *re, const char *buff, int desired_value)
 {
 	regmatch_t match[1];
 	match[0].rm_so = match[0].rm_eo = -1;
@@ -325,7 +383,7 @@ regex_matches(regex_t *re, const char *buff)
 	assert(re != NULL);
 	regexec(re, buff, 1, match, 0);
 //	fprintf(stderr,"result was %i for %s, returning %i\n", match[0].rm_so, buff,i);
-	return match[0].rm_so != -1 ? 1 : 0;
+	return match[0].rm_so != desired_value ? 1 : 0;
 }
 
 static const char *
@@ -335,14 +393,13 @@ process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, 
 	const char *window_start = NULL, *window_end = NULL;
 	const char *new_p = NULL;
 	const char *com_start = NULL;
-	const char *s = NULL, *e = NULL;
+	char *s = NULL;
+	char *e = NULL;
 	char *temp_string = NULL;
-	int x;
 
 	regmatch_t matches[3];
 	p = buff;
-	for (x=0; x < 3; ++x)
-		matches[x].rm_so = -1;
+	matches[0].rm_so = matches[1].rm_so = matches[2].rm_so = -1;
 
 	window_start = buff;
 	window_end = NULL;
@@ -369,104 +426,85 @@ process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, 
 			continue;
 		}
 
-		/* actual text */
-		regexec(&func_r, p, 3, matches, 0);
-		if (matches[0].rm_so != -1) {
-			//got us a func match.
-			if (matches[2].rm_so != -1) {
-				s = p + matches[2].rm_so;	e = p + matches[2].rm_eo;
-			} else {
-				s = p;	e = p + matches[1].rm_eo;
-			}
-			temp_string = (char*)xmalloc(e - s + 1);
-			memset(temp_string, 0, e - s + 1);
-			memcpy(temp_string, s, e - s);
+		if(NULL != (new_p = is_function(p, &s, &e))) {
+			asprintf(&temp_string, "%.*s", (int)(e - s), s);
 			d1printf("matched func name '%s'\n", temp_string);
 			/* output it if it doesn't match */
 
-			new_p = process_scope(NULL,p + matches[0].rm_eo, end, NULL, NULL, '}');
+			new_p = process_scope(NULL, new_p, end, NULL, NULL, '}');
 			d1printf("ended processing  '%s'\n", temp_string);
-			if (func_re != NULL && regex_matches(func_re, temp_string)) {
+			if (func_re != NULL && regex_matches(func_re, temp_string, desired_func_match)) {
 				/* well, it matched.  so it gets skipped. */
 				d1printf("filtering func '%s'\n", temp_string);
 				window_end = com_start;
 			}
 
 			p = new_p;
-//			p += matches[0].rm_eo;
 			free(temp_string);
-			temp_string = NULL;
-			for (x=0; x < 3; ++x)
-				matches[x].rm_so = -1;
 
+			++p;
 		} else {
 			// check for env assignment
-			regexec(&var_r, p, 2, matches, 0);
-			if (matches[0].rm_so == -1) {
+			if (NULL == (new_p = is_envvar(p, &s, &e))) {
 				//exactly as it sounds, non env assignment.
-				p = walk_command(p,end,'\0',COMMAND_PARSING);
+				p = walk_command_complex(p, end, '\0', COMMAND_PARSING);
+				++p;
 			} else {
 				//env assignment
-				temp_string = (char*)xmalloc(matches[1].rm_eo + 1);
-				memset(temp_string,0,matches[1].rm_eo + 1);
-				memcpy(temp_string,p, matches[1].rm_eo);
+				asprintf(&temp_string, "%.*s", (int)(e - s), s);
+				p = new_p;
 				d1printf("matched env assign '%s'\n", temp_string);
-				p += matches[0].rm_eo;
-				for (x=0; x < 3; ++x)
-					matches[x].rm_so = -1;
 
 				if (p >= end)
 					return p;
 
-				if ('\'' == *p)
-					p = walk_command(p + 1,end,*p,NO_PARSING);
-				else if ('"' == *p || '`' == *p)
-					p = walk_command(p + 1,end,*p,ESCAPED_PARSING);
-				else if ('(' == *p)
-					p = walk_command(p + 1,end,')',ESCAPED_PARSING);
-				else if (isspace(*p)) {
-					while (p < end && isspace(*p) && *p != '\n')
+				while(p < end && !isspace(*p) && ';' != *p) {
+					if ('\'' == *p)
+						p = walk_command_no_parsing(p + 1, end, *p);
+					else if ('"' == *p || '`' == *p)
+						p = walk_command_escaped_parsing(p + 1, end, *p);
+					else if ('(' == *p)
+						p = walk_command_escaped_parsing(p + 1, end, ')');
+					else if (isspace(*p)) {
+						while (p < end && isspace(*p) && *p != '\n')
 						++p;
-				} else if ('$' == *p) {
-					if (p + 1 >= end) {
-						++p;
-						continue;
-					}
-					if ('(' == p[1]) {
-						p = walk_command(p + 2,end, ')',ESCAPED_PARSING);
-					} else if ('\'' == p[1]) {
-						p = walk_command(p + 2,end, '\'', DOLLARED_QUOTE_PARSING);
-					} else if ('{' == p[1]) {
-						p = walk_command(p + 2,end, '}', ESCAPED_PARSING);
-					} else {
-						x = 0;
-						while (p < end && (!isspace(*p) || x)) {
-							if ('\\' == *p)
-								x = 1;
-							else
-								x = 0;
+					} else if ('$' == *p) {
+						if (p + 1 >= end) {
 							++p;
+							continue;
 						}
+						if ('(' == p[1]) {
+							p = walk_command_escaped_parsing(p + 2, end, ')');
+						} else if ('\'' == p[1]) {
+							p = walk_command_dollared_parsing(p + 2, end, '\'');
+						} else if ('{' == p[1]) {
+							p = walk_command_escaped_parsing(p + 2, end, '}');
+						} else {
+							while (p < end && !isspace(*p)) {
+								if ('\\' == *p)
+									++p;
+								++p;
+							}
+						}
+					} else {
+						// blah=cah ; single word.
+						p = walk_command_complex(p + 1, end, ' ', SPACE_PARSING);
+					}
+					if(isspace(*p)) {
+						++p;
+						break;
 					}
 					++p;
-				} else {
-					// blah=cah ; single word.
-					p = walk_command(p + 1, end, ' ', SPACE_PARSING);
 				}
-
-				if (var_re!=NULL && regex_matches(var_re, temp_string)) {
+				if (var_re && regex_matches(var_re, temp_string, desired_var_match)) {
 					//this would be filtered.
 					window_end = com_start;
 				}
 				free(temp_string);
-				temp_string = NULL;
 			}
 		}
-		++p;
-//		fprintf(stderr,"at byte %i of %i\n", p - buff, strchr(buff,'\0') - buff);
 	}
 
-//	fprintf(stderr, "returning %x\n", p);
 	if (out_fd != NULL) {
 		if (window_end == NULL)
 			window_end = p;
@@ -478,103 +516,144 @@ process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, 
 	return p;
 }
 
-// interpret level == 0, no interprettation (no escaping), 1 == normal command limiting, 2 == wait strictly for 
-// endchar
-static const char *
-walk_command(const char *p, const char *end, char endchar, const char interpret_level)
+
+static inline const char *
+walk_command_no_parsing(const char *p, const char *end, const char endchar)
 {
-	int escaped = 0;
-	int dollared = 0;
+	while (p < end) {
+		if (*p == endchar)
+			return p;
+		++p;
+	}
+	return p;
+}
+
+static inline const char *
+walk_command_dollared_parsing(const char *p, const char *end, const char endchar)
+{
+	while (p < end) {
+		if (*p == endchar) {
+			return p;
+		} else if ('\\' == *p) {
+			++p;
+		}
+		++p;
+	}
+	return p;
+}
+
+static const char *
+walk_here_command(const char *p, const char *end)
+{
+	char *end_here, *temp_string;
+	++p;
+	d2printf("starting here processing for COMMAND and l2 at p == '%.10s'\n", p);
+	if (p >= end) {
+		fprintf(stderr, "bailing\n");
+		return p;
+	}
+	if ('<' == *p) {
+		d2printf("correction, it's a third level here.  Handing back to command parsing\n");
+		return ++p;
+	}
+	while (p < end && (isspace(*p) || '-' == *p))
+		++p;
+	if ('\'' == *p || '"' == *p) {
+		end_here = (char *)walk_command_no_parsing(p + 1, end, *p);
+		++p;
+	} else {
+		end_here = (char *)walk_command_complex(p, end, ' ',SPACE_PARSING);
+	}
+	/* d1printf("end_here=%.5s\n",end_here); */
+	temp_string = xmalloc(end_here -p + 1);
+	memcpy(temp_string, p, end_here - p);
+	temp_string[end_here - p] = '\0';
+	d2printf("matched len('%zi')/'%s' for a here word\n", end_here - p, temp_string);
+	// XXX watch this.  potential for horkage.  need to do the quote removal thing.
+	//this sucks.
+
+	++end_here;
+	if (end_here >= end)
+		return end_here;
+	end_here = (char *)bmh_search((unsigned char*)temp_string, (unsigned char*)end_here, end - end_here);
+	d1printf("bmh returned %p\n", end_here);
+	if (end_here) {
+		d2printf("bmh = %.10s\n", end_here);
+		p = end_here + strlen(temp_string) -1;
+		d2printf("continuing on at %.10s\n", p);
+	} else {
+		p = end;
+	}
+	free(temp_string);
+	return p;
+}
+
+static const char *
+walk_command_pound(const char *p, const char endchar)
+{
+	while('\0' != *p) {
+		if('\n' == *p || endchar == *p)
+			break;
+		++p;
+	}
+	return p;
+}
+
+static const char *
+walk_command_complex(const char *p, const char *end, char endchar, const char interpret_level)
+{
 	int here_count = 0;
-	char *temp_string = NULL;
-	const char *end_here;
 
 	while (p < end) {
 		if (*p == endchar || 
 		    (interpret_level == COMMAND_PARSING && (';'==*p || '\n'==*p)) ||
 		    (interpret_level == SPACE_PARSING && isspace(*p))) {
-			if (!escaped)
-				return p;
-		} else if (NO_PARSING==interpret_level) {
+			return p;
+		} else if ('\\' == *p) {
 			++p;
-			continue;
-		} else if ('\\' == *p && !escaped) {
-			escaped = 1;
-			++p;
-			continue;
-		} else if (escaped) {
-			escaped = 0;
-		} else if (DOLLARED_QUOTE_PARSING == interpret_level) {
-			++p;
-			continue;
 		} else if ('<' == *p) {
 			++here_count;
 			if (2 == here_count && interpret_level == COMMAND_PARSING) {
-				++p;
-				d2printf("starting here processing for COMMAND and l2 at p == '%.10s'\n", p);
-				if (p >= end) {
-					fprintf(stderr, "bailing\n");
-					return p;
-				}
-				if ('<' == *p) {
-					d2printf("correction, it's a third level here.  Handing back to command parsing\n");
-					return ++p;
-				}
-				while (p < end && (isspace(*p) || '-' == *p))
-					++p;
-				if ('\'' == *p || '"' == *p) {
-					end_here = walk_command(p + 1,end,*p,NO_PARSING);
-					++p;
-				} else {
-					end_here = walk_command(p,end,' ',SPACE_PARSING);
-				}
-				/* d1printf("end_here=%.5s\n",end_here); */
-				temp_string = xmalloc(end_here -p + 1);
-				memcpy(temp_string, p, end_here - p);
-				temp_string[end_here - p] = '\0';
-				d2printf("matched len('%zi')/'%s' for a here word\n", end_here - p, temp_string);
-				// XXX watch this.  potential for horkage.  need to do the quote removal thing.
-				//this sucks.
-
-				++end_here;
-				if (end_here >= end)
-					return end_here;
-				end_here = bmh_search(temp_string, end_here, end - end_here);
-				d1printf("bmh returned %p\n", end_here);
-				if (end_here) {
-					d2printf("bmh = %.10s\n", end_here);
-					p = end_here + strlen(temp_string) -1;
-					d2printf("continuing on at %.10s\n", p);
-				} else {
-					p = end;
-				}
-				free(temp_string);
+				p = walk_here_command(p, end);
 				here_count = 0;
 			} else {
 				d2printf("noticed '<', interpret_level=%i\n", interpret_level);
-				++p;
-				continue;
 			}
-		} else if ('$' == *p && !dollared && !escaped) {
-			dollared = 1;
-			++p;
+		} else if ('#' == *p) {
+			p = walk_command_pound(p, endchar);
 			continue;
 		} else if ('{' == *p) {
 			//process_scope.  this gets fun.
-//			fprintf(stderr,"process_scope called for %.10s\n", p - 10);
-//			p = process_scope(NULL,p+1,end,NULL,NULL,'}');
-			p = walk_command(p+1,end, '}', ESCAPED_PARSING);
-			// kind of a hack.
+			p = walk_command_escaped_parsing(p+1, end, '}');
 		} else if ('(' == *p && interpret_level == COMMAND_PARSING) {
-			p = walk_command(p + 1, end, ')',ESCAPED_PARSING);
+			p = walk_command_escaped_parsing(p + 1, end, ')');
 		} else if ('`' == *p || '"' == *p) {
-			p = walk_command(p + 1, end, *p, ESCAPED_PARSING);
+			p = walk_command_escaped_parsing(p + 1, end, *p);
 		} else if ('\'' == *p && '"' != endchar) {
-			p = walk_command(p + 1, end, '\'', NO_PARSING);
+			p = walk_command_no_parsing(p + 1, end, '\'');
 		}
 		++p;
-		escaped = 0;
-		dollared = 0;
 	}
 	return p;
 }
+
+static const char *
+walk_command_escaped_parsing(const char *p, const char *end, char endchar)
+{	while (p < end) {
+		if (*p == endchar) {
+			return p;
+		} else if ('\\' == *p) {
+			++p;
+		} else if ('{' == *p) {
+			//process_scope.  this gets fun.
+			p = walk_command_escaped_parsing(p + 1, end, '}');
+		} else if ('`' == *p || '"' == *p) {
+			p = walk_command_escaped_parsing(p + 1, end, *p);
+		} else if ('\'' == *p && '"' != endchar) {
+			p = walk_command_no_parsing(p + 1, end, '\'');
+		}
+		++p;
+	}
+	return p;
+}
+

@@ -420,9 +420,7 @@ process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, 
 
 		/* ignore comments */
 		if (*p == '#') {
-			while (p < end && *p != '\n')
-				++p;
-			/*window_end = p;*/
+			p = walk_command_pound(p, endchar);
 			continue;
 		}
 
@@ -447,7 +445,7 @@ process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, 
 			// check for env assignment
 			if (NULL == (new_p = is_envvar(p, &s, &e))) {
 				//exactly as it sounds, non env assignment.
-				p = walk_command_complex(p, end, '\0', COMMAND_PARSING);
+				p = walk_command_complex(p, end, endchar, COMMAND_PARSING);
 				++p;
 			} else {
 				//env assignment
@@ -603,7 +601,7 @@ static const char *
 walk_command_complex(const char *p, const char *end, char endchar, const char interpret_level)
 {
 	int here_count = 0;
-
+	const char *start = p;
 	while (p < end) {
 		if (*p == endchar || 
 		    (interpret_level == COMMAND_PARSING && (';'==*p || '\n'==*p)) ||
@@ -620,11 +618,15 @@ walk_command_complex(const char *p, const char *end, char endchar, const char in
 				d2printf("noticed '<', interpret_level=%i\n", interpret_level);
 			}
 		} else if ('#' == *p) {
-			p = walk_command_pound(p, endchar);
+			/* echo x#y == x#y, echo x;#a == x */
+			if (start == p || isspace(p[-1]) || p[-1] == ';')
+				p = walk_command_pound(p, endchar);
+			else
+				++p;
 			continue;
 		} else if ('{' == *p) {
 			//process_scope.  this gets fun.
-			p = walk_command_escaped_parsing(p+1, end, '}');
+			p = walk_command_escaped_parsing(p + 1, end, '}');
 		} else if ('(' == *p && interpret_level == COMMAND_PARSING) {
 			p = walk_command_escaped_parsing(p + 1, end, ')');
 		} else if ('`' == *p || '"' == *p) {

@@ -46,7 +46,7 @@ static const char *build_regex_string(const char **list, size_t count);
 static inline const char *walk_command_no_parsing(const char *p, const char *end, const char endchar);
 static inline const char *walk_command_dollared_parsing(const char *p, const char *end, const char endchar);
 static inline const char *walk_command_escaped_parsing(const char *p, const char *end, const char endchar);
-static inline const char *walk_command_pound(const char *p, const char endchar);
+static inline const char *walk_command_pound(const char *p);
 static const char *walk_command_complex(const char *p, const char *end, char endchar, const char interpret_level);
 static inline const char *is_function(const char *p, char **start, char **end);
 static inline const char *is_envvar(const char *p, char **start, char **end);
@@ -420,7 +420,7 @@ process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, 
 
 		/* ignore comments */
 		if (*p == '#') {
-			p = walk_command_pound(p, '}' == endchar ? '\0' : endchar);
+			p = walk_command_pound(p);
 			continue;
 		}
 
@@ -587,11 +587,11 @@ walk_here_command(const char *p, const char *end)
 }
 
 static const char *
-walk_command_pound(const char *p, const char endchar)
+walk_command_pound(const char *p)
 {
 	while('\0' != *p) {
-		if('\n' == *p || endchar == *p)
-			break;
+		if('\n' == *p)
+			return p;
 		++p;
 	}
 	return p;
@@ -620,7 +620,7 @@ walk_command_complex(const char *p, const char *end, char endchar, const char in
 		} else if ('#' == *p) {
 			/* echo x#y == x#y, echo x;#a == x */
 			if (start == p || isspace(p[-1]) || p[-1] == ';')
-				p = walk_command_pound(p, endchar == '}' ? '\0' : endchar);
+				p = walk_command_pound(p);
 			else
 				++p;
 			continue;

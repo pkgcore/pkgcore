@@ -420,7 +420,7 @@ process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, 
 
 		/* ignore comments */
 		if (*p == '#') {
-			p = walk_command_pound(p, endchar);
+			p = walk_command_pound(p, '}' == endchar ? '\0' : endchar);
 			continue;
 		}
 
@@ -620,7 +620,7 @@ walk_command_complex(const char *p, const char *end, char endchar, const char in
 		} else if ('#' == *p) {
 			/* echo x#y == x#y, echo x;#a == x */
 			if (start == p || isspace(p[-1]) || p[-1] == ';')
-				p = walk_command_pound(p, endchar);
+				p = walk_command_pound(p, endchar == '}' ? '\0' : endchar);
 			else
 				++p;
 			continue;

@@ -22,14 +22,14 @@ these settings all default to PORTAGE_BASE_PATH ; if you define it in portage_cu
 if no portage_custom_path, then it defaults to "/home/bharring/new/" which probably isn't what you want.
 
 an example portage_custom_path.py is available at
-http://dev.gentoo.org/~ferringb/portage_custom_path.py
+http://gentooexperimental.org/~ferringb/portage_custom_path.py
 
 So, where to place this file?  /usr/lib/portage/pym, or /usr/lib/python2.*/site-packages/ would suffice.
 
 Wherever your conf is assigned to, you need to have a configuration defined.
 Harring's configuration is available via
 
-http://dev.gentoo.org/~ferringb/config
+http://gentooexperimental/~ferringb/config
 
 It's recommended you start with it as the base, and customize it.
 

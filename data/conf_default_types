@@ -25,7 +25,7 @@
 # custom instantiation func prototype (the actual instantiation handler):
 # def handler(config, callable, section_label, section_config)
 # 
-# config == portage.config.central.config instance, 
+# config == pkgcore.config.central.config instance, 
 # callable == class definition for that section, 
 # section_label == section's label/name (hard one I know).
 # section_config == collapsed section's config as a dict.
@@ -83,7 +83,7 @@ list = %(default_incrementals)s profile_incrementals package.keywords package.us
 defaults = class profile_incrementals 
 incrementals = %(default_incrementals)s
 profile_incrementals = %(default_incrementals)s
-class = portage.ebuild.profiles.OnDiskProfile
+class = pkgcore.ebuild.profiles.OnDiskProfile
 required = class profile_incrementals base_repo profile
 section_ref = base_repo
 positional = base_repo profile profile_incrementals
@@ -91,7 +91,7 @@ str = profile
 
 
 [domain]
-#instantiate = portage.config.parser.domain
+#instantiate = pkgcore.config.parser.domain
 required = repositories profile root class domain_incrementals ACCEPT_LICENSE vdb fetcher
 section_ref = profile fetcher
 section_refs = repositories vdb
@@ -102,7 +102,7 @@ bool = default
 incrementals = %(default_incrementals)s
 domain_incrementals = %(default_incrementals)s
 defaults = class root domain_incrementals ACCEPT_LICENSE PORTAGE_TMPDIR PATH DISTCC_PATH DISTCC_DIR CCACHE_PATH CCACHE_DIR
-class =  portage.config.domain.domain
+class =  pkgcore.config.domain.domain
 root = /
 ACCEPT_LICENSE = 
 PORTAGE_TMPDIR = "/var/tmp/"
@@ -118,7 +118,7 @@ positional = domain_incrementals root profile repositories vdb
 [repo]
 required = class location
 defaults = class
-class = portage.ebuild.repository
+class = pkgcore.ebuild.repository
 section_ref = cache sync sync_cache fetcher
 str = location
 
@@ -126,7 +126,7 @@ str = location
 [cache]
 required = class location label auxdbkeys
 defaults = class auxdbkeys location readonly
-class = portage.cache.flat_list.database
+class = pkgcore.cache.flat_list.database
 auxdbkeys = %(metadata_keys)s
 location = %(cache_base_loc)s
 readonly = false
@@ -139,7 +139,7 @@ bool = readonly
 [sync]
 required = class url
 defaults = class
-class = portage.sync.rsync
+class = pkgcore.sync.rsync
 
 
 [fetcher]
@@ -149,7 +149,7 @@ list = required_chksums
 defaults = class command userpriv required_chksums
 positional = distdir command required_chksums
 str = distdir command
-class = portage.fetch.custom.fetcher
+class = pkgcore.fetch.custom.fetcher
 command = "/usr/bin/wget -c -t 5 --passive-ftp -P '${DISTDIR}' '${URI}'"
 required_chksums = all
 userpriv = true

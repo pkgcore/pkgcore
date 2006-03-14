@@ -83,7 +83,7 @@ exempted if you _know_ the code doesn't mangle the default.
 ---------------------------
 Visible curried functions should have documentation.
 
-When using the currying methods (portage.util.currying) for function mangling, preserve the 
+When using the currying methods (pkgcore.util.currying) for function mangling, preserve the 
 documentation via pretty_docs.
 
 If this is exempted, pydoc output for objects isn't incredibly useful.

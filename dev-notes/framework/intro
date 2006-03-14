@@ -48,11 +48,11 @@ set         = list without order (think dict.keys())
 [General design/idea/approach]
 So... this round of "lets take another stab at gutting portage" seems to be 
 proceeding, and not killed off by design flaws *again* (famous last words I 
-assure you), but general jist.  All pythonic components installed by portage 
-*must* be within portage.* namespace.
+assure you), but general jist.  All pythonic components installed by pkgcore 
+*must* be within pkgcore.* namespace.
 
 No more polluting python's namespace, plain and simple.  Third party plugins 
-to portage aren't bound by this however (their mess, not ours).
+to pkgcore aren't bound by this however (their mess, not ours).
 
 API flows from the config definitions, *everything* internal is effectively 
 the same.  Basically, config crap gives you your starter objects which from 
@@ -89,7 +89,7 @@ configurable via section definitions too).
 Final comment re: design goals, defining chunks of callable code and plugging 
 it into the framework is another bit of a goal.  Think twisted, just not 
 quite as prevalent (their needs/focus is much different from ours, twisted is 
-the app, your code is the lib, vice versa for portage).
+the app, your code is the lib, vice versa for pkgcore).
 
 Back to config.  Here's general notion of config 'chunks' of the subsystem, 
 (these map out to run time objects unless otherwise stated)
@@ -134,12 +134,12 @@ trickery.  In other words, the magic is hidden away, just define remote
 classes that match defined class rules (preferably inheriting from the base 
 class, since isinstance sanity checks will become the norm), and you could do 
 emerge --domain some-remote-domain -u glsa on the master box.  Emerge won't 
-know it's doing remote crap.  Portagelib won't even.  It'll just load what 
+know it's doing remote crap.  Pkgcore won't even.  It'll just load what 
 you define in the config.
 
 Ambitious?  Yeah, a bit.  Thing to note, the remote class additions will 
-exist outside of portage proper most likely.  Develop the code needed in 
-parallel to fleshing portage proper out.
+exist outside of pkgcore proper most likely.  Develop the code needed in 
+parallel to fleshing pkgcore proper out.
 
 Meanwhile, the remote bit + multiple domains + class overrides in config 
 definition is _explicitly_ for the reasons above.  That and 
@@ -193,9 +193,9 @@ namely package abstraction, and abstraction of building/merging operations.
 On disk configurations for alternatives formats is extensible via changing 
 section types, and plugging them into the domain definition.
 
-Note alt. formats quite likely will never be implemented in portage proper, 
-that's kind of the domain of portage addons.  In other words, 
-dpkg/rpm/whatever quite likely won't be worked on by portage developers, at 
+Note alt. formats quite likely will never be implemented in pkgcore proper, 
+that's kind of the domain of pkgcore addons.  In other words, 
+dpkg/rpm/whatever quite likely won't be worked on by pkgcore developers, at 
 least not in the near future (too many other things to do).
 
 The intention is to generalize the framework so it's possible for others to 
@@ -209,8 +209,8 @@ from a proper abstracted design, and flexibility/power is gained).
 
 
 [config's actions/operation]
-portage.config.load_config() is the entrance point, returns to you a config 
-object (portage.config.central).  This object gives you access to the user 
+pkgcore.config.load_config() is the entrance point, returns to you a config 
+object (pkgcore.config.central).  This object gives you access to the user 
 defined configs, although only interest/poking at it should be to get a 
 domain object from it.
 
@@ -244,7 +244,7 @@ IOW, it's normally a sequence, but the class doesn't implicitly force it
 :LazyValDict:
 similar to ixseq, late loading of keys, on fly pulling of values as requested.
 
-:global config object (from portage.config.load_config()):
+:global config object (from pkgcore.config.load_config()):
 #simple bugger.
 .get_types()			# get the section types.
 .get_object()			# return instantiated section
@@ -252,7 +252,7 @@ similar to ixseq, late loading of keys, on fly pulling of values as requested.
 # and, just to make it damn fun, you can also access types via (fex, domain being a type)
 .domains					# IndexableSequence, iterating == section labels, index == instantiate and return that section type
 
-convenience function in portage.config.* (somewhere)
+convenience function in pkgcore.config.* (somewhere)
 default_domain(config_obj)
 returns instantiated domain object of the default domain from config_obj.
 Nothing incredibly fancy, finds default domain via config._cparser.defaults().get("domain"), or 
@@ -268,7 +268,7 @@ domain = some-section-label
 # any package.{mask,unmask,keywords} mangling is instantiated as a wrapper around repository instances upon domain instantiation.
 # code _should_ be smart and lift any package.{mask,unmask,keywords} wrappers from repositoriy instances and collapse it, pointing
 # at the raw repo (basically don't have N wrappers, collapse it into a single wrapper).  Not worth implementing until the wrapper is 
-# a faster implementation then the current portage.repository.visibility hack though (currently O(N) for each pkg instance, N being 
+# a faster implementation then the current pkgcore.repository.visibility hack though (currently O(N) for each pkg instance, N being 
 # visibility restrictions/atoms).  Once it's O(1), collapsing makes a bit more sense (can be done in parallel however).
 # a word on inter repository dependencies... simply put, if the repository only allows satisfying deps from the same repository,
 # the package instance's *DEPEND atom conversions should include that restriction.  Same trickery for keeping ebuilds from depping on 
@@ -357,7 +357,7 @@ verify()		# handed a fetchable, either False or True
 				# dependant on that package (ui app's choice really).
 .raw_repo	# either it weakref's self, or non-weakref refs another repo.  why is this useful?  visibility wrappers...
 				# this gives ya a way to see if p.mask is blocking usable packages fex.  useful for the UI, not too much for
-				# portagelib innards.
+				# pkgcore innards.
 .frozen		# boolean.  basically, does it account for things changing without it's knowledge, or does it not.  frozen=True is faster
 				# for ebuild trees for example, single check for cache staleness.  frozen=False is slower, and is what portage does now 
 				# (meaning every lookup of a package, and instantiation of a package instance requires mtime checks for staleness)
@@ -377,7 +377,7 @@ note you can group repositories together, think portdir + portdir_overlay1 + por
 Creation of a repositoryset basically would involve passing multiple instantiating repo's, and depending on that classes semantics, 
 it internally handles the stacking (right most positional arg repo overrides 2nd right most, ... overriding left most)
 So... stating it again/clearly if it ain't obvious, everything is configuration/instantiating of objects, chucked around/mangled by the 
-portagelib framework.
+pkgcore framework.
 
 What _isn't_ obvious is that since a repository set gets handed instantiated repositories, each repo, _including_ the set instance, can 
 should eb able to have it's own cache (this is assuming it's ebuild repos through and through).  Why?

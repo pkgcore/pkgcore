@@ -4,20 +4,20 @@
 # License: GPL2
 # $Id:$
 
-import portage.plugins
-from portage.util.modules import load_attribute
+import pkgcore.plugins
+from pkgcore.util.modules import load_attribute
 import sys
 
 def set(ptype, magic, version, namespace):
 	load_attribute(namespace)
 	# loaded.
-	portage.plugins.register(ptype, magic, version, namespace, replace=True)
+	pkgcore.plugins.register(ptype, magic, version, namespace, replace=True)
 
 def cleanse(ptype, magic, version):
-	portage.plugins.deregister(ptype, magic, version)
+	pkgcore.plugins.deregister(ptype, magic, version)
 	
 def get_list(ptype=None):
-	return portage.plugins.query_plugins(ptype)
+	return pkgcore.plugins.query_plugins(ptype)
 
 if __name__ == "__main__":
 	args = sys.argv[1:]

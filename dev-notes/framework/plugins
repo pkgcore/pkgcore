@@ -5,7 +5,7 @@ was collecting his thoughts ;)
 
 plugins_dir = /var/lib/portage/plugins , tentatively.
 
-installation of a plugin that wants/needs to make it's capabilities known globally, must call portage.plugins.register
+installation of a plugin that wants/needs to make it's capabilities known globally, must call pkgcore.plugins.register
 prototype of register is
 
 def register(plugin_type, magic, version, namespace, replace=False)

@@ -5,9 +5,9 @@
 # $Id:$
 
 if __name__ == "__main__":
-	import sys, portage.config
-	from portage.package.atom import atom
-	from portage.restrictions import packages, values, boolean
+	import sys, pkgcore.config
+	from pkgcore.package.atom import atom
+	from pkgcore.restrictions import packages, values, boolean
 	a = sys.argv[1:]
 	if "--raw" in a:
 		raw = True
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 	if len(a) == 0:
 		print "supported args: [--raw] [--atomstr] atom [ --attr attr ]"
 		sys.exit(1)
-	conf = portage.config.load_config()
+	conf = pkgcore.config.load_config()
 	if len(conf.domain) != 1:
 		print "sorry, I don't know about domains aside from using the only one I find"
 		sys.exit(2)

@@ -1,6 +1,6 @@
 Yet Another Harring Random Notes File (henceforth known as YAHRF)
 
-portage.ebuild.ebuild_repository is unconfigured packages, with the reasoning that as a repo, it's not supposed to know 
+pkgcore.ebuild.ebuild_repository is unconfigured packages, with the reasoning that as a repo, it's not supposed to know 
 about config crap (encapsulation); you wrap it with a configurator, which wraps the base package with configuration data, 
 generated a flattened *depends, src_uri, license, keywords, etc.
 

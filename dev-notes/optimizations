@@ -10,5 +10,5 @@ python -m timeit -s 'x="/usr/lib/portage/bin/dar";from os.path import sep;normpa
 
 * os.path.join is a bit slow also, mainly the '/' testing.
 
-Point the two above into portage.util.fs.$FUNC , if/when underlying python is faster, just drop the func and leave the indirection in.
+Point the two above into pkgcore.util.fs.$FUNC , if/when underlying python is faster, just drop the func and leave the indirection in.
 

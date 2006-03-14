@@ -3,12 +3,12 @@
 import sys
 sys.path.insert(0, ".")
 
-import portage.config
-c = portage.config.load_config()
+import pkgcore.config
+c = pkgcore.config.load_config()
 d = c.domain["livefs domain"]
 
-import portage.graph.state_graph
-graph = portage.graph.state_graph.StateGraph()
+import pkgcore.graph.state_graph
+graph = pkgcore.graph.state_graph.StateGraph()
 
 print "\n\n===ADDING TO GRAPH===\n"
 

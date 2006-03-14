@@ -14,7 +14,7 @@ repository for example,
 
 [rsync repo]
 type = repo
-class = portage.ebuild.repository
+class = pkgcore.ebuild.repository
 location = /usr/portage
 
 each section is capable of specifying inherit targets.  inherit's specify the base section to pull in, and override.
@@ -24,7 +24,7 @@ few words on each section (note the type of the section is declared explicitly, 
 used by inherit's)
 
 [repo]
-	class defaults to portage.ebuild.repository
+	class defaults to pkgcore.ebuild.repository
 	REPO_LABEL is automatically defined for all cache instances.
 	frozen is a boolean, specifies if cache staleness is corrected, or errored out.
 	can (and is advisable for rsync) specify a sync_cache.
@@ -86,7 +86,7 @@ raw repo.  All package.* are effectively location types, meaning they're (curren
 That assumption may change however.
 
 remaining options after any mangling above are handed to the class type specified for a section.
-so portage.ebuild.repository.__init__ will get basedir="/usr/portage" for a dict arg. (Example above)
+so pkgcore.ebuild.repository.__init__ will get basedir="/usr/portage" for a dict arg. (Example above)
 
 
 allowed_merges file

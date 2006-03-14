@@ -6,24 +6,24 @@ flesh out (need to get a solid kernel/core)
 
 
 **important**
-portage.package.cpv.ver_cmp fails on this;
+pkgcore.package.cpv.ver_cmp fails on this;
 dev-lang/icc-7.1.029 > dev-lang/icc-7.1.006 # thinks .006 is gt .029
 
 fetchables aren't implemented.
 hack in place but it should be done properly.
-portage.ebuild.package will need modification as will portage.ebuild.buildable once fetchable is in.
+pkgcore.ebuild.package will need modification as will pkgcore.ebuild.buildable once fetchable is in.
 
 
 [namespace fixes required, plus potentially a bit of rewrite]
-:portage.sync:
-:portage.transports:
+:pkgcore.sync:
+:pkgcore.transports:
 transports needs to be unified behind fetcher design.
 need a fetchable class also.
 
 
 [sort of started, some code avail. at least.]
 
-:portage.vdb.*:
+:pkgcore.vdb.*:
 Initial code for at least querying the repo is implemented, but nothing further.  Need a package type created for it.
 Where it gets a bit hairy (and consult jason/harring if you want to try this portion) is that it is a *modifiable* repo,
 packages *do* get added to it.  as such, it will need to generate a mergeoperation, something not defined.
@@ -32,26 +32,26 @@ Should be designed such that the underlying disk layout is easily changable, sin
 added (thus removing the reliance on mtime + md5 for discerning whether to remove a file).
 
 
-:portage.binpkg:
-bind it to portage.ebuild where ever possible; akin to portage.vdb.*, initial code was scratched out, but no package 
+:pkgcore.binpkg:
+bind it to pkgcore.ebuild where ever possible; akin to pkgcore.vdb.*, initial code was scratched out, but no package 
 instance defined for it; which would be wise/useful.
 Keep an eye on the design of it so that remote binpkg (BINHOST) can be easily derived from it.
 
 
 [not started]
 
-:portage.config.domain:
+:pkgcore.config.domain:
 consult intro doc if you attempt it, and collect feedback from jason/brian regarding it please
 harring will want it one way which probably slightly conflicts with what jason wants (and vice versa),
 so be aware it's probably going to be a shifting class definition.
 still need a prototype though.
 
 
-:portage.*.fetchable:
+:pkgcore.*.fetchable:
 find a place for this.  simple one however, see intro doc.
 
 
-:portage.*.(merge|build)operation:
+:pkgcore.*.(merge|build)operation:
 no base class defined yet, see intro.
 Not so simple. :)
 

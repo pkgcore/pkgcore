@@ -4,7 +4,7 @@
 # License: GPL2
 # $Id: clone_cache.py 1940 2005-08-26 22:23:34Z ferringb $
 
-import portage.config, sys, time
+import pkgcore.config, sys, time
 
 if __name__ == "__main__":
 	verbose = 0
@@ -12,7 +12,7 @@ if __name__ == "__main__":
 		print "I need 2 args, cache label to read from, cache label to write to, with -v optional for verbose"
 	elif len(sys.argv) == 4:
 		verbose = 1
-	c=portage.config.load_config()
+	c=pkgcore.config.load_config()
 	try:	cache1 = c.cache[sys.argv[1]]
 	except KeyError:
 		print "read cache label '%s' isn't defined." % sys.argv[1]

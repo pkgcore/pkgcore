@@ -4,5 +4,5 @@ currently it's effectively for the filter-
 not ( licenses in $ACCEPT_LICENSES || licenses in package.license )
 to support negation, needs to be
 not ( licenses in package.license || ( licenses in $ACCEPT_LICENSES && not licenses in (filtered) package.license ) )
-so... anyone after getting it added (I'll do it when I get around to it), poke in portage.config.domain.domain
+so... anyone after getting it added (I'll do it when I get around to it), poke in pkgcore.config.domain.domain
 

@@ -4,13 +4,13 @@ general protocol is simple,
 
 def match(self, pkginst) 
 
-is all that's expected.  pkginst being an instance like portage.ebuild.ebuild_package.
+is all that's expected.  pkginst being an instance like pkgcore.ebuild.ebuild_package.
 all base restrictions chunks should support the negate option, usually via something akin to this in match
 return boolean-value-for-this-match ^ self.negate
 
-Individual restrictions are built up via portage.restrictions.restriction .  Str matches, package data matches, etc,
+Individual restrictions are built up via pkgcore.restrictions.restriction .  Str matches, package data matches, etc,
 are covered by that module.  More likely then not, people will need to be able to bind restrictions together via boolean ops;
-these 'sets' of restrictions (they're technically sequences) are in portage.restrictions.restrictionSet.
+these 'sets' of restrictions (they're technically sequences) are in pkgcore.restrictions.restrictionSet.
 
 AndRestrictionSet # boolean and
 OrRestrictionSet	# boolean or

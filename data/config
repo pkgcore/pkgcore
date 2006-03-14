@@ -1,18 +1,18 @@
 [/usr/portage]
 type = cache
-class = portage.cache.metadata.database
+class = pkgcore.cache.metadata.database
 readonly = true
 location = /usr/portage
 
 [rsync repo]
 type = repo 
-class = portage.ebuild.repository
+class = pkgcore.ebuild.repository
 location = /usr/portage
 cache = '/usr/portage'
 
 [vdb]
 type = repo
-class = portage.vdb.repository
+class = pkgcore.vdb.repository
 location = /var/db/pkg
 
 [fetcher]

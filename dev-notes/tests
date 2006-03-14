@@ -1,8 +1,8 @@
 We use twisted.trial for our tests;
 
 to run the test framework,
-trial portage
+trial pkgcore
 
-Writing your own tests, must be stored in portage.test - further, test must pass when ran repeatedly (-u option).
+Writing your own tests, must be stored in pkgcore.test - further, test must pass when ran repeatedly (-u option).
 You'll want twisted 2.2 for that, <2.2 has a few false positives. :)
 

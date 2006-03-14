@@ -13,7 +13,7 @@ into a dict, if matched, run the restrictions returned, or return the negation v
 This would knock it down to a dict lookup, then execution of returned remaining restrictions worst case, dict lookup best case.
 Bit faster.
 
-:portage.cache.multiplex:
+:pkgcore.cache.multiplex:
 a master/slave cache implementation.  handed master cache (positionally), and secondary caches, this implementation would 
 do lookups in master normally, and multiplex the updates/deletetions across all caches handed in.
 Sounds odd I realize, but this would be useful so that the master cache generation for rsync could have it's updates slaved 
@@ -25,7 +25,7 @@ just as it sounds.  profile the whole sucker, and point out areas of where impro
 advantageous.  This will be ongoing, initially probably pretty easy, getting harder as low franging fruit picked off.
 Why do this? Well, if you think portage is slow, this is how you can help us speed the sucker up.
 
-:portage.config.central features: ***
+:pkgcore.config.central features: ***
 These may or may not be picked off as development continues; the main requirement for this functionality is 
 plugins, which the framework intends... so... prior to a release, it will be added.
 1) needs introspection capabilities, looking at a callable to pull further required/section_ref/etc opts out of it.
@@ -38,27 +38,27 @@ plugins, which the framework intends... so... prior to a release, it will be add
    This *is* the hook for having configs stored on a central server, and it's nifty ;)
 5) integration of make.globals type data; defaults effectively, but a bit more complex.
 
-:portage.ebuild.gpgtree: ****
-derivative of portage.ebuild.ebuild_repository, this overloads ebuild_factory and eclass_cache so that gpg checks are done.
+:pkgcore.ebuild.gpgtree: ****
+derivative of pkgcore.ebuild.ebuild_repository, this overloads ebuild_factory and eclass_cache so that gpg checks are done.
 This requires some hackery, partially dependant on config.central changes (see above).
 Need a way to specify the trust ring to use, 'severity' level (different class targets works for me).
 Anyone who implements this deserves massive cookies.
 
-:portage.ebuild.gpgprofile: ****
+:pkgcore.ebuild.gpgprofile: ****
 Same as above.  Likely need a way to bind the trustring between these too, *or* the gpgprofile lifts it somehow from the gpgtree.
 Anyone who implements this deserves massive cookies.
 
-:portage.config.domain:
+:pkgcore.config.domain:
 Redesign, seperation of it into ebuild specific chunk (domain class), and generic abstraction layer.
 cleanup needed already, imo :/
 
-:portage.fetch.bundled_lib:
+:pkgcore.fetch.bundled_lib:
 clean this beast up.
 
 :IPV6 handling:
 bug 37124 # syncing
 check over BINHOST code replacement for any code that resolve to a specific IP
 
-:move portage uid/gid checks out of ebuild.sh, and into python side:
+:move pkgcore uid/gid checks out of ebuild.sh, and into python side:
 
 :locking unification.  see plugins for an example of why it's needed

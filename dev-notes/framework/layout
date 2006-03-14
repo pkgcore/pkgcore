@@ -14,7 +14,7 @@ specification of subsystems/relevant classes.
 this isn't a concrete "it must be this way", this is a guideline of the various subsystems/import classes, 
 and how they interact.
 
-The intention being that you can read this, see the important aspects of portage at a single glass,
+The intention being that you can read this, see the important aspects of pkgcore at a single glass,
 and be aware of where/which subsystems touch up, and how things fit together
 
 sync subsystem/class:

@@ -1,0 +1,95 @@
+# Copyright: 2005 Brian Harring <ferringb@gmail.com>
+# License: GPL2
+
+from pkgcore.ebuild import ebuild_src
+from pkgcore.util.mappings import ImmutableDict, IndeterminantDict
+from pkgcore.package import metadata, base
+from pkgcore.interfaces.data_source import local_source
+from pkgcore.fs import scan
+from pkgcore.util.currying import post_curry
+import ebd
+
+def passthrough(inst, attr, rename=None):
+	if rename is None:
+		rename = attr
+	return inst.data[rename]
+
+def forced_evaluate(inst, obj):
+	return obj.evaluate_depset(inst.use)
+
+class package(ebuild_src.package):
+	immutable = True
+	tracked_attributes = ebuild_src.package.tracked_attributes[:]
+	tracked_attributes.extend(["contents", "use", "environment"])
+	allow_regen = False
+	
+	_convert_data = dict(ebuild_src.package._convert_data)
+
+	for x in ("_mtime_", "fetchables"):
+		del _convert_data[x]
+	del x
+
+	_convert_data.update((x,post_curry(passthrough, x)) for x in ("contents", "environment"))
+	_convert_data["use"] = post_curry(passthrough, "use", "USE")
+	
+	def _update_metadata(self, pkg):
+		raise NotImplementedError()
+
+	def _repo_install_op(self, features=None):
+		return ebd.install_op(self, env_data_source=self.environment, features=features)
+
+	def _repo_uninstall_op(self, features=None):
+		return ebd.uninstall_op(self, env_data_source=self.environment, features=features)
+
+class package_factory(metadata.factory):
+	child_class = package
+
+	def _get_metadata(self, pkg):
+		return self._parent_repo._get_metadata(pkg)
+
+	def _get_new_child_data(self, cpv):
+		return ([self._parent_repo._get_ebuild_path], {})
+
+
+class fake_package_factory(package_factory):
+	"""a fake package_factory, so that we can reuse the normal get_metadata hooks; a factory is generated per
+	package instance, rather then one factory, N packages.
+	
+	Do not use this unless you know it's what your after; this is strictly for transitioning a built ebuild 
+	(still in the builddir) over to an actual repo.  It literally is a mapping of original package data
+	to the new generated instances data store.
+	"""
+	
+	def __init__(self, child_class):
+		self.child_class = child_class
+
+	def __del__(self):
+		pass
+	
+	_forced_copy = ebuild_src.package.tracked_attributes
+	
+	def new_package(self, pkg, image_root, environment_path):
+		self.pkg = pkg
+		self.image_root = image_root
+		self.environment_path = environment_path
+		# lambda redirects path to environment path
+		obj = self.child_class(pkg.cpvstr, self, lambda *x:self.environment_path)
+		for x in self._forced_copy:
+			# bypass setattr restrictions.
+			obj.__dict__[x] = getattr(self.pkg, x)
+		obj.__dict__["use"] = self.pkg.use
+		return obj
+
+	def _get_metadata(self, pkg):
+		return IndeterminantDict(self.__pull_metadata)
+
+	def __pull_metadata(self, key):
+		if key == "contents":
+			return scan(self.image_root, offset=self.image_root)
+		elif key == "environment":
+			return local_source(self.environment_path)
+		else:
+			return getattr(self.pkg, key)
+
+def generate_new_factory(*a, **kw):
+	return package_factory(*a, **kw).new_package

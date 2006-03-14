@@ -1,0 +1,3 @@
+fixpackages (global updates; integrate as repo specific maintanance)
+envupdate (same thing, although questionable if it should exist)
+quickpkg (integrate via repo install ops)

@@ -172,7 +172,14 @@ class domain:
 		bashrc = profile.bashrc[:]
 
 		if "bashrc" in self.settings:
-			bashrc.extend([local_source(x) for x in self.settings["bashrc"]])
+			for input in self.settings['bashrc']:
+				source = local_source(input)
+				# this is currently local-only so a get_path check is ok
+				# TODO make this more general
+				if source.get_path() is None:
+					raise Failure(
+						'user-specified bashrc %r does not exist' %	input)
+				bashrc.append(source)
 
 		self.settings["bashrc"] = bashrc
 		

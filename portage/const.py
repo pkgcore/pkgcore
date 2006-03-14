@@ -8,13 +8,23 @@
 USER_CONFIG_PATH 	= "/etc/portage"
 PRIVATE_PATH		= "/var/lib/portage"
 
+
+# try to grab portage_custom_path from /etc/portage, fall back to the normal
+# pythonpath
+import sys
+sys.path.insert(0, '/etc/portage')
+
 try:
 	import portage_custom_path
 
 except (ImportError, AttributeError):
 	portage_custom_path = None
-	print "warning, can't find portage_custom_path.  which means no custom PORTAGE_BASE_PATH"
-	print "so... that means you're getting /usr/lib/portage/ as a base , which quite likely isn't what you want"
+	print "Warning, can't find portage_custom_path.  which means no custom"
+	print "PORTAGE_BASE_PATH. You're getting /usr/lib/portage as a base,"
+	print "which quite likely isn't what you want."
+
+del sys.path[0]
+
 
 PORTAGE_BASE_PATH		= getattr(portage_custom_path, "PORTAGE_BASE_PATH", "/usr/lib/portage/")
 PORTAGE_BIN_PATH		= getattr(portage_custom_path, "PORTAGE_BIN_PATH", PORTAGE_BASE_PATH+"/bin")

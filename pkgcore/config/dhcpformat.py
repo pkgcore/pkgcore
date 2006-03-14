@@ -36,8 +36,6 @@ metadata {
 		distdir /usr/portage/distfiles;
 	}
 }
-		
-
 """
 
 from pkgcore.util import mappings, modules
@@ -52,7 +50,7 @@ value = pyp.Word(pyp.alphanums + './_') | pyp.quotedString.setParseAction(
 	pyp.removeQuotes)
 
 section_contents = pyp.dictOf(
-	value, pyp.OneOrMore(value | section) + pyp.Suppress(';'))
+	value, pyp.Group(pyp.OneOrMore(value | section)) + pyp.Suppress(';'))
 section << pyp.Group(pyp.Suppress('{') + section_contents + pyp.Suppress('}'))
 
 # pyp.dictOf uses pyp.ZeroOrMore instead of pyp.OneOrMore, which seems
@@ -62,39 +60,44 @@ section << pyp.Group(pyp.Suppress('{') + section_contents + pyp.Suppress('}'))
 parser = pyp.Dict(pyp.OneOrMore(pyp.Group(value + section)))
 parser.ignore(pyp.pythonStyleComment)
 
-parser.validate()
+
 class ConfigSection(basics.ConfigSection):
 
 	"""Expose a section_contents from pyparsing as a ConfigSection."""
-	
+
 	def __init__(self, section):
 		self.section = section
 
 	def __contains__(self, name):
 		return name in self.section
-		
+
 	def keys(self):
 		return self.section.keys()
 
 	def get_value(self, central, name, arg_type):
 		value = self.section[name]
 		if arg_type == 'callable':
+			if len(value) != 1:
+				raise errors.ConfigurationError('only one argument required')
+			value = value[0]
+			if not isinstance(value, basestring):
+				raise errors.ConfigurationError(
+					'need a callable, not a section')
 			value = modules.load_attribute(value)
 			if not callable(value):
 				raise errors.ConfigurationError('%r is not callable' % value)
 			return value
 		elif arg_type == 'section_ref':
+			if len(value) != 1:
+				raise errors.ConfigurationError('only one argument required')
+			value = value[0]
 			if isinstance(value, basestring):
 				# it's a section ref
 				return central.instantiate_section(value)
-			elif isinstance(value, pyp.Dict):
+			else:
 				# it's an anonymous inline section
 				return central.instantiate_section(
 					'anonymous', conf=ConfigSection(value))
-			else:
-				raise errors.ConfigurationError(
-					'%r should be a string or section reference' % value)
-
 		elif arg_type == 'section_refs':
 			result = []
 			for ref in value:
@@ -112,14 +115,16 @@ class ConfigSection(basics.ConfigSection):
 				value = ' '.join(value)
 			return basics.list_parser(value)
 		else:
-			if not isinstance(value, basestring):
+			if len(value) != 1:
+				raise errors.ConfigurationError('only one argument required')
+			if not isinstance(value[0], basestring):
 				raise errors.ConfigurationError(
 					'%r should be a string' % value)
 			return {
 				'str': basics.str_parser,
 				'bool': basics.bool_parser,
-				}[arg_type](value)
-			
+				}[arg_type](value[0])
+
 
 def configFromFile(file_obj):
 	try:

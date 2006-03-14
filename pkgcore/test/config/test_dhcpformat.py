@@ -8,11 +8,10 @@ from twisted.trial import unittest
 
 try:
 	import pyparsing
-	skip_test = False
 except ImportError:
 	skip_test = True
-	
-if not skip_test:
+else:
+	skip_test = False
 	from pkgcore.config import dhcpformat
 
 from pkgcore.config import central, basics, errors
@@ -24,7 +23,7 @@ def passthrough(*args, **kwargs):
 class DHCPConfigTest(unittest.TestCase):
 	if skip_test:
 		skip = "missing pyparsing module"
-	
+
 	def test_basics(self):
 		config = dhcpformat.configFromFile(StringIO('''
 test {
@@ -54,7 +53,7 @@ test {
 			('callable', 'callable', passthrough),
 			):
 			self.assertEquals(section.get_value(None, name, typename), value)
-		
+
 	def test_section_ref(self):
 		config = dhcpformat.configFromFile(StringIO('''
 target {
@@ -83,8 +82,44 @@ test {
 			section.get_value(manager, 'inline', 'section_ref'),
 			((), {'hi': 'here'}))
 
-	test_section_ref.todo = (errors.ConfigurationError, 'does not work yet')
-		
+	def test_multiple_section_ref(self):
+		config = dhcpformat.configFromFile(StringIO('''
+target {
+    type testtype;
+	class pkgcore.test.config.test_dhcpformat.passthrough;
+    hi there;
+}
+
+test {
+    ref target target;
+	inline {
+	    type testtype;
+		class pkgcore.test.config.test_dhcpformat.passthrough;
+		hi here;
+	} {
+	    type testtype;
+		class pkgcore.test.config.test_dhcpformat.passthrough;
+		hi here;
+	};
+	mix target {
+	    type testtype;
+		class pkgcore.test.config.test_dhcpformat.passthrough;
+		hi here;
+	};
+}
+'''))
+		manager = central.ConfigManager(
+			[{'testtype': basics.ConfigType('testtype',	{'hi': 'str'})}],
+			[config])
+		section = config['test']
+		for name in ('ref', 'inline', 'mix'):
+			try:
+				section.get_value(manager, name, 'section_ref')
+			except errors.ConfigurationError, e:
+				self.assertEquals('only one argument required', str(e))
+			else:
+				self.fail('no exception raised')
+
 	def test_section_refs(self):
 		config = dhcpformat.configFromFile(StringIO('''
 target {
@@ -110,6 +145,34 @@ test {
 			[((), {'hi': 'there'}),
 			 ((), {'hi': 'here'})])
 
+	def test_one_section_refs(self):
+		config = dhcpformat.configFromFile(StringIO('''
+target {
+    type testtype;
+	class pkgcore.test.config.test_dhcpformat.passthrough;
+    hi there;
+}
+
+test {
+    inline {
+	    type testtype;
+		class pkgcore.test.config.test_dhcpformat.passthrough;
+		hi here;
+	};
+	ref target;
+}
+'''))
+		manager = central.ConfigManager(
+			[{'testtype': basics.ConfigType('testtype',	{'hi': 'str'})}],
+			[config])
+		section = config['test']
+		self.assertEquals(
+			section.get_value(manager, 'inline', 'section_refs'),
+			[((), {'hi': 'here'})])
+		self.assertEquals(
+			section.get_value(manager, 'ref', 'section_refs'),
+			[((), {'hi': 'there'})])
+
 	def test_invalid_values(self):
 		config = dhcpformat.configFromFile(StringIO('''
 test {
@@ -117,6 +180,7 @@ test {
 	string la la;
 	ref one two;
 	callable pkgcore.config.dhcpformat;
+	inlinecallable { lala bork; };
 }
 '''))
 		section = config['test']
@@ -132,4 +196,6 @@ test {
 		self.assertRaises(
 			errors.ConfigurationError,
 			section.get_value, None, 'ref', 'section_ref')
-
+		self.assertRaises(
+			errors.ConfigurationError,
+			section.get_value, None, 'inlinecallable', 'callable')

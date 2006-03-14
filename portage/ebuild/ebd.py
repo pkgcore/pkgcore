@@ -124,17 +124,17 @@ class ebd(object):
 
 	def _request_bashrcs(self, ebd, a):
 		if a != None:
-			chuck_UnhandledCommand("bashrc request with arg"+str(a))
+			chuck_UnhandledCommand(ebd, "bashrc request with arg"+str(a))
 		for source in self.bashrc:
 			if source.get_path != None:
 				ebd.write("path\n%s" % source.get_path())
 			elif source.get_data != None:
 				raise NotImplementedError
 			else:
-				chuck_UnhandledCommand("bashrc request: unable to process bashrc '%s' due to source '%s' due to lacking"+
+				chuck_UnhandledCommand(ebd, "bashrc request: unable to process bashrc '%s' due to source '%s' due to lacking"+
 					"usable get_*" % (val, source))
 			if not ebd.expect("next"):
-				chuck_UnhandledCommand("bashrc transfer, didn't receive 'next' response.  failure?")
+				chuck_UnhandledCommand(ebd, "bashrc transfer, didn't receive 'next' response.  failure?")
 		ebd.write("end_request")
 
 	def _generic_phase(self, phase, userpriv, sandbox, fakeroot):

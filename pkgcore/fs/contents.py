@@ -1,8 +1,8 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import fs
 from itertools import imap
+from pkgcore.fs import fs
 
 def check_instance(obj):
 	if not isinstance(obj, fs.fsBase):
@@ -16,17 +16,24 @@ class contentsSet(set):
 		# override __new__ so set doesn't scream about opt args
 		return set.__new__(cls)
 
-	def __init__(self, initial=None):
+	def __init__(self, initial=None, frozen=False):
 		if initial is None:
 			initial = []
 		set.__init__(self, imap(check_instance, initial))
+		self.frozen = frozen
 	
 	def add(self, obj):
+		if self.frozen:
+			# weird, but keeping with set.
+			raise AttributeError("%s is frozen; no add functionality" % self.__class__)
 		if not isinstance(obj, fs.fsBase):
-			raise Exception("'%s' is not a fs.fsBase class" % str(obj))
+			raise TypeError("'%s' is not a fs.fsBase class" % str(obj))
 		set.add(self, obj)
 		
 	def remove(self, obj):
+		if self.frozen:
+			# weird, but keeping with set.
+			raise AttributeError("%s is frozen; no remove functionality" % self.__class__)
 		if not isinstance(obj, fs.fsBase):
 			# why are we doing the loop and break?  try this
 			# s=set([1,2,3]);
@@ -34,15 +41,16 @@ class contentsSet(set):
 			# short version, you can't yank stuff while iterating over the beast.
 			# iow, what you think would be cleaner/simpler here, doesn't work. :)
 			# ~harring
-			for x in self:
-				if obj == x.location:
-					set.remove(self, x)
-					return
-			if key == None:
-				raise KeyError(obj)
+
+			if obj is not None:
+				for x in self:
+					if obj == x.location:
+						set.remove(self, x)
+						return
+			raise KeyError(obj)
 		else:
 			set.remove(self, obj)
-				
+
 	def __contains__(self, key):
 		if isinstance(key, fs.fsBase):
 			return set.__contains__(self, key)
@@ -52,6 +60,9 @@ class contentsSet(set):
 		return False
 	
 	def clear(self):
+		if self.frozen:
+			# weird, but keeping with set.
+			raise AttributeError("%s is frozen; no clear functionality" % self.__class__)
 		set.clear(self)
 
 	def iterfiles(self):
@@ -83,3 +94,4 @@ class contentsSet(set):
 
 	def iterfifos(self):
 		return (x for x in self if isinstance(x, fs.fsFifo))
+

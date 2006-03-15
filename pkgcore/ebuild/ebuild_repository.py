@@ -6,7 +6,7 @@ from pkgcore.ebuild.ebd import buildable
 from weakref import proxy
 from pkgcore.package.conditionals import PackageWrapper
 from pkgcore.repository import prototype, errors
-from pkgcore.util.mappings import InvertedContains
+from pkgcore.util.containers import InvertedContains
 from pkgcore.util.file import read_dict
 from pkgcore.plugins import get_plugin
 from pkgcore.util.modules import load_attribute

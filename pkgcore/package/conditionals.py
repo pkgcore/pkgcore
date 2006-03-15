@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.util.mappings import LimitedChangeSet, Unchangable
+from pkgcore.util.containers import LimitedChangeSet, Unchangable
 from pkgcore.util.lists import unique, flatten
 import copy
 

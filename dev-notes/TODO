@@ -2,6 +2,12 @@ kindly check over HORKED; stuff here is "would be nice", but horked comes first.
 Difficulty estimate indicated by '*', based on either codebase in question, or knowledge of python tricks
 none == easy, >=5 of 'em, tricky.
 
+
+:split blockers out of depends/rdepends for ebuilds into conflicts attribute:
+seperate blockers into conflict_depends conflict_rdepends (names aren't set in stone); this is a needed
+addition to the pkg format abstraction.
+
+
 :p.mask visibility handler: *
 p.mask comes out to over 300 pkgs, current implementation is a OrRestriction; iow, worst case (the norm I'm afraid), it 
 does >300 match runs, in reality probably around >900 (atom == 3 restricts).  This fortunately is easily addressed; basically 

@@ -70,8 +70,9 @@ class fsBase(object):
 class fsFile(fsBase):
 	__slots__ = tuple(base_slots + fsBase.__slots__ + ["chksums"])
 	def __init__(self, location, chksums=None, mtime=None, **kwds):
-		mtime = long(mtime)
-		kwds["mtime"] = mtime
+		if mtime is not None:
+			mtime = long(mtime)
+			kwds["mtime"] = mtime
 		if chksums is None:
 			# this can be problematic offhand if the file is modified but chksum not triggered
 			chksums = LazyValDict(get_handlers().keys(), self._chksum_callback)
@@ -118,3 +119,4 @@ class fsFifo(fsBase):
 isdir = lambda x: isinstance(x, fsDir)
 isreg = lambda x: isinstance(x, fsFile)
 isfs_obj = lambda x: isinstance(x, fsBase)
+

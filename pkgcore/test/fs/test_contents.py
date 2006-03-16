@@ -96,7 +96,7 @@ class TestContentsSet(unittest.TestCase):
 	test_iterfiles = post_curry(iterobj, "files", fs.fsFile)
 	test_files = post_curry(listobj, "files", fs.fsFile)
 
-	test_iterdirss = post_curry(iterobj, "dirs", fs.fsDir)
+	test_iterdirs = post_curry(iterobj, "dirs", fs.fsDir)
 	test_dirs = post_curry(listobj, "dirs", fs.fsDir)
 
 	test_iterlinks = post_curry(iterobj, "links", fs.fsLink)

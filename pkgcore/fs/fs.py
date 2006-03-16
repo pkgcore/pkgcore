@@ -97,7 +97,7 @@ class fsLink(fsBase):
 
 	def __init__(self, location, target, **kwargs):
 		kwargs["target"] = target
-		fsBase.__init__(self,location,**kwargs)
+		fsBase.__init__(self, location, **kwargs)
 
 	def __repr__(self): return "symlink:%s->%s" % (self.location, self.target)
 

@@ -28,9 +28,11 @@ del sys.path[0]
 
 PORTAGE_BASE_PATH		= getattr(portage_custom_path, "PORTAGE_BASE_PATH", "/usr/lib/portage/")
 PORTAGE_BIN_PATH		= getattr(portage_custom_path, "PORTAGE_BIN_PATH", PORTAGE_BASE_PATH+"/bin")
+PORTAGE_DATA_PATH		= getattr(portage_custom_path, "PORTAGE_DATA_PATH" , PORTAGE_BASE_PATH+"/data")
 DEFAULT_CONF_FILE		= getattr(portage_custom_path, "DEFAULT_CONF_FILE", USER_CONFIG_PATH+"/config")
-CONF_DEFAULTS			= getattr(portage_custom_path, "CONF_DEFAULTS", PORTAGE_BASE_PATH+"/conf_default_types")
+CONF_DEFAULTS			= getattr(portage_custom_path, "CONF_DEFAULTS", PORTAGE_DATA_PATH+"/conf_default_types")
 
+GLOBAL_CONF_FILE		= PORTAGE_DATA_PATH + '/global_conf'
 #PORTAGE_PYM_PATH		= PORTAGE_BASE_PATH+"/pym"
 #PROFILE_PATH			= "/etc/make.profile"
 LOCALE_DATA_PATH		= PORTAGE_BASE_PATH+"/locale"

@@ -23,19 +23,28 @@ class ConfigLoadingTest(unittest.TestCase):
 			'[foo]\n'
 			)
 		self.types.flush()
-		self.config = tempfile.NamedTemporaryFile()
-		self.config.write(
+		self.localConfig = tempfile.NamedTemporaryFile()
+		self.localConfig.write(
 			'[foo]\n'
 			'type = foo\n'
 			'class = pkgcore.test.config.test_init.passthrough\n'
 			)
-		self.config.flush()
+		self.localConfig.flush()
+		self.globalConfig = tempfile.NamedTemporaryFile()
+		self.globalConfig.write(
+			'[foo]\n'
+			'type = foo\n'
+			'class = invalid\n'
+			)
+		self.globalConfig.flush()
 
 	def tearDown(self):
 		del self.types
-		del self.config
+		del self.localConfig
+		del self.globalConfig
 
 	def test_load_config(self):
-		manager = load_config(self.config.name, self.types.name)
+		manager = load_config(
+			self.localConfig.name, self.globalConfig.name, self.types.name)
 		self.assertEquals(manager.foo['foo'], ((), {}))
 		self.assertRaises(errors.BaseException, load_config, 'invalid')

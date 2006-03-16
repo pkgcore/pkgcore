@@ -68,3 +68,6 @@ check over BINHOST code replacement for any code that resolve to a specific IP
 :move pkgcore uid/gid checks out of ebuild.sh, and into python side:
 
 :locking unification.  see plugins for an example of why it's needed
+
+:extend packages.* parsing to support globs in pkg: *
+http://bugs.gentoo.org/show_bug.cgi?id=57153

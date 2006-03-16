@@ -47,7 +47,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False, save_
 				inactive_ebp_list.remove(x)
 				active_ebp_list.append(x)
 				return x
-	e=ebuild_processor(userpriv, sandbox, fakeroot, save_file)
+	e = EbuildProcessor(userpriv, sandbox, fakeroot, save_file)
 	active_ebp_list.append(e)
 	return e
 
@@ -80,7 +80,7 @@ def release_ebuild_processor(ebp):
 	return False	
 
 
-class ebuild_processor:
+class EbuildProcessor:
 	"""abstraction of a running ebuild.sh instance- the env, functions, etc that ebuilds expect."""
 	def __init__(self, userpriv, sandbox, fakeroot, save_file):
 		"""
@@ -466,7 +466,7 @@ class UnhandledCommand(ProcessingInterruption):
 	def __init__(self, line=None):		self.line=line
 	def __str__(self):						return "unhandled command, %s" % self.line
 
-__all__ = ("request_ebuild_processor", "release_ebuild_processor", "ebuild_processor"
+__all__ = ("request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor"
 	"UnhandledCommand", "expected_ebuild_env")
 
 def expected_ebuild_env(pkg, d=None):

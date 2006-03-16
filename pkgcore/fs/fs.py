@@ -8,10 +8,9 @@ from os.path import sep as path_seperator, abspath
 # goofy set of classes representating the fs objects pkgcore knows of.
 
 __all__ = ["fsFile", "fsDir", "fsSymLink", "fsDev", "fsFifo", "isdir", "isreg", "isfs_obj"]
-base_slots = ["mtime", "mode", "uid", "gid"]
 
 class fsBase(object):
-	__slots__ = ["location", "real_path"]
+	__slots__ = ["location", "real_path", "mtime", "mode", "uid", "gid"]
 
 	def __init__(self, location, strict=True, real_path=None, **d):
 			
@@ -68,7 +67,9 @@ class fsBase(object):
 
 
 class fsFile(fsBase):
-	__slots__ = tuple(base_slots + fsBase.__slots__ + ["chksums"])
+
+	__slots__ = fsBase.__slots__ + ["chksums"]
+
 	def __init__(self, location, chksums=None, mtime=None, **kwds):
 		if mtime is not None:
 			mtime = long(mtime)
@@ -81,25 +82,28 @@ class fsFile(fsBase):
 		kwds["chksums"] = chksums
 		fsBase.__init__(self,location,**kwds)
 
-	def __repr__(self): return "file:%s" % self.location
+	def __repr__(self):
+		return "file:%s" % self.location
 
 	def _chksum_callback(self, chf_type):
 		return get_handler(chf_type)(self.real_path)
 
 class fsDir(fsBase):
-	__slots__ = tuple(base_slots + fsBase.__slots__)
+	__slots__ = fsBase.__slots__
 
-	def __repr__(self): return "dir:%s" % self.location
+	def __repr__(self):
+		return "dir:%s" % self.location
 
 
 class fsLink(fsBase):
-	__slots__ = tuple(base_slots + fsBase.__slots__  + ["target"])
+	__slots__ = fsBase.__slots__ + ["target"]
 
 	def __init__(self, location, target, **kwargs):
 		kwargs["target"] = target
 		fsBase.__init__(self, location, **kwargs)
 
-	def __repr__(self): return "symlink:%s->%s" % (self.location, self.target)
+	def __repr__(self):
+		return "symlink:%s->%s" % (self.location, self.target)
 
 
 fsSymLink = fsLink
@@ -108,12 +112,15 @@ fsSymLink = fsLink
 class fsDev(fsBase):
 	__slots__ = fsBase.__slots__
 
-	def __repr__(self): return "device:%s" % self.location
+	def __repr__(self):
+		return "device:%s" % self.location
 
 
 class fsFifo(fsBase):
 	__slots__ = fsBase.__slots__
-	def __repr__(self): return "fifo:%s" % self.location
+
+	def __repr__(self):
+		return "fifo:%s" % self.location
 	
 
 isdir = lambda x: isinstance(x, fsDir)

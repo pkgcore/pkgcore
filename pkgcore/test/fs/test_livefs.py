@@ -33,12 +33,13 @@ class FsObjsTest(TempDirMixin, unittest.TestCase):
 		path = os.path.join(self.dir, "test_sym")
 		os.mkdir(path)
 		src = os.path.join(path, "s")
-		dst = os.path.join(path, "t")
+		link = os.path.join(path, "t")
 		open(src, "w")
-		os.symlink(src, dst)
-		obj = gen_obj(dst)
+		os.symlink(src, link)
+		obj = gen_obj(link)
 		self.failUnless(isinstance(obj, fs.fsSymLink))
-		self.check_attrs(obj, dst)
+		self.check_attrs(obj, link)
+		self.assertEqual(os.readlink(link), obj.target)
 
 	def test_real_path(self):
 		o = gen_obj("/tmp/etc/passwd", real_path="/etc/passwd")

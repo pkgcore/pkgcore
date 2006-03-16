@@ -30,7 +30,7 @@ if __name__ == "__main__":
 	else:
 		atomstr = lambda x, y=False: str(x)
 
-	if len(a) == 0:
+	if len(a) == 0 or "--help" in a:
 		print "supported args: [--raw] [--atomstr] atom [ --attr attr ]"
 		sys.exit(1)
 	conf = pkgcore.config.load_config()

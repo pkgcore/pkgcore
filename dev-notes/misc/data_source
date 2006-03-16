@@ -1,7 +1,0 @@
-the protocol roughly is
-get_path('obj') returns the path on disk, if available.  potentially is None also
-get_data('obj') returns the data as a big 'ole string.
-
-eclass_cache uses this, profile uses this, and ebuilds will use this.
-
-return of None == error, unfound.

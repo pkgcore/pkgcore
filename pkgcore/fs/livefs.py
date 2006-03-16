@@ -3,9 +3,11 @@
 
 import os
 from stat import *
-from itertools import imap
 from pkgcore.fs.fs import *
 from pkgcore.fs.util import normpath
+from pkgcore.fs.contents import contentsSet
+
+__all__ = ["gen_obj", "scan", "iter_scan"]
 
 def gen_obj(path, stat=None, real_path=None):
 	"""given a fs path, and an optional stat, return an appropriate fs obj representing that file/dir/dev/fif/link
@@ -72,5 +74,4 @@ def scan(*a, **kw):
 	calls list(iter_scan(*a, **kw))
 	Look at iter_scan for valid args
 	"""
-	from pkgcore.fs.contents import contentsSet	
 	return contentsSet(iter_scan(*a, **kw))

@@ -7,7 +7,7 @@ from twisted.trial import unittest
 from pkgcore.fs import fs, gen_obj, iter_scan
 from pkgcore.test.fs.test_util import TempDirMixin
 
-class EnsureFsDirTest(TempDirMixin, unittest.TestCase):
+class FsObjsTest(TempDirMixin, unittest.TestCase):
 	
 	def check_attrs(self, obj, path):
 		st = os.lstat(path)

@@ -89,7 +89,6 @@ class tree(prototype.tree):
 		s = "%s-%s" % (pkg.package, pkg.fullver)
 		return os.path.join(self.base, pkg.category, s, s+".ebuild")
 
-
 	_metadata_rewrites = {"depends":"DEPEND", "rdepends":"RDEPEND", "use":"USE", "eapi":"EAPI"}
 	
 	def _get_metadata(self, pkg):
@@ -134,18 +133,10 @@ class tree(prototype.tree):
 
 
 class install(repo_interfaces.install):
-	def __init__(self, repo, pkg, offset=None, *a, **kw):
-		self.offset = offset
+	def __init__(self, repo, pkg, *a, **kw):
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
 		repo_interfaces.install.__init__(self, repo, pkg, *a, **kw)
 		
-	def transfer(self, **kw):
-		# error checking? ;)
-		if self.offset:
-			kw["offset"] = self.offset
-		merge_contents(self.pkg.contents, **kw)
-		return True
-
 	def merge_metadata(self):
 		# error checking?
 		ensure_dirs(self.dirpath)
@@ -179,30 +170,9 @@ class install(repo_interfaces.install):
 
 class uninstall(repo_interfaces.uninstall):
 	def __init__(self, repo, pkg, offset=None, *a, **kw):
-		self.offset = offset
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
-		repo_interfaces.uninstall.__init__(self, repo, pkg, *a, **kw)
+		repo_interfaces.uninstall.__init__(self, repo, pkg, offset=offset, *a, **kw)
 
-	def remove(self):
-		for x in ifilter(lambda x: not isinstance(x, fsDir), self.pkg.contents):
-			if self.offset:
-				x = x.change_location(os.path.join(self.offset, x.location.lstrip(os.path.sep)))
-			try:
-				os.unlink(x.location)
-			except OSError, e:
-				if e.errno != errno.ENOENT:
-					raise
-		
-		for x in self.pkg.contents.iterdirs():
-			if self.offset:
-				x = x.change_location(os.path.join(self.offset, x.location.lstrip(os.path.sep)))
-			try:
-				os.rmdir(x.location)
-			except OSError, e:
-				if e.errno != errno.ENOTEMPTY:
-					raise
-		return True
-		
 	def unmerge_metadata(self):
 		shutil.rmtree(self.dirpath)
 		return True

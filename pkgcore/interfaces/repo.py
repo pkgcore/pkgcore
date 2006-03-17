@@ -3,6 +3,7 @@
 
 from pkgcore.util.dependant_methods import ForcedDepends
 from pkgcore.util.currying import pre_curry
+from pkgcore.merge.engine import MergeEngine, errors as merge_errors
 
 def decorate_ui_callback(stage, status_obj, original, *a, **kw):
 	status_obj.phase(stage)
@@ -20,10 +21,11 @@ class base(object):
 	stage_depends = {}
 	stage_hooks = []
 
-	def __init__(self, repo, pkg, status_obj=None):
+	def __init__(self, repo, pkg, status_obj=None, offset=None):
 		self.repo = repo
 		self.pkg = pkg
 		self.underway = False
+		self.offset = offset
 		assert getattr(self, "_op_name", None)
 		self.op = getattr(pkg, self._op_name)()
 		self.lock = getattr(repo, "lock")
@@ -34,12 +36,15 @@ class base(object):
 			for x in self.stage_hooks:
 				setattr(self, x, pre_curry(decorate_ui_callback, x, status_obj, getattr(self, x)))
 
-	def start(self):
+	def start(self, engine):
+		self.me = engine
 		self.underway = True
 		self.lock.acquire_write_lock()
+		self.me.sanity_check()
 		return True
 
 	def finish(self):
+		self.me.final()
 		self.lock.release_write_lock()
 		self.underway = False
 		return True
@@ -57,11 +62,19 @@ class install(base):
 	stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
 	_op_name = "_repo_install_op"
 
+	def start(self):
+		return base.start(self, MergeEngine.install(self.pkg, offset=self.offset))
+
 	def preinst(self):
 		return self.op.preinst()
 
-	def transfer(self):	
-		raise NotImplementedError
+	def transfer(self):
+		for x in (self.me.pre_modify, self.me.modify, self.me.post_modify):
+			try:
+				x()
+			except merge_errors.NonFatalModification, e:
+				print "warning caught: %s" % e
+		return True
 
 	def postinst(self):
 		return self.op.postinst()
@@ -77,11 +90,19 @@ class uninstall(base):
 	stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
 	_op_name = "_repo_uninstall_op"
 
+	def start(self):
+		return base.start(self, MergeEngine.uninstall(self.pkg, offset=self.offset))
+
 	def prerm(self):
 		return self.op.prerm()
 
 	def remove(self):
-		raise NotImplementedError
+		for x in (self.me.pre_modify, self.me.modify, self.me.post_modify):
+			try:
+				x()
+			except merge_errors.NonFatalModification, e:
+				print "warning caught: %s" % e
+		return True
 
 	def postrm(self):
 		return self.op.postrm()

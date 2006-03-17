@@ -165,7 +165,6 @@ class ebd(object):
 			raise build.GenericBuildError("clean: Caught exception while cleansing: %s" % oe)
 		return True
 
-
 	def feat_or_bool(self, name, extra_env=None):
 		if name in self.env:
 			v = bool(self.env[name])

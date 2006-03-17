@@ -41,6 +41,9 @@ class package(ebuild_src.package):
 	def _repo_uninstall_op(self, features=None):
 		return ebd.uninstall_op(self, env_data_source=self.environment, features=features)
 
+	def _repo_replace_op(self, features=None):
+		return ebd.replace_op(self, env_data_source=self.environment, features=features)
+
 class package_factory(metadata.factory):
 	child_class = package
 

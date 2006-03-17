@@ -6,6 +6,7 @@
 # ordering?
 
 import os, errno
+from itertools import ifilterfalse
 
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.ops import merge_contents
@@ -55,7 +56,25 @@ class trigger(object):
 		self.trigger(engine, csets)
 
 def merge_trigger():
-	return trigger("new_cset", lambda s,c: merge_contents(csets["new_cset"]))
+	return trigger("install", lambda s,c: merge_contents(csets["install"]))
+
+def unmerge_contents(cset):
+	for x in ifilterfalse(lambda x: isinstance(x, fsDir), self.pkg.contents):
+		try:
+			os.unlink(x.location)
+		except OSError, e:
+			if e.errno != errno.ENOENT:
+				raise
+	for x in cset.iterdirs():
+		try:
+			os.rmdir(x.location)
+		except OSError, e:
+			if e.errno != errno.ENOTEMPTY:
+				raise
+			
+def unmerge_trigger():
+	return trigger("uninstall", lambda s,c: merge_contents(csets["uninstall"]))
+
 
 def run_ldconfig(engine, csets, cset_name):
 	# this sucks. not very fine grained.
@@ -75,28 +94,34 @@ def run_ldconfig(engine, csets, cset_name):
 		if ret != 0:
 			raise TriggerWarning("ldconfig returned %i from execution" % ret)
 
-def merge_ldconfig_trigger():
+def ldconfig_trigger():
 	# this should be just replacement once I get answers from solar/spanky about
 	# symlink issues and updating cache but updating just one dir
-	return trigger("new_cset", currying.post_curry(run_ldconfig, "new_cset"))
+	return trigger("modifying", currying.post_curry(run_ldconfig, "modifying"))
 
 def alias_cset(alias, engine, csets):
 	return csets[alias]
 
 class MergeEngine(object):
 	REPLACING_MODE = 0
-	MERGING_MODE = 1
-	UNMERGING_MODE = 2
+	INSTALL_MODE = 1
+	UNINSTALL_MODE = 2
 
-#	unmerge_hooks = dict((x, []) for x in ["sanity_check", "pre_modify", "modify", "post_modify", "final"])
 #	replace_hooks = dict((x, []) for x in ["sanity_check", "pre_modify", "modify", "post_modify", "final"])
 
 	merge_hooks = dict((x, []) for x in ["sanity_check", "pre_modify", "modify", "post_modify", "final"])
-	merge_csets = {"new_cset":"get_merge_cset", "livefs_intersect":"get_livefs_intersect_cset"}
-	merge_csets.update({}.fromkeys(["merge", "replace"], currying.pre_curry(alias_cset, "new_cset")))
-	merge_csets_preserve = ["new_cset"]
+	unmerge_hooks = dict((x, []) for x in merge_hooks.keys())
 	merge_hooks["modify"].append(merge_trigger)
-	merge_hooks["post_modify"].append(merge_ldconfig_trigger)
+	unmerge_hooks["modify"].append(unmerge_trigger)
+	merge_hooks["post_modify"].append(ldconfig_trigger)
+	unmerge_hooks["post_modify"].append(ldconfig_trigger)
+
+	merge_csets = {"livefs_intersect":"get_livefs_intersect_cset"}
+	unmerge_csets = dict(merge_csets)
+	merge_csets.update({}.fromkeys(["install", "replace", "modifying"], currying.pre_curry(alias_cset, "new_cset")))
+	unmerge_csets.update({}.fromkeys(["uninstall", "modifying"], currying.pre_curry(alias_cset, "old_cset")))
+	merge_csets_preserve = ["new_cset"]
+	unmerge_csets_preserve = ["old_cset"]
 
 	def __init__(self, mode, hooks, csets, preserves, offset=None):
 		self.mode = mode
@@ -118,21 +143,43 @@ class MergeEngine(object):
 
 		self.offset = offset
 		for k, v in hooks.iteritems():
+			print "adding",k
 			self.add_triggers(k, *v)
 
 		self.regenerate_csets()
 
 	@classmethod
-	def merge(cls, new, offset=None):
+	def merge(cls, pkg, offset=None):
 		hooks = dict((k, [y() for y in v]) for (k,v) in cls.merge_hooks.iteritems())
-		o = cls(cls.MERGING_MODE, hooks, cls.merge_csets, cls.merge_csets_preserve, offset=offset)
+		csets = dict(cls.merge_csets)
+		if "new_cset" not in csets:
+			csets["new_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
+		print csets.keys()
+		print hooks
+		o = cls(cls.INSTALL_MODE, hooks, csets, cls.merge_csets_preserve, offset=offset)
 
 		if offset:
 			# wrap the results of new_cset to pass through an offset generator
 			o.cset_sources["new_cset"] = currying.post_curry(o.generate_offset_cset, o.cset_sources["new_cset"])
 			
-		o.new = new
+		o.new = pkg
 		return o
+
+	@classmethod
+	def unmerge(cls, pkg, offset=None):
+		hooks = dict((k, [y() for y in v]) for (k,v) in cls.unmerge_hooks.iteritems())
+		csets = dict(cls.unmerge_csets)
+		if "old_cset" not in csets:
+			csets["old_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
+		o = cls(cls.UNINSTALL_MODE, hooks, csets, cls.unmerge_csets_preserve, offset=offset)
+
+		if offset:
+			# wrap the results of new_cset to pass through an offset generator
+			o.cset_sources["old_cset"] = currying.post_curry(o.generate_offset_cset, o.cset_sources["old_cset"])
+			
+		o.old = pkg
+		return o
+
 
 	def regenerate_csets(self):
 		self.csets = StackedDict(self.preserved_csets, 
@@ -176,9 +223,9 @@ class MergeEngine(object):
 			x.location.lstrip(os.path.sep))) for x in cset_generator(engine, csets))
 
 	@staticmethod
-	def get_merge_cset(engine, csets):
+	def get_pkg_contents(engine, csets, pkg):
 		"""generate the cset of what files shall be merged to the livefs"""
-		return engine.new.contents
+		return pkg.contents
 
 	@staticmethod
 	def get_remove_cset(engine, csets):
@@ -191,14 +238,14 @@ class MergeEngine(object):
 		return csets["new_cset"].intersection(csets["old_cset"])
 
 	@staticmethod
-	def get_livefs_intersect_cset(engine, csets, default_cset="new_cset"):
+	def get_livefs_intersect_cset(engine, csets, default_cset="modifying"):
 		"""generates the livefs intersection against a cset"""
 		return contentsSet(scan_livefs(csets[default_cset]))
 
 
-class MergeException(Exception):
+class ModificationError(Exception):
 
-	"""Base Exception class for merge exceptions"""
+	"""Base Exception class for modification errors/warnings"""
 
 	def __init__(self, msg):
 		self.msg = msg
@@ -207,14 +254,15 @@ class MergeException(Exception):
 		return "%s: %s" % (self.__class__, self.msg)
 
 	
-class BlockMerging(MergeException):
+class BlockModification(ModificationError):
 	"""Merging cannot proceed"""
 
-class TriggerUnknownCset(MergeException):
+class TriggerUnknownCset(ModificationError):
 	"""Trigger's required content set isn't known"""
 
-class NonFatalMergeException(Exception):
+class NonFatalModification(Exception):
 	pass
 	
-class TriggerWarning(NonFatalMergeException):
+class TriggerWarning(NonFatalModification):
 	pass
+

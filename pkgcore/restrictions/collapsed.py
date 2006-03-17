@@ -46,8 +46,8 @@ class DictBased(packages.base):
 				elif isinstance(remaining, (tuple, list)):
 					remaining = packages.AndRestriction(*remaining)
 				elif not isinstance(remaining, base):
-					print "remaining=",remaining
-					print "base=",base
+#					print "remaining=",remaining
+#					print "base=",base
 					raise KeyError("unable to convert '%s', remaining '%s' isn't of a known base" % (str(r), str(remaining)))
 
 			if key in self.restricts_dict:

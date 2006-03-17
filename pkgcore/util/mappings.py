@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from itertools import imap, chain
+from itertools import imap, chain, ifilterfalse
 import UserDict
 
 
@@ -312,3 +312,38 @@ class IndeterminantDict(dict):
 	clear = update = pop = popitem = setdefault = __setitem__ = __delitem__
 	__iter__ = keys = values = __len__ = __delitem__
 	
+
+class StackedDict(UserDict.DictMixin):
+
+	"""A non modifiable dict that makes multiple dicts appear as one"""
+
+	def __init__(self, *dicts):
+		self._dicts = dicts
+	
+	def __getitem__(self, key):
+		for x in self._dicts:
+			if key in x:
+				return x[key]
+		raise KeyError(key)
+	
+	def keys(self):
+		return list(iter(self))
+
+	def __iter__(self):
+		s=set()
+		for k in ifilterfalse(s.__contains__, chain(*map(iter, self._dicts))):
+			s.add(k)
+			yield k
+
+	iterkeys = __iter__
+
+	def has_key(self, key):
+		for x in self._dicts:
+			if key in x:
+				return True
+		return False
+
+	def __setitem__(self, *a):
+		raise TypeError("non modifiable")
+
+	__delitem__ = clear = __setitem__

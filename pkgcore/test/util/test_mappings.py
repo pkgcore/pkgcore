@@ -1,10 +1,10 @@
-# Copyright: 2005 Marien Zwart <marienz@gentoo.org>
+# Copyright: 2005-2006 Marien Zwart <marienz@gentoo.org>
+# Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-
 from twisted.trial import unittest
-
 from pkgcore.util import mappings
+from itertools import chain
 
 
 def a_dozen():
@@ -135,6 +135,7 @@ class IndexableSequenceSpecialCasesTest(unittest.TestCase):
 		self.assertEquals(3, len(seq))
 		self.assertEquals([False, (True, 1), (True, 2)], sorted(list(seq)))
 
+
 class LazyValDictTestMixin(object):
 
 	def test_invalid_operations(self):
@@ -264,3 +265,50 @@ class ImmutableDictTest(unittest.TestCase):
 		self.assertRaises(TypeError, self.dict.popitem)
 		self.assertRaises(TypeError, self.dict.setdefault, 6, -6)
 		self.assertEquals(initialHash, hash(self.dict))
+
+class StackedDictTest(unittest.TestCase):
+	
+	orig_dict = dict.fromkeys(range(100))
+	new_dict = dict.fromkeys(range(100,200))
+	
+	def test_contains(self):
+		std	= mappings.StackedDict(self.orig_dict, self.new_dict)
+		self.failUnless(1 in std)
+		self.failUnless(std.has_key(1))
+	
+	def test_stacking(self):
+		o = dict(self.orig_dict)
+		std = mappings.StackedDict(o, self.new_dict)
+		for x in chain(*map(iter, (self.orig_dict, self.new_dict))):
+			self.failUnless(x in std)
+		
+		map(o.__delitem__, iter(self.orig_dict))
+		for x in self.orig_dict:
+			self.failIf(x in std)
+		for x in self.new_dict:
+			self.failUnless(x in std)
+
+	def test_len(self):
+		self.assertEqual(sum(map(len ,(self.orig_dict, self.new_dict))), 
+			len(mappings.StackedDict(self.orig_dict, self.new_dict)))
+
+	def test_setattr(self):
+		self.assertRaises(TypeError, mappings.StackedDict().__setitem__, (1,2))
+
+	def test_delattr(self):
+		self.assertRaises(TypeError, mappings.StackedDict().__delitem__, (1,2))
+
+	def test_clear(self):
+		self.assertRaises(TypeError, mappings.StackedDict().clear)
+		
+	def test_iter(self):
+		s = set()
+		map(s.add, chain(iter(self.orig_dict), iter(self.new_dict)))
+		for x in mappings.StackedDict(self.orig_dict, self.new_dict):
+			self.failUnless(x in s)
+			s.remove(x)
+		self.assertEquals(len(s), 0)
+
+	def test_keys(self):
+		self.assertEqual(sorted(mappings.StackedDict(self.orig_dict, self.new_dict)),
+			sorted(self.orig_dict.keys() + self.new_dict.keys()))

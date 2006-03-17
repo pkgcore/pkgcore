@@ -8,16 +8,13 @@ from pkgcore.repository import prototype, errors
 #needed to grab the PN
 from pkgcore.package.cpv import CPV as cpv
 from pkgcore.fs.util import ensure_dirs
-from pkgcore.util.lists import unique
 from pkgcore.util.mappings import LazyValDict
 from pkgcore.vdb.contents import ContentsFile
 from pkgcore.plugins import get_plugin
 from pkgcore.interfaces import repo as repo_interfaces
-from pkgcore.fs.ops import merge_contents
-from pkgcore.fs.fs import fsDir
 from pkgcore.interfaces.data_source import local_source
-import shutil
 from pkgcore.spawn import spawn
+
 
 class tree(prototype.tree):
 	ebuild_format_magic = "ebuild_built"

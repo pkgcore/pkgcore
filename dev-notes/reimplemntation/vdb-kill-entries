@@ -1,7 +1,0 @@
-# list of key entries we can ignore.  beyond that, the usual pkg attributes need to survive, and/or be regenerated.
-# regeneration of license/keywords should be external using saved env, not done on the fly normally (imo).
-LDFLAGS
-CFLAGS
-CXXFLAGS
-ASFLAGS
-DEBUGBUILD

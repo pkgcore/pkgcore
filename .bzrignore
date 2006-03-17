@@ -1,4 +1,4 @@
-savior.log
-savior.state
-savior.state.old
-savior.state.journal
+dev-notes/*.html
+dev-notes/toc.rst
+dev-notes/*/*.html
+dev-notes/*/toc.rst

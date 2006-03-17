@@ -94,6 +94,9 @@ class fsDir(fsBase):
 	def __repr__(self):
 		return "dir:%s" % self.location
 
+	def __cmp__(self, other):
+		return cmp(self.location.split(path_seperator), other.location.split(path_seperator))
+
 
 class fsLink(fsBase):
 	__slots__ = fsBase.__slots__ + ["target"]

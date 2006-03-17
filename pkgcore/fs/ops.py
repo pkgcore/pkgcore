@@ -1,11 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-#fsFile, fsDir, fsLink, fsFifo, fsSymlink
-
-import os
-import shutil
-import stat
+import os, shutil, errno
 from itertools import ifilterfalse
 from pkgcore.fs import gen_obj, contents, fs
 from pkgcore.spawn import spawn
@@ -98,6 +94,7 @@ def merge_contents(cset, offset=None):
 	ensure_perms = get_plugin("fs_ops", "ensure_perms")
 	copyfile = get_plugin("fs_ops", "copyfile")
 	mkdir = get_plugin("fs_ops", "mkdir")	
+
 	if os.path.exists(offset) and not os.path.isdir(offset):
 		raise TypeError("offset must be a dir, or not exist")
 	if not isinstance(cset, contents.contentsSet):
@@ -105,12 +102,9 @@ def merge_contents(cset, offset=None):
 	if not os.path.exists(offset):
 		mkdir(fs.fsDir(offset, strict=False))
 	
-	if offset:
-		offset = normpath(offset.rstrip(os.path.sep))+os.path.sep
-
-	for x in sorted(cset.iterdirs(), lambda x, y: cmp(x.location, y.location)):
-		if offset:
-			x = x.change_location(offset + x.location)
+	for x in sorted(cset.iterdirs()):
+		# XXX temporary until this is chunked for output
+		print "installing",x
 
 		try:
 			obj = gen_obj(x.location)
@@ -121,6 +115,29 @@ def merge_contents(cset, offset=None):
 			mkdir(x)
 
 	for x in ifilterfalse(fs.isdir, cset):
-		if offset:
-			x = x.change_location(offset + x.location)
+		# XXX temporary until this is chunked for output
+		print "installing",x
 		copyfile(x)
+
+def unmerge_contents(cset):
+	for x in ifilterfalse(lambda x: isinstance(x, fs.fsDir), cset):
+		# XXX temporary until this is chunked for output
+		print "removing",x
+		try:
+			os.unlink(x.location)
+		except OSError, e:
+			if e.errno != errno.ENOENT:
+				raise
+	# this is a fair sight faster then using sorted/reversed
+	l = cset.dirs()
+	l.sort()
+	l.reverse()
+	for x in l:
+		# XXX temporary until this is chunked for output
+		print "removing",x
+		try:
+			os.rmdir(x.location)
+		except OSError, e:
+			if e.errno != errno.ENOTEMPTY and e.errno != errno.ENOENT:
+				raise
+

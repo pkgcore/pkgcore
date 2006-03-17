@@ -69,7 +69,7 @@ class install(base):
 		return self.op.preinst()
 
 	def transfer(self):
-		for x in (self.me.pre_modify, self.me.modify, self.me.post_modify):
+		for x in (self.me.pre_merge, self.me.merge, self.me.post_merge):
 			try:
 				x()
 			except merge_errors.NonFatalModification, e:
@@ -97,7 +97,7 @@ class uninstall(base):
 		return self.op.prerm()
 
 	def remove(self):
-		for x in (self.me.pre_modify, self.me.modify, self.me.post_modify):
+		for x in (self.me.pre_unmerge, self.me.unmerge, self.me.post_unmerge):
 			try:
 				x()
 			except merge_errors.NonFatalModification, e:

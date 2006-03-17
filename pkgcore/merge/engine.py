@@ -34,22 +34,40 @@ class MergeEngine(object):
 	INSTALL_MODE = 1
 	UNINSTALL_MODE = 2
 
-#	replace_hooks = dict((x, []) for x in ["sanity_check", "pre_modify", "modify", "post_modify", "final"])
+	install_hooks = dict((x, []) for x in ["sanity_check", "pre_merge", "merge", "post_merge", "final"])
+	uninstall_hooks = dict((x, []) for x in ["sanity_check", "pre_unmerge", "unmerge", "post_unmerge", "final"])
+	replace_hooks = dict((x, []) for x in set(install_hooks.keys() + uninstall_hooks.keys()))
 
-	install_hooks = dict((x, []) for x in ["sanity_check", "pre_modify", "modify", "post_modify", "final"])
-	uninstall_hooks = dict((x, []) for x in install_hooks.keys())
-	install_hooks["modify"].append(merge_trigger)
-	uninstall_hooks["modify"].append(unmerge_trigger)
-	install_hooks["post_modify"].append(ldconfig_trigger)
-	uninstall_hooks["post_modify"].append(ldconfig_trigger)
+	install_hooks["merge"].append(merge_trigger)
+	uninstall_hooks["unmerge"].append(unmerge_trigger)
+	replace_hooks["merge"].append(merge_trigger)
+	replace_hooks["unmerge"].append(unmerge_trigger)
+	install_hooks["post_merge"].append(ldconfig_trigger)
+	uninstall_hooks["post_unmerge"].append(ldconfig_trigger)
+	
+	# this should be a symlink update only
+	replace_hooks["post_merge"].append(ldconfig_trigger)
+	replace_hooks["post_unmerge"].append(ldconfig_trigger)
+	
 
-	install_csets = {"livefs_intersect":"get_livefs_intersect_cset"}
+	install_csets = {"install_existing":"get_livefs_intersect_cset"}
 	uninstall_csets = dict(install_csets)
-	install_csets.update({}.fromkeys(["install", "replace", "modifying"], currying.pre_curry(alias_cset, "new_cset")))
-	uninstall_csets.update({}.fromkeys(["uninstall", "modifying"], currying.pre_curry(alias_cset, "old_cset")))
+	replace_csets = dict(install_csets)
+
+	install_csets.update({}.fromkeys(["install", "replace", "modifying"], 
+		currying.pre_curry(alias_cset, "new_cset")))
+	uninstall_csets.update({}.fromkeys(["uninstall", "modifying"], 
+		currying.pre_curry(alias_cset, "old_cset")))
+	replace_csets["install"] = currying.pre_curry(alias_cset, "new_cset")
+	replace_csets["modifying"] = lambda e, c: c["install"].intersection(c["uninstall"])
+	replace_csets["uninstall"] = "get_remove_cset"
+	replace_csets["replace"] = "get_replace_cset"
+	replace_csets["install_existing"] = "get_livefs_intersect_cset"
+
 	install_csets_preserve = ["new_cset"]
 	uninstall_csets_preserve = ["old_cset"]
-
+	replace_csets_preserve = ["new_cset", "old_cset"]
+	
 	def __init__(self, mode, hooks, csets, preserves, offset=None):
 		self.mode = mode
 		self.hooks = ImmutableDict((x, []) for x in hooks)
@@ -62,7 +80,8 @@ class MergeEngine(object):
 			if isinstance(v, basestring):
 				v = getattr(self, v, v)
 			if not callable(v):
-				raise TypeError("cset values must be either the string name of existing methods, or callables")
+				raise TypeError("cset values must be either the string name of existing methods, or callables "
+				"(got %s)" % v)
 			if k in preserves:
 				self.add_preserved_cset(k, v)
 			else:
@@ -106,7 +125,28 @@ class MergeEngine(object):
 		o.old = pkg
 		return o
 
+	@classmethod
+	def replace(cls, old, new, offset=None):
+		hooks = dict((k, [y() for y in v]) for (k,v) in cls.replace_hooks.iteritems())
+		csets = dict(cls.replace_csets)
+
+		for v,k in ((old, "old_cset"), (new, "new_cset")):
+			if k not in csets:
+				csets[k] = currying.post_curry(cls.get_pkg_contents, v)
+		
+		o = cls(cls.UNINSTALL_MODE, hooks, csets, cls.replace_csets_preserve, offset=offset)
+
+		if offset:
+			for k in ("old_cset", "new_cset"):
+				# wrap the results of new_cset to pass through an offset generator
+				o.cset_sources[k] = currying.post_curry(o.generate_offset_cset, o.cset_sources[k])
+			
+		o.old = old
+		o.new = new
+		return o
+
 	def execute_hook(self, hook):
+		self.regenerate_csets()
 		for x in self.hooks[hook]:
 			# error checking needed here.
 			x(self, self.csets)

@@ -48,3 +48,12 @@ trigger
 	if string, then the cset generator must exist already (eg, default)
 	if tuple, then if the cset generator isn't defined, use that func (makes it a default for that instance)
 	if callable, then it's treated as a non-shared cset.
+
+using lazyvaldict, need to generate keys and funcs on the fly for available csets.
+initial keys (and funcs) are pulled from the class and handed into __init__
+
+add_trigger's checks against the csets list for the instance, adding if needed else puking
+passes in a "preserve these csets" also
+
+how to handle invalidating a cset?  say a cset intersection between new and livefs,
+if new or livefs is modified, should invalidate any cset that relies on it

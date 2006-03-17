@@ -163,7 +163,7 @@ class LazyValDict(UserDict.DictMixin):
 	
 	def __init__(self, get_keys_func, get_val_func):
 		"""
-		get_keys_func is a callable that is JIT called with no args	 returns a tuple of keys, or is a list
+		get_keys_func is a callable that is JIT called with no args	 returns a tuple of keys, or supports __contains__
 		get_val_func is a callable that is JIT called with the key requested
 		"""
 		if not callable(get_val_func):
@@ -172,7 +172,8 @@ class LazyValDict(UserDict.DictMixin):
 			self.__keys_func = get_keys_func
 		else:
 			try:
-				self.__keys = set(get_keys_func)
+				iter(get_keys_func)
+				self.__keys = get_keys_func
 				self.__keys_func = None
 			except TypeError:
 				raise TypeError("get_keys_func isn't iterable nor is it callable")

@@ -112,7 +112,7 @@ class tree(object):
 	def replace(self, orig, new, *a, **kw):
 		if self.frozen:
 			raise AttributeError("repo is frozen")
-		self._replace(orig, new, *a, **kw)
+		return self._replace(orig, new, *a, **kw)
 
 	def _replace(self, orig, new, *a, **kw):
 		raise NotImplementedError

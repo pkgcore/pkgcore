@@ -9,14 +9,14 @@ from pkgcore.package.atom import atom
 from pkgcore.ebuild.conditionals import DepSet
 from pkgcore.restrictions.packages import OrRestriction
 
-import repository
+from pkgcore.vdb import ondisk
 
 class tree(prototype.tree):
 
 	def __init__(self, parent):
 		super(tree,self).__init__()
-		if not isinstance(parent, repository.tree):
-			raise errors.InitializationError("parent must be a pkgcore.vdb.repository repo" + str(type(parent)))
+		if not isinstance(parent, ondisk.tree):
+			raise errors.InitializationError("parent must be a pkgcore.vdb.ondisk repo" + str(type(parent)))
 		self.parent = parent
 		self.package_class = factory(self).new_package
 		self._virtuals = None

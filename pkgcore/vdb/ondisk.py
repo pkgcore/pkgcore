@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os, stat, errno
+import os, stat, errno, shutil
 from itertools import ifilter
 from pkgcore.repository import prototype, errors
 
@@ -128,19 +128,24 @@ class tree(prototype.tree):
 	def _uninstall(self, pkg, *a, **kw):
 		return uninstall(self, pkg, *a, **kw)
 
+	def _replace(self, oldpkg, newpkg, *a, **kw):
+		return replace(self, oldpkg, newpkg, *a, **kw)
+
 
 class install(repo_interfaces.install):
 	def __init__(self, repo, pkg, *a, **kw):
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
 		repo_interfaces.install.__init__(self, repo, pkg, *a, **kw)
 		
-	def merge_metadata(self):
+	def merge_metadata(self, dirpath=None):
 		# error checking?
-		ensure_dirs(self.dirpath)
+		if dirpath is None:
+			dirpath = self.dirpath
+		ensure_dirs(dirpath)
 		rewrite = self.repo._metadata_rewrites
 		for k in self.pkg.tracked_attributes:
 			if k == "contents":
-				v = ContentsFile(os.path.join(self.dirpath, "CONTENTS"), writable=True, empty=True)
+				v = ContentsFile(os.path.join(dirpath, "CONTENTS"), writable=True, empty=True)
 				for x in self.pkg.contents:
 					if self.offset:
 						v.add(x.change_location(os.path.join(self.offset, x.location)))
@@ -148,8 +153,8 @@ class install(repo_interfaces.install):
 						v.add(x)
 				v.flush()
 			elif k == "environment":
-				shutil.copy(getattr(self.pkg, k).get_path(), os.path.join(self.dirpath, "environment"))
-				spawn(["bzip2", "-9", os.path.join(self.dirpath, "environment")], fd_pipes={})
+				shutil.copy(getattr(self.pkg, k).get_path(), os.path.join(dirpath, "environment"))
+				spawn(["bzip2", "-9", os.path.join(dirpath, "environment")], fd_pipes={})
 			else:
 				v = getattr(self.pkg, k)
 				if not isinstance(v, basestring):
@@ -161,7 +166,7 @@ class install(repo_interfaces.install):
 					s = v
 				if not s.endswith("\n"):
 					s += "\n"
-				open(os.path.join(self.dirpath, rewrite.get(k, k.upper())), "w").write(s)
+				open(os.path.join(dirpath, rewrite.get(k, k.upper())), "w").write(s)
 		return True
 
 
@@ -170,6 +175,27 @@ class uninstall(repo_interfaces.uninstall):
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
 		repo_interfaces.uninstall.__init__(self, repo, pkg, offset=offset, *a, **kw)
 
-	def unmerge_metadata(self):
+	def unmerge_metadata(self, dirpath=None):
+		if dirpath is None:
+			dirpath = self.dirpath
 		shutil.rmtree(self.dirpath)
+		return True
+
+# should convert these to mixins.
+class replace(install, uninstall, repo_interfaces.replace):
+	
+	def __init__(self, repo, pkg, *a, **kw):
+		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
+		self.tmpdirpath = os.path.join(os.path.dirname(self.dirpath), ".tmp."+os.path.basename(self.dirpath))
+		repo_interfaces.replace.__init__(self, repo, pkg, *a, **kw)
+	
+	def merge_metadata(self, *a, **kw):
+		kw["dirpath"] = self.tmpdirpath
+		return install.merge_metadata(self, *a, **kw)
+	
+	def unmerge_metadata(self, *a, **kw):
+		ret = uninstall.unmerge_metadata(self, *a, **kw)
+		if not ret:
+			return ret
+		os.rename(self.tmpdirpath, self.dirpath)
 		return True

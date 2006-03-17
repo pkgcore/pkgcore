@@ -1,13 +1,13 @@
 So... you've got a checkout, how do you hack on it, how do you get it setup so you can actually work on this framework?
 
-PYTHONPATH is your friend, first of all.  Set it to the directory you've checked savior/3.0 out to.
-for example, I've got /home/bharring/savior as my checkout- I want python to use the checkouts pkgcore code, so
-export PYTHONPATH="/home/bharring/savior/"
+PYTHONPATH is your friend, first of all.  Set it to the directory you've checked pkgcore/3.0 out to.
+for example, I've got /home/bharring/pkgcore as my checkout- I want python to use the checkouts pkgcore code, so
+export PYTHONPATH="/home/bharring/pkgcore/"
 
-Upon a python -c'import pkgcore', python will scan savior, see the pkgcore directory in it (and that it has __init__.py), and use that.
+Upon a python -c'import pkgcore', python will scan pkgcore, see the pkgcore directory in it (and that it has __init__.py), and use that.
 
 Stable portage still is accessible/usable via normal emerge/repoman calls; if you unset PYTHONPATH, python -c'import portage' will pull from
-/usr/lib/portage/pym/ (unless you have a portage.py in your current directory, or you're current dir is the savior checkout).
+/usr/lib/portage/pym/ (unless you have a portage.py in your current directory, or you're current dir is the pkgcore checkout).
 
 PYTHONPATH makes the new code accessible to the python namespace; next you need to tweak the new pkgcore code's default paths.
 
@@ -35,11 +35,11 @@ It's recommended you start with it as the base, and customize it.
 
 so... after you've done all this, few more setup steps- need to register the ebuild plugin, running as root-
 
-savior/bin/utilities/register_plugin.py -s fs_ops copyfile 1 pkgcore.fs.ops.default_copyfile
-savior/bin/utilities/register_plugin.py -s fs_ops ensure_perms 1 pkgcore.fs.ops.default_ensure_perms
-savior/bin/utilities/register_plugin.py -s fs_ops mkdir 1 pkgcore.fs.ops.default_mkdir
-savior/bin/utilities/register_plugin.py -s format ebuild_built 0.0 pkgcore.ebuild.ebuild_built.generate_new_factory
-savior/bin/utilities/register_plugin.py -s format ebuild_src 0.0 pkgcore.ebuild.ebuild_src.generate_new_factory
+pkgcore/bin/utilities/register_plugin.py -s fs_ops copyfile 1 pkgcore.fs.ops.default_copyfile
+pkgcore/bin/utilities/register_plugin.py -s fs_ops ensure_perms 1 pkgcore.fs.ops.default_ensure_perms
+pkgcore/bin/utilities/register_plugin.py -s fs_ops mkdir 1 pkgcore.fs.ops.default_mkdir
+pkgcore/bin/utilities/register_plugin.py -s format ebuild_built 0.0 pkgcore.ebuild.ebuild_built.generate_new_factory
+pkgcore/bin/utilities/register_plugin.py -s format ebuild_src 0.0 pkgcore.ebuild.ebuild_src.generate_new_factory
 
 You'll need to have PYTHONPATH set as root, note that sudo cleanses the env normally.
 If that fails, you're PYTHONPATH is invalid; otherwise it'll spit back a registering message.  So far, good to go.

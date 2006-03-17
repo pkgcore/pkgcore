@@ -51,6 +51,6 @@ default = yes
 repositories = "rsync repo" 
 fetcher = fetcher
 # development override
-PATH	= /sbin:/bin:/home/bharring/savior/bin/ebuild-helpers:/home/bharring/savior/bin:/usr/lib/portage/bin:/usr/sbin:/usr/bin
+PATH	= /sbin:/bin:/home/bharring/pkgcore/bin/ebuild-helpers:/home/bharring/savior/bin:/usr/lib/portage/bin:/usr/sbin:/usr/bin
 vdb = vdb
 

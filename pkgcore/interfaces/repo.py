@@ -110,7 +110,12 @@ class uninstall(base):
 	def unmerge_metadata(self):
 		raise NotImplementedError
 		
-
+	def __del__(self):
+		if self.underway:
+			print "warning: %s unmerge was underway, but wasn't completed" % self.pkg
+			self.lock.release_write_lock()
+			
+			
 class replace(install, uninstall):
 	stage_depends = {"finish":"unmerge_metadata",
 		"unmerge_metadata":"postrm", "postrm":"remove","remove":"prerm", "prerm":"merge_metadata", 
@@ -120,3 +125,15 @@ class replace(install, uninstall):
 	stage_hooks = ["merge_metadata", "unmerge_metadata", "postrm", "prerm", "postinst", "preinst",
 		"unmerge_metadata", "merge_metadata"]
 	_op_name = "_repo_replace_op"
+
+	def __init__(self, repo, oldpkg, newpkg, status_obj=None, offset=None):
+		base.__init__(self, repo, newpkg, status_obj=status_obj, offset=offset)
+		self.oldpkg = oldpkg
+		
+	def start(self):
+		return base.start(self, MergeEngine.replace(self.oldpkg, self.pkg, offset=self.offset))
+
+	def __del__(self):
+		if self.underway:
+			print "warning: %s -> %s replacement was underway, but wasn't completed" % (self.oldpkg, self.pkg)
+			self.lock.release_write_lock()

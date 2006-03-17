@@ -39,6 +39,8 @@ class trigger(object):
 	def __call__(self, engine, csets):
 		self.trigger(engine, csets)
 
+	def __str__(self):
+		return "trigger: %s for csets(%s)" % (self.trigger, self.required_csets)
 
 class SimpleTrigger(trigger):
 
@@ -82,13 +84,13 @@ def run_ldconfig(engine, cset, ld_so_conf_file="etc/ld.so.conf"):
 			raise errors.TriggerWarning("ldconfig returned %i from execution" % ret)
 
 
-def merge_trigger():
-	return SimpleTrigger("install", 
+def merge_trigger(cset="install"):
+	return SimpleTrigger(cset, 
 		lambda engine,cset:ops.merge_contents(cset, offset=engine.offset))
 
-def unmerge_trigger():
-	return SimpleTrigger("uninstall", lambda e,c: ops.unmerge_contents(c))
+def unmerge_trigger(cset="uninstall"):
+	return SimpleTrigger(cset, lambda e,c: ops.unmerge_contents(c))
 
-def ldconfig_trigger():
-	return SimpleTrigger("modifying", run_ldconfig)
+def ldconfig_trigger(cset="modifying"):
+	return SimpleTrigger(cset, run_ldconfig)
 

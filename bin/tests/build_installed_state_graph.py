@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import sys
-sys.path.insert(0, ".")
 
 import pkgcore.config
 c = pkgcore.config.load_config()

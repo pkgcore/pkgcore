@@ -1,6 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from itertools import chain
 from twisted.trial import unittest
 from pkgcore import spawn
 from pkgcore.test.fs.test_util import TempDirMixin
@@ -66,7 +67,8 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 			raise unittest.SkipTest("sandbox is not available, thus testing isn't possible")
 		self.assertTrue(spawn.sandbox_capable, "sandbox_capable boolean test")
 		fp = self.generate_script("portage-spawn-sandbox.sh", "echo $LD_PRELOAD")
-		self.failUnlessSubstring("/libsandbox.so", spawn.spawn_get_output(fp, spawn_type=spawn.spawn_sandbox)[1][0])
+		self.assertIn("libsandbox.so", [os.path.basename(x.strip()) for x in 
+			spawn.spawn_get_output(fp, spawn_type=spawn.spawn_sandbox)[1][0].split(":")])
 		os.unlink(fp)
 
 	def test_fakeroot(self):

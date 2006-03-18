@@ -2,9 +2,6 @@
 # Copyright: 2005-2006 Zac Medico <zmedico@gentoo.org>
 # License: GPL2
 
-if not hasattr(__builtins__, "set"):
-	from sets import Set as set
-
 from pkgcore.package.atom import atom
 from pkgcore.restrictions.boolean import OrRestriction
 
@@ -23,7 +20,7 @@ class StateGraph(object):
 		self.pkgs[pkg] = (combinations(pkg.rdepends, atom), set(), set())
 		if len(self.pkgs[pkg][0]) <= 1:
 			for atomset in self.pkgs[pkg][0]:
-				self.pkgs[pkg][1].union_update(atomset)
+				self.pkgs[pkg][1].update(self.pkgs[pkg][1].union(atomset))
 				self._add_deps(pkg)
 
 	def _add_deps(self, pkg):
@@ -55,7 +52,7 @@ class StateGraph(object):
 				continue
 			all_atoms = set()
 			for atomset in self.pkgs[pkg][0]:
-				all_atoms.union_update(atomset)
+				all_atoms.update(all_atoms.union(atomset))
 			okay_atoms = set()
 			for atom in all_atoms:
 				have_blocker=False
@@ -82,7 +79,7 @@ class StateGraph(object):
 				for choice, difference in differences.iteritems():
 					if len(difference) < len(differences[best_choice]):
 						best_choice = choice
-			self.pkgs[pkg][1].union_update(best_choice)
+			self.pkgs[pkg][1].update(self.pkgs[pkg][1].union(best_choice))
 			self._add_deps(pkg)
 		for pkg in self.pkgs:
 			for atom in self.atoms:
@@ -204,9 +201,9 @@ def combinations(restrict, elem_type=atom):
 			if isinstance(element, elem_type):
 				newset = set()
 				newset.add(element)
-				ret.add(newset)
+				ret.add(frozenset(newset))
 			else:
-				ret.union_update(combinations(element, elem_type))
+				ret.update(ret.union(combinations(element, elem_type)))
 	else:
 		newset = set()
 		subsets = set()
@@ -215,7 +212,7 @@ def combinations(restrict, elem_type=atom):
 				newset.add(element)
 			else:
 				subsets.add(combinations(element, elem_type))
-		ret.add(newset)
+		ret.add(frozenset(newset))
 		for comb in subsets:
 			ret = extrapolate(ret, comb)
 

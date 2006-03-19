@@ -179,32 +179,17 @@ a potentially faster resolver remotely (consider situation where the
 repo is a rdbms; visibility filter can be handed off to pl/sql funcs
 or massive where clause)
 
-determination of whether or not a repo defines it's own global
-visibility filter is done via inspection of the repo class-
-repo.visibility_config If set to False, niadda, otherwise it is either
-a callable that returns, or is already, a config object. In other
-words, the repo on initialization is *raw*, callers must instantiate
-the visibility wrapper (this is a candidate for api wrapping)
-
-The wrapper is given an instantiated repository instance (or possibly
-a callable that returns it, this isn't set in stone however) as first
-arg, Wrapper should/will be smart enough to filter out restrictions
-that don't apply to that repo.
-
-possibly after category is mapped, drop restrictions that don't match
-categories. Debatable. Not debatable, filter out restrictions that are
-domain/repo specific, eg, don't hold onto a restriction for repo xyz
-when you're wrapping abc.
-
-visibility wrappers are *not* added if repo.allow_visibility_filtering
-exists, and is true. VDB doesn't need a visibility wrapper, and
-shouldn't be allowed wrapped. Config should/will know not to attempt
-this, but checks within the visibility wrapper should assert this
-also.
+The way this is implemented is that package.* are translated into
+restrictions, which are then slipped into a 
+``pkgcore.repository.visibility.tree`` instance that wraps the raw repo.
 
 
 profiles
 --------
+
+Profiles can be implemented as config sub groups (think inherit on steroids); 
+that said, they're not implemented that way currently, they're implemented as
+stand alone objects.
 
 if profile is specified, creates repo visibility wrappers to work with
 it. implicit implication is that you can specify a profile per actual
@@ -218,19 +203,24 @@ target(s), which is a section to pull values from, and override.
 MAKE.CONF BACKWARDS COMPATIBILITY
 =================================
 
-assumes /etc/make.profile points at a valid profile , which is used to define the profile for the config.
-make.conf is read, and converted into a config section, all of this is bound under a default domain with root="/".
-PORTDIR is removed and used for ebuild repo's location
-PORTDIR_OVERLAY is removed, and sections are created for each, slaving them to PORTDIR, creating a final repositorySet that binds them 
-together.
+**note** this isn't yet implemented, as such, subject to change.
+assumes /etc/make.profile points at a valid profile , which is used to define
+the profile for the config.  make.conf is read, and converted into a config 
+section, all of this is bound under a default domain with root="/".
+PORTDIR is removed and used for ebuild repo's location PORTDIR_OVERLAY is 
+removed, and sections are created for each, slaving them to PORTDIR, creating 
+a final repositorySet that binds them together.
 /etc/portage/package.* is used as a visibility wrapper on repositorySet.
 
-if FEATURES="binpkg" is defined, then a binpkg repository section is generated, and PKGDIR is removed and used as location for the 
-repository.
+if FEATURES="binpkg" is defined, then a binpkg repository section is 
+generated, and PKGDIR is removed and used as location for the repository.
 
-defaults are lifted from /usr/share/portage/defaults.config ; basically make.global, but in the new config format, and treated as a 
-non-modifiable data file, and stored elsewhere
+defaults are lifted from /usr/share/portage/defaults.config ; basically 
+make.global, but in the new config format, and treated as a non-modifiable 
+data file, and stored elsewhere
 
-Note that effectively make.conf's existance just serves to mangle defaults.config.  it's a mapping of old options into new, with all 
-unknown options being used as config fodder (literally, default config section gets 'em).
+Note that effectively make.conf's existance just serves to mangle 
+defaults.config.  it's a mapping of old options into new, with all unknown 
+options being used as config fodder (literally, default config section gets 
+'em).
 

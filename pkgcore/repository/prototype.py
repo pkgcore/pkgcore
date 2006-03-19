@@ -23,7 +23,6 @@ class tree(object):
 			returnIterFunc=lambda x,y: str(x)+"/"+str(y), modifiable=(not frozen))
 		self.versions   = IndexableSequence(self.packages.__iter__, self._get_versions, \
 			returnIterFunc=lambda x,y: str(x)+"-"+str(y), modifiable=(not frozen))
-#		self.raw_repo = proxy(self)
 		self.frozen = frozen
 		self.lock = None
 

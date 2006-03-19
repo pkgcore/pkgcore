@@ -162,11 +162,8 @@ will get basedir="/usr/portage" for a dict arg. (Example above)
 allowed_merges file
 -------------------
 
-Specifies atoms that control what can be merged. Think of it as either
-the uber "you ain't merging this bubba" for vdb (not very useful), or,
-bit more useful, list of atoms that are binpkg'd, specifiable per
-merge_target repo. can't apply it to an ebuild repo, can apply it to a
-binpkg/rpm repo though.
+Specifies atoms that control what can be merged. Think of it as a
+filter on what can be added to a mutable repository.
 
 
 package.*, visibility wrappers

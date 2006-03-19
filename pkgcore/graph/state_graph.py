@@ -211,7 +211,7 @@ def combinations(restrict, elem_type=atom):
 			if isinstance(element, elem_type):
 				newset.add(element)
 			else:
-				subsets.add(combinations(element, elem_type))
+				subsets.add(frozenset(combinations(element, elem_type)))
 		ret.add(frozenset(newset))
 		for comb in subsets:
 			ret = extrapolate(ret, comb)

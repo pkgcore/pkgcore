@@ -37,4 +37,4 @@ class CombinationsTest(unittest.TestCase):
 			comb_known_good = set()
 			for comb_string in comb_strings:
 				comb_known_good.update(self.get_combinations(comb_string))
-			self.assertEquals(comb,comb_known_good)
+			self.assertEquals(comb, frozenset(comb_known_good))

@@ -237,8 +237,8 @@ class buildable(ebd, build.base):
 					if s+y in self.env:
 						del self.env[s+y]
 		
-		self.env["PATH"] = ":".join(path)
 		path = filter(None, path)
+		self.env["PATH"] = ":".join(path)
 		self.fetchables = pkg.fetchables[:]
 		self.env["A"] = ' '.join(map(operator.attrgettet("filename"), self.fetchables))
 

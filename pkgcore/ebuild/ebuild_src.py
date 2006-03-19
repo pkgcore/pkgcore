@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os
+import os, operator
 from pkgcore.package import metadata
 from conditionals import DepSet
 from pkgcore.package.atom import atom
@@ -73,7 +73,7 @@ class package(metadata.package):
 	_get_attr["_mtime_"] = lambda s: long(os.stat(s.path).st_mtime)
 	_get_attr["P"] = lambda s: s.package+"-"+s.version
 	_get_attr["PF"] = lambda s: s.package+"-"+s.fullver
-	_get_attr["PN"] = lambda s: s.package
+	_get_attr["PN"] = operator.attrgetter("package")
 	_get_attr["PR"] = lambda s: "-r"+str(s.revision is not None and s.revision or 0)
 	_get_attr.update((x, post_curry(generate_depset, atom, x.rstrip("s"),)) for x in ("depends", "provides"))
 	_get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepends", "pdepends")

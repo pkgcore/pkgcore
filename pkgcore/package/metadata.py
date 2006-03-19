@@ -2,15 +2,16 @@
 # License: GPL2
 
 import weakref
+import warnings
 from cpv import CPV
 
 class package(CPV):
 	immutable = True
+
+	_get_attr = dict(CPV._get_attr)
 	
 	def __init__(self, cpv, parent_repository):
 		super(package,self).__init__(cpv)
-		self.__dict__["_cpv_finalized"] = False
-#		self.__dict__["_finalized"] = False
 		self.__dict__["_parent"] = parent_repository
 
 
@@ -28,38 +29,18 @@ class package(CPV):
 			raise KeyError(key)
 
 
-	def __getattr__(self, attr):
-		if not self._cpv_finalized:
-			try:	return super(package,self).__getattr__(attr)
-			except AttributeError:
-				#enable this when CPV does it.
-				#self.__cpv_finalized = True
-				pass
-
-		# adding this here for now as there doesn't
-		# seem to be a better place for it.
-		# -- jstubbs
-		if attr == "metapkg":
-			import warnings
-			warnings.warn("metapkg hack will be removed.")
-			return False
-
-		# assuming they're doing super, if it ain't data it's an error (no other jit attr)
-		if attr != "data":
-			raise AttributeError, attr
-#		if self._finalized:
-#			raise AttributeError, attr
-
-		# if we've made it here, then more is needed.
-		data = self._fetch_metadata()
-		self.__dict__["data"] = data
-		return data
-
-#		self.__dict__["_finalized"] = True
-#		if attr in self.__dict__:
-#			return self.__dict__[attr]
-#		raise AttributeError,attr
-
+	# hack. :)
+	_get_attr["metapkg"] = lambda *a: bool(warnings.warn("metapkg hack will be removed soon"))
+	
+	def _get_data(self):
+		if "data" in self.__dict__:
+			import traceback
+			traceback.print_stack()
+			warnings.warn("odd, got a request for data yet it's in the dict")
+			return self.__dict__["data"]
+		
+		return self._fetch_metadata()
+	_get_attr["data"] = _get_data
 
 	def _fetch_metadata(self):
 		raise NotImplementedError

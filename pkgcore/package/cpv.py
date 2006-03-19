@@ -4,6 +4,7 @@
 
 import re
 from base import base
+from pkgcore.util.currying import post_curry
 
 pkg_regexp = re.compile("^[a-zA-Z0-9]([-_+a-zA-Z0-9]*[+a-zA-Z0-9])?$")
 ver_regexp = re.compile("^(cvs\\.)?(\\d+)((\\.\\d+)*)([a-z]?)((_(pre|p|beta|alpha|rc)\\d*)*)(-r(\\d+))?$")
@@ -28,6 +29,8 @@ class CPV(base):
 	int __cmp__(CPV)
 	"""
 
+	_get_attr = {}
+
 	def __init__(self, cpvstr):
 		if not isinstance(cpvstr, str):
 			raise ValueError(cpvstr)
@@ -43,72 +46,90 @@ class CPV(base):
 	def __setattr__(self, name, value):
 		raise Exception()
 
-	def __getattr__(self, name):
+	def __getattr__(self, attr):
+		val = None
+		if attr in self.__dict__:
+			print "caught attr lookup when key exists in __dict__: %s" % attr
+		if attr in self._get_attr:
+			val = self._get_attr[attr](self)
+		else:
+			print "throwing for",attr
+			print self._get_attr.keys()
+			raise AttributeError(attr)
+		self.__dict__[attr] = val
+		return val
 
-		if name == "category":
-			myparts = self.cpvstr.split("/")
-			if len(myparts) >= 2:
-				if not pkg_regexp.match(myparts[0]):
-					raise ValueError(self.cpvstr)
-				self.__dict__["category"] = myparts[0]
-			else:
-				self.__dict__["category"] = None
-
-		if name == "package":
-			if self.category:
-				myparts = self.cpvstr[len(self.category)+1:].split("-")
-			else:
-				myparts = self.cpvstr.split("-")
-			if ver_regexp.match(myparts[0]):
+	def _get_category(self):
+		myparts = self.cpvstr.split("/")
+		if len(myparts) >= 2:
+			# regexes suck. move away from them.
+			if not pkg_regexp.match(myparts[0]):
 				raise ValueError(self.cpvstr)
-			pos = 1
-			while pos < len(myparts) and not ver_regexp.match(myparts[pos]):
-				pos += 1
-			pkgname = "-".join(myparts[:pos])
-			if not pkg_regexp.match(pkgname):
-				raise ValueError(self.cpvstr)
-			self.__dict__["package"] = pkgname
+			return myparts[0]
+		return None
 
-		if name == "key":
-			if self.category:
-				self.__dict__["key"] = self.category +"/"+ self.package
+	_get_attr["category"] = _get_category
+
+	def _get_package(self):
+		if self.category:
+			myparts = self.cpvstr[len(self.category)+1:].split("-")
+		else:
+			myparts = self.cpvstr.split("-")
+		if ver_regexp.match(myparts[0]):
+			raise ValueError(self.cpvstr)
+		pos = 1
+		while pos < len(myparts) and not ver_regexp.match(myparts[pos]):
+			pos += 1
+		pkgname = "-".join(myparts[:pos])
+		if not pkg_regexp.match(pkgname):
+			raise ValueError(self.cpvstr)
+		return pkgname
+
+	_get_attr["package"] = _get_package
+
+	def _get_key(self):
+		if self.category:
+			return self.category +"/"+ self.package
+		return self.package
+
+	_get_attr["key"] = _get_key
+
+	def _split_version(self, attr):
+		if self.category:
+			myparts = self.cpvstr[len(self.category+self.package)+2:].split("-")
+		else:
+			myparts = self.cpvstr[len(self.package)+1:].split("-")
+
+		if not myparts[0]:
+			self.__dict__["version"] = None
+			self.__dict__["revision"] = None
+
+		else:
+			if myparts[-1][0] == "r" and myparts[-1][1:].isdigit():
+				self.__dict__["revision"] = int(myparts[-1][1:])
+				myparts = myparts[:-1]
 			else:
-				self.__dict__["key"] = self.package
-
-		if name in ("version","revision","fullver"):
-			if self.category:
-				myparts = self.cpvstr[len(self.category+self.package)+2:].split("-")
-			else:
-				myparts = self.cpvstr[len(self.package)+1:].split("-")
-
-			if not myparts[0]:
-				self.__dict__["version"] = None
 				self.__dict__["revision"] = None
 
-			else:
-				if myparts[-1][0] == "r" and myparts[-1][1:].isdigit():
-					self.__dict__["revision"] = int(myparts[-1][1:])
-					myparts = myparts[:-1]
-				else:
-#					self.__dict__["revision"] = 0 # harring changed this
-					self.__dict__["revision"] = None
+			for x in myparts:
+				if not ver_regexp.match(x):
+					raise ValueError(self.cpvstr)
 
-				for x in myparts:
-					if not ver_regexp.match(x):
-						raise ValueError(self.cpvstr)
-
-				self.__dict__["version"] = "-".join(myparts)
-		if name == "fullver":
-			if self.version == None:
+			self.__dict__["version"] = "-".join(myparts)
+			if self.__dict__["version"] is None:
 				self.__dict__["fullver"] = None
-			elif self.revision == None:
-				self.__dict__["fullver"] = self.version
 			else:
-				self.__dict__["fullver"] = "%s-r%i" % (self.version,self.revision)
+				if self.version == None:
+					self.__dict__["fullver"] = None
+				elif self.revision == None:
+					self.__dict__["fullver"] = self.version
+				else:
+					self.__dict__["fullver"] = "%s-r%i" % (self.version,self.revision)
+			
+		return self.__dict__[attr]
 
-		if name in self.__dict__:
-			return self.__dict__[name]
-		raise AttributeError,name
+	_get_attr.update([(x, post_curry(_split_version, x)) for x in ("version", "fullver", "revision")])
+	
 
 	def __eq__(self, other):
 		if not isinstance(other, self.__class__):

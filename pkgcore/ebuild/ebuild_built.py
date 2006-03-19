@@ -23,14 +23,14 @@ class package(ebuild_src.package):
 	tracked_attributes.extend(["contents", "use", "environment"])
 	allow_regen = False
 	
-	_convert_data = dict(ebuild_src.package._convert_data)
+	_get_attr = dict(ebuild_src.package._get_attr)
 
 	for x in ("_mtime_", "fetchables"):
-		del _convert_data[x]
+		del _get_attr[x]
 	del x
 
-	_convert_data.update((x,post_curry(passthrough, x)) for x in ("contents", "environment"))
-	_convert_data["use"] = post_curry(passthrough, "use", "USE")
+	_get_attr.update((x,post_curry(passthrough, x)) for x in ("contents", "environment"))
+	_get_attr["use"] = post_curry(passthrough, "use", "USE")
 	
 	def _update_metadata(self, pkg):
 		raise NotImplementedError()

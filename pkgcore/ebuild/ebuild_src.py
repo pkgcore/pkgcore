@@ -68,30 +68,21 @@ class package(metadata.package):
 			mirrors = {}
 		self.__dict__["_mirrors"] = mirrors
 
-	_convert_data = {}
-	_convert_data["path"] = lambda s:s._get_path(s)
-	_convert_data["_mtime_"] = lambda s: long(os.stat(s.path).st_mtime)
-	_convert_data["P"] = lambda s: s.package+"-"+s.fullver
-	_convert_data["PF"] = lambda s: s.package
-	_convert_data["PN"] = lambda s: s.package
-	_convert_data["PR"] = lambda s: "-r"+str(s.revision)
-	_convert_data.update((x, post_curry(generate_depset, atom, x.rstrip("s"),)) for x in ("depends", "provides"))
-	_convert_data["rdepends"] = post_curry(generate_depset, atom, "rdepends", "pdepends")
-	_convert_data.update((x, post_curry(generate_depset, str, x)) for x in ("license", "slot"))
-	_convert_data["fetchables"] = generate_fetchables
-	_convert_data["description"] = lambda s:s.data["DESCRIPTION"]
-	_convert_data["keywords"] = lambda s:s.data["KEYWORDS"].split()
-	_convert_data["restrict"] = lambda s:s.data["RESTRICT"].split()
-	_convert_data["eapi"] = generate_eapi
-
-	def __getattr__(self, key):
-		val = None
-		if key in self._convert_data:
-			val = self._convert_data[key](self)
-		else:
-			return super(package, self).__getattr__(key)
-		self.__dict__[key] = val
-		return val
+	_get_attr = dict(metadata.package._get_attr)
+	_get_attr["path"] = lambda s:s._get_path(s)
+	_get_attr["_mtime_"] = lambda s: long(os.stat(s.path).st_mtime)
+	_get_attr["P"] = lambda s: s.package+"-"+s.fullver
+	_get_attr["PF"] = lambda s: s.package
+	_get_attr["PN"] = lambda s: s.package
+	_get_attr["PR"] = lambda s: "-r"+str(s.revision)
+	_get_attr.update((x, post_curry(generate_depset, atom, x.rstrip("s"),)) for x in ("depends", "provides"))
+	_get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepends", "pdepends")
+	_get_attr.update((x, post_curry(generate_depset, str, x)) for x in ("license", "slot"))
+	_get_attr["fetchables"] = generate_fetchables
+	_get_attr["description"] = lambda s:s.data["DESCRIPTION"]
+	_get_attr["keywords"] = lambda s:s.data["KEYWORDS"].split()
+	_get_attr["restrict"] = lambda s:s.data["RESTRICT"].split()
+	_get_attr["eapi"] = generate_eapi
 
 	def _fetch_metadata(self):
 		data = self._parent._get_metadata(self)

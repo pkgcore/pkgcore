@@ -5,8 +5,8 @@ from pkgcore.util.mappings import IndexableSequence
 from weakref import proxy
 from pkgcore.package.atom import atom
 
-def ix_cat_callable(*cat):
-	return "/".join(cat)
+def ix_callable(*args):
+	return "/".join(str(x) for x in args)
 
 class tree(object):
 	"""
@@ -18,11 +18,11 @@ class tree(object):
 	
 	def __init__(self, frozen=True):
 		self.categories = IndexableSequence(self._get_categories, self._get_categories, 
-			returnIterFunc=ix_cat_callable, returnEmpty=True, modifiable=(not frozen))
+			returnIterFunc=ix_callable, returnEmpty=True, modifiable=(not frozen))
 		self.packages   = IndexableSequence(self.categories.iterkeys, self._get_packages, \
-			returnIterFunc=lambda x,y: str(x)+"/"+str(y), modifiable=(not frozen))
+			returnIterFunc=ix_callable, modifiable=(not frozen))
 		self.versions   = IndexableSequence(self.packages.__iter__, self._get_versions, \
-			returnIterFunc=lambda x,y: str(x)+"-"+str(y), modifiable=(not frozen))
+			returnIterFunc=ix_callable, modifiable=(not frozen))
 		self.frozen = frozen
 		self.lock = None
 

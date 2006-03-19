@@ -203,7 +203,10 @@ target(s), which is a section to pull values from, and override.
 MAKE.CONF BACKWARDS COMPATIBILITY
 =================================
 
-**note** this isn't yet implemented, as such, subject to change.
+**note**
+this isn't yet implemented, as such, subject to change.
+
+
 assumes /etc/make.profile points at a valid profile , which is used to define
 the profile for the config.  make.conf is read, and converted into a config 
 section, all of this is bound under a default domain with root="/".

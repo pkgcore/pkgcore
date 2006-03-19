@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os, shutil
+import os, shutil, operator
 from pkgcore.interfaces import build, repo
 from itertools import imap, izip
 from pkgcore.ebuild.processor import request_ebuild_processor, release_ebuild_processor, UnhandledCommand, \
@@ -240,7 +240,7 @@ class buildable(ebd, build.base):
 		self.env["PATH"] = ":".join(path)
 		path = filter(None, path)
 		self.fetchables = pkg.fetchables[:]
-		self.env["A"] = ' '.join(map(lambda x: x.filename, self.fetchables))
+		self.env["A"] = ' '.join(map(operator.attrgettet("filename"), self.fetchables))
 
 	def setup_distfiles(self):
 		if self.files:

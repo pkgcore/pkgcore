@@ -215,10 +215,13 @@ class atom(boolean.AndRestriction):
 
 	def atom_str(self):
 		s = ""
-		if self.blocks:			s+="!"
-		s+=self.op+self.category+"/"+self.package
-		if self.version:		s+="-"+self.fullver
-		if self.glob:			s+="*"
+		if self.blocks:	
+			s+="!"
+		s+ = self.op + self.category + "/" + self.package
+		if self.version:
+			s+="-"+self.fullver
+		if self.glob:
+			s+="*"
 		return s
 
 	def __str__(self):
@@ -237,9 +240,13 @@ class atom(boolean.AndRestriction):
 		if not isinstance(other, self.__class__):
 			raise TypeError("other isn't of %s type, is %s" % (self.__class__, other.__class__))
 		c = cmp(self.category, other.category)
-		if c != 0:	return c
+		if c != 0:
+			return c
 		c = cmp(self.package, other.package)
-		if c != 0:	return c
+		if c != 0:
+			return c
 		c = ver_cmp(self.version, self.revision, other.version, other.revision)
-		if c != 0:	return c
+		if c != 0:	
+			return c
+
 		return cmp(self.op, other.op)

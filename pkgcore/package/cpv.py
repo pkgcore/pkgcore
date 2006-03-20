@@ -47,17 +47,10 @@ class CPV(base):
 		raise Exception()
 
 	def __getattr__(self, attr):
-		val = None
-		if attr in self.__dict__:
-			print "caught attr lookup when key exists in __dict__: %s" % attr
 		if attr in self._get_attr:
-			val = self._get_attr[attr](self)
-		else:
-			print "throwing for",attr
-			print self._get_attr.keys()
-			raise AttributeError(attr)
-		self.__dict__[attr] = val
-		return val
+			val = self.__dict__[attr] = self._get_attr[attr](self)
+			return val
+		raise AttributeError(attr)
 
 	def _get_category(self):
 		myparts = self.cpvstr.split("/")

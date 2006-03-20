@@ -46,6 +46,7 @@ def default_ensure_perms(d1,d2=None):
 	if do_mtime and t is not None:
 		os.utime(d1.location, (t, t))
 
+
 def default_mkdir(d):
 	if not d.mode:
 		mode = 0777
@@ -118,6 +119,7 @@ def merge_contents(cset, offset=None):
 		# XXX temporary until this is chunked for output
 		print "installing",x
 		copyfile(x)
+
 
 def unmerge_contents(cset):
 	for x in ifilterfalse(lambda x: isinstance(x, fs.fsDir), cset):

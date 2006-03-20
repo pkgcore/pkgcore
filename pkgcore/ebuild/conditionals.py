@@ -9,8 +9,6 @@ from pkgcore.util.lists import unique, flatten
 from pkgcore.util.strings import iter_tokens
 
 def conditional_converter(node, payload):
-	if isinstance(payload, DepSet):
-		import traceback;traceback.print_stack()
 	if node[0] == "!":
 		return packages.Conditional(node[1:], payload, negate=True)
 	return packages.Conditional(node, payload)

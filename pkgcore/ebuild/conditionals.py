@@ -68,9 +68,11 @@ class DepSet(boolean.AndRestriction):
 					else:
 						# Unconditional subset - useful in the || ( ( a b ) c ) case
 						k = ""
+
 					# push another frame on
 					depsets.append(self.__class__(dep_str, element_func, empty=True, conditional_converter=conditional_converter,
 						conditional_class=self.conditional_class))
+
 					conditionals.append(k)
 					if k.endswith("?"):
 						has_conditionals[-1] = True
@@ -126,10 +128,13 @@ class DepSet(boolean.AndRestriction):
 
 	def match(self, *a):
 		raise NotImplementedError
+
 	force_False = force_True = match
 
 class ParseError(Exception):
-	def __init__(self, s):	self.dep_str = s
-	def __str__(self):	return "%s is unparseable" % self.dep_str
 
+	def __init__(self, s):	
+		self.dep_str = s
 
+	def __str__(self):
+		return "%s is unparseable" % self.dep_str

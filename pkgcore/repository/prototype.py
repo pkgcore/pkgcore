@@ -28,6 +28,9 @@ class IterValLazyValDict(LazyValDict):
 
 	def __contains__(self, key):
 		return key in iter(self)
+		
+	def __str__(self):
+		return str(list(self))
 
 class tree(object):
 	"""
@@ -39,8 +42,8 @@ class tree(object):
 	
 	def __init__(self, frozen=True):
 		self.categories = IterValLazyValDict(self._get_categories, self._get_categories, override_iter=mangle_empties)
-		self.packages   = IterValLazyValDict(self.categories.__iter__, self._get_packages)
-		self.versions   = IterValLazyValDict(self.packages.__iter__, self._get_versions)
+		self.packages   = IterValLazyValDict(self.categories, self._get_packages)
+		self.versions   = IterValLazyValDict(self.packages, self._get_versions)
 
 		self.frozen = frozen
 		self.lock = None

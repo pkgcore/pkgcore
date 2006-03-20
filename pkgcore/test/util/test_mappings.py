@@ -55,7 +55,7 @@ class LazyValDictTestMixin(object):
 		self.dict[11]
 		self.dict[11]
 		self.assertEquals(self.negateCalls, [11])
-		
+
 
 class LazyValDictWithListTest(
 	unittest.TestCase, LazyValDictTestMixin, RememberingNegateMixin):
@@ -67,6 +67,20 @@ class LazyValDictWithListTest(
 	def tearDown(self):
 		self.tearDownRememberingNegate()
 
+	def test_itervalues(self):
+		self.assertEquals(sorted(self.dict.itervalues()), range(-11, 1))
+
+	def test_len(self):
+		self.assertEquals(len(self.dict), 12)
+		
+	def test_iter(self):
+		self.assertEquals(list(self.dict), range(12))
+	
+	def test_contains(self):
+		self.assertIn(1, self.dict)
+	
+	def test_has_key(self):
+		self.assertEqual(True, self.dict.has_key(1))
 
 class LazyValDictWithFuncTest(
 	unittest.TestCase, LazyValDictTestMixin, RememberingNegateMixin):

@@ -2,7 +2,7 @@
 # License: GPL2
 
 from itertools import imap, chain, ifilterfalse
-from operator import attrgetter
+from pkgcore.util.currying import alias_class_attr
 import UserDict
 
 
@@ -80,7 +80,8 @@ class LazyValDict(UserDict.DictMixin):
 			count += 1
 		return count
 
-	has_key = attrgetter("__contains__")
+	has_key = __contains__
+	__iter__ = alias_class_attr("iterkeys")
 
 
 class ProtectedDict(UserDict.DictMixin):
@@ -200,13 +201,13 @@ class StackedDict(UserDict.DictMixin):
 	def keys(self):
 		return list(iter(self))
 
-	def __iter__(self):
+	def iterkeys(self):
 		s=set()
 		for k in ifilterfalse(s.__contains__, chain(*map(iter, self._dicts))):
 			s.add(k)
 			yield k
 
-	iterkeys = __iter__
+	__iter__ = alias_class_attr("iterkeys")
 
 	def has_key(self, key):
 		for x in self._dicts:

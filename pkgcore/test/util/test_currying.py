@@ -107,10 +107,10 @@ class PrettyDocsTest(unittest.TestCase):
                 func.__doc__)
             
 class TestAliasClassAttr(unittest.TestCase):
-	def test_alias_class_attr(self):
+	def test_alias_class_method(self):
 		class kls(object):
 			__len__ = lambda s: 3
-			lfunc = currying.alias_class_attr("__len__")
+			lfunc = currying.alias_class_method("__len__")
 
 		c = kls()
 		self.assertEqual(c.__len__(), c.lfunc())

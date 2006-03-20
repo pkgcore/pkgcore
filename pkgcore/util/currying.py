@@ -3,7 +3,7 @@
 
 from operator import attrgetter
 
-__all__ = ["pre_curry", "post_curry", "pretty_docs", "alias_class_attr"]
+__all__ = ["pre_curry", "post_curry", "pretty_docs", "alias_class_method"]
 
 def pre_curry(func, *args, **kwargs):
 	"""passed in args are prefixed, with further args appended"""
@@ -39,8 +39,8 @@ def pretty_docs(wrapped, extradocs=None):
 def _second_level_call(grab_attr, self, *a, **kw):
 	return grab_attr(self)(*a, **kw)
 	
-def alias_class_attr(attr):
-	"""used at class creation time to alias an attr/method to another
+def alias_class_method(attr):
+	"""at runtime, redirect to another method
 	
 	attr is the desired attr name to lookup, and supply all later passed in
 	args/kws to

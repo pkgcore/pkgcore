@@ -176,7 +176,6 @@ def split_atom_depset_by_blockers(ds):
 	# rebuild node_conds.
 	for s, d in ((block, bconds), (nonblock, nbconds)):
 		s.node_conds.update((x, tuple(unique(flatten(d[x])))) for x in d)
-		s.has_conditionals = len(s) != 0
 
 	return block, nonblock
 

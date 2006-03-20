@@ -21,15 +21,13 @@ class LazyValDict(UserDict.DictMixin):
 		"""
 		if not callable(get_val_func):
 			raise TypeError("get_val_func isn't a callable")
-		if callable(get_keys_func):
-			self.__keys_func = get_keys_func
+		if hasattr(get_keys_func, "__iter__"):
+			self.__keys = get_keys_func
+			self.__keys_func = None
 		else:
-			try:
-				iter(get_keys_func)
-				self.__keys = get_keys_func
-				self.__keys_func = None
-			except TypeError:
+			if not callable(get_keys_func):
 				raise TypeError("get_keys_func isn't iterable nor is it callable")
+			self.__keys_func = get_keys_func
 		self.__val_func = get_val_func
 		self.__vals = {}
 

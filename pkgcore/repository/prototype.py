@@ -1,12 +1,33 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.util.mappings import IndexableSequence
 from weakref import proxy
+from itertools import imap
+from pkgcore.util.mappings import LazyValDict
 from pkgcore.package.atom import atom
 
 def ix_callable(*args):
 	return "/".join(str(x) for x in args)
+
+def mangle_empties(val):
+	if len(val) == 0:
+		return [""]
+	return val
+
+class IterValLazyValDict(LazyValDict):
+
+	def __init__(self, key_func, val_func, override_iter=None):
+		LazyValDict.__init__(self, key_func, val_func)
+		self._iter_callable = override_iter
+		
+	def __iter__(self):
+		if self._iter_callable is not None:
+			return (ix_callable(k,x).strip("/") for k in self.iterkeys() for x in self._iter_callable(self[k]))
+		else:
+			return (ix_callable(k,x) for k in self.iterkeys() for x in self[k])
+
+	def __contains__(self, key):
+		return key in iter(self)
 
 class tree(object):
 	"""
@@ -17,16 +38,14 @@ class tree(object):
 	configure = ()
 	
 	def __init__(self, frozen=True):
-		self.categories = IndexableSequence(self._get_categories, self._get_categories, 
-			returnIterFunc=ix_callable, returnEmpty=True, modifiable=(not frozen))
-		self.packages   = IndexableSequence(self.categories.iterkeys, self._get_packages, \
-			returnIterFunc=ix_callable, modifiable=(not frozen))
-		self.versions   = IndexableSequence(self.packages.__iter__, self._get_versions, \
-			returnIterFunc=ix_callable, modifiable=(not frozen))
+		self.categories = IterValLazyValDict(self._get_categories, self._get_categories, override_iter=mangle_empties)
+		self.packages   = IterValLazyValDict(self.categories.__iter__, self._get_packages)
+		self.versions   = IterValLazyValDict(self.packages.__iter__, self._get_versions)
+
 		self.frozen = frozen
 		self.lock = None
 
-	def _get_categories(self, *arg):
+	def _get_categories(self, *args):
 		"""this must return a list, or sequence"""
 		raise NotImplementedError
 

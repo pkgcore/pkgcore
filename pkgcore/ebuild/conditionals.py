@@ -18,7 +18,7 @@ class DepSet(boolean.AndRestriction):
 	__slots__ = ("has_conditionals", "conditional_class", "node_conds") + boolean.AndRestriction.__slots__
 
 	def __init__(self, dep_str, element_func, operators={"||":packages.OrRestriction,"":packages.AndRestriction}, \
-		conditional_converter=conditional_converter, conditional_class=packages.Conditional, empty=False, full_str=None):
+		conditional_converter=conditional_converter, conditional_class=packages.Conditional, empty=False):
 
 		"""dep_str is a dep style syntax, element_func is a callable returning the obj for each element, and
 		cleanse_string controls whether or translation of tabs/newlines is required"""
@@ -28,13 +28,8 @@ class DepSet(boolean.AndRestriction):
 		self.conditional_class = conditional_class
 		self.node_conds = {}
 
-		if empty:	return
-
-		# XXX: full_str will help to weed these out until the parsing is certain to be correct.
-		# See the IndexError below for an example
-		# -- jstubbs
-		if full_str is None:
-			full_str = dep_str
+		if empty:
+			return
 
 		# anyone who uses this routine as fodder for pushing a rewrite in lisp I reserve the right to deliver an
 		# atomic wedgie upon.
@@ -69,13 +64,13 @@ class DepSet(boolean.AndRestriction):
 						except StopIteration:	k2 = ''
 
 						if k2 != "(":
-							raise ParseError(full_str)
+							raise ParseError(dep_str)
 					else:
 						# Unconditional subset - useful in the || ( ( a b ) c ) case
 						k = ""
 					# push another frame on
-					depsets.append(self.__class__(None, element_func, empty=True, conditional_converter=conditional_converter,
-						conditional_class=self.conditional_class, full_str=full_str))
+					depsets.append(self.__class__(dep_str, element_func, empty=True, conditional_converter=conditional_converter,
+						conditional_class=self.conditional_class))
 					conditionals.append(k)
 					if k.endswith("?"):
 						has_conditionals[-1] = True
@@ -89,17 +84,17 @@ class DepSet(boolean.AndRestriction):
 
 		except IndexError:
 			# [][-1] for a frame access, which means it was a parse error.
-			#raise ParseError(dep_str)
-			raise ParseError(full_str)
+			raise ParseError(dep_str)
 
 		# check if any closures required
 		if len(depsets) != 1:
-			raise ParseError(full_str)
+			raise ParseError(dep_str)
 		self.has_conditionals = has_conditionals[0]
 		for x in self.node_conds:
 			self.node_conds[x] = tuple(unique(flatten(self.node_conds[x])))
 
-	def __str__(self):	return ' '.join(map(str,self.restrictions))
+	def __str__(self):
+		return ' '.join(str(x) for x in self.restrictions)
 
 	def evaluate_depset(self, cond_dict):
 		"""passed in a depset, does lookups of the node in cond_dict.

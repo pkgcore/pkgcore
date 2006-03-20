@@ -33,6 +33,8 @@ class Conditional(base):
 	def __iter__(self):
 		return iter(self.restrictions)
 
+	def clone_empty(self):
+		return self.__class__(self.cond, [], negate=self.negate)
 
 
 class PackageRestriction(base):

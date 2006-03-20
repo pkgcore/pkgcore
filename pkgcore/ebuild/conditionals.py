@@ -99,9 +99,10 @@ class DepSet(boolean.AndRestriction):
 		"""passed in a depset, does lookups of the node in cond_dict.
 		no entry in cond_dict == conditional is off, else the bool value of the key's val in cond_dict"""
 
-		if not self.has_conditionals:		return self
+		if not self.has_conditionals:
+			return self
 
-		flat_deps = DepSet("", str)
+		flat_deps = self.__class__("", str)
 
 		stack = [self.restrictions]
 		while stack:
@@ -131,6 +132,53 @@ class DepSet(boolean.AndRestriction):
 	def __iter__(self):
 		return iter(self.restrictions)
 
+def split_atom_depset_by_blockers(ds):
+	"""returns a two depsets, (blockers, nonblockers)"""
+	ccls = ds.conditional_class
+	block = ds.__class__("", str, conditional_class=ccls)
+	nonblock = ds.__class__("", str, conditional_class=ccls)
+	if not ds.has_conditionals:
+		block.restrictions = [x for x in ds if x.blocks]
+		nonblock.restrictions = [x for x in ds if not x.blocks]
+		return block, nonblock
+
+	nbstack = [nonblock]
+	bstack = [block]
+	stack = [iter(ds)]
+	nbconds, bconds = {}, {}
+
+	conds = []
+	while stack:
+		reset = False
+		for node in stack[-1]:
+			if isinstance(node, ccls):
+				stack.append(iter(node.restrictions))
+				nbstack.append(node.clone_empty())
+				bstack.append(node.clone_empty())
+				conds.append(node.cond)
+				reset = True
+				break
+			elif node.blocks:
+				bstack[-1].restrictions.append(node)
+			else:
+				nbstack[-1].restrictions.append(node)
+		if not reset:
+			if len(stack) > 1:
+				for s, d in ((nbstack, nbconds), (bstack, bconds)):
+					if s[-1].restrictions:
+						if conds[-1] is not None:
+							d.setdefault(conds[-1], []).append(s[-1].restrictions)
+						print "adding",s[-1]
+						s[-2].restrictions.append(s[-1])
+					s.pop(-1)
+				conds.pop(-1)
+			stack.pop(-1)
+	# rebuild node_conds.
+	for x in nbconds:
+		block.node_conds[x] = tuple(unique(flatten(nbconds[x])))
+	for x in bconds:
+		nonblock.node_conds[x] = tuple(unique(flatten(bconds[x])))
+	return block, nonblock
 
 class ParseError(Exception):
 

@@ -14,9 +14,6 @@ def passthrough(inst, attr, rename=None):
 		rename = attr
 	return inst.data[rename]
 
-def forced_evaluate(inst, obj):
-	return obj.evaluate_depset(inst.use)
-
 class package(ebuild_src.package):
 	immutable = True
 	tracked_attributes = ebuild_src.package.tracked_attributes[:]
@@ -43,6 +40,7 @@ class package(ebuild_src.package):
 
 	def _repo_replace_op(self, features=None):
 		return ebd.replace_op(self, env_data_source=self.environment, features=features)
+
 
 class package_factory(metadata.factory):
 	child_class = package

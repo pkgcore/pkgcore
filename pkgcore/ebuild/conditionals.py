@@ -95,9 +95,6 @@ class DepSet(boolean.AndRestriction):
 		for x in self.node_conds:
 			self.node_conds[x] = tuple(unique(flatten(self.node_conds[x])))
 
-	def __str__(self):
-		return ' '.join(str(x) for x in self.restrictions)
-
 	def evaluate_depset(self, cond_dict):
 		"""passed in a depset, does lookups of the node in cond_dict.
 		no entry in cond_dict == conditional is off, else the bool value of the key's val in cond_dict"""
@@ -123,13 +120,17 @@ class DepSet(boolean.AndRestriction):
 			stack.pop(0)
 		return flat_deps
 
-	def __iter__(self):
-		return iter(self.restrictions)
-
 	def match(self, *a):
 		raise NotImplementedError
 
 	force_False = force_True = match
+
+	def __str__(self):
+		return ' '.join(str(x) for x in self.restrictions)
+
+	def __iter__(self):
+		return iter(self.restrictions)
+
 
 class ParseError(Exception):
 

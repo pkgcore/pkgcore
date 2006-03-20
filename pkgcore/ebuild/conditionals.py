@@ -35,7 +35,7 @@ class DepSet(boolean.AndRestriction):
 		# atomic wedgie upon.
 		# ~harring
 
-		conditionals, depsets, has_conditionals = [], [self], [False]
+		conditionals, depsets = [], [self]
 		raw_conditionals = []
 		words = iter_tokens(dep_str, splitter=" \t\n")
 		try:
@@ -54,7 +54,6 @@ class DepSet(boolean.AndRestriction):
 					else:
 						depsets[-2].restrictions.append(operators[conditionals.pop(-1)](*depsets[-1].restrictions))
 
-					has_conditionals.pop(-1)
 					depsets.pop(-1)
 
 				elif k.endswith('?') or k in operators or k=="(":
@@ -75,9 +74,7 @@ class DepSet(boolean.AndRestriction):
 
 					conditionals.append(k)
 					if k.endswith("?"):
-						has_conditionals[-1] = True
 						raw_conditionals.append(k[:-1])
-					has_conditionals.append(False)
 
 				else:
 					# node/element.
@@ -91,7 +88,6 @@ class DepSet(boolean.AndRestriction):
 		# check if any closures required
 		if len(depsets) != 1:
 			raise ParseError(dep_str)
-		self.has_conditionals = has_conditionals[0]
 		for x in self.node_conds:
 			self.node_conds[x] = tuple(unique(flatten(self.node_conds[x])))
 
@@ -120,6 +116,10 @@ class DepSet(boolean.AndRestriction):
 					flat_deps.restrictions.append(node)
 			stack.pop(0)
 		return flat_deps
+
+	@property
+	def has_conditionals(self):
+		return len(self.node_conds) > 0
 
 	def match(self, *a):
 		raise NotImplementedError

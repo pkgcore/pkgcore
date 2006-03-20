@@ -6,8 +6,8 @@ from itertools import imap
 from pkgcore.util.mappings import LazyValDict
 from pkgcore.package.atom import atom
 
-def ix_callable(*args):
-	return "/".join(str(x) for x in args)
+def ix_callable(*a):
+	return "/".join(args)
 
 def mangle_empties(val):
 	if len(val) == 0:

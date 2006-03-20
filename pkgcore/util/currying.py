@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from operator import attrgetter
+
+__all__ = ["pre_curry", "post_curry", "pretty_docs", "alias_class_attr"]
+
 def pre_curry(func, *args, **kwargs):
 	"""passed in args are prefixed, with further args appended"""
 
@@ -32,3 +36,16 @@ def pretty_docs(wrapped, extradocs=None):
 		wrapped.__doc__ = extradocs
 	return wrapped
 
+def _second_level_call(grab_attr, self, *a, **kw):
+	return grab_attr(self)(*a, **kw)
+	
+def alias_class_attr(attr):
+	"""used at class creation time to alias an attr/method to another
+	
+	attr is the desired attr name to lookup, and supply all later passed in
+	args/kws to
+	
+	Useful for when setting has_key to __contains__ for example, and __contains__ may be
+	overriden
+	"""
+	return pre_curry(_second_level_call, attrgetter(attr))

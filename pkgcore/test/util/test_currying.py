@@ -1,9 +1,7 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-
 from twisted.trial import unittest
-
 from pkgcore.util import currying
 
 
@@ -108,3 +106,14 @@ class PrettyDocsTest(unittest.TestCase):
                 currying.pretty_docs(currying.pre_curry(func)).__doc__,
                 func.__doc__)
             
+class TestAliasClassAttr(unittest.TestCase):
+	def test_alias_class_attr(self):
+		class kls(object):
+			__len__ = lambda s: 3
+			lfunc = currying.alias_class_attr("__len__")
+
+		c = kls()
+		self.assertEqual(c.__len__(), c.lfunc())
+		c.__len__ = lambda : 4
+		self.assertEqual(c.__len__(), c.lfunc())
+		

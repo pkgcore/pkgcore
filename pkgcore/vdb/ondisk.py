@@ -86,15 +86,15 @@ class tree(prototype.tree):
 		s = "%s-%s" % (pkg.package, pkg.fullver)
 		return os.path.join(self.base, pkg.category, s, s+".ebuild")
 
-	_metadata_rewrites = {"depends":"DEPEND", "rdepends":"RDEPEND", "use":"USE", "eapi":"EAPI"}
+	_metadata_rewrites = {"depends":"DEPEND", "rdepends":"RDEPEND", "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
 	
 	def _get_metadata(self, pkg):
 		path = os.path.dirname(pkg.path)
+		pathjoin = os.path.sep.join
 		try:
-			keys = [self._metadata_rewrites.get(x, x) for x in 
-				filter(lambda x: x.isupper() and stat.S_ISREG(os.stat(path+os.path.sep+x).st_mode) and x!="CONTENTS", 
-				os.listdir(path))]
-			keys.extend(["environment","contents"])
+			keys = list(self._metadata_rewrites.get(x, x) for x in os.listdir(path) if 
+				x.isupper() and stat.S_ISREG(os.stat(pathjoin((path, x))).st_mode))
+			keys.append("environment")
 		except OSError:
 			return None
 

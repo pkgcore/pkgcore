@@ -207,7 +207,6 @@ class atom(boolean.AndRestriction):
 					r.append(packages.PackageRestriction("use", values.ContainmentMatch(all=True, *true_use)))
 				if self.slot:
 					r.append(packages.PackageRestriction("slot", values.ContainmentMatch(*self.slot)))
-#			self.__dict__[attr] = r
 			setattr(self, attr, r)
 			return r
 
@@ -217,7 +216,7 @@ class atom(boolean.AndRestriction):
 		s = ""
 		if self.blocks:	
 			s+="!"
-		s+ = self.op + self.category + "/" + self.package
+		s += self.op + self.category + "/" + self.package
 		if self.version:
 			s+="-"+self.fullver
 		if self.glob:

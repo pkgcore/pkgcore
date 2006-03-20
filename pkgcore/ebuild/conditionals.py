@@ -174,11 +174,12 @@ def split_atom_depset_by_blockers(ds):
 					s.pop(-1)
 				conds.pop(-1)
 			stack.pop(-1)
+
 	# rebuild node_conds.
-	for x in nbconds:
-		block.node_conds[x] = tuple(unique(flatten(nbconds[x])))
-	for x in bconds:
-		nonblock.node_conds[x] = tuple(unique(flatten(bconds[x])))
+	for s, d in ((block, bconds), (nonblock, nbconds)):
+		s.node_conds.update((x, tuple(unique(flatten(d[x])))) for x in d)
+		s.has_conditionals = len(s) != 0
+
 	return block, nonblock
 
 class ParseError(Exception):

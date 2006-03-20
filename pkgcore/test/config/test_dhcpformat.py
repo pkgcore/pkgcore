@@ -9,10 +9,13 @@ from twisted.trial import unittest
 try:
 	import pyparsing
 except ImportError:
-	skip_test = True
+	skip_test = 'Missing pyparsing module.'
 else:
-	skip_test = False
-	from pkgcore.config import dhcpformat
+	if getattr(pyparsing, 'pythonStyleComment', None) is None:
+		skip_test = 'pyparsing missing pythonStyleComment. Upgrade to >=1.4'
+	else:
+		skip_test = None
+		from pkgcore.config import dhcpformat
 
 from pkgcore.config import central, basics, errors
 
@@ -21,8 +24,8 @@ def passthrough(*args, **kwargs):
 
 
 class DHCPConfigTest(unittest.TestCase):
-	if skip_test:
-		skip = "missing pyparsing module"
+	if skip_test is not None:
+		skip = skip_test
 
 	def test_basics(self):
 		config = dhcpformat.configFromFile(StringIO('''

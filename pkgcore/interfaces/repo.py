@@ -45,9 +45,13 @@ class base(object):
 
 	def finish(self):
 		self.me.final()
+		self._notify_repo()
 		self.lock.release_write_lock()
 		self.underway = False
 		return True
+
+	def _modify_repo_cache(self):
+		raise NotImplementedError
 
 	def __del__(self):
 		if self.underway:
@@ -75,6 +79,9 @@ class install(base):
 			except merge_errors.NonFatalModification, e:
 				print "warning caught: %s" % e
 		return True
+
+	def _notify_repo(self):
+		self.repo.notify_add_package(self.pkg)
 
 	def postinst(self):
 		return self.op.postinst()
@@ -107,6 +114,9 @@ class uninstall(base):
 	def postrm(self):
 		return self.op.postrm()
 
+	def _notify_repo(self):
+		self.repo.notify_remove_package(self.pkg)
+
 	def unmerge_metadata(self):
 		raise NotImplementedError
 		
@@ -132,6 +142,10 @@ class replace(install, uninstall):
 		
 	def start(self):
 		return base.start(self, MergeEngine.replace(self.oldpkg, self.pkg, offset=self.offset))
+
+	def _notify_repo(self):
+		self.repo.notify_remove_package(self.oldpkg)
+		self.repo.notify_add_package(self.pkg)
 
 	def __del__(self):
 		if self.underway:

@@ -121,6 +121,18 @@ class tree(prototype.tree):
 
 		return LazyValDict(keys, load_data)
 
+	def notify_remove_pkg(self, pkg):
+		remove_it = list(self.packages[pkg.category]) == 1
+		prototype.tree.notify_remove_pkg(self, pkg)
+		if remove_it:
+			try:
+				os.rmdir(os.path.join(self.base, pkg.category))
+			except OSError, oe:
+				if oe.errno != errno.ENOTEMPTY:
+					raise
+				# silently swallow it;
+				del oe
+
 	def _install(self, pkg, *a, **kw):
 		# need to verify it's not in already...
 		return install(self, pkg, *a, **kw)

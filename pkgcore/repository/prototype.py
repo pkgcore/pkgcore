@@ -11,26 +11,51 @@ def ix_callable(*args):
 
 def mangle_empties(val):
 	if len(val) == 0:
-		return [""]
+		return ("",)
 	return val
 
 class IterValLazyValDict(LazyValDict):
 
-	def __init__(self, key_func, val_func, override_iter=None):
+	def __init__(self, key_func, val_func, override_iter=None, return_func=ix_callable):
 		LazyValDict.__init__(self, key_func, val_func)
 		self._iter_callable = override_iter
+		self._return_mangler = return_func
 		
 	def __iter__(self):
 		if self._iter_callable is not None:
-			return (ix_callable(k,x).strip("/") for k in self.iterkeys() for x in self._iter_callable(self[k]))
+			return (self._return_mangler(k,x).strip("/") for k in self.iterkeys() for x in self._iter_callable(self[k]))
 		else:
-			return (ix_callable(k,x) for k in self.iterkeys() for x in self[k])
+			return (self._return_mangler(k,x) for k in self.iterkeys() for x in self[k])
 
 	def __contains__(self, key):
 		return key in iter(self)
 		
 	def __str__(self):
 		return str(list(self))
+
+	def force_regen(self, key):
+		if key in self._vals:
+				del self._vals[key]
+	
+			
+class CategoryIterValLazyValDict(IterValLazyValDict):
+
+	def force_add(self, key):
+		try:
+			# force lazyvaldict to do the _keys_func work
+			self[key]
+		except KeyError:
+			self._keys.add(key)
+
+	def force_remove(self, key):
+		try:
+			# force lazyvaldict to do the _keys_func work
+			self[key]
+			self._keys.remove(key)
+			if key in self._vals:
+				del self._vals[key]
+		except KeyError:
+			pass
 
 class tree(object):
 	"""
@@ -41,9 +66,10 @@ class tree(object):
 	configure = ()
 	
 	def __init__(self, frozen=True):
-		self.categories = IterValLazyValDict(self._get_categories, self._get_categories, override_iter=mangle_empties)
+		self.categories = CategoryIterValLazyValDict(self._get_categories, self._get_categories, 
+			override_iter=mangle_empties)
 		self.packages   = IterValLazyValDict(self.categories, self._get_packages)
-		self.versions   = IterValLazyValDict(self.packages, self._get_versions)
+		self.versions   = IterValLazyValDict(self.packages, self._get_versions, return_func=lambda *k: "-".join(k))
 
 		self.frozen = frozen
 		self.lock = None
@@ -114,6 +140,27 @@ class tree(object):
 					yield pkg
 		return
 
+	def notify_remove_package(self, pkg):
+		cp = "%s/%s" % (pkg.category, pkg.package)
+		self.versions.force_regen(cp)
+		if len(self.versions.get(cp, [])) == 0:
+			# dead package
+			self.packages.force_regen(pkg.category)
+			if len(self.packages.get(pkg.category, [])) == 0:
+				#  dead category
+				self.categories.force_remove(pkg.category)
+				self.packages.force_regen(pkg.category)
+			self.versions.force_regen(cp)
+
+	def notify_add_package(self, pkg):
+		cp = "%s/%s" % (pkg.category, pkg.package)
+		if pkg.category not in self.categories:
+			self.categories.force_add(pkg.category)
+		if cp not in self.packages:
+			self.packages.force_regen(pkg.category)
+		self.packages.force_regen(cp)
+			
+		
 	def install(self, pkg, *a, **kw):
 		if self.frozen:
 			raise AttributeError("repo is frozen")

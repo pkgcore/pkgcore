@@ -9,6 +9,8 @@ from pkgcore.util.lists import unique, flatten
 from pkgcore.util.strings import iter_tokens
 
 def conditional_converter(node, payload):
+	if isinstance(payload, DepSet):
+		import traceback;traceback.print_stack()
 	if node[0] == "!":
 		return packages.Conditional(node[1:], payload, negate=True)
 	return packages.Conditional(node, payload)
@@ -47,14 +49,14 @@ class DepSet(boolean.AndRestriction):
 						raise ParseError(dep_str)
 					elif conditionals[-1].endswith('?'):
 						cond = raw_conditionals[:]
-						depsets[-2].restrictions.append(conditional_converter(conditionals.pop(-1)[:-1], depsets[-1]))
+						depsets[-2].restrictions.append(conditional_converter(conditionals.pop(-1)[:-1], depsets[-1].restrictions))
 						raw_conditionals.pop(-1)
 						for x in depsets[-1]:
 							self.node_conds.setdefault(x, []).append(cond)
 					else:
 						depsets[-2].restrictions.append(operators[conditionals.pop(-1)](*depsets[-1].restrictions))
 
-					depsets[-1].has_conditionals = has_conditionals.pop(-1)
+					has_conditionals.pop(-1)
 					depsets.pop(-1)
 
 				elif k.endswith('?') or k in operators or k=="(":
@@ -168,7 +170,6 @@ def split_atom_depset_by_blockers(ds):
 					if s[-1].restrictions:
 						if conds[-1] is not None:
 							d.setdefault(conds[-1], []).append(s[-1].restrictions)
-						print "adding",s[-1]
 						s[-2].restrictions.append(s[-1])
 					s.pop(-1)
 				conds.pop(-1)

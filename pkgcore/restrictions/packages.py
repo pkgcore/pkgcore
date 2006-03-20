@@ -25,7 +25,7 @@ class Conditional(base):
 		else:
 			s = self.cond
 		try:
-			s2=" ".join(self.restrictions)
+			s2=" ".join(str(x) for x in self.restrictions)
 		except TypeError:
 			s2 = str(self.restrictions)
 		return "%s? ( %s )" % (s, s2)

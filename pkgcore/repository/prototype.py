@@ -159,8 +159,7 @@ class tree(object):
 		if cp not in self.packages:
 			self.packages.force_regen(pkg.category)
 		self.packages.force_regen(cp)
-			
-		
+	
 	def install(self, pkg, *a, **kw):
 		if self.frozen:
 			raise AttributeError("repo is frozen")

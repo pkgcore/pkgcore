@@ -121,9 +121,9 @@ class tree(prototype.tree):
 
 		return LazyValDict(keys, load_data)
 
-	def notify_remove_pkg(self, pkg):
-		remove_it = list(self.packages[pkg.category]) == 1
-		prototype.tree.notify_remove_pkg(self, pkg)
+	def notify_remove_package(self, pkg):
+		remove_it = len(self.packages[pkg.category]) == 1
+		prototype.tree.notify_remove_package(self, pkg)
 		if remove_it:
 			try:
 				os.rmdir(os.path.join(self.base, pkg.category))

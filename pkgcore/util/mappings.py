@@ -22,14 +22,14 @@ class LazyValDict(UserDict.DictMixin):
 		if not callable(get_val_func):
 			raise TypeError("get_val_func isn't a callable")
 		if hasattr(get_keys_func, "__iter__"):
-			self.__keys = get_keys_func
-			self.__keys_func = None
+			self._keys = get_keys_func
+			self._keys_func = None
 		else:
 			if not callable(get_keys_func):
 				raise TypeError("get_keys_func isn't iterable nor is it callable")
-			self.__keys_func = get_keys_func
-		self.__val_func = get_val_func
-		self.__vals = {}
+			self._keys_func = get_keys_func
+		self._val_func = get_val_func
+		self._vals = {}
 
 	def __setitem__(self, key, value):
 		raise AttributeError
@@ -38,27 +38,27 @@ class LazyValDict(UserDict.DictMixin):
 		raise AttributeError
 
 	def __getitem__(self, key):
-		if self.__keys_func != None:
-			self.__keys = set(self.__keys_func())
-			self.__keys_func = None
-		if key in self.__vals:
-			return self.__vals[key]
-		if key in self.__keys:
-			v = self.__vals[key] = self.__val_func(key)
+		if self._keys_func != None:
+			self._keys = set(self._keys_func())
+			self._keys_func = None
+		if key in self._vals:
+			return self._vals[key]
+		if key in self._keys:
+			v = self._vals[key] = self._val_func(key)
 			return v
 		raise KeyError(key)
 
 	def keys(self):
-		if self.__keys_func != None:
-			self.__keys = set(self.__keys_func())
-			self.__keys_func = None
-		return list(self.__keys)
+		if self._keys_func != None:
+			self._keys = set(self._keys_func())
+			self._keys_func = None
+		return list(self._keys)
 
 	def iterkeys(self):
-		if self.__keys_func != None:
-			self.__keys = set(self.__keys_func())
-			self.__keys_func = None
-		return iter(self.__keys)
+		if self._keys_func != None:
+			self._keys = set(self._keys_func())
+			self._keys_func = None
+		return iter(self._keys)
 
 	def itervalues(self):
 		return imap(self.__getitem__, self.iterkeys())
@@ -67,10 +67,10 @@ class LazyValDict(UserDict.DictMixin):
 		return ((k, self[k]) for k in self.iterkeys())
 
 	def __contains__(self, key):
-		if self.__keys_func != None:
-			self.__keys = set(self.__keys_func())
-			self.__keys_func = None
-		return key in self.__keys
+		if self._keys_func != None:
+			self._keys = set(self._keys_func())
+			self._keys_func = None
+		return key in self._keys
 
 	def __len__(self):
 		count = 0

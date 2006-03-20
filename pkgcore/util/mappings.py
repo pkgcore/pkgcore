@@ -38,7 +38,7 @@ class LazyValDict(UserDict.DictMixin):
 		raise AttributeError
 
 	def __getitem__(self, key):
-		if self._keys_func != None:
+		if self._keys_func is not None:
 			self._keys = set(self._keys_func())
 			self._keys_func = None
 		if key in self._vals:
@@ -49,13 +49,13 @@ class LazyValDict(UserDict.DictMixin):
 		raise KeyError(key)
 
 	def keys(self):
-		if self._keys_func != None:
+		if self._keys_func is not None:
 			self._keys = set(self._keys_func())
 			self._keys_func = None
 		return list(self._keys)
 
 	def iterkeys(self):
-		if self._keys_func != None:
+		if self._keys_func is not None:
 			self._keys = set(self._keys_func())
 			self._keys_func = None
 		return iter(self._keys)
@@ -67,7 +67,7 @@ class LazyValDict(UserDict.DictMixin):
 		return ((k, self[k]) for k in self.iterkeys())
 
 	def __contains__(self, key):
-		if self._keys_func != None:
+		if self._keys_func is not None:
 			self._keys = set(self._keys_func())
 			self._keys_func = None
 		return key in self._keys

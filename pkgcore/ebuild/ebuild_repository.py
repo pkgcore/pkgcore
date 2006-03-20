@@ -8,8 +8,8 @@ from pkgcore.package.conditionals import PackageWrapper
 from pkgcore.repository import prototype, errors
 from pkgcore.util.containers import InvertedContains
 from pkgcore.util.file import read_dict
+from pkgcore.util import currying
 from pkgcore.plugins import get_plugin
-from pkgcore.util.modules import load_attribute
 
 metadata_offset = "profiles"
 
@@ -108,8 +108,9 @@ class UnconfiguredTree(prototype.tree):
 
 class ConfiguredTree(UnconfiguredTree):
 	configured = True
-	l=["license","depends","rdepends","bdepends", "fetchables", "license", "slot", "src_uri"]
-	wrappables = dict(zip(l, len(l)*[convert_depset]))
+	wrappables = dict((x, convert_depset) for x in 
+		["depends","rdepends", "depend_blockers", "rdepend_blockers", 
+		"fetchables", "license", "slot", "src_uri", "license"])
 
 	def __init__(self, raw_repo, domain_settings, fetcher=None):
 		if "USE" not in domain_settings:

@@ -3,7 +3,7 @@
 
 import os, operator
 from pkgcore.package import metadata
-from conditionals import DepSet
+from pkgcore.ebuild import conditionals
 from pkgcore.package.atom import atom
 from digest import parse_digest
 from pkgcore.util.mappings import LazyValDict
@@ -36,12 +36,23 @@ def create_fetchable_from_uri(chksums, mirrors, uri):
 	return fetchable(file, uri, chksums[file])
 
 def generate_depset(s, c, *keys):
-	return DepSet(" ".join([s.data.get(x.upper(),"") for x in keys]), c)
+	return conditionals.DepSet(" ".join([s.data.get(x.upper(),"") for x in keys]), c)
 
+def generate_depends_depset(s, c, basename, return_key, *data_keys):
+	d = conditionals.DepSet(" ".join([s.data.get(x.upper(),"") for x in data_keys]), c)
+	blocks, nonblocks = conditionals.split_atom_depset_by_blockers(d)
+
+	s.__dict__[basename+"s"] = nonblocks
+	s.__dict__[basename+"_blockers"] = blocks
+	if return_key.endswith("_blockers"):
+		return blocks
+	return nonblocks
+	
 def generate_fetchables(self):
 	chksums = parse_digest(os.path.join(os.path.dirname(self.path), "files", \
 		"digest-%s-%s" % (self.package, self.fullver)))
-	return DepSet(self.data["SRC_URI"], lambda x:create_fetchable_from_uri(chksums, self._mirrors, x), operators={})
+	return conditionals.DepSet(self.data["SRC_URI"], lambda x:
+		create_fetchable_from_uri(chksums, self._mirrors, x), operators={})
 
 def generate_eapi(self):
 	try:
@@ -58,8 +69,9 @@ def generate_eapi(self):
 class package(metadata.package):
 	immutable = False
 	allow_regen = True
-	tracked_attributes=["PF", "depends","provides","rdepends","license","slot","keywords",
-	"eapi", "restrict"]
+	tracked_attributes=["PF", "depends", "depend_blockers", "rdepends", 
+		"rdepend_blockers", "provides","license", "slot", "keywords",
+		"eapi", "restrict"]
 
 	def __init__(self, cpv, parent, pull_path, mirrors=None):
 		super(package, self).__init__(cpv, parent)
@@ -75,8 +87,15 @@ class package(metadata.package):
 	_get_attr["PF"] = lambda s: s.package+"-"+s.fullver
 	_get_attr["PN"] = operator.attrgetter("package")
 	_get_attr["PR"] = lambda s: "-r"+str(s.revision is not None and s.revision or 0)
-	_get_attr.update((x, post_curry(generate_depset, atom, x.rstrip("s"),)) for x in ("depends", "provides"))
-	_get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepends", "pdepends")
+	_get_attr["provides"] = post_curry(generate_depset, atom, "provide")
+	_get_attr["depends"] = post_curry(generate_depends_depset, atom, "depend", 
+		"depends", "depend")
+	_get_attr["depend_blockers"] = post_curry(generate_depends_depset, atom, "depend", 
+		"depend_blockers", "depend")
+	_get_attr["rdepends"] = post_curry(generate_depends_depset, atom, "rdepend",
+		"rdepends", "rdepend", "pdepend")
+	_get_attr["rdepend_blockers"] = post_curry(generate_depends_depset, atom, "rdepend",
+		"rdepend_blockers", "rdepend", "pdeend")
 	_get_attr.update((x, post_curry(generate_depset, str, x)) for x in ("license", "slot"))
 	_get_attr["fetchables"] = generate_fetchables
 	_get_attr["description"] = lambda s:s.data["DESCRIPTION"]

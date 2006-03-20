@@ -6,15 +6,10 @@ from itertools import imap
 from pkgcore.util.mappings import LazyValDict
 from pkgcore.package.atom import atom
 
-def ix_callable(*a):
-	return "/".join(args)
+def ix_callable(a):
+	return "/".join(a)
 
-def mangle_empties(val):
-	if len(val) == 0:
-		return ("",)
-	return val
-
-class IterValLazyValDict(LazyValDict):
+class IterValLazyDict(LazyValDict):
 
 	def __init__(self, key_func, val_func, override_iter=None, return_func=ix_callable):
 		LazyValDict.__init__(self, key_func, val_func)
@@ -22,10 +17,7 @@ class IterValLazyValDict(LazyValDict):
 		self._return_mangler = return_func
 		
 	def __iter__(self):
-		if self._iter_callable is not None:
-			return (self._return_mangler(k,x).strip("/") for k in self.iterkeys() for x in self._iter_callable(self[k]))
-		else:
-			return (self._return_mangler(k,x) for k in self.iterkeys() for x in self[k])
+		return imap(self._return_mangler, ((k, x) for k in self.iterkeys() for x in self[k]))
 
 	def __contains__(self, key):
 		return key in iter(self)
@@ -35,10 +27,20 @@ class IterValLazyValDict(LazyValDict):
 
 	def force_regen(self, key):
 		if key in self._vals:
-				del self._vals[key]
-	
-			
-class CategoryIterValLazyValDict(IterValLazyValDict):
+			del self._vals[key]
+
+class PackageIterValLazyDict(IterValLazyDict):
+
+	def __iter__(self):
+		return (k+"/"+x for k in self.iterkeys() for x in self[k])
+		
+	def __contains__(self, key):
+		s = key.rsplit("/",1)
+		if len(s) != 2:
+			return False
+		return s[1] in self[s[0]]
+
+class CategoryIterValLazyDict(IterValLazyDict):
 
 	def force_add(self, key):
 		try:
@@ -57,6 +59,13 @@ class CategoryIterValLazyValDict(IterValLazyValDict):
 		except KeyError:
 			pass
 
+	def __iter__(self):
+		return self.iterkeys()
+
+	def __contains__(self, key):
+		return key in self.keys()
+
+
 class tree(object):
 	"""
 	del raw_repo, and set it to the underlying repo if you're wrapping another repo"""
@@ -66,10 +75,9 @@ class tree(object):
 	configure = ()
 	
 	def __init__(self, frozen=True):
-		self.categories = CategoryIterValLazyValDict(self._get_categories, self._get_categories, 
-			override_iter=mangle_empties)
-		self.packages   = IterValLazyValDict(self.categories, self._get_packages)
-		self.versions   = IterValLazyValDict(self.packages, self._get_versions, return_func=lambda *k: "-".join(k))
+		self.categories = CategoryIterValLazyDict(self._get_categories, self._get_categories)
+		self.packages   = PackageIterValLazyDict(self.categories, self._get_packages)
+		self.versions   = IterValLazyDict(self.packages, self._get_versions, return_func=lambda k: "-".join(k))
 
 		self.frozen = frozen
 		self.lock = None

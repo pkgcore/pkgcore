@@ -30,11 +30,10 @@ def ensure_deps(name, func, self, *a, **kw):
 		self._stage_state.add(name)
 	return r
 
-# this could just as easily be implemented via a decorator btw.
 
 class ForcedDepends(type):
 	def __call__(cls, *a, **kw):
-		for k,v in cls.stage_depends.items():
+		for k,v in getattr(cls, "stage_depends", {}).items():
 			if not isinstance(v, (list, tuple)):
 				if v == None:
 					cls.stage_depends[k] = []

@@ -156,9 +156,7 @@ class install(repo_interfaces.install):
 		ensure_dirs(dirpath)
 		rewrite = self.repo._metadata_rewrites
 		for k in self.pkg.tracked_attributes:
-			if k.endswith("_blockers"):
-				continue
-			elif k == "contents":
+			if k == "contents":
 				v = ContentsFile(os.path.join(dirpath, "CONTENTS"), writable=True, empty=True)
 				for x in self.pkg.contents:
 					if self.offset:
@@ -170,13 +168,7 @@ class install(repo_interfaces.install):
 				shutil.copy(getattr(self.pkg, k).get_path(), os.path.join(dirpath, "environment"))
 				spawn(["bzip2", "-9", os.path.join(dirpath, "environment")], fd_pipes={})
 			else:
-				if k.endswith("depends"):
-					v = str(getattr(self.pkg, k)) + " " + str(getattr(self.pkg, k.rstrip("s")+"_blockers"))
-					print "working on k",v
-					print getattr(self.pkg, k)
-					print getattr(self.pkg, k.rstrip("s")+"_blockers")
-				else:
-					v = getattr(self.pkg, k)
+				v = getattr(self.pkg, k)
 				if not isinstance(v, basestring):
 					try:
 						s = ' '.join(v)

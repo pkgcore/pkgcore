@@ -7,7 +7,7 @@ from pkgcore.ebuild import conditionals
 from pkgcore.package.atom import atom
 from digest import parse_digest
 from pkgcore.util.mappings import LazyValDict
-from pkgcore.util.currying import post_curry
+from pkgcore.util.currying import post_curry, alias_class_method
 from pkgcore.restrictions.values import StrExactMatch
 from pkgcore.restrictions.packages import PackageRestriction
 from pkgcore.chksum.errors import MissingChksum
@@ -56,11 +56,15 @@ def generate_eapi(self):
 		val = 0
 	return val
 
+
 class package(metadata.package):
 	immutable = False
 	allow_regen = True
 	tracked_attributes=["PF", "depends", "rdepends", "provides","license", "slot", "keywords",
 		"eapi", "restrict"]
+
+	_config_wrappables = dict((x, alias_class_method("evaluate_depset")) for x in
+		["depends","rdepends", "fetchables", "license", "slot", "src_uri", "license"])
 
 	def __init__(self, cpv, parent, pull_path, mirrors=None):
 		super(package, self).__init__(cpv, parent)

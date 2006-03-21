@@ -13,9 +13,6 @@ from pkgcore.plugins import get_plugin
 
 metadata_offset = "profiles"
 
-def convert_depset(instance, conditionals):
-	return instance.evaluate_depset(conditionals)
-
 class UnconfiguredTree(prototype.tree):
 	false_categories = set(["eclass","profiles","packages","distfiles","licenses","scripts", "CVS"])
 	configured=False
@@ -108,9 +105,6 @@ class UnconfiguredTree(prototype.tree):
 
 class ConfiguredTree(UnconfiguredTree):
 	configured = True
-	wrappables = dict((x, convert_depset) for x in 
-		["depends","rdepends", "depend_blockers", "rdepend_blockers", 
-		"fetchables", "license", "slot", "src_uri", "license"])
 
 	def __init__(self, raw_repo, domain_settings, fetcher=None):
 		if "USE" not in domain_settings:
@@ -129,7 +123,7 @@ class ConfiguredTree(UnconfiguredTree):
 	def package_class(self, *a):
 		pkg = self.raw_repo.package_class(*a)
 		return PackageWrapper(pkg, "use", initial_settings=self.default_use, unchangable_settings=InvertedContains(pkg.data["IUSE"]), 
-			attributes_to_wrap=self.wrappables, build_callback=self.generate_buildop)
+			attributes_to_wrap=pkg._config_wrappables, build_callback=self.generate_buildop)
 
 	def __getattr__(self, attr):
 		return getattr(self.raw_repo, attr)

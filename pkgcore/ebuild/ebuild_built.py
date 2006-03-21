@@ -14,6 +14,9 @@ def passthrough(inst, attr, rename=None):
 		rename = attr
 	return inst.data[rename]
 
+def flatten_depset(inst, conditionals):
+	return inst.evaluate_depset(conditionals)
+
 class package(ebuild_src.package):
 	immutable = True
 	tracked_attributes = ebuild_src.package.tracked_attributes[:]
@@ -27,8 +30,12 @@ class package(ebuild_src.package):
 	del x
 
 	_get_attr.update((x,post_curry(passthrough, x)) for x in ("contents", "environment"))
+	_get_attr.update((k, post_curry( lambda s, wrap, inst: wrap(inst(s), s.use), 
+		ebuild_src.package._config_wrappables[k], ebuild_src.package._get_attr[k]))
+		for k in filter(ebuild_src.package.tracked_attributes.__contains__,
+		ebuild_src.package._config_wrappables))
 	_get_attr["use"] = post_curry(passthrough, "use", "USE")
-	
+
 	def _update_metadata(self, pkg):
 		raise NotImplementedError()
 

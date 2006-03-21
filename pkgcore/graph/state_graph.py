@@ -17,7 +17,7 @@ class StateGraph(object):
 	def add_pkg(self, pkg):
 		assert(pkg not in self.pkgs)
 		self.dirty = True
-		self.pkgs[pkg] = (combinations(pkg.rdepends, atom), set(), set())
+		self.pkgs[pkg] = [combinations(pkg.rdepends, atom), set(), set()]
 		if len(self.pkgs[pkg][0]) <= 1:
 			for atomset in self.pkgs[pkg][0]:
 				self.pkgs[pkg][1].update(self.pkgs[pkg][1].union(atomset))
@@ -39,14 +39,16 @@ class StateGraph(object):
 
 	def calculate_deps(self):
 		if not self.dirty:
+			import traceback;traceback.print_stack()
+			print "calcuate_deps called yet it wasn't dirty"
 			return
 		for atom in self.atoms:
-			self.atoms[atom][1].clear()
+			self.atoms[atom][1] = set()
 		for pkg in self.pkgs:
-			self.pkgs[pkg][2].clear()
+			self.pkgs[pkg][2] = set()
 			if self.pkgs[pkg][1] and len(self.pkgs[pkg][0]) > 1:
 				self._remove_deps(pkg)
-				self.pkgs[pkg][1].clear()
+				self.pkgs[pkg][1] = set()
 		for pkg in self.pkgs:
 			if len(self.pkgs[pkg][0]) <= 1:
 				continue

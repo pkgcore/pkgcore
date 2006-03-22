@@ -43,3 +43,9 @@ print "== unresolveds =="
 print "\n".join(str(x) for x in sg.unresolved_atoms())
 print "\n== blockers =="
 print "\n".join(str(x) for x in sg.blocking_atoms())
+
+print
+from pkgcore.util import caching
+hits = sum(caching.class_hits.itervalues())
+misses = sum(caching.class_misses.itervalues())
+print "debug: caching hits(%s), misses(%s): %.2f%%" % (hits, misses, (hits*100)/float(hits+misses))

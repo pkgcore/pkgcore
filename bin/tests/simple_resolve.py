@@ -46,6 +46,19 @@ print "\n".join(str(x) for x in sg.blocking_atoms())
 
 print
 from pkgcore.util import caching
-hits = sum(caching.class_hits.itervalues())
-misses = sum(caching.class_misses.itervalues())
-print "debug: caching hits(%s), misses(%s): %.2f%%" % (hits, misses, (hits*100)/float(hits+misses))
+from pkgcore.restrictions import restriction
+from pkgcore.package import metadata
+
+pkg_hits = sum(v for k,v in caching.class_hits.iteritems() if issubclass(k, metadata.factory))
+pkg_misses = sum(v for k,v in caching.class_misses.iteritems() if issubclass(k, metadata.factory))
+rest_hits = sum(v for k,v in caching.class_hits.iteritems() if issubclass(k, restriction.base))
+rest_misses = sum(v for k,v in caching.class_misses.iteritems() if issubclass(k, restriction.base))
+
+try:
+	print "debug: packages:     caching hits(%s), misses(%s): %.2f%%" % (pkg_hits, pkg_misses, (pkg_hits*100)/float(pkg_hits+pkg_misses))
+except ZeroDivisionError:
+	print "debug: packages:     caching hits(0), misses (0): 0.00%"
+try:
+	print "debug: restrictions: caching hits(%s), misses(%s): %.2f%%" % (rest_hits, rest_misses, (rest_hits*100)/float(rest_hits+rest_misses))
+except ZeroDivisionError:
+	print "debug: restrictions: caching hits(0), misses (0): 0.00%"

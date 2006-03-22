@@ -25,16 +25,21 @@ for a in map(atom, sys.argv[1:]):
 		print "found %s in vdb" % m
 		map(sg.add_pkg, m)
 	else:
-		for x in max(repo.match(a)):
+		foundit = False
+		l = repo.match(a)
+		if l:
+			x = max(l)
 			print "repo match %s" % x
 			sg.add_pkg(x)
-			break
+		else:
+			print "couldn't find repo match for atom '%s'" % a
+			sys.exit(1)
 			
 changed=True
 print 
 resolve(sg, vdb, repo)
 
 print "== unresolveds =="
-print "\n".join(sg.unresolved_atoms())
+print "\n".join(str(x) for x in sg.unresolved_atoms())
 print "\n== blockers =="
-print "\n".join(sg.blocking_atoms())
+print "\n".join(str(x) for x in sg.blocking_atoms())

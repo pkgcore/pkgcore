@@ -15,7 +15,9 @@ class StateGraph(object):
 		self.dirty = False
 
 	def add_pkg(self, pkg):
-		assert(pkg not in self.pkgs)
+#		assert(pkg not in self.pkgs)
+		if pkg in self.pkgs:
+			return
 		self.dirty = True
 		self.pkgs[pkg] = [combinations(pkg.rdepends, atom), set(), set()]
 		if len(self.pkgs[pkg][0]) <= 1:

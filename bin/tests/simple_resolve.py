@@ -55,10 +55,12 @@ rest_hits = sum(v for k,v in caching.class_hits.iteritems() if issubclass(k, res
 rest_misses = sum(v for k,v in caching.class_misses.iteritems() if issubclass(k, restriction.base))
 
 try:
-	print "debug: packages:     caching hits(%s), misses(%s): %.2f%%" % (pkg_hits, pkg_misses, (pkg_hits*100)/float(pkg_hits+pkg_misses))
+	print "debug: packages:     weakrefs: %.2f%%,  hits(%i), misses(%i)" % \
+		((pkg_hits*100)/float(pkg_hits+pkg_misses), pkg_hits, pkg_misses)
 except ZeroDivisionError:
-	print "debug: packages:     caching hits(0), misses (0): 0.00%"
+	print "debug: packages:     weakrefs:   0.00%, hits(0), misses (0)"
 try:
-	print "debug: restrictions: caching hits(%s), misses(%s): %.2f%%" % (rest_hits, rest_misses, (rest_hits*100)/float(rest_hits+rest_misses))
+	print "debug: restrictions: weakrefs: %.2f%%, hits(%i), misses(%i)" % \
+		((rest_hits*100)/float(rest_hits+rest_misses), rest_hits, rest_misses)
 except ZeroDivisionError:
-	print "debug: restrictions: caching hits(0), misses (0): 0.00%"
+	print "debug: restrictions: weakrefs:   0.00%% weakref hits(0), misses (0)"

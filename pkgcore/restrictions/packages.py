@@ -14,9 +14,9 @@ class Conditional(base):
 	"""base object representing a conditional node"""
 
 	__slots__ = ["cond", "negate", "restrictions"]
-	type = package_type
+	__inst_caching__ = False
 	
-	def __init__(self, node, payload, negate=False):
+	def __initialize__(self, node, payload, negate=False):
 		self.negate, self.cond, self.restrictions = negate, node, payload
 
 	def __str__(self):	
@@ -42,8 +42,8 @@ class PackageRestriction(base):
 
 	__slots__ = tuple(["attr_split", "attr", "restriction"] + base.__slots__)
 	
-	def __init__(self, attr, restriction, **kwds):
-		super(PackageRestriction, self).__init__(**kwds)
+	def __initialize__(self, attr, restriction, **kwds):
+		super(PackageRestriction, self).__initialize__(**kwds)
 		self.attr_split = attr.split(".")
 		self.attr = attr
 		if not restriction.type == values.value_type:
@@ -154,5 +154,5 @@ for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
 del x, m, l, o, doc
 
 AlwaysTrue = AlwaysBool(True)
-AlwaysFalse = AlwaysBool(True)
+AlwaysFalse = AlwaysBool(False)
 

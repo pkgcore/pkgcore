@@ -12,6 +12,7 @@ class base(restriction.base):
 	all derivatives *must* be __slot__ based"""
 
 	__slots__ = restriction.base.__slots__
+
 	type = value_type
 
 	def force_True(self, pkg, attr, val):
@@ -43,8 +44,8 @@ class StrRegexMatch(StrMatch):
 	#potentially redesign this to jit the compiled_re object
 	__slots__ = tuple(["regex", "compiled_re"] + StrMatch.__slots__)
 
-	def __init__(self, regex, CaseSensitive=True, **kwds):
-		super(StrRegexMatch, self).__init__(**kwds)
+	def __initialize__(self, regex, CaseSensitive=True, **kwds):
+		super(StrRegexMatch, self).__initialize__(**kwds)
 		self.regex = regex
 		flags = 0
 		if not CaseSensitive:
@@ -71,8 +72,8 @@ class StrRegexMatch(StrMatch):
 class StrExactMatch(StrMatch):
 	__slots__ = tuple(["exact", "flags"] + StrMatch.__slots__)
 
-	def __init__(self, exact, CaseSensitive=True, **kwds):
-		super(StrExactMatch, self).__init__(**kwds)
+	def __initialize__(self, exact, CaseSensitive=True, **kwds):
+		super(StrExactMatch, self).__initialize__(**kwds)
 		if not CaseSensitive:
 			self.flags = re.I
 			self.exact = str(exact).lower()
@@ -108,8 +109,8 @@ class StrGlobMatch(StrMatch):
 
 	__slots__ = tuple(["glob", "prefix"] + StrMatch.__slots__)
 
-	def __init__(self, glob, CaseSensitive=True, prefix=True, **kwds):
-		super(StrGlobMatch, self).__init__(**kwds)
+	def __initialize__(self, glob, CaseSensitive=True, prefix=True, **kwds):
+		super(StrGlobMatch, self).__initialize__(**kwds)
 		if not CaseSensitive:
 			self.flags = re.I
 			self.glob = str(glob).lower()
@@ -152,7 +153,7 @@ class ContainmentMatch(base):
 
 	__slots__ = tuple(["vals", "vals_len", "all"] + base.__slots__)
 	
-	def __init__(self, *vals, **kwds):
+	def __initialize__(self, *vals, **kwds):
 		"""vals must support a contaiment test
 		if all is set to True, all vals must match"""
 
@@ -161,7 +162,7 @@ class ContainmentMatch(base):
 			del kwds["all"]
 		else:
 			self.all = False
-		super(ContainmentMatch, self).__init__(**kwds)
+		super(ContainmentMatch, self).__initialize__(**kwds)
 		self.vals = set(vals)
 		self.vals_len = len(self.vals)
 		

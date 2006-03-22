@@ -13,15 +13,17 @@ import restriction
 
 class base(restriction.base):
 	__slots__ = tuple(["restrictions", "type"] + restriction.base.__slots__)
+	__inst_caching__ = False
 	
-	def __init__(self, type, *restrictions, **kwds):
+	def __initialize__(self, node_type=None, *restrictions, **kwds):
 		"""Optionally hand in (positionally) restrictions to use as the basis of this restriction
 		finalize=False, set it to True to notify this instance to internally finalize itself (no way to reverse it yet)
 		negate=False, controls whether matching results are negated
 		"""
-		self.type = type
+		if node_type is not None:
+			self.type = node_type
 		finalize = kwds.pop('finalize', False)
-		super(base, self).__init__(**kwds)
+		super(base, self).__initialize__(**kwds)
 
 		self.restrictions = []
 		if restrictions:
@@ -41,7 +43,8 @@ class base(restriction.base):
 				if r.type != self.type:
 					raise TypeError("instance '%s' is restriction type '%s', must be '%s'" % (r, r.type, self.type))
 		except AttributeError:
-			raise TypeError("instance '%s' has no restriction type, '%s' required" % (r, self.type))
+			raise TypeError("type '%s' instance '%s' has no restriction type, '%s' required" % (r.__class__, 
+				r, getattr(self, "type", "unset")))
 		
 		self.restrictions.extend(new_restrictions)
 

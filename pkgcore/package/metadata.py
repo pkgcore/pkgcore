@@ -3,6 +3,8 @@
 
 import weakref
 import warnings
+from pkgcore.util import caching
+
 from cpv import CPV
 
 class package(CPV):
@@ -51,10 +53,14 @@ class factory(object):
 	def __init__(self, parent_repo):
 		self._parent_repo = parent_repo
 		self._cached_instances = weakref.WeakValueDictionary()
+		caching.class_hits.setdefault(self.__class__, 0)
+		caching.class_misses.setdefault(self.__class__, 0)
 
 	def new_package(self, cpv):
 		if cpv in self._cached_instances:
+			caching.class_hits[self.__class__] += 1
 			return self._cached_instances[cpv]
+		caching.class_misses[self.__class__] += 1
 		d = self._get_new_child_data(cpv)
 		m = self.child_class(cpv, self, *d[0], **d[1])
 		self._cached_instances[cpv] = m

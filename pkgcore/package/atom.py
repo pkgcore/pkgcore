@@ -20,9 +20,10 @@ class VersionMatch(packages.base):
 	vals also must be a tuple"""
 
 	type = packages.package_type
-	def __init__(self, operator, ver, rev=None, negate=False, **kwd):
+
+	def __initialize__(self, operator, ver, rev=None, negate=False, **kwd):
 		kwd["negate"] = False
-		super(self.__class__, self).__init__(**kwd)
+		super(self.__class__, self).__initialize__(**kwd)
 		self.ver, self.rev = ver, rev
 		if operator not in ("<=","<", "=", ">", ">=", "~"):
 			# XXX: hack
@@ -127,8 +128,11 @@ class atom(boolean.AndRestriction):
 #		"version","revision", "fullver", "package") \
 #		+ tuple(boolean.AndRestriction.__slots__)
 	
-	def __init__(self, atom, negate_vers=False):
-		boolean.AndRestriction.__init__(self, packages.package_type)
+	__inst_caching__ = False
+	type = packages.package_type
+	
+	def __initialize__(self, atom, negate_vers=False):
+		boolean.AndRestriction.__initialize__(self)
 
 		atom = atom.strip()
 		self.hash = hash(atom)

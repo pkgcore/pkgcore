@@ -26,15 +26,16 @@ class DictBased(packages.base):
 	"""
 
 	__slots__ = tuple(["restricts_dict", "get_pkg_key", "get_atom_key"] + packages.base.__slots__)
+	__inst_caching__ = False
 
-	def __init__(self, restriction_items, get_key_from_package, get_key_from_atom, *args, **kwargs):
+	def __initialize__(self, restriction_items, get_key_from_package, get_key_from_atom, *args, **kwargs):
 		"""restriction_items is a source of restriction keys and remaining restriction (if none, set it to None)
 		get_key is a function to get the key from a pkg instance"""
 
 		if not callable(get_key_from_package):
 			raise TypeError(get_key_from_package)
 
-		super(DictBased, self).__init__(*args, **kwargs)
+		super(DictBased, self).__initialize__(*args, **kwargs)
 		self.restricts_dict = {}
 		for r in restriction_items:
 			key, remaining = get_key_from_atom(r)

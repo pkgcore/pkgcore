@@ -1,15 +1,17 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from pkgcore.util.caching import WeakInstCaching
 
-class base(object):
+class base(WeakInstCaching):
+
 	"""base restriction matching object; overrides setattr to provide the usual write once trickery
 	all derivatives *must* be __slot__ based"""
 
 	__slots__ = ["negate", "_hash"]
 	package_matching = False
-
-	def __init__(self, negate=False):
+	
+	def __initialize__(self, negate=False):
 		self.negate = negate
 
 #	def __setattr__(self, name, value):
@@ -51,9 +53,9 @@ class base(object):
 
 class AlwaysBool(base):
 	__slots__ = ["type"] + base.__slots__
-	
-	def __init__(self, package_type, negate=False):
-		self.type, self.negate  = package_type, negate
+
+	def __initialize__(self, node_type=None, negate=False):
+		self.type, self.negate  = node_type, negate
 
 	def match(self, *a, **kw):
 		return self.negate

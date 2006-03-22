@@ -4,7 +4,7 @@
 # TODO: move exceptions elsewhere, bind them to a base exception for pkgcore
 
 import logging
-from pkgcore.restrictions import packages, boolean
+from pkgcore.restrictions import packages
 from pkgcore.util.lists import unique, flatten
 from pkgcore.util.strings import iter_tokens
 
@@ -14,8 +14,8 @@ def conditional_converter(node, payload):
 	return packages.Conditional(node, payload)
 
 
-class DepSet(boolean.AndRestriction):
-	__slots__ = ("has_conditionals", "conditional_class", "node_conds") + boolean.AndRestriction.__slots__
+class DepSet(object):
+	__slots__ = ("has_conditionals", "conditional_class", "node_conds", "restrictions")
 
 	def __init__(self, dep_str, element_func, operators={"||":packages.OrRestriction,"":packages.AndRestriction}, \
 		conditional_converter=conditional_converter, conditional_class=packages.Conditional, empty=False):
@@ -23,19 +23,14 @@ class DepSet(boolean.AndRestriction):
 		"""dep_str is a dep style syntax, element_func is a callable returning the obj for each element, and
 		cleanse_string controls whether or translation of tabs/newlines is required"""
 
-		boolean.AndRestriction.__init__(self, packages.package_type)
-
 		self.conditional_class = conditional_class
 		self.node_conds = {}
+		self.restrictions = []
 
 		if empty:
 			return
 
-		# anyone who uses this routine as fodder for pushing a rewrite in lisp I reserve the right to deliver an
-		# atomic wedgie upon.
-		# ~harring
-
-		conditionals, depsets = [], [self]
+		conditionals, depsets = [], [self.restrictions]
 		raw_conditionals = []
 		words = iter_tokens(dep_str, splitter=" \t\n")
 		try:
@@ -43,16 +38,16 @@ class DepSet(boolean.AndRestriction):
 				if k == ")":
 					# no elements == error.  if closures don't map up, indexerror would be chucked from trying to pop the frame
 					# so that is addressed.
-					if not depsets[-1].restrictions:
+					if not depsets[-1]:
 						raise ParseError(dep_str)
 					elif conditionals[-1].endswith('?'):
 						cond = raw_conditionals[:]
-						depsets[-2].restrictions.append(conditional_converter(conditionals.pop(-1)[:-1], depsets[-1].restrictions))
+						depsets[-2].append(conditional_converter(conditionals.pop(-1)[:-1], depsets[-1]))
 						raw_conditionals.pop(-1)
 						for x in depsets[-1]:
 							self.node_conds.setdefault(x, []).append(cond)
 					else:
-						depsets[-2].restrictions.append(operators[conditionals.pop(-1)](*depsets[-1].restrictions))
+						depsets[-2].append(operators[conditionals.pop(-1)](*depsets[-1]))
 
 					depsets.pop(-1)
 
@@ -69,8 +64,7 @@ class DepSet(boolean.AndRestriction):
 						k = ""
 
 					# push another frame on
-					depsets.append(self.__class__(dep_str, element_func, empty=True, conditional_converter=conditional_converter,
-						conditional_class=self.conditional_class))
+					depsets.append([])
 
 					conditionals.append(k)
 					if k.endswith("?"):
@@ -78,7 +72,7 @@ class DepSet(boolean.AndRestriction):
 
 				else:
 					# node/element.
-					depsets[-1].restrictions.append(element_func(k))
+					depsets[-1].append(element_func(k))
 
 
 		except IndexError:

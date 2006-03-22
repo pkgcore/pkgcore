@@ -33,13 +33,6 @@ for a in map(atom, sys.argv[1:]):
 changed=True
 print 
 resolve(sg, vdb, repo)
-#while changed:
-#	changed=False
-#	for x in list(sg.unresolved_atoms()):
-#		for pkg in vdb.itermatch(x):
-#			print "adding %s for %s" % (pkg, x)
-#			sg.add_pkg(pkg)
-#			changed=True
 
 print "== unresolveds =="
 print "\n".join(sg.unresolved_atoms())

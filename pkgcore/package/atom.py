@@ -137,10 +137,14 @@ class atom(boolean.AndRestriction):
 		atom = atom.strip()
 		self.hash = hash(atom)
 
-		pos=0
-		while atom[pos] in ("<",">","=","~","!"):
+		self.blocks = atom[0] == "!"
+		if self.blocks:
+			pos = 1
+		else:
+			pos = 0
+		while atom[pos] in ("<",">","=","~"):
 			pos+=1
-		if atom.startswith("!"):
+		if self.blocks:
 			self.blocks  = True
 			self.op = atom[1:pos]
 		else:

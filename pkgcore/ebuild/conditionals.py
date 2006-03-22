@@ -126,6 +126,9 @@ class DepSet(object):
 	def __iter__(self):
 		return iter(self.restrictions)
 
+	def __getitem__(self, key):
+		return self.restrictions[key]
+
 def split_atom_depset_by_blockers(ds):
 	"""returns a two depsets, (blockers, nonblockers)"""
 	ccls = ds.conditional_class

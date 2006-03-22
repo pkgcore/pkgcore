@@ -39,7 +39,7 @@ changed=True
 print 
 resolve(sg, vdb, repo)
 
-print "== unresolveds =="
+print "\n== unresolveds =="
 print "\n".join(str(x) for x in sg.unresolved_atoms())
 print "\n== blockers =="
 print "\n".join(str(x) for x in sg.blocking_atoms())

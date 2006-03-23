@@ -12,10 +12,14 @@ class WeakInstCaching(object):
 	__inst_caching__ = True
 	
 	def __new__(cls, *a, **kw):
+		"""disable caching via disable_inst_caching=True"""
 		global class_hits, class_misses
-#		import pdb;pdb.set_trace()
-		if cls.__inst_caching__ is not False:
-#			if not isinstance(cls.__inst_caching__, WeakValueDictionary):
+		if "disable_inst_caching" in kw:
+			disabled = kw["disable_inst_caching"]
+			del kw["disable_inst_caching"]
+		else:
+			disabled = False
+		if cls.__inst_caching__ is not False and not disabled:
 			o = None
 			try:
 				key = hash((cls, a, tuple(kw.iteritems())))
@@ -47,3 +51,5 @@ class WeakInstCaching(object):
 
 		return o
 
+	def __init__(*a, **kw):
+		pass

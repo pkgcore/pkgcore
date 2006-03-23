@@ -3,35 +3,39 @@
 
 # TODO: move exceptions elsewhere, bind them to a base exception for pkgcore
 
-import logging
-from pkgcore.restrictions import packages
+from pkgcore.restrictions import packages, values
 from pkgcore.util.lists import unique, flatten
 from pkgcore.util.strings import iter_tokens
 
-def conditional_converter(node, payload):
-	if node[0] == "!":
-		return packages.Conditional(node[1:], payload, negate=True)
-	return packages.Conditional(node, payload)
-
+def convert_use_reqs(uses):
+	assert len(uses)
+	use_asserts = tuple(x for x in uses if x[0] != "!")
+	if len(use_asserts) != len(uses):
+		use_negates = values.ContainmentMatch(all=True, negate=True, *tuple(x[1:] for x in uses if x[0] == "!"))
+		assert len(use_negates.vals)
+		if not use_asserts:
+			return use_negates
+	else:
+		return values.ContainmentMatch(all=True, *use_asserts)
+	return values.AndRestriction(values.ContainmentMatch(all=True, *use_asserts), use_negates)
+	
 
 class DepSet(object):
-	__slots__ = ("has_conditionals", "conditional_class", "node_conds", "restrictions")
+	__slots__ = ("has_conditionals", "element_class", "node_conds", "restrictions")
 
-	def __init__(self, dep_str, element_func, operators={"||":packages.OrRestriction,"":packages.AndRestriction}, \
-		conditional_converter=conditional_converter, conditional_class=packages.Conditional, empty=False):
+	def __init__(self, dep_str, element_class, operators={"||":packages.OrRestriction,"":packages.AndRestriction}):
 
 		"""dep_str is a dep style syntax, element_func is a callable returning the obj for each element, and
 		cleanse_string controls whether or translation of tabs/newlines is required"""
 
-		self.conditional_class = conditional_class
 		self.node_conds = {}
 		self.restrictions = []
-
-		if empty:
-			return
-
-		conditionals, depsets = [], [self.restrictions]
+		self.element_class = element_class
+		
 		raw_conditionals = []
+		depsets = [self.restrictions]
+		use_asserts = []
+		
 		words = iter_tokens(dep_str, splitter=" \t\n")
 		try:
 			for k in words:
@@ -40,50 +44,55 @@ class DepSet(object):
 					# so that is addressed.
 					if not depsets[-1]:
 						raise ParseError(dep_str)
-					elif conditionals[-1].endswith('?'):
-						cond = raw_conditionals[:]
-						depsets[-2].append(conditional_converter(conditionals.pop(-1)[:-1], depsets[-1]))
-						raw_conditionals.pop(-1)
-						for x in depsets[-1]:
-							self.node_conds.setdefault(x, []).append(cond)
-					else:
-						depsets[-2].append(operators[conditionals.pop(-1)](*depsets[-1]))
+					elif raw_conditionals[-1].endswith('?'):
+						for x in (y for y in depsets[-1] if not isinstance(y, packages.Conditional)):
+							self.node_conds.setdefault(x, []).append(use_asserts[-1])
 
+						c = convert_use_reqs((raw_conditionals[-1][:-1],))
+
+						depsets[-2].append(packages.Conditional("use", c, tuple(depsets[-1])))
+						use_asserts.pop(-1)
+					else:
+						depsets[-2].append(operators[raw_conditionals[-1]](finalize=True, *depsets[-1]))
+					
+					raw_conditionals.pop(-1)
 					depsets.pop(-1)
 
 				elif k.endswith('?') or k in operators or k=="(":
 					if k != "(":
 						# use conditional or custom op. no tokens left == bad dep_str.
-						try:							k2 = words.next()
-						except StopIteration:	k2 = ''
+						try:
+							k2 = words.next()
+						except StopIteration:
+							k2 = ''
 
 						if k2 != "(":
 							raise ParseError(dep_str)
+
 					else:
 						# Unconditional subset - useful in the || ( ( a b ) c ) case
 						k = ""
 
 					# push another frame on
 					depsets.append([])
-
-					conditionals.append(k)
-					if k.endswith("?"):
-						raw_conditionals.append(k[:-1])
+					raw_conditionals.append(k)
+					if k[-1] == "?":
+						use_asserts.append(convert_use_reqs([x[:-1] for x in raw_conditionals if x[-1] == "?"]))
 
 				else:
 					# node/element.
-					depsets[-1].append(element_func(k))
+					depsets[-1].append(element_class(k))
 
 
 		except IndexError:
 			# [][-1] for a frame access, which means it was a parse error.
+			raise
 			raise ParseError(dep_str)
 
 		# check if any closures required
 		if len(depsets) != 1:
 			raise ParseError(dep_str)
-		for x in self.node_conds:
-			self.node_conds[x] = tuple(unique(flatten(self.node_conds[x])))
+		self.restrictions = tuple(self.restrictions)
 
 	def evaluate_depset(self, cond_dict):
 		"""passed in a depset, does lookups of the node in cond_dict.
@@ -94,21 +103,39 @@ class DepSet(object):
 
 		flat_deps = self.__class__("", str)
 
-		stack = [self.restrictions]
+		stack = [iter(self.restrictions)]
+		base_restrict = []
+		restricts = [base_restrict]
 		while stack:
-			for node in stack[0]:
-				if isinstance(node, self.conditional_class):
-					if node.cond in cond_dict:
-						if not node.negate:
-							stack.append(node.restrictions)
-					elif node.negate:
-						stack.append(node.restrictions)
+			exhausted = True
+			for node in stack[-1]:
+				if isinstance(node, self.element_class):
+					restricts[-1].append(node)
+					continue
+				if isinstance(node, packages.Conditional):
+					if not (node.restriction.match(cond_dict) and node.payload):
+						continue
+					stack.append(packages.AndRestriction)
 				else:
-					# XXX: OrRestrictioins seem to fall in here...
-					# Does "|| ( foo? ( bar ) baz )" work?
-					# -- jstubbs
-					flat_deps.restrictions.append(node)
-			stack.pop(0)
+					stack.append(node.change_restrictions)
+				stack.append(iter(node.payload))
+				restricts.append([])
+				exhausted = False
+				break
+
+			if exhausted:
+				stack.pop(-1)
+				if len(restricts) != 1:
+					if restricts[-1]:
+						# optimization to avoid uneccessary frames.
+						if len(restricts[-1]) == 1:
+							restricts[-2].append(restricts[-1][0])
+						else:
+							restricts[-2].append(stack[-1](*restricts[-1]))
+					stack.pop(-1)
+				restricts.pop(-1)
+
+		flat_deps.restrictions = tuple(base_restrict)
 		return flat_deps
 
 	@property
@@ -129,52 +156,6 @@ class DepSet(object):
 	def __getitem__(self, key):
 		return self.restrictions[key]
 
-def split_atom_depset_by_blockers(ds):
-	"""returns a two depsets, (blockers, nonblockers)"""
-	ccls = ds.conditional_class
-	block = ds.__class__("", str, conditional_class=ccls)
-	nonblock = ds.__class__("", str, conditional_class=ccls)
-	if not ds.has_conditionals:
-		block.restrictions = [x for x in ds if x.blocks]
-		nonblock.restrictions = [x for x in ds if not x.blocks]
-		return block, nonblock
-
-	nbstack = [nonblock]
-	bstack = [block]
-	stack = [iter(ds)]
-	nbconds, bconds = {}, {}
-
-	conds = []
-	while stack:
-		reset = False
-		for node in stack[-1]:
-			if isinstance(node, ccls):
-				stack.append(iter(node.restrictions))
-				nbstack.append(node.clone_empty())
-				bstack.append(node.clone_empty())
-				conds.append(node.cond)
-				reset = True
-				break
-			elif node.blocks:
-				bstack[-1].restrictions.append(node)
-			else:
-				nbstack[-1].restrictions.append(node)
-		if not reset:
-			if len(stack) > 1:
-				for s, d in ((nbstack, nbconds), (bstack, bconds)):
-					if s[-1].restrictions:
-						if conds[-1] is not None:
-							d.setdefault(conds[-1], []).append(s[-1].restrictions)
-						s[-2].restrictions.append(s[-1])
-					s.pop(-1)
-				conds.pop(-1)
-			stack.pop(-1)
-
-	# rebuild node_conds.
-	for s, d in ((block, bconds), (nonblock, nbconds)):
-		s.node_conds.update((x, tuple(unique(flatten(d[x])))) for x in d)
-
-	return block, nonblock
 
 class ParseError(Exception):
 

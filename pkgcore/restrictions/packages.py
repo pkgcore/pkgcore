@@ -6,41 +6,12 @@ from pkgcore.util.currying import pre_curry, pretty_docs
 from pkgcore.restrictions import values, restriction, boolean
 
 package_type = "package"
-class base(restriction.base):
-	__slots__ = restriction.base.__slots__
-	type = package_type
 
-class Conditional(base):
-	"""base object representing a conditional node"""
-
-	__slots__ = ["cond", "negate", "restrictions"]
-	__inst_caching__ = False
-	
-	def __initialize__(self, node, payload, negate=False):
-		self.negate, self.cond, self.restrictions = negate, node, payload
-
-	def __str__(self):	
-		if self.negate:
-			s = "!"+self.cond
-		else:
-			s = self.cond
-		try:
-			s2=" ".join(str(x) for x in self.restrictions)
-		except TypeError:
-			s2 = str(self.restrictions)
-		return "%s? ( %s )" % (s, s2)
-
-	def __iter__(self):
-		return iter(self.restrictions)
-
-	def clone_empty(self):
-		return self.__class__(self.cond, [], negate=self.negate)
-
-
-class PackageRestriction(base):
+class PackageRestriction(restriction.base):
 	"""cpv data restriction.  Inherit for anything that's more then cpv mangling please"""
 
-	__slots__ = tuple(["attr_split", "attr", "restriction"] + base.__slots__)
+	__slots__ = tuple(["attr_split", "attr", "restriction"] + restriction.base.__slots__)
+	type = package_type
 	
 	def __initialize__(self, attr, restriction, **kwds):
 		super(PackageRestriction, self).__initialize__(**kwds)
@@ -137,12 +108,29 @@ class PackageRestriction(base):
 		if self.negate:	self.attr += "not "
 		return s + str(self.restriction)
 
+
+class Conditional(PackageRestriction):
+	"""base object representing a conditional node"""
+
+	__slots__ = tuple(["payload"] + list(PackageRestriction.__slots__))
+	
+	def __initialize__(self, attr, restriction, payload, **kwds):
+		super(Conditional, self).__initialize__(attr, restriction, **kwds)
+		self.payload = tuple(payload)
+
+	def __str__(self):
+		return "( %s payload: [ %s ] )" % (PackageRestriction.__str__(self), ", ".join(map(str, self.payload)))
+	
+	def __iter__(self):
+		return iter(self.restrictions)
+
+
 for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
 	[restriction, ["AlwaysBool"]]]:
 	for x in l:
 		o = getattr(m, x)
 		doc = o.__doc__
-		o = pre_curry(o, package_type)
+		o = pre_curry(o, node_type=package_type)
 		if doc == None:
 			doc = ''
 		else:
@@ -153,6 +141,6 @@ for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
 
 del x, m, l, o, doc
 
-AlwaysTrue = AlwaysBool(True)
-AlwaysFalse = AlwaysBool(False)
+AlwaysTrue = AlwaysBool(negate=True)
+AlwaysFalse = AlwaysBool(negate=False)
 

@@ -185,6 +185,9 @@ class ContainmentMatch(base):
 #			return val in self.vals ^ self.negate
 
 	def force_False(self, pkg, attr, val):
+		
+		# XXX pretty much positive this isn't working.
+		
 		if isinstance(val, (str, unicode)):
 			# unchangable
 			if self.all:
@@ -230,6 +233,9 @@ class ContainmentMatch(base):
 
 
 	def force_True(self, pkg, attr, val):
+
+		# XXX pretty much positive this isn't working.
+
 		if isinstance(val, (str, unicode)):
 			# unchangable
 			if self.all:

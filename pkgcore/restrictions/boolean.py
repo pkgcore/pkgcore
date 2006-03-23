@@ -20,7 +20,8 @@ class base(restriction.base):
 		finalize=False, set it to True to notify this instance to internally finalize itself (no way to reverse it yet)
 		negate=False, controls whether matching results are negated
 		finalize=False, controls whether this instance is finalized.
-		node_type=None, controls whether to override the class default type (package or value)
+		node_type=None, controls whether to override the class default (if specified); no type in class nor passed in means
+		no filtering of add_restriction calls.
 		"""
 		if "node_type" in kwds:
 			self.type = kwds["node_type"]
@@ -35,9 +36,9 @@ class base(restriction.base):
 			self.restrictions = tuple(self.restrictions)
 
 	def change_restrictions(self, *restrictions, **kwds):
-		if self.type != cls.type:
+		if self.__class__.type != self.type:
 			kwds["node_type"] = self.type
-		kdws["negate"] = self.negate
+		kwds["negate"] = self.negate
 		return self.__class__(*restrictions, **kwds)
 
 	def add_restriction(self, *new_restrictions):
@@ -45,13 +46,14 @@ class base(restriction.base):
 		"""
 		if not new_restrictions:
 			raise TypeError("need at least one restriction handed in")
-		try:
-			for r in new_restrictions:
-				if r.type != self.type:
-					raise TypeError("instance '%s' is restriction type '%s', must be '%s'" % (r, r.type, self.type))
-		except AttributeError:
-			raise TypeError("type '%s' instance '%s' has no restriction type, '%s' required" % (r.__class__, 
-				r, getattr(self, "type", "unset")))
+		if hasattr(self, "type"):
+			try:
+				for r in new_restrictions:
+					if r.type != self.type:
+						raise TypeError("instance '%s' is restriction type '%s', must be '%s'" % (r, r.type, self.type))
+			except AttributeError:
+				raise TypeError("type '%s' instance '%s' has no restriction type, '%s' required" % (r.__class__, 
+					r, getattr(self, "type", "unset")))
 		
 		self.restrictions.extend(new_restrictions)
 

@@ -167,7 +167,7 @@ class ContainmentMatch(base):
 		
 	def match(self, val):
 		if isinstance(val, (str, unicode)):
-			return val in self.vals ^ self.negate
+			return (val in self.vals) ^ self.negate
 		rem = set(self.vals)
 		try:
 			# assume our lookup is faster, since we don't know if val is constant lookup or not

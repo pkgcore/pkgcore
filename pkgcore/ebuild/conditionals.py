@@ -76,8 +76,8 @@ class DepSet(object):
 					# push another frame on
 					depsets.append([])
 					raw_conditionals.append(k)
-					if k[-1] == "?":
-						use_asserts.append(convert_use_reqs([x[:-1] for x in raw_conditionals if x[-1] == "?"]))
+					if k.endswith("?"):
+						use_asserts.append(convert_use_reqs([x[:-1] for x in raw_conditionals if x.endswith("?")]))
 
 				else:
 					# node/element.
@@ -116,9 +116,10 @@ class DepSet(object):
 					if not (node.restriction.match(cond_dict) and node.payload):
 						continue
 					stack.append(packages.AndRestriction)
+					stack.append(iter(node.payload))
 				else:
 					stack.append(node.change_restrictions)
-				stack.append(iter(node.payload))
+					stack.append(iter(node.restrictions))
 				restricts.append([])
 				exhausted = False
 				break

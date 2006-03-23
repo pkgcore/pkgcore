@@ -20,8 +20,10 @@ class database(fs_template.FsBased):
 	def _getitem(self, cpv):
 		try:
 			myf = open(os.path.join(self.location, cpv),"r")
-		except IOError:
-			raise KeyError(cpv)
+		except IOError, e:
+			if e.errno == errno.ENOENT:
+				raise KeyError(cpv)
+			raise cache_errors.CacheCorruption(cpv, e)
 		except OSError, e:
 			raise cache_errors.CacheCorruption(cpv, e)
 		try:
@@ -54,6 +56,8 @@ class database(fs_template.FsBased):
 					myf = open(fp,"w")
 				except (OSError, IOError),e:
 					raise cache_errors.CacheCorruption(cpv, e)
+			else:
+				raise cache_errors.CacheCorruption(cpv, ie)
 		except OSError, e:
 			raise cache_errors.CacheCorruption(cpv, e)
 		

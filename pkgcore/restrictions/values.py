@@ -163,8 +163,7 @@ class ContainmentMatch(base):
 		else:
 			self.all = False
 		super(ContainmentMatch, self).__initialize__(**kwds)
-		self.vals = set(vals)
-		self.vals_len = len(self.vals)
+		self.vals = frozenset(vals)
 		
 	def match(self, val):
 		if isinstance(val, (str, unicode)):
@@ -298,7 +297,7 @@ for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
 	for x in l:
 		o = getattr(m, x)
 		doc = o.__doc__
-		o = pre_curry(o, value_type)
+		o = pre_curry(o, node_type=value_type)
 		if doc == None:
 			doc = ''
 		else:
@@ -309,6 +308,6 @@ for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
 
 del x, m, l, o, doc
 
-AlwaysTrue = AlwaysBool(True)
-AlwaysFalse = AlwaysBool(True)
+AlwaysTrue = AlwaysBool(negate=True)
+AlwaysFalse = AlwaysBool(negate=False)
 

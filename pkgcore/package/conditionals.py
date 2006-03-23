@@ -68,12 +68,14 @@ class PackageWrapper(object):
 		a = getattr(self._wrapped_pkg, attr)
 		try:
 			for x in vals:
-				if x in a.node_conds:
-					map(self._configurable.add, a.node_conds[x])
-				else:
-					if x not in a:
-						self.rollback(entry_point)
-						return False
+				succeeded = False
+				for reqs in a.node_conds.get(x, []):
+					succeeded = reqs.force_true(self)
+					if succeeded:
+						break
+				if not succeeded:
+					self.rollback(entry_point)
+					return False
 		except Unchangable:
 			self.rollback(entry_point)
 			return False
@@ -94,12 +96,14 @@ class PackageWrapper(object):
 		a = getattr(self._wrapped_pkg, attr)
 		try:
 			for x in vals:
-				if x in a.node_conds:
-						map(self._configurable.remove, a.node_conds[x])
-				else:
-					if x in a:
-						self.rollback(entry_point)
-						return False
+				succeeded = False
+				for reqs in a.node_conds.get(x, []):
+					succeeded = reqs.force_false(self)
+					if succeeded:
+						break
+				if not succeeded:
+					self.rollback(entry_point)
+					return False
 		except Unchangable:
 			self.rollback(entry_point)
 			return False

@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.restrictions import values, packages, boolean
+from pkgcore.restrictions import values, packages, boolean, restriction
 from cpv import ver_cmp, CPV
 from pkgcore.util.lists import unique
 
@@ -14,7 +14,7 @@ class InvalidVersion(Exception):
 	def __str__(self):	return "Version restriction ver='%s', rev='%s', is malformed: error %s" % (self.ver, self.rev, self.err)
 
 
-class VersionMatch(packages.base):
+class VersionMatch(restriction.base):
 	__slots__ = tuple(["ver","rev", "vals", "droprev"])
 	"""any overriding of this class *must* maintain numerical order of self.vals, see intersect for reason why
 	vals also must be a tuple"""

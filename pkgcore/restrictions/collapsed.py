@@ -2,9 +2,10 @@
 # License: GPL2
 
 __all__=("DictBased")
+from pkgcore.restrictions import restriction
 from pkgcore.restrictions import packages
 
-class DictBased(packages.base):
+class DictBased(restriction.base):
 
 	"""Restrictions are (by default) executed in a depth/breadth method; for long chains of restrictions,
 	this grows inneficient.  For example, package.mask'ing has over 300 atoms, effectively over 1800 objects in use.
@@ -25,8 +26,9 @@ class DictBased(packages.base):
 	in re: what restriction types are being collapsed; short version, api isn't declared stable yet.
 	"""
 
-	__slots__ = tuple(["restricts_dict", "get_pkg_key", "get_atom_key"] + packages.base.__slots__)
+	__slots__ = tuple(["restricts_dict", "get_pkg_key", "get_atom_key"] + restriction.base.__slots__)
 	__inst_caching__ = False
+	type = packages.package_type
 
 	def __initialize__(self, restriction_items, get_key_from_package, get_key_from_atom, *args, **kwargs):
 		"""restriction_items is a source of restriction keys and remaining restriction (if none, set it to None)

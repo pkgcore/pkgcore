@@ -7,7 +7,8 @@ fi
 if [ -d ~/vdb-install/"${PKG}" ]; then
 	rm -rf ~/vdb-{install,test}
 fi
-[ ! -d ~/vdb-install ] && mkdir ~/vdb-test
+[ ! -d ~/vdb-install ] && mkdir ~/vdb-install
+[ ! -d ~/vdb-test ] && mkdir ~/vdb-test
 python -c"import pkgcore.config;from pkgcore.vdb import repository;v=repository('${HOME}/vdb-test').trees[0];
 v.frozen=False;
 p=pkgcore.config.load_config().domain['livefs domain'].repos[0]['${PKG}'];

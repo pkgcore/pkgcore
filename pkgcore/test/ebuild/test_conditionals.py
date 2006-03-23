@@ -27,8 +27,8 @@ class AndRestrictionOverride(boolean.AndRestriction):
 		assert not self.negate
 		return "( %s )" % " ".join(imap(str, self.restrictions))
 
-OrRestriction=pre_curry(OrRestrictionOverride,packages.package_type)
-AndRestriction=pre_curry(AndRestrictionOverride,packages.package_type)
+OrRestriction=pre_curry(OrRestrictionOverride,node_type=packages.package_type)
+AndRestriction=pre_curry(AndRestrictionOverride,node_type=packages.package_type)
 
 class StrPackage(StrExactMatch):
 	"""simple string restriction for testing purposes (portage.package.atom requires

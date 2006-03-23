@@ -52,8 +52,7 @@ def init(additional_handlers=None):
 			# no go.
 			continue
 		try:
-			for name, chf in types:
-				chksum_types[name] = chf
+			chksum_types.update(types)
 
 		except ValueError, ve:
 			logging.warn("%s.%s invalid chksum_types, ValueError Exception" % (__name__, f))

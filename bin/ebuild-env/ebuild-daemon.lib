@@ -1,9 +1,6 @@
 #!/bin/bash 
 # ebuild-daemon.lib; daemon lib code.
-# Copyright 2005 Gentoo Foundation
-# Author(s):	Brian Harring (ferringb@gentoo.org)
-# License:	GPL2
-# $Id: ebuild-daemon.lib 1913 2005-08-25 03:58:27Z ferringb $
+# Copyright 2005-2006 Brian Harring <ferringb@gmail.com>
  
 alias die='diefunc "$FUNCNAME" "$LINENO" "$?"'
 #alias listen='read -u 3 -t 10'

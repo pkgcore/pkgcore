@@ -1,8 +1,7 @@
 #!/bin/bash
 # ebuild-default-functions.sh; default functions for ebuild env that aren't saved- specific to the portage instance.
-# Copyright 2004-2005 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
-# $Id: ebuild-default-functions.sh 2220 2005-11-01 01:31:48Z vapier $
+# Copyright 2005-2006 Brian Harring <ferringb@gmail.com>
+# Copyright 2004-2006 Gentoo Foundation
 
 has_version()
 {

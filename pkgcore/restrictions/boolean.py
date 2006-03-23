@@ -15,23 +15,30 @@ class base(restriction.base):
 	__slots__ = tuple(["restrictions", "type"] + restriction.base.__slots__)
 	__inst_caching__ = False
 	
-	def __initialize__(self, node_type=None, *restrictions, **kwds):
+	def __initialize__(self, *restrictions, **kwds):
 		"""Optionally hand in (positionally) restrictions to use as the basis of this restriction
 		finalize=False, set it to True to notify this instance to internally finalize itself (no way to reverse it yet)
 		negate=False, controls whether matching results are negated
+		finalize=False, controls whether this instance is finalized.
+		node_type=None, controls whether to override the class default type (package or value)
 		"""
-		if node_type is not None:
-			self.type = node_type
-		finalize = kwds.pop('finalize', False)
-		super(base, self).__initialize__(**kwds)
+		if "node_type" in kwds:
+			self.type = kwds["node_type"]
+
+		super(base, self).__initialize__(negate=kwds.get("negate", False))
 
 		self.restrictions = []
 		if restrictions:
 			self.add_restriction(*restrictions)
 
-		if finalize:
+		if "finalize" in kwds:
 			self.restrictions = tuple(self.restrictions)
 
+	def change_restrictions(self, *restrictions, **kwds):
+		if self.type != cls.type:
+			kwds["node_type"] = self.type
+		kdws["negate"] = self.negate
+		return self.__class__(*restrictions, **kwds)
 
 	def add_restriction(self, *new_restrictions):
 		"""add restriction(s), must be isinstance of required_base

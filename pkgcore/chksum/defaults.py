@@ -34,10 +34,9 @@ for k,v in (("sha1", "SHA"), ("sha256", "SHA256"), ("RMD160", "RIPEMD")):
 	try:
 		chksum_types[k] = pre_curry(loop_over_file, modules.load_module("Crypto.Hash.%s" % v))
 	except modules.FailedImport:
-		print "failed on k"
 		pass
+del k,v
 
 if "sha1" not in chksum_types:
 	import sha
 	chksum_types["sha1"] = pre_curry(loop_over_file, sha1)
-

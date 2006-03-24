@@ -3,7 +3,7 @@
 
 # TODO: move exceptions elsewhere, bind them to a base exception for pkgcore
 
-from pkgcore.restrictions import packages, values
+from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.lists import unique, flatten
 from pkgcore.util.strings import iter_tokens
 
@@ -103,10 +103,11 @@ class DepSet(object):
 
 		flat_deps = self.__class__("", str)
 
-		stack = [iter(self.restrictions)]
+		stack = [packages.AndRestriction, iter(self.restrictions)]
 		base_restrict = []
 		restricts = [base_restrict]
-		while stack:
+#		import pdb;pdb.set_trace()
+		while len(stack) > 1:
 			exhausted = True
 			for node in stack[-1]:
 				if isinstance(node, self.element_class):
@@ -131,6 +132,8 @@ class DepSet(object):
 						# optimization to avoid uneccessary frames.
 						if len(restricts[-1]) == 1:
 							restricts[-2].append(restricts[-1][0])
+						elif stack[-1] is stack[-3] is packages.AndRestriction:
+							restricts[-2].extend(restricts[-1])
 						else:
 							restricts[-2].append(stack[-1](*restricts[-1]))
 					stack.pop(-1)

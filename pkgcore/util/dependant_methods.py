@@ -10,37 +10,70 @@
 from pkgcore.util.lists import unique, flatten
 from pkgcore.util.currying import pre_curry
 
-def ensure_deps(name, func, self, *a, **kw):
-	if "_stage_state" not in self.__dict__:
-		self._stage_state = set()
+__all__ = ["ForcedDepends"]
 
-	if "raw" in kw:
-		del kw["raw"]
-		r=func(self, *a, **kw)
-
+def ensure_deps(self, name, *a, **kw):
+	ignore_deps = "ignore_deps" in kw
+	if ignore_deps:
+		del kw["ignore_deps"]
+		s = [name]
 	else:
-		if name in self._stage_state:
-			return True
-		for x in self.stage_depends.get(name,[]):
-			r = getattr(self,x)(*a, **kw)
-			if not r:
+		s = yield_deps(self, self.stage_depends, name)
+
+	r = True
+	for dep in s:
+		if dep not in self._stage_state:
+			r = getattr(self, dep).raw_func(*a, **kw)
+			if r:
+				self._stage_state.add(dep)
+			else:
 				return r
-		r = func(self, *a, **kw)
-	if r:
-		self._stage_state.add(name)
 	return r
+
+def dont_iterate_strings(val):
+	if isinstance(val, (tuple, list)):
+		return val
+	elif isinstance(val, basestring):
+		return (val,)
+	raise ValueError("encountered val %s when it must be a list or string", val)
+
+def yield_deps(inst, d, k):
+	if k not in d:
+		yield k
+		return
+	s = [k, iter(dont_iterate_strings(d.get(k,())))]
+	while s:
+		if isinstance(s[-1], basestring):
+			yield s.pop(-1)
+			continue
+		exhausted = True
+		for x in s[-1]:
+			v = d.get(x)
+			if v:
+				s.append(x)
+				s.append(iter(dont_iterate_strings(v)))
+				exhausted = False
+				break
+			yield x
+		if exhausted:
+			s.pop(-1)
 
 
 class ForcedDepends(type):
 	def __call__(cls, *a, **kw):
-		for k,v in getattr(cls, "stage_depends", {}).items():
-			if not isinstance(v, (list, tuple)):
-				if v == None:
-					cls.stage_depends[k] = []
-				else:
-					cls.stage_depends[k] = [v]
+		if not getattr(cls, "stage_depends"):
+			return super(ForcedDepends, cls).__call_(*a, **kw)
 		
-		for x in unique(cls.stage_depends.keys() + flatten(cls.stage_depends.values())):
-			setattr(cls, x, pre_curry(ensure_deps, x, getattr(cls, x)))
-		return super(ForcedDepends, cls).__call__(*a, **kw)
+		o = super(ForcedDepends, cls).__call__(*a, **kw)
+		if not hasattr(o, "_stage_state"):
+			o._stage_state = set()
 
+		# wrap the funcs
+
+		for x in set(filter(None, flatten(o.stage_depends.iteritems()))):
+			f = getattr(o, x)
+			f2 = pre_curry(ensure_deps, o, x)
+			f2.raw_func = f
+			setattr(o, x, f2)
+
+		return o

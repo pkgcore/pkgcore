@@ -116,9 +116,15 @@ class OnDiskProfile(profiles.base):
 
 		maskers = []
 		for fp, i in loop_iter_read(os.path.join(prof, "package.mask") for prof in stack + [self.basepath]):
-			maskers.extend(map(atom,i))
+			for p in i:
+				if p[0] == "-":
+					try:	maskers.remove(p[1:])
+					except KeyError:
+						logger.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
+				else:	maskers.extend([p])
 
-		self.maskers = maskers
+		self.maskers = map(atom,maskers)
+		del maskers
 
 		d = {}
 		for fp, dc in loop_iter_read((os.path.join(prof, "make.defaults") for prof in stack), 

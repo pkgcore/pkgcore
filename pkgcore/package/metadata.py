@@ -69,9 +69,6 @@ class factory(object):
 	def clear(self):
 		self._cached_instances.clear()
 
-	def __del__(self):
-		self.clear()
-
 	def _get_metadata(self, *args):
 		raise NotImplementedError
 

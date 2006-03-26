@@ -6,8 +6,10 @@ from pkgcore.graph.state_graph import StateGraph
 def resolve(sg, vdb, repos, noisy=True):
 	removes=[]
 	changed=True
+	loop_count=0
 	while changed:
 		changed = False
+		print "loop count",loop_count
 		for a in list(sg.unresolved_atoms()):
 			vdb_matched=False
 			for pkg in vdb.itermatch(a):
@@ -26,4 +28,4 @@ def resolve(sg, vdb, repos, noisy=True):
 					changed = True
 				else:
 					print "caught unresolvable node %s" % a
-			
+		loop_count = loop_count + 1

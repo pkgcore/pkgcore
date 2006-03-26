@@ -34,7 +34,8 @@ class package(ebuild_src.package):
 		ebuild_src.package._config_wrappables[k], ebuild_src.package._get_attr[k]))
 		for k in filter(ebuild_src.package.tracked_attributes.__contains__,
 		ebuild_src.package._config_wrappables))
-	_get_attr["use"] = post_curry(passthrough, "use", "USE")
+#	_get_attr["use"] = post_curry(passthrough, "use", "USE")
+	_get_attr["use"] = lambda s:s.data["USE"].split()
 
 	def _update_metadata(self, pkg):
 		raise NotImplementedError()

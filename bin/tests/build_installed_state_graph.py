@@ -62,3 +62,6 @@ if __name__ == "__main__":
 	print_unresolved(graph)
 	print "\n\n===BLOCKS===\n"
 	print_blockers(graph)
+	if len(sys.argv) == 2:
+		from pkgcore.graph.dot.util import dump_dot_file_from_graph
+		dump_dot_file_from_graph(graph, sys.argv[1])

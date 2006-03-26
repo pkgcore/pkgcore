@@ -11,6 +11,7 @@ from pkgcore.config import load_config
 from pkgcore.package.atom import atom
 from pkgcore.graph.state_graph import StateGraph
 from pkgcore.graph.simple_resolver import resolve
+from build_installed_state_graph import print_unresolved, print_blockers
 
 d=load_config().domain["livefs domain"]
 sg=StateGraph()
@@ -40,9 +41,9 @@ print
 resolve(sg, vdb, repo)
 
 print "\n== unresolveds =="
-print "\n".join(str(x) for x in sg.unresolved_atoms())
+print_unresolved(sg)
 print "\n== blockers =="
-print "\n".join(str(x) for x in sg.blocking_atoms())
+print_blockers(sg)
 
 print
 from pkgcore.util import caching

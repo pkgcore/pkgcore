@@ -117,55 +117,57 @@ class StateGraph(object):
 	def root_pkgs(self):
 		if self.dirty:
 			self.calculate_deps()
-		for pkg in self.pkgs:
-			if not self.pkgs[pkg][2]:
-				yield pkg
+#		for pkg in self.pkgs:
+#			if not self.pkgs[pkg][2]:
+#				yield pkg
+		return (pkg for pkg in self.pkgs if not self.pkgs[pkg][2])
 
 	def child_atoms(self, pkg):
 		assert(pkg in self.pkgs)
 		if self.dirty:
 			self.calculate_deps()
-		for atom in self.pkgs[pkg][1]:
-			yield atom
+#		for atom in self.pkgs[pkg][1]:
+#			yield atom
+		return self.pkgs[pkg][1]
 
 	def child_pkgs(self, atom):
 		assert(atom in self.atoms)
 		if self.dirty:
 			self.calculate_deps()
-		for pkg in self.atoms[atom][1]:
-			yield pkg
+#		for pkg in self.atoms[atom][1]:
+#			yield pkg
+		return self.atoms[atom][1]
 
 	def parent_atoms(self, pkg):
 		assert(pkg in self.pkgs)
 		if self.dirty:
 			self.calculate_deps()
-		for atom in self.pkgs[pkg][2]:
-			yield atom
+#		for atom in self.pkgs[pkg][2]:
+#			yield atom
+		return self.pkgs[pkg][2]
 
 	def parent_pkgs(self, atom):
 		assert(atom in self.atoms)
 		if self.dirty:
 			self.calculate_deps()
-		for parent in self.atoms[atom][0]:
-			yield parent
+		return self.atoms[atom][0]
+#		for parent in self.atoms[atom][0]:
+#			yield parent
 
 	def unresolved_atoms(self):
 		if self.dirty:
 			self.calculate_deps()
-		for atom in self.atoms:
-			if atom.blocks:
-				continue
-			if not self.atoms[atom][1]:
-				yield atom
+		return (atom for atom, data in self.atoms.iteritems() if not atom.blocks and not data[1])
+
+	def resolved_atoms(self):
+		if self.dirty:
+			self.calculate_deps()
+		return (atom for atom, data in self.atoms.iteritems() if not atom.blocks and data[1])
 
 	def blocking_atoms(self):
 		if self.dirty:
 			self.calculate_deps()
-		for atom in self.atoms:
-			if not atom.blocks:
-				continue
-			if self.atoms[atom][1]:
-				yield atom
+		return (atom for atom, data in self.atoms.iteritems() if atom.blocks and data[1])
 
 
 def extrapolate(set1, set2):

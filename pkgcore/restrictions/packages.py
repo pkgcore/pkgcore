@@ -119,10 +119,10 @@ class Conditional(PackageRestriction):
 		self.payload = tuple(payload)
 
 	def __str__(self):
-		return "( %s payload: [ %s ] )" % (PackageRestriction.__str__(self), ", ".join(map(str, self.payload)))
+		return "( Conditional: %s payload: [ %s ] )" % (PackageRestriction.__str__(self), ", ".join(map(str, self.payload)))
 	
 	def __iter__(self):
-		return iter(self.restrictions)
+		return iter(self.payload)
 
 
 for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \

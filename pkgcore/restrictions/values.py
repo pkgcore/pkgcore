@@ -11,7 +11,7 @@ class base(restriction.base):
 	"""base restriction matching object; overrides setattr to provide the usual write once trickery
 	all derivatives *must* be __slot__ based"""
 
-	__slots__ = restriction.base.__slots__
+	__slots__ = ()
 
 	type = value_type
 
@@ -32,20 +32,22 @@ class base(restriction.base):
 
 class VersionRestriction(base):
 	"""use this as base for version restrictions, gives a clue to what the restriction does"""
-	__slots__ = base.__slots__
+	__slots__ = ()
 
 
 class StrMatch(base):
 	""" Base string matching restriction.  all derivatives must be __slot__ based classes"""
-	__slots__ = ["flags"] + base.__slots__
+	__slots__ = ("flags",)
 
 
 class StrRegexMatch(StrMatch):
 	#potentially redesign this to jit the compiled_re object
-	__slots__ = tuple(["regex", "compiled_re"] + StrMatch.__slots__)
+	__slots__ = ("regex", "compiled_re")
 
-	def __initialize__(self, regex, CaseSensitive=True, **kwds):
-		super(StrRegexMatch, self).__initialize__(**kwds)
+	__inst_caching__ = True
+
+	def __init__(self, regex, CaseSensitive=True, **kwds):
+		super(StrRegexMatch, self).__init__(**kwds)
 		self.regex = regex
 		flags = 0
 		if not CaseSensitive:
@@ -70,10 +72,12 @@ class StrRegexMatch(StrMatch):
 
 
 class StrExactMatch(StrMatch):
-	__slots__ = tuple(["exact", "flags"] + StrMatch.__slots__)
+	__slots__ = ("exact", "flags")
 
-	def __initialize__(self, exact, CaseSensitive=True, **kwds):
-		super(StrExactMatch, self).__initialize__(**kwds)
+	__inst_caching__ = True
+
+	def __init__(self, exact, CaseSensitive=True, **kwds):
+		super(StrExactMatch, self).__init__(**kwds)
 		if not CaseSensitive:
 			self.flags = re.I
 			self.exact = str(exact).lower()
@@ -107,10 +111,12 @@ class StrExactMatch(StrMatch):
 
 class StrGlobMatch(StrMatch):
 
-	__slots__ = tuple(["glob", "prefix"] + StrMatch.__slots__)
+	__slots__ = ("glob", "prefix")
 
-	def __initialize__(self, glob, CaseSensitive=True, prefix=True, **kwds):
-		super(StrGlobMatch, self).__initialize__(**kwds)
+	__inst_caching__ = True
+
+	def __init__(self, glob, CaseSensitive=True, prefix=True, **kwds):
+		super(StrGlobMatch, self).__init__(**kwds)
 		if not CaseSensitive:
 			self.flags = re.I
 			self.glob = str(glob).lower()
@@ -151,9 +157,11 @@ class ContainmentMatch(base):
 	"""used for an 'in' style operation, 'x86' in ['x86','~x86'] for example
 	note that negation of this *does* not result in a true NAND when all is on."""
 
-	__slots__ = tuple(["vals", "vals_len", "all"] + base.__slots__)
+	__slots__ = ("vals", "vals_len", "all")
 	
-	def __initialize__(self, *vals, **kwds):
+	__inst_caching__ = True
+
+	def __init__(self, *vals, **kwds):
 		"""vals must support a contaiment test
 		if all is set to True, all vals must match"""
 
@@ -162,7 +170,7 @@ class ContainmentMatch(base):
 			del kwds["all"]
 		else:
 			self.all = False
-		super(ContainmentMatch, self).__initialize__(**kwds)
+		super(ContainmentMatch, self).__init__(**kwds)
 		self.vals = frozenset(vals)
 		
 	def match(self, val):

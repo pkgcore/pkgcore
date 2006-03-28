@@ -12,10 +12,9 @@ __all__ = ("AndRestriction", "OrRestriction", "XorRestriction")
 import restriction
 
 class base(restriction.base):
-	__slots__ = tuple(["restrictions", "type"] + restriction.base.__slots__)
-	__inst_caching__ = False
-	
-	def __initialize__(self, *restrictions, **kwds):
+	__slots__ = ("restrictions", "type")
+
+	def __init__(self, *restrictions, **kwds):
 		"""Optionally hand in (positionally) restrictions to use as the basis of this restriction
 		finalize=False, set it to True to notify this instance to internally finalize itself (no way to reverse it yet)
 		negate=False, controls whether matching results are negated
@@ -26,7 +25,7 @@ class base(restriction.base):
 		if "node_type" in kwds:
 			self.type = kwds["node_type"]
 
-		super(base, self).__initialize__(negate=kwds.get("negate", False))
+		super(base, self).__init__(negate=kwds.get("negate", False))
 
 		self.restrictions = []
 		if restrictions:
@@ -135,7 +134,7 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths, fil
 
 class AndRestriction(base):
 	"""Boolean AND grouping of restrictions.  negation is a NAND"""
-	__slots__ = tuple(base.__slots__)
+	__slots__ = ()
 
 	def match(self, vals):
 		for rest in self.restrictions:
@@ -197,7 +196,7 @@ class AndRestriction(base):
 
 class OrRestriction(base):
 	"""Boolean OR grouping of restrictions."""
-	__slots__ = base.__slots__
+	__slots__ = ()
 	
 	def match(self, vals):
 		for rest in self.restrictions:
@@ -260,7 +259,7 @@ class OrRestriction(base):
 
 class XorRestriction(base):
 	"""Boolean XOR grouping of restrictions."""
-	__slots__ = tuple(base.__slots__)
+	__slots__ = ()
 
 	def match(self, vals):
 		if not self.restrictions:
@@ -400,5 +399,3 @@ class XorRestriction(base):
 	def __str__(self):
 		if self.negate:	return "not ( %s )" % " ^^ ".join(imap(str, self.restrictions))
 		return "( %s )" % " ^^ ".join(imap(str, self.restrictions))
-
-

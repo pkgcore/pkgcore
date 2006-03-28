@@ -15,15 +15,15 @@ class InvalidVersion(Exception):
 
 
 class VersionMatch(restriction.base):
-	__slots__ = tuple(["ver","rev", "vals", "droprev"])
+	__slots__ = ("ver","rev", "vals", "droprev")
 	"""any overriding of this class *must* maintain numerical order of self.vals, see intersect for reason why
 	vals also must be a tuple"""
 
 	type = packages.package_type
 
-	def __initialize__(self, operator, ver, rev=None, negate=False, **kwd):
+	def __init__(self, operator, ver, rev=None, negate=False, **kwd):
 		kwd["negate"] = False
-		super(self.__class__, self).__initialize__(**kwd)
+		super(self.__class__, self).__init__(**kwd)
 		self.ver, self.rev = ver, rev
 		if operator not in ("<=","<", "=", ">", ">=", "~"):
 			# XXX: hack
@@ -124,15 +124,16 @@ class VersionMatch(restriction.base):
 
 class atom(boolean.AndRestriction):
 
-#	__slots__ = ("glob","atom","blocks","op", "negate_vers","cpv","cpvstr", "use","slot", "hash","category",
-#		"version","revision", "fullver", "package") \
-#		+ tuple(boolean.AndRestriction.__slots__)
-	
-	__inst_caching__ = False
+	__slots__ = (
+		"glob", "atom", "blocks", "op", "negate_vers", "cpv", "cpvstr", "use",
+		"slot", "hash","category", "version", "revision", "fullver", "package")
+
 	type = packages.package_type
-	
-	def __initialize__(self, atom, negate_vers=False):
-		boolean.AndRestriction.__initialize__(self)
+
+	__inst_caching__ = True
+
+	def __init__(self, atom, negate_vers=False):
+		boolean.AndRestriction.__init__(self)
 
 		atom = atom.strip()
 		self.hash = hash(atom)

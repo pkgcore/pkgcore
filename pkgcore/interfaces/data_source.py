@@ -9,7 +9,7 @@ class base(object):
 	get_path = get_data
 	
 class local_source(base):
-	__slots__ = ["path"]
+	__slots__ = ("path",)
 
 	def __init__(self, path):
 		self.path = path

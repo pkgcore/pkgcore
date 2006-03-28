@@ -10,12 +10,12 @@ package_type = "package"
 class PackageRestriction(restriction.base):
 	"""cpv data restriction.  Inherit for anything that's more then cpv mangling please"""
 
-	__slots__ = tuple(["attr_split", "attr", "restriction"] + restriction.base.__slots__)
+	__slots__ = ("attr_split", "attr", "restriction")
 	type = package_type
 	
-	def __initialize__(self, attr, restriction, **kwds):
-		super(PackageRestriction, self).__initialize__(**kwds)
-		self.attr_split = attr.split(".")
+	def __init__(self, attr, restriction, **kwds):
+		super(PackageRestriction, self).__init__(**kwds)
+		self.attr_split = tuple(attr.split("."))
 		self.attr = attr
 		if not restriction.type == values.value_type:
 			raise TypeError("restriction must be of a value type")
@@ -112,10 +112,12 @@ class PackageRestriction(restriction.base):
 class Conditional(PackageRestriction):
 	"""base object representing a conditional node"""
 
-	__slots__ = tuple(["payload"] + list(PackageRestriction.__slots__))
-	
-	def __initialize__(self, attr, restriction, payload, **kwds):
-		super(Conditional, self).__initialize__(attr, restriction, **kwds)
+	__slots__ = ("payload",)
+
+	__inst_caching__ = True
+
+	def __init__(self, attr, restriction, payload, **kwds):
+		super(Conditional, self).__init__(attr, restriction, **kwds)
 		self.payload = tuple(payload)
 
 	def __str__(self):

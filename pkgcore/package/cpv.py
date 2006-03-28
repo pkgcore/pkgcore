@@ -1,4 +1,4 @@
-# Copyright: 2005 Jason Stubbs <ferringb@gentoo.org>
+# Copyright: 2005 Jason Stubbs <jstubbs@gentoo.org>
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 

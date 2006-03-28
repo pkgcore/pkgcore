@@ -119,7 +119,7 @@ class GenericFailed(LockException):
 
 
 class FsLock(object):
-	__slots__ = ["path", "fd", "create"]
+	__slots__ = ("path", "fd", "create")
 	def __init__(self, path, create=False):
 		"""path specifies the fs path for the lock
 		create controls whether the file will be create if the file doesn't exist

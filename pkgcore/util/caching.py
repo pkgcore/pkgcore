@@ -7,49 +7,51 @@ import warnings
 class_hits = {}
 class_misses = {}
 
-class WeakInstCaching(object):
+class WeakInstMeta(type):
 
-	__inst_caching__ = True
-	
-	def __new__(cls, *a, **kw):
-		"""disable caching via disable_inst_caching=True"""
-		global class_hits, class_misses
-		if "disable_inst_caching" in kw:
-			disabled = kw["disable_inst_caching"]
-			del kw["disable_inst_caching"]
+	def __new__(cls, name, bases, d):
+		if d.get("__inst_caching__", False):
+			d["__inst_caching__"] = True
+			d["__inst_dict__"]  = WeakValueDictionary()
 		else:
-			disabled = False
-		if cls.__inst_caching__ is not False and not disabled:
-			o = None
+			d["__inst_caching__"] = False
+		slots = d.get('__slots__')
+		if slots is not None:
+			for base in bases:
+				if getattr(base, '__weakref__', False):
+					break
+			else:
+				d['__slots__'] = tuple(slots) + ('__weakref__',)
+		return type.__new__(cls, name, bases, d)
+
+	def __call__(cls, *a, **kw):
+		"""disable caching via disable_inst_caching=True"""
+		if cls.__inst_caching__ and not kw.pop("disable_inst_caching", False):
+			kwlist = kw.items()
+			kwlist.sort()
 			try:
-				key = hash((cls, a, tuple(kw.iteritems())))
+				key = hash((a, tuple(kwlist)))
 			except TypeError, t:
 				warnings.warn("caching keys for %s, got %s for a=%s, kw=%s" % (cls, t, a, kw))
 				del t
 				key = None
-			if cls.__inst_caching__ == True:
-				cls.__inst_caching__ = WeakValueDictionary()
-			elif key is not None:
-				o = cls.__inst_caching__.get(key, None) 
+				instance = None
+			else:
+				instance = cls.__inst_dict__.get(key)
 
-			if o is None:
+			if instance is None:
 				class_misses[cls] = class_misses.get(cls, 0) + 1
-				o = object.__new__(cls)
-				o.__init__()
-				o.__initialize__(*a, **kw)
+				instance = super(WeakInstMeta, cls).__call__(*a, **kw)
+
 				if key is not None:
-					cls.__inst_caching__[key] = o
+					cls.__inst_dict__[key] = instance
 			else:
 				class_hits[cls] = class_hits.get(cls, 0) + 1
 		else:
-			o = object.__new__(cls)
-			o.__initialize__(*a, **kw)
+			instance = super(WeakInstMeta, cls).__call__(*a, **kw)
 
 #		print cls
 #		print a
 #		print kw
 
-		return o
-
-	def __init__(*a, **kw):
-		pass
+		return instance

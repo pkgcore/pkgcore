@@ -21,16 +21,16 @@ def convert_use_reqs(uses):
 	
 
 class DepSet(object):
-	__slots__ = ("has_conditionals", "element_class", "node_conds", "restrictions")
+	__slots__ = ("has_conditionals", "element_class", "_node_conds", "restrictions")
 
 	def __init__(self, dep_str, element_class, operators={"||":packages.OrRestriction,"":packages.AndRestriction}):
 
 		"""dep_str is a dep style syntax, element_func is a callable returning the obj for each element, and
 		cleanse_string controls whether or translation of tabs/newlines is required"""
 
-		self.node_conds = {}
 		self.restrictions = []
 		self.element_class = element_class
+		self._node_conds = None
 		
 		raw_conditionals = []
 		depsets = [self.restrictions]
@@ -45,8 +45,8 @@ class DepSet(object):
 					if not depsets[-1]:
 						raise ParseError(dep_str)
 					elif raw_conditionals[-1].endswith('?'):
-						for x in (y for y in depsets[-1] if not isinstance(y, packages.Conditional)):
-							self.node_conds.setdefault(x, []).append(use_asserts[-1])
+#						for x in (y for y in depsets[-1] if not isinstance(y, packages.Conditional)):
+#							self.node_conds.setdefault(x, []).append(use_asserts[-1])
 
 						c = convert_use_reqs((raw_conditionals[-1][:-1],))
 
@@ -94,6 +94,7 @@ class DepSet(object):
 			raise ParseError(dep_str)
 		self.restrictions = tuple(self.restrictions)
 
+
 	def evaluate_depset(self, cond_dict):
 		"""passed in a depset, does lookups of the node in cond_dict.
 		no entry in cond_dict == conditional is off, else the bool value of the key's val in cond_dict"""
@@ -106,7 +107,6 @@ class DepSet(object):
 		stack = [packages.AndRestriction, iter(self.restrictions)]
 		base_restrict = []
 		restricts = [base_restrict]
-#		import pdb;pdb.set_trace()
 		while len(stack) > 1:
 			exhausted = True
 			for node in stack[-1]:
@@ -141,6 +141,29 @@ class DepSet(object):
 
 		flat_deps.restrictions = tuple(base_restrict)
 		return flat_deps
+
+	@property
+	def node_conds(self):
+		if self._node_conds is None:
+			nc = {}
+			s = [([x.restriction], x.payload) for x in self.restrictions if isinstance(x, packages.Conditional)]
+			while s:
+				conds, nodes = s.pop(0)
+				if len(conds) == 1:
+					current = conds[0]
+				else:
+					current = values.AndRestriction(all=True, finalize=True, *conds)
+
+				for x in nodes:
+					# XXX optimize this so it's a single restriction.
+					if isinstance(x, packages.Conditional):
+						s.append((conds + [x.restriction], x.payload))
+					else:
+						nc.setdefault(x, []).append(current)
+			for k in nc:
+				nc[k] = tuple(nc[k])
+			self._node_conds = nc
+		return self._node_conds
 
 	@property
 	def has_conditionals(self):

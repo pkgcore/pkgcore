@@ -126,7 +126,7 @@ class atom(boolean.AndRestriction):
 
 	__slots__ = (
 		"glob", "atom", "blocks", "op", "negate_vers", "cpv", "cpvstr", "use",
-		"slot", "hash","category", "version", "revision", "fullver", "package")
+		"slot", "hash","category", "version", "revision", "fullver", "package", "key")
 
 	type = packages.package_type
 

@@ -170,6 +170,7 @@ class StateGraph(object):
 		return (atom for atom, data in self.atoms.iteritems() if atom.blocks and data[1])
 
 
+# kind of a screwed up intersect
 def extrapolate(set1, set2):
 
 	final_set = set1.intersection(set2)
@@ -199,6 +200,9 @@ def extrapolate(set1, set2):
 	return final_set
 
 
+# this is used to generate all potential combinations of or ops (fex)
+# || ( virtual/x x11-base/x ) blah results in 
+# set([frozenset([virtual/x1, blah]), frozenset([x11-base/x, blah])])
 def combinations(restrict, elem_type=atom):
 	ret = set()
 

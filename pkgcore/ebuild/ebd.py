@@ -97,7 +97,7 @@ class ebd(object):
 		# ensure dirs.
 		for k, text in (("HOME", "home"), ("T", "temp"), ("WORKDIR", "work"), ("D", "image")):
 			if not ensure_dirs(self.env[k], mode=0770, gid=portage_gid, minimal=True):
-				raise build.FailedDirectory(self.env[k], "%s doesn't fulfill minimum mode %o and gid %i" % (k, required_mode, portage_gid))
+				raise build.FailedDirectory(self.env[k], "%s doesn't fulfill minimum mode %o and gid %i" % (k, 0770, portage_gid))
 			# XXX hack, just 'til pkgcore controls these directories
 			if (os.stat(self.env[k]).st_mode & 02000):
 				warnings.warn(self.env[k] + " (" + k + ") is set sgid")

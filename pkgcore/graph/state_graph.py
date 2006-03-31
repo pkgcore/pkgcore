@@ -7,6 +7,13 @@ from pkgcore.restrictions.boolean import OrRestriction
 
 class StateGraph(object):
 
+	# constants.  yes, bit unpythonic.
+	pkg_combinations = 0
+	pkg_satisfies_atoms = 2
+
+	atom_parents = 0
+	atom_matches = 1
+	
 	def __init__(self):
 		# { pkg : ( [ combination ], Set( atom ), Set( matching atom ) ) }
 		self.pkgs = {}
@@ -20,8 +27,8 @@ class StateGraph(object):
 			return
 		self.dirty = True
 		self.pkgs[pkg] = [combinations(pkg.rdepends, atom), set(), set()]
-		if len(self.pkgs[pkg][0]) <= 1:
-			for atomset in self.pkgs[pkg][0]:
+		if len(self.pkgs[pkg][self.pkg_combinations]) <= 1:
+			for atomset in self.pkgs[pkg][self.pkg_combinations]:
 				self.pkgs[pkg][1].update(self.pkgs[pkg][1].union(atomset))
 				self._add_deps(pkg)
 
@@ -29,14 +36,14 @@ class StateGraph(object):
 		for atom in self.pkgs[pkg][1]:
 			if atom not in self.atoms:
 				self.atoms[atom] = [set(), set()]
-			self.atoms[atom][0].add(pkg)
+			self.atoms[atom][self.atom_parents].add(pkg)
 
 	def _remove_deps(self, pkg):
 		for atom in self.pkgs[pkg][1]:
-			self.atoms[atom][0].remove(pkg)
-			if not self.atoms[atom][0]:
-				for match in self.atoms[atom][1]:
-					self.pkgs[match][2].remove(atom)
+			self.atoms[atom][self.atom_parents].remove(pkg)
+			if not self.atoms[atom][self.atom_parents]:
+				for match in self.atoms[atom][self.atom_matches]:
+					self.pkgs[match][self.pkg_satisfies_atoms].remove(atom)
 				del self.atoms[atom]
 
 	def calculate_deps(self):
@@ -45,19 +52,22 @@ class StateGraph(object):
 			print "calcuate_deps called yet it wasn't dirty"
 			return
 		for atom in self.atoms:
-			self.atoms[atom][1] = set()
+			self.atoms[atom][self.atom_matches] = set()
 		for pkg in self.pkgs:
-			self.pkgs[pkg][2] = set()
-			if self.pkgs[pkg][1] and len(self.pkgs[pkg][0]) > 1:
+			self.pkgs[pkg][self.pkg_satisfies_atoms] = set()
+			if self.pkgs[pkg][1] and len(self.pkgs[pkg][self.pkg_combinations]) > 1:
 				self._remove_deps(pkg)
 				self.pkgs[pkg][1] = set()
 		for pkg in self.pkgs:
-			if len(self.pkgs[pkg][0]) <= 1:
+			if len(self.pkgs[pkg][self.pkg_combinations]) <= 1:
 				continue
 			all_atoms = set()
-			for atomset in self.pkgs[pkg][0]:
+			for atomset in self.pkgs[pkg][self.pkg_combinations]:
 				all_atoms.update(all_atoms.union(atomset))
 			okay_atoms = set()
+
+			# run blockers against all packages in the graph.
+			# this should be just a subset, else it's O(N^2) for any calculation
 			for atom in all_atoms:
 				have_blocker=False
 				for child in self.pkgs:
@@ -70,10 +80,12 @@ class StateGraph(object):
 							okay_atoms.add(atom)
 						break
 				if atom.blocks and not have_blocker:
-					# block atom that does not match any packages
+					# blockers to ignore.
 					okay_atoms.add(atom)
+
+			# note entirely sure what this does.  selection strategy?
 			differences={}
-			for choice in self.pkgs[pkg][0]:
+			for choice in self.pkgs[pkg][self.pkg_combinations]:
 				difference = choice.difference(okay_atoms)
 				if not difference:
 					break
@@ -92,35 +104,35 @@ class StateGraph(object):
 				if atom.key != pkg.key:
 					continue
 				if atom.match(pkg):
-					self.pkgs[pkg][2].add(atom)
-					self.atoms[atom][1].add(pkg)
+					self.pkgs[pkg][self.pkg_satisfies_atoms].add(atom)
+					self.atoms[atom][self.atom_matches].add(pkg)
 		for pkg in self.pkgs:
 			if not pkg.metapkg:
 				continue
 			redirected_atoms = set()
-			for parent_atom in self.pkgs[pkg][2]:
+			for parent_atom in self.pkgs[pkg][self.pkg_satisfies_atoms]:
 				if not parent_atom.blocks:
 					continue
 				redirected_atoms.add(parent_atom)
-				for parent_pkg in self.atoms[parent_atom][0]:
+				for parent_pkg in self.atoms[parent_atom][self.atom_parents]:
 					for child_atom in self.pkgs[pkg][1]:
 						if child_atom.blocks or child_atom.match(parent_pkg):
 							continue
-						for child_pkg in self.atoms[child_atom][1]:
-							self.pkgs[child_pkg][2].add(parent_atom)
-							self.atoms[parent_atom][1].add(child_pkg)
+						for child_pkg in self.atoms[child_atom][self.atom_matches]:
+							self.pkgs[child_pkg][self.pkg_satisfies_atoms].add(parent_atom)
+							self.atoms[parent_atom][self.atom_matches].add(child_pkg)
 			for atom in redirected_atoms:
-				self.pkgs[pkg][2].remove(atom)
-				self.atoms[atom][1].remove(pkg)
+				self.pkgs[pkg][self.pkg_satisfies_atoms].remove(atom)
+				self.atoms[atom][self.atom_matches].remove(pkg)
 		self.dirty = False
 
 	def root_pkgs(self):
 		if self.dirty:
 			self.calculate_deps()
 #		for pkg in self.pkgs:
-#			if not self.pkgs[pkg][2]:
+#			if not self.pkgs[pkg][self.pkg_satisfies_atoms]:
 #				yield pkg
-		return (pkg for pkg in self.pkgs if not self.pkgs[pkg][2])
+		return (pkg for pkg in self.pkgs if not self.pkgs[pkg][self.pkg_satisfies_atoms])
 
 	def child_atoms(self, pkg):
 		assert(pkg in self.pkgs)
@@ -134,40 +146,40 @@ class StateGraph(object):
 		assert(atom in self.atoms)
 		if self.dirty:
 			self.calculate_deps()
-#		for pkg in self.atoms[atom][1]:
+#		for pkg in self.atoms[atom][self.atom_matches]:
 #			yield pkg
-		return self.atoms[atom][1]
+		return self.atoms[atom][self.atom_matches]
 
 	def parent_atoms(self, pkg):
 		assert(pkg in self.pkgs)
 		if self.dirty:
 			self.calculate_deps()
-#		for atom in self.pkgs[pkg][2]:
+#		for atom in self.pkgs[pkg][self.pkg_satisfies_atoms]:
 #			yield atom
-		return self.pkgs[pkg][2]
+		return self.pkgs[pkg][self.pkg_satisfies_atoms]
 
 	def parent_pkgs(self, atom):
 		assert(atom in self.atoms)
 		if self.dirty:
 			self.calculate_deps()
-		return self.atoms[atom][0]
-#		for parent in self.atoms[atom][0]:
+		return self.atoms[atom][self.atom_parents]
+#		for parent in self.atoms[atom][self.atom_parents]:
 #			yield parent
 
 	def unresolved_atoms(self):
 		if self.dirty:
 			self.calculate_deps()
-		return (atom for atom, data in self.atoms.iteritems() if not atom.blocks and not data[1])
+		return (atom for atom, data in self.atoms.iteritems() if not atom.blocks and not data[self.atom_matches])
 
 	def resolved_atoms(self):
 		if self.dirty:
 			self.calculate_deps()
-		return (atom for atom, data in self.atoms.iteritems() if not atom.blocks and data[1])
+		return (atom for atom, data in self.atoms.iteritems() if not atom.blocks and data[self.atom_matches])
 
 	def blocking_atoms(self):
 		if self.dirty:
 			self.calculate_deps()
-		return (atom for atom, data in self.atoms.iteritems() if atom.blocks and data[1])
+		return (atom for atom, data in self.atoms.iteritems() if atom.blocks and data[self.atom_matches])
 
 
 # kind of a screwed up intersect

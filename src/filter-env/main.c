@@ -641,7 +641,9 @@ walk_command_complex(const char *p, const char *end, char endchar, const char in
 
 static const char *
 walk_command_escaped_parsing(const char *p, const char *end, char endchar)
-{	while (p < end) {
+{
+	int dollared = 0;
+	while (p < end) {
 		if (*p == endchar) {
 			return p;
 		} else if ('\\' == *p) {
@@ -649,10 +651,20 @@ walk_command_escaped_parsing(const char *p, const char *end, char endchar)
 		} else if ('{' == *p) {
 			//process_scope.  this gets fun.
 			p = walk_command_escaped_parsing(p + 1, end, '}');
+		} else if ('(' == *p) {
+			// if double quote parsing, must be $(, else can be either
+			if('"' != endchar || dollared) {
+				p = walk_command_escaped_parsing(p + 1, end, ')');
+			}
 		} else if ('`' == *p || '"' == *p) {
 			p = walk_command_escaped_parsing(p + 1, end, *p);
 		} else if ('\'' == *p && '"' != endchar) {
 			p = walk_command_no_parsing(p + 1, end, '\'');
+		} else if('$' == *p) {
+			// if dollared, disable, else enable
+			dollared ^= 1;
+		} else {
+			dollared = 0;
 		}
 		++p;
 	}

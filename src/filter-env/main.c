@@ -649,8 +649,11 @@ walk_command_escaped_parsing(const char *p, const char *end, char endchar)
 		} else if ('\\' == *p) {
 			++p;
 		} else if ('{' == *p) {
-			//process_scope.  this gets fun.
-			p = walk_command_escaped_parsing(p + 1, end, '}');
+			// if double quote parsing, must be ${, else can be either
+			if('"' != endchar || dollared) {
+				//process_scope.  this gets fun.
+				p = walk_command_escaped_parsing(p + 1, end, '}');
+			}
 		} else if ('(' == *p) {
 			// if double quote parsing, must be $(, else can be either
 			if('"' != endchar || dollared) {

@@ -25,7 +25,7 @@ def gen_obj(path, stat=None, real_path=None):
 		d["size"] = stat.st_size
 		return fsFile(path, **d)
 	elif S_ISLNK(mode):
-		d["target"] = os.readlink(path)
+		d["target"] = os.readlink(real_path)
 		return fsSymLink(path, **d)
 	elif S_ISFIFO(mode):
 		return fsFifo(path, **d)

@@ -9,6 +9,7 @@ class StateGraph(object):
 
 	# constants.  yes, bit unpythonic.
 	pkg_combinations = 0
+	pkg_atoms = 1
 	pkg_satisfies_atoms = 2
 
 	atom_parents = 0
@@ -29,17 +30,17 @@ class StateGraph(object):
 		self.pkgs[pkg] = [combinations(pkg.rdepends, atom), set(), set()]
 		if len(self.pkgs[pkg][self.pkg_combinations]) <= 1:
 			for atomset in self.pkgs[pkg][self.pkg_combinations]:
-				self.pkgs[pkg][1].update(self.pkgs[pkg][1].union(atomset))
+				self.pkgs[pkg][self.pkg_atoms].update(self.pkgs[pkg][self.pkg_atoms].union(atomset))
 				self._add_deps(pkg)
 
 	def _add_deps(self, pkg):
-		for atom in self.pkgs[pkg][1]:
+		for atom in self.pkgs[pkg][self.pkg_atoms]:
 			if atom not in self.atoms:
 				self.atoms[atom] = [set(), set()]
 			self.atoms[atom][self.atom_parents].add(pkg)
 
 	def _remove_deps(self, pkg):
-		for atom in self.pkgs[pkg][1]:
+		for atom in self.pkgs[pkg][self.pkg_atoms]:
 			self.atoms[atom][self.atom_parents].remove(pkg)
 			if not self.atoms[atom][self.atom_parents]:
 				for match in self.atoms[atom][self.atom_matches]:
@@ -55,9 +56,9 @@ class StateGraph(object):
 			self.atoms[atom][self.atom_matches] = set()
 		for pkg in self.pkgs:
 			self.pkgs[pkg][self.pkg_satisfies_atoms] = set()
-			if self.pkgs[pkg][1] and len(self.pkgs[pkg][self.pkg_combinations]) > 1:
+			if self.pkgs[pkg][self.pkg_atoms] and len(self.pkgs[pkg][self.pkg_combinations]) > 1:
 				self._remove_deps(pkg)
-				self.pkgs[pkg][1] = set()
+				self.pkgs[pkg][self.pkg_atoms] = set()
 		for pkg in self.pkgs:
 			if len(self.pkgs[pkg][self.pkg_combinations]) <= 1:
 				continue
@@ -95,7 +96,7 @@ class StateGraph(object):
 				for choice, difference in differences.iteritems():
 					if len(difference) < len(differences[best_choice]):
 						best_choice = choice
-			self.pkgs[pkg][1].update(self.pkgs[pkg][1].union(best_choice))
+			self.pkgs[pkg][self.pkg_atoms].update(self.pkgs[pkg][self.pkg_atoms].union(best_choice))
 			self._add_deps(pkg)
 		for pkg in self.pkgs:
 			for atom in self.atoms:
@@ -115,7 +116,7 @@ class StateGraph(object):
 					continue
 				redirected_atoms.add(parent_atom)
 				for parent_pkg in self.atoms[parent_atom][self.atom_parents]:
-					for child_atom in self.pkgs[pkg][1]:
+					for child_atom in self.pkgs[pkg][self.pkg_atoms]:
 						if child_atom.blocks or child_atom.match(parent_pkg):
 							continue
 						for child_pkg in self.atoms[child_atom][self.atom_matches]:
@@ -138,9 +139,9 @@ class StateGraph(object):
 		assert(pkg in self.pkgs)
 		if self.dirty:
 			self.calculate_deps()
-#		for atom in self.pkgs[pkg][1]:
+#		for atom in self.pkgs[pkg][self.pkg_atoms]:
 #			yield atom
-		return self.pkgs[pkg][1]
+		return self.pkgs[pkg][self.pkg_atoms]
 
 	def child_pkgs(self, atom):
 		assert(atom in self.atoms)

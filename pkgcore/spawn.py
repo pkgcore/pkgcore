@@ -9,12 +9,19 @@ import os, atexit, signal, sys
 from pkgcore.util.mappings import ProtectedDict
 from pkgcore.const import BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH
 
-
 try:
 	import resource
 	max_fd_limit = resource.getrlimit(resource.RLIMIT_NOFILE)[0]
 except ImportError:
 	max_fd_limit = 256
+
+if os.path.isdir("/proc/%i/fd" % os.getpid()):
+	def get_fds():
+		return map(int, os.listdir("/proc/%i/fd" % os.getpid()))
+else:
+	def get_fds():
+		return xrange(max_fd_limit)
+
 
 sandbox_capable = (os.path.isfile(SANDBOX_BINARY) and
                    os.access(SANDBOX_BINARY, os.X_OK))
@@ -163,11 +170,13 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 		fd_pipes[1] = pw
 		fd_pipes[2] = pw
 
+
+	fd_range = get_fds()
 	pid = os.fork()
 
 	if not pid:
 		try:
-			_exec(binary, mycommand, opt_name, fd_pipes,
+			_exec(binary, mycommand, opt_name, fd_pipes, fd_range,
 			      env, gid, groups, uid, umask)
 		except Exception, e:
 			# We need to catch _any_ exception so that it doesn't
@@ -222,7 +231,7 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 	# Everything succeeded
 	return 0
 
-def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask):
+def _exec(binary, mycommand, opt_name, fd_pipes, fd_set, env, gid, groups, uid, umask):
 	"""internal function to handle exec'ing the child process"""
 	
 	# If the process we're creating hasn't been given a name
@@ -246,7 +255,7 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask):
 		os.dup2(my_fds[fd], fd)
 	# Then close _all_ fds that haven't been explictly
 	# requested to be kept open.
-	for fd in range(max_fd_limit):
+	for fd in fd_set:
 		if fd not in my_fds:
 			try:
 				os.close(fd)

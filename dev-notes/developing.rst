@@ -55,15 +55,15 @@ Plugin Registration
 pkgcore is a pluggable, so even to get the basis working some plugins must be 
 registered.
 
-- pkgcore/bin/utilities/register_plugin.py -s fs_ops copyfile 1 
+- pkgcore/bin/utilities/register_plugin.py -s fs_ops copyfile 1 \
   pkgcore.fs.ops.default_copyfile
-- pkgcore/bin/utilities/register_plugin.py -s fs_ops ensure_perms 1 
+- pkgcore/bin/utilities/register_plugin.py -s fs_ops ensure_perms 1 \
   pkgcore.fs.ops.default_ensure_perms
-- pkgcore/bin/utilities/register_plugin.py -s fs_ops mkdir 1 
+- pkgcore/bin/utilities/register_plugin.py -s fs_ops mkdir 1 \
   pkgcore.fs.ops.default_mkdir
-- pkgcore/bin/utilities/register_plugin.py -s format ebuild_built 0.0 
+- pkgcore/bin/utilities/register_plugin.py -s format ebuild_built 0.0 \
   pkgcore.ebuild.ebuild_built.generate_new_factory
-- pkgcore/bin/utilities/register_plugin.py -s format ebuild_src 0.0 
+- pkgcore/bin/utilities/register_plugin.py -s format ebuild_src 0.0 \
   pkgcore.ebuild.ebuild_src.generate_new_factory
 
 You'll need to have PYTHONPATH set as root, note that sudo cleanses the env

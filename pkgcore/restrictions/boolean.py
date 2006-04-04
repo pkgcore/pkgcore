@@ -189,6 +189,32 @@ class AndRestriction(base):
 		for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0, len(self.restrictions), truths, filter):
 			yield True 
 
+	def solutions(self):
+		if self.negate:
+			raise NotImplementedError("negation for solutions on AndRestriction isn't implemented yet")
+		flattened_matrix = []
+		s=[]
+		for x in self.restrictions:
+			if isinstance(x, base):
+				s2 = x.solutions()
+				# there *must* be a solution returned.
+				assert s2
+				if len(s2) == 1:
+					flattened_matrix.extend(s2[0])
+				else:
+					s.append(s2)
+			else:
+				flattened_matrix.append(x)
+
+		# matrix multiplication.
+		flattened_matrix = [flattened_matrix]
+
+		while s:
+			flattened_matrix = list(x + y for x in s.pop() for y in flattened_matrix)
+
+		return flattened_matrix
+		
+
 	def __str__(self):
 		if self.negate:	return "not ( %s )" % " && ".join(imap(str, self.restrictions))
 		return "( %s )" % " && ".join(imap(str, self.restrictions))
@@ -204,6 +230,22 @@ class OrRestriction(base):
 				return not self.negate
 		return self.negate
 	
+	def solutions(self):
+		if self.negate:
+			raise NotImplementedError("OrRestriction.solutions doesn't yet support self.negate")
+		choices = []
+		for x in self.restrictions:
+			if isinstance(x, base):
+				s = x.solutions()
+				# must be a solution.
+				assert s
+				choices.extend(s)
+			else:
+				choices.append([x])
+
+		return choices
+
+
 	def force_True(self, pkg, *vals):
 		pvals = [pkg]
 		pvals.extend(vals)
@@ -260,6 +302,9 @@ class OrRestriction(base):
 class XorRestriction(base):
 	"""Boolean XOR grouping of restrictions."""
 	__slots__ = ()
+
+	def __init__(*a, **kw):
+		raise NotImplementedError("kindly don't use xor yet")
 
 	def match(self, vals):
 		if not self.restrictions:

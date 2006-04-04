@@ -148,8 +148,9 @@ class DepSet(boolean.AndRestriction):
 	def node_conds(self):
 		if self._node_conds is None:
 			nc = {}
-			always_required = set(x for x in self.restrictions if not isinstance(x, packages.Conditional))
-			s = [([x.restriction], x.payload) for x in self.restrictions if x not in always_required]
+			# logic here isn't smart enough in combination with evaluate_depset
+#			always_required = set(x for x in self.restrictions if not isinstance(x, packages.Conditional))
+			s = [([x.restriction], x.payload) for x in self.restrictions if isinstance(x, packages.Conditional)]
 			while s:
 				conds, nodes = s.pop(0)
 				if len(conds) == 1:
@@ -162,9 +163,10 @@ class DepSet(boolean.AndRestriction):
 					if isinstance(x, packages.Conditional):
 						s.append((conds + [x.restriction], x.payload))
 					else:
-						# only add it if it's known to be variable, ie not a "x y? ( x ) " (x cannot be disabled)
-						if x not in always_required:
-							nc.setdefault(x, []).append(current)
+#						# only add it if it's known to be variable, ie not a "x y? ( x ) " (x cannot be disabled)
+#						if x not in always_required:
+#							nc.setdefault(x, []).append(current)
+						nc.setdefault(x, []).append(current)
 			for k in nc:
 				nc[k] = tuple(nc[k])
 

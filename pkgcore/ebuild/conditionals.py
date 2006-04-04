@@ -20,8 +20,10 @@ def convert_use_reqs(uses):
 	return values.AndRestriction(values.ContainmentMatch(all=True, *use_asserts), use_negates)
 	
 
-class DepSet(object):
+class DepSet(boolean.AndRestriction):
 	__slots__ = ("has_conditionals", "element_class", "_node_conds", "restrictions")
+	type=packages.package_type
+	negate = False
 
 	def __init__(self, dep_str, element_class, operators={"||":packages.OrRestriction,"":packages.AndRestriction}):
 
@@ -146,7 +148,8 @@ class DepSet(object):
 	def node_conds(self):
 		if self._node_conds is None:
 			nc = {}
-			s = [([x.restriction], x.payload) for x in self.restrictions if isinstance(x, packages.Conditional)]
+			always_required = set(x for x in self.restrictions if not isinstance(x, packages.Conditional))
+			s = [([x.restriction], x.payload) for x in self.restrictions if x not in always_required]
 			while s:
 				conds, nodes = s.pop(0)
 				if len(conds) == 1:
@@ -159,10 +162,14 @@ class DepSet(object):
 					if isinstance(x, packages.Conditional):
 						s.append((conds + [x.restriction], x.payload))
 					else:
-						nc.setdefault(x, []).append(current)
+						# only add it if it's known to be variable, ie not a "x y? ( x ) " (x cannot be disabled)
+						if x not in always_required:
+							nc.setdefault(x, []).append(current)
 			for k in nc:
 				nc[k] = tuple(nc[k])
+
 			self._node_conds = nc
+		
 		return self._node_conds
 
 	@property

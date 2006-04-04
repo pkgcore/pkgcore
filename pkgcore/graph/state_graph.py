@@ -30,8 +30,16 @@ class StateGraph(object):
 #		assert(pkg not in self.pkgs)
 		if pkg in self.pkgs:
 			return
+
+		from pkgcore.restrictions import packages
+		for x in pkg.rdepends.solutions():
+			for node in x:
+				if isinstance(node, packages.Conditional):
+					import pdb;pdb.set_trace()
+					
+
 		self.dirty = True
-		self.pkgs[pkg] = [combinations(pkg.rdepends, atom), set(), set()]
+		self.pkgs[pkg] = [map(frozenset, pkg.rdepends.solutions()), set(), set()]
 		if len(self.pkgs[pkg][self.pkg_combinations]) <= 1:
 			for atomset in self.pkgs[pkg][self.pkg_combinations]:
 				self.pkgs[pkg][self.pkg_atoms].update(self.pkgs[pkg][self.pkg_atoms].union(atomset))
@@ -208,30 +216,3 @@ def extrapolate(set1, set2):
 	return final_set
 
 
-# this is used to generate all potential combinations of or ops (fex)
-# || ( virtual/x x11-base/x ) blah results in 
-# set([frozenset([virtual/x1, blah]), frozenset([x11-base/x, blah])])
-def combinations(restrict, elem_type=atom):
-	ret = set()
-
-	if isinstance(restrict, OrRestriction):
-		for element in restrict:
-			if isinstance(element, elem_type):
-				newset = set()
-				newset.add(element)
-				ret.add(frozenset(newset))
-			else:
-				ret.update(ret.union(combinations(element, elem_type)))
-	else:
-		newset = set()
-		subsets = set()
-		for element in restrict:
-			if isinstance(element, elem_type):
-				newset.add(element)
-			else:
-				subsets.add(frozenset(combinations(element, elem_type)))
-		ret.add(frozenset(newset))
-		for comb in subsets:
-			ret = extrapolate(ret, comb)
-
-	return ret

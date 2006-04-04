@@ -2,7 +2,7 @@
 
 import sys
 
-def load_vdb(graph, c):
+def load_vdb(graph, d):
 	for v in d.vdb:
 		for pkg in v:
 			#if str(pkg) in ["x11-terms/xterm-204", "www-client/mozilla-launcher-1.45"]:
@@ -47,15 +47,19 @@ def print_blockers(graph):
 					continue
 				print "  ",p,"doesn't like",c
 
-if __name__ == "__main__":
+def gen_graph():
 	import pkgcore.config
 	c = pkgcore.config.load_config()
 	d = c.domain["livefs domain"]
 
 	import pkgcore.graph.state_graph
 	graph = pkgcore.graph.state_graph.StateGraph()
-	print "\n\n===ADDING TO GRAPH===\n"
 	load_vdb(graph, d)
+	return graph
+
+if __name__ == "__main__":
+	print "\n\n===ADDING TO GRAPH===\n"
+	graph = gen_graph()
 	print "\n\n===ROOT PACKAGES===\n"
 	print_roots(graph)
 	print "\n\n===UNRESOLVED===\n"

@@ -58,6 +58,7 @@ if __name__ == "__main__":
 			sys.exit(1)
 	else:
 		attr = None
+
 	for x in a:
 		if "*" in x:
 			x = x.split("/", 1)
@@ -95,7 +96,14 @@ if __name__ == "__main__":
 				r = packages.PackageRestriction("package", values.StrGlobMatch(x[0]))
 			atoms.append(r)
 		else:
-			atoms.append(atom(x))
+			if "/" in x:
+				atoms.append(atom(x))
+			else:
+				if x.endswith("*"):
+					atoms.append(packages.PackageRestriction("package", values.StrGlobMatch(x[:-1])))
+				else:
+					atoms.append(packages.PackageRestriction("package", values.StrExactMatch(x)))
+
 	if len(atoms) > 1:
 		atoms = packages.OrRestriction(*atoms)
 	for a in atoms:

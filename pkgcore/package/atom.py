@@ -185,7 +185,7 @@ class atom(boolean.AndRestriction):
 		del self.restrictions
 
 	def solutions(self):
-		return [self]
+		return [[self]]
 
 	def __getattr__(self, attr):
 		if attr in ("category", "package", "version", "revision", "cpvstr", "fullver", "key"):

@@ -48,3 +48,6 @@ will be optional.
 
 - size sanity_check prior to attempting the merge; this will be tricky since 
   it requires figuring out all mounts and space available for each.
+
+- icon cache trigger for fd.o spec; specifically, touching the icon directory mtime
+  to force any consumers of the icon cache to flush their cache and start anew.

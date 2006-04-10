@@ -36,7 +36,7 @@ except IndexError: pass
 ---------------------------
 Be aware of what the interpretter is actually doing.
 
-1) Don't use len(list_instance) when you just want to know if it's nonempty/empty
+Don't use len(list_instance) when you just want to know if it's nonempty/empty
 l=[1]
 if l: blah
 # instead of

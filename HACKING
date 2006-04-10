@@ -320,9 +320,9 @@ Catch what you're interested in *only*.
 ------------------------
 tuples versus lists.
 
-Former is immutable, later is mutable.
+Former is immutable, latter is mutable.
 
-Former over-allocates (cpython thing), meaning it takes up more memory then is used 
+Latter  over-allocates (cpython thing), meaning it takes up more memory then is used 
 (this is actually a good thing usually).
 
 If you're generating/storing a lot of sequences that shouldn't be modified, use tuples.
@@ -336,7 +336,12 @@ Bad, mm'kay.
 
 
 -----------------------
-instances that are immutable (tuples/strings fex), eg, copying them is dumb.
+for instances that are immutable (tuples/strings fex), trying to copy them is dumb.
+
+fex;
+copy.copy((1,2,3)) is dumb; nobody makes a mistake that obvious, but in larger code
+folks do (folks even try using [:] to copy a string; it returns the same string since
+it's immutable).
 
 Can't modify them, thus there is no point in trying to make copies of them.
 
@@ -349,6 +354,7 @@ break the cycle.
 
 So... if you're using __del__ methods, make sure the instance doesn't wind up in
 a cycle (whether careful data structs, or weakref usage).
+
 
 -----------------------
 (General) python isn't slow, your algorithm is.

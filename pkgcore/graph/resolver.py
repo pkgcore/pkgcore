@@ -1,26 +1,25 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import warnings
-from itertools import imap
-
-common_solution_atoms_barrier = 1
-depends_solution_space = "depends"
-rdepends_solution_space = "rdepends"
+from pkgcore.util.lists import stable_unique
+from pkgcore.graph.util import atom_queue
 
 class solution_space(object):
-	def __init__(self, pkg, deset_type, solutions):
+	def __init__(self, pkg, solutions):
 		assert solutions
-		self.atom, self.depset_type, self.solutions = atom, depset_type, solutions
-		
-		self.solution_index = 0
-		self._absolute_atoms = None
+		self.pkg, self.solutions = pkg, solutions
+		self.solution_index = -1
+		self._common_atoms = None
+
+	@property
+	def processing_commons(self):
+		return self.solution_index == -1
 	
 	@property
 	def common_atoms(self):
 		if self._common_atoms is None:
 			if len(self.solutions) == 1:
-				common = tuple(self.solutions)
+				common = tuple(self.solutions[0])
 				self.solutions = ()
 			else:
 				i = iter(self.solutions)
@@ -41,147 +40,140 @@ class solution_space(object):
 		return self._common_atoms
 	
 	@property
+	def current_solution(self):
+		assert self._common_atoms is not None
+		assert self.solution_index >= 0
+		return self.solutions[self.solution_index]
+	
+	@property
 	def next_solution(self):
 		# folks should have the calling order right.
 		assert self._common_atoms is not None
-		s = self.solutions[self.solution_index]
-		self.solution_index = self.solution_index + 1
-
+		try:
+			self.solution_index = self.solution_index + 1
+			s = self.solutions[self.solution_index]
+		except IndexError:
+			return None
 		return s
 	
 	def reset_solutions(self):
 		self.solution_index = 0
 	
 	def __str__(self):
-		return "atom(%s): %s" % (self.atom, str(self.solutions))
+		return "pkg(%s): %s" % (self.pkg, str(self.solutions))
 
 
-class state_graph(object):
+class choice_point(object):
 	
-	def __init__(self):
-		self.atoms = {}
-		self.versionless_packages = {}
+	def __init__(self, a, matches):
+		self.atom = a
+		self.matches = matches
+		self.position = -1
+	
+	@property
+	def next_choice(self):
+		self.position += 1
+		try:
+			return self.matches[self.position]
+		except IndexError:
+			return None
+	
+	@property
+	def current_choice(self):
+		if self.position < 0:
+			raise Exception("position was -1, call order was wrong")
+		return self.matches[self.position]
 		
-	def add_node(self, node, child):
-		
-		
-	def add_root_atom(self, atom):
-		self.atoms
-
+	
 
 class resolver(object):
-	
 	def __init__(self):
-		self.graph = state_graph()
-		# current decision stack.
+		# choicepoint, processing common?, pos
 		self.stack = []
-		self.unresolvable_atoms = set()
-		# cp -> pkg
-		self.incomplete_truths = {}
-		
-	def get_unresolved_atom(self):
-		yield_it = False
+		self.added_atoms_stack = []
+		self.fast_stack = set()
+		self.atoms = {}
+		self.pkgs = {}
+	
+	def iterate_unresolved_atoms(self):
 		while self.stack:
-			if isinstance(self.stack[-1], solution_space):
-				# this package was resolved fully.
-				self.stack.pop(-1)
-				continue
-			elif self.stack[-1] is common_solution_atoms_barrier:
-				# ok, so now we expand it.  guranteed solution exists also
-				self.stack.pop(-1)
-				self.stack.extend(self.stack[-1].next_solution)
-				yield_it = True
-			else:
-				if atom in self.unresolvable_atoms:
-					# this should only happen when backtracking?
-					import traceback;traceback.print_stack()
-					print "uncertain if reachable code point was reached: unresolvable atom was in the stack"
-					self.unsolvable_atom(atom)
+			s = self.stack[-1]
+			if isinstance(s, choice_point):
+				# grab the next (potentially first) solution.
+				c = s.next_choice
+				if c is not None:
+					self.append_choice_point_solutions(c)
 					continue
-
-				# see if this one is already known.
-				yield_it = True
-				i = iter(self.graph.versionless_packages.get(atom.package_key, []))
-				while yield_it and i:
-					if atom.match(x):
-						yield_it = False
-
-			if yield_it:
-				return self.stack[-1]
-			self.stack.pop(-1)
-
-		# else we fell through, no remaining queries.
-		return None
-
-
-	def satisfy_atom(self, atom, matches):
-		assert atom not in self.unresolvable_atoms
-		assert matches
-		assert self.stack
-		assert not isinstance(self.stack[-1], solution_space)
-		assert atom == self.stack[-1]
-		
-		
-		# no selected solution yet, replace atom with solution space
-		s = solution_space(self.stack[-1], matches)
-		self.stack.pop(-1)
-		self.push_solution_space(s)
-		
-		
-	def unsolvable_atom(self, atom):
-		self.unresolvable_atoms.add(atom)
-		# remove existant atom, wasn't resolved.
-		self.stack.pop(-1)
-		self.invalidate_current_solution()
-		
-		
-	def invalidate_current_solution(self):
-		# note this can leave earlier decisions in place that may need to be revoked/re-examined.
-		# solve this by tracking the mods for this solution space.
-
-		while True:
-			if not isinstance(self.stack[-1], solution_space):
-				if self.stack[-1] is common_solution_atoms_barrier:
-
-					# roh roh.  this whole solution space is screwed.
-					self.stack.pop(-1)
-
-					# sanity check.  barriers should always immediately follow the solution_space
-					assert isinstance(self.stack[-1], solution_space)
-				self.stack.pop(-1)
-
-			else:
-				f = self.stack[-1].next_solution
-				if f is None:
-					# exhausted all solutions.  non-solvable, force evaluation of
-					# next solution in the parent.
-					self.stack.pop(-1)
+			elif isinstance(s, solution_space):
+				if s.processing_commons:
+					# proved the commons atoms for this solution.
+					self.stack.extend(s.common_atoms)
+					self.added_atoms_stack.append([])
 				else:
-					# else push the new solution to investigate on the stack.
-					self.stack.extend(f)
-					break
-			# sanity check.  can this occur validly?
-			# yes it can, top level atoms without solutions.
-			assert self.stack
+					# proved this solution.
+					self.added_atoms_stack.pop(-1)
+					continue
+			else:
+				# an atom.
+				yield s
+	
+	def satisfy_atom(self, a, matches):
+		assert a is self.stack[-1]
+		self.stack.pop(-1)
+		c = choice_point(a, matches)
+		self.stack.append(c)
+		self.added_atoms_stack.append(a)
 
-	def push_solution_space(self, solution):
-		common_requirements = solution.common_atoms
-		for x in common_requirements:
-			if x in self.unresolvable_atoms:
-				# well, that solution sucked, and is totally unusable.
-				self.invalidate_current_solution()
-				return
-
-		self.stack.append(solution)
-		# optimization.  push the solution set on directly if no common reqs for the solution space.
-		if not common_requirements:
-			self.stack.extend(solution.next_solution)
-		else:
-			# insert the common_barrier so the unresolved_atoms loop can know whether or not
-			# to invalidate this solution_space.
-			self.stack.append(common_solution_atoms_barrier)
-			self.stack.extend(common_requirements)
+	def append_choice_point_solutions(self, pkg):
+		s2 = pkg.rdepends.solutions()
+		if s2:
+			self.stack.append(solution_space(pkg, s2))
+		s2 = pkg.depends.solutions()
+		if s2:
+			self.stack.append(solution_space(pkg, s2))
+		if isinstance(self.stack[-1], choice_point):
+			# huh.  virtual node maybe.
+			# well, this node is proven.
+			self.stack.pop(-1)
 		
+	def unsatisfiable_atom(self, atom):
+		assert atom is self.stack[-1]
+		# joy oh joys.
+		while self.stack:
+			if isinstance(s, solution_space):
+				atoms_added = set(self.added_atoms_stack.pop(-1))
+				n = s.next_solution
+				kills = atoms_added
+				saves = None
+				if s.processing_commons or n is None:
+					kills = True
+				else:
+					ns = set(n)
+					kills = atoms_added.difference(ns)
+					saves = atoms.added.intersection(ns)
+
+				if kills is True:
+					# non usable or exhausted solution space.
+					while isinstance(self.stack[-1], solution_space):
+						self.stack.pop(-1)
+				else:
+					for x in kills:
+						del self.atoms[x]
+					self.added_atoms_stack.append(list(saves))
+					self.stack.extend(x for x in n if x not in saves)
+					return
+			
+			elif isinstance(s, choice_point):
+				c = s.next_choice
+				if n is None:
+					# old gal has no more in her.
+					self.stack.pop(-1)
+					continue
+				self.append_choice_point_solutions(c)
+				return
+			else:
+				self.stack.pop(-1)
+					
 
 # <harring was bored and hates writing resolver code>
 # total slaughter, 
@@ -197,3 +189,4 @@ class resolver(object):
 # 
 # sad thing?  Almost verbatim from memory of the hang fire episode of trigun ;)
 # </harring was bored and hates writing resolver code>
+

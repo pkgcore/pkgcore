@@ -169,9 +169,8 @@ class tree(object):
 					cats_iter = ifilter(cats[0].match, self.categories)
 				else:
 					if cats_exact:
-						# this makes the worst case slightly worse.  worth it?
 						cats = [values.ContainmentMatch(cats_exact)] + \
-							[r for r in cats if not isintance(r, values.StrExactMatch) or r.flags]
+							[r for r in cats if not isintance(r, values.StrExactMatch) or r.flags or r.negate]
 					cats = values.OrRestriction(*cats)
 					cats_iter = ifilter(cats.match, self.categories)
 
@@ -186,9 +185,8 @@ class tree(object):
 					pkgs_iter = ifilter(pkgs[0].match, cats_iter)
 				else:
 					if pkgs_exact:
-						# this makes the worst case slightly worse.  worth it?
 						pkgs = [values.ContainmentMatch(cats_exact)] + \
-							[r for r in pkgs if not isintance(r, values.StrExactMatch) or r.flags]
+							[r for r in pkgs if not isintance(r, values.StrExactMatch) or r.flags or r.negate]
 					pkgs = values.OrRestriction(*pkgs)
 					pkgs_iter = ((c,p) for c in cats_iter
 						for p in ifilter(pkgs.match, self.packages.get(c, [])))

@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-def unique(s):
+def unstable_unique(s):
 	"""lifted from python cookbook, credit: Tim Peters
 	Return a list of the elements in s in arbitrary order, sans duplicates"""
 	n = len(s)
@@ -33,6 +33,21 @@ def unique(s):
 		if x not in u:
 			u.append(x)
 	return u
+
+def unique(s):
+	import warnings
+	warnings.warn("unique will be going away in favor of unstable_unique and stable_unique")
+	return unstable_unique(s)
+
+def stable_unique(iterable):
+	return list(iter_stable_unique(iterable))
+
+def iter_stable_unique(iterable):
+	s=set()
+	for x in iterable:
+		if x not in s:
+			yield x
+			s.add(x)
 	
 def iterflatten(l):
 	"""collapse [(1),2] into [1,2]"""
@@ -52,3 +67,14 @@ def iterflatten(l):
 def flatten(l):
 	"""flatten, returning a list rather then an iterable"""
 	return list(iterflatten(l))
+
+def extract_common(set1, *additional_sets):
+	if not isinstance(set1, set):
+		s = set(set1)
+	else:
+		s = set1
+	for x in iterables:
+		s = s.intersection(x)
+		if not s:
+			break
+	return s

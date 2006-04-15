@@ -2,9 +2,20 @@
 # License: GPL2
 
 from weakref import proxy
-from itertools import imap
+from itertools import imap, ifilter
 from pkgcore.util.mappings import LazyValDict
+from pkgcore.util.lists import unstable_unique, iter_flatten
 from pkgcore.package.atom import atom
+from pkgcore.restrictions import packages, values, boolean
+
+class FakeMatch(object):
+	def __init__(self, val):
+		self.val = val
+	def match(self, pkg):
+		return self.val
+
+FakeTrueMatch = FakeMatch(True)
+FakeFalseMatch = FakeMatch(False)
 
 def ix_callable(a):
 	return "/".join(a)
@@ -14,10 +25,10 @@ class IterValLazyDict(LazyValDict):
 	def __init__(self, key_func, val_func, override_iter=None, return_func=ix_callable):
 		LazyValDict.__init__(self, key_func, val_func)
 		self._iter_callable = override_iter
-		self._return_mangler = return_func
+		self.return_mangler = return_func
 		
 	def __iter__(self):
-		return imap(self._return_mangler, ((k, x) for k in self.iterkeys() for x in self[k]))
+		return imap(self.return_mangler, self.iteritems())
 
 	def __contains__(self, key):
 		return key in iter(self)
@@ -137,8 +148,54 @@ class tree(object):
 					except KeyError:
 						# restrict.category wasn't valid.  no matches possible.
 						return
+					r = restrict[2:]
+					if not r:
+						restrict = FakeTrueMatch
+					elif len(r) > 1:
+						restrict = packages.AndRestriction(*r)
+					else:
+						restrict = r[0]
+		elif isinstance(restrict, boolean.base):
+			s=set(iter_flatten(restrict.solutions()))
+			pkgrestricts = [r for r in s if isinstance(r, packages.PackageRestriction)]
+			cats = [r.restriction for r in pkgrestricts if r.attr == "category"]
+			if not cats:
+				cats_iter = iter(self.categories)
+			else:
+				cats_exact = set(r.exact for r in cats if isinstance(r, values.StrExactMatch) and not r.flags)
+				if len(cats_exact) == len(cats):
+					cats_iter = ifilter(cats_exact.__contains__, self.categories)
+				elif len(cats) == 1:
+					cats_iter = ifilter(cats[0].match, self.categories)
+				else:
+					if cats_exact:
+						cats = [values.ContainmentMatch(cats_exact)] + \
+							[r for r in cats if not isintance(r, values.StrExactMatch) or r.flags]
+					cats = values.OrRestriction(*cats)
+					cats_iter = ifilter(cats.match, self.categories)
+
+			pkgs = [r.restriction for r in pkgrestricts if r.attr == "package"]
+			if not pkgs:
+				candidates = ((c,p) for c in cats_iter for p in self.packages.get(c, []))
+			else:
+				pkgs_exact = set(r.exact for r in pkgs if isinstance(r, values.StrExactMatch) and not r.flags)
+				if len(pkgs_exact) == len(pkgs):
+					pkgs_iter = ((c,p) for c in cats_iter for p in ifilter(pkgs_exact.__contains__, self.packages.get(c,[])))
+				elif len(pkgs) == 1:
+					pkgs_iter = ifilter(pkgs[0].match, cats_iter)
+				else:
+					if pkgs_exact:
+						pkgs = [values.ContainmentMatch(cats_exact)] + \
+							[r for r in pkgs if not isintance(r, values.StrExactMatch) or r.flags]
+					pkgs = values.OrRestriction(*pkgs)
+					pkgs_iter = ((c,p) for c in cats_iter
+						for p in ifilter(pkgs.match, self.packages.get(c, [])))
+
+				candidates = imap(self.packages.return_mangler, pkgs_iter)
+
 		else:
 			candidates = self.packages
+
 
 		#actual matching.
 		for catpkg in candidates:

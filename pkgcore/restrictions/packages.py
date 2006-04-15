@@ -4,6 +4,7 @@
 from pkgcore.util.lists import unique
 from pkgcore.util.currying import pre_curry, pretty_docs
 from pkgcore.restrictions import values, restriction, boolean
+import logging
 
 package_type = "package"
 

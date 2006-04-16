@@ -7,6 +7,8 @@ from pkgcore.package import metadata, base
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.fs import scan
 from pkgcore.util.currying import post_curry
+from pkgcore.ebuild.conditionals import DepSet
+from pkgcore.package.atom import atom
 import ebd
 
 def passthrough(inst, attr, rename=None):
@@ -36,6 +38,7 @@ class package(ebuild_src.package):
 		ebuild_src.package._config_wrappables))
 #	_get_attr["use"] = post_curry(passthrough, "use", "USE")
 	_get_attr["use"] = lambda s:s.data["USE"].split()
+	_get_attr["depends"] = lambda s:DepSet("", atom)
 
 	def _update_metadata(self, pkg):
 		raise NotImplementedError()

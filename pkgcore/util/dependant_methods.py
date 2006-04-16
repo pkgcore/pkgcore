@@ -7,7 +7,7 @@
 # object being used to create instances of that class.
 # note python doesn't exactly have definitions, just executions, but analogy is close enough :P
 	
-from pkgcore.util.lists import unique, flatten
+from pkgcore.util.lists import flatten
 from pkgcore.util.currying import pre_curry
 
 __all__ = ["ForcedDepends"]

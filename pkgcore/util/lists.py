@@ -36,11 +36,6 @@ def unstable_unique(s):
 			u.append(x)
 	return u
 
-def unique(s):
-	import warnings
-	warnings.warn("unique will be going away in favor of unstable_unique and stable_unique")
-	return unstable_unique(s)
-
 def stable_unique(iterable):
 	return list(iter_stable_unique(iterable))
 

@@ -31,7 +31,7 @@ if __name__ == "__main__":
 		atomstr = lambda x, y=False: str(x)
 
 	if len(a) == 0 or "--help" in a:
-		print "supported args: [--raw] [--atomstr] [atom [ --attr attr ] ]*"
+		print "supported args: [--raw] [ --max || --min ] [--atomstr] [atom [ --attr attr ] ]*"
 		sys.exit(1)
 	conf = pkgcore.config.load_config()
 	if len(conf.domain) != 1:
@@ -58,6 +58,18 @@ if __name__ == "__main__":
 			print "need an arg to --attr!"
 			sys.exit(1)
 
+	results_filter = lambda a: a
+	try:	
+		a.remove("--max")
+		results_filter = lambda a: [max(a)]
+	except ValueError:
+		pass
+
+	try:
+		a.remove("--min")
+		results_filter = lambda a: [min(a)]
+	except ValueError:
+		pass
 	for x in a:
 		if "*" in x:
 			x = x.split("/", 1)
@@ -107,7 +119,7 @@ if __name__ == "__main__":
 		atoms = packages.OrRestriction(*atoms)
 	for a in atoms:
 		for repo in repos:
-			for pkg in repo.itermatch(a):
+			for pkg in results_filter(repo.itermatch(a)):
 				try:	print str(atomstr(pkg))
 				except AttributeError:
 					print str(pkg)
@@ -115,4 +127,5 @@ if __name__ == "__main__":
 					try:	print "attr '%s' == %s" % (x, atomstr(getattr(pkg, x), True))
 					except AttributeError, ae:
 						print "attr '%s' exception: %s" % (x, ae)
+				print
 	sys.exit(0)

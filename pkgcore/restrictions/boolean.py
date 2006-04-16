@@ -7,6 +7,7 @@ style operations.
 """
 
 from itertools import imap, islice
+from pkgcore.util.compatibility import any, all
 
 __all__ = ("AndRestriction", "OrRestriction", "XorRestriction")
 import restriction
@@ -137,10 +138,7 @@ class AndRestriction(base):
 	__slots__ = ()
 
 	def match(self, vals):
-		for rest in self.restrictions:
-			if not rest.match(vals):
-				return self.negate
-		return not self.negate
+		return all(rest.match(vals) for rest in self.restrictions) != self.negate
 	
 	def force_True(self, pkg, *vals):
 		pvals = [pkg]
@@ -225,10 +223,7 @@ class OrRestriction(base):
 	__slots__ = ()
 	
 	def match(self, vals):
-		for rest in self.restrictions:
-			if rest.match(vals):
-				return not self.negate
-		return self.negate
+		return any(rest.match(vals) for rest in self.restrictions) != self.negate
 	
 	def solutions(self):
 		if self.negate:

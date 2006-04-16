@@ -10,7 +10,7 @@ from pkgcore.package.atom import atom
 from pkgcore.repository.visibility import filterTree
 from pkgcore.restrictions.values import StrGlobMatch, StrExactMatch, ContainmentMatch
 from pkgcore.util.currying import post_curry
-from pkgcore.util.lists import unique
+from pkgcore.util.lists import stable_unique
 from pkgcore.util.mappings import ProtectedDict
 from itertools import imap
 from pkgcore.interfaces.data_source import local_source
@@ -32,7 +32,7 @@ def get_key_from_package(pkg):
 
 def package_keywords_splitter(val):
 	v=val.split()
-	return atom(v[0]), unique(v[1:])
+	return atom(v[0]), stable_unique(v[1:])
 
 
 # ow ow ow ow ow ow....

@@ -76,6 +76,13 @@ class AndRestrictionTest(unittest.TestCase):
 			boolean.AndRestriction(true, true,
 				node_type='foo', negate=True).match(None))
 
+	def test_solutions(self):
+		self.assertEquals(boolean.AndRestriction(true, true).solutions(), [[true, true]])
+		self.assertEquals(boolean.AndRestriction(boolean.AndRestriction(true, true), true).solutions(), 
+			[[true, true, true]])
+		self.assertEquals(map(set, boolean.AndRestriction(true, true, boolean.OrRestriction(false, true)).solutions()),
+			[set([true, true, false]), set([true, true, true])])
+
 
 class OrRestrictionTest(unittest.TestCase):
 
@@ -95,3 +102,10 @@ class OrRestrictionTest(unittest.TestCase):
 			self.failIf(boolean.OrRestriction(node_type='foo', negate=True, *x).match(None))
 		self.failUnless(
 			boolean.OrRestriction(false, false, node_type='foo', negate=True).match(None))
+
+	def test_solutions(self):
+		self.assertEquals(boolean.OrRestriction(true, true).solutions(), [[true], [true]])
+		self.assertEquals(map(set, boolean.OrRestriction(true, true, boolean.AndRestriction(false, true)).solutions()),
+			map(set, [[true], [true], [false, true]]))
+		self.assertEquals(boolean.OrRestriction(boolean.OrRestriction(true, false), true).solutions(),
+			[[true], [false], [true]])

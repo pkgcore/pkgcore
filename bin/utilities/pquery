@@ -112,7 +112,7 @@ if __name__ == "__main__":
 				except AttributeError:
 					print str(pkg)
 				for x in attr:
-					try:	print "attr == %s" % atomstr(getattr(pkg, x), True)
+					try:	print "attr '%s' == %s" % (x, atomstr(getattr(pkg, x), True))
 					except AttributeError, ae:
 						print "attr '%s' exception: %s" % (x, ae)
 	sys.exit(0)

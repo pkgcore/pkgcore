@@ -3,32 +3,26 @@
 
 from twisted.trial import unittest
 from pkgcore.util import compatibility
+from pkgcore.util.currying import post_curry
 
+class mixin:
+	def test_builtin_override(self):
+		if self.func_name in __builtins__:
+			self.assertIdentical(*[getattr(x, self.func) for x in [__builtins__, compatibility]])
 
-class AnyTest(unittest.TestCase):
-	
-	def test_check_for_builtin_any(self):
-		if "any" in __builtins__:
-			if compatibility.any is __builtins__.any:
-				raise unittest.SkipTest("builtin any is being used")
-			raise unittest.FailTest("builtin any is available, but not used")
-
-	def test_any(self):
+	def check_func(self, result1, result2, test3, result3):
 		i = iter(xrange(100))
-		self.assertEquals(compatibility.any(x==3 for x in i), True)
-		self.assertEquals(i.next(), 4, "any consumed more args then needed")
-		self.assertEquals(compatibility.any(x==3 for x in i), False)
+		f = getattr(compatibility, self.func_name)
+		self.assertEquals(f(x==3 for x in i), result1)
+		self.assertEquals(i.next(), result2)
+		self.assertEquals(f(test3), result3)
 
-class AllTest(unittest.TestCase):
+class AnyTest(unittest.TestCase, mixin):
+	func_name = "any"
+	test_any = post_curry(mixin.check_func, True, 4, (x==3 for x in xrange(2)), False)
 
-	def test_check_for_builtin_all(self):
-		if "all" in __builtins__:
-			if compatibility.all is __builtins__.all:
-				raise unittest.SkipTest("builtin all is being used")
-			raise unittest.FailTest("builtin all is available, but not used")
 
-	def test_all(self):
-		i = iter(xrange(100))
-		self.assertEquals(compatibility.all(x==3 for x in i), False)
-		self.assertEquals(i.next(), 1)
-		self.assertEquals(compatibility.all(isinstance(x,int) for x in i), True)
+class AllTest(unittest.TestCase, mixin):
+	func_name = "all"
+	test_all = post_curry(mixin.check_func, False, 1, 
+		(isinstance(x, int) for x in xrange(100)), True)

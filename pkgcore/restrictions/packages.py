@@ -1,7 +1,6 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.util.lists import unique
 from pkgcore.util.currying import pre_curry, pretty_docs
 from pkgcore.restrictions import values, restriction, boolean
 import logging

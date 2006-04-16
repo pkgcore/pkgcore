@@ -2,7 +2,11 @@
 # License: GPL2
 
 from collections import deque
+
 class expandable_chain(object):
+	"""chained iterables, with the ability to add new iterables to the chain 
+	as long as the instance hasn't raise StopIteration already"""
+
 	__slot__ = ("iterables", "__weakref__")
 
 	def __init__(self, *iterables):
@@ -23,18 +27,23 @@ class expandable_chain(object):
 		self.iterables = None
 		raise StopIteration()
 			
-
 	def append(self, iterable):
+		"""append an iterable to the chain to be consumed"""
 		if self.iterables is None:
 			raise StopIteration()
 		self.iterables.append(iter(iterable))
 	
 	def extend(self, iterables):
+		"""append multiple iterable to the chain to be consumed"""
 		if self.iterables is None:
 			raise StopIteration()
 		self.iterables.extend(iter(x) for x in iterables)
-	
+
+
 class caching_iter(object):
+	"""On demand consumers from an iterable so as to appear
+	like a tuple
+	"""
 	__slots__ = ("iterable", "__weakref__", "cached_list")
 	
 	def __init__(self, iterable):
@@ -48,7 +57,7 @@ class caching_iter(object):
 		existing_len = len(self.cached_list)
 		if index < 0:
 			if self.iterable is not None:
-				self.cached_list.extend(self.iterable)
+				self.cached_list = tuple(self.cached_list + list(self.iterable))
 				self.iterable = None
 				existing_len = len(self.cached_list)
 
@@ -64,12 +73,16 @@ class caching_iter(object):
 				except StopIteration:
 					# consumed, baby.
 					self.iterable = None
+					self.cached_list = tuple(self.cached_list)
 					raise IndexError("list index out of range")
+		
 		return self.cached_list[index]
 
 	def __len__(self):
 		if self.iterable is not None:
 			self.cached_list.extend(self.iterable)
+			self.cached_list = tuple(self.cached_list)
+			self.iterable = None
 		return len(self.cached_list)
 
 	def __iter__(self):
@@ -79,6 +92,17 @@ class caching_iter(object):
 			for x in self.iterable:
 				self.cached_list.append(x)
 				yield x
+		else:
+			return
+		self.iterable = None
+		self.cached_list = tuple(self.cached_list)
 	
+	def __hash__(self):
+		if self.iterable is not None:
+			self.cached_list.extend(self.iterable)
+			self.cached_list = tuple(self.cached_list)
+			self.iterable = None
+		return hash(self.cached_list)
+
 	def __str__(self):
 		return "iter(%s), list: %s" % (self.iterable, str(self.cached_list))

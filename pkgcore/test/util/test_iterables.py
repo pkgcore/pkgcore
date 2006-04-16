@@ -52,3 +52,5 @@ class CachingIterTest(unittest.TestCase):
 	def test_len(self):
 		self.assertEqual(100, len(caching_iter(xrange(100))))
 
+	def test_hash(self):
+		self.assertEquals(hash(caching_iter(xrange(100))), hash(tuple(range(100))))

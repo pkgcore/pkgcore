@@ -15,13 +15,19 @@ try:
 except ImportError:
 	max_fd_limit = 256
 
+def slow_get_open_fds():
+	return xrange(max_fd_limit)
 if os.path.isdir("/proc/%i/fd" % os.getpid()):
 	def get_open_fds():
-		return map(int, os.listdir("/proc/%i/fd" % os.getpid()))
+		try:
+			return map(int, os.listdir("/proc/%i/fd" % os.getpid()))
+		except ValueError, v:
+			import warnings
+			warnings.warn("extremely odd, got a value error '%s' while scanning /proc/%i/fd; OS allowing string names in fd?" %
+				(v, os.getpid()))
+			return slow_get_open_fds()
 else:
-	def get_open_fds():
-		return xrange(max_fd_limit)
-
+	get_open_fds = slow_get_open_fds
 
 sandbox_capable = (os.path.isfile(SANDBOX_BINARY) and
                    os.access(SANDBOX_BINARY, os.X_OK))

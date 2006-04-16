@@ -28,7 +28,7 @@ class IterValLazyDict(LazyValDict):
 		self.return_mangler = return_func
 		
 	def __iter__(self):
-		return imap(self.return_mangler, self.iteritems())
+		return (self.return_mangler(k, ver) for k,v in self.iteritems() for ver in v)
 
 	def __contains__(self, key):
 		return key in iter(self)
@@ -88,7 +88,7 @@ class tree(object):
 	def __init__(self, frozen=True):
 		self.categories = CategoryIterValLazyDict(self._get_categories, self._get_categories)
 		self.packages   = PackageIterValLazyDict(self.categories, self._get_packages)
-		self.versions   = IterValLazyDict(self.packages, self._get_versions, return_func=lambda k: "-".join(k))
+		self.versions   = IterValLazyDict(self.packages, self._get_versions, return_func=lambda *t:"-".join(t))
 
 		self.frozen = frozen
 		self.lock = None

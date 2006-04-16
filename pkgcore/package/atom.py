@@ -3,7 +3,6 @@
 
 from pkgcore.restrictions import values, packages, boolean, restriction
 from cpv import ver_cmp, CPV
-from pkgcore.util.lists import unique
 
 class MalformedAtom(Exception):
 	def __init__(self, atom, err=''):	self.atom, self.err = atom, err

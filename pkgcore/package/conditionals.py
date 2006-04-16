@@ -2,7 +2,6 @@
 # License: GPL2
 
 from pkgcore.util.containers import LimitedChangeSet, Unchangable
-from pkgcore.util.lists import unique, flatten
 import copy
 
 class PackageWrapper(object):

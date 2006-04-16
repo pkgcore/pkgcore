@@ -142,6 +142,7 @@ class CPV(base):
 
 		# note I chucked out valueerror, none checks on versions passed in.  I suck, I know.
 		# ~harring
+		# fails in doing comparison of unversioned atoms against versioned atoms
 		return ver_cmp(self.version, self.revision, other.version, other.revision)
 
 

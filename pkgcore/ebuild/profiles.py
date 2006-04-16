@@ -120,7 +120,8 @@ class OnDiskProfile(profiles.base):
 					try:	maskers.remove(p[1:])
 					except KeyError:
 						logger.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
-				else:	maskers.extend([p])
+				else:
+					maskers.extend([p])
 
 		self.maskers = map(atom,maskers)
 		del maskers
@@ -144,6 +145,13 @@ class OnDiskProfile(profiles.base):
 			if u in d:
 				d["USE"].extend(map(u2.__add__, d[u].split()))
 				del d[u]
+
+		# and... default virtuals.
+		self.virtuals = {}
+		for fp, i in loop_iter_read(os.path.join(prof, "virtuals") for prof in stack):
+			for p in i:
+				p = p.split()
+				self.virtuals[p[0]] = p[1]
 
 		# collapsed make.defaults.  now chunkify the bugger.
 		self.conf = d

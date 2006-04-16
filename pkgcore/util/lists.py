@@ -1,6 +1,8 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from pkgcore.util.iterables import expandable_chain
+
 def unstable_unique(s):
 	"""lifted from python cookbook, credit: Tim Peters
 	Return a list of the elements in s in arbitrary order, sans duplicates"""
@@ -49,24 +51,25 @@ def iter_stable_unique(iterable):
 			yield x
 			s.add(x)
 	
-def iterflatten(l):
+def iter_flatten(l):
 	"""collapse [(1),2] into [1,2]"""
-	iters = [iter(l)]
-	while iters:
-		try:
-			while True:
-				x = iters[-1].next()
-				if hasattr(x, '__iter__') and not isinstance(x, basestring):
-					iters.append(iter(x))
-				else:
-					yield x
-		except StopIteration:
-			iters.pop(-1)
-
+	if isinstance(l, basestring):
+		yield l
+		return
+	iters = expandable_chain(l)
+	try:
+		while True:
+			x = iters.next()
+			if hasattr(x, '__iter__') and not isinstance(x, basestring):
+				iters.appendleft(x)
+			else:
+				yield x
+	except StopIteration:
+		pass
 			
 def flatten(l):
 	"""flatten, returning a list rather then an iterable"""
-	return list(iterflatten(l))
+	return list(iter_flatten(l))
 
 def extract_common(set1, *additional_sets):
 	if not isinstance(set1, set):

@@ -33,11 +33,23 @@ class expandable_chain(object):
 			raise StopIteration()
 		self.iterables.append(iter(iterable))
 	
+	def appendleft(self, iterable):
+		"""prepend an iterable to in the chain"""
+		if self.iterables is None:
+			raise StopIteration()
+		self.iterables.appendleft(iter(iterable))
+	
 	def extend(self, iterables):
-		"""append multiple iterable to the chain to be consumed"""
+		"""extend multiple iterable to the chain to be consumed"""
 		if self.iterables is None:
 			raise StopIteration()
 		self.iterables.extend(iter(x) for x in iterables)
+
+	def extendleft(self, iterables):
+		"""prepend multiple iterables to the chain to be consumed"""
+		if self.iterables is None:
+			raise StopIteration()
+		self.iterables.extendleft(iter(x) for x in iterables)
 
 
 class caching_iter(object):

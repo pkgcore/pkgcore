@@ -15,16 +15,28 @@ class ExpandableChainTest(unittest.TestCase):
 		for x in i + [e]:
 			self.assertRaises(StopIteration, x.next)
 
-	def test_extending(self):
+	def test_extend(self):
 		e = expandable_chain()
 		e.extend(xrange(100) for x in (1,2))
 		self.assertEquals(list(e), range(100)*2)
 		self.assertRaises(StopIteration, e.extend, [[]])
 
-	def test_appending(self):
+	def test_extendleft(self):
+		e = expandable_chain(xrange(20, 30))
+		e.extendleft([xrange(10,20), xrange(10)])
+		self.assertEquals(list(e), range(30))
+		self.assertRaises(StopIteration, e.extendleft, [[]])
+
+	def test_append(self):
 		e = expandable_chain()
 		e.append(xrange(100))
 		self.assertEquals(list(e), range(100))
+		self.assertRaises(StopIteration, e.append, [])
+
+	def test_appendleft(self):
+		e = expandable_chain(xrange(10, 20))
+		e.appendleft(xrange(10))
+		self.assertEquals(list(e), range(20))
 		self.assertRaises(StopIteration, e.append, [])
 
 

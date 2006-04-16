@@ -1,12 +1,14 @@
-from pkgcore.restrictions import package
-from pkgcore.util.iterables import expandable_chain
+from pkgcore.restrictions import packages, values
+from pkgcore.util.iterables import expandable_chain, caching_iter
 from pkgcore.util.compatibility import all
-from itertools import chain
+from pkgcore.graph.choice_point import choice_point
+
 
 debug_whitelist = [None]
 def debug(msg, id=None):
 	if id in debug_whitelist:
 		print "debug: %s" % msg
+
 
 class NoSolution(Exception):
 	def __init__(self, msg):
@@ -14,7 +16,8 @@ class NoSolution(Exception):
 	def __str__(self):
 		return str(msg)
 
-class resolver:
+
+class resolver(object):
 
 	def __init__(self):
 		self.search_stacks = [[]]
@@ -35,9 +38,7 @@ class resolver:
 
 	def satisfy_atom(self, atom, matches):
 		assert atom is self.current_stack[-1]
-		# hack since we don't have caching iterable pulling.
-		l=list(matches)
-		c = choice_point(atom, matches)
+		c = choice_point(atom, caching_iter(matches))
 		h = hash(atom)
 		assert h not in self.atoms
 		self.atoms[h] = [c, []]
@@ -69,8 +70,9 @@ class resolver:
 				# cycle protection.
 				if self.current_stack.find(a) != len(self.current_stack) - 1:
 					# cycle ask the repo for a pkg configuration that breaks the cycle.
-					
-					yield package.AndRestriction(
+					v = value.ContainmentMatch([a], negate=True)
+					yield packages.AndRestriction(a, 
+						PackageRestriction("depends", v), PackageRestriction("rdepends", v))
 				self.current_atom = a
 				yield a
 			else:
@@ -116,7 +118,8 @@ class resolver:
 			raise bail
 
 	def choice_point_is_complete(self, choice_point):
-		return all(x in self.atoms for x in chain(choice_point.depends, choice_point.rdepends))
+		return all(x in self.atoms for x in choice_point.depends) and \
+			all(x in self.atoms for x in choice_point.rdepends)
 
 	def ref_stack_for_atom(self, hashed_atom, stack):
 		assert hashed_atom in self.atoms

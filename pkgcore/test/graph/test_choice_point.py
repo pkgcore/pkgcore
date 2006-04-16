@@ -35,4 +35,13 @@ class TestChoicePoint(unittest.TestCase):
 		self.assertEqual(c.reduce_atoms("ordep2")[0], set())
 		self.assertEqual(c.reduce_atoms("ordep1")[0], set(["or1"]))
 		self.assertEqual(c.current_pkg.marker, 2)
+		c = self.gen_choice_point()
+		self.assertEqual(c.reduce_atoms("anddep2")[0], set(["ordep1", "ordep1", "anddep1", "anddep2", "pkg1and"]))
 
+	def test_no_solutions(self):
+		c=self.gen_choice_point()
+		self.assertEqual(c.no_solutions, False)
+		c.reduce_atoms("pkg1and")
+		self.assertEqual(c.no_solutions, False)
+		c.reduce_atoms("anddep2")
+		self.assertEqual(c.no_solutions, True)

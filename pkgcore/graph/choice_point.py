@@ -33,20 +33,24 @@ class choice_point(object):
 
 		# lock step checks of each- it's possible for rdepend to push depend forward
 		rdep_idx = orig_match_idx = -1
-		while orig_match_idx != self.matches_idx:
-			orig_match_idx = self.matches_idx
-			while self.matches_idx < matches_len:
-				if all(x not in self.solution_filters for x in self.depends):
-					break
-				self._dep_solutions[1] += 1
-
-			# optimization.  don't redo rdep if it forced last redo, and matches hasn't changed
-			if rdep_idx != self.matches_idx:
+		try:
+			while orig_match_idx != self.matches_idx:
+				orig_match_idx = self.matches_idx
 				while self.matches_idx < matches_len:
-					if all(x not in self.solution_filters for x in self.rdepends):
+					if all(x not in self.solution_filters for x in self.depends):
 						break
-					self._rdep_solutions[1] += 1
-			rdep_idx = self.matches_idx
+					self._dep_solutions[1] += 1
+
+				# optimization.  don't redo rdep if it forced last redo, and matches hasn't changed
+				if rdep_idx != self.matches_idx:
+					while self.matches_idx < matches_len:
+						if all(x not in self.solution_filters for x in self.rdepends):
+							break
+						self._rdep_solutions[1] += 1
+				rdep_idx = self.matches_idx
+		except IndexError:
+			# shot off the end, no solutions.
+			self.matches_idx = matches_len
 
 		if self.matches_idx  == matches_len:
 			# no solutions remain.

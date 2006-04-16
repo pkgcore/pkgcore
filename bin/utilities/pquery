@@ -31,7 +31,7 @@ if __name__ == "__main__":
 		atomstr = lambda x, y=False: str(x)
 
 	if len(a) == 0 or "--help" in a:
-		print "supported args: [--raw] [--atomstr] atom [ --attr attr ]"
+		print "supported args: [--raw] [--atomstr] [atom [ --attr attr ] ]*"
 		sys.exit(1)
 	conf = pkgcore.config.load_config()
 	if len(conf.domain) != 1:
@@ -48,16 +48,15 @@ if __name__ == "__main__":
 		repos.extend(domain.repos)
 
 	atoms = []
-	if "--attr" in a:
+	attr = []
+	while "--attr" in a:
 		i = a.index("--attr")
 		a.pop(i)
 		try:
-			attr = a.pop(i)
+			attr.append(a.pop(i))
 		except IndexError:
 			print "need an arg to --attr!"
 			sys.exit(1)
-	else:
-		attr = None
 
 	for x in a:
 		if "*" in x:
@@ -112,8 +111,8 @@ if __name__ == "__main__":
 				try:	print str(atomstr(pkg))
 				except AttributeError:
 					print str(pkg)
-				if attr is not None:
-					try:	print "attr == %s" % atomstr(getattr(pkg, attr), True)
+				for x in attr:
+					try:	print "attr == %s" % atomstr(getattr(pkg, x), True)
 					except AttributeError, ae:
-						print "attr exception: %s" % ae
+						print "attr '%s' exception: %s" % (x, ae)
 	sys.exit(0)

@@ -4,7 +4,6 @@
 # TODO: move exceptions elsewhere, bind them to a base exception for pkgcore
 
 from pkgcore.restrictions import packages, values, boolean
-from pkgcore.util.lists import unique, flatten
 from pkgcore.util.strings import iter_tokens
 
 def convert_use_reqs(uses):

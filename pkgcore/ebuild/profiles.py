@@ -3,7 +3,6 @@
 
 from pkgcore.config import profiles
 import os, logging
-from pkgcore.util.lists import unique
 from pkgcore.util.file import iter_read_bash, read_dict, read_bash_dict
 from pkgcore.util.currying import pre_curry
 from pkgcore.package.atom import atom

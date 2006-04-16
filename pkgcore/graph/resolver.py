@@ -1,192 +1,138 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+from pkgcore.restrictions import package
+from pkgcore.util.iterables import expandable_chain
+from pkgcore.util.compatibility import all
+from itertools import chain
 
-from pkgcore.util.lists import stable_unique
-from pkgcore.graph.util import atom_queue
+debug_whitelist = [None]
+def debug(msg, id=None):
+	if id in debug_whitelist:
+		print "debug: %s" % msg
 
-class solution_space(object):
-	def __init__(self, pkg, solutions):
-		assert solutions
-		self.pkg, self.solutions = pkg, solutions
-		self.solution_index = -1
-		self._common_atoms = None
-
-	@property
-	def processing_commons(self):
-		return self.solution_index == -1
-	
-	@property
-	def common_atoms(self):
-		if self._common_atoms is None:
-			if len(self.solutions) == 1:
-				common = tuple(self.solutions[0])
-				self.solutions = ()
-			else:
-				i = iter(self.solutions)
-				common = set(i.next())
-				for solution_set in i:
-					common = common.intersect(solution_set)
-					# not sure how often this is needed really.
-					if not common:
-						break
-				if common:
-					# convert solutions to filtered tuples
-					self.solutions = tuple([tuple(set(x).difference(common)) for x in self.solutions])
-				else:
-					# no common base.  convert to tuples.
-					self.solutions = map(tuple, self.solutions)
-			self._common_atoms = tuple(common)
-
-		return self._common_atoms
-	
-	@property
-	def current_solution(self):
-		assert self._common_atoms is not None
-		assert self.solution_index >= 0
-		return self.solutions[self.solution_index]
-	
-	@property
-	def next_solution(self):
-		# folks should have the calling order right.
-		assert self._common_atoms is not None
-		try:
-			self.solution_index = self.solution_index + 1
-			s = self.solutions[self.solution_index]
-		except IndexError:
-			return None
-		return s
-	
-	def reset_solutions(self):
-		self.solution_index = 0
-	
+class NoSolution(Exception):
+	def __init__(self, msg):
+		self.msg = msg
 	def __str__(self):
-		return "pkg(%s): %s" % (self.pkg, str(self.solutions))
+		return str(msg)
 
+class resolver:
 
-class choice_point(object):
-	
-	def __init__(self, a, matches):
-		self.atom = a
-		self.matches = matches
-		self.position = -1
-	
-	@property
-	def next_choice(self):
-		self.position += 1
-		try:
-			return self.matches[self.position]
-		except IndexError:
-			return None
-	
-	@property
-	def current_choice(self):
-		if self.position < 0:
-			raise Exception("position was -1, call order was wrong")
-		return self.matches[self.position]
-		
-	
-
-class resolver(object):
 	def __init__(self):
-		# choicepoint, processing common?, pos
-		self.stack = []
-		self.added_atoms_stack = []
-		self.fast_stack = set()
-		self.atoms = {}
-		self.pkgs = {}
-	
-	def iterate_unresolved_atoms(self):
-		while self.stack:
-			s = self.stack[-1]
-			if isinstance(s, choice_point):
-				# grab the next (potentially first) solution.
-				c = s.next_choice
-				if c is not None:
-					self.append_choice_point_solutions(c)
-					continue
-			elif isinstance(s, solution_space):
-				if s.processing_commons:
-					# proved the commons atoms for this solution.
-					self.stack.extend(s.common_atoms)
-					self.added_atoms_stack.append([])
-				else:
-					# proved this solution.
-					self.added_atoms_stack.pop(-1)
-					continue
-			else:
-				# an atom.
-				yield s
-	
-	def satisfy_atom(self, a, matches):
-		assert a is self.stack[-1]
-		self.stack.pop(-1)
-		c = choice_point(a, matches)
-		self.stack.append(c)
-		self.added_atoms_stack.append(a)
+		self.search_stacks = [[]]
+		self.grab_next_stack()
+		self.current_atom = None
+		self.false_atoms = set()
 
-	def append_choice_point_solutions(self, pkg):
-		s2 = pkg.rdepends.solutions()
-		if s2:
-			self.stack.append(solution_space(pkg, s2))
-		s2 = pkg.depends.solutions()
-		if s2:
-			self.stack.append(solution_space(pkg, s2))
-		if isinstance(self.stack[-1], choice_point):
-			# huh.  virtual node maybe.
-			# well, this node is proven.
-			self.stack.pop(-1)
+	def add_root_atom(self, atom):
+		h = hash(atom)
+		if h in self.atoms:
+			# register a root level stack
+			self.ref_stack_for_atom(h, [])
+		else:
+			self.search_stacks.append([atom])
+
+	def grab_next_stack(self):
+		self.current_stack = self.search_stacks[-1]
+
+	def satisfy_atom(self, atom, matches):
+		assert atom is self.current_stack[-1]
+		# hack since we don't have caching iterable pulling.
+		l=list(matches)
+		c = choice_point(atom, matches)
+		h = hash(atom)
+		assert h not in self.atoms
+		self.atoms[h] = [c, []]
+		# is this right?
+		self.ref_stack_for_atom(h, self.current_stack)
 		
-	def unsatisfiable_atom(self, atom):
-		assert atom is self.stack[-1]
-		# joy oh joys.
-		while self.stack:
-			if isinstance(s, solution_space):
-				atoms_added = set(self.added_atoms_stack.pop(-1))
-				n = s.next_solution
-				kills = atoms_added
-				saves = None
-				if s.processing_commons or n is None:
-					kills = True
-				else:
-					ns = set(n)
-					kills = atoms_added.difference(ns)
-					saves = atoms.added.intersection(ns)
+	def iterate_unresolvable_atoms(self):
+		while self.search_stacks:
+			assert self.current_stack is self.search_stacks[-1]
+			if not self.current_stack:
+				self.search_stacks.pop(-1)
+				self.grab_next_stack()
+				continue
 
-				if kills is True:
-					# non usable or exhausted solution space.
-					while isinstance(self.stack[-1], solution_space):
-						self.stack.pop(-1)
+			a = self.current_stack[-1]
+			c = self.atoms[a][0]
+			t = tuple(self.current_stack)
+			for x in c.depends + c.rdepends:
+				# yes this is innefficient
+				h = hash(x)
+				if h not in self.atoms:
+					self.current_stack.append(x)
+					break
 				else:
-					for x in kills:
-						del self.atoms[x]
-					self.added_atoms_stack.append(list(saves))
-					self.stack.extend(x for x in n if x not in saves)
-					return
-			
-			elif isinstance(s, choice_point):
-				c = s.next_choice
-				if n is None:
-					# old gal has no more in her.
-					self.stack.pop(-1)
-					continue
-				self.append_choice_point_solutions(c)
-				return
-			else:
-				self.stack.pop(-1)
+					#ensure we're registered.
+					self.register_stack_for_atom(h, t)
+		
+			if self.current_stack[-1] is not a:
+				# cycle protection.
+				if self.current_stack.find(a) != len(self.current_stack) - 1:
+					# cycle ask the repo for a pkg configuration that breaks the cycle.
 					
+					yield package.AndRestriction(
+				self.current_atom = a
+				yield a
+			else:
+				# all satisfied.
+				self.current_stack.pop(-1)
+	
+	def unsatisfiable_atom(self, atom, msg="None supplied"):
+		# what's on the stack may be different from current_atom; union of atoms will do this fex.
+		assert atom is self.current_atom
 
-# <harring was bored and hates writing resolver code>
-# total slaughter, 
-# total slaughter.
-# I won't leave...
-# a single man alive.
-# loddy doddy die,
-# genocide.
-# loddy doddy daad,
-# an ocean of blood.
-# lets begin...
-# the killing time.
-# 
-# sad thing?  Almost verbatim from memory of the hang fire episode of trigun ;)
-# </harring was bored and hates writing resolver code>
+		a = self.current_atom
+
+		# register this as unsolvable
+		self.false_atoms.add(atom)
+
+		bail = none
+		istack = expandable_chain(self.atoms[atom][0])
+		for stack in istack:
+			if not stack:
+				# this is a root atom, eg externally supplied. Continue cleanup, but raise.
+				bail = NoSolution("root node %s was marked unsatisfiable, reason: %s" % (atom, msg))
+
+			c = self.atoms[stack[-1]]
+			was_complete = self.choice_point_is_complete(c)
+			released_atoms = c.reduce_solutions(stack[-1])
+			t = tuple(c[:-1])
+			for x in released_atoms:
+				# how's this work for external specified root atoms?
+				# could save 'em also; need a queue with faster then O(N) lookup for it though.
+				self.deref_stack_for_atom(x, t)
+
+			if c.no_solution:
+				# notify the parents.
+				# this work properly? :)
+				istack.append(t)
+			elif was_complete and not self.choice_point_is_complete(c):
+				# if we've made it incomplete, well, time to go anew at it.
+				self.stack.append(list(t))
+
+		self.current_stack = self.stack[-1]
+
+		if bail is not None:
+			raise bail
+
+	def choice_point_is_complete(self, choice_point):
+		return all(x in self.atoms for x in chain(choice_point.depends, choice_point.rdepends))
+
+	def ref_stack_for_atom(self, hashed_atom, stack):
+		assert hashed_atom in self.atoms
+		if not isinstance(stack, tuple):
+			stack = tuple(stack)
+		if stack not in self.atoms[hashed_atom][1]:
+			self.atoms[hashed_atom][1].append(stack)
+
+	def deref_stack_for_atom(self, hashed_atom, stack):
+		assert hashed_atom in self.atoms
+		if not isinstance(stack, tuple):
+			stack = tuple(stack)
+		l = [x for x in self.atoms[hashed_atom][1] if x != stack]
+		if l:
+			self.atoms[hashed_atom][1] = l
+		else:
+			del self.atoms[hashed_atom][1]
+			
 

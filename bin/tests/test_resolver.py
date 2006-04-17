@@ -1,27 +1,39 @@
 #!/usr/bin/python
 import itertools
-from pkgcore.graph.resolver import resolver, debug
+from pkgcore.graph import resolver
 from pkgcore.config import load_config
 from pkgcore.package.atom import atom
 
 if __name__ == "__main__":
 	import sys
-	if len(sys.argv) == 1:
+	args = sys.argv[1:]
+
+	try:
+		while True:
+			i = args.index("--debug")
+			args.pop(i)
+			if len(args) == i:
+				raise Exception("--debug needs to be followed by a debug level to enable")
+			resolver.debug_whitelist.append(args.pop(i))
+	except ValueError:
+		pass
+
+	if len(args) == 1:
 		print "resolving sys-apps/portage since no atom supplied"
 		atoms = [atom("sys-apps/portage")]
 	else:
-		atoms = [atom(x) for x in sys.argv[1:]]
+		atoms = [atom(x) for x in args[1:]]
 	
 	conf=load_config()
 	domain = conf.domain["livefs domain"]
 	v = domain.vdb[0]
 	repo = domain.repos[0]
-	r = resolver()
+	r = resolver.resolver()
 	da=atom("sys-apps/portage")
 	map(r.add_root_atom, atoms)
 	lasta = None
 	for a in r.iterate_unresolved_atoms():
-		debug("    unresolved atom: %s" % a)
+		resolver.debug("    unresolved atom: %s" % a)
 		if a is lasta:
 			import pdb;pdb.set_trace()
 	

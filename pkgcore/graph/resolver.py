@@ -24,61 +24,80 @@ class resolver(object):
 		self.grab_next_stack()
 		self.current_atom = None
 		self.false_atoms = set()
+		self.atoms = {}
 
 	def add_root_atom(self, atom):
-		h = hash(atom)
-		if h in self.atoms:
+		if atom in self.atoms:
 			# register a root level stack
 			self.ref_stack_for_atom(h, [])
 		else:
 			self.search_stacks.append([atom])
+			self.grab_next_stack()
 
 	def grab_next_stack(self):
 		self.current_stack = self.search_stacks[-1]
 
-	def satisfy_atom(self, atom, matches):
-		assert atom is self.current_stack[-1]
-		c = choice_point(atom, caching_iter(matches))
-		h = hash(atom)
-		assert h not in self.atoms
-		self.atoms[h] = [c, []]
-		# is this right?
-		self.ref_stack_for_atom(h, self.current_stack)
-		
-	def iterate_unresolvable_atoms(self):
+	def iterate_unresolved_atoms(self):
 		while self.search_stacks:
 			assert self.current_stack is self.search_stacks[-1]
 			if not self.current_stack:
 				self.search_stacks.pop(-1)
+				if not self.search_stacks:
+					self.current_stack = None
+					return
 				self.grab_next_stack()
 				continue
 
+			debug("stack is %s" % self.current_stack)
 			a = self.current_stack[-1]
+			if a not in self.atoms:
+				debug("  missing atom: %s" % a)
+				yield a
+				continue
+			
 			c = self.atoms[a][0]
 			t = tuple(self.current_stack)
+			missing_atoms = False
 			for x in c.depends + c.rdepends:
 				# yes this is innefficient
-				h = hash(x)
-				if h not in self.atoms:
+				if x not in self.atoms:
 					self.current_stack.append(x)
+					missing_atoms = True
 					break
 				else:
 					#ensure we're registered.
-					self.register_stack_for_atom(h, t)
+					self.ref_stack_for_atom(x, t)
 		
-			if self.current_stack[-1] is not a:
+			if missing_atoms:
+				debug("  missing_atoms for %s: %s" % (a, self.current_stack[-1]))
 				# cycle protection.
-				if self.current_stack.find(a) != len(self.current_stack) - 1:
+				self.current_atom = self.current_stack[-1]
+				
+				if self.current_atom == a:
 					# cycle ask the repo for a pkg configuration that breaks the cycle.
-					v = value.ContainmentMatch([a], negate=True)
-					yield packages.AndRestriction(a, 
+					import pdb;pdb.set_trace()
+					v = values.ContainmentMatch(a, negate=True)
+					yield packages.AndRestriction(self.current_atom, 
 						PackageRestriction("depends", v), PackageRestriction("rdepends", v))
-				self.current_atom = a
-				yield a
+				else:
+					yield self.current_atom
 			else:
 				# all satisfied.
 				self.current_stack.pop(-1)
 	
+	def satisfy_atom(self, atom, matches):
+		assert atom is self.current_stack[-1]
+		c = choice_point(atom, caching_iter(matches))
+		if not c:
+			self.unsatisfiable_atom(atom)
+			return
+
+		self.atoms[atom] = [c, []]
+		# is this right?
+		self.ref_stack_for_atom(atom, self.current_stack)
+		print "left it",self.search_stacks
+		print "atoms",self.atoms
+		
 	def unsatisfiable_atom(self, atom, msg="None supplied"):
 		# what's on the stack may be different from current_atom; union of atoms will do this fex.
 		assert atom is self.current_atom
@@ -88,7 +107,7 @@ class resolver(object):
 		# register this as unsolvable
 		self.false_atoms.add(atom)
 
-		bail = none
+		bail = None
 		istack = expandable_chain(self.atoms[atom][0])
 		for stack in istack:
 			if not stack:
@@ -107,6 +126,8 @@ class resolver(object):
 			if c.no_solution:
 				# notify the parents.
 				# this work properly? :)
+				if c.package == "libc":
+					import pdb;pdb.set_trace()
 				istack.append(t)
 			elif was_complete and not self.choice_point_is_complete(c):
 				# if we've made it incomplete, well, time to go anew at it.
@@ -138,4 +159,3 @@ class resolver(object):
 		else:
 			del self.atoms[hashed_atom][1]
 			
-

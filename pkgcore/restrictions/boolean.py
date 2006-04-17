@@ -228,6 +228,8 @@ class OrRestriction(base):
 	def solutions(self):
 		if self.negate:
 			raise NotImplementedError("OrRestriction.solutions doesn't yet support self.negate")
+		if not self.restrictions:
+			return [[]]
 		choices = []
 		for x in self.restrictions:
 			if isinstance(x, base):

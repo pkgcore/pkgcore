@@ -82,7 +82,7 @@ class AndRestrictionTest(unittest.TestCase):
 			[[true, true, true]])
 		self.assertEquals(map(set, boolean.AndRestriction(true, true, boolean.OrRestriction(false, true)).solutions()),
 			[set([true, true, false]), set([true, true, true])])
-
+		self.assertEquals(boolean.AndRestriction().solutions(), [[]])
 
 class OrRestrictionTest(unittest.TestCase):
 
@@ -109,3 +109,4 @@ class OrRestrictionTest(unittest.TestCase):
 			map(set, [[true], [true], [false, true]]))
 		self.assertEquals(boolean.OrRestriction(boolean.OrRestriction(true, false), true).solutions(),
 			[[true], [false], [true]])
+		self.assertEquals(boolean.OrRestriction().solutions(), [[]])

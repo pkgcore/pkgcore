@@ -2,6 +2,7 @@
 # License: GPL2
 
 from pkgcore.restrictions import values, packages, boolean, restriction
+from pkgcore.util.compatibility import any, all
 import cpv
 
 class MalformedAtom(Exception):
@@ -158,6 +159,8 @@ class atom(boolean.AndRestriction):
 			if u2 == -1:
 				raise MalformedAtom(atom, "use restriction isn't completed")
 			self.use = atom[u+1:u2].split(',')
+			if not all(x.rstrip("-") for x in self.use):
+				raise MalformedAtom(atom, "cannot have empty use deps in use restriction")
 			atom = atom[0:u]+atom[u2 + 1:]
 		else:
 			self.use = ()
@@ -167,6 +170,8 @@ class atom(boolean.AndRestriction):
 				raise MalformedAtom(atom, "second specification of slotting")
 			# slot dep.
 			self.slot = atom[s + 1:].rstrip().split(",")
+			if not all(self.slot):
+				raise MalformedAtom(atom, "cannot have empty slot deps in slot restriction")
 			atom = atom[:s]
 		else:
 			self.slot = ()
@@ -208,13 +213,13 @@ class atom(boolean.AndRestriction):
 				else:
 					r.append(VersionMatch(self.op, self.version, self.revision, negate=self.negate_vers))
 			if self.use:
-				false_use = map(lambda x: x[1:], filter(lambda x: x.startswith("-"), self.use))
-				true_use = filter(lambda x: not x.startswith("-"), self.use)
+				false_use = [x[1:] for x in self.use if x[0] == "-"]
+				true_use = [x for x in self.use if x[0] != "-"]
 				if false_use:
 					# XXX: convert this to a value AndRestriction whenever harring gets off his ass and
 					# decides another round of tinkering with restriction subsystem is viable (burnt out now)
 					# ~harring
-					r.append(packages.PackageRestriction("use", values.ContainmentMatch(all=True, *false_use), negate=True))
+					r.append(packages.PackageRestriction("use", values.ContainmentMatch(negate=True, all=True, *false_use)))
 				if true_use:
 					r.append(packages.PackageRestriction("use", values.ContainmentMatch(all=True, *true_use)))
 			if self.slot:

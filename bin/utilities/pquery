@@ -4,20 +4,25 @@
 # License: GPL2
 # $Id:$
 
+import os
 from pkgcore.package.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.currying import pre_curry
 
+def grab_arg(arg, args):
+	val = False
+	try:
+		while True:
+			args.remove(arg)
+			val = True
+	except ValueError:
+		pass
+	return val
+
 if __name__ == "__main__":
 	import sys, pkgcore.config
 	a = sys.argv[1:]
-	raw = False
-	try:
-		while True:
-			a.remove("--raw")
-			raw = True
-	except ValueError:
-		pass
+	raw = grab_arg("--raw", a)
 
 	if "--atomstr" in a:
 		def atomstr(a, l=False):
@@ -74,12 +79,8 @@ if __name__ == "__main__":
 	for s, f in (("--min", min), ("--max", max)):
 		func = pre_curry(lambda inner_func,a: [inner_func(a)],
 			pre_curry(less_pissy_builtins, f))
-		try:
-			while True:
-				a.remove(s)
-				results_filter = func
-		except ValueError:
-			pass
+		if grab_arg(s, a):
+			results_filter = func
 
 	for x in a:
 		if "*" in x:
@@ -139,4 +140,5 @@ if __name__ == "__main__":
 					except AttributeError, ae:
 						print "attr '%s' exception: %s" % (x, ae)
 				print
+		
 	sys.exit(0)

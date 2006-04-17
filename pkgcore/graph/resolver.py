@@ -1,3 +1,6 @@
+# Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# License: GPL2
+
 from pkgcore.restrictions import packages, values
 from pkgcore.util.iterables import expandable_chain, caching_iter
 from pkgcore.util.compatibility import all

@@ -30,7 +30,7 @@ except ImportError:
 chksum_types = {"md5":md5hash}
 
 # expand this to load all available at some point
-for k,v in (("sha1", "SHA"), ("sha256", "SHA256"), ("RMD160", "RIPEMD")):
+for k,v in (("sha1", "SHA"), ("sha256", "SHA256"), ("rmd160", "RIPEMD")):
 	try:
 		chksum_types[k] = pre_curry(loop_over_file, modules.load_module("Crypto.Hash.%s" % v))
 	except modules.FailedImport:

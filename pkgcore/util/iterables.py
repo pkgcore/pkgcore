@@ -134,4 +134,4 @@ class caching_iter(object):
 		return hash(self.cached_list)
 
 	def __str__(self):
-		return "iter(%s), list: %s" % (self.iterable, str(self.cached_list))
+		return "iterable(%s), cached: %s" % (self.iterable, str(self.cached_list))

@@ -227,12 +227,16 @@ class atom(boolean.AndRestriction):
 	def atom_str(self):
 		s = ""
 		if self.blocks:	
-			s+="!"
+			s += "!"
 		s += self.op + self.category + "/" + self.package
 		if self.version:
-			s+="-"+self.fullver
+			s += "-"+self.fullver
 		if self.glob:
-			s+="*"
+			s += "*"
+		if self.use:
+			s += "[%s]" % ",".join(self.use)
+		if self.slot:
+			s += ":%s" % ",".join(self.slot)
 		return s
 
 	def __str__(self):

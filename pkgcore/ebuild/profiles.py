@@ -1,15 +1,16 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.config import profiles
 import os, logging
-from pkgcore.util.file import iter_read_bash, read_dict, read_bash_dict
+from pkgcore.config import profiles
+from pkgcore.util.file import iter_read_bash, read_bash_dict
 from pkgcore.util.currying import pre_curry
 from pkgcore.package.atom import atom
 from pkgcore.config.basics import list_parser
 from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source
-from itertools import imap
+from pkgcore.repository import virtual
+from pkgcore.package import cpv
 
 # Harring sez-
 # This should be implemented as an auto-exec config addition.
@@ -111,7 +112,7 @@ class OnDiskProfile(profiles.base):
 
 		self.use_mask = list(use_mask)
 		del use_mask
-		self.bashrc = map(local_source, filter(os.path.exists, imap(lambda x: os.path.join(x, "profile.bashrc"), stack)))
+		self.bashrc = map(local_source, filter(os.path.exists, (os.path.join(x, "profile.bashrc") for x in stack)))
 
 		maskers = []
 		for fp, i in loop_iter_read(os.path.join(prof, "package.mask") for prof in stack + [self.basepath]):
@@ -147,12 +148,17 @@ class OnDiskProfile(profiles.base):
 				del d[u]
 
 		# and... default virtuals.
-		self.virtuals = {}
+		virtuals = {}
 		for fp, i in loop_iter_read(os.path.join(prof, "virtuals") for prof in stack):
 			for p in i:
 				p = p.split()
-				self.virtuals[p[0]] = p[1]
+				c = cpv.CPV(p[0])
+				version = c.version
+				if version is None:
+					version = "0" 
+				virtuals.setdefault(c.package, {})[version] = atom(p[1])
 
+		self.virtuals = virtual.tree(lambda: virtuals)		
 		# collapsed make.defaults.  now chunkify the bugger.
 		self.conf = d
 

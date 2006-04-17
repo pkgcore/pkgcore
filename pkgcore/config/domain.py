@@ -3,17 +3,16 @@
 
 import os
 from pkgcore.restrictions.collapsed import DictBased
-from pkgcore.restrictions import packages, values #import OrRestriction, AndRestriction, PackageRestriction
-from errors import BaseException
+from pkgcore.restrictions import packages, values
 from pkgcore.util.file import iter_read_bash
 from pkgcore.package.atom import atom
-from pkgcore.repository.visibility import filterTree
+from pkgcore.repository import multiplex, visibility
 from pkgcore.restrictions.values import StrGlobMatch, StrExactMatch, ContainmentMatch
 from pkgcore.util.currying import post_curry
 from pkgcore.util.lists import stable_unique
 from pkgcore.util.mappings import ProtectedDict
-from itertools import imap
 from pkgcore.interfaces.data_source import local_source
+from errors import BaseException
 
 class MissingFile(BaseException):
 	def __init__(self, file, setting):	self.file, self.setting = file, setting
@@ -55,8 +54,10 @@ class domain:
 			if key in settings:
 
 				for fp in settings[key]:
+					# unecessary stating.
 					if os.path.exists(fp):
-						try:  val.extend(imap(action, iter_read_bash(fp)))
+						try:
+							val.extend(action(x) for x in iter_read_bash(fp))
 						except (IOError, OSError, ValueError), e:
 							raise Failure("failed reading '%s': %s" % (fp, str(e)))
 					else:
@@ -182,7 +183,6 @@ class domain:
 				bashrc.append(source)
 
 		self.settings["bashrc"] = bashrc
-		
 		self.repos = []
 		for repo in repositories:
 			if not repo.configured:
@@ -202,6 +202,8 @@ class domain:
 				self.repos.append(repo.configure(*pargs))
 			else:
 				self.repos.append(repo)
-
-		self.repos = map(post_curry(filterTree, filter, False), self.repos)
+			# do this once at top level instead.
+		self.repos = [visibility.filterTree(t, filter, False) for t in self.repos]
+		if profile.virtuals:
+			self.repos = [multiplex.tree(t, profile.virtuals) for t in self.repos]
 		self.vdb = vdb

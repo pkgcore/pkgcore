@@ -11,8 +11,10 @@ if __name__ == "__main__":
 	a = sys.argv[1:]
 	if "--raw" in a:
 		raw = True
-		del a[a.index("--raw")]
-	else: raw = False
+		a.remove("--raw")
+	else: 
+		raw = False
+
 	if "--atomstr" in a:
 		def atomstr(a, l=False):
 			if l:
@@ -39,11 +41,12 @@ if __name__ == "__main__":
 		sys.exit(2)
 	domain = conf.domain.items()[0][1]
 	repos = []
+
 	if raw:
-		for r in domain.repos:
-			while r.raw_repo != None:
-				r = r.raw_repo
-			repos.append(r)
+		for k,r in conf.repo.iteritems():
+			# hackity hack hack hack
+			if not r.configured and not k.startswith("vdb"):
+				repos.append(r)
 	else:
 		repos.extend(domain.repos)
 

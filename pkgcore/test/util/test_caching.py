@@ -2,7 +2,8 @@
 # License: GPL2
 
 from twisted.trial import unittest
-from pkgcore.util.caching import WeakInstMeta
+from pkgcore.util import caching
+WeakInstMeta = caching.WeakInstMeta
 
 class weak_inst(object):
 	__metaclass__ = WeakInstMeta
@@ -56,5 +57,14 @@ class TestWeakInstMeta(unittest.TestCase):
 
 	def test_uncachable(self):
 		weak_inst.reset()
-		self.assertTrue(weak_inst([]) is not weak_inst([]))
-		self.assertEqual(weak_inst.counter, 2)
+		class fake_warning(object):
+			def warn(*a,**kw):
+				pass
+		# silence warnings.
+		w = caching.warnings
+		try:
+			caching.warnings = fake_warning()
+			self.assertTrue(weak_inst([]) is not weak_inst([]))
+			self.assertEqual(weak_inst.counter, 2)
+		finally:
+			caching.warnings = w

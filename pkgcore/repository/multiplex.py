@@ -59,11 +59,12 @@ class tree(prototype.tree):
 		return tuple(d)
 
 	def itermatch(self, atom):
-		d={}
+		s = set()
 		for t in self.trees:
-			for m in t.match(atom):
-				d[m] = None
-		return d.keys()
+			for m in t.itermatch(atom):
+				if m not in s:
+					yield m
+					s.add(m)
 
 	def __iter__(self):
 		s = set()

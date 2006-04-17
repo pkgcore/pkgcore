@@ -101,6 +101,3 @@ class choice_point(object):
 			return True
 		return False
 
-	@property
-	def no_solutions(self):
-		return not bool(self)

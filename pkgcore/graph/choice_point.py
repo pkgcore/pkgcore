@@ -90,6 +90,17 @@ class choice_point(object):
 	def provides(self):
 		return self._common_property(self._provides_solutions, "provides")
 
+	def __nonzero__(self):
+		l = len(self.matches)
+		if self.matches_idx != l:
+			try:
+				self.depends
+				self.rdepends
+			except IndexError:
+				return False
+			return True
+		return False
+
 	@property
 	def no_solutions(self):
-		return self.matches_idx == len(self.matches)
+		return not bool(self)

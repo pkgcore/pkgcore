@@ -45,3 +45,10 @@ class TestChoicePoint(unittest.TestCase):
 		self.assertEqual(c.no_solutions, False)
 		c.reduce_atoms("anddep2")
 		self.assertEqual(c.no_solutions, True)
+
+	def test_nonzero(self):
+		c = self.gen_choice_point()
+		self.assertEqual(bool(c), True)
+		self.assertEqual(c.current_pkg.marker, 1)
+		c.reduce_atoms("anddep1")
+		self.assertEqual(bool(c), False)

@@ -66,3 +66,14 @@ class CachingIterTest(unittest.TestCase):
 
 	def test_hash(self):
 		self.assertEquals(hash(caching_iter(xrange(100))), hash(tuple(range(100))))
+
+	def test_nonzero(self):
+		self.assertEquals(bool(caching_iter(xrange(100))), True)
+		self.assertEquals(bool(caching_iter(iter([]))), False)
+		
+	def test_cmp(self):
+		self.assertEquals(caching_iter(xrange(100)), tuple(xrange(100)))
+		self.assertNotEquals(caching_iter(xrange(90)), tuple(xrange(100)))
+		self.assertTrue(caching_iter(xrange(100)) > tuple(xrange(90)))
+		self.assertFalse(caching_iter(xrange(90)) > tuple(xrange(100)))
+		self.assertTrue(caching_iter(xrange(100)) >= tuple(xrange(100)))

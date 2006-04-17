@@ -90,6 +90,23 @@ class caching_iter(object):
 		
 		return self.cached_list[index]
 
+	def __cmp__(self, other):
+		if self.iterable is not None:
+			self.cached_list = tuple(self.cached_list + list(self.iterable))
+			self.iterable = None
+		return cmp(self.cached_list, other)
+	
+	def __nonzero__(self):
+		if not self.cached_list:
+			if self.iterable:
+				try:
+					self[0]
+					return True
+				except IndexError:
+					return False
+			return False
+		return True
+	
 	def __len__(self):
 		if self.iterable is not None:
 			self.cached_list.extend(self.iterable)

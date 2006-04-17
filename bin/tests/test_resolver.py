@@ -25,7 +25,7 @@ if __name__ == "__main__":
 		print "resolving sys-apps/portage since no atom supplied"
 		atoms = [atom("sys-apps/portage")]
 	else:
-		atoms = [atom(x) for x in args[1:]]
+		atoms = [atom(x) for x in args]
 	
 	conf=load_config()
 	domain = conf.domain["livefs domain"]

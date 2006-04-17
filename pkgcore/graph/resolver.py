@@ -96,8 +96,8 @@ class resolver(object):
 			import pdb;pdb.set_trace()
 			self.unsatisfiable_atom(atom)
 
-		print "left it",self.search_stacks
-		print "atoms",self.atoms.keys()
+		debug("  satisfy_atoms exiting: stack %s" % (self.search_stacks), "satisfy")
+		debug("  satisfy_atoms exiting: atoms %s" % str(self.atoms.keys()), "satisfy")
 		
 	def unsatisfiable_atom(self, atom, msg="None supplied"):
 		# what's on the stack may be different from current_atom; union of atoms will do this fex.

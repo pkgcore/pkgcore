@@ -124,7 +124,7 @@ class ConfiguredTree(configured.tree):
 
 	def _get_pkg_kwds(self, pkg):
 		return {"initial_settings":self.default_use,
-			"unchangable_settings":InvertedContains(pkg.data["IUSE"]),
+			"unchangable_settings":InvertedContains(pkg.data["IUSE"].split()),
 			"build_callback":self.generate_buildop}
 
 	def generate_buildop(self, pkg):

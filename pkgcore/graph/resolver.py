@@ -76,7 +76,7 @@ class resolver(object):
 				# cycle protection.
 				self.current_atom = self.current_stack[-1]
 				
-				if self.current_atom == a:
+				if self.current_atom is a:
 					# cycle ask the repo for a pkg configuration that breaks the cycle.
 					import pdb;pdb.set_trace()
 					v = values.ContainmentMatch(a, negate=True)

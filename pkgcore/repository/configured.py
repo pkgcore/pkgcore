@@ -14,7 +14,7 @@ class tree(prototype.tree):
 	def __init__(self, wrapped_attrs):
 		# yes, we're intentionally not using tree's init.
 		# not perfect I know.
-		self.wrapped_attrs = tuple(wrapped_attrs)
+		self.wrapped_attrs = wrapped_attrs
 		self.attr_filters = frozenset(wrapped_attrs.keys() + [self.configurable])
 
 	def _get_pkg_kwds(self, pkg):

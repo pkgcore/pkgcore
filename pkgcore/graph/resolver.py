@@ -98,7 +98,9 @@ class resolver(object):
 			debug("  results for %s was empty" % (atom))
 			import pdb;pdb.set_trace()
 			self.unsatisfiable_atom(atom)
-
+		else:
+			debug("  results for %s was %s" % (atom, c))
+		
 		debug("  satisfy_atoms exiting: stack %s" % (self.search_stacks), "satisfy")
 		debug("  satisfy_atoms exiting: atoms %s" % str(self.atoms.keys()), "satisfy")
 		

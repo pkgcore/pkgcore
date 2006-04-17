@@ -4,6 +4,7 @@
 import re
 from pkgcore.restrictions import restriction, boolean
 from pkgcore.util.currying import pre_curry, pretty_docs
+from pkgcore.util.compatibility import any, all
 
 value_type = "values"
 
@@ -195,7 +196,6 @@ class ContainmentMatch(base):
 	def force_False(self, pkg, attr, val):
 		
 		# XXX pretty much positive this isn't working.
-		
 		if isinstance(val, (str, unicode)):
 			# unchangable
 			if self.all:
@@ -236,7 +236,6 @@ class ContainmentMatch(base):
 			for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, l, truths, filter, 
 				desired_false=false, desired_true=true):
 				yield True
-			
 		return
 
 
@@ -248,34 +247,37 @@ class ContainmentMatch(base):
 			# unchangable
 			if self.all:
 				if len(self.vals) != 1:
-					yield False
+					return False
 				else:
-					yield (self.vals[0] in val) ^ self.negate
+					return (self.vals[0] in val) ^ self.negate
 			else:
-				yield (val in self.vals) ^ self.negate
-			return			
+				return (val in self.vals) ^ self.negate
+			return False		
 
 		entry = pkg.changes_count()
 		if not self.negate:
 			if not self.all:
-				def filter(truths):		return True in truths
-				def true(r, pvals):		return pkg.request_enable(attr, r)
-				def false(r, pvals):	return pkg.request_disable(attr, r)
+				def filter(truths):
+					return True in truths
+				def true(r, pvals):
+					return pkg.request_enable(attr, r)
+				def false(r, pvals):
+					return pkg.request_disable(attr, r)
 
 				truths = [x in val for x in self.vals]
 				
 				for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter, 
 					desired_false=false, desired_true=true):
-					yield True
+					return True
 			else:
 				if pkg.request_enable(attr, *self.vals):
-					yield True
-			return
+					return True
+			return False
 
 		# negation
 		if not self.all:
 			if pkg.request_disable(attr, *self.vals):
-				yield True
+				return True
 		else:
 			def filter(truths):		return True not in truths
 			def true(r, pvals):		return pkg.request_enable(attr, r)
@@ -283,8 +285,8 @@ class ContainmentMatch(base):
 			truths=[x in val for x in self.vals]
 			for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter, 
 				desired_false=false, desired_true=true):
-				yield True
-		return
+				return True
+		return False
 
 
 	def __str__(self):

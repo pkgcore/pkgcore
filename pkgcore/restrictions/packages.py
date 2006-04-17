@@ -40,31 +40,16 @@ class PackageRestriction(restriction.base):
 		
 
 	def force_False(self, pkg):
-#		import pdb;pdb.set_trace()
 		if self.negate:
-			i = self.restriction.force_True(pkg, self.attr, self.__pull_attr(pkg))
+			return self.restriction.force_True(pkg, self.attr, self.__pull_attr(pkg))
 		else: 
-			i = self.restriction.force_False(pkg, self.attr, self.__pull_attr(pkg))
-		if isinstance(i, bool):
-			yield i
-		else:
-			for x in i:
-				yield True
-		return
+			return self.restriction.force_False(pkg, self.attr, self.__pull_attr(pkg))
 
 	def force_True(self, pkg):
-#		import pdb;pdb.set_trace()
 		if self.negate:
-			i = self.restriction.force_False(pkg, self.attr, self.__pull_attr(pkg))
+			return self.restriction.force_False(pkg, self.attr, self.__pull_attr(pkg))
 		else: 
-			i = self.restriction.force_True(pkg, self.attr, self.__pull_attr(pkg))
-		if isinstance(i, bool):
-			yield i
-		else:
-			for x in i:
-				yield True
-		return
-					
+			return self.restriction.force_True(pkg, self.attr, self.__pull_attr(pkg))
 
 	def __getitem__(self, key):
 		if not isinstance(self.restriction, boolean.base):
@@ -107,7 +92,6 @@ class PackageRestriction(restriction.base):
 			return self.negate == self.negate and self.attr == other.attr and self.restriction == other.restriction
 		except AttributeError:
 			print "caught attribute error"
-			import pdb;pdb.set_trace()
 			return False
 
 	def __str__(self):

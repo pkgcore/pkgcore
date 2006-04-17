@@ -152,9 +152,8 @@ class AndRestriction(base):
 			for r in self.restrictions:
 				if not r.force_True(*pvals):
 					pkg.rollback(entry_point)
-					return
-			yield True
-			return
+					return False
+			return True
 
 		# <insert page long curse here>, NAND logic, len(restrictions)**2 potential solutions.
 		# 0|0 == 0, 0|1 == 1|0 == 0|0 == 1.
@@ -165,7 +164,8 @@ class AndRestriction(base):
 			return False in truths
 		
 		for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0, len(self.restrictions), truths, filter):
-			yield True 
+			return True 
+		return False
 
 	def force_False(self, pkg, *vals):
 		pvals = [pkg]
@@ -176,9 +176,8 @@ class AndRestriction(base):
 			for r in self.restrictions:
 				if not r.force_True(*pvals):
 					pkg.rollback(entry_point)
-					return
-			yield True
-			return
+					return False
+			return True
 
 		# <insert page long curse here>, NAND logic, (len(restrictions)^2)-1 potential solutions.
 		# 1|1 == 0, 0|1 == 1|0 == 0|0 == 1.
@@ -188,7 +187,8 @@ class AndRestriction(base):
 		def filter(truths):
 			return False in truths
 		for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0, len(self.restrictions), truths, filter):
-			yield True 
+			return True
+		return False
 
 	def solutions(self, full_solution_expansion=False):
 		if self.negate:
@@ -255,9 +255,8 @@ class OrRestriction(base):
 			for r in self.restrictions:
 				if not r.force_False(*pvals):
 					pkg.rollback(entry_point)
-					return
-			yield True
-			return
+					return False
+			return True
 
 		# <insert page long curse here>, OR logic, len(restrictions)**2-1 potential solutions.
 		# 0|0 == 0, 0|1 == 1|0 == 1|1 == 1.
@@ -267,8 +266,8 @@ class OrRestriction(base):
 		def filter(truths):
 			return True in truths
 		for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0, len(self.restrictions), truths, filter):
-			yield True 
-
+			return True 
+		return False
 
 	def force_False(self, pkg, *vals):
 		pvals = [pkg]
@@ -345,8 +344,7 @@ class XorRestriction(base):
 			else:			order = ((f, l - count, False), (t, count, True))
 			for action, current, desired in order:
 				if current == l:
-					yield True
-					continue
+					return True
 				for x, r in enumerate(self.restrictions):
 					if truths[x] != desired:
 						if action(r):
@@ -354,9 +352,9 @@ class XorRestriction(base):
 						else:
 							break
 				if current == l:
-					yield True
+					return True
 				pkg.rollback(entry_point)
-			return
+			return False
 
 		stack = []
 		for x, val in enumerate(truths):
@@ -368,7 +366,7 @@ class XorRestriction(base):
 				stack.append((falses, x))
 
 		if count == 1:
-			yield True
+			return True
 			del stack[truths.index(True)]
 
 		for falses, truths in stack:
@@ -380,11 +378,11 @@ class XorRestriction(base):
 			if not failed: 
 				if trues != None:
 					if self.restrictions[x].force_True(*pvals):
-						yield True
+						return True
 				else:
-					yield True
+					return True
 			pkg.rollback(entry_point)
-		
+		return False
 
 	def force_False(self, pkg, *vals):
 		pvals = [pkg]
@@ -401,8 +399,8 @@ class XorRestriction(base):
 			else:			order = ((f, l - count, False), (t, count, True))
 			for action, current, desired in order:
 				if current == l:
-					yield True
-					continue
+					return True
+
 				for x, r in enumerate(self.restrictions):
 					if truths[x] != desired:
 						if action(r):
@@ -410,9 +408,9 @@ class XorRestriction(base):
 						else:
 							break
 				if current == l:
-					yield True
+					return True
 				pkg.rollback(entry_point)
-			return
+			return False
 		# the fun one.
 		stack = []
 		for x, val in enumerate(truths):
@@ -424,8 +422,7 @@ class XorRestriction(base):
 				stack.append((falses, x))
 
 		if count == 1:
-			yield True
-			del stack[truths.index(True)]
+			return True
 
 		for falses, truths in stack:
 			failed = False
@@ -436,10 +433,11 @@ class XorRestriction(base):
 			if not failed: 
 				if trues != None:
 					if self.restrictions[x].force_True(*pvals):
-						yield True
+						return True
 				else:
-					yield True
+					return True
 			pkg.rollback(entry_point)
+		return False
 		
 	def __str__(self):
 		if self.negate:	return "not ( %s )" % " ^^ ".join(imap(str, self.restrictions))

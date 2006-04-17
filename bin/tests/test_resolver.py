@@ -21,7 +21,7 @@ if __name__ == "__main__":
 	except ValueError:
 		pass
 
-	if len(args) == 1:
+	if not args:
 		print "resolving sys-apps/portage since no atom supplied"
 		atoms = [atom("sys-apps/portage")]
 	else:

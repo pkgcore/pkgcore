@@ -51,7 +51,7 @@ class resolver(object):
 			debug("stack is %s" % self.current_stack)
 			a = self.current_stack[-1]
 			if a not in self.atoms:
-				debug("  missing atom: %s" % a)
+				debug("  1: missing atom: %s" % a)
 				yield a
 				continue
 			
@@ -69,7 +69,7 @@ class resolver(object):
 					self.ref_stack_for_atom(x, t)
 		
 			if missing_atoms:
-				debug("  missing_atoms for %s: %s" % (a, self.current_stack[-1]))
+				debug("  2: missing_atoms for %s: %s" % (a, self.current_stack[-1]))
 				# cycle protection.
 				self.current_atom = self.current_stack[-1]
 				
@@ -88,20 +88,21 @@ class resolver(object):
 	def satisfy_atom(self, atom, matches):
 		assert atom is self.current_stack[-1]
 		c = choice_point(atom, caching_iter(matches))
-		if not c:
-			self.unsatisfiable_atom(atom)
-			return
-
 		self.atoms[atom] = [c, []]
 		# is this right?
 		self.ref_stack_for_atom(atom, self.current_stack)
+		if not c:
+			debug("  results for %s was empty" % (atom))
+			import pdb;pdb.set_trace()
+			self.unsatisfiable_atom(atom)
+
 		print "left it",self.search_stacks
-		print "atoms",self.atoms
+		print "atoms",self.atoms.keys()
 		
 	def unsatisfiable_atom(self, atom, msg="None supplied"):
 		# what's on the stack may be different from current_atom; union of atoms will do this fex.
 		assert atom is self.current_atom
-
+		import pdb;pdb.set_trace()
 		a = self.current_atom
 
 		# register this as unsolvable
@@ -142,12 +143,12 @@ class resolver(object):
 		return all(x in self.atoms for x in choice_point.depends) and \
 			all(x in self.atoms for x in choice_point.rdepends)
 
-	def ref_stack_for_atom(self, hashed_atom, stack):
-		assert hashed_atom in self.atoms
+	def ref_stack_for_atom(self, atom, stack):
+		assert atom in self.atoms
 		if not isinstance(stack, tuple):
 			stack = tuple(stack)
-		if stack not in self.atoms[hashed_atom][1]:
-			self.atoms[hashed_atom][1].append(stack)
+		if stack not in self.atoms[atom][1]:
+			self.atoms[atom][1].append(stack)
 
 	def deref_stack_for_atom(self, hashed_atom, stack):
 		assert hashed_atom in self.atoms

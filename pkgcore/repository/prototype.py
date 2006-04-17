@@ -1,12 +1,12 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from weakref import proxy
 from itertools import imap, ifilter
 from pkgcore.util.mappings import LazyValDict
 from pkgcore.util.lists import unstable_unique, iter_flatten
 from pkgcore.package.atom import atom
 from pkgcore.restrictions import packages, values, boolean
+from pkgcore.util.compatibility import any
 
 class FakeMatch(object):
 	def __init__(self, val):
@@ -248,3 +248,6 @@ class tree(object):
 
 	def _replace(self, orig, new, *a, **kw):
 		raise NotImplementedError
+
+	def __nonzero__(self):
+		return any(x for x in self.versions)

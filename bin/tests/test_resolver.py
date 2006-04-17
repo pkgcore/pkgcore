@@ -29,11 +29,11 @@ if __name__ == "__main__":
 	
 	conf=load_config()
 	domain = conf.domain["livefs domain"]
-	v = domain.vdb[0]
-	repo = domain.repos[0]
+	v,repo = domain.vdb[0], domain.repos[0]
+
 	r = resolver.resolver()
-	da=atom("sys-apps/portage")
 	map(r.add_root_atom, atoms)
+
 	lasta = None
 	for a in r.iterate_unresolved_atoms():
 		resolver.debug("    unresolved atom: %s" % a)

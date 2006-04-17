@@ -42,7 +42,6 @@ class tree(prototype.tree):
 			# well.  that was an expensive waste of time- doesn't check anything we care about.
 			return prototype.tree.itermatch(self, restrict, restrict_solutions=restrict_solutions)
 
-		print "engaged"
 		# disable inst_caching for this restriction.  it's a one time generation, and potentially
 		# quite costly for hashing
 		filtered_restrict = OrRestriction(disable_inst_caching=True, 

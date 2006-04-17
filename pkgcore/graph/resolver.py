@@ -62,7 +62,7 @@ class resolver(object):
 			t = tuple(self.current_stack)
 			missing_atoms = False
 			for x in c.depends + c.rdepends:
-				# yes this is innefficient
+				# yes that was innefficient
 				if x not in self.atoms:
 					self.current_stack.append(x)
 					missing_atoms = True

@@ -66,8 +66,6 @@ class choice_point(object):
 			if existing[1] >= len(existing[2]):
 				self.matches_idx = self.matches_idx + 1
 		if self.matches_idx != existing[0]:
-#			print len(self.matches),self.matches_idx,self.matches[self.matches_idx]
-#			print "getattr for "+name+" is",getattr(self.matches[self.matches_idx], name)
 			existing[0:3] = [self.matches_idx, 0,
 				map(tuple, getattr(self.matches[self.matches_idx], name).solutions())]
 		return existing[2][existing[1]]

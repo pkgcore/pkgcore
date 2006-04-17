@@ -1,4 +1,7 @@
 #!/usr/bin/python
+# Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# License: GPL2
+
 import itertools
 from pkgcore.graph import resolver
 from pkgcore.config import load_config

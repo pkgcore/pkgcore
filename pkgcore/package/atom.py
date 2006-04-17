@@ -217,8 +217,8 @@ class atom(boolean.AndRestriction):
 					r.append(packages.PackageRestriction("use", values.ContainmentMatch(all=True, *false_use), negate=True))
 				if true_use:
 					r.append(packages.PackageRestriction("use", values.ContainmentMatch(all=True, *true_use)))
-				if self.slot:
-					r.append(packages.PackageRestriction("slot", values.ContainmentMatch(*self.slot)))
+			if self.slot:
+				r.append(packages.PackageRestriction("slot", values.ContainmentMatch(*self.slot)))
 			setattr(self, attr, r)
 			return r
 

@@ -29,7 +29,6 @@ class package(CPV):
 		except AttributeError:
 			raise KeyError(key)
 
-
 	# hack. :)
 	_get_attr["metapkg"] = lambda *a: bool(warnings.warn("metapkg hack will be removed soon"))
 	

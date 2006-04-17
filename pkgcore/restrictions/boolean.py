@@ -74,6 +74,9 @@ class base(restriction.base):
 
 	force_False, force_True = match, match
 
+	def solutions(self, full_solution_expansion=False):
+		raise NotImplementedError()
+
 	def __getitem__(self, key):
 		return self.restrictions[key]
 
@@ -187,14 +190,14 @@ class AndRestriction(base):
 		for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0, len(self.restrictions), truths, filter):
 			yield True 
 
-	def solutions(self):
+	def solutions(self, full_solution_expansion=False):
 		if self.negate:
 			raise NotImplementedError("negation for solutions on AndRestriction isn't implemented yet")
 		flattened_matrix = []
 		s=[]
 		for x in self.restrictions:
 			if isinstance(x, base):
-				s2 = x.solutions()
+				s2 = x.solutions(full_solution_expansion=full_solution_expansion)
 				# there *must* be a solution returned.
 				assert s2
 				if len(s2) == 1:
@@ -225,7 +228,7 @@ class OrRestriction(base):
 	def match(self, vals):
 		return any(rest.match(vals) for rest in self.restrictions) != self.negate
 	
-	def solutions(self):
+	def solutions(self, full_solution_expansion=False):
 		if self.negate:
 			raise NotImplementedError("OrRestriction.solutions doesn't yet support self.negate")
 		if not self.restrictions:
@@ -233,7 +236,7 @@ class OrRestriction(base):
 		choices = []
 		for x in self.restrictions:
 			if isinstance(x, base):
-				s = x.solutions()
+				s = x.solutions(full_solution_expansion=full_solution_expansion)
 				# must be a solution.
 				assert s
 				choices.extend(s)

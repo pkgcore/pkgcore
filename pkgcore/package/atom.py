@@ -183,7 +183,9 @@ class atom(boolean.AndRestriction):
 		# force jitting of it.
 		del self.restrictions
 
-	def solutions(self):
+	def solutions(self, full_solution_expansion=False):
+		if full_solution_expansion:
+			return boolean.AndRestriction.solutions(self, full_solution_expansion=True)
 		return [[self]]
 
 	def __getattr__(self, attr):

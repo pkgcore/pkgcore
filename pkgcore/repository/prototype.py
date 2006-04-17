@@ -3,7 +3,7 @@
 
 from itertools import imap, ifilter
 from pkgcore.util.mappings import LazyValDict
-from pkgcore.util.lists import unstable_unique, iter_flatten
+from pkgcore.util.lists import iter_stable_unique, iter_flatten
 from pkgcore.package.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.compatibility import any
@@ -129,7 +129,11 @@ class tree(object):
 	def match(self, atom):
 		return list(self.itermatch(atom))
 
-	def itermatch(self, restrict):
+	def itermatch(self, restrict, restrict_solutions=None):
+		"""yield matches one by one for restrict
+		restriction_solutions is only useful if you've already split the restrict into it's seperate
+		solutions.
+		"""
 		if isinstance(restrict, atom):
 			if restrict.category == None:
 				candidates = self.packages
@@ -156,7 +160,10 @@ class tree(object):
 					else:
 						restrict = r[0]
 		elif isinstance(restrict, boolean.base):
-			s=set(iter_flatten(restrict.solutions()))
+			if restrict_solutions is None:
+				restrict_solutions = restrict.solutions()
+			s = iter_stable_unique(iter_flatten(restrict_solutions))
+
 			pkgrestricts = [r for r in s if isinstance(r, packages.PackageRestriction)]
 			cats = [r.restriction for r in pkgrestricts if r.attr == "category"]
 			if not cats:

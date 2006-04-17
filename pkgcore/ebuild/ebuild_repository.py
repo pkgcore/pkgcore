@@ -5,7 +5,7 @@ import os, stat
 from pkgcore.ebuild.ebd import buildable
 from weakref import proxy
 from pkgcore.package.conditionals import PackageWrapper
-from pkgcore.repository import prototype, errors
+from pkgcore.repository import prototype, errors, configured
 from pkgcore.util.containers import InvertedContains
 from pkgcore.util.file import read_dict
 from pkgcore.util import currying
@@ -103,30 +103,29 @@ class UnconfiguredTree(prototype.tree):
 		           
 
 
-class ConfiguredTree(UnconfiguredTree):
-	configured = True
-
+class ConfiguredTree(configured.tree):
+	configurable = "use"
+	config_wrappables = dict((x, currying.alias_class_method("evaluate_depset")) for x in
+		["depends","rdepends", "fetchables", "license", "slot", "src_uri", "license"])
+	
 	def __init__(self, raw_repo, domain_settings, fetcher=None):
 		if "USE" not in domain_settings:
 			raise errors.InitializationError("%s requires the following settings: '%s', not supplied" % (str(self.__class__), x))
-
-		self.default_use = domain_settings["USE"][:]
+		
+		configured.tree.__init__(self, self.config_wrappables)
+		self.default_use = tuple(domain_settings["USE"])
 		self.domain_settings = domain_settings
 		if fetcher == None:
 			self.fetcher = self.domain_settings["fetcher"]
 		else:
 			self.fetcher = fetcher
 		self.raw_repo = raw_repo
-		r = raw_repo
 		self.eclass_cache = self.raw_repo.eclass_cache
 
-	def package_class(self, *a):
-		pkg = self.raw_repo.package_class(*a)
-		return PackageWrapper(pkg, "use", initial_settings=self.default_use, unchangable_settings=InvertedContains(pkg.data["IUSE"]), 
-			attributes_to_wrap=pkg._config_wrappables, build_callback=self.generate_buildop)
-
-	def __getattr__(self, attr):
-		return getattr(self.raw_repo, attr)
+	def _get_pkg_kwds(self, pkg):
+		return {"initial_settings":self.default_use,
+			"unchangable_settings":InvertedContains(pkg.data["IUSE"]),
+			"build_callback":self.generate_buildop}
 
 	def generate_buildop(self, pkg):
 		return buildable(pkg, self.domain_settings, self.eclass_cache, self.fetcher)

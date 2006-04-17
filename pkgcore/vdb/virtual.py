@@ -24,22 +24,18 @@ class tree(prototype.tree):
 	def _grab_virtuals(self):
 		self._virtuals = {}
 		for pkg in self.parent:
-			try:
-				for virtual in DepSet(pkg.data["PROVIDE"], atom).evaluate_depset(pkg.data["USE"].split()):
-					if virtual.package not in self._virtuals:
-						self._virtuals[virtual.package] = {pkg.fullver:OrRestriction(atom("="+str(pkg)))}
-					elif not pkg.fullver in self._virtuals[virtual.package]:
-						self._virtuals[virtual.package][pkg.fullver] = OrRestriction(atom("="+str(pkg)))
-					else:
-						self._virtuals[virtual.package][pkg.fullver].add_restriction(atom("="+str(pkg)))
-			except KeyError:
-				pass
+			for virtual in pkg.provides.evaluate_depset(pkg.use):
+				self._virtuals.setdefault(virtual.package, {}).setdefault(pkg.fullver, []).append(pkg)
 
-		for pkg in self._virtuals:
-			map(lambda x: self._virtuals[pkg][x].finalize(), self._virtuals[pkg].keys())
+		for pkg_dict in self._virtuals.itervalues():
+			for full_ver, rdep_atoms in pkg_dict.iteritems():
+				if len(rdep_atoms) == 1:
+					pkg_dict[full_ver] = atom("=%s" % rdep_atoms[0])
+				else:
+					pkg_dict[full_ver] = OrRestriction(finalize=True, *[atom("=%s" % x) for x in rdep_atoms])
 
 	def _fetch_metadata(self, pkg):
-		if self._virtuals == None:
+		if self._virtuals is None:
 			self._grab_virtuals()
 		return self._virtuals[pkg.package][pkg.fullver]
 
@@ -50,7 +46,7 @@ class tree(prototype.tree):
 		return ("virtual",)
 
 	def _get_packages(self, category):
-		if self._virtuals == None:
+		if self._virtuals is None:
 			self._grab_virtuals()
 
 		if category == "virtual":
@@ -70,6 +66,8 @@ class package(metadata.package):
 		val = None
 		if key == "rdepends":
 			val = self.data
+		elif key == "depends":
+			val = OrRestriction()
 		elif key == "metapkg":
 			val = True
 		else:

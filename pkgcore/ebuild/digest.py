@@ -13,6 +13,7 @@ def parse_digest(path, throw_errors=True):
 			if len(l) != 4:
 				if throw_errors:
 					raise ParseChksumError(path, "line count was not 4, was %i: '%s'" % (len(l), line))
+				continue
 
 			#MD5 c08f3a71a51fff523d2cfa00f14fa939 diffball-0.6.2.tar.bz2 305567
 			d.setdefault(l[2], {})[l[0].lower()] = l[1]

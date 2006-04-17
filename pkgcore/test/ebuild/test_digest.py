@@ -21,8 +21,10 @@ class parse_digest_testcases(unittest.TestCase):
 	def gen_digest(data=digest_contents, **flags):
 		fn = tempfile.mktemp()
 		open(fn, "w").write(data)
-		d = parse_digest(fn,**flags)
-		os.unlink(fn)
+		try:
+			d = parse_digest(fn,**flags)
+		finally:
+			os.unlink(fn)
 		return d
 		
 	def test_parsing(self):
@@ -38,3 +40,4 @@ class parse_digest_testcases(unittest.TestCase):
 
 	def test_throw(self):
 		self.assertRaises(ParseChksumError, self.gen_digest, digest_contents+"\nMD5 asdfasdfasdfasdf")
+		self.assertEqual(len(self.gen_digest(digest_contents+"\nMD5 asdfasdf", throw_errors=False)), 2)

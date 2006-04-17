@@ -4,16 +4,20 @@
 # License: GPL2
 # $Id:$
 
+from pkgcore.package.atom import atom
+from pkgcore.restrictions import packages, values, boolean
+from pkgcore.util.currying import pre_curry
+
 if __name__ == "__main__":
 	import sys, pkgcore.config
-	from pkgcore.package.atom import atom
-	from pkgcore.restrictions import packages, values, boolean
 	a = sys.argv[1:]
-	if "--raw" in a:
-		raw = True
-		a.remove("--raw")
-	else: 
-		raw = False
+	raw = False
+	try:
+		while True:
+			a.remove("--raw")
+			raw = True
+	except ValueError:
+		pass
 
 	if "--atomstr" in a:
 		def atomstr(a, l=False):
@@ -62,17 +66,21 @@ if __name__ == "__main__":
 			sys.exit(1)
 
 	results_filter = lambda a: a
-	try:	
-		a.remove("--max")
-		results_filter = lambda a: [max(a)]
-	except ValueError:
-		pass
+	def less_pissy_builtins(func, *args, **kwds):
+		try:
+			return func(*args, **kwds)
+		except ValueError:
+			return []
+	for s, f in (("--min", min), ("--max", max)):
+		func = pre_curry(lambda inner_func,a: [inner_func(a)],
+			pre_curry(less_pissy_builtins, f))
+		try:
+			while True:
+				a.remove(s)
+				results_filter = func
+		except ValueError:
+			pass
 
-	try:
-		a.remove("--min")
-		results_filter = lambda a: [min(a)]
-	except ValueError:
-		pass
 	for x in a:
 		if "*" in x:
 			x = x.split("/", 1)

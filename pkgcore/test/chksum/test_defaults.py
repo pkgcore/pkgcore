@@ -33,9 +33,6 @@ class ChksumsTests(unittest.TestCase):
 		self.assertEqual(chf(self.fn), sums[chf_type])
 
 	locals().update([("test_%s" % x, post_curry(generic_check, x)) for x in 
-		("rmd160", "sha1", "sha256", "md5")])
+		("rmd160", "sha1", "sha256", "md5", "size")])
 	del x
-	
-	def test_size(self):
-		self.generic_check("size")
-		self.assertEqual(isinstance(chksum.get_handler("size")(self.fn), long), True)
+

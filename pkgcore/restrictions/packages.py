@@ -101,7 +101,14 @@ class PackageRestriction(restriction.base):
 		return self.__class__(self.attr, s)
 
 	def __eq__(self, other):
-		return self.negate == self.negate and self.attr == other.attr and self.restriction == other.restriction
+		if self is other:
+			return True
+		try:
+			return self.negate == self.negate and self.attr == other.attr and self.restriction == other.restriction
+		except AttributeError:
+			print "caught attribute error"
+			import pdb;pdb.set_trace()
+			return False
 
 	def __str__(self):
 		s = self.attr+" "

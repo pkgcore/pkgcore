@@ -5,6 +5,7 @@
 import re
 from base import base
 from pkgcore.util.currying import post_curry
+from pkgcore.package import atom
 
 pkg_regexp = re.compile("^[a-zA-Z0-9]([-_+a-zA-Z0-9]*[+a-zA-Z0-9])?$")
 ver_regexp = re.compile("^(cvs\\.)?(\\d+)((\\.\\d+)*)([a-z]?)((_(pre|p|beta|alpha|rc)\\d*)*)(-r(\\d+))?$")
@@ -144,6 +145,10 @@ class CPV(base):
 		# ~harring
 		# fails in doing comparison of unversioned atoms against versioned atoms
 		return ver_cmp(self.version, self.revision, other.version, other.revision)
+
+	@property
+	def versioned_atom(self):
+		return atom.atom("=%s" % self.cpvstr)
 
 
 def ver_cmp(ver1, rev1, ver2, rev2):

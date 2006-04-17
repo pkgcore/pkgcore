@@ -2,7 +2,7 @@
 # License: GPL2
 
 from pkgcore.restrictions import values, packages, boolean, restriction
-from cpv import ver_cmp, CPV
+import cpv
 
 class MalformedAtom(Exception):
 	def __init__(self, atom, err=''):	self.atom, self.err = atom, err
@@ -56,9 +56,9 @@ class VersionMatch(restriction.base):
 			return None
 
 		if self.droprev or other.droprev:
-			vc = ver_cmp(self.ver, None, other.ver, None)
+			vc = cpv.ver_cmp(self.ver, None, other.ver, None)
 		else:
-			vc = ver_cmp(self.ver, self.rev, other.ver, other.rev)
+			vc = cpv.ver_cmp(self.ver, self.rev, other.ver, other.rev)
 
 		# ick.  28 possible valid combinations.
 		if vc == 0:
@@ -107,7 +107,7 @@ class VersionMatch(restriction.base):
 		if self.droprev:			r1, r2 = None, None
 		else:							r1, r2 = self.rev, pkginst.revision
 
-		return (ver_cmp(pkginst.version, r2, self.ver, r1) in self.vals) ^ self.negate
+		return (cpv.ver_cmp(pkginst.version, r2, self.ver, r1) in self.vals) ^ self.negate
 
 	def __str__(self):
 		l = []
@@ -179,7 +179,7 @@ class atom(boolean.AndRestriction):
 			self.glob = False
 			self.atom = atom[pos:]
 		self.negate_vers = negate_vers
-		self.cpv = CPV(self.atom)
+		self.cpv = cpv.CPV(self.atom)
 		# force jitting of it.
 		del self.restrictions
 
@@ -254,7 +254,7 @@ class atom(boolean.AndRestriction):
 		c = cmp(self.package, other.package)
 		if c != 0:
 			return c
-		c = ver_cmp(self.version, self.revision, other.version, other.revision)
+		c = cpv.ver_cmp(self.version, self.revision, other.version, other.revision)
 		if c != 0:	
 			return c
 

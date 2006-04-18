@@ -13,6 +13,7 @@ if __name__ == "__main__":
 
 	try:
 		while True:
+			args.remove("--debug")
 			i = args.index("--debug")
 			args.pop(i)
 			if len(args) == i:
@@ -21,6 +22,9 @@ if __name__ == "__main__":
 	except ValueError:
 		pass
 
+	trigger_pdb = [x for x in args if x not in ("-p", "--pdb")]
+	trigger_pdb, args = args != trigger_pdb, trigger_pdb
+			
 	if not args:
 		print "resolving sys-apps/portage since no atom supplied"
 		atoms = [atom("sys-apps/portage")]
@@ -35,10 +39,20 @@ if __name__ == "__main__":
 	map(r.add_root_atom, atoms)
 
 	lasta = None
+	count = 0
 	for a in r.iterate_unresolved_atoms():
+		count += 1
+		if a.blocks:
+			import pdb;pdb.set_trace()
+			print "caught blocker"
+			
 		resolver.debug("    unresolved atom: %s" % a)
 		if a is lasta:
 			import pdb;pdb.set_trace()
-	
 		r.satisfy_atom(a, itertools.chain(v.itermatch(a), sorted(repo.itermatch(a))))
 		lasta = a
+		print "loop %i" % count
+
+	if trigger_pdb:
+		import pdb
+		pdb.set_trace()

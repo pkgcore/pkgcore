@@ -71,7 +71,8 @@ class resolver(object):
 				for x in c.depends + c.rdepends:
 					# yes that was innefficient
 					if x not in self.atoms:
-						self.current_atom = x
+						debug("  2: missing_atom for %s: %s" % (a, x))
+						a = x
 						self.current_stack.append(x)
 						missing_atoms = True
 						break
@@ -80,40 +81,39 @@ class resolver(object):
 						self.ref_stack_for_atom(x, t)
 		
 			if missing_atoms:
-				debug("  2: missing_atoms for %s: %s" % (a, self.current_stack[-1]))
 				# cycle protection.
-				self.current_atom = self.current_stack[-1]
+				self.current_atom = a
 				
-				if self.current_atom in self.current_stack[:-1]:
-					# cycle ask the repo for a pkg configuration that breaks the cycle.
-					debug("   cycle detected for %s: stack %s" % (a, self.current_stack))
-					v = values.ContainmentMatch(a, negate=True)
-					yield packages.AndRestriction(self.current_atom, 
-						packages.PackageRestriction("depends", v), packages.PackageRestriction("rdepends", v))
-				elif a.blocks:
-					import pdb;pdb.set_trace()
+				if a.blocks:
+#					import pdb;pdb.set_trace()
 					backup = False
-					for x in self.pkg_atoms.get(a.key, []):
+					for x in (x for x in self.pkg_atoms.get(a.key, []) if isinstance(x, choice_point)):
 						if not x:
 							# huh.  this shouldn't exist most likely.
 							print "!!! %s exists in graph but isn't valid" % (x.atom)
 						elif a.match(x.current_pkg):
 							debug("  checking blocker %s, found %s (from %s)" % (a, x.current_pkg, x.atom))
-							self.current_atom = a
 							cur = self.current_stack
+							self.atoms[a] = (choice_point(a, []), [t])
 							self.unsatisfiable_atom(a, "backtracking for blocker", False)
 							cur.pop(-1)
 							backup = True
 							break
 					else:
-						print "me3"
+						debug("   blocker %s refed for %s" % (a, self.current_stack[-2]))
 						# ref it.
 						self.atoms[a] = [choice_point(a, []), []]
 						self.ref_stack_for_atom(a, t)
 						self.current_stack.pop(-1)
+				elif a in self.current_stack[:-1]:
+					# cycle ask the repo for a pkg configuration that breaks the cycle.
+					debug("   cycle detected for %s: stack %s" % (a, self.current_stack))
+					v = values.ContainmentMatch(a, negate=True)
+					yield packages.AndRestriction(a, 
+						packages.PackageRestriction("depends", v), packages.PackageRestriction("rdepends", v))
 				else:
 					debug("   yielding %s for %s" % (a, self.current_stack))
-					yield self.current_atom
+					yield a
 			else:
 				# all satisfied.
 				self.current_stack.pop(-1)
@@ -188,7 +188,6 @@ class resolver(object):
 		self.grab_next_stack()
 		if bail is not None:
 			raise bail
-		new_stack = []
 		debug("    exiting unsatisfiable: atoms %s" % self.atoms, "unsatisfy")
 		debug("    exiting unsatisfiable: stacks %s" % self.search_stacks, "unsatisfy")
 

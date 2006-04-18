@@ -99,3 +99,11 @@ class choice_point(object):
 			return True
 		return False
 
+	def clone(self):
+		o = self.__class__(self.atom, self.matches)
+		o.matches_idx = self.matches_idx
+		o.matches_len = self.matches_len
+		o.solutions_filter.update(self.solutions_filter)
+		o._dep_solutions = self._dep_solutions[:]
+		o._rdep_solutions = self._rdep_solutions[:]
+		o._provides_solutions = self._provides_solutions[:]

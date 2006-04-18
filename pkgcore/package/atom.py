@@ -270,3 +270,9 @@ class atom(boolean.AndRestriction):
 			return c
 
 		return cmp(self.op, other.op)
+
+	def __ne__(self, other):
+		return self is not other
+
+	def __eq__(self, other):
+		return self is other

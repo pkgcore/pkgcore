@@ -124,6 +124,13 @@ class resolver(object):
 				import pdb;pdb.set_trace()
 				raise				
 
+		# sanity check.  all nodes in the graph *should* have solutions.
+		# no exceptions, solutions are valid.
+		for c in (x[0] for x in self.atoms.itervalues()):
+			c.depends
+			c.rdepends
+			c.current_pkg
+
 	
 	def satisfy_atom(self, atom, matches):
 		assert atom is self.current_stack[-1]

@@ -46,16 +46,21 @@ def iter_stable_unique(iterable):
 			yield x
 			s.add(x)
 	
-def iter_flatten(l):
+def iter_flatten(l, skip_flattening=(str)):
 	"""collapse [(1),2] into [1,2]"""
-	if isinstance(l, basestring):
+	if isinstance(skip_flattening, list):
+		skip_flattening = tuple(skip_flattening)
+	elif not isinstance(skip_flattening, tuple):
+		skip_flattening = (skip_flattening,)
+
+	if isinstance(l, skip_flattening):
 		yield l
 		return
 	iters = expandable_chain(l)
 	try:
 		while True:
 			x = iters.next()
-			if hasattr(x, '__iter__') and not isinstance(x, basestring):
+			if hasattr(x, '__iter__') and not isinstance(x, skip_flattening):
 				iters.appendleft(x)
 			else:
 				yield x

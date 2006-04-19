@@ -17,14 +17,13 @@ class expandable_chain(object):
 		return self
 
 	def next(self):
-		if self.iterables is None:
-			raise StopIteration
-		while self.iterables:
-			try:
-				return self.iterables[0].next()
-			except StopIteration:
-				self.iterables.popleft()
-		self.iterables = None
+		if self.iterables is not None:
+			while self.iterables:
+				try:
+					return self.iterables[0].next()
+				except StopIteration:
+					self.iterables.popleft()
+			self.iterables = None
 		raise StopIteration()
 			
 	def append(self, iterable):

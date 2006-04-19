@@ -26,6 +26,13 @@ class PigeonHoledSlots(object):
 					l.append(x)
 			else:
 				if x.slot == obj.slot:
+					if x == obj:
+						# exit,with a sanity check.
+						for y in (z for z in self.slot_dict[key] if isinstance(z, restriction.base)):
+							if z.match(x):
+								import pdb;pdb.set_trace()
+								raise Exception
+						return []
 					l.append(x)
 		if not l:
 			self.slot_dict[key].append(obj)

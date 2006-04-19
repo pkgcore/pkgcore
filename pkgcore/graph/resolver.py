@@ -6,6 +6,7 @@ from pkgcore.util.iterables import expandable_chain, caching_iter
 from pkgcore.util.compatibility import all, any
 from pkgcore.graph.choice_point import choice_point
 from pkgcore.util.lists import iter_flatten
+from pkgcore.graph.pigeonholes import PigeonHoledSlots
 
 
 debug_whitelist = [None, "unsatisfy", "ref", "blockers"]
@@ -30,6 +31,7 @@ class resolver(object):
 		self.false_atoms = set()
 		self.atoms = {}
 		self.pkg_atoms = {}
+		self.slots = PigeonHoledSlots()
 
 	def add_root_atom(self, atom):
 		if atom in self.atoms:
@@ -86,19 +88,13 @@ class resolver(object):
 				
 				if a.blocks:
 #					import pdb;pdb.set_trace()
-					backup = False
-					for x in (x for x in self.pkg_atoms.get(a.key, []) if isinstance(x, choice_point)):
-						if not x:
-							# huh.  this shouldn't exist most likely.
-							print "!!! %s exists in graph but isn't valid" % (x.atom)
-						elif a.match(x.current_pkg):
-							debug("  checking blocker %s, found %s (from %s)" % (a, x.current_pkg, x.atom))
-							cur = self.current_stack
-							self.atoms[a] = (choice_point(a, []), [t])
-							self.unsatisfiable_atom(a, "backtracking for blocker", False)
-							cur.pop(-1)
-							backup = True
-							break
+					conflicts = self.slots.add_limiter(a)
+					if conflicts:
+						debug("  blocker %s would block previous choices of %s" % (a, conflicts))
+						cur = self.current_stack
+						self.atoms[a] = (choice_point(a, []), [t])
+						self.unsatisfiable_atom(a, "backtracking for blocker", False)
+						cur.pop(-1)
 					else:
 						debug("   blocker %s refed for %s" % (a, self.current_stack[-2]))
 						# ref it.
@@ -131,18 +127,27 @@ class resolver(object):
 			c.rdepends
 			c.current_pkg
 
-	
 	def satisfy_atom(self, atom, matches):
 		assert atom is self.current_stack[-1]
 		c = choice_point(atom, caching_iter(matches))
 		self.atoms[atom] = [c, []]
-		self.pkg_atoms.setdefault(atom.key, []).append(c)
+		perm_unsatisfy = not bool(c)
+		while c:
+			p = c.current_pkg
+			conflicts = self.slots.fill_slotting(p)
+			if conflicts:
+				debug("  satisfy: atom %s pkg %s conflicts with %s" % (atom, p, conflicts))
+				c.force_next_pkg()
+			else:
+				debug("  results for %s was %s" % (atom, c))
+				break
+
 		# is this right?
 		self.ref_stack_for_atom(atom, self.current_stack)
 		if not c:
-			debug("  results for %s was empty" % (atom))
+			debug("  results for %s was empty through filtering/unification" % (atom))
 			cur = self.current_stack
-			self.unsatisfiable_atom(atom)
+			self.unsatisfiable_atom(atom, permenant=perm_unsatisfy, indent=2)
 			if cur is self.current_stack:
 				self.current_stack.pop(-1)
 		else:
@@ -151,7 +156,7 @@ class resolver(object):
 		debug("  satisfy_atoms exiting: stack %s" % (self.search_stacks), "satisfy")
 		debug("  satisfy_atoms exiting: atoms %s" % str(self.atoms.keys()), "satisfy")
 		
-	def unsatisfiable_atom(self, atom, msg="None supplied", permenant=True):
+	def unsatisfiable_atom(self, atom, msg="None supplied", permenant=True, indent=0):
 		# what's on the stack may be different from current_atom; union of atoms will do this fex.
 		assert atom is self.current_atom
 		a = self.current_atom
@@ -182,7 +187,7 @@ class resolver(object):
 				# how's this work for external specified root atoms?
 				# could save 'em also; need a queue with faster then O(N) lookup for it though.
 				print x
-				self.deref_stack_for_atom(x, t)
+				self.deref_stack_for_atom(x, t, indent=(indent+2))
 
 			if not c:
 				# notify the parents.
@@ -209,11 +214,11 @@ class resolver(object):
 		if stack not in self.atoms[atom][1]:
 			self.atoms[atom][1].append(stack)
 
-	def deref_stack_for_atom(self, atom, stack):
+	def deref_stack_for_atom(self, atom, stack, indent=0):
 		try:
 			assert atom in self.atoms
 		except AssertionError:
-			debug("      atoms is %s, stack was %s" % (atom, stack))
+			debug("%s  atoms is %s, stack was %s" % (" "*indent, atom, stack))
 			raise
 		if not isinstance(stack, tuple):
 			stack = tuple(stack)
@@ -221,14 +226,10 @@ class resolver(object):
 		l = [x for x in self.atoms[atom][1] if x[:stack_l] != stack]
 		if l:
 			self.atoms[atom][1] = l
-			debug("  deref: atom %s, derefed stack %s" % (atom, stack), "ref")
+			debug("%s  deref: atom %s, derefed stack %s" % (" "*indent, atom, stack), "ref")
 		else:
-			debug("  deref: released %s" % atom, "ref")
-			if atom.key in self.pkg_atoms:
-				l = [x for x in self.pkg_atoms[atom.key] if atom != x.atom]
-				if not l:
-					del self.pkg_atoms[atom.key]
-				else:
-					self.pkg_atoms[atom.key] = l
+			debug("%s  deref: released %s" % (" "*indent, atom), "ref")
+			if atom.blocks:
+				self.slots.remove_slotting(atom)
 			del self.atoms[atom]
 			

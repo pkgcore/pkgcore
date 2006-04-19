@@ -16,7 +16,7 @@ class PigeonHoledSlots(object):
 		self.slot_dict = {}
 		
 	def fill_slotting(self, obj):
-		"""try to insert obj in, returning any conflicting objs"""
+		"""try to insert obj in, returning any conflicting objs (empty list if inserted successfully)"""
 		key = obj.key
 		for x in self.slot_dict.setdefault(key, []):
 			if isinstance(x, restriction.base):
@@ -27,7 +27,7 @@ class PigeonHoledSlots(object):
 				if x.slot == obj.slot:
 					return x
 		self.slot_dict[key].append(obj)
-		return None
+		return []
 			
 	def add_limiter(self, atom):
 		if not isinstance(atom, restriction.base):

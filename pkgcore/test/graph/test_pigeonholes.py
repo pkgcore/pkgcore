@@ -26,9 +26,9 @@ class SlotTesting(unittest.TestCase):
 	def test_add(self):
 		c = PigeonHoledSlots()
 		o = fake_package()
-		self.assertEqual(None, c.fill_slotting(o))
+		self.assertEqual([], c.fill_slotting(o))
 		self.assertEqual(o, c.fill_slotting(fake_package()))
-		self.assertEqual(None, c.fill_slotting(fake_package(slot=1, key=1)))
+		self.assertEqual([], c.fill_slotting(fake_package(slot=1, key=1)))
 
 	def test_add_limiter(self):
 		c = PigeonHoledSlots()
@@ -37,7 +37,7 @@ class SlotTesting(unittest.TestCase):
 		c.add_limiter(o)
 		self.assertEqual(o, c.fill_slotting(p))
 		# note we're doing 'is' tests in fake_blocker
-		self.assertEqual(None, c.fill_slotting(fake_package()))
+		self.assertEqual([], c.fill_slotting(fake_package()))
 
 	def test_remove_slotting(self):
 		c = PigeonHoledSlots()
@@ -46,8 +46,8 @@ class SlotTesting(unittest.TestCase):
 		c.add_limiter(o)
 		c.remove_slotting(o)
 		self.assertRaises(KeyError, c.remove_slotting, o)
-		self.assertEqual(None, c.fill_slotting(p))
-		self.assertEqual(None, c.fill_slotting(p2))
+		self.assertEqual([], c.fill_slotting(p))
+		self.assertEqual([], c.fill_slotting(p2))
 		c.remove_slotting(p)
 		c.remove_slotting(p2)
 		

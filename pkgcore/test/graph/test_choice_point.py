@@ -6,21 +6,22 @@ from pkgcore.graph.choice_point import choice_point
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 
 class fake_package(object):
-	def __init__(self, marker, depends=AndRestriction(), rdepends=AndRestriction(), provides=AndRestriction()):
-		self.depends = depends
-		self.rdepends = rdepends
-		self.provides = provides
-		self.marker = marker
+	def __init__(self, **kwds):
+		for k,v in (("depends", AndRestriction()),
+			("rdepends", AndRestriction()),
+			("provides", AndRestriction()),
+			("slot", 0), ("key", None), ("marker", None)):
+			setattr(self, k, kwds.get(k, v))
 
 class TestChoicePoint(unittest.TestCase):
 
 	@staticmethod
 	def gen_choice_point():
 		return choice_point("asdf", [
-			fake_package(1, OrRestriction("ordep1", "ordep2", "dependsordep"), 
-				AndRestriction(OrRestriction("ordep1", "andordep2"), "anddep1", "anddep2", "pkg1and")),
-			fake_package(2, AndRestriction("anddep1", "anddep2"), 
-				OrRestriction("or1", "or2"))])
+			fake_package(marker=1, depends=OrRestriction("ordep1", "ordep2", "dependsordep"), 
+				rdepends=AndRestriction(OrRestriction("ordep1", "andordep2"), "anddep1", "anddep2", "pkg1and")),
+			fake_package(marker=2, depends=AndRestriction("anddep1", "anddep2"), 
+				rdepends=OrRestriction("or1", "or2"))])
 
 	def test_depends_rdepends_stepping(self):
 		c = self.gen_choice_point()

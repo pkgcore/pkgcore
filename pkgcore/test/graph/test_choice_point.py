@@ -22,6 +22,17 @@ class TestChoicePoint(unittest.TestCase):
 			fake_package(2, AndRestriction("anddep1", "anddep2"), 
 				OrRestriction("or1", "or2"))])
 
+	def test_depends_rdepends_stepping(self):
+		c = self.gen_choice_point()
+		self.assertEqual(c.depends, ("ordep1",))
+		self.assertEqual(sorted(c.rdepends), sorted(["ordep1", "anddep1", "anddep2", "pkg1and"]))
+		c.reduce_atoms("ordep1")
+		self.assertEqual(c.depends, ("ordep2",))
+		self.assertEqual(sorted(c.rdepends), sorted(["andordep2", "anddep1", "anddep2", "pkg1and"]))
+		c.reduce_atoms("pkg1and")
+		c.reduce_atoms("or1")
+		self.assertEqual(c.rdepends, ("or2",))
+
 	def test_current_pkg(self):
 		c = self.gen_choice_point()
 		self.assertEqual(c.current_pkg.marker, 1)

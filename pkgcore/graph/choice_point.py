@@ -76,6 +76,11 @@ class choice_point(object):
 		self.depends, self.rdepends
 		return self.matches[self.matches_idx]
 	
+	def force_next_pkg(self):
+		bool(self)
+		self.matches_idx = self.matches_idx + 1
+		return bool(self)
+
 	@property
 	def depends(self):
 		return self._common_property(self._dep_solutions, "depends")

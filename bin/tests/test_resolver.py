@@ -36,7 +36,7 @@ if __name__ == "__main__":
 	v,repo = domain.vdb[0], domain.repos[0]
 
 	r = resolver.resolver()
-	map(r.add_root_atom, atoms)
+	map(r.add_root_atom, reversed(atoms))
 
 	lasta = None
 	count = 0

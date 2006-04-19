@@ -2,16 +2,21 @@
 # License: GPL2
 
 from pkgcore.restrictions import restriction
-from pkgcore.util.compatibility import any, all
+from pkgcore.util.compatibility import any
 
 # lil too getter/setter like for my tastes...
 
 class PigeonHoledSlots(object):
+	"""class for tracking slotting to a specific atom/obj key
+	no atoms present, just prevents conflicts of obj.key; atom present, assumes
+	it's a blocker and ensures no obj matches the atom for that key
+	"""
 
 	def __init__(self):
 		self.slot_dict = {}
 		
 	def fill_slotting(self, obj):
+		"""try to insert obj in, returning any conflicting objs"""
 		key = obj.key
 		for x in self.slot_dict.setdefault(key, []):
 			if isinstance(x, restriction.base):

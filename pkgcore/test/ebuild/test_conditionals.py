@@ -12,8 +12,10 @@ from pkgcore.util.currying import post_curry
 from pkgcore.util.iterables import expandable_chain
 from pkgcore.util.lists import iter_flatten
 
-def gen_depset(s):
-	return DepSet(s, str, operators={"||":boolean.OrRestriction, "":boolean.AndRestriction})
+def gen_depset(s, operators=None):
+	if operators is None:
+		operators = {"":boolean.AndRestriction, "||":boolean.OrRestriction}
+	return DepSet(s, str, operators=operators)
 
 class DepSetTest(unittest.TestCase):
 
@@ -74,7 +76,7 @@ class DepSetTest(unittest.TestCase):
 					yield x
 		self.assertFalse(depth)
 
-	def check(self, s):
+	def check(self, s, func=gen_depset):
 		if isinstance(s, (list, tuple)):
 			s,v = s[:]
 			v = list(v)
@@ -83,9 +85,9 @@ class DepSetTest(unittest.TestCase):
 					v[idx] = set(x)
 		else:
 			v = s.split()
-		self.assertEqual(list(self.flatten_restricts(gen_depset(s))), list(v))
+		self.assertEqual(list(self.flatten_restricts(func(s))), list(v))
 
-	for s in [
+	for x in [
 		"a b", 
 		( "", 	[]),
 
@@ -118,10 +120,11 @@ class DepSetTest(unittest.TestCase):
 			)
 		)]:
 		
-		if isinstance(s, basestring):
-			locals()["test '%s'" % s] = post_curry(check, s)
+		if isinstance(x, basestring):
+			locals()["test '%s'" % x] = post_curry(check, x)
 		else:
-			locals()["test '%s'" % s[0]] = post_curry(check, s)
-			
-	def test_and_parsing(self):
-		self.assertEqual(("a", "b", "c"), gen_depset("( a b c )").restrictions[0].restrictions)
+			locals()["test '%s'" % x[0]] = post_curry(check, x)
+
+	def test_disabling_or(self):
+		self.assertRaises(ParseError, gen_depset, "|| ( a b )",
+			{"operators":{"":boolean.AndRestriction}})

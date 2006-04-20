@@ -80,6 +80,8 @@ class DepSet(boolean.AndRestriction):
 					if k.endswith("?"):
 						use_asserts.append(convert_use_reqs([x[:-1] for x in raw_conditionals if x.endswith("?")]))
 
+				elif "(" in k or ")" in k or "|" in k or "?" in k:
+					raise ParseError(dep_str)
 				else:
 					# node/element.
 					depsets[-1].append(element_class(k))

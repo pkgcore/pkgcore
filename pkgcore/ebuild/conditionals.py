@@ -31,7 +31,7 @@ class DepSet(boolean.AndRestriction):
 
 		self.restrictions = []
 		self.element_class = element_class
-		self._node_conds = None
+		self._node_conds = False
 		
 		raw_conditionals = []
 		depsets = [self.restrictions]
@@ -46,6 +46,7 @@ class DepSet(boolean.AndRestriction):
 					if not depsets[-1]:
 						raise ParseError(dep_str)
 					elif raw_conditionals[-1].endswith('?'):
+						self._node_conds = True
 #						for x in (y for y in depsets[-1] if not isinstance(y, packages.Conditional)):
 #							self.node_conds.setdefault(x, []).append(use_asserts[-1])
 
@@ -177,6 +178,7 @@ class DepSet(boolean.AndRestriction):
 
 	@property
 	def has_conditionals(self):
+		return self._node_conds is True or bool(self._node_conds)
 		return len(self.node_conds) > 0
 
 	def match(self, *a):

@@ -1,5 +1,4 @@
-# Copyright: 2005 Zac Medico <zmedico@gentoo.org>
-# Copyright: 2005 Marien Zwart <marienz@gentoo.org>
+# Copyright: 2005 Brian Harring <ferringb@gentoo.org>
 # License: GPL2
 
 import os
@@ -17,7 +16,7 @@ def gen_depset(s, operators=None):
 		operators = {"":boolean.AndRestriction, "||":boolean.OrRestriction}
 	return DepSet(s, str, operators=operators)
 
-class DepSetTest(unittest.TestCase):
+class DepSetParsingTest(unittest.TestCase):
 
 	def t(self, s):
 		self.assertRaises(ParseError, gen_depset, s)
@@ -31,7 +30,7 @@ class DepSetTest(unittest.TestCase):
 		"|| ( x?() )", "|| (x )", "|| ( x)",
 		"a|", "a?", "a?b", "a||b", 
 		"a(", "a)b", "x? y", "( x )?", "||?"):
-		locals()["test ParseError '%s'" % x] = post_curry(t, x)
+		locals()["test assert ParseError '%s'" % x] = post_curry(t, x)
 	del x
 
 	@staticmethod
@@ -112,9 +111,9 @@ class DepSetTest(unittest.TestCase):
 		# at some point, this should collapse it
 		"|| ( || ( a b ) c )",
 
-		( "x? ( a y? ( || ( b c ) d ) e ) f1 f? ( g h ) i", 
+		( "x? ( a !y? ( || ( b c ) d ) e ) f1 f? ( g h ) i", 
 			(
-			["x"], "(", "a", ["x", "y"], "(", "||", "(", "b", 
+			["x"], "(", "a", ["x", "!y"], "(", "||", "(", "b", 
 			"c", ")", "d", ")", "e", ")", "f1",
 			["f"], "(", "g", "h", ")", "i"
 			)
@@ -128,3 +127,15 @@ class DepSetTest(unittest.TestCase):
 	def test_disabling_or(self):
 		self.assertRaises(ParseError, gen_depset, "|| ( a b )",
 			{"operators":{"":boolean.AndRestriction}})
+
+
+class DepSetConditionalsInspectionTest(unittest.TestCase):
+
+	def test_sanity_has_conditionals(self):
+		self.assertFalse(bool(gen_depset("a b").has_conditionals))
+		self.assertFalse(bool(gen_depset("( a b ) || ( c d )").has_conditionals))
+		self.assertTrue(bool(gen_depset("x? ( a )").has_conditionals))
+		self.assertTrue(bool(gen_depset("( x? ( a ) )").has_conditionals))
+
+#	def test_node_conds(self):
+		

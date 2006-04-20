@@ -18,9 +18,7 @@ def gen_depset(s, operators=None):
 
 class DepSetParsingTest(unittest.TestCase):
 
-	def t(self, s):
-		self.assertRaises(ParseError, gen_depset, s)
-	
+	# generate a lot of parse error assertions.
 	for x in ("( )", "( a b c", "(a b c )", 
 		"( a b c)", "()", "x?( a )", 
 		"?x (a)", "x? (a )", "x? ( a b)", 
@@ -30,7 +28,8 @@ class DepSetParsingTest(unittest.TestCase):
 		"|| ( x?() )", "|| (x )", "|| ( x)",
 		"a|", "a?", "a?b", "a||b", 
 		"a(", "a)b", "x? y", "( x )?", "||?"):
-		locals()["test assert ParseError '%s'" % x] = post_curry(t, x)
+		locals()["test assert ParseError '%s'" % x] = \
+			post_curry(unittest.TestCase.assertRaises, ParseError, gen_depset, x)
 	del x
 
 	@staticmethod
@@ -86,6 +85,9 @@ class DepSetParsingTest(unittest.TestCase):
 			v = s.split()
 		self.assertEqual(list(self.flatten_restricts(func(s))), list(v))
 
+	# generate a lot of assertions of parse results.
+	# if it's a list, first arg is string, second is results, if string, the results for testing
+	# are determined by splitting the string
 	for x in [
 		"a b", 
 		( "", 	[]),

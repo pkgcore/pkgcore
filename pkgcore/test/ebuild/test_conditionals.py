@@ -6,59 +6,30 @@ import os
 from itertools import imap
 from twisted.trial import unittest
 
-from pkgcore.ebuild.conditionals import DepSet
-from pkgcore.restrictions.values import StrExactMatch
+from pkgcore.ebuild.conditionals import DepSet, ParseError
 from pkgcore.restrictions import boolean
-from pkgcore.restrictions import packages
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import post_curry
+from pkgcore.util.lists import iter_flatten
 
-def normalize_depstring(depstring):
-	return " ".join(depstring.split())
-
-class OrRestrictionOverride(boolean.OrRestriction):
-	def __str__(self):
-		"""We need to output standard portage depset syntax for comparison with input"""
-		assert not self.negate
-		return "|| ( %s )" % " ".join(imap(str, self.restrictions))
-
-class AndRestrictionOverride(boolean.AndRestriction):
-	def __str__(self):
-		"""We need to output standard portage depset syntax for comparison with input"""
-		assert not self.negate
-		return "( %s )" % " ".join(imap(str, self.restrictions))
-
-OrRestriction=pre_curry(OrRestrictionOverride,node_type=packages.package_type)
-AndRestriction=pre_curry(AndRestrictionOverride,node_type=packages.package_type)
-
-class StrPackage(StrExactMatch):
-	"""simple string restriction for testing purposes (portage.package.atom requires
-	categories and has many other features which would only be clutter here)"""
-	def __init__(self, *args, **kwds):
-		super(StrPackage, self).__init__(*args, **kwds)
-		# package_type is a hard coded requirement by DepSet
-		self.type = packages.package_type
-
-	def __str__(self):
-		assert not self.negate
-		return self.exact
+def get_depset(s):
+	return DepSet(s, str, operators={"||":boolean.OrRestriction, "":boolean.AndRestriction})
 
 class DepSetTest(unittest.TestCase):
 
-	test_input = ("|| ( ( a b ) c )",
-		"|| ( a ( b c ) )",
-		"|| ( ( a b ) c ( d e ) )",
-		"|| ( a ( b c ) ( d e ) )",
-		"|| ( a b ) ( c d )",
-		"a || ( b c )")
+	def t(self, s):
+		self.assertRaises(ParseError, get_depset, s)
+	
+	for x in ("( )", "( a b c", "(a b c )", "( a b c)", "()",
+		"x?( a )", "?x (a)", "x? (a )", "x? ( a b)", 
+		"x? ( x? () )", "x? ( x? (a)", "(", ")", 
+		"||(", "||()", "||( )", "|| ()", "|| (", "|| )", "||)",
+		"|| ( x? ( )", "|| ( x?() )", "|| (x )", "|| ( x)",
+		"a|", "a?", "a?b", "a||b", "a(", "a)b"):
+		locals()["test ParseError '%s'" % x] = post_curry(t, x)
+	del x
 
-	def depset_consistency_check(self, depstring):
-		norm_depstring = normalize_depstring(depstring)
-		d = DepSet(
-			norm_depstring, StrPackage,
-			operators={"":AndRestriction,"||":OrRestriction})
-		output_depstring = str(d)
-		self.assertEquals(norm_depstring, output_depstring)
+#	def t2(self, s, v):
+#		self.assertEquals(iter_flatten(get_depset(s)), tuple(iter_flatten(v)))
 
-	def test_depstrings(self):
-		for depstring in self.test_input:
-			self.depset_consistency_check(depstring)
+	def test_and_parsing(self):
+		self.assertEqual(("a", "b", "c"), get_depset("( a b c )").restrictions[0].restrictions)

@@ -15,6 +15,14 @@ This is *HIGH* priority.  It enables folks to do alternate repository classes wi
 current instantiation hard codings.
 
 
+:refactor pkgcore.package.atom and pkgcore.package.cpv: *
+Those *should* be (effectively) abstract bases, not specific to ebuild format.
+Right now they are specific- breaking that up is required.
+
+Plus, once it's broken up can derive from it to attach msgs to an atom (resolver can use it to state why it
+generated a particular atom, glsa's can ref a glsa obj, etc).
+
+
 :binpkg repository: *
 Just manual work- fix up pkgcore.binpkg to generate ebuild_built instances (akin to what pkgcore.vdb.ondisk does)
 

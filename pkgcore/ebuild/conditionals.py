@@ -148,7 +148,9 @@ class DepSet(boolean.AndRestriction):
 
 	@property
 	def node_conds(self):
-		if self._node_conds is None:
+		if self._node_conds is False:
+			self._node_conds = {}
+		elif self._node_conds is True:
 			nc = {}
 			# logic here isn't smart enough in combination with evaluate_depset
 #			always_required = set(x for x in self.restrictions if not isinstance(x, packages.Conditional))
@@ -178,8 +180,7 @@ class DepSet(boolean.AndRestriction):
 
 	@property
 	def has_conditionals(self):
-		return self._node_conds is True or bool(self._node_conds)
-		return len(self.node_conds) > 0
+		return bool(self._node_conds)
 
 	def match(self, *a):
 		raise NotImplementedError

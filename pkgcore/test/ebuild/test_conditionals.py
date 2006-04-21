@@ -156,7 +156,7 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
 			l.add(frozenset(t))
 		return l
 		
-	def check_conds(self, s, r):
+	def check_conds(self, s, r, msg=None):
 		nc = dict((k, self.flatten_cond(v)) for (k, v) in gen_depset(s).node_conds.iteritems())
 		d = dict(r)
 		for k,v in d.iteritems():
@@ -164,16 +164,19 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
 				d[k] = set([frozenset(v.split())])
 			elif isinstance(v, (tuple, list)):
 				d[k] = set(map(frozenset, v))
-		self.assertEqual(nc, d)
+		self.assertEqual(nc, d, msg)
 				
-	for s,r in (
+	for s in (
 		("x? ( y )", {"y":"x"}),
 		("x? ( y ) z? ( y )", {"y":["z", "x"]}),
 		("x? ( z? ( y ) )", {"y":"z x"}),
 		("!x? ( y )", {"y":"!x"}),
 		("!x? ( z? ( y a ) )", {"y":"!x z", "a":"!x z"}),
 		("x ( y )", {}),
-		("x ( y? ( z ) )", {"z":"y"}),
+		("x ( y? ( z ) )", {"z":"y"}, "needs to dig down as deep as required"),
+		("x y? ( x )", {}, "x isn't controlled by a conditional, shouldn't be in the list"),
+		("|| ( y? ( x ) x )", {}, "x cannot be filtered down since x is accessible via non conditional path"),
+		("|| ( y? ( x ) z )", {"x":"y"}),
 		):
-		locals()["test _node_conds %s" % s] = post_curry(check_conds, s, r)
+		locals()["test _node_conds %s" % s[0]] = post_curry(check_conds, *s)
 		

@@ -77,7 +77,7 @@ if __name__ == "__main__":
 		if a is lasta:
 			import pdb;pdb.set_trace()
 		if empty_vdb:
-			r.satisfy_atom(a, sorted(repo.itermatch(a)))
+			r.satisfy_atom(a, itertools.chain(sorted(repo.itermatch(a)), v.itermatch(a)))
 		else:
 			r.satisfy_atom(a, itertools.chain(v.itermatch(a), sorted(repo.itermatch(a))))
 		lasta = a

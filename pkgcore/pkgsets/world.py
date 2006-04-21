@@ -15,7 +15,6 @@ class WorldFile(object):
 		return self._atoms
 		
 	def __iter__(self):
-		print self._atoms
 		return iter(self._atoms)
 	
 	def __len__(self):

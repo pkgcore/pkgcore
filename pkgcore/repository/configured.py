@@ -1,6 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from pkgcore.restrictions import boolean
 from pkgcore.restrictions.packages import PackageRestriction, OrRestriction, AndRestriction
 from pkgcore.repository import prototype
 from pkgcore.package.conditionals import PackageWrapper
@@ -30,6 +31,8 @@ class tree(prototype.tree):
 		return getattr(self.raw_repo, attr)
 	
 	def itermatch(self, restrict, restrict_solutions=None):
+		if not isinstance(restrict, boolean.base):
+			return prototype.tree.itermatch(self, restrict, restrict_solutions=restrict_solutions)
 		if restrict_solutions is None:
 			restrict_solutions = restrict.solutions(full_solution_expansion=True)
 		

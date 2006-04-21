@@ -155,6 +155,15 @@ required_chksums = all
 userpriv = true
 
 
+[pkgset]
+class = pkgcore.pkgsets.world.WorldFile
+required = world_path
+str = world_path
+defaults = world_path class
+positional = world_path
+world_path = /var/lib/portage/world
+
+
 [DEFAULT]
 metadata_keys = DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE DESCRIPTION KEYWORDS INHERITED IUSE CDEPEND
    PDEPEND PROVIDE

@@ -9,7 +9,7 @@ from pkgcore.util.lists import iter_flatten
 from pkgcore.graph.pigeonholes import PigeonHoledSlots
 
 
-debug_whitelist = [None, "unsatisfy", "ref", "blockers"]
+debug_whitelist = [None, "ref", "blockers"]
 def debug(msg, id=None):
 	if id in debug_whitelist:
 		print "debug: %s" % msg
@@ -55,7 +55,8 @@ class resolver(object):
 				self.grab_next_stack()
 				continue
 			try:
-				assert not any(x.blocks for x in self.current_stack)
+				assert all(a in self.atoms for a in self.current_stack[:-1])
+				assert all(not x.blocks for x in self.current_stack)
 			except AssertionError:
 				import pdb;pdb.set_trace()
 				raise				
@@ -69,6 +70,11 @@ class resolver(object):
 			else:
 				c = self.atoms[a][0]
 				t = tuple(self.current_stack)
+				try:
+					c.depends + c.rdepends
+				except IndexError:
+					import pdb;pdb.set_trace()
+					raise
 				missing_atoms = False
 				for x in c.depends + c.rdepends:
 					# yes that was innefficient

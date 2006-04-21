@@ -139,5 +139,41 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
 		self.assertTrue(bool(gen_depset("x? ( a )").has_conditionals))
 		self.assertTrue(bool(gen_depset("( x? ( a ) )").has_conditionals))
 
-#	def test_node_conds(self):
+	def flatten_cond(self, c):
+		l = set()
+		for x in c:
+			if isinstance(x, boolean.base):
+				self.assertEqual(len(x.solutions()), 1)
+				f = x.solutions()[0]
+			else:
+				f = [x]
+			t=set()
+			for a in f:
+				s= ""
+				if a.negate:
+					s = "!"
+				t.update(["%s%s" % (s, y) for y in a.vals])
+			l.add(frozenset(t))
+		return l
+		
+	def check_conds(self, s, r):
+		nc = dict((k, self.flatten_cond(v)) for (k, v) in gen_depset(s).node_conds.iteritems())
+		d = dict(r)
+		for k,v in d.iteritems():
+			if isinstance(v, basestring):
+				d[k] = set([frozenset(v.split())])
+			elif isinstance(v, (tuple, list)):
+				d[k] = set(map(frozenset, v))
+		self.assertEqual(nc, d)
+				
+	for s,r in (
+		("x? ( y )", {"y":"x"}),
+		("x? ( y ) z? ( y )", {"y":["z", "x"]}),
+		("x? ( z? ( y ) )", {"y":"z x"}),
+		("!x? ( y )", {"y":"!x"}),
+		("!x? ( z? ( y a ) )", {"y":"!x z", "a":"!x z"}),
+		("x ( y )", {}),
+		("x ( y? ( z ) )", {"z":"y"}),
+		):
+		locals()["test _node_conds %s" % s] = post_curry(check_conds, s, r)
 		

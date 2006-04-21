@@ -6,32 +6,47 @@ import itertools
 from pkgcore.graph import resolver
 from pkgcore.config import load_config
 from pkgcore.package.atom import atom
+from pkgcore.util.lists import flatten
+
+def pop_paired_args(args, arg, msg):
+	rets = []
+	try:
+		while True:
+			i = args.index(arg)
+			args.pop(i)
+			if len(args) == i:
+				raise Exception("%s needs to be followed by an arg: %s" % msg)
+			rets.append(args.pop(i))
+	except ValueError:
+		pass
+	return rets
+	
 
 if __name__ == "__main__":
 	import sys
 	args = sys.argv[1:]
 
-	try:
-		while True:
-			args.remove("--debug")
-			i = args.index("--debug")
-			args.pop(i)
-			if len(args) == i:
-				raise Exception("--debug needs to be followed by a debug level to enable")
-			resolver.debug_whitelist.append(args.pop(i))
-	except ValueError:
-		pass
+	resolver.debug_whitelist.extend(pop_paired_args(args, "--debug", "debug filter to enable"))
+	set_targets = pop_paired_args(args, "--set", "pkg sets to enable")
 
 	trigger_pdb = [x for x in args if x not in ("-p", "--pdb")]
 	trigger_pdb, args = args != trigger_pdb, trigger_pdb
-			
-	if not args:
-		print "resolving sys-apps/portage since no atom supplied"
-		atoms = [atom("sys-apps/portage")]
-	else:
-		atoms = [atom(x) for x in args]
-	
+
 	conf=load_config()
+
+	if set_targets:
+		print "using pkgset(s): %s" % (", ".join("'%s'" % x.strip() for x in set_targets))
+	set_targets = flatten([map(atom, conf.pkgset[l]) for l in set_targets], atom)
+	
+	if not args:
+		if set_targets:
+			atoms = set_targets
+		else:
+			print "resolving sys-apps/portage since no atom supplied"
+			atoms = [atom("sys-apps/portage")]
+	else:
+		atoms = [atom(x) for x in args] + set_targets
+	
 	domain = conf.domain["livefs domain"]
 	v,repo = domain.vdb[0], domain.repos[0]
 

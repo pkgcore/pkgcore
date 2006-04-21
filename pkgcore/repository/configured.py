@@ -31,10 +31,11 @@ class tree(prototype.tree):
 		return getattr(self.raw_repo, attr)
 	
 	def itermatch(self, restrict, restrict_solutions=None):
-		if not isinstance(restrict, (PackageRestriction, boolean.base)) or restrict.attr not in self.attr_filters:
-			return prototype.tree.itermatch(self, restrict, restrict_solutions=restrict_solutions)
 		if restrict_solutions is None:
-			restrict_solutions = restrict.solutions(full_solution_expansion=True)
+			if hasattr(restrict, "solutions"):
+				restrict_solutions = restrict.solutions(full_solution_expansion=True)
+			else:
+				restrict_solutions = (restrict,)
 		
 		filtered_solutions = [
 			[a for a in x if not (isinstance(a, PackageRestriction) and a.attr in self.attr_filters)]

@@ -20,6 +20,18 @@ def pop_paired_args(args, arg, msg):
 	except ValueError:
 		pass
 	return rets
+
+def pop_arg(args, *arg):
+
+	ret = False
+	for a in arg:
+		try:
+			while True:
+				args.remove(a)
+				ret = True
+		except ValueError:
+			pass
+	return ret
 	
 
 if __name__ == "__main__":
@@ -29,9 +41,9 @@ if __name__ == "__main__":
 	resolver.debug_whitelist.extend(pop_paired_args(args, "--debug", "debug filter to enable"))
 	set_targets = pop_paired_args(args, "--set", "pkg sets to enable")
 
-	trigger_pdb = [x for x in args if x not in ("-p", "--pdb")]
-	trigger_pdb, args = args != trigger_pdb, trigger_pdb
-
+	trigger_pdb = pop_arg(args, "-p", "--pdb")
+	empty_vdb = pop_arg(args, "-e", "--empty")
+	
 	conf=load_config()
 
 	if set_targets:
@@ -64,7 +76,10 @@ if __name__ == "__main__":
 		resolver.debug("    unresolved atom: %s" % a)
 		if a is lasta:
 			import pdb;pdb.set_trace()
-		r.satisfy_atom(a, itertools.chain(v.itermatch(a), sorted(repo.itermatch(a))))
+		if empty_vdb:
+			r.satisfy_atom(a, sorted(repo.itermatch(a)))
+		else:
+			r.satisfy_atom(a, itertools.chain(v.itermatch(a), sorted(repo.itermatch(a))))
 		lasta = a
 		print "loop %i" % count
 

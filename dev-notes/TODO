@@ -2,8 +2,22 @@ kindly check over HORKED; stuff here is "would be nice", but horked comes first.
 Difficulty estimate indicated by '*', based on either codebase in question, or knowledge of python tricks
 none == easy, >=5 of 'em, tricky.
 
+
+:config object inspection: *
+Pieces are there already (pkgcore.config.introspect), tests included (pkgcore.test.config.test_introspect),
+just need to enable it in pkgcore.config.central.  Poke harring or marienz for extra details, or just jump in.
+
+The rough jist is that type definitions should be overridable by the class being instantiated- fex, we have a
+system and world type, which is pointless- they're the same type, just different classes with different
+instantiation requirements.  Until introspection is turned on, this is the route required however.
+
+This is *HIGH* priority.  It enables folks to do alternate repository classes without having to hack around
+current instantiation hard codings.
+
+
 :binpkg repository: *
 Just manual work- fix up pkgcore.binpkg to generate ebuild_built instances (akin to what pkgcore.vdb.ondisk does)
+
 
 :modify repository.prototype.tree.match to take an optional comparison: *
 reasoning being that if we're just going to do a max, pass in the max so it has the option of doing the initial

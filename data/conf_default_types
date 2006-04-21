@@ -155,13 +155,23 @@ required_chksums = all
 userpriv = true
 
 
-[pkgset]
+# these should obviously be combined into a common subset, and use
+# pkgcore.config.introspect to lift the type definition from the class
+[world_pkgset]
 class = pkgcore.pkgsets.world.WorldFile
 required = world_path
 str = world_path
 defaults = world_path class
 positional = world_path
 world_path = /var/lib/portage/world
+
+
+[system_pkgset]
+class = pkgcore.pkgsets.system.SystemSet
+required = profile
+section_ref = profile
+defaults = class
+positional = profile
 
 
 [DEFAULT]

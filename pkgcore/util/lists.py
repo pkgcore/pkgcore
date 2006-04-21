@@ -46,7 +46,7 @@ def iter_stable_unique(iterable):
 			yield x
 			s.add(x)
 	
-def iter_flatten(l, skip_flattening=(str)):
+def iter_flatten(l, skip_flattening=(basestring,)):
 	"""collapse [(1),2] into [1,2]"""
 	if isinstance(skip_flattening, list):
 		skip_flattening = tuple(skip_flattening)
@@ -67,6 +67,6 @@ def iter_flatten(l, skip_flattening=(str)):
 	except StopIteration:
 		pass
 			
-def flatten(l):
+def flatten(l, skip_flattening=(basestring,)):
 	"""flatten, returning a list rather then an iterable"""
-	return list(iter_flatten(l))
+	return list(iter_flatten(l, skip_flattening=skip_flattening))

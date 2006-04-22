@@ -16,10 +16,11 @@ def debug(msg, id=None):
 
 
 class NoSolution(Exception):
-	def __init__(self, msg):
-		self.msg = msg
+	def __init__(self, atom, msg):
+		self.msg, self.atom = msg, atom
 	def __str__(self):
-		return str(msg)
+		return "No Solution for %s: %s" % (self.atom, self.msg)
+	__repr__ = __str__
 
 
 class resolver(object):
@@ -177,9 +178,23 @@ class resolver(object):
 			if not stack:
 				# this is a root atom, eg externally supplied. Continue cleanup, but raise.
 				debug("    caught a root node, setting bail for %s" % (atom))
-				bail = NoSolution("root node %s was marked unsatisfiable, reason: %s" % (atom, msg))
+				bail = NoSolution(atom, "root node was marked unsatisfiable, reason: %s" % msg)
 
-			c = self.atoms[stack[-2]][0]
+
+#			try:
+#				assert len(stack) > 1
+#			except AssertionError:
+#				import pdb;pdb.set_trace()
+#				raise
+			if not stack:
+				continue
+			elif len(stack) == 1:
+				c = self.atoms[stack[0]][0]
+			else:
+				try:
+					c = self.atoms[stack[-2]][0]
+				except Exception:
+					import pdb;pdb.set_trace()
 			try:
 				was_complete = self.choice_point_is_complete(c)
 				released_atoms, released_provides = c.reduce_atoms(stack[-1])

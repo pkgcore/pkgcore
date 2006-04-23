@@ -10,7 +10,7 @@ class InvertedContainsTest(unittest.TestCase):
 
 	def setUp(self):
 		self.set = containers.InvertedContains(range(12))
-	
+
 	def test_basic(self):
 		self.failIf(7 in self.set)
 		self.failUnless(-7 in self.set)
@@ -108,10 +108,10 @@ class LimitedChangeSetTest(unittest.TestCase):
 
 class LimitedChangeSetWithBlacklistTest(unittest.TestCase):
 
-    def setUp(self):
-        self.set = containers.LimitedChangeSet(range(12), [3, 13])
-		
-    def test_basic(self):
+	def setUp(self):
+		self.set = containers.LimitedChangeSet(range(12), [3, 13])
+
+	def test_basic(self):
 		self.failUnless(0 in self.set)
 		self.failIf(12 in self.set)
 		self.assertEquals(12, len(self.set))
@@ -119,9 +119,9 @@ class LimitedChangeSetWithBlacklistTest(unittest.TestCase):
 		self.assertEquals(0, self.set.changes_count())
 		self.assertRaises(TypeError, self.set.rollback, -1)
 
-    def test_adding_blacklisted(self):
-        self.assertRaises(containers.Unchangable, self.set.add, 13)
+	def test_adding_blacklisted(self):
+		self.assertRaises(containers.Unchangable, self.set.add, 13)
 
-    def test_removing_blacklisted(self):
-        self.assertRaises(containers.Unchangable, self.set.remove, 3)
+	def test_removing_blacklisted(self):
+		self.assertRaises(containers.Unchangable, self.set.remove, 3)
 

@@ -5,6 +5,7 @@
 
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.strings import iter_tokens
+from pkgcore.util.iterables import expandable_chain
 
 def convert_use_reqs(uses):
 	assert len(uses)
@@ -17,7 +18,20 @@ def convert_use_reqs(uses):
 	else:
 		return values.ContainmentMatch(all=True, *use_asserts)
 	return values.AndRestriction(values.ContainmentMatch(all=True, *use_asserts), use_negates)
-	
+
+def find_cond_nodes(restriction_set):
+	conditions_stack = []
+	new_set = expandable_chain(restriction_set)
+	for cur_node in new_set:
+		if isinstance(cur_node, packages.Conditional):
+			conditions_stack.append(cur_node.restriction)
+			new_set.appendleft(list(cur_node.payload) + [None])
+		elif isinstance(cur_node, boolean.base):
+			new_set.appendleft(cur_node.restrictions)
+		elif cur_node is None:
+			conditions_stack.pop()
+		else: # leaf
+			yield (cur_node, conditions_stack[:])
 
 class DepSet(boolean.AndRestriction):
 	__slots__ = ("has_conditionals", "element_class", "_node_conds", "restrictions")
@@ -152,25 +166,25 @@ class DepSet(boolean.AndRestriction):
 			self._node_conds = {}
 		elif self._node_conds is True:
 			nc = {}
-			# logic here isn't smart enough in combination with evaluate_depset
-#			always_required = set(x for x in self.restrictions if not isinstance(x, packages.Conditional))
-			s = [([x.restriction], x.payload) for x in self.restrictions if isinstance(x, packages.Conditional)]
-			while s:
-				conds, nodes = s.pop(0)
-				if len(conds) == 1:
-					current = conds[0]
-				else:
-					current = values.AndRestriction(all=True, finalize=True, *conds)
 
-				for x in nodes:
-					# XXX optimize this so it's a single restriction.
-					if isinstance(x, packages.Conditional):
-						s.append((conds + [x.restriction], x.payload))
+			found_conds = find_cond_nodes(self.restrictions)
+
+			always_required = set()
+
+			for payload, restrictions in found_conds:
+				if not restrictions:
+					always_required.add(payload)
+				else:
+					if len(restrictions) == 1:
+						current = restrictions[0]
 					else:
-#						# only add it if it's known to be variable, ie not a "x y? ( x ) " (x cannot be disabled)
-#						if x not in always_required:
-#							nc.setdefault(x, []).append(current)
-						nc.setdefault(x, []).append(current)
+						current = values.AndRestriction(all=True, finalize=True, *restrictions)
+
+					nc.setdefault(payload, []).append(current)
+
+			for k in always_required:
+				if k in nc:
+					del nc[k]
 			for k in nc:
 				nc[k] = tuple(nc[k])
 

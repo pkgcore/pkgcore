@@ -5,18 +5,18 @@ from pkgcore.util.currying import pre_curry
 from pkgcore.util import modules
 
 def loop_over_file(obj, filename):
-	    f = open(filename, 'rb')
-	    blocksize=32768
-	    data = f.read(blocksize)
-	    size = 0L
-	    sum = obj.new()
-	    while data:
-	        sum.update(data)
-	        size = size + len(data)
-	        data = f.read(blocksize)
-	    f.close()
+	f = open(filename, 'rb')
+	blocksize=32768
+	data = f.read(blocksize)
+	size = 0L
+	sum = obj.new()
+	while data:
+		sum.update(data)
+		size = size + len(data)
+		data = f.read(blocksize)
+	f.close()
 
-	    return sum.hexdigest()
+	return sum.hexdigest()
 
 try:
 	import fchksum

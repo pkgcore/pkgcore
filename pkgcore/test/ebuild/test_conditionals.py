@@ -169,7 +169,7 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
 	for s in (
 		("x? ( y )", {"y":"x"}),
 		("x? ( y ) z? ( y )", {"y":["z", "x"]}),
-		("x? ( z? ( y ) )", {"y":"z x"}),
+		("x? ( z? ( w? ( y ) ) )", {"y":"w z x"}),
 		("!x? ( y )", {"y":"!x"}),
 		("!x? ( z? ( y a ) )", {"y":"!x z", "a":"!x z"}),
 		("x ( y )", {}),

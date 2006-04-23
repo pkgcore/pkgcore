@@ -11,7 +11,7 @@ class FailedImport(ImportError):
 def load_module(name):
 	"""load a module, throwing a FailedImport if __import__ fails"""
 	if name in sys.modules:
-	    return sys.modules[name]
+		return sys.modules[name]
 	try:
 		m = __import__(name)
 		nl = name.split('.')

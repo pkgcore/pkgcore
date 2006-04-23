@@ -98,7 +98,7 @@ class VersionMatch(restriction.base):
 				return AndRestriction(self, other)
 
 		if vc == -1 and 1 in self.vals and 0 in other.vals:
-				return self.__class__("=", other.ver, rev=other.rev)
+			return self.__class__("=", other.ver, rev=other.rev)
 		elif vc == 1 and -1 in other.vals and 0 in self.vals:
 			return self.__class__("=", self.ver, rev=self.rev)
 		# disjoint.

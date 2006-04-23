@@ -19,19 +19,6 @@ def convert_use_reqs(uses):
 		return values.ContainmentMatch(all=True, *use_asserts)
 	return values.AndRestriction(values.ContainmentMatch(all=True, *use_asserts), use_negates)
 
-def find_cond_nodes(restriction_set):
-	conditions_stack = []
-	new_set = expandable_chain(restriction_set)
-	for cur_node in new_set:
-		if isinstance(cur_node, packages.Conditional):
-			conditions_stack.append(cur_node.restriction)
-			new_set.appendleft(list(cur_node.payload) + [None])
-		elif isinstance(cur_node, boolean.base):
-			new_set.appendleft(cur_node.restrictions)
-		elif cur_node is None:
-			conditions_stack.pop()
-		else: # leaf
-			yield (cur_node, conditions_stack[:])
 
 class DepSet(boolean.AndRestriction):
 	__slots__ = ("has_conditionals", "element_class", "_node_conds", "restrictions")
@@ -160,6 +147,21 @@ class DepSet(boolean.AndRestriction):
 		flat_deps.restrictions = tuple(base_restrict)
 		return flat_deps
 
+	@staticmethod
+	def find_cond_nodes(restriction_set):
+		conditions_stack = []
+		new_set = expandable_chain(restriction_set)
+		for cur_node in new_set:
+			if isinstance(cur_node, packages.Conditional):
+				conditions_stack.append(cur_node.restriction)
+				new_set.appendleft(list(cur_node.payload) + [None])
+			elif isinstance(cur_node, boolean.base):
+				new_set.appendleft(cur_node.restrictions)
+			elif cur_node is None:
+				conditions_stack.pop()
+			else: # leaf
+				yield (cur_node, conditions_stack[:])
+
 	@property
 	def node_conds(self):
 		if self._node_conds is False:
@@ -167,7 +169,7 @@ class DepSet(boolean.AndRestriction):
 		elif self._node_conds is True:
 			nc = {}
 
-			found_conds = find_cond_nodes(self.restrictions)
+			found_conds = self.find_cond_nodes(self.restrictions)
 
 			always_required = set()
 

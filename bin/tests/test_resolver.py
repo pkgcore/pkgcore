@@ -10,15 +10,18 @@ from pkgcore.util.lists import flatten
 
 def pop_paired_args(args, arg, msg):
 	rets = []
-	try:
-		while True:
-			i = args.index(arg)
-			args.pop(i)
-			if len(args) == i:
-				raise Exception("%s needs to be followed by an arg: %s" % msg)
-			rets.append(args.pop(i))
-	except ValueError:
-		pass
+	if not isinstance(arg, (tuple, list)):
+		arg = [arg]
+	for a in arg:
+		try:
+			while True:
+				i = args.index(a)
+				args.pop(i)
+				if len(args) == i:
+					raise Exception("%s needs to be followed by an arg: %s" % (a, msg))
+				rets.append(args.pop(i))
+		except ValueError:
+			pass
 	return rets
 
 def pop_arg(args, *arg):
@@ -38,8 +41,8 @@ if __name__ == "__main__":
 	import sys
 	args = sys.argv[1:]
 
-	resolver.debug_whitelist.extend(pop_paired_args(args, "--debug", "debug filter to enable"))
-	set_targets = pop_paired_args(args, "--set", "pkg sets to enable")
+	resolver.debug_whitelist.extend(pop_paired_args(args, ["--debug", "-d"], "debug filter to enable"))
+	set_targets = pop_paired_args(args, ["--set", "-s"], "pkg sets to enable")
 
 	trigger_pdb = pop_arg(args, "-p", "--pdb")
 	empty_vdb = pop_arg(args, "-e", "--empty")

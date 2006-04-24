@@ -13,7 +13,7 @@ class fake_blocker(restriction.base):
 		self.key, self.blocks = key, blocks
 	
 	def __str__(self):
-		return "fake_atom(%s, %s)" % self.key, self.blocks
+		return "fake_atom(%s, %s)" % (self.key, self.blocks)
 	
 	def match(self, obj):
 		for x in self.blocks:

@@ -10,5 +10,7 @@ class mirror(object):
 		self.mirrors = mirrors
 
 	def __iter__(self):
-		return imap(lambda x: "%s/%s" % (x, self.uri), self.mirrors)
+		return ("%s/%s" % (x, self.uri) for x in self.mirrors)
 
+	def __str__(self):
+		return "mirror://%s/%s" % (self.mirrors, self.uri)

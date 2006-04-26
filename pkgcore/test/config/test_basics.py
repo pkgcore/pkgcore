@@ -172,6 +172,10 @@ class ParsersTest(unittest.TestCase):
 			(' " foo " ', ' foo '),
 			('	"', '"'),
 			('\nfoo\t\n bar\t', 'foo   bar'),
+			('"a"', 'a'),
+			("'a'", "a"),
+			("'a", "'a"),
+			('"a', '"a'),
 			]:
 			self.assertEquals(basics.str_parser(input), output)
 

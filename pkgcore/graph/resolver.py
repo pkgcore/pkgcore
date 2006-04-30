@@ -31,7 +31,6 @@ class resolver(object):
 		self.current_atom = None
 		self.false_atoms = set()
 		self.atoms = {}
-		self.pkg_atoms = {}
 		self.slots = PigeonHoledSlots()
 
 	def add_root_atom(self, atom):

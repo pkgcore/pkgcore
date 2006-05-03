@@ -35,7 +35,7 @@ class database(fs_template.FsBased):
 		return d
 
 	def _parse_data(self, data, mtime):
-		d = dict(map(lambda x:x.rstrip().split("=", 1), data))
+		d = dict(x.rstrip().split("=", 1) for x in  data)
 		d["_mtime_"] = long(mtime)
 		return d
 		

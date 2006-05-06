@@ -80,4 +80,6 @@ class CachingIterTest(unittest.TestCase):
 
 	def test_sorter(self):
 		self.assertEquals(caching_iter(xrange(100, 0, -1), sorted), tuple(xrange(1,101)))
-		
+		c = caching_iter(xrange(100, 0, -1), sorted)
+		self.assertTrue(c)
+		self.assertEquals(c, tuple(xrange(1, 101)))

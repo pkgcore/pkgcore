@@ -67,10 +67,12 @@ class caching_iter(object):
 
 	def __getitem__(self, index):
 		existing_len = len(self.cached_list)
-		if existing_len == 0 and self.iterable is not None and self.sorter:
-			self.cached_list = tuple(self.sorter(self.iterable))
-			existing_len = len(self.cached_list)
+		if self.iterable is not None and self.sorter:
+			self.cached_list.extend(self.iterable)
+			self.cached_list = tuple(self.sorter(self.cached_list))
 			self.iterable = self.sorter = None
+			existing_len = len(self.cached_list)
+
 		if index < 0:
 			if self.iterable is not None:
 				self.cached_list = tuple(self.cached_list + list(self.iterable))
@@ -106,15 +108,17 @@ class caching_iter(object):
 		return cmp(self.cached_list, other)
 	
 	def __nonzero__(self):
-		if not self.cached_list:
-			if self.iterable:
-				try:
-					self[0]
-					return True
-				except IndexError:
-					return False
-			return False
-		return True
+		if self.cached_list:
+			return True
+
+		if self.iterable:
+			try:
+				self.cached_list.append(self.iterable.next())
+				return True
+			except StopIteration:
+				self.iterable = self.sorter = None
+				self.cached_list = ()
+		return False
 	
 	def __len__(self):
 		if self.iterable is not None:

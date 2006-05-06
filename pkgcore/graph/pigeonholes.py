@@ -43,8 +43,8 @@ class PigeonHoledSlots(object):
 		if not isinstance(atom, restriction.base):
 			raise TypeError("atom must be a restriction.base derivative")
 		# debug.
-		if any(atom is x for x in self.slot_dict.get(atom.key, [])):
-			raise KeyError("%s is already in %s: %s" % (atom, atom.key, self.slot_dict[atom.key]))
+#		if any(atom is x for x in self.slot_dict.get(atom.key, [])):
+#			raise KeyError("%s is already in %s: %s" % (atom, atom.key, self.slot_dict[atom.key]))
 
 		l = []
 		for x in self.slot_dict.setdefault(atom.key, []):

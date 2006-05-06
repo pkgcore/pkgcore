@@ -28,6 +28,7 @@ class DictBased(restriction.base):
 
 	__slots__ = ("restricts_dict", "get_pkg_key", "get_atom_key")
 	type = packages.package_type
+	inst_caching = False
 
 	def __init__(self, restriction_items, get_key_from_package, get_key_from_atom, *args, **kwargs):
 		"""restriction_items is a source of restriction keys and remaining restriction (if none, set it to None)
@@ -46,7 +47,7 @@ class DictBased(restriction.base):
 				if len(remaining) == 1 and (isinstance(remaining, list) or isinstance(remaining, tuple)):
 					remaining = remaining[0]
 				elif isinstance(remaining, (tuple, list)):
-					remaining = packages.AndRestriction(*remaining)
+					remaining = packages.AndRestriction(inst_caching=False, *remaining)
 				elif not isinstance(remaining, base):
 #					print "remaining=",remaining
 #					print "base=",base
@@ -55,7 +56,7 @@ class DictBased(restriction.base):
 			if key in self.restricts_dict:
 				self.restricts_dict[key].add_restriction(remaining)
 			else:
-				self.restricts_dict[key] = packages.OrRestriction(remaining)
+				self.restricts_dict[key] = packages.OrRestriction(remaining, inst_caching=False)
 
 		self.get_pkg_key, self.get_atom_key = get_key_from_package, get_key_from_atom
 

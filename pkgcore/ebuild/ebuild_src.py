@@ -85,7 +85,7 @@ class package(metadata.package):
 	_get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepend", "pdepend")
 	_get_attr.update((x, post_curry(generate_depset, str, x)) for x in ("license", "slot"))
 	_get_attr["fetchables"] = generate_fetchables
-	_get_attr["description"] = lambda s:s.data.get("DESCRIPTION", "").split()
+	_get_attr["description"] = lambda s:s.data.get("DESCRIPTION", "")
 	_get_attr["keywords"] = lambda s:s.data.get("KEYWORDS", "").split()
 	_get_attr["restrict"] = lambda s:s.data.get("RESTRICT", "").split()
 	_get_attr["eapi"] = generate_eapi

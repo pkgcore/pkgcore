@@ -77,3 +77,7 @@ class CachingIterTest(unittest.TestCase):
 		self.assertTrue(caching_iter(xrange(100)) > tuple(xrange(90)))
 		self.assertFalse(caching_iter(xrange(90)) > tuple(xrange(100)))
 		self.assertTrue(caching_iter(xrange(100)) >= tuple(xrange(100)))
+
+	def test_sorter(self):
+		self.assertEquals(caching_iter(xrange(100, 0, -1), sorted), tuple(xrange(1,101)))
+		

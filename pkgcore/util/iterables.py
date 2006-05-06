@@ -55,9 +55,10 @@ class caching_iter(object):
 	"""On demand consumers from an iterable so as to appear
 	like a tuple
 	"""
-	__slots__ = ("iterable", "__weakref__", "cached_list")
+	__slots__ = ("iterable", "__weakref__", "cached_list", "sorter")
 	
-	def __init__(self, iterable):
+	def __init__(self, iterable, sorter=None):
+		self.sorter = sorter
 		self.iterable = iter(iterable)
 		self.cached_list = []
 
@@ -66,6 +67,10 @@ class caching_iter(object):
 
 	def __getitem__(self, index):
 		existing_len = len(self.cached_list)
+		if existing_len == 0 and self.iterable is not None and self.sorter:
+			self.cached_list = tuple(self.sorter(self.iterable))
+			existing_len = len(self.cached_list)
+			self.iterable = self.sorter = None
 		if index < 0:
 			if self.iterable is not None:
 				self.cached_list = tuple(self.cached_list + list(self.iterable))
@@ -91,7 +96,12 @@ class caching_iter(object):
 
 	def __cmp__(self, other):
 		if self.iterable is not None:
-			self.cached_list = tuple(self.cached_list + list(self.iterable))
+			if self.sorter:
+				self.cached_list.extend(self.iterable)
+				self.cached_list = tuple(self.sorter(self.cached_list))
+				self.sorter = None
+			else:
+				self.cached_list = tuple(self.cached_list + list(self.iterable))
 			self.iterable = None
 		return cmp(self.cached_list, other)
 	
@@ -109,11 +119,20 @@ class caching_iter(object):
 	def __len__(self):
 		if self.iterable is not None:
 			self.cached_list.extend(self.iterable)
-			self.cached_list = tuple(self.cached_list)
+			if self.sorter:
+				self.cached_list = tuple(self.sorter(self.cached_list))
+				self.sorter = None
+			else:
+				self.cached_list = tuple(self.cached_list)
 			self.iterable = None
 		return len(self.cached_list)
 
 	def __iter__(self):
+		if len(self.cached_list) == 0 and self.iterable is not None and self.sorter:
+			self.cached_list = tuple(self.sorter(self.iterable))
+			existing_len = len(self.cached_list)
+			self.iterable = self.sorter = None
+
 		for x in self.cached_list:
 			yield x
 		if self.iterable is not None:

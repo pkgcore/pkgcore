@@ -36,7 +36,7 @@ class resolver(object):
 	def add_root_atom(self, atom):
 		if atom in self.atoms:
 			# register a root level stack
-			self.ref_stack_for_atom(h, [])
+			self.ref_stack_for_atom(h, [atom])
 		else:
 			self.search_stacks.append([atom])
 			self.grab_next_stack()
@@ -135,7 +135,9 @@ class resolver(object):
 
 	def satisfy_atom(self, atom, matches):
 		assert atom is self.current_stack[-1]
-		c = choice_point(atom, caching_iter(matches))
+		if not isinstance(matches, caching_iter):
+			matches = caching_iter(matches)
+		c = choice_point(atom, matches)
 		self.atoms[atom] = [c, []]
 		perm_unsatisfy = not bool(c)
 		while c:

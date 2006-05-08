@@ -160,6 +160,8 @@ class IndeterminantDict(dict):
 
 	"""A wrapped dict with a constant dict, and a fallback function to pull keys"""
 
+	__slots__ = ("__initial", "__pull")
+
 	def __init__(self, pull_func, starter_dict=None):
 		if starter_dict is None:
 			self.__initial = {}

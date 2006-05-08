@@ -14,7 +14,7 @@ class PigeonHoledSlots(object):
 
 	def __init__(self):
 		self.slot_dict = {}
-		self.blocks_ref_counts = {}
+		self.blocker_ref_count = {}
 		
 	def fill_slotting(self, obj):
 		"""try to insert obj in, returning any conflicting objs (empty list if inserted successfully)"""
@@ -39,8 +39,15 @@ class PigeonHoledSlots(object):
 			self.slot_dict[key].append(obj)
 		return l
 
+	def get_conflicting_slot(self, pkg):
+		key = pkg.key
+		for x in self.slot_dict.get(key, []):
+			if not isinstance(x, restriction.base) and pkg.slot == x.slot:
+				return x
+		return None
+
 	def find_key_matches(self, key):
-		return [x for x in self.slot_dict.get(key, []) if not isinstance(x. restriction.base)]
+		return [x for x in self.slot_dict.get(key, []) if not isinstance(x, restriction.base)]
 
 	def find_atom_matches(self, atom):
 		return [atom.match(x) for x in self.find_key_matches(atom.key)]
@@ -57,7 +64,11 @@ class PigeonHoledSlots(object):
 		for x in self.slot_dict.setdefault(atom.key, []):
 			if not isinstance(x, restriction.base) and atom.match(x):
 				l.append(x)
-		self.slot_dict[atom.key].append(atom)
+
+		if atom in self.blocker_ref_count:
+			self.blocker_ref_count[atom] += 1
+		else:
+			self.slot_dict[atom.key].append(atom)
 		return l
 		
 	def remove_slotting(self, obj):
@@ -72,14 +83,14 @@ class PigeonHoledSlots(object):
 			del self.slot_dict[key]
 
 	def remove_limiter(self, atom):
-		count = self.blocker_ref_counts[atom]
+		count = self.blocker_ref_count[atom]
 		if count == 1:
-			del self.blocker_ref_counts[atom]
+			del self.blocker_ref_count[atom]
 			l = [x for x in self.slot_dict[atom.key] if x is not atom]
 			if not l:
 				del self.slot_dict[atom.key]
 		else:
-			self.blocker_ref_counts[atom] = count - 1
+			self.blocker_ref_count[atom] = count - 1
 
 	def __contains__(self, obj):
 		return any(True for o in self.slot_dict[obj.key] if o == obj)

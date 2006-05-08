@@ -3,7 +3,7 @@
 
 from pkgcore.restrictions.packages import OrRestriction
 from pkgcore.repository import prototype
-from pkgcore.package import metadata
+from pkgcore.package import virtual
 
 class tree(prototype.tree):
 
@@ -12,7 +12,7 @@ class tree(prototype.tree):
 		if not callable(grab_virtuals_func):
 			raise TypeError("grab_virtuals_func must be a callable")
 		self._grab_virtuals = grab_virtuals_func
-		self.package_class = factory(self).new_package
+		self.package_class = virtual.factory(self).new_package
 		self._virtuals = None
 
 	def _fetch_metadata(self, pkg):
@@ -41,32 +41,3 @@ class tree(prototype.tree):
 		if cat == "virtual":
 			return self._virtuals[pkg].keys()
 		raise KeyError("no '%s' package in this repository" % catpkg)
-
-
-class package(metadata.package):
-
-	def __getattr__ (self, key):
-		val = None
-		if key == "rdepends":
-			val = self.data
-		elif key == "depends":
-			val = OrRestriction()
-		elif key == "provides":
-			val = OrRestriction()
-		elif key == "metapkg":
-			val = True
-		else:
-			return super(package, self).__getattr__(key)
-		self.__dict__[key] = val
-		return val
-
-	def _fetch_metadata(self):
-		data = self._parent._parent_repo._fetch_metadata(self)
-		return data
-
-
-class factory(metadata.factory):
-	child_class = package
-
-	def __init__(self, parent, *args, **kwargs):
-		super(factory, self).__init__(parent, *args, **kwargs)

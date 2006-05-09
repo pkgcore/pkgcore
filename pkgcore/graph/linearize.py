@@ -107,6 +107,7 @@ class merge_plan(object):
 			return [atom]
 		l = self.state.match_atom(atom)
 		if l:
+			print "pre-solved %s%s, [%s]" % (depth*2*" ", atom, ", ".join(str(x) for x in l))
 			return False
 		# not in the plan thus far.
 		matches = self.get_db_matches(atom, depth=depth, limit_to_vdb=limit_to_vdb)
@@ -129,11 +130,15 @@ class merge_plan(object):
 			# we can't.
 			return [atom]
 		
+		if current_stack:
+			print "processing   %s%s  [%s]" % (depth *2 * " ", atom, current_stack[-1][0])
+		else:
+			print "processing   %s%s" % (depth *2 * " ", atom)
+
 		current_stack.append([atom, choices, limit_to_vdb])
 		saved_state = self.state.current_state()
 
 		blocks = []
-		print "processing       %s%s" % (depth *2 * " ", atom)
 		while choices:
 			satisfied = True
 			additions, blocks, nolonger_used = [], [], []
@@ -198,7 +203,7 @@ class merge_plan(object):
 			if not satisfied:
 				# need to clean up blockers here... cleanup our additions in light of reductions from choices.reduce
 #				print "dirty dirty little boy!  skipping cleaning",additions
-				print "reseting for     %s%s because of %s" % (depth*2*" ", atom, failure)
+				print "reseting for %s%s because of %s" % (depth*2*" ", atom, failure)
 				self.state.reset_state(saved_state)
 			else:
 				break
@@ -208,7 +213,7 @@ class merge_plan(object):
 			current_stack.pop()
 			self.state.reset_state(saved_state)
 			return [atom] + failure
-		print "choose           %s%s for %s" % (depth *2*" ", atom, choices.current_pkg)
+		print "choose for   %s%s, %s" % (depth *2*" ", atom, choices.current_pkg)
 		# well, we got ourselvs a resolution.
 		l = self.state.add_pkg(choices)
 		if l:
@@ -264,7 +269,7 @@ class merge_plan(object):
 		matches = self.atom_cache.get(atom, None)
 		# hack.
 		if matches is None or limit_to_vdb:
-			print "querying db for  %s%s" % (depth*2*" ", atom)
+#			print "querying db for  %s%s" % (depth*2*" ", atom)
 			matches = self.pkg_selection_strategy(self, self.vdb, dbs, atom)
 			if not isinstance(matches, caching_iter):
 				matches = caching_iter(matches)
@@ -281,16 +286,22 @@ class merge_plan(object):
 				blocker, finalize=True)
 		return new_atom			 
 
+
 	# selection strategies for atom matches
+
 	@staticmethod
 	def prefer_highest_version_strategy(self, vdb, dbs, atom):
+		return caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs + [vdb]]), reversed)
+
+	@staticmethod
+	def prefer_lowest_version_strategy(self, vdb, dbs, atom):
 		return caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs + [vdb]]), sorted)
 
 	@staticmethod
 	def prefer_reuse_strategy(self, vdb, dbs, atom):
 		return caching_iter(itertools.chain(
 			vdb.itermatch(atom), 
-			caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs]), sorted)
+			caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs]), reversed)
 		))
 
 	@staticmethod

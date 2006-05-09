@@ -73,9 +73,9 @@ if __name__ == "__main__":
 	domain = conf.domain["livefs domain"]
 	vdb, repo = domain.vdb[0], domain.repos[0]
 	resolver = linearize.merge_plan(vdb, repo, pkg_selection_strategy=strategy, verify_vdb=deep)
-	print "calling resolve"
 	ret = True
 	for x in atoms:
+		print "\ncalling resolve for %s..." % x
 		ret = resolver.add_atom(x)
 		if not ret:
 			print "ret was",ret

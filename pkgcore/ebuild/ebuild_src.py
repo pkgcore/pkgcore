@@ -43,7 +43,7 @@ def generate_providers(self):
 	func = post_curry(virtual_ebuild, self._parent, self, {"rdepends":rdep})
 	# re-enable license at some point.
 	#, "license":self.license})
-	return generate_depset(self, func, "provide")
+	return conditionals.DepSet(self.data.get("PROVIDE", ""), virtual_ebuild, element_func=func)
 
 def generate_fetchables(self):
 	chksums = parse_digest(os.path.join(os.path.dirname(self.path), "files", \

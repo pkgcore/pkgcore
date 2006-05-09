@@ -11,10 +11,14 @@ from pkgcore.util.currying import post_curry
 from pkgcore.util.iterables import expandable_chain
 from pkgcore.util.lists import iter_flatten
 
-def gen_depset(s, operators=None):
+def gen_depset(s, operators=None, func=None):
+	if func is not None:
+		kwds = {"element_func":func}
+	else:
+		kwds ={}
 	if operators is None:
 		operators = {"":boolean.AndRestriction, "||":boolean.OrRestriction}
-	return DepSet(s, str, operators=operators)
+	return DepSet(s, str, operators=operators, **kwds)
 
 class DepSetParsingTest(unittest.TestCase):
 
@@ -125,6 +129,9 @@ class DepSetParsingTest(unittest.TestCase):
 			locals()["test '%s'" % x] = post_curry(check, x)
 		else:
 			locals()["test '%s'" % x[0]] = post_curry(check, x)
+
+	def test_element_func(self):
+		self.assertEqual(gen_depset("asdf fdas", func=post_curry(str)).element_class, "".__class__)
 
 	def test_disabling_or(self):
 		self.assertRaises(ParseError, gen_depset, "|| ( a b )",

@@ -25,13 +25,16 @@ class DepSet(boolean.AndRestriction):
 	type=packages.package_type
 	negate = False
 
-	def __init__(self, dep_str, element_class, operators={"||":packages.OrRestriction,"":packages.AndRestriction}):
+	def __init__(self, dep_str, element_class, operators={"||":packages.OrRestriction,"":packages.AndRestriction}, 
+		element_func=None):
 
 		"""dep_str is a dep style syntax, element_func is a callable returning the obj for each element, and
 		cleanse_string controls whether or translation of tabs/newlines is required"""
 
 		self.restrictions = []
 		self.element_class = element_class
+		if element_func is None:
+			element_func = element_class
 		self._node_conds = False
 		
 		raw_conditionals = []
@@ -86,7 +89,7 @@ class DepSet(boolean.AndRestriction):
 					raise ParseError(dep_str)
 				else:
 					# node/element.
-					depsets[-1].append(element_class(k))
+					depsets[-1].append(element_func(k))
 
 
 		except IndexError:

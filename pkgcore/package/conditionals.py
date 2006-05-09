@@ -122,7 +122,8 @@ class PackageWrapper(object):
 			return getattr(self._wrapped_pkg, attr)
 
 	def __str__(self):
-		return "config wrapper: %s, configurable('%s'):%s" % (self._wrapped_pkg, self._configurable_name, self._configurable)
+#		return "config wrapper: %s, configurable('%s'):%s" % (self._wrapped_pkg, self._configurable_name, self._configurable)
+		return "config wrapped(%s): %s" % (self._configurable_name, self._wrapped_pkg)
 
 	def freeze(self):
 		o = copy.copy(self)

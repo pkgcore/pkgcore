@@ -31,7 +31,6 @@ class PigeonHoledSlots(object):
 						# exit,with a sanity check.
 						for y in (z for z in self.slot_dict[key] if isinstance(z, restriction.base)):
 							if y.match(x):
-								import pdb;pdb.set_trace()
 								raise Exception
 						return []
 					l.append(x)
@@ -55,14 +54,12 @@ class PigeonHoledSlots(object):
 	def add_limiter(self, atom, key=None):
 		"""add a limiter, returning any conflicting objs"""
 		if not isinstance(atom, restriction.base):
-			import pdb;pdb.set_trace()
 			raise TypeError("atom must be a restriction.base derivative")
 		# debug.
 #		if any(atom is x for x in self.slot_dict.get(atom.key, [])):
 #			raise KeyError("%s is already in %s: %s" % (atom, atom.key, self.slot_dict[atom.key]))
 
 		if key is None:
-			import pdb;pdb.set_trace()
 			key = atom.key
 		l = []
 		for x in self.slot_dict.setdefault(key, []):

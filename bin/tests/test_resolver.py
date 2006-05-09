@@ -39,6 +39,11 @@ if __name__ == "__main__":
 	import sys
 	args = sys.argv[1:]
 
+	if pop_arg(args, "-h", "--help"):
+		print "args supported, -D, -u, and -s (system|world)"
+		print "can specify additional atoms when specifying -s, no atoms/sets available, defaults to sys-apps/portage"
+		sys.exit(1)
+
 	trigger_pdb = pop_arg(args, "-p", "--pdb")
 	empty_vdb = pop_arg(args, "-e", "--empty")
 	upgrade = pop_arg(args, "-u", "--upgrade")

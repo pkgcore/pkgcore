@@ -156,7 +156,7 @@ class merge_plan(object):
 					else:
 						if ratom in current_stack:
 							# cycle.  whee.
-							print "ratom cycle",ratom,current_stack
+#							print "ratom cycle",ratom,current_stack
 							failures = self._rec_add_atom(ratom, current_stack, depth=depth+1, limit_to_vdb=True)
 						else:
 							failure = self._rec_add_atom(ratom, current_stack, depth=depth+1)
@@ -228,7 +228,8 @@ class merge_plan(object):
 			matches = self.pkg_selection_strategy(self, self.vdb, dbs, atom)
 			if not isinstance(matches, caching_iter):
 				matches = caching_iter(matches)
-			self.atom_cache[atom] = matches
+			if not limit_to_vdb:
+				self.atom_cache[atom] = matches
 		return matches
 
 	def generate_mangled_blocker(self, choices, blocker):

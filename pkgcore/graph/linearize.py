@@ -146,7 +146,7 @@ class merge_plan(object):
 						# reduce our options.
 						failure = True
 					else:
-						failure = self._rec_add_atom(datom, current_stack, depth=depth+1)
+						failure = self._rec_add_atom(datom, current_stack, depth=depth+1, limit_to_vdb=limit_to_vdb)
 					if failure:
 						# reduce.
 						nolonger_used = choices.reduce_atoms(datom)
@@ -163,6 +163,7 @@ class merge_plan(object):
 						if ratom in current_stack:
 							# cycle.  whee.
 #							print "ratom cycle",ratom,current_stack
+							import pdb;pdb.set_trace()
 							failure = self._rec_add_atom(ratom, current_stack, depth=depth+1, limit_to_vdb=True)
 						else:
 							failure = self._rec_add_atom(ratom, current_stack, depth=depth+1)
@@ -192,12 +193,16 @@ class merge_plan(object):
 		if l:
 			# this means in this branch of resolution, someone slipped something in already.
 			# cycle, basically.
-			print "was trying to insert atom '%s' pkg '%s',\nbut '%s' exists already" % (atom, choices.current_pkg, l)
+			print "was trying to insert atom '%s' pkg '%s',\nbut '[%s]' exists already" % (atom, choices.current_pkg, 
+				", ".join(str(y) for y in l))
 			# hack.  see if what was insert is enough for us.
 			l2 = self.state.match_atom(atom)
 			if l2:
+				print "and we 'parently match it.  ignoring (should prune here however)"
 				current_stack.pop()
 				return False
+			import time
+			time.sleep(3)
 			
 #			import pdb;pdb.set_trace()
 			import time

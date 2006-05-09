@@ -74,11 +74,15 @@ if __name__ == "__main__":
 	vdb, repo = domain.vdb[0], domain.repos[0]
 	resolver = linearize.merge_plan(vdb, repo, pkg_selection_strategy=strategy, verify_vdb=deep)
 	print "calling resolve"
+	ret = True
 	for x in atoms:
 		ret = resolver.add_atom(x)
 		if not ret:
 			print "ret was",ret
 			print "resolution failed"
 			import pdb;pdb.set_trace()
-
-	print "successfull, 'parently"
+	print "\nbuildplan"
+	for x in resolver.state.iter_pkg_ops():
+		print "%.8s      %s" % (x[0], x[1])
+	print "result was successfull, 'parently"
+	

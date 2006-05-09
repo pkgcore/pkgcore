@@ -35,6 +35,15 @@ class nodeps_pkg(object):
 			return cmp(self._pkg, other._pkg)
 		return cmp(self._pkg, other)
 
+def rindex_gen(iterable):
+	"""returns zero for no match, else the negative len offset for the match"""
+	count = -1
+	for y in iterable:
+		if y:
+			return count
+		count -= 1
+	return 0
+
 class InconsistantState(Exception):
 	pass
 
@@ -109,7 +118,8 @@ class merge_plan(object):
 				matches = None
 				# and was intractable because it has a hard dep on an unsolvable atom.
 		if not matches:
-			self.insoluble.add(atom)
+			if not limit_to_vdb:
+				self.insoluble.add(atom)
 			return [atom]
 
 		# experiment. ;)
@@ -119,7 +129,7 @@ class merge_plan(object):
 			# we can't.
 			return [atom]
 		
-		current_stack.append(atom)
+		current_stack.append([atom, choices, limit_to_vdb])
 		saved_state = self.state.current_state()
 
 		blocks = []
@@ -138,13 +148,13 @@ class merge_plan(object):
 						import pdb;pdb.set_trace()
 						raise Exception("whee, damn depends blockers")
 				else:
-					if datom in current_stack:
+					if any(True for x in current_stack if x[0] == datom):
 						# cycle.
 #						new_atom = packages.AndRestriction(datom, packages.Restriction("depends", 
 #							values.ContainmentMatch(datom, 
 #						import pdb;pdb.set_trace()
 						# reduce our options.
-						failure = True
+						failure = [datom]
 					else:
 						failure = self._rec_add_atom(datom, current_stack, depth=depth+1, limit_to_vdb=limit_to_vdb)
 					if failure:
@@ -160,11 +170,22 @@ class merge_plan(object):
 						# only as depends for a node required for rdepends
 						blocks.append(ratom)
 					else:
-						if ratom in current_stack:
+						index = rindex_gen(x[0] == ratom for x in current_stack)
+						if index != 0:
 							# cycle.  whee.
 #							print "ratom cycle",ratom,current_stack
-							import pdb;pdb.set_trace()
-							failure = self._rec_add_atom(ratom, current_stack, depth=depth+1, limit_to_vdb=True)
+#							import pdb;pdb.set_trace()
+
+							if current_stack[index][2] == True:
+								# well.  we know the node is valid, so we can ignore this cycle.
+								failure = []
+							else:
+								# force limit_to_vdb to True to try and isolate the cycle to installed vdb components
+								val = current_stack[-1][2]
+								current_stack[-1][2] = True
+								failure = self._rec_add_atom(ratom, current_stack, depth=depth+1, limit_to_vdb=True)
+								current_stack[-1][2] = val
+							
 						else:
 							failure = self._rec_add_atom(ratom, current_stack, depth=depth+1)
 						if failure:
@@ -177,17 +198,17 @@ class merge_plan(object):
 			if not satisfied:
 				# need to clean up blockers here... cleanup our additions in light of reductions from choices.reduce
 #				print "dirty dirty little boy!  skipping cleaning",additions
-				print "reseting for     %s%s" % (depth*2*" ", atom)
+				print "reseting for     %s%s because of %s" % (depth*2*" ", atom, failure)
 				self.state.reset_state(saved_state)
 			else:
 				break
 
 		if not choices:
-			print "found no solution for %s%s" % (depth *2 * " ", atom)
+			print "no solution for  %s%s" % (depth*2*" ", atom)
 			current_stack.pop()
 			self.state.reset_state(saved_state)
 			return [atom] + failure
-
+		print "choose           %s%s for %s" % (depth *2*" ", atom, choices.current_pkg)
 		# well, we got ourselvs a resolution.
 		l = self.state.add_pkg(choices)
 		if l:
@@ -317,6 +338,13 @@ class plan_state(object):
 			self.plan.append((action, choices, pkg))
 		return False
 		
+	def iter_pkg_ops(self):
+		ops = {ADD:"add", REMOVE:"remove", REPLACE:"replace"}
+		for x in self.plan:
+			if x[0] in ops:
+				yield ops[x[0]], x[2]
+		
+			
 	def add_blocker(self, blocker, key=None):
 		"""adds blocker, returning any packages blocked"""
 		l = self.state.add_limiter(blocker, key=key)

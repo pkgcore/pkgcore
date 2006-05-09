@@ -148,5 +148,10 @@ class PackageWrapper(object):
 				return c
 		elif isinstance(other, self._wrapped_pkg.__class__):
 			return cmp(self._wrapped_pkg, other)
-		raise TypeError
+		else:
+			c = cmp(other, self)
+			if c == 0:
+				return 0
+			return -c
+		raise NotImplementedError
 

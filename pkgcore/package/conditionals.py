@@ -140,10 +140,13 @@ class PackageWrapper(object):
 		return None
 
 	def __cmp__(self, other):
-		if isinstance(self, PackageWrapper) and isinstance(other, PackageWrapper):
-			c = cmp(self._wrapped_pkg, other._wrapped_pkg)
-			if c == 0:
-				return cmp(self._configurable, other._configurable)
-			return c
+		if isinstance(other, PackageWrapper):
+			if isinstance(other._wrapped_pkg, self._wrapped_pkg.__class__):
+				c = cmp(self._wrapped_pkg, other._wrapped_pkg)
+				if c == 0:
+					return cmp(self._configurable, other._configurable)
+				return c
+		elif isinstance(other, self._wrapped_pkg.__class__):
+			return cmp(self._wrapped_pkg, other)
 		raise TypeError
 

@@ -52,23 +52,27 @@ class PigeonHoledSlots(object):
 	def find_atom_matches(self, atom):
 		return [atom.match(x) for x in self.find_key_matches(atom.key)]
 			
-	def add_limiter(self, atom):
+	def add_limiter(self, atom, key=None):
 		"""add a limiter, returning any conflicting objs"""
 		if not isinstance(atom, restriction.base):
+			import pdb;pdb.set_trace()
 			raise TypeError("atom must be a restriction.base derivative")
 		# debug.
 #		if any(atom is x for x in self.slot_dict.get(atom.key, [])):
 #			raise KeyError("%s is already in %s: %s" % (atom, atom.key, self.slot_dict[atom.key]))
 
+		if key is None:
+			import pdb;pdb.set_trace()
+			key = atom.key
 		l = []
-		for x in self.slot_dict.setdefault(atom.key, []):
+		for x in self.slot_dict.setdefault(key, []):
 			if not isinstance(x, restriction.base) and atom.match(x):
 				l.append(x)
 
 		if atom in self.blocker_ref_count:
 			self.blocker_ref_count[atom] += 1
 		else:
-			self.slot_dict[atom.key].append(atom)
+			self.slot_dict[key].append(atom)
 		return l
 		
 	def remove_slotting(self, obj):

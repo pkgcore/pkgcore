@@ -6,10 +6,10 @@ from pkgcore.package import metadata
 from pkgcore.ebuild import conditionals
 from pkgcore.package.atom import atom
 from digest import parse_digest
-from pkgcore.util.mappings import LazyValDict
+from pkgcore.util.mappings import LazyValDict, IndeterminantDict
 from pkgcore.util.currying import post_curry, alias_class_method
 from pkgcore.restrictions.values import StrExactMatch
-from pkgcore.restrictions.packages import PackageRestriction
+from pkgcore.restrictions.packages import PackageRestriction, AndRestriction
 from pkgcore.chksum.errors import MissingChksum
 from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror
@@ -37,6 +37,13 @@ def create_fetchable_from_uri(chksums, mirrors, uri):
 
 def generate_depset(s, c, *keys):
 	return conditionals.DepSet(" ".join([s.data.get(x.upper(),"") for x in keys]), c)
+
+def generate_providers(self):
+	rdep = AndRestriction(self.versioned_atom, finalize=True)
+	func = post_curry(virtual_ebuild, self._parent, self, {"rdepends":rdep})
+	# re-enable license at some point.
+	#, "license":self.license})
+	return generate_depset(self, func, "provide")
 
 def generate_fetchables(self):
 	chksums = parse_digest(os.path.join(os.path.dirname(self.path), "files", \
@@ -80,7 +87,8 @@ class package(metadata.package):
 	_get_attr["PF"] = lambda s: s.package+"-"+s.fullver
 	_get_attr["PN"] = operator.attrgetter("package")
 	_get_attr["PR"] = lambda s: "-r"+str(s.revision is not None and s.revision or 0)
-	_get_attr["provides"] = post_curry(generate_depset, atom, "provide")
+#	_get_attr["provides"] = post_curry(generate_depset, atom, "provide")
+	_get_attr["provides"] = generate_providers
 	_get_attr["depends"] = post_curry(generate_depset, atom, "depend")
 	_get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepend", "pdepend")
 	_get_attr.update((x, post_curry(generate_depset, str, x)) for x in ("license", "slot"))
@@ -153,3 +161,18 @@ class package_factory(metadata.factory):
 def generate_new_factory(*a, **kw):
 	return package_factory(*a, **kw).new_package
 
+
+class virtual_ebuild(metadata.package):
+
+	def __init__(self, cpv, parent_repository, pkg, data):
+		self.__dict__["data"] = IndeterminantDict(lambda *a: str(), data)
+		self.__dict__["_orig_data"] = data
+		self.__dict__["actual_pkg"] = pkg
+		metadata.package.__init__(self, cpv, parent_repository)
+
+	def __getattr__(self, attr):
+		if attr in self._orig_data:
+			return self._orig_data[attr]
+		return metadata.package.__getattr__(self, attr)
+
+	_get_attr = package._get_attr.copy()

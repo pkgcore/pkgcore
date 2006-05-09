@@ -7,8 +7,6 @@ from pkgcore.graph.choice_point import choice_point
 from pkgcore.util.currying import pre_curry
 from pkgcore.restrictions import packages, values, boolean, restriction
 
-def reversed_iter(iterable):
-	return reversed(list(iterable))
 
 class nodeps_repo(object):
 	def __init__(self, repo):
@@ -293,7 +291,7 @@ class merge_plan(object):
 
 	@staticmethod
 	def prefer_highest_version_strategy(self, vdb, dbs, atom):
-		return caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs + [vdb]]), reversed_iter)
+		return caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs + [vdb]]), reversed)
 
 	@staticmethod
 	def prefer_lowest_version_strategy(self, vdb, dbs, atom):
@@ -303,19 +301,22 @@ class merge_plan(object):
 	def prefer_reuse_strategy(self, vdb, dbs, atom):
 		return caching_iter(itertools.chain(
 			vdb.itermatch(atom), 
-			caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs]), reversed_iter)
+			caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs]), reversed)
 		))
 
 	@staticmethod
-	def force_max_strategy(self, vdb, dbs, atom):
+	def force_max_version_strategy(self, vdb, dbs, atom):
 		try:
 			yield max(vdb.match(atom) + [pkg for repo in dbs for pkg in repo.itermatch(atom)])
 		except ValueError:
 			# max throws it if max([]) is called.
 			yield []
+		except Exception, e:
+			import pdb;pdb.set_trace()
+			raise
 
 	@staticmethod
-	def force_min_strategy(self, vdb, dbs, atom):
+	def force_min_version_strategy(self, vdb, dbs, atom):
 		try:
 			yield min(vdb.match(atom) + [pkg for repo in dbs for pkg in repo.itermatch(atom)])
 		except ValueError:

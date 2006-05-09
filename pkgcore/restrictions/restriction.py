@@ -67,3 +67,31 @@ class AlwaysBool(base):
 
 	def __str__(self):
 		return "always '%s'" % self.negate
+
+class Negate(base):
+	__slots__ = ("type", "_restrict")
+	__inst_caching__ = False
+	
+	def __init__(self, restrict):
+		self.type = restrict.type
+		self._restrict = restrict
+		
+	def match(self, *a, **kw):
+		return not self._restrict.match(*a, **kw)
+
+	def __str__(self):
+		return " not (%s)" % self._restrict
+
+class FakeType(base):
+	__slots__ = ("type", "_restrict")
+	__inst_caching__ = False
+		
+	def __init__(self, restrict, new_type):
+		self.type = new_type
+		self._restrict = restrict
+	
+	def match(self, *a, **kw):
+		return self._restrict.match(*a, **kw)
+
+	def __str__(self):
+		return "Faked type(%s): %s" % (self.type, self._restrict)

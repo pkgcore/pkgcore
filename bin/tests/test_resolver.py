@@ -40,14 +40,20 @@ if __name__ == "__main__":
 	args = sys.argv[1:]
 
 	if pop_arg(args, "-h", "--help"):
-		print "args supported, -D, -u, and -s (system|world)"
+		print "args supported, -D, [-u|-m] and -s (system|world)"
 		print "can specify additional atoms when specifying -s, no atoms/sets available, defaults to sys-apps/portage"
 		sys.exit(1)
 
 	trigger_pdb = pop_arg(args, "-p", "--pdb")
 	empty_vdb = pop_arg(args, "-e", "--empty")
 	upgrade = pop_arg(args, "-u", "--upgrade")
-	if upgrade:
+	max = pop_arg(args, "-m", "--max-upgrade")
+	if max and max == upgrade:
+		print "can only choose max, or upgrade"
+		sys.exit(1)
+	if max:
+		strategy = linearize.merge_plan.force_max_version_strategy
+	elif upgrade:
 		strategy = linearize.merge_plan.prefer_highest_version_strategy
 	else:
 		strategy = linearize.merge_plan.prefer_reuse_strategy

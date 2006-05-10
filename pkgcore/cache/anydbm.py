@@ -48,7 +48,7 @@ class database(fs_template.FsBased):
 	def iteritems(self):
 		return self._db.iteritems()
 
-	def __getitem__(self, cpv):
+	def _getitem(self, cpv):
 		# we override getitem because it's just a cpickling of the data handed in.
 		return pickle.loads(self._db[cpv])
 

@@ -169,12 +169,12 @@ class atom(boolean.AndRestriction):
 			if atom.find(":", s+1) != -1:
 				raise MalformedAtom(atom, "second specification of slotting")
 			# slot dep.
-			self.slot = atom[s + 1:].rstrip().split(",")
-			if not all(self.slot):
+			self.slot = atom[s + 1:].rstrip()
+			if not self.slot:
 				raise MalformedAtom(atom, "cannot have empty slot deps in slot restriction")
 			atom = atom[:s]
 		else:
-			self.slot = ()
+			self.slot = None
 		del u,s
 
 		if atom.endswith("*"):
@@ -222,8 +222,8 @@ class atom(boolean.AndRestriction):
 					r.append(packages.PackageRestriction("use", values.ContainmentMatch(negate=True, all=True, *false_use)))
 				if true_use:
 					r.append(packages.PackageRestriction("use", values.ContainmentMatch(all=True, *true_use)))
-			if self.slot:
-				r.append(packages.PackageRestriction("slot", values.ContainmentMatch(*self.slot)))
+			if self.slot is not None:
+				r.append(packages.PackageRestriction("slot", values.StrExactMatch(self.slot)))
 			setattr(self, attr, r)
 			return r
 

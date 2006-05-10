@@ -106,7 +106,7 @@ class UnconfiguredTree(prototype.tree):
 class ConfiguredTree(configured.tree):
 	configurable = "use"
 	config_wrappables = dict((x, currying.alias_class_method("evaluate_depset")) for x in
-		["depends","rdepends", "fetchables", "license", "slot", "src_uri", "license", "provides"])
+		["depends","rdepends", "fetchables", "license", "src_uri", "license", "provides"])
 	
 	def __init__(self, raw_repo, domain_settings, fetcher=None):
 		if "USE" not in domain_settings:

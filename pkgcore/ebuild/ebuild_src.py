@@ -71,7 +71,7 @@ class package(metadata.package):
 		"eapi", "restrict"]
 
 	_config_wrappables = dict((x, alias_class_method("evaluate_depset")) for x in
-		["depends","rdepends", "fetchables", "license", "slot", "src_uri", "license", "provides"])
+		["depends","rdepends", "fetchables", "license", "src_uri", "license", "provides"])
 
 	def __init__(self, cpv, parent, pull_path, mirrors=None):
 		super(package, self).__init__(cpv, parent)
@@ -91,7 +91,9 @@ class package(metadata.package):
 	_get_attr["provides"] = generate_providers
 	_get_attr["depends"] = post_curry(generate_depset, atom, "depend")
 	_get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepend", "pdepend")
-	_get_attr.update((x, post_curry(generate_depset, str, x)) for x in ("license", "slot"))
+#	_get_attr.update((x, post_curry(generate_depset, str, x)) for x in ("license", "slot"))
+	_get_attr["license"] = post_curry(generate_depset, str, "license")
+	_get_attr["slot"] = lambda s: s.data.get("slot", "0").strip()
 	_get_attr["fetchables"] = generate_fetchables
 	_get_attr["description"] = lambda s:s.data.get("DESCRIPTION", "")
 	_get_attr["keywords"] = lambda s:s.data.get("KEYWORDS", "").split()

@@ -17,7 +17,7 @@ class package(metadata.package):
 		elif key == "metapkg":
 			val = True
 		elif key == "slot":
-			val = 0
+			val = "0"
 		else:
 			return super(package, self).__getattr__(key)
 		self.__dict__[key] = val

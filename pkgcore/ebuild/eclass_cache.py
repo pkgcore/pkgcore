@@ -50,8 +50,6 @@ class cache(base):
 		"""given a dict as returned by get_eclass_data, walk it comparing it to internal eclass view
 		returns a boolean representing whether that eclass data is still up to date, or not
 		"""
-		if not isinstance(ec_dict, dict):
-			return False
 		for eclass, tup in ec_dict.iteritems():
 			if eclass not in self.eclasses or tuple(tup) != self.eclasses[eclass]:
 				return False

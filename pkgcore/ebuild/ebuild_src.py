@@ -71,7 +71,7 @@ class package(metadata.package):
 		"eapi", "restrict"]
 
 	_config_wrappables = dict((x, alias_class_method("evaluate_depset")) for x in
-		["depends","rdepends", "fetchables", "license", "slot", "src_uri", "license"])
+		["depends","rdepends", "fetchables", "license", "slot", "src_uri", "license", "provides"])
 
 	def __init__(self, cpv, parent, pull_path, mirrors=None):
 		super(package, self).__init__(cpv, parent)

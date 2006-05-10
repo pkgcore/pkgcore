@@ -29,7 +29,7 @@ class OnDiskProfile(profiles.base):
 
 		dep_path = os.path.join(self.basepath, profile, "deprecated")
 		if os.path.isfile(dep_path):
-			logger.warn("profile '%s' is marked as deprecated, read '%s' please" % (profile, dep_path))
+			logging.warn("profile '%s' is marked as deprecated, read '%s' please" % (profile, dep_path))
 		del dep_path
 
 		parents = [None]
@@ -84,7 +84,7 @@ class OnDiskProfile(profiles.base):
 				if p[0] == "-":
 					try:	pkgs.remove(p[1:])
 					except KeyError:
-						logger.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
+						logging.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
 				else:	pkgs.add(p)
 
 		visibility = []
@@ -106,7 +106,7 @@ class OnDiskProfile(profiles.base):
 				if p[0] == "-":
 					try:	use_mask.remove(p[1:])
 					except KeyError:
-						logger.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
+						logging.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
 				else:
 					use_mask.add(p)
 
@@ -120,7 +120,7 @@ class OnDiskProfile(profiles.base):
 				if p[0] == "-":
 					try:	maskers.remove(p[1:])
 					except KeyError:
-						logger.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
+						logging.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
 				else:
 					maskers.extend([p])
 

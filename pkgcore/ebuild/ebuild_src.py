@@ -137,7 +137,6 @@ class package_factory(metadata.factory):
 		return None
 
 	def _update_metadata(self, pkg):
-
 		ebp=processor.request_ebuild_processor()
 		mydata = ebp.get_keys(pkg, self._ecache)
 		processor.release_ebuild_processor(ebp)
@@ -168,7 +167,15 @@ class virtual_ebuild(metadata.package):
 		self.__dict__["data"] = IndeterminantDict(lambda *a: str(), data)
 		self.__dict__["_orig_data"] = data
 		self.__dict__["actual_pkg"] = pkg
+		state = set(self.__dict__.keys())
+		# hack. :)
 		metadata.package.__init__(self, cpv, parent_repository)
+		if not self.version:
+			for x in self.__dict__.keys():
+				if x not in state:
+					del self.__dict__[x]
+			metadata.package.__init__(self, cpv+"-0", parent_repository)
+			assert self.version
 
 	def __getattr__(self, attr):
 		if attr in self._orig_data:

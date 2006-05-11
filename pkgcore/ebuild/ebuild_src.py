@@ -37,7 +37,7 @@ def create_fetchable_from_uri(chksums, mirrors, uri):
 	return fetchable(file, uri, chksums[file])
 
 def generate_depset(s, c, *keys, **kwds):
-	if kwds.pop("non_package_type"):
+	if kwds.pop("non_package_type", False):
 		kwds["operators"]={"||":boolean.OrRestriction,"":boolean.AndRestriction}
 	try:
 		return conditionals.DepSet(" ".join([s.data.get(x.upper(),"") for x in keys]), c, **kwds)

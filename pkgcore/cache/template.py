@@ -33,7 +33,7 @@ class database(object):
 			self.updates = 0
 		d=self._getitem(cpv)
 		if self.serialize_eclasses and "_eclasses_" in d:
-			d["_eclasses_"] = reconstruct_eclasses(cpv, d["_eclasses_"])
+			d["_eclasses_"] = self.reconstruct_eclasses(cpv, d["_eclasses_"])
 		return d
 
 	def _getitem(self, cpv):
@@ -52,10 +52,10 @@ class database(object):
 				if d[k] == '':
 					del d[k]
 			if self.serialize_eclasses and "_eclasses_" in values:
-				d["_eclasses_"] = serialize_eclasses(d["_eclasses_"])
+				d["_eclasses_"] = self.deconstruct_eclasses(d["_eclasses_"])
 		elif self.serialize_eclasses and "_eclasses_" in values:
 			d = ProtectedDict(values)
-			d["_eclasses_"] = serialize_eclasses(d["_eclasses_"])
+			d["_eclasses_"] = self.deconstruct_eclasses(d["_eclasses_"])
 		else:
 			d = values
 		self._setitem(cpv, d)
@@ -147,7 +147,7 @@ class database(object):
 				yield cpv
 
 	@staticmethod
-	def serialize_eclasses(eclass_dict):
+	def deconstruct_eclasses(eclass_dict):
 		"""takes a dict, returns a string representing said dict"""
 		return "\t".join(["%s\t%s\t%s" % (k, v[0], str(v[1])) for k,v in eclass_dict.items()])
 

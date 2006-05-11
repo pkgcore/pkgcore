@@ -3,7 +3,7 @@
 from pkgcore.config import load_config
 from pkgcore.graph import linearize
 from pkgcore.package.atom import atom
-from pkgcore.util.lists import flatten
+from pkgcore.util.lists import flatten, stable_unique
 
 
 def pop_paired_args(args, arg, msg):
@@ -75,6 +75,7 @@ if __name__ == "__main__":
 			atoms = [atom("sys-apps/portage")]
 	else:
 		atoms = [atom(x) for x in args] + set_targets
+	atoms = stable_unique(atoms)
 
 	domain = conf.domain["livefs domain"]
 	vdb, repo = domain.vdb[0], domain.repos[0]

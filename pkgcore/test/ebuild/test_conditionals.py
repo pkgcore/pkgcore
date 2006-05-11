@@ -25,12 +25,12 @@ class DepSetParsingTest(unittest.TestCase):
 	# generate a lot of parse error assertions.
 	for x in ("( )", "( a b c", "(a b c )", 
 		"( a b c)", "()", "x?( a )", 
-		"?x (a)", "x? (a )", "x? ( a b)", 
+		"?x (a)", "x? (a )", "x? (a)", "x? ( a b)", 
 		"x? ( x? () )", "x? ( x? (a)", "(", ")",
 		"||(", "||()", "||( )", "|| ()", 
 		"|| (", "|| )", "||)",	"|| ( x? ( )", 
 		"|| ( x?() )", "|| (x )", "|| ( x)",
-		"a|", "a?", "a?b", "a||b", 
+		"a|", "a?", "a(b", "a)", "a||b", 
 		"a(", "a)b", "x? y", "( x )?", "||?"):
 		locals()["test assert ParseError '%s'" % x] = \
 			post_curry(unittest.TestCase.assertRaises, ParseError, gen_depset, x)

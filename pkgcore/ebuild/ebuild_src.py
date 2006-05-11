@@ -53,7 +53,7 @@ def generate_providers(self):
 		return conditionals.DepSet(self.data.get("PROVIDE", ""), virtual_ebuild, element_func=func,
 			operators={"||":boolean.OrRestriction,"":boolean.AndRestriction})
 	except conditionals.ParseError, p:
-		raise metadata.MetadataException(s, "provide", str(p))
+		raise metadata.MetadataException(self, "provide", str(p))
 
 def generate_fetchables(self):
 	chksums = parse_digest(os.path.join(os.path.dirname(self.path), "files", \
@@ -62,7 +62,7 @@ def generate_fetchables(self):
 		return conditionals.DepSet(self.data["SRC_URI"], lambda x:
 			create_fetchable_from_uri(chksums, self._mirrors, x), operators={})
 	except conditionals.ParseError, p:
-		raise metadata.MetadataException(s, "src_uri", str(p))
+		raise metadata.MetadataException(self, "src_uri", str(p))
 
 def generate_eapi(self):
 	try:

@@ -80,4 +80,4 @@ class MetadataException(Exception):
 		self.pkg, self.attr, self.error = pkg, attr, error
 	
 	def __str__(self):
-		return "Metadata Exception: pkg %s, attr %s\nerror: '%s'" % (self.pkg, self.attr, self.error)
+		return "Metadata Exception: pkg %s, attr %s\nerror: %s" % (self.pkg, self.attr, self.error)

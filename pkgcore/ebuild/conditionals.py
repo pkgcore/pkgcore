@@ -222,4 +222,4 @@ class ParseError(Exception):
 		self.dep_str = s
 
 	def __str__(self):
-		return "%s is unparseable" % self.dep_str
+		return "%s is unparseable" % repr(self.dep_str)

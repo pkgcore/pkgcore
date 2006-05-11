@@ -36,20 +36,29 @@ def create_fetchable_from_uri(chksums, mirrors, uri):
 	return fetchable(file, uri, chksums[file])
 
 def generate_depset(s, c, *keys):
-	return conditionals.DepSet(" ".join([s.data.get(x.upper(),"") for x in keys]), c)
+	try:
+		return conditionals.DepSet(" ".join([s.data.get(x.upper(),"") for x in keys]), c)
+	except conditionals.ParseError, p:
+		raise metadata.MetadataException(s, str(keys), str(p))
 
 def generate_providers(self):
 	rdep = AndRestriction(self.versioned_atom, finalize=True)
 	func = post_curry(virtual_ebuild, self._parent, self, {"rdepends":rdep})
 	# re-enable license at some point.
 	#, "license":self.license})
-	return conditionals.DepSet(self.data.get("PROVIDE", ""), virtual_ebuild, element_func=func)
+	try:
+		return conditionals.DepSet(self.data.get("PROVIDE", ""), virtual_ebuild, element_func=func)
+	except conditionals.ParseError, p:
+		raise metadata.MetadataException(s, "provide", str(p))
 
 def generate_fetchables(self):
 	chksums = parse_digest(os.path.join(os.path.dirname(self.path), "files", \
 		"digest-%s-%s" % (self.package, self.fullver)))
-	return conditionals.DepSet(self.data["SRC_URI"], lambda x:
-		create_fetchable_from_uri(chksums, self._mirrors, x), operators={})
+	try:
+		return conditionals.DepSet(self.data["SRC_URI"], lambda x:
+			create_fetchable_from_uri(chksums, self._mirrors, x), operators={})
+	except conditionals.ParseError, p:
+		raise metadata.MetadataException(s, "src_uri", str(p))
 
 def generate_eapi(self):
 	try:

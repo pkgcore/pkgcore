@@ -74,3 +74,10 @@ class factory(object):
 		defaults to [], {}
 		Probably will be rolled into a class/instance attribute whenever someone cleans this up"""
 		return ([],{})
+
+class MetadataException(Exception):
+	def __init__(self, pkg, attr, error):
+		self.pkg, self.attr, self.error = pkg, attr, error
+	
+	def __str__(self):
+		return "Metadata Exception: pkg %s, attr %s\nerror: '%s'" % (self.pkg, self.attr, self.error)

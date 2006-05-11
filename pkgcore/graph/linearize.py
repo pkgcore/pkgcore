@@ -93,15 +93,16 @@ class merge_plan(object):
 		print "finished"
 	
 	def add_atom(self, atom):
+		"""add an atom, recalculating as necessary.  returns the last unresolvable atom stack if a solution can't be found,
+		else returns [] (meaning the atom was successfully added)"""
 		if atom not in self.forced_atoms:
 			stack = deque()
-			self._rec_add_atom(atom, stack)
-			ret = self.forced_atoms.add(atom)
+			ret = self._rec_add_atom(atom, stack)
+			self.forced_atoms.add(atom)
 			if ret:
 				print "failed- %s" % ret
-				import pdb;pdb.set_trace()
-				return False
-		return True
+				return ret
+		return []
 
 	def _rec_add_atom(self, atom, current_stack, depth=0, limit_to_vdb=False):
 		"""returns false on no issues (inserted succesfully), else a list of the stack that screwed it up"""
@@ -265,7 +266,7 @@ class merge_plan(object):
 				import pdb;pdb.set_trace()
 		current_stack.pop()
 		return False
-	
+
 	def get_db_matches(self, atom, depth=0, limit_to_vdb=False):
 		if limit_to_vdb:
 			dbs = []

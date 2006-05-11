@@ -81,15 +81,17 @@ if __name__ == "__main__":
 	vdb, repo = domain.vdb[0], domain.repos[0]
 	resolver = linearize.merge_plan(vdb, repo, pkg_selection_strategy=strategy, verify_vdb=deep)
 	ret = True
+	import time
+	start_time = time.time()
 	for x in atoms:
 		print "\ncalling resolve for %s..." % x
 		ret = resolver.add_atom(x)
-		if not ret:
+		if ret:
 			print "ret was",ret
 			print "resolution failed"
-			import pdb;pdb.set_trace()
+			sys.exit(2)
 	print "\nbuildplan"
 	for x in resolver.state.iter_pkg_ops():
 		print "%.8s      %s" % (x[0], x[1])
-	print "result was successfull, 'parently"
+	print "result was successfull, 'parently- took %.2s seconds" % (time.time() - start_time)
 	

@@ -19,7 +19,7 @@ class database(fs_template.FsBased):
 
 	def _getitem(self, cpv):
 		try:
-			myf = open(os.path.join(self.location, cpv),"r")
+			myf = open(os.path.join(self.location, cpv),"r", 32384)
 		except IOError, e:
 			if e.errno == errno.ENOENT:
 				raise KeyError(cpv)
@@ -48,12 +48,12 @@ class database(fs_template.FsBased):
 		s = cpv.rfind("/")
 		fp = os.path.join(self.location,cpv[:s],".update.%i.%s" % (os.getpid(), cpv[s+1:]))
 		try:
-			myf = open(fp, "w")
+			myf = open(fp, "w", 32384)
 		except IOError, ie:
 			if ie.errno == errno.ENOENT:
 				try:
 					self._ensure_dirs(cpv)
-					myf = open(fp,"w")
+					myf = open(fp,"w", 32384)
 				except (OSError, IOError),e:
 					raise cache_errors.CacheCorruption(cpv, e)
 			else:

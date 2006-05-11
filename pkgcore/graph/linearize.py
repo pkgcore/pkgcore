@@ -229,12 +229,9 @@ class merge_plan(object):
 				print "and we 'parently match it.  ignoring (should prune here however)"
 				current_stack.pop()
 				return False
-			import time
-			time.sleep(3)
-			
 #			import pdb;pdb.set_trace()
-			import time
-			time.sleep(3)
+#			import time
+#			time.sleep(3)
 			self.state.reset_state(saved_state)
 			current_stack.pop()
 			return [atom]

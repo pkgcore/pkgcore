@@ -111,7 +111,7 @@ class tree(prototype.tree):
 				data =local_source(fp)
 			else:
 				try:
-					f = open(os.path.join(path, key))
+					f = open(os.path.join(path, key), "r", 32384)
 				except (OSError, IOError):
 					return None
 				data = f.read()
@@ -178,7 +178,7 @@ class install(repo_interfaces.install):
 					s = v
 				if not s.endswith("\n"):
 					s += "\n"
-				open(os.path.join(dirpath, rewrite.get(k, k.upper())), "w").write(s)
+				open(os.path.join(dirpath, rewrite.get(k, k.upper())), "w", 32384).write(s)
 		return True
 
 

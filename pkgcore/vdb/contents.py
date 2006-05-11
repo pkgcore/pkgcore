@@ -69,7 +69,7 @@ class ContentsFile(contentsSet):
 	def _read(self):
 		self.clear()
 		try:
-			infile = open(self._file_location, "r")
+			infile = open(self._file_location, "r", 32384)
 			for line in infile:
 				if "\t" not in line:
 					line = self._parse_old(line.strip("\n"))
@@ -102,7 +102,7 @@ class ContentsFile(contentsSet):
 
 	def _write(self):
 		try:
-			outfile = open(self._file_location + ".temp","w")
+			outfile = open(self._file_location + ".temp","w", 32384)
 
 			for obj in self:
 

@@ -11,7 +11,7 @@ def iter_read_bash(bash_source):
 	once the file object is no longer referenced, the handle will be closed, but be proactive instead of relying on the 
 	garbage collector."""
 	if isinstance(bash_source, basestring):
-		bash_source = open(bash_source, 'r')
+		bash_source = open(bash_source, 'r', 32384)
 	for s in bash_source:
 		s=s.strip()
 		if s.startswith("#") or s == "":
@@ -62,7 +62,7 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False, sourcing
 		d, protected = ProtectedDict(vars_dict), True
 	else:
 		d, protected = {}, False
-	f = open(bash_source, 'r')
+	f = open(bash_source, 'r', 32384)
 	s = bash_parser(f, sourcing_command=sourcing_command, env=d)
 
 	try:

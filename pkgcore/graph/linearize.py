@@ -8,8 +8,7 @@ from pkgcore.util.currying import pre_curry
 from pkgcore.restrictions import packages, values, boolean, restriction
 
 
-def reversed_iter(genexp):
-	return reversed(sorted(genexp))
+rev_sort = pre_curry(sorted, reverse=True)
 
 class nodeps_repo(object):
 	def __init__(self, repo):
@@ -294,7 +293,7 @@ class merge_plan(object):
 
 	@staticmethod
 	def prefer_highest_version_strategy(self, vdb, dbs, atom):
-		return caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs + [vdb]]), reversed_iter)
+		return caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs + [vdb]]), rev_sort)
 
 	@staticmethod
 	def prefer_lowest_version_strategy(self, vdb, dbs, atom):
@@ -304,7 +303,7 @@ class merge_plan(object):
 	def prefer_reuse_strategy(self, vdb, dbs, atom):
 		return caching_iter(itertools.chain(
 			vdb.itermatch(atom), 
-			caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs]), reversed_iter)
+			caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs]), rev_sort)
 		))
 
 	@staticmethod

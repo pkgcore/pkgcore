@@ -161,7 +161,12 @@ class merge_plan(object):
 #							values.ContainmentMatch(datom, 
 #						import pdb;pdb.set_trace()
 						# reduce our options.
+#
 						failure = [datom]
+						val = current_stack[-1][2]
+						current_stack[-1][2] = True
+						failure = self._rec_add_atom(datom, current_stack, depth=depth+1, limit_to_vdb=True)
+						current_stack[-1][2] = val
 					else:
 						failure = self._rec_add_atom(datom, current_stack, depth=depth+1, limit_to_vdb=limit_to_vdb)
 					if failure:
@@ -211,7 +216,7 @@ class merge_plan(object):
 				break
 
 		if not choices:
-			print "no solution for  %s%s" % (depth*2*" ", atom)
+			print "no solution  %s%s" % (depth*2*" ", atom)
 			current_stack.pop()
 			self.state.reset_state(saved_state)
 			return [atom] + failure

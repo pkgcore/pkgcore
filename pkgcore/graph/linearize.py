@@ -9,7 +9,7 @@ from pkgcore.restrictions import packages, values, boolean, restriction
 
 
 def reversed_iter(genexp):
-	return reversed(list(genexp))
+	return reversed(sorted(genexp))
 
 class nodeps_repo(object):
 	def __init__(self, repo):

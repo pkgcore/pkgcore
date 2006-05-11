@@ -317,18 +317,15 @@ class merge_plan(object):
 			yield max(vdb.match(atom) + [pkg for repo in dbs for pkg in repo.itermatch(atom)])
 		except ValueError:
 			# max throws it if max([]) is called.
-			yield []
-		except Exception, e:
-			import pdb;pdb.set_trace()
-			raise
+			pass
 
 	@staticmethod
 	def force_min_version_strategy(self, vdb, dbs, atom):
 		try:
 			yield min(vdb.match(atom) + [pkg for repo in dbs for pkg in repo.itermatch(atom)])
 		except ValueError:
-			# max throws it if max([]) is called.
-			yield []
+			# min throws it if min([]) is called.
+			pass
 
 REMOVE  = 0
 ADD     = 1

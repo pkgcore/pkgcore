@@ -3,6 +3,7 @@
 
 from pkgcore.util.compatibility import any, all
 from itertools import chain
+from pkgcore.util.lists import stable_unique
 
 class choice_point(object):
 	
@@ -66,8 +67,9 @@ class choice_point(object):
 			if existing[1] >= len(existing[2]):
 				self.matches_idx = self.matches_idx + 1
 		if self.matches_idx != existing[0]:
+			# use stable_unique to preserve ordering, but cut down on dupes.
 			existing[0:3] = [self.matches_idx, 0,
-				map(tuple, getattr(self.matches[self.matches_idx], name).solutions())]
+				[tuple(stable_unique(x)) for x in getattr(self.matches[self.matches_idx], name).solutions()]]
 		return existing[2][existing[1]]
 	
 	@property

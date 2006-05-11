@@ -10,6 +10,7 @@ from pkgcore.util.mappings import LazyValDict, IndeterminantDict
 from pkgcore.util.currying import post_curry, alias_class_method
 from pkgcore.restrictions.values import StrExactMatch
 from pkgcore.restrictions.packages import PackageRestriction, AndRestriction
+from pkgcore.restrictions import boolean
 from pkgcore.chksum.errors import MissingChksum
 from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror
@@ -35,9 +36,11 @@ def create_fetchable_from_uri(chksums, mirrors, uri):
 		raise MissingChksum(file)
 	return fetchable(file, uri, chksums[file])
 
-def generate_depset(s, c, *keys):
+def generate_depset(s, c, *keys, **kwds):
+	if kwds.pop("non_package_type"):
+		kwds["operators"]={"||":boolean.OrRestriction,"":boolean.AndRestriction}
 	try:
-		return conditionals.DepSet(" ".join([s.data.get(x.upper(),"") for x in keys]), c)
+		return conditionals.DepSet(" ".join([s.data.get(x.upper(),"") for x in keys]), c, **kwds)
 	except conditionals.ParseError, p:
 		raise metadata.MetadataException(s, str(keys), str(p))
 
@@ -47,7 +50,8 @@ def generate_providers(self):
 	# re-enable license at some point.
 	#, "license":self.license})
 	try:
-		return conditionals.DepSet(self.data.get("PROVIDE", ""), virtual_ebuild, element_func=func)
+		return conditionals.DepSet(self.data.get("PROVIDE", ""), virtual_ebuild, element_func=func,
+			operators={"||":boolean.OrRestriction,"":boolean.AndRestriction})
 	except conditionals.ParseError, p:
 		raise metadata.MetadataException(s, "provide", str(p))
 
@@ -101,7 +105,7 @@ class package(metadata.package):
 	_get_attr["depends"] = post_curry(generate_depset, atom, "depend")
 	_get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepend", "pdepend")
 #	_get_attr.update((x, post_curry(generate_depset, str, x)) for x in ("license", "slot"))
-	_get_attr["license"] = post_curry(generate_depset, str, "license")
+	_get_attr["license"] = post_curry(generate_depset, str, "license", non_package_type=True)
 	_get_attr["slot"] = lambda s: s.data.get("SLOT", "0").strip()
 	_get_attr["fetchables"] = generate_fetchables
 	_get_attr["description"] = lambda s:s.data.get("DESCRIPTION", "")

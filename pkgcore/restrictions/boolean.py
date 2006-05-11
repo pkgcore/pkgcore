@@ -49,7 +49,7 @@ class base(restriction.base):
 		if hasattr(self, "type"):
 			try:
 				for r in new_restrictions:
-					if r.type != self.type:
+					if r.type is not None and r.type != self.type:
 						raise TypeError("instance '%s' is restriction type '%s', must be '%s'" % (r, r.type, self.type))
 			except AttributeError:
 				raise TypeError("type '%s' instance '%s' has no restriction type, '%s' required" % (r.__class__, 

@@ -133,7 +133,10 @@ class merge_plan(object):
 			return [atom]
 		
 		if current_stack:
-			print "processing   %s%s  [%s]" % (depth *2 * " ", atom, current_stack[-1][0])
+			if limit_to_vdb:
+				print "processing   %s%s  [%s] vdb bound" % (depth *2 * " ", atom, current_stack[-1][0])
+			else:
+				print "processing   %s%s  [%s]" % (depth *2 * " ", atom, current_stack[-1][0])
 		else:
 			print "processing   %s%s" % (depth *2 * " ", atom)
 

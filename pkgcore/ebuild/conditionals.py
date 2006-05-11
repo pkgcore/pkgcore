@@ -73,7 +73,7 @@ class DepSet(boolean.AndRestriction):
 							k2 = ''
 
 						if k2 != "(":
-							raise ParseError(dep_str)
+							raise ParseError(dep_str, k2)
 
 					else:
 						# Unconditional subset - useful in the || ( ( a b ) c ) case
@@ -86,7 +86,7 @@ class DepSet(boolean.AndRestriction):
 						use_asserts.append(convert_use_reqs([x[:-1] for x in raw_conditionals if x.endswith("?")]))
 
 				elif "(" in k or ")" in k or "|" in k:
-					raise ParseError(dep_str)
+					raise ParseError(dep_str, k)
 				else:
 					# node/element.
 					depsets[-1].append(element_func(k))
@@ -218,8 +218,11 @@ class DepSet(boolean.AndRestriction):
 
 class ParseError(Exception):
 
-	def __init__(self, s):	
-		self.dep_str = s
+	def __init__(self, s, token=None):
+		self.dep_str, self.token = s, token
 
 	def __str__(self):
-		return "%s is unparseable" % repr(self.dep_str)
+		if self.token is not None:
+			return "%s is unparesable\nflagged token- %s" % (repr(self.dep_str), repr(self.token))
+		else:
+			return "%s is unparseable" % repr(self.dep_str)

@@ -5,7 +5,7 @@ from pkgcore.chksum.errors import ParseChksumError
 def parse_digest(path, throw_errors=True):
 	d = {}
 	try:
-		f = open(path)
+		f = open(path, "r", 32384)
 		for line in f:
 			l = line.split()
 			if not l:

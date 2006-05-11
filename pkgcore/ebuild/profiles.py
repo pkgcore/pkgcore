@@ -48,7 +48,7 @@ class OnDiskProfile(profiles.base):
 			if os.path.isfile(fp):
 				l = []
 				try:
-					f = open(fp,"r")
+					f = open(fp,"r", 32384)
 				except (IOError, OSError):
 					raise profiles.ProfileException("failed reading parent from %s" % path)
 				for x in f:

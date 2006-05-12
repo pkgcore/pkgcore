@@ -175,6 +175,12 @@ class IndeterminantDict(dict):
 		else:
 			return self.__pull(key)
 
+	def get(self, key, val=None):
+		try:
+			return self[key]
+		except KeyError:
+			return val
+
 	def __hash__(self):
 		raise TypeError("non hashable")
 	
@@ -183,7 +189,7 @@ class IndeterminantDict(dict):
 
 	clear = update = pop = popitem = setdefault = __setitem__ = __delitem__
 	__iter__ = keys = values = __len__ = __delitem__
-	
+
 
 class StackedDict(UserDict.DictMixin):
 

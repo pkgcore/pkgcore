@@ -216,3 +216,47 @@ class StackedDictTest(unittest.TestCase):
 	def test_keys(self):
 		self.assertEqual(sorted(mappings.StackedDict(self.orig_dict, self.new_dict)),
 			sorted(self.orig_dict.keys() + self.new_dict.keys()))
+
+
+class IndeterminantDictTest(unittest.TestCase):
+	
+	def test_disabled_methods(self):
+		d = mappings.IndeterminantDict(lambda *a: None)
+		for x in ("clear", ("update", {}), ("pop", 1), ("setdefault", 1),
+			"__iter__", "__len__", "__hash__", ("__delitem__", 1), 
+			("__setitem__", 2), ("popitem", 2), "iteritems", "iterkeys",
+			"keys", "items", "itervalues", "values"):
+			if isinstance(x, tuple):
+				self.assertRaises(TypeError, x[0], x[1])
+			else:
+				self.assertRaises(TypeError, x[0])
+
+	def test_starter_dict(self):
+		d = mappings.IndeterminantDict(lambda key: False, starter_dict={}.fromkeys(xrange(100), True))
+		for x in xrange(100):
+			self.assertEqual(d[x], True)
+		for x in xrange(100, 110):
+			self.assertEqual(d[x], False)
+		
+	def test_behaviour(self):
+		val = []
+		d = mappings.IndeterminantDict(lambda key: val.append(key), {}.fromkeys(xrange(10), True))
+		self.assertEqual(d[0], True)
+		self.assertEqual(d[11], None)
+		self.assertEqual(val, [11])
+		def f(*a):
+			raise KeyError
+		self.assertRaises(KeyError, mappings.IndeterminantDict(f).__getitem__, 1)
+
+
+	def test_get(self):
+		def f(key):
+			if key == 2:
+				raise KeyError
+			return True
+		d = mappings.IndeterminantDict(f, {1:1})
+		self.assertEqual(d.get(1, 1), 1)
+		self.assertEqual(d.get(1, 2), 1)
+		self.assertEqual(d.get(2), None)
+		self.assertEqual(d.get(2,2), 2)
+		self.assertEqual(d.get(3), True)

@@ -8,7 +8,8 @@ from pkgcore.repository import prototype, errors
 #needed to grab the PN
 from pkgcore.package.cpv import CPV as cpv
 from pkgcore.fs.util import ensure_dirs
-from pkgcore.util.mappings import LazyValDict
+from pkgcore.util.mappings import IndeterminantDict
+from pkgcore.util.currying import pre_curry
 from pkgcore.vdb.contents import ContentsFile
 from pkgcore.plugins import get_plugin
 from pkgcore.interfaces import repo as repo_interfaces
@@ -49,14 +50,10 @@ class tree(prototype.tree):
 
 	def _get_packages(self, category):
 		cpath = os.path.join(self.base,category.lstrip(os.path.sep))
-		l=set()
 		try:
 			try:
-				for x in os.listdir(cpath):
-					if stat.S_ISDIR(os.stat(os.path.join(cpath,x)).st_mode) and not x.endswith(".lockfile"):
-						l.add(cpv(x).package)
-				return tuple(l)
-
+				return tuple(cpv(x).package for x in os.listdir(cpath) if stat.S_ISDIR(os.stat(os.path.join(cpath,x)).st_mode) and not 
+					x.endswith(".lockfile"))
 			except (OSError, IOError), e:
 				raise KeyError("failed fetching packages for category %s: %s" % \
 				(os.path.join(self.base,category.lstrip(os.path.sep)), str(e)))
@@ -90,36 +87,27 @@ class tree(prototype.tree):
 	
 	def _get_metadata(self, pkg):
 		path = os.path.dirname(pkg.path)
-		pathjoin = os.path.sep.join
-		try:
-			keys = list(self._metadata_rewrites.get(x, x) for x in os.listdir(path) if 
-				x.isupper() and stat.S_ISREG(os.stat(pathjoin((path, x))).st_mode))
-			keys.append("environment")
-		except OSError:
-			return None
+		return IndeterminantDict(pre_curry(self._internal_load_key, path))
 
-		def load_data(key):
-			if key == "contents":
-				data = ContentsFile(os.path.join(path, "CONTENTS"))
-			elif key == "environment":
-				fp=os.path.join(path, key)
-				if not os.path.exists(fp):
-					if not os.path.exists(fp+".bz2"):
-						# icky.
-						raise KeyError("environment: no environment file found")
-					fp += ".bz2"
-				data =local_source(fp)
-			else:
-				try:
-					f = open(os.path.join(path, key), "r", 32384)
-				except (OSError, IOError):
-					return None
-				data = f.read()
-				f.close()
-				data = data.strip()
-			return data
+	def _internal_load_key(self, path, key):
+		key = self._metadata_rewrites.get(key, key)
+		if key == "contents":
+			data = ContentsFile(os.path.join(path, "CONTENTS"))
+		elif key == "environment":
+			fp=os.path.join(path, key)
+			if not os.path.exists(fp):
+				if not os.path.exists(fp+".bz2"):
+					# icky.
+					raise KeyError("environment: no environment file found")
+				fp += ".bz2"
+			data =local_source(fp)
+		else:
+			try:
+				data = open(os.path.join(path, key), "r", 32384).read().strip()
+			except (OSError, IOError):
+				raise KeyError(key)
+		return data
 
-		return LazyValDict(keys, load_data)
 
 	def notify_remove_package(self, pkg):
 		remove_it = len(self.packages[pkg.category]) == 1

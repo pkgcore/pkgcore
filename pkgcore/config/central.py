@@ -125,11 +125,9 @@ class ConfigManager(object):
 		allow_reuse controls whether existing instantiations of that section
 		can be reused or not.
 		"""
-		if conf is None:
+		if allow_reuse:
 			if section in self.instantiated:
 				return self.instantiated[section]
-		else:
-			allow_reuse = False
 
 		# collapse_config will call get_section_config if conf is None
 		conf = self.collapse_config(section, conf)

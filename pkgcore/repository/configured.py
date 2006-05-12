@@ -30,7 +30,7 @@ class tree(prototype.tree):
 	def __getattr__(self, attr):
 		return getattr(self.raw_repo, attr)
 	
-	def itermatch(self, restrict, restrict_solutions=None):
+	def itermatch(self, restrict, restrict_solutions=None, **kwds):
 		if restrict_solutions is None:
 			if hasattr(restrict, "solutions"):
 				restrict_solutions = restrict.solutions(full_solution_expansion=True)
@@ -44,7 +44,7 @@ class tree(prototype.tree):
 		# second walk of the list.  ick.
 		if sum(imap(len, restrict_solutions)) == sum(imap(len, filtered_solutions)):
 			# well.  that was an expensive waste of time- doesn't check anything we care about.
-			return prototype.tree.itermatch(self, restrict, restrict_solutions=restrict_solutions)
+			return prototype.tree.itermatch(self, restrict, restrict_solutions=restrict_solutions, **kwds)
 
 		# disable inst_caching for this restriction.  it's a one time generation, and potentially
 		# quite costly for hashing
@@ -52,5 +52,5 @@ class tree(prototype.tree):
 			*[AndRestriction(disable_inst_caching=True, *x) for x in filtered_solutions])
 
 		return (pkg for pkg in prototype.tree.itermatch(self, filtered_restrict, 
-			restrict_solutions=filtered_solutions) if restrict.force_True(pkg))
+			restrict_solutions=filtered_solutions, **kwds) if restrict.force_True(pkg))
 

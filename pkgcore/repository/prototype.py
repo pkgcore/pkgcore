@@ -129,7 +129,7 @@ class tree(object):
 	def match(self, atom):
 		return list(self.itermatch(atom))
 
-	def itermatch(self, restrict, restrict_solutions=None):
+	def itermatch(self, restrict, restrict_solutions=None, sorter=None):
 		"""yield matches one by one for restrict
 		restriction_solutions is only useful if you've already split the restrict into it's seperate
 		solutions.
@@ -203,15 +203,22 @@ class tree(object):
 		else:
 			candidates = self.packages
 
-
-		#actual matching.
-		for catpkg in candidates:
-			for ver in self.versions[catpkg]:
-				pkg = self.package_class(catpkg+"-"+ver)
-				if restrict.match(pkg):
-					yield pkg
-		return
-
+		if sorter is None:
+			#actual matching.
+			for catpkg in candidates:
+				for ver in self.versions[catpkg]:
+					pkg = self.package_class(catpkg+"-"+ver)
+					if restrict.match(pkg):
+						yield pkg
+		else:
+			l = []
+			for catpkg in candidates:
+				for ver in self.versions[catpkg]:
+					pkg = self.package_class(catpkg+"-"+ver)
+					if restrict.match(pkg):
+						l.append(pkg)
+			for pkg in sorter(l):
+				yield pkg
 	def notify_remove_package(self, pkg):
 		cp = "%s/%s" % (pkg.category, pkg.package)
 		self.versions.force_regen(cp)

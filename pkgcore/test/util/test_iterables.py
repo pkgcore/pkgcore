@@ -2,7 +2,7 @@
 # License: GPL2
 
 from twisted.trial import unittest
-from pkgcore.util.iterables import expandable_chain, caching_iter
+from pkgcore.util.iterables import expandable_chain, caching_iter, iter_sort
 
 
 class ExpandableChainTest(unittest.TestCase):
@@ -83,3 +83,10 @@ class CachingIterTest(unittest.TestCase):
 		c = caching_iter(xrange(100, 0, -1), sorted)
 		self.assertTrue(c)
 		self.assertEquals(c, tuple(xrange(1, 101)))
+
+
+class iter_sortTest(unittest.TestCase):
+	def test_ordering(self):
+		f = lambda l: sorted(l, key=lambda x:x[0])
+		self.assertEquals(list(iter_sort(f, *[iter(xrange(x, x+10)) for x in (30, 20, 0, 10)])),
+			list(xrange(40)))

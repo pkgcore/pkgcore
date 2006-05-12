@@ -157,3 +157,33 @@ class caching_iter(object):
 
 	def __str__(self):
 		return "iterable(%s), cached: %s" % (self.iterable, str(self.cached_list))
+
+def iter_sort(sorter, *iterables):
+	"""requires a sorter func, which is passed a list of [element, iterable]
+	remaining args are iterables to consume from, and are _required_ to yield in presorted order"""
+	l = []
+	for x in iterables:
+		try:
+			l.append([x.next(), x])
+		except StopIteration:
+			pass
+	if len(l) == 1:
+		yield l[0][0]
+		for x in l[0][1]:
+			yield x
+		return
+	l = sorter(l)
+	while l:
+		yield l[0][0]
+		try:
+			l[0][0] = l[0][1].next()
+		except StopIteration:
+			del l[0]
+			if len(l) == 1:
+				yield l[0][0]
+				for x in l[0][1]:
+					yield x
+				break
+			continue
+		if l[0][0] < l[1][0]:
+			l = sorter(l)

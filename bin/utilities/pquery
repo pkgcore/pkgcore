@@ -131,7 +131,7 @@ if __name__ == "__main__":
 		atoms = packages.OrRestriction(*atoms)
 	for a in atoms:
 		for repo in repos:
-			for pkg in results_filter(repo.itermatch(a)):
+			for pkg in results_filter(repo.itermatch(a, sorter=pre_curry(sorted, reverse=True))):
 				try:	print str(atomstr(pkg))
 				except AttributeError:
 					print str(pkg)

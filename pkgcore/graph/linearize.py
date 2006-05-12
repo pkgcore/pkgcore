@@ -1,14 +1,12 @@
-import itertools
+import itertools, operator
 from collections import deque
 from pkgcore.util.compatibility import any, all
-from pkgcore.util.iterables import caching_iter
+from pkgcore.util.iterables import caching_iter, iter_sort
 from pkgcore.graph.pigeonholes import PigeonHoledSlots
 from pkgcore.graph.choice_point import choice_point
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import pre_curry, post_curry
 from pkgcore.restrictions import packages, values, boolean, restriction
 
-
-rev_sort = pre_curry(sorted, reverse=True)
 
 class nodeps_repo(object):
 	def __init__(self, repo):
@@ -52,6 +50,20 @@ class InconsistantState(Exception):
 
 class InsolubleSolution(Exception):
 	pass
+
+
+#iter/pkg sorting functions for selection strategy
+pkg_sort_highest = pre_curry(sorted, reverse=True)
+pkg_sort_lowest = sorted
+
+pkg_grabber = operator.itemgetter(0)
+def highest_iter_sort(l):
+	l.sort(key=pkg_grabber, reverse=True)
+	return l
+
+def lowest_iter_sort(l):
+	l.sort(key=pkg_grabber)
+	return l
 
 
 class merge_plan(object):
@@ -299,34 +311,37 @@ class merge_plan(object):
 
 	@staticmethod
 	def prefer_highest_version_strategy(self, vdb, dbs, atom):
-		return caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs + [vdb]]), rev_sort)
+		return caching_iter(iter_sort(highest_iter_sort, 
+			*[r.itermatch(atom, sorter=pkg_sort_highest) for r in dbs + [vdb]])
+		)
 
 	@staticmethod
 	def prefer_lowest_version_strategy(self, vdb, dbs, atom):
-		return caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs + [vdb]]), sorted)
+		return caching_iter(iter_sort(lowest_iter_sort, 
+			*[r.itermatch(atom, sorter=pkg_sort_lowest) for r in dbs + [vdb]])
+		)
 
 	@staticmethod
 	def prefer_reuse_strategy(self, vdb, dbs, atom):
-		return caching_iter(itertools.chain(
-			vdb.itermatch(atom), 
-			caching_iter(itertools.chain(*[r.itermatch(atom) for r in dbs]), rev_sort)
-		))
+		return caching_iter(
+			itertools.chain(vdb.itermatch(atom, sorter=pkg_sort_highest), 
+			*[r.itermatch(atom, sorter=pkg_sort_highest) for r in dbs])
+		)
 
-	@staticmethod
-	def force_max_version_strategy(self, vdb, dbs, atom):
+	def generic_force_version_strategy(self, vdb, dbs, atom, iter_sorter, pkg_sorter):
 		try:
-			yield max(vdb.match(atom) + [pkg for repo in dbs for pkg in repo.itermatch(atom)])
-		except ValueError:
-			# max throws it if max([]) is called.
+			# nasty, but works.
+			yield iter_sort(iter_sorter, *[r.itermatch(atom, sorter=pkg_sorter) for r in [vdb] + dbs]).next()
+#			yield max(itertools.chain(*[r.itermatch(atom) for r in [vdb] + dbs]))
+		except StopIteration:
+			# twas no matches
 			pass
 
-	@staticmethod
-	def force_min_version_strategy(self, vdb, dbs, atom):
-		try:
-			yield min(vdb.match(atom) + [pkg for repo in dbs for pkg in repo.itermatch(atom)])
-		except ValueError:
-			# min throws it if min([]) is called.
-			pass
+	force_max_version_strategy = staticmethod(post_curry(generic_force_version_strategy, 
+		highest_iter_sort, pkg_sort_highest))
+	force_min_version_strategy = staticmethod(post_curry(generic_force_version_strategy, 
+		lowest_iter_sort, pkg_sort_lowest))
+
 
 REMOVE  = 0
 ADD     = 1

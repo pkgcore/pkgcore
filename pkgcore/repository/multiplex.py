@@ -58,10 +58,10 @@ class tree(prototype.tree):
 			raise KeyError("category '%s' not found" % package)
 		return tuple(d)
 
-	def itermatch(self, atom):
+	def itermatch(self, atom, **kwds):
 		s = set()
 		for t in self.trees:
-			for m in t.itermatch(atom):
+			for m in t.itermatch(atom, **kwds):
 				if m not in s:
 					yield m
 					s.add(m)

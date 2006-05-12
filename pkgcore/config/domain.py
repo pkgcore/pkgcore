@@ -45,7 +45,7 @@ class domain:
 	def __init__(self, incrementals, root, profile, repositories, vdb, **settings):
 		# voodoo, unfortunately (so it goes)
 		# break this up into chunks once it's stabilized (most of code here has already, but still more to add)
-		maskers, unmaskers, keywords, license = profile.maskers[:], [], [], []
+		maskers, unmaskers, keywords, license = list(profile.maskers), [], [], []
 		if profile.visibility:
 			maskers.extend(profile.visibility)
 
@@ -170,7 +170,7 @@ class domain:
 			
 		if profile.get_path == None and profile.get_data == None:
 			raise Failure("profile instance '%s' lacks a usable ebd_data_source method" % profile)
-		bashrc = profile.bashrc[:]
+		bashrc = list(profile.bashrc)
 
 		if "bashrc" in self.settings:
 			for input in self.settings['bashrc']:

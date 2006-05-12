@@ -97,8 +97,8 @@ class OnDiskProfile(profiles.base):
 				# note the negation.  this means cat/pkg matchs, but ver must not, else it's masked.
 				visibility.append(atom(p, negate_vers=True))
 		del pkgs
-		self.sys = sys
-		self.visibility = visibility
+		self.sys = tuple(sys)
+		self.visibility = tuple(visibility)
 
 		use_mask = set()
 		for fp, i in loop_iter_read(os.path.join(prof, "use.mask") for prof in stack):
@@ -110,9 +110,9 @@ class OnDiskProfile(profiles.base):
 				else:
 					use_mask.add(p)
 
-		self.use_mask = list(use_mask)
+		self.use_mask = tuple(use_mask)
 		del use_mask
-		self.bashrc = map(local_source, filter(os.path.exists, (os.path.join(x, "profile.bashrc") for x in stack)))
+		self.bashrc = tuple(map(local_source, filter(os.path.exists, (os.path.join(x, "profile.bashrc") for x in stack))))
 
 		maskers = []
 		for fp, i in loop_iter_read(os.path.join(prof, "package.mask") for prof in stack + [self.basepath]):
@@ -124,7 +124,7 @@ class OnDiskProfile(profiles.base):
 				else:
 					maskers.extend([p])
 
-		self.maskers = map(atom,maskers)
+		self.maskers = tuple(map(atom,maskers))
 		del maskers
 
 		d = {}

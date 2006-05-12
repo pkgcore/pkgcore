@@ -22,6 +22,8 @@ class choice_point(object):
 		
 	def reduce_atoms(self, atom):
 
+		if self.matches_idx is None:
+			raise IndexError("no solutions remain")
 		if hasattr(atom, "__contains__") and not isinstance(atom, basestring):
 			self.solution_filters.update(atom)
 		else:
@@ -30,31 +32,23 @@ class choice_point(object):
 		# ref copies; grab this info now before we screw with the stack
 		orig_dep, orig_rdep = self.depends, self.rdepends
 		orig_provides = self.provides
-		matches_len = len(self.matches)
 
 		# lock step checks of each- it's possible for rdepend to push depend forward
 		rdep_idx = orig_match_idx = -1
 		try:
 			while orig_match_idx != self.matches_idx:
 				orig_match_idx = self.matches_idx
-				while self.matches_idx < matches_len:
-					if all(x not in self.solution_filters for x in self.depends):
-						break
+				while not all(x not in self.solution_filters for x in self.depends):
 					self._dep_solutions[1] += 1
 
 				# optimization.  don't redo rdep if it forced last redo, and matches hasn't changed
 				if rdep_idx != self.matches_idx:
-					while self.matches_idx < matches_len:
-						if all(x not in self.solution_filters for x in self.rdepends):
-							break
+					while not all(x not in self.solution_filters for x in self.rdepends):
 						self._rdep_solutions[1] += 1
 				rdep_idx = self.matches_idx
 		except IndexError:
-			# shot off the end, no solutions.
-			self.matches_idx = matches_len
-
-		if self.matches_idx  == matches_len:
-			# no solutions remain.
+			# shot off the end, no solutions remain
+			self.matches_idx = None
 			return set(orig_dep + orig_rdep), orig_provides
 
 		s = set(self.depends + self.rdepends)
@@ -67,6 +61,8 @@ class choice_point(object):
 			if existing[1] >= len(existing[2]):
 				self.matches_idx = self.matches_idx + 1
 		if self.matches_idx != existing[0]:
+			if self.matches_idx == None:
+				raise IndexError
 			# use stable_unique to preserve ordering, but cut down on dupes.
 			existing[0:3] = [self.matches_idx, 0,
 				[tuple(stable_unique(x)) for x in getattr(self.matches[self.matches_idx], name).solutions()]]
@@ -79,9 +75,10 @@ class choice_point(object):
 		return self.matches[self.matches_idx]
 	
 	def force_next_pkg(self):
-		bool(self)
-		self.matches_idx = self.matches_idx + 1
-		return bool(self)
+		if bool(self):
+			self.matches_idx = self.matches_idx + 1
+			return bool(self)
+		return False
 
 	@property
 	def depends(self):
@@ -96,8 +93,7 @@ class choice_point(object):
 		return self._common_property(self._provides_solutions, "provides")
 
 	def __nonzero__(self):
-		l = len(self.matches)
-		if self.matches_idx != l:
+		if self.matches_idx is not None:
 			try:
 				self.depends
 				self.rdepends

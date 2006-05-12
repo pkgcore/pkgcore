@@ -13,8 +13,8 @@ class PackageRestriction(restriction.base):
 	__slots__ = ("attr_split", "attr", "restriction")
 	type = package_type
 	__inst_caching__ = True
-	def __init__(self, attr, restriction, **kwds):
-		super(PackageRestriction, self).__init__(**kwds)
+	def __init__(self, attr, restriction, negate=False):
+		super(PackageRestriction, self).__init__(negate=negate)
 		self.attr_split = tuple(attr.split("."))
 		self.attr = attr
 		if not restriction.type == values.value_type:

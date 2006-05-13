@@ -8,6 +8,7 @@ import os
 from pkgcore.package.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.currying import pre_curry
+from pkgcore.util import repo_utils
 
 def grab_arg(arg, args):
 	val = False
@@ -24,7 +25,9 @@ if __name__ == "__main__":
 	a = sys.argv[1:]
 	raw = grab_arg("--raw", a)
 	force_vdb = grab_arg("--vdb", a)
-	
+	force_virtuals = grab_arg("--virtuals-only", a)
+	disable_virtuals = grab_arg("--disable-virtuals", a)
+
 	if "--atomstr" in a:
 		def atomstr(a, l=False):
 			if l:
@@ -42,8 +45,8 @@ if __name__ == "__main__":
 	else:
 		atomstr = lambda x, y=False: str(x)
 
-	if len(a) == 0 or "--help" in a:
-		print "supported args: [--raw] [--vdb] [ --max || --min ] [--atomstr] [atom [ --attr attr ] ]*"
+	if len(a) == 0 or "--help" in a or (force_virtuals and disable_virtuals) or ("--max" in a and "--min" in a):
+		print "supported args: [--raw] [--virtuals-only || --disable-virtuals ] [--vdb] [ --max || --min ] [--atomstr] [atom [ --attr attr ] ]*"
 		sys.exit(1)
 	conf = pkgcore.config.load_config()
 	if len(conf.domain) != 1:
@@ -51,16 +54,16 @@ if __name__ == "__main__":
 		sys.exit(2)
 	domain = conf.domain.items()[0][1]
 	repos = []
-
 	if force_vdb:
-		repos.append(conf.domain["livefs domain"].vdb[0])
-	elif raw:
-		for k,r in conf.repo.iteritems():
-			# hackity hack hack hack
-			if not r.configured and not k.startswith("vdb"):
-				repos.append(r)
+		repos = conf.domain["livefs domain"].vdb
 	else:
-		repos.extend(domain.repos)
+		repos = conf.domain["livefs domain"].repos
+	if raw:
+		repos = repo_utils.get_raw_repos(repos)
+	if force_virtuals:
+		repos = repo_utils.get_virtual_repos(repo_utils.get_raw_repos(repos))
+	elif disable_virtuals:
+		repos = repo_utils.get_virtual_repos(repo_utils.get_raw_repos(repos), False)
 
 	atoms = []
 	attr = []

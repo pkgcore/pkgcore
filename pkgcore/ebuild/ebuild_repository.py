@@ -66,8 +66,9 @@ class UnconfiguredTree(prototype.tree):
 			#raise KeyError
 			return ()
 
-		try:	return tuple([x for x in os.listdir(self.base) \
-			if stat.S_ISDIR(os.lstat(os.path.join(self.base,x)).st_mode) and x not in self.false_categories])
+		try:	
+			return tuple(x for x in os.listdir(self.base) \
+			if stat.S_ISDIR(os.lstat(os.path.join(self.base,x)).st_mode) and x not in self.false_categories)
 
 		except (OSError, IOError), e:
 			raise KeyError("failed fetching categories: %s" % str(e))
@@ -76,8 +77,9 @@ class UnconfiguredTree(prototype.tree):
 	def _get_packages(self, category):
 
 		cpath = os.path.join(self.base,category.lstrip(os.path.sep))
-		try:	return tuple([x for x in os.listdir(cpath) \
-			if stat.S_ISDIR(os.lstat(os.path.join(cpath,x)).st_mode)])
+		try:	
+			return tuple(x for x in os.listdir(cpath) \
+			if stat.S_ISDIR(os.lstat(os.path.join(cpath,x)).st_mode))
 
 		except (OSError, IOError), e:
 			raise KeyError("failed fetching packages for category %s: %s" % \
@@ -89,9 +91,10 @@ class UnconfiguredTree(prototype.tree):
 		pkg = catpkg.split("/")[-1]
 		cppath = os.path.join(self.base, catpkg.lstrip(os.path.sep))
 		# 7 == len(".ebuild")
-		try:	return tuple([x[len(pkg):-7].lstrip("-") for x in os.listdir(cppath) \
-			if x.endswith(".ebuild") and x.startswith(pkg) and  \
-			stat.S_ISREG(os.lstat(os.path.join(cppath,x)).st_mode)])
+		try:
+			return tuple(x[len(pkg):-7].lstrip("-") for x in os.listdir(cppath) \
+				if x.endswith(".ebuild") and x.startswith(pkg) and  \
+				stat.S_ISREG(os.lstat(os.path.join(cppath,x)).st_mode))
 
 		except (OSError, IOError), e:
 			raise KeyError("failed fetching versions for package %s: %s" % \

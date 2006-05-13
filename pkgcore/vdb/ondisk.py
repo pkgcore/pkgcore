@@ -40,8 +40,9 @@ class tree(prototype.tree):
 		if optionalCategory:
 			return {}
 		try:
-			try:	return tuple([x for x in os.listdir(self.base) \
-				if stat.S_ISDIR(os.lstat(os.path.join(self.base,x)).st_mode)])
+			try:	
+				return tuple(x for x in os.listdir(self.base) \
+				if stat.S_ISDIR(os.lstat(os.path.join(self.base,x)).st_mode))
 
 			except (OSError, IOError), e:
 				raise KeyError("failed fetching categories: %s" % str(e))

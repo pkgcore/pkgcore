@@ -1,3 +1,6 @@
+# Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# License: GPL2
+
 import itertools, operator
 from collections import deque
 from pkgcore.util.compatibility import any, all
@@ -122,7 +125,10 @@ class merge_plan(object):
 			return [atom]
 		l = self.state.match_atom(atom)
 		if l:
-			print "pre-solved %s%s, [%s]" % (depth*2*" ", atom, ", ".join(str(x) for x in l))
+			if current_stack:
+				print "pre-solved %s%s, [%s] [%s]" % (depth*2*" ", atom, current_stack[-1][0], ", ".join(str(x) for x in l))
+			else:
+				print "pre-solved %s%s, [%s]" % (depth*2*" ", atom, ", ".join(str(x) for x in l))
 			return False
 		# not in the plan thus far.
 		matches = self.get_db_matches(atom, depth=depth, limit_to_vdb=limit_to_vdb)

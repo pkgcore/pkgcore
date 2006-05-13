@@ -48,10 +48,11 @@ class CPV(base):
 		raise Exception()
 
 	def __getattr__(self, attr):
-		if attr in self._get_attr:
+		try:
 			val = self.__dict__[attr] = self._get_attr[attr](self)
 			return val
-		raise AttributeError(attr)
+		except KeyError:
+			raise AttributeError(attr)
 
 	def _get_category(self):
 		myparts = self.cpvstr.split("/")

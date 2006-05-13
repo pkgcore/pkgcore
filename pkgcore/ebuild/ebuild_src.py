@@ -100,11 +100,9 @@ class package(metadata.package):
 	_get_attr["PF"] = lambda s: s.package+"-"+s.fullver
 	_get_attr["PN"] = operator.attrgetter("package")
 	_get_attr["PR"] = lambda s: "-r"+str(s.revision is not None and s.revision or 0)
-#	_get_attr["provides"] = post_curry(generate_depset, atom, "provide")
 	_get_attr["provides"] = generate_providers
 	_get_attr["depends"] = post_curry(generate_depset, atom, "depend")
 	_get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepend", "pdepend")
-#	_get_attr.update((x, post_curry(generate_depset, str, x)) for x in ("license", "slot"))
 	_get_attr["license"] = post_curry(generate_depset, str, "license", non_package_type=True)
 	_get_attr["slot"] = lambda s: s.data.get("SLOT", "0").strip()
 	_get_attr["fetchables"] = generate_fetchables

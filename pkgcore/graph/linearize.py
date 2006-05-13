@@ -174,8 +174,9 @@ class merge_plan(object):
 					if l:
 						print "depends blocker messing with us- dumping to pdb for inspection of atom %s, pkg %s, ret %s" % \
 							(atom, choices.current_pkg, l)
-						import pdb;pdb.set_trace()
-						raise Exception("whee, damn depends blockers")
+						failure = [datom]
+#						import pdb;pdb.set_trace()
+#						raise Exception("whee, damn depends blockers")
 				else:
 					if any(True for x in current_stack if x[0] == datom):
 						# cycle.

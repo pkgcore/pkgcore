@@ -3,8 +3,8 @@
 
 from pkgcore.util.currying import pre_curry, pretty_docs
 from pkgcore.restrictions import values, restriction, boolean
+import operator
 import logging
-
 package_type = "package"
 
 class PackageRestriction(restriction.base):
@@ -15,7 +15,7 @@ class PackageRestriction(restriction.base):
 	__inst_caching__ = True
 	def __init__(self, attr, restriction, negate=False):
 		super(PackageRestriction, self).__init__(negate=negate)
-		self.attr_split = tuple(attr.split("."))
+		self.attr_split = tuple(operator.attrgetter(x) for x in attr.split("."))
 		self.attr = attr
 		if not restriction.type == values.value_type:
 			raise TypeError("restriction must be of a value type")
@@ -24,8 +24,8 @@ class PackageRestriction(restriction.base):
 	def __pull_attr(self, pkg):
 		try:
 			o = pkg
-			for x in self.attr_split:
-				o = getattr(o, x)
+			for f in self.attr_split:
+				o=f(o)
 			return o
 		except AttributeError,ae:
 			logging.debug("failed getting attribute %s from %s, exception %s" % \

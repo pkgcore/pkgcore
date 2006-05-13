@@ -129,9 +129,10 @@ class ProtectedDict(UserDict.DictMixin):
 	def keys(self):
 		return list(self.__iter__())
 
-	def has_key(self, key):
+	def __contains__(self, key):
 		return key in self.new or (key not in self.blacklist and key in self.orig)
 
+	has_key = __contains__
 
 class ImmutableDict(dict):
 

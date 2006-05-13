@@ -113,10 +113,12 @@ class merge_plan(object):
 		if atom not in self.forced_atoms:
 			stack = deque()
 			ret = self._rec_add_atom(atom, stack)
-			self.forced_atoms.add(atom)
 			if ret:
 				print "failed- %s" % ret
 				return ret
+			else:
+				self.forced_atoms.add(atom)
+
 		return []
 
 	def _rec_add_atom(self, atom, current_stack, depth=0, limit_to_vdb=False):

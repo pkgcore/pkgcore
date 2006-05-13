@@ -23,7 +23,8 @@ if __name__ == "__main__":
 	import sys, pkgcore.config
 	a = sys.argv[1:]
 	raw = grab_arg("--raw", a)
-
+	force_vdb = grab_arg("--vdb", a)
+	
 	if "--atomstr" in a:
 		def atomstr(a, l=False):
 			if l:
@@ -42,7 +43,7 @@ if __name__ == "__main__":
 		atomstr = lambda x, y=False: str(x)
 
 	if len(a) == 0 or "--help" in a:
-		print "supported args: [--raw] [ --max || --min ] [--atomstr] [atom [ --attr attr ] ]*"
+		print "supported args: [--raw] [--vdb] [ --max || --min ] [--atomstr] [atom [ --attr attr ] ]*"
 		sys.exit(1)
 	conf = pkgcore.config.load_config()
 	if len(conf.domain) != 1:
@@ -51,7 +52,9 @@ if __name__ == "__main__":
 	domain = conf.domain.items()[0][1]
 	repos = []
 
-	if raw:
+	if force_vdb:
+		repos.append(conf.domain["livefs domain"].vdb[0])
+	elif raw:
 		for k,r in conf.repo.iteritems():
 			# hackity hack hack hack
 			if not r.configured and not k.startswith("vdb"):

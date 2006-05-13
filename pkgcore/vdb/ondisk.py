@@ -23,6 +23,7 @@ class tree(prototype.tree):
 	def __init__(self, location):
 		super(tree,self).__init__()
 		self.base = self.location = location
+		self._versions_tmp_cache = {}
 		try:
 			st = os.lstat(self.base)
 			if not stat.S_ISDIR(st.st_mode):
@@ -51,34 +52,26 @@ class tree(prototype.tree):
 
 	def _get_packages(self, category):
 		cpath = os.path.join(self.base,category.lstrip(os.path.sep))
+		l = []
+		d = {}
 		try:
 			try:
-				return tuple(cpv(x).package for x in os.listdir(cpath) if stat.S_ISDIR(os.stat(os.path.join(cpath,x)).st_mode) and not 
-					x.endswith(".lockfile"))
+				for x in os.listdir(cpath):
+					if x.endswith(".lockfile") or not stat.S_ISDIR(os.stat(os.path.join(cpath, x)).st_mode):
+						continue
+					x = cpv(x)
+					l.append(x.package)
+					d.setdefault(category+"/"+x.package, []).append(x.fullver)
 			except (OSError, IOError), e:
 				raise KeyError("failed fetching packages for category %s: %s" % \
 				(os.path.join(self.base,category.lstrip(os.path.sep)), str(e)))
 		finally:
 			pass
+		self._versions_tmp_cache.update(d)
+		return l
 
 	def _get_versions(self, catpkg):
-		pkg = catpkg.split("/")[-1]
-		l=set()
-		try:
-			try:
-				cpath=os.path.join(self.base, os.path.dirname(catpkg.lstrip("/").rstrip("/")))
-				for x in os.listdir(cpath):
-					# XXX: This matches foo to foo-bar-1.2.3 and creates an incorrect foo-1.2.3 in l
-					# This sucks.  fix...
-					if x.startswith(pkg) and x[len(pkg)+1].isdigit() and stat.S_ISDIR(os.stat(os.path.join(cpath,x)).st_mode) \
-						and not x.endswith(".lockfile"):
-						l.add(cpv(x).fullver)
-				return tuple(l)
-			except (OSError, IOError), e:
-				raise KeyError("failed fetching packages for package %s: %s" % \
-				(os.path.join(self.base,catpkg.lstrip(os.path.sep)), str(e)))
-		finally:
-			pass
+		return tuple(self._versions_tmp_cache.pop(catpkg))
 
 	def _get_ebuild_path(self, pkg):
 		s = "%s-%s" % (pkg.package, pkg.fullver)

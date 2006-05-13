@@ -4,9 +4,6 @@
 from weakref import WeakValueDictionary
 import warnings
 
-class_hits = {}
-class_misses = {}
-
 class WeakInstMeta(type):
 
 	def __new__(cls, name, bases, d):
@@ -34,24 +31,16 @@ class WeakInstMeta(type):
 			except TypeError, t:
 				warnings.warn("caching keys for %s, got %s for a=%s, kw=%s" % (cls, t, a, kw))
 				del t
-				key = None
-				instance = None
+				key = instance = None
 			else:
 				instance = cls.__inst_dict__.get(key)
 
 			if instance is None:
-				class_misses[cls] = class_misses.get(cls, 0) + 1
 				instance = super(WeakInstMeta, cls).__call__(*a, **kw)
 
 				if key is not None:
 					cls.__inst_dict__[key] = instance
-			else:
-				class_hits[cls] = class_hits.get(cls, 0) + 1
 		else:
 			instance = super(WeakInstMeta, cls).__call__(*a, **kw)
-
-#		print cls
-#		print a
-#		print kw
 
 		return instance

@@ -74,7 +74,8 @@ class fake_package_factory(package_factory):
 
 	def __init__(self, child_class):
 		self.child_class = child_class
-
+		self._parent_repo = None
+	
 	def __del__(self):
 		pass
 

@@ -260,11 +260,11 @@ class merge_plan(object):
 			print "was trying to insert atom '%s' pkg '%s',\nbut '[%s]' exists already" % (atom, choices.current_pkg, 
 				", ".join(str(y) for y in l))
 			# hack.  see if what was insert is enough for us.
-			fail = False
+			fail = try_rematch = False
 			if any(isinstance(x, restriction.base) for x in l):
 				# blocker was caught
-				print "blocker detected in slotting, failing."
-				fail = True
+				print "blocker detected in slotting, trying a re-match"
+				try_rematch = True
 			elif all(self.vdb_restrict.match(x) for x in l):
 				# vdb entry, replace.
 				if self.vdb_restrict.match(choices.current_pkg):
@@ -278,6 +278,8 @@ class merge_plan(object):
 					print "tried the replace, but got matches still- %s" % l
 					fail = True
 			else:
+				try_rematch = True
+			if try_rematch:
 				l2 = self.state.match_atom(atom)
 				if l2 == [choices.current_pkg]:
 					print "node was pulled in already, same so ignoring it"
@@ -285,7 +287,7 @@ class merge_plan(object):
 					return False
 				else:
 					print "and we 'parently match it.  ignoring (should prune here however)"
-					import pdb;pdb.set_trace()
+#					import pdb;pdb.set_trace()
 					current_stack.pop()
 					return False
 #				import pdb;pdb.set_trace()

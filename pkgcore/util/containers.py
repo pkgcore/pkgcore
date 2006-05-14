@@ -27,7 +27,7 @@ class LimitedChangeSet(object):
 	_added		= 1
 
 	def __init__(self, initial_keys, unchangable_keys=None):
-		self.__new = set(initial_keys)
+		self._new = set(initial_keys)
 		if unchangable_keys == None:
 			self.__blacklist = []
 		else:
@@ -36,14 +36,14 @@ class LimitedChangeSet(object):
 			self.__blacklist = unchangable_keys
 		self.__changed = set()
 		self.__change_order = []
-		self.__orig = frozenset(self.__new)
+		self.__orig = frozenset(self._new)
 
 	def add(self, key):
 		if key in self.__changed or key in self.__blacklist:
 			# it's been del'd already once upon a time.
 			raise Unchangable(key)
 
-		self.__new.add(key)
+		self._new.add(key)
 		self.__changed.add(key)
 		self.__change_order.append((self._added, key))
 
@@ -51,19 +51,19 @@ class LimitedChangeSet(object):
 		if key in self.__changed or key in self.__blacklist:
 			raise Unchangable(key)
 
-		if key in self.__new:
-			self.__new.remove(key)
+		if key in self._new:
+			self._new.remove(key)
 		self.__changed.add(key)
 		self.__change_order.append((self._removed, key))
 
 	def __contains__(self, key):
-		return key in self.__new
+		return key in self._new
 
 	def changes_count(self):
 		return len(self.__change_order)
 
 	def commit(self):
-		self.__orig = frozenset(self.__new)
+		self.__orig = frozenset(self._new)
 		self.__changed.clear()
 		self.__change_order = []
 
@@ -75,20 +75,27 @@ class LimitedChangeSet(object):
 			change, key = self.__change_order.pop(-1)
 			self.__changed.remove(key)
 			if change == self._removed:
-				self.__new.add(key)
+				self._new.add(key)
 			else:
-				self.__new.remove(key)
+				self._new.remove(key)
 			l -= 1
 
 	def __str__(self):
-		return str(self.__new).replace("set(", "LimitedChangeSet(", 1)
+		return str(self._new).replace("set(", "LimitedChangeSet(", 1)
 
 	def __iter__(self):
-		return iter(self.__new)
+		return iter(self._new)
 
 	def __len__(self):
-		return len(self.__new)
+		return len(self._new)
 
+	def __eq__(self, other):
+		if isinstance(other, LimitedChangeSet):
+			return self._new == other._new
+		elif isinstance(other, set):
+			return self._new == other
+		return False
+	
 
 class Unchangable(Exception):
 	def __init__(self, key):	self.key = key

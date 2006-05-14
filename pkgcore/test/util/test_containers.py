@@ -106,6 +106,11 @@ class LimitedChangeSetTest(unittest.TestCase):
 			str(containers.LimitedChangeSet([7])), 'LimitedChangeSet([7])')
 
 
+	def test__eq__(self):
+		c = containers.LimitedChangeSet(range(99))
+		c.add(99)
+		self.assertEquals(c, containers.LimitedChangeSet(range(100)))
+
 class LimitedChangeSetWithBlacklistTest(unittest.TestCase):
 
 	def setUp(self):

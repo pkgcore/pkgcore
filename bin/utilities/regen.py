@@ -39,8 +39,14 @@ if __name__ == "__main__":
 		thread_count = 1
 	repo = load_config().repo["rsync repo"]
 	start_time = time.time()
+	count = 0
 	if thread_count == 1:
-		regen_iter(repo)
+		def passthru(iterable):
+			global count
+			for x in iterable:
+				count += 1
+				yield x
+		regen_iter(passthru(repo))
 	else:
 		queue = Queue.Queue(thread_count*2)
 		kill = threading.Event()
@@ -59,6 +65,7 @@ if __name__ == "__main__":
 			print "started"
 			# now we feed the queue.
 			for pkg in repo:
+				count += 1
 				queue.put(pkg)
 		except Exception:
 			kill.set()
@@ -71,4 +78,4 @@ if __name__ == "__main__":
 		kill.set()
 		reclaim_threads(regen_threads)
 		assert queue.empty()
-	print "finished in %.2f seconds" % (time.time() - start_time)
+	print "finished %d nodes in in %.2f seconds" % (count, time.time() - start_time)

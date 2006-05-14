@@ -1,8 +1,8 @@
 
-buildtoc = buildtoc.py
+buildtoc = ./buildtoc.py
 htmlfromrst = $(addsuffix .html,$(basename $(wildcard *.rst))) toc.html
 
-all: $(htmlfromrst)
+all: $(htmlfromrst) toc.html
 
 .PHONY: all clean
 

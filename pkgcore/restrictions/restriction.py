@@ -80,7 +80,7 @@ class Negate(base):
 		return not self._restrict.match(*a, **kw)
 
 	def __str__(self):
-		return " not (%s)" % self._restrict
+		return "not (%s)" % self._restrict
 
 class FakeType(base):
 	__slots__ = ("type", "_restrict")

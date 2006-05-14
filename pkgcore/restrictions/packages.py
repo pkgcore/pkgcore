@@ -97,7 +97,8 @@ class PackageRestriction(restriction.base):
 
 	def __str__(self):
 		s = self.attr+" "
-		if self.negate:	self.attr += "not "
+		if self.negate:	
+			s += "not "
 		return s + str(self.restriction)
 
 

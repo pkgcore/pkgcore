@@ -70,6 +70,9 @@ def lowest_iter_sort(l):
 
 
 class merge_plan(object):
+
+	vdb_restrict = packages.PackageRestriction("repo.livefs", 
+		values.EqualityMatch(True))
 	
 	def __init__(self, vdb, dbs, pkg_selection_strategy=None, load_initial_vdb_state=True, verify_vdb=False):
 		if pkg_selection_strategy is None:
@@ -236,6 +239,9 @@ class merge_plan(object):
 				# need to clean up blockers here... cleanup our additions in light of reductions from choices.reduce
 #				print "dirty dirty little boy!  skipping cleaning",additions
 				print "reseting for %s%s because of %s" % (depth*2*" ", atom, failure)
+				print "reduced for  %s%s atoms [%s], provides [%s]" % (depth*2*" ", atom,
+					", ".join(str(x) for x in nolonger_used[0]),
+					", ".join(str(x) for x in nolonger_used[1]))
 				self.state.reset_state(saved_state)
 			else:
 				break
@@ -254,17 +260,41 @@ class merge_plan(object):
 			print "was trying to insert atom '%s' pkg '%s',\nbut '[%s]' exists already" % (atom, choices.current_pkg, 
 				", ".join(str(y) for y in l))
 			# hack.  see if what was insert is enough for us.
-			l2 = self.state.match_atom(atom)
-			if l2:
-				print "and we 'parently match it.  ignoring (should prune here however)"
+			fail = False
+			if any(isinstance(x, restriction.base) for x in l):
+				# blocker was caught
+				print "blocker detected in slotting, failing."
+				fail = True
+			elif all(self.vdb_restrict.match(x) for x in l):
+				# vdb entry, replace.
+				if self.vdb_restrict.match(choices.current_pkg):
+					# we're replacing a vdb entry with a vdb entry?  wtf.
+					print "internal weirdness spotted, dumping to pdb for inspection"
+					import pdb;pdb.set_trace()
+					raise Exception()
+				print "replacing a vdb node, so it's valid (need to do a recheck of state up to this point however, which we're not)"
+				l = self.state.add_pkg(choices, REPLACE)
+				if l:
+					print "tried the replace, but got matches still- %s" % l
+					fail = True
+			else:
+				l2 = self.state.match_atom(atom)
+				if l2 == [choices.current_pkg]:
+					print "node was pulled in already, same so ignoring it"
+					current_stack.pop()
+					return False
+				else:
+					print "and we 'parently match it.  ignoring (should prune here however)"
+					import pdb;pdb.set_trace()
+					current_stack.pop()
+					return False
+#				import pdb;pdb.set_trace()
+#				import time
+#				time.sleep(3)
+			if fail:
+				self.state.reset_state(saved_state)
 				current_stack.pop()
-				return False
-#			import pdb;pdb.set_trace()
-#			import time
-#			time.sleep(3)
-			self.state.reset_state(saved_state)
-			current_stack.pop()
-			return [atom]
+				return [atom]
 
 		# level blockers.
 		for x in blocks:

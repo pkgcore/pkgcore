@@ -19,6 +19,7 @@ from pkgcore.spawn import spawn
 
 class tree(prototype.tree):
 	ebuild_format_magic = "ebuild_built"
+	livefs = True
 
 	def __init__(self, location):
 		super(tree, self).__init__()

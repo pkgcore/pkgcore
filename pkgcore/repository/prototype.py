@@ -81,6 +81,7 @@ class tree(object):
 	"""
 	del raw_repo, and set it to the underlying repo if you're wrapping another repo"""
 	raw_repo = None
+	livefs = False
 	package_class = None
 	configured = True
 	configure = ()

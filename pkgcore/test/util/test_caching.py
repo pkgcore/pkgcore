@@ -60,11 +60,21 @@ class TestWeakInstMeta(unittest.TestCase):
 		class fake_warning(object):
 			def warn(*a, **kw):
 				pass
+		
+		class chuck_errors(object):
+			def __init__(self, error):
+				self.error = error
+			def __hash__(self):
+				raise self.error
+		
 		# silence warnings.
 		w = caching.warnings
 		try:
 			caching.warnings = fake_warning()
 			self.assertTrue(weak_inst([]) is not weak_inst([]))
 			self.assertEqual(weak_inst.counter, 2)
+			for x in (TypeError, NotImplementedError):
+				self.assertTrue(weak_inst(chuck_errors(x)) is not 
+					weak_inst(chuck_errors(x)))
 		finally:
 			caching.warnings = w

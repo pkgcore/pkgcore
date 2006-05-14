@@ -28,7 +28,7 @@ class WeakInstMeta(type):
 			kwlist.sort()
 			try:
 				key = hash((a, tuple(kwlist)))
-			except TypeError, t:
+			except (NotImplementedError, TypeError), t:
 				warnings.warn("caching keys for %s, got %s for a=%s, kw=%s" % (cls, t, a, kw))
 				del t
 				key = instance = None

@@ -159,3 +159,11 @@ class PackageWrapper(object):
 			return -c
 		raise NotImplementedError
 
+	def __eq__(self, other):
+		if isinstance(other, PackageWrapper):
+			if self._wrapped_pkg == other._wrapped_pkg:
+				return self._configurable == other._configurable
+			return False
+		elif isinstance(other, self._wrapped_pkg.__class__):
+			return self._wrapped_pkg == other
+		return False

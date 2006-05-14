@@ -14,6 +14,8 @@ class InvalidVersion(Exception):
 	def __str__(self):	return "Version restriction ver='%s', rev='%s', is malformed: error %s" % (self.ver, self.rev, self.err)
 
 
+# TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq, ne ops, and convert this to it.
+
 class VersionMatch(restriction.base):
 	__slots__ = ("ver", "rev", "vals", "droprev")
 	"""any overriding of this class *must* maintain numerical order of self.vals, see intersect for reason why

@@ -5,8 +5,9 @@ import os, shutil, operator
 import warnings
 from pkgcore.interfaces import build, repo
 from itertools import imap, izip
-from pkgcore.ebuild.processor import request_ebuild_processor, release_ebuild_processor, UnhandledCommand, \
-	expected_ebuild_env, chuck_UnhandledCommand
+from pkgcore.ebuild.processor import \
+	request_ebuild_processor, release_ebuild_processor, \
+	UnhandledCommand, expected_ebuild_env, chuck_UnhandledCommand
 from pkgcore.os_data import portage_gid
 from pkgcore.fs.util import ensure_dirs, normpath
 from pkgcore.os_data import portage_gid
@@ -39,31 +40,31 @@ class ebd(object):
 		# XXX: hack.
 		if self.env_data_source:
 			self.env["PORT_ENV_FILE"] = self.env_data_source.get_path()
-		
+
 		if features is None:
 			features = self.env.get("FEATURES", [])
 
-		self.features = set(map(lambda x:x.lower(), features))
+		self.features = set(x.lower() for x in features)
 
 		if "FEATURES" in self.env:
 			del self.env["FEATURES"]
-			
+
 		expected_ebuild_env(pkg, self.env)
 
 		self.env["USE"] = ' '.join(imap(str, pkg.use))
 		self.env["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", {}).keys())
 
 		self.restrict = pkg.restrict
-		
+
 		for x in ("sandbox", "userpriv", "fakeroot"):
 			setattr(self, x, self.feat_or_bool(x) and not (x in self.restrict))
-		
+
 		if "PORT_LOGDIR" in self.env:
 			self.logging = os.path.join(self.env["PORT_LOGDIR"], pkg.category, pkg.cpvstr+".log")
 			del self.env["PORT_LOGDIR"]
 		else:
 			self.logging = False
-		
+
 		self.env["XARGS"] = xargs
 
 		self.bashrc = self.env.get("bashrc", [])
@@ -84,7 +85,7 @@ class ebd(object):
 		self.env["HOME"] = os.path.join(prefix, "homedir")
 
 		self.builddir = os.path.join(prefix, self.env["CATEGORY"], self.env["PF"])
-		for x,y in (("T","temp"),("WORKDIR","work"), ("D","image")):
+		for x,y in (("T", "temp"), ("WORKDIR", "work"), ("D", "image")):
 			self.env[x] = os.path.join(self.builddir, y) +"/"
 		self.env["IMAGE"] = self.env["D"]
 
@@ -142,8 +143,9 @@ class ebd(object):
 		ebd.write("end_request")
 
 	def _generic_phase(self, phase, userpriv, sandbox, fakeroot):
-		ebd = request_ebuild_processor(userpriv=(self.userpriv and userpriv), 
-			sandbox=(self.sandbox and sandbox), fakeroot=(self.fakeroot and fakeroot))
+		ebd = request_ebuild_processor(userpriv=(self.userpriv and userpriv), \
+			sandbox=(self.sandbox and sandbox), \
+			fakeroot=(self.fakeroot and fakeroot))
 		try:
 			ebd.prep_phase(phase, self.env, sandbox=self.sandbox, logging=self.logging)
 			ebd.write("start_processing")
@@ -206,14 +208,14 @@ class replace_op(install_op, uninstall_op):
 
 class buildable(ebd, build.base):
 	_built_class = ebuild_built.package
-	
+
 	# XXX this is unclean- should be handing in strictly what is build env, rather then
-	# dumping domain settings as env. 
+	# dumping domain settings as env.
 	def __init__(self, pkg, domain_settings, eclass_cache, fetcher):
 		build.base.__init__(self)
 		ebd.__init__(self, pkg, initial_env=domain_settings, features=domain_settings["FEATURES"])
 		self.__init_workdir__()
-		
+
 		self.env["FILESDIR"] = os.path.join(os.path.dirname(pkg.path), "files")
 		self.eclass_cache = eclass_cache
 		self.fetcher = fetcher
@@ -240,7 +242,7 @@ class buildable(ebd, build.base):
 				for y in ("_PATH", "_DIR"):
 					if s+y in self.env:
 						del self.env[s+y]
-		
+
 		path = filter(None, path)
 		self.env["PATH"] = ":".join(path)
 		self.fetchables = pkg.fetchables[:]
@@ -261,13 +263,13 @@ class buildable(ebd, build.base):
 
 			except OSError, oe:
 				raise build.FailedDirectory(self.env["DISTDIR"], "failed removing existing file/dir/link at: exception %s" % oe)
-				
+
 			if not ensure_dirs(self.env["DISTDIR"], mode=0770, gid=portage_gid):
 				raise build.FailedDirectory(self.env["DISTDIR"], "failed creating distdir symlink directory")
 
 			try:
 				for src, dest in [(k, os.path.join(self.env["DISTDIR"], v.filename)) for (k,v) in self.files.items()]:
-					os.symlink(src,dest)
+					os.symlink(src, dest)
 
 			except OSError, oe:
 				raise build.GenericBuildError("Failed symlinking in distfiles for src %s -> %s: %s" % (src, dest, str(oe)))
@@ -314,7 +316,7 @@ class buildable(ebd, build.base):
 		return True
 
 	unpack = pretty_docs(post_curry(ebd._generic_phase, "unpack", True, True, False), "run the unpack phase")
-	compile = pretty_docs(post_curry(ebd._generic_phase, "compile", True, True, False), "run the compile phase")	
+	compile = pretty_docs(post_curry(ebd._generic_phase, "compile", True, True, False), "run the compile phase")
 
 	def install(self):
 		"""install phase"""
@@ -330,5 +332,5 @@ class buildable(ebd, build.base):
 		return self._generic_phase("test", True, True, False)
 
 	def finalize(self):
-		return ebuild_built.fake_package_factory(self._built_class).new_package(self.pkg, 
+		return ebuild_built.fake_package_factory(self._built_class).new_package(self.pkg,
 			self.env["IMAGE"], os.path.join(self.env["T"], "environment"))

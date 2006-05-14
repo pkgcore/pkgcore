@@ -35,7 +35,7 @@ def pop_arg(args, *arg):
 		except ValueError:
 			pass
 	return ret
-	
+
 
 if __name__ == "__main__":
 	import sys
@@ -46,13 +46,13 @@ if __name__ == "__main__":
 
 	trigger_pdb = pop_arg(args, "-p", "--pdb")
 	empty_vdb = pop_arg(args, "-e", "--empty")
-	
+
 	conf=load_config()
 
 	if set_targets:
 		print "using pkgset(s): %s" % (", ".join("'%s'" % x.strip() for x in set_targets))
 	set_targets = flatten([map(atom, getattr(conf, "%s_pkgset" % l)[l]) for l in set_targets], atom)
-	
+
 	if not args:
 		if set_targets:
 			atoms = set_targets
@@ -61,7 +61,7 @@ if __name__ == "__main__":
 			atoms = [atom("sys-apps/portage")]
 	else:
 		atoms = [atom(x) for x in args] + set_targets
-	
+
 	domain = conf.domain["livefs domain"]
 	v,repo = domain.vdb[0], domain.repos[0]
 
@@ -75,7 +75,7 @@ if __name__ == "__main__":
 		if a.blocks:
 			import pdb;pdb.set_trace()
 			print "caught blocker"
-			
+
 		resolver.debug("    unresolved atom: %s" % a)
 		if a is lasta:
 			import pdb;pdb.set_trace()

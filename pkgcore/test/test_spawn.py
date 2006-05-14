@@ -9,7 +9,7 @@ from pkgcore.util.currying import post_curry
 import os, pwd, signal
 
 class SpawnTest(TempDirMixin, unittest.TestCase):
-	
+
 	def __init__(self, *a, **kw):
 		try:
 			self.bash_path = spawn.find_binary("bash")
@@ -18,7 +18,7 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 		except spawn.CommandNotFound:
 			self.skip = "bash wasn't found.  this will be ugly."
 		super(SpawnTest, self).__init__(*a, **kw)
-		
+
 	def setUp(self):
 		self.orig_env = os.environ["PATH"]
 		TempDirMixin.setUp(self)
@@ -27,7 +27,7 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 	def tearDown(self):
 		os.environ["PATH"] = self.orig_env
 		TempDirMixin.tearDown(self)
-		
+
 	def test_find_binary(self):
 		script_name = "portage-findpath-test.sh"
 		self.assertRaises(spawn.CommandNotFound, spawn.find_binary, script_name)
@@ -38,14 +38,14 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 		os.chmod(fp, 0750)
 		self.failUnlessSubstring(self.dir, spawn.find_binary(script_name))
 		os.unlink(fp)
-	
+
 	def generate_script(self, filename, text):
 		if not os.path.isabs(filename):
 			fp = os.path.join(self.dir, filename)
 		open(fp, "w").write(text)
 		os.chmod(fp, 0750)
 		return fp
-	
+
 	def test_get_output(self):
 		filename = "portage-spawn-getoutput.sh"
 		for r, s, text, args in [
@@ -67,7 +67,7 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 			raise unittest.SkipTest("sandbox is not available, thus testing isn't possible")
 		self.assertTrue(spawn.sandbox_capable, "sandbox_capable boolean test")
 		fp = self.generate_script("portage-spawn-sandbox.sh", "echo $LD_PRELOAD")
-		self.assertIn("libsandbox.so", [os.path.basename(x.strip()) for x in 
+		self.assertIn("libsandbox.so", [os.path.basename(x.strip()) for x in
 			spawn.spawn_get_output(fp, spawn_type=spawn.spawn_sandbox)[1][0].split(":")])
 		os.unlink(fp)
 
@@ -78,7 +78,7 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 			raise unittest.SkipTest("fakeroot is not available, thus testing isn't possible")
 		self.assertTrue(spawn.fakeroot_capable, "fakeroot_capable boolean test")
 		fp = os.path.join(self.dir, "portage-spawn-fakeroot.sh")
-		
+
 		try:
 			l = pwd.getpwnam("nobody")
 		except KeyError:
@@ -92,26 +92,26 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 			kw = {"uid":l[2], "gid":l[3]}
 
 		fp2 = self.generate_script("portage-spawn-fakeroot2.sh",
-			"#!%s\nimport os\ns=os.stat('/tmp')\nprint s.st_uid\nprint s.st_gid\n" % 
+			"#!%s\nimport os\ns=os.stat('/tmp')\nprint s.st_uid\nprint s.st_gid\n" %
 			spawn.find_binary("python"))
-		
-		fp1 = self.generate_script("portage-spawn-fakeroot.sh", 
+
+		fp1 = self.generate_script("portage-spawn-fakeroot.sh",
 			"#!%s\nchown %i:%i /tmp;%s;\n" % (self.bash_path, nobody_uid, nobody_gid, fp2))
 
 		savefile = os.path.join(self.dir, "fakeroot-savefile")
 		self.assertNotEqual(long(os.stat("/tmp").st_uid), long(nobody_uid))
 		self.assertEqual([0, ["%s\n" % x for x in (nobody_uid, nobody_gid)]],
-			spawn.spawn_get_output([self.bash_path, fp1], 
+			spawn.spawn_get_output([self.bash_path, fp1],
 			spawn_type=post_curry(spawn.spawn_fakeroot, savefile), **kw))
-		self.assertNotEqual(long(os.stat("/tmp").st_uid), long(nobody_uid), 
+		self.assertNotEqual(long(os.stat("/tmp").st_uid), long(nobody_uid),
 			"bad voodoo; we managed to change /tmp to nobody- this shouldn't occur!")
-		self.assertEqual(True, os.path.exists(savefile), 
+		self.assertEqual(True, os.path.exists(savefile),
 			"no fakeroot file was created, either fakeroot differs or our" +
 			" args passed to it are bad")
 
 		# yes this is a bit ugly, but fakeroot requires an arg- so we have to curry it
 		self.assertEqual([0, ["%s\n" % x for x in (nobody_uid, nobody_gid)]],
-			spawn.spawn_get_output([fp2], 
+			spawn.spawn_get_output([fp2],
 			spawn_type=post_curry(spawn.spawn_fakeroot, savefile), **kw))
 
 		os.unlink(fp1)
@@ -164,7 +164,7 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 				os.umask(desired)
 			else:
 				desired = 0
-			self.assertEqual(str(desired).lstrip("0"), 
+			self.assertEqual(str(desired).lstrip("0"),
 				spawn.spawn_get_output(fp)[1][0].strip().lstrip("0"))
 		finally:
 			os.umask(old_um)

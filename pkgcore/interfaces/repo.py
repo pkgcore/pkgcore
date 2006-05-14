@@ -17,7 +17,7 @@ class fake_lock:
 
 class base(object):
 	__metaclass__ = ForcedDepends
-	
+
 	stage_depends = {}
 	stage_hooks = []
 
@@ -60,8 +60,8 @@ class base(object):
 
 
 class install(base):
-	
-	stage_depends = {"finish":"merge_metadata", "merge_metadata":"postinst", "postinst":"transfer", "transfer":"preinst", 
+
+	stage_depends = {"finish":"merge_metadata", "merge_metadata":"postinst", "postinst":"transfer", "transfer":"preinst",
 		"preinst":"start"}
 	stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
 	_op_name = "_repo_install_op"
@@ -91,7 +91,7 @@ class install(base):
 
 
 class uninstall(base):
-	
+
 	stage_depends = {"finish":"unmerge_metadata", "unmerge_metadata":"postrm", "postrm":"remove", "remove":"prerm",
 		"prerm":"start"}
 	stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
@@ -119,16 +119,16 @@ class uninstall(base):
 
 	def unmerge_metadata(self):
 		raise NotImplementedError
-		
+
 	def __del__(self):
 		if self.underway:
 			print "warning: %s unmerge was underway, but wasn't completed" % self.pkg
 			self.lock.release_write_lock()
-			
-			
+
+
 class replace(install, uninstall):
 	stage_depends = {"finish":"unmerge_metadata",
-		"unmerge_metadata":"postrm", "postrm":"remove","remove":"prerm", "prerm":"merge_metadata", 
+		"unmerge_metadata":"postrm", "postrm":"remove","remove":"prerm", "prerm":"merge_metadata",
 		"merge_metadata":"postinst", "postinst":"transfer","transfer":"preinst",
 		"preinst":"start"}
 
@@ -139,7 +139,7 @@ class replace(install, uninstall):
 	def __init__(self, repo, oldpkg, newpkg, status_obj=None, offset=None):
 		base.__init__(self, repo, newpkg, status_obj=status_obj, offset=offset)
 		self.oldpkg = oldpkg
-		
+
 	def start(self):
 		return base.start(self, MergeEngine.replace(self.oldpkg, self.pkg, offset=self.offset))
 

@@ -13,6 +13,7 @@ class PackageRestriction(restriction.base):
 	__slots__ = ("attr_split", "attr", "restriction")
 	type = package_type
 	__inst_caching__ = True
+
 	def __init__(self, attr, restriction, negate=False):
 		super(PackageRestriction, self).__init__(negate=negate)
 		self.attr_split = tuple(operator.attrgetter(x) for x in attr.split("."))
@@ -37,18 +38,18 @@ class PackageRestriction(restriction.base):
 			return self.restriction.match(self.__pull_attr(pkg)) ^ self.negate
 		except AttributeError:
 			return self.negate
-		
+
 
 	def force_False(self, pkg):
 		if self.negate:
 			return self.restriction.force_True(pkg, self.attr, self.__pull_attr(pkg))
-		else: 
+		else:
 			return self.restriction.force_False(pkg, self.attr, self.__pull_attr(pkg))
 
 	def force_True(self, pkg):
 		if self.negate:
 			return self.restriction.force_False(pkg, self.attr, self.__pull_attr(pkg))
-		else: 
+		else:
 			return self.restriction.force_True(pkg, self.attr, self.__pull_attr(pkg))
 
 	def __getitem__(self, key):
@@ -113,7 +114,7 @@ class Conditional(PackageRestriction):
 
 	def __str__(self):
 		return "( Conditional: %s payload: [ %s ] )" % (PackageRestriction.__str__(self), ", ".join(map(str, self.payload)))
-	
+
 	def __iter__(self):
 		return iter(self.payload)
 
@@ -128,7 +129,7 @@ for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
 			doc = ''
 		else:
 			# do this so indentation on pydoc __doc__ is sane
-			doc = "\n".join(map(lambda x:x.lstrip(), doc.split("\n"))) +"\n"
+			doc = "\n".join(x.lstrip() for x in doc.split("\n")) +"\n"
 			doc += "Automatically set to package type"
 		globals()[x] = pretty_docs(o, doc)
 
@@ -136,4 +137,3 @@ del x, m, l, o, doc
 
 AlwaysTrue = AlwaysBool(negate=True)
 AlwaysFalse = AlwaysBool(negate=False)
-

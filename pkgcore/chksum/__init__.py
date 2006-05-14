@@ -59,7 +59,7 @@ def init(additional_handlers=None):
 			continue
 
 	if additional_handlers is not None:
-		chksum_types.update(additional_handlers)	
+		chksum_types.update(additional_handlers)
 
 	__inited__ = True
 

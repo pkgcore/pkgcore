@@ -2,7 +2,7 @@
 # License: GPL2
 
 # metaclasses, 101.  metaclass gets called to instantiate a class (creating a class instance).
-# effectively, __metaclass__ controls how that class is converted from a definition, to an object, with the 
+# effectively, __metaclass__ controls how that class is converted from a definition, to an object, with the
 # object being used to create instances of that class.
 # note python doesn't exactly have definitions, just executions, but analogy is close enough :P
 
@@ -29,9 +29,9 @@ class base(object):
 	def fetch(self):
 		if not "files" in self.__dict__:
 			self.files = {}
-		
+
 		# this is being anal, but protect against pkgs that don't collapse common uri down to a single file.
-		gotten_fetchables = set(map(lambda x: x.filename, self.files.values()))
+		gotten_fetchables = set(x.filename for x in self.files.values())
 		for x in self.fetchables:
 			if x.filename in gotten_fetchables:
 				continue

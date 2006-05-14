@@ -4,23 +4,23 @@
 
 from portage_const import RSYNC_BIN, RSYNC_HOST
 import os, portage_exec
-import portage_exception,socket
+import portage_exception, socket
 
 import sync.syncexceptions
 
 class RSyncSyntaxError(sync.syncexceptions.SyncException):
 	"""Exception thrown when generated rsync syntax is invalid"""
-	def __init__(self,command):
-		self.command=command
+	def __init__(self, command):
+		self.command = command
 	def __str__(self):
 		return "Invalid rsync syntax: %s" % str(self.command)
 
 class RsyncHost:
 	"""abstraction over the rsync binary"""
 
-	def __init__(self,host_uri,local_host=False,rsync_binary=RSYNC_BIN):
+	def __init__(self, host_uri, local_host=False, rsync_binary=RSYNC_BIN):
 		"""self explanatory"""
-		if not os.access(rsync_binary,os.X_OK):
+		if not os.access(rsync_binary, os.X_OK):
 			raise portage_exceptions.CommandNotFound(rsync_binary)
 
 		self.__binary = rsync_binary
@@ -29,12 +29,12 @@ class RsyncHost:
 
 		self.__local = local_host
 		if self.__local:
-			self.__host_name=''
+			self.__host_name = ''
 			self.__remote_path = host_uri
-			self.__host_uri=''
+			self.__host_uri = ''
 			return
 
-		f=host_uri.split("/",1)
+		f = host_uri.split("/", 1)
 		if len(f) == 1:
 			#deprecated, assume /gentoo-portage
 			self.__remote_path = "/gentoo-portage"
@@ -42,12 +42,12 @@ class RsyncHost:
 			self.__remote_path = "/"+f[1]
 			host_uri = f[0]
 
-		f=host_uri.find("@")
+		f = host_uri.find("@")
 		if f != -1:
-			host_uri=host_uri[f+1:]
-		f=host_uri.find(":")
+			host_uri = host_uri[f+1:]
+		f = host_uri.find(":")
 		if f != -1:
-			host_uri=host_uri[:f]
+			host_uri = host_uri[:f]
 
 		self.__host_name = host_uri
 
@@ -59,14 +59,14 @@ class RsyncHost:
 			return None
 		try:
 			self.__ips = socket.gethostbyname_ex(self.__host_name)[2]
-		except socket.error,e:
-			print "caught exception for %s" % self.__host_name,e
+		except socket.error, e:
+			print "caught exception for %s" % self.__host_name, e
 			return None
 		return self.__ips
-	
-	def sync(self,settings, local_path,remote_path=None,verbosity=1,excludes=None,compress=True, \
-		timeout=180,ip=None,cleanup=True):
-		
+
+	def sync(self, settings, local_path, remote_path=None, verbosity=1, excludes=None, \
+			compress=True, timeout=180, ip=None, cleanup=True):
+
 		"""sync up local_path with remote_path on host
 		settings is a portage.config, at some point hopefully removed and specific options
 		passed in instead.
@@ -77,7 +77,7 @@ class RsyncHost:
 		"""
 
 
-		args=[self.__binary,
+		args = [self.__binary, \
 			"--recursive",    # Recurse directories
 			"--links",        # Consider symlinks
 			"--safe-links",   # Ignore links outside of tree
@@ -98,7 +98,7 @@ class RsyncHost:
 		if excludes:
 			for x in excludes:
 				args.append("--exclude=%s" % str(x))
-		if verbosity >=3:
+		if verbosity >= 3:
 			args.append("--progress")
 			args.append("--verbose")
 		elif verbosity == 2:
@@ -110,10 +110,10 @@ class RsyncHost:
 			args.remove("--stats")
 
 		if verbosity:
-			fd_pipes={1:1,2:2}
+			fd_pipes = {1:1, 2:2}
 		else:
-			fd_pipes={}
-		
+			fd_pipes = {}
+
 		#why do this if has_key crap?  cause portage.config lacks a get function
 		#this allows dicts to be passed in and used.
 		if settings.has_key("RSYNC_INCLUDE"):
@@ -132,13 +132,13 @@ class RsyncHost:
 		if settings.has_key("RSYNC_RATELIMIT"):
 			args.append("--bwlimit=%s" % settings["RSYNC_RATELIMIT"])
 
-		prefix="rsync://"
+		prefix = "rsync://"
 		if remote_path == None:
 			if self.__local:
-				host=self.__remote_path
-				prefix=''
+				host = self.__remote_path
+				prefix = ''
 			else:
-				host=self.__host
+				host = self.__host
 		else:
 			if remote_path[0] != "/":
 				host = self.__host_name + '/' + remote_path
@@ -146,15 +146,15 @@ class RsyncHost:
 				host = self.__host_name + remote_path
 
 		if ip:
-			args.append("%s%s" % (prefix,host.replace(self.__host_name,ip)))
+			args.append("%s%s" % (prefix, host.replace(self.__host_name, ip)))
 		else:
-			args.append("%s%s" % (prefix,host))
+			args.append("%s%s" % (prefix, host))
 		args.append(local_path)
 
 		# tie a debug option into this
 		#print "options are",args
 
-		ret=portage_exec.spawn(args,fd_pipes=fd_pipes)
+		ret = portage_exec.spawn(args, fd_pipes=fd_pipes)
 		if ret == 0:
 			return True
 		elif ret == 1:

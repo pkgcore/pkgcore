@@ -15,7 +15,7 @@ def set(ptype, magic, version, namespace):
 
 def cleanse(ptype, magic, version):
 	pkgcore.plugins.deregister(ptype, magic, version)
-	
+
 def get_list(ptype=None):
 	return pkgcore.plugins.query_plugins(ptype)
 
@@ -35,7 +35,7 @@ if __name__ == "__main__":
 				for k,v in i:
 					print
 					try:
-						l = max(map(lambda y: len(y), v.keys())) + 4
+						l = max(len(y) for y in v.keys()) + 4
 						print "%s => " % k
 						for y in v.keys():
 							print "%s:    %s, %s" % (y.rjust(l), v[y]["namespace"], v[y]["version"])

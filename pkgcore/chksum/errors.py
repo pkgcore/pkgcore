@@ -3,7 +3,7 @@
 
 class base(Exception):
 	pass
-	
+
 class MissingChksum(base):
 	def __init__(self, file):	self.file = file
 	def __str__(self):	return "Missing chksum for file '%s'" % self.file

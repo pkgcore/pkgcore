@@ -27,8 +27,8 @@ class DepSetParsingTest(unittest.TestCase):
 		"( a b c)", "()", "x?( a )", 
 		"?x (a)", "x? (a )", "x? (a)", "x? ( a b)", 
 		"x? ( x? () )", "x? ( x? (a)", "(", ")",
-		"||(", "||()", "||( )", "|| ()", 
-		"|| (", "|| )", "||)",	"|| ( x? ( )", 
+		"||(", "||()", "||( )", "|| ()",
+		"|| (", "|| )", "||)",	"|| ( x? ( )",
 		"|| ( x?() )", "|| (x )", "|| ( x)",
 		"a|", "a?", "a(b", "a)", "a||b", 
 		"a(", "a)b", "x? y", "( x )?", "||?"):
@@ -47,8 +47,8 @@ class DepSetParsingTest(unittest.TestCase):
 				s = "!"
 			for y in x.vals:
 				yield s + y
-			
-	
+
+
 	def flatten_restricts(self, v):
 		i = expandable_chain(v)
 		depth = 0
@@ -80,7 +80,7 @@ class DepSetParsingTest(unittest.TestCase):
 
 	def check(self, s, func=gen_depset):
 		if isinstance(s, (list, tuple)):
-			s,v = s[:]
+			s, v = s[:]
 			v = list(v)
 			for idx, x in enumerate(v):
 				if isinstance(x, (list, tuple)):
@@ -93,22 +93,22 @@ class DepSetParsingTest(unittest.TestCase):
 	# if it's a list, first arg is string, second is results, if string, the results for testing
 	# are determined by splitting the string
 	for x in [
-		"a b", 
+		"a b",
 		( "", 	[]),
 
 		( "( a b )",	("&&", "(", "a", "b", ")")),
 
-		"|| ( a b )", 
+		"|| ( a b )",
 
 		( "a || ( a ( b ) c || ( d ) )",
 			["a", "||", "(", "a", "&&", "(", "b", ")", "c",
 			"||", "(", "d", ")", ")"]),
-			
-		( "x? ( a b )", 
+
+		( "x? ( a b )",
 			(["x"], "(", "a", "b", ")")),
 
 		# at some point, this should collapse it
-		( "x? ( y? ( a ) )", 
+		( "x? ( y? ( a ) )",
 			(["x"], "(", ["y", "x"], "(", "a", ")", ")")),
 
 		# at some point, this should collapse it
@@ -117,14 +117,14 @@ class DepSetParsingTest(unittest.TestCase):
 		# at some point, this should collapse it
 		"|| ( || ( a b ) c )",
 
-		( "x? ( a !y? ( || ( b c ) d ) e ) f1 f? ( g h ) i", 
+		( "x? ( a !y? ( || ( b c ) d ) e ) f1 f? ( g h ) i",
 			(
-			["x"], "(", "a", ["x", "!y"], "(", "||", "(", "b", 
+			["x"], "(", "a", ["x", "!y"], "(", "||", "(", "b",
 			"c", ")", "d", ")", "e", ")", "f1",
 			["f"], "(", "g", "h", ")", "i"
 			)
 		)]:
-		
+
 		if isinstance(x, basestring):
 			locals()["test '%s'" % x] = post_curry(check, x)
 		else:
@@ -154,15 +154,15 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
 				f = x.solutions()[0]
 			else:
 				f = [x]
-			t=set()
+			t = set()
 			for a in f:
-				s= ""
+				s = ""
 				if a.negate:
 					s = "!"
 				t.update(["%s%s" % (s, y) for y in a.vals])
 			l.add(frozenset(t))
 		return l
-		
+
 	def check_conds(self, s, r, msg=None):
 		nc = dict((k, self.flatten_cond(v)) for (k, v) in gen_depset(s).node_conds.iteritems())
 		d = dict(r)
@@ -172,7 +172,7 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
 			elif isinstance(v, (tuple, list)):
 				d[k] = set(map(frozenset, v))
 		self.assertEqual(nc, d, msg)
-				
+
 	for s in (
 		("x? ( y )", {"y":"x"}),
 		("x? ( y ) z? ( y )", {"y":["z", "x"]}),
@@ -186,4 +186,4 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
 		("|| ( y? ( x ) z )", {"x":"y"}),
 		):
 		locals()["test _node_conds %s" % s[0]] = post_curry(check_conds, *s)
-		
+

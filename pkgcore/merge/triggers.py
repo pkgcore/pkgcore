@@ -27,7 +27,7 @@ class trigger(object):
 			if not callable(register_func):
 				raise TypeError("register_func must be a callable")
 		self.register_func = register_func
-	
+
 	# this should probably be implemented as an associated int that can be used to
 	# sort the triggers
 	def register(self, hook_name, existing_triggers):
@@ -35,7 +35,7 @@ class trigger(object):
 			self.register_func(self, hook_name, existing_triggers)
 		else:
 			existing_triggers.append(self)
-	
+
 	def __call__(self, engine, csets):
 		self.trigger(engine, csets)
 
@@ -48,17 +48,17 @@ class SimpleTrigger(trigger):
 		if not isinstance(cset_name, basestring):
 			raise TypeError("cset_name must be a string")
 		trigger.__init__(self, [cset_name], ftrigger, register_func=register_func)
-	
+
 	def __call__(self, engine, csets):
 		self.trigger(engine, csets[self.required_csets[0]])
-		
+
 
 def run_ldconfig(engine, cset, ld_so_conf_file="etc/ld.so.conf"):
 	# this sucks. not very fine grained, plus it can false positive on binaries
 	# libtool fex, which isn't a lib
 	fireit = False
 	for x in cset.iterfiles():
-		s=x.location
+		s = x.location
 		if s[-3:] == ".so":
 			pass
 		elif basename(s[:3]).lower() != "lib":
@@ -79,17 +79,17 @@ def run_ldconfig(engine, cset, ld_so_conf_file="etc/ld.so.conf"):
 		f = os.path.join(offset, ld_so_conf_file)
 		if not os.path.exists(f):
 			open(f, "w")
-		ret = spawn(["/sbin/ldconfig", "-r", offset], fd_pipes={1:1,2:2})
+		ret = spawn(["/sbin/ldconfig", "-r", offset], fd_pipes={1:1, 2:2})
 		if ret != 0:
 			raise errors.TriggerWarning("ldconfig returned %i from execution" % ret)
 
 
 def merge_trigger(cset="install"):
-	return SimpleTrigger(cset, 
-		lambda engine,cset:ops.merge_contents(cset, offset=engine.offset))
+	return SimpleTrigger(cset,
+		lambda engine, cset: ops.merge_contents(cset, offset=engine.offset))
 
 def unmerge_trigger(cset="uninstall"):
-	return SimpleTrigger(cset, lambda e,c: ops.unmerge_contents(c))
+	return SimpleTrigger(cset, lambda e, c: ops.unmerge_contents(c))
 
 def ldconfig_trigger(cset="modifying"):
 	return SimpleTrigger(cset, run_ldconfig)

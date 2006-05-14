@@ -53,14 +53,14 @@ def default_mkdir(d):
 	else:
 		mode = d.mode
 	os.mkdir(d.location, mode)
-	get_plugin("fs_ops", "ensure_perms")(d)	
+	get_plugin("fs_ops", "ensure_perms")(d)
 	return True
 
 
 def default_copyfile(obj):
 	existant = False
 	ensure_perms = get_plugin("fs_ops", "ensure_perms")
-	
+
 	if not fs.isfs_obj(obj):
 		raise TypeError("obj must be fsBase derivative")
 	elif fs.isdir(obj):
@@ -73,7 +73,7 @@ def default_copyfile(obj):
 		existant = True
 	except OSError:
 		existant = False
-	
+
 	if fs.isreg(obj):
 		if not existant:
 			shutil.copyfile(obj.real_path, obj.location)
@@ -94,7 +94,7 @@ def merge_contents(cset, offset=None):
 
 	ensure_perms = get_plugin("fs_ops", "ensure_perms")
 	copyfile = get_plugin("fs_ops", "copyfile")
-	mkdir = get_plugin("fs_ops", "mkdir")	
+	mkdir = get_plugin("fs_ops", "mkdir")
 
 	if os.path.exists(offset) and not os.path.isdir(offset):
 		raise TypeError("offset must be a dir, or not exist")
@@ -102,7 +102,7 @@ def merge_contents(cset, offset=None):
 		raise TypeError("cset must be a contentsSet")
 	if not os.path.exists(offset):
 		mkdir(fs.fsDir(offset, strict=False))
-	
+
 	for x in sorted(cset.iterdirs()):
 		# XXX temporary until this is chunked for output
 		print "installing",x

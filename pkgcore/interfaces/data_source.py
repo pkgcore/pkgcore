@@ -7,7 +7,7 @@ class base(object):
 	def get_data(self, arg):
 		raise NotImplementedError
 	get_path = get_data
-	
+
 class local_source(base):
 	__slots__ = ("path",)
 
@@ -20,7 +20,7 @@ class local_source(base):
 			return self.path
 		return None
 
-		
+
 	def get_data(self):
 		if self.path == None:
 			return None
@@ -28,6 +28,6 @@ class local_source(base):
 			f = open(fp, "r")
 			d = f.read()
 			f.close()
-			return d 
+			return d
 		except OSError:
 			return None

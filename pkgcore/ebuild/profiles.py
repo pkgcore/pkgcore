@@ -16,7 +16,7 @@ from pkgcore.package import cpv
 # This should be implemented as an auto-exec config addition.
 
 class OnDiskProfile(profiles.base):
-	positional = ("base_repo","profile")
+	positional = ("base_repo", "profile")
 	required = ("base_repo", "profile")
 	section_ref = ("base_repo")
 
@@ -25,7 +25,7 @@ class OnDiskProfile(profiles.base):
 		if incrementals is None:
 			incrementals = []
 
-		self.basepath = os.path.join(base_repo.base,"profiles")
+		self.basepath = os.path.join(base_repo.base, "profiles")
 
 		dep_path = os.path.join(self.basepath, profile, "deprecated")
 		if os.path.isfile(dep_path):
@@ -48,7 +48,7 @@ class OnDiskProfile(profiles.base):
 			if os.path.isfile(fp):
 				l = []
 				try:
-					f = open(fp,"r", 32384)
+					f = open(fp, "r", 32384)
 				except (IOError, OSError):
 					raise profiles.ProfileException("failed reading parent from %s" % path)
 				for x in f:
@@ -62,15 +62,15 @@ class OnDiskProfile(profiles.base):
 					stack.append(os.path.abspath(os.path.join(trg, x)))
 					parents.append(trg)
 				del l
-			
-			idx+=1
+
+			idx += 1
 
 		del parents
 
 		def loop_iter_read(files, callable=iter_read_bash):
 			for fp in files:
 				if os.path.exists(fp):
-					try: 
+					try:
 						yield fp, callable(fp)
 					except (OSError, IOError), e:
 						raise profiles.ProfileException("failed reading '%s': %s" % (e.filename, str(e)))
@@ -124,11 +124,11 @@ class OnDiskProfile(profiles.base):
 				else:
 					maskers.extend([p])
 
-		self.maskers = tuple(map(atom,maskers))
+		self.maskers = tuple(atom(x) for x in maskers)
 		del maskers
 
 		d = {}
-		for fp, dc in loop_iter_read((os.path.join(prof, "make.defaults") for prof in stack), 
+		for fp, dc in loop_iter_read((os.path.join(prof, "make.defaults") for prof in stack),
 			lambda x:read_bash_dict(x, vars_dict=ProtectedDict(d))):
 			for k,v in dc.items():
 				# potentially make incrementals a dict for ~O(1) here, rather then O(N)
@@ -138,8 +138,8 @@ class OnDiskProfile(profiles.base):
 					else:				d[k] = v
 				else:					d[k] = v
 
-		d.setdefault("USE_EXPAND",'')
-		if isinstance(d["USE_EXPAND"],str):
+		d.setdefault("USE_EXPAND", '')
+		if isinstance(d["USE_EXPAND"], str):
 			d["USE_EXPAND"] = d["USE_EXPAND"].split()
 		for u in d["USE_EXPAND"]:
 			u2 = u.lower()+"_"
@@ -155,10 +155,10 @@ class OnDiskProfile(profiles.base):
 				c = cpv.CPV(p[0])
 				version = c.version
 				if version is None:
-					version = "0" 
+					version = "0"
 				virtuals.setdefault(c.package, {})[version] = atom(p[1])
 
-		self.virtuals = virtual.tree(lambda: virtuals)		
+		self.virtuals = virtual.tree(lambda: virtuals)
 		# collapsed make.defaults.  now chunkify the bugger.
 		self.conf = d
 
@@ -173,7 +173,7 @@ class OnDiskProfile(profiles.base):
 #		if not os.path.exists(fp):
 #			return None
 #		return fp
-#	
+#
 #	def get_data(self, bashrc):
 #		fp = self.get_path(bashrc)
 #		if fp == None:

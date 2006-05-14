@@ -29,7 +29,7 @@ class ModulesTest(unittest.TestCase):
 			horkedmod = open(os.path.join(dir, 'mod_horked.py'), 'w')
 			horkedmod.write('1/0\n')
 			horkedmod.close()
-		
+
 		# append them to path
 		sys.path.insert(0, self.dir)
 
@@ -45,7 +45,7 @@ class ModulesTest(unittest.TestCase):
 		sys.modules.pop('mod_testpack', None)
 		sys.modules.pop('mod_horked', None)
 		sys.modules.pop('mod_testpack.mod_horked', None)
-	
+
 	def test_load_module(self):
 		# import an already-imported module
 		self.assertIdentical(
@@ -67,7 +67,7 @@ class ModulesTest(unittest.TestCase):
 		import mod_testpack
 		from mod_testpack import mod_test1
 		self.assertIdentical(mod_test1, packtest1)
-		
+
 	def test_load_attribute(self):
 		# already imported
 		self.assertIdentical(modules.load_attribute('sys.path'), sys.path)

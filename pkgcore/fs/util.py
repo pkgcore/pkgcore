@@ -7,7 +7,7 @@ import errno
 
 def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
 	"""ensure dirs exist, creating as needed with (optional) gid, uid, and mode
-	be forewarned- if mode is specified to a mode that blocks the euid from accessing the dir, this 
+	be forewarned- if mode is specified to a mode that blocks the euid from accessing the dir, this
 	code *will* try to create the dir"""
 
 	try:
@@ -22,14 +22,14 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
 			apath = normpath(os.path.abspath(path))
 			sticky_parent = False
 			creating = False
-			
+
 			for dir in apath.split(os.path.sep):
 				base = os.path.join(base,dir)
 				try:
 					st = os.stat(base)
 					if not stat.S_ISDIR(st.st_mode):
 						return False
-					
+
 					# if it's a subdir, we need +wx at least
 					if apath != base:
 						if ((st.st_mode & 0300) != 0300):
@@ -60,7 +60,7 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
 					os.chown(base, uid, gid)
 			except OSError:
 				return False
-		
+
 		finally:
 			os.umask(um)
 		return True
@@ -100,7 +100,7 @@ class LockException(Exception):
 	"""Base lock exception class"""
 	def __init__(self, path, reason):
 		self.path, self.reason = path, reason
-		
+
 class NonExistant(LockException):
 	"""Missing file/dir exception"""
 	def __init__(self, path, reason=None):
@@ -124,7 +124,7 @@ class FsLock(object):
 		"""path specifies the fs path for the lock
 		create controls whether the file will be create if the file doesn't exist
 		if create is true, the base dir must exist, and it will create a file
-		
+
 		If you want a directory yourself, create it.
 		"""
 		self.path = path
@@ -142,7 +142,7 @@ class FsLock(object):
 		else:
 			try:	self.fd = os.open(self.path, os.R_OK)
 			except OSError, oe:	raise NonExistant(self.path, oe)
-	
+
 	def _enact_change(self, flags, blocking):
 		if self.fd == None:
 			self._acquire_fd()
@@ -168,11 +168,11 @@ class FsLock(object):
 		Returns True if lock is acquired, False if not.
 		Note, if you have a write_lock already, it'll implicitly downgrade atomically"""
 		return self._enact_change(fcntl.LOCK_SH, blocking)
-	
+
 	def release_write_lock(self):
 		"""Release an exclusive lock if held"""
 		self._enact_change(fcntl.LOCK_UN, False)
-		
+
 	def release_read_lock(self):
 		self._enact_change(fcntl.LOCK_UN, False)
 

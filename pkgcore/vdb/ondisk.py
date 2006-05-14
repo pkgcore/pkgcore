@@ -21,7 +21,7 @@ class tree(prototype.tree):
 	ebuild_format_magic = "ebuild_built"
 
 	def __init__(self, location):
-		super(tree,self).__init__()
+		super(tree, self).__init__()
 		self.base = self.location = location
 		self._versions_tmp_cache = {}
 		try:
@@ -43,15 +43,14 @@ class tree(prototype.tree):
 		try:
 			try:	
 				return tuple(x for x in os.listdir(self.base) \
-				if stat.S_ISDIR(os.lstat(os.path.join(self.base,x)).st_mode))
-
+					if stat.S_ISDIR(os.lstat(os.path.join(self.base, x)).st_mode))
 			except (OSError, IOError), e:
 				raise KeyError("failed fetching categories: %s" % str(e))
 		finally:
 			pass
 
 	def _get_packages(self, category):
-		cpath = os.path.join(self.base,category.lstrip(os.path.sep))
+		cpath = os.path.join(self.base, category.lstrip(os.path.sep))
 		l = []
 		d = {}
 		try:
@@ -64,7 +63,7 @@ class tree(prototype.tree):
 					d.setdefault(category+"/"+x.package, []).append(x.fullver)
 			except (OSError, IOError), e:
 				raise KeyError("failed fetching packages for category %s: %s" % \
-				(os.path.join(self.base,category.lstrip(os.path.sep)), str(e)))
+				(os.path.join(self.base, category.lstrip(os.path.sep)), str(e)))
 		finally:
 			pass
 		self._versions_tmp_cache.update(d)
@@ -78,7 +77,7 @@ class tree(prototype.tree):
 		return os.path.join(self.base, pkg.category, s, s+".ebuild")
 
 	_metadata_rewrites = {"depends":"DEPEND", "rdepends":"RDEPEND", "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
-	
+
 	def _get_metadata(self, pkg):
 		path = os.path.dirname(pkg.path)
 		return IndeterminantDict(pre_curry(self._internal_load_key, path))
@@ -101,7 +100,6 @@ class tree(prototype.tree):
 			except (OSError, IOError):
 				raise KeyError(key)
 		return data
-
 
 	def notify_remove_package(self, pkg):
 		remove_it = len(self.packages[pkg.category]) == 1
@@ -130,7 +128,7 @@ class install(repo_interfaces.install):
 	def __init__(self, repo, pkg, *a, **kw):
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
 		repo_interfaces.install.__init__(self, repo, pkg, *a, **kw)
-		
+
 	def merge_metadata(self, dirpath=None):
 		# error checking?
 		if dirpath is None:
@@ -177,16 +175,16 @@ class uninstall(repo_interfaces.uninstall):
 
 # should convert these to mixins.
 class replace(install, uninstall, repo_interfaces.replace):
-	
+
 	def __init__(self, repo, pkg, *a, **kw):
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
 		self.tmpdirpath = os.path.join(os.path.dirname(self.dirpath), ".tmp."+os.path.basename(self.dirpath))
 		repo_interfaces.replace.__init__(self, repo, pkg, *a, **kw)
-	
+
 	def merge_metadata(self, *a, **kw):
 		kw["dirpath"] = self.tmpdirpath
 		return install.merge_metadata(self, *a, **kw)
-	
+
 	def unmerge_metadata(self, *a, **kw):
 		ret = uninstall.unmerge_metadata(self, *a, **kw)
 		if not ret:

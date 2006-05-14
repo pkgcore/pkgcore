@@ -40,12 +40,12 @@ def stable_unique(iterable):
 	return list(iter_stable_unique(iterable))
 
 def iter_stable_unique(iterable):
-	s=set()
+	s = set()
 	for x in iterable:
 		if x not in s:
 			yield x
 			s.add(x)
-	
+
 def iter_flatten(l, skip_flattening=(basestring,)):
 	"""collapse [(1),2] into [1,2]"""
 	if isinstance(skip_flattening, list):
@@ -66,7 +66,7 @@ def iter_flatten(l, skip_flattening=(basestring,)):
 				yield x
 	except StopIteration:
 		pass
-			
+
 def flatten(l, skip_flattening=(basestring,)):
 	"""flatten, returning a list rather then an iterable"""
 	return list(iter_flatten(l, skip_flattening=skip_flattening))

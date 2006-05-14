@@ -4,7 +4,7 @@
 from collections import deque
 
 class expandable_chain(object):
-	"""chained iterables, with the ability to add new iterables to the chain 
+	"""chained iterables, with the ability to add new iterables to the chain
 	as long as the instance hasn't raise StopIteration already"""
 
 	__slot__ = ("iterables", "__weakref__")
@@ -12,7 +12,7 @@ class expandable_chain(object):
 	def __init__(self, *iterables):
 		self.iterables = deque()
 		self.extend(iterables)
-			
+
 	def __iter__(self):
 		return self
 
@@ -25,19 +25,19 @@ class expandable_chain(object):
 					self.iterables.popleft()
 			self.iterables = None
 		raise StopIteration()
-			
+
 	def append(self, iterable):
 		"""append an iterable to the chain to be consumed"""
 		if self.iterables is None:
 			raise StopIteration()
 		self.iterables.append(iter(iterable))
-	
+
 	def appendleft(self, iterable):
 		"""prepend an iterable to in the chain"""
 		if self.iterables is None:
 			raise StopIteration()
 		self.iterables.appendleft(iter(iterable))
-	
+
 	def extend(self, iterables):
 		"""extend multiple iterable to the chain to be consumed"""
 		if self.iterables is None:
@@ -86,14 +86,14 @@ class caching_iter(object):
 		elif index >= existing_len - 1:
 			if self.iterable is not None:
 				try:
-					self.cached_list.extend(self.iterable.next() 
+					self.cached_list.extend(self.iterable.next()
 						for x in xrange(existing_len - index + 1))
 				except StopIteration:
 					# consumed, baby.
 					self.iterable = None
 					self.cached_list = tuple(self.cached_list)
 					raise IndexError("list index out of range")
-		
+
 		return self.cached_list[index]
 
 	def __cmp__(self, other):
@@ -106,7 +106,7 @@ class caching_iter(object):
 				self.cached_list = tuple(self.cached_list + list(self.iterable))
 			self.iterable = None
 		return cmp(self.cached_list, other)
-	
+
 	def __nonzero__(self):
 		if self.cached_list:
 			return True
@@ -147,7 +147,7 @@ class caching_iter(object):
 			return
 		self.iterable = None
 		self.cached_list = tuple(self.cached_list)
-	
+
 	def __hash__(self):
 		if self.iterable is not None:
 			self.cached_list.extend(self.iterable)

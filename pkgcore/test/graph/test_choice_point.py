@@ -18,9 +18,9 @@ class TestChoicePoint(unittest.TestCase):
 	@staticmethod
 	def gen_choice_point():
 		return choice_point("asdf", [
-			fake_package(marker=1, depends=OrRestriction("ordep1", "ordep2", "dependsordep"), 
+			fake_package(marker=1, depends=OrRestriction("ordep1", "ordep2", "dependsordep"),
 				rdepends=AndRestriction(OrRestriction("ordep1", "andordep2"), "anddep1", "anddep2", "pkg1and")),
-			fake_package(marker=2, depends=AndRestriction("anddep1", "anddep2"), 
+			fake_package(marker=2, depends=AndRestriction("anddep1", "anddep2"),
 				rdepends=OrRestriction("or1", "or2"))])
 
 	def test_depends_rdepends_stepping(self):
@@ -37,7 +37,7 @@ class TestChoicePoint(unittest.TestCase):
 	def test_current_pkg(self):
 		c = self.gen_choice_point()
 		self.assertEqual(c.current_pkg.marker, 1)
-		atoms,p=c.reduce_atoms("pkg1and")
+		atoms,p = c.reduce_atoms("pkg1and")
 		self.assertEqual(c.current_pkg.marker, 2)
 
 	def test_reduce(self):

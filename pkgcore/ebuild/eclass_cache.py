@@ -15,8 +15,8 @@ class cache(base):
 	Any code trying to get eclass data/path will choose which method it prefers, falling back to what's available if only one option
 	exists.
 
-	get_path should be defined when it's possible to state the actual on disk location 
-	get_data should be defined when it's not possible (or not preferable), as such 
+	get_path should be defined when it's possible to state the actual on disk location
+	get_data should be defined when it's not possible (or not preferable), as such
 	dumping the eclass down the pipe is required (think remote tree)
 
 	Base defaults to having both set.  Override as needed.
@@ -26,7 +26,7 @@ class cache(base):
 		self.eclasses = {} # {"Name": ("location","_mtime_")}
 
 		self.porttrees = tuple(map(normpath, [porttree] + list(additional_porttrees)))
-		self._master_eclass_root = os.path.join(self.porttrees[0],"eclass")
+		self._master_eclass_root = os.path.join(self.porttrees[0], "eclass")
 		self.update_eclasses()
 
 
@@ -34,17 +34,17 @@ class cache(base):
 		"""force instance to update it's internal view of on disk/remote eclasses"""
 		self.eclasses = {}
 		eclass_len = len(".eclass")
-		for x in [normpath(os.path.join(y,"eclass")) for y in self.porttrees]:
+		for x in [normpath(os.path.join(y, "eclass")) for y in self.porttrees]:
 			if not os.path.isdir(x):
 				continue
 			for y in [y for y in os.listdir(x) if y.endswith(".eclass")]:
 				try:
-					mtime=os.stat(x+"/"+y).st_mtime
+					mtime = os.stat(x+"/"+y).st_mtime
 				except OSError:
 					continue
-				ys=y[:-eclass_len]
+				ys = y[:-eclass_len]
 				self.eclasses[ys] = (x, long(mtime))
-	
+
 
 	def is_eclass_data_valid(self, ec_dict):
 		"""given a dict as returned by get_eclass_data, walk it comparing it to internal eclass view
@@ -59,7 +59,7 @@ class cache(base):
 
 	def get_eclass_data(self, inherits, from_master_only=False):
 		"""given a list of inherited eclasses, return the cachable eclass entries
-		only make get_eclass_data calls for data you know came from this eclass_cache, otherwise be ready to cache a KeyError 
+		only make get_eclass_data calls for data you know came from this eclass_cache, otherwise be ready to cache a KeyError
 		exception for any eclass that was requested, but not known to this cache
 		"""
 
@@ -68,8 +68,8 @@ class cache(base):
 			try:
 				ec_dict[x] = self.eclasses[x]
 			except:
-				print "ec=",ec_dict
-				print "inherits=",inherits
+				print "ec=", ec_dict
+				print "inherits=", inherits
 				raise
 			if from_master_only and self.eclasses[x][0] != self._master_eclass_root:
 				return None

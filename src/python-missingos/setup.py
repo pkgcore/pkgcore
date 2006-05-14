@@ -17,7 +17,7 @@ setup (# Distribution meta-data
                             "missingos",
                             ["missingos.c"],
                             libraries=[],
-                        ) 
+                        )
                       ],
         url = "",
       )

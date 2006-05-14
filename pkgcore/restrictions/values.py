@@ -22,9 +22,9 @@ class base(restriction.base):
 		elif self.negate:
 			return pkg.request_disable(attr, val)
 		return pkg.request_enable(attr, val)
-		
+
 	def force_False(self, pkg, attr, val):
-		if self.match(val) ^ self.negate:	
+		if self.match(val) ^ self.negate:
 			return True
 		elif self.negate:
 			return pkg.request_enable(attr, val)
@@ -159,7 +159,7 @@ class ContainmentMatch(base):
 	note that negation of this *does* not result in a true NAND when all is on."""
 
 	__slots__ = ("vals", "vals_len", "all")
-	
+
 	__inst_caching__ = True
 
 	def __init__(self, *vals, **kwds):
@@ -173,7 +173,7 @@ class ContainmentMatch(base):
 			self.all = False
 		super(ContainmentMatch, self).__init__(**kwds)
 		self.vals = frozenset(vals)
-		
+
 	def match(self, val):
 		if isinstance(val, (str, unicode)):
 			return (val in self.vals) ^ self.negate
@@ -194,7 +194,7 @@ class ContainmentMatch(base):
 #			return val in self.vals ^ self.negate
 
 	def force_False(self, pkg, attr, val):
-		
+
 		# XXX pretty much positive this isn't working.
 		if isinstance(val, (str, unicode)):
 			# unchangable
@@ -215,8 +215,8 @@ class ContainmentMatch(base):
 				def false(r, pvals):	return pkg.request_disable(attr, r)
 
 				truths = [x in val for x in self.vals]
-				
-				for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter, 
+
+				for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter,
 					desired_false=false, desired_true=true):
 					yield True
 			else:
@@ -233,7 +233,7 @@ class ContainmentMatch(base):
 			def true(r, pvals):		return pkg.request_enable(attr, r)
 			def false(r, pvals):	return pkg.request_disable(attr, r)
 			truths=[x in val for x in self.vals]
-			for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, l, truths, filter, 
+			for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, l, truths, filter,
 				desired_false=false, desired_true=true):
 				yield True
 		return
@@ -252,7 +252,7 @@ class ContainmentMatch(base):
 					return (self.vals[0] in val) ^ self.negate
 			else:
 				return (val in self.vals) ^ self.negate
-			return False		
+			return False
 
 		entry = pkg.changes_count()
 		if not self.negate:
@@ -265,8 +265,8 @@ class ContainmentMatch(base):
 					return pkg.request_disable(attr, r)
 
 				truths = [x in val for x in self.vals]
-				
-				for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter, 
+
+				for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter,
 					desired_false=false, desired_true=true):
 					return True
 			else:
@@ -283,7 +283,7 @@ class ContainmentMatch(base):
 			def true(r, pvals):		return pkg.request_enable(attr, r)
 			def false(r, pvals):	return pkg.request_disable(attr, r)
 			truths=[x in val for x in self.vals]
-			for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter, 
+			for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter,
 				desired_false=false, desired_true=true):
 				return True
 		return False
@@ -303,7 +303,7 @@ def get_val(pkg, attr):
 			o=getattr(o, x)
 		return x
 	except AttributeError, ae:
-		logger.warn("impossible happened, unable to get attr '%s' from pkg '%s', yet it was handed into my parent" 
+		logger.warn("impossible happened, unable to get attr '%s' from pkg '%s', yet it was handed into my parent"
 			% (attr, pkg))
 		raise
 
@@ -318,7 +318,7 @@ for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
 			doc = ''
 		else:
 			# do this so indentation on pydoc __doc__ is sane
-			doc = "\n".join(map(lambda x:x.lstrip(), doc.split("\n"))) +"\n"
+			doc = "\n".join(x.lstrip() for x in doc.split("\n")) + "\n"
 			doc += "Automatically set to package type"
 		globals()[x] = pretty_docs(o, doc)
 

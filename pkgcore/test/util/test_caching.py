@@ -28,7 +28,7 @@ class reenabled_weak_inst(automatic_disabled_weak_inst):
 	__inst_caching__ = True
 
 class TestWeakInstMeta(unittest.TestCase):
-	
+
 	def test_reuse(self, kls=weak_inst):
 		kls.reset()
 		o = kls()
@@ -40,25 +40,25 @@ class TestWeakInstMeta(unittest.TestCase):
 
 	def test_disabling_inst(self):
 		weak_inst.reset()
-		for x in (1,2):
+		for x in (1, 2):
 			o = weak_inst(disable_inst_caching=True)
 			self.assertIdentical(weak_inst.counter, x)
 		del o
 		o = weak_inst()
 		self.assertFalse(o is weak_inst(disable_inst_caching=True))
-	
+
 	def test_class_disabling(self):
 		automatic_disabled_weak_inst.reset()
 		self.assertTrue(automatic_disabled_weak_inst() is not automatic_disabled_weak_inst())
 		self.assertTrue(explicit_disabled_weak_inst() is not explicit_disabled_weak_inst())
-	
+
 	def test_reenabled(self):
 		self.test_reuse(reenabled_weak_inst)
 
 	def test_uncachable(self):
 		weak_inst.reset()
 		class fake_warning(object):
-			def warn(*a,**kw):
+			def warn(*a, **kw):
 				pass
 		# silence warnings.
 		w = caching.warnings

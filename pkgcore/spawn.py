@@ -1,8 +1,9 @@
+# Copyright: 2005-2006 Jason Stubbs <jstubbs@gmail.com>
 # Copyright: 2004-2006 Brian Harring <ferringb@gmail.com>
-# Copyright: 2005 Gentoo Foundation
+# Copyright: 2004-2005 Gentoo Foundation
 # License: GPL2
 
-__all__ = ["cleanup_pids", "spawn","spawn_sandbox", "spawn_bash", "spawn_fakeroot", "spawn_get_output"]
+__all__ = ["cleanup_pids", "spawn", "spawn_sandbox", "spawn_bash", "spawn_fakeroot", "spawn_get_output"]
 
 import os, atexit, signal, sys
 
@@ -37,7 +38,7 @@ fakeroot_capable = False
 
 def spawn_bash(mycommand, debug=False, opt_name=None, **keywords):
 	"""spawn the command via bash -c"""
-	
+
 	args = [BASH_BINARY]
 	if not opt_name:
 		opt_name = os.path.basename(mycommand.split()[0])
@@ -50,10 +51,10 @@ def spawn_bash(mycommand, debug=False, opt_name=None, **keywords):
 
 def spawn_sandbox(mycommand, opt_name=None, **keywords):
 	"""spawn the command under sandboxed"""
-	
+
 	if not sandbox_capable:
 		return spawn_bash(mycommand, opt_name=opt_name, **keywords)
-	args=[SANDBOX_BINARY]
+	args = [SANDBOX_BINARY]
 	if not opt_name:
 		opt_name = os.path.basename(mycommand.split()[0])
 	args.append(mycommand)
@@ -117,20 +118,19 @@ def cleanup_pids(pids=None):
 				spawned_pids.remove(pid)
 			except ValueError:
 				pass
-		
+
 def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
-          uid=None, gid=None, groups=None, umask=None, logfile=None,
-          path_lookup=True):
+	uid=None, gid=None, groups=None, umask=None, logfile=None, path_lookup=True):
 
 	"""wrapper around execve
-	
+
 	mycommand must be either a list, or a string
 	env must be a dict with it's keys strictly strings, and values strictly strings
 	opt_name controls what the process is named (what it would show up as under top for example)
 	fd_pipes controls what fd's are left open in the spawned process- must be a dict mapping existing
 	fd to fd # inside the new process
 	returnpid controls whether spawn waits for the process to finish, or returns the pid.
-	
+
 	rest of the options are fairly self explanatory"""
 	global spawned_pids
 	# mycommand is either a str or a list
@@ -165,9 +165,8 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 
 		# Create a tee process, giving it our stdout and stderr
 		# as well as the read end of the pipe.
-		mypids.extend(spawn(('tee', '-i', '-a', logfile),
-		              returnpid=True, fd_pipes={0:pr,
-		              1:fd_pipes[1], 2:fd_pipes[2]}))
+		mypids.extend(spawn(('tee', '-i', '-a', logfile), returnpid=True,
+			fd_pipes={0:pr, 1:fd_pipes[1], 2:fd_pipes[2]}))
 
 		# We don't need the read end of the pipe, so close it.
 		os.close(pr)
@@ -181,8 +180,7 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 
 	if not pid:
 		try:
-			_exec(binary, mycommand, opt_name, fd_pipes,
-			      env, gid, groups, uid, umask)
+			_exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask)
 		except Exception, e:
 			# We need to catch _any_ exception so that it doesn't
 			# propogate out of this function and cause exiting
@@ -224,7 +222,7 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 				# If it failed, kill off anything else that
 				# isn't dead yet.
 				for pid in mypids:
-					if os.waitpid(pid, os.WNOHANG) == (0,0):
+					if os.waitpid(pid, os.WNOHANG) == (0, 0):
 						os.kill(pid, signal.SIGTERM)
 						os.waitpid(pid, 0)
 					spawned_pids.remove(pid)
@@ -238,7 +236,7 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 
 def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask):
 	"""internal function to handle exec'ing the child process"""
-	
+
 	# If the process we're creating hasn't been given a name
 	# assign it the name of the executable.
 	if not opt_name:
@@ -282,7 +280,7 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask):
 
 def find_binary(binary):
 	"""look through the PATH environment, finding the binary to execute"""
-	
+
 	if os.path.isabs(binary):
 		if not (os.path.isfile(binary) and os.access(binary, os.X_OK)):
 			raise CommandNotFound(binary)
@@ -297,7 +295,7 @@ def find_binary(binary):
 
 def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=False, **keywords):
 	"""spawn a process via fakeroot
-	
+
 	refer to the fakeroot manpage for specifics of using fakeroot
 	"""
 	if env is None:
@@ -331,7 +329,7 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=Fals
 					os.close(x)
 				except OSError:
 					pass
-	
+
 	line = line.strip()
 
 	try:
@@ -352,8 +350,7 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=Fals
 		if not returnpid:
 			cleanup_pids([fakepid])
 
-def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=[1],
-	fd_pipes=None, **keywords):
+def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=[1], fd_pipes=None, **keywords):
 
 	"""call spawn, collecting the output to fd's specified in collect_fds list
 	emulate_gso is a compatability hack to emulate commands.getstatusoutput's return, minus the
@@ -372,7 +369,7 @@ def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_f
 		for x in collect_fds:
 			fd_pipes[x] = pw
 		keywords["returnpid"] = True
-		mypid=spawn_type(mycommand,fd_pipes=fd_pipes,**keywords)
+		mypid = spawn_type(mycommand, fd_pipes=fd_pipes, **keywords)
 		os.close(pw)
 		pw = None
 
@@ -385,11 +382,11 @@ def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_f
 		finally:
 			fd.close()
 			pw = None
-	
-		retval = os.waitpid(mypid[0],0)[1]
+
+		retval = os.waitpid(mypid[0], 0)[1]
 		cleanup_pids(mypid)
 		if raw_exit_code:
-			return [retval,mydata]
+			return [retval, mydata]
 		return [process_exit_code(retval), mydata]
 
 	finally:
@@ -419,12 +416,12 @@ def process_exit_code(retval):
 class ExecutionFailure(Exception):
 	def __init__(self, msg):
 		self.msg = msg
-	def __str__(self): 
+	def __str__(self):
 		return "Execution Failure: %s" % self.msg
 
 class CommandNotFound(ExecutionFailure):
 	def __init__(self, command):
-		self.command=command
+		self.command = command
 	def __str__(self):
 		return "CommandNotFound Exception: Couldn't find '%s'" % str(self.command)
 
@@ -434,5 +431,5 @@ if os.path.exists(FAKED_PATH) and os.path.exists(LIBFAKEROOT_PATH):
 		fakeroot_capable = (r == 0) and (len(s) == 1) and ("version 1." in s[0])
 	except ExecutionFailure:
 		fakeroot_capable = False
-				
-	
+
+

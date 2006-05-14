@@ -11,10 +11,10 @@ class fake_blocker(restriction.base):
 		if not isinstance(blocks, (list, tuple)):
 			blocks = [blocks]
 		self.key, self.blocks = key, blocks
-	
+
 	def __str__(self):
 		return "fake_atom(%s, %s)" % (self.key, self.blocks)
-	
+
 	def match(self, obj):
 		for x in self.blocks:
 			if x is obj:
@@ -54,4 +54,4 @@ class SlotTesting(unittest.TestCase):
 		self.assertEqual([], c.fill_slotting(p2))
 		c.remove_slotting(p)
 		c.remove_slotting(p2)
-		
+

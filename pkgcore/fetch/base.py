@@ -13,7 +13,7 @@ class fetcher(object):
 		-1: iff (size chksum is available, and file is smaller then stated chksum) or file doesn't exist.
 		0:  iff all chksums match
 		1:  iff file is too large (if size chksums are available) or else size is right but a chksum didn't match.
-		
+
 		if required == None, all chksums must match
 		"""
 		if not os.path.exists(file_location):
@@ -24,7 +24,7 @@ class fetcher(object):
 			for x in target.chksums:
 				if x not in handlers:
 					raise errors.RequiredChksumDataMissing(target, x)
-		
+
 		if "size" in handlers:
 			c = cmp(handlers["size"](file_location), target.chksums["size"])
 			if c != 0:
@@ -34,7 +34,7 @@ class fetcher(object):
 			if x != "size" or x not in handlers:
 				if not handlers[x](file_location) == target.chksums[x]:
 					return 1
-				
+
 		return 0
 
 	def __call__(self, *a, **kw):

@@ -3,7 +3,7 @@
 
 import os, stat
 from pkgcore.cache import flat_hash, cache_errors
-from pkgcore.ebuild import eclass_cache 
+from pkgcore.ebuild import eclass_cache
 from pkgcore.util.mappings import ProtectedDict
 
 # this is the old cache format, flat_list.  count maintained here.
@@ -59,7 +59,7 @@ class database(flat_hash.database):
 					break
 				elif not c.isupper():
 					break
-			
+
 			if not hashed:
 				# non hashed.
 				d.clear()
@@ -69,11 +69,11 @@ class database(flat_hash.database):
 
 		d["_mtime_"] = mtime
 		return d
-		
+
 	def _setitem(self, cpv, values):
 		values = ProtectedDict(values)
-		
-		# hack.  proper solution is to make this a __setitem__ override, since template.__setitem__ 
+
+		# hack.  proper solution is to make this a __setitem__ override, since template.__setitem__
 		# serializes _eclasses_, then we reconstruct it.
 		if "_eclasses_" in values:
 			values["INHERITED"] = ' '.join(self.reconstruct_eclasses(cpv, values["_eclasses_"]).keys())

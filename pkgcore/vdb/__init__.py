@@ -11,7 +11,7 @@ def _grab_virtuals(parent_repo):
 	for pkg in parent_repo:
 		for virtual in pkg.provides.evaluate_depset(pkg.use):
 			virtuals.setdefault(virtual.package, {}).setdefault(pkg.fullver, []).append(pkg)
-	
+
 	for pkg_dict in virtuals.itervalues():
 		for full_ver, rdep_atoms in pkg_dict.iteritems():
 			if len(rdep_atoms) == 1:

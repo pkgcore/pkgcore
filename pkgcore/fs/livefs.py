@@ -39,7 +39,7 @@ def gen_obj(path, stat=None, real_path=None):
 # make it less slow somehow.  the obj instantiation is a bit of a killer I'm afraid;
 # without obj, looking at 2.3ms roughly best of 3 100 iterations, obj instantiation, 58ms.
 # also, os.path.join is rather slow.
-# in this case, we know it's always pegging one more dir on, so it's fine doing it this way 
+# in this case, we know it's always pegging one more dir on, so it's fine doing it this way
 # (specially since we're relying on os.path.sep, not '/' :P)
 
 def iter_scan(path, offset=None):

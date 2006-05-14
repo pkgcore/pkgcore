@@ -22,7 +22,7 @@ def dump_dot_file_from_graph(graph, filepath, graph_name="dumped_graph"):
 					fd.write("\t%s\n" % dump_edge(parent, matches, a))
 			else:
 				fd.write("\t%s\n" % dump_edge(parent, a, a))
-			
+
 	fd.write("\tnode [shape=circle];\n")
 	for x in graph.pkgs.keys():
 		fd.write("\t%s\n" % mangle_name(x))
@@ -32,4 +32,4 @@ def dump_dot_file_from_graph(graph, filepath, graph_name="dumped_graph"):
 		fd.write("\tnode [shape=box];\n\t%s;\n" % " ".join(map(mangle_name, graph.unresolved_atoms())))
 		del l
 	fd.write("}\n");
-	
+

@@ -11,7 +11,7 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
 	SCHEMA_DELETE_TRIGGER	= """CREATE TRIGGER %s AFTER DELETE on %s
 	begin
 	DELETE FROM %s WHERE pkgid=old.pkgid;
-	end;""" % (SCHEMA_DELETE_NAME, sql_template.SQLDatabase.SCHEMA_PACKAGE_NAME, 
+	end;""" % (SCHEMA_DELETE_NAME, sql_template.SQLDatabase.SCHEMA_PACKAGE_NAME,
 		sql_template.SQLDatabase.SCHEMA_VALUES_NAME)
 
 	_BaseError = sqlite_module.Error
@@ -42,7 +42,7 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
 	def _table_exists(self, tbl):
 		"""return true/false dependant on a tbl existing"""
 		try:
-			self.con.execute("SELECT name FROM sqlite_master WHERE type=\"table\" AND name=%s" % 
+			self.con.execute("SELECT name FROM sqlite_master WHERE type=\"table\" AND name=%s" %
 				self._sfilter(tbl))
 		except self._BaseError, e:
 			# XXX crappy.

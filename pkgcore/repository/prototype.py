@@ -26,13 +26,13 @@ class IterValLazyDict(LazyValDict):
 		LazyValDict.__init__(self, key_func, val_func)
 		self._iter_callable = override_iter
 		self.return_mangler = return_func
-		
+
 	def __iter__(self):
 		return (self.return_mangler(k, ver) for k,v in self.iteritems() for ver in v)
 
 	def __contains__(self, key):
 		return key in iter(self)
-		
+
 	def __str__(self):
 		return str(list(self))
 
@@ -44,9 +44,9 @@ class PackageIterValLazyDict(IterValLazyDict):
 
 	def __iter__(self):
 		return (k+"/"+x for k in self.iterkeys() for x in self[k])
-		
+
 	def __contains__(self, key):
-		s = key.rsplit("/",1)
+		s = key.rsplit("/", 1)
 		if len(s) != 2:
 			return False
 		return s[1] in self[s[0]]
@@ -84,7 +84,7 @@ class tree(object):
 	package_class = None
 	configured = True
 	configure = ()
-	
+
 	def __init__(self, frozen=True):
 		self.categories = CategoryIterValLazyDict(self._get_categories, self._get_categories)
 		self.packages   = PackageIterValLazyDict(self.categories, self._get_packages)
@@ -187,7 +187,7 @@ class tree(object):
 			else:
 				pkgs_exact = set(r.exact for r in pkgs if isinstance(r, values.StrExactMatch) and not r.flags and not r.negate)
 				if len(pkgs_exact) == len(pkgs):
-					pkgs_iter = ((c,p) for c in cats_iter for p in ifilter(pkgs_exact.__contains__, self.packages.get(c,[])))
+					pkgs_iter = ((c,p) for c in cats_iter for p in ifilter(pkgs_exact.__contains__, self.packages.get(c, [])))
 				elif len(pkgs) == 1:
 					pkgs_iter = ifilter(pkgs[0].match, cats_iter)
 				else:
@@ -238,7 +238,7 @@ class tree(object):
 		if cp not in self.packages:
 			self.packages.force_regen(pkg.category)
 		self.packages.force_regen(cp)
-	
+
 	def install(self, pkg, *a, **kw):
 		if self.frozen:
 			raise AttributeError("repo is frozen")
@@ -252,7 +252,7 @@ class tree(object):
 			raise AttributeError("repo is frozen")
 		return self._uninstall(pkg, *a, **kw)
 
-	def _uninstall(self,pkg, *a, **kw):
+	def _uninstall(self, pkg, *a, **kw):
 		raise NotImplementedError
 
 	def replace(self, orig, new, *a, **kw):

@@ -21,7 +21,7 @@ class contentsSet(set):
 			initial = []
 		set.__init__(self, imap(check_instance, initial))
 		self.frozen = frozen
-	
+
 	def add(self, obj):
 		if self.frozen:
 			# weird, but keeping with set.
@@ -29,7 +29,7 @@ class contentsSet(set):
 		if not isinstance(obj, fs.fsBase):
 			raise TypeError("'%s' is not a fs.fsBase class" % str(obj))
 		set.add(self, obj)
-		
+
 	def remove(self, obj):
 		if self.frozen:
 			# weird, but keeping with set.
@@ -58,7 +58,7 @@ class contentsSet(set):
 			if key == x.location:
 				return True
 		return False
-	
+
 	def clear(self):
 		if self.frozen:
 			# weird, but keeping with set.

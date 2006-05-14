@@ -33,7 +33,7 @@ def dump_dot_file_from_graph(graph, filepath, graph_name="dumped_graph"):
 	l = list(graph.unresolved_atoms())
 	if l:
 		fd.write("\tUNRESOLVED_ATOM\n")
-	
+
 	for a, data in graph.atoms.iteritems():
 		for parent in data[0]:
 			fd.write("\t%s\n" % dump_package_dep(parent, a))
@@ -50,12 +50,12 @@ def dump_dot_file_from_graph(graph, filepath, graph_name="dumped_graph"):
 #					fd.write("\t%s\n" % dump_edge(parent, matches, a))
 #			else:
 #				fd.write("\t%s\n" % dump_edge(parent, a, a))
-#			
-#	
+#
+#
 #	fd.write("\tnode [shape=circle];\n\t%s;\n" % " ".join(map(mangle_name, graph.pkgs.keys())))
 #	l = list(graph.unresolved_atoms())
 #	if l:
 #		fd.write("\tnode [shape=box];\n\t%s;\n" % " ".join(map(mangle_name, graph.unresolved_atoms())))
 #		del l
 	fd.write("}\n");
-	
+

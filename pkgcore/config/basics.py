@@ -11,9 +11,9 @@ type_names = ("list", "str", "bool", "section_ref", "section_refs")
 
 class ConfigType(object):
 
-	def __init__(
-		self, typename, types,
-		positional=None, incrementals=None, required=None, defaults=None):
+	def __init__(self, typename, types, positional=None, incrementals=None, \
+		required=None, defaults=None):
+
 		"""A configurable 'type'.
 
 		typename is the name of the type, used in errors.
@@ -23,6 +23,7 @@ class ConfigType(object):
 		required is a list of required arguments.
 		defaults is a ConfigSection with default values.
 		"""
+
 		if positional is None:
 			positional = []
 		if incrementals is None:
@@ -72,7 +73,7 @@ class ConfigSection(object):
 	def keys(self):
 		"""Return a list of keys."""
 		raise NotImplementedError
-	
+
 	def get_value(self, central, name, arg_type):
 		"""Return a setting, converted to the requested type."""
 		raise NotImplementedError
@@ -91,7 +92,7 @@ class ConfigSectionFromStringDict(ConfigSection):
 
 	def keys(self):
 		return self.dict.keys()
-		
+
 	def get_value(self, central, name, arg_type):
 		value = self.dict[name]
 		if arg_type == 'callable':
@@ -115,8 +116,8 @@ class ConfigSectionFromStringDict(ConfigSection):
 						'%s: requested section %r for %r not found' %
 						(self.name, section_name, name))
 				else:
-					result.append(central.instantiate_section(
-							section_name, conf=conf))
+					result.append(central.instantiate_section( \
+						section_name, conf=conf))
 			return result
 		elif arg_type == 'section_ref':
 			# TODO does this defeat central's instance caching?
@@ -149,7 +150,7 @@ class HardCodedConfigSection(ConfigSection):
 
 	def keys(self):
 		return self.dict.keys()
-		
+
 	def get_value(self, central, name, arg_type):
 		types = {
 			'list': list,
@@ -171,7 +172,7 @@ class HardCodedConfigSection(ConfigSection):
 
 def list_parser(s):
 	"""split on whitespace honoring quoting for new tokens"""
-	l=[]
+	l = []
 	i = 0
 	e = len(s)
 	# check for stringness because we return something interesting if
@@ -186,9 +187,9 @@ def list_parser(s):
 				res = []
 				while i < e and s[i] != s[q]:
 					if s[i] == '\\':
-						i+=1
+						i += 1
 					res.append(s[i])
-					i+=1
+					i += 1
 				if i >= e:
 					raise errors.QuoteInterpretationError(s)
 				l.append(''.join(res))
@@ -197,13 +198,13 @@ def list_parser(s):
 				res = []
 				while i < e and not (s[i].isspace() or s[i] in ("'", '"')):
 					if s[i] == '\\':
-						i+=1
+						i += 1
 					res.append(s[i])
-					i+=1
+					i += 1
 				if i < e and s[i] in ("'", '"'):
 					raise errors.QuoteInterpretationError(s)
 				l.append(''.join(res))
-		i+=1
+		i += 1
 	return l
 
 def str_parser(s):
@@ -214,7 +215,7 @@ def str_parser(s):
 	if len(s) > 1 and s[0] in '"\'' and s[0] == s[-1]:
 		s = s[1:-1]
 	return s.replace('\n', ' ').replace('\t', ' ')
-	
+
 def bool_parser(s):
 	s = str_parser(s).lower()
 	if s in ("no", "false", "0"):

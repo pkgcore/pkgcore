@@ -25,22 +25,24 @@ class DepSet(boolean.AndRestriction):
 	type=packages.package_type
 	negate = False
 
-	def __init__(self, dep_str, element_class, operators={"||":packages.OrRestriction,"":packages.AndRestriction}, 
+	def __init__(self, dep_str, element_class, \
+		operators={"||":packages.OrRestriction,"":packages.AndRestriction}, 
 		element_func=None):
 
-		"""dep_str is a dep style syntax, element_func is a callable returning the obj for each element, and
-		cleanse_string controls whether or translation of tabs/newlines is required"""
+		"""dep_str is a dep style syntax, element_func is a callable returning
+		the obj for each element, and cleanse_string controls whether or
+		translation of tabs/newlines is required"""
 
 		self.restrictions = []
 		self.element_class = element_class
 		if element_func is None:
 			element_func = element_class
 		self._node_conds = False
-		
+
 		raw_conditionals = []
 		depsets = [self.restrictions]
 		use_asserts = []
-		
+
 		words = iter_tokens(dep_str, splitter=" \t\n")
 		try:
 			for k in words:
@@ -60,11 +62,11 @@ class DepSet(boolean.AndRestriction):
 						use_asserts.pop(-1)
 					else:
 						depsets[-2].append(operators[raw_conditionals[-1]](finalize=True, *depsets[-1]))
-					
+
 					raw_conditionals.pop(-1)
 					depsets.pop(-1)
 
-				elif k.endswith('?') or k in operators or k=="(":
+				elif k.endswith('?') or k in operators or k == "(":
 					if k != "(":
 						# use conditional or custom op. no tokens left == bad dep_str.
 						try:
@@ -194,7 +196,7 @@ class DepSet(boolean.AndRestriction):
 				nc[k] = tuple(nc[k])
 
 			self._node_conds = nc
-		
+
 		return self._node_conds
 
 	@property

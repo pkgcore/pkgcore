@@ -18,7 +18,7 @@ class StateGraph(object):
 
 	atom_parents = 0
 	atom_matches = 1
-	
+
 	def __init__(self):
 		# { pkg : ( [ combination ], Set( atom ), Set( matching atom ) ) }
 		self.pkgs = {}
@@ -36,7 +36,7 @@ class StateGraph(object):
 			for node in x:
 				if isinstance(node, packages.Conditional):
 					import pdb;pdb.set_trace()
-					
+
 
 		self.dirty = True
 		self.pkgs[pkg] = [map(frozenset, pkg.rdepends.solutions()), set(), set()]

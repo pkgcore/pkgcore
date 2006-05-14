@@ -6,7 +6,7 @@ class base(object):
 
 	def get_data(self, bashrc):
 		raise NotImplementedError
-	
+
 	get_path = get_data
 
 class ProfileException(Exception):

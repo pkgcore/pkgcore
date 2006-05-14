@@ -9,11 +9,11 @@ import UserDict
 class LazyValDict(UserDict.DictMixin):
 
 	"""Mapping that loads values via a callable
-	
-	given a function to get keys, and to look up the val for those keys, it'll 
+
+	given a function to get keys, and to look up the val for those keys, it'll
 	lazy load key definitions, and values as requested
 	"""
-	
+
 	def __init__(self, get_keys_func, get_val_func):
 		"""
 		get_keys_func is a callable that is JIT called with no args	 returns a tuple of keys, or supports __contains__
@@ -62,7 +62,7 @@ class LazyValDict(UserDict.DictMixin):
 
 	def itervalues(self):
 		return imap(self.__getitem__, self.iterkeys())
-	
+
 	def iteritems(self):
 		return ((k, self[k]) for k in self.iterkeys())
 
@@ -85,12 +85,12 @@ class LazyValDict(UserDict.DictMixin):
 class ProtectedDict(UserDict.DictMixin):
 
 	"""Mapping wrapper to store changes to a dict without modifying the initial dict
-	
+
 	given an initial dict, this wraps that dict storing changes in a secondary dict, protecting
 	the underlying dict from changes
 	"""
-	
-	__slots__=("orig","new","blacklist")
+
+	__slots__=("orig", "new", "blacklist")
 
 	def __init__(self, orig):
 		self.orig = orig
@@ -147,12 +147,12 @@ class ImmutableDict(dict):
 	pop = __delitem__
 	popitem = __delitem__
 	setdefault = __delitem__
-	
+
 	def __hash__(self):
 		k = self.items()
 		k.sort(lambda x, y: cmp(x[0], y[0]))
 		return hash(tuple(k))
-	
+
 	__delattr__ = __setitem__
 	__setattr__ = __setitem__
 
@@ -169,7 +169,7 @@ class IndeterminantDict(dict):
 		else:
 			self.__initial = starter_dict
 		self.__pull = pull_func
-		
+
 	def __getitem__(self, key):
 		if key in self.__initial:
 			return self.__initial[key]
@@ -184,7 +184,7 @@ class IndeterminantDict(dict):
 
 	def __hash__(self):
 		raise TypeError("non hashable")
-	
+
 	def __delitem__(self, *args):
 		raise TypeError("non modifiable")
 
@@ -198,18 +198,18 @@ class StackedDict(UserDict.DictMixin):
 
 	def __init__(self, *dicts):
 		self._dicts = dicts
-	
+
 	def __getitem__(self, key):
 		for x in self._dicts:
 			if key in x:
 				return x[key]
 		raise KeyError(key)
-	
+
 	def keys(self):
 		return list(iter(self))
 
 	def iterkeys(self):
-		s=set()
+		s = set()
 		for k in ifilterfalse(s.__contains__, chain(*map(iter, self._dicts))):
 			s.add(k)
 			yield k

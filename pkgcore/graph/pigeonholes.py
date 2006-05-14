@@ -15,7 +15,7 @@ class PigeonHoledSlots(object):
 	def __init__(self):
 		self.slot_dict = {}
 		self.blocker_ref_count = {}
-		
+
 	def fill_slotting(self, obj):
 		"""try to insert obj in, returning any conflicting objs (empty list if inserted successfully)"""
 		key = obj.key
@@ -71,7 +71,7 @@ class PigeonHoledSlots(object):
 		else:
 			self.slot_dict[key].append(atom)
 		return l
-		
+
 	def remove_slotting(self, obj):
 		key = obj.key
 		# let the key error be thrown if they screwed up.

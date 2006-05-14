@@ -6,14 +6,14 @@ from shlex import shlex
 from mappings import ProtectedDict
 
 def iter_read_bash(bash_source):
-	"""read file honoring bash commenting rules.  Note that it's considered good behaviour to close filehandles, as such, 
+	"""read file honoring bash commenting rules.  Note that it's considered good behaviour to close filehandles, as such,
 	either iterate fully through this, or use read_bash instead.
-	once the file object is no longer referenced, the handle will be closed, but be proactive instead of relying on the 
+	once the file object is no longer referenced, the handle will be closed, but be proactive instead of relying on the
 	garbage collector."""
 	if isinstance(bash_source, basestring):
 		bash_source = open(bash_source, 'r', 32384)
 	for s in bash_source:
-		s=s.strip()
+		s = s.strip()
 		if s.startswith("#") or s == "":
 			continue
 		yield s
@@ -42,7 +42,7 @@ def read_dict(bash_source, splitter="=", ignore_malformed=False, source_isiter=F
 					raise ParseError(file, line_count)
 			else:
 				if len(v) > 2 and v[0] == v[-1] and v[0] in ("'", '"'):
-					v=v[1:-1]
+					v = v[1:-1]
 				d[k] = v
 	finally:
 		del i
@@ -55,7 +55,7 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False, sourcing
 	recursively sources that file
 	"""
 
-	# quite possibly I'm missing something here, but the original portage_util getconfig/varexpand seemed like it 
+	# quite possibly I'm missing something here, but the original portage_util getconfig/varexpand seemed like it
 	# only went halfway.  The shlex posix mode *should* cover everything.
 
 	if vars_dict is not None:
@@ -110,7 +110,7 @@ class bash_parser(shlex):
 
 	def __setattr__(self, attr, val):
 		if attr == "state" and "state" in self.__dict__:
-			if (self.state, val) in (('"','a'),('a','"'), ('a', ' '), ("'", 'a')):
+			if (self.state, val) in (('"', 'a'), ('a', '"'), ('a', ' '), ("'", 'a')):
 				strl = len(self.token)
 				if self.__pos != strl:
 					self.changed_state.append((self.state, self.token[self.__pos:]))
@@ -134,7 +134,7 @@ class bash_parser(shlex):
 
 	def var_expand(self, val):
 		prev, pos = 0, 0
-		l=[]
+		l = []
 		match = var_find.search(val)
 		while match != None:
 			pos = match.start()

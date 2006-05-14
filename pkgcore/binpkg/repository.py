@@ -28,17 +28,18 @@ class tree(prototype.tree):
 		if optionalCategory:
 			return {}
 
-		try:	return tuple([x for x in os.listdir(self.base) \
-			if stat.S_ISDIR(os.lstat(os.path.join(self.base,x)).st_mode) and x != "All"])
-
+		try:
+			return tuple(x for x in os.listdir(self.base) \
+				if stat.S_ISDIR(os.lstat(os.path.join(self.base,x)).st_mode) \
+				and x != "All")
 		except (OSError, IOError), e:
 			raise KeyError("failed fetching categories: %s" % str(e))
-	
+
 	def _get_packages(self, category):
 		cpath = os.path.join(self.base,category.lstrip(os.path.sep))
 		#-5 == len(".tbz2")
 		l=set()
-		try:    
+		try:
 			for x in os.listdir(cpath):
 				if x.endswith(".tbz2"):
 					l.add(cpv(x[:-5]).package)
@@ -60,4 +61,4 @@ class tree(prototype.tree):
 		except (OSError, IOError), e:
 			raise KeyError("failed fetching packages for package %s: %s" % \
 			(os.path.join(self.base,catpkg.lstrip(os.path.sep)), str(e)))
-			
+

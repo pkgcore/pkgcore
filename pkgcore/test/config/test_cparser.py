@@ -32,7 +32,7 @@ class TypesConfigFromIniTest(unittest.TestCase):
 
 [profile]
 list = %(stuff)s extra
-incrementals = %(stuff)s 
+incrementals = %(stuff)s
 class = pkgcore.ebuild blah
 defaults = class
 

@@ -24,7 +24,7 @@ class package(ebuild_src.package):
 	tracked_attributes = ebuild_src.package.tracked_attributes[:]
 	tracked_attributes.extend(["contents", "use", "environment"])
 	allow_regen = False
-	
+
 	_get_attr = dict(ebuild_src.package._get_attr)
 
 	for x in ("_mtime_", "fetchables"):
@@ -36,7 +36,7 @@ class package(ebuild_src.package):
 		ebuild_src.package._config_wrappables[k], ebuild_src.package._get_attr[k]))
 		for k in filter(ebuild_src.package.tracked_attributes.__contains__,
 		ebuild_src.package._config_wrappables))
-#	_get_attr["use"] = post_curry(passthrough, "use", "USE")
+
 	_get_attr["use"] = lambda s:s.data["USE"].split()
 	_get_attr["depends"] = lambda s:DepSet("", atom)
 
@@ -66,20 +66,20 @@ class package_factory(metadata.factory):
 class fake_package_factory(package_factory):
 	"""a fake package_factory, so that we can reuse the normal get_metadata hooks; a factory is generated per
 	package instance, rather then one factory, N packages.
-	
-	Do not use this unless you know it's what your after; this is strictly for transitioning a built ebuild 
+
+	Do not use this unless you know it's what your after; this is strictly for transitioning a built ebuild
 	(still in the builddir) over to an actual repo.  It literally is a mapping of original package data
 	to the new generated instances data store.
 	"""
-	
+
 	def __init__(self, child_class):
 		self.child_class = child_class
 
 	def __del__(self):
 		pass
-	
+
 	_forced_copy = ebuild_src.package.tracked_attributes
-	
+
 	def new_package(self, pkg, image_root, environment_path):
 		self.pkg = pkg
 		self.image_root = image_root

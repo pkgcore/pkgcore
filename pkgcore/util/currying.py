@@ -28,7 +28,7 @@ def post_curry(func, *args, **kwargs):
 	return callit
 
 def pretty_docs(wrapped, extradocs=None):
-	wrapped.__module__ = wrapped.__original__.__module__	    
+	wrapped.__module__ = wrapped.__original__.__module__
 	doc = wrapped.__original__.__doc__
 	if extradocs is None:
 		wrapped.__doc__ = doc
@@ -38,13 +38,13 @@ def pretty_docs(wrapped, extradocs=None):
 
 def _second_level_call(grab_attr, self, *a, **kw):
 	return grab_attr(self)(*a, **kw)
-	
+
 def alias_class_method(attr):
 	"""at runtime, redirect to another method
-	
+
 	attr is the desired attr name to lookup, and supply all later passed in
 	args/kws to
-	
+
 	Useful for when setting has_key to __contains__ for example, and __contains__ may be
 	overriden
 	"""

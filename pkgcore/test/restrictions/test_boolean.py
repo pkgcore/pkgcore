@@ -67,10 +67,10 @@ class AndRestrictionTest(unittest.TestCase):
 			boolean.AndRestriction(false, true,
 				node_type='foo', negate=True).match(None))
 		self.failUnless(
-			boolean.AndRestriction(true, false, 
+			boolean.AndRestriction(true, false,
 				node_type='foo', negate=True).match(None))
 		self.failUnless(
-			boolean.AndRestriction(false, false, 
+			boolean.AndRestriction(false, false,
 				node_type='foo', negate=True).match(None))
 		self.failIf(
 			boolean.AndRestriction(true, true,
@@ -78,7 +78,7 @@ class AndRestrictionTest(unittest.TestCase):
 
 	def test_solutions(self):
 		self.assertEquals(boolean.AndRestriction(true, true).solutions(), [[true, true]])
-		self.assertEquals(boolean.AndRestriction(boolean.AndRestriction(true, true), true).solutions(), 
+		self.assertEquals(boolean.AndRestriction(boolean.AndRestriction(true, true), true).solutions(),
 			[[true, true, true]])
 		self.assertEquals(map(set, boolean.AndRestriction(true, true, boolean.OrRestriction(false, true)).solutions()),
 			[set([true, true, false]), set([true, true, true])])
@@ -98,7 +98,7 @@ class OrRestrictionTest(unittest.TestCase):
 			boolean.OrRestriction(false, false, node_type='foo').match(None))
 
 	def test_negate_match(self):
-		for x in ((true, false), (false, true), (true,true)):
+		for x in ((true, false), (false, true), (true, true)):
 			self.failIf(boolean.OrRestriction(node_type='foo', negate=True, *x).match(None))
 		self.failUnless(
 			boolean.OrRestriction(false, false, node_type='foo', negate=True).match(None))

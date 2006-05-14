@@ -119,12 +119,12 @@ class CPV(base):
 				elif self.revision == None:
 					self.__dict__["fullver"] = self.version
 				else:
-					self.__dict__["fullver"] = "%s-r%i" % (self.version,self.revision)
-			
+					self.__dict__["fullver"] = "%s-r%i" % (self.version, self.revision)
+
 		return self.__dict__[attr]
 
 	_get_attr.update([(x, post_curry(_split_version, x)) for x in ("version", "fullver", "revision")])
-	
+
 
 	def __eq__(self, other):
 		if not isinstance(other, self.__class__):
@@ -164,11 +164,11 @@ def ver_cmp(ver1, rev1, ver2, rev2):
 
 	# If the dotted strings are equal, we can skip doing a detailed comparison.
 	if parts1[0] != parts2[0]:
-		
+
 		# First split up the dotted strings into their components.
 		ver_parts1 = parts1[0].split(".")
 		ver_parts2 = parts2[0].split(".")
-		
+
 		# And check if CVS ebuilds come into play. If there is only
 		# one it wins by default. Otherwise any CVS component can
 		# be ignored.
@@ -204,7 +204,7 @@ def ver_cmp(ver1, rev1, ver2, rev2):
 			# letter suffix, it wins. Otherwise, the other version wins.
 			if x in len_list:
 				if x == ver_parts1_len:
-					return cmp(letters[0],0)
+					return cmp(letters[0], 0)
 				else:
 					return cmp(0, letters[1])
 
@@ -270,7 +270,7 @@ def ver_cmp(ver1, rev1, ver2, rev2):
 		# for comparison.
 		c = cmp(suffix_value[match1.group(1)], suffix_value[match2.group(1)])
 		if c:	return c
-		
+
 		# Otherwise use the digit as the basis for comparison.
 		c = cmp(int("0"+match1.group(2)), int("0"+match2.group(2)))
 		if c:	return c

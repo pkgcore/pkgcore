@@ -44,6 +44,6 @@ if __name__ == "__main__":
 		if not x in valid:
 			if verbose:	print "deleting %s" % x
 			del cache2[x]
-	
+
 	if verbose:
 		print "took %i seconds" % int(time.time() - start)

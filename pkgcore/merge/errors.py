@@ -12,7 +12,7 @@ class ModificationError(Exception):
 	def __str__(self):
 		return "%s: %s" % (self.__class__, self.msg)
 
-	
+
 class BlockModification(ModificationError):
 	"""Merging cannot proceed"""
 
@@ -21,7 +21,7 @@ class TriggerUnknownCset(ModificationError):
 
 class NonFatalModification(Exception):
 	pass
-	
+
 class TriggerWarning(NonFatalModification):
 	pass
 

@@ -25,7 +25,7 @@ class Failure(BaseException):
 
 def split_atom(inst):
 	return inst.category + "/" + inst.package, inst.restrictions[2:]
-	
+
 def get_key_from_package(pkg):
 	return pkg.category + "/" + pkg.package
 
@@ -37,7 +37,7 @@ def package_keywords_splitter(val):
 # ow ow ow ow ow ow....
 # this manages a *lot* of crap.  so... this is fun.
 #
-# note also, that this is rather ebuild centric.  it shouldn't be, and should be redesigned to be a seperation of 
+# note also, that this is rather ebuild centric.  it shouldn't be, and should be redesigned to be a seperation of
 # configuration instantiation manglers, and then the ebuild specific chunk (which is selected by config)
 # ~harring
 
@@ -49,7 +49,7 @@ class domain:
 		if profile.visibility:
 			maskers.extend(profile.visibility)
 
-		for key, val, action in (("package.mask", maskers, atom), ("package.unmask", unmaskers, atom), 
+		for key, val, action in (("package.mask", maskers, atom), ("package.unmask", unmaskers, atom),
 			("package.keywords", keywords, package_keywords_splitter), ("package.license", license, package_keywords_splitter)):
 			if key in settings:
 
@@ -97,10 +97,10 @@ class domain:
 					else:
 						if len(x) == 1:
 							raise Failure("negation of a setting in '%s', but name negated isn't completed-" % (k, v))
-						x=x[1:]
-						if x in l:	
+						x = x[1:]
+						if x in l:
 							l.remove(x)
-				else:	
+				else:
 					l.add(x)
 			return l
 
@@ -142,7 +142,7 @@ class domain:
 
 		key_filter = ContainmentMatch(*key)
 		if keyword_filter:
-			filter.add_restriction(packages.OrRestriction(packages.PackageRestriction("keywords", key_filter), 
+			filter.add_restriction(packages.OrRestriction(packages.PackageRestriction("keywords", key_filter),
 				DictBased(keyword_filter, get_key_from_package, split_atom), negate=True))
 		else:
 			filter.add_restriction(packages.PackageRestriction("keywords", key_filter, negate=True))
@@ -167,7 +167,7 @@ class domain:
 		if "default" in settings:
 			del settings["default"]
 		self.settings = settings
-			
+
 		if profile.get_path == None and profile.get_data == None:
 			raise Failure("profile instance '%s' lacks a usable ebd_data_source method" % profile)
 		bashrc = list(profile.bashrc)

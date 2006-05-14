@@ -7,7 +7,7 @@
 class InvertedContains(set):
 
 	"""Set that inverts all contains lookups results
-	
+
 	mainly useful in conjuection with LimitedChangeSet for converting from blacklist to whitelist
 	"""
 
@@ -16,13 +16,13 @@ class InvertedContains(set):
 
 
 class LimitedChangeSet(object):
-	
+
 	"""Set used to limit the number of times a key can be removed/added
-	
-	specifically deleting/adding a key only once per commit, 
+
+	specifically deleting/adding a key only once per commit,
 	optionally blocking changes to certain keys.
 	"""
-	
+
 	_removed	= 0
 	_added		= 1
 
@@ -50,7 +50,7 @@ class LimitedChangeSet(object):
 	def remove(self, key):
 		if key in self.__changed or key in self.__blacklist:
 			raise Unchangable(key)
-		
+
 		if key in self.__new:
 			self.__new.remove(key)
 		self.__changed.add(key)
@@ -77,11 +77,11 @@ class LimitedChangeSet(object):
 			if change == self._removed:
 				self.__new.add(key)
 			else:
-				self.__new.remove(key)					
+				self.__new.remove(key)
 			l -= 1
 
 	def __str__(self):
-		return str(self.__new).replace("set(","LimitedChangeSet(", 1)
+		return str(self.__new).replace("set(", "LimitedChangeSet(", 1)
 
 	def __iter__(self):
 		return iter(self.__new)

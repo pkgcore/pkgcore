@@ -15,7 +15,7 @@ class InvalidVersion(Exception):
 
 
 class VersionMatch(restriction.base):
-	__slots__ = ("ver","rev", "vals", "droprev")
+	__slots__ = ("ver", "rev", "vals", "droprev")
 	"""any overriding of this class *must* maintain numerical order of self.vals, see intersect for reason why
 	vals also must be a tuple"""
 
@@ -25,7 +25,7 @@ class VersionMatch(restriction.base):
 		kwd["negate"] = False
 		super(self.__class__, self).__init__(**kwd)
 		self.ver, self.rev = ver, rev
-		if operator not in ("<=","<", "=", ">", ">=", "~"):
+		if operator not in ("<=", "<", "=", ">", ">=", "~"):
 			# XXX: hack
 			raise InvalidVersion(self.ver, self.rev, "invalid operator, '%s'" % operator)
 
@@ -34,7 +34,7 @@ class VersionMatch(restriction.base):
 				raise Exception("Cannot negate '~' operator")
 			if "=" in operator:		operator = operator.strip("=")
 			else:					operator += "="
-			for x,v in (("<",">"),(">","<")):
+			for x,v in (("<", ">"), (">", "<")):
 				if x in operator:
 					operator = operator.strip(x) + v
 					break
@@ -44,7 +44,7 @@ class VersionMatch(restriction.base):
 			self.vals = (0,)
 		else:
 			self.droprev = False
-			l=[]
+			l = []
 			if "<" in operator:	l.append(-1)
 			if "=" in operator:	l.append(0)
 			if ">" in operator:	l.append(1)
@@ -75,7 +75,7 @@ class VersionMatch(restriction.base):
 				return self.__class__("=", self.ver, rev=self.rev)
 
 			# hokay, no > in each.  potentially disjoint
-			for x, v in ((-1, "<"), (1,">")):
+			for x,v in ((-1, "<"), (1, ">")):
 				if x in self.vals and x in other.vals:
 					return self.__class__(v, self.ver, rev=self.rev)
 
@@ -126,7 +126,7 @@ class atom(boolean.AndRestriction):
 
 	__slots__ = (
 		"glob", "atom", "blocks", "op", "negate_vers", "cpv", "cpvstr", "use",
-		"slot", "hash","category", "version", "revision", "fullver", "package", "key")
+		"slot", "hash", "category", "version", "revision", "fullver", "package", "key")
 
 	type = packages.package_type
 
@@ -143,8 +143,8 @@ class atom(boolean.AndRestriction):
 			pos = 1
 		else:
 			pos = 0
-		while atom[pos] in ("<",">","=","~"):
-			pos+=1
+		while atom[pos] in ("<", ">", "=", "~"):
+			pos += 1
 		if self.blocks:
 			self.blocks  = True
 			self.op = atom[1:pos]
@@ -231,7 +231,7 @@ class atom(boolean.AndRestriction):
 
 	def atom_str(self):
 		s = ""
-		if self.blocks:	
+		if self.blocks:
 			s += "!"
 		s += self.op + self.category + "/" + self.package
 		if self.version:
@@ -266,7 +266,7 @@ class atom(boolean.AndRestriction):
 		if c != 0:
 			return c
 		c = cpv.ver_cmp(self.version, self.revision, other.version, other.revision)
-		if c != 0:	
+		if c != 0:
 			return c
 
 		return cmp(self.op, other.op)

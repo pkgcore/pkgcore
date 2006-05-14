@@ -8,13 +8,13 @@ from pkgcore.fs import fs, gen_obj, iter_scan
 from pkgcore.test.fs.test_util import TempDirMixin
 
 class FsObjsTest(TempDirMixin, unittest.TestCase):
-	
+
 	def check_attrs(self, obj, path):
 		st = os.lstat(path)
 		self.assertEqual(obj.mode & 07777, st.st_mode & 07777)
 		self.assertEqual(obj.uid, st.st_uid)
 		self.assertEqual(obj.gid, st.st_gid)
-		
+
 	def test_gen_obj_reg(self):
 		path = os.path.join(self.dir, "reg_obj")
 		open(path, "w")
@@ -26,7 +26,7 @@ class FsObjsTest(TempDirMixin, unittest.TestCase):
 		o = gen_obj(self.dir)
 		self.failUnless(fs.isdir(o))
 		self.check_attrs(o, self.dir)
-		
+
 	def test_gen_obj_sym(self):
 		path = os.path.join(self.dir, "test_sym")
 		os.mkdir(path)
@@ -53,10 +53,10 @@ class FsObjsTest(TempDirMixin, unittest.TestCase):
 	def test_iterscan(self):
 		path = os.path.join(self.dir, "iscan")
 		os.mkdir(path)
-		files = map(os.path.normpath, map(lambda x: os.path.join(path, x), ["tmp", "blah", "dar"]))
+		files = [os.path.normpath(os.path.join(path, x)) for x in ["tmp", "blah", "dar"]]
 		# cheap version of a touch.
 		map(lambda x:open(x, "w"), files)
-		dirs = map(os.path.normpath, map(lambda x: os.path.join(path, x), ["a", "b", "c"]))
+		dirs = [os.path.normpath(os.path.join(path, x)) for x in ["a", "b", "c"]]
 		map(os.mkdir, dirs)
 		dirs.append(path)
 		for obj in iter_scan(path):
@@ -74,4 +74,4 @@ class FsObjsTest(TempDirMixin, unittest.TestCase):
 		os.symlink("../sym1/blah", f)
 		o = gen_obj(f)
 		self.failUnless(o.target == "../sym1/blah")
-	
+

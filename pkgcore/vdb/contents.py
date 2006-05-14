@@ -14,7 +14,7 @@ class ContentsFile(contentsSet):
 		if not empty:
 			self.readonly = False
 			self._read()
-			
+
 		self.readonly = not writable
 
 
@@ -27,7 +27,7 @@ class ContentsFile(contentsSet):
 				raise TypeError("fsFile objects need to be strict")
 		elif not isinstance(obj, (fs.fsDir, fs.fsLink, fs.fsFifo, fs.fsDev)):
 			raise TypeError("obj must be of fsObj, fsDir, fsLink, fsFifo, fsDev class or derivative")
-		
+
 		contentsSet.add(self, obj)
 
 
@@ -50,7 +50,7 @@ class ContentsFile(contentsSet):
 	def _parse_old(self, line):
 		"""parse old contents, non tab based format"""
 		s = line.split()
-		if s[0] in ("dir","dev","fif"):
+		if s[0] in ("dir", "dev", "fif"):
 			return s[0], ' '.join(s[1:])
 		elif s[0] == "obj":
 			return "obj", ' '.join(s[1:-2]), s[-2], s[-1]
@@ -87,7 +87,7 @@ class ContentsFile(contentsSet):
 					obj = fs.fsFile(line[1], chksums={"md5":line[2]}, mtime=line[3], strict=False)
 				elif line[0] == "sym":
 					#path, target, ' -> ', mtime
-					obj = fs.fsLink(line[1],line[2], mtime=line[3], strict=False)
+					obj = fs.fsLink(line[1], line[2], mtime=line[3], strict=False)
 				else:
 					if len(line) > 2:
 						line = line[0], ' '.join(line[1:])
@@ -102,7 +102,7 @@ class ContentsFile(contentsSet):
 
 	def _write(self):
 		try:
-			outfile = open(self._file_location + ".temp","w", 32384)
+			outfile = open(self._file_location + ".temp", "w", 32384)
 
 			for obj in self:
 
@@ -124,7 +124,7 @@ class ContentsFile(contentsSet):
 					s = "fif\t" + obj.location
 
 				else:
-					raise Exception("unknown type %s: %s" % (type(obj),str(obj)))
+					raise Exception("unknown type %s: %s" % (type(obj), str(obj)))
 				outfile.write(s + "\n")
 
 		except Exception, e:

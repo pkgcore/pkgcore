@@ -44,19 +44,19 @@ class MergeEngine(object):
 	replace_hooks["unmerge"].append(unmerge_trigger)
 	install_hooks["post_merge"].append(ldconfig_trigger)
 	uninstall_hooks["post_unmerge"].append(ldconfig_trigger)
-	
+
 	# this should be a symlink update only
 	replace_hooks["post_merge"].append(ldconfig_trigger)
 	replace_hooks["post_unmerge"].append(ldconfig_trigger)
-	
+
 
 	install_csets = {"install_existing":"get_livefs_intersect_cset"}
 	uninstall_csets = dict(install_csets)
 	replace_csets = dict(install_csets)
 
-	install_csets.update({}.fromkeys(["install", "replace", "modifying"], 
+	install_csets.update({}.fromkeys(["install", "replace", "modifying"],
 		currying.pre_curry(alias_cset, "new_cset")))
-	uninstall_csets.update({}.fromkeys(["uninstall", "modifying"], 
+	uninstall_csets.update({}.fromkeys(["uninstall", "modifying"],
 		currying.pre_curry(alias_cset, "old_cset")))
 	replace_csets["install"] = currying.pre_curry(alias_cset, "new_cset")
 	replace_csets["modifying"] = lambda e, c: c["install"].intersection(c["uninstall"])
@@ -67,11 +67,11 @@ class MergeEngine(object):
 	install_csets_preserve = ["new_cset"]
 	uninstall_csets_preserve = ["old_cset"]
 	replace_csets_preserve = ["new_cset", "old_cset"]
-	
+
 	def __init__(self, mode, hooks, csets, preserves, offset=None):
 		self.mode = mode
 		self.hooks = ImmutableDict((x, []) for x in hooks)
-		
+
 		self.preserve_csets = []
 		self.cset_sources = {}
 		# instantiate these seperately so their values are preserved
@@ -106,7 +106,7 @@ class MergeEngine(object):
 		if offset:
 			# wrap the results of new_cset to pass through an offset generator
 			o.cset_sources["new_cset"] = currying.post_curry(o.generate_offset_cset, o.cset_sources["new_cset"])
-			
+
 		o.new = pkg
 		return o
 
@@ -121,7 +121,7 @@ class MergeEngine(object):
 		if offset:
 			# wrap the results of new_cset to pass through an offset generator
 			o.cset_sources["old_cset"] = currying.post_curry(o.generate_offset_cset, o.cset_sources["old_cset"])
-			
+
 		o.old = pkg
 		return o
 
@@ -133,14 +133,14 @@ class MergeEngine(object):
 		for v,k in ((old, "old_cset"), (new, "new_cset")):
 			if k not in csets:
 				csets[k] = currying.post_curry(cls.get_pkg_contents, v)
-		
+
 		o = cls(cls.UNINSTALL_MODE, hooks, csets, cls.replace_csets_preserve, offset=offset)
 
 		if offset:
 			for k in ("old_cset", "new_cset"):
 				# wrap the results of new_cset to pass through an offset generator
 				o.cset_sources[k] = currying.post_curry(o.generate_offset_cset, o.cset_sources[k])
-			
+
 		o.old = old
 		o.new = new
 		return o
@@ -152,7 +152,7 @@ class MergeEngine(object):
 			x(self, self.csets)
 
 	def regenerate_csets(self):
-		self.csets = StackedDict(self.preserved_csets, 
+		self.csets = StackedDict(self.preserved_csets,
 			LazyValDict(self.cset_sources, self._get_cset_source))
 
 	def _get_cset_source(self, key):
@@ -161,14 +161,14 @@ class MergeEngine(object):
 	def add_preserved_cset(self, cset_name, func):
 		self.add_cset(cset_name, func)
 		self.preserve_csets.append(cset_name)
-	
+
 	def add_cset(self, cset_name, func):
 		if not callable(func):
 			raise TypeError("func must be a callable")
 		if not isinstance(cset_name, basestring):
 			raise TypeError("cset_name must be a string")
 		self.cset_sources[cset_name] = func
-	
+
 
 	def add_triggers(self, hook_name, *triggers):
 		if hook_name not in self.hooks:
@@ -189,7 +189,7 @@ class MergeEngine(object):
 
 	@staticmethod
 	def generate_offset_cset(engine, csets, cset_generator):
-		return contents.contentsSet(x.change_location(os.path.join(engine.offset, 
+		return contents.contentsSet(x.change_location(os.path.join(engine.offset,
 			x.location.lstrip(os.path.sep))) for x in cset_generator(engine, csets))
 
 	@staticmethod

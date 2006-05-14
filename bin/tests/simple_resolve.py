@@ -7,7 +7,7 @@ if len(sys.argv) == 1:
 	print "need at least one arg to process for resolving"
 	sys.exit(1)
 
-from pkgcore.config import load_config  
+from pkgcore.config import load_config
 from pkgcore.package.atom import atom
 from pkgcore.graph.state_graph import StateGraph
 from pkgcore.graph.simple_resolver import resolve
@@ -35,9 +35,9 @@ for a in map(atom, sys.argv[1:]):
 		else:
 			print "couldn't find repo match for atom '%s'" % a
 			sys.exit(1)
-			
+
 changed=True
-print 
+print
 resolve(sg, vdb, repo)
 
 print "\n== unresolveds =="

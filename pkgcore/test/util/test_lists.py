@@ -29,12 +29,12 @@ class UniqueTest(unittest.TestCase):
 		# silly
 		self.assertEquals(f(()), [])
 		# hashable
-		self.assertEquals(sorted(f([1,1,2,3,2])), [1,2,3])
+		self.assertEquals(sorted(f([1, 1, 2, 3, 2])), [1, 2, 3])
 		# neither
 
 	def test_stable_unique(self):
 		self.common_check(lists.stable_unique)
-	
+
 	def test_unstable_unique(self):
 		self.common_check(lists.unstable_unique)
 		uc = UnhashableComplex

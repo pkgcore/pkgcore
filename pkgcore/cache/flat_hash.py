@@ -11,7 +11,7 @@ class database(fs_template.FsBased):
 
 	def __init__(self, *args, **config):
 		super(database,self).__init__(*args, **config)
-		self.location = os.path.join(self.location, 
+		self.location = os.path.join(self.location,
 			self.label.lstrip(os.path.sep).rstrip(os.path.sep))
 
 		if not os.path.exists(self.location):
@@ -28,7 +28,7 @@ class database(fs_template.FsBased):
 			raise cache_errors.CacheCorruption(cpv, e)
 		try:
 			d = self._parse_data(myf, os.fstat(myf.fileno()).st_mtime)
-		except (OSError, ValueError), e:	
+		except (OSError, ValueError), e:
 			myf.close()
 			raise cache_errors.CacheCorruption(cpv, e)
 		myf.close()
@@ -38,7 +38,7 @@ class database(fs_template.FsBased):
 		d = dict(x.rstrip().split("=", 1) for x in  data)
 		d["_mtime_"] = long(mtime)
 		return d
-		
+
 		for x in self._known_keys:
 			if x not in d:
 				d[x] = ''
@@ -60,7 +60,7 @@ class database(fs_template.FsBased):
 				raise cache_errors.CacheCorruption(cpv, ie)
 		except OSError, e:
 			raise cache_errors.CacheCorruption(cpv, e)
-		
+
 		for k, v in values.iteritems():
 			if k != "_mtime_":
 				myf.writelines("%s=%s\n" % (k, v))

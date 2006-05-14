@@ -118,7 +118,7 @@ class database(object):
 		"""generic function for walking the entire cache db, matching restrictions to
 		filter what cpv's are returned.  Derived classes should override this if they
 		can implement a faster method then pulling each cpv:values, and checking it.
-		
+
 		For example, RDBMS derived classes should push the matching logic down to the
 		actual RDBM."""
 

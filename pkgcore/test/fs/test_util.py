@@ -26,7 +26,7 @@ class TempDirMixin(object):
 			for dir in dirs:
 				os.chmod(os.path.join(root, dir), 0777)
 		shutil.rmtree(self.dir)
-	
+
 
 class EnsureDirsTest(TempDirMixin, unittest.TestCase):
 
@@ -87,7 +87,7 @@ class EnsureDirsTest(TempDirMixin, unittest.TestCase):
 		self.checkDir(path, os.geteuid(), portage_gid, 0777)
 		self.failUnless(util.ensure_dirs(path, gid=os.getegid()))
 		self.checkDir(path, os.geteuid(), os.getegid(), 0777)
-		
+
 
 class SymlinkTest(TempDirMixin, unittest.TestCase):
 
@@ -97,7 +97,7 @@ class SymlinkTest(TempDirMixin, unittest.TestCase):
 		os.mkdir(target)
 		os.symlink('target', linkname)
 		self.assertEquals(util.abssymlink(linkname), target)
-		
+
 
 class NormPathTest(unittest.TestCase):
 
@@ -112,7 +112,7 @@ class FsLockTest(TempDirMixin, unittest.TestCase):
 	def test_nonexistant(self):
 		self.assertRaises(
 			util.NonExistant, util.FsLock, os.path.join(self.dir, 'missing'))
-	
+
 	def test_locking(self):
 		path = os.path.join(self.dir, 'lockfile')
 		lock = util.FsLock(path, True)
@@ -146,7 +146,7 @@ class FsLockTest(TempDirMixin, unittest.TestCase):
 		lock.release_read_lock()
 		fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
 		fcntl.flock(f, fcntl.LOCK_UN | fcntl.LOCK_NB)
-		
+
 		self.failUnless(lock.acquire_write_lock(False))
 		lock.release_write_lock()
 		fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)

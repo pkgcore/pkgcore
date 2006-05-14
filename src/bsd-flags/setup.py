@@ -17,7 +17,7 @@ setup (# Distribution meta-data
                             "chflags",
                             ["chflags.c"],
                             libraries=[],
-                        ) 
+                        )
                       ],
         url = "",
       )

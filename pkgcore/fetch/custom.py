@@ -18,7 +18,7 @@ class fetcher(base.fetcher):
 	def __init__(self, distdir, command, required_chksums=None, userpriv=True, attempts=10, readonly=False, **conf):
 		self.distdir = distdir
 		if required_chksums is not None:
-			required_chksums = map(lambda x: x.lower(), required_chksums)
+			required_chksums = [x.lower() for x in required_chksums]
 		else:
 			required_chksums = []
 		if len(required_chksums) == 1 and required_chksums[0] == "all":
@@ -42,14 +42,14 @@ class fetcher(base.fetcher):
 		kw["minimal"] = True
 		if not ensure_dirs(self.distdir, **kw):
 			raise errors.distdirPerms(self.distdir, "if userpriv, uid must be %i, gid must be %i.  if not readonly, directory must be 0775, else 0555")
-		
-			
+
+
 	def fetch(self, target):
 		if not isinstance(target, fetchable):
 			raise TypeError("target must be fetchable instance/derivative: %s" % target)
 
 		fp = os.path.join(self.distdir, target.filename)
-		
+
 		uri = iter(target.uri)
 		if self.userpriv and userpriv_capable:
 			extra = {"uid":portage_uid, "gid":portage_gid}
@@ -73,7 +73,7 @@ class fetcher(base.fetcher):
 					# note we're not even checking the results. the verify portion of the loop handles this.
 					# iow, don't trust their exit code.  trust our chksums instead.
 					spawn_bash(self.command % {"URI":u}, **extra)
-					
+
 				attempts -= 1
 		except StopIteration:
 			return None

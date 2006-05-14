@@ -21,18 +21,18 @@ class ChksumsTests(unittest.TestCase):
 		for x in xrange(multi):
 			f.write(data)
 		f.close()
-	
+
 	def tearDown(self):
 		try:
 			os.unlink(self.fn)
 		except IOError:
 			pass
-	
+
 	def generic_check(self, chf_type):
 		chf = chksum.get_handler(chf_type)
 		self.assertEqual(chf(self.fn), sums[chf_type])
 
-	locals().update([("test_%s" % x, post_curry(generic_check, x)) for x in 
+	locals().update([("test_%s" % x, post_curry(generic_check, x)) for x in
 		("rmd160", "sha1", "sha256", "md5", "size")])
 	del x
 

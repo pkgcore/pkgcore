@@ -13,14 +13,14 @@ class fsBase(object):
 	__slots__ = ["location", "real_path", "mtime", "mode", "uid", "gid"]
 
 	def __init__(self, location, strict=True, real_path=None, **d):
-			
+
 		d["location"] = location
 		if real_path is None:
 			real_path = location
 
 		if not real_path.startswith(path_seperator):
 			real_path = abspath(real_path)
-		
+
 		d["real_path"] = real_path
 		s = object.__setattr__
 		if strict:
@@ -33,7 +33,7 @@ class fsBase(object):
 	def change_location(self, location):
 		if not location.startswith(path_seperator):
 			location = abspath(location)
-			
+
 		d = {}
 		for x in self.__slots__:
 			if hasattr(self, x):
@@ -42,7 +42,7 @@ class fsBase(object):
 		return self.__class__(location, **d)
 
 	def __setattr__(self, key, value):
-		try:	
+		try:
 			getattr(self, key)
 			raise Exception("non modifiable")
 		except AttributeError:
@@ -124,7 +124,7 @@ class fsFifo(fsBase):
 
 	def __repr__(self):
 		return "fifo:%s" % self.location
-	
+
 
 isdir = lambda x: isinstance(x, fsDir)
 isreg = lambda x: isinstance(x, fsFile)

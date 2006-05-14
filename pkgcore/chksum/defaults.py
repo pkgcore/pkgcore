@@ -6,7 +6,7 @@ from pkgcore.util import modules
 
 def loop_over_file(obj, filename):
 	f = open(filename, 'rb')
-	blocksize=32768
+	blocksize = 32768
 	data = f.read(blocksize)
 	size = 0L
 	sum = obj.new()
@@ -35,7 +35,7 @@ for k,v in (("sha1", "SHA"), ("sha256", "SHA256"), ("rmd160", "RIPEMD")):
 		chksum_types[k] = pre_curry(loop_over_file, modules.load_module("Crypto.Hash.%s" % v))
 	except modules.FailedImport:
 		pass
-del k,v
+del k, v
 
 if "sha1" not in chksum_types:
 	import sha

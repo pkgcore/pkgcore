@@ -3,10 +3,10 @@
 
 
 # metaclasses, 101.  metaclass gets called to instantiate a class (creating a class instance).
-# effectively, __metaclass__ controls how that class is converted from a definition, to an object, with the 
+# effectively, __metaclass__ controls how that class is converted from a definition, to an object, with the
 # object being used to create instances of that class.
 # note python doesn't exactly have definitions, just executions, but analogy is close enough :P
-	
+
 from pkgcore.util.lists import flatten
 from pkgcore.util.currying import pre_curry
 
@@ -41,7 +41,7 @@ def yield_deps(inst, d, k):
 	if k not in d:
 		yield k
 		return
-	s = [k, iter(dont_iterate_strings(d.get(k,())))]
+	s = [k, iter(dont_iterate_strings(d.get(k, ())))]
 	while s:
 		if isinstance(s[-1], basestring):
 			yield s.pop(-1)
@@ -63,7 +63,7 @@ class ForcedDepends(type):
 	def __call__(cls, *a, **kw):
 		if not getattr(cls, "stage_depends"):
 			return super(ForcedDepends, cls).__call_(*a, **kw)
-		
+
 		o = super(ForcedDepends, cls).__call__(*a, **kw)
 		if not hasattr(o, "_stage_state"):
 			o._stage_state = set()

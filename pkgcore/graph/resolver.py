@@ -59,7 +59,7 @@ class resolver(object):
 				assert all(not x.blocks for x in self.current_stack)
 			except AssertionError:
 				import pdb;pdb.set_trace()
-				raise				
+				raise
 
 			debug("stack is %s" % self.current_stack)
 			a = self.current_stack[-1]
@@ -87,11 +87,11 @@ class resolver(object):
 					else:
 						#ensure we're registered.
 						self.ref_stack_for_atom(x, t)
-		
+
 			if missing_atoms:
 				# cycle protection.
 				self.current_atom = a
-				
+
 				if a.blocks:
 #					import pdb;pdb.set_trace()
 					conflicts = self.slots.add_limiter(a)
@@ -111,7 +111,7 @@ class resolver(object):
 					# cycle ask the repo for a pkg configuration that breaks the cycle.
 					debug("   cycle detected for %s: stack %s" % (a, self.current_stack))
 					v = values.ContainmentMatch(a, negate=True)
-					yield packages.AndRestriction(a, 
+					yield packages.AndRestriction(a,
 						packages.PackageRestriction("depends", v), packages.PackageRestriction("rdepends", v))
 				else:
 					debug("   yielding %s for %s" % (a, self.current_stack))
@@ -124,7 +124,7 @@ class resolver(object):
 				assert not any(x.blocks for x in self.current_stack)
 			except AssertionError:
 				import pdb;pdb.set_trace()
-				raise				
+				raise
 
 		# sanity check.  all nodes in the graph *should* have solutions.
 		# no exceptions, solutions are valid.
@@ -160,10 +160,10 @@ class resolver(object):
 				self.current_stack.pop(-1)
 		else:
 			debug("  results for %s was %s" % (atom, c))
-		
+
 		debug("  satisfy_atoms exiting: stack %s" % (self.search_stacks), "satisfy")
 		debug("  satisfy_atoms exiting: atoms %s" % str(self.atoms.keys()), "satisfy")
-		
+
 	def unsatisfiable_atom(self, atom, msg="None supplied", permenant=True, indent=0):
 		# what's on the stack may be different from current_atom; union of atoms will do this fex.
 		assert atom is self.current_atom
@@ -254,4 +254,4 @@ class resolver(object):
 			if atom.blocks:
 				self.slots.remove_slotting(atom)
 			del self.atoms[atom]
-			
+

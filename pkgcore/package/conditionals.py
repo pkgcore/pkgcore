@@ -5,18 +5,18 @@ from pkgcore.util.containers import LimitedChangeSet, Unchangable
 import copy
 
 class PackageWrapper(object):
-	def __init__(self, pkg_instance, configurable_attribute_name, initial_settings=None, unchangable_settings=None, 
+	def __init__(self, pkg_instance, configurable_attribute_name, initial_settings=None, unchangable_settings=None,
 		attributes_to_wrap=None, build_callback=None):
 
 		"""pkg_instance should be an existing package instance
 		configurable_attribute_name is the attribute name to fake on this instance for accessing builtup conditional changes
 		use, fex, is valid for unconfigured ebuilds
-		
+
 		initial_settings is the initial settings of this beast, dict
 		attributes_to_wrap should be a dict of attr_name:callable
 		the callable receives the 'base' attribute (unconfigured), with the built up conditionals as a second arg
 		"""
-		
+
 		if initial_settings is None:
 			initial_settings = []
 		if unchangable_settings is None:
@@ -32,26 +32,26 @@ class PackageWrapper(object):
 		self._configurable = getattr(self, configurable_attribute_name)
 		self._configurable_name = configurable_attribute_name
 		self._reuse_pt = 0
-		self._cached_wrapped = {}		
+		self._cached_wrapped = {}
 		self._buildable = build_callback
 
 	def __copy__(self):
-		return self.__class__(self._wrapped_pkg, self._configurable_name, initial_settings=set(self._configurable), 
+		return self.__class__(self._wrapped_pkg, self._configurable_name, initial_settings=set(self._configurable),
 			unchangable_settings=self._unchangable, attributes_to_wrap=self._wrapped_attr)
 
 	def rollback(self, point=0):
 		self._configurable.rollback(point)
 		# yes, nuking objs isn't necessarily required.  easier this way though.
 		# XXX: optimization point
-		self._reuse_pt += 1 
-	
+		self._reuse_pt += 1
+
 	def commit(self):
 		self._configurable.commit()
 		self._reuse_pt = 0
-		
+
 	def changes_count(self):
 		return self._configurable.changes_count()
-	
+
 	def request_enable(self, attr, *vals):
 		if attr not in self._wrapped_attr:
 			if attr == self._configurable_name:
@@ -132,8 +132,8 @@ class PackageWrapper(object):
 
 	def lock(self):
 		self.commit()
-		self._configurable = list(self._configurable)		
-		
+		self._configurable = list(self._configurable)
+
 	def build(self):
 		if self._buildable:
 			return self._buildable(self)

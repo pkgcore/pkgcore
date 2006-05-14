@@ -68,7 +68,7 @@ def xpak(rootdir,outfile=None):
 	mylist.sort()
 
 	#Our list index has been created
-	
+
 	indexglob=""
 	indexpos=0
 	dataglob=""
@@ -102,11 +102,11 @@ def xsplit(infile):
 	myfile=open(infile,"r")
 	mydat=myfile.read()
 	myfile.close()
-	
+
 	splits = xsplit_mem(mydat)
 	if not splits:
 		return
-	
+
 	myfile=open(infile+".index","w")
 	myfile.write(splits[0])
 	myfile.close()
@@ -182,7 +182,7 @@ def searchindex(myindex,myitem):
 				datalen=decodeint(myindex[startpos+8+mytestlen:startpos+12+mytestlen]);
 				return [datapos,datalen]
 		startpos=startpos+mytestlen+12
-		
+
 def getitem(myid,myitem):
 	myindex=myid[0]
 	mydata=myid[1]

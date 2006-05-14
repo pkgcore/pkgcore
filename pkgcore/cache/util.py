@@ -23,7 +23,7 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None, 
 		count+=1
 		if x in dead_nodes:
 			dead_nodes.remove(x)
-		try:	
+		try:
 			entry = src_cache[x]
 		except KeyError, e:
 			noise.missing_entry(x)
@@ -44,7 +44,7 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None, 
 					noise.eclass_stale(x)
 					continue
 
-		# by this time, if it reaches here, the eclass has been validated, and the entry has 
+		# by this time, if it reaches here, the eclass has been validated, and the entry has
 		# been updated/translated (if needs be, for metadata/cache mainly)
 		try:
 			trg_cache[x] = entry

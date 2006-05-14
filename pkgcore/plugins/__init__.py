@@ -17,10 +17,10 @@ PLUGINS_EXTENSION = ".plugins"
 class RegistrationException(Exception):
 	def __init__(self, reason):		self.reason = reason
 	def __str__(self):	return "failed action due to %s" % self.reason
-	
+
 class FailedDir(RegistrationException):
 	pass
-	
+
 class PluginExistsAlready(RegistrationException):
 	def __init__(self):
 		RegistrationException.__init__(self, "plugin exists aleady, magic found")
@@ -71,7 +71,7 @@ class GlobalPluginRegistry(object):
 
 		finally:
 			plug_lock.release_write_lock()
-	
+
 	def deregister(self, plugin_type, magic, version, ignore_errors=False):
 		"""plugin_type is the categorization of the plugin
 		magic is the magic constant for lookup
@@ -90,11 +90,11 @@ class GlobalPluginRegistry(object):
 			if not existing.has_section(magic):
 				if ignore_errors:	return
 				raise PluginNotFound(magic, "magic not found in plugin_type")
-				
+
 			if not existing.has_option(magic, "version") or str(version) != existing.get(magic, "version"):
 				if ignore_errors: return
 				raise PluginNotFound(magic, "version not found in plugin_type")
-			
+
 			existing.remove_section(magic)
 			try:
 				if not existing.sections():
@@ -131,7 +131,7 @@ class GlobalPluginRegistry(object):
 		try:
 			if plugin_type == None:
 				ptypes = [x for x in os.listdir(plugins_dir) if x.endswith(PLUGINS_EXTENSION) ]
-	
+
 			len_exten = len(PLUGINS_EXTENSION)
 			for x in ptypes:
 				c = RawConfigParser()
@@ -139,8 +139,8 @@ class GlobalPluginRegistry(object):
 				if raw:
 					d[x[:-len_exten]] = c
 				else:
-					d[x[:-len_exten]] = dict([(y, dict(c.items(y))) for y in c.sections()])
-		
+					d[x[:-len_exten]] = dict((y, dict(c.items(y))) for y in c.sections())
+
 		finally:
 			if locking:
 				plug_lock.release_read_lock()
@@ -165,7 +165,7 @@ for x in ["register", "deregister", "query_plugins", "get_plugin"]:
 		doc = ''
 	else:
 		# do this so indentation on pydoc __doc__ is sane
-		doc = "\n".join(map(lambda x:x.lstrip(), doc.split("\n"))) +"\n"
+		doc = "\n".join(x.lstrip() for x in doc.split("\n")) +"\n"
 	doc += "proxied call to module level registry instances %s method" % x
 	globals()[x] = pretty_docs(v, doc)
 

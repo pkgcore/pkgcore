@@ -24,5 +24,5 @@ class AnyTest(unittest.TestCase, mixin):
 
 class AllTest(unittest.TestCase, mixin):
 	func_name = "all"
-	test_all = post_curry(mixin.check_func, False, 1, 
+	test_all = post_curry(mixin.check_func, False, 1,
 		(isinstance(x, int) for x in xrange(100)), True)

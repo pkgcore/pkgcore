@@ -6,7 +6,7 @@ from itertools import chain
 from pkgcore.util.lists import stable_unique
 
 class choice_point(object):
-	
+
 	__slots__ = ("__weakref__", "atom", "matches", "matches_idx", "solution_filters",
 		"_rdep_solutions", "_dep_solutions", "_provides_solutions")
 
@@ -19,7 +19,7 @@ class choice_point(object):
 		self._rdep_solutions = [-2, 0, ()]
 		self._dep_solutions = [-2, 0, ()]
 		self._provides_solutions = [-2, 0, ()]
-		
+
 	def reduce_atoms(self, atom):
 
 		if self.matches_idx is None:
@@ -67,13 +67,13 @@ class choice_point(object):
 			existing[0:3] = [self.matches_idx, 0,
 				[tuple(stable_unique(x)) for x in getattr(self.matches[self.matches_idx], name).solutions()]]
 		return existing[2][existing[1]]
-	
+
 	@property
 	def current_pkg(self):
 		# trigger depends lookup.  cheap, but works.
 		self.depends, self.rdepends
 		return self.matches[self.matches_idx]
-	
+
 	def force_next_pkg(self):
 		if bool(self):
 			self.matches_idx = self.matches_idx + 1

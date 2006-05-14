@@ -7,7 +7,7 @@ from pkgcore.os_data import portage_gid
 from pkgcore.fs.util import ensure_dirs
 
 class FsBased(template.database):
-	"""template wrapping fs needed options, and providing _ensure_access as a way to 
+	"""template wrapping fs needed options, and providing _ensure_access as a way to
 	attempt to ensure files have the specified owners/perms"""
 
 	def __init__(self, *args, **config):
@@ -49,7 +49,7 @@ class FsBased(template.database):
 		else:
 			path = self.location
 		return ensure_dirs(path)
-	
+
 def gen_label(base, label):
 	"""if supplied label is a path, generate a unique label based upon label, and supplied base path"""
 	if label.find(os.path.sep) == -1:

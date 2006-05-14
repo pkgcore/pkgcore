@@ -11,7 +11,7 @@ from itertools import imap
 
 class tree(prototype.tree):
 	configured = True
-	
+
 	def __init__(self, wrapped_attrs):
 		# yes, we're intentionally not using tree's init.
 		# not perfect I know.
@@ -20,7 +20,7 @@ class tree(prototype.tree):
 
 	def _get_pkg_kwds(self, pkg):
 		raise NotImplementedError()
-		
+
 	def package_class(self, *a):
 		pkg = self.raw_repo.package_class(*a)
 		kwds = self._get_pkg_kwds(pkg)
@@ -36,7 +36,7 @@ class tree(prototype.tree):
 				restrict_solutions = restrict.solutions(full_solution_expansion=True)
 			else:
 				restrict_solutions = (restrict,)
-		
+
 		filtered_solutions = [
 			[a for a in x if not (isinstance(a, PackageRestriction) and a.attr in self.attr_filters)]
 			for x in restrict_solutions]
@@ -48,9 +48,8 @@ class tree(prototype.tree):
 
 		# disable inst_caching for this restriction.  it's a one time generation, and potentially
 		# quite costly for hashing
-		filtered_restrict = OrRestriction(disable_inst_caching=True, 
+		filtered_restrict = OrRestriction(disable_inst_caching=True,
 			*[AndRestriction(disable_inst_caching=True, *x) for x in filtered_solutions])
 
 		return (pkg for pkg in prototype.tree.itermatch(self, filtered_restrict, 
 			restrict_solutions=filtered_solutions, **kwds) if restrict.force_True(pkg))
-

@@ -23,8 +23,8 @@ class RememberingNegateMixin(object):
 	def tearDownRememberingNegate(self):
 		del self.negate
 		del self.negateCalls
-		
-		
+
+
 
 class LazyValDictTestMixin(object):
 
@@ -42,7 +42,7 @@ class LazyValDictTestMixin(object):
 		self.failIf(12 in self.dict)
 
 	def test_keys(self):
-		self.failUnlessEqual(sorted(self.dict.keys()), list(range(12)))
+		self.failUnlessEqual(sorted(self.dict.keys()), list(xrange(12)))
 
 	def test_getkey(self):
 		self.assertEquals(self.dict[3], -3)
@@ -59,7 +59,7 @@ class LazyValDictTestMixin(object):
 
 class LazyValDictWithListTest(
 	unittest.TestCase, LazyValDictTestMixin, RememberingNegateMixin):
-	
+
 	def setUp(self):
 		self.setUpRememberingNegate()
 		self.dict = mappings.LazyValDict(range(12), self.negate)
@@ -72,13 +72,13 @@ class LazyValDictWithListTest(
 
 	def test_len(self):
 		self.assertEquals(len(self.dict), 12)
-		
+
 	def test_iter(self):
 		self.assertEquals(list(self.dict), range(12))
-	
+
 	def test_contains(self):
 		self.assertIn(1, self.dict)
-	
+
 	def test_has_key(self):
 		self.assertEqual(True, self.dict.has_key(1))
 
@@ -91,14 +91,14 @@ class LazyValDictWithFuncTest(
 
 	def tearDown(self):
 		self.tearDownRememberingNegate()
-	
+
 
 class LazyValDictTest(unittest.TestCase):
 
 	def test_invalid_init_args(self):
 		self.assertRaises(TypeError, mappings.LazyValDict, [1], 42)
 		self.assertRaises(TypeError, mappings.LazyValDict, 42, a_dozen)
-		
+
 
 # TODO check for valid values for dict.new, since that seems to be
 # part of the interface?
@@ -147,7 +147,7 @@ class ProtectedDictTest(unittest.TestCase):
 		self.dict[1] = -1
 		checkAfterAdding()
 
-		
+
 class ImmutableDictTest(unittest.TestCase):
 
 	def setUp(self):
@@ -171,21 +171,21 @@ class ImmutableDictTest(unittest.TestCase):
 		self.assertEquals(initialHash, hash(self.dict))
 
 class StackedDictTest(unittest.TestCase):
-	
-	orig_dict = dict.fromkeys(range(100))
-	new_dict = dict.fromkeys(range(100,200))
-	
+
+	orig_dict = dict.fromkeys(xrange(100))
+	new_dict = dict.fromkeys(xrange(100, 200))
+
 	def test_contains(self):
 		std	= mappings.StackedDict(self.orig_dict, self.new_dict)
 		self.failUnless(1 in std)
 		self.failUnless(std.has_key(1))
-	
+
 	def test_stacking(self):
 		o = dict(self.orig_dict)
 		std = mappings.StackedDict(o, self.new_dict)
 		for x in chain(*map(iter, (self.orig_dict, self.new_dict))):
 			self.failUnless(x in std)
-		
+
 		map(o.__delitem__, iter(self.orig_dict))
 		for x in self.orig_dict:
 			self.failIf(x in std)
@@ -193,18 +193,18 @@ class StackedDictTest(unittest.TestCase):
 			self.failUnless(x in std)
 
 	def test_len(self):
-		self.assertEqual(sum(map(len ,(self.orig_dict, self.new_dict))), 
+		self.assertEqual(sum(map(len, (self.orig_dict, self.new_dict))),
 			len(mappings.StackedDict(self.orig_dict, self.new_dict)))
 
 	def test_setattr(self):
-		self.assertRaises(TypeError, mappings.StackedDict().__setitem__, (1,2))
+		self.assertRaises(TypeError, mappings.StackedDict().__setitem__, (1, 2))
 
 	def test_delattr(self):
-		self.assertRaises(TypeError, mappings.StackedDict().__delitem__, (1,2))
+		self.assertRaises(TypeError, mappings.StackedDict().__delitem__, (1, 2))
 
 	def test_clear(self):
 		self.assertRaises(TypeError, mappings.StackedDict().clear)
-		
+
 	def test_iter(self):
 		s = set()
 		map(s.add, chain(iter(self.orig_dict), iter(self.new_dict)))

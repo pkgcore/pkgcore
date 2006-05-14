@@ -10,18 +10,18 @@ import portage_const
 
 def parseSyncUri(uri):
 	"""parse a SYNC uri, returning a tuple of protocol,host_uri"""
-	u=uri.lower()
+	u = uri.lower()
 	if u.startswith("rsync") or not u:
 		if len(u) <= 5:
-			return ('rsync',portage_const.RSYNC_HOST)
-		return ('rsync',u[8:])
+			return ('rsync', portage_const.RSYNC_HOST)
+		return ('rsync', u[8:])
 	elif u.startswith("cvs://"):
-		u=u[6:]
-		return ('cvs',u)
+		u = u[6:]
+		return ('cvs', u)
 	elif u.startswith("snapshot"):
-		if len(u)==8:
+		if len(u) == 8:
 			# the caller gets to randomly crapshoot a mirror for it.
-			return ('snapshot',None)
-		return ('snapshot',u[9:])
+			return ('snapshot', None)
+		return ('snapshot', u[9:])
 	else:
-		return (None,None)
+		return (None, None)

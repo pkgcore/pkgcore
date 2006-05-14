@@ -50,7 +50,7 @@ class ConfigSectionFromStringDictTest(unittest.TestCase):
 			'callable': passthrough,
 			}
 		self.section = basics.ConfigSectionFromStringDict('test', self.source)
-		
+
 	def test_contains(self):
 		self.failIf('foo' in self.section)
 		self.failUnless('list' in self.section)
@@ -73,7 +73,7 @@ class ConfigSectionFromStringDictTest(unittest.TestCase):
 		self.assertRaises(
 			errors.ConfigurationError,
 			self.section.get_value, None, 'bool', 'callable')
-			
+
 	def test_section_ref(self):
 		section = basics.ConfigSectionFromStringDict(
 			'test', {'goodref': 'target', 'badref': 'missing'})
@@ -147,8 +147,8 @@ class HardCodedConfigSectionTest(unittest.TestCase):
 		section = basics.HardCodedConfigSection('test', {'refs': [1, 2]})
 		self.assertEquals(
 			section.get_value(None, 'refs', 'section_refs'), [1, 2])
-		
-		
+
+
 class ParsersTest(unittest.TestCase):
 
 	def test_bool_parser(self):
@@ -164,13 +164,13 @@ class ParsersTest(unittest.TestCase):
 			('0', False),
 			]:
 			self.assertIdentical(basics.bool_parser(input), output)
-		
+
 	def test_str_parser(self):
 		for input, output in [
-			('	 ', ''),
+			('\t ', ''),
 			(' foo ', 'foo'),
 			(' " foo " ', ' foo '),
-			('	"', '"'),
+			('\t"', '"'),
 			('\nfoo\t\n bar\t', 'foo   bar'),
 			('"a"', 'a'),
 			("'a'", "a"),

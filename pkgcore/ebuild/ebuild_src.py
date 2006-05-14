@@ -40,7 +40,7 @@ def generate_depset(s, c, *keys, **kwds):
 	if kwds.pop("non_package_type", False):
 		kwds["operators"]={"||":boolean.OrRestriction,"":boolean.AndRestriction}
 	try:
-		return conditionals.DepSet(" ".join([s.data.get(x.upper(),"") for x in keys]), c, **kwds)
+		return conditionals.DepSet(" ".join([s.data.get(x.upper(), "") for x in keys]), c, **kwds)
 	except conditionals.ParseError, p:
 		raise metadata.MetadataException(s, str(keys), str(p))
 
@@ -49,9 +49,12 @@ def generate_providers(self):
 	func = post_curry(virtual_ebuild, self._parent, self, {"rdepends":rdep})
 	# re-enable license at some point.
 	#, "license":self.license})
+
 	try:
-		return conditionals.DepSet(self.data.get("PROVIDE", ""), virtual_ebuild, element_func=func,
+		return conditionals.DepSet(self.data.get("PROVIDE", ""), virtual_ebuild, 
+			element_func=func, 
 			operators={"||":boolean.OrRestriction,"":boolean.AndRestriction})
+
 	except conditionals.ParseError, p:
 		raise metadata.MetadataException(self, "provide", str(p))
 
@@ -80,11 +83,12 @@ def generate_eapi(self):
 class package(metadata.package):
 	immutable = False
 	allow_regen = True
-	tracked_attributes=["PF", "depends", "rdepends", "provides","license", "slot", "keywords",
-		"eapi", "restrict"]
+	tracked_attributes = ["PF", "depends", "rdepends", "provides", 	"license",
+		"slot", "keywords", "eapi", "restrict"]
 
-	_config_wrappables = dict((x, alias_class_method("evaluate_depset")) for x in
-		["depends","rdepends", "fetchables", "license", "src_uri", "license", "provides"])
+	_config_wrappables = dict((x, alias_class_method("evaluate_depset")) 
+		for x in ["depends", "rdepends", "fetchables", "license", "src_uri", 
+		"license", "provides"])
 
 	def __init__(self, cpv, parent, pull_path, mirrors=None):
 		super(package, self).__init__(cpv, parent)
@@ -106,7 +110,7 @@ class package(metadata.package):
 	_get_attr["license"] = post_curry(generate_depset, str, "license", non_package_type=True)
 	_get_attr["slot"] = lambda s: s.data.get("SLOT", "0").strip()
 	_get_attr["fetchables"] = generate_fetchables
-	_get_attr["description"] = lambda s:s.data.get("DESCRIPTION", "")
+	_get_attr["description"] = lambda s:s.data.get("DESCRIPTION", "").strip()
 	_get_attr["keywords"] = lambda s:s.data.get("KEYWORDS", "").split()
 	_get_attr["restrict"] = lambda s:s.data.get("RESTRICT", "").split()
 	_get_attr["eapi"] = generate_eapi
@@ -135,8 +139,8 @@ class package(metadata.package):
 class package_factory(metadata.factory):
 	child_class = package
 
-	def __init__(self, parent, cachedb, eclass_cache, mirrors, *args,**kwargs):
-		super(package_factory, self).__init__(parent, *args,**kwargs)
+	def __init__(self, parent, cachedb, eclass_cache, mirrors, *args, **kwargs):
+		super(package_factory, self).__init__(parent, *args, **kwargs)
 		self._cache = cachedb
 		self._ecache = eclass_cache
 		self._mirrors = mirrors
@@ -150,7 +154,7 @@ class package_factory(metadata.factory):
 		return None
 
 	def _update_metadata(self, pkg):
-		ebp=processor.request_ebuild_processor()
+		ebp = processor.request_ebuild_processor()
 		mydata = ebp.get_keys(pkg, self._ecache)
 		processor.release_ebuild_processor(ebp)
 

@@ -28,9 +28,9 @@ class ConfigManager(object):
 						'type %r was defined twice' % type_name)
 				self.types[type_name] = type_obj
 				setattr(self, type_name, LazyValDict(
-						pre_curry(self.sections, type_name),
-						self.instantiate_section))
-		
+					pre_curry(self.sections, type_name),
+					self.instantiate_section))
+
 	def sections(self, type_name=None):
 		"""With no arguments, return a list of all section names.
 
@@ -78,7 +78,7 @@ class ConfigManager(object):
 					else:
 						slist.append((inherit, inherited_conf))
 		# collapse, honoring incrementals.
-		
+
 		# remember that inherit's are l->r.	 So the slist above works
 		# with incrementals, and default overrides (doesn't look it,
 		# but it does. tree isn't needed, list suffices)
@@ -114,12 +114,12 @@ class ConfigManager(object):
 				raise errors.ConfigurationError(
 					'type %r needs a setting for %r in section %r' %
 					(type_name, var, section))
-		
+
 		return conf
 
 	def instantiate_section(self, section, conf=None, allow_reuse=True):
 		"""make a section config into an actual object.
-		
+
 		if conf is specified, allow_reuse is forced to false.
 		if conf isn't specified, it's pulled via get_section_config.
 		allow_reuse controls whether existing instantiations of that section
@@ -134,7 +134,7 @@ class ConfigManager(object):
 
 		type_name = conf['type']
 		del conf['type']
-		
+
 		if 'class' not in conf:
 			raise errors.ConfigurationError(
 				'%s: no class specified' % section)
@@ -146,7 +146,7 @@ class ConfigManager(object):
 			pargs.append(conf[var])
 			del conf[var]
 		try:
-			obj=callable_obj(*pargs, **conf)
+			obj = callable_obj(*pargs, **conf)
 		except (RuntimeError, SystemExit, errors.InstantiationError):
 			raise
 		except Exception, e:

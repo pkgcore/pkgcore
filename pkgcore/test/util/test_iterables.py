@@ -6,7 +6,7 @@ from pkgcore.util.iterables import expandable_chain, caching_iter, iter_sort
 
 
 class ExpandableChainTest(unittest.TestCase):
-	
+
 	def test_normal_function(self):
 		i = [iter(xrange(100)) for x in xrange(3)]
 		e = expandable_chain()
@@ -17,13 +17,13 @@ class ExpandableChainTest(unittest.TestCase):
 
 	def test_extend(self):
 		e = expandable_chain()
-		e.extend(xrange(100) for x in (1,2))
+		e.extend(xrange(100) for x in (1, 2))
 		self.assertEquals(list(e), range(100)*2)
 		self.assertRaises(StopIteration, e.extend, [[]])
 
 	def test_extendleft(self):
 		e = expandable_chain(xrange(20, 30))
-		e.extendleft([xrange(10,20), xrange(10)])
+		e.extendleft([xrange(10, 20), xrange(10)])
 		self.assertEquals(list(e), range(30))
 		self.assertRaises(StopIteration, e.extendleft, [[]])
 
@@ -60,7 +60,7 @@ class CachingIterTest(unittest.TestCase):
 		self.assertEqual(list(c), range(100))
 		# do it twice, to verify it returns properly
 		self.assertEqual(list(c), range(100))
-	
+
 	def test_len(self):
 		self.assertEqual(100, len(caching_iter(xrange(100))))
 
@@ -70,7 +70,7 @@ class CachingIterTest(unittest.TestCase):
 	def test_nonzero(self):
 		self.assertEquals(bool(caching_iter(xrange(100))), True)
 		self.assertEquals(bool(caching_iter(iter([]))), False)
-		
+
 	def test_cmp(self):
 		self.assertEquals(caching_iter(xrange(100)), tuple(xrange(100)))
 		self.assertNotEquals(caching_iter(xrange(90)), tuple(xrange(100)))

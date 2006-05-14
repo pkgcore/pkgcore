@@ -1,7 +1,7 @@
 # Copyright: 2004-2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-# this needs work.  it's been pruned heavily from what ebd used originally, but it still isn't what 
+# this needs work.  it's been pruned heavily from what ebd used originally, but it still isn't what
 # I would define as 'right'
 
 inactive_ebp_list = []
@@ -16,23 +16,23 @@ def shutdown_all_processors():
 	global active_ebp_list, inactive_ebp_list
 
 	while active_ebp_list:
-		try:	
+		try:
 			active_ebp_list.pop().shutdown_processor()
-		except (IOError,OSError):
+		except (IOError, OSError):
 			pass
 
 	while inactive_ebp_list:
 		try:
 			inactive_ebp_list.pop().shutdown_processor()
-		except (IOError,OSError):
+		except (IOError, OSError):
 			pass
 
 pkgcore.spawn.atexit_register(shutdown_all_processors)
 
 def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False, save_file=None):
 	"""request an ebuild_processor instance from the pool, or create a new one
-	  this walks through the requirements, matching a inactive processor if one exists
-	  note fakerooted processors are never reused, do to the nature of fakeroot"""
+	this walks through the requirements, matching a inactive processor if one exists
+	note fakerooted processors are never reused, do to the nature of fakeroot"""
 
 	if sandbox == None:
 		sandbox = pkgcore.spawn.sandbox_capable
@@ -63,7 +63,7 @@ def release_ebuild_processor(ebp):
 	except ValueError:	return False
 
 	try:	inactive_ebp_list.index(ebp)
-	except ValueError:	
+	except ValueError:
 		# if it's a fakeroot'd process, we throw it away.  it's not useful outside of a chain of calls
 		if not ebp.onetime():
 			inactive_ebp_list.append(ebp)
@@ -77,7 +77,7 @@ def release_ebuild_processor(ebp):
 	print "ebp was requested to be free'd, yet it already is claimed inactive _and_ was in the active list"
 	print "this means somethings horked, badly"
 	traceback.print_stack()
-	return False	
+	return False
 
 
 class EbuildProcessor:
@@ -86,9 +86,9 @@ class EbuildProcessor:
 		"""
 		sandbox enables a sandboxed processor
 		userpriv enables a userpriv'd processor
-		fakeroot enables a fakeroot'd processor- this is a mutually exclusive option to sandbox, and 
-		requires userpriv to be enabled.  
-		
+		fakeroot enables a fakeroot'd processor- this is a mutually exclusive option to sandbox, and
+		requires userpriv to be enabled.
+
 		Violating this will result in nastyness
 		"""
 
@@ -100,16 +100,16 @@ class EbuildProcessor:
 			import traceback
 			traceback.print_stack()
 			print "warning, was asking to enable fakeroot but-"
-			print "sandbox",sandbox,"userpriv",userpriv
+			print "sandbox", sandbox, "userpriv", userpriv
 			print "this isn't valid.  bailing"
-			raise Exception,"cannot initialize with sandbox and fakeroot"
+			raise Exception, "cannot initialize with sandbox and fakeroot"
 
 		if userpriv:
 			self.__userpriv = True
-			spawn_opts.update({"uid":portage_uid,"gid":portage_gid,"groups":[portage_gid],"umask":002})
+			spawn_opts.update({"uid":portage_uid, "gid":portage_gid, "groups":[portage_gid], "umask":002})
 		else:
 			if pkgcore.spawn.userpriv_capable:
-				spawn_opts.update({"gid":portage_gid,"groups":[0,portage_gid]})
+				spawn_opts.update({"gid":portage_gid, "groups":[0, portage_gid]})
 			self.__userpriv = False
 
 		# open the pipes to be used for chatting with the new daemon
@@ -117,10 +117,10 @@ class EbuildProcessor:
 		dread, dwrite = os.pipe()
 		self.__sandbox = False
 		self.__fakeroot = False
-		
-		# since it's questionable which spawn method we'll use (if sandbox or fakeroot fex), 
+
+		# since it's questionable which spawn method we'll use (if sandbox or fakeroot fex),
 		# we ensure the bashrc is invalid.
-		env=dict((x, "/etc/portage/spork/not/valid/ha/ha") for x in ("BASHRC", "BASH_ENV"))
+		env = dict((x, "/etc/portage/spork/not/valid/ha/ha") for x in ("BASHRC", "BASH_ENV"))
 		args = []
 		if sandbox:
 			if fakeroot:
@@ -128,7 +128,7 @@ class EbuildProcessor:
 				sys.exit(1)
 			self.__sandbox = True
 			spawn_func = pkgcore.spawn.spawn_sandbox
-#			env.update({"SANDBOX_DEBUG":"1","SANDBOX_DEBUG_LOG":"/var/tmp/test"})
+#			env.update({"SANDBOX_DEBUG":"1", "SANDBOX_DEBUG_LOG":"/var/tmp/test"})
 
 		elif fakeroot:
 			self.__fakeroot = True
@@ -137,13 +137,14 @@ class EbuildProcessor:
 		else:
 			spawn_func = pkgcore.spawn.spawn
 
-		self.pid = spawn_func(self.ebd+" daemonize", fd_pipes={0:0, 1:1, 2:2, 3:cread, 4:dwrite},
+		self.pid = spawn_func(self.ebd+" daemonize", \
+			fd_pipes={0:0, 1:1, 2:2, 3:cread, 4:dwrite}, \
 			returnpid=True, env=env, *args, **spawn_opts)[0]
 
 		os.close(cread)
 		os.close(dwrite)
-		self.ebd_write = os.fdopen(cwrite,"w")
-		self.ebd_read  = os.fdopen(dread,"r")
+		self.ebd_write = os.fdopen(cwrite, "w")
+		self.ebd_read  = os.fdopen(dread, "r")
 
 		# basically a quick "yo" to the daemon
 		self.write("dude?")
@@ -160,12 +161,12 @@ class EbuildProcessor:
 
 	def prep_phase(self, phase, env, sandbox=None, logging=None):
 		"""
-		Utility function, combines multiple calls into one, leaving the processor in a state where all that 
+		Utility function, combines multiple calls into one, leaving the processor in a state where all that
 		remains is a call start_processing call, then generic_handler event loop.
-		
+
 		Returns True for success, false for everything else.
 		"""
-		
+
 		self.write("process_ebuild %s" % phase)
 		if not self.send_env(env):
 			return False
@@ -195,7 +196,7 @@ class EbuildProcessor:
 		return self.__fakeroot
 
 
-	def write(self, string,flush=True):
+	def write(self, string, flush=True):
 		"""talk to running daemon.  Disabling flush is useful when dumping large amounts of data
 		all strings written are automatically \\n terminated"""
 		if string[-1] == "\n":
@@ -204,17 +205,17 @@ class EbuildProcessor:
 			self.ebd_write.write(string +"\n")
 		if flush:
 			self.ebd_write.flush()
-		
+
 
 	def expect(self, want):
 		"""read from the daemon, and return true or false if the returned string is what is expected"""
-		got=self.ebd_read.readline()
-		return want==got[:-1]
+		got = self.ebd_read.readline()
+		return want == got[:-1]
 
 
-	def read(self,lines=1):
+	def read(self, lines=1):
 		"""read data from the daemon.  Shouldn't be called except internally"""
-		mydata=''
+		mydata = ''
 		while lines > 0:
 			mydata += self.ebd_read.readline()
 			lines -= 1
@@ -226,14 +227,14 @@ class EbuildProcessor:
 		if not os.path.exists(self.__sandbox_log):
 			self.write("end_sandbox_summary")
 			return 0
-		violations=portage_util.grabfile(self.__sandbox_log)
+		violations = portage_util.grabfile(self.__sandbox_log)
 		if not violations:
 			self.write("end_sandbox_summary")
 			return 0
 		if not move_log:
-			move_log=self.__sandbox_log
+			move_log = self.__sandbox_log
 		elif move_log != self.__sandbox_log:
-			myf=open(move_log)
+			myf = open(move_log)
 			for x in violations:
 				myf.write(x+"\n")
 			myf.close()
@@ -249,7 +250,7 @@ class EbuildProcessor:
 		except (IOError, OSError), e:
 			print "exception caught when cleansing sandbox_log=%s" % str(e)
 		return 1
-		
+
 
 	def preload_eclasses(self, ec_file):
 		"""this preloades eclasses into a function, thus avoiding the cost of going to disk.
@@ -258,7 +259,7 @@ class EbuildProcessor:
 			return 1
 		self.write("preload_eclass %s" % ec_file)
 		if self.expect("preload_eclass succeeded"):
-			self.preloaded_eclasses=True
+			self.preloaded_eclasses = True
 			return True
 		return False
 
@@ -295,7 +296,7 @@ class EbuildProcessor:
 				# now we wait.
 				os.waitpid(self.pid, 0)
 
-		except (IOError,OSError):
+		except (IOError, OSError):
 			pass
 
 		# currently, this assumes all went well.
@@ -303,7 +304,7 @@ class EbuildProcessor:
 		self.pid = None
 
 
-	def set_sandbox_state(self,state):
+	def set_sandbox_state(self, state):
 		"""tell the daemon whether to enable the sandbox, or disable it"""
 		if state:
 			self.write("set_sandbox_state 1")
@@ -320,21 +321,21 @@ class EbuildProcessor:
 			if x not in self.dont_export_vars:
 				if not x[0].isalpha():
 					raise KeyError(x)
-				s=env_dict[x].replace("\\","\\\\\\\\")
-				s=s.replace("'","\\\\'")
-				s=s.replace("\n","\\\n")
+				s = env_dict[x].replace("\\", "\\\\\\\\")
+				s = s.replace("'", "\\\\'")
+				s = s.replace("\n", "\\\n")
 				self.write("%s='%s'\n" % (x, s), flush=False)
 				exported_keys += x+' '
-		self.write("export "+exported_keys,flush=False)
+		self.write("export " + exported_keys, flush=False)
 		self.write("end_receiving_env")
 		return self.expect("env_received")
-	
 
-	def set_logfile(self,logfile=''):
+
+	def set_logfile(self, logfile=''):
 		"""relevant only when the daemon is sandbox'd, set the logfile"""
 		self.write("logging %s" % logfile)
-		return self.expect("logging_ack")	
-	
+		return self.expect("logging_ack")
+
 
 	def __del__(self):
 		"""simply attempts to notify the daemon to die"""
@@ -359,7 +360,7 @@ class EbuildProcessor:
 		self.write("start_processing")
 
 		metadata_keys = {}
-		val=self.generic_handler(additional_commands={ \
+		val = self.generic_handler(additional_commands={ \
 			"request_inherit":post_curry(self.__class__._inherit, eclass_cache), \
 			"key":post_curry(self.__class__._receive_key, metadata_keys) } )
 
@@ -371,20 +372,20 @@ class EbuildProcessor:
 
 
 	def _receive_key(self, line, keys_dict):
-		line = line.split("=",1)
+		line = line.split("=", 1)
 		if len(line) != 2:
 			raise FinishedProcessing(True)
 		else:
 			keys_dict[line[0]] = line[1]
-		
+
 
 	def _inherit(self, line, ecache):
 		"""callback for implementing inherit digging into eclass_cache.  not for normal consumption."""
 		if line == None:
 			self.write("failed")
 			raise UnhandledCommand("inherit requires an eclass specified, none specified")
-		
-		line=line.strip()
+
+		line = line.strip()
 		if ecache.get_eclass_path != None:
 			value = ecache.get_eclass_path(line)
 			self.write("path")
@@ -395,18 +396,18 @@ class EbuildProcessor:
 			self.write(value)
 		else:
 			raise AttributeError("neither get_data nor get_path is usable on ecache!")
-		
+
 
 	# this basically handles all hijacks from the daemon, whether confcache or portageq.
 	def generic_handler(self, additional_commands=None):
 		"""internal function that responds to the running ebuild processor's requests
-		
+
 		additional_commands is a dict of command:callable.  If you need to slip in extra args, look into pkgcore.util.currying.
 
-		commands names cannot have spaces.  the callable is called with the processor as first arg, and 
+		commands names cannot have spaces.  the callable is called with the processor as first arg, and
 		remaining string (None if no remaining fragment) as second arg.
 		If you need to split the args to command, whitespace splitting falls to your func.
-		
+
 		Chucks an UnhandledCommand exception when an unknown command is encountered.
 		"""
 
@@ -414,13 +415,13 @@ class EbuildProcessor:
 		# if you don't do it, sandbox_summary (fex) cannot be overriden, this func will just use this classes version.
 		# so dig through self.__class__ for it. :P
 
-		handlers = {"request_sandbox_summary":(self.__class__.sandbox_summary,[],{})}
+		handlers = {"request_sandbox_summary":(self.__class__.sandbox_summary, [], {})}
 		f = post_curry(chuck_UnhandledCommand, False)
 		for x in ("prob", "env_receiving_failed"):
 			handlers[x] = f
 		del f
 
-		handlers["phases"] = pre_curry(chuck_StoppingCommand, lambda f: f.lower().strip()=="succeeded")
+		handlers["phases"] = pre_curry(chuck_StoppingCommand, lambda f: f.lower().strip() == "succeeded")
 
 		if additional_commands is not None:
 			for x in additional_commands.keys():
@@ -431,9 +432,9 @@ class EbuildProcessor:
 
 		try:
 			while True:
-				line=self.read().strip()
+				line = self.read().strip()
 				# split on first whitespace.
-				s=line.split(None,1)
+				s = line.split(None, 1)
 				if s[0] in handlers:
 					if len(s) == 1:
 						s.append(None)
@@ -481,8 +482,8 @@ def expected_ebuild_env(pkg, d=None):
 		d["PR"] = "-r" + str(pkg.revision)
 	else:
 		d["PR"] = ""
-	d["PVR"]= pkg.fullver
+	d["PVR"] = pkg.fullver
 	d["EBUILD"] = pkg.path
-	d["PATH"] = ":".join(EBUILD_ENV_PATH + d.get("PATH","").split(":"))
+	d["PATH"] = ":".join(EBUILD_ENV_PATH + d.get("PATH", "").split(":"))
 	return d
 

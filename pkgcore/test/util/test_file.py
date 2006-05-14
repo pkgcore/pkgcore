@@ -32,7 +32,7 @@ class TestBashCommentStripping(unittest.TestCase):
 
 
 class TestReadBashConfig(unittest.TestCase):
-	
+
 	def test_read_dict(self):
 		self.assertEquals(
 			read_dict(StringIO(
@@ -108,7 +108,7 @@ class ReadBashDictTest(unittest.TestCase):
 		del self.envFile
 		del self.escapedFile
 		del self.unclosedFile
-	
+
 	def test_read_bash_dict(self):
 		# TODO this is not even close to complete
 		self.assertEquals(

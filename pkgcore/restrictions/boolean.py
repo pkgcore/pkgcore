@@ -2,7 +2,7 @@
 # License: GPL2
 
 """
-This module provides classes that can be used to combine arbitrary collections of restrictions in AND, NAND, OR, NOR, XOR, XNOR 
+This module provides classes that can be used to combine arbitrary collections of restrictions in AND, NAND, OR, NOR, XOR, XNOR
 style operations.
 """
 
@@ -52,16 +52,16 @@ class base(restriction.base):
 					if r.type is not None and r.type != self.type:
 						raise TypeError("instance '%s' is restriction type '%s', must be '%s'" % (r, r.type, self.type))
 			except AttributeError:
-				raise TypeError("type '%s' instance '%s' has no restriction type, '%s' required" % (r.__class__, 
+				raise TypeError("type '%s' instance '%s' has no restriction type, '%s' required" % (r.__class__,
 					r, getattr(self, "type", "unset")))
-		
+
 		self.restrictions.extend(new_restrictions)
 
 	def finalize(self):
 		self.restrictions = tuple(self.restrictions)
 
 	def total_len(self):
-		return sum(imap(lambda x: x.total_len(), self.restrictions)) + 1
+		return sum(x.total_len() for x in self.restrictions) + 1
 
 	def __len__(self):
 		return len(self.restrictions)
@@ -104,7 +104,7 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths, fil
 				t[index] = False
 				if filter(t):
 					yield True
-				for x in iterative_quad_toggling(pkg, pvals, restrictions, index + 1, end, t, filter, 
+				for x in iterative_quad_toggling(pkg, pvals, restrictions, index + 1, end, t, filter,
 					desired_false=desired_false, desired_true=desired_true, kill_switch=kill_switch):
 #					import pdb;pdb.set_trace()
 					yield True
@@ -119,7 +119,7 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths, fil
 				t[index] = True
 				if filter(t):
 					yield True
-				for x in iterative_quad_toggling(pkg, pvals, restrictions, index + 1, end, t, filter, 
+				for x in iterative_quad_toggling(pkg, pvals, restrictions, index + 1, end, t, filter,
 					desired_false=desired_false, desired_true=desired_true):
 #					import pdb;pdb.set_trace()
 					yield True
@@ -142,7 +142,7 @@ class AndRestriction(base):
 
 	def match(self, vals):
 		return all(rest.match(vals) for rest in self.restrictions) != self.negate
-	
+
 	def force_True(self, pkg, *vals):
 		pvals = [pkg]
 		pvals.extend(vals)
@@ -162,9 +162,9 @@ class AndRestriction(base):
 		truths = [r.match(*pvals) for r in self.restrictions]
 		def filter(truths):
 			return False in truths
-		
+
 		for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0, len(self.restrictions), truths, filter):
-			return True 
+			return True
 		return False
 
 	def force_False(self, pkg, *vals):
@@ -214,7 +214,7 @@ class AndRestriction(base):
 			flattened_matrix = list(x + y for x in s.pop() for y in flattened_matrix)
 
 		return flattened_matrix
-		
+
 
 	def __str__(self):
 		if self.negate:	return "not ( %s )" % " && ".join(imap(str, self.restrictions))
@@ -224,10 +224,10 @@ class AndRestriction(base):
 class OrRestriction(base):
 	"""Boolean OR grouping of restrictions."""
 	__slots__ = ()
-	
+
 	def match(self, vals):
 		return any(rest.match(vals) for rest in self.restrictions) != self.negate
-	
+
 	def solutions(self, full_solution_expansion=False):
 		if self.negate:
 			raise NotImplementedError("OrRestriction.solutions doesn't yet support self.negate")
@@ -266,7 +266,7 @@ class OrRestriction(base):
 		def filter(truths):
 			return True in truths
 		for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0, len(self.restrictions), truths, filter):
-			return True 
+			return True
 		return False
 
 	def force_False(self, pkg, *vals):
@@ -290,7 +290,7 @@ class OrRestriction(base):
 		def filter(truths):
 			return True in truths
 		for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0, len(self.restrictions), truths, filter):
-			yield True 
+			yield True
 
 
 	def __str__(self):
@@ -328,7 +328,7 @@ class XorRestriction(base):
 		if armed:
 			return True
 		return False
-	
+
 	def force_True(self, pkg, *vals):
 		pvals = [pkg]
 		pvals.extend(vals)
@@ -375,7 +375,7 @@ class XorRestriction(base):
 				if not self.restrictions[x].force_False(*pvals):
 					failed = True
 					break
-			if not failed: 
+			if not failed:
 				if trues != None:
 					if self.restrictions[x].force_True(*pvals):
 						return True
@@ -430,7 +430,7 @@ class XorRestriction(base):
 				if not self.restrictions[x].force_False(*pvals):
 					failed = True
 					break
-			if not failed: 
+			if not failed:
 				if trues != None:
 					if self.restrictions[x].force_True(*pvals):
 						return True
@@ -438,7 +438,7 @@ class XorRestriction(base):
 					return True
 			pkg.rollback(entry_point)
 		return False
-		
+
 	def __str__(self):
 		if self.negate:	return "not ( %s )" % " ^^ ".join(imap(str, self.restrictions))
 		return "( %s )" % " ^^ ".join(imap(str, self.restrictions))

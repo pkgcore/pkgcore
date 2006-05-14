@@ -153,6 +153,19 @@ class StrGlobMatch(StrMatch):
 		return self.glob+"*"
 
 
+class EqualityMatch(base):
+	"""Equality restriction- match if the stored value equals the passed in value"""
+
+	__slots__ = ("val", "negate")
+	def __init__(self, val, negate=False):
+		self.val, self.negate = val, negate
+
+	def match(self, actual_val):
+		return (self.val == actual_val) != self.negate
+
+	def __hash__(self):
+		return hash((self.val, self.negate))
+
 class ContainmentMatch(base):
 
 	"""used for an 'in' style operation, 'x86' in ['x86','~x86'] for example
@@ -293,20 +306,6 @@ class ContainmentMatch(base):
 		if self.negate:	s="not contains [%s]"
 		else:			s="contains [%s]"
 		return s % ', '.join(map(str, self.vals))
-
-
-def get_val(pkg, attr):
-	attr_list = '.'.split(attr)
-	o=pkg
-	try:
-		for x in attr:
-			o=getattr(o, x)
-		return x
-	except AttributeError, ae:
-		logger.warn("impossible happened, unable to get attr '%s' from pkg '%s', yet it was handed into my parent"
-			% (attr, pkg))
-		raise
-
 
 for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
 	[restriction, ["AlwaysBool"]]]:

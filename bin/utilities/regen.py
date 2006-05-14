@@ -42,7 +42,7 @@ if __name__ == "__main__":
 	if thread_count == 1:
 		regen_iter(repo)
 	else:
-		queue = Queue.Queue()
+		queue = Queue.Queue(thread_count*2)
 		kill = threading.Event()
 		kill.clear()
 		def iter_queue(kill, qlist, timeout=0.25):

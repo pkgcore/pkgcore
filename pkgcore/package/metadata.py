@@ -42,6 +42,10 @@ class package(CPV):
 		return self._fetch_metadata()
 	_get_attr["data"] = _get_data
 
+	@property
+	def repo(self):
+		return self._parent._parent_repo
+
 	def _fetch_metadata(self):
 		raise NotImplementedError
 

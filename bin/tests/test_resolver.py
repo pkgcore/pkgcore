@@ -92,6 +92,6 @@ if __name__ == "__main__":
 			sys.exit(2)
 	print "\nbuildplan"
 	for x in resolver.state.iter_pkg_ops():
-		print "%.8s      %s" % (x[0], x[1])
+		print "%s %s" % (x[0].ljust(8), x[1])
 	print "result was successfull, 'parently- took %.2f seconds" % (time.time() - start_time)
 	

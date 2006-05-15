@@ -30,13 +30,12 @@ class CPV(base):
 	int __cmp__(CPV)
 	"""
 
-	_get_attr = {}
+	_get_attr = {"hash":lambda self:hash(self.cpvstr)}
 
 	def __init__(self, cpvstr):
 		if not isinstance(cpvstr, str):
 			raise ValueError(cpvstr)
 		self.__dict__["cpvstr"] = cpvstr
-		self.__dict__["hash"] = hash(cpvstr)
 
 	def __hash__(self):
 		return self.hash

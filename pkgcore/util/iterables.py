@@ -56,7 +56,7 @@ class caching_iter(object):
 	like a tuple
 	"""
 	__slots__ = ("iterable", "__weakref__", "cached_list", "sorter")
-	
+
 	def __init__(self, iterable, sorter=None):
 		self.sorter = sorter
 		self.iterable = iter(iterable)

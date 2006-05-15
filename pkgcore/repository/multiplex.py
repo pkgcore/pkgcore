@@ -18,7 +18,7 @@ class tree(prototype.tree):
 			optionalCategory = optionalCategory[0]
 			for x in self.trees:
 				try:
-					map(d.add, x.categories[optionalCategory])
+					d.update(x.categories[optionalCategory])
 				except KeyError:
 					failures += 1
 		else:
@@ -38,7 +38,7 @@ class tree(prototype.tree):
 		failures = 0
 		for x in self.trees:
 			try:
-				map(d.add, x.packages[category])
+				d.update(x.packages[category])
 			except (errors.TreeCorruption, KeyError):
 				failures += 1
 		if failures == len(self.trees):
@@ -50,7 +50,7 @@ class tree(prototype.tree):
 		failures = 0
 		for x in self.trees:
 			try:
-				map(d.add, x.versions[package])
+				d.update(x.versions[package])
 			except (errors.TreeCorruption, KeyError):
 				failures += 1
 
@@ -59,23 +59,14 @@ class tree(prototype.tree):
 		return tuple(d)
 
 	def itermatch(self, atom, **kwds):
-		s = set()
-		for t in self.trees:
-			for m in t.itermatch(atom, **kwds):
-				if m not in s:
-					yield m
-					s.add(m)
+		return (match for repo in self.trees for match in repo.itermatch(atom, **kwds))
 
 	def __iter__(self):
-		s = set()
-		for t in self.trees:
-			# rather then using the iter, we use version scanning
-			# reason is wee only need to cache the cpv, not the full obj.
-			for pkg in t:
-				if pkg not in s:
-					yield pkg
-					s.add(pkg)
+		return (pkg for repo in self.trees for pkg in repo)
 
+	def __len__(self):
+		return sum(len(repo) for repo in self.trees)
+		
 	def __getitem__(self, key):
 		for t in self.trees:
 			try:

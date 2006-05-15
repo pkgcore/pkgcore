@@ -71,10 +71,10 @@ class tree(prototype.tree):
 		for t in self.trees:
 			# rather then using the iter, we use version scanning
 			# reason is wee only need to cache the cpv, not the full obj.
-			for cpv in t.versions:
-				if cpv not in s:
-					yield t.package_class(cpv)
-					s.add(cpv)
+			for pkg in t:
+				if pkg not in s:
+					yield pkg
+					s.add(pkg)
 
 	def __getitem__(self, key):
 		for t in self.trees:

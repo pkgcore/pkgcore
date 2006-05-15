@@ -83,13 +83,15 @@ class PigeonHoledSlots(object):
 		else:
 			del self.slot_dict[key]
 
-	def remove_limiter(self, atom):
+	def remove_limiter(self, atom, key=None):
+		if key is None:
+			key = atom.key
 		count = self.blocker_ref_count[atom]
 		if count == 1:
 			del self.blocker_ref_count[atom]
-			l = [x for x in self.slot_dict[atom.key] if x is not atom]
+			l = [x for x in self.slot_dict[key] if x is not atom]
 			if not l:
-				del self.slot_dict[atom.key]
+				del self.slot_dict[key]
 		else:
 			self.blocker_ref_count[atom] = count - 1
 

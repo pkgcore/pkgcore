@@ -316,7 +316,7 @@ class merge_plan(object):
 			l = self.state.add_blocker(self.generate_mangled_blocker(choices, x), key=x.key)
 			if l:
 				# blocker caught something. yay.
-				print "rdepend blocker %x hit %s for atom %s pkg %s" % (x, l, atom, choices_current.pkg)
+				print "rdepend blocker %s hit %s for atom %s pkg %s" % (x, l, atom, choices.current_pkg)
 				import pdb;pdb.set_trace()
 
 		for x in choices.provides:

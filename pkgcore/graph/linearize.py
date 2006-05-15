@@ -10,6 +10,8 @@ from pkgcore.graph.choice_point import choice_point
 from pkgcore.util.currying import pre_curry, post_curry
 from pkgcore.restrictions import packages, values, boolean, restriction
 
+def dprint(fmt, args=None, label=None):
+	pass
 
 class nodeps_repo(object):
 	def __init__(self, repo):
@@ -117,7 +119,7 @@ class merge_plan(object):
 			stack = deque()
 			ret = self._rec_add_atom(atom, stack)
 			if ret:
-				print "failed- %s" % ret
+				dprint("failed- %s", ret)
 				return ret
 			else:
 				self.forced_atoms.add(atom)
@@ -131,9 +133,9 @@ class merge_plan(object):
 		l = self.state.match_atom(atom)
 		if l:
 			if current_stack:
-				print "pre-solved %s%s, [%s] [%s]" % (depth*2*" ", atom, current_stack[-1][0], ", ".join(str(x) for x in l))
+				dprint("pre-solved %s%s, [%s] [%s]", (depth*2*" ", atom, current_stack[-1][0], ", ".join(str(x) for x in l)))
 			else:
-				print "pre-solved %s%s, [%s]" % (depth*2*" ", atom, ", ".join(str(x) for x in l))
+				dprint("pre-solved %s%s, [%s]", (depth*2*" ", atom, ", ".join(str(x) for x in l)))
 			return False
 		# not in the plan thus far.
 		matches = self.get_db_matches(atom, depth=depth, limit_to_vdb=limit_to_vdb)
@@ -158,11 +160,11 @@ class merge_plan(object):
 		
 		if current_stack:
 			if limit_to_vdb:
-				print "processing   %s%s  [%s] vdb bound" % (depth *2 * " ", atom, current_stack[-1][0])
+				dprint("processing   %s%s  [%s] vdb bound", (depth *2 * " ", atom, current_stack[-1][0]))
 			else:
-				print "processing   %s%s  [%s]" % (depth *2 * " ", atom, current_stack[-1][0])
+				dprint("processing   %s%s  [%s]", (depth *2 * " ", atom, current_stack[-1][0]))
 		else:
-			print "processing   %s%s" % (depth *2 * " ", atom)
+			dprint("processing   %s%s", (depth *2 * " ", atom))
 
 		current_stack.append([atom, choices, limit_to_vdb])
 		saved_state = self.state.current_state()
@@ -211,9 +213,9 @@ class merge_plan(object):
 						blocks.append(ratom)
 					else:
 						index = rindex_gen(x[0] == ratom for x in current_stack)
-						if index != 0:
+						if index:
 							# cycle.  whee.
-#							print "ratom cycle",ratom,current_stack
+#							dprint("ratom cycle %s %s", (ratom,current_stack))
 #							import pdb;pdb.set_trace()
 
 							if current_stack[index][2] == True:
@@ -238,32 +240,32 @@ class merge_plan(object):
 			if not satisfied:
 				# need to clean up blockers here... cleanup our additions in light of reductions from choices.reduce
 #				print "dirty dirty little boy!  skipping cleaning",additions
-				print "reseting for %s%s because of %s" % (depth*2*" ", atom, failure)
-				print "reduced for  %s%s atoms [%s], provides [%s]" % (depth*2*" ", atom,
+				dprint( "reseting for %s%s because of %s", (depth*2*" ", atom, failure))
+				dprint( "reduced for  %s%s atoms [%s], provides [%s]", (depth*2*" ", atom,
 					", ".join(str(x) for x in nolonger_used[0]),
-					", ".join(str(x) for x in nolonger_used[1]))
+					", ".join(str(x) for x in nolonger_used[1])))
 				self.state.reset_state(saved_state)
 			else:
 				break
 
 		if not choices:
-			print "no solution  %s%s" % (depth*2*" ", atom)
+			dprint("no solution  %s%s", (depth*2*" ", atom))
 			current_stack.pop()
 			self.state.reset_state(saved_state)
 			return [atom] + failure
-		print "choose for   %s%s, %s" % (depth *2*" ", atom, choices.current_pkg)
+		dprint("choose for   %s%s, %s", (depth *2*" ", atom, choices.current_pkg))
 		# well, we got ourselvs a resolution.
 		l = self.state.add_pkg(choices)
 		if l:
 			# this means in this branch of resolution, someone slipped something in already.
 			# cycle, basically.
-			print "was trying to insert atom '%s' pkg '%s',\nbut '[%s]' exists already" % (atom, choices.current_pkg, 
-				", ".join(str(y) for y in l))
+			dprint("was trying to insert atom '%s' pkg '%s',\nbut '[%s]' exists already", (atom, choices.current_pkg, 
+				", ".join(str(y) for y in l)))
 			# hack.  see if what was insert is enough for us.
 			fail = try_rematch = False
 			if any(isinstance(x, restriction.base) for x in l):
 				# blocker was caught
-				print "blocker detected in slotting, trying a re-match"
+				dprint("blocker detected in slotting, trying a re-match")
 				try_rematch = True
 			elif all(self.vdb_restrict.match(x) for x in l):
 				# vdb entry, replace.
@@ -272,21 +274,21 @@ class merge_plan(object):
 					print "internal weirdness spotted, dumping to pdb for inspection"
 					import pdb;pdb.set_trace()
 					raise Exception()
-				print "replacing a vdb node, so it's valid (need to do a recheck of state up to this point however, which we're not)"
+				dprint("replacing a vdb node, so it's valid (need to do a recheck of state up to this point however, which we're not)")
 				l = self.state.add_pkg(choices, REPLACE)
 				if l:
-					print "tried the replace, but got matches still- %s" % l
+					dprint("tried the replace, but got matches still- %s", l)
 					fail = True
 			else:
 				try_rematch = True
 			if try_rematch:
 				l2 = self.state.match_atom(atom)
 				if l2 == [choices.current_pkg]:
-					print "node was pulled in already, same so ignoring it"
+					dprint("node was pulled in already, same so ignoring it")
 					current_stack.pop()
 					return False
 				else:
-					print "and we 'parently match it.  ignoring (should prune here however)"
+					dprint("and we 'parently match it.  ignoring (should prune here however)")
 #					import pdb;pdb.set_trace()
 					current_stack.pop()
 					return False
@@ -436,7 +438,7 @@ class plan_state(object):
 	def current_state(self):
 		#hack- this doesn't work when insertions are possible
 		return len(self.plan)
-	
+
 	def reset_state(self, state_pos):
 		assert state_pos <= len(self.plan)
 		if len(self.plan) == state_pos:

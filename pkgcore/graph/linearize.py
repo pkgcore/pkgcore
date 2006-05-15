@@ -10,8 +10,13 @@ from pkgcore.graph.choice_point import choice_point
 from pkgcore.util.currying import pre_curry, post_curry
 from pkgcore.restrictions import packages, values, boolean, restriction
 
+limiters = set([None])
 def dprint(fmt, args=None, label=None):
-	pass
+	if label in limiters:
+		if args is None:
+			print fmt
+		else:
+			print fmt % args
 
 class nodeps_repo(object):
 	def __init__(self, repo):
@@ -240,8 +245,8 @@ class merge_plan(object):
 			if not satisfied:
 				# need to clean up blockers here... cleanup our additions in light of reductions from choices.reduce
 #				print "dirty dirty little boy!  skipping cleaning",additions
-				dprint( "reseting for %s%s because of %s", (depth*2*" ", atom, failure))
-				dprint( "reduced for  %s%s atoms [%s], provides [%s]", (depth*2*" ", atom,
+				dprint("reseting for %s%s because of %s", (depth*2*" ", atom, failure))
+				dprint("reduced for  %s%s atoms [%s], provides [%s]", (depth*2*" ", atom,
 					", ".join(str(x) for x in nolonger_used[0]),
 					", ".join(str(x) for x in nolonger_used[1])))
 				self.state.reset_state(saved_state)
@@ -404,16 +409,66 @@ class plan_state(object):
 	
 	def _add_pkg(self, choices, pkg, action):
 		"""returns False (no issues), else the conflicts"""
-		if action == REMOVE:
-			# level it even if it's not existant?
-			self.state.remove_slotting(pkg)
-			self.plan.append((action, choices, pkg))
-		elif action == ADD:
+#		if str(pkg) == "sys-apps/coreutils-5.2.1-r6":
+#			import pdb;pdb.set_trace()
+		if action == ADD:
 			l = self.state.fill_slotting(pkg)
 			if l:
 				return l
 			self.plan.append((action, choices, pkg))
+		elif action == REMOVE:
+			# level it even if it's not existant?
+			self.state.remove_slotting(pkg)
+			self.plan.append((action, choices, pkg))
+		elif action == REPLACE:
+			l = self.state.fill_slotting(pkg)
+			assert len(l) == 1
+			self.state.remove_slotting(l[0])
+			l2 = self.state.fill_slotting(pkg)
+			if l2:
+				#revert
+				l3 = self.state.fill_slotting(l[0])
+				assert not l3
+				return l2
+			self.plan.append((action, choices, pkg, l[0]))
 		return False
+
+	def reset_state(self, state_pos):
+		assert state_pos <= len(self.plan)
+		if len(self.plan) == state_pos:
+			return
+		ps = self._force_rebuild(state_pos)
+		self.plan = ps.plan
+		self.state = ps.state
+#		import pdb;pdb.set_trace()
+		for change in reversed(self.plan[state_pos:]):
+			if change[0] == ADD:
+				if change[2].cpvstr == "sys-devel/automake-1.8.5-r3":
+					print "automake-1.8.5-r3 was removed"
+					import pdb;pdb.set_trace()
+				self.state.remove_slotting(change[2])
+			elif change[0] == REMOVE:
+				self.state.fill_slotting(change[2])
+			elif change[0] == REPLACE:
+				self.state.remove_slotting(change[2])
+				self.state.fill_slotting(change[3])
+			elif change[0] == FORWARD_BLOCK:
+				self.state.remove_limiter(change[1], key=change[2])
+		self.plan = self.plan[:state_pos]
+		
+	def _force_rebuild(self, state_pos):
+		# should revert, rather then force a re-run
+		ps = plan_state()
+		for x in self.plan[:state_pos]:
+			if x[0] == FORWARD_BLOCK:
+				ps.add_blocker(x[1], key=x[2])
+			elif x[0] in (REMOVE, ADD, REPLACE):
+				ps._add_pkg(x[1], x[2], action=x[0])
+			else:
+				print "unknown %s encountered in rebuilding state" % str(x)
+				import pdb;pdb.set_trace()
+				pass
+		return ps
 		
 	def iter_pkg_ops(self):
 		ops = {ADD:"add", REMOVE:"remove", REPLACE:"replace"}
@@ -438,21 +493,3 @@ class plan_state(object):
 	def current_state(self):
 		#hack- this doesn't work when insertions are possible
 		return len(self.plan)
-
-	def reset_state(self, state_pos):
-		assert state_pos <= len(self.plan)
-		if len(self.plan) == state_pos:
-			return
-		# should revert, rather then force a re-run
-		ps = plan_state()
-		for x in self.plan[:state_pos]:
-			if x[0] == FORWARD_BLOCK:
-				ps.add_blocker(x[1], key=x[2])
-			elif x[0] in (REMOVE, ADD):
-				ps._add_pkg(x[1], x[2], x[0])
-			else:
-				print "unknown %s encountered in rebuilding state" % str(x)
-				import pdb;pdb.set_trace()
-				pass
-		self.plan = ps.plan
-		self.state = ps.state

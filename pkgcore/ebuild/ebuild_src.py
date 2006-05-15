@@ -119,21 +119,16 @@ class package(metadata.package):
 		data = self._parent._get_metadata(self)
 		if not self.allow_regen:
 			return data
-		doregen = False
-		if data == None:
+		if data is None:
 			doregen = True
-		# got us a dict.  yay.
-		if not doregen:
-			if self._mtime_ != long(data.get("_mtime_", -1)):
-				doregen = True
-			elif data.get("_eclasses_") != None and not self._parent._ecache.is_eclass_data_valid(data["_eclasses_"]):
-				doregen = True
-
-		if doregen:
-			# ah hell.
-			data = self._parent._update_metadata(self)
-
-		return data
+		elif self._mtime_ != long(data.get("_mtime_", -1)):
+			doregen = True
+		elif data.get("_eclasses_") is not None and not self._parent._ecache.is_eclass_data_valid(data["_eclasses_"]):
+			doregen = True
+		else:
+			return data
+		# ah hell.
+		return self._parent._update_metadata(self)
 
 
 class package_factory(metadata.factory):

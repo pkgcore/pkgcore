@@ -185,26 +185,20 @@ class ContainmentMatch(base):
 		else:
 			self.all = False
 		super(ContainmentMatch, self).__init__(**kwds)
+		# note that we're discarding any specialized __getitem__ on vals here.
+		# this isn't optimal, and should be special cased for known types (lists/tuples fex)
 		self.vals = frozenset(vals)
 
 	def match(self, val):
 		if isinstance(val, (str, unicode)):
 			return (val in self.vals) ^ self.negate
-		rem = set(self.vals)
-		try:
-			# assume our lookup is faster, since we don't know if val is constant lookup or not
-			for x in val:
-				if x in rem:
-					if self.all:
-						rem.remove(x)
-						if not rem:
-							return not self.negate
-					else:
-						return not self.negate
-			return self.negate
-		except TypeError:
-			return self.negate
-#			return val in self.vals ^ self.negate
+
+		# this can, and should be optimized to do len checks- iterate over the smaller of the two
+		# see above about special casing bits.  need the same protection here, on the offchance
+		# (as contents sets do), the __getitem__ is non standard.
+		if self.all:
+			return bool(self.vals.difference(val)) != self.negate
+		return any(True for x in self.vals if x in val) != self.negate
 
 	def force_False(self, pkg, attr, val):
 

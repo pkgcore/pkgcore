@@ -3,10 +3,10 @@
 
 from pkgcore.util.currying import pre_curry
 from pkgcore.util import modules
+blocksize = 32768
 
 def loop_over_file(obj, filename):
-	f = open(filename, 'rb')
-	blocksize = 32768
+	f = open(filename, 'rb', blocksize * 2)
 	data = f.read(blocksize)
 	size = 0L
 	sum = obj.new()

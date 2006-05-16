@@ -59,10 +59,13 @@ def release_ebuild_processor(ebp):
 	Returns True exempting when the processor requested to be released isn't marked as active"""
 
 	global inactive_ebp_list, active_ebp_list
-	try:	active_ebp_list.remove(ebp)
-	except ValueError:	return False
+	try:
+		active_ebp_list.remove(ebp)
+	except ValueError:
+		return False
 
-	try:	inactive_ebp_list.index(ebp)
+	try:
+		inactive_ebp_list.index(ebp)
 	except ValueError:
 		# if it's a fakeroot'd process, we throw it away.  it's not useful outside of a chain of calls
 		if not ebp.onetime():

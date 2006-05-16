@@ -4,7 +4,7 @@ if [ -z "$1" ]; then
 else
 	PKG="$1"
 fi
-[ ! -d  "${HOME}/vdb-test/$kg" ] && $(dirname "$0")/test-install.sh
+[ -d  "${HOME}/vdb-test/$PKG" ] || $(dirname "$0")/test-install.sh $PKG
 python -c"from pkgcore.vdb import repository;
 v=repository('${HOME}/vdb-test').trees[0];
 v.frozen=False;

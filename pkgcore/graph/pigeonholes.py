@@ -27,13 +27,14 @@ class PigeonHoledSlots(object):
 					l.append(x)
 			else:
 				if x.slot == obj.slot:
-					if x == obj:
-						# exit,with a sanity check.
-						for y in (z for z in self.slot_dict[key] if isinstance(z, restriction.base)):
-							if y.match(x):
-								raise Exception
-						return []
 					l.append(x)
+#					if x == obj:
+#						# exit,with a sanity check.
+#						for y in (z for z in self.slot_dict[key] if isinstance(z, restriction.base)):
+#							if y.match(x):
+#								raise Exception
+#						return []
+#					l.append(x)
 		if not l:
 			self.slot_dict[key].append(obj)
 		return l
@@ -70,6 +71,7 @@ class PigeonHoledSlots(object):
 			self.blocker_ref_count[atom] += 1
 		else:
 			self.slot_dict[key].append(atom)
+			self.blocker_ref_count[atom] = 1
 		return l
 
 	def remove_slotting(self, obj):

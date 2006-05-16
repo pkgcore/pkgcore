@@ -28,7 +28,7 @@ class SlotTesting(unittest.TestCase):
 		o = fake_package()
 		self.assertEqual([], c.fill_slotting(o))
 		# test that it doesn't invalidly block o when (innefficiently) doing a re-add
-		self.assertEqual([], c.fill_slotting(o))
+		self.assertEqual([o], c.fill_slotting(o))
 		self.assertEqual([o], c.fill_slotting(fake_package()))
 		self.assertEqual([], c.fill_slotting(fake_package(slot=1, key=1)))
 

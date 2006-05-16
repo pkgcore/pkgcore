@@ -10,7 +10,7 @@ from pkgcore.graph.choice_point import choice_point
 from pkgcore.util.currying import pre_curry, post_curry
 from pkgcore.restrictions import packages, values, boolean, restriction
 
-limiters = set([None])
+limiters = set() # [None])
 def dprint(fmt, args=None, label=None):
 	if label in limiters:
 		if args is None:
@@ -261,7 +261,7 @@ class merge_plan(object):
 		dprint("choose for   %s%s, %s", (depth *2*" ", atom, choices.current_pkg))
 		# well, we got ourselvs a resolution.
 		l = self.state.add_pkg(choices)
-		if l:
+		if l and l != [choices.current_pkg]:
 			# this means in this branch of resolution, someone slipped something in already.
 			# cycle, basically.
 			dprint("was trying to insert atom '%s' pkg '%s',\nbut '[%s]' exists already", (atom, choices.current_pkg, 
@@ -321,9 +321,10 @@ class merge_plan(object):
 
 		for x in choices.provides:
 			l = self.state.add_provider(choices, x)
-			if l:
+			if l and l != [x]:
 				print "provider conflicted... how?"
 				import pdb;pdb.set_trace()
+				print "should do something here, something sane..."
 		current_stack.pop()
 		return False
 
@@ -409,8 +410,6 @@ class plan_state(object):
 	
 	def _add_pkg(self, choices, pkg, action):
 		"""returns False (no issues), else the conflicts"""
-#		if str(pkg) == "sys-apps/coreutils-5.2.1-r6":
-#			import pdb;pdb.set_trace()
 		if action == ADD:
 			l = self.state.fill_slotting(pkg)
 			if l:
@@ -437,15 +436,12 @@ class plan_state(object):
 		assert state_pos <= len(self.plan)
 		if len(self.plan) == state_pos:
 			return
-		ps = self._force_rebuild(state_pos)
-		self.plan = ps.plan
-		self.state = ps.state
+#		ps = self._force_rebuild(state_pos)
+#		self.plan = ps.plan
+#		self.state = ps.state
 #		import pdb;pdb.set_trace()
 		for change in reversed(self.plan[state_pos:]):
 			if change[0] == ADD:
-				if change[2].cpvstr == "sys-devel/automake-1.8.5-r3":
-					print "automake-1.8.5-r3 was removed"
-					import pdb;pdb.set_trace()
 				self.state.remove_slotting(change[2])
 			elif change[0] == REMOVE:
 				self.state.fill_slotting(change[2])

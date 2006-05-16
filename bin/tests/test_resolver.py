@@ -40,10 +40,11 @@ if __name__ == "__main__":
 	args = sys.argv[1:]
 
 	if pop_arg(args, "-h", "--help"):
-		print "args supported, -D, [-u|-m] and -s (system|world)"
+		print "args supported, [-D || --deep], [[-u || --upgrade] | [-m || --max-upgrade]] and -s (system|world) [-d || --debug]"
 		print "can specify additional atoms when specifying -s, no atoms/sets available, defaults to sys-apps/portage"
 		sys.exit(1)
-
+	if pop_arg(args, "-d", "--debug"):
+		linearize.limiters.add(None)
 	trigger_pdb = pop_arg(args, "-p", "--pdb")
 	empty_vdb = pop_arg(args, "-e", "--empty")
 	upgrade = pop_arg(args, "-u", "--upgrade")

@@ -59,9 +59,9 @@ def configTypeFromCallable(func_obj):
 	if hint_overrides is not None:
 		if isinstance(hint_overrides, ConfigHint):
 			types.update(hint_overrides.types)
-		elif isinstance(hint_overrides, bool):
-			raise errors.TypeDefinitionError("instance %s attr pkgcore_config_type is "+
-				"neither a ConfigHint nor boolean" % func_obj)
+		elif not isinstance(hint_overrides, bool):
+			raise errors.TypeDefinitionError(
+				"instance %s attr pkgcore_config_type is neither a ConfigHint nor boolean" % func_obj)
 
 	return basics.ConfigType(
 		name, types, required=args,

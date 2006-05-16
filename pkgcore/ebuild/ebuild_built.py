@@ -102,7 +102,10 @@ class fake_package_factory(package_factory):
 		elif key == "environment":
 			return local_source(self.environment_path)
 		else:
-			return getattr(self.pkg, key)
+			try:
+				return getattr(self.pkg, key)
+			except AttributeError:
+				raise KeyError
 
 def generate_new_factory(*a, **kw):
 	return package_factory(*a, **kw).new_package

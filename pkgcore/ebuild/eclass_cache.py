@@ -34,10 +34,12 @@ class cache(base):
 		"""force instance to update it's internal view of on disk/remote eclasses"""
 		self.eclasses = {}
 		eclass_len = len(".eclass")
-		for x in [normpath(os.path.join(y, "eclass")) for y in self.porttrees]:
+		for x in (normpath(os.path.join(y, "eclass")) for y in self.porttrees):
 			if not os.path.isdir(x):
 				continue
-			for y in [y for y in os.listdir(x) if y.endswith(".eclass")]:
+			for y in os.listdir(x):
+				if not y.endswith(".eclass"):
+					continue
 				try:
 					mtime = os.stat(x+"/"+y).st_mtime
 				except OSError:

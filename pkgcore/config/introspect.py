@@ -5,10 +5,9 @@
 
 import inspect
 
-from pkgcore.config import basics
+from pkgcore.config import basics, errors
 
-
-def configTypeFromCallable(func):
+def configTypeFromCallable(func_obj):
 	"""Create a ConfigType from a callable (function, member function, class).
 
 	It uses the defaults to determine type:
@@ -17,11 +16,16 @@ def configTypeFromCallable(func):
 	- a str means it's a string
 	- some other object means it's a section_ref
 
-	If an argument has no default, it is assumed to be a string.
+	If an argument has no default, it is assumed to be a string- exception to this is if
+	the callable has a pkgcore_config_type attr that is a ConfigHints instance, in which 
+	case those override
 	"""
-	name = func.__name__
-	if inspect.isclass(func):
-		func = func.__init__
+	
+	name = func_obj.__name__
+	if inspect.isclass(func_obj):
+		func = func_obj.__init__
+	else:
+		func = func_obj
 	args, varargs, varkw, defaults = inspect.getargspec(func)
 	if varargs is not None or varkw is not None:
 		raise TypeError('func accepts *args or **kwargs')
@@ -45,12 +49,31 @@ def configTypeFromCallable(func):
 		else:
 			typename = 'section_ref'
 		types[argname] = typename
-		defaultsDict[argname] = typename
+		defaultsDict[argname] = default
 	# no defaults to determine the type from -> default to str.
 	# just [:-len(defaults)] doesn't work if there are no defaults
 	for arg in args[:len(args)-len(defaults)]:
 		types[arg] = 'str'
+
+	hint_overrides = getattr(func_obj, "pkgcore_config_type", None)
+	if hint_overrides is not None:
+		if isinstance(hint_overrides, ConfigHint):
+			types.update(hint_overrides.types)
+		elif isinstance(hint_overrides, bool):
+			raise errors.TypeDefinitionError("instance %s attr pkgcore_config_type is "+
+				"neither a ConfigHint nor boolean" % func_obj)
+
 	return basics.ConfigType(
 		name, types, required=args,
 		defaults=basics.HardCodedConfigSection(
 			'%s defaults' % name, defaultsDict))
+
+
+class ConfigHint(object):
+	__slots__ = ("types")
+	
+	def __init__(self, types=None):
+		if types is None:
+			self.types = {}
+		else:
+			self.types = types

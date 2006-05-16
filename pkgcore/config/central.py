@@ -1,5 +1,5 @@
 # Copyright: 2005-2006 Marien Zwart <marienz@gentoo.org>
-# Copyright: 2005 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
 """Collapse multiple config- and type-datasources and instantiate from them"""
@@ -7,6 +7,7 @@
 from pkgcore.config import errors
 from pkgcore.util.mappings import LazyValDict
 from pkgcore.util.currying import pre_curry
+from pkgcore.config import introspect
 
 
 class ConfigManager(object):
@@ -77,6 +78,17 @@ class ConfigManager(object):
 							(current_section, inherit))
 					else:
 						slist.append((inherit, inherited_conf))
+		type_override = None
+		for inherit_name, inherit_conf in slist:
+			if "class" in inherit_conf:
+				type_override = inherit_conf
+		
+		if type_override is not None:
+			class_obj = type_override.get_value(self, "class", type_obj.types["class"])
+			if getattr(class_obj, "pkgcore_config_type", False):
+				type_obj = introspect.configTypeFromCallable(class_obj)
+		del type_override	
+
 		# collapse, honoring incrementals.
 
 		# remember that inherit's are l->r.	 So the slist above works

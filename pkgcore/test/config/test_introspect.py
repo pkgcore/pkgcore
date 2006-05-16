@@ -25,7 +25,7 @@ def alltypes(alist=(), astr='astr', abool=True, aref=object()):
 	"""Function taking lots of kinds of args."""
 
 
-class NewStyleClass(object):
+class NewStyleStrClass(object):
 
 	def __init__(self, one, two='two'):
 		"""Newstyle testclass."""
@@ -101,9 +101,9 @@ class ConfigTypeFromFunctionTest(unittest.TestCase):
 		self._test_class_member(OldStyleClass.member)
 
 
-class ConfigTypeFromClass(unittest.TestCase):
+class ConfigTypeFromClassTest(unittest.TestCase):
 
-	def _test_basics(self, klass, name):
+	def _test_basics(self, klass, name, two_override='section_ref'):
 		testType = introspect.configTypeFromCallable(klass)
 		self.assertEquals(testType.typename, name)
 		self.assertEquals(sorted(testType.required), ['one', 'two'])
@@ -111,7 +111,7 @@ class ConfigTypeFromClass(unittest.TestCase):
 			testType.defaults.keys(), ['two'])
 		self.assertEquals(
 			testType.types,
-			{'one': 'str', 'two': 'section_ref',
+			{'one': 'str', 'two': two_override,
 			 'class': 'callable', 'type': 'str', 'inherit': 'list'})
 
 	def test_oldstyle(self):
@@ -119,4 +119,11 @@ class ConfigTypeFromClass(unittest.TestCase):
 
 	def test_newstyle(self):
 		self._test_basics(NewStyleClass, 'NewStyleClass')
+	
+	def test_defaults_str(self):
+		self._test_basics(NewStyleStrClass, 'NewStyleStrClass', two_override='str')
 
+	def test_config_hint(self):
+		class c(NewStyleClass):
+			pkgcore_config_type = introspect.ConfigHint(types={'two':'bool'})
+		self._test_basics(c, 'c', two_override='bool')

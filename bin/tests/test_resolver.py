@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from pkgcore.config import load_config
-from pkgcore.graph import linearize
+from pkgcore.resolver import plan
 from pkgcore.package.atom import atom
 from pkgcore.util.lists import flatten, stable_unique
 
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 		print "can specify additional atoms when specifying -s, no atoms/sets available, defaults to sys-apps/portage"
 		sys.exit(1)
 	if pop_arg(args, "-d", "--debug"):
-		linearize.limiters.add(None)
+		plan.limiters.add(None)
 	trigger_pdb = pop_arg(args, "-p", "--pdb")
 	empty_vdb = pop_arg(args, "-e", "--empty")
 	upgrade = pop_arg(args, "-u", "--upgrade")
@@ -53,11 +53,11 @@ if __name__ == "__main__":
 		print "can only choose max, or upgrade"
 		sys.exit(1)
 	if max:
-		strategy = linearize.merge_plan.force_max_version_strategy
+		strategy = plan.merge_plan.force_max_version_strategy
 	elif upgrade:
-		strategy = linearize.merge_plan.prefer_highest_version_strategy
+		strategy = plan.merge_plan.prefer_highest_version_strategy
 	else:
-		strategy = linearize.merge_plan.prefer_reuse_strategy
+		strategy = plan.merge_plan.prefer_reuse_strategy
 
 	deep = bool(pop_arg(args, "-D", "--deep"))
 
@@ -80,7 +80,7 @@ if __name__ == "__main__":
 
 	domain = conf.domain["livefs domain"]
 	vdb, repo = domain.vdb[0], domain.repos[0]
-	resolver = linearize.merge_plan(vdb, repo, pkg_selection_strategy=strategy, verify_vdb=deep)
+	resolver = plan.merge_plan(vdb, repo, pkg_selection_strategy=strategy, verify_vdb=deep)
 	ret = True
 	import time
 	start_time = time.time()

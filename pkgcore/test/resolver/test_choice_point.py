@@ -2,7 +2,7 @@
 # License: GPL2
 
 from twisted.trial import unittest
-from pkgcore.graph.choice_point import choice_point
+from pkgcore.resolver.choice_point import choice_point
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 
 class fake_package(object):

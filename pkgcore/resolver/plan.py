@@ -5,8 +5,8 @@ import itertools, operator
 from collections import deque
 from pkgcore.util.compatibility import any, all
 from pkgcore.util.iterables import caching_iter, iter_sort
-from pkgcore.graph.pigeonholes import PigeonHoledSlots
-from pkgcore.graph.choice_point import choice_point
+from pkgcore.resolver.pigeonholes import PigeonHoledSlots
+from pkgcore.resolver.choice_point import choice_point
 from pkgcore.util.currying import pre_curry, post_curry
 from pkgcore.restrictions import packages, values, boolean, restriction
 

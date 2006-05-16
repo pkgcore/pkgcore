@@ -2,8 +2,8 @@
 # License: GPL2
 
 from twisted.trial import unittest
-from pkgcore.graph.pigeonholes import PigeonHoledSlots
-from pkgcore.test.graph.test_choice_point import fake_package
+from pkgcore.resolver.pigeonholes import PigeonHoledSlots
+from pkgcore.test.resolver.test_choice_point import fake_package
 from pkgcore.restrictions import restriction
 
 class fake_blocker(restriction.base):

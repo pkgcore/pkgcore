@@ -154,25 +154,8 @@ command = "/usr/bin/wget -c -t 5 --passive-ftp -P '${DISTDIR}' '${URI}'"
 required_chksums = all
 userpriv = true
 
-
-# these should obviously be combined into a common subset, and use
-# pkgcore.config.introspect to lift the type definition from the class
-[world_pkgset]
-class = pkgcore.pkgsets.world.WorldFile
-required = world_path
-str = world_path
-defaults = world_path class
-positional = world_path
-world_path = /var/lib/portage/world
-
-
-[system_pkgset]
-class = pkgcore.pkgsets.system.SystemSet
-required = profile
-section_ref = profile
-defaults = class
-positional = profile
-
+[pkgset]
+# no defaults.
 
 [DEFAULT]
 metadata_keys = DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE DESCRIPTION KEYWORDS INHERITED IUSE CDEPEND

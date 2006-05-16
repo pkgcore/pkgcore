@@ -2,9 +2,12 @@
 # License: GPL2
 
 from pkgcore.package.atom import atom
+import pkgcore.const
 
 class WorldFile(object):
-	def __init__(self, world_path):
+	pkgcore_config_type = True
+
+	def __init__(self, world_path=pkgcore.const.WORLD_FILE):
 		self.path = world_path
 		# note that _atoms is generated on the fly.
 

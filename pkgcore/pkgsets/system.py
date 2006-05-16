@@ -2,7 +2,9 @@
 # License: GPL2
 
 # yuck. :)
+import pkgcore.config.introspect
 
-class SystemSet(frozenset):
-	def __new__(self, profile):
-		return frozenset.__new__(self, profile.sys)
+def SystemSet(profile):
+	return frozenset(profile.sys)
+SystemSet.pkgcore_config_type = \
+	pkgcore.config.introspect.ConfigHint(types={"profile":"section_ref"})

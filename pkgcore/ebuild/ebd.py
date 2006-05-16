@@ -51,8 +51,8 @@ class ebd(object):
 
 		expected_ebuild_env(pkg, self.env)
 
-		self.env["USE"] = ' '.join(imap(str, pkg.use))
-		self.env["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", {}).keys())
+		self.env["USE"] = ' '.join(str(x) for x in pkg.use)
+		self.env["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", {}))
 
 		self.restrict = pkg.restrict
 

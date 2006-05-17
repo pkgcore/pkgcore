@@ -7,7 +7,7 @@ import os
 from pkgcore.util.repo_utils import get_virtual_repos
 from pkgcore.util.compatibility import any
 from pkgcore.package import atom, cpv
-from pkgcore.restrictions import packages
+from pkgcore.restrictions import packages, restriction
 
 class GlsaDirSet(object):
 
@@ -46,10 +46,9 @@ class GlsaDirSet(object):
 			return
 		for pkgname, restricts in pkgs.iteritems():
 			pkgatom = atom.atom(pkgname)
-			if any(True for x in self.vdb.itermatch(packages.AndRestriction(pkgatom, 
-				packages.OrRestriction(*restricts)))):
-				yield packages.AndRestriction(pkgatom, packages.OrRestriction(negate=True, finalize=True, *restricts))
-
+			vulns = packages.OrRestriction(finalize=True, *restricts)
+			if any(True for x in self.vdb.itermatch(packages.AndRestriction(pkgatom, vulns))):
+				yield packages.AndRestriction(pkgatom, restriction.Negate(vulns))
 
 	def generate_intersects_from_pkg_node(self, pkg_node):
 		vuln = pkg_node.getElementsByTagName("vulnerable")
@@ -64,23 +63,26 @@ class GlsaDirSet(object):
 		if not invuln:
 			return vuln
 		elif len(invuln) > 1:
-			invuln = packages.OrRestriction(finalize=True, negate=True, 
-				*[self.generate_restrict_from_range(x) for x in invuln])
+			invuln = packages.OrRestriction(finalize=True,
+				*[self.generate_restrict_from_range(x, negate=True) for x in invuln])
 		else:
 			invuln = self.generate_restrict_from_range(invuln[0], negate=True)
 
 		return packages.AndRestriction(vuln, invuln, finalize=True)
-			
 
 	def generate_restrict_from_range(self, node, negate=False):
 		op = node.getAttribute("range").strip()
 		base = cpv.CPV("bar/foo-%s" % str(node.childNodes[0].nodeValue.strip()))
 		restrict = self.op_translate[op.lstrip("r")]
+		if negate:
+			f = restriction.Negate
+		else:
+			f = lambda x:x
 		if op.startswith("r"):
 			restrict = packages.AndRestriction(
-				atom.VersionMatch("~", base.version),
-				atom.VersionMatch(restrict, base.version, rev=base.revision),
-				finalize=True, negate=negate)
+				f(atom.VersionMatch("~", base.version)),
+				atom.VersionMatch(restrict, base.version, rev=base.revision, negate=True),
+				finalize=True)
 		else:
 			restrict = atom.VersionMatch(restrict, base.version, rev=base.revision, negate=negate)
 		return restrict

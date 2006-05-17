@@ -6,11 +6,12 @@ This module provides classes that can be used to combine arbitrary collections o
 style operations.
 """
 
+__all__ = ("AndRestriction", "OrRestriction", "XorRestriction")
+
 from itertools import imap, islice
 from pkgcore.util.compatibility import any, all
-
-__all__ = ("AndRestriction", "OrRestriction", "XorRestriction")
 import restriction
+
 
 class base(restriction.base):
 	__slots__ = ("restrictions", "type")
@@ -193,6 +194,7 @@ class AndRestriction(base):
 	def solutions(self, full_solution_expansion=False):
 		if self.negate:
 			raise NotImplementedError("negation for solutions on AndRestriction isn't implemented yet")
+
 		flattened_matrix = []
 		s=[]
 		for x in self.restrictions:

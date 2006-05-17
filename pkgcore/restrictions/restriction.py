@@ -68,6 +68,7 @@ class AlwaysBool(base):
 	def __str__(self):
 		return "always '%s'" % self.negate
 
+
 class Negate(base):
 	__slots__ = ("type", "_restrict")
 	__inst_caching__ = False
@@ -81,6 +82,7 @@ class Negate(base):
 
 	def __str__(self):
 		return "not (%s)" % self._restrict
+
 
 class FakeType(base):
 	__slots__ = ("type", "_restrict")

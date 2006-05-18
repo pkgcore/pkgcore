@@ -4,7 +4,7 @@ from pkgcore.pkgsets.glsa import GlsaDirSet
 from pkgcore.config import load_config
 r = load_config().repo["rsync repo"]
 start_time = time.time()
-for a in GlsaDirSet(r, None):
+for a in sorted(GlsaDirSet(r), key=lambda x:x[0]):
 	l=r.match(a)
 	if l:
 		print "\n%s\naffected:   %s" % (a, ", ".join(str(x) for x in sorted(l)))

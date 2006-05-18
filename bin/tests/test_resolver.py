@@ -66,7 +66,8 @@ if __name__ == "__main__":
 	set_targets = pop_paired_args(args, ["--set", "-s"], "pkg sets to enable")
 	if set_targets:
 		print "using pkgset(s): %s" % (", ".join("'%s'" % x.strip() for x in set_targets))
-	set_targets = flatten([map(atom, conf.pkgset[l]) for l in set_targets], atom)
+	set_targets = [a for t in set_targets for a in conf.pkgset[t]]
+	#map(atom, conf.pkgset[l]) for l in set_targets], restriction.base)
 	
 	if not args:
 		if set_targets:

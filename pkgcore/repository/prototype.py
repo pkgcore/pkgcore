@@ -162,11 +162,12 @@ class tree(object):
 						restrict = r[0]
 		elif isinstance(restrict, boolean.base):
 			if restrict_solutions is None:
-				restrict_solutions = restrict.solutions()
+				restrict_solutions = restrict.solutions(full_solution_expansion=True)
 			s = iter_stable_unique(iter_flatten(restrict_solutions))
 
 			pkgrestricts = [r for r in s if isinstance(r, packages.PackageRestriction)]
 			cats = [r.restriction for r in pkgrestricts if r.attr == "category"]
+			cats.extend(r.category for r in pkgrestricts if isinstance(r, atom))
 			if not cats:
 				cats_iter = iter(self.categories)
 			else:
@@ -183,6 +184,7 @@ class tree(object):
 					cats_iter = ifilter(cats.match, self.categories)
 
 			pkgs = [r.restriction for r in pkgrestricts if r.attr == "package"]
+			pkgs.extend(r.package for r in pkgrestricts if isinstance(r, atom))
 			if not pkgs:
 				candidates = ((c,p) for c in cats_iter for p in self.packages.get(c, []))
 			else:

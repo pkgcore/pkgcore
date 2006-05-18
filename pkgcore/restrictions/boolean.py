@@ -8,7 +8,7 @@ style operations.
 
 __all__ = ("AndRestriction", "OrRestriction", "XorRestriction")
 
-from itertools import imap, islice
+from itertools import islice
 from pkgcore.util.compatibility import any, all
 import restriction
 
@@ -219,8 +219,9 @@ class AndRestriction(base):
 
 
 	def __str__(self):
-		if self.negate:	return "not ( %s )" % " && ".join(imap(str, self.restrictions))
-		return "( %s )" % " && ".join(imap(str, self.restrictions))
+		if self.negate:
+			return "not ( %s )" % " && ".join(str(x) for x in self.restrictions)
+		return "( %s )" % " && ".join(str(x) for x in self.restrictions)
 
 
 class OrRestriction(base):
@@ -296,8 +297,9 @@ class OrRestriction(base):
 
 
 	def __str__(self):
-		if self.negate:	return "not ( %s )" % " || ".join(imap(str, self.restrictions))
-		return "( %s )" % " || ".join(imap(str, self.restrictions))
+		if self.negate:
+			return "not ( %s )" % " || ".join(str(x) for x in self.restrictions)
+		return "( %s )" % " || ".join(str(x) for x in self.restrictions)
 
 
 class XorRestriction(base):
@@ -442,5 +444,6 @@ class XorRestriction(base):
 		return False
 
 	def __str__(self):
-		if self.negate:	return "not ( %s )" % " ^^ ".join(imap(str, self.restrictions))
-		return "( %s )" % " ^^ ".join(imap(str, self.restrictions))
+		if self.negate:
+			return "not ( %s )" % " ^^ ".join(str(x) for x in self.restrictions)
+		return "( %s )" % " ^^ ".join(str(x) for x in self.restrictions)

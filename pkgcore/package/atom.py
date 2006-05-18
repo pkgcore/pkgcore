@@ -17,12 +17,13 @@ class InvalidVersion(Exception):
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq, ne ops, and convert this to it.
 
 class VersionMatch(restriction.base):
-	__slots__ = ("ver", "rev", "vals", "droprev")
+	__slots__ = ("ver", "rev", "vals", "droprev", "negate")
 	"""any overriding of this class *must* maintain numerical order of self.vals, see intersect for reason why
 	vals also must be a tuple"""
 
+	__inst_caching__ = True
 	type = packages.package_type
-
+	
 	def __init__(self, operator, ver, rev=None, negate=False, **kwd):
 		kwd["negate"] = False
 		super(self.__class__, self).__init__(**kwd)
@@ -31,16 +32,18 @@ class VersionMatch(restriction.base):
 			# XXX: hack
 			raise InvalidVersion(self.ver, self.rev, "invalid operator, '%s'" % operator)
 
-		if negate:
-			if operator == "~":
-				raise Exception("Cannot negate '~' operator")
-			if "=" in operator:		operator = operator.strip("=")
-			else:					operator += "="
-			for x,v in (("<", ">"), (">", "<")):
-				if x in operator:
-					operator = operator.strip(x) + v
-					break
-
+#		if negate:
+#			if operator == "~":
+#				raise Exception("Cannot negate '~' operator")
+#			if "=" in operator:
+#				operator = operator.strip("=")
+#			else:
+#				operator += "="
+#			for x,v in (("<", ">"), (">", "<")):
+#				if x in operator:
+#					operator = operator.strip(x) + v
+#					break
+		self.negate = negate
 		if operator == "~":
 			self.droprev = True
 			self.vals = (0,)
@@ -50,9 +53,10 @@ class VersionMatch(restriction.base):
 			if "<" in operator:	l.append(-1)
 			if "=" in operator:	l.append(0)
 			if ">" in operator:	l.append(1)
-			self.vals = tuple(l)
+			self.vals = tuple(sorted(l))
 
 	def intersect(self, other, allow_hand_off=True):
+		raise Exception("need to fix negate before using this.")
 		if not isinstance(other, self.__class__):
 			if allow_hand_off:
 				return other.intersect(self, allow_hand_off=False)
@@ -107,10 +111,12 @@ class VersionMatch(restriction.base):
 		return None
 
 	def match(self, pkginst):
-		if self.droprev:			r1, r2 = None, None
-		else:							r1, r2 = self.rev, pkginst.revision
+		if self.droprev:
+			r1, r2 = None, None
+		else:
+			r1, r2 = self.rev, pkginst.revision
 
-		return (cpv.ver_cmp(pkginst.version, r2, self.ver, r1) in self.vals) ^ self.negate
+		return (cpv.ver_cmp(pkginst.version, r2, self.ver, r1) in self.vals) != self.negate
 
 	def __str__(self):
 		l = []
@@ -120,10 +126,33 @@ class VersionMatch(restriction.base):
 			elif x == 1:	l.append(">")
 		l.sort()
 		l = ''.join(l)
+		if self.negate:
+			n = "not "
+		else:
+			n = ''
 		if self.droprev or self.rev == None:
-			return "ver %s %s" % (l, self.ver)
-		return "fullver %s %s-r%s" % (l, self.ver, self.rev)
+			return "ver %s%s %s" % (n, l, self.ver)
+		return "ver-rev %s%s %s-r%s" % (n, l, self.ver, self.rev)
 
+	@staticmethod
+	def _convert_ops(inst):
+		if inst.negate:
+			if inst.droprev:
+				return inst.vals
+			return tuple(sorted(set((-1,0,1)).difference(inst.vals)))
+		return inst.vals
+
+	def __eq__(self, other):
+		if self is other:
+			return True
+		if isinstance(other, self.__class__):
+			if self.droprev != other.droprev or self.ver != other.ver \
+				or self.rev != other.rev:
+				return False
+			return self._convert_ops(self) == self._convert_ops(other)
+
+		return False
+			
 class atom(boolean.AndRestriction):
 
 	__slots__ = (

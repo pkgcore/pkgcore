@@ -90,7 +90,7 @@ class ProtectedDict(UserDict.DictMixin):
 	the underlying dict from changes
 	"""
 
-	__slots__=("orig", "new", "blacklist")
+	__slots__ = ("orig", "new", "blacklist")
 
 	def __init__(self, orig):
 		self.orig = orig

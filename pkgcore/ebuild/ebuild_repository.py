@@ -3,8 +3,6 @@
 
 import os, stat
 from pkgcore.ebuild.ebd import buildable
-from weakref import proxy
-from pkgcore.package.conditionals import PackageWrapper
 from pkgcore.repository import prototype, errors, configured
 from pkgcore.util.containers import InvertedContains
 from pkgcore.util.file import read_dict
@@ -16,7 +14,7 @@ metadata_offset = "profiles"
 class UnconfiguredTree(prototype.tree):
 	false_categories = frozenset(["eclass", "profiles", "packages", "distfiles", 
 		"licenses", "scripts", "CVS", ".svn"])
-	configured=False
+	configured = False
 	configurables = ("settings",)
 	configure = None
 	ebuild_format_magic = "ebuild_src"

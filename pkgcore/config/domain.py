@@ -7,8 +7,7 @@ from pkgcore.restrictions import packages, values
 from pkgcore.util.file import iter_read_bash
 from pkgcore.package.atom import atom
 from pkgcore.repository import multiplex, visibility
-from pkgcore.restrictions.values import StrGlobMatch, StrExactMatch, ContainmentMatch
-from pkgcore.util.currying import post_curry
+from pkgcore.restrictions.values import StrGlobMatch, ContainmentMatch
 from pkgcore.util.lists import stable_unique
 from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source
@@ -30,7 +29,7 @@ def get_key_from_package(pkg):
 	return pkg.category + "/" + pkg.package
 
 def package_keywords_splitter(val):
-	v=val.split()
+	v = val.split()
 	return atom(v[0]), stable_unique(v[1:])
 
 

@@ -1,7 +1,6 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from itertools import chain
 from twisted.trial import unittest
 from pkgcore import spawn
 from pkgcore.test.fs.test_util import TempDirMixin

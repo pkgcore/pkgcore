@@ -2,7 +2,6 @@
 # License: GPL2
 
 import os, stat, errno, shutil
-from itertools import ifilter
 from pkgcore.repository import prototype, errors
 
 #needed to grab the PN

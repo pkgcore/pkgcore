@@ -6,14 +6,12 @@
 # ordering?
 
 import os, errno
-from itertools import ifilterfalse
 
-from pkgcore.fs import contents, fs,ops
+from pkgcore.fs import contents
 from pkgcore.fs import gen_obj as gen_fs_obj
-from pkgcore.util.mappings import LazyValDict, ImmutableDict, ProtectedDict, StackedDict
+from pkgcore.util.mappings import LazyValDict, ImmutableDict, StackedDict
 from pkgcore.util import currying
-from pkgcore import spawn
-from pkgcore.merge.triggers import *
+from pkgcore.merge.triggers import merge_trigger, unmerge_trigger, ldconfig_trigger
 from pkgcore.merge import errors
 
 def scan_livefs(cset):

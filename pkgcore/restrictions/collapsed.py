@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-__all__=("DictBased")
+__all__ = ("DictBased")
 from pkgcore.restrictions import restriction
 from pkgcore.restrictions import packages
 

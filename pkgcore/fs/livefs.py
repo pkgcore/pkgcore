@@ -2,8 +2,8 @@
 # License: GPL2
 
 import os
-from stat import *
-from pkgcore.fs.fs import *
+from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO, S_ISCHR, S_ISBLK
+from pkgcore.fs.fs import fsFile, fsDir, fsSymLink, fsDev, fsFifo
 from pkgcore.fs.util import normpath
 from pkgcore.fs.contents import contentsSet
 
@@ -29,7 +29,7 @@ def gen_obj(path, stat=None, real_path=None):
 		return fsSymLink(path, **d)
 	elif S_ISFIFO(mode):
 		return fsFifo(path, **d)
-	elif S_ISDEV(mode):
+	elif S_ISCHR(mode) or S_ISBLK(mode):
 		return fsDev(path, **d)
 	else:
 		raise KeyError(path)

@@ -1,8 +1,8 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os, stat
-from pkgcore.cache import flat_hash, cache_errors
+import os
+from pkgcore.cache import flat_hash
 from pkgcore.ebuild import eclass_cache
 from pkgcore.util.mappings import ProtectedDict
 
@@ -12,7 +12,7 @@ magic_line_count = 22
 # store the current key order *here*.
 class database(flat_hash.database):
 	complete_eclass_entries = False
-	auxdbkey_order=('DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
+	auxdbkey_order = ('DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
 		'RESTRICT',  'HOMEPAGE',  'LICENSE', 'DESCRIPTION',
 		'KEYWORDS',  'INHERITED', 'IUSE', 'CDEPEND',
 		'PDEPEND',   'PROVIDE', 'EAPI')

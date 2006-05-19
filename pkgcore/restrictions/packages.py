@@ -26,7 +26,7 @@ class PackageRestriction(restriction.base):
 		try:
 			o = pkg
 			for f in self.attr_split:
-				o=f(o)
+				o = f(o)
 			return o
 		except AttributeError,ae:
 			logging.debug("failed getting attribute %s from %s, exception %s" % \

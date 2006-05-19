@@ -6,10 +6,9 @@ from pkgcore.package import metadata
 from pkgcore.ebuild import conditionals
 from pkgcore.package.atom import atom
 from digest import parse_digest
-from pkgcore.util.mappings import LazyValDict, IndeterminantDict
+from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import post_curry, alias_class_method
-from pkgcore.restrictions.values import StrExactMatch
-from pkgcore.restrictions.packages import PackageRestriction, AndRestriction
+from pkgcore.restrictions.packages import AndRestriction
 from pkgcore.restrictions import boolean
 from pkgcore.chksum.errors import MissingChksum
 from pkgcore.fetch.errors import UnknownMirror
@@ -38,7 +37,7 @@ def create_fetchable_from_uri(chksums, mirrors, uri):
 
 def generate_depset(s, c, *keys, **kwds):
 	if kwds.pop("non_package_type", False):
-		kwds["operators"]={"||":boolean.OrRestriction,"":boolean.AndRestriction}
+		kwds["operators"] = {"||":boolean.OrRestriction, "":boolean.AndRestriction}
 	try:
 		return conditionals.DepSet(" ".join([s.data.get(x.upper(), "") for x in keys]), c, **kwds)
 	except conditionals.ParseError, p:

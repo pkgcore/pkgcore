@@ -2,7 +2,7 @@
 # License: GPL2
 
 from pkgcore.restrictions import values, packages, boolean, restriction
-from pkgcore.util.compatibility import any, all
+from pkgcore.util.compatibility import all
 import cpv
 
 class MalformedAtom(Exception):

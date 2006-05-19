@@ -6,7 +6,6 @@ from itertools import ifilterfalse
 from pkgcore.fs import gen_obj, contents, fs
 from pkgcore.spawn import spawn
 from pkgcore.const import COPY_BINARY
-from pkgcore.fs.util import normpath
 from pkgcore.plugins import get_plugin
 
 __all__ = ["merge_contents"]

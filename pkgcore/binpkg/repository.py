@@ -38,7 +38,7 @@ class tree(prototype.tree):
 	def _get_packages(self, category):
 		cpath = os.path.join(self.base,category.lstrip(os.path.sep))
 		#-5 == len(".tbz2")
-		l=set()
+		l = set()
 		try:
 			for x in os.listdir(cpath):
 				if x.endswith(".tbz2"):
@@ -51,11 +51,11 @@ class tree(prototype.tree):
 
 	def _get_versions(self, catpkg):
 		pkg = catpkg.split("/")[-1]
-		l=set()
+		l = set()
 		try:
 			for x in os.listdir(os.path.join(self.base, os.path.dirname(catpkg.lstrip("/").rstrip("/")))):
 				# startswith is faster but causes false positives, fex: mozilla and mozilla-launcher
-				if cpv(x[:-5]).package==pkg:
+				if cpv(x[:-5]).package == pkg:
 					l.add(cpv(x[:-5]).fullver)
 			return tuple(l)
 		except (OSError, IOError), e:

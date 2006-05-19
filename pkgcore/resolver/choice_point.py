@@ -1,8 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.util.compatibility import any, all
-from itertools import chain
+from pkgcore.util.compatibility import all
 from pkgcore.util.lists import stable_unique
 
 class choice_point(object):

@@ -4,7 +4,6 @@
 import os
 import base
 from pkgcore.spawn import spawn_bash, userpriv_capable
-from pkgcore.chksum import get_handler
 from fetchable import fetchable
 import errors
 from pkgcore.os_data import portage_uid, portage_gid

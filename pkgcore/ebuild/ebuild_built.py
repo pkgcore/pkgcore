@@ -2,8 +2,8 @@
 # License: GPL2
 
 from pkgcore.ebuild import ebuild_src
-from pkgcore.util.mappings import ImmutableDict, IndeterminantDict
-from pkgcore.package import metadata, base
+from pkgcore.util.mappings import IndeterminantDict
+from pkgcore.package import metadata
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.fs import scan
 from pkgcore.util.currying import post_curry

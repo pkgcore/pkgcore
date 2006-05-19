@@ -9,18 +9,18 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None, 
 		raise Exception("eclass_cache required for cache's of class %s!" % src_cache.__class__)
 
 	if verbose_instance == None:
-		noise=quiet_mirroring()
+		noise = quiet_mirroring()
 	else:
-		noise=verbose_instance
+		noise = verbose_instance
 
 	dead_nodes = set(trg_cache.iterkeys())
-	count=0
+	count = 0
 
 	if not trg_cache.autocommits:
 		trg_cache.sync(100)
 
 	for x in valid_nodes_iterable:
-		count+=1
+		count += 1
 		if x in dead_nodes:
 			dead_nodes.remove(x)
 		try:
@@ -82,7 +82,7 @@ class quiet_mirroring(object):
 	def corruption(self, key, s):	pass
 
 class non_quiet_mirroring(quiet_mirroring):
-	call_update_min=1
+	call_update_min = 1
 	def update(self,key,*arg):	print "processed",key
 	def exception(self, key, *arg):	print "exec",key,arg
 	def missing(self,key):		print "key %s is missing", key

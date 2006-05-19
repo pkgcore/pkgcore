@@ -158,7 +158,7 @@ class EbuildProcessor:
 		if self.__sandbox:
 			self.write("sandbox_log?")
 			self.__sandbox_log = self.read().split()[0]
-		self.dont_export_vars=self.read().split()
+		self.dont_export_vars = self.read().split()
 		# locking isn't used much, but w/ threading this will matter
 
 

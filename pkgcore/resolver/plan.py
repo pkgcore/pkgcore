@@ -8,7 +8,7 @@ from pkgcore.util.iterables import caching_iter, iter_sort
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.util.currying import pre_curry, post_curry
-from pkgcore.restrictions import packages, values, boolean, restriction
+from pkgcore.restrictions import packages, values, restriction
 
 limiters = set() # [None])
 def dprint(fmt, args=None, label=None):

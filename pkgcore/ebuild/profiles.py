@@ -4,7 +4,6 @@
 import os, logging
 from pkgcore.config import profiles
 from pkgcore.util.file import iter_read_bash, read_bash_dict
-from pkgcore.util.currying import pre_curry
 from pkgcore.package.atom import atom
 from pkgcore.config.basics import list_parser
 from pkgcore.util.mappings import ProtectedDict

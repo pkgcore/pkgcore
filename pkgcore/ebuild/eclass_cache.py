@@ -3,8 +3,7 @@
 # License: GPL2
 
 from pkgcore.fs.util import normpath
-import os, sys
-from pkgcore.interfaces import data_source
+import os
 
 class base(object):	pass
 

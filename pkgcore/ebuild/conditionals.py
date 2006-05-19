@@ -22,7 +22,7 @@ def convert_use_reqs(uses):
 
 class DepSet(boolean.AndRestriction):
 	__slots__ = ("has_conditionals", "element_class", "_node_conds", "restrictions")
-	type=packages.package_type
+	type = packages.package_type
 	negate = False
 
 	def __init__(self, dep_str, element_class, \

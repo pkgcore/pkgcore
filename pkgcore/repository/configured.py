@@ -1,12 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.restrictions import boolean
 from pkgcore.restrictions.packages import PackageRestriction, OrRestriction, AndRestriction
 from pkgcore.repository import prototype
 from pkgcore.package.conditionals import PackageWrapper
-from pkgcore.util.compatibility import any
-from pkgcore.util.lists import iter_flatten
 from itertools import imap
 
 class tree(prototype.tree):

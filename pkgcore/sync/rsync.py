@@ -2,9 +2,9 @@
 # Copyright 2004 Brian Harring <ferringb@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
-from portage_const import RSYNC_BIN, RSYNC_HOST
+from portage_const import RSYNC_BIN
 import os, portage_exec
-import portage_exception, socket
+import socket
 
 import sync.syncexceptions
 

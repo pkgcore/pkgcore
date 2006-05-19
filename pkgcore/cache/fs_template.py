@@ -2,7 +2,7 @@
 # License: GPL2
 
 import os
-from pkgcore.cache import template, cache_errors
+from pkgcore.cache import template
 from pkgcore.os_data import portage_gid
 from pkgcore.fs.util import ensure_dirs
 

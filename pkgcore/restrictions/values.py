@@ -4,7 +4,7 @@
 import re
 from pkgcore.restrictions import restriction, boolean
 from pkgcore.util.currying import pre_curry, pretty_docs
-from pkgcore.util.compatibility import any, all
+from pkgcore.util.compatibility import any
 
 value_type = "values"
 
@@ -197,7 +197,7 @@ class ContainmentMatch(base):
 		# see above about special casing bits.  need the same protection here, on the offchance
 		# (as contents sets do), the __getitem__ is non standard.
 		if self.all:
-			return bool(self.vals.difference(val)) != self.negate
+			return bool(self.vals.difference(val)) == self.negate
 		return any(True for x in self.vals if x in val) != self.negate
 
 	def force_False(self, pkg, attr, val):
@@ -239,7 +239,7 @@ class ContainmentMatch(base):
 			def filter(truths):		return truths.count(True) < l
 			def true(r, pvals):		return pkg.request_enable(attr, r)
 			def false(r, pvals):	return pkg.request_disable(attr, r)
-			truths=[x in val for x in self.vals]
+			truths = [x in val for x in self.vals]
 			for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, l, truths, filter,
 				desired_false=false, desired_true=true):
 				yield True
@@ -289,7 +289,7 @@ class ContainmentMatch(base):
 			def filter(truths):		return True not in truths
 			def true(r, pvals):		return pkg.request_enable(attr, r)
 			def false(r, pvals):	return pkg.request_disable(attr, r)
-			truths=[x in val for x in self.vals]
+			truths = [x in val for x in self.vals]
 			for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter,
 				desired_false=false, desired_true=true):
 				return True
@@ -297,8 +297,8 @@ class ContainmentMatch(base):
 
 
 	def __str__(self):
-		if self.negate:	s="not contains [%s]"
-		else:			s="contains [%s]"
+		if self.negate: s = "not contains [%s]"
+		else:           s = "contains [%s]"
 		return s % ', '.join(map(str, self.vals))
 
 for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \

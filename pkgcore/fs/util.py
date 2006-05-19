@@ -82,10 +82,10 @@ def abssymlink(symlink):
 	"""
 	This reads symlinks, resolving the relative symlinks, and returning the absolute.
 	"""
-	mylink=os.readlink(symlink)
+	mylink = os.readlink(symlink)
 	if mylink[0] != '/':
-		mydir=os.path.dirname(symlink)
-		mylink=mydir+"/"+mylink
+		mydir = os.path.dirname(symlink)
+		mylink = mydir+"/"+mylink
 	return os.path.normpath(mylink)
 
 

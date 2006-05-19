@@ -1,8 +1,6 @@
 # Copyright: 2005 Brian Harring <ferringb@gentoo.org>
 # License: GPL2
 
-import os
-from itertools import imap
 from twisted.trial import unittest
 
 from pkgcore.ebuild.conditionals import DepSet, ParseError

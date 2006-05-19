@@ -3,11 +3,10 @@
 
 import os, shutil, operator
 import warnings
-from pkgcore.interfaces import build, repo
-from itertools import imap, izip
+from pkgcore.interfaces import build
 from pkgcore.ebuild.processor import \
 	request_ebuild_processor, release_ebuild_processor, \
-	UnhandledCommand, expected_ebuild_env, chuck_UnhandledCommand
+	expected_ebuild_env, chuck_UnhandledCommand
 from pkgcore.os_data import portage_gid
 from pkgcore.fs.util import ensure_dirs, normpath
 from pkgcore.os_data import portage_gid

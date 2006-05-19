@@ -1,7 +1,6 @@
 # Copyright: 2005 Jason Stubbs <jstubbs@gentoo.org>
 # License: GPL2
 
-from pkgcore.restrictions.packages import OrRestriction
 from pkgcore.repository import prototype
 from pkgcore.package import virtual
 

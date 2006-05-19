@@ -5,7 +5,6 @@
 from twisted.trial import unittest
 
 from pkgcore.restrictions import boolean, restriction
-from pkgcore.util import mappings
 
 
 true = restriction.AlwaysBool(node_type='foo', negate=True)

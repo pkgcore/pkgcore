@@ -196,7 +196,7 @@ class AndRestriction(base):
 			raise NotImplementedError("negation for solutions on AndRestriction isn't implemented yet")
 
 		flattened_matrix = []
-		s=[]
+		s = []
 		for x in self.restrictions:
 			if isinstance(x, base):
 				s2 = x.solutions(full_solution_expansion=full_solution_expansion)

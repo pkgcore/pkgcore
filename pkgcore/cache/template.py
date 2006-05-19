@@ -31,7 +31,7 @@ class database(object):
 		if self.updates > self.sync_rate:
 			self.commit()
 			self.updates = 0
-		d=self._getitem(cpv)
+		d = self._getitem(cpv)
 		if self.serialize_eclasses and "_eclasses_" in d:
 			d["_eclasses_"] = self.reconstruct_eclasses(cpv, d["_eclasses_"])
 		return d
@@ -47,7 +47,7 @@ class database(object):
 		if self.readonly:
 			raise cache_errors.ReadOnlyRestriction()
 		if self.cleanse_keys:
-			d=ProtectedDict(values)
+			d = ProtectedDict(values)
 			for k in d.keys():
 				if d[k] == '':
 					del d[k]
@@ -160,7 +160,7 @@ class database(object):
 			return {}
 		if len(eclasses) % 3 != 0:
 			raise cache_errors.CacheCorruption(cpv, "_eclasses_ was of invalid len %i" % len(eclasses))
-		d={}
+		d = {}
 		for x in range(0, len(eclasses), 3):
 			d[eclasses[x]] = (eclasses[x + 1], long(eclasses[x + 2]))
 		del eclasses

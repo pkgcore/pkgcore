@@ -58,3 +58,25 @@ class TestStrGlobMatch(unittest.TestCase):
 					values.StrGlobMatch("rsyn"+x, negate=negate))
 			self.assertEquals(values.StrGlobMatch("Rsync", CaseSensitive=False, negate=negate),  \
 				values.StrGlobMatch("rsync", CaseSensitive=False, negate=negate))
+		self.assertNotEqual(values.StrGlobMatch("rsync", negate=True), values.StrGlobMatch("rsync", negate=False))
+
+
+class TestEqualityMatch(unittest.TestCase):
+
+	def test_match(self):
+		for x, y, ret in (("asdf", "asdf", True), ("asdf", "fdsa", False),
+			(1, 1, True), (1,2, False),
+			(list(range(2)), list(range(2)), True),
+			(range(2), reversed(range(2)), False),
+			(True, True, True),
+			(True, False, False),
+			(False, True, False)):
+			for negate in (True, False):
+				self.assertEquals(values.EqualityMatch(x, negate=negate).match(y), ret != negate, 
+					msg="testing %s==%s, required %s, negate=%s" % (repr(x),repr(y), ret, negate))
+
+	def test__eq__(self):
+		for negate in (True, False):
+			self.assertEqual(values.EqualityMatch("asdf", negate=negate), values.EqualityMatch("asdf", negate=negate))
+			self.assertNotEqual(values.EqualityMatch(1, negate=negate), values.EqualityMatch(2, negate=negate))
+		self.assertNotEqual(values.EqualityMatch("asdf", negate=True), values.EqualityMatch("asdf", negate=False))

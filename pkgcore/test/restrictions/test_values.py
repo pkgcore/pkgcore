@@ -80,3 +80,29 @@ class TestEqualityMatch(unittest.TestCase):
 			self.assertEqual(values.EqualityMatch("asdf", negate=negate), values.EqualityMatch("asdf", negate=negate))
 			self.assertNotEqual(values.EqualityMatch(1, negate=negate), values.EqualityMatch(2, negate=negate))
 		self.assertNotEqual(values.EqualityMatch("asdf", negate=True), values.EqualityMatch("asdf", negate=False))
+
+
+class TestContainmentMatch(unittest.TestCase):
+
+	def test_match(self):
+		for x, y, ret in ((range(10), range(10), True), (range(10), [], False),
+			(range(10), set(xrange(10)), True), (set(xrange(10)), range(10), True)):
+			for negate in (True, False):
+				self.assertEquals(values.ContainmentMatch(negate=negate, disable_inst_caching=True, *x).match(y), ret != negate)
+		for negate in (True, False):
+			self.assertEquals(values.ContainmentMatch(all=True, negate=negate, *range(10)).match(range(10)), not negate)
+
+
+	def test__eq__(self):
+		for negate in (True, False):
+			self.assertEquals(values.ContainmentMatch(negate=negate, *range(100)), 
+				values.ContainmentMatch(negate=negate, *range(100)), msg="range(100), negate=%s" % negate)
+			self.assertNotEqual(values.ContainmentMatch(1, negate=not negate),
+				values.ContainmentMatch(1, negate=negate))
+			self.assertEqual(values.ContainmentMatch(1, 2, 3, all=True, negate=negate),
+				values.ContainmentMatch(1, 2, 3, all=True, negate=negate))
+			self.assertNotEqual(values.ContainmentMatch(1, 2, all=True, negate=negate),
+				values.ContainmentMatch(1, 2, 3, all=True, negate=negate))
+			self.assertNotEqual(values.ContainmentMatch(1, 2, 3, all=False, negate=negate),
+				values.ContainmentMatch(1, 2, 3, all=True, negate=negate))
+			

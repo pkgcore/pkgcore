@@ -86,6 +86,7 @@ class GlsaDirSet(object):
 						pkgatom = atom.atom(pkgname)
 						# some glsa suck.  intentionally trigger any failures now.
 						str(pkgatom)
+#						print pkg_vuln_restrict
 						yield fn[5:-4], pkgname, pkgatom, pkg_vuln_restrict
 					except (TypeError, ValueError), v:
 						# thrown from cpv.
@@ -120,9 +121,16 @@ class GlsaDirSet(object):
 
 	def generate_restrict_from_range(self, node, negate=False):
 		op = node.getAttribute("range").strip()
-		base = cpv.CPV("bar/foo-%s" % str(node.childNodes[0].nodeValue.strip()))
+		base = cpv.CPV("cat/pkg-%s" % str(node.childNodes[0].nodeValue.strip()))
 		restrict = self.op_translate[op.lstrip("r")]
 		if op.startswith("r"):
+			if not base.revision:
+				if '=' not in restrict:
+					# this is a non-range.
+					raise ValueError("range %s version %s is a guranteed empty set" % \
+						(op, str(node.childNodes[0].nodeValue.strip())))
+				
+				return atom.VersionMatch("~", base.version, negate=negate)
 			return packages.AndRestriction(
 				atom.VersionMatch("~", base.version),
 				atom.VersionMatch(restrict, base.version, rev=base.revision),
@@ -141,7 +149,7 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False):
 		i = iter(glsa_src)
 	for restrict in i:
 		matches = caching_iter(repo.itermatch(restrict, sorter=sorted))
-		print "checking on ",restrict
+#		print "checking on ",restrict
 		if matches:
 			yield glsa_src, matches
 

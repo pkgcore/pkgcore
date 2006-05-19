@@ -87,8 +87,10 @@ class StrExactMatch(StrMatch):
 			self.exact = str(exact)
 
 	def match(self, value):
-		if self.flags & re.I:	return (self.exact == str(value).lower()) ^ self.negate
-		else:			return (self.exact == str(value)) ^ self.negate
+		if self.flags & re.I:
+			return (self.exact == str(value).lower()) != self.negate
+		else:	
+			return (self.exact == str(value)) != self.negate
 
 	def intersect(self, other):
 		s1, s2 = self.exact, other.exact
@@ -106,7 +108,8 @@ class StrExactMatch(StrMatch):
 		return self.exact == other.exact and self.negate == other.negate and self.flags == other.flags
 
 	def __str__(self):
-		if self.negate:	return "!= "+self.exact
+		if self.negate:
+			return "!= "+self.exact
 		return "== "+self.exact
 
 
@@ -146,10 +149,14 @@ class StrGlobMatch(StrMatch):
 		return None
 
 	def __eq__(self, other):
-		return self.glob == other.glob and self.negate == other.negate and self.flags == other.flags
+		try:
+			return self.glob == other.glob and self.negate == other.negate and self.flags == other.flags
+		except AttributeError:
+			return False
 
 	def __str__(self):
-		if self.negate:	return "not "+self.glob+"*"
+		if self.negate:
+			return "not "+self.glob+"*"
 		return self.glob+"*"
 
 
@@ -166,12 +173,19 @@ class EqualityMatch(base):
 	def __hash__(self):
 		return hash((self.val, self.negate))
 
+	def __eq__(self, other):
+		try:
+			return self.val == other.val and self.negate == other.negate
+		except AttributeError:
+			return False
+
+
 class ContainmentMatch(base):
 
 	"""used for an 'in' style operation, 'x86' in ['x86','~x86'] for example
 	note that negation of this *does* not result in a true NAND when all is on."""
 
-	__slots__ = ("vals", "vals_len", "all")
+	__slots__ = ("vals", "all")
 
 	__inst_caching__ = True
 
@@ -179,11 +193,7 @@ class ContainmentMatch(base):
 		"""vals must support a contaiment test
 		if all is set to True, all vals must match"""
 
-		if "all" in kwds:
-			self.all = kwds["all"]
-			del kwds["all"]
-		else:
-			self.all = False
+		self.all = bool(kwds.pop("all", False))
 		super(ContainmentMatch, self).__init__(**kwds)
 		# note that we're discarding any specialized __getitem__ on vals here.
 		# this isn't optimal, and should be special cased for known types (lists/tuples fex)
@@ -296,9 +306,17 @@ class ContainmentMatch(base):
 		return False
 
 
+	def __eq__(self, other):
+		try:
+			return self.all == other.all and self.negate == other.negate and self.vals == other.vals
+		except AttributeError:
+			return False
+	
 	def __str__(self):
-		if self.negate: s = "not contains [%s]"
-		else:           s = "contains [%s]"
+		if self.negate:
+			s = "not contains [%s]"
+		else:
+			s = "contains [%s]"
 		return s % ', '.join(map(str, self.vals))
 
 for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \

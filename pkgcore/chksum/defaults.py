@@ -38,4 +38,5 @@ for k,v in (("sha1", "SHA"), ("sha256", "SHA256"), ("rmd160", "RIPEMD")):
 del k, v
 
 if "sha1" not in chksum_types:
-	chksum_types["sha1"] = pre_curry(loop_over_file, sha1)
+	import sha
+	chksum_types["sha1"] = pre_curry(loop_over_file, sha)

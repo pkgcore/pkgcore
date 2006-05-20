@@ -137,6 +137,5 @@ source_profiles() {
 	done
 }
 DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $(declare -F | cut -s -d ' ' -f 3)"
-DONT_EXPORT_VARS="${DONT_EXPORT_VARS} ${DONT_EXPORT_VARS}"
 
 :

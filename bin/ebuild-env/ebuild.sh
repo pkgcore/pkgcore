@@ -21,7 +21,6 @@
 # few notes on general env stuff- if it's not ebuild specific or a user option, it's typically marked
 # readonly.  This limits users, but also helps to ensure that reloaded envs from older portages don't
 # overwrite an internal ebd.sh function that has since changed.
-
 ORIG_VARS=`declare | egrep '^[^[:space:]{}()]+=' | cut -s -d '=' -f 1`
 ORIG_FUNCS=`declare -F | cut -s -d ' ' -f 3`
 DONT_EXPORT_FUNCS='portageq speak'
@@ -214,7 +213,7 @@ dump_environ() {
 	fails=
 	for x in $(declare -F | sed -n "s/^declare -f[^ ]* \+\([^ ]\+\) *\$/\1/; /^$(gen_func_filter ${DONT_EXPORT_FUNCS})$/! p;"); do
 		y=$(declare -f "$x" 2> /dev/null)
-		if [ "$!" != 0 ]; then
+		if [[ $? != 0 ]]; then
 			# older bash that lacks declare -f x-y validity check fix.
 			fails="$fails $x"
 		else
@@ -351,7 +350,7 @@ load_environ() {
 				unset -f declare load_file;
 				dump_environ;
 			)"
-		ret=$!
+		ret=$?
 	else
 		echo "ebuild=${EBUILD}, phase $EBUILD_PHASE" >&2
 		ret=1

@@ -106,12 +106,13 @@ class GlsaDirSet(object):
 			vuln = vuln_list[0]
 		invuln = pkg_node.getElementsByTagName("unaffected")
 		if not invuln:
-			return vuln
+			# wrap it.
+			return KeyedAndRestriction(vuln, tag=tag, finalize=True)
 		invuln_list = [self.generate_restrict_from_range(x, negate=True) for x in invuln]
 		invuln = [x for x in invuln_list if x not in vuln_list]
 		if not invuln:
 			if tag is None:
-				return vuln
+				return KeyedAndRestriction(vuln, tag=tag, finalize=True)
 			return KeyedAndRestriction(vuln, tag=tag, finalize=True)
 		return KeyedAndRestriction(vuln, finalize=True, tag=tag, *invuln)
 

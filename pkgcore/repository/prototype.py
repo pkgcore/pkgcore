@@ -133,7 +133,7 @@ class tree(object):
 		cat_exact = set()
 		pkg_exact = set()
 
-		for x in collect_package_restrictions(restrict):
+		for x in collect_package_restrictions(restrict, ["category", "package"]):
 			if x.attr == "category":
 				cat_restrict.add(x.restriction)
 			elif x.attr == "package":

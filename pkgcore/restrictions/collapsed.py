@@ -30,7 +30,7 @@ class DictBased(restriction.base):
 	type = packages.package_type
 	inst_caching = False
 
-	def __init__(self, restriction_items, get_key_from_package, get_key_from_atom, *args, **kwargs):
+	def __init__(self, restriction_items, get_key_from_package, *args, **kwargs):
 		"""restriction_items is a source of restriction keys and remaining restriction (if none, set it to None)
 		get_key is a function to get the key from a pkg instance"""
 
@@ -39,46 +39,36 @@ class DictBased(restriction.base):
 
 		super(DictBased, self).__init__(*args, **kwargs)
 		self.restricts_dict = {}
-		for r in restriction_items:
-			key, remaining = get_key_from_atom(r)
-			if not remaining:
-				remaining = packages.AlwaysTrue
-			else:
-				if len(remaining) == 1 and (isinstance(remaining, list) or isinstance(remaining, tuple)):
-					remaining = remaining[0]
-				elif isinstance(remaining, (tuple, list)):
-					remaining = packages.AndRestriction(inst_caching=False, *remaining)
-				elif not isinstance(remaining, base):
-#					print "remaining=",remaining
-#					print "base=",base
-					raise KeyError("unable to convert '%s', remaining '%s' isn't of a known base" % (str(r), str(remaining)))
+		for key, restrict in restriction_items:
+			if not restrict:
+				restrict = packages.AlwaysTrue
 
 			if key in self.restricts_dict:
-				self.restricts_dict[key].add_restriction(remaining)
+				self.restricts_dict[key].add_restriction(restrict)
 			else:
-				self.restricts_dict[key] = packages.OrRestriction(remaining, inst_caching=False)
+				self.restricts_dict[key] = packages.OrRestriction(restrict, inst_caching=False)
 
-		self.get_pkg_key, self.get_atom_key = get_key_from_package, get_key_from_atom
+#		self.get_pkg_key, self.get_atom_key = get_key_from_package, get_key_from_atom
+		self.get_pkg_key = get_key_from_package
 
 
 	def match(self, pkginst):
 		try:
-			key = self.get_pkg_key(pkginst)
+			key = self.get_pkg_key(self, pkginst)
 		except (TypeError, AttributeError):
 			return self.negate
 		if key not in self.restricts_dict:
 			return self.negate
 
 		remaining = self.restricts_dict[key]
-		return remaining.match(pkginst) ^ self.negate
+		return remaining.match(pkginst) != self.negate
 
-
-	def __contains__(self, restriction):
-		if isinstance(restriction, base):
-			key, r = self.get_atom_key(restriction)
-		if key != None and key in self.restricts_dict:
-			return True
-		return False
+#	def __contains__(self, restriction):
+#		if isinstance(restriction, base):
+#			key, r = self.get_atom_key(restriction)
+#		if key != None and key in self.restricts_dict:
+#			return True
+#		return False
 
 	def __str__(self):
 		return "%s: pkg_key(%s), atom_key(%s)" % (self.__class__, self.get_pkg_key, \

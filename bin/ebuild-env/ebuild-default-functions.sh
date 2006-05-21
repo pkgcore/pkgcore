@@ -783,7 +783,7 @@ inherit()
 	done
 	ECLASS_DEPTH=$(($ECLASS_DEPTH - 1))
 	if [[ $ECLASS_DEPTH == 0 ]]; then
-		ECLASS_DEPTH=$(($SAVED_INHERIT_COUNT - 1)) 
+		ECLASS_DEPTH=$(($SAVED_INHERIT_COUNT - 1))
 	fi
 }
 
@@ -1036,4 +1036,5 @@ libopts()
 	export LIBOPTIONS
 }
 
+DONT_EXPORT_VARS="${DONT_EXPORT_VARS} ECLASS_DEPTH"
 true

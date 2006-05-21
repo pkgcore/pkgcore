@@ -179,21 +179,15 @@ class tree(object):
 		if sorter is None:
 			sorter = iter
 		for pkg in sorter(self._internal_match(candidates, restrict)):
-			print "yielding",pkg
 			yield pkg
 
 	def _internal_match(self, candidates, restrict):
 		#actual matching.
 		for catpkg in candidates:
 			for ver in self.versions[catpkg]:
-				print "ver=",ver
 				pkg = self.package_class(catpkg+"-"+ver)
-#				import pdb;pdb.set_trace()
 				if restrict.match(pkg):
 					yield pkg
-				else:
-					print "restrict=",restrict,"didn't match",pkg
-
 
 	def notify_remove_package(self, pkg):
 		cp = "%s/%s" % (pkg.category, pkg.package)

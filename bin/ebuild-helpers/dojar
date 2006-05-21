@@ -1,7 +1,7 @@
 #!/bin/sh
-# Copyright 1999-2004 Gentoo Foundation
+# Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: dojar 1912 2005-08-25 03:54:42Z ferringb $
+# $Id: /var/cvsroot/gentoo-src/portage/bin/dojar,v 1.8 2004/10/04 13:56:50 vapier Exp $
 # Author Karl Trygve Kalleberg <karltk@gentoo.org>
 
 #
@@ -40,7 +40,7 @@ for i in $* ; do
 	bn="$(basename $i)"
 
 	if [ -f "$pf" ] ; then
-		oldcp=`grep "CLASSPATH=" "$pf" | sed "s/CLASSPATH=//"`
+		oldcp=$(grep "CLASSPATH=" "$pf" | sed "s/CLASSPATH=//")
 		grep -v "CLASSPATH=" "$pf" > "${pf}.new"
 		echo "CLASSPATH=${oldcp}:${jardest}${bn}" >> "${pf}.new"
 		mv "${pf}.new" "$pf"

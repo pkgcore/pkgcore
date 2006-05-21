@@ -1,12 +1,14 @@
 #!/bin/bash
-# Copyright 1999-2005 Gentoo Foundation
+# Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: doconfd 1912 2005-08-25 03:54:42Z ferringb $
+# $Id: /var/cvsroot/gentoo-src/portage/bin/doconfd,v 1.2.2.1 2005/01/13 04:51:56 vapier Exp $
 
-if [ $# -lt 1 ] ; then
+if [[ $# -lt 1 ]] ; then
 	echo "$0: at least one argument needed" 1>&2
-	exit 1 	
+	exit 1
 fi
 
-exec env INSDESTTREE=/etc/conf.d/ INSOPTIONS="-m0644" \
-	doins "$@"
+exec \
+env \
+INSDESTTREE="/etc/conf.d/" \
+doins "$@"

@@ -1,27 +1,21 @@
 #!/bin/bash
-# Copyright 1999-2005 Gentoo Foundation
+# Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: doinfo 1912 2005-08-25 03:54:42Z ferringb $
+# $Id: /var/cvsroot/gentoo-src/portage/bin/doinfo,v 1.7 2004/10/04 13:56:50 vapier Exp $
 
-if [ $# -lt 1 ] ; then
-	echo "$0: at least one argument needed" 1>&2
+if [ ${#} -lt 1 ] ; then
+	echo "doinfo: at least one argument needed"
 	exit 1 	
 fi
-
-dir="${D}usr/share/info"
-if [ ! -d "${dir}" ] ; then
-	install -d "${dir}"
+if [ ! -d "${D}usr/share/info" ] ; then
+	install -d "${D}usr/share/info"
 fi
-
-PORTAGE_COMPRESS=${PORTAGE_COMPRESS:-gzip}
-PORTAGE_COMPRESS_FLAGS=${PORTAGE_COMPRESS_FLAGS:--9}
 
 for x in "$@" ; do
 	if [ -e "${x}" ] ; then
-		install -m0644 "${x}" "${dir}"
-		"${PORTAGE_COMPRESS}" ${PORTAGE_COMPRESS_FLAGS} -f \
-			"${dir}/${x##*/}"
+		install -m0644 "${x}" "${D}usr/share/info"
+		gzip -f -9 "${D}usr/share/info/${x##*/}"
 	else
-		echo "doinfo: ${x} does not exist" 1>&2
+		echo "doinfo: ${x} does not exist"
 	fi
 done

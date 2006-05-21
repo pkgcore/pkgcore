@@ -7,15 +7,7 @@ from pkgcore.util.lists import iter_stable_unique, iter_flatten
 from pkgcore.package.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.compatibility import any
-
-class FakeMatch(object):
-	def __init__(self, val):
-		self.val = val
-	def match(self, pkg):
-		return self.val
-
-FakeTrueMatch = FakeMatch(True)
-FakeFalseMatch = FakeMatch(False)
+from pkgcore.restrictions.util import collect_package_restrictions
 
 def ix_callable(a):
 	return "/".join(a)
@@ -140,16 +132,13 @@ class tree(object):
 		cat_restrict = set()
 		cat_exact = set()
 		pkg_exact = set()
-		for x in iter_flatten(restrict):
-			if isinstance(x, packages.PackageRestriction):
-				if x.attr == "category":
-					cat_restrict.add(x.restriction)
-				elif x.attr == "package":
-					pkg_restrict.add(x.restriction)
-			elif isinstance(x, atom):
-				# shouldn't occur.
-				cat_exacts.add(x.category)
-				pkg_exact.add(x.package)
+
+		for x in collect_package_restrictions(restrict):
+			if x.attr == "category":
+				cat_restrict.add(x.restriction)
+			elif x.attr == "package":
+				pkg_restrict.add(x.restriction)
+
 		for e, s in ((pkg_exact, pkg_restrict), (cat_exact, cat_restrict)):
 			l = [x.exact for x in e if isinstance(e, values.StrExactMatch) and not e.negate]
 			s.difference_update(l)

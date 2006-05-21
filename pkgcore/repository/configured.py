@@ -30,7 +30,6 @@ class tree(prototype.tree):
 		return getattr(self.raw_repo, attr)
 
 	def itermatch(self, restrict, **kwds):
-		
 		if not any(True for r in collect_package_restrictions(restrict, self.attr_filters)):
 			return (self.package_class(pkg) for pkg in self.raw_repo.itermatch(restrict))
 			
@@ -57,3 +56,6 @@ class tree(prototype.tree):
 
 		return (self.package_class(pkg) for pkg in self.raw_repo.itermatch(self, filtered_restrict, 
 			restrict_solutions=filtered_solutions, **kwds) if restrict.force_True(pkg))
+
+	def __getitem__(self, key):
+		return self.package_class(self.raw_repo[key])

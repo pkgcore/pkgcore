@@ -70,6 +70,7 @@ alias save_IFS='[ "${IFS:-unset}" != "unset" ] && portage_old_IFS="${IFS}"'
 alias restore_IFS='if [ "${portage_old_IFS:-unset}" != "unset" ]; then IFS="${portage_old_IFS}"; unset portage_old_IFS; else unset IFS; fi'
 
 diefunc() {
+	set +x
 	local funcname="$1" lineno="$2" exitcode="$3"
 	shift 3
 	echo >&2

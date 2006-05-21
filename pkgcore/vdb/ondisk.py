@@ -56,7 +56,7 @@ class tree(prototype.tree):
 		try:
 			try:
 				for x in os.listdir(cpath):
-					if x.endswith(".lockfile") or not stat.S_ISDIR(os.stat(os.path.join(cpath, x)).st_mode):
+					if x.endswith(".lockfile") or x.startswith("-MERGING-") or not stat.S_ISDIR(os.stat(os.path.join(cpath, x)).st_mode):
 						continue
 					x = cpv(x)
 					l.append(x.package)

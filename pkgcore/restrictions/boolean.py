@@ -26,14 +26,14 @@ class base(restriction.base):
 		"""
 		if "node_type" in kwds:
 			self.type = kwds["node_type"]
-
+		finalize = kwds.pop("finalize", False)
 		super(base, self).__init__(negate=kwds.get("negate", False))
 
 		self.restrictions = []
 		if restrictions:
 			self.add_restriction(*restrictions)
 
-		if "finalize" in kwds:
+		if finalize:
 			self.restrictions = tuple(self.restrictions)
 
 	def change_restrictions(self, *restrictions, **kwds):

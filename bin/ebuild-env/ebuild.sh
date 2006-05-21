@@ -26,11 +26,11 @@ ORIG_VARS=`declare | egrep '^[^[:space:]{}()]+=' | cut -s -d '=' -f 1`
 ORIG_FUNCS=`declare -F | cut -s -d ' ' -f 3`
 DONT_EXPORT_FUNCS='portageq speak'
 DONT_EXPORT_VARS="ORIG_VARS GROUPS ORIG_FUNCS FUNCNAME DAEMONIZED CCACHE.* DISTCC.* AUTOCLEAN CLEAN_DELAY SYNC
-(TMP|)DIR FEATURES CONFIG_PROTECT.* (P|)WORKDIR (FETCH|RESUME) COMMAND RSYNC_.* GENTOO_MIRRORS 
-(DIST|FILES|RPM|ECLASS)DIR HOME MUST_EXPORT_ENV QA_CONTROLLED_EXTERNALLY COLORTERM COLS ROWS HOSTNAME
-myarg SANDBOX_.* BASH.* EUID PPID SHELLOPTS UID ACCEPT_(KEYWORDS|LICENSE) BUILD(_PREFIX|DIR) T DIRSTACK
-DISPLAY (EBUILD|)_PHASE PORTAGE_.* RC_.* SUDO_.* IFS PATH LD_PRELOAD ret line phases D EMERGE_FROM
-PORT(_LOGDIR|DIR(|_OVERLAY)) ROOT TERM _ done e ENDCOLS PROFILE_.* BRACKET BAD WARN GOOD NORMAL"
+\(TMP\|\)DIR FEATURES CONFIG_PROTECT.* P\?WORKDIR \(FETCH\|RESUME\) COMMAND RSYNC_.* GENTOO_MIRRORS 
+\(DIST\|FILES\|RPM\|ECLASS\)DIR HOME MUST_EXPORT_ENV QA_CONTROLLED_EXTERNALLY COLORTERM COLS ROWS HOSTNAME
+myarg SANDBOX_.* BASH.* EUID PPID SHELLOPTS UID ACCEPT_\(KEYWORDS\|LICENSE\) BUILD\(_PREFIX\|DIR\) T DIRSTACK
+DISPLAY \(EBUILD\)\?_PHASE PORTAGE_.* RC_.* SUDO_.* IFS PATH LD_PRELOAD ret line phases D EMERGE_FROM
+PORT\(_LOGDIR\|DIR\(_OVERLAY\)\?\) ROOT TERM _ done e ENDCOLS PROFILE_.* BRACKET BAD WARN GOOD NORMAL"
 # flip this on to enable extra noisy output for debugging.
 #DEBUGGING="yes"
 
@@ -124,16 +124,6 @@ killparent() {
 	kill ${PORTAGE_MASTER_PID}
 }
 
-convert_filter() {
-	while [ -n "$1" ]; do
-		echo -n "$1"
-		shift
-		if [ -n "$1" ]; then
-			echo -n ','
-		fi
-	done
-}
-
 hasq() {
         local x
 
@@ -165,21 +155,34 @@ umask 022
 # the sandbox is disabled by default except when overridden in the relevant stages
 export SANDBOX_ON="0"
 
-gen_filter() {
-	if [ "$#" == 0 ]; then 
-		#default param to keep things quiet
-		echo 
+gen_func_filter() {
+	if [ "$#" == "1" ]; then 
+		echo "$1"
 		return
 	fi
-	echo -n '('
-	while [ "$1" ]; do
-		echo -n "$1"
+	echo -n "\($1"
+	shift
+	while [ -n "$1" ]; do
+		# expand .* to a sane range
+		echo -n "\|${1//.*/[A-Za-z0-9_-+./]*}"
 		shift
-		if [ "$1" ]; then
-			echo -n '|'
-		fi
 	done
-	echo -n ')'
+	echo -n "\)"
+}
+
+gen_var_filter() {
+	if [ "$#" == 1 ]; then 
+		echo "$1"
+		return
+	fi
+	echo -n "\($1"
+	shift
+	while [ -n "$1" ]; do
+		# expand .* to a sane range
+		echo -n "\|${1//.*/[A-Za-z0-9_+]*}"
+		shift
+	done
+	echo -n "\)"
 }
 
 # func for beeping and delaying a defined period of time.
@@ -199,56 +202,57 @@ sleepbeep() {
 	return 0
 }
 
-# basically this runs through the output of export/readonly/declare, properly handling variables w/ values 
-# that have newline.
-get_vars() {
-	local l
-	if [ "${portage_old_IFS:-unset}" != "unset" ]; then
-		local portage_old_IFS
-	fi
-	save_IFS
-	IFS=''
-	while read l; do
-		l="${l/=*}"
-		echo "${l##* }"
-	done
-	restore_IFS
-}
-
 # selectively saves  the environ- specifically removes things that have been marked to not be exported.
 # dump the environ to stdout.
 dump_environ() {
-	local f x;
-	declare | filter-env -f $(convert_filter ${DONT_EXPORT_FUNCS}) -v $(convert_filter ${DONT_EXPORT_VARS} f x)
-
+	# scope it so we can pass the output through a sed correction for newlines.
+	local x y;
+	#env dump, if it doesn't match a var pattern, stop processing, else print only if
+	#it doesn't match one of the filter lists.
+	# vars, then funcs.
+	declare |  sed -n "/[a-zA-Z0-9_]\+=/! { q; }; /^$(gen_var_filter ${DONT_EXPORT_VARS} f x)=/! p;" # | tee /var/tmp/portage/dev-util/test-${EBUILD_PHASE}
+	fails=
+	for x in $(declare -F | sed -n "s/^declare -f[^ ]* \+\([^ ]\+\) *\$/\1/; /^$(gen_func_filter ${DONT_EXPORT_FUNCS})$/! p;"); do
+		y=$(declare -f "$x" 2> /dev/null)
+		if [ "$!" != 0 ]; then
+			# older bash that lacks declare -f x-y validity check fix.
+			fails="$fails $x"
+		else
+			echo "$y"
+		fi
+	done
+	if [ -n "$fails" ]; then
+		declare | filter-env -F -f "${fails// /,}" -v '.*' | sed -e '/^[[:space:]]*$/d'
+	fi
+	unset fails
 	if ! hasq "--no-attributes" "$@"; then
-		echo "reinstate_loaded_env_attributes ()"
-		echo "{"
-
-		x=$(export | get_vars | egrep -v "$(gen_filter ${DONT_EXPORT_VARS} f x y)$")
-		[ ! -z "$x" ] && echo "    export `echo $x`"
+		echo $'reinstate_loaded_env_attributes ()\n{'
+#		echo "echo starting reinstate \${EBUILD_PHASE}>&2;"
+		for y in export 'declare -i' readonly; do
+			x=$(${y} | sed -n "s:^declare \(-[^ ]\+ \)*\([A-Za-z0-9_+]\+\)\(=.*$\)\?:\2:; /^$(gen_var_filter ${DONT_EXPORT_VARS} x y)$/! p;")
+			[ -n "$x" ] && echo "    ${y} $(echo $x);" | tee "/var/tmp/portage/dev-util/${y}-$(date +'%s')"
+#			echo "echo dump- $y $(echo $x) >&2;"
+#			echo "echo dump- $y original was $(echo $(${y})) >&2"
+		done
 		
+		# if it's just declare -f some_func, filter it, else drop it if it's one of the filtered funcs
+		declare -F | sed -n "/^declare -[^ ]\( \|[^ ]? $(gen_func_filter ${DONT_EXPORT_FUNCS})$\)\?/d; s/^/    /;s/;*$/;/p;"
 
-		x=$(readonly | get_vars | egrep -v "$(gen_filter ${DONT_EXPORT_VARS} f x y)")
-		[ ! -z "$x" ] && echo "    readonly `echo $x`"
-		
-
-		x=$(declare -i | get_vars | egrep -v "$(gen_filter ${DONT_EXPORT_VARS} f x y)")
-		[ ! -z "$x" ] && echo "    declare -i `echo $x`"
-
-		declare -F | egrep "^declare -[aFfirtx]+ $(gen_filter ${f} )\$" | egrep -v "^declare -f "
-		shopt -p
-		echo "    unset reinstate_loaded_env_attributes"
+		shopt -p | sed -e 's:^:    :; s/;*$/;/;'
 		echo "}"
 	fi
 	
-	debug-print "dumped"
-	if [ ! -z ${DEBUGGING} ]; then
+#	debug-print "dumped"
+	if [ -n "${DEBUGGING}" ]; then
 		echo "#dumping debug info"
 		echo "#var filter..."
-		echo "#$(gen_filter ${DONT_EXPORT_VARS} f x | sort)"
+		echo "#$(gen_var_filter ${DONT_EXPORT_VARS} f x | sort)"
+		echo "#"
+		echo "#funcs"
+		declare -F | sed -e 's:^:# :'
+		echo "#"
 		echo "#func filter..."
-		echo "#$(gen_filter ${DONT_EXPORT_FUNCS} | sort)"
+		echo "#$(gen_func_filter ${DONT_EXPORT_FUNCS} | sort)"
 		echo "#DONT_EXPORT_VARS follow"
 		for x in `echo $DONT_EXPORT_VARS | sort`; do
 			echo "#    $x";
@@ -295,10 +299,13 @@ export_environ() {
 
 # reload a saved env, applying usual filters to the env prior to eval'ing it.
 load_environ() {
-	local src e
-	#protect the exterior env to some degree from older saved envs, where *everything* was dumped (no filters applied)
+	local src e ret
+	# localize these so the reload doesn't have the ability to change them
+	local DONT_EXPORT_VARS="${DONT_EXPORT_VARS} src e ret"
+	local DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} load_file declare"
 	local SANDBOX_STATE=$SANDBOX_ON
 	local EBUILD_PHASE=$EBUILD_PHASE
+	local reload_failure=0
 	SANDBOX_ON=0
 
 	SANDBOX_READ="/bin:${SANDBOX_READ}:/dev/urandom:/dev/random:$PORTAGE_BIN_PATH"
@@ -321,20 +328,36 @@ load_environ() {
 	# aren't worth the trouble.  Drop all inline declare's that would be executed.
 	# potentially handle this via filter-env?
 	# ~harring
-	function declare() {
-		:
+	load_file() {
+		if [ "${src%bz2}" != "${src}" ]; then
+			bzcat "${src}"
+		else
+			cat "${src}"
+		fi
 	}
 	if [ -f "$src" ]; then
-		eval "$({ [ "${src%.bz2}" != "${src}" ] && bzcat "$src" || cat "${src}"
-			} | filter-env -v $(convert_filter ${DONT_EXPORT_VARS}) \
-			-f $(convert_filter ${DONT_EXPORT_FUNCS}) )"
-#			} | egrep -v "^$(gen_filter $DONT_EXPORT_VARS)=")"
+		# double exec.
+#		 #2<>>(grep -v 'readonly' >&2)";
+#		; } 2<>>(grep -v 'readonly' >&2)";
+
+		eval "$(
+				unset DEBUGGING;
+				function declare() {
+					:
+				};
+				shopt -s execfail;
+				eval "$(load_file "$src")"
+				shopt -u execfail;
+				unset -f declare load_file;
+				dump_environ;
+			)"
+		ret=$!
 	else
 		echo "ebuild=${EBUILD}, phase $EBUILD_PHASE" >&2
-		return 1
+		ret=1
 	fi
-	unset declare
-	return 0
+	unset -f load_file &> /dev/null;
+	return $(( $ret ))
 }
 
 # walk the cascaded profile src'ing it's various bashrcs.
@@ -505,6 +528,7 @@ execute_phases() {
 
 			if type reinstate_loaded_env_attributes &> /dev/null; then
 				reinstate_loaded_env_attributes
+				unset -f reinstate_loaded_env_attributes
 			fi
 			[ "$PORTAGE_DEBUG" == "1" ] && set -x
 			type -p pre_pkg_${EBUILD_PHASE} &> /dev/null && pre_pkg_${EBUILD_PHASE}
@@ -537,6 +561,7 @@ execute_phases() {
 			if type reinstate_loaded_env_attributes &> /dev/null; then
 #				echo "reinstating attribs" >&2
 				reinstate_loaded_env_attributes
+				unset -f reinstate_loaded_env_attributes
 			fi
 			[ "$PORTAGE_DEBUG" == "1" ] && set -x
 			type -p pre_src_${EBUILD_PHASE} &> /dev/null && pre_src_${EBUILD_PHASE}
@@ -643,7 +668,7 @@ f="$(declare | {
 if [ -z "${ORIG_VARS}" ]; then
 	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} ${f}"
 else
-	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $(echo "${f}" | egrep -v "^`gen_filter ${ORIG_VARS}`\$")"
+	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $(echo "${f}" | egrep -v "^$(gen_var_filter ${ORIG_VARS})\$")"
 fi
 unset f
 

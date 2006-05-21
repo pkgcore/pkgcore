@@ -135,93 +135,66 @@ class tree(object):
 		restriction_solutions is only useful if you've already split the restrict into it's seperate
 		solutions.
 		"""
-		if isinstance(restrict, atom):
-			if restrict.category == None:
-				candidates = self.packages
-			else:
-				if restrict.package == None:
-					try:	candidates = self.packages[restrict.category]
-					except KeyError:
-						# just stop now.  no category matches == no yielded cpvs.
-						return
-				else:
-					try:
-						if restrict.package not in self.packages[restrict.category]:
-							# no matches possible
-							return
-						candidates = [restrict.key]
-					except KeyError:
-						# restrict.category wasn't valid.  no matches possible.
-						return
-					r = restrict[2:]
-					if not r:
-						restrict = FakeTrueMatch
-					elif len(r) > 1:
-						restrict = packages.AndRestriction(*r)
-					else:
-						restrict = r[0]
-		elif isinstance(restrict, boolean.base):
-			if restrict_solutions is None:
-				restrict_solutions = restrict.solutions(full_solution_expansion=True)
-			s = iter_stable_unique(iter_flatten(restrict_solutions))
 
-			pkgrestricts = [r for r in s if isinstance(r, packages.PackageRestriction)]
-			cats = [r.restriction for r in pkgrestricts if r.attr == "category"]
-			cats.extend(r.category for r in pkgrestricts if isinstance(r, atom))
-			if not cats:
-				cats_iter = iter(self.categories)
-			else:
-				cats_exact = set(r.exact for r in cats if isinstance(r, values.StrExactMatch) and not r.flags and not r.negate)
-				if len(cats_exact) == len(cats):
-					cats_iter = ifilter(cats_exact.__contains__, self.categories)
-				elif len(cats) == 1:
-					cats_iter = ifilter(cats[0].match, self.categories)
-				else:
-					if cats_exact:
-						cats = [values.ContainmentMatch(cats_exact)] + \
-							[r for r in cats if not isintance(r, values.StrExactMatch) or r.flags or r.negate]
-					cats = values.OrRestriction(*cats)
-					cats_iter = ifilter(cats.match, self.categories)
+		pkg_restrict = set()
+		cat_restrict = set()
+		cat_exact = set()
+		pkg_exact = set()
+		for x in iter_flatten(restrict):
+			if isinstance(x, packages.PackageRestriction):
+				if x.attr == "category":
+					cat_restrict.add(x.restriction)
+				elif x.attr == "package":
+					pkg_restrict.add(x.restriction)
+			elif isinstance(x, atom):
+				# shouldn't occur.
+				cat_exacts.add(x.category)
+				pkg_exact.add(x.package)
+		for e, s in ((pkg_exact, pkg_restrict), (cat_exact, cat_restrict)):
+			l = [x.exact for x in e if isinstance(e, values.StrExactMatch) and not e.negate]
+			s.difference_update(l)
+			e.update(l)
 
-			pkgs = [r.restriction for r in pkgrestricts if r.attr == "package"]
-			pkgs.extend(r.package for r in pkgrestricts if isinstance(r, atom))
-			if not pkgs:
-				candidates = ((c,p) for c in cats_iter for p in self.packages.get(c, []))
-			else:
-				pkgs_exact = set(r.exact for r in pkgs if isinstance(r, values.StrExactMatch) and not r.flags and not r.negate)
-				if len(pkgs_exact) == len(pkgs):
-					pkgs_iter = ((c,p) for c in cats_iter for p in ifilter(pkgs_exact.__contains__, self.packages.get(c, [])))
-				elif len(pkgs) == 1:
-					pkgs_iter = ifilter(pkgs[0].match, cats_iter)
-				else:
-					if pkgs_exact:
-						pkgs = [values.ContainmentMatch(cats_exact)] + \
-							[r for r in pkgs if not isintance(r, values.StrExactMatch) or r.flags or r.negate]
-					pkgs = values.OrRestriction(*pkgs)
-					pkgs_iter = ((c,p) for c in cats_iter
-						for p in ifilter(pkgs.match, self.packages.get(c, [])))
-
-				candidates = imap(self.packages.return_mangler, pkgs_iter)
-
+		if cat_exact:
+			cat_restrict.add(values.ContainmentMatch(cats_exact))
+		del cat_exact
+		if not cat_restrict:
+			cats_iter = iter(self.categories)
 		else:
-			candidates = self.packages
+			cats_iter = (x for x in self.categories if any(r.match(x) for r in cat_restrict))
+
+		if pkg_exact:
+			pkg_restrict.add(values.ContainmentMatch(pkg_exact))
+		del pkg_exact
+		if pkg_restrict:
+			candidates = (self.packages.return_mangler((c,p)) for c in cats_iter for
+				p in self.packages.get(c, []) if any(r.match(p) for r in pkg_restrict))
+		else:
+			if not cat_restrict:
+				candidates = iter(self.packages)
+			else:
+				candidates = (self.packages.return_mangler((c,p)) 
+					for c in cats_iter for p in self.packages.get(c, []))
 
 		if sorter is None:
-			#actual matching.
-			for catpkg in candidates:
-				for ver in self.versions[catpkg]:
-					pkg = self.package_class(catpkg+"-"+ver)
-					if restrict.match(pkg):
-						yield pkg
-		else:
-			l = []
-			for catpkg in candidates:
-				for ver in self.versions[catpkg]:
-					pkg = self.package_class(catpkg+"-"+ver)
-					if restrict.match(pkg):
-						l.append(pkg)
-			for pkg in sorter(l):
-				yield pkg
+			sorter = iter
+		for pkg in sorter(self._internal_match(candidates, restrict)):
+			print "yielding",pkg
+			yield pkg
+
+	def _internal_match(self, candidates, restrict):
+		#actual matching.
+		for catpkg in candidates:
+			for ver in self.versions[catpkg]:
+				print "ver=",ver
+				pkg = self.package_class(catpkg+"-"+ver)
+#				import pdb;pdb.set_trace()
+				if restrict.match(pkg):
+					yield pkg
+				else:
+					print "restrict=",restrict,"didn't match",pkg
+
+
 	def notify_remove_package(self, pkg):
 		cp = "%s/%s" % (pkg.category, pkg.package)
 		self.versions.force_regen(cp)

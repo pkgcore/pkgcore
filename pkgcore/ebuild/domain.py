@@ -2,6 +2,7 @@
 # License: GPL2
 
 import os
+import pkgcore.config.domain
 from pkgcore.restrictions.collapsed import DictBased
 from pkgcore.restrictions import packages, values
 from pkgcore.util.file import iter_read_bash
@@ -11,7 +12,7 @@ from pkgcore.restrictions.values import StrGlobMatch, ContainmentMatch
 from pkgcore.util.lists import stable_unique
 from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source
-from errors import BaseException
+from pkgcore.config.errors import BaseException
 
 class MissingFile(BaseException):
 	def __init__(self, file, setting):	self.file, self.setting = file, setting
@@ -40,7 +41,7 @@ def package_keywords_splitter(val):
 # configuration instantiation manglers, and then the ebuild specific chunk (which is selected by config)
 # ~harring
 
-class domain:
+class domain(pkgcore.config.domain.domain):
 	def __init__(self, incrementals, root, profile, repositories, vdb, **settings):
 		# voodoo, unfortunately (so it goes)
 		# break this up into chunks once it's stabilized (most of code here has already, but still more to add)

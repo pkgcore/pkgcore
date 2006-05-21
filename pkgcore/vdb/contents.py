@@ -104,7 +104,7 @@ class ContentsFile(contentsSet):
 		try:
 			outfile = open(self._file_location + ".temp", "w", 32384)
 
-			for obj in self:
+			for obj in sorted(self):
 
 				if isinstance(obj, fs.fsFile):
 					s = "\t".join(("obj", obj.location, obj.chksums["md5"], str(obj.mtime)))

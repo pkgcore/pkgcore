@@ -255,7 +255,7 @@ class atom(boolean.AndRestriction):
 					r.append(packages.PackageRestriction("use", values.ContainmentMatch(all=True, *true_use)))
 			if self.slot is not None:
 				r.append(packages.PackageRestriction("slot", values.StrExactMatch(self.slot)))
-			setattr(self, attr, r)
+			setattr(self, attr, tuple(r))
 			return r
 
 		raise AttributeError(attr)

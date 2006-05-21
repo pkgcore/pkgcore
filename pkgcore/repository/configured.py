@@ -21,8 +21,7 @@ class tree(prototype.tree):
 	def _get_pkg_kwds(self, pkg):
 		raise NotImplementedError()
 
-	def package_class(self, *a):
-		pkg = self.raw_repo.package_class(*a)
+	def package_class(self, pkg, *a):
 		kwds = self._get_pkg_kwds(pkg)
 		kwds.setdefault("attributes_to_wrap", self.wrapped_attrs)
 		return PackageWrapper(pkg, self.configurable, **kwds)
@@ -33,7 +32,7 @@ class tree(prototype.tree):
 	def itermatch(self, restrict, **kwds):
 		
 		if not any(True for r in collect_package_restrictions(restrict, self.attr_filters)):
-			return self.raw_repo.itermatch(restrict, **kwds)
+			return (self.package_class(pkg) for pkg in self.raw_repo.itermatch(restrict))
 			
 		if restrict_solutions is None:
 			if hasattr(restrict, "solutions"):
@@ -48,12 +47,13 @@ class tree(prototype.tree):
 		# second walk of the list.  ick.
 		if sum(imap(len, restrict_solutions)) == sum(imap(len, filtered_solutions)):
 			# well.  that was an expensive waste of time- doesn't check anything we care about.
-			return self.raw_repo.itermatch(self, restrict, restrict_solutions=restrict_solutions, **kwds)
+			return (self.package_class(pkg) for pkg in
+				self.raw_repo.itermatch(self, restrict, restrict_solutions=restrict_solutions, **kwds))
 
 		# disable inst_caching for this restriction.  it's a one time generation, and potentially
 		# quite costly for hashing
 		filtered_restrict = OrRestriction(disable_inst_caching=True,
 			*[AndRestriction(disable_inst_caching=True, *x) for x in filtered_solutions])
 
-		return (pkg for pkg in prototype.tree.itermatch(self, filtered_restrict, 
+		return (self.package_class(pkg) for pkg in self.raw_repo.itermatch(self, filtered_restrict, 
 			restrict_solutions=filtered_solutions, **kwds) if restrict.force_True(pkg))

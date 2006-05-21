@@ -9,6 +9,7 @@ from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.util.currying import pre_curry, post_curry
 from pkgcore.restrictions import packages, values, restriction
+from pkgcore.packages.mutate import MutatedPkg
 
 limiters = set() # [None])
 def dprint(fmt, args=None, label=None):
@@ -19,31 +20,18 @@ def dprint(fmt, args=None, label=None):
 			print fmt % args
 
 class nodeps_repo(object):
+	default_depends = packages.AndRestriction(finalize=True)
+	default_rdepends = packages.AndRestriction(finalize=True)
 	def __init__(self, repo):
 		self.__repo = repo
 
 	def itermatch(self, *a, **kwds):
-		return (nodeps_pkg(x) for x in self.__repo.itermatch(*a, **kwds))
+		return (MutatedPkg(x, overrides={"depends":self.default_depends, "rdepends":self.default_rdepends) 
+			for x in self.__repo.itermatch(*a, **kwds))
 	
 	def match(self, *a, **kwds):
 		return list(self.itermatch(*a, **kwds))
 
-
-class nodeps_pkg(object):
-	def __init__(self, pkg, overrides={"depends":packages.AndRestriction(finalize=True), 
-		"rdepends":packages.AndRestriction(finalize=True)}):
-		self._pkg = pkg
-		self._overrides = overrides
-		
-	def __getattr__(self, attr):
-		if attr in self._overrides:
-			return self._overrides[attr]
-		return getattr(self._pkg, attr)
-
-	def __cmp__(self, other):
-		if isinstance(other, self.__class__):
-			return cmp(self._pkg, other._pkg)
-		return cmp(self._pkg, other)
 
 def rindex_gen(iterable):
 	"""returns zero for no match, else the negative len offset for the match"""

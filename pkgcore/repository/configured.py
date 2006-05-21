@@ -1,7 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from pkgcore.util.compatibility import any
 from pkgcore.restrictions.packages import PackageRestriction, OrRestriction, AndRestriction
+from pkgcore.restrictions.util import collect_package_restrictions
 from pkgcore.repository import prototype
 from pkgcore.package.conditionals import PackageWrapper
 from itertools import imap
@@ -28,13 +30,17 @@ class tree(prototype.tree):
 	def __getattr__(self, attr):
 		return getattr(self.raw_repo, attr)
 
-	def itermatch(self, restrict, restrict_solutions=None, **kwds):
+	def itermatch(self, restrict, **kwds):
+		
+		if not any(True for r in collect_package_restrictions(restrict, self.attr_filters)):
+			return self.raw_repo.itermatch(restrict, **kwds)
+			
 		if restrict_solutions is None:
 			if hasattr(restrict, "solutions"):
 				restrict_solutions = restrict.solutions(full_solution_expansion=True)
 			else:
 				restrict_solutions = (restrict,)
-
+			
 		filtered_solutions = [
 			[a for a in x if not (isinstance(a, PackageRestriction) and a.attr in self.attr_filters)]
 			for x in restrict_solutions]
@@ -42,7 +48,7 @@ class tree(prototype.tree):
 		# second walk of the list.  ick.
 		if sum(imap(len, restrict_solutions)) == sum(imap(len, filtered_solutions)):
 			# well.  that was an expensive waste of time- doesn't check anything we care about.
-			return prototype.tree.itermatch(self, restrict, restrict_solutions=restrict_solutions, **kwds)
+			return self.raw_repo.itermatch(self, restrict, restrict_solutions=restrict_solutions, **kwds)
 
 		# disable inst_caching for this restriction.  it's a one time generation, and potentially
 		# quite costly for hashing

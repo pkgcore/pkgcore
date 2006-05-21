@@ -6,12 +6,16 @@ from pkgcore.util.compatibility import all
 import cpv
 
 class MalformedAtom(Exception):
-	def __init__(self, atom, err=''):	self.atom, self.err = atom, err
-	def __str__(self):	return "atom '%s' is malformed: error %s" % (self.atom, self.err)
+	def __init__(self, atom, err=''):
+		self.atom, self.err = atom, err
+	def __str__(self):
+		return "atom '%s' is malformed: error %s" % (self.atom, self.err)
 
 class InvalidVersion(Exception):
-	def __init__(self, ver, rev, err=''):	self.ver, self.rev, self.err = ver, rev, err
-	def __str__(self):	return "Version restriction ver='%s', rev='%s', is malformed: error %s" % (self.ver, self.rev, self.err)
+	def __init__(self, ver, rev, err=''):
+		self.ver, self.rev, self.err = ver, rev, err
+	def __str__(self):
+		return "Version restriction ver='%s', rev='%s', is malformed: error %s" % (self.ver, self.rev, self.err)
 
 
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq, ne ops, and convert this to it.
@@ -209,6 +213,8 @@ class atom(boolean.AndRestriction):
 		del u,s
 
 		if atom.endswith("*"):
+			if self.op != "=":
+				raise MalformedAtom(atom, "only allowed to have =cat/pkg* or !=cat/pkg*, not %s" % self.op)
 			self.glob = True
 			self.atom = atom[pos:-1]
 		else:

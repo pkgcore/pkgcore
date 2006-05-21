@@ -210,7 +210,7 @@ dump_environ() {
 	#env dump, if it doesn't match a var pattern, stop processing, else print only if
 	#it doesn't match one of the filter lists.
 	# vars, then funcs.
-	declare |  sed -n "/[a-zA-Z0-9_]\+=/! { q; }; /^$(gen_var_filter ${DONT_EXPORT_VARS} f x)=/! p;" # | tee /var/tmp/portage/dev-util/test-${EBUILD_PHASE}
+	declare |  sed -n "/[a-zA-Z0-9_]\+=/! { q; }; /^$(gen_var_filter ${DONT_EXPORT_VARS} f x)=/! p;"
 	fails=
 	for x in $(declare -F | sed -n "s/^declare -f[^ ]* \+\([^ ]\+\) *\$/\1/; /^$(gen_func_filter ${DONT_EXPORT_FUNCS})$/! p;"); do
 		y=$(declare -f "$x" 2> /dev/null)
@@ -230,7 +230,7 @@ dump_environ() {
 #		echo "echo starting reinstate \${EBUILD_PHASE}>&2;"
 		for y in export 'declare -i' readonly; do
 			x=$(${y} | sed -n "s:^declare \(-[^ ]\+ \)*\([A-Za-z0-9_+]\+\)\(=.*$\)\?:\2:; /^$(gen_var_filter ${DONT_EXPORT_VARS} x y)$/! p;")
-			[ -n "$x" ] && echo "    ${y} $(echo $x);" | tee "/var/tmp/portage/dev-util/${y}-$(date +'%s')"
+			[ -n "$x" ] && echo "    ${y} $(echo $x);"
 #			echo "echo dump- $y $(echo $x) >&2;"
 #			echo "echo dump- $y original was $(echo $(${y})) >&2"
 		done
@@ -423,7 +423,7 @@ init_environ() {
 	export EXEDESTTREE=""
 	export DOCDESTTREE=""
 	export INSOPTIONS="-m0644"
-	export EXEOPTIONS="-m0755"	
+	export EXEOPTIONS="-m0755"
 	export LIBOPTIONS="-m0644"
 	export DIROPTIONS="-m0755"
 	export MOPREFIX=${PN}

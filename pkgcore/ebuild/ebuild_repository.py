@@ -110,14 +110,13 @@ class ConfiguredTree(configured.tree):
 		if "USE" not in domain_settings:
 			raise errors.InitializationError("%s requires the following settings: '%s', not supplied" % (str(self.__class__), x))
 
-		configured.tree.__init__(self, self.config_wrappables)
+		configured.tree.__init__(self, raw_repo, self.config_wrappables)
 		self.default_use = tuple(domain_settings["USE"])
 		self.domain_settings = domain_settings
-		if fetcher == None:
+		if fetcher is None:
 			self.fetcher = self.domain_settings["fetcher"]
 		else:
 			self.fetcher = fetcher
-		self.raw_repo = raw_repo
 		self.eclass_cache = self.raw_repo.eclass_cache
 
 	def _get_pkg_kwds(self, pkg):

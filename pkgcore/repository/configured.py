@@ -9,9 +9,10 @@ from itertools import imap
 class tree(prototype.tree):
 	configured = True
 
-	def __init__(self, wrapped_attrs):
+	def __init__(self, raw_repo, wrapped_attrs):
 		# yes, we're intentionally not using tree's init.
 		# not perfect I know.
+		self.raw_repo = raw_repo
 		self.wrapped_attrs = wrapped_attrs
 		self.attr_filters = frozenset(wrapped_attrs.keys() + [self.configurable])
 
@@ -26,7 +27,7 @@ class tree(prototype.tree):
 
 	def __getattr__(self, attr):
 		return getattr(self.raw_repo, attr)
-	
+
 	def itermatch(self, restrict, restrict_solutions=None, **kwds):
 		if restrict_solutions is None:
 			if hasattr(restrict, "solutions"):

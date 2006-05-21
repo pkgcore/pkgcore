@@ -89,11 +89,12 @@ class PackageRestriction(restriction.base):
 	def __eq__(self, other):
 		if self is other:
 			return True
-		try:
-			return self.negate == self.negate and self.attr == other.attr and self.restriction == other.restriction
-		except AttributeError:
-			print "caught attribute error"
-			return False
+		if isinstance(other, self.__class__):
+			try:
+				return self.negate == self.negate and self.attr == other.attr and self.restriction == other.restriction
+			except AttributeError, a:
+				return False
+		return False
 
 	def __str__(self):
 		s = self.attr+" "

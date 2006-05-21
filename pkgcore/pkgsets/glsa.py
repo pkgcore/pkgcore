@@ -8,7 +8,7 @@ from pkgcore.util.repo_utils import get_virtual_repos
 from pkgcore.util.compatibility import any
 from pkgcore.util.iterables import caching_iter
 from pkgcore.package import atom, cpv
-from pkgcore.restrictions import packages, restriction, boolean
+from pkgcore.restrictions import packages, restriction, boolean, values
 from pkgcore.config.introspect import ConfigHint
 
 class KeyedAndRestriction(boolean.AndRestriction):
@@ -114,31 +114,31 @@ class GlsaDirSet(object):
 				return vuln
 			return KeyedAndRestriction(vuln, tag=tag, finalize=True)
 		return KeyedAndRestriction(vuln, finalize=True, tag=tag, *invuln)
-#		elif len(invuln) == 1:
-#			return KeyedAndRestriction(vuln, invuln[0], finalize=True, tag=tag)
-#		return KeyedAndRestriction(vuln, packages.AndRestriction(finalize=True, *invuln),
-#			finalize=True, tag=tag)
 
 	def generate_restrict_from_range(self, node, negate=False):
 		op = node.getAttribute("range").strip()
-		base = cpv.CPV("cat/pkg-%s" % str(node.childNodes[0].nodeValue.strip()))
+		base = str(node.childNodes[0].nodeValue.strip())
+		glob = base.endswith("*")
+		if glob:
+			base = base[:-1]
+		base = cpv.CPV("cat/pkg-%s" % base)
 		restrict = self.op_translate[op.lstrip("r")]
 		if op.startswith("r"):
-			if not base.revision:
+			if glob:
+				raise ValueError("glob cannot be used with %s ops" % op)
+			elif not base.revision:
 				if '=' not in restrict:
 					# this is a non-range.
 					raise ValueError("range %s version %s is a guranteed empty set" % \
 						(op, str(node.childNodes[0].nodeValue.strip())))
-				
 				return atom.VersionMatch("~", base.version, negate=negate)
 			return packages.AndRestriction(
 				atom.VersionMatch("~", base.version),
 				atom.VersionMatch(restrict, base.version, rev=base.revision),
 				finalize=True, negate=True)
-#			restrict = packages.AndRestriction(
-#				atom.VersionMatch("~", base.version, negate=negate),
-#				atom.VersionMatch(restrict, base.version, rev=base.revision, negate=negate),
-#				finalize=True)
+		if glob:
+			return packages.PackageRestriction("fullver", 
+				values.StrGlobMatch(base))
 		return atom.VersionMatch(restrict, base.version, rev=base.revision, negate=negate)
 
 

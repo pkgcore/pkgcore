@@ -254,6 +254,15 @@ abort_install()
 dyn_compile()
 {
 	MUST_EXPORT_ENV="yes"
+	export DESTTREE=/usr
+	export INSDESTTREE=""
+	export EXEDESTTREE=""
+	export DOCDESTTREE=""
+	export INSOPTIONS="-m0644"
+	export EXEOPTIONS="-m0755"
+	export LIBOPTIONS="-m0644"
+	export DIROPTIONS="-m0755"
+	export MOPREFIX=${PN}
 
 	trap "abort_compile" SIGINT SIGQUIT
 	[ "${CFLAGS-unset}"      != "unset" ] && export CFLAGS

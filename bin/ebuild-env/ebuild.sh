@@ -157,7 +157,7 @@ export SANDBOX_ON="0"
 
 gen_func_filter() {
 	if [ "$#" == "1" ]; then 
-		echo "$1"
+		echo -n "$1"
 		return
 	fi
 	echo -n "\($1"
@@ -172,7 +172,7 @@ gen_func_filter() {
 
 gen_var_filter() {
 	if [ "$#" == 1 ]; then 
-		echo "$1"
+		echo -n "$1"
 		return
 	fi
 	echo -n "\($1"
@@ -229,7 +229,7 @@ dump_environ() {
 		echo $'reinstate_loaded_env_attributes ()\n{'
 #		echo "echo starting reinstate \${EBUILD_PHASE}>&2;"
 		for y in export 'declare -i' readonly; do
-			x=$(${y} | sed -n "s:^declare \(-[^ ]\+ \)*\([A-Za-z0-9_+]\+\)\(=.*$\)\?:\2:; /^$(gen_var_filter ${DONT_EXPORT_VARS} x y)$/! p;")
+			x=$(${y} | sed -n "s:^declare \(-[^ ]\+ \)*\([A-Za-z0-9_+]\+\)\(=.*$\)\?$:\2:; /^$(gen_var_filter ${DONT_EXPORT_VARS} x y)$/! p;")
 			[ -n "$x" ] && echo "    ${y} $(echo $x);"
 #			echo "echo dump- $y $(echo $x) >&2;"
 #			echo "echo dump- $y original was $(echo $(${y})) >&2"
@@ -349,7 +349,8 @@ load_environ() {
 				eval "$(load_file "$src")"
 				shopt -u execfail;
 				unset -f declare load_file;
-				dump_environ;
+				# leave the existing reinstate attribs in place
+				dump_environ --no-attributes;
 			)"
 		ret=$?
 	else
@@ -417,16 +418,6 @@ init_environ() {
 		[ ! -z "$OCXX" ] && export CXX="$OCXX"
 
 	fi
-
-	export DESTTREE=/usr
-	export INSDESTTREE=""
-	export EXEDESTTREE=""
-	export DOCDESTTREE=""
-	export INSOPTIONS="-m0644"
-	export EXEOPTIONS="-m0755"
-	export LIBOPTIONS="-m0644"
-	export DIROPTIONS="-m0755"
-	export MOPREFIX=${PN}
 
 	# if daemonized, it's already loaded these funcs.
 	if [ "$DAEMONIZED" != "yes" ]; then

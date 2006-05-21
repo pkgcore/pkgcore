@@ -9,7 +9,7 @@ from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.util.currying import pre_curry, post_curry
 from pkgcore.restrictions import packages, values, restriction
-from pkgcore.packages.mutate import MutatedPkg
+from pkgcore.package.mutated import MutatedPkg
 
 limiters = set() # [None])
 def dprint(fmt, args=None, label=None):
@@ -26,7 +26,7 @@ class nodeps_repo(object):
 		self.__repo = repo
 
 	def itermatch(self, *a, **kwds):
-		return (MutatedPkg(x, overrides={"depends":self.default_depends, "rdepends":self.default_rdepends) 
+		return (MutatedPkg(x, overrides={"depends":self.default_depends, "rdepends":self.default_rdepends}) 
 			for x in self.__repo.itermatch(*a, **kwds))
 	
 	def match(self, *a, **kwds):

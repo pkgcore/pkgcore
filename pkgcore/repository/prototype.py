@@ -119,8 +119,8 @@ class tree(object):
 	def __len__(self):
 		return len(self.versions)
 
-	def match(self, atom):
-		return list(self.itermatch(atom))
+	def match(self, atom, **kwds):
+		return list(self.itermatch(atom, **kwds))
 
 	def itermatch(self, restrict, restrict_solutions=None, sorter=None):
 		"""yield matches one by one for restrict

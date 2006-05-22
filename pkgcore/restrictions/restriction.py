@@ -65,6 +65,9 @@ class AlwaysBool(base):
 	def match(self, *a, **kw):
 		return self.negate
 
+	def __iter__(self):
+		return iter([])
+
 	def __str__(self):
 		return "always '%s'" % self.negate
 

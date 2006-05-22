@@ -133,6 +133,8 @@ class tree(object):
 		cat_exact = set()
 		pkg_exact = set()
 
+		if sorter is None:
+			sorter = iter
 		for x in collect_package_restrictions(restrict, ["category", "package"]):
 			if x.attr == "category":
 				cat_restrict.add(x.restriction)
@@ -145,36 +147,37 @@ class tree(object):
 			e.update(l)
 
 		if cat_exact:
-			cat_restrict.add(values.ContainmentMatch(cats_exact))
+			cat_restrict.add(values.ContainmentMatch(*cats_exact))
 		del cat_exact
 		if not cat_restrict:
-			cats_iter = iter(self.categories)
+			cats_iter = (x for x in sorter(self.categories))
 		else:
-			cats_iter = (x for x in self.categories if any(r.match(x) for r in cat_restrict))
+			cats_iter = (x for x in sorter(self.categories) if any(r.match(x) for r in cat_restrict))
 
 		if pkg_exact:
-			pkg_restrict.add(values.ContainmentMatch(pkg_exact))
+			pkg_restrict.add(values.ContainmentMatch(*pkg_exact))
 		del pkg_exact
 		if pkg_restrict:
 			candidates = (self.packages.return_mangler((c,p)) for c in cats_iter for
-				p in self.packages.get(c, []) if any(r.match(p) for r in pkg_restrict))
+				p in sorter(self.packages.get(c, [])) if any(r.match(p) for r in pkg_restrict))
 		else:
 			if not cat_restrict:
-				candidates = iter(self.packages)
+				if sorter is iter:
+					candidates = iter(self.packages)
+				else:
+					candidates = (self.packages.return_mangler((c, p)) for c in 
+						sorter(self.categories) for p in sorter(self.packages.get(c, [])))
 			else:
 				candidates = (self.packages.return_mangler((c,p)) 
-					for c in cats_iter for p in self.packages.get(c, []))
+					for c in cats_iter for p in sorter(self.packages.get(c, [])))
 
-		if sorter is None:
-			sorter = iter
-		for pkg in sorter(self._internal_match(candidates, restrict)):
+		for pkg in self._internal_match(candidates, restrict, sorter):
 			yield pkg
 
-	def _internal_match(self, candidates, restrict):
+	def _internal_match(self, candidates, restrict, sorter):
 		#actual matching.
 		for catpkg in candidates:
-			for ver in self.versions[catpkg]:
-				pkg = self.package_class(catpkg+"-"+ver)
+			for pkg in sorter(self.package_class(catpkg+"-"+ver) for ver in self.versions[catpkg]):
 				if restrict.match(pkg):
 					yield pkg
 

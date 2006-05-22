@@ -214,7 +214,7 @@ class atom(boolean.AndRestriction):
 
 		if atom.endswith("*"):
 			if self.op != "=":
-				raise MalformedAtom(atom, "only allowed to have =cat/pkg* or !=cat/pkg*, not %s" % self.op)
+				raise MalformedAtom(atom, "range operators on a range are nonsencial, drop the globbing or use =cat/pkg* or !=cat/pkg*, not %s" % self.op)
 			self.glob = True
 			self.atom = atom[pos:-1]
 		else:

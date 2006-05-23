@@ -13,8 +13,8 @@ from pkgcore.restrictions import boolean
 from pkgcore.chksum.errors import MissingChksum
 from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror
-import const
-import processor
+from pkgcore.ebuild import const, processor
+
 
 # utility func.
 def create_fetchable_from_uri(chksums, mirrors, uri):
@@ -140,7 +140,7 @@ class package_factory(metadata.factory):
 		self._mirrors = mirrors
 
 	def _get_metadata(self, pkg):
-		if self._cache != None:
+		if self._cache is not None:
 			try:
 				return self._cache[pkg.cpvstr]
 			except KeyError:

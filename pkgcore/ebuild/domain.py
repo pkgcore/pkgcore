@@ -149,12 +149,12 @@ class domain(pkgcore.config.domain.domain):
 			if license:
 				r = packages.OrRestriction(negate=True)
 				r.add_restriction(packages.PackageRestriction("license", ContainmentMatch(*master_license)))
-				r.add_restriction(DictBased(license, get_key_from_package, split_atom))
-				filter.add_restriction(r)
+				r.add_restriction(DictBased(license, get_key_from_package))
+				vfilter.add_restriction(r)
 			else:
-				filter.add_restriction(packages.PackageRestriction("license", ContainmentMatch(*master_license), negate=True))
+				vfilter.add_restriction(packages.PackageRestriction("license", ContainmentMatch(*master_license)))
 		elif license:
-			filter.add_restriction(DictBased(license, get_key_from_package, split_atom, negate=True))
+			vfilter.add_restriction(DictBased(license, get_key_from_package))
 
 		del master_license, license
 		

@@ -458,7 +458,7 @@ class plan_state(object):
 		ops = {ADD:"add", REMOVE:"remove", REPLACE:"replace"}
 		for x in self.plan:
 			if x[0] in ops:
-				yield ops[x[0]], x[2]
+				yield ops[x[0]], x[2:]
 		
 			
 	def add_blocker(self, blocker, key=None):

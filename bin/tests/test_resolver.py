@@ -93,7 +93,7 @@ if __name__ == "__main__":
 			print "resolution failed"
 			sys.exit(2)
 	print "\nbuildplan"
-	for x in resolver.state.iter_pkg_ops():
-		print "%s %s" % (x[0].ljust(8), x[1])
+	for op, pkgs in resolver.state.iter_pkg_ops():
+		print "%s %s" % (op.ljust(8), ", ".join(str(y) for y in reversed(pkgs)))
 	print "result was successfull, 'parently- took %.2f seconds" % (time.time() - start_time)
 	

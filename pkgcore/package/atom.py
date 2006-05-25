@@ -217,11 +217,13 @@ class atom(boolean.AndRestriction):
 				raise MalformedAtom(atom, "range operators on a range are nonsencial, drop the globbing or use =cat/pkg* or !=cat/pkg*, not %s" % self.op)
 			self.glob = True
 			self.atom = atom[pos:-1]
+			# may have specified a period to force calculation limitation there- hence rstrip'ing it for the cpv generation
+			atom = self.atom.rstrip(".")
 		else:
 			self.glob = False
-			self.atom = atom[pos:]
+			atom = self.atom = atom[pos:]
 		self.negate_vers = negate_vers
-		self.cpv = cpv.CPV(self.atom)
+		self.cpv = cpv.CPV(atom)
 		# force jitting of it.
 		del self.restrictions
 

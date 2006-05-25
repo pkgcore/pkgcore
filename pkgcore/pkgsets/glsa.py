@@ -58,7 +58,7 @@ class GlsaDirSet(object):
 			pkgs.setdefault(pkg, []).append(vuln)
 
 		for pkgname in sorter(pkgs):
-			yield KeyedAndRestriction(pkgatoms[pkgname], key=pkgname, *pkgs[pkgname])
+			yield KeyedAndRestriction(pkgatoms[pkgname], packages.OrRestriction(*pkgs[pkgname]), key=pkgname)
 
 
 	def iter_vulnerabilities(self):
@@ -150,9 +150,8 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False):
 		i = iter(glsa_src)
 	for restrict in i:
 		matches = caching_iter(repo.itermatch(restrict, sorter=sorted))
-#		print "checking on ",restrict
 		if matches:
-			yield glsa_src, matches
+			yield restrict, matches
 
 
 class SecurityUpgrades(object):
@@ -164,6 +163,5 @@ class SecurityUpgrades(object):
 
 	def __iter__(self):
 		for glsa, matches in find_vulnerable_repo_pkgs(self.glsa_src, self.vdb, grouped=True):
-			import pdb;pdb.set_trace()
 			yield KeyedAndRestriction(glsa[0], restriction.Negate(glsa[1]), finalize=True)
 

@@ -4,7 +4,7 @@ from pkgcore.config import load_config
 from pkgcore.resolver import plan
 from pkgcore.package.atom import atom
 from pkgcore.util.lists import flatten, stable_unique
-
+from pkgcore.util.repo_utils import get_raw_repos
 
 def pop_paired_args(args, arg, msg):
 	rets = []
@@ -49,6 +49,7 @@ if __name__ == "__main__":
 	empty_vdb = pop_arg(args, "-e", "--empty")
 	upgrade = pop_arg(args, "-u", "--upgrade")
 	max = pop_arg(args, "-m", "--max-upgrade")
+	ignore_failures = pop_arg(args, None, "--ignore-failures")
 	if max and max == upgrade:
 		print "can only choose max, or upgrade"
 		sys.exit(1)
@@ -77,21 +78,40 @@ if __name__ == "__main__":
 			atoms = [atom("sys-apps/portage")]
 	else:
 		atoms = [atom(x) for x in args] + set_targets
-	atoms = stable_unique(atoms)
 
+	atoms = stable_unique(atoms)
 	domain = conf.domain["livefs domain"]
 	vdb, repo = domain.vdb[0], domain.repos[0]
 	resolver = plan.merge_plan(vdb, repo, pkg_selection_strategy=strategy, verify_vdb=deep)
 	ret = True
+	failures = []
 	import time
 	start_time = time.time()
-	for x in atoms:
-		print "\ncalling resolve for %s..." % x
-		ret = resolver.add_atom(x)
+	for restrict in atoms:
+		print "\ncalling resolve for %s..." % restrict
+		ret = resolver.add_atom(restrict)
 		if ret:
 			print "ret was",ret
 			print "resolution failed"
-			sys.exit(2)
+			failures.append(restrict)
+			if not ignore_failures:
+				break
+	if failures:
+		print "\nfailures encountered-"
+		for restrict in failures:
+			print "failed '%s'\npotentials-" % restrict
+			match_count = 0
+			for r in get_raw_repos(repo):
+				l = r.match(restrict)
+				if l:
+					print "repo %s: [ %s ]" % (r, ", ".join(str(x) for x in l))
+					match_count += len(l)
+			if not match_count:
+				print "no matches found in %s" % repo
+			print
+			if not ignore_failures:
+				sys.exit(2)
+
 	print "\nbuildplan"
 	for op, pkgs in resolver.state.iter_pkg_ops():
 		print "%s %s" % (op.ljust(8), ", ".join(str(y) for y in reversed(pkgs)))

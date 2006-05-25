@@ -68,12 +68,12 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False, sourcing
 	try:
 		tok = ""
 		try:
-			while tok != None:
+			while tok is not None:
 				key = s.get_token()
-				if key == None:
+				if key is None:
 					break
 				eq, val = s.get_token(), s.get_token()
-				if eq != '=' or val == None:
+				if eq != '=' or val is None:
 					if not ignore_malformed:
 						raise ParseError(bash_source, s.lineno)
 					else:
@@ -92,15 +92,17 @@ var_find = re.compile(r'\\?(\${\w+}|\$\w+)')
 backslash_find = re.compile(r'\\.')
 def nuke_backslash(s):
 	s = s.group()
-	if s == "\\\n":	return "\n"
-	try:	return chr(ord(s))
+	if s == "\\\n":
+		return "\n"
+	try:
+		return chr(ord(s))
 	except TypeError:
 		return s[1]
 
 class bash_parser(shlex):
 	def __init__(self, source, sourcing_command=None, env=None):
 		shlex.__init__(self, source, posix=True)
-		self.wordchars += "${}/."
+		self.wordchars += "${}/.-+"
 		if sourcing_command is not None:
 			self.source = sourcing_command
 		if env is None:
@@ -121,7 +123,7 @@ class bash_parser(shlex):
 		self.changed_state = []
 		self.__pos = 0
 		tok = shlex.read_token(self)
-		if tok == None:
+		if tok is None:
 			return tok
 		self.changed_state.append((self.state, self.token[self.__pos:]))
 		tok = ''
@@ -136,7 +138,7 @@ class bash_parser(shlex):
 		prev, pos = 0, 0
 		l = []
 		match = var_find.search(val)
-		while match != None:
+		while match is not None:
 			pos = match.start()
 			if val[pos] == '\\':
 				# it's escaped.	 either it's \\$ or \\${ , either way, skipping two ahead handles it.
@@ -145,8 +147,10 @@ class bash_parser(shlex):
 				var = val[match.start():match.end()].strip("${}")
 				if prev != pos:
 					l.append(val[prev:pos])
-				if var in self.env:	l.append(self.env[var])
-				else:						l.append("")
+				if var in self.env:
+					l.append(self.env[var])
+				else:
+					l.append("")
 				prev = pos = match.end()
 			match = var_find.search(val, pos)
 
@@ -154,6 +158,11 @@ class bash_parser(shlex):
 		val = backslash_find.sub(nuke_backslash, ''.join(l) + val[prev:])
 		return val
 
+
 class ParseError(Exception):
-	def __init__(self, file, line):	self.file, self.line = file, line
-	def __str__(self):	return "error parsing '%s' on or before %i" % (self.file, self.line)
+
+	def __init__(self, file, line):
+		self.file, self.line = file, line
+
+	def __str__(self):
+		return "error parsing '%s' on or before %i" % (self.file, self.line)

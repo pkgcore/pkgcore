@@ -133,9 +133,12 @@ class OnDiskProfile(profiles.base):
 				# potentially make incrementals a dict for ~O(1) here, rather then O(N)
 				if k in incrementals:
 					v = list_parser(dc[k])
-					if k in d:		d[k] += v
-					else:				d[k] = v
-				else:					d[k] = v
+					if k in d:
+						d[k] += v
+					else:
+						d[k] = v
+				else:
+					d[k] = v
 
 		d.setdefault("USE_EXPAND", '')
 		if isinstance(d["USE_EXPAND"], str):

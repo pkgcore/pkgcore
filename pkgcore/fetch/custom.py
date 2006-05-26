@@ -9,8 +9,12 @@ from pkgcore.fetch import errors, base, fetchable
 
 
 class MalformedCommand(errors.base):
-	def __init__(self, command):	self.command = command
-	def __str__(self):	return "fetchcommand is malformed: "+self.command
+
+	def __init__(self, command):
+		self.command = command
+
+	def __str__(self):
+		return "fetchcommand is malformed: "+self.command
 
 
 class fetcher(base.fetcher):

@@ -67,7 +67,7 @@ class ConfigTypeFromFunctionTest(unittest.TestCase):
 			 'class': 'callable', 'type': 'str', 'inherit': 'list'})
 		self.assertEquals(nonoptType.incrementals, [])
 		self.assertEquals(nonoptType.required, ['one', 'two'])
-		self.assertEquals(nonoptType.positional, [])
+		self.assertEquals(nonoptType.positional, ['one', 'two'])
 		self.assertEquals(nonoptType.defaults.keys(), [])
 
 	def test_default_types(self):

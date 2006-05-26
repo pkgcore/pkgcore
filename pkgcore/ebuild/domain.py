@@ -194,7 +194,7 @@ class domain(pkgcore.config.domain.domain):
 						elif x == "profile":
 							pargs.append(profile)
 						else:
-							pargs.append(getattr, self, x)
+							pargs.append(getattr(self, x))
 				except AttributeError, ae:
 					raise Failure("failed configuring repo '%s': configurable missing: %s" % (repo, ae))
 				self.repos.append(repo.configure(*pargs))

@@ -78,20 +78,19 @@ class ebd(object):
 
 	def __init_workdir__(self):
 		# don't fool with this, without fooling with setup.
-		tmp = self.env["PORTAGE_TMPDIR"]
-		del self.env["PORTAGE_TMPDIR"]
-		prefix = normpath(os.path.join(tmp, "portage"))
-		self.env["HOME"] = os.path.join(prefix, "homedir")
+		self.tmpdir = self.env.pop("PORTAGE_TMPDIR")
+		prefix = normpath(os.path.join(self.tmpdir, "portage"))
+		self.env["HOME"] = os.path.join(self.tmpdir, "homedir")
 
-		self.builddir = os.path.join(prefix, self.env["CATEGORY"], self.env["PF"])
+		self.builddir = os.path.join(self.tmpdir, self.env["CATEGORY"], self.env["PF"])
 		for x,y in (("T", "temp"), ("WORKDIR", "work"), ("D", "image")):
 			self.env[x] = os.path.join(self.builddir, y) +"/"
 		self.env["IMAGE"] = self.env["D"]
 
 
 	def setup_logging(self):
-		if self.logging and not ensure_dirs(os.path.dirname(self.env["PORT_LOGFILE"]), mode=02770, gid=portage_gid):
-			raise build.FailedDirectory(os.path.dirname(self.env["PORT_LOGFILE"]), "failed ensuring PORT_LOGDIR as 02770 and %i" % portage_gid)
+		if self.logging and not ensure_dirs(os.path.dirname(self.logging), mode=02770, gid=portage_gid):
+			raise build.FailedDirectory(os.path.dirname(self.logging), "failed ensuring PORT_LOGDIR as 02770 and %i" % portage_gid)
 
 	def setup_workdir(self):
 		# ensure dirs.
@@ -231,7 +230,7 @@ class buildable(ebd, build.base):
 				path.insert(0, self.env[s+"_PATH"])
 				# looks weird I realize, but os.path.join("/foor/bar", "/barr/foo") == "/barr/foo"
 				# and os.path.join("/foo/bar",".asdf") == "/foo/bar/.asdf"
-				self.env[s+"_DIR"] = os.path.join(tmp, self.env[s+"_DIR"])
+				self.env[s+"_DIR"] = os.path.join(self.tmpdir, self.env[s+"_DIR"].lstrip("/"))
 				for x in ("CC", "CXX"):
 					if x in self.env:
 						self.env[x] = "%s %s" % (s.lower(), self.env[x])
@@ -273,7 +272,6 @@ class buildable(ebd, build.base):
 			except OSError, oe:
 				raise build.GenericBuildError("Failed symlinking in distfiles for src %s -> %s: %s" % (src, dest, str(oe)))
 
-
 	def setup(self):
 		if self.distcc:
 			for p in ("", "/lock", "/state"):
@@ -282,15 +280,20 @@ class buildable(ebd, build.base):
 		if self.ccache:
 			# yuck.
 			st = None
-			try:	st = os.stat(self.env["CCACHE_DIR"])
+			try:
+				st = os.stat(self.env["CCACHE_DIR"])
 			except OSError:
 				st = None
 				if not ensure_dirs(self.env["CCACHE_DIR"], mode=02775, gid=portage_gid):
 					raise build.FailedDirectory(self.env["CCACHE_DIR"], "failed creation of ccache dir")
+
+				# XXX this is more then mildly stupid.
+				st = os.stat(self.env["CCACHE_DIR"])
 			if st == None:
 				try:
 					if st.gid != portage_gid or (st.st_mode & 02070) != 02070:
-						try:	cwd = os.getcwd()
+						try:
+							cwd = os.getcwd()
 						except OSError:	cwd = "/"
 						try:
 							# crap.
@@ -305,9 +308,7 @@ class buildable(ebd, build.base):
 							os.chdir(cwd)
 				except OSError:
 					raise build.FailedDirectory(self.env["CCACHE_DIR"], "failed ensuring perms/group owner for CCACHE_DIR")
-
 		return ebd.setup(self)
-
 
 	def configure(self):
 		if self.eapi > 0:

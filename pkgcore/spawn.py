@@ -276,7 +276,11 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask):
 		os.umask(umask)
 
 	# And switch to the new process.
-	os.execve(binary, myargs, env)
+	try:
+		os.execve(binary, myargs, env)
+	except Exception, e:
+		print "caught exception executing %s, %s\nerror: %s" % (binary, myargs, e)
+		sys.exit(1)
 
 def find_binary(binary):
 	"""look through the PATH environment, finding the binary to execute"""

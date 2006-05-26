@@ -84,10 +84,10 @@ defaults = class profile_incrementals
 incrementals = %(default_incrementals)s
 profile_incrementals = %(default_incrementals)s
 class = pkgcore.ebuild.profiles.OnDiskProfile
-required = class profile_incrementals base_repo profile
+required = class profile_incrementals profile
 section_ref = base_repo
-positional = base_repo profile profile_incrementals
-str = profile
+positional = profile profile_incrementals
+str = profile base_path
 
 
 [domain]

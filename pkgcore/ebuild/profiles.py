@@ -15,16 +15,29 @@ from pkgcore.package import cpv
 # This should be implemented as an auto-exec config addition.
 
 class OnDiskProfile(profiles.base):
-	positional = ("base_repo", "profile")
-	required = ("base_repo", "profile")
-	section_ref = ("base_repo")
 
-	def __init__(self, base_repo, profile, incrementals=None):
+	def __init__(self, profile, incrementals=None, base_repo=None, base_path=None):
 
+		from pkgcore.config.errors import InstantiationError
 		if incrementals is None:
 			incrementals = []
-
-		self.basepath = os.path.join(base_repo.base, "profiles")
+		if base_path is None and base_repo is None:
+			raise InstantiationError(self.__class__, [profile], {"incrementals": incrementals, 
+				"base_repo": base_repo, "base_path": base_path}, 
+				"either base_path, or location must be set")
+		if base_repo is not None:
+			self.basepath = os.path.join(base_repo.base, "profiles")
+		elif base_path is not None:
+			if not os.path.exists(base_path):
+				from pkgcore.config.errors import InstantiationError
+				raise InstantiationError(self.__class__, [profile], {"incrementals": incrementals, 
+					"base_repo": base_repo, "base_path": base_path}, 
+					"if defined, base_path(%s) must exist-" % base_path)
+			self.basepath = base_path
+		else:
+			raise InstantiationError(self.__class__, [profile], {"incrementals": incrementals, 
+				"base_repo": base_repo, "base_path": base_path}, 
+				"either base_repo or base_path must be configured")
 
 		dep_path = os.path.join(self.basepath, profile, "deprecated")
 		if os.path.isfile(dep_path):

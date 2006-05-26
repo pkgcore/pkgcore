@@ -12,7 +12,7 @@ type_names = ("list", "str", "bool", "section_ref", "section_refs")
 class ConfigType(object):
 
 	def __init__(self, typename, types, positional=None, incrementals=None, \
-		required=None, defaults=None):
+		required=None, defaults=None, allow_unknowns=False):
 
 		"""A configurable 'type'.
 
@@ -22,6 +22,7 @@ class ConfigType(object):
 		incrementals is a list of incrementals.
 		required is a list of required arguments.
 		defaults is a ConfigSection with default values.
+		allow_unknowns controls whether unknown settings should error or not
 		"""
 
 		if positional is None:
@@ -39,6 +40,7 @@ class ConfigType(object):
 		self.incrementals = incrementals
 		self.required = required
 		self.defaults = defaults
+		self.allow_unknowns = bool(allow_unknowns)
 
 		for var, var_typename in (
 			('class', 'callable'),
@@ -162,8 +164,10 @@ class HardCodedConfigSection(ConfigSection):
 			if not callable(value):
 				raise errors.ConfigurationError(
 					'%s: %r is not callable' % (self.name, value))
-		elif arg_type in ('section_ref', 'section_refs'):
-			pass
+		elif arg_type == 'section_ref':
+			value = central.instantiate_section(value)
+		elif arg_type == 'section_refs':
+			value = [central.instantiate_section(x) for x in value]
 		elif not isinstance(value, types[arg_type]):
 			raise errors.ConfigurationError(
 				'%s: %r does not have type %r' % (self.name, name, arg_type))

@@ -229,7 +229,6 @@ class buildable(ebd, build.base):
 			b = (self.feat_or_bool(s, domain_settings) and not s in self.restrict)
 			setattr(self, s.lower(), b)
 			if b:
-				path.insert(0, self.env[s+"_PATH"])
 				# looks weird I realize, but os.path.join("/foor/bar", "/barr/foo") == "/barr/foo"
 				# and os.path.join("/foo/bar",".asdf") == "/foo/bar/.asdf"
 				if not (s+"_DIR") in self.env:

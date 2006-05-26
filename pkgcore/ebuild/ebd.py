@@ -57,6 +57,8 @@ class ebd(object):
 
 		for x in ("sandbox", "userpriv", "fakeroot"):
 			setattr(self, x, self.feat_or_bool(x) and not (x in self.restrict))
+		if self.userpriv and os.getuid() != 0:
+			self.userpriv = False
 
 		if "PORT_LOGDIR" in self.env:
 			self.logging = os.path.join(self.env["PORT_LOGDIR"], pkg.category, pkg.cpvstr+".log")
@@ -78,8 +80,8 @@ class ebd(object):
 
 	def __init_workdir__(self):
 		# don't fool with this, without fooling with setup.
-		self.tmpdir = self.env.pop("PORTAGE_TMPDIR")
-		prefix = normpath(os.path.join(self.tmpdir, "portage"))
+		self.base_tmpdir = self.env.pop("PORTAGE_TMPDIR")
+		self.tmpdir = normpath(os.path.join(self.base_tmpdir, "portage"))
 		self.env["HOME"] = os.path.join(self.tmpdir, "homedir")
 
 		self.builddir = os.path.join(self.tmpdir, self.env["CATEGORY"], self.env["PF"])

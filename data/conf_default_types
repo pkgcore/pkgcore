@@ -113,7 +113,7 @@ CCACHE_PATH	= "/usr/lib/ccache/bin"
 CCACHE_DIR	= "/var/tmp/ccache"
 PATH		= %(default_path)s
 positional = domain_incrementals root profile repositories vdb
-
+allow_unknowns = yes
 
 [repo]
 required = class location
@@ -148,7 +148,7 @@ bool = userpriv
 list = required_chksums
 defaults = class command userpriv required_chksums
 positional = distdir command 
-str = distdir command
+str = distdir command resume_command
 class = pkgcore.fetch.custom.fetcher
 command = "/usr/bin/wget -c -t 5 --passive-ftp -P '${DISTDIR}' '${URI}'"
 required_chksums = all

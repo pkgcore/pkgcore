@@ -218,12 +218,11 @@ class atom(boolean.AndRestriction):
 			self.glob = True
 			self.atom = atom[pos:-1]
 			# may have specified a period to force calculation limitation there- hence rstrip'ing it for the cpv generation
-			atom = self.atom.rstrip(".")
 		else:
 			self.glob = False
-			atom = self.atom = atom[pos:]
+			self.atom = atom[pos:]
 		self.negate_vers = negate_vers
-		self.cpv = cpv.CPV(atom)
+		self.cpv = cpv.CPV(self.atom)
 		# force jitting of it.
 		del self.restrictions
 

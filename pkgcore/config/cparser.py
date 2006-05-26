@@ -31,6 +31,7 @@ def configTypesFromIni(file_object):
 		# parse everything in the type definition config that
 		# should be a list
 		type_config = dict(config.items(type_name))
+		allow_unknowns = bool(type_config.pop("allow_unknowns", False))
 		incrementals = tuple(basics.list_parser(
 				type_config.pop('incrementals', '')))
 		required = tuple(basics.list_parser(
@@ -69,5 +70,5 @@ def configTypesFromIni(file_object):
 		types[type_name] = basics.ConfigType(
 			type_name, arg_types,
 			incrementals=incrementals, positional=positional,
-			required=required, defaults=defaults)
+			required=required, defaults=defaults, allow_unknowns=allow_unknowns)
 	return types

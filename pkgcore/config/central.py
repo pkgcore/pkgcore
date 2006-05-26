@@ -104,7 +104,6 @@ class ConfigManager(object):
 					typename = type_obj.types[x]
 				except KeyError:
 					if not type_obj.allow_unknowns:
-						import pdb;pdb.set_trace()
 						raise errors.ConfigurationError(
 							'%r: type of %r inherited from %r unknown' % (
 								section, x, inherit_name))

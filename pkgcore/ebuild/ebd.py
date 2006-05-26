@@ -233,11 +233,11 @@ class buildable(ebd, build.base):
 				# looks weird I realize, but os.path.join("/foor/bar", "/barr/foo") == "/barr/foo"
 				# and os.path.join("/foo/bar",".asdf") == "/foo/bar/.asdf"
 				self.env[s+"_DIR"] = os.path.join(self.tmpdir, self.env[s+"_DIR"].lstrip("/"))
-				for x in ("CC", "CXX"):
-					if x in self.env:
-						self.env[x] = "%s %s" % (s.lower(), self.env[x])
-					else:
-						self.env[x] = s.lower()
+#				for x in ("CC", "CXX"):
+#					if x in self.env:
+#						self.env[x] = "%s %s" % (s.lower(), self.env[x])
+#					else:
+#						self.env[x] = s.lower()
 			else:
 				for y in ("_PATH", "_DIR"):
 					if s+y in self.env:

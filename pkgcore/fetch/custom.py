@@ -2,19 +2,21 @@
 # License: GPL2
 
 import os
-import base
 from pkgcore.spawn import spawn_bash, userpriv_capable
-from fetchable import fetchable
-import errors
 from pkgcore.os_data import portage_uid, portage_gid
 from pkgcore.fs.util import ensure_dirs
+from pkgcore.fetch import errors, base, fetchable
+
 
 class MalformedCommand(errors.base):
 	def __init__(self, command):	self.command = command
 	def __str__(self):	return "fetchcommand is malformed: "+self.command
 
+
 class fetcher(base.fetcher):
-	def __init__(self, distdir, command, required_chksums=None, userpriv=True, attempts=10, readonly=False, **conf):
+
+	def __init__(self, distdir, command, resume_command=None, required_chksums=None, 
+		userpriv=True, attempts=10, readonly=False, **conf):
 		self.distdir = distdir
 		if required_chksums is not None:
 			required_chksums = [x.lower() for x in required_chksums]
@@ -24,13 +26,21 @@ class fetcher(base.fetcher):
 			self.required_chksums = None
 		else:
 			self.required_chksums = required_chksums
-		new_command = command.replace("${DISTDIR}", self.distdir)
-		new_command = new_command.replace("$DISTDIR", self.distdir)
-		new_command = new_command.replace("${URI}", "%(URI)s")
-		new_command = new_command.replace("$URI", "%(URI)s")
-		if new_command == command:
-			raise MalformedCommand(command)
-		self.command = new_command
+		def rewrite_command(s):
+			new_command = s.replace("${DISTDIR}", self.distdir)
+			new_command = new_command.replace("$DISTDIR", self.distdir)
+			new_command = new_command.replace("${URI}", "%(URI)s")
+			new_command = new_command.replace("$URI", "%(URI)s")
+			if new_command == s:
+				raise MalformedCommand(s)
+			return new_command
+
+		self.command = rewrite_command(command)
+		if resume_command is None:
+			self.resume_command = self.command
+		else:
+			self.resume_command = rewrite_command(resume_command)
+
 		self.attempts = attempts
 		self.userpriv = userpriv
 		kw = {"mode":0775}
@@ -63,18 +73,22 @@ class fetcher(base.fetcher):
 				elif c > 0:
 					try:
 						os.unlink(fp)
+						command = self.resume_command
 					except OSError, oe:
 						raise errors.UnmodifiableFile(fp, oe)
-
+				else:
+					command = self.command
+				
 				# yeah, it's funky, but it works.
 				if attempts > 0:
 					u = uri.next()
 					# note we're not even checking the results. the verify portion of the loop handles this.
 					# iow, don't trust their exit code.  trust our chksums instead.
-					spawn_bash(self.command % {"URI":u}, **extra)
-
+					spawn_bash(command % {"URI":u}, **extra)
 				attempts -= 1
+
 		except StopIteration:
+			# ran out of uris
 			return None
 
 		return None

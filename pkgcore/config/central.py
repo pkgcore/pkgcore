@@ -103,9 +103,12 @@ class ConfigManager(object):
 				try:
 					typename = type_obj.types[x]
 				except KeyError:
-					raise errors.ConfigurationError(
-						'%r: type of %r inherited from %r unknown' % (
-							section, x, inherit_name))
+					if not type_obj.allow_unknowns:
+						import pdb;pdb.set_trace()
+						raise errors.ConfigurationError(
+							'%r: type of %r inherited from %r unknown' % (
+								section, x, inherit_name))
+					typename = 'str'
 				additions[x] = inherit_conf.get_value(self, x, typename)
 			for x in type_obj.incrementals:
 				if x in additions and x in conf:

@@ -12,11 +12,11 @@ import os, stat
 
 class OverlayRepo(multiplex.tree):
 
-	pkgcore_config_type = ConfigHint(types={"trees":"list"})
+	pkgcore_config_type = ConfigHint(types={"trees":"list", "cache": "section_ref"}, 
+		required=("trees",), positional=("trees",))
 	
-	def __init__(self, *trees, **kwds):
+	def __init__(self, trees, **kwds):
 		cache = kwds.pop("cache", None)
-		print len(trees), trees
 		if not trees or len(trees) < 2:
 			raise errors.InstantiationError(self.__class__, trees, {}, 
 				"Must specify at least two pathes to ebuild trees to overlay")

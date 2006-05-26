@@ -14,7 +14,11 @@ class OverlayRepo(multiplex.tree):
 
 	pkgcore_config_type = ConfigHint(types={"trees":"list", "cache": "section_ref"}, 
 		required=("trees",), positional=("trees",))
-	
+
+	configured = False
+	configurables = ("settings",)
+	configure = ebuild_repository.ConfiguredTree
+		
 	def __init__(self, trees, **kwds):
 		cache = kwds.pop("cache", None)
 		if not trees or len(trees) < 2:

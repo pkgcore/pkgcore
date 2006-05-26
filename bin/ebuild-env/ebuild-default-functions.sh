@@ -82,7 +82,6 @@ addpredict()
 unpack()
 {
 	local x y myfail tarvars srcdir
-
 	if [ "$USERLAND" == "BSD" ]; then
 		tarvars=""
 	else
@@ -102,7 +101,7 @@ unpack()
 			srcdir="${DISTDIR}"
 		fi
 
-		[ ! -s "${srcdir}/${x}" ] && die "$myfail"
+		[ ! -s "${srcdir}/${x}" ] && die "$myfail: empty file"
 
 		case "${x##*.}" in
 			tar)

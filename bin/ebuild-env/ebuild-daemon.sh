@@ -6,21 +6,20 @@ alias die='diefunc "$FUNCNAME" "$LINENO" "$?"'
 #alias listen='read -u 3 -t 10'
 alias assert='_pipestatus="${PIPESTATUS[*]}"; [[ "${_pipestatus// /}" -eq 0 ]] || diefunc "$FUNCNAME" "$LINENO" "$_pipestatus"'
 
-
 # use listen/speak for talking to the running portage instance instead of echo'ing to the fd yourself.
 # this allows us to move the open fd's w/out issues down the line.
 listen() {
-	if ! read -u 3 $1; then
+	if ! read -u ${EBD_READ_FD} $1; then
 		echo "coms error, read failed: backing out of daemon."
 		exit 1
 	fi
 }
 
 speak() {
-	echo "$*" >&4
+	echo "$*" >&${EBD_WRITE_FD}
 }
 declare -rf speak
-
+declare -r EBD_WRITE_FD EBD_READ_FD
 # ensure the other side is still there.  Well, this moreso is for the python side to ensure
 # loading up the intermediate funcs succeeded.
 listen com

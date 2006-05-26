@@ -147,8 +147,11 @@ class EbuildProcessor:
 		else:
 			spawn_func = pkgcore.spawn.spawn
 
+		# little trick.  we force the pipes to be high up fd wise so nobody stupidly hits 'em.
+		max_fd = min(pkgcore.spawn.max_fd_limit, 1024)
+		env.update({"EBD_READ_FD": str(max_fd -2), "EBD_WRITE_FD": str(max_fd -1)})
 		self.pid = spawn_func(self.ebd+" daemonize", \
-			fd_pipes={0:0, 1:1, 2:2, 3:cread, 4:dwrite}, \
+			fd_pipes={0:0, 1:1, 2:2, max_fd-2:cread, max_fd-1:dwrite}, \
 			returnpid=True, env=env, *args, **spawn_opts)[0]
 
 		os.close(cread)
@@ -281,7 +284,11 @@ class EbuildProcessor:
 	def is_alive(self):
 		"""returns if it's known if the processor has been shutdown.
 		Currently doesn't check to ensure the pid is still running, yet it should"""
-		return self.pid > None
+		try:
+			return self.pid > None
+		except AttributeError:
+			# thrown only if failure occured instantiation.
+			return False
 
 	def shutdown_processor(self):
 		"""tell the daemon to shut itself down, and mark this instance as dead"""
@@ -455,13 +462,21 @@ class ProcessingInterruption(Exception):
 
 
 class FinishedProcessing(ProcessingInterruption):
-	def __init__(self, val, msg=None):	self.val, self.msg = val, msg
-	def __str__(self):	return "Finished processing with val, %s" % str(self.val)
+
+	def __init__(self, val, msg=None):
+		self.val, self.msg = val, msg
+
+	def __str__(self):
+		return "Finished processing with val, %s" % str(self.val)
 
 
 class UnhandledCommand(ProcessingInterruption):
-	def __init__(self, line=None):		self.line=line
-	def __str__(self):						return "unhandled command, %s" % self.line
+
+	def __init__(self, line=None):
+		self.line=line
+
+	def __str__(self):
+		return "unhandled command, %s" % self.line
 
 
 def expected_ebuild_env(pkg, d=None):

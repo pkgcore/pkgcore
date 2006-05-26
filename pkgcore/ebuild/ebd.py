@@ -225,14 +225,15 @@ class buildable(ebd, build.base):
 		# XXX minor hack
 		path = self.env["PATH"].split(":")
 
-		for s in ("DISTCC", "CCACHE"):
+		for s, default in (("DISTCC", ".distcc"), ("CCACHE", "ccache")):
 			b = (self.feat_or_bool(s, domain_settings) and not s in self.restrict)
 			setattr(self, s.lower(), b)
 			if b:
 				path.insert(0, self.env[s+"_PATH"])
 				# looks weird I realize, but os.path.join("/foor/bar", "/barr/foo") == "/barr/foo"
 				# and os.path.join("/foo/bar",".asdf") == "/foo/bar/.asdf"
-				self.env[s+"_DIR"] = os.path.join(self.tmpdir, self.env[s+"_DIR"].lstrip("/"))
+				if not (s+"_DIR") in self.env:
+					self.env[s+"_DIR"] = os.path.join(self.tmpdir,  default)
 #				for x in ("CC", "CXX"):
 #					if x in self.env:
 #						self.env[x] = "%s %s" % (s.lower(), self.env[x])
@@ -242,7 +243,6 @@ class buildable(ebd, build.base):
 				for y in ("_PATH", "_DIR"):
 					if s+y in self.env:
 						del self.env[s+y]
-
 		path = filter(None, path)
 		self.env["PATH"] = ":".join(path)
 		self.fetchables = pkg.fetchables[:]

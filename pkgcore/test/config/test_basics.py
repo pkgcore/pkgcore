@@ -145,8 +145,8 @@ class HardCodedConfigSectionTest(unittest.TestCase):
 
 	def test_section_refs(self):
 		section = basics.HardCodedConfigSection('test', {'refs': [1, 2]})
-		self.assertEquals(
-			section.get_value(None, 'refs', 'section_refs'), [1, 2])
+		self.assertRaises(AssertionError,
+			section.get_value, None, 'refs', 'section_refs')
 
 
 class ParsersTest(unittest.TestCase):

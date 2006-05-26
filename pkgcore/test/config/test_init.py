@@ -47,4 +47,3 @@ class ConfigLoadingTest(unittest.TestCase):
 		manager = load_config(
 			self.localConfig.name, self.globalConfig.name, self.types.name)
 		self.assertEquals(manager.foo['foo'], ((), {}))
-		self.assertRaises(errors.BaseException, load_config, 'invalid')

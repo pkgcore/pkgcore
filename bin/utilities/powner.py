@@ -26,7 +26,7 @@ if __name__ == "__main__":
 	all = grab_arg("-a", a) or grab_arg("--all", a)
 	repo = load_config().domain["livefs domain"].vdb[0]
 	restrict = packages.PackageRestriction("contents", values.ContainmentMatch(
-		*[normpath(x) for x in sys.argv[1:]]))
+		*[normpath(x) for x in a]))
 	start_time = time.time()
 	count = 0 
 	print "query- %s, returning all matches? %s" % (restrict, all)

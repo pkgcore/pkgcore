@@ -164,10 +164,13 @@ class HardCodedConfigSection(ConfigSection):
 			if not callable(value):
 				raise errors.ConfigurationError(
 					'%s: %r is not callable' % (self.name, value))
-		elif arg_type == 'section_ref':
-			value = central.instantiate_section(value)
-		elif arg_type == 'section_refs':
-			value = [central.instantiate_section(x) for x in value]
+		elif arg_type in ('section_ref', 'section_refs'):
+			if isinstance(value, (list, tuple, basestring)):
+				assert central is not None
+				if arg_type == 'section_refs':
+					value = [central.instantiate_section(x) for x in value]
+				else:
+					value = central.instantiate_section(value)
 		elif not isinstance(value, types[arg_type]):
 			raise errors.ConfigurationError(
 				'%s: %r does not have type %r' % (self.name, name, arg_type))

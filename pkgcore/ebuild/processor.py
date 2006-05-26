@@ -4,6 +4,11 @@
 # this needs work.  it's been pruned heavily from what ebd used originally, but it still isn't what
 # I would define as 'right'
 
+
+__all__ = ("request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor"
+	"UnhandledCommand", "expected_ebuild_env")
+
+
 inactive_ebp_list = []
 active_ebp_list = []
 
@@ -84,7 +89,9 @@ def release_ebuild_processor(ebp):
 
 
 class EbuildProcessor:
+
 	"""abstraction of a running ebuild.sh instance- the env, functions, etc that ebuilds expect."""
+
 	def __init__(self, userpriv, sandbox, fakeroot, save_file):
 		"""
 		sandbox enables a sandboxed processor
@@ -176,28 +183,25 @@ class EbuildProcessor:
 		if sandbox:
 			self.set_sandbox_state(sandbox)
 		if logging:
-			self.set_logging(logging)
+			if not self.set_logfile(logging):
+				return False
 		return True
 
 	def sandboxed(self):
 		"""is this instance sandboxed?"""
 		return self.__sandbox
 
-
 	def userprived(self):
 		"""is this instance userprived?"""
 		return self.__userpriv
-
 
 	def fakerooted(self):
 		"""is this instance fakerooted?"""
 		return self.__fakeroot
 
-
 	def onetime(self):
 		"""is this instance going to be discarded after usage; eg is it fakerooted?"""
 		return self.__fakeroot
-
 
 	def write(self, string, flush=True):
 		"""talk to running daemon.  Disabling flush is useful when dumping large amounts of data
@@ -209,12 +213,10 @@ class EbuildProcessor:
 		if flush:
 			self.ebd_write.flush()
 
-
 	def expect(self, want):
 		"""read from the daemon, and return true or false if the returned string is what is expected"""
 		got = self.ebd_read.readline()
 		return want == got[:-1]
-
 
 	def read(self, lines=1):
 		"""read data from the daemon.  Shouldn't be called except internally"""
@@ -223,7 +225,6 @@ class EbuildProcessor:
 			mydata += self.ebd_read.readline()
 			lines -= 1
 		return mydata
-
 
 	def sandbox_summary(self, move_log=False):
 		"""if the instance is sandboxed, print the sandbox access summary"""
@@ -254,7 +255,6 @@ class EbuildProcessor:
 			print "exception caught when cleansing sandbox_log=%s" % str(e)
 		return 1
 
-
 	def preload_eclasses(self, ec_file):
 		"""this preloades eclasses into a function, thus avoiding the cost of going to disk.
 		preloading eutils (which is heaviliy inherited) speeds up regen times fex"""
@@ -266,27 +266,22 @@ class EbuildProcessor:
 			return True
 		return False
 
-
 	def lock(self):
 		"""lock the processor.  Currently doesn't block any access, but will"""
 		self.processing_lock = True
-
 
 	def unlock(self):
 		"""unlock the processor"""
 		self.processing_lock = False
 
-
 	def locked(self):
 		"""is the processor locked?"""
 		return self.processing_lock
-
 
 	def is_alive(self):
 		"""returns if it's known if the processor has been shutdown.
 		Currently doesn't check to ensure the pid is still running, yet it should"""
 		return self.pid > None
-
 
 	def shutdown_processor(self):
 		"""tell the daemon to shut itself down, and mark this instance as dead"""
@@ -306,14 +301,12 @@ class EbuildProcessor:
 		# which isn't always true.
 		self.pid = None
 
-
 	def set_sandbox_state(self, state):
 		"""tell the daemon whether to enable the sandbox, or disable it"""
 		if state:
 			self.write("set_sandbox_state 1")
 		else:
 			self.write("set_sandbox_state 0")
-
 
 	def send_env(self, env_dict):
 		"""transfer the ebuild's desired env (env_dict) to the running daemon"""
@@ -327,18 +320,19 @@ class EbuildProcessor:
 				s = env_dict[x].replace("\\", "\\\\\\\\")
 				s = s.replace("'", "\\\\'")
 				s = s.replace("\n", "\\\n")
-				self.write("%s='%s'\n" % (x, s), flush=False)
+				if "'" in s:
+					self.write("%s=$'%s'\n" % (x, s), flush=False)
+				else:
+					self.write("%s=$'%s'\n" % (x, s), flush=False)
 				exported_keys += x+' '
 		self.write("export " + exported_keys, flush=False)
 		self.write("end_receiving_env")
 		return self.expect("env_received")
 
-
 	def set_logfile(self, logfile=''):
 		"""relevant only when the daemon is sandbox'd, set the logfile"""
 		self.write("logging %s" % logfile)
 		return self.expect("logging_ack")
-
 
 	def __del__(self):
 		"""simply attempts to notify the daemon to die"""
@@ -349,7 +343,6 @@ class EbuildProcessor:
 				self.shutdown_processor()
 			except TypeError:
 				pass
-
 
 	def get_keys(self, package_inst, eclass_cache):
 		"""request the auxdbkeys from an ebuild
@@ -373,14 +366,12 @@ class EbuildProcessor:
 
 		return metadata_keys
 
-
 	def _receive_key(self, line, keys_dict):
 		line = line.split("=", 1)
 		if len(line) != 2:
 			raise FinishedProcessing(True)
 		else:
 			keys_dict[line[0]] = line[1]
-
 
 	def _inherit(self, line, ecache):
 		"""callback for implementing inherit digging into eclass_cache.  not for normal consumption."""
@@ -399,7 +390,6 @@ class EbuildProcessor:
 			self.write(value)
 		else:
 			raise AttributeError("neither get_data nor get_path is usable on ecache!")
-
 
 	# this basically handles all hijacks from the daemon, whether confcache or portageq.
 	def generic_handler(self, additional_commands=None):
@@ -459,19 +449,20 @@ def chuck_StoppingCommand(val, processor, *args):
 		raise FinishedProcessing(val(args[0]))
 	raise FinishedProcessing(val)
 
+
 class ProcessingInterruption(Exception):
 	pass
+
 
 class FinishedProcessing(ProcessingInterruption):
 	def __init__(self, val, msg=None):	self.val, self.msg = val, msg
 	def __str__(self):	return "Finished processing with val, %s" % str(self.val)
 
+
 class UnhandledCommand(ProcessingInterruption):
 	def __init__(self, line=None):		self.line=line
 	def __str__(self):						return "unhandled command, %s" % self.line
 
-__all__ = ("request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor"
-	"UnhandledCommand", "expected_ebuild_env")
 
 def expected_ebuild_env(pkg, d=None):
 	if d is None:

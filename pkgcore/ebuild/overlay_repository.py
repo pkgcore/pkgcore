@@ -28,7 +28,7 @@ class OverlayRepo(multiplex.tree):
 		# master combined eclass
 		ec = eclass_cache.cache(*trees)
 
-		repos = [ebuild_repository.UnconfiguredTree(loc, cache=cache, eclass_cache=ec) for loc in trees]
+		repos = [ebuild_repository.UnconfiguredTree(loc, cache=cache, eclass_cache=ec, **kwds) for loc in trees]
 
 		# now... we do a lil trick.  substitute the master mirrors in for each tree.
 		master_mirrors = repos[0].mirrors

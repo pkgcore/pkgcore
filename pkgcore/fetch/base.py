@@ -3,7 +3,8 @@
 
 import os
 from pkgcore.chksum import get_handlers
-import errors
+from pkgcore.fetch import errors
+
 
 class fetcher(object):
 
@@ -27,7 +28,7 @@ class fetcher(object):
 
 		if "size" in handlers:
 			c = cmp(handlers["size"](file_location), target.chksums["size"])
-			if c != 0:
+			if c:
 				return (c < 0 and -1) or 1
 
 		for x in handlers:

@@ -313,7 +313,7 @@ class EbuildProcessor:
 
 		self.write("start_receiving_env\n")
 		exported_keys = ''
-		for x in env_dict.keys():
+		for x in env_dict:
 			if x not in self.dont_export_vars:
 				if not x[0].isalpha():
 					raise KeyError(x)

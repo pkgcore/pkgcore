@@ -69,6 +69,13 @@ def filter_negations(setting, orig_list):
 			l.add(x)
 	return l
 
+def generate_masking_restrict(masks, unmasks=None):
+	# if it's masked, it's not a match
+	return DictBased((split_atom(x) for x in masks), get_key_from_package, negate=True)
+
+def generate_unmasking_restrict(unmasks):
+	return DictBased((split_atom(x) for x in unmasks), get_key_from_package)
+
 
 class domain(pkgcore.config.domain.domain):
 	def __init__(self, incrementals, root, profile, repositories, vdb, **settings):
@@ -109,16 +116,19 @@ class domain(pkgcore.config.domain.domain):
 		# visibility mask...
 		# if ((package.mask or visibility) and not package.unmask) or not (package.keywords or accept_keywords)
 
-		# if it's masked, it's not a match
-		masker_d = DictBased((split_atom(x) for x in pkg_maskers), get_key_from_package, negate=True)
-		# check this.
+		vfilter = packages.AndRestriction(finalize=False, inst_caching=False)
+		r = None
+		if pkg_maskers:
+			r = generate_masking_restrict(pkg_maskers)
 		if pkg_unmaskers:
-			# if we unmask it, that's fine.
-			masker_d = packages.OrRestriction(masker_d, 
-				DictBased((split_atom(x) for x in pkg_unmaskers), get_key_from_package))
-		vfilter = packages.AndRestriction(masker_d, finalize=False)
-
-		del masker_d, pkg_unmaskers, pkg_maskers
+			if r is None:
+				# unmasking without masking... 'k (wtf?)
+				r = generate_unmasking_restrict(pkg_unmaskers)
+			else:
+				r = packages.OrRestriction(r, generate_unmasking_restrict(pkg_unmaskers), disable_inst_caching=True)
+		if r:
+			vfilter.add_restriction(r)
+		del pkg_unmaskers, pkg_maskers
 		
 		use, license, default_keywords = [], [], []
 

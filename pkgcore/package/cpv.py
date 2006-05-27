@@ -62,12 +62,14 @@ class CPV(base):
 		if not m:
 			raise ValueError(self.cpvstr)
 		self.__dict__.update(m.groupdict())
+		r = self.__dict__["revision"]
+		if r is not None:
+			self.__dict__["revision"] = int(r)
 		return self.__dict__[attr]
 
-	for x in ("category", "package", "fullver", "version", "revision", "key"):
+	for x in ("category", "package", "revision", "fullver", "version", "key"):
 		_get_attr[x] = post_curry(parse, x)
 	del x
-
 
 	def __eq__(self, other):
 		if not isinstance(other, self.__class__):

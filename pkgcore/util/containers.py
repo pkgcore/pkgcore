@@ -9,11 +9,16 @@ class InvertedContains(set):
 	"""Set that inverts all contains lookups results
 
 	mainly useful in conjuection with LimitedChangeSet for converting from blacklist to whitelist
+	
+	Not able to be iterated over also
 	"""
 
 	def __contains__(self, key):
 		return not set.__contains__(self, key)
 
+	def __iter__(self):
+		# infinite set, non iterable.
+		raise TypeError
 
 class LimitedChangeSet(object):
 

@@ -71,8 +71,7 @@ class DictBased(restriction.base):
 #		return False
 
 	def __str__(self):
-		return "%s: pkg_key(%s), atom_key(%s)" % (self.__class__, self.get_pkg_key, \
-			self.get_atom_key)
+		return "%s: pkg_key(%s), " % (self.__class__, self.get_pkg_key)
 
 #	def __getitem__(self, restriction, default=None):
 #		if isinstance(restriction, base):

@@ -124,3 +124,7 @@ class ProtectedSet(object):
 	
 	def __len__(self):
 		return len(self._orig.union(self._new))
+
+	def add(self, key):
+		if key not in self._orig:
+			self._new.add(key)

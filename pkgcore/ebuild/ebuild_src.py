@@ -113,6 +113,7 @@ class package(metadata.package):
 	_get_attr["keywords"] = lambda s:s.data.get("KEYWORDS", "").split()
 	_get_attr["restrict"] = lambda s:s.data.get("RESTRICT", "").split()
 	_get_attr["eapi"] = generate_eapi
+	_get_attr["iuse"] = lambda s:s.data.get("IUSE", "").split()
 
 	def _fetch_metadata(self):
 		data = self._parent._get_metadata(self)

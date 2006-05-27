@@ -4,6 +4,7 @@
 
 # name sucks a bit, but was choosen to avoid any conflict with existing sets modules
 
+
 class InvertedContains(set):
 
 	"""Set that inverts all contains lookups results
@@ -19,6 +20,7 @@ class InvertedContains(set):
 	def __iter__(self):
 		# infinite set, non iterable.
 		raise TypeError
+
 
 class LimitedChangeSet(object):
 
@@ -100,8 +102,25 @@ class LimitedChangeSet(object):
 		elif isinstance(other, set):
 			return self._new == other
 		return False
-	
+
 
 class Unchangable(Exception):
-	def __init__(self, key):	self.key = key
-	def __str__(self):			return "key '%s' is unchangable" % self.key
+
+	def __init__(self, key):
+		self.key = key
+
+	def __str__(self):
+		return "key '%s' is unchangable" % self.key
+
+
+class ProtectedSet(object):
+
+	def __init__(self, orig_set):
+		self._orig = orig_set
+		self._new = set()
+	
+	def __contains__(self):
+		return key in self._orig or key in self._new
+	
+	def __len__(self):
+		return len(self._orig.union(self._new))

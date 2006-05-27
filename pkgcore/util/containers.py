@@ -119,7 +119,7 @@ class ProtectedSet(object):
 		self._orig = orig_set
 		self._new = set()
 	
-	def __contains__(self):
+	def __contains__(self, key):
 		return key in self._orig or key in self._new
 	
 	def __len__(self):

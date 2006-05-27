@@ -69,7 +69,7 @@ def filter_negations(setting, orig_list):
 			l.add(x)
 	return l
 
-def generate_masking_restrict(masks, unmasks=None):
+def generate_masking_restrict(masks):
 	# if it's masked, it's not a match
 	return DictBased((split_atom(x) for x in masks), get_key_from_package, negate=True)
 

@@ -160,6 +160,7 @@ userpriv = true
 metadata_keys = DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE DESCRIPTION KEYWORDS INHERITED IUSE CDEPEND
    PDEPEND PROVIDE
 cache_base_loc = /var/cache/edb/dep/
+# this *must* be kept in sync with pkgcore.ebuild.const
 default_incrementals = USE FEATURES ACCEPT_KEYWORDS ACCEPT_LICENSE CONFIG_PROTECT_MASK CONFIG_PROTECT PRELINK_PATH PRELINK_PATH_MASK
 package_filters = package.mask package.keywords package.license package.use
 default_path	= "/sbin:/usr/sbin:/bin:/usr/bin"

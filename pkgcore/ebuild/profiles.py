@@ -20,7 +20,8 @@ class OnDiskProfile(profiles.base):
 
 		from pkgcore.config.errors import InstantiationError
 		if incrementals is None:
-			incrementals = []
+			from pkgcore.ebuild import const
+			incrementals = list(const.incrementals)
 		if base_path is None and base_repo is None:
 			raise InstantiationError(self.__class__, [profile], {"incrementals": incrementals, 
 				"base_repo": base_repo, "base_path": base_path}, 
@@ -159,7 +160,7 @@ class OnDiskProfile(profiles.base):
 		for u in d["USE_EXPAND"]:
 			u2 = u.lower()+"_"
 			if u in d:
-				d["USE"].extend(map(u2.__add__, d[u].split()))
+				d["USE"].extend(u2 + x for x in d[u].split())
 				del d[u]
 
 		# and... default virtuals.

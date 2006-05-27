@@ -206,9 +206,22 @@ class ContainmentMatch(base):
 		# this can, and should be optimized to do len checks- iterate over the smaller of the two
 		# see above about special casing bits.  need the same protection here, on the offchance
 		# (as contents sets do), the __getitem__ is non standard.
-		if self.all:
-			return bool(self.vals.difference(val)) == self.negate
-		return any(True for x in self.vals if x in val) != self.negate
+		try:
+			if self.all:
+				i = iter(val)
+				return bool(self.vals.difference(i)) == self.negate
+			return any(x in val for x in self.vals) != self.negate
+		except TypeError:
+			# other way around.  rely on contains.
+			if self.all:
+				for k in self.vals:
+					if k not in val:
+						return self.negate
+				return not self.negate
+			for k in self.vals:
+				if k in val:
+					return not self.negate
+								
 
 	def force_False(self, pkg, attr, val):
 

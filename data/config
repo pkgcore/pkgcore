@@ -5,23 +5,11 @@ class = pkgcore.cache.metadata.database
 readonly = true
 location = /usr/portage
 
-[anydbm]
-label = 'anydbm_test'
-type = cache
-class = pkgcore.cache.anydbm.database
-location = /var/cache/edb/dep
-
-[cdb]
-label = 'cdb_portdir'
-type = cache
-class = pkgcore.cache.cdb.database
-location = /var/cache/edb/dep
-
 [flat_hash]
-label = '/usr/portage'
+label = 'tmp'
 type = cache
 class = pkgcore.cache.flat_hash.database
-location = /var/cache/edb/dep
+location = /home/bharring/tmp-cache
 
 [rsync repo]
 type = repo 
@@ -36,13 +24,13 @@ location = /var/db/pkg
 
 [fetcher]
 type = fetcher
-distdir = "/usr/portage/distfiles"
+distdir = "/mnt/scratch/distfiles"
+
 
 [base config]
-#USE = -* 3dnow 3dnowext X a52 aac alsa bitmap-fonts bzip2 cjk crypt dga divx4linux doc dv encode ffmpeg flac glep lzo mad matroska mbox mmx mmxext mp3 mpeg mpeg2 ncurses nls nptl nptlonly ogg oggvorbis pam readline sandbox sdl slang sse sse2 ssl tcpd threads truetype truetype-fonts unicode usb vorbis win32codecs xml xml2 xvid zlib
+USE = -* 3dnow 3dnowext X a52 aac alsa bitmap-fonts bzip2 cjk crypt dga divx4linux doc dv encode ffmpeg flac glep lzo mad matroska mbox mmx mmxext mp3 mpeg mpeg2 ncurses nls nptl nptlonly ogg oggvorbis pam readline sandbox sdl slang sse sse2 ssl tcpd threads truetype truetype-fonts unicode usb vorbis win32codecs xml xml2 xvid zlib
 #nptl nptlonly -gnome -oss mad matroska faad mpg avi -arts mmx mmxext flac bidi dvd ssl sdl xvid 3dnow 3dnowext 
 #	sse sse2 mythtv rtc -svga -ipv6 win32codecs -esd
-USE = x86 3dnow 3dnowext X a52 aac acpi acpid alsa apache2 apm arts avi berkdb bitmap-fonts bzip2 cjk cli crypt cups dga divx4linux doc dri dv eds emboss encode ffmpeg flac foomaticdb fortran gdbm gif glep gnome gpm gstreamer gtk gtk2 imlib ipv6 isdnlog jpeg kde libg++ libwww lzo mad matroska mbox mikmod mmx mmxext motif mp3 mpeg mpeg2 ncurses nls nptl nptlonly ogg oggvorbis opengl oss pam pcre pdflib perl png pppd python qt quicktime readline reflection sandbox sdl session slang spell spl sse sse2 ssl svg tcpd threads truetype truetype-fonts type1-fonts unicode usb userlocales vorbis win32codecs xml xml2 xmms xorg xv xvid zlib elibc_glibc kernel_linux userland_GNU
 #FEATURES = confcache parallel-fetch
 FEATURES="confcache"
 #package.use = %(CONFDIR)/package.use
@@ -53,27 +41,25 @@ FEATURES="confcache"
 [profile]
 type = profile
 base_repo = 'rsync repo'
-profile = default-linux/x86/2005.0
+profile = default-linux/amd64/2005.0
 
 [x86]
 CFLAGS = "-O2 -march=pentium4 -pipe"
 CHOST = "i686-pc-linux-gnu"
 profile = profile
 inherit = 'base config'
-ACCEPT_KEYWORDS = ~x86
+ACCEPT_KEYWORDS = ~amd64
 bashrc = /etc/portage/bashrc
 
 [livefs domain]
 type = domain
-#package.keywords = /etc/portage/package.keywords
-#package.unmask = /etc/portage/package.unmask
-
+package.keywords = /etc/portage/package.keywords
 inherit = x86
 default = yes
+#ACCEPT_LICENSE = GPL-2 GPL
 repositories = "rsync repo" 
 fetcher = fetcher
 # development override
-PATH	= /sbin:/bin:/usr/lib/portage/bin:/usr/sbin:/usr/bin
 vdb = vdb
 
 [system]
@@ -84,3 +70,9 @@ profile = profile
 [world]
 type = pkgset
 class = pkgcore.pkgsets.world.WorldFile
+
+[glsa]
+type = pkgset
+class = pkgcore.pkgsets.glsa.SecurityUpgrades
+ebuild_repo = 'rsync repo'
+vdb = vdb

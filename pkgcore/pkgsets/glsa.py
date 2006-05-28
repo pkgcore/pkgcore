@@ -1,15 +1,14 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import logging
-from xml.dom import minidom
-import os
+import logging, os
 from pkgcore.util.repo_utils import get_virtual_repos
 from pkgcore.util.compatibility import any
 from pkgcore.util.iterables import caching_iter
 from pkgcore.package import atom, cpv
 from pkgcore.restrictions import packages, restriction, boolean, values
 from pkgcore.config.introspect import ConfigHint
+from pkgcore.util.xml import etree
 
 class KeyedAndRestriction(boolean.AndRestriction):
 
@@ -71,14 +70,14 @@ class GlsaDirSet(object):
 				[int(x) for x in fn[5:-4].split("-")]
 			except ValueError:
 				continue
-			root = minidom.parse(os.path.join(self.path, fn))
-			glsa_node = root.getElementsByTagName('glsa')
-			if not glsa_node:
-				continue
-			for affected in root.getElementsByTagName('affected'):
-				for pkg in affected.getElementsByTagName('package'):
+			root = etree.parse(os.path.join(self.path, fn))
+			glsa_node = root.getroot()
+			if glsa_node.tag != 'glsa':
+				raise ValueError("glsa without glsa rootnode")
+			for affected in root.findall('affected'):
+				for pkg in affected.findall('package'):
 					try:
-						pkgname = str(pkg.getAttribute('name')).strip()
+						pkgname = str(pkg.get('name')).strip()
 						pkg_vuln_restrict = self.generate_intersects_from_pkg_node(pkg, 
 							tag="glsa(%s)" % fn[5:-4])
 						if pkg_vuln_restrict is None:
@@ -95,7 +94,7 @@ class GlsaDirSet(object):
 
 
 	def generate_intersects_from_pkg_node(self, pkg_node, tag=None):
-		vuln = pkg_node.getElementsByTagName("vulnerable")
+		vuln = list(pkg_node.findall("vulnerable"))
 		if not vuln:
 			return None
 		elif len(vuln) > 1:
@@ -104,7 +103,7 @@ class GlsaDirSet(object):
 		else:
 			vuln_list = [self.generate_restrict_from_range(vuln[0])]
 			vuln = vuln_list[0]
-		invuln = pkg_node.getElementsByTagName("unaffected")
+		invuln = (pkg_node.findall("unaffected"))
 		if not invuln:
 			# wrap it.
 			return KeyedAndRestriction(vuln, tag=tag, finalize=True)
@@ -117,8 +116,8 @@ class GlsaDirSet(object):
 		return KeyedAndRestriction(vuln, finalize=True, tag=tag, *invuln)
 
 	def generate_restrict_from_range(self, node, negate=False):
-		op = node.getAttribute("range").strip()
-		base = str(node.childNodes[0].nodeValue.strip())
+		op = str(node.get("range").strip())
+		base = str(node.text.strip())
 		glob = base.endswith("*")
 		if glob:
 			base = base[:-1]
@@ -131,7 +130,7 @@ class GlsaDirSet(object):
 				if '=' not in restrict:
 					# this is a non-range.
 					raise ValueError("range %s version %s is a guranteed empty set" % \
-						(op, str(node.childNodes[0].nodeValue.strip())))
+						(op, str(node.text.strip())))
 				return atom.VersionMatch("~", base.version, negate=negate)
 			return packages.AndRestriction(
 				atom.VersionMatch("~", base.version),

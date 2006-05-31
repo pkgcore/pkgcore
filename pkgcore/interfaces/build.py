@@ -11,7 +11,7 @@ from pkgcore.util.dependant_methods import ForcedDepends
 __all__ = ["base", "FailedDirectory", "GenericBuildError", "errors"]
 
 class base(object):
-	stage_depends = {"fetch":None, "setup":"fetch",		"unpack":"setup",
+	stage_depends = {"setup":"fetch",		"unpack":"setup",
 					"configure":"unpack",	"compile":"configure", "test":"compile",
 					"install":"test", 	"finalize":"install"}
 

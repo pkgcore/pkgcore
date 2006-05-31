@@ -5,7 +5,7 @@ import logging, os
 from pkgcore.util.repo_utils import get_virtual_repos
 from pkgcore.util.compatibility import any
 from pkgcore.util.iterables import caching_iter
-from pkgcore.package import atom, cpv
+from pkgcore.package import atom, cpv, mutated
 from pkgcore.restrictions import packages, restriction, boolean, values
 from pkgcore.config.introspect import ConfigHint
 from pkgcore.util.xml import etree
@@ -94,6 +94,12 @@ class GlsaDirSet(object):
 
 
 	def generate_intersects_from_pkg_node(self, pkg_node, tag=None):
+		arch = pkg_node.get("arch")
+		if arch is not None:
+			arch = str(arch.strip()).split()
+			if not arch or "*" in arch:
+				arch = None
+
 		vuln = list(pkg_node.findall("vulnerable"))
 		if not vuln:
 			return None
@@ -103,6 +109,9 @@ class GlsaDirSet(object):
 		else:
 			vuln_list = [self.generate_restrict_from_range(vuln[0])]
 			vuln = vuln_list[0]
+		if arch is not None:
+			vuln = packages.AndRestriction(vuln, 
+				packages.PackageRestriction("keywords", values.ContainmentMatch(all=False, *arch)))
 		invuln = (pkg_node.findall("unaffected"))
 		if not invuln:
 			# wrap it.
@@ -142,13 +151,21 @@ class GlsaDirSet(object):
 		return atom.VersionMatch(restrict, base.version, rev=base.revision, negate=negate)
 
 
-def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False):
+def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
 	if grouped:
 		i = glsa_src.pkg_grouped_iter()
 	else:
 		i = iter(glsa_src)
+	if arch is None:
+		wrapper = lambda p: p
+	else:
+		if isinstance(arch, basestring):
+			arch = (arch,)
+		else:
+			arch = tuple(arch)
+		wrapper = lambda p: mutated.MutatedPkg(p, {"keywords":arch})
 	for restrict in i:
-		matches = caching_iter(repo.itermatch(restrict, sorter=sorted))
+		matches = caching_iter(wrapper(x) for x in repo.itermatch(restrict, sorter=sorted))
 		if matches:
 			yield restrict, matches
 
@@ -156,11 +173,12 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False):
 class SecurityUpgrades(object):
 	pkgcore_config_type = ConfigHint(types={"ebuild_repo":"section_ref", "vdb":"section_ref"})
 
-	def __init__(self, ebuild_repo, vdb):
+	def __init__(self, ebuild_repo, vdb, arch):
 		self.glsa_src = GlsaDirSet(ebuild_repo)
 		self.vdb = vdb
+		self.arch = arch
 
 	def __iter__(self):
-		for glsa, matches in find_vulnerable_repo_pkgs(self.glsa_src, self.vdb, grouped=True):
+		for glsa, matches in find_vulnerable_repo_pkgs(self.glsa_src, self.vdb, grouped=True, arch=self.arch):
 			yield KeyedAndRestriction(glsa[0], restriction.Negate(glsa[1]), finalize=True)
 

@@ -11,7 +11,7 @@ from pkgcore.util.currying import pre_curry, post_curry
 from pkgcore.restrictions import packages, values, restriction
 
 class MutatedPkg(object):
-	__slots__ = ("pkg", "overrides")
+	__slots__ = ("_pkg", "_overrides")
 	
 	def __init__(self, pkg, overrides):
 		"""pkg is a pkg to wrap, overrides is an attr -> instance list to fake """

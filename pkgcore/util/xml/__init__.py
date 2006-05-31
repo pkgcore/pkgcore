@@ -31,3 +31,6 @@ if not gotit:
 if not gotit:
 	from pkgcore.util.xml.bundled_elementtree import ElementTree as etree
 del gotit
+
+def escape(s):
+	return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

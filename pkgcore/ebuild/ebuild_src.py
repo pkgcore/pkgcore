@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os, operator
+import os, operator, errno, weakref
 from pkgcore.package import metadata
 from pkgcore.ebuild import conditionals
 from pkgcore.package.atom import atom
@@ -14,7 +14,8 @@ from pkgcore.chksum.errors import MissingChksum
 from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror
 from pkgcore.ebuild import const, processor
-
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.util.xml:etree")
 
 # utility func.
 def create_fetchable_from_uri(chksums, mirrors, uri):
@@ -78,6 +79,38 @@ def generate_eapi(self):
 		val = 0
 	return val
 
+def pull_metadata_xml(self, attr):
+	if self._pkg_metadata_shared[0] is None:
+		try:
+			tree = etree.parse(os.path.join(os.path.dirname(self.path), "metadata.xml"))
+			maintainers = []
+			for x in tree.findall("maintainer"):
+				name = email = None
+				for e in x:
+					if e.tag == "name":
+						name = e.text
+					elif e.tag == "email":
+						email = e.text
+				if name is not None:
+					if email is not None:
+						maintainers.append("%s <%s>" % (name, email))
+					else:
+						maintainers.append(name)
+				elif email is not None:
+					maintainers.append(email)
+
+			self._pkg_metadata_shared[0] = tuple(maintainers)
+			self._pkg_metadata_shared[1] = tuple(str(x.text) for x in tree.findall("herd"))
+
+		except IOError, i:
+			if i.errno != 22:
+				raise
+			self._pkg_metadata_shared[0] = ()
+			self._pkg_metadata_shared[1] = ()
+	self.__dict__["maintainers"] = self._pkg_metadata_shared[0]
+	self.__dict__["herds"] = self._pkg_metadata_shared[1]
+	return self.__dict__[attr]
+
 
 class package(metadata.package):
 	immutable = False
@@ -114,6 +147,8 @@ class package(metadata.package):
 	_get_attr["restrict"] = lambda s:s.data.get("RESTRICT", "").split()
 	_get_attr["eapi"] = generate_eapi
 	_get_attr["iuse"] = lambda s:s.data.get("IUSE", "").split()
+	_get_attr["herds"] = lambda s:pull_metadata_xml(s, "herds")
+	_get_attr["maintainers"] = lambda s:pull_metadata_xml(s, "maintainers")
 
 	def _fetch_metadata(self):
 		data = self._parent._get_metadata(self)
@@ -139,6 +174,7 @@ class package_factory(metadata.factory):
 		self._cache = cachedb
 		self._ecache = eclass_cache
 		self._mirrors = mirrors
+		self._weak_pkglevel_cache = weakref.WeakValueDictionary()
 
 	def _get_metadata(self, pkg):
 		if self._cache is not None:
@@ -168,9 +204,32 @@ class package_factory(metadata.factory):
 	def _get_new_child_data(self, cpv):
 		return ([self._parent_repo._get_ebuild_path], {"mirrors":self._mirrors})
 
+	def new_package(self, cpv):
+		inst = metadata.factory.new_package(self, cpv)
+		if inst.key not in self._weak_pkglevel_cache:
+			o = ThrowAwayNameSpace([None, None])
+			self._weak_pkglevel_cache[inst.key] = o
+		else:
+			o = self._weak_pkglevel_cache[inst.key]
+		inst.__dict__["_pkg_metadata_shared"] = o
+		return inst
+
+
+class ThrowAwayNameSpace(object):
+	"""used for weakref passing data only"""
+	def __init__(self, val):
+		self._val = val
+	
+	def __getitem__(self, index):
+		return self._val[index]
+	
+	def __setitem__(self, slice, val):
+		self._val[slice] = val
+
 
 def generate_new_factory(*a, **kw):
 	return package_factory(*a, **kw).new_package
+	__slots__ = ("__weak__", "herds", "maintainers")
 
 
 class virtual_ebuild(metadata.package):
@@ -186,7 +245,7 @@ class virtual_ebuild(metadata.package):
 			for x in self.__dict__.keys():
 				if x not in state:
 					del self.__dict__[x]
-			metadata.package.__init__(self, cpv+"-0", parent_repository)
+			metadata.package.__init__(self, cpv+"-"+pkg.fullver, parent_repository)
 			assert self.version
 
 	def __getattr__(self, attr):

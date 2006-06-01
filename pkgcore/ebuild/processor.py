@@ -487,8 +487,8 @@ def expected_ebuild_env(pkg, d=None):
 	d["P"]  = "-".join((pkg.package, pkg.version))
 	d["PN"] = pkg.package
 	d["PV"] = pkg.version
-	if pkg.revision != None:
-		d["PR"] = "-r" + str(pkg.revision)
+	if pkg.revision is not None:
+		d["PR"] = "r" + str(pkg.revision)
 	else:
 		d["PR"] = ""
 	d["PVR"] = pkg.fullver

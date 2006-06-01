@@ -135,7 +135,7 @@ class package(metadata.package):
 	_get_attr["P"] = lambda s: s.package+"-"+s.version
 	_get_attr["PF"] = lambda s: s.package+"-"+s.fullver
 	_get_attr["PN"] = operator.attrgetter("package")
-	_get_attr["PR"] = lambda s: "-r"+str(s.revision is not None and s.revision or 0)
+	_get_attr["PR"] = lambda s: "r"+str(s.revision is not None and s.revision or 0)
 	_get_attr["provides"] = generate_providers
 	_get_attr["depends"] = post_curry(generate_depset, atom, "depend")
 	_get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepend", "pdepend")

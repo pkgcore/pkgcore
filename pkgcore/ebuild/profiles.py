@@ -4,6 +4,7 @@
 import os, logging
 from pkgcore.config import profiles
 from pkgcore.util.file import iter_read_bash, read_bash_dict
+from pkgcore.util.currying import pre_curry
 from pkgcore.package.atom import atom
 from pkgcore.config.basics import list_parser
 from pkgcore.util.mappings import ProtectedDict
@@ -169,12 +170,14 @@ class OnDiskProfile(profiles.base):
 			for p in i:
 				p = p.split()
 				c = cpv.CPV(p[0])
-				version = c.version
-				if version is None:
-					version = "0"
-				virtuals.setdefault(c.package, {})[version] = atom(p[1])
+#				version = c.version
+#				if version is None:
+#					version = "0"
+#				virtuals.setdefault(c.package, {})[version] = atom(p[1])
+				virtuals[c.package] = atom(p[1])
 
-		self.virtuals = virtual.tree(lambda: virtuals)
+#		self.virtuals = virtual.tree(lambda: virtuals)
+		self.virtuals = pre_curry(AliasedVirtuals, virtuals)
 		# collapsed make.defaults.  now chunkify the bugger.
 		self.conf = d
 
@@ -184,20 +187,26 @@ class OnDiskProfile(profiles.base):
 		del self.use_mask
 		del self.maskers
 
-#	def get_path(self, bashrc):
-#		fp = os.path.join(self.basepath, bashrc)
-#		if not os.path.exists(fp):
-#			return None
-#		return fp
-#
-#	def get_data(self, bashrc):
-#		fp = self.get_path(bashrc)
-#		if fp == None:
-#			return None
-#		try:
-#			f = open(fp, "r")
-#			d = f.read()
-#			f.close()
-#		except OSError:
-#			return None
-#		return d
+
+class ForgetfulDict(dict):
+	
+	def __setitem__(self, key, attr):
+		return
+	
+	def update(self, other):
+		return
+
+class AliasedVirtuals(virtual.tree):
+	def __init__(self, virtuals, repo):
+		virtual.tree.__init__(self, virtuals)
+		self.aliased_repo = repo		
+		self.versions._vals = ForgetfulDict()
+
+	def _get_versions(self, catpkg):
+		cat, pkg = catpkg.rsplit("/", 1)
+		if cat != "virtual":
+			raise KeyError("no %s package in this repository" % catpkg)
+		return tuple(x.fullver for x in self.aliased_repo.itermatch(self._virtuals[pkg]))
+
+	def _fetch_metadata(self, pkg):
+		return atom("=%s-%s" % (self._virtuals[pkg.package].key, pkg.fullver))

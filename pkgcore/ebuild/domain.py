@@ -213,7 +213,7 @@ class domain(pkgcore.config.domain.domain):
 			# do this once at top level instead.
 		self.repos = [visibility.filterTree(t, vfilter, True) for t in self.repos]
 		if profile.virtuals:
-			self.repos = [multiplex.tree(t, profile.virtuals) for t in self.repos]
+			self.repos = [multiplex.tree(t, profile.virtuals(t)) for t in self.repos]
 		self.vdb = vdb
 
 

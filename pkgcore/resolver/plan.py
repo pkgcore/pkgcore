@@ -310,9 +310,11 @@ class merge_plan(object):
 		for x in choices.provides:
 			l = self.state.add_provider(choices, x)
 			if l and l != [x]:
-				print "provider conflicted... how?"
-				import pdb;pdb.set_trace()
-				print "should do something here, something sane..."
+				if len(current_stack) > 1:
+					if not current_stack[-2][0].match(x):
+						print "provider conflicted... how?"
+						import pdb;pdb.set_trace()
+						print "should do something here, something sane..."
 		current_stack.pop()
 		return False
 

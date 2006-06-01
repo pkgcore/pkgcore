@@ -62,8 +62,8 @@ def generate_fetchables(self):
 	chksums = parse_digest(os.path.join(os.path.dirname(self.path), "files", \
 		"digest-%s-%s" % (self.package, self.fullver)))
 	try:
-		return conditionals.DepSet(self.data["SRC_URI"], lambda x:
-			create_fetchable_from_uri(chksums, self._mirrors, x), operators={})
+		return conditionals.DepSet(self.data["SRC_URI"], fetchable, operators={}, 
+			element_func=lambda x:create_fetchable_from_uri(chksums, self._mirrors, x))
 	except conditionals.ParseError, p:
 		raise metadata.MetadataException(self, "src_uri", str(p))
 

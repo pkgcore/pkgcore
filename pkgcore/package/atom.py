@@ -49,6 +49,8 @@ class VersionMatch(restriction.base):
 #					break
 		self.negate = negate
 		if operator == "~":
+			if ver is None:
+				raise ValueError("for ~ op, version must be something other then None")
 			self.droprev = True
 			self.vals = (0,)
 		else:
@@ -170,7 +172,7 @@ class atom(boolean.AndRestriction):
 	def __init__(self, atom, negate_vers=False):
 		boolean.AndRestriction.__init__(self)
 
-		atom = atom.strip()
+		atom = orig_atom = atom.strip()
 		self.hash = hash(atom)
 
 		self.blocks = atom[0] == "!"
@@ -214,7 +216,7 @@ class atom(boolean.AndRestriction):
 
 		if atom.endswith("*"):
 			if self.op != "=":
-				raise MalformedAtom(atom, "range operators on a range are nonsencial, drop the globbing or use =cat/pkg* or !=cat/pkg*, not %s" % self.op)
+				raise MalformedAtom(orig_atom, "range operators on a range are nonsencial, drop the globbing or use =cat/pkg* or !=cat/pkg*, not %s" % self.op)
 			self.glob = True
 			self.atom = atom[pos:-1]
 			# may have specified a period to force calculation limitation there- hence rstrip'ing it for the cpv generation
@@ -223,6 +225,9 @@ class atom(boolean.AndRestriction):
 			self.atom = atom[pos:]
 		self.negate_vers = negate_vers
 		self.cpv = cpv.CPV(self.atom)
+		if "~" in self.op:
+			if self.cpv.version is None:
+				raise MalformedAtom(orig_atom, "~ operator requires a version")
 		# force jitting of it.
 		del self.restrictions
 

@@ -162,6 +162,7 @@ class StrGlobMatch(StrMatch):
 			return "%s%s*" % (s, self.glob)
 		return "%s*%s" % (s, self.glob)
 
+
 def EqualityMatch(val, negate=False):
 	return ComparisonMatch(cmp, val, [0], negate=negate)
 
@@ -172,20 +173,44 @@ def _mangle_cmp_val(val):
 		return 1
 	return 0
 
+
 class ComparisonMatch(base):
 	"""comparison restriction- match if the comparison funcs return value is what's required"""
 
+	_op_converter = {"=": (0,)}
+	_rev_op_converter = {(0,): "="}
+
+	for k, v in (("<", (-1,)), (">", (1,))):
+		_op_converter[k] = v
+		_op_converter[k+"="] = tuple(sorted(v + (0,)))
+		_rev_op_converter[v] = k
+		_rev_op_converter[tuple(sorted(v+(0,)))] = k+"="
+	_op_converter["!="] = _op_converter["<>"] = (-1, 1)
+	_rev_op_converter[(-1,1)] = "!="
+	del k,v
+
 	__slots__ = ("data", "cmp_func", "matching_vals")
 	negate = False
+
+	@classmethod
+	def convert_str_op(cls, op_str):
+		return cls._op_converter[op_str]
+	
+	@classmethod
+	def convert_op_str(cls, op):
+		return cls._rev_op_converter[tuple(sorted(op))]
 	
 	def __init__(self, cmp_func, data, matching_vals, negate=False):
 		self.cmp_func = cmp_func
 	
 		if not isinstance(matching_vals, (tuple, list)):
-			if not isinstance(matching_vals, int):
+			if isinstance(matching_vals, basestring):
+				matching_vals = self.convert_str_op(matching_vals)
+			elif isinstance(matching_vals, int):
+				matching_vals = [matching_vals]
+			else:
 				raise TypeError("matching_vals must be a list/tuple")
-			matching_vals = [matching_vals]
-		
+			
 		self.data = data
 		if negate:
 			self.matching_vals = tuple(set([-1, 0, 1]).difference(_mangle_cmp_val(x) for x in matching_vals))
@@ -204,6 +229,9 @@ class ComparisonMatch(base):
 				self.data == other.data
 		except AttributeError:
 			return False
+
+	def __str__(self):
+		return "%s %s" % (self.convert_op_str(self.matching_vals), self.data)
 
 
 class ContainmentMatch(base):

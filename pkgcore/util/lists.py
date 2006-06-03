@@ -48,10 +48,12 @@ def iter_stable_unique(iterable):
 
 def iter_flatten(l, skip_flattening=(basestring,)):
 	"""collapse [(1),2] into [1,2]"""
-	if isinstance(skip_flattening, list):
-		skip_flattening = tuple(skip_flattening)
-	elif not isinstance(skip_flattening, tuple):
-		skip_flattening = (skip_flattening,)
+	if isinstance(skip_flattening, (list, tuple)):
+		func = lambda x:isinstance(x, skip_flattening)
+	elif callable(skip_flattening):
+		func = skip_flattening
+	else:
+		raise ValueError("skip_flattening must be a func, or a list/tuple of classes")
 
 	if isinstance(l, skip_flattening):
 		yield l
@@ -60,7 +62,7 @@ def iter_flatten(l, skip_flattening=(basestring,)):
 	try:
 		while True:
 			x = iters.next()
-			if hasattr(x, '__iter__') and not isinstance(x, skip_flattening):
+			if hasattr(x, '__iter__') and not func(x):
 				iters.appendleft(x)
 			else:
 				yield x

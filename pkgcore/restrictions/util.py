@@ -14,5 +14,5 @@ def collect_package_restrictions(restrict, attrs=None):
 		attrs = InvertedContains()
 	elif isinstance(attrs, (list, tuple)):
 		attrs = frozenset(attrs)
-	return (r for r in iter_flatten(restrict) 
+	return (r for r in iter_flatten(restrict, packages.PackageRestriction) 
 		if isinstance(r, packages.PackageRestriction) and r.attr in attrs)

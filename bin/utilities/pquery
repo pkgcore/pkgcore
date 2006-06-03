@@ -6,7 +6,7 @@ import os
 from pkgcore.package.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.currying import pre_curry
-from pkgcore.util import repo_utils
+from pkgcore.util import repo_utils, commandline
 
 def grab_arg(arg, args):
 	val = False
@@ -86,50 +86,7 @@ if __name__ == "__main__":
 		if grab_arg(s, a):
 			results_filter = func
 
-	for x in a:
-		if "*" in x:
-			x = x.split("/", 1)
-			if len(x) > 1:
-				r = packages.AndRestriction()
-				def check_glob_pos(x):
-					if x.startswith("*"):
-						prefix = True
-					elif x.endswith("*"):
-						prefix = False
-					else:
-						raise TypeError("'*' must be specified at the end or beginning of a matching field")
-					return x.strip("*")
-				if "*" in x[0]:
-					x[0] = check_glob_pos(x[0])
-					if len(x[0]):
-						cat = values.StrGlobMatch(x[0])
-					else:
-						cat = None
-				else:
-					cat = values.StrExactMatch(x[0])
-				if cat is not None:
-					r.add_restriction(packages.PackageRestriction("category", cat))
-				if "*" in x[1]:
-					x[1] = check_glob_pos(x[1])
-					if len(x[1]):
-						pkg = values.StrGlobMatch(x[1])
-					else:
-						pkg = None
-				else:
-					pkg = values.StrExactMatch(x[1])
-				if pkg is not None:
-					r.add_restriction(packages.PackageRestriction("package", pkg))
-			else:
-				r = packages.PackageRestriction("package", values.StrGlobMatch(x[0]))
-			atoms.append(r)
-		else:
-			if "/" in x:
-				atoms.append(atom(x))
-			else:
-				if x.endswith("*"):
-					atoms.append(packages.PackageRestriction("package", values.StrGlobMatch(x[:-1])))
-				else:
-					atoms.append(packages.PackageRestriction("package", values.StrExactMatch(x)))
+	atoms = map(commandline.generate_restriction, a)
 
 	if len(atoms) > 1:
 		atoms = packages.OrRestriction(*atoms)

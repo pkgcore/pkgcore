@@ -36,17 +36,6 @@ class VersionMatch(restriction.base):
 			# XXX: hack
 			raise InvalidVersion(self.ver, self.rev, "invalid operator, '%s'" % operator)
 
-#		if negate:
-#			if operator == "~":
-#				raise Exception("Cannot negate '~' operator")
-#			if "=" in operator:
-#				operator = operator.strip("=")
-#			else:
-#				operator += "="
-#			for x,v in (("<", ">"), (">", "<")):
-#				if x in operator:
-#					operator = operator.strip(x) + v
-#					break
 		self.negate = negate
 		if operator == "~":
 			if ver is None:
@@ -60,61 +49,6 @@ class VersionMatch(restriction.base):
 			if "=" in operator:	l.append(0)
 			if ">" in operator:	l.append(1)
 			self.vals = tuple(sorted(l))
-
-	def intersect(self, other, allow_hand_off=True):
-		raise Exception("need to fix negate before using this.")
-		if not isinstance(other, self.__class__):
-			if allow_hand_off:
-				return other.intersect(self, allow_hand_off=False)
-			return None
-
-		if self.droprev or other.droprev:
-			vc = cpv.ver_cmp(self.ver, None, other.ver, None)
-		else:
-			vc = cpv.ver_cmp(self.ver, self.rev, other.ver, other.rev)
-
-		# ick.  28 possible valid combinations.
-		if vc == 0:
-			if 0 in self.vals and 0 in other.vals:
-				for x in (-1, 1):
-					if x in self.vals and x in other.vals:
-						return self
-				# need a '=' restrict.
-				if self.vals == (0,):
-					return self
-				elif other.vals == (0,):
-					return other
-				return self.__class__("=", self.ver, rev=self.rev)
-
-			# hokay, no > in each.  potentially disjoint
-			for x,v in ((-1, "<"), (1, ">")):
-				if x in self.vals and x in other.vals:
-					return self.__class__(v, self.ver, rev=self.rev)
-
-			# <, > ; disjoint.
-			return None
-
-		if vc < 0:	vc = -1
-		else:		vc = 1
-		# this handles a node already containing the intersection
-		for x in (-1, 1):
-			if x in self.vals and x in other.vals:
-				if vc == x:
-					return self
-				return other
-
-		# remaining permutations are interesections
-		for x in (-1, 1):
-			needed = x * -1
-			if (x in self.vals and needed in other.vals) or (x in other.vals and needed in self.vals):
-				return AndRestriction(self, other)
-
-		if vc == -1 and 1 in self.vals and 0 in other.vals:
-			return self.__class__("=", other.ver, rev=other.rev)
-		elif vc == 1 and -1 in other.vals and 0 in self.vals:
-			return self.__class__("=", self.ver, rev=self.rev)
-		# disjoint.
-		return None
 
 	def match(self, pkginst):
 		if self.droprev:

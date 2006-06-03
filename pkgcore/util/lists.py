@@ -55,7 +55,7 @@ def iter_flatten(l, skip_flattening=(basestring,)):
 	else:
 		raise ValueError("skip_flattening must be a func, or a list/tuple of classes")
 
-	if isinstance(l, skip_flattening):
+	if func(l):
 		yield l
 		return
 	iters = expandable_chain(l)

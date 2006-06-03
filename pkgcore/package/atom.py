@@ -27,6 +27,7 @@ class VersionMatch(restriction.base):
 
 	__inst_caching__ = True
 	type = packages.package_type
+	attr = "fullver"
 	
 	def __init__(self, operator, ver, rev=None, negate=False, **kwd):
 		kwd["negate"] = False

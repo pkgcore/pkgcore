@@ -1,9 +1,14 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from operator import attrgetter
 from pkgcore.util.lists import iter_flatten
 from pkgcore.util.containers import InvertedContains
-from pkgcore.restrictions import packages
+from pkgcore.restrictions import packages, boolean
+
+_restriction_type_getter = attrgetter("type")
+def _is_package_instance(inst):
+	return _restriction_type_getter(inst) == packages.package_type and not isinstance(inst, boolean.base)
 
 def collect_package_restrictions(restrict, attrs=None):
 	"""walks a restriction, descending as neccessary and returning any PackageRestrictions that work
@@ -14,5 +19,5 @@ def collect_package_restrictions(restrict, attrs=None):
 		attrs = InvertedContains()
 	elif isinstance(attrs, (list, tuple)):
 		attrs = frozenset(attrs)
-	return (r for r in iter_flatten(restrict, packages.PackageRestriction) 
-		if isinstance(r, packages.PackageRestriction) and r.attr in attrs)
+	return (r for r in iter_flatten(restrict, _is_package_instance) 
+		if r.attr in attrs)

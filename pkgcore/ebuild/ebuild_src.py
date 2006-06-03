@@ -46,7 +46,7 @@ def generate_depset(s, c, *keys, **kwds):
 
 def generate_providers(self):
 	rdep = AndRestriction(self.versioned_atom, finalize=True)
-	func = post_curry(virtual_ebuild, self._parent, self, {"rdepends":rdep})
+	func = post_curry(virtual_ebuild, self._parent, self, {"rdepends":rdep, "slot":self.version})
 	# re-enable license at some point.
 	#, "license":self.license})
 

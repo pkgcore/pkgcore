@@ -1,8 +1,6 @@
 #!/usr/bin/python
-# Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
+# Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id: clone_cache.py 1940 2005-08-26 22:23:34Z ferringb $
 
 import pkgcore.config, sys, time
 

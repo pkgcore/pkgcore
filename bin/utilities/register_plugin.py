@@ -1,8 +1,6 @@
 #!/usr/bin/python
-# Copyright: 2005 Gentoo Foundation
-# Author(s): Brian Harring (ferringb@gentoo.org)
+# Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id:$
 
 import pkgcore.plugins
 from pkgcore.util.modules import load_attribute

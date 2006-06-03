@@ -35,7 +35,6 @@ def generate_restriction(text):
 	tsplit = text.rsplit("/", 1)
 	if len(tsplit) == 1:
 		ops, text = collect_ops(text)
-		print ops
 		if not ops:
 			r = convert_glob(text)
 			if r is None:

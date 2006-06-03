@@ -155,27 +155,53 @@ class StrGlobMatch(StrMatch):
 			return False
 
 	def __str__(self):
+		s = ''
 		if self.negate:
-			return "not "+self.glob+"*"
-		return self.glob+"*"
+			s = 'not '
+		if self.prefix:
+			return "%s%s*" % (s, self.glob)
+		return "%s*%s" % (s, self.glob)
 
+def EqualityMatch(val, negate=False):
+	return ComparisonMatch(cmp, val, [0], negate=negate)
 
-class EqualityMatch(base):
-	"""Equality restriction- match if the stored value equals the passed in value"""
+def _mangle_cmp_val(val):
+	if val < 0:
+		return -1
+	elif val > 0:
+		return 1
+	return 0
 
-	__slots__ = ("val", "negate")
-	def __init__(self, val, negate=False):
-		self.val, self.negate = val, negate
+class ComparisonMatch(base):
+	"""comparison restriction- match if the comparison funcs return value is what's required"""
+
+	__slots__ = ("data", "cmp_func", "matching_vals")
+	negate = False
+	
+	def __init__(self, cmp_func, data, matching_vals, negate=False):
+		self.cmp_func = cmp_func
+	
+		if not isinstance(matching_vals, (tuple, list)):
+			if not isinstance(matching_vals, int):
+				raise TypeError("matching_vals must be a list/tuple")
+			matching_vals = [matching_vals]
+		
+		self.data = data
+		if negate:
+			self.matching_vals = tuple(set([-1, 0, 1]).difference(_mangle_cmp_val(x) for x in matching_vals))
+		else:
+			self.matching_vals = tuple(_mangle_cmp_val(x) for x in matching_vals)
 
 	def match(self, actual_val):
-		return (self.val == actual_val) != self.negate
+		return _mangle_cmp_val(self.cmp_func(actual_val, self.data)) in self.matching_vals
 
 	def __hash__(self):
-		return hash((self.val, self.negate))
+		return hash((self.cmp_func, self.matching_vals, self.data))
 
 	def __eq__(self, other):
 		try:
-			return self.val == other.val and self.negate == other.negate
+			return self.cmp_func == other.cmp_func and self.matching_vals == other.matching_vals and \
+				self.data == other.data
 		except AttributeError:
 			return False
 

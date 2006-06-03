@@ -31,7 +31,7 @@ class tree(prototype.tree):
 
 	def itermatch(self, restrict, **kwds):
 		if not any(True for r in collect_package_restrictions(restrict, self.attr_filters)):
-			return (self.package_class(pkg) for pkg in self.raw_repo.itermatch(restrict))
+			return (self.package_class(pkg) for pkg in self.raw_repo.itermatch(restrict, **kwds))
 			
 		if restrict_solutions is None:
 			if hasattr(restrict, "solutions"):

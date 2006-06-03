@@ -190,6 +190,9 @@ class atom(boolean.AndRestriction):
 					r.append(packages.PackageRestriction("fullver", values.StrGlobMatch(self.fullver)))
 				else:
 					r.append(VersionMatch(self.op, self.version, self.revision, negate=self.negate_vers))
+			elif self.op:
+				raise MalformedAtom(self.atom_str, "cannot specify a version operator without a version")
+				
 			if self.use:
 				false_use = [x[1:] for x in self.use if x[0] == "-"]
 				true_use = [x for x in self.use if x[0] != "-"]

@@ -25,15 +25,19 @@ class OverlayRepo(multiplex.tree):
 			raise errors.InstantiationError(self.__class__, trees, {}, 
 				"Must specify at least two pathes to ebuild trees to overlay")
 		for t in trees:
-			if not stat.S_ISDIR(os.stat(t).st_mode):
+			if not os.path.isdir(t):
 				raise errors.InstantiationError(self.__class__, trees, {}, 
 					"all trees must be ebuild_repository instances, and existant dirs- '%s' is not" % t)
 
 		# master combined eclass
 		self.eclass_cache = eclass_cache.cache(*trees)
 
-		repos = [ebuild_repository.UnconfiguredTree(loc, cache=cache, eclass_cache=self.eclass_cache, 
-			**kwds) for loc in trees]
+		try:
+			repos = [ebuild_repository.UnconfiguredTree(loc, cache=cache, eclass_cache=self.eclass_cache, 
+				**kwds) for loc in trees]
+		except (OSError, IOError), e:
+			raise errors.InstantiationError(self.__class__, trees, {},
+				"unable to initialize a sub tree- %s" % e)
 
 		# now... we do a lil trick.  substitute the master mirrors in for each tree.
 		master_mirrors = repos[0].mirrors

@@ -212,8 +212,8 @@ class AndRestriction(base):
 		# matrix multiplication.
 		flattened_matrix = [flattened_matrix]
 
-		while s:
-			flattened_matrix = list(x + y for x in s.pop() for y in flattened_matrix)
+		for current_s in s:
+			flattened_matrix = list(x + y for x in current_s for y in flattened_matrix)
 
 		return flattened_matrix
 

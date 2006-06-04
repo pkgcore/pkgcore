@@ -78,6 +78,6 @@ core.setup(
     # booo, no glob support in distutils for this one
     scripts=(
         glob.glob('pkgcore/bin/utilities/*.py') + 
-        ('pkgcore/bin/utilities/pquery')),
+        ['pkgcore/bin/utilities/pquery']),
     cmdclass={'build_filter_env': build_filter_env},
     )

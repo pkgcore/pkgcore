@@ -55,4 +55,4 @@ RSYNC_BIN            = "/usr/bin/rsync"
 RSYNC_HOST           = "rsync.gentoo.org/gentoo-portage"
 
 CVS_BIN              = "/usr/bin/cvs"
-plugins_dir          = "/var/lib/portage/plugins/"
+plugins_dir          = "/etc/pkgcore/plugins/"

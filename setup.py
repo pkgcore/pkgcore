@@ -9,8 +9,17 @@ from distutils.command import build, sdist
 class mysdist(sdist.sdist):
 	default_format = dict(sdist.sdist.default_format)
 	default_format["posix"] = "bztar"
+
+	def get_file_list(self):
+		for key, globs in self.distribution.package_data.iteritems():
+			for pattern in globs:
+				self.filelist.extend(glob.glob(os.path.join(key, pattern)))
+		self.filelist.append("ChangeLog")
+		self.filelist.append("AUTHORS")
+		sdist.sdist.get_file_list(self)
+
 	def run(self):
-		print "regenning ChangeLog"
+		print "regenning ChangeLog (may take a while)"
 		os.system("bzr log --verbose > ChangeLog")
 		sdist.sdist.run(self)
 
@@ -74,7 +83,7 @@ for root, dirs, files in os.walk('pkgcore'):
 
 core.setup(
 	name='pkgcore',
-	version='dev',
+	version='0',
 	description='package managing framework',
 	url='http://gentooexperimental.org/~ferringb/bzr/pkgcore/',
 	packages=packages,
@@ -83,6 +92,12 @@ core.setup(
 			'data/*',
 			'bin/ebuild-env/*',
 			'bin/ebuild-helpers/*',
+			],
+		'src': [
+			'filter-env/*.c',
+			'filter-env/*.h',
+			'bsd-flags/*',
+			'tbz2tool.c'
 			]},
 	# booo, no glob support in distutils for this one
 	scripts=(

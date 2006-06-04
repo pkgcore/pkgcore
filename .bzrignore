@@ -2,3 +2,4 @@ dev-notes/*.html
 dev-notes/toc.rst
 dev-notes/*/*.html
 dev-notes/*/toc.rst
+build

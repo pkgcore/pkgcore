@@ -23,13 +23,13 @@ class ConfigLoadingTest(unittest.TestCase):
 			'[foo]\n'
 			)
 		self.types.flush()
-		self.localConfig = tempfile.NamedTemporaryFile()
-		self.localConfig.write(
+		self.userConfig = tempfile.NamedTemporaryFile()
+		self.userConfig.write(
 			'[foo]\n'
 			'type = foo\n'
 			'class = pkgcore.test.config.test_init.passthrough\n'
 			)
-		self.localConfig.flush()
+		self.userConfig.flush()
 		self.globalConfig = tempfile.NamedTemporaryFile()
 		self.globalConfig.write(
 			'[foo]\n'
@@ -37,13 +37,32 @@ class ConfigLoadingTest(unittest.TestCase):
 			'class = invalid\n'
 			)
 		self.globalConfig.flush()
+		self.systemConfig = tempfile.NamedTemporaryFile()
+		self.systemConfig.write(
+			'[foo]\n'
+			'type = foo\n'
+			'class = also invalid\n'
+			)
+		self.systemConfig.flush()
 
 	def tearDown(self):
 		del self.types
-		del self.localConfig
+		del self.userConfig
 		del self.globalConfig
+		del self.systemConfig
 
 	def test_load_config(self):
 		manager = load_config(
-			self.localConfig.name, self.globalConfig.name, self.types.name)
+			user_conf_file=self.userConfig.name,
+			global_conf_file=self.globalConfig.name,
+			types_file=self.types.name)
+		self.assertEquals(manager.foo['foo'], ((), {}))
+
+	def test_stacking(self):
+		"""Test user config overrides system config."""
+		manager = load_config(
+			user_conf_file=self.userConfig.name,
+			system_conf_file=self.systemConfig.name,
+			global_conf_file=self.globalConfig.name,
+			types_file=self.types.name)
 		self.assertEquals(manager.foo['foo'], ((), {}))

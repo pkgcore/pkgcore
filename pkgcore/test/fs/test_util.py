@@ -33,7 +33,8 @@ class EnsureDirsTest(TempDirMixin, unittest.TestCase):
 	def checkDir(self, path, uid, gid, mode):
 		self.failUnless(os.path.isdir(path))
 		st = os.stat(path)
-		self.failUnlessEqual(stat.S_IMODE(st.st_mode), mode)
+		self.failUnlessEqual(stat.S_IMODE(st.st_mode), mode,
+		                     '0%o != 0%o' % (stat.S_IMODE(st.st_mode), mode))
 		self.failUnlessEqual(st.st_uid, uid)
 		self.failUnlessEqual(st.st_gid, gid)
 

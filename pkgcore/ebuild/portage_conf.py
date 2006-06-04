@@ -57,20 +57,21 @@ def configFromMakeConf(location="/etc/"):
 	portdir = conf_dict.pop("PORTDIR").strip()
 	portdir_overlays = conf_dict.pop("PORTDIR_OVERLAY", "").split()
 
-	cache_config = {"type": "cache", "location": "%s/var/cache/edb/dep" % config_root, "label": "make_conf_cache"}
+	cache_config = {"type": "cache", "location": "%s/var/cache/edb/dep" % config_root, "label": "make_conf_overlay_cache"}
 	pcache = None
 	if os.path.exists(config_root+"portage/modules"):
 		pcache = read_dict(config_root+"portage/modules").get("portdbapi.auxdbmodule", None)
 	
 	features = conf_dict.get("FEATURES", "").split()
 	
+	rsync_portdir_cache = os.path.exists(os.path.join(portdir, "metadata", "cache"))
 	if pcache is None:
 		if portdir_overlays or ("metadata-transfer" not in features):
 			cache_config["class"] = "pkgcore.cache.flat_hash.database"
 		else:
 			cache_config["class"] = "pkgcore.cache.metadata.database"
 			cache_config["location"] = portdir
-			cache_config["readonly"] = "true"
+			cache_config["readonly"] = "true"			
 	else:
 		cache_config["class"] = pcache
 
@@ -85,16 +86,31 @@ def configFromMakeConf(location="/etc/"):
 		{"type": "fetcher", "distdir": distdir, "command": fetchcommand,
 		"resume_command": resumecommand})
 
-	d = {"type": "repo", "class": "pkgcore.ebuild.repository", "cache": "cache"}
+	from pkgcore.util.modules import load_attribute
+	ebuild_repo_class = load_attribute("pkgcore.ebuild.repository")
 	
+	for tree_loc in [portdir] + portdir_overlays:
+		d2 = {"type": "repo", "class": ebuild_repo_class}
+		d2["location"] = tree_loc
+		d2["cache"] = "%s cache" % tree_loc
+		new_config[tree_loc] = basics.HardCodedConfigSection(tree_loc, d2)
+		if rsync_portdir_cache and tree_loc == portdir:
+			c = {"type": "cache", "location": tree_loc, "label": "%s cache" % tree_loc, 
+				"class": "pkgcore.cache.metadata.database"}
+		else:
+			c = {"type": "cache", "location": "%s/var/cache/edb/dep" % config_root, "label": "%s cache" % tree_loc,
+				"class": "pkgcore.cache.flat_hash.database"}
+		new_config["%s cache" % tree_loc] = \
+			basics.ConfigSectionFromStringDict("%s cache" % tree_loc, c)
+
 	if portdir_overlays:
-		from pkgcore.util.modules import load_attribute
+		d = {"type": "repo", "class": load_attribute("pkgcore.ebuild.overlay_repository.OverlayRepo"),
+			"cache": "cache", "trees": [portdir] + portdir_overlays}
 		# sucky.  needed?
-		d["trees"] = [portdir] + portdir_overlays
-		d["class"] = load_attribute("pkgcore.ebuild.overlay_repository.OverlayRepo")
+		new_config["portdir"] = basics.HardCodedConfigSection("portdir", d)
 	else:
-		d["location"] = portdir
-	new_config["portdir"] = basics.HardCodedConfigSection("portdir", d)
+		new_config["portdir"] = new_config[portdir]
+
 	new_config["glsa"] = basics.ConfigSectionFromStringDict("glsa",
 		{"type": "pkgset", "class": "pkgcore.pkgsets.glsa.SecurityUpgrades",
 		"ebuild_repo": "portdir", "vdb": "vdb"})

@@ -162,8 +162,7 @@ class HardCodedConfigSection(ConfigSection):
 		value = self.dict[name]
 		if arg_type == 'callable':
 			if not callable(value):
-				raise errors.ConfigurationError(
-					'%s: %r is not callable' % (self.name, value))
+				value = modules.load_attribute(value)
 		elif arg_type in ('section_ref', 'section_refs'):
 			if isinstance(value, (list, tuple, basestring)):
 				assert central is not None

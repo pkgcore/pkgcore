@@ -29,7 +29,7 @@ if not gotit:
 		pass
 
 if not gotit:
-	from pkgcore.util.xml.bundled_elementtree import ElementTree as etree
+	from pkgcore.util.xml import bundled_elementtree as etree
 del gotit
 
 def escape(s):

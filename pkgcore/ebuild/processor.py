@@ -150,7 +150,7 @@ class EbuildProcessor:
 		# little trick.  we force the pipes to be high up fd wise so nobody stupidly hits 'em.
 		max_fd = min(pkgcore.spawn.max_fd_limit, 1024)
 		env.update({"EBD_READ_FD": str(max_fd -2), "EBD_WRITE_FD": str(max_fd -1)})
-		self.pid = spawn_func(self.ebd+" daemonize", \
+		self.pid = spawn_func("/bin/bash %s daemonize" % self.ebd, \
 			fd_pipes={0:0, 1:1, 2:2, max_fd-2:cread, max_fd-1:dwrite}, \
 			returnpid=True, env=env, *args, **spawn_opts)[0]
 

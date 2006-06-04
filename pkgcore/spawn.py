@@ -3,7 +3,7 @@
 # Copyright: 2004-2005 Gentoo Foundation
 # License: GPL2
 
-__all__ = ["cleanup_pids", "spawn", "spawn_sandbox", "spawn_bash", "spawn_fakeroot", "spawn_get_output"]
+__all__ = ["cleanup_pids", "spawn", "spawn_sandbox", "spawn_bash", "spawn_fakeroot", "spawn_get_output", "find_binary"]
 
 import os, atexit, signal, sys
 

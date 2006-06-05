@@ -142,6 +142,9 @@ if __name__ == "__main__":
 
 	print "\nbuildplan"
 	for op, pkgs in resolver.state.iter_pkg_ops():
+		if pkgs[-1].repo.livefs:
+			continue
 		print "%s %s" % (op.ljust(8), ", ".join(str(y) for y in reversed(pkgs)))
+		
 	print "result was successfull, 'parently- took %.2f seconds" % (time.time() - start_time)
 	

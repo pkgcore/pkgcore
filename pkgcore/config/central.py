@@ -176,3 +176,20 @@ class ConfigManager(object):
 			self.instantiated[section] = obj
 
 		return obj
+
+	def get_default(self, type_name):
+		"""finds the configuration specified default obj of type_name, returning None if no defaults"""
+		l = []
+		for section_name in getattr(self, type_name).iterkeys():
+			section_config = self.get_section_config(section_name)
+			try:
+				is_default = section_config.get_value(self, "default", "bool")
+			except KeyError:
+				pass
+			if is_default:
+				l.append(section_name)
+		if len(l) > 1:
+			raise errors.ConfigurationError("type %s has multiple defined defaults- %s" % (type_name, ", ".join(l)))
+		elif l:
+			return getattr(self, type_name)[l[0]]
+		return None

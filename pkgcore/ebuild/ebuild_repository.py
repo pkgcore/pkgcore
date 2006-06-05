@@ -26,8 +26,6 @@ class UnconfiguredTree(prototype.tree):
 			st = os.lstat(self.base)
 			if not stat.S_ISDIR(st.st_mode):
 				raise errors.InitializationError("base not a dir: %s" % self.base)
-			elif not st.st_mode & (os.X_OK|os.R_OK):
-				raise errors.InitializationError("base lacks read/executable: %s" % self.base)
 
 		except OSError:
 			raise errors.InitializationError("lstat failed on base %s" % self.base)

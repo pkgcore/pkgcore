@@ -38,7 +38,7 @@ def generate_restriction(text):
 		if not ops:
 			r = convert_glob(text)
 			if r is None:
-				return packages.AlwaysBool
+				return packages.AlwaysTrue
 			return packages.PackageRestriction("package", r)
 		elif text.startswith("*"):
 			raise ValueError("cannot do prefix glob matches with version ops: %s" % orig_text)
@@ -56,12 +56,12 @@ def generate_restriction(text):
 	if len(tsplit) == 1:
 		r = convert_glob(tsplit[0])
 		if not r:
-			return packages.AlwaysBool
+			return packages.AlwaysTrue
 		return packages.PackageRestriction("package", r)
 	
 	r = map(convert_glob, tsplit)
 	if not r[0] and not r[1]:
-		return packages.AlwaysBool
+		return packages.AlwaysTrue
 	if not r[0]:
 		return packages.PackageRestriction("package", r[1])
 	elif not r[1]:

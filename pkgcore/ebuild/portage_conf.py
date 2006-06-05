@@ -3,7 +3,9 @@
 
 from pkgcore.config import basics, errors
 from pkgcore.util.file import read_bash_dict, read_dict
+from pkgcore.fs.util import normpath
 from pkgcore import const
+from pkgcore.util.modules import load_attribute
 import os, errno
 
 def configFromMakeConf(location="/etc/"):
@@ -54,8 +56,8 @@ def configFromMakeConf(location="/etc/"):
 		{"type": "profile", "class": "pkgcore.ebuild.profiles.OnDiskProfile", 
 		"base_path": os.path.join("/", *psplit[:stop+1]), "profile": os.path.join(*psplit[stop + 1:])})
 
-	portdir = conf_dict.pop("PORTDIR").strip()
-	portdir_overlays = conf_dict.pop("PORTDIR_OVERLAY", "").split()
+	portdir = normpath(conf_dict.pop("PORTDIR").strip())
+	portdir_overlays = map(normpath, conf_dict.pop("PORTDIR_OVERLAY", "").split())
 
 	cache_config = {"type": "cache", "location": "%s/var/cache/edb/dep" % config_root, "label": "make_conf_overlay_cache"}
 	pcache = None
@@ -78,7 +80,7 @@ def configFromMakeConf(location="/etc/"):
 	new_config["cache"] = basics.ConfigSectionFromStringDict("cache", cache_config)
 
 	#fetcher.
-	distdir = conf_dict.pop("DISTDIR", os.path.join(portdir, "distdir"))
+	distdir = normpath(conf_dict.pop("DISTDIR", os.path.join(portdir, "distdir")))
 	fetchcommand = conf_dict.pop("FETCHCOMMAND")
 	resumecommand = conf_dict.pop("RESUMECOMMAND", fetchcommand)
 
@@ -86,7 +88,6 @@ def configFromMakeConf(location="/etc/"):
 		{"type": "fetcher", "distdir": distdir, "command": fetchcommand,
 		"resume_command": resumecommand})
 
-	from pkgcore.util.modules import load_attribute
 	ebuild_repo_class = load_attribute("pkgcore.ebuild.repository")
 	
 	for tree_loc in [portdir] + portdir_overlays:

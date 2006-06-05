@@ -24,7 +24,7 @@ if __name__ == "__main__":
 		print "Multiple args are further restrictions on a match- pkg must own all of the files"
 		sys.exit(1)
 	all = grab_arg("-a", a) or grab_arg("--all", a)
-	repo = load_config().domain["livefs domain"].vdb[0]
+	repo = load_config().get_default("domain").vdb[0]
 	restrict = packages.PackageRestriction("contents", values.ContainmentMatch(
 		*[normpath(x) for x in a]))
 	start_time = time.time()

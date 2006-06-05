@@ -47,15 +47,15 @@ if __name__ == "__main__":
 		print "supported args: [--raw] [--virtuals-only || --disable-virtuals ] [--vdb] [ --max || --min ] [--atomstr] [atom [ --attr attr ] ]*"
 		sys.exit(1)
 	conf = pkgcore.config.load_config()
-	if len(conf.domain) != 1:
-		print "sorry, I don't know about domains aside from using the only one I find"
-		sys.exit(2)
-	domain = conf.domain.items()[0][1]
+	domain = conf.get_default("domain")
+	if domain is None:
+		print "no default domain specified in configuration- please fix your configuration"
+		sys.exit(-1)
 	repos = []
 	if force_vdb:
-		repos = conf.domain["livefs domain"].vdb
+		repos = domain.vdb
 	else:
-		repos = conf.domain["livefs domain"].repos
+		repos = domain.repos
 	if raw:
 		repos = repo_utils.get_raw_repos(repos)
 	if force_virtuals:

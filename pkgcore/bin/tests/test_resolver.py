@@ -5,6 +5,7 @@ from pkgcore.resolver import plan
 from pkgcore.package.atom import atom
 from pkgcore.util.lists import flatten, stable_unique
 from pkgcore.util.repo_utils import get_raw_repos
+from pkgcore.util.commandline import generate_restriction, collect_ops
 
 def pop_paired_args(args, arg, msg):
 	rets = []
@@ -70,6 +71,8 @@ if __name__ == "__main__":
 	set_targets = [a for t in set_targets for a in conf.pkgset[t]]
 	#map(atom, conf.pkgset[l]) for l in set_targets], restriction.base)
 	
+	domain = conf.domain["livefs domain"]
+	vdb, repo = domain.vdb[0], domain.repos[0]
 	if not args:
 		if set_targets:
 			atoms = set_targets
@@ -77,11 +80,36 @@ if __name__ == "__main__":
 			print "resolving sys-apps/portage since no atom supplied"
 			atoms = [atom("sys-apps/portage")]
 	else:
-		atoms = [atom(x) for x in args] + set_targets
+		atoms = []
+		for x in args:
+			a = generate_restriction(x)
+			if isinstance(a, atom):
+				atoms.append(a)
+				continue
+			matches = set(pkg.key for pkg in repo.itermatch(a))
+			if not matches:
+				print "no matches found to %s" % x,a
+				if ignore_failures:
+					print "skipping %s" % x
+					continue
+				sys.exit(1)
+			if len(matches) > 1:
+				print "multiple pkg matches found for %s: %s, %s" % (x, ", ".join(sorted(matches)), a)
+				if ignore_failures:
+					print "skipping %s" % x
+					continue
+				sys.exit(2)
+			# else we rebuild an atom.
+			key = list(matches)[0]
+			ops, text = collect_ops(x)
+			if not ops:
+				atoms.append(atom(key))
+				continue
+			atoms.append(atom(ops + key.rsplit("/", 1)[0] + "/" + text.rsplit("/",1)[-1]))
+		
+#		atoms = [atom(x) for x in args] + set_targets
 
 	atoms = stable_unique(atoms)
-	domain = conf.domain["livefs domain"]
-	vdb, repo = domain.vdb[0], domain.repos[0]
 	resolver = plan.merge_plan(vdb, repo, pkg_selection_strategy=strategy, verify_vdb=deep)
 	ret = True
 	failures = []

@@ -240,7 +240,7 @@ class SQLDatabase(template.database):
 		l = []
 		for x, y, v in self.con.fetchall():
 			if oldcpv != x:
-				if oldcpv != None:
+				if oldcpv is not None:
 					d = dict(l)
 					if "_eclasses_" in d:
 						d["_eclasses_"] = self.reconstruct_eclasses(oldcpv, d["_eclasses_"])
@@ -249,7 +249,7 @@ class SQLDatabase(template.database):
 				oldcpv = x
 			l.append((y,v))
 
-		if oldcpv != None:
+		if oldcpv is not None:
 			d = dict(l)
 			if "_eclasses_" in d:
 				d["_eclasses_"] = self.reconstruct_eclasses(oldcpv, d["_eclasses_"])

@@ -60,7 +60,7 @@ class choice_point(object):
 			if existing[1] >= len(existing[2]):
 				self.matches_idx = self.matches_idx + 1
 		if self.matches_idx != existing[0]:
-			if self.matches_idx == None:
+			if self.matches_idx is None:
 				raise IndexError
 			# use stable_unique to preserve ordering, but cut down on dupes.
 			existing[0:3] = [self.matches_idx, 0,

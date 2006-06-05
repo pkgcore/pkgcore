@@ -15,7 +15,7 @@ def gen_obj(path, stat=None, real_path=None):
 	"""
 	if real_path is None:
 		real_path = path
-	if stat == None:
+	if stat is None:
 		stat = os.lstat(real_path)
 	mode = stat.st_mode
 	d = {"mtime":stat.st_mtime, "mode":S_IMODE(mode), "uid":stat.st_uid, "gid":stat.st_gid, "real_path":real_path}

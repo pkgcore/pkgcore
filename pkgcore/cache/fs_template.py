@@ -43,8 +43,8 @@ class FsBased(template.database):
 		return True
 
 	def _ensure_dirs(self, path=None):
-		"""if path != None, ensures self.location + '/' + path, else self.location"""
-		if path != None:
+		"""if path is not None, ensures self.location + '/' + path, else self.location"""
+		if path is not None:
 			path = self.location + os.path.sep + os.path.dirname(path)
 		else:
 			path = self.location

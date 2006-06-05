@@ -84,9 +84,9 @@ class base(restriction.base):
 
 # this beast, handles N^2 permutations.  convert to stack based.
 def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths, filter, desired_false=None, desired_true=None, kill_switch=None):
-	if desired_false == None:
+	if desired_false is None:
 		desired_false = lambda r, a:r.force_False(*a)
-	if desired_true == None:
+	if desired_true is None:
 		desired_true = lambda r, a:r.force_True(*a)
 
 #	import pdb;pdb.set_trace()
@@ -111,7 +111,7 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths, fil
 					yield True
 				reset = True
 			else:
-				if kill_switch != None and kill_switch(truths, index):
+				if kill_switch is not None and kill_switch(truths, index):
 					return
 		else:
 			if desired_true(rest, pvals):
@@ -130,7 +130,7 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths, fil
 #					import pdb;pdb.set_trace()
 					yield True
 			else:
-				if kill_switch != None and kill_switch(truths, index):
+				if kill_switch is not None and kill_switch(truths, index):
 					return
 
 		if reset:
@@ -380,7 +380,7 @@ class XorRestriction(base):
 					failed = True
 					break
 			if not failed:
-				if trues != None:
+				if trues is not None:
 					if self.restrictions[x].force_True(*pvals):
 						return True
 				else:
@@ -435,7 +435,7 @@ class XorRestriction(base):
 					failed = True
 					break
 			if not failed:
-				if trues != None:
+				if trues is not None:
 					if self.restrictions[x].force_True(*pvals):
 						return True
 				else:

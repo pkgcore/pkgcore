@@ -119,7 +119,7 @@ class GlobalPluginRegistry(object):
 
 	def query_plugins(self, plugin_type=None, locking=True, raw=False):
 		# designed this way to minimize lock holding time.
-		if plugin_type != None:
+		if plugin_type is not None:
 			ptypes = [plugin_type + PLUGINS_EXTENSION]
 		d = {}
 		if locking:
@@ -129,7 +129,7 @@ class GlobalPluginRegistry(object):
 				return {}
 			plug_lock.acquire_read_lock()
 		try:
-			if plugin_type == None:
+			if plugin_type is None:
 				ptypes = [x for x in os.listdir(plugins_dir) if x.endswith(PLUGINS_EXTENSION) ]
 
 			len_exten = len(PLUGINS_EXTENSION)
@@ -144,7 +144,7 @@ class GlobalPluginRegistry(object):
 		finally:
 			if locking:
 				plug_lock.release_read_lock()
-		if plugin_type != None:
+		if plugin_type is not None:
 			return d[plugin_type]
 		return d
 
@@ -154,14 +154,14 @@ from pkgcore.util.currying import pre_curry, pretty_docs
 
 def proxy_it(method, *a, **kw):
 	global registry
-	if registry == None:
+	if registry is None:
 		registry = GlobalPluginRegistry()
 	return getattr(registry, method)(*a, **kw)
 
 for x in ["register", "deregister", "query_plugins", "get_plugin"]:
 	v = pre_curry(proxy_it, x)
 	doc = getattr(GlobalPluginRegistry, x).__doc__
-	if doc == None:
+	if doc is None:
 		doc = ''
 	else:
 		# do this so indentation on pydoc __doc__ is sane

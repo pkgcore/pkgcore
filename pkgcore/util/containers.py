@@ -35,7 +35,7 @@ class LimitedChangeSet(object):
 
 	def __init__(self, initial_keys, unchangable_keys=None):
 		self._new = set(initial_keys)
-		if unchangable_keys == None:
+		if unchangable_keys is None:
 			self.__blacklist = []
 		else:
 			if isinstance(unchangable_keys, (list, tuple)):

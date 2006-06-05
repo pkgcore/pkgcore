@@ -128,12 +128,12 @@ class ebd(object):
 		return True
 
 	def _request_bashrcs(self, ebd, a):
-		if a != None:
+		if a is not None:
 			chuck_UnhandledCommand(ebd, "bashrc request with arg"+str(a))
 		for source in self.bashrc:
-			if source.get_path != None:
+			if source.get_path is not None:
 				ebd.write("path\n%s" % source.get_path())
-			elif source.get_data != None:
+			elif source.get_data is not None:
 				raise NotImplementedError
 			else:
 				chuck_UnhandledCommand(ebd, "bashrc request: unable to process bashrc '%s' due to source '%s' due to lacking"+
@@ -290,7 +290,7 @@ class buildable(ebd, build.base):
 
 				# XXX this is more then mildly stupid.
 				st = os.stat(self.env["CCACHE_DIR"])
-			if st == None:
+			if st is None:
 				try:
 					if st.gid != portage_gid or (st.st_mode & 02070) != 02070:
 						try:

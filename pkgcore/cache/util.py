@@ -8,7 +8,7 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None, 
 	if not src_cache.complete_eclass_entries and not eclass_cache:
 		raise Exception("eclass_cache required for cache's of class %s!" % src_cache.__class__)
 
-	if verbose_instance == None:
+	if verbose_instance is None:
 		noise = quiet_mirroring()
 	else:
 		noise = verbose_instance

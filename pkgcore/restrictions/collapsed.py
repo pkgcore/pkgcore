@@ -66,7 +66,7 @@ class DictBased(restriction.base):
 #	def __contains__(self, restriction):
 #		if isinstance(restriction, base):
 #			key, r = self.get_atom_key(restriction)
-#		if key != None and key in self.restricts_dict:
+#		if key is not None and key in self.restricts_dict:
 #			return True
 #		return False
 
@@ -76,14 +76,14 @@ class DictBased(restriction.base):
 #	def __getitem__(self, restriction, default=None):
 #		if isinstance(restriction, base):
 #			key, r = self.get_atom_key(restriction)
-#		if key == None:	return default
+#		if key is None:	return default
 #		return self.restricts_dict.get(key, default)
 #
 #
 #	def __setitem__(self, restriction, val):
 #		if isinstance(restriction, base):
 #			key, r = self.get_atom_key(restriction)
-#		if key == None:
+#		if key is None:
 #			raise KeyError("either passed in, or converted val became None, invalid as key")
 #		self.restricts_dict[key] = val
 #
@@ -91,5 +91,5 @@ class DictBased(restriction.base):
 #	def __delitem__(self, restriction):
 #		if isinstance(restriction, base):
 #			key = self.get_atom_key(restriction)
-#		if key != None and key in self.restricts_dict:
+#		if key is not None and key in self.restricts_dict:
 #			del self.restricts_dict[key]

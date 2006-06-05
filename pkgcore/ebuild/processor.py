@@ -39,7 +39,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False, save_
 	this walks through the requirements, matching a inactive processor if one exists
 	note fakerooted processors are never reused, do to the nature of fakeroot"""
 
-	if sandbox == None:
+	if sandbox is None:
 		sandbox = pkgcore.spawn.sandbox_capable
 
 	global inactive_ebp_list, active_ebp_list
@@ -382,16 +382,16 @@ class EbuildProcessor:
 
 	def _inherit(self, line, ecache):
 		"""callback for implementing inherit digging into eclass_cache.  not for normal consumption."""
-		if line == None:
+		if line is None:
 			self.write("failed")
 			raise UnhandledCommand("inherit requires an eclass specified, none specified")
 
 		line = line.strip()
-		if ecache.get_eclass_path != None:
+		if ecache.get_eclass_path is not None:
 			value = ecache.get_eclass_path(line)
 			self.write("path")
 			self.write(value)
-		elif ecache.get_eclass_data != None:
+		elif ecache.get_eclass_data is not None:
 			value = ecache.get_eclass_data(line)
 			self.write("transfer")
 			self.write(value)

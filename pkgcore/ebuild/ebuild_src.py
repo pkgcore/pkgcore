@@ -196,7 +196,7 @@ class package_factory(metadata.factory):
 		else:
 			mydata["_eclasses_"] = {}
 
-		if self._cache != None:
+		if self._cache is not None:
 			self._cache[pkg.cpvstr] = mydata
 
 		return mydata

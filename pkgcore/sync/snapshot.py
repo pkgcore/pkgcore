@@ -15,7 +15,7 @@ import sync.rsync
 """snapshot-http://gentoo.chem.wisc.edu/gentoo"""
 class SnapshotHost:
 	def __init__(self, host_uri, snapshots_dir, tmp_dir, fetcher=None, use_md5=True):
-		if fetcher == None:
+		if fetcher is None:
 			import transports.bundled_lib
 			fetcher = transports.bundled_lib.BundledConnection()
 		self.__fetcher = fetcher
@@ -74,7 +74,7 @@ class SnapshotHost:
 		ret = False
 		if self.__use_md5 and os.path.exists(loc+".md5sum"):
 			hash = self.__read_md5sum(loc+".md5sum")
-			if hash == None:
+			if hash is None:
 				os.remove(loc+".md5sum")
 			else:
 				md5_existed = True

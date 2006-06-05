@@ -57,7 +57,7 @@ class StrRegexMatch(StrMatch):
 		self.compiled_re = re.compile(regex, flags)
 
 	def match(self, value):
-		return (self.compiled_re.match(str(value)) != None) ^ self.negate
+		return (self.compiled_re.match(str(value)) is not None) ^ self.negate
 
 	def intersect(self, other):
 		if self.regex == other.regex and self.negate == other.negate and self.flags == other.flags:
@@ -392,7 +392,7 @@ for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
 		o = getattr(m, x)
 		doc = o.__doc__
 		o = pre_curry(o, node_type=value_type)
-		if doc == None:
+		if doc is None:
 			doc = ''
 		else:
 			# do this so indentation on pydoc __doc__ is sane

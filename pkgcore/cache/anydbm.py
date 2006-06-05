@@ -40,7 +40,7 @@ class database(fs_template.FsBased):
 
 			# try again if failed
 			try:
-				if self._db == None:
+				if self._db is None:
 					self._db = anydbm_module.open(self._db_path, "c", self._perms)
 			except andbm_module.error, e:
 				raise cache_errors.InitializationError(self.__class__, e)

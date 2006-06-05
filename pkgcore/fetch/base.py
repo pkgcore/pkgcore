@@ -15,7 +15,7 @@ class fetcher(object):
 		0:  iff all chksums match
 		1:  iff file is too large (if size chksums are available) or else size is right but a chksum didn't match.
 
-		if required == None, all chksums must match
+		if required is None, all chksums must match
 		"""
 		if not os.path.exists(file_location):
 			return -1

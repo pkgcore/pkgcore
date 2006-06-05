@@ -1037,7 +1037,7 @@ class TreeBuilder:
 
     def close(self):
         assert len(self._elem) == 0, "missing end tags"
-        assert self._last != None, "missing toplevel element"
+        assert self._last is not None, "missing toplevel element"
         return self._last
 
     def _flush(self):

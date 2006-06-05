@@ -144,7 +144,7 @@ class FsLock(object):
 			except OSError, oe:	raise NonExistant(self.path, oe)
 
 	def _enact_change(self, flags, blocking):
-		if self.fd == None:
+		if self.fd is None:
 			self._acquire_fd()
 		# we do it this way, due to the fact try/except is a bit of a hit
 		if not blocking:
@@ -179,9 +179,9 @@ class FsLock(object):
 	def __del__(self):
 		# alright, it's 5:45am, yes this is weird code.
 		try:
-			if self.fd != None:
+			if self.fd is not None:
 				self.release_read_lock()
 		finally:
-			if self.fd != None:
+			if self.fd is not None:
 				os.close(self.fd)
 

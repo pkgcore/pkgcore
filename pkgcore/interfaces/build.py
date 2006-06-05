@@ -36,7 +36,7 @@ class base(object):
 			if x.filename in gotten_fetchables:
 				continue
 			fp = self.fetcher(x)
-			if fp == None:
+			if fp is None:
 				return False
 			self.files[fp] = x
 			gotten_fetchables.add(x.filename)

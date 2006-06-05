@@ -133,7 +133,7 @@ class RsyncHost:
 			args.append("--bwlimit=%s" % settings["RSYNC_RATELIMIT"])
 
 		prefix = "rsync://"
-		if remote_path == None:
+		if remote_path is None:
 			if self.__local:
 				host = self.__remote_path
 				prefix = ''

@@ -29,7 +29,7 @@ class UnconfiguredTree(prototype.tree):
 
 		except OSError:
 			raise errors.InitializationError("lstat failed on base %s" % self.base)
-		if eclass_cache == None:
+		if eclass_cache is None:
 			import eclass_cache
 			self.eclass_cache = eclass_cache.cache(self.base)
 		else:
@@ -49,7 +49,7 @@ class UnconfiguredTree(prototype.tree):
 					shuffle(v)
 					mirrors.setdefault(k, []).extend(v)
 			except OSError:
-				if f != None:
+				if f is not None:
 					f.close()
 				raise
 

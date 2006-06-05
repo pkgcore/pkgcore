@@ -71,7 +71,7 @@ class VersionMatch(restriction.base):
 			n = "not "
 		else:
 			n = ''
-		if self.droprev or self.rev == None:
+		if self.droprev or self.rev is None:
 			return "ver %s%s %s" % (n, l, self.ver)
 		return "ver-rev %s%s %s-r%s" % (n, l, self.ver, self.rev)
 

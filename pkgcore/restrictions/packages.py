@@ -78,7 +78,7 @@ class PackageRestriction(restriction.base):
 		elif isinstance(other.restriction, self.restriction.__class__):
 			s = other.restriction.intersect(self.restriction)
 		else:	return None
-		if s == None:
+		if s is None:
 			return None
 		if s == self.restriction:		return self
 		elif s == other.restriction:	return other
@@ -127,7 +127,7 @@ for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
 		o = getattr(m, x)
 		doc = o.__doc__
 		o = pre_curry(o, node_type=package_type)
-		if doc == None:
+		if doc is None:
 			doc = ''
 		else:
 			# do this so indentation on pydoc __doc__ is sane

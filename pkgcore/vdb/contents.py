@@ -23,7 +23,7 @@ class ContentsFile(contentsSet):
 			raise TypeError("This instance is readonly")
 		elif isinstance(obj, fs.fsFile):
 			# strict checks
-			if obj.chksums == None or "md5" not in obj.chksums:
+			if obj.chksums is None or "md5" not in obj.chksums:
 				raise TypeError("fsFile objects need to be strict")
 		elif not isinstance(obj, (fs.fsDir, fs.fsLink, fs.fsFifo, fs.fsDev)):
 			raise TypeError("obj must be of fsObj, fsDir, fsLink, fsFifo, fsDev class or derivative")

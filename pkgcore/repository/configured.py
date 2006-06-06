@@ -43,12 +43,6 @@ class tree(prototype.tree):
 			[a for a in x if not (isinstance(a, PackageRestriction) and a.attr in self.attr_filters)]
 			for x in restrict_solutions]
 
-		# second walk of the list.  ick.
-		if sum(imap(len, restrict_solutions)) == sum(imap(len, filtered_solutions)):
-			# well.  that was an expensive waste of time- doesn't check anything we care about.
-			return (self.package_class(pkg) for pkg in
-				self.raw_repo.itermatch(self, restrict, restrict_solutions=restrict_solutions, **kwds))
-
 		# disable inst_caching for this restriction.  it's a one time generation, and potentially
 		# quite costly for hashing
 		filtered_restrict = OrRestriction(disable_inst_caching=True,

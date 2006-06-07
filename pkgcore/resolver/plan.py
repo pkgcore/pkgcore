@@ -256,11 +256,11 @@ class merge_plan(object):
 				", ".join(str(y) for y in l)))
 			# hack.  see if what was insert is enough for us.
 			fail = try_rematch = False
-			if any(isinstance(x, restriction.base) for x in l):
+			if any(True for x in l if isinstance(x, restriction.base)):
 				# blocker was caught
 				dprint("blocker detected in slotting, trying a re-match")
 				try_rematch = True
-			elif all(self.vdb_restrict.match(x) for x in l):
+			elif not any (True for x in l if not self.vdb_restrict.match(x)):
 				# vdb entry, replace.
 				if self.vdb_restrict.match(choices.current_pkg):
 					# we're replacing a vdb entry with a vdb entry?  wtf.

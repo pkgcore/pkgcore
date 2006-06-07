@@ -244,4 +244,8 @@ class tree(object):
 		raise NotImplementedError
 
 	def __nonzero__(self):
-		return any(x for x in self.versions)
+		try:
+			iter(self.versions).next()
+			return True
+		except StopIteration:
+			return False

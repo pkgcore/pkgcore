@@ -264,7 +264,7 @@ class ContainmentMatch(base):
 			if self.all:
 				i = iter(val)
 				return bool(self.vals.difference(i)) == self.negate
-			return any(x in val for x in self.vals) != self.negate
+			return any(True for x in self.vals if x in val) != self.negate
 		except TypeError:
 			# other way around.  rely on contains.
 			if self.all:

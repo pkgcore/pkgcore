@@ -142,7 +142,8 @@ class AndRestriction(base):
 	__slots__ = ()
 
 	def match(self, vals):
-		return all(rest.match(vals) for rest in self.restrictions) != self.negate
+#		return all(rest.match(vals) for rest in self.restrictions) != self.negate
+		return any(True for rest in self.restrictions if not rest.match(vals)) == self.negate
 
 	def force_True(self, pkg, *vals):
 		pvals = [pkg]
@@ -274,7 +275,7 @@ class OrRestriction(base):
 	__slots__ = ()
 
 	def match(self, vals):
-		return any(rest.match(vals) for rest in self.restrictions) != self.negate
+		return any(True for rest in self.restrictions if rest.match(vals)) != self.negate
 
 	def cnf_solutions(self, full_solution_expansion=False):
 		if self.negate:

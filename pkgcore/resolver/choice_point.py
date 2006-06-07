@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.util.compatibility import all
+from pkgcore.util.compatibility import any
 from pkgcore.util.lists import stable_unique
 from pkgcore.util.iterables import caching_iter
 import operator
@@ -72,12 +72,12 @@ class choice_point(object):
 		try:
 			while orig_match_idx != self.matches_idx:
 				orig_match_idx = self.matches_idx
-				while not all(x not in self.solution_filters for x in self.depends):
+				while any(True for x in self.depends if x in self.solution_filters):
 					self._dep_solutions[1] += 1
 
 				# optimization.  don't redo rdep if it forced last redo, and matches hasn't changed
 				if rdep_idx != self.matches_idx:
-					while not all(x not in self.solution_filters for x in self.rdepends):
+					while any(True for x in self.rdepends if x in self.solution_filters):
 						self._rdep_solutions[1] += 1
 				rdep_idx = self.matches_idx
 		except IndexError:

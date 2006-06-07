@@ -72,13 +72,15 @@ class LazyValDict(UserDict.DictMixin):
 			self._keys_func = None
 		return key in self._keys
 
+	def has_key(self, key):
+		return key in self
+
 	def __len__(self):
 		count = 0
 		for x in self:
 			count += 1
 		return count
 
-	has_key = __contains__
 	__iter__ = alias_class_method("iterkeys")
 
 

@@ -198,6 +198,28 @@ class merge_plan(object):
 						satisfied = False
 						break
 					additions.append(datom)
+
+			if satisfied:
+				# level blockers up front for rdep.
+				# downside is that for it kills off any solution where a temp merge/unmerge of a node is useful
+				blocked = None
+				for x in choices.rdepends:
+					if not x.blocks:
+						continue
+					# hackity hack potential- say we did this-
+					# disallowing blockers from blocking what introduced them.
+					# iow, we can't block ourselves (can block other versions, but not our exact self)
+					# this might be suspect mind you...
+					# disabled, but something to think about.
+
+					l = self.state.add_blocker(self.generate_mangled_blocker(choices, x), key=x.key)
+					if l:
+						dprint("resetting for %s%s because blocker %s couldn't be leveled: %s" % (depth*2*" ", atom, x, l))
+						failure = [x] + [l]
+						nolonger_used = choices.reduce_atoms(x)
+						satisfied = False
+						break
+
 			if satisfied:
 				for ratom in choices.rdepends:
 					if ratom.blocks:
@@ -293,28 +315,22 @@ class merge_plan(object):
 				current_stack.pop()
 				return [atom]
 
-		# level blockers.
-		for x in blocks:
-			# hackity hack potential- say we did this-
-			# disallowing blockers from blocking what introduced them.
-			# iow, we can't block ourselves (can block other versions, but not our exact self)
-			# this might be suspect mind you...
-			# disabled, but something to think about.
-
-			l = self.state.add_blocker(self.generate_mangled_blocker(choices, x), key=x.key)
-			if l:
-				# blocker caught something. yay.
-				print "rdepend blocker %s hit %s for atom %s pkg %s" % (x, l, atom, choices.current_pkg)
-				import pdb;pdb.set_trace()
-
 		for x in choices.provides:
 			l = self.state.add_provider(choices, x)
 			if l and l != [x]:
-				if len(current_stack) > 1:
+				# hack.
+				if len(l) == 1 and not any(True for y in l if isinstance(y, restriction.base)) and \
+					self.vdb_restrict.match(l[0]) and l[0].category == "virtual":
+					l = self.state.add_provider(choices, x, REPLACE)
+					if l:
+						print "tried a replace on a virtual provides, still failed.  blocker?"
+						import pdb;pdb.set_trace()
+				elif len(current_stack) > 1:
 					if not current_stack[-2][0].match(x):
 						print "provider conflicted... how?"
 						import pdb;pdb.set_trace()
 						print "should do something here, something sane..."
+
 		current_stack.pop()
 		return False
 

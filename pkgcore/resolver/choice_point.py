@@ -3,11 +3,46 @@
 
 from pkgcore.util.compatibility import all
 from pkgcore.util.lists import stable_unique
+from pkgcore.util.iterables import caching_iter
+import operator
+
+class CheatingIter(object):
+	__slots__ = ("_src", "_position", "_item", "_iter_obj")
+	def __init__(self, bool_restrict_instance):
+		self._src = bool_restrict_instance
+		self._position = -1
+		self._item = None
+		self._iter_obj = None
+		
+	def __getitem__(self, idx):
+		if idx < 0:
+			raise IndexError("piss off, I don't like negative indexes")
+		elif idx < self._position or self._position == -1:
+			self._iter_obj = self._src.itersolutions()
+			self._position = -1
+
+		if idx != self._position:
+			try:
+				for x in xrange(idx - self._position):
+					item = self._iter_obj.next()
+			except StopIteration:
+				self._position = -1
+				raise IndexError
+			self._item = stable_unique(item)
+			self._position = idx
+		return self._item
+		
+	def __iter__(self):
+		return self._src.itersolutions()
 
 class choice_point(object):
 
 	__slots__ = ("__weakref__", "atom", "matches", "matches_idx", "solution_filters",
 		"_rdep_solutions", "_dep_solutions", "_provides_solutions")
+	
+	depends_getter = operator.attrgetter("depends")
+	rdepends_getter = operator.attrgetter("rdepends")
+	provides_getter = operator.attrgetter("provides")
 
 	def __init__(self, a, matches):
 		self.atom = a
@@ -54,17 +89,18 @@ class choice_point(object):
 		s.difference_update(orig_dep + orig_rdep)
 		return s, [x for x in self.provides if x not in orig_provides]
 
-	def _common_property(self, existing, name):
+	def _common_property(self, existing, getter):
 		# are we beyond this matches solutions?
+		ret = None
 		if self.matches_idx == existing[0]:
-			if existing[1] >= len(existing[2]):
+			try:
+				return existing[2][existing[1]]
+			except IndexError:
 				self.matches_idx = self.matches_idx + 1
-		if self.matches_idx != existing[0]:
-			if self.matches_idx is None:
-				raise IndexError
-			# use stable_unique to preserve ordering, but cut down on dupes.
-			existing[0:3] = [self.matches_idx, 0,
-				[tuple(stable_unique(x)) for x in getattr(self.matches[self.matches_idx], name).solutions()]]
+		elif self.matches_idx is None:
+			raise IndexError
+		existing[0:3] = [self.matches_idx, 0,
+			CheatingIter(getter(self.matches[self.matches_idx]))]
 		return existing[2][existing[1]]
 
 	@property
@@ -81,15 +117,15 @@ class choice_point(object):
 
 	@property
 	def depends(self):
-		return self._common_property(self._dep_solutions, "depends")
+		return self._common_property(self._dep_solutions, self.depends_getter)
 
 	@property
 	def rdepends(self):
-		return self._common_property(self._rdep_solutions, "rdepends")
+		return self._common_property(self._rdep_solutions, self.rdepends_getter)
 
 	@property
 	def provides(self):
-		return self._common_property(self._provides_solutions, "provides")
+		return self._common_property(self._provides_solutions, self.provides_getter)
 
 	def __nonzero__(self):
 		if self.matches_idx is not None:

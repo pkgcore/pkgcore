@@ -76,12 +76,12 @@ class AndRestrictionTest(unittest.TestCase):
 				node_type='foo', negate=True).match(None))
 
 	def test_solutions(self):
-		self.assertEquals(boolean.AndRestriction(true, true).solutions(), [[true, true]])
-		self.assertEquals(boolean.AndRestriction(boolean.AndRestriction(true, true), true).solutions(),
+		self.assertEquals(boolean.AndRestriction(true, true).dnf_solutions(), [[true, true]])
+		self.assertEquals(boolean.AndRestriction(boolean.AndRestriction(true, true), true).dnf_solutions(),
 			[[true, true, true]])
-		self.assertEquals(map(set, boolean.AndRestriction(true, true, boolean.OrRestriction(false, true)).solutions()),
+		self.assertEquals(map(set, boolean.AndRestriction(true, true, boolean.OrRestriction(false, true)).dnf_solutions()),
 			[set([true, true, false]), set([true, true, true])])
-		self.assertEquals(boolean.AndRestriction().solutions(), [[]])
+		self.assertEquals(boolean.AndRestriction().dnf_solutions(), [[]])
 
 class OrRestrictionTest(unittest.TestCase):
 
@@ -103,9 +103,9 @@ class OrRestrictionTest(unittest.TestCase):
 			boolean.OrRestriction(false, false, node_type='foo', negate=True).match(None))
 
 	def test_solutions(self):
-		self.assertEquals(boolean.OrRestriction(true, true).solutions(), [[true], [true]])
-		self.assertEquals(map(set, boolean.OrRestriction(true, true, boolean.AndRestriction(false, true)).solutions()),
+		self.assertEquals(boolean.OrRestriction(true, true).dnf_solutions(), [[true], [true]])
+		self.assertEquals(map(set, boolean.OrRestriction(true, true, boolean.AndRestriction(false, true)).dnf_solutions()),
 			map(set, [[true], [true], [false, true]]))
-		self.assertEquals(boolean.OrRestriction(boolean.OrRestriction(true, false), true).solutions(),
+		self.assertEquals(boolean.OrRestriction(boolean.OrRestriction(true, false), true).dnf_solutions(),
 			[[true], [false], [true]])
-		self.assertEquals(boolean.OrRestriction().solutions(), [[]])
+		self.assertEquals(boolean.OrRestriction().dnf_solutions(), [[]])

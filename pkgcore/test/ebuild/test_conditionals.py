@@ -148,8 +148,8 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
 		l = set()
 		for x in c:
 			if isinstance(x, boolean.base):
-				self.assertEqual(len(x.solutions()), 1)
-				f = x.solutions()[0]
+				self.assertEqual(len(x.dnf_solutions()), 1)
+				f = x.dnf_solutions()[0]
 			else:
 				f = [x]
 			t = set()

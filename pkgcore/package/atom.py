@@ -166,14 +166,14 @@ class atom(boolean.AndRestriction):
 		# force jitting of it.
 		del self.restrictions
 
-	def itersolutions(self, full_solution_expansion=False):
+	def iter_dnf_solutions(self, full_solution_expansion=False):
 		if full_solution_expansion:
-			return boolean.AndRestriction.itersolutions(self, full_solution_expansion=True)
+			return boolean.AndRestriction.iter_dnf_solutions(self, full_solution_expansion=True)
 		return iter([[self]])
 
 	def cnf_solutions(self, full_solution_expansion=False):
 		if full_solution_expansion:
-			return boolean.AndRestriction.solutions(self, full_solution_expansion=True)
+			return boolean.AndRestriction.cnf_solutions(self, full_solution_expansion=True)
 		return [[self]]
 
 	def __getattr__(self, attr):

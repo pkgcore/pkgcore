@@ -75,8 +75,10 @@ class base(restriction.base):
 
 	force_False, force_True = match, match
 
-	def solutions(self, full_solution_expansion=False):
+	def dnf_solutions(self, full_solution_expansion=False):
 		raise NotImplementedError()
+
+	cnf_solutions = iter_dnf_solutions = iter_cnf_solutions = dnf_solutions
 
 	def __getitem__(self, key):
 		return self.restrictions[key]
@@ -192,9 +194,9 @@ class AndRestriction(base):
 			return True
 		return False
 
-	def itersolutions(self, full_solution_expansion=False):
+	def iter_dnf_solutions(self, full_solution_expansion=False):
 		if self.negate:
-			raise NotImplementedError("negation for solutions on AndRestriction isn't implemented yet")
+			raise NotImplementedError("negation for dnf_solutions on AndRestriction isn't implemented yet")
 		if not self.restrictions:
 			yield []
 			return
@@ -202,7 +204,7 @@ class AndRestriction(base):
 		optionals = []
 		for x in self.restrictions:
 			if isinstance(x, base):
-				s2 = x.solutions(full_solution_expansion=full_solution_expansion)
+				s2 = x.dnf_solutions(full_solution_expansion=full_solution_expansion)
 				assert s2
 				if len(s2) == 1:
 					hardreqs.extend(s2[0])
@@ -224,8 +226,8 @@ class AndRestriction(base):
 				import pdb;pdb.set_trace()
 			yield solution
 
-	def solutions(self, **kwds):
-		return list(self.itersolutions(**kwds))
+	def dnf_solutions(self, **kwds):
+		return list(self.iter_dnf_solutions(**kwds))
 
 	def cnf_solutions(self, full_solution_expansion=False):
 		if self.negate:
@@ -279,15 +281,15 @@ class OrRestriction(base):
 		return dcnf
 				
 
-	def solutions(self, full_solution_expansion=False):
+	def dnf_solutions(self, full_solution_expansion=False):
 		if self.negate:
-			raise NotImplementedError("OrRestriction.solutions doesn't yet support self.negate")
+			raise NotImplementedError("OrRestriction.dnf_solutions doesn't yet support self.negate")
 		if not self.restrictions:
 			return [[]]
 		choices = []
 		for x in self.restrictions:
 			if isinstance(x, base):
-				s = x.solutions(full_solution_expansion=full_solution_expansion)
+				s = x.dnf_solutions(full_solution_expansion=full_solution_expansion)
 				# must be a solution.
 				assert s
 				choices.extend(s)
@@ -296,8 +298,8 @@ class OrRestriction(base):
 
 		return choices
 
-	def itersolutions(self, **kwds):
-		return iter(self.solutions(**kwds))
+	def iter_dnf_solutions(self, **kwds):
+		return iter(self.dnf_solutions(**kwds))
 
 	def force_True(self, pkg, *vals):
 		pvals = [pkg]

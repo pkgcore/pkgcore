@@ -18,7 +18,7 @@ class CheatingIter(object):
 		if idx < 0:
 			raise IndexError("piss off, I don't like negative indexes")
 		elif idx < self._position or self._position == -1:
-			self._iter_obj = self._src.itersolutions()
+			self._iter_obj = self._src.iter_dnf_solutions()
 			self._position = -1
 
 		if idx != self._position:
@@ -33,7 +33,7 @@ class CheatingIter(object):
 		return self._item
 		
 	def __iter__(self):
-		return self._src.itersolutions()
+		return self._src.iter_dnf_solutions()
 
 class choice_point(object):
 

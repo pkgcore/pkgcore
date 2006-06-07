@@ -192,32 +192,6 @@ class AndRestriction(base):
 			return True
 		return False
 
-	def orig_solutions(self, full_solution_expansion=False):
-		if self.negate:
-			raise NotImplementedError("negation for solutions on AndRestriction isn't implemented yet")
-
-		flattened_matrix = []
-		s = []
-		for x in self.restrictions:
-			if isinstance(x, base):
-				s2 = x.solutions(full_solution_expansion=full_solution_expansion)
-				# there *must* be a solution returned.
-				assert s2
-				if len(s2) == 1:
-					flattened_matrix.extend(s2[0])
-				else:
-					s.append(s2)
-			else:
-				flattened_matrix.append(x)
-
-		# matrix multiplication.
-		flattened_matrix = [flattened_matrix]
-
-		for current_s in s:
-			flattened_matrix = list(x + y for x in current_s for y in flattened_matrix)
-
-		return flattened_matrix
-
 	def itersolutions(self, full_solution_expansion=False):
 		if self.negate:
 			raise NotImplementedError("negation for solutions on AndRestriction isn't implemented yet")

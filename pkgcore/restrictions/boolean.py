@@ -10,7 +10,7 @@ __all__ = ("AndRestriction", "OrRestriction", "XorRestriction")
 
 from itertools import islice
 from pkgcore.util.compatibility import any, all
-import restriction
+from pkgcore.restrictions import restriction
 
 
 class base(restriction.base):
@@ -191,7 +191,7 @@ class AndRestriction(base):
 			return True
 		return False
 
-	def solutions(self, full_solution_expansion=False):
+	def orig_solutions(self, full_solution_expansion=False):
 		if self.negate:
 			raise NotImplementedError("negation for solutions on AndRestriction isn't implemented yet")
 
@@ -217,6 +217,51 @@ class AndRestriction(base):
 
 		return flattened_matrix
 
+	def itersolutions(self, full_solution_expansion=False):
+		if self.negate:
+			raise NotImplementedError("negation for solutions on AndRestriction isn't implemented yet")
+		if not self.restrictions:
+			yield []
+			return
+		hardreqs = []
+		optionals = []
+		for x in self.restrictions:
+			if isinstance(x, base):
+				s2 = x.solutions(full_solution_expansion=full_solution_expansion)
+				assert s2
+				if len(s2) == 1:
+					hardreqs.extend(s2[0])
+				else:
+					optionals.append(s2)
+			else:
+				hardreqs.append(x)
+		def f(arg, *others):
+			if others:
+				for node in arg:
+					for node2 in f(*others):
+						yield node + node2
+			else:
+				for node in arg:
+					yield node
+
+		for solution in f([hardreqs], *optionals):
+			if not isinstance(solution, (tuple, list)):
+				import pdb;pdb.set_trace()
+			yield solution
+
+	def solutions(self, **kwds):
+		return list(self.itersolutions(**kwds))
+
+	def cnf_solutions(self, full_solution_expansion=False):
+		if self.negate:
+			raise NotImplementedError("negation for solutions on AndRestriction isn't implemented yet")
+		andreqs = []
+		for x in self.restrictions:
+			if isinstance(x, base):
+				andreqs.extend(x.cnf_solutions(full_solution_expansion=full_solution_expansion))
+			else:
+				andreqs.append([x])
+		return andreqs
 
 	def __str__(self):
 		if self.negate:
@@ -230,6 +275,34 @@ class OrRestriction(base):
 
 	def match(self, vals):
 		return any(rest.match(vals) for rest in self.restrictions) != self.negate
+
+	def cnf_solutions(self, full_solution_expansion=False):
+		if self.negate:
+			raise NotImplementedError("OrRestriction.solutions doesn't yet support self.negate")
+
+		dcnf = []
+		cnf = []
+		for x in self.restrictions:
+			if isinstance(x, base):
+				s2 = x.cnf_solutions(full_solution_expansion=full_solution_expansion)
+				if len(s2) == 1:
+					dcnf.extend(s2[0])
+				else:
+					cnf.append(list(y[0] for y in s2))
+
+		def f(arg, *others):
+			if others:
+				for node2 in f(*others):
+					yield arg + node2
+			else:
+				yield [arg]
+
+		# combinatorial explosion.  if it's got cnf, we peel off one of each and smash append to the dcnf.
+		dcnf = [dcnf]
+		for andreq in cnf:
+			dcnf = list([x] + y for x in andreq for y in dcnf)
+		return dcnf
+				
 
 	def solutions(self, full_solution_expansion=False):
 		if self.negate:
@@ -248,6 +321,8 @@ class OrRestriction(base):
 
 		return choices
 
+	def itersolutions(self, **kwds):
+		return iter(self.solutions(**kwds))
 
 	def force_True(self, pkg, *vals):
 		pvals = [pkg]

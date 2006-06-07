@@ -128,13 +128,30 @@ class tree(object):
 		solutions.
 		"""
 
+		if sorter is None:
+			sorter = iter
+
+		if isinstance(restrict, atom):
+			candidates = [restrict.key]
+		else:
+			candidates = self._identify_candidates(restrict, sorter)
+
+		for pkg in self._internal_match(candidates, restrict, sorter):
+			yield pkg
+
+	def _internal_match(self, candidates, restrict, sorter):
+		#actual matching.
+		for catpkg in candidates:
+			for pkg in sorter(self.package_class(catpkg+"-"+ver) for ver in self.versions.get(catpkg, [])):
+				if restrict.match(pkg):
+					yield pkg
+
+	def _identify_candidates(self, restrict, sorter):
 		pkg_restrict = set()
 		cat_restrict = set()
 		cat_exact = set()
 		pkg_exact = set()
 
-		if sorter is None:
-			sorter = iter
 		for x in collect_package_restrictions(restrict, ["category", "package"]):
 			if x.attr == "category":
 				cat_restrict.add(x.restriction)
@@ -147,39 +164,40 @@ class tree(object):
 			e.update(l)
 
 		if cat_exact:
-			cat_restrict.add(values.ContainmentMatch(*cats_exact))
-		del cat_exact
-		if not cat_restrict:
-			cats_iter = (x for x in sorter(self.categories))
+			if not cat_restrict and len(cat_exact) == 1:
+				if not pkg_restrict and len(pkg_exact) == 1:
+					return ["%s/%s" % (cat_exact.pop(), pkg_exact.pop())]
+				cats_iter = sorter(self.categories.get(cat_exact[0], []))
+			else:
+				cat_restrict.add(values.ContainmentMatch(*cats_exact))
+				cats_iter = sorter(x for x in self.categories if any(True for r in cat_restrict if r.match(x)))
+		elif cat_restrict:
+			cats_iter = sorter(x for x in self.categories if any(True for r in cat_restrict if r.match(x)))
 		else:
-			cats_iter = (x for x in sorter(self.categories) if any(r.match(x) for r in cat_restrict))
+			cats_iter = sorter(self.categories)
 
 		if pkg_exact:
-			pkg_restrict.add(values.ContainmentMatch(*pkg_exact))
-		del pkg_exact
-		if pkg_restrict:
-			candidates = (self.packages.return_mangler((c,p)) for c in cats_iter for
-				p in sorter(self.packages.get(c, [])) if any(r.match(p) for r in pkg_restrict))
-		else:
-			if not cat_restrict:
+			if not pkg_restrict:
 				if sorter is iter:
-					candidates = iter(self.packages)
+					pkg_exact = tuple(pkg_exact)
 				else:
-					candidates = (self.packages.return_mangler((c, p)) for c in 
-						sorter(self.categories) for p in sorter(self.packages.get(c, [])))
+					pkg_exact = sorter(pkg_exact)
+				return (self.package.return_mangler((c,p)) for c in cats_iter for p in
+					pkg_exact)
 			else:
-				candidates = (self.packages.return_mangler((c,p)) 
-					for c in cats_iter for p in sorter(self.packages.get(c, [])))
-
-		for pkg in self._internal_match(candidates, restrict, sorter):
-			yield pkg
-
-	def _internal_match(self, candidates, restrict, sorter):
-		#actual matching.
-		for catpkg in candidates:
-			for pkg in sorter(self.package_class(catpkg+"-"+ver) for ver in self.versions[catpkg]):
-				if restrict.match(pkg):
-					yield pkg
+				pkg_restrict.add(values.ContainmentMatch(*pkg_exact))
+		
+		if pkg_restrict:
+			return (self.packages.return_mangler((c,p)) for c in cats_iter for
+				p in sorter(self.packages.get(c, [])) if any(True for r in pkg_restrict if r.match(p)))
+		elif not cat_restrict:
+			if sorter is iter:
+				return self.packages
+			else:
+				return (self.packages.return_mangler((c, p)) for c in 
+					cats_iter for p in sorter(self.packages.get(c, [])))
+		return (self.packages.return_mangler((c,p)) 
+			for c in cats_iter for p in sorter(self.packages.get(c, [])))
 
 	def notify_remove_package(self, pkg):
 		cp = "%s/%s" % (pkg.category, pkg.package)

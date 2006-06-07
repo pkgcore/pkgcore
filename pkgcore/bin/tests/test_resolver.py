@@ -75,7 +75,7 @@ if __name__ == "__main__":
 	vdb, repo = domain.vdb[0], domain.repos[0]
 	if not args:
 		if set_targets:
-			atoms = set_targets
+			atoms = []
 		else:
 			print "resolving sys-apps/portage since no atom supplied"
 			atoms = [atom("sys-apps/portage")]
@@ -108,7 +108,8 @@ if __name__ == "__main__":
 			atoms.append(atom(ops + key.rsplit("/", 1)[0] + "/" + text.rsplit("/",1)[-1]))
 		
 #		atoms = [atom(x) for x in args] + set_targets
-
+	if set_targets:
+		atoms += set_targets
 	atoms = stable_unique(atoms)
 	resolver = plan.merge_plan(vdb, repo, pkg_selection_strategy=strategy, verify_vdb=deep)
 	ret = True

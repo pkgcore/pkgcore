@@ -87,10 +87,10 @@ class StrExactMatch(StrMatch):
 			self.exact = str(exact)
 
 	def match(self, value):
-		if self.flags & re.I:
-			return (self.exact == str(value).lower()) != self.negate
+		if self.flags == re.I:
+			return (self.exact == value.lower()) != self.negate
 		else:	
-			return (self.exact == str(value)) != self.negate
+			return (self.exact == value) != self.negate
 
 	def intersect(self, other):
 		s1, s2 = self.exact, other.exact
@@ -131,7 +131,7 @@ class StrGlobMatch(StrMatch):
 
 	def match(self, value):
 		value = str(value)
-		if self.flags & re.I:
+		if self.flags == re.I:
 			value = value.lower()
 		if self.prefix:
 			f = value.startswith

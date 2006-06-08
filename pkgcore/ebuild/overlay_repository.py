@@ -7,6 +7,7 @@ from pkgcore.config import errors
 from pkgcore.ebuild import ebuild_repository, eclass_cache
 from pkgcore.util.file import read_dict
 from pkgcore.util.lists import unstable_unique
+from pkgcore.restrictions import packages
 import os, stat
 
 
@@ -50,6 +51,14 @@ class OverlayRepo(multiplex.tree):
 		
 		multiplex.tree.__init__(self, *repos)
 
+	def _get_packages(self, *category):
+		return tuple(unstable_unique(multiplex.tree._get_categories(self, *category)))
+
+	def _get_packages(self, category):
+		return tuple(unstable_unique(multiplex.tree._get_packages(self, category)))
+
+	def _get_versions(self, catpkg):
+		return tuple(unstable_unique(multiplex.tree._get_versions(self, catpkg)))
 
 	def itermatch(self, *a, **kwds):
 		s = set()
@@ -58,3 +67,6 @@ class OverlayRepo(multiplex.tree):
 				if pkg not in s:
 					yield pkg
 					s.add(pkg)
+
+	def __iter__(self):
+		return self.itermatch(packages.AlwaysTrue)

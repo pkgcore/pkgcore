@@ -53,3 +53,6 @@ class tree(prototype.tree):
 
 	def __getitem__(self, key):
 		return self.package_class(self.raw_repo[key])
+
+	def __iter__(self):
+		return (self.package_class(cpv) for cpv in self.raw_repo)

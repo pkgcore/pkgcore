@@ -45,7 +45,7 @@ class OverlayRepo(multiplex.tree):
 		for r in repos[1:]:
 			for k, v in master_mirrors.iteritems():
 				if k in r.mirrors:
-					r.mirrors[k] = unstable_unique(r.mirror[k] + v)
+					r.mirrors[k] = unstable_unique(r.mirrors[k] + v)
 				else:
 					r.mirrors[k] = v
 		

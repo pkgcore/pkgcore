@@ -6,6 +6,7 @@
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.strings import iter_tokens
 from pkgcore.util.iterables import expandable_chain
+from pkgcore.package.atom import atom
 
 def convert_use_reqs(uses):
 	assert len(uses)
@@ -160,7 +161,7 @@ class DepSet(boolean.AndRestriction):
 			if isinstance(cur_node, packages.Conditional):
 				conditions_stack.append(cur_node.restriction)
 				new_set.appendleft(list(cur_node.payload) + [None])
-			elif isinstance(cur_node, boolean.base):
+			elif isinstance(cur_node, boolean.base) and not isinstance(cur_node, atom):
 				new_set.appendleft(cur_node.restrictions)
 			elif cur_node is None:
 				conditions_stack.pop()

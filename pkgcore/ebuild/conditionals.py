@@ -100,9 +100,13 @@ class DepSet(boolean.AndRestriction):
 		self.restrictions = tuple(self.restrictions)
 
 
-	def evaluate_depset(self, cond_dict):
+	def evaluate_depset(self, cond_dict, tristate_filter=None):
 		"""passed in a depset, does lookups of the node in cond_dict.
-		no entry in cond_dict == conditional is off, else the bool value of the key's val in cond_dict"""
+		no entry in cond_dict == conditional is off, else the bool value of the key's val in cond_dict
+		
+		tristate filter is a control; if specified, must be a container of conditionals to lock to cond_dict.
+		during processing, if it's not in tristate_filter will automatically enable the payload
+		(regardless of the conditionals negation)"""
 
 		if not self.has_conditionals:
 			return self
@@ -119,7 +123,17 @@ class DepSet(boolean.AndRestriction):
 					restricts[-1].append(node)
 					continue
 				if isinstance(node, packages.Conditional):
-					if not (node.restriction.match(cond_dict) and node.payload):
+					if not node.payload:
+						continue
+					elif tristate_filter is not None:
+						assert len(node.restriction.vals) == 1
+						val = list(node.restriction.vals)[0]
+						if val in tristate_filter:
+							# if val is forced true, but the check is negation ignore it
+							# if !mips != mips
+							if (val in cond_dict) != node.restriction.negate:
+								continue
+					elif not node.restriction.match(cond_dict):
 						continue
 					stack.append(packages.AndRestriction)
 					stack.append(iter(node.payload))

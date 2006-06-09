@@ -42,7 +42,6 @@ class DepSet(boolean.AndRestriction):
 
 		raw_conditionals = []
 		depsets = [self.restrictions]
-		use_asserts = []
 
 		words = iter_tokens(dep_str, splitter=" \t\n")
 		try:
@@ -54,13 +53,10 @@ class DepSet(boolean.AndRestriction):
 						raise ParseError(dep_str)
 					elif raw_conditionals[-1].endswith('?'):
 						self._node_conds = True
-#						for x in (y for y in depsets[-1] if not isinstance(y, packages.Conditional)):
-#							self.node_conds.setdefault(x, []).append(use_asserts[-1])
 
 						c = convert_use_reqs((raw_conditionals[-1][:-1],))
 
 						depsets[-2].append(packages.Conditional("use", c, tuple(depsets[-1])))
-						use_asserts.pop(-1)
 					else:
 						depsets[-2].append(operators[raw_conditionals[-1]](finalize=True, *depsets[-1]))
 
@@ -85,8 +81,6 @@ class DepSet(boolean.AndRestriction):
 					# push another frame on
 					depsets.append([])
 					raw_conditionals.append(k)
-					if k.endswith("?"):
-						use_asserts.append(convert_use_reqs([x[:-1] for x in raw_conditionals if x.endswith("?")]))
 
 				elif "(" in k or ")" in k or "|" in k:
 					raise ParseError(dep_str, k)

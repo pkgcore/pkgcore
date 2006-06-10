@@ -96,7 +96,8 @@ class OnDiskProfile(profiles.base):
 		for fp, i in loop_iter_read(os.path.join(prof, "packages") for prof in stack):
 			for p in i:
 				if p[0] == "-":
-					try:	pkgs.remove(p[1:])
+					try:
+						pkgs.remove(p[1:])
 					except KeyError:
 						logging.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
 				else:	pkgs.add(p)
@@ -118,7 +119,8 @@ class OnDiskProfile(profiles.base):
 		for fp, i in loop_iter_read(os.path.join(prof, "use.mask") for prof in stack):
 			for p in i:
 				if p[0] == "-":
-					try:	use_mask.remove(p[1:])
+					try:
+						use_mask.remove(p[1:])
 					except KeyError:
 						logging.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
 				else:
@@ -132,8 +134,9 @@ class OnDiskProfile(profiles.base):
 		for fp, i in loop_iter_read(os.path.join(prof, "package.mask") for prof in stack + [self.basepath]):
 			for p in i:
 				if p[0] == "-":
-					try:	maskers.remove(p[1:])
-					except KeyError:
+					try:
+						maskers.remove(p[1:])
+					except ValueError:
 						logging.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
 				else:
 					maskers.extend([p])

@@ -96,10 +96,10 @@ def configFromMakeConf(location="/etc/"):
 		d2["cache"] = "%s cache" % tree_loc
 		new_config[tree_loc] = basics.HardCodedConfigSection(tree_loc, d2)
 		if rsync_portdir_cache and tree_loc == portdir:
-			c = {"type": "cache", "location": tree_loc, "label": "%s cache" % tree_loc, 
+			c = {"type": "cache", "location": tree_loc, "label": tree_loc, 
 				"class": "pkgcore.cache.metadata.database"}
 		else:
-			c = {"type": "cache", "location": "%s/var/cache/edb/dep" % config_root, "label": "%s cache" % tree_loc,
+			c = {"type": "cache", "location": "%s/var/cache/edb/dep" % config_root, "label": tree_loc,
 				"class": "pkgcore.cache.flat_hash.database"}
 		new_config["%s cache" % tree_loc] = \
 			basics.ConfigSectionFromStringDict("%s cache" % tree_loc, c)

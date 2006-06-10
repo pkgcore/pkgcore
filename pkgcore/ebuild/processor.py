@@ -487,10 +487,10 @@ def expected_ebuild_env(pkg, d=None):
 	d["P"]  = "-".join((pkg.package, pkg.version))
 	d["PN"] = pkg.package
 	d["PV"] = pkg.version
-	if pkg.revision is not None:
-		d["PR"] = "r" + str(pkg.revision)
+	if pkg.revision is None:
+		d["PR"] = "r0"
 	else:
-		d["PR"] = ""
+		d["PR"] = "r%i" % pkg.revision
 	d["PVR"] = pkg.fullver
 	d["EBUILD"] = pkg.path
 	d["PATH"] = ":".join(EBUILD_ENV_PATH + d.get("PATH", "").split(":"))

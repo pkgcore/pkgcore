@@ -24,12 +24,13 @@ def reclaim_threads(threads):
 
 
 if __name__ == "__main__":
-	if len(sys.argv) > 2:
-		print "need a single optional arg, # of threads to spawn"
+	if len(sys.argv) not in (2,3) or "--help" in sys.argv or "-h" in sys.argv:
+		print "need at least one arg, repo to regen; optional arg, # of threads to spawn"
 		sys.exit(1)
-	elif len(sys.argv) == 2:
+	repo_name = sys.argv[1]
+	if len(sys.argv) == 3:
 		try:
-			thread_count = int(sys.argv[1])
+			thread_count = int(sys.argv[2])
 			if thread_count < 1:
 				raise ValueError
 		except ValueError:
@@ -37,7 +38,13 @@ if __name__ == "__main__":
 			sys.exit(1)
 	else:
 		thread_count = 1
-	repo = load_config().repo["rsync repo"]
+	conf = load_config()
+	try:
+		repo = conf.repo[repo_name]
+	except KeyError:
+		print "repo %s wasn't found: known repos-\n%s" % (repr(repo_name), ", ".join(str(x) for x 
+			in conf.repo.iterkeys()))
+		sys.exit(1)
 	start_time = time.time()
 	count = 0
 	if thread_count == 1:

@@ -131,7 +131,7 @@ class DepSet(boolean.AndRestriction):
 						if val in tristate_filter:
 							# if val is forced true, but the check is negation ignore it
 							# if !mips != mips
-							if (val in cond_dict) != node.restriction.negate:
+							if (val in cond_dict) == node.restriction.negate:
 								continue
 					elif not node.restriction.match(cond_dict):
 						continue

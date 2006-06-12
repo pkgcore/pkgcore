@@ -130,18 +130,18 @@ class OnDiskProfile(profiles.base):
 		del use_mask
 		self.bashrc = tuple(map(local_source, filter(os.path.exists, (os.path.join(x, "profile.bashrc") for x in stack))))
 
-		maskers = []
+		maskers = set()
 		for fp, i in loop_iter_read(os.path.join(prof, "package.mask") for prof in stack + [self.basepath]):
 			for p in i:
 				if p[0] == "-":
 					try:
 						maskers.remove(p[1:])
-					except ValueError:
+					except KeyError:
 						logging.warn("%s is reversed in %s, but isn't set yet!" % (p[1:], fp))
 				else:
-					maskers.extend([p])
+					maskers.add(p)
 
-		self.maskers = tuple(atom(x) for x in maskers)
+		self.maskers = tuple(set(self.visibility).union(atom(x) for x in maskers))
 		del maskers
 
 		d = {}

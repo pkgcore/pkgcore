@@ -82,8 +82,6 @@ class domain(pkgcore.config.domain.domain):
 		# voodoo, unfortunately (so it goes)
 		# break this up into chunks once it's stabilized (most of code here has already, but still more to add)
 		pkg_maskers, pkg_unmaskers, pkg_keywords, pkg_license = list(profile.maskers), [], [], []
-		if profile.visibility:
-			pkg_maskers.extend(profile.visibility)
 
 		for key, val, action in (("package.mask", pkg_maskers, atom), ("package.unmask", pkg_unmaskers, atom),
 			("package.keywords", pkg_keywords, package_keywords_splitter),

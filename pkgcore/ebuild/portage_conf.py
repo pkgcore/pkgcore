@@ -14,12 +14,10 @@ def configFromMakeConf(location="/etc/"):
 
 	config_root = os.environ.get("CONFIG_ROOT", "/") + "/"
 	base_path = os.path.join(config_root, location.strip("/"))
-	make_globals = os.path.join(base_path, "make.globals")
-	make_conf = os.path.join(base_path, "make.conf")
 
 	# this isn't preserving incremental behaviour for features/use unfortunately
-	conf_dict = read_bash_dict(config_root + make_globals)
-	conf_dict.update(read_bash_dict(config_root + make_conf, vars_dict=conf_dict))
+	conf_dict = read_bash_dict(os.path.join(base_path, "make.globals"))
+	conf_dict.update(read_bash_dict(os.path.join(base_path, "make.conf"), vars_dict=conf_dict))
 	conf_dict.setdefault("PORTDIR", "/usr/portage")
 	root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
 
@@ -59,10 +57,10 @@ def configFromMakeConf(location="/etc/"):
 	portdir = normpath(conf_dict.pop("PORTDIR").strip())
 	portdir_overlays = map(normpath, conf_dict.pop("PORTDIR_OVERLAY", "").split())
 
-	cache_config = {"type": "cache", "location": "%s/var/cache/edb/dep" % config_root, "label": "make_conf_overlay_cache"}
+	cache_config = {"type": "cache", "location": "%s/var/cache/edb/dep" % config_root.rstrip("/"), "label": "make_conf_overlay_cache"}
 	pcache = None
-	if os.path.exists(config_root+"portage/modules"):
-		pcache = read_dict(config_root+"portage/modules").get("portdbapi.auxdbmodule", None)
+	if os.path.exists(base_path+"portage/modules"):
+		pcache = read_dict(base_path+"portage/modules").get("portdbapi.auxdbmodule", None)
 	
 	features = conf_dict.get("FEATURES", "").split()
 	
@@ -99,7 +97,7 @@ def configFromMakeConf(location="/etc/"):
 			c = {"type": "cache", "location": tree_loc, "label": tree_loc, 
 				"class": "pkgcore.cache.metadata.database"}
 		else:
-			c = {"type": "cache", "location": "%s/var/cache/edb/dep" % config_root, "label": tree_loc,
+			c = {"type": "cache", "location": "%s/var/cache/edb/dep" % config_root.rstrip("/"), "label": tree_loc,
 				"class": "pkgcore.cache.flat_hash.database"}
 		new_config["%s cache" % tree_loc] = \
 			basics.ConfigSectionFromStringDict("%s cache" % tree_loc, c)

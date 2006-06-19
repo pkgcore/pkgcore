@@ -1,14 +1,18 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import logging, os
-from pkgcore.util.repo_utils import get_virtual_repos
+import os
 from pkgcore.util.compatibility import any
 from pkgcore.util.iterables import caching_iter
-from pkgcore.package import atom, cpv, mutated
 from pkgcore.restrictions import packages, restriction, boolean, values
 from pkgcore.config.introspect import ConfigHint
-from pkgcore.util.xml import etree
+from pkgcore.util.demandload import demandload
+
+demandload(globals(), "pkgcore.util.xml:etree " +
+	"pkgcore.util.repo_utils:get_virtual_repos " +
+	"pkgcore.package:atom,cpv,mutated " +
+	"logging")
+
 
 class KeyedAndRestriction(boolean.AndRestriction):
 

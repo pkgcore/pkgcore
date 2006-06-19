@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os, logging
+import os
 from pkgcore.config import profiles
 from pkgcore.util.file import iter_read_bash, read_bash_dict
 from pkgcore.util.currying import pre_curry
@@ -11,6 +11,8 @@ from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.repository import virtual
 from pkgcore.package import cpv
+from pkgcore.util.demandload import demandload
+demandload(globals(), "logging")
 
 # Harring sez-
 # This should be implemented as an auto-exec config addition.
@@ -173,13 +175,8 @@ class OnDiskProfile(profiles.base):
 			for p in i:
 				p = p.split()
 				c = cpv.CPV(p[0])
-#				version = c.version
-#				if version is None:
-#					version = "0"
-#				virtuals.setdefault(c.package, {})[version] = atom(p[1])
 				virtuals[c.package] = atom(p[1])
 
-#		self.virtuals = virtual.tree(lambda: virtuals)
 		self.virtuals = pre_curry(AliasedVirtuals, virtuals)
 		# collapsed make.defaults.  now chunkify the bugger.
 		self.conf = d
@@ -198,6 +195,7 @@ class ForgetfulDict(dict):
 	
 	def update(self, other):
 		return
+
 
 class AliasedVirtuals(virtual.tree):
 	def __init__(self, virtuals, repo):

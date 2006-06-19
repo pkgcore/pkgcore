@@ -1,12 +1,26 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.config import basics, errors
+import os
+from pkgcore.config import basics, introspect
 from pkgcore.util.file import read_bash_dict, read_dict
 from pkgcore.fs.util import normpath
 from pkgcore import const
 from pkgcore.util.modules import load_attribute
-import os, errno
+from pkgcore.util.demandload import demandload
+demandload(globals(), "errno pkgcore.config:errors pkgcore.pkgsets.glsa:SecurityUpgrades")
+
+
+def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
+	arch = profile.conf.get("ARCH")
+	if arch is None:
+		raise errors.InstantiationError("pkgcore.ebuild.portage_conf.SecurityUpgradesViaProfile", 
+			(repo, vdb, profile), {}, "arch wasn't set in profiles")
+	return SecurityUpgrades(ebuild_repo, vdb, arch)
+
+SecurityUpgradesViaProfile.pkgcore_config_type = introspect.ConfigHint(types={
+	"ebuild_repo":"section_ref", "vdb":"section_ref", "profile":"section_ref"})
+
 
 def configFromMakeConf(location="/etc/"):
 	# this actually differs from portage parsing- we allow make.globals to provide vars used in make.conf, 
@@ -110,9 +124,9 @@ def configFromMakeConf(location="/etc/"):
 	else:
 		new_config["portdir"] = new_config[portdir]
 
-	new_config["glsa"] = basics.ConfigSectionFromStringDict("glsa",
-		{"type": "pkgset", "class": "pkgcore.pkgsets.glsa.SecurityUpgrades",
-		"ebuild_repo": "portdir", "vdb": "vdb"})
+	new_config["glsa"] = basics.HardCodedConfigSection("glsa",
+		{"type": "pkgset", "class": SecurityUpgradesViaProfile,
+		"ebuild_repo": "portdir", "vdb": "vdb", "profile":"profile"})
 	
 	# finally... domain.
 	d = {"repositories": "portdir", "fetcher": "fetcher", "default": "yes", 
@@ -124,3 +138,4 @@ def configFromMakeConf(location="/etc/"):
 		conf_dict)
 
 	return new_config		
+

@@ -1,8 +1,8 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os, sys
-from pkgcore.util.modules import load_module
+from pkgcore.util.demandload import demandload
+demandload(globals(), "os sys pkgcore.util.modules:load_module")
 
 chksum_types = {}
 __inited__ = False
@@ -27,7 +27,6 @@ def get_handlers(requested=None):
 def init(additional_handlers=None):
 	"""init the chksum subsystem.  scan the dir, find what handlers are available, etc.
 	if desired to register additional, or override existing, pass in a dict of type:func"""
-	import sys, os, logging
 
 	if additional_handlers is not None and not isinstance(additional_handlers, dict):
 		raise TypeError("additional handlers must be a dict!")

@@ -1,10 +1,12 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+import operator
 from pkgcore.util.currying import pre_curry, pretty_docs
 from pkgcore.restrictions import values, restriction, boolean
-import operator
-import logging
+from pkgcore.util.demandload import demandload
+demandload(globals(), "logging")
+
 package_type = "package"
 
 class PackageRestriction(restriction.base):

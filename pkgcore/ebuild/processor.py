@@ -12,9 +12,12 @@ __all__ = ("request_ebuild_processor", "release_ebuild_processor", "EbuildProces
 inactive_ebp_list = []
 active_ebp_list = []
 
-import pkgcore.spawn, os, logging
+import pkgcore.spawn, os
 from pkgcore.util.currying import post_curry, pre_curry
 from pkgcore.const import depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH
+from pkgcore.util.demandload import demandload
+demandload(globals(), "logging")
+
 
 def shutdown_all_processors():
 	"""kill off all known processors"""

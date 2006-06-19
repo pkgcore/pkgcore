@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os, operator, errno, weakref
+import os, operator, weakref
 from pkgcore.package import metadata
 from pkgcore.ebuild import conditionals
 from pkgcore.package.atom import atom
@@ -16,6 +16,8 @@ from pkgcore.fetch import fetchable, mirror
 from pkgcore.ebuild import const, processor
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.xml:etree")
+demandload(globals(), "errno")
+
 
 # utility func.
 def create_fetchable_from_uri(chksums, mirrors, uri):
@@ -103,7 +105,7 @@ def pull_metadata_xml(self, attr):
 			self._pkg_metadata_shared[1] = tuple(str(x.text) for x in tree.findall("herd"))
 
 		except IOError, i:
-			if i.errno != 22:
+			if i.errno != errno.ENOENT:
 				raise
 			self._pkg_metadata_shared[0] = ()
 			self._pkg_metadata_shared[1] = ()

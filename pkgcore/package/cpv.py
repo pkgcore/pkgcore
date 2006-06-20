@@ -72,7 +72,7 @@ class CPV(base):
 	del x
 
 	def __eq__(self, other):
-		if not isinstance(other, self.__class__):
+		if not isinstance(other, CPV):
 			return False
 		return self.hash == other.hash
 

@@ -1,11 +1,12 @@
 #!/usr/bin/python
 
 from pkgcore.config import load_config
-from pkgcore.resolver import plan
 from pkgcore.package.atom import atom
 from pkgcore.util.lists import flatten, stable_unique
 from pkgcore.util.repo_utils import get_raw_repos
 from pkgcore.util.commandline import generate_restriction, collect_ops
+from pkgcore.ebuild import resolver
+
 
 def pop_paired_args(args, arg, msg):
 	rets = []
@@ -41,25 +42,22 @@ if __name__ == "__main__":
 	args = sys.argv[1:]
 
 	if pop_arg(args, "-h", "--help"):
-		print "args supported, [-D || --deep], [[-u || --upgrade] | [-m || --max-upgrade]] and -s (system|world) [-d || --debug]"
+		print "args supported, [-D || --deep], [[-u || --upgrade]] and -s (system|world) [-d || --debug]"
 		print "can specify additional atoms when specifying -s, no atoms/sets available, defaults to sys-apps/portage"
 		sys.exit(1)
 	if pop_arg(args, "-d", "--debug"):
-		plan.limiters.add(None)
+		resolver.plan.limiters.add(None)
 	trigger_pdb = pop_arg(args, "-p", "--pdb")
 	empty_vdb = pop_arg(args, "-e", "--empty")
 	upgrade = pop_arg(args, "-u", "--upgrade")
-	max = pop_arg(args, "-m", "--max-upgrade")
 	ignore_failures = pop_arg(args, None, "--ignore-failures")
 	if max and max == upgrade:
 		print "can only choose max, or upgrade"
 		sys.exit(1)
-	if max:
-		strategy = plan.merge_plan.force_max_version_strategy
-	elif upgrade:
-		strategy = plan.merge_plan.prefer_highest_version_strategy
+	if upgrade:
+		resolver_kls = resolver.upgrade_resolver
 	else:
-		strategy = plan.merge_plan.prefer_reuse_strategy
+		resolver_kls = resolver.min_install_resolver
 
 	deep = bool(pop_arg(args, "-D", "--deep"))
 
@@ -111,7 +109,7 @@ if __name__ == "__main__":
 	if set_targets:
 		atoms += set_targets
 	atoms = stable_unique(atoms)
-	resolver = plan.merge_plan(vdb, repo, pkg_selection_strategy=strategy, verify_vdb=deep)
+	resolver = resolver_kls(vdb, repo, verify_vdb=deep)
 	ret = True
 	failures = []
 	import time

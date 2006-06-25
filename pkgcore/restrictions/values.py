@@ -255,7 +255,7 @@ class ContainmentMatch(base):
 
 	def match(self, val):
 		if isinstance(val, (str, unicode)):
-			return (val in self.vals) ^ self.negate
+			return any(True for fval in self.vals if fval in val) != self.negate
 
 		# this can, and should be optimized to do len checks- iterate over the smaller of the two
 		# see above about special casing bits.  need the same protection here, on the offchance

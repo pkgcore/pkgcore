@@ -91,6 +91,10 @@ class TestContainmentMatch(unittest.TestCase):
 				self.assertEquals(values.ContainmentMatch(negate=negate, disable_inst_caching=True, *x).match(y), ret != negate)
 		for negate in (True, False):
 			self.assertEquals(values.ContainmentMatch(all=True, negate=negate, *range(10)).match(range(10)), not negate)
+		self.assertEquals(values.ContainmentMatch("asdf").match("fdsa"), False)
+		self.assertEquals(values.ContainmentMatch("asdf").match("asdf"), True)
+		self.assertEquals(values.ContainmentMatch("asdf").match("aasdfa"), True)
+		self.assertEquals(values.ContainmentMatch("asdf", "bzip").match("pbzip2"), True)
 
 
 	def test__eq__(self):

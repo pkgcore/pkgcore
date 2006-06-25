@@ -8,19 +8,16 @@ from pkgcore.package import cpv, atom
 
 def convert_glob(token):
 	if len(filter(None, token.split("*"))) > 1:
-		raise TypeError("'*' must be specified at the end or beginning of a matching field, and are mutually exclusive")
+		raise TypeError("'*' must be specified at the end or beginning of a matching field")
 	if token.startswith("*"):
-		prefix = False
+		if token.endswith("*"):
+			return values.ContainmentMatch(token.strip("*"))
+		return values.StrGlobMatch(token.strip("*"), prefix=False)
 	elif token.endswith("*"):
-		prefix = True
-	else:
-		if not token:
-			return None
-		return values.StrExactMatch(token)
-	token = token.strip("*")
-	if not token:
+		return values.StrGlobMatch(token.strip("*"), prefix=True)
+	elif not token:
 		return None
-	return values.StrGlobMatch(token, prefix=prefix)
+	return values.StrExactMatch(token)
 
 def collect_ops(text):
 	i = 0

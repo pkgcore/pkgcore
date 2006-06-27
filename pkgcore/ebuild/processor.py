@@ -16,6 +16,7 @@ import pkgcore.spawn, os
 from pkgcore.util.currying import post_curry, pre_curry
 from pkgcore.const import depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH
 from pkgcore.util.demandload import demandload
+from pkgcore.os_data import portage_uid, portage_gid
 demandload(globals(), "logging")
 
 
@@ -106,7 +107,6 @@ class EbuildProcessor:
 		"""
 
 		self.ebd = EBUILD_DAEMON_PATH
-		from portage_data import portage_uid, portage_gid
 		spawn_opts = {}
 
 		if fakeroot and (sandbox or not userpriv):

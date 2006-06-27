@@ -266,6 +266,8 @@ class OrRestriction(base):
 					dcnf.extend(s2[0])
 				else:
 					cnf.append(list(y[0] for y in s2))
+			else:
+				dcnf.append(x)
 
 		def f(arg, *others):
 			if others:

@@ -54,6 +54,9 @@ class CachingIterTest(unittest.TestCase):
 		self.assertRaises(StopIteration, i.next)
 		self.assertEqual(list(c), range(20) + range(21, 100))
 
+	def test_init(self):
+		self.assertEquals(caching_iter(list(xrange(100)))[0], 0)
+
 	def test_full_consumption(self):
 		i = iter(xrange(100))
 		c = caching_iter(i)

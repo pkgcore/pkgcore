@@ -164,6 +164,7 @@ def iter_sort(sorter, *iterables):
 	l = []
 	for x in iterables:
 		try:
+			x = iter(x)
 			l.append([x.next(), x])
 		except StopIteration:
 			pass

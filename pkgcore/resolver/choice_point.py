@@ -3,7 +3,6 @@
 
 from pkgcore.util.compatibility import any
 from pkgcore.util.lists import stable_unique
-from pkgcore.util.iterables import caching_iter
 import operator
 
 class CheatingIter(object):
@@ -68,40 +67,44 @@ class choice_point(object):
 		orig_provides = self.provides
 
 		# lock step checks of each- it's possible for rdepend to push depend forward
-		rdep_idx = orig_match_idx = -1
+		starting_idx = rdep_idx = orig_match_idx = -1
 		try:
 			while orig_match_idx != self.matches_idx:
 				orig_match_idx = self.matches_idx
-				while any(True for x in self.depends if x in self.solution_filters):
-					self._dep_solutions[1] += 1
+				for idx, node in enumerate(self.depends):
+					node = [x for x in node if not x in self.solution_filters]
+					if not node:
+						self.matches_idx += 1
+						break
+					self.depends[idx] = node
 
 				# optimization.  don't redo rdep if it forced last redo, and matches hasn't changed
 				if rdep_idx != self.matches_idx:
-					while any(True for x in self.rdepends if x in self.solution_filters):
-						self._rdep_solutions[1] += 1
+					for idx, node in enumerate(self.rdepends):
+						node = [x for x in node if not x in self.solution_filters]
+						if not node:
+							self.matches_idx += 1
+							break
+						self.rdepends[idx] = node
 				rdep_idx = self.matches_idx
 		except IndexError:
 			# shot off the end, no solutions remain
 			self.matches_idx = None
-			return set(orig_dep + orig_rdep), orig_provides
-
-		s = set(self.depends + self.rdepends)
-		s.difference_update(orig_dep + orig_rdep)
-		return s, [x for x in self.provides if x not in orig_provides]
+		return self.matches_idx != starting_idx
 
 	def _common_property(self, existing, getter):
 		# are we beyond this matches solutions?
 		ret = None
 		if self.matches_idx == existing[0]:
 			try:
-				return existing[2][existing[1]]
+				return existing[2]
 			except IndexError:
 				self.matches_idx = self.matches_idx + 1
 		elif self.matches_idx is None:
 			raise IndexError
 		existing[0:3] = [self.matches_idx, 0,
-			CheatingIter(getter(self.matches[self.matches_idx]))]
-		return existing[2][existing[1]]
+			getter(self.matches[self.matches_idx]).cnf_solutions()]
+		return existing[2]
 
 	@property
 	def current_pkg(self):
@@ -125,7 +128,10 @@ class choice_point(object):
 
 	@property
 	def provides(self):
-		return self._common_property(self._provides_solutions, self.provides_getter)
+		if self.matches_idx != self._provides_solutions[0]:
+			self._provides_solutions = [self.matches_idx, 0, 
+				self.matches[self.matches_idx].provides]
+		return self._provides_solutions[2]
 
 	def __nonzero__(self):
 		if self.matches_idx is not None:

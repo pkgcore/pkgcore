@@ -257,6 +257,8 @@ class OrRestriction(base):
 		if self.negate:
 			raise NotImplementedError("OrRestriction.solutions doesn't yet support self.negate")
 
+		if not self.restrictions:
+			return []
 		dcnf = []
 		cnf = []
 		for x in self.restrictions:

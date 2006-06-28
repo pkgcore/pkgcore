@@ -125,4 +125,4 @@ class OrRestrictionTest(unittest.TestCase):
 			map(set, [[true, false], [true, true]]))
 		self.assertEquals(set(boolean.OrRestriction(boolean.OrRestriction(true, false), true).cnf_solutions()[0]),
 			set([true, false, true]))
-		self.assertEquals(boolean.OrRestriction().cnf_solutions(), [[]])
+		self.assertEquals(boolean.OrRestriction().cnf_solutions(), [])

@@ -11,7 +11,7 @@ class package(metadata.package):
 		if key == "rdepends":
 			val = self.data
 		elif key == "depends":
-			val = OrRestriction()
+			val = OrRestriction(finalize=True)
 		elif key == "provides":
 			val = OrRestriction()
 		elif key == "metapkg":

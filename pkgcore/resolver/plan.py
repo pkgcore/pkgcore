@@ -5,6 +5,7 @@ import itertools, operator
 from collections import deque
 from pkgcore.util.compatibility import any, all
 from pkgcore.util.iterables import caching_iter, iter_sort
+from pkgcore.util.mappings import OrderedDict
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.util.currying import pre_curry, post_curry
@@ -145,12 +146,11 @@ class merge_plan(object):
 	def __init__(self, dbs, per_repo_strategy, global_strategy=default_global_strategy, depset_reorder_strategy=default_depset_reorder):
 		if not isinstance(dbs, (list, tuple)):
 			dbs = [dbs]
-		# these should maintain ordering, dict doesn't...
-		self.all_dbs = dict((r, {}) for r in dbs)
+		self.all_dbs = OrderedDict((r, {}) for r in dbs)
 		self.cached_queries = {}
 		self.forced_atoms = set()
-		self.livefs_dbs = dict((k, v) for k,v in self.all_dbs.iteritems() if k.livefs)
-		self.dbs = dict((k,v) for k,v in self.all_dbs.iteritems() if not k.livefs)
+		self.livefs_dbs = OrderedDict((k, v) for k,v in self.all_dbs.iteritems() if k.livefs)
+		self.dbs = OrderedDict((k,v) for k,v in self.all_dbs.iteritems() if not k.livefs)
 		self.depset_reorder = depset_reorder_strategy
 		self.per_repo_strategy = per_repo_strategy
 		self.global_strategy = global_strategy
@@ -196,11 +196,13 @@ class merge_plan(object):
 					index = is_cycle(current_stack, datom, choices, "depends")
 					if index != -1:
 						# cycle.
-#						new_atom = packages.AndRestriction(datom, packages.Restriction("depends", 
-#							values.ContainmentMatch(datom, 
+
+#						v = values.ContainmentMatch(datom, negate=True)
+#						import pdb;pdb.set_trace()
+#						new_atom = packages.AndRestriction(self.current_atom, 
+#							PackageRestriction("depends", v), PackageRestriction("rdepends", v))
 #						import pdb;pdb.set_trace()
 						# reduce our options.
-
 						failure = self._rec_add_atom(datom, current_stack, self.livefs_dbs, depth=depth+1)
 					else:
 						failure = self._rec_add_atom(datom, current_stack, dbs, depth=depth+1)

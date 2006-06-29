@@ -134,6 +134,11 @@ def configFromMakeConf(location="/etc/"):
 	conf_dict.update({"repositories": "portdir", "fetcher": "fetcher", "default": "yes", 
 		"vdb": "vdb", "profile": "profile", "type": "domain"})
 
+	# finally... package.* additions
+	for f in ("package.mask", "package.unmask", "package.keywords", "package.use"):
+		fp = os.path.join(config_root, "etc", "portage", f)
+		if os.path.isfile(fp):
+			conf_dict[f] = fp
 	new_config["livefs domain"] = basics.ConfigSectionFromStringDict("livefs domain",
 		conf_dict)
 

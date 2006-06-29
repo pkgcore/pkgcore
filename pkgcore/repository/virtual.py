@@ -6,8 +6,9 @@ from pkgcore.package import virtual
 
 class tree(prototype.tree):
 
-	def __init__(self, grab_virtuals_func):
+	def __init__(self, grab_virtuals_func, livefs=False):
 		super(tree,self).__init__()
+		self.livefs = livefs
 		if not callable(grab_virtuals_func):
 			if not hasattr(grab_virtuals_func, "__getitem__"):
 				raise TypeError("grab_virtuals_func must be a callable")

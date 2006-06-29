@@ -22,4 +22,4 @@ def _grab_virtuals(parent_repo):
 
 def repository(*args, **kwargs):
 	r = vdb_repository(*args, **kwargs)
-	return multiplex.tree(r, virtual.tree(pre_curry(_grab_virtuals, r)))
+	return multiplex.tree(r, virtual.tree(pre_curry(_grab_virtuals, r), livefs=True))

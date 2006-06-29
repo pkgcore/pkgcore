@@ -203,9 +203,9 @@ class merge_plan(object):
 #							PackageRestriction("depends", v), PackageRestriction("rdepends", v))
 #						import pdb;pdb.set_trace()
 						# reduce our options.
-						failure = self._rec_add_atom(datom, current_stack, self.livefs_dbs, depth=depth+1)
+						failure = self._rec_add_atom(datom, current_stack, self.livefs_dbs, depth=depth+1, mode="depends")
 					else:
-						failure = self._rec_add_atom(datom, current_stack, dbs, depth=depth+1)
+						failure = self._rec_add_atom(datom, current_stack, dbs, depth=depth+1, mode="depends")
 					if failure:
 						if choices.reduce_atoms(datom):
 							# this means the pkg just changed under our feet.
@@ -235,10 +235,15 @@ class merge_plan(object):
 						# well.  we know the node is valid, so we can ignore this cycle.
 						failure = []
 					else:
-						# force limit_to_vdb to True to try and isolate the cycle to installed vdb components
-						failure = self._rec_add_atom(ratom, current_stack, self.livefs_dbs, depth=depth+1)
+						if current_stack[index][2] == "rdepends":
+							# contained rdepends cycle... ignore it.
+							pass
+							failure = []
+						else:
+							# force limit_to_vdb to True to try and isolate the cycle to installed vdb components
+							failure = self._rec_add_atom(ratom, current_stack, self.livefs_dbs, depth=depth+1, mode="rdepends")
 				else:
-					failure = self._rec_add_atom(ratom, current_stack, dbs, depth=depth+1)
+					failure = self._rec_add_atom(ratom, current_stack, dbs, depth=depth+1, mode="rdepends")
 				if failure:
 					# reduce.
 					if choices.reduce_atoms(ratom):
@@ -252,9 +257,9 @@ class merge_plan(object):
 		else: # all potentials were usable.
 			return additions, blocks
 
-	def _rec_add_atom(self, atom, current_stack, dbs, depth=0):
+	def _rec_add_atom(self, atom, current_stack, dbs, depth=0, mode="none"):
 		"""returns false on no issues (inserted succesfully), else a list of the stack that screwed it up"""
-		limit_to_vdb = False
+		limit_to_vdb = dbs == self.livefs_dbs
 		if atom in self.insoluble:
 			return [atom]
 		l = self.state.match_atom(atom)
@@ -296,7 +301,7 @@ class merge_plan(object):
 		else:
 			dprint("processing   %s%s", (depth *2 * " ", atom))
 
-		current_stack.append([atom, choices])
+		current_stack.append([atom, choices, mode])
 		saved_state = self.state.current_state()
 
 		blocks = []

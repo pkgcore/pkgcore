@@ -162,12 +162,14 @@ class OnDiskProfile(profiles.base):
 
 		d.setdefault("USE_EXPAND", '')
 		if isinstance(d["USE_EXPAND"], str):
-			d["USE_EXPAND"] = d["USE_EXPAND"].split()
-		for u in d["USE_EXPAND"]:
-			u2 = u.lower()+"_"
-			if u in d:
-				d["USE"].extend(u2 + x for x in d[u].split())
-				del d[u]
+			self.use_expand = tuple(d["USE_EXPAND"].split())
+		else:
+			self.use_expand = ()
+#		for u in d["USE_EXPAND"]:
+#			u2 = u.lower()+"_"
+#			if u in d:
+#				d["USE"].extend(u2 + x for x in d[u].split())
+#				del d[u]
 
 		# and... default virtuals.
 		virtuals = {}

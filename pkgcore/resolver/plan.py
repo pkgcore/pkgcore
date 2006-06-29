@@ -76,12 +76,46 @@ pkg_sort_highest = pre_curry(sorted, reverse=True)
 pkg_sort_lowest = sorted
 
 pkg_grabber = operator.itemgetter(0)
+def pkg_cmp_preferring_vdb(x, y):
+	if x > y:
+		return 1
+	elif x < y:
+		return -1
+	elif x.repo.livefs:
+		return 1
+	elif y.repo.livefs:
+		return -1
+	return 0
+
 def highest_iter_sort(l):
-	l.sort(key=pkg_grabber, reverse=True)
+	def f(x, y):
+		c = cmp(x,y)
+		if c:
+			return c
+		elif x.repo.livefs:
+			if y.repo.livefs:
+				return 0
+			return 1
+		elif y.repo.livefs:
+			return -1
+		return 0
+	l.sort(f, key=pkg_grabber, reverse=True)
+#	l.sort(key=pkg_grabber, reverse=True)
 	return l
 
 def lowest_iter_sort(l):
-	l.sort(key=pkg_grabber)
+	def f(x, y):
+		c = cmp(x,y)
+		if c:
+			return c
+		elif x.repo.livefs:
+			if y.repo.livefs:
+				return 0
+			return -1
+		elif y.repo.livefs:
+			return 1
+		return 0
+	l.sort(f, key=pkg_grabber)
 	return l
 
 def default_global_strategy(resolver, dbs, atom):

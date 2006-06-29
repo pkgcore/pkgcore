@@ -99,8 +99,10 @@ class domain(pkgcore.config.domain.domain):
 						raise MissingFile(settings[key], key)
 				del settings[key]
 
+		
 		inc_d = set(incrementals)
-		for x in profile.conf.keys():
+		inc_d.update(profile.use_expand)
+		for x in profile.conf:
 			if x in settings:
 				if x in inc_d:
 					# strings overwrite, lists append.
@@ -129,13 +131,20 @@ class domain(pkgcore.config.domain.domain):
 		del pkg_unmaskers, pkg_maskers
 		
 		use, license, default_keywords = [], [], []
-
+		self.use = use
 		master_license = []
 		for k,v in (("USE", use), ("ACCEPT_KEYWORDS", default_keywords), ("ACCEPT_LICENSE", master_license)):
 			if k not in settings:
 				raise Failure("No %s setting detected from profile, or user config" % k)
 			v.extend(filter_negations(k, settings[k]))
 			settings[k] = v
+
+		for u in profile.use_expand:
+			if k not in settings:
+				continue
+			u2 = u.lower()+"_"
+			if u in settings:
+				use.extend(u2 + x for x in settings[u].split())
 
 		if "ARCH" not in settings:
 			raise Failure("No ARCH setting detected from profile, or user config")

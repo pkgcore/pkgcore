@@ -48,7 +48,7 @@ class TestChoicePoint(unittest.TestCase):
 		self.assertEqual(c.reduce_atoms("ordep1"), True)
 		self.assertEqual(c.current_pkg.marker, 2)
 		c = self.gen_choice_point()
-		self.assertEqual(c.reduce_atoms("anddep2"), False)
+		self.assertEqual(c.reduce_atoms("anddep2"), True)
 		c = self.gen_choice_point()
 		c.reduce_atoms("anddep1")
 		self.assertRaises(IndexError, lambda :c.depends)

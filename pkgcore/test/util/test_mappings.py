@@ -260,3 +260,34 @@ class IndeterminantDictTest(unittest.TestCase):
 		self.assertEqual(d.get(2), None)
 		self.assertEqual(d.get(2,2), 2)
 		self.assertEqual(d.get(3), True)
+
+
+class TestOrderedDict(unittest.TestCase):
+
+	@staticmethod
+	def gen_dict():
+		return mappings.OrderedDict(enumerate(xrange(100)))
+	
+	def test_items(self):
+		self.assertEqual(list(self.gen_dict().iteritems()), 
+			list(enumerate(xrange(100))))
+		self.assertEqual(self.gen_dict().items(), 
+			list(enumerate(xrange(100))))
+	
+	def test_keys(self):
+		self.assertEqual(list(self.gen_dict().iterkeys()), list(xrange(100)))
+		self.assertEqual(self.gen_dict().keys(), list(xrange(100)))
+
+	def test_iter(self):
+		self.assertEqual(list(self.gen_dict()), list(xrange(100)))
+
+	def test_del(self):
+		d = self.gen_dict()
+		del d[50]
+		self.assertEqual(list(d), list(range(50) + range(51,100)))
+
+	def test_set(self):
+		d = self.gen_dict()
+		d.setdefault(120)
+		d.setdefault(110)
+		self.assertEqual(list(d), list(range(100)) + [120, 110])

@@ -3,6 +3,7 @@
 
 from itertools import imap, chain, ifilterfalse
 from pkgcore.util.currying import alias_class_method
+from collections import deque
 import UserDict
 
 
@@ -228,3 +229,57 @@ class StackedDict(UserDict.DictMixin):
 		raise TypeError("non modifiable")
 
 	__delitem__ = clear = __setitem__
+
+
+class OrderedDict(dict):
+	def __init__(self, pairs):
+		self._order = deque()
+		for k, v in pairs:
+			self[k] = v
+
+	def __setitem__(self, key, val):
+		if key not in self:
+			self._order.append(key)
+		dict.__setitem__(self, key, val)
+		
+	def __delitem__(self, key):
+		if key not in self:
+			raise KeyError(key)
+		for idx, o in enumerate(self._order):
+			if o == key:
+				break
+		del self._order[idx]
+		dict.__delitem__(self, key)
+	
+	def setdefault(self, key, default=None):
+		if not key in self:
+			self[key] = default
+		return self[key]
+
+	def __len__(self):
+		return len(self._order)
+	
+	def __iter__(self):
+		return self.iterkeys()
+	
+	def iterkeys(self):
+		return iter(self._order)
+	
+	def keys(self):
+		return list(self.iterkeys())
+	
+	def iteritems(self):
+		return (self[k] for k in self._order)
+	
+	def items(self):
+		return list(self.iteritems())
+	
+	def iteritems(self):						
+		return ((k, self[k]) for k in self._order)
+	
+	def items(self):
+		return list(self.iteritems())
+
+	def clear(self):
+		dict.clear(self)
+		self._order = deque()

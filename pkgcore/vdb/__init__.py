@@ -15,9 +15,9 @@ def _grab_virtuals(parent_repo):
 	for pkg_dict in virtuals.itervalues():
 		for full_ver, rdep_atoms in pkg_dict.iteritems():
 			if len(rdep_atoms) == 1:
-				pkg_dict[full_ver] = rdep_atoms[0].versioned_atom
+				pkg_dict[full_ver] = rdep_atoms[0].unversioned_atom
 			else:
-				pkg_dict[full_ver] = OrRestriction(finalize=True, *[x.versioned_atom for x in rdep_atoms])
+				pkg_dict[full_ver] = OrRestriction(finalize=True, *[x.unversioned_atom for x in rdep_atoms])
 	return virtuals
 
 def repository(*args, **kwargs):

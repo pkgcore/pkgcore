@@ -96,6 +96,10 @@ class CPV(base):
 	def versioned_atom(self):
 		return atom.atom("=%s" % self.cpvstr)
 
+	@property
+	def unversioned_atom(self):
+		return atom.atom(self.key)
+
 
 def ver_cmp(ver1, rev1, ver2, rev2):
 

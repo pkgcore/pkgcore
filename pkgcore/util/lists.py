@@ -70,3 +70,47 @@ def iter_flatten(l, skip_flattening=(basestring,), skip_func=None):
 def flatten(l, skip_flattening=(basestring,)):
 	"""flatten, returning a list rather then an iterable"""
 	return list(iter_flatten(l, skip_flattening=skip_flattening))
+
+
+class ChainedLists(object):
+	__slots__ = ("_lists", "__weakref__")
+	
+	def __init__(self, *lists):
+		# ensure they're iterable
+		for x in lists:
+			iter(x)
+			
+		self._lists = lists
+
+	def __len__(self):
+		return sum(len(l) for l in self._lists)
+
+	def __getitem__(self, idx):
+		if idx < 0:
+			idx += len(self)
+			if idx < 0:
+				raise IndexError
+		for l in self._lists:
+			l2 = len(l)
+			if idx < l2:
+				return l[idx]
+			idx -= l2
+		else:
+			raise IndexError
+	
+	def __setitem__(self, idx, val):
+		raise TypeError("not mutable")
+
+	def __delitem__(self, idx):
+		raise TypeError("not mutable")
+
+	def __iter__(self):
+		for l in self._lists:
+			for x in l:
+				yield x
+	
+	def __contains__(self, obj):
+		return obj in iter(self)
+
+	def __str__(self):
+		return "[ %s ]" % ", ".join(str(l) for l in self._lists)

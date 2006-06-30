@@ -45,3 +45,31 @@ class UniqueTest(unittest.TestCase):
 		self.failUnless(
 			res == [uc(1, 0), uc(0, 1)] or res == [uc(0, 1), uc(1, 0)], res)
 
+
+class ChainedListsTest(unittest.TestCase):
+
+	@staticmethod
+	def gen_cl():
+		return lists.ChainedLists(range(3), range(3,6), range(6, 100))
+
+	def test_contains(self):
+		cl = self.gen_cl()
+		for x in (1, 2, 4, 99):
+			self.assertTrue(x in cl)
+
+	def test_iter(self):
+		self.assertEquals(list(self.gen_cl()), list(xrange(100)))
+	
+	def test_len(self):
+		self.assertEquals(100, len(self.gen_cl()))
+
+	def test_getitem(self):
+		cl = self.gen_cl()
+		for x in (1, 2, 4, 98, -1, -99, 0):
+			cl[x]
+		self.assertRaises(IndexError, cl.__getitem__, 100)
+		self.assertRaises(IndexError, cl.__getitem__, -101)
+
+	def test_mutable(self):
+		self.assertRaises(TypeError, self.gen_cl().__delitem__, 1)
+		self.assertRaises(TypeError, self.gen_cl().__setitem__, (1, 2))

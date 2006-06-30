@@ -33,6 +33,8 @@ class nodeps_repo(object):
 	def match(self, *a, **kwds):
 		return list(self.itermatch(*a, **kwds))
 
+	def __getattr__(self, k):
+		return getattr(self.__repo, k)
 
 def rindex_gen(iterable):
 	"""returns zero for no match, else the negative len offset for the match"""

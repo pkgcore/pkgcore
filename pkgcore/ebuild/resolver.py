@@ -23,7 +23,7 @@ def upgrade_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True):
 	# hack.
 	vdb = list(vdb.trees)
 	if not verify_vdb:
-		vdb = plan.nodeps_repo(vdb)
+		vdb = map(plan.nodeps_repo, vdb)
 	if not isinstance(dbs, (list, tuple)):
 		dbs = [dbs]
 	return plan.merge_plan(dbs + vdb, plan.pkg_sort_highest, f)
@@ -32,7 +32,7 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True):
 	# nothing fancy required for force_vdb_virtuals, we just silently ignore it.
 	vdb = list(vdb.trees)
 	if not verify_vdb:
-		vdb = plan.nodeps_repo(vdb)
+		vdb = map(plan.nodeps_repo, vdb)
 	if not isinstance(dbs, (list, tuple)):
 		dbs = [dbs]
 	

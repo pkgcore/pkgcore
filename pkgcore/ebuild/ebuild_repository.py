@@ -19,7 +19,7 @@ class UnconfiguredTree(prototype.tree):
 	configure = None
 	ebuild_format_magic = "ebuild_src"
 
-	def __init__(self, location, cache=None, eclass_cache=None, mirrors_file=None):
+	def __init__(self, location, cache=None, eclass_cache=None, mirrors_file=None, default_mirrors=None):
 		super(UnconfiguredTree, self).__init__()
 		self.base = self.location = location
 		try:
@@ -54,7 +54,10 @@ class UnconfiguredTree(prototype.tree):
 				raise
 
 		self.mirrors = mirrors
-		self.package_class = get_plugin("format", self.ebuild_format_magic)(self, cache, self.eclass_cache, self.mirrors)
+		if default_mirrors is None:
+			import pdb;pdb.set_trace()
+		self.default_mirrors = default_mirrors
+		self.package_class = get_plugin("format", self.ebuild_format_magic)(self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
 
 	def _get_categories(self, *optionalCategory):
 		# why the auto return?  current porttrees don't allow/support categories deeper then one dir.

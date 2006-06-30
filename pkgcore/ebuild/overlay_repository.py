@@ -13,7 +13,7 @@ import os, stat
 
 class OverlayRepo(multiplex.tree):
 
-	pkgcore_config_type = ConfigHint(types={"trees":"list", "cache": "section_ref"}, 
+	pkgcore_config_type = ConfigHint(types={"trees":"list", "default_mirrors":"list", "cache": "section_ref"}, 
 		required=("trees",), positional=("trees",))
 
 	configured = False

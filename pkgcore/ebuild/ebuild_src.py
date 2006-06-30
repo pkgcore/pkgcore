@@ -7,7 +7,8 @@ from pkgcore.ebuild import conditionals
 from pkgcore.package.atom import atom
 from digest import parse_digest
 from pkgcore.util.mappings import IndeterminantDict
-from pkgcore.util.currying import post_curry, alias_class_method
+from pkgcore.util.currying import post_curry, alias_class_method, pre_curry
+from pkgcore.util.lists import ChainedLists
 from pkgcore.restrictions.packages import AndRestriction
 from pkgcore.restrictions import boolean
 from pkgcore.chksum.errors import MissingChksum
@@ -20,23 +21,41 @@ demandload(globals(), "errno")
 
 
 # utility func.
-def create_fetchable_from_uri(chksums, mirrors, uri):
+def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors, uri):
 	file = os.path.basename(uri)
-	if file == uri:
-		uri = []
-	else:
-		if uri.startswith("mirror://"):
-			# mirror:// is 9 chars.
-			tier, uri = uri[9:].split("/", 1)
-			if tier not in mirrors:
-				raise UnknownMirror(tier, uri)
-			uri = mirror(uri, mirrors[tier])
-			# XXX replace this with an iterable instead
-		else:
-			uri = [uri]
 	if file not in chksums:
 		raise MissingChksum(file)
-	return fetchable(file, uri, chksums[file])
+
+	if file == uri:
+		new_uri = []
+	else:
+		new_uri = []
+		if "primaryuri" in pkg.restrict:
+			new_uri.append([uri])
+		
+		if default_mirrors is not None and "mirror" not in pkg.restrict:
+			new_uri.append(mirror(file, default_mirrors, "conf_default_mirrors"))
+		
+		if uri.startswith("mirror://"):
+			# mirror:// is 9 chars.
+			tier, remaining_uri = uri[9:].split("/", 1)
+			if "mirror" in pkg.restrict:
+				# XXX idiot hack cause of portage.
+				if tier != "gentoo":
+					raise UnknownMirror(tier, remaining_uri)
+			if tier not in mirrors:
+				raise UnknownMirror(tier, remaining_uri)
+			new_uri.append(mirror(remaining_uri, mirrors[tier], tier))
+			# XXX replace this with an iterable instead
+		else:
+			if not new_uri or new_uri[0] != [uri]:
+				new_uri.append([uri])
+		if len(new_uri) != 1:
+			new_uri = ChainedLists(*new_uri)
+		else:
+			new_uri = new_uri[0]
+
+	return fetchable(file, new_uri, chksums[file])
 
 def generate_depset(s, c, *keys, **kwds):
 	if kwds.pop("non_package_type", False):
@@ -64,8 +83,16 @@ def generate_fetchables(self):
 	chksums = parse_digest(os.path.join(os.path.dirname(self.path), "files", \
 		"digest-%s-%s" % (self.package, self.fullver)))
 	try:
+		mirrors = self._parent.mirrors
+	except AttributeError:
+		mirrors = {}
+	try:
+		default_mirrors = self._parent.default_mirrors
+	except AttributeError:
+		default_mirrors = None
+	try:
 		return conditionals.DepSet(self.data["SRC_URI"], fetchable, operators={}, 
-			element_func=lambda x:create_fetchable_from_uri(chksums, self._mirrors, x))
+			element_func=pre_curry(create_fetchable_from_uri, self, chksums, mirrors, default_mirrors))
 	except conditionals.ParseError, p:
 		raise metadata.MetadataException(self, "src_uri", str(p))
 
@@ -113,6 +140,14 @@ def pull_metadata_xml(self, attr):
 	self.__dict__["herds"] = self._pkg_metadata_shared[1]
 	return self.__dict__[attr]
 
+def rewrite_restrict(restrict):
+	l = []
+	for x in restrict:
+		if x.startswith("no"):
+			l.append(x[2:])
+		else:
+			l.append(x)
+	return tuple(l)
 
 class package(metadata.package):
 	immutable = False
@@ -124,13 +159,10 @@ class package(metadata.package):
 		for x in ["depends", "rdepends", "fetchables", "license", "src_uri", 
 		"license", "provides"])
 
-	def __init__(self, cpv, parent, pull_path, mirrors=None):
+	def __init__(self, cpv, parent, pull_path):
 		super(package, self).__init__(cpv, parent)
 		self.__dict__["_get_path"] = pull_path
-		if mirrors is None:
-			mirrors = {}
-		self.__dict__["_mirrors"] = mirrors
-
+	
 	_get_attr = dict(metadata.package._get_attr)
 	_get_attr["path"] = lambda s:s._get_path(s)
 	_get_attr["_mtime_"] = lambda s: long(os.stat(s.path).st_mtime)
@@ -146,7 +178,7 @@ class package(metadata.package):
 	_get_attr["fetchables"] = generate_fetchables
 	_get_attr["description"] = lambda s:s.data.get("DESCRIPTION", "").strip()
 	_get_attr["keywords"] = lambda s:s.data.get("KEYWORDS", "").split()
-	_get_attr["restrict"] = lambda s:s.data.get("RESTRICT", "").split()
+	_get_attr["restrict"] = lambda s:rewrite_restrict(s.data.get("RESTRICT", "").split())
 	_get_attr["eapi"] = generate_eapi
 	_get_attr["iuse"] = lambda s:s.data.get("IUSE", "").split()
 	_get_attr["herds"] = lambda s:pull_metadata_xml(s, "herds")
@@ -172,11 +204,12 @@ class package(metadata.package):
 class package_factory(metadata.factory):
 	child_class = package
 
-	def __init__(self, parent, cachedb, eclass_cache, mirrors, *args, **kwargs):
+	def __init__(self, parent, cachedb, eclass_cache, mirrors, default_mirrors, *args, **kwargs):
 		super(package_factory, self).__init__(parent, *args, **kwargs)
 		self._cache = cachedb
 		self._ecache = eclass_cache
-		self._mirrors = mirrors
+		self.mirrors = mirrors
+		self.default_mirrors = default_mirrors
 		self._weak_pkglevel_cache = weakref.WeakValueDictionary()
 
 	def _get_metadata(self, pkg):
@@ -205,7 +238,7 @@ class package_factory(metadata.factory):
 		return mydata
 
 	def _get_new_child_data(self, cpv):
-		return ([self._parent_repo._get_ebuild_path], {"mirrors":self._mirrors})
+		return ([self._parent_repo._get_ebuild_path], {})
 
 	def new_package(self, cpv):
 		inst = metadata.factory.new_package(self, cpv)

@@ -34,6 +34,9 @@ def configFromMakeConf(location="/etc/"):
 	conf_dict.update(read_bash_dict(os.path.join(base_path, "make.conf"), vars_dict=conf_dict))
 	conf_dict.setdefault("PORTDIR", "/usr/portage")
 	root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
+	gentoo_mirrors = conf_dict.pop("GENTOO_MIRRORS", "").split()
+	if not gentoo_mirrors:
+		gentoo_mirrors = None
 
 	new_config = {}
 	new_config["world"] = basics.ConfigSectionFromStringDict("world", 
@@ -106,6 +109,7 @@ def configFromMakeConf(location="/etc/"):
 		d2 = {"type": "repo", "class": ebuild_repo_class}
 		d2["location"] = tree_loc
 		d2["cache"] = "%s cache" % tree_loc
+		d2["default_mirrors"] = gentoo_mirrors
 		new_config[tree_loc] = basics.HardCodedConfigSection(tree_loc, d2)
 		if rsync_portdir_cache and tree_loc == portdir:
 			c = {"type": "cache", "location": tree_loc, "label": tree_loc, 
@@ -118,7 +122,7 @@ def configFromMakeConf(location="/etc/"):
 
 	if portdir_overlays:
 		d = {"type": "repo", "class": load_attribute("pkgcore.ebuild.overlay_repository.OverlayRepo"),
-			"cache": "cache", "trees": [portdir] + portdir_overlays}
+			"default_mirrors":gentoo_mirrors, "cache": "cache", "trees": [portdir] + portdir_overlays}
 		# sucky.  needed?
 		new_config["portdir"] = basics.HardCodedConfigSection("portdir", d)
 	else:

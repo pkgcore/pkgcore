@@ -14,7 +14,7 @@ from pkgcore.package.mutated import MutatedPkg
 
 limiters = set(["cycle"]) # [None])
 def dprint(fmt, args=None, label=None):
-	if label in limiters:
+	if limiters is None or label in limiters:
 		if args is None:
 			print fmt
 		else:
@@ -153,6 +153,15 @@ class merge_plan(object):
 		self.global_strategy = global_strategy
 		self.state = plan_state()
 		self.insoluble = set()
+		
+	def load_vdb_state(self):
+		for r in self.livefs_dbs:
+			for pkg in r:
+				dprint("inserting %s from %s", (pkg, r), "vdb")
+				ret = self.add_atom(pkg.versioned_atom, dbs=self.livefs_dbs)
+				dprint("insertion of %s from %s: %s", (pkg, r, ret), "vdb")
+				if ret != []:
+					raise Exception("couldn't load vdb state, %s %s" % (pkg.versioned_atom, ret))
 
 	def get_db_match(self, db, cache, atom):
 		v = cache.get(atom)
@@ -160,12 +169,14 @@ class merge_plan(object):
 			v = cache[atom] = caching_iter(db.itermatch(atom, sorter=self.per_repo_strategy))
 		return v
 
-	def add_atom(self, atom):
+	def add_atom(self, atom, dbs=None):
 		"""add an atom, recalculating as necessary.  returns the last unresolvable atom stack if a solution can't be found,
 		else returns [] (meaning the atom was successfully added)"""
+		if dbs is None:
+			dbs = self.all_dbs
 		if atom not in self.forced_atoms:
 			stack = deque()
-			ret = self._rec_add_atom(atom, stack, self.all_dbs)
+			ret = self._rec_add_atom(atom, stack, dbs)
 			if ret:
 				dprint("failed- %s", ret)
 				return ret
@@ -204,6 +215,7 @@ class merge_plan(object):
 					else:
 						failure = self._rec_add_atom(datom, current_stack, dbs, depth=depth+1, mode="depends")
 					if failure:
+						dprint("depends:     %s%s: reducing %s from %s", (depth *2 * " ", atom, datom, choices.current_pkg))
 						if choices.reduce_atoms(datom):
 							# this means the pkg just changed under our feet.
 							return [[datom] + failure]
@@ -257,7 +269,9 @@ class merge_plan(object):
 	def _rec_add_atom(self, atom, current_stack, dbs, depth=0, mode="none"):
 		"""returns false on no issues (inserted succesfully), else a list of the stack that screwed it up"""
 		limit_to_vdb = dbs == self.livefs_dbs
+
 		if atom in self.insoluble:
+			dprint("processing   %s%s: marked insoluble already", (depth *2 * " ", atom))
 			return [atom]
 		l = self.state.match_atom(atom)
 		if l:
@@ -280,15 +294,15 @@ class merge_plan(object):
 		if not matches:
 			if not limit_to_vdb:
 				self.insoluble.add(atom)
-				dprint("processing   %s%s  [%s] no matches", (depth *2 * " ", atom, current_stack[-1][0]))
+			dprint("processing   %s%s  [%s] no matches", (depth *2 * " ", atom, current_stack[-1][0]))
 			return [atom]
 
 		# experiment. ;)
 		# see if we can insert or not at this point (if we can't, no point in descending)
-		l = self.state.pkg_conflicts(choices.current_pkg)
-		if l:
-			# we can't.
-			return [atom]
+#		l = self.state.pkg_conflicts(choices.current_pkg)
+#		if l:
+#			# we can't.
+#			return [atom]
 		
 		if current_stack:
 			if limit_to_vdb:
@@ -308,7 +322,7 @@ class merge_plan(object):
 			l = self.process_depends(atom, dbs, current_stack, choices, 
 				self.depset_reorder(self, choices.depends, "depends"), depth=depth)
 			if len(l) == 1:
-				dprint("reseting for %s%s because of %s", (depth*2*" ", atom, l[0][-1]))
+				dprint("reseting for %s%s because of depends: %s", (depth*2*" ", atom, l[0][-1]))
 				self.state.reset_state(saved_state)
 				failures = l[0]
 				continue
@@ -317,7 +331,7 @@ class merge_plan(object):
 			l = self.process_rdepends(atom, dbs, current_stack, choices, 
 				self.depset_reorder(self, choices.rdepends, "rdepends"), depth=depth)
 			if len(l) == 1:
-				dprint("reseting for %s%s because of %s", (depth*2*" ", atom, l[0][-1]))
+				dprint("reseting for %s%s because of rdepends: %s", (depth*2*" ", atom, l[0]))
 				self.state.reset_state(saved_state)
 				failures = l[0]
 				continue
@@ -366,7 +380,7 @@ class merge_plan(object):
 					continue
 
 			# level blockers.
-			fail = False
+			fail = True
 			for x in blocks:
 				# hackity hack potential- say we did this-
 				# disallowing blockers from blocking what introduced them.
@@ -377,10 +391,11 @@ class merge_plan(object):
 				l = self.state.add_blocker(self.generate_mangled_blocker(choices, x), key=x.key)
 				if l:
 					# blocker caught something. yay.
-					print "rdepend blocker %s hit %s for atom %s pkg %s" % (x, l, atom, choices.current_pkg)
-					fail = True
+					dprint("rdepend blocker %s hit %s for atom %s pkg %s", (x, l, atom, choices.current_pkg))
 					failures = [x]
 					break
+			else:
+				fail = False
 			if fail:
 				choices.reduce_atoms(x)
 				self.state.reset_state(saved_state)

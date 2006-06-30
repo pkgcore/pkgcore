@@ -39,10 +39,11 @@ def pop_arg(args, *arg):
 
 if __name__ == "__main__":
 	import sys
+	import time
 	args = sys.argv[1:]
 
 	if pop_arg(args, "-h", "--help"):
-		print "args supported, [-D || --deep], [[-u || --upgrade]] and -s (system|world) [-d || --debug]"
+		print "args supported, [-D || --deep], [[-u || --upgrade]] and -s (system|world) [-d || --debug] [ --ignore-failures ] [ --preload-vdb-state ]"
 		print "can specify additional atoms when specifying -s, no atoms/sets available, defaults to sys-apps/portage"
 		sys.exit(1)
 	if pop_arg(args, "-d", "--debug"):
@@ -50,6 +51,7 @@ if __name__ == "__main__":
 	trigger_pdb = pop_arg(args, "-p", "--pdb")
 	empty_vdb = pop_arg(args, "-e", "--empty")
 	upgrade = pop_arg(args, "-u", "--upgrade")
+	preload_vdb_state = pop_arg(args, None, "--preload-vdb-state")
 	ignore_failures = pop_arg(args, None, "--ignore-failures")
 	if max and max == upgrade:
 		print "can only choose max, or upgrade"
@@ -110,10 +112,15 @@ if __name__ == "__main__":
 		atoms += set_targets
 	atoms = stable_unique(atoms)
 	resolver = resolver_kls(vdb, repo, verify_vdb=deep)
+	if preload_vdb_state:
+		vdb_time = time.time()
+		resolver.load_vdb_state()
+		vdb_time = time.time() - vdb_time
+	else:
+		vdb_time = 0.0
 	ret = True
 	failures = []
-	import time
-	start_time = time.time()
+	resolve_time = time.time()
 	for restrict in atoms:
 		print "\ncalling resolve for %s..." % restrict
 		ret = resolver.add_atom(restrict)
@@ -123,6 +130,7 @@ if __name__ == "__main__":
 			failures.append(restrict)
 			if not ignore_failures:
 				break
+	resolve_time = time.time() - resolve_time
 	if failures:
 		print "\nfailures encountered-"
 		for restrict in failures:
@@ -144,6 +152,8 @@ if __name__ == "__main__":
 		if pkgs[-1].repo.livefs:
 			continue
 		print "%s %s" % (op.ljust(8), ", ".join(str(y) for y in reversed(pkgs)))
-		
-	print "result was successfull, 'parently- took %.2f seconds" % (time.time() - start_time)
+	print
+	if vdb_time:
+		print "spent %.2f seconds preloading vdb state" % vdb_time
+	print "result was successfull, 'parently- spent %.2f seconds resolving" % (resolve_time)
 	

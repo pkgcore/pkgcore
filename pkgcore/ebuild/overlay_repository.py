@@ -13,35 +13,43 @@ import os, stat
 
 class OverlayRepo(multiplex.tree):
 
-	pkgcore_config_type = ConfigHint(types={"trees":"list", "default_mirrors":"list", "cache": "section_ref"}, 
+	pkgcore_config_type = ConfigHint(types={"trees":"section_refs", "default_mirrors":"list", "cache": "section_ref"}, 
 		required=("trees",), positional=("trees",))
 
 	configured = False
 	configurables = ("settings",)
 	configure = ebuild_repository.ConfiguredTree
-		
+
 	def __init__(self, trees, **kwds):
-		cache = kwds.pop("cache", None)
 		if not trees or len(trees) < 2:
 			raise errors.InstantiationError(self.__class__, trees, {}, 
 				"Must specify at least two pathes to ebuild trees to overlay")
-		for t in trees:
-			if not os.path.isdir(t):
-				raise errors.InstantiationError(self.__class__, trees, {}, 
-					"all trees must be ebuild_repository instances, and existant dirs- '%s' is not" % t)
+
+		cache = kwds.pop("cache", None)
+		default_mirrors = kwds.pop("default_mirors", None)
+		
+#		for t in trees:
+#			if not os.path.isdir(t):
+#				raise errors.InstantiationError(self.__class__, trees, {}, 
+#					"all trees must be ebuild_repository instances, and existant dirs- '%s' is not" % t)
 
 		# master combined eclass
-		self.eclass_cache = eclass_cache.cache(*trees)
+		self.eclass_cache = eclass_cache.StackedCache(*[t.eclass_cache for t in trees])
 
-		try:
-			repos = [ebuild_repository.UnconfiguredTree(loc, cache=cache, eclass_cache=self.eclass_cache, 
-				**kwds) for loc in trees]
-		except (OSError, IOError), e:
-			raise errors.InstantiationError(self.__class__, trees, {},
-				"unable to initialize a sub tree- %s" % e)
+		repos = []
+		for t in trees:
+			repos.append(t.rebind(cache=[cache]+t.cache, eclass_cache=self.eclass_cache, default_mirrors=default_mirrors))
+
+
+#		try:
+#			repos = [ebuild_repository.UnconfiguredTree(loc, cache=cache, eclass_cache=self.eclass_cache, 
+#				**kwds) for loc in trees]
+#		except (OSError, IOError), e:
+#			raise errors.InstantiationError(self.__class__, trees, {},
+#				"unable to initialize a sub tree- %s" % e)
 
 		# now... we do a lil trick.  substitute the master mirrors in for each tree.
-		master_mirrors = repos[0].mirrors
+		master_mirrors = trees[0].mirrors
 		for r in repos[1:]:
 			for k, v in master_mirrors.iteritems():
 				if k in r.mirrors:
@@ -51,7 +59,7 @@ class OverlayRepo(multiplex.tree):
 		
 		multiplex.tree.__init__(self, *repos)
 
-	def _get_packages(self, *category):
+	def _get_categories(self, *category):
 		return tuple(unstable_unique(multiplex.tree._get_categories(self, *category)))
 
 	def _get_packages(self, category):

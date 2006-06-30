@@ -53,8 +53,14 @@ class UnconfiguredTree(prototype.tree):
 					f.close()
 				raise
 
+		if isinstance(cache, tuple):
+			cache = list(cache)
+		elif not isinstance(cache, list):
+			cache = [cache]	
+
 		self.mirrors = mirrors
 		self.default_mirrors = default_mirrors
+		self.cache = cache
 		self.package_class = get_plugin("format", self.ebuild_format_magic)(self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
 
 	def rebind(self, **kwds):

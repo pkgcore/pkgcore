@@ -186,19 +186,20 @@ class package(metadata.package):
 	_get_attr["homepage"] = lambda s:s.data.get("HOMEPAGE", "").strip()
 
 	def _fetch_metadata(self):
-		data = self._parent._get_metadata(self)
-		if not self.allow_regen:
-			return data
-		if data is None:
-			doregen = True
-		elif self._mtime_ != long(data.get("_mtime_", -1)):
-			doregen = True
-		elif data.get("_eclasses_") is not None and not self._parent._ecache.is_eclass_data_valid(data["_eclasses_"]):
-			doregen = True
+		for data in self._parent._get_metadata(self):
+			if not self.allow_regen:
+				return data
+			if data is None:
+				continue
+			elif self._mtime_ != long(data.get("_mtime_", -1)):
+				continue
+			elif data.get("_eclasses_") is not None and not self._parent._ecache.is_eclass_data_valid(data["_eclasses_"]):
+				continue
+			else:
+				return data
+			# ah hell.
 		else:
-			return data
-		# ah hell.
-		return self._parent._update_metadata(self)
+			return self._parent._update_metadata(self)
 
 
 class package_factory(metadata.factory):
@@ -213,12 +214,12 @@ class package_factory(metadata.factory):
 		self._weak_pkglevel_cache = weakref.WeakValueDictionary()
 
 	def _get_metadata(self, pkg):
-		if self._cache is not None:
-			try:
-				return self._cache[pkg.cpvstr]
-			except KeyError:
-				pass
-		return None
+		for cache in self._cache:
+			if cache is not None:
+				try:
+					yield cache[pkg.cpvstr]
+				except KeyError:
+					pass
 
 	def _update_metadata(self, pkg):
 		ebp = processor.request_ebuild_processor()
@@ -233,7 +234,7 @@ class package_factory(metadata.factory):
 			mydata["_eclasses_"] = {}
 
 		if self._cache is not None:
-			self._cache[pkg.cpvstr] = mydata
+			self._cache[0][pkg.cpvstr] = mydata
 
 		return mydata
 

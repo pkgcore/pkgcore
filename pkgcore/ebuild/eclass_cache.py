@@ -2,10 +2,11 @@
 # Copyright: 2000-2005 Gentoo Foundation
 # License: GPL2
 
-from pkgcore.fs.util import normpath
-import os
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.fs.util:normpath pkgcore.util.mappings:StackedDict os")
 
-class base(object):	pass
+class base(object):
+	pass
 
 class cache(base):
 	"""
@@ -23,9 +24,7 @@ class cache(base):
 	"""
 	def __init__(self, porttree, *additional_porttrees):
 		self.eclasses = {} # {"Name": ("location","_mtime_")}
-
 		self.porttrees = tuple(map(normpath, [porttree] + list(additional_porttrees)))
-		self._master_eclass_root = os.path.join(self.porttrees[0], "eclass")
 		self.update_eclasses()
 
 
@@ -82,3 +81,10 @@ class cache(base):
 		except KeyError:
 			return None
 
+
+class StackedCache(cache):
+
+	def __init__(self, *caches):
+		if len(caches) < 2:
+			raise TypeError("%s requires at least two eclass_caches" % self.__class__)
+		self.eclasses = StackedDict(*[ec.eclasses for ec in caches])

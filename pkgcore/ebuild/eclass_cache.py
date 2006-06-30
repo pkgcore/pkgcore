@@ -58,7 +58,7 @@ class cache(base):
 		return True
 
 
-	def get_eclass_data(self, inherits, from_master_only=False):
+	def get_eclass_data(self, inherits):
 		"""given a list of inherited eclasses, return the cachable eclass entries
 		only make get_eclass_data calls for data you know came from this eclass_cache, otherwise be ready to cache a KeyError
 		exception for any eclass that was requested, but not known to this cache
@@ -72,8 +72,6 @@ class cache(base):
 				print "ec=", ec_dict
 				print "inherits=", inherits
 				raise
-			if from_master_only and self.eclasses[x][0] != self._master_eclass_root:
-				return None
 
 		return ec_dict
 

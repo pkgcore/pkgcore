@@ -120,7 +120,7 @@ defaults = class
 class = pkgcore.ebuild.repository
 section_ref = cache sync sync_cache fetcher
 str = location
-
+list = default_mirrors
 
 [cache]
 required = class location label auxdbkeys

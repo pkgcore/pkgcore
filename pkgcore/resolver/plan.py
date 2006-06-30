@@ -36,15 +36,6 @@ class nodeps_repo(object):
 	def __getattr__(self, k):
 		return getattr(self.__repo, k)
 
-def rindex_gen(iterable):
-	"""returns zero for no match, else the negative len offset for the match"""
-	count = -1
-	for y in iterable:
-		if y:
-			return count
-		count -= 1
-	return 0
-
 
 def index_gen(iterable):
 	"""returns zero for no match, else the negative len offset for the match"""
@@ -90,6 +81,7 @@ def pkg_cmp_preferring_vdb(x, y):
 		return -1
 	return 0
 
+
 def highest_iter_sort(l):
 	def f(x, y):
 		c = cmp(x,y)
@@ -103,8 +95,8 @@ def highest_iter_sort(l):
 			return -1
 		return 0
 	l.sort(f, key=pkg_grabber, reverse=True)
-#	l.sort(key=pkg_grabber, reverse=True)
 	return l
+
 
 def lowest_iter_sort(l):
 	def f(x, y):
@@ -121,8 +113,10 @@ def lowest_iter_sort(l):
 	l.sort(f, key=pkg_grabber)
 	return l
 
+
 def default_global_strategy(resolver, dbs, atom):
 	return (p for r,cache in dbs.iteritems() for p in resolver.get_db_match(r, cache, atom))
+
 
 def default_depset_reorder(resolver, depset, mode):
 	for or_block in depset:
@@ -140,6 +134,7 @@ def default_depset_reorder(resolver, depset, mode):
 			yield vdb + non_vdb
 		else:
 			yield or_block
+
 
 class merge_plan(object):
 	vdb_restrict = packages.PackageRestriction("repo.livefs", 

@@ -124,7 +124,7 @@ source_profiles() {
 	while [ "$line" != end_request ]; do
 		if [ "$line" == "path" ]; then
 			listen line;
-			source "${line}" || die "failed sourcing profile bashrc: ${line}"
+			source "${line}"
 		elif [ "$line" == "transfer" ]; then
 			listen line;
 			eval "$line" || die "failed evaluating profile bashrc: ${line}"

@@ -1,13 +1,11 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+metaclass to inject dependencies into method calls; essentially, method a must be ran prior to method b, invoking method a if b is called first
+"""
 
-# metaclasses, 101.  metaclass gets called to instantiate a class (creating a class instance).
-# effectively, __metaclass__ controls how that class is converted from a definition, to an object, with the
-# object being used to create instances of that class.
-# note python doesn't exactly have definitions, just executions, but analogy is close enough :P
-
-from pkgcore.util.lists import flatten
+from pkgcore.util.lists import iter_flatten
 from pkgcore.util.currying import pre_curry
 
 __all__ = ["ForcedDepends"]
@@ -30,18 +28,12 @@ def ensure_deps(self, name, *a, **kw):
 				return r
 	return r
 
-def dont_iterate_strings(val):
-	if isinstance(val, (tuple, list)):
-		return val
-	elif isinstance(val, basestring):
-		return (val,)
-	raise ValueError("encountered val %s when it must be a list or string", val)
-
 def yield_deps(inst, d, k):
+	# XXX: this sucks.  rewrite it to use expandable_chain...
 	if k not in d:
 		yield k
 		return
-	s = [k, iter(dont_iterate_strings(d.get(k, ())))]
+	s = [k, iter_flatten(d.get(k, ()))]
 	while s:
 		if isinstance(s[-1], basestring):
 			yield s.pop(-1)
@@ -51,7 +43,7 @@ def yield_deps(inst, d, k):
 			v = d.get(x)
 			if v:
 				s.append(x)
-				s.append(iter(dont_iterate_strings(v)))
+				s.append(iter_flatten(v))
 				exhausted = False
 				break
 			yield x
@@ -70,7 +62,7 @@ class ForcedDepends(type):
 
 		# wrap the funcs
 
-		for x in set(filter(None, flatten(o.stage_depends.iteritems()))):
+		for x in set(x for x in iter_flatten(o.stage_depends.iteritems()) if x):
 			f = getattr(o, x)
 			f2 = pre_curry(ensure_deps, o, x)
 			f2.raw_func = f

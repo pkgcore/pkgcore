@@ -4,7 +4,6 @@
 # TODO: move exceptions elsewhere, bind them to a base exception for pkgcore
 
 from pkgcore.restrictions import packages, values, boolean
-from pkgcore.util.strings import iter_tokens
 from pkgcore.util.iterables import expandable_chain
 from pkgcore.package.atom import atom
 
@@ -43,7 +42,7 @@ class DepSet(boolean.AndRestriction):
 		raw_conditionals = []
 		depsets = [self.restrictions]
 
-		words = iter_tokens(dep_str, splitter=" \t\n")
+		words = iter(dep_str.split())
 		try:
 			for k in words:
 				if k == ")":

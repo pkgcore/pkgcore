@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os
+import os, collections
 from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO, S_ISCHR, S_ISBLK
 from pkgcore.fs.fs import fsFile, fsDir, fsSymLink, fsDev, fsFifo
 from pkgcore.fs.util import normpath
@@ -51,17 +51,17 @@ def iter_scan(path, offset=None):
 	sep = os.path.sep
 	if offset is None:
 		offset = ""
-		dirs = [path.rstrip(sep)]
+		dirs = collections.deque([path.rstrip(sep)])
 		yield gen_obj(dirs[0])
 	else:
 		offset = normpath(offset.rstrip(sep))+sep
 		path = normpath(path)
-		dirs = [path.rstrip(sep)[len(offset):]]
+		dirs = collections.deque([path.rstrip(sep)[len(offset):]])
 		if dirs[0]:
 			yield gen_obj(dirs[0])
 
 	while dirs:
-		base = dirs.pop(0) + sep
+		base = dirs.popleft() + sep
 		for x in os.listdir(offset + base):
 			path = base + x
 			o = gen_obj(path, real_path=offset+path)

@@ -88,6 +88,7 @@ class fsFile(fsBase):
 	def _chksum_callback(self, chf_type):
 		return get_handler(chf_type)(self.real_path)
 
+
 class fsDir(fsBase):
 	__slots__ = fsBase.__slots__
 
@@ -129,4 +130,3 @@ class fsFifo(fsBase):
 isdir = lambda x: isinstance(x, fsDir)
 isreg = lambda x: isinstance(x, fsFile)
 isfs_obj = lambda x: isinstance(x, fsBase)
-

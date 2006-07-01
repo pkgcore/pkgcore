@@ -54,7 +54,8 @@ class fetcher(base.fetcher):
 			kw["gid"] = portage_gid
 		kw["minimal"] = True
 		if not ensure_dirs(self.distdir, **kw):
-			raise errors.distdirPerms(self.distdir, "if userpriv, uid must be %i, gid must be %i.  if not readonly, directory must be 0775, else 0555")
+			raise errors.distdirPerms(self.distdir, "if userpriv, uid must be %i, gid must be %i.  if not readonly, directory must be 0775, else 0555" % 
+				(portage_uid, portage_gid))
 
 
 	def fetch(self, target):

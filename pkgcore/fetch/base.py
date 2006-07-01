@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+prototype fetcher class, all fetchers should derive from this
+"""
+
 import os
 from pkgcore.chksum import get_handlers
 from pkgcore.fetch import errors
@@ -9,7 +13,8 @@ from pkgcore.fetch import errors
 class fetcher(object):
 
 	def _verify(self, file_location, target, required=None):
-		"""internal function for derivatives.
+		"""
+		internal function for derivatives.
 		digs through chksums, and returns:
 		-1: iff (size chksum is available, and file is smaller then stated chksum) or file doesn't exist.
 		0:  iff all chksums match

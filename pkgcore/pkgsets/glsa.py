@@ -44,7 +44,7 @@ class GlsaDirSet(object):
 
 	"""
 	generate a pkgset bsaed on GLSA's distributed via a directory (rsync tree being usual source)
-	""""
+	"""
 	
 	pkgcore_config_type = ConfigHint(types={"src":"section_ref"})
 	op_translate = {"ge":">=", "gt":">", "lt":"<", "le":"<=", "eq":"="}

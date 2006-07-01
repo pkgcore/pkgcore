@@ -1,6 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+Gentoo Linux Security Advisories (GLSA) support
+"""
+
 import os
 from pkgcore.util.compatibility import any
 from pkgcore.util.iterables import caching_iter
@@ -38,11 +42,19 @@ class KeyedAndRestriction(boolean.AndRestriction):
 
 class GlsaDirSet(object):
 
+	"""
+	generate a pkgset bsaed on GLSA's distributed via a directory (rsync tree being usual source)
+	""""
+	
 	pkgcore_config_type = ConfigHint(types={"src":"section_ref"})
 	op_translate = {"ge":">=", "gt":">", "lt":"<", "le":"<=", "eq":"="}
 
 	def __init__(self, src):
-		"""src must be either full path to glsa dir, or a repo object to pull it from"""
+		"""
+		@param src: where to get the glsa from
+		@type src: must be either full path to glsa dir, or a repo object to pull it from
+		"""
+
 		if not isinstance(src, basestring):
 			src = os.path.join(get_virtual_repos(src, False)[0].base, "metadata/glsa")
 		self.path = src
@@ -52,6 +64,12 @@ class GlsaDirSet(object):
 			yield KeyedAndRestriction(pkgatom, vuln, finalize=True, key=catpkg, tag="GLSA vulnerable:")
 
 	def pkg_grouped_iter(self, sorter=None):
+		"""
+		yield GLSA restrictions grouped by package key
+		
+		@param sorter: must be either None, or a comparison function
+		"""
+		
 		if sorter is None:
 			sorter = iter
 		pkgs = {}
@@ -65,6 +83,9 @@ class GlsaDirSet(object):
 
 
 	def iter_vulnerabilities(self):
+		"""
+		generator yielding each GLSA restriction
+		"""
 		pkgs = {}
 		for fn in os.listdir(self.path):
 			#"glsa-1234-12.xml
@@ -156,6 +177,15 @@ class GlsaDirSet(object):
 
 
 def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
+	"""
+	generator yielding GLSA restrictions, and vulnerable pkgs from passed in repo
+	
+	@param glsa_src: GLSA pkgset to pull vulnerabilities from
+	@param repo: repo to scan for vulnerable packages
+	@param groupped: if groupped, combine glsa restrictions into one restriction (thus yielding a pkg only once)
+	@param arch: arch to scan for, x86 for example
+	"""
+
 	if grouped:
 		i = glsa_src.pkg_grouped_iter()
 	else:
@@ -175,6 +205,11 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
 
 
 class SecurityUpgrades(object):
+
+	"""
+	pkgset that can be used directly from pkgcore configuration, generates set of restrictions of required upgrades
+	"""
+
 	pkgcore_config_type = ConfigHint(types={"ebuild_repo":"section_ref", "vdb":"section_ref"})
 
 	def __init__(self, ebuild_repo, vdb, arch):

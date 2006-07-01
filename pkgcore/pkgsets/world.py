@@ -1,6 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+pkgset based around loading a list of atoms from a world file
+"""
+
 from pkgcore.package.atom import atom
 import pkgcore.const
 

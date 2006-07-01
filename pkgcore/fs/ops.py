@@ -41,9 +41,10 @@ def default_ensure_perms(d1,d2=None):
 	if do_mode and m is not None:
 		os.chmod(d1.location, m)
 	if do_chown and (o != -1 or g != -1):
-		os.chown(d1.location, o, g)
+		os.lchown(d1.location, o, g)
 	if do_mtime and t is not None:
 		os.utime(d1.location, (t, t))
+	return True
 
 
 def default_mkdir(d):

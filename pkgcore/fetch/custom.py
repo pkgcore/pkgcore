@@ -29,7 +29,7 @@ class fetcher(base.fetcher):
 		@param distdir: directory to download files to
 		@type distdir: string
 		@param command: shell command to execute to fetch a file
-		@type distdir: string
+		@type command: string
 		@param resume_command: if not None, command to use for resuming- if None, command is reused
 		@param required_chksums: if None, all chksums must be verified, else only chksums listed
 		@type required_chksums: None or sequence

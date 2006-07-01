@@ -182,7 +182,7 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
 	
 	@param glsa_src: GLSA pkgset to pull vulnerabilities from
 	@param repo: repo to scan for vulnerable packages
-	@param groupped: if groupped, combine glsa restrictions into one restriction (thus yielding a pkg only once)
+	@param grouped: if grouped, combine glsa restrictions into one restriction (thus yielding a pkg only once)
 	@param arch: arch to scan for, x86 for example
 	"""
 

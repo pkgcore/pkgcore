@@ -9,6 +9,7 @@ def check_instance(obj):
 		raise TypeError("'%s' is not a fs.fsBase deriviative" % obj)
 	return obj
 
+
 class contentsSet(set):
 	"""class wrapping a contents file"""
 
@@ -65,33 +66,32 @@ class contentsSet(set):
 			raise AttributeError("%s is frozen; no clear functionality" % self.__class__)
 		set.clear(self)
 
-	def iterfiles(self):
-		return (x for x in self if isinstance(x, fs.fsFile))
+	def iterfiles(self, invert=False):
+		return (x for x in self if isinstance(x, fs.fsFile) is not invert)
 
-	def files(self):
-		return list(self.iterfiles())
+	def files(self, invert=False):
+		return list(self.iterfiles(invert=invert))
 
-	def iterdirs(self):
-		return (x for x in self if isinstance(x, fs.fsDir))
+	def iterdirs(self, invert=False):
+		return (x for x in self if isinstance(x, fs.fsDir) is not invert)
 
-	def dirs(self):
-		return list(self.iterdirs())
+	def dirs(self, invert=False):
+		return list(self.iterdirs(invert=invert))
 
-	def iterlinks(self):
-		return (x for x in self if isinstance(x, fs.fsLink))
+	def iterlinks(self, invert=False):
+		return (x for x in self if isinstance(x, fs.fsLink) is not invert)
 
-	def links(self):
-		return list(self.iterlinks())
+	def links(self, invert=False):
+		return list(self.iterlinks(invert=invert))
 
-	def devs(self):
-		return list(self.iterdevs())
+	def iterdevs(self, invert=False):
+		return (x for x in self if isinstance(x, fs.fsDev) is not invert)
 
-	def iterdevs(self):
-		return (x for x in self if isinstance(x, fs.fsDev))
+	def devs(self, invert=False):
+		return list(self.iterdevs(invert=invert))
 
-	def fifos(self):
-		return list(self.iterfifos())
+	def iterfifos(self, invert=False):
+		return (x for x in self if isinstance(x, fs.fsFifo) is not invert)
 
-	def iterfifos(self):
-		return (x for x in self if isinstance(x, fs.fsFifo))
-
+	def fifos(self, invert=False):
+		return list(self.iterfifos(invert=invert))

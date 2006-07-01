@@ -75,14 +75,24 @@ class TestContentsSet(unittest.TestCase):
 	def iterobj(self, name, obj_class=None, forced_name=None):
 		s = set(getattr(self, name))
 		cs = contents.contentsSet(s)
-		s2 = set()
 		if forced_name is None:
 			forced_name = "iter"+name
-		for x in getattr(cs, forced_name)():
-			if obj_class is not None:
-				self.assertTrue(isinstance(x, obj_class))
-			s2.add(x)
+		
+		s2 = set(getattr(cs, forced_name)())
+		if obj_class is not None:
+			map(post_curry(self.assertTrue, obj_class), s2)
 		self.assertEqual(s, s2)
+
+		if forced_name == "__iter__":
+			return
+
+		# inversion tests now.
+		s3 = set(getattr(cs, forced_name)(invert=True))
+		if obj_class is not None:
+			map(post_curry(self.assertFalse, obj_class), s3)
+		
+		self.assertEqual(s.symmetric_difference(s2), s3)
+		
 
 	def listobj(self, name, obj_class=None):
 		valid_list = getattr(self, name)

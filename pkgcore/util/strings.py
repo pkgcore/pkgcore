@@ -1,6 +1,14 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
+
+"""
+WARNING, module may not be around long term (limited functionality)
+
+provides iter_tokens, basically an overload split() that functions the same regardless of the splitter
+"""
+
 from itertools import ifilter
+
 
 def iter_tokens(s, splitter=" "):
 	l = len(splitter)

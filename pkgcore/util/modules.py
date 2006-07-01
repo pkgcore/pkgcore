@@ -1,15 +1,21 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+dynamic import functionality
+"""
+
 import sys
 
 class FailedImport(ImportError):
-	def __init__(self, trg, e):	self.trg, self.e = trg, e
-	def __str__(self):	return "Failed importing target '%s': '%s'" % (self.trg, self.e)
+	def __init__(self, trg, e):
+		self.trg, self.e = trg, e
+	def __str__(self):
+		return "Failed importing target '%s': '%s'" % (self.trg, self.e)
 
 
 def load_module(name):
-	"""load a module, throwing a FailedImport if __import__ fails"""
+	"""load 'name' module, throwing a FailedImport if __import__ fails"""
 	if name in sys.modules:
 		return sys.modules[name]
 	try:

@@ -1,6 +1,10 @@
 # Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+common commandline processing, including simplified atom generation
+"""
+
 from pkgcore.util.containers import InvertedContains
 from pkgcore.restrictions import packages, values, boolean, util
 from pkgcore.package import cpv, atom
@@ -26,6 +30,28 @@ def collect_ops(text):
 	return text[0:i], text[i:]
 
 def generate_restriction(text):
+
+	"""generate appropriate restriction for text
+
+	Parsing basically breaks it down into chunks split by /, with each chunk allowing for 
+	prefix/postfix globbing- note that a postfixed glob on package token is treated as package attribute
+	matching, B{not} as necessarily a version match.
+	
+	If only one chunk is found, it's treated as a package chunk.  Finally, it supports a nonstandard variation of atom syntax
+	where the category can be dropped.
+	
+	Examples-
+	- "*": match all
+	- "dev-*/*": category must start with dev-
+	- "dev-*": package must start with dev-
+	- *-apps/portage*: category must end in -apps, package must start with portage
+	- >=portage-2.1: atom syntax, package portage, version greater then or equal to 2.1
+
+	@param text: string to attempt to parse
+	@type text: string
+	@return: L{package restriction<pkgcore.restrictions.package>} derivative
+	"""
+	
 	orig_text = text = text.strip()
 	if "!" in text:
 		raise ValueError("!, or any form of blockers make no sense in this usage: %s" % text)

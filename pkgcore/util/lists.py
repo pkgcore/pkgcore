@@ -4,8 +4,11 @@
 from pkgcore.util.iterables import expandable_chain
 
 def unstable_unique(s):
-	"""lifted from python cookbook, credit: Tim Peters
-	Return a list of the elements in s in arbitrary order, sans duplicates"""
+	"""
+	lifted from python cookbook, credit: Tim Peters
+	Return a list of the elements in s in arbitrary order, sans duplicates
+	"""
+
 	n = len(s)
 	# assume all elements are hashable, if so, it's linear
 	try:
@@ -37,9 +40,15 @@ def unstable_unique(s):
 	return u
 
 def stable_unique(iterable):
+	"""
+	return unique list from iterable, preserving ordering
+	"""
 	return list(iter_stable_unique(iterable))
 
 def iter_stable_unique(iterable):
+	"""
+	generator yielding unique elements from iterable, preserving ordering
+	"""
 	s = set()
 	for x in iterable:
 		if x not in s:
@@ -47,7 +56,13 @@ def iter_stable_unique(iterable):
 			s.add(x)
 
 def iter_flatten(l, skip_flattening=(basestring,), skip_func=None):
-	"""collapse [(1),2] into [1,2]"""
+	"""
+	collapse [(1),2] into [1,2]
+	
+	@param skip_flattening: list of classes to not descend through
+	@param skip_func: if None, skip_flattening is used- else it must be a callable 
+	  that returns True when iter_flatten should escend no further
+	"""
 	if skip_func is None:
 		func = lambda x:isinstance(x, skip_flattening)
 	else:
@@ -73,9 +88,15 @@ def flatten(l, skip_flattening=(basestring,)):
 
 
 class ChainedLists(object):
+	"""
+	sequences chained together, without collapsing into a list
+	"""
 	__slots__ = ("_lists", "__weakref__")
 	
 	def __init__(self, *lists):
+		"""
+		all args must be sequences
+		"""
 		# ensure they're iterable
 		for x in lists:
 			iter(x)

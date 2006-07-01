@@ -2,8 +2,10 @@
 # License: GPL2
 # $Id:$
 
-# name sucks a bit, but was choosen to avoid any conflict with existing sets modules
 
+"""
+collection of container classes
+"""
 
 class InvertedContains(set):
 
@@ -115,6 +117,11 @@ class Unchangable(Exception):
 
 class ProtectedSet(object):
 
+	"""
+	basic container duck typing, wraps a set pushing all changes into a secondary set
+
+	be aware that it lacks majority of set methods
+	"""
 	def __init__(self, orig_set):
 		self._orig = orig_set
 		self._new = set()

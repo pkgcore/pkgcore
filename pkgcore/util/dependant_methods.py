@@ -52,6 +52,13 @@ def yield_deps(inst, d, k):
 
 
 class ForcedDepends(type):
+	"""
+	dependency injection for class methods controlled by existance of a stage_depends dict in the class namespace
+	
+	keys are method names, values is either a string (name of preceeding method), or list/tuple (proceeding methods).
+	
+	L{pkgcore.interfaces.build.base} is a consumer of this metaclass to look at for example usage
+	"""
 	def __call__(cls, *a, **kw):
 		if not getattr(cls, "stage_depends"):
 			return super(ForcedDepends, cls).__call_(*a, **kw)

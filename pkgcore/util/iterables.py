@@ -4,12 +4,17 @@
 from collections import deque
 
 class expandable_chain(object):
-	"""chained iterables, with the ability to add new iterables to the chain
-	as long as the instance hasn't raise StopIteration already"""
+	"""
+	chained iterables, with the ability to add new iterables to the chain
+	as long as the instance hasn't raise StopIteration already
+	"""
 
 	__slot__ = ("iterables", "__weakref__")
 
 	def __init__(self, *iterables):
+		"""
+		accepts N iterables, must have at least one specified
+		"""
 		self.iterables = deque()
 		self.extend(iterables)
 
@@ -52,8 +57,8 @@ class expandable_chain(object):
 
 
 class caching_iter(object):
-	"""On demand consumers from an iterable so as to appear
-	like a tuple
+	"""
+	On demand consumes from an iterable so as to appear like a tuple
 	"""
 	__slots__ = ("iterable", "__weakref__", "cached_list", "sorter")
 

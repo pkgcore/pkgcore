@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+miscellanious mapping/dict related classes
+"""
+
 from itertools import imap, chain, ifilterfalse
 from pkgcore.util.currying import alias_class_method
 from collections import deque
@@ -9,7 +13,8 @@ import UserDict
 
 class LazyValDict(UserDict.DictMixin):
 
-	"""Mapping that loads values via a callable
+	"""
+	Mapping that loads values via a callable
 
 	given a function to get keys, and to look up the val for those keys, it'll
 	lazy load key definitions, and values as requested
@@ -17,8 +22,8 @@ class LazyValDict(UserDict.DictMixin):
 
 	def __init__(self, get_keys_func, get_val_func):
 		"""
-		get_keys_func is a callable that is JIT called with no args	 returns a tuple of keys, or supports __contains__
-		get_val_func is a callable that is JIT called with the key requested
+		@param get_keys_func: either a container, or func to call to get keys
+		@param get_val_func: a callable that is JIT called with the key requested
 		"""
 		if not callable(get_val_func):
 			raise TypeError("get_val_func isn't a callable")
@@ -87,7 +92,8 @@ class LazyValDict(UserDict.DictMixin):
 
 class ProtectedDict(UserDict.DictMixin):
 
-	"""Mapping wrapper to store changes to a dict without modifying the initial dict
+	"""
+	Mapping wrapper to store changes to a dict without modifying the initial dict
 
 	given an initial dict, this wraps that dict storing changes in a secondary dict, protecting
 	the underlying dict from changes
@@ -232,7 +238,10 @@ class StackedDict(UserDict.DictMixin):
 
 
 class OrderedDict(dict):
-	def __init__(self, pairs):
+
+	"""Dict that preserves insertion ordering which is used for iteration ops"""
+	
+	def __init__(self, pairs=()):
 		self._order = deque()
 		for k, v in pairs:
 			self[k] = v
@@ -241,7 +250,7 @@ class OrderedDict(dict):
 		if key not in self:
 			self._order.append(key)
 		dict.__setitem__(self, key, val)
-		
+	
 	def __delitem__(self, key):
 		if key not in self:
 			raise KeyError(key)

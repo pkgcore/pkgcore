@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+function currying, generating a functor with a set of args/defaults pre bound
+"""
+
 from operator import attrgetter
 
 __all__ = ["pre_curry", "post_curry", "pretty_docs", "alias_class_method"]

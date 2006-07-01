@@ -6,6 +6,7 @@ from pkgcore.fs import gen_obj, contents, fs
 from pkgcore.spawn import spawn
 from pkgcore.const import COPY_BINARY
 from pkgcore.plugins import get_plugin
+from pkgcore.util.currying import pre_curry
 
 __all__ = ["merge_contents"]
 
@@ -87,8 +88,14 @@ def default_copyfile(obj):
 			raise Exception("failed cp'ing %s to %s, ret %s" % (obj.real_path, obj.location, ret))
 	return True
 
+def offset_rewriter(offset, iterable):
+	pjoin = os.path.join
+	sep = os.path.sep
+	for x in iterable:
+		yield x.change_location(pjoin(offset, x.location.lstrip(sep)))
 
-def merge_contents(cset, offset=None):
+
+def merge_contents(cset, offset=None, callback=lambda obj:None):
 	from pkgcore.plugins import get_plugin
 
 	ensure_perms = get_plugin("fs_ops", "ensure_perms")
@@ -102,9 +109,14 @@ def merge_contents(cset, offset=None):
 	if not os.path.exists(offset):
 		mkdir(fs.fsDir(offset, strict=False))
 
-	for x in sorted(cset.iterdirs()):
-		# XXX temporary until this is chunked for output
-		print "installing",x
+	iterate = iter
+	if offset is not None:
+		iterate = pre_curry(offset_rewriter, offset.rstrip(os.path.sep))
+	
+	d = list(iterate(cset.iterdirs()))
+	d.sort()
+	for x in d:
+		callback(x)
 
 		try:
 			obj = gen_obj(x.location)
@@ -113,32 +125,36 @@ def merge_contents(cset, offset=None):
 			ensure_perms(x, obj)
 		except OSError:
 			mkdir(x)
-
-	for x in cset.iterdirs(invert=True):
-		# XXX temporary until this is chunked for output
-		print "installing",x
+			ensure_perms(x)
+	del d
+	
+	for x in iterate(cset.iterdirs(invert=True)):
+		callback(x)
 		copyfile(x)
+	return True
 
 
-def unmerge_contents(cset):
-	for x in cset.iterdirs(invert=True):
-		# XXX temporary until this is chunked for output
-		print "removing",x
+def unmerge_contents(cset, offset=None, callback=lambda obj:None):
+	iterate = iter
+	if offset is not None:
+		iterate = pre_curry(offset_rewriter, offset.rstrip(os.path.sep))
+
+	for x in iterate(cset.iterdirs(invert=True)):
+		callback(x)
 		try:
 			os.unlink(x.location)
 		except OSError, e:
 			if e.errno != errno.ENOENT:
 				raise
 	# this is a fair sight faster then using sorted/reversed
-	l = cset.dirs()
+	l = list(iterate(cset.iterdirs()))
 	l.sort()
 	l.reverse()
 	for x in l:
-		# XXX temporary until this is chunked for output
-		print "removing",x
+		callback(x)
 		try:
 			os.rmdir(x.location)
 		except OSError, e:
 			if e.errno != errno.ENOTEMPTY and e.errno != errno.ENOENT:
 				raise
-
+	return True

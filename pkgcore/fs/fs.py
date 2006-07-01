@@ -99,7 +99,7 @@ class fsDir(fsBase):
 
 
 class fsLink(fsBase):
-	__slots__ = fsBase.__slots__ + ["target"]
+	__slots__ = [x for x in fsBase.__slots__ if x != "mtime"]+ ["target"]
 
 	def __init__(self, location, target, **kwargs):
 		kwargs["target"] = target

@@ -41,11 +41,11 @@ def generate_restriction(text):
 	where the category can be dropped.
 	
 	Examples-
-	- "*": match all
-	- "dev-*/*": category must start with dev-
-	- "dev-*": package must start with dev-
-	- *-apps/portage*: category must end in -apps, package must start with portage
-	- >=portage-2.1: atom syntax, package portage, version greater then or equal to 2.1
+	  - "*": match all
+	  - "dev-*/*": category must start with dev-
+	  - "dev-*": package must start with dev-
+	  - *-apps/portage*: category must end in -apps, package must start with portage
+	  - >=portage-2.1: atom syntax, package portage, version greater then or equal to 2.1
 
 	@param text: string to attempt to parse
 	@type text: string

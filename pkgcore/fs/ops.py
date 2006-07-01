@@ -2,7 +2,6 @@
 # License: GPL2
 
 import os, shutil, errno
-from itertools import ifilterfalse
 from pkgcore.fs import gen_obj, contents, fs
 from pkgcore.spawn import spawn
 from pkgcore.const import COPY_BINARY
@@ -115,14 +114,14 @@ def merge_contents(cset, offset=None):
 		except OSError:
 			mkdir(x)
 
-	for x in ifilterfalse(fs.isdir, cset):
+	for x in cset.iterdirs(invert=True):
 		# XXX temporary until this is chunked for output
 		print "installing",x
 		copyfile(x)
 
 
 def unmerge_contents(cset):
-	for x in ifilterfalse(lambda x: isinstance(x, fs.fsDir), cset):
+	for x in cset.iterdirs(invert=True):
 		# XXX temporary until this is chunked for output
 		print "removing",x
 		try:

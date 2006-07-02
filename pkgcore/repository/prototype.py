@@ -143,9 +143,9 @@ class tree(object):
 	def itermatch(self, restrict, restrict_solutions=None, sorter=None):
 
 		"""
-		generator that yield packages that match a L{pkgcore.restrictions.package.base} instance
+		generator that yield packages that match a L{pkgcore.restrictions.packages.PackageRestriction} instance
 		
-		@param restrict: L{package restriction<pkgcore.restrictions.package.base>} to search via
+		@param restrict: L{package restriction<pkgcore.restrictions.packages.PackageRestriction>} to search via
 		@param restrict_solutions: cnf collapsed list of the restrict.  Don't play with it unless you know what you're doing
 		@param sorter: callable to do sorting during searching- if sorting the results, use this instead of sorting externally
 		"""

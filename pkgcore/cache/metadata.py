@@ -32,7 +32,7 @@ class database(flat_hash.database):
 		super(database, self).__init__(location, *args, **config)
 		self.location = os.path.join(loc, "metadata","cache")
 		self.ec = eclass_cache.cache(loc)
-	__init__.__doc__ = flat_hash.database.__init__.__doc__
+	__init__.__doc__ = flat_hash.database.__init__.__doc__.replace("@keyword location", "@param location")
 	
 	def __getitem__(self, cpv):
 		d = flat_hash.database.__getitem__(self, cpv)

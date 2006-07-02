@@ -2,6 +2,10 @@
 # License: GPL2
 # $Id:$
 
+"""
+triggers, callables to bind to a step in a MergeEngine to affect changes
+"""
+
 __all__ = ["trigger", "SimpleTrigger", "merge_trigger", "unmerge_trigger", "ldconfig_trigger"]
 
 import os
@@ -12,7 +16,16 @@ from pkgcore.merge import errors
 
 class trigger(object):
 
+	"""base trigger class"""
+	
 	def __init__(self, cset_name, ftrigger, register_func=None):
+
+		"""
+		@param cset_name: the cset label required for this trigger
+		@param ftrigger: actually func to execute when MergeEngine hands control over
+		@param register_func: either None, or a callable to execute for handling registering with a MergeEngine instance
+		"""
+		
 		if not isinstance(cset_name, basestring):
 			for x in cset_name:
 				if not isinstance(x, basestring):
@@ -31,20 +44,32 @@ class trigger(object):
 	# this should probably be implemented as an associated int that can be used to
 	# sort the triggers
 	def register(self, hook_name, existing_triggers):
+		"""
+		register with a MergeEngine
+		"""
 		if self.register_func is not None:
 			self.register_func(self, hook_name, existing_triggers)
 		else:
 			existing_triggers.append(self)
 
 	def __call__(self, engine, csets):
+		"""execute the trigger"""
 		self.trigger(engine, csets)
 
 	def __str__(self):
 		return "trigger: %s for csets(%s)" % (self.trigger, self.required_csets)
 
+
 class SimpleTrigger(trigger):
 
+	"""simplified trigger class; for most triggers, this is what you want to use"""
+	
 	def __init__(self, cset_name, ftrigger, register_func=None):
+		"""
+		@param cset_name: cset to use
+		@param ftrigger: callable to execute when 'triggered'
+		@param register_func: None, or callable to call to register with a MergeEngine
+		"""
 		if not isinstance(cset_name, basestring):
 			raise TypeError("cset_name must be a string")
 		trigger.__init__(self, [cset_name], ftrigger, register_func=register_func)
@@ -54,6 +79,8 @@ class SimpleTrigger(trigger):
 
 
 def run_ldconfig(engine, cset, ld_so_conf_file="etc/ld.so.conf"):
+	"""execute ldconfig updates"""
+
 	# this sucks. not very fine grained, plus it can false positive on binaries
 	# libtool fex, which isn't a lib
 	fireit = False
@@ -85,12 +112,14 @@ def run_ldconfig(engine, cset, ld_so_conf_file="etc/ld.so.conf"):
 
 
 def merge_trigger(cset="install"):
+	"""generate a trigger for the actual copy to the livefs"""
 	return SimpleTrigger(cset,
 		lambda engine, cset: ops.merge_contents(cset, offset=engine.offset))
 
 def unmerge_trigger(cset="uninstall"):
+	"""generate a trigger for the actual unmerge from the livefs"""
 	return SimpleTrigger(cset, lambda e, c: ops.unmerge_contents(c))
 
 def ldconfig_trigger(cset="modifying"):
+	"""generate a trigger to execute any ldconfig calls required"""
 	return SimpleTrigger(cset, run_ldconfig)
-

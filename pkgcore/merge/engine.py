@@ -1,6 +1,12 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+core engine for livefs modifications
+"""
+
+# need better documentation...
+
 # pre merge triggers
 # post merge triggers
 # ordering?
@@ -15,6 +21,7 @@ from pkgcore.merge.triggers import merge_trigger, unmerge_trigger, ldconfig_trig
 from pkgcore.merge import errors
 
 def scan_livefs(cset):
+	"""generate the intersect of a cset and the livefs"""
 	for x in cset:
 		try:
 			yield gen_fs_obj(x.location)
@@ -25,7 +32,9 @@ def scan_livefs(cset):
 
 
 def alias_cset(alias, engine, csets):
+	"""alias a cset to another"""
 	return csets[alias]
+
 
 class MergeEngine(object):
 	REPLACING_MODE = 0
@@ -95,6 +104,16 @@ class MergeEngine(object):
 
 	@classmethod
 	def install(cls, pkg, offset=None):
+
+		"""
+		generate a MergeEngine instance configured for uninstalling a pkg
+		
+		@param pkg: L{pkgcore.package.metadata.package} instance to install
+		@param offset: any livefs offset to force for modifications
+		@return: L{MergeEngine}
+		
+		"""
+
 		hooks = dict((k, [y() for y in v]) for (k,v) in cls.install_hooks.iteritems())
 		csets = dict(cls.install_csets)
 		if "new_cset" not in csets:
@@ -110,6 +129,16 @@ class MergeEngine(object):
 
 	@classmethod
 	def uninstall(cls, pkg, offset=None):
+
+		"""
+		generate a MergeEngine instance configured for uninstalling a pkg
+		
+		@param pkg: L{pkgcore.package.metadata.package} instance to uninstall, must be from a livefs vdb
+		@param offset: any livefs offset to force for modifications
+		@return: L{MergeEngine}
+		
+		"""
+
 		hooks = dict((k, [y() for y in v]) for (k,v) in cls.uninstall_hooks.iteritems())
 		csets = dict(cls.uninstall_csets)
 		if "old_cset" not in csets:
@@ -125,6 +154,17 @@ class MergeEngine(object):
 
 	@classmethod
 	def replace(cls, old, new, offset=None):
+
+		"""
+		generate a MergeEngine instance configured for replacing one pkg with another
+		
+		@param old: L{pkgcore.package.metadata.package} instance to replace, must be from a livefs vdb
+		@param new: L{pkgcore.package.metadata.package} instance
+		@param offset: any livefs offset to force for modifications
+		@return: L{MergeEngine}
+		
+		"""
+
 		hooks = dict((k, [y() for y in v]) for (k,v) in cls.replace_hooks.iteritems())
 		csets = dict(cls.replace_csets)
 
@@ -144,12 +184,18 @@ class MergeEngine(object):
 		return o
 
 	def execute_hook(self, hook):
+		"""
+		execute any triggers bound to a hook point
+		"""
 		self.regenerate_csets()
 		for x in self.hooks[hook]:
 			# error checking needed here.
 			x(self, self.csets)
 
 	def regenerate_csets(self):
+		"""
+		internal function, reset non preserverd csets.  Used in transitioning between hook points
+		"""
 		self.csets = StackedDict(self.preserved_csets,
 			LazyValDict(self.cset_sources, self._get_cset_source))
 
@@ -157,10 +203,26 @@ class MergeEngine(object):
 		return self.cset_sources[key](self, self.csets)
 
 	def add_preserved_cset(self, cset_name, func):
+		"""
+		register a cset generator for use.
+		
+		The cset will stay in memory until the engine finishes all steps.
+
+		@param cset_name: what to call the generated cset
+		@param func: callable to get the cset
+		"""
 		self.add_cset(cset_name, func)
 		self.preserve_csets.append(cset_name)
 
 	def add_cset(self, cset_name, func):
+		"""
+		regiser a cset generator for use.  
+		
+		The cset will be released from memory when it's no longer used.
+		
+		@param cset_name: what to call the generated cset
+		@param func: callable to get the cset
+		"""
 		if not callable(func):
 			raise TypeError("func must be a callable")
 		if not isinstance(cset_name, basestring):
@@ -169,6 +231,12 @@ class MergeEngine(object):
 
 
 	def add_triggers(self, hook_name, *triggers):
+		"""
+		register a L{pkgcore.merge.triggers.trigger} instance to be executed
+		
+		@param hook_name: engine step to hook the trigger into
+		@param triggers: L{triggers<pkgcore.merge.triggers.trigger>} to add
+		"""
 		if hook_name not in self.hooks:
 			raise KeyError("%s isn't a known hook" % hook_name)
 
@@ -187,6 +255,7 @@ class MergeEngine(object):
 
 	@staticmethod
 	def generate_offset_cset(engine, csets, cset_generator):
+		"""generate a cset with offset applied"""
 		return contents.contentsSet(x.change_location(os.path.join(engine.offset,
 			x.location.lstrip(os.path.sep))) for x in cset_generator(engine, csets))
 
@@ -209,5 +278,3 @@ class MergeEngine(object):
 	def get_livefs_intersect_cset(engine, csets, default_cset="modifying"):
 		"""generates the livefs intersection against a cset"""
 		return contents.contentsSet(scan_livefs(csets[default_cset]))
-
-

@@ -1,6 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+instance caching metaclass
+"""
+
 from weakref import WeakValueDictionary
 import warnings
 

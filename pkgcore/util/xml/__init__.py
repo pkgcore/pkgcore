@@ -1,6 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+indirection to load ElementTree
+"""
 # essentially... prefer cElementTree, then 2.5 bundled, then elementtree, then 2.5 bundled,
 # then our own bundled
 
@@ -33,4 +36,7 @@ if not gotit:
 del gotit
 
 def escape(s):
+	"""
+	simple escaping of &, <, and >
+	"""
 	return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+file related operations, mainly reading
+"""
+
 import re
 from shlex import shlex
 from mappings import ProtectedDict

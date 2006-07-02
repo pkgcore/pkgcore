@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+sequence related operations
+"""
+
 from pkgcore.util.iterables import expandable_chain
 
 def unstable_unique(s):

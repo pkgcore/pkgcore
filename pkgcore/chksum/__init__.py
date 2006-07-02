@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+chksum verification/generation subsystem
+"""
+
 from pkgcore.util.demandload import demandload
 demandload(globals(), "os sys pkgcore.util.modules:load_module")
 

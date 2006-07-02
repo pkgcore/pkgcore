@@ -1,6 +1,10 @@
 # Copyright 2004 Brian Harring <ferringb@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
+"""
+misc. livefs related ops
+"""
+
 import os, stat
 import fcntl
 import errno

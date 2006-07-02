@@ -9,6 +9,7 @@ Doesn't mean existing code is correct however ;)
 
 Stats are all from a sempron 1.6ghz with python 2.4.2
 
+Finally, code _should_ be documented, following epydoc/epytext guidelines
 
 ---------------------------
 Follow pep8, with following exemptions-

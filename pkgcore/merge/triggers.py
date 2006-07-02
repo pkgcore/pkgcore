@@ -8,11 +8,11 @@ triggers, callables to bind to a step in a MergeEngine to affect changes
 
 __all__ = ["trigger", "SimpleTrigger", "merge_trigger", "unmerge_trigger", "ldconfig_trigger"]
 
-import os
-basename = os.path.basename
-from pkgcore.fs import ops
-from pkgcore.spawn import spawn
 from pkgcore.merge import errors
+from pkgcore.util.demandload import demandload
+demandload(globals(), """os 
+	pkgcore.plugins:get_plugin 
+	pkgcore.spawn:spawn""")
 
 class trigger(object):
 
@@ -88,7 +88,7 @@ def run_ldconfig(engine, cset, ld_so_conf_file="etc/ld.so.conf"):
 		s = x.location
 		if s[-3:] == ".so":
 			pass
-		elif basename(s[:3]).lower() != "lib":
+		elif os.path.basename(s[:3]).lower() != "lib":
 			pass
 		else:
 			continue
@@ -114,11 +114,11 @@ def run_ldconfig(engine, cset, ld_so_conf_file="etc/ld.so.conf"):
 def merge_trigger(cset="install"):
 	"""generate a trigger for the actual copy to the livefs"""
 	return SimpleTrigger(cset,
-		lambda engine, cset: ops.merge_contents(cset, offset=engine.offset))
+		lambda engine, cset: get_plugin("fs_ops", "merge_contents")(cset))
 
 def unmerge_trigger(cset="uninstall"):
 	"""generate a trigger for the actual unmerge from the livefs"""
-	return SimpleTrigger(cset, lambda e, c: ops.unmerge_contents(c))
+	return SimpleTrigger(cset, lambda e, c: get_plugin("fs_ops", "unmerge_contents")(c))
 
 def ldconfig_trigger(cset="modifying"):
 	"""generate a trigger to execute any ldconfig calls required"""

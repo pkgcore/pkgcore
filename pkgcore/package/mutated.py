@@ -1,6 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+package wrapper class to override a packages attributes
+"""
+
 import itertools, operator
 from collections import deque
 from pkgcore.util.compatibility import any, all
@@ -14,7 +18,10 @@ class MutatedPkg(object):
 	__slots__ = ("_pkg", "_overrides")
 	
 	def __init__(self, pkg, overrides):
-		"""pkg is a pkg to wrap, overrides is an attr -> instance list to fake """
+		"""
+		@param pkg: L{pkgcore.package.metadata.package} to wrap
+		@param overrides: is an attr -> instance mapping to substitute when the attr is requested
+		"""
 		self._pkg = pkg
 		self._overrides = overrides
 		

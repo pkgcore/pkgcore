@@ -1,20 +1,28 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+conditional attributes on a package, changing them triggering regen of other attributes on the package instance
+"""
+
 from pkgcore.util.containers import LimitedChangeSet, Unchangable
-import copy
+from pkgcore.util.demandload import demandload
+demandload(globals(), "copy")
 
 class PackageWrapper(object):
+
+	"""wrap a package instance adding a new attribute, and evaluating the wrapped pkgs attributes"""
+	
 	def __init__(self, pkg_instance, configurable_attribute_name, initial_settings=None, unchangable_settings=None,
 		attributes_to_wrap=None, build_callback=None):
 
-		"""pkg_instance should be an existing package instance
-		configurable_attribute_name is the attribute name to fake on this instance for accessing builtup conditional changes
-		use, fex, is valid for unconfigured ebuilds
-
-		initial_settings is the initial settings of this beast, dict
-		attributes_to_wrap should be a dict of attr_name:callable
-		the callable receives the 'base' attribute (unconfigured), with the built up conditionals as a second arg
+		"""
+		@param pkg_instance: L{pkgcore.package.metadata.package} instance to wrap
+		@param configurable_attribute_name: attribute name to add, and that is used for evaluating attributes_to_wrap
+		@param initial_settings: sequence, initial configuration of the configurable_attribute
+		@param unchangable_settings: sequence, settings that configurable_attribute cannot be set to
+		@param attributes_to_wrap: mapping of attr_name:callable for revaluating the pkg_instance, using the result instead of the wrapped pkgs attr
+		@param build_callback: None, or a callable to be used to get a L{pkgcore.interfaces.build.base} instance
 		"""
 
 		if initial_settings is None:
@@ -40,19 +48,39 @@ class PackageWrapper(object):
 			unchangable_settings=self._unchangable, attributes_to_wrap=self._wrapped_attr)
 
 	def rollback(self, point=0):
+		"""
+		rollback changes to the configurable attribute to an earlier point
+		
+		@param point: must be an int
+		"""
 		self._configurable.rollback(point)
 		# yes, nuking objs isn't necessarily required.  easier this way though.
 		# XXX: optimization point
 		self._reuse_pt += 1
 
 	def commit(self):
+		"""
+		commit current changes, this means that those those changes can be reverted from this point out
+		"""
 		self._configurable.commit()
 		self._reuse_pt = 0
 
 	def changes_count(self):
+		"""
+		current commit point for the configurable
+		"""
 		return self._configurable.changes_count()
 
 	def request_enable(self, attr, *vals):
+		"""
+		internal function
+		
+		since configurable somewhat steps outside of normal restriction protocols, request_enable requests that this package instance
+		change its configuration to make the restriction return True; if not possible, reverts any changes it attempted
+		
+		@param attr: attr to try and change
+		@param vals: L{pkgcore.restrictions.values.base} instances that we're attempting to make match True
+		"""
 		if attr not in self._wrapped_attr:
 			if attr == self._configurable_name:
 				entry_point = self.changes_count()
@@ -82,6 +110,15 @@ class PackageWrapper(object):
 		return True
 
 	def request_disable(self, attr, *vals):
+		"""
+		internal function
+		
+		since configurable somewhat steps outside of normal restriction protocols, request_disable requests that this package instance
+		change its configuration to make the restriction return False; if not possible, reverts any changes it attempted
+		
+		@param attr: attr to try and change
+		@param vals: L{pkgcore.restrictions.values.base} instances that we're attempting to make match False
+		"""
 		if attr not in self._wrapped_attr:
 			if attr == self._configurable_name:
 				entry_point = self.changes_count()
@@ -131,6 +168,9 @@ class PackageWrapper(object):
 		return o
 
 	def lock(self):
+		"""
+		commit any outstanding changes, and lock the configuration so that it's unchangable.
+		"""
 		self.commit()
 		self._configurable = list(self._configurable)
 

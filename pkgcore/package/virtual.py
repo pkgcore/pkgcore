@@ -1,10 +1,18 @@
 # Copyright: 2005 Jason Stubbs <jstubbs@gentoo.org>
 # License: GPL2
 
+"""
+virtual package
+"""
+
 from pkgcore.package import metadata
 from pkgcore.restrictions.packages import OrRestriction
 
 class package(metadata.package):
+
+	"""
+	virtual package, mainly useful since it's generating so little attrs on the fly
+	"""
 
 	def __getattr__ (self, key):
 		val = None
@@ -14,6 +22,8 @@ class package(metadata.package):
 			val = OrRestriction(finalize=True)
 		elif key == "provides":
 			val = OrRestriction()
+		elif key == "metapkg":
+			val = True
 		elif key == "slot":
 			val = str(self.version)
 		else:

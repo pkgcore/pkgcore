@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+gentoo ebuild atom, should be generalized into an agnostic base
+"""
+
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
 import cpv
@@ -21,15 +25,31 @@ class InvalidVersion(Exception):
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq, ne ops, and convert this to it.
 
 class VersionMatch(restriction.base):
+
+	"""
+	package restriction implementing gentoo ebuild version comparison rules
+
+	any overriding of this class *must* maintain numerical order of self.vals, see intersect for reason why
+	vals also must be a tuple
+	"""
+	
 	__slots__ = ("ver", "rev", "vals", "droprev", "negate")
-	"""any overriding of this class *must* maintain numerical order of self.vals, see intersect for reason why
-	vals also must be a tuple"""
 
 	__inst_caching__ = True
 	type = packages.package_type
 	attr = "fullver"
 	
 	def __init__(self, operator, ver, rev=None, negate=False, **kwd):
+		"""
+		@param operator: version comparison to do, valid operators are ('<', '<=', '=', '>=', '>', '~')
+		@type operator: string
+		@param ver: version to base comparison on
+		@type ver: string
+		@param rev: revision to base comparison on
+		@type rev: None (no rev), or an int
+		@param negate: should the restriction results be negated; currently forced to False
+		"""
+		
 		kwd["negate"] = False
 		super(self.__class__, self).__init__(**kwd)
 		self.ver, self.rev = ver, rev
@@ -96,6 +116,9 @@ class VersionMatch(restriction.base):
 			
 class atom(boolean.AndRestriction):
 
+	"""currently implements gentoo ebuild atom parsing, should be converted into an agnostic dependency base thought
+	"""
+	
 	__slots__ = (
 		"glob", "atom", "blocks", "op", "negate_vers", "cpv", "cpvstr", "use",
 		"slot", "hash", "category", "version", "revision", "fullver", "package", "key")
@@ -105,6 +128,9 @@ class atom(boolean.AndRestriction):
 	__inst_caching__ = True
 
 	def __init__(self, atom, negate_vers=False):
+		"""
+		@param atom: string, see gentoo ebuild atom syntax
+		"""
 		boolean.AndRestriction.__init__(self)
 
 		atom = orig_atom = atom.strip()

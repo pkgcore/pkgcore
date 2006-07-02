@@ -2,6 +2,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+
+"""gentoo ebuild specific base package class"""
+
+
 import re
 from base import base
 from pkgcore.util.currying import post_curry
@@ -19,24 +23,25 @@ parser = re.compile("^(?P<key>(?P<category>(?:[a-zA-Z0-9+-]+/?))/" + \
 class CPV(base):
 
 	"""
-	Attributes
+	base ebuild package class
 
-        str category
-        str package
-	str key (cat/pkg)
-        str version
-        int revision
-
-	Methods
-
-	int __hash__()
-	str __repr__()
-	int __cmp__(CPV)
+        @ivar category: str category
+        @ivar package: str package
+	@ivar key: strkey (cat/pkg)
+        @ivar version: str version
+        @ivar revision: int revision
+	@ivar versioned_atom: atom matching this exact version
+	@ivar unversioned_atom: atom matching all versions of this package
+	@cvar _get_attr: mapping of attr:callable to generate attributes on the fly
 	"""
 
 	_get_attr = {"hash":lambda self:hash(self.cpvstr)}
 
 	def __init__(self, cpvstr):
+		"""
+		@param cpvstr: cat/pkg-ver[-rev] of an ebuild package.  See L{parser} for allowed syntax
+		@type cpvstr: string
+		"""
 		if not isinstance(cpvstr, str):
 			raise ValueError(cpvstr)
 		self.__dict__["cpvstr"] = cpvstr

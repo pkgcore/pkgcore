@@ -1,17 +1,31 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+
+"""
+package with it's metadata accessible (think 'no longer abstract')
+"""
+
 import weakref
 import warnings
 
 from cpv import CPV
 
 class package(CPV):
+
+	__doc__ = "package class with metadata bound to it for attribute generation\n\n" + \
+		"\n".join(x.lstrip() for x in CPV.__doc__.split("\n") if "@ivar" in x or "@cvar" in x)
+	__doc__+="\n@ivar repo: parent repository"
 	immutable = True
 
 	_get_attr = dict(CPV._get_attr)
 
 	def __init__(self, cpv, parent_repository):
+		"""
+		@param cpv: cpv string to parse.  Gentoo specific, should be abstracted out
+		@param parent_repository: parent repository this package belongs to
+		@type parent_repository: L{pkgcore.repository.prototype.tree} instance
+		"""
 		super(package, self).__init__(cpv)
 		self.__dict__["_parent"] = parent_repository
 
@@ -30,9 +44,8 @@ class package(CPV):
 			raise KeyError(key)
 
 	def _get_data(self):
+		"""internal hook func to get the packages metadata, consumer of L{_get_attr}"""
 		if "data" in self.__dict__:
-			import traceback
-			traceback.print_stack()
 			warnings.warn("odd, got a request for data yet it's in the dict")
 			return self.__dict__["data"]
 
@@ -44,16 +57,37 @@ class package(CPV):
 		return self._parent._parent_repo
 
 	def _fetch_metadata(self):
+		"""
+		pull the metadata for this package.
+		must be overrode in derivative
+		"""
 		raise NotImplementedError
 
 
 class factory(object):
+
+	"""
+	package generator
+	
+	does weakref caching per repository
+
+	@cvar child_class: callable to generate packages
+	"""
+
 	child_class = package
+
 	def __init__(self, parent_repo):
 		self._parent_repo = parent_repo
 		self._cached_instances = weakref.WeakValueDictionary()
 
 	def new_package(self, cpv):
+		"""
+		generate a new package instance
+		
+		@param cpv: cpvstring to parse for the new package (gentoo specific, abstract this out)
+		@type cpv: string
+		"""
+		
 		if cpv in self._cached_instances:
 			return self._cached_instances[cpv]
 		d = self._get_new_child_data(cpv)
@@ -62,12 +96,17 @@ class factory(object):
 		return m
 
 	def clear(self):
+		"""
+		wipe the weakref cache of packages instances
+		"""
 		self._cached_instances.clear()
 
 	def _get_metadata(self, *args):
+		"""must be overriden in derivatives, pulls metadata from the repo/cache/wherever"""
 		raise NotImplementedError
 
 	def _update_metadata(self, *args):
+		"""must be overriden in derivatives, updates metadata in the repo/cache/wherever"""
 		raise NotImplementedError
 
 	def _get_new_child_data(self, cpv):
@@ -78,6 +117,7 @@ class factory(object):
 
 
 class MetadataException(Exception):
+
 	def __init__(self, pkg, attr, error):
 		self.pkg, self.attr, self.error = pkg, attr, error
 	

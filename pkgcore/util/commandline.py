@@ -49,7 +49,7 @@ def generate_restriction(text):
 
 	@param text: string to attempt to parse
 	@type text: string
-	@return: L{package restriction<pkgcore.restrictions.package>} derivative
+	@return: L{package restriction<pkgcore.restrictions.packages>} derivative
 	"""
 	
 	orig_text = text = text.strip()

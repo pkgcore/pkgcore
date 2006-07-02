@@ -1,5 +1,9 @@
 # Copyright 2004-2005 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: GPL
+
+"""
+filesystem entry abstractions
+"""
 
 from pkgcore.util.mappings import ImmutableDict, LazyValDict
 from pkgcore.chksum import get_handlers, get_handler
@@ -7,9 +11,37 @@ from os.path import sep as path_seperator, abspath
 
 # goofy set of classes representating the fs objects pkgcore knows of.
 
+
 __all__ = ["fsFile", "fsDir", "fsSymLink", "fsDev", "fsFifo", "isdir", "isreg", "isfs_obj"]
 
+# following are used to generate appropriate __init__, wiped from the namespace at the end of the module
+
+_fs_doc = {
+	"mode":"""@param mode: int, the mode of this entry.  required if strict is set""",
+	"mtime":"""@param mode: long, the mtime of this entry.  required if strict is set""",
+	"uid":"""@param uid: int, the uid of this entry.  required if strict is set""",
+	"gid":"""@param gid: int, the gid of this entry.  required if strict is set""",
+}
+
+def gen_doc_additions(init, slots):
+	if init.__doc__ is None:
+		d = raw_init_doc.split("\n")
+	else:
+		d = init.__doc__.split("\n")
+	init.__doc__ = "\n".join(k.lstrip() for k in d)+"\n".join(_fs_doc[k] for k in _fs_doc if k in slots)
+
+
+raw_init_doc = \
+"""
+@param location: location (real or intended) for this entry
+@param real_path: real on disk location for this entry
+@param strict: is this fully representative of the entry, or only partially
+@raise KeyError: if strict is enabled, and not all args are passed in
+"""
+
 class fsBase(object):
+	
+	"""base class, all extensions must derive from this class"""
 	__slots__ = ["location", "real_path", "mtime", "mode", "uid", "gid"]
 
 	def __init__(self, location, strict=True, real_path=None, **d):
@@ -29,8 +61,15 @@ class fsBase(object):
 		else:
 			for k,v in d.iteritems():
 				s(self, k, v)
+	gen_doc_additions(__init__, __slots__)
 
 	def change_location(self, location):
+		"""
+		generate a new instance identical to self except having the passed in location
+		@param location: new location
+		@type location: string
+		@return: self.__class__ instance
+		"""
 		if not location.startswith(path_seperator):
 			location = abspath(location)
 
@@ -68,9 +107,14 @@ class fsBase(object):
 
 class fsFile(fsBase):
 
+	"""file class"""
+	
 	__slots__ = fsBase.__slots__ + ["chksums"]
 
 	def __init__(self, location, chksums=None, mtime=None, **kwds):
+		"""
+		@param chksums: dict of checksums, key chksum_type: val hash val.  see L{pkgcore.chksum}
+		"""
 		if mtime is not None:
 			mtime = long(mtime)
 			kwds["mtime"] = mtime
@@ -81,6 +125,7 @@ class fsFile(fsBase):
 			chksums = ImmutableDict(chksums)
 		kwds["chksums"] = chksums
 		fsBase.__init__(self,location,**kwds)
+	gen_doc_additions(__init__, __slots__)
 
 	def __repr__(self):
 		return "file:%s" % self.location
@@ -90,6 +135,9 @@ class fsFile(fsBase):
 
 
 class fsDir(fsBase):
+
+	"""dir class"""
+
 	__slots__ = fsBase.__slots__
 
 	def __repr__(self):
@@ -100,11 +148,18 @@ class fsDir(fsBase):
 
 
 class fsLink(fsBase):
+
+	"""symlink class"""
+
 	__slots__ = [x for x in fsBase.__slots__ if x != "mtime"]+ ["target"]
 
 	def __init__(self, location, target, **kwargs):
+		"""
+		@param target: string, filepath of the symlinks target
+		"""
 		kwargs["target"] = target
 		fsBase.__init__(self, location, **kwargs)
+	gen_doc_additions(__init__, __slots__)
 
 	def __repr__(self):
 		return "symlink:%s->%s" % (self.location, self.target)
@@ -114,6 +169,9 @@ fsSymLink = fsLink
 
 
 class fsDev(fsBase):
+
+	"""dev class (char/block objects)"""
+
 	__slots__ = fsBase.__slots__
 
 	def __repr__(self):
@@ -121,6 +179,9 @@ class fsDev(fsBase):
 
 
 class fsFifo(fsBase):
+
+	"""fifo class (socket objects)"""
+
 	__slots__ = fsBase.__slots__
 
 	def __repr__(self):
@@ -130,3 +191,6 @@ class fsFifo(fsBase):
 isdir = lambda x: isinstance(x, fsDir)
 isreg = lambda x: isinstance(x, fsFile)
 isfs_obj = lambda x: isinstance(x, fsBase)
+
+del raw_init_doc, gen_doc_additions, _fs_doc
+

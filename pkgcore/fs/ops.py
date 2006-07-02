@@ -1,6 +1,12 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+default fs ops.
+
+Shouldn't be accessed directly for the most part, use L{pkgcore.plugins} to get at these ops
+"""
+
 import os, shutil, errno
 from pkgcore.fs import gen_obj, contents, fs
 from pkgcore.spawn import spawn
@@ -8,9 +14,18 @@ from pkgcore.const import COPY_BINARY
 from pkgcore.plugins import get_plugin
 from pkgcore.util.currying import pre_curry
 
-__all__ = ["merge_contents"]
+__all__ = ["merge_contents", "unmerge_contents", "default_ensure_perms", "default_copyfile", "default_mkdir"]
 
 def default_ensure_perms(d1,d2=None):
+
+	"""
+	enforce a fs objects attributes on the livefs (permissions, mtime, uid, gid specifically)
+	
+	@param d2: if not None, an fs object for what's on the livefs now
+	@raise OSError: if fs object attributes can't be enforced
+	@return: True on success, else an exception is thrown
+	"""
+	
 	m, o, g, t = d1.mode, d1.uid, d1.gid, d1.mtime
 	if o is None:
 		o = -1
@@ -48,6 +63,13 @@ def default_ensure_perms(d1,d2=None):
 
 
 def default_mkdir(d):
+	"""
+	mkdir for a fsDir object
+	
+	@param d: L{pkgcore.fs.fs.fsDir} instance
+	@raise OSError: if can't complete
+	@return: true if success, else an exception is thrown
+	"""
 	if not d.mode:
 		mode = 0777
 	else:
@@ -58,6 +80,14 @@ def default_mkdir(d):
 
 
 def default_copyfile(obj):
+	"""
+	copy a L{fs obj<pkgcore.fs.fs.fsBase>} from it's real_path to it's stated location
+	
+	@param obj: L{pkgcore.fs.fs.fsBase} instance, exempting fsDir
+	@raise OSError:, for non file objs, Exception (this needs to be fixed
+	@return: true if success, else an exception is thrown
+	"""
+	
 	existant = False
 	ensure_perms = get_plugin("fs_ops", "ensure_perms")
 
@@ -96,6 +126,17 @@ def offset_rewriter(offset, iterable):
 
 
 def merge_contents(cset, offset=None, callback=lambda obj:None):
+
+	"""
+	merge a L{pkgcore.fs.contents.contentsSet} instance to the livefs
+	
+	@param cset: L{pkgcore.fs.contents.contentsSet} instance
+	@param offset: if not None, offset to prefix all locations with.  Think of it as target dir.
+	@param callback: callable to report each entry being merged
+	@raise OSError: see L{default_copyfile} and L{default_mkdir}
+	@return: True, or an exception is thrown on failure (OSError, although see default_copyfile for specifics)
+	"""
+
 	from pkgcore.plugins import get_plugin
 
 	ensure_perms = get_plugin("fs_ops", "ensure_perms")
@@ -135,6 +176,17 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
 
 
 def unmerge_contents(cset, offset=None, callback=lambda obj:None):
+
+	"""
+	unmerge a L{pkgcore.fs.contents.contentsSet} instance to the livefs
+	
+	@param cset: L{pkgcore.fs.contents.contentsSet} instance
+	@param offset: if not None, offset to prefix all locations with.  Think of it as target dir.
+	@param callback: callable to report each entry being unmerged
+	@raise OSError: see L{default_copyfile} and L{default_mkdir}
+	@return: True, or an exception is thrown on failure (OSError, although see default_copyfile for specifics)
+	"""
+
 	iterate = iter
 	if offset is not None:
 		iterate = pre_curry(offset_rewriter, offset.rstrip(os.path.sep))

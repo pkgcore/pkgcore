@@ -6,9 +6,11 @@ import fcntl
 import errno
 
 def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
-	"""ensure dirs exist, creating as needed with (optional) gid, uid, and mode
+	"""
+	ensure dirs exist, creating as needed with (optional) gid, uid, and mode
 	be forewarned- if mode is specified to a mode that blocks the euid from accessing the dir, this
-	code *will* try to create the dir"""
+	code *will* try to create the dir
+	"""
 
 	try:
 		st = os.stat(path)
@@ -90,6 +92,9 @@ def abssymlink(symlink):
 
 
 def normpath(mypath):
+	"""
+	normalize path- //usr/bin becomes /usr/bin
+	"""
 	newpath = os.path.normpath(mypath)
 	if newpath.startswith('//'):
 		return newpath[1:]
@@ -119,13 +124,19 @@ class GenericFailed(LockException):
 
 
 class FsLock(object):
+
+	"""
+	fnctl based locks
+	"""
+	
 	__slots__ = ("path", "fd", "create")
 	def __init__(self, path, create=False):
-		"""path specifies the fs path for the lock
-		create controls whether the file will be create if the file doesn't exist
+		"""
+		@param path: fs path for the lock
+		@param create: controls whether the file will be created if the file doesn't exist
 		if create is true, the base dir must exist, and it will create a file
-
-		If you want a directory yourself, create it.
+		If you want to lock via a dir, you have to ensure it exists (create doesn't suffice)
+		@raise NonExistant: if no file/dir exists for that path, and cannot be created
 		"""
 		self.path = path
 		self.fd = None
@@ -158,22 +169,33 @@ class FsLock(object):
 		return True
 
 	def acquire_write_lock(self, blocking=True):
-		"""Acquire an exclusive lock
-		Returns True if lock is acquired, False if not.
-		Note if you have a read lock, it implicitly upgrades atomically"""
+		"""
+		Acquire an exclusive lock
+
+		Note if you have a read lock, it implicitly upgrades atomically
+		
+		@param blocking: if enabled, don't return until we have the lock
+		@return: True if lock is acquired, False if not.
+		"""
 		return self._enact_change(fcntl.LOCK_EX, blocking)
 
 	def acquire_read_lock(self, blocking=True):
-		"""Acquire a shared lock
-		Returns True if lock is acquired, False if not.
-		Note, if you have a write_lock already, it'll implicitly downgrade atomically"""
+		"""
+		Acquire a shared lock
+
+		Note if you have a write lock, it implicitly downgrades atomically
+		
+		@param blocking: if enabled, don't return until we have the lock
+		@return: True if lock is acquired, False if not.
+		"""
 		return self._enact_change(fcntl.LOCK_SH, blocking)
 
 	def release_write_lock(self):
-		"""Release an exclusive lock if held"""
+		"""Release an write/exclusive lock if held"""
 		self._enact_change(fcntl.LOCK_UN, False)
 
 	def release_read_lock(self):
+		"""Release an shared/read lock if held"""
 		self._enact_change(fcntl.LOCK_UN, False)
 
 	def __del__(self):
@@ -184,4 +206,3 @@ class FsLock(object):
 		finally:
 			if self.fd is not None:
 				os.close(self.fd)
-

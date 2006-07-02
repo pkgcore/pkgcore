@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+interaction with the livefs, namely generating fs objects to represent the livefs
+"""
+
 import os, collections
 from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO, S_ISCHR, S_ISBLK
 from pkgcore.fs.fs import fsFile, fsDir, fsSymLink, fsDev, fsFifo
@@ -10,9 +14,16 @@ from pkgcore.fs.contents import contentsSet
 __all__ = ["gen_obj", "scan", "iter_scan"]
 
 def gen_obj(path, stat=None, real_path=None):
-	"""given a fs path, and an optional stat, return an appropriate fs obj representing that file/dir/dev/fif/link
-	throws KeyError if no obj type matches the stat checks
+	
 	"""
+	given a fs path, and an optional stat, return an appropriate fs obj representing that file/dir/dev/fif/link
+
+	@param stat: stat object to reuse if available
+	@param real_path: real path to the object if path is the desired location
+	@raise KeyError: if no obj type matches the stat checks
+	@return: L{pkgcore.fs.fsBase} derivative
+	"""
+	
 	if real_path is None:
 		real_path = path
 	if stat is None:
@@ -44,9 +55,11 @@ def gen_obj(path, stat=None, real_path=None):
 
 def iter_scan(path, offset=None):
 	"""
-	generator that yield fs objects from recursively scanning a path.
+	generator that yield L{pkgcore.fs.fsBase} objects from recursively scanning a path.
 	Does not follow symlinks pointing at dirs, just merely yields an obj representing said symlink
-	offset is the prefix to filter from the generated objects
+
+	@param path: str path of what directory to scan in the livefs
+	@param offset: if not None, prefix to strip from each objects location.  if offset is /tmp, /tmp/blah becomes /blah
 	"""
 	sep = os.path.sep
 	if offset is None:

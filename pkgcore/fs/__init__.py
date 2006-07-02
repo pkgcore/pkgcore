@@ -2,4 +2,8 @@
 # License: GPL2
 # $Id:$
 
+"""
+filesystem abstractions, and select operations
+"""
+
 from pkgcore.fs.livefs import *

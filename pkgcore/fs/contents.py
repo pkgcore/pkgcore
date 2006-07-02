@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+contents set- container of fs objects
+"""
+
 from itertools import imap
 from pkgcore.fs import fs
 
@@ -11,19 +15,33 @@ def check_instance(obj):
 
 
 class contentsSet(set):
-	"""class wrapping a contents file"""
+	"""set of L{fs<pkgcore.fs.fs>} objects"""
 
 	def __new__(cls, *a, **kw):
 		# override __new__ so set doesn't scream about opt args
 		return set.__new__(cls)
 
 	def __init__(self, initial=None, frozen=False):
+		
+		"""
+		@param initial: initial fs objs for this set
+		@type initial: sequence
+		@param frozen: controls if it modifiable after initialization
+		"""
+		
 		if initial is None:
 			initial = []
 		set.__init__(self, imap(check_instance, initial))
 		self.frozen = frozen
 
 	def add(self, obj):
+
+		"""
+		add a new fs obj to the set
+		
+		@param obj: must be a derivative of L{pkgcore.fs.fs.base}
+		"""
+		
 		if self.frozen:
 			# weird, but keeping with set.
 			raise AttributeError("%s is frozen; no add functionality" % self.__class__)
@@ -32,6 +50,14 @@ class contentsSet(set):
 		set.add(self, obj)
 
 	def remove(self, obj):
+
+		"""
+		remove a fs obj to the set
+		
+		@param obj: must be a derivative of L{pkgcore.fs.fs.base}, or a string location of an obj in the set
+		@raise KeyError: if the obj isn't found
+		"""
+		
 		if self.frozen:
 			# weird, but keeping with set.
 			raise AttributeError("%s is frozen; no remove functionality" % self.__class__)
@@ -61,6 +87,10 @@ class contentsSet(set):
 		return False
 
 	def clear(self):
+		"""
+		clear the set
+		@raise ttributeError: if the instance is frozen
+		"""
 		if self.frozen:
 			# weird, but keeping with set.
 			raise AttributeError("%s is frozen; no clear functionality" % self.__class__)
@@ -95,3 +125,18 @@ class contentsSet(set):
 
 	def fifos(self, invert=False):
 		return list(self.iterfifos(invert=invert))
+
+	for k in ("files", "dirs", "links", "devs", "fifos"):
+		s = k.capitalize()
+		locals()[k].__doc__ = \
+			"""
+			returns a list of just L{pkgcore.fs.fs.fs%s} instances
+			@param invert: if True, yield everything that isn't a fs%s instance, else yields just fs%s
+			""" % (s, s, s)
+		locals()["iter"+k].__doc__ = \
+			"""
+			a generator yielding just L{pkgcore.fs.fs.fs%s} instances
+			@param invert: if True, yield everything that isn't a fs%s instance, else yields just fs%s
+			""" % (s, s, s)
+		del s
+	del k

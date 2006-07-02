@@ -7,7 +7,7 @@
 #sanitize this to use listdir
 #~harring
 
-from pkgcore.const impor tRSYNC_HOST
+from pkgcore.const import RSYNC_HOST
 
 def parseSyncUri(uri):
 	"""parse a SYNC uri, returning a tuple of protocol,host_uri"""

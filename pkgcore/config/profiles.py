@@ -1,8 +1,11 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+base profile class- WARNING, may not be around long (provides little gain and is ebuild specific)
+"""
+
 class base(object):
-	pass
 
 	def get_data(self, bashrc):
 		raise NotImplementedError

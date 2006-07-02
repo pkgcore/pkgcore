@@ -1,6 +1,10 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
+"""
+ini based configuration format
+"""
+
 from ConfigParser import ConfigParser
 
 from pkgcore.util import mappings
@@ -14,6 +18,12 @@ class CaseSensitiveConfigParser(ConfigParser):
 
 
 def configFromIni(file_obj):
+	"""
+	generate a config dict
+	
+	@param file_obj: file protocol instance
+	@return: L{pkgcore.util.mappings.LazyValDict} instance
+	"""
 	cparser = CaseSensitiveConfigParser()
 	cparser.readfp(file_obj)
 	def get_section(section):
@@ -23,6 +33,7 @@ def configFromIni(file_obj):
 
 
 def configTypesFromIni(file_object):
+	"""parse config types from ini file object"""
 	types = {}
 	config = CaseSensitiveConfigParser()
 	config.readfp(file_object)

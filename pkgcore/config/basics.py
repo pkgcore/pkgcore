@@ -2,6 +2,13 @@
 # License: GPL2
 
 
+"""
+configuration subsystem primitives
+
+all callables can/may throw a L{configuration exception<pkgcore.config.errors.ConfigurationError>}
+"""
+
+
 from pkgcore.util import modules
 from pkgcore.config import errors
 
@@ -11,18 +18,19 @@ type_names = ("list", "str", "bool", "section_ref", "section_refs")
 
 class ConfigType(object):
 
+	"""A configurable 'type"""
+	
 	def __init__(self, typename, types, positional=None, incrementals=None, \
 		required=None, defaults=None, allow_unknowns=False):
 
-		"""A configurable 'type'.
-
-		typename is the name of the type, used in errors.
-		types is a dict mapping key names to type strings.
-		positional is a list of positional arguments.
-		incrementals is a list of incrementals.
-		required is a list of required arguments.
-		defaults is a ConfigSection with default values.
-		allow_unknowns controls whether unknown settings should error or not
+		"""
+		@param typename: name of the type, used in errors.
+		@param types: dict mapping key names to type strings.
+		@param positional: container holding positional arguments.
+		@param incrementals: container holding incrementals.
+		@param required: container holding required arguments.
+		@param defaults: L{ConfigSection} with default values.
+		@param allow_unknowns: controls whether unknown settings should error or not
 		"""
 
 		if positional is None:
@@ -62,7 +70,8 @@ class ConfigType(object):
 
 class ConfigSection(object):
 
-	"""Single Config section, returning typed values from a key.
+	"""
+	Single Config section, returning typed values from a key.
 
 	Not much of an object this, if we were using zope.interface it'd
 	be an Interface.
@@ -224,6 +233,7 @@ def str_parser(s):
 	return s.replace('\n', ' ').replace('\t', ' ')
 
 def bool_parser(s):
+	"""convert a string to a boolean"""
 	s = str_parser(s).lower()
 	if s in ("no", "false", "0"):
 		return False

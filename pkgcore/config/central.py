@@ -11,12 +11,12 @@ from pkgcore.config import introspect
 
 
 class ConfigManager(object):
-
+	
 	def __init__(self, configTypes, configs):
 		"""Initialize.
 
-		configTypes is a sequence of mappings of strings to ConfigType.
-		configs is a sequence of mappings of strings to ConfigSections.
+		@param configTypes: sequence of mappings of strings to ConfigType.
+		@param configs: sequence of mappings of strings to ConfigSections.
 		"""
 		# TODO autoexecs
 		self.configs = list(configs)

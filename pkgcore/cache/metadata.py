@@ -16,7 +16,7 @@ magic_line_count = 22
 # store the current key order *here*.
 class database(flat_hash.database):
 	"""
-	autodetects per entry if it is a L{flat_list<pkgcore.cache.flat_hash.database>} and L{flat_hash<pkgcore.cache.flat_list>} backends entry,
+	autodetects per entry if it is a L{flat_list<pkgcore.cache.flat_hash.database>} and flat_list backends entry,
 	and converts old (and incomplete) INHERITED field to _eclasses_ as required
 	"""
 	complete_eclass_entries = False

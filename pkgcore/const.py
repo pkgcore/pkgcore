@@ -2,6 +2,14 @@
 # Copyright: 2000-2005 Gentoo Foundation
 # License: GPL2
 
+
+"""
+internal constants.
+
+Future of this module is debatable- for the most part you likely don't want to be using this.
+As soon as is possible, most of these defines will be shifted to wherever they're best situated
+"""
+
 # note this is lifted out of portage 2.  so... it's held onto for the sake of having stuff we still need,
 # but it does need cleanup.
 

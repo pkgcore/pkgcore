@@ -1,6 +1,12 @@
 # Copyright: 2005 Gentoo Foundation
 # License: GPL2
 
+"""
+Avoid using- os data- root uid/gid, pkgcore uid/gid, etc.
+
+This will be killed off and bound into configuration subsystem at some point
+"""
+
 import os, pwd, grp
 
 ostype = os.uname()[0]

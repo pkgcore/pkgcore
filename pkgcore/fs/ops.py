@@ -143,16 +143,18 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
 	copyfile = get_plugin("fs_ops", "copyfile")
 	mkdir = get_plugin("fs_ops", "mkdir")
 
-	if os.path.exists(offset) and not os.path.isdir(offset):
-		raise TypeError("offset must be a dir, or not exist")
 	if not isinstance(cset, contents.contentsSet):
 		raise TypeError("cset must be a contentsSet")
-	if not os.path.exists(offset):
-		mkdir(fs.fsDir(offset, strict=False))
 
-	iterate = iter
 	if offset is not None:
+		if os.path.exists(offset):
+			if not os.path.isdir(offset):
+				raise TypeError("offset must be a dir, or not exist")
+		else:
+			mkdir(fs.fsDir(offset, strict=False))
 		iterate = pre_curry(offset_rewriter, offset.rstrip(os.path.sep))
+	else:
+		iterate = iter
 	
 	d = list(iterate(cset.iterdirs()))
 	d.sort()

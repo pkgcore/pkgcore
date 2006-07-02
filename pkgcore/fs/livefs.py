@@ -21,7 +21,7 @@ def gen_obj(path, stat=None, real_path=None):
 	@param stat: stat object to reuse if available
 	@param real_path: real path to the object if path is the desired location
 	@raise KeyError: if no obj type matches the stat checks
-	@return: L{pkgcore.fs.fsBase} derivative
+	@return: L{pkgcore.fs.fs.fsBase} derivative
 	"""
 	
 	if real_path is None:
@@ -55,7 +55,7 @@ def gen_obj(path, stat=None, real_path=None):
 
 def iter_scan(path, offset=None):
 	"""
-	generator that yield L{pkgcore.fs.fsBase} objects from recursively scanning a path.
+	generator that yield L{pkgcore.fs.fs.fsBase} objects from recursively scanning a path.
 	Does not follow symlinks pointing at dirs, just merely yields an obj representing said symlink
 
 	@param path: str path of what directory to scan in the livefs

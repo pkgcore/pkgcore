@@ -39,7 +39,7 @@ class contentsSet(set):
 		"""
 		add a new fs obj to the set
 		
-		@param obj: must be a derivative of L{pkgcore.fs.fs.base}
+		@param obj: must be a derivative of L{pkgcore.fs.fs.fsBase}
 		"""
 		
 		if self.frozen:
@@ -54,7 +54,7 @@ class contentsSet(set):
 		"""
 		remove a fs obj to the set
 		
-		@param obj: must be a derivative of L{pkgcore.fs.fs.base}, or a string location of an obj in the set
+		@param obj: must be a derivative of L{pkgcore.fs.fs.fsBase}, or a string location of an obj in the set
 		@raise KeyError: if the obj isn't found
 		"""
 		
@@ -132,11 +132,11 @@ class contentsSet(set):
 			"""
 			returns a list of just L{pkgcore.fs.fs.fs%s} instances
 			@param invert: if True, yield everything that isn't a fs%s instance, else yields just fs%s
-			""" % (s, s, s)
+			""" % (s.rstrip("s"), s, s)
 		locals()["iter"+k].__doc__ = \
 			"""
 			a generator yielding just L{pkgcore.fs.fs.fs%s} instances
 			@param invert: if True, yield everything that isn't a fs%s instance, else yields just fs%s
-			""" % (s, s, s)
+			""" % (s.rstrip("s"), s, s)
 		del s
 	del k

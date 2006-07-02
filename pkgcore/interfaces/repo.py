@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+repository modifications (installing, removing, replacing)
+"""
+
 from pkgcore.util.dependant_methods import ForcedDepends
 from pkgcore.util.currying import pre_curry
 from pkgcore.merge.engine import MergeEngine, errors as merge_errors
@@ -11,7 +15,9 @@ def decorate_ui_callback(stage, status_obj, original, *a, **kw):
 
 
 class fake_lock:
-	def __init__(self): pass
+	def __init__(self):
+		pass
+	
 	acquire_write_lock = acquire_read_lock = release_read_lock = release_write_lock = __init__
 
 
@@ -44,6 +50,7 @@ class base(object):
 		return True
 
 	def finish(self):
+		"""finish the transaction"""
 		self.me.final()
 		self._notify_repo()
 		self.lock.release_write_lock()
@@ -60,19 +67,24 @@ class base(object):
 
 
 class install(base):
-
+	
+	"""base interface for installing a pkg from a repo; repositories should override as needed"""
+	
 	stage_depends = {"finish":"merge_metadata", "merge_metadata":"postinst", "postinst":"transfer", "transfer":"preinst",
 		"preinst":"start"}
 	stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
 	_op_name = "_repo_install_op"
 
 	def start(self):
+		"""start the install transaction"""
 		return base.start(self, MergeEngine.install(self.pkg, offset=self.offset))
 
 	def preinst(self):
+		"""execute any pre-transfer steps required"""
 		return self.op.preinst()
 
 	def transfer(self):
+		"""execute the actual transfer"""
 		for x in (self.me.pre_merge, self.me.merge, self.me.post_merge):
 			try:
 				x()
@@ -84,13 +96,17 @@ class install(base):
 		self.repo.notify_add_package(self.pkg)
 
 	def postinst(self):
+		"""execute any post-transfer steps required"""
 		return self.op.postinst()
 
 	def merge_metadata(self):
+		"""merge pkg metadata to the repository.  Must be overrided"""
 		raise NotImplementedError
 
 
 class uninstall(base):
+
+	"""base interface for uninstalling a pkg from a repo; repositories should override as needed"""
 
 	stage_depends = {"finish":"unmerge_metadata", "unmerge_metadata":"postrm", "postrm":"remove", "remove":"prerm",
 		"prerm":"start"}
@@ -98,12 +114,15 @@ class uninstall(base):
 	_op_name = "_repo_uninstall_op"
 
 	def start(self):
+		"""start the uninstall transaction"""
 		return base.start(self, MergeEngine.uninstall(self.pkg, offset=self.offset))
 
 	def prerm(self):
+		"""execute any pre-removal steps required"""
 		return self.op.prerm()
 
 	def remove(self):
+		"""execute any removal steps required"""
 		for x in (self.me.pre_unmerge, self.me.unmerge, self.me.post_unmerge):
 			try:
 				x()
@@ -112,12 +131,14 @@ class uninstall(base):
 		return True
 
 	def postrm(self):
+		"""execute any post-removal steps required"""
 		return self.op.postrm()
 
 	def _notify_repo(self):
 		self.repo.notify_remove_package(self.pkg)
 
 	def unmerge_metadata(self):
+		"""unmerge pkg metadata from the repository.  Must be overrided."""
 		raise NotImplementedError
 
 	def __del__(self):
@@ -127,6 +148,9 @@ class uninstall(base):
 
 
 class replace(install, uninstall):
+
+	"""base interface for replacing a pkg in a repo with another; repositories should override as needed"""
+
 	stage_depends = {"finish":"unmerge_metadata",
 		"unmerge_metadata":"postrm", "postrm":"remove","remove":"prerm", "prerm":"merge_metadata",
 		"merge_metadata":"postinst", "postinst":"transfer","transfer":"preinst",
@@ -141,6 +165,7 @@ class replace(install, uninstall):
 		self.oldpkg = oldpkg
 
 	def start(self):
+		"""start the transaction"""
 		return base.start(self, MergeEngine.replace(self.oldpkg, self.pkg, offset=self.offset))
 
 	def _notify_repo(self):

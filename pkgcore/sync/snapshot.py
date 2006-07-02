@@ -1,13 +1,12 @@
 # snapshot.py; provides the capability of fetching a portage tree snapshot, and syncing a tree with it.
-# Copyright 2004 Brian Harring <ferringb@gmail.com>
+# Copyright 2004-2006 Brian Harring <ferringb@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
-
-raise Exception("won't work. portage_checksum clean ups needed")
+"""WARNING, WILL NOT WORK (too much has changed)"""
 
 import os
 import time
-import portage_checksum
+from pkgcore import chksums
 from pkgcore.spawn import spawn
 import shutil
 import sync.rsync

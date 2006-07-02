@@ -1,10 +1,13 @@
 # rsync.py; module providing an abstraction over the rsync binary
-# Copyright 2004 Brian Harring <ferringb@gmail.com>
+# Copyright 2004-2006 Brian Harring <ferringb@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
-from portage_const import RSYNC_BIN
-import os, portage_exec
+"""WARNING, will not work yet"""
+
+from pkgcore.const import RSYNC_BIN
+import os
 import socket
+from pkgcore import spawn
 
 import sync.syncexceptions
 
@@ -21,7 +24,7 @@ class RsyncHost:
 	def __init__(self, host_uri, local_host=False, rsync_binary=RSYNC_BIN):
 		"""self explanatory"""
 		if not os.access(rsync_binary, os.X_OK):
-			raise portage_exceptions.CommandNotFound(rsync_binary)
+			raise spawn.CommandNotFound(rsync_binary)
 
 		self.__binary = rsync_binary
 		self.__host = host_uri
@@ -154,7 +157,7 @@ class RsyncHost:
 		# tie a debug option into this
 		#print "options are",args
 
-		ret = portage_exec.spawn(args, fd_pipes=fd_pipes)
+		ret = spawn.spawn(args, fd_pipes=fd_pipes)
 		if ret == 0:
 			return True
 		elif ret == 1:

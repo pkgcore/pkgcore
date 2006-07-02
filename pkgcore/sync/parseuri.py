@@ -1,19 +1,20 @@
 # parseuri.py; parses a SYNC uri, returning protocol/host_uri
-# Copyright 2004 Brian Harring <ferringb@gmail.com>
+# Copyright 2004-2006 Brian Harring <ferringb@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
+"""WARNING, NEEDS WORK"""
 
 #sanitize this to use listdir
 #~harring
 
-import portage_const
+from pkgcore.const impor tRSYNC_HOST
 
 def parseSyncUri(uri):
 	"""parse a SYNC uri, returning a tuple of protocol,host_uri"""
 	u = uri.lower()
 	if u.startswith("rsync") or not u:
 		if len(u) <= 5:
-			return ('rsync', portage_const.RSYNC_HOST)
+			return ('rsync', RSYNC_HOST)
 		return ('rsync', u[8:])
 	elif u.startswith("cvs://"):
 		u = u[6:]

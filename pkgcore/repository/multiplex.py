@@ -1,10 +1,20 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+repository that combines multiple repositories together
+"""
+
 import prototype, errors
 
 class tree(prototype.tree):
+	
+	"""repository combining multiple repositories into one"""
+
 	def __init__(self, *trees):
+		"""
+		@param trees: L{pkgcore.repository.prototype.tree} instances to combines into one
+		"""
 		super(tree, self).__init__()
 		for x in trees:
 			if not isinstance(x, prototype.tree):
@@ -58,8 +68,9 @@ class tree(prototype.tree):
 			raise KeyError("category '%s' not found" % package)
 		return tuple(d)
 
-	def itermatch(self, atom, **kwds):
-		return (match for repo in self.trees for match in repo.itermatch(atom, **kwds))
+	def itermatch(self, restrict, **kwds):
+		return (match for repo in self.trees for match in repo.itermatch(restrict, **kwds))
+	itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace("@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
 
 	def __iter__(self):
 		return (pkg for repo in self.trees for pkg in repo)

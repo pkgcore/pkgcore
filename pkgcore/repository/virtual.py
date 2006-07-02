@@ -1,12 +1,20 @@
 # Copyright: 2005 Jason Stubbs <jstubbs@gentoo.org>
 # License: GPL2
 
+"""
+virtual repository, pkgs generated via callable
+"""
+
 from pkgcore.repository import prototype
 from pkgcore.package import virtual
 
 class tree(prototype.tree):
 
 	def __init__(self, grab_virtuals_func, livefs=False):
+		"""
+		@param grab_virtuals_func: callable to get a package -> versions mapping
+		@param livefs: is this a livefs repository?
+		"""
 		super(tree,self).__init__()
 		self.livefs = livefs
 		if not callable(grab_virtuals_func):

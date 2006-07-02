@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+base repository template
+"""
+
 from itertools import imap, ifilter
 from pkgcore.util.mappings import LazyValDict
 from pkgcore.util.lists import iter_stable_unique, iter_flatten
@@ -32,6 +36,7 @@ class IterValLazyDict(LazyValDict):
 		if key in self._vals:
 			del self._vals[key]
 
+
 class PackageIterValLazyDict(IterValLazyDict):
 
 	def __iter__(self):
@@ -42,6 +47,7 @@ class PackageIterValLazyDict(IterValLazyDict):
 		if len(s) != 2:
 			return False
 		return s[1] in self[s[0]]
+
 
 class CategoryIterValLazyDict(IterValLazyDict):
 
@@ -71,14 +77,26 @@ class CategoryIterValLazyDict(IterValLazyDict):
 
 class tree(object):
 	"""
-	del raw_repo, and set it to the underlying repo if you're wrapping another repo"""
+	repository template
+	
+	@ivar raw_repo: if wrapping a repo, set raw_repo per instance to it
+	@ivar livefs: boolean, set it to True if it's a repository representing a livefs
+	@ivar package_class: callable to generate a package instance, must override
+	@ivar configured: if a repo is unusable for merging/unmerging without being configured, set it to False
+	@ivar configure: if the repository isn't configured, must be a callable yielding a configured form of the repository
+	"""
+
 	raw_repo = None
 	livefs = False
 	package_class = None
 	configured = True
-	configure = ()
+	configure = None
 
 	def __init__(self, frozen=True):
+		"""
+		@param frozen: controls whether the repository is mutable or immutable
+		"""
+
 		self.categories = CategoryIterValLazyDict(self._get_categories, self._get_categories)
 		self.packages   = PackageIterValLazyDict(self.categories, self._get_packages)
 		self.versions   = IterValLazyDict(self.packages, self._get_versions, return_func=lambda *t:"-".join(t))
@@ -123,9 +141,13 @@ class tree(object):
 		return list(self.itermatch(atom, **kwds))
 
 	def itermatch(self, restrict, restrict_solutions=None, sorter=None):
-		"""yield matches one by one for restrict
-		restriction_solutions is only useful if you've already split the restrict into it's seperate
-		solutions.
+
+		"""
+		generator that yield packages that match a L{pkgcore.restrictions.package.base} instance
+		
+		@param restrict: L{package restriction<pkgcore.restrictions.package.base>} to search via
+		@param restrict_solutions: cnf collapsed list of the restrict.  Don't play with it unless you know what you're doing
+		@param sorter: callable to do sorting during searching- if sorting the results, use this instead of sorting externally
 		"""
 
 		if sorter is None:
@@ -200,6 +222,9 @@ class tree(object):
 			for c in cats_iter for p in sorter(self.packages.get(c, [])))
 
 	def notify_remove_package(self, pkg):
+		"""
+		internal function, notify the repository that a pkg it provides is being removed
+		"""
 		cp = "%s/%s" % (pkg.category, pkg.package)
 		self.versions.force_regen(cp)
 		if len(self.versions.get(cp, [])) == 0:
@@ -212,6 +237,9 @@ class tree(object):
 			self.versions.force_regen(cp)
 
 	def notify_add_package(self, pkg):
+		"""
+		internal function, notify the repository that a pkg is being addeded to it
+		"""
 		cp = "%s/%s" % (pkg.category, pkg.package)
 		if pkg.category not in self.categories:
 			self.categories.force_add(pkg.category)
@@ -220,27 +248,80 @@ class tree(object):
 		self.packages.force_regen(cp)
 
 	def install(self, pkg, *a, **kw):
+		"""
+		internal function, install a pkg to the repository
+		
+		@param pkg: L{pkgcore.package.metadata.package} instance to install
+		@param a: passed to _install
+		@param kw: passed to _install
+		@raise AttributeError: if the repository is frozen (immutable)
+		@return: L{pkgcore.interfaces.repo.install} instance
+		"""
 		if self.frozen:
 			raise AttributeError("repo is frozen")
 		return self._install(pkg, *a, **kw)
 
 	def _install(self, pkg, *a, **kw):
+		"""
+		internal install function- must be overrided in derivatives
+		
+		@param pkg: L{pkgcore.package.metadata.package} instance to install
+		@param a: passed to _install
+		@param kw: passed to _install
+		@return: L{pkgcore.interfaces.repo.install} instance
+		"""
 		raise NotImplementedError
 
 	def uninstall(self, pkg, *a, **kw):
+		"""
+		internal function, uninstall a pkg from the repository
+		
+		@param pkg: L{pkgcore.package.metadata.package} instance to install
+		@param a: passed to _install
+		@param kw: passed to _install
+		@raise AttributeError: if the repository is frozen (immutable)
+		@return: L{pkgcore.interfaces.repo.install} instance
+		"""
 		if self.frozen:
 			raise AttributeError("repo is frozen")
 		return self._uninstall(pkg, *a, **kw)
 
 	def _uninstall(self, pkg, *a, **kw):
+		"""
+		internal uninstall function- must be overrided in derivatives
+		
+		@param pkg: L{pkgcore.package.metadata.package} instance to install
+		@param a: passed to _install
+		@param kw: passed to _install
+		@return: L{pkgcore.interfaces.repo.install} instance
+		"""
 		raise NotImplementedError
 
 	def replace(self, orig, new, *a, **kw):
+		"""
+		internal function, replace a pkg in the repository with another
+		
+		@param orig: L{pkgcore.package.metadata.package} instance to install, must be from this repository instance
+		@param new: L{pkgcore.package.metadata.package} instance to install
+		@param a: passed to _install
+		@param kw: passed to _install
+		@raise AttributeError: if the repository is frozen (immutable)
+		@return: L{pkgcore.interfaces.repo.install} instance
+		"""
 		if self.frozen:
 			raise AttributeError("repo is frozen")
 		return self._replace(orig, new, *a, **kw)
 
 	def _replace(self, orig, new, *a, **kw):
+		"""
+		internal replace function- must be overrided in derivatives
+		
+		@param orig: L{pkgcore.package.metadata.package} instance to install, must be from this repository instance
+		@param new: L{pkgcore.package.metadata.package} instance to install
+		@param a: passed to _install
+		@param kw: passed to _install
+		@return: L{pkgcore.interfaces.repo.install} instance
+		"""
 		raise NotImplementedError
 
 	def __nonzero__(self):

@@ -1,6 +1,12 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+exceptions thrown by repository classes.
+
+Need to extend the usage a bit further still.
+"""
+
 class TreeCorruption(Exception):
 	def __init__(self, err):
 		self.err = err

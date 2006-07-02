@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+filtering repository
+"""
+
 # icky.
 # ~harring
 import prototype, errors
@@ -18,14 +22,15 @@ class filterTree(prototype.tree):
 		self.restriction = restriction
 		self.raw_repo = repo
 
-	def itermatch(self, atom, **kwds):
+	def itermatch(self, restrict, **kwds):
 		# note that this lets the repo do the initial filtering.
 		# better design would to analyze the restrictions, and inspect the repo,
 		# determine what can be done without cost (determined by repo's attributes)
 		# versus what does cost (metadata pull for example).
-		for cpv in self.raw_repo.itermatch(atom, **kwds):
+		for cpv in self.raw_repo.itermatch(restrict, **kwds):
 			if self.restriction.match(cpv) == self.sentinel_val:
 				yield cpv
+	itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace("@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
 
 	def __iter__(self):
 		for cpv in self.raw_repo:

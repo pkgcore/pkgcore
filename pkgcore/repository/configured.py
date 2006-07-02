@@ -1,6 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+wrap a repository, binding configuration to pkgs returned from the repository
+"""
+
 from pkgcore.util.compatibility import any
 from pkgcore.restrictions.packages import PackageRestriction, OrRestriction, AndRestriction
 from pkgcore.restrictions.util import collect_package_restrictions
@@ -12,6 +16,13 @@ class tree(prototype.tree):
 	configured = True
 
 	def __init__(self, raw_repo, wrapped_attrs):
+
+		"""
+		@param raw_repo: repo to wrap
+		@type raw_repo: L{pkgcore.repository.prototype.tree}
+		@param wrapped_attrs: sequence of attrs to wrap for each pkg
+		"""
+
 		# yes, we're intentionally not using tree's init.
 		# not perfect I know.
 		self.raw_repo = raw_repo
@@ -50,6 +61,8 @@ class tree(prototype.tree):
 
 		return (self.package_class(pkg) for pkg in self.raw_repo.itermatch(self, filtered_restrict, 
 			restrict_solutions=filtered_solutions, **kwds) if restrict.force_True(pkg))
+
+	itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace("@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
 
 	def __getitem__(self, key):
 		return self.package_class(self.raw_repo[key])

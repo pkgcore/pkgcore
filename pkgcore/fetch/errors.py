@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+errors fetch subsystem may throw
+"""
+
 class base(Exception):
 	pass
 

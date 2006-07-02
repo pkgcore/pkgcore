@@ -17,10 +17,10 @@ __all__ = ["fsFile", "fsDir", "fsSymLink", "fsDev", "fsFifo", "isdir", "isreg", 
 # following are used to generate appropriate __init__, wiped from the namespace at the end of the module
 
 _fs_doc = {
-	"mode":"""@param mode: int, the mode of this entry.  required if strict is set""",
-	"mtime":"""@param mtime: long, the mtime of this entry.  required if strict is set""",
-	"uid":"""@param uid: int, the uid of this entry.  required if strict is set""",
-	"gid":"""@param gid: int, the gid of this entry.  required if strict is set""",
+	"mode":"""@keyword mode: int, the mode of this entry.  required if strict is set""",
+	"mtime":"""@keyword mtime: long, the mtime of this entry.  required if strict is set""",
+	"uid":"""@keyword uid: int, the uid of this entry.  required if strict is set""",
+	"gid":"""@keyword gid: int, the gid of this entry.  required if strict is set""",
 }
 
 def gen_doc_additions(init, slots):
@@ -111,13 +111,12 @@ class fsFile(fsBase):
 	
 	__slots__ = fsBase.__slots__ + ["chksums"]
 
-	def __init__(self, location, chksums=None, mtime=None, **kwds):
+	def __init__(self, location, chksums=None, **kwds):
 		"""
 		@param chksums: dict of checksums, key chksum_type: val hash val.  see L{pkgcore.chksum}
 		"""
-		if mtime is not None:
-			mtime = long(mtime)
-			kwds["mtime"] = mtime
+		if "mtime" in kwds:
+			kwds["mtime"] = long(kwds["mtime"])
 		if chksums is None:
 			# this can be problematic offhand if the file is modified but chksum not triggered
 			chksums = LazyValDict(get_handlers().keys(), self._chksum_callback)

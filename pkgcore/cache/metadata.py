@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+cache backend designed for rsynced tree's pregenerated metadata.
+"""
+
 import os
 from pkgcore.cache import flat_hash
 from pkgcore.ebuild import eclass_cache
@@ -11,6 +15,10 @@ magic_line_count = 22
 
 # store the current key order *here*.
 class database(flat_hash.database):
+	"""
+	autodetects per entry if it is a L{flat_list<pkgcore.cache.flat_hash.database>} and L{flat_hash<pkgcore.cache.flat_list>} backends entry,
+	and converts old (and incomplete) INHERITED field to _eclasses_ as required
+	"""
 	complete_eclass_entries = False
 	auxdbkey_order = ('DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
 		'RESTRICT',  'HOMEPAGE',  'LICENSE', 'DESCRIPTION',
@@ -24,7 +32,8 @@ class database(flat_hash.database):
 		super(database, self).__init__(location, *args, **config)
 		self.location = os.path.join(loc, "metadata","cache")
 		self.ec = eclass_cache.cache(loc)
-
+	__init__.__doc__ = flat_hash.database.__init__.__doc__
+	
 	def __getitem__(self, cpv):
 		d = flat_hash.database.__getitem__(self, cpv)
 

@@ -1,12 +1,19 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+per key file based backend
+"""
+
 import os, stat, errno
 from pkgcore.cache import fs_template
 from pkgcore.cache import cache_errors
 
 class database(fs_template.FsBased):
 
+	"""
+	stores cache entries in key=value form, stripping newlines
+	"""
 	autocommits = True
 
 	def __init__(self, *args, **config):
@@ -16,6 +23,7 @@ class database(fs_template.FsBased):
 
 		if not os.path.exists(self.location):
 			self._ensure_dirs()
+	__init__.__doc__ = fs_template.FsBased.__init__.__doc__
 
 	def _getitem(self, cpv):
 		try:

@@ -2,6 +2,10 @@
 # Author(s): Jason Stubbs <jstubbs@gentoo.org>
 # License: GPL2
 
+"""
+cdb backend
+"""
+
 cdb_module = __import__("cdb")
 try:
 	import cPickle as pickle
@@ -16,6 +20,8 @@ from pkgcore.cache import fs_template, cache_errors
 
 class database(fs_template.FsBased):
 
+	"""cdb cache backend, non autocommiting"""
+	
 	autocommits = False
 	cleanse_keys = True
 	serialize_eclasses = False
@@ -45,6 +51,7 @@ class database(fs_template.FsBased):
 				raise cache_errors.InitializationError(self.__class__, e)
 		self._adds = {}
 		self._dels = set()
+	__init__.__doc__ = fs_template.FsBased.__init__.__doc__
 
 	def iteritems(self):
 		self.commit()
@@ -68,6 +75,7 @@ class database(fs_template.FsBased):
 		self._dels.add(cpv)
 
 	def commit(self):
+		"""commit any outstanding transactions"""
 		if not self._adds and not self._dels:
 			return
 		cm = cdb_module.cdbmake(self._db_path, self._db_path+str(os.getpid()))

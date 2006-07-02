@@ -2,6 +2,10 @@
 # Author(s): Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+template for cache backend classes
+"""
+
 from pkgcore.cache import cache_errors
 from pkgcore.util.mappings import ProtectedDict
 
@@ -10,13 +14,26 @@ class database(object):
 	# basically flags the cache needs be updated when transfered cache to cache.
 	# leave this.
 
+	"""
+	@ivar autocommits: controls whether the template commits every update, or queues up updates
+	@ivar complete_eclass_entries: specifics if the cache backend stores full eclass data, or partial
+	@ivar cleanse_keys: boolean controlling whether the template should drop empty keys for storing
+	@ivar serialize_eclasses: boolean controlling whether the template should serialize eclass data itself, or leave it to the derivative
+	"""
+	
 	complete_eclass_entries = True
 	autocommits = False
 	cleanse_keys = False
 	serialize_eclasses = True
 
 	def __init__(self, location, label, auxdbkeys, readonly=False):
-		""" initialize the derived class; specifically, store label/keys"""
+		"""
+		initialize the derived class; specifically, store label/keys
+		
+		@param location: fs location the cache is stored at
+		@param label: cache label
+		@param auxdbkeys: sequence of allowed keys for each cache entry
+		@param readonly: defaults to False, controls whether the cache is mutable"""
 		self._known_keys = auxdbkeys
 		self.location = location
 		self.label = label

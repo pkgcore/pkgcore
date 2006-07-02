@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+template for sql backends- needs work
+"""
+
 from pkgcore.cache import template, cache_errors
 
 class SQLDatabase(template.database):

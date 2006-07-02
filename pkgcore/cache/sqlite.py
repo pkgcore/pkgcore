@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+pysqlite <v2 backend
+"""
+
 import os
 from pkgcore.cache import sql_template, fs_template, cache_errors
 sqlite_module =__import__("sqlite")

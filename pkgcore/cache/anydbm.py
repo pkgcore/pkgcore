@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+anydbm backend
+"""
+
 anydbm_module = __import__("anydbm")
 try:
 	import cPickle as pickle
@@ -13,6 +17,8 @@ import cache_errors
 
 class database(fs_template.FsBased):
 
+	"""anydbm based cache backend, autocommiting"""
+	
 	autocommits = True
 	cleanse_keys = True
 
@@ -44,7 +50,8 @@ class database(fs_template.FsBased):
 					self._db = anydbm_module.open(self._db_path, "c", self._perms)
 			except andbm_module.error, e:
 				raise cache_errors.InitializationError(self.__class__, e)
-
+	__init__.__doc__ = fs_template.FsBased.__init__.__doc__
+	
 	def iteritems(self):
 		return self._db.iteritems()
 

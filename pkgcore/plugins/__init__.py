@@ -1,6 +1,12 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+global plugin registry- may be nuked/deprecated in the near future
+
+functionality it provides the config subsystem should be able to provide
+"""
+
 # I don't like this.
 # doesn't seem clean/right.
 

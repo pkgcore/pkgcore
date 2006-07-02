@@ -8,13 +8,31 @@ chksum_types = {}
 __inited__ = False
 
 def get_handler(requested):
+
+	"""
+	get a chksum handler
+	
+	@raise KeyError: if chksum type has no registered handler
+	@return: chksum handler (callable)
+	"""
+
 	if not __inited__:
 		init()
 	if requested not in chksum_types:
 		raise KeyError("no handler for %s" % requested)
 	return chksum_types[requested]
 
+
 def get_handlers(requested=None):
+
+	"""
+	get chksum handlers
+	
+	@param requested: None (all handlers), or a sequence of the specific handlers desired
+	@raise KeyError: if requested chksum type has no registered handler
+	@return: dict of chksum_type:chksum handler
+	"""
+
 	if requested is None:
 		if not __inited__:
 			init()
@@ -24,9 +42,16 @@ def get_handlers(requested=None):
 		d[x] = get_handler(x)
 	return d
 
+
 def init(additional_handlers=None):
-	"""init the chksum subsystem.  scan the dir, find what handlers are available, etc.
-	if desired to register additional, or override existing, pass in a dict of type:func"""
+
+	"""
+	init the chksum subsystem.  scan the dir, find what handlers are available, etc.
+	
+	@param additional_handlers: None, or pass in a dict of type:func
+	"""
+
+	global __inited__
 
 	if additional_handlers is not None and not isinstance(additional_handlers, dict):
 		raise TypeError("additional handlers must be a dict!")
@@ -40,7 +65,8 @@ def init(additional_handlers=None):
 			continue
 		try:
 			i = f.find(".")
-			if i != -1:	f = f[:i]
+			if i != -1:
+				f = f[:i]
 			del i
 			m = load_module(__name__+"."+f)
 		except ImportError, ie:
@@ -62,7 +88,15 @@ def init(additional_handlers=None):
 
 	__inited__ = True
 
+
 def size(file):
+	"""
+	size based chksum handler
+	
+	yes, aware that size isn't much of a chksum. ;)
+	
+	Also, don't use this directly, use get_handler from above
+	"""
 	try:
 		size = os.lstat(file).st_size
 	except OSError:

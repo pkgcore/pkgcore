@@ -1,6 +1,11 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+
+"""
+default chksum handlers implementation- sha1, sha256, rmd160, and md5
+"""
+
 from pkgcore.util.currying import pre_curry
 from pkgcore.util import modules
 blocksize = 32768

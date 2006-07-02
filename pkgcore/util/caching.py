@@ -8,14 +8,14 @@ class WeakInstMeta(type):
 	""""metaclass for instance caching, resulting in reuse of unique instances
 	
 	few notes-
-	- instances must be immutable (or effectively so).  Since creating a new instance
-	  may return a preexisting instance, this requirement B{must} be honored.
-	- due to the potential for mishap, each subclass of a caching class must assign __inst_caching__ = True
-	  to enable caching for the derivative.
-	- conversely, __inst_caching__ = False does nothing (although it's useful as a sign of 
-	  I{do not enable caching for this class}
-	- instance caching can be disabled per instantiation via passing disabling_inst_caching=True into the 
-	  class constructor.
+	  - instances must be immutable (or effectively so).  Since creating a new instance
+	    may return a preexisting instance, this requirement B{must} be honored.
+	  - due to the potential for mishap, each subclass of a caching class must assign __inst_caching__ = True
+	    to enable caching for the derivative.
+	  - conversely, __inst_caching__ = False does nothing (although it's useful as a sign of 
+	    I{do not enable caching for this class}
+	  - instance caching can be disabled per instantiation via passing disabling_inst_caching=True into the 
+	    class constructor.
 	
 	Being a metaclass, the voodoo used doesn't require modification of the class itself.
 	

@@ -14,8 +14,6 @@ class package(metadata.package):
 			val = OrRestriction(finalize=True)
 		elif key == "provides":
 			val = OrRestriction()
-		elif key == "metapkg":
-			val = True
 		elif key == "slot":
 			val = str(self.version)
 		else:

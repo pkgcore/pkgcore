@@ -29,9 +29,6 @@ class package(CPV):
 		except AttributeError:
 			raise KeyError(key)
 
-	# hack. :)
-	_get_attr["metapkg"] = lambda *a: bool(warnings.warn("metapkg hack will be removed soon"))
-
 	def _get_data(self):
 		if "data" in self.__dict__:
 			import traceback

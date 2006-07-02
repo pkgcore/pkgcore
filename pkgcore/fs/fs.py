@@ -18,7 +18,7 @@ __all__ = ["fsFile", "fsDir", "fsSymLink", "fsDev", "fsFifo", "isdir", "isreg", 
 
 _fs_doc = {
 	"mode":"""@param mode: int, the mode of this entry.  required if strict is set""",
-	"mtime":"""@param mode: long, the mtime of this entry.  required if strict is set""",
+	"mtime":"""@param mtime: long, the mtime of this entry.  required if strict is set""",
 	"uid":"""@param uid: int, the uid of this entry.  required if strict is set""",
 	"gid":"""@param gid: int, the gid of this entry.  required if strict is set""",
 }

@@ -1,6 +1,18 @@
 # Copyright: 2004-2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+
+"""
+low level ebuild processor.
+
+This basically is a coprocessor that controls a bash daemon for actual ebuild execution.
+Via this, the bash side can reach into the python side (and vice versa), enabling remote trees (piping 
+data from python side into bash side for example).
+
+A couple of processors are left lingering while pkgcore is running for the purpose of avoiding spawning
+overhead, this (and the general design) reduces regen time by over 40% compared to portage-2.1
+"""
+
 # this needs work.  it's been pruned heavily from what ebd used originally, but it still isn't what
 # I would define as 'right'
 
@@ -39,9 +51,19 @@ def shutdown_all_processors():
 pkgcore.spawn.atexit_register(shutdown_all_processors)
 
 def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False, save_file=None):
-	"""request an ebuild_processor instance from the pool, or create a new one
-	this walks through the requirements, matching a inactive processor if one exists
-	note fakerooted processors are never reused, do to the nature of fakeroot"""
+	"""
+	request an ebuild_processor instance from the pool, creating a new one if needed
+	
+	Note that fakeroot processes are B{never} reused due to the fact the fakeroot env becomes localized to the pkg
+	it's handling.
+	
+	@return: L{EbuildProcessor}
+	@param userpriv: should the processor be deprived to L{pkgcore.os_data.portage_gid} and L{pkgcore.os_data.portage_uid}?
+	@param sandbox: should the processor be sandboxed?
+	@param fakeroot: should the processor be fakerooted?  This option is mutually exclusive to sandbox, and requires
+	save_file to be set
+	@param save_file: location to store fakeroot state dumps
+	"""
 
 	if sandbox is None:
 		sandbox = pkgcore.spawn.sandbox_capable
@@ -62,11 +84,17 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False, save_
 
 
 def release_ebuild_processor(ebp):
-	"""the inverse of request_ebuild_processor.  Any processor requested via request_ebuild_processor
-	_must_ be released via this function once it's no longer in use.
-	this includes fakerooted processors.
-	Returns True exempting when the processor requested to be released isn't marked as active"""
+	"""
+	the inverse of request_ebuild_processor.  
+	
+	Any processor requested via request_ebuild_processor B{must} be released via this function once it's no longer in use.
+	This includes fakerooted processors.
 
+	@param ebp: L{EbuildProcessor} instance
+	@return: boolean indicating release results- if the processor isn't known as active, False is returned.
+	If a processor isn't known as active, this means either calling error or an internal error
+	"""
+	
 	global inactive_ebp_list, active_ebp_list
 	try:
 		active_ebp_list.remove(ebp)
@@ -98,12 +126,10 @@ class EbuildProcessor:
 
 	def __init__(self, userpriv, sandbox, fakeroot, save_file):
 		"""
-		sandbox enables a sandboxed processor
-		userpriv enables a userpriv'd processor
-		fakeroot enables a fakeroot'd processor- this is a mutually exclusive option to sandbox, and
-		requires userpriv to be enabled.
-
-		Violating this will result in nastyness
+		@param sandbox: enables a sandboxed processor
+		@param userpriv: enables a userpriv'd processor
+		@param fakeroot: enables a fakeroot'd processor- this is a mutually exclusive option to sandbox, and
+		requires userpriv to be enabled. Violating this will result in nastyness
 		"""
 
 		self.ebd = EBUILD_DAEMON_PATH
@@ -180,7 +206,12 @@ class EbuildProcessor:
 		Utility function, combines multiple calls into one, leaving the processor in a state where all that
 		remains is a call start_processing call, then generic_handler event loop.
 
-		Returns True for success, false for everything else.
+		@param phase: phase to prep for
+		@type phase: str
+		@param env: mapping of the environment to prep the processor with
+		@param sandbox: should the sandbox be enabled?
+		@param logging: None, or a filepath to log the output from the processor to
+		@return: True for success, False for everything else
 		"""
 
 		self.write("process_ebuild %s" % phase)
@@ -210,8 +241,13 @@ class EbuildProcessor:
 		return self.__fakeroot
 
 	def write(self, string, flush=True):
-		"""talk to running daemon.  Disabling flush is useful when dumping large amounts of data
-		all strings written are automatically \\n terminated"""
+		"""
+		send something to the bash side.
+		
+		@param string: string to write to the bash processor all strings written are automatically \\n terminated
+		@param flush: boolean controlling whether the data is flushed immediately.  Disabling flush is 
+		useful when dumping large amounts of data
+		"""
 		if string[-1] == "\n":
 			self.ebd_write.write(string)
 		else:
@@ -220,12 +256,19 @@ class EbuildProcessor:
 			self.ebd_write.flush()
 
 	def expect(self, want):
-		"""read from the daemon, and return true or false if the returned string is what is expected"""
+		"""
+		read from the daemon, and return true or false if the returned string is what is expected
+		
+		@param want: string we're expecting
+		@return: boolean, was what was read == want?
+		"""
 		got = self.ebd_read.readline()
-		return want == got[:-1]
+		return want == got.rstrip("\n")
 
 	def read(self, lines=1):
-		"""read data from the daemon.  Shouldn't be called except internally"""
+		"""
+		read data from the daemon.  Shouldn't be called except internally
+		"""
 		mydata = ''
 		while lines > 0:
 			mydata += self.ebd_read.readline()
@@ -233,7 +276,11 @@ class EbuildProcessor:
 		return mydata
 
 	def sandbox_summary(self, move_log=False):
-		"""if the instance is sandboxed, print the sandbox access summary"""
+		"""
+		if the instance is sandboxed, print the sandbox access summary
+		
+		@param move_log: location to move the sandbox log to if a failure occured
+		"""
 		if not os.path.exists(self.__sandbox_log):
 			self.write("end_sandbox_summary")
 			return 0
@@ -262,8 +309,13 @@ class EbuildProcessor:
 		return 1
 
 	def preload_eclasses(self, ec_file):
-		"""this preloades eclasses into a function, thus avoiding the cost of going to disk.
-		preloading eutils (which is heaviliy inherited) speeds up regen times fex"""
+		"""
+		this preloades eclasses into a a bash function, thus avoiding the cost of going to disk.
+		preloading eutils (which is heaviliy inherited) speeds up regen times for example
+		
+		@param ec_file: filepath of eclass to preload
+		@return: boolean, True for success
+		"""
 		if not os.path.exists(ec_file):
 			return 1
 		self.write("preload_eclass %s" % ec_file)
@@ -273,20 +325,29 @@ class EbuildProcessor:
 		return False
 
 	def lock(self):
-		"""lock the processor.  Currently doesn't block any access, but will"""
+		"""
+		lock the processor.  Currently doesn't block any access, but will
+		"""
 		self.processing_lock = True
 
 	def unlock(self):
-		"""unlock the processor"""
+		"""
+		unlock the processor
+		"""
 		self.processing_lock = False
 
 	def locked(self):
-		"""is the processor locked?"""
+		"""
+		is the processor locked?
+		"""
 		return self.processing_lock
 
 	def is_alive(self):
-		"""returns if it's known if the processor has been shutdown.
-		Currently doesn't check to ensure the pid is still running, yet it should"""
+		"""
+		returns if it's known if the processor has been shutdown.
+		
+		Currently doesn't check to ensure the pid is still running, yet it should
+		"""
 		try:
 			return self.pid > None
 		except AttributeError:
@@ -294,7 +355,9 @@ class EbuildProcessor:
 			return False
 
 	def shutdown_processor(self):
-		"""tell the daemon to shut itself down, and mark this instance as dead"""
+		"""
+		tell the daemon to shut itself down, and mark this instance as dead
+		"""
 		try:
 			if self.is_alive():
 				self.write("shutdown_daemon")
@@ -312,14 +375,21 @@ class EbuildProcessor:
 		self.pid = None
 
 	def set_sandbox_state(self, state):
-		"""tell the daemon whether to enable the sandbox, or disable it"""
+		"""
+		tell the daemon whether to enable the sandbox, or disable it
+		@param state: boolean, if True enable sandbox
+		"""
 		if state:
 			self.write("set_sandbox_state 1")
 		else:
 			self.write("set_sandbox_state 0")
 
 	def send_env(self, env_dict):
-		"""transfer the ebuild's desired env (env_dict) to the running daemon"""
+		"""
+		transfer the ebuild's desired env (env_dict) to the running daemon
+		
+		@param env_dict: mapping of key -> value pairs to use for the bash env.  all keys/values must be strings
+		"""
 
 		self.write("start_receiving_env\n")
 		exported_keys = ''
@@ -340,7 +410,11 @@ class EbuildProcessor:
 		return self.expect("env_received")
 
 	def set_logfile(self, logfile=''):
-		"""relevant only when the daemon is sandbox'd, set the logfile"""
+		"""
+		relevant only when the daemon is sandbox'd, set the logfile.  Set the location to log to
+		
+		@param logfile: filepath to log to
+		"""
 		self.write("logging %s" % logfile)
 		return self.expect("logging_ack")
 
@@ -355,8 +429,13 @@ class EbuildProcessor:
 				pass
 
 	def get_keys(self, package_inst, eclass_cache):
-		"""request the auxdbkeys from an ebuild
-		returns a dict when successful, None when failed"""
+		"""
+		request the metadata be regenerated from an ebuild
+		
+		@param package_inst: L{pkgcore.ebuild.ebuild_src.package} instance to regenerate
+		@param eclass_cache: L{pkgcore.ebuild.eclass_cache} instance to use for eclass access
+		@return: dict when successful, None when failed
+		"""
 
 		self.write("process_ebuild depend")
 		e = expected_ebuild_env(package_inst)
@@ -377,6 +456,9 @@ class EbuildProcessor:
 		return metadata_keys
 
 	def _receive_key(self, line, keys_dict):
+		"""
+		internal function used for receiving keys from the bash processor
+		"""
 		line = line.split("=", 1)
 		if len(line) != 2:
 			raise FinishedProcessing(True)
@@ -384,7 +466,9 @@ class EbuildProcessor:
 			keys_dict[line[0]] = line[1]
 
 	def _inherit(self, line, ecache):
-		"""callback for implementing inherit digging into eclass_cache.  not for normal consumption."""
+		"""
+		callback for implementing inherit digging into eclass_cache.  not for normal consumption.
+		"""
 		if line is None:
 			self.write("failed")
 			raise UnhandledCommand("inherit requires an eclass specified, none specified")
@@ -403,15 +487,15 @@ class EbuildProcessor:
 
 	# this basically handles all hijacks from the daemon, whether confcache or portageq.
 	def generic_handler(self, additional_commands=None):
-		"""internal function that responds to the running ebuild processor's requests
+		"""
+		internal event handler that responds to the running ebuild processor's requests
 
-		additional_commands is a dict of command:callable.  If you need to slip in extra args, look into pkgcore.util.currying.
-
+		@param additional_commands: is a dict of command:callable.  If you need to slip in extra args, look into pkgcore.util.currying.
 		commands names cannot have spaces.  the callable is called with the processor as first arg, and
 		remaining string (None if no remaining fragment) as second arg.
 		If you need to split the args to command, whitespace splitting falls to your func.
 
-		Chucks an UnhandledCommand exception when an unknown command is encountered.
+		@raise UnhandledCommand: thrown when an unknown command is encountered.
 		"""
 
 		# note that self is passed in.  so... we just pass in the unbound instance.  Specifically, via digging through __class__
@@ -483,6 +567,12 @@ class UnhandledCommand(ProcessingInterruption):
 
 
 def expected_ebuild_env(pkg, d=None):
+	"""
+	setup expected ebuild vars
+	
+	@param d: if None, generates a dict, else modifies a passed in mapping
+	@return: mapping
+	"""
 	if d is None:
 		d = {}
 	d["CATEGORY"] = pkg.category

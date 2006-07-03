@@ -1,6 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+make.conf translator, converts portage configuration files into L{pkgcore.config} form
+"""
+
 import os
 from pkgcore.config import basics, introspect
 from pkgcore.util.file import read_bash_dict, read_dict
@@ -12,6 +16,13 @@ demandload(globals(), "errno pkgcore.config:errors pkgcore.pkgsets.glsa:Security
 
 
 def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
+	"""
+	generate a GLSA vuln. pkgset limited by profile
+	
+	@param ebuild_repo: L{pkgcore.ebuild.ebuild_repository.UnconfiguredTree} instance
+	@param vdb: L{pkgcore.repository.prototype.tree} instance that is the livefs
+	@param profile: L{pkgcore.ebuild.profiles} instance
+	"""
 	arch = profile.conf.get("ARCH")
 	if arch is None:
 		raise errors.InstantiationError("pkgcore.ebuild.portage_conf.SecurityUpgradesViaProfile", 
@@ -23,6 +34,12 @@ SecurityUpgradesViaProfile.pkgcore_config_type = introspect.ConfigHint(types={
 
 
 def configFromMakeConf(location="/etc/"):
+	"""
+	generate a config from a file location
+	
+	@param location: location the portage configuration is based in, defaults to /etc
+	"""
+	
 	# this actually differs from portage parsing- we allow make.globals to provide vars used in make.conf, 
 	# portage keeps them seperate (kind of annoying)
 
@@ -146,5 +163,4 @@ def configFromMakeConf(location="/etc/"):
 	new_config["livefs domain"] = basics.ConfigSectionFromStringDict("livefs domain",
 		conf_dict)
 
-	return new_config		
-
+	return new_config

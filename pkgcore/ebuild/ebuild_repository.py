@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
+"""
+
 import os, stat
 from pkgcore.ebuild.ebd import buildable
 from pkgcore.repository import prototype, errors, configured
@@ -12,6 +16,11 @@ from pkgcore.plugins import get_plugin
 metadata_offset = "profiles"
 
 class UnconfiguredTree(prototype.tree):
+
+	"""
+	raw implementation supporting standard ebuild tree, return packages don't have USE configuration bound to them
+	"""
+	
 	false_categories = frozenset(["eclass", "profiles", "packages", "distfiles", 
 		"licenses", "scripts", "CVS", ".svn"])
 	configured = False
@@ -20,6 +29,16 @@ class UnconfiguredTree(prototype.tree):
 	ebuild_format_magic = "ebuild_src"
 
 	def __init__(self, location, cache=None, eclass_cache=None, mirrors_file=None, default_mirrors=None):
+
+		"""
+		@param location: on disk location of the tree
+		@param cache: sequence of L{pkgcore.cache.template.database} instances to use for storing metadata
+		@param eclass_cache: If not None, L{pkgcore.ebuild.eclass_cache} instance representing the eclasses available,
+		if None, generates the eclass_cache itself
+		@param mirrors_file: file parsed via L{read_dict} to get mirror tiers
+		@param default_mirrors: Either None, or sequence of mirrors to try fetching from first, then falling back to other uri
+		"""
+		
 		super(UnconfiguredTree, self).__init__()
 		self.base = self.location = location
 		try:
@@ -64,6 +83,13 @@ class UnconfiguredTree(prototype.tree):
 		self.package_class = get_plugin("format", self.ebuild_format_magic)(self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
 
 	def rebind(self, **kwds):
+
+		"""
+		generate a new tree instance with the same location using supplied keywords
+		
+		@param kwds: see __init__ for valid values
+		"""
+		
 		o = self.__class__(self.location, **kwds)
 		o.categories = self.categories
 		o.packages = self.packages
@@ -114,11 +140,20 @@ class UnconfiguredTree(prototype.tree):
 
 class ConfiguredTree(configured.tree):
 
+	"""
+	wrapper around a L{UnconfiguredTree}, binding USE configuration data (in general, all build/configuration data)
+	"""
+
 	configurable = "use"
 	config_wrappables = dict((x, currying.alias_class_method("evaluate_depset")) for x in
 		["depends", "rdepends", "fetchables", "license", "src_uri", "license", "provides"])
 
 	def __init__(self, raw_repo, domain_settings, fetcher=None):
+		"""
+		@param raw_repo: L{UnconfiguredTree} instance
+		@param domain_settings: environment settings to bind
+		@param fetcher: L{pkgcore.fetch.base.fetcher} instance to use for getting access to fetchable files
+		"""
 		if "USE" not in domain_settings:
 			raise errors.InitializationError("%s requires the following settings: '%s', not supplied" % (str(self.__class__), x))
 

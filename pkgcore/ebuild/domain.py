@@ -1,6 +1,12 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+gentoo configuration domain
+"""
+
+# XXX doc this up better...
+
 import os
 import pkgcore.config.domain
 from pkgcore.util.compatibility import any, all

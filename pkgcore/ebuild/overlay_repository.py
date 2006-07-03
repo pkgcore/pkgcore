@@ -31,7 +31,7 @@ class OverlayRepo(multiplex.tree):
 	def __init__(self, trees, **kwds):
 		"""
 		@param trees: L{pkgcore.ebuild.ebuild_repository.UnconfiguredTree} instances to combine
-		@keywords cache: L{pkgcore.cache.template.databse} instance to use for caching for the combined tree
+		@keyword cache: L{pkgcore.cache.template.database} instance to use for caching for the combined tree
 		"""
 
 		if not trees or len(trees) < 2:

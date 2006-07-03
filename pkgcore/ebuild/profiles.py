@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+gentoo profile support
+"""
+
 import os
 from pkgcore.config import profiles
 from pkgcore.util.file import iter_read_bash, read_bash_dict
@@ -19,7 +23,20 @@ demandload(globals(), "logging")
 
 class OnDiskProfile(profiles.base):
 
+	"""
+	On disk profile to scan
+	
+	api subject to change (not stable)
+	"""
+
 	def __init__(self, profile, incrementals=None, base_repo=None, base_path=None):
+		
+		"""
+		@param profile: profile name to scan
+		@param incrementals: sequence of settings to implement incremental stacking for
+		@param base_repo: L{pkgcore.ebuild.ebuild_repository.UnconfiguredTree} to build this profile from, mutually exclusive with base_path
+		@param base_path: raw filepath for this profile.  Mutually exclusive to base_repo
+		"""
 
 		from pkgcore.config.errors import InstantiationError
 		if incrementals is None:
@@ -200,7 +217,17 @@ class ForgetfulDict(dict):
 
 
 class AliasedVirtuals(virtual.tree):
+	
+	"""
+	repository generated from a profiles default virtuals
+	"""
+	
 	def __init__(self, virtuals, repo):
+		"""
+		@param virtuals: dict of virtual -> providers
+		@param repo: L{pkgcore.ebuild.ebuild_repository.UnconfiguredTree} parent repo
+		"""
+		
 		virtual.tree.__init__(self, virtuals)
 		self.aliased_repo = repo		
 		self.versions._vals = ForgetfulDict()

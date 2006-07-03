@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+ebuild tree manifest/digest support
+"""
+
 from pkgcore.chksum.errors import ParseChksumError
 def parse_digest(path, throw_errors=True):
 	d = {}

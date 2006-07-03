@@ -2,6 +2,10 @@
 # Copyright: 2000-2005 Gentoo Foundation
 # License: GPL2
 
+"""
+in memory representation of on disk eclass stacking order
+"""
+
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.fs.util:normpath pkgcore.util.mappings:StackedDict os")
 
@@ -22,9 +26,12 @@ class cache(base):
 	Base defaults to having both set.  Override as needed.
 	Set to None if that method isn't possible.
 	"""
-	def __init__(self, porttree, *additional_porttrees):
+	def __init__(self, porttree):
+		"""
+		@param porttree: ondisk location of the tree we're working with
+		"""
 		self.eclasses = {} # {"Name": ("location","_mtime_")}
-		self.porttrees = tuple(map(normpath, [porttree] + list(additional_porttrees)))
+		self.porttree = normpath(porttree)
 		self.update_eclasses()
 
 
@@ -32,18 +39,17 @@ class cache(base):
 		"""force instance to update it's internal view of on disk/remote eclasses"""
 		self.eclasses = {}
 		eclass_len = len(".eclass")
-		for x in (normpath(os.path.join(y, "eclass")) for y in self.porttrees):
-			if not os.path.isdir(x):
-				continue
-			for y in os.listdir(x):
+		fp = os.path.join(self.porttree, "eclass")
+		if os.path.isdir(x):
+			for y in os.listdir(fp):
 				if not y.endswith(".eclass"):
 					continue
 				try:
-					mtime = os.stat(x+"/"+y).st_mtime
+					mtime = os.stat(fp+"/"+y).st_mtime
 				except OSError:
 					continue
 				ys = y[:-eclass_len]
-				self.eclasses[ys] = (x, long(mtime))
+				self.eclasses[ys] = (fp, long(mtime))
 
 
 	def is_eclass_data_valid(self, ec_dict):
@@ -84,7 +90,13 @@ class cache(base):
 
 class StackedCache(cache):
 
+	"""
+	collapse multiple eclass caches into one, doing L->R searching for eclass matches
+	"""
 	def __init__(self, *caches):
+		"""
+		@param caches: L{cache} instances to stack; ordering should be desired lookup order
+		"""
 		if len(caches) < 2:
 			raise TypeError("%s requires at least two eclass_caches" % self.__class__)
 		self.eclasses = StackedDict(*[ec.eclasses for ec in caches])

@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+DepSet parsing (depends, rdepends, SRC_URI, license, etc) generating appropriate conditionals
+"""
+
 # TODO: move exceptions elsewhere, bind them to a base exception for pkgcore
 
 from pkgcore.restrictions import packages, values, boolean
@@ -21,6 +25,11 @@ def convert_use_reqs(uses):
 
 
 class DepSet(boolean.AndRestriction):
+	
+	"""
+	gentoo DepSet syntax parser
+	"""
+
 	__slots__ = ("has_conditionals", "element_class", "_node_conds", "restrictions")
 	type = packages.package_type
 	negate = False
@@ -29,9 +38,13 @@ class DepSet(boolean.AndRestriction):
 		operators={"||":packages.OrRestriction,"":packages.AndRestriction}, 
 		element_func=None):
 
-		"""dep_str is a dep style syntax, element_func is a callable returning
-		the obj for each element, and cleanse_string controls whether or
-		translation of tabs/newlines is required"""
+		"""
+		@param dep_str: string abiding by DepSet syntax
+		@param operators: mapping of node -> callable for special operators in DepSet syntax
+		@param element_func: if None, element_class is used for generating elements, else it's used to generate elements.
+		Mainly useful for when you need to curry a few args for instance generation, since element_class _must_ be a class
+		@param element_class: class of generated elements
+		"""
 
 		self.restrictions = []
 		self.element_class = element_class
@@ -100,12 +113,12 @@ class DepSet(boolean.AndRestriction):
 
 
 	def evaluate_depset(self, cond_dict, tristate_filter=None):
-		"""passed in a depset, does lookups of the node in cond_dict.
-		no entry in cond_dict == conditional is off, else the bool value of the key's val in cond_dict
-		
-		tristate filter is a control; if specified, must be a container of conditionals to lock to cond_dict.
+		"""
+		@param cond_dict: container to be used for conditional collapsing, typically is a use list
+		@param tristate_filter: a control; if specified, must be a container of conditionals to lock to cond_dict.
 		during processing, if it's not in tristate_filter will automatically enable the payload
-		(regardless of the conditionals negation)"""
+		(regardless of the conditionals negation)
+		"""
 
 		if not self.has_conditionals:
 			return self

@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+built ebuild packages (vdb packages and binpkgs are derivatives of this)
+"""
+
 from pkgcore.ebuild import ebuild_src
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.package import metadata
@@ -20,6 +24,11 @@ def flatten_depset(inst, conditionals):
 	return inst.evaluate_depset(conditionals)
 
 class package(ebuild_src.package):
+
+	"""
+	built form of an ebuild
+	"""
+	
 	immutable = True
 	tracked_attributes = ebuild_src.package.tracked_attributes[:]
 	tracked_attributes.extend(["contents", "use", "environment"])
@@ -67,7 +76,8 @@ class package_factory(metadata.factory):
 
 
 class fake_package_factory(package_factory):
-	"""a fake package_factory, so that we can reuse the normal get_metadata hooks; a factory is generated per
+	"""
+	a fake package_factory, so that we can reuse the normal get_metadata hooks; a factory is generated per
 	package instance, rather then one factory, N packages.
 
 	Do not use this unless you know it's what your after; this is strictly for transitioning a built ebuild

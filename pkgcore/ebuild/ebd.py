@@ -1,6 +1,13 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+EBuild Daemon (ebd), main high level interface to ebuild execution env (ebuild.sh being part of it).
+
+Wraps L{pkgcore.ebuild.processor} functionality into a higher level api, per phase methods for example
+"""
+
+
 import os, shutil, operator
 import warnings
 from pkgcore.interfaces import build
@@ -19,6 +26,14 @@ from pkgcore.ebuild import ebuild_built
 class ebd(object):
 
 	def __init__(self, pkg, initial_env=None, env_data_source=None, features=None):
+		"""
+		@param pkg: L{ebuild package instance<pkgcore.ebuild.ebuild_src.package>} instance this env is being setup for
+		@param initial_env: initial environment to use for this ebuild
+		@param env_data_source: a L{pkgcore.interfaces.data_source} instance to restore the environment from- used for restoring the
+		state of an ebuild processing, whether for unmerging, or walking phases during building
+		@param features: ebuild features, hold over from portage, will be broken down at some point
+		"""
+		
 		if pkg.eapi not in eapi_capable:
 			raise TypeError("pkg isn't of a supported eapi!, %i not in %s for %s" % (pkg.eapi, eapi_capable, pkg))
 
@@ -143,6 +158,13 @@ class ebd(object):
 		ebd.write("end_request")
 
 	def _generic_phase(self, phase, userpriv, sandbox, fakeroot):
+		"""
+		@param phase: phase to execute
+		@param userpriv: will we drop to L{portage_uid<pkgcore.os_data.portage_uid>} and L{portage_gid<pkgcore.os_data.portage_gid>}
+		access for this phase?
+		@param sandbox: should this phase be sandboxes?
+		@param fakeroot: should the phase be fakeroot'd?  Only really useful for install phase, and is mutually exclusive with sandbox
+		"""
 		ebd = request_ebuild_processor(userpriv=(self.userpriv and userpriv), \
 			sandbox=(self.sandbox and sandbox), \
 			fakeroot=(self.fakeroot and fakeroot))
@@ -193,25 +215,47 @@ class ebd(object):
 
 
 class install_op(ebd):
+	"""
+	phase operations and steps for install execution
+	"""
 	preinst = pretty_docs(post_curry(ebd._generic_phase, "preinst", False, False, False), "run the preinst phase")
 	postinst = pretty_docs(post_curry(ebd._generic_phase, "postinst", False, False, False), "run the postinst phase")
 
 
 class uninstall_op(ebd):
+	"""
+	phase operations and steps for uninstall execution
+	"""
 	prerm = pretty_docs(post_curry(ebd._generic_phase, "prerm", False, False, False), "run the prerm phase")
 	postrm = pretty_docs(post_curry(ebd._generic_phase, "postrm", False, False, False), "run the postrm phase")
 
 
 class replace_op(install_op, uninstall_op):
+	"""
+	phase operations and steps for replacing a pkg with another
+	"""
 	pass
 
 
 class buildable(ebd, build.base):
+
+	"""
+	build operation
+	"""
+	
 	_built_class = ebuild_built.package
 
 	# XXX this is unclean- should be handing in strictly what is build env, rather then
 	# dumping domain settings as env.
 	def __init__(self, pkg, domain_settings, eclass_cache, fetcher):
+		
+		"""
+		@param pkg: L{pkgcore.ebuild.ebuild_src.package} instance we'll be building
+		@param domain_settings: dict bled down from the domain configuration; basically initial env
+		@param eclass_cache: the L{eclass_cache<pkgcore.ebuild.eclass_cache>} we'll be using
+		@param fetcher: a L{pkgcore.fetch.base.fetcher} instance to use to access our required files for building
+		"""
+	
 		build.base.__init__(self)
 		ebd.__init__(self, pkg, initial_env=domain_settings, features=domain_settings["FEATURES"])
 		self.__init_workdir__()
@@ -274,6 +318,11 @@ class buildable(ebd, build.base):
 				raise build.GenericBuildError("Failed symlinking in distfiles for src %s -> %s: %s" % (src, dest, str(oe)))
 
 	def setup(self):
+		"""
+		execute the setup phase, mapping out to pkg_setup in the ebuild
+		
+		necessarily dirs are created as required, and build env is initialized at this point
+		"""
 		if self.distcc:
 			for p in ("", "/lock", "/state"):
 				if not ensure_dirs(os.path.join(self.env["DISTCC_DIR"], p), mode=02775, gid=portage_gid):
@@ -312,26 +361,36 @@ class buildable(ebd, build.base):
 		return ebd.setup(self)
 
 	def configure(self):
+		"""
+		execute the configure phase- does nothing if the pkg is EAPI=0 (that spec lacks a seperated configure phase)
+		"""
 		if self.eapi > 0:
 			return self._generic_phase("configure", True, True, False)
 		return True
 
-	unpack = pretty_docs(post_curry(ebd._generic_phase, "unpack", True, True, False), "run the unpack phase")
-	compile = pretty_docs(post_curry(ebd._generic_phase, "compile", True, True, False), "run the compile phase")
+	unpack = pretty_docs(post_curry(ebd._generic_phase, "unpack", True, True, False), "run the unpack phase (maps to src_unpack)")
+	compile = pretty_docs(post_curry(ebd._generic_phase, "compile", True, True, False), "run the compile phase (maps to src_compile)")
 
 	def install(self):
-		"""install phase"""
+		"""run the install phase (maps to src_install)"""
 		if self.fakeroot:
 			return self._generic_phase("install", True, False, True)
 		else:
 			return self._generic_phase("install", True, True, False)
 
 	def test(self):
-		"""run the test phase (if enabled)"""
+		"""run the test phase (if enabled), maps to src_test"""
 		if not self.run_test:
 			return True
 		return self._generic_phase("test", True, True, False)
 
 	def finalize(self):
+		"""
+		finalize the operation; this yields a built package, but the packages metadata/contents are bound to the workdir.
+		
+		In other words, install the package somewhere prior to executing clean if you intend on installing it
+		
+		@return: L{pkgcore.ebuild.ebuild_built.package} instance
+		"""
 		return ebuild_built.fake_package_factory(self._built_class).new_package(self.pkg,
 			self.env["IMAGE"], os.path.join(self.env["T"], "environment"))

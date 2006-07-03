@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+package class for buildable ebuilds
+"""
+
 import os, operator, weakref
 from pkgcore.package import metadata
 from pkgcore.ebuild import conditionals
@@ -150,6 +154,15 @@ def rewrite_restrict(restrict):
 	return tuple(l)
 
 class package(metadata.package):
+
+	"""
+	ebuild package
+	
+	@cvar tracked_attributes: sequence of attributes that are required to exist in the built version of ebuidl-src
+	@cvar _config_wrappables: mapping of attribute to callable for re-evaluating attributes dependant on configuration
+
+	"""
+
 	immutable = False
 	allow_regen = True
 	tracked_attributes = ["PF", "depends", "rdepends", "provides", 	"license",
@@ -271,7 +284,18 @@ def generate_new_factory(*a, **kw):
 
 class virtual_ebuild(metadata.package):
 
+	"""
+	PROVIDES generated fake packages
+	"""
+
 	def __init__(self, cpv, parent_repository, pkg, data):
+		"""
+		@param cpv: cpv for the new pkg
+		@param parent_repository: actual repository that this pkg should claim it belongs to
+		@param pkg: parent pkg that is generating this pkg
+		@param data: mapping of data to push to use in __getattr__ access
+		"""
+		
 		self.__dict__["data"] = IndeterminantDict(lambda *a: str(), data)
 		self.__dict__["_orig_data"] = data
 		self.__dict__["actual_pkg"] = pkg

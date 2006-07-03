@@ -1,9 +1,16 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+resolver configuration to match portage behaviour (misbehaviour in a few spots)
+"""
+
+__all__ = ["upgrade_resolver", "min_install_resolver"]
+
 from pkgcore.resolver import plan
 from pkgcore.util.iterables import caching_iter
 from pkgcore.util.repo_utils import get_virtual_repos
+
 
 def prefer_highest_ver(resolver, dbs, atom):
 	try:
@@ -15,7 +22,21 @@ def prefer_highest_ver(resolver, dbs, atom):
 		pass
 	return resolver.prefer_highest_version_strategy(resolver, dbs, atom)
 
+
 def upgrade_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True):
+
+	"""
+	generate and configure a resolver for upgrading all nodes encountered in processing
+	
+	@param vdb: list of L{pkgcore.repository.prototype.tree} instances that represents the livefs
+	@param dbs: list of L{pkgcore.repository.prototype.tree} instances representing sources of pkgs
+	@param verify_vdb: should we stop resolving once we hit the vdb, or do full resolution?
+	@param force_vdb_virtuals: old style portage virtuals (non metapkgs) cannot be technically sorted since their
+	versions are from multiple packages bleeding through- results make no sense essentially.  You want this option
+	enabled if you're dealing in old style virtuals
+	@return: L{pkgcore.resolver.plan.merge_plan} instance
+	"""
+
 	if force_vdb_virtuals:
 		f = prefer_highest_ver
 	else:
@@ -28,7 +49,21 @@ def upgrade_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True):
 		dbs = [dbs]
 	return plan.merge_plan(dbs + vdb, plan.pkg_sort_highest, f)
 
+
 def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True):
+	"""
+	generate and configure a resolver that is focused on just installing requests- installs highest version it can build a solution for,
+	but tries to avoid building anything not needed
+
+	@param vdb: list of L{pkgcore.repository.prototype.tree} instances that represents the livefs
+	@param dbs: list of L{pkgcore.repository.prototype.tree} instances representing sources of pkgs
+	@param verify_vdb: should we stop resolving once we hit the vdb, or do full resolution?
+	@param force_vdb_virtuals: old style portage virtuals (non metapkgs) cannot be technically sorted since their
+	versions are from multiple packages bleeding through- results make no sense essentially.  You want this option
+	enabled if you're dealing in old style virtuals
+	@return: L{pkgcore.resolver.plan.merge_plan} instance
+	"""
+
 	# nothing fancy required for force_vdb_virtuals, we just silently ignore it.
 	vdb = list(vdb.trees)
 	if not verify_vdb:

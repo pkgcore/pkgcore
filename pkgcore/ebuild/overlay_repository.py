@@ -1,6 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+implementation of the standard PORTDIR + PORTDIR_OVERLAY repository stacking
+"""
+
 from pkgcore.repository import multiplex
 from pkgcore.config.introspect import ConfigHint
 from pkgcore.config import errors
@@ -13,6 +17,10 @@ import os, stat
 
 class OverlayRepo(multiplex.tree):
 
+	"""
+	collapse multiple trees into one, with a shared eclass dir, and first package leftmost returned
+	"""
+	
 	pkgcore_config_type = ConfigHint(types={"trees":"section_refs", "default_mirrors":"list", "cache": "section_ref"}, 
 		required=("trees",), positional=("trees",))
 
@@ -21,6 +29,11 @@ class OverlayRepo(multiplex.tree):
 	configure = ebuild_repository.ConfiguredTree
 
 	def __init__(self, trees, **kwds):
+		"""
+		@param trees: L{pkgcore.ebuild.ebuild_repository.UnconfiguredTree} instances to combine
+		@keywords cache: L{pkgcore.cache.template.databse} instance to use for caching for the combined tree
+		"""
+
 		if not trees or len(trees) < 2:
 			raise errors.InstantiationError(self.__class__, trees, {}, 
 				"Must specify at least two pathes to ebuild trees to overlay")
@@ -34,7 +47,7 @@ class OverlayRepo(multiplex.tree):
 #					"all trees must be ebuild_repository instances, and existant dirs- '%s' is not" % t)
 
 		# master combined eclass
-		self.eclass_cache = eclass_cache.StackedCache(*[t.eclass_cache for t in trees])
+		self.eclass_cache = eclass_cache.StackedCache(*[t.eclass_cache for t in reversed(trees)])
 
 		repos = []
 		for t in trees:

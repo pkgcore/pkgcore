@@ -40,7 +40,7 @@ class cache(base):
 		self.eclasses = {}
 		eclass_len = len(".eclass")
 		fp = os.path.join(self.porttree, "eclass")
-		if os.path.isdir(x):
+		if os.path.isdir(fp):
 			for y in os.listdir(fp):
 				if not y.endswith(".eclass"):
 					continue

@@ -14,16 +14,21 @@ from pkgcore.restrictions import restriction
 
 
 class base(restriction.base):
+
+	"""base template for boolean restrictions"""
+
 	__slots__ = ("restrictions", "type")
 
 	def __init__(self, *restrictions, **kwds):
-		"""Optionally hand in (positionally) restrictions to use as the basis of this restriction
-		finalize=False, set it to True to notify this instance to internally finalize itself (no way to reverse it yet)
-		negate=False, controls whether matching results are negated
-		finalize=False, controls whether this instance is finalized.
-		node_type=None, controls whether to override the class default (if specified); no type in class nor passed in means
-		no filtering of add_restriction calls.
+
 		"""
+		@keyword node_type: type of restriction this accepts (L{package_type<pkgcore.restrictions.packages.package_type>} and 
+		L{value_type<pkgcore.restrictions.values.value_type>}) being common types.  If set to None, no instance limiting is done
+		@param restrictions: initial restrictions to add, must be of node_type (if node_type is specified)
+		@keyword finalize: should this instance be made immutable immediately?
+		@keyword negate: should the logic be negated?
+		"""
+
 		if "node_type" in kwds:
 			self.type = kwds["node_type"]
 		finalize = kwds.pop("finalize", False)
@@ -37,14 +42,22 @@ class base(restriction.base):
 			self.restrictions = tuple(self.restrictions)
 
 	def change_restrictions(self, *restrictions, **kwds):
+		"""
+		return a new instance of self.__class__, using supplied restrictions
+		
+		"""
 		if self.__class__.type != self.type:
 			kwds["node_type"] = self.type
 		kwds["negate"] = self.negate
 		return self.__class__(*restrictions, **kwds)
 
 	def add_restriction(self, *new_restrictions):
-		"""add restriction(s), must be isinstance of required_base
 		"""
+		add an more restriction(s)
+		
+		@param new_restrictions: if node_type is enforced, restrictions must be of that type.
+		"""
+		
 		if not new_restrictions:
 			raise TypeError("need at least one restriction handed in")
 		if hasattr(self, "type"):
@@ -59,10 +72,10 @@ class base(restriction.base):
 		self.restrictions.extend(new_restrictions)
 
 	def finalize(self):
+		"""
+		finalize the restriction instance so that no further restrictions can be added
+		"""
 		self.restrictions = tuple(self.restrictions)
-
-	def total_len(self):
-		return sum(x.total_len() for x in self.restrictions) + 1
 
 	def __len__(self):
 		return len(self.restrictions)
@@ -195,6 +208,11 @@ class AndRestriction(base):
 		return False
 
 	def iter_dnf_solutions(self, full_solution_expansion=False):
+		"""
+		generater yielding DNF (disjunctive normalized form) form of this instance
+		
+		@param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
+		"""
 		if self.negate:
 			raise NotImplementedError("negation for dnf_solutions on AndRestriction isn't implemented yet")
 		if not self.restrictions:
@@ -227,9 +245,19 @@ class AndRestriction(base):
 			yield solution
 
 	def dnf_solutions(self, **kwds):
+		"""
+		list form of L{iter_dnf_solutions}, see iter_dnf_solutions for args
+		"""
 		return list(self.iter_dnf_solutions(**kwds))
 
 	def cnf_solutions(self, full_solution_expansion=False):
+		
+		"""
+		returns solutions in CNF (conjunctive normalized form) for of this instance
+		
+		@param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
+		"""
+		
 		if self.negate:
 			raise NotImplementedError("negation for solutions on AndRestriction isn't implemented yet")
 		andreqs = []
@@ -254,6 +282,11 @@ class OrRestriction(base):
 		return any(True for rest in self.restrictions if rest.match(vals)) != self.negate
 
 	def cnf_solutions(self, full_solution_expansion=False):
+		"""
+		returns alist in CNF (conjunctive normalized form) for of this instance
+		
+		@param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
+		"""
 		if self.negate:
 			raise NotImplementedError("OrRestriction.solutions doesn't yet support self.negate")
 
@@ -286,6 +319,11 @@ class OrRestriction(base):
 				
 
 	def dnf_solutions(self, full_solution_expansion=False):
+		"""
+		returns a list in DNF (disjunctive normalized form) for of this instance
+		
+		@param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
+		"""
 		if self.negate:
 			raise NotImplementedError("OrRestriction.dnf_solutions doesn't yet support self.negate")
 		if not self.restrictions:
@@ -303,6 +341,9 @@ class OrRestriction(base):
 		return choices
 
 	def iter_dnf_solutions(self, **kwds):
+		"""
+		see dnf_solutions, iterates yielding DNF solutions
+		"""
 		return iter(self.dnf_solutions(**kwds))
 
 	def force_True(self, pkg, *vals):

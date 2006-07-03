@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+restriction classes designed for package level matching
+"""
+
 import operator
 from pkgcore.util.currying import pre_curry, pretty_docs
 from pkgcore.restrictions import values, restriction, boolean
@@ -10,13 +14,20 @@ demandload(globals(), "logging")
 package_type = "package"
 
 class PackageRestriction(restriction.base):
-	"""cpv data restriction.  Inherit for anything that's more then cpv mangling please"""
+	"""
+	package data restriction.  Inherit for anything that's more then cpv mangling please
+	"""
 
 	__slots__ = ("attr_split", "attr", "restriction")
 	type = package_type
 	__inst_caching__ = True
 
 	def __init__(self, attr, restriction, negate=False):
+		"""
+		@param attr: package attribute to match against
+		@param restriction: a L{pkgcore.restrictions.values.base} instance to pass attr to for matching
+		@param negate: should the results be negated?
+		"""
 		super(PackageRestriction, self).__init__(negate=negate)
 		self.attr_split = tuple(operator.attrgetter(x) for x in attr.split("."))
 		self.attr = attr
@@ -106,13 +117,24 @@ class PackageRestriction(restriction.base):
 
 
 class Conditional(PackageRestriction):
-	"""base object representing a conditional node"""
+
+	"""
+	base object representing a conditional package restriction
+	
+	used to control whether a payload of restrictions are accessible or not
+	"""
 
 	__slots__ = ("payload",)
 
 	__inst_caching__ = True
 
 	def __init__(self, attr, restriction, payload, **kwds):
+		"""
+		@param attr: attr to match against
+		@param restriction: restriction to control whether or not the payload is accessible
+		@param payload: payload data, whatever it may be.
+		@param kwds: additional args to pass to L{PackageRestriction}
+		"""
 		super(Conditional, self).__init__(attr, restriction, **kwds)
 		self.payload = tuple(payload)
 

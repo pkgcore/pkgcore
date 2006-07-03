@@ -1,26 +1,30 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+functionality to collapse O(N) restriction match calls into ~O(1)
+"""
+
 __all__ = ("DictBased")
 from pkgcore.restrictions import restriction
 from pkgcore.restrictions import packages
 
 class DictBased(restriction.base):
 
-	"""Restrictions are (by default) executed in a depth/breadth method; for long chains of restrictions,
+	"""
+	Restrictions are (by default) executed in a depth/breadth method; for long chains of restrictions,
 	this grows inneficient.  For example, package.mask'ing has over 300 atoms, effectively over 1800 objects in use.
 
 	Running the filter on each package instance returned from a repo would be exceedingly slow, a way to get as close to
 	constant lookup as possible is needed.
 
 	DictBased works by using supplied functions to collapse long chains of restrictions into a dict, with key
-	defined by get_key_from_atom (with get_key_from_package returning the key of a pkg instance), and with the
-	value of that key holding the remaining restrictions (if any).
+	defined by get_key_from_package, and with the value of that key holding the remaining restrictions (if any).
 
 	Common usage at this point is to collapse category and package attribute restrictions into constant lookup, with
 	any remaining version restrictions being handed off as a val.
 
-	Example usage of this class should be available in pkgcore.config.domain.domain
+	Example usage of this class should be available in pkgcore.ebuild.domain
 
 	Aside from that, method of generating keys/collapsing restrictions is subject to change, still need to push metadata
 	in re: what restriction types are being collapsed; short version, api isn't declared stable yet.
@@ -31,8 +35,13 @@ class DictBased(restriction.base):
 	inst_caching = False
 
 	def __init__(self, restriction_items, get_key_from_package, *args, **kwargs):
-		"""restriction_items is a source of restriction keys and remaining restriction (if none, set it to None)
-		get_key is a function to get the key from a pkg instance"""
+		"""
+		
+		@param restriction_items: source of restriction keys and remaining restriction (if none, set it to None)
+		@param get_key_from_package: is a function to get the key from a pkg instance
+		@param args: pass any additional args to L{pkgcore.restrictions.restriction.base}
+		@param kwargs: pass any additional args to L{pkgcore.restrictions.restriction.base}
+		"""
 
 		if not callable(get_key_from_package):
 			raise TypeError(get_key_from_package)
@@ -48,7 +57,6 @@ class DictBased(restriction.base):
 			else:
 				self.restricts_dict[key] = packages.OrRestriction(restrict, inst_caching=False)
 
-#		self.get_pkg_key, self.get_atom_key = get_key_from_package, get_key_from_atom
 		self.get_pkg_key = get_key_from_package
 
 
@@ -72,24 +80,3 @@ class DictBased(restriction.base):
 
 	def __str__(self):
 		return "%s: pkg_key(%s), " % (self.__class__, self.get_pkg_key)
-
-#	def __getitem__(self, restriction, default=None):
-#		if isinstance(restriction, base):
-#			key, r = self.get_atom_key(restriction)
-#		if key is None:	return default
-#		return self.restricts_dict.get(key, default)
-#
-#
-#	def __setitem__(self, restriction, val):
-#		if isinstance(restriction, base):
-#			key, r = self.get_atom_key(restriction)
-#		if key is None:
-#			raise KeyError("either passed in, or converted val became None, invalid as key")
-#		self.restricts_dict[key] = val
-#
-#
-#	def __delitem__(self, restriction):
-#		if isinstance(restriction, base):
-#			key = self.get_atom_key(restriction)
-#		if key is not None and key in self.restricts_dict:
-#			del self.restricts_dict[key]

@@ -1,6 +1,14 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+value restrictions
+
+works hand in hand with L{pkgcore.restrictions.packages}, these classes match against a value handed in,
+package restrictions pull the attr from a package instance and hand it to their wrapped restriction (which is
+a value restriction).
+"""
+
 import re
 from pkgcore.restrictions import restriction, boolean
 from pkgcore.util.currying import pre_curry, pretty_docs
@@ -9,8 +17,10 @@ from pkgcore.util.compatibility import any
 value_type = "values"
 
 class base(restriction.base):
-	"""base restriction matching object; overrides setattr to provide the usual write once trickery
-	all derivatives *must* be __slot__ based"""
+	"""
+	base restriction matching object; overrides setattr to provide the usual write once trickery
+	all derivatives *should* be __slot__ based (lot of instances in memory potentially)
+	"""
 
 	__slots__ = ()
 
@@ -42,12 +52,23 @@ class StrMatch(base):
 
 
 class StrRegexMatch(StrMatch):
-	#potentially redesign this to jit the compiled_re object
+	
+	"""
+	regex based matching
+	"""
+	
 	__slots__ = ("regex", "compiled_re")
 
 	__inst_caching__ = True
 
 	def __init__(self, regex, CaseSensitive=True, **kwds):
+
+		"""
+		@param regex: regex pattern to match
+		@param CaseSensitive: should the match be case sensitive?
+		@keyword negate: should the match results be negated?
+		"""
+
 		super(StrRegexMatch, self).__init__(**kwds)
 		self.regex = regex
 		flags = 0
@@ -73,11 +94,23 @@ class StrRegexMatch(StrMatch):
 
 
 class StrExactMatch(StrMatch):
+
+	"""
+	exact string comparison match
+	"""
+
 	__slots__ = ("exact", "flags")
 
 	__inst_caching__ = True
 
 	def __init__(self, exact, CaseSensitive=True, **kwds):
+
+		"""
+		@param exact: exact string to match
+		@param CaseSensitive: should the match be case sensitive?
+		@keyword negate: should the match results be negated?
+		"""
+
 		super(StrExactMatch, self).__init__(**kwds)
 		if not CaseSensitive:
 			self.flags = re.I
@@ -115,11 +148,23 @@ class StrExactMatch(StrMatch):
 
 class StrGlobMatch(StrMatch):
 
+	"""
+	globbing matches; essentially startswith and endswith matches
+	"""
+
 	__slots__ = ("glob", "prefix")
 
 	__inst_caching__ = True
 
 	def __init__(self, glob, CaseSensitive=True, prefix=True, **kwds):
+
+		"""
+		@param glob: string chunk that must be matched
+		@param CaseSensitive: should the match be case sensitive?
+		@param prefix: should the glob be a prefix check for matching, or postfix matching
+		@keyword negate: should the match results be negated?
+		"""
+
 		super(StrGlobMatch, self).__init__(**kwds)
 		if not CaseSensitive:
 			self.flags = re.I
@@ -164,6 +209,9 @@ class StrGlobMatch(StrMatch):
 
 
 def EqualityMatch(val, negate=False):
+	"""
+	equality test wrapping L{ComparisonMatch}
+	"""
 	return ComparisonMatch(cmp, val, [0], negate=negate)
 
 def _mangle_cmp_val(val):
@@ -201,6 +249,15 @@ class ComparisonMatch(base):
 		return cls._rev_op_converter[tuple(sorted(op))]
 	
 	def __init__(self, cmp_func, data, matching_vals, negate=False):
+
+		"""
+		@param cmp_func: comparison function that compares data against what is passed in during match
+		@param data: data to base comparison against
+		@param matching_vals: sequence, composed of [-1 (less then), 0 (equal), and 1 (greater then)].
+		If you specify [-1,0], you're saying "result must be less then or equal to".
+		@param negate: should the results be negated?
+		"""
+			
 		self.cmp_func = cmp_func
 	
 		if not isinstance(matching_vals, (tuple, list)):
@@ -237,15 +294,20 @@ class ComparisonMatch(base):
 class ContainmentMatch(base):
 
 	"""used for an 'in' style operation, 'x86' in ['x86','~x86'] for example
-	note that negation of this *does* not result in a true NAND when all is on."""
+	note that negation of this *does* not result in a true NAND when all is on.
+	"""
 
 	__slots__ = ("vals", "all")
 
 	__inst_caching__ = True
 
 	def __init__(self, *vals, **kwds):
-		"""vals must support a contaiment test
-		if all is set to True, all vals must match"""
+
+		"""
+		@param vals: what values to look for during match
+		@keyword all: must all vals be present, or just one for a match to succeed?
+		@keyword negate: should the match results be negated?
+		"""
 
 		self.all = bool(kwds.pop("all", False))
 		super(ContainmentMatch, self).__init__(**kwds)
@@ -404,4 +466,3 @@ del x, m, l, o, doc
 
 AlwaysTrue = AlwaysBool(negate=True)
 AlwaysFalse = AlwaysBool(negate=False)
-

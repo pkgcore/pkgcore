@@ -14,6 +14,8 @@ from pkgcore.plugins import get_plugin
 from pkgcore.interfaces import repo as repo_interfaces
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.spawn import spawn
+from pkgcore.util.demandload import demandload
+demandload(globals(), "logging")
 
 
 class tree(prototype.tree):
@@ -158,6 +160,15 @@ class install(repo_interfaces.install):
 				if not s.endswith("\n"):
 					s += "\n"
 				open(os.path.join(dirpath, rewrite.get(k, k.upper())), "w", 32384).write(s)
+
+		# ebuild_data is the actual ebuild- no point in holding onto it for built ebuilds, but if it's there, we store it.
+		o = getattr(self.pkg, "raw_ebuild", None)
+		if o is None:
+			logging.warn("doing install/replace op, but source package doesn't provide the actual ebuild data.  Creating an empty file")
+			o = ''
+		# XXX lil hackish accessing PF
+		import pdb;pdb.set_trace()
+		open(os.path.join(dirpath, self.pkg.PF + ".ebuild"), "w").write(o)
 		return True
 
 

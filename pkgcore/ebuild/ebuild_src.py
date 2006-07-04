@@ -197,6 +197,7 @@ class package(metadata.package):
 	_get_attr["herds"] = lambda s:pull_metadata_xml(s, "herds")
 	_get_attr["maintainers"] = lambda s:pull_metadata_xml(s, "maintainers")
 	_get_attr["homepage"] = lambda s:s.data.get("HOMEPAGE", "").strip()
+	_get_attr["raw_ebuild"] = lambda s: open(s.path, "r").read()
 
 	def _fetch_metadata(self):
 		for data in self._parent._get_metadata(self):

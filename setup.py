@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 import glob
-import os.path
+import os
 
-from distutils import core, ccompiler
-from distutils.command import build, sdist
+from distutils import core, ccompiler, log
+from distutils.command import build, sdist, install, build_py
+from stat import ST_MODE
 
 class mysdist(sdist.sdist):
 	default_format = dict(sdist.sdist.default_format)
@@ -70,6 +71,26 @@ class build_filter_env(core.Command):
 
 build.build.sub_commands.append(('build_filter_env', None))
 
+class hacked_build_py(build_py.build_py):
+
+	def run(self):
+		build_py.build_py.run(self)
+
+		fp = os.path.join(self.build_lib, "pkgcore", "bin", "ebuild-helpers")
+		for f in os.listdir(fp):
+			self.set_chmod(os.path.join(fp, f))
+		fp = os.path.join(self.build_lib, "pkgcore", "bin", "ebuild-env")
+		for f in ("ebuild.sh", "ebuild-daemon.sh", "filter-env"): 
+			self.set_chmod(os.path.join(fp, f))
+	
+	def set_chmod(self, fp):
+		if self.dry_run:
+			log.info("changing mode of %s", file)
+		else:
+			mode = ((os.stat(fp)[ST_MODE]) | 0555) & 07777
+			log.info("changing mode of %s to %o", fp, mode)
+			os.chmod(fp, mode)
+
 
 packages = []
 
@@ -78,8 +99,6 @@ for root, dirs, files in os.walk('pkgcore'):
 		package = root.replace(os.path.sep, '.')
 		print 'adding package %r' % (package,)
 		packages.append(package)
-
-
 
 core.setup(
 	name='pkgcore',
@@ -98,10 +117,11 @@ core.setup(
 			'filter-env/*.h',
 			'bsd-flags/*',
 			'tbz2tool.c'
-			]},
+			],
+		},
 	# booo, no glob support in distutils for this one
 	scripts=(
 		glob.glob('pkgcore/bin/utilities/*.py') + 
 		['pkgcore/bin/utilities/pquery']),
-	cmdclass={'build_filter_env': build_filter_env, "sdist":mysdist},
+	cmdclass={'build_filter_env': build_filter_env, "sdist":mysdist, "build_py": hacked_build_py},
 	)

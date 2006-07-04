@@ -375,6 +375,7 @@ class merge_plan(object):
 						import pdb;pdb.set_trace()
 						print l2[0] == choices.current_pkg
 						current_stack.pop()
+						return False
 				if fail:
 					self.state.reset_state(saved_state)
 					continue

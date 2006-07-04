@@ -150,7 +150,7 @@ class fsLink(fsBase):
 
 	"""symlink class"""
 
-	__slots__ = [x for x in fsBase.__slots__ if x != "mtime"]+ ["target"]
+	__slots__ = list(fsBase.__slots__) + ["target"]
 
 	def __init__(self, location, target, **kwargs):
 		"""

@@ -167,7 +167,6 @@ class install(repo_interfaces.install):
 			logging.warn("doing install/replace op, but source package doesn't provide the actual ebuild data.  Creating an empty file")
 			o = ''
 		# XXX lil hackish accessing PF
-		import pdb;pdb.set_trace()
 		open(os.path.join(dirpath, self.pkg.PF + ".ebuild"), "w").write(o)
 		return True
 

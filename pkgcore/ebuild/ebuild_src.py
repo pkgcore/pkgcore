@@ -158,7 +158,7 @@ class package(metadata.package):
 	"""
 	ebuild package
 	
-	@cvar tracked_attributes: sequence of attributes that are required to exist in the built version of ebuidl-src
+	@cvar tracked_attributes: sequence of attributes that are required to exist in the built version of ebuild-src
 	@cvar _config_wrappables: mapping of attribute to callable for re-evaluating attributes dependant on configuration
 
 	"""
@@ -166,7 +166,7 @@ class package(metadata.package):
 	immutable = False
 	allow_regen = True
 	tracked_attributes = ["PF", "depends", "rdepends", "provides", 	"license",
-		"slot", "keywords", "eapi", "restrict"]
+		"slot", "keywords", "eapi", "restrict", "eapi", "description", "iuse"]
 
 	_config_wrappables = dict((x, alias_class_method("evaluate_depset")) 
 		for x in ["depends", "rdepends", "fetchables", "license", "src_uri", 

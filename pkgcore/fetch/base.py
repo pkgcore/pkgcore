@@ -34,7 +34,9 @@ class fetcher(object):
 		if "size" in handlers:
 			c = cmp(handlers["size"](file_location), target.chksums["size"])
 			if c:
-				return (c < 0 and -1) or 1
+				if c < 0:
+					return -1
+				return 1				
 
 		for x in handlers:
 			if x != "size" or x not in handlers:

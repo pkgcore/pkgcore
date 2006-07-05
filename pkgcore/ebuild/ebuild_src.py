@@ -25,20 +25,27 @@ demandload(globals(), "errno")
 
 
 # utility func.
-def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors, uri):
+def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors, common_files, uri):
 	file = os.path.basename(uri)
-	if file not in chksums:
-		raise MissingChksum(file)
+
+	preexisting = file in common_files
+
+	if not preexisting:
+		if file not in chksums:
+			raise MissingChksum(file)
 
 	if file == uri:
 		new_uri = []
 	else:
-		new_uri = []
-		if "primaryuri" in pkg.restrict:
-			new_uri.append([uri])
+		if not preexisting:
+			new_uri = []
+			if "primaryuri" in pkg.restrict:
+				new_uri.append([uri])
 		
-		if default_mirrors is not None and "mirror" not in pkg.restrict:
-			new_uri.append(mirror(file, default_mirrors, "conf_default_mirrors"))
+			if default_mirrors is not None and "mirror" not in pkg.restrict:
+				new_uri.append(mirror(file, default_mirrors, "conf_default_mirrors"))
+		else:
+			new_uri = common_files[file]
 		
 		if uri.startswith("mirror://"):
 			# mirror:// is 9 chars.
@@ -54,11 +61,13 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors, uri):
 		else:
 			if not new_uri or new_uri[0] != [uri]:
 				new_uri.append([uri])
-		if len(new_uri) != 1:
-			new_uri = ChainedLists(*new_uri)
-		else:
-			new_uri = new_uri[0]
 
+	# force usage of a ChainedLists, why?  because folks may specify multiple uri's resulting in the same file.
+	# we basically use ChainedList's _list as a mutable space we directly modify.
+	if not preexisting:
+		new_uri = common_files[file] = ChainedLists(*new_uri)
+	else:
+		return None
 	return fetchable(file, new_uri, chksums[file])
 
 def generate_depset(s, c, *keys, **kwds):
@@ -96,7 +105,7 @@ def generate_fetchables(self):
 		default_mirrors = None
 	try:
 		return conditionals.DepSet(self.data["SRC_URI"], fetchable, operators={}, 
-			element_func=pre_curry(create_fetchable_from_uri, self, chksums, mirrors, default_mirrors))
+			element_func=pre_curry(create_fetchable_from_uri, self, chksums, mirrors, default_mirrors, {}))
 	except conditionals.ParseError, p:
 		raise metadata.MetadataException(self, "src_uri", str(p))
 

@@ -14,6 +14,8 @@ class package(metadata.package):
 	virtual package, mainly useful since it's generating so little attrs on the fly
 	"""
 
+	package_is_real = False
+
 	def __getattr__ (self, key):
 		val = None
 		if key == "rdepends":

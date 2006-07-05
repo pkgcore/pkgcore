@@ -289,6 +289,8 @@ class virtual_ebuild(metadata.package):
 	PROVIDES generated fake packages
 	"""
 
+	package_is_real = False
+
 	def __init__(self, cpv, parent_repository, pkg, data):
 		"""
 		@param cpv: cpv for the new pkg

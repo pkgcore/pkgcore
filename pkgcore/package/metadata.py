@@ -10,6 +10,7 @@ import weakref
 import warnings
 
 from cpv import CPV
+from pkgcore.package.atom import atom
 
 class package(CPV):
 
@@ -17,6 +18,7 @@ class package(CPV):
 		"\n".join(x.lstrip() for x in CPV.__doc__.split("\n") if "@ivar" in x or "@cvar" in x)
 	__doc__+="\n@ivar repo: parent repository"
 	immutable = True
+	package_is_real = True
 
 	_get_attr = dict(CPV._get_attr)
 
@@ -55,6 +57,10 @@ class package(CPV):
 	@property
 	def repo(self):
 		return self._parent._parent_repo
+
+	@property
+	def slotted_atom(self):
+		return atom("%s:%s" % (self.key, self.slot))
 
 	def _fetch_metadata(self):
 		"""

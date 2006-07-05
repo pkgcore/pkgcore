@@ -82,6 +82,8 @@ class fetcher(base.fetcher):
 		@type target: L{pkgcore.fetch.fetchable} instance
 		@return: None if fetching failed, else on disk location of the copied file
 		"""
+
+
 		if not isinstance(target, fetchable):
 			raise TypeError("target must be fetchable instance/derivative: %s" % target)
 
@@ -101,11 +103,11 @@ class fetcher(base.fetcher):
 				elif c > 0:
 					try:
 						os.unlink(fp)
-						command = self.resume_command
+						command = self.command
 					except OSError, oe:
 						raise errors.UnmodifiableFile(fp, oe)
 				else:
-					command = self.command
+					command = self.resume_command
 				
 				# yeah, it's funky, but it works.
 				if attempts > 0:

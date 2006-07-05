@@ -29,3 +29,9 @@ class mirror(object):
 
 	def __str__(self):
 		return "mirror://%s/%s" % (self.mirror_name, self.uri)
+
+	def __len__(self):
+		return len(self.mirrors)
+
+	def __getitem__(self, idx):
+		return "%s/%s" % (self.mirrors[idx], self.uri)

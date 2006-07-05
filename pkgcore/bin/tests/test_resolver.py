@@ -141,7 +141,7 @@ def main():
 	failures = []
 	resolve_time = time.time()
 	for restrict in atoms:
-		print "\ncalling resolve for %s..." % restrict
+#		print "\ncalling resolve for %s..." % restrict
 		ret = resolver_inst.add_atom(restrict)
 		if ret:
 			print "ret was",ret
@@ -167,8 +167,11 @@ def main():
 				return 2
 
 	print "\nbuildplan"
-	for op, pkgs in resolver_inst.state.iter_pkg_ops():
-		if pkgs[-1].repo.livefs:
+	plan = list(resolver_inst.state.iter_pkg_ops())
+	for op, pkgs in plan:
+		if pkgs[-1].repo.livefs and op != "replace":
+			continue
+		elif not pkgs[-1].package_is_real:
 			continue
 		print "%s %s" % (op.ljust(8), ", ".join(str(y) for y in reversed(pkgs)))
 	print

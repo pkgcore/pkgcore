@@ -153,6 +153,7 @@ class merge_plan(object):
 		self.global_strategy = global_strategy
 		self.state = plan_state()
 		self.insoluble = set()
+		self.vdb_preloaded = False
 		
 	def load_vdb_state(self):
 		for r in self.livefs_dbs:
@@ -162,6 +163,7 @@ class merge_plan(object):
 				dprint("insertion of %s from %s: %s", (pkg, r, ret), "vdb")
 				if ret != []:
 					raise Exception("couldn't load vdb state, %s %s" % (pkg.versioned_atom, ret))
+		self.vdb_preloaded = True
 
 	def get_db_match(self, db, cache, atom):
 		v = cache.get(atom)
@@ -340,6 +342,19 @@ class merge_plan(object):
 			dprint("choose for   %s%s, %s", (depth *2*" ", atom, choices.current_pkg))
 
 			# well, we got ourselvs a resolution.
+			# do a trick to make the resolver now aware of vdb pkgs if needed
+			if not self.vdb_preloaded and not choices.current_pkg.repo.livefs:
+				slotted_atom = choices.current_pkg.slotted_atom
+				l = self.state.match_atom(slotted_atom)
+				if not l:
+					# hmm.  ok... no conflicts, so we insert in vdb matches to trigger a replace instead of an install
+					for repo, cache in self.livefs_dbs.iteritems():
+						m = self.get_db_match(repo, cache, slotted_atom)
+						if m:
+							self.state.add_pkg(choice_point(slotted_atom, m), force=True)
+							break				
+
+			# first, check for conflicts.
 			l = self.state.add_pkg(choices)
 			if l and l != [choices.current_pkg]:
 				# this means in this branch of resolution, someone slipped something in already.
@@ -488,34 +503,34 @@ class plan_state(object):
 		self.state = PigeonHoledSlots()
 		self.plan = []
 	
-	def add_pkg(self, choices, action=ADD):
-		return self._add_pkg(choices, choices.current_pkg, action)
+	def add_pkg(self, choices, action=ADD, force=False):
+		return self._add_pkg(choices, choices.current_pkg, action, force=force)
 	
 	def add_provider(self, choices, provider, action=ADD):
 		return self._add_pkg(choices, provider, action)
 	
-	def _add_pkg(self, choices, pkg, action):
+	def _add_pkg(self, choices, pkg, action, force=False):
 		"""returns False (no issues), else the conflicts"""
 		if action == ADD:
-			l = self.state.fill_slotting(pkg)
+			l = self.state.fill_slotting(pkg, force=force)
 			if l:
 				return l
-			self.plan.append((action, choices, pkg))
+			self.plan.append((action, choices, force, pkg))
 		elif action == REMOVE:
 			# level it even if it's not existant?
 			self.state.remove_slotting(pkg)
-			self.plan.append((action, choices, pkg))
+			self.plan.append((action, choices, force, pkg))
 		elif action == REPLACE:
 			l = self.state.fill_slotting(pkg)
 			assert len(l) == 1
 			self.state.remove_slotting(l[0])
-			l2 = self.state.fill_slotting(pkg)
+			l2 = self.state.fill_slotting(pkg, force=force)
 			if l2:
 				#revert
 				l3 = self.state.fill_slotting(l[0])
 				assert not l3
 				return l2
-			self.plan.append((action, choices, pkg, l[0]))
+			self.plan.append((action, choices, force, pkg, l[0]))
 		return False
 
 	def reset_state(self, state_pos):
@@ -528,12 +543,12 @@ class plan_state(object):
 #		import pdb;pdb.set_trace()
 		for change in reversed(self.plan[state_pos:]):
 			if change[0] == ADD:
-				self.state.remove_slotting(change[2])
+				self.state.remove_slotting(change[3])
 			elif change[0] == REMOVE:
-				self.state.fill_slotting(change[2])
+				self.state.fill_slotting(change[3], force=change[2])
 			elif change[0] == REPLACE:
-				self.state.remove_slotting(change[2])
-				self.state.fill_slotting(change[3])
+				self.state.remove_slotting(change[3])
+				self.state.fill_slotting(change[4], force=change[3])
 			elif change[0] == FORWARD_BLOCK:
 				self.state.remove_limiter(change[1], key=change[2])
 		self.plan = self.plan[:state_pos]
@@ -545,7 +560,7 @@ class plan_state(object):
 			if x[0] == FORWARD_BLOCK:
 				ps.add_blocker(x[1], key=x[2])
 			elif x[0] in (REMOVE, ADD, REPLACE):
-				ps._add_pkg(x[1], x[2], action=x[0])
+				ps._add_pkg(x[1], x[3], action=x[0], force=x[2])
 			else:
 				print "unknown %s encountered in rebuilding state" % str(x)
 				import pdb;pdb.set_trace()
@@ -553,11 +568,12 @@ class plan_state(object):
 		return ps
 		
 	def iter_pkg_ops(self):
-		ops = {ADD:"add", REMOVE:"remove", REPLACE:"replace"}
+		ops = {ADD:"add", REMOVE:"remove", REPLACE:"replace", FORWARD_BLOCK:None}
 		for x in self.plan:
-			if x[0] in ops:
-				yield ops[x[0]], x[2:]
-		
+			if x[0] == FORWARD_BLOCK:
+				continue
+			assert x[0] in ops
+			yield ops[x[0]], x[3:]
 			
 	def add_blocker(self, blocker, key=None):
 		"""adds blocker, returning any packages blocked"""

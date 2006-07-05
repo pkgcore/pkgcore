@@ -212,7 +212,7 @@ def main():
 	if fetchonly:
 		for op, pkgs, build_op in ops:
 			try:
-				print "fetching for",pkgs[0]
+				print "\nfetching for %s\n" % pkgs[0]
 				ret = build_op.fetch()
 			except Exception, e:
 				ret = e

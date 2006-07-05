@@ -218,7 +218,7 @@ def main():
 				ret = e
 			if ret != True:
 				if not ignore_failures:
-					print "\nfailed fetching for pkgs[0], bailing",ret
+					print "\nfailed fetching for %s, bailing..." % pkgs[0]
 					return 3
 				del ret
 		return 0

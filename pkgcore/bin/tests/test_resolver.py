@@ -6,6 +6,7 @@ from pkgcore.util.lists import flatten, stable_unique
 from pkgcore.util.repo_utils import get_raw_repos
 from pkgcore.util.commandline import generate_restriction, collect_ops
 from pkgcore.ebuild import resolver
+import sys
 
 
 def pop_paired_args(args, arg, msg):
@@ -37,17 +38,58 @@ def pop_arg(args, *arg):
 	return ret
 	
 
-if __name__ == "__main__":
-	import sys
+def parse_atom(repo, ignore_failures, *tokens):
+	""""
+	parse a list of strings returning a list of atoms, filling in categories as needed
+
+	@param repo: L{pkgcore.prototype.tree} instance
+	@param tokens: list of strings to parse
+	"""
+	atoms = []
+	for x in tokens:
+		a = generate_restriction(x)
+		if isinstance(a, atom):
+			atoms.append(a)
+			continue
+		matches = set(pkg.key for pkg in repo.itermatch(a))
+		if not matches:
+			print "no matches found to %s" % x,a
+			if ignore_failures:
+				print "skipping %s" % x
+				continue
+			sys.exit(1)
+		if len(matches) > 1:
+			print "multiple pkg matches found for %s: %s, %s" % (x, ", ".join(sorted(matches)), a)
+			if ignore_failures:
+				print "skipping %s" % x
+				continue
+			sys.exit(2)
+		# else we rebuild an atom to include category
+		key = list(matches)[0]
+		ops, text = collect_ops(x)
+		if not ops:
+			atoms.append(atom(key))
+			continue
+		atoms.append(atom(key))
+	return atoms	
+
+
+def main():
 	import time
 	args = sys.argv[1:]
 
 	if pop_arg(args, "-h", "--help"):
 		print "args supported, [-D || --deep], [[-u || --upgrade]] and -s (system|world) [-d || --debug] [ --ignore-failures ] [ --preload-vdb-state ]"
+		print "[[-p || --pretend] || [-f || --fetchonly]]"
 		print "can specify additional atoms when specifying -s, no atoms/sets available, defaults to sys-apps/portage"
-		sys.exit(1)
+		return 1
+
 	if pop_arg(args, "-d", "--debug"):
 		resolver.plan.limiters.add(None)
+	
+	pretend = pop_arg(args, "-p", "--pretend")
+	fetchonly = pop_arg(args, "-f", "--fetchonly")
+	
 	trigger_pdb = pop_arg(args, "-p", "--pdb")
 	empty_vdb = pop_arg(args, "-e", "--empty")
 	upgrade = pop_arg(args, "-u", "--upgrade")
@@ -55,7 +97,7 @@ if __name__ == "__main__":
 	ignore_failures = pop_arg(args, None, "--ignore-failures")
 	if max and max == upgrade:
 		print "can only choose max, or upgrade"
-		sys.exit(1)
+		return 1
 	if upgrade:
 		resolver_kls = resolver.upgrade_resolver
 	else:
@@ -80,41 +122,18 @@ if __name__ == "__main__":
 			print "resolving sys-apps/portage since no atom supplied"
 			atoms = [atom("sys-apps/portage")]
 	else:
-		atoms = []
-		for x in args:
-			a = generate_restriction(x)
-			if isinstance(a, atom):
-				atoms.append(a)
-				continue
-			matches = set(pkg.key for pkg in repo.itermatch(a))
-			if not matches:
-				print "no matches found to %s" % x,a
-				if ignore_failures:
-					print "skipping %s" % x
-					continue
-				sys.exit(1)
-			if len(matches) > 1:
-				print "multiple pkg matches found for %s: %s, %s" % (x, ", ".join(sorted(matches)), a)
-				if ignore_failures:
-					print "skipping %s" % x
-					continue
-				sys.exit(2)
-			# else we rebuild an atom.
-			key = list(matches)[0]
-			ops, text = collect_ops(x)
-			if not ops:
-				atoms.append(atom(key))
-				continue
-			atoms.append(atom(ops + key.rsplit("/", 1)[0] + "/" + text.rsplit("/",1)[-1]))
-		
-#		atoms = [atom(x) for x in args] + set_targets
+		atoms = parse_atom(repo, ignore_failures, *args)
+
 	if set_targets:
 		atoms += set_targets
+
 	atoms = stable_unique(atoms)
-	resolver = resolver_kls(vdb, repo, verify_vdb=deep)
+
+	resolver_inst = resolver_kls(vdb, repo, verify_vdb=deep)
+
 	if preload_vdb_state:
 		vdb_time = time.time()
-		resolver.load_vdb_state()
+		resolver_inst.load_vdb_state()
 		vdb_time = time.time() - vdb_time
 	else:
 		vdb_time = 0.0
@@ -123,7 +142,7 @@ if __name__ == "__main__":
 	resolve_time = time.time()
 	for restrict in atoms:
 		print "\ncalling resolve for %s..." % restrict
-		ret = resolver.add_atom(restrict)
+		ret = resolver_inst.add_atom(restrict)
 		if ret:
 			print "ret was",ret
 			print "resolution failed"
@@ -145,15 +164,22 @@ if __name__ == "__main__":
 				print "no matches found in %s" % repo
 			print
 			if not ignore_failures:
-				sys.exit(2)
+				return 2
 
 	print "\nbuildplan"
-	for op, pkgs in resolver.state.iter_pkg_ops():
+	for op, pkgs in resolver_inst.state.iter_pkg_ops():
 		if pkgs[-1].repo.livefs:
 			continue
 		print "%s %s" % (op.ljust(8), ", ".join(str(y) for y in reversed(pkgs)))
 	print
+	
 	if vdb_time:
 		print "spent %.2f seconds preloading vdb state" % vdb_time
 	print "result was successfull, 'parently- spent %.2f seconds resolving" % (resolve_time)
-	
+
+	if pretend:
+		return 0
+		
+
+if __name__ == "__main__":
+	main()

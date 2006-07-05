@@ -73,3 +73,13 @@ class ChainedListsTest(unittest.TestCase):
 	def test_mutable(self):
 		self.assertRaises(TypeError, self.gen_cl().__delitem__, 1)
 		self.assertRaises(TypeError, self.gen_cl().__setitem__, (1, 2))
+
+	def test_append(self):
+		cl = self.gen_cl()
+		cl.append(range(10))
+		self.assertEquals(110, len(cl))
+	
+	def test_extend(self):
+		cl = self.gen_cl()
+		cl.extend(range(10) for x in range(5))
+		self.assertEquals(150, len(cl))

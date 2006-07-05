@@ -104,7 +104,9 @@ class ChainedLists(object):
 		# ensure they're iterable
 		for x in lists:
 			iter(x)
-			
+		
+		if isinstance(lists, tuple):
+			lists = list(lists)
 		self._lists = lists
 
 	def __len__(self):
@@ -139,3 +141,9 @@ class ChainedLists(object):
 
 	def __str__(self):
 		return "[ %s ]" % ", ".join(str(l) for l in self._lists)
+
+	def append(self, item):
+		self._lists.append(item)
+	
+	def extend(self, items):
+		self._lists.extend(items)

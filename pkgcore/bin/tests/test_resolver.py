@@ -38,7 +38,33 @@ def pop_arg(args, *arg):
 	return ret
 	
 
-def parse_atom(repo, ignore_failures, *tokens):
+class Failure(Exception):
+	pass
+
+
+class AmbiguousQuery(Failure):
+
+	def __init__(self, raw_atom, matches, rewritten_atom):
+		self.raw_atom, self.matches, self.rewritten_atom = raw_atom, matches, rewritten_atom
+
+	def __str__(self):
+		if self.raw_atom == self.rewritten_atom:
+			return "multiple pkg matches found for %s: %s" % (self.raw_atom, ", ".join(sorted(self.matches)))
+		return "multiple pkg matches found for %s: %s, %s" % (self.raw_atom, ", ".join(sorted(self.matches)), self.rewritten_atom)
+
+
+class NoMatches(Failure):
+
+	def __init__(self, raw_atom, rewritten):
+		self.raw_atom, self.rewritten = raw_atom, rewritten
+	
+	def __str__(self):
+		if self.raw_atom == self.rewritten_atom:
+			return "no matches found to %s (rewritten into %s)" % (self.raw_atom, self.rewitten_atom)
+		return "no matches found to %s" % self.raw_atom
+
+
+def parse_atom(repos, ignore_failures, *tokens):
 	""""
 	parse a list of strings returning a list of atoms, filling in categories as needed
 
@@ -47,30 +73,30 @@ def parse_atom(repo, ignore_failures, *tokens):
 	"""
 	atoms = []
 	for x in tokens:
-		a = generate_restriction(x)
-		if isinstance(a, atom):
-			atoms.append(a)
-			continue
-		matches = set(pkg.key for pkg in repo.itermatch(a))
-		if not matches:
-			print "no matches found to %s" % x,a
-			if ignore_failures:
-				print "skipping %s" % x
+		for r in repos:
+			a = generate_restriction(x)
+			if isinstance(a, atom):
+				atoms.append(a)
 				continue
-			sys.exit(1)
-		if len(matches) > 1:
-			print "multiple pkg matches found for %s: %s, %s" % (x, ", ".join(sorted(matches)), a)
-			if ignore_failures:
-				print "skipping %s" % x
+			matches = set(pkg.key for pkg in repo.itermatch(a))
+			if not matches:
 				continue
-			sys.exit(2)
-		# else we rebuild an atom to include category
-		key = list(matches)[0]
-		ops, text = collect_ops(x)
-		if not ops:
+			elif len(matches) > 1:
+				raise AmbiguousQuery(x, matches, a)
+			# else we rebuild an atom to include category
+			key = list(matches)[0]
+			ops, text = collect_ops(x)
+			if not ops:
+				atoms.append(atom(key))
+				continue
 			atoms.append(atom(key))
-			continue
-		atoms.append(atom(key))
+			break
+		else:
+			e = NoMatches(x, a)
+			if not ignore_failures:
+				raise e
+			print e
+			print "skipping"
 	return atoms	
 
 
@@ -114,7 +140,7 @@ def main():
 	#map(atom, conf.pkgset[l]) for l in set_targets], restriction.base)
 	
 	domain = conf.domain["livefs domain"]
-	vdb, repo = domain.vdb[0], domain.repos[0]
+	vdb, repos = domain.vdb[0], domain.repos
 	if not args:
 		if set_targets:
 			atoms = []
@@ -122,14 +148,14 @@ def main():
 			print "resolving sys-apps/portage since no atom supplied"
 			atoms = [atom("sys-apps/portage")]
 	else:
-		atoms = parse_atom(repo, ignore_failures, *args)
+		atoms = parse_atom(repos, ignore_failures, *args)
 
 	if set_targets:
 		atoms += set_targets
 
 	atoms = stable_unique(atoms)
 
-	resolver_inst = resolver_kls(vdb, repo, verify_vdb=deep)
+	resolver_inst = resolver_kls(vdb, repos, verify_vdb=deep)
 
 	if preload_vdb_state:
 		vdb_time = time.time()
@@ -155,7 +181,7 @@ def main():
 		for restrict in failures:
 			print "failed '%s'\npotentials-" % restrict
 			match_count = 0
-			for r in get_raw_repos(repo):
+			for r in get_raw_repos(repos):
 				l = r.match(restrict)
 				if l:
 					print "repo %s: [ %s ]" % (r, ", ".join(str(x) for x in l))
@@ -168,21 +194,34 @@ def main():
 
 	print "\nbuildplan"
 	plan = list(resolver_inst.state.iter_pkg_ops())
+	changes = []
 	for op, pkgs in plan:
 		if pkgs[-1].repo.livefs and op != "replace":
 			continue
 		elif not pkgs[-1].package_is_real:
 			continue
+		changes.append((op, pkgs))
 		print "%s %s" % (op.ljust(8), ", ".join(str(y) for y in reversed(pkgs)))
-	print
-	
+		
+	print "result was successfull, 'parently- spent %.2f seconds resolving" % (resolve_time)
 	if vdb_time:
 		print "spent %.2f seconds preloading vdb state" % vdb_time
-	print "result was successfull, 'parently- spent %.2f seconds resolving" % (resolve_time)
-
 	if pretend:
 		return 0
-		
+	ops = [(op, pkgs, pkgs[0].build()) for op, pkgs in changes]				
+	if fetchonly:
+		for op, pkgs, build_op in ops:
+			try:
+				print "fetching for",pkgs[0]
+				ret = build_op.fetch()
+			except Exception, e:
+				ret = e
+			if ret != True:
+				if not ignore_failures:
+					print "\nfailed fetching for pkgs[0], bailing",ret
+					return 3
+				del ret
+		return 0
 
 if __name__ == "__main__":
 	main()

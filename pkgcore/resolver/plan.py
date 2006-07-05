@@ -137,6 +137,7 @@ def default_depset_reorder(resolver, depset, mode):
 
 
 class merge_plan(object):
+
 	vdb_restrict = packages.PackageRestriction("repo.livefs", 
 		values.EqualityMatch(True))
 	

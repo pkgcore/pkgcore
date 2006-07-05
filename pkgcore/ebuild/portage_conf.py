@@ -51,7 +51,7 @@ def configFromMakeConf(location="/etc/"):
 	conf_dict.update(read_bash_dict(os.path.join(base_path, "make.conf"), vars_dict=conf_dict))
 	conf_dict.setdefault("PORTDIR", "/usr/portage")
 	root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
-	gentoo_mirrors = conf_dict.pop("GENTOO_MIRRORS", "").split()
+	gentoo_mirrors = [x+"/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split()]
 	if not gentoo_mirrors:
 		gentoo_mirrors = None
 

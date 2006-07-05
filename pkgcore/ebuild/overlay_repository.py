@@ -39,7 +39,7 @@ class OverlayRepo(multiplex.tree):
 				"Must specify at least two pathes to ebuild trees to overlay")
 
 		cache = kwds.pop("cache", None)
-		default_mirrors = kwds.pop("default_mirors", None)
+		default_mirrors = kwds.pop("default_mirrors", None)
 		
 #		for t in trees:
 #			if not os.path.isdir(t):

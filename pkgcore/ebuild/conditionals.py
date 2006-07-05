@@ -98,7 +98,9 @@ class DepSet(boolean.AndRestriction):
 					raise ParseError(dep_str, k)
 				else:
 					# node/element.
-					depsets[-1].append(element_func(k))
+					e = element_func(k)
+					if e is not None:
+						depsets[-1].append(e)
 
 
 		except IndexError:

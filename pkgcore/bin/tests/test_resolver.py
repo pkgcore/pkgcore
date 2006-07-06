@@ -73,7 +73,7 @@ def parse_atom(repos, ignore_failures, *tokens):
 	"""
 	atoms = []
 	for x in tokens:
-		for r in repos:
+		for repo in repos:
 			a = generate_restriction(x)
 			if isinstance(a, atom):
 				atoms.append(a)
@@ -88,8 +88,8 @@ def parse_atom(repos, ignore_failures, *tokens):
 			ops, text = collect_ops(x)
 			if not ops:
 				atoms.append(atom(key))
-				continue
-			atoms.append(atom(key))
+			else:
+				atoms.append(atom(key))
 			break
 		else:
 			e = NoMatches(x, a)
@@ -208,20 +208,36 @@ def main():
 		print "spent %.2f seconds preloading vdb state" % vdb_time
 	if pretend:
 		return 0
-	ops = [(op, pkgs, pkgs[0].build()) for op, pkgs in changes]				
-	if fetchonly:
-		for op, pkgs, build_op in ops:
+	elif not fetchonly:
+		vdb = vdb.trees[0]
+		vdb.frozen = False
+	for op, pkgs in changes:
+		print "processing %s" % pkgs[0]
+		buildop = pkgs[0].build()
+		if fetchonly:
+			print "\n%i files required-" % len(pkgs[0].fetchables)
 			try:
-				print "\nfetching for %s\n" % pkgs[0]
 				ret = build_op.fetch()
 			except Exception, e:
-				ret = e
-			if ret != True:
-				if not ignore_failures:
-					print "\nfailed fetching for %s, bailing..." % pkgs[0]
-					return 3
-				del ret
-		return 0
+				ret =e
+		else:
+			print "building..."
+			f = buildop.finalize()
+			if ret != False:
+				print "\nmerge op: %s" % op
+				if op == "add":
+					i = vdb.install(f)
+				elif op == "replace":
+					i = vdb.replace(pkgs[1], pkgs[0])
+				ret = i.finish()
+		if ret != True:
+			print "got %s for a phase execution for %s" % (ret, pkgs[0])
+			if not ignore_failures:
+				return 1
+		elif not fetchonly:
+			buildop.clean()
+	
+	return 0
 
 if __name__ == "__main__":
 	main()

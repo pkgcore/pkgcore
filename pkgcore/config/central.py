@@ -185,6 +185,7 @@ class ConfigManager(object):
 			try:
 				is_default = section_config.get_value(self, "default", "bool")
 			except KeyError:
+				is_default = False
 				pass
 			if is_default:
 				l.append(section_name)

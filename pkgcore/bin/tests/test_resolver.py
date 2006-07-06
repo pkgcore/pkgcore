@@ -155,7 +155,10 @@ def main():
 
 	atoms = stable_unique(atoms)
 
-	resolver_inst = resolver_kls(vdb, repos, verify_vdb=deep)
+	if empty_vdb:
+		resolver_inst = resolver_kls(vdb, repos, verify_vdb=deep, resolver_cls=resolver.empty_tree_merge_plan)
+	else:
+		resolver_inst = resolver_kls(vdb, repos, verify_vdb=deep)
 
 	if preload_vdb_state:
 		vdb_time = time.time()

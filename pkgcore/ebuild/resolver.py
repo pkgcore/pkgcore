@@ -9,7 +9,10 @@ __all__ = ["upgrade_resolver", "min_install_resolver"]
 
 from pkgcore.resolver import plan
 from pkgcore.util.iterables import caching_iter
-from pkgcore.util.repo_utils import get_virtual_repos
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.util.repo_utils:get_virtual_repos " +
+	"pkgcore.util.mappings:OrderedDict " +
+	"pkgcore.repository:virtual ")
 
 
 def prefer_highest_ver(resolver, dbs, atom):
@@ -23,7 +26,7 @@ def prefer_highest_ver(resolver, dbs, atom):
 	return resolver.prefer_highest_version_strategy(resolver, dbs, atom)
 
 
-def upgrade_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True):
+def upgrade_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, resolver_cls=plan.merge_plan):
 
 	"""
 	generate and configure a resolver for upgrading all nodes encountered in processing
@@ -47,10 +50,10 @@ def upgrade_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True):
 		vdb = map(plan.nodeps_repo, vdb)
 	if not isinstance(dbs, (list, tuple)):
 		dbs = [dbs]
-	return plan.merge_plan(dbs + vdb, plan.pkg_sort_highest, f)
+	return resolver_cls(dbs + vdb, plan.pkg_sort_highest, f)
 
 
-def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True):
+def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, resolver_cls=plan.merge_plan):
 	"""
 	generate and configure a resolver that is focused on just installing requests- installs highest version it can build a solution for,
 	but tries to avoid building anything not needed
@@ -71,4 +74,18 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True):
 	if not isinstance(dbs, (list, tuple)):
 		dbs = [dbs]
 	
-	return plan.merge_plan(vdb + dbs, plan.pkg_sort_highest, plan.merge_plan.prefer_reuse_strategy)
+	return resolver_cls(vdb + dbs, plan.pkg_sort_highest, plan.merge_plan.prefer_reuse_strategy)
+
+
+class empty_tree_merge_plan(plan.merge_plan):
+	
+	def __init__(self, *args, **kwds):
+		"""
+		@param args: see L{pkgcore.resolver.plan.merge_plan.__init__} for valid args
+		@param kwds: see L{pkgcore.resolver.plan.merge_plan.__init__} for valid args
+		"""
+		plan.merge_plan.__init__(self, *args, **kwds)
+		self.first_round_dbs = OrderedDict((repo, cache) for repo, cache in self.all_dbs.iteritems() if not repo.livefs or isinstance(repo, virtual.tree))
+
+	def add_atom(self, atom):
+		return plan.merge_plan.add_atom(self, atom, dbs=self.first_round_dbs)

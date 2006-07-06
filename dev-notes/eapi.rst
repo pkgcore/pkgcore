@@ -22,3 +22,4 @@ Version 1
 - default IUSE support, IUSE="+gcj" == USE="gcj" unless the user disables it.
 - GLEP 37
 - test depend, test src_uri
+- drop AA (unused)

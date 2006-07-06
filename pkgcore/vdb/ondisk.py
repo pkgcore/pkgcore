@@ -185,18 +185,21 @@ class uninstall(repo_interfaces.uninstall):
 # should convert these to mixins.
 class replace(install, uninstall, repo_interfaces.replace):
 
-	def __init__(self, repo, pkg, *a, **kw):
+	def __init__(self, repo, pkg, newpkg, *a, **kw):
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
+		self.newpath = os.path.join(repo.base, newpkg.category, newpkg.package+"-"+newpkg.fullver)
 		self.tmpdirpath = os.path.join(os.path.dirname(self.dirpath), ".tmp."+os.path.basename(self.dirpath))
-		repo_interfaces.replace.__init__(self, repo, pkg, *a, **kw)
+		repo_interfaces.replace.__init__(self, repo, pkg, newpkg, *a, **kw)
 
 	def merge_metadata(self, *a, **kw):
 		kw["dirpath"] = self.tmpdirpath
+		if os.path.exists(self.tmpdirpath):
+			shutil.rmtree(self.tmpdirpath)
 		return install.merge_metadata(self, *a, **kw)
 
 	def unmerge_metadata(self, *a, **kw):
 		ret = uninstall.unmerge_metadata(self, *a, **kw)
 		if not ret:
 			return ret
-		os.rename(self.tmpdirpath, self.dirpath)
+		os.rename(self.tmpdirpath, self.newpath)
 		return True

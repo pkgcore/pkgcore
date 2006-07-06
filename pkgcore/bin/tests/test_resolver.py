@@ -231,7 +231,7 @@ def main():
 				if op == "add":
 					i = vdb.install(f)
 				elif op == "replace":
-					i = vdb.replace(pkgs[1], pkgs[0])
+					i = vdb.replace(pkgs[1], f)
 				ret = i.finish()
 		if ret != True:
 			print "got %s for a phase execution for %s" % (ret, pkgs[0])

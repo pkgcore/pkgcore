@@ -41,10 +41,16 @@ class PackageRestriction(restriction.base):
 			for f in self.attr_split:
 				o = f(o)
 			return o
+		except SystemExit:
+			raise
 		except AttributeError,ae:
 			logging.debug("failed getting attribute %s from %s, exception %s" % \
 				(self.attr, str(pkg), str(ae)))
 			raise
+		except Exception, e:
+			logging.warn("caught unexpected exception accessing %s from %s, exception %s" % 
+				(self.attr, str(pkg), str(e)))
+			raise AttributeError
 
 	def match(self, pkg):
 		try:

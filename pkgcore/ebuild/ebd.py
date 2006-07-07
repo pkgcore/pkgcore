@@ -262,6 +262,7 @@ class buildable(ebd, build.base):
 
 		self.env["FILESDIR"] = os.path.join(os.path.dirname(pkg.path), "files")
 		self.eclass_cache = eclass_cache
+		self.env["ECLASSDIR"] = eclass_cache.eclassdir
 		self.fetcher = fetcher
 
 		self.run_test = self.feat_or_bool("test", domain_settings) and not "test" in self.restrict

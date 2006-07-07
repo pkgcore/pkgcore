@@ -188,9 +188,13 @@ class tree(object):
 
 		if cat_exact:
 			if not cat_restrict and len(cat_exact) == 1:
+				c = cat_exact.pop()
 				if not pkg_restrict and len(pkg_exact) == 1:
-					return ["%s/%s" % (cat_exact.pop(), pkg_exact.pop())]
-				cats_iter = sorter(self.categories.get(cat_exact[0], []))
+					cp = self.packages.return_mangler((c, pkg_exact.pop()))
+					if cp in self.packages:
+						return [cp]
+					return []
+				cats_iter = [c]
 			else:
 				cat_restrict.add(values.ContainmentMatch(*cat_exact))
 				cats_iter = sorter(x for x in self.categories if any(True for r in cat_restrict if r.match(x)))

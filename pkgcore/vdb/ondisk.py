@@ -53,7 +53,7 @@ class tree(prototype.tree):
 
 	def _get_packages(self, category):
 		cpath = os.path.join(self.base, category.lstrip(os.path.sep))
-		l = []
+		l = set()
 		d = {}
 		try:
 			try:
@@ -61,7 +61,7 @@ class tree(prototype.tree):
 					if x.endswith(".lockfile") or x.startswith("-MERGING-") or not stat.S_ISDIR(os.stat(os.path.join(cpath, x)).st_mode):
 						continue
 					x = cpv(category+"/"+x)
-					l.append(x.package)
+					l.add(x.package)
 					d.setdefault(category+"/"+x.package, []).append(x.fullver)
 			except (OSError, IOError), e:
 				raise KeyError("failed fetching packages for category %s: %s" % \
@@ -69,7 +69,7 @@ class tree(prototype.tree):
 		finally:
 			pass
 		self._versions_tmp_cache.update(d)
-		return l
+		return tuple(l)
 
 	def _get_versions(self, catpkg):
 		return tuple(self._versions_tmp_cache.pop(catpkg))

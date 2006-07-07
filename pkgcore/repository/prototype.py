@@ -181,7 +181,7 @@ class tree(object):
 				pkg_restrict.add(x.restriction)
 
 		for e, s in ((pkg_exact, pkg_restrict), (cat_exact, cat_restrict)):
-			l = [x.exact for x in e if isinstance(e, values.StrExactMatch) and not e.negate]
+			l = [x.exact for x in s if isinstance(x, values.StrExactMatch) and not x.negate]
 			s.difference_update(l)
 			e.update(l)
 
@@ -191,7 +191,7 @@ class tree(object):
 					return ["%s/%s" % (cat_exact.pop(), pkg_exact.pop())]
 				cats_iter = sorter(self.categories.get(cat_exact[0], []))
 			else:
-				cat_restrict.add(values.ContainmentMatch(*cats_exact))
+				cat_restrict.add(values.ContainmentMatch(*cat_exact))
 				cats_iter = sorter(x for x in self.categories if any(True for r in cat_restrict if r.match(x)))
 		elif cat_restrict:
 			cats_iter = sorter(x for x in self.categories if any(True for r in cat_restrict if r.match(x)))

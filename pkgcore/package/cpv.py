@@ -9,6 +9,7 @@
 import re
 from base import base
 from pkgcore.util.currying import post_curry
+from pkgcore.util.caching import WeakInstMeta
 from pkgcore.package import atom
 
 suffix_regexp = re.compile("^(alpha|beta|rc|pre|p)(\\d*)$")
@@ -35,6 +36,10 @@ class CPV(base):
 	@cvar _get_attr: mapping of attr:callable to generate attributes on the fly
 	"""
 
+#	__metaclass__ = WeakInstMeta
+
+#	__inst_caching__ = True
+
 	_get_attr = {"hash":lambda self:hash(self.cpvstr)}
 
 	def __init__(self, cpvstr):
@@ -45,6 +50,13 @@ class CPV(base):
 		if not isinstance(cpvstr, str):
 			raise ValueError(cpvstr)
 		self.__dict__["cpvstr"] = cpvstr
+		m = parser.match(self.cpvstr)
+		if not m:
+			raise ValueError(self.cpvstr)
+		self.__dict__.update(m.groupdict())
+		r = self.__dict__["revision"]
+		if r is not None:
+			self.__dict__["revision"] = int(r)
 
 	def __hash__(self):
 		return self.hash
@@ -61,20 +73,6 @@ class CPV(base):
 			return val
 		except KeyError:
 			raise AttributeError(attr)
-
-	def parse(self, attr):
-		m = parser.match(self.cpvstr)
-		if not m:
-			raise ValueError(self.cpvstr)
-		self.__dict__.update(m.groupdict())
-		r = self.__dict__["revision"]
-		if r is not None:
-			self.__dict__["revision"] = int(r)
-		return self.__dict__[attr]
-
-	for x in ("category", "package", "revision", "fullver", "version", "key"):
-		_get_attr[x] = post_curry(parse, x)
-	del x
 
 	def __eq__(self, other):
 		if not isinstance(other, CPV):

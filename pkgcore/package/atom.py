@@ -185,7 +185,7 @@ class atom(boolean.AndRestriction):
 			self.glob = False
 			self.atom = atom[pos:]
 		self.negate_vers = negate_vers
-		self.cpv = cpv.CPV(self.atom)
+#		self.cpv = cpv.CPV(self.atom)
 		if "~" in self.op:
 			if self.cpv.version is None:
 				raise MalformedAtom(orig_atom, "~ operator requires a version")
@@ -203,7 +203,11 @@ class atom(boolean.AndRestriction):
 		return [[self]]
 
 	def __getattr__(self, attr):
-		if attr in ("category", "package", "version", "revision", "cpvstr", "fullver", "key"):
+		if attr == "cpv":
+			c = cpv.CPV(self.atom)
+			setattr(self, "cpv", c)
+			return c
+		elif attr in ("category", "package", "version", "revision", "cpvstr", "fullver", "key"):
 			g = getattr(self.cpv, attr)
 			# Commenting this doubles the time taken in StateGraph.recalculate_deps()
 			# -- jstubbs

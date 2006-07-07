@@ -205,7 +205,7 @@ class tree(object):
 					pkg_exact = tuple(pkg_exact)
 				else:
 					pkg_exact = sorter(pkg_exact)
-				return (self.package.return_mangler((c,p)) for c in cats_iter for p in
+				return (self.packages.return_mangler((c,p)) for c in cats_iter for p in
 					pkg_exact)
 			else:
 				pkg_restrict.add(values.ContainmentMatch(*pkg_exact))

@@ -181,9 +181,10 @@ class tree(object):
 				pkg_restrict.add(x.restriction)
 
 		for e, s in ((pkg_exact, pkg_restrict), (cat_exact, cat_restrict)):
-			l = [x.exact for x in s if isinstance(x, values.StrExactMatch) and not x.negate]
+			l = [x for x in s if isinstance(x, values.StrExactMatch) and not x.negate]
 			s.difference_update(l)
-			e.update(l)
+			e.update(x.exact for x in l)
+		del l
 
 		if cat_exact:
 			if not cat_restrict and len(cat_exact) == 1:

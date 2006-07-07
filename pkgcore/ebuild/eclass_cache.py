@@ -30,26 +30,33 @@ class cache(base):
 		"""
 		@param porttree: ondisk location of the tree we're working with
 		"""
-		self.eclasses = {} # {"Name": ("location","_mtime_")}
+		# generate this.
+		# self.eclasses = {} # {"Name": ("location","_mtime_")}
 		self.porttree = normpath(porttree)
+		self.eclassdir = os.path.join(self.porttree, "eclass")
 		self.update_eclasses()
 
+	def __getattr__(self, attr):
+		if attr == "eclasses":
+			self.update_eclasses
+			return self.eclasses
+		raise AttributeError(attr)
 
 	def update_eclasses(self):
 		"""force instance to update it's internal view of on disk/remote eclasses"""
 		self.eclasses = {}
 		eclass_len = len(".eclass")
-		fp = os.path.join(self.porttree, "eclass")
-		if os.path.isdir(fp):
-			for y in os.listdir(fp):
+		pjoin = os.path.join
+		if os.path.isdir(self.eclassdir):
+			for y in os.listdir(self.eclassdir):
 				if not y.endswith(".eclass"):
 					continue
 				try:
-					mtime = os.stat(fp+"/"+y).st_mtime
+					mtime = os.stat(pjoin(self.eclassdir, y)).st_mtime
 				except OSError:
 					continue
 				ys = y[:-eclass_len]
-				self.eclasses[ys] = (fp, long(mtime))
+				self.eclasses[ys] = (self.eclassdir, long(mtime))
 
 
 	def is_eclass_data_valid(self, ec_dict):
@@ -93,10 +100,24 @@ class StackedCache(cache):
 	"""
 	collapse multiple eclass caches into one, doing L->R searching for eclass matches
 	"""
-	def __init__(self, *caches):
+	def __init__(self, *caches, **kwds):
 		"""
 		@param caches: L{cache} instances to stack; ordering should be desired lookup order
+		@keyword eclassdir: override for the master eclass dir, required for eapi0 and idiot eclass usage.  defaults to pulling from the first cache
 		"""
 		if len(caches) < 2:
 			raise TypeError("%s requires at least two eclass_caches" % self.__class__)
-		self.eclasses = StackedDict(*[ec.eclasses for ec in caches])
+		
+		self.eclassdir = kwds.pop("eclassdir")
+		if self.eclassdir is None:
+			self.eclassdir = caches[0].eclassdir
+
+		# temp var, nuked when no longer needed
+		self.ec = caches
+		
+	def __getattr__(self, attr):
+		if attr == "eclasses":
+			ec = self.eclasses = StackedDict(*[ec.eclasses for ec in self.ec])
+			del self.ec
+			return ec
+		raise AttributeError(attr)

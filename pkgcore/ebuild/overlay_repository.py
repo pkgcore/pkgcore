@@ -41,25 +41,12 @@ class OverlayRepo(multiplex.tree):
 		cache = kwds.pop("cache", None)
 		default_mirrors = kwds.pop("default_mirrors", None)
 		
-#		for t in trees:
-#			if not os.path.isdir(t):
-#				raise errors.InstantiationError(self.__class__, trees, {}, 
-#					"all trees must be ebuild_repository instances, and existant dirs- '%s' is not" % t)
-
 		# master combined eclass
-		self.eclass_cache = eclass_cache.StackedCache(*[t.eclass_cache for t in reversed(trees)])
+		self.eclass_cache = eclass_cache.StackedCache(eclassdir=trees[0].eclass_cache.eclassdir, *[t.eclass_cache for t in reversed(trees)])
 
 		repos = []
 		for t in trees:
 			repos.append(t.rebind(cache=[cache]+t.cache, eclass_cache=self.eclass_cache, default_mirrors=default_mirrors))
-
-
-#		try:
-#			repos = [ebuild_repository.UnconfiguredTree(loc, cache=cache, eclass_cache=self.eclass_cache, 
-#				**kwds) for loc in trees]
-#		except (OSError, IOError), e:
-#			raise errors.InstantiationError(self.__class__, trees, {},
-#				"unable to initialize a sub tree- %s" % e)
 
 		# now... we do a lil trick.  substitute the master mirrors in for each tree.
 		master_mirrors = trees[0].mirrors

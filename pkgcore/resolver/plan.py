@@ -387,9 +387,9 @@ class merge_plan(object):
 					if l2 == [choices.current_pkg]:
 						dprint("node was pulled in already, same so ignoring it")
 					elif l2:
-						dprint("and we 'parently don't match it.  ignoring (should prune here however)")
-						import pdb;pdb.set_trace()
-						print l2[0] == choices.current_pkg
+						dprint("and we 'parently match it.  ignoring (should prune here however)")
+						# need to do cleanup here
+#						import pdb;pdb.set_trace()
 						current_stack.pop()
 						return False
 				if fail:

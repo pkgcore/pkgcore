@@ -102,4 +102,3 @@ if __name__ == "__main__":
 						print "attr '%s' exception: %s" % (x, ae)
 				print
 		
-	sys.exit(0)

@@ -46,7 +46,7 @@ class PackageIterValLazyDict(IterValLazyDict):
 		s = key.rsplit("/", 1)
 		if len(s) != 2:
 			return False
-		return s[1] in self[s[0]]
+		return s[1] in self.get(s[0], ())
 
 
 class CategoryIterValLazyDict(IterValLazyDict):

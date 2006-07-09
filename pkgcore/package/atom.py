@@ -226,7 +226,7 @@ class atom(boolean.AndRestriction):
 				else:
 					r.append(VersionMatch(self.op, self.version, self.revision, negate=self.negate_vers))
 			elif self.op:
-				raise MalformedAtom(self.atom_str, "cannot specify a version operator without a version")
+				raise MalformedAtom(str(self), "cannot specify a version operator without a version")
 				
 			if self.use:
 				false_use = [x[1:] for x in self.use if x[0] == "-"]
@@ -245,7 +245,7 @@ class atom(boolean.AndRestriction):
 
 		raise AttributeError(attr)
 
-	def atom_str(self):
+	def __str__(self):
 		s = ""
 		if self.blocks:
 			s += "!"
@@ -259,9 +259,6 @@ class atom(boolean.AndRestriction):
 		if self.slot:
 			s += ":%s" % ",".join(self.slot)
 		return s
-
-	def __str__(self):
-		return self.atom_str()
 
 	def __hash__(self):
 		return self.hash

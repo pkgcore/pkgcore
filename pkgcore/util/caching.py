@@ -46,14 +46,13 @@ class WeakInstMeta(type):
 		if cls.__inst_caching__ and not kw.pop("disable_inst_caching", False):
 			kwlist = kw.items()
 			kwlist.sort()
+			key = (a, tuple(kwlist))
 			try:
-				key = hash((a, tuple(kwlist)))
+				instance = cls.__inst_dict__.get(key)
 			except (NotImplementedError, TypeError), t:
 				warnings.warn("caching keys for %s, got %s for a=%s, kw=%s" % (cls, t, a, kw))
 				del t
 				key = instance = None
-			else:
-				instance = cls.__inst_dict__.get(key)
 
 			if instance is None:
 				instance = super(WeakInstMeta, cls).__call__(*a, **kw)

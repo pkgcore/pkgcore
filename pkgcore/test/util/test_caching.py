@@ -78,3 +78,10 @@ class TestWeakInstMeta(unittest.TestCase):
 					weak_inst(chuck_errors(x)))
 		finally:
 			caching.warnings = w
+
+	def test_hash_collision(self):
+		class BrokenHash(object):
+			def __hash__(self):
+				return 1
+		self.assertNotIdentical(weak_inst(BrokenHash()),
+								weak_inst(BrokenHash()))

@@ -10,7 +10,7 @@ import re
 from base import base
 from pkgcore.util.currying import post_curry
 from pkgcore.util.caching import WeakInstMeta
-from pkgcore.package import atom
+from pkgcore.package import atom, errors
 
 suffix_regexp = re.compile("^(alpha|beta|rc|pre|p)(\\d*)$")
 suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
@@ -40,7 +40,7 @@ class CPV(base):
 
 #	__inst_caching__ = True
 
-	_get_attr = {"hash":lambda self:hash(self.cpvstr)}
+	_get_attr = {}
 
 	def __init__(self, cpvstr):
 		"""
@@ -52,16 +52,20 @@ class CPV(base):
 		self.__dict__["cpvstr"] = cpvstr
 		m = parser.match(self.cpvstr)
 		if not m:
-			raise ValueError(self.cpvstr)
+			raise errors.InvalidCpv(self.cpvstr)
 		self.__dict__.update(m.groupdict())
 		r = self.__dict__["revision"]
 		if r is not None:
 			self.__dict__["revision"] = int(r)
 
 	def __hash__(self):
-		return self.hash
+		return hash(self.cpvstr)
 
 	def __repr__(self):
+		return '<%s cpvstr=%s @%#8x>' % (
+			self.__class__.__name__, self.cpvstr, id(self))
+
+	def __str__(self):
 		return self.cpvstr
 
 	def __setattr__(self, name, value):
@@ -77,7 +81,7 @@ class CPV(base):
 	def __eq__(self, other):
 		if not isinstance(other, CPV):
 			return False
-		return self.hash == other.hash
+		return self.cpvstr == other.cpvstr
 
 	def __cmp__(self, other):
 

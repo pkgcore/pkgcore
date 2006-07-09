@@ -3,3 +3,4 @@ dev-notes/toc.rst
 dev-notes/*/*.html
 dev-notes/*/toc.rst
 build
+pkgcore/bin/ebuild-env/filter-env

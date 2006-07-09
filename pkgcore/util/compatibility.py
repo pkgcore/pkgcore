@@ -6,14 +6,18 @@ compatibility module providing reimplementations of python2.5 functionality, fal
 """
 
 
-if not "any" in __builtins__:
+if "any" in __builtins__:
+	any = any
+else:
 	def any(iterable):
 		for x in iterable:
 			if x:
 				return True
 		return False
 
-if not "all" in __builtins__:
+if "all" in __builtins__:
+	all = all
+else:
 	def all(iterable):
 		for x in iterable:
 			if not x:

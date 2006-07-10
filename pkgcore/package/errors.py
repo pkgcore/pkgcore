@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-class InvalidCpv(ValueError):
+class InvalidCPV(ValueError):
 	"""Raised if an invalid cpv was passed in.
 
 	@ivar args: single-element tuple containing the invalid string.

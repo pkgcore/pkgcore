@@ -52,7 +52,7 @@ class CPV(base):
 		self.__dict__["cpvstr"] = cpvstr
 		m = parser.match(self.cpvstr)
 		if not m:
-			raise errors.InvalidCpv(self.cpvstr)
+			raise errors.InvalidCPV(self.cpvstr)
 		self.__dict__.update(m.groupdict())
 		r = self.__dict__["revision"]
 		if r is not None:

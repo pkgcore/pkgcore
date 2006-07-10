@@ -13,4 +13,4 @@ class CpvTest(unittest.TestCase):
 			'two-2.5',
 			'three',
 			]:
-			self.assertRaises(errors.InvalidCpv, cpv.CPV, brokencpv)
+			self.assertRaises(errors.InvalidCPV, cpv.CPV, brokencpv)

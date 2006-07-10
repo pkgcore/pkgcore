@@ -143,6 +143,11 @@ def pull_metadata_xml(self, attr):
 
 			self._pkg_metadata_shared[0] = tuple(maintainers)
 			self._pkg_metadata_shared[1] = tuple(str(x.text) for x in tree.findall("herd"))
+			# Could be unicode!
+			longdesc = tree.findtext("longdescription")
+			if longdesc:
+				longdesc = ' '.join(longdesc.strip().split())
+			self._pkg_metadata_shared[2] = longdesc
 
 		except IOError, i:
 			if i.errno != errno.ENOENT:
@@ -151,6 +156,7 @@ def pull_metadata_xml(self, attr):
 			self._pkg_metadata_shared[1] = ()
 	self.__dict__["maintainers"] = self._pkg_metadata_shared[0]
 	self.__dict__["herds"] = self._pkg_metadata_shared[1]
+	self.__dict__["longdescription"] = self._pkg_metadata_shared[2]
 	return self.__dict__[attr]
 
 def rewrite_restrict(restrict):
@@ -205,6 +211,8 @@ class package(metadata.package):
 	_get_attr["iuse"] = lambda s:s.data.get("IUSE", "").split()
 	_get_attr["herds"] = lambda s:pull_metadata_xml(s, "herds")
 	_get_attr["maintainers"] = lambda s:pull_metadata_xml(s, "maintainers")
+	_get_attr["longdescription"] = lambda s:pull_metadata_xml(
+		s, "longdescription")
 	_get_attr["homepage"] = lambda s:s.data.get("HOMEPAGE", "").strip()
 	_get_attr["raw_ebuild"] = lambda s: open(s.path, "r").read()
 
@@ -267,7 +275,7 @@ class package_factory(metadata.factory):
 	def new_package(self, cpv):
 		inst = metadata.factory.new_package(self, cpv)
 		if inst.key not in self._weak_pkglevel_cache:
-			o = ThrowAwayNameSpace([None, None])
+			o = ThrowAwayNameSpace([None, None, None])
 			self._weak_pkglevel_cache[inst.key] = o
 		else:
 			o = self._weak_pkglevel_cache[inst.key]
@@ -289,7 +297,6 @@ class ThrowAwayNameSpace(object):
 
 def generate_new_factory(*a, **kw):
 	return package_factory(*a, **kw).new_package
-	__slots__ = ("__weak__", "herds", "maintainers")
 
 
 class virtual_ebuild(metadata.package):

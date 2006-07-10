@@ -77,6 +77,10 @@ class base(restriction.base):
 		"""
 		self.restrictions = tuple(self.restrictions)
 
+	def __repr__(self):
+		return '<%s restrictions=%r @%#8x>' % (
+			self.__class__.__name__, self.restrictions, id(self))
+
 	def __len__(self):
 		return len(self.restrictions)
 

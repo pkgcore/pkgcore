@@ -121,6 +121,13 @@ class PackageRestriction(restriction.base):
 			s += "not "
 		return s + str(self.restriction)
 
+	def __repr__(self):
+		if self.negate:
+			string = '<%s attr=%r restriction=%r negated @%#8x>'
+		else:
+			string = '<%s attr=%r restriction=%r @%#8x>'
+		return string % (
+			self.__class__.__name__, self.attr, self.restriction, id(self))
 
 class Conditional(PackageRestriction):
 
@@ -146,6 +153,15 @@ class Conditional(PackageRestriction):
 
 	def __str__(self):
 		return "( Conditional: %s payload: [ %s ] )" % (PackageRestriction.__str__(self), ", ".join(map(str, self.payload)))
+
+	def __repr__(self):
+		if self.negate:
+			string = '<%s attr=%r restriction=%r payload=%r negated @%#8x>'
+		else:
+			string = '<%s attr=%r restriction=%r payload=%r @%#8x>'
+		return string % (
+			self.__class__.__name__, self.attr, self.restriction, payload,
+			id(self))
 
 	def __iter__(self):
 		return iter(self.payload)

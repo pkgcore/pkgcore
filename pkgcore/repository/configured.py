@@ -59,7 +59,7 @@ class tree(prototype.tree):
 		filtered_restrict = OrRestriction(disable_inst_caching=True,
 			*[AndRestriction(disable_inst_caching=True, *x) for x in filtered_solutions])
 
-		return (self.package_class(pkg) for pkg in self.raw_repo.itermatch(self, filtered_restrict, 
+		return (self.package_class(pkg) for pkg in self.raw_repo.itermatch(filtered_restrict, 
 			restrict_solutions=filtered_solutions, **kwds) if restrict.force_True(pkg))
 
 	itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace("@param", "@keyword").replace("@keyword restrict:", "@param restrict:")

@@ -144,10 +144,8 @@ class atom(boolean.AndRestriction):
 		while atom[pos] in ("<", ">", "=", "~"):
 			pos += 1
 		if self.blocks:
-			self.blocks  = True
 			self.op = atom[1:pos]
 		else:
-			self.blocks = False
 			self.op = atom[:pos]
 
 		u = atom.find("[")
@@ -191,6 +189,20 @@ class atom(boolean.AndRestriction):
 				raise MalformedAtom(orig_atom, "~ operator requires a version")
 		# force jitting of it.
 		del self.restrictions
+
+	def __repr__(self):
+		atom = self.op + self.atom
+		if self.blocks:
+			atom = '!' + atom
+		if self.glob:
+			atom = atom + '*'
+		attrs = [atom]
+		if self.use:
+			attrs.append('use=' + repr(self.use))
+		if self.slot:
+			attrs.append('slot=' + repr(self.slot))
+		return '<%s %s @#%xf>' % (
+			self.__class__.__name__, ' '.join(attrs), id(self))
 
 	def iter_dnf_solutions(self, full_solution_expansion=False):
 		if full_solution_expansion:

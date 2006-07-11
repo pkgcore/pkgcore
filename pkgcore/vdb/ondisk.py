@@ -16,11 +16,15 @@ from pkgcore.interfaces.data_source import local_source
 from pkgcore.spawn import spawn
 from pkgcore.util.demandload import demandload
 demandload(globals(), "logging")
+from pkgcore.repository import multiplex, virtual
 
 
 class tree(prototype.tree):
-	ebuild_format_magic = "ebuild_built"
 	livefs = True
+	configured = False
+	configurables = ("domain")
+	configure = None
+	ebuild_format_magic = "ebuild_built"	
 
 	def __init__(self, location):
 		super(tree, self).__init__()
@@ -114,6 +118,18 @@ class tree(prototype.tree):
 				# silently swallow it;
 				del oe
 
+
+class ConfiguredTree(multiplex.tree):
+
+	livefs = True
+
+	def __init__(self, raw_vdb, domain, domain_settings):
+		self.domain = domain
+		self.domain_settings = domain_settings
+		self.raw_vdb = raw_vdb
+		self.raw_virtual = virtual.tree(self._grab_virtuals, livefs=True)
+		multiplex.tree.__init__(raw_vdb, self.raw_virtual)
+
 	def _install(self, pkg, *a, **kw):
 		# need to verify it's not in already...
 		return install(self, pkg, *a, **kw)
@@ -123,6 +139,20 @@ class tree(prototype.tree):
 
 	def _replace(self, oldpkg, newpkg, *a, **kw):
 		return replace(self, oldpkg, newpkg, *a, **kw)
+
+	def _grab_virtuals(self):
+		virtuals = {}
+		for pkg in self.raw_vdb:
+			for virtual in pkg.provides.evaluate_depset(pkg.use):
+				virtuals.setdefault(virtual.package, {}).setdefault(pkg.fullver, []).append(pkg)
+
+		for pkg_dict in virtuals.itervalues():
+			for full_ver, rdep_atoms in pkg_dict.iteritems():
+				if len(rdep_atoms) == 1:
+					pkg_dict[full_ver] = rdep_atoms[0].unversioned_atom
+				else:
+					pkg_dict[full_ver] = OrRestriction(finalize=True, *[x.unversioned_atom for x in rdep_atoms])
+		return virtuals
 
 
 class install(repo_interfaces.install):

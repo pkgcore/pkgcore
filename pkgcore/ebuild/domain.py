@@ -205,30 +205,31 @@ class domain(pkgcore.config.domain.domain):
 
 		self.settings["bashrc"] = bashrc
 		self.repos = []
-		for repo in repositories:
-			if not repo.configured:
-				pargs = [repo]
-				try:
-					for x in repo.configurables:
-						if x == "domain":
-							pargs.append(self)
-						elif x == "settings":
-							pargs.append(ProtectedDict(settings))
-						elif x == "profile":
-							pargs.append(profile)
-						else:
-							pargs.append(getattr(self, x))
-				except AttributeError, ae:
-					raise Failure("failed configuring repo '%s': configurable missing: %s" % (repo, ae))
-				self.repos.append(repo.configure(*pargs))
-			else:
-				self.repos.append(repo)
-			# do this once at top level instead.
+		self.vdb = []
+		for l, repos in ((self.repos, repositories), (self.vdb, vdb)):
+			for repo in repositories:
+				if not repo.configured:
+					pargs = [repo]
+					try:
+						for x in repo.configurables:
+							if x == "domain":
+								pargs.append(self)
+							elif x == "settings":
+								pargs.append(ProtectedDict(settings))
+							elif x == "profile":
+								pargs.append(profile)
+							else:
+								pargs.append(getattr(self, x))
+					except AttributeError, ae:
+						raise Failure("failed configuring repo '%s': configurable missing: %s" % (repo, ae))
+					l.append(repo.configure(*pargs))
+				else:
+					l.append(repo)
+				# do this once at top level instead.
+
 		self.repos = [visibility.filterTree(t, vfilter, True) for t in self.repos]
 		if profile.virtuals:
-#			self.repos = [multiplex.tree(t, profile.virtuals(t)) for t in self.repos]
 			self.repos = [profile.virtuals(multiplex.tree(*self.repos))] + self.repos
-		self.vdb = vdb
 
 
 	def generate_keywords_filter(self, arch, default_keys, pkg_keywords, already_unstable=False):

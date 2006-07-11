@@ -22,7 +22,7 @@ from pkgcore.repository import multiplex, virtual
 class tree(prototype.tree):
 	livefs = True
 	configured = False
-	configurables = ("domain")
+	configurables = ("domain", "settings")
 	configure = None
 	ebuild_format_magic = "ebuild_built"	
 
@@ -128,7 +128,7 @@ class ConfiguredTree(multiplex.tree):
 		self.domain_settings = domain_settings
 		self.raw_vdb = raw_vdb
 		self.raw_virtual = virtual.tree(self._grab_virtuals, livefs=True)
-		multiplex.tree.__init__(raw_vdb, self.raw_virtual)
+		multiplex.tree.__init__(self, raw_vdb, self.raw_virtual)
 
 	def _install(self, pkg, *a, **kw):
 		# need to verify it's not in already...
@@ -153,6 +153,8 @@ class ConfiguredTree(multiplex.tree):
 				else:
 					pkg_dict[full_ver] = OrRestriction(finalize=True, *[x.unversioned_atom for x in rdep_atoms])
 		return virtuals
+
+tree.configure = ConfiguredTree
 
 
 class install(repo_interfaces.install):

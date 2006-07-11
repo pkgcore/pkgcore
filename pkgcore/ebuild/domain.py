@@ -207,7 +207,7 @@ class domain(pkgcore.config.domain.domain):
 		self.repos = []
 		self.vdb = []
 		for l, repos in ((self.repos, repositories), (self.vdb, vdb)):
-			for repo in repositories:
+			for repo in repos:
 				if not repo.configured:
 					pargs = [repo]
 					try:

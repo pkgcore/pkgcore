@@ -3,29 +3,21 @@
 # Copyright 2005-2006 Brian Harring <ferringb@gmail.com>
 # Copyright 2004-2006 Gentoo Foundation
 
+portageq() {
+	if [[ $EBUILD_PHASE == depend ]]; then
+		die "portageq calls in depends phase is disallowed"
+	fi
+	portageq_emulation "$1" "${PKGCORE_DOMAIN}" "$3"
+}
+
 has_version()
 {
-	# if there is a predefined portageq call, use it.
-	# why?  Because if we're being called from an ebuild daemon/processor, it can hijack the call, and access the
-	# running portage instance already, saving at least .5s in load up of portageq.
-	# time emerge -s mod_php w/out the hijack == 23s
-	# time emerge -s mod_php w/ the hijack == < 6s
-	local -i e
-	[ "${EBUILD_PHASE}" == "depend" ] && echo "QA Notice: has_version() in global scope: ${CATEGORY}/$PF" >&2
-	# return shell-true/shell-false if exists.
-	# Takes single depend-type atoms.
-
-	# XXX: harring; portageq should be in path if there isn't a func.  if not, well, tough cookies
 	portageq 'has_version' "${ROOT}" "$1"
-	return $?
 }
 
 best_version() 
 {
-	local -i e
-	# see above
 	portageq 'best_version' "${ROOT}" "$1"
-	return $?
 }
 
 check_KV()

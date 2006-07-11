@@ -7,29 +7,6 @@ alias die='diefunc "$FUNCNAME" "$LINENO" "$?"'
 alias assert='_pipestatus="${PIPESTATUS[*]}"; [[ "${_pipestatus// /}" -eq 0 ]] || diefunc "$FUNCNAME" "$LINENO" "$_pipestatus"'
 
 
-# portageq hijack- redirects all requests back through the pipes and has the python side execute it.
-# much faster, also avoids the gpg/sandbox being active issues.
-portageq() {
-	local line e alive
-	if [ "${EBUILD_PHASE}" == "depend" ]; then
-		echo "QA Notice: portageq() in global scope for ${CATEGORY}/${PF}" >&2
-	fi
-	speak "portageq $*"
-	listen line
-	declare -i e
-	e=$(( ${line/return_code=} + 0 ))
-	alive=1
-	while [ $alive == 1 ]; do
-		listen line
-		if [ "$line" == "stop_text" ]; then
-			alive=0
-		else
-			echo "portageq: $line"
-		fi
-	done
-	return $e
-}
-	
 # ask the python side to display sandbox complaints.
 request_sandbox_summary() {
 	local line

@@ -125,6 +125,9 @@ class ConfigManager(object):
 
 		for var in type_obj.required:
 			if var not in conf:
+				if type_obj.types.get(var, None) == "section_name":
+					conf[var] = section
+					continue
 				raise errors.ConfigurationError(
 					'type %r needs a setting for %r in section %r' %
 					(type_name, var, section))

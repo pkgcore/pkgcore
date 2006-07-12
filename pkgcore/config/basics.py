@@ -13,7 +13,7 @@ from pkgcore.util import modules
 from pkgcore.config import errors
 
 
-type_names = ("list", "str", "bool", "section_ref", "section_refs")
+type_names = ("list", "str", "bool", "section_ref", "section_refs", "section_name")
 
 
 class ConfigType(object):

@@ -130,7 +130,7 @@ class merge_plan(object):
 	vdb_restrict = packages.PackageRestriction("repo.livefs", 
 		values.EqualityMatch(True))
 	
-	def __init__(self, dbs, per_repo_strategy, global_strategy=default_global_strategy, depset_reorder_strategy=default_depset_reorder):
+	def __init__(self, dbs, per_repo_strategy, global_strategy=default_global_strategy, depset_reorder_strategy=default_depset_reorder, drop_cycles=False):
 		if not isinstance(dbs, (list, tuple)):
 			dbs = [dbs]
 		self.all_dbs = OrderedDict((r, {}) for r in dbs)
@@ -144,6 +144,7 @@ class merge_plan(object):
 		self.state = plan_state()
 		self.insoluble = set()
 		self.vdb_preloaded = False
+		self.drop_cycles = drop_cycles
 		
 	def load_vdb_state(self):
 		for r in self.livefs_dbs:
@@ -204,6 +205,9 @@ class merge_plan(object):
 #						import pdb;pdb.set_trace()
 						# reduce our options.
 						failure = self._rec_add_atom(datom, current_stack, self.livefs_dbs, depth=depth+1, mode="depends")
+						if failure and self.drop_cycles:
+							dprint("depends:     %s%s: dropping cycle for %s from %s", (depth *2 * " ", atom, datom, choices.current_pkg), "cycle")
+							failure = []
 					else:
 						failure = self._rec_add_atom(datom, current_stack, dbs, depth=depth+1, mode="depends")
 					if failure:
@@ -238,11 +242,13 @@ class merge_plan(object):
 					else:
 						if current_stack[index][2] == "rdepends":
 							# contained rdepends cycle... ignore it.
-							pass
 							failure = []
 						else:
 							# force limit_to_vdb to True to try and isolate the cycle to installed vdb components
 							failure = self._rec_add_atom(ratom, current_stack, self.livefs_dbs, depth=depth+1, mode="rdepends")
+							if failure and self.drop_cycles:
+								dprint("rdepends:    %s%s: dropping cycle for %s from %s", (depth *2 * " ", atom, ratom, choices.current_pkg), "cycle")
+								failure = []
 				else:
 					failure = self._rec_add_atom(ratom, current_stack, dbs, depth=depth+1, mode="rdepends")
 				if failure:

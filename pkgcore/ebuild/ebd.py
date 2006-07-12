@@ -22,7 +22,7 @@ from pkgcore.util.currying import post_curry, pretty_docs
 from pkgcore.os_data import xargs
 from const import eapi_capable
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.ebuild.ebuild_built:package")
+demandload(globals(), "pkgcore.ebuild.ebuild_built:fake_package_factory,package")
 
 class ebd(object):
 
@@ -397,5 +397,5 @@ class buildable(ebd, build.base):
 		
 		@return: L{pkgcore.ebuild.ebuild_built.package} instance
 		"""
-		return ebuild_built.fake_package_factory(self._built_class).new_package(self.pkg,
+		return fake_package_factory(self._built_class).new_package(self.pkg,
 			self.env["IMAGE"], os.path.join(self.env["T"], "environment"))

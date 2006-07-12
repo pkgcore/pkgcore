@@ -1,5 +1,8 @@
 '''Demand load modules when used, not when imported.'''
 
+import sys
+import re
+
 __author__ = '''Copyright 2006 Vadim Gelfer <vadim.gelfer@gmail.com>.
 This software may be used and distributed according to the terms
 of the GNU General Public License, incorporated herein by reference.'''
@@ -29,6 +32,10 @@ class _importer(object):
         if self.mod is None:
             self.mod = __import__(self.modname, self.scope, self.scope,
                                   self.fromlist)
+            if isinstance(self.mod, _replacer):
+                del sys.modules[self.modname]
+                self.mod = __import__(self.modname, self.scope, self.scope,
+                                      self.fromlist)
             del self.modname, self.fromlist
         return self.mod
 
@@ -133,3 +140,34 @@ def demandload(scope, modules):
             else:
                 basemod = mod
             scope[basemod] = _replacer(importer, basemod)
+
+
+_real_compile = re.compile
+class _delayed_compiler(object):
+    """A class which just waits to compile a regex until it is actually requested.
+    
+    It might be possible to use the scope swapping to prevent any overhead after
+    the first request.
+    """
+
+    __slots__ = ['_args', '_kwargs', '_regex']
+
+    def __init__(self, args, kwargs):
+        self._args = args
+        self._kwargs = kwargs
+        self._regex = None
+
+    def __getattribute__(self, attr):
+        regex = object.__getattribute__(self, '_regex')
+        if regex is None:
+            args = object.__getattribute__(self, '_args')
+            kwargs = object.__getattribute__(self, '_kwargs')
+            regex = _real_compile(*args, **kwargs)
+            self._regex = regex
+        return getattr(regex, attr)
+
+def demand_compile(*args, **kwargs):
+    return _delayed_compiler(args, kwargs)
+
+re.compile = demand_compile
+

@@ -92,13 +92,14 @@ str = profile base_path
 
 [domain]
 #instantiate = pkgcore.config.parser.domain
-required = repositories profile root class domain_incrementals ACCEPT_LICENSE vdb fetcher
+required = repositories profile root class domain_incrementals ACCEPT_LICENSE vdb fetcher name
 section_ref = profile fetcher
 section_refs = repositories vdb
 list = %(default_incrementals)s %(package_filters)s package.unmask bashrc domain_incrementals
 str = root CHOST CFLAGS PATH PORTAGE_TMPDIR DISTCC_PATH DISTCC_DIR CCACHE_DIR
 # XXX is this right
 bool = default
+section_name = name
 incrementals = %(default_incrementals)s
 domain_incrementals = %(default_incrementals)s
 defaults = class root domain_incrementals ACCEPT_LICENSE PORTAGE_TMPDIR PATH DISTCC_PATH DISTCC_DIR CCACHE_DIR

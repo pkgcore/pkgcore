@@ -84,7 +84,7 @@ def generate_unmasking_restrict(unmasks):
 
 
 class domain(pkgcore.config.domain.domain):
-	def __init__(self, incrementals, root, profile, repositories, vdb, **settings):
+	def __init__(self, incrementals, root, profile, repositories, vdb, name=None, **settings):
 		# voodoo, unfortunately (so it goes)
 		# break this up into chunks once it's stabilized (most of code here has already, but still more to add)
 		pkg_maskers, pkg_unmaskers, pkg_keywords, pkg_license = list(profile.maskers), [], [], []
@@ -105,7 +105,9 @@ class domain(pkgcore.config.domain.domain):
 						raise MissingFile(settings[key], key)
 				del settings[key]
 
-		
+
+		self.name = name
+		settings.setdefault("PKGCORE_DOMAIN", name)
 		inc_d = set(incrementals)
 		inc_d.update(profile.use_expand)
 		for x in profile.conf:

@@ -87,7 +87,7 @@ def main():
 		if not getattr(command, "command_handler", False):
 			raise KeyError
 	except KeyError:
-		print "%s isn't a valid command" % command
+		print "%s isn't a valid command" % a[0]
 		usage()
 		sys.exit(2)
 	

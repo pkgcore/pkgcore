@@ -73,30 +73,27 @@ def parse_atom(repos, ignore_failures, *tokens):
 	"""
 	atoms = []
 	for x in tokens:
-		for repo in repos:
-			a = generate_restriction(x)
-			if isinstance(a, atom):
-				atoms.append(a)
-				continue
-			matches = set(pkg.key for pkg in repo.itermatch(a))
-			if not matches:
-				continue
-			elif len(matches) > 1:
-				raise AmbiguousQuery(x, matches, a)
-			# else we rebuild an atom to include category
-			key = list(matches)[0]
-			ops, text = collect_ops(x)
-			if not ops:
-				atoms.append(atom(key))
-			else:
-				atoms.append(atom(key))
-			break
-		else:
+		a = generate_restriction(x)
+		if isinstance(a, atom):
+			atoms.append(a)
+			continue
+		matches = set(pkg.key for pkg in repos.itermatch(a))
+		if not matches:
 			e = NoMatches(x, a)
 			if not ignore_failures:
 				raise e
 			print e
 			print "skipping"
+			continue
+		elif len(matches) > 1:
+			raise AmbiguousQuery(x, matches, a)
+		# else we rebuild an atom to include category
+		key = list(matches)[0]
+		ops, text = collect_ops(x)
+		if not ops:
+			atoms.append(atom(key))
+		else:
+			atoms.append(atom(key))
 	return atoms	
 
 
@@ -140,7 +137,7 @@ def main():
 	#map(atom, conf.pkgset[l]) for l in set_targets], restriction.base)
 	
 	domain = conf.domain["livefs domain"]
-	vdb, repos = domain.vdb[0], domain.repos
+	vdb, repos = domain.all_vdbs, domain.all_repos
 	if not args:
 		if set_targets:
 			atoms = []

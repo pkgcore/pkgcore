@@ -21,7 +21,8 @@ from pkgcore.spawn import spawn_bash, spawn
 from pkgcore.util.currying import post_curry, pretty_docs
 from pkgcore.os_data import xargs
 from const import eapi_capable
-from pkgcore.ebuild import ebuild_built
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.ebuild.ebuild_built:package")
 
 class ebd(object):
 
@@ -46,6 +47,9 @@ class ebd(object):
 		else:
 			self.env = {}
 
+		# temp hack.
+		if "PYTHONPATH" in os.environ:
+			self.env["PYTHONPATH"] = os.environ["PYTHONPATH"]
 		self.env_data_source = env_data_source
 		if __debug__:
 			from pkgcore.interfaces.data_source import local_source
@@ -243,7 +247,7 @@ class buildable(ebd, build.base):
 	build operation
 	"""
 	
-	_built_class = ebuild_built.package
+	_built_class = package
 
 	# XXX this is unclean- should be handing in strictly what is build env, rather then
 	# dumping domain settings as env.

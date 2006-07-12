@@ -6,11 +6,13 @@ ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 """
 
 import os, stat
-from pkgcore.ebuild.ebd import buildable
 from pkgcore.repository import prototype, errors, configured
 from pkgcore.util.containers import InvertedContains
 from pkgcore.util.file import read_dict
 from pkgcore.util import currying
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.ebuild.ebd:buildable")
+
 from pkgcore.plugins import get_plugin
 
 metadata_offset = "profiles"

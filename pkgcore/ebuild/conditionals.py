@@ -232,7 +232,7 @@ class DepSet(boolean.AndRestriction):
 	force_False = force_True = match
 
 	def __str__(self):
-		return ' '.join(str(x) for x in self.restrictions)
+		return ' '.join(self._stringify_node(x) for x in self.restrictions)
 
 	def __iter__(self):
 		return iter(self.restrictions)
@@ -240,6 +240,15 @@ class DepSet(boolean.AndRestriction):
 	def __getitem__(self, key):
 		return self.restrictions[key]
 
+	def _stringify_node(self, node):
+		if isinstance(node, boolean.OrRestriction):
+			return "|| ( %s )" % " ".join(self._stringify_node(x) for x in node.restrictions)
+		elif isinstance(node, packages.Conditional):
+			assert len(node.restriction.vals) == 1
+			return "%s%s? ( %s )" % (node.negate and "!" or "", list(node.restriction.vals)[0], \
+				" ".join(self._stringify_node(x) for x in node.payload))
+		return str(node)
+		
 
 class ParseError(Exception):
 

@@ -35,8 +35,6 @@ class KeyedAndRestriction(boolean.AndRestriction):
 		return "%s %s" % (self.tag, boolean.AndRestriction.__str__(self))
 
 	def solutions(self, *a, **kwds):
-		if self.key == "dev-db/postgresql":
-			import pdb;pdb.set_trace()
 		return boolean.AndRestriction.solutions(self, *a, **kwds)
 
 

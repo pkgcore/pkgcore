@@ -12,10 +12,19 @@ __all__ = ["pre_curry", "post_curry", "pretty_docs", "alias_class_method"]
 def pre_curry(func, *args, **kwargs):
 	"""passed in args are prefixed, with further args appended"""
 
-	def callit(*moreargs, **morekwargs):
-		kw = kwargs.copy()
-		kw.update(morekwargs)
-		return func(*(args+moreargs), **kw)
+	if not kwargs:
+		def callit(*moreargs, **morekwargs):
+			return func(*(args + moreargs), **morekwargs)
+	elif not args:
+		def callit(*moreargs, **morekwargs):
+			kw = kwargs.copy()
+			kw.update(morekwargs)
+			return func(*moreargs, **kw)
+	else:
+		def callit(*moreargs, **morekwargs):
+			kw = kwargs.copy()
+			kw.update(morekwargs)
+			return func(*(args+moreargs), **kw)
 
 	callit.__original__ = func
 	return callit
@@ -23,10 +32,19 @@ def pre_curry(func, *args, **kwargs):
 def post_curry(func, *args, **kwargs):
 	"""passed in args are appended to any further args supplied"""
 
-	def callit(*moreargs, **morekwargs):
-		kw = morekwargs.copy()
-		kw.update(kwargs)
-		return func(*(moreargs+args), **kw)
+	if not kwargs:
+		def callit(*moreargs, **morekwargs):
+			return func(*(moreargs+args), **morekwargs)
+	elif not args:
+		def callit(*moreargs, **morekwargs):
+			kw = morekwargs.copy()
+			kw.update(kwargs)
+			return func(*moreargs, **kw)
+	else:
+		def callit(*moreargs, **morekwargs):
+			kw = morekwargs.copy()
+			kw.update(kwargs)
+			return func(*(moreargs+args), **kw)
 
 	callit.__original__ = func
 	return callit
@@ -40,8 +58,6 @@ def pretty_docs(wrapped, extradocs=None):
 		wrapped.__doc__ = extradocs
 	return wrapped
 
-def _second_level_call(grab_attr, self, *a, **kw):
-	return grab_attr(self)(*a, **kw)
 
 def alias_class_method(attr):
 	"""at runtime, redirect to another method
@@ -52,4 +68,9 @@ def alias_class_method(attr):
 	Useful for when setting has_key to __contains__ for example, and __contains__ may be
 	overriden
 	"""
-	return pre_curry(_second_level_call, attrgetter(attr))
+	grab_attr = attrgetter(attr)
+
+	def _asecond_level_call(self, *a, **kw):
+		return grab_attr(self)(*a, **kw)
+
+	return _asecond_level_call

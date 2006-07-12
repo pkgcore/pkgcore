@@ -132,13 +132,13 @@ class ConfiguredTree(multiplex.tree):
 
 	def _install(self, pkg, *a, **kw):
 		# need to verify it's not in already...
-		return install(self, pkg, *a, **kw)
+		return install(self.raw_vdb, pkg, *a, **kw)
 
 	def _uninstall(self, pkg, *a, **kw):
-		return uninstall(self, pkg, *a, **kw)
+		return uninstall(self.raw_vdb, pkg, *a, **kw)
 
 	def _replace(self, oldpkg, newpkg, *a, **kw):
-		return replace(self, oldpkg, newpkg, *a, **kw)
+		return replace(self.raw_vdb, oldpkg, newpkg, *a, **kw)
 
 	def _grab_virtuals(self):
 		virtuals = {}

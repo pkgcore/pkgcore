@@ -70,17 +70,6 @@ pkg_sort_highest = pre_curry(sorted, reverse=True)
 pkg_sort_lowest = sorted
 
 pkg_grabber = operator.itemgetter(0)
-def pkg_cmp_preferring_vdb(x, y):
-	if x > y:
-		return 1
-	elif x < y:
-		return -1
-	elif x.repo.livefs:
-		return 1
-	elif y.repo.livefs:
-		return -1
-	return 0
-
 
 def highest_iter_sort(l):
 	def f(x, y):

@@ -26,7 +26,7 @@ def prefer_highest_ver(resolver, dbs, atom):
 	return resolver.prefer_highest_version_strategy(resolver, dbs, atom)
 
 
-def upgrade_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, resolver_cls=plan.merge_plan):
+def upgrade_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, resolver_cls=plan.merge_plan, **kwds):
 
 	"""
 	generate and configure a resolver for upgrading all nodes encountered in processing
@@ -50,10 +50,10 @@ def upgrade_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, resolve
 		vdb = map(plan.nodeps_repo, vdb)
 	if not isinstance(dbs, (list, tuple)):
 		dbs = [dbs]
-	return resolver_cls(dbs + vdb, plan.pkg_sort_highest, f)
+	return resolver_cls(dbs + vdb, plan.pkg_sort_highest, f, **kwds)
 
 
-def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, resolver_cls=plan.merge_plan):
+def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, resolver_cls=plan.merge_plan, **kwds):
 	"""
 	generate and configure a resolver that is focused on just installing requests- installs highest version it can build a solution for,
 	but tries to avoid building anything not needed
@@ -74,7 +74,7 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, res
 	if not isinstance(dbs, (list, tuple)):
 		dbs = [dbs]
 	
-	return resolver_cls(vdb + dbs, plan.pkg_sort_highest, plan.merge_plan.prefer_reuse_strategy)
+	return resolver_cls(vdb + dbs, plan.pkg_sort_highest, plan.merge_plan.prefer_reuse_strategy, **kwds)
 
 
 class empty_tree_merge_plan(plan.merge_plan):

@@ -103,13 +103,14 @@ def main():
 
 	if pop_arg(args, "-h", "--help"):
 		print "args supported, [-D || --deep], [[-u || --upgrade]] and -s (system|world) [-d || --debug] [ --ignore-failures ] [ --preload-vdb-state ]"
-		print "[[-p || --pretend] || [-f || --fetchonly]]"
+		print "[[-p || --pretend] || [-f || --fetchonly]] [ -i || --ignore-cycles ]"
 		print "can specify additional atoms when specifying -s, no atoms/sets available, defaults to sys-apps/portage"
 		return 1
 
 	if pop_arg(args, "-d", "--debug"):
 		resolver.plan.limiters.add(None)
 	
+	ignore_cycles = pop_arg(args, "-i", "--ignore-cycles")
 	pretend = pop_arg(args, "-p", "--pretend")
 	fetchonly = pop_arg(args, "-f", "--fetchonly")
 	
@@ -153,9 +154,9 @@ def main():
 	atoms = stable_unique(atoms)
 
 	if empty_vdb:
-		resolver_inst = resolver_kls(vdb, repos, verify_vdb=deep, resolver_cls=resolver.empty_tree_merge_plan)
+		resolver_inst = resolver_kls(vdb, repos, verify_vdb=deep, resolver_cls=resolver.empty_tree_merge_plan, drop_cycles=ignore_cycles)
 	else:
-		resolver_inst = resolver_kls(vdb, repos, verify_vdb=deep)
+		resolver_inst = resolver_kls(vdb, repos, verify_vdb=deep, drop_cycles=ignore_cycles)
 
 	if preload_vdb_state:
 		vdb_time = time.time()

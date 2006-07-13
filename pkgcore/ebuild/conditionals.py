@@ -98,9 +98,7 @@ class DepSet(boolean.AndRestriction):
 					raise ParseError(dep_str, k)
 				else:
 					# node/element.
-					e = element_func(k)
-					if e is not None:
-						depsets[-1].append(e)
+					depsets[-1].append(element_func(k))
 
 
 		except IndexError:
@@ -247,6 +245,7 @@ class DepSet(boolean.AndRestriction):
 			assert len(node.restriction.vals) == 1
 			return "%s%s? ( %s )" % (node.negate and "!" or "", list(node.restriction.vals)[0], \
 				" ".join(self._stringify_node(x) for x in node.payload))
+
 		return str(node)
 		
 

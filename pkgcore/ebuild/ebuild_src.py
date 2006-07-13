@@ -26,6 +26,7 @@ demandload(globals(), "errno")
 
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors, common_files, uri):
+
 	file = os.path.basename(uri)
 
 	preexisting = file in common_files
@@ -45,7 +46,7 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors, common_fil
 			if default_mirrors is not None and "mirror" not in pkg.restrict:
 				new_uri.append(mirror(file, default_mirrors, "conf_default_mirrors"))
 		else:
-			new_uri = common_files[file]
+			new_uri = common_files[file].uri
 		
 		if uri.startswith("mirror://"):
 			# mirror:// is 9 chars.
@@ -65,10 +66,8 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors, common_fil
 	# force usage of a ChainedLists, why?  because folks may specify multiple uri's resulting in the same file.
 	# we basically use ChainedList's _list as a mutable space we directly modify.
 	if not preexisting:
-		new_uri = common_files[file] = ChainedLists(*new_uri)
-	else:
-		return None
-	return fetchable(file, new_uri, chksums[file])
+		common_files[file] = fetchable(file, ChainedLists(*new_uri), chksums[file])
+	return common_files[file]
 
 def generate_depset(s, c, *keys, **kwds):
 	if kwds.pop("non_package_type", False):

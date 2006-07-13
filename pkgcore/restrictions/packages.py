@@ -160,7 +160,7 @@ class Conditional(PackageRestriction):
 		else:
 			string = '<%s attr=%r restriction=%r payload=%r @%#8x>'
 		return string % (
-			self.__class__.__name__, self.attr, self.restriction, payload,
+			self.__class__.__name__, self.attr, self.restriction, self.payload,
 			id(self))
 
 	def __iter__(self):

@@ -51,10 +51,6 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors, common_fil
 		if uri.startswith("mirror://"):
 			# mirror:// is 9 chars.
 			tier, remaining_uri = uri[9:].split("/", 1)
-			if "mirror" in pkg.restrict:
-				# XXX idiot hack cause of portage.
-				if tier != "gentoo":
-					raise UnknownMirror(tier, remaining_uri)
 			if tier not in mirrors:
 				raise UnknownMirror(tier, remaining_uri)
 			new_uri.append(mirror(remaining_uri, mirrors[tier], tier))

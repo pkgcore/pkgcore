@@ -120,7 +120,7 @@ class ebd(object):
 				raise build.FailedDirectory(self.env[k], "%s doesn't fulfill minimum mode %o and gid %i" % (k, 0770, portage_gid))
 			# XXX hack, just 'til pkgcore controls these directories
 			if (os.stat(self.env[k]).st_mode & 02000):
-				warnings.warn(self.env[k] + " (" + k + ") is set sgid")
+				warnings.warn("%s ( %s ) is setgid" % (self.env[k], k))
 
 	def setup(self):
 		self.setup_workdir()

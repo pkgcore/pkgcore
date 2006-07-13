@@ -23,7 +23,7 @@ def strip_pkg_configuration(p):
 
 	
 @expose_to_commandline
-def is_installed(domain, atom):
+def has_version(domain, atom):
 	"""
 	@param domain: L{pkgcore.config.domain.domain} instance
 	@param atom_str: L{pkgcore.package.atom.atom} instance

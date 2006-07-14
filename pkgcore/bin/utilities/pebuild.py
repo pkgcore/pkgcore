@@ -6,7 +6,7 @@ if len(sys.argv) <= 2:
 pkg = sys.argv[1]
 phases = sys.argv[2:]
 from pkgcore.config import load_config
-p=load_config().get_default("domain").repos[0][pkg];
+p=load_config().get_default("domain").all_repos[pkg];
 b=p.build();
 phase_funcs = [getattr(b, x) for x in phases]
 for phase, f in zip(phases, phase_funcs):

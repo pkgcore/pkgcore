@@ -224,13 +224,17 @@ def main():
 		else:
 			print "building..."
 			f = buildop.finalize()
-			if ret != False:
-				print "\nmerge op: %s" % op
+			if f is not False:
+				print "\nmerge op: %s" % op,pkgs
 				if op == "add":
 					i = vdb.install(f)
 				elif op == "replace":
 					i = vdb.replace(pkgs[1], f)
 				ret = i.finish()
+			else:
+				print "failure building %s", pkgs[0]
+				if not ignore_failures:
+					sys.exit(1)
 		if ret != True:
 			print "got %s for a phase execution for %s" % (ret, pkgs[0])
 			if not ignore_failures:

@@ -15,7 +15,7 @@ from pkgcore.interfaces import repo as repo_interfaces
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.spawn import spawn
 from pkgcore.util.demandload import demandload
-demandload(globals(), "logging")
+demandload(globals(), "logging time")
 from pkgcore.repository import multiplex, virtual
 
 
@@ -200,6 +200,11 @@ class install(repo_interfaces.install):
 			o = ''
 		# XXX lil hackish accessing PF
 		open(os.path.join(dirpath, self.pkg.PF + ".ebuild"), "w").write(o)
+		
+		# XXX finally, hack to keep portage from doing stupid shit.  relies on counter to discern what to punt during merging/removal, 
+		# we don't need that crutch however.  problem?  No counter file, portage wipes all of our merges (friendly bugger).
+		# need to get zmedico to localize the counter creation/counting to per CP for this trick to behave perfectly.
+		open(os.path.join(dirpath, "COUNTER"), "w").write(str(int(time.time())))
 		return True
 
 

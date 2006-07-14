@@ -48,7 +48,7 @@ def index_gen(iterable):
 
 
 def is_cycle(stack, atom, cur_choice, attr):
-	index = index_gen(x[0] == atom for x in stack)
+	index = index_gen(x[0].key == atom.key for x in stack)
 	if index != -1:
 		# fun fun.  deque can't be sliced, so slice a copy.
 		dprint("%s level cycle: stack: %s, [%s: %s]\n", 
@@ -178,7 +178,7 @@ class merge_plan(object):
 
 		return []
 
-	def process_depends(self, atom, dbs, current_stack, choices, depset, depth=0):
+	def process_depends(self, atom, dbs, current_stack, choices, depset, depth=0, drop_cycles=False):
 		failure = []
 		additions, blocks, = [], []
 		dprint("depends:     %s%s: started: %s", (depth *2 * " ", atom, choices.current_pkg))
@@ -205,9 +205,11 @@ class merge_plan(object):
 #						import pdb;pdb.set_trace()
 						# reduce our options.
 						failure = self._rec_add_atom(datom, current_stack, self.livefs_dbs, depth=depth+1, mode="depends")
-						if failure and self.drop_cycles:
-							dprint("depends:     %s%s: dropping cycle for %s from %s", (depth *2 * " ", atom, datom, choices.current_pkg), "cycle")
+						if failure and drop_cycles:
+							dprint("depends level cycle: %s: dropping cycle for %s from %s", (atom, datom, choices.current_pkg), "cycle")
 							failure = []
+							# note we trigger a break ourselves.
+							break
 					else:
 						failure = self._rec_add_atom(datom, current_stack, dbs, depth=depth+1, mode="depends")
 					if failure:
@@ -223,7 +225,7 @@ class merge_plan(object):
 		else: # all potentials were usable.
 			return additions, blocks
 
-	def process_rdepends(self, atom, dbs, current_stack, choices, depset, depth=0):
+	def process_rdepends(self, atom, dbs, current_stack, choices, depset, depth=0, drop_cycles=False):
 		failure = []
 		additions, blocks, = [], []
 		dprint("rdepends:    %s%s: started: %s", (depth *2 * " ", atom, choices.current_pkg))
@@ -246,9 +248,10 @@ class merge_plan(object):
 						else:
 							# force limit_to_vdb to True to try and isolate the cycle to installed vdb components
 							failure = self._rec_add_atom(ratom, current_stack, self.livefs_dbs, depth=depth+1, mode="rdepends")
-							if failure and self.drop_cycles:
-								dprint("rdepends:    %s%s: dropping cycle for %s from %s", (depth *2 * " ", atom, ratom, choices.current_pkg), "cycle")
+							if failure and drop_cycles:
+								dprint("rdepends level cycle: %s: dropping cycle for %s from %s", (atom, ratom, choices.current_pkg), "cycle")
 								failure = []
+								break
 				else:
 					failure = self._rec_add_atom(ratom, current_stack, dbs, depth=depth+1, mode="rdepends")
 				if failure:
@@ -264,7 +267,7 @@ class merge_plan(object):
 		else: # all potentials were usable.
 			return additions, blocks
 
-	def _rec_add_atom(self, atom, current_stack, dbs, depth=0, mode="none"):
+	def _rec_add_atom(self, atom, current_stack, dbs, depth=0, mode="none", drop_cycles=False):
 		"""returns false on no issues (inserted succesfully), else a list of the stack that screwed it up"""
 		limit_to_vdb = dbs == self.livefs_dbs
 
@@ -318,7 +321,7 @@ class merge_plan(object):
 		while choices:
 			additions, blocks = [], []
 			l = self.process_depends(atom, dbs, current_stack, choices, 
-				self.depset_reorder(self, choices.depends, "depends"), depth=depth)
+				self.depset_reorder(self, choices.depends, "depends"), depth=depth, drop_cycles=drop_cycles)
 			if len(l) == 1:
 				dprint("reseting for %s%s because of depends: %s", (depth*2*" ", atom, l[0][-1]))
 				self.state.reset_state(saved_state)
@@ -327,7 +330,7 @@ class merge_plan(object):
 			additions += l[0]
 			blocks += l[1]
 			l = self.process_rdepends(atom, dbs, current_stack, choices, 
-				self.depset_reorder(self, choices.rdepends, "rdepends"), depth=depth)
+				self.depset_reorder(self, choices.rdepends, "rdepends"), depth=depth, drop_cycles=drop_cycles)
 			if len(l) == 1:
 				dprint("reseting for %s%s because of rdepends: %s", (depth*2*" ", atom, l[0]))
 				self.state.reset_state(saved_state)
@@ -436,6 +439,14 @@ class merge_plan(object):
 			dprint("no solution  %s%s", (depth*2*" ", atom))
 			current_stack.pop()
 			self.state.reset_state(saved_state)
+			# saving roll.  if we're allowed to drop cycles, try it again.
+			# this needs to be *far* more fine grained also.  it'll try regardless of if it's cycle issue
+			if not drop_cycles and self.drop_cycles:
+				dprint("trying saving throw for %s ignoring cycles", atom, "cycle")
+				# note everything is retored to a pristine state prior also.
+				l = self._rec_add_atom(atom, current_stack, dbs, depth=depth, mode=mode, drop_cycles=True)
+				if not l:
+					return False
 			return [atom] + failures
 
 		current_stack.pop()

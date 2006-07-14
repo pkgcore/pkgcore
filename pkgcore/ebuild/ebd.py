@@ -50,6 +50,7 @@ class ebd(object):
 		# temp hack.
 		if "PYTHONPATH" in os.environ:
 			self.env["PYTHONPATH"] = os.environ["PYTHONPATH"]
+		self.env.setdefault("ROOT", "/")
 		self.env_data_source = env_data_source
 		if __debug__:
 			from pkgcore.interfaces.data_source import local_source

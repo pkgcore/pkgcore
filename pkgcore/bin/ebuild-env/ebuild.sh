@@ -230,7 +230,7 @@ dump_environ() {
 		echo $'reinstate_loaded_env_attributes ()\n{'
 #		echo "echo starting reinstate \${EBUILD_PHASE}>&2;"
 		for y in export 'declare -i' readonly; do
-			x=$(${y} | sed -n "s:^declare \(-[^ ]\+ \)*\([A-Za-z0-9_+]\+\)\(=.*$\)\?$:\2:; /^$(gen_var_filter ${DONT_EXPORT_VARS} x y)$/! p;")
+			x=$(${y} | sed -n "/declare \(-[^ ]\+ \)*/!d; s:^declare \(-[^ ]\+ \)*\([A-Za-z0-9_+]\+\)\(=.*$\)\?$:\2:; /^$(gen_var_filter ${DONT_EXPORT_VARS} x y)$/! p;")
 			[ -n "$x" ] && echo "    ${y} $(echo $x);"
 #			echo "echo dump- $y $(echo $x) >&2;"
 #			echo "echo dump- $y original was $(echo $(${y})) >&2"
@@ -518,11 +518,12 @@ execute_phases() {
 				sleepbeep 10
 			fi	
 
+			[[ $PORTAGE_DEBUG -ge 3 ]] && set -x
 			if type reinstate_loaded_env_attributes &> /dev/null; then
 				reinstate_loaded_env_attributes
 				unset -f reinstate_loaded_env_attributes
 			fi
-			[ "$PORTAGE_DEBUG" == "1" ] && set -x
+			[[ -n $PORTAGE_DEBUG ]] && set -x
 			type -p pre_pkg_${EBUILD_PHASE} &> /dev/null && pre_pkg_${EBUILD_PHASE}
 			if type -p dyn_${EBUILD_PHASE}; then
 				dyn_${EBUILD_PHASE}
@@ -531,7 +532,7 @@ execute_phases() {
 			fi
 			ret=0
 			type -p post_pkg_${EBUILD_PHASE} &> /dev/null && post_pkg_${EBUILD_PHASE}
-			[ "$PORTAGE_DEBUG" == "1" ] && set +x
+			[[ $PORTAGE_DEBUG -lt 2 ]] && set +x
 			;;
 		clean)
 			einfo "clean phase is now handled in the python side of portage."
@@ -545,6 +546,7 @@ execute_phases() {
 				export SANDBOX_ON="0"
 			fi
 
+			[[ $PORTAGE_DEBUG -ge 3 ]] && set -x
 			if ! load_environ ${T}/environment; then
 				ewarn 
 				ewarn "failed to load env.  This is bad, bailing."
@@ -555,12 +557,12 @@ execute_phases() {
 				reinstate_loaded_env_attributes
 				unset -f reinstate_loaded_env_attributes
 			fi
-			[ "$PORTAGE_DEBUG" == "1" ] && set -x
+			[[ -n $PORTAGE_DEBUG ]] && set -x
 			type -p pre_src_${EBUILD_PHASE} &> /dev/null && pre_src_${EBUILD_PHASE}
 			dyn_${EBUILD_PHASE}
 			ret=0
 			type -p post_src_${EBUILD_PHASE} &> /dev/null && post_src_${EBUILD_PHASE}
-			[ "$PORTAGE_DEBUG" == "1" ] && set +x
+			[[ $PORTAGE_DEBUG -lt 2 ]] && set +x
 			export SANDBOX_ON="0"
 			;;
 		setup)
@@ -577,15 +579,16 @@ execute_phases() {
 
 			[ -z "${CCACHE_SIZE}" ] && export CCACHE_SIZE="500M"
 			ccache -M ${CCACHE_SIZE} &> /dev/null
+			[[ $PORTAGE_DEBUG == 2 ]] && set -x
 			init_environ
 			MUST_EXPORT_ENV="yes"
 
-			[ "$PORTAGE_DEBUG" == "1" ] && set -x
+			[[ -n $PORTAGE_DEBUG ]] && set -x
 			type -p pre_pkg_${EBUILD_PHASE} &> /dev/null && pre_pkg_${EBUILD_PHASE}
 			dyn_${EBUILD_PHASE}
 			ret=0;
 			type -p post_pkg_${EBUILD_PHASE} &> /dev/null && post_pkg_${EBUILD_PHASE}
-			[ "$PORTAGE_DEBUG" == "1" ] && set +x
+			[[ $PORTAGE_DEBUG -lt 2 ]] && set +x
 
 			;;
 		depend)
@@ -635,6 +638,7 @@ execute_phases() {
 			export_environ "${PORT_ENV_FILE:-${T}/environment}"
 			MUST_EXPORT_ENV="no"
 		fi
+		[[ $PORTAGE_DEBUG -lt 4 ]] && set +x
 	done
 	return ${ret:-0}
 }

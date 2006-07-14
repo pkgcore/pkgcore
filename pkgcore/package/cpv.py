@@ -79,9 +79,9 @@ class CPV(base):
 			raise AttributeError(attr)
 
 	def __eq__(self, other):
-		if not isinstance(other, CPV):
-			return False
-		return self.cpvstr == other.cpvstr
+		if isinstance(other, CPV):
+			return self.cpvstr == other.cpvstr
+		return False
 
 	def __cmp__(self, other):
 

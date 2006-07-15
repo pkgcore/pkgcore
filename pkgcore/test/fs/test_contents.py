@@ -37,7 +37,7 @@ class TestContentsSet(unittest.TestCase):
 		map(cs.add, self.links)
 		for x in self.links:
 			self.assertIn(x, cs)
-		self.assertEqual(len(cs), len(self.files + self.dirs + self.links))
+		self.assertEqual(len(cs), len(set(x.location for x in self.files + self.dirs + self.links)))
 		self.assertRaises(AttributeError, lambda:contents.contentsSet(frozen=True).add(self.devs[0]))
 		self.assertRaises(TypeError, cs.add, 1)
 		self.assertRaises(TypeError, cs.add, self.fifos)
@@ -122,7 +122,7 @@ class TestContentsSet(unittest.TestCase):
 
 	def test_check_instance(self):
 		for x in [y[0] for y in [self.files, self.dirs, self.links, self.devs, self.fifos]]:
-			self.assertEqual(x, contents.check_instance(x))
+			self.assertEqual((x.location, x), tuple(contents.check_instance(x)))
 		self.assertRaises(TypeError, contents.check_instance, 1)
 	
 	def check_set_op(self, name, ret, source=[[fs.fsDir("/tmp", strict=False)], [fs.fsFile("/tmp", strict=False)]]):

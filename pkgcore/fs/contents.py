@@ -5,7 +5,6 @@
 contents set- container of fs objects
 """
 
-from itertools import imap
 from pkgcore.fs import fs
 from pkgcore.util.compatibility import any, all
 from itertools import chain
@@ -13,15 +12,11 @@ from itertools import chain
 def check_instance(obj):
 	if not isinstance(obj, fs.fsBase):
 		raise TypeError("'%s' is not a fs.fsBase deriviative" % obj)
-	return obj
+	return obj.location, obj
 
 
-class contentsSet(set):
+class contentsSet(object):
 	"""set of L{fs<pkgcore.fs.fs>} objects"""
-
-	def __new__(cls, *a, **kw):
-		# override __new__ so set doesn't scream about opt args
-		return set.__new__(cls)
 
 	def __init__(self, initial=None, frozen=False):
 		
@@ -30,10 +25,9 @@ class contentsSet(set):
 		@type initial: sequence
 		@param frozen: controls if it modifiable after initialization
 		"""
-		
-		if initial is None:
-			initial = []
-		set.__init__(self, imap(check_instance, initial))
+		self._dict = {}
+		if initial is not None:
+			self._dict.update(check_instance(x) for x in initial)
 		self.frozen = frozen
 
 	def add(self, obj):
@@ -49,9 +43,9 @@ class contentsSet(set):
 			raise AttributeError("%s is frozen; no add functionality" % self.__class__)
 		if not isinstance(obj, fs.fsBase):
 			raise TypeError("'%s' is not a fs.fsBase class" % str(obj))
-		set.add(self, obj)
+		self._dict[obj.location] = obj
 
-	def remove(self, obj):
+	def __delitem__(self, obj):
 
 		"""
 		remove a fs obj to the set
@@ -63,30 +57,23 @@ class contentsSet(set):
 		if self.frozen:
 			# weird, but keeping with set.
 			raise AttributeError("%s is frozen; no remove functionality" % self.__class__)
-		if not isinstance(obj, fs.fsBase):
-			# why are we doing the loop and break?  try this
-			# s=set([1,2,3]);
-			# for x in s:s.remove(x)
-			# short version, you can't yank stuff while iterating over the beast.
-			# iow, what you think would be cleaner/simpler here, doesn't work. :)
-			# ~harring
-
-			if obj is not None:
-				for x in self:
-					if obj == x.location:
-						set.remove(self, x)
-						return
-			raise KeyError(obj)
+		if isinstance(obj, fs.fsBase):
+			del self._dict[obj.location]
 		else:
-			set.remove(self, obj)
+			del self._dict[obj]
+
+	def remove(self, obj):
+		del self[obj]
+	
+	def __getitem__(self, obj):
+		if isinstance(obj, fs.fsBase):
+			return self._dict[obj.location]
+		return self._dict[obj]
 
 	def __contains__(self, key):
 		if isinstance(key, fs.fsBase):
-			return set.__contains__(self, key)
-		for x in self:
-			if key == x.location:
-				return True
-		return False
+			return key.location in self._dict
+		return key in self._dict
 
 	def clear(self):
 		"""
@@ -96,7 +83,7 @@ class contentsSet(set):
 		if self.frozen:
 			# weird, but keeping with set.
 			raise AttributeError("%s is frozen; no clear functionality" % self.__class__)
-		set.clear(self)
+		self._dict.clear()
 
 	def difference(self, other):
 		if isinstance(other, contentsSet):
@@ -104,26 +91,36 @@ class contentsSet(set):
 		return set.difference(self, other)
 	
 	def intersection(self, other):
-		if isinstance(other, contentsSet):
-			return contentsSet((x for x in self if x.location in other))
-		return set.intersection(self, other)
+		return contentsSet((x for x in self if x.location in other))
 	
 	def issubset(self, other):
-		if isinstance(other, contentsSet):
-			return all(x.location in other for x in self)
-		return set.issubset(self, other)
+		return all(x.location in other for x in self._dict)
 	
 	def issuperset(self, other):
-		return other.issubset(self)
+		if isinstance(other, contentsSet):
+			return other.issubset(self)
+		return all(x in self for x in other)
 	
 	def union(self, other):
-		if isinstance(other, contentsSet):
-			return contentsSet(chain(iter(self), (x for x in other if x.location not in self)))
-		return set.union(self, other)
+		if not isinstance(other, contentsSet):
+			raise TypeError("will only do unions with contentsSet derivatives, not %s" % other.__class__)
+
+		c = contentsSet(other)
+		c.update(self)
+		return c
+
+	def __iter__(self):
+		return self._dict.itervalues()
+	
+	def __len__(self):
+		return len(self._dict)
 	
 	def symmetric_difference(self, other):
 		i = self.intersection(other)
 		return contentsSet(chain(iter(self.difference(i)), iter(other.difference(i))))
+
+	def update(self, iterable):
+		self._dict.update((x.location, x) for x in iterable)
 
 	def iterfiles(self, invert=False):
 		return (x for x in self if isinstance(x, fs.fsFile) is not invert)

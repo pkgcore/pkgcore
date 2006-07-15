@@ -44,7 +44,7 @@ secpass = 0
 uid = os.getuid()
 # hard coding sucks.
 root_uid = 0
-wheelgid = 0
+root_gid = wheelgid = 0
 
 if uid == 0:
 	secpass = 2

@@ -220,7 +220,7 @@ def main():
 			try:
 				ret = build_op.fetch()
 			except Exception, e:
-				ret =e
+				ret = e
 		else:
 			print "building..."
 			f = buildop.finalize()
@@ -231,10 +231,14 @@ def main():
 				elif op == "replace":
 					i = vdb.replace(pkgs[1], f)
 				ret = i.finish()
+				buildop.clean()
 			else:
 				print "failure building %s", pkgs[0]
 				if not ignore_failures:
 					sys.exit(1)
+
+			# force this explicitly- can hold onto a helluva lot more then we would like.
+			del f
 		if ret != True:
 			print "got %s for a phase execution for %s" % (ret, pkgs[0])
 			if not ignore_failures:

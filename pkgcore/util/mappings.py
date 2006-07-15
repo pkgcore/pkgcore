@@ -148,6 +148,8 @@ class ImmutableDict(dict):
 
 	"""Immutable Dict, non changable after instantiating"""
 
+	_hash_key_grabber = operator.itemgetter(0)
+
 	def __delitem__(self, *args):
 		raise TypeError("non modifiable")
 
@@ -160,7 +162,7 @@ class ImmutableDict(dict):
 
 	def __hash__(self):
 		k = self.items()
-		k.sort(key=operator.itemgetter(0))
+		k.sort(key=self._hash_key_grabber)
 		return hash(tuple(k))
 
 	__delattr__ = __setitem__

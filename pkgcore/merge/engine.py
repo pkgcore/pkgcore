@@ -17,8 +17,7 @@ from pkgcore.fs import contents
 from pkgcore.fs import gen_obj as gen_fs_obj
 from pkgcore.util.mappings import LazyValDict, ImmutableDict, StackedDict
 from pkgcore.util import currying
-from pkgcore.merge.triggers import merge_trigger, unmerge_trigger, ldconfig_trigger
-from pkgcore.merge import errors
+from pkgcore.merge import triggers, errors
 
 def scan_livefs(cset):
 	"""generate the intersect of a cset and the livefs"""
@@ -45,18 +44,22 @@ class MergeEngine(object):
 	uninstall_hooks = dict((x, []) for x in ["sanity_check", "pre_unmerge", "unmerge", "post_unmerge", "final"])
 	replace_hooks = dict((x, []) for x in set(install_hooks.keys() + uninstall_hooks.keys()))
 
-	install_hooks["merge"].append(merge_trigger)
-	uninstall_hooks["unmerge"].append(unmerge_trigger)
-	replace_hooks["merge"].append(merge_trigger)
-	replace_hooks["unmerge"].append(unmerge_trigger)
-	install_hooks["post_merge"].append(ldconfig_trigger)
-	uninstall_hooks["post_unmerge"].append(ldconfig_trigger)
+	install_hooks["merge"].append(triggers.merge_trigger)
+	uninstall_hooks["unmerge"].append(triggers.unmerge_trigger)
+	replace_hooks["merge"].append(triggers.merge_trigger)
+	replace_hooks["unmerge"].append(triggers.unmerge_trigger)
+	install_hooks["post_merge"].append(triggers.ldconfig_trigger)
+	uninstall_hooks["post_unmerge"].append(triggers.ldconfig_trigger)
 
 	# this should be a symlink update only
-	replace_hooks["post_merge"].append(ldconfig_trigger)
-	replace_hooks["post_unmerge"].append(ldconfig_trigger)
+	replace_hooks["post_merge"].append(triggers.ldconfig_trigger)
+	replace_hooks["post_unmerge"].append(triggers.ldconfig_trigger)
 
-
+	l = [triggers.fix_default_gid, triggers.fix_default_uid]
+	replace_hooks["sanity_check"].extend(l)
+	install_hooks["sanity_check"].extend(l)
+	del l
+	
 	install_csets = {"install_existing":"get_livefs_intersect_cset"}
 	uninstall_csets = dict(install_csets)
 	replace_csets = dict(install_csets)

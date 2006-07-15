@@ -442,29 +442,6 @@ dyn_install()
 		die "There are ${UNSAFE} unsafe files.  Portage will not install them."
 	fi
 
-	local file s
-
-	find "${D}/" -user  portage -print | while read file; do
-		ewarn "file $file was installed with user portage!"
-		s=$(stat_perms "$file")
-		chown root "$file"
-		#XXX: Stable does not have the symlink test
-		[ -h "$file" ] || chmod "$s" "$file"
-	done
-
-	find "${D}/" -group portage -print | while read file; do
-		# Too annoying - uncommenting this as it's a regression
-		#ewarn "file $file was installed with group portage!"
-		s=$(stat_perms "$file")
-		if [ "$USERLAND" == "BSD" ]; then
-			chgrp wheel "$file"
-		else
-			chgrp root "$file"
-		fi
-		#XXX: Stable does not have the symlink test
-		[ -h "$file" ] || chmod "$s" "$file"
-	done
-
 	if hasq multilib-strict ${FEATURES} && [ -x /usr/bin/file -a -x /usr/bin/find -a \
 	     -n "${MULTILIB_STRICT_DIRS}" -a -n "${MULTILIB_STRICT_DENY}" ]; then
 		MULTILIB_STRICT_EXEMPT=${MULTILIB_STRICT_EXEMPT:-"(perl5|gcc|gcc-lib)"}
@@ -478,6 +455,7 @@ dyn_install()
 
 	echo ">>> Completed installing ${PF} into ${D}"
 	echo
+	unset dir UNSAFE
 	MUST_EXPORT_ENV="yes"
 	trap SIGINT SIGQUIT
 }

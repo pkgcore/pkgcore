@@ -411,3 +411,54 @@ python -m timeit -s 'l=range(50)' $'if 1001 in set(l): pass'
 python -m timeit -s 'l=range(50)' $'if 1001 in l: pass'
 10000 loops, best of 3: 7.68 usec per loop
 
+What's up with __hash__ and dicts
+---------------------------------
+
+A bunch of things (too many things most likely) in the codebase define
+__hash__. The rule for __hash__ is (quoted from
+http://docs.python.org/ref/customization.html):
+
+ Should return a 32-bit integer usable as a hash value for dictionary
+ operations. The only required property is that objects which compare
+ equal have the same hash value.
+
+Quick/rough explanation for folks who do not know how a "dict" works
+internally:
+
+- Things added to it are dumped in a "bucket" depending on their hash
+  value.
+- To check if something is in the dict it first determines the bucket
+  to check (based on hash value), then does equality checks (__cmp__
+  or __eq__ if there is one, object identity comparison otherwise) for
+  everything in the bucket (if there is anything).
+
+So what does this mean?
+
+- There's no reason at all to define your own __hash__ unless you also
+  define __eq__ or __cmp__. Behaviour of your object in dicts/sets
+  will not change, it will just be slower (since your own __hash__ is
+  almost certainly slower than the default one).
+- If you define __eq__ or __cmp__ and want your object to be usable in
+  a dict you have to define __hash__. If you don't the default
+  __hash__ is used which means your objects act in dicts like only
+  object identity matters *until* you hit a hash collision and your
+  own __eq__ or __cmp__ kicks in.
+- If you do define your own __hash__ it has to produce the same value
+  for objects that compare equal, or you get *really* weird behaviour
+  in dicts/sets ("thing in dict" returning False because the hash
+  values differ while "thing in dict.keys()" returns True because that
+  does not use the hash value, only does equality checks).
+- If the hash value changes after the object was put in a dict you get
+  weird behaviour too ("s=set([thing]); thing.change_hash();thing in s"
+  is False, but "thing in list(s)" is True). So if your objects are
+  mutable they can usually provide __eq__/__cmp__ but not __hash__.
+- Not having many hash "collisions" (same hash value for objects that
+  compare nonequal) is good, but collisions are not illegal. Too many
+  of them just slow down dict/set operations (in a worst case scenario
+  of the same hash for every object dict/set operations become linear
+  searches through the single hash bucket everything ends up in).
+- If you use the hash value directly keep in mind that collisions are
+  legal. Do not use comparisons of hash values as a substitute for
+  comparing objects (implementing __eq__ / __cmp__). Probably the only
+  legitimate use of hash() is to determine an object's hash value
+  based on things used for comparison.

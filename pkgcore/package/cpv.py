@@ -47,8 +47,6 @@ class CPV(base):
 		@param cpvstr: cat/pkg-ver[-rev] of an ebuild package.  See L{parser} for allowed syntax
 		@type cpvstr: string
 		"""
-		if not isinstance(cpvstr, str):
-			raise ValueError(cpvstr)
 		self.__dict__["cpvstr"] = cpvstr
 		m = parser.match(self.cpvstr)
 		if not m:

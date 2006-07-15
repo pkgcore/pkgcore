@@ -5,6 +5,7 @@
 miscellanious mapping/dict related classes
 """
 
+import operator
 from itertools import imap, chain, ifilterfalse
 from pkgcore.util.currying import alias_class_method
 from collections import deque
@@ -159,7 +160,7 @@ class ImmutableDict(dict):
 
 	def __hash__(self):
 		k = self.items()
-		k.sort(lambda x, y: cmp(x[0], y[0]))
+		k.sort(key=operator.itemgetter(0))
 		return hash(tuple(k))
 
 	__delattr__ = __setitem__

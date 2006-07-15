@@ -88,6 +88,9 @@ class StrRegexMatch(StrMatch):
 	def __eq__(self, other):
 		return self.regex == other.regex and self.negate == other.negate and self.flags == other.flags
 
+	def __hash__(self):
+		return hash((self.regex, self.negate, self.flags))
+
 	def __str__(self):
 		if self.negate:	return "not like %s" % self.regex
 		return "like %s" % self.regex
@@ -139,6 +142,9 @@ class StrExactMatch(StrMatch):
 
 	def __eq__(self, other):
 		return self.exact == other.exact and self.negate == other.negate and self.flags == other.flags
+
+	def __hash__(self):
+		return hash((self.exact, self.negate, self.flags))
 
 	def __str__(self):
 		if self.negate:
@@ -198,6 +204,9 @@ class StrGlobMatch(StrMatch):
 			return self.glob == other.glob and self.negate == other.negate and self.flags == other.flags
 		except AttributeError:
 			return False
+
+	def __hash__(self):
+		return hash((self.glob, self.negate, self.flags))
 
 	def __str__(self):
 		s = ''
@@ -440,7 +449,10 @@ class ContainmentMatch(base):
 			return self.all == other.all and self.negate == other.negate and self.vals == other.vals
 		except AttributeError:
 			return False
-	
+
+	def __hash__(self):
+		return hash((self.all, self.negate, self.vals))
+
 	def __str__(self):
 		if self.negate:
 			s = "not contains [%s]"

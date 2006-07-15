@@ -113,7 +113,10 @@ class VersionMatch(restriction.base):
 			return self._convert_ops(self) == self._convert_ops(other)
 
 		return False
-			
+
+	def __hash__(self):
+		return hash((self.droprev, self.ver, self.rev, self.negate, self.vals))
+
 class atom(boolean.AndRestriction):
 
 	"""currently implements gentoo ebuild atom parsing, should be converted into an agnostic dependency base thought

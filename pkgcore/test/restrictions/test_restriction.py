@@ -14,7 +14,7 @@ class BaseTest(unittest.TestCase):
 		self.assertEquals(len(base), 1)
 		self.assertRaises(NotImplementedError, str, base)
 		self.assertRaises(NotImplementedError, repr, base)
-		self.assertRaises(NotImplementedError, hash, base)
+		self.failUnless(hash(base))
 		self.assertRaises(NotImplementedError, base.match)
 		self.assertIdentical(None, base.intersect(base))
 

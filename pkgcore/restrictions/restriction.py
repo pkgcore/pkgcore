@@ -17,7 +17,7 @@ class base(object):
 	all derivatives *should* be __slot__ based (lot of instances may wind up in memory)
 	"""
 
-	__slots__ = ("negate", "_hash")
+	__slots__ = ("negate",)
 	package_matching = False
 
 	def __init__(self, negate=False):
@@ -52,15 +52,6 @@ class base(object):
 	def __str__(self):
 		# without this __repr__ recurses...
 		raise NotImplementedError
-
-	def __hash__(self):
-		# XXX: This likely isn't actually unique. Something is needed
-		# to uniquely identify restrictions though otherwise the object
-		# pointer is used.
-		# -- jstubbs
-		if not hasattr(self, '_hash'):
-			self._hash = hash(str(self))
-		return self._hash
 
 
 class AlwaysBool(base):

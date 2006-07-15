@@ -115,6 +115,9 @@ class PackageRestriction(restriction.base):
 				return False
 		return False
 
+	def __hash__(self):
+		return hash((self.negate, self.attr, self.restriction))
+
 	def __str__(self):
 		s = self.attr+" "
 		if self.negate:	

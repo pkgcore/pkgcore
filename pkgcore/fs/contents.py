@@ -7,6 +7,8 @@ contents set- container of fs objects
 
 from itertools import imap
 from pkgcore.fs import fs
+from pkgcore.util.compatibility import any, all
+from itertools import chain
 
 def check_instance(obj):
 	if not isinstance(obj, fs.fsBase):
@@ -96,6 +98,33 @@ class contentsSet(set):
 			raise AttributeError("%s is frozen; no clear functionality" % self.__class__)
 		set.clear(self)
 
+	def difference(self, other):
+		if isinstance(other, contentsSet):
+			return contentsSet((x for x in self if x.location not in other))
+		return set.difference(self, other)
+	
+	def intersection(self, other):
+		if isinstance(other, contentsSet):
+			return contentsSet((x for x in self if x.location in other))
+		return set.intersection(self, other)
+	
+	def issubset(self, other):
+		if isinstance(other, contentsSet):
+			return all(x.location in other for x in self)
+		return set.issubset(self, other)
+	
+	def issuperset(self, other):
+		return other.issubset(self)
+	
+	def union(self, other):
+		if isinstance(other, contentsSet):
+			return contentsSet(chain(iter(self), (x for x in other if x.location not in self)))
+		return set.union(self, other)
+	
+	def symmetric_difference(self, other):
+		i = self.intersection(other)
+		return contentsSet(chain(iter(self.difference(i)), iter(other.difference(i))))
+
 	def iterfiles(self, invert=False):
 		return (x for x in self if isinstance(x, fs.fsFile) is not invert)
 
@@ -140,3 +169,4 @@ class contentsSet(set):
 			""" % (s.rstrip("s"), s, s)
 		del s
 	del k
+		

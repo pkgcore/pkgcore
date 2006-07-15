@@ -124,3 +124,18 @@ class TestContentsSet(unittest.TestCase):
 		for x in [y[0] for y in [self.files, self.dirs, self.links, self.devs, self.fifos]]:
 			self.assertEqual(x, contents.check_instance(x))
 		self.assertRaises(TypeError, contents.check_instance, 1)
+	
+	def check_set_op(self, name, ret, source=[[fs.fsDir("/tmp", strict=False)], [fs.fsFile("/tmp", strict=False)]]):
+		c1, c2 = [contents.contentsSet(x) for x in source]
+		self.assertEquals(set(ret), set(x.location for x in getattr(c1, name)(c2)))
+	
+	test_intersection = post_curry(check_set_op, "intersection", ["/tmp"])
+	test_difference = post_curry(check_set_op, "difference", [])
+	test_symmetric_difference1 = post_curry(check_set_op, "symmetric_difference", [])
+	fstrings = ("/a", "/b", "/c", "/d")
+	f = [fs.fsFile(x, strict=False) for x in fstrings]
+	test_union1 = post_curry(check_set_op, "union", ["/tmp"])
+	test_union2 = post_curry(check_set_op, "union", fstrings, [f[:2], f[2:]])
+	test_symmetric_difference2 = post_curry(check_set_op, "symmetric_difference", fstrings, [f[:2], f[2:]])
+	del f, fstrings
+	

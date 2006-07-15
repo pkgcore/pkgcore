@@ -330,15 +330,6 @@ dyn_test()
 	trap SIGINT SIGQUIT
 }
 
-stat_perms()
-{
-	local f
-	f=$(stat -c '%f' "$1")
-	f=$(printf "%o" 0x$f)
-	f=${f:${#f}-4}
-	echo $f
-}
-
 
 dyn_install()
 {

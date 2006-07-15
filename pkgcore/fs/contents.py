@@ -65,6 +65,16 @@ class contentsSet(object):
 	def remove(self, obj):
 		del self[obj]
 	
+	def __eq__(self, other):
+		if isinstance(other, contentsSet):
+			return self._dict == other._dict
+		return False
+	
+	def __ne__(self, other):
+		if isinstance(other, contentsSet):
+			return self._dict != other._dict
+		return True
+
 	def __getitem__(self, obj):
 		if isinstance(obj, fs.fsBase):
 			return self._dict[obj.location]

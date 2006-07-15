@@ -129,15 +129,12 @@ def fix_default_gid(gid=pkgcore.os_data.portage_gid, replacement=pkgcore.os_data
 	def change_gid(engine, cset):
 		# do it as a list, since we're mutating the set
 		resets = [x.change_attributes(gid=replacement) for x in cset if x.gid == gid]
-		print "resetting gid",resets
 		cset.update(resets)
-		import pdb;pdb.set_trace()
 	return SimpleTrigger(cset, change_gid)
 
 def fix_default_uid(uid=pkgcore.os_data.portage_uid, replacement=pkgcore.os_data.root_uid, cset="new_cset"):
 	def change_uid(engine, cset):
 		# do it as a list, since we're mutating the set
 		resets = [x.change_attributes(uid=replacement) for x in cset if x.uid == uid]
-		print "resetting uid",resets
 		cset.update(resets)
 	return SimpleTrigger(cset, change_uid)

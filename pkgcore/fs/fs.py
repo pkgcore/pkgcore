@@ -63,21 +63,24 @@ class fsBase(object):
 				s(self, k, v)
 	gen_doc_additions(__init__, __slots__)
 
-	def change_location(self, location):
+	def change_location(self, location, **kwds):
 		"""
 		generate a new instance identical to self except having the passed in location
 		@param location: new location
 		@type location: string
 		@return: self.__class__ instance
 		"""
+		kwds["location"] = location
+		return self.change_attributes(**kwds)
+
+	def change_attributes(self, **kwds):
+		d = dict((x, getattr(self, x)) for x in self.__slots__ if hasattr(self, x))
+		d.update(kwds)
+		# split location out
+		location = d.pop("location")
 		if not location.startswith(path_seperator):
 			location = abspath(location)
-
-		d = {}
-		for x in self.__slots__:
-			if hasattr(self, x):
-				d[x] = getattr(self, x)
-		del d["location"]
+		d["strict"] = False
 		return self.__class__(location, **d)
 
 	def __setattr__(self, key, value):
@@ -159,6 +162,17 @@ class fsLink(fsBase):
 		kwargs["target"] = target
 		fsBase.__init__(self, location, **kwargs)
 	gen_doc_additions(__init__, __slots__)
+
+	def change_attributes(self, **kwds):
+		d = dict((x, getattr(self, x)) for x in self.__slots__ if hasattr(self, x))
+		d.update(kwds)
+		# split location out
+		location = d.pop("location")
+		if not location.startswith(path_seperator):
+			location = abspath(location)
+		target = d.pop("target")
+		d["strict"] = False
+		return self.__class__(location, target, **d)
 
 	def __repr__(self):
 		return "symlink:%s->%s" % (self.location, self.target)

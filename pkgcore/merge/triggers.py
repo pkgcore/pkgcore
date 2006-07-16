@@ -149,11 +149,32 @@ def fix_special_bits_world_writable(fix_perms=True, cset="new_cset"):
 		if reporter is not None:
 			for x in l:
 				if x.mode & 04000:
-					reporter.warn("UNSAFE world writable SetGID: %s", (x.real_path))
+					reporter.error("UNSAFE world writable SetGID: %s", (x.real_path,))
 				else:
-					reporter.warn("UNSAFE world writable SetUID: %s" % (x.real_path))
+					reporter.error("UNSAFE world writable SetUID: %s" % (x.real_path,))
 		
 		if l:
 			# filters the 01, for those who aren't accustomed to screwing with mode.
 			cset.update(x.change_attributes(mode=x.mode & ~01) for x in l)
 	return SimpleTrigger(cset, perm_func)
+
+def notice_world_writable(fix_perms=False, cset="new_cset"):
+	def perm_func(engine, cset):
+		import pdb;pdb.set_trace()
+		if not engine.reporter and not fix_perms:
+			return
+		
+		reporter = engine.reporter
+		
+		l = []
+		for x in cset:
+			if x.mode & 0001:
+				l.append(x)
+		if reporter is not None:
+			for x in l:
+				reporter.warn("world writable file: %s", (x.real_path,))
+		if fix_perms:
+			cset.update(x.change_attributes(mode=x.mode & ~01) for x in l)
+	
+	return SimpleTrigger(cset, perm_func)
+

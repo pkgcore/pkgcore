@@ -55,7 +55,9 @@ class MergeEngine(object):
 	replace_hooks["post_merge"].append(triggers.ldconfig_trigger)
 	replace_hooks["post_unmerge"].append(triggers.ldconfig_trigger)
 
-	l = [triggers.fix_default_gid, triggers.fix_default_uid, triggers.fix_special_bits_world_writable]
+	# break this down into configured, right now hardcoded.
+	l = [triggers.fix_default_gid, triggers.fix_default_uid, triggers.fix_special_bits_world_writable,
+		triggers.notice_world_writable]
 	replace_hooks["sanity_check"].extend(l)
 	install_hooks["sanity_check"].extend(l)
 	del l

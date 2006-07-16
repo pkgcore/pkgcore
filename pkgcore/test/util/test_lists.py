@@ -21,6 +21,10 @@ class FlattenTest(unittest.TestCase):
 			lists.flatten(['foo', ('bar', 'baz')]),
 			['foo', 'bar', 'baz'])
 
+	def test_custom(self):
+		l = ["a", "b", "cs", "d"]
+		self.assertEquals(l, lists.flatten(l[0:3] + [l[3]], str))
+		
 
 
 class UniqueTest(unittest.TestCase):

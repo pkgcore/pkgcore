@@ -75,6 +75,11 @@ pkgcore_iter_flatten_func_iternext(pkgcore_iter_flatten_func *self)
 	int n, res;
 
 	/* Look at the final iterator on our stack: */
+	if(NULL == self->iterables) {
+		printf("called when already went empty\n");
+		PyErr_SetString(PyExc_StopIteration, "");
+		return NULL;
+	}
 
 	while(n = PyList_GET_SIZE(self->iterables)) {
 		tail = PySequence_GetItem(self->iterables, n - 1);
@@ -138,10 +143,15 @@ pkgcore_iter_flatten_func_iternext(pkgcore_iter_flatten_func *self)
 		/* XXX this is an accident waiting to happen: what if
 		 * PyIter_Next messed with our iterable length? */
 
-		if (PySequence_DelItem(self->iterables, n - 1) < 0)
+		if (PySequence_DelItem(self->iterables, n - 1) < 0) {
+			PyErr_SetString(PyExc_StopIteration, "");
 			return NULL;
+		}
 	}
 
+	PY_DECREF(self->iterables);
+	self->iterables = NULL;
+	PyErr_SetString(PyExc_StopIteration, "");
 	/* We ran out of iterables entirely, so we are done */
 	return NULL;
 }
@@ -261,7 +271,15 @@ pkgcore_iter_flatten_instance_iternext(pkgcore_iter_flatten_instance *self)
 
 	/* Look at the final iterator on our stack: */
 
-	while(n = PyList_GET_SIZE(self->iterables)) {
+
+	if(NULL == self->iterables) {
+		printf("called when already went empty\n");
+		PyErr_SetString(PyExc_StopIteration, "");
+		return NULL;
+	}
+
+	while(0 != (n = PyList_GET_SIZE(self->iterables))) {
+		printf("n==%i\n", n);
 		tail = PySequence_GetItem(self->iterables, n - 1);
 
 		/* See if it has any results left: */
@@ -309,11 +327,17 @@ pkgcore_iter_flatten_instance_iternext(pkgcore_iter_flatten_instance *self)
 
 		/* XXX this is an accident waiting to happen: what if
 		 * PyIter_Next messed with our iterable length? */
-		if (PySequence_DelItem(self->iterables, n - 1) < 0)
+		if (PySequence_DelItem(self->iterables, n - 1) < 0) {
+			PyErr_SetString(PyExc_StopIteration, "");
 			return NULL;
+		}
 	}
+	printf("n==%i\n", n);
 
 	/* We ran out of iterables entirely, so we are done */
+	PY_DECREF(self->iterables);
+	self->iterables = NULL;
+	PyErr_SetString(PyExc_StopIteration, "");
 	return NULL;
 }
 

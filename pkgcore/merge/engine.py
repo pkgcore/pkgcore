@@ -55,7 +55,7 @@ class MergeEngine(object):
 	replace_hooks["post_merge"].append(triggers.ldconfig_trigger)
 	replace_hooks["post_unmerge"].append(triggers.ldconfig_trigger)
 
-	l = [triggers.fix_default_gid, triggers.fix_default_uid]
+	l = [triggers.fix_default_gid, triggers.fix_default_uid, triggers.fix_special_bits_world_writable]
 	replace_hooks["sanity_check"].extend(l)
 	install_hooks["sanity_check"].extend(l)
 	del l
@@ -80,6 +80,8 @@ class MergeEngine(object):
 
 	def __init__(self, mode, hooks, csets, preserves, offset=None):
 		self.mode = mode
+		self.reporter = None
+
 		self.hooks = ImmutableDict((x, []) for x in hooks)
 
 		self.preserve_csets = []

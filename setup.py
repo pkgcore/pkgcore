@@ -123,5 +123,8 @@ core.setup(
 	scripts=(
 		glob.glob('pkgcore/bin/utilities/*.py') + 
 		['pkgcore/bin/utilities/pquery']),
+	ext_modules=[
+		core.Extension('pkgcore.util._caching', ['pkgcore/util/_caching.c']),
+		],
 	cmdclass={'build_filter_env': build_filter_env, "sdist":mysdist, "build_py": hacked_build_py},
 	)

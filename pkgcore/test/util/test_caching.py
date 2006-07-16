@@ -5,14 +5,20 @@ from twisted.trial import unittest
 from pkgcore.util import caching
 WeakInstMeta = caching.WeakInstMeta
 
+
+class weak_slotted(object):
+	__metaclass__ = WeakInstMeta
+	__inst_caching__ = True
+	__slots__ = ('one',)
+
 class weak_inst(object):
 	__metaclass__ = WeakInstMeta
 	__inst_caching__ = True
 	counter = 0
-	def __new__(cls, *args):
+	def __new__(cls, *args, **kwargs):
 		cls.counter += 1
 		return object.__new__(cls)
-	def __init__(self, *args):
+	def __init__(self, *args, **kwargs):
 		pass
 	@classmethod
 	def reset(cls):
@@ -68,16 +74,18 @@ class TestWeakInstMeta(unittest.TestCase):
 				raise self.error
 		
 		# silence warnings.
-		w = caching.warnings
+		w = getattr(caching, 'warnings', None)
 		try:
-			caching.warnings = fake_warning()
+			if w is not None:
+				caching.warnings = fake_warning()
 			self.assertTrue(weak_inst([]) is not weak_inst([]))
 			self.assertEqual(weak_inst.counter, 2)
 			for x in (TypeError, NotImplementedError):
 				self.assertTrue(weak_inst(chuck_errors(x)) is not 
 					weak_inst(chuck_errors(x)))
 		finally:
-			caching.warnings = w
+			if w is not None:
+				caching.warnings = w
 
 	def test_hash_collision(self):
 		class BrokenHash(object):
@@ -85,3 +93,11 @@ class TestWeakInstMeta(unittest.TestCase):
 				return 1
 		self.assertNotIdentical(weak_inst(BrokenHash()),
 								weak_inst(BrokenHash()))
+
+	def test_weak_slot(self):
+		weak_slotted()
+
+	def test_keyword_args(self):
+		o = weak_inst(argument=1)
+		self.assertIdentical(o, weak_inst(argument=1))
+		self.assertNotIdentical(o, weak_inst(argument=2))

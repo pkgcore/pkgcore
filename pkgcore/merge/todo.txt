@@ -1,0 +1,39 @@
+missing triggers:
+collision-protect
+config_protect
+
+- misc-functions.sh
+ 1) big ass scanelf block.
+ 2) install_mask (need to bind domain generation of triggers for it)
+ 3) preinst_mask (same thing, although that shouldn't wipe mangle the install image)
+ 4) sfperms (feature based), domain bound
+ 5) suid control.  same thing (see a pattern?)
+ 6) selinux labelling.  need to override the copies there imo, installing then slapping labels on sucks, although could mangle the image file and use a selinux aware copy
+
+prepman:
+ 1) all of it.  the symlink rewriting might be fun...
+
+prepinfo:
+ 1) no different then prepman.
+
+prepstrip:
+ 1) splitdebug (transformation, fun one that one- maybe higher up, generate N pkgs instead)
+ 2) installsources
+
+
+prepall: (calls prepman, prepinfo, and prepstrip which are seperated in this list)
+ 1) qa: bug 4111, gen_usr_ldscript shit for static files.
+ 2) qa: check for la/.a in /lib
+ 3) more scanelf idiocy- check for libs without sonames, no NEEDED info.
+
+not automatically invoked-
+
+prepalldocs:
+ 1) symlink/compression.  usual.
+
+potential
+preplib:
+ 1) we can generate this ourselves... figure out if ebuilds really should be doing it themselves (eapi bump for that most likely)
+
+size check (is there enough space on the partitions for merging?)
+revdep check.

@@ -76,7 +76,6 @@ pkgcore_iter_flatten_func_iternext(pkgcore_iter_flatten_func *self)
 
 	/* Look at the final iterator on our stack: */
 	if(NULL == self->iterables) {
-		printf("called when already went empty\n");
 		PyErr_SetString(PyExc_StopIteration, "");
 		return NULL;
 	}
@@ -273,13 +272,11 @@ pkgcore_iter_flatten_instance_iternext(pkgcore_iter_flatten_instance *self)
 
 
 	if(NULL == self->iterables) {
-		printf("called when already went empty\n");
 		PyErr_SetString(PyExc_StopIteration, "");
 		return NULL;
 	}
 
 	while(0 != (n = PyList_GET_SIZE(self->iterables))) {
-		printf("n==%i\n", n);
 		tail = PySequence_GetItem(self->iterables, n - 1);
 
 		/* See if it has any results left: */
@@ -332,7 +329,6 @@ pkgcore_iter_flatten_instance_iternext(pkgcore_iter_flatten_instance *self)
 			return NULL;
 		}
 	}
-	printf("n==%i\n", n);
 
 	/* We ran out of iterables entirely, so we are done */
 	PY_DECREF(self->iterables);

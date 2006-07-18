@@ -140,6 +140,12 @@ class bash_parser(shlex):
 				self.__pos = strl
 		self.__dict__[attr] = val
 
+	def sourcehook(self, newfile):
+		try:
+			return shlex.sourcehook(self, newfile)
+		except IOError, ie:
+			raise ParseError(newfile, 0, str(ie))
+
 	def read_token(self):
 		self.changed_state = []
 		self.__pos = 0
@@ -182,8 +188,10 @@ class bash_parser(shlex):
 
 class ParseError(Exception):
 
-	def __init__(self, file, line):
-		self.file, self.line = file, line
+	def __init__(self, file, line, errmsg=None):
+		self.file, self.line, self.errmsg = file, line, errmsg
 
 	def __str__(self):
+		if self.errmsg is not None:
+			return "error parsing '%s' on or before %i: err %s" % (self.file, self.line, self.errmsg)
 		return "error parsing '%s' on or before %i" % (self.file, self.line)

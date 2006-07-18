@@ -48,7 +48,7 @@ def configFromMakeConf(location="/etc/"):
 
 	# this isn't preserving incremental behaviour for features/use unfortunately
 	conf_dict = read_bash_dict(os.path.join(base_path, "make.globals"))
-	conf_dict.update(read_bash_dict(os.path.join(base_path, "make.conf"), vars_dict=conf_dict))
+	conf_dict.update(read_bash_dict(os.path.join(base_path, "make.conf"), vars_dict=conf_dict, sourcing_command="source"))
 	conf_dict.setdefault("PORTDIR", "/usr/portage")
 	root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
 	gentoo_mirrors = [x+"/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split()]

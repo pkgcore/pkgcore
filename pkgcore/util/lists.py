@@ -112,7 +112,6 @@ def iter_flatten(l, skip_flattening=(basestring,), skip_func=None):
 	"""
 	import warnings
 	warnings.warn('iter_flatten is deprecated, use iflatten_{instance,func}.')
-	foo
 	if skip_func is None:
 		return iflatten_instance(l, skip_flattening)
 	else:

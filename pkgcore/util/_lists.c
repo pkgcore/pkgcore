@@ -153,21 +153,17 @@ pkgcore_iflatten_func_iternext(pkgcore_iflatten_func *self) {
 					}
 				}
 			}
-			self->in_iternext = 0;
-			return result;
+		} else {
+			/* PyIter_Next did not return an item. If this was not
+			 * because of an error we should pop the exhausted
+			 * iterable off and continue. */
+			if (!PyErr_Occurred() &&
+				PySequence_DelItem(self->iterables, n - 1) != -1) {
+				continue;
+			}
 		}
-		/* If we get here PyIter_Next did not return an item. */
-		if (PyErr_Occurred()) {
-			self->in_iternext = 0;
-			return NULL;
-		}
-
-		/* PyIter_Next returns NULL with no exception for "StopIteration". */
-
-		if (PySequence_DelItem(self->iterables, n - 1) < 0) {
-			self->in_iternext = 0;
-			return NULL;
-		}
+		self->in_iternext = 0;
+		return result;
 	}
 
 	/* We ran out of iterables entirely, so we are done */
@@ -175,46 +171,53 @@ pkgcore_iflatten_func_iternext(pkgcore_iflatten_func *self) {
 	return NULL;
 }
 
+PyDoc_STRVAR(
+	pkgcore_iflatten_func_documentation,
+	"collapse [(1),2] into [1,2]\n"
+	"\n"
+	"@param skip_flattening: list of classes to not descend through\n"
+	);
+
 static PyTypeObject pkgcore_iflatten_func_type = {
 	PyObject_HEAD_INIT(NULL)
-	0,						   /*ob_size*/
-	"pkgcore.util._lists.iflatten_func",	   /*tp_name*/
-	sizeof(pkgcore_iflatten_func), /*tp_basicsize*/
-	0,						   /*tp_itemsize*/
-	(destructor)pkgcore_iflatten_func_dealloc, /*tp_dealloc*/
-	0,						   /*tp_print*/
-	0,						   /*tp_getattr*/
-	0,						   /*tp_setattr*/
-	0,						   /*tp_compare*/
-	0,						   /*tp_repr*/
-	0,						   /*tp_as_number*/
-	0,						   /*tp_as_sequence*/
-	0,						   /*tp_as_mapping*/
-	0,						   /*tp_hash */
-	(ternaryfunc)0, /*tp_call*/
-	(reprfunc)0,		/*tp_str*/
-	0,						   /*tp_getattro*/
-	0,						   /*tp_setattro*/
-	0,						   /*tp_as_buffer*/
-	Py_TPFLAGS_DEFAULT,		   /*tp_flags*/
-	0, /* Documentation string */
-	(traverseproc)0,					   /* tp_traverse */
-	(inquiry)0,					   /* tp_clear */
-	(richcmpfunc)0,					   /* tp_richcompare */
-	0,					   /* tp_weaklistoffset */
-	(getiterfunc)PyObject_SelfIter,	/* tp_iter */
-	(iternextfunc)pkgcore_iflatten_func_iternext, /* tp_iternext */
-	0,			   /* tp_methods */
-	0,			   /* tp_members */
-	0,						   /* tp_getset */
-	0,						   /* tp_base */
-	0,						   /* tp_dict */
-	0,						   /* tp_descr_get */
-	0,						   /* tp_descr_set */
-	0,						   /* tp_dictoffset */
-	(initproc)0, /* tp_init */
-	0,						   /* tp_alloc */
-	pkgcore_iflatten_func_new, /* tp_new */
+	0,                                               /* ob_size*/
+	"pkgcore.util._lists.iflatten_func",             /* tp_name*/
+	sizeof(pkgcore_iflatten_func),                   /* tp_basicsize*/
+	0,                                               /* tp_itemsize*/
+	(destructor)pkgcore_iflatten_func_dealloc,       /* tp_dealloc*/
+	0,                                               /* tp_print*/
+	0,                                               /* tp_getattr*/
+	0,                                               /* tp_setattr*/
+	0,                                               /* tp_compare*/
+	0,                                               /* tp_repr*/
+	0,                                               /* tp_as_number*/
+	0,                                               /* tp_as_sequence*/
+	0,                                               /* tp_as_mapping*/
+	0,                                               /* tp_hash */
+	(ternaryfunc)0,                                  /* tp_call*/
+	(reprfunc)0,                                     /* tp_str*/
+	0,                                               /* tp_getattro*/
+	0,                                               /* tp_setattro*/
+	0,                                               /* tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,                              /* tp_flags*/
+	pkgcore_iflatten_func_documentation,             /* tp_doc */
+	(traverseproc)0,                                 /* tp_traverse */
+	(inquiry)0,                                      /* tp_clear */
+	(richcmpfunc)0,                                  /* tp_richcompare */
+	0,                                               /* tp_weaklistoffset */
+	(getiterfunc)PyObject_SelfIter,                  /* tp_iter */
+	(iternextfunc)pkgcore_iflatten_func_iternext,    /* tp_iternext */
+	0,                                               /* tp_methods */
+	0,                                               /* tp_members */
+	0,                                               /* tp_getset */
+	0,                                               /* tp_base */
+	0,                                               /* tp_dict */
+	0,                                               /* tp_descr_get */
+	0,                                               /* tp_descr_set */
+	0,                                               /* tp_dictoffset */
+	(initproc)0,                                     /* tp_init */
+	0,                                               /* tp_alloc */
+	pkgcore_iflatten_func_new,                       /* tp_new */
 };
 
 /* iflatten_instance: recursively flatten an iterable
@@ -240,7 +243,7 @@ pkgcore_iflatten_instance_new(PyTypeObject *type,
 								  PyObject *args, PyObject *kwargs)
 {
 	pkgcore_iflatten_instance *self;
-	PyObject *l=NULL, *skip_flattening=&PyBaseString_Type;
+	PyObject *l=NULL, *skip_flattening=(PyObject*)&PyBaseString_Type;
 
 	if (kwargs) {
 		PyErr_SetString(PyExc_TypeError,
@@ -328,20 +331,17 @@ pkgcore_iflatten_instance_iternext(pkgcore_iflatten_instance *self) {
 					}
 				}
 			}
-			self->in_iternext = 0;
-			return result;
+		} else {
+			/* PyIter_Next did not return an item. If this was not
+			 * because of an error we should pop the exhausted
+			 * iterable off and continue. */
+			if (!PyErr_Occurred() &&
+				PySequence_DelItem(self->iterables, n - 1) != -1) {
+				continue;
+			}
 		}
-		/* If we get here PyIter_Next did not return an item. */
-		if (PyErr_Occurred()) {
-			self->in_iternext = 0;
-			return NULL;
-		}
-		/* PyIter_Next returns NULL with no exception for "StopIteration". */
-
-		if (PySequence_DelItem(self->iterables, n - 1) < 0) {
-			self->in_iternext = 0;
-			return NULL;
-		}
+		self->in_iternext = 0;
+		return result;
 	}
 
 	/* We ran out of iterables entirely, so we are done */
@@ -349,59 +349,61 @@ pkgcore_iflatten_instance_iternext(pkgcore_iflatten_instance *self) {
 	return NULL;
 }
 
+PyDoc_STRVAR(
+	pkgcore_iflatten_instance_documentation,
+	"collapse [(1),2] into [1,2]\n"
+	"\n"
+	"@param skip_flattening: list of classes to not descend through\n"
+	);
+
 static PyTypeObject pkgcore_iflatten_instance_type = {
 	PyObject_HEAD_INIT(NULL)
-	0,						   /*ob_size*/
-	"pkgcore.util._lists.iflatten_instance",	   /*tp_name*/
-	sizeof(pkgcore_iflatten_instance), /*tp_basicsize*/
-	0,						   /*tp_itemsize*/
-	(destructor)pkgcore_iflatten_instance_dealloc, /*tp_dealloc*/
-	0,						   /*tp_print*/
-	0,						   /*tp_getattr*/
-	0,						   /*tp_setattr*/
-	0,						   /*tp_compare*/
-	0,						   /*tp_repr*/
-	0,						   /*tp_as_number*/
-	0,						   /*tp_as_sequence*/
-	0,						   /*tp_as_mapping*/
-	0,						   /*tp_hash */
-	(ternaryfunc)0, /*tp_call*/
-	(reprfunc)0,		/*tp_str*/
-	0,						   /*tp_getattro*/
-	0,						   /*tp_setattro*/
-	0,						   /*tp_as_buffer*/
-	Py_TPFLAGS_DEFAULT,		   /*tp_flags*/
-	0, /* Documentation string */
-	(traverseproc)0,					   /* tp_traverse */
-	(inquiry)0,					   /* tp_clear */
-	(richcmpfunc)0,					   /* tp_richcompare */
-	0,					   /* tp_weaklistoffset */
-	(getiterfunc)PyObject_SelfIter,	/* tp_iter */
+	0,                                               /* ob_size*/
+	"pkgcore.util._lists.iflatten_instance",         /* tp_name*/
+	sizeof(pkgcore_iflatten_instance),               /* tp_basicsize*/
+	0,                                               /* tp_itemsize*/
+	(destructor)pkgcore_iflatten_instance_dealloc,   /* tp_dealloc*/
+	0,                                               /* tp_print*/
+	0,                                               /* tp_getattr*/
+	0,                                               /* tp_setattr*/
+	0,                                               /* tp_compare*/
+	0,                                               /* tp_repr*/
+	0,                                               /* tp_as_number*/
+	0,                                               /* tp_as_sequence*/
+	0,                                               /* tp_as_mapping*/
+	0,                                               /* tp_hash */
+	(ternaryfunc)0,                                  /* tp_call*/
+	(reprfunc)0,                                     /* tp_str*/
+	0,                                               /* tp_getattro*/
+	0,                                               /* tp_setattro*/
+	0,                                               /* tp_as_buffer*/
+	Py_TPFLAGS_DEFAULT,                              /* tp_flags*/
+	pkgcore_iflatten_instance_documentation,         /* tp_doc */
+	(traverseproc)0,                                 /* tp_traverse */
+	(inquiry)0,                                      /* tp_clear */
+	(richcmpfunc)0,                                  /* tp_richcompare */
+	0,                                               /* tp_weaklistoffset */
+	(getiterfunc)PyObject_SelfIter,                  /* tp_iter */
 	(iternextfunc)pkgcore_iflatten_instance_iternext, /* tp_iternext */
-	0,			   /* tp_methods */
-	0,			   /* tp_members */
-	0,						   /* tp_getset */
-	0,						   /* tp_base */
-	0,						   /* tp_dict */
-	0,						   /* tp_descr_get */
-	0,						   /* tp_descr_set */
-	0,						   /* tp_dictoffset */
-	(initproc)0, /* tp_init */
-	0,						   /* tp_alloc */
-	pkgcore_iflatten_instance_new,	/* tp_new */
-};
-
-
-/* Module initialization */
-
-static struct PyMethodDef pkgcore_lists_methods[] = {
-	{NULL,	 (PyCFunction)NULL, 0, NULL}		/* sentinel */
+	0,                                               /* tp_methods */
+	0,                                               /* tp_members */
+	0,                                               /* tp_getset */
+	0,                                               /* tp_base */
+	0,                                               /* tp_dict */
+	0,                                               /* tp_descr_get */
+	0,                                               /* tp_descr_set */
+	0,                                               /* tp_dictoffset */
+	(initproc)0,                                     /* tp_init */
+	0,                                               /* tp_alloc */
+	pkgcore_iflatten_instance_new,                   /* tp_new */
 };
 
 
 /* Initialization function for the module */
 
-static char pkgcore_lists_documentation[] = "C version of some of pkgcore.";
+PyDoc_STRVAR(
+	pkgcore_lists_documentation,
+	"C reimplementation of some of pkgcore.util.lists.");
 
 PyMODINIT_FUNC
 init_lists()
@@ -415,8 +417,7 @@ init_lists()
 		return;
 
 	/* Create the module and add the functions */
-	m = Py_InitModule3("_lists", pkgcore_lists_methods,
-					   pkgcore_lists_documentation);
+	m = Py_InitModule3("_lists", NULL, pkgcore_lists_documentation);
 
 	Py_INCREF(&pkgcore_iflatten_func_type);
 	PyModule_AddObject(m, "iflatten_func",

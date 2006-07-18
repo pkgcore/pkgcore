@@ -12,6 +12,20 @@
  * WeakValFinalizer: holds a reference to a dict and key,
  * does "del dict[key]" when called. Used as weakref callback.
  * Only used internally (does not expose a constructor/new method).
+ *
+ * Together with a "normal" PyDict this is used as a much more minimal
+ * version of python's weakref.WeakValueDictionary. One noticable
+ * difference between that and this is that WeakValueDictionary gives
+ * the weakref callbacks responsible for removing an item from the
+ * dict a weakref to the dict, while we use a "hard" reference to it.
+ *
+ * WeakValueDictionary has to do it that way to prevent objects in the
+ * dict from keeping the dict alive. That should not be an issue here:
+ * the objects in the dict have a hard reference to the dict through
+ * their type anyway. So this simplifies things a bit (especially
+ * since you cannot weakref a PyDict, it would have to be subclassed
+ * to add that ability (WeakValueDictionary is a UserDict, not a
+ * "real" dict, so it does not have that problem)).
  */
 
 typedef struct {
@@ -40,33 +54,33 @@ pkgcore_WeakValFinalizer_call(pkgcore_WeakValFinalizer *self,
 }
 
 static PyTypeObject pkgcore_WeakValFinalizerType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                         /*ob_size*/
-    "_pkgcore.WeakValFinalizer",    /*tp_name*/
-    sizeof(pkgcore_WeakValFinalizer), /*tp_basicsize*/
-    0,                         /*tp_itemsize*/
-    (destructor)pkgcore_WeakValFinalizer_dealloc, /*tp_dealloc*/
-    0,                         /*tp_print*/
-    0,                         /*tp_getattr*/
-    0,                         /*tp_setattr*/
-    0,                         /*tp_compare*/
-    0,                         /*tp_repr*/
-    0,                         /*tp_as_number*/
-    0,                         /*tp_as_sequence*/
-    0,                         /*tp_as_mapping*/
-    0,                         /*tp_hash */
-    (ternaryfunc)pkgcore_WeakValFinalizer_call, /*tp_call*/
-	(reprfunc)0,		/*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
+	PyObject_HEAD_INIT(NULL)
+	0,                                               /* ob_size */
+	"pkgcore.util._caching.WeakValFinalizer",        /* tp_name */
+	sizeof(pkgcore_WeakValFinalizer),                /* tp_basicsize */
+	0,                                               /* tp_itemsize */
+	(destructor)pkgcore_WeakValFinalizer_dealloc,    /* tp_dealloc */
+	0,                                               /* tp_print */
+	0,                                               /* tp_getattr */
+	0,                                               /* tp_setattr */
+	0,                                               /* tp_compare */
+	0,                                               /* tp_repr */
+	0,                                               /* tp_as_number */
+	0,                                               /* tp_as_sequence */
+	0,                                               /* tp_as_mapping */
+	0,                                               /* tp_hash  */
+	(ternaryfunc)pkgcore_WeakValFinalizer_call,      /* tp_call */
+	(reprfunc)0,                                     /* tp_str */
+	0,                                               /* tp_getattro */
+	0,                                               /* tp_setattro */
+	0,                                               /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT,                              /* tp_flags */
 };
 
 /* WeakInstMeta: metaclass for instance caching. */
 
 typedef struct {
-	PyTypeObject type;
+	PyHeapTypeObject type;
 	PyObject *inst_dict;
 	int inst_caching;
 } pkgcore_WeakInstMeta;
@@ -302,84 +316,94 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
 }
 
 
-static char pkgcore_WeakInstMetaType__doc__[] = 
-	"metaclass for instance caching, resulting in reuse of unique instances";
+PyDoc_STRVAR(
+	pkgcore_WeakInstMetaType__doc__,
+	"metaclass for instance caching, resulting in reuse of unique instances.\n"
+	"few notes-\n"
+	"- instances must be immutable (or effectively so).	 Since creating a\n"
+	"  new instance may return a preexisting instance, this requirement\n"
+	"  B{must} be honored.\n"
+	"- due to the potential for mishap, each subclass of a caching class \n"
+	"  must assign __inst_caching__ = True to enable caching for the\n"
+	"  derivative.\n"
+	"- conversely, __inst_caching__ = False does nothing (although it's\n"
+	"  useful as a sign of I{do not enable caching for this class}\n"
+	"- instance caching can be disabled per instantiation via passing\n"
+	"  disabling_inst_caching=True into the class constructor.\n"
+	"\n"
+	"Being a metaclass, the voodoo used doesn't require modification of the\n"
+	"class itself.\n"
+	"\n"
+	"Examples of usage are the restriction modules\n"
+	"L{packages<pkgcore.restrictions.packages>} and\n"
+	"L{values<pkgcore.restrictions.values>}\n"
+	);
 
 static PyTypeObject pkgcore_WeakInstMetaType = {
-	PyObject_HEAD_INIT(&PyType_Type)
-	0,				/*ob_size*/
-	"pkgcore.util._caching.WeakInstMeta",			/*tp_name*/
-	/* XXX The next line can't be right.
-	   I am pretty sure it should be sizeof(pkgcore_WeakInstMeta) but that
-	   segfaults. "0" works but I suspect I'm writing to memory I should not
-	   somewhere. */
-	0 /*sizeof(pkgcore_WeakInstMeta)*/,		/*tp_basicsize*/
-	0,				/*tp_itemsize*/
+	PyObject_HEAD_INIT(NULL)
+	0,                                               /* ob_size */
+	"pkgcore.util._caching.WeakInstMeta",            /* tp_name */
+	sizeof(pkgcore_WeakInstMeta),                    /* tp_basicsize */
+	0,                                               /* tp_itemsize */
 	/* methods */
-	(destructor)pkgcore_WeakInstMeta_dealloc,	/*tp_dealloc*/
-	(printfunc)0,		/*tp_print*/
-	(getattrfunc)0,	/*tp_getattr*/
-	(setattrfunc)0,	/*tp_setattr*/
-	(cmpfunc)0,		/*tp_compare*/
-	(reprfunc)0,		/*tp_repr*/
-	0,			/*tp_as_number*/
-	0,		/*tp_as_sequence*/
-	0,		/*tp_as_mapping*/
-	(hashfunc)0,		/*tp_hash*/
-	(ternaryfunc)pkgcore_WeakInstMeta_call,		/*tp_call*/
-	(reprfunc)0,		/*tp_str*/
-    0,                         /*tp_getattro*/
-    0,                         /*tp_setattro*/
-    0,                         /*tp_as_buffer*/
-    Py_TPFLAGS_DEFAULT,        /*tp_flags*/
-	pkgcore_WeakInstMetaType__doc__, /* Documentation string */
-	(traverseproc)0,		               /* tp_traverse */
-    (inquiry)0,		               /* tp_clear */
-    (richcmpfunc)0,		               /* tp_richcompare */
-    0,		               /* tp_weaklistoffset */
-    (getiterfunc)0,		               /* tp_iter */
-    (iternextfunc)0,		               /* tp_iternext */
-    0,             /* tp_methods */
-    0,             /* tp_members */
-    0,                         /* tp_getset */
-    &PyType_Type,                         /* tp_base */
-    0,                         /* tp_dict */
-    0,                         /* tp_descr_get */
-    0,                         /* tp_descr_set */
-    0,                         /* tp_dictoffset */
-    (initproc)0,      /* tp_init */
-    0,                         /* tp_alloc */
-    pkgcore_WeakInstMeta_new,  /* tp_new */
+	(destructor)pkgcore_WeakInstMeta_dealloc,        /* tp_dealloc */
+	(printfunc)0,                                    /* tp_print */
+	(getattrfunc)0,                                  /* tp_getattr */
+	(setattrfunc)0,                                  /* tp_setattr */
+	(cmpfunc)0,                                      /* tp_compare */
+	(reprfunc)0,                                     /* tp_repr */
+	0,                                               /* tp_as_number */
+	0,                                               /* tp_as_sequence */
+	0,                                               /* tp_as_mapping */
+	(hashfunc)0,                                     /* tp_hash */
+	(ternaryfunc)pkgcore_WeakInstMeta_call,          /* tp_call */
+	(reprfunc)0,                                     /* tp_str */
+	0,                                               /* tp_getattro */
+	0,                                               /* tp_setattro */
+	0,                                               /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT,                              /* tp_flags */
+	pkgcore_WeakInstMetaType__doc__,                 /* tp_doc */
+	(traverseproc)0,                                 /* tp_traverse */
+	(inquiry)0,                                      /* tp_clear */
+	(richcmpfunc)0,                                  /* tp_richcompare */
+	0,                                               /* tp_weaklistoffset */
+	(getiterfunc)0,                                  /* tp_iter */
+	(iternextfunc)0,                                 /* tp_iternext */
+	0,                                               /* tp_methods */
+	0,                                               /* tp_members */
+	0,                                               /* tp_getset */
+	0, /* set to &PyType_Type later */               /* tp_base */
+	0,                                               /* tp_dict */
+	0,                                               /* tp_descr_get */
+	0,                                               /* tp_descr_set */
+	0,                                               /* tp_dictoffset */
+	(initproc)0,                                     /* tp_init */
+	0,                                               /* tp_alloc */
+	pkgcore_WeakInstMeta_new,                        /* tp_new */
 };
-
 
 
 /* Module initialization */
 
-static struct PyMethodDef pkgcore_methods[] = {
-	{NULL,	 (PyCFunction)NULL, 0, NULL}		/* sentinel */
-};
+PyDoc_STRVAR(
+	pkgcore_module_documentation,
+	"C reimplementation of pkgcore.util.caching.");
 
-
-/* Initialization function for the module (*must* be called init_pkgcore) */
-
-static char pkgcore_module_documentation[] =
-	"C version of some of pkgcore.";
-
-void
+PyMODINIT_FUNC
 init_caching()
 {
 	PyObject *m;
 
-    if (PyType_Ready(&pkgcore_WeakInstMetaType) < 0)
-        return;
+	pkgcore_WeakInstMetaType.tp_base = &PyType_Type;
+
+	if (PyType_Ready(&pkgcore_WeakInstMetaType) < 0)
+		return;
 
 	if (PyType_Ready(&pkgcore_WeakValFinalizerType) < 0)
 		return;
 
 	/* Create the module and add the functions */
-	m = Py_InitModule3("_caching", pkgcore_methods,
-					   pkgcore_module_documentation);
+	m = Py_InitModule3("_caching", NULL, pkgcore_module_documentation);
 
 	Py_INCREF(&pkgcore_WeakInstMetaType);
 	PyModule_AddObject(m, "WeakInstMeta",

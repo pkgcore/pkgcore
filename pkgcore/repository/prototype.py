@@ -7,7 +7,7 @@ base repository template
 
 from itertools import imap, ifilter
 from pkgcore.util.mappings import LazyValDict
-from pkgcore.util.lists import iter_stable_unique, iter_flatten
+from pkgcore.util.lists import iter_stable_unique
 from pkgcore.package.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.compatibility import any

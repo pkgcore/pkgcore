@@ -71,19 +71,6 @@ class PackageRestriction(restriction.base):
 		else:
 			return self.restriction.force_True(pkg, self.attr, self.__pull_attr(pkg))
 
-	def __getitem__(self, key):
-		if not isinstance(self.restriction, boolean.base):
-			if key != 0:
-				raise IndexError("restriction isn't indexable")
-			else:
-				return self
-		try:
-			g = self.restriction[key]
-		except TypeError:
-			if key == 0:
-				return self.restriction
-			raise IndexError("index out of range")
-
 	def __len__(self):
 		if not isinstance(self.restriction, boolean.base):
 			return 1
@@ -108,11 +95,12 @@ class PackageRestriction(restriction.base):
 	def __eq__(self, other):
 		if self is other:
 			return True
-		if isinstance(other, self.__class__):
-			try:
-				return self.negate == self.negate and self.attr == other.attr and self.restriction == other.restriction
-			except AttributeError, a:
-				return False
+		if not (self.__class__ is other.__class__ is PackageRestriction):
+			return False
+		try:
+			return self.negate == self.negate and self.attr == other.attr and self.restriction == other.restriction
+		except AttributeError, a:
+			return False
 		return False
 
 	def __hash__(self):

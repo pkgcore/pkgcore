@@ -5,7 +5,7 @@
 metaclass to inject dependencies into method calls; essentially, method a must be ran prior to method b, invoking method a if b is called first
 """
 
-from pkgcore.util.lists import iter_flatten
+from pkgcore.util.lists import iflatten_instance
 from pkgcore.util.currying import pre_curry
 
 __all__ = ["ForcedDepends"]
@@ -33,7 +33,7 @@ def yield_deps(inst, d, k):
 	if k not in d:
 		yield k
 		return
-	s = [k, iter_flatten(d.get(k, ()))]
+	s = [k, iflatten_instance(d.get(k, ()))]
 	while s:
 		if isinstance(s[-1], basestring):
 			yield s.pop(-1)
@@ -43,7 +43,7 @@ def yield_deps(inst, d, k):
 			v = d.get(x)
 			if v:
 				s.append(x)
-				s.append(iter_flatten(v))
+				s.append(iflatten_instance(v))
 				exhausted = False
 				break
 			yield x
@@ -69,7 +69,7 @@ class ForcedDepends(type):
 
 		# wrap the funcs
 
-		for x in set(x for x in iter_flatten(o.stage_depends.iteritems()) if x):
+		for x in set(x for x in iflatten_instance(o.stage_depends.iteritems()) if x):
 			f = getattr(o, x)
 			f2 = pre_curry(ensure_deps, o, x)
 			f2.raw_func = f

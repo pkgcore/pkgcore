@@ -23,8 +23,8 @@ typedef struct {
 static void
 pkgcore_WeakValFinalizer_dealloc(pkgcore_WeakValFinalizer *self)
 {
-	Py_XDECREF(self->dict);
-	Py_XDECREF(self->key);
+	Py_CLEAR(self->dict);
+	Py_CLEAR(self->key);
 	self->ob_type->tp_free((PyObject*) self);
 }
 
@@ -32,6 +32,8 @@ static PyObject *
 pkgcore_WeakValFinalizer_call(pkgcore_WeakValFinalizer *self,
 							  PyObject *args, PyObject *kwargs)
 {
+	/* We completely ignore whatever arguments are passed to us
+	   (should be a single positional (the weakref) we do not need). */
 	if (PyObject_DelItem(self->dict, self->key) < 0)
 		return NULL;
 	Py_RETURN_NONE;
@@ -72,7 +74,7 @@ typedef struct {
 static void
 pkgcore_WeakInstMeta_dealloc(pkgcore_WeakInstMeta* self)
 {
-	Py_XDECREF(self->inst_dict);
+	Py_CLEAR(self->inst_dict);
 	PyType_Type.tp_dealloc((PyObject*)self);
 }
 
@@ -85,8 +87,12 @@ pkgcore_WeakInstMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 	PyTupleObject *bases;
 	PyObject *d;
 	int inst_caching = 0;
+	static char *kwlist[] = {"name", "bases", "dict", 0};
 
-	if (PyArg_ParseTuple(args, "sO!O", &name, &PyTuple_Type, &bases, &d) < 0)
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sO!O!", kwlist,
+									 &name,
+									 &PyTuple_Type, &bases,
+									 &PyDict_Type, &d))
 		return NULL;
 
 	PyObject *cachesetting = PyMapping_GetItemString(d, "__inst_caching__");
@@ -370,9 +376,6 @@ init_caching()
 
 	if (PyType_Ready(&pkgcore_WeakValFinalizerType) < 0)
 		return;
-
-	/* XXX Why is this here? */
-	Py_INCREF(&pkgcore_WeakValFinalizerType);
 
 	/* Create the module and add the functions */
 	m = Py_InitModule3("_caching", pkgcore_methods,

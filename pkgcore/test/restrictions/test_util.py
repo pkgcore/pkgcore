@@ -20,7 +20,7 @@ class Test_collect_package_restrictions(unittest.TestCase):
 		r = packages.AndRestriction(packages.OrRestriction(*prs.values()), packages.AlwaysTrue)
 		for k,v in prs.iteritems():
 			self.assertEqual(sorted(util.collect_package_restrictions(r, attrs=[k])),
-				sorted(v))
+				sorted([v]))
 		r = packages.AndRestriction(packages.OrRestriction(*prs.values()), *prs.values())
 		for k,v in prs.iteritems():
 			self.assertEqual(sorted(util.collect_package_restrictions(r, attrs=[k])),

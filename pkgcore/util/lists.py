@@ -60,38 +60,67 @@ def iter_stable_unique(iterable):
 			s.add(x)
 
 try:
-	from pkgcore.util._lists import iter_flatten
+	from pkgcore.util._lists import iflatten_instance, iflatten_func
 except ImportError:
-	def iter_flatten(l, skip_flattening=(basestring,), skip_func=None):
+
+	def iflatten_instance(l, skip_flattening=(basestring,)):
 		"""
 		collapse [(1),2] into [1,2]
 
 		@param skip_flattening: list of classes to not descend through
-		@param skip_func: if None, skip_flattening is used- else it must be a callable 
-		  that returns True when iter_flatten should escend no further
 		"""
-		if skip_func is None:
-			func = lambda x:isinstance(x, skip_flattening)
-		else:
-			func = skip_func
-
-		if func(l):
+		if isinstance(l, skip_flattening):
 			yield l
 			return
 		iters = expandable_chain(l)
 		try:
 			while True:
 				x = iters.next()
-				if hasattr(x, '__iter__') and not func(x):
+				if hasattr(x, '__iter__') and not isinstance(l, skip_flattening):
 					iters.appendleft(x)
 				else:
 					yield x
 		except StopIteration:
 			pass
 
+	def iflatten_func(l, skip_func):
+		"""
+		collapse [(1),2] into [1,2]
+
+		@param skip_func: a callable that returns True when iflatten_func should descend no further
+		"""
+		if skip_func(l):
+			yield l
+			return
+		iters = expandable_chain(l)
+		try:
+			while True:
+				x = iters.next()
+				if hasattr(x, '__iter__') and not skip_func(x):
+					iters.appendleft(x)
+				else:
+					yield x
+		except StopIteration:
+			pass
+
+def iter_flatten(l, skip_flattening=(basestring,), skip_func=None):
+	"""Deprecated, call iflatten_instance or iflatten_func instead.
+
+	@param skip_flattening: list of classes to not descend through
+	@param skip_func: if None, skip_flattening is used- else it must be a callable
+	that returns True when iter_flatten should escend no further
+	"""
+	import warnings
+	warnings.warn('iter_flatten is deprecated, use iflatten_{instance,func}.')
+	foo
+	if skip_func is None:
+		return iflatten_instance(l, skip_flattening)
+	else:
+		return iflatten_func(l, skip_func)
+
 def flatten(l, skip_flattening=(basestring,)):
 	"""flatten, returning a list rather then an iterable"""
-	return list(iter_flatten(l, skip_flattening=skip_flattening))
+	return list(iflatten_instance(l, skip_flattening))
 
 
 class ChainedLists(object):

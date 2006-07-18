@@ -7,7 +7,7 @@ from pkgcore.ebuild.conditionals import DepSet, ParseError
 from pkgcore.restrictions import boolean, packages
 from pkgcore.util.currying import post_curry
 from pkgcore.util.iterables import expandable_chain
-from pkgcore.util.lists import iter_flatten
+from pkgcore.util.lists import iflatten_instance
 
 def gen_depset(s, operators=None, func=None):
 	if func is not None:
@@ -64,7 +64,7 @@ class DepSetParsingTest(unittest.TestCase):
 				if isinstance(x, packages.Conditional):
 					self.assertTrue(x.attr == "use")
 					conditionals.insert(depth, list(self.mangle_cond_payload(x.restriction)))
-					yield set(iter_flatten(conditionals[:depth + 1]))
+					yield set(iflatten_instance(conditionals[:depth + 1]))
 					yield "("
 					i.appendleft(")")
 					i.appendleft(x.payload)

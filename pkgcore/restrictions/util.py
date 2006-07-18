@@ -5,7 +5,7 @@
 restriction related utilities
 """
 
-from pkgcore.util.lists import iter_flatten
+from pkgcore.util.lists import iflatten_func
 from pkgcore.util.containers import InvertedContains
 from pkgcore.restrictions import packages, boolean
 
@@ -24,5 +24,5 @@ def collect_package_restrictions(restrict, attrs=None):
 		attrs = InvertedContains()
 	elif isinstance(attrs, (list, tuple)):
 		attrs = frozenset(attrs)
-	return (r for r in iter_flatten(restrict, skip_func=_is_package_instance) 
+	return (r for r in iflatten_func(restrict, _is_package_instance)
 		if getattr(r, "attr", None) in attrs)

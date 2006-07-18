@@ -39,12 +39,6 @@ class package(CPV):
 	def __delattr__(self, *args, **kwargs):
 		raise AttributeError
 
-
-	def __getitem__(self, key):
-		try:	return getattr(self, key)
-		except AttributeError:
-			raise KeyError(key)
-
 	def _get_data(self):
 		"""internal hook func to get the packages metadata, consumer of L{_get_attr}"""
 		if "data" in self.__dict__:

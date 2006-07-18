@@ -462,3 +462,39 @@ So what does this mean?
   comparing objects (implementing __eq__ / __cmp__). Probably the only
   legitimate use of hash() is to determine an object's hash value
   based on things used for comparison.
+
+__eq__/__hash__ and subclassing
+-------------------------------
+
+If your class has a custom __eq__ and it might be subclassed you have
+to be very careful about how you "compare" to instances of a subclass.
+Usually you will want to be "different" from those unconditionally:
+
+  def __eq__(self, other):
+      if self.__class is not YourClass or other.__class__ is not YourClass:
+	      return False
+	  # Your actual code goes here
+
+This might seem like overkill, but is necessary to avoid problems if
+you are subclassed and the subclass does not have a new __eq__. If you
+just do an "isinstance(other, self.__class__)" check you will compare
+equal to instances of a subclass, which is usually not what you want.
+If you just check for "self.__class__ is other.__class__" then
+subclasses that add a new attribute without overriding __eq__ will
+compare equal when they should not (because the new attribute
+differs).
+
+If you subclass something that has an __eq__ you should most likely
+override it (you might get away with not doing so if the class does
+not do the type check demonstrated above). If you add a new attribute
+don't forget to override __hash__ too (that is not critical, but you
+will have unnecessary hash collisions if you forget it).
+
+This is especially important for pkgcore because of
+pkgcore.util.caching. If an instance of a class with a broken __eq__
+is used as argument for the __init__ of a class that uses
+caching.WeakInstMeta it will cause a cached instance to be used when
+it should not. Notice the class with the broken __eq__ does not have
+to be cached itself to trigger this! Getting this wrong can cause fun
+behaviour like atoms showing up in the list of fetchables because the
+restrictions they're in compare equal independent of their "payload".

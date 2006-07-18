@@ -91,6 +91,13 @@ class StrRegexMatch(StrMatch):
 	def __hash__(self):
 		return hash((self.regex, self.negate, self.flags))
 
+	def __repr__(self):
+		if self.negate:
+			string = '<%s %r negated @%#8x>'
+		else:
+			string = '<%s %r @%#8x>'
+		return string % (self.__class__.__name__, self.regex, id(self))
+
 	def __str__(self):
 		if self.negate:	return "not like %s" % self.regex
 		return "like %s" % self.regex
@@ -145,6 +152,13 @@ class StrExactMatch(StrMatch):
 
 	def __hash__(self):
 		return hash((self.exact, self.negate, self.flags))
+
+	def __repr__(self):
+		if self.negate:
+			string = '<%s %r negated @%#8x>'
+		else:
+			string = '<%s %r @%#8x>'
+		return string % (self.__class__.__name__, self.exact, id(self))
 
 	def __str__(self):
 		if self.negate:
@@ -207,6 +221,13 @@ class StrGlobMatch(StrMatch):
 
 	def __hash__(self):
 		return hash((self.glob, self.negate, self.flags))
+
+	def __repr__(self):
+		if self.negate:
+			string = '<%s %r negated @%#8x>'
+		else:
+			string = '<%s %r @%#8x>'
+		return string % (self.__class__.__name__, self.glob, id(self))
 
 	def __str__(self):
 		s = ''
@@ -295,6 +316,11 @@ class ComparisonMatch(base):
 				self.data == other.data
 		except AttributeError:
 			return False
+
+	def __repr__(self):
+		return '<%s %s %r @%#8x>' % (
+			self.__class__.__name__, self.convert_op_str(self.matching_vals),
+			self.data, id(self))
 
 	def __str__(self):
 		return "%s %s" % (self.convert_op_str(self.matching_vals), self.data)
@@ -452,6 +478,14 @@ class ContainmentMatch(base):
 
 	def __hash__(self):
 		return hash((self.all, self.negate, self.vals))
+
+	def __repr__(self):
+		if self.negate:
+			string = '<%s %r all=%s negated @%#8x>'
+		else:
+			string = '<%s %r all=%s @%#8x>'
+		return string % (
+			self.__class__.__name__, tuple(self.vals), self.all, id(self))
 
 	def __str__(self):
 		if self.negate:

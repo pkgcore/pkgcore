@@ -12,21 +12,6 @@ class UnhashableComplex(complex):
 		raise TypeError
 
 
-class FlattenTest(unittest.TestCase):
-
-	def test_flatten(self):
-		self.assertEquals(lists.flatten([(1), (2, [3, 4])]), [1, 2, 3, 4])
-		self.assertEquals(lists.flatten(()), [])
-		self.assertEquals(
-			lists.flatten(['foo', ('bar', 'baz')]),
-			['foo', 'bar', 'baz'])
-
-	def test_custom(self):
-		l = ["a", "b", "cs", "d"]
-		self.assertEquals(l, lists.flatten(l[0:3] + [l[3]], str))
-		
-
-
 class UniqueTest(unittest.TestCase):
 
 	def common_check(self, f):

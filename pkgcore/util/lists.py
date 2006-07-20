@@ -117,10 +117,6 @@ def iter_flatten(l, skip_flattening=(basestring,), skip_func=None):
 	else:
 		return iflatten_func(l, skip_func)
 
-def flatten(l, skip_flattening=(basestring,)):
-	"""flatten, returning a list rather then an iterable"""
-	return list(iflatten_instance(l, skip_flattening))
-
 
 class ChainedLists(object):
 	"""

@@ -128,8 +128,8 @@ class DepSet(boolean.AndRestriction):
 		stack = [packages.AndRestriction, iter(self.restrictions)]
 		base_restrict = []
 		restricts = [base_restrict]
-		while len(stack) > 1:
-			exhausted = True
+		count = 1
+		while count:
 			for node in stack[-1]:
 				if isinstance(node, self.element_class):
 					restricts[-1].append(node)
@@ -147,27 +147,26 @@ class DepSet(boolean.AndRestriction):
 								continue
 					elif not node.restriction.match(cond_dict):
 						continue
-					stack.append(packages.AndRestriction)
-					stack.append(iter(node.payload))
+					stack += [packages.AndRestriction, iter(node.payload)]
 				else:
-					stack.append(node.change_restrictions)
-					stack.append(iter(node.restrictions))
+					stack += [node.change_restrictions, iter(node.restrictions)]
+				count += 1
 				restricts.append([])
-				exhausted = False
 				break
-
-			if exhausted:
+			else:
 				stack.pop(-1)
-				if len(restricts) != 1:
+				l = len(restricts)
+				if l != 1:
 					if restricts[-1]:
 						# optimization to avoid uneccessary frames.
-						if len(restricts[-1]) == 1:
+						if l == 1:
 							restricts[-2].append(restricts[-1][0])
 						elif stack[-1] is stack[-3] is packages.AndRestriction:
 							restricts[-2].extend(restricts[-1])
 						else:
 							restricts[-2].append(stack[-1](*restricts[-1]))
 					stack.pop(-1)
+				count -= 1
 				restricts.pop(-1)
 
 		flat_deps.restrictions = tuple(base_restrict)

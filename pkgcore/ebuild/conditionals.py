@@ -9,6 +9,7 @@ DepSet parsing (depends, rdepends, SRC_URI, license, etc) generating appropriate
 
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.iterables import expandable_chain
+from pkgcore.util.lists import iflatten_instance
 from pkgcore.package.atom import atom
 
 def convert_use_reqs(uses):
@@ -30,7 +31,7 @@ class DepSet(boolean.AndRestriction):
 	gentoo DepSet syntax parser
 	"""
 
-	__slots__ = ("has_conditionals", "element_class", "_node_conds", "restrictions")
+	__slots__ = ("has_conditionals", "element_class", "_node_conds", "restrictions", "_known_conditionals")
 	type = packages.package_type
 	negate = False
 
@@ -46,6 +47,7 @@ class DepSet(boolean.AndRestriction):
 		@param element_class: class of generated elements
 		"""
 
+		self._known_conditionals = None
 		self.restrictions = []
 		self.element_class = element_class
 		if element_func is None:
@@ -220,6 +222,18 @@ class DepSet(boolean.AndRestriction):
 	@property
 	def has_conditionals(self):
 		return bool(self._node_conds)
+
+	@property
+	def known_conditionals(self):
+		if self._node_conds is False:
+			return frozenset()
+		if self._known_conditionals is None:
+			kc = set()
+			for payload, restrictions in self.find_cond_nodes(self.restrictions):
+				kc.update(iflatten_instance(x.vals for x in restrictions))
+			kc = self._known_conditionals = frozenset(kc)
+			return kc
+		return self._known_conditionals
 
 	def match(self, *a):
 		raise NotImplementedError

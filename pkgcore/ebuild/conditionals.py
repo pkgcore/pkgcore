@@ -184,7 +184,7 @@ class DepSet(boolean.AndRestriction):
 				new_set.appendleft(cur_node.restrictions)
 			elif cur_node is None:
 				conditions_stack.pop()
-			else: # leaf
+			elif conditions_stack: # leaf
 				yield (cur_node, conditions_stack[:])
 
 	@property
@@ -194,11 +194,9 @@ class DepSet(boolean.AndRestriction):
 		elif self._node_conds is True:
 			nc = {}
 
-			found_conds = self.find_cond_nodes(self.restrictions)
-
 			always_required = set()
 
-			for payload, restrictions in found_conds:
+			for payload, restrictions in self.find_cond_nodes(self.restrictions):
 				if not restrictions:
 					always_required.add(payload)
 				else:

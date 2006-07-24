@@ -56,7 +56,14 @@ class TestPrototype(unittest.TestCase):
 			sorted(CPV(x) for x in ("dev-util/diffball-0.7", "dev-util/diffball-1.0")))
 		rc2 = packages.PackageRestriction("category", values.StrExactMatch("dev-lib"))
 		self.assertEqual(sorted(self.repo.itermatch(packages.AndRestriction(rp, rc2))), sorted([]))
+
+		# note this mixes a category level match, and a pkg level match.  they *must* be treated as an or.
 		self.assertEqual(sorted(self.repo.itermatch(packages.OrRestriction(rp, rc2))),
+			sorted(CPV(x) for x in ("dev-util/diffball-0.7", "dev-util/diffball-1.0", "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
+
+		# this is similar to the test above, but mixes a cat/pkg candidate with a pkg candidate
+		rp2 = packages.PackageRestriction("package", values.StrExactMatch("fake"))
+		self.assertEqual(sorted(self.repo.itermatch(packages.OrRestriction(atom("dev-util/diffball"), rp2))),
 			sorted(CPV(x) for x in ("dev-util/diffball-0.7", "dev-util/diffball-1.0", "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
 	def test_iter(self):

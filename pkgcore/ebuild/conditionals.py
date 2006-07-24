@@ -175,7 +175,7 @@ class DepSet(boolean.AndRestriction):
 		return flat_deps
 
 	@staticmethod
-	def find_cond_nodes(restriction_set):
+	def find_cond_nodes(restriction_set, yield_non_conditionals=False):
 		conditions_stack = []
 		new_set = expandable_chain(restriction_set)
 		for cur_node in new_set:
@@ -186,8 +186,8 @@ class DepSet(boolean.AndRestriction):
 				new_set.appendleft(cur_node.restrictions)
 			elif cur_node is None:
 				conditions_stack.pop()
-			elif conditions_stack: # leaf
-				yield (cur_node, conditions_stack[:])
+			elif conditions_stack or yield_non_conditionals: # leaf
+					yield (cur_node, conditions_stack[:])
 
 	@property
 	def node_conds(self):
@@ -198,7 +198,7 @@ class DepSet(boolean.AndRestriction):
 
 			always_required = set()
 
-			for payload, restrictions in self.find_cond_nodes(self.restrictions):
+			for payload, restrictions in self.find_cond_nodes(self.restrictions, True):
 				if not restrictions:
 					always_required.add(payload)
 				else:

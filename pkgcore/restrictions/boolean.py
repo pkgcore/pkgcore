@@ -248,11 +248,11 @@ class AndRestriction(base):
 				import pdb;pdb.set_trace()
 			yield solution
 
-	def dnf_solutions(self, **kwds):
+	def dnf_solutions(self, *args, **kwds):
 		"""
 		list form of L{iter_dnf_solutions}, see iter_dnf_solutions for args
 		"""
-		return list(self.iter_dnf_solutions(**kwds))
+		return list(self.iter_dnf_solutions(*args, **kwds))
 
 	def cnf_solutions(self, full_solution_expansion=False):
 		
@@ -344,11 +344,11 @@ class OrRestriction(base):
 
 		return choices
 
-	def iter_dnf_solutions(self, **kwds):
+	def iter_dnf_solutions(self, *args, **kwds):
 		"""
 		see dnf_solutions, iterates yielding DNF solutions
 		"""
-		return iter(self.dnf_solutions(**kwds))
+		return iter(self.dnf_solutions(*args, **kwds))
 
 	def force_True(self, pkg, *vals):
 		pvals = [pkg]

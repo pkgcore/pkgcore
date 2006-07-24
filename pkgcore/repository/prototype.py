@@ -7,7 +7,7 @@ base repository template
 
 from itertools import imap, ifilter
 from pkgcore.util.mappings import LazyValDict
-from pkgcore.util.lists import iter_stable_unique
+from pkgcore.util.lists import iter_stable_unique, iflatten_instance
 from pkgcore.package.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.compatibility import any
@@ -169,6 +169,40 @@ class tree(object):
 					yield pkg
 
 	def _identify_candidates(self, restrict, sorter):
+		# full expansion
+		if not isinstance(restrict, boolean.base) or isinstance(restrict, atom):
+			return self._fast_identify_candidates(restrict, sorter)
+		dsolutions = [([c.restriction for c in collect_package_restrictions(x, ["category"])], 
+			[p.restriction for p in collect_package_restrictions(x, ["package"])]) for x in restrict.iter_dnf_solutions(True)]
+		for x in dsolutions:
+			if not x[0] and not x[1]:
+				# great... one doesn't rely on cat/pkg.
+				return self.packages
+		# simple cases first.
+		# if one specifies categories, and one doesn't
+		cat_specified = bool(dsolutions[0][0])
+		pkg_specified = bool(dsolutions[0][1])
+		ret_mangler = self.packages.return_mangler
+		pgetter = self.packages.get
+		if any(True for x in dsolutions[1:] if bool(x[0]) != cat_specified):
+			if any(True for x in dsolutions[1:] if bool(x[1]) != pkg_specified):
+				# merde.  so we've got a mix- some specify cats, some don't, some specify pkgs, some don't.
+				# this may be optimizable
+				return self.packages
+			# ok.  so... one doesn't specify a category, but they all specify packages (or don't)
+			pr = values.OrRestriction(*tuple(iflatten_instance((x[1] for x in dsolutions if x[1]), values.base)))
+			return (ret_mangler((c, p)) for c in sorter(self.categories) for p in sorter(pgetter(c, [])) if pr.match(p))
+		
+		elif any(True for x in dsolutions[1:] if bool(x[1]) != pkg_specified):
+			# one (or more) don't specify pkgs, but they all specify cats.
+			cr = values.OrRestriction(*tuple(iflatten_instance((x[0] for x in dsolutions), values.base)))
+			cats_iter = (c for c in sorter(self.categories) if cr.match(c))
+			return (self.packages.return_mangler((c, p)) for c in cats_iter for p in sorter(pgetter(c, [])))
+
+		return self._fast_identify_candidates(restrict, sorter)
+
+
+	def _fast_identify_candidates(self, restrict, sorter):
 		pkg_restrict = set()
 		cat_restrict = set()
 		cat_exact = set()

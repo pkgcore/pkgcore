@@ -2,7 +2,7 @@
 
 from pkgcore.config import load_config
 from pkgcore.package.atom import atom
-from pkgcore.util.lists import flatten, stable_unique
+from pkgcore.util.lists import stable_unique
 from pkgcore.util.repo_utils import get_raw_repos
 from pkgcore.util.commandline import generate_restriction, collect_ops
 from pkgcore.ebuild import resolver

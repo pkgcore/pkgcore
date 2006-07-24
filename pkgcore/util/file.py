@@ -5,10 +5,41 @@
 file related operations, mainly reading
 """
 
-import re
+import re, os, errno
 from shlex import shlex
 from mappings import ProtectedDict
+from pkgcore.util.demandload import demandload
 
+
+class AtomicWriteFile(file):
+	
+	"""file class that stores the changes in a tempfile, upon close call, uses rename to replace the destination.
+	
+	Similar to file protocol behaviour, except for the __init__, and that close *must* be called for the changes to be made live,
+	if __del__ is triggered it's assumed that an exception occured, thus the changes shouldn't be made live
+	"""
+	def __init__(self, fp, binary=False, **kwds):
+		self.is_finalized = False
+		if binary:
+			mode = "wb"
+		else:
+			mode = "w"
+		fp = os.path.realpath(fp)
+		self.original_fp = fp
+		self.temp_fp = os.path.join(os.path.dirname(fp), ".update.%s" % os.path.basename(fp))
+		file.__init__(self, self.temp_fp, mode=mode, **kwds)
+	
+	def close(self):
+		file.close(self)
+		os.rename(self.temp_fp, self.original_fp)
+		self.is_finalized = True
+	
+	def __del__(self):
+		file.close(self)
+		if not self.is_finalized:
+			os.unlink(self.temp_fp)
+		
+		
 def iter_read_bash(bash_source):
 	"""
 	read file honoring bash commenting rules.  Note that it's considered good behaviour to close filehandles, as such,

@@ -2,14 +2,15 @@
 # License: GPL2
 
 
-import tempfile
+import tempfile, os
 from StringIO import StringIO
 
 from twisted.trial import unittest
 
 # ick, a module shadowing a builtin. import its contents instead.
-from pkgcore.util.file import iter_read_bash, read_bash, read_dict
+from pkgcore.util.file import iter_read_bash, read_bash, read_dict, AtomicWriteFile
 from pkgcore.util.file import read_bash_dict, ParseError
+from pkgcore.test.fs.test_util import TempDirMixin
 
 
 class TestBashCommentStripping(unittest.TestCase):
@@ -156,3 +157,25 @@ class ReadBashDictTest(unittest.TestCase):
 
 	def test_unclosed(self):
 		self.assertRaises(ParseError, read_bash_dict, self.unclosedFile.name)
+
+
+class TestAtomicWriteFile(TempDirMixin, unittest.TestCase):
+	
+	def test_normal_ops(self):
+		fp = os.path.join(self.dir, "target")
+		open(fp, "w").write("me")
+		af = AtomicWriteFile(fp)
+		af.write("dar")
+		self.assertEquals(open(fp, "r").read(), "me")
+		af.close()
+		self.assertEquals(open(fp, "r").read(), "dar")
+	
+	def test_del(self):
+		fp = os.path.join(self.dir, "target")
+		open(fp, "w").write("me")
+		self.assertEquals(open(fp, "r").read(), "me")
+		af = AtomicWriteFile(fp)
+		af.write("dar")
+		del af
+		self.assertEquals(open(fp, "r").read(), "me")
+		self.assertEquals(len(os.listdir(self.dir)), 1)

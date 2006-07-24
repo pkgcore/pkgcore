@@ -18,6 +18,8 @@ from pkgcore.fs import gen_obj as gen_fs_obj
 from pkgcore.util.mappings import LazyValDict, ImmutableDict, StackedDict
 from pkgcore.util import currying
 from pkgcore.merge import triggers, errors
+from pkgcore.ebuild import triggers as ebuild_triggers
+
 
 def scan_livefs(cset):
 	"""generate the intersect of a cset and the livefs"""
@@ -52,9 +54,10 @@ class MergeEngine(object):
 	uninstall_hooks["post_unmerge"].append(triggers.ldconfig_trigger)
 
 	# this should be a symlink update only
-	replace_hooks["post_merge"].append(triggers.ldconfig_trigger)
-	replace_hooks["post_unmerge"].append(triggers.ldconfig_trigger)
-
+	for k in ("post_merge", "post_unmerge"):
+		replace_hooks[k].extend([ebuild_triggers.env_update_trigger, triggers.ldconfig_trigger])
+	del k
+	
 	# break this down into configured, right now hardcoded.
 	l = [triggers.fix_default_gid, triggers.fix_default_uid, triggers.fix_special_bits_world_writable,
 		triggers.notice_world_writable]

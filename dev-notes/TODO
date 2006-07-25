@@ -1,107 +1,88 @@
+==========
+Rough TODO
+==========
 kindly check over HORKED; stuff here is "would be nice", but horked comes first.
 Difficulty estimate indicated by '*', based on either codebase in question, or knowledge of python tricks
 none == easy, >=5 of 'em, tricky.
 
+- CONFIG_PROTECT trigger **
+  potentially need to implement it as two (yuck) triggers; issue is that in the vdb, the file needs to be recorded with
+  the proper name; for merging, have to have a different name however.
 
-:config object inspection: *
-Pieces are there already (pkgcore.config.introspect), tests included (pkgcore.test.config.test_introspect),
-just need to enable it in pkgcore.config.central.  Poke harring or marienz for extra details, or just jump in.
+- finish off trigger registration; **
+  Right now it's hardcoded in merge.engine; this sucks, need to convert the gentoo specific triggers over to
+  being registered on the fly via domain/configuration.
+  
+- testing of fakeroot integration: **
+  it was working back in the ebd branch days; things have changed since then (heavily), enabling/disabling
+  should work fine, but will need to take a look at the contentset generation to ensure perms/gid leaks through
+  correctly.
 
-The rough jist is that type definitions should be overridable by the class being instantiated- fex, we have a
-system and world type, which is pointless- they're the same type, just different classes with different
-instantiation requirements.  Until introspection is turned on, this is the route required however.
+- sync subsystem. ***
+  Threw out the old refactoring, too portage specific; exists in sandbox/dead_code , design sucked also.
 
-This is *HIGH* priority.  It enables folks to do alternate repository classes without having to hack around
-current instantiation hard codings.
+- refactor pkgcore.package.atom and pkgcore.package.cpv *
+  Those *should* be (effectively) abstract bases, not specific to ebuild format.
+  Right now they are specific- breaking that up is required.
 
+- Plus, once it's broken up can derive from it to attach msgs to an atom (resolver can use it to state why it
+  generated a particular atom, glsa's can ref a glsa obj, etc).
 
-:refactor pkgcore.package.atom and pkgcore.package.cpv: *
-Those *should* be (effectively) abstract bases, not specific to ebuild format.
-Right now they are specific- breaking that up is required.
+- binpkg repository *
+  Just manual work- fix up pkgcore.binpkg to generate ebuild_built instances (akin to what pkgcore.vdb.ondisk does)
 
-Plus, once it's broken up can derive from it to attach msgs to an atom (resolver can use it to state why it
-generated a particular atom, glsa's can ref a glsa obj, etc).
+- modify repository.prototype.tree.match to take an optional comparison *
+  reasoning being that if we're just going to do a max, pass in the max so it has the option of doing the initial
+  sorting without passing through visibility filters (which will trigger metadata lookups)
 
+- pkgcore.cache.multiplex *
+  a master/slave cache implementation.  handed master cache (positionally), and secondary caches, this implementation would 
+  do lookups in master normally, and multiplex the updates/deletetions across all caches handed in.
+  Sounds odd I realize, but this would be useful so that the master cache generation for rsync could have it's updates slaved 
+  into a common rdbms w/in gentoo infra, with mirror-dist, src_uri checker, and packages.g.o being able to access it.
+  Right now they do their own thing, which is inneficient.  This should be pretty easy.
 
-:binpkg repository: *
-Just manual work- fix up pkgcore.binpkg to generate ebuild_built instances (akin to what pkgcore.vdb.ondisk does)
+- profiling everything **
+  just as it sounds.  profile the whole sucker, and point out areas of where improvement, conversion to cpython might be 
+  advantageous.  This will be ongoing, initially probably pretty easy, getting harder as low franging fruit picked off.
+  Why do this? Well, if you think portage is slow, this is how you can help us speed the sucker up.
 
+- pkgcore.config.central features: ***
+  These may or may not be picked off as development continues; the main requirement for this functionality is 
+  plugins, which the framework intends... so... prior to a release, it will be added.
 
-:modify repository.prototype.tree.match to take an optional comparison: *
-reasoning being that if we're just going to do a max, pass in the max so it has the option of doing the initial
-sorting without passing through visibility filters (which will trigger metadata lookups)
+  - needs introspection capabilities, looking at a callable to pull further required/section_ref/etc opts out of it.
+  - needs method to do lookups of further object restrictions/section_ref/etc from a common dir, based on name.
+    this one requires some thought;  essentially, if loading portage-mysql.cache, try 1, or try this opt, look in a dir
+    the plugins ebuild can install a section conf tweak, and use it.
+  - configuration 'types' , list, bool, str, etc, should be extendable, lifted from a config most likely.  Defaults should be
+    avail in code, but should have a method of extending it
+  - exec section implementation.  Any section of exec type is automatically executed, able to mangle the central config directly.
+    This *is* the hook for having configs stored on a central server, and it's nifty ;)
+  - integration of make.globals type data; defaults effectively, but a bit more complex.
 
+- pkgcore.ebuild.gpgtree ****
+  derivative of pkgcore.ebuild.ebuild_repository, this overloads ebuild_factory and eclass_cache so that gpg checks are done.
+  This requires some hackery, partially dependant on config.central changes (see above).
+  Need a way to specify the trust ring to use, 'severity' level (different class targets works for me).
+  Anyone who implements this deserves massive cookies.
 
-:p.mask visibility handler: *
-p.mask comes out to over 300 pkgs, current implementation is a OrRestriction; iow, worst case (the norm I'm afraid), it 
-does >300 match runs, in reality probably around >900 (atom == 3 restricts).  This fortunately is easily addressed; basically 
-need either 
-A) optimizer of RestrictionSets (complex)
-B) restrictionSet variation that is able to do containment tests, if matches, then look up remaining restrictions and apply.
-B is the easiest, and the one someone should do in the rather near future.  In short, collapse cat/pkg of a pkginst, do a lookup
-into a dict, if matched, run the restrictions returned, or return the negation val.
-This would knock it down to a dict lookup, then execution of returned remaining restrictions worst case, dict lookup best case.
-Bit faster.
+- pkgcore.ebuild.gpgprofile ****
+  Same as above.  Likely need a way to bind the trustring between these too, *or* the gpgprofile lifts it somehow from the gpgtree.
+  Anyone who implements this deserves massive cookies.
 
+- pkgcore.config.domain ***
+  Redesign, seperation of it into ebuild specific chunk (domain class), and generic abstraction layer.
+  cleanup needed already, imo :/
 
-:pkgcore.cache.multiplex:
-a master/slave cache implementation.  handed master cache (positionally), and secondary caches, this implementation would 
-do lookups in master normally, and multiplex the updates/deletetions across all caches handed in.
-Sounds odd I realize, but this would be useful so that the master cache generation for rsync could have it's updates slaved 
-into a common rdbms w/in gentoo infra, with mirror-dist, src_uri checker, and packages.g.o being able to access it.
-Right now they do their own thing, which is inneficient.  This should be pretty easy.
+- pkgcore.fetch.bundled_lib:
+  clean this beast up.
 
+- IPV6 handling:
+  bug 37124 # syncing
+  check over BINHOST code replacement for any code that resolve to a specific IP
 
-:profiling everything: **
-just as it sounds.  profile the whole sucker, and point out areas of where improvement, conversion to cpython might be 
-advantageous.  This will be ongoing, initially probably pretty easy, getting harder as low franging fruit picked off.
-Why do this? Well, if you think portage is slow, this is how you can help us speed the sucker up.
+- locking unification.  see plugins for an example of why it's needed
 
-
-:pkgcore.config.central features: ***
-These may or may not be picked off as development continues; the main requirement for this functionality is 
-plugins, which the framework intends... so... prior to a release, it will be added.
-1) needs introspection capabilities, looking at a callable to pull further required/section_ref/etc opts out of it.
-2) needs method to do lookups of further object restrictions/section_ref/etc from a common dir, based on name.
-   this one requires some thought;  essentially, if loading portage-mysql.cache, try 1, or try this opt, look in a dir
-   the plugins ebuild can install a section conf tweak, and use it.
-3) configuration 'types' , list, bool, str, etc, should be extendable, lifted from a config most likely.  Defaults should be
-   avail in code, but should have a method of extending it
-4) exec section implementation.  Any section of exec type is automatically executed, able to mangle the central config directly.
-   This *is* the hook for having configs stored on a central server, and it's nifty ;)
-5) integration of make.globals type data; defaults effectively, but a bit more complex.
-
-
-:pkgcore.ebuild.gpgtree: ****
-derivative of pkgcore.ebuild.ebuild_repository, this overloads ebuild_factory and eclass_cache so that gpg checks are done.
-This requires some hackery, partially dependant on config.central changes (see above).
-Need a way to specify the trust ring to use, 'severity' level (different class targets works for me).
-Anyone who implements this deserves massive cookies.
-
-
-:pkgcore.ebuild.gpgprofile: ****
-Same as above.  Likely need a way to bind the trustring between these too, *or* the gpgprofile lifts it somehow from the gpgtree.
-Anyone who implements this deserves massive cookies.
-
-
-:pkgcore.config.domain:
-Redesign, seperation of it into ebuild specific chunk (domain class), and generic abstraction layer.
-cleanup needed already, imo :/
-
-
-:pkgcore.fetch.bundled_lib:
-clean this beast up.
-
-
-:IPV6 handling:
-bug 37124 # syncing
-check over BINHOST code replacement for any code that resolve to a specific IP
-
-:move pkgcore uid/gid checks out of ebuild.sh, and into python side:
-
-
-:locking unification.  see plugins for an example of why it's needed
-
-
-:extend packages.* parsing to support globs in pkg: *
-http://bugs.gentoo.org/show_bug.cgi?id=57153
+- extend packages.* parsing to support globs in pkg: *
+  http://bugs.gentoo.org/show_bug.cgi?id=57153

@@ -60,18 +60,16 @@ class tree(prototype.tree):
 		l = set()
 		d = {}
 		try:
-			try:
-				for x in os.listdir(cpath):
-					if x.endswith(".lockfile") or x.startswith("-MERGING-") or not stat.S_ISDIR(os.stat(os.path.join(cpath, x)).st_mode):
-						continue
-					x = cpv(category+"/"+x)
-					l.add(x.package)
-					d.setdefault(category+"/"+x.package, []).append(x.fullver)
-			except (OSError, IOError), e:
-				raise KeyError("failed fetching packages for category %s: %s" % \
-				(os.path.join(self.base, category.lstrip(os.path.sep)), str(e)))
-		finally:
-			pass
+			for x in os.listdir(cpath):
+				if x.endswith(".lockfile") or x.startswith("-MERGING-") or not stat.S_ISDIR(os.stat(os.path.join(cpath, x)).st_mode):
+					continue
+				x = cpv(category+"/"+x)
+				l.add(x.package)
+				d.setdefault(category+"/"+x.package, []).append(x.fullver)
+		except (OSError, IOError), e:
+			raise KeyError("failed fetching packages for category %s: %s" % \
+			(os.path.join(self.base, category.lstrip(os.path.sep)), str(e)))
+
 		self._versions_tmp_cache.update(d)
 		return tuple(l)
 

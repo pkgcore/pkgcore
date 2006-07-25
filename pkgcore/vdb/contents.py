@@ -4,19 +4,21 @@
 import os
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs import fs
+from pkgcore.util.file import AtomicWriteFile
+
 
 class ContentsFile(contentsSet):
 	"""class wrapping a contents file"""
 
-	def __init__(self, location, writable=False, empty=False):
+	def __init__(self, source, writable=False, empty=False):
 		contentsSet.__init__(self)
-		self._file_location = location
+		self._source_is_path = isinstance(source, basestring)
+		self._source = source
 		if not empty:
 			self.readonly = False
 			self._read()
 
 		self.readonly = not writable
-
 
 	def add(self, obj):
 		if self.readonly:
@@ -30,22 +32,28 @@ class ContentsFile(contentsSet):
 
 		contentsSet.add(self, obj)
 
-
 	def remove(self, key):
 		if self.readonly:
 			raise TypeError("This instance is readonly")
 		contentsSet.remove(self, key)
-
 
 	def clear(self):
 		if self.readonly:
 			raise TypeError("This instance is readonly")
 		contentsSet.clear(self)
 
-
+	def _get_fd(self, write=False):
+		if self._source_is_path:
+			if write:
+				return AtomicWriteFile(self._source)
+			return open(self._source, "r", 32384)
+		if write:
+			self._source.seek(0)
+			self.truncate(0)
+		return self._source
+		
 	def flush(self):
 		return self._write()
-
 
 	def _parse_old(self, line):
 		"""parse old contents, non tab based format"""
@@ -65,11 +73,10 @@ class ContentsFile(contentsSet):
 		else:
 			return s[0], ' '.join(s[1:])
 
-
 	def _read(self):
 		self.clear()
 		try:
-			infile = open(self._file_location, "r", 32384)
+			infile = self._get_fd()
 			for line in infile:
 				if "\t" not in line:
 					line = self._parse_old(line.strip("\n"))
@@ -95,14 +102,15 @@ class ContentsFile(contentsSet):
 				self.add(obj)
 
 		finally:
-			try:	infile.close()
+			try:
+				infile.close()
 			except UnboundLocalError:
 				pass
 
-
 	def _write(self):
+		outfile = None
 		try:
-			outfile = open(self._file_location + ".temp", "w", 32384)
+			outfile = self._get_fd(True)
 
 			for obj in sorted(self):
 
@@ -126,20 +134,8 @@ class ContentsFile(contentsSet):
 				else:
 					raise Exception("unknown type %s: %s" % (type(obj), str(obj)))
 				outfile.write(s + "\n")
+			outfile.close()
 
-		except Exception, e:
-			try:	outfile.close()
-			except (IOError, OSError): pass
-			try:	os.remove(self._file_location + ".temp")
-			except (IOError, OSError): pass
-			raise
-		else:
-			try:
-				outfile.close()
-				os.rename(self._file_location + ".temp", self._file_location)
-			except (OSError, IOError), e:
-				# XXX what to do?
-				try:	os.remove(self.__file+".temp")
-				except (OSError, IOError): pass
-				raise
-
+		finally:
+			# if atomic, it forces the update to be wiped.
+			del outfile

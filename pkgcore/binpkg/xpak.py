@@ -67,9 +67,9 @@ class Xpak(object):
 		try:
 			pre, size, post = struct.unpack(self.trailer_parser, fd.read(self.trailer_size))
 			if pre != self.trailer_pre_magic or post != self.trailer_post_magic:
-				raise TypeError("not an xpak segment, trailer didn't match: %r" % fd)
+				raise MalformedXpak("not an xpak segment, trailer didn't match: %r" % fd)
 		except struct.error:
-			raise TypeError("not an xpak segment, failed parsing trailer: %r" % fd)
+			raise MalformedXpak("not an xpak segment, failed parsing trailer: %r" % fd)
 
 		# this is a bit daft, but the format seems to intentionally have an off by 8 in the offset address.
 		# presumably cause the header was added after the fact, either way we go +8 to check the header magic.
@@ -78,9 +78,9 @@ class Xpak(object):
 		try:
 			pre, index_len, data_len = struct.unpack(self.header_parser, fd.read(self.header_size))
 			if pre != self.header_pre_magic:
-				raise TypeError("not an xpak segment, header didn't match: %r" % fd)
+				raise MalformedXpak("not an xpak segment, header didn't match: %r" % fd)
 		except struct.error:
-			raise TypeError("not an xpak segment, failed parsing header: %r" % fd)
+			raise MalformedXpak("not an xpak segment, failed parsing header: %r" % fd)
 
 		return self.xpak_start + self.header_size, index_len, data_len
 

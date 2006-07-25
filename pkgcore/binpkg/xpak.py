@@ -102,6 +102,9 @@ class Xpak(object):
 	def __nonzero__(self):
 		return bool(self._keys_dict)
 	
+	def __iter__(self):
+		return iter(self._keys_dict)
+	
 	def iterkeys(self):
 		return self._keys_dict.iterkeys()
 	
@@ -118,7 +121,10 @@ class Xpak(object):
 		return self._get_data(self._fd, *self._keys_dict[key])
 
 	def _get_data(self, fd, offset, data_len):
-		fd.seek(offset)
+		# optimization for file objs; they cache tell position, but pass through all seek calls (nice, eh?)
+		# so we rely on that for cutting down on uneeded seeks; userland comparison being far cheaper then an actual syscall seek
+		if fd.tell() != offset:
+			fd.seek(offset, 0)
 		assert fd.tell() == offset
 		r = fd.read(data_len)
 		assert len(r) == data_len

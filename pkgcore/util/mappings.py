@@ -144,6 +144,7 @@ class ProtectedDict(UserDict.DictMixin):
 
 	has_key = __contains__
 
+
 class ImmutableDict(dict):
 
 	"""Immutable Dict, non changable after instantiating"""

@@ -120,6 +120,12 @@ class Xpak(object):
 	def __getitem__(self, key):
 		return self._get_data(self._fd, *self._keys_dict[key])
 
+	def get(self, key, default=None):
+		try:
+			return self[key]
+		except KeyError:
+			return default
+
 	def _get_data(self, fd, offset, data_len):
 		# optimization for file objs; they cache tell position, but pass through all seek calls (nice, eh?)
 		# so we rely on that for cutting down on uneeded seeks; userland comparison being far cheaper then an actual syscall seek

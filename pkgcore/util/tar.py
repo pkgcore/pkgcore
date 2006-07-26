@@ -2,6 +2,7 @@
 # License: GPL2
 
 # monkey patching of stdlib tarfile to reduce mem usage (33% reduction).
+# note this is also racey; N threads trying an import, if they're after the *original* tarfile, they may inadvertantly get ours.
 
 import sys
 t=sys.modules.pop("tarfile", None)

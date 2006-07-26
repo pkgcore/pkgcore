@@ -13,6 +13,7 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "logging time pkgcore.vdb.contents:ContentsFile")
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.binpkg.xpak import Xpak
+from pkgcore.binpkg.tar import generate_contents
 
 class tree(prototype.tree):
 	ebuild_format_magic = "ebuild_built"	
@@ -80,13 +81,12 @@ class tree(prototype.tree):
 	_metadata_rewrites = {"depends":"DEPEND", "rdepends":"RDEPEND", "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
 
 	def _get_metadata(self, pkg):
-		return IndeterminantDict(pre_curry(self._internal_load_key, Xpak(self._get_path(pkg))))
+		return IndeterminantDict(pre_curry(self._internal_load_key, pkg, Xpak(self._get_path(pkg))))
 
-	def _internal_load_key(self, xpak, key):
+	def _internal_load_key(self, pkg, xpak, key):
 		key = self._metadata_rewrites.get(key, key)
 		if key == "contents":
-			raise NotImplementedError
-			data = ContentsFile(os.path.join(path, "CONTENTS"))
+			data = generate_contents(self._get_path(pkg))
 		elif key == "environment":
 			raise NotImplementedError
 			fp = os.path.join(path, key)

@@ -218,7 +218,11 @@ class AndRestriction(base):
 		@param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
 		"""
 		if self.negate:
-			raise NotImplementedError("negation for dnf_solutions on AndRestriction isn't implemented yet")
+#			raise NotImplementedError("negation for dnf_solutions on AndRestriction isn't implemented yet")
+			# hack- this is an experiment
+			for r in OrRestriction(type=self.type, strict=False, *[restriction.Negate(x) for x in self.restrictions]).iter_dnf_solutions():
+				yield r
+			return
 		if not self.restrictions:
 			yield []
 			return
@@ -329,7 +333,9 @@ class OrRestriction(base):
 		@param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
 		"""
 		if self.negate:
-			raise NotImplementedError("OrRestriction.dnf_solutions doesn't yet support self.negate")
+#			raise NotImplementedError("negation for dnf_solutions on AndRestriction isn't implemented yet")
+			# hack- this is an experiment
+			return AndRestriction(type=self.type, strict=False, *[restriction.Negate(x) for x in self.restrictions]).dnf_solutions()
 		if not self.restrictions:
 			return [[]]
 		choices = []

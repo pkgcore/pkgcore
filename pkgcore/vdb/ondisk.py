@@ -176,10 +176,9 @@ class install(repo_interfaces.install):
 						v.add(x)
 				v.flush()
 			elif k == "environment":
-				shutil.copy(getattr(self.pkg, k).get_path(), os.path.join(dirpath, "environment"))
-				fp = os.path.join(dirpath, "environment")
-				open("%s.bz2" % fp, "w").write(bz2.compress(open(fp, "r").read(), 9))
-				os.unlink(fp)
+				data = bz2.compress(open(gettatr(self.pkg, k).get_path(), "r").read())
+				open(os.path.join(dirpath, "environment.bz2"), "w").write(data)
+				del data
 			else:
 				v = getattr(self.pkg, k)
 				if not isinstance(v, basestring):

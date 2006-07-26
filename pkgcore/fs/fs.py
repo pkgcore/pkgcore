@@ -63,16 +63,6 @@ class fsBase(object):
 				s(self, k, v)
 	gen_doc_additions(__init__, __slots__)
 
-	def change_location(self, location, **kwds):
-		"""
-		generate a new instance identical to self except having the passed in location
-		@param location: new location
-		@type location: string
-		@return: self.__class__ instance
-		"""
-		kwds["location"] = location
-		return self.change_attributes(**kwds)
-
 	def change_attributes(self, **kwds):
 		d = dict((x, getattr(self, x)) for x in self.__slots__ if hasattr(self, x))
 		d.update(kwds)

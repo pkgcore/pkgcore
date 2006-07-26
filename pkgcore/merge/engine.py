@@ -266,7 +266,7 @@ class MergeEngine(object):
 	@staticmethod
 	def generate_offset_cset(engine, csets, cset_generator):
 		"""generate a cset with offset applied"""
-		return contents.contentsSet(x.change_location(os.path.join(engine.offset,
+		return contents.contentsSet(x.change_attribute(location=os.path.join(engine.offset,
 			x.location.lstrip(os.path.sep))) for x in cset_generator(engine, csets))
 
 	@staticmethod

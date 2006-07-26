@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os, stat, errno, shutil
+import os, stat, errno, shutil, bz2
 from pkgcore.repository import prototype, errors
 
 #needed to grab the PN
@@ -13,7 +13,6 @@ from pkgcore.vdb.contents import ContentsFile
 from pkgcore.plugins import get_plugin
 from pkgcore.interfaces import repo as repo_interfaces
 from pkgcore.interfaces.data_source import local_source
-from pkgcore.spawn import spawn
 from pkgcore.util.demandload import demandload
 demandload(globals(), "logging time")
 from pkgcore.repository import multiplex, virtual
@@ -170,14 +169,17 @@ class install(repo_interfaces.install):
 			if k == "contents":
 				v = ContentsFile(os.path.join(dirpath, "CONTENTS"), writable=True, empty=True)
 				for x in self.pkg.contents:
+					# $10 this ain't right.  verify this- harring
 					if self.offset:
-						v.add(x.change_location(os.path.join(self.offset, x.location)))
+						v.add(x.change_attribute(location=os.path.join(self.offset, x.location)))
 					else:
 						v.add(x)
 				v.flush()
 			elif k == "environment":
 				shutil.copy(getattr(self.pkg, k).get_path(), os.path.join(dirpath, "environment"))
-				spawn(["bzip2", "-9", os.path.join(dirpath, "environment")], fd_pipes={})
+				fp = os.path.join(dirpath, "environment")
+				open("%s.bz2" % fp, "w").write(bz2.compress(open(fp, "r").read(), 9))
+				os.unlink(fp)
 			else:
 				v = getattr(self.pkg, k)
 				if not isinstance(v, basestring):

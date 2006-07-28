@@ -288,17 +288,20 @@ class merge_plan(object):
 			# ignore what dropped out, at this juncture we don't care.
 			choices.reduce_atoms(self.insoluble)
 			if not choices:
+				s = 'first level'
+				if current_stack:
+					s = current_stack[-1][0]
 				dprint("filtering    %s%s  [%s] reduced it to no matches", (depth * 2 * " ",
-					atom, current_stack[-1][0]))
+					atom, s))
 				matches = None
 				# and was intractable because it has a hard dep on an unsolvable atom.
 		if not matches:
 			if not limit_to_vdb:
 				self.insoluble.add(atom)
-			if not current_stack:
-				dprint("processing   %s%s  [first stack], no matches", (depth *2 * " ", atom))
-			else:
-				dprint("processing   %s%s  [%s] no matches", (depth *2 * " ", atom, current_stack[-1][0]))
+			s = 'first level'
+			if current_stack:
+				s = current_stack[-1][0]
+			dprint("processing   %s%s  [%s] no matches", (depth *2 * " ", atom, s))
 			return [atom]
 
 		# experiment. ;)

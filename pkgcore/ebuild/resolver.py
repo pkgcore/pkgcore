@@ -93,6 +93,7 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, for
 
 class empty_tree_merge_plan(plan.merge_plan):
 	
+	_vdb_restrict = packages.PackageRestriction("repo.livefs", values.EqualityMatch(False))
 	def __init__(self, *args, **kwds):
 		"""
 		@param args: see L{pkgcore.resolver.plan.merge_plan.__init__} for valid args
@@ -102,7 +103,7 @@ class empty_tree_merge_plan(plan.merge_plan):
 		self.first_round_dbs = OrderedDict((repo, cache) for repo, cache in self.all_dbs.iteritems() if not repo.livefs or isinstance(repo, virtual.tree))
 
 	def add_atom(self, atom):
-		return plan.merge_plan.add_atom(self, atom, dbs=self.first_round_dbs)
+		return plan.merge_plan.add_atom(self, KeyedAndRestriction(self._vdb_restrict, atom, key=atom.key), dbs=self.first_round_dbs)
 
 
 def generate_replace_resolver_kls(resolver_kls):

@@ -22,7 +22,7 @@ def raw_env_update(reporter, cset):
 	base = pjoin(reporter.offset, "etc/env.d")
 	collapsed_d = {}
 	for x in sorted(os.listdir(base)):
-		if x.endswith(".bak") or x.endswith("~") or x.startswith("._cfg"):
+		if x.endswith(".bak") or x.endswith("~") or x.startswith("._cfg") or len(x) > 3 or x[0:2].isdigit():
 			continue
 		d = read_bash_dict(pjoin(base, x))
 		# inefficient, but works.

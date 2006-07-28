@@ -34,3 +34,11 @@ class MutatedPkg(object):
 		if isinstance(other, self.__class__):
 			return cmp(self._pkg, other._pkg)
 		return cmp(self._pkg, other)
+
+	def __repr__(self):
+		return '<%s pkg=%r overrides=%r @%#8x>' % \
+			(self.__class__.__name__, self._pkg, tuple(self._overrides), id(self))
+
+	def __str__(self):
+		return '%s(%s, overrides=%s)' % \
+			(self.__class__.__name__, self._pkg, tuple(self._overrides))

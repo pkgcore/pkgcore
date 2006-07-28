@@ -110,7 +110,7 @@ def default_copyfile(obj):
 			ensure_perms(obj)
 		else:
 			shutil.copyfile(obj.real_path, obj.real_location+"#new")
-			ensure_perms(obj.change_attribute(location=obj.real_location+"#new"))
+			ensure_perms(obj.change_attributes(location=obj.real_location+"#new"))
 			os.rename(obj.real_location+"#new", obj.real_location)
 	else:
 		ret = spawn([COPY_BINARY, "-R", obj.real_path, obj.real_location])
@@ -122,7 +122,7 @@ def offset_rewriter(offset, iterable):
 	pjoin = os.path.join
 	sep = os.path.sep
 	for x in iterable:
-		yield x.change_attribute(location=pjoin(offset, x.location.lstrip(sep)))
+		yield x.change_attributes(location=pjoin(offset, x.location.lstrip(sep)))
 
 
 def merge_contents(cset, offset=None, callback=lambda obj:None):

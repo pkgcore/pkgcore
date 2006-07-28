@@ -111,7 +111,7 @@ def config_protect_func(install_cset, existing_cset, protected_filter, engine, c
 				# this shouldn't occur...
 				continue
 			new_fn = pjoin(dir_loc, "._cfg%i_%s" % (count + 1, fname))
-			install_cset.add(entry.change_attribute(real_location=new_fn))
+			install_cset.add(entry.change_attributes(real_location=new_fn))
 		del updates
 
 def config_protect_trigger(existing_cset="install_existing", modifying_cset="cset"):

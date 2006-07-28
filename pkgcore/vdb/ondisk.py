@@ -194,7 +194,7 @@ class install(repo_interfaces.install):
 				for x in self.pkg.contents:
 					# $10 this ain't right.  verify this- harring
 					if self.offset:
-						v.add(x.change_attribute(location=os.path.join(self.offset, x.location)))
+						v.add(x.change_attributes(location=os.path.join(self.offset, x.location)))
 					else:
 						v.add(x)
 				v.flush()

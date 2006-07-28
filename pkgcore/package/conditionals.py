@@ -161,6 +161,9 @@ class PackageWrapper(object):
 	def __str__(self):
 #		return "config wrapper: %s, configurable('%s'):%s" % (self._wrapped_pkg, self._configurable_name, self._configurable)
 		return "config wrapped(%s): %s" % (self._configurable_name, self._wrapped_pkg)
+	
+	def __repr__(self):
+		return "<%s pkg=%r wrapped=%r @%#8x>" % (self.__class__.__name__, self._wrapped_pkg, self._configurable_name, id(self))
 
 	def freeze(self):
 		o = copy.copy(self)

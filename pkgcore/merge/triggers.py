@@ -160,7 +160,6 @@ def fix_special_bits_world_writable(fix_perms=True, cset="new_cset"):
 
 def notice_world_writable(fix_perms=False, cset="new_cset"):
 	def perm_func(engine, cset):
-		import pdb;pdb.set_trace()
 		if not engine.reporter and not fix_perms:
 			return
 		

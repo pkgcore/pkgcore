@@ -104,6 +104,8 @@ class MergeEngine(object):
 			else:
 				self.add_cset(k, v)
 
+		if offset is None:
+			offset = "/"
 		self.offset = offset
 		for k, v in hooks.iteritems():
 			self.add_triggers(k, *v)

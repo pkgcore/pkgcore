@@ -10,9 +10,12 @@ __all__ = ["upgrade_resolver", "min_install_resolver"]
 from pkgcore.resolver import plan
 from pkgcore.util.iterables import caching_iter
 from pkgcore.util.demandload import demandload
+
 demandload(globals(), "pkgcore.util.repo_utils:get_virtual_repos " +
 	"pkgcore.util.mappings:OrderedDict " +
-	"pkgcore.repository:virtual ")
+	"pkgcore.repository:virtual "+
+	"pkgcore.restrictions:packages,values "+
+	"pkgcore.pkgsets.glsa:KeyedAndRestriction ")
 
 
 def prefer_highest_ver(resolver, dbs, atom):
@@ -26,7 +29,7 @@ def prefer_highest_ver(resolver, dbs, atom):
 	return resolver.prefer_highest_version_strategy(resolver, dbs, atom)
 
 
-def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False, force_vdb_virtuals=True, resolver_cls=plan.merge_plan, **kwds):
+def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False, force_replacement=False, force_vdb_virtuals=True, resolver_cls=plan.merge_plan, **kwds):
 
 	"""
 	generate and configure a resolver for upgrading all nodes encountered in processing
@@ -53,10 +56,13 @@ def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False, force_vdb_virtuals
 		dbs = map(plan.nodeps_repo, dbs)
 	elif not verify_vdb:
 		vdb = map(plan.nodeps_repo, vdb)
+
+	if force_replacement:
+		resolver_cls = generate_replace_resolver_kls(resolver_cls)
 	return resolver_cls(dbs + vdb, plan.pkg_sort_highest, f, **kwds)
 
 
-def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, resolver_cls=plan.merge_plan, nodeps=False, **kwds):
+def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, force_replacement=False, resolver_cls=plan.merge_plan, nodeps=False, **kwds):
 	"""
 	generate and configure a resolver that is focused on just installing requests- installs highest version it can build a solution for,
 	but tries to avoid building anything not needed
@@ -80,6 +86,8 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, res
 	elif not verify_vdb:
 		vdb = map(plan.nodeps_repo, vdb)
 	
+	if force_replacement:
+		resolver_cls = generate_replace_resolver_kls(resolver_cls)
 	return resolver_cls(vdb + dbs, plan.pkg_sort_highest, plan.merge_plan.prefer_reuse_strategy, **kwds)
 
 
@@ -95,3 +103,15 @@ class empty_tree_merge_plan(plan.merge_plan):
 
 	def add_atom(self, atom):
 		return plan.merge_plan.add_atom(self, atom, dbs=self.first_round_dbs)
+
+
+def generate_replace_resolver_kls(resolver_kls):
+
+	class replace_resolver(resolver_kls):
+		overriding_resolver_kls = resolver_kls
+		_vdb_restrict = packages.PackageRestriction("repo.livefs", values.EqualityMatch(False))
+		
+		def add_atom(self, atom, **kwds):
+			return self.overriding_resolver_kls.add_atom(self, KeyedAndRestriction(self._vdb_restrict, atom, key=atom.key), **kwds)
+		
+	return replace_resolver

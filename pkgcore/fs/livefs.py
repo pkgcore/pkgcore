@@ -22,7 +22,7 @@ def gen_chksums(handlers, location):
 	return LazyValDict(handlers, f)
 
 
-def gen_obj(chksum_handlers, path, stat=None, real_path=None):
+def gen_obj(path, stat=None, chksum_handlers=None, real_path=None):
 	
 	"""
 	given a fs path, and an optional stat, return an appropriate fs obj representing that file/dir/dev/fif/link
@@ -32,18 +32,25 @@ def gen_obj(chksum_handlers, path, stat=None, real_path=None):
 	@raise KeyError: if no obj type matches the stat checks
 	@return: L{pkgcore.fs.fs.fsBase} derivative
 	"""
-	
+
 	if real_path is None:
 		real_path = path
 	if stat is None:
 		stat = os.lstat(real_path)
+	if chksum_handlers is None:
+		chksum_handlers = get_handlers()
+
 	mode = stat.st_mode
 	d = {"mtime":stat.st_mtime, "mode":S_IMODE(mode), "uid":stat.st_uid, "gid":stat.st_gid, "real_path":real_path}
 	if S_ISDIR(mode):
 		return fsDir(path, **d)
 	elif S_ISREG(mode):
 		d["size"] = stat.st_size
-		return fsFile(path, chksums=gen_chksums(chksum_handlers, path), **d)
+		if real_path is None:
+			l = path
+		else:
+			l = real_path
+		return fsFile(path, chksums=gen_chksums(chksum_handlers, l), **d)
 	elif S_ISLNK(mode):
 		d["target"] = os.readlink(real_path)
 		return fsSymLink(path, **d)
@@ -75,19 +82,19 @@ def iter_scan(path, offset=None):
 	if offset is None:
 		offset = ""
 		dirs = collections.deque([path.rstrip(sep)])
-		yield gen_obj(chksum_handlers, dirs[0])
+		yield gen_obj(dirs[0], chksum_handlers)
 	else:
 		offset = normpath(offset.rstrip(sep))+sep
 		path = normpath(path)
 		dirs = collections.deque([path.rstrip(sep)[len(offset):]])
 		if dirs[0]:
-			yield gen_obj(chksum_handlers, dirs[0])
+			yield gen_obj(dirs[0], chksum_handlers)
 
 	while dirs:
 		base = dirs.popleft() + sep
 		for x in os.listdir(offset + base):
 			path = base + x
-			o = gen_obj(chksum_handlers, path, real_path=offset+path)
+			o = gen_obj(path, chksum_handlers=chksum_handlers, real_path=offset+path)
 			yield o
 			if isinstance(o, fsDir):
 				dirs.append(path)

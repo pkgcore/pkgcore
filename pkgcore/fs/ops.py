@@ -162,7 +162,7 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
 		callback(x)
 
 		try:
-			obj = gen_obj(x.location)
+			obj = gen_obj(x.real_location)
 			if not fs.isdir(obj):
 				raise Exception("%s exists and needs to be a dir, but isn't" % x.location)
 			ensure_perms(x, obj)

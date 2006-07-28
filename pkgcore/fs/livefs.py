@@ -10,10 +10,19 @@ from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO, S_ISCHR, S_ISBLK
 from pkgcore.fs.fs import fsFile, fsDir, fsSymLink, fsDev, fsFifo
 from pkgcore.fs.util import normpath
 from pkgcore.fs.contents import contentsSet
+from pkgcore.chksum import get_handlers
+from pkgcore.util.mappings import LazyValDict
 
 __all__ = ["gen_obj", "scan", "iter_scan"]
 
-def gen_obj(path, stat=None, real_path=None):
+
+def gen_chksums(handlers, location):
+	def f(key):
+		return handlers[key](location)
+	return LazyValDict(handlers, f)
+
+
+def gen_obj(chksum_handlers, path, stat=None, real_path=None):
 	
 	"""
 	given a fs path, and an optional stat, return an appropriate fs obj representing that file/dir/dev/fif/link
@@ -34,7 +43,7 @@ def gen_obj(path, stat=None, real_path=None):
 		return fsDir(path, **d)
 	elif S_ISREG(mode):
 		d["size"] = stat.st_size
-		return fsFile(path, **d)
+		return fsFile(path, chksums=gen_chksums(chksum_handlers, path), **d)
 	elif S_ISLNK(mode):
 		d["target"] = os.readlink(real_path)
 		return fsSymLink(path, **d)
@@ -61,23 +70,24 @@ def iter_scan(path, offset=None):
 	@param path: str path of what directory to scan in the livefs
 	@param offset: if not None, prefix to strip from each objects location.  if offset is /tmp, /tmp/blah becomes /blah
 	"""
+	chksum_handlers = get_handlers()
 	sep = os.path.sep
 	if offset is None:
 		offset = ""
 		dirs = collections.deque([path.rstrip(sep)])
-		yield gen_obj(dirs[0])
+		yield gen_obj(chksum_handlers, dirs[0])
 	else:
 		offset = normpath(offset.rstrip(sep))+sep
 		path = normpath(path)
 		dirs = collections.deque([path.rstrip(sep)[len(offset):]])
 		if dirs[0]:
-			yield gen_obj(dirs[0])
+			yield gen_obj(chksum_handlers, dirs[0])
 
 	while dirs:
 		base = dirs.popleft() + sep
 		for x in os.listdir(offset + base):
 			path = base + x
-			o = gen_obj(path, real_path=offset+path)
+			o = gen_obj(chksum_handlers, path, real_path=offset+path)
 			yield o
 			if isinstance(o, fsDir):
 				dirs.append(path)

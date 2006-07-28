@@ -217,13 +217,13 @@ dump_environ() {
 		y=$(declare -f "$x" 2> /dev/null)
 		if [[ $? != 0 ]]; then
 			# older bash that lacks declare -f x-y validity check fix.
-			fails="$fails $x"
+			fails="${fails:+${fails} }$x"
 		else
 			echo "$y"
 		fi
 	done
 	if [ -n "$fails" ]; then
-		declare | filter-env -F -f "${fails// /,}" -v '.*' | sed -e '/^[[:space:]]*$/d'
+		declare | filter-env -F -f "${fails// /,}" -v '.*'
 	fi
 	unset fails
 	if ! hasq "--no-attributes" "$@"; then

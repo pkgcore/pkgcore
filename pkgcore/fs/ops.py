@@ -54,11 +54,11 @@ def default_ensure_perms(d1,d2=None):
 			do_mtime = True
 
 	if do_mode and m is not None:
-		os.chmod(d1.location, m)
+		os.chmod(d1.real_location, m)
 	if do_chown and (o != -1 or g != -1):
-		os.lchown(d1.location, o, g)
+		os.lchown(d1.real_location, o, g)
 	if do_mtime and t is not None:
-		os.utime(d1.location, (t, t))
+		os.utime(d1.real_location, (t, t))
 	return True
 
 
@@ -74,7 +74,7 @@ def default_mkdir(d):
 		mode = 0777
 	else:
 		mode = d.mode
-	os.mkdir(d.location, mode)
+	os.mkdir(d.real_location, mode)
 	get_plugin("fs_ops", "ensure_perms")(d)
 	return True
 
@@ -95,10 +95,10 @@ def default_copyfile(obj):
 		raise TypeError("obj must be fsBase derivative")
 	elif fs.isdir(obj):
 		raise TypeError("obj must not be a fsDir instance")
-	elif obj.real_path == obj.location:
+	elif obj.real_path == obj.real_location:
 		raise TypeError("obj real_path must differ from obj location")
 	try:
-		if fs.isdir(gen_obj(obj.location)):
+		if fs.isdir(gen_obj(obj.real_location)):
 			raise TypeError("fs_copyfile doesn't work on directories")
 		existant = True
 	except OSError:
@@ -106,16 +106,16 @@ def default_copyfile(obj):
 
 	if fs.isreg(obj):
 		if not existant:
-			shutil.copyfile(obj.real_path, obj.location)
+			shutil.copyfile(obj.real_path, obj.real_location)
 			ensure_perms(obj)
 		else:
-			shutil.copyfile(obj.real_path, obj.location+"#new")
-			ensure_perms(obj.change_attribute(location=obj.location+"#new"))
-			os.rename(obj.location+"#new", obj.location)
+			shutil.copyfile(obj.real_path, obj.real_location+"#new")
+			ensure_perms(obj.change_attribute(location=obj.real_location+"#new"))
+			os.rename(obj.real_location+"#new", obj.real_location)
 	else:
-		ret = spawn([COPY_BINARY, "-R", obj.real_path, obj.location])
+		ret = spawn([COPY_BINARY, "-R", obj.real_path, obj.real_location])
 		if ret != 0:
-			raise Exception("failed cp'ing %s to %s, ret %s" % (obj.real_path, obj.location, ret))
+			raise Exception("failed cp'ing %s to %s, ret %s" % (obj.real_path, obj.real_location, ret))
 	return True
 
 def offset_rewriter(offset, iterable):

@@ -8,11 +8,11 @@ from pkgcore.util.currying import pre_curry
 import os, errno, stat
 
 colon_parsed = set(["ADA_INCLUDE_PATH",  "ADA_OBJECTS_PATH", "LDPATH", "MANPATH", 
-	"PATH", "PRELINK_PATH", "PRELINK_PATH_MASK", "PYTHONPATH"])
+	"PATH", "PRELINK_PATH", "PRELINK_PATH_MASK", "PYTHONPATH", "PKG_CONFIG_PATH"])
 
 incrementals = set(['ADA_INCLUDE_PATH', 'ADA_OBJECTS_PATH', 'CLASSPATH', 'CONFIG_PROTECT', 
 	'CONFIG_PROTECT_MASK', 'INFODIR', 'INFOPATH', 'KDEDIRS', 'LDPATH', 'MANPATH', 
-	'PATH', 'PRELINK_PATH', 'PRELINK_PATH_MASK', 'PYTHONPATH', 'ROOTPATH'])
+	'PATH', 'PRELINK_PATH', 'PRELINK_PATH_MASK', 'PYTHONPATH', 'ROOTPATH', 'PKG_CONFIG_PATH'])
 
 def raw_env_update(reporter, cset):
 	pjoin = os.path.join

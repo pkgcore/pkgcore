@@ -486,7 +486,7 @@ process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, 
 						}
 					} else {
 						// blah=cah ; single word.
-						p = walk_command_complex(p + 1, end, ' ', SPACE_PARSING);
+						p = walk_command_complex(p, end, ' ', SPACE_PARSING);
 					}
 					if(isspace(*p)) {
 						++p;

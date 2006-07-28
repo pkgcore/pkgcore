@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os, stat, errno, shutil, bz2
+import os, stat, errno, shutil
 from pkgcore.repository import prototype, errors
 
 #needed to grab the PN
@@ -17,7 +17,30 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "logging time")
 from pkgcore.repository import multiplex, virtual
 
+try:
+	from bz2 import compress
+except ImportError:
+	from pkgcore.spawn import find_binary, spawn_get_output
+	import tempfile
+	# trigger it to throw a CommandNotFound if missing
+	find_binary("bzip2")
 
+	def compress(in_data, compress_level=9):
+		fd = None
+		fd = tempfile.TemporaryFile("w+")
+		fd.write(in_data)
+		fd.flush()
+		fd.seek(0)
+		try:
+			ret, data = spawn_get_output(["bzip2", "-%ic" % compress_level], fd_pipes={0:fd.fileno()})
+			if ret != 0:
+				raise ValueError("failed compressing the data")
+			return ''.join(data)
+			import pdb;pdb.set_trace()
+		finally:
+			if fd is not None:
+				fd.close()
+	
 class tree(prototype.tree):
 	livefs = True
 	configured = False
@@ -176,7 +199,7 @@ class install(repo_interfaces.install):
 						v.add(x)
 				v.flush()
 			elif k == "environment":
-				data = bz2.compress(open(gettatr(self.pkg, k).get_path(), "r").read())
+				data = compress(open(gettatr(self.pkg, k).get_path(), "r").read())
 				open(os.path.join(dirpath, "environment.bz2"), "w").write(data)
 				del data
 			else:

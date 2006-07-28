@@ -3,7 +3,9 @@
 
 from pkgcore.merge import triggers
 from pkgcore.util.file import read_bash_dict, AtomicWriteFile
-import os
+from pkgcore.fs import fs
+from pkgcore.util.currying import pre_curry
+import os, errno
 
 colon_parsed = set(["ADA_INCLUDE_PATH",  "ADA_OBJECTS_PATH", "LDPATH", "MANPATH", 
 	"PATH", "PRELINK_PATH", "PRELINK_PATH_MASK", "PYTHONPATH"])
@@ -61,3 +63,56 @@ def raw_env_update(reporter, cset):
 
 def env_update_trigger(cset="install"):
 	return triggers.SimpleTrigger(cset, raw_env_update)
+
+
+def config_protect_func(install_cset, existing_cset, protected_filter, engine, csets):
+	install_cset = csets[install_cset]
+	existing_cset = csets[existing_cset]
+	protected = {}
+	pdir = os.path.dirname
+	pbase = os.path.basename
+	pjoin = os.path.join
+	fisdir = fs.isdir
+	for x in existing_cset:
+		if fisdir(x):
+			continue
+		elif protected_filter(x):
+			replacement = install_cset[x.location]
+			if replacement.chksums != x.chksums:
+				protected.setdefault(pdir(x.location), []).append((pbase(x), x))
+
+	for dir_loc, entries in protected.iteritems():
+		updates = dict((x[0], -1) for x in entries)
+		try:
+			existing = sorted(x for x in os.listdir(dir_loc) if x.startswith("._cfg"))
+		except OSError, oe:
+			if oe.errno != errno.ENOENT:
+				raise
+			# this shouldn't occur.
+			continue
+		
+		for x in existing:
+			try:
+				# ._cfg0000_filename
+				count = int(x[5:9])
+				if x[9] != "_":
+					raise ValueError
+				fn = x[10:]
+			except (ValueError, IndexError):
+				continue
+			if fn in updates:
+				updates[fn] = max(updates[fn], count)
+			
+		# now we rename.
+		for fname, entry in entries:
+			try:
+				install_cset.remove(entry)
+			except KeyError:
+				# this shouldn't occur...
+				continue
+			new_fn = pjoin(dir_loc, "._cfg%i_%s" % (count + 1, fname))
+			install_cset.add(entry.change_attribute(real_location=new_fn))
+		del updates
+
+def config_protect_trigger(existing_cset="install_existing", modifying_cset="cset"):
+	return triggers.trigger([existing_cset, modifying_cset], pre_curry(config_protect_func, existing_cset, modifying_cset))

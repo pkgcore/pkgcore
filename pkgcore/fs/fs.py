@@ -42,9 +42,9 @@ raw_init_doc = \
 class fsBase(object):
 	
 	"""base class, all extensions must derive from this class"""
-	__slots__ = ["location", "real_path", "mtime", "mode", "uid", "gid"]
-
-	def __init__(self, location, strict=True, real_path=None, **d):
+	__slots__ = ["location", "_real_location", "real_path", "mtime", "mode", "uid", "gid"]
+	
+	def __init__(self, location, real_location=None, strict=True, real_path=None, **d):
 
 		d["location"] = location
 		if real_path is None:
@@ -53,6 +53,10 @@ class fsBase(object):
 		if not real_path.startswith(path_seperator):
 			real_path = abspath(real_path)
 
+		if real_location is not None:
+			if not real_location.startswith(path_seperator):
+				real_location = abspath(real_location)
+		d["_real_location"] = real_location
 		d["real_path"] = real_path
 		s = object.__setattr__
 		if strict:
@@ -97,6 +101,11 @@ class fsBase(object):
 	def __ne__(self, other):
 		return not self == other
 
+	@property
+	def real_location(self):
+		if self._real_location is not None:
+			return self._real_location
+		return self.location
 
 class fsFile(fsBase):
 

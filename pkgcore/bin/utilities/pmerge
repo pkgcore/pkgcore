@@ -103,7 +103,7 @@ def main():
 
 	if pop_arg(args, "-h", "--help"):
 		print "args supported, [-D || --deep], [[-u || --upgrade]] and -s (system|world) [-d || --debug] [ --ignore-failures ] [ --preload-vdb-state ]"
-		print "[[-p || --pretend] || [-f || --fetchonly]] [ -i || --ignore-cycles ]"
+		print "[[-p || --pretend] || [-f || --fetchonly]] [ -i || --ignore-cycles ] [ --nodeps ]"
 		print "can specify additional atoms when specifying -s, no atoms/sets available, defaults to sys-apps/portage"
 		return 1
 
@@ -128,6 +128,7 @@ def main():
 		resolver_kls = resolver.min_install_resolver
 
 	deep = bool(pop_arg(args, "-D", "--deep"))
+	nodeps = bool(pop_arg(args, None, "--nodeps"))
 
 	conf = load_config()
 
@@ -154,9 +155,9 @@ def main():
 	atoms = stable_unique(atoms)
 
 	if empty_vdb:
-		resolver_inst = resolver_kls(vdb, repos, verify_vdb=deep, resolver_cls=resolver.empty_tree_merge_plan, drop_cycles=ignore_cycles)
+		resolver_inst = resolver_kls(vdb, repos, verify_vdb=deep, nodeps=nodeps, resolver_cls=resolver.empty_tree_merge_plan, drop_cycles=ignore_cycles)
 	else:
-		resolver_inst = resolver_kls(vdb, repos, verify_vdb=deep, drop_cycles=ignore_cycles)
+		resolver_inst = resolver_kls(vdb, repos, verify_vdb=deep, nodeps=nodeps, drop_cycles=ignore_cycles)
 
 	if preload_vdb_state:
 		vdb_time = time.time()
@@ -208,6 +209,7 @@ def main():
 	if vdb_time:
 		print "spent %.2f seconds preloading vdb state" % vdb_time
 	if pretend:
+		import pdb;pdb.set_trace()
 		return 0
 	elif not fetchonly:
 		vdb = vdb.trees[0]

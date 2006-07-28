@@ -82,13 +82,13 @@ def iter_scan(path, offset=None):
 	if offset is None:
 		offset = ""
 		dirs = collections.deque([path.rstrip(sep)])
-		yield gen_obj(dirs[0], chksum_handlers)
+		yield gen_obj(dirs[0], chksum_handlers=chksum_handlers)
 	else:
 		offset = normpath(offset.rstrip(sep))+sep
 		path = normpath(path)
 		dirs = collections.deque([path.rstrip(sep)[len(offset):]])
 		if dirs[0]:
-			yield gen_obj(dirs[0], chksum_handlers)
+			yield gen_obj(dirs[0], chksum_handlers=chksum_handlers)
 
 	while dirs:
 		base = dirs.popleft() + sep

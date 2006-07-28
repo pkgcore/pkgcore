@@ -199,7 +199,7 @@ class install(repo_interfaces.install):
 						v.add(x)
 				v.flush()
 			elif k == "environment":
-				data = compress(open(gettatr(self.pkg, k).get_path(), "r").read())
+				data = compress(open(getattr(self.pkg, k).get_path(), "r").read())
 				open(os.path.join(dirpath, "environment.bz2"), "w").write(data)
 				del data
 			else:

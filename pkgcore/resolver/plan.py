@@ -361,7 +361,8 @@ class merge_plan(object):
 
 			# first, check for conflicts.
 			l = self.state.add_pkg(choices)
-			if l and l != [choices.current_pkg]:
+			# lil bit fugly, but works for the moment
+			if l and not any(True for x in l if atom.match(x)):
 				# this means in this branch of resolution, someone slipped something in already.
 				# cycle, basically.
 				dprint("was trying to insert atom '%s' pkg '%s',\nbut '[%s]' exists already", (atom, choices.current_pkg, 

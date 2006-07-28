@@ -295,7 +295,10 @@ class merge_plan(object):
 		if not matches:
 			if not limit_to_vdb:
 				self.insoluble.add(atom)
-			dprint("processing   %s%s  [%s] no matches", (depth *2 * " ", atom, current_stack[-1][0]))
+			if not current_stack:
+				dprint("processing   %s%s  [first stack], no matches", (depth *2 * " ", atom))
+			else:
+				dprint("processing   %s%s  [%s] no matches", (depth *2 * " ", atom, current_stack[-1][0]))
 			return [atom]
 
 		# experiment. ;)

@@ -80,9 +80,11 @@ class hacked_build_py(build_py.build_py):
 		for f in os.listdir(fp):
 			self.set_chmod(os.path.join(fp, f))
 		fp = os.path.join(self.build_lib, "pkgcore", "bin", "ebuild-env")
-		for f in ("ebuild.sh", "ebuild-daemon.sh", "filter-env"): 
+		for f in ("ebuild.sh", "ebuild-daemon.sh"):
 			self.set_chmod(os.path.join(fp, f))
-	
+		if os.path.exists(os.path.join(fp, "filter-env")):
+			self.set_chmod(os.path.join(fp, "filter-env"))
+
 	def set_chmod(self, fp):
 		if self.dry_run:
 			log.info("changing mode of %s", file)

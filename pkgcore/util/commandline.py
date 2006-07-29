@@ -13,13 +13,16 @@ from pkgcore.package import cpv, atom
 def convert_glob(token):
 	if len(filter(None, token.split("*"))) > 1:
 		raise TypeError("'*' must be specified at the end or beginning of a matching field")
-	if token.startswith("*"):
+	l = len(token)
+	if token.startswith("*") and l > 1:
 		if token.endswith("*"):
+			if l == 2:
+				return None
 			return values.ContainmentMatch(token.strip("*"))
 		return values.StrGlobMatch(token.strip("*"), prefix=False)
-	elif token.endswith("*"):
+	elif token.endswith("*") and l > 1:
 		return values.StrGlobMatch(token.strip("*"), prefix=True)
-	elif not token:
+	elif l <= 1:
 		return None
 	return values.StrExactMatch(token)
 
@@ -71,17 +74,12 @@ def generate_restriction(text):
 		if len(r) == 1:
 			return r[0]
 		return packages.AndRestriction(*r)
-	if "*" not in text and len(tsplit) != 1:
+	if "*" not in text:
 		a = atom.atom(text)
 		# force expansion
 		a.key
 		return a
-	if len(tsplit) == 1:
-		r = convert_glob(tsplit[0])
-		if not r:
-			return packages.AlwaysTrue
-		return packages.PackageRestriction("package", r)
-	
+
 	r = map(convert_glob, tsplit)
 	if not r[0] and not r[1]:
 		return packages.AlwaysTrue

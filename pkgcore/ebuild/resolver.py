@@ -13,9 +13,10 @@ from pkgcore.util.demandload import demandload
 
 demandload(globals(), "pkgcore.util.repo_utils:get_virtual_repos " +
 	"pkgcore.util.mappings:OrderedDict " +
-	"pkgcore.repository:virtual "+
+	"pkgcore.repository:virtual,prototype "+
 	"pkgcore.restrictions:packages,values "+
-	"pkgcore.pkgsets.glsa:KeyedAndRestriction ")
+	"pkgcore.pkgsets.glsa:KeyedAndRestriction "+
+	"pkgcore.util:lists,repo_utils ")
 
 
 def prefer_highest_ver(resolver, dbs, atom):
@@ -90,29 +91,32 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, for
 		resolver_cls = generate_replace_resolver_kls(resolver_cls)
 	return resolver_cls(vdb + dbs, plan.pkg_sort_highest, plan.merge_plan.prefer_reuse_strategy, **kwds)
 
+_vdb_restrict = packages.OrRestriction(packages.PackageRestriction("repo.livefs", values.EqualityMatch(False)), \
+	packages.PackageRestriction("category", values.StrExactMatch("virtual")))
 
 class empty_tree_merge_plan(plan.merge_plan):
-	
-	_vdb_restrict = packages.PackageRestriction("repo.livefs", values.EqualityMatch(False))
+
+	_vdb_restriction = _vdb_restrict
+
 	def __init__(self, *args, **kwds):
 		"""
 		@param args: see L{pkgcore.resolver.plan.merge_plan.__init__} for valid args
 		@param kwds: see L{pkgcore.resolver.plan.merge_plan.__init__} for valid args
 		"""
 		plan.merge_plan.__init__(self, *args, **kwds)
-		self.first_round_dbs = OrderedDict((repo, cache) for repo, cache in self.all_dbs.iteritems() if not repo.livefs or isinstance(repo, virtual.tree))
 
 	def add_atom(self, atom):
-		return plan.merge_plan.add_atom(self, KeyedAndRestriction(self._vdb_restrict, atom, key=atom.key), dbs=self.first_round_dbs)
+		return plan.merge_plan.add_atom(self, KeyedAndRestriction(self._vdb_restriction, atom, key=atom.key), dbs=self.all_dbs)
 
 
 def generate_replace_resolver_kls(resolver_kls):
 
+
 	class replace_resolver(resolver_kls):
 		overriding_resolver_kls = resolver_kls
-		_vdb_restrict = packages.PackageRestriction("repo.livefs", values.EqualityMatch(False))
+		_vdb_restriction = _vdb_restrict
 		
 		def add_atom(self, atom, **kwds):
-			return self.overriding_resolver_kls.add_atom(self, KeyedAndRestriction(self._vdb_restrict, atom, key=atom.key), **kwds)
+			return self.overriding_resolver_kls.add_atom(self, KeyedAndRestriction(self._vdb_restrictiction, atom, key=atom.key), **kwds)
 		
 	return replace_resolver

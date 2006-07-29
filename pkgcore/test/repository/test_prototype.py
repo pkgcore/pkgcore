@@ -6,6 +6,9 @@ from twisted.trial import unittest
 from pkgcore.restrictions import packages, values
 from pkgcore.package.atom import atom
 from pkgcore.package.cpv import CPV
+from pkgcore.util.currying import pre_curry
+
+rev_sorted = pre_curry(sorted, reverse=True)
 
 class SimpleTree(tree):
 	package_class = CPV
@@ -50,11 +53,13 @@ class TestPrototype(unittest.TestCase):
 		self.assertEqual(sorted(set(x.package for x in self.repo.itermatch(rc))),
 			sorted(["diffball", "bsdiff"]))
 		rp = packages.PackageRestriction("package", values.StrExactMatch("diffball"))
-		self.assertEqual(sorted(x.version for x in self.repo.itermatch(rp)), ["0.7", "1.0"])
-		self.assertEqual(sorted(self.repo.itermatch(packages.OrRestriction(rc, rp))),
+		self.assertEqual(list(x.version for x in self.repo.itermatch(rp, sorter=sorted)), ["0.7", "1.0"])
+		self.assertEqual(self.repo.match(packages.OrRestriction(rc, rp), sorter=sorted),
 			sorted(CPV(x) for x in ("dev-util/diffball-0.7", "dev-util/diffball-1.0", "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2")))
 		self.assertEqual(sorted(self.repo.itermatch(packages.AndRestriction(rc, rp))),
 			sorted(CPV(x) for x in ("dev-util/diffball-0.7", "dev-util/diffball-1.0")))
+		self.assertEqual(sorted(self.repo), self.repo.match(packages.AlwaysTrue, sorter=sorted))
+		self.assertEqual(sorted(self.repo), self.repo.match(packages.OrRestriction(rc, packages.AlwaysTrue), sorter=sorted))
 		rc2 = packages.PackageRestriction("category", values.StrExactMatch("dev-lib"))
 		self.assertEqual(sorted(self.repo.itermatch(packages.AndRestriction(rp, rc2))), sorted([]))
 
@@ -71,6 +76,7 @@ class TestPrototype(unittest.TestCase):
 		self.assertEqual(sorted(self.repo.itermatch(packages.OrRestriction(packages.AlwaysTrue, rp2))),
 			sorted(CPV(x) for x in ("dev-util/diffball-0.7", "dev-util/diffball-1.0", "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
 			"dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
+
 
 	def test_iter(self):
 		self.assertEqual(sorted(self.repo), sorted(CPV(x) for x in 

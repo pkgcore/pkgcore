@@ -7,6 +7,7 @@ from pkgcore.restrictions import packages, values
 from pkgcore.package.atom import atom
 from pkgcore.package.cpv import CPV
 from pkgcore.util.currying import pre_curry
+from pkgcore.util.mappings import OrderedDict
 
 rev_sorted = pre_curry(sorted, reverse=True)
 
@@ -32,8 +33,10 @@ class SimpleTree(tree):
 class TestPrototype(unittest.TestCase):
 	
 	def setUp(self):
-		self.repo = SimpleTree({"dev-util":{"diffball":["1.0", "0.7"], "bsdiff":["0.4.1", "0.4.2"]},
-			"dev-lib":{"fake":["1.0", "1.0-r1"]}})
+		# we an orderreddict here specifically to trigger any sorter related bugs
+		d = {"dev-util":{"diffball":["1.0", "0.7"], "bsdiff":["0.4.1", "0.4.2"]},
+			"dev-lib":{"fake":["1.0", "1.0-r1"]}}
+		self.repo = SimpleTree(OrderedDict((k, d[k]) for k in sorted(d, reverse=True)))
 
 	def test_internal_lookups(self):
 		self.assertEqual(sorted(self.repo.categories), sorted(["dev-lib", "dev-util"]))
@@ -59,7 +62,7 @@ class TestPrototype(unittest.TestCase):
 		self.assertEqual(sorted(self.repo.itermatch(packages.AndRestriction(rc, rp))),
 			sorted(CPV(x) for x in ("dev-util/diffball-0.7", "dev-util/diffball-1.0")))
 		self.assertEqual(sorted(self.repo), self.repo.match(packages.AlwaysTrue, sorter=sorted))
-		self.assertEqual(sorted(self.repo), self.repo.match(packages.OrRestriction(rc, packages.AlwaysTrue), sorter=sorted))
+		self.assertEqual(sorted(self.repo), self.repo.match(packages.OrRestriction(rc, rp), sorter=sorted))
 		rc2 = packages.PackageRestriction("category", values.StrExactMatch("dev-lib"))
 		self.assertEqual(sorted(self.repo.itermatch(packages.AndRestriction(rp, rc2))), sorted([]))
 

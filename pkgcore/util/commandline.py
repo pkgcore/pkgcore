@@ -66,6 +66,7 @@ def generate_restriction(text):
 				r = convert_glob(text)
 				if r is None:
 					return packages.AlwaysTrue
+				return packages.PackageRestriction("package", r)
 		elif text.startswith("*"):
 			raise ValueError("cannot do prefix glob matches with version ops: %s" % orig_text)
 		# ok... fake category.  whee.

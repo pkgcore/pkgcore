@@ -91,8 +91,13 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, for
 		resolver_cls = generate_replace_resolver_kls(resolver_cls)
 	return resolver_cls(vdb + dbs, plan.pkg_sort_highest, plan.merge_plan.prefer_reuse_strategy, **kwds)
 
-_vdb_restrict = packages.OrRestriction(packages.PackageRestriction("repo.livefs", values.EqualityMatch(False)), \
-	packages.PackageRestriction("category", values.StrExactMatch("virtual")))
+_vdb_restrict = packages.OrRestriction(
+	packages.PackageRestriction("repo.livefs", values.EqualityMatch(False)),
+	packages.AndRestriction(
+		packages.PackageRestriction("category", values.StrExactMatch("virtual")),
+		packages.PackageRestriction("package_is_real", values.EqualityMatch(False))
+		)
+	)
 
 class empty_tree_merge_plan(plan.merge_plan):
 

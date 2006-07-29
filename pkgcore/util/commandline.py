@@ -62,10 +62,10 @@ def generate_restriction(text):
 	if len(tsplit) == 1:
 		ops, text = collect_ops(text)
 		if not ops:
-			r = convert_glob(text)
-			if r is None:
-				return packages.AlwaysTrue
-			return packages.PackageRestriction("package", r)
+			if "*" in text:
+				r = convert_glob(text)
+				if r is None:
+					return packages.AlwaysTrue
 		elif text.startswith("*"):
 			raise ValueError("cannot do prefix glob matches with version ops: %s" % orig_text)
 		# ok... fake category.  whee.

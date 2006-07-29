@@ -45,6 +45,7 @@ class TestPrototype(unittest.TestCase):
 		self.assertFalse(self.repo.match(atom("dev-util/monkeys_rule")))
 
 	def test_identify_candidates(self):
+		self.assertRaises(TypeError, self.repo.match, ("asdf"))
 		rc = packages.PackageRestriction("category", values.StrExactMatch("dev-util"))
 		self.assertEqual(sorted(set(x.package for x in self.repo.itermatch(rc))),
 			sorted(["diffball", "bsdiff"]))

@@ -62,7 +62,8 @@ class TestPrototype(unittest.TestCase):
 		self.assertEqual(sorted(self.repo.itermatch(packages.AndRestriction(rc, rp))),
 			sorted(CPV(x) for x in ("dev-util/diffball-0.7", "dev-util/diffball-1.0")))
 		self.assertEqual(sorted(self.repo), self.repo.match(packages.AlwaysTrue, sorter=sorted))
-		self.assertEqual(sorted(self.repo), self.repo.match(packages.OrRestriction(rc, rp), sorter=sorted))
+		# mix/match cat/pkg to check that it handles that corner case properly for sorting.
+		self.assertEqual(sorted(self.repo), self.repo.match(packages.OrRestriction(rc, rp, packages.AlwaysTrue), sorter=sorted))
 		rc2 = packages.PackageRestriction("category", values.StrExactMatch("dev-lib"))
 		self.assertEqual(sorted(self.repo.itermatch(packages.AndRestriction(rp, rc2))), sorted([]))
 

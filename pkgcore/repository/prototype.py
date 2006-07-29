@@ -170,6 +170,7 @@ class tree(object):
 
 	def _identify_candidates(self, restrict, sorter):
 		# full expansion
+		ret_mangler = self.packages.return_mangler
 		if not isinstance(restrict, boolean.base) or isinstance(restrict, atom):
 			return self._fast_identify_candidates(restrict, sorter)
 		dsolutions = [([c.restriction for c in collect_package_restrictions(x, ["category"])], 
@@ -177,12 +178,13 @@ class tree(object):
 		for x in dsolutions:
 			if not x[0] and not x[1]:
 				# great... one doesn't rely on cat/pkg.
-				return self.packages
+				if iter is sorter:
+					return self.packages
+				return (ret_mangler((c, p)) for c in sorter(self.categories) for p in sorter(self.packages.get(c, [])))
 		# simple cases first.
 		# if one specifies categories, and one doesn't
 		cat_specified = bool(dsolutions[0][0])
 		pkg_specified = bool(dsolutions[0][1])
-		ret_mangler = self.packages.return_mangler
 		pgetter = self.packages.get
 		if any(True for x in dsolutions[1:] if bool(x[0]) != cat_specified):
 			if any(True for x in dsolutions[1:] if bool(x[1]) != pkg_specified):

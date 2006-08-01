@@ -362,12 +362,19 @@ class merge_plan(object):
 			# first, check for conflicts.
 			l = self.state.add_pkg(choices)
 			# lil bit fugly, but works for the moment
-			if l and not any(True for x in l if atom.match(x)):
+			if l:
 				# this means in this branch of resolution, someone slipped something in already.
 				# cycle, basically.
 				dprint("was trying to insert atom '%s' pkg '%s',\nbut '[%s]' exists already", (atom, choices.current_pkg, 
 					", ".join(str(y) for y in l)))
 				# hack.  see if what was insert is enough for us.
+				
+				# this is tricky... if it's the same node inserted (cycle), then we ignore it; this does *not* perfectly behave though, doesn't discern between repos.
+				if len(l) == 1 and l[0] == choices.current_pkg and l[0].repo.livefs == choices.current_pkg.repo.livefs and atom.match(l[0]):
+					# early exit.  means that a cycle came about, but exact same result slipped through.
+					dprint("non issue, cycle for %s pkg %s resolved to same pkg" % (repr(atom), choices.current_pkg))
+					current_stack.pop()
+					return []
 				fail = try_rematch = False
 				if any(True for x in l if isinstance(x, restriction.base)):
 					# blocker was caught
@@ -432,7 +439,7 @@ class merge_plan(object):
 							print "provider conflicted... how?"
 #							import pdb;pdb.set_trace()
 #							print "should do something here, something sane..."
-							failures = [x]
+							fail = [x]
 							break
 			else:
 				fail = False

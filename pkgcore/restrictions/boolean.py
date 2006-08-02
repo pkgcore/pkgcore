@@ -326,35 +326,31 @@ class OrRestriction(base):
 		return dcnf
 				
 
-	def dnf_solutions(self, full_solution_expansion=False):
+	def iter_dnf_solutions(self, full_solution_expansion=False):
 		"""
 		returns a list in DNF (disjunctive normalized form) for of this instance
 		
 		@param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
 		"""
 		if self.negate:
-#			raise NotImplementedError("negation for dnf_solutions on AndRestriction isn't implemented yet")
 			# hack- this is an experiment
-			return AndRestriction(type=self.type, strict=False, *[restriction.Negate(x) for x in self.restrictions]).dnf_solutions()
+			for x in AndRestriction(type=self.type, strict=False, *[restriction.Negate(x) for x in self.restrictions]).iter_dnf_solutions():
+				yield x
 		if not self.restrictions:
-			return [[]]
-		choices = []
+			yield []
+			return
 		for x in self.restrictions:
 			if isinstance(x, base):
-				s = x.dnf_solutions(full_solution_expansion=full_solution_expansion)
-				# must be a solution.
-				assert s
-				choices.extend(s)
+				for y in x.iter_dnf_solutions(full_solution_expansion=full_solution_expansion):
+					yield y
 			else:
-				choices.append([x])
+				yield [x]
 
-		return choices
-
-	def iter_dnf_solutions(self, *args, **kwds):
+	def dnf_solutions(self, *args, **kwds):
 		"""
 		see dnf_solutions, iterates yielding DNF solutions
 		"""
-		return iter(self.dnf_solutions(*args, **kwds))
+		return list(self.iter_dnf_solutions(*args, **kwds))
 
 	def force_True(self, pkg, *vals):
 		pvals = [pkg]

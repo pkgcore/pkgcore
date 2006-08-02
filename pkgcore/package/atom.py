@@ -186,7 +186,6 @@ class atom(boolean.AndRestriction):
 			self.glob = False
 			self.atom = atom[pos:]
 		self.negate_vers = negate_vers
-#		self.cpv = cpv.CPV(self.atom)
 		if "~" in self.op:
 			if self.cpv.version is None:
 				raise MalformedAtom(orig_atom, "~ operator requires a version")

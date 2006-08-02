@@ -169,5 +169,5 @@ class _delayed_compiler(object):
 def demand_compile(*args, **kwargs):
     return _delayed_compiler(args, kwargs)
 
-re.compile = demand_compile
+#re.compile = demand_compile
 

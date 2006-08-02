@@ -71,8 +71,11 @@ class package_factory(metadata.factory):
 	def _get_metadata(self, pkg):
 		return self._parent_repo._get_metadata(pkg)
 
-	def _get_new_child_data(self, cpv):
-		return ([self._parent_repo._get_ebuild_path], {})
+	def new_package(self, cpv):
+		inst = self._cached_instances.get(cpv, None)
+		if inst is None:
+			inst = self._cached_instances[cpv] = self.child_class(cpv, self, self._parent_repo._get_ebuild_path)
+		return inst
 
 
 class fake_package_factory(package_factory):

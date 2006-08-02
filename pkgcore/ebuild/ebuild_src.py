@@ -183,7 +183,7 @@ class package(metadata.package):
 		"license", "provides"])
 
 	def __init__(self, cpv, parent, pull_path):
-		super(package, self).__init__(cpv, parent)
+		metadata.package.__init__(self, cpv, parent)
 		self.__dict__["_get_path"] = pull_path
 	
 	_get_attr = dict(metadata.package._get_attr)
@@ -264,17 +264,15 @@ class package_factory(metadata.factory):
 
 		return mydata
 
-	def _get_new_child_data(self, cpv):
-		return ([self._parent_repo._get_ebuild_path], {})
-
 	def new_package(self, cpv):
-		inst = metadata.factory.new_package(self, cpv)
-		if inst.key not in self._weak_pkglevel_cache:
-			o = ThrowAwayNameSpace([None, None, None])
-			self._weak_pkglevel_cache[inst.key] = o
-		else:
-			o = self._weak_pkglevel_cache[inst.key]
-		inst.__dict__["_pkg_metadata_shared"] = o
+		inst = self._cached_instances.get(cpv, None)
+		if inst is None:
+			inst = self._cached_instances[cpv] = self.child_class(cpv, self, self._parent_repo._get_ebuild_path)
+			o = self._weak_pkglevel_cache.get(inst.key, None)
+			if o is None:
+				o = ThrowAwayNameSpace([None, None, None])
+				self._weak_pkglevel_cache[inst.key] = o
+			inst.__dict__["_pkg_metadata_shared"] = o
 		return inst
 
 

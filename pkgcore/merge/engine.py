@@ -58,6 +58,9 @@ class MergeEngine(object):
 		replace_hooks[k].extend([ebuild_triggers.env_update_trigger, triggers.ldconfig_trigger])
 	del k
 	
+	install_hooks["pre_merge"].append(ebuild_triggers.config_protect_trigger)
+	replace_hooks["pre_merge"].append(ebuild_triggers.config_protect_trigger)
+	
 	# break this down into configured, right now hardcoded.
 	l = [triggers.fix_default_gid, triggers.fix_default_uid, triggers.fix_special_bits_world_writable,
 		triggers.notice_world_writable]
@@ -69,9 +72,9 @@ class MergeEngine(object):
 	uninstall_csets = dict(install_csets)
 	replace_csets = dict(install_csets)
 
-	install_csets.update({}.fromkeys(["install", "replace", "modifying"],
+	install_csets.update({}.fromkeys(["install", "replace"],
 		currying.pre_curry(alias_cset, "new_cset")))
-	uninstall_csets.update({}.fromkeys(["uninstall", "modifying"],
+	uninstall_csets.update({}.fromkeys(["uninstall"],
 		currying.pre_curry(alias_cset, "old_cset")))
 	replace_csets["install"] = currying.pre_curry(alias_cset, "new_cset")
 	replace_csets["modifying"] = lambda e, c: c["install"].intersection(c["uninstall"])
@@ -287,6 +290,6 @@ class MergeEngine(object):
 		return csets["new_cset"].intersection(csets["old_cset"])
 
 	@staticmethod
-	def get_livefs_intersect_cset(engine, csets, default_cset="modifying"):
+	def get_livefs_intersect_cset(engine, csets, default_cset="install"):
 		"""generates the livefs intersection against a cset"""
 		return contents.contentsSet(scan_livefs(csets[default_cset]))

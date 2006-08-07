@@ -14,16 +14,12 @@ incrementals = set(['ADA_INCLUDE_PATH', 'ADA_OBJECTS_PATH', 'CLASSPATH', 'CONFIG
 	'CONFIG_PROTECT_MASK', 'INFODIR', 'INFOPATH', 'KDEDIRS', 'LDPATH', 'MANPATH', 
 	'PATH', 'PRELINK_PATH', 'PRELINK_PATH_MASK', 'PYTHONPATH', 'ROOTPATH', 'PKG_CONFIG_PATH'])
 
-def raw_env_update(reporter, cset):
+def collapse_envd(base):
 	pjoin = os.path.join
-	offset = reporter.offset
-	if reporter.offset is None:
-		offset = "/"
-	base = pjoin(reporter.offset, "etc/env.d")
 	collapsed_d = {}
 	for x in sorted(os.listdir(base)):
-		if x.endswith(".bak") or x.endswith("~") or x.startswith("._cfg") or len(x) > 3 or x[0:2].isdigit() \
-			or not stat.S_ISREG(os.lstat(pjoin(base, x)).st_mode):
+		if x.endswith(".bak") or x.endswith("~") or x.startswith("._cfg") or not (len(x) > 2 and x[0:2].isdigit() \
+			and stat.S_ISREG(os.lstat(pjoin(base, x)).st_mode)):
 			continue
 		d = read_bash_dict(pjoin(base, x))
 		# inefficient, but works.
@@ -36,6 +32,15 @@ def raw_env_update(reporter, cset):
 			else:
 				collapsed_d[k] = d[k]
 		del d
+	return collapsed_d
+	
+
+def raw_env_update(reporter, cset):
+	pjoin = os.path.join
+	offset = reporter.offset
+	if reporter.offset is None:
+		offset = "/"
+	collapsed_d = collapse_envd(pjoin(offset, "etc/env.d"))
 	
 	if "LDPATH" in collapsed_d:
 		# we do an atomic rename instead of open and write quick enough (avoid the race iow)

@@ -259,11 +259,11 @@ class MergeEngine(object):
 			for rcs in x.required_csets:
 				if rcs not in self.cset_sources:
 					if isinstance(rcs, basestring):
-						raise errors.TriggerUnknownCset(rcs)
+						raise errors.TriggerUnknownCset(x, rcs)
 #					elif isinstance(rcs, (tuple, list)):
 #						updates.update([rcs])
 #					elif not callable(rcs):
-#						raise TriggerUnknownCset(rcs)
+#						raise TriggerUnknownCset(x, rcs)
 
 		for x in triggers:
 			x.register(hook_name, self.hooks[hook_name])

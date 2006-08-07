@@ -22,6 +22,15 @@ class BlockModification(ModificationError):
 class TriggerUnknownCset(ModificationError):
 	"""Trigger's required content set isn't known"""
 
+	def __init__(self, trigger, csets):
+		if not isinstance(csets, (tuple, list)):
+			csets = (csets,)
+		self.trigger, self.csets = trigger, csets
+	
+	def __str__(self):
+		return "%s: trigger %r unknown cset: %r" % (self.__class__, self.trigger, self.csets)
+
+
 class NonFatalModification(Exception):
 	pass
 

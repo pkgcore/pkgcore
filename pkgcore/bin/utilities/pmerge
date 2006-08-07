@@ -102,7 +102,7 @@ def unmerge(vdb, atoms, pretend=True, ignore_failures=False):
 	for raw in atoms:
 		try:
 			rewritten = parse_atom(vdb, False, raw)[0]
-		except AmbiguosQuery, e:
+		except AmbiguousQuery, e:
 			if not ignore_failures:
 				raise
 			print e
@@ -129,7 +129,6 @@ def unmerge(vdb, atoms, pretend=True, ignore_failures=False):
 		vdb = vdb.trees[0]
 		print "warning: vdb is frozen, overriding"
 		vdb.frozen = False
-		import pdb;pdb.set_trace()
 
 	for x in nuke:
 		op = vdb.uninstall(x)

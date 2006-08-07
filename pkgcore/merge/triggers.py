@@ -73,34 +73,40 @@ class SimpleTrigger(trigger):
 	
 	def __init__(self, cset_name, ftrigger, register_func=None):
 		"""
-		@param cset_name: cset to use
+		@param cset_name: cset to use, either string (single), list/tuple for many.  Can be an empty tuple if no csets used
 		@param ftrigger: callable to execute when 'triggered'
 		@param register_func: None, or callable to call to register with a MergeEngine
 		"""
-		if not isinstance(cset_name, basestring):
-			raise TypeError("cset_name must be a string")
-		trigger.__init__(self, [cset_name], ftrigger, register_func=register_func)
+		if not isinstance(cset_name, (list, tuple)):
+			if not isinstance(cset_name, basestring):
+				raise TypeError("cset_name must be a string")
+			cset_name = [cset_name]
+		trigger.__init__(self, cset_name, ftrigger, register_func=register_func)
 
 	def __call__(self, engine, csets):
-		self.trigger(engine, csets[self.required_csets[0]])
+		self.trigger(engine, *[csets[x] for x in self.required_csets])
 	
 
-def run_ldconfig(engine, cset, ld_so_conf_file="etc/ld.so.conf"):
+def run_ldconfig(engine, ld_so_conf_file="etc/ld.so.conf"):
 	"""execute ldconfig updates"""
+
+	# use this for the time- disabled and forced to fire
+
 
 	# this sucks. not very fine grained, plus it can false positive on binaries
 	# libtool fex, which isn't a lib
-	fireit = False
-	for x in cset.iterfiles():
-		s = x.location
-		if s[-3:] == ".so":
-			pass
-		elif os.path.basename(s[:3]).lower() != "lib":
-			pass
-		else:
-			continue
-		fireit = True
-		break
+#	fireit = False
+#	for x in cset.iterfiles():
+#		s = x.location
+#		if s[-3:] == ".so":
+#			pass
+#		elif os.path.basename(s[:3]).lower() != "lib":
+#			pass
+#		else:
+#			continue
+#		fireit = True
+#		break
+	fireit = True
 
 	if fireit:
 		if engine.offset is None:
@@ -127,9 +133,9 @@ def unmerge_trigger(cset="uninstall"):
 	"""generate a trigger for the actual unmerge from the livefs"""
 	return SimpleTrigger(cset, lambda e, c: get_plugin("fs_ops", "unmerge_contents")(c))
 
-def ldconfig_trigger(cset="modifying"):
+def ldconfig_trigger():
 	"""generate a trigger to execute any ldconfig calls required"""
-	return SimpleTrigger(cset, run_ldconfig)
+	return SimpleTrigger([], run_ldconfig)
 
 def fix_default_gid(gid=pkgcore.os_data.portage_gid, replacement=pkgcore.os_data.root_gid, cset="new_cset"):
 	def change_gid(engine, cset):

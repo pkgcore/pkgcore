@@ -96,13 +96,57 @@ def parse_atom(repos, ignore_failures, *tokens):
 			atoms.append(atom(key))
 	return atoms	
 
+def unmerge(vdb, atoms, pretend=True, ignore_failures=False):
+	# admittedly... this is fugly.
+	new_atoms = []
+	for raw in atoms:
+		try:
+			rewritten = parse_atom(vdb, False, raw)[0]
+		except AmbiguosQuery, e:
+			if not ignore_failures:
+				raise
+			print e
+			print "ignoring..."
+			continue
+		new_atoms.append((raw, rewritten))
+
+	nuke = set()
+	for raw, a in new_atoms:
+		matches = vdb.match(a)
+		if not matches:
+			if not ignore_failures:
+				raise NoMatches(raw, a)
+			print "ignoring %s: rewritten %s, no vdb matches" % (raw, a)
+			continue
+		nuke.update(matches)
+	print "removing: %s" % ", ".join(str(x) for x in sorted(nuke))
+	if pretend:
+		return True
+
+	if vdb.frozen:
+		# hackity hack hack hack.
+		# should clean this out in the rewrite
+		vdb = vdb.trees[0]
+		print "warning: vdb is frozen, overriding"
+		vdb.frozen = False
+		import pdb;pdb.set_trace()
+
+	for x in nuke:
+		op = vdb.uninstall(x)
+		ret = op.finish()
+		if not ret:
+			print "failed unmerging %s" % x
+			if not ignore_failures:
+				return ret
+	return True
+
 
 def main():
 	import time
 	args = sys.argv[1:]
 
 	if pop_arg(args, "-h", "--help"):
-		print "args supported, [-D || --deep], [[-u || --upgrade]] and -s (system|world) [-d || --debug] [ --ignore-failures ] [ --preload-vdb-state ]"
+		print "args supported, [-D || --deep], [[-C || --unmerge] || [ [-u || --upgrade] || [ -s (system|world) ]] [-d || --debug] [ --ignore-failures ] [ --preload-vdb-state ]"
 		print "[[-p || --pretend] || [-f || --fetchonly]] [ -i || --ignore-cycles ] [ --nodeps ] [ -r || --replace ]"
 		print "can specify additional atoms when specifying -s, no atoms/sets available, defaults to sys-apps/portage"
 		return 1
@@ -119,13 +163,10 @@ def main():
 	upgrade = pop_arg(args, "-u", "--upgrade")
 	preload_vdb_state = pop_arg(args, None, "--preload-vdb-state")
 	ignore_failures = pop_arg(args, None, "--ignore-failures")
+	unmerging = pop_arg(args, "-C", "--unmerge")
 	if max and max == upgrade:
 		print "can only choose max, or upgrade"
 		return 1
-	if upgrade:
-		resolver_kls = resolver.upgrade_resolver
-	else:
-		resolver_kls = resolver.min_install_resolver
 
 	deep = bool(pop_arg(args, "-D", "--deep"))
 	nodeps = bool(pop_arg(args, None, "--nodeps"))
@@ -134,18 +175,33 @@ def main():
 
 	set_targets = pop_paired_args(args, ["--set", "-s"], "pkg sets to enable")
 	if set_targets:
+		if unmerging:
+			raise Exception("sorry, using sets with -C probably isn't wise- bailing")
 		print "using pkgset(s): %s" % (", ".join("'%s'" % x.strip() for x in set_targets))
 	set_targets = [a for t in set_targets for a in conf.pkgset[t]]
+
 	#map(atom, conf.pkgset[l]) for l in set_targets], restriction.base)
 	
 	domain = conf.domain["livefs domain"]
 	vdb, repos = domain.all_vdbs, domain.all_repos
+
+	if unmerging:
+		if upgrade:
+			raise Exception("can't combine upgrade and unmerging")
+		if not args:
+			raise Exception("need at least one atom")
+		unmerge(vdb, args, pretend=pretend, ignore_failures=ignore_failures)
+		return 0
+	elif upgrade:
+		resolver_kls = resolver.upgrade_resolver
+	else:
+		resolver_kls = resolver.min_install_resolver
+
 	if not args:
 		if set_targets:
 			atoms = []
 		else:
-			print "resolving sys-apps/portage since no atom supplied"
-			atoms = [atom("sys-apps/portage")]
+			raise Exception("need at least one atom/set")
 	else:
 		atoms = parse_atom(repos, ignore_failures, *args)
 

@@ -58,7 +58,13 @@ class trigger(object):
 		self.trigger(engine, csets)
 
 	def __str__(self):
-		return "trigger: %s for csets(%s)" % (self.trigger, self.required_csets)
+		return "%s: cset(%s) ftrigger(%s)" % (self.__class__, self.required_csets, self.trigger)
+	
+	def __repr__(self):
+		s = ''
+		if self.register_func is not None:
+			s = "register_func=%r " % self.register_func
+		return "<%s cset=%r ftrigger=%r %s@#%xf>" % (self.__class__.__name__, self.required_csets, self.trigger, s, id(self))
 
 
 class SimpleTrigger(trigger):
@@ -77,7 +83,7 @@ class SimpleTrigger(trigger):
 
 	def __call__(self, engine, csets):
 		self.trigger(engine, csets[self.required_csets[0]])
-
+	
 
 def run_ldconfig(engine, cset, ld_so_conf_file="etc/ld.so.conf"):
 	"""execute ldconfig updates"""

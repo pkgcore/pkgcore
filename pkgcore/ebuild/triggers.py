@@ -89,33 +89,42 @@ def simple_chksum_compare(x, y):
 	return found
 
 
-def config_protect_func(existing_cset, install_cset, engine, csets):
-	install_cset = csets[install_cset]
-	existing_cset = csets[existing_cset]
-	pjoin = os.path.join
-	offset = engine.offset
-	collapsed_d = collapse_envd(pjoin(offset, "etc/env.d"))
-	# probably gets offset wrong.
-	# need trailing '/', else it'll pick up /etc/env.d when the stated was /etc/env (implicit dir target)
-	r = values.OrRestriction(*[values.StrGlobMatch(util.normpath(x).rstrip("/") + "/") for x in set(collapsed_d.get("CONFIG_PROTECT", []) + ["/etc"])])
+def gen_config_protect_filter(offset):
+	collapsed_d = collapse_envd(os.path.join(offset, "etc/env.d"))
+	
+	r = [values.StrGlobMatch(util.normpath(x).rstrip("/") + "/") for x in set(collapsed_d.get("CONFIG_PROTECT", []) + ["/etc"])]
+	if len(r) > 1:
+		r = values.OrRestriction(*r)
+	else:
+		r = r[0]
 	neg = collapsed_d.get("CONFIG_PROTECT_MASK", None)
 	if neg is not None:
-		r = values.AndRestriction(r, 
-			values.OrRestriction(negate=True, *[values.StrGlobMatch(util.normpath(x).rstrip("/") + "/") for x in set(neg)])
-			)
-	# hackish, but it works.
-	protected_filter = packages.PackageRestriction("location", r).match
-	protected = {}
-	pjoin = os.path.join
-	fisdir = fs.isdir
+		if len(neg) == 1:
+			r2 = values.StrGlobMatch(util.normpath(neg[0]).rstrip("/") + "/", negate=True)
+		else:
+			r2 = values.OrRestriction(negate=True, *[values.StrGlobMatch(util.normpath(x).rstrip("/") + "/") for x in set(neg)])
+		r = values.AndRestriction(r, r2)
+	return r
 
-	for x in existing_cset:
-		if fisdir(x) or x.location.endswith("/.keep"):
+
+def config_protect_func_install(existing_cset, install_cset, engine, csets):
+	install_cset = csets[install_cset]
+	existing_cset = csets[existing_cset]
+
+	pjoin = os.path.join
+	offset = engine.offset
+
+	# hackish, but it works.
+	protected_filter = gen_config_protect_filter(engine.offset).match
+	protected = {}
+
+	for x in existing_cset.iterfiles():
+		if x.location.endswith("/.keep"):
 			continue
-		elif protected_filter(x):
+		elif protected_filter(x.location):
 			replacement = install_cset[x]
 			if not simple_chksum_compare(replacement, x):
-				protected.setdefault(os.path.dirname(x.location), []).append((os.path.basename(x.location), x))
+				protected.setdefault(pjoin(engine.offset, os.path.dirname(x.location).lstrip(os.path.sep)), []).append((os.path.basename(x.location), x))
 
 	for dir_loc, entries in protected.iteritems():
 		updates = dict((x[0], []) for x in entries)
@@ -144,8 +153,6 @@ def config_protect_func(existing_cset, install_cset, engine, csets):
 		for fname, entry in entries:
 			# check for any updates with the same chksums.
 			count = 0
-			if fname.startswith("dispatch"):
-				import pdb;pdb.set_trace()
 			for cfg_count, cfg_fname in updates[fname]:
 				if simple_chksum_compare(gen_obj(pjoin(dir_loc, cfg_fname)), entry):
 					count = cfg_count
@@ -160,6 +167,31 @@ def config_protect_func(existing_cset, install_cset, engine, csets):
 			install_cset.add(entry.change_attributes(real_location=new_fn))
 		del updates
 
-def config_protect_trigger(existing_cset="install_existing", modifying_cset="install"):
-	return triggers.trigger([existing_cset, modifying_cset], pre_curry(config_protect_func, existing_cset, modifying_cset))
+
+def config_protect_trigger_install(existing_cset="install_existing", modifying_cset="install"):
+	return triggers.trigger([existing_cset, modifying_cset], pre_curry(config_protect_func_install, existing_cset, modifying_cset))
+
+
+def config_protect_func_uninstall(existing_cset, uninstall_cset, engine, csets):
+	uninstall_cset = csets[uninstall_cset]
+	existing_cset = csets[existing_cset]
+	pjoin = os.path.join
+	protected_restrict = gen_config_protect_filter(engine.offset)
+
+	remove = []
+	for x in existing_cset.iterfiles():
+		if x.location.endswith("/.keep"):
+			continue
+		if protected_restrict.match(x.location):
+			recorded_ent = uninstall_cset[x]
+			if not simple_chksum_compare(recorded_ent, x):
+				# chksum differs.  file stays.
+				remove.append(recorded_ent)
+	
+	for x in remove:
+		del uninstall_cset[x]
+
+
+def config_protect_trigger_uninstall(existing_cset="uninstall_existing", modifying_cset="uninstall"):
+	return triggers.trigger([existing_cset, modifying_cset], pre_curry(config_protect_func_uninstall, existing_cset, modifying_cset))
 

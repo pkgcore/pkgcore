@@ -203,7 +203,7 @@ class atom(boolean.AndRestriction):
 			attrs.append('use=' + repr(self.use))
 		if self.slot:
 			attrs.append('slot=' + repr(self.slot))
-		return '<%s %s @#%xf>' % (
+		return '<%s %s @#%x>' % (
 			self.__class__.__name__, ' '.join(attrs), id(self))
 
 	def iter_dnf_solutions(self, full_solution_expansion=False):

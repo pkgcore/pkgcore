@@ -64,7 +64,7 @@ class trigger(object):
 		s = ''
 		if self.register_func is not None:
 			s = "register_func=%r " % self.register_func
-		return "<%s cset=%r ftrigger=%r %s@#%xf>" % (self.__class__.__name__, self.required_csets, self.trigger, s, id(self))
+		return "<%s cset=%r ftrigger=%r %s@#%x>" % (self.__class__.__name__, self.required_csets, self.trigger, s, id(self))
 
 
 class SimpleTrigger(trigger):

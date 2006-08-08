@@ -10,6 +10,7 @@ from pkgcore.repository import prototype, errors, configured
 from pkgcore.util.containers import InvertedContains
 from pkgcore.util.file import read_dict
 from pkgcore.util import currying
+from pkgcore.util.osutils import listdir_files, listdir_dirs
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.ebuild.ebd:buildable")
 
@@ -105,17 +106,14 @@ class UnconfiguredTree(prototype.tree):
 			return ()
 
 		try:	
-			return tuple(x for x in os.listdir(self.base) \
-				if stat.S_ISDIR(os.lstat(os.path.join(self.base, x)).st_mode) 
-				and x not in self.false_categories)
+			return tuple(x for x in listdir_dirs(self.base) if x not in self.false_categories)
 		except (OSError, IOError), e:
 			raise KeyError("failed fetching categories: %s" % str(e))
 
 	def _get_packages(self, category):
 		cpath = os.path.join(self.base,category.lstrip(os.path.sep))
 		try:	
-			return tuple(x for x in os.listdir(cpath) \
-				if stat.S_ISDIR(os.lstat(os.path.join(cpath, x)).st_mode))
+			return tuple(listdir_dirs(cpath))
 
 		except (OSError, IOError), e:
 			raise KeyError("failed fetching packages for category %s: %s" % \
@@ -127,10 +125,8 @@ class UnconfiguredTree(prototype.tree):
 		cppath = os.path.join(self.base, catpkg.lstrip(os.path.sep))
 		# 7 == len(".ebuild")
 		try:
-			return tuple(x[len(pkg):-7].lstrip("-") 
-				for x in os.listdir(cppath) \
-				if x.endswith(".ebuild") and x.startswith(pkg) and  \
-				stat.S_ISREG(os.lstat(os.path.join(cppath, x)).st_mode))
+			return tuple(x[len(pkg):-7].lstrip("-") for x in listdir_files(cppath)
+				if x.endswith(".ebuild") and x.startswith(pkg))
 		except (OSError, IOError), e:
 			raise KeyError("failed fetching versions for package %s: %s" % \
 				(os.path.join(self.base, catpkg.lstrip(os.path.sep)), str(e)))

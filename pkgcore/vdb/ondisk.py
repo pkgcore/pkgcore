@@ -14,6 +14,7 @@ from pkgcore.plugins import get_plugin
 from pkgcore.interfaces import repo as repo_interfaces
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.util.demandload import demandload
+from pkgcore.util.osutils import listdir_dirs
 demandload(globals(), "logging time")
 from pkgcore.repository import multiplex, virtual
 
@@ -69,9 +70,8 @@ class tree(prototype.tree):
 		if optionalCategory:
 			return {}
 		try:
-			try:	
-				return tuple(x for x in os.listdir(self.base) \
-					if stat.S_ISDIR(os.lstat(os.path.join(self.base, x)).st_mode))
+			try:
+				return tuple(listdir_dirs(self.base))
 			except (OSError, IOError), e:
 				raise KeyError("failed fetching categories: %s" % str(e))
 		finally:
@@ -82,8 +82,8 @@ class tree(prototype.tree):
 		l = set()
 		d = {}
 		try:
-			for x in os.listdir(cpath):
-				if x.endswith(".lockfile") or x.startswith("-MERGING-") or not stat.S_ISDIR(os.stat(os.path.join(cpath, x)).st_mode):
+			for x in listdir_dirs(cpath):
+				if x.endswith(".lockfile") or x.startswith("-MERGING-"):
 					continue
 				x = cpv(category+"/"+x)
 				l.add(x.package)

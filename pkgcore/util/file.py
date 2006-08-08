@@ -206,6 +206,8 @@ class bash_parser(shlex):
 				if prev != pos:
 					l.append(val[prev:pos])
 				if var in self.env:
+					if not isinstance(self.env[var], basestring):
+						raise ValueError("env key %r must be a string, not %s: %r" % (var, type(self.env[var]), self.env[var]))
 					l.append(self.env[var])
 				else:
 					l.append("")

@@ -35,6 +35,7 @@ if os.path.isdir("/proc/%i/fd" % os.getpid()):
 else:
 	get_open_fds = slow_get_open_fds
 
+# this should be JIT determination.
 sandbox_capable = (os.path.isfile(SANDBOX_BINARY) and
                    os.access(SANDBOX_BINARY, os.X_OK))
 userpriv_capable = (os.getuid() == 0)

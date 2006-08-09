@@ -5,9 +5,12 @@ kindly check over HORKED; stuff here is "would be nice", but horked comes first.
 Difficulty estimate indicated by '*', based on either codebase in question, or knowledge of python tricks
 none == easy, >=5 of 'em, tricky.
 
-- CONFIG_PROTECT trigger **
-  potentially need to implement it as two (yuck) triggers; issue is that in the vdb, the file needs to be recorded with
-  the proper name; for merging, have to have a different name however.
+- write a cpython cpv parser; **
+  parser able to split dev-util/diffball-0.7 into it's components, see pkgcore.package.cpv.CPV;
+  current regex based works, but cpython version should be well over 30x faster.
+
+- write a cpython ver_cmp; **
+  current python ver_cmp is slow.  add builtin, should speed it up nicely (10x at least).
 
 - finish off trigger registration; **
   Right now it's hardcoded in merge.engine; this sucks, need to convert the gentoo specific triggers over to
@@ -24,8 +27,8 @@ none == easy, >=5 of 'em, tricky.
 - refactor pkgcore.package.atom and pkgcore.package.cpv *
   Those *should* be (effectively) abstract bases, not specific to ebuild format.
   Right now they are specific- breaking that up is required.
-
-- Plus, once it's broken up can derive from it to attach msgs to an atom (resolver can use it to state why it
+ 
+  Plus, once it's broken up can derive from it to attach msgs to an atom (resolver can use it to state why it
   generated a particular atom, glsa's can ref a glsa obj, etc).
 
 - binpkg repository *
@@ -35,23 +38,10 @@ none == easy, >=5 of 'em, tricky.
   reasoning being that if we're just going to do a max, pass in the max so it has the option of doing the initial
   sorting without passing through visibility filters (which will trigger metadata lookups)
 
-- pkgcore.cache.multiplex *
-  a master/slave cache implementation.  handed master cache (positionally), and secondary caches, this implementation would 
-  do lookups in master normally, and multiplex the updates/deletetions across all caches handed in.
-  Sounds odd I realize, but this would be useful so that the master cache generation for rsync could have it's updates slaved 
-  into a common rdbms w/in gentoo infra, with mirror-dist, src_uri checker, and packages.g.o being able to access it.
-  Right now they do their own thing, which is inneficient.  This should be pretty easy.
-
-- profiling everything **
-  just as it sounds.  profile the whole sucker, and point out areas of where improvement, conversion to cpython might be 
-  advantageous.  This will be ongoing, initially probably pretty easy, getting harder as low franging fruit picked off.
-  Why do this? Well, if you think portage is slow, this is how you can help us speed the sucker up.
-
 - pkgcore.config.central features: ***
   These may or may not be picked off as development continues; the main requirement for this functionality is 
   plugins, which the framework intends... so... prior to a release, it will be added.
 
-  - needs introspection capabilities, looking at a callable to pull further required/section_ref/etc opts out of it.
   - needs method to do lookups of further object restrictions/section_ref/etc from a common dir, based on name.
     this one requires some thought;  essentially, if loading portage-mysql.cache, try 1, or try this opt, look in a dir
     the plugins ebuild can install a section conf tweak, and use it.
@@ -86,3 +76,4 @@ none == easy, >=5 of 'em, tricky.
 
 - extend packages.* parsing to support globs in pkg: *
   http://bugs.gentoo.org/show_bug.cgi?id=57153
+

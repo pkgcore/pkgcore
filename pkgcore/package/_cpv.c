@@ -201,6 +201,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		// ver-  "(?:-(?P<fullver>(?P<version>(?:cvs\\.)?(?:\\d+)(?:\\.\\d+)*[a-z]?(?:_(p(?:re)?|beta|alpha|rc)\\d*)*)" +
 		// "(?:-r(?P<revision>\\d+))?))?$")
 		// note that pkg regex is non-greedy.
+		start = p;
 		p = strchr(start, '-');
 		while(NULL != p) {
 			++p;
@@ -232,13 +233,9 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		}
 		// do verification of pkg for *both* branches
 		if (!p) {
-			// no pkg detected
-			// verify it's valid chars then.
-			p = start;
-			while('\0' != *p && (isalnum(*p) || '-' == *p || '_' == *p || '+' == *p))
+			// no pkg detected, find end, verification happens outside the block
+			while('\0' != *p)
 				p++;
-			if('\0' != *p)
-				goto parse_error;
 			ver_start = p;
 		} else {
 			p = ver_start;
@@ -311,13 +308,13 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		// suffixes.  yay.
 		char *orig_p = (char *)p;
 		unsigned int suffix_count = 0;
-		unsigned int pos = 0;
+		unsigned int pos;
 		unsigned new_long;
 		struct suffix_ver *sv;
-		while(p != NULL) {
+		do {
 			suffix_count++;
 			p = strchr(p + 1, '_');
-		}
+		} while(NULL != p);
 		// trailing is 0 0
 		p = orig_p;
 		self->suffixes = PyObject_Malloc(sizeof(long) * (suffix_count + 1) * 2);
@@ -327,9 +324,9 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 			result = -1;
 			goto cleanup;
 		}
-		p++;
 		suffix_count *= 2;
-		while(pos < suffix_count) {
+		for(pos = 0; pos < suffix_count; pos += 2) {
+			p += 1; // skip the leading _
 			if('\0' == *p)
 				goto parse_error;
 			for(sv = pkgcore_ebuild_suffixes; NULL != sv->str; sv++) {
@@ -351,7 +348,6 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 				// that means it didn't find the suffix.
 				goto parse_error;
 			}
-			pos += 2;
 		}
 		self->suffixes[pos] = PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF;
 		self->suffixes[pos + 1] = PKGCORE_EBUILD_SUFFIX_DEFAULT_VAL;
@@ -528,8 +524,6 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 			
 			char *s_end = s1;
 
-			s1 = s_start;
-			o1 = o_start;
 			for(s1 = s_start, o1 = o_start; s1 != s_end; s1++, o1++) {
 				if(*s1 < *o1)
 					return -1;
@@ -543,8 +537,10 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 					return -1;
 				else if(*s1 > *o1)
 					return 1;
-			} else
+				o1++;
+			} else 
 				return 1;
+			s1++;
 		} else if isalpha(*o1) {
 			return -1;
 		}
@@ -555,14 +551,12 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 		// hokay.  no resolution there.
 	}
 	// ok.  one of the two just ran out of vers; test on suffixes
-	if('_' == *s1) {
-		if('_' != *o1)
-			return +1;
-	} else if('_' == *o1) {
+	if(isdigit(*s1)) {
+		return +1;
+	} else if(isdigit(*o1)) {
 		return -1;
 	}
-	
-	// bugger.  exact same version string up to suffix.
+	// bugger.  exact same version string up to suffix pt.
 	int x;
 	for(x=0;;) {
 		// cmp suffix type.

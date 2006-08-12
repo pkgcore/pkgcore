@@ -226,11 +226,11 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 				break;
 			
 			// ok.  so, either it's a period, _, or a *single* [a-z].
-			if('.' == *p || '_' == *p) {
+			if('\0' == *p || '.' == *p || '_' == *p || '-' == *p) {
 				break;
 			} else if(islower(*p)) {
 				p++;
-				if('\0' == *p || '.' == *p || '_' == *p)
+				if('\0' == *p || '.' == *p || '_' == *p || '-' == *p)
 					break;
 			}
 			p = strchr(p, '-');
@@ -265,10 +265,10 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 	s2++;
 	while('\0' != s2 && (isalnum(*s2) || '+' == *s2 || '-' == *s2 || '_' == *s2))
 		s2++;
-	if('\0' != *s2 || s2 - s1 < 2)
-		goto parse_error;
-	if(!(isalnum(*(s2 - 1)) || '+' == *(s2 -1)))
-		goto parse_error;
+	if(s2 - s1 > 1) {
+		if(!(isalnum(*(s2 - 1)) || '+' == *(s2 -1)))
+			goto parse_error;
+	}
 
 	// ok. it's good.
 	tmp = PyString_FromFormat("%s/%s", PyString_AsString(self->category), PyString_AsString(self->package));

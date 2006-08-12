@@ -195,7 +195,6 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		Py_INCREF(package);
 		self->package = package;
 		Py_DECREF(tmp);
-		printf("%s\n", PyString_AsString(package));
 	} else {
 		// yay- need to eat the pkg next
 		// allowed [a-zA-Z0-9](?:[-_+a-zA-Z0-9]*?[+a-zA-Z0-9])??)
@@ -435,6 +434,7 @@ cleanup:
 	return -1;
 }
 
+
 static void
 pkgcore_cpv_dealloc(pkgcore_cpv *self)
 {
@@ -459,6 +459,142 @@ pkgcore_cpv_dealloc(pkgcore_cpv *self)
 }
 
 
+static int
+pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
+{
+	int c;
+	c = PyObject_Compare(self->category, other->category);
+	if(PyErr_Occurred())
+		return -1;
+	if(c != 0)
+		return c;
+	c = PyObject_Compare(self->package, other->package);
+	if(PyErr_Occurred())
+		return -1;
+	if(c != 0)
+		return c;
+	if(self->version == Py_None)
+		return other->version == Py_None ? 0 : -1;
+	
+	if(self->cvs != other->cvs)
+		return self->cvs ? +1 : -1;
+
+	char *s1, *o1;
+	s1 = PyString_AsString(self->version);
+	if(!s1)
+		return -1;
+	o1 = PyString_AsString(other->version);
+	if (!o1)
+		return -1;
+
+	if(self->cvs) {
+		s1 += 4; // "cvs."
+		o1 += 4;
+	}
+	while('_' != *s1 && '\0' != *s1 && '_' != *o1 && '\0' != *o1) {
+		if('0' == *s1 || '0' == *o1) {
+			// float comparison rules.
+			do {
+				if(*s1 > *o1)
+					return 1;
+				else if (*s1 < *o1)
+					return -1;
+				s1++; o1++;
+			} while (isdigit(*s1) && isdigit(*o1));
+
+			while(isdigit(*s1)) {
+				if('0' != *s1)
+					return +1;
+				s1++;
+			}
+			while(isdigit(*o1)) {
+				if('0' != *o1)
+					return -1;
+				o1++;
+			}
+		} else {
+			// int comparison rules.
+			char *s_start = s1, *o_start = o1;
+
+			while(isdigit(*s1))
+				s1++;
+			while(isdigit(*o1))
+				o1++;
+
+			if((s1 - s_start) < (o1 - o_start))
+				return -1;
+			else if((s1 - s_start) > (o1 - o_start))
+				return 1;
+			
+			char *s_end = s1;
+
+			s1 = s_start;
+			o1 = o_start;
+			for(s1 = s_start, o1 = o_start; s1 != s_end; s1++, o1++) {
+				if(*s1 < *o1)
+					return -1;
+				else if (*s1 > *o1)
+					return 1;
+			}
+		}
+		if(isalpha(*s1)) {
+			if(isalpha(*o1)) {
+				if(*s1 < *o1)
+					return -1;
+				else if(*s1 > *o1)
+					return 1;
+			} else
+				return 1;
+		} else if isalpha(*o1) {
+			return -1;
+		}
+		if('.' == *s1)
+			s1++;
+		if('.' == *o1)
+			o1++;
+		// hokay.  no resolution there.
+	}
+	// ok.  one of the two just ran out of vers; test on suffixes
+	if('_' == *s1) {
+		if('_' != *o1)
+			return +1;
+	} else if('_' == *o1) {
+		return -1;
+	}
+	
+	// bugger.  exact same version string up to suffix.
+	int x;
+	for(x=0;;) {
+		// cmp suffix type.
+		if(self->suffixes[x] < other->suffixes[x])
+			return -1;
+		else if(self->suffixes[x] > other->suffixes[x])
+			return +1;
+		else if(PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF == self->suffixes[x]) {
+			// terminator.  one remaining element, but little point in testing it.
+			// to have hit here requires them to be the same also (for those wondering why we're not testing)
+			break;
+		}
+		x++;
+		// cmp suffix val
+		if(self->suffixes[x] < other->suffixes[x])
+			return -1;
+		else if(self->suffixes[x] > other->suffixes[x])
+			return +1;
+		x++;
+	}
+	// all that remains is revision.
+	return PyObject_Compare(self->revision, other->revision);
+}
+	
+
+
+static long
+pkgcore_cpv_hash(pkgcore_cpv *self)
+{
+	return PyObject_Hash(self->cpvstr);
+}
+
 static PyTypeObject pkgcore_cpvType = {
 	PyObject_HEAD_INIT(NULL)
 	0,                                /* ob_size */
@@ -469,12 +605,12 @@ static PyTypeObject pkgcore_cpvType = {
 	0,                                /* tp_print */
 	0,                                /* tp_getattr */
 	0,                                /* tp_setattr */
-	0,                                /* tp_compare */
+	pkgcore_cpv_compare,              /* tp_compare */
 	0,                                /* tp_repr */
 	0,                                /* tp_as_number */
 	0,                                /* tp_as_sequence */
 	0,                                /* tp_as_mapping */
-	0,                                /* tp_hash */
+	(hashfunc)pkgcore_cpv_hash,       /* tp_hash */
 	0,                                /* tp_call */
 	0,                                /* tp_str */
 	0,                                /* tp_getattro */

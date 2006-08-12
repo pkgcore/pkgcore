@@ -34,6 +34,7 @@ typedef struct {
 	PyObject *cpvstr;
 	PyObject *category;
 	PyObject *package;
+	PyObject *key;
 	PyObject *fullver;
 	PyObject *version;
 	PyObject *revision;
@@ -64,16 +65,18 @@ PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_package,  pkgcore_cpv_set_package,  
 PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_fullver,  pkgcore_cpv_set_fullver,  "fullver", fullver);
 PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_version,  pkgcore_cpv_set_version,  "version", version);
 PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_revision, pkgcore_cpv_set_revision, "revision", revision);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_key, pkgcore_cpv_set_key, "key", key);
 
 #undef PKGCORE_IMMUTABLE_ATTRIBUTE
 
 
 static PyGetSetDef pkgcore_cpv_getsetters[] = {
-	{"cpvstr", (getter)pkgcore_cpv_get_cpvstr, (setter)pkgcore_cpv_set_cpvstr, "cpvstr", NULL},
+	{"cpvstr",   (getter)pkgcore_cpv_get_cpvstr,   (setter)pkgcore_cpv_set_cpvstr,   "cpvstr", NULL},
 	{"category", (getter)pkgcore_cpv_get_category, (setter)pkgcore_cpv_set_category, "category", NULL},
-	{"package", (getter)pkgcore_cpv_get_package, (setter)pkgcore_cpv_set_package, "package", NULL},
-	{"fullver", (getter)pkgcore_cpv_get_fullver, (setter)pkgcore_cpv_set_fullver, "fullver", NULL},
-	{"version", (getter)pkgcore_cpv_get_version, (setter)pkgcore_cpv_set_version, "version", NULL},
+	{"package",  (getter)pkgcore_cpv_get_package,  (setter)pkgcore_cpv_set_package,  "package", NULL},
+	{"key",      (getter)pkgcore_cpv_get_key,      (setter)pkgcore_cpv_set_key,      "key", NULL},
+	{"fullver",  (getter)pkgcore_cpv_get_fullver,  (setter)pkgcore_cpv_set_fullver,  "fullver", NULL},
+	{"version",  (getter)pkgcore_cpv_get_version,  (setter)pkgcore_cpv_set_version,  "version", NULL},
 	{"revision", (getter)pkgcore_cpv_get_revision, (setter)pkgcore_cpv_set_revision, "revision", NULL},
 	{NULL}
 };
@@ -97,6 +100,7 @@ pkgcore_cpv_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	PKGCORE_CPV_INIT_ATTR(fullver);
 	PKGCORE_CPV_INIT_ATTR(version);
 	PKGCORE_CPV_INIT_ATTR(revision);
+	PKGCORE_CPV_INIT_ATTR(key);
 	#undef PKGCORE_CPV_INIT_ATTR
 	self->cvs = 0;
 	self->suffixes = NULL;
@@ -234,6 +238,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		// do verification of pkg for *both* branches
 		if (!p) {
 			// no pkg detected, find end, verification happens outside the block
+			p = start;
 			while('\0' != *p)
 				p++;
 			ver_start = p;
@@ -262,9 +267,16 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		s2++;
 	if('\0' != *s2 || s2 - s1 < 2)
 		goto parse_error;
-	if(!isalnum(*(s2 - 1)))
+	if(!(isalnum(*(s2 - 1)) || '+' == *(s2 -1)))
 		goto parse_error;
+
 	// ok. it's good.
+	tmp = PyString_FromFormat("%s/%s", PyString_AsString(self->category), PyString_AsString(self->package));
+	if(!tmp)
+		goto cleanup;
+	tmp2 = self->key;
+	self->key = tmp;
+	Py_DECREF(tmp2);
 
 	if('\0' == *ver_start) {
 		// no version.
@@ -420,6 +432,8 @@ cleanup:
 	self->version = NULL;
 	Py_XDECREF(self->revision);
 	self->revision = NULL;
+	Py_XDECREF(self->key);
+	self->key = NULL;
 	if(NULL != self->suffixes) {
 		// if we're not using the communal val...
 		if(PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF != self->suffixes[0]) {
@@ -446,6 +460,8 @@ pkgcore_cpv_dealloc(pkgcore_cpv *self)
 	self->version = NULL;
 	Py_XDECREF(self->revision);
 	self->revision = NULL;
+	Py_XDECREF(self->key);
+	self->key = NULL;
 	if(NULL != self->suffixes) {
 		if(PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF != self->suffixes[0]) {
 			PyObject_Free(self->suffixes);

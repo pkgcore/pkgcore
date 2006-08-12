@@ -14,9 +14,13 @@ from pkgcore.package.atom import atom
 
 class package(CPV):
 
-	__doc__ = "package class with metadata bound to it for attribute generation\n\n" + \
-		"\n".join(x.lstrip() for x in CPV.__doc__.split("\n") if "@ivar" in x or "@cvar" in x)
-	__doc__+="\n@ivar repo: parent repository"
+	try:
+		__doc__ = "package class with metadata bound to it for attribute generation\n\n" + \
+			"\n".join(x.lstrip() for x in CPV.__doc__.split("\n") if "@ivar" in x or "@cvar" in x)
+		__doc__+="\n@ivar repo: parent repository"
+	except AttributeError:
+		# wee, must be in -OO mode.
+		__doc__ = None
 	immutable = True
 	package_is_real = True
 

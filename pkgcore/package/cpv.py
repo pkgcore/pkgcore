@@ -21,7 +21,7 @@ parser = re.compile("^(?P<key>(?P<category>(?:[a-zA-Z0-9+-]+/?))/" + \
 	"(?:-r(?P<revision>\\d+))?))?$")
 
 
-class CPV(base):
+class Native_CPV(object):
 
 	"""
 	base ebuild package class
@@ -39,8 +39,6 @@ class CPV(base):
 #	__metaclass__ = WeakInstMeta
 
 #	__inst_caching__ = True
-
-	_get_attr = {}
 
 	def __init__(self, cpvstr):
 		"""
@@ -67,14 +65,7 @@ class CPV(base):
 		return self.cpvstr
 
 	def __setattr__(self, name, value):
-		raise Exception()
-
-	def __getattr__(self, attr):
-		try:
-			val = self.__dict__[attr] = self._get_attr[attr](self)
-			return val
-		except KeyError:
-			raise AttributeError(attr)
+		raise AttributeError(name)
 
 	def __eq__(self, other):
 		if isinstance(other, CPV):
@@ -96,14 +87,6 @@ class CPV(base):
 		# ~harring
 		# fails in doing comparison of unversioned atoms against versioned atoms
 		return ver_cmp(self.version, self.revision, other.version, other.revision)
-
-	@property
-	def versioned_atom(self):
-		return atom.atom("=%s" % self.cpvstr)
-
-	@property
-	def unversioned_atom(self):
-		return atom.atom(self.key)
 
 
 def ver_cmp(ver1, rev1, ver2, rev2):
@@ -232,3 +215,53 @@ def ver_cmp(ver1, rev1, ver2, rev2):
 	# Our versions had different strings but ended up being equal.
 	# The revision holds the final difference.
 	return cmp(rev1, rev2)
+
+try:
+	from _cpv import CPV as cpy_CPV
+	base_CPV = cpy_CPV
+except ImportError:
+	base_CPV = Native_CPV
+
+
+class CPV(base, base_CPV):
+
+	"""
+	base ebuild package class
+
+        @ivar category: str category
+        @ivar package: str package
+	@ivar key: strkey (cat/pkg)
+        @ivar version: str version
+        @ivar revision: int revision
+	@ivar versioned_atom: atom matching this exact version
+	@ivar unversioned_atom: atom matching all versions of this package
+	@cvar _get_attr: mapping of attr:callable to generate attributes on the fly
+	"""
+
+#	__metaclass__ = WeakInstMeta
+
+#	__inst_caching__ = True
+
+	_get_attr = {}
+
+	def __repr__(self):
+		return '<%s cpvstr=%s @%#8x>' % (
+			self.__class__.__name__, self.cpvstr, id(self))
+
+	def __setattr__(self, name, value):
+		raise AttributeError(name)
+
+	def __getattr__(self, attr):
+		try:
+			val = self.__dict__[attr] = self._get_attr[attr](self)
+			return val
+		except KeyError:
+			raise AttributeError(attr)
+
+	@property
+	def versioned_atom(self):
+		return atom.atom("=%s" % self.cpvstr)
+
+	@property
+	def unversioned_atom(self):
+		return atom.atom(self.key)

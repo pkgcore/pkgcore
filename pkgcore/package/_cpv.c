@@ -589,6 +589,47 @@ pkgcore_cpv_hash(pkgcore_cpv *self)
 	return PyObject_Hash(self->cpvstr);
 }
 
+
+static PyObject *
+pkgcore_cpv_str(pkgcore_cpv *self)
+{
+	PyObject *s;
+	if(self->cpvstr == Py_None) {
+		Py_INCREF(Py_None);
+		s = PyObject_Str(Py_None);
+		Py_DECREF(Py_None);
+	} else {
+		s = self->cpvstr;
+		Py_INCREF(s);
+	}
+	return s;
+}
+
+
+static PyObject *
+pkgcore_cpv_repr(pkgcore_cpv *self)
+{
+	PyObject *s;
+	if(self->cpvstr == Py_None) {
+		Py_INCREF(Py_None);
+		s = PyObject_Repr(Py_None);
+		Py_DECREF(Py_None);
+	} else {
+		s = PyObject_Repr(self->cpvstr);
+		if(!s)
+			return (PyObject *)NULL;
+		char *str = PyString_AsString(s);
+		if(!s) {
+			Py_DECREF(s);
+			return (PyObject *)NULL;
+		}
+		PyObject *s2 = PyString_FromFormat("CPV(%s)", str);
+		Py_DECREF(s);
+		s = s2;
+	}
+	return s;
+}
+		
 static PyTypeObject pkgcore_cpvType = {
 	PyObject_HEAD_INIT(NULL)
 	0,                                /* ob_size */
@@ -600,13 +641,13 @@ static PyTypeObject pkgcore_cpvType = {
 	0,                                /* tp_getattr */
 	0,                                /* tp_setattr */
 	pkgcore_cpv_compare,              /* tp_compare */
-	0,                                /* tp_repr */
+	pkgcore_cpv_repr,                 /* tp_repr */
 	0,                                /* tp_as_number */
 	0,                                /* tp_as_sequence */
 	0,                                /* tp_as_mapping */
 	(hashfunc)pkgcore_cpv_hash,       /* tp_hash */
 	0,                                /* tp_call */
-	0,                                /* tp_str */
+	pkgcore_cpv_str,                  /* tp_str */
 	0,                                /* tp_getattro */
 	0,                                /* tp_setattro */
 	0,                                /* tp_as_buffer */

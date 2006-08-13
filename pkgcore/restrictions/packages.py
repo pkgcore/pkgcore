@@ -54,7 +54,7 @@ class PackageRestriction(restriction.base):
 
 	def match(self, pkg):
 		try:
-			return self.restriction.match(self.__pull_attr(pkg)) ^ self.negate
+			return self.restriction.match(self.__pull_attr(pkg)) != self.negate
 		except AttributeError:
 			return self.negate
 

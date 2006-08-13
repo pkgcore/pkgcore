@@ -138,7 +138,7 @@ class native_CpvTest(unittest.TestCase):
 
 		self.verify_gt(kls("dev-util/diffball-cvs.6"), kls("dev-util/diffball-600"))
 		self.verify_gt(kls("dev-util/diffball-cvs.7"), kls("dev-util/diffball-cvs.6"))
-
+		self.verify_gt(kls("da/ba-6a"), kls("da/ba-6"))
 
 
 if cpv.cpy_builtin:

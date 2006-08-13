@@ -173,7 +173,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		// allowed pattern [a-zA-Z0-9+-]+/
 		while('\0' != *p && '/' != *p && (isalnum(*p) || '+' == *p || '-' == *p))
 			p++;
-		if(p - start <= 1) {
+		if(p - start <= 1 || '/' != *p) {
 			// just /, or nothing
 			goto parse_error;
 		}

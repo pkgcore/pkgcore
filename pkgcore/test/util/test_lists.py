@@ -4,7 +4,7 @@
 
 from twisted.trial import unittest
 from pkgcore.util import lists
-
+from pkgcore.util.mappings import OrderedDict
 
 class UnhashableComplex(complex):
 
@@ -72,3 +72,24 @@ class ChainedListsTest(unittest.TestCase):
 		cl = self.gen_cl()
 		cl.extend(range(10) for x in range(5))
 		self.assertEquals(150, len(cl))
+
+class Test_iflatten_instance(unittest.TestCase):
+	func = staticmethod(lists.native_iflatten_instance)
+	
+	def test_it(self):
+		o = OrderedDict((k, None) for k in xrange(10))
+		for l, correct, skip in [
+			(["asdf", ["asdf", "asdf"], 1, None],
+			["asdf", "asdf", "asdf", 1, None], basestring),
+			([o, 1, "fds"], [o, 1, "fds"], (basestring, OrderedDict)),
+			([o, 1, "fds"], range(10) + [1, "fds"], basestring),
+			]:
+			self.assertEqual(list(self.func(l, skip)), correct)
+
+
+
+
+if lists.cpy_builtin:
+	class CPY_Test_iflatten_instance(Test_iflatten_instance):
+		func = staticmethod(lists.iflatten_instance)
+	

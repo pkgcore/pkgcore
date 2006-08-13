@@ -59,49 +59,55 @@ def iter_stable_unique(iterable):
 			yield x
 			s.add(x)
 
+def native_iflatten_instance(l, skip_flattening=(basestring,)):
+	"""
+	collapse [(1),2] into [1,2]
+
+	@param skip_flattening: list of classes to not descend through
+	"""
+	if isinstance(l, skip_flattening):
+		yield l
+		return
+	iters = expandable_chain(l)
+	try:
+		while True:
+			x = iters.next()
+			if hasattr(x, '__iter__') and not isinstance(x, skip_flattening):
+				iters.appendleft(x)
+			else:
+				yield x
+	except StopIteration:
+		pass
+
+def native_iflatten_func(l, skip_func):
+	"""
+	collapse [(1),2] into [1,2]
+
+	@param skip_func: a callable that returns True when iflatten_func should descend no further
+	"""
+	if skip_func(l):
+		yield l
+		return
+	iters = expandable_chain(l)
+	try:
+		while True:
+			x = iters.next()
+			if hasattr(x, '__iter__') and not skip_func(x):
+				iters.appendleft(x)
+			else:
+				yield x
+	except StopIteration:
+		pass
+
 try:
 	from pkgcore.util._lists import iflatten_instance, iflatten_func
+	cpy_builtin = True
 except ImportError:
+	cpy_builtin = False
+	cpy_iflatten_instance = cpy_iflatten_func = None
+	iflatten_instance = native_iflatten_instance
+	iflatten_func = native_iflatten_func
 
-	def iflatten_instance(l, skip_flattening=(basestring,)):
-		"""
-		collapse [(1),2] into [1,2]
-
-		@param skip_flattening: list of classes to not descend through
-		"""
-		if isinstance(l, skip_flattening):
-			yield l
-			return
-		iters = expandable_chain(l)
-		try:
-			while True:
-				x = iters.next()
-				if hasattr(x, '__iter__') and not isinstance(l, skip_flattening):
-					iters.appendleft(x)
-				else:
-					yield x
-		except StopIteration:
-			pass
-
-	def iflatten_func(l, skip_func):
-		"""
-		collapse [(1),2] into [1,2]
-
-		@param skip_func: a callable that returns True when iflatten_func should descend no further
-		"""
-		if skip_func(l):
-			yield l
-			return
-		iters = expandable_chain(l)
-		try:
-			while True:
-				x = iters.next()
-				if hasattr(x, '__iter__') and not skip_func(x):
-					iters.appendleft(x)
-				else:
-					yield x
-		except StopIteration:
-			pass
 
 def iter_flatten(l, skip_flattening=(basestring,), skip_func=None):
 	"""Deprecated, call iflatten_instance or iflatten_func instead.

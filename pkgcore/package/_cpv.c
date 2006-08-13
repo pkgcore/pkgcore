@@ -5,6 +5,10 @@
 // dev-util/diffball-cvs.2006.0_alpha1_alpha2
 // dev-util/diffball
 
+#define ISDIGIT(c) ('0' <= (c) && '9' >= (c))
+#define ISALPHA(c) (('a' <= (c) && 'z' >= (c)) || ('A' <= (c) && 'Z' >= (c)))
+#define ISLOWER(c) ('a' <= (c) && 'z' >= (c))
+#define ISALNUM(c) (ISALPHA(c) || ISDIGIT(c))
 
 typedef enum { SUF_ALPHA=0, SUF_BETA, SUF_PRE, SUF_RC, SUF_NORM, SUF_P } version_suffixes;
 const char * const version_suffixes_str[] = {"alpha", "beta", "pre", "rc", "", "p", NULL};
@@ -160,9 +164,9 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 			goto parse_error;
 		if('\0' == *s1)
 			goto parse_error;
-		while('\0' != *s1 && (isalnum(*s1) || '+' == *s1 || '-' == *s1))
+		while(ISALNUM(*s1) || '+' == *s1 || '-' == *s1)
 			s1++;
-		if(*s1 != '\0')
+		if('\0' != *s1)
 			goto parse_error;
 		tmp = self->category;
 		Py_INCREF(category);
@@ -171,7 +175,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 	} else {
 		// ok, we need to eat the cat from the cpvstring.
 		// allowed pattern [a-zA-Z0-9+-]+/
-		while('\0' != *p && '/' != *p && (isalnum(*p) || '+' == *p || '-' == *p))
+		while('\0' != *p && '/' != *p && (ISALNUM(*p) || '+' == *p || '-' == *p))
 			p++;
 		if(p - start <= 1 || '/' != *p) {
 			// just /, or nothing
@@ -216,7 +220,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 				// we've got it.
 				break;
 			}
-			while('\0' != *p && isdigit(*p))
+			while(ISDIGIT(*p))
 				p++;
 			if(p == ver_start) {
 				p = strchr(ver_start + 1, '-');
@@ -228,7 +232,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 			// ok.  so, either it's a period, _, or a *single* [a-z].
 			if('\0' == *p || '.' == *p || '_' == *p || '-' == *p) {
 				break;
-			} else if(islower(*p)) {
+			} else if(ISLOWER(*p)) {
 				p++;
 				if('\0' == *p || '.' == *p || '_' == *p || '-' == *p)
 					break;
@@ -260,29 +264,29 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 	if(!s1)
 		goto parse_error;
 	s2 = s1;
-	if(!isalnum(*s2) || '+' == *s2)
+	if(!ISALNUM(*s2))
 		goto parse_error;
 	s2++;
-	while ('\0' != *s2 && (isalnum(*s2) || '_' == *s2 || '+' == *s2))
+	while (ISALNUM(*s2) || '_' == *s2 || '+' == *s2)
 		s2++;
 	while('-' == *s2) {
 		s2++;
 		if('\0' == *s2)
 			goto parse_error;
-		if(isdigit(*s2)) {
+		if(ISDIGIT(*s2)) {
 			s2++;
-			while(isdigit(*s2))
+			while(ISDIGIT(*s2))
 				s2++;
-			if(!isalpha(*s2) && '+' != *s2)
+			if(!ISALPHA(*s2) && '+' != *s2)
 				goto parse_error;
 			s2++;
-			if(!isalpha(*s2) && '+' != *s2)
+			if(!ISALPHA(*s2) && '+' != *s2)
 				goto parse_error;
-			while(isalnum(*s2) || '+' == *s2 || '_' == *s2)
+			while(ISALNUM(*s2) || '+' == *s2 || '_' == *s2)
 				s2++;
-		} else if(isalpha(*s2) || '+' == *s2) {
+		} else if(ISALPHA(*s2) || '+' == *s2) {
 			s2++;
-			while(isalnum(*s2) || '+' == *s2 || '_' == *s2)
+			while(ISALNUM(*s2) || '+' == *s2 || '_' == *s2)
 				s2++;
 		} else {
 			goto parse_error;
@@ -344,9 +348,9 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 	}
 	// (\d+)(\.\d+)*[a-z]?
 	for(;;) {
-		while('\0' != *p && isdigit(*p))
+		while(ISDIGIT(*p))
 			p++;
-		if(isalpha(*p)) {
+		if(ISALPHA(*p)) {
 			p++;
 			if('\0' != *p && '_' != *p && '-' != *p)
 				goto parse_error;
@@ -389,7 +393,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 					self->suffixes[pos] = sv->val;
 					p += sv->str_len;
 					new_long = 0;
-					while('\0' != *p && isdigit(*p)) {
+					while(ISDIGIT(*p)) {
 						new_long = (new_long * 10) + *p - '0';
 						p++;
 					}
@@ -426,7 +430,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		if('r' != *p)
 			goto parse_error;
 		p++;
-		while('\0' != *p && isdigit(*p)) {
+		while(ISDIGIT(*p)) {
 			revision = (revision * 10) + *p - '0';
 			p++;
 		}
@@ -556,14 +560,14 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 				else if (*s1 < *o1)
 					return -1;
 				s1++; o1++;
-			} while (isdigit(*s1) && isdigit(*o1));
+			} while (ISDIGIT(*s1) && ISDIGIT(*o1));
 
-			while(isdigit(*s1)) {
+			while(ISDIGIT(*s1)) {
 				if('0' != *s1)
 					return +1;
 				s1++;
 			}
-			while(isdigit(*o1)) {
+			while(ISDIGIT(*o1)) {
 				if('0' != *o1)
 					return -1;
 				o1++;
@@ -572,9 +576,9 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 			// int comparison rules.
 			char *s_start = s1, *o_start = o1;
 
-			while(isdigit(*s1))
+			while(ISDIGIT(*s1))
 				s1++;
-			while(isdigit(*o1))
+			while(ISDIGIT(*o1))
 				o1++;
 
 			if((s1 - s_start) < (o1 - o_start))
@@ -591,8 +595,8 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 					return 1;
 			}
 		}
-		if(isalpha(*s1)) {
-			if(isalpha(*o1)) {
+		if(ISALPHA(*s1)) {
+			if(ISALPHA(*o1)) {
 				if(*s1 < *o1)
 					return -1;
 				else if(*s1 > *o1)
@@ -601,7 +605,7 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 			} else 
 				return 1;
 			s1++;
-		} else if isalpha(*o1) {
+		} else if ISALPHA(*o1) {
 			return -1;
 		}
 		if('.' == *s1)
@@ -611,9 +615,9 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 		// hokay.  no resolution there.
 	}
 	// ok.  one of the two just ran out of vers; test on suffixes
-	if(isdigit(*s1)) {
+	if(ISDIGIT(*s1)) {
 		return +1;
-	} else if(isdigit(*o1)) {
+	} else if(ISDIGIT(*o1)) {
 		return -1;
 	}
 	// bugger.  exact same version string up to suffix pt.

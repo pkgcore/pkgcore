@@ -5,6 +5,7 @@
 gentoo ebuild atom, should be generalized into an agnostic base
 """
 
+from operator import attrgetter
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
 import cpv
@@ -117,13 +118,15 @@ class VersionMatch(restriction.base):
 	def __hash__(self):
 		return hash((self.droprev, self.ver, self.rev, self.negate, self.vals))
 
+_cpv_copies = dict((k, attrgetter(k)) for k in ("category", "package", "version", "revision", "fullver", "key"))
+
 class atom(boolean.AndRestriction):
 
 	"""currently implements gentoo ebuild atom parsing, should be converted into an agnostic dependency base thought
 	"""
 	
 	__slots__ = (
-		"glob", "atom", "blocks", "op", "negate_vers", "cpv", "cpvstr", "use",
+		"glob", "blocks", "op", "negate_vers", "cpvstr", "use",
 		"slot", "hash", "category", "version", "revision", "fullver", "package", "key")
 
 	type = packages.package_type
@@ -180,20 +183,20 @@ class atom(boolean.AndRestriction):
 			if self.op != "=":
 				raise MalformedAtom(orig_atom, "range operators on a range are nonsencial, drop the globbing or use =cat/pkg* or !=cat/pkg*, not %s" % self.op)
 			self.glob = True
-			self.atom = atom[pos:-1]
+			self.cpvstr = atom[pos:-1]
 			# may have specified a period to force calculation limitation there- hence rstrip'ing it for the cpv generation
 		else:
 			self.glob = False
-			self.atom = atom[pos:]
+			self.cpvstr = atom[pos:]
 		self.negate_vers = negate_vers
 		if "~" in self.op:
-			if self.cpv.version is None:
+			if self.version is None:
 				raise MalformedAtom(orig_atom, "~ operator requires a version")
 		# force jitting of it.
 		del self.restrictions
 
 	def __repr__(self):
-		atom = self.op + self.atom
+		atom = self.op + self.cpvstr
 		if self.blocks:
 			atom = '!' + atom
 		if self.glob:
@@ -217,15 +220,13 @@ class atom(boolean.AndRestriction):
 		return [[self]]
 
 	def __getattr__(self, attr):
-		if attr == "cpv":
-			c = cpv.CPV(self.atom)
-			setattr(self, "cpv", c)
-			return c
-		elif attr in ("category", "package", "version", "revision", "cpvstr", "fullver", "key"):
-			g = getattr(self.cpv, attr)
-			# Commenting this doubles the time taken in StateGraph.recalculate_deps()
-			# -- jstubbs
-			setattr(self, attr, g)
+		if attr in _cpv_copies:
+			c = cpv.CPV(self.cpvstr)
+			for k, f in _cpv_copies.iteritems():
+				o = f(c)
+				if k == attr:
+					g = o
+				setattr(self, k, o)
 			return g
 		elif attr == "restrictions":
 			r = [packages.PackageRestriction("package", values.StrExactMatch(self.package))]

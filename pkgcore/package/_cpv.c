@@ -511,6 +511,7 @@ pkgcore_cpv_dealloc(pkgcore_cpv *self)
 		}
 		self->suffixes = NULL;
 	}
+	self->ob_type->tp_free((PyObject *)self);
 }
 
 

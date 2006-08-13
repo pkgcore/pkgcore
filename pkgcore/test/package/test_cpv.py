@@ -9,18 +9,18 @@ class native_CpvTest(unittest.TestCase):
 	
 	kls = staticmethod(cpv.native_CPV)
 	good_cats = ["dev-util", "asdf", "dev+", "dev-util+", "DEV-UTIL", "aaa0", "zzz9", "aaa-0", "bbb-9"]
-	bad_cats  = ["dev.util", "dev_", ""]
+	bad_cats  = ["dev.util", "dev_", "", "dev-util "]
 	good_pkgs = ["diffball", "a9", "a9+", "a-100dpi", "a-cvs"]
-	bad_pkgs  = [""]
+	bad_pkgs  = ["diffball "]
 	good_vers = ["1", "2.3.4", "2.3.4a", "02.3", "2.03"]
 	good_vers = ["cvs.%s" % x for x in good_vers] + good_vers
-	bad_vers  = ["2.3a.4", "2.a.3", "2.3_"]
+	bad_vers  = ["2.3a.4", "2.a.3", "2.3_", "2.3 "]
 	simple_good_sufs = ["_alpha", "_beta", "_pre", "_p"]
 	good_sufs = simple_good_sufs + ["%s1" % x for x in simple_good_sufs] + ["%s932" % x for x in simple_good_sufs]
 	l = len(good_sufs)
 	good_sufs = good_sufs + [good_sufs[x] + good_sufs[l - x - 1] for x in xrange(l)]
 	del l
-	bad_sufs  = ["_a", "_9", "_"]
+	bad_sufs  = ["_a", "_9", "_"] + [x+" " for x in simple_good_sufs]
 	del simple_good_sufs
 	good_revs = ["-r1", "-r300",""]
 	bad_revs = ["-r", "-ra", "-r", "-R1"]

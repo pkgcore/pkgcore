@@ -114,6 +114,33 @@ class native_CpvTest(unittest.TestCase):
 			self.assertEqual(c.fullver, ver + rev)
 
 
+	def verify_gt(self, o1, o2):
+		self.assertTrue(cmp(o1, o2) > 0)
+		self.assertTrue(cmp(o2, o1) < 0)
+
+	def test_cmp(self):
+		kls = self.kls
+		self.assertTrue(cmp(kls("dev-util/diffball-0.1"), kls("dev-util/diffball-0.2")) < 0)
+		base = "dev-util/diffball-0.7.1"
+		self.assertFalse(cmp(kls(base), kls(base)))
+		for rev in ("", "-r1"):
+			last = None
+			for suf in ["_alpha", "_beta", "_pre", "", "_p"]:
+				if suf == "":
+					sufs = [suf]
+				else:
+					sufs = [suf, suf+"4"]
+				for x in sufs:
+					cur = kls(base+x+rev)
+					self.assertEqual(cmp(cur, kls(base+x+rev)), 0)
+					if last is not None:
+						self.verify_gt(cur, last)
+
+		self.verify_gt(kls("dev-util/diffball-cvs.6"), kls("dev-util/diffball-600"))
+		self.verify_gt(kls("dev-util/diffball-cvs.7"), kls("dev-util/diffball-cvs.6"))
+
+
+
 if cpv.cpy_builtin:
 	class CPY_CpvTest(native_CpvTest):
 		kls = staticmethod(cpv.cpy_CPV)

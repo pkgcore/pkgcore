@@ -351,7 +351,7 @@ class ContainmentMatch(base):
 
 	def match(self, val):
 		if isinstance(val, basestring):
-			for val in self.vals:
+			for fval in self.vals:
 				if fval in val:
 					return not self.negate
 			return self.negate

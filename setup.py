@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import glob
-import os
+import os, errno
 
 from distutils import core, ccompiler, log
 from distutils.command import build, sdist, install, build_py
@@ -102,6 +102,14 @@ for root, dirs, files in os.walk('pkgcore'):
 		print 'adding package %r' % (package,)
 		packages.append(package)
 
+try:
+	os.unlink("MANIFEST")
+except OSError, oe:
+	if oe.errno != errno.ENOENT:
+		raise
+	del oe
+
+
 core.setup(
 	name='pkgcore',
 	version='0',
@@ -128,6 +136,7 @@ core.setup(
 	ext_modules=[
 		core.Extension('pkgcore.util._caching', ['pkgcore/util/_caching.c']),
 		core.Extension('pkgcore.util._lists', ['pkgcore/util/_lists.c']),
+		core.Extension('pkgcore.package._cpv', ['pkgcore/package/_cpv.c']),
 		],
 	cmdclass={'build_filter_env': build_filter_env, "sdist":mysdist, "build_py": hacked_build_py},
 	)

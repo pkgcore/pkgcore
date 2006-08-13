@@ -65,6 +65,7 @@ class native_CpvTest(unittest.TestCase):
 			self.assertRaises(errors.InvalidCPV, self.kls, "%s/%s" % (cat, pkg))
 		else:
 			c = self.kls("%s/%s" % (cat, pkg))
+			self.assertEqual(c.cpvstr, "%s/%s" % (cat,pkg))
 			self.assertEqual(c.category, cat)
 			self.assertEqual(c.package, pkg)
 			self.assertEqual(c.key, "%s/%s" % (cat,pkg))
@@ -77,6 +78,7 @@ class native_CpvTest(unittest.TestCase):
 			self.assertRaises(errors.InvalidCPV, self.kls, "%s/%s-%s%s" % (cat, pkg, ver, rev))
 		else:
 			c = self.kls("%s/%s-%s%s" % (cat, pkg, ver, rev))
+			self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat,pkg, ver, rev))
 			self.assertEqual(c.category, cat)
 			self.assertEqual(c.package, pkg)
 			self.assertEqual(c.key, "%s/%s" % (cat,pkg))
@@ -103,6 +105,7 @@ class native_CpvTest(unittest.TestCase):
 			self.assertRaises(errors.InvalidCPV, self.kls, "%s/%s-%s%s" % (cat, pkg, ver, rev))
 		else:
 			c = self.kls("%s/%s-%s%s" % (cat, pkg, ver, rev))
+			self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat,pkg, ver, rev))
 			self.assertEqual(c.category, cat)
 			self.assertEqual(c.package, pkg)
 			self.assertEqual(c.key, "%s/%s" % (cat,pkg))

@@ -130,6 +130,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 
 	if(NULL == category && NULL == package) {
 		tmp = cpvstr;
+		Py_INCREF(tmp);
 	} else if (NULL == package) {
 		s1 = PyString_AsString(category);
 		if(!s1)
@@ -149,7 +150,6 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 			goto cleanup;
 	}
 	tmp2 = self->cpvstr;
-	Py_INCREF(tmp);
 	self->cpvstr = tmp;
 	Py_DECREF(tmp2);
 
@@ -260,30 +260,62 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 	if(!s1)
 		goto parse_error;
 	s2 = s1;
-	if(!isalnum(*s2))
+	if(!isalnum(*s2) || '+' == *s2)
 		goto parse_error;
 	s2++;
-	while('\0' != s2 && (isalnum(*s2) || '+' == *s2 || '-' == *s2 || '_' == *s2))
+	while ('\0' != *s2 && (isalnum(*s2) || '_' == *s2 || '+' == *s2))
 		s2++;
-	if(s2 - s1 > 1) {
-		if(!(isalnum(*(s2 - 1)) || '+' == *(s2 -1)))
+	while('-' == *s2) {
+		s2++;
+		if('\0' == *s2)
 			goto parse_error;
+		if(isdigit(*s2)) {
+			s2++;
+			while(isdigit(*s2))
+				s2++;
+			if(!isalpha(*s2) && '+' != *s2)
+				goto parse_error;
+			s2++;
+			if(!isalpha(*s2) && '+' != *s2)
+				goto parse_error;
+			while(isalnum(*s2) || '+' == *s2 || '_' == *s2)
+				s2++;
+		} else if(isalpha(*s2) || '+' == *s2) {
+			s2++;
+			while(isalnum(*s2) || '+' == *s2 || '_' == *s2)
+				s2++;
+		} else {
+			goto parse_error;
+		}
 	}
+	if('\0' != *s2)
+		goto parse_error;	
 
 	// ok. it's good.  note the key setting; if no ver, just reuse cpvstr
 
 	if('\0' == *ver_start) {
 		// no version.
+
 		Py_INCREF(self->cpvstr);
 		tmp = self->key;
 		self->key = self->cpvstr;
 		Py_DECREF(tmp);
+
 		Py_INCREF(Py_None);
+		tmp = self->fullver;
 		self->fullver = Py_None;
+		Py_DECREF(tmp);
+
 		Py_INCREF(Py_None);
+		tmp = self->version;
 		self->version = Py_None;
+		Py_DECREF(tmp);
+
 		Py_INCREF(Py_None);
+		tmp = self->revision;
 		self->revision = Py_None;
+		Py_DECREF(tmp);
+
 		return 0;
 	}
 
@@ -298,6 +330,11 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 	// "(?:-(?P<fullver>(?P<version>(?:cvs\\.)?(?:\\d+)(?:\\.\\d+)*[a-z]?(?:_(p(?:re)?|beta|alpha|rc)\\d*)*)" +
 	// "(?:-r(?P<revision>\\d+))?))?$")
 	p = ver_start;
+
+	// suffixes _have_ to have versions; do it now to avoid
+	if('_' == *p)
+		goto parse_error;
+
 	// grab cvs chunk
 	if(0 == strncmp(ver_start, "cvs.", 4)) {
 		self->cvs = 1;
@@ -393,7 +430,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 			revision = (revision * 10) + *p - '0';
 			p++;
 		}
-		if('\0' != *p)
+		if('\0' != *p || 'r' == p[-1])
 			goto parse_error;
 		tmp = PyInt_FromLong(revision);
 		if(!tmp) {
@@ -414,32 +451,35 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		tmp2 = self->fullver;
 		self->fullver = self->version;
 		Py_DECREF(tmp2);
+
+		Py_INCREF(Py_None);
+		tmp = self->revision;
+		self->revision = Py_None;
+		Py_DECREF(tmp);
+		
 	}
 	return 0;
 
 parse_error:
 	// yay.  well, set an exception.
+	// if an error from trying to call, let it propagate.  meanwhile, we cleanup our own
 	tmp = PyObject_CallFunction(pkgcore_InvalidCPV_Exc, "O", self->cpvstr);
-	if(!tmp) {
-		// fricker- let it's error propagate.
-		return -1;
-	}
-	PyErr_SetObject(pkgcore_InvalidCPV_Exc, tmp);
+	if(NULL != tmp) {
+		PyErr_SetObject(pkgcore_InvalidCPV_Exc, tmp);
+		Py_DECREF(tmp);
+	} 
 cleanup:
-	Py_XDECREF(self->cpvstr);
-	self->cpvstr = NULL;
-	Py_XDECREF(self->category);
-	self->category = NULL;
-	Py_XDECREF(self->package);
-	self->package = NULL;
-	Py_XDECREF(self->fullver);
-	self->fullver = NULL;
-	Py_XDECREF(self->version);
-	self->version = NULL;
-	Py_XDECREF(self->revision);
-	self->revision = NULL;
-	Py_XDECREF(self->key);
-	self->key = NULL;
+	#define dealloc_attr(attr)	\
+	Py_XDECREF(self->attr); self->attr = NULL;
+	dealloc_attr(cpvstr);
+	dealloc_attr(category);
+	dealloc_attr(package);
+	dealloc_attr(key);
+	dealloc_attr(version);
+	dealloc_attr(revision);
+	dealloc_attr(fullver);
+	#undef dealloc_attr
+
 	if(NULL != self->suffixes) {
 		// if we're not using the communal val...
 		if(PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF != self->suffixes[0]) {
@@ -454,20 +494,17 @@ cleanup:
 static void
 pkgcore_cpv_dealloc(pkgcore_cpv *self)
 {
-	Py_XDECREF(self->cpvstr);
-	self->cpvstr = NULL;
-	Py_XDECREF(self->category);
-	self->category = NULL;
-	Py_XDECREF(self->package);
-	self->package = NULL;
-	Py_XDECREF(self->fullver);
-	self->fullver = NULL;
-	Py_XDECREF(self->version);
-	self->version = NULL;
-	Py_XDECREF(self->revision);
-	self->revision = NULL;
-	Py_XDECREF(self->key);
-	self->key = NULL;
+	#define dealloc_attr(attr)	\
+	Py_XDECREF(self->attr); self->attr = NULL;
+	dealloc_attr(cpvstr);
+	dealloc_attr(category);
+	dealloc_attr(package);
+	dealloc_attr(key);
+	dealloc_attr(version);
+	dealloc_attr(revision);
+	dealloc_attr(fullver);
+	#undef dealloc_attr
+	
 	if(NULL != self->suffixes) {
 		if(PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF != self->suffixes[0]) {
 			PyObject_Free(self->suffixes);

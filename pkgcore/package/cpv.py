@@ -136,7 +136,7 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
 		len_list = (ver_parts1_len, ver_parts2_len)
 
 		# Iterate through the components
-		for x in range(max(len_list)):
+		for x in xrange(max(len_list)):
 
 			# If we've run out components, we can figure out who wins
 			# now. If the version that ran out of components has a
@@ -180,7 +180,7 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
 	parts2_len = len(parts2)
 
 	# Iterate through the suffixes
-	for x in range(max(parts1_len, parts2_len)):
+	for x in xrange(max(parts1_len, parts2_len)):
 
 		# If we're at the end of one of our lists, we need to use
 		# the next suffix from the other list to decide who wins.

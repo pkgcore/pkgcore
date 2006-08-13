@@ -178,7 +178,7 @@ class database(object):
 		if len(eclasses) % 3 != 0:
 			raise cache_errors.CacheCorruption(cpv, "_eclasses_ was of invalid len %i" % len(eclasses))
 		d = {}
-		for x in range(0, len(eclasses), 3):
+		for x in xrange(0, len(eclasses), 3):
 			d[eclasses[x]] = (eclasses[x + 1], long(eclasses[x + 2]))
 		del eclasses
 		return d

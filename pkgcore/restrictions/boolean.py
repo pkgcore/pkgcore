@@ -9,7 +9,6 @@ style operations.
 __all__ = ("AndRestriction", "OrRestriction", "XorRestriction")
 
 from itertools import islice
-from pkgcore.util.compatibility import any, all
 from pkgcore.restrictions import restriction
 
 
@@ -161,8 +160,10 @@ class AndRestriction(base):
 	__slots__ = ()
 
 	def match(self, vals):
-#		return all(rest.match(vals) for rest in self.restrictions) != self.negate
-		return any(True for rest in self.restrictions if not rest.match(vals)) == self.negate
+		for rest in self.restrictions:
+			if not rest.match(vals):
+				return self.negate
+		return not self.negate
 
 	def force_True(self, pkg, *vals):
 		pvals = [pkg]
@@ -287,7 +288,10 @@ class OrRestriction(base):
 	__slots__ = ()
 
 	def match(self, vals):
-		return any(True for rest in self.restrictions if rest.match(vals)) != self.negate
+		for rest in self.restrictions:
+			if rest.match(vals):
+				return not self.negate
+		return self.negate
 
 	def cnf_solutions(self, full_solution_expansion=False):
 		"""

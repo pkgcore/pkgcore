@@ -12,7 +12,6 @@ a value restriction).
 import re
 from pkgcore.restrictions import restriction, boolean
 from pkgcore.util.currying import pre_curry, pretty_docs
-from pkgcore.util.compatibility import any
 
 value_type = "values"
 
@@ -351,8 +350,11 @@ class ContainmentMatch(base):
 		self.vals = frozenset(vals)
 
 	def match(self, val):
-		if isinstance(val, (str, unicode)):
-			return any(True for fval in self.vals if fval in val) != self.negate
+		if isinstance(val, basestring):
+			for val in self.vals:
+				if fval in val:
+					return not self.negate
+			return self.negate
 
 		# this can, and should be optimized to do len checks- iterate over the smaller of the two
 		# see above about special casing bits.  need the same protection here, on the offchance
@@ -361,7 +363,10 @@ class ContainmentMatch(base):
 			if self.all:
 				i = iter(val)
 				return bool(self.vals.difference(i)) == self.negate
-			return any(True for x in self.vals if x in val) != self.negate
+			for x in self.vals:
+				if x in val:
+					return not self.negate
+			return self.negate
 		except TypeError:
 			# other way around.  rely on contains.
 			if self.all:

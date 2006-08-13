@@ -2,7 +2,6 @@
 # License: GPL2
 
 from pkgcore.restrictions import restriction
-from pkgcore.util.compatibility import any
 
 # lil too getter/setter like for my tastes...
 
@@ -57,8 +56,6 @@ class PigeonHoledSlots(object):
 		if not isinstance(atom, restriction.base):
 			raise TypeError("atom must be a restriction.base derivative")
 		# debug.
-#		if any(True for x in self.slot_dict.get(atom.key, []) if atom is x):
-#			raise KeyError("%s is already in %s: %s" % (atom, atom.key, self.slot_dict[atom.key]))
 
 		if key is None:
 			key = atom.key
@@ -98,4 +95,7 @@ class PigeonHoledSlots(object):
 			self.blocker_ref_count[atom] = count - 1
 
 	def __contains__(self, obj):
-		return any(True for o in self.slot_dict[obj.key] if o == obj)
+		for o in self.slot_dict[obj.key]:
+			if o == obj:
+				return True
+		return False

@@ -73,6 +73,7 @@ class ChainedListsTest(unittest.TestCase):
 		cl.extend(range(10) for x in range(5))
 		self.assertEquals(150, len(cl))
 
+
 class Test_iflatten_instance(unittest.TestCase):
 	func = staticmethod(lists.native_iflatten_instance)
 	
@@ -87,9 +88,23 @@ class Test_iflatten_instance(unittest.TestCase):
 			self.assertEqual(list(self.func(l, skip)), correct)
 
 
+class Test_iflatten_func(unittest.TestCase):
+	func = staticmethod(lists.native_iflatten_func)
 
+	def test_it(self):
+		o = OrderedDict((k, None) for k in xrange(10))
+		for l, correct, skip in [
+			(["asdf", ["asdf", "asdf"], 1, None],
+			["asdf", "asdf", "asdf", 1, None], basestring),
+			([o, 1, "fds"], [o, 1, "fds"], (basestring, OrderedDict)),
+			([o, 1, "fds"], range(10) + [1, "fds"], basestring),
+			]:
+			self.assertEqual(list(self.func(l, lambda x:isinstance(x, skip))), correct)
+		
 
 if lists.cpy_builtin:
 	class CPY_Test_iflatten_instance(Test_iflatten_instance):
 		func = staticmethod(lists.iflatten_instance)
-	
+
+	class CPY_Test_iflatten_func(Test_iflatten_func):
+		func = staticmethod(lists.iflatten_func)

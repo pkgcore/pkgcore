@@ -270,16 +270,14 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 			goto parse_error;
 	}
 
-	// ok. it's good.
-	tmp = PyString_FromFormat("%s/%s", PyString_AsString(self->category), PyString_AsString(self->package));
-	if(!tmp)
-		goto cleanup;
-	tmp2 = self->key;
-	self->key = tmp;
-	Py_DECREF(tmp2);
+	// ok. it's good.  note the key setting; if no ver, just reuse cpvstr
 
 	if('\0' == *ver_start) {
 		// no version.
+		Py_INCREF(self->cpvstr);
+		tmp = self->key;
+		self->key = self->cpvstr;
+		Py_DECREF(tmp);
 		Py_INCREF(Py_None);
 		self->fullver = Py_None;
 		Py_INCREF(Py_None);
@@ -288,6 +286,14 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		self->revision = Py_None;
 		return 0;
 	}
+
+	tmp = PyString_FromFormat("%s/%s", PyString_AsString(self->category), PyString_AsString(self->package));
+	if(!tmp)
+		goto cleanup;
+	tmp2 = self->key;
+	self->key = tmp;
+	Py_DECREF(tmp2);
+
 	// version parsing.
 	// "(?:-(?P<fullver>(?P<version>(?:cvs\\.)?(?:\\d+)(?:\\.\\d+)*[a-z]?(?:_(p(?:re)?|beta|alpha|rc)\\d*)*)" +
 	// "(?:-r(?P<revision>\\d+))?))?$")

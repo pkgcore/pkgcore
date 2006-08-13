@@ -12,6 +12,9 @@ class native_CpvTest(unittest.TestCase):
 	bad_cats  = ["dev.util", "dev_", "", "dev-util "]
 	good_pkgs = ["diffball", "a9", "a9+", "a-100dpi", "a-cvs"]
 	bad_pkgs  = ["diffball "]
+
+	good_cp   = ["bbb-9/foon", "dev-util/diffball", "dev-util/diffball-a9", "dev-ut-asdf/emacs-cvs", "xfce-base/xfce4", "bah/f-100dpi"]
+
 	good_vers = ["1", "2.3.4", "2.3.4a", "02.3", "2.03"]
 	good_vers = ["cvs.%s" % x for x in good_vers] + good_vers
 	bad_vers  = ["2.3a.4", "2.a.3", "2.3_", "2.3 "]
@@ -41,15 +44,22 @@ class native_CpvTest(unittest.TestCase):
 	def test_parsing(self):
 		for cat_ret, cats in [[False, self.good_cats], [True, self.bad_cats]]:
 			for cat in cats:
-				self.process_cat(cat_ret, cat)
-	locals()["test_parsing (may take minutes)"] = test_parsing
+				for pkg_ret, pkgs in [[False, self.good_pkgs], [True, self.bad_pkgs]]:
+					for pkg in pkgs:
+						self.process_pkg(cat_ret or pkg_ret, cat, pkg)
+
+		for cp in self.good_cp:
+			cat,pkg = cp.rsplit("/", 1)
+			for rev_ret, revs in [[False, self.good_revs], [True, self.bad_revs]]:
+				for rev in revs:
+					for ver_ret, vers in [[False, self.good_vers], [True, self.bad_vers]]:
+						for ver in vers:
+							self.process_ver(ver_ret or rev_ret, cat, pkg, ver, rev)
+
+
+	locals()["test_parsing (may take awhile)"] = test_parsing
 	del test_parsing
 	
-	def process_cat(self, ret, cat):
-		for pkg_ret, pkgs in [[False, self.good_pkgs], [True, self.bad_pkgs]]:
-			for pkg in pkgs:
-				self.process_pkg(ret or pkg_ret, cat, pkg)
-
 	def process_pkg(self, ret, cat, pkg):
 		if ret:
 			self.assertRaises(errors.InvalidCPV, self.kls, "%s/%s" % (cat, pkg))
@@ -61,11 +71,6 @@ class native_CpvTest(unittest.TestCase):
 			self.assertEqual(c.revision, None)
 			self.assertEqual(c.version, None)
 			self.assertEqual(c.fullver, None)
-		for rev_ret, revs in [[False, self.good_revs], [True, self.bad_revs]]:
-			for rev in revs:
-				for ver_ret, vers in [[False, self.good_vers], [True, self.bad_vers]]:
-					for ver in vers:
-						self.process_ver(ret or ver_ret or rev_ret, cat, pkg, ver, rev)
 
 	def process_ver(self, ret, cat, pkg, ver, rev):
 		if ret:

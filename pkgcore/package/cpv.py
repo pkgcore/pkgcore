@@ -21,7 +21,7 @@ parser = re.compile("^(?P<key>(?P<category>(?:[a-zA-Z0-9+-]+/?))/" + \
 	"(?:-r(?P<revision>\\d+))?))?$")
 
 
-class Native_CPV(object):
+class native_CPV(object):
 
 	"""
 	base ebuild package class
@@ -89,7 +89,7 @@ class Native_CPV(object):
 		return ver_cmp(self.version, self.revision, other.version, other.revision)
 
 
-def Native_ver_cmp(ver1, rev1, ver2, rev2):
+def native_ver_cmp(ver1, rev1, ver2, rev2):
 
 	# If the versions are the same, comparing revisions will suffice.
 	if ver1 == ver2:
@@ -231,9 +231,11 @@ try:
 	from _cpv import CPV as cpy_CPV
 	base_CPV = cpy_CPV
 	ver_cmp = cpy_ver_cmp
+	cpy_builtin = True
 except ImportError:
-	base_CPV = Native_CPV
-	ver_cmp = Native_ver_cmp
+	base_CPV = native_CPV
+	ver_cmp = native_ver_cmp
+	cpy_builtin = False
 
 
 class CPV(base, base_CPV):

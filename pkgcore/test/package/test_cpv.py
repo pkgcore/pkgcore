@@ -6,6 +6,9 @@ from pkgcore.package import cpv, errors
 
 
 class CpvTest(unittest.TestCase):
+	
+	kls = staticmethod(cpv.native_CPV)
+	
 	goodcpv = ['dev-util/diffball', 'dev-util/diffball-0.7.1',
 		'dev-util/diffball-cvs.2006']
 	for x in ('alpha', 'beta', 'p', 'pre', 'rc'):
@@ -22,7 +25,12 @@ class CpvTest(unittest.TestCase):
 			'dev-util/diffball-2.2_alphaa',
 			'dev-util/diffball-2.2_alpha_2.2_alpha',
 			]:
-			self.assertRaises(errors.InvalidCPV, cpv.CPV, brokencpv)
+			self.assertRaises(errors.InvalidCPV, self.kls, brokencpv)
 		
 		for goodcpv in self.goodcpv:
-			cpv.CPV(goodcpv)
+			self.kls(goodcpv)
+
+if cpv.cpy_builtin:
+	class CPY_CpvTest(CpvTest):
+		kls = staticmethod(cpv.cpy_CPV)
+

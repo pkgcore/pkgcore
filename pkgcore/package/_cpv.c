@@ -704,14 +704,14 @@ static PyTypeObject pkgcore_cpvType = {
 	0,                                /* tp_print */
 	0,                                /* tp_getattr */
 	0,                                /* tp_setattr */
-	pkgcore_cpv_compare,              /* tp_compare */
-	pkgcore_cpv_repr,                 /* tp_repr */
+	(cmpfunc)pkgcore_cpv_compare,     /* tp_compare */
+	(reprfunc)pkgcore_cpv_repr,       /* tp_repr */
 	0,                                /* tp_as_number */
 	0,                                /* tp_as_sequence */
 	0,                                /* tp_as_mapping */
 	(hashfunc)pkgcore_cpv_hash,       /* tp_hash */
 	0,                                /* tp_call */
-	pkgcore_cpv_str,                  /* tp_str */
+	(reprfunc)pkgcore_cpv_str,        /* tp_str */
 	0,                                /* tp_getattro */
 	0,                                /* tp_setattro */
 	0,                                /* tp_as_buffer */

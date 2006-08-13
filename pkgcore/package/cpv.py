@@ -89,7 +89,7 @@ class Native_CPV(object):
 		return ver_cmp(self.version, self.revision, other.version, other.revision)
 
 
-def ver_cmp(ver1, rev1, ver2, rev2):
+def Native_ver_cmp(ver1, rev1, ver2, rev2):
 
 	# If the versions are the same, comparing revisions will suffice.
 	if ver1 == ver2:
@@ -216,11 +216,24 @@ def ver_cmp(ver1, rev1, ver2, rev2):
 	# The revision holds the final difference.
 	return cmp(rev1, rev2)
 
+fake_cat = "fake"
+fake_pkg = "pkg"
+def cpy_ver_cmp(ver1, rev1, ver2, rev2):
+	if ver1 == ver2:
+		return cmp(rev1, rev2)
+	c = cmp(cpy_CPV(ver1, fake_cat, fake_pkg), cpy_CPV(ver2, fake_cat, fake_pkg))
+	if c != 0:
+		return c
+	return cmp(rev1, rev2)
+
+
 try:
 	from _cpv import CPV as cpy_CPV
 	base_CPV = cpy_CPV
+	ver_cmp = cpy_ver_cmp
 except ImportError:
 	base_CPV = Native_CPV
+	ver_cmp = Native_ver_cmp
 
 
 class CPV(base, base_CPV):

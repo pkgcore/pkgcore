@@ -208,6 +208,9 @@ class domain(pkgcore.config.domain.domain):
 		self.settings["bashrc"] = bashrc
 		self.repos = []
 		self.vdb = []
+		profile_repo = None
+		if profile.virtuals:
+			profile_repo = profile.virtuals(multiplex.tree(*repositories))
 		for l, repos in ((self.repos, repositories), (self.vdb, vdb)):
 			for repo in repos:
 				if not repo.configured:
@@ -230,8 +233,8 @@ class domain(pkgcore.config.domain.domain):
 				# do this once at top level instead.
 
 		self.repos = [visibility.filterTree(t, vfilter, True) for t in self.repos]
-		if profile.virtuals:
-			self.repos = [profile.virtuals(multiplex.tree(*self.repos))] + self.repos
+		if profile_repo is not None:
+			self.repos = [profile_repo] + self.repos
 
 
 	def generate_keywords_filter(self, arch, default_keys, pkg_keywords, already_unstable=False):

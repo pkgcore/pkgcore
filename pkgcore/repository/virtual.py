@@ -46,11 +46,11 @@ class tree(prototype.tree):
 			self._grab_virtuals = None
 
 		if category == "virtual":
-			return self._virtuals.keys()
+			return tuple(self._virtuals.iterkeys())
 		raise KeyError("no %s category for this repository" % category)
 
 	def _get_versions(self, catpkg):
 		cat,pkg = catpkg.rsplit("/", 1)
 		if cat == "virtual":
-			return self._virtuals[pkg].keys()
+			return tuple(self._virtuals[pkg].iterkeys())
 		raise KeyError("no '%s' package in this repository" % catpkg)

@@ -5,7 +5,7 @@
 ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 """
 
-import os, stat
+import os, stat, operator
 from pkgcore.repository import prototype, errors, configured
 from pkgcore.util.containers import InvertedContains
 from pkgcore.util.file import read_dict
@@ -136,12 +136,28 @@ class UnconfiguredTree(prototype.tree):
 			"%s-%s.ebuild" % (pkg.package, pkg.fullver))
 
 
+class DelayedInvertedContains(InvertedContains):
+	__slot__ = ("_func", "_data")
+	def __new__(cls, func, data):
+		o = set.__new__(cls)
+		o._func = func
+		o._data = data
+	
+	def __contains__(self, key):
+		if self._func is not None:
+			s = o._func(o._data)
+			self._data = self._func = None
+			self.update(s)
+		return InvertedContains.__contains__(self, key)
+
+
 class ConfiguredTree(configured.tree):
 
 	"""
 	wrapper around a L{UnconfiguredTree}, binding USE configuration data (in general, all build/configuration data)
 	"""
 
+	_get_iuse = staticmethod(operator.attrgetter("iuse"))
 	configurable = "use"
 	config_wrappables = dict((x, currying.alias_class_method("evaluate_depset")) for x in
 		["depends", "rdepends", "fetchables", "license", "src_uri", "license", "provides"])
@@ -166,7 +182,7 @@ class ConfiguredTree(configured.tree):
 
 	def _get_pkg_kwds(self, pkg):
 		return {"initial_settings":self.default_use,
-			"unchangable_settings":InvertedContains(pkg.iuse),
+			"unchangable_settings":DelayedInvertedContains(self._get_iuse, pkg),
 			"build_callback":self.generate_buildop}
 
 	def generate_buildop(self, pkg):

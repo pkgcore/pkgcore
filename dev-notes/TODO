@@ -5,12 +5,13 @@ kindly check over HORKED; stuff here is "would be nice", but horked comes first.
 Difficulty estimate indicated by '*', based on either codebase in question, or knowledge of python tricks
 none == easy, >=5 of 'em, tricky.
 
-- write a cpython cpv parser; **
-  parser able to split dev-util/diffball-0.7 into it's components, see pkgcore.package.cpv.CPV;
-  current regex based works, but cpython version should be well over 30x faster.
+- package.use.force, package.use.mask (ick); **
+  not horrid, but take care of it prior to a release.
 
-- write a cpython ver_cmp; **
-  current python ver_cmp is slow.  add builtin, should speed it up nicely (10x at least).
+- info regeneration trigger; **
+
+- refactor ver_cmp usage to avoid full cpv parsing when _cpv is in use; **
+  'nuff said, look in pkgcore.package.cpv.cpy_ver_cmp
 
 - finish off trigger registration; **
   Right now it's hardcoded in merge.engine; this sucks, need to convert the gentoo specific triggers over to

@@ -1,3 +1,10 @@
+/*
+ * Copyright: 2006 Brian Harring <ferringb@gmail.com>
+ * License: GPL2
+ *
+ * C version of cpv class for speed.
+ */
+
 #include <Python.h>
 #include <structmember.h>
 #include <string.h>

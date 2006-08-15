@@ -44,7 +44,7 @@ pkgcore_WeakValFinalizer_dealloc(pkgcore_WeakValFinalizer *self)
 
 static PyObject *
 pkgcore_WeakValFinalizer_call(pkgcore_WeakValFinalizer *self,
-							  PyObject *args, PyObject *kwargs)
+	PyObject *args, PyObject *kwargs)
 {
 	/* We completely ignore whatever arguments are passed to us
 	   (should be a single positional (the weakref) we do not need). */
@@ -77,6 +77,196 @@ static PyTypeObject pkgcore_WeakValFinalizerType = {
 	Py_TPFLAGS_DEFAULT,                              /* tp_flags */
 };
 
+typedef struct {
+	PyObject_HEAD
+	PyObject *dict;
+} pkgcore_WeakValCache;
+
+static PyObject *
+pkgcore_WeakValCache_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+{
+	pkgcore_WeakValCache *self;
+	self = (pkgcore_WeakValCache *)type->tp_alloc(type, 0);
+	if(!self)
+		return (PyObject *)NULL;
+	self->dict = PyDict_New();
+	if(!self->dict) {
+		Py_DECREF(self);
+		return NULL;
+	}
+	return (PyObject *)self;
+}
+
+static void
+pkgcore_WeakValCache_dealloc(pkgcore_WeakValCache *self)
+{
+	Py_CLEAR(self->dict);
+	self->ob_type->tp_free((PyObject *)self);
+}
+
+static int
+pkgcore_WeakValCache_len(pkgcore_WeakValCache *self)
+{
+	return PyDict_Size(self->dict);
+}
+
+static int
+pkgcore_WeakValCache_setitem(pkgcore_WeakValCache *self, PyObject *key, PyObject *val)
+{
+	if(NULL == val) {
+		return PyDict_SetItem(self->dict, (PyObject*)key, (PyObject*)val);
+	}
+	if(PyWeakref_Check(val)) {
+		PyErr_SetString(PyExc_TypeError, "cannot set value to a weakref");
+		return -1;
+	}
+
+	pkgcore_WeakValFinalizer *finalizer = PyObject_New(pkgcore_WeakValFinalizer, 
+		&pkgcore_WeakValFinalizerType);
+
+	if (NULL == finalizer)
+		return -1;
+
+	Py_INCREF(self->dict);
+	finalizer->dict = self->dict;
+	Py_INCREF(key);
+	finalizer->key = key;
+
+	PyObject *weakref = PyWeakref_NewRef(val, (PyObject*)finalizer);
+	Py_DECREF(finalizer);
+	int ret = -1;
+	if (weakref) {
+		ret = PyDict_SetItem(self->dict, key, (PyObject*)weakref);
+		Py_DECREF(weakref);
+	}
+	return ret;
+}
+
+PyObject *
+pkgcore_WeakValCache_getitem(pkgcore_WeakValCache *self, PyObject *key)
+{
+	PyObject *resobj, *actual = NULL;
+	resobj = PyDict_GetItem(self->dict, key);
+	if(resobj == Py_None) {
+		PyErr_SetObject(PyExc_KeyError, key);
+		return (PyObject *)NULL;
+	} else if(resobj) {
+		actual = PyWeakref_GetObject(resobj);
+		Py_DECREF(resobj);
+		if (!actual) {
+			Py_DECREF(key);
+			return NULL;
+		}
+		if (actual == Py_None) {
+			/* PyWeakref_GetObject returns a borrowed reference, do not clear it */
+			actual = NULL;
+			/* wipe the weakref err */
+			PyErr_Clear();
+			PyDict_DelItem(self->dict, key);
+			if(!PyErr_Occurred()) {
+				PyErr_SetObject(PyExc_KeyError, key);
+			}
+		} else {
+			Py_INCREF(actual);
+		}
+	} else if(!PyErr_Occurred()) {
+		PyErr_SetObject(PyExc_KeyError, key);
+	}
+	return actual;
+}
+
+static PyObject *
+pkgcore_WeakValCache_get(pkgcore_WeakValCache *self, PyObject *args)
+{
+	int size;
+	size = PySequence_Size(args);
+	PyObject *key, *resobj;
+	if(size < 1 || size > 2) {
+		PyErr_SetString(PyExc_TypeError, "get requires one arg (key), with optional default to return");
+		return (PyObject *)NULL;
+	}
+	key = PySequence_GetItem(args, 0);
+	if(!key) {
+		assert(PyErr_Occurred());
+		return (PyObject *)NULL;
+	}
+	
+	resobj = PyDict_GetItem((PyObject *)self, key);
+	Py_DECREF(key);
+	if(resobj) {
+		assert(!PyErr_Occurred());
+		return resobj;
+
+	} else if(PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_KeyError))
+		return resobj;
+
+	PyErr_Clear();
+	if(size == 2) {
+		resobj = PySequence_GetItem(args, 1);
+		assert(resobj);
+	}
+	resobj = Py_None;
+	Py_INCREF(resobj);
+	return resobj;
+}
+
+static PyMappingMethods pkgcore_WeakValCache_as_mapping = {
+	(inquiry)pkgcore_WeakValCache_len,               /* len inquiry */
+	(binaryfunc)pkgcore_WeakValCache_getitem,        /* getitem */
+	(objobjargproc)pkgcore_WeakValCache_setitem,     /* setitem */
+};		
+
+
+static PyMethodDef pkgcore_WeakValCache_methods[] = {
+	{"get", (PyCFunction)pkgcore_WeakValCache_get, METH_VARARGS, "get(key, default=None)"},
+	{NULL}
+};
+
+/* WeakValCache; simplified WeakValDictionary. */
+
+static PyTypeObject pkgcore_WeakValCacheType = {
+	PyObject_HEAD_INIT(NULL)
+	0,                                               /* ob_size */
+	"pkgcore.util._caching.WeakValCache",            /* tp_name */
+	sizeof(pkgcore_WeakValCache),                    /* tp_basicsize */
+	0,                                               /* tp_itemsize */
+	(destructor)pkgcore_WeakValCache_dealloc,        /* tp_dealloc */
+	0,                                               /* tp_print */
+	0,                                               /* tp_getattr */
+	0,                                               /* tp_setattr */
+	0,                                               /* tp_compare */
+	0,                                               /* tp_repr */
+	0,                                               /* tp_as_number */
+	0,                                               /* tp_as_sequence */
+	&pkgcore_WeakValCache_as_mapping,                /* tp_as_mapping */
+	0,                                               /* tp_hash  */
+	0,                                               /* tp_call */
+	(reprfunc)0,                                     /* tp_str */
+	0,                                               /* tp_getattro */
+	0,                                               /* tp_setattro */
+	0,                                               /* tp_as_buffer */
+	Py_TPFLAGS_DEFAULT,                              /* tp_flags */
+	0,                                               /* tp_doc */
+	0,                                               /* tp_traverse */
+	0,                                               /* tp_clear */
+	0,                                               /* tp_richcompare */
+	0,                                               /* tp_weaklistoffset */
+	0,                                               /* tp_iter */
+	0,                                               /* tp_iternext */
+	pkgcore_WeakValCache_methods,                    /* tp_methods */
+	0,                                               /* tp_members */
+	0,                                               /* tp_getset */
+	0,                                               /* tp_base */
+	0,                                               /* tp_dict */
+	0,                                               /* tp_descr_get */
+	0,                                               /* tp_descr_set */
+	0,                                               /* tp_dictoffset */
+	0,                                               /* tp_init */
+	0,                                               /* tp_alloc */
+	pkgcore_WeakValCache_new,                        /* tp_new */
+};
+
+
 /* WeakInstMeta: metaclass for instance caching. */
 
 typedef struct {
@@ -89,7 +279,7 @@ static void
 pkgcore_WeakInstMeta_dealloc(pkgcore_WeakInstMeta* self)
 {
 	Py_CLEAR(self->inst_dict);
-	PyType_Type.tp_dealloc((PyObject*)self);
+	((PyObject*)self)->ob_type->tp_free((PyObject *)self);
 }
 
 static PyTypeObject pkgcore_WeakInstMetaType;
@@ -181,7 +371,7 @@ pkgcore_WeakInstMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 
 static PyObject *
 pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
-						  PyObject *args, PyObject *kwargs)
+	PyObject *args, PyObject *kwargs)
 {
 	PyObject *key, *kwlist, *kwtuple, *resobj = NULL;
 	int result;
@@ -262,7 +452,7 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
 					if (message = PyString_Format(format, formatargs)) {
 						PyErr_Warn(NULL, PyString_AsString(message));
 						resobj = PyType_Type.tp_call((PyObject*)self,
-													 args, kwargs);
+							args, kwargs);
 						Py_DECREF(message);
 					}
 					Py_DECREF(formatargs);
@@ -399,6 +589,9 @@ init_caching()
 	if (PyType_Ready(&pkgcore_WeakInstMetaType) < 0)
 		return;
 
+	if (PyType_Ready(&pkgcore_WeakValCacheType) < 0)
+		return;
+
 	if (PyType_Ready(&pkgcore_WeakValFinalizerType) < 0)
 		return;
 
@@ -407,9 +600,13 @@ init_caching()
 
 	Py_INCREF(&pkgcore_WeakInstMetaType);
 	PyModule_AddObject(m, "WeakInstMeta",
-					   (PyObject *)&pkgcore_WeakInstMetaType);
+		(PyObject *)&pkgcore_WeakInstMetaType);
+	if (PyErr_Occurred())
+		Py_FatalError("can't initialize module _caching");
 
-	/* Check for errors */
+	Py_INCREF(&pkgcore_WeakValCacheType);
+	PyModule_AddObject(m, "WeakValCache",
+		(PyObject *)&pkgcore_WeakValCacheType);
 	if (PyErr_Occurred())
 		Py_FatalError("can't initialize module _caching");
 }

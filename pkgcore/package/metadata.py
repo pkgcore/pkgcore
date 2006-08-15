@@ -6,8 +6,13 @@
 package with it's metadata accessible (think 'no longer abstract')
 """
 
-import weakref
-import warnings
+try:
+	from pkgcore.util._caching import WeakValCache
+except ImportError:
+	from weakref import WeakValueDictionary as WeakValCache
+
+from pkgcore.util.demandload import demandload
+demandload(globals(), "warnings")
 
 from cpv import CPV
 from pkgcore.package.atom import atom
@@ -82,7 +87,8 @@ class factory(object):
 
 	def __init__(self, parent_repo):
 		self._parent_repo = parent_repo
-		self._cached_instances = weakref.WeakValueDictionary()
+		self._cached_instances = WeakValCache()
+#		self._cached_instances = weakref.WeakValueDictionary()
 
 	def new_package(self, cpv):
 		"""

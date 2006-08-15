@@ -127,36 +127,41 @@ class caching_iter(object):
 	
 	def __len__(self):
 		if self.iterable is not None:
-			self.cached_list.extend(self.iterable)
 			if self.sorter:
-				self.cached_list = tuple(self.sorter(self.cached_list))
+				self.cached_list = tuple(self.sorter(self.iterable))
 				self.sorter = None
 			else:
+				self.cached_list.extend(self.iterable)
 				self.cached_list = tuple(self.cached_list)
 			self.iterable = None
 		return len(self.cached_list)
 
 	def __iter__(self):
-		if len(self.cached_list) == 0 and self.iterable is not None and self.sorter:
+		if self.sorter is not None:
 			self.cached_list = tuple(self.sorter(self.iterable))
 			existing_len = len(self.cached_list)
 			self.iterable = self.sorter = None
 
 		for x in self.cached_list:
 			yield x
-		if self.iterable is not None:
-			for x in self.iterable:
-				self.cached_list.append(x)
-				yield x
-		else:
+		if self.iterable is None:
 			return
+
+		for x in self.iterable:
+			self.cached_list.append(x)
+			yield x
+
 		self.iterable = None
 		self.cached_list = tuple(self.cached_list)
 
 	def __hash__(self):
 		if self.iterable is not None:
-			self.cached_list.extend(self.iterable)
-			self.cached_list = tuple(self.cached_list)
+			if self.sorter:
+				self.cached_list = tuple(self.sorter(self.iterable))
+				self.sorter = None
+			else:
+				self.cached_list.extend(self.iterable)
+				self.cached_list = tuple(self.cached_list)
 			self.iterable = None
 		return hash(self.cached_list)
 

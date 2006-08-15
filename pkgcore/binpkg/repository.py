@@ -1,6 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+binpkg ebuild repository
+"""
+
 import os, stat, errno
 from pkgcore.repository import prototype, errors
 

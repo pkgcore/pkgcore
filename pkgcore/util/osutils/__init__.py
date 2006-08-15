@@ -1,3 +1,9 @@
+"""
+os specific utilities, FS access mainly
+
+not heavily used right now, but will shift functions over to it as time goes by
+"""
+
 cpy_listdir = cpy_listdir_files = cpy_listdir_dirs = native_listdir = native_listdir_dirs = native_listdir_files = None
 
 try:

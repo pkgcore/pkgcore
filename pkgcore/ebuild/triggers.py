@@ -1,6 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+"""
+gentoo/ebuild specific triggers
+"""
+
 from pkgcore.merge import triggers
 from pkgcore.util.file import read_bash_dict, AtomicWriteFile
 from pkgcore.fs import fs, util, livefs

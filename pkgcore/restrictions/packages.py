@@ -41,7 +41,7 @@ class PackageRestriction(restriction.base):
 			for f in self.attr_split:
 				o = f(o)
 			return o
-		except SystemExit:
+		except (KeyBoardInterrupt, RunTimeError, SystemExit):
 			raise
 		except AttributeError,ae:
 			logging.debug("failed getting attribute %s from %s, exception %s" % \

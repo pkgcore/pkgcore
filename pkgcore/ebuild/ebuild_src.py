@@ -5,8 +5,11 @@
 package class for buildable ebuilds
 """
 
-import os, operator, weakref
+import os, operator
 from pkgcore.package import metadata
+
+WeakValCache = metadata.WeakValCache
+
 from pkgcore.ebuild import conditionals
 from pkgcore.package.atom import atom
 from digest import parse_digest
@@ -237,7 +240,7 @@ class package_factory(metadata.factory):
 		self._ecache = eclass_cache
 		self.mirrors = mirrors
 		self.default_mirrors = default_mirrors
-		self._weak_pkglevel_cache = weakref.WeakValueDictionary()
+		self._weak_pkglevel_cache = WeakValCache()
 
 	def _get_metadata(self, pkg):
 		for cache in self._cache:

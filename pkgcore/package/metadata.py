@@ -88,7 +88,6 @@ class factory(object):
 	def __init__(self, parent_repo):
 		self._parent_repo = parent_repo
 		self._cached_instances = WeakValCache()
-#		self._cached_instances = weakref.WeakValueDictionary()
 
 	def new_package(self, cpv):
 		"""

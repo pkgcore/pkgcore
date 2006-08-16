@@ -30,9 +30,10 @@ def decompress(in_data):
 	fd.flush()
 	fd.seek(0)
 	try:
-		ret, data = spawn_get_output(["bzip2", "-%dc" % compress_level], fd_pipes={0:fd.fileno()})
+		ret, data = spawn_get_output(["bzip2", "-dc"], fd_pipes={0:fd.fileno()})
 		if ret != 0:
 			raise ValueError("failed decompressing the data")
+		print "yo"
 		return ''.join(data)
 	finally:
 		if fd is not None:

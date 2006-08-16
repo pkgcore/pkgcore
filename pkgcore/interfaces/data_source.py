@@ -11,9 +11,7 @@ import os
 
 class base(object):
 	"""base class, all implementations should match this protocol"""
-	def get_data(self, arg):
-		raise NotImplementedError
-	get_path = get_data
+	get_path = get_data = set_data = None
 
 
 class local_source(base):
@@ -41,3 +39,18 @@ class local_source(base):
 			return d
 		except OSError:
 			return None
+
+
+class data_source(base):
+	
+	def __init__(self, data):
+		"""@param data: data to wrap"""
+		self.data = data
+	
+	get_path = None
+	
+	def get_data(self):
+		return self.data
+
+	def set_data(self, data):
+		self.data = data

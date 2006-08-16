@@ -360,7 +360,7 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=Fals
 		if not returnpid:
 			cleanup_pids([fakepid])
 
-def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=[1], fd_pipes=None, **keywords):
+def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=[1], fd_pipes=None, split_lines=True, **keywords):
 
 	"""call spawn, collecting the output to fd's specified in collect_fds list
 	emulate_gso is a compatability hack to emulate commands.getstatusoutput's return, minus the
@@ -388,7 +388,10 @@ def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_f
 
 		fd = os.fdopen(pr, "r")
 		try:
-			mydata = fd.readlines()
+			if not split_lines:
+				mydata = fd.read()
+			else:
+				mydata = fd.readlines()
 		finally:
 			fd.close()
 			pw = None

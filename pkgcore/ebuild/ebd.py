@@ -138,6 +138,8 @@ class ebd(object):
 			if self.env_data_source.get_path is not None:
 				self.env["PORT_ENV_FILE"] = self.env_data_source.get_path()
 			else:
+				if not ensure_dirs(self.env["T"], mode=0770, gid=portage_gid, minimal=True):
+					raise build.FailedDirectory(self.env[k], "%s doesn't fulfill minimum mode %o and gid %i" % (k, 0770, portage_gid))
 				fp = os.path.join(self.env["T"], "env_data_source")
 				open(fp, "w").write(self.env_data_source.get_data())
 				self.env["PORT_ENV_FILE"] = fp

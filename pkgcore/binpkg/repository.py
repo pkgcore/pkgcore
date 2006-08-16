@@ -19,8 +19,6 @@ from pkgcore.binpkg.xpak import Xpak
 from pkgcore.binpkg.tar import generate_contents
 from pkgcore.util.bzip2 import decompress
 
-from pkgcore.util.demandload import demandload
-demandload(globals(), "logging time pkgcore.vdb.contents:ContentsFile")
 
 class tree(prototype.tree):
 	ebuild_format_magic = "ebuild_built"	

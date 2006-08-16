@@ -12,11 +12,12 @@ from pkgcore.repository import prototype, errors
 from pkgcore.package.cpv import CPV as cpv
 from pkgcore.util.currying import pre_curry
 from pkgcore.plugins import get_plugin
-from pkgcore.interfaces.data_source import local_source
+from pkgcore.interfaces.data_source import data_source
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.osutils import listdir_dirs, listdir_files
 from pkgcore.binpkg.xpak import Xpak
 from pkgcore.binpkg.tar import generate_contents
+from pkgcore.util.bzip2 import decompress
 
 from pkgcore.util.demandload import demandload
 demandload(globals(), "logging time pkgcore.vdb.contents:ContentsFile")
@@ -80,6 +81,7 @@ class tree(prototype.tree):
 	def _get_path(self, pkg):
 		s = "%s-%s" % (pkg.package, pkg.fullver)
 		return os.path.join(self.base, pkg.category, s+".tbz2")
+	
 	_get_ebuild_path = _get_path
 
 	_metadata_rewrites = {"depends":"DEPEND", "rdepends":"RDEPEND", "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
@@ -92,18 +94,16 @@ class tree(prototype.tree):
 		if key == "contents":
 			data = generate_contents(self._get_path(pkg))
 		elif key == "environment":
-			raise NotImplementedError
-			fp = os.path.join(path, key)
-			if not os.path.exists(fp):
-				if not os.path.exists(fp+".bz2"):
-					# icky.
-					raise KeyError("environment: no environment file found")
-				fp += ".bz2"
-			data = local_source(fp)
+			data = xpak.get("environment.bz2", None)
+			if data is None:
+				data = xpak.get("environment", None)
+				if data is None:
+					raise KeyError("environment.bz2 not found in xpak segment, malformed binpkg?")
+			else:
+				data = decompress(data)
 		else:
 			try:
 				data = xpak[key]
 			except KeyError:
 				data =''
 		return data
-

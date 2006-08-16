@@ -5,7 +5,7 @@
 binpkg ebuild repository
 """
 
-import os, stat, errno
+import os, stat
 from pkgcore.repository import prototype, errors
 
 #needed to grab the PN
@@ -13,11 +13,13 @@ from pkgcore.package.cpv import CPV as cpv
 from pkgcore.util.currying import pre_curry
 from pkgcore.plugins import get_plugin
 from pkgcore.interfaces.data_source import local_source
-from pkgcore.util.demandload import demandload
-demandload(globals(), "logging time pkgcore.vdb.contents:ContentsFile")
 from pkgcore.util.mappings import IndeterminantDict
+from pkgcore.util.osutils import listdir_dirs, listdir_files
 from pkgcore.binpkg.xpak import Xpak
 from pkgcore.binpkg.tar import generate_contents
+
+from pkgcore.util.demandload import demandload
+demandload(globals(), "logging time pkgcore.vdb.contents:ContentsFile")
 
 class tree(prototype.tree):
 	ebuild_format_magic = "ebuild_built"	
@@ -46,8 +48,7 @@ class tree(prototype.tree):
 			return {}
 		try:
 			try:	
-				return tuple(x for x in os.listdir(self.base) \
-					if stat.S_ISDIR(os.lstat(os.path.join(self.base, x)).st_mode) and x.lower() != "all")
+				return tuple(x for x in listdir_dirs(self.base) if x.lower() != "all")
 			except (OSError, IOError), e:
 				raise KeyError("failed fetching categories: %s" % str(e))
 		finally:
@@ -59,10 +60,9 @@ class tree(prototype.tree):
 		d = {}
 		lext = len(self.extension)
 		try:
-			for x in os.listdir(cpath):
+			for x in listdir_files(cpath):
 				# don't use lstat; symlinks may exist
-				if x.endswith(".lockfile") or not stat.S_ISREG(os.stat(os.path.join(cpath, x)).st_mode) \
-					or not x[-lext:].lower() == self.extension:
+				if x.endswith(".lockfile") or not x[-lext:].lower() == self.extension:
 					continue
 				x = cpv(category+"/"+x[:-lext])
 				l.add(x.package)

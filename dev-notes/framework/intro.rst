@@ -24,19 +24,6 @@ still relevant info for restriction is in layout.txt. Other
 subsystems/design choices have their basis quite likely from other
 docs in this directory, so do your homework please :)
 
-**FURTHER DISCLAIMER**
-
-If this is implemented, which is being attempted, this is going to
-break backwards compatibility for existing python api. Writing a
-translation layer doesn't really seem possible either, since things
-are pretty radically different (imho).
-
-Sorry, but thems the breaks. Feel free to attempt it, but this docs
-author doesn't view it as a good use of time, since old api was useful
-for querying, about it.
-
-.. contents::
-
 Terminology
 ===========
 
@@ -61,8 +48,10 @@ repository
   trees.  ebuild tree (/usr/portage), binpkg tree, vdb tree, etc.
 
 protocol
-  python name for design/api.  iter() fex, is a protocol; it
-  calls .next() on the passed in sequence, or wraps the sequence...
+  python name for design/api.  iter() fex, is a protocol; for iter(o)
+  it does i=o.__iter__(); the returned object is expected to yield an
+  element when i.next() is called, till it runs out of elements (then
+  throwing a StopIteration).
   hesitate to call it defined hook on a class/instance, but this
   (crappy) description should suffice.
 
@@ -72,12 +61,8 @@ seq
 set
   list without order (think dict.keys())
 
-General design/idea/approach
-============================
-
-So... this round of "lets take another stab at gutting portage" seems
-to be proceeding, and not killed off by design flaws *again* (famous
-last words I assure you), but general jist.
+General design/idea/approach/requirements
+=========================================
 
 All pythonic components installed by pkgcore *must* be within
 pkgcore.* namespace. No more polluting python's namespace, plain and
@@ -85,35 +70,32 @@ simple. Third party plugins to pkgcore aren't bound by this however
 (their mess, not ours).
 
 API flows from the config definitions, *everything* internal is
-effectively the same. Basically, config crap gives you your starter
+effectively the same. Basically, config data gives you your starter
 objects which from there, you dig deeper into the innards as needed
 action wise.
 
-The general design is intended to heavily abuse OOP, something portage
-has lacked thus far aside from the cache subsystem (cache was pretty
-much only subsystem that used inheritance rather then duplication).
+The general design is intended to heavily abuse OOP.
 Further, delegation of actions down to components *must* be abided by,
 example being repo + cache interaction. repo does what it can, but for
 searching the cache, let the cache do it. Assume what you're
-delegating to knows what the hell it's doing, and probably can do it's
-job better then some external caller (essentially).
+delegating to knows the best way to handle the request, and probably 
+can do it's job better then some external caller (essentially).
 
 Actual configuration is pretty heavily redesigned. Look at
 conf_default_types (likely renamed at some point). It's the
 meta-definition of the config... sort of. Basically the global config
-class knows jack, is generic, and is configured by the
-conf_default_type. The intention is that the on disk configuration
+class knows nothing, and needs to be initialized with configuration item
+type definitions- this is what conf_default_type provides, the initial 
+type definitions.. The intention is that the on disk configuration
 format is encapsulated, so it can be remote or completely different
-from the win.ini format advocated by harring (mainly cause it's
-easiest since a functional and mostly not completely obnoxious parser
-exists already).
+from the win.ini format natively supported.
 
 Encapsulation, extensibility/modularity, delegation, and allowing
 parallelizing of development should be key focuses in
 implementing/refining this high level design doc. Realize
 parallelizing is a funky statement, but it's apt; work on the repo
 implementations can proceed without being held up by cache work, and
-vice versa. Config is the central hold up, but that's mainly cause it
+vice versa. Config is the central hold up, but that is because it
 instantiates everything, so the protocol for it needs to be nailed
 down so that you know what positional/optional args your
 class/callable will be receiving (that said, positiona/optional is
@@ -140,8 +122,8 @@ subsystem, (these map out to run time objects unless otherwise stated)::
   repository
   +-- cache   (optional)
   +-- fetcher (optional)
-  +-- sync    (optional)
-  \-- sync cache (optional)
+  +-- sync    (optional, may change)
+  \-- sync cache (optional, may chance)
 
   profile
   +-- build env?

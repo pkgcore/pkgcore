@@ -15,3 +15,19 @@ isdir(char *path, int followsyms)
 		return 1;
 	return 0;
 }
+
+int
+isreg(char *path, int followsyms)
+{
+	struct stat st;
+	int ret;
+	if(followsyms)
+		ret = stat(path, &st);
+	else
+		ret = lstat(path, &st);
+	if(ret != 0)
+		return -1;
+	if S_ISREG(st.st_mode)
+		return 1;
+	return 0;
+}

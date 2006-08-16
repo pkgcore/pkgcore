@@ -29,7 +29,6 @@ cdef extern from 'errno.h':
 cdef extern from 'sys/types.h':
 	ctypedef long ssize_t
 	ctypedef unsigned long size_t
-	ctypedef 
 
 cdef extern from 'dirent.h':
 	int DT_UNKNOWN
@@ -53,7 +52,7 @@ cdef extern from 'dirent.h':
 
 cdef extern from '_stat.c':
 	int isdir(char * path, int followsyms)
-
+	int isreg(char * path, int followsyms)
 
 _directory = 'directory'
 _chardev = 'chardev'
@@ -148,11 +147,11 @@ def cpy_listdir_files(path, followSymlinks=True):
 				(name[1] == 0 or (name[1] == dot and name [2] == 0)):
 				entry = readdir(the_dir)
 				continue
-			elif entry.d_type != DT_UNKNOWN and entry.d_type != DT_DIR:
+			elif entry.d_type == DT_REG:
 				result.append(name)
 			elif entry.d_type == DT_UNKNOWN or (followsyms and entry.d_type == DT_LNK):
 				fp = path + "/" + name
-				ret = isdir(fp, followsyms)
+				ret = isreg(fp, followsyms)
 				if ret == 0:
 					result.append(name)
 			

@@ -81,7 +81,7 @@ class MergeEngine(object):
 	replace_csets["modifying"] = lambda e, c: c["install"].intersection(c["uninstall"])
 	replace_csets["uninstall"] = "get_remove_cset"
 	replace_csets["replace"] = "get_replace_cset"
-	replace_csets["install_existing"] = "get_livefs_intersect_cset"
+	replace_csets["install_existing"] = "get_install_livefs_intersect"
 
 	install_csets_preserve = ["new_cset"]
 	uninstall_csets_preserve = ["old_cset"]
@@ -101,9 +101,10 @@ class MergeEngine(object):
 		for k,v in csets.iteritems():
 			if isinstance(v, basestring):
 				v = getattr(self, v, v)
-			if not callable(v):
+			elif not callable(v):
 				raise TypeError("cset values must be either the string name of existing methods, or callables "
 				"(got %s)" % v)
+
 			if k in preserves:
 				self.add_preserved_cset(k, v)
 			else:

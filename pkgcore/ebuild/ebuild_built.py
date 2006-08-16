@@ -52,14 +52,14 @@ class package(ebuild_src.package):
 	def _update_metadata(self, pkg):
 		raise NotImplementedError()
 
-	def _repo_install_op(self, features=None):
-		return ebd.install_op(self, env_data_source=self.environment, features=features)
+	def _repo_install_op(self, domain_settings):
+		return ebd.install_op(self, initial_env=domain_settings, env_data_source=self.environment)
 
-	def _repo_uninstall_op(self, features=None):
-		return ebd.uninstall_op(self, env_data_source=self.environment, features=features)
+	def _repo_uninstall_op(self, domain_settings):
+		return ebd.uninstall_op(self, initial_env=domain_settings, env_data_source=self.environment)
 
-	def _repo_replace_op(self, features=None):
-		return ebd.replace_op(self, env_data_source=self.environment, features=features)
+	def _repo_replace_op(self, domain_settings):
+		return ebd.replace_op(self, initial_env=domain_settings, env_data_source=self.environment)
 
 	def _fetch_metadata(self):
 		return self._parent._get_metadata(self)

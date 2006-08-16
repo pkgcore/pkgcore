@@ -8,9 +8,9 @@ Wraps L{pkgcore.ebuild.processor} functionality into a higher level api, per pha
 """
 
 
-import os, shutil, operator
+import os, errno, shutil, operator
 import warnings
-from pkgcore.interfaces import build
+from pkgcore.interfaces import build, data_source
 from pkgcore.ebuild.processor import \
 	request_ebuild_processor, release_ebuild_processor, \
 	expected_ebuild_env, chuck_UnhandledCommand
@@ -23,6 +23,27 @@ from pkgcore.os_data import xargs
 from const import eapi_capable
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.ebuild.ebuild_built:fake_package_factory,package")
+
+
+def _reset_env_data_source(method):
+	def store_env_data_wrapper(self, *args, **kwds):
+		try:
+			return method(self, *args, **kwds)
+		finally:
+			# note that we're *not* return'ing anything ourselves.
+			# we want the original val to slide back
+			if self.env_data_source is None and "PORT_ENV_FILE" in self.env:
+				print "\nfiring env_data_source\n"
+				try:
+					fp = self.env["PORT_ENV_FILE"]
+					self.env_data_sources.set_data(open(fp, "r").read())
+				except (IOError, OSError), oe:
+					if oe.errno != errno.ENOENT:
+						raise
+
+	store_env_data_wrapper.__doc__ = method.__doc__
+	return store_env_data_wrapper
+
 
 class ebd(object):
 
@@ -55,13 +76,8 @@ class ebd(object):
 		
 		self.env.setdefault("ROOT", "/")
 		self.env_data_source = env_data_source
-		if __debug__:
-			from pkgcore.interfaces.data_source import local_source
-			assert env_data_source is None or isinstance(env_data_source, local_source)
-
-		# XXX: hack.
-		if self.env_data_source:
-			self.env["PORT_ENV_FILE"] = self.env_data_source.get_path()
+		if env_data_source is not None and not isinstance(env_data_source, data_source.base):
+			raise TypeError("env_data_source must be None, or a pkgcore.data_source.base derivative: %r" % local_source)
 
 		if features is None:
 			features = self.env.get("FEATURES", [])
@@ -101,6 +117,10 @@ class ebd(object):
 			if not isinstance(v, basestring):
 				del self.env[k]
 
+		build.base.__init__(self)
+		self.__init_workdir__()
+		self.setup_env_data_source(env_data_source)
+
 	def __init_workdir__(self):
 		# don't fool with this, without fooling with setup.
 		self.base_tmpdir = self.env.pop("PORTAGE_TMPDIR")
@@ -112,6 +132,16 @@ class ebd(object):
 			self.env[x] = os.path.join(self.builddir, y) +"/"
 		self.env["IMAGE"] = self.env["D"]
 
+	def setup_env_data_source(self, env_data_source):
+		self.env_data_source = env_data_source
+		if env_data_source is not None:
+			if self.env_data_source.get_path is not None:
+				self.env["PORT_ENV_FILE"] = self.env_data_source.get_path()
+			else:
+				fp = os.path.join(self.env["T"], "env_data_source")
+				open(fp, "w").write(self.env_data_source.get_data())
+				self.env["PORT_ENV_FILE"] = fp
+		
 
 	def setup_logging(self):
 		if self.logging and not ensure_dirs(os.path.dirname(self.logging), mode=02770, gid=portage_gid):
@@ -126,6 +156,7 @@ class ebd(object):
 			if (os.stat(self.env[k]).st_mode & 02000):
 				warnings.warn("%s ( %s ) is setgid" % (self.env[k], k))
 
+	@_reset_env_data_source
 	def setup(self):
 		self.setup_workdir()
 		self.setup_distfiles()
@@ -165,6 +196,7 @@ class ebd(object):
 				chuck_UnhandledCommand(ebd, "bashrc transfer, didn't receive 'next' response.  failure?")
 		ebd.write("end_request")
 
+	@_reset_env_data_source
 	def _generic_phase(self, phase, userpriv, sandbox, fakeroot):
 		"""
 		@param phase: phase to execute
@@ -264,9 +296,7 @@ class buildable(ebd, build.base):
 		@param fetcher: a L{pkgcore.fetch.base.fetcher} instance to use to access our required files for building
 		"""
 	
-		build.base.__init__(self)
 		ebd.__init__(self, pkg, initial_env=domain_settings, features=domain_settings["FEATURES"])
-		self.__init_workdir__()
 
 		self.env["FILESDIR"] = os.path.join(os.path.dirname(pkg.path), "files")
 		self.eclass_cache = eclass_cache
@@ -380,6 +410,7 @@ class buildable(ebd, build.base):
 	unpack = pretty_docs(post_curry(ebd._generic_phase, "unpack", True, True, False), "run the unpack phase (maps to src_unpack)")
 	compile = pretty_docs(post_curry(ebd._generic_phase, "compile", True, True, False), "run the compile phase (maps to src_compile)")
 
+	@_reset_env_data_source
 	def install(self):
 		"""run the install phase (maps to src_install)"""
 		if self.fakeroot:
@@ -387,6 +418,7 @@ class buildable(ebd, build.base):
 		else:
 			return self._generic_phase("install", True, True, False)
 
+	@_reset_env_data_source
 	def test(self):
 		"""run the test phase (if enabled), maps to src_test"""
 		if not self.run_test:

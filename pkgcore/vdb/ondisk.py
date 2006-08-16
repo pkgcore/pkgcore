@@ -152,13 +152,13 @@ class ConfiguredTree(multiplex.tree):
 
 	def _install(self, pkg, *a, **kw):
 		# need to verify it's not in already...
-		return install(self.raw_vdb, pkg, *a, **kw)
+		return install(self.domain_settings, self.raw_vdb, pkg, *a, **kw)
 
 	def _uninstall(self, pkg, *a, **kw):
-		return uninstall(self.raw_vdb, pkg, *a, **kw)
+		return uninstall(self.domain_settings, self.raw_vdb, pkg, *a, **kw)
 
 	def _replace(self, oldpkg, newpkg, *a, **kw):
-		return replace(self.raw_vdb, oldpkg, newpkg, *a, **kw)
+		return replace(self.domain_settings, self.raw_vdb, oldpkg, newpkg, *a, **kw)
 
 	def _grab_virtuals(self):
 		virtuals = {}
@@ -176,11 +176,17 @@ class ConfiguredTree(multiplex.tree):
 
 tree.configure = ConfiguredTree
 
+def _get_ebuild_op_args_kwds(self):
+	return (dict(self.domain_settings),), {}
 
 class install(repo_interfaces.install):
-	def __init__(self, repo, pkg, *a, **kw):
+
+	def __init__(self, domain_settings, repo, pkg, *a, **kw):
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
+		self.domain_settings = domain_settings
 		repo_interfaces.install.__init__(self, repo, pkg, *a, **kw)
+
+	_get_format_op_args_kwds = _get_ebuild_op_args_kwds
 
 	def merge_metadata(self, dirpath=None):
 		# error checking?
@@ -231,9 +237,13 @@ class install(repo_interfaces.install):
 
 
 class uninstall(repo_interfaces.uninstall):
-	def __init__(self, repo, pkg, offset=None, *a, **kw):
+
+	def __init__(self, domain_settings, repo, pkg, offset=None, *a, **kw):
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
+		self.domain_settings = domain_settings
 		repo_interfaces.uninstall.__init__(self, repo, pkg, offset=offset, *a, **kw)
+
+	_get_format_op_args_kwds = _get_ebuild_op_args_kwds
 
 	def unmerge_metadata(self, dirpath=None):
 		if dirpath is None:
@@ -244,11 +254,14 @@ class uninstall(repo_interfaces.uninstall):
 # should convert these to mixins.
 class replace(install, uninstall, repo_interfaces.replace):
 
-	def __init__(self, repo, pkg, newpkg, *a, **kw):
+	def __init__(self, domain_settings, repo, pkg, newpkg, *a, **kw):
 		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
 		self.newpath = os.path.join(repo.base, newpkg.category, newpkg.package+"-"+newpkg.fullver)
 		self.tmpdirpath = os.path.join(os.path.dirname(self.dirpath), ".tmp."+os.path.basename(self.dirpath))
+		self.domain_settings = domain_settings
 		repo_interfaces.replace.__init__(self, repo, pkg, newpkg, *a, **kw)
+
+	_get_format_op_args_kwds = _get_ebuild_op_args_kwds
 
 	def merge_metadata(self, *a, **kw):
 		kw["dirpath"] = self.tmpdirpath

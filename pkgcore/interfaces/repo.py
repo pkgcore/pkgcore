@@ -32,8 +32,9 @@ class base(object):
 		self.pkg = pkg
 		self.underway = False
 		self.offset = offset
-		assert getattr(self, "_op_name", None)
-		self.op = getattr(pkg, self._op_name)()
+		assert bool(getattr(self, "_op_name", None))
+		op_args, op_kwds = self._get_format_op_args_kwds()
+		self.op = getattr(pkg, self._op_name)(*op_args, **op_kwds)
 		self.lock = getattr(repo, "lock")
 		if self.lock is None:
 			self.lock = fake_lock()
@@ -41,6 +42,9 @@ class base(object):
 		if status_obj is not None:
 			for x in self.stage_hooks:
 				setattr(self, x, pre_curry(decorate_ui_callback, x, status_obj, getattr(self, x)))
+
+	def _get_format_op_args_kwds(self):
+		return (), {}
 
 	def start(self, engine):
 		self.me = engine

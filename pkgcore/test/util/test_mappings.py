@@ -277,6 +277,10 @@ class TestOrderedDict(unittest.TestCase):
 	def test_values(self):
 		self.assertEqual(list(self.gen_dict().itervalues()), 
 			list(xrange(100)))
+		l = ["asdf", "fdsa", "Dawefa", "3419", "pas", "1"]
+		l = [s+"12" for s in l] + l
+		l = ["1231adsfasdfagqwer"+s for s in l] + l
+		self.assertEqual(list(mappings.OrderedDict((v,k) for k,v in enumerate(l)).itervalues()), l)
 
 	def test_keys(self):
 		self.assertEqual(list(self.gen_dict().iterkeys()), list(xrange(100)))
@@ -284,7 +288,9 @@ class TestOrderedDict(unittest.TestCase):
 
 	def test_iter(self):
 		self.assertEqual(list(self.gen_dict()), list(xrange(100)))
-		l = ["asdf", "fdsa", "Dawefa", "3419", "pas", 1]
+		l = ["asdf", "fdsa", "Dawefa", "3419", "pas", "1"]
+		l = [s+"12" for s in l] + l
+		l = ["1231adsfasdfagqwer"+s for s in l] + l
 		self.assertEqual(list(mappings.OrderedDict((x, None) for x in l)), l)
 
 	def test_del(self):

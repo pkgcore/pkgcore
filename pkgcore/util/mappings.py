@@ -290,6 +290,12 @@ class OrderedDict(dict):
 	def iteritems(self):						
 		return ((k, self[k]) for k in self._order)
 	
+	def itervalues(self):
+		return (self[k] for k in self._order)
+	
+	def values(self):
+		return list(self.itervalues())
+
 	def items(self):
 		return list(self.iteritems())
 

@@ -12,35 +12,27 @@ from pkgcore.util.currying import pre_curry
 from pkgcore.vdb.contents import ContentsFile
 from pkgcore.plugins import get_plugin
 from pkgcore.interfaces import repo as repo_interfaces
-from pkgcore.interfaces.data_source import local_source
-from pkgcore.util.demandload import demandload
+from pkgcore.interfaces import data_source
 from pkgcore.util.osutils import listdir_dirs
-demandload(globals(), "logging time")
 from pkgcore.repository import multiplex, virtual
+from pkgcore.util import bzip2
 
-try:
-	from bz2 import compress
-except ImportError:
-	from pkgcore.spawn import find_binary, spawn_get_output
-	import tempfile
-	# trigger it to throw a CommandNotFound if missing
-	find_binary("bzip2")
+from pkgcore.util.demandload import demandload
+demandload(globals(), "logging time tempfile")
 
-	def compress(in_data, compress_level=9):
-		fd = None
-		fd = tempfile.TemporaryFile("w+")
-		fd.write(in_data)
-		fd.flush()
-		fd.seek(0)
-		try:
-			ret, data = spawn_get_output(["bzip2", "-%ic" % compress_level], fd_pipes={0:fd.fileno()})
-			if ret != 0:
-				raise ValueError("failed compressing the data")
-			return ''.join(data)
-			import pdb;pdb.set_trace()
-		finally:
-			if fd is not None:
-				fd.close()
+
+class bz2_data_source(data_source.data_source):
+	
+	def __init__(self, location):
+		self.location = location
+	
+	def get_data(self):
+		 return bzip2.decompress(open(self.location, "rb").read())
+	
+	def set_data(self, data):
+		d = bzip2.compress(data, 9)
+		open(self.location, "w").write(d)
+		
 	
 class tree(prototype.tree):
 	livefs = True
@@ -113,12 +105,13 @@ class tree(prototype.tree):
 			data = ContentsFile(os.path.join(path, "CONTENTS"))
 		elif key == "environment":
 			fp = os.path.join(path, key)
-			if not os.path.exists(fp):
-				if not os.path.exists(fp+".bz2"):
+			if not os.path.exists(fp+".bz2"):
+				if not os.path.exists(fp):
 					# icky.
 					raise KeyError("environment: no environment file found")
-				fp += ".bz2"
-			data = local_source(fp)
+				data = local_source(fp)
+			else:
+				data = bz2_data_source(fp+".bz2")
 		else:
 			try:
 				data = open(os.path.join(path, key), "r", 32384).read().strip()
@@ -205,7 +198,7 @@ class install(repo_interfaces.install):
 						v.add(x)
 				v.flush()
 			elif k == "environment":
-				data = compress(open(getattr(self.pkg, k).get_path(), "r").read())
+				data = bzip2.compress(open(getattr(self.pkg, k).get_path(), "r").read())
 				open(os.path.join(dirpath, "environment.bz2"), "w").write(data)
 				del data
 			else:

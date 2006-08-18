@@ -9,6 +9,24 @@ from pkgcore.util.dependant_methods import ForcedDepends
 
 __all__ = ["base", "FailedDirectory", "GenericBuildError", "errors"]
 
+
+def _raw_fetch(self):
+	if not "files" in self.__dict__:
+		self.files = {}
+
+	# this is being anal, but protect against pkgs that don't collapse common uri down to a single file.
+	gotten_fetchables = set(x.filename for x in self.files.values())
+	for x in self.fetchables:
+		if x.filename in gotten_fetchables:
+			continue
+		fp = self.fetcher(x)
+		if fp is None:
+			return False
+		self.files[fp] = x
+		gotten_fetchables.add(x.filename)
+	return True
+
+
 class base(object):
 	stage_depends = {
 		"setup":"fetch",
@@ -24,21 +42,7 @@ class base(object):
 	def setup(self):
 		return True
 
-	def fetch(self):
-		if not "files" in self.__dict__:
-			self.files = {}
-
-		# this is being anal, but protect against pkgs that don't collapse common uri down to a single file.
-		gotten_fetchables = set(x.filename for x in self.files.values())
-		for x in self.fetchables:
-			if x.filename in gotten_fetchables:
-				continue
-			fp = self.fetcher(x)
-			if fp is None:
-				return False
-			self.files[fp] = x
-			gotten_fetchables.add(x.filename)
-		return True
+	fetch = _raw_fetch
 
 	def unpack(self):
 		return True
@@ -70,6 +74,33 @@ class base(object):
 		o = locals()[k]
 		o.__doc__ = "\n".join(x.lstrip() for x in o.__doc__.split("\n") + ["@return: True on success, False on failure"])
 	del o, k
+
+
+class fetch(base):
+	__metaclass__ = ForcedDepends
+	
+	stage_depends = {"finalize":"fetch"}
+	
+	fetch = _raw_fetch
+
+	def __init__(self, pkg):
+		self.pkg = pkg
+		self.fetchables = pkg.fetchables
+	
+	def finalize(self):
+		"""finalize any build steps required"""
+		return self.pkg
+	
+
+class empty_build_op(base):
+	
+	stage_depends = {}
+	
+	def __init__(self, pkg):
+		self.pkg = pkg
+	
+	def finalize(self):
+		return self.pkg
 
 
 class BuildError(Exception):

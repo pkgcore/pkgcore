@@ -103,10 +103,10 @@ def size(file_obj):
 	Also, don't use this directly, use get_handler from above
 	"""
 	if isinstance(file_obj, base_data_source):
-		if file_obj.get_path == None:
-			file_obj = file_obj.get_fileobj()
-		else:
+		if file_obj.get_path is not None:
 			file_obj = file_obj.get_path()
+		else:
+			file_obj = file_obj.get_fileobj()
 	if isinstance(file_obj, basestring):
 		try:
 			size = os.lstat(file_obj).st_size

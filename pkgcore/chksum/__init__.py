@@ -93,7 +93,7 @@ def init(additional_handlers=None):
 	__inited__ = True
 
 
-def size(file):
+def size(file_obj):
 	"""
 	size based chksum handler
 	
@@ -101,8 +101,12 @@ def size(file):
 	
 	Also, don't use this directly, use get_handler from above
 	"""
-	try:
-		size = os.lstat(file).st_size
-	except OSError:
-		return None
-	return size
+	if isinstance(file_obj, basestring):
+		try:
+			size = os.lstat(file_obj).st_size
+		except OSError:
+			return None
+		return size
+	# seek to the end.
+	file_obj.seek(0,2)
+	return long(file_obj.tell())

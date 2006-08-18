@@ -11,22 +11,34 @@ from pkgcore.util import modules
 blocksize = 32768
 
 def loop_over_file(obj, filename):
-	f = open(filename, 'rb', blocksize * 2)
-	data = f.read(blocksize)
-	size = 0L
-	sum = obj.new()
-	while data:
-		sum.update(data)
-		size = size + len(data)
+	wipeit = isinstance(filename, basestring)
+	if wipeit:
+		f = open(filename, 'rb', blocksize * 2)
+	else:
+		f = filename
+		# reposition to start
+		f.seek(0, 0)
+	try:
 		data = f.read(blocksize)
-	f.close()
+		size = 0L
+		sum = obj.new()
+		while data:
+			sum.update(data)
+			size = size + len(data)
+			data = f.read(blocksize)
 
-	return sum.hexdigest()
+		return sum.hexdigest()
+	finally:
+		if wipeit:
+			f.close()
 
+import md5
 try:
 	import fchksum
 	def md5hash(filename):
-		return fchksum.fmd5t(filename)[0]
+		if isinstance(filename, basestring):
+			return fchksum.fmd5t(filename)[0]
+		return loop_over_file(md5, filename)
 
 except ImportError:
 	import md5

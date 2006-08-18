@@ -28,11 +28,19 @@ class ChksumsTests(unittest.TestCase):
 		except IOError:
 			pass
 
-	def generic_check(self, chf_type):
+	def generic_fp_check(self, chf_type):
 		chf = chksum.get_handler(chf_type)
 		self.assertEqual(chf(self.fn), sums[chf_type])
 
-	locals().update([("test_%s" % x, post_curry(generic_check, x)) for x in
+	def generic_fileobj_check(self, chf_type):
+		chf = chksum.get_handler(chf_type)
+		self.assertEqual(chf(open(self.fn, "r")), sums[chf_type])
+
+	locals().update([("test_filepath_%s" % x, post_curry(generic_fp_check, x)) for x in
 		("rmd160", "sha1", "sha256", "md5", "size")])
+
+	locals().update([("test_fileobj_%s" % x, post_curry(generic_fileobj_check, x)) for x in
+		("rmd160", "sha1", "sha256", "md5", "size")])
+
 	del x
 

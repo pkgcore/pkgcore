@@ -474,16 +474,20 @@ class EbuildProcessor:
 			raise UnhandledCommand("inherit requires an eclass specified, none specified")
 
 		line = line.strip()
-		if ecache.get_eclass_path is not None:
-			value = ecache.get_eclass_path(line)
+		eclass = ecache.get_eclass(line)
+		if eclass is None:
+			value = ecache.write("failed")
+			raise UnhandledCommand("inherit requires a known eclass, %s cannot be found" % line)
+
+		if eclass.get_path is not None:
+			value = eclass.get_path()
 			self.write("path")
 			self.write(value)
-		elif ecache.get_eclass_data is not None:
-			value = ecache.get_eclass_data(line)
+		else:
+			# $10 this doesn't work.
+			value = eclass.get_fileobj().read()
 			self.write("transfer")
 			self.write(value)
-		else:
-			raise AttributeError("neither get_data nor get_path is usable on ecache!")
 
 	# this basically handles all hijacks from the daemon, whether confcache or portageq.
 	def generic_handler(self, additional_commands=None):

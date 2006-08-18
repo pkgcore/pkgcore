@@ -6,6 +6,8 @@
 in memory representation of on disk eclass stacking order
 """
 
+from pkgcore.interfaces.data_source import local_source
+
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.fs.util:normpath pkgcore.util.mappings:StackedDict os")
 
@@ -19,8 +21,6 @@ class cache(base):
 	Any code trying to get eclass data/path will choose which method it prefers, falling back to what's available if only one option
 	exists.
 
-	get_path should be defined when it's possible to state the actual on disk location
-	get_data should be defined when it's not possible (or not preferable), as such
 	dumping the eclass down the pipe is required (think remote tree)
 
 	Base defaults to having both set.  Override as needed.
@@ -87,13 +87,12 @@ class cache(base):
 
 		return ec_dict
 
-	def get_eclass_path(self, eclass):
-		"""get local file path to an eclass.  remote implementations should set this to None, since the file isn't locally available"""
-		try:
-			return os.path.join(self.eclasses[eclass][0], eclass+".eclass")
-		except KeyError:
-			return None
-
+	def get_eclass(self, eclass):
+		o = self.eclasses.get(eclass, None)
+		if o is None:
+			return o
+		return local_source(os.path.join(o[0], eclass+".eclass"))
+		
 
 class StackedCache(cache):
 

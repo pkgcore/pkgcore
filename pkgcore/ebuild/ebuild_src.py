@@ -234,7 +234,7 @@ class package(metadata.package):
 		return "ebuild src: %s" % self.cpvstr
 	
 	def __repr__(self):
-		return "<%s cpv=%r @%#8x>" % (self.__class.__name__, self.cpvstr, id(self))
+		return "<%s cpv=%r @%#8x>" % (self.__class__, self.cpvstr, id(self))
 
 
 class package_factory(metadata.factory):

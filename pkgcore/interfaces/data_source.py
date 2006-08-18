@@ -76,7 +76,7 @@ class data_source(base):
 	def get_fileobj(self):
 		if self.mutable:
 			return write_StringIO(self.data)
-		return read_StringIO(_reset_data, self.data)
+		return read_StringIO(self._reset_data, self.data)
 	
 	def _reset_data(self, data):
 		self.data = data

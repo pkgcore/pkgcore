@@ -98,7 +98,7 @@ def abspath(path):
 	path = os.path.abspath(path)
 	try:
 		return abssymlink(path)
-	except OSError e:
+	except OSError, e:
 		if e.errno == errno.EINVAL:
 			return path
 		raise

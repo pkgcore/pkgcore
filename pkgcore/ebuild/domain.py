@@ -251,6 +251,7 @@ class domain(pkgcore.config.domain.domain):
 		default_restrict = ContainmentMatch(*default_keys)
 		default_keys = set(default_keys)
 		
+		second_level_restricts = {}
 		for pkgatom, vals in pkg_keywords:
 			if not vals:
 				# if we already are unstable, no point in adding this exemption
@@ -289,13 +290,18 @@ class domain(pkgcore.config.domain.domain):
 				else:
 					r.add_restriction(default_restrict)
 				r = packages.PackageRestriction("keywords", r)
+			second_level_restricts.setdefault(pkgatom.key, []).append(pkgatom)
 			keywords_filter[pkgatom] = r
-
+		
+		second_level_restricts = dict((k, tuple(unstable_unique(v))) for k,v in second_level_restricts.iteritems())
+		
 		keywords_filter["__DEFAULT__"] = packages.PackageRestriction("keywords", default_restrict)
 		def redirecting_splitter(collapsed_inst, pkg):
 			key = get_key_from_package(collapsed_inst, pkg)
-			if key not in collapsed_inst.restricts_dict:
-				return "__DEFAULT__"
+			for pkgatom in second_level_restricts.get(key, []):
+				if pkgatom.match(pkg):
+					return pkgatom
+			return "__DEFAULT__"
 			return key
 
 		return DictBased(keywords_filter.iteritems(), redirecting_splitter)

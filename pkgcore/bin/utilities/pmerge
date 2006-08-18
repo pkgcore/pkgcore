@@ -6,6 +6,7 @@ from pkgcore.util.lists import stable_unique
 from pkgcore.util.repo_utils import get_raw_repos
 from pkgcore.util.commandline import generate_restriction, collect_ops
 from pkgcore.ebuild import resolver
+from pkgcore.repository import multiplex
 import sys
 
 
@@ -146,7 +147,7 @@ def main():
 
 	if pop_arg(args, "-h", "--help"):
 		print "args supported, [-D || --deep], [[-C || --unmerge] || [ [-u || --upgrade] || [ -s (system|world) ]] [-d || --debug] [ --ignore-failures ] [ --preload-vdb-state ]"
-		print "[[-p || --pretend] || [-f || --fetchonly]] [ -i || --ignore-cycles ] [ --nodeps ] [ -r || --replace ]"
+		print "[[-p || --pretend] || [-f || --fetchonly]] [ -i || --ignore-cycles ] [ --nodeps ] [ -r || --replace ] [-k || --usepkg] [-K || --usepkgonly]"
 		print "can specify additional atoms when specifying -s, no atoms/sets available, defaults to sys-apps/portage"
 		return 1
 
@@ -157,6 +158,8 @@ def main():
 	pretend = pop_arg(args, "-p", "--pretend")
 	fetchonly = pop_arg(args, "-f", "--fetchonly")
 	
+	prefer_binpkgs = pop_arg(args, "-k", "--usepkg")
+	force_binpkgs = pop_arg(args, "-K", "--usepkgonly")
 	trigger_pdb = pop_arg(args, "-p", "--pdb")
 	empty_vdb = pop_arg(args, "-e", "--empty")
 	upgrade = pop_arg(args, "-u", "--upgrade")
@@ -183,6 +186,14 @@ def main():
 	
 	domain = conf.domain["livefs domain"]
 	vdb, repos = domain.all_vdbs, domain.all_repos
+	if force_binpkgs:
+		if prefer_binpkgs:
+			print "-k is redundant when -K is used"
+		repos = multiplex.tree(*[x for x in repos.trees if getattr(x, "format_magic", None) != "ebuild_src"])
+	elif prefer_binpkgs:
+		repos = [x for x in repos.trees if getattr(x, "format_magic", None) == "ebuild_built"] + \
+			[x for x in repos.trees if getattr(x, "format_magic", None) != "ebuild_built"]
+		repos = multiplex.tree(*repos)
 
 	if unmerging:
 		if upgrade:

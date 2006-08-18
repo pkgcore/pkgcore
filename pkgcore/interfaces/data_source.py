@@ -6,51 +6,62 @@ data source.
 
 Think of it as a far more minimal form of file protocol
 """
+from pkgcore.util.demandload import demandload
+from pkgcore.util.currying import pre_curry
 
-import os
+import os, StringIO
+class native_ro_StringIO(StringIO.StringIO):
+	def generic_immutable_method(attr, self, *a, **kwds):
+		raise AttributeError("%s doesn't have %s" % (self.__class__, attr))
+	
+	locals().update([(k, pre_curry(generic_immutable_method, k)) for k in 
+		["write", "writelines", "truncate"]])
+	del generic_immutable_method
+
+
+write_StringIO = StringIO.StringIO
+try:
+	import cStringIO
+	read_StringIO = cStringIO.StringIO
+except ImportError:
+	read_StringIO = native_ro_StringIO
 
 class base(object):
 	"""base class, all implementations should match this protocol"""
-	get_path = get_data = set_data = None
+	get_fileobj = get_path = None
 
 
 class local_source(base):
 	
 	"""locally accessible data source"""
 	
-	__slots__ = ("path",)
+	__slots__ = ("path", "mutable")
 
-	def __init__(self, path):
+	def __init__(self, path, mutable=False):
 		"""@param path: file path of the data source"""
 		self.path = path
+		self.mutable = mutable
 
 	def get_path(self):
 		if os.path.exists(self.path):
 			return self.path
 		return None
 
-	def get_data(self):
-		if self.path is None:
-			return None
-		try:
-			f = open(fp, "r", 32768)
-			d = f.read()
-			f.close()
-			return d
-		except OSError:
-			return None
-
+	def get_fileobj(self):
+		if self.mutable:
+			return open(self, "rb+")
+		return open(self, "rb")
 
 class data_source(base):
 	
-	def __init__(self, data):
+	def __init__(self, data, mutable=False):
 		"""@param data: data to wrap"""
 		self.data = data
+		self.mutable = mutable
 	
 	get_path = None
 	
-	def get_data(self):
-		return self.data
-
-	def set_data(self, data):
-		self.data = data
+	def get_fileobj(self):
+		if self.mutable:
+			return write_StringIO(self.data)
+		return read_StringIO(self.data)

@@ -21,7 +21,7 @@ from pkgcore.util.bzip2 import decompress
 
 
 class tree(prototype.tree):
-	ebuild_format_magic = "ebuild_built"	
+	format_magic = "ebuild_built"	
 	# yes, the period is required.  no, do not try and remove it (harring says it stays)
 	extension = ".tbz2"
 	
@@ -39,7 +39,7 @@ class tree(prototype.tree):
 		except OSError:
 			raise errors.InitializationError("lstat failed on base %s" % self.base)
 
-		self.package_class = get_plugin("format", self.ebuild_format_magic)(self)
+		self.package_class = get_plugin("format", self.format_magic)(self)
 
 	def _get_categories(self, *optionalCategory):
 		# return if optionalCategory is passed... cause it's not yet supported

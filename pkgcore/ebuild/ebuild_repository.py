@@ -29,7 +29,7 @@ class UnconfiguredTree(prototype.tree):
 	configured = False
 	configurables = ("settings",)
 	configure = None
-	ebuild_format_magic = "ebuild_src"
+	format_magic = "ebuild_src"
 
 	def __init__(self, location, cache=None, eclass_cache=None, mirrors_file=None, default_mirrors=None):
 
@@ -83,7 +83,7 @@ class UnconfiguredTree(prototype.tree):
 		self.mirrors = mirrors
 		self.default_mirrors = default_mirrors
 		self.cache = cache
-		self.package_class = get_plugin("format", self.ebuild_format_magic)(self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
+		self.package_class = get_plugin("format", self.format_magic)(self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
 
 	def rebind(self, **kwds):
 

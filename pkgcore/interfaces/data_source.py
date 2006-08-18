@@ -23,7 +23,7 @@ class write_StringIO(StringIO.StringIO):
 		if not callable(callback):
 			raise TypeError("callback must be callable")
 		StringIO.StringIO.__init__(self, *args, **kwds)
-		self._callback = callbak
+		self._callback = callback
 	
 	def close(self):
 		self.flush()
@@ -32,7 +32,6 @@ class write_StringIO(StringIO.StringIO):
 			self._callback = None
 		StringIO.StringIO.close(self)
 
-write_StringIO = StringIO.StringIO
 try:
 	import cStringIO
 	read_StringIO = cStringIO.StringIO
@@ -75,8 +74,8 @@ class data_source(base):
 	
 	def get_fileobj(self):
 		if self.mutable:
-			return write_StringIO(self.data)
-		return read_StringIO(self._reset_data, self.data)
+			return write_StringIO(self._reset_data, self.data)
+		return read_StringIO(self.data)
 	
 	def _reset_data(self, data):
 		self.data = data

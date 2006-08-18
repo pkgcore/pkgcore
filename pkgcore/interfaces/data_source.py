@@ -18,6 +18,19 @@ class native_ro_StringIO(StringIO.StringIO):
 		["write", "writelines", "truncate"]])
 	del generic_immutable_method
 
+class write_StringIO(StringIO.StringIO):
+	def __init__(self, callback, *args, **kwds):
+		if not callable(callback):
+			raise TypeError("callback must be callable")
+		StringIO.StringIO.__init__(self, *args, **kwds)
+		self._callback = callbak
+	
+	def close(self):
+		self.flush()
+		if self._callback is not None:
+			self._callback(self.get_value())
+			self._callback = None
+		StringIO.StringIO.close(self)
 
 write_StringIO = StringIO.StringIO
 try:
@@ -50,6 +63,7 @@ class local_source(base):
 			return open(self.path,"rb+")
 		return open(self.path, "rb")
 
+
 class data_source(base):
 	
 	def __init__(self, data, mutable=False):
@@ -62,4 +76,7 @@ class data_source(base):
 	def get_fileobj(self):
 		if self.mutable:
 			return write_StringIO(self.data)
-		return read_StringIO(self.data)
+		return read_StringIO(_reset_data, self.data)
+	
+	def _reset_data(self, data):
+		self.data = data

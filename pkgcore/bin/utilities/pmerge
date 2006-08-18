@@ -213,7 +213,13 @@ def main():
 		else:
 			raise Exception("need at least one atom/set")
 	else:
-		atoms = parse_atom(repos, ignore_failures, *args)
+		try:
+			atoms = parse_atom(repos, ignore_failures, *args)
+		except NoMatches, nme:
+			if nme.raw_atom in conf.pkgset:
+				print "didn't find a pkg match to %r, but found a set match- use -s to specify a set to operate upon" % nme.raw_atom
+				return 1
+			raise
 
 	if set_targets:
 		atoms += set_targets

@@ -8,11 +8,19 @@ default chksum handlers implementation- sha1, sha256, rmd160, and md5
 
 from pkgcore.util.currying import pre_curry
 from pkgcore.util import modules
+from pkgcore.interfaces.data_source import base as base_data_source
 blocksize = 32768
 
+
 def loop_over_file(obj, filename):
-	wipeit = isinstance(filename, basestring)
-	if wipeit:
+	if isinstance(filename, base_data_source):
+		if filename.get_path is not None:
+			filename = filename.get_path()
+		else:
+			filename = filename.get_fileobj()
+	wipeit = False
+	if isinstance(filename, basestring):
+		wipeit = True
 		f = open(filename, 'rb', blocksize * 2)
 	else:
 		f = filename
@@ -36,6 +44,9 @@ import md5
 try:
 	import fchksum
 	def md5hash(filename):
+		if isinstance(filename, base_data_source):
+			if filename.get_path is not None:
+				filename = filename.get_path()
 		if isinstance(filename, basestring):
 			return fchksum.fmd5t(filename)[0]
 		return loop_over_file(md5, filename)

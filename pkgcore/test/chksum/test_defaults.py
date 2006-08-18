@@ -4,6 +4,7 @@
 from twisted.trial import unittest
 from pkgcore import chksum
 from pkgcore.util.currying import post_curry
+from pkgcore.interfaces.data_source import data_source, local_source
 import tempfile, os
 
 data = "afsd123klawerponzzbnzsdf;h89y23746123;haas"
@@ -36,10 +37,18 @@ class ChksumsTests(unittest.TestCase):
 		chf = chksum.get_handler(chf_type)
 		self.assertEqual(chf(open(self.fn, "r")), sums[chf_type])
 
+	def generic_data_source_check(self, chf_type):
+		chf = chksum.get_handler(chf_type)
+		self.assertEqual(chf(local_source(self.fn)), sums[chf_type])
+		self.assertEqual(chf(data_source(open(self.fn, "r").read())), sums[chf_type])
+
 	locals().update([("test_filepath_%s" % x, post_curry(generic_fp_check, x)) for x in
 		("rmd160", "sha1", "sha256", "md5", "size")])
 
 	locals().update([("test_fileobj_%s" % x, post_curry(generic_fileobj_check, x)) for x in
+		("rmd160", "sha1", "sha256", "md5", "size")])
+
+	locals().update([("test_data_source_%s" % x, post_curry(generic_data_source_check, x)) for x in
 		("rmd160", "sha1", "sha256", "md5", "size")])
 
 	del x

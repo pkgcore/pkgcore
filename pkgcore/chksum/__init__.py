@@ -5,6 +5,7 @@
 chksum verification/generation subsystem
 """
 
+from pkgcore.interfaces.data_source import base as base_data_source
 from pkgcore.util.demandload import demandload
 demandload(globals(), "os sys pkgcore.util.modules:load_module")
 
@@ -101,6 +102,11 @@ def size(file_obj):
 	
 	Also, don't use this directly, use get_handler from above
 	"""
+	if isinstance(file_obj, base_data_source):
+		if file_obj.get_path == None:
+			file_obj = file_obj.get_fileobj()
+		else:
+			file_obj = file_obj.get_path()
 	if isinstance(file_obj, basestring):
 		try:
 			size = os.lstat(file_obj).st_size

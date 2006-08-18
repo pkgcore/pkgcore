@@ -191,8 +191,6 @@ class domain(pkgcore.config.domain.domain):
 			del settings["default"]
 		self.settings = settings
 
-		if profile.get_path is None and profile.get_data is None:
-			raise Failure("profile instance '%s' lacks a usable ebd_data_source method" % profile)
 		bashrc = list(profile.bashrc)
 
 		if "bashrc" in self.settings:

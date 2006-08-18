@@ -43,14 +43,12 @@ class local_source(base):
 		self.mutable = mutable
 
 	def get_path(self):
-		if os.path.exists(self.path):
-			return self.path
-		return None
+		return self.path
 
 	def get_fileobj(self):
 		if self.mutable:
-			return open(self, "rb+")
-		return open(self, "rb")
+			return open(self.path,"rb+")
+		return open(self.path, "rb")
 
 class data_source(base):
 	

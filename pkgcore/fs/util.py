@@ -94,6 +94,14 @@ def abssymlink(symlink):
 		mylink = mydir+"/"+mylink
 	return os.path.normpath(mylink)
 
+def abspath(path):
+	path = os.path.abspath(path)
+	try:
+		return abssymlink(path)
+	except OSError e:
+		if e.errno == errno.EINVAL:
+			return path
+		raise
 
 def normpath(mypath):
 	"""

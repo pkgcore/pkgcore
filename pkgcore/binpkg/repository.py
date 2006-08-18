@@ -18,7 +18,7 @@ from pkgcore.util.osutils import listdir_dirs, listdir_files
 from pkgcore.binpkg.xpak import Xpak
 from pkgcore.binpkg.tar import generate_contents
 from pkgcore.util.bzip2 import decompress
-
+from pkgcore.interfaces.build import empty_build_op
 
 class tree(prototype.tree):
 	format_magic = "ebuild_built"	
@@ -94,14 +94,17 @@ class tree(prototype.tree):
 		elif key == "environment":
 			data = xpak.get("environment.bz2", None)
 			if data is None:
-				data = xpak.get("environment", None)
+				data = data_source(xpak.get("environment", None), mutable=True)
 				if data is None:
 					raise KeyError("environment.bz2 not found in xpak segment, malformed binpkg?")
 			else:
-				data = decompress(data)
+				data = data_source(decompress(data), mutable=True)
 		else:
 			try:
 				data = xpak[key]
 			except KeyError:
 				data =''
 		return data
+
+	def generate_buildop(self, pkg):
+		return empty_build_op(pkg)

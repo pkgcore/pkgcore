@@ -69,6 +69,9 @@ class package(ebuild_src.package):
 	def __str__(self):
 		return "built ebuild: %s" % (self.cpvstr)
 
+	def build(self):
+		return self.repo.generate_buildop(self)
+
 
 class package_factory(metadata.factory):
 	child_class = package

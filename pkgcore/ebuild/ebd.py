@@ -36,7 +36,11 @@ def _reset_env_data_source(method):
 				print "\nfiring env_data_source\n"
 				try:
 					fp = self.env["PORT_ENV_FILE"]
-					self.env_data_sources.set_data(open(fp, "r").read())
+					f = self.env_data.get_fileobj()
+					f.seek(0,0)
+					f.truncate(0)
+					f.write(open(fp, "r").read())
+					del f,fp
 				except (IOError, OSError), oe:
 					if oe.errno != errno.ENOENT:
 						raise
@@ -77,7 +81,7 @@ class ebd(object):
 		self.env.setdefault("ROOT", "/")
 		self.env_data_source = env_data_source
 		if env_data_source is not None and not isinstance(env_data_source, data_source.base):
-			raise TypeError("env_data_source must be None, or a pkgcore.data_source.base derivative: %r" % local_source)
+			raise TypeError("env_data_source must be None, or a pkgcore.data_source.base derivative: %s: %s" % (env_data_source.__class__, env_data_source))
 
 		if features is None:
 			features = self.env.get("FEATURES", [])
@@ -136,12 +140,12 @@ class ebd(object):
 		self.env_data_source = env_data_source
 		if env_data_source is not None:
 			if self.env_data_source.get_path is not None:
-				self.env["PORT_ENV_FILE"] = self.env_data_source.get_path()
+				self.env["PORT_ENV_FILE"] = env_data_source.get_path()
 			else:
 				if not ensure_dirs(self.env["T"], mode=0770, gid=portage_gid, minimal=True):
 					raise build.FailedDirectory(self.env[k], "%s doesn't fulfill minimum mode %o and gid %i" % (k, 0770, portage_gid))
 				fp = os.path.join(self.env["T"], "env_data_source")
-				open(fp, "w").write(self.env_data_source.get_data())
+				open(fp, "w").write(env_data_source.get_fileobj().read())
 				self.env["PORT_ENV_FILE"] = fp
 		
 

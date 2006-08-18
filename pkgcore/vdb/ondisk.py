@@ -23,16 +23,19 @@ demandload(globals(), "logging time tempfile")
 
 class bz2_data_source(data_source.data_source):
 	
-	def __init__(self, location):
+	def __init__(self, location, mutable=False):
 		self.location = location
+		self.mutable = mutable
 	
-	def get_data(self):
-		 return bzip2.decompress(open(self.location, "rb").read())
+	def _get_data(self):
+		return bzip2.decompress(open(self.location, "rb").read())
 	
-	def set_data(self, data):
-		d = bzip2.compress(data, 9)
-		open(self.location, "w").write(d)
-		
+	def _set_data(self, data):
+		open(self.location, "wb").write(bzip2.compress(data))
+		return data
+	
+	data = property(_get_data, _set_data)
+	
 	
 class tree(prototype.tree):
 	livefs = True
@@ -109,7 +112,7 @@ class tree(prototype.tree):
 				if not os.path.exists(fp):
 					# icky.
 					raise KeyError("environment: no environment file found")
-				data = local_source(fp)
+				data = data_source.local_source(fp)
 			else:
 				data = bz2_data_source(fp+".bz2")
 		else:
@@ -198,7 +201,7 @@ class install(repo_interfaces.install):
 						v.add(x)
 				v.flush()
 			elif k == "environment":
-				data = bzip2.compress(open(getattr(self.pkg, k).get_path(), "r").read())
+				data = bzip2.compress(self.pkg.environment.get_fileobj().read())
 				open(os.path.join(dirpath, "environment.bz2"), "w").write(data)
 				del data
 			else:

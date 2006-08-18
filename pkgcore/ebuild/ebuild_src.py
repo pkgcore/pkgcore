@@ -308,7 +308,8 @@ class virtual_ebuild(metadata.package):
 	"""
 
 	package_is_real = False
-
+	built = True
+	
 	def __init__(self, cpv, parent_repository, pkg, data):
 		"""
 		@param cpv: cpv for the new pkg

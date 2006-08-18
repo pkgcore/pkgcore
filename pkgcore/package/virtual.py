@@ -15,6 +15,7 @@ class package(metadata.package):
 	"""
 
 	package_is_real = False
+	built = True
 
 	def __getattr__ (self, key):
 		val = None

@@ -33,7 +33,9 @@ class package(ebuild_src.package):
 	tracked_attributes = ebuild_src.package.tracked_attributes[:]
 	tracked_attributes.extend(["contents", "use", "environment"])
 	allow_regen = False
-
+	
+	built = True
+	
 	_get_attr = dict(ebuild_src.package._get_attr)
 
 	for x in ("_mtime_", "fetchables"):

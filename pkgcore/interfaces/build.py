@@ -76,7 +76,7 @@ class base(object):
 	del o, k
 
 
-class fetch(base):
+class fetch(object):
 	__metaclass__ = ForcedDepends
 	
 	stage_depends = {"finalize":"fetch"}
@@ -90,15 +90,23 @@ class fetch(base):
 	def finalize(self):
 		"""finalize any build steps required"""
 		return self.pkg
-	
 
-class empty_build_op(base):
+	def clean(self):
+		return True	
+
+
+class empty_build_op(object):
 	
 	stage_depends = {}
+	
+#	__metaclass__ = ForcedDepends
 	
 	def __init__(self, pkg):
 		self.pkg = pkg
 	
+	def clean(self):
+		return True	
+
 	def finalize(self):
 		return self.pkg
 

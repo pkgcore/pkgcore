@@ -7,12 +7,13 @@ make.conf translator, converts portage configuration files into L{pkgcore.config
 
 import os
 from pkgcore.config import basics, introspect
-from pkgcore.util.file import read_bash_dict, read_dict
-from pkgcore.fs.util import normpath
 from pkgcore import const
 from pkgcore.util.modules import load_attribute
 from pkgcore.util.demandload import demandload
-demandload(globals(), "errno pkgcore.config:errors pkgcore.pkgsets.glsa:SecurityUpgrades")
+demandload(globals(), "errno pkgcore.config:errors " +
+	"pkgcore.pkgsets.glsa:SecurityUpgrades "+
+	"pkgcore.fs.util:normpath,abspath "+
+	"pkgcore.util.file:read_bash_dict,read_dict ")
 
 
 def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
@@ -148,11 +149,23 @@ def configFromMakeConf(location="/etc/"):
 	new_config["glsa"] = basics.HardCodedConfigSection("glsa",
 		{"type": "pkgset", "class": SecurityUpgradesViaProfile,
 		"ebuild_repo": "portdir", "vdb": "vdb", "profile":"profile"})
-	
+
+	#binpkg.
+	pkgdir = conf_dict.pop("PKGDIR", None)
+	default_repos = "portdir"
+	if pkgdir is not None:
+		pkgdir = abspath(pkgdir)
+		if os.path.isdir(pkgdir):
+			new_config["binpkg"] = basics.ConfigSectionFromStringDict("binpkg", 
+				{"class":"pkgcore.binpkg.repository.tree", "type":"repo",
+				"location":pkgdir})
+			default_repos += " binpkg"
+
 	# finally... domain.
-	d = {"repositories": "portdir", "fetcher": "fetcher", "default": "yes", 
+
+	d = {"repositories":default_repos, "fetcher": "fetcher", "default": "yes", 
 		"vdb": "vdb", "profile": "profile", "type": "domain"}
-	conf_dict.update({"repositories": "portdir", "fetcher": "fetcher", "default": "yes", 
+	conf_dict.update({"repositories": default_repos, "fetcher": "fetcher", "default": "yes", 
 		"vdb": "vdb", "profile": "profile", "type": "domain"})
 
 	# finally... package.* additions

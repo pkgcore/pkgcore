@@ -7,11 +7,12 @@ interaction with the livefs, namely generating fs objects to represent the livef
 
 import os, collections
 from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO, S_ISCHR, S_ISBLK
-from pkgcore.fs.fs import fsFile, fsDir, fsSymLink, fsDev, fsFifo
+from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsDev, fsFifo, isreg
 from pkgcore.fs.util import normpath
 from pkgcore.fs.contents import contentsSet
 from pkgcore.chksum import get_handlers
 from pkgcore.util.mappings import LazyValDict
+from pkgcore.interfaces.data_source import local_source
 
 __all__ = ["gen_obj", "scan", "iter_scan"]
 
@@ -28,7 +29,8 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_path=None):
 	given a fs path, and an optional stat, return an appropriate fs obj representing that file/dir/dev/fif/link
 
 	@param stat: stat object to reuse if available
-	@param real_path: real path to the object if path is the desired location
+	@param datasource: real path to the object if path is the desired location, rather then existant location-
+	alternatively, can be a L{<pkgcore.interfaces.data_source.base>data_source} instance to pull data from
 	@raise KeyError: if no obj type matches the stat checks
 	@return: L{pkgcore.fs.fs.fsBase} derivative
 	"""
@@ -41,19 +43,18 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_path=None):
 		chksum_handlers = get_handlers()
 
 	mode = stat.st_mode
-	d = {"mtime":stat.st_mtime, "mode":S_IMODE(mode), "uid":stat.st_uid, "gid":stat.st_gid, "real_path":real_path}
+	d = {"mtime":stat.st_mtime, "mode":S_IMODE(mode), "uid":stat.st_uid, "gid":stat.st_gid}
 	if S_ISDIR(mode):
 		return fsDir(path, **d)
 	elif S_ISREG(mode):
 		d["size"] = stat.st_size
-		if real_path is None:
-			l = path
-		else:
-			l = real_path
-		return fsFile(path, chksums=gen_chksums(chksum_handlers, l), **d)
+		if real_path != path:
+			# we would've set it above, so is check flies
+			d["data_source"] = local_source(real_path)
+		return fsFile(path, **d)
 	elif S_ISLNK(mode):
 		d["target"] = os.readlink(real_path)
-		return fsSymLink(path, **d)
+		return fsSymlink(path, **d)
 	elif S_ISFIFO(mode):
 		return fsFifo(path, **d)
 	elif S_ISCHR(mode) or S_ISBLK(mode):

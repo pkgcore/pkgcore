@@ -15,6 +15,11 @@ class FsObjsTest(TempDirMixin, unittest.TestCase):
 		self.assertEqual(obj.uid, st.st_uid)
 		self.assertEqual(obj.gid, st.st_gid)
 
+	def test_data_source(self):
+		o = gen_obj("/tmp/etc/passwd", real_path="/etc/passwd")
+		self.failUnless(o.location, "/tmp/etc/passwd")
+		self.failUnless(o.data.get_path(), "/etc/passwd")
+
 	def test_gen_obj_reg(self):
 		path = os.path.join(self.dir, "reg_obj")
 		open(path, "w")
@@ -35,7 +40,7 @@ class FsObjsTest(TempDirMixin, unittest.TestCase):
 		open(src, "w")
 		os.symlink(src, link)
 		obj = gen_obj(link)
-		self.failUnless(isinstance(obj, fs.fsSymLink))
+		self.failUnless(isinstance(obj, fs.fsSymlink))
 		self.check_attrs(obj, link)
 		self.assertEqual(os.readlink(link), obj.target)
 
@@ -44,11 +49,6 @@ class FsObjsTest(TempDirMixin, unittest.TestCase):
 		os.mkfifo(path)
 		o = gen_obj(path)
 		self.check_attrs(o, path)
-
-	def test_real_path(self):
-		o = gen_obj("/tmp/etc/passwd", real_path="/etc/passwd")
-		self.failUnless(o.location == "/tmp/etc/passwd")
-		self.failUnless(o.real_path == "/etc/passwd")
 
 	def test_iterscan(self):
 		path = os.path.join(self.dir, "iscan")

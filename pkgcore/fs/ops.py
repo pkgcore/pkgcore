@@ -87,15 +87,14 @@ def default_copyfile(obj):
 	@raise OSError:, for non file objs, Exception (this needs to be fixed
 	@return: true if success, else an exception is thrown
 	"""
-	
+
 	existant = False
 	ensure_perms = get_plugin("fs_ops", "ensure_perms")
-
 	if not fs.isfs_obj(obj):
 		raise TypeError("obj must be fsBase derivative")
 	elif fs.isdir(obj):
 		raise TypeError("obj must not be a fsDir instance")
-	elif obj.real_path == obj.real_location:
+	elif not fs.issym(obj) and not fs.isreg(obj) and obj.real_path == obj.real_location:
 		raise TypeError("obj real_path must differ from obj location")
 	try:
 		if fs.isdir(gen_obj(obj.real_location)):
@@ -104,18 +103,39 @@ def default_copyfile(obj):
 	except OSError:
 		existant = False
 
+	existant_fp = obj.real_location + "#new"
+	
 	if fs.isreg(obj):
-		if not existant:
-			shutil.copyfile(obj.real_path, obj.real_location)
-			ensure_perms(obj)
+		src_f = obj.data.get_fileobj()
+		if existant:
+			new_f = open(existant_fp, "wb", 32768)
 		else:
-			shutil.copyfile(obj.real_path, obj.real_location+"#new")
-			ensure_perms(obj.change_attributes(location=obj.real_location+"#new"))
-			os.rename(obj.real_location+"#new", obj.real_location)
+			new_f = open(obj.real_location, "wb", 32768)
+		d = src_f.read(32768)
+		while d:
+			new_f.write(d)
+			d = src_f.read(32768)
+		new_f.close()
+		del src_f
+	elif fs.issym(obj):
+		if existant:
+			os.symlink(obj.target, existant_fp)
+		else:
+			os.symlink(obj.target, obj.real_location)
 	else:
-		ret = spawn([COPY_BINARY, "-R", obj.real_path, obj.real_location])
+		if existant:
+			ret = spawn([COPY_BINARY, "-Rp", obj.real_path, existant_fp])
+		else:
+			ret = spawn([COPY_BINARY, "-Rp", obj.real_path, obj.real_location])
 		if ret != 0:
 			raise Exception("failed cp'ing %s to %s, ret %s" % (obj.real_path, obj.real_location, ret))
+	if existant:
+		if not fs.issym(obj):
+			ensure_perms(obj.change_attributes(location=existant_fp))
+		os.rename(existant_fp, obj.real_location)
+	else:
+		if not fs.issym(obj):
+			ensure_perms(obj)
 	return True
 
 def offset_rewriter(offset, iterable):

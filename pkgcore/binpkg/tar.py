@@ -6,7 +6,7 @@ binpkg tar utilities
 """
 
 from pkgcore.util.tar import TarFile
-from pkgcore.fs.fs import fsFile, fsDir, fsSymLink, fsDev, fsFifo
+from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsDev, fsFifo
 from pkgcore.fs import contents
 from pkgcore.util.mappings import OrderedDict
 
@@ -30,7 +30,7 @@ def converter(member):
 		d["size"] = long(member.size)
 		return fsFile(location, **d)
 	elif member.issym():
-		return fsSymLink(location, member.linkname, **d)
+		return fsSymlink(location, member.linkname, **d)
 	else:
 		print "skipping",member
 

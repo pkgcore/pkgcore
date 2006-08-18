@@ -21,7 +21,7 @@ del t
 class TarInfo(tarfile.TarInfo):
 	__slots__ = ("name", "mode", "uid", "gid", "size", "mtime", "chksum", "type",
 		"linkname", "uname", "gname", "devmajor", "devminor", "prefix", "offset",
-		"offset_data")
+		"offset_data", "buf", "sparse", "_link_target")
 
 tarfile.TarInfo = TarInfo
 # finished monkey patching.  now to lift things out of our tarfile module into this scope so from/import behaves properly.

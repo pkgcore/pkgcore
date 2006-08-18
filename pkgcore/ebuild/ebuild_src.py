@@ -230,6 +230,12 @@ class package(metadata.package):
 		else:
 			return self._parent._update_metadata(self)
 
+	def __str__(self):
+		return "ebuild src: %s" % self.cpvstr
+	
+	def __repr__(self):
+		return "<%s cpv=%r @%#8x>" % (self.__class.__name__, self.cpvstr, id(self))
+
 
 class package_factory(metadata.factory):
 	child_class = package

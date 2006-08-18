@@ -65,11 +65,7 @@ class package(ebuild_src.package):
 		return self._parent._get_metadata(self)
 
 	def __str__(self):
-		return "built ebuild: %s" % (ebuild_src.package.__str__(self))
-
-	def __repr__(self):
-		return "<%s cpv=%r @%#8x>" % (
-			self.__class__.__name__, self.cpvstr, id(self))
+		return "built ebuild: %s" % (self.cpvstr)
 
 
 class package_factory(metadata.factory):

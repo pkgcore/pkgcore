@@ -6,11 +6,7 @@ base profile class- WARNING, may not be around long (provides little gain and is
 """
 
 class base(object):
-
-	def get_data(self, bashrc):
-		raise NotImplementedError
-
-	get_path = get_data
+	pass
 
 class ProfileException(Exception):
 	def __init__(self, err):	self.err = err

@@ -8,7 +8,7 @@ Shouldn't be accessed directly for the most part, use L{pkgcore.plugins} to get 
 """
 
 import os, shutil, errno
-from pkgcore.fs import gen_obj, contents, fs
+from pkgcore.fs import gen_obj, contents, fs, util
 from pkgcore.spawn import spawn
 from pkgcore.const import COPY_BINARY
 from pkgcore.plugins import get_plugin
@@ -79,7 +79,7 @@ def default_mkdir(d):
 	return True
 
 
-def default_copyfile(obj):
+def default_copyfile(obj, mkdirs=False):
 	"""
 	copy a L{fs obj<pkgcore.fs.fs.fsBase>} from it's real_path to it's stated location
 	
@@ -101,6 +101,14 @@ def default_copyfile(obj):
 			raise TypeError("fs_copyfile doesn't work on directories")
 		existant = True
 	except OSError:
+		# verify the parent dir is there at least
+		basefp = os.path.dirname(obj.real_location)
+		if basefp.strip(os.path.sep) and not os.path.exists(basefp):
+			if mkdirs:
+				if not util.ensure_dirs(basefp, mode=0750, minimal=True):
+					raise
+			else:
+				raise
 		existant = False
 
 	existant_fp = obj.real_location + "#new"
@@ -193,7 +201,7 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
 	
 	for x in iterate(cset.iterdirs(invert=True)):
 		callback(x)
-		copyfile(x)
+		copyfile(x, mkdirs=True)
 	return True
 
 

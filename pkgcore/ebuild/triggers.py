@@ -21,7 +21,7 @@ incrementals = set(['ADA_INCLUDE_PATH', 'ADA_OBJECTS_PATH', 'CLASSPATH', 'CONFIG
 
 def collapse_envd(base):
 	pjoin = os.path.join
-	collapsed_d = {}
+	collapsed_d = {"LDPATH":["/usr/lib"]}
 	for x in sorted(os.listdir(base)):
 		if x.endswith(".bak") or x.endswith("~") or x.startswith("._cfg") or not (len(x) > 2 and x[0:2].isdigit() \
 			and stat.S_ISREG(os.lstat(pjoin(base, x)).st_mode)):
@@ -50,7 +50,7 @@ def raw_env_update(engine, cset):
 		fp = pjoin(offset, "etc", "ld.so.conf")
 		new_f = AtomicWriteFile(fp)
 		new_f.write("# automatically generated, edit env.d files instead\n")
-		new_f.writelines(x.strip() for x in collapsed_d)
+		new_f.writelines(x.strip()+"\n" for x in collapsed_d["LDPATH"])
 		new_f.close()
 		del collapsed_d["LDPATH"]
 	

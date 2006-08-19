@@ -79,9 +79,9 @@ class ContentsFile(contentsSet):
 			infile = self._get_fd()
 			for line in infile:
 				if "\t" not in line:
-					line = self._parse_old(line.strip("\n"))
+					line = self._parse_old(line.rstrip("\n"))
 				else:
-					line = line.strip("\n").split("\t")
+					line = line.rstrip("\n").split("\t")
 
 				if line[0] == "dir":
 					obj = fs.fsDir(line[1], strict=False)

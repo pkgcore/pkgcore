@@ -291,7 +291,7 @@ def main():
 		if fetchonly:
 			print "\n%i files required-" % len(pkgs[0].fetchables)
 			try:
-				ret = build_op.fetch()
+				ret = buildop.fetch()
 			except Exception, e:
 				ret = e
 		else:

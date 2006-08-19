@@ -6,6 +6,7 @@ from twisted.trial import unittest
 
 from pkgcore.fs import fs, gen_obj, iter_scan
 from pkgcore.test.fs.test_util import TempDirMixin
+from pkgcore.interfaces import data_source
 
 class FsObjsTest(TempDirMixin, unittest.TestCase):
 
@@ -14,11 +15,14 @@ class FsObjsTest(TempDirMixin, unittest.TestCase):
 		self.assertEqual(obj.mode & 07777, st.st_mode & 07777)
 		self.assertEqual(obj.uid, st.st_uid)
 		self.assertEqual(obj.gid, st.st_gid)
+		if fs.isreg(obj):
+			self.assertEqual(obj.data.get_path(), path)
 
 	def test_data_source(self):
 		o = gen_obj("/tmp/etc/passwd", real_path="/etc/passwd")
 		self.failUnless(o.location, "/tmp/etc/passwd")
 		self.failUnless(o.data.get_path(), "/etc/passwd")
+		self.failUnless(o.data.get_fileobj().read(), open("/etc/passwd", "r").read())
 
 	def test_gen_obj_reg(self):
 		path = os.path.join(self.dir, "reg_obj")

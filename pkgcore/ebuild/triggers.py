@@ -128,7 +128,7 @@ def config_protect_func_install(existing_cset, install_cset, engine, csets):
 		elif protected_filter(x.location):
 			replacement = install_cset[x]
 			if not simple_chksum_compare(replacement, x):
-				protected.setdefault(pjoin(engine.offset, os.path.dirname(x.location).lstrip(os.path.sep)), []).append((os.path.basename(x.location), x))
+				protected.setdefault(pjoin(engine.offset, os.path.dirname(x.location).lstrip(os.path.sep)), []).append((os.path.basename(replacement.location), replacement))
 
 	for dir_loc, entries in protected.iteritems():
 		updates = dict((x[0], []) for x in entries)

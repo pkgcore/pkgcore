@@ -6,6 +6,7 @@
 in memory representation of on disk eclass stacking order
 """
 
+import os
 from pkgcore.interfaces.data_source import local_source
 
 from pkgcore.util.demandload import demandload
@@ -34,6 +35,7 @@ class cache(base):
 		# self.eclasses = {} # {"Name": ("location","_mtime_")}
 		self.porttree = normpath(porttree)
 		self.eclassdir = os.path.join(self.porttree, "eclass")
+		self.porttree = porttree
 		self.update_eclasses()
 
 	def __getattr__(self, attr):
@@ -110,6 +112,7 @@ class StackedCache(cache):
 		self.eclassdir = kwds.pop("eclassdir")
 		if self.eclassdir is None:
 			self.eclassdir = caches[0].eclassdir
+		self.porttree = os.path.basename(self.eclassdir)
 
 		# temp var, nuked when no longer needed
 		self.ec = caches

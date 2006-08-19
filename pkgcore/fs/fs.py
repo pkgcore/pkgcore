@@ -122,8 +122,6 @@ class fsFile(fsBase):
 		if chksums is None:
 			# this can be problematic offhand if the file is modified but chksum not triggered
 			chksums = LazyValDict(tuple(get_handlers()), self._chksum_callback)
-		elif not isinstance(chksums, ImmutableDict):
-			chksums = ImmutableDict(chksums)
 		kwds["chksums"] = chksums
 		fsBase.__init__(self,location,**kwds)
 	gen_doc_additions(__init__, __slots__)

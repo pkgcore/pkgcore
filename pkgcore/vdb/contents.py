@@ -5,52 +5,53 @@ import os
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs import fs
 from pkgcore.util.file import AtomicWriteFile
-
+from pkgcore.interfaces import data_source
 
 class ContentsFile(contentsSet):
 	"""class wrapping a contents file"""
 
-	def __init__(self, source, writable=False, empty=False):
-		contentsSet.__init__(self)
-		self._source_is_path = isinstance(source, basestring)
+	def __init__(self, source, mutable=False, create=False):
+
+		if not isinstance(source, (data_source.base, basestring)):
+			raise TypeError("source must be either data_source, or a filepath")
+		contentsSet.__init__(self,mutable=True)
 		self._source = source
-		if not empty:
-			self.readonly = False
+
+		if not create:
 			self._read()
 
-		self.readonly = not writable
+		self.mutable = mutable
+
+	def clone(self, mutable=False):
+		if mutable == self.mutable:
+			return self
+		# populate directly from ourselfs instead of going to disk.
+		o = self.__class__(self._source, mutable=True, create=False)
+		for x in self:
+			o.add(x)
+		o.mutable = mutable
+		return o
 
 	def add(self, obj):
-		if self.readonly:
-			raise TypeError("This instance is readonly")
-		elif isinstance(obj, fs.fsFile):
+		if isinstance(obj, fs.fsFile):
 			# strict checks
 			if obj.chksums is None or "md5" not in obj.chksums:
 				raise TypeError("fsFile objects need to be strict")
-		elif not isinstance(obj, (fs.fsDir, fs.fsLink, fs.fsFifo, fs.fsDev)):
+		elif not isinstance(obj, (fs.fsDir, fs.fsSymlink, fs.fsFifo, fs.fsDev)):
 			raise TypeError("obj must be of fsObj, fsDir, fsLink, fsFifo, fsDev class or derivative")
 
 		contentsSet.add(self, obj)
 
-	def remove(self, key):
-		if self.readonly:
-			raise TypeError("This instance is readonly")
-		contentsSet.remove(self, key)
-
-	def clear(self):
-		if self.readonly:
-			raise TypeError("This instance is readonly")
-		contentsSet.clear(self)
-
 	def _get_fd(self, write=False):
-		if self._source_is_path:
+		if isinstance(self._source, basestring):
 			if write:
 				return AtomicWriteFile(self._source)
 			return open(self._source, "r", 32384)
+		fobj = self._source.get_fileobj()
 		if write:
-			self._source.seek(0)
-			self.truncate(0)
-		return self._source
+			fobj.seek(0,0)
+			fobj.truncate(0)
+		return fobj
 		
 	def flush(self):
 		return self._write()

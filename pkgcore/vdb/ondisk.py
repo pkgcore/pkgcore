@@ -192,7 +192,7 @@ class install(repo_interfaces.install):
 		rewrite = self.repo._metadata_rewrites
 		for k in self.pkg.tracked_attributes:
 			if k == "contents":
-				v = ContentsFile(os.path.join(dirpath, "CONTENTS"), writable=True, empty=True)
+				v = ContentsFile(os.path.join(dirpath, "CONTENTS"), mutable=True, create=True)
 				for x in self.pkg.contents:
 					# $10 this ain't right.  verify this- harring
 					if self.offset:

@@ -18,7 +18,7 @@ def check_instance(obj):
 class contentsSet(object):
 	"""set of L{fs<pkgcore.fs.fs>} objects"""
 
-	def __init__(self, initial=None, frozen=False):
+	def __init__(self, initial=None, mutable=False):
 		
 		"""
 		@param initial: initial fs objs for this set
@@ -28,7 +28,7 @@ class contentsSet(object):
 		self._dict = {}
 		if initial is not None:
 			self._dict.update(check_instance(x) for x in initial)
-		self.frozen = frozen
+		self.mutable = mutable
 
 	def add(self, obj):
 
@@ -38,7 +38,7 @@ class contentsSet(object):
 		@param obj: must be a derivative of L{pkgcore.fs.fs.fsBase}
 		"""
 		
-		if self.frozen:
+		if not self.mutable:
 			# weird, but keeping with set.
 			raise AttributeError("%s is frozen; no add functionality" % self.__class__)
 		if not isinstance(obj, fs.fsBase):
@@ -54,7 +54,7 @@ class contentsSet(object):
 		@raise KeyError: if the obj isn't found
 		"""
 		
-		if self.frozen:
+		if not self.mutable:
 			# weird, but keeping with set.
 			raise AttributeError("%s is frozen; no remove functionality" % self.__class__)
 		if isinstance(obj, fs.fsBase):
@@ -90,7 +90,7 @@ class contentsSet(object):
 		clear the set
 		@raise ttributeError: if the instance is frozen
 		"""
-		if self.frozen:
+		if not self.mutable:
 			# weird, but keeping with set.
 			raise AttributeError("%s is frozen; no clear functionality" % self.__class__)
 		self._dict.clear()
@@ -177,3 +177,7 @@ class contentsSet(object):
 		del s
 	del k
 		
+	def clone(self, mutable=False):
+		if mutable == self.mutable:
+			return self
+		return self.__class__(self._dict.itervalues(), mutable=mutable)

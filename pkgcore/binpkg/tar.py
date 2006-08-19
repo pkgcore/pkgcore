@@ -19,13 +19,13 @@ class tar_data_source(data_source):
 
 class TarContentsSet(contents.contentsSet):
 	
-	def __init__(self, initial=None, frozen=False):
+	def __init__(self, initial=None, mutable=False):
 		contents.contentsSet.__init__(self)
 		self._dict = OrderedDict()
 		if initial is not None:
 			for x in initial:
 				self.add(x)
-		self.frozen = frozen
+		self.mutable = mutable
 
 
 def converter(src_tar):
@@ -48,4 +48,4 @@ def converter(src_tar):
 
 def generate_contents(path):
 	t = TarFile.bz2open(path, mode="r")
-	return TarContentsSet(converter(t), frozen=True)
+	return TarContentsSet(converter(t), mutable=False)

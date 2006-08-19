@@ -27,34 +27,34 @@ class TestContentsSet(unittest.TestCase):
 	def test_init(self):
 		self.assertEquals(len(self.all), len(contents.contentsSet(self.all)))
 		self.assertRaises(TypeError, contents.contentsSet, self.all + [1])
-		contents.contentsSet(self.all, frozen=True)
-		contents.contentsSet(self.all, frozen=False)
+		contents.contentsSet(self.all)
+		contents.contentsSet(self.all, mutable=True)
 		# test to ensure no one screwed up the optional initials making it mandatory
-		self.assertEquals(len(contents.contentsSet(frozen=True)), 0)
+		self.assertEquals(len(contents.contentsSet()), 0)
 
 	def test_add(self):
-		cs = contents.contentsSet(self.files + self.dirs)
+		cs = contents.contentsSet(self.files + self.dirs, mutable=True)
 		map(cs.add, self.links)
 		for x in self.links:
 			self.assertIn(x, cs)
 		self.assertEqual(len(cs), len(set(x.location for x in self.files + self.dirs + self.links)))
-		self.assertRaises(AttributeError, lambda:contents.contentsSet(frozen=True).add(self.devs[0]))
+		self.assertRaises(AttributeError, lambda:contents.contentsSet().add(self.devs[0]))
 		self.assertRaises(TypeError, cs.add, 1)
 		self.assertRaises(TypeError, cs.add, self.fifos)
 
 	def test_remove(self):
-		self.assertRaises(KeyError, contents.contentsSet().remove, self.devs[0])
-		self.assertRaises(KeyError, contents.contentsSet().remove, 1)
-		cs = contents.contentsSet(self.all)
+		self.assertRaises(AttributeError, contents.contentsSet().remove, self.devs[0])
+		self.assertRaises(AttributeError, contents.contentsSet().remove, 1)
+		cs = contents.contentsSet(self.all, mutable=True)
 		map(cs.remove, self.all)
-		cs = contents.contentsSet(self.all)
+		cs = contents.contentsSet(self.all, mutable=True)
 		map(cs.remove, (x.location for x in self.all))
 		self.assertEqual(len(cs), 0)
 		self.assertRaises(KeyError, cs.remove, self.all[0])
-		self.assertRaises(AttributeError, lambda:contents.contentsSet(frozen=True).remove(self.devs[0]))
+		self.assertRaises(AttributeError, lambda:contents.contentsSet().remove(self.devs[0]))
 
 	def test_contains(self):
-		cs = contents.contentsSet()
+		cs = contents.contentsSet(mutable=True)
 		for x in [y[0] for y in [self.files, self.dirs, self.links, self.devs, self.fifos]]:
 			self.assertFalse(x in cs)
 			self.assertFalse(x.location in cs)
@@ -64,7 +64,7 @@ class TestContentsSet(unittest.TestCase):
 			cs.remove(x)
 
 	def test_clear(self):
-		cs = contents.contentsSet(self.all)
+		cs = contents.contentsSet(self.all, mutable=True)
 		self.assertTrue(len(cs))
 		cs.clear()
 		self.assertEqual(len(cs), 0)

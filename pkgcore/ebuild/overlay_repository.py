@@ -28,6 +28,9 @@ class OverlayRepo(multiplex.tree):
 	configurables = ("settings",)
 	configure = ebuild_repository.ConfiguredTree
 
+	# sucks a bit, need to work something better out here
+	format_magic = "ebuild_src"
+
 	def __init__(self, trees, **kwds):
 		"""
 		@param trees: L{pkgcore.ebuild.ebuild_repository.UnconfiguredTree} instances to combine

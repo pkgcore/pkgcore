@@ -19,7 +19,8 @@ from pkgcore.ebuild import ebd
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.merge:engine "+
 	"pkgcore.ebuild:triggers "+
-	"pkgcore.util.packages:get_raw_pkg ")
+	"pkgcore.util.packages:get_raw_pkg "+
+	"re ")
 
 ebuild_triggers = triggers
 
@@ -31,7 +32,19 @@ def passthrough(inst, attr, rename=None):
 def flatten_depset(inst, conditionals):
 	return inst.evaluate_depset(conditionals)
 
-default_pkg_preinst_re = re.compile("(?:^|\n)pkg_preinst *\(\)\s*{\s*return;?\s*}[ \t]*(?:\n|$)")
+default_pkg_preinst_re = None
+
+def pkg_uses_default_preinst(pkg):
+	global default_pkg_preinst_re
+	if default_pkg_preinst_re is None:
+		default_pkg_preinst_re = re.compile("(?:^|\n)pkg_preinst *\(\)\s*{\s*return;?\s*}[ \t]*(?:\n|$)")
+
+	data = pkg.environment.get_fileobj().read()
+	m = default_pkg_preinst_re.search(data)
+
+	# second check.  make sure there aren't two matches- if so, that means we should not guess it.
+	return m is not None and default_pkg_preinst_re.search(data[m.end():]) is None
+
 
 class package(ebuild_src.package):
 
@@ -86,15 +99,7 @@ class package(ebuild_src.package):
 		if engine_inst.mode in (engine.REPLACING_MODE, engine.INSTALL_MODE) and \
 			get_raw_pkg(self) is get_raw_pkg(engine_inst.new):
 
-			# crappy check for default pkg_preinst.
-			addit = True
-			data = self.environment.get_fileobj().read()
-			if self.package == "bash":
-				import pdb;pdb.set_trace()
-
-			m = default_pkg_preinst_re.search(data)
-			# second check.  make sure there aren't two matches- if so, that means we should not guess it.
-			if m is None or default_pkg_preinst_re.search(data[m.end():]) is not None:
+			if not pkg_uses_default_preinst(self):
 				engine_inst.add_triggers("pre_merge", ebuild_triggers.preinst_contents_reset_trigger())
 			
 

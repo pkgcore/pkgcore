@@ -34,9 +34,6 @@ class KeyedAndRestriction(boolean.AndRestriction):
 			return boolean.AndRestriction.__str__(self)
 		return "%s %s" % (self.tag, boolean.AndRestriction.__str__(self))
 
-	def solutions(self, *a, **kwds):
-		return boolean.AndRestriction.solutions(self, *a, **kwds)
-
 
 class GlsaDirSet(object):
 

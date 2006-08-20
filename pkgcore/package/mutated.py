@@ -22,23 +22,23 @@ class MutatedPkg(object):
 		@param pkg: L{pkgcore.package.metadata.package} to wrap
 		@param overrides: is an attr -> instance mapping to substitute when the attr is requested
 		"""
-		self._pkg = pkg
+		self._raw_pkg = pkg
 		self._overrides = overrides
 		
 	def __getattr__(self, attr):
 		if attr in self._overrides:
 			return self._overrides[attr]
-		return getattr(self._pkg, attr)
+		return getattr(self._raw_pkg, attr)
 
 	def __cmp__(self, other):
 		if isinstance(other, self.__class__):
-			return cmp(self._pkg, other._pkg)
-		return cmp(self._pkg, other)
+			return cmp(self._raw_pkg, other._raw_pkg)
+		return cmp(self._raw_pkg, other)
 
 	def __repr__(self):
 		return '<%s pkg=%r overrides=%r @%#8x>' % \
-			(self.__class__.__name__, self._pkg, tuple(self._overrides), id(self))
+			(self.__class__.__name__, self._raw_pkg, tuple(self._overrides), id(self))
 
 	def __str__(self):
 		return '%s(%s, overrides=%s)' % \
-			(self.__class__.__name__, self._pkg, tuple(self._overrides))
+			(self.__class__.__name__, self._raw_pkg, tuple(self._overrides))

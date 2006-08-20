@@ -29,7 +29,7 @@ class PackageWrapper(object):
 			initial_settings = []
 		if unchangable_settings is None:
 			unchangable_settings = []
-		self._wrapped_pkg = pkg_instance
+		self._raw_pkg = pkg_instance
 		if attributes_to_wrap is None:
 			attributes_to_wrap = {}
 		self._wrapped_attr = attributes_to_wrap
@@ -44,7 +44,7 @@ class PackageWrapper(object):
 		self._buildable = build_callback
 
 	def __copy__(self):
-		return self.__class__(self._wrapped_pkg, self._configurable_name, initial_settings=set(self._configurable),
+		return self.__class__(self._raw_pkg, self._configurable_name, initial_settings=set(self._configurable),
 			unchangable_settings=self._unchangable, attributes_to_wrap=self._wrapped_attr)
 
 	def rollback(self, point=0):
@@ -92,7 +92,7 @@ class PackageWrapper(object):
 					self.rollback(entry_point)
 			return False
 		entry_point = self.changes_count()
-		a = getattr(self._wrapped_pkg, attr)
+		a = getattr(self._raw_pkg, attr)
 		try:
 			for x in vals:
 				succeeded = False
@@ -129,7 +129,7 @@ class PackageWrapper(object):
 					self.rollback(entry_point)
 			return False
 		entry_point = self.changes_count()
-		a = getattr(self._wrapped_pkg, attr)
+		a = getattr(self._raw_pkg, attr)
 		try:
 			for x in vals:
 				succeeded = False
@@ -152,18 +152,18 @@ class PackageWrapper(object):
 				if self._cached_wrapped[attr][0] == self._reuse_pt:
 					return self._cached_wrapped[attr][1]
 				del self._cached_wrapped[attr]
-			o = self._wrapped_attr[attr](getattr(self._wrapped_pkg, attr), self._configurable)
+			o = self._wrapped_attr[attr](getattr(self._raw_pkg, attr), self._configurable)
 			self._cached_wrapped[attr] = (self._reuse_pt, o)
 			return o
 		else:
-			return getattr(self._wrapped_pkg, attr)
+			return getattr(self._raw_pkg, attr)
 
 	def __str__(self):
-#		return "config wrapper: %s, configurable('%s'):%s" % (self._wrapped_pkg, self._configurable_name, self._configurable)
-		return "config wrapped(%s): %s" % (self._configurable_name, self._wrapped_pkg)
+#		return "config wrapper: %s, configurable('%s'):%s" % (self._raw_pkg, self._configurable_name, self._configurable)
+		return "config wrapped(%s): %s" % (self._configurable_name, self._raw_pkg)
 	
 	def __repr__(self):
-		return "<%s pkg=%r wrapped=%r @%#8x>" % (self.__class__.__name__, self._wrapped_pkg, self._configurable_name, id(self))
+		return "<%s pkg=%r wrapped=%r @%#8x>" % (self.__class__.__name__, self._raw_pkg, self._configurable_name, id(self))
 
 	def freeze(self):
 		o = copy.copy(self)
@@ -184,8 +184,8 @@ class PackageWrapper(object):
 
 	def __cmp__(self, other):
 		if isinstance(other, PackageWrapper):
-			if isinstance(other._wrapped_pkg, self._wrapped_pkg.__class__):
-				c = cmp(self._wrapped_pkg, other._wrapped_pkg)
+			if isinstance(other._raw_pkg, self._raw_pkg.__class__):
+				c = cmp(self._raw_pkg, other._raw_pkg)
 				if c:
 					return c
 				if self._configurable == other._configurable:
@@ -193,8 +193,8 @@ class PackageWrapper(object):
 				# sucky, but comparing sets isn't totally possible.
 				# potentially do sub/super tests instead?
 				raise TypeError
-		elif isinstance(other, self._wrapped_pkg.__class__):
-			return cmp(self._wrapped_pkg, other)
+		elif isinstance(other, self._raw_pkg.__class__):
+			return cmp(self._raw_pkg, other)
 		else:
 			c = cmp(other, self)
 			if c == 0:
@@ -204,9 +204,9 @@ class PackageWrapper(object):
 
 	def __eq__(self, other):
 		if isinstance(other, PackageWrapper):
-			if self._wrapped_pkg == other._wrapped_pkg:
+			if self._raw_pkg == other._raw_pkg:
 				return self._configurable == other._configurable
 			return False
-		elif isinstance(other, self._wrapped_pkg.__class__):
-			return self._wrapped_pkg == other
+		elif isinstance(other, self._raw_pkg.__class__):
+			return self._raw_pkg == other
 		return False

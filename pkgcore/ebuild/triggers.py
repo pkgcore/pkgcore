@@ -199,3 +199,18 @@ def config_protect_func_uninstall(existing_cset, uninstall_cset, engine, csets):
 def config_protect_trigger_uninstall(existing_cset="uninstall_existing", modifying_cset="uninstall"):
 	return triggers.trigger([existing_cset, modifying_cset], pre_curry(config_protect_func_uninstall, existing_cset, modifying_cset))
 
+def preinst_contents_reset_func(engine, cset):
+	# wipe, and get data again.
+	cset.clear()
+	cset.update(engine.new._parent.scan_contents())
+
+def preinst_contents_reset_register(trigger, hook_name, triggers_list):
+	for x in triggers_list:
+		if x.label == "preinst_contents_reset":
+			break
+	else:
+		triggers_list.insert(0, trigger)
+
+def preinst_contents_reset_trigger():
+	return triggers.SimpleTrigger("install", preinst_contents_reset_func,
+		register_func=preinst_contents_reset_register, label="preinst_contents_reset")

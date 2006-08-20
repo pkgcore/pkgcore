@@ -6,7 +6,7 @@ built ebuild packages (vdb packages and binpkgs are derivatives of this)
 """
 
 from pkgcore.ebuild import ebuild_src
-from pkgcore.util.mappings import IndeterminantDict
+from pkgcore.util.mappings import IndeterminantDict, ImmutableDict
 from pkgcore.package import metadata
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.fs import scan
@@ -14,6 +14,11 @@ from pkgcore.util.currying import post_curry
 from pkgcore.ebuild.conditionals import DepSet
 from pkgcore.package.atom import atom
 import ebd
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.merge:engine "+
+	"pkgcore.ebuild:triggers ")
+
+ebuild_triggers = triggers
 
 def passthrough(inst, attr, rename=None):
 	if rename is None:
@@ -72,6 +77,10 @@ class package(ebuild_src.package):
 	def build(self):
 		return self.repo.generate_buildop(self)
 
+	def add_format_triggers(self, op_inst, format_op_inst, engine_inst):
+		if engine_inst.mode in (engine.REPLACING_MODE, engine.INSTALL_MODE):
+			engine_inst.add_triggers("pre_merge", ebuild_triggers.preinst_contents_reset_trigger())
+			
 
 class package_factory(metadata.factory):
 	child_class = package
@@ -117,12 +126,15 @@ class fake_package_factory(package_factory):
 		obj.__dict__["use"] = self.pkg.use
 		return obj
 
+	def scan_contents(self, pkg=None):
+		return scan(self.image_root, offset=self.image_root)
+	
 	def _get_metadata(self, pkg):
 		return IndeterminantDict(self.__pull_metadata)
 
 	def __pull_metadata(self, key):
 		if key == "contents":
-			return scan(self.image_root, offset=self.image_root)
+			return self.scan_contents()
 		elif key == "environment":
 			return local_source(self.environment_path)
 		else:

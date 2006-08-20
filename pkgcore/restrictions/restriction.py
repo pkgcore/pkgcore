@@ -77,6 +77,12 @@ class AlwaysBool(base):
 	def match(self, *a, **kw):
 		return self.negate
 
+	def force_True(self, *a, **kw):
+		return self.negate
+	
+	def force_False(self, *a, **kw):
+		return not self.negate
+
 	def __iter__(self):
 		return iter([])
 

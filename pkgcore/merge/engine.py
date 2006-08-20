@@ -191,7 +191,7 @@ class MergeEngine(object):
 			if k not in csets:
 				csets[k] = currying.post_curry(cls.get_pkg_contents, v)
 
-		o = cls(REPLACEL_MODE, hooks, csets, cls.replace_csets_preserve, offset=offset)
+		o = cls(REPLACING_MODE, hooks, csets, cls.replace_csets_preserve, offset=offset)
 
 		if offset:
 			for k in ("old_cset", "new_cset"):

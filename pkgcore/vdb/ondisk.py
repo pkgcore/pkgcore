@@ -193,7 +193,7 @@ class install(repo_interfaces.install):
 		for k in self.pkg.tracked_attributes:
 			if k == "contents":
 				v = ContentsFile(os.path.join(dirpath, "CONTENTS"), mutable=True, create=True)
-				for x in self.pkg.contents:
+				for x in self.me.csets["install"]:
 					# $10 this ain't right.  verify this- harring
 					if self.offset:
 						v.add(x.change_attributes(location=os.path.join(self.offset, x.location)))

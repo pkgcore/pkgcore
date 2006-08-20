@@ -140,7 +140,7 @@ class tree(object):
 	def match(self, atom, **kwds):
 		return list(self.itermatch(atom, **kwds))
 
-	def itermatch(self, restrict, restrict_solutions=None, sorter=None):
+	def itermatch(self, restrict, restrict_solutions=None, sorter=None, pkg_klass_override=None, force=None):
 
 		"""
 		generator that yield packages that match a L{pkgcore.restrictions.packages.PackageRestriction} instance
@@ -158,14 +158,23 @@ class tree(object):
 		else:
 			candidates = self._identify_candidates(restrict, sorter)
 
-		for pkg in self._internal_match(candidates, restrict, sorter):
+		for pkg in self._internal_match(candidates, restrict, sorter, pkg_klass_override, force):
 			yield pkg
 
-	def _internal_match(self, candidates, restrict, sorter):
+	def _internal_match(self, candidates, restrict, sorter, pkg_klass_override, force):
 		#actual matching.
+		if force is None:
+			match = restrict.match
+		elif force:
+			match = restrict.force_True
+		else:
+			match = restrict.force_False
 		for catpkg in candidates:
 			for pkg in sorter(self.package_class(catpkg+"-"+ver) for ver in self.versions.get(catpkg, [])):
-				if restrict.match(pkg):
+				if pkg_klass_override is not None:
+					pkg = pkg_klass_override(pkg)
+			
+				if match(pkg):
 					yield pkg
 
 	def _identify_candidates(self, restrict, sorter):

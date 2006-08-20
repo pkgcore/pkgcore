@@ -46,10 +46,9 @@ class tree(prototype.tree):
 			
 		if restrict_solutions is None:
 			if hasattr(restrict, "iter_cnf_solutions"):
-				restrict_solutions = restrict.cnf_solutions(full_solution_expansion=True)
+				restrict_solutions = restrict.cnf_solutions()
 			else:
 				restrict_solutions = (restrict,)
-			
 		filtered_solutions = [
 			[a for a in x if not (isinstance(a, PackageRestriction) and a.attr in self.attr_filters)]
 			for x in restrict_solutions]
@@ -57,7 +56,7 @@ class tree(prototype.tree):
 		# disable inst_caching for this restriction.  it's a one time generation, and potentially
 		# quite costly for hashing
 		filtered_restrict = OrRestriction(disable_inst_caching=True,
-			*[AndRestriction(disable_inst_caching=True, *x) for x in filtered_solutions])
+			*[AndRestriction(disable_inst_caching=True, *x) for x in filtered_solutions if x])
 
 		return (pkg for pkg in (self.package_class(x) for x in self.raw_repo.itermatch(filtered_restrict, 
 			restrict_solutions=filtered_solutions, **kwds)) if restrict.force_True(pkg))

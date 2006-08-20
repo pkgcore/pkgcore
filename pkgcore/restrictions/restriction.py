@@ -38,7 +38,11 @@ class base(object):
 	def match(self, *arg, **kwargs):
 		raise NotImplementedError
 
-	force_False = force_True = match
+	def force_False(self, *arg, **kwargs):
+		return self.match(*arg, **kwargs) == self.negate
+	
+	def force_True(self, *arg, **kwargs):
+		return self.match(*arg, **kwargs) != self.negate
 
 	def intersect(self, other):
 		return None

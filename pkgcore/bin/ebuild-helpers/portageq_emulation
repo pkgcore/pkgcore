@@ -7,7 +7,8 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.iterables:caching_iter "+
 	"pkgcore.config:load_config "+
 	"pkgcore.package.atom:atom "+
-	"sys os")
+	"pkgcore.util.package:get_raw_pkg "+
+	"sys os ")
 
 
 def expose_to_commandline(f):
@@ -15,13 +16,6 @@ def expose_to_commandline(f):
 	return f
 
 
-def strip_pkg_configuration(p):
-	o = getattr(p, "_wrapped_pkg", None)
-	if o is None:
-		return p
-	return strip_pkg_configuration(o)
-
-	
 @expose_to_commandline
 def has_version(domain, atom):
 	"""
@@ -46,7 +40,7 @@ def best_version(domain, atom):
 	except ValueError:
 		# empty sequence.
 		return ['', 1]
-	return [str(strip_pkg_configuration(p)), 0]
+	return [str(get_raw_pkg(p)), 0]
 
 
 @expose_to_commandline
@@ -56,7 +50,7 @@ def match(argv):
 	@param atom_str: L{pkgcore.package.atom.atom} instance
 	"""
 	# temp hack, configured pkgs yield "configured(blah) pkg"
-	l = sorted(str(strip_pkg_configuration(x)) for x in domain.all_repos.itermatch(atom))
+	l = sorted(str(get_raw_pkg(x)) for x in domain.all_repos.itermatch(atom))
 	if not l:
 		return ['', 1]
 	return ["\n".join(l), 0]

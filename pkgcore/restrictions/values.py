@@ -214,12 +214,12 @@ class StrGlobMatch(StrMatch):
 
 	def __eq__(self, other):
 		try:
-			return self.glob == other.glob and self.negate == other.negate and self.flags == other.flags
+			return self.glob == other.glob and self.negate == other.negate and self.flags == other.flags and self.prefix == other.prefix
 		except AttributeError:
 			return False
 
 	def __hash__(self):
-		return hash((self.glob, self.negate, self.flags))
+		return hash((self.glob, self.negate, self.flags, self.prefix))
 
 	def __repr__(self):
 		if self.negate:

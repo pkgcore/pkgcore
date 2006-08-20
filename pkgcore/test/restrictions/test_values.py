@@ -51,6 +51,7 @@ class TestStrGlobMatch(unittest.TestCase):
 			self.assertEquals(values.StrGlobMatch("diffball", CaseSensitive=False, negate=not x).match("bsdiff"), not x)
 
 	def test__eq__(self):
+		self.assertFalse(values.StrGlobMatch("rsync", prefix=False) == values.StrGlobMatch("rsync", prefix=True))
 		for negate in (True, False):
 			self.assertEquals(values.StrGlobMatch("rsync", negate=negate), values.StrGlobMatch("rsync", negate=negate))
 			for x in "Ca":

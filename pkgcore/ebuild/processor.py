@@ -72,7 +72,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False, save_
 	if not fakeroot:
 		for x in inactive_ebp_list:
 			if x.userprived() == userpriv and (x.sandboxed() or not sandbox):
-				if not x.is_alive():
+				if not x.is_alive:
 					inactive_ebp_list.remove(x)
 					continue
 				inactive_ebp_list.remove(x)
@@ -336,12 +336,14 @@ class EbuildProcessor:
 		"""
 		self.processing_lock = False
 
+	@property
 	def locked(self):
 		"""
 		is the processor locked?
 		"""
 		return self.processing_lock
 
+	@property
 	def is_alive(self):
 		"""
 		returns if it's known if the processor has been shutdown.
@@ -349,7 +351,7 @@ class EbuildProcessor:
 		Currently doesn't check to ensure the pid is still running, yet it should
 		"""
 		try:
-			return self.pid > None
+			return self.pid is not None
 		except AttributeError:
 			# thrown only if failure occured instantiation.
 			return False
@@ -359,7 +361,7 @@ class EbuildProcessor:
 		tell the daemon to shut itself down, and mark this instance as dead
 		"""
 		try:
-			if self.is_alive():
+			if self.is_alive:
 				self.write("shutdown_daemon")
 				self.ebd_write.close()
 				self.ebd_read.close()
@@ -421,7 +423,7 @@ class EbuildProcessor:
 	def __del__(self):
 		"""simply attempts to notify the daemon to die"""
 		# for this to be reached means we ain't in a list no more.
-		if self.is_alive():
+		if self.is_alive:
 			# I'd love to know why the exception wrapping is required...
 			try:
 				self.shutdown_processor()

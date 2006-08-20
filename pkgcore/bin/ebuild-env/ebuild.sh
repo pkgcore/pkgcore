@@ -525,21 +525,13 @@ execute_phases() {
 			fi
 			[[ -n $PORTAGE_DEBUG ]] && set -x
 			type -p pre_pkg_${EBUILD_PHASE} &> /dev/null && pre_pkg_${EBUILD_PHASE}
-			[[ $EBUILD_PHASE -eq preinst ]] && unset PKGCORE_DEFAULT_PREINST_USED
 			if type -p dyn_${EBUILD_PHASE}; then
 				dyn_${EBUILD_PHASE}
 			else
 				pkg_${EBUILD_PHASE}
 			fi
 			ret=0
-			# notify python side if default was used.
-			if [[ $EBUILD_PHASE -eq preinst ]]; then
-				if [[ -n $DAEMONIZED ]]; then
-					[[ -n $PKGCORE_DEFAULT_PREINST_USED ]] && speak default_preinst_used
-				fi
-				unset PKGCORE_DEFAULT_PREINST_USED
-			fi
-						
+
 			type -p post_pkg_${EBUILD_PHASE} &> /dev/null && post_pkg_${EBUILD_PHASE}
 			[[ $PORTAGE_DEBUG -lt 2 ]] && set +x
 			;;

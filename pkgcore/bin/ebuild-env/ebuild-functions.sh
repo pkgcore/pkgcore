@@ -276,7 +276,6 @@ src_install()
 
 pkg_preinst()
 {
-	PKGCORE_DEFAULT_PREINST_USED=1
 	return
 }
 

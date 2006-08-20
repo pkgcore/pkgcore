@@ -268,13 +268,7 @@ class install_op(ebd):
 		self.default_preinst_used = False
 		ebd.__init__(self, *args, **kwds)
 
-	def _default_preinst_used_handler(self, processor, *args):
-		self.default_preinst_used = True
-
-	def preinst(self):
-		"""run the preinst phase"""
-		return ebd._generic_phase(self, "preinst", False, False, False, 
-			extra_handlers={"default_preinst_used":self._default_preinst_used_handler})
+	preinst = pretty_docs(post_curry(ebd._generic_phase, "preinst", False, False, False), "run the postinst phase")
 	postinst = pretty_docs(post_curry(ebd._generic_phase, "postinst", False, False, False), "run the postinst phase")
 
 
@@ -286,7 +280,7 @@ class uninstall_op(ebd):
 	postrm = pretty_docs(post_curry(ebd._generic_phase, "postrm", False, False, False), "run the postrm phase")
 
 
-class replace_op(install_op, uninstall_op):
+class replace_op(uninstall_op, install_op):
 	"""
 	phase operations and steps for replacing a pkg with another
 	"""

@@ -158,8 +158,7 @@ class tree(object):
 		else:
 			candidates = self._identify_candidates(restrict, sorter)
 
-		for pkg in self._internal_match(candidates, restrict, sorter, pkg_klass_override, force):
-			yield pkg
+		return self._internal_match(candidates, restrict, sorter, pkg_klass_override, force)
 
 	def _internal_match(self, candidates, restrict, sorter, pkg_klass_override, force):
 		#actual matching.
@@ -184,6 +183,7 @@ class tree(object):
 			return self._fast_identify_candidates(restrict, sorter)
 		dsolutions = [([c.restriction for c in collect_package_restrictions(x, ["category"])], 
 			[p.restriction for p in collect_package_restrictions(x, ["package"])]) for x in restrict.iter_dnf_solutions(True)]
+
 		for x in dsolutions:
 			if not x[0] and not x[1]:
 				# great... one doesn't rely on cat/pkg.

@@ -6,7 +6,7 @@
 package with it's metadata accessible (think 'no longer abstract')
 """
 
-from pkgcore.util.weakref import WeakValCache
+from pkgcore.util.weakrefs import WeakValCache
 
 from pkgcore.util.demandload import demandload
 demandload(globals(), "warnings")

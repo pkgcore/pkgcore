@@ -20,6 +20,10 @@ from pkgcore.util import currying
 from pkgcore.merge import triggers, errors
 from pkgcore.ebuild import triggers as ebuild_triggers
 
+REPLACING_MODE = 0
+INSTALL_MODE = 1
+UNINSTALL_MODE = 2
+
 
 def scan_livefs(cset):
 	"""generate the intersect of a cset and the livefs"""
@@ -38,9 +42,6 @@ def alias_cset(alias, engine, csets):
 
 
 class MergeEngine(object):
-	REPLACING_MODE = 0
-	INSTALL_MODE = 1
-	UNINSTALL_MODE = 2
 
 	install_hooks = dict((x, []) for x in ["sanity_check", "pre_merge", "merge", "post_merge", "final"])
 	uninstall_hooks = dict((x, []) for x in ["sanity_check", "pre_unmerge", "unmerge", "post_unmerge", "final"])
@@ -136,7 +137,7 @@ class MergeEngine(object):
 		csets = dict(cls.install_csets)
 		if "new_cset" not in csets:
 			csets["new_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
-		o = cls(cls.INSTALL_MODE, hooks, csets, cls.install_csets_preserve, offset=offset)
+		o = cls(INSTALL_MODE, hooks, csets, cls.install_csets_preserve, offset=offset)
 
 		if offset:
 			# wrap the results of new_cset to pass through an offset generator
@@ -161,7 +162,7 @@ class MergeEngine(object):
 		csets = dict(cls.uninstall_csets)
 		if "old_cset" not in csets:
 			csets["old_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
-		o = cls(cls.UNINSTALL_MODE, hooks, csets, cls.uninstall_csets_preserve, offset=offset)
+		o = cls(UNINSTALL_MODE, hooks, csets, cls.uninstall_csets_preserve, offset=offset)
 
 		if offset:
 			# wrap the results of new_cset to pass through an offset generator
@@ -190,7 +191,7 @@ class MergeEngine(object):
 			if k not in csets:
 				csets[k] = currying.post_curry(cls.get_pkg_contents, v)
 
-		o = cls(cls.UNINSTALL_MODE, hooks, csets, cls.replace_csets_preserve, offset=offset)
+		o = cls(REPLACEL_MODE, hooks, csets, cls.replace_csets_preserve, offset=offset)
 
 		if offset:
 			for k in ("old_cset", "new_cset"):

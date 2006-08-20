@@ -77,14 +77,14 @@ class package(ebuild_src.package):
 	def _update_metadata(self, pkg):
 		raise NotImplementedError()
 
-	def _repo_install_op(self, domain_settings):
-		return ebd.install_op(self, initial_env=domain_settings, env_data_source=self.environment)
-
-	def _repo_uninstall_op(self, domain_settings):
-		return ebd.uninstall_op(self, initial_env=domain_settings, env_data_source=self.environment)
-
-	def _repo_replace_op(self, domain_settings):
-		return ebd.replace_op(self, initial_env=domain_settings, env_data_source=self.environment)
+	def _repo_install_op(self, *args, **kwds):
+		return self._parent._generate_format_install_op(self, *args, **kwds)
+	
+	def _repo_uninstall_op(self, *args, **kwds):
+		return self._parent._generate_format_uninstall_op(self, *args, **kwds)
+	
+	def _repo_replace_op(self, *args, **kwds):
+		return self._parent._generate_format_replace_op(self, *args, **kwds)
 
 	def _fetch_metadata(self):
 		return self._parent._get_metadata(self)
@@ -95,13 +95,26 @@ class package(ebuild_src.package):
 	def build(self):
 		return self.repo.generate_buildop(self)
 
-	def add_format_triggers(self, op_inst, format_op_inst, engine_inst):
-		if engine_inst.mode in (engine.REPLACING_MODE, engine.INSTALL_MODE) and \
-			get_raw_pkg(self) is get_raw_pkg(engine_inst.new):
+	def add_format_triggers(self, *args, **kwds):
+		return self._parent._add_format_triggers(self, *args, **kwds)
 
-			if not pkg_uses_default_preinst(self):
-				engine_inst.add_triggers("pre_merge", ebuild_triggers.preinst_contents_reset_trigger())
+
+def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
+	if engine_inst.mode in (engine.REPLACING_MODE, engine.INSTALL_MODE) and \
+		get_raw_pkg(self) is get_raw_pkg(engine_inst.new):
+		if not pkg_uses_default_preinst(self):
+			engine_inst.add_triggers("pre_merge", ebuild_triggers.preinst_contents_reset_trigger())
 			
+
+def _generic_format_install_op(self, pkg, domain_settings):
+	return ebd.install_op(pkg, initial_env=domain_settings, env_data_source=pkg.environment)
+
+def _generic_format_uninstall_op(self, pkg, domain_settings):
+	return ebd.uninstall_op(pkg, initial_env=domain_settings, env_data_source=pkg.environment)
+
+def _generic_format_replace_op(self, pkg, domain_settings):
+	return ebd.replace_op(pkg, initial_env=domain_settings, env_data_source=pkg.environment)
+
 
 class package_factory(metadata.factory):
 	child_class = package
@@ -114,6 +127,11 @@ class package_factory(metadata.factory):
 		if inst is None:
 			inst = self._cached_instances[cpv] = self.child_class(cpv, self, self._parent_repo._get_ebuild_path)
 		return inst
+
+	_generate_format_install_op   = _generic_format_install_op
+	_generate_format_uninstall_op = _generic_format_uninstall_op
+	_generate_format_replace_op   = _generic_format_replace_op
+	_add_format_triggers          = generic_format_triggers
 
 
 class fake_package_factory(package_factory):
@@ -147,15 +165,15 @@ class fake_package_factory(package_factory):
 		obj.__dict__["use"] = self.pkg.use
 		return obj
 
-	def scan_contents(self, pkg=None):
-		return scan(self.image_root, offset=self.image_root)
+	def scan_contents(self, location):
+		return scan(location, offset=location)
 	
 	def _get_metadata(self, pkg):
 		return IndeterminantDict(self.__pull_metadata)
 
 	def __pull_metadata(self, key):
 		if key == "contents":
-			return self.scan_contents()
+			return self.scan_contents(self.image_root)
 		elif key == "environment":
 			return local_source(self.environment_path)
 		else:
@@ -164,5 +182,10 @@ class fake_package_factory(package_factory):
 			except AttributeError:
 				raise KeyError
 
-def generate_new_factory(*a, **kw):
-	return package_factory(*a, **kw).new_package
+	_generate_format_install_op   = _generic_format_install_op
+	_generate_format_uninstall_op = _generic_format_uninstall_op
+	_generate_format_replace_op   = _generic_format_replace_op
+	_add_format_triggers          = generic_format_triggers
+
+
+generate_new_factory = package_factory

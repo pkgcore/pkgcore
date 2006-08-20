@@ -6,10 +6,7 @@
 package with it's metadata accessible (think 'no longer abstract')
 """
 
-try:
-	from pkgcore.util._caching import WeakValCache
-except ImportError:
-	from weakref import WeakValueDictionary as WeakValCache
+from pkgcore.util.weakref import WeakValCache
 
 from pkgcore.util.demandload import demandload
 demandload(globals(), "warnings")
@@ -105,6 +102,9 @@ class factory(object):
 		if inst is None:
 			inst = self._cached_instances[cpv] = self.child_class(cpv, self)
 		return inst
+
+	def __call__(self, *args, **kwds):
+		return self.new_package(*args, **kwds)
 
 	def clear(self):
 		"""

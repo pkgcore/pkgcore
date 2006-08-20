@@ -297,8 +297,7 @@ class ThrowAwayNameSpace(object):
 		self._val[slice] = val
 
 
-def generate_new_factory(*a, **kw):
-	return package_factory(*a, **kw).new_package
+generate_new_factory = package_factory
 
 
 class virtual_ebuild(metadata.package):

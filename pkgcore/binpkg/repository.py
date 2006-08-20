@@ -19,6 +19,53 @@ from pkgcore.binpkg.xpak import Xpak
 from pkgcore.binpkg.tar import generate_contents
 from pkgcore.util.bzip2 import decompress
 from pkgcore.interfaces.build import empty_build_op
+from pkgcore.ebuild.ebuild_built import pkg_uses_default_preinst
+from pkgcore.ebuild import ebd
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.merge:engine "+
+	"pkgcore.merge.triggers:SimpleTrigger "+
+	"pkgcore.fs.livefs:scan "+
+	"pkgcore.interfaces.data_source.data_source ")
+
+
+def force_unpack_trigger(op, engine, cset):
+	op.setup_workdir()
+	merge_contents = get_plugin("fs_ops", "merge_contents")
+	merge_contents(cset, offset=op.env["D"])
+	cset.clear()
+	cset.update(scan(op.env["D"], offset=op.env["D"]))
+
+def generic_register(label, trigger, hook_name, triggers_list):
+	for x in triggers_list:
+		if x.label == label:
+			break
+	else:
+		triggers_list.insert(0, trigger)
+
+
+def wrap_factory(klass, *args, **kwds):
+
+	class new_factory(klass):
+
+		def _add_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
+			if engine.UNINSTALL_MODE != engine_inst.mode and \
+				pkg == engine_inst.new and \
+				not pkg_uses_default_preinst(pkg):
+
+				label = "forced_decompression"
+				t = SimpleTrigger("install", 
+					pre_curry(force_unpack_trigger, format_op_inst), 
+					register_func=pre_curry(generic_register, label),
+					label=label)
+				engine_inst.add_triggers("sanity_check", t)
+				
+			klass._add_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst)
+		
+		def scan_contents(self, location):
+			return scan(location, offset=location)
+
+	return new_factory(*args, **kwds)
+
 
 class tree(prototype.tree):
 	format_magic = "ebuild_built"	
@@ -39,7 +86,7 @@ class tree(prototype.tree):
 		except OSError:
 			raise errors.InitializationError("lstat failed on base %s" % self.base)
 
-		self.package_class = get_plugin("format", self.format_magic)(self)
+		self.package_class = wrap_factory(get_plugin("format", self.format_magic), self)
 
 	def _get_categories(self, *optionalCategory):
 		# return if optionalCategory is passed... cause it's not yet supported

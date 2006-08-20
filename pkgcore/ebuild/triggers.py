@@ -201,8 +201,9 @@ def config_protect_trigger_uninstall(existing_cset="uninstall_existing", modifyi
 
 def preinst_contents_reset_func(engine, cset):
 	# wipe, and get data again.
+	print "firing"
 	cset.clear()
-	cset.update(engine.new._parent.scan_contents())
+	cset.update(engine.new._parent.scan_contents(engine.op["D"]))
 
 def preinst_contents_reset_register(trigger, hook_name, triggers_list):
 	for x in triggers_list:

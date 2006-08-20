@@ -19,7 +19,7 @@ class trigger(object):
 
 	"""base trigger class"""
 	
-	def __init__(self, cset_name, ftrigger, register_func=None):
+	def __init__(self, cset_name, ftrigger, register_func=None, label=None):
 
 		"""
 		@param cset_name: the cset label required for this trigger
@@ -41,6 +41,13 @@ class trigger(object):
 			if not callable(register_func):
 				raise TypeError("register_func must be a callable")
 		self.register_func = register_func
+		self._label = label
+	
+	@property
+	def label(self):
+		if self._label is not None:
+			return self._label
+		return self.__class__
 
 	# this should probably be implemented as an associated int that can be used to
 	# sort the triggers
@@ -71,7 +78,7 @@ class SimpleTrigger(trigger):
 
 	"""simplified trigger class; for most triggers, this is what you want to use"""
 	
-	def __init__(self, cset_name, ftrigger, register_func=None):
+	def __init__(self, cset_name, ftrigger, register_func=None, label=None):
 		"""
 		@param cset_name: cset to use, either string (single), list/tuple for many.  Can be an empty tuple if no csets used
 		@param ftrigger: callable to execute when 'triggered'
@@ -81,7 +88,7 @@ class SimpleTrigger(trigger):
 			if not isinstance(cset_name, basestring):
 				raise TypeError("cset_name must be a string")
 			cset_name = [cset_name]
-		trigger.__init__(self, cset_name, ftrigger, register_func=register_func)
+		trigger.__init__(self, cset_name, ftrigger, register_func=register_func, label=label)
 
 	def __call__(self, engine, csets):
 		self.trigger(engine, *[csets[x] for x in self.required_csets])

@@ -517,7 +517,7 @@ class EbuildProcessor:
 		handlers["phases"] = pre_curry(chuck_StoppingCommand, lambda f: f.lower().strip() == "succeeded")
 
 		if additional_commands is not None:
-			for x in additional_commands.keys():
+			for x in additional_commands:
 				if not callable(additional_commands[x]):
 					raise TypeError(additional_commands[x])
 

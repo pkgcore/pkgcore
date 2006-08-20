@@ -203,7 +203,7 @@ class ebd(object):
 		ebd.write("end_request")
 
 	@_reset_env_data_source
-	def _generic_phase(self, phase, userpriv, sandbox, fakeroot):
+	def _generic_phase(self, phase, userpriv, sandbox, fakeroot, extra_handlers=None):
 		"""
 		@param phase: phase to execute
 		@param userpriv: will we drop to L{portage_uid<pkgcore.os_data.portage_uid>} and L{portage_gid<pkgcore.os_data.portage_gid>}
@@ -217,7 +217,7 @@ class ebd(object):
 		try:
 			ebd.prep_phase(phase, self.env, sandbox=self.sandbox, logging=self.logging)
 			ebd.write("start_processing")
-			if not ebd.generic_handler():
+			if not ebd.generic_handler(additional_commands=extra_handlers):
 				raise build.GenericBuildError(phase + ": Failed building (False/0 return from handler)")
 
 		except Exception, e:
@@ -264,7 +264,17 @@ class install_op(ebd):
 	"""
 	phase operations and steps for install execution
 	"""
-	preinst = pretty_docs(post_curry(ebd._generic_phase, "preinst", False, False, False), "run the preinst phase")
+	def __init__(self, *args, **kwds):
+		self.default_preinst_used = False
+		ebd.__init__(self, *args, **kwds)
+
+	def _default_preinst_used_handler(self, processor, *args):
+		self.default_preinst_used = True
+
+	def preinst(self):
+		"""run the preinst phase"""
+		return ebd._generic_phase(self, "preinst", False, False, False, 
+			extra_handlers={"default_preinst_used":self._default_preinst_used_handler})
 	postinst = pretty_docs(post_curry(ebd._generic_phase, "postinst", False, False, False), "run the postinst phase")
 
 

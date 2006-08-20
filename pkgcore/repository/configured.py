@@ -45,8 +45,8 @@ class tree(prototype.tree):
 			return (self.package_class(pkg) for pkg in self.raw_repo.itermatch(restrict, restrict_solutions=restrict_solutions, **kwds))
 			
 		if restrict_solutions is None:
-			if hasattr(restrict, "solutions"):
-				restrict_solutions = restrict.solutions(full_solution_expansion=True)
+			if hasattr(restrict, "iter_cnf_solutions"):
+				restrict_solutions = restrict.cnf_solutions(full_solution_expansion=True)
 			else:
 				restrict_solutions = (restrict,)
 			

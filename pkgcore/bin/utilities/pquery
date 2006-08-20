@@ -7,6 +7,7 @@ from pkgcore.package.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.currying import pre_curry
 from pkgcore.util import repo_utils, commandline
+from pkgcore.util.packages import groupby_pkg
 
 def grab_arg(arg, args):
 	val = False
@@ -94,18 +95,19 @@ if __name__ == "__main__":
 		atoms = packages.OrRestriction(*atoms)
 	for a in atoms:
 		for repo in repos:
-			for pkg in results_filter(repo.itermatch(a, sorter=pre_curry(sorted, reverse=True))):
-				try:
-					print str(atomstr(pkg))
-				except AttributeError:
-					print str(pkg)
-				for x in attr:
-					o = pkg
+			for pkgs in groupby_pkg(results_filter(repo.itermatch(a, sorter=sorted))):
+				for pkg in sorted(pkgs, reverse=True):
 					try:
-						for f in x[1]:
-							o = f(o)
-						print "attr '%s' == %s" % (x[0], atomstr(o, True))
-					except AttributeError, ae:
-						print "attr '%s' exception: %s" % (x[0], ae)
-				print
+						print str(atomstr(pkg))
+					except AttributeError:
+						print str(pkg)
+					for x in attr:
+						o = pkg
+						try:
+							for f in x[1]:
+								o = f(o)
+							print "attr '%s' == %s" % (x[0], atomstr(o, True))
+						except AttributeError, ae:
+							print "attr '%s' exception: %s" % (x[0], ae)
+					print
 		

@@ -94,7 +94,15 @@ class base(restriction.base):
 	def dnf_solutions(self, full_solution_expansion=False):
 		raise NotImplementedError()
 
-	cnf_solutions = iter_dnf_solutions = iter_cnf_solutions = dnf_solutions
+	cnf_solutions = dnf_solutions
+
+	def iter_cnf_solutions(self, *a, **kwds):
+		"""iterate over the cnf solution"""
+		return self.cnf_solutions(*a, **kwds)
+	
+	def iter_dnf_solutions(self, *a, **kwds):
+		"""iterate over the dnf solution"""
+		return self.dnf_solutions(*a, **kwds)
 
 	def __getitem__(self, key):
 		return self.restrictions[key]

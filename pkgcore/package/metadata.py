@@ -73,6 +73,9 @@ class package(CPV):
 		"""
 		raise NotImplementedError
 
+	def add_format_triggers(self, op_inst, format_op_inst, engine_inst):
+		pass
+
 
 class factory(object):
 

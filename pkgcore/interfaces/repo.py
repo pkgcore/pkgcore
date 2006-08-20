@@ -47,6 +47,7 @@ class base(object):
 		return (), {}
 
 	def start(self, engine):
+		# add the pkgs triggers.
 		self.me = engine
 		self.underway = True
 		self.lock.acquire_write_lock()
@@ -81,7 +82,9 @@ class install(base):
 
 	def start(self):
 		"""start the install transaction"""
-		return base.start(self, MergeEngine.install(self.pkg, offset=self.offset))
+		engine = MergeEngine.install(self.pkg, offset=self.offset)
+		self.pkg.add_format_triggers(self, self.op, engine)
+		return base.start(self, engine)
 
 	def preinst(self):
 		"""execute any pre-transfer steps required"""
@@ -119,7 +122,9 @@ class uninstall(base):
 
 	def start(self):
 		"""start the uninstall transaction"""
-		return base.start(self, MergeEngine.uninstall(self.pkg, offset=self.offset))
+		engine = MergeEngine.uninstall(self.pkg, offset=self.offset)
+		self.pkg.add_format_triggers(self, self.op, engine)
+		return base.start(self, engine)
 
 	def prerm(self):
 		"""execute any pre-removal steps required"""
@@ -170,7 +175,10 @@ class replace(install, uninstall):
 
 	def start(self):
 		"""start the transaction"""
-		return base.start(self, MergeEngine.replace(self.oldpkg, self.pkg, offset=self.offset))
+		engine = MergeEngine.replace(self.oldpkg, self.pkg, offset=self.offset)
+		self.pkg.add_format_triggers(self, self.op, engine)
+		self.oldpkg.add_format_triggers(self, self.op, engine)
+		return base.start(self, engine)
 
 	def _notify_repo(self):
 		self.repo.notify_remove_package(self.oldpkg)

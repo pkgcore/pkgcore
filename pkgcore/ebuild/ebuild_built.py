@@ -5,6 +5,8 @@
 built ebuild packages (vdb packages and binpkgs are derivatives of this)
 """
 
+import re
+
 from pkgcore.ebuild import ebuild_src
 from pkgcore.util.mappings import IndeterminantDict, ImmutableDict
 from pkgcore.package import metadata
@@ -13,10 +15,11 @@ from pkgcore.fs import scan
 from pkgcore.util.currying import post_curry
 from pkgcore.ebuild.conditionals import DepSet
 from pkgcore.package.atom import atom
-import ebd
+from pkgcore.ebuild import ebd
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.merge:engine "+
-	"pkgcore.ebuild:triggers ")
+	"pkgcore.ebuild:triggers "+
+	"pkgcore.util.packages:get_raw_pkg ")
 
 ebuild_triggers = triggers
 
@@ -27,6 +30,8 @@ def passthrough(inst, attr, rename=None):
 
 def flatten_depset(inst, conditionals):
 	return inst.evaluate_depset(conditionals)
+
+default_pkg_preinst_re = re.compile("(?:^|\n)pkg_preinst *\(\)\s*{\s*return;?\s*}[ \t]*(?:\n|$)")
 
 class package(ebuild_src.package):
 
@@ -78,8 +83,19 @@ class package(ebuild_src.package):
 		return self.repo.generate_buildop(self)
 
 	def add_format_triggers(self, op_inst, format_op_inst, engine_inst):
-		if engine_inst.mode in (engine.REPLACING_MODE, engine.INSTALL_MODE):
-			engine_inst.add_triggers("pre_merge", ebuild_triggers.preinst_contents_reset_trigger())
+		if engine_inst.mode in (engine.REPLACING_MODE, engine.INSTALL_MODE) and \
+			get_raw_pkg(self) is get_raw_pkg(engine_inst.new):
+
+			# crappy check for default pkg_preinst.
+			addit = True
+			data = self.environment.get_fileobj().read()
+			if self.package == "bash":
+				import pdb;pdb.set_trace()
+
+			m = default_pkg_preinst_re.search(data)
+			# second check.  make sure there aren't two matches- if so, that means we should not guess it.
+			if m is None or default_pkg_preinst_re.search(data[m.end():]) is not None:
+				engine_inst.add_triggers("pre_merge", ebuild_triggers.preinst_contents_reset_trigger())
 			
 
 class package_factory(metadata.factory):

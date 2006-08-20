@@ -17,7 +17,7 @@ class native_CpvTest(unittest.TestCase):
 
 	good_vers = ["1", "2.3.4", "2.3.4a", "02.3", "2.03"]
 	good_vers = ["cvs.%s" % x for x in good_vers] + good_vers
-	bad_vers  = ["2.3a.4", "2.a.3", "2.3_", "2.3 "]
+	bad_vers  = ["2.3a.4", "2.a.3", "2.3_", "2.3 ", "2.3."]
 	simple_good_sufs = ["_alpha", "_beta", "_pre", "_p"]
 	good_sufs = simple_good_sufs + ["%s1" % x for x in simple_good_sufs] + ["%s932" % x for x in simple_good_sufs]
 	l = len(good_sufs)

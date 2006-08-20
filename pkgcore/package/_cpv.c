@@ -357,6 +357,10 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 	for(;;) {
 		while(ISDIGIT(*p))
 			p++;
+		// safe due to our checks from above, but just in case...
+		if(ver_start == p || '.' == p[-1]) {
+			goto parse_error;
+		}
 		if(ISALPHA(*p)) {
 			p++;
 			if('\0' != *p && '_' != *p && '-' != *p)

@@ -254,7 +254,7 @@ class DepSet(boolean.AndRestriction):
 			return "|| ( %s )" % " ".join(self._stringify_node(x) for x in node.restrictions)
 		elif isinstance(node, packages.Conditional):
 			assert len(node.restriction.vals) == 1
-			return "%s%s? ( %s )" % (node.negate and "!" or "", list(node.restriction.vals)[0], \
+			return "%s%s? ( %s )" % (node.restriction.negate and "!" or "", list(node.restriction.vals)[0], \
 				" ".join(self._stringify_node(x) for x in node.payload))
 
 		return str(node)

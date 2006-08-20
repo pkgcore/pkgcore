@@ -269,6 +269,10 @@ class OrderedDict(dict):
 			self[key] = default
 		return self[key]
 
+	def update(self, iterable):
+		for k,v in iterable:
+			self[k] = v
+
 	def __len__(self):
 		return len(self._order)
 	

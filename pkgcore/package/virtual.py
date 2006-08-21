@@ -21,10 +21,8 @@ class package(metadata.package):
 		val = None
 		if key == "rdepends":
 			val = self.data
-		elif key == "depends":
+		elif key in ("depends", "post_rdepends", "provides"):
 			val = OrRestriction(finalize=True)
-		elif key == "provides":
-			val = OrRestriction()
 		elif key == "metapkg":
 			val = True
 		elif key == "slot":

@@ -242,6 +242,8 @@ class merge_plan(object):
 						# well.  we know the node is valid, so we can ignore this cycle.
 						failure = []
 					else:
+						# XXX this is faulty for rdepends/prdepends most likely
+						
 						if current_stack[index][2] == attr:
 							# contained rdepends cycle... ignore it.
 							failure = []

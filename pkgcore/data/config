@@ -69,7 +69,7 @@ profile = profile
 
 [world]
 type = pkgset
-class = pkgcore.pkgsets.world.WorldFile
+class = pkgcore.pkgsets.world.FileList
 
 [glsa]
 type = pkgset

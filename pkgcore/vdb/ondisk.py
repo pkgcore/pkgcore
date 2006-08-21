@@ -97,7 +97,7 @@ class tree(prototype.tree):
 		s = "%s-%s" % (pkg.package, pkg.fullver)
 		return os.path.join(self.base, pkg.category, s, s+".ebuild")
 
-	_metadata_rewrites = {"depends":"DEPEND", "rdepends":"RDEPEND", "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
+	_metadata_rewrites = {"depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND", "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
 
 	def _get_metadata(self, pkg):
 		return IndeterminantDict(pre_curry(self._internal_load_key, os.path.dirname(pkg.path)))

@@ -75,9 +75,9 @@ class OverlayRepo(multiplex.tree):
 		s = set()
 		for repo in self.trees:
 			for pkg in repo.itermatch(*a, **kwds):
-				if hash(pkg) not in s:
+				if str(pkg) not in s:
 					yield pkg
-					s.add(hash(pkg))
+					s.add(str(pkg))
 
 	def __iter__(self):
 		return self.itermatch(packages.AlwaysTrue)

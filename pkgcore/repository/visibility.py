@@ -30,6 +30,8 @@ class filterTree(prototype.tree):
 		for cpv in self.raw_repo.itermatch(restrict, **kwds):
 			if self.restriction.match(cpv) == self.sentinel_val:
 				yield cpv
+
+
 	itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace("@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
 
 	def __iter__(self):

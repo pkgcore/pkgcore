@@ -122,7 +122,7 @@ class choice_point(object):
 	@property
 	def current_pkg(self):
 		# trigger depends lookup.  cheap, but works.
-		self.depends, self.rdepends
+		self.depends, self.rdepends, self.post_rdepends
 		return self.matches[self.matches_idx]
 
 	def force_next_pkg(self):

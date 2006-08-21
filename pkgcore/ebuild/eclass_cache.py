@@ -112,7 +112,7 @@ class StackedCache(cache):
 		self.eclassdir = kwds.pop("eclassdir")
 		if self.eclassdir is None:
 			self.eclassdir = caches[0].eclassdir
-		self.portdir = os.path.basename(self.eclassdir)
+		self.portdir = os.path.dirname(self.eclassdir)
 
 		# temp var, nuked when no longer needed
 		self.ec = caches

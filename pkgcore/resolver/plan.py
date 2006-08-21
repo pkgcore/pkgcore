@@ -225,7 +225,7 @@ class merge_plan(object):
 		else: # all potentials were usable.
 			return additions, blocks
 
-	def process_rdepends(self, atom, dbs, current_stack, choices, depset, depth=0, drop_cycles=False):
+	def process_rdepends(self, atom, dbs, current_stack, choices, attr, depset, depth=0, drop_cycles=False):
 		failure = []
 		additions, blocks, = [], []
 		dprint("rdepends:    %s%s: started: %s", (depth *2 * " ", atom, choices.current_pkg))
@@ -235,25 +235,25 @@ class merge_plan(object):
 				if ratom.blocks:
 					blocks.append(ratom)
 					break
-				index = is_cycle(current_stack, ratom, choices, "rdepends")
+				index = is_cycle(current_stack, ratom, choices, attr)
 				if index != -1:
 					# cycle.  whee.
 					if dbs is self.livefs_dbs:
 						# well.  we know the node is valid, so we can ignore this cycle.
 						failure = []
 					else:
-						if current_stack[index][2] == "rdepends":
+						if current_stack[index][2] == attr:
 							# contained rdepends cycle... ignore it.
 							failure = []
 						else:
 							# force limit_to_vdb to True to try and isolate the cycle to installed vdb components
-							failure = self._rec_add_atom(ratom, current_stack, self.livefs_dbs, depth=depth+1, mode="rdepends")
+							failure = self._rec_add_atom(ratom, current_stack, self.livefs_dbs, depth=depth+1, mode=attr)
 							if failure and drop_cycles:
 								dprint("rdepends level cycle: %s: dropping cycle for %s from %s", (atom, ratom, choices.current_pkg), "cycle")
 								failure = []
 								break
 				else:
-					failure = self._rec_add_atom(ratom, current_stack, dbs, depth=depth+1, mode="rdepends")
+					failure = self._rec_add_atom(ratom, current_stack, dbs, depth=depth+1, mode=attr)
 				if failure:
 					# reduce.
 					if choices.reduce_atoms(ratom):
@@ -266,6 +266,69 @@ class merge_plan(object):
 				return [[ratom_potentials]]
 		else: # all potentials were usable.
 			return additions, blocks
+
+	def insert_choice(self, atom, current_stack, choices):
+		# well, we got ourselvs a resolution.
+		# do a trick to make the resolver now aware of vdb pkgs if needed
+		if not self.vdb_preloaded and not choices.current_pkg.repo.livefs:
+			slotted_atom = choices.current_pkg.slotted_atom
+			l = self.state.match_atom(slotted_atom)
+			if not l:
+				# hmm.  ok... no conflicts, so we insert in vdb matches to trigger a replace instead of an install
+				for repo, cache in self.livefs_dbs.iteritems():
+					m = self.get_db_match(repo, cache, slotted_atom)
+					if m:
+						self.state.add_pkg(choice_point(slotted_atom, m), force=True)
+						break				
+
+		# first, check for conflicts.
+		l = self.state.add_pkg(choices)
+		# lil bit fugly, but works for the moment
+		if l:
+			# this means in this branch of resolution, someone slipped something in already.
+			# cycle, basically.
+			dprint("was trying to insert atom '%s' pkg '%s',\nbut '[%s]' exists already", (atom, choices.current_pkg, 
+				", ".join(str(y) for y in l)))
+			# hack.  see if what was insert is enough for us.
+			
+			# this is tricky... if it's the same node inserted (cycle), then we ignore it; this does *not* perfectly behave though, doesn't discern between repos.
+			if len(l) == 1 and l[0] == choices.current_pkg and l[0].repo.livefs == choices.current_pkg.repo.livefs and atom.match(l[0]):
+				# early exit.  means that a cycle came about, but exact same result slipped through.
+				dprint("non issue, cycle for %s pkg %s resolved to same pkg" % (repr(atom), choices.current_pkg))
+				return False
+			try_rematch = False
+			if any(True for x in l if isinstance(x, restriction.base)):
+				# blocker was caught
+				dprint("blocker detected in slotting, trying a re-match")
+				try_rematch = True
+			elif not any (True for x in l if not self.vdb_restrict.match(x)):
+				# vdb entry, replace.
+				if self.vdb_restrict.match(choices.current_pkg):
+					# we're replacing a vdb entry with a vdb entry?  wtf.
+					print "internal weirdness spotted, dumping to pdb for inspection"
+					import pdb;pdb.set_trace()
+					raise Exception()
+				dprint("replacing a vdb node, so it's valid (need to do a recheck of state up to this point however, which we're not)")
+				l = self.state.add_pkg(choices, REPLACE)
+				if l:
+					dprint("tried the replace, but got matches still- %s", l)
+			else:
+				try_rematch = True
+			if try_rematch:
+				l2 = self.state.match_atom(atom)
+				if l2 == [choices.current_pkg]:
+					dprint("node was pulled in already, same so ignoring it")
+					# stop resolution.
+					l = False
+				elif l2:
+					dprint("and we 'parently match it.  ignoring (should prune here however)")
+					# need to do cleanup here
+#					import pdb;pdb.set_trace()
+					l = False
+					
+		else:
+			l = None
+		return l
 
 	def _rec_add_atom(self, atom, current_stack, dbs, depth=0, mode="none", drop_cycles=False):
 		"""returns false on no issues (inserted succesfully), else a list of the stack that screwed it up"""
@@ -306,10 +369,6 @@ class merge_plan(object):
 
 		# experiment. ;)
 		# see if we can insert or not at this point (if we can't, no point in descending)
-#		l = self.state.pkg_conflicts(choices.current_pkg)
-#		if l:
-#			# we can't.
-#			return [atom]
 		
 		if current_stack:
 			if limit_to_vdb:
@@ -335,7 +394,7 @@ class merge_plan(object):
 				continue
 			additions += l[0]
 			blocks += l[1]
-			l = self.process_rdepends(atom, dbs, current_stack, choices, 
+			l = self.process_rdepends(atom, dbs, current_stack, choices, "rdepends",
 				self.depset_reorder(self, choices.rdepends, "rdepends"), depth=depth, drop_cycles=drop_cycles)
 			if len(l) == 1:
 				dprint("reseting for %s%s because of rdepends: %s", (depth*2*" ", atom, l[0]))
@@ -346,67 +405,17 @@ class merge_plan(object):
 			blocks += l[1]				
 			dprint("choose for   %s%s, %s", (depth *2*" ", atom, choices.current_pkg))
 
-			# well, we got ourselvs a resolution.
-			# do a trick to make the resolver now aware of vdb pkgs if needed
-			if not self.vdb_preloaded and not choices.current_pkg.repo.livefs:
-				slotted_atom = choices.current_pkg.slotted_atom
-				l = self.state.match_atom(slotted_atom)
-				if not l:
-					# hmm.  ok... no conflicts, so we insert in vdb matches to trigger a replace instead of an install
-					for repo, cache in self.livefs_dbs.iteritems():
-						m = self.get_db_match(repo, cache, slotted_atom)
-						if m:
-							self.state.add_pkg(choice_point(slotted_atom, m), force=True)
-							break				
-
-			# first, check for conflicts.
-			l = self.state.add_pkg(choices)
-			# lil bit fugly, but works for the moment
-			if l:
-				# this means in this branch of resolution, someone slipped something in already.
-				# cycle, basically.
-				dprint("was trying to insert atom '%s' pkg '%s',\nbut '[%s]' exists already", (atom, choices.current_pkg, 
-					", ".join(str(y) for y in l)))
-				# hack.  see if what was insert is enough for us.
-				
-				# this is tricky... if it's the same node inserted (cycle), then we ignore it; this does *not* perfectly behave though, doesn't discern between repos.
-				if len(l) == 1 and l[0] == choices.current_pkg and l[0].repo.livefs == choices.current_pkg.repo.livefs and atom.match(l[0]):
-					# early exit.  means that a cycle came about, but exact same result slipped through.
-					dprint("non issue, cycle for %s pkg %s resolved to same pkg" % (repr(atom), choices.current_pkg))
-					current_stack.pop()
-					return []
-				fail = try_rematch = False
-				if any(True for x in l if isinstance(x, restriction.base)):
-					# blocker was caught
-					dprint("blocker detected in slotting, trying a re-match")
-					try_rematch = True
-				elif not any (True for x in l if not self.vdb_restrict.match(x)):
-					# vdb entry, replace.
-					if self.vdb_restrict.match(choices.current_pkg):
-						# we're replacing a vdb entry with a vdb entry?  wtf.
-						print "internal weirdness spotted, dumping to pdb for inspection"
-						import pdb;pdb.set_trace()
-						raise Exception()
-					dprint("replacing a vdb node, so it's valid (need to do a recheck of state up to this point however, which we're not)")
-					l = self.state.add_pkg(choices, REPLACE)
-					if l:
-						dprint("tried the replace, but got matches still- %s", l)
-						fail = True
-				else:
-					try_rematch = True
-				if try_rematch:
-					l2 = self.state.match_atom(atom)
-					if l2 == [choices.current_pkg]:
-						dprint("node was pulled in already, same so ignoring it")
-					elif l2:
-						dprint("and we 'parently match it.  ignoring (should prune here however)")
-						# need to do cleanup here
-#						import pdb;pdb.set_trace()
-						current_stack.pop()
-						return False
-				if fail:
-					self.state.reset_state(saved_state)
-					continue
+			l = self.insert_choice(atom, current_stack, choices)
+			if l is False:
+				# this means somehow the node already slipped in.
+				# so we exit now, we are satisfied
+				current_stack.pop()
+				return False
+			elif l is not None:
+				# failure.
+				self.state.reset_state(saved_state)
+				choices.force_next_pkg()
+				continue
 
 			# level blockers.
 			fail = True

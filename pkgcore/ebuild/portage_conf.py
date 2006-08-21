@@ -13,7 +13,9 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "errno pkgcore.config:errors " +
 	"pkgcore.pkgsets.glsa:SecurityUpgrades "+
 	"pkgcore.fs.util:normpath,abspath "+
-	"pkgcore.util.file:read_bash_dict,read_dict ")
+	"pkgcore.util.file:read_bash_dict,read_dict "+
+	"pkgcore.pkgsets.filelist:FileList "+
+	"pkgcore.util.osutils:listdir_files ")
 
 
 def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
@@ -44,12 +46,15 @@ def configFromMakeConf(location="/etc/"):
 	# this actually differs from portage parsing- we allow make.globals to provide vars used in make.conf, 
 	# portage keeps them seperate (kind of annoying)
 
+	pjoin = os.path.join
+
 	config_root = os.environ.get("CONFIG_ROOT", "/") + "/"
-	base_path = os.path.join(config_root, location.strip("/"))
+	base_path = pjoin(config_root, location.strip("/"))
+	portage_base = pjoin(base_path, "portage")
 
 	# this isn't preserving incremental behaviour for features/use unfortunately
-	conf_dict = read_bash_dict(os.path.join(base_path, "make.globals"))
-	conf_dict.update(read_bash_dict(os.path.join(base_path, "make.conf"), vars_dict=conf_dict, sourcing_command="source"))
+	conf_dict = read_bash_dict(pjoin(base_path, "make.globals"))
+	conf_dict.update(read_bash_dict(pjoin(base_path, "make.conf"), vars_dict=conf_dict, sourcing_command="source"))
 	conf_dict.setdefault("PORTDIR", "/usr/portage")
 	root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
 	gentoo_mirrors = [x+"/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split()]
@@ -57,6 +62,8 @@ def configFromMakeConf(location="/etc/"):
 		gentoo_mirrors = None
 
 	new_config = {}
+
+	# sets...
 	new_config["world"] = basics.ConfigSectionFromStringDict("world", 
 		{"type": "pkgset", "class": "pkgcore.pkgsets.world.WorldFile", 
 		"world_path": "%s/%s" % (root, const.WORLD_FILE)})
@@ -64,11 +71,20 @@ def configFromMakeConf(location="/etc/"):
 		{"type": "pkgset", "class": "pkgcore.pkgsets.system.SystemSet", 
 		"profile": "profile"})
 
+	set_fp = pjoin(portage_base, "sets")
+	if os.path.isdir(set_fp):
+		for setname in listdir_files(set_fp):
+			new_config[setname] = basics.ConfigSectionFromStringDict(setname,
+				{"class":"pkgcore.pkgsets.filelist.FileList", "type":"pkgset",
+				"location":pjoin(set_fp, setname)})
+
+
+
 	new_config["vdb"] = basics.ConfigSectionFromStringDict("vdb",
 		{"type": "repo", "class": "pkgcore.vdb.repository", "location": "%s/var/db/pkg" % config_root.rstrip("/")})
 	
 	try:
-		profile = os.readlink(os.path.join(base_path, "make.profile"))
+		profile = os.readlink(pjoin(base_path, "make.profile"))
 	except OSError, oe:
 		if oe.errno in (errno.ENOENT, errno.EINVAL):
 			raise errors.InstantiationError("configFromMakeConf", [], {},
@@ -87,7 +103,7 @@ def configFromMakeConf(location="/etc/"):
 	
 	new_config["profile"] = basics.ConfigSectionFromStringDict("profile", 
 		{"type": "profile", "class": "pkgcore.ebuild.profiles.OnDiskProfile", 
-		"base_path": os.path.join("/", *psplit[:stop+1]), "profile": os.path.join(*psplit[stop + 1:])})
+		"base_path": pjoin("/", *psplit[:stop+1]), "profile": pjoin(*psplit[stop + 1:])})
 
 	portdir = normpath(conf_dict.pop("PORTDIR").strip())
 	portdir_overlays = map(normpath, conf_dict.pop("PORTDIR_OVERLAY", "").split())
@@ -99,7 +115,7 @@ def configFromMakeConf(location="/etc/"):
 	
 	features = conf_dict.get("FEATURES", "").split()
 	
-	rsync_portdir_cache = os.path.exists(os.path.join(portdir, "metadata", "cache"))
+	rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache"))
 	if pcache is None:
 		if portdir_overlays or ("metadata-transfer" not in features):
 			cache_config["class"] = "pkgcore.cache.flat_hash.database"
@@ -113,7 +129,7 @@ def configFromMakeConf(location="/etc/"):
 	new_config["cache"] = basics.ConfigSectionFromStringDict("cache", cache_config)
 
 	#fetcher.
-	distdir = normpath(conf_dict.pop("DISTDIR", os.path.join(portdir, "distdir")))
+	distdir = normpath(conf_dict.pop("DISTDIR", pjoin(portdir, "distdir")))
 	fetchcommand = conf_dict.pop("FETCHCOMMAND")
 	resumecommand = conf_dict.pop("RESUMECOMMAND", fetchcommand)
 
@@ -161,6 +177,7 @@ def configFromMakeConf(location="/etc/"):
 				"location":pkgdir})
 			default_repos += " binpkg"
 
+
 	# finally... domain.
 
 	d = {"repositories":default_repos, "fetcher": "fetcher", "default": "yes", 
@@ -170,7 +187,7 @@ def configFromMakeConf(location="/etc/"):
 
 	# finally... package.* additions
 	for f in ("package.mask", "package.unmask", "package.keywords", "package.use"):
-		fp = os.path.join(config_root, "etc", "portage", f)
+		fp = pjoin(portage_base, f)
 		if os.path.isfile(fp):
 			conf_dict[f] = fp
 	new_config["livefs domain"] = basics.ConfigSectionFromStringDict("livefs domain",

@@ -9,6 +9,7 @@ class fake_package(object):
 	def __init__(self, **kwds):
 		for k,v in (("depends", AndRestriction()),
 			("rdepends", AndRestriction()),
+			("post_rdepends", AndRestriction()),
 			("provides", AndRestriction()),
 			("slot", 0), ("key", None), ("marker", None)):
 			setattr(self, k, kwds.get(k, v))
@@ -19,9 +20,11 @@ class TestChoicePoint(unittest.TestCase):
 	def gen_choice_point():
 		return choice_point("asdf", [
 			fake_package(marker=1, depends=OrRestriction("ordep1", "ordep2", "dependsordep"),
-				rdepends=AndRestriction(OrRestriction("ordep1", "andordep2"), "anddep1", "anddep2", "pkg1and")),
+				rdepends=AndRestriction(OrRestriction("ordep1", "andordep2"), "anddep1", "anddep2", "pkg1and"),
+				post_rdepends=OrRestriction("prdep1", "or3")),
 			fake_package(marker=2, depends=AndRestriction("anddep1", "anddep2"),
-				rdepends=OrRestriction("or1", "or2"))])
+				rdepends=OrRestriction("or1", "or2"),
+				post_rdepends=OrRestriction("prdep1", "or3"))])
 
 	def test_depends_rdepends_stepping(self):
 		c = self.gen_choice_point()
@@ -33,6 +36,11 @@ class TestChoicePoint(unittest.TestCase):
 		c.reduce_atoms("pkg1and")
 		c.reduce_atoms("or1")
 		self.assertEqual(c.rdepends, [["or2"]])
+		c.reduce_atoms("prdep1")
+		self.assertEquals(c.depends, [['anddep1'], ['anddep2']])
+		self.assertEquals(c.post_rdepends, [["or3"]])
+		c.reduce_atoms("or3")
+		self.assertRaises(IndexError, lambda:c.depends)
 
 	def test_current_pkg(self):
 		c = self.gen_choice_point()

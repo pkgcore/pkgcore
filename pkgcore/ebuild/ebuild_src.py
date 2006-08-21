@@ -178,11 +178,11 @@ class package(metadata.package):
 
 	immutable = False
 	allow_regen = True
-	tracked_attributes = ["PF", "depends", "rdepends", "provides", 	"license",
+	tracked_attributes = ["PF", "depends", "rdepends", "post_rdepends", "provides", "license",
 		"slot", "keywords", "eapi", "restrict", "eapi", "description", "iuse"]
 
 	_config_wrappables = dict((x, alias_class_method("evaluate_depset")) 
-		for x in ["depends", "rdepends", "fetchables", "license", "src_uri", 
+		for x in ["depends", "rdepends", "post_rdepends", "fetchables", "license", "src_uri", 
 		"license", "provides"])
 
 	def __init__(self, cpv, parent, pull_path):
@@ -198,7 +198,8 @@ class package(metadata.package):
 	_get_attr["PR"] = lambda s: "r"+str(s.revision is not None and s.revision or 0)
 	_get_attr["provides"] = generate_providers
 	_get_attr["depends"] = post_curry(generate_depset, atom, "depend")
-	_get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepend", "pdepend")
+	_get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepend")
+	_get_attr["post_rdepends"] = post_curry(generate_depset, atom, "pdepend")
 	_get_attr["license"] = post_curry(generate_depset, str, "license", non_package_type=True)
 	_get_attr["slot"] = lambda s: s.data.get("SLOT", "0").strip()
 	_get_attr["fetchables"] = generate_fetchables

@@ -385,6 +385,7 @@ class merge_plan(object):
 		failures = []
 		while choices:
 			additions, blocks = [], []
+
 			l = self.process_depends(atom, dbs, current_stack, choices, 
 				self.depset_reorder(self, choices.depends, "depends"), depth=depth, drop_cycles=drop_cycles)
 			if len(l) == 1:
@@ -394,6 +395,7 @@ class merge_plan(object):
 				continue
 			additions += l[0]
 			blocks += l[1]
+
 			l = self.process_rdepends(atom, dbs, current_stack, choices, "rdepends",
 				self.depset_reorder(self, choices.rdepends, "rdepends"), depth=depth, drop_cycles=drop_cycles)
 			if len(l) == 1:
@@ -403,6 +405,7 @@ class merge_plan(object):
 				continue
 			additions += l[0]
 			blocks += l[1]				
+
 			dprint("choose for   %s%s, %s", (depth *2*" ", atom, choices.current_pkg))
 
 			l = self.insert_choice(atom, current_stack, choices)
@@ -455,9 +458,44 @@ class merge_plan(object):
 			if fail:
 				self.state.reset_state(saved_state)
 				choices.force_next_pkg()
-				
-			# and... we've made it here.
+				continue
+
+			# reset blocks for pdepend proccesing
+			blocks = []
+			l = self.process_rdepends(atom, dbs, current_stack, choices, "post_rdepends",
+				self.depset_reorder(self, choices.post_rdepends, "post_rdepends"), depth=depth, drop_cycles=drop_cycles)
+
+			if len(l) == 1:
+				dprint("reseting for %s%s because of rdepends: %s", (depth*2*" ", atom, l[0]))
+				self.state.reset_state(saved_state)
+				failures = l[0]
+				continue
+			additions += l[0]
+			blocks += l[1]				
+
+			# level blockers.
+			fail = True
+			for x in blocks:
+				# hackity hack potential- say we did this-
+				# disallowing blockers from blocking what introduced them.
+				# iow, we can't block ourselves (can block other versions, but not our exact self)
+				# this might be suspect mind you...
+				# disabled, but something to think about.
+
+				l = self.state.add_blocker(self.generate_mangled_blocker(choices, x), key=x.key)
+				if l:
+					# blocker caught something. yay.
+					dprint("rdepend blocker %s hit %s for atom %s pkg %s", (x, l, atom, choices.current_pkg))
+					failures = [x]
+					break
+			else:
+				fail = False
+			if fail:
+				self.state.reset_state(saved_state)
+				choices.force_next_pkg()
+				continue
 			break
+			
 		else:
 			dprint("no solution  %s%s", (depth*2*" ", atom))
 			current_stack.pop()

@@ -11,8 +11,8 @@ import pkgcore.const
 class FileList(object):
 	pkgcore_config_type = True
 
-	def __init__(self, file_path=pkgcore.const.WORLD_FILE):
-		self.path = file_path
+	def __init__(self, location=pkgcore.const.WORLD_FILE):
+		self.path = location
 		# note that _atoms is generated on the fly.
 
 	def __getattr__(self, attr):

@@ -158,7 +158,7 @@ def config_protect_func_install(existing_cset, install_cset, engine, csets):
 			# check for any updates with the same chksums.
 			count = 0
 			for cfg_count, cfg_fname in updates[fname]:
-				if simple_chksum_compare(gen_obj(pjoin(dir_loc, cfg_fname)), entry):
+				if simple_chksum_compare(livefs.gen_obj(pjoin(dir_loc, cfg_fname)), entry):
 					count = cfg_count
 					break
 				count = max(count, cfg_count + 1)

@@ -5,6 +5,8 @@ kindly check over HORKED; stuff here is "would be nice", but horked comes first.
 Difficulty estimate indicated by '*', based on either codebase in question, or knowledge of python tricks
 none == easy, >=5 of 'em, tricky.
 
+- pmerge exit code; ambiguousquery doesn't seem to result in ret != 0
+
 - pmerge mods; [ --skip-set SET ] , [ --skip atom ], use similar restriction to --replace to prefer
   vdb for matching atoms
 

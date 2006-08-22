@@ -7,7 +7,7 @@ interaction with the livefs, namely generating fs objects to represent the livef
 
 import os, collections
 from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO, S_ISCHR, S_ISBLK
-from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsDev, fsFifo, isreg
+from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsDev, fsFifo, isreg, get_major_minor
 from pkgcore.fs.util import normpath
 from pkgcore.fs.contents import contentsSet
 from pkgcore.chksum import get_handlers
@@ -57,10 +57,12 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_path=None):
 		return fsSymlink(path, **d)
 	elif S_ISFIFO(mode):
 		return fsFifo(path, **d)
-	elif S_ISCHR(mode) or S_ISBLK(mode):
-		return fsDev(path, **d)
 	else:
-		raise KeyError(path)
+		major, minor = get_major_minor(stat)
+		d["minor"] = minor
+		d["major"] = major
+		d["mode"] = mode
+		return fsDev(path, **d)
 
 
 # hmm. this code is roughly 25x slower then find.

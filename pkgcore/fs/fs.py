@@ -5,6 +5,7 @@
 filesystem entry abstractions
 """
 
+import stat
 from pkgcore.util.mappings import ImmutableDict, LazyValDict
 from pkgcore.chksum import get_handlers, get_handler
 from os.path import sep as path_seperator, abspath
@@ -194,11 +195,28 @@ class fsDev(fsBase):
 
 	"""dev class (char/block objects)"""
 	
-	__slots__ = list(fsBase.__slots__) + ["real_path"]
-	__init__ = _real_path_init
+	__slots__ = list(fsBase.__slots__) + ["real_path", "major", "minor"]
 
+	def __init__(self, path, major=-1, minor=-1, **kwds):
+		if not kwds.get("strict", False):
+			if major == -1 or minor == -1:
+				import pdb;pdb.set_trace()
+				raise TypeError("major/minor must be specified and positive ints")
+			if not stat.S_IFMT(kwds["mode"]):
+				raise TypeError("mode %o: must specify the device type (got %o)" % (kwds["mode"], stat.S_IFMT(kwds["mode"])))
+			kwds["major"] = major
+			kwds["minor"] = minor
+		_real_path_init(self, path, **kwds)
+		
 	def __repr__(self):
 		return "device:%s" % self.location
+
+
+def get_major_minor(stat):
+	"""get major/minor from a stat instance
+	@return: major,minor tuple of ints
+	"""
+	return ( stat.st_rdev >> 8 ) & 0xff, stat.st_rdev & 0xff
 
 
 class fsFifo(fsBase):
@@ -212,9 +230,11 @@ class fsFifo(fsBase):
 		return "fifo:%s" % self.location
 
 
-isdir = lambda x: isinstance(x, fsDir)
-isreg = lambda x: isinstance(x, fsFile)
-issym = lambda x: isinstance(x, fsSymlink)
+isdir    = lambda x: isinstance(x, fsDir)
+isreg    = lambda x: isinstance(x, fsFile)
+issym    = lambda x: isinstance(x, fsSymlink)
+isfifo   = lambda x: isinstance(x, fsFifo)
+isdev    = lambda x: isinstance(x, fsDev)
 isfs_obj = lambda x: isinstance(x, fsBase)
 
 del raw_init_doc, gen_doc_additions, _fs_doc

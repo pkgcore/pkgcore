@@ -91,11 +91,10 @@ def default_copyfile(obj, mkdirs=False):
 	existant = False
 	ensure_perms = get_plugin("fs_ops", "ensure_perms")
 	if not fs.isfs_obj(obj):
-		raise TypeError("obj must be fsBase derivative")
+		raise TypeError("obj must be fsBase derivative: %r" % obj)
 	elif fs.isdir(obj):
-		raise TypeError("obj must not be a fsDir instance")
-	elif not fs.issym(obj) and not fs.isreg(obj) and obj.real_path == obj.real_location:
-		raise TypeError("obj real_path must differ from obj location")
+		raise TypeError("obj must not be a fsDir instance: %r" % obj)
+
 	try:
 		if fs.isdir(gen_obj(obj.real_location)):
 			raise TypeError("fs_copyfile doesn't work on directories")
@@ -111,14 +110,13 @@ def default_copyfile(obj, mkdirs=False):
 				raise
 		existant = False
 
-	existant_fp = obj.real_location + "#new"
+	fp = existant_fp = obj.real_location + "#new"
+	if not existant:
+		fp = obj.real_location
 	
 	if fs.isreg(obj):
 		src_f = obj.data.get_fileobj()
-		if existant:
-			new_f = open(existant_fp, "wb", 32768)
-		else:
-			new_f = open(obj.real_location, "wb", 32768)
+		new_f = open(fp, "wb", 32768)
 		d = src_f.read(32768)
 		while d:
 			new_f.write(d)
@@ -126,24 +124,21 @@ def default_copyfile(obj, mkdirs=False):
 		new_f.close()
 		del src_f
 	elif fs.issym(obj):
-		if existant:
-			os.symlink(obj.target, existant_fp)
-		else:
-			os.symlink(obj.target, obj.real_location)
+		os.symlink(obj.target, fp)
+	elif fs.isfifo(obj):
+		os.mkfifo(fp)
+	elif fs.isdev(obj):
+		dev = os.makedev(obj.major, obj.minor)
+		os.mknod(fp, obj.mode, dev)
 	else:
-		if existant:
-			ret = spawn([COPY_BINARY, "-Rp", obj.real_path, existant_fp])
-		else:
-			ret = spawn([COPY_BINARY, "-Rp", obj.real_path, obj.real_location])
+		ret = spawn([COPY_BINARY, "-Rp", obj.real_path, fp])
 		if ret != 0:
-			raise Exception("failed cp'ing %s to %s, ret %s" % (obj.real_path, obj.real_location, ret))
+			raise Exception("failed cp'ing %s to %s, ret %s" % (obj.real_path, fp, ret))
+	if not fs.issym(obj):
+		ensure_perms(obj.change_attributes(location=fp))
+
 	if existant:
-		if not fs.issym(obj):
-			ensure_perms(obj.change_attributes(location=existant_fp))
 		os.rename(existant_fp, obj.real_location)
-	else:
-		if not fs.issym(obj):
-			ensure_perms(obj)
 	return True
 
 def offset_rewriter(offset, iterable):

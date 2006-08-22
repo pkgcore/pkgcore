@@ -1,11 +1,35 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs import fs
 from pkgcore.util.file import AtomicWriteFile
 from pkgcore.interfaces import data_source
+from pkgcore.util.compatibility import any
+from pkgcore.util.demandload import demandload
+demandload(globals(), "warnings os stat errno")
+
+class LookupFsDev(fs.fsDev):
+
+	def __init__(self, path, **kwds):
+		fp = kwds.get("real_path", path)
+		if any(x not in kwds for x in ("major", "minor", "mode")):
+			try:
+				st = os.lstat(fp)
+			except OSError, oe:
+				if oe.errno != errno.ENOENT:
+					raise
+				st = None
+			if st is None or any(f(st.st_mode) for f in 
+				(stat.S_ISREG, stat.S_ISDIR, stat.S_ISFIFO)):
+				kwds["strict"] = True
+			else:
+				major, minor = fs.get_major_minor(st)
+				kwds["major"] = major
+				kwds["minor"] = minor
+				kwds["mode"] = st.st_mode
+		fs.fsDev.__init__(self, path, **kwds)
+
 
 class ContentsFile(contentsSet):
 	"""class wrapping a contents file"""
@@ -89,7 +113,7 @@ class ContentsFile(contentsSet):
 				elif line[0] == "fif":
 					obj = fs.fsDir(line[1], strict=False)
 				elif line[0] == "dev":
-					obj = fs.fsDev(line[1], strict=False)
+					obj = LookupFsDev(line[1], strict=False)
 				elif line[0] == "obj":
 					#file: path, md5, time
 					obj = fs.fsFile(line[1], chksums={"md5":line[2]}, mtime=line[3], strict=False)

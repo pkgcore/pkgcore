@@ -264,9 +264,6 @@ class install_op(ebd):
 	"""
 	phase operations and steps for install execution
 	"""
-	def __init__(self, *args, **kwds):
-		self.default_preinst_used = False
-		ebd.__init__(self, *args, **kwds)
 
 	preinst = pretty_docs(post_curry(ebd._generic_phase, "preinst", False, False, False), "run the postinst phase")
 	postinst = pretty_docs(post_curry(ebd._generic_phase, "postinst", False, False, False), "run the postinst phase")

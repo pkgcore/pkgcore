@@ -284,7 +284,7 @@ class EbuildProcessor:
 		if not os.path.exists(self.__sandbox_log):
 			self.write("end_sandbox_summary")
 			return 0
-		violations = portage_util.grabfile(self.__sandbox_log)
+		violations = open(self.__sandbox_log, "r").readlines()
 		if not violations:
 			self.write("end_sandbox_summary")
 			return 0
@@ -508,7 +508,7 @@ class EbuildProcessor:
 		# if you don't do it, sandbox_summary (fex) cannot be overriden, this func will just use this classes version.
 		# so dig through self.__class__ for it. :P
 
-		handlers = {"request_sandbox_summary":(self.__class__.sandbox_summary, [], {})}
+		handlers = {"request_sandbox_summary":self.__class__.sandbox_summary}
 		f = post_curry(chuck_UnhandledCommand, False)
 		for x in ("prob", "env_receiving_failed"):
 			handlers[x] = f

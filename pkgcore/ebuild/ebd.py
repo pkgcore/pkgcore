@@ -167,7 +167,7 @@ class ebd(object):
 		self.setup_workdir()
 		self.setup_distfiles()
 		self.setup_logging()
-		ebd = request_ebuild_processor(userpriv=False, sandbox=self.sandbox)
+		ebd = request_ebuild_processor(userpriv=False, sandbox=False)
 		try:
 			ebd.prep_phase("setup", self.env, sandbox=self.sandbox, logging=self.logging)
 			ebd.write("start_processing")

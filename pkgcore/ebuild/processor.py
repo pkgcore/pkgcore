@@ -284,7 +284,7 @@ class EbuildProcessor:
 		if not os.path.exists(self.__sandbox_log):
 			self.write("end_sandbox_summary")
 			return 0
-		violations = open(self.__sandbox_log, "r").readlines()
+		violations = [x.strip() for x in open(self.__sandbox_log, "r") if x.strip()]
 		if not violations:
 			self.write("end_sandbox_summary")
 			return 0

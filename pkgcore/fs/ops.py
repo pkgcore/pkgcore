@@ -234,6 +234,6 @@ def unmerge_contents(cset, offset=None, callback=lambda obj:None):
 		try:
 			os.rmdir(x.location)
 		except OSError, e:
-			if e.errno != errno.ENOTEMPTY and e.errno != errno.ENOENT:
+			if not e.errno in (errno.ENOTEMPTY, errno.ENOENT, errno.ENOTDIR):
 				raise
 	return True

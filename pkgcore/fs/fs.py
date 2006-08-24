@@ -198,9 +198,8 @@ class fsDev(fsBase):
 	__slots__ = list(fsBase.__slots__) + ["real_path", "major", "minor"]
 
 	def __init__(self, path, major=-1, minor=-1, **kwds):
-		if not kwds.get("strict", False):
+		if kwds.get("strict", True):
 			if major == -1 or minor == -1:
-				import pdb;pdb.set_trace()
 				raise TypeError("major/minor must be specified and positive ints")
 			if not stat.S_IFMT(kwds["mode"]):
 				raise TypeError("mode %o: must specify the device type (got %o)" % (kwds["mode"], stat.S_IFMT(kwds["mode"])))

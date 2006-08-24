@@ -116,7 +116,7 @@ def cpy_listdir_dirs(path, followSymlinks=True):
 			elif entry.d_type == DT_UNKNOWN or (followsyms and entry.d_type == DT_LNK):
 				fp = path + "/" + name
 				ret = isdir(fp, followsyms)
-				if ret < 0 or ret:
+				if ret:
 					result.append(name)
 			
 			entry = readdir(the_dir)
@@ -152,7 +152,7 @@ def cpy_listdir_files(path, followSymlinks=True):
 			elif entry.d_type == DT_UNKNOWN or (followsyms and entry.d_type == DT_LNK):
 				fp = path + "/" + name
 				ret = isreg(fp, followsyms)
-				if ret == 0:
+				if ret:
 					result.append(name)
 			
 			entry = readdir(the_dir)

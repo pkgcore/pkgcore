@@ -5,6 +5,11 @@ kindly check over HORKED; stuff here is "would be nice", but horked comes first.
 Difficulty estimate indicated by '*', based on either codebase in question, or knowledge of python tricks
 none == easy, >=5 of 'em, tricky.
 
+
+- pkgcore.fs.ops.merge_contents; doesn't rewite the contents set when a file it's mergeing is relying on symlinked
+  directories for the full path; eg, /usr/share/X11/xkb/compiled -> /var/blah, it records the former instead of 
+  recording the true absolute path.
+
 - pmerge exit code; ambiguousquery doesn't seem to result in ret != 0
 
 - pmerge mods; [ --skip-set SET ] , [ --skip atom ], use similar restriction to --replace to prefer

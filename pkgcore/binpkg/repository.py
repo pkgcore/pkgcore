@@ -92,13 +92,10 @@ class tree(prototype.tree):
 		# return if optionalCategory is passed... cause it's not yet supported
 		if optionalCategory:
 			return {}
-		try:
-			try:	
-				return tuple(x for x in listdir_dirs(self.base) if x.lower() != "all")
-			except (OSError, IOError), e:
-				raise KeyError("failed fetching categories: %s" % str(e))
-		finally:
-			pass
+		try:	
+			return tuple(x for x in listdir_dirs(self.base) if x.lower() != "all")
+		except (OSError, IOError), e:
+			raise KeyError("failed fetching categories: %s" % str(e))
 
 	def _get_packages(self, category):
 		cpath = os.path.join(self.base, category.lstrip(os.path.sep))

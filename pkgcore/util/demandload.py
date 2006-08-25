@@ -141,7 +141,6 @@ def _demandload(scope, modules):
                 basemod = mod
             scope[basemod] = _replacer(importer, basemod)
 
-demandload = _demandload
 
 def disabled_demandload(scope, modules):
     for mod in modules.split():
@@ -160,8 +159,17 @@ def disabled_demandload(scope, modules):
             for sub in mod.split(".")[1:]:
                 mod_obj = getattr(mod_obj, sub)
             for name in fromlist:
-                scope[name] = getattr(mod_obj, name)
+                if name in dir(mod_obj):
+                    scope[name] = getattr(mod_obj, name)
+                else:
+                    loc = mod + "." + name
+                    m = __import__(loc, scope, {}, [])
+                    for sub in loc.split(".")[1:]:
+                        m = getattr(m, sub)
+                    scope[name] = m
 
+
+demandload = _demandload
 
 _real_compile = re.compile
 class _delayed_compiler(object):

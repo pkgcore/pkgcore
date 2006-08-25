@@ -18,7 +18,9 @@ from pkgcore.repository import multiplex, virtual
 from pkgcore.util import bzip2
 
 from pkgcore.util.demandload import demandload
-demandload(globals(), "logging time tempfile")
+demandload(globals(), "logging time tempfile "+
+	"pkgcore.ebuild:conditionals "+
+	"pkgcore.restrictions:boolean ")
 
 
 class bz2_data_source(data_source.data_source):
@@ -204,6 +206,11 @@ class install(repo_interfaces.install):
 				data = bzip2.compress(self.pkg.environment.get_fileobj().read())
 				open(os.path.join(dirpath, "environment.bz2"), "w").write(data)
 				del data
+			elif isinstance(k, boolean.base):
+				if isinstance(k, conditionals.DepSet):
+					s = str(k)
+				else:
+					s = conditionals.stringify_boolean(k)
 			else:
 				v = getattr(self.pkg, k)
 				if not isinstance(v, basestring):

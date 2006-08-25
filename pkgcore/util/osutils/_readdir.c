@@ -52,6 +52,7 @@ pkgcore_readdir_actual_listdir(const char* path, int followsyms,
 			size_t size = pathlen + strlen(name) + 2;
 			char *buffer = (char *) malloc(size);
 			if (!buffer) {
+				Py_DECREF(result);
 				return PyErr_NoMemory();
 			}
 			snprintf(buffer, size, "%s/%s", path, name);
@@ -90,7 +91,7 @@ pkgcore_readdir_actual_listdir(const char* path, int followsyms,
 		Py_DECREF(string);
 	}
 	closedir(the_dir);
-	if (errno) {
+	if (errno && errno != ENOENT) {
 		return PyErr_SetFromErrno(PyExc_OSError);
 	}
 	return result;

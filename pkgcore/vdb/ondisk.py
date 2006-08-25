@@ -47,7 +47,7 @@ class tree(prototype.tree):
 	format_magic = "ebuild_built"	
 
 	def __init__(self, location):
-		super(tree, self).__init__()
+		prototype.tree.__init__(self, frozen=False)
 		self.base = self.location = location
 		self._versions_tmp_cache = {}
 		try:
@@ -147,6 +147,7 @@ class ConfiguredTree(multiplex.tree):
 		self.raw_vdb = raw_vdb
 		self.raw_virtual = virtual.tree(self._grab_virtuals, livefs=True)
 		multiplex.tree.__init__(self, raw_vdb, self.raw_virtual)
+		self.frozen = raw_vdb.frozen
 
 	def _install(self, pkg, *a, **kw):
 		# need to verify it's not in already...

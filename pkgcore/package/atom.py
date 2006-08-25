@@ -5,21 +5,26 @@
 gentoo ebuild atom, should be generalized into an agnostic base
 """
 
-from operator import attrgetter
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
 import cpv
 from pkgcore.package import errors
 
+
 class MalformedAtom(Exception):
+
 	def __init__(self, atom, err=''):
 		self.atom, self.err = atom, err
+
 	def __str__(self):
 		return "atom '%s' is malformed: error %s" % (self.atom, self.err)
 
+
 class InvalidVersion(Exception):
+
 	def __init__(self, ver, rev, err=''):
 		self.ver, self.rev, self.err = ver, rev, err
+
 	def __str__(self):
 		return "Version restriction ver='%s', rev='%s', is malformed: error %s" % (self.ver, self.rev, self.err)
 
@@ -119,7 +124,6 @@ class VersionMatch(restriction.base):
 	def __hash__(self):
 		return hash((self.droprev, self.ver, self.rev, self.negate, self.vals))
 
-_cpv_copies = dict((k, attrgetter(k)) for k in ("category", "package", "version", "revision", "fullver", "key"))
 
 class atom(boolean.AndRestriction):
 
@@ -189,6 +193,15 @@ class atom(boolean.AndRestriction):
 		else:
 			self.glob = False
 			self.cpvstr = atom[pos:]
+
+		c = cpv.CPV(self.cpvstr)
+		self.key = c.key
+		self.package = c.package
+		self.category = c.category
+		self.version = c.version
+		self.fullver = c.fullver
+		self.revision = c.revision
+
 		self.negate_vers = negate_vers
 		if "~" in self.op:
 			if self.version is None:
@@ -221,18 +234,7 @@ class atom(boolean.AndRestriction):
 		return [[self]]
 
 	def __getattr__(self, attr):
-		if attr in _cpv_copies:
-			try:
-				c = cpv.CPV(self.cpvstr)
-			except errors.InvalidCPV, e:
-				raise MalformedAtom(self.cpvstr, e)
-			for k, f in _cpv_copies.iteritems():
-				o = f(c)
-				if k == attr:
-					g = o
-				setattr(self, k, o)
-			return g
-		elif attr == "restrictions":
+		if attr == "restrictions":
 			r = [packages.PackageRestriction("package", values.StrExactMatch(self.package))]
 			try:
 				cat = self.category

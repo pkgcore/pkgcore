@@ -144,6 +144,27 @@ class native_CpvTest(unittest.TestCase):
 		self.verify_gt(kls("da/ba-6a"), kls("da/ba-6"))
 		self.verify_gt(kls("da/ba-6a-r1"), kls("da/ba-6a"))
 
+	def test_no_init(self):
+		"""Test if the cpv is in a somewhat sane state if __init__ fails.
+
+		IPython used to segfault when showing a verbose traceback for
+		a subclass of CPV which raised errors.InvalidCPV. This checks
+		if such uninitialized objects survive some basic poking.
+		"""
+		uninited = self.kls.__new__(self.kls)
+		broken = self.kls.__new__(self.kls)
+		self.assertRaises(errors.InvalidCPV, broken.__init__, 'broken')
+		for thing in (uninited, broken):
+			# the c version returns None, the py version does not have the attr
+			getattr(thing, 'cpvstr', None)
+			repr(thing)
+			str(thing)
+			# The c version returns a constant, the py version raises
+			try:
+				hash(thing)
+			except AttributeError:
+				pass
+
 
 if cpv.cpy_builtin:
 	class CPY_CpvTest(native_CpvTest):

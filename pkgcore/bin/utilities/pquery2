@@ -114,9 +114,6 @@ def check_atom(option, opt, value):
 	"""optparse cpv type parser."""
 	try:
 		result = atom.atom(value)
-		# Construction/parsing of this is normally delayed. Force the
-		# parse now so we get the exception now if it is broken:
-		result.cpvstr
 	except perrors.InvalidCPV:
 		raise optparse.OptionValueError(
 			'option %s: invalid cpv in atom: %r' % (opt, value))
@@ -257,7 +254,8 @@ def main(config, options):
 					print '     description: %s' % (pkg.description,)
 					print '     homepage:    %s' % (pkg.homepage,)
 					print '     license:     %s' % (pkg.license,)
-					for attr in options.attr:
+					# ^%&^#@( optparse defaults to None, not an empty seq
+					for attr in (options.attr or ()):
 						val = getattr(pkg, attr, None)
 						if val:
 							if attr in ('use',):

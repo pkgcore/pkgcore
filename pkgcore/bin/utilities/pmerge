@@ -127,7 +127,6 @@ def unmerge(vdb, atoms, pretend=True, ignore_failures=False):
 	if vdb.frozen:
 		# hackity hack hack hack.
 		# should clean this out in the rewrite
-		vdb = vdb.trees[0]
 		print "warning: vdb is frozen, overriding"
 		vdb.frozen = False
 
@@ -282,9 +281,6 @@ def main():
 		print "spent %.2f seconds preloading vdb state" % vdb_time
 	if pretend:
 		return 0
-	elif not fetchonly:
-		vdb = vdb.trees[0]
-		vdb.frozen = False
 	for op, pkgs in changes:
 		print "processing %s" % pkgs[0]
 		buildop = pkgs[0].build()

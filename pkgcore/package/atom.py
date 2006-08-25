@@ -9,6 +9,7 @@ from operator import attrgetter
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
 import cpv
+from pkgcore.package import errors
 
 class MalformedAtom(Exception):
 	def __init__(self, atom, err=''):
@@ -221,7 +222,10 @@ class atom(boolean.AndRestriction):
 
 	def __getattr__(self, attr):
 		if attr in _cpv_copies:
-			c = cpv.CPV(self.cpvstr)
+			try:
+				c = cpv.CPV(self.cpvstr)
+			except errors.InvalidCPV, e:
+				raise MalformedAtom(self.cpvstr, e)
 			for k, f in _cpv_copies.iteritems():
 				o = f(c)
 				if k == attr:

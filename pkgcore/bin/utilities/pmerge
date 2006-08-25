@@ -296,13 +296,13 @@ def main():
 				ret = e
 		else:
 			print "building..."
-			f = buildop.finalize()
-			if f is not False:
+			built_pkg = buildop.finalize()
+			if built_pkg is not False:
 				print "\nmerge op: %s" % op,pkgs
 				if op == "add":
-					i = vdb.install(f)
+					i = vdb.install(built_pkg)
 				elif op == "replace":
-					i = vdb.replace(pkgs[1], f)
+					i = vdb.replace(pkgs[1], built_pkg)
 				ret = i.finish()
 				buildop.clean()
 			else:
@@ -311,7 +311,7 @@ def main():
 					sys.exit(1)
 
 			# force this explicitly- can hold onto a helluva lot more then we would like.
-			del f
+			del built_pkg
 		if ret != True:
 			print "got %s for a phase execution for %s" % (ret, pkgs[0])
 			if not ignore_failures:

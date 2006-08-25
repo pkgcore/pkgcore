@@ -23,10 +23,10 @@ import os
 from stat import S_ISDIR, S_ISREG
 
 
-def native_listdir(path):
+def listdir(path):
 	return os.listdir(path)
 
-def native_listdir_dirs(path, followSymlinks=True):
+def listdir_dirs(path, followSymlinks=True):
 	pjoin = os.path.join
 	if followSymlinks:
 		stat = os.stat
@@ -34,10 +34,10 @@ def native_listdir_dirs(path, followSymlinks=True):
 		stat = os.lstat
 	return [x for x in os.listdir(path) if S_ISDIR(stat(pjoin(path, x)).st_mode)]
 
-def native_listdir_files(path, followSymlinks=True):
+def listdir_files(path, followSymlinks=True):
 	pjoin = os.path.join
 	if followSymlinks:
 		stat = os.stat
 	else:
 		stat = os.lstat
-	return [x for x in os.listdir(path) if not S_ISDIR(stat(pjoin(path, x)).st_mode)]
+	return [x for x in os.listdir(path) if S_ISREG(stat(pjoin(path, x)).st_mode)]

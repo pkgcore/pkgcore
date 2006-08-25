@@ -88,7 +88,7 @@ class native_CPV(object):
 		# note I chucked out valueerror, none checks on versions passed in.  I suck, I know.
 		# ~harring
 		# fails in doing comparison of unversioned atoms against versioned atoms
-		return ver_cmp(self.version, self.revision, other.version, other.revision)
+		return native_ver_cmp(self.version, self.revision, other.version, other.revision)
 
 
 def native_ver_cmp(ver1, rev1, ver2, rev2):
@@ -116,8 +116,8 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
 		elif ver_parts1[0] != "cvs" and ver_parts2[0] == "cvs":
 			return -1
 		elif ver_parts1[0] == "cvs":
-			del ver_parts1[0][0]
-			del ver_parts2[0][0]
+			del ver_parts1[0]
+			del ver_parts2[0]
 
 		# Pull out any letter suffix on the final components and keep
 		# them for later.

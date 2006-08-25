@@ -137,6 +137,8 @@ core.setup(
 		core.Extension('pkgcore.util._caching', ['pkgcore/util/_caching.c']),
 		core.Extension('pkgcore.util._lists', ['pkgcore/util/_lists.c']),
 		core.Extension('pkgcore.package._cpv', ['pkgcore/package/_cpv.c']),
+		core.Extension('pkgcore.util.osutils._readdir',
+					   ['pkgcore/util/osutils/_readdir.c']),
 		],
 	cmdclass={'build_filter_env': build_filter_env, "sdist":mysdist, "build_py": hacked_build_py},
 	)

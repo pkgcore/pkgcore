@@ -6,7 +6,7 @@ package class for buildable ebuilds
 """
 
 import os, operator
-from pkgcore.package import metadata
+from pkgcore.package import metadata, errors
 
 WeakValCache = metadata.WeakValCache
 
@@ -74,7 +74,7 @@ def generate_depset(s, c, *keys, **kwds):
 	try:
 		return conditionals.DepSet(" ".join([s.data.get(x.upper(), "") for x in keys]), c, **kwds)
 	except conditionals.ParseError, p:
-		raise metadata.MetadataException(s, str(keys), str(p))
+		raise errors.MetadataException(s, str(keys), str(p))
 
 def generate_providers(self):
 	rdep = AndRestriction(self.versioned_atom, finalize=True)
@@ -88,7 +88,7 @@ def generate_providers(self):
 			operators={"||":boolean.OrRestriction,"":boolean.AndRestriction})
 
 	except conditionals.ParseError, p:
-		raise metadata.MetadataException(self, "provide", str(p))
+		raise errors.MetadataException(self, "provide", str(p))
 
 def generate_fetchables(self):
 	chksums = parse_digest(os.path.join(os.path.dirname(self.path), "files", \
@@ -105,7 +105,7 @@ def generate_fetchables(self):
 		return conditionals.DepSet(self.data["SRC_URI"], fetchable, operators={}, 
 			element_func=pre_curry(create_fetchable_from_uri, self, chksums, mirrors, default_mirrors, {}))
 	except conditionals.ParseError, p:
-		raise metadata.MetadataException(self, "src_uri", str(p))
+		raise errors.MetadataException(self, "src_uri", str(p))
 
 def generate_eapi(self):
 	try:

@@ -119,12 +119,3 @@ class factory(object):
 	def _update_metadata(self, *args):
 		"""must be overriden in derivatives, updates metadata in the repo/cache/wherever"""
 		raise NotImplementedError
-
-
-class MetadataException(Exception):
-
-	def __init__(self, pkg, attr, error):
-		self.pkg, self.attr, self.error = pkg, attr, error
-	
-	def __str__(self):
-		return "Metadata Exception: pkg %s, attr %s\nerror: %s" % (self.pkg, self.attr, self.error)

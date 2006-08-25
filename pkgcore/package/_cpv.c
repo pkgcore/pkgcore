@@ -66,6 +66,9 @@ setter (pkgcore_cpv *self, PyObject *v, void *closure)				\
 static PyObject *								\
 getter (pkgcore_cpv *self, void *closure)					\
 {										\
+	if (self->attribute == NULL) {					\
+		Py_RETURN_NONE;								\
+	}												\
 	Py_INCREF(self->attribute);						\
 	return self->attribute;							\
 }
@@ -93,32 +96,6 @@ static PyGetSetDef pkgcore_cpv_getsetters[] = {
 };
 
 
-static PyObject *
-pkgcore_cpv_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
-{
-	pkgcore_cpv *self;
-	self = (pkgcore_cpv *)type->tp_alloc(type, 0);
-	if(NULL == self)
-		return (PyObject *)self;
-
-	#define PKGCORE_CPV_INIT_ATTR(attr)	\
-	Py_INCREF(Py_None);			\
-	self->attr = Py_None;
-
-	PKGCORE_CPV_INIT_ATTR(cpvstr);
-	PKGCORE_CPV_INIT_ATTR(category);
-	PKGCORE_CPV_INIT_ATTR(package);
-	PKGCORE_CPV_INIT_ATTR(fullver);
-	PKGCORE_CPV_INIT_ATTR(version);
-	PKGCORE_CPV_INIT_ATTR(revision);
-	PKGCORE_CPV_INIT_ATTR(key);
-	#undef PKGCORE_CPV_INIT_ATTR
-	self->cvs = 0;
-	self->suffixes = NULL;
-	return (PyObject *)self;
-}
-
-	
 static int
 //pkgcore_cpv_init(pkgcore_cpv *self, const char *cpvstring, char parse_cat, char parse_pkg)
 pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
@@ -162,7 +139,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 	}
 	tmp2 = self->cpvstr;
 	self->cpvstr = tmp;
-	Py_DECREF(tmp2);
+	Py_XDECREF(tmp2);
 
 	if(NULL != category) {
 		// verify it first.
@@ -178,7 +155,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		tmp = self->category;
 		Py_INCREF(category);
 		self->category = category;
-		Py_DECREF(tmp);
+		Py_XDECREF(tmp);
 	} else {
 		// ok, we need to eat the cat from the cpvstring.
 		// allowed pattern [a-zA-Z0-9+-]+/
@@ -197,7 +174,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		}
 		tmp2 = self->category;
 		self->category = tmp;
-		Py_DECREF(tmp2);
+		Py_XDECREF(tmp2);
 		p++;
 		if('\0' == *p)
 			goto parse_error;
@@ -209,7 +186,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		tmp = self->package;
 		Py_INCREF(package);
 		self->package = package;
-		Py_DECREF(tmp);
+		Py_XDECREF(tmp);
 	} else {
 		// yay- need to eat the pkg next
 		// allowed [a-zA-Z0-9](?:[-_+a-zA-Z0-9]*?[+a-zA-Z0-9])??)
@@ -264,7 +241,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		}
 		tmp2 = self->package;
 		self->package = tmp;
-		Py_DECREF(tmp2);
+		Py_XDECREF(tmp2);
 	}
 	// package verification
 	s1 = PyString_AsString(self->package);
@@ -310,22 +287,11 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		Py_INCREF(self->cpvstr);
 		tmp = self->key;
 		self->key = self->cpvstr;
-		Py_DECREF(tmp);
+		Py_XDECREF(tmp);
 
-		Py_INCREF(Py_None);
-		tmp = self->fullver;
-		self->fullver = Py_None;
-		Py_DECREF(tmp);
-
-		Py_INCREF(Py_None);
-		tmp = self->version;
-		self->version = Py_None;
-		Py_DECREF(tmp);
-
-		Py_INCREF(Py_None);
-		tmp = self->revision;
-		self->revision = Py_None;
-		Py_DECREF(tmp);
+		Py_CLEAR(self->fullver);
+		Py_CLEAR(self->version);
+		Py_CLEAR(self->revision);
 
 		return 0;
 	}
@@ -335,7 +301,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		goto cleanup;
 	tmp2 = self->key;
 	self->key = tmp;
-	Py_DECREF(tmp2);
+	Py_XDECREF(tmp2);
 
 	// version parsing.
 	// "(?:-(?P<fullver>(?P<version>(?:cvs\\.)?(?:\\d+)(?:\\.\\d+)*[a-z]?(?:_(p(?:re)?|beta|alpha|rc)\\d*)*)" +
@@ -432,7 +398,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 			goto cleanup;
 		tmp2 = self->version;
 		self->version = tmp;
-		Py_DECREF(tmp2);
+		Py_XDECREF(tmp2);
 	}
 	if('-' == *p) {
 		unsigned long revision = 0;
@@ -454,24 +420,20 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		}
 		tmp2 = self->revision;
 		self->revision = tmp;
-		Py_DECREF(tmp2);
+		Py_XDECREF(tmp2);
 		tmp = PyString_FromStringAndSize(ver_start, p - ver_start);
 		if(!tmp)
 			goto cleanup;
 		tmp2 = self->fullver;
 		self->fullver = tmp;
-		Py_DECREF(tmp2);
+		Py_XDECREF(tmp2);
 	} else {
 		Py_INCREF(self->version);
 		tmp2 = self->fullver;
 		self->fullver = self->version;
-		Py_DECREF(tmp2);
+		Py_XDECREF(tmp2);
 
-		Py_INCREF(Py_None);
-		tmp = self->revision;
-		self->revision = Py_None;
-		Py_DECREF(tmp);
-		
+		Py_CLEAR(self->revision);
 	}
 	return 0;
 
@@ -484,16 +446,14 @@ parse_error:
 		Py_DECREF(tmp);
 	} 
 cleanup:
-	#define dealloc_attr(attr)	\
-	Py_XDECREF(self->attr); self->attr = NULL;
-	dealloc_attr(cpvstr);
-	dealloc_attr(category);
-	dealloc_attr(package);
-	dealloc_attr(key);
-	dealloc_attr(version);
-	dealloc_attr(revision);
-	dealloc_attr(fullver);
-	#undef dealloc_attr
+
+	Py_CLEAR(self->cpvstr);
+	Py_CLEAR(self->category);
+	Py_CLEAR(self->package);
+	Py_CLEAR(self->key);
+	Py_CLEAR(self->version);
+	Py_CLEAR(self->revision);
+	Py_CLEAR(self->fullver);
 
 	if(NULL != self->suffixes) {
 		// if we're not using the communal val...
@@ -509,17 +469,14 @@ cleanup:
 static void
 pkgcore_cpv_dealloc(pkgcore_cpv *self)
 {
-	#define dealloc_attr(attr)	\
-	Py_XDECREF(self->attr); self->attr = NULL;
-	dealloc_attr(cpvstr);
-	dealloc_attr(category);
-	dealloc_attr(package);
-	dealloc_attr(key);
-	dealloc_attr(version);
-	dealloc_attr(revision);
-	dealloc_attr(fullver);
-	#undef dealloc_attr
-	
+	Py_CLEAR(self->cpvstr);
+	Py_CLEAR(self->category);
+	Py_CLEAR(self->package);
+	Py_CLEAR(self->key);
+	Py_CLEAR(self->version);
+	Py_CLEAR(self->revision);
+	Py_CLEAR(self->fullver);
+
 	if(NULL != self->suffixes) {
 		if(PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF != self->suffixes[0]) {
 			PyObject_Free(self->suffixes);
@@ -531,21 +488,37 @@ pkgcore_cpv_dealloc(pkgcore_cpv *self)
 
 
 static int
+pkgcore_nullsafe_compare(PyObject *this, PyObject *other)
+{
+	if ((this == NULL || this == Py_None) && (other == NULL || other == Py_None)) {
+		return 0;
+	}
+	if (this == NULL || this == Py_None) {
+		return -1;
+	}
+	if (other == NULL || other == Py_None) {
+		return +1;
+	}
+	return PyObject_Compare(this, other);
+}
+
+
+static int
 pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 {
 	int c;
-	c = PyObject_Compare(self->category, other->category);
+	c = pkgcore_nullsafe_compare(self->category, other->category);
 	if(PyErr_Occurred())
 		return -1;
 	if(c != 0)
 		return c;
-	c = PyObject_Compare(self->package, other->package);
+	c = pkgcore_nullsafe_compare(self->package, other->package);
 	if(PyErr_Occurred())
 		return -1;
 	if(c != 0)
 		return c;
-	if(self->version == Py_None)
-		return other->version == Py_None ? 0 : -1;
+	if(self->version == NULL)
+		return other->version == NULL ? 0 : -1;
 	
 	if(self->cvs != other->cvs)
 		return self->cvs ? +1 : -1;
@@ -653,7 +626,7 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 		x++;
 	}
 	// all that remains is revision.
-	return PyObject_Compare(self->revision, other->revision);
+	return pkgcore_nullsafe_compare(self->revision, other->revision);
 }
 	
 
@@ -661,6 +634,9 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 static long
 pkgcore_cpv_hash(pkgcore_cpv *self)
 {
+	if (self->cpvstr == NULL) {
+		return -2;
+	}
 	return PyObject_Hash(self->cpvstr);
 }
 
@@ -669,7 +645,7 @@ static PyObject *
 pkgcore_cpv_str(pkgcore_cpv *self)
 {
 	PyObject *s;
-	if(self->cpvstr == Py_None) {
+	if(self->cpvstr == NULL) {
 		Py_INCREF(Py_None);
 		s = PyObject_Str(Py_None);
 		Py_DECREF(Py_None);
@@ -685,7 +661,7 @@ static PyObject *
 pkgcore_cpv_repr(pkgcore_cpv *self)
 {
 	PyObject *s;
-	if(self->cpvstr == Py_None) {
+	if(self->cpvstr == NULL) {
 		Py_INCREF(Py_None);
 		s = PyObject_Repr(Py_None);
 		Py_DECREF(Py_None);
@@ -744,7 +720,7 @@ static PyTypeObject pkgcore_cpvType = {
 	0,                                /* tp_dictoffset */
 	(initproc)pkgcore_cpv_init,       /* tp_init */
 	0,                                /* tp_alloc */
-	pkgcore_cpv_new,                  /* tp_new */
+	PyType_GenericNew,                /* tp_new */
 };
 
 PyDoc_STRVAR(

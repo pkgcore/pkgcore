@@ -61,10 +61,10 @@ class native_CPV(object):
 
 	def __repr__(self):
 		return '<%s cpvstr=%s @%#8x>' % (
-			self.__class__.__name__, self.cpvstr, id(self))
+			self.__class__.__name__, getattr(self, 'cpvstr', None), id(self))
 
 	def __str__(self):
-		return self.cpvstr
+		return getattr(self, 'cpvstr', 'None')
 
 	def __setattr__(self, name, value):
 		raise AttributeError(name)

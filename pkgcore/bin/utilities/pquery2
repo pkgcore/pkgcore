@@ -116,7 +116,7 @@ def check_atom(option, opt, value):
 		result = atom.atom(value)
 		# Construction/parsing of this is normally delayed. Force the
 		# parse now so we get the exception now if it is broken:
-		result.cpv
+		result.cpvstr
 	except perrors.InvalidCPV:
 		raise optparse.OptionValueError(
 			'option %s: invalid cpv in atom: %r' % (opt, value))
@@ -184,6 +184,8 @@ def build_option_parser():
 					  '(can be specified more than once).')
 	output.add_option('--contents', action='store_true',
 					  help='list files owned by the package. Implies --vdb.')
+	output.add_option('--verbose', '-v', action='store_true',
+					  help='human-readable multi-line output per package')
 	return parser
 
 
@@ -250,8 +252,23 @@ def main(config, options):
 	for repo in repos:
 		try:
 			for pkg in repo.itermatch(restrict, sorter=sorted):
+				if options.verbose:
+					print ' * %s' % (pkg.cpvstr,)
+					print '     description: %s' % (pkg.description,)
+					print '     homepage:    %s' % (pkg.homepage,)
+					print '     license:     %s' % (pkg.license,)
+					for attr in options.attr:
+						val = getattr(pkg, attr, None)
+						if val:
+							if attr in ('use',):
+								val = ' '.join(val)
+							print '     %s: %s' % (attr, val)
+					print
+					# This overrides the other kinds of output.
+					# TODO: integrate some of the stuff below into "verbose".
+					continue
 				if not options.contents or options.cpv:
-					print pkg,
+					print pkg.cpvstr,
 				if options.attr:
 					for attr in options.attr:
 						try:
@@ -262,7 +279,7 @@ def main(config, options):
 									attr, pkg))
 						else:
 							if attr == 'use':
-								value = ' '.join(repr(v) for v in sorted(value))
+								value = ' '.join(sorted(value))
 							print '%s="%s"' % (attr, value),
 				if options.contents:
 					try:
@@ -274,6 +291,8 @@ def main(config, options):
 							print thing.location
 				if not options.contents or options.cpv:
 					print
+		except KeyboardInterrupt:
+			raise
 		except Exception:
 			print 'caught an exception!'
 			print >> sys.stderr, 'repo:', repr(repo)

@@ -271,6 +271,6 @@ class ParseError(Exception):
 
 	def __str__(self):
 		if self.token is not None:
-			return "%s is unparesable\nflagged token- %s" % (repr(self.dep_str), repr(self.token))
+			return "%s is unparesable\nflagged token- %s" % (self.dep_str, self.token)
 		else:
-			return "%s is unparseable" % repr(self.dep_str)
+			return "%s is unparseable" % self.dep_str

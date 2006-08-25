@@ -41,6 +41,7 @@ pkgcore_readdir_actual_listdir(const char* path, int followsyms,
 	if (!(the_dir = opendir(path))) {
 		return PyErr_SetFromErrno(PyExc_OSError);
 	}
+	errno = 0;
 	while (entry = readdir(the_dir)) {
 		const char *name = entry->d_name;
 		/* skip over "." and ".." */
@@ -91,7 +92,7 @@ pkgcore_readdir_actual_listdir(const char* path, int followsyms,
 		Py_DECREF(string);
 	}
 	closedir(the_dir);
-	if (errno && errno != ENOENT) {
+	if (errno) {
 		return PyErr_SetFromErrno(PyExc_OSError);
 	}
 	return result;

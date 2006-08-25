@@ -65,8 +65,8 @@ def configFromMakeConf(location="/etc/"):
 
 	# sets...
 	new_config["world"] = basics.ConfigSectionFromStringDict("world", 
-		{"type": "pkgset", "class": "pkgcore.pkgsets.world.WorldFile", 
-		"world_path": "%s/%s" % (root, const.WORLD_FILE)})
+		{"type": "pkgset", "class": "pkgcore.pkgsets.filelist.FileList", 
+		"location": "%s/%s" % (root, const.WORLD_FILE)})
 	new_config["system"] = basics.ConfigSectionFromStringDict("system",
 		{"type": "pkgset", "class": "pkgcore.pkgsets.system.SystemSet", 
 		"profile": "profile"})

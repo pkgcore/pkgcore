@@ -103,7 +103,7 @@ class DepSet(boolean.AndRestriction):
 					depsets[-1].append(element_func(k))
 
 
-		except (RuntimeErrors, SystemExit, KeyboardInterrupt):
+		except (RuntimeError, SystemExit, KeyboardInterrupt):
 			raise
 		except IndexError:
 			# [][-1] for a frame access, which means it was a parse error.

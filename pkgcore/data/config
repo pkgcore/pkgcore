@@ -13,7 +13,7 @@ location = /home/bharring/tmp-cache
 
 [rsync repo]
 type = repo 
-class = pkgcore.ebuild.repository
+class = pkgcore.ebuild.repository.tree
 location = /usr/portage
 cache = 'metadata'
 

@@ -34,7 +34,7 @@ class OnDiskProfile(profiles.base):
 		"""
 		@param profile: profile name to scan
 		@param incrementals: sequence of settings to implement incremental stacking for
-		@param base_repo: L{pkgcore.ebuild.ebuild_repository.UnconfiguredTree} to build this profile from, mutually exclusive with base_path
+		@param base_repo: L{pkgcore.ebuild.repository.UnconfiguredTree} to build this profile from, mutually exclusive with base_path
 		@param base_path: raw filepath for this profile.  Mutually exclusive to base_repo
 		"""
 
@@ -225,7 +225,7 @@ class AliasedVirtuals(virtual.tree):
 	def __init__(self, virtuals, repo):
 		"""
 		@param virtuals: dict of virtual -> providers
-		@param repo: L{pkgcore.ebuild.ebuild_repository.UnconfiguredTree} parent repo
+		@param repo: L{pkgcore.ebuild.repository.UnconfiguredTree} parent repo
 		"""
 		
 		virtual.tree.__init__(self, virtuals)

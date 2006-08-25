@@ -22,7 +22,7 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
 	"""
 	generate a GLSA vuln. pkgset limited by profile
 	
-	@param ebuild_repo: L{pkgcore.ebuild.ebuild_repository.UnconfiguredTree} instance
+	@param ebuild_repo: L{pkgcore.ebuild.repository.UnconfiguredTree} instance
 	@param vdb: L{pkgcore.repository.prototype.tree} instance that is the livefs
 	@param profile: L{pkgcore.ebuild.profiles} instance
 	"""
@@ -137,7 +137,7 @@ def configFromMakeConf(location="/etc/"):
 		{"type": "fetcher", "distdir": distdir, "command": fetchcommand,
 		"resume_command": resumecommand})
 
-	ebuild_repo_class = load_attribute("pkgcore.ebuild.repository")
+	ebuild_repo_class = load_attribute("pkgcore.ebuild.repository.tree")
 	
 	for tree_loc in [portdir] + portdir_overlays:
 		d2 = {"type": "repo", "class": ebuild_repo_class}

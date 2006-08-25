@@ -8,7 +8,7 @@ implementation of the standard PORTDIR + PORTDIR_OVERLAY repository stacking
 from pkgcore.repository import multiplex
 from pkgcore.config.introspect import ConfigHint
 from pkgcore.config import errors
-from pkgcore.ebuild import ebuild_repository, eclass_cache
+from pkgcore.ebuild import repository, eclass_cache
 from pkgcore.util.file import read_dict
 from pkgcore.util.lists import unstable_unique
 from pkgcore.restrictions import packages
@@ -26,14 +26,14 @@ class OverlayRepo(multiplex.tree):
 
 	configured = False
 	configurables = ("settings",)
-	configure = ebuild_repository.ConfiguredTree
+	configure = repository.ConfiguredTree
 
 	# sucks a bit, need to work something better out here
 	format_magic = "ebuild_src"
 
 	def __init__(self, trees, **kwds):
 		"""
-		@param trees: L{pkgcore.ebuild.ebuild_repository.UnconfiguredTree} instances to combine
+		@param trees: L{pkgcore.ebuild.repository.UnconfiguredTree} instances to combine
 		@keyword cache: L{pkgcore.cache.template.database} instance to use for caching for the combined tree
 		"""
 

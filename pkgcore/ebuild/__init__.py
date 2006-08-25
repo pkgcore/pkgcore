@@ -4,6 +4,3 @@
 """
 gentoo ebuild support
 """
-
-import ebuild_repository
-repository	= ebuild_repository.UnconfiguredTree

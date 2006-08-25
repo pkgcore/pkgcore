@@ -189,3 +189,4 @@ class ConfiguredTree(configured.tree):
 		return buildable(pkg, self.domain_settings, self.eclass_cache, self.fetcher)
 
 UnconfiguredTree.configure = ConfiguredTree
+tree = UnconfiguredTree

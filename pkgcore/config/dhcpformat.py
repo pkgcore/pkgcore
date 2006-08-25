@@ -25,7 +25,7 @@ metadata {
 	# this is a section reference, with a nested anonymous section.
 	repositories {
 		type repo;
-		class pkgcore.ebuild.repository;
+		class pkgcore.ebuild.repository.tree;
 		location /usr/portage;
 		# this is also a section reference, but instead of a nested section
 		# we refer to the named metadata section above

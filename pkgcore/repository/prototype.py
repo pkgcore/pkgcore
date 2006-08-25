@@ -106,15 +106,15 @@ class tree(object):
 
 	def _get_categories(self, *args):
 		"""this must return a list, or sequence"""
-		raise NotImplementedError
+		raise NotImplementedError(self, "_get_categories")
 
 	def _get_packages(self, category):
 		"""this must return a list, or sequence"""
-		raise NotImplementedError
+		raise NotImplementedError(self, "_get_packages")
 
 	def _get_versions(self, package):
 		"""this must return a list, or sequence"""
-		raise NotImplementedError
+		raise NotImplementedError(self, "_get_versions")
 
 	def __getitem__(self, cpv):
 		cpv_inst = self.package_class(cpv)
@@ -320,7 +320,7 @@ class tree(object):
 		@param kw: passed to _install
 		@return: L{pkgcore.interfaces.repo.install} instance
 		"""
-		raise NotImplementedError
+		raise NotImplementedError(self, "_install")
 
 	def uninstall(self, pkg, *a, **kw):
 		"""
@@ -345,7 +345,7 @@ class tree(object):
 		@param kw: passed to _install
 		@return: L{pkgcore.interfaces.repo.install} instance
 		"""
-		raise NotImplementedError
+		raise NotImplementedError(self, "_uninstall")
 
 	def replace(self, orig, new, *a, **kw):
 		"""
@@ -372,7 +372,7 @@ class tree(object):
 		@param kw: passed to _install
 		@return: L{pkgcore.interfaces.repo.install} instance
 		"""
-		raise NotImplementedError
+		raise NotImplementedError(self, "_replace")
 
 	def __nonzero__(self):
 		try:

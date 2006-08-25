@@ -96,7 +96,7 @@ class _replacer_from(_replacer):
         return target(*args, **kwargs)
 
 
-def demandload(scope, modules):
+def _demandload(scope, modules):
     '''import modules into scope when each is first used.
 
     scope should be the value of globals() in the module calling this
@@ -140,6 +140,27 @@ def demandload(scope, modules):
             else:
                 basemod = mod
             scope[basemod] = _replacer(importer, basemod)
+
+demandload = _demandload
+
+def disabled_demandload(scope, modules):
+    for mod in modules.split():
+        if not mod: #Ignore empty entries
+            continue
+        col = mod.find(':')
+        if col >= 0:
+            fromlist = mod[col+1:].split(',')
+            mod = mod[:col]
+        else:
+            fromlist = []
+        mod_obj = __import__(mod, scope, {}, [])
+        if not fromlist:
+            scope[mod.split(".", 1)[0]] = mod_obj
+        else:
+            for sub in mod.split(".")[1:]:
+                mod_obj = getattr(mod_obj, sub)
+            for name in fromlist:
+                scope[name] = getattr(mod_obj, name)
 
 
 _real_compile = re.compile

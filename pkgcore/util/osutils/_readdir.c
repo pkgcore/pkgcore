@@ -25,7 +25,7 @@ static PyObject *pkgcore_DIRSTR,
 
 static PyObject*
 pkgcore_readdir_actual_listdir(const char* path, int followsyms,
-							   int dkind, int skind)
+	int dkind, int skind)
 {
 	DIR *the_dir;
 	struct dirent *entry;
@@ -44,12 +44,10 @@ pkgcore_readdir_actual_listdir(const char* path, int followsyms,
 	while (entry = readdir(the_dir)) {
 		const char *name = entry->d_name;
 		/* skip over "." and ".." */
-		if (name[0] == '.' && (name[1] == 0 ||
-							   (name[1] == '.' && name[2] == 0))) {
+		if (name[0] == '.' && (name[1] == 0 || (name[1] == '.' && name[2] == 0))) {
 			continue;
 		}
-		if (entry->d_type == DT_UNKNOWN || (followsyms &&
-										   entry->d_type == DT_LNK)) {
+		if (entry->d_type == DT_UNKNOWN || (followsyms && entry->d_type == DT_LNK)) {
 			/* both path components, the "/", the trailing null */
 			size_t size = pathlen + strlen(name) + 2;
 			char *buffer = (char *) malloc(size);
@@ -114,7 +112,7 @@ pkgcore_readdir_listdir_dirs(PyObject* self, PyObject* args)
 	}
 
 	return pkgcore_readdir_actual_listdir(path, follow_symlinks,
-										  DT_DIR, S_IFDIR);
+		DT_DIR, S_IFDIR);
 }
 
 static PyObject*
@@ -133,7 +131,7 @@ pkgcore_readdir_listdir_files(PyObject* self, PyObject* args)
 	}
 
 	return pkgcore_readdir_actual_listdir(path, follow_symlinks,
-										  DT_REG, S_IFREG);
+		DT_REG, S_IFREG);
 }
 
 static PyObject*
@@ -160,7 +158,8 @@ pkgcore_readdir_listdir(PyObject* self, PyObject* args)
 		const char *name = entry->d_name;
 		/* skip over "." and ".." */
 		if (!(name[0] == '.' && (name[1] == 0 ||
-								 (name[1] == '.' && name[2] == 0)))) {
+			(name[1] == '.' && name[2] == 0)))) {
+			
 			PyObject *string = PyString_FromString(name);
 			if (!string) {
 				Py_DECREF(result);
@@ -207,8 +206,7 @@ pkgcore_readdir_read_dir(PyObject* self, PyObject* args)
 	while (entry = readdir(the_dir)) {
 		const char *name = entry->d_name;
 		/* skip over "." and ".." */
-		if (name[0] == '.' && (name[1] == 0 ||
-							   (name[1] == '.' && name[2] == 0))) {
+		if (name[0] == '.' && (name[1] == 0 || (name[1] == '.' && name[2] == 0))) {
 			continue;
 		}
 

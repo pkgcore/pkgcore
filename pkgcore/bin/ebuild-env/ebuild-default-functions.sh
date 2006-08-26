@@ -141,25 +141,6 @@ unpack()
 dyn_setup()
 {
 	MUST_EXPORT_ENV="yes"
-	if [ "$USERLAND" == "Linux" ]; then
-		# The next bit is to ease the broken pkg_postrm()'s
-		# some of the gcc ebuilds have that nuke the new
-		# /lib/cpp and /usr/bin/cc wrappers ...
-
-		# Make sure we can have it disabled somehow ....
-		if [ "${DISABLE_GEN_GCC_WRAPPERS}" != "yes" ]; then
-			# Create /lib/cpp if missing or a symlink
-			if [ -L /lib/cpp -o ! -e /lib/cpp ]; then
-				[ -L /lib/cpp ] && rm -f /lib/cpp
-				gen_wrapper /lib/cpp cpp
-			fi
-			# Create /usr/bin/cc if missing for a symlink
-			if [ -L /usr/bin/cc -o ! -e /usr/bin/cc ]; then
-				[ -L /usr/bin/cc ] && rm -f /usr/bin/cc
-				gen_wrapper /usr/bin/cc gcc
-			fi
-		fi
-	fi
 	pkg_setup
 }
 

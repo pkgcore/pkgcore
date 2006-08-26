@@ -17,6 +17,8 @@ from pkgcore.util import repo_utils, commandline, lists, currying
 from pkgcore.restrictions import packages, values, restriction
 from pkgcore.package import atom, cpv, errors as perrors
 from pkgcore.util.compatibility import any
+from pkgcore import fetch
+from pkgcore.ebuild import conditionals
 
 
 # TODO a fair chunk of this is library code, should be moved elsewhere
@@ -84,7 +86,7 @@ class AtomIntersectsAtom(values.base):
 		if not val.op or not self.atom.op:
 			return True
 		# If one cpv matches the other's restriction we match
-		return self.atom.match(val.cpv) or val.match(self.atom.cpv)
+		return self.atom.match(val) or val.match(self.atom)
 
 	def __str__(self):
 		return "atom matches %s" % self.atom
@@ -169,6 +171,13 @@ def build_option_parser():
 						help='Exact string match on a USE flag.')
 	restrict.add_option('--revdep', action='append', type='atom',
 						help='Dependency on an atom.')
+	restrict.add_option('--description', '-S', action='append',
+						help='regexp match on (long)description. '
+						'*exact* match, start/end with ".*" for a search.')
+	restrict.add_option('--herd', action='append',
+						help='exact match on a herd.')
+	restrict.add_option('--license', action='append',
+						help='exact match on a license.')
 
 	output = parser.add_option_group('Output formatting')
 	output.add_option('--cpv', action='store_true',
@@ -176,7 +185,9 @@ def build_option_parser():
 					  'by default, this option re-enables this if another '
 					  'output option (like --contents) disabled it.')
 	output.add_option('--attr', action='append',
-					  choices=('rdepends', 'depends', 'use'),
+					  choices=('rdepends', 'depends', 'post_rdepends',
+							   'use', 'description', 'longdescription',
+							   'herds', 'license', 'uris', 'files'),
 					  help="Print this attribute's value "
 					  '(can be specified more than once).')
 	output.add_option('--contents', action='store_true',
@@ -184,6 +195,31 @@ def build_option_parser():
 	output.add_option('--verbose', '-v', action='store_true',
 					  help='human-readable multi-line output per package')
 	return parser
+
+
+def stringify_attr(config, pkg, attr):
+	"""Grab a package attr and convert it to a string."""
+	# config is currently unused but may affect display in the future.
+	if attr in ('files', 'uris'):
+		data = getattr(pkg, 'fetchables', None)
+		if data is None:
+			return 'MISSING'
+		if attr == 'files':
+			def format(node):
+				return node.filename
+		else:
+			def format(node):
+				return ' '.join(node.uri or ())
+		return conditionals.stringify_boolean(data, format)
+
+	# TODO: is a missing or None attr an error?
+	value = getattr(pkg, attr, None)
+	if value is None:
+		return 'MISSING'
+
+	if attr in ('use', 'herds'):
+		return ' '.join(value)
+	return str(value)
 
 
 def main(config, options):
@@ -230,10 +266,23 @@ def main(config, options):
 		for revdep in options.revdep:
 			helper = ValuesAnyMatch(AtomIntersectsAtom(revdep))
 			val_restrict = FlatteningRestriction(atom.atom, helper)
-			for dep in ('depends', 'rdepends'):
+			for dep in ('depends', 'rdepends', 'post_rdepends'):
 				subrestrict.append(packages.PackageRestriction(dep,
 															   val_restrict))
 		restrict.append(packages.OrRestriction(finalize=True, *subrestrict))
+	if options.description:
+		subrestrict = []
+		for query in options.description:
+			matcher = values.StrRegexMatch(query, CaseSensitive=False)
+			for attr in ('description', 'longdescription'):
+				subrestrict.append(packages.PackageRestriction(attr, matcher))
+		restrict.append(packages.OrRestriction(finalize=True, *subrestrict))
+	if options.herd:
+		restrict.append(packages.PackageRestriction(
+				'herds', values.ContainmentMatch(*options.herd)))
+	if options.license:
+		restrict.append(packages.PackageRestriction(
+				'license', values.ContainmentMatch(*options.license)))
 
 	if not restrict:
 		# Match everything in the repo.
@@ -256,29 +305,23 @@ def main(config, options):
 					print '     license:     %s' % (pkg.license,)
 					# ^%&^#@( optparse defaults to None, not an empty seq
 					for attr in (options.attr or ()):
-						val = getattr(pkg, attr, None)
-						if val:
-							if attr in ('use',):
-								val = ' '.join(val)
-							print '     %s: %s' % (attr, val)
+						print '     %s: %s' % (
+							attr, stringify_attr(options, pkg, attr))
 					print
-					# This overrides the other kinds of output.
-					# TODO: integrate some of the stuff below into "verbose".
-					continue
-				if not options.contents or options.cpv:
-					print pkg.cpvstr,
-				if options.attr:
-					for attr in options.attr:
-						try:
-							value = getattr(pkg, attr)
-						except AttributeError:
-							print >> sys.stderr, (
-								'requested attr %s not found on %r' % (
-									attr, pkg))
-						else:
-							if attr == 'use':
-								value = ' '.join(sorted(value))
-							print '%s="%s"' % (attr, value),
+				else:
+					printedSomething = False
+					if (not options.contents) or options.cpv:
+						printedSomething = True
+						print pkg.cpvstr,
+					# hack around optparse defaulting to None
+					for attr in options.attr or ():
+						printedSomething = True
+						print '%s="%s"' % (
+							attr, stringify_attr(options, pkg, attr)),
+					# If we printed anything at all print the newline now
+					if printedSomething:
+						print
+
 				if options.contents:
 					try:
 						contents = pkg.contents
@@ -287,12 +330,11 @@ def main(config, options):
 					else:
 						for thing in contents:
 							print thing.location
-				if not options.contents or options.cpv:
-					print
+
 		except KeyboardInterrupt:
 			raise
 		except Exception:
-			print 'caught an exception!'
+			print >> sys.stderr, 'caught an exception!'
 			print >> sys.stderr, 'repo:', repr(repo)
 			print >> sys.stderr, 'restrict:', repr(restrict)
 			raise

@@ -50,7 +50,7 @@ class PackageRestriction(restriction.base):
 		except Exception, e:
 			logging.warn("caught unexpected exception accessing %s from %s, exception %s" % 
 				(self.attr, str(pkg), str(e)))
-			raise AttributeError
+			raise AttributeError(self.attr)
 
 	def match(self, pkg):
 		try:

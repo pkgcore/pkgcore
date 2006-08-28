@@ -90,6 +90,13 @@ class PackageWrapper(object):
 					return True
 				except Unchangable:
 					self.rollback(entry_point)
+			else:
+				a = getattr(self._raw_pkg, attr)
+				for x in vals:
+					if x not in a:
+						break
+				else:
+					return True
 			return False
 		entry_point = self.changes_count()
 		a = getattr(self._raw_pkg, attr)
@@ -127,6 +134,13 @@ class PackageWrapper(object):
 					return True
 				except Unchangable:
 					self.rollback(entry_point)
+			else:
+				a = getattr(self._raw_pkg, attr)
+				for x in vals:
+					if x in a:
+						break
+				else:
+					return True
 			return False
 		entry_point = self.changes_count()
 		a = getattr(self._raw_pkg, attr)

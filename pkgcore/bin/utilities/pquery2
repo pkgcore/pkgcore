@@ -13,12 +13,124 @@ import sys
 import optparse
 
 from pkgcore.config import load_config
-from pkgcore.util import repo_utils, commandline, lists, currying
+from pkgcore.util import repo_utils, commandline, lists, currying, formatters
 from pkgcore.restrictions import packages, values, restriction
 from pkgcore.package import atom, cpv, errors as perrors
 from pkgcore.util.compatibility import any
 from pkgcore import fetch
 from pkgcore.ebuild import conditionals
+
+
+class ParseError(ValueError):
+	"""Raised if parsing a restriction expression failed."""
+
+
+# Functions that turn a string into a restriction or raise ParseError.
+# These are used by both the expression-parsing and the optparse code.
+
+# To add a new restriction you have to do the following:
+# - add a parse function for it here.
+# - add the parse function to the parsefuncs dict.
+# - add an optparse option using the name you used in the dict as typename.
+
+def parse_match(value):
+	try:
+		return commandline.generate_restriction(value)
+	except perrors.InvalidCPV:
+		raise ParseError('invalid cpv')
+
+def parse_revdep(value):
+	val_restrict = FlatteningRestriction(
+		atom.atom, ValuesAnyMatch(AtomIntersectsAtom(revdep)))
+	return packages.OrRestriction(finalize=True, *list(
+			packages.PackageRestriction(dep, val_restrict)
+			for dep in ('depends', 'rdepends', 'post_rdepends')))
+
+def parse_description(value):
+	matcher = values.StrRegexMatch(value, CaseSensitive=False)
+	return packages.OrRestriction(finalize=True, *list(
+			packages.PackageRestriction(attr, matcher)
+			for attr in ('description', 'longdescription')))
+
+def commaSeparatedContainment(attr):
+	"""Helper for parsing comma-separated strings to a ContainmentMatch."""
+	def _parse(value):
+		return packages.PackageRestriction(attr, values.ContainmentMatch(*(
+					piece.strip() for piece in value.split(','))))
+	return _parse
+
+def parse_herd(value):
+	return packages.PackageRestriction('herds', values.ContainmentMatch(*(
+				herd.strip() for herd in value.split(','))))
+
+def parse_license(value):
+	return packages.PackageRestriction('license', values.ContainmentMatch(*(
+				license.strip() for license in value.split(','))))
+
+parsefuncs = {
+	'match': parse_match,
+	'revdep': parse_revdep,
+	'description': parse_description,
+	'herd': commaSeparatedContainment('herds'),
+	'license': commaSeparatedContainment('license'),
+	}
+
+
+try:
+	import pyparsing as pyp
+except ImportError:
+	def parseExpression(string):
+		raise ParseError('pyparsing is not installed.')
+else:
+	string = pyp.quotedString.setParseAction(pyp.removeQuotes)
+	string |= pyp.Word(pyp.alphanums + ',')
+
+	def funcall(name, parser):
+		result = pyp.Suppress('%s(' % (name,)) + string + pyp.Suppress(')')
+		def _parse(tokens):
+			return parser(tokens[0])
+		result.setParseAction(_parse)
+		return result
+
+	boolcall = pyp.Forward()
+	expr = boolcall
+	for name, func in parsefuncs.iteritems():
+		expr |= funcall(name, func)
+
+	andcall = (pyp.Suppress(pyp.CaselessLiteral('and') + '(') +
+			   pyp.delimitedList(expr) + pyp.Suppress(')'))
+	def parse_and(tokens):
+		return packages.AndRestriction(*tokens)
+	andcall.setParseAction(parse_and)
+
+	orcall = (pyp.Suppress(pyp.CaselessLiteral('or') + '(') +
+			   pyp.delimitedList(expr) + pyp.Suppress(')'))
+	def parse_or(tokens):
+		return packages.OrRestriction(*tokens)
+	orcall.setParseAction(parse_or)
+
+	notcall = (pyp.Suppress(pyp.CaselessLiteral('not') + '(') + expr +
+			   pyp.Suppress(')'))
+	def parse_not(tokens):
+		restriction = tokens[0]
+		restriction.negate = not restriction.negate
+		return restriction
+	notcall.setParseAction(parse_not)
+
+	boolcall << (notcall | andcall | orcall)
+
+	# This forces a match on the entire thing, without it trailing
+	# unparsed data is ignored.
+	grammar = pyp.stringStart + expr + pyp.stringEnd
+
+	# grammar.validate()
+
+	def parseExpression(string):
+		try:
+			return grammar.parseString(string)[0]
+		except pyp.ParseException, e:
+			raise ParseError(e.msg)
+
 
 
 # TODO a fair chunk of this is library code, should be moved elsewhere
@@ -103,38 +215,18 @@ ValuesAnyMatch = currying.pre_curry(
 	AnyMatch, restriction_type=values.value_type)
 
 
+def optparse_type(parsefunc):
+	"""Wrap a parsefunc shared with the expression-style code for optparse."""
+	def _typecheck(option, opt, value):
+		try:
+			return parsefunc(value)
+		except ParseError, e:
+			raise optparse.OptionValueError('option %s: %s' % (opt, e))
+	return _typecheck
 
-def check_cpv(option, opt, value):
-	"""optparse cpv type parser."""
-	try:
-		return CPV.cpv(value)
-	except perrors.InvalidCPV:
-		raise optparse.OptionValueError(
-			'option %s: invalid cpv: %r' % (opt, value))
 
-def check_atom(option, opt, value):
-	"""optparse cpv type parser."""
-	try:
-		result = atom.atom(value)
-	except perrors.InvalidCPV:
-		raise optparse.OptionValueError(
-			'option %s: invalid cpv in atom: %r' % (opt, value))
-	return result
-
-def check_restriction(option, opt, value):
-	"""optparse "commandline" restriction parser."""
-	try:
-		return commandline.generate_restriction(value)
-	except perrors.InvalidCPV:
-		raise optparse.OptionValueError(
-			'option %s: invalid cpv in restriction: %r' % (opt, value))
-
-extras = {
-	'cpv': check_cpv,
-	'atom': check_atom,
-	'restriction': check_restriction,
-	}
-
+extras = dict((name, optparse_type(func))
+			  for name, func in parsefuncs.iteritems())
 
 class MyOption(optparse.Option):
 	TYPES = optparse.Option.TYPES + tuple(extras.keys())
@@ -165,16 +257,17 @@ def build_option_parser():
 		'Specifying the same option twice means "or" unless stated otherwise. '
 		'Specifying multiple types of restrictions means "and" unless stated '
 		'otherwise.')
-	restrict.add_option('--match', '-m', action='append', type='restriction',
+	restrict.add_option('--match', '-m', action='append', type='match',
 						help='Glob-like match on category/package-version.')
 	restrict.add_option('--hasuse', action='append',
 						help='Exact string match on a USE flag.')
-	restrict.add_option('--revdep', action='append', type='atom',
+	restrict.add_option('--revdep', action='append', type='revdep',
 						help='Dependency on an atom.')
 	restrict.add_option('--description', '-S', action='append',
+						type='description',
 						help='regexp match on (long)description. '
 						'*exact* match, start/end with ".*" for a search.')
-	restrict.add_option('--herd', action='append',
+	restrict.add_option('--herd', action='append', type='herd',
 						help='exact match on a herd.')
 	restrict.add_option('--license', action='append',
 						help='exact match on a license.')
@@ -222,7 +315,7 @@ def stringify_attr(config, pkg, attr):
 	return str(value)
 
 
-def main(config, options):
+def main(config, options, args):
 	# Config postprocessing.
 	if options.contents:
 		options.vdb = True
@@ -257,32 +350,19 @@ def main(config, options):
 		repos = repo_utils.get_virtual_repos(repos, options.virtuals == 'only')
 
 	# Build up a restriction.
-	# The restrictions in here will be and-ed. Ordered for speed.
 	restrict = []
-	if options.match:
-		restrict.append(packages.OrRestriction(finalize=True, *options.match))
-	if options.revdep:
-		subrestrict = []
-		for revdep in options.revdep:
-			helper = ValuesAnyMatch(AtomIntersectsAtom(revdep))
-			val_restrict = FlatteningRestriction(atom.atom, helper)
-			for dep in ('depends', 'rdepends', 'post_rdepends'):
-				subrestrict.append(packages.PackageRestriction(dep,
-															   val_restrict))
-		restrict.append(packages.OrRestriction(finalize=True, *subrestrict))
-	if options.description:
-		subrestrict = []
-		for query in options.description:
-			matcher = values.StrRegexMatch(query, CaseSensitive=False)
-			for attr in ('description', 'longdescription'):
-				subrestrict.append(packages.PackageRestriction(attr, matcher))
-		restrict.append(packages.OrRestriction(finalize=True, *subrestrict))
-	if options.herd:
-		restrict.append(packages.PackageRestriction(
-				'herds', values.ContainmentMatch(*options.herd)))
-	if options.license:
-		restrict.append(packages.PackageRestriction(
-				'license', values.ContainmentMatch(*options.license)))
+	for attr in (options.match, options.revdep, options.description,
+				 options.herd, options.license):
+		if attr:
+			restrict.append(packages.OrRestriction(finalize=True, *attr))
+
+	if args:
+		expr = ' '.join(args)
+		try:
+			restrict.append(parseExpression(expr))
+		except ParseError, e:
+			print >> sys.stderr, 'failure parsing "%s": %s' % (expr, e)
+			return 1
 
 	if not restrict:
 		# Match everything in the repo.
@@ -294,20 +374,26 @@ def main(config, options):
 		# "And" them all together
 		restrict = packages.AndRestriction(finalize=True, *restrict)
 
+	# Get a pretty-printer if we need one
+	if options.verbose:
+		f = formatters.TerminfoFormatter()
+
 	# Run the query
 	for repo in repos:
 		try:
 			for pkg in repo.itermatch(restrict, sorter=sorted):
 				if options.verbose:
-					print ' * %s' % (pkg.cpvstr,)
-					print '     description: %s' % (pkg.description,)
-					print '     homepage:    %s' % (pkg.homepage,)
-					print '     license:     %s' % (pkg.license,)
+					green = f.fg('green')
+					f.write(f.bold, green, ' * ', f.fg(), pkg.cpvstr)
+					f.write(green, '     description: ',
+							f.fg(), pkg.description)
+					f.write(green, '     homepage:    ', f.fg(), pkg.homepage)
+					f.write(green, '     license:     ', f.fg(), pkg.license)
 					# ^%&^#@( optparse defaults to None, not an empty seq
 					for attr in (options.attr or ()):
-						print '     %s: %s' % (
-							attr, stringify_attr(options, pkg, attr))
-					print
+						f.write(green, '     %s: ' % (attr,), f.fg(),
+								stringify_attr(options, pkg, attr))
+					f.write()
 				else:
 					printedSomething = False
 					if (not options.contents) or options.cpv:
@@ -342,12 +428,9 @@ def main(config, options):
 if __name__ == '__main__':
 	parser = build_option_parser()
 	options, args = parser.parse_args()
-
-	if args:
-		parser.error('what do you want me to do with %s?' % (' '.join(args),))
 	config = load_config()
 	try:
-		exitstatus = main(config, options)
+		exitstatus = main(config, options, args)
 	except KeyboardInterrupt:
 		exitstatus = 1
 	sys.exit(exitstatus)

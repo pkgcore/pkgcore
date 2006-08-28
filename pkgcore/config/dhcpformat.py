@@ -46,8 +46,8 @@ import pyparsing as pyp
 # this is based on the 'BIND named.conf parser' on pyparsing's webpage
 
 section = pyp.Forward()
-value = pyp.Word(pyp.alphanums + './_') | pyp.quotedString.setParseAction(
-	pyp.removeQuotes)
+value = (pyp.Word(pyp.alphanums + './_') |
+		 pyp.quotedString.copy().setParseAction(pyp.removeQuotes))
 
 section_contents = pyp.dictOf(
 	value, pyp.Group(pyp.OneOrMore(value | section)) + pyp.Suppress(';'))

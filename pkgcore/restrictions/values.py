@@ -26,18 +26,14 @@ class base(restriction.base):
 	type = value_type
 
 	def force_True(self, pkg, attr, val):
-		if self.match(val) ^ self.negate:
+		if self.match(val) != self.negate:
 			return True
-		elif self.negate:
-			return pkg.request_disable(attr, val)
-		return pkg.request_enable(attr, val)
+		return False
 
 	def force_False(self, pkg, attr, val):
-		if self.match(val) ^ self.negate:
+		if self.match(val) == self.negate:
 			return True
-		elif self.negate:
-			return pkg.request_enable(attr, val)
-		return pkg.request_disable(attr, val)
+		return False
 
 
 class VersionRestriction(base):

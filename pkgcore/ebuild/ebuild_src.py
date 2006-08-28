@@ -158,12 +158,12 @@ def pull_metadata_xml(self, attr):
 	return self.__dict__[attr]
 
 def rewrite_restrict(restrict):
-	l = []
+	l = set()
 	for x in restrict:
 		if x.startswith("no"):
-			l.append(x[2:])
+			l.add(x[2:])
 		else:
-			l.append(x)
+			l.add(x)
 	return tuple(l)
 
 class package(metadata.package):

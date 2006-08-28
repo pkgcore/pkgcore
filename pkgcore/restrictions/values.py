@@ -386,12 +386,12 @@ class ContainmentMatch(base):
 			# unchangable
 			if self.all:
 				if len(self.vals) != 1:
-					yield False
+					return False
 				else:
-					yield (self.vals[0] in val) ^ self.negate
+					return (self.vals[0] in val) != self.negate
 			else:
-				yield (val in self.vals) ^ self.negate
-			return
+				return (val in self.vals) != self.negate
+			return False
 
 		entry = pkg.changes_count()
 		if self.negate:
@@ -404,15 +404,15 @@ class ContainmentMatch(base):
 
 				for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter,
 					desired_false=false, desired_true=true):
-					yield True
+					return True
 			else:
 				if pkg.request_disable(attr, *self.vals):
-					yield True
-			return
+					return True
+			return False
 
 		if not self.all:
 			if pkg.request_disable(attr, *self.vals):
-				yield True
+				return True
 		else:
 			l = len(self.vals)
 			def filter(truths):		return truths.count(True) < l
@@ -421,8 +421,8 @@ class ContainmentMatch(base):
 			truths = [x in val for x in self.vals]
 			for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, l, truths, filter,
 				desired_false=false, desired_true=true):
-				yield True
-		return
+				return True
+		return False
 
 
 	def force_True(self, pkg, attr, val):
@@ -435,9 +435,9 @@ class ContainmentMatch(base):
 				if len(self.vals) != 1:
 					return False
 				else:
-					return (self.vals[0] in val) ^ self.negate
+					return (self.vals[0] in val) != self.negate
 			else:
-				return (val in self.vals) ^ self.negate
+				return (val in self.vals) != self.negate
 			return False
 
 		entry = pkg.changes_count()

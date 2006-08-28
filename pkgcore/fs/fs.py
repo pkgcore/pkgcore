@@ -91,7 +91,7 @@ class fsBase(object):
 	def __eq__(self, other):
 		if not isinstance(other, self.__class__):
 			return False
-		return hash(self) == hash(other)
+		return self.location == other.location
 
 	def __ne__(self, other):
 		return not self == other

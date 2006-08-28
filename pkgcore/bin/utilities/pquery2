@@ -32,6 +32,7 @@ class ParseError(ValueError):
 # - add a parse function for it here.
 # - add the parse function to the parsefuncs dict.
 # - add an optparse option using the name you used in the dict as typename.
+# - add that option to the list in main() (near "build up a restriction")
 
 def parse_match(value):
 	try:
@@ -73,6 +74,7 @@ parsefuncs = {
 	'description': parse_description,
 	'herd': commaSeparatedContainment('herds'),
 	'license': commaSeparatedContainment('license'),
+	'hasuse': commaSeparatedContainment('iuse'),
 	}
 
 
@@ -82,7 +84,7 @@ except ImportError:
 	def parseExpression(string):
 		raise ParseError('pyparsing is not installed.')
 else:
-	string = pyp.quotedString.setParseAction(pyp.removeQuotes)
+	string = pyp.quotedString.copy().setParseAction(pyp.removeQuotes)
 	string |= pyp.Word(pyp.alphanums + ',')
 
 	def funcall(name, parser):
@@ -259,7 +261,7 @@ def build_option_parser():
 		'otherwise.')
 	restrict.add_option('--match', '-m', action='append', type='match',
 						help='Glob-like match on category/package-version.')
-	restrict.add_option('--hasuse', action='append',
+	restrict.add_option('--hasuse', action='append', type='hasuse',
 						help='Exact string match on a USE flag.')
 	restrict.add_option('--revdep', action='append', type='revdep',
 						help='Dependency on an atom.')
@@ -279,8 +281,9 @@ def build_option_parser():
 					  'output option (like --contents) disabled it.')
 	output.add_option('--attr', action='append',
 					  choices=('rdepends', 'depends', 'post_rdepends',
-							   'use', 'description', 'longdescription',
-							   'herds', 'license', 'uris', 'files'),
+							   'use', 'iuse', 'description', 'longdescription',
+							   'herds', 'license', 'uris', 'files',
+							   'slot', 'maintainers', 'restrict'),
 					  help="Print this attribute's value "
 					  '(can be specified more than once).')
 	output.add_option('--contents', action='store_true',
@@ -310,7 +313,7 @@ def stringify_attr(config, pkg, attr):
 	if value is None:
 		return 'MISSING'
 
-	if attr in ('use', 'herds'):
+	if attr in ('use', 'herds', 'iuse', 'maintainers', 'restrict'):
 		return ' '.join(value)
 	return str(value)
 
@@ -352,7 +355,7 @@ def main(config, options, args):
 	# Build up a restriction.
 	restrict = []
 	for attr in (options.match, options.revdep, options.description,
-				 options.herd, options.license):
+				 options.herd, options.license, options.hasuse):
 		if attr:
 			restrict.append(packages.OrRestriction(finalize=True, *attr))
 

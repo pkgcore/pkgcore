@@ -312,17 +312,6 @@ class OrRestriction(base):
 
 		if not self.restrictions:
 			return []
-		dcnf = []
-		cnf = []
-		for x in self.restrictions:
-			if isinstance(x, base):
-				s2 = x.cnf_solutions(full_solution_expansion=full_solution_expansion)
-				if len(s2) == 1:
-					dcnf.extend(s2[0])
-				else:
-					cnf.append(list(y[0] for y in s2))
-			else:
-				dcnf.append(x)
 
 		def f(arg, *others):
 			if others:
@@ -330,6 +319,23 @@ class OrRestriction(base):
 					yield arg + node2
 			else:
 				yield [arg]
+
+
+		dcnf = []
+		cnf = []
+		for x in self.restrictions:
+			if isinstance(x, base):
+				s2 = x.dnf_solutions(full_solution_expansion=full_solution_expansion)
+				if len(s2) == 1:
+					cnf.extend(s2)
+				else:
+					for y in s2:
+						if len(y) == 1:
+							dcnf.append(y[0])
+						else:
+							cnf.append(y)
+			else:
+				dcnf.append(x)
 
 		# combinatorial explosion.  if it's got cnf, we peel off one of each and smash append to the dcnf.
 		dcnf = [dcnf]

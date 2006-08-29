@@ -121,8 +121,12 @@ class OrRestrictionTest(unittest.TestCase):
 
 	def test_cnf_solutions(self):
 		self.assertEquals(boolean.OrRestriction(true, true).cnf_solutions(), [[true, true]])
-		self.assertEquals(map(set, boolean.OrRestriction(true, true, boolean.AndRestriction(false, true)).cnf_solutions()),
-			map(set, [[true, false], [true, true]]))
+		self.assertEquals([set(x) for x in boolean.OrRestriction(true, true, boolean.AndRestriction(false, true)).cnf_solutions()],
+			[set(x) for x in [[true, false], [true, true]]])
+
+		self.assertEquals([set(x) for x in boolean.OrRestriction(boolean.OrRestriction(true, true, boolean.AndRestriction(false, true))).cnf_solutions()],
+			[set(x) for x in [[true, false], [true, true]]])
+
 		self.assertEquals(set(boolean.OrRestriction(boolean.OrRestriction(true, false), true).cnf_solutions()[0]),
 			set([true, false, true]))
 		self.assertEquals(boolean.OrRestriction().cnf_solutions(), [])

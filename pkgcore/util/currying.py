@@ -26,7 +26,7 @@ def pre_curry(func, *args, **kwargs):
 			kw.update(morekwargs)
 			return func(*(args+moreargs), **kw)
 
-	callit.__original__ = func
+	callit.func = func
 	return callit
 
 def post_curry(func, *args, **kwargs):
@@ -46,12 +46,12 @@ def post_curry(func, *args, **kwargs):
 			kw.update(kwargs)
 			return func(*(moreargs+args), **kw)
 
-	callit.__original__ = func
+	callit.func = func
 	return callit
 
 def pretty_docs(wrapped, extradocs=None):
-	wrapped.__module__ = wrapped.__original__.__module__
-	doc = wrapped.__original__.__doc__
+	wrapped.__module__ = wrapped.func.__module__
+	doc = wrapped.func.__doc__
 	if extradocs is None:
 		wrapped.__doc__ = doc
 	else:

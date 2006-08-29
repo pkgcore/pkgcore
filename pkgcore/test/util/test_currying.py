@@ -83,9 +83,9 @@ class PrettyDocsTest(unittest.TestCase):
 
 	def test_curry_original(self):
 		self.assertIdentical(
-			currying.pre_curry(passthrough).__original__, passthrough)
+			currying.pre_curry(passthrough).func, passthrough)
 		self.assertIdentical(
-			currying.post_curry(passthrough).__original__, passthrough)
+			currying.post_curry(passthrough).func, passthrough)
 
 	def test_module_magic(self):
 		self.assertIdentical(

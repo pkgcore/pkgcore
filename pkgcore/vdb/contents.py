@@ -100,8 +100,8 @@ class ContentsFile(contentsSet):
 
 	def _read(self):
 		self.clear()
+		infile = self._get_fd()
 		try:
-			infile = self._get_fd()
 			for line in infile:
 				if "\t" not in line:
 					line = self._parse_old(line.rstrip("\n"))
@@ -127,10 +127,7 @@ class ContentsFile(contentsSet):
 				self.add(obj)
 
 		finally:
-			try:
-				infile.close()
-			except UnboundLocalError:
-				pass
+			infile.close()
 
 	def _write(self):
 		outfile = None

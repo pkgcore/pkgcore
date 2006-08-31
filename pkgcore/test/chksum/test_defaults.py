@@ -9,14 +9,15 @@ import tempfile, os
 
 data = "afsd123klawerponzzbnzsdf;h89y23746123;haas"
 multi = 40000
-sums = {"rmd160":"b83ad488d624e7911f886420ab230f78f6368b9f",
-	"size":long(len(data)*multi),
-	"sha1":"63cd8cce8a1773dffb400ee184be3ec7d89791f5",
-	"md5":"d17ea153bc57ba9e07298c5378664369",
-	"sha256":"68ae37b45e4a4a5df252db33c0cbf79baf5916b5ff6fc15e8159163b6dbe3bae"}
 
-class ChksumsTests(unittest.TestCase):
+class ChksumTest(object):
 	def setUp(self):
+		try:
+			self.chf = chksum.get_handler(self.chf_type)
+		except KeyError:
+			raise unittest.SkipTest(
+				'no handler for %s, do you need to install PyCrypto?' % (
+					self.chf_type,))
 		self.fn = tempfile.mktemp()
 		f = open(self.fn,"w")
 		for x in xrange(multi):
@@ -29,27 +30,28 @@ class ChksumsTests(unittest.TestCase):
 		except IOError:
 			pass
 
-	def generic_fp_check(self, chf_type):
-		chf = chksum.get_handler(chf_type)
-		self.assertEqual(chf(self.fn), sums[chf_type])
+	def test_fp_check(self):
+		self.assertEqual(self.chf(self.fn), self.sum)
 
-	def generic_fileobj_check(self, chf_type):
-		chf = chksum.get_handler(chf_type)
-		self.assertEqual(chf(open(self.fn, "r")), sums[chf_type])
+	def test_fileobj_check(self):
+		self.assertEqual(self.chf(open(self.fn, "r")), self.sum)
 
-	def generic_data_source_check(self, chf_type):
-		chf = chksum.get_handler(chf_type)
-		self.assertEqual(chf(local_source(self.fn)), sums[chf_type])
-		self.assertEqual(chf(data_source(open(self.fn, "r").read())), sums[chf_type])
+	def test_data_source_check(self):
+		self.assertEqual(self.chf(local_source(self.fn)), self.sum)
+		self.assertEqual(
+			self.chf(data_source(open(self.fn, "r").read())), self.sum)
 
-	locals().update([("test_filepath_%s" % x, post_curry(generic_fp_check, x)) for x in
-		("rmd160", "sha1", "sha256", "md5", "size")])
 
-	locals().update([("test_fileobj_%s" % x, post_curry(generic_fileobj_check, x)) for x in
-		("rmd160", "sha1", "sha256", "md5", "size")])
+# trick: create subclasses for each checksum with a useful class name.
+for chf_type, sum in {
+	"rmd160":"b83ad488d624e7911f886420ab230f78f6368b9f",
+	"size":long(len(data)*multi),
+	"sha1":"63cd8cce8a1773dffb400ee184be3ec7d89791f5",
+	"md5":"d17ea153bc57ba9e07298c5378664369",
+	"sha256":"68ae37b45e4a4a5df252db33c0cbf79baf5916b5ff6fc15e8159163b6dbe3bae"}.iteritems():
+	globals()[chf_type + 'ChksumTest'] = type(
+		chf_type + 'ChksumTest',
+		(ChksumTest, unittest.TestCase),
+		dict(chf_type=chf_type, sum=sum))
 
-	locals().update([("test_data_source_%s" % x, post_curry(generic_data_source_check, x)) for x in
-		("rmd160", "sha1", "sha256", "md5", "size")])
-
-	del x
-
+del chf_type

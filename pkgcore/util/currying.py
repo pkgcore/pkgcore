@@ -9,7 +9,7 @@ from operator import attrgetter
 
 __all__ = ["pre_curry", "post_curry", "pretty_docs", "alias_class_method"]
 
-def pre_curry(func, *args, **kwargs):
+def native_pre_curry(func, *args, **kwargs):
 	"""passed in args are prefixed, with further args appended"""
 
 	if not kwargs:
@@ -28,6 +28,14 @@ def pre_curry(func, *args, **kwargs):
 
 	callit.func = func
 	return callit
+
+# native_pre_curry is always defined, if pre_curry is not identical to
+# native_pre_curry the tests test both.
+try:
+	from functools import partial as pre_curry
+except ImportError:
+	pre_curry = native_pre_curry
+
 
 def post_curry(func, *args, **kwargs):
 	"""passed in args are appended to any further args supplied"""

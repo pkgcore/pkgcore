@@ -13,23 +13,27 @@ def passthrough(*args, **kwargs):
 def documented():
 	"""original docstring"""
 
-class CurryTest(unittest.TestCase):
+class PreCurryTest(unittest.TestCase):
+
+	def setUp(self):
+		# If we just set this at class level it becomes a bound method
+		self.pre_curry = currying.pre_curry
 
 	def test_pre_curry(self):
-		noop = currying.pre_curry(passthrough)
+		noop = self.pre_curry(passthrough)
 		self.assertEquals(noop(), ((), {}))
 		self.assertEquals(noop('foo', 'bar'), (('foo', 'bar'), {}))
 		self.assertEquals(noop(foo='bar'), ((), {'foo': 'bar'}))
 		self.assertEquals(noop('foo', bar='baz'), (('foo',), {'bar': 'baz'}))
 
-		oneArg = currying.pre_curry(passthrough, 42)
+		oneArg = self.pre_curry(passthrough, 42)
 		self.assertEquals(oneArg(), ((42,), {}))
 		self.assertEquals(oneArg('foo', 'bar'), ((42, 'foo', 'bar'), {}))
 		self.assertEquals(oneArg(foo='bar'), ((42, ), {'foo': 'bar'}))
 		self.assertEquals(
 			oneArg('foo', bar='baz'), ((42, 'foo'), {'bar': 'baz'}))
 
-		keyWordArg = currying.pre_curry(passthrough, foo=42)
+		keyWordArg = self.pre_curry(passthrough, foo=42)
 		self.assertEquals(keyWordArg(), ((), {'foo': 42}))
 		self.assertEquals(
 			keyWordArg('foo', 'bar'), (('foo', 'bar'), {'foo': 42}))
@@ -38,13 +42,44 @@ class CurryTest(unittest.TestCase):
 			keyWordArg('foo', bar='baz'),
 			(('foo',), {'bar': 'baz', 'foo': 42}))
 
-		both = currying.pre_curry(passthrough, 42, foo=42)
+		both = self.pre_curry(passthrough, 42, foo=42)
 		self.assertEquals(both(), ((42,), {'foo': 42}))
 		self.assertEquals(
 			both('foo', 'bar'), ((42, 'foo', 'bar'), {'foo': 42}))
 		self.assertEquals(both(foo='bar'), ((42, ), {'foo': 'bar'}))
 		self.assertEquals(
 			both('foo', bar='baz'), ((42, 'foo'), {'bar': 'baz', 'foo': 42}))
+
+	def test_curry_original(self):
+		self.assertIdentical(self.pre_curry(passthrough).func, passthrough)
+
+	def test_module_magic(self):
+		self.assertIdentical(
+			currying.pretty_docs(self.pre_curry(passthrough)).__module__,
+			passthrough.__module__)
+		# test is kinda useless if they are identical without pretty_docs
+		self.assertNotIdentical(
+			getattr(self.pre_curry(passthrough), '__module__', None),
+			passthrough.__module__)
+
+	def test_pretty_docs(self):
+		for func in (passthrough, documented):
+			self.assertEquals(
+				currying.pretty_docs(
+					self.pre_curry(func), 'new doc').__doc__,
+				'new doc')
+			self.assertIdentical(
+				currying.pretty_docs(self.pre_curry(func)).__doc__,
+				func.__doc__)
+
+
+if currying.pre_curry is not currying.native_pre_curry:
+	class NativePrecurryTest(PreCurryTest):
+		def setUp(self):
+			self.pre_curry = currying.native_pre_curry
+
+
+class PostCurryTest(unittest.TestCase):
 
 	def test_post_curry(self):
 		noop = currying.post_curry(passthrough)
@@ -78,33 +113,10 @@ class CurryTest(unittest.TestCase):
 		self.assertEquals(
 			both('foo', bar='baz'), (('foo', 42), {'bar': 'baz', 'foo': 42}))
 
-
-class PrettyDocsTest(unittest.TestCase):
-
 	def test_curry_original(self):
-		self.assertIdentical(
-			currying.pre_curry(passthrough).func, passthrough)
 		self.assertIdentical(
 			currying.post_curry(passthrough).func, passthrough)
 
-	def test_module_magic(self):
-		self.assertIdentical(
-			currying.pretty_docs(currying.pre_curry(passthrough)).__module__,
-			passthrough.__module__)
-		# test is kinda useless if they are identical without pretty_docs
-		self.assertNotIdentical(
-			currying.pre_curry(passthrough).__module__,
-			passthrough.__module__)
-
-	def test_pretty_docs(self):
-		for func in (passthrough, documented):
-			self.assertEquals(
-				currying.pretty_docs(
-					currying.pre_curry(func), 'new doc').__doc__,
-				'new doc')
-			self.assertIdentical(
-				currying.pretty_docs(currying.pre_curry(func)).__doc__,
-				func.__doc__)
 
 class TestAliasClassAttr(unittest.TestCase):
 	def test_alias_class_method(self):

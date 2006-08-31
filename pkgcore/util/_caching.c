@@ -6,8 +6,23 @@
  * C version of some of pkgcore (for extra speed).
  */
 
+/* This does not really do anything since we do not use the "#"
+ * specifier in a PyArg_Parse or similar call, but hey, not using it
+ * means we are Py_ssize_t-clean too!
+ */
+
+#define PY_SSIZE_T_CLEAN
+
 #include "Python.h"
 
+/* Compatibility with python < 2.5 */
+
+#if PY_VERSION_HEX < 0x02050000
+typedef int Py_ssize_t;
+#define PY_SSIZE_T_MAX INT_MAX
+#define PY_SSIZE_T_MIN INT_MIN
+typedef Py_ssize_t (*lenfunc)(PyObject *);
+#endif
 
 /*
  * WeakValFinalizer: holds a reference to a dict and key,
@@ -54,6 +69,15 @@ pkgcore_WeakValFinalizer_call(pkgcore_WeakValFinalizer *self,
 	Py_RETURN_NONE;
 }
 
+static int
+pkgcore_WeakValFinalizer_traverse(
+	pkgcore_WeakValFinalizer *self, visitproc visit, void *arg)
+{
+	Py_VISIT(self->dict);
+	Py_VISIT(self->key);
+	return 0;
+}
+
 static PyTypeObject pkgcore_WeakValFinalizerType = {
 	PyObject_HEAD_INIT(NULL)
 	0,                                               /* ob_size */
@@ -75,7 +99,9 @@ static PyTypeObject pkgcore_WeakValFinalizerType = {
 	0,                                               /* tp_getattro */
 	0,                                               /* tp_setattro */
 	0,                                               /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT,                              /* tp_flags */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,         /* tp_flags */
+	"WeakValFinalizer objects",                      /* tp_doc */
+    (traverseproc)pkgcore_WeakValFinalizer_traverse, /* tp_traverse */
 };
 
 typedef struct {
@@ -98,6 +124,31 @@ pkgcore_WeakValCache_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 	return (PyObject *)self;
 }
 
+static int
+pkgcore_WeakValCache_traverse(
+	pkgcore_WeakValCache *self, visitproc visit, void *arg)
+{
+	Py_VISIT(self->dict);
+	return 0;
+}
+
+static int
+pkgcore_WeakValCache_clear(pkgcore_WeakValCache *self)
+{
+	/* TODO someone who understands python gc should check if the
+	 * following logic makes sense. --marienz
+	 *
+	 * We could simply Py_CLEAR(self->dict) here but since we must be
+	 * in a mostly sane state (at least not segfault) after _clear
+	 * that would mean a lot of extra NULL checks in our methods.
+	 * Since we only need to clear references that "may have created
+	 * cycles" and we should have the only reference to self->dict
+	 * ourself just clearing the dict contents should suffice.
+	 */
+	PyDict_Clear(self->dict);
+	return 0;
+}
+
 static void
 pkgcore_WeakValCache_dealloc(pkgcore_WeakValCache *self)
 {
@@ -105,7 +156,7 @@ pkgcore_WeakValCache_dealloc(pkgcore_WeakValCache *self)
 	self->ob_type->tp_free((PyObject *)self);
 }
 
-static int
+static Py_ssize_t
 pkgcore_WeakValCache_len(pkgcore_WeakValCache *self)
 {
 	return PyDict_Size(self->dict);
@@ -122,8 +173,8 @@ pkgcore_WeakValCache_setitem(pkgcore_WeakValCache *self, PyObject *key, PyObject
 		return -1;
 	}
 
-	pkgcore_WeakValFinalizer *finalizer = PyObject_New(pkgcore_WeakValFinalizer, 
-		&pkgcore_WeakValFinalizerType);
+	pkgcore_WeakValFinalizer *finalizer = PyObject_GC_New(
+		pkgcore_WeakValFinalizer, &pkgcore_WeakValFinalizerType);
 
 	if (NULL == finalizer)
 		return -1;
@@ -179,7 +230,7 @@ pkgcore_WeakValCache_getitem(pkgcore_WeakValCache *self, PyObject *key)
 static PyObject *
 pkgcore_WeakValCache_get(pkgcore_WeakValCache *self, PyObject *args)
 {
-	int size;
+	Py_ssize_t size;
 	size = PySequence_Size(args);
 	PyObject *key, *resobj;
 	if(size < 1 || size > 2) {
@@ -212,7 +263,7 @@ pkgcore_WeakValCache_get(pkgcore_WeakValCache *self, PyObject *args)
 }
 
 static PyMappingMethods pkgcore_WeakValCache_as_mapping = {
-	(inquiry)pkgcore_WeakValCache_len,               /* len inquiry */
+	(lenfunc)pkgcore_WeakValCache_len,               /* len() */
 	(binaryfunc)pkgcore_WeakValCache_getitem,        /* getitem */
 	(objobjargproc)pkgcore_WeakValCache_setitem,     /* setitem */
 };		
@@ -246,10 +297,10 @@ static PyTypeObject pkgcore_WeakValCacheType = {
 	0,                                               /* tp_getattro */
 	0,                                               /* tp_setattro */
 	0,                                               /* tp_as_buffer */
-	Py_TPFLAGS_DEFAULT,                              /* tp_flags */
+	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,         /* tp_flags */
 	0,                                               /* tp_doc */
-	0,                                               /* tp_traverse */
-	0,                                               /* tp_clear */
+	pkgcore_WeakValCache_traverse,                   /* tp_traverse */
+	pkgcore_WeakValCache_clear,                      /* tp_clear */
 	0,                                               /* tp_richcompare */
 	0,                                               /* tp_weaklistoffset */
 	0,                                               /* tp_iter */
@@ -476,7 +527,7 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
 		return NULL;
 	}
 
-	pkgcore_WeakValFinalizer *finalizer = PyObject_New(
+	pkgcore_WeakValFinalizer *finalizer = PyObject_GC_New(
 		pkgcore_WeakValFinalizer, &pkgcore_WeakValFinalizerType);
 	if (!finalizer) {
 		Py_DECREF(key);

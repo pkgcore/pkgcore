@@ -46,56 +46,81 @@ class StrMatch(base):
 	__slots__ = ("flags",)
 
 
-class StrRegexMatch(StrMatch):
-	
+class StrRegex(StrMatch):
+
 	"""
 	regex based matching
 	"""
-	
-	__slots__ = ("regex", "compiled_re")
+
+	__slots__ = ("regex", "_matchfunc", "ismatch")
 
 	__inst_caching__ = True
 
-	def __init__(self, regex, CaseSensitive=True, **kwds):
+	def __init__(self, regex, CaseSensitive=True, match=False, **kwds):
 
 		"""
 		@param regex: regex pattern to match
 		@param CaseSensitive: should the match be case sensitive?
+		@param match: should C{re.match} be used instead of C{re.search}?
 		@keyword negate: should the match results be negated?
 		"""
 
-		super(StrRegexMatch, self).__init__(**kwds)
+		super(StrRegex, self).__init__(**kwds)
 		self.regex = regex
+		self.ismatch = match
 		flags = 0
 		if not CaseSensitive:
 			flags = re.I
 		self.flags = flags
-		self.compiled_re = re.compile(regex, flags)
+		compiled_re = re.compile(regex, flags)
+		if match:
+			self._matchfunc = compiled_re.match
+		else:
+			self._matchfunc = compiled_re.search
 
 	def match(self, value):
-		return (self.compiled_re.match(str(value)) is not None) ^ self.negate
+		if not isinstance(value, basestring):
+			# Be too clever for our own good --marienz
+			if value is None:
+				value = ''
+			else:
+				value = str(value)
+		return (self._matchfunc(value) is not None) != self.negate
 
 	def intersect(self, other):
-		if self.regex == other.regex and self.negate == other.negate and self.flags == other.flags:
+		if self == other:
 			return self
 		return None
 
 	def __eq__(self, other):
-		return self.regex == other.regex and self.negate == other.negate and self.flags == other.flags
+		return (self.regex == other.regex and
+				self.negate == other.negate and
+				self.flags == other.flags and
+				self.ismatch == other.ismatch)
 
 	def __hash__(self):
-		return hash((self.regex, self.negate, self.flags))
+		return hash((self.regex, self.negate, self.flags, self.ismatch))
 
 	def __repr__(self):
+		result = [self.__class__.__name__, repr(self.regex)]
 		if self.negate:
-			string = '<%s %r negated @%#8x>'
+			result.append('negated')
+		if self.ismatch:
+			result.append('match')
 		else:
-			string = '<%s %r @%#8x>'
-		return string % (self.__class__.__name__, self.regex, id(self))
+			result.append('search')
+		result.append('@%#8x' % (id(self),))
+		return '<%s>' % (' '.join(result),)
 
 	def __str__(self):
-		if self.negate:	return "not like %s" % self.regex
-		return "like %s" % self.regex
+		if self.ismatch:
+			result = 'match '
+		else:
+			result = 'search '
+		result += self.regex
+		if self.negate:
+			return 'not ' + result
+		return result
 
 
 class StrExactMatch(StrMatch):

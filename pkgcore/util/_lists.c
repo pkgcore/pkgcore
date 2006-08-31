@@ -5,7 +5,22 @@
  * C version of some of pkgcore (for extra speed).
  */
 
+/* This does not really do anything since we do not use the "#"
+ * specifier in a PyArg_Parse or similar call, but hey, not using it
+ * means we are Py_ssize_t-clean too!
+ */
+
+#define PY_SSIZE_T_CLEAN
+
 #include "Python.h"
+
+/* Compatibility with python < 2.5 */
+
+#if PY_VERSION_HEX < 0x02050000
+typedef int Py_ssize_t;
+#define PY_SSIZE_T_MAX INT_MAX
+#define PY_SSIZE_T_MIN INT_MIN
+#endif
 
 
 /* Helper functions */
@@ -88,7 +103,8 @@ pkgcore_iflatten_func_new(PyTypeObject *type,
 static PyObject *
 pkgcore_iflatten_func_iternext(pkgcore_iflatten_func *self) {
 	PyObject *tail, *result, *tmp;
-	int n, res;
+	int res;
+	Py_ssize_t n;
 
 	if (self->in_iternext) {
 		/* We do not allow this because it means our list could be

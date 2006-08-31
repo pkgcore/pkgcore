@@ -8,7 +8,8 @@ from pkgcore.util.currying import post_curry
 class mixin:
 	def test_builtin_override(self):
 		if self.func_name in __builtins__:
-			self.assertIdentical(*[getattr(x, self.func) for x in [__builtins__, compatibility]])
+			self.assertIdentical(__builtins__[self.func_name],
+								 getattr(compatibility, self.func_name))
 
 	def check_func(self, result1, result2, test3, result3):
 		i = iter(xrange(100))

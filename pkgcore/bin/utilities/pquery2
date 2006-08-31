@@ -53,7 +53,7 @@ def parse_revdep(value):
 
 def parse_description(value):
 	"""Value is used as a regexp matching description or longdescription."""
-	matcher = values.StrRegexMatch(value, CaseSensitive=False)
+	matcher = values.StrRegex(value, CaseSensitive=False)
 	return packages.OrRestriction(finalize=True, *list(
 			packages.PackageRestriction(attr, matcher)
 			for attr in ('description', 'longdescription')))
@@ -70,6 +70,26 @@ def parse_owns(value):
 	return packages.PackageRestriction(
 		'contents', values.ContainmentMatch(value))
 
+
+class GetAttrRestriction(values.base):
+
+	def __init__(self, attr, child, **kwargs):
+		values.base.__init__(self, **kwargs)
+		self.attr = attr
+		self.child = child
+
+	def match(self, value):
+		return self.child.match(getattr(value, self.attr)) != self.negate
+
+	def __repr__(self):
+		if self.negate:
+			string = '<%s attr=%s child=%r negate @%#8x>'
+		else:
+			string = '<%s attr=%s child=%r @%#8x>'
+		return string % (
+			self.__class__.__name__, self.attr, self.child, id(self))
+
+
 def parse_ownsre(value):
 	"""Value is a regexp matched against the string form of an fs object.
 
@@ -77,7 +97,39 @@ def parse_ownsre(value):
 	to match.
 	"""
 	return packages.PackageRestriction(
-		'contents', ValuesAnyMatch(values.StrRegexMatch(value)))
+		'contents', ValuesAnyMatch(GetAttrRestriction('location',
+													  values.StrRegex(value))))
+
+
+class DataSourceRestriction(values.base):
+
+	"""Turn a data_source into a line iterator and apply a restriction."""
+
+	def __init__(self, childrestriction, **kwargs):
+		values.base.__init__(self, **kwargs)
+		self.restriction = childrestriction
+
+	def __str__(self):
+		return 'DataSourceRestriction: %s negate=%s' % (
+			self.restriction, self.negate)
+
+	def __repr__(self):
+		if self.negate:
+			string = '<%s restriction=%r negate @%#8x>'
+		else:
+			string = '<%s restriction=%r @%#8x>'
+		return string % (self.__class__.__name__, self.restriction, id(self))
+
+	def match(self, value):
+		return self.restriction.match(iter(value.get_fileobj())) ^ self.negate
+
+
+def parse_envmatch(value):
+	"""Apply a regexp to the environment."""
+	return packages.PackageRestriction(
+		'environment', DataSourceRestriction(ValuesAnyMatch(
+				values.StrRegex(value))))
+
 
 PARSE_FUNCS = {
 	'match': parse_match,
@@ -88,7 +140,8 @@ PARSE_FUNCS = {
 	'hasuse': commaSeparatedContainment('iuse'),
 	'owns': parse_owns,
 	'ownsre': parse_ownsre,
-	'maintainer': commaSeparatedContainment('maintainers')
+	'maintainer': commaSeparatedContainment('maintainers'),
+	'environment': parse_envmatch,
 	}
 
 
@@ -359,8 +412,7 @@ def build_option_parser():
 		'Each option specifies a restriction displayed packages must match. '
 		'Specifying the same option twice means "or" unless stated otherwise. '
 		'Specifying multiple types of restrictions means "and" unless stated '
-		'otherwise. BEWARE: regexps need to match *entirely*! Start/end with '
-		'".*" for a search.')
+		'otherwise.')
 	restrict.add_option('--match', '-m', action='append', type='match',
 						help='Glob-like match on category/package-version.')
 	restrict.add_option('--hasuse', action='append', type='hasuse',
@@ -369,7 +421,7 @@ def build_option_parser():
 						help='Dependency on an atom.')
 	restrict.add_option('--description', '-S', action='append',
 						type='description',
-						help='regexp match on (long)description. ')
+						help='regexp search on (long)description. ')
 	restrict.add_option('--herd', action='append', type='herd',
 						help='exact match on a herd.')
 	restrict.add_option('--license', action='append', type='license',
@@ -380,12 +432,14 @@ def build_option_parser():
 						help='like "owns" but using a regexp for matching.')
 	restrict.add_option('--maintainer', action='append', type='maintainer',
 						help='comma-separated list of maintainers.')
+	restrict.add_option('--environment', action='append', type='environment',
+						help='regexp search in environment.bz2.')
 
 	printable_attrs = ('rdepends', 'depends', 'post_rdepends',
 					   'use', 'iuse', 'description', 'longdescription',
 					   'herds', 'license', 'uris', 'files',
 					   'slot', 'maintainers', 'restrict',
-					   'alldepends', 'path')
+					   'alldepends', 'path', 'environment')
 
 	output = parser.add_option_group('Output formatting')
 	output.add_option('--cpv', action='store_true',
@@ -429,6 +483,8 @@ def stringify_attr(config, pkg, attr):
 
 	if attr in ('use', 'herds', 'iuse', 'maintainers', 'restrict'):
 		return ' '.join(value)
+	if attr == 'environment':
+		return ''.join(value.get_fileobj())
 	return str(value)
 
 

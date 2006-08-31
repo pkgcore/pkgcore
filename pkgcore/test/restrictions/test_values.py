@@ -5,6 +5,48 @@
 from twisted.trial import unittest
 from pkgcore.restrictions import values
 
+
+class StrRegexTest(unittest.TestCase):
+
+	def test_match(self):
+		for x in (True, False):
+			self.assertEquals(x, values.StrRegex(
+					'foo.*r', match=True, negate=not x).match('foobar'))
+			self.assertEquals(not x, values.StrRegex(
+					'foo.*r', match=True, negate=not x).match('afoobar'))
+
+	def test_search(self):
+		for x in (True, False):
+			self.assertEquals(x, values.StrRegex(
+					'foo.*r', negate=not x).match('afoobar'))
+			self.assertEquals(not x, values.StrRegex(
+					'^foo.*r', negate=not x).match('afoobar'))
+
+	def test_case_sensitivity(self):
+		self.assertEquals(False, values.StrRegex('foo').match('FOO'))
+		self.assertEquals(True, values.StrRegex('foo', False).match('FOO'))
+
+	def test_str(self):
+		self.assertEquals('search spork', str(values.StrRegex('spork')))
+		self.assertEquals('not search spork',
+						  str(values.StrRegex('spork', negate=True)))
+		self.assertEquals('match spork',
+						  str(values.StrRegex('spork', match=True)))
+		self.assertEquals('not match spork',
+						  str(values.StrRegex('spork',
+											  match=True, negate=True)))
+
+	def test_repr(self):
+		for restr, string in [
+			(values.StrRegex('spork'), "<StrRegex 'spork' search @"),
+			(values.StrRegex('spork', match=True),
+			 "<StrRegex 'spork' match @"),
+			(values.StrRegex('spork', negate=True),
+			 "<StrRegex 'spork' negated search @"),
+			]:
+			self.failUnless(repr(restr).startswith(string), (restr, string))
+
+
 class TestStrExactMatch(unittest.TestCase):
 	
 	def test_case_sensitive(self):

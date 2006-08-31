@@ -15,9 +15,7 @@ def documented():
 
 class PreCurryTest(unittest.TestCase):
 
-	def setUp(self):
-		# If we just set this at class level it becomes a bound method
-		self.pre_curry = currying.pre_curry
+	pre_curry = staticmethod(currying.pre_curry)
 
 	def test_pre_curry(self):
 		noop = self.pre_curry(passthrough)
@@ -75,8 +73,7 @@ class PreCurryTest(unittest.TestCase):
 
 if currying.pre_curry is not currying.native_pre_curry:
 	class NativePrecurryTest(PreCurryTest):
-		def setUp(self):
-			self.pre_curry = currying.native_pre_curry
+		pre_curry = staticmethod(currying.native_pre_curry)
 
 
 class PostCurryTest(unittest.TestCase):

@@ -478,7 +478,7 @@ class EbuildProcessor:
 		line = line.strip()
 		eclass = ecache.get_eclass(line)
 		if eclass is None:
-			value = ecache.write("failed")
+			self.write("failed")
 			raise UnhandledCommand("inherit requires a known eclass, %s cannot be found" % line)
 
 		if eclass.get_path is not None:
@@ -486,7 +486,7 @@ class EbuildProcessor:
 			self.write("path")
 			self.write(value)
 		else:
-			# $10 this doesn't work.
+			# XXX $10 this doesn't work.
 			value = eclass.get_fileobj().read()
 			self.write("transfer")
 			self.write(value)

@@ -12,7 +12,8 @@ from pkgcore.util.file import read_dict
 from pkgcore.util import currying
 from pkgcore.util.osutils import listdir_files, listdir_dirs
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.ebuild.ebd:buildable")
+demandload(globals(), "pkgcore.ebuild.ebd:buildable ")
+from pkgcore.ebuild import eclass_cache as eclass_cache_module
 
 from pkgcore.plugins import get_plugin
 
@@ -52,8 +53,7 @@ class UnconfiguredTree(prototype.tree):
 		except OSError:
 			raise errors.InitializationError("lstat failed on base %s" % self.base)
 		if eclass_cache is None:
-			import eclass_cache
-			self.eclass_cache = eclass_cache.cache(self.base)
+			self.eclass_cache = eclass_cache_module.cache(os.path.join(self.base, "eclass"), self.base)
 		else:
 			self.eclass_cache = eclass_cache
 		if mirrors_file:

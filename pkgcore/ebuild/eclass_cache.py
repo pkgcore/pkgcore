@@ -27,22 +27,15 @@ class cache(base):
 	Base defaults to having both set.  Override as needed.
 	Set to None if that method isn't possible.
 	"""
-	def __init__(self, porttree):
+	def __init__(self, path, portdir=None):
 		"""
 		@param porttree: ondisk location of the tree we're working with
 		"""
 		# generate this.
 		# self.eclasses = {} # {"Name": ("location","_mtime_")}
-		self.porttree = normpath(porttree)
-		self.eclassdir = os.path.join(self.porttree, "eclass")
-		self.portdir = self.porttree
+		self.eclassdir = normpath(path)
+		self.portdir = portdir
 		self.update_eclasses()
-
-	def __getattr__(self, attr):
-		if attr == "eclasses":
-			self.update_eclasses
-			return self.eclasses
-		raise AttributeError(attr)
 
 	def update_eclasses(self):
 		"""force instance to update it's internal view of on disk/remote eclasses"""

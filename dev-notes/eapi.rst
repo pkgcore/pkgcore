@@ -34,3 +34,4 @@ Version 1
 - use/slot deps, optionally repository deps.
 - hard one to slide in, but change versioning rules; no longer allow 1.006, require it to be 1.6
 - pkg_setup must be sandboxable.
+- default IUSE, bug # 61732

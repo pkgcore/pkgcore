@@ -43,8 +43,14 @@ def converter(src_tar):
 			yield fsFile(location, **d)
 		elif member.issym():
 			yield fsSymlink(location, member.linkname, **d)
+		elif member.isfifo():
+			yield fsFifo(location, **d)
+		elif member.isdev():
+			d["major"] = long(member.major)
+			d["minor"] = long(member.minor)
+			yield fsDir(location, **d)
 		else:
-			print "skipping", member
+			raise AssertionError("unknown type %r was encounted walking tarmembers" % member)
 
 def generate_contents(path):
 	t = TarFile.bz2open(path, mode="r")

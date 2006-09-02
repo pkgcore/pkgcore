@@ -142,10 +142,15 @@ class DelayedInvertedContains(InvertedContains):
 		o = set.__new__(cls)
 		o._func = func
 		o._data = data
-	
+		return o
+
+	def __init__(self, func, data):
+		"""Call func on data and update with the result when "in" is called."""
+		# We need to have an __init__ taking two args or we explode.
+
 	def __contains__(self, key):
 		if self._func is not None:
-			s = o._func(o._data)
+			s = self._func(self._data)
 			self._data = self._func = None
 			self.update(s)
 		return InvertedContains.__contains__(self, key)

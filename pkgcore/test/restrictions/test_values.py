@@ -6,6 +6,53 @@ from twisted.trial import unittest
 from pkgcore.restrictions import values
 
 
+class SillyBool(values.base):
+	"""Extra stupid version of AlwaysBool to test base.force_{True,False}."""
+	def match(self, something):
+		return not self.negate
+
+
+class BaseTest(unittest.TestCase):
+
+	def test_force(self):
+		true = SillyBool(negate=False)
+		false = SillyBool(negate=True)
+		self.failUnless(true.force_True(None, None, None))
+		self.failIf(true.force_False(None, None, None))
+		self.failIf(false.force_True(None, None, None))
+		self.failUnless(false.force_False(None, None, None))
+
+
+class GetAttrTest(unittest.TestCase):
+
+	"""Test bits of GetAttrRestriction that differ from PackageRestriction."""
+
+	def test_force(self):
+		# TODO we could do with both more tests and a more powerful
+		# force_* implementation. This just tests if the function
+		# takes the right number of arguments.
+
+		# TODO test negate handling
+		succeeds = values.GetAttrRestriction('test', values.AlwaysTrue)
+		fails = values.GetAttrRestriction('test', values.AlwaysFalse)
+
+		class Dummy(object):
+			test = True
+
+		dummy = Dummy()
+
+		class FakePackage(object):
+			"""XXX this is vastly too minimal."""
+			value = dummy
+
+		pkg = FakePackage()
+
+		self.failUnless(succeeds.force_True(pkg, 'value', dummy))
+		self.failIf(succeeds.force_False(pkg, 'value', dummy))
+		self.failIf(fails.force_True(pkg, 'value', dummy))
+		self.failUnless(fails.force_False(pkg, 'value', dummy))
+
+
 class StrRegexTest(unittest.TestCase):
 
 	def test_match(self):

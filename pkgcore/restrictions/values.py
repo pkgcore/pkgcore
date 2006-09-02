@@ -10,30 +10,46 @@ a value restriction).
 """
 
 import re
-from pkgcore.restrictions import restriction, boolean
+from pkgcore.restrictions import restriction, boolean, packages
 from pkgcore.util.currying import pre_curry, pretty_docs
 
-value_type = "values"
+# Backwards compatibility.
+value_type = restriction.value_type
+
 
 class base(restriction.base):
-	"""
-	base restriction matching object; overrides setattr to provide the usual write once trickery
-	all derivatives *should* be __slot__ based (lot of instances in memory potentially)
+	"""Base restriction matching object for values.
+
+	Beware: do not check for instances of this to detect value
+	restrictions! Use the C{type} attribute instead.
 	"""
 
 	__slots__ = ()
 
-	type = value_type
+	type = restriction.value_type
 
 	def force_True(self, pkg, attr, val):
-		if self.match(val) != self.negate:
-			return True
-		return False
+		return self.match(val)
 
 	def force_False(self, pkg, attr, val):
-		if self.match(val) == self.negate:
-			return True
-		return False
+		return not self.match(val)
+
+
+class GetAttrRestriction(base, packages.PackageRestriction):
+
+	"""Restriction pulling an attribute and applying a child restriction."""
+
+	__slots__ = ()
+
+	# XXX this needs further thought.
+	#
+	# The api for force_{True,False} is a ValueRestriction gets called
+	# with a package instance, the attribute name (string), and the
+	# current attribute value. We cannot really provide a child
+	# restriction with a sensible pkg and a sensible attribute name,
+	# so we just punt and return True/False depending on the current
+	# state without "forcing" anything (default implementation in
+	# "base").
 
 
 class VersionRestriction(base):
@@ -288,7 +304,6 @@ class ComparisonMatch(base):
 	del k,v
 
 	__slots__ = ("data", "cmp_func", "matching_vals")
-	negate = False
 
 	@classmethod
 	def convert_str_op(cls, op_str):
@@ -307,7 +322,7 @@ class ComparisonMatch(base):
 		If you specify [-1,0], you're saying "result must be less then or equal to".
 		@param negate: should the results be negated?
 		"""
-			
+		base.__init__(self, negate=negate)
 		self.cmp_func = cmp_func
 	
 		if not isinstance(matching_vals, (tuple, list)):
@@ -525,7 +540,7 @@ for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
 	for x in l:
 		o = getattr(m, x)
 		doc = o.__doc__
-		o = pre_curry(o, node_type=value_type)
+		o = pre_curry(o, node_type=restriction.value_type)
 		if doc is None:
 			doc = ''
 		else:

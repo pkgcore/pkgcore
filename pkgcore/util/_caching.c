@@ -184,6 +184,8 @@ pkgcore_WeakValCache_setitem(pkgcore_WeakValCache *self, PyObject *key, PyObject
 	Py_INCREF(key);
 	finalizer->key = key;
 
+	PyObject_GC_Track(finalizer);
+
 	PyObject *weakref = PyWeakref_NewRef(val, (PyObject*)finalizer);
 	Py_DECREF(finalizer);
 	int ret = -1;
@@ -299,8 +301,8 @@ static PyTypeObject pkgcore_WeakValCacheType = {
 	0,                                               /* tp_as_buffer */
 	Py_TPFLAGS_DEFAULT | Py_TPFLAGS_HAVE_GC,         /* tp_flags */
 	0,                                               /* tp_doc */
-	pkgcore_WeakValCache_traverse,                   /* tp_traverse */
-	pkgcore_WeakValCache_clear,                      /* tp_clear */
+	(traverseproc)pkgcore_WeakValCache_traverse,     /* tp_traverse */
+	(inquiry)pkgcore_WeakValCache_clear,             /* tp_clear */
 	0,                                               /* tp_richcompare */
 	0,                                               /* tp_weaklistoffset */
 	0,                                               /* tp_iter */
@@ -502,9 +504,13 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
 					"caching for %s, key=%s is unhashable")) {
 				if (formatargs = PyTuple_Pack(2, self, key)) {
 					if (message = PyString_Format(format, formatargs)) {
-						PyErr_Warn(NULL, PyString_AsString(message));
-						resobj = PyType_Type.tp_call((PyObject*)self,
-							args, kwargs);
+						/* Leave resobj NULL if PyErr_Warn raises. */
+						if (!PyErr_Warn(
+								PyExc_UserWarning,
+								PyString_AsString(message))) {
+							resobj = PyType_Type.tp_call((PyObject*)self,
+														 args, kwargs);
+						}
 						Py_DECREF(message);
 					}
 					Py_DECREF(formatargs);
@@ -538,6 +544,8 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
 	finalizer->dict = self->inst_dict;
 	Py_INCREF(key);
 	finalizer->key = key;
+
+	PyObject_GC_Track(finalizer);
 
 	PyObject *weakref = PyWeakref_NewRef(resobj, (PyObject*)finalizer);
 	Py_DECREF(finalizer);

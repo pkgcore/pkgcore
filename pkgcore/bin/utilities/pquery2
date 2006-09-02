@@ -71,25 +71,6 @@ def parse_owns(value):
 		'contents', values.ContainmentMatch(value))
 
 
-class GetAttrRestriction(values.base):
-
-	def __init__(self, attr, child, **kwargs):
-		values.base.__init__(self, **kwargs)
-		self.attr = attr
-		self.child = child
-
-	def match(self, value):
-		return self.child.match(getattr(value, self.attr)) != self.negate
-
-	def __repr__(self):
-		if self.negate:
-			string = '<%s attr=%s child=%r negate @%#8x>'
-		else:
-			string = '<%s attr=%s child=%r @%#8x>'
-		return string % (
-			self.__class__.__name__, self.attr, self.child, id(self))
-
-
 def parse_ownsre(value):
 	"""Value is a regexp matched against the string form of an fs object.
 
@@ -97,8 +78,8 @@ def parse_ownsre(value):
 	to match.
 	"""
 	return packages.PackageRestriction(
-		'contents', ValuesAnyMatch(GetAttrRestriction('location',
-													  values.StrRegex(value))))
+		'contents', ValuesAnyMatch(values.GetAttrRestriction(
+				'location', values.StrRegex(value))))
 
 
 class DataSourceRestriction(values.base):

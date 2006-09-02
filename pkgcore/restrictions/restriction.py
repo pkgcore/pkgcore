@@ -39,10 +39,10 @@ class base(object):
 		raise NotImplementedError
 
 	def force_False(self, *arg, **kwargs):
-		return self.match(*arg, **kwargs) == self.negate
+		return not self.match(*arg, **kwargs)
 	
 	def force_True(self, *arg, **kwargs):
-		return self.match(*arg, **kwargs) != self.negate
+		return self.match(*arg, **kwargs)
 
 	def intersect(self, other):
 		return None
@@ -135,3 +135,7 @@ class FakeType(base):
 
 	def __str__(self):
 		return "Faked type(%s): %s" % (self.type, self._restrict)
+
+
+value_type = "values"
+package_type = "package"

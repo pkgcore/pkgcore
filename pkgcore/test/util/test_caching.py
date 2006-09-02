@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from twisted.trial import unittest, util
 from pkgcore.util import caching
 
 def gen_test(WeakInstMeta):
@@ -60,31 +60,79 @@ def gen_test(WeakInstMeta):
 		def test_reenabled(self):
 			self.test_reuse(reenabled_weak_inst)
 
+		# Read this before doing anything with the warnings-related
+		# tests unless you really enjoy debugging Heisenbugs.
+		#
+		# The warnings module is optimized for the common case of
+		# warnings that should be ignored: it stores a "key"
+		# consisting of the type of warning, the warning message and
+		# the module it originates from in a dict (cleverly hidden
+		# away in the globals() of the frame calling warn()) if a
+		# warning should be ignored, and then immediately ignores
+		# warnings matching that key, *without* looking at the current
+		# filters list.
+		#
+		# This means that if our test(s) with warnings ignored run
+		# before tests with warnings turned into exceptions (test
+		# order is random, enter Heisenbugs) and both tests involve
+		# the same exception message they will screw up the tests.
+		#
+		# To make matters more interesting the warning message we deal
+		# with here is not constant. Specifically it contains the
+		# repr() of an argument tuple, containing a class instance,
+		# which means the message will contain the address that object
+		# is stored at!
+		#
+		# This exposed itself as crazy test failures where running
+		# from .py fails and from .pyc works (perhaps related to the
+		# warnings module taking a different codepath for this) and
+		# creating objects or setting pdb breakpoints before that
+		# failure caused the test to pass again.
+		#
+		# What all this means: Be 100% positively absolutely sure
+		# test_uncachable and test_uncachable_warnings do not see the
+		# same warning message ever. We do that by making sure their
+		# warning messages contain a different classname
+		# (RaisingHashFor...).
+
 		def test_uncachable(self):
 			weak_inst.reset()
-			class fake_warning(object):
-				def warn(*a, **kw):
-					pass
-		
-			class chuck_errors(object):
+
+			# This name is *important*, see above.
+			class RaisingHashForTestUncachable(object):
 				def __init__(self, error):
 					self.error = error
 				def __hash__(self):
 					raise self.error
-		
-			# silence warnings.
-			w = getattr(caching, 'warnings', None)
-			try:
-				if w is not None:
-					caching.warnings = fake_warning()
-				self.assertTrue(weak_inst([]) is not weak_inst([]))
-				self.assertEqual(weak_inst.counter, 2)
-				for x in (TypeError, NotImplementedError):
-					self.assertTrue(weak_inst(chuck_errors(x)) is not 
-						weak_inst(chuck_errors(x)))
-			finally:
-				if w is not None:
-					caching.warnings = w
+
+			RaisingHash = RaisingHashForTestUncachable
+
+			self.assertTrue(weak_inst([]) is not weak_inst([]))
+			self.assertEqual(weak_inst.counter, 2)
+			for x in (TypeError, NotImplementedError):
+				self.assertTrue(weak_inst(RaisingHash(x)) is not 
+					weak_inst(RaisingHash(x)))
+
+		# These are applied in reverse order. Effect is UserWarning is
+		# ignored and everything else is an error.
+		test_uncachable.suppress = [
+			util.suppress('error'), util.suppress(category=UserWarning)]
+
+		def test_uncachable_warning(self):
+			# This name is *important*, see above.
+			class RaisingHashForTestUncachableWarnings(object):
+				def __init__(self, error):
+					self.error = error
+				def __hash__(self):
+					raise self.error
+
+			RaisingHash = RaisingHashForTestUncachableWarnings
+
+			for x in (TypeError, NotImplementedError):
+				self.assertRaises(UserWarning, weak_inst, RaisingHash(x))
+
+		test_uncachable_warning.suppress = [
+			util.suppress('error', category=UserWarning)]
 
 		def test_hash_collision(self):
 			class BrokenHash(object):
@@ -100,6 +148,9 @@ def gen_test(WeakInstMeta):
 			o = weak_inst(argument=1)
 			self.assertIdentical(o, weak_inst(argument=1))
 			self.assertNotIdentical(o, weak_inst(argument=2))
+
+	# Hack to make it show up with a different name in trial's output
+	TestWeakInstMeta.__name__ = WeakInstMeta.__name__ + 'Test'
 
 	return TestWeakInstMeta
 

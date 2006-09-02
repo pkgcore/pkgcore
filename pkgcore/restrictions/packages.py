@@ -7,19 +7,26 @@ restriction classes designed for package level matching
 
 import operator
 from pkgcore.util.currying import pre_curry, pretty_docs
-from pkgcore.restrictions import values, restriction, boolean
+from pkgcore.restrictions import restriction, boolean
 from pkgcore.util.demandload import demandload
 demandload(globals(), "logging")
 
-package_type = "package"
+# Backwards compatibility.
+package_type = restriction.package_type
+
 
 class PackageRestriction(restriction.base):
-	"""
-	package data restriction.  Inherit for anything that's more then cpv mangling please
-	"""
+
+	"""Package data restriction."""
+
+	# Careful: some methods (__eq__, __hash__, intersect) try to work
+	# for subclasses too. They will not behave as intended if a
+	# subclass adds attributes. So if you do that, override the
+	# methods.
 
 	__slots__ = ("attr_split", "attr", "restriction")
-	type = package_type
+	type = restriction.package_type
+	subtype = restriction.value_type
 	__inst_caching__ = True
 
 	def __init__(self, attr, restriction, negate=False):
@@ -31,8 +38,8 @@ class PackageRestriction(restriction.base):
 		super(PackageRestriction, self).__init__(negate=negate)
 		self.attr_split = tuple(operator.attrgetter(x) for x in attr.split("."))
 		self.attr = attr
-		if not restriction.type == values.value_type:
-			raise TypeError("restriction must be of a value type")
+		if not restriction.type == self.subtype:
+			raise TypeError("restriction must be of type %r" % (self.subtype,))
 		self.restriction = restriction
 
 	def __pull_attr(self, pkg):
@@ -77,38 +84,54 @@ class PackageRestriction(restriction.base):
 		return len(self.restriction) + 1
 
 	def intersect(self, other):
-		if self.negate != other.negate or self.attr != other.attr:
+		"""Build a restriction that matches anything matched by this and other.
+
+		If an optimized intersection cannot be determined this returns C{None}.
+		"""
+		if (self.negate != other.negate or
+			self.attr != other.attr or
+			self.__class__ is not other.__class__):
 			return None
+		# Make the most subclassed instance do the intersecting
 		if isinstance(self.restriction, other.restriction.__class__):
 			s = self.restriction.intersect(other.restriction)
 		elif isinstance(other.restriction, self.restriction.__class__):
 			s = other.restriction.intersect(self.restriction)
-		else:	return None
+		else:
+			# Child restrictions are not related, give up.
+			return None
 		if s is None:
 			return None
-		if s == self.restriction:		return self
-		elif s == other.restriction:	return other
 
-		# this can probably bite us in the ass self or other is a derivative, and the other isn't.
-		return self.__class__(self.attr, s)
+		# optimization: do not build a new wrapper if we already have one.
+		if s == self.restriction:
+			return self
+		elif s == other.restriction:
+			return other
+
+		# This breaks completely if we are a subclass with different
+		# __init__ args, so such a subclass had better override this
+		# method...
+		return self.__class__(self.attr, s, negate=self.negate)
 
 	def __eq__(self, other):
 		if self is other:
 			return True
-		if not (self.__class__ is other.__class__ is PackageRestriction):
-			return False
-		try:
-			return self.negate == self.negate and self.attr == other.attr and self.restriction == other.restriction
-		except AttributeError, a:
-			return False
-		return False
+		return (
+			self.__class__ is other.__class__ and
+			self.negate == other.negate and
+			self.attr == other.attr and
+			self.restriction == other.restriction)
+
+	def __ne__(self, other):
+		return not self == other
 
 	def __hash__(self):
 		return hash((self.negate, self.attr, self.restriction))
 
 	def __str__(self):
 		s = self.attr+" "
-		if self.negate:	
+		if self.negate:
 			s += "not "
 		return s + str(self.restriction)
 
@@ -119,6 +142,7 @@ class PackageRestriction(restriction.base):
 			string = '<%s attr=%r restriction=%r @%#8x>'
 		return string % (
 			self.__class__.__name__, self.attr, self.restriction, id(self))
+
 
 class Conditional(PackageRestriction):
 
@@ -163,7 +187,7 @@ for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
 	for x in l:
 		o = getattr(m, x)
 		doc = o.__doc__
-		o = pre_curry(o, node_type=package_type)
+		o = pre_curry(o, node_type=restriction.package_type)
 		if doc is None:
 			doc = ''
 		else:

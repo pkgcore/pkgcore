@@ -107,7 +107,9 @@ def cleanup_pids(pids=None):
 
 	if pids is None:
 		pids = spawned_pids
-
+	elif pids is not spawned_pids:
+		pids = list(pids)
+	
 	while pids:
 		pid = pids.pop()
 		try:
@@ -333,12 +335,17 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=Fals
 	else:
 		daemon_fd_pipes[0] = os.open("/dev/null", os.O_RDONLY)
 
+	pids = None
+	pids = spawn(args, fd_pipes=daemon_fd_pipes, returnpid=True)
 	try:
-		spawn(args, fd_pipes=daemon_fd_pipes, returnpid=True)
-		rd_f = os.fdopen(rd_fd)
-		line = rd_f.readline()
-		rd_f.close()
-		rd_fd = None
+		try:
+			rd_f = os.fdopen(rd_fd)
+			line = rd_f.readline()
+			rd_f.close()
+			rd_fd = None
+		except:
+			cleanup_pids(pids)
+			raise
 	finally:
 		for x in (rd_fd, wr_fd, daemon_fd_pipes[0]):
 			if x is not None:
@@ -361,11 +368,11 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=Fals
 	try:
 		ret = spawn(mycommand, opt_name=opt_name, env=env, returnpid=returnpid, **keywords)
 		if returnpid:
-			return ret + [fakepid]
+			return ret + [fakepid] + pids
 		return ret
 	finally:
 		if not returnpid:
-			cleanup_pids([fakepid])
+			cleanup_pids([fakepid] + pids)
 
 def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=(1,), fd_pipes=None, split_lines=True, **keywords):
 

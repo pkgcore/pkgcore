@@ -8,6 +8,7 @@ in memory representation of on disk eclass stacking order
 
 import os
 from pkgcore.interfaces.data_source import local_source
+from pkgcore.config.introspect import ConfigHint
 
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.fs.util:normpath pkgcore.util.mappings:StackedDict os")
@@ -27,6 +28,9 @@ class cache(base):
 	Base defaults to having both set.  Override as needed.
 	Set to None if that method isn't possible.
 	"""
+	
+	pkgcore_config_type = True
+
 	def __init__(self, path, portdir=None):
 		"""
 		@param porttree: ondisk location of the tree we're working with
@@ -89,12 +93,15 @@ class cache(base):
 		return local_source(os.path.join(o[0], eclass+".eclass"))
 		
 
-class StackedCache(cache):
+class StackedCaches(cache):
 
 	"""
 	collapse multiple eclass caches into one, doing L->R searching for eclass matches
 	"""
-	def __init__(self, *caches, **kwds):
+	
+	pkgcore_config_type = ConfigHint({"caches":"section_refs", "portdir":"str", "eclassdir":"str"})
+	
+	def __init__(self, caches, **kwds):
 		"""
 		@param caches: L{cache} instances to stack; ordering should be desired lookup order
 		@keyword eclassdir: override for the master eclass dir, required for eapi0 and idiot eclass usage.  defaults to pulling from the first cache
@@ -102,17 +109,12 @@ class StackedCache(cache):
 		if len(caches) < 2:
 			raise TypeError("%s requires at least two eclass_caches" % self.__class__)
 		
-		self.eclassdir = kwds.pop("eclassdir")
+		self.eclassdir = kwds.pop("eclassdir", None)
 		if self.eclassdir is None:
 			self.eclassdir = caches[0].eclassdir
-		self.portdir = os.path.dirname(self.eclassdir)
 
-		# temp var, nuked when no longer needed
-		self.ec = caches
-		
-	def __getattr__(self, attr):
-		if attr == "eclasses":
-			ec = self.eclasses = StackedDict(*[ec.eclasses for ec in self.ec])
-			del self.ec
-			return ec
-		raise AttributeError(attr)
+		self.portdir = kwds.pop("portdir", None)
+		if self.portdir is None:
+			self.portdir = os.path.dirname(self.eclassdir.rstrip(os.path.sep))
+
+		self.eclasses = StackedDict(*[ec.eclasses for ec in caches])

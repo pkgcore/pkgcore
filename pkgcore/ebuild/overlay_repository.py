@@ -43,7 +43,7 @@ class OverlayRepo(multiplex.tree):
 		default_mirrors = kwds.pop("default_mirrors", None)
 		
 		# master combined eclass
-		self.eclass_cache = eclass_cache.StackedCache(eclassdir=trees[0].eclass_cache.eclassdir, *[t.eclass_cache for t in reversed(trees)])
+		self.eclass_cache = eclass_cache.StackedCaches([t.eclass_cache for t in reversed(trees)], eclassdir=trees[0].eclass_cache.eclassdir)
 
 		repos = []
 		for t in trees:

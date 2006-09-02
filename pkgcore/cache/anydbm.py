@@ -11,8 +11,7 @@ try:
 except ImportError:
 	import pickle
 import os
-import fs_template
-import cache_errors
+from pkgcore.cache import fs_template, cache_errors
 
 
 class database(fs_template.FsBased):
@@ -24,7 +23,7 @@ class database(fs_template.FsBased):
 
 	def __init__(self, *args, **config):
 		self._db = None
-		super(database,self).__init__(*args, **config)
+		super(database, self).__init__(*args, **config)
 
 		default_db = config.get("dbtype","anydbm")
 		if not default_db.startswith("."):
@@ -48,7 +47,7 @@ class database(fs_template.FsBased):
 			try:
 				if self._db is None:
 					self._db = anydbm_module.open(self._db_path, "c", self._perms)
-			except andbm_module.error, e:
+			except anydbm_module.error, e:
 				raise cache_errors.InitializationError(self.__class__, e)
 	__init__.__doc__ = fs_template.FsBased.__init__.__doc__
 	
@@ -60,7 +59,7 @@ class database(fs_template.FsBased):
 		return pickle.loads(self._db[cpv])
 
 	def _setitem(self, cpv, values):
-		self._db[cpv] = pickle.dumps(values,pickle.HIGHEST_PROTOCOL)
+		self._db[cpv] = pickle.dumps(values, pickle.HIGHEST_PROTOCOL)
 
 	def _delitem(self, cpv):
 		del self._db[cpv]

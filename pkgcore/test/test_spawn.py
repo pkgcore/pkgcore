@@ -54,7 +54,7 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 			[0, [], "echo dar 1>&2", {"fd_pipes":{1:1,2:self.null}}]]:
 
 			fp = self.generate_script(filename, text)
-			self.assertEqual([r,s], spawn.spawn_get_output(fp, spawn_type=spawn.spawn_bash, **args))
+			self.assertEqual([r, s], spawn.spawn_get_output(fp, spawn_type=spawn.spawn_bash, **args))
 
 		os.unlink(fp)
 
@@ -76,8 +76,6 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 		except spawn.CommandNotFound:
 			raise unittest.SkipTest("fakeroot is not available, thus testing isn't possible")
 		self.assertTrue(spawn.fakeroot_capable, "fakeroot_capable boolean test")
-		fp = os.path.join(self.dir, "portage-spawn-fakeroot.sh")
-
 		try:
 			l = pwd.getpwnam("nobody")
 		except KeyError:
@@ -124,7 +122,7 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 	def generate_background_pid(self):
 		try:
 			return spawn.spawn(["sleep", "3600s"], returnpid=True)[0]
-		except CommandNotFound:
+		except spawn.CommandNotFound:
 			raise unittest.SkipTest("can't complete the test, sleep binary doesn't exist")
 
 	def test_spawn_returnpid(self):
@@ -147,7 +145,6 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
 
 	def test_logfile(self):
 		log_fp = os.path.join(self.dir, "logfile_test")
-		out_file = os.path.join(self.dir, "logfile_result")
 		text = "grande tiza"
 		fp = self.generate_script("logfile.sh", "#!%s\necho %s\n" % (self.bash_path, text))
 		self.assertEqual(0, spawn.spawn(fp, logfile=log_fp, fd_pipes={1:self.null, 2:1}))

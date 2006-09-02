@@ -2,6 +2,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+import operator
+
 from twisted.trial import unittest
 from pkgcore.util import mappings
 from itertools import chain
@@ -29,13 +31,8 @@ class RememberingNegateMixin(object):
 class LazyValDictTestMixin(object):
 
 	def test_invalid_operations(self):
-		# we're not mutable
-		def set(i, v):
-			self.dict[i] = v
-		def remove(i):
-			del self.dict[i]
-		self.assertRaises(AttributeError, set, 7, 7)
-		self.assertRaises(AttributeError, remove, 7)
+		self.assertRaises(AttributeError, operator.setitem, self.dict, 7, 7)
+		self.assertRaises(AttributeError, operator.delitem, self.dict, 7)
 
 	def test_contains(self):
 		self.failUnless(7 in self.dict)
@@ -155,14 +152,10 @@ class ImmutableDictTest(unittest.TestCase):
 
 	def test_invalid_operations(self):
 		initialHash = hash(self.dict)
-		def remove(k):
-			del self.dict[k]
-		def set(k, v):
-			self.dict[k] = v
-		self.assertRaises(TypeError, remove, 1)
-		self.assertRaises(TypeError, remove, 7)
-		self.assertRaises(TypeError, set, 1, -1)
-		self.assertRaises(TypeError, set, 7, -7)
+		self.assertRaises(TypeError, operator.delitem, self.dict, 1)
+		self.assertRaises(TypeError, operator.delitem, self.dict, 7)
+		self.assertRaises(TypeError, operator.setitem, self.dict, 1, -1)
+		self.assertRaises(TypeError, operator.setitem, self.dict, 7, -7)
 		self.assertRaises(TypeError, self.dict.clear)
 		self.assertRaises(TypeError, self.dict.update, {6: -6})
 		self.assertRaises(TypeError, self.dict.pop, 1)
@@ -227,9 +220,9 @@ class IndeterminantDictTest(unittest.TestCase):
 			("__setitem__", 2), ("popitem", 2), "iteritems", "iterkeys",
 			"keys", "items", "itervalues", "values"):
 			if isinstance(x, tuple):
-				self.assertRaises(TypeError, x[0], x[1])
+				self.assertRaises(TypeError, getattr(d, x[0]), x[1])
 			else:
-				self.assertRaises(TypeError, x[0])
+				self.assertRaises(TypeError, getattr(d, x))
 
 	def test_starter_dict(self):
 		d = mappings.IndeterminantDict(lambda key: False, starter_dict={}.fromkeys(xrange(100), True))
@@ -258,7 +251,7 @@ class IndeterminantDictTest(unittest.TestCase):
 		self.assertEqual(d.get(1, 1), 1)
 		self.assertEqual(d.get(1, 2), 1)
 		self.assertEqual(d.get(2), None)
-		self.assertEqual(d.get(2,2), 2)
+		self.assertEqual(d.get(2, 2), 2)
 		self.assertEqual(d.get(3), True)
 
 
@@ -280,7 +273,7 @@ class TestOrderedDict(unittest.TestCase):
 		l = ["asdf", "fdsa", "Dawefa", "3419", "pas", "1"]
 		l = [s+"12" for s in l] + l
 		l = ["1231adsfasdfagqwer"+s for s in l] + l
-		self.assertEqual(list(mappings.OrderedDict((v,k) for k,v in enumerate(l)).itervalues()), list(xrange(len(l))))
+		self.assertEqual(list(mappings.OrderedDict((v, k) for k, v in enumerate(l)).itervalues()), list(xrange(len(l))))
 
 	def test_keys(self):
 		self.assertEqual(list(self.gen_dict().iterkeys()), list(xrange(100)))
@@ -296,7 +289,7 @@ class TestOrderedDict(unittest.TestCase):
 	def test_del(self):
 		d = self.gen_dict()
 		del d[50]
-		self.assertEqual(list(d), list(range(50) + range(51,100)))
+		self.assertEqual(list(d), list(range(50) + range(51, 100)))
 
 	def test_set(self):
 		d = self.gen_dict()

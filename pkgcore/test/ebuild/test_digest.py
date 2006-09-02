@@ -32,10 +32,10 @@ class parse_digest_testcases(unittest.TestCase):
 		self.assertEqual(sorted(d.keys()), sorted(files))
 		d2 = d["Python-2.4.2.tar.bz2"]
 		self.assertEqual(sorted(d2.keys()), sorted(["md5", "size", "rmd160", "sha256"]))
-		for chf, sum in (("size", long(7853169)), ("md5", "98db1465629693fc434d4dc52db93838"),
+		for chf, expectedsum in (("size", long(7853169)), ("md5", "98db1465629693fc434d4dc52db93838"),
 			("rmd160", "c511d2b76b5394742d285e71570a2bcd3c1fa871"),
 			("sha256", "e163b95ee56819c0f3c58ef9278c30b9e49302c2f1a1917680ca894d33929f7e")):
-			self.assertEqual(d2[chf], sum)
+			self.assertEqual(d2[chf], expectedsum)
 		self.assertTrue(isinstance(d2["size"], long))
 
 	def test_throw(self):

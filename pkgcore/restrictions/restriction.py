@@ -9,13 +9,13 @@ from pkgcore.util import caching
 
 class base(object):
 
-	__metaclass__ = caching.WeakInstMeta
-	__inst_caching__ = True
-
 	"""
 	base restriction matching object; overrides setattr to provide the usual write once trickery
 	all derivatives *should* be __slot__ based (lot of instances may wind up in memory)
 	"""
+
+	__metaclass__ = caching.WeakInstMeta
+	__inst_caching__ = True
 
 	__slots__ = ("negate",)
 	package_matching = False

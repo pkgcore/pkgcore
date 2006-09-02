@@ -1,0 +1,67 @@
+# First cut at a pylintrc to match pkgcore's coding style.
+#
+# This is currently only tested with pylint 0.11.0. Generally using
+# the latest ~arch pylint in portage is recommended.
+#
+# This version was written by marienz, which means it is probably not
+# accurate.
+
+[MASTER]
+
+# Ignore external modules.
+ignore=demandload.py,bundled_elementtree.py
+
+
+[REPORTS]
+
+# Disable a bunch of silly checkers.
+#
+# To add to this list run pylint with --include-ids=y so you can see
+# what id the message you want to disable has. To disable a message
+# temporarily pass --disable-msg=id1,id2 (useful for things like
+# docstrings (C0111)).
+
+# * or ** magic: W0142
+# unused argument: W0613
+# too many ancestors: R0901
+# not enough pub methods: R0903
+# too many pub methods: R0904
+# method could be a function: R0201
+# mention what is locally disabled (I0011)
+# abstract method not overridden: W0223
+# operator not preceded by a space (broken in python 2.4): C0322
+# Metaclass should have "mcs" as first argument (we use "cls", string
+# is hardcoded): C0203
+# Except doesn't do anything (just "pass" in an except clause): W0704
+disable-msg=W0142,W0613,R0901,R0903,R0904,R0201,I0011,W0223,C0322,C0203,W0704
+
+
+[BASIC]
+
+# Required attributes for module, separated by a comma. Was __revision__.
+required-attributes=
+
+# Regular expression which should only match functions or classes name which do
+# not require a docstring. Was __.*__
+no-docstring-rgx=^_
+
+# Regular expression which should only match correct instance attribute names
+# Was:   [a-z_][a-z0-9_]{2,30}$
+attr-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+
+# Regular expression which should only match correct argument names
+# Was:       [a-z_][a-z0-9_]{2,30}$
+argument-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+
+# Regular expression which should only match correct variable names
+# Was:       [a-z_][a-z0-9_]{2,30}$
+variable-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+
+# "bad" builtins.
+# Was: map,filter,apply,input
+bad-functions=filter,apply,input
+
+
+[FORMAT]
+
+indent-string="\t"

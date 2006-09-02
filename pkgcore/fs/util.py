@@ -27,10 +27,9 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
 			resets = []
 			apath = normpath(os.path.abspath(path))
 			sticky_parent = False
-			creating = False
 
-			for dir in apath.split(os.path.sep):
-				base = os.path.join(base,dir)
+			for directory in apath.split(os.path.sep):
+				base = os.path.join(base, directory)
 				try:
 					st = os.stat(base)
 					if not stat.S_ISDIR(st.st_mode):
@@ -39,8 +38,10 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
 					# if it's a subdir, we need +wx at least
 					if apath != base:
 						if ((st.st_mode & 0300) != 0300):
-							try:			os.chmod(base, (st.st_mode | 0300))
-							except OSError:	return False
+							try:
+								os.chmod(base, (st.st_mode | 0300))
+							except OSError:
+								return False
 							resets.append((base, st.st_mode))
 						sticky_parent = (st.st_gid & stat.S_ISGID)
 
@@ -159,19 +160,23 @@ class FsLock(object):
 
 	def _acquire_fd(self):
 		if self.create:
-			try:	self.fd = os.open(self.path, os.R_OK|os.O_CREAT)
+			try:
+				self.fd = os.open(self.path, os.R_OK|os.O_CREAT)
 			except OSError, oe:
 				raise GenericFailed(self.path, oe)
 		else:
-			try:	self.fd = os.open(self.path, os.R_OK)
-			except OSError, oe:	raise NonExistant(self.path, oe)
+			try:
+				self.fd = os.open(self.path, os.R_OK)
+			except OSError, oe:
+				raise NonExistant(self.path, oe)
 
 	def _enact_change(self, flags, blocking):
 		if self.fd is None:
 			self._acquire_fd()
 		# we do it this way, due to the fact try/except is a bit of a hit
 		if not blocking:
-			try:	fcntl.flock(self.fd, flags|fcntl.LOCK_NB)
+			try:
+				fcntl.flock(self.fd, flags|fcntl.LOCK_NB)
 			except IOError, ie:
 				if ie.errno == errno.EAGAIN:
 					return False

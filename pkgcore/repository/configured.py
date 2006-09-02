@@ -8,7 +8,7 @@ wrap a repository, binding configuration to pkgs returned from the repository
 from pkgcore.repository import prototype
 from pkgcore.package.conditionals import PackageWrapper
 from pkgcore.util.currying import pre_curry
-from itertools import imap
+
 
 class tree(prototype.tree):
 	configured = True

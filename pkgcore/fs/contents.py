@@ -6,7 +6,7 @@ contents set- container of fs objects
 """
 
 from pkgcore.fs import fs
-from pkgcore.util.compatibility import any, all
+from pkgcore.util.compatibility import all
 from itertools import chain
 
 def check_instance(obj):

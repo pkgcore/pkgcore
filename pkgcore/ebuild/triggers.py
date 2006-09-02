@@ -7,9 +7,9 @@ gentoo/ebuild specific triggers
 
 from pkgcore.merge import triggers
 from pkgcore.util.file import read_bash_dict, AtomicWriteFile
-from pkgcore.fs import fs, util, livefs
+from pkgcore.fs import util, livefs
 from pkgcore.util.currying import pre_curry
-from pkgcore.restrictions import values, packages
+from pkgcore.restrictions import values
 import os, errno, stat
 
 colon_parsed = set(["ADA_INCLUDE_PATH",  "ADA_OBJECTS_PATH", "LDPATH", "MANPATH", 
@@ -80,7 +80,7 @@ def env_update_trigger(cset="install"):
 
 def simple_chksum_compare(x, y):
 	found = False
-	for k,v in x.chksums.iteritems():
+	for k, v in x.chksums.iteritems():
 		if k == "size":
 			continue
 		o = y.chksums.get(k, None)

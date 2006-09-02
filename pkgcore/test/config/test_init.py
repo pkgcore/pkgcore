@@ -8,7 +8,7 @@ import tempfile
 
 from twisted.trial import unittest
 
-from pkgcore.config import load_config, errors
+from pkgcore.config import load_config
 
 
 def passthrough(*args, **kwargs):

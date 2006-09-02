@@ -7,7 +7,7 @@ simple repository wrapping to override the package instances returned
 
 # icky.
 # ~harring
-import prototype, errors
+from pkgcore.repository import prototype, errors
 
 class tree(prototype.tree):
 	"""wrap an existing repository filtering results based upon passed in restrictions."""

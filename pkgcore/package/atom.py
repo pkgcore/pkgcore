@@ -1,6 +1,9 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+# "More than one statement on a single line"
+# pylint: disable-msg=C0321
+
 """
 gentoo ebuild atom, should be generalized into an agnostic base
 """
@@ -8,7 +11,6 @@ gentoo ebuild atom, should be generalized into an agnostic base
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
 import cpv
-from pkgcore.package import errors
 
 
 class MalformedAtom(Exception):
@@ -107,7 +109,7 @@ class VersionMatch(restriction.base):
 		if inst.negate:
 			if inst.droprev:
 				return inst.vals
-			return tuple(sorted(set((-1,0,1)).difference(inst.vals)))
+			return tuple(sorted(set((-1, 0, 1)).difference(inst.vals)))
 		return inst.vals
 
 	def __eq__(self, other):
@@ -182,7 +184,7 @@ class atom(boolean.AndRestriction):
 			atom = atom[:s]
 		else:
 			self.slot = None
-		del u,s
+		del u, s
 
 		if atom.endswith("*"):
 			if self.op != "=":

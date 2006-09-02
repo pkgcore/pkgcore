@@ -21,12 +21,13 @@ class ModulesTest(unittest.TestCase):
 		os.mkdir(packdir)
 		# create an empty file
 		open(os.path.join(packdir, '__init__.py'), 'w').close()
-		for dir in [self.dir, packdir]:
+		for directory in [self.dir, packdir]:
 			for i in range(3):
-				testmod = open(os.path.join(dir, 'mod_test%s.py' % i), 'w')
+				testmod = open(
+					os.path.join(directory, 'mod_test%s.py' % i), 'w')
 				testmod.write('def foo(): pass\n')
 				testmod.close()
-			horkedmod = open(os.path.join(dir, 'mod_horked.py'), 'w')
+			horkedmod = open(os.path.join(directory, 'mod_horked.py'), 'w')
 			horkedmod.write('1/0\n')
 			horkedmod.close()
 
@@ -64,7 +65,6 @@ class ModulesTest(unittest.TestCase):
 		self.assertIdentical(mod_test1, modtest1)
 		# unimported in-package module
 		packtest1 = modules.load_module('mod_testpack.mod_test1')
-		import mod_testpack
 		from mod_testpack import mod_test1
 		self.assertIdentical(mod_test1, packtest1)
 

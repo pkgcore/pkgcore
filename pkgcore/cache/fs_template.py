@@ -23,7 +23,7 @@ class FsBased(template.database):
 		@keyword gid: defaults to L{pkgcore.os_data.portage_gid}, gid to force all entries to
 		@keyword perms: defaults to 0665, mode to force all entries to"""
 
-		for x,y in (("gid",portage_gid),("perms",0664)):
+		for x, y in (("gid", portage_gid), ("perms", 0664)):
 			if x in config:
 				setattr(self, "_"+x, config[x])
 				del config[x]

@@ -537,7 +537,8 @@ class EbuildProcessor:
 					raise UnhandledCommand(line)
 
 		except FinishedProcessing, fp:
-			v = fp.val; del fp
+			v = fp.val
+			del fp
 			return v
 
 

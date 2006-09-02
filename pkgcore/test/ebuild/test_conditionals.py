@@ -13,7 +13,7 @@ def gen_depset(s, operators=None, func=None):
 	if func is not None:
 		kwds = {"element_func":func}
 	else:
-		kwds ={}
+		kwds = {}
 	if operators is None:
 		operators = {"":boolean.AndRestriction, "||":boolean.OrRestriction}
 	return DepSet(s, str, operators=operators, **kwds)
@@ -52,7 +52,7 @@ class DepSetParsingTest(unittest.TestCase):
 		depth = 0
 		conditionals = []
 		for x in i:
-			for t,s in ((boolean.OrRestriction, "||"), (boolean.AndRestriction, "&&")):
+			for t, s in ((boolean.OrRestriction, "||"), (boolean.AndRestriction, "&&")):
 				if isinstance(x, t):
 					yield s
 					yield "("
@@ -164,7 +164,7 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
 	def check_conds(self, s, r, msg=None):
 		nc = dict((k, self.flatten_cond(v)) for (k, v) in gen_depset(s).node_conds.iteritems())
 		d = dict(r)
-		for k,v in d.iteritems():
+		for k, v in d.iteritems():
 			if isinstance(v, basestring):
 				d[k] = set([frozenset(v.split())])
 			elif isinstance(v, (tuple, list)):

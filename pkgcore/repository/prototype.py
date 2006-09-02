@@ -5,11 +5,10 @@
 base repository template
 """
 
-from itertools import imap, ifilter
 from pkgcore.util.mappings import LazyValDict
-from pkgcore.util.lists import iter_stable_unique, iflatten_instance
+from pkgcore.util.lists import iflatten_instance
 from pkgcore.package.atom import atom
-from pkgcore.restrictions import packages, values, boolean
+from pkgcore.restrictions import values, boolean
 from pkgcore.util.compatibility import any
 from pkgcore.restrictions.util import collect_package_restrictions
 
@@ -24,7 +23,7 @@ class IterValLazyDict(LazyValDict):
 		self.return_mangler = return_func
 
 	def __iter__(self):
-		return (self.return_mangler(k, ver) for k,v in self.iteritems() for ver in v)
+		return (self.return_mangler(k, ver) for k, v in self.iteritems() for ver in v)
 
 	def __contains__(self, key):
 		return key in iter(self)
@@ -254,13 +253,13 @@ class tree(object):
 					pkg_exact = tuple(pkg_exact)
 				else:
 					pkg_exact = sorter(pkg_exact)
-				return (self.packages.return_mangler((c,p)) for c in cats_iter for p in
+				return (self.packages.return_mangler((c, p)) for c in cats_iter for p in
 					pkg_exact)
 			else:
 				pkg_restrict.add(values.ContainmentMatch(*pkg_exact))
 		
 		if pkg_restrict:
-			return (self.packages.return_mangler((c,p)) for c in cats_iter for
+			return (self.packages.return_mangler((c, p)) for c in cats_iter for
 				p in sorter(self.packages.get(c, [])) if any(True for r in pkg_restrict if r.match(p)))
 		elif not cat_restrict:
 			if sorter is iter:
@@ -268,7 +267,7 @@ class tree(object):
 			else:
 				return (self.packages.return_mangler((c, p)) for c in 
 					cats_iter for p in sorter(self.packages.get(c, [])))
-		return (self.packages.return_mangler((c,p)) 
+		return (self.packages.return_mangler((c, p))
 			for c in cats_iter for p in sorter(self.packages.get(c, [])))
 
 	def notify_remove_package(self, pkg):

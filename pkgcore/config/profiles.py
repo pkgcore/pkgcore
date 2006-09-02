@@ -9,5 +9,7 @@ class base(object):
 	pass
 
 class ProfileException(Exception):
-	def __init__(self, err):	self.err = err
-	def __str__(self): return str(self.err)
+	def __init__(self, err):
+		self.err = err
+	def __str__(self):
+		return str(self.err)

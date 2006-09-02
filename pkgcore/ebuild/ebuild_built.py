@@ -8,7 +8,7 @@ built ebuild packages (vdb packages and binpkgs are derivatives of this)
 import re
 
 from pkgcore.ebuild import ebuild_src
-from pkgcore.util.mappings import IndeterminantDict, ImmutableDict
+from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.package import metadata
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.fs import scan
@@ -68,8 +68,8 @@ class package(ebuild_src.package):
 	_get_attr.update((x, post_curry(passthrough, x)) for x in ("contents", "environment", "raw_ebuild"))
 	_get_attr.update((k, post_curry(lambda s, wrap, inst: wrap(inst(s), s.use), 
 		ebuild_src.package._config_wrappables[k], ebuild_src.package._get_attr[k]))
-		for k in filter(ebuild_src.package.tracked_attributes.__contains__,
-		ebuild_src.package._config_wrappables))
+		for k in ebuild_src.package._config_wrappables
+		if k in ebuild_src.package.tracked_attributes)
 
 	_get_attr["use"] = lambda s:s.data["USE"].split()
 	_get_attr["depends"] = lambda s:DepSet("", atom)

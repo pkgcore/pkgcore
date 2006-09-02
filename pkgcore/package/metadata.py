@@ -11,7 +11,7 @@ from pkgcore.util.weakrefs import WeakValCache
 from pkgcore.util.demandload import demandload
 demandload(globals(), "warnings")
 
-from cpv import CPV
+from pkgcore.package.cpv import CPV
 from pkgcore.package.atom import atom
 
 class package(CPV):

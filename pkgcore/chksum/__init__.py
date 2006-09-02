@@ -114,5 +114,5 @@ def size(file_obj):
 			return None
 		return size
 	# seek to the end.
-	file_obj.seek(0,2)
+	file_obj.seek(0, 2)
 	return long(file_obj.tell())

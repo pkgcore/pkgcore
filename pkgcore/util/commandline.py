@@ -6,12 +6,12 @@ common commandline processing, including simplified atom generation
 """
 
 from pkgcore.util.containers import InvertedContains
-from pkgcore.restrictions import packages, values, boolean, util
-from pkgcore.package import cpv, atom
+from pkgcore.restrictions import packages, values, util
+from pkgcore.package import atom
 
 
 def convert_glob(token):
-	if len(filter(None, token.split("*"))) > 1:
+	if '*' in token[1:-1]:
 		raise TypeError("'*' must be specified at the end or beginning of a matching field")
 	l = len(token)
 	if token.startswith("*") and l > 1:
@@ -76,10 +76,7 @@ def generate_restriction(text):
 			return r[0]
 		return packages.AndRestriction(*r)
 	if "*" not in text:
-		a = atom.atom(text)
-		# force expansion
-		a.key
-		return a
+		return atom.atom(text)
 
 	r = map(convert_glob, tsplit)
 	if not r[0] and not r[1]:

@@ -119,7 +119,7 @@ class Xpak(object):
 	def iteritems(self):
 		# note that it's an OrderedDict, so this works.
 		fd = self._fd
-		return ((k, self._get_data(fd, *v)) for k,v in self._keys_dict.iteritems())
+		return ((k, self._get_data(fd, *v)) for k, v in self._keys_dict.iteritems())
 
 	def __getitem__(self, key):
 		return self._get_data(self._fd, *self._keys_dict[key])

@@ -125,7 +125,10 @@ class TestContentsSet(unittest.TestCase):
 			self.assertEqual((x.location, x), tuple(contents.check_instance(x)))
 		self.assertRaises(TypeError, contents.check_instance, 1)
 	
-	def check_set_op(self, name, ret, source=[[fs.fsDir("/tmp", strict=False)], [fs.fsFile("/tmp", strict=False)]]):
+	def check_set_op(self, name, ret, source=None):
+		if source is None:
+			source = [[fs.fsDir("/tmp", strict=False)],
+					  [fs.fsFile("/tmp", strict=False)]]
 		c1, c2 = [contents.contentsSet(x) for x in source]
 		self.assertEquals(set(ret), set(x.location for x in getattr(c1, name)(c2)))
 	

@@ -20,7 +20,6 @@ from pkgcore.binpkg.tar import generate_contents
 from pkgcore.util.bzip2 import decompress
 from pkgcore.interfaces.build import empty_build_op
 from pkgcore.ebuild.ebuild_built import pkg_uses_default_preinst
-from pkgcore.ebuild import ebd
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.merge:engine "+
 	"pkgcore.merge.triggers:SimpleTrigger "+

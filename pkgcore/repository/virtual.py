@@ -15,7 +15,7 @@ class tree(prototype.tree):
 		@param grab_virtuals_func: callable to get a package -> versions mapping
 		@param livefs: is this a livefs repository?
 		"""
-		super(tree,self).__init__()
+		super(tree, self).__init__()
 		self.livefs = livefs
 		if not callable(grab_virtuals_func):
 			if not hasattr(grab_virtuals_func, "__getitem__"):
@@ -50,7 +50,7 @@ class tree(prototype.tree):
 		raise KeyError("no %s category for this repository" % category)
 
 	def _get_versions(self, catpkg):
-		cat,pkg = catpkg.rsplit("/", 1)
+		cat, pkg = catpkg.rsplit("/", 1)
 		if cat == "virtual":
 			return tuple(self._virtuals[pkg].iterkeys())
 		raise KeyError("no '%s' package in this repository" % catpkg)

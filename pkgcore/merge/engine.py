@@ -99,7 +99,7 @@ class MergeEngine(object):
 		self.cset_sources = {}
 		# instantiate these seperately so their values are preserved
 		self.preserved_csets = LazyValDict(self.preserve_csets, self._get_cset_source)
-		for k,v in csets.iteritems():
+		for k, v in csets.iteritems():
 			if isinstance(v, basestring):
 				v = getattr(self, v, v)
 			elif not callable(v):
@@ -133,7 +133,7 @@ class MergeEngine(object):
 		
 		"""
 
-		hooks = dict((k, [y() for y in v]) for (k,v) in cls.install_hooks.iteritems())
+		hooks = dict((k, [y() for y in v]) for (k, v) in cls.install_hooks.iteritems())
 		csets = dict(cls.install_csets)
 		if "new_cset" not in csets:
 			csets["new_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
@@ -158,7 +158,7 @@ class MergeEngine(object):
 		
 		"""
 
-		hooks = dict((k, [y() for y in v]) for (k,v) in cls.uninstall_hooks.iteritems())
+		hooks = dict((k, [y() for y in v]) for (k, v) in cls.uninstall_hooks.iteritems())
 		csets = dict(cls.uninstall_csets)
 		if "old_cset" not in csets:
 			csets["old_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
@@ -184,10 +184,10 @@ class MergeEngine(object):
 		
 		"""
 
-		hooks = dict((k, [y() for y in v]) for (k,v) in cls.replace_hooks.iteritems())
+		hooks = dict((k, [y() for y in v]) for (k, v) in cls.replace_hooks.iteritems())
 		csets = dict(cls.replace_csets)
 
-		for v,k in ((old, "old_cset"), (new, "new_cset")):
+		for v, k in ((old, "old_cset"), (new, "new_cset")):
 			if k not in csets:
 				csets[k] = currying.post_curry(cls.get_pkg_contents, v)
 

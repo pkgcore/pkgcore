@@ -125,5 +125,5 @@ ref = 'missing'
 		section = config['test']
 		self.assertRaises(
 			errors.ConfigurationError,
-			config['test'].get_value,
+			section.get_value,
 			central.ConfigManager([], []), 'ref', 'section_ref')

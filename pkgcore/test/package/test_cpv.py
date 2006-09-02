@@ -25,7 +25,7 @@ class native_CpvTest(unittest.TestCase):
 	del l
 	bad_sufs  = ["_a", "_9", "_"] + [x+" " for x in simple_good_sufs]
 	del simple_good_sufs
-	good_revs = ["-r1", "-r300",""]
+	good_revs = ["-r1", "-r300", ""]
 	bad_revs = ["-r", "-ra", "-r", "-R1"]
 
 	def test_simple_key(self):
@@ -49,7 +49,7 @@ class native_CpvTest(unittest.TestCase):
 						self.process_pkg(cat_ret or pkg_ret, cat, pkg)
 
 		for cp in self.good_cp:
-			cat,pkg = cp.rsplit("/", 1)
+			cat, pkg = cp.rsplit("/", 1)
 			for rev_ret, revs in [[False, self.good_revs], [True, self.bad_revs]]:
 				for rev in revs:
 					for ver_ret, vers in [[False, self.good_vers], [True, self.bad_vers]]:
@@ -65,10 +65,10 @@ class native_CpvTest(unittest.TestCase):
 			self.assertRaises(errors.InvalidCPV, self.kls, "%s/%s" % (cat, pkg))
 		else:
 			c = self.kls("%s/%s" % (cat, pkg))
-			self.assertEqual(c.cpvstr, "%s/%s" % (cat,pkg))
+			self.assertEqual(c.cpvstr, "%s/%s" % (cat, pkg))
 			self.assertEqual(c.category, cat)
 			self.assertEqual(c.package, pkg)
-			self.assertEqual(c.key, "%s/%s" % (cat,pkg))
+			self.assertEqual(c.key, "%s/%s" % (cat, pkg))
 			self.assertEqual(c.revision, None)
 			self.assertEqual(c.version, None)
 			self.assertEqual(c.fullver, None)
@@ -78,10 +78,10 @@ class native_CpvTest(unittest.TestCase):
 			self.assertRaises(errors.InvalidCPV, self.kls, "%s/%s-%s%s" % (cat, pkg, ver, rev))
 		else:
 			c = self.kls("%s/%s-%s%s" % (cat, pkg, ver, rev))
-			self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat,pkg, ver, rev))
+			self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat, pkg, ver, rev))
 			self.assertEqual(c.category, cat)
 			self.assertEqual(c.package, pkg)
-			self.assertEqual(c.key, "%s/%s" % (cat,pkg))
+			self.assertEqual(c.key, "%s/%s" % (cat, pkg))
 			if rev == "":
 				self.assertEqual(c.revision, None)
 			else:
@@ -105,10 +105,10 @@ class native_CpvTest(unittest.TestCase):
 			self.assertRaises(errors.InvalidCPV, self.kls, "%s/%s-%s%s" % (cat, pkg, ver, rev))
 		else:
 			c = self.kls("%s/%s-%s%s" % (cat, pkg, ver, rev))
-			self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat,pkg, ver, rev))
+			self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat, pkg, ver, rev))
 			self.assertEqual(c.category, cat)
 			self.assertEqual(c.package, pkg)
-			self.assertEqual(c.key, "%s/%s" % (cat,pkg))
+			self.assertEqual(c.key, "%s/%s" % (cat, pkg))
 			if rev == "":
 				self.assertEqual(c.revision, None)
 			else:

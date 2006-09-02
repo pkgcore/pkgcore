@@ -5,7 +5,7 @@
 repository that combines multiple repositories together
 """
 
-import prototype, errors
+from pkgcore.repository import prototype, errors
 
 class tree(prototype.tree):
 	

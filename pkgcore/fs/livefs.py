@@ -6,8 +6,8 @@ interaction with the livefs, namely generating fs objects to represent the livef
 """
 
 import os, collections
-from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO, S_ISCHR, S_ISBLK
-from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsDev, fsFifo, isreg, get_major_minor
+from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO
+from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsDev, fsFifo, get_major_minor
 from pkgcore.fs.util import normpath
 from pkgcore.fs.contents import contentsSet
 from pkgcore.chksum import get_handlers

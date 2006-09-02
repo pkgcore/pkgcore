@@ -125,7 +125,7 @@ def cleanup_pids(pids=None):
 			except ValueError:
 				pass
 
-def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
+def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
 	uid=None, gid=None, groups=None, umask=None, logfile=None, path_lookup=True):
 
 	"""wrapper around execve
@@ -138,6 +138,8 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 	returnpid controls whether spawn waits for the process to finish, or returns the pid.
 
 	rest of the options are fairly self explanatory"""
+	if env is None:
+		env = {}
 	global spawned_pids
 	# mycommand is either a str or a list
 	if isinstance(mycommand, str):
@@ -185,6 +187,8 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 	pid = os.fork()
 
 	if not pid:
+		# 'Catch "Exception"'
+		# pylint: disable-msg=W0703
 		try:
 			_exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask)
 		except Exception, e:
@@ -241,7 +245,13 @@ def spawn(mycommand, env={}, opt_name=None, fd_pipes=None, returnpid=False,
 	return 0
 
 def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask):
-	"""internal function to handle exec'ing the child process"""
+	"""internal function to handle exec'ing the child process.
+
+	If it succeeds this function does not return. It might raise an
+	exception, and since this runs after fork calling code needs to
+	make sure this is caught and os._exit is called if it does (or
+	atexit handlers run twice).
+	"""
 
 	# If the process we're creating hasn't been given a name
 	# assign it the name of the executable.
@@ -282,11 +292,8 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask):
 		os.umask(umask)
 
 	# And switch to the new process.
-	try:
-		os.execve(binary, myargs, env)
-	except Exception, e:
-		print "caught exception executing %s, %s\nerror: %s" % (binary, myargs, e)
-		sys.exit(1)
+	os.execve(binary, myargs, env)
+
 
 def find_binary(binary):
 	"""look through the PATH environment, finding the binary to execute"""
@@ -327,7 +334,7 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=Fals
 		daemon_fd_pipes[0] = os.open("/dev/null", os.O_RDONLY)
 
 	try:
-		pid = spawn(args, fd_pipes=daemon_fd_pipes, returnpid=True)
+		spawn(args, fd_pipes=daemon_fd_pipes, returnpid=True)
 		rd_f = os.fdopen(rd_fd)
 		line = rd_f.readline()
 		rd_f.close()
@@ -345,7 +352,7 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=Fals
 	try:
 		fakekey, fakepid = map(int, line.split(":"))
 	except ValueError:
-		raise ExecutionFailure("output from faked was unparsable- %s" % lines)
+		raise ExecutionFailure("output from faked was unparsable- %s" % line)
 
 	# by now we have our very own daemonized faked.  yay.
 	env["FAKEROOTKEY"] = str(fakekey)
@@ -360,7 +367,7 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=Fals
 		if not returnpid:
 			cleanup_pids([fakepid])
 
-def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=[1], fd_pipes=None, split_lines=True, **keywords):
+def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=(1,), fd_pipes=None, split_lines=True, **keywords):
 
 	"""call spawn, collecting the output to fd's specified in collect_fds list
 	emulate_gso is a compatability hack to emulate commands.getstatusoutput's return, minus the
@@ -404,11 +411,15 @@ def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_f
 
 	finally:
 		if pr is not None:
-			try: os.close(pr)
-			except OSError: pass
+			try:
+				os.close(pr)
+			except OSError:
+				pass
 		if pw is not None:
-			try: os.close(pw)
-			except OSError: pass
+			try:
+				os.close(pw)
+			except OSError:
+				pass
 
 def process_exit_code(retval):
 	"""process a waitpid returned exit code, returning exit code if it exit'd, or the
@@ -440,7 +451,7 @@ class CommandNotFound(ExecutionFailure):
 
 if os.path.exists(FAKED_PATH) and os.path.exists(LIBFAKEROOT_PATH):
 	try:
-		r,s = spawn_get_output(["fakeroot", "--version"], fd_pipes={2:1, 1:1})
+		r, s = spawn_get_output(["fakeroot", "--version"], fd_pipes={2:1, 1:1})
 		fakeroot_capable = (r == 0) and (len(s) == 1) and ("version 1." in s[0])
 	except ExecutionFailure:
 		fakeroot_capable = False

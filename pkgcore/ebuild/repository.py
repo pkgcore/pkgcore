@@ -111,7 +111,7 @@ class UnconfiguredTree(prototype.tree):
 			raise KeyError("failed fetching categories: %s" % str(e))
 
 	def _get_packages(self, category):
-		cpath = os.path.join(self.base,category.lstrip(os.path.sep))
+		cpath = os.path.join(self.base, category.lstrip(os.path.sep))
 		try:	
 			return tuple(listdir_dirs(cpath))
 

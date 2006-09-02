@@ -61,7 +61,7 @@ class SQLDatabase(template.database):
 		self.db = self._dbClass(**config)
 		self.con = self.db.cursor()
 
-	def _initdb_con(self,config):
+	def _initdb_con(self, config):
 		"""ensure needed tables are in place.
 		If the derived class needs a different set of table creation commands, overload the approriate
 		SCHEMA_ attributes.  If it needs additional execution beyond, override
@@ -165,8 +165,10 @@ class SQLDatabase(template.database):
 
 		except Exception:
 			if not self.autocommits:
-				try:	self.db.rollback()
-				except self._BaseError: pass
+				try:
+					self.db.rollback()
+				except self._BaseError:
+					pass
 			raise
 
 
@@ -179,7 +181,7 @@ class SQLDatabase(template.database):
 
 		cpv = self._sfilter(cpv)
 		if self._supports_replace:
-			query_str = self.SCHEMA_INSERT_CPV_INTO_PACKAGE.replace("INSERT","REPLACE",1)
+			query_str = self.SCHEMA_INSERT_CPV_INTO_PACKAGE.replace("INSERT", "REPLACE", 1)
 		else:
 			# just delete it.
 			try:
@@ -251,7 +253,7 @@ class SQLDatabase(template.database):
 					yield cpv, d
 				l.clear()
 				oldcpv = x
-			l.append((y,v))
+			l.append((y, v))
 
 		if oldcpv is not None:
 			d = dict(l)
@@ -262,9 +264,9 @@ class SQLDatabase(template.database):
 	def commit(self):
 		self.db.commit()
 
-	def get_matches(self,match_dict):
+	def get_matches(self, match_dict):
 		query_list = []
-		for k,v in match_dict.items():
+		for k, v in match_dict.items():
 			if k not in self._known_keys:
 				raise cache_errors.InvalidRestriction(k, v, "key isn't known to this cache instance")
 			v = v.replace("%","\\%")

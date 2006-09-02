@@ -38,7 +38,7 @@ class ContentsFile(contentsSet):
 
 		if not isinstance(source, (data_source.base, basestring)):
 			raise TypeError("source must be either data_source, or a filepath")
-		contentsSet.__init__(self,mutable=True)
+		contentsSet.__init__(self, mutable=True)
 		self._source = source
 
 		if not create:
@@ -73,7 +73,7 @@ class ContentsFile(contentsSet):
 			return open(self._source, "r", 32384)
 		fobj = self._source.get_fileobj()
 		if write:
-			fobj.seek(0,0)
+			fobj.seek(0, 0)
 			fobj.truncate(0)
 		return fobj
 		

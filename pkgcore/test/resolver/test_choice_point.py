@@ -7,7 +7,7 @@ from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 
 class fake_package(object):
 	def __init__(self, **kwds):
-		for k,v in (("depends", AndRestriction()),
+		for k, v in (("depends", AndRestriction()),
 			("rdepends", AndRestriction()),
 			("post_rdepends", AndRestriction()),
 			("provides", AndRestriction()),

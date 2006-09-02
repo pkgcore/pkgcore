@@ -17,8 +17,8 @@ class MissingChksum(base):
 		return "Missing chksum for file '%s'" % self.file
 
 class ParseChksumError(base):
-	def __init__(self, file, error):
-		self.file, self.error = file, error
+	def __init__(self, filename, error):
+		self.file, self.error = filename, error
 
 	def __str__(self):
 		return "Failed parsing %s chksum due to %s" % (self.file, self.error)

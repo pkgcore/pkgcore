@@ -27,7 +27,7 @@ class database(fs_template.FsBased):
 	serialize_eclasses = False
 
 	def __init__(self, *args, **config):
-		super(database,self).__init__(*args, **config)
+		super(database, self).__init__(*args, **config)
 
 		self._db_path = os.path.join(self.location, fs_template.gen_label(self.location, self.label)+".cdb")
 		self._db = None

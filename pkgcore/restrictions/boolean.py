@@ -427,7 +427,7 @@ class XorRestriction(base):
 	"""Boolean XOR grouping of restrictions."""
 	__slots__ = ()
 
-	def __init__(*a, **kw):
+	def __init__(self, *a, **kw):
 		raise NotImplementedError("kindly don't use xor yet")
 
 	def match(self, vals):

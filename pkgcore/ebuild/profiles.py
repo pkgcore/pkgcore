@@ -100,11 +100,11 @@ class OnDiskProfile(profiles.base):
 
 		del parents
 
-		def loop_iter_read(files, callable=iter_read_bash):
+		def loop_iter_read(files, func=iter_read_bash):
 			for fp in files:
 				if os.path.exists(fp):
 					try:
-						yield fp, callable(fp)
+						yield fp, func(fp)
 					except (OSError, IOError), e:
 						raise profiles.ProfileException("failed reading '%s': %s" % (e.filename, str(e)))
 
@@ -147,7 +147,10 @@ class OnDiskProfile(profiles.base):
 
 		self.use_mask = tuple(use_mask)
 		del use_mask
-		self.bashrc = tuple(map(local_source, filter(os.path.exists, (os.path.join(x, "profile.bashrc") for x in stack))))
+		self.bashrc = tuple(
+			local_source(path) for path in (
+				os.path.join(x, 'profile.bashrc') for x in stack)
+			if os.path.exists(path))
 
 		maskers = set()
 		for fp, i in loop_iter_read(os.path.join(prof, "package.mask") for prof in stack + [self.basepath]):
@@ -166,7 +169,7 @@ class OnDiskProfile(profiles.base):
 		d = {}
 		for fp, dc in loop_iter_read((os.path.join(prof, "make.defaults") for prof in stack),
 			lambda x:read_bash_dict(x, vars_dict=ProtectedDict(d))):
-			for k,v in dc.items():
+			for k, v in dc.items():
 				# potentially make incrementals a dict for ~O(1) here, rather then O(N)
 				if k in incrementals:
 					v = list_parser(dc[k])

@@ -7,7 +7,7 @@ filtering repository
 
 # icky.
 # ~harring
-import prototype, errors
+from pkgcore.repository import prototype, errors
 from pkgcore.restrictions.restriction import base
 
 class filterTree(prototype.tree):

@@ -202,7 +202,8 @@ class IndeterminantDict(dict):
 		raise TypeError("non modifiable")
 
 	clear = update = pop = popitem = setdefault = __setitem__ = __delitem__
-	__iter__ = keys = values = __len__ = __delitem__
+	__iter__ = keys = values = items = __len__ = __delitem__
+	iteritems = iterkeys = itervalues = __delitem__
 
 
 class StackedDict(UserDict.DictMixin):
@@ -270,7 +271,7 @@ class OrderedDict(dict):
 		return self[key]
 
 	def update(self, iterable):
-		for k,v in iterable:
+		for k, v in iterable:
 			self[k] = v
 
 	def __len__(self):
@@ -284,12 +285,6 @@ class OrderedDict(dict):
 	
 	def keys(self):
 		return list(self.iterkeys())
-	
-	def iteritems(self):
-		return (self[k] for k in self._order)
-	
-	def items(self):
-		return list(self.iteritems())
 	
 	def iteritems(self):						
 		return ((k, self[k]) for k in self._order)

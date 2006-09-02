@@ -191,7 +191,7 @@ class DepSet(boolean.AndRestriction):
 			elif cur_node is None:
 				conditions_stack.pop()
 			elif conditions_stack or yield_non_conditionals: # leaf
-					yield (cur_node, conditions_stack[:])
+				yield (cur_node, conditions_stack[:])
 
 	@property
 	def node_conds(self):

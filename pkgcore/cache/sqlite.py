@@ -7,7 +7,7 @@ pysqlite <v2 backend
 
 import os
 from pkgcore.cache import sql_template, fs_template, cache_errors
-sqlite_module =__import__("sqlite")
+sqlite_module = __import__("sqlite")
 
 class database(fs_template.FsBased, sql_template.SQLDatabase):
 
@@ -57,7 +57,7 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
 	def _insert_cpv(self, cpv):
 		cpv = self._sfilter(cpv)
 		try:
-			self.con.execute(self.SCHEMA_INSERT_CPV_INTO_PACKAGE.replace("INSERT","REPLACE",1) % \
+			self.con.execute(self.SCHEMA_INSERT_CPV_INTO_PACKAGE.replace("INSERT", "REPLACE", 1) % \
 			(self.label, cpv))
 		except self._BaseError, e:
 			raise cache_errors.CacheCorruption(cpv, "tried to insert a cpv, but failed: %s" % str(e))

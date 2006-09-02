@@ -21,8 +21,10 @@ from pkgcore.util.modules import load_attribute
 PLUGINS_EXTENSION = ".plugins"
 
 class RegistrationException(Exception):
-	def __init__(self, reason):		self.reason = reason
-	def __str__(self):	return "failed action due to %s" % self.reason
+	def __init__(self, reason):
+		self.reason = reason
+	def __str__(self):
+		return "failed action due to %s" % self.reason
 
 class FailedDir(RegistrationException):
 	pass
@@ -89,16 +91,19 @@ class GlobalPluginRegistry(object):
 			ptype_fp = os.path.join(plugins_dir, plugin_type.lstrip(os.path.sep) + PLUGINS_EXTENSION)
 			existing = self.query_plugins(locking=False, raw=True)
 			if plugin_type not in existing:
-				if ignore_errors:	return
+				if ignore_errors:
+					return
 				raise PluginNotFound(magic, "no plugin type")
 
 			existing = existing[plugin_type]
 			if not existing.has_section(magic):
-				if ignore_errors:	return
+				if ignore_errors:
+					return
 				raise PluginNotFound(magic, "magic not found in plugin_type")
 
 			if not existing.has_option(magic, "version") or str(version) != existing.get(magic, "version"):
-				if ignore_errors: return
+				if ignore_errors:
+					return
 				raise PluginNotFound(magic, "version not found in plugin_type")
 
 			existing.remove_section(magic)
@@ -118,7 +123,8 @@ class GlobalPluginRegistry(object):
 			plug_lock.release_write_lock()
 
 	def get_plugin(self, plugin_type, magic):
-		try:	address = self.query_plugins(plugin_type)[magic]["namespace"]
+		try:
+			address = self.query_plugins(plugin_type)[magic]["namespace"]
 		except KeyError:
 			raise PluginNotFound(magic)
 		return load_attribute(address)

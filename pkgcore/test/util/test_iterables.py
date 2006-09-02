@@ -46,7 +46,8 @@ class CachingIterTest(unittest.TestCase):
 		i = iter(xrange(100))
 		c = caching_iter(i)
 		i2 = iter(c)
-		[i2.next() for x in xrange(20)]
+		for x in xrange(20):
+			i2.next()
 		self.assertEqual(i.next(), 20)
 		# note we consumed one ourselves
 		self.assertEqual(c[20], 21)
@@ -82,7 +83,7 @@ class CachingIterTest(unittest.TestCase):
 		self.assertTrue(caching_iter(xrange(100)) >= tuple(xrange(100)))
 
 	def test_sorter(self):
-		self.assertEquals(caching_iter(xrange(100, 0, -1), sorted), tuple(xrange(1,101)))
+		self.assertEquals(caching_iter(xrange(100, 0, -1), sorted), tuple(xrange(1, 101)))
 		c = caching_iter(xrange(100, 0, -1), sorted)
 		self.assertTrue(c)
 		self.assertEquals(c, tuple(xrange(1, 101)))

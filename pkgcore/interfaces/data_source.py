@@ -6,17 +6,18 @@ data source.
 
 Think of it as a far more minimal form of file protocol
 """
-from pkgcore.util.demandload import demandload
 from pkgcore.util.currying import pre_curry
 
-import os, StringIO
+import StringIO
+
+def generic_immutable_method(attr, self, *a, **kwds):
+	raise AttributeError("%s doesn't have %s" % (self.__class__, attr))
+
 class native_ro_StringIO(StringIO.StringIO):
-	def generic_immutable_method(attr, self, *a, **kwds):
-		raise AttributeError("%s doesn't have %s" % (self.__class__, attr))
-	
-	locals().update([(k, pre_curry(generic_immutable_method, k)) for k in 
+	locals().update([(k, pre_curry(generic_immutable_method, k)) for k in
 		["write", "writelines", "truncate"]])
-	del generic_immutable_method
+
+del generic_immutable_method
 
 class write_StringIO(StringIO.StringIO):
 	def __init__(self, callback, *args, **kwds):

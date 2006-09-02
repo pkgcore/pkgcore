@@ -99,7 +99,7 @@ class database(object):
 			self.commit()
 			self.updates = 0
 
-	def _delitem(self,cpv):
+	def _delitem(self, cpv):
 		"""__delitem__ calls this after readonly checks.  override it in derived classes"""
 		raise NotImplementedError
 
@@ -141,13 +141,13 @@ class database(object):
 
 		import re
 		restricts = {}
-		for key,match in match_dict.iteritems():
+		for key, match in match_dict.iteritems():
 			# XXX this sucks.
 			try:
 				if isinstance(match, str):
 					restricts[key] = re.compile(match).match
 				else:
-					restricts[key] = re.compile(match[0],match[1]).match
+					restricts[key] = re.compile(match[0], match[1]).match
 			except re.error, e:
 				raise InvalidRestriction(key, match, e)
 			if key not in self.__known_keys:
@@ -166,7 +166,7 @@ class database(object):
 	@staticmethod
 	def deconstruct_eclasses(eclass_dict):
 		"""takes a dict, returns a string representing said dict"""
-		return "\t".join(["%s\t%s\t%s" % (k, v[0], str(v[1])) for k,v in eclass_dict.items()])
+		return "\t".join(["%s\t%s\t%s" % (k, v[0], str(v[1])) for k, v in eclass_dict.items()])
 
 	@staticmethod
 	def reconstruct_eclasses(cpv, eclass_string):

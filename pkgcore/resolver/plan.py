@@ -73,7 +73,7 @@ pkg_grabber = operator.itemgetter(0)
 
 def highest_iter_sort(l):
 	def f(x, y):
-		c = cmp(x,y)
+		c = cmp(x, y)
 		if c:
 			return c
 		elif x.repo.livefs:
@@ -89,7 +89,7 @@ def highest_iter_sort(l):
 
 def lowest_iter_sort(l):
 	def f(x, y):
-		c = cmp(x,y)
+		c = cmp(x, y)
 		if c:
 			return c
 		elif x.repo.livefs:
@@ -104,7 +104,7 @@ def lowest_iter_sort(l):
 
 
 def default_global_strategy(resolver, dbs, atom):
-	return (p for r,cache in dbs.iteritems() for p in resolver.get_db_match(r, cache, atom))
+	return (p for r, cache in dbs.iteritems() for p in resolver.get_db_match(r, cache, atom))
 
 
 def default_depset_reorder(resolver, depset, mode):
@@ -115,7 +115,7 @@ def default_depset_reorder(resolver, depset, mode):
 			yield or_block
 			continue
 		for atom in or_block:
-			if not atom.blocks and caching_iter(p for r,c in resolver.livefs_dbs.iteritems() for p in resolver.get_db_match(r, c, atom)):
+			if not atom.blocks and caching_iter(p for r, c in resolver.livefs_dbs.iteritems() for p in resolver.get_db_match(r, c, atom)):
 				vdb.append(atom)
 			else:
 				non_vdb.append(atom)
@@ -136,8 +136,8 @@ class merge_plan(object):
 		self.all_dbs = OrderedDict((r, {}) for r in dbs)
 		self.cached_queries = {}
 		self.forced_atoms = set()
-		self.livefs_dbs = OrderedDict((k, v) for k,v in self.all_dbs.iteritems() if k.livefs)
-		self.dbs = OrderedDict((k,v) for k,v in self.all_dbs.iteritems() if not k.livefs)
+		self.livefs_dbs = OrderedDict((k, v) for k, v in self.all_dbs.iteritems() if k.livefs)
+		self.dbs = OrderedDict((k, v) for k, v in self.all_dbs.iteritems() if not k.livefs)
 		self.depset_reorder = depset_reorder_strategy
 		self.per_repo_strategy = per_repo_strategy
 		self.global_strategy = global_strategy
@@ -530,7 +530,7 @@ class merge_plan(object):
 	@staticmethod
 	def prefer_highest_version_strategy(self, dbs, atom):
 		# XXX rework caching_iter so that it iter's properly
-		return iter_sort(highest_iter_sort, *[self.get_db_match(r, c, atom) for r,c in 
+		return iter_sort(highest_iter_sort, *[self.get_db_match(r, c, atom) for r, c in
 			dbs.iteritems()])
 		#return iter_sort(highest_iter_sort, default_global_strategy(self, dbs, atom))
 
@@ -540,11 +540,11 @@ class merge_plan(object):
 
 	@staticmethod
 	def prefer_reuse_strategy(self, dbs, atom):
-		for r,c in dbs.iteritems():
+		for r, c in dbs.iteritems():
 			if r.livefs:
 				for p in self.get_db_match(r, c, atom):
 					yield p
-		for r,c in dbs.iteritems():
+		for r, c in dbs.iteritems():
 			if not r.livefs:
 				for p in self.get_db_match(r, c, atom):
 					yield p

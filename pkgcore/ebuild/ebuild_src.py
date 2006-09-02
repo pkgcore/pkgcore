@@ -12,7 +12,7 @@ WeakValCache = metadata.WeakValCache
 
 from pkgcore.ebuild import conditionals
 from pkgcore.package.atom import atom
-from digest import parse_digest
+from pkgcore.ebuild.digest import parse_digest
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import post_curry, alias_class_method, pre_curry
 from pkgcore.util.lists import ChainedLists
@@ -30,15 +30,15 @@ demandload(globals(), "errno")
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors, common_files, uri):
 
-	file = os.path.basename(uri)
+	filename = os.path.basename(uri)
 
-	preexisting = file in common_files
+	preexisting = filename in common_files
 
 	if not preexisting:
-		if file not in chksums:
-			raise MissingChksum(file)
+		if filename not in chksums:
+			raise MissingChksum(filename)
 
-	if file == uri:
+	if filename == uri:
 		new_uri = []
 	else:
 		if not preexisting:
@@ -47,9 +47,9 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors, common_fil
 				new_uri.append([uri])
 		
 			if default_mirrors is not None and "mirror" not in pkg.restrict:
-				new_uri.append(mirror(file, default_mirrors, "conf_default_mirrors"))
+				new_uri.append(mirror(filename, default_mirrors, "conf_default_mirrors"))
 		else:
-			new_uri = common_files[file].uri
+			new_uri = common_files[filename].uri
 		
 		if uri.startswith("mirror://"):
 			# mirror:// is 9 chars.
@@ -65,8 +65,9 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors, common_fil
 	# force usage of a ChainedLists, why?  because folks may specify multiple uri's resulting in the same file.
 	# we basically use ChainedList's _list as a mutable space we directly modify.
 	if not preexisting:
-		common_files[file] = fetchable(file, ChainedLists(*new_uri), chksums[file])
-	return common_files[file]
+		common_files[filename] = fetchable(
+			filename, ChainedLists(*new_uri), chksums[filename])
+	return common_files[filename]
 
 def generate_depset(s, c, *keys, **kwds):
 	if kwds.pop("non_package_type", False):
@@ -296,8 +297,8 @@ class ThrowAwayNameSpace(object):
 	def __getitem__(self, index):
 		return self._val[index]
 	
-	def __setitem__(self, slice, val):
-		self._val[slice] = val
+	def __setitem__(self, key, val):
+		self._val[key] = val
 
 
 generate_new_factory = package_factory

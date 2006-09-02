@@ -1,10 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.fs import ops, fs, livefs, contents
+from pkgcore.fs import ops, fs, livefs
 from twisted.trial import unittest
 from pkgcore.test.fs.test_util import TempDirMixin
-from pkgcore.util import currying
 import os, shutil
 pjoin = os.path.join
 
@@ -69,7 +68,9 @@ class TestCopyFile(VerifyMixin, TempDirMixin, unittest.TestCase):
 		self.verify(o, kwds, os.stat(o.location))
 		
 	def test_puke_on_dirs(self):
-		self.assertRaises, ops.default_copyfile, fs.fsDir(pjoin(self.dir, "puke_dir"), strict=False)
+		self.assertRaises(
+			TypeError, ops.default_copyfile,
+			fs.fsDir(pjoin(self.dir, "puke_dir"), strict=False))
 
 
 class ContentsMixin(VerifyMixin, TempDirMixin, unittest.TestCase):
@@ -94,7 +95,7 @@ class ContentsMixin(VerifyMixin, TempDirMixin, unittest.TestCase):
 		for k, v in s_ents:
 			if v[0] == "dir":
 				os.mkdir(k)
-		for k,v in s_ents:
+		for k, v in s_ents:
 			if v[0] == "dir":
 				pass
 			elif v[0] == "reg":
@@ -102,7 +103,7 @@ class ContentsMixin(VerifyMixin, TempDirMixin, unittest.TestCase):
 			elif v[0] == "sym":
 				os.symlink(v[1], k)
 			else:
-				raise Exception("generate_tree doesnt' support type %r yet: k %r" % (v,k))
+				raise Exception("generate_tree doesnt' support type %r yet: k %r" % (v, k))
 	
 	def gen_dir(self, name):
 		d = os.path.join(self.dir, name)
@@ -125,12 +126,16 @@ class Test_merge_contents(ContentsMixin):
 		return src, dest, cset
 	
 	def test_callback(self):
-		l = [k for k in self.__dict__ if k.startswith("entries") and isinstance(k, dict) and "fail" not in k]
-		for e in l:
+		for attr in dir(self):
+			if not attr.startswith('entries') or 'fail' in attr:
+				continue
+			e = getattr(self, attr)
+			if not isinstance(e, dict):
+				continue
 			src, dest, cset = self.generic_merge_bits(e)
-			s = set(cset)
-			ops.merge_contents(cset, offset=img, callback=lambda x:s.discard(s))
-			self.assertFalse(s)
+			s = set(ops.offset_rewriter(dest, cset))
+			ops.merge_contents(cset, offset=dest, callback=s.remove)
+			self.assertFalse(s, s)
 		
 	def test_empty_overwrite(self):
 		self.generic_merge_bits(self.entries_norm1)
@@ -152,12 +157,16 @@ class Test_unmerge_contents(ContentsMixin):
 		return img, cset
 
 	def test_callback(self):
-		l = [k for k in self.__dict__ if k.startswith("entries") and isinstance(k, dict) and "fail" not in k]
-		for e in l:
+		for attr in dir(self):
+			if not attr.startswith('entries') or 'fail' in attr:
+				continue
+			e = getattr(self, attr)
+			if not isinstance(e, dict):
+				continue
 			img, cset = self.generic_unmerge_bits(e)
-			s = set(cset)
-			ops.unmerge_contents(cset, offset=img, callback=lambda x:s.discard(s))
-			self.assertFalse(s)
+			s = set(ops.offset_rewriter(img, cset))
+			ops.unmerge_contents(cset, offset=img, callback=s.remove)
+			self.assertFalse(s, s)
 		
 	def test_empty_removal(self):
 		img, cset = self.generic_unmerge_bits(self.entries_norm1)
@@ -170,7 +179,7 @@ class Test_unmerge_contents(ContentsMixin):
 
 	def test_lingering_file(self):
 		img, cset = self.generic_unmerge_bits(self.entries_norm1)
-		dirs = [k for k,v in self.entries_norm1.iteritems() if v[0] == "dir"]
+		dirs = [k for k, v in self.entries_norm1.iteritems() if v[0] == "dir"]
 		fp = os.path.join(img, dirs[0], "linger")
 		open(fp, "w")
 		self.assertTrue(ops.unmerge_contents(cset, offset=img))

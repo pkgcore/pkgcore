@@ -9,12 +9,12 @@ from pkgcore.util import formatters
 class FormatterTest(unittest.TestCase):
 
 	def _testStream(self, stream, formatter, *data):
-		for input, output in data:
+		for inputs, outputs in data:
 			stream.seek(0)
 			stream.truncate()
-			formatter.write(*input)
+			formatter.write(*inputs)
 			stream.seek(0)
-			self.assertEquals(''.join(output), stream.read())
+			self.assertEquals(''.join(outputs), stream.read())
 
 	def test_terminfo(self):
 		ESC = '\x1b['

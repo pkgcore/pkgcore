@@ -5,10 +5,9 @@
 file related operations, mainly reading
 """
 
-import re, os, errno
+import re, os
 from shlex import shlex
-from mappings import ProtectedDict
-from pkgcore.util.demandload import demandload
+from pkgcore.util.mappings import ProtectedDict
 
 
 class AtomicWriteFile(file):
@@ -73,8 +72,11 @@ def read_dict(bash_source, splitter="=", ignore_malformed=False, source_isiter=F
 	"""
 	d = {}
 	if not source_isiter:
+		filename = bash_source
 		i = iter_read_bash(bash_source)
 	else:
+		# XXX what to do?
+		filename = '<unknown>'
 		i = bash_source
 	line_count = 1
 	try:
@@ -84,7 +86,7 @@ def read_dict(bash_source, splitter="=", ignore_malformed=False, source_isiter=F
 				k, v = k.split(splitter, 1)
 			except ValueError:
 				if not ignore_malformed:
-					raise ParseError(file, line_count)
+					raise ParseError(filename, line_count)
 			else:
 				if len(v) > 2 and v[0] == v[-1] and v[0] in ("'", '"'):
 					v = v[1:-1]
@@ -221,8 +223,8 @@ class bash_parser(shlex):
 
 class ParseError(Exception):
 
-	def __init__(self, file, line, errmsg=None):
-		self.file, self.line, self.errmsg = file, line, errmsg
+	def __init__(self, filename, line, errmsg=None):
+		self.file, self.line, self.errmsg = filename, line, errmsg
 
 	def __str__(self):
 		if self.errmsg is not None:

@@ -7,10 +7,8 @@
 
 
 import re
-from base import base
-from pkgcore.util.currying import post_curry
-from pkgcore.util.caching import WeakInstMeta
-from pkgcore.package import atom, errors
+from pkgcore.package import atom, errors, base
+
 
 suffix_regexp = re.compile("^(alpha|beta|rc|pre|p)(\\d*)$")
 suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
@@ -163,7 +161,8 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
 
 			# If they are not equal, the higher value wins.
 			c = cmp(v1, v2)
-			if c:	return c
+			if c:
+				return c
 
 		# The dotted components were equal. Let's compare any single
 		# letter suffixes.
@@ -187,12 +186,14 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
 		if x == parts1_len:
 			match = suffix_regexp.match(parts2[x])
 			val = suffix_value[match.group(1)]
-			if val:	return cmp(0, val)
+			if val:
+				return cmp(0, val)
 			return cmp(0, int("0"+match.group(2)))
 		if x == parts2_len:
 			match = suffix_regexp.match(parts1[x])
 			val = suffix_value[match.group(1)]
-			if val:	return cmp(val, 0)
+			if val:
+				return cmp(val, 0)
 			return cmp(int("0"+match.group(2)), 0)
 
 		# If the string values are equal, no need to parse them.
@@ -208,11 +209,13 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
 		# If our int'ified suffix names are different, use that as the basis
 		# for comparison.
 		c = cmp(suffix_value[match1.group(1)], suffix_value[match2.group(1)])
-		if c:	return c
+		if c:
+			return c
 
 		# Otherwise use the digit as the basis for comparison.
 		c = cmp(int("0"+match1.group(2)), int("0"+match2.group(2)))
-		if c:	return c
+		if c:
+			return c
 
 	# Our versions had different strings but ended up being equal.
 	# The revision holds the final difference.
@@ -230,7 +233,7 @@ def cpy_ver_cmp(ver1, rev1, ver2, rev2):
 
 
 try:
-	from _cpv import CPV as cpy_CPV
+	from pkgcore.package._cpv import CPV as cpy_CPV
 	base_CPV = cpy_CPV
 	ver_cmp = cpy_ver_cmp
 	cpy_builtin = True
@@ -240,7 +243,7 @@ except ImportError:
 	cpy_builtin = False
 
 
-class CPV(base, base_CPV):
+class CPV(base.base, base_CPV):
 
 	"""
 	base ebuild package class

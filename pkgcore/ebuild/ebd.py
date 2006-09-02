@@ -20,7 +20,7 @@ from pkgcore.os_data import portage_gid
 from pkgcore.spawn import spawn_bash, spawn
 from pkgcore.util.currying import post_curry, pretty_docs
 from pkgcore.os_data import xargs
-from const import eapi_capable
+from pkgcore.ebuild.const import eapi_capable
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.ebuild.ebuild_built:fake_package_factory,package")
 
@@ -37,10 +37,10 @@ def _reset_env_data_source(method):
 				try:
 					fp = self.env["PORT_ENV_FILE"]
 					f = self.env_data.get_fileobj()
-					f.seek(0,0)
+					f.seek(0, 0)
 					f.truncate(0)
 					f.write(open(fp, "r").read())
-					del f,fp
+					del f, fp
 				except (IOError, OSError), oe:
 					if oe.errno != errno.ENOENT:
 						raise
@@ -117,7 +117,7 @@ class ebd(object):
 
 		self.pkg = pkg
 		self.eapi = pkg.eapi
-		for k,v in self.env.items():
+		for k, v in self.env.items():
 			if not isinstance(v, basestring):
 				del self.env[k]
 
@@ -132,7 +132,7 @@ class ebd(object):
 		self.env["HOME"] = os.path.join(self.tmpdir, "homedir")
 
 		self.builddir = os.path.join(self.tmpdir, self.env["CATEGORY"], self.env["PF"])
-		for x,y in (("T", "temp"), ("WORKDIR", "work"), ("D", "image")):
+		for x, y in (("T", "temp"), ("WORKDIR", "work"), ("D", "image")):
 			self.env[x] = os.path.join(self.builddir, y) +"/"
 		self.env["IMAGE"] = self.env["D"]
 
@@ -334,7 +334,7 @@ class buildable(ebd, build.base):
 				for y in ("_PATH", "_DIR"):
 					if s+y in self.env:
 						del self.env[s+y]
-		path = filter(None, path)
+		path = [piece for piece in path if piece]
 		self.env["PATH"] = ":".join(path)
 		self.fetchables = pkg.fetchables[:]
 		self.env["A"] = ' '.join(map(operator.attrgetter("filename"), self.fetchables))
@@ -359,7 +359,7 @@ class buildable(ebd, build.base):
 				raise build.FailedDirectory(self.env["DISTDIR"], "failed creating distdir symlink directory")
 
 			try:
-				for src, dest in [(k, os.path.join(self.env["DISTDIR"], v.filename)) for (k,v) in self.files.items()]:
+				for src, dest in [(k, os.path.join(self.env["DISTDIR"], v.filename)) for (k, v) in self.files.items()]:
 					os.symlink(src, dest)
 
 			except OSError, oe:

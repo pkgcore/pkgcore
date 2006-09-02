@@ -6,7 +6,7 @@ binpkg tar utilities
 """
 import os
 from pkgcore.util.tar import TarFile
-from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsDev, fsFifo
+from pkgcore.fs.fs import fsFile, fsDir, fsSymlink
 from pkgcore.fs import contents
 from pkgcore.util.mappings import OrderedDict
 from pkgcore.interfaces.data_source import data_source
@@ -44,7 +44,7 @@ def converter(src_tar):
 		elif member.issym():
 			yield fsSymlink(location, member.linkname, **d)
 		else:
-			print "skipping",member
+			print "skipping", member
 
 def generate_contents(path):
 	t = TarFile.bz2open(path, mode="r")

@@ -6,7 +6,7 @@ filesystem entry abstractions
 """
 
 import stat
-from pkgcore.util.mappings import ImmutableDict, LazyValDict
+from pkgcore.util.mappings import LazyValDict
 from pkgcore.chksum import get_handlers, get_handler
 from os.path import sep as path_seperator, abspath
 from pkgcore.interfaces.data_source import local_source
@@ -58,7 +58,7 @@ class fsBase(object):
 			for k in self.__slots__:
 				s(self, k, d[k])
 		else:
-			for k,v in d.iteritems():
+			for k, v in d.iteritems():
 				s(self, k, v)
 	gen_doc_additions(__init__, __slots__)
 
@@ -124,7 +124,7 @@ class fsFile(fsBase):
 			# this can be problematic offhand if the file is modified but chksum not triggered
 			chksums = LazyValDict(tuple(get_handlers()), self._chksum_callback)
 		kwds["chksums"] = chksums
-		fsBase.__init__(self,location,**kwds)
+		fsBase.__init__(self, location, **kwds)
 	gen_doc_additions(__init__, __slots__)
 
 	def __repr__(self):

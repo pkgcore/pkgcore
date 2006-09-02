@@ -39,7 +39,7 @@ class ChainedListsTest(unittest.TestCase):
 
 	@staticmethod
 	def gen_cl():
-		return lists.ChainedLists(range(3), range(3,6), range(6, 100))
+		return lists.ChainedLists(range(3), range(3, 6), range(6, 100))
 
 	def test_contains(self):
 		cl = self.gen_cl()

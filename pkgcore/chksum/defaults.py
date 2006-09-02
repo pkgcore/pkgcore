@@ -28,14 +28,15 @@ def loop_over_file(obj, filename):
 		f.seek(0, 0)
 	try:
 		data = f.read(blocksize)
+		# XXX why is size tracked here? It seems to be unused...
 		size = 0L
-		sum = obj()
+		checksum = obj()
 		while data:
-			sum.update(data)
+			checksum.update(data)
 			size = size + len(data)
 			data = f.read(blocksize)
 
-		return sum.hexdigest()
+		return checksum.hexdigest()
 	finally:
 		if wipeit:
 			f.close()
@@ -170,7 +171,7 @@ if 'md5' not in chksum_types:
 
 
 # expand this to load all available at some point
-for k,v in (("sha1", "SHA"), ("sha256", "SHA256"), ("rmd160", "RIPEMD")):
+for k, v in (("sha1", "SHA"), ("sha256", "SHA256"), ("rmd160", "RIPEMD")):
 	if k in chksum_types:
 		continue
 	try:

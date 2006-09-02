@@ -91,7 +91,7 @@ def configFromMakeConf(location="/etc/"):
 				"%s/make.profile must be a symlink pointing to a real target" % base_path)
 		raise errors.InstantiationError("configFromMakeConf", [], {},
 			"%s/make.profile: unexepect error- %s" % (base_path, oe))
-	psplit = filter(None, profile.split("/"))
+	psplit = [piece for piece in profile.split("/") if piece]
 	# poor mans rindex.
 	try:
 		stop = max(idx for idx, val in enumerate(psplit) if val == "profiles")

@@ -5,5 +5,6 @@
 package interface/classes
 """
 
+# cpv and atom circularly import each other. This enforces a working order.
 import cpv
 

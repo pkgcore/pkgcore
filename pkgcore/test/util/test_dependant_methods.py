@@ -13,7 +13,7 @@ class TestDependantMethods(unittest.TestCase):
 			__metaclass__ = dm.ForcedDepends
 			stage_depends = dict(dependencies)
 
-		for k,v in methods.iteritems():
+		for k, v in methods.iteritems():
 			setattr(c, k, v)
 
 		return c()

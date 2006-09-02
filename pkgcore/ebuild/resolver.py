@@ -8,7 +8,6 @@ resolver configuration to match portage behaviour (misbehaviour in a few spots)
 __all__ = ["upgrade_resolver", "min_install_resolver"]
 
 from pkgcore.resolver import plan
-from pkgcore.util.iterables import caching_iter
 from pkgcore.util.demandload import demandload
 
 demandload(globals(), "pkgcore.util.repo_utils:get_virtual_repos " +

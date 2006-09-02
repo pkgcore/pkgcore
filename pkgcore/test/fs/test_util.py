@@ -23,8 +23,8 @@ class TempDirMixin(object):
 	def tearDown(self):
 		# change permissions back or rmtree can't kill it
 		for root, dirs, files in os.walk(self.dir):
-			for dir in dirs:
-				os.chmod(os.path.join(root, dir), 0777)
+			for directory in dirs:
+				os.chmod(os.path.join(root, directory), 0777)
 		shutil.rmtree(self.dir)
 
 

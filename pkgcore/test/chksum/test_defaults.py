@@ -3,7 +3,6 @@
 
 from twisted.trial import unittest
 from pkgcore import chksum
-from pkgcore.util.currying import post_curry
 from pkgcore.interfaces.data_source import data_source, local_source
 import tempfile, os
 
@@ -43,7 +42,7 @@ class ChksumTest(object):
 
 
 # trick: create subclasses for each checksum with a useful class name.
-for chf_type, sum in {
+for chf_type, expectedsum in {
 	"rmd160":"b83ad488d624e7911f886420ab230f78f6368b9f",
 	"size":long(len(data)*multi),
 	"sha1":"63cd8cce8a1773dffb400ee184be3ec7d89791f5",
@@ -52,6 +51,6 @@ for chf_type, sum in {
 	globals()[chf_type + 'ChksumTest'] = type(
 		chf_type + 'ChksumTest',
 		(ChksumTest, unittest.TestCase),
-		dict(chf_type=chf_type, sum=sum))
+		dict(chf_type=chf_type, sum=expectedsum))
 
 del chf_type

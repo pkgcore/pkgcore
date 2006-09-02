@@ -9,7 +9,6 @@ gentoo configuration domain
 
 import os
 import pkgcore.config.domain
-from pkgcore.util.compatibility import any, all
 from pkgcore.restrictions.collapsed import DictBased
 from pkgcore.restrictions import packages, values
 from pkgcore.util.file import iter_read_bash
@@ -22,8 +21,8 @@ from pkgcore.interfaces.data_source import local_source
 from pkgcore.config.errors import BaseException
 
 class MissingFile(BaseException):
-	def __init__(self, file, setting):
-		self.file, self.setting = file, setting
+	def __init__(self, filename, setting):
+		self.file, self.setting = filename, setting
 	def __str__(self):
 		return "setting %s points at %s, which doesn't exist." % (self.setting, self.file)
 
@@ -141,7 +140,7 @@ class domain(pkgcore.config.domain.domain):
 		use, license, default_keywords = [], [], []
 		self.use = use
 		master_license = []
-		for k,v in (("USE", use), ("ACCEPT_KEYWORDS", default_keywords), ("ACCEPT_LICENSE", master_license)):
+		for k, v in (("USE", use), ("ACCEPT_KEYWORDS", default_keywords), ("ACCEPT_LICENSE", master_license)):
 			if k not in settings:
 				raise Failure("No %s setting detected from profile, or user config" % k)
 			v.extend(filter_negations(k, settings[k]))
@@ -194,13 +193,13 @@ class domain(pkgcore.config.domain.domain):
 		bashrc = list(profile.bashrc)
 
 		if "bashrc" in self.settings:
-			for input in self.settings['bashrc']:
-				source = local_source(input)
+			for data in self.settings['bashrc']:
+				source = local_source(data)
 				# this is currently local-only so a get_path check is ok
 				# TODO make this more general
 				if source.get_path() is None:
 					raise Failure(
-						'user-specified bashrc %r does not exist' %	input)
+						'user-specified bashrc %r does not exist' %	(data,))
 				bashrc.append(source)
 
 		self.settings["bashrc"] = bashrc
@@ -293,7 +292,7 @@ class domain(pkgcore.config.domain.domain):
 			second_level_restricts.setdefault(pkgatom.key, []).append(pkgatom)
 			keywords_filter[pkgatom] = r
 		
-		second_level_restricts = dict((k, tuple(unstable_unique(v))) for k,v in second_level_restricts.iteritems())
+		second_level_restricts = dict((k, tuple(unstable_unique(v))) for k, v in second_level_restricts.iteritems())
 		
 		keywords_filter["__DEFAULT__"] = packages.PackageRestriction("keywords", default_restrict)
 		def redirecting_splitter(collapsed_inst, pkg):

@@ -7,7 +7,7 @@ default fs ops.
 Shouldn't be accessed directly for the most part, use L{pkgcore.plugins} to get at these ops
 """
 
-import os, shutil, errno
+import os, errno
 from pkgcore.fs import gen_obj, contents, fs, util
 from pkgcore.spawn import spawn
 from pkgcore.const import COPY_BINARY
@@ -16,7 +16,7 @@ from pkgcore.util.currying import pre_curry
 
 __all__ = ["merge_contents", "unmerge_contents", "default_ensure_perms", "default_copyfile", "default_mkdir"]
 
-def default_ensure_perms(d1,d2=None):
+def default_ensure_perms(d1, d2=None):
 
 	"""
 	enforce a fs objects attributes on the livefs (permissions, mtime, uid, gid specifically)

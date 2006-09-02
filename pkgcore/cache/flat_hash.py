@@ -17,7 +17,7 @@ class database(fs_template.FsBased):
 	autocommits = True
 
 	def __init__(self, *args, **config):
-		super(database,self).__init__(*args, **config)
+		super(database, self).__init__(*args, **config)
 		self.location = os.path.join(self.location,
 			self.label.lstrip(os.path.sep).rstrip(os.path.sep))
 
@@ -27,7 +27,7 @@ class database(fs_template.FsBased):
 
 	def _getitem(self, cpv):
 		try:
-			myf = open(os.path.join(self.location, cpv),"r", 32384)
+			myf = open(os.path.join(self.location, cpv), "r", 32384)
 		except IOError, e:
 			if e.errno == errno.ENOENT:
 				raise KeyError(cpv)
@@ -49,14 +49,14 @@ class database(fs_template.FsBased):
 
 	def _setitem(self, cpv, values):
 		s = cpv.rfind("/")
-		fp = os.path.join(self.location,cpv[:s],".update.%i.%s" % (os.getpid(), cpv[s+1:]))
+		fp = os.path.join(self.location, cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s+1:]))
 		try:
 			myf = open(fp, "w", 32384)
 		except IOError, ie:
 			if ie.errno == errno.ENOENT:
 				try:
 					self._ensure_dirs(cpv)
-					myf = open(fp,"w", 32384)
+					myf = open(fp, "w", 32384)
 				except (OSError, IOError),e:
 					raise cache_errors.CacheCorruption(cpv, e)
 			else:
@@ -73,7 +73,7 @@ class database(fs_template.FsBased):
 
 		#update written.  now we move it.
 
-		new_fp = os.path.join(self.location,cpv)
+		new_fp = os.path.join(self.location, cpv)
 		try:
 			os.rename(fp, new_fp)
 		except (OSError, IOError), e:
@@ -82,7 +82,7 @@ class database(fs_template.FsBased):
 
 	def _delitem(self, cpv):
 		try:
-			os.remove(os.path.join(self.location,cpv))
+			os.remove(os.path.join(self.location, cpv))
 		except OSError, e:
 			if e.errno == errno.ENOENT:
 				raise KeyError(cpv)

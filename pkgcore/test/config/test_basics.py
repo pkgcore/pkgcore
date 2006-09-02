@@ -15,7 +15,6 @@ class ConfigTypeTest(unittest.TestCase):
 
 	def test_invalid_types(self):
 		for var in ('class', 'type', 'inherit'):
-			emptySection = basics.ConfigSectionFromStringDict('empty', {})
 			self.assertRaises(
 				errors.TypeDefinitionError,
 				basics.ConfigType, 'testtype', {var: 'str'})
@@ -155,7 +154,7 @@ class ParsersTest(unittest.TestCase):
 		# abuse Identical to make sure we get actual bools, not some
 		# weird object that happens to be True or False when converted
 		# to a bool
-		for input, output in [
+		for string, output in [
 			('True', True),
 			('yes', True),
 			('1', True),
@@ -163,10 +162,10 @@ class ParsersTest(unittest.TestCase):
 			('no', False),
 			('0', False),
 			]:
-			self.assertIdentical(basics.bool_parser(input), output)
+			self.assertIdentical(basics.bool_parser(string), output)
 
 	def test_str_parser(self):
-		for input, output in [
+		for string, output in [
 			('\t ', ''),
 			(' foo ', 'foo'),
 			(' " foo " ', ' foo '),
@@ -177,10 +176,10 @@ class ParsersTest(unittest.TestCase):
 			("'a", "'a"),
 			('"a', '"a'),
 			]:
-			self.assertEquals(basics.str_parser(input), output)
+			self.assertEquals(basics.str_parser(string), output)
 
 	def test_list_parser(self):
-		for input, output in [
+		for string, output in [
 			('foo', ['foo']),
 			('"f\'oo"  \'b"ar\'', ["f'oo", 'b"ar']),
 			('', []),
@@ -189,10 +188,10 @@ class ParsersTest(unittest.TestCase):
 			('\'"hi\'', ['"hi']),
 			('"\\"hi"', ['"hi']),
 			]:
-			self.assertEquals(basics.list_parser(input), output)
-		for input in ['"', "'foo", 'ba"r', 'baz"']:
+			self.assertEquals(basics.list_parser(string), output)
+		for string in ['"', "'foo", 'ba"r', 'baz"']:
 			self.assertRaises(
-				errors.QuoteInterpretationError, basics.list_parser, input)
+				errors.QuoteInterpretationError, basics.list_parser, string)
 		# make sure this explodes instead of returning something
 		# confusing so we explode much later
 		self.assertRaises(TypeError, basics.list_parser, ['no', 'string'])

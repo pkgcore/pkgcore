@@ -300,8 +300,8 @@ class ComparisonMatch(base):
 		_rev_op_converter[v] = k
 		_rev_op_converter[tuple(sorted(v+(0,)))] = k+"="
 	_op_converter["!="] = _op_converter["<>"] = (-1, 1)
-	_rev_op_converter[(-1,1)] = "!="
-	del k,v
+	_rev_op_converter[(-1, 1)] = "!="
+	del k, v
 
 	__slots__ = ("data", "cmp_func", "matching_vals")
 
@@ -417,6 +417,9 @@ class ContainmentMatch(base):
 
 	def force_False(self, pkg, attr, val):
 
+		# "More than one statement on a single line"
+		# pylint: disable-msg=C0321
+
 		# XXX pretty much positive this isn't working.
 		if isinstance(val, (str, unicode)):
 			# unchangable
@@ -462,6 +465,9 @@ class ContainmentMatch(base):
 
 
 	def force_True(self, pkg, attr, val):
+
+		# "More than one statement on a single line"
+		# pylint: disable-msg=C0321
 
 		# XXX pretty much positive this isn't working.
 

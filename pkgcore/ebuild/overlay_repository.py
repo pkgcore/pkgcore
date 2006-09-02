@@ -9,10 +9,8 @@ from pkgcore.repository import multiplex
 from pkgcore.config.introspect import ConfigHint
 from pkgcore.config import errors
 from pkgcore.ebuild import repository, eclass_cache
-from pkgcore.util.file import read_dict
 from pkgcore.util.lists import unstable_unique
 from pkgcore.restrictions import packages
-import os, stat
 
 
 class OverlayRepo(multiplex.tree):

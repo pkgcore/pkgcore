@@ -117,9 +117,10 @@ class ebd(object):
 
 		self.pkg = pkg
 		self.eapi = pkg.eapi
-		for k, v in self.env.items():
-			if not isinstance(v, basestring):
-				del self.env[k]
+		wipes = [k for k, v in self.env.iteritems() if not isinstance(v, basestring)]
+		for k in wipes:
+			del self.env[k]
+		del wipes, k ,v
 
 		build.base.__init__(self)
 		self.__init_workdir__()

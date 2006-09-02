@@ -10,12 +10,13 @@ from pkgcore.config import basics, introspect
 from pkgcore import const
 from pkgcore.util.modules import load_attribute
 from pkgcore.util.demandload import demandload
-demandload(globals(), "errno pkgcore.config:errors " +
-	"pkgcore.pkgsets.glsa:SecurityUpgrades "+
-	"pkgcore.fs.util:normpath,abspath "+
-	"pkgcore.util.file:read_bash_dict,read_dict "+
-	"pkgcore.pkgsets.filelist:FileList "+
-	"pkgcore.util.osutils:listdir_files ")
+demandload(globals(), "errno pkgcore.config:errors " 
+	"pkgcore.pkgsets.glsa:SecurityUpgrades "
+	"pkgcore.fs.util:normpath,abspath "
+	"pkgcore.util.file:read_bash_dict,read_dict "
+	"pkgcore.pkgsets.filelist:FileList "
+	"pkgcore.util.osutils:listdir_files "
+	"pkgcore.ebuild.eclass_cache:StackedCaches ")
 
 
 def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
@@ -61,6 +62,8 @@ def configFromMakeConf(location="/etc/"):
 	if not gentoo_mirrors:
 		gentoo_mirrors = None
 
+	features = conf_dict.get("FEATURES", "").split()
+
 	new_config = {}
 
 	# sets...
@@ -105,28 +108,10 @@ def configFromMakeConf(location="/etc/"):
 		{"type": "profile", "class": "pkgcore.ebuild.profiles.OnDiskProfile", 
 		"base_path": pjoin("/", *psplit[:stop+1]), "profile": pjoin(*psplit[stop + 1:])})
 
+
 	portdir = normpath(conf_dict.pop("PORTDIR").strip())
-	portdir_overlays = map(normpath, conf_dict.pop("PORTDIR_OVERLAY", "").split())
+	portdir_overlays = [normpath(x) for x in conf_dict.pop("PORTDIR_OVERLAY", "").split()]
 
-	cache_config = {"type": "cache", "location": "%s/var/cache/edb/dep" % config_root.rstrip("/"), "label": "make_conf_overlay_cache"}
-	pcache = None
-	if os.path.exists(base_path+"portage/modules"):
-		pcache = read_dict(base_path+"portage/modules").get("portdbapi.auxdbmodule", None)
-	
-	features = conf_dict.get("FEATURES", "").split()
-	
-	rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache"))
-	if pcache is None:
-		if portdir_overlays or ("metadata-transfer" not in features):
-			cache_config["class"] = "pkgcore.cache.flat_hash.database"
-		else:
-			cache_config["class"] = "pkgcore.cache.metadata.database"
-			cache_config["location"] = portdir
-			cache_config["readonly"] = "true"			
-	else:
-		cache_config["class"] = pcache
-
-	new_config["cache"] = basics.ConfigSectionFromStringDict("cache", cache_config)
 
 	#fetcher.
 	distdir = normpath(conf_dict.pop("DISTDIR", pjoin(portdir, "distdir")))
@@ -137,6 +122,45 @@ def configFromMakeConf(location="/etc/"):
 		{"type": "fetcher", "distdir": distdir, "command": fetchcommand,
 		"resume_command": resumecommand})
 
+
+	cache_config = {"type": "cache", "location": "%s/var/cache/edb/dep" % config_root.rstrip("/"), "label": "make_conf_overlay_cache"}
+	pcache = None
+	if os.path.exists(base_path+"portage/modules"):
+		pcache = read_dict(base_path+"portage/modules").get("portdbapi.auxdbmodule", None)
+	
+	
+	rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache"))
+
+	if pcache is None:
+		if portdir_overlays or ("metadata-transfer" not in features):
+			cache_config["class"] = "pkgcore.cache.flat_hash.database"
+		else:
+			cache_config["class"] = "pkgcore.cache.metadata.database"
+			cache_config["location"] = portdir
+			cache_config["readonly"] = "true"			
+	else:
+		cache_config["class"] = pcache
+
+	all_ecs = []
+	for x in [portdir] + portdir_overlays:
+		ec_path = pjoin(x, "eclass")
+		new_config[ec_path] = basics.ConfigSectionFromStringDict(ec_path,
+			{"class":"pkgcore.ebuild.eclass_cache.cache", "type":"misc", "path":ec_path})
+		all_ecs.append(ec_path)
+
+	if len(all_ecs) > 1:
+		# reverse the ordering so that overlays override portdir (portage default)
+		new_config["eclass stack"] = basics.HardCodedConfigSection("eclass stack",
+			{"class":StackedCaches, "type":"misc",
+				"caches":tuple(reversed(all_ecs))})
+	else:
+		# via forced portdir above, no need to verify bool(all_ecs), we know it's just portdir.
+		new_config["eclass stack"] = new_config[all_ecs[0]]
+		
+	del all_ecs
+		
+	new_config["cache"] = basics.ConfigSectionFromStringDict("cache", cache_config)
+
 	ebuild_repo_class = load_attribute("pkgcore.ebuild.repository.tree")
 	
 	for tree_loc in [portdir] + portdir_overlays:
@@ -144,6 +168,7 @@ def configFromMakeConf(location="/etc/"):
 		d2["location"] = tree_loc
 		d2["cache"] = "%s cache" % tree_loc
 		d2["default_mirrors"] = gentoo_mirrors
+		d2["eclass_cache"] = "eclass stack"
 		new_config[tree_loc] = basics.HardCodedConfigSection(tree_loc, d2)
 		if rsync_portdir_cache and tree_loc == portdir:
 			c = {"type": "cache", "location": tree_loc, "label": tree_loc, 

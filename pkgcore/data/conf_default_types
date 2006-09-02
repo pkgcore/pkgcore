@@ -119,7 +119,7 @@ allow_unknowns = yes
 required = class location
 defaults = class
 class = pkgcore.ebuild.repository.tree
-section_ref = cache sync sync_cache fetcher
+section_ref = cache sync sync_cache fetcher eclass_cache
 str = location
 list = default_mirrors
 
@@ -156,6 +156,9 @@ userpriv = true
 
 [pkgset]
 # no defaults.
+
+[misc]
+# no defaults
 
 [DEFAULT]
 metadata_keys = DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE DESCRIPTION KEYWORDS INHERITED IUSE CDEPEND

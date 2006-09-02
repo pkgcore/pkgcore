@@ -3,9 +3,8 @@
 
 """Use introspection to build ConfigTypes from callables."""
 
-import inspect
-
-from pkgcore.config import basics, errors
+from pkgcore.util.demandload import demandload
+demandload(globals(), "inspect pkgcore:config")
 
 def configTypeFromCallable(func_obj):
 	"""Create a ConfigType from a callable (function, member function, class).
@@ -65,16 +64,16 @@ def configTypeFromCallable(func_obj):
 			if hint_overrides.positional:
 				positional = list(hint_overrides.positional)
 		elif not isinstance(hint_overrides, bool):
-			raise errors.TypeDefinitionError(
+			raise config.errors.TypeDefinitionError(
 				"instance %s attr pkgcore_config_type is neither a ConfigHint nor boolean" % func_obj)
 		elif fail:
 			raise TypeError('func accepts *args or **kwargs, and no ConfigHint is provided')
 	elif fail:
 		raise TypeError('func accepts *args or **kwargs, and no ConfigHint is provided')
 
-	return basics.ConfigType(
+	return config.basics.ConfigType(
 		name, types, required=args,
-		defaults=basics.HardCodedConfigSection(
+		defaults=config.basics.HardCodedConfigSection(
 			'%s defaults' % name, defaultsDict),
 		positional=positional)
 

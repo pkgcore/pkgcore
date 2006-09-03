@@ -6,6 +6,8 @@ Difficulty estimate indicated by '*', based on either codebase in question, or k
 none == easy, >=5 of 'em, tricky.
 
 
+- conf_default_types , gut all of the ebuild specific crap and shift it into introspective configuration objs.
+
 - pkgcore.fs.ops.merge_contents; doesn't rewite the contents set when a file it's mergeing is relying on symlinked
   directories for the full path; eg, /usr/share/X11/xkb/compiled -> /var/blah, it records the former instead of 
   recording the true absolute path.

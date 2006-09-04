@@ -5,109 +5,109 @@
 
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.iterables:caching_iter "+
-	"pkgcore.config:load_config "+
-	"pkgcore.package.atom:atom "+
-	"pkgcore.util.packages:get_raw_pkg "+
-	"sys os ")
+    "pkgcore.config:load_config "+
+    "pkgcore.package.atom:atom "+
+    "pkgcore.util.packages:get_raw_pkg "+
+    "sys os ")
 
 def str_pkg(pkg):
-	pkg = get_raw_pkg(pkg)
-	return pkg.cpvstr
+    pkg = get_raw_pkg(pkg)
+    return pkg.cpvstr
 
 def expose_to_commandline(f):
-	f.command_handler = True
-	return f
+    f.command_handler = True
+    return f
 
 
 @expose_to_commandline
 def has_version(domain, atom):
-	"""
-	@param domain: L{pkgcore.config.domain.domain} instance
-	@param atom_str: L{pkgcore.package.atom.atom} instance
-	"""
-	if caching_iter(domain.all_vdbs.itermatch(atom)):
-		return ['', 0]
-	return ['', 1]
+    """
+    @param domain: L{pkgcore.config.domain.domain} instance
+    @param atom_str: L{pkgcore.package.atom.atom} instance
+    """
+    if caching_iter(domain.all_vdbs.itermatch(atom)):
+        return ['', 0]
+    return ['', 1]
 
 
 @expose_to_commandline
 def best_version(domain, atom):
-	"""
-	@param domain: L{pkgcore.config.domain.domain} instance
-	@param atom_str: L{pkgcore.package.atom.atom} instance
-	"""
-	# temp hack, configured pkgs yield "configured(blah) pkg"
-	
-	try:
-		p = max(domain.all_vdbs.itermatch(atom))
-	except ValueError:
-		# empty sequence.
-		return ['', 1]
-	return [str_pkg(get_raw_pkg(p)), 0]
+    """
+    @param domain: L{pkgcore.config.domain.domain} instance
+    @param atom_str: L{pkgcore.package.atom.atom} instance
+    """
+    # temp hack, configured pkgs yield "configured(blah) pkg"
+    
+    try:
+        p = max(domain.all_vdbs.itermatch(atom))
+    except ValueError:
+        # empty sequence.
+        return ['', 1]
+    return [str_pkg(get_raw_pkg(p)), 0]
 
 
 @expose_to_commandline
 def match(argv):
-	"""
-	@param domain: L{pkgcore.config.domain.domain} instance
-	@param atom_str: L{pkgcore.package.atom.atom} instance
-	"""
-	# temp hack, configured pkgs yield "configured(blah) pkg"
-	l = sorted(get_raw_pkg(x) for x in domain.all_repos.itermatch(atom))
-	if not l:
-		return ['', 1]
-	return ["\n".join(str_pkg(x) for x in l), 0]
+    """
+    @param domain: L{pkgcore.config.domain.domain} instance
+    @param atom_str: L{pkgcore.package.atom.atom} instance
+    """
+    # temp hack, configured pkgs yield "configured(blah) pkg"
+    l = sorted(get_raw_pkg(x) for x in domain.all_repos.itermatch(atom))
+    if not l:
+        return ['', 1]
+    return ["\n".join(str_pkg(x) for x in l), 0]
 
 
 def usage():
-	print "\nusage: command domain atom"
-	print "domain is the string name of the domain to query from; if exempted, will use the default domain"
-	print "\n=available commands=\n"
-	for k, v in globals().iteritems():
-		if not getattr(v, "command_handler", False):
-			continue
-		print k
-		print "\n".join("  "+x for x in [s.strip() for s in v.__doc__.split("\n")] if x)
-		print
-	
+    print "\nusage: command domain atom"
+    print "domain is the string name of the domain to query from; if exempted, will use the default domain"
+    print "\n=available commands=\n"
+    for k, v in globals().iteritems():
+        if not getattr(v, "command_handler", False):
+            continue
+        print k
+        print "\n".join("  "+x for x in [s.strip() for s in v.__doc__.split("\n")] if x)
+        print
+    
 def main():
-	a = sys.argv[1:]
-	if "--usage" in a or "--help" in a:
-		usage()
-		sys.exit(0)
-	if not a:
-		usage()
-		sys.exit(1)
+    a = sys.argv[1:]
+    if "--usage" in a or "--help" in a:
+        usage()
+        sys.exit(0)
+    if not a:
+        usage()
+        sys.exit(1)
 
-	try:
-		command = globals()[a[0]]
-		if not getattr(command, "command_handler", False):
-			raise KeyError
-	except KeyError:
-		print "%s isn't a valid command" % a[0]
-		usage()
-		sys.exit(2)
-	
-	if len(a) > 3 or len(a) == 1:
-		print "arg count is wrong"
-		usage()
-		sys.exit(2)
-	elif len(a) == 2:
-		domain = load_config().get_default("domain")
-	else:
-		domain = load_config().domain.get(a[1], None)
-	
-	if domain is None:
-		print "no default domain in your configuration, or what was specified manually wasn't found."
-		print "known domains- %r" % list(load_config().domain.iterkeys())
-		sys.exit(2)
-	
-	a = atom(a[-1])
-	# force expansion.
-	a.restrictions
-	s, ret = command(domain, a)
-	print s
-	sys.exit(ret)
+    try:
+        command = globals()[a[0]]
+        if not getattr(command, "command_handler", False):
+            raise KeyError
+    except KeyError:
+        print "%s isn't a valid command" % a[0]
+        usage()
+        sys.exit(2)
+    
+    if len(a) > 3 or len(a) == 1:
+        print "arg count is wrong"
+        usage()
+        sys.exit(2)
+    elif len(a) == 2:
+        domain = load_config().get_default("domain")
+    else:
+        domain = load_config().domain.get(a[1], None)
+    
+    if domain is None:
+        print "no default domain in your configuration, or what was specified manually wasn't found."
+        print "known domains- %r" % list(load_config().domain.iterkeys())
+        sys.exit(2)
+    
+    a = atom(a[-1])
+    # force expansion.
+    a.restrictions
+    s, ret = command(domain, a)
+    print s
+    sys.exit(ret)
 
 if __name__ == "__main__":
-	main()
+    main()

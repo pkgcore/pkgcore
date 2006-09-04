@@ -20,14 +20,15 @@ demandload(globals(), "errno pkgcore.config:errors "
 def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
 	"""
 	generate a GLSA vuln. pkgset limited by profile
-	
+
 	@param ebuild_repo: L{pkgcore.ebuild.repository.UnconfiguredTree} instance
 	@param vdb: L{pkgcore.repository.prototype.tree} instance that is the livefs
 	@param profile: L{pkgcore.ebuild.profiles} instance
 	"""
 	arch = profile.conf.get("ARCH")
 	if arch is None:
-		raise errors.InstantiationError("pkgcore.ebuild.portage_conf.SecurityUpgradesViaProfile", 
+		raise errors.InstantiationError(
+			"pkgcore.ebuild.portage_conf.SecurityUpgradesViaProfile",
 			(repo, vdb, profile), {}, "arch wasn't set in profiles")
 	return SecurityUpgrades(ebuild_repo, vdb, arch)
 
@@ -38,12 +39,13 @@ SecurityUpgradesViaProfile.pkgcore_config_type = introspect.ConfigHint(types={
 def configFromMakeConf(location="/etc/"):
 	"""
 	generate a config from a file location
-	
+
 	@param location: location the portage configuration is based in, defaults to /etc
 	"""
-	
-	# this actually differs from portage parsing- we allow make.globals to provide vars used in make.conf, 
-	# portage keeps them seperate (kind of annoying)
+
+	# this actually differs from portage parsing- we allow
+	# make.globals to provide vars used in make.conf, portage keeps
+	# them seperate (kind of annoying)
 
 	pjoin = os.path.join
 
@@ -51,12 +53,16 @@ def configFromMakeConf(location="/etc/"):
 	base_path = pjoin(config_root, location.strip("/"))
 	portage_base = pjoin(base_path, "portage")
 
-	# this isn't preserving incremental behaviour for features/use unfortunately
+	# this isn't preserving incremental behaviour for features/use
+	# unfortunately
 	conf_dict = read_bash_dict(pjoin(base_path, "make.globals"))
-	conf_dict.update(read_bash_dict(pjoin(base_path, "make.conf"), vars_dict=conf_dict, sourcing_command="source"))
+	conf_dict.update(read_bash_dict(
+			pjoin(base_path, "make.conf"), vars_dict=conf_dict,
+			sourcing_command="source"))
 	conf_dict.setdefault("PORTDIR", "/usr/portage")
 	root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
-	gentoo_mirrors = [x+"/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split()]
+	gentoo_mirrors = [
+		x+"/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split()]
 	if not gentoo_mirrors:
 		gentoo_mirrors = None
 
@@ -65,11 +71,11 @@ def configFromMakeConf(location="/etc/"):
 	new_config = {}
 
 	# sets...
-	new_config["world"] = basics.ConfigSectionFromStringDict("world", 
-		{"type": "pkgset", "class": "pkgcore.pkgsets.filelist.FileList", 
+	new_config["world"] = basics.ConfigSectionFromStringDict("world",
+		{"type": "pkgset", "class": "pkgcore.pkgsets.filelist.FileList",
 		"location": "%s/%s" % (root, const.WORLD_FILE)})
 	new_config["system"] = basics.ConfigSectionFromStringDict("system",
-		{"type": "pkgset", "class": "pkgcore.pkgsets.system.SystemSet", 
+		{"type": "pkgset", "class": "pkgcore.pkgsets.system.SystemSet",
 		"profile": "profile"})
 
 	set_fp = pjoin(portage_base, "sets")
@@ -81,15 +87,20 @@ def configFromMakeConf(location="/etc/"):
 
 
 
-	new_config["vdb"] = basics.ConfigSectionFromStringDict("vdb",
-		{"type": "repo", "class": "pkgcore.vdb.repository", "location": "%s/var/db/pkg" % config_root.rstrip("/")})
-	
+	new_config["vdb"] = basics.ConfigSectionFromStringDict(
+		"vdb", {
+			"type": "repo",
+			"class": "pkgcore.vdb.repository",
+			"location": "%s/var/db/pkg" % config_root.rstrip("/")})
+
 	try:
 		profile = os.readlink(pjoin(base_path, "make.profile"))
 	except OSError, oe:
 		if oe.errno in (errno.ENOENT, errno.EINVAL):
-			raise errors.InstantiationError("configFromMakeConf", [], {},
-				"%s/make.profile must be a symlink pointing to a real target" % base_path)
+			raise errors.InstantiationError(
+				"configFromMakeConf", [], {},
+				"%s/make.profile must be a symlink pointing to a real target"
+				% base_path)
 		raise errors.InstantiationError("configFromMakeConf", [], {},
 			"%s/make.profile: unexepect error- %s" % (base_path, oe))
 	psplit = [piece for piece in profile.split("/") if piece]
@@ -99,17 +110,20 @@ def configFromMakeConf(location="/etc/"):
 		if stop + 1 >= len(psplit):
 			raise ValueError
 	except ValueError, v:
-		raise errors.InstantiationError("configFromMakeConf", [], {}, 
-			"%s/make.profile expands to %s, but no profile/profile base detected" % (base_path, profile))
-	
-	new_config["profile"] = basics.ConfigSectionFromStringDict("profile", 
-		{"type": "profile", "class": "pkgcore.ebuild.profiles.OnDiskProfile", 
-		"base_path": pjoin("/", *psplit[:stop+1]), "profile": pjoin(*psplit[stop + 1:])})
+		raise errors.InstantiationError(
+			"configFromMakeConf", [], {},
+			"%s/make.profile expands to %s, but no profile/profile base "
+			"detected" % (base_path, profile))
+
+	new_config["profile"] = basics.ConfigSectionFromStringDict("profile",
+		{"type": "profile", "class": "pkgcore.ebuild.profiles.OnDiskProfile",
+		 "base_path": pjoin("/", *psplit[:stop+1]),
+		 "profile": pjoin(*psplit[stop + 1:])})
 
 
 	portdir = normpath(conf_dict.pop("PORTDIR").strip())
-	portdir_overlays = [normpath(x) for x in conf_dict.pop("PORTDIR_OVERLAY", "").split()]
-
+	portdir_overlays = [
+		normpath(x) for x in conf_dict.pop("PORTDIR_OVERLAY", "").split()]
 
 	#fetcher.
 	distdir = normpath(conf_dict.pop("DISTDIR", pjoin(portdir, "distdir")))
@@ -119,7 +133,6 @@ def configFromMakeConf(location="/etc/"):
 	new_config["fetcher"] = basics.ConfigSectionFromStringDict("fetcher", 
 		{"type": "fetcher", "distdir": distdir, "command": fetchcommand,
 		"resume_command": resumecommand})
-
 
 	pcache = None
 	if os.path.exists(base_path+"portage/modules"):
@@ -209,6 +222,16 @@ def configFromMakeConf(location="/etc/"):
 		
 
 	if portdir_overlays:
+<<<<<<< TREE
+		d = {
+			"type": "repo",
+			"class": load_attribute(
+				"pkgcore.ebuild.overlay_repository.OverlayRepo"),
+			"default_mirrors":gentoo_mirrors, "cache": "cache",
+			"trees": [portdir] + portdir_overlays}
+		# sucky.  needed?
+		new_config["portdir"] = basics.HardCodedConfigSection("portdir", d)
+=======
 		new_config["repo-stack"] = basics.HardCodedConfigSection("portdir", 
 			{"type": "repo", "class": "pkgcore.ebuild.overlay_repository.OverlayRepo",
 			"trees": tuple([portdir] + portdir_overlays)})
@@ -226,6 +249,7 @@ def configFromMakeConf(location="/etc/"):
 #
 #		new_config["cache"] = basics.ConfigSectionFromStringDict("cache", cache_config)
 
+>>>>>>> MERGE-SOURCE
 	else:
 		new_config['repo-stack'] = basics.SectionAlias('repo-stack', portdir)
 
@@ -240,7 +264,7 @@ def configFromMakeConf(location="/etc/"):
 	if pkgdir is not None:
 		pkgdir = abspath(pkgdir)
 		if os.path.isdir(pkgdir):
-			new_config["binpkg"] = basics.ConfigSectionFromStringDict("binpkg", 
+			new_config["binpkg"] = basics.ConfigSectionFromStringDict("binpkg",
 				{"class":"pkgcore.binpkg.repository.tree", "type":"repo",
 				"location":pkgdir})
 			default_repos += " binpkg"
@@ -248,17 +272,20 @@ def configFromMakeConf(location="/etc/"):
 
 	# finally... domain.
 
-	d = {"repositories":default_repos, "fetcher": "fetcher", "default": "yes", 
+	d = {"repositories":default_repos, "fetcher": "fetcher", "default": "yes",
 		"vdb": "vdb", "profile": "profile", "type": "domain"}
-	conf_dict.update({"repositories": default_repos, "fetcher": "fetcher", "default": "yes", 
-		"vdb": "vdb", "profile": "profile", "type": "domain"})
+	conf_dict.update({
+			"repositories": default_repos,
+			"fetcher": "fetcher", "default": "yes",
+			"vdb": "vdb", "profile": "profile", "type": "domain"})
 
 	# finally... package.* additions
-	for f in ("package.mask", "package.unmask", "package.keywords", "package.use"):
+	for f in (
+		"package.mask", "package.unmask", "package.keywords", "package.use"):
 		fp = pjoin(portage_base, f)
 		if os.path.isfile(fp):
 			conf_dict[f] = fp
-	new_config["livefs domain"] = basics.ConfigSectionFromStringDict("livefs domain",
-		conf_dict)
+	new_config["livefs domain"] = basics.ConfigSectionFromStringDict(
+		"livefs domain", conf_dict)
 
 	return new_config

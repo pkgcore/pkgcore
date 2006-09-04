@@ -23,7 +23,7 @@ class MalformedCommand(errors.base):
 
 class fetcher(base.fetcher):
 
-	def __init__(self, distdir, command, resume_command=None, required_chksums=None, 
+	def __init__(self, distdir, command, resume_command=None, required_chksums=None,
 		userpriv=True, attempts=10, readonly=False):
 		"""
 		@param distdir: directory to download files to
@@ -37,7 +37,7 @@ class fetcher(base.fetcher):
 		@param attempts: max number of attempts before failing the fetch
 		@param readonly: controls whether fetching is allowed
 		"""
-		
+
 		self.distdir = distdir
 		if required_chksums is not None:
 			required_chksums = [x.lower() for x in required_chksums]
@@ -71,21 +71,24 @@ class fetcher(base.fetcher):
 			kw["gid"] = portage_gid
 		kw["minimal"] = True
 		if not ensure_dirs(self.distdir, **kw):
-			raise errors.distdirPerms(self.distdir, "if userpriv, uid must be %i, gid must be %i.  if not readonly, directory must be 0775, else 0555" % 
-				(portage_uid, portage_gid))
+			raise errors.distdirPerms(
+				self.distdir, "if userpriv, uid must be %i, gid must be %i. "
+				"if not readonly, directory must be 0775, else 0555" % (
+					portage_uid, portage_gid))
 
 
 	def fetch(self, target):
 		"""
 		fetch a file
-		
+
 		@type target: L{pkgcore.fetch.fetchable} instance
 		@return: None if fetching failed, else on disk location of the copied file
 		"""
 
 
 		if not isinstance(target, fetchable):
-			raise TypeError("target must be fetchable instance/derivative: %s" % target)
+			raise TypeError(
+				"target must be fetchable instance/derivative: %s" % target)
 
 		fp = os.path.join(self.distdir, target.filename)
 
@@ -108,12 +111,14 @@ class fetcher(base.fetcher):
 						raise errors.UnmodifiableFile(fp, oe)
 				else:
 					command = self.resume_command
-				
+
 				# yeah, it's funky, but it works.
 				if attempts > 0:
 					u = uri.next()
-					# note we're not even checking the results. the verify portion of the loop handles this.
-					# iow, don't trust their exit code.  trust our chksums instead.
+					# note we're not even checking the results. the
+					# verify portion of the loop handles this. iow,
+					# don't trust their exit code. trust our chksums
+					# instead.
 					spawn_bash(command % {"URI":u}, **extra)
 				attempts -= 1
 

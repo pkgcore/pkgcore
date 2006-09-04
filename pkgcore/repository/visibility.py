@@ -16,9 +16,11 @@ class filterTree(prototype.tree):
 		self.raw_repo = repo
 		self.sentinel_val = sentinel_val
 		if not isinstance(self.raw_repo, prototype.tree):
-			raise errors.InitializationError("%s is not a repository tree derivative" % str(self.raw_repo))
+			raise errors.InitializationError(
+				"%s is not a repository tree derivative" % (self.raw_repo,))
 		if not isinstance(restriction, base):
-			raise errors.InitializationError("%s is not a restriction" % str(restriction))
+			raise errors.InitializationError(
+				"%s is not a restriction" % (restriction,))
 		self.restriction = restriction
 		self.raw_repo = repo
 
@@ -32,7 +34,8 @@ class filterTree(prototype.tree):
 				yield cpv
 
 
-	itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace("@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
+	itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
+		"@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
 
 	def __iter__(self):
 		for cpv in self.raw_repo:

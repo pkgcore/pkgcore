@@ -4,8 +4,8 @@
 """
 indirection to load ElementTree
 """
-# essentially... prefer cElementTree, then 2.5 bundled, then elementtree, then 2.5 bundled,
-# then our own bundled
+# essentially... prefer cElementTree, then 2.5 bundled, then
+# elementtree, then 2.5 bundled, then our own bundled
 
 gotit = True
 try:

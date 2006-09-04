@@ -11,9 +11,9 @@ from pkgcore.util.mappings import ProtectedDict
 
 
 class AtomicWriteFile(file):
-	
+
 	"""file class that stores the changes in a tempfile, upon close call, uses rename to replace the destination.
-	
+
 	Similar to file protocol behaviour, except for the __init__, and that close *must* be called for the changes to be made live,
 	if __del__ is triggered it's assumed that an exception occured, thus the changes shouldn't be made live
 	"""
@@ -25,27 +25,28 @@ class AtomicWriteFile(file):
 			mode = "w"
 		fp = os.path.realpath(fp)
 		self.original_fp = fp
-		self.temp_fp = os.path.join(os.path.dirname(fp), ".update.%s" % os.path.basename(fp))
+		self.temp_fp = os.path.join(
+			os.path.dirname(fp), ".update.%s" % os.path.basename(fp))
 		file.__init__(self, self.temp_fp, mode=mode, **kwds)
-	
+
 	def close(self):
 		file.close(self)
 		os.rename(self.temp_fp, self.original_fp)
 		self.is_finalized = True
-	
+
 	def __del__(self):
 		file.close(self)
 		if not self.is_finalized:
 			os.unlink(self.temp_fp)
-		
-		
+
+
 def iter_read_bash(bash_source):
 	"""
 	read file honoring bash commenting rules.  Note that it's considered good behaviour to close filehandles, as such,
 	either iterate fully through this, or use read_bash instead.
 	once the file object is no longer referenced, the handle will be closed, but be proactive instead of relying on the
 	garbage collector.
-	
+
 	@param bash_source: either a file to read from, or a string holding the filename to open
 	"""
 	if isinstance(bash_source, basestring):
@@ -66,7 +67,7 @@ read_bash.__doc__ = iter_read_bash.__doc__
 def read_dict(bash_source, splitter="=", ignore_malformed=False, source_isiter=False):
 	"""
 	read key value pairs, splitting on specified splitter, using iter_read_bash for filtering comments
-	
+
 	@param bash_source: either a file to read from, or a string holding the filename to open
 
 	"""
@@ -166,10 +167,12 @@ class bash_parser(shlex):
 
 	def __setattr__(self, attr, val):
 		if attr == "state" and "state" in self.__dict__:
-			if (self.state, val) in (('"', 'a'), ('a', '"'), ('a', ' '), ("'", 'a')):
+			if (self.state, val) in (
+				('"', 'a'), ('a', '"'), ('a', ' '), ("'", 'a')):
 				strl = len(self.token)
 				if self.__pos != strl:
-					self.changed_state.append((self.state, self.token[self.__pos:]))
+					self.changed_state.append(
+						(self.state, self.token[self.__pos:]))
 				self.__pos = strl
 		self.__dict__[attr] = val
 
@@ -201,7 +204,8 @@ class bash_parser(shlex):
 		while match is not None:
 			pos = match.start()
 			if val[pos] == '\\':
-				# it's escaped.	 either it's \\$ or \\${ , either way, skipping two ahead handles it.
+				# it's escaped. either it's \\$ or \\${ , either way,
+				# skipping two ahead handles it.
 				pos += 2
 			else:
 				var = val[match.start():match.end()].strip("${}")
@@ -209,7 +213,9 @@ class bash_parser(shlex):
 					l.append(val[prev:pos])
 				if var in self.env:
 					if not isinstance(self.env[var], basestring):
-						raise ValueError("env key %r must be a string, not %s: %r" % (var, type(self.env[var]), self.env[var]))
+						raise ValueError(
+							"env key %r must be a string, not %s: %r" % (
+								var, type(self.env[var]), self.env[var]))
 					l.append(self.env[var])
 				else:
 					l.append("")
@@ -228,5 +234,6 @@ class ParseError(Exception):
 
 	def __str__(self):
 		if self.errmsg is not None:
-			return "error parsing '%s' on or before %i: err %s" % (self.file, self.line, self.errmsg)
+			return "error parsing '%s' on or before %i: err %s" % (
+				self.file, self.line, self.errmsg)
 		return "error parsing '%s' on or before %i" % (self.file, self.line)

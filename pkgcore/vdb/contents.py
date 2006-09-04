@@ -62,7 +62,9 @@ class ContentsFile(contentsSet):
 			if obj.chksums is None or "md5" not in obj.chksums:
 				raise TypeError("fsFile objects need to be strict")
 		elif not isinstance(obj, (fs.fsDir, fs.fsSymlink, fs.fsFifo, fs.fsDev)):
-			raise TypeError("obj must be of fsObj, fsDir, fsLink, fsFifo, fsDev class or derivative")
+			raise TypeError(
+				"obj must be of fsObj, fsDir, fsLink, fsFifo, fsDev class "
+				"or derivative")
 
 		contentsSet.add(self, obj)
 
@@ -116,14 +118,18 @@ class ContentsFile(contentsSet):
 					obj = LookupFsDev(line[1], strict=False)
 				elif line[0] == "obj":
 					#file: path, md5, time
-					obj = fs.fsFile(line[1], chksums={"md5":line[2]}, mtime=line[3], strict=False)
+					obj = fs.fsFile(
+						line[1], chksums={"md5":line[2]}, mtime=line[3],
+						strict=False)
 				elif line[0] == "sym":
 					#path, target, ' -> ', mtime
-					obj = fs.fsLink(line[1], line[2], mtime=line[3], strict=False)
+					obj = fs.fsLink(
+						line[1], line[2], mtime=line[3], strict=False)
 				else:
 					if len(line) > 2:
 						line = line[0], ' '.join(line[1:])
-					raise Exception("unknown entry type %s: %s" % (line[0], line[1]))
+					raise Exception(
+						"unknown entry type %s: %s" % (line[0], line[1]))
 				self.add(obj)
 
 		finally:

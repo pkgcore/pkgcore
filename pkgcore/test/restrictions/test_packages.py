@@ -16,6 +16,7 @@ class DummyIntersectingValues(values.base):
 	"""Helper to test PackageRestriction.intersect."""
 
 	def __init__(self, val, iself=False):
+		values.base.__init__(self)
 		self.val = val
 
 	def intersect(self, other):

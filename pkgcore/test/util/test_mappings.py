@@ -212,11 +212,11 @@ class StackedDictTest(unittest.TestCase):
 
 
 class IndeterminantDictTest(unittest.TestCase):
-	
+
 	def test_disabled_methods(self):
 		d = mappings.IndeterminantDict(lambda *a: None)
 		for x in ("clear", ("update", {}), ("pop", 1), ("setdefault", 1),
-			"__iter__", "__len__", "__hash__", ("__delitem__", 1), 
+			"__iter__", "__len__", "__hash__", ("__delitem__", 1),
 			("__setitem__", 2), ("popitem", 2), "iteritems", "iterkeys",
 			"keys", "items", "itervalues", "values"):
 			if isinstance(x, tuple):
@@ -225,21 +225,24 @@ class IndeterminantDictTest(unittest.TestCase):
 				self.assertRaises(TypeError, getattr(d, x))
 
 	def test_starter_dict(self):
-		d = mappings.IndeterminantDict(lambda key: False, starter_dict={}.fromkeys(xrange(100), True))
+		d = mappings.IndeterminantDict(
+			lambda key: False, starter_dict={}.fromkeys(xrange(100), True))
 		for x in xrange(100):
 			self.assertEqual(d[x], True)
 		for x in xrange(100, 110):
 			self.assertEqual(d[x], False)
-		
+
 	def test_behaviour(self):
 		val = []
-		d = mappings.IndeterminantDict(lambda key: val.append(key), {}.fromkeys(xrange(10), True))
+		d = mappings.IndeterminantDict(
+			lambda key: val.append(key), {}.fromkeys(xrange(10), True))
 		self.assertEqual(d[0], True)
 		self.assertEqual(d[11], None)
 		self.assertEqual(val, [11])
 		def f(*a):
 			raise KeyError
-		self.assertRaises(KeyError, mappings.IndeterminantDict(f).__getitem__, 1)
+		self.assertRaises(
+			KeyError, mappings.IndeterminantDict(f).__getitem__, 1)
 
 
 	def test_get(self):
@@ -260,20 +263,23 @@ class TestOrderedDict(unittest.TestCase):
 	@staticmethod
 	def gen_dict():
 		return mappings.OrderedDict(enumerate(xrange(100)))
-	
+
 	def test_items(self):
-		self.assertEqual(list(self.gen_dict().iteritems()), 
+		self.assertEqual(list(self.gen_dict().iteritems()),
 			list(enumerate(xrange(100))))
-		self.assertEqual(self.gen_dict().items(), 
+		self.assertEqual(self.gen_dict().items(),
 			list(enumerate(xrange(100))))
-	
+
 	def test_values(self):
-		self.assertEqual(list(self.gen_dict().itervalues()), 
+		self.assertEqual(list(self.gen_dict().itervalues()),
 			list(xrange(100)))
 		l = ["asdf", "fdsa", "Dawefa", "3419", "pas", "1"]
 		l = [s+"12" for s in l] + l
 		l = ["1231adsfasdfagqwer"+s for s in l] + l
-		self.assertEqual(list(mappings.OrderedDict((v, k) for k, v in enumerate(l)).itervalues()), list(xrange(len(l))))
+		self.assertEqual(
+			list(mappings.OrderedDict(
+					(v, k) for k, v in enumerate(l)).itervalues()),
+			list(xrange(len(l))))
 
 	def test_keys(self):
 		self.assertEqual(list(self.gen_dict().iterkeys()), list(xrange(100)))
@@ -290,6 +296,8 @@ class TestOrderedDict(unittest.TestCase):
 		d = self.gen_dict()
 		del d[50]
 		self.assertEqual(list(d), list(range(50) + range(51, 100)))
+		self.assertRaises(KeyError, operator.delitem, d, 50)
+		self.assertRaises(KeyError, operator.delitem, d, 'spork')
 
 	def test_set(self):
 		d = self.gen_dict()

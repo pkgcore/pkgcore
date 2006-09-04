@@ -4,7 +4,8 @@
 """
 default fs ops.
 
-Shouldn't be accessed directly for the most part, use L{pkgcore.plugins} to get at these ops
+Shouldn't be accessed directly for the most part, use
+L{pkgcore.plugins} to get at these ops.
 """
 
 import os, errno
@@ -14,7 +15,9 @@ from pkgcore.const import COPY_BINARY
 from pkgcore.plugins import get_plugin
 from pkgcore.util.currying import pre_curry
 
-__all__ = ["merge_contents", "unmerge_contents", "default_ensure_perms", "default_copyfile", "default_mkdir"]
+__all__ = [
+	"merge_contents", "unmerge_contents", "default_ensure_perms",
+	"default_copyfile", "default_mkdir"]
 
 def default_ensure_perms(d1, d2=None):
 
@@ -185,11 +188,14 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
 		callback(x)
 
 		try:
-			# we pass in the stat ourselves, using stat instead of lstat gen_obj uses internally;
-			# this is the equivalent of "deference that link"
+			# we pass in the stat ourselves, using stat instead of
+			# lstat gen_obj uses internally; this is the equivalent of
+			# "deference that link"
 			obj = gen_obj(x.real_location, stat=os.stat(x.real_location))
 			if not fs.isdir(obj):
-				raise Exception("%s exists and needs to be a dir, but is a %s" % (x.location, obj))
+				raise Exception(
+					"%s exists and needs to be a dir, but is a %s" % (
+						x.location, obj))
 			ensure_perms(x, obj)
 		except OSError:
 			mkdir(x)

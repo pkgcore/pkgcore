@@ -21,17 +21,17 @@ def gen_depset(s, operators=None, func=None):
 class DepSetParsingTest(unittest.TestCase):
 
 	# generate a lot of parse error assertions.
-	for x in ("( )", "( a b c", "(a b c )", 
-		"( a b c)", "()", "x?( a )", 
-		"?x (a)", "x? (a )", "x? (a)", "x? ( a b)", 
+	for x in ("( )", "( a b c", "(a b c )",
+		"( a b c)", "()", "x?( a )",
+		"?x (a)", "x? (a )", "x? (a)", "x? ( a b)",
 		"x? ( x? () )", "x? ( x? (a)", "(", ")",
 		"||(", "||()", "||( )", "|| ()",
 		"|| (", "|| )", "||)",	"|| ( x? ( )",
 		"|| ( x?() )", "|| (x )", "|| ( x)",
-		"a|", "a?", "a(b", "a)", "a||b", 
+		"a|", "a?", "a(b", "a)", "a||b",
 		"a(", "a)b", "x? y", "( x )?", "||?"):
-		locals()["test assert ParseError '%s'" % x] = \
-			post_curry(unittest.TestCase.assertRaises, ParseError, gen_depset, x)
+		locals()["test assert ParseError '%s'" % x] = post_curry(
+			unittest.TestCase.assertRaises, ParseError, gen_depset, x)
 	del x
 
 	@staticmethod
@@ -88,8 +88,8 @@ class DepSetParsingTest(unittest.TestCase):
 		self.assertEqual(list(self.flatten_restricts(func(s))), list(v))
 
 	# generate a lot of assertions of parse results.
-	# if it's a list, first arg is string, second is results, if string, the results for testing
-	# are determined by splitting the string
+	# if it's a list, first arg is string, second is results, if
+	# string, the results for testing are determined by splitting the string
 	for x in [
 		"a b",
 		( "", 	[]),
@@ -129,10 +129,13 @@ class DepSetParsingTest(unittest.TestCase):
 			locals()["test '%s'" % x[0]] = post_curry(check, x)
 
 	def test_element_func(self):
-		self.assertEqual(gen_depset("asdf fdas", func=post_curry(str)).element_class, "".__class__)
+		self.assertEqual(
+			gen_depset("asdf fdas", func=post_curry(str)).element_class,
+			"".__class__)
 
 	def test_disabling_or(self):
-		self.assertRaises(ParseError, gen_depset, "|| ( a b )",
+		self.assertRaises(
+			ParseError, gen_depset, "|| ( a b )",
 			{"operators":{"":boolean.AndRestriction}})
 
 
@@ -162,7 +165,9 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
 		return l
 
 	def check_conds(self, s, r, msg=None):
-		nc = dict((k, self.flatten_cond(v)) for (k, v) in gen_depset(s).node_conds.iteritems())
+		nc = dict(
+			(k, self.flatten_cond(v))
+			for (k, v) in gen_depset(s).node_conds.iteritems())
 		d = dict(r)
 		for k, v in d.iteritems():
 			if isinstance(v, basestring):

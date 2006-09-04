@@ -20,7 +20,8 @@ class mixin:
 
 class AnyTest(unittest.TestCase, mixin):
 	func_name = "any"
-	test_any = post_curry(mixin.check_func, True, 4, (x==3 for x in xrange(2)), False)
+	test_any = post_curry(
+		mixin.check_func, True, 4, (x==3 for x in xrange(2)), False)
 
 
 class AllTest(unittest.TestCase, mixin):

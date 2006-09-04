@@ -7,7 +7,8 @@ interaction with the livefs, namely generating fs objects to represent the livef
 
 import os, collections
 from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO
-from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsDev, fsFifo, get_major_minor
+from pkgcore.fs.fs import (
+	fsFile, fsDir, fsSymlink, fsDev, fsFifo, get_major_minor)
 from pkgcore.fs.util import normpath
 from pkgcore.fs.contents import contentsSet
 from pkgcore.chksum import get_handlers
@@ -43,7 +44,8 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_path=None):
 		chksum_handlers = get_handlers()
 
 	mode = stat.st_mode
-	d = {"mtime":stat.st_mtime, "mode":S_IMODE(mode), "uid":stat.st_uid, "gid":stat.st_gid}
+	d = {"mtime":stat.st_mtime, "mode":S_IMODE(mode),
+		 "uid":stat.st_uid, "gid":stat.st_gid}
 	if S_ISDIR(mode):
 		return fsDir(path, **d)
 	elif S_ISREG(mode):
@@ -66,11 +68,13 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_path=None):
 
 
 # hmm. this code is roughly 25x slower then find.
-# make it less slow somehow.  the obj instantiation is a bit of a killer I'm afraid;
-# without obj, looking at 2.3ms roughly best of 3 100 iterations, obj instantiation, 58ms.
+# make it less slow somehow. the obj instantiation is a bit of a
+# killer I'm afraid; without obj, looking at 2.3ms roughly best of 3
+# 100 iterations, obj instantiation, 58ms.
 # also, os.path.join is rather slow.
-# in this case, we know it's always pegging one more dir on, so it's fine doing it this way
-# (specially since we're relying on os.path.sep, not '/' :P)
+# in this case, we know it's always pegging one more dir on, so it's
+# fine doing it this way (specially since we're relying on
+# os.path.sep, not '/' :P)
 
 def iter_scan(path, offset=None):
 	"""

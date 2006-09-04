@@ -46,7 +46,9 @@ class PigeonHoledSlots(object):
 		return None
 
 	def find_key_matches(self, key):
-		return [x for x in self.slot_dict.get(key, []) if not isinstance(x, restriction.base)]
+		return [
+			x for x in self.slot_dict.get(key, [])
+			if not isinstance(x, restriction.base)]
 
 	def find_atom_matches(self, atom):
 		return [x for x in self.find_key_matches(atom.key) if atom.match(x)]

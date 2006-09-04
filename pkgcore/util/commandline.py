@@ -12,7 +12,8 @@ from pkgcore.package import atom
 
 def convert_glob(token):
 	if '*' in token[1:-1]:
-		raise TypeError("'*' must be specified at the end or beginning of a matching field")
+		raise TypeError(
+			"'*' must be specified at the end or beginning of a matching field")
 	l = len(token)
 	if token.startswith("*") and l > 1:
 		if token.endswith("*"):
@@ -36,13 +37,15 @@ def generate_restriction(text):
 
 	"""generate appropriate restriction for text
 
-	Parsing basically breaks it down into chunks split by /, with each chunk allowing for 
-	prefix/postfix globbing- note that a postfixed glob on package token is treated as package attribute
-	matching, B{not} as necessarily a version match.
-	
-	If only one chunk is found, it's treated as a package chunk.  Finally, it supports a nonstandard variation of atom syntax
-	where the category can be dropped.
-	
+	Parsing basically breaks it down into chunks split by /, with each
+	chunk allowing for prefix/postfix globbing- note that a postfixed
+	glob on package token is treated as package attribute matching,
+	B{not} as necessarily a version match.
+
+	If only one chunk is found, it's treated as a package chunk.
+	Finally, it supports a nonstandard variation of atom syntax where
+	the category can be dropped.
+
 	Examples-
 	  - "*": match all
 	  - "dev-*/*": category must start with dev-
@@ -54,10 +57,12 @@ def generate_restriction(text):
 	@type text: string
 	@return: L{package restriction<pkgcore.restrictions.packages>} derivative
 	"""
-	
+
 	orig_text = text = text.strip()
 	if "!" in text:
-		raise ValueError("!, or any form of blockers make no sense in this usage: %s" % text)
+		raise ValueError(
+			"!, or any form of blockers make no sense in this usage: %s" % (
+				text,))
 	tsplit = text.rsplit("/", 1)
 	if len(tsplit) == 1:
 		ops, text = collect_ops(text)
@@ -68,10 +73,13 @@ def generate_restriction(text):
 					return packages.AlwaysTrue
 				return packages.PackageRestriction("package", r)
 		elif text.startswith("*"):
-			raise ValueError("cannot do prefix glob matches with version ops: %s" % orig_text)
+			raise ValueError(
+				"cannot do prefix glob matches with version ops: %s" % (
+					orig_text,))
 		# ok... fake category.  whee.
-		r = list(util.collect_package_restrictions(atom.atom("%scategory/%s" % (ops, text)).restrictions,
-			attrs=InvertedContains(["category"])))
+		r = list(util.collect_package_restrictions(
+				atom.atom("%scategory/%s" % (ops, text)).restrictions,
+				attrs=InvertedContains(["category"])))
 		if len(r) == 1:
 			return r[0]
 		return packages.AndRestriction(*r)

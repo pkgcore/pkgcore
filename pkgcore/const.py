@@ -4,14 +4,15 @@
 
 
 """
-internal constants.
+Internal constants.
 
-Future of this module is debatable- for the most part you likely don't want to be using this.
-As soon as is possible, most of these defines will be shifted to wherever they're best situated
+Future of this module is debatable- for the most part you likely don't
+want to be using this. As soon as is possible, most of these defines
+will be shifted to wherever they're best situated.
 """
 
-# note this is lifted out of portage 2.  so... it's held onto for the sake of having stuff we still need,
-# but it does need cleanup.
+# note this is lifted out of portage 2. so... it's held onto for the
+# sake of having stuff we still need, but it does need cleanup.
 
 import os.path as osp
 
@@ -39,7 +40,8 @@ MOVE_BINARY          = "/bin/mv"
 COPY_BINARY          = "/bin/cp"
 PRELINK_BINARY       = "/usr/sbin/prelink"
 depends_phase_path   = PORTAGE_BIN_PATH+":/bin:/usr/bin"
-EBUILD_ENV_PATH      = [PORTAGE_BIN_PATH+"/"+x for x in ["ebuild-env", "ebuild-helpers"]] \
+EBUILD_ENV_PATH      = [PORTAGE_BIN_PATH+"/"+x for x in [
+                           "ebuild-env", "ebuild-helpers"]] \
                      + ["/sbin", "/bin", "/usr/sbin", "/usr/bin"]
 EBD_ENV_PATH         = PORTAGE_BIN_PATH+"/ebuild-env"
 

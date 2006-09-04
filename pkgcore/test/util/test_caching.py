@@ -54,8 +54,10 @@ def gen_test(WeakInstMeta):
 
 		def test_class_disabling(self):
 			automatic_disabled_weak_inst.reset()
-			self.assertTrue(automatic_disabled_weak_inst() is not automatic_disabled_weak_inst())
-			self.assertTrue(explicit_disabled_weak_inst() is not explicit_disabled_weak_inst())
+			self.assertNotIdentical(
+				automatic_disabled_weak_inst(), automatic_disabled_weak_inst())
+			self.assertNotIdentical(
+				explicit_disabled_weak_inst(), explicit_disabled_weak_inst())
 
 		def test_reenabled(self):
 			self.test_reuse(reenabled_weak_inst)
@@ -110,7 +112,7 @@ def gen_test(WeakInstMeta):
 			self.assertTrue(weak_inst([]) is not weak_inst([]))
 			self.assertEqual(weak_inst.counter, 2)
 			for x in (TypeError, NotImplementedError):
-				self.assertTrue(weak_inst(RaisingHash(x)) is not 
+				self.assertTrue(weak_inst(RaisingHash(x)) is not
 					weak_inst(RaisingHash(x)))
 
 		# These are applied in reverse order. Effect is UserWarning is

@@ -22,7 +22,8 @@ class FsObjsTest(TempDirMixin, unittest.TestCase):
 		o = gen_obj("/tmp/etc/passwd", real_path="/etc/passwd")
 		self.failUnless(o.location, "/tmp/etc/passwd")
 		self.failUnless(o.data.get_path(), "/etc/passwd")
-		self.failUnless(o.data.get_fileobj().read(), open("/etc/passwd", "r").read())
+		self.failUnless(
+			o.data.get_fileobj().read(), open("/etc/passwd", "r").read())
 
 	def test_gen_obj_reg(self):
 		path = os.path.join(self.dir, "reg_obj")
@@ -57,10 +58,12 @@ class FsObjsTest(TempDirMixin, unittest.TestCase):
 	def test_iterscan(self):
 		path = os.path.join(self.dir, "iscan")
 		os.mkdir(path)
-		files = [os.path.normpath(os.path.join(path, x)) for x in ["tmp", "blah", "dar"]]
+		files = [os.path.normpath(os.path.join(path, x)) for x in [
+				"tmp", "blah", "dar"]]
 		# cheap version of a touch.
 		map(lambda x:open(x, "w"), files)
-		dirs = [os.path.normpath(os.path.join(path, x)) for x in ["a", "b", "c"]]
+		dirs = [os.path.normpath(os.path.join(path, x)) for x in [
+				"a", "b", "c"]]
 		map(os.mkdir, dirs)
 		dirs.append(path)
 		for obj in iter_scan(path):
@@ -70,7 +73,8 @@ class FsObjsTest(TempDirMixin, unittest.TestCase):
 			elif fs.isdir(obj):
 				self.failUnless(obj.location in dirs)
 			else:
-				raise Exception("unknown object popped up in testing dir, '%s'" % obj)
+				raise Exception(
+					"unknown object popped up in testing dir, '%s'" % obj)
 			self.check_attrs(obj, obj.location)
 
 	def test_relative_sym(self):

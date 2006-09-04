@@ -49,7 +49,9 @@ class native_WeakInstMeta(type):
 			try:
 				instance = cls.__inst_dict__.get(key)
 			except (NotImplementedError, TypeError), t:
-				warnings.warn("caching keys for %s, got %s for a=%s, kw=%s" % (cls, t, a, kw))
+				warnings.warn(
+					"caching keys for %s, got %s for a=%s, kw=%s" % (
+						cls, t, a, kw))
 				del t
 				key = instance = None
 

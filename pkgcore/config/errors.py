@@ -37,9 +37,14 @@ class ConfigurationError(BaseException):
 class InstantiationError(BaseException):
 	"""Exception occured during instantiation.	Actual exception is stored in instance.exc"""
 	def __init__(self, callablename, pargs, kwargs, exception):
-		self.callable, self.pargs, self.kwargs, self.exc = callablename, pargs, kwargs, exception
+		self.callable = callablename
+		self.pargs = pargs
+		self.kwargs = kwargs
+		self.exc = exception
+
 	def __str__(self):
-		return "Caught exception '%s' instantiating %s" % (str(self.exc), self.callable)
+		return "Caught exception '%s' instantiating %s" % (
+			self.exc, self.callable)
 
 class QuoteInterpretationError(BaseException):
 

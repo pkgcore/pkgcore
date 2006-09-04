@@ -1,5 +1,7 @@
 # First cut at a pylintrc to match pkgcore's coding style.
 #
+# Use like "pylint --rcfile=dev-notes/pylintrc pkgcore".
+#
 # This is currently only tested with pylint 0.11.0. Generally using
 # the latest ~arch pylint in portage is recommended.
 #
@@ -33,7 +35,8 @@ ignore=demandload.py,bundled_elementtree.py
 # Metaclass should have "mcs" as first argument (we use "cls", string
 # is hardcoded): C0203
 # Except doesn't do anything (just "pass" in an except clause): W0704
-disable-msg=W0142,W0613,R0901,R0903,R0904,R0201,I0011,W0223,C0322,C0203,W0704
+# Missing docstring: C0111
+disable-msg=W0142,W0613,R0901,R0903,R0904,R0201,I0011,W0223,C0322,C0203,W0704,C0111
 
 
 [BASIC]

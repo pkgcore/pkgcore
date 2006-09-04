@@ -8,6 +8,7 @@ from pkgcore.restrictions import restriction
 
 class fake_blocker(restriction.base):
 	def __init__(self, key, blocks=()):
+		restriction.base.__init__(self)
 		if not isinstance(blocks, (list, tuple)):
 			blocks = [blocks]
 		self.key, self.blocks = key, blocks

@@ -21,7 +21,7 @@ from pkgcore.cache import fs_template, cache_errors
 class database(fs_template.FsBased):
 
 	"""cdb cache backend, non autocommiting"""
-	
+
 	autocommits = False
 	cleanse_keys = True
 	serialize_eclasses = False
@@ -29,7 +29,9 @@ class database(fs_template.FsBased):
 	def __init__(self, *args, **config):
 		super(database, self).__init__(*args, **config)
 
-		self._db_path = os.path.join(self.location, fs_template.gen_label(self.location, self.label)+".cdb")
+		self._db_path = os.path.join(
+			self.location,
+			fs_template.gen_label(self.location, self.label)+".cdb")
 		self._db = None
 		try:
 			self._db = cdb_module.init(self._db_path)

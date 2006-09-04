@@ -23,11 +23,15 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
 	_supports_replace = True
 
 	def _dbconnect(self, config):
-		self._dbpath = os.path.join(self.location, fs_template.gen_label(self.location, self.label)+".sqldb")
+		self._dbpath = os.path.join(
+			self.location,
+			fs_template.gen_label(self.location, self.label)+".sqldb")
 		try:
-			self.db = sqlite_module.connect(self._dbpath, mode=self._perms, autocommit=False)
+			self.db = sqlite_module.connect(
+				self._dbpath, mode=self._perms, autocommit=False)
 			if not self._ensure_access(self._dbpath):
-				raise cache_errors.InitializationError(self.__class__, "can't ensure perms on %s" % self._dbpath)
+				raise cache_errors.InitializationError(
+					self.__class__, "can't ensure perms on %s" % self._dbpath)
 			self.con = self.db.cursor()
 		except self._BaseError, e:
 			raise cache_errors.InitializationError(self.__class__, e)
@@ -35,7 +39,9 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
 	def _initdb_con(self, config):
 		sql_template.SQLDatabase._initdb_con(self, config)
 		try:
-			self.con.execute("SELECT name FROM sqlite_master WHERE type=\"trigger\" AND name=%s" % \
+			self.con.execute(
+				"SELECT name FROM sqlite_master "
+				"WHERE type=\"trigger\" AND name=%s" %
 				self._sfilter(self.SCHEMA_DELETE_NAME))
 			if self.con.rowcount == 0:
 				self.con.execute(self.SCHEMA_DELETE_TRIGGER);
@@ -46,7 +52,9 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
 	def _table_exists(self, tbl):
 		"""return true/false dependant on a tbl existing"""
 		try:
-			self.con.execute("SELECT name FROM sqlite_master WHERE type=\"table\" AND name=%s" %
+			self.con.execute(
+				"SELECT name FROM sqlite_master "
+				"WHERE type=\"table\" AND name=%s" %
 				self._sfilter(tbl))
 		except self._BaseError, e:
 			# XXX crappy.
@@ -57,12 +65,17 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
 	def _insert_cpv(self, cpv):
 		cpv = self._sfilter(cpv)
 		try:
-			self.con.execute(self.SCHEMA_INSERT_CPV_INTO_PACKAGE.replace("INSERT", "REPLACE", 1) % \
-			(self.label, cpv))
+			self.con.execute(
+				self.SCHEMA_INSERT_CPV_INTO_PACKAGE.replace(
+					"INSERT", "REPLACE", 1) %
+				(self.label, cpv))
 		except self._BaseError, e:
-			raise cache_errors.CacheCorruption(cpv, "tried to insert a cpv, but failed: %s" % str(e))
+			raise cache_errors.CacheCorruption(
+				cpv, "tried to insert a cpv, but failed: %s" % str(e))
 
 		# sums the delete also
 		if self.con.rowcount <= 0 or self.con.rowcount > 2:
-			raise cache_errors.CacheCorruption(cpv, "tried to insert a cpv, but failed- %i rows modified" % self.rowcount)
+			raise cache_errors.CacheCorruption(
+				cpv, "tried to insert a cpv, but failed- %i rows modified" %
+				self.rowcount)
 		return self.con.lastrowid

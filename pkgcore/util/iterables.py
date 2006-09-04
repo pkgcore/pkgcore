@@ -124,7 +124,7 @@ class caching_iter(object):
 				self.iterable = self.sorter = None
 				self.cached_list = ()
 		return False
-	
+
 	def __len__(self):
 		if self.iterable is not None:
 			self.cached_list.extend(self.iterable)
@@ -137,7 +137,9 @@ class caching_iter(object):
 		return len(self.cached_list)
 
 	def __iter__(self):
-		if self.sorter is not None and self.iterable is not None and len(self.cached_list) == 0:
+		if (self.sorter is not None and
+			self.iterable is not None and
+			len(self.cached_list) == 0):
 			self.cached_list = tuple(self.sorter(self.iterable))
 			existing_len = len(self.cached_list)
 			self.iterable = self.sorter = None
@@ -161,7 +163,8 @@ class caching_iter(object):
 		return hash(self.cached_list)
 
 	def __str__(self):
-		return "iterable(%s), cached: %s" % (self.iterable, str(self.cached_list))
+		return "iterable(%s), cached: %s" % (
+			self.iterable, str(self.cached_list))
 
 def iter_sort(sorter, *iterables):
 	"""requires a sorter func, which is passed a list of [element, iterable]

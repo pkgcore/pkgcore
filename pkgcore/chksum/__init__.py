@@ -52,13 +52,14 @@ def init(additional_handlers=None):
 
 	"""
 	init the chksum subsystem.  scan the dir, find what handlers are available, etc.
-	
+
 	@param additional_handlers: None, or pass in a dict of type:func
 	"""
 
 	global __inited__
 
-	if additional_handlers is not None and not isinstance(additional_handlers, dict):
+	if additional_handlers is not None and not isinstance(
+		additional_handlers, dict):
 		raise TypeError("additional handlers must be a dict!")
 
 	chksum_types.clear()
@@ -85,7 +86,9 @@ def init(additional_handlers=None):
 			chksum_types.update(types)
 
 		except ValueError, ve:
-			logging.warn("%s.%s invalid chksum_types, ValueError Exception" % (__name__, f))
+			logging.warn(
+				"%s.%s invalid chksum_types, ValueError Exception" % (
+					__name__, f))
 			continue
 
 	if additional_handlers is not None:

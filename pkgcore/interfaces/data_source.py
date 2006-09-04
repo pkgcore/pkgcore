@@ -52,6 +52,7 @@ class local_source(base):
 
 	def __init__(self, path, mutable=False):
 		"""@param path: file path of the data source"""
+		base.__init__(self)
 		self.path = path
 		self.mutable = mutable
 
@@ -68,6 +69,7 @@ class data_source(base):
 	
 	def __init__(self, data, mutable=False):
 		"""@param data: data to wrap"""
+		base.__init__(self)
 		self.data = data
 		self.mutable = mutable
 	

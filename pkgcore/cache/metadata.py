@@ -32,15 +32,17 @@ class database(flat_hash.database):
 		super(database, self).__init__(location, *args, **config)
 		self.location = os.path.join(loc, "metadata","cache")
 		self.ec = eclass_cache.cache(os.path.join(loc, "eclass"), loc)
-	
-	__init__.__doc__ = flat_hash.database.__init__.__doc__.replace("@keyword location", "@param location")
-	
+
+	__init__.__doc__ = flat_hash.database.__init__.__doc__.replace(
+		"@keyword location", "@param location")
+
 	def __getitem__(self, cpv):
 		d = flat_hash.database.__getitem__(self, cpv)
 
 		if "_eclasses_" not in d:
 			if "INHERITED" in d:
-				d["_eclasses_"] = self.ec.get_eclass_data(d["INHERITED"].split())
+				d["_eclasses_"] = self.ec.get_eclass_data(
+					d["INHERITED"].split())
 				del d["INHERITED"]
 		else:
 			d["_eclasses_"] = self.reconstruct_eclasses(cpv, d["_eclasses_"])
@@ -83,10 +85,11 @@ class database(flat_hash.database):
 	def _setitem(self, cpv, values):
 		values = ProtectedDict(values)
 
-		# hack.  proper solution is to make this a __setitem__ override, since template.__setitem__
-		# serializes _eclasses_, then we reconstruct it.
+		# hack. proper solution is to make this a __setitem__ override, since
+		# template.__setitem__ serializes _eclasses_, then we reconstruct it.
 		if "_eclasses_" in values:
-			values["INHERITED"] = ' '.join(self.reconstruct_eclasses(cpv, values["_eclasses_"]).keys())
+			values["INHERITED"] = ' '.join(
+				self.reconstruct_eclasses(cpv, values["_eclasses_"]).keys())
 			del values["_eclasses_"]
 
 		flat_hash.database._setitem(self, cpv, values)

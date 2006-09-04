@@ -56,7 +56,8 @@ class contentsSet(object):
 		
 		if not self.mutable:
 			# weird, but keeping with set.
-			raise AttributeError("%s is frozen; no remove functionality" % self.__class__)
+			raise AttributeError(
+				"%s is frozen; no remove functionality" % self.__class__)
 		if isinstance(obj, fs.fsBase):
 			del self._dict[obj.location]
 		else:
@@ -92,7 +93,8 @@ class contentsSet(object):
 		"""
 		if not self.mutable:
 			# weird, but keeping with set.
-			raise AttributeError("%s is frozen; no clear functionality" % self.__class__)
+			raise AttributeError(
+				"%s is frozen; no clear functionality" % self.__class__)
 		self._dict.clear()
 
 	def difference(self, other):
@@ -113,7 +115,9 @@ class contentsSet(object):
 	
 	def union(self, other):
 		if not isinstance(other, contentsSet):
-			raise TypeError("will only do unions with contentsSet derivatives, not %s" % other.__class__)
+			raise TypeError(
+				"will only do unions with contentsSet derivatives, not %s" %
+				other.__class__)
 
 		c = contentsSet(other)
 		c.update(self)

@@ -32,7 +32,8 @@ class TestDependantMethods(unittest.TestCase):
 		self.assertEqual(results, range(10))
 		results = []
 		o = self.generate_instance(
-			dict((str(x), currying.post_curry(self.f, results, x, False)) for x in range(10)),
+			dict((str(x), currying.post_curry(self.f, results, x, False))
+				 for x in range(10)),
 			dict((str(x), str(x - 1)) for x in xrange(1, 10)))
 		getattr(o, "9")()
 		self.assertEqual(results, [0])
@@ -42,7 +43,8 @@ class TestDependantMethods(unittest.TestCase):
 	def test_stage_awareness(self):
 		results = []
 		o = self.generate_instance(
-			dict((str(x), currying.post_curry(self.f, results, x)) for x in range(10)),
+			dict((str(x), currying.post_curry(self.f, results, x))
+				 for x in range(10)),
 			dict((str(x), str(x - 1)) for x in xrange(1, 10)))
 		getattr(o, "1")()
 		self.assertEqual(results, [0, 1])
@@ -53,7 +55,8 @@ class TestDependantMethods(unittest.TestCase):
 
 	def test_stage_depends(self):
 		results = []
-		methods = dict((str(x), currying.post_curry(self.f, results, x)) for x in range(10))
+		methods = dict((str(x), currying.post_curry(self.f, results, x))
+					   for x in range(10))
 		deps = dict((str(x), str(x - 1)) for x in xrange(1, 10))
 		deps["1"] = ["0", "a"]
 		methods["a"] = currying.post_curry(self.f, results, "a")

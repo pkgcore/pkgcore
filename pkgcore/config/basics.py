@@ -5,7 +5,8 @@
 """
 configuration subsystem primitives
 
-all callables can/may throw a L{configuration exception<pkgcore.config.errors.ConfigurationError>}
+all callables can/may throw a
+L{configuration exception<pkgcore.config.errors.ConfigurationError>}
 """
 
 
@@ -14,13 +15,14 @@ from pkgcore.util.demandload import demandload
 demandload(globals(),
 	"pkgcore.util:modules ")
 
-type_names = ("list", "str", "bool", "section_ref", "section_refs", "section_name")
+type_names = (
+	"list", "str", "bool", "section_ref", "section_refs", "section_name")
 
 
 class ConfigType(object):
 
 	"""A configurable 'type"""
-	
+
 	def __init__(self, typename, types, positional=None, incrementals=None, \
 		required=None, defaults=None, allow_unknowns=False):
 

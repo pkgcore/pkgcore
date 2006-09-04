@@ -6,22 +6,29 @@ from pkgcore.package import cpv, errors
 
 
 class native_CpvTest(unittest.TestCase):
-	
+
 	kls = staticmethod(cpv.native_CPV)
-	good_cats = ["dev-util", "asdf", "dev+", "dev-util+", "DEV-UTIL", "aaa0", "zzz9", "aaa-0", "bbb-9"]
+	good_cats = [
+		"dev-util", "asdf", "dev+", "dev-util+", "DEV-UTIL", "aaa0", "zzz9",
+		"aaa-0", "bbb-9"]
 	bad_cats  = ["dev.util", "dev_", "", "dev-util "]
 	good_pkgs = ["diffball", "a9", "a9+", "a-100dpi", "a-cvs"]
 	bad_pkgs  = ["diffball "]
 
-	good_cp   = ["bbb-9/foon", "dev-util/diffball", "dev-util/diffball-a9", "dev-ut-asdf/emacs-cvs", "xfce-base/xfce4", "bah/f-100dpi"]
+	good_cp   = [
+		"bbb-9/foon", "dev-util/diffball", "dev-util/diffball-a9",
+		"dev-ut-asdf/emacs-cvs", "xfce-base/xfce4", "bah/f-100dpi"]
 
 	good_vers = ["1", "2.3.4", "2.3.4a", "02.3", "2.03"]
 	good_vers = ["cvs.%s" % x for x in good_vers] + good_vers
 	bad_vers  = ["2.3a.4", "2.a.3", "2.3_", "2.3 ", "2.3."]
 	simple_good_sufs = ["_alpha", "_beta", "_pre", "_p"]
-	good_sufs = simple_good_sufs + ["%s1" % x for x in simple_good_sufs] + ["%s932" % x for x in simple_good_sufs]
+	good_sufs = (simple_good_sufs +
+				 ["%s1" % x for x in simple_good_sufs] +
+				 ["%s932" % x for x in simple_good_sufs])
 	l = len(good_sufs)
-	good_sufs = good_sufs + [good_sufs[x] + good_sufs[l - x - 1] for x in xrange(l)]
+	good_sufs = good_sufs + [
+		good_sufs[x] + good_sufs[l - x - 1] for x in xrange(l)]
 	del l
 	bad_sufs  = ["_a", "_9", "_"] + [x+" " for x in simple_good_sufs]
 	del simple_good_sufs
@@ -75,7 +82,9 @@ class native_CpvTest(unittest.TestCase):
 
 	def process_ver(self, ret, cat, pkg, ver, rev):
 		if ret:
-			self.assertRaises(errors.InvalidCPV, self.kls, "%s/%s-%s%s" % (cat, pkg, ver, rev))
+			self.assertRaises(
+				errors.InvalidCPV,
+				self.kls, "%s/%s-%s%s" % (cat, pkg, ver, rev))
 		else:
 			c = self.kls("%s/%s-%s%s" % (cat, pkg, ver, rev))
 			self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat, pkg, ver, rev))
@@ -102,7 +111,9 @@ class native_CpvTest(unittest.TestCase):
 
 	def process_suf(self, ret, cat, pkg, ver, rev):
 		if ret:
-			self.assertRaises(errors.InvalidCPV, self.kls, "%s/%s-%s%s" % (cat, pkg, ver, rev))
+			self.assertRaises(
+				errors.InvalidCPV,
+				self.kls, "%s/%s-%s%s" % (cat, pkg, ver, rev))
 		else:
 			c = self.kls("%s/%s-%s%s" % (cat, pkg, ver, rev))
 			self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat, pkg, ver, rev))
@@ -123,7 +134,9 @@ class native_CpvTest(unittest.TestCase):
 
 	def test_cmp(self):
 		kls = self.kls
-		self.assertTrue(cmp(kls("dev-util/diffball-0.1"), kls("dev-util/diffball-0.2")) < 0)
+		self.assertTrue(
+			cmp(kls("dev-util/diffball-0.1"),
+				kls("dev-util/diffball-0.2")) < 0)
 		base = "dev-util/diffball-0.7.1"
 		self.assertFalse(cmp(kls(base), kls(base)))
 		for rev in ("", "-r1"):
@@ -139,8 +152,10 @@ class native_CpvTest(unittest.TestCase):
 					if last is not None:
 						self.verify_gt(cur, last)
 
-		self.verify_gt(kls("dev-util/diffball-cvs.6"), kls("dev-util/diffball-600"))
-		self.verify_gt(kls("dev-util/diffball-cvs.7"), kls("dev-util/diffball-cvs.6"))
+		self.verify_gt(
+			kls("dev-util/diffball-cvs.6"), kls("dev-util/diffball-600"))
+		self.verify_gt(
+			kls("dev-util/diffball-cvs.7"), kls("dev-util/diffball-cvs.6"))
 		self.verify_gt(kls("da/ba-6a"), kls("da/ba-6"))
 		self.verify_gt(kls("da/ba-6a-r1"), kls("da/ba-6a"))
 

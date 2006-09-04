@@ -53,12 +53,15 @@ class tree(prototype.tree):
 		try:
 			st = os.lstat(self.base)
 			if not stat.S_ISDIR(st.st_mode):
-				raise errors.InitializationError("base not a dir: %s" % self.base)
+				raise errors.InitializationError(
+					"base not a dir: %s" % self.base)
 			elif not st.st_mode & (os.X_OK|os.R_OK):
-				raise errors.InitializationError("base lacks read/executable: %s" % self.base)
+				raise errors.InitializationError(
+					"base lacks read/executable: %s" % self.base)
 
 		except OSError:
-			raise errors.InitializationError("lstat failed on base %s" % self.base)
+			raise errors.InitializationError(
+				"lstat failed on base %s" % self.base)
 
 		self.package_class = get_plugin("format", self.format_magic)(self)
 
@@ -99,7 +102,9 @@ class tree(prototype.tree):
 		s = "%s-%s" % (pkg.package, pkg.fullver)
 		return os.path.join(self.base, pkg.category, s, s+".ebuild")
 
-	_metadata_rewrites = {"depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND", "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
+	_metadata_rewrites = {
+		"depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
+		"use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
 
 	def _get_metadata(self, pkg):
 		return IndeterminantDict(pre_curry(self._internal_load_key, os.path.dirname(pkg.path)))
@@ -157,13 +162,15 @@ class ConfiguredTree(multiplex.tree):
 		return uninstall(self.domain_settings, self.raw_vdb, pkg, *a, **kw)
 
 	def _replace(self, oldpkg, newpkg, *a, **kw):
-		return replace(self.domain_settings, self.raw_vdb, oldpkg, newpkg, *a, **kw)
+		return replace(
+			self.domain_settings, self.raw_vdb, oldpkg, newpkg, *a, **kw)
 
 	def _grab_virtuals(self):
 		virtuals = {}
 		for pkg in self.raw_vdb:
 			for virtual in pkg.provides.evaluate_depset(pkg.use):
-				virtuals.setdefault(virtual.package, {}).setdefault(pkg.fullver, []).append(pkg)
+				virtuals.setdefault(virtual.package, {}).setdefault(
+					pkg.fullver, []).append(pkg)
 
 		for pkg_dict in virtuals.itervalues():
 			for full_ver, rdep_atoms in pkg_dict.iteritems():
@@ -181,7 +188,8 @@ def _get_ebuild_op_args_kwds(self):
 class install(repo_interfaces.install):
 
 	def __init__(self, domain_settings, repo, pkg, *a, **kw):
-		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
+		self.dirpath = os.path.join(
+			repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
 		self.domain_settings = domain_settings
 		repo_interfaces.install.__init__(self, repo, pkg, *a, **kw)
 
@@ -195,11 +203,13 @@ class install(repo_interfaces.install):
 		rewrite = self.repo._metadata_rewrites
 		for k in self.pkg.tracked_attributes:
 			if k == "contents":
-				v = ContentsFile(os.path.join(dirpath, "CONTENTS"), mutable=True, create=True)
+				v = ContentsFile(os.path.join(dirpath, "CONTENTS"),
+								 mutable=True, create=True)
 				for x in self.me.csets["install"]:
 					# $10 this ain't right.  verify this- harring
 					if self.offset:
-						v.add(x.change_attributes(location=os.path.join(self.offset, x.location)))
+						v.add(x.change_attributes(
+								location=os.path.join(self.offset, x.location)))
 					else:
 						v.add(x)
 				v.flush()
@@ -225,17 +235,26 @@ class install(repo_interfaces.install):
 					s += "\n"
 				open(os.path.join(dirpath, rewrite.get(k, k.upper())), "w", 32384).write(s)
 
-		# ebuild_data is the actual ebuild- no point in holding onto it for built ebuilds, but if it's there, we store it.
+		# ebuild_data is the actual ebuild- no point in holding onto
+		# it for built ebuilds, but if it's there, we store it.
 		o = getattr(self.pkg, "raw_ebuild", None)
 		if o is None:
-			logging.warn("doing install/replace op, but source package doesn't provide the actual ebuild data.  Creating an empty file")
+			logging.warn(
+				"doing install/replace op, "
+				"but source package doesn't provide the actual ebuild data.  "
+				"Creating an empty file")
 			o = ''
 		# XXX lil hackish accessing PF
 		open(os.path.join(dirpath, self.pkg.PF + ".ebuild"), "w").write(o)
-		
-		# XXX finally, hack to keep portage from doing stupid shit.  relies on counter to discern what to punt during merging/removal, 
-		# we don't need that crutch however.  problem?  No counter file, portage wipes all of our merges (friendly bugger).
-		# need to get zmedico to localize the counter creation/counting to per CP for this trick to behave perfectly.
+
+		# XXX finally, hack to keep portage from doing stupid shit.
+		# relies on counter to discern what to punt during
+		# merging/removal, we don't need that crutch however. problem?
+		# No counter file, portage wipes all of our merges (friendly
+		# bugger).
+		# need to get zmedico to localize the counter
+		# creation/counting to per CP for this trick to behave
+		# perfectly.
 		open(os.path.join(dirpath, "COUNTER"), "w").write(str(int(time.time())))
 		return True
 
@@ -243,9 +262,11 @@ class install(repo_interfaces.install):
 class uninstall(repo_interfaces.uninstall):
 
 	def __init__(self, domain_settings, repo, pkg, offset=None, *a, **kw):
-		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
+		self.dirpath = os.path.join(
+			repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
 		self.domain_settings = domain_settings
-		repo_interfaces.uninstall.__init__(self, repo, pkg, offset=offset, *a, **kw)
+		repo_interfaces.uninstall.__init__(
+			self, repo, pkg, offset=offset, *a, **kw)
 
 	_get_format_op_args_kwds = _get_ebuild_op_args_kwds
 
@@ -259,9 +280,13 @@ class uninstall(repo_interfaces.uninstall):
 class replace(install, uninstall, repo_interfaces.replace):
 
 	def __init__(self, domain_settings, repo, pkg, newpkg, *a, **kw):
-		self.dirpath = os.path.join(repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
-		self.newpath = os.path.join(repo.base, newpkg.category, newpkg.package+"-"+newpkg.fullver)
-		self.tmpdirpath = os.path.join(os.path.dirname(self.dirpath), ".tmp."+os.path.basename(self.dirpath))
+		self.dirpath = os.path.join(
+			repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
+		self.newpath = os.path.join(
+			repo.base, newpkg.category, newpkg.package+"-"+newpkg.fullver)
+		self.tmpdirpath = os.path.join(
+			os.path.dirname(self.dirpath),
+			".tmp."+os.path.basename(self.dirpath))
 		self.domain_settings = domain_settings
 		repo_interfaces.replace.__init__(self, repo, pkg, newpkg, *a, **kw)
 

@@ -18,23 +18,25 @@ class tree(prototype.tree):
 		"""
 		self.raw_repo = repo
 		if not isinstance(self.raw_repo, prototype.tree):
-			raise errors.InitializationError("%s is not a repository tree derivative" % str(self.raw_repo))
+			raise errors.InitializationError(
+				"%s is not a repository tree derivative" % (self.raw_repo,))
 		self.package_class = package_class
 		self.raw_repo = repo
 
 	def itermatch(self, *args, **kwargs):
 		if self.package_class is None:
 			return self.raw_repo.itermatch(*args, **kwargs)
-		return (self.package_class(x) for x in self.raw_repo.itermatch(*args, **kwargs))
+		return (
+			self.package_class(x)
+			for x in self.raw_repo.itermatch(*args, **kwargs))
 
 	def __getattr__(self, attr):
 		return getattr(self.raw_repo, repo)
 
 	def __len__(self):
 		return len(self.raw_repo)
-	
+
 	def __iter__(self):
 		if self.package_class is None:
 			return iter(self.raw_repo)
 		return (self.package_class(x) for x in self.raw_repo)
-		

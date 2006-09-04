@@ -14,15 +14,22 @@ from pkgcore.interfaces.data_source import local_source
 # goofy set of classes representating the fs objects pkgcore knows of.
 
 
-__all__ = ["fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo", "isdir", "isreg", "isfs_obj"]
+__all__ = [
+	"fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo", "isdir", "isreg",
+	"isfs_obj"]
 
-# following are used to generate appropriate __init__, wiped from the namespace at the end of the module
+# following are used to generate appropriate __init__, wiped from the
+# namespace at the end of the module
 
 _fs_doc = {
-	"mode":"""@keyword mode: int, the mode of this entry.  required if strict is set""",
-	"mtime":"""@keyword mtime: long, the mtime of this entry.  required if strict is set""",
-	"uid":"""@keyword uid: int, the uid of this entry.  required if strict is set""",
-	"gid":"""@keyword gid: int, the gid of this entry.  required if strict is set""",
+	"mode":"""@keyword mode: int, the mode of this entry.  """
+		"""required if strict is set""",
+	"mtime":"""@keyword mtime: long, the mtime of this entry.  """
+		"""required if strict is set""",
+	"uid":"""@keyword uid: int, the uid of this entry.  """
+		"""required if strict is set""",
+	"gid":"""@keyword gid: int, the gid of this entry.  """
+		"""required if strict is set""",
 }
 
 def gen_doc_additions(init, slots):
@@ -30,7 +37,8 @@ def gen_doc_additions(init, slots):
 		d = raw_init_doc.split("\n")
 	else:
 		d = init.__doc__.split("\n")
-	init.__doc__ = "\n".join(k.lstrip() for k in d)+"\n".join(_fs_doc[k] for k in _fs_doc if k in slots)
+	init.__doc__ = "\n".join(k.lstrip() for k in d) + \
+		"\n".join(_fs_doc[k] for k in _fs_doc if k in slots)
 
 
 raw_init_doc = \
@@ -63,7 +71,8 @@ class fsBase(object):
 	gen_doc_additions(__init__, __slots__)
 
 	def change_attributes(self, **kwds):
-		d = dict((x, getattr(self, x)) for x in self.__slots__ if hasattr(self, x))
+		d = dict((x, getattr(self, x))
+				 for x in self.__slots__ if hasattr(self, x))
 		d.update(kwds)
 		# split location out
 		location = d.pop("location")
@@ -116,12 +125,15 @@ class fsFile(fsBase):
 			kwds["mtime"] = long(kwds["mtime"])
 		if real_path is not None:
 			if "data_source" in kwds:
-				raise TypeError("%s: real_path and data_source are mutually exclusive options" % self.__class__)
+				raise TypeError(
+					"%s: real_path and data_source are mutually exclusive "
+					"options" % self.__class__)
 			kwds["data_source"] = local_source(real_path)
 		else:
 			kwds.setdefault("data_source", None)
 		if chksums is None:
-			# this can be problematic offhand if the file is modified but chksum not triggered
+			# this can be problematic offhand if the file is modified
+			# but chksum not triggered
 			chksums = LazyValDict(tuple(get_handlers()), self._chksum_callback)
 		kwds["chksums"] = chksums
 		fsBase.__init__(self, location, **kwds)
@@ -151,7 +163,9 @@ class fsDir(fsBase):
 		return "dir:%s" % self.location
 
 	def __cmp__(self, other):
-		return cmp(self.location.split(path_seperator), other.location.split(path_seperator))
+		return cmp(
+			self.location.split(path_seperator),
+			other.location.split(path_seperator))
 
 
 class fsLink(fsBase):
@@ -169,7 +183,8 @@ class fsLink(fsBase):
 	gen_doc_additions(__init__, __slots__)
 
 	def change_attributes(self, **kwds):
-		d = dict((x, getattr(self, x)) for x in self.__slots__ if hasattr(self, x))
+		d = dict((x, getattr(self, x))
+				 for x in self.__slots__ if hasattr(self, x))
 		d.update(kwds)
 		# split location out
 		location = d.pop("location")
@@ -200,9 +215,12 @@ class fsDev(fsBase):
 	def __init__(self, path, major=-1, minor=-1, **kwds):
 		if kwds.get("strict", True):
 			if major == -1 or minor == -1:
-				raise TypeError("major/minor must be specified and positive ints")
+				raise TypeError(
+					"major/minor must be specified and positive ints")
 			if not stat.S_IFMT(kwds["mode"]):
-				raise TypeError("mode %o: must specify the device type (got %o)" % (kwds["mode"], stat.S_IFMT(kwds["mode"])))
+				raise TypeError(
+					"mode %o: must specify the device type (got %o)" % (
+						kwds["mode"], stat.S_IFMT(kwds["mode"])))
 			kwds["major"] = major
 			kwds["minor"] = minor
 		_real_path_init(self, path, **kwds)

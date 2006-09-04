@@ -7,10 +7,11 @@ cache backend utilities
 
 from pkgcore.cache import cache_errors
 
-def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None, verbose_instance=None):
+def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None,
+				 verbose_instance=None):
 	"""
 	make a cache backend a mirror of another
-	
+
 	@param valid_nodes_iterable: valid keys
 	@param src_cache: L{pkgcore.cache.template.database} instance to copy keys from
 	@param trg_cache: L{pkgcore.cache.template.database} instance to write keys to
@@ -19,7 +20,9 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None, 
 	"""
 
 	if not src_cache.complete_eclass_entries and not eclass_cache:
-		raise Exception("eclass_cache required for cache's of class %s!" % src_cache.__class__)
+		raise Exception(
+			"eclass_cache required for cache's of class %s!" %
+			src_cache.__class__)
 
 	if verbose_instance is None:
 		noise = quiet_mirroring()
@@ -51,14 +54,15 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None, 
 					noise.eclass_stale(x)
 					continue
 			else:
-				entry["_eclasses_"] = eclass_cache.get_eclass_data(entry["INHERITED"].split(), \
-					from_master_only=True)
+				entry["_eclasses_"] = eclass_cache.get_eclass_data(
+					entry["INHERITED"].split(), from_master_only=True)
 				if not entry["_eclasses_"]:
 					noise.eclass_stale(x)
 					continue
 
-		# by this time, if it reaches here, the eclass has been validated, and the entry has
-		# been updated/translated (if needs be, for metadata/cache mainly)
+		# by this time, if it reaches here, the eclass has been
+		# validated, and the entry has been updated/translated (if
+		# needs be, for metadata/cache mainly)
 		try:
 			trg_cache[x] = entry
 		except cache_errors.CacheError, ce:
@@ -73,8 +77,9 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None, 
 	if not trg_cache.autocommits:
 		trg_cache.commit()
 
-	# ok.  by this time, the trg_cache is up to date, and we have a dict
-	# with a crapload of cpv's.  we now walk the target db, removing stuff if it's in the list.
+	# ok. by this time, the trg_cache is up to date, and we have a
+	# dict with a crapload of cpv's. we now walk the target db,
+	# removing stuff if it's in the list.
 	for key in dead_nodes:
 		try:
 			del trg_cache[key]
@@ -88,8 +93,9 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None, 
 
 class quiet_mirroring(object):
 	"""a nonverbose mirror_cache callback object for getting progress information"""
-	# call_update_every is used by mirror_cache to determine how often to call in.
-	# quiet defaults to 2^24 -1.  Don't call update, 'cept once every 16 million or so :)
+	# call_update_every is used by mirror_cache to determine how often
+	# to call in. quiet defaults to 2^24 -1. Don't call update, 'cept
+	# once every 16 million or so :)
 	call_update_min = 0xffffff
 	def update(self, key, *arg):	pass
 	def exception(self, key, *arg):	pass
@@ -100,7 +106,7 @@ class quiet_mirroring(object):
 
 class non_quiet_mirroring(quiet_mirroring):
 	"""prints to stdout each step in cache mirroring"""
-	
+
 	call_update_min = 1
 	def update(self, key, *arg):	print "processed", key
 	def exception(self, key, *arg):	print "exec", key, arg

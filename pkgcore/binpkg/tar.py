@@ -18,7 +18,7 @@ class tar_data_source(data_source):
 		return self.data()
 
 class TarContentsSet(contents.contentsSet):
-	
+
 	def __init__(self, initial=None, mutable=False):
 		contents.contentsSet.__init__(self, mutable=True)
 		self._dict = OrderedDict()
@@ -31,7 +31,9 @@ class TarContentsSet(contents.contentsSet):
 def converter(src_tar):
 	psep = os.path.sep
 	for member in src_tar:
-		d = {"uid":member.uid, "gid":member.gid, "mtime":member.mtime, "mode":member.mode}
+		d = {
+			"uid":member.uid, "gid":member.gid,
+			"mtime":member.mtime, "mode":member.mode}
 		location = psep + member.name.strip(psep)
 		if member.isdir():
 			if member.name.strip(psep) == ".":
@@ -39,7 +41,8 @@ def converter(src_tar):
 			yield fsDir(location, **d)
 		elif member.isreg():
 			d["size"] = long(member.size)
-			d["data_source"] = tar_data_source(pre_curry(src_tar.extractfile, member.name))
+			d["data_source"] = tar_data_source(pre_curry(
+					src_tar.extractfile, member.name))
 			yield fsFile(location, **d)
 		elif member.issym():
 			yield fsSymlink(location, member.linkname, **d)

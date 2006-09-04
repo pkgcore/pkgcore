@@ -46,20 +46,22 @@ def wrap_factory(klass, *args, **kwds):
 
 	class new_factory(klass):
 
-		def _add_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
+		def _add_format_triggers(self, pkg, op_inst, format_op_inst,
+								 engine_inst):
 			if engine.UNINSTALL_MODE != engine_inst.mode and \
 				pkg == engine_inst.new and \
 				not pkg_uses_default_preinst(pkg):
 
 				label = "forced_decompression"
-				t = SimpleTrigger("install", 
-					pre_curry(force_unpack_trigger, format_op_inst), 
+				t = SimpleTrigger("install",
+					pre_curry(force_unpack_trigger, format_op_inst),
 					register_func=pre_curry(generic_register, label),
 					label=label)
 				engine_inst.add_triggers("sanity_check", t)
-				
-			klass._add_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst)
-		
+
+			klass._add_format_triggers(
+				self, pkg, op_inst, format_op_inst, engine_inst)
+
 		def scan_contents(self, location):
 			return scan(location, offset=location)
 
@@ -67,10 +69,11 @@ def wrap_factory(klass, *args, **kwds):
 
 
 class tree(prototype.tree):
-	format_magic = "ebuild_built"	
-	# yes, the period is required.  no, do not try and remove it (harring says it stays)
+	format_magic = "ebuild_built"
+	# yes, the period is required. no, do not try and remove it
+	# (harring says it stays)
 	extension = ".tbz2"
-	
+
 	def __init__(self, location):
 		super(tree, self).__init__()
 		self.base = location
@@ -78,21 +81,27 @@ class tree(prototype.tree):
 		try:
 			st = os.lstat(self.base)
 			if not stat.S_ISDIR(st.st_mode):
-				raise errors.InitializationError("base not a dir: %s" % self.base)
+				raise errors.InitializationError(
+					"base not a dir: %s" % self.base)
 			elif not st.st_mode & (os.X_OK|os.R_OK):
-				raise errors.InitializationError("base lacks read/executable: %s" % self.base)
+				raise errors.InitializationError(
+					"base lacks read/executable: %s" % self.base)
 
 		except OSError:
-			raise errors.InitializationError("lstat failed on base %s" % self.base)
+			raise errors.InitializationError(
+				"lstat failed on base %s" % self.base)
 
-		self.package_class = wrap_factory(get_plugin("format", self.format_magic), self)
+		self.package_class = wrap_factory(
+			get_plugin("format", self.format_magic), self)
 
 	def _get_categories(self, *optionalCategory):
 		# return if optionalCategory is passed... cause it's not yet supported
 		if optionalCategory:
 			return {}
-		try:	
-			return tuple(x for x in listdir_dirs(self.base) if x.lower() != "all")
+		try:
+			return tuple(
+				x for x in listdir_dirs(self.base)
+				if x.lower() != "all")
 		except (OSError, IOError), e:
 			raise KeyError("failed fetching categories: %s" % str(e))
 
@@ -104,7 +113,8 @@ class tree(prototype.tree):
 		try:
 			for x in listdir_files(cpath):
 				# don't use lstat; symlinks may exist
-				if x.endswith(".lockfile") or not x[-lext:].lower() == self.extension:
+				if (x.endswith(".lockfile")
+					or not x[-lext:].lower() == self.extension):
 					continue
 				x = cpv(category+"/"+x[:-lext])
 				l.add(x.package)
@@ -122,13 +132,16 @@ class tree(prototype.tree):
 	def _get_path(self, pkg):
 		s = "%s-%s" % (pkg.package, pkg.fullver)
 		return os.path.join(self.base, pkg.category, s+".tbz2")
-	
+
 	_get_ebuild_path = _get_path
 
-	_metadata_rewrites = {"depends":"DEPEND", "rdepends":"RDEPEND", "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
+	_metadata_rewrites = {
+		"depends":"DEPEND", "rdepends":"RDEPEND", "use":"USE", "eapi":"EAPI",
+		"CONTENTS":"contents"}
 
 	def _get_metadata(self, pkg):
-		return IndeterminantDict(pre_curry(self._internal_load_key, pkg, Xpak(self._get_path(pkg))))
+		return IndeterminantDict(pre_curry(
+				self._internal_load_key, pkg, Xpak(self._get_path(pkg))))
 
 	def _internal_load_key(self, pkg, xpak, key):
 		key = self._metadata_rewrites.get(key, key)
@@ -139,7 +152,9 @@ class tree(prototype.tree):
 			if data is None:
 				data = data_source(xpak.get("environment", None), mutable=True)
 				if data is None:
-					raise KeyError("environment.bz2 not found in xpak segment, malformed binpkg?")
+					raise KeyError(
+						"environment.bz2 not found in xpak segment, "
+						"malformed binpkg?")
 			else:
 				data = data_source(decompress(data), mutable=True)
 		else:

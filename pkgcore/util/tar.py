@@ -5,7 +5,9 @@
 tar file access
 
 monkey patching of stdlib tarfile to reduce mem usage (33% reduction).
-note this is also racey; N threads trying an import, if they're after the *original* tarfile, they may inadvertantly get ours.
+
+note this is also racey; N threads trying an import, if they're after
+the *original* tarfile, they may inadvertantly get ours.
 """
 
 import sys
@@ -19,7 +21,8 @@ del t
 # ok, we now have our own local copy to monkey patch
 
 class TarInfo(tarfile.TarInfo):
-	__slots__ = ("name", "mode", "uid", "gid", "size", "mtime", "chksum", "type",
+	__slots__ = (
+		"name", "mode", "uid", "gid", "size", "mtime", "chksum", "type",
 		"linkname", "uname", "gname", "devmajor", "devminor", "prefix", "offset",
 		"offset_data", "buf", "sparse", "_link_target")
 

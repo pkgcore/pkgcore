@@ -26,9 +26,10 @@ class TriggerUnknownCset(ModificationError):
 		if not isinstance(csets, (tuple, list)):
 			csets = (csets,)
 		self.trigger, self.csets = trigger, csets
-	
+
 	def __str__(self):
-		return "%s: trigger %r unknown cset: %r" % (self.__class__, self.trigger, self.csets)
+		return "%s: trigger %r unknown cset: %r" % (
+			self.__class__, self.trigger, self.csets)
 
 
 class NonFatalModification(Exception):

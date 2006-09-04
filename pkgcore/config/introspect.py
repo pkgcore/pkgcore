@@ -65,11 +65,15 @@ def configTypeFromCallable(func_obj):
 				positional = list(hint_overrides.positional)
 		elif not isinstance(hint_overrides, bool):
 			raise config.errors.TypeDefinitionError(
-				"instance %s attr pkgcore_config_type is neither a ConfigHint nor boolean" % func_obj)
+				"instance %s attr pkgcore_config_type is "
+				"neither a ConfigHint nor boolean" % func_obj)
 		elif fail:
-			raise TypeError('func accepts *args or **kwargs, and no ConfigHint is provided')
+			raise TypeError(
+				'func accepts *args or **kwargs, '
+				'and no ConfigHint is provided')
 	elif fail:
-		raise TypeError('func accepts *args or **kwargs, and no ConfigHint is provided')
+		raise TypeError(
+			'func accepts *args or **kwargs, and no ConfigHint is provided')
 
 	return config.basics.ConfigType(
 		name, types, required=args,

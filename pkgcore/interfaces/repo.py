@@ -17,8 +17,9 @@ def decorate_ui_callback(stage, status_obj, original, *a, **kw):
 class fake_lock:
 	def __init__(self):
 		pass
-	
-	acquire_write_lock = acquire_read_lock = release_read_lock = release_write_lock = __init__
+
+	acquire_write_lock = acquire_read_lock = __init__
+	release_read_lock = release_write_lock = __init__
 
 
 class base(object):
@@ -41,7 +42,8 @@ class base(object):
 		self.status_obj = status_obj
 		if status_obj is not None:
 			for x in self.stage_hooks:
-				setattr(self, x, pre_curry(decorate_ui_callback, x, status_obj, getattr(self, x)))
+				setattr(self, x, pre_curry(
+						decorate_ui_callback, x, status_obj, getattr(self, x)))
 
 	def _get_format_op_args_kwds(self):
 		return (), {}
@@ -67,16 +69,21 @@ class base(object):
 
 	def __del__(self):
 		if self.underway:
-			print "warning: %s merge was underway, but wasn't completed" % self.pkg
+			print "warning: %s merge was underway, but wasn't completed" % (
+				self.pkg,)
 			self.lock.release_write_lock()
 
 
 class install(base):
-	
-	"""base interface for installing a pkg from a repo; repositories should override as needed"""
-	
-	stage_depends = {"finish":"merge_metadata", "merge_metadata":"postinst", "postinst":"transfer", "transfer":"preinst",
-		"preinst":"start"}
+
+	"""base interface for installing a pkg from a repo.
+
+	repositories should override as needed.
+	"""
+
+	stage_depends = {
+		"finish":"merge_metadata", "merge_metadata":"postinst",
+		"postinst":"transfer", "transfer":"preinst", "preinst":"start"}
 	stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
 	_op_name = "_repo_install_op"
 
@@ -113,10 +120,14 @@ class install(base):
 
 class uninstall(base):
 
-	"""base interface for uninstalling a pkg from a repo; repositories should override as needed"""
+	"""base interface for uninstalling a pkg from a repo.
 
-	stage_depends = {"finish":"unmerge_metadata", "unmerge_metadata":"postrm", "postrm":"remove", "remove":"prerm",
-		"prerm":"start"}
+	Repositories should override as needed.
+	"""
+
+	stage_depends = {
+		"finish":"unmerge_metadata", "unmerge_metadata":"postrm",
+		"postrm":"remove", "remove":"prerm", "prerm":"start"}
 	stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
 	_op_name = "_repo_uninstall_op"
 
@@ -152,21 +163,27 @@ class uninstall(base):
 
 	def __del__(self):
 		if self.underway:
-			print "warning: %s unmerge was underway, but wasn't completed" % self.pkg
+			print "warning: %s unmerge was underway, but wasn't completed" % (
+				self.pkg,)
 			self.lock.release_write_lock()
 
 
 class replace(install, uninstall):
 
-	"""base interface for replacing a pkg in a repo with another; repositories should override as needed"""
+	"""base interface for replacing a pkg in a repo with another.
 
-	stage_depends = {"finish":"unmerge_metadata",
-		"unmerge_metadata":"postrm", "postrm":"remove","remove":"prerm", "prerm":"merge_metadata",
-		"merge_metadata":"postinst", "postinst":"transfer","transfer":"preinst",
-		"preinst":"start"}
+	Repositories should override as needed.
+	"""
 
-	stage_hooks = ["merge_metadata", "unmerge_metadata", "postrm", "prerm", "postinst", "preinst",
-		"unmerge_metadata", "merge_metadata"]
+	stage_depends = {
+		"finish":"unmerge_metadata", "unmerge_metadata":"postrm",
+		"postrm":"remove","remove":"prerm", "prerm":"merge_metadata",
+		"merge_metadata":"postinst", "postinst":"transfer",
+		"transfer":"preinst", "preinst":"start"}
+
+	stage_hooks = [
+		"merge_metadata", "unmerge_metadata", "postrm", "prerm", "postinst",
+		"preinst", "unmerge_metadata", "merge_metadata"]
 	_op_name = "_repo_replace_op"
 
 	def __init__(self, repo, oldpkg, newpkg, status_obj=None, offset=None):
@@ -186,5 +203,6 @@ class replace(install, uninstall):
 
 	def __del__(self):
 		if self.underway:
-			print "warning: %s -> %s replacement was underway, but wasn't completed" % (self.oldpkg, self.pkg)
+			print "warning: %s -> %s replacement was underway, " \
+				"but wasn't completed" % (self.oldpkg, self.pkg)
 			self.lock.release_write_lock()

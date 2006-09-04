@@ -17,13 +17,16 @@ def ix_callable(a):
 
 class IterValLazyDict(LazyValDict):
 
-	def __init__(self, key_func, val_func, override_iter=None, return_func=ix_callable):
+	def __init__(self, key_func, val_func, override_iter=None,
+				 return_func=ix_callable):
 		LazyValDict.__init__(self, key_func, val_func)
 		self._iter_callable = override_iter
 		self.return_mangler = return_func
 
 	def __iter__(self):
-		return (self.return_mangler(k, ver) for k, v in self.iteritems() for ver in v)
+		return (
+			self.return_mangler(k, ver)
+			for k, v in self.iteritems() for ver in v)
 
 	def __contains__(self, key):
 		return key in iter(self)
@@ -77,7 +80,7 @@ class CategoryIterValLazyDict(IterValLazyDict):
 class tree(object):
 	"""
 	repository template
-	
+
 	@ivar raw_repo: if wrapping a repo, set raw_repo per instance to it
 	@ivar livefs: boolean, set it to True if it's a repository representing a livefs
 	@ivar package_class: callable to generate a package instance, must override
@@ -96,9 +99,13 @@ class tree(object):
 		@param frozen: controls whether the repository is mutable or immutable
 		"""
 
-		self.categories = CategoryIterValLazyDict(self._get_categories, self._get_categories)
-		self.packages   = PackageIterValLazyDict(self.categories, self._get_packages)
-		self.versions   = IterValLazyDict(self.packages, self._get_versions, return_func=lambda *t:"-".join(t))
+		self.categories = CategoryIterValLazyDict(
+			self._get_categories, self._get_categories)
+		self.packages   = PackageIterValLazyDict(
+			self.categories, self._get_packages)
+		self.versions   = IterValLazyDict(
+			self.packages, self._get_versions,
+			return_func=lambda *t:"-".join(t))
 
 		self.frozen = frozen
 		self.lock = None
@@ -139,11 +146,12 @@ class tree(object):
 	def match(self, atom, **kwds):
 		return list(self.itermatch(atom, **kwds))
 
-	def itermatch(self, restrict, restrict_solutions=None, sorter=None, pkg_klass_override=None, force=None):
+	def itermatch(self, restrict, restrict_solutions=None, sorter=None,
+				  pkg_klass_override=None, force=None):
 
 		"""
 		generator that yield packages that match a L{pkgcore.restrictions.packages.PackageRestriction} instance
-		
+
 		@param restrict: L{package restriction<pkgcore.restrictions.packages.PackageRestriction>} to search via
 		@param restrict_solutions: cnf collapsed list of the restrict.  Don't play with it unless you know what you're doing
 		@param sorter: callable to do sorting during searching- if sorting the results, use this instead of sorting externally
@@ -157,9 +165,11 @@ class tree(object):
 		else:
 			candidates = self._identify_candidates(restrict, sorter)
 
-		return self._internal_match(candidates, restrict, sorter, pkg_klass_override, force)
+		return self._internal_match(
+			candidates, restrict, sorter, pkg_klass_override, force)
 
-	def _internal_match(self, candidates, restrict, sorter, pkg_klass_override, force):
+	def _internal_match(self, candidates, restrict, sorter,
+						pkg_klass_override, force):
 		#actual matching.
 		if force is None:
 			match = restrict.match
@@ -168,10 +178,12 @@ class tree(object):
 		else:
 			match = restrict.force_False
 		for catpkg in candidates:
-			for pkg in sorter(self.package_class(catpkg+"-"+ver) for ver in self.versions.get(catpkg, [])):
+			for pkg in sorter(
+				self.package_class(catpkg+"-"+ver)
+				for ver in self.versions.get(catpkg, [])):
 				if pkg_klass_override is not None:
 					pkg = pkg_klass_override(pkg)
-			
+
 				if match(pkg):
 					yield pkg
 
@@ -180,15 +192,22 @@ class tree(object):
 		ret_mangler = self.packages.return_mangler
 		if not isinstance(restrict, boolean.base) or isinstance(restrict, atom):
 			return self._fast_identify_candidates(restrict, sorter)
-		dsolutions = [([c.restriction for c in collect_package_restrictions(x, ["category"])], 
-			[p.restriction for p in collect_package_restrictions(x, ["package"])]) for x in restrict.iter_dnf_solutions(True)]
+		dsolutions = [
+			([c.restriction
+			  for c in collect_package_restrictions(x, ["category"])],
+			 [p.restriction
+			  for p in collect_package_restrictions(x, ["package"])])
+			for x in restrict.iter_dnf_solutions(True)]
 
 		for x in dsolutions:
 			if not x[0] and not x[1]:
 				# great... one doesn't rely on cat/pkg.
 				if iter is sorter:
 					return self.packages
-				return (ret_mangler((c, p)) for c in sorter(self.categories) for p in sorter(self.packages.get(c, [])))
+				return (
+					ret_mangler((c, p))
+					for c in sorter(self.categories)
+					for p in sorter(self.packages.get(c, [])))
 		# simple cases first.
 		# if one specifies categories, and one doesn't
 		cat_specified = bool(dsolutions[0][0])
@@ -196,18 +215,27 @@ class tree(object):
 		pgetter = self.packages.get
 		if any(True for x in dsolutions[1:] if bool(x[0]) != cat_specified):
 			if any(True for x in dsolutions[1:] if bool(x[1]) != pkg_specified):
-				# merde.  so we've got a mix- some specify cats, some don't, some specify pkgs, some don't.
+				# merde.  so we've got a mix- some specify cats, some
+				# don't, some specify pkgs, some don't.
 				# this may be optimizable
 				return self.packages
-			# ok.  so... one doesn't specify a category, but they all specify packages (or don't)
-			pr = values.OrRestriction(*tuple(iflatten_instance((x[1] for x in dsolutions if x[1]), values.base)))
-			return (ret_mangler((c, p)) for c in sorter(self.categories) for p in sorter(pgetter(c, [])) if pr.match(p))
-		
+			# ok. so... one doesn't specify a category, but they all
+			# specify packages (or don't)
+			pr = values.OrRestriction(*tuple(iflatten_instance(
+						(x[1] for x in dsolutions if x[1]), values.base)))
+			return (
+				ret_mangler((c, p))
+				for c in sorter(self.categories)
+				for p in sorter(pgetter(c, [])) if pr.match(p))
+
 		elif any(True for x in dsolutions[1:] if bool(x[1]) != pkg_specified):
 			# one (or more) don't specify pkgs, but they all specify cats.
-			cr = values.OrRestriction(*tuple(iflatten_instance((x[0] for x in dsolutions), values.base)))
+			cr = values.OrRestriction(*tuple(iflatten_instance(
+						(x[0] for x in dsolutions), values.base)))
 			cats_iter = (c for c in sorter(self.categories) if cr.match(c))
-			return (self.packages.return_mangler((c, p)) for c in cats_iter for p in sorter(pgetter(c, [])))
+			return (
+				self.packages.return_mangler((c, p))
+				for c in cats_iter for p in sorter(pgetter(c, [])))
 
 		return self._fast_identify_candidates(restrict, sorter)
 
@@ -241,9 +269,13 @@ class tree(object):
 				cats_iter = [c]
 			else:
 				cat_restrict.add(values.ContainmentMatch(*cat_exact))
-				cats_iter = sorter(x for x in self.categories if any(True for r in cat_restrict if r.match(x)))
+				cats_iter = sorter(
+					x for x in self.categories
+					if any(True for r in cat_restrict if r.match(x)))
 		elif cat_restrict:
-			cats_iter = sorter(x for x in self.categories if any(True for r in cat_restrict if r.match(x)))
+			cats_iter = sorter(
+				x for x in self.categories
+				if any(True for r in cat_restrict if r.match(x)))
 		else:
 			cats_iter = sorter(self.categories)
 
@@ -253,14 +285,18 @@ class tree(object):
 					pkg_exact = tuple(pkg_exact)
 				else:
 					pkg_exact = sorter(pkg_exact)
-				return (self.packages.return_mangler((c, p)) for c in cats_iter for p in
-					pkg_exact)
+				return (
+					self.packages.return_mangler((c, p))
+					for c in cats_iter for p in pkg_exact)
 			else:
 				pkg_restrict.add(values.ContainmentMatch(*pkg_exact))
 		
 		if pkg_restrict:
-			return (self.packages.return_mangler((c, p)) for c in cats_iter for
-				p in sorter(self.packages.get(c, [])) if any(True for r in pkg_restrict if r.match(p)))
+			return (
+				self.packages.return_mangler((c, p))
+				for c in cats_iter
+				for p in sorter(self.packages.get(c, []))
+				if any(True for r in pkg_restrict if r.match(p)))
 		elif not cat_restrict:
 			if sorter is iter:
 				return self.packages

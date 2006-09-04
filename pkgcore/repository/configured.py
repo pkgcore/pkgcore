@@ -47,7 +47,8 @@ class tree(prototype.tree):
 			kwds["pkg_klass_override"] = self.package_class
 		return self.raw_repo.itermatch(restrict, **kwds)
 
-	itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace("@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
+	itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
+		"@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
 
 	def __getitem__(self, key):
 		return self.package_class(self.raw_repo[key])

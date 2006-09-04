@@ -78,7 +78,10 @@ except KeyError:
 
 if (uid != 0) and (portage_gid not in os.getgroups()):
 	if not os.environ.has_key("PORTAGE_SCRIPT"):
-		print "*** You are not in the portage group. You may experience cache problems"
-		print "*** due to permissions preventing the creation of the on-disk cache."
-		print "*** Please add this user to the portage group if you wish to use portage."
+		print ("*** You are not in the portage group. "
+			   "You may experience cache problems")
+		print ("*** due to permissions preventing the creation of the "
+			   "on-disk cache.")
+		print ("*** Please add this user to the portage group "
+			   "if you wish to use portage.")
 

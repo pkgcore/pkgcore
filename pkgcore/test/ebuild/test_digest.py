@@ -6,7 +6,8 @@ from pkgcore.ebuild.digest import parse_digest
 from pkgcore.chksum.errors import ParseChksumError
 import tempfile, os
 
-digest_contents = """MD5 98db1465629693fc434d4dc52db93838 Python-2.4.2.tar.bz2 7853169
+digest_contents = \
+"""MD5 98db1465629693fc434d4dc52db93838 Python-2.4.2.tar.bz2 7853169
 RMD160 c511d2b76b5394742d285e71570a2bcd3c1fa871 Python-2.4.2.tar.bz2 7853169
 SHA256 e163b95ee56819c0f3c58ef9278c30b9e49302c2f1a1917680ca894d33929f7e Python-2.4.2.tar.bz2 7853169
 MD5 2fa54dd51b6a8f1c46e5baf741e90f7e python-2.4-patches-1.tar.bz2 7820
@@ -31,13 +32,21 @@ class parse_digest_testcases(unittest.TestCase):
 		d = self.gen_digest()
 		self.assertEqual(sorted(d.keys()), sorted(files))
 		d2 = d["Python-2.4.2.tar.bz2"]
-		self.assertEqual(sorted(d2.keys()), sorted(["md5", "size", "rmd160", "sha256"]))
-		for chf, expectedsum in (("size", long(7853169)), ("md5", "98db1465629693fc434d4dc52db93838"),
+		self.assertEqual(
+			sorted(d2.keys()), sorted(["md5", "size", "rmd160", "sha256"]))
+		for chf, expectedsum in (
+			("size", long(7853169)),
+			("md5", "98db1465629693fc434d4dc52db93838"),
 			("rmd160", "c511d2b76b5394742d285e71570a2bcd3c1fa871"),
 			("sha256", "e163b95ee56819c0f3c58ef9278c30b9e49302c2f1a1917680ca894d33929f7e")):
 			self.assertEqual(d2[chf], expectedsum)
 		self.assertTrue(isinstance(d2["size"], long))
 
 	def test_throw(self):
-		self.assertRaises(ParseChksumError, self.gen_digest, digest_contents+"\nMD5 asdfasdfasdfasdf")
-		self.assertEqual(len(self.gen_digest(digest_contents+"\nMD5 asdfasdf", throw_errors=False)), 2)
+		self.assertRaises(
+			ParseChksumError,
+			self.gen_digest, digest_contents+"\nMD5 asdfasdfasdfasdf")
+		self.assertEqual(
+			2,
+			len(self.gen_digest(
+					digest_contents+"\nMD5 asdfasdf", throw_errors=False)))

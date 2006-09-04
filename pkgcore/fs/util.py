@@ -117,6 +117,7 @@ def normpath(mypath):
 class LockException(Exception):
 	"""Base lock exception class"""
 	def __init__(self, path, reason):
+		Exception.__init__(self, path, reason)
 		self.path, self.reason = path, reason
 
 class NonExistant(LockException):
@@ -124,12 +125,18 @@ class NonExistant(LockException):
 	def __init__(self, path, reason=None):
 		LockException.__init__(self, path, reason)
 	def __str__(self):
-		return "Lock action for '%s' failed due to not being a valid dir/file %s" % (self.path, self.reason)
+		return (
+			"Lock action for '%s' failed due to not being a valid dir/file %s"
+			% (self.path, self.reason))
 
 class GenericFailed(LockException):
-	"""the fallback lock exception class- covers perms, IOError's, and general whackyness"""
+	"""The fallback lock exception class.
+
+	Covers perms, IOError's, and general whackyness.
+	"""
 	def __str__(self):
-		return "Lock action for '%s' failed due to '%s'" % (self.path, self.reason)
+		return "Lock action for '%s' failed due to '%s'" % (
+			self.path, self.reason)
 
 
 # should the fd be left open indefinitely?

@@ -26,7 +26,8 @@ class fetchable(object):
 		self.filename = filename
 
 	def __str__(self):
-		return "('%s', '%s', (%s))" % (self.filename, self.uri, ', '.join(self.chksums))
+		return "('%s', '%s', (%s))" % (
+			self.filename, self.uri, ', '.join(self.chksums))
 
 
 class mirror(object):

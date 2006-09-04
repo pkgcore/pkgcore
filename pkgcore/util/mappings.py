@@ -83,15 +83,12 @@ class LazyValDict(UserDict.DictMixin):
 		return key in self
 
 	def __len__(self):
-		count = 0
-		for x in self:
-			count += 1
-		return count
+		return len(self.keys())
 
 	__iter__ = alias_class_method("iterkeys")
 
 
-class ProtectedDict(UserDict.DictMixin):
+class ProtectedDict(UserDict.DictMixin, object):
 
 	"""
 	Mapping wrapper to store changes to a dict without modifying the initial dict
@@ -177,6 +174,7 @@ class IndeterminantDict(dict):
 	__slots__ = ("__initial", "__pull")
 
 	def __init__(self, pull_func, starter_dict=None):
+		dict.__init__(self)
 		if starter_dict is None:
 			self.__initial = {}
 		else:
@@ -247,6 +245,7 @@ class OrderedDict(dict):
 	"""Dict that preserves insertion ordering which is used for iteration ops"""
 	
 	def __init__(self, pairs=()):
+		dict.__init__(self)
 		self._order = deque()
 		for k, v in pairs:
 			self[k] = v

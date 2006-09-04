@@ -202,7 +202,9 @@ class ConfigManager(object):
 			if is_default:
 				l.append(section_name)
 		if len(l) > 1:
-			raise errors.ConfigurationError("type %s has multiple defined defaults- %s" % (type_name, ", ".join(l)))
+			raise errors.ConfigurationError(
+				"type %s has multiple defined defaults- %s" % (
+					type_name, ", ".join(l)))
 		elif l:
 			return getattr(self, type_name)[l[0]]
 		return None

@@ -8,12 +8,15 @@
 subprocess related functionality
 """
 
-__all__ = ["cleanup_pids", "spawn", "spawn_sandbox", "spawn_bash", "spawn_fakeroot", "spawn_get_output", "find_binary"]
+__all__ = [
+	"cleanup_pids", "spawn", "spawn_sandbox", "spawn_bash", "spawn_fakeroot",
+	"spawn_get_output", "find_binary"]
 
 import os, atexit, signal, sys
 
 from pkgcore.util.mappings import ProtectedDict
-from pkgcore.const import BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH
+from pkgcore.const import (
+	BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH)
 
 try:
 	import resource
@@ -29,7 +32,9 @@ if os.path.isdir("/proc/%i/fd" % os.getpid()):
 			return map(int, os.listdir("/proc/%i/fd" % os.getpid()))
 		except ValueError, v:
 			import warnings
-			warnings.warn("extremely odd, got a value error '%s' while scanning /proc/%i/fd; OS allowing string names in fd?" %
+			warnings.warn(
+				"extremely odd, got a value error '%s' while scanning "
+				"/proc/%i/fd; OS allowing string names in fd?" %
 				(v, os.getpid()))
 			return slow_get_open_fds()
 else:
@@ -312,7 +317,8 @@ def find_binary(binary):
 
 	raise CommandNotFound(binary)
 
-def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=False, **keywords):
+def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None,
+				   returnpid=False, **keywords):
 	"""spawn a process via fakeroot
 
 	refer to the fakeroot manpage for specifics of using fakeroot
@@ -325,7 +331,9 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=Fals
 	if opt_name is None:
 		opt_name = "fakeroot %s" % mycommand
 
-	args = [FAKED_PATH, "--unknown-is-real", "--foreground", "--save-file", save_file]
+	args = [
+		FAKED_PATH,
+		"--unknown-is-real", "--foreground", "--save-file", save_file]
 
 	rd_fd, wr_fd = os.pipe()
 	daemon_fd_pipes = {1:wr_fd, 2:wr_fd}
@@ -363,10 +371,13 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=Fals
 
 	# by now we have our very own daemonized faked.  yay.
 	env["FAKEROOTKEY"] = str(fakekey)
-	env["LD_PRELOAD"] = ":".join([LIBFAKEROOT_PATH] + env.get("LD_PRELOAD", "").split(":"))
+	env["LD_PRELOAD"] = ":".join(
+		[LIBFAKEROOT_PATH] + env.get("LD_PRELOAD", "").split(":"))
 
 	try:
-		ret = spawn(mycommand, opt_name=opt_name, env=env, returnpid=returnpid, **keywords)
+		ret = spawn(
+			mycommand, opt_name=opt_name, env=env, returnpid=returnpid,
+			**keywords)
 		if returnpid:
 			return ret + [fakepid] + pids
 		return ret
@@ -374,7 +385,9 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None, returnpid=Fals
 		if not returnpid:
 			cleanup_pids([fakepid] + pids)
 
-def spawn_get_output(mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=(1,), fd_pipes=None, split_lines=True, **keywords):
+def spawn_get_output(
+	mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=(1,),
+	fd_pipes=None, split_lines=True, **keywords):
 
 	"""call spawn, collecting the output to fd's specified in collect_fds list
 	emulate_gso is a compatability hack to emulate commands.getstatusoutput's return, minus the
@@ -446,15 +459,17 @@ def process_exit_code(retval):
 
 class ExecutionFailure(Exception):
 	def __init__(self, msg):
+		Exception.__init__(self, msg)
 		self.msg = msg
 	def __str__(self):
 		return "Execution Failure: %s" % self.msg
 
 class CommandNotFound(ExecutionFailure):
 	def __init__(self, command):
+		Exception.__init__(
+			self, "CommandNotFound Exception: Couldn't find '%s'" % (command,))
 		self.command = command
-	def __str__(self):
-		return "CommandNotFound Exception: Couldn't find '%s'" % str(self.command)
+
 
 if os.path.exists(FAKED_PATH) and os.path.exists(LIBFAKEROOT_PATH):
 	try:

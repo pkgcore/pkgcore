@@ -9,10 +9,11 @@ Bit empty at the moment
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.repository:multiplex")
 
-# yes this is basically empty.  will fill it out as the base is better identified.
+# yes this is basically empty. will fill it out as the base is better
+# identified.
 
 class domain(object):
-	
+
 	def __getattr__(self, attr):
 		if attr == "all_repos":
 			if len(self.repos) == 1:

@@ -29,15 +29,17 @@ class CheatingIter(object):
 			self._item = stable_unique(item)
 			self._position = idx
 		return self._item
-		
+
 	def __iter__(self):
 		return self._src.iter_dnf_solutions()
 
 class choice_point(object):
 
-	__slots__ = ("__weakref__", "atom", "matches", "matches_idx", "solution_filters",
-		"_prdep_solutions", "_rdep_solutions", "_dep_solutions", "_provides_solutions")
-	
+	__slots__ = (
+		"__weakref__", "atom", "matches", "matches_idx", "solution_filters",
+		"_prdep_solutions", "_rdep_solutions", "_dep_solutions",
+		"_provides_solutions")
+
 	depends_getter = operator.attrgetter("depends")
 	rdepends_getter = operator.attrgetter("rdepends")
 	post_rdepends_getter = operator.attrgetter("post_rdepends")
@@ -65,7 +67,8 @@ class choice_point(object):
 
 		# ref copies; grab this info now before we screw with the stack
 		# why are we doing this still?
-		orig_dep, orig_rdep, orig_prdep = self.depends, self.rdepends, self.post_rdepends
+		orig_dep, orig_rdep, orig_prdep = (
+			self.depends, self.rdepends, self.post_rdepends)
 		orig_provides = self.provides
 
 		# lock step checks of each- it's possible for rdepend to push depend forward
@@ -80,7 +83,8 @@ class choice_point(object):
 						break
 					self.depends[idx] = node
 
-				# optimization.  don't redo rdep if it forced last redo, and matches hasn't changed
+				# optimization. don't redo rdep if it forced last
+				# redo, and matches hasn't changed
 				if rdep_idx != self.matches_idx:
 					for idx, node in enumerate(self.rdepends):
 						node = [x for x in node if not x in self.solution_filters]

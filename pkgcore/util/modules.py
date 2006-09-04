@@ -9,9 +9,9 @@ import sys
 
 class FailedImport(ImportError):
 	def __init__(self, trg, e):
+		ImportError.__init__(
+			self, "Failed importing target '%s': '%s'" % (trg, e))
 		self.trg, self.e = trg, e
-	def __str__(self):
-		return "Failed importing target '%s': '%s'" % (self.trg, self.e)
 
 
 def load_module(name):

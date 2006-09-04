@@ -18,7 +18,8 @@ class tree(prototype.tree):
 		super(tree, self).__init__()
 		for x in trees:
 			if not isinstance(x, prototype.tree):
-				raise errors.InitializationError("%s is not a repository tree derivative" % str(x))
+				raise errors.InitializationError(
+					"%s is not a repository tree derivative" % (x,))
 		self.trees = trees
 
 	def _get_categories(self, *optionalCategory):
@@ -69,8 +70,12 @@ class tree(prototype.tree):
 		return tuple(d)
 
 	def itermatch(self, restrict, **kwds):
-		return (match for repo in self.trees for match in repo.itermatch(restrict, **kwds))
-	itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace("@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
+		return (
+			match
+			for repo in self.trees
+			for match in repo.itermatch(restrict, **kwds))
+	itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
+		"@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
 
 	def __iter__(self):
 		return (pkg for repo in self.trees for pkg in repo)

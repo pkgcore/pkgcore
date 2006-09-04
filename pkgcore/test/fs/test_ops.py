@@ -30,11 +30,13 @@ class TestDefaultEnsurePerms(VerifyMixin, TempDirMixin, unittest.TestCase):
 		o2 = kls(pjoin(self.dir, "blah"), **kwds)
 		self.assertTrue(ops.default_ensure_perms(o2))
 		self.verify(o2, kwds, os.stat(o.location))
-		self.assertRaises(OSError, ops.default_ensure_perms, kls(pjoin(self.dir, "asdf"), **kwds))
+		self.assertRaises(
+			OSError,
+			ops.default_ensure_perms, kls(pjoin(self.dir, "asdf"), **kwds))
 
 	def test_dir(self):
 		self.common_bits(os.mkdir, fs.fsDir)
-	
+
 	def test_file(self):
 		self.common_bits(lambda s:open(s, "w"), fs.fsFile)
 
@@ -66,7 +68,7 @@ class TestCopyFile(VerifyMixin, TempDirMixin, unittest.TestCase):
 		self.assertTrue(ops.default_copyfile(o))
 		self.assertEqual("asdf\n" * 10, open(dest, "r").read())
 		self.verify(o, kwds, os.stat(o.location))
-		
+
 	def test_puke_on_dirs(self):
 		self.assertRaises(
 			TypeError, ops.default_copyfile,
@@ -87,7 +89,7 @@ class ContentsMixin(VerifyMixin, TempDirMixin, unittest.TestCase):
 	entries_rec1 = {
 		"dir":["dir"],
 		"dir/link":["sym", "../dir"]
-		}		
+		}
 
 	def generate_tree(self, base, entries):
 		pjoin = os.path.join
@@ -103,8 +105,9 @@ class ContentsMixin(VerifyMixin, TempDirMixin, unittest.TestCase):
 			elif v[0] == "sym":
 				os.symlink(v[1], k)
 			else:
-				raise Exception("generate_tree doesnt' support type %r yet: k %r" % (v, k))
-	
+				raise Exception(
+					"generate_tree doesnt' support type %r yet: k %r" % (v, k))
+
 	def gen_dir(self, name):
 		d = os.path.join(self.dir, name)
 		if os.path.exists(d):
@@ -124,7 +127,7 @@ class Test_merge_contents(ContentsMixin):
 		self.assertEqual(livefs.scan(src, offset=src),
 			livefs.scan(dest, offset=dest))
 		return src, dest, cset
-	
+
 	def test_callback(self):
 		for attr in dir(self):
 			if not attr.startswith('entries') or 'fail' in attr:
@@ -136,7 +139,7 @@ class Test_merge_contents(ContentsMixin):
 			s = set(ops.offset_rewriter(dest, cset))
 			ops.merge_contents(cset, offset=dest, callback=s.remove)
 			self.assertFalse(s, s)
-		
+
 	def test_empty_overwrite(self):
 		self.generic_merge_bits(self.entries_norm1)
 
@@ -149,7 +152,7 @@ class Test_merge_contents(ContentsMixin):
 
 
 class Test_unmerge_contents(ContentsMixin):
-	
+
 	def generic_unmerge_bits(self, entries, img="img"):
 		img = self.gen_dir(img)
 		self.generate_tree(img, entries)
@@ -167,10 +170,11 @@ class Test_unmerge_contents(ContentsMixin):
 			s = set(ops.offset_rewriter(img, cset))
 			ops.unmerge_contents(cset, offset=img, callback=s.remove)
 			self.assertFalse(s, s)
-		
+
 	def test_empty_removal(self):
 		img, cset = self.generic_unmerge_bits(self.entries_norm1)
-		self.assertTrue(ops.unmerge_contents(cset, offset=os.path.join(self.dir, "dest")))
+		self.assertTrue(
+			ops.unmerge_contents(cset, offset=os.path.join(self.dir, "dest")))
 
 	def test_exact_removal(self):
 		img, cset = self.generic_unmerge_bits(self.entries_norm1)

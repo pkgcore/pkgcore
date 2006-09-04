@@ -29,11 +29,13 @@ def prefer_highest_ver(resolver, dbs, atom):
 	return resolver.prefer_highest_version_strategy(resolver, dbs, atom)
 
 
-def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False, force_replacement=False, force_vdb_virtuals=True, resolver_cls=plan.merge_plan, **kwds):
+def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False,
+					 force_replacement=False, force_vdb_virtuals=True,
+					 resolver_cls=plan.merge_plan, **kwds):
 
 	"""
 	generate and configure a resolver for upgrading all nodes encountered in processing
-	
+
 	@param vdb: list of L{pkgcore.repository.prototype.tree} instances that represents the livefs
 	@param dbs: list of L{pkgcore.repository.prototype.tree} instances representing sources of pkgs
 	@param verify_vdb: should we stop resolving once we hit the vdb, or do full resolution?
@@ -85,7 +87,7 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, for
 		dbs = map(plan.nodeps_repo, dbs)
 	elif not verify_vdb:
 		vdb = map(plan.nodeps_repo, vdb)
-	
+
 	if force_replacement:
 		resolver_cls = generate_replace_resolver_kls(resolver_cls)
 	return resolver_cls(vdb + dbs, plan.pkg_sort_highest, plan.merge_plan.prefer_reuse_strategy, **kwds)
@@ -93,8 +95,10 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, for
 _vdb_restrict = packages.OrRestriction(
 	packages.PackageRestriction("repo.livefs", values.EqualityMatch(False)),
 	packages.AndRestriction(
-		packages.PackageRestriction("category", values.StrExactMatch("virtual")),
-		packages.PackageRestriction("package_is_real", values.EqualityMatch(False))
+		packages.PackageRestriction(
+			"category", values.StrExactMatch("virtual")),
+		packages.PackageRestriction(
+			"package_is_real", values.EqualityMatch(False))
 		)
 	)
 
@@ -119,8 +123,10 @@ def generate_replace_resolver_kls(resolver_kls):
 	class replace_resolver(resolver_kls):
 		overriding_resolver_kls = resolver_kls
 		_vdb_restriction = _vdb_restrict
-		
+
 		def add_atom(self, atom, **kwds):
-			return self.overriding_resolver_kls.add_atom(self, KeyedAndRestriction(self._vdb_restriction, atom, key=atom.key), **kwds)
-		
+			return self.overriding_resolver_kls.add_atom(
+				self, KeyedAndRestriction(
+					self._vdb_restriction, atom, key=atom.key), **kwds)
+
 	return replace_resolver

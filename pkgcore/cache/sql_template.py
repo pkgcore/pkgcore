@@ -23,15 +23,21 @@ class SQLDatabase(template.database):
 	"""
 
 	SCHEMA_PACKAGE_NAME	= "package_cache"
-	SCHEMA_PACKAGE_CREATE 	= "CREATE TABLE %s (\
-		pkgid INTEGER PRIMARY KEY, label VARCHAR(255), cpv VARCHAR(255), UNIQUE(label, cpv))" % SCHEMA_PACKAGE_NAME
+	SCHEMA_PACKAGE_CREATE 	= (
+		"CREATE TABLE %s ( "
+		"pkgid INTEGER PRIMARY KEY, label VARCHAR(255), cpv VARCHAR(255), "
+		"UNIQUE(label, cpv))" % SCHEMA_PACKAGE_NAME)
 	SCHEMA_PACKAGE_DROP	= "DROP TABLE %s" % SCHEMA_PACKAGE_NAME
 
 	SCHEMA_VALUES_NAME	= "values_cache"
-	SCHEMA_VALUES_CREATE	= "CREATE TABLE %s ( pkgid integer references %s (pkgid) on delete cascade, \
-		key varchar(255), value text, UNIQUE(pkgid, key))" % (SCHEMA_VALUES_NAME, SCHEMA_PACKAGE_NAME)
+	SCHEMA_VALUES_CREATE	= (
+		"CREATE TABLE %s ( "
+		"pkgid integer references %s (pkgid) on delete cascade, "
+		"key varchar(255), value text, UNIQUE(pkgid, key))" % (
+			SCHEMA_VALUES_NAME, SCHEMA_PACKAGE_NAME))
 	SCHEMA_VALUES_DROP	= "DROP TABLE %s" % SCHEMA_VALUES_NAME
-	SCHEMA_INSERT_CPV_INTO_PACKAGE	= "INSERT INTO %s (label, cpv) VALUES(%%s, %%s)" % SCHEMA_PACKAGE_NAME
+	SCHEMA_INSERT_CPV_INTO_PACKAGE	= (
+		"INSERT INTO %s (label, cpv) VALUES(%%s, %%s)" % SCHEMA_PACKAGE_NAME)
 
 	_BaseError = ()
 	_dbClass = None
@@ -70,8 +76,8 @@ class SQLDatabase(template.database):
 		self._dbconnect(config)
 		if not self._table_exists(self.SCHEMA_PACKAGE_NAME):
 			if self.readonly:
-				raise cache_errors.ReadOnlyRestriction("table %s doesn't exist" % \
-					self.SCHEMA_PACKAGE_NAME)
+				raise cache_errors.ReadOnlyRestriction(
+					"table %s doesn't exist" % self.SCHEMA_PACKAGE_NAME)
 			try:
 				self.con.execute(self.SCHEMA_PACKAGE_CREATE)
 			except self._BaseError, e:
@@ -79,8 +85,8 @@ class SQLDatabase(template.database):
 
 		if not self._table_exists(self.SCHEMA_VALUES_NAME):
 			if self.readonly:
-				raise cache_errors.ReadOnlyRestriction("table %s doesn't exist" % \
-					self.SCHEMA_VALUES_NAME)
+				raise cache_errors.ReadOnlyRestriction(
+					"table %s doesn't exist" % self.SCHEMA_VALUES_NAME)
 			try:
 				self.con.execute(self.SCHEMA_VALUES_CREATE)
 			except self._BaseError, e:
@@ -97,9 +103,11 @@ class SQLDatabase(template.database):
 
 	def _getitem(self, cpv):
 		try:
-			self.con.execute("SELECT key, value FROM %s NATURAL JOIN %s "
-			"WHERE label=%s AND cpv=%s" % (self.SCHEMA_PACKAGE_NAME, self.SCHEMA_VALUES_NAME,
-			self.label, self._sfilter(cpv)))
+			self.con.execute(
+				"SELECT key, value FROM %s NATURAL JOIN %s "
+				"WHERE label=%s AND cpv=%s" % (
+					self.SCHEMA_PACKAGE_NAME, self.SCHEMA_VALUES_NAME,
+					self.label, self._sfilter(cpv)))
 		except self._BaseError, e:
 			raise cache_errors.CacheCorruption(self, cpv, e)
 
@@ -131,7 +139,7 @@ class SQLDatabase(template.database):
 		except Exception:
 			if not self.autocommits:
 				self.db.rollback()
-				# yes, this can roll back a lot more then just the delete.  deal.
+				# yes, this can roll back a lot more then just the delete. deal.
 			raise
 
 	def __del__(self):
@@ -156,8 +164,10 @@ class SQLDatabase(template.database):
 
 			if db_values:
 				try:
-					self.con.executemany("INSERT INTO %s (pkgid, key, value) VALUES(\"%s\", %%(key)s, %%(value)s)" % \
-					(self.SCHEMA_VALUES_NAME, str(pkgid)), db_values)
+					self.con.executemany(
+						"INSERT INTO %s (pkgid, key, value) "
+						"VALUES(\"%s\", %%(key)s, %%(value)s)" %
+						(self.SCHEMA_VALUES_NAME, str(pkgid)), db_values)
 				except self._BaseError, e:
 					raise cache_errors.CacheCorruption(cpv, e)
 			if self.autocommits:
@@ -181,7 +191,8 @@ class SQLDatabase(template.database):
 
 		cpv = self._sfilter(cpv)
 		if self._supports_replace:
-			query_str = self.SCHEMA_INSERT_CPV_INTO_PACKAGE.replace("INSERT", "REPLACE", 1)
+			query_str = self.SCHEMA_INSERT_CPV_INTO_PACKAGE.replace(
+				"INSERT", "REPLACE", 1)
 		else:
 			# just delete it.
 			try:
@@ -200,7 +211,8 @@ class SQLDatabase(template.database):
 			(self.SCHEMA_PACKAGE_NAME, self.label, cpv))
 
 		if self.con.rowcount != 1:
-			raise cache_error.CacheCorruption(cpv, "Tried to insert the cpv, but found "
+			raise cache_error.CacheCorruption(
+				cpv, "Tried to insert the cpv, but found "
 				" %i matches upon the following select!" % len(rows))
 		return self.con.fetchone()[0]
 
@@ -236,9 +248,10 @@ class SQLDatabase(template.database):
 
 	def iteritems(self):
 		try:
-			self.con.execute("SELECT cpv, key, value FROM %s NATURAL JOIN %s "
-			"WHERE label=%s" % (self.SCHEMA_PACKAGE_NAME, self.SCHEMA_VALUES_NAME,
-			self.label))
+			self.con.execute(
+				"SELECT cpv, key, value FROM %s NATURAL JOIN %s WHERE label=%s"
+				% (self.SCHEMA_PACKAGE_NAME, self.SCHEMA_VALUES_NAME,
+				   self.label))
 		except self._BaseError, e:
 			raise cache_errors.CacheCorruption(self, cpv, e)
 
@@ -249,7 +262,8 @@ class SQLDatabase(template.database):
 				if oldcpv is not None:
 					d = dict(l)
 					if "_eclasses_" in d:
-						d["_eclasses_"] = self.reconstruct_eclasses(oldcpv, d["_eclasses_"])
+						d["_eclasses_"] = self.reconstruct_eclasses(
+							oldcpv, d["_eclasses_"])
 					yield cpv, d
 				l.clear()
 				oldcpv = x
@@ -258,7 +272,8 @@ class SQLDatabase(template.database):
 		if oldcpv is not None:
 			d = dict(l)
 			if "_eclasses_" in d:
-				d["_eclasses_"] = self.reconstruct_eclasses(oldcpv, d["_eclasses_"])
+				d["_eclasses_"] = self.reconstruct_eclasses(
+					oldcpv, d["_eclasses_"])
 			yield cpv, d
 
 	def commit(self):
@@ -268,20 +283,26 @@ class SQLDatabase(template.database):
 		query_list = []
 		for k, v in match_dict.items():
 			if k not in self._known_keys:
-				raise cache_errors.InvalidRestriction(k, v, "key isn't known to this cache instance")
+				raise cache_errors.InvalidRestriction(
+					k, v, "key isn't known to this cache instance")
 			v = v.replace("%","\\%")
 			v = v.replace(".*","%")
-			query_list.append("(key=%s AND value LIKE %s)" % (self._sfilter(k), self._sfilter(v)))
+			query_list.append(
+				"(key=%s AND value LIKE %s)" % (
+					self._sfilter(k), self._sfilter(v)))
 
 		if query_list:
 			query = " AND "+" AND ".join(query_list)
 		else:
 			query = ''
 
-		print "query = SELECT cpv from package_cache natural join values_cache WHERE label=%s %s" % (self.label, query)
+		print (
+			"query = SELECT cpv from package_cache natural join values_cache "
+			"WHERE label=%s %s" % (self.label, query))
 		try:
-			self.con.execute("SELECT cpv from package_cache natural join values_cache WHERE label=%s %s" % \
-				(self.label, query))
+			self.con.execute(
+				"SELECT cpv from package_cache natural join values_cache "
+				"WHERE label=%s %s" % (self.label, query))
 		except self._BaseError, e:
 			raise cache_errors.GeneralCacheCorruption(e)
 

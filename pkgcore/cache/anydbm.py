@@ -17,7 +17,7 @@ from pkgcore.cache import fs_template, cache_errors
 class database(fs_template.FsBased):
 
 	"""anydbm based cache backend, autocommiting"""
-	
+
 	autocommits = True
 	cleanse_keys = True
 
@@ -29,7 +29,9 @@ class database(fs_template.FsBased):
 		if not default_db.startswith("."):
 			default_db = '.' + default_db
 
-		self._db_path = os.path.join(self.location, fs_template.gen_label(self.location, self.label)+default_db)
+		self._db_path = os.path.join(
+			self.location,
+			fs_template.gen_label(self.location, self.label)+default_db)
 		self._db = None
 
 		try:
@@ -46,11 +48,12 @@ class database(fs_template.FsBased):
 			# try again if failed
 			try:
 				if self._db is None:
-					self._db = anydbm_module.open(self._db_path, "c", self._perms)
+					self._db = anydbm_module.open(
+						self._db_path, "c", self._perms)
 			except anydbm_module.error, e:
 				raise cache_errors.InitializationError(self.__class__, e)
 	__init__.__doc__ = fs_template.FsBased.__init__.__doc__
-	
+
 	def iteritems(self):
 		return self._db.iteritems()
 

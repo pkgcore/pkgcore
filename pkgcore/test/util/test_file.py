@@ -8,8 +8,9 @@ from StringIO import StringIO
 from twisted.trial import unittest
 
 # ick, a module shadowing a builtin. import its contents instead.
-from pkgcore.util.file import iter_read_bash, read_bash, read_dict, AtomicWriteFile
-from pkgcore.util.file import read_bash_dict, ParseError
+from pkgcore.util.file import (
+	iter_read_bash, read_bash, read_dict, AtomicWriteFile, read_bash_dict,
+	ParseError)
 from pkgcore.test.fs.test_util import TempDirMixin
 
 

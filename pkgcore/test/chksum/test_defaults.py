@@ -47,7 +47,8 @@ for chf_type, expectedsum in {
 	"size":long(len(data)*multi),
 	"sha1":"63cd8cce8a1773dffb400ee184be3ec7d89791f5",
 	"md5":"d17ea153bc57ba9e07298c5378664369",
-	"sha256":"68ae37b45e4a4a5df252db33c0cbf79baf5916b5ff6fc15e8159163b6dbe3bae"}.iteritems():
+	"sha256":"68ae37b45e4a4a5df252db33c0cbf79baf5916b5ff6fc15e8159163b6dbe3bae",
+	}.iteritems():
 	globals()[chf_type + 'ChksumTest'] = type(
 		chf_type + 'ChksumTest',
 		(ChksumTest, unittest.TestCase),

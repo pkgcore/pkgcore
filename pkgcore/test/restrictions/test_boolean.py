@@ -55,11 +55,12 @@ class BaseTest(unittest.TestCase):
 class AndRestrictionTest(unittest.TestCase):
 
 	def test_match(self):
-		self.failUnless(boolean.AndRestriction(true, true, node_type='foo').match(None))
-		self.failIf(
-			boolean.AndRestriction(false, true, true, node_type='foo').match(None))
-		self.failIf(
-			boolean.AndRestriction(true, false, true, node_type='foo').match(None))
+		self.failUnless(boolean.AndRestriction(
+				true, true, node_type='foo').match(None))
+		self.failIf(boolean.AndRestriction(
+				false, true, true, node_type='foo').match(None))
+		self.failIf(boolean.AndRestriction(
+				true, false, true, node_type='foo').match(None))
 
 	def test_negate_match(self):
 		self.failUnless(
@@ -76,18 +77,31 @@ class AndRestrictionTest(unittest.TestCase):
 				node_type='foo', negate=True).match(None))
 
 	def test_dnf_solutions(self):
-		self.assertEquals(boolean.AndRestriction(true, true).dnf_solutions(), [[true, true]])
-		self.assertEquals(boolean.AndRestriction(boolean.AndRestriction(true, true), true).dnf_solutions(),
+		self.assertEquals(
+			boolean.AndRestriction(true, true).dnf_solutions(), [[true, true]])
+		self.assertEquals(
+			boolean.AndRestriction(
+				boolean.AndRestriction(true, true), true).dnf_solutions(),
 			[[true, true, true]])
-		self.assertEquals(map(set, boolean.AndRestriction(true, true, boolean.OrRestriction(false, true)).dnf_solutions()),
+		self.assertEquals(
+			map(set, boolean.AndRestriction(
+					true, true,
+					boolean.OrRestriction(false, true)).dnf_solutions()),
 			[set([true, true, false]), set([true, true, true])])
 		self.assertEquals(boolean.AndRestriction().dnf_solutions(), [[]])
 
 	def test_cnf_solutions(self):
-		self.assertEquals(boolean.AndRestriction(true, true).cnf_solutions(), [[true], [true]])
-		self.assertEquals(boolean.AndRestriction(boolean.AndRestriction(true, true), true).cnf_solutions(),
+		self.assertEquals(
+			boolean.AndRestriction(true, true).cnf_solutions(),
+			[[true], [true]])
+		self.assertEquals(
+			boolean.AndRestriction(
+				boolean.AndRestriction(true, true), true).cnf_solutions(),
 			[[true], [true], [true]])
-		self.assertEquals(sorted(boolean.AndRestriction(true, true, boolean.OrRestriction(false, true)).cnf_solutions()),
+		self.assertEquals(
+			sorted(boolean.AndRestriction(
+					true, true,
+					boolean.OrRestriction(false, true)).cnf_solutions()),
 			sorted([[true], [true], [false, true]]))
 		self.assertEquals(boolean.AndRestriction().cnf_solutions(), [])
 
@@ -95,38 +109,57 @@ class AndRestrictionTest(unittest.TestCase):
 class OrRestrictionTest(unittest.TestCase):
 
 	def test_match(self):
-		self.failUnless(boolean.OrRestriction(true, true, node_type='foo').match(None))
-		self.failUnless(
-			boolean.OrRestriction(false, true, false, node_type='foo').match(None))
-		self.failUnless(
-			boolean.OrRestriction(true, false, false, node_type='foo').match(None))
-		self.failUnless(
-			boolean.OrRestriction(false, false, true, node_type='foo').match(None))
-		self.failIf(
-			boolean.OrRestriction(false, false, node_type='foo').match(None))
+		self.failUnless(boolean.OrRestriction(
+				true, true, node_type='foo').match(None))
+		self.failUnless(boolean.OrRestriction(
+				false, true, false, node_type='foo').match(None))
+		self.failUnless(boolean.OrRestriction(
+				true, false, false, node_type='foo').match(None))
+		self.failUnless(boolean.OrRestriction(
+				false, false, true, node_type='foo').match(None))
+		self.failIf(boolean.OrRestriction(
+				false, false, node_type='foo').match(None))
 
 	def test_negate_match(self):
 		for x in ((true, false), (false, true), (true, true)):
-			self.failIf(boolean.OrRestriction(node_type='foo', negate=True, *x).match(None))
-		self.failUnless(
-			boolean.OrRestriction(false, false, node_type='foo', negate=True).match(None))
+			self.failIf(boolean.OrRestriction(
+					node_type='foo', negate=True, *x).match(None))
+		self.failUnless(boolean.OrRestriction(
+				false, false, node_type='foo', negate=True).match(None))
 
 	def test_dnf_solutions(self):
-		self.assertEquals(boolean.OrRestriction(true, true).dnf_solutions(), [[true], [true]])
-		self.assertEquals(map(set, boolean.OrRestriction(true, true, boolean.AndRestriction(false, true)).dnf_solutions()),
+		self.assertEquals(
+			boolean.OrRestriction(true, true).dnf_solutions(),
+			[[true], [true]])
+		self.assertEquals(
+			map(set, boolean.OrRestriction(
+					true, true,
+					boolean.AndRestriction(false, true)).dnf_solutions()),
 			map(set, [[true], [true], [false, true]]))
-		self.assertEquals(boolean.OrRestriction(boolean.OrRestriction(true, false), true).dnf_solutions(),
+		self.assertEquals(
+			boolean.OrRestriction(
+				boolean.OrRestriction(true, false), true).dnf_solutions(),
 			[[true], [false], [true]])
 		self.assertEquals(boolean.OrRestriction().dnf_solutions(), [[]])
 
 	def test_cnf_solutions(self):
-		self.assertEquals(boolean.OrRestriction(true, true).cnf_solutions(), [[true, true]])
-		self.assertEquals([set(x) for x in boolean.OrRestriction(true, true, boolean.AndRestriction(false, true)).cnf_solutions()],
+		self.assertEquals(
+			boolean.OrRestriction(true, true).cnf_solutions(), [[true, true]])
+		self.assertEquals(
+			[set(x) for x in boolean.OrRestriction(
+					true, true,
+					boolean.AndRestriction(false, true)).cnf_solutions()],
 			[set(x) for x in [[true, false], [true, true]]])
 
-		self.assertEquals([set(x) for x in boolean.OrRestriction(boolean.OrRestriction(true, true, boolean.AndRestriction(false, true))).cnf_solutions()],
+		self.assertEquals(
+			[set(x) for x in boolean.OrRestriction(boolean.OrRestriction(
+						true, true,
+						boolean.AndRestriction(false, true))).cnf_solutions()],
 			[set(x) for x in [[true, false], [true, true]]])
 
-		self.assertEquals(set(boolean.OrRestriction(boolean.OrRestriction(true, false), true).cnf_solutions()[0]),
+		self.assertEquals(
+			set(boolean.OrRestriction(
+					boolean.OrRestriction(true, false),
+					true).cnf_solutions()[0]),
 			set([true, false, true]))
 		self.assertEquals(boolean.OrRestriction().cnf_solutions(), [])

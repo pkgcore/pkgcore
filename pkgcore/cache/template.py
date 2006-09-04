@@ -60,7 +60,10 @@ class database(object):
 
 	def __setitem__(self, cpv, values):
 		"""set a cpv to values
-		This shouldn't be overriden in derived classes since it handles the readonly checks"""
+
+		This shouldn't be overriden in derived classes since it
+		handles the readonly checks.
+		"""
 		if self.readonly:
 			raise cache_errors.ReadOnlyRestriction()
 		if self.cleanse_keys:
@@ -83,13 +86,19 @@ class database(object):
 				self.updates = 0
 
 	def _setitem(self, name, values):
-		"""__setitem__ calls this after readonly checks.  override it in derived classes
-		note _eclassees_ key *must* be handled"""
+		"""__setitem__ calls this after readonly checks.
+
+		override it in derived classes.
+		note _eclassees_ key *must* be handled.
+		"""
 		raise NotImplementedError
 
 	def __delitem__(self, cpv):
 		"""delete a key from the cache.
-		This shouldn't be overriden in derived classes since it handles the readonly checks"""
+
+		This shouldn't be overriden in derived classes since it
+		handles the readonly checks.
+		"""
 		if self.readonly:
 			raise cache_errors.ReadOnlyRestriction()
 		if not self.autocommits:
@@ -100,7 +109,10 @@ class database(object):
 			self.updates = 0
 
 	def _delitem(self, cpv):
-		"""__delitem__ calls this after readonly checks.  override it in derived classes"""
+		"""__delitem__ calls this after readonly checks.
+
+		override it in derived classes.
+		"""
 		raise NotImplementedError
 
 	def __contains__(self, cpv):
@@ -166,7 +178,9 @@ class database(object):
 	@staticmethod
 	def deconstruct_eclasses(eclass_dict):
 		"""takes a dict, returns a string representing said dict"""
-		return "\t".join(["%s\t%s\t%s" % (k, v[0], str(v[1])) for k, v in eclass_dict.items()])
+		return "\t".join([
+				"%s\t%s\t%s" % (k, v[0], str(v[1]))
+				for k, v in eclass_dict.items()])
 
 	@staticmethod
 	def reconstruct_eclasses(cpv, eclass_string):
@@ -176,7 +190,8 @@ class database(object):
 			# occasionally this occurs in the fs backends.  they suck.
 			return {}
 		if len(eclasses) % 3 != 0:
-			raise cache_errors.CacheCorruption(cpv, "_eclasses_ was of invalid len %i" % len(eclasses))
+			raise cache_errors.CacheCorruption(
+				cpv, "_eclasses_ was of invalid len %i" % len(eclasses))
 		d = {}
 		for x in xrange(0, len(eclasses), 3):
 			d[eclasses[x]] = (eclasses[x + 1], long(eclasses[x + 2]))

@@ -19,7 +19,7 @@ class FsBased(template.database):
 	def __init__(self, *args, **config):
 		"""
 		throws InitializationError if needs args aren't specified
-		
+
 		@keyword gid: defaults to L{pkgcore.os_data.portage_gid}, gid to force all entries to
 		@keyword perms: defaults to 0665, mode to force all entries to"""
 
@@ -33,10 +33,14 @@ class FsBased(template.database):
 
 		if self.label.startswith(os.path.sep):
 			# normpath.
-			self.label = os.path.sep + os.path.normpath(self.label).lstrip(os.path.sep)
-	__init__.__doc__ = "\n".join(x.lstrip() for x in __init__.__doc__.split("\n") + 
-		[y.lstrip().replace("@param", "@keyword") for y in template.database.__init__.__doc__.split("\n") if "@param" in y])
-	
+			self.label = os.path.sep + os.path.normpath(
+				self.label).lstrip(os.path.sep)
+	__init__.__doc__ = "\n".join(
+		x.lstrip() for x in __init__.__doc__.split("\n") + [
+			y.lstrip().replace("@param", "@keyword")
+			for y in template.database.__init__.__doc__.split("\n")
+			if "@param" in y])
+
 	def _ensure_access(self, path, mtime=-1):
 		"""returns true or false if it's able to ensure that path is properly chmod'd and chowned.
 		if mtime is specified, attempts to ensure that's correct also"""

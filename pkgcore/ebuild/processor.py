@@ -53,10 +53,10 @@ pkgcore.spawn.atexit_register(shutdown_all_processors)
 def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False, save_file=None):
 	"""
 	request an ebuild_processor instance from the pool, creating a new one if needed
-	
+
 	Note that fakeroot processes are B{never} reused due to the fact the fakeroot env becomes localized to the pkg
 	it's handling.
-	
+
 	@return: L{EbuildProcessor}
 	@param userpriv: should the processor be deprived to L{pkgcore.os_data.portage_gid} and L{pkgcore.os_data.portage_uid}?
 	@param sandbox: should the processor be sandboxed?
@@ -85,8 +85,8 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False, save_
 
 def release_ebuild_processor(ebp):
 	"""
-	the inverse of request_ebuild_processor.  
-	
+	the inverse of request_ebuild_processor.
+
 	Any processor requested via request_ebuild_processor B{must} be released via this function once it's no longer in use.
 	This includes fakerooted processors.
 
@@ -94,7 +94,7 @@ def release_ebuild_processor(ebp):
 	@return: boolean indicating release results- if the processor isn't known as active, False is returned.
 	If a processor isn't known as active, this means either calling error or an internal error
 	"""
-	
+
 	global inactive_ebp_list, active_ebp_list
 	try:
 		active_ebp_list.remove(ebp)
@@ -145,7 +145,9 @@ class EbuildProcessor:
 
 		if userpriv:
 			self.__userpriv = True
-			spawn_opts.update({"uid":portage_uid, "gid":portage_gid, "groups":[portage_gid], "umask":002})
+			spawn_opts.update({
+					"uid":portage_uid, "gid":portage_gid,
+					"groups":[portage_gid], "umask":002})
 		else:
 			if pkgcore.spawn.userpriv_capable:
 				spawn_opts.update({"gid":portage_gid, "groups":[0, portage_gid]})
@@ -157,8 +159,8 @@ class EbuildProcessor:
 		self.__sandbox = False
 		self.__fakeroot = False
 
-		# since it's questionable which spawn method we'll use (if sandbox or fakeroot fex),
-		# we ensure the bashrc is invalid.
+		# since it's questionable which spawn method we'll use (if
+		# sandbox or fakeroot fex), we ensure the bashrc is invalid.
 		env = dict((x, "/etc/portage/spork/not/valid/ha/ha") for x in ("BASHRC", "BASH_ENV"))
 		args = []
 		if sandbox:
@@ -176,9 +178,11 @@ class EbuildProcessor:
 		else:
 			spawn_func = pkgcore.spawn.spawn
 
-		# little trick.  we force the pipes to be high up fd wise so nobody stupidly hits 'em.
+		# little trick. we force the pipes to be high up fd wise so
+		# nobody stupidly hits 'em.
 		max_fd = min(pkgcore.spawn.max_fd_limit, 1024)
-		env.update({"EBD_READ_FD": str(max_fd -2), "EBD_WRITE_FD": str(max_fd -1)})
+		env.update({
+				"EBD_READ_FD": str(max_fd -2), "EBD_WRITE_FD": str(max_fd -1)})
 		self.pid = spawn_func("/bin/bash %s daemonize" % self.ebd, \
 			fd_pipes={0:0, 1:1, 2:2, max_fd-2:cread, max_fd-1:dwrite}, \
 			returnpid=True, env=env, *args, **spawn_opts)[0]
@@ -192,7 +196,9 @@ class EbuildProcessor:
 		self.write("dude?")
 		if not self.expect("dude!"):
 			print "error in server coms, bailing."
-			raise Exception("expected 'dude!' response from ebd, which wasn't received. likely a bug")
+			raise Exception(
+				"expected 'dude!' response from ebd, which wasn't received. "
+				"likely a bug")
 		self.write(EBD_ENV_PATH)
 		if self.__sandbox:
 			self.write("sandbox_log?")
@@ -278,7 +284,7 @@ class EbuildProcessor:
 	def sandbox_summary(self, move_log=False):
 		"""
 		if the instance is sandboxed, print the sandbox access summary
-		
+
 		@param move_log: location to move the sandbox log to if a failure occured
 		"""
 		if not os.path.exists(self.__sandbox_log):
@@ -473,13 +479,15 @@ class EbuildProcessor:
 		"""
 		if line is None:
 			self.write("failed")
-			raise UnhandledCommand("inherit requires an eclass specified, none specified")
+			raise UnhandledCommand(
+				"inherit requires an eclass specified, none specified")
 
 		line = line.strip()
 		eclass = ecache.get_eclass(line)
 		if eclass is None:
 			self.write("failed")
-			raise UnhandledCommand("inherit requires a known eclass, %s cannot be found" % line)
+			raise UnhandledCommand(
+				"inherit requires a known eclass, %s cannot be found" % line)
 
 		if eclass.get_path is not None:
 			value = eclass.get_path()
@@ -491,7 +499,8 @@ class EbuildProcessor:
 			self.write("transfer")
 			self.write(value)
 
-	# this basically handles all hijacks from the daemon, whether confcache or portageq.
+	# this basically handles all hijacks from the daemon, whether
+	# confcache or portageq.
 	def generic_handler(self, additional_commands=None):
 		"""
 		internal event handler that responds to the running ebuild processor's requests
@@ -504,8 +513,10 @@ class EbuildProcessor:
 		@raise UnhandledCommand: thrown when an unknown command is encountered.
 		"""
 
-		# note that self is passed in.  so... we just pass in the unbound instance.  Specifically, via digging through __class__
-		# if you don't do it, sandbox_summary (fex) cannot be overriden, this func will just use this classes version.
+		# note that self is passed in. so... we just pass in the
+		# unbound instance. Specifically, via digging through
+		# __class__ if you don't do it, sandbox_summary (fex) cannot
+		# be overriden, this func will just use this classes version.
 		# so dig through self.__class__ for it. :P
 
 		handlers = {"request_sandbox_summary":self.__class__.sandbox_summary}
@@ -514,7 +525,8 @@ class EbuildProcessor:
 			handlers[x] = f
 		del f
 
-		handlers["phases"] = pre_curry(chuck_StoppingCommand, lambda f: f.lower().strip() == "succeeded")
+		handlers["phases"] = pre_curry(
+			chuck_StoppingCommand, lambda f: f.lower().strip() == "succeeded")
 
 		if additional_commands is not None:
 			for x in additional_commands:

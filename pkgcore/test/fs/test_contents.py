@@ -13,13 +13,16 @@ class TestContentsSet(unittest.TestCase):
 
 	def __init__(self, *a, **kw):
 		unittest.TestCase.__init__(self, *a, **kw)
-		self.files = [fs.fsFile(x, strict=False) for x in ["/etc/blah", "/etc/foo",
-			"/etc/dar", "/tmp/dar", "/tmp/blah/foo/long/ass/file/name/but/not/that/bad/really"]]
-		self.dirs = [fs.fsDir(x, strict=False) for x in ["/tmp", "/blah", "/tmp/dar", "/usr/", "/usr/bin"]]
+		self.files = [fs.fsFile(x, strict=False) for x in [
+				"/etc/blah", "/etc/foo", "/etc/dar", "/tmp/dar",
+				"/tmp/blah/foo/long/ass/file/name/but/not/that/bad/really"]]
+		self.dirs = [fs.fsDir(x, strict=False) for x in [
+				"/tmp", "/blah", "/tmp/dar", "/usr/", "/usr/bin"]]
 		self.links = [fs.fsLink(x, os.path.dirname(x), strict=False) for x in
 			["/tmp/foo", "/usr/X11R6/lib", "/nagga/noo"]]
 		self.devs = [fs.fsDev(x, strict=False) for x in
-			[os.path.join("dev", y) for y in ("sda1", "hda", "hda2", "disks/ide1")]]
+			[os.path.join("dev", y) for y in (
+					"sda1", "hda", "hda2", "disks/ide1")]]
 		self.fifos = [fs.fsFifo(x, strict=False) for x in
 			[os.path.join("tmp", y) for y in ("dar", "boo", "bah")]]
 		self.all = self.dirs + self.links + self.devs + self.fifos
@@ -29,7 +32,8 @@ class TestContentsSet(unittest.TestCase):
 		self.assertRaises(TypeError, contents.contentsSet, self.all + [1])
 		contents.contentsSet(self.all)
 		contents.contentsSet(self.all, mutable=True)
-		# test to ensure no one screwed up the optional initials making it mandatory
+		# test to ensure no one screwed up the optional initials
+		# making it mandatory
 		self.assertEquals(len(contents.contentsSet()), 0)
 
 	def test_add(self):
@@ -37,13 +41,19 @@ class TestContentsSet(unittest.TestCase):
 		map(cs.add, self.links)
 		for x in self.links:
 			self.assertIn(x, cs)
-		self.assertEqual(len(cs), len(set(x.location for x in self.files + self.dirs + self.links)))
-		self.assertRaises(AttributeError, lambda:contents.contentsSet().add(self.devs[0]))
+		self.assertEqual(
+			len(cs),
+			len(set(x.location for x in self.files + self.dirs + self.links)))
+		self.assertRaises(
+			AttributeError,
+			lambda:contents.contentsSet().add(self.devs[0]))
 		self.assertRaises(TypeError, cs.add, 1)
 		self.assertRaises(TypeError, cs.add, self.fifos)
 
 	def test_remove(self):
-		self.assertRaises(AttributeError, contents.contentsSet().remove, self.devs[0])
+		self.assertRaises(
+			AttributeError,
+			contents.contentsSet().remove, self.devs[0])
 		self.assertRaises(AttributeError, contents.contentsSet().remove, 1)
 		cs = contents.contentsSet(self.all, mutable=True)
 		map(cs.remove, self.all)
@@ -51,11 +61,14 @@ class TestContentsSet(unittest.TestCase):
 		map(cs.remove, (x.location for x in self.all))
 		self.assertEqual(len(cs), 0)
 		self.assertRaises(KeyError, cs.remove, self.all[0])
-		self.assertRaises(AttributeError, lambda:contents.contentsSet().remove(self.devs[0]))
+		self.assertRaises(
+			AttributeError,
+			lambda:contents.contentsSet().remove(self.devs[0]))
 
 	def test_contains(self):
 		cs = contents.contentsSet(mutable=True)
-		for x in [y[0] for y in [self.files, self.dirs, self.links, self.devs, self.fifos]]:
+		for x in [y[0] for y in [
+				self.files, self.dirs, self.links, self.devs, self.fifos]]:
 			self.assertFalse(x in cs)
 			self.assertFalse(x.location in cs)
 			cs.add(x)
@@ -77,7 +90,7 @@ class TestContentsSet(unittest.TestCase):
 		cs = contents.contentsSet(s)
 		if forced_name is None:
 			forced_name = "iter"+name
-		
+
 		s2 = set(getattr(cs, forced_name)())
 		if obj_class is not None:
 			map(post_curry(self.assertTrue, obj_class), s2)
@@ -90,9 +103,9 @@ class TestContentsSet(unittest.TestCase):
 		s3 = set(getattr(cs, forced_name)(invert=True))
 		if obj_class is not None:
 			map(post_curry(self.assertFalse, obj_class), s3)
-		
+
 		self.assertEqual(s.symmetric_difference(s2), s3)
-		
+
 
 	def listobj(self, name, obj_class=None):
 		valid_list = getattr(self, name)
@@ -121,17 +134,20 @@ class TestContentsSet(unittest.TestCase):
 	test_iter = post_curry(iterobj, "all", forced_name="__iter__")
 
 	def test_check_instance(self):
-		for x in [y[0] for y in [self.files, self.dirs, self.links, self.devs, self.fifos]]:
+		for x in [y[0] for y in [
+				self.files, self.dirs, self.links, self.devs, self.fifos]]:
 			self.assertEqual((x.location, x), tuple(contents.check_instance(x)))
 		self.assertRaises(TypeError, contents.check_instance, 1)
-	
+
 	def check_set_op(self, name, ret, source=None):
 		if source is None:
 			source = [[fs.fsDir("/tmp", strict=False)],
 					  [fs.fsFile("/tmp", strict=False)]]
 		c1, c2 = [contents.contentsSet(x) for x in source]
-		self.assertEquals(set(ret), set(x.location for x in getattr(c1, name)(c2)))
-	
+		self.assertEquals(
+			set(ret),
+			set(x.location for x in getattr(c1, name)(c2)))
+
 	test_intersection = post_curry(check_set_op, "intersection", ["/tmp"])
 	test_difference = post_curry(check_set_op, "difference", [])
 	test_symmetric_difference1 = post_curry(check_set_op, "symmetric_difference", [])
@@ -141,4 +157,3 @@ class TestContentsSet(unittest.TestCase):
 	test_union2 = post_curry(check_set_op, "union", fstrings, [f[:2], f[2:]])
 	test_symmetric_difference2 = post_curry(check_set_op, "symmetric_difference", fstrings, [f[:2], f[2:]])
 	del f, fstrings
-	

@@ -19,20 +19,29 @@ class TestChoicePoint(unittest.TestCase):
 	@staticmethod
 	def gen_choice_point():
 		return choice_point("asdf", [
-			fake_package(marker=1, depends=OrRestriction("ordep1", "ordep2", "dependsordep"),
-				rdepends=AndRestriction(OrRestriction("ordep1", "andordep2"), "anddep1", "anddep2", "pkg1and"),
+			fake_package(marker=1, depends=OrRestriction(
+						"ordep1", "ordep2", "dependsordep"),
+				rdepends=AndRestriction(
+						OrRestriction("ordep1", "andordep2"),
+						"anddep1", "anddep2", "pkg1and"),
 				post_rdepends=OrRestriction("prdep1", "or3")),
-			fake_package(marker=2, depends=AndRestriction("anddep1", "anddep2"),
+			fake_package(marker=2, depends=AndRestriction(
+						"anddep1", "anddep2"),
 				rdepends=OrRestriction("or1", "or2"),
 				post_rdepends=OrRestriction("prdep1", "or3"))])
 
 	def test_depends_rdepends_stepping(self):
 		c = self.gen_choice_point()
 		self.assertEqual(c.depends, [["ordep1", "ordep2", "dependsordep"]])
-		self.assertEqual(sorted(c.rdepends), sorted([['anddep1'], ['anddep2'], ['ordep1', 'andordep2'], ['pkg1and']]))
+		self.assertEqual(
+			sorted(c.rdepends),
+			sorted([['anddep1'], ['anddep2'], ['ordep1', 'andordep2'],
+					['pkg1and']]))
 		c.reduce_atoms("ordep1")
 		self.assertEqual(c.depends, [['ordep2', 'dependsordep']])
-		self.assertEqual(sorted(c.rdepends), sorted([['anddep1'], ['anddep2'], ['andordep2'], ['pkg1and']]))
+		self.assertEqual(
+			sorted(c.rdepends),
+			sorted([['anddep1'], ['anddep2'], ['andordep2'], ['pkg1and']]))
 		c.reduce_atoms("pkg1and")
 		c.reduce_atoms("or1")
 		self.assertEqual(c.rdepends, [["or2"]])

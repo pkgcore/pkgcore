@@ -183,7 +183,12 @@ class ConfiguredTree(configured.tree):
 			self.fetcher = self.domain_settings["fetcher"]
 		else:
 			self.fetcher = fetcher
-		self.eclass_cache = self.raw_repo.eclass_cache
+
+
+	@property
+	def eclass_cache(self):
+		return self.raw_repo.eclass_cache	
+#		self.eclass_cache = self.raw_repo.eclass_cache
 
 	def _get_pkg_kwds(self, pkg):
 		return {"initial_settings":self.default_use,

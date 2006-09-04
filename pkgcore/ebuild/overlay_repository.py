@@ -19,7 +19,7 @@ class OverlayRepo(multiplex.tree):
 	collapse multiple trees into one, with a shared eclass dir, and first package leftmost returned
 	"""
 	
-	pkgcore_config_type = ConfigHint(types={"trees":"section_refs", "default_mirrors":"list", "cache": "section_ref"}, 
+	pkgcore_config_type = ConfigHint(types={"trees":"section_refs"}, 
 		required=("trees",), positional=("trees",))
 
 	configured = False
@@ -32,33 +32,13 @@ class OverlayRepo(multiplex.tree):
 	def __init__(self, trees, **kwds):
 		"""
 		@param trees: L{pkgcore.ebuild.repository.UnconfiguredTree} instances to combine
-		@keyword cache: L{pkgcore.cache.template.database} instance to use for caching for the combined tree
 		"""
 
 		if not trees or len(trees) < 2:
 			raise errors.InstantiationError(self.__class__, trees, {}, 
 				"Must specify at least two pathes to ebuild trees to overlay")
 
-		cache = kwds.pop("cache", None)
-		default_mirrors = kwds.pop("default_mirrors", None)
-		
-		# master combined eclass
-		self.eclass_cache = eclass_cache.StackedCaches([t.eclass_cache for t in reversed(trees)], eclassdir=trees[0].eclass_cache.eclassdir)
-
-		repos = []
-		for t in trees:
-			repos.append(t.rebind(cache=[cache]+t.cache, eclass_cache=self.eclass_cache, default_mirrors=default_mirrors))
-
-		# now... we do a lil trick.  substitute the master mirrors in for each tree.
-		master_mirrors = trees[0].mirrors
-		for r in repos[1:]:
-			for k, v in master_mirrors.iteritems():
-				if k in r.mirrors:
-					r.mirrors[k] = unstable_unique(r.mirrors[k] + v)
-				else:
-					r.mirrors[k] = v
-		
-		multiplex.tree.__init__(self, *repos)
+		multiplex.tree.__init__(self, *trees)
 
 	def _get_categories(self, *category):
 		return tuple(unstable_unique(multiplex.tree._get_categories(self, *category)))

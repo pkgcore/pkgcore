@@ -75,10 +75,10 @@ class UnconfiguredTree(prototype.tree):
 					f.close()
 				raise
 
-		if isinstance(cache, tuple):
-			cache = list(cache)
-		elif not isinstance(cache, list):
-			cache = [cache]	
+		if isinstance(cache, (tuple, list)):
+			cache = tuple(cache)
+		else:
+			cache = (cache,)
 
 		self.mirrors = mirrors
 		self.default_mirrors = default_mirrors

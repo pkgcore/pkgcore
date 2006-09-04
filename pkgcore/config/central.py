@@ -104,9 +104,14 @@ class ConfigManager(object):
 					typename = type_obj.types[x]
 				except KeyError:
 					if not type_obj.allow_unknowns:
-						raise errors.ConfigurationError(
-							'%r: type of %r inherited from %r unknown' % (
+						if inherit_name != section:
+							raise errors.ConfigurationError(
+								'%r: type of %r inherited from %r unknown' % (
 								section, x, inherit_name))
+						raise errors.ConfigurationError(
+							'%r: type of %r unknown' % (
+							section, x))
+
 					typename = 'str'
 				additions[x] = inherit_conf.get_value(self, x, typename)
 			for x in type_obj.incrementals:

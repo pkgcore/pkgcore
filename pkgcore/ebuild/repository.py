@@ -185,18 +185,13 @@ class ConfiguredTree(configured.tree):
 			self.fetcher = fetcher
 
 
-	@property
-	def eclass_cache(self):
-		return self.raw_repo.eclass_cache	
-#		self.eclass_cache = self.raw_repo.eclass_cache
-
 	def _get_pkg_kwds(self, pkg):
 		return {"initial_settings":self.default_use,
 			"unchangable_settings":DelayedInvertedContains(self._get_iuse, pkg),
 			"build_callback":self.generate_buildop}
 
 	def generate_buildop(self, pkg):
-		return buildable(pkg, self.domain_settings, self.eclass_cache, self.fetcher)
+		return buildable(pkg, self.domain_settings, pkg.repo.eclass_cache, self.fetcher)
 
 UnconfiguredTree.configure = ConfiguredTree
 tree = UnconfiguredTree

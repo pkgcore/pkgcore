@@ -90,6 +90,26 @@ class ConfigSection(object):
 		"""Return a setting, converted to the requested type."""
 		raise NotImplementedError
 
+	def get_section_ref(self, central, section, msg):
+		assert central is not None
+		if not isinstance(section, basestring):
+			s = "got section %s which isn't a basestring; indicates HardCodedConfigSection definition is broke" % repr(section)
+			raise errors.ConfigurationError(msg % s)
+		try:
+			conf = central.get_section_config(section)
+		except KeyError:
+			raise errors.ConfigurationError(msg % 'not found')
+		try:
+			return central.instantiate_section(section, conf=conf)
+		except (SystemExit, KeyboardInterrupt, AssertionError):
+			raise
+		except errors.ConfigurationError:
+			raise
+		except Exception, e:
+			s = "Exception " + str(e)
+			raise errors.ConfigurationError(msg % s)
+
+
 
 class ConfigSectionFromStringDict(ConfigSection):
 
@@ -112,36 +132,26 @@ class ConfigSectionFromStringDict(ConfigSection):
 				func = modules.load_attribute(value)
 			except modules.FailedImport:
 				raise errors.ConfigurationError(
-					'%s: cannot import %r' % (self.name, value))
+					'%r: cannot import %r' % (self.name, value))
 			if not callable(func):
 				raise errors.ConfigurationError(
-					'%s: %r is not callable' % (self.name, value))
+					'%r: %r is not callable' % (self.name, value))
 			return func
 		elif arg_type == 'section_refs':
 			result = []
-			for section_name in list_parser(value):
-				# TODO does this defeat central's instance caching?
-				try:
-					conf = central.get_section_config(section_name)
-				except KeyError:
-					raise errors.ConfigurationError(
-						'%s: requested section %r for %r not found' %
-						(self.name, section_name, name))
-				else:
-					result.append(central.instantiate_section( \
-						section_name, conf=conf))
+			if "cache" in value:
+				print value,list_parser(value)
+			value = list_parser(value)
+			for x in value:
+				result.append(self.get_section_ref(central, x, 
+					"%r: requested section refs %r for section %r, section %r: error %%s" % 
+					(self.name, value, name, x)))
 			return result
 		elif arg_type == 'section_ref':
-			# TODO does this defeat central's instance caching?
-			section_name = str_parser(value)
-			try:
-				conf = central.get_section_config(section_name)
-			except KeyError:
-				raise errors.ConfigurationError(
-					'%s: requested section %r for %r not found' %
-					(self.name, name, value))
-			else:
-				return central.instantiate_section(section_name, conf=conf)
+			value = str_parser(value)
+			return self.get_section_ref(central, value, 
+				"%r: requested section ref %r for section %r: error %%s" % 
+				(self.name, name, value))
 		return {
 			'list': list_parser,
 			'str': str_parser,
@@ -176,21 +186,38 @@ class HardCodedConfigSection(ConfigSection):
 					value = modules.load_attribute(value)
 				except modules.FailedImport:
 					raise errors.ConfigurationError(
-						'%s: cannot import %r' % (self.name, value))
+						'%r: cannot import %r' % (self.name, value))
 				if not callable(value):
 					raise errors.ConfigurationError(
-						'%s: %r is not callable' % (self.name, value))
-		elif arg_type in ('section_ref', 'section_refs'):
-			if isinstance(value, (list, tuple, basestring)):
-				assert central is not None
-				if arg_type == 'section_refs':
-					value = [central.instantiate_section(x) for x in value]
-				else:
-					value = central.instantiate_section(value)
+						'%r: %r is not callable' % (self.name, value))
+
+		elif arg_type == 'section_ref':
+			value = self.get_section_ref(central, value, 
+				"%r: requested section %r for section %r: error %%s" % 
+				(self.name, name, value))
+
+		elif arg_type == 'section_refs':
+			l = []
+			for x in value:
+				l.append(self.get_section_ref(central, x, 
+					"%r: requested section refs %r for section %r, section ref %r: error %%s" % 
+					(self.name, value, name, x)))
+			value = l
+
 		elif not isinstance(value, types[arg_type]):
 			raise errors.ConfigurationError(
 				'%s: %r does not have type %r' % (self.name, name, arg_type))
+
 		return value
+
+def SectionAlias(new_section, section):
+	"""convience function to generate a section alias
+	@param new_section: str name of the new section
+	@param section: str name of the section to alias
+	@return: L{ConfigSectionFromStringDict}
+	"""
+	return ConfigSectionFromStringDict(new_section,
+		{"type": "alias", "section": section})
 
 
 def list_parser(s):

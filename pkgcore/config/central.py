@@ -150,8 +150,12 @@ class ConfigManager(object):
 		conf = self.collapse_config(section, conf)
 
 		type_name = conf['type']
-		del conf['type']
 
+		if type_name == "alias":
+			return self.instantiate_section(conf["section"], allow_reuse=allow_reuse)
+
+		del conf['type']
+		
 		if 'class' not in conf:
 			raise errors.ConfigurationError(
 				'%s: no class specified' % section)

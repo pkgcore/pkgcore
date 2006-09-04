@@ -160,6 +160,10 @@ userpriv = true
 [misc]
 # no defaults
 
+[alias]
+required = section
+str = section
+
 [DEFAULT]
 metadata_keys = DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE DESCRIPTION KEYWORDS INHERITED IUSE CDEPEND
    PDEPEND PROVIDE

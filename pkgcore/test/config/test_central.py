@@ -34,6 +34,23 @@ class ConfigManagerTest(unittest.TestCase):
 		self.assertEquals(manager.sections('foo'), ['fooinst'])
 		self.assertEquals(manager.bar, {'barinst': ((), {})})
 
+	def test_alias(self):
+		manager = central.ConfigManager(
+			[{'foo': basics.ConfigType('foo', {}),
+			  'alias': basics.ConfigType('alias', {"section":"str"}, required=["section"]),
+			  }],
+			[{'fooinst': basics.HardCodedConfigSection(
+						'fooinst', {'type': 'foo', 'class': passthrough}),
+			  'barinst': basics.HardCodedConfigSection(
+						'barinst', {'type': 'alias', 'section':'fooinst'}),
+			  }])
+		self.assertEquals(sorted(manager.sections()), ['barinst', 'fooinst'])
+		self.assertEquals(manager.sections('foo'), ['fooinst'])
+		self.assertEquals(manager.sections('alias'), ['barinst'])
+		self.assertEquals(manager.alias, {'barinst': ((), {})})
+		self.assertEquals(manager.alias['barinst'], manager.foo['fooinst'])
+
+
 	def test_duplicate_type(self):
 		try:
 			central.ConfigManager(

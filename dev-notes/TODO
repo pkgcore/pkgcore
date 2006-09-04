@@ -5,6 +5,7 @@ kindly check over HORKED; stuff here is "would be nice", but horked comes first.
 Difficulty estimate indicated by '*', based on either codebase in question, or knowledge of python tricks
 none == easy, >=5 of 'em, tricky.
 
+- tool to dump config definitions to term; useful for A) emerge --info, B) debugging cranky-ass make.conf translation
 
 - conf_default_types , gut all of the ebuild specific crap and shift it into introspective configuration objs.
 

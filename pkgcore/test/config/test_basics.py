@@ -139,8 +139,10 @@ class HardCodedConfigSectionTest(unittest.TestCase):
 						self.section.get_value, None, arg, typename)
 
 	def test_section_ref(self):
+		# should have positive assertions here
 		section = basics.HardCodedConfigSection('test', {'ref': 42})
-		self.assertEquals(section.get_value(None, 'ref', 'section_ref'), 42)
+		self.assertRaises(AssertionError,
+			section.get_value, None, 'ref', 'section_ref')
 
 	def test_section_refs(self):
 		section = basics.HardCodedConfigSection('test', {'refs': [1, 2]})

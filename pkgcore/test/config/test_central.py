@@ -243,7 +243,7 @@ class ConfigManagerTest(unittest.TestCase):
 		try:
 			manager.repo['myrepo']
 		except errors.BaseException, e:
-			self.assertEquals(str(e), "test: None is not callable")
+			self.assertTrue("import" in str(e))
 		else:
 			self.fail('no exception raised')
 

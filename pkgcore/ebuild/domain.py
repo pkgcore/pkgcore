@@ -19,6 +19,8 @@ from pkgcore.util.lists import stable_unique, unstable_unique
 from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.config.errors import BaseException
+from pkgcore.util.demandload import demandload
+demandload(globals(), "warnings")
 
 class MissingFile(BaseException):
 	def __init__(self, filename, setting):
@@ -268,7 +270,8 @@ class domain(pkgcore.config.domain.domain):
 						glob.append(StrGlobMatch("~"))
 					elif "*" == s:
 						if negate:
-							raise Failure("can't -* keywords")
+							warnings.warn("-* detected in keywords stack; -* isn't a valid target, ignoring")
+							continue
 						# stable only, exempt unstable
 						glob.append(StrGlobMatch("~", negate=True))
 					elif negate:

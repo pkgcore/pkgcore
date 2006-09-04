@@ -222,16 +222,6 @@ def configFromMakeConf(location="/etc/"):
         
 
     if portdir_overlays:
-<<<<<<< TREE
-        d = {
-            "type": "repo",
-            "class": load_attribute(
-                "pkgcore.ebuild.overlay_repository.OverlayRepo"),
-            "default_mirrors":gentoo_mirrors, "cache": "cache",
-            "trees": [portdir] + portdir_overlays}
-        # sucky.  needed?
-        new_config["portdir"] = basics.HardCodedConfigSection("portdir", d)
-=======
         new_config["repo-stack"] = basics.HardCodedConfigSection("portdir", 
             {"type": "repo", "class": "pkgcore.ebuild.overlay_repository.OverlayRepo",
             "trees": tuple([portdir] + portdir_overlays)})
@@ -249,7 +239,6 @@ def configFromMakeConf(location="/etc/"):
 #
 #		new_config["cache"] = basics.ConfigSectionFromStringDict("cache", cache_config)
 
->>>>>>> MERGE-SOURCE
     else:
         new_config['repo-stack'] = basics.SectionAlias('repo-stack', portdir)
 

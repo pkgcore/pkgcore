@@ -15,6 +15,8 @@ Version 1
 - EAPI = 1 required
 - src_configure exists, configuration of packages must occur in src_configure
   and not src_compile. 
+- not necessarily using EXPORT_FUNCTIONS, but enable all EAPI functionality to 
+  be overriden via eclass/repo, yet still able to be referenced without 
 - default src_install
 - RDEPEND="${RDEPEND-${DEPEND}}" is no longer set by portage, same for eclass.
 - Elibs
@@ -35,3 +37,6 @@ Version 1
 - hard one to slide in, but change versioning rules; no longer allow 1.006, require it to be 1.6
 - pkg_setup must be sandboxable.
 - default IUSE, bug # 61732
+- allowed USE conditional configurations; new metadata key, extend depset syntax to include xor, represent allowed configurations.
+- use groups (kill use_expand off)
+- true incremental stacking support for metadata keys between eclasses/ebuilds; RESTRICT=-strip for example in the ebuild.

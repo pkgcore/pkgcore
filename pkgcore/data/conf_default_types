@@ -119,7 +119,8 @@ allow_unknowns = yes
 required = class location
 defaults = class
 class = pkgcore.ebuild.repository.tree
-section_ref = cache sync sync_cache fetcher eclass_cache
+section_ref = sync sync_cache fetcher eclass_cache
+section_refs = cache
 str = location
 list = default_mirrors
 

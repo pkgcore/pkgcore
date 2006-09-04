@@ -31,8 +31,6 @@ distdir = "/mnt/scratch/distfiles"
 USE = -* 3dnow 3dnowext X a52 aac alsa bitmap-fonts bzip2 cjk crypt dga divx4linux doc dv encode ffmpeg flac glep lzo mad matroska mbox mmx mmxext mp3 mpeg mpeg2 ncurses nls nptl nptlonly ogg oggvorbis pam readline sandbox sdl slang sse sse2 ssl tcpd threads truetype truetype-fonts unicode usb vorbis win32codecs xml xml2 xvid zlib
 #nptl nptlonly -gnome -oss mad matroska faad mpg avi -arts mmx mmxext flac bidi dvd ssl sdl xvid 3dnow 3dnowext 
 #	sse sse2 mythtv rtc -svga -ipv6 win32codecs -esd
-#FEATURES = confcache parallel-fetch
-FEATURES="confcache"
 #package.use = %(CONFDIR)/package.use
 #package.mask = %(CONFDIR)/package.mask
 #package.unmask = %(CONFDIR)/package.unmask

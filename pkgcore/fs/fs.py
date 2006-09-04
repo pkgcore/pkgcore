@@ -15,30 +15,30 @@ from pkgcore.interfaces.data_source import local_source
 
 
 __all__ = [
-	"fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo", "isdir", "isreg",
-	"isfs_obj"]
+    "fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo", "isdir", "isreg",
+    "isfs_obj"]
 
 # following are used to generate appropriate __init__, wiped from the
 # namespace at the end of the module
 
 _fs_doc = {
-	"mode":"""@keyword mode: int, the mode of this entry.  """
-		"""required if strict is set""",
-	"mtime":"""@keyword mtime: long, the mtime of this entry.  """
-		"""required if strict is set""",
-	"uid":"""@keyword uid: int, the uid of this entry.  """
-		"""required if strict is set""",
-	"gid":"""@keyword gid: int, the gid of this entry.  """
-		"""required if strict is set""",
+    "mode":"""@keyword mode: int, the mode of this entry.  """
+        """required if strict is set""",
+    "mtime":"""@keyword mtime: long, the mtime of this entry.  """
+        """required if strict is set""",
+    "uid":"""@keyword uid: int, the uid of this entry.  """
+        """required if strict is set""",
+    "gid":"""@keyword gid: int, the gid of this entry.  """
+        """required if strict is set""",
 }
 
 def gen_doc_additions(init, slots):
-	if init.__doc__ is None:
-		d = raw_init_doc.split("\n")
-	else:
-		d = init.__doc__.split("\n")
-	init.__doc__ = "\n".join(k.lstrip() for k in d) + \
-		"\n".join(_fs_doc[k] for k in _fs_doc if k in slots)
+    if init.__doc__ is None:
+        d = raw_init_doc.split("\n")
+    else:
+        d = init.__doc__.split("\n")
+    init.__doc__ = "\n".join(k.lstrip() for k in d) + \
+        "\n".join(_fs_doc[k] for k in _fs_doc if k in slots)
 
 
 raw_init_doc = \
@@ -49,202 +49,202 @@ raw_init_doc = \
 """
 
 class fsBase(object):
-	
-	"""base class, all extensions must derive from this class"""
-	__slots__ = ["location", "_real_location", "mtime", "mode", "uid", "gid"]
-	
-	def __init__(self, location, real_location=None, strict=True, **d):
+    
+    """base class, all extensions must derive from this class"""
+    __slots__ = ["location", "_real_location", "mtime", "mode", "uid", "gid"]
+    
+    def __init__(self, location, real_location=None, strict=True, **d):
 
-		d["location"] = location
+        d["location"] = location
 
-		if real_location is not None:
-			if not real_location.startswith(path_seperator):
-				real_location = abspath(real_location)
-		d["_real_location"] = real_location
-		s = object.__setattr__
-		if strict:
-			for k in self.__slots__:
-				s(self, k, d[k])
-		else:
-			for k, v in d.iteritems():
-				s(self, k, v)
-	gen_doc_additions(__init__, __slots__)
+        if real_location is not None:
+            if not real_location.startswith(path_seperator):
+                real_location = abspath(real_location)
+        d["_real_location"] = real_location
+        s = object.__setattr__
+        if strict:
+            for k in self.__slots__:
+                s(self, k, d[k])
+        else:
+            for k, v in d.iteritems():
+                s(self, k, v)
+    gen_doc_additions(__init__, __slots__)
 
-	def change_attributes(self, **kwds):
-		d = dict((x, getattr(self, x))
-				 for x in self.__slots__ if hasattr(self, x))
-		d.update(kwds)
-		# split location out
-		location = d.pop("location")
-		if not location.startswith(path_seperator):
-			location = abspath(location)
-		d["strict"] = False
-		return self.__class__(location, **d)
+    def change_attributes(self, **kwds):
+        d = dict((x, getattr(self, x))
+                 for x in self.__slots__ if hasattr(self, x))
+        d.update(kwds)
+        # split location out
+        location = d.pop("location")
+        if not location.startswith(path_seperator):
+            location = abspath(location)
+        d["strict"] = False
+        return self.__class__(location, **d)
 
-	def __setattr__(self, key, value):
-		try:
-			getattr(self, key)
-			raise Exception("non modifiable")
-		except AttributeError:
-			object.__setattr__(self, key, value)
+    def __setattr__(self, key, value):
+        try:
+            getattr(self, key)
+            raise Exception("non modifiable")
+        except AttributeError:
+            object.__setattr__(self, key, value)
 
-	def __getattr__(self, attr):
-		# we would only get called if it doesn't exist.
-		if attr in self.__slots__:
-			return None
-		raise AttributeError(attr)
+    def __getattr__(self, attr):
+        # we would only get called if it doesn't exist.
+        if attr in self.__slots__:
+            return None
+        raise AttributeError(attr)
 
-	def __hash__(self):
-		return hash(self.location)
+    def __hash__(self):
+        return hash(self.location)
 
-	def __eq__(self, other):
-		if not isinstance(other, self.__class__):
-			return False
-		return self.location == other.location
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return self.location == other.location
 
-	def __ne__(self, other):
-		return not self == other
+    def __ne__(self, other):
+        return not self == other
 
-	@property
-	def real_location(self):
-		if self._real_location is not None:
-			return self._real_location
-		return self.location
+    @property
+    def real_location(self):
+        if self._real_location is not None:
+            return self._real_location
+        return self.location
 
 class fsFile(fsBase):
 
-	"""file class"""
-	
-	__slots__ = fsBase.__slots__ + ["chksums", "data_source"]
+    """file class"""
+    
+    __slots__ = fsBase.__slots__ + ["chksums", "data_source"]
 
-	def __init__(self, location, chksums=None, real_path=None, **kwds):
-		"""
-		@param chksums: dict of checksums, key chksum_type: val hash val.  see L{pkgcore.chksum}
-		"""
-		if "mtime" in kwds:
-			kwds["mtime"] = long(kwds["mtime"])
-		if real_path is not None:
-			if "data_source" in kwds:
-				raise TypeError(
-					"%s: real_path and data_source are mutually exclusive "
-					"options" % self.__class__)
-			kwds["data_source"] = local_source(real_path)
-		else:
-			kwds.setdefault("data_source", None)
-		if chksums is None:
-			# this can be problematic offhand if the file is modified
-			# but chksum not triggered
-			chksums = LazyValDict(tuple(get_handlers()), self._chksum_callback)
-		kwds["chksums"] = chksums
-		fsBase.__init__(self, location, **kwds)
-	gen_doc_additions(__init__, __slots__)
+    def __init__(self, location, chksums=None, real_path=None, **kwds):
+        """
+        @param chksums: dict of checksums, key chksum_type: val hash val.  see L{pkgcore.chksum}
+        """
+        if "mtime" in kwds:
+            kwds["mtime"] = long(kwds["mtime"])
+        if real_path is not None:
+            if "data_source" in kwds:
+                raise TypeError(
+                    "%s: real_path and data_source are mutually exclusive "
+                    "options" % self.__class__)
+            kwds["data_source"] = local_source(real_path)
+        else:
+            kwds.setdefault("data_source", None)
+        if chksums is None:
+            # this can be problematic offhand if the file is modified
+            # but chksum not triggered
+            chksums = LazyValDict(tuple(get_handlers()), self._chksum_callback)
+        kwds["chksums"] = chksums
+        fsBase.__init__(self, location, **kwds)
+    gen_doc_additions(__init__, __slots__)
 
-	def __repr__(self):
-		return "file:%s" % self.location
+    def __repr__(self):
+        return "file:%s" % self.location
 
-	def _chksum_callback(self, chf_type):
-		return get_handler(chf_type)(self.data)
+    def _chksum_callback(self, chf_type):
+        return get_handler(chf_type)(self.data)
 
-	@property
-	def data(self):
-		o = self.data_source
-		if o is not None:
-			return o
-		return local_source(self.real_location)
+    @property
+    def data(self):
+        o = self.data_source
+        if o is not None:
+            return o
+        return local_source(self.real_location)
 
 
 class fsDir(fsBase):
 
-	"""dir class"""
+    """dir class"""
 
-	__slots__ = fsBase.__slots__
+    __slots__ = fsBase.__slots__
 
-	def __repr__(self):
-		return "dir:%s" % self.location
+    def __repr__(self):
+        return "dir:%s" % self.location
 
-	def __cmp__(self, other):
-		return cmp(
-			self.location.split(path_seperator),
-			other.location.split(path_seperator))
+    def __cmp__(self, other):
+        return cmp(
+            self.location.split(path_seperator),
+            other.location.split(path_seperator))
 
 
 class fsLink(fsBase):
 
-	"""symlink class"""
+    """symlink class"""
 
-	__slots__ = list(fsBase.__slots__) + ["target"]
+    __slots__ = list(fsBase.__slots__) + ["target"]
 
-	def __init__(self, location, target, **kwargs):
-		"""
-		@param target: string, filepath of the symlinks target
-		"""
-		kwargs["target"] = target
-		fsBase.__init__(self, location, **kwargs)
-	gen_doc_additions(__init__, __slots__)
+    def __init__(self, location, target, **kwargs):
+        """
+        @param target: string, filepath of the symlinks target
+        """
+        kwargs["target"] = target
+        fsBase.__init__(self, location, **kwargs)
+    gen_doc_additions(__init__, __slots__)
 
-	def change_attributes(self, **kwds):
-		d = dict((x, getattr(self, x))
-				 for x in self.__slots__ if hasattr(self, x))
-		d.update(kwds)
-		# split location out
-		location = d.pop("location")
-		if not location.startswith(path_seperator):
-			location = abspath(location)
-		target = d.pop("target")
-		d["strict"] = False
-		return self.__class__(location, target, **d)
+    def change_attributes(self, **kwds):
+        d = dict((x, getattr(self, x))
+                 for x in self.__slots__ if hasattr(self, x))
+        d.update(kwds)
+        # split location out
+        location = d.pop("location")
+        if not location.startswith(path_seperator):
+            location = abspath(location)
+        target = d.pop("target")
+        d["strict"] = False
+        return self.__class__(location, target, **d)
 
-	def __repr__(self):
-		return "symlink:%s->%s" % (self.location, self.target)
+    def __repr__(self):
+        return "symlink:%s->%s" % (self.location, self.target)
 
 
 fsSymlink = fsLink
 
 
 def _real_path_init(self, path, **kwds):
-	if "real_path" not in kwds:
-		kwds["real_path"] = path
-	return fsBase.__init__(self, path, **kwds)
+    if "real_path" not in kwds:
+        kwds["real_path"] = path
+    return fsBase.__init__(self, path, **kwds)
 
 class fsDev(fsBase):
 
-	"""dev class (char/block objects)"""
-	
-	__slots__ = list(fsBase.__slots__) + ["real_path", "major", "minor"]
+    """dev class (char/block objects)"""
+    
+    __slots__ = list(fsBase.__slots__) + ["real_path", "major", "minor"]
 
-	def __init__(self, path, major=-1, minor=-1, **kwds):
-		if kwds.get("strict", True):
-			if major == -1 or minor == -1:
-				raise TypeError(
-					"major/minor must be specified and positive ints")
-			if not stat.S_IFMT(kwds["mode"]):
-				raise TypeError(
-					"mode %o: must specify the device type (got %o)" % (
-						kwds["mode"], stat.S_IFMT(kwds["mode"])))
-			kwds["major"] = major
-			kwds["minor"] = minor
-		_real_path_init(self, path, **kwds)
-		
-	def __repr__(self):
-		return "device:%s" % self.location
+    def __init__(self, path, major=-1, minor=-1, **kwds):
+        if kwds.get("strict", True):
+            if major == -1 or minor == -1:
+                raise TypeError(
+                    "major/minor must be specified and positive ints")
+            if not stat.S_IFMT(kwds["mode"]):
+                raise TypeError(
+                    "mode %o: must specify the device type (got %o)" % (
+                        kwds["mode"], stat.S_IFMT(kwds["mode"])))
+            kwds["major"] = major
+            kwds["minor"] = minor
+        _real_path_init(self, path, **kwds)
+        
+    def __repr__(self):
+        return "device:%s" % self.location
 
 
 def get_major_minor(stat):
-	"""get major/minor from a stat instance
-	@return: major,minor tuple of ints
-	"""
-	return ( stat.st_rdev >> 8 ) & 0xff, stat.st_rdev & 0xff
+    """get major/minor from a stat instance
+    @return: major,minor tuple of ints
+    """
+    return ( stat.st_rdev >> 8 ) & 0xff, stat.st_rdev & 0xff
 
 
 class fsFifo(fsBase):
 
-	"""fifo class (socket objects)"""
+    """fifo class (socket objects)"""
 
-	__slots__ = list(fsBase.__slots__) + ["real_path"]
-	__init__ = _real_path_init
-	
-	def __repr__(self):
-		return "fifo:%s" % self.location
+    __slots__ = list(fsBase.__slots__) + ["real_path"]
+    __init__ = _real_path_init
+    
+    def __repr__(self):
+        return "fifo:%s" % self.location
 
 
 isdir    = lambda x: isinstance(x, fsDir)

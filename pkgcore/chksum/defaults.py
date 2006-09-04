@@ -13,33 +13,33 @@ blocksize = 32768
 
 
 def loop_over_file(obj, filename):
-	if isinstance(filename, base_data_source):
-		if filename.get_path is not None:
-			filename = filename.get_path()
-		else:
-			filename = filename.get_fileobj()
-	wipeit = False
-	if isinstance(filename, basestring):
-		wipeit = True
-		f = open(filename, 'rb', blocksize * 2)
-	else:
-		f = filename
-		# reposition to start
-		f.seek(0, 0)
-	try:
-		data = f.read(blocksize)
-		# XXX why is size tracked here? It seems to be unused...
-		size = 0L
-		checksum = obj()
-		while data:
-			checksum.update(data)
-			size = size + len(data)
-			data = f.read(blocksize)
+    if isinstance(filename, base_data_source):
+        if filename.get_path is not None:
+            filename = filename.get_path()
+        else:
+            filename = filename.get_fileobj()
+    wipeit = False
+    if isinstance(filename, basestring):
+        wipeit = True
+        f = open(filename, 'rb', blocksize * 2)
+    else:
+        f = filename
+        # reposition to start
+        f.seek(0, 0)
+    try:
+        data = f.read(blocksize)
+        # XXX why is size tracked here? It seems to be unused...
+        size = 0L
+        checksum = obj()
+        while data:
+            checksum.update(data)
+            size = size + len(data)
+            data = f.read(blocksize)
 
-		return checksum.hexdigest()
-	finally:
-		if wipeit:
-			f.close()
+        return checksum.hexdigest()
+    finally:
+        if wipeit:
+            f.close()
 
 # We have a couple of options:
 #
@@ -124,69 +124,69 @@ def loop_over_file(obj, filename):
 chksum_types = {}
 
 try:
-	import hashlib
+    import hashlib
 except ImportError:
-	pass
+    pass
 else:
-	# Always available according to docs.python.org:
-	# md5(), sha1(), sha224(), sha256(), sha384(), and sha512().
-	for hashlibname, chksumname in [
-		('md5', 'md5'),
-		('sha1', 'sha1'),
-		('sha256', 'sha256'),
-		]:
-		chksum_types[chksumname] = pre_curry(
-			loop_over_file, getattr(hashlib, hashlibname))
-	# May or may not be available depending on openssl. List
-	# determined through trial and error.
-	for hashlibname, chksumname in [
-		('ripemd160', 'rmd160'),
-		]:
-		try:
-			hashlib.new(hashlibname)
-		except ValueError:
-			pass # This hash is not available.
-		else:
-			chksum_types[chksumname] = pre_curry(
-				loop_over_file, pre_curry(hashlib.new, hashlibname))
-	del hashlibname, chksumname
+    # Always available according to docs.python.org:
+    # md5(), sha1(), sha224(), sha256(), sha384(), and sha512().
+    for hashlibname, chksumname in [
+        ('md5', 'md5'),
+        ('sha1', 'sha1'),
+        ('sha256', 'sha256'),
+        ]:
+        chksum_types[chksumname] = pre_curry(
+            loop_over_file, getattr(hashlib, hashlibname))
+    # May or may not be available depending on openssl. List
+    # determined through trial and error.
+    for hashlibname, chksumname in [
+        ('ripemd160', 'rmd160'),
+        ]:
+        try:
+            hashlib.new(hashlibname)
+        except ValueError:
+            pass # This hash is not available.
+        else:
+            chksum_types[chksumname] = pre_curry(
+                loop_over_file, pre_curry(hashlib.new, hashlibname))
+    del hashlibname, chksumname
 
 
 if 'md5' not in chksum_types:
-	import md5
-	try:
-		import fchksum
-	except ImportError:
-		pass
-	else:
-		def md5hash(filename):
-			if isinstance(filename, base_data_source):
-				if filename.get_path is not None:
-					filename = filename.get_path()
-			if isinstance(filename, basestring):
-				return fchksum.fmd5t(filename)[0]
-			return loop_over_file(md5.new, filename)
+    import md5
+    try:
+        import fchksum
+    except ImportError:
+        pass
+    else:
+        def md5hash(filename):
+            if isinstance(filename, base_data_source):
+                if filename.get_path is not None:
+                    filename = filename.get_path()
+            if isinstance(filename, basestring):
+                return fchksum.fmd5t(filename)[0]
+            return loop_over_file(md5.new, filename)
 
-		chksum_types = {"md5":md5hash}
+        chksum_types = {"md5":md5hash}
 
 
 # expand this to load all available at some point
 for k, v in (("sha1", "SHA"), ("sha256", "SHA256"), ("rmd160", "RIPEMD")):
-	if k in chksum_types:
-		continue
-	try:
-		chksum_types[k] = pre_curry(loop_over_file, modules.load_attribute(
-				"Crypto.Hash.%s.new" % v))
-	except modules.FailedImport:
-		pass
+    if k in chksum_types:
+        continue
+    try:
+        chksum_types[k] = pre_curry(loop_over_file, modules.load_attribute(
+                "Crypto.Hash.%s.new" % v))
+    except modules.FailedImport:
+        pass
 del k, v
 
 
 for modulename, chksumname in [
-	('sha', 'sha1'),
-	('md5', 'md5'),
-	]:
-	if chksumname not in chksum_types:
-		chksum_types[chksumname] = pre_curry(
-			loop_over_file, modules.load_attribute('%s.new' % (modulename,)))
+    ('sha', 'sha1'),
+    ('md5', 'md5'),
+    ]:
+    if chksumname not in chksum_types:
+        chksum_types[chksumname] = pre_curry(
+            loop_over_file, modules.load_attribute('%s.new' % (modulename,)))
 del modulename, chksumname

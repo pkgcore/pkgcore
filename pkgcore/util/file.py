@@ -12,228 +12,228 @@ from pkgcore.util.mappings import ProtectedDict
 
 class AtomicWriteFile(file):
 
-	"""file class that stores the changes in a tempfile, upon close call, uses rename to replace the destination.
+    """file class that stores the changes in a tempfile, upon close call, uses rename to replace the destination.
 
-	Similar to file protocol behaviour, except for the __init__, and that close *must* be called for the changes to be made live,
-	if __del__ is triggered it's assumed that an exception occured, thus the changes shouldn't be made live
-	"""
-	def __init__(self, fp, binary=False, **kwds):
-		self.is_finalized = False
-		if binary:
-			mode = "wb"
-		else:
-			mode = "w"
-		fp = os.path.realpath(fp)
-		self.original_fp = fp
-		self.temp_fp = os.path.join(
-			os.path.dirname(fp), ".update.%s" % os.path.basename(fp))
-		file.__init__(self, self.temp_fp, mode=mode, **kwds)
+    Similar to file protocol behaviour, except for the __init__, and that close *must* be called for the changes to be made live,
+    if __del__ is triggered it's assumed that an exception occured, thus the changes shouldn't be made live
+    """
+    def __init__(self, fp, binary=False, **kwds):
+        self.is_finalized = False
+        if binary:
+            mode = "wb"
+        else:
+            mode = "w"
+        fp = os.path.realpath(fp)
+        self.original_fp = fp
+        self.temp_fp = os.path.join(
+            os.path.dirname(fp), ".update.%s" % os.path.basename(fp))
+        file.__init__(self, self.temp_fp, mode=mode, **kwds)
 
-	def close(self):
-		file.close(self)
-		os.rename(self.temp_fp, self.original_fp)
-		self.is_finalized = True
+    def close(self):
+        file.close(self)
+        os.rename(self.temp_fp, self.original_fp)
+        self.is_finalized = True
 
-	def __del__(self):
-		file.close(self)
-		if not self.is_finalized:
-			os.unlink(self.temp_fp)
+    def __del__(self):
+        file.close(self)
+        if not self.is_finalized:
+            os.unlink(self.temp_fp)
 
 
 def iter_read_bash(bash_source):
-	"""
-	read file honoring bash commenting rules.  Note that it's considered good behaviour to close filehandles, as such,
-	either iterate fully through this, or use read_bash instead.
-	once the file object is no longer referenced, the handle will be closed, but be proactive instead of relying on the
-	garbage collector.
+    """
+    read file honoring bash commenting rules.  Note that it's considered good behaviour to close filehandles, as such,
+    either iterate fully through this, or use read_bash instead.
+    once the file object is no longer referenced, the handle will be closed, but be proactive instead of relying on the
+    garbage collector.
 
-	@param bash_source: either a file to read from, or a string holding the filename to open
-	"""
-	if isinstance(bash_source, basestring):
-		bash_source = open(bash_source, 'r', 32384)
-	for s in bash_source:
-		s = s.strip()
-		if s.startswith("#") or s == "":
-			continue
-		yield s
-	bash_source.close()
+    @param bash_source: either a file to read from, or a string holding the filename to open
+    """
+    if isinstance(bash_source, basestring):
+        bash_source = open(bash_source, 'r', 32384)
+    for s in bash_source:
+        s = s.strip()
+        if s.startswith("#") or s == "":
+            continue
+        yield s
+    bash_source.close()
 
 
 def read_bash(bash_source):
-	return list(iter_read_bash(bash_source))
+    return list(iter_read_bash(bash_source))
 read_bash.__doc__ = iter_read_bash.__doc__
 
 
 def read_dict(bash_source, splitter="=", ignore_malformed=False, source_isiter=False):
-	"""
-	read key value pairs, splitting on specified splitter, using iter_read_bash for filtering comments
+    """
+    read key value pairs, splitting on specified splitter, using iter_read_bash for filtering comments
 
-	@param bash_source: either a file to read from, or a string holding the filename to open
+    @param bash_source: either a file to read from, or a string holding the filename to open
 
-	"""
-	d = {}
-	if not source_isiter:
-		filename = bash_source
-		i = iter_read_bash(bash_source)
-	else:
-		# XXX what to do?
-		filename = '<unknown>'
-		i = bash_source
-	line_count = 1
-	try:
-		for k in i:
-			line_count += 1
-			try:
-				k, v = k.split(splitter, 1)
-			except ValueError:
-				if not ignore_malformed:
-					raise ParseError(filename, line_count)
-			else:
-				if len(v) > 2 and v[0] == v[-1] and v[0] in ("'", '"'):
-					v = v[1:-1]
-				d[k] = v
-	finally:
-		del i
-	return d
+    """
+    d = {}
+    if not source_isiter:
+        filename = bash_source
+        i = iter_read_bash(bash_source)
+    else:
+        # XXX what to do?
+        filename = '<unknown>'
+        i = bash_source
+    line_count = 1
+    try:
+        for k in i:
+            line_count += 1
+            try:
+                k, v = k.split(splitter, 1)
+            except ValueError:
+                if not ignore_malformed:
+                    raise ParseError(filename, line_count)
+            else:
+                if len(v) > 2 and v[0] == v[-1] and v[0] in ("'", '"'):
+                    v = v[1:-1]
+                d[k] = v
+    finally:
+        del i
+    return d
 
 def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False, sourcing_command=None):
-	"""
-	read bash source, yielding a dict of vars
+    """
+    read bash source, yielding a dict of vars
 
-	@param bash_source: either a file to read from, or a string holding the filename to open
-	@param vars_dict: initial 'env' for the sourcing, and is protected from modification.
-	@type vars_dict: dict or None
-	@param sourcing_command: controls whether a source command exists, if one does and is encountered, then this func
-	@type sourcing_command: callable
-	@param ignore_malformed: if malformed syntax, whether to ignore that line or throw a ParseError
-	@raise ParseError: thrown if ignore_malformed is False, and invalid syntax is encountered
-	@return: dict representing the resultant env if bash executed the source
-	"""
+    @param bash_source: either a file to read from, or a string holding the filename to open
+    @param vars_dict: initial 'env' for the sourcing, and is protected from modification.
+    @type vars_dict: dict or None
+    @param sourcing_command: controls whether a source command exists, if one does and is encountered, then this func
+    @type sourcing_command: callable
+    @param ignore_malformed: if malformed syntax, whether to ignore that line or throw a ParseError
+    @raise ParseError: thrown if ignore_malformed is False, and invalid syntax is encountered
+    @return: dict representing the resultant env if bash executed the source
+    """
 
-	# quite possibly I'm missing something here, but the original portage_util getconfig/varexpand seemed like it
-	# only went halfway.  The shlex posix mode *should* cover everything.
+    # quite possibly I'm missing something here, but the original portage_util getconfig/varexpand seemed like it
+    # only went halfway.  The shlex posix mode *should* cover everything.
 
-	if vars_dict is not None:
-		d, protected = ProtectedDict(vars_dict), True
-	else:
-		d, protected = {}, False
-	f = open(bash_source, 'r', 32384)
-	s = bash_parser(f, sourcing_command=sourcing_command, env=d)
+    if vars_dict is not None:
+        d, protected = ProtectedDict(vars_dict), True
+    else:
+        d, protected = {}, False
+    f = open(bash_source, 'r', 32384)
+    s = bash_parser(f, sourcing_command=sourcing_command, env=d)
 
-	try:
-		tok = ""
-		try:
-			while tok is not None:
-				key = s.get_token()
-				if key is None:
-					break
-				eq, val = s.get_token(), s.get_token()
-				if eq != '=' or val is None:
-					if not ignore_malformed:
-						raise ParseError(bash_source, s.lineno)
-					else:
-						break
-				d[key] = val
-		except ValueError:
-			raise ParseError(bash_source, s.lineno)
-	finally:
-		f.close()
-	if protected:
-		d = d.new
-	return d
+    try:
+        tok = ""
+        try:
+            while tok is not None:
+                key = s.get_token()
+                if key is None:
+                    break
+                eq, val = s.get_token(), s.get_token()
+                if eq != '=' or val is None:
+                    if not ignore_malformed:
+                        raise ParseError(bash_source, s.lineno)
+                    else:
+                        break
+                d[key] = val
+        except ValueError:
+            raise ParseError(bash_source, s.lineno)
+    finally:
+        f.close()
+    if protected:
+        d = d.new
+    return d
 
 
 var_find = re.compile(r'\\?(\${\w+}|\$\w+)')
 backslash_find = re.compile(r'\\.')
 def nuke_backslash(s):
-	s = s.group()
-	if s == "\\\n":
-		return "\n"
-	try:
-		return chr(ord(s))
-	except TypeError:
-		return s[1]
+    s = s.group()
+    if s == "\\\n":
+        return "\n"
+    try:
+        return chr(ord(s))
+    except TypeError:
+        return s[1]
 
 class bash_parser(shlex):
-	def __init__(self, source, sourcing_command=None, env=None):
-		shlex.__init__(self, source, posix=True)
-		self.wordchars += "${}/.-+/:"
-		if sourcing_command is not None:
-			self.source = sourcing_command
-		if env is None:
-			env = {}
-		self.env = env
-		self.__pos = 0
+    def __init__(self, source, sourcing_command=None, env=None):
+        shlex.__init__(self, source, posix=True)
+        self.wordchars += "${}/.-+/:"
+        if sourcing_command is not None:
+            self.source = sourcing_command
+        if env is None:
+            env = {}
+        self.env = env
+        self.__pos = 0
 
-	def __setattr__(self, attr, val):
-		if attr == "state" and "state" in self.__dict__:
-			if (self.state, val) in (
-				('"', 'a'), ('a', '"'), ('a', ' '), ("'", 'a')):
-				strl = len(self.token)
-				if self.__pos != strl:
-					self.changed_state.append(
-						(self.state, self.token[self.__pos:]))
-				self.__pos = strl
-		self.__dict__[attr] = val
+    def __setattr__(self, attr, val):
+        if attr == "state" and "state" in self.__dict__:
+            if (self.state, val) in (
+                ('"', 'a'), ('a', '"'), ('a', ' '), ("'", 'a')):
+                strl = len(self.token)
+                if self.__pos != strl:
+                    self.changed_state.append(
+                        (self.state, self.token[self.__pos:]))
+                self.__pos = strl
+        self.__dict__[attr] = val
 
-	def sourcehook(self, newfile):
-		try:
-			return shlex.sourcehook(self, newfile)
-		except IOError, ie:
-			raise ParseError(newfile, 0, str(ie))
+    def sourcehook(self, newfile):
+        try:
+            return shlex.sourcehook(self, newfile)
+        except IOError, ie:
+            raise ParseError(newfile, 0, str(ie))
 
-	def read_token(self):
-		self.changed_state = []
-		self.__pos = 0
-		tok = shlex.read_token(self)
-		if tok is None:
-			return tok
-		self.changed_state.append((self.state, self.token[self.__pos:]))
-		tok = ''
-		for s, t in self.changed_state:
-			if s in ('"', "a"):
-				tok += self.var_expand(t)
-			else:
-				tok += t
-		return tok
+    def read_token(self):
+        self.changed_state = []
+        self.__pos = 0
+        tok = shlex.read_token(self)
+        if tok is None:
+            return tok
+        self.changed_state.append((self.state, self.token[self.__pos:]))
+        tok = ''
+        for s, t in self.changed_state:
+            if s in ('"', "a"):
+                tok += self.var_expand(t)
+            else:
+                tok += t
+        return tok
 
-	def var_expand(self, val):
-		prev, pos = 0, 0
-		l = []
-		match = var_find.search(val)
-		while match is not None:
-			pos = match.start()
-			if val[pos] == '\\':
-				# it's escaped. either it's \\$ or \\${ , either way,
-				# skipping two ahead handles it.
-				pos += 2
-			else:
-				var = val[match.start():match.end()].strip("${}")
-				if prev != pos:
-					l.append(val[prev:pos])
-				if var in self.env:
-					if not isinstance(self.env[var], basestring):
-						raise ValueError(
-							"env key %r must be a string, not %s: %r" % (
-								var, type(self.env[var]), self.env[var]))
-					l.append(self.env[var])
-				else:
-					l.append("")
-				prev = pos = match.end()
-			match = var_find.search(val, pos)
+    def var_expand(self, val):
+        prev, pos = 0, 0
+        l = []
+        match = var_find.search(val)
+        while match is not None:
+            pos = match.start()
+            if val[pos] == '\\':
+                # it's escaped. either it's \\$ or \\${ , either way,
+                # skipping two ahead handles it.
+                pos += 2
+            else:
+                var = val[match.start():match.end()].strip("${}")
+                if prev != pos:
+                    l.append(val[prev:pos])
+                if var in self.env:
+                    if not isinstance(self.env[var], basestring):
+                        raise ValueError(
+                            "env key %r must be a string, not %s: %r" % (
+                                var, type(self.env[var]), self.env[var]))
+                    l.append(self.env[var])
+                else:
+                    l.append("")
+                prev = pos = match.end()
+            match = var_find.search(val, pos)
 
-		# do \\ cleansing, collapsing val down also.
-		val = backslash_find.sub(nuke_backslash, ''.join(l) + val[prev:])
-		return val
+        # do \\ cleansing, collapsing val down also.
+        val = backslash_find.sub(nuke_backslash, ''.join(l) + val[prev:])
+        return val
 
 
 class ParseError(Exception):
 
-	def __init__(self, filename, line, errmsg=None):
-		self.file, self.line, self.errmsg = filename, line, errmsg
+    def __init__(self, filename, line, errmsg=None):
+        self.file, self.line, self.errmsg = filename, line, errmsg
 
-	def __str__(self):
-		if self.errmsg is not None:
-			return "error parsing '%s' on or before %i: err %s" % (
-				self.file, self.line, self.errmsg)
-		return "error parsing '%s' on or before %i" % (self.file, self.line)
+    def __str__(self):
+        if self.errmsg is not None:
+            return "error parsing '%s' on or before %i: err %s" % (
+                self.file, self.line, self.errmsg)
+        return "error parsing '%s' on or before %i" % (self.file, self.line)

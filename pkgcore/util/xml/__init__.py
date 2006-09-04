@@ -9,34 +9,34 @@ indirection to load ElementTree
 
 gotit = True
 try:
-	import cElementTree as etree
+    import cElementTree as etree
 except ImportError:
-	gotit = False
+    gotit = False
 if not gotit:
-	try:
-		from xml.etree import cElementTree as etree
-		gotit = True
-	except ImportError:
-		pass
+    try:
+        from xml.etree import cElementTree as etree
+        gotit = True
+    except ImportError:
+        pass
 if not gotit:
-	try:
-		from elementtree import ElementTree as etree
-		gotit = True
-	except ImportError:
-		pass
+    try:
+        from elementtree import ElementTree as etree
+        gotit = True
+    except ImportError:
+        pass
 if not gotit:
-	try:
-		from xml.etree import ElementTree as etree
-		gotit = True
-	except ImportError:
-		pass
+    try:
+        from xml.etree import ElementTree as etree
+        gotit = True
+    except ImportError:
+        pass
 
 if not gotit:
-	from pkgcore.util.xml import bundled_elementtree as etree
+    from pkgcore.util.xml import bundled_elementtree as etree
 del gotit
 
 def escape(s):
-	"""
-	simple escaping of &, <, and >
-	"""
-	return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    """
+    simple escaping of &, <, and >
+    """
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")

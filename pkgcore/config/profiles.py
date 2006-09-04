@@ -6,10 +6,10 @@ base profile class- WARNING, may not be around long (provides little gain and is
 """
 
 class base(object):
-	pass
+    pass
 
 class ProfileException(Exception):
-	def __init__(self, err):
-		self.err = err
-	def __str__(self):
-		return str(self.err)
+    def __init__(self, err):
+        self.err = err
+    def __str__(self):
+        return str(self.err)

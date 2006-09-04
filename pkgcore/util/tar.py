@@ -14,21 +14,21 @@ import sys
 t=sys.modules.pop("tarfile", None)
 tarfile = __import__("tarfile")
 if t is not None:
-	sys.modules["tarfile"] = t
+    sys.modules["tarfile"] = t
 else:
-	del sys.modules["tarfile"]
+    del sys.modules["tarfile"]
 del t
 # ok, we now have our own local copy to monkey patch
 
 class TarInfo(tarfile.TarInfo):
-	__slots__ = (
-		"name", "mode", "uid", "gid", "size", "mtime", "chksum", "type",
-		"linkname", "uname", "gname", "devmajor", "devminor", "prefix", "offset",
-		"offset_data", "buf", "sparse", "_link_target")
+    __slots__ = (
+        "name", "mode", "uid", "gid", "size", "mtime", "chksum", "type",
+        "linkname", "uname", "gname", "devmajor", "devminor", "prefix", "offset",
+        "offset_data", "buf", "sparse", "_link_target")
 
 tarfile.TarInfo = TarInfo
 # finished monkey patching.  now to lift things out of our tarfile module into this scope so from/import behaves properly.
 
 for x in tarfile.__all__:
-	locals()[x] = getattr(tarfile, x)
+    locals()[x] = getattr(tarfile, x)
 del x

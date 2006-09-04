@@ -9,6 +9,6 @@ system pkgset based off of profile system collapsing
 import pkgcore.config.introspect
 
 def SystemSet(profile):
-	return frozenset(profile.sys)
+    return frozenset(profile.sys)
 SystemSet.pkgcore_config_type = \
-	pkgcore.config.introspect.ConfigHint(types={"profile":"section_ref"})
+    pkgcore.config.introspect.ConfigHint(types={"profile":"section_ref"})

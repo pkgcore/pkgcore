@@ -14,17 +14,17 @@ demandload(globals(), "pkgcore.repository:multiplex")
 
 class domain(object):
 
-	def __getattr__(self, attr):
-		if attr == "all_repos":
-			if len(self.repos) == 1:
-				a = self.all_repos = self.repos[0]
-			else:
-				a = self.all_repos = multiplex.tree(*self.repos)
-		elif attr == "all_vdbs":
-			if len(self.vdb) == 1:
-				a = self.all_vdbs = self.vdb[0]
-			else:
-				a = self.all_vdbs = multiplex.tree(*self.vdb)
-		else:
-			raise AttributeError(attr)
-		return a
+    def __getattr__(self, attr):
+        if attr == "all_repos":
+            if len(self.repos) == 1:
+                a = self.all_repos = self.repos[0]
+            else:
+                a = self.all_repos = multiplex.tree(*self.repos)
+        elif attr == "all_vdbs":
+            if len(self.vdb) == 1:
+                a = self.all_vdbs = self.vdb[0]
+            else:
+                a = self.all_vdbs = multiplex.tree(*self.vdb)
+        else:
+            raise AttributeError(attr)
+        return a

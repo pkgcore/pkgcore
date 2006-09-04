@@ -24,20 +24,20 @@ from stat import S_ISDIR, S_ISREG
 
 
 def listdir(path):
-	return os.listdir(path)
+    return os.listdir(path)
 
 def listdir_dirs(path, followSymlinks=True):
-	pjoin = os.path.join
-	if followSymlinks:
-		stat = os.stat
-	else:
-		stat = os.lstat
-	return [x for x in os.listdir(path) if S_ISDIR(stat(pjoin(path, x)).st_mode)]
+    pjoin = os.path.join
+    if followSymlinks:
+        stat = os.stat
+    else:
+        stat = os.lstat
+    return [x for x in os.listdir(path) if S_ISDIR(stat(pjoin(path, x)).st_mode)]
 
 def listdir_files(path, followSymlinks=True):
-	pjoin = os.path.join
-	if followSymlinks:
-		stat = os.stat
-	else:
-		stat = os.lstat
-	return [x for x in os.listdir(path) if S_ISREG(stat(pjoin(path, x)).st_mode)]
+    pjoin = os.path.join
+    if followSymlinks:
+        stat = os.stat
+    else:
+        stat = os.lstat
+    return [x for x in os.listdir(path) if S_ISREG(stat(pjoin(path, x)).st_mode)]

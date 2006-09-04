@@ -11,51 +11,51 @@
 
 class BaseException(Exception):
 
-	def __init__(self, *args, **kwargs):
-		Exception.__init__(self, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        Exception.__init__(self, *args, **kwargs)
 
-	def __str__(self):
-		return self.args[0]
+    def __str__(self):
+        return self.args[0]
 
 
 class TypeDefinitionError(BaseException):
 
-	"""Fatal error in type construction."""
+    """Fatal error in type construction."""
 
-	def __init__(self, *args, **kwargs):
-		BaseException.__init__(self, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        BaseException.__init__(self, *args, **kwargs)
 
 
 class ConfigurationError(BaseException):
 
-	"""Fatal error in parsing a config section."""
+    """Fatal error in parsing a config section."""
 
-	def __init__(self, *args, **kwargs):
-		BaseException.__init__(self, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        BaseException.__init__(self, *args, **kwargs)
 
 
 class InstantiationError(BaseException):
-	"""Exception occured during instantiation.	Actual exception is stored in instance.exc"""
-	def __init__(self, callablename, pargs, kwargs, exception):
-		self.callable = callablename
-		self.pargs = pargs
-		self.kwargs = kwargs
-		self.exc = exception
+    """Exception occured during instantiation.	Actual exception is stored in instance.exc"""
+    def __init__(self, callablename, pargs, kwargs, exception):
+        self.callable = callablename
+        self.pargs = pargs
+        self.kwargs = kwargs
+        self.exc = exception
 
-	def __str__(self):
-		return "Caught exception '%s' instantiating %s" % (
-			self.exc, self.callable)
+    def __str__(self):
+        return "Caught exception '%s' instantiating %s" % (
+            self.exc, self.callable)
 
 class QuoteInterpretationError(BaseException):
 
-	"""Quoting of a var was screwed up.
+    """Quoting of a var was screwed up.
 
-	It may be useful to catch this and raise a ConfigurationError at a
-	point where the filename is known.
-	"""
+    It may be useful to catch this and raise a ConfigurationError at a
+    point where the filename is known.
+    """
 
-	def __init__(self, string):
-		self.str = string
+    def __init__(self, string):
+        self.str = string
 
-	def __str__(self):
-		return "Parsing of %r failed" % self.str
+    def __str__(self):
+        return "Parsing of %r failed" % self.str

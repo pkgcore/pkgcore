@@ -2,6 +2,6 @@
 # License: GPL2
 
 try:
-	from pkgcore.util._caching import WeakValCache
+    from pkgcore.util._caching import WeakValCache
 except ImportError:
-	from weakref import WeakValueDictionary as WeakValCache
+    from weakref import WeakValueDictionary as WeakValCache

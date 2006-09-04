@@ -9,23 +9,23 @@ from pkgcore.package.atom import atom
 import pkgcore.const
 
 class FileList(object):
-	pkgcore_config_type = True
+    pkgcore_config_type = True
 
-	def __init__(self, location=pkgcore.const.WORLD_FILE):
-		self.path = location
-		# note that _atoms is generated on the fly.
+    def __init__(self, location=pkgcore.const.WORLD_FILE):
+        self.path = location
+        # note that _atoms is generated on the fly.
 
-	def __getattr__(self, attr):
-		if attr != "_atoms":
-			raise AttributeError(attr)
-		self._atoms = set(atom(x.strip()) for x in open(self.path, "r"))
-		return self._atoms
+    def __getattr__(self, attr):
+        if attr != "_atoms":
+            raise AttributeError(attr)
+        self._atoms = set(atom(x.strip()) for x in open(self.path, "r"))
+        return self._atoms
 
-	def __iter__(self):
-		return iter(self._atoms)
+    def __iter__(self):
+        return iter(self._atoms)
 
-	def __len__(self):
-		return len(self._atoms)
+    def __len__(self):
+        return len(self._atoms)
 
-	def __contains__(self, key):
-		return key in self._atoms
+    def __contains__(self, key):
+        return key in self._atoms

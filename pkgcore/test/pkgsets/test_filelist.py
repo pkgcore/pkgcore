@@ -7,28 +7,28 @@ from pkgcore.package.atom import atom
 import tempfile, os
 
 class TestFileList(unittest.TestCase):
-	def setUp(self):
-		self.fn = tempfile.mktemp()
+    def setUp(self):
+        self.fn = tempfile.mktemp()
 
-	def tearDown(self):
-		try:
-			os.unlink(self.fn)
-		except IOError:
-			pass
+    def tearDown(self):
+        try:
+            os.unlink(self.fn)
+        except IOError:
+            pass
 
-	def gen_world(self, contents):
-		open(self.fn, "w").write(contents)
-		return FileList(self.fn)
+    def gen_world(self, contents):
+        open(self.fn, "w").write(contents)
+        return FileList(self.fn)
 
-	def test_contains(self):
-		self.assertIn(
-			atom("x11-base/xorg-x11"), self.gen_world("x11-base/xorg-x11"))
+    def test_contains(self):
+        self.assertIn(
+            atom("x11-base/xorg-x11"), self.gen_world("x11-base/xorg-x11"))
 
-	def test_len(self):
-		self.assertEqual(
-			len(self.gen_world("x11-base/xorg-x11\ndev-util/diffball")), 2)
+    def test_len(self):
+        self.assertEqual(
+            len(self.gen_world("x11-base/xorg-x11\ndev-util/diffball")), 2)
 
-	def test_iter(self):
-		self.assertEqual(
-			sorted(self.gen_world("dev-util/diffball\ndev-util/bsdiff")),
-			sorted(atom(x) for x in ["dev-util/diffball", "dev-util/bsdiff"]))
+    def test_iter(self):
+        self.assertEqual(
+            sorted(self.gen_world("dev-util/diffball\ndev-util/bsdiff")),
+            sorted(atom(x) for x in ["dev-util/diffball", "dev-util/bsdiff"]))

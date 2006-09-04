@@ -173,10 +173,13 @@ class HardCodedConfigSection(ConfigSection):
 		if arg_type == 'callable':
 			if not callable(value):
 				try:
-					valuec = modules.load_attribute(value)
+					value = modules.load_attribute(value)
 				except modules.FailedImport:
 					raise errors.ConfigurationError(
 						'%s: cannot import %r' % (self.name, value))
+				if not callable(value):
+					raise errors.ConfigurationError(
+						'%s: %r is not callable' % (self.name, value))
 		elif arg_type in ('section_ref', 'section_refs'):
 			if isinstance(value, (list, tuple, basestring)):
 				assert central is not None

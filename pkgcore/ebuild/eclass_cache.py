@@ -29,7 +29,7 @@ class cache(base):
 	Set to None if that method isn't possible.
 	"""
 	
-	pkgcore_config_type = True
+	pkgcore_config_type = ConfigHint({"path":"str", "portdir":"str"})
 
 	def __init__(self, path, portdir=None):
 		"""
@@ -81,7 +81,7 @@ class cache(base):
 				ec_dict[x] = self.eclasses[x]
 			except:
 				print "ec=", ec_dict
-				print "inherits=", inherits
+				print "inherit=",x
 				raise
 
 		return ec_dict

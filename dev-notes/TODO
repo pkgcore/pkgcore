@@ -62,6 +62,9 @@ none == easy, >=5 of 'em, tricky.
     This *is* the hook for having configs stored on a central server, and it's nifty ;)
   - integration of make.globals type data; defaults effectively, but a bit more complex.
 
+- 'app bundles'.  Reliant on serious overhauling of deps to do 'locked deps', but think of it as rpath based app stacks,
+  a full apache stack compiled to run from /opt/blah for example.
+
 - pkgcore.ebuild.gpgtree ****
   derivative of pkgcore.ebuild.ebuild_repository, this overloads ebuild_factory and eclass_cache so that gpg checks are done.
   This requires some hackery, partially dependant on config.central changes (see above).

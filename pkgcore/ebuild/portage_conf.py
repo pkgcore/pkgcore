@@ -163,8 +163,6 @@ def configFromMakeConf(location="/etc/"):
 			{"type": "cache", "location": portdir, 
 			"label": "portdir cache",
 			"class": "pkgcore.cache.metadata.database"})
-		new_config[portdir_local_cache] = basics.SectionAlias(
-			portdir_local_cache, 'portdir cache')
 	else:
 		new_config["portdir cache"] = \
 			basics.ConfigSectionFromStringDict("portdir cache",
@@ -172,8 +170,13 @@ def configFromMakeConf(location="/etc/"):
 	
 	# setup portdir.
 	d = gen_tree_dict(portdir, gentoo_mirrors)
-	if rsync_portdir_cache:
-		d["cache"] = d["cache"] + ("portdir cache",)
+	d["cache"] = ("portdir cache",)
+	if len(all_ecs) > 1:
+		s = "%s cache" % portdir
+		new_config[s] = basics.ConfigSectionFromStringDict(s,
+			generate_generic_cache(portdir))
+		if rsync_portdir_cache:
+			d["cache"] = (s,) + d["cache"]
 	new_config[portdir] = basics.HardCodedConfigSection(portdir, d)
 	del d
 
@@ -183,17 +186,13 @@ def configFromMakeConf(location="/etc/"):
 		new_config["portdir"] = basics.SectionAlias("portdir", portdir)
 	else:
 		# something special. ;)
-		cache = ["portdir cache"]
-		if rsync_portdir_cache:
-			# created higher up; two caches, writes to the local, reads (when possible)
-			# from pregenned metadata
-			cache.insert(0, portdir_local_cache)
-		print cache
 		# FIX
 		d = gen_tree_dict(portdir, gentoo_mirrors)
 		d["eclass_cache"] = pjoin(portdir, "eclass")
-		d["cache"] = ("portdir cache",)
-		print d
+		if rsync_portdir_cache:
+			# created higher up; two caches, writes to the local, reads (when possible)
+			# from pregenned metadata
+			d["cache"] = ("portdir cache",)
 		new_config["portdir"] = basics.HardCodedConfigSection("portdir", d)
 		
 	

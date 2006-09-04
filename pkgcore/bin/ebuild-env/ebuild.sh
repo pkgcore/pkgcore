@@ -122,7 +122,7 @@ dump_trace() {
 
 killparent() {
 	trap INT
-	kill ${PORTAGE_MASTER_PID}
+#	kill ${PORTAGE_MASTER_PID}
 }
 
 hasq() {

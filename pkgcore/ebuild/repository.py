@@ -147,6 +147,13 @@ class UnconfiguredTree(prototype.tree):
         return os.path.join(self.base, pkg.category, pkg.package, \
             "%s-%s.ebuild" % (pkg.package, pkg.fullver))
 
+    def __str__(self):
+        return "%s: location %s" % (self.__class__, self.base)
+
+    def __repr__(self):
+        return "<ebuild %s location=%r @%#8x>" % (self.__class__.__name__,
+            self.base, id(self))
+
 
 class DelayedInvertedContains(InvertedContains):
     __slot__ = ("_func", "_data")

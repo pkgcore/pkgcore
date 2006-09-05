@@ -33,13 +33,13 @@ class TestMutatedPkg(unittest.TestCase):
 
     def test_raw_pkg(self):
         pkg = self.make_fakepkg()
-        self.assertIdentical(MutatedPkg(pkg, [])._raw_pkg, pkg)
+        self.assertIdentical(MutatedPkg(pkg, {})._raw_pkg, pkg)
     
     def test_cmp(self):
         pkg1 = self.make_fakepkg()
         pkg2 = self.make_fakepkg(ver=2)
-        mpkg1 = MutatedPkg(pkg1, [])
-        mpkg2 = MutatedPkg(pkg2, [])
+        mpkg1 = MutatedPkg(pkg1, {})
+        mpkg2 = MutatedPkg(pkg2, {})
         
         for lpkg in (pkg1, mpkg1):
             self.assertTrue(cmp(lpkg, mpkg2) < 0)
@@ -49,6 +49,6 @@ class TestMutatedPkg(unittest.TestCase):
     
     def test_getattr(self):
         pkg = self.make_fakepkg()
-        self.assertEqual(MutatedPkg(pkg, []).a, 1)
+        self.assertEqual(MutatedPkg(pkg, {}).a, 1)
         self.assertEqual(MutatedPkg(pkg, {"a":2}).a, 2)
-        self.assertRaises(AttributeError, MutatedPkg(pkg, []).__getattr__, "b")
+        self.assertRaises(AttributeError, MutatedPkg(pkg, {}).__getattr__, "b")

@@ -14,23 +14,22 @@ Finally, code _should_ be documented, following epydoc/epytext guidelines
 ---------------------------
 Follow pep8, with following exemptions-
 
-1) Use tabs for indentation
-2) <80 char limit is only applicable where it doesn't make the logic ugly.
+-  <80 char limit is only applicable where it doesn't make the logic ugly.
    This is not an excuse to have a 200 char if statement (fix your logic).  Use common sense.
-3) combining imports is ok.
-4) use absolute imports
-5) _simple_ try/except combined lines are acceptable, but not forced (your call)- example
+-  combining imports is ok.
+-  use absolute imports
+-  _simple_ try/except combined lines are acceptable, but not forced (your call)- example
 
 try: l.remove(blah)
 except IndexError: pass
 
-6) for comments. 2 spaces trailing is pointless- not needed.
-7) classes should be named SomeClass , functions/methods should be named some_func
+-  for comments. 2 spaces trailing is pointless- not needed.
+-  classes should be named SomeClass , functions/methods should be named some_func
    Exceptions are classes.  Don't raise strings either.
-8) avoid __var 'private' attributes unless you absolutely have a reason to hide it, 
+-  avoid __var 'private' attributes unless you absolutely have a reason to hide it, 
    and the class won't be inherited (or that attribute must _not_ be accessed)
-9) using string module functions when you could use a string method is evil.  Don't do it.
-10) use isinstance(str_instance, basestring) unless you _really_ need to know if it's 
+-  using string module functions when you could use a string method is evil.  Don't do it.
+-  use isinstance(str_instance, basestring) unless you _really_ need to know if it's 
    utf8/ascii
    
 

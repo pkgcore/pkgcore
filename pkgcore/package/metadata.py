@@ -40,14 +40,6 @@ class package(CPV):
         CPV.__init__(self, cpv)
         self.__dict__["_parent"] = parent_repository
 
-
-    def __setattr__(self, *args, **kwargs):
-        raise AttributeError
-
-
-    def __delattr__(self, *args, **kwargs):
-        raise AttributeError
-
     def _get_data(self):
         """internal hook func to get the packages metadata, consumer of L{_get_attr}"""
         if "data" in self.__dict__:

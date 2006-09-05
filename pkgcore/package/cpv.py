@@ -64,9 +64,6 @@ class native_CPV(object):
     def __str__(self):
         return getattr(self, 'cpvstr', 'None')
 
-    def __setattr__(self, name, value):
-        raise AttributeError(name)
-
     def __eq__(self, other):
         if isinstance(other, CPV):
             return self.cpvstr == other.cpvstr

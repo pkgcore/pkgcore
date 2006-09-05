@@ -14,6 +14,9 @@ class base(object):
     def __setattr__(self, name, value):
         raise AttributeError(name)
     
+    def __delattr__(self, attr):
+        raise AttributeError(name)
+    
     def __getattr__(self, attr):
         try:
             val = self.__dict__[attr] = self._get_attr[attr](self)

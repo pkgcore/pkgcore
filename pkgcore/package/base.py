@@ -11,11 +11,11 @@ class base(object):
     
     _get_attr = {}
     
-    def __setattr__(self, name, value):
-        raise AttributeError(name)
+    def __setattr__(self, attr, value):
+        raise AttributeError(attr)
     
     def __delattr__(self, attr):
-        raise AttributeError(name)
+        raise AttributeError(attr)
     
     def __getattr__(self, attr):
         try:

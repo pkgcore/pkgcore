@@ -31,7 +31,7 @@ class package(CPV):
 
     _get_attr = dict(CPV._get_attr)
 
-    def __init__(self, cpv, parent_repository):
+    def __init__(self, parent_repository, cpv):
         """
         @param cpv: cpv string to parse.  Gentoo specific, should be abstracted out
         @param parent_repository: parent repository this package belongs to
@@ -94,7 +94,7 @@ class factory(object):
         
         inst = self._cached_instances.get(cpv)
         if inst is None:
-            inst = self._cached_instances[cpv] = self.child_class(cpv, self)
+            inst = self._cached_instances[cpv] = self.child_class(self, cpv)
         return inst
 
     def __call__(self, *args, **kwds):

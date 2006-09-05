@@ -84,7 +84,7 @@ def generate_depset(s, c, *keys, **kwds):
 
 def generate_providers(self):
     rdep = AndRestriction(self.versioned_atom, finalize=True)
-    func = post_curry(virtual_ebuild, self._parent, self,
+    func = pre_curry(virtual_ebuild, self._parent, self,
                       {"rdepends":rdep, "slot":self.version})
     # re-enable license at some point.
     #, "license":self.license})
@@ -99,8 +99,7 @@ def generate_providers(self):
 
 def generate_fetchables(self):
     chksums = parse_digest(os.path.join(os.path.dirname(self.path), "files",
-                                        "digest-%s-%s" % (self.package,
-                                                          self.fullver)))
+        "digest-%s-%s" % (self.package, self.fullver)))
     try:
         mirrors = self._parent.mirrors
     except AttributeError:
@@ -198,8 +197,8 @@ class package(metadata.package):
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
                   "license", "src_uri", "license", "provides"])
 
-    def __init__(self, cpv, parent, pull_path):
-        metadata.package.__init__(self, cpv, parent)
+    def __init__(self, parent, cpv, pull_path):
+        metadata.package.__init__(self, parent, cpv)
         self.__dict__["_get_path"] = pull_path
 
     _get_attr = dict(metadata.package._get_attr)
@@ -300,7 +299,7 @@ class package_factory(metadata.factory):
         inst = self._cached_instances.get(cpv, None)
         if inst is None:
             inst = self._cached_instances[cpv] = self.child_class(
-                cpv, self, self._parent_repo._get_ebuild_path)
+                self, cpv, self._parent_repo._get_ebuild_path)
             o = self._weak_pkglevel_cache.get(inst.key, None)
             if o is None:
                 o = ThrowAwayNameSpace([None, None, None])
@@ -333,26 +332,25 @@ class virtual_ebuild(metadata.package):
     package_is_real = False
     built = True
 
-    def __init__(self, cpv, parent_repository, pkg, data):
+    def __init__(self, parent_repository, pkg, data, cpv):
         """
         @param cpv: cpv for the new pkg
         @param parent_repository: actual repository that this pkg should claim it belongs to
         @param pkg: parent pkg that is generating this pkg
         @param data: mapping of data to push to use in __getattr__ access
         """
-
         self.__dict__["data"] = IndeterminantDict(lambda *a: str(), data)
         self.__dict__["_orig_data"] = data
         self.__dict__["actual_pkg"] = pkg
         state = set(self.__dict__.keys())
         # hack. :)
-        metadata.package.__init__(self, cpv, parent_repository)
+        metadata.package.__init__(self, parent_repository, cpv)
         if not self.version:
             for x in self.__dict__.keys():
                 if x not in state:
                     del self.__dict__[x]
-            metadata.package.__init__(self, cpv+"-"+pkg.fullver,
-                                      parent_repository)
+            metadata.package.__init__(self, parent_repository, 
+                cpv+"-"+pkg.fullver)
             assert self.version
 
     def __getattr__(self, attr):

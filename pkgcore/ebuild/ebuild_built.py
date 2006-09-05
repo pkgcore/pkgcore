@@ -136,8 +136,8 @@ class package_factory(metadata.factory):
     def new_package(self, cpv):
         inst = self._cached_instances.get(cpv, None)
         if inst is None:
-            inst = self._cached_instances[cpv] = self.child_class(
-                cpv, self, self._parent_repo._get_ebuild_path)
+            inst = self._cached_instances[cpv] = self.child_class(self,
+                cpv, self._parent_repo._get_ebuild_path)
         return inst
 
     _generate_format_install_op   = _generic_format_install_op
@@ -170,7 +170,7 @@ class fake_package_factory(package_factory):
         self.image_root = image_root
         self.environment_path = environment_path
         # lambda redirects path to environment path
-        obj = self.child_class(pkg.cpvstr, self,
+        obj = self.child_class(self, pkg.cpvstr,
                                lambda *x:self.environment_path)
         for x in self._forced_copy:
             # bypass setattr restrictions.

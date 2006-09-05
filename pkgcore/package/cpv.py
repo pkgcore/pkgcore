@@ -267,21 +267,9 @@ class CPV(base.base, base_CPV):
 
 #	__inst_caching__ = True
 
-    _get_attr = {}
-
     def __repr__(self):
         return '<%s cpvstr=%s @%#8x>' % (
             self.__class__.__name__, self.cpvstr, id(self))
-
-    def __setattr__(self, name, value):
-        raise AttributeError(name)
-
-    def __getattr__(self, attr):
-        try:
-            val = self.__dict__[attr] = self._get_attr[attr](self)
-            return val
-        except KeyError:
-            raise AttributeError(attr)
 
     @property
     def versioned_atom(self):

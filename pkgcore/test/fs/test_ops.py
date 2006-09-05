@@ -11,7 +11,9 @@ pjoin = os.path.join
 class VerifyMixin(object):
 
     def verify(self, o, kwds, stat):
-        for a, k in (("st_mtime", "mtime"), ("st_gid", "gid"), ("st_uid", "uid")):
+        for a, k in (("st_mtime", "mtime"),
+                     ("st_gid", "gid"),
+                     ("st_uid", "uid")):
             if k in kwds:
                 self.assertEqual(getattr(stat, a), kwds[k], "testing %s" % k)
         if "mode" in kwds:
@@ -21,7 +23,8 @@ class VerifyMixin(object):
 class TestDefaultEnsurePerms(VerifyMixin, TempDirMixin, unittest.TestCase):
 
     def common_bits(self, creator_func, kls):
-        kwds = {"mtime":01234, "uid":os.getuid(), "gid":os.getgid(), "mode":0775}
+        kwds = {"mtime":01234, "uid":os.getuid(), "gid":os.getgid(),
+                "mode":0775}
         o = kls(pjoin(self.dir, "blah"), **kwds)
         creator_func(o.location)
         self.assertTrue(ops.default_ensure_perms(o))
@@ -63,7 +66,8 @@ class TestCopyFile(VerifyMixin, TempDirMixin, unittest.TestCase):
         src = pjoin(self.dir, "copy_test_src")
         dest = pjoin(self.dir, "copy_test_dest")
         open(src, "w").writelines("asdf\n" for x in xrange(10))
-        kwds = {"mtime":10321, "uid":os.getuid(), "gid":os.getgid(), "mode":0664}
+        kwds = {"mtime":10321, "uid":os.getuid(), "gid":os.getgid(),
+                "mode":0664}
         o = fs.fsFile(dest, real_path=src, **kwds)
         self.assertTrue(ops.default_copyfile(o))
         self.assertEqual("asdf\n" * 10, open(dest, "r").read())

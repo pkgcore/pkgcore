@@ -53,7 +53,8 @@ def converter(src_tar):
             d["minor"] = long(member.minor)
             yield fsDir(location, **d)
         else:
-            raise AssertionError("unknown type %r was encounted walking tarmembers" % member)
+            raise AssertionError(
+                "unknown type %r was encounted walking tarmembers" % member)
 
 def generate_contents(path):
     t = TarFile.bz2open(path, mode="r")

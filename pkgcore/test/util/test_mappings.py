@@ -207,7 +207,8 @@ class StackedDictTest(unittest.TestCase):
         self.assertEquals(len(s), 0)
 
     def test_keys(self):
-        self.assertEqual(sorted(mappings.StackedDict(self.orig_dict, self.new_dict)),
+        self.assertEqual(
+            sorted(mappings.StackedDict(self.orig_dict, self.new_dict)),
             sorted(self.orig_dict.keys() + self.new_dict.keys()))
 
 

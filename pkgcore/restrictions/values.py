@@ -4,9 +4,10 @@
 """
 value restrictions
 
-works hand in hand with L{pkgcore.restrictions.packages}, these classes match against a value handed in,
-package restrictions pull the attr from a package instance and hand it to their wrapped restriction (which is
-a value restriction).
+works hand in hand with L{pkgcore.restrictions.packages}, these
+classes match against a value handed in, package restrictions pull the
+attr from a package instance and hand it to their wrapped restriction
+(which is a value restriction).
 """
 
 import re
@@ -168,7 +169,7 @@ class StrExactMatch(StrMatch):
     def match(self, value):
         if self.flags == re.I:
             return (self.exact == value.lower()) != self.negate
-        else:	
+        else:
             return (self.exact == value) != self.negate
 
     def intersect(self, other):
@@ -184,7 +185,9 @@ class StrExactMatch(StrMatch):
         return None
 
     def __eq__(self, other):
-        return self.exact == other.exact and self.negate == other.negate and self.flags == other.flags
+        return (self.exact == other.exact and
+                self.negate == other.negate and
+                self.flags == other.flags)
 
     def __hash__(self):
         return hash((self.exact, self.negate, self.flags))
@@ -251,7 +254,10 @@ class StrGlobMatch(StrMatch):
 
     def __eq__(self, other):
         try:
-            return self.glob == other.glob and self.negate == other.negate and self.flags == other.flags and self.prefix == other.prefix
+            return (self.glob == other.glob and
+                    self.negate == other.negate and
+                    self.flags == other.flags and
+                    self.prefix == other.prefix)
         except AttributeError:
             return False
 
@@ -308,11 +314,11 @@ class ComparisonMatch(base):
     @classmethod
     def convert_str_op(cls, op_str):
         return cls._op_converter[op_str]
-    
+
     @classmethod
     def convert_op_str(cls, op):
         return cls._rev_op_converter[tuple(sorted(op))]
-    
+
     def __init__(self, cmp_func, data, matching_vals, negate=False):
 
         """
@@ -324,7 +330,7 @@ class ComparisonMatch(base):
         """
         base.__init__(self, negate=negate)
         self.cmp_func = cmp_func
-    
+
         if not isinstance(matching_vals, (tuple, list)):
             if isinstance(matching_vals, basestring):
                 matching_vals = self.convert_str_op(matching_vals)
@@ -332,23 +338,28 @@ class ComparisonMatch(base):
                 matching_vals = [matching_vals]
             else:
                 raise TypeError("matching_vals must be a list/tuple")
-            
+
         self.data = data
         if negate:
-            self.matching_vals = tuple(set([-1, 0, 1]).difference(_mangle_cmp_val(x) for x in matching_vals))
+            self.matching_vals = tuple(
+                set([-1, 0, 1]).difference(_mangle_cmp_val(x)
+                                           for x in matching_vals))
         else:
-            self.matching_vals = tuple(_mangle_cmp_val(x) for x in matching_vals)
+            self.matching_vals = tuple(_mangle_cmp_val(x)
+                                       for x in matching_vals)
 
     def match(self, actual_val):
-        return _mangle_cmp_val(self.cmp_func(actual_val, self.data)) in self.matching_vals
+        return _mangle_cmp_val(
+            self.cmp_func(actual_val, self.data)) in self.matching_vals
 
     def __hash__(self):
         return hash((self.cmp_func, self.matching_vals, self.data))
 
     def __eq__(self, other):
         try:
-            return self.cmp_func == other.cmp_func and self.matching_vals == other.matching_vals and \
-                self.data == other.data
+            return (self.cmp_func == other.cmp_func and
+                    self.matching_vals == other.matching_vals and
+                    self.data == other.data)
         except AttributeError:
             return False
 
@@ -382,7 +393,8 @@ class ContainmentMatch(base):
         self.all = bool(kwds.pop("all", False))
         super(ContainmentMatch, self).__init__(**kwds)
         # note that we're discarding any specialized __getitem__ on vals here.
-        # this isn't optimal, and should be special cased for known types (lists/tuples fex)
+        # this isn't optimal, and should be special cased for known
+        # types (lists/tuples fex)
         self.vals = frozenset(vals)
 
     def match(self, val):
@@ -392,9 +404,10 @@ class ContainmentMatch(base):
                     return not self.negate
             return self.negate
 
-        # this can, and should be optimized to do len checks- iterate over the smaller of the two
-        # see above about special casing bits.  need the same protection here, on the offchance
-        # (as contents sets do), the __getitem__ is non standard.
+        # this can, and should be optimized to do len checks- iterate
+        # over the smaller of the two see above about special casing
+        # bits. need the same protection here, on the offchance (as
+        # contents sets do), the __getitem__ is non standard.
         try:
             if self.all:
                 i = iter(val)
@@ -413,7 +426,7 @@ class ContainmentMatch(base):
             for k in self.vals:
                 if k in val:
                     return not self.negate
-                                
+
 
     def force_False(self, pkg, attr, val):
 
@@ -435,14 +448,18 @@ class ContainmentMatch(base):
         entry = pkg.changes_count()
         if self.negate:
             if self.all:
-                def filter(truths):		return False in truths
-                def true(r, pvals):		return pkg.request_enable(attr, r)
-                def false(r, pvals):	return pkg.request_disable(attr, r)
+                def filter(truths):
+                    return False in truths
+                def true(r, pvals):
+                    return pkg.request_enable(attr, r)
+                def false(r, pvals):
+                    return pkg.request_disable(attr, r)
 
                 truths = [x in val for x in self.vals]
 
-                for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter,
-                    desired_false=false, desired_true=true):
+                for x in boolean.iterative_quad_toggling(
+                    pkg, None, list(self.vals), 0, len(self.vals), truths,
+                    filter, desired_false=false, desired_true=true):
                     return True
             else:
                 if pkg.request_disable(attr, *self.vals):
@@ -458,7 +475,8 @@ class ContainmentMatch(base):
             def true(r, pvals):		return pkg.request_enable(attr, r)
             def false(r, pvals):	return pkg.request_disable(attr, r)
             truths = [x in val for x in self.vals]
-            for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, l, truths, filter,
+            for x in boolean.iterative_quad_toggling(
+                pkg, None, list(self.vals), 0, l, truths, filter,
                 desired_false=false, desired_true=true):
                 return True
         return False
@@ -494,8 +512,9 @@ class ContainmentMatch(base):
 
                 truths = [x in val for x in self.vals]
 
-                for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter,
-                    desired_false=false, desired_true=true):
+                for x in boolean.iterative_quad_toggling(
+                    pkg, None, list(self.vals), 0, len(self.vals), truths,
+                    filter, desired_false=false, desired_true=true):
                     return True
             else:
                 if pkg.request_enable(attr, *self.vals):
@@ -511,7 +530,8 @@ class ContainmentMatch(base):
             def true(r, pvals):		return pkg.request_enable(attr, r)
             def false(r, pvals):	return pkg.request_disable(attr, r)
             truths = [x in val for x in self.vals]
-            for x in boolean.iterative_quad_toggling(pkg, None, list(self.vals), 0, len(self.vals), truths, filter,
+            for x in boolean.iterative_quad_toggling(
+                pkg, None, list(self.vals), 0, len(self.vals), truths, filter,
                 desired_false=false, desired_true=true):
                 return True
         return False
@@ -519,7 +539,9 @@ class ContainmentMatch(base):
 
     def __eq__(self, other):
         try:
-            return self.all == other.all and self.negate == other.negate and self.vals == other.vals
+            return (self.all == other.all and
+                    self.negate == other.negate and
+                    self.vals == other.vals)
         except AttributeError:
             return False
 
@@ -541,8 +563,8 @@ class ContainmentMatch(base):
             s = "contains [%s]"
         return s % ', '.join(map(str, self.vals))
 
-for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
-    [restriction, ["AlwaysBool"]]]:
+for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]],
+             [restriction, ["AlwaysBool"]]]:
     for x in l:
         o = getattr(m, x)
         doc = o.__doc__

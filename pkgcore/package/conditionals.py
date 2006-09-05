@@ -12,9 +12,10 @@ demandload(globals(), "copy")
 class PackageWrapper(object):
 
     """wrap a package instance adding a new attribute, and evaluating the wrapped pkgs attributes"""
-    
-    def __init__(self, pkg_instance, configurable_attribute_name, initial_settings=None, unchangable_settings=None,
-        attributes_to_wrap=None, build_callback=None):
+
+    def __init__(self, pkg_instance, configurable_attribute_name,
+                 initial_settings=None, unchangable_settings=None,
+                 attributes_to_wrap=None, build_callback=None):
 
         """
         @param pkg_instance: L{pkgcore.package.metadata.package} instance to wrap
@@ -34,8 +35,11 @@ class PackageWrapper(object):
             attributes_to_wrap = {}
         self._wrapped_attr = attributes_to_wrap
         if configurable_attribute_name.find(".") != -1:
-            raise ValueError("can only wrap first level attributes, 'obj.dar' fex, not '%s'" % (configurable_attribute_name))
-        setattr(self, configurable_attribute_name, LimitedChangeSet(initial_settings, unchangable_settings))
+            raise ValueError("can only wrap first level attributes, "
+                             "'obj.dar' fex, not '%s'" %
+                             (configurable_attribute_name))
+        setattr(self, configurable_attribute_name,
+                LimitedChangeSet(initial_settings, unchangable_settings))
         self._unchangable = unchangable_settings
         self._configurable = getattr(self, configurable_attribute_name)
         self._configurable_name = configurable_attribute_name
@@ -44,13 +48,15 @@ class PackageWrapper(object):
         self._buildable = build_callback
 
     def __copy__(self):
-        return self.__class__(self._raw_pkg, self._configurable_name, initial_settings=set(self._configurable),
-            unchangable_settings=self._unchangable, attributes_to_wrap=self._wrapped_attr)
+        return self.__class__(self._raw_pkg, self._configurable_name,
+                              initial_settings=set(self._configurable),
+                              unchangable_settings=self._unchangable,
+                              attributes_to_wrap=self._wrapped_attr)
 
     def rollback(self, point=0):
         """
         rollback changes to the configurable attribute to an earlier point
-        
+
         @param point: must be an int
         """
         self._configurable.rollback(point)
@@ -74,10 +80,13 @@ class PackageWrapper(object):
     def request_enable(self, attr, *vals):
         """
         internal function
-        
-        since configurable somewhat steps outside of normal restriction protocols, request_enable requests that this package instance
-        change its configuration to make the restriction return True; if not possible, reverts any changes it attempted
-        
+
+        since configurable somewhat steps outside of normal
+        restriction protocols, request_enable requests that this
+        package instance change its configuration to make the
+        restriction return True; if not possible, reverts any changes
+        it attempted
+
         @param attr: attr to try and change
         @param vals: L{pkgcore.restrictions.values.base} instances that we're attempting to make match True
         """
@@ -119,10 +128,13 @@ class PackageWrapper(object):
     def request_disable(self, attr, *vals):
         """
         internal function
-        
-        since configurable somewhat steps outside of normal restriction protocols, request_disable requests that this package instance
-        change its configuration to make the restriction return False; if not possible, reverts any changes it attempted
-        
+
+        since configurable somewhat steps outside of normal
+        restriction protocols, request_disable requests that this
+        package instance change its configuration to make the
+        restriction return False; if not possible, reverts any changes
+        it attempted
+
         @param attr: attr to try and change
         @param vals: L{pkgcore.restrictions.values.base} instances that we're attempting to make match False
         """
@@ -166,18 +178,23 @@ class PackageWrapper(object):
                 if self._cached_wrapped[attr][0] == self._reuse_pt:
                     return self._cached_wrapped[attr][1]
                 del self._cached_wrapped[attr]
-            o = self._wrapped_attr[attr](getattr(self._raw_pkg, attr), self._configurable)
+            o = self._wrapped_attr[attr](getattr(self._raw_pkg, attr),
+                                         self._configurable)
             self._cached_wrapped[attr] = (self._reuse_pt, o)
             return o
         else:
             return getattr(self._raw_pkg, attr)
 
     def __str__(self):
-#		return "config wrapper: %s, configurable('%s'):%s" % (self._raw_pkg, self._configurable_name, self._configurable)
-        return "config wrapped(%s): %s" % (self._configurable_name, self._raw_pkg)
-    
+#        return "config wrapper: %s, configurable('%s'):%s" % (
+#            self._raw_pkg, self._configurable_name, self._configurable)
+        return "config wrapped(%s): %s" % (self._configurable_name,
+                                           self._raw_pkg)
+
     def __repr__(self):
-        return "<%s pkg=%r wrapped=%r @%#8x>" % (self.__class__.__name__, self._raw_pkg, self._configurable_name, id(self))
+        return "<%s pkg=%r wrapped=%r @%#8x>" % (
+            self.__class__.__name__, self._raw_pkg, self._configurable_name,
+            id(self))
 
     def freeze(self):
         o = copy.copy(self)

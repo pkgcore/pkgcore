@@ -53,7 +53,8 @@ class SQLDatabase(template.database):
         derived classes shouldn't need to override this"""
 
         self.db = None
-        super(SQLDatabase, self).__init__(location, label, auxdbkeys, *args, **config)
+        super(SQLDatabase, self).__init__(location, label, auxdbkeys,
+                                          *args, **config)
 
         config.setdefault("host","127.0.0.1")
         config.setdefault("autocommit", self.autocommits)

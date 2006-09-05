@@ -64,7 +64,9 @@ def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False,
     return resolver_cls(dbs + vdb, plan.pkg_sort_highest, f, **kwds)
 
 
-def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, force_replacement=False, resolver_cls=plan.merge_plan, nodeps=False, **kwds):
+def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True,
+                         force_replacement=False, resolver_cls=plan.merge_plan,
+                         nodeps=False, **kwds):
     """
     generate and configure a resolver that is focused on just installing requests- installs highest version it can build a solution for,
     but tries to avoid building anything not needed
@@ -90,7 +92,8 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True, for
 
     if force_replacement:
         resolver_cls = generate_replace_resolver_kls(resolver_cls)
-    return resolver_cls(vdb + dbs, plan.pkg_sort_highest, plan.merge_plan.prefer_reuse_strategy, **kwds)
+    return resolver_cls(vdb + dbs, plan.pkg_sort_highest,
+                        plan.merge_plan.prefer_reuse_strategy, **kwds)
 
 _vdb_restrict = packages.OrRestriction(
     packages.PackageRestriction("repo.livefs", values.EqualityMatch(False)),
@@ -114,7 +117,10 @@ class empty_tree_merge_plan(plan.merge_plan):
         plan.merge_plan.__init__(self, *args, **kwds)
 
     def add_atom(self, atom):
-        return plan.merge_plan.add_atom(self, KeyedAndRestriction(self._vdb_restriction, atom, key=atom.key), dbs=self.all_dbs)
+        return plan.merge_plan.add_atom(
+            self,
+            KeyedAndRestriction(self._vdb_restriction, atom, key=atom.key),
+            dbs=self.all_dbs)
 
 
 def generate_replace_resolver_kls(resolver_kls):

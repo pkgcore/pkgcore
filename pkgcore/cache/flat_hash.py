@@ -49,7 +49,8 @@ class database(fs_template.FsBased):
 
     def _setitem(self, cpv, values):
         s = cpv.rfind("/")
-        fp = os.path.join(self.location, cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s+1:]))
+        fp = os.path.join(self.location,
+                          cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s+1:]))
         try:
             myf = open(fp, "w", 32384)
         except IOError, ie:

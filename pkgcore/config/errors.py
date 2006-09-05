@@ -10,41 +10,27 @@
 
 
 class BaseException(Exception):
-
-    def __init__(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
-
-    def __str__(self):
-        return self.args[0]
+    pass
 
 
 class TypeDefinitionError(BaseException):
-
     """Fatal error in type construction."""
-
-    def __init__(self, *args, **kwargs):
-        BaseException.__init__(self, *args, **kwargs)
 
 
 class ConfigurationError(BaseException):
-
     """Fatal error in parsing a config section."""
-
-    def __init__(self, *args, **kwargs):
-        BaseException.__init__(self, *args, **kwargs)
 
 
 class InstantiationError(BaseException):
     """Exception occured during instantiation.	Actual exception is stored in instance.exc"""
     def __init__(self, callablename, pargs, kwargs, exception):
+        BaseException.__init__(self, "Caught exception '%s' instantiating %s" %
+                               (exception, callablename))
         self.callable = callablename
         self.pargs = pargs
         self.kwargs = kwargs
         self.exc = exception
 
-    def __str__(self):
-        return "Caught exception '%s' instantiating %s" % (
-            self.exc, self.callable)
 
 class QuoteInterpretationError(BaseException):
 
@@ -55,7 +41,5 @@ class QuoteInterpretationError(BaseException):
     """
 
     def __init__(self, string):
+        BaseException.__init__(self, "Parsing of %r failed" % (str,))
         self.str = string
-
-    def __str__(self):
-        return "Parsing of %r failed" % self.str

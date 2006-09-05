@@ -16,22 +16,25 @@ def convert_use_reqs(uses):
     assert len(uses)
     use_asserts = tuple(x for x in uses if x[0] != "!")
     if len(use_asserts) != len(uses):
-        use_negates = values.ContainmentMatch(all=True, negate=True, *tuple(x[1:] for x in uses if x[0] == "!"))
+        use_negates = values.ContainmentMatch(
+            all=True, negate=True, *tuple(x[1:] for x in uses if x[0] == "!"))
         assert len(use_negates.vals)
         if not use_asserts:
             return use_negates
     else:
         return values.ContainmentMatch(all=True, *use_asserts)
-    return values.AndRestriction(values.ContainmentMatch(all=True, *use_asserts), use_negates)
+    return values.AndRestriction(
+        values.ContainmentMatch(all=True, *use_asserts), use_negates)
 
 
 class DepSet(boolean.AndRestriction):
-    
+
     """
     gentoo DepSet syntax parser
     """
 
-    __slots__ = ("has_conditionals", "element_class", "_node_conds", "restrictions", "_known_conditionals")
+    __slots__ = ("has_conditionals", "element_class", "_node_conds",
+                 "restrictions", "_known_conditionals")
     type = packages.package_type
     negate = False
 
@@ -61,8 +64,9 @@ class DepSet(boolean.AndRestriction):
         try:
             for k in words:
                 if k == ")":
-                    # no elements == error.  if closures don't map up, indexerror would be chucked from trying to pop the frame
-                    # so that is addressed.
+                    # no elements == error. if closures don't map up,
+                    # indexerror would be chucked from trying to pop
+                    # the frame so that is addressed.
                     if not depsets[-1]:
                         raise ParseError(dep_str)
                     elif raw_conditionals[-1].endswith('?'):
@@ -70,16 +74,20 @@ class DepSet(boolean.AndRestriction):
 
                         c = convert_use_reqs((raw_conditionals[-1][:-1],))
 
-                        depsets[-2].append(packages.Conditional("use", c, tuple(depsets[-1])))
+                        depsets[-2].append(
+                            packages.Conditional("use", c, tuple(depsets[-1])))
                     else:
-                        depsets[-2].append(operators[raw_conditionals[-1]](finalize=True, *depsets[-1]))
+                        depsets[-2].append(
+                            operators[raw_conditionals[-1]](finalize=True,
+                                                            *depsets[-1]))
 
                     raw_conditionals.pop(-1)
                     depsets.pop(-1)
 
                 elif k.endswith('?') or k in operators or k == "(":
                     if k != "(":
-                        # use conditional or custom op. no tokens left == bad dep_str.
+                        # use conditional or custom op.
+                        # no tokens left == bad dep_str.
                         try:
                             k2 = words.next()
                         except StopIteration:
@@ -89,7 +97,8 @@ class DepSet(boolean.AndRestriction):
                             raise ParseError(dep_str, k2)
 
                     else:
-                        # Unconditional subset - useful in the || ( ( a b ) c ) case
+                        # Unconditional subset - useful in the || ( ( a b ) c )
+                        # case
                         k = ""
 
                     # push another frame on
@@ -147,7 +156,8 @@ class DepSet(boolean.AndRestriction):
                         assert len(node.restriction.vals) == 1
                         val = list(node.restriction.vals)[0]
                         if val in tristate_filter:
-                            # if val is forced true, but the check is negation ignore it
+                            # if val is forced true, but the check is
+                            # negation ignore it
                             # if !mips != mips
                             if (val in cond_dict) == node.restriction.negate:
                                 continue
@@ -155,7 +165,8 @@ class DepSet(boolean.AndRestriction):
                         continue
                     stack += [packages.AndRestriction, iter(node.payload)]
                 else:
-                    stack += [node.change_restrictions, iter(node.restrictions)]
+                    stack += [node.change_restrictions,
+                              iter(node.restrictions)]
                 count += 1
                 restricts.append([])
                 break
@@ -186,7 +197,8 @@ class DepSet(boolean.AndRestriction):
             if isinstance(cur_node, packages.Conditional):
                 conditions_stack.append(cur_node.restriction)
                 new_set.appendleft(list(cur_node.payload) + [None])
-            elif isinstance(cur_node, boolean.base) and not isinstance(cur_node, atom):
+            elif (isinstance(cur_node, boolean.base)
+                  and not isinstance(cur_node, atom)):
                 new_set.appendleft(cur_node.restrictions)
             elif cur_node is None:
                 conditions_stack.pop()
@@ -202,14 +214,17 @@ class DepSet(boolean.AndRestriction):
 
             always_required = set()
 
-            for payload, restrictions in self.find_cond_nodes(self.restrictions, True):
+            for payload, restrictions in self.find_cond_nodes(
+                self.restrictions, True):
                 if not restrictions:
                     always_required.add(payload)
                 else:
                     if len(restrictions) == 1:
                         current = restrictions[0]
                     else:
-                        current = values.AndRestriction(all=True, finalize=True, *restrictions)
+                        current = values.AndRestriction(all=True,
+                                                        finalize=True,
+                                                        *restrictions)
 
                     nc.setdefault(payload, []).append(current)
 
@@ -233,7 +248,8 @@ class DepSet(boolean.AndRestriction):
             return frozenset()
         if self._known_conditionals is None:
             kc = set()
-            for payload, restrictions in self.find_cond_nodes(self.restrictions):
+            for payload, restrictions in self.find_cond_nodes(
+                self.restrictions):
                 kc.update(iflatten_instance(x.vals for x in restrictions))
             kc = self._known_conditionals = frozenset(kc)
             return kc
@@ -257,10 +273,13 @@ class DepSet(boolean.AndRestriction):
 def stringify_boolean(node, func=str):
     """func is used to stringify the actual content. Useful for fetchables."""
     if isinstance(node, boolean.OrRestriction):
-        return "|| ( %s )" % " ".join(stringify_boolean(x) for x in node.restrictions)
+        return "|| ( %s )" % " ".join(stringify_boolean(x)
+                                      for x in node.restrictions)
     elif isinstance(node, packages.Conditional):
         assert len(node.restriction.vals) == 1
-        return "%s%s? ( %s )" % (node.restriction.negate and "!" or "", list(node.restriction.vals)[0], \
+        return "%s%s? ( %s )" % (
+            node.restriction.negate and "!" or "",
+            list(node.restriction.vals)[0],
             " ".join(stringify_boolean(x, func) for x in node.payload))
     elif isinstance(node, DepSet):
         return ' '.join(stringify_boolean(x, func) for x in node.restrictions)
@@ -270,10 +289,9 @@ def stringify_boolean(node, func=str):
 class ParseError(Exception):
 
     def __init__(self, s, token=None):
-        self.dep_str, self.token = s, token
-
-    def __str__(self):
-        if self.token is not None:
-            return "%s is unparesable\nflagged token- %s" % (self.dep_str, self.token)
+        if token is not None:
+            Exception.__init__(self, "%s is unparesable\nflagged token- %s" %
+                               (s, token))
         else:
-            return "%s is unparseable" % self.dep_str
+            Exception.__init__(self, "%s is unparseable" % (s,))
+        self.dep_str, self.token = s, token

@@ -72,7 +72,8 @@ class AlwaysBool(base):
         L{pkgcore.restrictions.values.value_type}
         @param negate: boolean to return for the match
         """
-        self.type, self.negate  = node_type, negate
+        base.__init__(self, negate=negate)
+        self.type = node_type
 
     def match(self, *a, **kw):
         return self.negate

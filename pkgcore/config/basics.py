@@ -95,8 +95,9 @@ class ConfigSection(object):
     def get_section_ref(self, central, section, msg):
         assert central is not None
         if not isinstance(section, basestring):
-            s = "got section %s which isn't a basestring; indicates HardCodedConfigSection definition is broke" % repr(section)
-            raise errors.ConfigurationError(msg % s)
+            raise errors.ConfigurationError(msg % (
+                    "got section %r which isn't a basestring; indicates "
+                    "HardCodedConfigSection definition is broke" % (section,)))
         try:
             conf = central.get_section_config(section)
         except KeyError:
@@ -118,6 +119,7 @@ class ConfigSectionFromStringDict(ConfigSection):
     """Useful for string-based config implementations."""
 
     def __init__(self, name, source_dict):
+        ConfigSection.__init__(self)
         self.name = name
         self.dict = source_dict
 
@@ -142,17 +144,19 @@ class ConfigSectionFromStringDict(ConfigSection):
         elif arg_type == 'section_refs':
             result = []
             if "cache" in value:
-                print value,list_parser(value)
+                print value, list_parser(value)
             value = list_parser(value)
             for x in value:
-                result.append(self.get_section_ref(central, x, 
-                    "%r: requested section refs %r for section %r, section %r: error %%s" % 
-                    (self.name, value, name, x)))
+                result.append(self.get_section_ref(
+                        central, x,
+                        "%r: requested section refs %r for section %r, "
+                        "section %r: error %%s" %
+                        (self.name, value, name, x)))
             return result
         elif arg_type == 'section_ref':
             value = str_parser(value)
-            return self.get_section_ref(central, value, 
-                "%r: requested section ref %r for section %r: error %%s" % 
+            return self.get_section_ref(central, value,
+                "%r: requested section ref %r for section %r: error %%s" %
                 (self.name, name, value))
         return {
             'list': list_parser,
@@ -194,16 +198,18 @@ class HardCodedConfigSection(ConfigSection):
                         '%r: %r is not callable' % (self.name, value))
 
         elif arg_type == 'section_ref':
-            value = self.get_section_ref(central, value, 
-                "%r: requested section %r for section %r: error %%s" % 
+            value = self.get_section_ref(central, value,
+                "%r: requested section %r for section %r: error %%s" %
                 (self.name, name, value))
 
         elif arg_type == 'section_refs':
             l = []
             for x in value:
-                l.append(self.get_section_ref(central, x, 
-                    "%r: requested section refs %r for section %r, section ref %r: error %%s" % 
-                    (self.name, value, name, x)))
+                l.append(self.get_section_ref(
+                        central, x,
+                        "%r: requested section refs %r for section %r, "
+                        "section ref %r: error %%s" %
+                        (self.name, value, name, x)))
             value = l
 
         elif not isinstance(value, types[arg_type]):

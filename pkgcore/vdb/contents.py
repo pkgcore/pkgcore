@@ -143,12 +143,14 @@ class ContentsFile(contentsSet):
             for obj in sorted(self):
 
                 if isinstance(obj, fs.fsFile):
-                    s = "\t".join(("obj", obj.location, obj.chksums["md5"], str(obj.mtime)))
+                    s = "\t".join(("obj", obj.location, obj.chksums["md5"],
+                                   str(obj.mtime)))
 
                 elif isinstance(obj, fs.fsLink):
                     # write the tab, *and spaces*.  tab's for delimiting.
                     # spaces are for backwards compatability
-                    s = "\t".join(("sym", obj.location, " -> ", obj.target, str(obj.mtime)))
+                    s = "\t".join(("sym", obj.location, " -> ",
+                                   obj.target, str(obj.mtime)))
 
                 elif isinstance(obj, fs.fsDir):
                     s = "dir\t" + obj.location
@@ -160,7 +162,8 @@ class ContentsFile(contentsSet):
                     s = "fif\t" + obj.location
 
                 else:
-                    raise Exception("unknown type %s: %s" % (type(obj), str(obj)))
+                    raise Exception(
+                        "unknown type %s: %s" % (type(obj), obj))
                 outfile.write(s + "\n")
             outfile.close()
 

@@ -101,7 +101,8 @@ def iter_scan(path, offset=None):
         base = dirs.popleft() + sep
         for x in os.listdir(offset + base):
             path = base + x
-            o = gen_obj(path, chksum_handlers=chksum_handlers, real_path=offset+path)
+            o = gen_obj(path, chksum_handlers=chksum_handlers,
+                        real_path=offset+path)
             yield o
             if isinstance(o, fsDir):
                 dirs.append(path)

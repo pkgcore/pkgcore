@@ -36,7 +36,8 @@ class PackageRestriction(restriction.base):
         @param negate: should the results be negated?
         """
         super(PackageRestriction, self).__init__(negate=negate)
-        self.attr_split = tuple(operator.attrgetter(x) for x in attr.split("."))
+        self.attr_split = tuple(operator.attrgetter(x)
+                                for x in attr.split("."))
         self.attr = attr
         if not restriction.type == self.subtype:
             raise TypeError("restriction must be of type %r" % (self.subtype,))
@@ -51,12 +52,12 @@ class PackageRestriction(restriction.base):
         except (KeyboardInterrupt, RuntimeError, SystemExit):
             raise
         except AttributeError,ae:
-            logging.debug("failed getting attribute %s from %s, exception %s" % \
-                (self.attr, str(pkg), str(ae)))
+            logging.debug("failed getting attribute %s from %s, "
+                          "exception %s" % (self.attr, str(pkg), str(ae)))
             raise
         except Exception, e:
-            logging.warn("caught unexpected exception accessing %s from %s, exception %s" % 
-                (self.attr, str(pkg), str(e)))
+            logging.warn("caught unexpected exception accessing %s from %s, "
+                         "exception %s" % (self.attr, str(pkg), str(e)))
             raise AttributeError(self.attr)
 
     def match(self, pkg):
@@ -68,15 +69,19 @@ class PackageRestriction(restriction.base):
 
     def force_False(self, pkg):
         if self.negate:
-            return self.restriction.force_True(pkg, self.attr, self.__pull_attr(pkg))
+            return self.restriction.force_True(pkg, self.attr,
+                                               self.__pull_attr(pkg))
         else:
-            return self.restriction.force_False(pkg, self.attr, self.__pull_attr(pkg))
+            return self.restriction.force_False(pkg, self.attr,
+                                                self.__pull_attr(pkg))
 
     def force_True(self, pkg):
         if self.negate:
-            return self.restriction.force_False(pkg, self.attr, self.__pull_attr(pkg))
+            return self.restriction.force_False(pkg, self.attr,
+                                                self.__pull_attr(pkg))
         else:
-            return self.restriction.force_True(pkg, self.attr, self.__pull_attr(pkg))
+            return self.restriction.force_True(pkg, self.attr,
+                                               self.__pull_attr(pkg))
 
     def __len__(self):
         if not isinstance(self.restriction, boolean.base):
@@ -148,7 +153,7 @@ class Conditional(PackageRestriction):
 
     """
     base object representing a conditional package restriction
-    
+
     used to control whether a payload of restrictions are accessible or not
     """
 
@@ -167,7 +172,9 @@ class Conditional(PackageRestriction):
         self.payload = tuple(payload)
 
     def __str__(self):
-        return "( Conditional: %s payload: [ %s ] )" % (PackageRestriction.__str__(self), ", ".join(map(str, self.payload)))
+        return "( Conditional: %s payload: [ %s ] )" % (
+            PackageRestriction.__str__(self),
+            ", ".join(map(str, self.payload)))
 
     def __repr__(self):
         if self.negate:
@@ -182,8 +189,8 @@ class Conditional(PackageRestriction):
         return iter(self.payload)
 
 
-for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]], \
-    [restriction, ["AlwaysBool"]]]:
+for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]],
+             [restriction, ["AlwaysBool"]]]:
     for x in l:
         o = getattr(m, x)
         doc = o.__doc__

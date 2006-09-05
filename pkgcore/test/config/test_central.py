@@ -37,7 +37,8 @@ class ConfigManagerTest(unittest.TestCase):
     def test_alias(self):
         manager = central.ConfigManager(
             [{'foo': basics.ConfigType('foo', {}),
-              'alias': basics.ConfigType('alias', {"section":"str"}, required=["section"]),
+              'alias': basics.ConfigType('alias', {"section":"str"},
+                                         required=["section"]),
               }],
             [{'fooinst': basics.HardCodedConfigSection(
                         'fooinst', {'type': 'foo', 'class': passthrough}),

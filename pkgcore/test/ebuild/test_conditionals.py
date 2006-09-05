@@ -52,7 +52,8 @@ class DepSetParsingTest(unittest.TestCase):
         depth = 0
         conditionals = []
         for x in i:
-            for t, s in ((boolean.OrRestriction, "||"), (boolean.AndRestriction, "&&")):
+            for t, s in ((boolean.OrRestriction, "||"),
+                         (boolean.AndRestriction, "&&")):
                 if isinstance(x, t):
                     yield s
                     yield "("
@@ -63,7 +64,8 @@ class DepSetParsingTest(unittest.TestCase):
             else:
                 if isinstance(x, packages.Conditional):
                     self.assertTrue(x.attr == "use")
-                    conditionals.insert(depth, list(self.mangle_cond_payload(x.restriction)))
+                    conditionals.insert(
+                        depth, list(self.mangle_cond_payload(x.restriction)))
                     yield set(iflatten_instance(conditionals[:depth + 1]))
                     yield "("
                     i.appendleft(")")
@@ -143,7 +145,8 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
 
     def test_sanity_has_conditionals(self):
         self.assertFalse(bool(gen_depset("a b").has_conditionals))
-        self.assertFalse(bool(gen_depset("( a b ) || ( c d )").has_conditionals))
+        self.assertFalse(bool(
+                gen_depset("( a b ) || ( c d )").has_conditionals))
         self.assertTrue(bool(gen_depset("x? ( a )").has_conditionals))
         self.assertTrue(bool(gen_depset("( x? ( a ) )").has_conditionals))
 
@@ -184,8 +187,10 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
         ("!x? ( z? ( y a ) )", {"y":"!x z", "a":"!x z"}),
         ("x ( y )", {}),
         ("x ( y? ( z ) )", {"z":"y"}, "needs to dig down as deep as required"),
-        ("x y? ( x )", {}, "x isn't controlled by a conditional, shouldn't be in the list"),
-        ("|| ( y? ( x ) x )", {}, "x cannot be filtered down since x is accessible via non conditional path"),
+        ("x y? ( x )", {}, "x isn't controlled by a conditional, shouldn't be "
+         "in the list"),
+        ("|| ( y? ( x ) x )", {}, "x cannot be filtered down since x is "
+         "accessible via non conditional path"),
         ("|| ( y? ( x ) z )", {"x":"y"}),
         ):
         locals()["test _node_conds %s" % s[0]] = post_curry(check_conds, *s)

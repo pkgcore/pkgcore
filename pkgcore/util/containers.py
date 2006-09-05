@@ -79,7 +79,8 @@ class LimitedChangeSet(object):
     def rollback(self, point=0):
         l = self.changes_count()
         if point < 0 or point > l:
-            raise TypeError("%s point must be >=0 and <= changes_count()" % point)
+            raise TypeError(
+                "%s point must be >=0 and <= changes_count()" % point)
         while l > point:
             change, key = self.__change_order.pop(-1)
             self.__changed.remove(key)
@@ -109,10 +110,8 @@ class LimitedChangeSet(object):
 class Unchangable(Exception):
 
     def __init__(self, key):
+        Exception.__init__(self, "key '%s' is unchangable" % (key,))
         self.key = key
-
-    def __str__(self):
-        return "key '%s' is unchangable" % self.key
 
 
 class ProtectedSet(object):

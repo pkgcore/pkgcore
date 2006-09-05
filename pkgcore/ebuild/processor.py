@@ -5,19 +5,22 @@
 """
 low level ebuild processor.
 
-This basically is a coprocessor that controls a bash daemon for actual ebuild execution.
-Via this, the bash side can reach into the python side (and vice versa), enabling remote trees (piping 
-data from python side into bash side for example).
+This basically is a coprocessor that controls a bash daemon for actual
+ebuild execution. Via this, the bash side can reach into the python
+side (and vice versa), enabling remote trees (piping data from python
+side into bash side for example).
 
-A couple of processors are left lingering while pkgcore is running for the purpose of avoiding spawning
-overhead, this (and the general design) reduces regen time by over 40% compared to portage-2.1
+A couple of processors are left lingering while pkgcore is running for
+the purpose of avoiding spawning overhead, this (and the general
+design) reduces regen time by over 40% compared to portage-2.1
 """
 
-# this needs work.  it's been pruned heavily from what ebd used originally, but it still isn't what
-# I would define as 'right'
+# this needs work. it's been pruned heavily from what ebd used
+# originally, but it still isn't what I would define as 'right'
 
 
-__all__ = ("request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor"
+__all__ = (
+    "request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor"
     "UnhandledCommand", "expected_ebuild_env")
 
 
@@ -26,7 +29,8 @@ active_ebp_list = []
 
 import pkgcore.spawn, os
 from pkgcore.util.currying import post_curry, pre_curry
-from pkgcore.const import depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH
+from pkgcore.const import (
+    depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH)
 from pkgcore.util.demandload import demandload
 from pkgcore.os_data import portage_uid, portage_gid
 demandload(globals(), "logging")
@@ -50,7 +54,8 @@ def shutdown_all_processors():
 
 pkgcore.spawn.atexit_register(shutdown_all_processors)
 
-def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False, save_file=None):
+def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
+                             save_file=None):
     """
     request an ebuild_processor instance from the pool, creating a new one if needed
 
@@ -104,7 +109,8 @@ def release_ebuild_processor(ebp):
     try:
         inactive_ebp_list.index(ebp)
     except ValueError:
-        # if it's a fakeroot'd process, we throw it away.  it's not useful outside of a chain of calls
+        # if it's a fakeroot'd process, we throw it away.
+        # it's not useful outside of a chain of calls
         if not ebp.onetime():
             inactive_ebp_list.append(ebp)
         else:
@@ -150,7 +156,8 @@ class EbuildProcessor:
                     "groups":[portage_gid], "umask":002})
         else:
             if pkgcore.spawn.userpriv_capable:
-                spawn_opts.update({"gid":portage_gid, "groups":[0, portage_gid]})
+                spawn_opts.update({"gid":portage_gid,
+                                   "groups":[0, portage_gid]})
             self.__userpriv = False
 
         # open the pipes to be used for chatting with the new daemon
@@ -161,7 +168,8 @@ class EbuildProcessor:
 
         # since it's questionable which spawn method we'll use (if
         # sandbox or fakeroot fex), we ensure the bashrc is invalid.
-        env = dict((x, "/etc/portage/spork/not/valid/ha/ha") for x in ("BASHRC", "BASH_ENV"))
+        env = dict((x, "/etc/portage/spork/not/valid/ha/ha")
+                   for x in ("BASHRC", "BASH_ENV"))
         args = []
         if sandbox:
             if fakeroot:
@@ -290,7 +298,8 @@ class EbuildProcessor:
         if not os.path.exists(self.__sandbox_log):
             self.write("end_sandbox_summary")
             return 0
-        violations = [x.strip() for x in open(self.__sandbox_log, "r") if x.strip()]
+        violations = [x.strip()
+                      for x in open(self.__sandbox_log, "r") if x.strip()]
         if not violations:
             self.write("end_sandbox_summary")
             return 0
@@ -453,9 +462,10 @@ class EbuildProcessor:
         self.write("start_processing")
 
         metadata_keys = {}
-        val = self.generic_handler(additional_commands={ \
-            "request_inherit":post_curry(self.__class__._inherit, eclass_cache), \
-            "key":post_curry(self.__class__._receive_key, metadata_keys) } )
+        val = self.generic_handler(additional_commands={
+                "request_inherit": post_curry(
+                    self.__class__._inherit, eclass_cache),
+                "key": post_curry(self.__class__._receive_key, metadata_keys)})
 
         if not val:
             logging.error("returned val from get_keys was '%s'" % str(val))
@@ -545,7 +555,8 @@ class EbuildProcessor:
                         s.append(None)
                     handlers[s[0]](self, s[1])
                 else:
-                    logging.error("unhandled command '%s', line '%s'" % (s[0], line))
+                    logging.error("unhandled command '%s', line '%s'" %
+                                  (s[0], line))
                     raise UnhandledCommand(line)
 
         except FinishedProcessing, fp:
@@ -570,19 +581,17 @@ class ProcessingInterruption(Exception):
 class FinishedProcessing(ProcessingInterruption):
 
     def __init__(self, val, msg=None):
+        ProcessingInterruption.__init__(
+            self, "Finished processing with val, %s" % (val,))
         self.val, self.msg = val, msg
-
-    def __str__(self):
-        return "Finished processing with val, %s" % str(self.val)
 
 
 class UnhandledCommand(ProcessingInterruption):
 
     def __init__(self, line=None):
-        self.line=line
-
-    def __str__(self):
-        return "unhandled command, %s" % self.line
+        ProcessingInterruption.__init__(self,
+                                        "unhandled command, %s" % (line,))
+        self.line = line
 
 
 def expected_ebuild_env(pkg, d=None):

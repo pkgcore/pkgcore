@@ -224,7 +224,8 @@ class MergeEngine(object):
 
         if offset:
             for k in ("old_cset", "new_cset"):
-                # wrap the results of new_cset to pass through an offset generator
+                # wrap the results of new_cset to pass through an
+                # offset generator
                 o.cset_sources[k] = currying.post_curry(
                     o.generate_offset_cset, o.cset_sources[k])
 
@@ -306,8 +307,10 @@ class MergeEngine(object):
     def generate_offset_cset(engine, csets, cset_generator):
         """generate a cset with offset applied"""
         return contents.contentsSet(
-            x.change_attributes(location=os.path.join(engine.offset,
-            x.location.lstrip(os.path.sep))) for x in cset_generator(engine, csets))
+            x.change_attributes(
+                location=os.path.join(engine.offset,
+                                      x.location.lstrip(os.path.sep)))
+            for x in cset_generator(engine, csets))
 
     @staticmethod
     def get_pkg_contents(engine, csets, pkg):

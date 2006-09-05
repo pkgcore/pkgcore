@@ -34,9 +34,10 @@ class DictBased(restriction.base):
     type = packages.package_type
     inst_caching = False
 
-    def __init__(self, restriction_items, get_key_from_package, *args, **kwargs):
+    def __init__(self, restriction_items, get_key_from_package,
+                 *args, **kwargs):
         """
-        
+
         @param restriction_items: source of restriction keys and remaining restriction (if none, set it to None)
         @param get_key_from_package: is a function to get the key from a pkg instance
         @param args: pass any additional args to L{pkgcore.restrictions.restriction.base}
@@ -55,7 +56,8 @@ class DictBased(restriction.base):
             if key in self.restricts_dict:
                 self.restricts_dict[key].add_restriction(restrict)
             else:
-                self.restricts_dict[key] = packages.OrRestriction(restrict, inst_caching=False)
+                self.restricts_dict[key] = packages.OrRestriction(
+                    restrict, inst_caching=False)
 
         self.get_pkg_key = get_key_from_package
 

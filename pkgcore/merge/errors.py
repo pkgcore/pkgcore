@@ -10,10 +10,8 @@ class ModificationError(Exception):
     """Base Exception class for modification errors/warnings"""
 
     def __init__(self, msg):
+        Exception.__init__(self, "%s: %s" % (self.__class__, msg))
         self.msg = msg
-
-    def __str__(self):
-        return "%s: %s" % (self.__class__, self.msg)
 
 
 class BlockModification(ModificationError):
@@ -25,11 +23,9 @@ class TriggerUnknownCset(ModificationError):
     def __init__(self, trigger, csets):
         if not isinstance(csets, (tuple, list)):
             csets = (csets,)
+        ModificationError.__init__(self, "%s: trigger %r unknown cset: %r" %
+                                   (self.__class__, trigger, csets))
         self.trigger, self.csets = trigger, csets
-
-    def __str__(self):
-        return "%s: trigger %r unknown cset: %r" % (
-            self.__class__, self.trigger, self.csets)
 
 
 class NonFatalModification(Exception):

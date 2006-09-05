@@ -73,7 +73,8 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
         return True
     else:
         try:
-            if (gid != -1 and gid != st.st_gid) or (uid != -1 and uid != st.st_uid):
+            if ((gid != -1 and gid != st.st_gid) or
+                (uid != -1 and uid != st.st_uid)):
                 os.chown(path, uid, gid)
             if minimal:
                 if mode != (st.st_mode & mode):

@@ -71,7 +71,8 @@ class choice_point(object):
             self.depends, self.rdepends, self.post_rdepends)
         orig_provides = self.provides
 
-        # lock step checks of each- it's possible for rdepend to push depend forward
+        # lock step checks of each- it's possible for rdepend to push
+        # depend forward
         starting_idx = rdep_idx = prdep_idx = orig_match_idx = -1
         try:
             while orig_match_idx != self.matches_idx:
@@ -87,7 +88,8 @@ class choice_point(object):
                 # redo, and matches hasn't changed
                 if rdep_idx != self.matches_idx:
                     for idx, node in enumerate(self.rdepends):
-                        node = [x for x in node if not x in self.solution_filters]
+                        node = [x for x in node
+                                if not x in self.solution_filters]
                         if not node:
                             self.matches_idx += 1
                             break
@@ -95,7 +97,8 @@ class choice_point(object):
 
                 if prdep_idx != self.matches_idx:
                     for idx, node in enumerate(self.post_rdepends):
-                        node = [x for x in node if not x in self.solution_filters]
+                        node = [x for x in node
+                                if not x in self.solution_filters]
                         if not node:
                             self.matches_idx += 1
                             break
@@ -140,11 +143,13 @@ class choice_point(object):
 
     @property
     def rdepends(self):
-        return self._common_property(self._rdep_solutions, self.rdepends_getter)
+        return self._common_property(self._rdep_solutions,
+                                     self.rdepends_getter)
 
     @property
     def post_rdepends(self):
-        return self._common_property(self._prdep_solutions, self.post_rdepends_getter)
+        return self._common_property(self._prdep_solutions,
+                                     self.post_rdepends_getter)
 
     @property
     def provides(self):

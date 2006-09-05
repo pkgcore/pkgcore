@@ -86,7 +86,8 @@ class database(fs_template.FsBased):
                 del self._dels[key]
                 continue
             if key in self._adds:
-                cm.add(key, pickle.dumps(self._adds.pop(key), pickle.HIGHEST_PROTOCOL))
+                cm.add(key, pickle.dumps(self._adds.pop(key),
+                                         pickle.HIGHEST_PROTOCOL))
             else:
                 cm.add(key, value)
         for (key, value) in self._adds.iteritems():

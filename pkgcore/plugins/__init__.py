@@ -22,16 +22,16 @@ PLUGINS_EXTENSION = ".plugins"
 
 class RegistrationException(Exception):
     def __init__(self, reason):
+        Exception.__init__(self, "failed action due to %s" % (reason,))
         self.reason = reason
-    def __str__(self):
-        return "failed action due to %s" % self.reason
 
 class FailedDir(RegistrationException):
     pass
 
 class PluginExistsAlready(RegistrationException):
     def __init__(self):
-        RegistrationException.__init__(self, "plugin exists aleady, magic found")
+        RegistrationException.__init__(
+            self, "plugin exists aleady, magic found")
 
 class FailedUpdating(RegistrationException):
     def __str__(self):
@@ -39,9 +39,11 @@ class FailedUpdating(RegistrationException):
 
 class PluginNotFound(RegistrationException):
     def __init__(self, plugin, reason="unknown"):
+        RegistrationException.__init__(self, "plugin %s not found" % (plugin,))
         self.plugin, self.reason = plugin, reason
     def __str__(self):
-        return "Plugin '%s' wasn't found; reason: %s" % (self.plugin, self.reason)
+        return "Plugin '%s' wasn't found; reason: %s" % (
+            self.plugin, self.reason)
 
 
 class GlobalPluginRegistry(object):
@@ -52,14 +54,17 @@ class GlobalPluginRegistry(object):
         version is the specific plugin version (only one can be installed at a time)
         namespace is the pythonic namespace for that plugin
         replace controls whether or not a plugin_type + magic conflict will be replaced, or error out"""
-        if not ensure_dirs(plugins_dir, uid=root_uid, gid=portage_gid, mode=0755):
+        if not ensure_dirs(plugins_dir, uid=root_uid, gid=portage_gid,
+                           mode=0755):
             raise FailedDir("Failed ensuring base plugins dir")
 
         # this could be fine grained down to per plugin_type
         plug_lock = FsLock(plugins_dir)
         plug_lock.acquire_write_lock()
         try:
-            ptype_fp = os.path.join(plugins_dir, plugin_type.lstrip(os.path.sep) + PLUGINS_EXTENSION)
+            ptype_fp = os.path.join(plugins_dir,
+                                    plugin_type.lstrip(os.path.sep)
+                                    + PLUGINS_EXTENSION)
             existing = self.query_plugins(plugin_type, locking=False, raw=True)
             if existing.has_section(magic):
                 if not replace:
@@ -88,7 +93,9 @@ class GlobalPluginRegistry(object):
         plug_lock = FsLock(plugins_dir)
         plug_lock.acquire_write_lock()
         try:
-            ptype_fp = os.path.join(plugins_dir, plugin_type.lstrip(os.path.sep) + PLUGINS_EXTENSION)
+            ptype_fp = os.path.join(plugins_dir,
+                                    plugin_type.lstrip(os.path.sep) +
+                                    PLUGINS_EXTENSION)
             existing = self.query_plugins(locking=False, raw=True)
             if plugin_type not in existing:
                 if ignore_errors:
@@ -101,7 +108,8 @@ class GlobalPluginRegistry(object):
                     return
                 raise PluginNotFound(magic, "magic not found in plugin_type")
 
-            if not existing.has_option(magic, "version") or str(version) != existing.get(magic, "version"):
+            if (not existing.has_option(magic, "version") or
+                str(version) != existing.get(magic, "version")):
                 if ignore_errors:
                     return
                 raise PluginNotFound(magic, "version not found in plugin_type")
@@ -142,7 +150,8 @@ class GlobalPluginRegistry(object):
             plug_lock.acquire_read_lock()
         try:
             if plugin_type is None:
-                ptypes = [x for x in os.listdir(plugins_dir) if x.endswith(PLUGINS_EXTENSION) ]
+                ptypes = [x for x in os.listdir(plugins_dir)
+                          if x.endswith(PLUGINS_EXTENSION)]
 
             len_exten = len(PLUGINS_EXTENSION)
             for x in ptypes:
@@ -151,7 +160,8 @@ class GlobalPluginRegistry(object):
                 if raw:
                     d[x[:-len_exten]] = c
                 else:
-                    d[x[:-len_exten]] = dict((y, dict(c.items(y))) for y in c.sections())
+                    d[x[:-len_exten]] = dict((y, dict(c.items(y)))
+                                             for y in c.sections())
 
         finally:
             if locking:

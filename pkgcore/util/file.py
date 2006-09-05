@@ -64,7 +64,8 @@ def read_bash(bash_source):
 read_bash.__doc__ = iter_read_bash.__doc__
 
 
-def read_dict(bash_source, splitter="=", ignore_malformed=False, source_isiter=False):
+def read_dict(bash_source, splitter="=", ignore_malformed=False,
+              source_isiter=False):
     """
     read key value pairs, splitting on specified splitter, using iter_read_bash for filtering comments
 
@@ -96,7 +97,8 @@ def read_dict(bash_source, splitter="=", ignore_malformed=False, source_isiter=F
         del i
     return d
 
-def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False, sourcing_command=None):
+def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
+                   sourcing_command=None):
     """
     read bash source, yielding a dict of vars
 
@@ -110,8 +112,9 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False, sourcing
     @return: dict representing the resultant env if bash executed the source
     """
 
-    # quite possibly I'm missing something here, but the original portage_util getconfig/varexpand seemed like it
-    # only went halfway.  The shlex posix mode *should* cover everything.
+    # quite possibly I'm missing something here, but the original
+    # portage_util getconfig/varexpand seemed like it only went
+    # halfway. The shlex posix mode *should* cover everything.
 
     if vars_dict is not None:
         d, protected = ProtectedDict(vars_dict), True
@@ -230,10 +233,12 @@ class bash_parser(shlex):
 class ParseError(Exception):
 
     def __init__(self, filename, line, errmsg=None):
+        if errmsg is not None:
+            Exception.__init__(self,
+                               "error parsing '%s' on or before %i: err %s" %
+                               (filename, line, errmsg))
+        else:
+            Exception.__init__(self,
+                               "error parsing '%s' on or before %i" %
+                               (filename, line))
         self.file, self.line, self.errmsg = filename, line, errmsg
-
-    def __str__(self):
-        if self.errmsg is not None:
-            return "error parsing '%s' on or before %i: err %s" % (
-                self.file, self.line, self.errmsg)
-        return "error parsing '%s' on or before %i" % (self.file, self.line)

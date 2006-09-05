@@ -26,7 +26,8 @@ class TestDependantMethods(unittest.TestCase):
     def test_return_checking(self):
         results = []
         o = self.generate_instance(
-            dict((str(x), currying.post_curry(self.f, results, x)) for x in range(10)),
+            dict((str(x), currying.post_curry(self.f, results, x))
+                 for x in range(10)),
             dict((str(x), str(x - 1)) for x in xrange(1, 10)))
         getattr(o, "9")()
         self.assertEqual(results, range(10))

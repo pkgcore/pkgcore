@@ -150,10 +150,12 @@ class TestContentsSet(unittest.TestCase):
 
     test_intersection = post_curry(check_set_op, "intersection", ["/tmp"])
     test_difference = post_curry(check_set_op, "difference", [])
-    test_symmetric_difference1 = post_curry(check_set_op, "symmetric_difference", [])
+    test_symmetric_difference1 = post_curry(
+        check_set_op, "symmetric_difference", [])
     fstrings = ("/a", "/b", "/c", "/d")
     f = [fs.fsFile(x, strict=False) for x in fstrings]
     test_union1 = post_curry(check_set_op, "union", ["/tmp"])
     test_union2 = post_curry(check_set_op, "union", fstrings, [f[:2], f[2:]])
-    test_symmetric_difference2 = post_curry(check_set_op, "symmetric_difference", fstrings, [f[:2], f[2:]])
+    test_symmetric_difference2 = post_curry(
+        check_set_op, "symmetric_difference", fstrings, [f[:2], f[2:]])
     del f, fstrings

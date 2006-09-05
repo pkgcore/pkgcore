@@ -99,8 +99,9 @@ class Test_iflatten_func(unittest.TestCase):
             ([o, 1, "fds"], [o, 1, "fds"], (basestring, OrderedDict)),
             ([o, 1, "fds"], range(10) + [1, "fds"], basestring),
             ]:
-            self.assertEqual(list(self.func(l, lambda x:isinstance(x, skip))), correct)
-        
+            self.assertEqual(list(self.func(l, lambda x:isinstance(x, skip))),
+                             correct)
+
 
 if lists.cpy_builtin:
     class CPY_Test_iflatten_instance(Test_iflatten_instance):

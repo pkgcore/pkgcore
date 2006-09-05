@@ -246,14 +246,16 @@ class tree(object):
         cat_exact = set()
         pkg_exact = set()
 
-        for x in collect_package_restrictions(restrict, ["category", "package"]):
+        for x in collect_package_restrictions(restrict,
+                                              ["category", "package"]):
             if x.attr == "category":
                 cat_restrict.add(x.restriction)
             elif x.attr == "package":
                 pkg_restrict.add(x.restriction)
 
         for e, s in ((pkg_exact, pkg_restrict), (cat_exact, cat_restrict)):
-            l = [x for x in s if isinstance(x, values.StrExactMatch) and not x.negate]
+            l = [x for x in s
+                 if isinstance(x, values.StrExactMatch) and not x.negate]
             s.difference_update(l)
             e.update(x.exact for x in l)
         del l

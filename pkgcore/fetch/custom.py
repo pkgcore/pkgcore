@@ -15,16 +15,16 @@ from pkgcore.fetch import errors, base, fetchable
 class MalformedCommand(errors.base):
 
     def __init__(self, command):
+        errors.base.__init__(self,
+                             "fetchcommand is malformed: %s" % (command,))
         self.command = command
-
-    def __str__(self):
-        return "fetchcommand is malformed: "+self.command
 
 
 class fetcher(base.fetcher):
 
-    def __init__(self, distdir, command, resume_command=None, required_chksums=None,
-        userpriv=True, attempts=10, readonly=False):
+    def __init__(self, distdir, command, resume_command=None,
+                 required_chksums=None, userpriv=True, attempts=10,
+                 readonly=False):
         """
         @param distdir: directory to download files to
         @type distdir: string
@@ -37,7 +37,7 @@ class fetcher(base.fetcher):
         @param attempts: max number of attempts before failing the fetch
         @param readonly: controls whether fetching is allowed
         """
-
+        base.fetcher.__init__(self)
         self.distdir = distdir
         if required_chksums is not None:
             required_chksums = [x.lower() for x in required_chksums]

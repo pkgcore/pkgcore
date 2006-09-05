@@ -25,7 +25,8 @@ class tree(prototype.tree):
         # not perfect I know.
         self.raw_repo = raw_repo
         self.wrapped_attrs = wrapped_attrs
-        self.attr_filters = frozenset(wrapped_attrs.keys() + [self.configurable])
+        self.attr_filters = frozenset(wrapped_attrs.keys() +
+                                      [self.configurable])
 
     def _get_pkg_kwds(self, pkg):
         raise NotImplementedError()

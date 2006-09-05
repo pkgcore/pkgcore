@@ -16,22 +16,23 @@ import cpv
 class MalformedAtom(Exception):
 
     def __init__(self, atom, err=''):
+        Exception.__init__(self,
+                           "atom '%s' is malformed: error %s" % (atom, err))
         self.atom, self.err = atom, err
-
-    def __str__(self):
-        return "atom '%s' is malformed: error %s" % (self.atom, self.err)
 
 
 class InvalidVersion(Exception):
 
     def __init__(self, ver, rev, err=''):
+        Exception.__init__(
+            self,
+            "Version restriction ver='%s', rev='%s', is malformed: error %s" %
+            (ver, rev, err))
         self.ver, self.rev, self.err = ver, rev, err
 
-    def __str__(self):
-        return "Version restriction ver='%s', rev='%s', is malformed: error %s" % (self.ver, self.rev, self.err)
 
-
-# TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq, ne ops, and convert this to it.
+# TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq,
+# ne ops, and convert this to it.
 
 class VersionMatch(restriction.base):
 
@@ -41,13 +42,13 @@ class VersionMatch(restriction.base):
     any overriding of this class *must* maintain numerical order of self.vals, see intersect for reason why
     vals also must be a tuple
     """
-    
+
     __slots__ = ("ver", "rev", "vals", "droprev", "negate")
 
     __inst_caching__ = True
     type = packages.package_type
     attr = "fullver"
-    
+
     def __init__(self, operator, ver, rev=None, negate=False, **kwd):
         """
         @param operator: version comparison to do, valid operators are ('<', '<=', '=', '>=', '>', '~')
@@ -58,18 +59,20 @@ class VersionMatch(restriction.base):
         @type rev: None (no rev), or an int
         @param negate: should the restriction results be negated; currently forced to False
         """
-        
+
         kwd["negate"] = False
         super(self.__class__, self).__init__(**kwd)
         self.ver, self.rev = ver, rev
         if operator not in ("<=", "<", "=", ">", ">=", "~"):
             # XXX: hack
-            raise InvalidVersion(self.ver, self.rev, "invalid operator, '%s'" % operator)
+            raise InvalidVersion(self.ver, self.rev,
+                                 "invalid operator, '%s'" % operator)
 
         self.negate = negate
         if operator == "~":
             if ver is None:
-                raise ValueError("for ~ op, version must be something other then None")
+                raise ValueError(
+                    "for ~ op, version must be something other then None")
             self.droprev = True
             self.vals = (0,)
         else:
@@ -86,7 +89,8 @@ class VersionMatch(restriction.base):
         else:
             r1, r2 = self.rev, pkginst.revision
 
-        return (cpv.ver_cmp(pkginst.version, r2, self.ver, r1) in self.vals) != self.negate
+        return (cpv.ver_cmp(pkginst.version, r2, self.ver, r1) in self.vals) \
+            != self.negate
 
     def __str__(self):
         l = []
@@ -131,10 +135,11 @@ class atom(boolean.AndRestriction):
 
     """currently implements gentoo ebuild atom parsing, should be converted into an agnostic dependency base thought
     """
-    
+
     __slots__ = (
         "glob", "blocks", "op", "negate_vers", "cpvstr", "use",
-        "slot", "hash", "category", "version", "revision", "fullver", "package", "key")
+        "slot", "hash", "category", "version", "revision", "fullver",
+        "package", "key")
 
     type = packages.package_type
 
@@ -169,7 +174,8 @@ class atom(boolean.AndRestriction):
                 raise MalformedAtom(atom, "use restriction isn't completed")
             self.use = atom[u+1:u2].split(',')
             if not all(x.rstrip("-") for x in self.use):
-                raise MalformedAtom(atom, "cannot have empty use deps in use restriction")
+                raise MalformedAtom(
+                    atom, "cannot have empty use deps in use restriction")
             atom = atom[0:u]+atom[u2 + 1:]
         else:
             self.use = ()
@@ -180,7 +186,8 @@ class atom(boolean.AndRestriction):
             # slot dep.
             self.slot = atom[s + 1:].rstrip()
             if not self.slot:
-                raise MalformedAtom(atom, "cannot have empty slot deps in slot restriction")
+                raise MalformedAtom(
+                    atom, "cannot have empty slot deps in slot restriction")
             atom = atom[:s]
         else:
             self.slot = None
@@ -188,10 +195,15 @@ class atom(boolean.AndRestriction):
 
         if atom.endswith("*"):
             if self.op != "=":
-                raise MalformedAtom(orig_atom, "range operators on a range are nonsencial, drop the globbing or use =cat/pkg* or !=cat/pkg*, not %s" % self.op)
+                raise MalformedAtom(
+                    orig_atom, "range operators on a range are nonsencial, "
+                    "drop the globbing or use =cat/pkg* or !=cat/pkg*, not %s"
+                    % self.op)
             self.glob = True
             self.cpvstr = atom[pos:-1]
-            # may have specified a period to force calculation limitation there- hence rstrip'ing it for the cpv generation
+            # may have specified a period to force calculation
+            # limitation there- hence rstrip'ing it for the cpv
+            # generation
         else:
             self.glob = False
             self.cpvstr = atom[pos:]
@@ -227,42 +239,57 @@ class atom(boolean.AndRestriction):
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
         if full_solution_expansion:
-            return boolean.AndRestriction.iter_dnf_solutions(self, full_solution_expansion=True)
+            return boolean.AndRestriction.iter_dnf_solutions(
+                self, full_solution_expansion=True)
         return iter([[self]])
 
     def cnf_solutions(self, full_solution_expansion=False):
         if full_solution_expansion:
-            return boolean.AndRestriction.cnf_solutions(self, full_solution_expansion=True)
+            return boolean.AndRestriction.cnf_solutions(
+                self, full_solution_expansion=True)
         return [[self]]
 
     def __getattr__(self, attr):
         if attr == "restrictions":
-            r = [packages.PackageRestriction("package", values.StrExactMatch(self.package))]
+            r = [packages.PackageRestriction(
+                    "package", values.StrExactMatch(self.package))]
             try:
                 cat = self.category
-                r.append(packages.PackageRestriction("category", values.StrExactMatch(cat)))
+                r.append(packages.PackageRestriction(
+                        "category", values.StrExactMatch(cat)))
             except AttributeError:
                 pass
             if self.version:
                 if self.glob:
-                    r.append(packages.PackageRestriction("fullver", values.StrGlobMatch(self.fullver)))
+                    r.append(packages.PackageRestriction(
+                            "fullver", values.StrGlobMatch(self.fullver)))
                 else:
-                    r.append(VersionMatch(self.op, self.version, self.revision, negate=self.negate_vers))
+                    r.append(VersionMatch(self.op, self.version, self.revision,
+                                          negate=self.negate_vers))
             elif self.op:
-                raise MalformedAtom(str(self), "cannot specify a version operator without a version")
-                
+                raise MalformedAtom(
+                    str(self),
+                    "cannot specify a version operator without a version")
+
             if self.use:
                 false_use = [x[1:] for x in self.use if x[0] == "-"]
                 true_use = [x for x in self.use if x[0] != "-"]
                 if false_use:
-                    # XXX: convert this to a value AndRestriction whenever harring gets off his ass and
-                    # decides another round of tinkering with restriction subsystem is viable (burnt out now)
+                    # XXX: convert this to a value AndRestriction
+                    # whenever harring gets off his ass and decides
+                    # another round of tinkering with restriction
+                    # subsystem is viable (burnt out now)
                     # ~harring
-                    r.append(packages.PackageRestriction("use", values.ContainmentMatch(negate=True, all=True, *false_use)))
+                    r.append(packages.PackageRestriction(
+                            "use", values.ContainmentMatch(
+                                negate=True, all=True, *false_use)))
                 if true_use:
-                    r.append(packages.PackageRestriction("use", values.ContainmentMatch(all=True, *true_use)))
+                    r.append(packages.PackageRestriction(
+                            "use", values.ContainmentMatch(all=True,
+                                                           *true_use)))
             if self.slot is not None:
-                r.append(packages.PackageRestriction("slot", values.StrExactMatch(self.slot)))
+                r.append(packages.PackageRestriction(
+                        "slot", values.StrExactMatch(self.slot)))
             setattr(self, attr, tuple(r))
             return r
 
@@ -294,14 +321,16 @@ class atom(boolean.AndRestriction):
 
     def __cmp__(self, other):
         if not isinstance(other, self.__class__):
-            raise TypeError("other isn't of %s type, is %s" % (self.__class__, other.__class__))
+            raise TypeError("other isn't of %s type, is %s" %
+                            (self.__class__, other.__class__))
         c = cmp(self.category, other.category)
         if c:
             return c
         c = cmp(self.package, other.package)
         if c:
             return c
-        c = cpv.ver_cmp(self.version, self.revision, other.version, other.revision)
+        c = cpv.ver_cmp(self.version, self.revision,
+                        other.version, other.revision)
         if c:
             return c
 

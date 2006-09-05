@@ -10,15 +10,13 @@ class base(Exception):
 
 class MissingChksum(base):
 
-    def __init__(self, file):
-        self.file = file
+    def __init__(self, filename):
+        base.__init__(self, "Missing chksum for file '%s'" % (filename,))
+        self.file = filename
 
-    def __str__(self):
-        return "Missing chksum for file '%s'" % self.file
 
 class ParseChksumError(base):
     def __init__(self, filename, error):
+        base.__init__(self, "Failed parsing %s chksum due to %s" %
+                      (filename, error))
         self.file, self.error = filename, error
-
-    def __str__(self):
-        return "Failed parsing %s chksum due to %s" % (self.file, self.error)

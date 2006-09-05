@@ -27,9 +27,10 @@ class nodeps_repo(object):
         self.__repo = repo
 
     def itermatch(self, *a, **kwds):
-        return (MutatedPkg(x, overrides={"depends":self.default_depends, "rdepends":self.default_rdepends}) 
-            for x in self.__repo.itermatch(*a, **kwds))
-    
+        return (MutatedPkg(x, overrides={"depends":self.default_depends,
+                                         "rdepends":self.default_rdepends})
+                for x in self.__repo.itermatch(*a, **kwds))
+
     def match(self, *a, **kwds):
         return list(self.itermatch(*a, **kwds))
 
@@ -51,11 +52,12 @@ def is_cycle(stack, atom, cur_choice, attr):
     index = index_gen(x[0].key == atom.key for x in stack)
     if index != -1:
         # fun fun.  deque can't be sliced, so slice a copy.
-        dprint("%s level cycle: stack: %s, [%s: %s]\n", 
-            (attr, ", ".join("[%s: %s]" % (str(x[0]), str(x[1].current_pkg)) for x in list(stack)[index:]), 
-            atom, cur_choice.current_pkg), "cycle")
+        dprint("%s level cycle: stack: %s, [%s: %s]\n",
+               (attr, ", ".join("[%s: %s]" % (str(x[0]), str(x[1].current_pkg))
+                                for x in list(stack)[index:]),
+                atom, cur_choice.current_pkg), "cycle")
     return index
-    
+
 
 class InconsistantState(Exception):
     pass
@@ -104,7 +106,9 @@ def lowest_iter_sort(l):
 
 
 def default_global_strategy(resolver, dbs, atom):
-    return (p for r, cache in dbs.iteritems() for p in resolver.get_db_match(r, cache, atom))
+    return (p
+            for r, cache in dbs.iteritems()
+            for p in resolver.get_db_match(r, cache, atom))
 
 
 def default_depset_reorder(resolver, depset, mode):
@@ -115,7 +119,9 @@ def default_depset_reorder(resolver, depset, mode):
             yield or_block
             continue
         for atom in or_block:
-            if not atom.blocks and caching_iter(p for r, c in resolver.livefs_dbs.iteritems() for p in resolver.get_db_match(r, c, atom)):
+            if not atom.blocks and caching_iter(
+                p for r, c in resolver.livefs_dbs.iteritems()
+                for p in resolver.get_db_match(r, c, atom)):
                 vdb.append(atom)
             else:
                 non_vdb.append(atom)
@@ -127,17 +133,24 @@ def default_depset_reorder(resolver, depset, mode):
 
 class merge_plan(object):
 
-    vdb_restrict = packages.PackageRestriction("repo.livefs", 
+    vdb_restrict = packages.PackageRestriction("repo.livefs",
         values.EqualityMatch(True))
-    
-    def __init__(self, dbs, per_repo_strategy, global_strategy=default_global_strategy, depset_reorder_strategy=default_depset_reorder, drop_cycles=False):
+
+    def __init__(self, dbs, per_repo_strategy,
+                 global_strategy=default_global_strategy,
+                 depset_reorder_strategy=default_depset_reorder,
+                 drop_cycles=False):
         if not isinstance(dbs, (list, tuple)):
             dbs = [dbs]
         self.all_dbs = OrderedDict((r, {}) for r in dbs)
         self.cached_queries = {}
         self.forced_atoms = set()
-        self.livefs_dbs = OrderedDict((k, v) for k, v in self.all_dbs.iteritems() if k.livefs)
-        self.dbs = OrderedDict((k, v) for k, v in self.all_dbs.iteritems() if not k.livefs)
+        self.livefs_dbs = OrderedDict((k, v)
+                                      for k, v in self.all_dbs.iteritems()
+                                      if k.livefs)
+        self.dbs = OrderedDict((k, v)
+                               for k, v in self.all_dbs.iteritems()
+                               if not k.livefs)
         self.depset_reorder = depset_reorder_strategy
         self.per_repo_strategy = per_repo_strategy
         self.global_strategy = global_strategy
@@ -145,7 +158,7 @@ class merge_plan(object):
         self.insoluble = set()
         self.vdb_preloaded = False
         self.drop_cycles = drop_cycles
-        
+
     def load_vdb_state(self):
         for r in self.livefs_dbs:
             for pkg in r:
@@ -153,13 +166,16 @@ class merge_plan(object):
                 ret = self.add_atom(pkg.versioned_atom, dbs=self.livefs_dbs)
                 dprint("insertion of %s from %s: %s", (pkg, r, ret), "vdb")
                 if ret != []:
-                    raise Exception("couldn't load vdb state, %s %s" % (pkg.versioned_atom, ret))
+                    raise Exception(
+                        "couldn't load vdb state, %s %s" %
+                        (pkg.versioned_atom, ret))
         self.vdb_preloaded = True
 
     def get_db_match(self, db, cache, atom):
         v = cache.get(atom)
         if v is None:
-            v = cache[atom] = caching_iter(db.itermatch(atom, sorter=self.per_repo_strategy))
+            v = cache[atom] = caching_iter(db.itermatch(
+                    atom, sorter=self.per_repo_strategy))
         return v
 
     def add_atom(self, atom, dbs=None):
@@ -178,42 +194,56 @@ class merge_plan(object):
 
         return []
 
-    def process_depends(self, atom, dbs, current_stack, choices, depset, depth=0, drop_cycles=False):
+    def process_depends(self, atom, dbs, current_stack, choices, depset,
+                        depth=0, drop_cycles=False):
         failure = []
         additions, blocks, = [], []
-        dprint("depends:     %s%s: started: %s", (depth *2 * " ", atom, choices.current_pkg))
+        dprint("depends:     %s%s: started: %s",
+               (depth *2 * " ", atom, choices.current_pkg))
         for datom_potentials in depset:
             failure = []
             for datom in datom_potentials:
                 if datom.blocks:
-                    # don't register, just do a scan.  and this sucks because any later insertions prior to this won't get
-                    # hit by the blocker
+                    # don't register, just do a scan. and this sucks
+                    # because any later insertions prior to this won't
+                    # get hit by the blocker
                     l = self.state.match_atom(datom)
                     if l:
-                        dprint("depends blocker messing with us- dumping to pdb for inspection of atom %s, pkg %s, ret %s",
-                            (atom, choices.current_pkg, l), "blockers")
+                        dprint("depends blocker messing with us- "
+                               "dumping to pdb for inspection of "
+                               "atom %s, pkg %s, ret %s",
+                               (atom, choices.current_pkg, l), "blockers")
                         continue
                 else:
                     index = is_cycle(current_stack, datom, choices, "depends")
                     if index != -1:
                         # cycle.
 
-#						v = values.ContainmentMatch(datom, negate=True)
-#						import pdb;pdb.set_trace()
-#						new_atom = packages.AndRestriction(self.current_atom, 
-#							PackageRestriction("depends", v), PackageRestriction("rdepends", v))
-#						import pdb;pdb.set_trace()
+#                        v = values.ContainmentMatch(datom, negate=True)
+#                        import pdb;pdb.set_trace()
+#                        new_atom = packages.AndRestriction(self.current_atom,
+#                            PackageRestriction("depends", v),
+#                            PackageRestriction("rdepends", v))
+#                        import pdb;pdb.set_trace()
                         # reduce our options.
-                        failure = self._rec_add_atom(datom, current_stack, self.livefs_dbs, depth=depth+1, mode="depends")
+                        failure = self._rec_add_atom(
+                            datom, current_stack, self.livefs_dbs,
+                            depth=depth+1, mode="depends")
                         if failure and drop_cycles:
-                            dprint("depends level cycle: %s: dropping cycle for %s from %s", (atom, datom, choices.current_pkg), "cycle")
+                            dprint("depends level cycle: %s: "
+                                   "dropping cycle for %s from %s",
+                                   (atom, datom, choices.current_pkg), "cycle")
                             failure = []
                             # note we trigger a break ourselves.
                             break
                     else:
-                        failure = self._rec_add_atom(datom, current_stack, dbs, depth=depth+1, mode="depends")
+                        failure = self._rec_add_atom(
+                            datom, current_stack, dbs, depth=depth+1,
+                            mode="depends")
                     if failure:
-                        dprint("depends:     %s%s: reducing %s from %s", (depth *2 * " ", atom, datom, choices.current_pkg))
+                        dprint("depends:     %s%s: reducing %s from %s",
+                               (depth *2 * " ", atom, datom,
+                                choices.current_pkg))
                         if choices.reduce_atoms(datom):
                             # this means the pkg just changed under our feet.
                             return [[datom] + failure]
@@ -225,10 +255,12 @@ class merge_plan(object):
         else: # all potentials were usable.
             return additions, blocks
 
-    def process_rdepends(self, atom, dbs, current_stack, choices, attr, depset, depth=0, drop_cycles=False):
+    def process_rdepends(self, atom, dbs, current_stack, choices, attr, depset,
+                         depth=0, drop_cycles=False):
         failure = []
         additions, blocks, = [], []
-        dprint("rdepends:    %s%s: started: %s", (depth *2 * " ", atom, choices.current_pkg))
+        dprint("rdepends:    %s%s: started: %s",
+               (depth *2 * " ", atom, choices.current_pkg))
         for ratom_potentials in depset:
             failure = []
             for ratom in ratom_potentials:
@@ -239,23 +271,32 @@ class merge_plan(object):
                 if index != -1:
                     # cycle.  whee.
                     if dbs is self.livefs_dbs:
-                        # well.  we know the node is valid, so we can ignore this cycle.
+                        # well. we know the node is valid, so we can
+                        # ignore this cycle.
                         failure = []
                     else:
                         # XXX this is faulty for rdepends/prdepends most likely
-                        
+
                         if current_stack[index][2] == attr:
                             # contained rdepends cycle... ignore it.
                             failure = []
                         else:
-                            # force limit_to_vdb to True to try and isolate the cycle to installed vdb components
-                            failure = self._rec_add_atom(ratom, current_stack, self.livefs_dbs, depth=depth+1, mode=attr)
+                            # force limit_to_vdb to True to try and
+                            # isolate the cycle to installed vdb
+                            # components
+                            failure = self._rec_add_atom(
+                                ratom, current_stack, self.livefs_dbs,
+                                depth=depth+1, mode=attr)
                             if failure and drop_cycles:
-                                dprint("rdepends level cycle: %s: dropping cycle for %s from %s", (atom, ratom, choices.current_pkg), "cycle")
+                                dprint("rdepends level cycle: %s: "
+                                       "dropping cycle for %s from %s",
+                                       (atom, ratom, choices.current_pkg),
+                                       "cycle")
                                 failure = []
                                 break
                 else:
-                    failure = self._rec_add_atom(ratom, current_stack, dbs, depth=depth+1, mode=attr)
+                    failure = self._rec_add_atom(ratom, current_stack, dbs,
+                                                 depth=depth+1, mode=attr)
                 if failure:
                     # reduce.
                     if choices.reduce_atoms(ratom):
@@ -276,27 +317,36 @@ class merge_plan(object):
             slotted_atom = choices.current_pkg.slotted_atom
             l = self.state.match_atom(slotted_atom)
             if not l:
-                # hmm.  ok... no conflicts, so we insert in vdb matches to trigger a replace instead of an install
+                # hmm. ok... no conflicts, so we insert in vdb matches
+                # to trigger a replace instead of an install
                 for repo, cache in self.livefs_dbs.iteritems():
                     m = self.get_db_match(repo, cache, slotted_atom)
                     if m:
-                        self.state.add_pkg(choice_point(slotted_atom, m), force=True)
-                        break				
+                        self.state.add_pkg(choice_point(slotted_atom, m),
+                                           force=True)
+                        break
 
         # first, check for conflicts.
         l = self.state.add_pkg(choices)
         # lil bit fugly, but works for the moment
         if l:
-            # this means in this branch of resolution, someone slipped something in already.
-            # cycle, basically.
-            dprint("was trying to insert atom '%s' pkg '%s',\nbut '[%s]' exists already", (atom, choices.current_pkg, 
-                ", ".join(str(y) for y in l)))
+            # this means in this branch of resolution, someone slipped
+            # something in already. cycle, basically.
+            dprint("was trying to insert atom '%s' pkg '%s',\n"
+                   "but '[%s]' exists already", (atom, choices.current_pkg,
+                                                 ", ".join(str(y) for y in l)))
             # hack.  see if what was insert is enough for us.
-            
-            # this is tricky... if it's the same node inserted (cycle), then we ignore it; this does *not* perfectly behave though, doesn't discern between repos.
-            if len(l) == 1 and l[0] == choices.current_pkg and l[0].repo.livefs == choices.current_pkg.repo.livefs and atom.match(l[0]):
-                # early exit.  means that a cycle came about, but exact same result slipped through.
-                dprint("non issue, cycle for %s pkg %s resolved to same pkg" % (repr(atom), choices.current_pkg))
+
+            # this is tricky... if it's the same node inserted
+            # (cycle), then we ignore it; this does *not* perfectly
+            # behave though, doesn't discern between repos.
+            if (len(l) == 1 and l[0] == choices.current_pkg and
+                l[0].repo.livefs == choices.current_pkg.repo.livefs and
+                atom.match(l[0])):
+                # early exit. means that a cycle came about, but exact
+                # same result slipped through.
+                dprint("non issue, cycle for %s pkg %s resolved to same pkg" %
+                       (repr(atom), choices.current_pkg))
                 return False
             try_rematch = False
             if any(True for x in l if isinstance(x, restriction.base)):
@@ -310,7 +360,9 @@ class merge_plan(object):
                     print "internal weirdness spotted, dumping to pdb for inspection"
                     import pdb;pdb.set_trace()
                     raise Exception()
-                dprint("replacing a vdb node, so it's valid (need to do a recheck of state up to this point however, which we're not)")
+                dprint("replacing a vdb node, so it's valid (need to do a "
+                       "recheck of state up to this point however, which "
+                       "we're not)")
                 l = self.state.add_pkg(choices, REPLACE)
                 if l:
                     dprint("tried the replace, but got matches still- %s", l)
@@ -323,28 +375,34 @@ class merge_plan(object):
                     # stop resolution.
                     l = False
                 elif l2:
-                    dprint("and we 'parently match it.  ignoring (should prune here however)")
+                    dprint("and we 'parently match it.  ignoring "
+                           "(should prune here however)")
                     # need to do cleanup here
-#					import pdb;pdb.set_trace()
+#                    import pdb;pdb.set_trace()
                     l = False
-                    
+
         else:
             l = None
         return l
 
-    def _rec_add_atom(self, atom, current_stack, dbs, depth=0, mode="none", drop_cycles=False):
+    def _rec_add_atom(self, atom, current_stack, dbs, depth=0, mode="none",
+                      drop_cycles=False):
         """returns false on no issues (inserted succesfully), else a list of the stack that screwed it up"""
         limit_to_vdb = dbs == self.livefs_dbs
 
         if atom in self.insoluble:
-            dprint("processing   %s%s: marked insoluble already", (depth *2 * " ", atom))
+            dprint("processing   %s%s: marked insoluble already",
+                   (depth *2 * " ", atom))
             return [atom]
         l = self.state.match_atom(atom)
         if l:
             if current_stack:
-                dprint("pre-solved %s%s, [%s] [%s]", (((depth*2) + 1)*" ", atom, current_stack[-1][0], ", ".join(str(x) for x in l)))
+                dprint("pre-solved %s%s, [%s] [%s]",
+                       (((depth*2) + 1)*" ", atom, current_stack[-1][0],
+                        ", ".join(str(x) for x in l)))
             else:
-                dprint("pre-solved %s%s, [%s]", (depth*2*" ", atom, ", ".join(str(x) for x in l)))
+                dprint("pre-solved %s%s, [%s]",
+                       (depth*2*" ", atom, ", ".join(str(x) for x in l)))
             return False
         # not in the plan thus far.
         matches = caching_iter(self.global_strategy(self, dbs, atom))
@@ -356,27 +414,32 @@ class merge_plan(object):
                 s = 'first level'
                 if current_stack:
                     s = current_stack[-1][0]
-                dprint("filtering    %s%s  [%s] reduced it to no matches", (depth * 2 * " ",
-                    atom, s))
+                dprint("filtering    %s%s  [%s] reduced it to no matches",
+                       (depth * 2 * " ", atom, s))
                 matches = None
-                # and was intractable because it has a hard dep on an unsolvable atom.
+                # and was intractable because it has a hard dep on an
+                # unsolvable atom.
         if not matches:
             if not limit_to_vdb:
                 self.insoluble.add(atom)
             s = 'first level'
             if current_stack:
                 s = current_stack[-1][0]
-            dprint("processing   %s%s  [%s] no matches", (depth *2 * " ", atom, s))
+            dprint("processing   %s%s  [%s] no matches",
+                   (depth *2 * " ", atom, s))
             return [atom]
 
         # experiment. ;)
-        # see if we can insert or not at this point (if we can't, no point in descending)
-        
+        # see if we can insert or not at this point (if we can't, no
+        # point in descending)
+
         if current_stack:
             if limit_to_vdb:
-                dprint("processing   %s%s  [%s] vdb bound", (depth *2 * " ", atom, current_stack[-1][0]))
+                dprint("processing   %s%s  [%s] vdb bound",
+                       (depth *2 * " ", atom, current_stack[-1][0]))
             else:
-                dprint("processing   %s%s  [%s]", (depth *2 * " ", atom, current_stack[-1][0]))
+                dprint("processing   %s%s  [%s]",
+                       (depth *2 * " ", atom, current_stack[-1][0]))
         else:
             dprint("processing   %s%s", (depth *2 * " ", atom))
 
@@ -388,27 +451,34 @@ class merge_plan(object):
         while choices:
             additions, blocks = [], []
 
-            l = self.process_depends(atom, dbs, current_stack, choices, 
-                self.depset_reorder(self, choices.depends, "depends"), depth=depth, drop_cycles=drop_cycles)
+            l = self.process_depends(
+                atom, dbs, current_stack, choices,
+                self.depset_reorder(self, choices.depends, "depends"),
+                depth=depth, drop_cycles=drop_cycles)
             if len(l) == 1:
-                dprint("reseting for %s%s because of depends: %s", (depth*2*" ", atom, l[0][-1]))
+                dprint("reseting for %s%s because of depends: %s",
+                       (depth*2*" ", atom, l[0][-1]))
                 self.state.reset_state(saved_state)
                 failures = l[0]
                 continue
             additions += l[0]
             blocks += l[1]
 
-            l = self.process_rdepends(atom, dbs, current_stack, choices, "rdepends",
-                self.depset_reorder(self, choices.rdepends, "rdepends"), depth=depth, drop_cycles=drop_cycles)
+            l = self.process_rdepends(
+                atom, dbs, current_stack, choices, "rdepends",
+                self.depset_reorder(self, choices.rdepends, "rdepends"),
+                depth=depth, drop_cycles=drop_cycles)
             if len(l) == 1:
-                dprint("reseting for %s%s because of rdepends: %s", (depth*2*" ", atom, l[0]))
+                dprint("reseting for %s%s because of rdepends: %s",
+                       (depth*2*" ", atom, l[0]))
                 self.state.reset_state(saved_state)
                 failures = l[0]
                 continue
             additions += l[0]
-            blocks += l[1]				
+            blocks += l[1]
 
-            dprint("choose for   %s%s, %s", (depth *2*" ", atom, choices.current_pkg))
+            dprint("choose for   %s%s, %s",
+                   (depth *2*" ", atom, choices.current_pkg))
 
             l = self.insert_choice(atom, current_stack, choices)
             if l is False:
@@ -427,14 +497,17 @@ class merge_plan(object):
             for x in blocks:
                 # hackity hack potential- say we did this-
                 # disallowing blockers from blocking what introduced them.
-                # iow, we can't block ourselves (can block other versions, but not our exact self)
+                # iow, we can't block ourselves (can block other
+                # versions, but not our exact self)
                 # this might be suspect mind you...
                 # disabled, but something to think about.
 
-                l = self.state.add_blocker(self.generate_mangled_blocker(choices, x), key=x.key)
+                l = self.state.add_blocker(self.generate_mangled_blocker(
+                        choices, x), key=x.key)
                 if l:
                     # blocker caught something. yay.
-                    dprint("rdepend blocker %s hit %s for atom %s pkg %s", (x, l, atom, choices.current_pkg))
+                    dprint("rdepend blocker %s hit %s for atom %s pkg %s",
+                           (x, l, atom, choices.current_pkg))
                     failures = [x]
                     break
             else:
@@ -451,8 +524,8 @@ class merge_plan(object):
                     if len(current_stack) > 1:
                         if not current_stack[-2][0].match(x):
                             print "provider conflicted... how?"
-#							import pdb;pdb.set_trace()
-#							print "should do something here, something sane..."
+#                            import pdb;pdb.set_trace()
+#                            print "should do something here, something sane..."
                             fail = [x]
                             break
             else:
@@ -464,30 +537,37 @@ class merge_plan(object):
 
             # reset blocks for pdepend proccesing
             blocks = []
-            l = self.process_rdepends(atom, dbs, current_stack, choices, "post_rdepends",
-                self.depset_reorder(self, choices.post_rdepends, "post_rdepends"), depth=depth, drop_cycles=drop_cycles)
+            l = self.process_rdepends(
+                atom, dbs, current_stack, choices, "post_rdepends",
+                self.depset_reorder(self, choices.post_rdepends,
+                                    "post_rdepends"),
+                depth=depth, drop_cycles=drop_cycles)
 
             if len(l) == 1:
-                dprint("reseting for %s%s because of rdepends: %s", (depth*2*" ", atom, l[0]))
+                dprint("reseting for %s%s because of rdepends: %s",
+                       (depth*2*" ", atom, l[0]))
                 self.state.reset_state(saved_state)
                 failures = l[0]
                 continue
             additions += l[0]
-            blocks += l[1]				
+            blocks += l[1]
 
             # level blockers.
             fail = True
             for x in blocks:
                 # hackity hack potential- say we did this-
                 # disallowing blockers from blocking what introduced them.
-                # iow, we can't block ourselves (can block other versions, but not our exact self)
+                # iow, we can't block ourselves (can block other
+                # versions, but not our exact self)
                 # this might be suspect mind you...
                 # disabled, but something to think about.
 
-                l = self.state.add_blocker(self.generate_mangled_blocker(choices, x), key=x.key)
+                l = self.state.add_blocker(self.generate_mangled_blocker(
+                        choices, x), key=x.key)
                 if l:
                     # blocker caught something. yay.
-                    dprint("rdepend blocker %s hit %s for atom %s pkg %s", (x, l, atom, choices.current_pkg))
+                    dprint("rdepend blocker %s hit %s for atom %s pkg %s",
+                           (x, l, atom, choices.current_pkg))
                     failures = [x]
                     break
             else:
@@ -497,17 +577,20 @@ class merge_plan(object):
                 choices.force_next_pkg()
                 continue
             break
-            
+
         else:
             dprint("no solution  %s%s", (depth*2*" ", atom))
             current_stack.pop()
             self.state.reset_state(saved_state)
             # saving roll.  if we're allowed to drop cycles, try it again.
-            # this needs to be *far* more fine grained also.  it'll try regardless of if it's cycle issue
+            # this needs to be *far* more fine grained also. it'll try
+            # regardless of if it's cycle issue
             if not drop_cycles and self.drop_cycles:
-                dprint("trying saving throw for %s ignoring cycles", atom, "cycle")
+                dprint("trying saving throw for %s ignoring cycles",
+                       atom, "cycle")
                 # note everything is retored to a pristine state prior also.
-                l = self._rec_add_atom(atom, current_stack, dbs, depth=depth, mode=mode, drop_cycles=True)
+                l = self._rec_add_atom(atom, current_stack, dbs, depth=depth,
+                                       mode=mode, drop_cycles=True)
                 if not l:
                     return False
             return [atom] + failures
@@ -517,12 +600,14 @@ class merge_plan(object):
 
     def generate_mangled_blocker(self, choices, blocker):
         """converts a blocker into a "cannot block ourself" block"""
-        new_atom =	packages.AndRestriction(
-                packages.PackageRestriction("actual_pkg", 
-                    restriction.FakeType(choices.current_pkg.versioned_atom, values.value_type),
-                    negate=True),
-                blocker, finalize=True)
-        return new_atom			 
+        new_atom = packages.AndRestriction(
+            packages.PackageRestriction(
+                "actual_pkg",
+                restriction.FakeType(choices.current_pkg.versioned_atom,
+                                     values.value_type),
+                negate=True),
+            blocker, finalize=True)
+        return new_atom
 
 
     # selection strategies for atom matches
@@ -530,13 +615,16 @@ class merge_plan(object):
     @staticmethod
     def prefer_highest_version_strategy(self, dbs, atom):
         # XXX rework caching_iter so that it iter's properly
-        return iter_sort(highest_iter_sort, *[self.get_db_match(r, c, atom) for r, c in
-            dbs.iteritems()])
-        #return iter_sort(highest_iter_sort, default_global_strategy(self, dbs, atom))
+        return iter_sort(highest_iter_sort,
+                         *[self.get_db_match(r, c, atom)
+                           for r, c in dbs.iteritems()])
+        #return iter_sort(highest_iter_sort,
+        #                 default_global_strategy(self, dbs, atom))
 
     @staticmethod
     def prefer_lowest_version_strategy(self, dbs, atom):
-        return iter_sort(lowest_iter_sort, default_global_strategy(self, dbs, atom))
+        return iter_sort(lowest_iter_sort,
+                         default_global_strategy(self, dbs, atom))
 
     @staticmethod
     def prefer_reuse_strategy(self, dbs, atom):
@@ -549,19 +637,25 @@ class merge_plan(object):
                 for p in self.get_db_match(r, c, atom):
                     yield p
 
-    def generic_force_version_strategy(self, vdb, dbs, atom, iter_sorter, pkg_sorter):
+    def generic_force_version_strategy(self, vdb, dbs, atom, iter_sorter,
+                                       pkg_sorter):
         try:
             # nasty, but works.
-            yield iter_sort(iter_sorter, *[r.itermatch(atom, sorter=pkg_sorter) for r in [vdb] + dbs]).next()
-#			yield max(itertools.chain(*[r.itermatch(atom) for r in [vdb] + dbs]))
+            yield iter_sort(iter_sorter,
+                            *[r.itermatch(atom, sorter=pkg_sorter)
+                              for r in [vdb] + dbs]).next()
+#            yield max(itertools.chain(*[r.itermatch(atom)
+#                                        for r in [vdb] + dbs]))
         except StopIteration:
             # twas no matches
             pass
 
-    force_max_version_strategy = staticmethod(post_curry(generic_force_version_strategy, 
-        highest_iter_sort, pkg_sort_highest))
-    force_min_version_strategy = staticmethod(post_curry(generic_force_version_strategy, 
-        lowest_iter_sort, pkg_sort_lowest))
+    force_max_version_strategy = staticmethod(
+        post_curry(generic_force_version_strategy,
+                   highest_iter_sort, pkg_sort_highest))
+    force_min_version_strategy = staticmethod(
+        post_curry(generic_force_version_strategy,
+                   lowest_iter_sort, pkg_sort_lowest))
 
 REMOVE  = 0
 ADD     = 1
@@ -638,7 +732,8 @@ class plan_state(object):
         return ps
         
     def iter_pkg_ops(self):
-        ops = {ADD:"add", REMOVE:"remove", REPLACE:"replace", FORWARD_BLOCK:None}
+        ops = {ADD:"add", REMOVE:"remove", REPLACE:"replace",
+               FORWARD_BLOCK:None}
         for x in self.plan:
             if x[0] == FORWARD_BLOCK:
                 continue

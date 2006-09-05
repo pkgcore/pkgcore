@@ -27,13 +27,14 @@ class PigeonHoledSlots(object):
             else:
                 if x.slot == obj.slot:
                     l.append(x)
-#					if x == obj:
-#						# exit,with a sanity check.
-#						for y in (z for z in self.slot_dict[key] if isinstance(z, restriction.base)):
-#							if y.match(x):
-#								raise Exception
-#						return []
-#					l.append(x)
+#                     if x == obj:
+#                         # exit,with a sanity check.
+#                         for y in (z for z in self.slot_dict[key]
+#                                   if isinstance(z, restriction.base)):
+#                             if y.match(x):
+#                                 raise Exception
+#                         return []
+#                     l.append(x)
         if not l or force:
             self.slot_dict[key].append(obj)
         return l

@@ -11,7 +11,8 @@ from pkgcore.interfaces.data_source import local_source
 from pkgcore.config.introspect import ConfigHint
 
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.fs.util:normpath pkgcore.util.mappings:StackedDict os")
+demandload(globals(),
+           "pkgcore.fs.util:normpath pkgcore.util.mappings:StackedDict os")
 
 class base(object):
     pass
@@ -63,7 +64,8 @@ class cache(base):
         returns a boolean representing whether that eclass data is still up to date, or not
         """
         for eclass, tup in ec_dict.iteritems():
-            if eclass not in self.eclasses or tuple(tup) != self.eclasses[eclass]:
+            if (eclass not in self.eclasses or
+                tuple(tup) != self.eclasses[eclass]):
                 return False
 
         return True
@@ -81,7 +83,7 @@ class cache(base):
                 ec_dict[x] = self.eclasses[x]
             except:
                 print "ec=", ec_dict
-                print "inherit=",x
+                print "inherit=", x
                 raise
 
         return ec_dict
@@ -91,24 +93,26 @@ class cache(base):
         if o is None:
             return o
         return local_source(os.path.join(o[0], eclass+".eclass"))
-        
+
 
 class StackedCaches(cache):
 
     """
     collapse multiple eclass caches into one, doing L->R searching for eclass matches
     """
-    
-    pkgcore_config_type = ConfigHint({"caches":"section_refs", "portdir":"str", "eclassdir":"str"})
-    
+
+    pkgcore_config_type = ConfigHint({"caches":"section_refs", "portdir":"str",
+                                      "eclassdir":"str"})
+
     def __init__(self, caches, **kwds):
         """
         @param caches: L{cache} instances to stack; ordering should be desired lookup order
         @keyword eclassdir: override for the master eclass dir, required for eapi0 and idiot eclass usage.  defaults to pulling from the first cache
         """
         if len(caches) < 2:
-            raise TypeError("%s requires at least two eclass_caches" % self.__class__)
-        
+            raise TypeError(
+                "%s requires at least two eclass_caches" % self.__class__)
+
         self.eclassdir = kwds.pop("eclassdir", None)
         if self.eclassdir is None:
             self.eclassdir = caches[0].eclassdir

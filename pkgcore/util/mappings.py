@@ -33,7 +33,8 @@ class LazyValDict(UserDict.DictMixin):
             self._keys_func = None
         else:
             if not callable(get_keys_func):
-                raise TypeError("get_keys_func isn't iterable nor is it callable")
+                raise TypeError(
+                    "get_keys_func isn't iterable nor is it callable")
             self._keys_func = get_keys_func
         self._val_func = get_val_func
         self._vals = {}
@@ -137,7 +138,8 @@ class ProtectedDict(UserDict.DictMixin, object):
         return list(self.__iter__())
 
     def __contains__(self, key):
-        return key in self.new or (key not in self.blacklist and key in self.orig)
+        return key in self.new or (key not in self.blacklist and
+                                   key in self.orig)
 
     has_key = __contains__
 

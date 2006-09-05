@@ -5,8 +5,11 @@
 configuration subsystem
 """
 
-# keep these imports as minimal as possible; access to pkgcore.config.introspect isn't uncommon, thus don't trigger till actually needed
-from pkgcore.const import CONF_DEFAULTS, GLOBAL_CONF_FILE, SYSTEM_CONF_FILE, USER_CONF_FILE
+# keep these imports as minimal as possible; access to
+# pkgcore.config.introspect isn't uncommon, thus don't trigger till
+# actually needed
+from pkgcore.const import (
+    CONF_DEFAULTS, GLOBAL_CONF_FILE, SYSTEM_CONF_FILE, USER_CONF_FILE)
 
 
 def load_config(user_conf_file=USER_CONF_FILE,

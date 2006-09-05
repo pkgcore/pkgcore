@@ -97,8 +97,9 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
             kw = {"uid":l[2], "gid":l[3]}
 
         fp2 = self.generate_script("portage-spawn-fakeroot2.sh",
-            "#!%s\nimport os\ns=os.stat('/tmp')\nprint s.st_uid\nprint s.st_gid\n" %
-            spawn.find_binary("python"))
+                                   "#!%s\nimport os\ns=os.stat('/tmp')\n"
+                                   "print s.st_uid\nprint s.st_gid\n" %
+                                   spawn.find_binary("python"))
 
         fp1 = self.generate_script("portage-spawn-fakeroot.sh",
             "#!%s\nchown %i:%i /tmp;%s;\n" % (

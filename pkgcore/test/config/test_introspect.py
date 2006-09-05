@@ -119,9 +119,10 @@ class ConfigTypeFromClassTest(unittest.TestCase):
 
     def test_newstyle(self):
         self._test_basics(NewStyleClass, 'NewStyleClass')
-    
+
     def test_defaults_str(self):
-        self._test_basics(NewStyleStrClass, 'NewStyleStrClass', two_override='str')
+        self._test_basics(NewStyleStrClass, 'NewStyleStrClass',
+                          two_override='str')
 
     def test_config_hint(self):
         class c(NewStyleClass):

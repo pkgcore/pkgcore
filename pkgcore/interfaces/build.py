@@ -129,8 +129,8 @@ class FailedDirectory(BuildError):
 
 class GenericBuildError(BuildError):
     def __init__(self, err):
+        BuildError.__init__(self, "Failed build operation: %s" % (err,))
         self.err = str(err)
-        BuildError.__init__(self, "Failed build operation: %s" (self.err,))
 
 
 errors = (FailedDirectory, GenericBuildError)

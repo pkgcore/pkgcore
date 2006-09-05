@@ -10,6 +10,5 @@ class base(object):
 
 class ProfileException(Exception):
     def __init__(self, err):
+        Exception.__init__(self, str(err))
         self.err = err
-    def __str__(self):
-        return str(self.err)

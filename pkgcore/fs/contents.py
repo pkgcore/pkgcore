@@ -40,7 +40,8 @@ class contentsSet(object):
         
         if not self.mutable:
             # weird, but keeping with set.
-            raise AttributeError("%s is frozen; no add functionality" % self.__class__)
+            raise AttributeError(
+                "%s is frozen; no add functionality" % self.__class__)
         if not isinstance(obj, fs.fsBase):
             raise TypeError("'%s' is not a fs.fsBase class" % str(obj))
         self._dict[obj.location] = obj
@@ -131,7 +132,8 @@ class contentsSet(object):
     
     def symmetric_difference(self, other):
         i = self.intersection(other)
-        return contentsSet(chain(iter(self.difference(i)), iter(other.difference(i))))
+        return contentsSet(chain(iter(self.difference(i)),
+                                 iter(other.difference(i))))
 
     def update(self, iterable):
         self._dict.update((x.location, x) for x in iterable)

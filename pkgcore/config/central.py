@@ -82,12 +82,13 @@ class ConfigManager(object):
         for inherit_name, inherit_conf in slist:
             if "class" in inherit_conf:
                 type_override = inherit_conf
-        
+
         if type_override is not None:
-            class_obj = type_override.get_value(self, "class", type_obj.types["class"])
+            class_obj = type_override.get_value(self, "class",
+                                                type_obj.types["class"])
             if getattr(class_obj, "pkgcore_config_type", False):
                 type_obj = introspect.configTypeFromCallable(class_obj)
-        del type_override	
+        del type_override
 
         # collapse, honoring incrementals.
 
@@ -157,10 +158,11 @@ class ConfigManager(object):
         type_name = conf['type']
 
         if type_name == "alias":
-            return self.instantiate_section(conf["section"], allow_reuse=allow_reuse)
+            return self.instantiate_section(conf["section"],
+                                            allow_reuse=allow_reuse)
 
         del conf['type']
-        
+
         if 'class' not in conf:
             raise errors.ConfigurationError(
                 '%s: no class specified' % section)

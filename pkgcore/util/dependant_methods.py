@@ -69,7 +69,8 @@ class ForcedDepends(type):
 
         # wrap the funcs
 
-        for x in set(x for x in iflatten_instance(o.stage_depends.iteritems()) if x):
+        for x in set(x for x in iflatten_instance(o.stage_depends.iteritems())
+                     if x):
             f = getattr(o, x)
             f2 = pre_curry(ensure_deps, o, x)
             f2.raw_func = f

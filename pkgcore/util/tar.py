@@ -23,11 +23,12 @@ del t
 class TarInfo(tarfile.TarInfo):
     __slots__ = (
         "name", "mode", "uid", "gid", "size", "mtime", "chksum", "type",
-        "linkname", "uname", "gname", "devmajor", "devminor", "prefix", "offset",
-        "offset_data", "buf", "sparse", "_link_target")
+        "linkname", "uname", "gname", "devmajor", "devminor", "prefix",
+        "offset", "offset_data", "buf", "sparse", "_link_target")
 
 tarfile.TarInfo = TarInfo
-# finished monkey patching.  now to lift things out of our tarfile module into this scope so from/import behaves properly.
+# finished monkey patching. now to lift things out of our tarfile
+# module into this scope so from/import behaves properly.
 
 for x in tarfile.__all__:
     locals()[x] = getattr(tarfile, x)

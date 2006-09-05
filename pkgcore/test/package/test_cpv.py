@@ -51,17 +51,21 @@ class native_CpvTest(unittest.TestCase):
     def test_parsing(self):
         for cat_ret, cats in [[False, self.good_cats], [True, self.bad_cats]]:
             for cat in cats:
-                for pkg_ret, pkgs in [[False, self.good_pkgs], [True, self.bad_pkgs]]:
+                for pkg_ret, pkgs in [[False, self.good_pkgs],
+                                      [True, self.bad_pkgs]]:
                     for pkg in pkgs:
                         self.process_pkg(cat_ret or pkg_ret, cat, pkg)
 
         for cp in self.good_cp:
             cat, pkg = cp.rsplit("/", 1)
-            for rev_ret, revs in [[False, self.good_revs], [True, self.bad_revs]]:
+            for rev_ret, revs in [[False, self.good_revs],
+                                  [True, self.bad_revs]]:
                 for rev in revs:
-                    for ver_ret, vers in [[False, self.good_vers], [True, self.bad_vers]]:
+                    for ver_ret, vers in [[False, self.good_vers],
+                                          [True, self.bad_vers]]:
                         for ver in vers:
-                            self.process_ver(ver_ret or rev_ret, cat, pkg, ver, rev)
+                            self.process_ver(ver_ret or rev_ret, cat, pkg,
+                                             ver, rev)
 
 
     locals()["test_parsing (may take awhile)"] = test_parsing

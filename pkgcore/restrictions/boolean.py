@@ -21,7 +21,7 @@ class base(restriction.base):
     def __init__(self, *restrictions, **kwds):
 
         """
-        @keyword node_type: type of restriction this accepts (L{package_type<pkgcore.restrictions.packages.package_type>} and 
+        @keyword node_type: type of restriction this accepts (L{package_type<pkgcore.restrictions.packages.package_type>} and
         L{value_type<pkgcore.restrictions.values.value_type>}) being common types.  If set to None, no instance limiting is done
         @param restrictions: initial restrictions to add, must be of node_type (if node_type is specified)
         @keyword finalize: should this instance be made immutable immediately?
@@ -43,7 +43,7 @@ class base(restriction.base):
     def change_restrictions(self, *restrictions, **kwds):
         """
         return a new instance of self.__class__, using supplied restrictions
-        
+
         """
         if self.__class__.type != self.type:
             kwds["node_type"] = self.type
@@ -53,20 +53,24 @@ class base(restriction.base):
     def add_restriction(self, *new_restrictions):
         """
         add an more restriction(s)
-        
+
         @param new_restrictions: if node_type is enforced, restrictions must be of that type.
         """
-        
+
         if not new_restrictions:
             raise TypeError("need at least one restriction handed in")
         if hasattr(self, "type"):
             try:
                 for r in new_restrictions:
                     if r.type is not None and r.type != self.type:
-                        raise TypeError("instance '%s' is restriction type '%s', must be '%s'" % (r, r.type, self.type))
+                        raise TypeError(
+                            "instance '%s' is restriction type '%s', "
+                            "must be '%s'" % (r, r.type, self.type))
             except AttributeError:
-                raise TypeError("type '%s' instance '%s' has no restriction type, '%s' required" % (r.__class__,
-                    r, getattr(self, "type", "unset")))
+                raise TypeError(
+                    "type '%s' instance '%s' has no restriction type, "
+                    "'%s' required" % (
+                        r.__class__, r, getattr(self, "type", "unset")))
 
         self.restrictions.extend(new_restrictions)
 
@@ -99,7 +103,7 @@ class base(restriction.base):
     def iter_cnf_solutions(self, *a, **kwds):
         """iterate over the cnf solution"""
         return self.cnf_solutions(*a, **kwds)
-    
+
     def iter_dnf_solutions(self, *a, **kwds):
         """iterate over the dnf solution"""
         return self.dnf_solutions(*a, **kwds)
@@ -109,13 +113,15 @@ class base(restriction.base):
 
 
 # this beast, handles N^2 permutations.  convert to stack based.
-def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths, filter, desired_false=None, desired_true=None, kill_switch=None):
+def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
+                            filter, desired_false=None, desired_true=None,
+                            kill_switch=None):
     if desired_false is None:
         desired_false = lambda r, a:r.force_False(*a)
     if desired_true is None:
         desired_true = lambda r, a:r.force_True(*a)
 
-#	import pdb;pdb.set_trace()
+#    import pdb;pdb.set_trace()
     reset = True
     if starting == 0:
         if filter(truths):
@@ -131,9 +137,11 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths, fil
                 t[index] = False
                 if filter(t):
                     yield True
-                for x in iterative_quad_toggling(pkg, pvals, restrictions, index + 1, end, t, filter,
-                    desired_false=desired_false, desired_true=desired_true, kill_switch=kill_switch):
-#					import pdb;pdb.set_trace()
+                for x in iterative_quad_toggling(
+                    pkg, pvals, restrictions, index + 1, end, t, filter,
+                    desired_false=desired_false, desired_true=desired_true,
+                    kill_switch=kill_switch):
+#                    import pdb;pdb.set_trace()
                     yield True
                 reset = True
             else:
@@ -146,14 +154,15 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths, fil
                 t[index] = True
                 if filter(t):
                     yield True
-                for x in iterative_quad_toggling(pkg, pvals, restrictions, index + 1, end, t, filter,
+                for x in iterative_quad_toggling(
+                    pkg, pvals, restrictions, index + 1, end, t, filter,
                     desired_false=desired_false, desired_true=desired_true):
-#					import pdb;pdb.set_trace()
+#                    import pdb;pdb.set_trace()
                     yield True
                 reset = True
             elif index == end:
                 if filter(truths):
-#					import pdb;pdb.set_trace()
+#                    import pdb;pdb.set_trace()
                     yield True
             else:
                 if kill_switch is not None and kill_switch(truths, index):
@@ -185,15 +194,18 @@ class AndRestriction(base):
                     return False
             return True
 
-        # <insert page long curse here>, NAND logic, len(restrictions)**2 potential solutions.
+        # <insert page long curse here>, NAND logic,
+        # len(restrictions)**2 potential solutions.
         # 0|0 == 0, 0|1 == 1|0 == 0|0 == 1.
-        # XXX this is quadratic.  patches welcome to dodge the requirement to push through all potential
-        # truths.
+        # XXX this is quadratic. patches welcome to dodge the
+        # requirement to push through all potential truths.
         truths = [r.match(*pvals) for r in self.restrictions]
         def filter(truths):
             return False in truths
 
-        for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0, len(self.restrictions), truths, filter):
+        for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
+                                         len(self.restrictions), truths,
+                                         filter):
             return True
         return False
 
@@ -209,27 +221,34 @@ class AndRestriction(base):
                     return False
             return True
 
-        # <insert page long curse here>, NAND logic, (len(restrictions)^2)-1 potential solutions.
+        # <insert page long curse here>, NAND logic,
+        # (len(restrictions)^2)-1 potential solutions.
         # 1|1 == 0, 0|1 == 1|0 == 0|0 == 1.
-        # XXX this is quadratic.  patches welcome to dodge the requirement to push through all potential
-        # truths.
+        # XXX this is quadratic. patches welcome to dodge the
+        # requirement to push through all potential truths.
         truths = [r.match(*pvals) for r in self.restrictions]
         def filter(truths):
             return False in truths
-        for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0, len(self.restrictions), truths, filter):
+        for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
+                                         len(self.restrictions), truths,
+                                         filter):
             return True
         return False
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
         """
         generater yielding DNF (disjunctive normalized form) form of this instance
-        
+
         @param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
         """
         if self.negate:
-#			raise NotImplementedError("negation for dnf_solutions on AndRestriction isn't implemented yet")
+#           raise NotImplementedError("negation for dnf_solutions on "
+#                 "AndRestriction isn't implemented yet")
             # hack- this is an experiment
-            for r in OrRestriction(type=self.type, strict=False, *[restriction.Negate(x) for x in self.restrictions]).iter_dnf_solutions():
+            for r in OrRestriction(
+                type=self.type, strict=False,
+                *[restriction.Negate(x)
+                  for x in self.restrictions]).iter_dnf_solutions():
                 yield r
             return
         if not self.restrictions:
@@ -239,7 +258,8 @@ class AndRestriction(base):
         optionals = []
         for x in self.restrictions:
             if isinstance(x, base):
-                s2 = x.dnf_solutions(full_solution_expansion=full_solution_expansion)
+                s2 = x.dnf_solutions(
+                    full_solution_expansion=full_solution_expansion)
                 assert s2
                 if len(s2) == 1:
                     hardreqs.extend(s2[0])
@@ -268,19 +288,21 @@ class AndRestriction(base):
         return list(self.iter_dnf_solutions(*args, **kwds))
 
     def cnf_solutions(self, full_solution_expansion=False):
-        
+
         """
         returns solutions in CNF (conjunctive normalized form) for of this instance
-        
+
         @param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
         """
-        
+
         if self.negate:
-            raise NotImplementedError("negation for solutions on AndRestriction isn't implemented yet")
+            raise NotImplementedError("negation for solutions on "
+                                      "AndRestriction isn't implemented yet")
         andreqs = []
         for x in self.restrictions:
             if isinstance(x, base):
-                andreqs.extend(x.cnf_solutions(full_solution_expansion=full_solution_expansion))
+                andreqs.extend(x.cnf_solutions(
+                        full_solution_expansion=full_solution_expansion))
             else:
                 andreqs.append([x])
         return andreqs
@@ -304,11 +326,12 @@ class OrRestriction(base):
     def cnf_solutions(self, full_solution_expansion=False):
         """
         returns alist in CNF (conjunctive normalized form) for of this instance
-        
+
         @param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
         """
         if self.negate:
-            raise NotImplementedError("OrRestriction.solutions doesn't yet support self.negate")
+            raise NotImplementedError(
+                "OrRestriction.solutions doesn't yet support self.negate")
 
         if not self.restrictions:
             return []
@@ -325,7 +348,8 @@ class OrRestriction(base):
         cnf = []
         for x in self.restrictions:
             if isinstance(x, base):
-                s2 = x.dnf_solutions(full_solution_expansion=full_solution_expansion)
+                s2 = x.dnf_solutions(
+                    full_solution_expansion=full_solution_expansion)
                 if len(s2) == 1:
                     cnf.extend(s2)
                 else:
@@ -337,29 +361,34 @@ class OrRestriction(base):
             else:
                 dcnf.append(x)
 
-        # combinatorial explosion.  if it's got cnf, we peel off one of each and smash append to the dcnf.
+        # combinatorial explosion. if it's got cnf, we peel off one of
+        # each and smash append to the dcnf.
         dcnf = [dcnf]
         for andreq in cnf:
             dcnf = list([x] + y for x in andreq for y in dcnf)
         return dcnf
-                
+
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
         """
         returns a list in DNF (disjunctive normalized form) for of this instance
-        
+
         @param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
         """
         if self.negate:
             # hack- this is an experiment
-            for x in AndRestriction(type=self.type, strict=False, *[restriction.Negate(x) for x in self.restrictions]).iter_dnf_solutions():
+            for x in AndRestriction(
+                type=self.type, strict=False,
+                *[restriction.Negate(x)
+                  for x in self.restrictions]).iter_dnf_solutions():
                 yield x
         if not self.restrictions:
             yield []
             return
         for x in self.restrictions:
             if isinstance(x, base):
-                for y in x.iter_dnf_solutions(full_solution_expansion=full_solution_expansion):
+                for y in x.iter_dnf_solutions(
+                    full_solution_expansion=full_solution_expansion):
                     yield y
             else:
                 yield [x]
@@ -382,14 +411,17 @@ class OrRestriction(base):
                     return False
             return True
 
-        # <insert page long curse here>, OR logic, len(restrictions)**2-1 potential solutions.
+        # <insert page long curse here>, OR logic,
+        # len(restrictions)**2-1 potential solutions.
         # 0|0 == 0, 0|1 == 1|0 == 1|1 == 1.
-        # XXX this is quadratic.  patches welcome to dodge the requirement to push through all potential
-        # truths.
+        # XXX this is quadratic. patches welcome to dodge the
+        # requirement to push through all potential truths.
         truths = [r.match(*pvals) for r in self.restrictions]
         def filter(truths):
             return True in truths
-        for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0, len(self.restrictions), truths, filter):
+        for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
+                                         len(self.restrictions), truths,
+                                         filter):
             return True
         return False
 
@@ -406,14 +438,17 @@ class OrRestriction(base):
             yield True
             return
 
-        # <insert page long curse here>, OR logic, (len(restrictions)**2)-1 potential solutions.
+        # <insert page long curse here>, OR logic,
+        # (len(restrictions)**2)-1 potential solutions.
         # 0|0 == 0, 0|1 == 1|0 == 1|1 == 1.
-        # XXX this is quadratic.  patches welcome to dodge the requirement to push through all potential
-        # truths.
+        # XXX this is quadratic. patches welcome to dodge the
+        # requirement to push through all potential truths.
         truths = [r.match(*pvals) for r in self.restrictions]
         def filter(truths):
             return True in truths
-        for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0, len(self.restrictions), truths, filter):
+        for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
+                                         len(self.restrictions), truths,
+                                         filter):
             yield True
 
 

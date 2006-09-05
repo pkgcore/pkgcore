@@ -107,7 +107,8 @@ class tree(prototype.tree):
         "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
 
     def _get_metadata(self, pkg):
-        return IndeterminantDict(pre_curry(self._internal_load_key, os.path.dirname(pkg.path)))
+        return IndeterminantDict(pre_curry(self._internal_load_key,
+                                           os.path.dirname(pkg.path)))
 
     def _internal_load_key(self, path, key):
         key = self._metadata_rewrites.get(key, key)
@@ -177,7 +178,9 @@ class ConfiguredTree(multiplex.tree):
                 if len(rdep_atoms) == 1:
                     pkg_dict[full_ver] = rdep_atoms[0].unversioned_atom
                 else:
-                    pkg_dict[full_ver] = OrRestriction(finalize=True, *[x.unversioned_atom for x in rdep_atoms])
+                    pkg_dict[full_ver] = OrRestriction(
+                        finalize=True,
+                        *[x.unversioned_atom for x in rdep_atoms])
         return virtuals
 
 tree.configure = ConfiguredTree
@@ -233,7 +236,9 @@ class install(repo_interfaces.install):
                     s = v
                 if not s.endswith("\n"):
                     s += "\n"
-                open(os.path.join(dirpath, rewrite.get(k, k.upper())), "w", 32384).write(s)
+                open(os.path.join(
+                        dirpath,
+                        rewrite.get(k, k.upper())), "w", 32384).write(s)
 
         # ebuild_data is the actual ebuild- no point in holding onto
         # it for built ebuilds, but if it's there, we store it.

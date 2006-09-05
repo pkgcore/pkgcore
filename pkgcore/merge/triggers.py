@@ -53,8 +53,8 @@ class trigger(object):
             return self._label
         return self.__class__
 
-    # this should probably be implemented as an associated int that can be used to
-    # sort the triggers
+    # this should probably be implemented as an associated int that
+    # can be used to sort the triggers
     def register(self, hook_name, existing_triggers):
         """
         register with a MergeEngine
@@ -168,7 +168,8 @@ def fix_default_uid(uid=pkgcore.os_data.portage_uid,
                     replacement=pkgcore.os_data.root_uid, cset="new_cset"):
     def change_uid(engine, cset):
         # do it as a list, since we're mutating the set
-        resets = [x.change_attributes(uid=replacement) for x in cset if x.uid == uid]
+        resets = [x.change_attributes(uid=replacement)
+                  for x in cset if x.uid == uid]
         cset.update(resets)
     return SimpleTrigger(cset, change_uid)
 
@@ -182,12 +183,15 @@ def fix_special_bits_world_writable(fix_perms=True, cset="new_cset"):
         if reporter is not None:
             for x in l:
                 if x.mode & 04000:
-                    reporter.error("UNSAFE world writable SetGID: %s", (x.real_path,))
+                    reporter.error(
+                        "UNSAFE world writable SetGID: %s", (x.real_path,))
                 else:
-                    reporter.error("UNSAFE world writable SetUID: %s" % (x.real_path,))
+                    reporter.error(
+                        "UNSAFE world writable SetUID: %s" % (x.real_path,))
 
         if l:
-            # filters the 01, for those who aren't accustomed to screwing with mode.
+            # filters the 01, for those who aren't accustomed to
+            # screwing with mode.
             cset.update(x.change_attributes(mode=x.mode & ~01) for x in l)
     return SimpleTrigger(cset, perm_func)
 

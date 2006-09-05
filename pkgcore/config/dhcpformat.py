@@ -66,6 +66,7 @@ class ConfigSection(basics.ConfigSection):
     """Expose a section_contents from pyparsing as a ConfigSection."""
 
     def __init__(self, section):
+        basics.ConfigSection.__init__(self)
         self.section = section
 
     def __contains__(self, name):

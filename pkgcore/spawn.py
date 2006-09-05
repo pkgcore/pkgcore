@@ -133,7 +133,8 @@ def cleanup_pids(pids=None):
                 pass
 
 def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
-    uid=None, gid=None, groups=None, umask=None, logfile=None, path_lookup=True):
+          uid=None, gid=None, groups=None, umask=None, logfile=None,
+          path_lookup=True):
 
     """wrapper around execve
 
@@ -197,7 +198,8 @@ def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
         # 'Catch "Exception"'
         # pylint: disable-msg=W0703
         try:
-            _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask)
+            _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups,
+                  uid, umask)
         except Exception, e:
             # We need to catch _any_ exception so that it doesn't
             # propogate out of this function and cause exiting
@@ -466,7 +468,7 @@ class ExecutionFailure(Exception):
 
 class CommandNotFound(ExecutionFailure):
     def __init__(self, command):
-        Exception.__init__(
+        ExecutionFailure.__init__(
             self, "CommandNotFound Exception: Couldn't find '%s'" % (command,))
         self.command = command
 

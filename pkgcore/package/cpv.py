@@ -77,16 +77,20 @@ class native_CPV(object):
         if self.cpvstr == other.cpvstr:
             return 0
 
-        if self.category and other.category and self.category != other.category:
+        if (self.category and other.category and
+            self.category != other.category):
             return cmp(self.category, other.category)
 
         if self.package and other.package and self.package != other.package:
             return cmp(self.package, other.package)
 
-        # note I chucked out valueerror, none checks on versions passed in.  I suck, I know.
+        # note I chucked out valueerror, none checks on versions
+        # passed in. I suck, I know.
         # ~harring
-        # fails in doing comparison of unversioned atoms against versioned atoms
-        return native_ver_cmp(self.version, self.revision, other.version, other.revision)
+        # fails in doing comparison of unversioned atoms against
+        # versioned atoms
+        return native_ver_cmp(self.version, self.revision, other.version,
+                              other.revision)
 
 
 def native_ver_cmp(ver1, rev1, ver2, rev2):
@@ -226,7 +230,8 @@ fake_pkg = "pkg"
 def cpy_ver_cmp(ver1, rev1, ver2, rev2):
     if ver1 == ver2:
         return cmp(rev1, rev2)
-    c = cmp(cpy_CPV(ver1, fake_cat, fake_pkg), cpy_CPV(ver2, fake_cat, fake_pkg))
+    c = cmp(cpy_CPV(ver1, fake_cat, fake_pkg),
+            cpy_CPV(ver2, fake_cat, fake_pkg))
     if c != 0:
         return c
     return cmp(rev1, rev2)

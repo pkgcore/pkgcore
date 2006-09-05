@@ -14,9 +14,8 @@ import struct
 
 class MalformedXpak(Exception):
     def __init__(self, msg):
+        Exception.__init__(self, "xpak as malformed: %s" % (msg,))
         self.msg = msg
-    def __str__(self):
-        return "xpak as malformed: %s" % self.msg
 
 
 class Xpak(object):

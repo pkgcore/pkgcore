@@ -11,7 +11,7 @@
 [MASTER]
 
 # Ignore external modules.
-ignore=demandload.py,bundled_elementtree.py
+ignore=demandload.py,bundled_elementtree.py,native_readdir.py
 
 
 [REPORTS]
@@ -58,13 +58,8 @@ argument-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
 
 # Regular expression which should only match correct variable names
 # Was:       [a-z_][a-z0-9_]{2,30}$
-variable-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+variable-rgx=[a-z_][a-zA-Z0-9_]{0,30}$
 
 # "bad" builtins.
 # Was: map,filter,apply,input
 bad-functions=filter,apply,input
-
-
-[FORMAT]
-
-indent-string="\t"

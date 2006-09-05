@@ -8,7 +8,7 @@ repository that combines multiple repositories together
 from pkgcore.repository import prototype, errors
 
 class tree(prototype.tree):
-    
+
     """repository combining multiple repositories into one"""
 
     def __init__(self, *trees):
@@ -40,7 +40,8 @@ class tree(prototype.tree):
                     failures += 1
         if failures == len(self.trees):
             if optionalCategory:
-                raise KeyError("category base '%s' not found" % str(optionalCategory))
+                raise KeyError("category base '%s' not found" %
+                               str(optionalCategory))
             raise KeyError("failed getting categories")
         return tuple(d)
 

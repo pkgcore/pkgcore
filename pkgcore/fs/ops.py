@@ -136,7 +136,8 @@ def default_copyfile(obj, mkdirs=False):
     else:
         ret = spawn([COPY_BINARY, "-Rp", obj.real_path, fp])
         if ret != 0:
-            raise Exception("failed cp'ing %s to %s, ret %s" % (obj.real_path, fp, ret))
+            raise Exception(
+                "failed cp'ing %s to %s, ret %s" % (obj.real_path, fp, ret))
     if not fs.issym(obj):
         ensure_perms(obj.change_attributes(location=fp))
 
@@ -148,7 +149,8 @@ def offset_rewriter(offset, iterable):
     pjoin = os.path.join
     sep = os.path.sep
     for x in iterable:
-        yield x.change_attributes(location=pjoin(offset, x.location.lstrip(sep)))
+        yield x.change_attributes(
+            location=pjoin(offset, x.location.lstrip(sep)))
 
 
 def merge_contents(cset, offset=None, callback=lambda obj:None):
@@ -162,8 +164,6 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
     @raise OSError: see L{default_copyfile} and L{default_mkdir}
     @return: True, or an exception is thrown on failure (OSError, although see default_copyfile for specifics)
     """
-
-    from pkgcore.plugins import get_plugin
 
     ensure_perms = get_plugin("fs_ops", "ensure_perms")
     copyfile = get_plugin("fs_ops", "copyfile")

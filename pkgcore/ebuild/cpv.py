@@ -243,7 +243,7 @@ def cpy_ver_cmp(ver1, rev1, ver2, rev2):
 
 
 try:
-    from pkgcore.package._cpv import CPV as cpy_CPV
+    from pkgcore.ebuild._cpv import CPV as cpy_CPV
     base_CPV = cpy_CPV
     ver_cmp = cpy_ver_cmp
     cpy_builtin = True

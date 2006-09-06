@@ -185,7 +185,8 @@ class native_CpvTest(unittest.TestCase):
                 pass
 
 
-if cpv.cpy_builtin:
-    class CPY_CpvTest(native_CpvTest):
+class CPY_CpvTest(native_CpvTest):
+    if cpv.cpy_builtin:
         kls = staticmethod(cpv.cpy_CPV)
-
+    else:
+        skip = "cpython cpv extension not available"

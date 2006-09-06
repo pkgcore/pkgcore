@@ -52,6 +52,8 @@ class native_CPV(object):
         @type cpvstr: string
         """
         self.__dict__["cpvstr"] = cpvstr
+        if not isinstance(self.cpvstr, basestring):
+            import pdb;pdb.set_trace()
         m = parser.match(self.cpvstr)
         if not m:
             raise InvalidCPV(self.cpvstr)

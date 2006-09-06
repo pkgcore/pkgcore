@@ -9,7 +9,7 @@ import os, stat
 from pkgcore.repository import prototype, errors
 
 #needed to grab the PN
-from pkgcore.package.cpv import CPV as cpv
+from pkgcore.ebuild.cpv import CPV as cpv
 from pkgcore.util.currying import pre_curry
 from pkgcore.plugins import get_plugin
 from pkgcore.interfaces.data_source import data_source

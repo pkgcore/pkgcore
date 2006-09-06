@@ -10,7 +10,7 @@ gentoo ebuild atom, should be generalized into an agnostic base
 
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
-import cpv
+from pkgcore.ebuild import cpv
 
 
 class MalformedAtom(Exception):

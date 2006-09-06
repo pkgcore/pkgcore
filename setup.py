@@ -136,7 +136,7 @@ core.setup(
 	ext_modules=[
 		core.Extension('pkgcore.util._caching', ['pkgcore/util/_caching.c']),
 		core.Extension('pkgcore.util._lists', ['pkgcore/util/_lists.c']),
-		core.Extension('pkgcore.package._cpv', ['pkgcore/package/_cpv.c']),
+		core.Extension('pkgcore.ebuild._cpv', ['pkgcore/ebuild/_cpv.c']),
 		core.Extension('pkgcore.util.osutils._readdir',
 					   ['pkgcore/util/osutils/_readdir.c']),
 		],

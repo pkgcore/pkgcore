@@ -2,7 +2,7 @@
 # License: GPL2
 
 from twisted.trial import unittest
-from pkgcore.package import cpv, errors
+from pkgcore.ebuild import cpv
 
 
 class native_CpvTest(unittest.TestCase):

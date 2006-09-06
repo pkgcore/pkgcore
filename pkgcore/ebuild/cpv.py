@@ -7,8 +7,10 @@
 
 
 import re
-from pkgcore.package import atom, errors, base
-
+from pkgcore.package import errors, base
+# do this to break the cycle.
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.package:atom")
 
 suffix_regexp = re.compile("^(alpha|beta|rc|pre|p)(\\d*)$")
 suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}

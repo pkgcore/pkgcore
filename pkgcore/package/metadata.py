@@ -11,14 +11,14 @@ from pkgcore.util.weakrefs import WeakValCache
 from pkgcore.util.demandload import demandload
 demandload(globals(), "warnings")
 
-from pkgcore.package.cpv import CPV
+from pkgcore.ebuild.cpv import CPV
 from pkgcore.package.atom import atom
 
 def DeriveMetadataKls(original_kls):
     if getattr(original_kls, "_derived_metadata_kls", False):
         return original_kls
     
-    class package(CPV):
+    class package(original_kls):
         _derived_metadata_kls = True
         built = False
         try:

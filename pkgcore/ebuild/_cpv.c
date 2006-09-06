@@ -742,7 +742,7 @@ static PyTypeObject pkgcore_cpvType = {
 
 PyDoc_STRVAR(
 	pkgcore_cpv_documentation,
-	"C reimplementation of pkgcore.package.cpv.");
+	"C reimplementation of pkgcore.ebuild.cpv.");
 
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
@@ -753,7 +753,7 @@ init_cpv(void)
 	PyObject *m, *s;
 	
 	// this may be redundant; do this so __builtins__["__import__"] is used.
-	s = PyString_FromString("pkgcore.package.errors");
+	s = PyString_FromString("pkgcore.ebuild.cpv");
 	if(NULL == s)
 		return;
 	m = PyImport_Import(s);

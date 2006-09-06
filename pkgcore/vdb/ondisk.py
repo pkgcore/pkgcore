@@ -5,7 +5,7 @@ import os, stat, errno, shutil
 from pkgcore.repository import prototype, errors
 
 #needed to grab the PN
-from pkgcore.package.cpv import CPV as cpv
+from pkgcore.ebuild.cpv import CPV as cpv
 from pkgcore.fs.util import ensure_dirs
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import pre_curry

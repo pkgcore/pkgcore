@@ -14,7 +14,7 @@ from pkgcore.config.basics import list_parser
 from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.repository import virtual
-from pkgcore.package import cpv
+from pkgcore.ebuild import cpv
 from pkgcore.util.demandload import demandload
 demandload(globals(), "logging")
 

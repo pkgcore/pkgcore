@@ -5,7 +5,7 @@ from pkgcore.repository.prototype import tree
 from twisted.trial import unittest
 from pkgcore.restrictions import packages, values
 from pkgcore.package.atom import atom
-from pkgcore.package.cpv import CPV
+from pkgcore.ebuild.cpv import CPV
 from pkgcore.util.currying import pre_curry
 from pkgcore.util.mappings import OrderedDict
 

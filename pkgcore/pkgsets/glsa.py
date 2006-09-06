@@ -11,10 +11,11 @@ from pkgcore.restrictions import packages, restriction, boolean, values
 from pkgcore.config.introspect import ConfigHint
 from pkgcore.util.demandload import demandload
 
-demandload(globals(), "pkgcore.util.xml:etree " +
-    "pkgcore.util.repo_utils:get_virtual_repos " +
-    "pkgcore.package:atom,cpv,mutated " +
-    "logging")
+demandload(globals(), "pkgcore.util.xml:etree "
+    "pkgcore.util.repo_utils:get_virtual_repos "
+    "pkgcore.package:atom,mutated "
+    "pkgcore.ebuild:cpv "
+    "logging ")
 
 
 class KeyedAndRestriction(boolean.AndRestriction):

@@ -6,7 +6,7 @@
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.iterables:caching_iter "+
     "pkgcore.config:load_config "+
-    "pkgcore.package.atom:atom "+
+    "pkgcore.ebuild.atom:atom "+
     "pkgcore.util.packages:get_raw_pkg "+
     "sys os ")
 
@@ -23,7 +23,7 @@ def expose_to_commandline(f):
 def has_version(domain, atom):
     """
     @param domain: L{pkgcore.config.domain.domain} instance
-    @param atom_str: L{pkgcore.package.atom.atom} instance
+    @param atom_str: L{pkgcore.ebuild.atom.atom} instance
     """
     if caching_iter(domain.all_vdbs.itermatch(atom)):
         return ['', 0]
@@ -34,7 +34,7 @@ def has_version(domain, atom):
 def best_version(domain, atom):
     """
     @param domain: L{pkgcore.config.domain.domain} instance
-    @param atom_str: L{pkgcore.package.atom.atom} instance
+    @param atom_str: L{pkgcore.ebuild.atom.atom} instance
     """
     # temp hack, configured pkgs yield "configured(blah) pkg"
     
@@ -50,7 +50,7 @@ def best_version(domain, atom):
 def match(argv):
     """
     @param domain: L{pkgcore.config.domain.domain} instance
-    @param atom_str: L{pkgcore.package.atom.atom} instance
+    @param atom_str: L{pkgcore.ebuild.atom.atom} instance
     """
     # temp hack, configured pkgs yield "configured(blah) pkg"
     l = sorted(get_raw_pkg(x) for x in domain.all_repos.itermatch(atom))

@@ -14,9 +14,9 @@ from pkgcore.config import load_config
 from pkgcore.util import (
     repo_utils, commandline, lists, currying, formatters, packages as pkgutils)
 from pkgcore.restrictions import packages, values, restriction
-from pkgcore.package import atom, errors as perrors
+from pkgcore.package import errors as perrors
 from pkgcore.util.compatibility import any
-from pkgcore.ebuild import conditionals
+from pkgcore.ebuild import conditionals, atom
 
 
 class ParseError(ValueError):
@@ -279,7 +279,7 @@ class AtomIntersectsAtom(values.base):
     def __init__(self, queryatom, negate=False):
         """Initialize,
 
-        @type  queryatom: L{pkgcore.package.atom.atom}
+        @type  queryatom: L{pkgcore.ebuild.atom.atom}
         @param queryatom: the atom the dep needs to intersect with.
         """
         values.base.__init__(self, negate)

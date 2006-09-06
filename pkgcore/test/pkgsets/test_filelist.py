@@ -3,7 +3,7 @@
 
 from twisted.trial import unittest
 from pkgcore.pkgsets.filelist import FileList
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 import tempfile, os
 
 class TestFileList(unittest.TestCase):

@@ -5,7 +5,7 @@ from twisted.trial import unittest
 from pkgcore.test.repository.test_prototype import SimpleTree
 from pkgcore.repository.visibility import filterTree
 from pkgcore.restrictions import packages, values
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 
 class TestVisibility(unittest.TestCase):

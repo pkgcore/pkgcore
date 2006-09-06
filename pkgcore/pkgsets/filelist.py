@@ -5,7 +5,7 @@
 pkgset based around loading a list of atoms from a world file
 """
 
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 import pkgcore.const
 
 class FileList(object):

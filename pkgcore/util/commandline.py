@@ -7,7 +7,7 @@ common commandline processing, including simplified atom generation
 
 from pkgcore.util.containers import InvertedContains
 from pkgcore.restrictions import packages, values, util
-from pkgcore.package import atom
+from pkgcore.ebuild import atom
 
 
 def convert_glob(token):

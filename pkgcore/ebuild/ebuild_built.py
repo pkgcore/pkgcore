@@ -14,7 +14,7 @@ from pkgcore.interfaces.data_source import local_source
 from pkgcore.fs import scan
 from pkgcore.util.currying import post_curry
 from pkgcore.ebuild.conditionals import DepSet
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild import ebd
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.merge:engine "+

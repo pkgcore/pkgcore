@@ -13,8 +13,8 @@ from pkgcore.util.demandload import demandload
 
 demandload(globals(), "pkgcore.util.xml:etree "
     "pkgcore.util.repo_utils:get_virtual_repos "
-    "pkgcore.package:atom,mutated "
-    "pkgcore.ebuild:cpv "
+    "pkgcore.package:mutated "
+    "pkgcore.ebuild:cpv,atom "
     "logging ")
 
 

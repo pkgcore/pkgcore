@@ -12,7 +12,7 @@ import pkgcore.config.domain
 from pkgcore.restrictions.collapsed import DictBased
 from pkgcore.restrictions import packages, values
 from pkgcore.util.file import iter_read_bash
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 from pkgcore.repository import multiplex, visibility
 from pkgcore.restrictions.values import StrGlobMatch, ContainmentMatch
 from pkgcore.util.lists import stable_unique, unstable_unique

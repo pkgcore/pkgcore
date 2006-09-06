@@ -9,7 +9,7 @@ import os
 from pkgcore.config import profiles
 from pkgcore.util.file import iter_read_bash, read_bash_dict
 from pkgcore.util.currying import pre_curry
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 from pkgcore.config.basics import list_parser
 from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source

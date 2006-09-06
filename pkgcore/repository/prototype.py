@@ -7,7 +7,7 @@ base repository template
 
 from pkgcore.util.mappings import LazyValDict
 from pkgcore.util.lists import iflatten_instance
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import values, boolean
 from pkgcore.util.compatibility import any
 from pkgcore.restrictions.util import collect_package_restrictions

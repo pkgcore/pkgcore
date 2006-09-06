@@ -11,7 +11,7 @@ from pkgcore.package import metadata, errors
 WeakValCache = metadata.WeakValCache
 
 from pkgcore.ebuild import conditionals
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.digest import parse_digest
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import post_curry, alias_class_method, pre_curry

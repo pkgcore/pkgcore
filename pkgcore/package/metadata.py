@@ -12,7 +12,7 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "warnings")
 
 from pkgcore.ebuild.cpv import CPV
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 
 def DeriveMetadataKls(original_kls):
     if getattr(original_kls, "_derived_metadata_kls", False):

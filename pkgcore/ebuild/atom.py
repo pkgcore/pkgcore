@@ -11,9 +11,9 @@ gentoo ebuild atom, should be generalized into an agnostic base
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
 from pkgcore.ebuild import cpv
+from pkgcore.package import errors
 
-
-class MalformedAtom(Exception):
+class MalformedAtom(errors.InvalidDependency):
 
     def __init__(self, atom, err=''):
         Exception.__init__(self,
@@ -21,7 +21,7 @@ class MalformedAtom(Exception):
         self.atom, self.err = atom, err
 
 
-class InvalidVersion(Exception):
+class InvalidVersion(errors.InvalidDependency):
 
     def __init__(self, ver, rev, err=''):
         Exception.__init__(

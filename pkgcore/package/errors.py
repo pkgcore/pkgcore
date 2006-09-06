@@ -13,3 +13,6 @@ class MetadataException(Exception):
                            "Metadata Exception: pkg %s, attr %s\nerror: %s" %
                            (pkg, attr, error))
         self.pkg, self.attr, self.error = pkg, attr, error
+
+class InvalidDependency(ValueError):
+    pass

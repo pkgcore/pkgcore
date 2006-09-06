@@ -12,7 +12,7 @@ appropriate conditionals.
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.iterables import expandable_chain
 from pkgcore.util.lists import iflatten_instance
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 
 def convert_use_reqs(uses):
     assert len(uses)

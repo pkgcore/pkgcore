@@ -3,7 +3,7 @@
 # License: GPL2
 
 import os, operator
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.currying import pre_curry
 from pkgcore.util import repo_utils, commandline

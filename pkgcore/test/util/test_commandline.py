@@ -2,7 +2,7 @@
 # License: GPL2
 
 from twisted.trial import unittest
-from pkgcore.package.atom import atom
+from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.commandline import generate_restriction, convert_glob
 from pkgcore.util.currying import post_curry

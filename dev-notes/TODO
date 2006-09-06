@@ -38,13 +38,6 @@ none == easy, >=5 of 'em, tricky.
 - sync subsystem. ***
   Threw out the old refactoring, too portage specific; exists in sandbox/dead_code , design sucked also.
 
-- refactor pkgcore.package.atom and pkgcore.package.cpv *
-  Those *should* be (effectively) abstract bases, not specific to ebuild format.
-  Right now they are specific- breaking that up is required.
- 
-  Plus, once it's broken up can derive from it to attach msgs to an atom (resolver can use it to state why it
-  generated a particular atom, glsa's can ref a glsa obj, etc).
-
 - modify repository.prototype.tree.match to take an optional comparison *
   reasoning being that if we're just going to do a max, pass in the max so it has the option of doing the initial
   sorting without passing through visibility filters (which will trigger metadata lookups)

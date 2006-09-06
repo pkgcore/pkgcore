@@ -157,4 +157,11 @@ def gen_test(WeakInstMeta):
     return TestWeakInstMeta
 
 TestWeakInstMeta = gen_test(caching.native_WeakInstMeta)
-CPY_TestWeakInstMeta = gen_test(caching.cpy_WeakInstMeta)
+
+if caching.cpy_WeakInstMeta is not None:
+    CPY_TestWeakInstMeta = gen_test(caching.cpy_WeakInstMeta)
+else:
+    # generate fake test and mark it as skip
+    CPY_TestWeakInstMeta = gen_test(type)
+    CPY_TestWeakInstMeta.skip = "cpython cpv extension isn't available"        
+    

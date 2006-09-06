@@ -5,6 +5,7 @@
 
 """gentoo ebuild specific base package class"""
 
+from pkgcore.ebuild.cpv_errors import InvalidCPV
 
 import re
 from pkgcore.package import errors, base
@@ -283,11 +284,3 @@ class CPV(base.base, base_CPV):
     @property
     def unversioned_atom(self):
         return atom.atom(self.key)
-
-
-class InvalidCPV(errors.InvalidPackage):
-    """Raised if an invalid cpv was passed in.
-
-    @ivar args: single-element tuple containing the invalid string.
-    @type args: C{tuple}
-    """

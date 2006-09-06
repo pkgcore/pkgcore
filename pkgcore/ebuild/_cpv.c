@@ -753,7 +753,7 @@ init_cpv(void)
 	PyObject *m, *s;
 	
 	// this may be redundant; do this so __builtins__["__import__"] is used.
-	s = PyString_FromString("pkgcore.ebuild.cpv");
+	s = PyString_FromString("pkgcore.ebuild.cpv_errors");
 	if(NULL == s)
 		return;
 	m = PyImport_Import(s);

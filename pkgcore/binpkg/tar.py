@@ -6,7 +6,7 @@ binpkg tar utilities
 """
 import os
 from pkgcore.util.tar import TarFile
-from pkgcore.fs.fs import fsFile, fsDir, fsSymlink
+from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsFifo
 from pkgcore.fs import contents
 from pkgcore.util.mappings import OrderedDict
 from pkgcore.interfaces.data_source import data_source

@@ -1,8 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-"""
-metaclass to inject dependencies into method calls; essentially, method a must be ran prior to method b, invoking method a if b is called first
+"""Metaclass to inject dependencies into method calls.
+
+Essentially, method a must be ran prior to method b, invoking method a
+if b is called first.
 """
 
 from pkgcore.util.lists import iflatten_instance

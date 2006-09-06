@@ -55,7 +55,8 @@ def DeriveMetadataKls(original_kls):
             of L{_get_attr}
             """
             if "data" in self.__dict__:
-                warnings.warn("odd, got a request for data yet it's in the dict")
+                warnings.warn(
+                    "odd, got a request for data yet it's in the dict")
                 return self.__dict__["data"]
 
             return self._fetch_metadata()
@@ -80,14 +81,14 @@ def DeriveMetadataKls(original_kls):
             pass
 
     return package
-    
+
 package = DeriveMetadataKls(CPV)
 
 class factory(object):
 
     """
     package generator
-    
+
     does weakref caching per repository
 
     @cvar child_class: callable to generate packages
@@ -102,11 +103,12 @@ class factory(object):
     def new_package(self, cpv):
         """
         generate a new package instance
-        
-        @param cpv: cpvstring to parse for the new package (gentoo specific, abstract this out)
+
+        @param cpv: cpvstring to parse for the new package
+            (gentoo specific, abstract this out)
         @type cpv: string
         """
-        
+
         inst = self._cached_instances.get(cpv)
         if inst is None:
             inst = self._cached_instances[cpv] = self.child_class(self, cpv)
@@ -122,9 +124,14 @@ class factory(object):
         self._cached_instances.clear()
 
     def _get_metadata(self, *args):
-        """must be overriden in derivatives, pulls metadata from the repo/cache/wherever"""
+        """Pulls metadata from the repo/cache/wherever.
+
+        Must be overriden in derivatives.
+        """
         raise NotImplementedError
 
     def _update_metadata(self, *args):
-        """must be overriden in derivatives, updates metadata in the repo/cache/wherever"""
+        """Updates metadata in the repo/cache/wherever.
+
+        Must be overriden in derivatives."""
         raise NotImplementedError

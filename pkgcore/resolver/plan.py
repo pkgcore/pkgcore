@@ -179,8 +179,11 @@ class merge_plan(object):
         return v
 
     def add_atom(self, atom, dbs=None):
-        """add an atom, recalculating as necessary.  returns the last unresolvable atom stack if a solution can't be found,
-        else returns [] (meaning the atom was successfully added)"""
+        """add an atom, recalculating as necessary.
+
+        @return: the last unresolvable atom stack if a solution can't be found,
+            else returns [] (meaning the atom was successfully added).
+        """
         if dbs is None:
             dbs = self.all_dbs
         if atom not in self.forced_atoms:
@@ -357,7 +360,8 @@ class merge_plan(object):
                 # vdb entry, replace.
                 if self.vdb_restrict.match(choices.current_pkg):
                     # we're replacing a vdb entry with a vdb entry?  wtf.
-                    print "internal weirdness spotted, dumping to pdb for inspection"
+                    print ("internal weirdness spotted, "
+                           "dumping to pdb for inspection")
                     import pdb;pdb.set_trace()
                     raise Exception()
                 dprint("replacing a vdb node, so it's valid (need to do a "
@@ -387,7 +391,11 @@ class merge_plan(object):
 
     def _rec_add_atom(self, atom, current_stack, dbs, depth=0, mode="none",
                       drop_cycles=False):
-        """returns false on no issues (inserted succesfully), else a list of the stack that screwed it up"""
+        """Add an atom.
+
+        @return: False on no issues (inserted succesfully),
+            else a list of the stack that screwed it up.
+        """
         limit_to_vdb = dbs == self.livefs_dbs
 
         if atom in self.insoluble:

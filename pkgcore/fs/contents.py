@@ -173,12 +173,14 @@ class contentsSet(object):
         locals()[k].__doc__ = \
             """
             returns a list of just L{pkgcore.fs.fs.fs%s} instances
-            @param invert: if True, yield everything that isn't a fs%s instance, else yields just fs%s
+            @param invert: if True, yield everything that isn't a
+                fs%s instance, else yields just fs%s
             """ % (s.rstrip("s"), s, s)
         locals()["iter"+k].__doc__ = \
             """
             a generator yielding just L{pkgcore.fs.fs.fs%s} instances
-            @param invert: if True, yield everything that isn't a fs%s instance, else yields just fs%s
+            @param invert: if True, yield everything that isn't a
+                fs%s instance, else yields just fs%s
             """ % (s.rstrip("s"), s, s)
         del s
     del k

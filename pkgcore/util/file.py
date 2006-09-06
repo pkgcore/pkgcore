@@ -12,10 +12,15 @@ from pkgcore.util.mappings import ProtectedDict
 
 class AtomicWriteFile(file):
 
-    """file class that stores the changes in a tempfile, upon close call, uses rename to replace the destination.
+    """File class that stores the changes in a tempfile.
 
-    Similar to file protocol behaviour, except for the __init__, and that close *must* be called for the changes to be made live,
-    if __del__ is triggered it's assumed that an exception occured, thus the changes shouldn't be made live
+    Upon close call, uses rename to replace the destination.
+
+    Similar to file protocol behaviour, except for the C{__init__}, and
+    that close *must* be called for the changes to be made live,
+
+    if C{__del__} is triggered it's assumed that an exception occured,
+    thus the changes shouldn't be made live.
     """
     def __init__(self, fp, binary=False, **kwds):
         self.is_finalized = False

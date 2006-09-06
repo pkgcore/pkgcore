@@ -63,15 +63,20 @@ class SQLDatabase(template.database):
         self.label = self._sfilter(self.label)
 
     def _dbconnect(self, config):
-        """should be overridden if the derived class needs special parameters for initializing
-        the db connection, or cursor"""
+        """Initialize the internal db connection and cursor.
+
+        Should be overridden if the derived class needs special
+        parameters for initializing the db connection or cursor.
+        """
         self.db = self._dbClass(**config)
         self.con = self.db.cursor()
 
     def _initdb_con(self, config):
         """ensure needed tables are in place.
-        If the derived class needs a different set of table creation commands, overload the approriate
-        SCHEMA_ attributes.  If it needs additional execution beyond, override
+
+        If the derived class needs a different set of table creation
+        commands, overload the approriate SCHEMA_ attributes. If it
+        needs additional execution beyond that, override this.
         """
 
         self._dbconnect(config)
@@ -184,9 +189,14 @@ class SQLDatabase(template.database):
 
 
     def _insert_cpv(self, cpv):
-        """uses SCHEMA_INSERT_CPV_INTO_PACKAGE, which must be overloaded if the table definition
-        doesn't support auto-increment columns for pkgid.
-        returns the cpvs new pkgid
+        """Insert a cpv in the db.
+
+        Uses SCHEMA_INSERT_CPV_INTO_PACKAGE, which must be overloaded
+        if the table definition doesn't support auto-increment columns
+        for pkgid.
+
+        @return: the cpvs new pkgid
+
         note this doesn't commit the transaction.  The caller is expected to.
         """
 

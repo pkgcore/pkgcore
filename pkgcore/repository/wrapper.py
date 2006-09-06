@@ -10,7 +10,9 @@ simple repository wrapping to override the package instances returned
 from pkgcore.repository import prototype, errors
 
 class tree(prototype.tree):
-    """wrap an existing repository filtering results based upon passed in restrictions."""
+
+    """wrap an existing repository yielding wrapped packages."""
+
     def __init__(self, repo, package_class=None):
         """
         @param repo: L{pkgcore.repository.prototype.tree} instance to wrap

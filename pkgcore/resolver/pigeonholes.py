@@ -16,7 +16,10 @@ class PigeonHoledSlots(object):
         self.blocker_ref_count = {}
 
     def fill_slotting(self, obj, force=False):
-        """try to insert obj in, returning any conflicting objs (empty list if inserted successfully)"""
+        """Try to insert obj in.
+
+        @return: any conflicting objs (empty list if inserted successfully).
+        """
         key = obj.key
         l = []
         for x in self.slot_dict.setdefault(key, []):

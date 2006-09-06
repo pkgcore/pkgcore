@@ -1,8 +1,10 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-"""
-DepSet parsing (depends, rdepends, SRC_URI, license, etc) generating appropriate conditionals
+"""DepSet parsing.
+
+Turns a DepSet (depends, rdepends, SRC_URI, license, etc) into
+appropriate conditionals.
 """
 
 # TODO: move exceptions elsewhere, bind them to a base exception for pkgcore

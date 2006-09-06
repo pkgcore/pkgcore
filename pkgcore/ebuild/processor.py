@@ -57,16 +57,17 @@ pkgcore.spawn.atexit_register(shutdown_all_processors)
 def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
                              save_file=None):
     """
-    request an ebuild_processor instance from the pool, creating a new one if needed
+    request an ebuild_processor instance, creating a new one if needed.
 
-    Note that fakeroot processes are B{never} reused due to the fact the fakeroot env becomes localized to the pkg
-    it's handling.
+    Note that fakeroot processes are B{never} reused due to the fact
+    the fakeroot env becomes localized to the pkg it's handling.
 
     @return: L{EbuildProcessor}
-    @param userpriv: should the processor be deprived to L{pkgcore.os_data.portage_gid} and L{pkgcore.os_data.portage_uid}?
+    @param userpriv: should the processor be deprived to
+        L{pkgcore.os_data.portage_gid} and L{pkgcore.os_data.portage_uid}?
     @param sandbox: should the processor be sandboxed?
-    @param fakeroot: should the processor be fakerooted?  This option is mutually exclusive to sandbox, and requires
-    save_file to be set
+    @param fakeroot: should the processor be fakerooted?  This option is
+        mutually exclusive to sandbox, and requires save_file to be set.
     @param save_file: location to store fakeroot state dumps
     """
 
@@ -92,12 +93,16 @@ def release_ebuild_processor(ebp):
     """
     the inverse of request_ebuild_processor.
 
-    Any processor requested via request_ebuild_processor B{must} be released via this function once it's no longer in use.
+    Any processor requested via request_ebuild_processor B{must} be released
+    via this function once it's no longer in use.
     This includes fakerooted processors.
 
     @param ebp: L{EbuildProcessor} instance
-    @return: boolean indicating release results- if the processor isn't known as active, False is returned.
-    If a processor isn't known as active, this means either calling error or an internal error
+    @return: boolean indicating release results- if the processor isn't known
+        as active, False is returned.
+
+    If a processor isn't known as active, this means either calling
+    error or an internal error.
     """
 
     global inactive_ebp_list, active_ebp_list
@@ -120,7 +125,8 @@ def release_ebuild_processor(ebp):
     # if it makes it this far, that means ebp was already in the inactive list.
     # which is indicative of an internal fsck up.
     import traceback
-    print "ebp was requested to be free'd, yet it already is claimed inactive _and_ was in the active list"
+    print ("ebp was requested to be free'd, yet it already is claimed "
+           "inactive _and_ was in the active list")
     print "this means somethings horked, badly"
     traceback.print_stack()
     return False
@@ -128,14 +134,19 @@ def release_ebuild_processor(ebp):
 
 class EbuildProcessor:
 
-    """abstraction of a running ebuild.sh instance- the env, functions, etc that ebuilds expect."""
+    """abstraction of a running ebuild.sh instance.
+
+    Contains the env, functions, etc that ebuilds expect.
+    """
 
     def __init__(self, userpriv, sandbox, fakeroot, save_file):
         """
         @param sandbox: enables a sandboxed processor
         @param userpriv: enables a userpriv'd processor
-        @param fakeroot: enables a fakeroot'd processor- this is a mutually exclusive option to sandbox, and
-        requires userpriv to be enabled. Violating this will result in nastyness
+        @param fakeroot: enables a fakeroot'd processor-
+            this is a mutually exclusive option to sandbox, and
+            requires userpriv to be enabled. Violating this will
+            result in nastyness.
         """
 
         self.ebd = EBUILD_DAEMON_PATH
@@ -251,16 +262,17 @@ class EbuildProcessor:
         return self.__fakeroot
 
     def onetime(self):
-        """is this instance going to be discarded after usage; eg is it fakerooted?"""
+        """Is this instance going to be discarded after usage (fakerooted)?"""
         return self.__fakeroot
 
     def write(self, string, flush=True):
-        """
-        send something to the bash side.
-        
-        @param string: string to write to the bash processor all strings written are automatically \\n terminated
-        @param flush: boolean controlling whether the data is flushed immediately.  Disabling flush is 
-        useful when dumping large amounts of data
+        """send something to the bash side.
+
+        @param string: string to write to the bash processor.
+            All strings written are automatically \\n terminated.
+        @param flush: boolean controlling whether the data is flushed
+            immediately.  Disabling flush is useful when dumping large
+            amounts of data.
         """
         if string[-1] == "\n":
             self.ebd_write.write(string)
@@ -270,9 +282,8 @@ class EbuildProcessor:
             self.ebd_write.flush()
 
     def expect(self, want):
-        """
-        read from the daemon, and return true or false if the returned string is what is expected
-        
+        """read from the daemon, check if the returned string is expected.
+
         @param want: string we're expecting
         @return: boolean, was what was read == want?
         """
@@ -311,11 +322,15 @@ class EbuildProcessor:
                 myf.write(x+"\n")
             myf.close()
         from output import red
-        self.ebd_write.write(red("--------------------------- ACCESS VIOLATION SUMMARY ---------------------------")+"\n")
+        self.ebd_write.write(red(
+                "--------------------------- ACCESS VIOLATION SUMMARY "
+                "---------------------------")+"\n")
         self.ebd_write.write(red("LOG FILE = \"%s\"" % move_log)+"\n\n")
         for x in violations:
             self.ebd_write.write(x+"\n")
-        self.write(red("--------------------------------------------------------------------------------")+"\n")
+        self.write(red(
+                "-----------------------------------------------------"
+                "---------------------------")+"\n")
         self.write("end_sandbox_summary")
         try:
             os.remove(self.__sandbox_log)

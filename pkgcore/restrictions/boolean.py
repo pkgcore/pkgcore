@@ -1,9 +1,11 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-"""
-This module provides classes that can be used to combine arbitrary collections of restrictions in AND, NAND, OR, NOR, XOR, XNOR
-style operations.
+"""Boolean combinations of restrictions.
+
+This module provides classes that can be used to combine arbitrary
+collections of restrictions in AND, NAND, OR, NOR, XOR, XNOR style
+operations.
 """
 
 __all__ = ("AndRestriction", "OrRestriction", "XorRestriction")
@@ -21,9 +23,12 @@ class base(restriction.base):
     def __init__(self, *restrictions, **kwds):
 
         """
-        @keyword node_type: type of restriction this accepts (L{package_type<pkgcore.restrictions.packages.package_type>} and
-        L{value_type<pkgcore.restrictions.values.value_type>}) being common types.  If set to None, no instance limiting is done
-        @param restrictions: initial restrictions to add, must be of node_type (if node_type is specified)
+        @keyword node_type: type of restriction this accepts
+            (L{package_type<pkgcore.restrictions.packages.package_type>} and
+            L{value_type<pkgcore.restrictions.values.value_type>} being
+            common types).  If set to C{None}, no instance limiting is done.
+        @type  restrictions: node_type (if that is specified)
+        @param restrictions: initial restrictions to add
         @keyword finalize: should this instance be made immutable immediately?
         @keyword negate: should the logic be negated?
         """
@@ -54,7 +59,8 @@ class base(restriction.base):
         """
         add an more restriction(s)
 
-        @param new_restrictions: if node_type is enforced, restrictions must be of that type.
+        @param new_restrictions: if node_type is enforced,
+            restrictions must be of that type.
         """
 
         if not new_restrictions:

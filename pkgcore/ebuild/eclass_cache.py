@@ -21,7 +21,8 @@ class cache(base):
     """
     Maintains the cache information about eclasses available to an ebuild.
     get_path and get_data are special- one (and only one) can be set to None.
-    Any code trying to get eclass data/path will choose which method it prefers, falling back to what's available if only one option
+    Any code trying to get eclass data/path will choose which method it
+    prefers, falling back to what's available if only one option
     exists.
 
     dumping the eclass down the pipe is required (think remote tree)
@@ -29,7 +30,7 @@ class cache(base):
     Base defaults to having both set.  Override as needed.
     Set to None if that method isn't possible.
     """
-    
+
     pkgcore_config_type = ConfigHint({"path":"str", "portdir":"str"})
 
     def __init__(self, path, portdir=None):
@@ -43,7 +44,7 @@ class cache(base):
         self.update_eclasses()
 
     def update_eclasses(self):
-        """force instance to update it's internal view of on disk/remote eclasses"""
+        """Force an update of the internal view of on disk/remote eclasses."""
         self.eclasses = {}
         eclass_len = len(".eclass")
         pjoin = os.path.join
@@ -60,8 +61,13 @@ class cache(base):
 
 
     def is_eclass_data_valid(self, ec_dict):
-        """given a dict as returned by get_eclass_data, walk it comparing it to internal eclass view
-        returns a boolean representing whether that eclass data is still up to date, or not
+        """Check if eclass data is still valid.
+
+        Given a dict as returned by get_eclass_data, walk it comparing
+        it to internal eclass view.
+
+        @return: a boolean representing whether that eclass data is still
+            up to date, or not
         """
         for eclass, tup in ec_dict.iteritems():
             if (eclass not in self.eclasses or
@@ -72,9 +78,12 @@ class cache(base):
 
 
     def get_eclass_data(self, inherits):
-        """given a list of inherited eclasses, return the cachable eclass entries
-        only make get_eclass_data calls for data you know came from this eclass_cache, otherwise be ready to cache a KeyError
-        exception for any eclass that was requested, but not known to this cache
+        """Return the cachable entries from a list of inherited eclasses.
+
+        Only make get_eclass_data calls for data you know came from
+        this eclass_cache, otherwise be ready to catch a KeyError
+        exception for any eclass that was requested, but not known to
+        this cache.
         """
 
         ec_dict = {}

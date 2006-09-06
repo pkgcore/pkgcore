@@ -22,7 +22,10 @@ class ConfigurationError(BaseException):
 
 
 class InstantiationError(BaseException):
-    """Exception occured during instantiation.	Actual exception is stored in instance.exc"""
+    """Exception occured during instantiation.
+
+    @ivar exc: Actual exception.
+    """
     def __init__(self, callablename, pargs, kwargs, exception):
         BaseException.__init__(self, "Caught exception '%s' instantiating %s" %
                                (exception, callablename))

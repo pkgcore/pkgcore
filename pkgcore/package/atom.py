@@ -133,7 +133,9 @@ class VersionMatch(restriction.base):
 
 class atom(boolean.AndRestriction):
 
-    """currently implements gentoo ebuild atom parsing, should be converted into an agnostic dependency base thought
+    """Currently implements gentoo ebuild atom parsing.
+
+    Should be converted into an agnostic dependency base.
     """
 
     __slots__ = (

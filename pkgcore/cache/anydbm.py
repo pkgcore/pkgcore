@@ -30,8 +30,7 @@ class database(fs_template.FsBased):
             default_db = '.' + default_db
 
         self._db_path = os.path.join(
-            self.location,
-            fs_template.gen_label(self.location, self.label)+default_db)
+            self.location, fs_template.gen_label(self.label) + default_db)
         self._db = None
 
         try:

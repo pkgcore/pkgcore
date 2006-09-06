@@ -24,8 +24,7 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
 
     def _dbconnect(self, config):
         self._dbpath = os.path.join(
-            self.location,
-            fs_template.gen_label(self.location, self.label)+".sqldb")
+            self.location, fs_template.gen_label(self.label) + ".sqldb")
         try:
             self.db = sqlite_module.connect(
                 self._dbpath, mode=self._perms, autocommit=False)

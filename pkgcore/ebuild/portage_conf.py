@@ -1,8 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-"""
-make.conf translator, converts portage configuration files into L{pkgcore.config} form
+"""make.conf translator.
+
+Converts portage configuration files into L{pkgcore.config} form.
 """
 
 import os

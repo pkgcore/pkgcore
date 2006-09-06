@@ -30,8 +30,7 @@ class database(fs_template.FsBased):
         super(database, self).__init__(*args, **config)
 
         self._db_path = os.path.join(
-            self.location,
-            fs_template.gen_label(self.location, self.label)+".cdb")
+            self.location, fs_template.gen_label(self.label) + ".cdb")
         self._db = None
         try:
             self._db = cdb_module.init(self._db_path)

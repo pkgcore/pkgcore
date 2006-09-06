@@ -29,13 +29,17 @@ class OnDiskProfile(profiles.base):
     api subject to change (not stable)
     """
 
-    def __init__(self, profile, incrementals=None, base_repo=None, base_path=None):
+    def __init__(self, profile, incrementals=None, base_repo=None,
+                 base_path=None):
 
         """
         @param profile: profile name to scan
-        @param incrementals: sequence of settings to implement incremental stacking for
-        @param base_repo: L{pkgcore.ebuild.repository.UnconfiguredTree} to build this profile from, mutually exclusive with base_path
-        @param base_path: raw filepath for this profile.  Mutually exclusive to base_repo
+        @param incrementals: sequence of settings to implement incremental
+            stacking for.
+        @param base_repo: L{pkgcore.ebuild.repository.UnconfiguredTree} to
+            build this profile from, mutually exclusive with base_path.
+        @param base_path: raw filepath for this profile.  Mutually exclusive
+            to base_repo.
         """
 
         from pkgcore.config.errors import InstantiationError

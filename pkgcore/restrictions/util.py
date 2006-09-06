@@ -14,12 +14,11 @@ def _is_package_instance(inst):
             and not isinstance(inst, boolean.base))
 
 def collect_package_restrictions(restrict, attrs=None):
-    """walks a restriction, descending as neccessary and returning any PackageRestrictions that work
-    on attrs passed in
+    """Collect PackageRestriction instances inside a restriction.
 
     @param restrict: package instance to scan
-    @param attrs: None (return all package restrictions), or a sequence of specific attrs the package restriction
-    must work against
+    @param attrs: None (return all package restrictions), or a sequence of
+        specific attrs the package restriction must work against.
     """
     if not isinstance(restrict, (list, tuple)):
         restrict = [restrict]

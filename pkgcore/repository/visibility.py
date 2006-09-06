@@ -11,7 +11,9 @@ from pkgcore.repository import prototype, errors
 from pkgcore.restrictions.restriction import base
 
 class filterTree(prototype.tree):
-    """wrap an existing repository filtering results based upon passed in restrictions."""
+
+    """Filter existing repository based upon passed in restrictions."""
+
     def __init__(self, repo, restriction, sentinel_val=False):
         self.raw_repo = repo
         self.sentinel_val = sentinel_val

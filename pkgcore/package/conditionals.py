@@ -2,7 +2,9 @@
 # License: GPL2
 
 """
-conditional attributes on a package, changing them triggering regen of other attributes on the package instance
+conditional attributes on a package.
+
+Changing them triggering regen of other attributes on the package instance.
 """
 
 from pkgcore.util.containers import LimitedChangeSet, Unchangable
@@ -11,19 +13,28 @@ demandload(globals(), "copy")
 
 class PackageWrapper(object):
 
-    """wrap a package instance adding a new attribute, and evaluating the wrapped pkgs attributes"""
+    """Add a new attribute, and evaluate attributes of a wrapped pkg."""
 
     def __init__(self, pkg_instance, configurable_attribute_name,
                  initial_settings=None, unchangable_settings=None,
                  attributes_to_wrap=None, build_callback=None):
 
         """
-        @param pkg_instance: L{pkgcore.package.metadata.package} instance to wrap
-        @param configurable_attribute_name: attribute name to add, and that is used for evaluating attributes_to_wrap
-        @param initial_settings: sequence, initial configuration of the configurable_attribute
-        @param unchangable_settings: sequence, settings that configurable_attribute cannot be set to
-        @param attributes_to_wrap: mapping of attr_name:callable for revaluating the pkg_instance, using the result instead of the wrapped pkgs attr
-        @param build_callback: None, or a callable to be used to get a L{pkgcore.interfaces.build.base} instance
+        @type  pkg_instance: L{pkgcore.package.metadata.package}
+        @param pkg_instance: instance to wrap.
+        @param configurable_attribute_name: attribute name to add,
+            and that is used for evaluating attributes_to_wrap
+        @type  initial_settings: sequence
+        @param initial_settings: initial configuration of the
+            configurable_attribute
+        @type  unchangable_settings: sequence
+        @param unchangable_settings: settings that configurable_attribute
+            cannot be set to
+        @param attributes_to_wrap: mapping of attr_name:callable
+            for revaluating the pkg_instance, using the result
+            instead of the wrapped pkgs attr.
+        @param build_callback: None, or a callable to be used to get a
+            L{pkgcore.interfaces.build.base} instance
         """
 
         if initial_settings is None:

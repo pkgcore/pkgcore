@@ -167,8 +167,13 @@ class caching_iter(object):
             self.iterable, str(self.cached_list))
 
 def iter_sort(sorter, *iterables):
-    """requires a sorter func, which is passed a list of [element, iterable]
-    remaining args are iterables to consume from, and are _required_ to yield in presorted order"""
+    """Merge a number of sorted iterables into a single sorted iterable.
+
+    @type  sorter: callable.
+    @param sorter: function, passed a list of [element, iterable].
+    @param iterables: iterables to consume from.
+        B{Required} to yield in presorted order.
+    """
     l = []
     for x in iterables:
         try:

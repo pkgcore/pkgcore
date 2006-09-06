@@ -261,7 +261,7 @@ class domain(pkgcore.config.domain.domain):
 
     def generate_keywords_filter(self, arch, default_keys, pkg_keywords,
                                  already_unstable=False):
-        """generates a restrict that matches true iff the keywords are allowed"""
+        """Generates a restrict that matches iff the keywords are allowed."""
         if not pkg_keywords:
             return packages.PackageRestriction(
                 "keywords", values.ContainmentMatch(*default_keys))

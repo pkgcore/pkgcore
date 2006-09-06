@@ -192,7 +192,10 @@ class ConfigManager(object):
         return obj
 
     def get_default(self, type_name):
-        """finds the configuration specified default obj of type_name, returning None if no defaults"""
+        """Finds the configuration specified default obj of type_name.
+
+        Returns C{None} if no defaults.
+        """
         l = []
         for section_name in getattr(self, type_name).iterkeys():
             section_config = self.get_section_config(section_name)

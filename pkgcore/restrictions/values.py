@@ -54,12 +54,18 @@ class GetAttrRestriction(base, packages.PackageRestriction):
 
 
 class VersionRestriction(base):
-    """use this as base for version restrictions, gives a clue to what the restriction does"""
+    """use this as base for version restrictions.
+
+    Gives a clue to what the restriction does.
+    """
     __slots__ = ()
 
 
 class StrMatch(base):
-    """ Base string matching restriction.  all derivatives must be __slot__ based classes"""
+    """Base string matching restriction.
+
+    All derivatives must be __slot__ based classes.
+    """
     __slots__ = ("flags",)
 
 
@@ -295,7 +301,7 @@ def _mangle_cmp_val(val):
 
 
 class ComparisonMatch(base):
-    """comparison restriction- match if the comparison funcs return value is what's required"""
+    """Match if the comparison funcs return value is what's required."""
 
     _op_converter = {"=": (0,)}
     _rev_op_converter = {(0,): "="}

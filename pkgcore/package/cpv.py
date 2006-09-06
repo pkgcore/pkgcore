@@ -13,11 +13,15 @@ from pkgcore.package import atom, errors, base
 suffix_regexp = re.compile("^(alpha|beta|rc|pre|p)(\\d*)$")
 suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 
-# while the package section looks fugly, there is a reason for it- to prevent version chunks from showing up in the package
+# while the package section looks fugly, there is a reason for it-
+# to prevent version chunks from showing up in the package
 
-parser = re.compile("^(?P<key>(?P<category>(?:[a-zA-Z0-9+-]+)(?:/[a-zA-Z0-9+-]+)*)/" + \
-    "(?P<package>[a-zA-Z0-9+][a-zA-Z0-9_+]*(?:-(?:[0-9]+[a-zA-Z+]{2,}[_+a-zA-Z0-9]*|[a-zA-Z+][a-zA-Z0-9+_]*))*))" + \
-    "(?:-(?P<fullver>(?P<version>(?:cvs\\.)?(?:\\d+)(?:\\.\\d+)*[a-z]?(?:_(p(?:re)?|beta|alpha|rc)\\d*)*)" + \
+parser = re.compile(
+    "^(?P<key>(?P<category>(?:[a-zA-Z0-9+-]+)(?:/[a-zA-Z0-9+-]+)*)/"
+    "(?P<package>[a-zA-Z0-9+][a-zA-Z0-9_+]*"
+    "(?:-(?:[0-9]+[a-zA-Z+]{2,}[_+a-zA-Z0-9]*|[a-zA-Z+][a-zA-Z0-9+_]*))*))"
+    "(?:-(?P<fullver>(?P<version>(?:cvs\\.)?(?:\\d+)(?:\\.\\d+)*[a-z]?"
+    "(?:_(p(?:re)?|beta|alpha|rc)\\d*)*)"
     "(?:-r(?P<revision>\\d+))?))?$")
 
 

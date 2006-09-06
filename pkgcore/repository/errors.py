@@ -10,6 +10,7 @@ Need to extend the usage a bit further still.
 class TreeCorruption(Exception):
     def __init__(self, err):
         Exception.__init__(self, "unexpected tree corruption: %s" % (err,))
+        self.err = err
 
 class InitializationError(TreeCorruption):
     def __str__(self):

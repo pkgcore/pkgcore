@@ -83,13 +83,18 @@ class trigger(object):
 
 class SimpleTrigger(trigger):
 
-    """simplified trigger class; for most triggers, this is what you want to use"""
+    """Simplified trigger class.
+
+    For most triggers, this is what you want to use.
+    """
 
     def __init__(self, cset_name, ftrigger, register_func=None, label=None):
         """
-        @param cset_name: cset to use, either string (single), list/tuple for many.  Can be an empty tuple if no csets used
-        @param ftrigger: callable to execute when 'triggered'
-        @param register_func: None, or callable to call to register with a MergeEngine
+        @param cset_name: cset to use, either string (single),
+            list/tuple for many.  Can be an empty tuple if no csets used.
+        @param ftrigger: callable to execute when 'triggered'.
+        @param register_func: None, or callable to call to register
+            with a MergeEngine
         """
         if not isinstance(cset_name, (list, tuple)):
             if not isinstance(cset_name, basestring):

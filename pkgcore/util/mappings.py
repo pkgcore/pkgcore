@@ -171,7 +171,7 @@ class ImmutableDict(dict):
 
 class IndeterminantDict(dict):
 
-    """A wrapped dict with a constant dict, and a fallback function to pull keys"""
+    """A wrapped dict with constant defaults, and a function for other keys."""
 
     __slots__ = ("__initial", "__pull")
 

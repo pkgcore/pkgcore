@@ -2,7 +2,9 @@
 # License: GPL2
 
 """
-compatibility module providing reimplementations of python2.5 functionality, falling back to __builtins__ if they're found
+Compatibility module providing reimplementations of python2.5 functionality.
+
+Uses the native implementation from C{__builtins__} if available.
 """
 
 

@@ -48,17 +48,30 @@ required-attributes=
 # not require a docstring. Was __.*__
 no-docstring-rgx=^_
 
+# Regular expression which should only match correct module level names
+# was:    (([A-Z_][A-Z1-9_]*)|(__.*__))$
+const-rgx=(([A-Z_][A-Z1-9_]*)|([a-z_][a-z1-9_]*))$
+
+# Regular expression which should only match correct class names
+# TODO make this stricter
+# was:    [A-Z_][a-zA-Z0-9]+$
+class-rgx=([A-Z_][a-zA-Z0-9]+|[a-z_][a-z0-9_]+)$
+
 # Regular expression which should only match correct instance attribute names
 # Was:   [a-z_][a-z0-9_]{2,30}$
-attr-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+attr-rgx=[a-z_][a-z0-9_]{2,30}$
 
 # Regular expression which should only match correct argument names
 # Was:       [a-z_][a-z0-9_]{2,30}$
-argument-rgx=[a-z_][a-zA-Z0-9_]{2,30}$
+argument-rgx=([a-z_][a-z0-9_]{2,30}|a|kw)$
 
 # Regular expression which should only match correct variable names
 # Was:       [a-z_][a-z0-9_]{2,30}$
-variable-rgx=[a-z_][a-zA-Z0-9_]{0,30}$
+variable-rgx=[a-z_][a-z0-9_]{0,30}$
+
+# Good variable names which should always be accepted, separated by a comma
+# Was:     d,e,i,j,ex,_
+good-names=d,e,i,j,ex,_,setUp,tearDown
 
 # "bad" builtins.
 # Was: map,filter,apply,input

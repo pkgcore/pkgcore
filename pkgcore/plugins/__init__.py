@@ -48,12 +48,18 @@ class PluginNotFound(RegistrationException):
 
 class GlobalPluginRegistry(object):
     def register(self, plugin_type, magic, version, namespace, replace=False):
-        """register a plugin
-        plugin_type is a string, the category of the plugin
-        magic is a string, magic constant of the plugin
-        version is the specific plugin version (only one can be installed at a time)
-        namespace is the pythonic namespace for that plugin
-        replace controls whether or not a plugin_type + magic conflict will be replaced, or error out"""
+        """Register a plugin.
+
+        @type  plugin_type: string
+        @param plugin_type: the category of the plugin.
+        @type  magic: string
+        @param magic: constant of the plugin
+        @param version: the specific plugin version
+            (only one can be installed at a time)
+        @param namespace: the pythonic namespace for that plugin
+        @param replace: controls whether or not a plugin_type + magic conflict
+            will be replaced, or error out
+        """
         if not ensure_dirs(plugins_dir, uid=root_uid, gid=portage_gid,
                            mode=0755):
             raise FailedDir("Failed ensuring base plugins dir")
@@ -86,10 +92,14 @@ class GlobalPluginRegistry(object):
             plug_lock.release_write_lock()
 
     def deregister(self, plugin_type, magic, version, ignore_errors=False):
-        """plugin_type is the categorization of the plugin
-        magic is the magic constant for lookup
-        version is the version of the plugin to yank
-        ignore_errors controls whether or not an exception is thrown when the plugin isn't found"""
+        """Forget about a plugin.
+
+        @param plugin_type: the categorization of the plugin.
+        @param magic: the magic constant for lookup.
+        @param version: the version of the plugin to yank.
+        @param ignore_errors: whether or not an exception is thrown
+            when the plugin isn't found
+        """
         plug_lock = FsLock(plugins_dir)
         plug_lock.acquire_write_lock()
         try:

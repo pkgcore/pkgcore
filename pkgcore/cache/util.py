@@ -92,7 +92,7 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None,
 # pylint: disable-msg=C0321
 
 class quiet_mirroring(object):
-    """a nonverbose mirror_cache callback object for getting progress information"""
+    """Quiet mirror_cache callback object for getting progress information."""
     # call_update_every is used by mirror_cache to determine how often
     # to call in. quiet defaults to 2^24 -1. Don't call update, 'cept
     # once every 16 million or so :)

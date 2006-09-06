@@ -5,35 +5,36 @@ from twisted.trial import unittest
 from pkgcore.util import dependant_methods as dm
 from pkgcore.util import currying
 
+
+def func(self, seq, data, val=True):
+    seq.append(data)
+    return val
+
+
 class TestDependantMethods(unittest.TestCase):
 
     @staticmethod
     def generate_instance(methods, dependencies):
-        class c(object):
+        class Class(object):
             __metaclass__ = dm.ForcedDepends
             stage_depends = dict(dependencies)
 
         for k, v in methods.iteritems():
-            setattr(c, k, v)
+            setattr(Class, k, v)
 
-        return c()
-
-    @staticmethod
-    def f(self, l, x, val=True):
-        l.append(x)
-        return val
+        return Class()
 
     def test_return_checking(self):
         results = []
         o = self.generate_instance(
-            dict((str(x), currying.post_curry(self.f, results, x))
+            dict((str(x), currying.post_curry(func, results, x))
                  for x in range(10)),
             dict((str(x), str(x - 1)) for x in xrange(1, 10)))
         getattr(o, "9")()
         self.assertEqual(results, range(10))
         results = []
         o = self.generate_instance(
-            dict((str(x), currying.post_curry(self.f, results, x, False))
+            dict((str(x), currying.post_curry(func, results, x, False))
                  for x in range(10)),
             dict((str(x), str(x - 1)) for x in xrange(1, 10)))
         getattr(o, "9")()
@@ -44,7 +45,7 @@ class TestDependantMethods(unittest.TestCase):
     def test_stage_awareness(self):
         results = []
         o = self.generate_instance(
-            dict((str(x), currying.post_curry(self.f, results, x))
+            dict((str(x), currying.post_curry(func, results, x))
                  for x in range(10)),
             dict((str(x), str(x - 1)) for x in xrange(1, 10)))
         getattr(o, "1")()
@@ -56,11 +57,11 @@ class TestDependantMethods(unittest.TestCase):
 
     def test_stage_depends(self):
         results = []
-        methods = dict((str(x), currying.post_curry(self.f, results, x))
+        methods = dict((str(x), currying.post_curry(func, results, x))
                        for x in range(10))
         deps = dict((str(x), str(x - 1)) for x in xrange(1, 10))
         deps["1"] = ["0", "a"]
-        methods["a"] = currying.post_curry(self.f, results, "a")
+        methods["a"] = currying.post_curry(func, results, "a")
         o = self.generate_instance(methods, deps)
         getattr(o, "1")()
         self.assertEqual(results, [0, "a", 1])

@@ -324,7 +324,7 @@ class MergeEngine(object):
 
     @staticmethod
     def get_replace_cset(engine, csets):
-        """generates the cset of what will be replaced going from old -> new pkg"""
+        """Return the cset of what will be replaced going from old->new pkg."""
         return csets["new_cset"].intersection(csets["old_cset"])
 
     @staticmethod

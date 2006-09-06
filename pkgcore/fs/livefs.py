@@ -2,7 +2,7 @@
 # License: GPL2
 
 """
-interaction with the livefs, namely generating fs objects to represent the livefs
+interaction with the livefs: generating fs objects to represent the livefs.
 """
 
 import os, collections

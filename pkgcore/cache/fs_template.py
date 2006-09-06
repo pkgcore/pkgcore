@@ -11,16 +11,18 @@ from pkgcore.os_data import portage_gid
 from pkgcore.fs.util import ensure_dirs
 
 class FsBased(template.database):
-    """
-    template wrapping fs needed options, and providing _ensure_access as a way to
-    attempt to ensure files have the specified owners/perms
+    """Template wrapping fs needed options.
+
+    Provides _ensure_access as a way to attempt to ensure files have
+    the specified owners/perms.
     """
 
     def __init__(self, *args, **config):
         """
         throws InitializationError if needs args aren't specified
 
-        @keyword gid: defaults to L{pkgcore.os_data.portage_gid}, gid to force all entries to
+        @keyword gid: defaults to L{pkgcore.os_data.portage_gid},
+            gid to force all entries to
         @keyword perms: defaults to 0665, mode to force all entries to"""
 
         for x, y in (("gid", portage_gid), ("perms", 0664)):
@@ -42,8 +44,11 @@ class FsBased(template.database):
             if "@param" in y])
 
     def _ensure_access(self, path, mtime=-1):
-        """returns true or false if it's able to ensure that path is properly chmod'd and chowned.
-        if mtime is specified, attempts to ensure that's correct also"""
+        """Ensure access to a path.
+
+        @param mtime: if specified change mtime to this value.
+        @return: C{False} if unable to guarantee access, C{True} otherwise.
+        """
         try:
             os.chown(path, -1, self._gid)
             os.chmod(path, self._perms)
@@ -55,19 +60,18 @@ class FsBased(template.database):
         return True
 
     def _ensure_dirs(self, path=None):
-        """if path is not None, ensures self.location + '/' + path, else self.location"""
+        """Make sure a path relative to C{self.location} exists."""
         if path is not None:
             path = self.location + os.path.sep + os.path.dirname(path)
         else:
             path = self.location
         return ensure_dirs(path)
 
-def gen_label(base, label):
-    """if supplied label is a path, generate a unique label based upon label, and supplied base path"""
+def gen_label(label):
+    """Turn a user-defined label into something usable as a filename."""
     if label.find(os.path.sep) == -1:
         return label
     label = label.strip("\"").strip("'")
     label = os.path.join(*(label.rstrip(os.path.sep).split(os.path.sep)))
     tail = os.path.split(label)[1]
     return "%s-%X" % (tail, abs(label.__hash__()))
-

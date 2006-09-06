@@ -12,6 +12,8 @@ from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
 from pkgcore.ebuild import cpv
 from pkgcore.package import errors
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.restrictions.collapsed:DictBased ")
 
 class MalformedAtom(errors.InvalidDependency):
 
@@ -343,3 +345,20 @@ class atom(boolean.AndRestriction):
 
     def __eq__(self, other):
         return self is other
+
+
+def split_atom(inst):
+    if len(inst.restrictions) > 3:
+        a = packages.AndRestriction(*inst.restrictions[2:])
+    elif len(inst.restrictions) == 3:
+        a = inst.restrictions[2]
+    else:
+        a = []
+    return inst.category + "/" + inst.package, a
+
+def get_key_from_package(collapsed_inst, pkg):
+    return pkg.key
+
+def generate_collapsed_restriction(atoms, negate=False):
+	return DictBased((split_atom(x) for x in atoms), get_key_from_package,
+		negate=negate)

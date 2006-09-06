@@ -12,7 +12,8 @@ import pkgcore.config.domain
 from pkgcore.restrictions.collapsed import DictBased
 from pkgcore.restrictions import packages, values
 from pkgcore.util.file import iter_read_bash
-from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.atom import (atom, generate_collapsed_restriction,
+    get_key_from_package)
 from pkgcore.repository import multiplex, visibility
 from pkgcore.restrictions.values import StrGlobMatch, ContainmentMatch
 from pkgcore.util.lists import stable_unique, unstable_unique
@@ -34,18 +35,6 @@ class Failure(BaseException):
         BaseException.__init__(self, "domain failure: %s" % (text,))
         self.text = text
 
-
-def split_atom(inst):
-    if len(inst.restrictions) > 3:
-        a = packages.AndRestriction(*inst.restrictions[2:])
-    elif len(inst.restrictions) == 3:
-        a = inst.restrictions[2]
-    else:
-        a = []
-    return inst.category + "/" + inst.package, a
-
-def get_key_from_package(collapsed_inst, pkg):
-    return pkg.category + "/" + pkg.package
 
 def package_keywords_splitter(val):
     v = val.split()
@@ -81,11 +70,10 @@ def filter_negations(setting, orig_list):
 
 def generate_masking_restrict(masks):
     # if it's masked, it's not a match
-    return DictBased((split_atom(x) for x in masks), get_key_from_package,
-                     negate=True)
+    return generate_collapsed_restriction(masks, negate=True)
 
 def generate_unmasking_restrict(unmasks):
-    return DictBased((split_atom(x) for x in unmasks), get_key_from_package)
+    return generate_collapsed_restriction(unmasks)
 
 
 class domain(pkgcore.config.domain.domain):

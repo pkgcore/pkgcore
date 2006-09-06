@@ -73,7 +73,7 @@ class native_CpvTest(unittest.TestCase):
     
     def process_pkg(self, ret, cat, pkg):
         if ret:
-            self.assertRaises(errors.InvalidCPV, self.kls, "%s/%s" % (cat, pkg))
+            self.assertRaises(cpv.InvalidCPV, self.kls, "%s/%s" % (cat, pkg))
         else:
             c = self.kls("%s/%s" % (cat, pkg))
             self.assertEqual(c.cpvstr, "%s/%s" % (cat, pkg))
@@ -87,7 +87,7 @@ class native_CpvTest(unittest.TestCase):
     def process_ver(self, ret, cat, pkg, ver, rev):
         if ret:
             self.assertRaises(
-                errors.InvalidCPV,
+                cpv.InvalidCPV,
                 self.kls, "%s/%s-%s%s" % (cat, pkg, ver, rev))
         else:
             c = self.kls("%s/%s-%s%s" % (cat, pkg, ver, rev))
@@ -116,7 +116,7 @@ class native_CpvTest(unittest.TestCase):
     def process_suf(self, ret, cat, pkg, ver, rev):
         if ret:
             self.assertRaises(
-                errors.InvalidCPV,
+                cpv.InvalidCPV,
                 self.kls, "%s/%s-%s%s" % (cat, pkg, ver, rev))
         else:
             c = self.kls("%s/%s-%s%s" % (cat, pkg, ver, rev))
@@ -167,12 +167,12 @@ class native_CpvTest(unittest.TestCase):
         """Test if the cpv is in a somewhat sane state if __init__ fails.
 
         IPython used to segfault when showing a verbose traceback for
-        a subclass of CPV which raised errors.InvalidCPV. This checks
+        a subclass of CPV which raised cpv.InvalidCPV. This checks
         if such uninitialized objects survive some basic poking.
         """
         uninited = self.kls.__new__(self.kls)
         broken = self.kls.__new__(self.kls)
-        self.assertRaises(errors.InvalidCPV, broken.__init__, 'broken')
+        self.assertRaises(cpv.InvalidCPV, broken.__init__, 'broken')
         for thing in (uninited, broken):
             # the c version returns None, the py version does not have the attr
             getattr(thing, 'cpvstr', None)

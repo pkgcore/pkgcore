@@ -52,7 +52,7 @@ class native_CPV(object):
         self.__dict__["cpvstr"] = cpvstr
         m = parser.match(self.cpvstr)
         if not m:
-            raise errors.InvalidCPV(self.cpvstr)
+            raise InvalidCPV(self.cpvstr)
         self.__dict__.update(m.groupdict())
         r = self.__dict__["revision"]
         if r is not None:
@@ -279,3 +279,11 @@ class CPV(base.base, base_CPV):
     @property
     def unversioned_atom(self):
         return atom.atom(self.key)
+
+
+class InvalidCPV(errors.InvalidPackage):
+    """Raised if an invalid cpv was passed in.
+
+    @ivar args: single-element tuple containing the invalid string.
+    @type args: C{tuple}
+    """

@@ -35,15 +35,17 @@ class ParseError(ValueError):
 def parse_match(value):
     """Parse value with L{pkgcore.util.commandline.generate_restriction}."""
     try:
+        # XXX shouldn't be ebuild specific via cpv msg
         return commandline.generate_restriction(value)
-    except perrors.InvalidCPV:
+    except perrors.InvalidPackage:
         raise ParseError('invalid cpv')
 
 def parse_revdep(value):
     """Value should be an atom, packages with deps intersecting that match."""
     try:
         targetatom = atom.atom(value)
-    except perrors.InvalidCPV:
+    except perrors.InvalidPackage:
+        # XXX shouldn't be ebuild specific via cpv msg
         raise ParseError('invalid cpv')
     val_restrict = FlatteningRestriction(
         atom.atom, ValuesAnyMatch(AtomIntersectsAtom(targetatom)))

@@ -1,13 +1,10 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
+#base class
+class InvalidPackage(ValueError):
+    pass
 
-class InvalidCPV(ValueError):
-    """Raised if an invalid cpv was passed in.
-
-    @ivar args: single-element tuple containing the invalid string.
-    @type args: C{tuple}
-    """
 
 class MetadataException(Exception):
 

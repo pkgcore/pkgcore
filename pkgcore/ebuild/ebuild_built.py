@@ -14,6 +14,7 @@ from pkgcore.util.currying import post_curry
 from pkgcore.ebuild.conditionals import DepSet
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild import ebd
+from pkgcore.util.obj import DelayedInstantiation
 from pkgcore.util.demandload import demandload
 demandload(globals(),
            "pkgcore.merge:engine "
@@ -77,7 +78,8 @@ class package(ebuild_src.package):
         for k in ebuild_src.package._config_wrappables
         if k in ebuild_src.package.tracked_attributes)
 
-    _get_attr["use"] = lambda s:s.data["USE"].split()
+    _get_attr["use"] = lambda s:DelayedInstantiation(tuple,
+        lambda: tuple(s.data["USE"].split()))
     _get_attr["depends"] = lambda s:DepSet("", atom)
 
     def _update_metadata(self, pkg):

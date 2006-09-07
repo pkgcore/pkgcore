@@ -16,7 +16,6 @@ from pkgcore.interfaces import data_source
 from pkgcore.util.osutils import listdir_dirs
 from pkgcore.repository import multiplex, virtual
 from pkgcore.util import bzip2
-from pkgcore.util.obj import DelayedInstantiation
 
 from pkgcore.util.demandload import demandload
 demandload(globals(),
@@ -111,14 +110,7 @@ class tree(prototype.tree):
 
     def _get_metadata(self, pkg):
         return IndeterminantDict(pre_curry(self._internal_load_key,
-                                           os.path.dirname(pkg.path)))
-
-    @staticmethod
-    def _read_file(path, default=''):
-        try:
-            return open(path, "r").read().strip()
-        except (OSError, IOError):
-            return default
+            os.path.dirname(pkg.path)))
 
     def _internal_load_key(self, path, key):
         key = self._metadata_rewrites.get(key, key)
@@ -134,14 +126,10 @@ class tree(prototype.tree):
             else:
                 data = bz2_data_source(fp+".bz2")
         else:
-            fp = os.path.join(path, key)
-            if key == "USE":
-                # special case it, since lots of stuff passes it around, 
-                # but not always used.
-                data = DelayedInstantiation(str, 
-                    pre_curry(self._read_file, fp))
-            else:
-                data = self._read_file(fp)
+            try:
+                data = open(os.path.join(path, key), "r").read().strip()
+            except (OSError, IOError):
+                data = ''
         return data
 
     def notify_remove_package(self, pkg):

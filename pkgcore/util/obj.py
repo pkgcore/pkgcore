@@ -15,6 +15,12 @@ def instantiate(inst):
     return obj
 
 
+# we exempt __getattribute__ since we cover it already, same
+# for __new__ and __init__
+base_kls_descriptors = frozenset(
+    ('__delattr__', '__doc__', '__hash__', '__reduce__', 
+        '__reduce_ex__', '__repr__', '__setattr__', '__str__'))
+
 class BaseDelayedObject(object):
     """
     delay actual instantiation
@@ -38,8 +44,7 @@ class BaseDelayedObject(object):
         return getattr(obj, attr)
     
     # special case the normal descriptors
-    for x in ('__delattr__', '__doc__', '__hash__', '__reduce__', 
-        '__reduce_ex__', '__repr__', '__setattr__', '__str__'):
+    for x in base_kls_descriptors:
         locals()[x] = pre_curry(alias_method, attrgetter(x))
     del x
 

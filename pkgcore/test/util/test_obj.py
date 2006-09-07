@@ -34,3 +34,9 @@ class TestDelayedInstantiation(unittest.TestCase):
         o.difference_update(dir(list))
         o.difference_update(dir({}))
         
+    def test_BaseDelayedObject(self):
+        # assert that all methods/descriptors of object
+        # are covered via the base.
+        o = set(dir(object)).difference("__%s__" % x for x in
+            ["class", "getattribute", "new", "init"])
+        self.assertFalse(o.difference(obj.base_kls_descriptors))

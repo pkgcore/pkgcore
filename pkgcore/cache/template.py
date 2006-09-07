@@ -49,8 +49,11 @@ class database(object):
 
     def __getitem__(self, cpv):
         """set a cpv to values
-        This shouldn't be overriden in derived classes since it handles the __eclasses__ conversion.
-        that said, if the class handles it, they can override it."""
+
+        This shouldn't be overriden in derived classes since it
+        handles the __eclasses__ conversion. That said, if the class
+        handles it, they can override it.
+        """
         if self.updates > self.sync_rate:
             self.commit()
             self.updates = 0
@@ -61,7 +64,9 @@ class database(object):
 
     def _getitem(self, cpv):
         """get cpv's values.
-        override this in derived classess"""
+
+        override this in derived classess.
+        """
         raise NotImplementedError
 
     def __setitem__(self, cpv, values):
@@ -74,8 +79,8 @@ class database(object):
             raise cache_errors.ReadOnlyRestriction()
         if self.cleanse_keys:
             d = ProtectedDict(values)
-            for k in d.keys():
-                if d[k] == '':
+            for k in d.iterkeys():
+                if not d[k]:
                     del d[k]
             if self.serialize_eclasses and "_eclasses_" in values:
                 d["_eclasses_"] = self.deconstruct_eclasses(d["_eclasses_"])
@@ -95,7 +100,7 @@ class database(object):
         """__setitem__ calls this after readonly checks.
 
         override it in derived classes.
-        note _eclassees_ key *must* be handled.
+        note _eclasses_ key *must* be handled.
         """
         raise NotImplementedError
 
@@ -170,26 +175,24 @@ class database(object):
                 else:
                     restricts[key] = re.compile(match[0], match[1]).match
             except re.error, e:
-                raise InvalidRestriction(key, match, e)
-            if key not in self.__known_keys:
-                raise InvalidRestriction(key, match, "Key isn't valid")
+                raise cache_errors.InvalidRestriction(key, match, e)
+            if key not in self._known_keys:
+                raise cache_errors.InvalidRestriction(key, match,
+                                                      "Key isn't valid")
 
-        for cpv in self.keys():
-            cont = True
-            vals = self[cpv]
+        for cpv, vals in self.iteritems():
             for key, match in restricts.iteritems():
                 if not match(vals[key]):
-                    cont = False
                     break
-            if cont:
+            else:
                 yield cpv
 
     @staticmethod
     def deconstruct_eclasses(eclass_dict):
         """takes a dict, returns a string representing said dict"""
-        return "\t".join([
-                "%s\t%s\t%s" % (k, v[0], str(v[1]))
-                for k, v in eclass_dict.items()])
+        return "\t".join(
+            "%s\t%s\t%s" % (k, v[0], str(v[1]))
+            for k, v in eclass_dict.iteritems())
 
     @staticmethod
     def reconstruct_eclasses(cpv, eclass_string):
@@ -202,7 +205,10 @@ class database(object):
             raise cache_errors.CacheCorruption(
                 cpv, "_eclasses_ was of invalid len %i" % len(eclasses))
         d = {}
-        for x in xrange(0, len(eclasses), 3):
-            d[eclasses[x]] = (eclasses[x + 1], long(eclasses[x + 2]))
-        del eclasses
+        try:
+            for x in xrange(0, len(eclasses), 3):
+                d[eclasses[x]] = (eclasses[x + 1], long(eclasses[x + 2]))
+        except ValueError:
+            raise cache_errors.CacheCorruption(
+                cpv, 'ValueError reading %r' % (eclass_string,))
         return d

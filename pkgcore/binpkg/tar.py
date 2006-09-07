@@ -13,7 +13,7 @@ from pkgcore.interfaces.data_source import data_source
 from pkgcore.util.currying import pre_curry
 
 class tar_data_source(data_source):
-    
+
     def get_fileobj(self):
         return self.data()
 

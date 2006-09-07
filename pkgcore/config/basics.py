@@ -33,7 +33,7 @@ class ConfigType(object):
         @param incrementals: container holding incrementals.
         @param required: container holding required arguments.
         @param defaults: L{ConfigSection} with default values.
-        @param allow_unknowns: controls whether unknown settings should error or not
+        @param allow_unknowns: controls whether unknown settings should error.
         """
 
         if positional is None:
@@ -170,6 +170,7 @@ class HardCodedConfigSection(ConfigSection):
     """Just wrap around a dict."""
 
     def __init__(self, name, source_dict):
+        ConfigSection.__init__(self)
         self.name = name
         self.dict = source_dict
 
@@ -252,7 +253,6 @@ def list_parser(s):
                     raise errors.QuoteInterpretationError(s)
                 l.append(''.join(res))
             else:
-                start = i
                 res = []
                 while i < e and not (s[i].isspace() or s[i] in ("'", '"')):
                     if s[i] == '\\':

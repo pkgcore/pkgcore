@@ -23,46 +23,46 @@ class ConfigLoadingTest(unittest.TestCase):
             '[foo]\n'
             )
         self.types.flush()
-        self.userConfig = tempfile.NamedTemporaryFile()
-        self.userConfig.write(
+        self.user_config = tempfile.NamedTemporaryFile()
+        self.user_config.write(
             '[foo]\n'
             'type = foo\n'
             'class = pkgcore.test.config.test_init.passthrough\n'
             )
-        self.userConfig.flush()
-        self.globalConfig = tempfile.NamedTemporaryFile()
-        self.globalConfig.write(
+        self.user_config.flush()
+        self.global_config = tempfile.NamedTemporaryFile()
+        self.global_config.write(
             '[foo]\n'
             'type = foo\n'
             'class = invalid\n'
             )
-        self.globalConfig.flush()
-        self.systemConfig = tempfile.NamedTemporaryFile()
-        self.systemConfig.write(
+        self.global_config.flush()
+        self.system_config = tempfile.NamedTemporaryFile()
+        self.system_config.write(
             '[foo]\n'
             'type = foo\n'
             'class = also invalid\n'
             )
-        self.systemConfig.flush()
+        self.system_config.flush()
 
     def tearDown(self):
         del self.types
-        del self.userConfig
-        del self.globalConfig
-        del self.systemConfig
+        del self.user_config
+        del self.global_config
+        del self.system_config
 
     def test_load_config(self):
         manager = load_config(
-            user_conf_file=self.userConfig.name,
-            global_conf_file=self.globalConfig.name,
+            user_conf_file=self.user_config.name,
+            global_conf_file=self.global_config.name,
             types_file=self.types.name)
         self.assertEquals(manager.foo['foo'], ((), {}))
 
     def test_stacking(self):
         """Test user config overrides system config."""
         manager = load_config(
-            user_conf_file=self.userConfig.name,
-            system_conf_file=self.systemConfig.name,
-            global_conf_file=self.globalConfig.name,
+            user_conf_file=self.user_config.name,
+            system_conf_file=self.system_config.name,
+            global_conf_file=self.global_config.name,
             types_file=self.types.name)
         self.assertEquals(manager.foo['foo'], ((), {}))

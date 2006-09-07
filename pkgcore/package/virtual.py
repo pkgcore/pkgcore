@@ -11,7 +11,9 @@ from pkgcore.restrictions.packages import OrRestriction
 class package(metadata.package):
 
     """
-    virtual package, mainly useful since it's generating so little attrs on the fly
+    Virtual package.
+
+    Mainly useful since it's generating so little attrs on the fly.
     """
 
     package_is_real = False

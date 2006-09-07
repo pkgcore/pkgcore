@@ -12,22 +12,33 @@ from pkgcore.restrictions import packages
 class DictBased(restriction.base):
 
     """
-    Restrictions are (by default) executed in a depth/breadth method; for long chains of restrictions,
-    this grows inneficient.  For example, package.mask'ing has over 300 atoms, effectively over 1800 objects in use.
+    Convert a long chain of restrictions to a dict lookup.
 
-    Running the filter on each package instance returned from a repo would be exceedingly slow, a way to get as close to
-    constant lookup as possible is needed.
+    Restrictions are (by default) executed in a depth/breadth method;
+    for long chains of restrictions, this grows inneficient. For
+    example, package.mask'ing has over 300 atoms, effectively over
+    1800 objects in use.
 
-    DictBased works by using supplied functions to collapse long chains of restrictions into a dict, with key
-    defined by get_key_from_package, and with the value of that key holding the remaining restrictions (if any).
+    Running the filter on each package instance returned from a repo
+    would be exceedingly slow, a way to get as close to constant
+    lookup as possible is needed.
 
-    Common usage at this point is to collapse category and package attribute restrictions into constant lookup, with
-    any remaining version restrictions being handed off as a val.
+    DictBased works by using supplied functions to collapse long
+    chains of restrictions into a dict, with key defined by
+    get_key_from_package, and with the value of that key holding the
+    remaining restrictions (if any).
 
-    Example usage of this class should be available in pkgcore.ebuild.domain
+    Common usage at this point is to collapse category and package
+    attribute restrictions into constant lookup, with any remaining
+    version restrictions being handed off as a val.
 
-    Aside from that, method of generating keys/collapsing restrictions is subject to change, still need to push metadata
-    in re: what restriction types are being collapsed; short version, api isn't declared stable yet.
+    Example usage of this class should be available in
+    L{pkgcore.ebuild.domain}.
+
+    Aside from that, method of generating keys/collapsing restrictions
+    is subject to change, still need to push metadata in re: what
+    restriction types are being collapsed; short version, api isn't
+    declared stable yet.
     """
 
     __slots__ = ("restricts_dict", "get_pkg_key", "get_atom_key")
@@ -38,10 +49,14 @@ class DictBased(restriction.base):
                  *args, **kwargs):
         """
 
-        @param restriction_items: source of restriction keys and remaining restriction (if none, set it to None)
-        @param get_key_from_package: is a function to get the key from a pkg instance
-        @param args: pass any additional args to L{pkgcore.restrictions.restriction.base}
-        @param kwargs: pass any additional args to L{pkgcore.restrictions.restriction.base}
+        @param restriction_items: source of restriction keys and remaining
+            restriction (if none, set it to None)
+        @param get_key_from_package: is a function to get the key from a
+            pkg instance
+        @param args: pass any additional args to
+            L{pkgcore.restrictions.restriction.base}
+        @param kwargs: pass any additional args to
+            L{pkgcore.restrictions.restriction.base}
         """
 
         if not callable(get_key_from_package):

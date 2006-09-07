@@ -8,7 +8,7 @@
 from pkgcore.ebuild.cpv_errors import InvalidCPV
 
 import re
-from pkgcore.package import errors, base
+from pkgcore.package import base
 # do this to break the cycle.
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.ebuild:atom")
@@ -49,7 +49,8 @@ class native_CPV(object):
 
     def __init__(self, cpvstr):
         """
-        @param cpvstr: cat/pkg-ver[-rev] of an ebuild package.  See L{parser} for allowed syntax
+        @param cpvstr: cat/pkg-ver[-rev] of an ebuild package.
+            See L{parser} for allowed syntax.
         @type cpvstr: string
         """
         self.__dict__["cpvstr"] = cpvstr

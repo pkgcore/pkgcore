@@ -1,9 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import itertools, operator
+import operator
 from collections import deque
-from pkgcore.util.compatibility import any, all
+from pkgcore.util.compatibility import any
 from pkgcore.util.iterables import caching_iter, iter_sort
 from pkgcore.util.mappings import OrderedDict
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
@@ -674,13 +674,13 @@ class plan_state(object):
     def __init__(self):
         self.state = PigeonHoledSlots()
         self.plan = []
-    
+
     def add_pkg(self, choices, action=ADD, force=False):
         return self._add_pkg(choices, choices.current_pkg, action, force=force)
-    
+
     def add_provider(self, choices, provider, action=ADD):
         return self._add_pkg(choices, provider, action)
-    
+
     def _add_pkg(self, choices, pkg, action, force=False):
         """returns False (no issues), else the conflicts"""
         if action == ADD:
@@ -724,7 +724,7 @@ class plan_state(object):
             elif change[0] == FORWARD_BLOCK:
                 self.state.remove_limiter(change[1], key=change[2])
         self.plan = self.plan[:state_pos]
-        
+
     def _force_rebuild(self, state_pos):
         # should revert, rather then force a re-run
         ps = plan_state()
@@ -738,7 +738,7 @@ class plan_state(object):
                 import pdb;pdb.set_trace()
                 pass
         return ps
-        
+
     def iter_pkg_ops(self):
         ops = {ADD:"add", REMOVE:"remove", REPLACE:"replace",
                FORWARD_BLOCK:None}
@@ -747,7 +747,7 @@ class plan_state(object):
                 continue
             assert x[0] in ops
             yield ops[x[0]], x[3:]
-            
+
     def add_blocker(self, blocker, key=None):
         """adds blocker, returning any packages blocked"""
         l = self.state.add_limiter(blocker, key=key)

@@ -55,7 +55,7 @@ def parse_revdep(value):
 
 def parse_description(value):
     """Value is used as a regexp matching description or longdescription."""
-    matcher = values.StrRegex(value, CaseSensitive=False)
+    matcher = values.StrRegex(value, case_sensitive=False)
     return packages.OrRestriction(finalize=True, *list(
             packages.PackageRestriction(attr, matcher)
             for attr in ('description', 'longdescription')))

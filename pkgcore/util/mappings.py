@@ -23,8 +23,9 @@ class LazyValDict(UserDict.DictMixin):
 
     def __init__(self, get_keys_func, get_val_func):
         """
-        @param get_keys_func: either a container, or func to call to get keys
-        @param get_val_func: a callable that is JIT called with the key requested
+        @param get_keys_func: either a container, or func to call to get keys.
+        @param get_val_func: a callable that is JIT called
+            with the key requested.
         """
         if not callable(get_val_func):
             raise TypeError("get_val_func isn't a callable")
@@ -92,10 +93,10 @@ class LazyValDict(UserDict.DictMixin):
 class ProtectedDict(UserDict.DictMixin, object):
 
     """
-    Mapping wrapper to store changes to a dict without modifying the initial dict
+    Mapping wrapper storing changes to a dict without modifying the original.
 
-    given an initial dict, this wraps that dict storing changes in a secondary dict, protecting
-    the underlying dict from changes
+    Changes are stored in a secondary dict, protecting the underlying
+    mapping from changes.
     """
 
     __slots__ = ("orig", "new", "blacklist")
@@ -245,7 +246,7 @@ class StackedDict(UserDict.DictMixin):
 class OrderedDict(dict):
 
     """Dict that preserves insertion ordering which is used for iteration ops"""
-    
+
     def __init__(self, pairs=()):
         dict.__init__(self)
         self._order = deque()
@@ -256,16 +257,18 @@ class OrderedDict(dict):
         if key not in self:
             self._order.append(key)
         dict.__setitem__(self, key, val)
-    
+
     def __delitem__(self, key):
         if key not in self:
             raise KeyError(key)
         for idx, o in enumerate(self._order):
             if o == key:
                 break
+        # "Using possibly undefined loop variable"
+        # pylint: disable-msg=W0631
         del self._order[idx]
         dict.__delitem__(self, key)
-    
+
     def setdefault(self, key, default=None):
         if not key in self:
             self[key] = default
@@ -277,22 +280,22 @@ class OrderedDict(dict):
 
     def __len__(self):
         return len(self._order)
-    
+
     def __iter__(self):
         return self.iterkeys()
-    
+
     def iterkeys(self):
         return iter(self._order)
-    
+
     def keys(self):
         return list(self.iterkeys())
-    
-    def iteritems(self):						
+
+    def iteritems(self):
         return ((k, self[k]) for k in self._order)
-    
+
     def itervalues(self):
         return (self[k] for k in self._order)
-    
+
     def values(self):
         return list(self.itervalues())
 

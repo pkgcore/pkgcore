@@ -10,12 +10,13 @@ pjoin = os.path.join
 
 class VerifyMixin(object):
 
-    def verify(self, o, kwds, stat):
-        for a, k in (("st_mtime", "mtime"),
-                     ("st_gid", "gid"),
-                     ("st_uid", "uid")):
-            if k in kwds:
-                self.assertEqual(getattr(stat, a), kwds[k], "testing %s" % k)
+    def verify(self, obj, kwds, stat):
+        for attr, keyword in (("st_mtime", "mtime"),
+                              ("st_gid", "gid"),
+                              ("st_uid", "uid")):
+            if keyword in kwds:
+                self.assertEqual(getattr(stat, attr), kwds[keyword],
+                                 "testing %s" % (keyword,))
         if "mode" in kwds:
             self.assertEqual((stat.st_mode & 04777), kwds["mode"])
 
@@ -65,7 +66,7 @@ class TestCopyFile(VerifyMixin, TempDirMixin, unittest.TestCase):
     def test_it(self):
         src = pjoin(self.dir, "copy_test_src")
         dest = pjoin(self.dir, "copy_test_dest")
-        open(src, "w").writelines("asdf\n" for x in xrange(10))
+        open(src, "w").writelines("asdf\n" for i in xrange(10))
         kwds = {"mtime":10321, "uid":os.getuid(), "gid":os.getgid(),
                 "mode":0664}
         o = fs.fsFile(dest, real_path=src, **kwds)
@@ -96,7 +97,6 @@ class ContentsMixin(VerifyMixin, TempDirMixin, unittest.TestCase):
         }
 
     def generate_tree(self, base, entries):
-        pjoin = os.path.join
         s_ents = [(pjoin(base, k), entries[k]) for k in sorted(entries)]
         for k, v in s_ents:
             if v[0] == "dir":

@@ -10,11 +10,10 @@ import os
 from pkgcore.config import basics, introspect
 from pkgcore import const
 from pkgcore.util.demandload import demandload
-demandload(globals(), "errno pkgcore.config:errors " 
+demandload(globals(), "errno pkgcore.config:errors "
     "pkgcore.pkgsets.glsa:SecurityUpgrades "
     "pkgcore.fs.util:normpath,abspath "
     "pkgcore.util.file:read_bash_dict,read_dict "
-    "pkgcore.pkgsets.filelist:FileList "
     "pkgcore.util.osutils:listdir_files ")
 
 
@@ -30,7 +29,7 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     if arch is None:
         raise errors.InstantiationError(
             "pkgcore.ebuild.portage_conf.SecurityUpgradesViaProfile",
-            (repo, vdb, profile), {}, "arch wasn't set in profiles")
+            (ebuild_repo, vdb, profile), {}, "arch wasn't set in profiles")
     return SecurityUpgrades(ebuild_repo, vdb, arch)
 
 SecurityUpgradesViaProfile.pkgcore_config_type = introspect.ConfigHint(types={
@@ -41,7 +40,8 @@ def configFromMakeConf(location="/etc/"):
     """
     generate a config from a file location
 
-    @param location: location the portage configuration is based in, defaults to /etc
+    @param location: location the portage configuration is based in,
+        defaults to /etc
     """
 
     # this actually differs from portage parsing- we allow
@@ -110,7 +110,7 @@ def configFromMakeConf(location="/etc/"):
         stop = max(idx for idx, val in enumerate(psplit) if val == "profiles")
         if stop + 1 >= len(psplit):
             raise ValueError
-    except ValueError, v:
+    except ValueError:
         raise errors.InstantiationError(
             "configFromMakeConf", [], {},
             "%s/make.profile expands to %s, but no profile/profile base "
@@ -131,11 +131,10 @@ def configFromMakeConf(location="/etc/"):
     fetchcommand = conf_dict.pop("FETCHCOMMAND")
     resumecommand = conf_dict.pop("RESUMECOMMAND", fetchcommand)
 
-    new_config["fetcher"] = basics.ConfigSectionFromStringDict("fetcher", 
+    new_config["fetcher"] = basics.ConfigSectionFromStringDict("fetcher",
         {"type": "fetcher", "distdir": distdir, "command": fetchcommand,
         "resume_command": resumecommand})
 
-    pcache = None
     if os.path.exists(base_path+"portage/modules"):
         pcache = read_dict(
             base_path+"portage/modules").get("portdbapi.auxdbmodule", None)
@@ -171,15 +170,14 @@ def configFromMakeConf(location="/etc/"):
             gen_tree_dict(tree_loc, gentoo_mirrors))
         new_config["%s cache" % tree_loc] = \
             basics.ConfigSectionFromStringDict(
-            "%s cache" % tree_loc, 
+            "%s cache" % tree_loc,
             generate_generic_cache(tree_loc))
 
     # if a metadata cache exists, use it
-    portdir_local_cache = "%s cache" % portdir
     if rsync_portdir_cache:
         new_config["portdir cache"] = \
             basics.ConfigSectionFromStringDict("portdir cache",
-            {"type": "cache", "location": portdir, 
+            {"type": "cache", "location": portdir,
             "label": "portdir cache",
             "class": "pkgcore.cache.metadata.database"})
     else:

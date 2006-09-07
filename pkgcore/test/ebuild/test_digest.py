@@ -6,8 +6,8 @@ from pkgcore.ebuild.digest import parse_digest
 from pkgcore.chksum.errors import ParseChksumError
 import tempfile, os
 
-# "Line too long"
-# pylint: disable-msg=C0301
+# "Line too long" (and our custom more agressive version of that)
+# pylint: disable-msg=C0301,CPC01
 
 digest_contents = \
 """MD5 98db1465629693fc434d4dc52db93838 Python-2.4.2.tar.bz2 7853169

@@ -14,7 +14,7 @@ def grab_arg(arg, args):
     except ValueError:
         pass
     return val
-    
+
 if __name__ == "__main__":
     a = sys.argv[1:]
     if grab_arg("--help", a) or grab_arg("-h", a) or not a:
@@ -28,7 +28,7 @@ if __name__ == "__main__":
     restrict = packages.PackageRestriction("contents", values.ContainmentMatch(
         *[normpath(x) for x in a]))
     start_time = time.time()
-    count = 0 
+    count = 0
     print "query- %s, returning all matches? %s" % (restrict, all)
     for pkg in repo.itermatch(restrict):
         print "pkg: %s" % (pkg)

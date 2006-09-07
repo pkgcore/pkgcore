@@ -19,7 +19,7 @@ class ChksumTest(object):
                     self.chf_type,))
         self.fn = tempfile.mktemp()
         f = open(self.fn,"w")
-        for x in xrange(multi):
+        for i in xrange(multi):
             f.write(data)
         f.close()
 

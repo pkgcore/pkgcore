@@ -55,7 +55,7 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
                 "SELECT name FROM sqlite_master "
                 "WHERE type=\"table\" AND name=%s" %
                 self._sfilter(tbl))
-        except self._BaseError, e:
+        except self._BaseError:
             # XXX crappy.
             return False
         return len(self.con.fetchall()) == 1

@@ -15,16 +15,16 @@ def a_dozen():
 
 class RememberingNegateMixin(object):
 
-    def setUpRememberingNegate(self):
-        self.negateCalls = []
+    def setUp(self):
+        self.negate_calls = []
         def negate(i):
-            self.negateCalls.append(i)
+            self.negate_calls.append(i)
             return -i
         self.negate = negate
 
-    def tearDownRememberingNegate(self):
+    def tearDown(self):
         del self.negate
-        del self.negateCalls
+        del self.negate_calls
 
 
 
@@ -49,20 +49,22 @@ class LazyValDictTestMixin(object):
         self.assertRaises(KeyError, get)
 
     def test_caching(self):
+        # "Statement seems to have no effect"
+        # pylint: disable-msg=W0104
         self.dict[11]
         self.dict[11]
-        self.assertEquals(self.negateCalls, [11])
+        self.assertEquals(self.negate_calls, [11])
 
 
 class LazyValDictWithListTest(
     unittest.TestCase, LazyValDictTestMixin, RememberingNegateMixin):
 
     def setUp(self):
-        self.setUpRememberingNegate()
+        RememberingNegateMixin.setUp(self)
         self.dict = mappings.LazyValDict(range(12), self.negate)
 
     def tearDown(self):
-        self.tearDownRememberingNegate()
+        RememberingNegateMixin.tearDown(self)
 
     def test_itervalues(self):
         self.assertEquals(sorted(self.dict.itervalues()), range(-11, 1))
@@ -83,11 +85,11 @@ class LazyValDictWithFuncTest(
     unittest.TestCase, LazyValDictTestMixin, RememberingNegateMixin):
 
     def setUp(self):
-        self.setUpRememberingNegate()
+        RememberingNegateMixin.setUp(self)
         self.dict = mappings.LazyValDict(a_dozen, self.negate)
 
     def tearDown(self):
-        self.tearDownRememberingNegate()
+        RememberingNegateMixin.tearDown(self)
 
 
 class LazyValDictTest(unittest.TestCase):
@@ -120,11 +122,11 @@ class ProtectedDictTest(unittest.TestCase):
     def test_basic_mutating(self):
         # add something
         self.dict[7] = -7
-        def checkAfterAdding():
+        def check_after_adding():
             self.assertEquals(self.dict[7], -7)
             self.failUnless(7 in self.dict)
             self.assertEquals(sorted(self.dict.keys()), [1, 2, 7])
-        checkAfterAdding()
+        check_after_adding()
         # remove it again
         del self.dict[7]
         self.failIf(7 in self.dict)
@@ -134,7 +136,7 @@ class ProtectedDictTest(unittest.TestCase):
         self.assertEquals(sorted(self.dict.keys()), [1, 2])
         # add it back
         self.dict[7] = -7
-        checkAfterAdding()
+        check_after_adding()
         # remove something not previously added
         del self.dict[1]
         self.failIf(1 in self.dict)
@@ -142,7 +144,7 @@ class ProtectedDictTest(unittest.TestCase):
         self.assertEquals(sorted(self.dict.keys()), [2, 7])
         # and add it back
         self.dict[1] = -1
-        checkAfterAdding()
+        check_after_adding()
 
 
 class ImmutableDictTest(unittest.TestCase):
@@ -151,7 +153,7 @@ class ImmutableDictTest(unittest.TestCase):
         self.dict = mappings.ImmutableDict(**{1: -1, 2: -2})
 
     def test_invalid_operations(self):
-        initialHash = hash(self.dict)
+        initial_hash = hash(self.dict)
         self.assertRaises(TypeError, operator.delitem, self.dict, 1)
         self.assertRaises(TypeError, operator.delitem, self.dict, 7)
         self.assertRaises(TypeError, operator.setitem, self.dict, 1, -1)
@@ -161,7 +163,7 @@ class ImmutableDictTest(unittest.TestCase):
         self.assertRaises(TypeError, self.dict.pop, 1)
         self.assertRaises(TypeError, self.dict.popitem)
         self.assertRaises(TypeError, self.dict.setdefault, 6, -6)
-        self.assertEquals(initialHash, hash(self.dict))
+        self.assertEquals(initial_hash, hash(self.dict))
 
 class StackedDictTest(unittest.TestCase):
 
@@ -240,18 +242,18 @@ class IndeterminantDictTest(unittest.TestCase):
         self.assertEqual(d[0], True)
         self.assertEqual(d[11], None)
         self.assertEqual(val, [11])
-        def f(*a):
+        def func(*a):
             raise KeyError
         self.assertRaises(
-            KeyError, mappings.IndeterminantDict(f).__getitem__, 1)
+            KeyError, mappings.IndeterminantDict(func).__getitem__, 1)
 
 
     def test_get(self):
-        def f(key):
+        def func(key):
             if key == 2:
                 raise KeyError
             return True
-        d = mappings.IndeterminantDict(f, {1:1})
+        d = mappings.IndeterminantDict(func, {1:1})
         self.assertEqual(d.get(1, 1), 1)
         self.assertEqual(d.get(1, 2), 1)
         self.assertEqual(d.get(2), None)

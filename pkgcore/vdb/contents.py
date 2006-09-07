@@ -7,7 +7,7 @@ from pkgcore.util.file import AtomicWriteFile
 from pkgcore.interfaces import data_source
 from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
-demandload(globals(), "warnings os stat errno")
+demandload(globals(), "os stat errno")
 
 class LookupFsDev(fs.fsDev):
 
@@ -20,7 +20,7 @@ class LookupFsDev(fs.fsDev):
                 if oe.errno != errno.ENOENT:
                     raise
                 st = None
-            if st is None or any(f(st.st_mode) for f in 
+            if st is None or any(f(st.st_mode) for f in
                 (stat.S_ISREG, stat.S_ISDIR, stat.S_ISFIFO)):
                 kwds["strict"] = True
             else:
@@ -78,7 +78,7 @@ class ContentsFile(contentsSet):
             fobj.seek(0, 0)
             fobj.truncate(0)
         return fobj
-        
+
     def flush(self):
         return self._write()
 

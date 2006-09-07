@@ -33,7 +33,7 @@ class tree(prototype.tree):
             for x in self.raw_repo.itermatch(*args, **kwargs))
 
     def __getattr__(self, attr):
-        return getattr(self.raw_repo, repo)
+        return getattr(self.raw_repo, attr)
 
     def __len__(self):
         return len(self.raw_repo)

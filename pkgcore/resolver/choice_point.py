@@ -11,7 +11,7 @@ class CheatingIter(object):
         self._position = -1
         self._item = None
         self._iter_obj = None
-        
+
     def __getitem__(self, idx):
         if idx < 0:
             raise IndexError("piss off, I don't like negative indexes")
@@ -21,7 +21,7 @@ class CheatingIter(object):
 
         if idx != self._position:
             try:
-                for x in xrange(idx - self._position):
+                for i in xrange(idx - self._position):
                     item = self._iter_obj.next()
             except StopIteration:
                 self._position = -1
@@ -103,7 +103,7 @@ class choice_point(object):
                             self.matches_idx += 1
                             break
                         self.post_rdepends[idx] = node
-                
+
                 rdep_idx = prdep_idx = self.matches_idx
 
         except IndexError:
@@ -113,7 +113,6 @@ class choice_point(object):
 
     def _common_property(self, existing, getter):
         # are we beyond this matches solutions?
-        ret = None
         if self.matches_idx == existing[0]:
             try:
                 return existing[2]
@@ -154,7 +153,7 @@ class choice_point(object):
     @property
     def provides(self):
         if self.matches_idx != self._provides_solutions[0]:
-            self._provides_solutions = [self.matches_idx, 0, 
+            self._provides_solutions = [self.matches_idx, 0,
                 self.matches[self.matches_idx].provides]
         return self._provides_solutions[2]
 

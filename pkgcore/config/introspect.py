@@ -15,9 +15,10 @@ def configTypeFromCallable(func_obj):
      - a str means it's a string
      - some other object means it's a section_ref
 
-    If an argument has no default, it is assumed to be a string- exception to this is if
-    the callable has a pkgcore_config_type attr that is a L{ConfigHint} instance, in which 
-    case those override
+    If an argument has no default, it is assumed to be a string-
+    exception to this is if the callable has a pkgcore_config_type
+    attr that is a L{ConfigHint} instance, in which case those
+    override.
     """
     name = func_obj.__name__
     if inspect.isclass(func_obj):
@@ -29,7 +30,7 @@ def configTypeFromCallable(func_obj):
         # chop off 'self'
         args = args[1:]
     types = {}
-    defaultsDict = {}
+    defaults_dict = {}
     fail = False
     if varargs is not None or varkw is not None:
         fail = True
@@ -48,7 +49,7 @@ def configTypeFromCallable(func_obj):
         else:
             typename = 'section_ref'
         types[argname] = typename
-        defaultsDict[argname] = default
+        defaults_dict[argname] = default
     # no defaults to determine the type from -> default to str.
     # just [:-len(defaults)] doesn't work if there are no defaults
     for arg in args[:len(args)-len(defaults)]:
@@ -78,7 +79,7 @@ def configTypeFromCallable(func_obj):
     return config.basics.ConfigType(
         name, types, required=args,
         defaults=config.basics.HardCodedConfigSection(
-            '%s defaults' % name, defaultsDict),
+            '%s defaults' % name, defaults_dict),
         positional=positional)
 
 
@@ -87,7 +88,7 @@ class ConfigHint(object):
     """hint for introspection supplying overrides"""
 
     __slots__ = ("types", "positional", "required")
-    
+
     def __init__(self, types=None, positional=None, required=None):
         if types is None:
             self.types = {}

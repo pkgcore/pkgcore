@@ -12,7 +12,6 @@ from pkgcore.repository import prototype, errors
 from pkgcore.ebuild.cpv import CPV as cpv
 from pkgcore.util.currying import pre_curry
 from pkgcore.plugins import get_plugin
-from pkgcore.interfaces.data_source import data_source
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.osutils import listdir_dirs, listdir_files
 from pkgcore.binpkg.xpak import Xpak
@@ -21,13 +20,14 @@ from pkgcore.util.bzip2 import decompress
 from pkgcore.interfaces.build import empty_build_op
 from pkgcore.ebuild.ebuild_built import pkg_uses_default_preinst
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.merge:engine "+
-    "pkgcore.merge.triggers:SimpleTrigger "+
-    "pkgcore.fs.livefs:scan "+
-    "pkgcore.interfaces.data_source.data_source ")
+demandload(globals(),
+           "pkgcore.merge:engine "
+           "pkgcore.merge.triggers:SimpleTrigger "
+           "pkgcore.fs.livefs:scan "
+           "pkgcore.interfaces.data_source:data_source ")
 
 
-def force_unpack_trigger(op, engine, cset):
+def force_unpack_trigger(op, engine_inst, cset):
     op.setup_workdir()
     merge_contents = get_plugin("fs_ops", "merge_contents")
     merge_contents(cset, offset=op.env["D"])

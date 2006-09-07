@@ -73,8 +73,8 @@ def alias_class_method(attr):
     attr is the desired attr name to lookup, and supply all later passed in
     args/kws to
 
-    Useful for when setting has_key to __contains__ for example, and __contains__ may be
-    overriden
+    Useful for when setting has_key to __contains__ for example, and
+    __contains__ may be overriden.
     """
     grab_attr = attrgetter(attr)
 

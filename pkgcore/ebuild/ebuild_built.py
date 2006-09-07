@@ -5,8 +5,6 @@
 built ebuild packages (vdb packages and binpkgs are derivatives of this)
 """
 
-import re
-
 from pkgcore.ebuild import ebuild_src
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.package import metadata
@@ -17,10 +15,10 @@ from pkgcore.ebuild.conditionals import DepSet
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild import ebd
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.merge:engine "+
-    "pkgcore.ebuild:triggers "+
-    "pkgcore.util.packages:get_raw_pkg "+
-    "re ")
+demandload(globals(),
+           "pkgcore.merge:engine "
+           "pkgcore.ebuild:triggers "
+           "re ")
 
 ebuild_triggers = triggers
 
@@ -148,12 +146,15 @@ class package_factory(metadata.factory):
 
 class fake_package_factory(package_factory):
     """
-    a fake package_factory, so that we can reuse the normal get_metadata hooks; a factory is generated per
-    package instance, rather then one factory, N packages.
+    a fake package_factory, so that we can reuse the normal get_metadata hooks.
 
-    Do not use this unless you know it's what your after; this is strictly for transitioning a built ebuild
-    (still in the builddir) over to an actual repo.  It literally is a mapping of original package data
-    to the new generated instances data store.
+    a factory is generated per package instance, rather then one
+    factory, N packages.
+
+    Do not use this unless you know it's what your after; this is
+    strictly for transitioning a built ebuild (still in the builddir)
+    over to an actual repo. It literally is a mapping of original
+    package data to the new generated instances data store.
     """
 
     def __init__(self, child_class):
@@ -180,7 +181,7 @@ class fake_package_factory(package_factory):
 
     def scan_contents(self, location):
         return scan(location, offset=location)
-    
+
     def _get_metadata(self, pkg):
         return IndeterminantDict(self.__pull_metadata)
 

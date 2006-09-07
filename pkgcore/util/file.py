@@ -47,12 +47,16 @@ class AtomicWriteFile(file):
 
 def iter_read_bash(bash_source):
     """
-    read file honoring bash commenting rules.  Note that it's considered good behaviour to close filehandles, as such,
-    either iterate fully through this, or use read_bash instead.
-    once the file object is no longer referenced, the handle will be closed, but be proactive instead of relying on the
-    garbage collector.
+    Read file honoring bash commenting rules.
 
-    @param bash_source: either a file to read from, or a string holding the filename to open
+    Note that it's considered good behaviour to close filehandles, as
+    such, either iterate fully through this, or use read_bash instead.
+    Once the file object is no longer referenced the handle will be
+    closed, but be proactive instead of relying on the garbage
+    collector.
+
+    @param bash_source: either a file to read from
+        or a string holding the filename to open.
     """
     if isinstance(bash_source, basestring):
         bash_source = open(bash_source, 'r', 32384)
@@ -72,10 +76,11 @@ read_bash.__doc__ = iter_read_bash.__doc__
 def read_dict(bash_source, splitter="=", ignore_malformed=False,
               source_isiter=False):
     """
-    read key value pairs, splitting on specified splitter, using iter_read_bash for filtering comments
+    read key value pairs, ignoring bash-style comments.
 
-    @param bash_source: either a file to read from, or a string holding the filename to open
-
+    @param splitter: the string to split on.
+    @param bash_source: either a file to read from,
+        or a string holding the filename to open.
     """
     d = {}
     if not source_isiter:
@@ -107,14 +112,19 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
     """
     read bash source, yielding a dict of vars
 
-    @param bash_source: either a file to read from, or a string holding the filename to open
-    @param vars_dict: initial 'env' for the sourcing, and is protected from modification.
+    @param bash_source: either a file to read from
+        or a string holding the filename to open
+    @param vars_dict: initial 'env' for the sourcing.
+        Is protected from modification.
     @type vars_dict: dict or None
-    @param sourcing_command: controls whether a source command exists, if one does and is encountered, then this func
+    @param sourcing_command: controls whether a source command exists.
+        If one does and is encountered, then this func is called.
     @type sourcing_command: callable
-    @param ignore_malformed: if malformed syntax, whether to ignore that line or throw a ParseError
-    @raise ParseError: thrown if ignore_malformed is False, and invalid syntax is encountered
-    @return: dict representing the resultant env if bash executed the source
+    @param ignore_malformed: if malformed syntax, whether to ignore that line
+        or throw a ParseError
+    @raise ParseError: thrown if ignore_malformed is False, and invalid syntax
+        is encountered.
+    @return: dict representing the resultant env if bash executed the source.
     """
 
     # quite possibly I'm missing something here, but the original

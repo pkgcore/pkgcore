@@ -24,20 +24,20 @@ class PreCurryTest(unittest.TestCase):
         self.assertEquals(noop(foo='bar'), ((), {'foo': 'bar'}))
         self.assertEquals(noop('foo', bar='baz'), (('foo',), {'bar': 'baz'}))
 
-        oneArg = self.pre_curry(passthrough, 42)
-        self.assertEquals(oneArg(), ((42,), {}))
-        self.assertEquals(oneArg('foo', 'bar'), ((42, 'foo', 'bar'), {}))
-        self.assertEquals(oneArg(foo='bar'), ((42, ), {'foo': 'bar'}))
+        one_arg = self.pre_curry(passthrough, 42)
+        self.assertEquals(one_arg(), ((42,), {}))
+        self.assertEquals(one_arg('foo', 'bar'), ((42, 'foo', 'bar'), {}))
+        self.assertEquals(one_arg(foo='bar'), ((42, ), {'foo': 'bar'}))
         self.assertEquals(
-            oneArg('foo', bar='baz'), ((42, 'foo'), {'bar': 'baz'}))
+            one_arg('foo', bar='baz'), ((42, 'foo'), {'bar': 'baz'}))
 
-        keyWordArg = self.pre_curry(passthrough, foo=42)
-        self.assertEquals(keyWordArg(), ((), {'foo': 42}))
+        keyword_arg = self.pre_curry(passthrough, foo=42)
+        self.assertEquals(keyword_arg(), ((), {'foo': 42}))
         self.assertEquals(
-            keyWordArg('foo', 'bar'), (('foo', 'bar'), {'foo': 42}))
-        self.assertEquals(keyWordArg(foo='bar'), ((), {'foo': 'bar'}))
+            keyword_arg('foo', 'bar'), (('foo', 'bar'), {'foo': 42}))
+        self.assertEquals(keyword_arg(foo='bar'), ((), {'foo': 'bar'}))
         self.assertEquals(
-            keyWordArg('foo', bar='baz'),
+            keyword_arg('foo', bar='baz'),
             (('foo',), {'bar': 'baz', 'foo': 42}))
 
         both = self.pre_curry(passthrough, 42, foo=42)
@@ -85,21 +85,21 @@ class PostCurryTest(unittest.TestCase):
         self.assertEquals(noop(foo='bar'), ((), {'foo': 'bar'}))
         self.assertEquals(noop('foo', bar='baz'), (('foo',), {'bar': 'baz'}))
 
-        oneArg = currying.post_curry(passthrough, 42)
-        self.assertEquals(oneArg(), ((42,), {}))
-        self.assertEquals(oneArg('foo', 'bar'), (('foo', 'bar', 42), {}))
-        self.assertEquals(oneArg(foo='bar'), ((42, ), {'foo': 'bar'}))
+        one_arg = currying.post_curry(passthrough, 42)
+        self.assertEquals(one_arg(), ((42,), {}))
+        self.assertEquals(one_arg('foo', 'bar'), (('foo', 'bar', 42), {}))
+        self.assertEquals(one_arg(foo='bar'), ((42, ), {'foo': 'bar'}))
         self.assertEquals(
-            oneArg('foo', bar='baz'), (('foo', 42), {'bar': 'baz'}))
+            one_arg('foo', bar='baz'), (('foo', 42), {'bar': 'baz'}))
 
-        keyWordArg = currying.post_curry(passthrough, foo=42)
-        self.assertEquals(keyWordArg(), ((), {'foo': 42}))
+        keyword_arg = currying.post_curry(passthrough, foo=42)
+        self.assertEquals(keyword_arg(), ((), {'foo': 42}))
         self.assertEquals(
-            keyWordArg('foo', 'bar'), (('foo', 'bar'), {'foo': 42}))
+            keyword_arg('foo', 'bar'), (('foo', 'bar'), {'foo': 42}))
         self.assertEquals(
-            keyWordArg(foo='bar'), ((), {'foo': 42}))
+            keyword_arg(foo='bar'), ((), {'foo': 42}))
         self.assertEquals(
-            keyWordArg('foo', bar='baz'),
+            keyword_arg('foo', bar='baz'),
             (('foo',), {'bar': 'baz', 'foo': 42}))
 
         both = currying.post_curry(passthrough, 42, foo=42)

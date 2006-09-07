@@ -6,7 +6,6 @@ restriction classes designed for package level matching
 """
 
 import operator
-from pkgcore.util.currying import pre_curry, pretty_docs
 from pkgcore.restrictions import restriction, boolean
 from pkgcore.util.demandload import demandload
 demandload(globals(), "logging")
@@ -29,19 +28,20 @@ class PackageRestriction(restriction.base):
     subtype = restriction.value_type
     __inst_caching__ = True
 
-    def __init__(self, attr, restriction, negate=False):
+    def __init__(self, attr, childrestriction, negate=False):
         """
         @param attr: package attribute to match against
-        @param restriction: a L{pkgcore.restrictions.values.base} instance to pass attr to for matching
+        @param childrestriction: a L{pkgcore.restrictions.values.base} instance
+            to pass attr to for matching
         @param negate: should the results be negated?
         """
         super(PackageRestriction, self).__init__(negate=negate)
         self.attr_split = tuple(operator.attrgetter(x)
                                 for x in attr.split("."))
         self.attr = attr
-        if not restriction.type == self.subtype:
+        if not childrestriction.type == self.subtype:
             raise TypeError("restriction must be of type %r" % (self.subtype,))
-        self.restriction = restriction
+        self.restriction = childrestriction
 
     def __pull_attr(self, pkg):
         try:
@@ -161,14 +161,15 @@ class Conditional(PackageRestriction):
 
     __inst_caching__ = True
 
-    def __init__(self, attr, restriction, payload, **kwds):
+    def __init__(self, attr, childrestriction, payload, **kwds):
         """
-        @param attr: attr to match against
-        @param restriction: restriction to control whether or not the payload is accessible
+        n@param attr: attr to match against
+        @param childrestriction: restriction to control whether or not the
+            payload is accessible
         @param payload: payload data, whatever it may be.
         @param kwds: additional args to pass to L{PackageRestriction}
         """
-        super(Conditional, self).__init__(attr, restriction, **kwds)
+        super(Conditional, self).__init__(attr, childrestriction, **kwds)
         self.payload = tuple(payload)
 
     def __str__(self):
@@ -189,21 +190,16 @@ class Conditional(PackageRestriction):
         return iter(self.payload)
 
 
-for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]],
-             [restriction, ["AlwaysBool"]]]:
-    for x in l:
-        o = getattr(m, x)
-        doc = o.__doc__
-        o = pre_curry(o, node_type=restriction.package_type)
-        if doc is None:
-            doc = ''
-        else:
-            # do this so indentation on pydoc __doc__ is sane
-            doc = "\n".join(x.lstrip() for x in doc.split("\n")) +"\n"
-            doc += "Automatically set to package type"
-        globals()[x] = pretty_docs(o, doc)
+# "Invalid name" (pylint uses the module const regexp, not the class regexp)
+# pylint: disable-msg=C0103
 
-del x, m, l, o, doc
+AndRestriction = restriction.curry_node_type(boolean.AndRestriction,
+                                             restriction.package_type)
+OrRestriction = restriction.curry_node_type(boolean.OrRestriction,
+                                            restriction.package_type)
+
+AlwaysBool = restriction.curry_node_type(restriction.AlwaysBool,
+                                         restriction.package_type)
 
 AlwaysTrue = AlwaysBool(negate=True)
 AlwaysFalse = AlwaysBool(negate=False)

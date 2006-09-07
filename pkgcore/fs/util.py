@@ -11,9 +11,10 @@ import errno
 
 def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
     """
-    ensure dirs exist, creating as needed with (optional) gid, uid, and mode
-    be forewarned- if mode is specified to a mode that blocks the euid from accessing the dir, this
-    code *will* try to create the dir
+    ensure dirs exist, creating as needed with (optional) gid, uid, and mode.
+
+    be forewarned- if mode is specified to a mode that blocks the euid
+    from accessing the dir, this code *will* try to create the dir.
     """
 
     try:
@@ -88,7 +89,7 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
 
 def abssymlink(symlink):
     """
-    This reads symlinks, resolving the relative symlinks, and returning the absolute.
+    Read a symlink, resolving if it is relative, returning the absolute.
     """
     mylink = os.readlink(symlink)
     if mylink[0] != '/':
@@ -149,15 +150,18 @@ class FsLock(object):
     """
     fnctl based locks
     """
-    
+
     __slots__ = ("path", "fd", "create")
     def __init__(self, path, create=False):
         """
         @param path: fs path for the lock
-        @param create: controls whether the file will be created if the file doesn't exist
-        if create is true, the base dir must exist, and it will create a file
-        If you want to lock via a dir, you have to ensure it exists (create doesn't suffice)
-        @raise NonExistant: if no file/dir exists for that path, and cannot be created
+        @param create: controls whether the file will be created
+            if the file doesn't exist.
+            If true, the base dir must exist, and it will create a file.
+            If you want to lock via a dir, you have to ensure it exists
+            (create doesn't suffice).
+        @raise NonExistant: if no file/dir exists for that path,
+            and cannot be created
         """
         self.path = path
         self.fd = None
@@ -198,7 +202,7 @@ class FsLock(object):
         Acquire an exclusive lock
 
         Note if you have a read lock, it implicitly upgrades atomically
-        
+
         @param blocking: if enabled, don't return until we have the lock
         @return: True if lock is acquired, False if not.
         """
@@ -209,7 +213,7 @@ class FsLock(object):
         Acquire a shared lock
 
         Note if you have a write lock, it implicitly downgrades atomically
-        
+
         @param blocking: if enabled, don't return until we have the lock
         @return: True if lock is acquired, False if not.
         """

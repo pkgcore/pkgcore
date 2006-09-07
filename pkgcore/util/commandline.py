@@ -50,8 +50,10 @@ def generate_restriction(text):
       - "*": match all
       - "dev-*/*": category must start with dev-
       - "dev-*": package must start with dev-
-      - *-apps/portage*: category must end in -apps, package must start with portage
-      - >=portage-2.1: atom syntax, package portage, version greater then or equal to 2.1
+      - *-apps/portage*: category must end in -apps,
+          package must start with portage
+      - >=portage-2.1: atom syntax, package portage,
+          version greater then or equal to 2.1
 
     @param text: string to attempt to parse
     @type text: string

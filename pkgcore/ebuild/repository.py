@@ -22,7 +22,9 @@ metadata_offset = "profiles"
 class UnconfiguredTree(prototype.tree):
 
     """
-    raw implementation supporting standard ebuild tree, return packages don't have USE configuration bound to them
+    raw implementation supporting standard ebuild tree.
+
+    return packages don't have USE configuration bound to them.
     """
 
     false_categories = frozenset([
@@ -38,11 +40,14 @@ class UnconfiguredTree(prototype.tree):
 
         """
         @param location: on disk location of the tree
-        @param cache: sequence of L{pkgcore.cache.template.database} instances to use for storing metadata
-        @param eclass_cache: If not None, L{pkgcore.ebuild.eclass_cache} instance representing the eclasses available,
+        @param cache: sequence of L{pkgcore.cache.template.database} instances
+            to use for storing metadata
+        @param eclass_cache: If not None, L{pkgcore.ebuild.eclass_cache}
+            instance representing the eclasses available,
         if None, generates the eclass_cache itself
         @param mirrors_file: file parsed via L{read_dict} to get mirror tiers
-        @param default_mirrors: Either None, or sequence of mirrors to try fetching from first, then falling back to other uri
+        @param default_mirrors: Either None, or sequence of mirrors to try
+            fetching from first, then falling back to other uri
         """
 
         super(UnconfiguredTree, self).__init__()
@@ -97,7 +102,7 @@ class UnconfiguredTree(prototype.tree):
     def rebind(self, **kwds):
 
         """
-        generate a new tree instance with the same location using supplied keywords
+        generate a new tree instance with the same location using new keywords.
 
         @param kwds: see __init__ for valid values
         """
@@ -178,7 +183,7 @@ class DelayedInvertedContains(InvertedContains):
 class ConfiguredTree(configured.tree):
 
     """
-    wrapper around a L{UnconfiguredTree}, binding USE configuration data (in general, all build/configuration data)
+    wrapper around a L{UnconfiguredTree} binding build/configuration data (USE)
     """
 
     _get_iuse = staticmethod(operator.attrgetter("iuse"))
@@ -192,12 +197,13 @@ class ConfiguredTree(configured.tree):
         """
         @param raw_repo: L{UnconfiguredTree} instance
         @param domain_settings: environment settings to bind
-        @param fetcher: L{pkgcore.fetch.base.fetcher} instance to use for getting access to fetchable files
+        @param fetcher: L{pkgcore.fetch.base.fetcher} instance to use
+            for getting access to fetchable files
         """
         if "USE" not in domain_settings:
             raise errors.InitializationError(
-                "%s requires the following settings: '%s', not supplied" % (
-                    self.__class__, x))
+                "%s requires the following settings: 'USE', not supplied" % (
+                    self.__class__,))
 
         configured.tree.__init__(self, raw_repo, self.config_wrappables)
         self.default_use = tuple(domain_settings["USE"])

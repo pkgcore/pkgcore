@@ -6,7 +6,7 @@ from pkgcore.package import base
 from pkgcore.util.currying import pre_curry
 
 class TestBasePkg(unittest.TestCase):
-   
+
     def test_setattr(self):
         self.assertRaises(AttributeError, base.base().__setattr__, "asdf", 1)
 
@@ -21,12 +21,12 @@ class TestBasePkg(unittest.TestCase):
             self.assertRaises(AttributeError, o.__delattr__, f)
 
     def test_getattr(self):
-        class c(base.base):
-            _get_attr = dict((str(x), pre_curry(lambda a,s:a, x))
-                for x in xrange(10))
+        class Class(base.base):
+            _get_attr = dict((str(x), pre_curry((lambda a, s: a), x))
+                             for x in xrange(10))
             _get_attr["a"] = lambda s:"foo"
-        
-        o = c()
+
+        o = Class()
         for x in xrange(10):
             self.assertEqual(getattr(o, str(x)), x)
         self.assertEqual(o.a, "foo")

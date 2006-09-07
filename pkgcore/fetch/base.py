@@ -15,10 +15,13 @@ class fetcher(object):
     def _verify(self, file_location, target, required=None):
         """
         internal function for derivatives.
+
         digs through chksums, and returns:
-        -1: iff (size chksum is available, and file is smaller then stated chksum) or file doesn't exist.
+        -1: iff (size chksum is available, and
+            file is smaller than stated chksum) or file doesn't exist.
         0:  iff all chksums match
-        1:  iff file is too large (if size chksums are available) or else size is right but a chksum didn't match.
+        1:  iff file is too large (if size chksums are available)
+            or else size is right but a chksum didn't match.
 
         if required is None, all chksums must match
         """
@@ -36,7 +39,7 @@ class fetcher(object):
             if c:
                 if c < 0:
                     return -1
-                return 1				
+                return 1
 
         for x in handlers:
             if x != "size" or x not in handlers:

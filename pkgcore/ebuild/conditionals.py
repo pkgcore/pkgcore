@@ -41,14 +41,17 @@ class DepSet(boolean.AndRestriction):
     negate = False
 
     def __init__(self, dep_str, element_class, \
-        operators={"||":packages.OrRestriction,"":packages.AndRestriction}, 
+        operators={"||":packages.OrRestriction,"":packages.AndRestriction},
         element_func=None):
 
         """
         @param dep_str: string abiding by DepSet syntax
-        @param operators: mapping of node -> callable for special operators in DepSet syntax
-        @param element_func: if None, element_class is used for generating elements, else it's used to generate elements.
-        Mainly useful for when you need to curry a few args for instance generation, since element_class _must_ be a class
+        @param operators: mapping of node -> callable for special operators
+            in DepSet syntax
+        @param element_func: if None, element_class is used for generating
+            elements, else it's used to generate elements.
+            Mainly useful for when you need to curry a few args for instance
+            generation, since element_class _must_ be a class
         @param element_class: class of generated elements
         """
 
@@ -131,10 +134,13 @@ class DepSet(boolean.AndRestriction):
 
     def evaluate_depset(self, cond_dict, tristate_filter=None):
         """
-        @param cond_dict: container to be used for conditional collapsing, typically is a use list
-        @param tristate_filter: a control; if specified, must be a container of conditionals to lock to cond_dict.
-        during processing, if it's not in tristate_filter will automatically enable the payload
-        (regardless of the conditionals negation)
+        @param cond_dict: container to be used for conditional collapsing,
+            typically is a use list
+        @param tristate_filter: a control; if specified, must be a container
+            of conditionals to lock to cond_dict.
+            during processing, if it's not in tristate_filter will
+            automatically enable the payload
+            (regardless of the conditionals negation)
         """
 
         if not self.has_conditionals:

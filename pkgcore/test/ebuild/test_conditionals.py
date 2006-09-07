@@ -9,14 +9,14 @@ from pkgcore.util.currying import post_curry
 from pkgcore.util.iterables import expandable_chain
 from pkgcore.util.lists import iflatten_instance
 
-def gen_depset(s, operators=None, func=None):
+def gen_depset(string, operators=None, func=None):
     if func is not None:
         kwds = {"element_func":func}
     else:
         kwds = {}
     if operators is None:
         operators = {"":boolean.AndRestriction, "||":boolean.OrRestriction}
-    return DepSet(s, str, operators=operators, **kwds)
+    return DepSet(string, str, operators=operators, **kwds)
 
 class DepSetParsingTest(unittest.TestCase):
 

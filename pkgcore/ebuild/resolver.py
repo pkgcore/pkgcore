@@ -10,12 +10,9 @@ __all__ = ["upgrade_resolver", "min_install_resolver"]
 from pkgcore.resolver import plan
 from pkgcore.util.demandload import demandload
 
-demandload(globals(), "pkgcore.util.repo_utils:get_virtual_repos " +
-    "pkgcore.util.mappings:OrderedDict " +
-    "pkgcore.repository:virtual,prototype "+
-    "pkgcore.restrictions:packages,values "+
-    "pkgcore.pkgsets.glsa:KeyedAndRestriction "+
-    "pkgcore.util:lists,repo_utils ")
+demandload(globals(),
+           "pkgcore.restrictions:packages,values "
+           "pkgcore.pkgsets.glsa:KeyedAndRestriction ")
 
 
 def prefer_highest_ver(resolver, dbs, atom):
@@ -34,14 +31,18 @@ def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False,
                      resolver_cls=plan.merge_plan, **kwds):
 
     """
-    generate and configure a resolver for upgrading all nodes encountered in processing
+    generate and configure a resolver for upgrading all processed nodes.
 
-    @param vdb: list of L{pkgcore.repository.prototype.tree} instances that represents the livefs
-    @param dbs: list of L{pkgcore.repository.prototype.tree} instances representing sources of pkgs
-    @param verify_vdb: should we stop resolving once we hit the vdb, or do full resolution?
-    @param force_vdb_virtuals: old style portage virtuals (non metapkgs) cannot be technically sorted since their
-    versions are from multiple packages bleeding through- results make no sense essentially.  You want this option
-    enabled if you're dealing in old style virtuals
+    @param vdb: list of L{pkgcore.repository.prototype.tree} instances
+        that represents the livefs
+    @param dbs: list of L{pkgcore.repository.prototype.tree} instances
+        representing sources of pkgs
+    @param verify_vdb: should we stop resolving once we hit the vdb,
+        or do full resolution?
+    @param force_vdb_virtuals: old style portage virtuals (non metapkgs)
+        cannot be technically sorted since their versions are from multiple
+        packages bleeding through- results make no sense essentially.
+        You want this option enabled if you're dealing in old style virtuals.
     @return: L{pkgcore.resolver.plan.merge_plan} instance
     """
 
@@ -68,15 +69,22 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True,
                          force_replacement=False, resolver_cls=plan.merge_plan,
                          nodeps=False, **kwds):
     """
-    generate and configure a resolver that is focused on just installing requests- installs highest version it can build a solution for,
-    but tries to avoid building anything not needed
+    Resolver that tries to minimize the number of changes while installing.
 
-    @param vdb: list of L{pkgcore.repository.prototype.tree} instances that represents the livefs
-    @param dbs: list of L{pkgcore.repository.prototype.tree} instances representing sources of pkgs
-    @param verify_vdb: should we stop resolving once we hit the vdb, or do full resolution?
-    @param force_vdb_virtuals: old style portage virtuals (non metapkgs) cannot be technically sorted since their
-    versions are from multiple packages bleeding through- results make no sense essentially.  You want this option
-    enabled if you're dealing in old style virtuals
+    generate and configure a resolver that is focused on just
+    installing requests- installs highest version it can build a
+    solution for, but tries to avoid building anything not needed
+
+    @param vdb: list of L{pkgcore.repository.prototype.tree} instances
+        that represents the livefs
+    @param dbs: list of L{pkgcore.repository.prototype.tree} instances
+        representing sources of pkgs
+    @param verify_vdb: should we stop resolving once we hit the vdb,
+        or do full resolution?
+    @param force_vdb_virtuals: old style portage virtuals (non metapkgs)
+        cannot be technically sorted since their versions are from multiple
+        packages bleeding through- results make no sense essentially.
+        You want this option enabled if you're dealing in old style virtuals.
     @return: L{pkgcore.resolver.plan.merge_plan} instance
     """
 
@@ -111,8 +119,10 @@ class empty_tree_merge_plan(plan.merge_plan):
 
     def __init__(self, *args, **kwds):
         """
-        @param args: see L{pkgcore.resolver.plan.merge_plan.__init__} for valid args
-        @param kwds: see L{pkgcore.resolver.plan.merge_plan.__init__} for valid args
+        @param args: see L{pkgcore.resolver.plan.merge_plan.__init__}
+            for valid args
+        @param kwds: see L{pkgcore.resolver.plan.merge_plan.__init__}
+            for valid args
         """
         plan.merge_plan.__init__(self, *args, **kwds)
 

@@ -8,6 +8,12 @@
 # This version was written by marienz, which means it is probably not
 # accurate.
 
+# Yes, section names are case-sensitive.
+[master]
+
+load-plugins=pkgcore
+
+
 [MASTER]
 
 # Ignore external modules.
@@ -71,8 +77,15 @@ variable-rgx=[a-z_][a-z0-9_]{0,30}$
 
 # Good variable names which should always be accepted, separated by a comma
 # Was:     d,e,i,j,ex,_
-good-names=d,e,i,j,ex,_,setUp,tearDown
+good-names=d,e,i,j,ex,_,setUp,tearDown,force_True,force_False,f
 
 # "bad" builtins.
 # Was: map,filter,apply,input
 bad-functions=filter,apply,input
+
+[VARIABLES]
+
+# A regular expression matching names used for dummy variables (i.e. not used)
+# (common use case is unused loop counter variable).
+# Was:              _|dummy
+dummy-variables-rgx=_|dummy|i

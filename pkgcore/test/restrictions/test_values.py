@@ -95,7 +95,7 @@ class StrRegexTest(unittest.TestCase):
 
 
 class TestStrExactMatch(unittest.TestCase):
-    
+
     def test_case_sensitive(self):
         for x in (True, False):
             self.assertEquals(
@@ -115,20 +115,22 @@ class TestStrExactMatch(unittest.TestCase):
         for x in (True, False):
             self.assertEquals(
                 values.StrExactMatch(
-                    "Rsync", CaseSensitive=False, negate=not x).match("rsync"),
+                    "Rsync", case_sensitive=False, negate=not x).match(
+                    "rsync"),
                 x)
             self.assertEquals(
                 values.StrExactMatch(
-                    "rsync", CaseSensitive=False, negate=not x).match("RSYnC"),
+                    "rsync", case_sensitive=False, negate=not x).match(
+                    "RSYnC"),
                 x)
             self.assertEquals(
                 values.StrExactMatch(
-                    "PackageA", CaseSensitive=False, negate=not x).match(
+                    "PackageA", case_sensitive=False, negate=not x).match(
                     "package"),
                 not x)
             self.assertEquals(
                 values.StrExactMatch(
-                    "diffball", CaseSensitive=False, negate=not x).match(
+                    "diffball", case_sensitive=False, negate=not x).match(
                     "bsdiff"), not x)
 
     def test__eq__(self):
@@ -142,9 +144,9 @@ class TestStrExactMatch(unittest.TestCase):
                     values.StrExactMatch("rsyn"+x, negate=negate))
             self.assertEquals(
                 values.StrExactMatch(
-                    "Rsync", CaseSensitive=False, negate=negate),
+                    "Rsync", case_sensitive=False, negate=negate),
                 values.StrExactMatch(
-                    "rsync", CaseSensitive=False, negate=negate))
+                    "rsync", case_sensitive=False, negate=negate))
 
 
 class TestStrGlobMatch(unittest.TestCase):
@@ -173,19 +175,19 @@ class TestStrGlobMatch(unittest.TestCase):
             for y in ("c", ''):
                 self.assertEquals(
                     values.StrGlobMatch(
-                        "Rsyn"+y, CaseSensitive=False, negate=not x).match(
+                        "Rsyn"+y, case_sensitive=False, negate=not x).match(
                         "rsync"), x)
                 self.assertEquals(
                     values.StrGlobMatch(
-                        "rsyn"+y, CaseSensitive=False, negate=not x).match(
+                        "rsyn"+y, case_sensitive=False, negate=not x).match(
                         "RSYnC"), x)
             self.assertEquals(
                 values.StrGlobMatch(
-                    "PackageA", CaseSensitive=False, negate=not x).match(
+                    "PackageA", case_sensitive=False, negate=not x).match(
                     "package"), not x)
             self.assertEquals(
                 values.StrGlobMatch(
-                    "diffball", CaseSensitive=False, negate=not x).match(
+                    "diffball", case_sensitive=False, negate=not x).match(
                     "bsdiff"), not x)
 
     def test__eq__(self):
@@ -202,9 +204,9 @@ class TestStrGlobMatch(unittest.TestCase):
                     values.StrGlobMatch("rsyn"+x, negate=negate))
             self.assertEquals(
                 values.StrGlobMatch(
-                    "Rsync", CaseSensitive=False, negate=negate),
+                    "Rsync", case_sensitive=False, negate=negate),
                 values.StrGlobMatch(
-                    "rsync", CaseSensitive=False, negate=negate))
+                    "rsync", case_sensitive=False, negate=negate))
         self.assertNotEqual(
             values.StrGlobMatch("rsync", negate=True),
             values.StrGlobMatch("rsync", negate=False))

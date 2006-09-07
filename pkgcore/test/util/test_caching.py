@@ -107,13 +107,12 @@ def gen_test(WeakInstMeta):
                 def __hash__(self):
                     raise self.error
 
-            RaisingHash = RaisingHashForTestUncachable
-
             self.assertTrue(weak_inst([]) is not weak_inst([]))
             self.assertEqual(weak_inst.counter, 2)
             for x in (TypeError, NotImplementedError):
-                self.assertTrue(weak_inst(RaisingHash(x)) is not
-                    weak_inst(RaisingHash(x)))
+                self.assertNotIdentical(
+                    weak_inst(RaisingHashForTestUncachable(x)),
+                    weak_inst(RaisingHashForTestUncachable(x)))
 
         # These are applied in reverse order. Effect is UserWarning is
         # ignored and everything else is an error.
@@ -128,10 +127,9 @@ def gen_test(WeakInstMeta):
                 def __hash__(self):
                     raise self.error
 
-            RaisingHash = RaisingHashForTestUncachableWarnings
-
             for x in (TypeError, NotImplementedError):
-                self.assertRaises(UserWarning, weak_inst, RaisingHash(x))
+                self.assertRaises(UserWarning, weak_inst,
+                                  RaisingHashForTestUncachableWarnings(x))
 
         test_uncachable_warning.suppress = [
             util.suppress('error', category=UserWarning)]
@@ -156,12 +154,15 @@ def gen_test(WeakInstMeta):
 
     return TestWeakInstMeta
 
-TestWeakInstMeta = gen_test(caching.native_WeakInstMeta)
+# "Invalid name"
+# pylint: disable-msg=C0103
+
+TestNativeWeakInstMeta = gen_test(caching.native_WeakInstMeta)
 
 if caching.cpy_WeakInstMeta is not None:
     CPY_TestWeakInstMeta = gen_test(caching.cpy_WeakInstMeta)
 else:
     # generate fake test and mark it as skip
     CPY_TestWeakInstMeta = gen_test(type)
-    CPY_TestWeakInstMeta.skip = "cpython cpv extension isn't available"        
-    
+    CPY_TestWeakInstMeta.skip = "cpython cpv extension isn't available"
+

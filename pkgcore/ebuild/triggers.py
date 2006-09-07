@@ -127,7 +127,6 @@ def config_protect_func_install(existing_cset, install_cset, engine, csets):
     existing_cset = csets[existing_cset]
 
     pjoin = os.path.join
-    offset = engine.offset
 
     # hackish, but it works.
     protected_filter = gen_config_protect_filter(engine.offset).match
@@ -199,7 +198,6 @@ def config_protect_trigger_install(existing_cset="install_existing",
 def config_protect_func_uninstall(existing_cset, uninstall_cset, engine, csets):
     uninstall_cset = csets[uninstall_cset]
     existing_cset = csets[existing_cset]
-    pjoin = os.path.join
     protected_restrict = gen_config_protect_filter(engine.offset)
 
     remove = []
@@ -211,7 +209,7 @@ def config_protect_func_uninstall(existing_cset, uninstall_cset, engine, csets):
             if not simple_chksum_compare(recorded_ent, x):
                 # chksum differs.  file stays.
                 remove.append(recorded_ent)
-    
+
     for x in remove:
         del uninstall_cset[x]
 
@@ -235,7 +233,7 @@ def preinst_contents_reset_register(trigger, hook_name, triggers_list):
         triggers_list.insert(0, trigger)
 
 def preinst_contents_reset_trigger(format_op):
-    return triggers.SimpleTrigger("install", 
+    return triggers.SimpleTrigger("install",
         pre_curry(preinst_contents_reset_func, format_op),
         register_func=preinst_contents_reset_register,
         label="preinst_contents_reset")

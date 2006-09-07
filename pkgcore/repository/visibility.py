@@ -47,7 +47,7 @@ class filterTree(prototype.tree):
 
     def __len__(self):
         count = 0
-        for x in self:
+        for i in self:
             count += 1
         return count
 

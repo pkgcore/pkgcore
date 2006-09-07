@@ -13,8 +13,10 @@ class MutatedPkg(base):
     def __init__(self, pkg, overrides):
         """
         @param pkg: L{pkgcore.package.metadata.package} to wrap
-        @param overrides: is an attr -> instance mapping to substitute when the attr is requested
+        @param overrides: is an attr -> instance mapping to substitute when
+            the attr is requested
         """
+        base.__init__(self)
         object.__setattr__(self, "_raw_pkg", pkg)
         object.__setattr__(self, "_overrides", overrides)
 
@@ -41,7 +43,7 @@ class MutatedPkg(base):
     @property
     def versioned_atom(self):
         return self._raw_pkg.versioned_atom
-    
+
     @property
     def unversioned_atom(self):
         return self._raw_pkg.unversioned_atom

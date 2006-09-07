@@ -36,9 +36,9 @@ class native_CpvTest(unittest.TestCase):
     bad_revs = ["-r", "-ra", "-r", "-R1"]
 
     def test_simple_key(self):
-        for src in [["dev-util/diffball-0.7.1", "dev-util/diffball"], 
-            ["dev-util/diffball"], 
-            ["dev-perl/mod_perl"], 
+        for src in [["dev-util/diffball-0.7.1", "dev-util/diffball"],
+            ["dev-util/diffball"],
+            ["dev-perl/mod_perl"],
             ["dev-perl/mod_p"],
             ["dev-perl/mod-p"],
             ["dev-perl/mod-p-1", "dev-perl/mod-p"],]:
@@ -70,7 +70,7 @@ class native_CpvTest(unittest.TestCase):
 
     locals()["test_parsing (may take awhile)"] = test_parsing
     del test_parsing
-    
+
     def process_pkg(self, ret, cat, pkg):
         if ret:
             self.assertRaises(cpv.InvalidCPV, self.kls, "%s/%s" % (cat, pkg))
@@ -132,9 +132,9 @@ class native_CpvTest(unittest.TestCase):
             self.assertEqual(c.fullver, ver + rev)
 
 
-    def verify_gt(self, o1, o2):
-        self.assertTrue(cmp(o1, o2) > 0)
-        self.assertTrue(cmp(o2, o1) < 0)
+    def verify_gt(self, obj1, obj2):
+        self.assertTrue(cmp(obj1, obj2) > 0)
+        self.assertTrue(cmp(obj2, obj1) < 0)
 
     def test_cmp(self):
         kls = self.kls

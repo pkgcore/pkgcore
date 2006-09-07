@@ -64,9 +64,9 @@ class ModulesTest(unittest.TestCase):
         import mod_test1
         self.assertIdentical(mod_test1, modtest1)
         # unimported in-package module
-        packtest1 = modules.load_module('mod_testpack.mod_test1')
-        from mod_testpack import mod_test1
-        self.assertIdentical(mod_test1, packtest1)
+        packtest2 = modules.load_module('mod_testpack.mod_test2')
+        from mod_testpack import mod_test2
+        self.assertIdentical(mod_test2, packtest2)
 
     def test_load_attribute(self):
         # already imported

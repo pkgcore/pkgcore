@@ -19,13 +19,14 @@ def load_config(user_conf_file=USER_CONF_FILE,
     """
     the main entry point for any code looking to use pkgcore.
 
-    @param user_conf_file: file to attempt to load, else defaults to trying to load
-    portage 2 style configs (/etc/make.conf, /etc/make.profile)
+    @param user_conf_file: file to attempt to load, else defaults to trying to
+        load portage 2 style configs (/etc/make.conf, /etc/make.profile)
 
-    @return: L{pkgcore.config.central.ConfigManager} instance representing the system config.
+    @return: L{pkgcore.config.central.ConfigManager} instance
+        representing the system config.
     """
 
-    from pkgcore.config import central, cparser, errors
+    from pkgcore.config import central, cparser
     import os
 
     types_def = cparser.configTypesFromIni(open(types_file))
@@ -42,7 +43,7 @@ def load_config(user_conf_file=USER_CONF_FILE,
     else:
         # make.conf...
         from pkgcore.ebuild.portage_conf import configFromMakeConf
-        c = central.ConfigManager([types_def], 
+        c = central.ConfigManager([types_def],
             [configFromMakeConf()]
             )
     return c

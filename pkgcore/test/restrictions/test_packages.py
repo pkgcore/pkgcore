@@ -40,10 +40,10 @@ class PackageRestrictionTest(unittest.TestCase):
             packages.PackageRestriction('one', values.AlwaysFalse, negate=True))
 
     def test_intersect(self):
-        alwaysSelf = AlwaysSelfIntersect()
-        p1 = packages.PackageRestriction('one', alwaysSelf)
-        p1n = packages.PackageRestriction('one', alwaysSelf, negate=True)
-        p2 = packages.PackageRestriction('two', alwaysSelf)
+        always_self = AlwaysSelfIntersect()
+        p1 = packages.PackageRestriction('one', always_self)
+        p1n = packages.PackageRestriction('one', always_self, negate=True)
+        p2 = packages.PackageRestriction('two', always_self)
         self.assertIdentical(p1, p1.intersect(p1))
         self.assertIdentical(None, p1.intersect(p2))
         self.assertIdentical(None, p1n.intersect(p1))

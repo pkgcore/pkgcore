@@ -7,7 +7,7 @@ chksum verification/generation subsystem
 
 from pkgcore.interfaces.data_source import base as base_data_source
 from pkgcore.util.demandload import demandload
-demandload(globals(), "os sys pkgcore.util.modules:load_module")
+demandload(globals(), "os sys logging pkgcore.util.modules:load_module")
 
 chksum_types = {}
 __inited__ = False
@@ -16,7 +16,7 @@ def get_handler(requested):
 
     """
     get a chksum handler
-    
+
     @raise KeyError: if chksum type has no registered handler
     @return: chksum handler (callable)
     """
@@ -32,8 +32,9 @@ def get_handlers(requested=None):
 
     """
     get chksum handlers
-    
-    @param requested: None (all handlers), or a sequence of the specific handlers desired
+
+    @param requested: None (all handlers), or a sequence of the specific
+        handlers desired.
     @raise KeyError: if requested chksum type has no registered handler
     @return: dict of chksum_type:chksum handler
     """
@@ -51,7 +52,9 @@ def get_handlers(requested=None):
 def init(additional_handlers=None):
 
     """
-    init the chksum subsystem.  scan the dir, find what handlers are available, etc.
+    init the chksum subsystem.
+
+    Scan the dir, find what handlers are available, etc.
 
     @param additional_handlers: None, or pass in a dict of type:func
     """
@@ -75,7 +78,7 @@ def init(additional_handlers=None):
                 f = f[:i]
             del i
             m = load_module(__name__+"."+f)
-        except ImportError, ie:
+        except ImportError:
             continue
         try:
             types = getattr(m, "chksum_types")
@@ -85,7 +88,7 @@ def init(additional_handlers=None):
         try:
             chksum_types.update(types)
 
-        except ValueError, ve:
+        except ValueError:
             logging.warn(
                 "%s.%s invalid chksum_types, ValueError Exception" % (
                     __name__, f))
@@ -100,9 +103,9 @@ def init(additional_handlers=None):
 def size(file_obj):
     """
     size based chksum handler
-    
+
     yes, aware that size isn't much of a chksum. ;)
-    
+
     Also, don't use this directly, use get_handler from above
     """
     if isinstance(file_obj, base_data_source):
@@ -112,10 +115,10 @@ def size(file_obj):
             file_obj = file_obj.get_fileobj()
     if isinstance(file_obj, basestring):
         try:
-            size = os.lstat(file_obj).st_size
+            st_size = os.lstat(file_obj).st_size
         except OSError:
             return None
-        return size
+        return st_size
     # seek to the end.
     file_obj.seek(0, 2)
     return long(file_obj.tell())

@@ -10,16 +10,21 @@ from pkgcore.cache import template, cache_errors
 class SQLDatabase(template.database):
     """template class for RDBM based caches
 
-    This class is designed such that derivatives don't have to change much code, mostly constant strings.
-    _BaseError must be an exception class that all Exceptions thrown from the derived RDBMS are derived
-    from.
+    This class is designed such that derivatives don't have to change
+    much code, mostly constant strings.
 
-    SCHEMA_INSERT_CPV_INTO_PACKAGE should be modified dependant on the RDBMS, as should SCHEMA_PACKAGE_CREATE-
-    basically you need to deal with creation of a unique pkgid.  If the dbapi2 rdbms class has a method of
-    recovering that id, then modify _insert_cpv to remove the extra select.
+    _BaseError must be an exception class that all Exceptions thrown
+    from the derived RDBMS are derived from.
 
-    Creation of a derived class involves supplying _initdb_con, and table_exists.
-    Additionally, the default schemas may have to be modified.
+    SCHEMA_INSERT_CPV_INTO_PACKAGE should be modified dependant on the
+    RDBMS, as should SCHEMA_PACKAGE_CREATE- basically you need to deal
+    with creation of a unique pkgid. If the dbapi2 rdbms class has a
+    method of recovering that id, then modify _insert_cpv to remove
+    the extra select.
+
+    Creation of a derived class involves supplying _initdb_con, and
+    table_exists. Additionally, the default schemas may have to be
+    modified.
     """
 
     SCHEMA_PACKAGE_NAME	= "package_cache"
@@ -103,9 +108,9 @@ class SQLDatabase(template.database):
         derived classes must override this"""
         raise NotImplementedError
 
-    def _sfilter(self, s):
+    def _sfilter(self, string):
         """meta escaping, returns quoted string for use in sql statements"""
-        return "\"%s\"" % s.replace("\\","\\\\").replace("\"","\\\"")
+        return "\"%s\"" % string.replace("\\","\\\\").replace("\"","\\\"")
 
     def _getitem(self, cpv):
         try:
@@ -222,9 +227,10 @@ class SQLDatabase(template.database):
             (self.SCHEMA_PACKAGE_NAME, self.label, cpv))
 
         if self.con.rowcount != 1:
-            raise cache_error.CacheCorruption(
+            raise cache_errors.CacheCorruption(
                 cpv, "Tried to insert the cpv, but found "
-                " %i matches upon the following select!" % len(rows))
+                " %i matches upon the following select!" % (
+                    self.con.rowcount))
         return self.con.fetchone()[0]
 
     def __contains__(self, cpv):
@@ -264,7 +270,8 @@ class SQLDatabase(template.database):
                 % (self.SCHEMA_PACKAGE_NAME, self.SCHEMA_VALUES_NAME,
                    self.label))
         except self._BaseError, e:
-            raise cache_errors.CacheCorruption(self, cpv, e)
+            # XXX this makes no sense
+            raise cache_errors.CacheCorruption(self, 'iteritems', e)
 
         oldcpv = None
         l = []
@@ -275,7 +282,7 @@ class SQLDatabase(template.database):
                     if "_eclasses_" in d:
                         d["_eclasses_"] = self.reconstruct_eclasses(
                             oldcpv, d["_eclasses_"])
-                    yield cpv, d
+                    yield oldcpv, d
                 l.clear()
                 oldcpv = x
             l.append((y, v))
@@ -285,7 +292,7 @@ class SQLDatabase(template.database):
             if "_eclasses_" in d:
                 d["_eclasses_"] = self.reconstruct_eclasses(
                     oldcpv, d["_eclasses_"])
-            yield cpv, d
+            yield oldcpv, d
 
     def commit(self):
         self.db.commit()

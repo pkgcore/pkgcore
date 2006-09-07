@@ -73,7 +73,7 @@ class TerminfoColor(object):
     def __call__(self, formatter):
         if self.color is None:
             formatter._current_colors[self.mode] = None
-            res = formatter._colorReset
+            res = formatter._color_reset
             # slight abuse of boolean True/False and 1/0 equivalence
             other = formatter._current_colors[not self.mode]
             if other is not None:
@@ -86,7 +86,7 @@ class TerminfoColor(object):
             color = formatter._colors.get(self.color, default)
             # The curses module currently segfaults if handed a
             # bogus template so check explicitly.
-            template = formatter._setColor[self.mode]
+            template = formatter._set_color[self.mode]
             if template:
                 res = curses.tparm(template, color)
             else:
@@ -150,8 +150,8 @@ class TerminfoFormatter(Formatter):
         self.reset = TerminfoReset(getter('sgr0'))
         self.bold = TerminfoMode(getter('bold'))
         self.underline = TerminfoMode(getter('smul'))
-        self._colorReset = getter('op')
-        self._setColor = (getter('setaf'), getter('setab'))
+        self._color_reset = getter('op')
+        self._set_color = (getter('setaf'), getter('setab'))
         self._width = getter('cols')
         # [fg, bg]
         self._current_colors = [None, None]
@@ -184,7 +184,7 @@ class TerminfoFormatter(Formatter):
             self.stream.write(self.reset(self))
         if self._current_colors != [None, None]:
             self._current_colors = [None, None]
-            self.stream.write(self._colorReset)
+            self.stream.write(self._color_reset)
 
 
 class _Attr(object):

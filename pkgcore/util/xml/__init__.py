@@ -35,8 +35,9 @@ if not gotit:
     from pkgcore.util.xml import bundled_elementtree as etree
 del gotit
 
-def escape(s):
+def escape(string):
     """
     simple escaping of &, <, and >
     """
-    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+    return string.replace("&", "&amp;").replace("<", "&lt;").replace(">",
+                                                                     "&gt;")

@@ -82,10 +82,13 @@ class tree(object):
     repository template
 
     @ivar raw_repo: if wrapping a repo, set raw_repo per instance to it
-    @ivar livefs: boolean, set it to True if it's a repository representing a livefs
+    @ivar livefs: boolean, set it to True if it's a repository representing
+        a livefs
     @ivar package_class: callable to generate a package instance, must override
-    @ivar configured: if a repo is unusable for merging/unmerging without being configured, set it to False
-    @ivar configure: if the repository isn't configured, must be a callable yielding a configured form of the repository
+    @ivar configured: if a repo is unusable for merging/unmerging
+        without being configured, set it to False
+    @ivar configure: if the repository isn't configured, must be a callable
+        yielding a configured form of the repository
     """
 
     raw_repo = None
@@ -129,7 +132,7 @@ class tree(object):
             raise KeyError(cpv)
         return cpv_inst
 
-    def __setitem__(self, *values):
+    def __setitem__(self, *vals):
         raise AttributeError
 
     def __delitem__(self, cpv):
@@ -150,11 +153,15 @@ class tree(object):
                   pkg_klass_override=None, force=None):
 
         """
-        generator that yield packages that match a L{pkgcore.restrictions.packages.PackageRestriction} instance
+        generator that yields packages match a restriction.
 
-        @param restrict: L{package restriction<pkgcore.restrictions.packages.PackageRestriction>} to search via
-        @param restrict_solutions: cnf collapsed list of the restrict.  Don't play with it unless you know what you're doing
-        @param sorter: callable to do sorting during searching- if sorting the results, use this instead of sorting externally
+        @type restrict : L{pkgcore.restrictions.packages.PackageRestriction}
+            instance
+        @param restrict: restriction to search via
+        @param restrict_solutions: cnf collapsed list of the restrict.
+            Don't play with it unless you know what you're doing
+        @param sorter: callable to do sorting during searching-
+            if sorting the results, use this instead of sorting externally.
         """
 
         if sorter is None:
@@ -292,7 +299,7 @@ class tree(object):
                     for c in cats_iter for p in pkg_exact)
             else:
                 pkg_restrict.add(values.ContainmentMatch(*pkg_exact))
-        
+
         if pkg_restrict:
             return (
                 self.packages.return_mangler((c, p))
@@ -303,14 +310,16 @@ class tree(object):
             if sorter is iter:
                 return self.packages
             else:
-                return (self.packages.return_mangler((c, p)) for c in 
+                return (self.packages.return_mangler((c, p)) for c in
                     cats_iter for p in sorter(self.packages.get(c, [])))
         return (self.packages.return_mangler((c, p))
             for c in cats_iter for p in sorter(self.packages.get(c, [])))
 
     def notify_remove_package(self, pkg):
         """
-        internal function, notify the repository that a pkg it provides is being removed
+        internal function,
+
+        notify the repository that a pkg it provides is being removed
         """
         cp = "%s/%s" % (pkg.category, pkg.package)
         self.versions.force_regen(cp)
@@ -325,7 +334,9 @@ class tree(object):
 
     def notify_add_package(self, pkg):
         """
-        internal function, notify the repository that a pkg is being addeded to it
+        internal function,
+
+        notify the repository that a pkg is being addeded to it
         """
         cp = "%s/%s" % (pkg.category, pkg.package)
         if pkg.category not in self.categories:
@@ -337,7 +348,7 @@ class tree(object):
     def install(self, pkg, *a, **kw):
         """
         internal function, install a pkg to the repository
-        
+
         @param pkg: L{pkgcore.package.metadata.package} instance to install
         @param a: passed to _install
         @param kw: passed to _install
@@ -351,7 +362,7 @@ class tree(object):
     def _install(self, pkg, *a, **kw):
         """
         internal install function- must be overrided in derivatives
-        
+
         @param pkg: L{pkgcore.package.metadata.package} instance to install
         @param a: passed to _install
         @param kw: passed to _install
@@ -362,7 +373,7 @@ class tree(object):
     def uninstall(self, pkg, *a, **kw):
         """
         internal function, uninstall a pkg from the repository
-        
+
         @param pkg: L{pkgcore.package.metadata.package} instance to install
         @param a: passed to _install
         @param kw: passed to _install
@@ -376,7 +387,7 @@ class tree(object):
     def _uninstall(self, pkg, *a, **kw):
         """
         internal uninstall function- must be overrided in derivatives
-        
+
         @param pkg: L{pkgcore.package.metadata.package} instance to install
         @param a: passed to _install
         @param kw: passed to _install
@@ -387,8 +398,9 @@ class tree(object):
     def replace(self, orig, new, *a, **kw):
         """
         internal function, replace a pkg in the repository with another
-        
-        @param orig: L{pkgcore.package.metadata.package} instance to install, must be from this repository instance
+
+        @param orig: L{pkgcore.package.metadata.package} instance to install,
+            must be from this repository instance
         @param new: L{pkgcore.package.metadata.package} instance to install
         @param a: passed to _install
         @param kw: passed to _install
@@ -402,8 +414,9 @@ class tree(object):
     def _replace(self, orig, new, *a, **kw):
         """
         internal replace function- must be overrided in derivatives
-        
-        @param orig: L{pkgcore.package.metadata.package} instance to install, must be from this repository instance
+
+        @param orig: L{pkgcore.package.metadata.package} instance to install,
+            must be from this repository instance
         @param new: L{pkgcore.package.metadata.package} instance to install
         @param a: passed to _install
         @param kw: passed to _install

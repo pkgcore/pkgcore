@@ -6,7 +6,6 @@
 in memory representation of on disk eclass stacking order
 """
 
-import os
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.config.introspect import ConfigHint
 
@@ -37,6 +36,7 @@ class cache(base):
         """
         @param porttree: ondisk location of the tree we're working with
         """
+        base.__init__(self)
         # generate this.
         # self.eclasses = {} # {"Name": ("location","_mtime_")}
         self.eclassdir = normpath(path)
@@ -107,7 +107,9 @@ class cache(base):
 class StackedCaches(cache):
 
     """
-    collapse multiple eclass caches into one, doing L->R searching for eclass matches
+    collapse multiple eclass caches into one.
+
+    Does L->R searching for eclass matches.
     """
 
     pkgcore_config_type = ConfigHint({"caches":"section_refs", "portdir":"str",
@@ -115,8 +117,11 @@ class StackedCaches(cache):
 
     def __init__(self, caches, **kwds):
         """
-        @param caches: L{cache} instances to stack; ordering should be desired lookup order
-        @keyword eclassdir: override for the master eclass dir, required for eapi0 and idiot eclass usage.  defaults to pulling from the first cache
+        @param caches: L{cache} instances to stack;
+            ordering should be desired lookup order
+        @keyword eclassdir: override for the master eclass dir, required for
+            eapi0 and idiot eclass usage.  defaults to pulling from the first
+            cache.
         """
         if len(caches) < 2:
             raise TypeError(

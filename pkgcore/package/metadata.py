@@ -17,7 +17,7 @@ from pkgcore.ebuild.atom import atom
 def DeriveMetadataKls(original_kls):
     if getattr(original_kls, "_derived_metadata_kls", False):
         return original_kls
-    
+
     class package(original_kls):
         _derived_metadata_kls = True
         built = False
@@ -39,11 +39,11 @@ def DeriveMetadataKls(original_kls):
 
         def __init__(self, parent_repository, *a, **kwds):
             """
-            wrapper for %s.__init__; see %s.__init__ for allowed args/kwds, 
+            wrapper for %s.__init__; see %s.__init__ for allowed args/kwds,
                 they're passed directly to it
 
             @param parent_repository: parent repository this package belongs to
-            @type parent_repository: L{pkgcore.repository.prototype.tree} 
+            @type parent_repository: L{pkgcore.repository.prototype.tree}
                 instance
             """
             original_kls.__init__(self, *a, **kwds)

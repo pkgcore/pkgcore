@@ -77,7 +77,9 @@ class PackageWrapper(object):
 
     def commit(self):
         """
-        commit current changes, this means that those those changes can be reverted from this point out
+        Commit current changes.
+
+        This means that those changes can be reverted from this point out.
         """
         self._configurable.commit()
         self._reuse_pt = 0
@@ -99,7 +101,8 @@ class PackageWrapper(object):
         it attempted
 
         @param attr: attr to try and change
-        @param vals: L{pkgcore.restrictions.values.base} instances that we're attempting to make match True
+        @param vals: L{pkgcore.restrictions.values.base} instances that we're
+            attempting to make match True
         """
         if attr not in self._wrapped_attr:
             if attr == self._configurable_name:
@@ -147,7 +150,8 @@ class PackageWrapper(object):
         it attempted
 
         @param attr: attr to try and change
-        @param vals: L{pkgcore.restrictions.values.base} instances that we're attempting to make match False
+        @param vals: L{pkgcore.restrictions.values.base} instances that we're
+            attempting to make match False
         """
         if attr not in self._wrapped_attr:
             if attr == self._configurable_name:
@@ -214,7 +218,7 @@ class PackageWrapper(object):
 
     def lock(self):
         """
-        commit any outstanding changes, and lock the configuration so that it's unchangable.
+        commit any outstanding changes and lock the configuration.
         """
         self.commit()
         self._configurable = list(self._configurable)

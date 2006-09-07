@@ -25,7 +25,7 @@ class write_StringIO(StringIO.StringIO):
             raise TypeError("callback must be callable")
         StringIO.StringIO.__init__(self, *args, **kwds)
         self._callback = callback
-    
+
     def close(self):
         self.flush()
         if self._callback is not None:
@@ -45,9 +45,9 @@ class base(object):
 
 
 class local_source(base):
-    
+
     """locally accessible data source"""
-    
+
     __slots__ = ("path", "mutable")
 
     def __init__(self, path, mutable=False):
@@ -66,19 +66,19 @@ class local_source(base):
 
 
 class data_source(base):
-    
+
     def __init__(self, data, mutable=False):
         """@param data: data to wrap"""
         base.__init__(self)
         self.data = data
         self.mutable = mutable
-    
+
     get_path = None
-    
+
     def get_fileobj(self):
         if self.mutable:
             return write_StringIO(self._reset_data, self.data)
         return read_StringIO(self.data)
-    
+
     def _reset_data(self, data):
         self.data = data

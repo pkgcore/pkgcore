@@ -10,10 +10,10 @@ from pkgcore.config import introspect
 # the docstrings aren't part of the test, but using 'pass' instead
 # makes trial's --coverage complain about them.
 
-def args(*args):
+def argsfunc(*args):
     """Function taking a variable number of arguments."""
 
-def kwargs(**kwargs):
+def kwargsfunc(**kwargs):
     """Function taking keyword arguments."""
 
 
@@ -30,7 +30,7 @@ class NewStyleStrClass(object):
     def __init__(self, one, two='two'):
         """Newstyle testclass."""
 
-    def testMember(self, one):
+    def test_member(self, one):
         """Newstyle memberfunc."""
 
 
@@ -55,38 +55,40 @@ class OldStyleClass:
 class ConfigTypeFromFunctionTest(unittest.TestCase):
 
     def test_invalid(self):
-        self.assertRaises(TypeError, introspect.configTypeFromCallable, args)
-        self.assertRaises(TypeError, introspect.configTypeFromCallable, kwargs)
+        self.assertRaises(TypeError,
+                          introspect.configTypeFromCallable, argsfunc)
+        self.assertRaises(TypeError,
+                          introspect.configTypeFromCallable, kwargsfunc)
 
     def test_basic(self):
-        nonoptType = introspect.configTypeFromCallable(nonopt)
-        self.assertEquals(nonoptType.typename, 'nonopt')
+        nonopt_type = introspect.configTypeFromCallable(nonopt)
+        self.assertEquals(nonopt_type.typename, 'nonopt')
         self.assertEquals(
-            nonoptType.types,
+            nonopt_type.types,
             {'one': 'str', 'two': 'str',
              'class': 'callable', 'type': 'str', 'inherit': 'list'})
-        self.assertEquals(nonoptType.incrementals, [])
-        self.assertEquals(nonoptType.required, ['one', 'two'])
-        self.assertEquals(nonoptType.positional, ['one', 'two'])
-        self.assertEquals(nonoptType.defaults.keys(), [])
+        self.assertEquals(nonopt_type.incrementals, [])
+        self.assertEquals(nonopt_type.required, ['one', 'two'])
+        self.assertEquals(nonopt_type.positional, ['one', 'two'])
+        self.assertEquals(nonopt_type.defaults.keys(), [])
 
     def test_default_types(self):
-        testType = introspect.configTypeFromCallable(alltypes)
+        test_type = introspect.configTypeFromCallable(alltypes)
         self.assertEquals(
-            testType.types,
+            test_type.types,
             {'alist': 'list', 'astr': 'str', 'abool': 'bool',
              'aref': 'section_ref',
              'class': 'callable', 'type': 'str', 'inherit': 'list'})
         self.assertEquals(
-            sorted(testType.required), ['abool', 'alist', 'aref', 'astr'])
+            sorted(test_type.required), ['abool', 'alist', 'aref', 'astr'])
         self.assertEquals(
-            sorted(testType.defaults.keys()),
+            sorted(test_type.defaults.keys()),
             ['abool', 'alist', 'aref', 'astr'])
 
     def _test_class_member(self, func):
-        testType = introspect.configTypeFromCallable(func)
-        self.assertEquals(testType.typename, 'member')
-        self.assertEquals(testType.required, ['one'])
+        test_type = introspect.configTypeFromCallable(func)
+        self.assertEquals(test_type.typename, 'member')
+        self.assertEquals(test_type.required, ['one'])
 
     def test_newstyle_instance(self):
         self._test_class_member(NewStyleClass(1).member)
@@ -104,13 +106,13 @@ class ConfigTypeFromFunctionTest(unittest.TestCase):
 class ConfigTypeFromClassTest(unittest.TestCase):
 
     def _test_basics(self, klass, name, two_override='section_ref'):
-        testType = introspect.configTypeFromCallable(klass)
-        self.assertEquals(testType.typename, name)
-        self.assertEquals(sorted(testType.required), ['one', 'two'])
+        test_type = introspect.configTypeFromCallable(klass)
+        self.assertEquals(test_type.typename, name)
+        self.assertEquals(sorted(test_type.required), ['one', 'two'])
         self.assertEquals(
-            testType.defaults.keys(), ['two'])
+            test_type.defaults.keys(), ['two'])
         self.assertEquals(
-            testType.types,
+            test_type.types,
             {'one': 'str', 'two': two_override,
              'class': 'callable', 'type': 'str', 'inherit': 'list'})
 
@@ -125,6 +127,6 @@ class ConfigTypeFromClassTest(unittest.TestCase):
                           two_override='str')
 
     def test_config_hint(self):
-        class c(NewStyleClass):
+        class Class(NewStyleClass):
             pkgcore_config_type = introspect.ConfigHint(types={'two':'bool'})
-        self._test_basics(c, 'c', two_override='bool')
+        self._test_basics(Class, 'Class', two_override='bool')

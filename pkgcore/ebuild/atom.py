@@ -18,15 +18,15 @@ demandload(globals(), "pkgcore.restrictions.collapsed:DictBased ")
 class MalformedAtom(errors.InvalidDependency):
 
     def __init__(self, atom, err=''):
-        Exception.__init__(self,
-                           "atom '%s' is malformed: error %s" % (atom, err))
+        errors.InvalidDependency.__init__(
+            self, "atom '%s' is malformed: error %s" % (atom, err))
         self.atom, self.err = atom, err
 
 
 class InvalidVersion(errors.InvalidDependency):
 
     def __init__(self, ver, rev, err=''):
-        Exception.__init__(
+        errors.InvalidDependency.__init__(
             self,
             "Version restriction ver='%s', rev='%s', is malformed: error %s" %
             (ver, rev, err))
@@ -41,8 +41,8 @@ class VersionMatch(restriction.base):
     """
     package restriction implementing gentoo ebuild version comparison rules
 
-    any overriding of this class *must* maintain numerical order of self.vals, see intersect for reason why
-    vals also must be a tuple
+    any overriding of this class *must* maintain numerical order of
+    self.vals, see intersect for reason why. vals also must be a tuple.
     """
 
     __slots__ = ("ver", "rev", "vals", "droprev", "negate")
@@ -53,13 +53,15 @@ class VersionMatch(restriction.base):
 
     def __init__(self, operator, ver, rev=None, negate=False, **kwd):
         """
-        @param operator: version comparison to do, valid operators are ('<', '<=', '=', '>=', '>', '~')
+        @param operator: version comparison to do,
+            valid operators are ('<', '<=', '=', '>=', '>', '~')
         @type operator: string
         @param ver: version to base comparison on
         @type ver: string
         @param rev: revision to base comparison on
         @type rev: None (no rev), or an int
-        @param negate: should the restriction results be negated; currently forced to False
+        @param negate: should the restriction results be negated;
+            currently forced to False
         """
 
         kwd["negate"] = False
@@ -360,5 +362,5 @@ def get_key_from_package(collapsed_inst, pkg):
     return pkg.key
 
 def generate_collapsed_restriction(atoms, negate=False):
-	return DictBased((split_atom(x) for x in atoms), get_key_from_package,
-		negate=negate)
+    return DictBased((split_atom(x) for x in atoms), get_key_from_package,
+                     negate=negate)

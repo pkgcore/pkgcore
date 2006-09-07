@@ -7,22 +7,22 @@ sequence related operations
 
 from pkgcore.util.iterables import expandable_chain
 
-def unstable_unique(s):
+def unstable_unique(sequence):
     """
     lifted from python cookbook, credit: Tim Peters
     Return a list of the elements in s in arbitrary order, sans duplicates
     """
 
-    n = len(s)
+    n = len(sequence)
     # assume all elements are hashable, if so, it's linear
     try:
-        return list(set(s))
+        return list(set(sequence))
     except TypeError:
         pass
 
     # so much for linear.  abuse sort.
     try:
-        t = sorted(s)
+        t = sorted(sequence)
     except TypeError:
         pass
     else:
@@ -38,7 +38,7 @@ def unstable_unique(s):
 
     # blah.	 back to original portage.unique_array
     u = []
-    for x in s:
+    for x in sequence:
         if x not in u:
             u.append(x)
     return u
@@ -83,7 +83,8 @@ def native_iflatten_func(l, skip_func):
     """
     collapse [(1),2] into [1,2]
 
-    @param skip_func: a callable that returns True when iflatten_func should descend no further
+    @param skip_func: a callable that returns True when iflatten_func should
+        descend no further
     """
     if skip_func(l):
         yield l
@@ -113,8 +114,8 @@ def iter_flatten(l, skip_flattening=(basestring,), skip_func=None):
     """Deprecated, call iflatten_instance or iflatten_func instead.
 
     @param skip_flattening: list of classes to not descend through
-    @param skip_func: if None, skip_flattening is used- else it must be a callable
-    that returns True when iter_flatten should escend no further
+    @param skip_func: if None, skip_flattening is used- else it must be a
+        callable that returns True when iter_flatten should descend no further.
     """
     import warnings
     warnings.warn('iter_flatten is deprecated, use iflatten_{instance,func}.')
@@ -129,7 +130,7 @@ class ChainedLists(object):
     sequences chained together, without collapsing into a list
     """
     __slots__ = ("_lists", "__weakref__")
-    
+
     def __init__(self, *lists):
         """
         all args must be sequences
@@ -137,7 +138,7 @@ class ChainedLists(object):
         # ensure they're iterable
         for x in lists:
             iter(x)
-        
+
         if isinstance(lists, tuple):
             lists = list(lists)
         self._lists = lists
@@ -157,7 +158,7 @@ class ChainedLists(object):
             idx -= l2
         else:
             raise IndexError
-    
+
     def __setitem__(self, idx, val):
         raise TypeError("not mutable")
 
@@ -168,7 +169,7 @@ class ChainedLists(object):
         for l in self._lists:
             for x in l:
                 yield x
-    
+
     def __contains__(self, obj):
         return obj in iter(self)
 
@@ -177,6 +178,6 @@ class ChainedLists(object):
 
     def append(self, item):
         self._lists.append(item)
-    
+
     def extend(self, items):
         self._lists.extend(items)

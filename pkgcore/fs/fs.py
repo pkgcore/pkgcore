@@ -49,10 +49,10 @@ raw_init_doc = \
 """
 
 class fsBase(object):
-    
+
     """base class, all extensions must derive from this class"""
     __slots__ = ["location", "_real_location", "mtime", "mode", "uid", "gid"]
-    
+
     def __init__(self, location, real_location=None, strict=True, **d):
 
         d["location"] = location
@@ -114,12 +114,13 @@ class fsBase(object):
 class fsFile(fsBase):
 
     """file class"""
-    
+
     __slots__ = fsBase.__slots__ + ["chksums", "data_source"]
 
     def __init__(self, location, chksums=None, real_path=None, **kwds):
         """
-        @param chksums: dict of checksums, key chksum_type: val hash val.  see L{pkgcore.chksum}
+        @param chksums: dict of checksums, key chksum_type: val hash val.
+            See L{pkgcore.chksum}.
         """
         if "mtime" in kwds:
             kwds["mtime"] = long(kwds["mtime"])
@@ -201,15 +202,10 @@ class fsLink(fsBase):
 fsSymlink = fsLink
 
 
-def _real_path_init(self, path, **kwds):
-    if "real_path" not in kwds:
-        kwds["real_path"] = path
-    return fsBase.__init__(self, path, **kwds)
-
 class fsDev(fsBase):
 
     """dev class (char/block objects)"""
-    
+
     __slots__ = list(fsBase.__slots__) + ["real_path", "major", "minor"]
 
     def __init__(self, path, major=-1, minor=-1, **kwds):
@@ -223,17 +219,19 @@ class fsDev(fsBase):
                         kwds["mode"], stat.S_IFMT(kwds["mode"])))
             kwds["major"] = major
             kwds["minor"] = minor
-        _real_path_init(self, path, **kwds)
-        
+        if "real_path" not in kwds:
+            kwds["real_path"] = path
+        fsBase.__init__(self, path, **kwds)
+
     def __repr__(self):
         return "device:%s" % self.location
 
 
-def get_major_minor(stat):
+def get_major_minor(stat_inst):
     """get major/minor from a stat instance
     @return: major,minor tuple of ints
     """
-    return ( stat.st_rdev >> 8 ) & 0xff, stat.st_rdev & 0xff
+    return ( stat_inst.st_rdev >> 8 ) & 0xff, stat_inst.st_rdev & 0xff
 
 
 class fsFifo(fsBase):
@@ -241,8 +239,12 @@ class fsFifo(fsBase):
     """fifo class (socket objects)"""
 
     __slots__ = list(fsBase.__slots__) + ["real_path"]
-    __init__ = _real_path_init
-    
+
+    def __init__(self, path, **kwds):
+        if "real_path" not in kwds:
+            kwds["real_path"] = path
+        fsBase.__init__(self, path, **kwds)
+
     def __repr__(self):
         return "fifo:%s" % self.location
 

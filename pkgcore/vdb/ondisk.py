@@ -18,33 +18,35 @@ from pkgcore.repository import multiplex, virtual
 from pkgcore.util import bzip2
 
 from pkgcore.util.demandload import demandload
-demandload(globals(), "logging time tempfile "+
-    "pkgcore.ebuild:conditionals "+
-    "pkgcore.restrictions:boolean ")
+demandload(globals(),
+           "logging time "
+           "pkgcore.ebuild:conditionals "
+           "pkgcore.restrictions:boolean,packages ")
 
 
-class bz2_data_source(data_source.data_source):
-    
+class bz2_data_source(data_source.base):
+
     def __init__(self, location, mutable=False):
+        data_source.base.__init__(self)
         self.location = location
         self.mutable = mutable
-    
-    def _get_data(self):
-        return bzip2.decompress(open(self.location, "rb").read())
-    
+
+    def get_fileobj(self):
+        data = bzip2.decompress(open(self.location, 'rb').read())
+        if self.mutable:
+            return data_source.write_StringIO(self._set_data, data)
+        return data_source.read_StringIO(data)
+
     def _set_data(self, data):
         open(self.location, "wb").write(bzip2.compress(data))
-        return data
-    
-    data = property(_get_data, _set_data)
-    
-    
+
+
 class tree(prototype.tree):
     livefs = True
     configured = False
     configurables = ("domain", "settings")
     configure = None
-    format_magic = "ebuild_built"	
+    format_magic = "ebuild_built"
 
     def __init__(self, location):
         prototype.tree.__init__(self, frozen=False)
@@ -169,8 +171,8 @@ class ConfiguredTree(multiplex.tree):
     def _grab_virtuals(self):
         virtuals = {}
         for pkg in self.raw_vdb:
-            for virtual in pkg.provides.evaluate_depset(pkg.use):
-                virtuals.setdefault(virtual.package, {}).setdefault(
+            for virtualpkg in pkg.provides.evaluate_depset(pkg.use):
+                virtuals.setdefault(virtualpkg.package, {}).setdefault(
                     pkg.fullver, []).append(pkg)
 
         for pkg_dict in virtuals.itervalues():
@@ -178,7 +180,7 @@ class ConfiguredTree(multiplex.tree):
                 if len(rdep_atoms) == 1:
                     pkg_dict[full_ver] = rdep_atoms[0].unversioned_atom
                 else:
-                    pkg_dict[full_ver] = OrRestriction(
+                    pkg_dict[full_ver] = packages.OrRestriction(
                         finalize=True,
                         *[x.unversioned_atom for x in rdep_atoms])
         return virtuals

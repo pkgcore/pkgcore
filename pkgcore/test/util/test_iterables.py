@@ -17,7 +17,7 @@ class ExpandableChainTest(unittest.TestCase):
 
     def test_extend(self):
         e = expandable_chain()
-        e.extend(xrange(100) for x in (1, 2))
+        e.extend(xrange(100) for i in (1, 2))
         self.assertEquals(list(e), range(100)*2)
         self.assertRaises(StopIteration, e.extend, [[]])
 
@@ -46,7 +46,7 @@ class CachingIterTest(unittest.TestCase):
         i = iter(xrange(100))
         c = caching_iter(i)
         i2 = iter(c)
-        for x in xrange(20):
+        for _ in xrange(20):
             i2.next()
         self.assertEqual(i.next(), 20)
         # note we consumed one ourselves

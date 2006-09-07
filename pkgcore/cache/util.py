@@ -13,10 +13,14 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None,
     make a cache backend a mirror of another
 
     @param valid_nodes_iterable: valid keys
-    @param src_cache: L{pkgcore.cache.template.database} instance to copy keys from
-    @param trg_cache: L{pkgcore.cache.template.database} instance to write keys to
-    @param eclass_cache: if doing eclass_cache translation, a L{pkgcore.ebuild.eclass_cache.cache} instance to use, else None
-    @param verbose_instance: either None (defaulting to L{quiet_mirroring}), or a L{quiet_mirroring} derivative
+    @param src_cache: L{pkgcore.cache.template.database} instance
+        to copy keys from
+    @param trg_cache: L{pkgcore.cache.template.database} instance
+        to write keys to
+    @param eclass_cache: if doing eclass_cache translation,
+        a L{pkgcore.ebuild.eclass_cache.cache} instance to use, else None
+    @param verbose_instance: either None (defaulting to L{quiet_mirroring}),
+        or a L{quiet_mirroring} derivative
     """
 
     if not src_cache.complete_eclass_entries and not eclass_cache:
@@ -41,9 +45,8 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None,
             dead_nodes.remove(x)
         try:
             entry = src_cache[x]
-        except KeyError, e:
+        except KeyError:
             noise.missing_entry(x)
-            del e
             continue
         if entry.get("INHERITED",""):
             if src_cache.complete_eclass_entries:

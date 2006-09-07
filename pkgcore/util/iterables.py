@@ -92,7 +92,7 @@ class caching_iter(object):
             if self.iterable is not None:
                 try:
                     self.cached_list.extend(self.iterable.next()
-                        for x in xrange(existing_len - index + 1))
+                        for i in xrange(existing_len - index + 1))
                 except StopIteration:
                     # consumed, baby.
                     self.iterable = None
@@ -141,7 +141,6 @@ class caching_iter(object):
             self.iterable is not None and
             len(self.cached_list) == 0):
             self.cached_list = tuple(self.sorter(self.iterable))
-            existing_len = len(self.cached_list)
             self.iterable = self.sorter = None
 
         for x in self.cached_list:

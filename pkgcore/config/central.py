@@ -11,7 +11,7 @@ from pkgcore.config import introspect
 
 
 class ConfigManager(object):
-    
+
     def __init__(self, configTypes, configs):
         """Initialize.
 

@@ -25,8 +25,10 @@ class trigger(object):
 
         """
         @param cset_name: the cset label required for this trigger
-        @param ftrigger: actually func to execute when MergeEngine hands control over
-        @param register_func: either None, or a callable to execute for handling registering with a MergeEngine instance
+        @param ftrigger: actual func to execute when MergeEngine
+            hands control over
+        @param register_func: either None, or a callable to execute
+            for handling registering with a MergeEngine instance
         """
 
         if not isinstance(cset_name, basestring):

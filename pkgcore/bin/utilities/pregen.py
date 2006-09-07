@@ -42,7 +42,7 @@ if __name__ == "__main__":
     try:
         repo = conf.repo[repo_name]
     except KeyError:
-        print "repo %s wasn't found: known repos-\n%s" % (repr(repo_name), ", ".join(str(x) for x 
+        print "repo %s wasn't found: known repos-\n%s" % (repr(repo_name), ", ".join(str(x) for x
             in conf.repo.iterkeys()))
         sys.exit(1)
     start_time = time.time()
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         except Exception:
             kill.set()
             reclaim_threads(regen_threads)
-            raise			
+            raise
 
         # by now, queue is fed.  reliable for our uses since the queue is only subtracted from.
         while not queue.empty():

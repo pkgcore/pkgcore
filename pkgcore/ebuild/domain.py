@@ -60,7 +60,8 @@ def filter_negations(setting, orig_list):
             else:
                 if len(x) == 1:
                     raise Failure("negation of a setting in '%s', "
-                                  "but name negated isn't completed-" % (k, v))
+                                  "but name negated isn't completed (%s)" % (
+                            setting, orig_list))
                 x = x[1:]
                 if x in l:
                     l.remove(x)

@@ -45,19 +45,20 @@ import pyparsing as pyp
 
 # this is based on the 'BIND named.conf parser' on pyparsing's webpage
 
-section = pyp.Forward()
-value = (pyp.Word(pyp.alphanums + './_') |
-         pyp.quotedString.copy().setParseAction(pyp.removeQuotes))
+_section = pyp.Forward()
+_value = (pyp.Word(pyp.alphanums + './_') |
+          pyp.quotedString.copy().setParseAction(pyp.removeQuotes))
 
-section_contents = pyp.dictOf(
-    value, pyp.Group(pyp.OneOrMore(value | section)) + pyp.Suppress(';'))
-section << pyp.Group(pyp.Suppress('{') + section_contents + pyp.Suppress('}'))
+_section_contents = pyp.dictOf(
+    _value, pyp.Group(pyp.OneOrMore(_value | _section)) + pyp.Suppress(';'))
+_section << pyp.Group(pyp.Suppress('{') + _section_contents +
+                      pyp.Suppress('}'))
 
 # pyp.dictOf uses pyp.ZeroOrMore instead of pyp.OneOrMore, which seems
 # to cause it to succeed with 0 parsed sections if the input is bogus.
 
 # parser = pyp.dictOf(value, section)
-parser = pyp.Dict(pyp.OneOrMore(pyp.Group(value + section)))
+parser = pyp.Dict(pyp.OneOrMore(pyp.Group(_value + _section)))
 parser.ignore(pyp.pythonStyleComment)
 
 

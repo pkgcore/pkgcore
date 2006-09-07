@@ -11,8 +11,9 @@ class InvertedContains(set):
 
     """Set that inverts all contains lookups results
 
-    mainly useful in conjuection with LimitedChangeSet for converting from blacklist to whitelist
-    
+    Mainly useful in conjuection with LimitedChangeSet for converting
+    from blacklist to whitelist.
+
     Not able to be iterated over also
     """
 
@@ -117,17 +118,17 @@ class Unchangable(Exception):
 class ProtectedSet(object):
 
     """
-    basic container duck typing, wraps a set pushing all changes into a secondary set
+    Wraps a set pushing all changes into a secondary set.
 
-    be aware that it lacks majority of set methods
+    Be aware that it lacks the majority of set methods.
     """
     def __init__(self, orig_set):
         self._orig = orig_set
         self._new = set()
-    
+
     def __contains__(self, key):
         return key in self._orig or key in self._new
-    
+
     def __len__(self):
         return len(self._orig.union(self._new))
 

@@ -14,11 +14,11 @@ class UnhashableComplex(complex):
 
 class UniqueTest(unittest.TestCase):
 
-    def common_check(self, f):
+    def common_check(self, func):
         # silly
-        self.assertEquals(f(()), [])
+        self.assertEquals(func(()), [])
         # hashable
-        self.assertEquals(sorted(f([1, 1, 2, 3, 2])), [1, 2, 3])
+        self.assertEquals(sorted(func([1, 1, 2, 3, 2])), [1, 2, 3])
         # neither
 
     def test_stable_unique(self):
@@ -48,13 +48,15 @@ class ChainedListsTest(unittest.TestCase):
 
     def test_iter(self):
         self.assertEquals(list(self.gen_cl()), list(xrange(100)))
-    
+
     def test_len(self):
         self.assertEquals(100, len(self.gen_cl()))
 
     def test_getitem(self):
         cl = self.gen_cl()
         for x in (1, 2, 4, 98, -1, -99, 0):
+            # "Statement seems to have no effect"
+            # pylint: disable-msg=W0104
             cl[x]
         self.assertRaises(IndexError, cl.__getitem__, 100)
         self.assertRaises(IndexError, cl.__getitem__, -101)
@@ -67,16 +69,16 @@ class ChainedListsTest(unittest.TestCase):
         cl = self.gen_cl()
         cl.append(range(10))
         self.assertEquals(110, len(cl))
-    
+
     def test_extend(self):
         cl = self.gen_cl()
-        cl.extend(range(10) for x in range(5))
+        cl.extend(range(10) for i in range(5))
         self.assertEquals(150, len(cl))
 
 
 class Test_iflatten_instance(unittest.TestCase):
     func = staticmethod(lists.native_iflatten_instance)
-    
+
     def test_it(self):
         o = OrderedDict((k, None) for k in xrange(10))
         for l, correct, skip in [

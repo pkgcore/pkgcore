@@ -17,7 +17,6 @@ class InitializationError(CacheError):
 
 class CacheCorruption(CacheError):
     def __init__(self, key, ex):
-        import traceback;traceback.print_stack()
         CacheError.__init__(self, "%s is corrupt: %s" % (key, ex))
         self.key, self.ex = key, ex
 

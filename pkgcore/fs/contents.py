@@ -19,7 +19,7 @@ class contentsSet(object):
     """set of L{fs<pkgcore.fs.fs>} objects"""
 
     def __init__(self, initial=None, mutable=False):
-        
+
         """
         @param initial: initial fs objs for this set
         @type initial: sequence
@@ -34,10 +34,10 @@ class contentsSet(object):
 
         """
         add a new fs obj to the set
-        
+
         @param obj: must be a derivative of L{pkgcore.fs.fs.fsBase}
         """
-        
+
         if not self.mutable:
             # weird, but keeping with set.
             raise AttributeError(
@@ -50,11 +50,12 @@ class contentsSet(object):
 
         """
         remove a fs obj to the set
-        
-        @param obj: must be a derivative of L{pkgcore.fs.fs.fsBase}, or a string location of an obj in the set
+
+        @type obj: a derivative of L{pkgcore.fs.fs.fsBase}
+            or a string location of an obj in the set.
         @raise KeyError: if the obj isn't found
         """
-        
+
         if not self.mutable:
             # weird, but keeping with set.
             raise AttributeError(
@@ -66,12 +67,12 @@ class contentsSet(object):
 
     def remove(self, obj):
         del self[obj]
-    
+
     def __eq__(self, other):
         if isinstance(other, contentsSet):
             return self._dict == other._dict
         return False
-    
+
     def __ne__(self, other):
         if isinstance(other, contentsSet):
             return self._dict != other._dict
@@ -102,18 +103,18 @@ class contentsSet(object):
         if isinstance(other, contentsSet):
             return contentsSet((x for x in self if x.location not in other))
         return set.difference(self, other)
-    
+
     def intersection(self, other):
         return contentsSet((x for x in self if x.location in other))
-    
+
     def issubset(self, other):
         return all(x.location in other for x in self._dict)
-    
+
     def issuperset(self, other):
         if isinstance(other, contentsSet):
             return other.issubset(self)
         return all(x in self for x in other)
-    
+
     def union(self, other):
         if not isinstance(other, contentsSet):
             raise TypeError(
@@ -126,10 +127,10 @@ class contentsSet(object):
 
     def __iter__(self):
         return self._dict.itervalues()
-    
+
     def __len__(self):
         return len(self._dict)
-    
+
     def symmetric_difference(self, other):
         i = self.intersection(other)
         return contentsSet(chain(iter(self.difference(i)),
@@ -184,7 +185,7 @@ class contentsSet(object):
             """ % (s.rstrip("s"), s, s)
         del s
     del k
-        
+
     def clone(self, mutable=False):
         if mutable == self.mutable:
             return self

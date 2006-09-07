@@ -16,7 +16,9 @@ from pkgcore.restrictions import packages
 class OverlayRepo(multiplex.tree):
 
     """
-    collapse multiple trees into one, with a shared eclass dir, and first package leftmost returned
+    Collapse multiple trees into one.
+
+    Eclass dir is shared, the first package leftmost returned.
     """
 
     pkgcore_config_type = ConfigHint(types={"trees":"section_refs"},
@@ -31,7 +33,8 @@ class OverlayRepo(multiplex.tree):
 
     def __init__(self, trees, **kwds):
         """
-        @param trees: L{pkgcore.ebuild.repository.UnconfiguredTree} instances to combine
+        @param trees: L{pkgcore.ebuild.repository.UnconfiguredTree} instances
+            to combine.
         """
 
         if not trees or len(trees) < 2:

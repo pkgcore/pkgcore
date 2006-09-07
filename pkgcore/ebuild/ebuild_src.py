@@ -182,9 +182,10 @@ class package(metadata.package):
     """
     ebuild package
 
-    @cvar tracked_attributes: sequence of attributes that are required to exist in the built version of ebuild-src
-    @cvar _config_wrappables: mapping of attribute to callable for re-evaluating attributes dependant on configuration
-
+    @cvar tracked_attributes: sequence of attributes that are required to exist
+        in the built version of ebuild-src
+    @cvar _config_wrappables: mapping of attribute to callable for
+        re-evaluating attributes dependant on configuration
     """
 
     immutable = False
@@ -312,10 +313,10 @@ class ThrowAwayNameSpace(object):
     """used for weakref passing data only"""
     def __init__(self, val):
         self._val = val
-    
+
     def __getitem__(self, index):
         return self._val[index]
-    
+
     def __setitem__(self, key, val):
         self._val[key] = val
 
@@ -335,7 +336,8 @@ class virtual_ebuild(metadata.package):
     def __init__(self, parent_repository, pkg, data, cpv):
         """
         @param cpv: cpv for the new pkg
-        @param parent_repository: actual repository that this pkg should claim it belongs to
+        @param parent_repository: actual repository that this pkg should
+            claim it belongs to
         @param pkg: parent pkg that is generating this pkg
         @param data: mapping of data to push to use in __getattr__ access
         """
@@ -349,7 +351,7 @@ class virtual_ebuild(metadata.package):
             for x in self.__dict__.keys():
                 if x not in state:
                     del self.__dict__[x]
-            metadata.package.__init__(self, parent_repository, 
+            metadata.package.__init__(self, parent_repository,
                 cpv+"-"+pkg.fullver)
             assert self.version
 

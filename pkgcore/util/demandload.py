@@ -174,7 +174,7 @@ demandload = _demandload
 _real_compile = re.compile
 class _delayed_compiler(object):
     """A class which just waits to compile a regex until it is actually requested.
-    
+
     It might be possible to use the scope swapping to prevent any overhead after
     the first request.
     """

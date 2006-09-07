@@ -38,7 +38,9 @@ class KeyedAndRestriction(boolean.AndRestriction):
 class GlsaDirSet(object):
 
     """
-    generate a pkgset bsaed on GLSA's distributed via a directory (rsync tree being usual source)
+    generate a pkgset based on GLSA's distributed via a directory.
+
+    (rsync tree is the usual source.)
     """
 
     pkgcore_config_type = ConfigHint(types={"src":"section_ref"})
@@ -47,7 +49,8 @@ class GlsaDirSet(object):
     def __init__(self, src):
         """
         @param src: where to get the glsa from
-        @type src: must be either full path to glsa dir, or a repo object to pull it from
+        @type src: must be either full path to glsa dir, or a repo object
+            to pull it from
         """
 
         if not isinstance(src, basestring):
@@ -85,7 +88,6 @@ class GlsaDirSet(object):
         """
         generator yielding each GLSA restriction
         """
-        pkgs = {}
         for fn in os.listdir(self.path):
             #"glsa-1234-12.xml
             if not (fn.startswith("glsa-") and fn.endswith(".xml")):
@@ -183,11 +185,12 @@ class GlsaDirSet(object):
 
 def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
     """
-    generator yielding GLSA restrictions, and vulnerable pkgs from passed in repo
+    generator yielding GLSA restrictions, and vulnerable pkgs from a repo.
 
     @param glsa_src: GLSA pkgset to pull vulnerabilities from
     @param repo: repo to scan for vulnerable packages
-    @param grouped: if grouped, combine glsa restrictions into one restriction (thus yielding a pkg only once)
+    @param grouped: if grouped, combine glsa restrictions into one restriction
+        (thus yielding a pkg only once)
     @param arch: arch to scan for, x86 for example
     """
 
@@ -214,7 +217,9 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
 class SecurityUpgrades(object):
 
     """
-    pkgset that can be used directly from pkgcore configuration, generates set of restrictions of required upgrades
+    pkgset that can be used directly from pkgcore configuration.
+
+    generates set of restrictions of required upgrades.
     """
 
     pkgcore_config_type = ConfigHint(types={"ebuild_repo":"section_ref",

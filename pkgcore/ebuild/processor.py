@@ -184,8 +184,8 @@ class EbuildProcessor:
         args = []
         if sandbox:
             if fakeroot:
-                print "!!! ERROR: fakeroot was on, but sandbox was also on"
-                sys.exit(1)
+                # XXX improve this (Exception subclass etc)
+                raise Exception('fakeroot was on, but sandbox was also on')
             self.__sandbox = True
             spawn_func = pkgcore.spawn.spawn_sandbox
 #			env.update({"SANDBOX_DEBUG":"1", "SANDBOX_DEBUG_LOG":"/var/tmp/test"})
@@ -228,14 +228,18 @@ class EbuildProcessor:
 
     def prep_phase(self, phase, env, sandbox=None, logging=None):
         """
-        Utility function, combines multiple calls into one, leaving the processor in a state where all that
-        remains is a call start_processing call, then generic_handler event loop.
+        Utility function, to initialize the processor for a phase.
+
+        Used to combine multiple calls into one, leaving the processor
+        in a state where all that remains is a call start_processing
+        call, then generic_handler event loop.
 
         @param phase: phase to prep for
         @type phase: str
         @param env: mapping of the environment to prep the processor with
         @param sandbox: should the sandbox be enabled?
-        @param logging: None, or a filepath to log the output from the processor to
+        @param logging: None, or a filepath to log the output from the
+            processor to
         @return: True for success, False for everything else
         """
 
@@ -304,7 +308,8 @@ class EbuildProcessor:
         """
         if the instance is sandboxed, print the sandbox access summary
 
-        @param move_log: location to move the sandbox log to if a failure occured
+        @param move_log: location to move the sandbox log to if a failure
+            occured
         """
         if not os.path.exists(self.__sandbox_log):
             self.write("end_sandbox_summary")
@@ -340,9 +345,12 @@ class EbuildProcessor:
 
     def preload_eclasses(self, ec_file):
         """
-        this preloades eclasses into a a bash function, thus avoiding the cost of going to disk.
-        preloading eutils (which is heaviliy inherited) speeds up regen times for example
-        
+        Preload an eclass into a bash function.
+
+        Avoids the cost of going to disk on inherit. Preloading eutils
+        (which is heaviliy inherited) speeds up regen times for
+        example.
+
         @param ec_file: filepath of eclass to preload
         @return: boolean, True for success
         """
@@ -377,8 +385,9 @@ class EbuildProcessor:
     def is_alive(self):
         """
         returns if it's known if the processor has been shutdown.
-        
-        Currently doesn't check to ensure the pid is still running, yet it should
+
+        Currently doesn't check to ensure the pid is still running,
+        yet it should.
         """
         try:
             return self.pid is not None
@@ -419,8 +428,9 @@ class EbuildProcessor:
     def send_env(self, env_dict):
         """
         transfer the ebuild's desired env (env_dict) to the running daemon
-        
-        @param env_dict: mapping of key -> value pairs to use for the bash env.  all keys/values must be strings
+
+        @type  env_dict: mapping with string keys and values.
+        @param env_dict: the bash env.
         """
 
         self.write("start_receiving_env\n")
@@ -443,8 +453,10 @@ class EbuildProcessor:
 
     def set_logfile(self, logfile=''):
         """
-        relevant only when the daemon is sandbox'd, set the logfile.  Set the location to log to
-        
+        Set the logfile (location to log to).
+
+        Relevant only when the daemon is sandbox'd,
+
         @param logfile: filepath to log to
         """
         self.write("logging %s" % logfile)
@@ -463,9 +475,11 @@ class EbuildProcessor:
     def get_keys(self, package_inst, eclass_cache):
         """
         request the metadata be regenerated from an ebuild
-        
-        @param package_inst: L{pkgcore.ebuild.ebuild_src.package} instance to regenerate
-        @param eclass_cache: L{pkgcore.ebuild.eclass_cache} instance to use for eclass access
+
+        @param package_inst: L{pkgcore.ebuild.ebuild_src.package} instance
+            to regenerate
+        @param eclass_cache: L{pkgcore.ebuild.eclass_cache} instance to use
+            for eclass access
         @return: dict when successful, None when failed
         """
 
@@ -500,7 +514,9 @@ class EbuildProcessor:
 
     def _inherit(self, line, ecache):
         """
-        callback for implementing inherit digging into eclass_cache.  not for normal consumption.
+        Callback for implementing inherit digging into eclass_cache.
+
+        Not for normal consumption.
         """
         if line is None:
             self.write("failed")
@@ -528,12 +544,15 @@ class EbuildProcessor:
     # confcache or portageq.
     def generic_handler(self, additional_commands=None):
         """
-        internal event handler that responds to the running ebuild processor's requests
+        internal event handler responding to the running processor's requests.
 
-        @param additional_commands: is a dict of command:callable.  If you need to slip in extra args, look into pkgcore.util.currying.
-        commands names cannot have spaces.  the callable is called with the processor as first arg, and
-        remaining string (None if no remaining fragment) as second arg.
-        If you need to split the args to command, whitespace splitting falls to your func.
+        @type  additional_commands: mapping from string to callable.
+        @param additional_commands: Extra command handlers.
+            Command names cannot have spaces.
+            The callable is called with the processor as first arg, and
+            remaining string (None if no remaining fragment) as second arg.
+            If you need to split the args to command, whitespace splitting
+            falls to your func.
 
         @raise UnhandledCommand: thrown when an unknown command is encountered.
         """
@@ -612,7 +631,7 @@ class UnhandledCommand(ProcessingInterruption):
 def expected_ebuild_env(pkg, d=None):
     """
     setup expected ebuild vars
-    
+
     @param d: if None, generates a dict, else modifies a passed in mapping
     @return: mapping
     """

@@ -13,7 +13,8 @@ class tree(prototype.tree):
 
     def __init__(self, *trees):
         """
-        @param trees: L{pkgcore.repository.prototype.tree} instances to combines into one
+        @param trees: L{pkgcore.repository.prototype.tree} instances
+            to combines into one
         """
         super(tree, self).__init__()
         for x in trees:
@@ -83,7 +84,7 @@ class tree(prototype.tree):
 
     def __len__(self):
         return sum(len(repo) for repo in self.trees)
-        
+
     def __getitem__(self, key):
         for t in self.trees:
             try:

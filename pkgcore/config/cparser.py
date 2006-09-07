@@ -20,7 +20,7 @@ class CaseSensitiveConfigParser(ConfigParser):
 def configFromIni(file_obj):
     """
     generate a config dict
-    
+
     @param file_obj: file protocol instance
     @return: L{pkgcore.util.mappings.LazyValDict} instance
     """

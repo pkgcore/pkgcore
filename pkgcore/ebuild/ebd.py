@@ -56,11 +56,16 @@ class ebd(object):
     def __init__(self, pkg, initial_env=None, env_data_source=None,
                  features=None):
         """
-        @param pkg: L{ebuild package instance<pkgcore.ebuild.ebuild_src.package>} instance this env is being setup for
+        @param pkg:
+            L{ebuild package instance<pkgcore.ebuild.ebuild_src.package>}
+            instance this env is being setup for
         @param initial_env: initial environment to use for this ebuild
-        @param env_data_source: a L{pkgcore.interfaces.data_source} instance to restore the environment from- used for restoring the
-        state of an ebuild processing, whether for unmerging, or walking phases during building
-        @param features: ebuild features, hold over from portage, will be broken down at some point
+        @param env_data_source: a L{pkgcore.interfaces.data_source} instance
+            to restore the environment from- used for restoring the
+            state of an ebuild processing, whether for unmerging, or
+            walking phases during building
+        @param features: ebuild features, hold over from portage,
+            will be broken down at some point
         """
 
         if pkg.eapi not in eapi_capable:
@@ -158,9 +163,9 @@ class ebd(object):
                 if not ensure_dirs(self.env["T"], mode=0770, gid=portage_gid,
                                    minimal=True):
                     raise build.FailedDirectory(
-                        self.env[k],
+                        self.env['T'],
                         "%s doesn't fulfill minimum mode %o and gid %i" % (
-                            k, 0770, portage_gid))
+                            self.env['T'], 0770, portage_gid))
                 fp = os.path.join(self.env["T"], "env_data_source")
                 open(fp, "w").write(env_data_source.get_fileobj().read())
                 self.env["PORT_ENV_FILE"] = fp
@@ -175,10 +180,7 @@ class ebd(object):
 
     def setup_workdir(self):
         # ensure dirs.
-        for k, text in (("HOME", "home"),
-                        ("T", "temp"),
-                        ("WORKDIR", "work"),
-                        ("D", "image")):
+        for k in ("HOME", "T", "WORKDIR", "D"):
             if not ensure_dirs(self.env[k], mode=0770, gid=portage_gid,
                                minimal=True):
                 raise build.FailedDirectory(
@@ -229,9 +231,9 @@ class ebd(object):
                 raise NotImplementedError
             else:
                 chuck_UnhandledCommand(
-                    ebd, "bashrc request: unable to process bashrc '%s' "
+                    ebd, "bashrc request: unable to process bashrc "
                     "due to source '%s' due to lacking usable get_*" % (
-                        val, source))
+                        source,))
             if not ebd.expect("next"):
                 chuck_UnhandledCommand(
                     ebd, "bashrc transfer, didn't receive 'next' response.  "
@@ -243,10 +245,12 @@ class ebd(object):
                        extra_handlers=None):
         """
         @param phase: phase to execute
-        @param userpriv: will we drop to L{portage_uid<pkgcore.os_data.portage_uid>} and L{portage_gid<pkgcore.os_data.portage_gid>}
-        access for this phase?
+        @param userpriv: will we drop to
+            L{portage_uid<pkgcore.os_data.portage_uid>} and
+            L{portage_gid<pkgcore.os_data.portage_gid>} access for this phase?
         @param sandbox: should this phase be sandboxes?
-        @param fakeroot: should the phase be fakeroot'd?  Only really useful for install phase, and is mutually exclusive with sandbox
+        @param fakeroot: should the phase be fakeroot'd?  Only really useful
+            for install phase, and is mutually exclusive with sandbox
         """
         ebd = request_ebuild_processor(userpriv=(self.userpriv and userpriv),
                                        sandbox=(self.sandbox and sandbox),
@@ -283,7 +287,7 @@ class ebd(object):
     def feat_or_bool(self, name, extra_env=None):
         if name in self.env:
             v = bool(self.env[name])
-            del d[name]
+            del self.env[name]
             name = name.lower()
             if v:
                 self.features.add(name)
@@ -346,10 +350,14 @@ class buildable(ebd, build.base):
     def __init__(self, pkg, domain_settings, eclass_cache, fetcher):
 
         """
-        @param pkg: L{pkgcore.ebuild.ebuild_src.package} instance we'll be building
-        @param domain_settings: dict bled down from the domain configuration; basically initial env
-        @param eclass_cache: the L{eclass_cache<pkgcore.ebuild.eclass_cache>} we'll be using
-        @param fetcher: a L{pkgcore.fetch.base.fetcher} instance to use to access our required files for building
+        @param pkg: L{pkgcore.ebuild.ebuild_src.package} instance we'll be
+            building
+        @param domain_settings: dict bled down from the domain configuration;
+            basically initial env
+        @param eclass_cache: the L{eclass_cache<pkgcore.ebuild.eclass_cache>}
+            we'll be using
+        @param fetcher: a L{pkgcore.fetch.base.fetcher} instance to use to
+            access our required files for building
         """
 
         ebd.__init__(self, pkg, initial_env=domain_settings,
@@ -490,7 +498,10 @@ class buildable(ebd, build.base):
 
     def configure(self):
         """
-        execute the configure phase- does nothing if the pkg is EAPI=0 (that spec lacks a seperated configure phase)
+        execute the configure phase.
+
+        does nothing if the pkg is EAPI=0 (that spec lacks a seperated
+        configure phase).
         """
         if self.eapi > 0:
             return self._generic_phase("configure", True, True, False)
@@ -520,10 +531,13 @@ class buildable(ebd, build.base):
 
     def finalize(self):
         """
-        finalize the operation; this yields a built package, but the packages metadata/contents are bound to the workdir.
-        
-        In other words, install the package somewhere prior to executing clean if you intend on installing it
-        
+        finalize the operation.
+
+        this yields a built package, but the packages
+        metadata/contents are bound to the workdir. In other words,
+        install the package somewhere prior to executing clean if you
+        intend on installing it.
+
         @return: L{pkgcore.ebuild.ebuild_built.package} instance
         """
         return fake_package_factory(self._built_class).new_package(self.pkg,

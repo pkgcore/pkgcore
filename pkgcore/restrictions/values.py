@@ -12,7 +12,6 @@ attr from a package instance and hand it to their wrapped restriction
 
 import re
 from pkgcore.restrictions import restriction, boolean, packages
-from pkgcore.util.currying import pre_curry, pretty_docs
 
 # Backwards compatibility.
 value_type = restriction.value_type
@@ -79,11 +78,11 @@ class StrRegex(StrMatch):
 
     __inst_caching__ = True
 
-    def __init__(self, regex, CaseSensitive=True, match=False, **kwds):
+    def __init__(self, regex, case_sensitive=True, match=False, **kwds):
 
         """
         @param regex: regex pattern to match
-        @param CaseSensitive: should the match be case sensitive?
+        @param case_sensitive: should the match be case sensitive?
         @param match: should C{re.match} be used instead of C{re.search}?
         @keyword negate: should the match results be negated?
         """
@@ -92,7 +91,7 @@ class StrRegex(StrMatch):
         self.regex = regex
         self.ismatch = match
         flags = 0
-        if not CaseSensitive:
+        if not case_sensitive:
             flags = re.I
         self.flags = flags
         compiled_re = re.compile(regex, flags)
@@ -156,16 +155,16 @@ class StrExactMatch(StrMatch):
 
     __inst_caching__ = True
 
-    def __init__(self, exact, CaseSensitive=True, **kwds):
+    def __init__(self, exact, case_sensitive=True, **kwds):
 
         """
         @param exact: exact string to match
-        @param CaseSensitive: should the match be case sensitive?
+        @param case_sensitive: should the match be case sensitive?
         @keyword negate: should the match results be negated?
         """
 
         super(StrExactMatch, self).__init__(**kwds)
-        if not CaseSensitive:
+        if not case_sensitive:
             self.flags = re.I
             self.exact = str(exact).lower()
         else:
@@ -221,17 +220,18 @@ class StrGlobMatch(StrMatch):
 
     __inst_caching__ = True
 
-    def __init__(self, glob, CaseSensitive=True, prefix=True, **kwds):
+    def __init__(self, glob, case_sensitive=True, prefix=True, **kwds):
 
         """
         @param glob: string chunk that must be matched
-        @param CaseSensitive: should the match be case sensitive?
-        @param prefix: should the glob be a prefix check for matching, or postfix matching
+        @param case_sensitive: should the match be case sensitive?
+        @param prefix: should the glob be a prefix check for matching,
+            or postfix matching
         @keyword negate: should the match results be negated?
         """
 
         super(StrGlobMatch, self).__init__(**kwds)
-        if not CaseSensitive:
+        if not case_sensitive:
             self.flags = re.I
             self.glob = str(glob).lower()
         else:
@@ -328,10 +328,13 @@ class ComparisonMatch(base):
     def __init__(self, cmp_func, data, matching_vals, negate=False):
 
         """
-        @param cmp_func: comparison function that compares data against what is passed in during match
+        @param cmp_func: comparison function that compares data against what
+            is passed in during match
         @param data: data to base comparison against
-        @param matching_vals: sequence, composed of [-1 (less then), 0 (equal), and 1 (greater then)].
-        If you specify [-1,0], you're saying "result must be less then or equal to".
+        @param matching_vals: sequence, composed of
+            [-1 (less then), 0 (equal), and 1 (greater then)].
+            If you specify [-1,0], you're saying
+            "result must be less then or equal to".
         @param negate: should the results be negated?
         """
         base.__init__(self, negate=negate)
@@ -392,7 +395,8 @@ class ContainmentMatch(base):
 
         """
         @param vals: what values to look for during match
-        @keyword all: must all vals be present, or just one for a match to succeed?
+        @keyword all: must all vals be present, or just one for a match
+            to succeed?
         @keyword negate: should the match results be negated?
         """
 
@@ -451,7 +455,6 @@ class ContainmentMatch(base):
                 return (val in self.vals) != self.negate
             return False
 
-        entry = pkg.changes_count()
         if self.negate:
             if self.all:
                 def filter(truths):
@@ -506,7 +509,6 @@ class ContainmentMatch(base):
                 return (val in self.vals) != self.negate
             return False
 
-        entry = pkg.changes_count()
         if not self.negate:
             if not self.all:
                 def filter(truths):
@@ -569,21 +571,17 @@ class ContainmentMatch(base):
             s = "contains [%s]"
         return s % ', '.join(map(str, self.vals))
 
-for m, l in [[boolean, ["AndRestriction", "OrRestriction", "XorRestriction"]],
-             [restriction, ["AlwaysBool"]]]:
-    for x in l:
-        o = getattr(m, x)
-        doc = o.__doc__
-        o = pre_curry(o, node_type=restriction.value_type)
-        if doc is None:
-            doc = ''
-        else:
-            # do this so indentation on pydoc __doc__ is sane
-            doc = "\n".join(x.lstrip() for x in doc.split("\n")) + "\n"
-            doc += "Automatically set to package type"
-        globals()[x] = pretty_docs(o, doc)
 
-del x, m, l, o, doc
+# "Invalid name" (pylint uses the module const regexp, not the class regexp)
+# pylint: disable-msg=C0103
+
+AndRestriction = restriction.curry_node_type(boolean.AndRestriction,
+                                             restriction.value_type)
+OrRestriction = restriction.curry_node_type(boolean.OrRestriction,
+                                            restriction.value_type)
+
+AlwaysBool = restriction.curry_node_type(restriction.AlwaysBool,
+                                         restriction.value_type)
 
 AlwaysTrue = AlwaysBool(negate=True)
 AlwaysFalse = AlwaysBool(negate=False)

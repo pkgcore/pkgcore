@@ -171,11 +171,11 @@ class MergeEngine(object):
 
         """
         generate a MergeEngine instance configured for uninstalling a pkg
-        
-        @param pkg: L{pkgcore.package.metadata.package} instance to uninstall, must be from a livefs vdb
+
+        @param pkg: L{pkgcore.package.metadata.package} instance to uninstall,
+            must be from a livefs vdb
         @param offset: any livefs offset to force for modifications
         @return: L{MergeEngine}
-        
         """
 
         hooks = dict(
@@ -200,9 +200,10 @@ class MergeEngine(object):
     def replace(cls, old, new, offset=None):
 
         """
-        generate a MergeEngine instance configured for replacing one pkg with another
+        generate a MergeEngine instance configured for replacing a pkg.
 
-        @param old: L{pkgcore.package.metadata.package} instance to replace, must be from a livefs vdb
+        @param old: L{pkgcore.package.metadata.package} instance to replace,
+            must be from a livefs vdb
         @param new: L{pkgcore.package.metadata.package} instance
         @param offset: any livefs offset to force for modifications
         @return: L{MergeEngine}
@@ -244,7 +245,9 @@ class MergeEngine(object):
 
     def regenerate_csets(self):
         """
-        internal function, reset non preserverd csets.  Used in transitioning between hook points
+        internal function, reset non preserverd csets.
+
+        Used in transitioning between hook points
         """
         self.csets = StackedDict(self.preserved_csets,
             LazyValDict(self.cset_sources, self._get_cset_source))
@@ -255,7 +258,7 @@ class MergeEngine(object):
     def add_preserved_cset(self, cset_name, func):
         """
         register a cset generator for use.
-        
+
         The cset will stay in memory until the engine finishes all steps.
 
         @param cset_name: what to call the generated cset
@@ -266,10 +269,10 @@ class MergeEngine(object):
 
     def add_cset(self, cset_name, func):
         """
-        regiser a cset generator for use.  
-        
+        regiser a cset generator for use.
+
         The cset will be released from memory when it's no longer used.
-        
+
         @param cset_name: what to call the generated cset
         @param func: callable to get the cset
         """
@@ -280,17 +283,17 @@ class MergeEngine(object):
         self.cset_sources[cset_name] = func
 
 
-    def add_triggers(self, hook_name, *triggers):
+    def add_triggers(self, hook_name, *triggerseq):
         """
         register a L{pkgcore.merge.triggers.trigger} instance to be executed
-        
+
         @param hook_name: engine step to hook the trigger into
-        @param triggers: L{triggers<pkgcore.merge.triggers.trigger>} to add
+        @param triggerseq: L{triggers<pkgcore.merge.triggers.trigger>} to add
         """
         if hook_name not in self.hooks:
             raise KeyError("%s isn't a known hook" % hook_name)
 
-        for x in triggers:
+        for x in triggerseq:
             for rcs in x.required_csets:
                 if rcs not in self.cset_sources:
                     if isinstance(rcs, basestring):
@@ -300,7 +303,7 @@ class MergeEngine(object):
 #					elif not callable(rcs):
 #						raise TriggerUnknownCset(x, rcs)
 
-        for x in triggers:
+        for x in triggerseq:
             x.register(hook_name, self.hooks[hook_name])
 
     @staticmethod

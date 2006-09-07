@@ -25,13 +25,15 @@ def gen_chksums(handlers, location):
 
 
 def gen_obj(path, stat=None, chksum_handlers=None, real_path=None):
-    
+
     """
-    given a fs path, and an optional stat, return an appropriate fs obj representing that file/dir/dev/fif/link
+    given a fs path, and an optional stat, create an appropriate fs obj.
 
     @param stat: stat object to reuse if available
-    @param datasource: real path to the object if path is the desired location, rather then existant location-
-    alternatively, can be a L{<pkgcore.interfaces.data_source.base>data_source} instance to pull data from
+    @param datasource: real path to the object if path is the desired location,
+        rather then existant location- alternatively, can be a
+        L{<pkgcore.interfaces.data_source.base>data_source} instance to pull
+        data from.
     @raise KeyError: if no obj type matches the stat checks
     @return: L{pkgcore.fs.fs.fsBase} derivative
     """
@@ -78,11 +80,16 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_path=None):
 
 def iter_scan(path, offset=None):
     """
-    generator that yield L{pkgcore.fs.fs.fsBase} objects from recursively scanning a path.
-    Does not follow symlinks pointing at dirs, just merely yields an obj representing said symlink
+    Recursively scan a path.
+
+    Does not follow symlinks pointing at dirs, just merely yields an
+    obj representing said symlink
+
+    @return: an iterator of L{pkgcore.fs.fs.fsBase} objects.
 
     @param path: str path of what directory to scan in the livefs
-    @param offset: if not None, prefix to strip from each objects location.  if offset is /tmp, /tmp/blah becomes /blah
+    @param offset: if not None, prefix to strip from each objects location.
+        if offset is /tmp, /tmp/blah becomes /blah
     """
     chksum_handlers = get_handlers()
     sep = os.path.sep

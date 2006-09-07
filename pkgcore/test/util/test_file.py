@@ -62,75 +62,75 @@ class TestReadBashConfig(unittest.TestCase):
 class ReadBashDictTest(unittest.TestCase):
 
     def setUp(self):
-        self.validFile = tempfile.NamedTemporaryFile()
-        self.validFile.write(
+        self.valid_file = tempfile.NamedTemporaryFile()
+        self.valid_file.write(
             '# hi I am a comment\n'
             'foo1=bar\n'
             "foo2='bar'\n"
             'foo3="bar"\n'
             'foo4=-/:j4\n')
-        self.validFile.flush()
-        self.invalidFile = tempfile.NamedTemporaryFile()
-        self.invalidFile.write(
+        self.valid_file.flush()
+        self.invalid_file = tempfile.NamedTemporaryFile()
+        self.invalid_file.write(
             '# hi I am a comment\n'
             'foo1=bar\n'
             "foo2='bar'foo3=\"bar\"")
-        self.invalidFile.flush()
-        self.sourcingFile = tempfile.NamedTemporaryFile()
-        self.sourcingFile.write('source "%s"\n' % self.validFile.name)
-        self.sourcingFile.flush()
-        self.advancedFile = tempfile.NamedTemporaryFile()
-        self.advancedFile.write(
+        self.invalid_file.flush()
+        self.sourcing_file = tempfile.NamedTemporaryFile()
+        self.sourcing_file.write('source "%s"\n' % self.valid_file.name)
+        self.sourcing_file.flush()
+        self.advanced_file = tempfile.NamedTemporaryFile()
+        self.advanced_file.write(
             'one1=1\n'
             'one_=$one1\n'
             'two1=2\n'
             'two_=${two1}\n'
             )
-        self.advancedFile.flush()
-        self.envFile = tempfile.NamedTemporaryFile()
-        self.envFile.write(
+        self.advanced_file.flush()
+        self.env_file = tempfile.NamedTemporaryFile()
+        self.env_file.write(
             'imported=${external}\n'
             )
-        self.envFile.flush()
-        self.escapedFile = tempfile.NamedTemporaryFile()
-        self.escapedFile.write(
+        self.env_file.flush()
+        self.escaped_file = tempfile.NamedTemporaryFile()
+        self.escaped_file.write(
             'end=bye\n'
             'quoteddollar="\${dollar}"\n'
             'quotedexpansion="\${${end}}"\n'
             )
-        self.escapedFile.flush()
-        self.unclosedFile = tempfile.NamedTemporaryFile()
-        self.unclosedFile.write('foo="bar')
-        self.unclosedFile.flush()
+        self.escaped_file.flush()
+        self.unclosed_file = tempfile.NamedTemporaryFile()
+        self.unclosed_file.write('foo="bar')
+        self.unclosed_file.flush()
 
     def tearDown(self):
-        del self.validFile
-        del self.invalidFile
-        del self.sourcingFile
-        del self.advancedFile
-        del self.envFile
-        del self.escapedFile
-        del self.unclosedFile
+        del self.valid_file
+        del self.invalid_file
+        del self.sourcing_file
+        del self.advanced_file
+        del self.env_file
+        del self.escaped_file
+        del self.unclosed_file
 
     def test_read_bash_dict(self):
         # TODO this is not even close to complete
         self.assertEquals(
-            read_bash_dict(self.validFile.name),
+            read_bash_dict(self.valid_file.name),
             {'foo1': 'bar', 'foo2': 'bar', 'foo3': 'bar', 'foo4': '-/:j4'})
-        self.assertRaises(ParseError, read_bash_dict, self.invalidFile.name)
+        self.assertRaises(ParseError, read_bash_dict, self.invalid_file.name)
         self.assertEquals(
-            read_bash_dict(self.invalidFile.name, ignore_malformed=True),
+            read_bash_dict(self.invalid_file.name, ignore_malformed=True),
             {'foo1': 'bar', 'foo2': 'barfoo3'})
 
     def test_sourcing(self):
         # TODO this is not even close to complete
         self.assertEquals(
-            read_bash_dict(self.sourcingFile.name, sourcing_command='source'),
+            read_bash_dict(self.sourcing_file.name, sourcing_command='source'),
             {'foo1': 'bar', 'foo2': 'bar', 'foo3': 'bar', 'foo4': '-/:j4'})
 
     def test_read_advanced(self):
         self.assertEquals(
-            read_bash_dict(self.advancedFile.name),
+            read_bash_dict(self.advanced_file.name),
             {'one1': '1',
              'one_': '1',
              'two1': '2',
@@ -139,29 +139,29 @@ class ReadBashDictTest(unittest.TestCase):
 
     def test_env(self):
         self.assertEquals(
-            read_bash_dict(self.envFile.name),
+            read_bash_dict(self.env_file.name),
             {'imported': ''})
         env = {'external': 'imported foo'}
-        envBackup = env.copy()
+        env_backup = env.copy()
         self.assertEquals(
-            read_bash_dict(self.envFile.name, env),
+            read_bash_dict(self.env_file.name, env),
             {'imported': 'imported foo'})
-        self.assertEquals(envBackup, env)
+        self.assertEquals(env_backup, env)
 
     def test_escaping(self):
         self.assertEquals(
-            read_bash_dict(self.escapedFile.name), {
+            read_bash_dict(self.escaped_file.name), {
                 'end': 'bye',
                 'quoteddollar': '${dollar}',
                 'quotedexpansion': '${bye}',
                 })
 
     def test_unclosed(self):
-        self.assertRaises(ParseError, read_bash_dict, self.unclosedFile.name)
+        self.assertRaises(ParseError, read_bash_dict, self.unclosed_file.name)
 
 
 class TestAtomicWriteFile(TempDirMixin, unittest.TestCase):
-    
+
     def test_normal_ops(self):
         fp = os.path.join(self.dir, "target")
         open(fp, "w").write("me")
@@ -170,7 +170,7 @@ class TestAtomicWriteFile(TempDirMixin, unittest.TestCase):
         self.assertEquals(open(fp, "r").read(), "me")
         af.close()
         self.assertEquals(open(fp, "r").read(), "dar")
-    
+
     def test_del(self):
         fp = os.path.join(self.dir, "target")
         open(fp, "w").write("me")

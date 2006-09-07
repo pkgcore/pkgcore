@@ -8,7 +8,7 @@ collections of restrictions in AND, NAND, OR, NOR, XOR, XNOR style
 operations.
 """
 
-__all__ = ("AndRestriction", "OrRestriction", "XorRestriction")
+__all__ = ("AndRestriction", "OrRestriction")
 
 from itertools import islice
 from pkgcore.restrictions import restriction
@@ -82,7 +82,7 @@ class base(restriction.base):
 
     def finalize(self):
         """
-        finalize the restriction instance so that no further restrictions can be added
+        finalize the restriction instance, disallowing adding restrictions.
         """
         self.restrictions = tuple(self.restrictions)
 
@@ -143,7 +143,7 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
                 t[index] = False
                 if filter(t):
                     yield True
-                for x in iterative_quad_toggling(
+                for i in iterative_quad_toggling(
                     pkg, pvals, restrictions, index + 1, end, t, filter,
                     desired_false=desired_false, desired_true=desired_true,
                     kill_switch=kill_switch):
@@ -209,7 +209,7 @@ class AndRestriction(base):
         def filter(truths):
             return False in truths
 
-        for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
+        for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
                                          len(self.restrictions), truths,
                                          filter):
             return True
@@ -235,7 +235,7 @@ class AndRestriction(base):
         truths = [r.match(*pvals) for r in self.restrictions]
         def filter(truths):
             return False in truths
-        for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
+        for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
                                          len(self.restrictions), truths,
                                          filter):
             return True
@@ -243,9 +243,10 @@ class AndRestriction(base):
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
         """
-        generater yielding DNF (disjunctive normalized form) form of this instance
+        generater yielding DNF (disjunctive normalized form) of this instance.
 
-        @param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
+        @param full_solution_expansion: controls whether to expand everything
+            (break apart atoms for example); this isn't likely what you want
         """
         if self.negate:
 #           raise NotImplementedError("negation for dnf_solutions on "
@@ -296,9 +297,10 @@ class AndRestriction(base):
     def cnf_solutions(self, full_solution_expansion=False):
 
         """
-        returns solutions in CNF (conjunctive normalized form) for of this instance
+        returns solutions in CNF (conjunctive normalized form) of this instance
 
-        @param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
+        @param full_solution_expansion: controls whether to expand everything
+            (break apart atoms for example); this isn't likely what you want
         """
 
         if self.negate:
@@ -333,7 +335,8 @@ class OrRestriction(base):
         """
         returns alist in CNF (conjunctive normalized form) for of this instance
 
-        @param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
+        @param full_solution_expansion: controls whether to expand everything
+            (break apart atoms for example); this isn't likely what you want
         """
         if self.negate:
             raise NotImplementedError(
@@ -379,7 +382,8 @@ class OrRestriction(base):
         """
         returns a list in DNF (disjunctive normalized form) for of this instance
 
-        @param full_solution_expansion: controls whether to expand everything (break apart atoms for example); this isn't likely what you want
+        @param full_solution_expansion: controls whether to expand everything
+            (break apart atoms for example); this isn't likely what you want
         """
         if self.negate:
             # hack- this is an experiment
@@ -425,7 +429,7 @@ class OrRestriction(base):
         truths = [r.match(*pvals) for r in self.restrictions]
         def filter(truths):
             return True in truths
-        for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
+        for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
                                          len(self.restrictions), truths,
                                          filter):
             return True
@@ -452,7 +456,7 @@ class OrRestriction(base):
         truths = [r.match(*pvals) for r in self.restrictions]
         def filter(truths):
             return True in truths
-        for x in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
+        for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
                                          len(self.restrictions), truths,
                                          filter):
             yield True
@@ -462,150 +466,3 @@ class OrRestriction(base):
         if self.negate:
             return "not ( %s )" % " || ".join(str(x) for x in self.restrictions)
         return "( %s )" % " || ".join(str(x) for x in self.restrictions)
-
-
-class XorRestriction(base):
-    """Boolean XOR grouping of restrictions."""
-    __slots__ = ()
-
-    def __init__(self, *a, **kw):
-        raise NotImplementedError("kindly don't use xor yet")
-
-    def match(self, vals):
-        if not self.restrictions:
-            return not self.negate
-
-        if self.negate:
-            # 1|1 == 0|0 == 1, 0|1 == 1|0 == 0
-            armed = self.restrictions[0].match(*vals)
-            for rest in islice(self.restrictions, 1, len(self.restrictions)):
-                if armed != rest.match(vals):
-                    return False
-            return True
-        # 0|1 == 1|0 == 1, 0|0 == 1|1 == 0
-        armed = False
-        for rest in self.restrictions:
-            if armed == rest.match(vals):
-                if armed:
-                    return False
-            else:
-                if not armed:
-                    armed = True
-        if armed:
-            return True
-        return False
-
-    def force_True(self, pkg, *vals):
-        pvals = [pkg]
-        pvals.extend(vals)
-        entry_point = pkg.changes_count()
-        truths = [r.match(*pvals) for r in self.restrictions]
-        count = truths.count(True)
-        # get the simple one out of the way first.
-        l = len(truths)
-        if self.negate:
-            f = lambda r: r.force_False(*pvals)
-            t = lambda r: r.force_True(*pvals)
-            if count > l/2:	order = ((t, count, True), (f, l - count, False))
-            else:			order = ((f, l - count, False), (t, count, True))
-            for action, current, desired in order:
-                if current == l:
-                    return True
-                for x, r in enumerate(self.restrictions):
-                    if truths[x] != desired:
-                        if action(r):
-                            current += 1
-                        else:
-                            break
-                if current == l:
-                    return True
-                pkg.rollback(entry_point)
-            return False
-
-        stack = []
-        for x, val in enumerate(truths):
-            falses = filter(None, val)
-            if truths[x]:
-                falses.remove(x)
-                stack.append((falses, None))
-            else:
-                stack.append((falses, x))
-
-        if count == 1:
-            return True
-            del stack[truths.index(True)]
-
-        for falses, truths in stack:
-            failed = False
-            for x in falses:
-                if not self.restrictions[x].force_False(*pvals):
-                    failed = True
-                    break
-            if not failed:
-                if trues is not None:
-                    if self.restrictions[x].force_True(*pvals):
-                        return True
-                else:
-                    return True
-            pkg.rollback(entry_point)
-        return False
-
-    def force_False(self, pkg, *vals):
-        pvals = [pkg]
-        pvals.extend(vals)
-        entry_point = pkg.changes_count()
-        truths = [r.match(*pvals) for r in self.restrictions]
-        count = truths.count(True)
-        # get the simple one out of the way first.
-        l = len(truths)
-        if not self.negate:
-            f = lambda r: r.force_False(*pvals)
-            t = lambda r: r.force_True(*pvals)
-            if count > l/2:	order = ((t, count, True), (f, l - count, False))
-            else:			order = ((f, l - count, False), (t, count, True))
-            for action, current, desired in order:
-                if current == l:
-                    return True
-
-                for x, r in enumerate(self.restrictions):
-                    if truths[x] != desired:
-                        if action(r):
-                            current += 1
-                        else:
-                            break
-                if current == l:
-                    return True
-                pkg.rollback(entry_point)
-            return False
-        # the fun one.
-        stack = []
-        for x, val in enumerate(truths):
-            falses = filter(None, val)
-            if truths[x]:
-                falses.remove(x)
-                stack.append((falses, None))
-            else:
-                stack.append((falses, x))
-
-        if count == 1:
-            return True
-
-        for falses, truths in stack:
-            failed = False
-            for x in falses:
-                if not self.restrictions[x].force_False(*pvals):
-                    failed = True
-                    break
-            if not failed:
-                if trues is not None:
-                    if self.restrictions[x].force_True(*pvals):
-                        return True
-                else:
-                    return True
-            pkg.rollback(entry_point)
-        return False
-
-    def __str__(self):
-        if self.negate:
-            return "not ( %s )" % " ^^ ".join(str(x) for x in self.restrictions)
-        return "( %s )" % " ^^ ".join(str(x) for x in self.restrictions)

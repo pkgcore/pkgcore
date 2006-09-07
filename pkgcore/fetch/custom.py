@@ -30,8 +30,10 @@ class fetcher(base.fetcher):
         @type distdir: string
         @param command: shell command to execute to fetch a file
         @type command: string
-        @param resume_command: if not None, command to use for resuming- if None, command is reused
-        @param required_chksums: if None, all chksums must be verified, else only chksums listed
+        @param resume_command: if not None, command to use for resuming-
+            if None, command is reused
+        @param required_chksums: if None, all chksums must be verified,
+            else only chksums listed
         @type required_chksums: None or sequence
         @param userpriv: depriv for fetching?
         @param attempts: max number of attempts before failing the fetch
@@ -47,13 +49,13 @@ class fetcher(base.fetcher):
             self.required_chksums = None
         else:
             self.required_chksums = required_chksums
-        def rewrite_command(s):
-            new_command = s.replace("${DISTDIR}", self.distdir)
+        def rewrite_command(string):
+            new_command = string.replace("${DISTDIR}", self.distdir)
             new_command = new_command.replace("$DISTDIR", self.distdir)
             new_command = new_command.replace("${URI}", "%(URI)s")
             new_command = new_command.replace("$URI", "%(URI)s")
-            if new_command == s:
-                raise MalformedCommand(s)
+            if new_command == string:
+                raise MalformedCommand(string)
             return new_command
 
         self.command = rewrite_command(command)
@@ -82,7 +84,8 @@ class fetcher(base.fetcher):
         fetch a file
 
         @type target: L{pkgcore.fetch.fetchable} instance
-        @return: None if fetching failed, else on disk location of the copied file
+        @return: None if fetching failed,
+            else on disk location of the copied file
         """
 
 

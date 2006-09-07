@@ -114,7 +114,7 @@ def cleanup_pids(pids=None):
         pids = spawned_pids
     elif pids is not spawned_pids:
         pids = list(pids)
-    
+
     while pids:
         pid = pids.pop()
         try:
@@ -138,14 +138,17 @@ def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
 
     """wrapper around execve
 
-    mycommand must be either a list, or a string
-    env must be a dict with it's keys strictly strings, and values strictly strings
-    opt_name controls what the process is named (what it would show up as under top for example)
-    fd_pipes controls what fd's are left open in the spawned process- must be a dict mapping existing
-    fd to fd # inside the new process
-    returnpid controls whether spawn waits for the process to finish, or returns the pid.
+    @type  mycommand: list or string
+    @type  env: mapping with string keys and values
+    @param opt_name: controls what the process is named
+        (what it would show up as under top for example)
+    @type  fd_pipes: mapping from existing fd to fd (inside the new process)
+    @param fd_pipes: controls what fd's are left open in the spawned process-
+    @param returnpid: controls whether spawn waits for the process to finish,
+        or returns the pid.
 
-    rest of the options are fairly self explanatory"""
+    rest of the options are fairly self explanatory.
+    """
     if env is None:
         env = {}
     global spawned_pids
@@ -391,11 +394,10 @@ def spawn_get_output(
     mycommand, spawn_type=spawn, raw_exit_code=False, collect_fds=(1,),
     fd_pipes=None, split_lines=True, **keywords):
 
-    """call spawn, collecting the output to fd's specified in collect_fds list
-    emulate_gso is a compatability hack to emulate commands.getstatusoutput's return, minus the
-    requirement it always be a bash call (spawn_type controls the actual spawn call), and minus the
-    'lets let log only stdin and let stderr slide by'.
-    spawn_type is the passed in function to call- typically spawn_bash, spawn, spawn_sandbox, or spawn_fakeroot
+    """Call spawn, collecting the output to fd's specified in collect_fds list.
+
+    @param spawn_type: the passed in function to call-
+       typically spawn_bash, spawn, spawn_sandbox, or spawn_fakeroot.
     """
 
     pr, pw = None, None

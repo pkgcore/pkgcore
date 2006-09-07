@@ -9,8 +9,8 @@ from pkgcore.util.currying import pre_curry
 def _grab_virtuals(parent_repo):
     virtuals = {}
     for pkg in parent_repo:
-        for virtual in pkg.provides.evaluate_depset(pkg.use):
-            virtuals.setdefault(virtual.package, {}).setdefault(
+        for virtualpkg in pkg.provides.evaluate_depset(pkg.use):
+            virtuals.setdefault(virtualpkg.package, {}).setdefault(
                 pkg.fullver, []).append(pkg)
 
     for pkg_dict in virtuals.itervalues():

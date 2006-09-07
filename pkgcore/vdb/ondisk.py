@@ -16,7 +16,7 @@ from pkgcore.interfaces import data_source
 from pkgcore.util.osutils import listdir_dirs
 from pkgcore.repository import multiplex, virtual
 from pkgcore.util import bzip2
-from pkgcore.util.obj import DelayInstantiation
+from pkgcore.util.obj import DelayedInstantiation
 
 from pkgcore.util.demandload import demandload
 demandload(globals(),
@@ -138,7 +138,7 @@ class tree(prototype.tree):
             if key == "USE":
                 # special case it, since lots of stuff passes it around, 
                 # but not always used.
-                data = DelayInstantiation(str, 
+                data = DelayedInstantiation(str, 
                     pre_curry(self._read_file, fp))
             else:
                 data = self._read_file(fp)

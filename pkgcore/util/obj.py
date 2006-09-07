@@ -97,11 +97,11 @@ def DelayedInstantiation_kls(kls, *a, **kwd):
     return DelayedInstantiation(kls, kls, *a, **kwd)
 
 class_cache = {}
-def DelayedInstantiation(resultant_kls, kls, *a, **kwd):
+def DelayedInstantiation(resultant_kls, func, *a, **kwd):
     o = class_cache.get(resultant_kls, None)
     if o is None:
         o = make_kls(resultant_kls)
         class_cache[resultant_kls] = o
-    return o(kls, *a, **kwd)
+    return o(func, *a, **kwd)
     
     

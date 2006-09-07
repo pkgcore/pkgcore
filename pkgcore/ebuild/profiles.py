@@ -5,7 +5,7 @@
 gentoo profile support
 """
 
-import os
+import os, errno
 from pkgcore.config import profiles
 from pkgcore.util.file import iter_read_bash, read_bash_dict
 from pkgcore.util.currying import pre_curry
@@ -16,7 +16,11 @@ from pkgcore.interfaces.data_source import local_source
 from pkgcore.repository import virtual
 from pkgcore.ebuild import cpv
 from pkgcore.util.demandload import demandload
-demandload(globals(), "logging")
+from collections import deque
+
+demandload(globals(), "logging "
+    "pkgcore.config.errors:InstantiationError "
+    "pkgcore.ebuild:const ")
 
 # Harring sez-
 # This should be implemented as an auto-exec config addition.
@@ -73,10 +77,9 @@ class OnDiskProfile(profiles.base):
         """
 
         pjoin = os.path.join
+        profile = profile.strip()
 
-        from pkgcore.config.errors import InstantiationError
         if incrementals is None:
-            from pkgcore.ebuild import const
             incrementals = list(const.incrementals)
         if base_path is None and base_repo is None:
             raise InstantiationError(
@@ -84,6 +87,7 @@ class OnDiskProfile(profiles.base):
                                             "base_repo": base_repo,
                                             "base_path": base_path},
                 "either base_path, or location must be set")
+
         if base_repo is not None:
             self.basepath = pjoin(base_repo.base, "profiles")
         elif base_path is not None:
@@ -94,6 +98,7 @@ class OnDiskProfile(profiles.base):
                         "base_repo": base_repo, "base_path": base_path},
                     "if defined, base_path(%s) must exist-" % base_path)
             self.basepath = base_path
+
         else:
             raise InstantiationError(
                 self.__class__, [profile], {"incrementals": incrementals,
@@ -101,52 +106,9 @@ class OnDiskProfile(profiles.base):
                                             "base_path": base_path},
                 "either base_repo or base_path must be configured")
 
+        self.load_deprecation_status(profile)
 
-        dep_path = pjoin(self.basepath, profile, "deprecated")
-        if os.path.isfile(dep_path):
-            logging.warn(
-                "profile '%s' is marked as deprecated, read '%s' please" % (
-                    profile, dep_path))
-        del dep_path
-
-        parents = [None]
-        stack = [pjoin(self.basepath, profile.strip())]
-        idx = 0
-
-        while len(stack) > idx:
-            parent, trg = parents[idx], stack[idx]
-
-            if not os.path.isdir(trg):
-                if parent:
-                    raise profiles.ProfileException(
-                        "%s doesn't exist, or isn't a dir, referenced by %s" %
-                        (trg, parent))
-                raise profiles.ProfileException(
-                    "%s doesn't exist, or isn't a dir" % trg)
-
-            fp = pjoin(trg, "parent")
-            if os.path.isfile(fp):
-                l = []
-                try:
-                    f = open(fp, "r", 32384)
-                except (IOError, OSError):
-                    raise profiles.ProfileException(
-                        "failed reading parent from %s" % path)
-                for x in f:
-                    x = x.strip()
-                    if x.startswith("#") or x == "":
-                        continue
-                    l.append(x)
-                f.close()
-                l.reverse()
-                for x in l:
-                    stack.append(os.path.abspath(pjoin(trg, x)))
-                    parents.append(trg)
-                del l
-
-            idx += 1
-
-        del parents
+        stack = self.get_inheritance_order(profile)
 
         # build up visibility limiters.
         stack.reverse()
@@ -217,6 +179,76 @@ class OnDiskProfile(profiles.base):
         del self.use_mask
         del self.maskers
 
+    @property
+    def deprecated(self):
+        if isinstance(self._deprecated, basestring):
+            return open(self._deprecated, "r").read()
+        return False
+
+    def load_deprecation_status(self, profile):
+        dep_path = os.path.join(self.basepath, profile, "deprecated")
+        self._deprecated = False
+        if os.path.isfile(dep_path):
+            logging.warn("profile '%s' is marked as deprecated, read '%s' "
+                "please" % (profile, dep_path))
+            self._deprecated = dep_path
+
+    def get_inheritance_order(self, profile):
+        pjoin = os.path.join
+        pabs = os.path.abspath
+        # processed, required, loc, name
+        full_stack = [pjoin(self.basepath, profile)]
+        stack = deque([[False, full_stack[-1]]])
+        idx = 0
+
+        while stack:
+            processed, trg = stack[-1]
+            if processed:
+                stack.pop()
+                continue
+            if len(stack) > 1:
+                parent = stack[-2][1]
+            else:
+                parent = None
+            
+            new_parents = []
+
+            try:
+                for x in open(pjoin(trg, "parent")):
+                    x = x.strip()
+                    if x.startswith("#") or x == "":
+                        continue
+                    new_parents.append(x)
+
+                new_parents = [pabs(pjoin(trg, x))
+                    for x in reversed(new_parents)]
+            except (IOError, OSError), oe:
+                if oe.errno != errno.ENOENT:
+                    if parent:
+                        raise profiles.ProfileException(
+                            "%s failed reading parent %s: %s" %
+                            (parent, trg, oe))
+                    raise profiles.ProfileException(
+                        "%s failed reading: %s" % (trg, oe))
+
+                if not os.path.exists(trg):
+                    # never required without a parent.
+                    if oe.errno == errno.ENOENT:
+                        s = "doesn't exist"
+                    else:
+                        s = "wasn't found: %s" % oe
+                    raise profiles.ProfileException(
+                        "%s: parent %s %s" % 
+                            (parent, trg, s))
+                # ok.  no parent, non error.
+                del oe
+            if not new_parents:
+                stack.pop()
+            else:
+                stack[-1][0] = True
+                stack.extend([False, x] for x in new_parents)
+                full_stack.extend(new_parents)
+        return full_stack
 
 class ForgetfulDict(dict):
 

@@ -46,6 +46,8 @@ def pkg_uses_default_preinst(pkg):
     return m is not None and \
         default_pkg_preinst_re.search(data[m.end():]) is None
 
+def wrap_inst(self, wrap, inst):
+    return wrap(inst(self), self.use)
 
 class package(ebuild_src.package):
 
@@ -69,7 +71,7 @@ class package(ebuild_src.package):
     _get_attr.update((x, post_curry(passthrough, x))
                      for x in ("contents", "environment", "raw_ebuild"))
     _get_attr.update(
-        (k, post_curry(lambda s, wrap, inst: wrap(inst(s), s.use),
+        (k, post_curry(wrap_inst,
                        ebuild_src.package._config_wrappables[k],
                        ebuild_src.package._get_attr[k]))
         for k in ebuild_src.package._config_wrappables

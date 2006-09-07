@@ -95,7 +95,11 @@ def configFromMakeConf(location="/etc/"):
             "location": "%s/var/db/pkg" % config_root.rstrip("/")})
 
     try:
-        profile = os.readlink(pjoin(base_path, "make.profile"))
+        profile = os.path.abspath(pjoin(base_path, 
+            os.readlink(pjoin(base_path, "make.profile"))))
+        # normalize...
+        profile = "%s%s" % (os.path.sep, os.path.sep.join(
+            x for x in profile.split(os.path.sep) if x))
     except OSError, oe:
         if oe.errno in (errno.ENOENT, errno.EINVAL):
             raise errors.InstantiationError(
@@ -104,6 +108,7 @@ def configFromMakeConf(location="/etc/"):
                 % base_path)
         raise errors.InstantiationError("configFromMakeConf", [], {},
             "%s/make.profile: unexepect error- %s" % (base_path, oe))
+
     psplit = [piece for piece in profile.split("/") if piece]
     # poor mans rindex.
     try:

@@ -25,15 +25,22 @@ demandload(globals(), "logging "
 # Harring sez-
 # This should be implemented as an auto-exec config addition.
 
+def loop_stack(stack, filename, func=iter_read_bash):
+    return loop_iter_read((os.path.join(x, filename) for x in stack),
+        func=func)
 
 def loop_iter_read(files, func=iter_read_bash):
     for fp in files:
-        if os.path.exists(fp):
-            try:
+        try:
+            if func == iter_read_bash:
+                yield fp, func(open(fp, "r"))
+            else:
                 yield fp, func(fp)
-            except (OSError, IOError), e:
+        except (OSError, IOError), e:
+            if e.errno != errno.ENOENT:
                 raise profiles.ProfileException(
                     "failed reading '%s': %s" % (e.filename, str(e)))
+            del e
 
 
 def incremental_set(fp, iterable, stack):
@@ -53,6 +60,25 @@ def incremental_profile_files(stack, filename):
     for fp, i in loop_iter_read(pjoin(prof, filename) for prof in stack):
         incremental_set(fp, i, s)
     return s
+
+
+def incremental_list_negations(setting, orig_list):
+    l = set()
+    for x in orig_list:
+        if x.startswith("-"):
+            if x.startswith("-*"):
+                l.clear()
+            else:
+                if len(x) == 1:
+                    raise ValueError("negation of a setting in '%s', "
+                       	"but name negated isn't completed (%s)" % (
+                            setting, orig_list))
+                x = x[1:]
+                if x in l:
+                    l.remove(x)
+        else:
+            l.add(x)
+    return l
 
 
 class OnDiskProfile(profiles.base):
@@ -112,9 +138,8 @@ class OnDiskProfile(profiles.base):
 
         # build up visibility limiters.
         stack.reverse()
-        pkgs = set()
-        for fp, i in loop_iter_read(pjoin(prof, "packages") for prof in stack):
-            incremental_set(fp, i, pkgs)
+
+        pkgs = incremental_profile_files(stack, "packages")
 
         visibility = []
         sys = []
@@ -137,6 +162,9 @@ class OnDiskProfile(profiles.base):
         self.use_mask = tuple(incremental_profile_files(stack, "use.mask"))
         self.maskers = tuple(set(self.visibility).union(atom(x) for x in 
             incremental_profile_files(stack, "package.mask")))
+
+        package_use_mask  = self.load_atom_dict(stack, "package.use.mask")
+        package_use_force = self.load_atom_dict(stack, "package.use.force")
 
         d = {}
         for fp, dc in loop_iter_read((pjoin(prof, "make.defaults")
@@ -196,6 +224,21 @@ class OnDiskProfile(profiles.base):
             logging.warn("profile '%s' is marked as deprecated, read '%s' "
                 "please" % (profile, dep_path))
             self._deprecated = dep_path
+
+    def load_atom_dict(self, stack, file):
+        d = {}
+        for fp, i in loop_stack(stack, "package.use.mask"):
+            for line in i:
+                s = line.split()
+                a = atom(s[0])
+                d2 = d.setdefault(a.key, {})
+                o = s[1:]
+                if a in d2:
+                    o = filter_negations(fp, d2[a] + o)
+                d2[a] = o
+        if d:
+            import pdb;pdb.set_trace()
+        return d
 
     def get_inheritance_order(self, profile):
         pjoin = os.path.join

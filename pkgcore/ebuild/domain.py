@@ -21,6 +21,7 @@ from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.config.errors import BaseException
 from pkgcore.util.demandload import demandload
+from pkgcore.ebuild.profiles import incremental_list_negations
 demandload(globals(), "warnings")
 
 class MissingFile(BaseException):
@@ -50,24 +51,6 @@ def package_keywords_splitter(val):
 # selected by config)
 # ~harring
 
-
-def filter_negations(setting, orig_list):
-    l = set()
-    for x in orig_list:
-        if x.startswith("-"):
-            if x.startswith("-*"):
-                l.clear()
-            else:
-                if len(x) == 1:
-                    raise Failure("negation of a setting in '%s', "
-                                  "but name negated isn't completed (%s)" % (
-                            setting, orig_list))
-                x = x[1:]
-                if x in l:
-                    l.remove(x)
-        else:
-            l.add(x)
-    return l
 
 def generate_masking_restrict(masks):
     # if it's masked, it's not a match
@@ -150,7 +133,7 @@ class domain(pkgcore.config.domain.domain):
             if k not in settings:
                 raise Failure("No %s setting detected from profile, "
                               "or user config" % k)
-            v.extend(filter_negations(k, settings[k]))
+            v.extend(incremental_list_negations(k, settings[k]))
             settings[k] = v
 
         for u in profile.use_expand:

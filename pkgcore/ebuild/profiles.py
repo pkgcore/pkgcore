@@ -163,8 +163,10 @@ class OnDiskProfile(profiles.base):
         self.maskers = tuple(set(self.visibility).union(atom(x) for x in 
             incremental_profile_files(stack, "package.mask")))
 
-        package_use_mask  = self.load_atom_dict(stack, "package.use.mask")
-        package_use_force = self.load_atom_dict(stack, "package.use.force")
+        self.package_use_mask  = self.load_atom_dict(stack, "package.use.mask")
+        self.package_use_force = self.load_atom_dict(stack, "package.use.force")
+        if self.package_use_force:
+            import pdb;pdb.set_trace()
 
         d = {}
         for fp, dc in loop_iter_read((pjoin(prof, "make.defaults")
@@ -225,9 +227,9 @@ class OnDiskProfile(profiles.base):
                 "please" % (profile, dep_path))
             self._deprecated = dep_path
 
-    def load_atom_dict(self, stack, file):
+    def load_atom_dict(self, stack, filename):
         d = {}
-        for fp, i in loop_stack(stack, "package.use.mask"):
+        for fp, i in loop_stack(stack, filename):
             for line in i:
                 s = line.split()
                 a = atom(s[0])
@@ -236,8 +238,6 @@ class OnDiskProfile(profiles.base):
                 if a in d2:
                     o = filter_negations(fp, d2[a] + o)
                 d2[a] = o
-        if d:
-            import pdb;pdb.set_trace()
         return d
 
     def get_inheritance_order(self, profile):

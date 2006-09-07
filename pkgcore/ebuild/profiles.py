@@ -21,6 +21,36 @@ demandload(globals(), "logging")
 # Harring sez-
 # This should be implemented as an auto-exec config addition.
 
+
+def loop_iter_read(files, func=iter_read_bash):
+    for fp in files:
+        if os.path.exists(fp):
+            try:
+                yield fp, func(fp)
+            except (OSError, IOError), e:
+                raise profiles.ProfileException(
+                    "failed reading '%s': %s" % (e.filename, str(e)))
+
+
+def incremental_set(fp, iterable, stack):
+    for p in iterable:
+        if p[0] == "-":
+            try:
+                stack.remove(p[1:])
+            except KeyError:
+                logging.warn("%s is reversed in %s, but isn't set yet!"
+                    % (p[1:], fp))
+        else:
+            stack.add(p)
+
+def incremental_profile_files(stack, filename):
+    s = set()
+    pjoin = os.path.join
+    for fp, i in loop_iter_read(pjoin(prof, filename) for prof in stack):
+        incremental_set(fp, i, s)
+    return s
+
+
 class OnDiskProfile(profiles.base):
 
     """
@@ -42,6 +72,8 @@ class OnDiskProfile(profiles.base):
             to base_repo.
         """
 
+        pjoin = os.path.join
+
         from pkgcore.config.errors import InstantiationError
         if incrementals is None:
             from pkgcore.ebuild import const
@@ -53,7 +85,7 @@ class OnDiskProfile(profiles.base):
                                             "base_path": base_path},
                 "either base_path, or location must be set")
         if base_repo is not None:
-            self.basepath = os.path.join(base_repo.base, "profiles")
+            self.basepath = pjoin(base_repo.base, "profiles")
         elif base_path is not None:
             if not os.path.exists(base_path):
                 raise InstantiationError(
@@ -69,7 +101,8 @@ class OnDiskProfile(profiles.base):
                                             "base_path": base_path},
                 "either base_repo or base_path must be configured")
 
-        dep_path = os.path.join(self.basepath, profile, "deprecated")
+
+        dep_path = pjoin(self.basepath, profile, "deprecated")
         if os.path.isfile(dep_path):
             logging.warn(
                 "profile '%s' is marked as deprecated, read '%s' please" % (
@@ -77,7 +110,7 @@ class OnDiskProfile(profiles.base):
         del dep_path
 
         parents = [None]
-        stack = [os.path.join(self.basepath, profile.strip())]
+        stack = [pjoin(self.basepath, profile.strip())]
         idx = 0
 
         while len(stack) > idx:
@@ -91,7 +124,7 @@ class OnDiskProfile(profiles.base):
                 raise profiles.ProfileException(
                     "%s doesn't exist, or isn't a dir" % trg)
 
-            fp = os.path.join(trg, "parent")
+            fp = pjoin(trg, "parent")
             if os.path.isfile(fp):
                 l = []
                 try:
@@ -107,7 +140,7 @@ class OnDiskProfile(profiles.base):
                 f.close()
                 l.reverse()
                 for x in l:
-                    stack.append(os.path.abspath(os.path.join(trg, x)))
+                    stack.append(os.path.abspath(pjoin(trg, x)))
                     parents.append(trg)
                 del l
 
@@ -115,29 +148,11 @@ class OnDiskProfile(profiles.base):
 
         del parents
 
-        def loop_iter_read(files, func=iter_read_bash):
-            for fp in files:
-                if os.path.exists(fp):
-                    try:
-                        yield fp, func(fp)
-                    except (OSError, IOError), e:
-                        raise profiles.ProfileException(
-                            "failed reading '%s': %s" % (e.filename, str(e)))
-
-
         # build up visibility limiters.
         stack.reverse()
         pkgs = set()
-        for fp, i in loop_iter_read(os.path.join(prof, "packages")
-                                    for prof in stack):
-            for p in i:
-                if p[0] == "-":
-                    try:
-                        pkgs.remove(p[1:])
-                    except KeyError:
-                        logging.warn("%s is reversed in %s, but isn't set yet!"
-                                     % (p[1:], fp))
-                else:	pkgs.add(p)
+        for fp, i in loop_iter_read(pjoin(prof, "packages") for prof in stack):
+            incremental_set(fp, i, pkgs)
 
         visibility = []
         sys = []
@@ -149,49 +164,20 @@ class OnDiskProfile(profiles.base):
                 # note the negation. this means cat/pkg matchs, but
                 # ver must not, else it's masked.
                 visibility.append(atom(p, negate_vers=True))
-        del pkgs
+
         self.sys = tuple(sys)
         self.visibility = tuple(visibility)
-
-        use_mask = set()
-        for fp, i in loop_iter_read(os.path.join(prof, "use.mask")
-                                    for prof in stack):
-            for p in i:
-                if p[0] == "-":
-                    try:
-                        use_mask.remove(p[1:])
-                    except KeyError:
-                        logging.warn("%s is reversed in %s, but isn't set yet!"
-                                     % (p[1:], fp))
-                else:
-                    use_mask.add(p)
-
-        self.use_mask = tuple(use_mask)
-        del use_mask
-        self.bashrc = tuple(
-            local_source(path) for path in (
-                os.path.join(x, 'profile.bashrc') for x in stack)
-            if os.path.exists(path))
-
-        maskers = set()
-        for fp, i in loop_iter_read(os.path.join(prof, "package.mask")
-                                    for prof in stack + [self.basepath]):
-            for p in i:
-                if p[0] == "-":
-                    try:
-                        maskers.remove(p[1:])
-                    except KeyError:
-                        logging.warn("%s is reversed in %s, but isn't set yet!"
-                                     % (p[1:], fp))
-                else:
-                    maskers.add(p)
-
-        self.maskers = tuple(set(self.visibility).union(atom(x)
-                                                        for x in maskers))
-        del maskers
+        del sys, visibility, pkgs
+        
+        self.bashrc = tuple(local_source(path)
+            for path in (pjoin(x, 'profile.bashrc') for x in stack)
+                if os.path.exists(path))
+        self.use_mask = tuple(incremental_profile_files(stack, "use.mask"))
+        self.maskers = tuple(set(self.visibility).union(atom(x) for x in 
+            incremental_profile_files(stack, "package.mask")))
 
         d = {}
-        for fp, dc in loop_iter_read((os.path.join(prof, "make.defaults")
+        for fp, dc in loop_iter_read((pjoin(prof, "make.defaults")
                                       for prof in stack),
             lambda x:read_bash_dict(x, vars_dict=ProtectedDict(d))):
             for k, v in dc.items():
@@ -211,16 +197,11 @@ class OnDiskProfile(profiles.base):
             self.use_expand = tuple(d["USE_EXPAND"].split())
         else:
             self.use_expand = ()
-#		for u in d["USE_EXPAND"]:
-#			u2 = u.lower()+"_"
-#			if u in d:
-#				d["USE"].extend(u2 + x for x in d[u].split())
-#				del d[u]
 
         # and... default virtuals.
         virtuals = {}
-        for fp, i in loop_iter_read(os.path.join(prof, "virtuals")
-                                    for prof in stack):
+        for fp, i in loop_iter_read(pjoin(prof, "virtuals")
+            for prof in stack):
             for p in i:
                 p = p.split()
                 c = cpv.CPV(p[0])

@@ -25,7 +25,7 @@ class DelayInstantiation(object):
             obj = delayed[0](*delayed[1], **delayed[2])
             object.__setattr__(self, "__obj__", obj)
             object.__delattr__(self, "__delayed__")
-        return obj
+        return getattr(obj, attr)
     
     # special case a few methods
     for x in ('__delattr__', '__doc__', '__hash__', '__reduce__', 

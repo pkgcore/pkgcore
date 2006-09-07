@@ -180,6 +180,10 @@ class OnDiskProfile(profiles.base):
         del self.maskers
 
     @property
+    def arch(self):
+        return self.conf.get("ARCH", None)
+
+    @property
     def deprecated(self):
         if isinstance(self._deprecated, basestring):
             return open(self._deprecated, "r").read()

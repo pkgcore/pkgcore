@@ -70,7 +70,7 @@ class package(ebuild_src.package):
     del x
 
     _get_attr.update((x, post_curry(passthrough, x))
-                     for x in ("contents", "environment", "raw_ebuild"))
+                     for x in ("contents", "environment", "ebuild"))
     _get_attr.update(
         (k, post_curry(wrap_inst,
                        ebuild_src.package._config_wrappables[k],
@@ -81,6 +81,10 @@ class package(ebuild_src.package):
     _get_attr["use"] = lambda s:DelayedInstantiation(tuple,
         lambda: tuple(s.data["USE"].split()))
     _get_attr["depends"] = lambda s:DepSet("", atom)
+
+    for x in ("maintainers", "longdescription", "herds"):
+        locals()[x] = property(lambda s:None)
+    del x
 
     def _update_metadata(self, pkg):
         raise NotImplementedError()
@@ -139,7 +143,7 @@ class package_factory(metadata.factory):
         inst = self._cached_instances.get(cpv, None)
         if inst is None:
             inst = self._cached_instances[cpv] = self.child_class(self,
-                cpv, self._parent_repo._get_ebuild_path)
+                cpv)
         return inst
 
     _generate_format_install_op   = _generic_format_install_op

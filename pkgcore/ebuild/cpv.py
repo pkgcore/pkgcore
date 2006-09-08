@@ -55,7 +55,7 @@ class native_CPV(object):
         """
         self.__dict__["cpvstr"] = cpvstr
         if not isinstance(self.cpvstr, basestring):
-            import pdb;pdb.set_trace()
+            raise TypeError(self.cpvstr)
         m = parser.match(self.cpvstr)
         if not m:
             raise InvalidCPV(self.cpvstr)
@@ -245,6 +245,8 @@ def cpy_ver_cmp(ver1, rev1, ver2, rev2):
 
 
 try:
+    # No name in module
+    # pylint: disable-msg=E0611
     from pkgcore.ebuild._cpv import CPV as cpy_CPV
     base_CPV = cpy_CPV
     ver_cmp = cpy_ver_cmp

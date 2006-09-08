@@ -7,6 +7,8 @@ Compatibility module providing reimplementations of python2.5 functionality.
 Uses the native implementation from C{__builtins__} if available.
 """
 
+# using variable before assignment
+# pylint: disable-msg=E0601
 
 if "any" in __builtins__:
     any = any

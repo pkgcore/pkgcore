@@ -34,9 +34,9 @@ class tree(prototype.tree):
             self._grab_virtuals = None
         return self._virtuals[pkg.package][pkg.fullver]
 
-    def _get_categories(self, *optionalCategory):
-        # return if optionalCategory is passed... cause it's not yet supported
-        if optionalCategory:
+    def _get_categories(self, *optional_category):
+        # return if optional_category is passed... cause it's not yet supported
+        if optional_category:
             return ()
         return ("virtual",)
 

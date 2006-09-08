@@ -190,15 +190,15 @@ def proxy_it(method, *a, **kw):
         registry = GlobalPluginRegistry()
     return getattr(registry, method)(*a, **kw)
 
-for x in ["register", "deregister", "query_plugins", "get_plugin"]:
-    v = pre_curry(proxy_it, x)
-    doc = getattr(GlobalPluginRegistry, x).__doc__
+for name in ["register", "deregister", "query_plugins", "get_plugin"]:
+    v = pre_curry(proxy_it, name)
+    doc = getattr(GlobalPluginRegistry, name).__doc__
     if doc is None:
         doc = ''
     else:
         # do this so indentation on pydoc __doc__ is sane
-        doc = "\n".join(x.lstrip() for x in doc.split("\n")) +"\n"
-    doc += "proxied call to module level registry instances %s method" % x
-    globals()[x] = pretty_docs(v, doc)
+        doc = "\n".join(line.lstrip() for line in doc.split("\n")) +"\n"
+    doc += "proxied call to module level registry instances %s method" % name
+    globals()[name] = pretty_docs(v, doc)
 
-del x, v, proxy_it, doc
+del name, v, proxy_it, doc

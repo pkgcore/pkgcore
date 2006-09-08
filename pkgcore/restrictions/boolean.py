@@ -284,8 +284,7 @@ class AndRestriction(base):
                     yield node
 
         for solution in f([hardreqs], *optionals):
-            if not isinstance(solution, (tuple, list)):
-                import pdb;pdb.set_trace()
+            assert isinstance(solution, (tuple, list))
             yield solution
 
     def dnf_solutions(self, *args, **kwds):

@@ -67,9 +67,9 @@ class tree(prototype.tree):
 
         self.package_class = get_plugin("format", self.format_magic)(self)
 
-    def _get_categories(self, *optionalCategory):
-        # return if optionalCategory is passed... cause it's not yet supported
-        if optionalCategory:
+    def _get_categories(self, *optional_category):
+        # return if optional_category is passed... cause it's not yet supported
+        if optional_category:
             return {}
         try:
             try:

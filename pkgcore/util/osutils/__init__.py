@@ -4,6 +4,9 @@ os specific utilities, FS access mainly
 not heavily used right now, but will shift functions over to it as time goes by
 """
 
+# No name '_readdir' in module osutils
+# pylint: disable-msg=E0611
+
 try:
     from pkgcore.util.osutils import _readdir as module
 except ImportError:

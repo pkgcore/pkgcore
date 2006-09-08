@@ -285,3 +285,18 @@ class TestContainmentMatch(unittest.TestCase):
             self.assertNotEqual(
                 values.ContainmentMatch(1, 2, 3, all=False, negate=negate),
                 values.ContainmentMatch(1, 2, 3, all=True, negate=negate))
+
+
+class FlatteningRestrictionTest(unittest.TestCase):
+
+    def test_basic(self):
+        for negate in (False, True):
+            inst = values.FlatteningRestriction(
+                tuple, values.AnyMatch(values.EqualityMatch(None)),
+                negate=negate)
+            self.assertEqual(not negate, inst.match([7, 8, [9, None]]))
+            self.assertEqual(negate, inst.match([7, 8, (9, None)]))
+            self.assertEqual(not negate, inst.match(None))
+            # Just check this does not raise
+            self.assertTrue(str(inst))
+            self.assertTrue(repr(inst))

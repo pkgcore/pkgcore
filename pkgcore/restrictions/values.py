@@ -10,8 +10,9 @@ attr from a package instance and hand it to their wrapped restriction
 (which is a value restriction).
 """
 
-import re
 from pkgcore.restrictions import restriction, boolean, packages
+from pkgcore.util import demandload
+demandload.demandload(globals(), 're pkgcore.util:lists')
 
 # Backwards compatibility.
 value_type = restriction.value_type
@@ -572,6 +573,40 @@ class ContainmentMatch(base):
         return s % ', '.join(map(str, self.vals))
 
 
+class FlatteningRestriction(base):
+
+    """Flatten the values passed in and apply the nested restriction."""
+
+    __slots__ = ('dont_iter', 'restriction')
+
+    def __init__(self, dont_iter, childrestriction, negate=False):
+        """Initialize.
+
+        @type  dont_iter: type or tuple of types
+        @param dont_iter: type(s) not to flatten.
+                          Passed to L{pkgcore.util.lists.iflatten_instance}.
+        @type  childrestriction: restriction
+        @param childrestriction: restriction applied to the flattened list.
+        """
+        base.__init__(self, negate)
+        self.dont_iter = dont_iter
+        self.restriction = childrestriction
+
+    def match(self, val):
+        return self.restriction.match(
+            lists.iflatten_instance(val, self.dont_iter)) != self.negate
+
+    def __str__(self):
+        return 'flattening_restriction: dont_iter = %s, restriction = %s' % (
+            self.dont_iter, self.restriction)
+
+    def __repr__(self):
+        return '<%s restriction=%r dont_iter=%r negate=%r @%#8x>' % (
+            self.__class__.__name__,
+            self.restriction, self.dont_iter, self.negate,
+            id(self))
+
+
 # "Invalid name" (pylint uses the module const regexp, not the class regexp)
 # pylint: disable-msg=C0103
 
@@ -582,6 +617,9 @@ OrRestriction = restriction.curry_node_type(boolean.OrRestriction,
 
 AlwaysBool = restriction.curry_node_type(restriction.AlwaysBool,
                                          restriction.value_type)
+
+AnyMatch = restriction.curry_node_type(restriction.AnyMatch,
+                                       restriction.value_type)
 
 AlwaysTrue = AlwaysBool(negate=True)
 AlwaysFalse = AlwaysBool(negate=False)

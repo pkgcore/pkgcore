@@ -151,7 +151,6 @@ def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
     """
     if env is None:
         env = {}
-    global spawned_pids
     # mycommand is either a str or a list
     if isinstance(mycommand, str):
         mycommand = mycommand.split()

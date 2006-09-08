@@ -113,10 +113,10 @@ class UnconfiguredTree(prototype.tree):
         o.versions = self.versions
         return o
 
-    def _get_categories(self, *optionalCategory):
+    def _get_categories(self, *optional_category):
         # why the auto return? current porttrees don't allow/support
         # categories deeper then one dir.
-        if len(optionalCategory):
+        if len(optional_category):
             #raise KeyError
             return ()
 

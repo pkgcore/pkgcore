@@ -5,7 +5,7 @@ from twisted.trial import unittest
 from pkgcore.util import compatibility
 from pkgcore.util.currying import post_curry
 
-class mixin:
+class mixin(object):
     def test_builtin_override(self):
         if self.func_name in __builtins__:
             self.assertIdentical(__builtins__[self.func_name],

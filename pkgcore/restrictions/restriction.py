@@ -6,6 +6,7 @@ base restriction class
 """
 
 from pkgcore.util import caching
+from pkgcore.util.compatibility import any
 from pkgcore.util.currying import pre_curry, pretty_docs
 
 class base(object):
@@ -142,6 +143,34 @@ class FakeType(base):
 
     def __str__(self):
         return "Faked type(%s): %s" % (self.type, self._restrict)
+
+
+class AnyMatch(base):
+
+    """Apply a nested restriction to every item in a sequence."""
+
+    __slots__ = ('restriction', 'type')
+
+    def __init__(self, childrestriction, node_type, negate=False):
+        """Initialize.
+
+        @type  childrestriction: restriction
+        @param childrestriction: child restriction applied to every value.
+        @type  restriction_type: string
+        @param restriction_type: type of this restriction.
+        """
+        base.__init__(self, negate)
+        self.restriction, self.type = childrestriction, node_type
+
+    def match(self, val):
+        return any(self.restriction.match(x) for x in val) != self.negate
+
+    def __str__(self):
+        return "any: %s match" % (self.restriction,)
+
+    def __repr__(self):
+        return '<%s restriction=%r @%#8x>' % (
+            self.__class__.__name__, self.restriction, id(self))
 
 
 def curry_node_type(klass, node_type, extradoc=None):

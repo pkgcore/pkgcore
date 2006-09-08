@@ -7,6 +7,9 @@ indirection to load ElementTree
 # essentially... prefer cElementTree, then 2.5 bundled, then
 # elementtree, then 2.5 bundled, then our own bundled
 
+# "No name etree in module xml", "Reimport cElementTree"
+# pylint: disable-msg=E0611,W0404
+
 gotit = True
 try:
     import cElementTree as etree

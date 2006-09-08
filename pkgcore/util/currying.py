@@ -31,6 +31,9 @@ def native_pre_curry(func, *args, **kwargs):
 
 # native_pre_curry is always defined, if pre_curry is not identical to
 # native_pre_curry the tests test both.
+
+# Unused import, unable to import
+# pylint: disable-msg=W0611,F0401
 try:
     from functools import partial as pre_curry
 except ImportError:

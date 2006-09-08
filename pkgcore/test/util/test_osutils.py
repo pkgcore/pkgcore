@@ -44,6 +44,8 @@ class NativeListDirTest(unittest.TestCase, TempDirMixin):
             self.assertRaises(OSError, func, os.path.join(self.dir, 'spork'))
 
 try:
+    # No name "readdir" in module osutils
+    # pylint: disable-msg=E0611
     from pkgcore.util.osutils import _readdir
 except ImportError:
     pass

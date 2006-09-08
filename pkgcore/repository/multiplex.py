@@ -23,14 +23,14 @@ class tree(prototype.tree):
                     "%s is not a repository tree derivative" % (x,))
         self.trees = trees
 
-    def _get_categories(self, *optionalCategory):
+    def _get_categories(self, *optional_category):
         d = set()
         failures = 0
-        if optionalCategory:
-            optionalCategory = optionalCategory[0]
+        if optional_category:
+            optional_category = optional_category[0]
             for x in self.trees:
                 try:
-                    d.update(x.categories[optionalCategory])
+                    d.update(x.categories[optional_category])
                 except KeyError:
                     failures += 1
         else:
@@ -40,9 +40,9 @@ class tree(prototype.tree):
                 except (errors.TreeCorruption, KeyError):
                     failures += 1
         if failures == len(self.trees):
-            if optionalCategory:
+            if optional_category:
                 raise KeyError("category base '%s' not found" %
-                               str(optionalCategory))
+                               str(optional_category))
             raise KeyError("failed getting categories")
         return tuple(d)
 

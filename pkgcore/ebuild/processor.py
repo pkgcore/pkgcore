@@ -38,8 +38,6 @@ demandload(globals(), "logging")
 
 def shutdown_all_processors():
     """kill off all known processors"""
-    global active_ebp_list, inactive_ebp_list
-
     while active_ebp_list:
         try:
             active_ebp_list.pop().shutdown_processor()
@@ -74,7 +72,6 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
     if sandbox is None:
         sandbox = pkgcore.spawn.sandbox_capable
 
-    global inactive_ebp_list, active_ebp_list
     if not fakeroot:
         for x in inactive_ebp_list:
             if x.userprived() == userpriv and (x.sandboxed() or not sandbox):
@@ -105,7 +102,6 @@ def release_ebuild_processor(ebp):
     error or an internal error.
     """
 
-    global inactive_ebp_list, active_ebp_list
     try:
         active_ebp_list.remove(ebp)
     except ValueError:
@@ -326,7 +322,10 @@ class EbuildProcessor:
             for x in violations:
                 myf.write(x+"\n")
             myf.close()
-        from output import red
+        # XXX this is fugly, use a colorizer or something
+        # (but it is better than "from output import red" (portage's output))
+        def red(text):
+            return '\x1b[31;1m%s\x1b[39;49;00m' % (text,)
         self.ebd_write.write(red(
                 "--------------------------- ACCESS VIOLATION SUMMARY "
                 "---------------------------")+"\n")

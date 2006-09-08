@@ -43,3 +43,30 @@ class AlwaysBoolTest(unittest.TestCase):
         self.assertEquals(str(true), "always 'True'")
         self.assertEquals(str(false), "always 'False'")
         self.assertNotEqual(hash(true), hash(false))
+
+
+class NoneMatch(restriction.base):
+
+    """Only matches None."""
+
+    def match(self, val):
+        return val is None
+
+    def __repr__(self):
+        return '<NoneMatch>'
+
+    def __str__(self):
+        return 'NoneMatch'
+
+
+class AnyMatchTest(unittest.TestCase):
+
+    def test_basic(self):
+        for negate in (False, True):
+            inst = restriction.AnyMatch(NoneMatch(), 'spork', negate=negate)
+            self.assertEqual(not negate, inst.match(['spork', None]))
+            self.assertEqual(negate, inst.match(['spork']))
+            self.assertEqual(negate, inst.match(()))
+            # just test these do not traceback
+            self.assertTrue(repr(inst))
+            self.assertTrue(str(inst))

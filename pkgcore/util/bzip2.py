@@ -48,6 +48,8 @@ def process_decompress(in_data):
         if fd is not None:
             fd.close()
 
+# Unused import
+# pylint: disable-msg=W0611
 
 try:
     from bz2 import compress, decompress

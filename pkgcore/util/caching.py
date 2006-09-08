@@ -73,6 +73,8 @@ class native_WeakInstMeta(type):
 # pylint: disable-msg=C0103
 
 try:
+    # No name in module
+    # pylint: disable-msg=E0611
     from pkgcore.util._caching import WeakInstMeta
     cpy_WeakInstMeta = WeakInstMeta
 except ImportError:

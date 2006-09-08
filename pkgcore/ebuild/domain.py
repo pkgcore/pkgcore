@@ -137,8 +137,6 @@ class domain(pkgcore.config.domain.domain):
             settings[k] = v
 
         for u in profile.use_expand:
-            if k not in settings:
-                continue
             u2 = u.lower()+"_"
             if u in settings:
                 use.extend(u2 + x for x in settings[u].split())

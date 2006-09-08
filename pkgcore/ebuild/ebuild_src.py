@@ -128,11 +128,12 @@ def generate_eapi(self):
         val = 0
     return val
 
+metadata_xml_attr_map = {"maintainers":0, "herds":1, "longdescription":2}
+
 def pull_metadata_xml(self, attr):
     if self._pkg_metadata_shared[0] is None:
         try:
-            tree = etree.parse(os.path.join(os.path.dirname(self.path),
-                                            "metadata.xml"))
+            tree = etree.parse(self._parent._get_metadata_xml_path(self))
             maintainers = []
             for x in tree.findall("maintainer"):
                 name = email = None
@@ -163,10 +164,8 @@ def pull_metadata_xml(self, attr):
                 raise
             self._pkg_metadata_shared[0] = ()
             self._pkg_metadata_shared[1] = ()
-    self.__dict__["maintainers"] = self._pkg_metadata_shared[0]
-    self.__dict__["herds"] = self._pkg_metadata_shared[1]
-    self.__dict__["longdescription"] = self._pkg_metadata_shared[2]
-    return self.__dict__[attr]
+
+    return self._pkg_metadata_shared[metadata_xml_attr_map[attr]]
 
 def rewrite_restrict(restrict):
     l = set()
@@ -198,18 +197,11 @@ class package(metadata.package):
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
                   "license", "src_uri", "license", "provides"])
 
-    def __init__(self, parent, cpv, pull_path):
+    def __init__(self, parent, cpv):
         metadata.package.__init__(self, parent, cpv)
-        self.__dict__["_get_path"] = pull_path
 
     _get_attr = dict(metadata.package._get_attr)
-    _get_attr["path"] = lambda s:s._get_path(s)
-    _get_attr["_mtime_"] = lambda s: long(os.stat(s.path).st_mtime)
-    _get_attr["P"] = lambda s: s.package+"-"+s.version
-    _get_attr["PF"] = lambda s: s.package+"-"+s.fullver
-    _get_attr["PN"] = operator.attrgetter("package")
-    _get_attr["PR"] = lambda s: "r"+str(s.revision is not None
-                                        and s.revision or 0)
+    _get_attr["_mtime_"] = lambda s: s._parent.get_pkg_mtime(s)
     _get_attr["provides"] = generate_providers
     _get_attr["depends"] = post_curry(generate_depset, atom, "depend")
     _get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepend")
@@ -224,30 +216,46 @@ class package(metadata.package):
             s.data.get("RESTRICT", "").split())
     _get_attr["eapi"] = generate_eapi
     _get_attr["iuse"] = lambda s:s.data.get("IUSE", "").split()
-    _get_attr["herds"] = lambda s:pull_metadata_xml(s, "herds")
-    _get_attr["maintainers"] = lambda s:pull_metadata_xml(s, "maintainers")
-    _get_attr["longdescription"] = lambda s:pull_metadata_xml(
-        s, "longdescription")
     _get_attr["homepage"] = lambda s:s.data.get("HOMEPAGE", "").strip()
-    _get_attr["raw_ebuild"] = lambda s: open(s.path, "r").read()
+
+    @property
+    def P(self):
+        return "%s-%s" % (self.package, self.version)
+    
+    @property
+    def PF(self):
+        return "%s-%s" % (self.package, self.fullver)
+
+    @property
+    def PN(self):
+        return self.package
+
+    @property
+    def PR(self):
+        r = self.revision
+        if r is not Nne:
+            return r
+        return 0
+
+    @property
+    def ebuild(self):
+        return self._parent.get_ebuild_src(self)
+    
+    @property
+    def maintainers(self):
+        return pull_metadata_xml(self, "maintainers")
+    
+    @property
+    def herds(self):
+        return pull_metadata_xml(self, "herds")
+    
+    @property
+    def longdescription(self):
+        return pull_metadata_xml(self, "longdescription")
 
     def _fetch_metadata(self):
-        for data in self._parent._get_metadata(self):
-            if not self.allow_regen:
-                return data
-            if data is None:
-                continue
-            elif self._mtime_ != long(data.get("_mtime_", -1)):
-                continue
-            elif (data.get("_eclasses_") is not None and not
-                  self._parent._ecache.is_eclass_data_valid(
-                    data["_eclasses_"])):
-                continue
-            else:
-                return data
-            # ah hell.
-        else:
-            return self._parent._update_metadata(self)
+        d = self._parent._get_metadata(self)
+        return d
 
     def __str__(self):
         return "ebuild src: %s" % self.cpvstr
@@ -268,13 +276,36 @@ class package_factory(metadata.factory):
         self.default_mirrors = default_mirrors
         self._weak_pkglevel_cache = WeakValCache()
 
+    def get_ebuild_src(self, pkg):
+        return self._parent_repo._get_ebuild_src(pkg)
+
+    def _get_metadata_xml_path(self, pkg):
+        return self._parent_repo._get_metadata_xml_path(pkg)
+
     def _get_metadata(self, pkg):
         for cache in self._cache:
             if cache is not None:
                 try:
-                    yield cache[pkg.cpvstr]
+                    data = cache[pkg.cpvstr]
                 except KeyError:
-                    pass
+                    continue
+#                if not self.allow_regen:
+#                    return data
+                if long(data.get("_mtime_", -1)) != pkg._mtime_ or\
+                    self._invalidated_eclasses(data, pkg):
+                    continue
+                return data
+
+        # no cache entries, regen
+        return self._update_metadata(pkg)
+
+    def _invalidated_eclasses(self, data, pkg):
+        return (data.get("_eclasses_") is not None and not
+            self._ecache.is_eclass_data_valid(data["_eclasses_"]))
+
+    def get_pkg_mtime(self, pkg):
+        fp = self._parent_repo._get_ebuild_path(pkg)
+        return long(os.stat(fp).st_mtime)
 
     def _update_metadata(self, pkg):
         ebp = processor.request_ebuild_processor()
@@ -300,12 +331,12 @@ class package_factory(metadata.factory):
         inst = self._cached_instances.get(cpv, None)
         if inst is None:
             inst = self._cached_instances[cpv] = self.child_class(
-                self, cpv, self._parent_repo._get_ebuild_path)
+                self, cpv)
             o = self._weak_pkglevel_cache.get(inst.key, None)
             if o is None:
                 o = ThrowAwayNameSpace([None, None, None])
                 self._weak_pkglevel_cache[inst.key] = o
-            inst.__dict__["_pkg_metadata_shared"] = o
+            object.__setattr__(inst, "_pkg_metadata_shared", o)
         return inst
 
 
@@ -341,10 +372,12 @@ class virtual_ebuild(metadata.package):
         @param pkg: parent pkg that is generating this pkg
         @param data: mapping of data to push to use in __getattr__ access
         """
-        self.__dict__["data"] = IndeterminantDict(lambda *a: str(), data)
-        self.__dict__["_orig_data"] = data
-        self.__dict__["actual_pkg"] = pkg
-        state = set(self.__dict__.keys())
+        sfunc = object.__setattr__
+        sfunc(self, "data", IndeterminantDict(lambda *a: str(), data))
+        sfunc(self, "_orig_data", data)
+        sfunc(self, "actual_pkg", pkg)
+        # ick.
+        state = set(self.__dict__)
         # hack. :)
         metadata.package.__init__(self, parent_repository, cpv)
         if not self.version:

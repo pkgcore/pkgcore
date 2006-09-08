@@ -11,9 +11,10 @@ from pkgcore.util.containers import InvertedContains
 from pkgcore.util.file import read_dict
 from pkgcore.util import currying
 from pkgcore.util.osutils import listdir_files, listdir_dirs
-from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.ebuild.ebd:buildable ")
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.ebuild.ebd:buildable "
+    "pkgcore.interfaces.data_source:local_source ")
 
 from pkgcore.plugins import get_plugin
 
@@ -151,6 +152,13 @@ class UnconfiguredTree(prototype.tree):
     def _get_ebuild_path(self, pkg):
         return os.path.join(self.base, pkg.category, pkg.package, \
             "%s-%s.ebuild" % (pkg.package, pkg.fullver))
+
+    def _get_ebuild_src(self, pkg):
+        return local_source(self._get_ebuild_path(pkg))
+
+    def _get_metadata_xml_path(self, pkg):
+        return os.path.join(os.path.dirname(self._get_ebuild_path(pkg)),
+            "metadata.xml")
 
     def __str__(self):
         return "%s: location %s" % (self.__class__, self.base)

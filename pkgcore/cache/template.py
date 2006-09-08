@@ -8,6 +8,7 @@ template for cache backend classes
 
 from pkgcore.cache import cache_errors
 from pkgcore.util.mappings import ProtectedDict
+from pkgcore.util.obj import make_SlottedDict_kls
 
 class database(object):
     # this is for metadata/cache transfer.
@@ -41,6 +42,7 @@ class database(object):
             controls whether the cache is mutable.
         """
         self._known_keys = auxdbkeys
+        self._cdict_kls = make_SlottedDict_kls(set(list(auxdbkeys) + ["_mtime_", "_eclasses_", "EAPI"]))
         self.location = location
         self.label = label
         self.readonly = readonly

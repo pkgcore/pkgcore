@@ -60,7 +60,7 @@ class database(flat_hash.database):
             return flat_hash.database._parse_data(self, data, mtime)
 
         # this one's interesting.
-        d = {}
+        d = self._cdict_kls()
 
         for line in data:
             # yes, meant to iterate over a string.

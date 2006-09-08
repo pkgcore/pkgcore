@@ -110,3 +110,69 @@ def DelayedInstantiation(resultant_kls, func, *a, **kwd):
     return o(func, *a, **kwd)
     
     
+slotted_dict_cache = {}
+def make_SlottedDict_kls(keys):
+    new_keys = tuple(sorted(keys))
+    o = slotted_dict_cache.get(new_keys, None)
+    if o is None:
+        class SlottedDict(object):
+            __slots__ = new_keys
+
+            def __new__(cls, iterables=None):
+                return object.__new__(cls)
+            
+            def __init__(self, iterables=None):
+                if iterables is not None:
+                    self.update(iterables)
+            
+            __setitem__ = object.__setattr__
+            __getitem__ = object.__getattribute__
+            __delitem__ = object.__delattr__
+            
+            def __iter__(self):
+                for k in self.__slots__:
+                    if hasattr(self, k):
+                        yield k
+
+            def iterkeys(self):
+                return iter(self)
+            
+            def keys(self):
+                return list(self.__slots__)
+            
+            def itervalues(self):
+                for k in self:
+                    yield self[k]
+            
+            def values(self):
+                return list(self.itervalues())
+            
+            def iteritems(self):
+                for k in self:
+                    yield k, self[k]
+            
+            def items(self):
+                return list(self.iteritems())
+            
+            def get(self, key, default=None):
+                return getattr(self, key, default)
+                
+            def clear(self):
+                for k in self:
+                    del self[k]
+            
+            def update(self, iterable):
+                for k, v in iterable:
+                    setattr(self, k, v)
+            
+            def __len__(self):
+                return len(self.keys())
+            
+            def __contains__(self, key):
+                for k in self:
+                    if k == key:
+                        return True
+                return False
+        o = SlottedDict
+        slotted_dict_cache[new_keys] = o
+    return o

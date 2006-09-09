@@ -21,6 +21,7 @@ def DeriveMetadataKls(original_kls):
     class package(original_kls):
         _derived_metadata_kls = True
         built = False
+        __slots__ = ("_parent", "data")
         try:
             __doc__ = "package class with metadata bound to it for attribute " \
                 "generation\n\n" + \
@@ -47,18 +48,13 @@ def DeriveMetadataKls(original_kls):
                 instance
             """
             original_kls.__init__(self, *a, **kwds)
-            self.__dict__["_parent"] = parent_repository
+            object.__setattr__(self, "_parent",  parent_repository)
 
         def _get_data(self):
             """
             internal hook func to get the packages metadata, consumer
             of L{_get_attr}
             """
-            if "data" in self.__dict__:
-                warnings.warn(
-                    "odd, got a request for data yet it's in the dict")
-                return self.__dict__["data"]
-
             return self._fetch_metadata()
         _get_attr["data"] = _get_data
 

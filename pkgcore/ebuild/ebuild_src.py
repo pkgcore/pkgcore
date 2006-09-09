@@ -98,7 +98,8 @@ def generate_providers(self):
         raise errors.MetadataException(self, "provide", str(p))
 
 def generate_fetchables(self):
-    chksums = parse_digest(os.path.join(os.path.dirname(self.path), "files",
+    chksums = parse_digest(os.path.join(
+        os.path.dirname(self._parent._get_ebuild_path(self)), "files",
         "digest-%s-%s" % (self.package, self.fullver)))
     try:
         mirrors = self._parent.mirrors
@@ -218,6 +219,8 @@ class package(metadata.package):
     _get_attr["iuse"] = lambda s:s.data.get("IUSE", "").split()
     _get_attr["homepage"] = lambda s:s.data.get("HOMEPAGE", "").strip()
 
+    __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])
+
     @property
     def P(self):
         return "%s-%s" % (self.package, self.version)
@@ -303,9 +306,11 @@ class package_factory(metadata.factory):
         return (data.get("_eclasses_") is not None and not
             self._ecache.is_eclass_data_valid(data["_eclasses_"]))
 
+    def _get_ebuild_path(self, pkg):
+        return self._parent_repo._get_ebuild_path(pkg)
+
     def get_pkg_mtime(self, pkg):
-        fp = self._parent_repo._get_ebuild_path(pkg)
-        return long(os.stat(fp).st_mtime)
+        return long(os.stat(self._get_ebuild_path(pkg)).st_mtime)
 
     def _update_metadata(self, pkg):
         ebp = processor.request_ebuild_processor()
@@ -363,6 +368,8 @@ class virtual_ebuild(metadata.package):
 
     package_is_real = False
     built = True
+
+    __slots__ = ("__dict__")
 
     def __init__(self, parent_repository, pkg, data, cpv):
         """

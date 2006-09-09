@@ -271,7 +271,9 @@ class CPV(base.base, base_CPV):
     @ivar unversioned_atom: atom matching all versions of this package
     @cvar _get_attr: mapping of attr:callable to generate attributes on the fly
     """
-
+    
+    __slots__ = ()
+    
 #	__metaclass__ = WeakInstMeta
 
 #	__inst_caching__ = True

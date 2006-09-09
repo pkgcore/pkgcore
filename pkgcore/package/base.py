@@ -9,6 +9,7 @@ Right now, doesn't provide much, need to change that down the line
 
 class base(object):
 
+    __slots__ = ("__weakref__", )
     _get_attr = {}
 
     def __setattr__(self, attr, value):
@@ -19,7 +20,8 @@ class base(object):
 
     def __getattr__(self, attr):
         try:
-            val = self.__dict__[attr] = self._get_attr[attr](self)
+            val = self._get_attr[attr](self)
+            object.__setattr__(self, attr, val)
             return val
         except KeyError:
             raise AttributeError(attr)

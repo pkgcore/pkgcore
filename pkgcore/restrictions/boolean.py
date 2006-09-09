@@ -33,17 +33,21 @@ class base(restriction.base):
         @keyword negate: should the logic be negated?
         """
 
-        if "node_type" in kwds:
-            self.type = kwds["node_type"]
-        finalize = kwds.pop("finalize", False)
-        super(base, self).__init__(negate=kwds.get("negate", False))
+        node_type = kwds.pop("node_type", None)
+        if node_type is not None:
+            self.type = node_type
+        super(base, self).__init__(negate=kwds.pop("negate", False))
 
         self.restrictions = []
         if restrictions:
             self.add_restriction(*restrictions)
-
-        if finalize:
+        if kwds.pop("finalize", True):
             self.restrictions = tuple(self.restrictions)
+        if kwds:
+            kwds.pop("disable_inst_caching", None)
+            if kwds:
+                raise TypeError("unknown keywords to %s: %s" % 
+                    self.__class__, kwds)
 
     def change_restrictions(self, *restrictions, **kwds):
         """

@@ -201,21 +201,17 @@ PyObject *
 pkgcore_WeakValCache_getitem(pkgcore_WeakValCache *self, PyObject *key)
 {
     PyObject *resobj, *actual = NULL;
-    resobj = PyDict_GetItem(self->dict, key);
+    resobj = PyObject_GetItem(self->dict, key);
     if(resobj) {
         actual = PyWeakref_GetObject(resobj);
         Py_DECREF(resobj);
-        if (!actual) {
-            Py_DECREF(key);
-            return NULL;
-        }
         if (actual == Py_None) {
             // PyWeakref_GetObject returns a borrowed reference, do not 
             // clear it
             actual = NULL;
             /* wipe the weakref err */
             PyErr_Clear();
-            PyDict_DelItem(self->dict, key);
+            PyObject_DelItem(self->dict, key);
             if(!PyErr_Occurred()) {
                 PyErr_SetObject(PyExc_KeyError, key);
             }

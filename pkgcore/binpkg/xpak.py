@@ -139,11 +139,37 @@ class Xpak(object):
     def __getitem__(self, key):
         return self._get_data(self._fd, *self._keys_dict[key])
 
+    def __delitem__(self, key):
+        if not self.writable:
+            raise TypeError("%s is not writable" % self)
+        del self._keys_dict[key]
+
+    def __setitem__(self, key, val):
+        if not self.writable:
+            raise TypeError("%s is not writable" % self)
+        self._keys_dict[key] = val
+        return val
+
     def get(self, key, default=None):
         try:
             return self[key]
         except KeyError:
             return default
+
+    def pop(self, key, *a):
+        if not self.writable:
+            raise TypeError("%s is not writable" % self)
+        # faster then the exception form...
+        l = len(a)
+        if l > 1:
+            raise TypeError("pop accepts 1 or 2 args only")
+        if key in self._keys_dict:
+            o = self._keys_dict.pop(key)
+        elif l:
+            o = a[0]
+        else:
+            raise KeyError(key)
+        return o        
 
     def _get_data(self, fd, offset, data_len):
         # optimization for file objs; they cache tell position, but

@@ -230,9 +230,8 @@ class DepSet(boolean.AndRestriction):
                     if len(restrictions) == 1:
                         current = restrictions[0]
                     else:
-                        current = values.AndRestriction(all=True,
-                                                        finalize=True,
-                                                        *restrictions)
+                        current = values.AndRestriction(finalize=True,
+                            *restrictions)
 
                     nc.setdefault(payload, []).append(current)
 

@@ -39,4 +39,4 @@ class TestWeakValCache(unittest.TestCase):
         s = "asdf"
         self.assertRaises(KeyError, self.w.__getitem__, s)
         self.w[s] = self.o
-        self.assertIdentical(self.o, self.w.get(s))
+        self.assertIdentical(self.w.get(s), self.o)

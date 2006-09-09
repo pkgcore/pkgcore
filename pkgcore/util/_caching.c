@@ -202,10 +202,7 @@ pkgcore_WeakValCache_getitem(pkgcore_WeakValCache *self, PyObject *key)
 {
     PyObject *resobj, *actual = NULL;
     resobj = PyDict_GetItem(self->dict, key);
-    if(resobj == Py_None) {
-        PyErr_SetObject(PyExc_KeyError, key);
-        return (PyObject *)NULL;
-    } else if(resobj) {
+    if(resobj) {
         actual = PyWeakref_GetObject(resobj);
         Py_DECREF(resobj);
         if (!actual) {
@@ -248,14 +245,17 @@ pkgcore_WeakValCache_get(pkgcore_WeakValCache *self, PyObject *args)
         return (PyObject *)NULL;
     }
     
-    resobj = PyDict_GetItem((PyObject *)self, key);
+    PyErr_Clear();
+    resobj = PyObject_GetItem((PyObject *)self, key);
     Py_DECREF(key);
     if(resobj) {
         assert(!PyErr_Occurred());
         return resobj;
 
-    } else if(PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_KeyError))
+    } else if(PyErr_Occurred() && !PyErr_ExceptionMatches(PyExc_KeyError)) {
+        // if the error wasn't that the key isn't found, return
         return resobj;
+    }
 
     PyErr_Clear();
     if(size == 2) {

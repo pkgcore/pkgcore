@@ -34,3 +34,9 @@ class TestWeakValCache(unittest.TestCase):
         self.assertTrue(self.w[s])
         del self.o
         self.assertRaises(KeyError, self.w.__getitem__, s)
+
+    def test_get(self):
+        s = "asdf"
+        self.assertRaises(KeyError, self.w.__getitem__, s)
+        self.w[s] = self.o
+        self.assertIdentical(self.o, self.w.get(s))

@@ -29,15 +29,14 @@ class BaseTest(unittest.TestCase):
 
     def test_init_finalize(self):
         final = boolean.base(true, node_type='foo', finalize=True)
-        # TODO perhaps this should be more specific?
-        self.assertRaises(Exception, final.add_restriction, false)
+        # since it becomes a tuple, throws a AttributeError
+        self.assertRaises(AttributeError, final.add_restriction, false)
 
     def test_finalize(self):
-        base = boolean.base(true, node_type='foo')
+        base = boolean.base(true, node_type='foo', finalize=False)
         base.add_restriction(false)
         base.finalize()
-        # TODO perhaps this should be more specific?
-        self.assertRaises(Exception, base.add_restriction, true)
+        self.assertRaises(AttributeError, base.add_restriction, true)
 
     def test_base(self):
         base = boolean.base(true, false, node_type='foo')

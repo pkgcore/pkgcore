@@ -47,7 +47,7 @@ class base(restriction.base):
             kwds.pop("disable_inst_caching", None)
             if kwds:
                 raise TypeError("unknown keywords to %s: %s" % 
-                    self.__class__, kwds)
+                    (self.__class__, kwds))
 
     def change_restrictions(self, *restrictions, **kwds):
         """

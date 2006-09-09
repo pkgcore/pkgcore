@@ -185,6 +185,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		    s1++;
 	    if('\0' != *s1)
 		    goto parse_error;
+        PyString_InternInPlace(&tmp);
 	    tmp = self->category;
 	    Py_INCREF(category);
 	    self->category = category;
@@ -202,6 +203,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 	    if('\0' == *p)
 		    goto parse_error;
 	    tmp = PyString_FromStringAndSize(start, p - start);
+	    PyString_InternInPlace(&tmp);
 	    if(!tmp) {
 		    result = -1;
 		    goto cleanup;

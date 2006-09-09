@@ -108,7 +108,8 @@ class domain(pkgcore.config.domain.domain):
         # if ((package.mask or visibility) and not package.unmask)
         # or not (package.keywords or accept_keywords)
 
-        vfilter = packages.AndRestriction(finalize=False, inst_caching=False)
+        vfilter = packages.AndRestriction(finalize=False,
+            disable_inst_caching=False)
         r = None
         if pkg_maskers:
             r = generate_masking_restrict(pkg_maskers)
@@ -276,7 +277,8 @@ class domain(pkgcore.config.domain.domain):
                         negated.append(s)
                     else:
                         per.append(s)
-                r = values.OrRestriction(inst_caching=False)
+                r = values.OrRestriction(finalize=False, 
+                    disable_inst_caching=False)
                 if per:
                     r.add_restriction(ContainmentMatch(*per))
                 if glob:

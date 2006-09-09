@@ -122,7 +122,7 @@ class UnconfiguredTree(prototype.tree):
             return ()
 
         try:
-            return tuple(x for x in listdir_dirs(self.base)
+            return tuple(intern(x) for x in listdir_dirs(self.base)
                          if x not in self.false_categories)
         except (OSError, IOError), e:
             raise KeyError("failed fetching categories: %s" % str(e))

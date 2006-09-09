@@ -185,10 +185,11 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 		    s1++;
 	    if('\0' != *s1)
 		    goto parse_error;
-        PyString_InternInPlace(&tmp);
+		tmp2 = category;
+        PyString_InternInPlace(&tmp2);
 	    tmp = self->category;
 	    Py_INCREF(category);
-	    self->category = category;
+	    self->category = tmp2;
 	    Py_XDECREF(tmp);
     } else {
 	    // ok, we need to eat the cat from the cpvstring.

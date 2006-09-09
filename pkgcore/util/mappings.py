@@ -122,8 +122,8 @@ class DictMixin(object):
     
     def __len__(self):
         c = 0
-        for c in self.iterkeys():
-            c+=1
+        for x in self:
+            c += 1
         return c
     
     def popitem(self):

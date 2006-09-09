@@ -127,7 +127,7 @@ class DictMixin(object):
         return c
     
     def popitem(self):
-        if not self.__mutable__:
+        if not self.__externally_mutable__:
             raise AttributeError(self, "not mutable")
         # do it this way so python handles the stopiteration; faster
         for key, val in self.iteritems():

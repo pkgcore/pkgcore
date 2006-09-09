@@ -110,7 +110,8 @@ class tree(prototype.tree):
 
     def _get_metadata(self, pkg):
         return IndeterminantDict(pre_curry(self._internal_load_key,
-            os.path.dirname(pkg.path)))
+            os.path.join(self.base, pkg.category,
+                "%s-%s" % (pkg.package, pkg.fullver))))
 
     def _internal_load_key(self, path, key):
         key = self._metadata_rewrites.get(key, key)

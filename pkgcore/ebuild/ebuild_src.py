@@ -202,7 +202,6 @@ class package(metadata.package):
         metadata.package.__init__(self, parent, cpv)
 
     _get_attr = dict(metadata.package._get_attr)
-    _get_attr["_mtime_"] = lambda s: s._parent.get_pkg_mtime(s)
     _get_attr["provides"] = generate_providers
     _get_attr["depends"] = post_curry(generate_depset, atom, "depend")
     _get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepend")
@@ -255,6 +254,10 @@ class package(metadata.package):
     @property
     def longdescription(self):
         return pull_metadata_xml(self, "longdescription")
+    
+    @property
+    def _mtime_(self):
+        return self._parent._get_ebuild_mtime(self)
 
     def _fetch_metadata(self):
         d = self._parent._get_metadata(self)
@@ -294,7 +297,7 @@ class package_factory(metadata.factory):
                     continue
 #                if not self.allow_regen:
 #                    return data
-                if long(data.get("_mtime_", -1)) != pkg._mtime_ or\
+                if long(data.get("_mtime_", -1)) != pkg._mtime_ or \
                     self._invalidated_eclasses(data, pkg):
                     continue
                 return data
@@ -309,7 +312,7 @@ class package_factory(metadata.factory):
     def _get_ebuild_path(self, pkg):
         return self._parent_repo._get_ebuild_path(pkg)
 
-    def get_pkg_mtime(self, pkg):
+    def _get_ebuild_mtime(self, pkg):
         return long(os.stat(self._get_ebuild_path(pkg)).st_mtime)
 
     def _update_metadata(self, pkg):

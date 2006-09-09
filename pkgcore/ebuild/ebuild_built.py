@@ -65,9 +65,7 @@ class package(ebuild_src.package):
 
     _get_attr = dict(ebuild_src.package._get_attr)
 
-    for x in ("_mtime_", "fetchables"):
-        del _get_attr[x]
-    del x
+    del _get_attr["fetchables"]
 
     _get_attr.update((x, post_curry(passthrough, x))
                      for x in ("contents", "environment", "ebuild"))
@@ -109,6 +107,10 @@ class package(ebuild_src.package):
 
     def add_format_triggers(self, *args, **kwds):
         return self._parent._add_format_triggers(self, *args, **kwds)
+
+    @property
+    def _mtime_(self):
+        raise AttributeError(self, "_mtime_")
 
 
 def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):

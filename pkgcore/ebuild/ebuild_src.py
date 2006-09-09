@@ -347,6 +347,9 @@ class package_factory(metadata.factory):
 
 class ThrowAwayNameSpace(object):
     """used for weakref passing data only"""
+    
+    __slots__ = ("__weakref__", "_val")
+    
     def __init__(self, val):
         self._val = val
 

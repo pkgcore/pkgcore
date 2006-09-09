@@ -6,13 +6,137 @@ miscellanious mapping/dict related classes
 """
 
 import operator
-from itertools import imap, chain, ifilterfalse
+from itertools import imap, chain, ifilterfalse, izip
 from pkgcore.util.currying import alias_class_method
 from collections import deque
-import UserDict
 
 
-class LazyValDict(UserDict.DictMixin):
+
+class DictMixin(object):
+    """
+    new style class replacement for L{UserDict.DictMixin}
+    designed around iter* methods rather then forcing lists as DictMixin does
+    """
+
+    __slots__ = ()
+
+    __externally_mutable__ = True
+    
+    def __iter__(self):
+        return self.iterkeys()
+    
+    def keys(self):
+        return list(self.iterkeys())
+    
+    def values(self):
+        return list(self.itervalues())
+    
+    def items(self):
+        return list(self.iteritems())
+    
+    def update(self, iterable):
+        for k,v in iterable:
+            self[k] =v
+    
+    def get(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+   
+    # default cmp actually operates based on key len comparison, oddly enough
+    def __cmp__(self, other):
+        for k1, k2 in izip(self, other):
+            c = cmp(k1, k2)
+            if c != 0:
+                return c
+            c = cmp(self[k1], other[k2])
+            if c != 0:
+                return c
+        c = cmp(len(self), len(other))
+        return c
+    
+    def __eq__(self, other):
+        return self.__cmp__(other) == 0
+    
+    def __ne__(self, other):
+        return self.__cmp__(other) != 0
+    
+    def pop(self, key, *args):
+        if not self.__externally_mutable__:
+            raise AttributeError(self, "not mutable")
+        if len(args) > 1:
+            raise TypeError("pop expects at most 2 arguements, got %i" %
+                len(args) + 1)
+        try:
+            val = self[key]
+        except KeyError:
+            if args:
+                return args[0]
+            raise
+        del self[key]
+        return val
+    
+    def setdefault(self, key, default=None):
+        if not self.__externally_mutable__:
+            raise AttributeError(self, "not mutable")
+        if key in self:
+            return self[key]
+        self[key] = default
+        return default
+
+    def has_key(self, key):
+        return key in self
+        
+    def iterkeys(self):
+        raise NotImplementedError(self, "iterkeys")
+
+    def itervalues(self):
+        return imap(self.__getitem__, self)
+
+    def iteritems(self):
+        for k in self:
+            yield k, self[k]
+        
+    def __getitem__(self, key):
+        raise NotImplementedError(self, "__getitem__")
+    
+    def __setitem__(self, key, val):
+        if not self.__externally_modifiable__:
+            raise AttributeError(self, "__setitem__")
+        raise NotImplementedError(self, "__setitem__")
+    
+    def __delitem__(self, key):
+        if not self.__externally_modifiable__:
+            raise AttributeError(self, "__delitem__")
+        raise NotImplementedError(self, "__delitem__")
+        
+    def __contains__(self, key):
+        raise NotImplementedError(self, "__contains__")
+
+    def clear(self):
+        if not self.__externally_mutable__:
+            raise AttributeError(self, "not mutable")
+        # crappy, override if faster method exists.
+        map(self.__delitem__, self.keys())
+    
+    def __len__(self):
+        c = 0
+        for c in self.iterkeys():
+            c+=1
+        return c
+    
+    def popitem(self):
+        if not self.__mutable__:
+            raise AttributeError(self, "not mutable")
+        # do it this way so python handles the stopiteration; faster
+        for key, val in self.iteritems():
+            del self[key]
+            return key,val
+        raise KeyError("container is empty")
+
+
+class LazyValDict(DictMixin):
 
     """
     Mapping that loads values via a callable
@@ -20,6 +144,8 @@ class LazyValDict(UserDict.DictMixin):
     given a function to get keys, and to look up the val for those keys, it'll
     lazy load key definitions, and values as requested
     """
+    __slots__ = ("_keys", "_keys_func", "_vals", "_val_func")
+    __externally_mutable__ = False
 
     def __init__(self, get_keys_func, get_val_func):
         """
@@ -39,12 +165,6 @@ class LazyValDict(UserDict.DictMixin):
             self._keys_func = get_keys_func
         self._val_func = get_val_func
         self._vals = {}
-
-    def __setitem__(self, key, value):
-        raise AttributeError
-
-    def __delitem__(self, key):
-        raise AttributeError
 
     def __getitem__(self, key):
         if self._keys_func is not None:
@@ -81,16 +201,11 @@ class LazyValDict(UserDict.DictMixin):
             self._keys_func = None
         return key in self._keys
 
-    def has_key(self, key):
-        return key in self
-
     def __len__(self):
-        return len(self.keys())
-
-    __iter__ = alias_class_method("iterkeys")
+        return len(self._keys)
 
 
-class ProtectedDict(UserDict.DictMixin, object):
+class ProtectedDict(DictMixin):
 
     """
     Mapping wrapper storing changes to a dict without modifying the original.
@@ -128,21 +243,16 @@ class ProtectedDict(UserDict.DictMixin, object):
                 return
         raise KeyError(key)
 
-    def __iter__(self):
+    def iterkeys(self):
         for k in self.new.iterkeys():
             yield k
         for k in self.orig.iterkeys():
             if k not in self.blacklist and k not in self.new:
                 yield k
 
-    def keys(self):
-        return list(self.__iter__())
-
     def __contains__(self, key):
         return key in self.new or (key not in self.blacklist and
                                    key in self.orig)
-
-    has_key = __contains__
 
 
 class ImmutableDict(dict):
@@ -207,7 +317,7 @@ class IndeterminantDict(dict):
     iteritems = iterkeys = itervalues = __delitem__
 
 
-class StackedDict(UserDict.DictMixin):
+class StackedDict(DictMixin):
 
     """A non modifiable dict that makes multiple dicts appear as one"""
 
@@ -220,18 +330,13 @@ class StackedDict(UserDict.DictMixin):
                 return x[key]
         raise KeyError(key)
 
-    def keys(self):
-        return list(iter(self))
-
     def iterkeys(self):
         s = set()
         for k in ifilterfalse(s.__contains__, chain(*map(iter, self._dicts))):
             s.add(k)
             yield k
 
-    __iter__ = alias_class_method("iterkeys")
-
-    def has_key(self, key):
+    def __contains__(self, key):
         for x in self._dicts:
             if key in x:
                 return True
@@ -243,65 +348,45 @@ class StackedDict(UserDict.DictMixin):
     __delitem__ = clear = __setitem__
 
 
-class OrderedDict(dict):
+class OrderedDict(DictMixin):
 
     """Dict that preserves insertion ordering which is used for iteration ops"""
 
-    def __init__(self, pairs=()):
-        dict.__init__(self)
+    __slots__ = ("_data", "_order")
+
+    def __init__(self, iterable=()):
         self._order = deque()
-        for k, v in pairs:
+        self._data = {}
+        for k, v in iterable:
             self[k] = v
 
     def __setitem__(self, key, val):
         if key not in self:
             self._order.append(key)
-        dict.__setitem__(self, key, val)
+        self._data[key] = val
 
     def __delitem__(self, key):
-        if key not in self:
-            raise KeyError(key)
+        del self._data[key]
+
         for idx, o in enumerate(self._order):
             if o == key:
+                del self._order[idx]
                 break
-        # "Using possibly undefined loop variable"
-        # pylint: disable-msg=W0631
-        del self._order[idx]
-        dict.__delitem__(self, key)
+        else:
+            raise AssertionError("orderdict lost it's internal ordering")
 
-    def setdefault(self, key, default=None):
-        if not key in self:
-            self[key] = default
-        return self[key]
-
-    def update(self, iterable):
-        for k, v in iterable:
-            self[k] = v
+    def __getitem__(self, key):
+        return self._data[key]
 
     def __len__(self):
         return len(self._order)
 
-    def __iter__(self):
-        return self.iterkeys()
-
     def iterkeys(self):
         return iter(self._order)
-
-    def keys(self):
-        return list(self.iterkeys())
-
-    def iteritems(self):
-        return ((k, self[k]) for k in self._order)
-
-    def itervalues(self):
-        return (self[k] for k in self._order)
-
-    def values(self):
-        return list(self.itervalues())
-
-    def items(self):
-        return list(self.iteritems())
 
     def clear(self):
         dict.clear(self)
         self._order = deque()
+
+    def __contains__(self, key):
+        return key in self._data

@@ -157,6 +157,20 @@ def make_SlottedDict_kls(keys):
             def get(self, key, default=None):
                 return getattr(self, key, default)
                 
+            def pop(self, key, *a):
+                # faster then the exception form...
+                l = len(a)
+                if l > 1:
+                    raise TypeError("pop accepts 1 or 2 args only")
+                if hasattr(self, key):
+                    o = getattr(self, key)
+                    object.__delattr__(self, key)
+                elif l:
+                    o = a[0]
+                else:
+                    raise KeyError(key)
+                return o  
+
             def clear(self):
                 for k in self:
                     del self[k]

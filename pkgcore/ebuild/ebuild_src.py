@@ -209,6 +209,7 @@ class package(metadata.package):
     _get_attr["depends"] = post_curry(generate_depset, atom, "depend")
     _get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepend")
     _get_attr["post_rdepends"] = post_curry(generate_depset, atom, "pdepend")
+    # could *potentially* intern these, but not a huge gain in my testing.
     _get_attr["license"] = post_curry(generate_depset, str, "license",
                                       non_package_type=True)
     _get_attr["slot"] = lambda s: s.data.get("SLOT", "0").strip()

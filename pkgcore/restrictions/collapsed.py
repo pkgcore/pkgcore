@@ -72,7 +72,7 @@ class DictBased(restriction.base):
                 self.restricts_dict[key].add_restriction(restrict)
             else:
                 self.restricts_dict[key] = packages.OrRestriction(
-                    restrict, inst_caching=False)
+                    restrict, disable_inst_caching=False)
 
         self.get_pkg_key = get_key_from_package
 

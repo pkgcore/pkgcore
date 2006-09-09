@@ -132,7 +132,8 @@ def generate_eapi(self):
 metadata_xml_attr_map = {"maintainers":0, "herds":1, "longdescription":2}
 
 def pull_metadata_xml(self, attr):
-    if self._pkg_metadata_shared[0] is None:
+    o = getattr(self._pkg_metadata_shared, attr)
+    if o == -1:
         try:
             tree = etree.parse(self._parent._get_metadata_xml_path(self))
             maintainers = []
@@ -151,22 +152,24 @@ def pull_metadata_xml(self, attr):
                 elif email is not None:
                     maintainers.append(email)
 
-            self._pkg_metadata_shared[0] = tuple(maintainers)
-            self._pkg_metadata_shared[1] = tuple(str(x.text)
-                                                 for x in tree.findall("herd"))
+            self._pkg_metadata_shared.maintainers = tuple(maintainers)
+            self._pkg_metadata_shared.herds = tuple(str(x.text)
+                for x in tree.findall("herd"))
+
             # Could be unicode!
             longdesc = tree.findtext("longdescription")
             if longdesc:
                 longdesc = ' '.join(longdesc.strip().split())
-            self._pkg_metadata_shared[2] = longdesc
+            self._pkg_metadata_shared.longdescription = longdesc
 
         except IOError, i:
             if i.errno != errno.ENOENT:
                 raise
-            self._pkg_metadata_shared[0] = ()
-            self._pkg_metadata_shared[1] = ()
-
-    return self._pkg_metadata_shared[metadata_xml_attr_map[attr]]
+            self._pkg_metadata_shared.herds = ()
+            self._pkg_metadata_shared.maintainers = ()
+            self._pkg_metadata_shared.longdescription = None
+        o = getattr(self._pkg_metadata_shared, attr)
+    return o
 
 def rewrite_restrict(restrict):
     l = set()
@@ -342,26 +345,29 @@ class package_factory(metadata.factory):
                 self, cpv)
             o = self._weak_pkglevel_cache.get(inst.key, None)
             if o is None:
-                o = ThrowAwayNameSpace([None, None, None])
+                o = SharedMetadataXml()
                 self._weak_pkglevel_cache[inst.key] = o
             object.__setattr__(inst, "_pkg_metadata_shared", o)
         return inst
 
 
-class ThrowAwayNameSpace(object):
-    """used for weakref passing data only"""
+class SharedMetadataXml(object):
+    """
+    metadata.xml parsed reseults
     
-    __slots__ = ("__weakref__", "_val")
+    attributes are set to -1 if unloaded, None if no entry, or the value
+    if loaded
     
-    def __init__(self, val):
-        self._val = val
-
-    def __getitem__(self, index):
-        return self._val[index]
-
-    def __setitem__(self, key, val):
-        self._val[key] = val
-
+    """
+    
+    __slots__ = ("__weakref__", "maintainers", "herds", "longdescription")
+    
+    
+    def __init__(self):
+        self.maintainers = -1
+        self.herds = -1
+        self.longdescription = -1 
+    
 
 generate_new_factory = package_factory
 

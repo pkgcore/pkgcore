@@ -40,3 +40,6 @@ Version 1
 - allowed USE conditional configurations; new metadata key, extend depset syntax to include xor, represent allowed configurations.
 - use groups (kill use_expand off)
 - true incremental stacking support for metadata keys between eclasses/ebuilds; RESTRICT=-strip for example in the ebuild.
+- potentially add '<>dev-util/diffball-1.0' support; would require supporting tildes also; to head off the "but blockers exist",
+  blockers are statements of "I will not work with any matches to this in the graph, get rid of them", not "I'll work with this
+  range" which <> is.

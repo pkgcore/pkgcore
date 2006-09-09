@@ -69,7 +69,7 @@ class VersionMatch(restriction.base):
         self.ver, self.rev = ver, rev
         if operator not in ("<=", "<", "=", ">", ">=", "~"):
             # XXX: hack
-            raise InvalidVersion(self.ver, self.rev,
+            raise MalformedAtom(self.ver, self.rev,
                                  "invalid operator, '%s'" % operator)
 
         self.negate = negate
@@ -171,6 +171,10 @@ class atom(boolean.AndRestriction):
             self.op = atom[1:pos]
         else:
             self.op = atom[:pos]
+        if self.op not in ("<=", "<", "=", ">", ">=", "~", ""):
+            # XXX: hack
+            raise MalformedAtom(
+                "%s: invalid operator, '%s'" % (orig_atom, self.op))
 
         u = atom.find("[")
         if u != -1:
@@ -178,7 +182,7 @@ class atom(boolean.AndRestriction):
             u2 = atom.find("]", u)
             if u2 == -1:
                 raise MalformedAtom(atom, "use restriction isn't completed")
-            self.use = atom[u+1:u2].split(',')
+            self.use = tuple(x.strip() for x in atom[u+1:u2].split(','))
             if not all(x.rstrip("-") for x in self.use):
                 raise MalformedAtom(
                     atom, "cannot have empty use deps in use restriction")
@@ -190,8 +194,8 @@ class atom(boolean.AndRestriction):
             if atom.find(":", s+1) != -1:
                 raise MalformedAtom(atom, "second specification of slotting")
             # slot dep.
-            self.slot = atom[s + 1:].rstrip()
-            if not self.slot:
+            self.slot = atom[s + 1:]
+            if not self.slot or not all(s.isdigit() for s in self.slot):
                 raise MalformedAtom(
                     atom, "cannot have empty slot deps in slot restriction")
             atom = atom[:s]

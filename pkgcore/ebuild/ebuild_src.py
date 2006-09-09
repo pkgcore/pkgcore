@@ -214,11 +214,13 @@ class package(metadata.package):
     _get_attr["slot"] = lambda s: s.data.get("SLOT", "0").strip()
     _get_attr["fetchables"] = generate_fetchables
     _get_attr["description"] = lambda s:s.data.get("DESCRIPTION", "").strip()
-    _get_attr["keywords"] = lambda s:tuple(map(intern, s.data.get("KEYWORDS", "").split()))
+    _get_attr["keywords"] = lambda s:tuple(map(intern,
+        s.data.get("KEYWORDS", "").split()))
     _get_attr["restrict"] = lambda s:rewrite_restrict(
             s.data.get("RESTRICT", "").split())
     _get_attr["eapi"] = generate_eapi
-    _get_attr["iuse"] = lambda s:s.data.get("IUSE", "").split()
+    _get_attr["iuse"] = lambda s:tuple(map(intern,
+        s.data.get("IUSE", "").split()))
     _get_attr["homepage"] = lambda s:s.data.get("HOMEPAGE", "").strip()
 
     __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])

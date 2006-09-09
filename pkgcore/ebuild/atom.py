@@ -257,14 +257,19 @@ class atom(boolean.AndRestriction):
 
     def __getattr__(self, attr):
         if attr == "restrictions":
+            # ordering here matters; against 24702 ebuilds for
+            # a non matchable atom with package as the first restriction
+            # 10 loops, best of 3: 206 msec per loop
+            # with category as the first(the obvious ordering)
+            # 10 loops, best of 3: 209 msec per loop
+            # why?  because category is more likely to collide;
+            # at the time of this profiling, there were 151 categories.
+            # over 11k packages however.
             r = [packages.PackageRestriction(
-                    "package", values.StrExactMatch(self.package))]
-            try:
-                cat = self.category
-                r.append(packages.PackageRestriction(
-                        "category", values.StrExactMatch(cat)))
-            except AttributeError:
-                pass
+                    "package", values.StrExactMatch(self.package)),
+                packages.PackageRestriction(
+                    "category", values.StrExactMatch(self.category))]
+
             if self.version:
                 if self.glob:
                     r.append(packages.PackageRestriction(

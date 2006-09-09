@@ -30,15 +30,20 @@ class Xpak(object):
     header_pre_magic = "XPAKPACK"
 
 
-    def __init__(self, source, writable=False):
+    def __init__(self, source, empty=False):
         self._source_is_path = isinstance(source, basestring)
         self._source = source
         self.xpak_start = None
         # this becomes an ordereddict after _load_offsets; reason for
         # it is so that reads are serialized.
-        self._keys_dict = {}
-        if not writable:
+        if empty:
+            self._keys_dict = {}
+
+    def __getattr__(self, attr):
+        if attr == "_keys_dict":
             self._load_offsets()
+            return object.__getattribute__(self, attr)
+        raise AttributeError(self, attr)
 
     @property
     def _fd(self):
@@ -140,13 +145,9 @@ class Xpak(object):
         return self._get_data(self._fd, *self._keys_dict[key])
 
     def __delitem__(self, key):
-        if not self.writable:
-            raise TypeError("%s is not writable" % self)
         del self._keys_dict[key]
 
     def __setitem__(self, key, val):
-        if not self.writable:
-            raise TypeError("%s is not writable" % self)
         self._keys_dict[key] = val
         return val
 
@@ -157,8 +158,6 @@ class Xpak(object):
             return default
 
     def pop(self, key, *a):
-        if not self.writable:
-            raise TypeError("%s is not writable" % self)
         # faster then the exception form...
         l = len(a)
         if l > 1:

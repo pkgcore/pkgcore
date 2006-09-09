@@ -12,7 +12,7 @@ from pkgcore.repository import prototype, errors
 from pkgcore.ebuild.cpv import CPV as cpv
 from pkgcore.util.currying import pre_curry
 from pkgcore.plugins import get_plugin
-from pkgcore.util.mappings import IndeterminantDict
+from pkgcore.util.mappings import DictMixin
 from pkgcore.util.osutils import listdir_dirs, listdir_files
 from pkgcore.binpkg.xpak import Xpak
 from pkgcore.binpkg.tar import generate_contents
@@ -66,6 +66,75 @@ def wrap_factory(klass, *args, **kwds):
             return scan(location, offset=location)
 
     return new_factory(*args, **kwds)
+
+
+class StackedXpakDict(DictMixin):
+    __slots__ = ("_xpak", "_parent", "_pkg", "contents",
+        "_wipes")
+
+    _metadata_rewrites = {
+        "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
+        "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
+
+    def __init__(self, parent, pkg):
+        self._pkg = pkg
+        self._parent = parent
+        self._wipes = []
+    
+    def __getattr__(self, attr):
+        if attr == "_xpak":
+            data = Xpak(self._parent._get_path(self._pkg))
+            object.__setattr__(self, attr, data)
+            return data
+        raise AttributeError(self, attr)
+    
+    def __getitem__(self, key):
+        key = self._metadata_rewrites.get(key, key)
+        if key in self._wipes:
+            raise KeyError(self, key)
+        if key == "contents":
+            data = object.__setattr_(self, "contents",
+                generate_contents(self._parent._get_path(self._pkg)))
+        elif key == "environment":
+            data = self._xpak.get("environment.bz2", None)
+            if data is None:
+                data = data_source(self._xpak.get("environment", None), 
+                    mutable=True)
+                if data is None:
+                    raise KeyError(
+                        "environment.bz2 not found in xpak segment, "
+                        "malformed binpkg?")
+            else:
+                data = data_source(decompress(data), mutable=True)
+        else:
+            try:
+                data = self._xpak[key]
+            except KeyError:
+                data =''
+        return data
+    
+    def __delitem__(self, key):
+        if key in ("contents", "environment"):
+            if key in self._wipes:
+                raise KeyError(self, key)
+            self._wipes.append(key)
+        else:
+            del self._xpak[key]
+    
+    def __setitem__(self, key, val):
+        if key in ("contents", "environment"):
+            setattr(self, key, val)
+            self._wipes = [x for x in self._wipes if x != key]
+        else:
+            self._xpak[key] = val
+        return val
+    
+    def iterkeys(self):
+        for k in self._xpak:
+            yield k
+        for k in ("environment", "contents"):
+            if self.get(k, None) is not None:
+                yield k
 
 
 class tree(prototype.tree):
@@ -135,34 +204,10 @@ class tree(prototype.tree):
 
     _get_ebuild_path = _get_path
 
-    _metadata_rewrites = {
-        "depends":"DEPEND", "rdepends":"RDEPEND", "use":"USE", "eapi":"EAPI",
-        "CONTENTS":"contents"}
 
     def _get_metadata(self, pkg):
-        return IndeterminantDict(pre_curry(
-                self._internal_load_key, pkg, Xpak(self._get_path(pkg))))
+        return StackedXpakDict(self, pkg)
 
-    def _internal_load_key(self, pkg, xpak, key):
-        key = self._metadata_rewrites.get(key, key)
-        if key == "contents":
-            data = generate_contents(self._get_path(pkg))
-        elif key == "environment":
-            data = xpak.get("environment.bz2", None)
-            if data is None:
-                data = data_source(xpak.get("environment", None), mutable=True)
-                if data is None:
-                    raise KeyError(
-                        "environment.bz2 not found in xpak segment, "
-                        "malformed binpkg?")
-            else:
-                data = data_source(decompress(data), mutable=True)
-        else:
-            try:
-                data = xpak[key]
-            except KeyError:
-                data =''
-        return data
 
     def generate_buildop(self, pkg):
         return empty_build_op(pkg)

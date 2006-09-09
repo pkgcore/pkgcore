@@ -46,6 +46,8 @@ class native_CPV(object):
 #	__metaclass__ = WeakInstMeta
 
 #	__inst_caching__ = True
+    __slots__ = ("__weakref__", "cpvstr", "key", "category", "package",
+        "version", "revision", "fullver")
 
     def __init__(self, cpvstr):
         """
@@ -53,16 +55,17 @@ class native_CPV(object):
             See L{parser} for allowed syntax.
         @type cpvstr: string
         """
-        self.__dict__["cpvstr"] = cpvstr
-        if not isinstance(self.cpvstr, basestring):
+        if not isinstance(cpvstr, basestring):
             raise TypeError(self.cpvstr)
-        m = parser.match(self.cpvstr)
+        m = parser.match(cpvstr)
         if not m:
-            raise InvalidCPV(self.cpvstr)
-        self.__dict__.update(m.groupdict())
-        r = self.__dict__["revision"]
+            raise InvalidCPV(cpvstr)
+        object.__setattr__(self, "cpvstr", cpvstr)
+        for k,v in m.groupdict().iteritems():
+            object.__setattr__(self, k, v)
+        r = self.revision
         if r is not None:
-            self.__dict__["revision"] = int(r)
+            object.__setattr__(self, "revision", int(r))
 
     def __hash__(self):
         return hash(self.cpvstr)

@@ -21,7 +21,10 @@ class base(object):
     __metaclass__ = caching.WeakInstMeta
     __inst_caching__ = True
 
-    __slots__ = ("negate",)
+    # __weakref__ here's isn't strictly necessary since the metaclass forces it
+    # but if it were ever turned off, inability to weakref would be an annoying
+    # unexpected exception
+    __slots__ = ("negate", "__weakref__")
     package_matching = False
 
     def __init__(self, negate=False):

@@ -11,7 +11,6 @@ from pkgcore.util.currying import alias_class_method
 from collections import deque
 
 
-
 class DictMixin(object):
     """
     new style class replacement for L{UserDict.DictMixin}
@@ -21,6 +20,10 @@ class DictMixin(object):
     __slots__ = ()
 
     __externally_mutable__ = True
+    
+    def __init__(self, iterable=[]):
+        for k,v in iterable:
+            self[k] = v
     
     def __iter__(self):
         return self.iterkeys()
@@ -64,7 +67,7 @@ class DictMixin(object):
     
     def pop(self, key, *args):
         if not self.__externally_mutable__:
-            raise AttributeError(self, "not mutable")
+            raise AttributeError(self, "pop")
         if len(args) > 1:
             raise TypeError("pop expects at most 2 arguements, got %i" %
                 len(args) + 1)
@@ -79,7 +82,7 @@ class DictMixin(object):
     
     def setdefault(self, key, default=None):
         if not self.__externally_mutable__:
-            raise AttributeError(self, "not mutable")
+            raise AttributeError(self, "setdefault")
         if key in self:
             return self[key]
         self[key] = default
@@ -116,7 +119,7 @@ class DictMixin(object):
 
     def clear(self):
         if not self.__externally_mutable__:
-            raise AttributeError(self, "not mutable")
+            raise AttributeError(self, "clear")
         # crappy, override if faster method exists.
         map(self.__delitem__, self.keys())
     
@@ -128,7 +131,7 @@ class DictMixin(object):
     
     def popitem(self):
         if not self.__externally_mutable__:
-            raise AttributeError(self, "not mutable")
+            raise AttributeError(self, "popitem")
         # do it this way so python handles the stopiteration; faster
         for key, val in self.iteritems():
             del self[key]

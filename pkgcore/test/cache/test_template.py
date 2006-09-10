@@ -7,7 +7,7 @@ import operator
 
 from twisted.trial import unittest
 
-from pkgcore.cache import template, cache_errors
+from pkgcore.cache import template, errors
 
 
 class DictCache(template.database):
@@ -67,7 +67,7 @@ class TemplateTest(unittest.TestCase):
     def test_eclasses(self):
         self.cache['spork'] = {'_eclasses_': {'spork': 'here',
                                               'foon': 'there'}}
-        self.assertRaises(cache_errors.CacheCorruption,
+        self.assertRaises(errors.CacheCorruption,
                           operator.getitem, self.cache, 'spork')
 
         self.cache['spork'] = {'_eclasses_': {'spork': ('here', 1),
@@ -81,16 +81,16 @@ class TemplateTest(unittest.TestCase):
     def test_readonly(self):
         cache = DictCache('nowhere', 'rodictcache', ['foo'], True)
         cache.data = self.cache.data
-        self.assertRaises(cache_errors.ReadOnlyRestriction,
+        self.assertRaises(errors.ReadOnlyRestriction,
                           operator.delitem, cache, 'spork')
-        self.assertRaises(cache_errors.ReadOnlyRestriction,
+        self.assertRaises(errors.ReadOnlyRestriction,
                           operator.setitem, cache, 'spork', {'foo': 42})
         self.assertEquals({'foo': 'bar'}, cache['spork'])
 
     def test_get_matches(self):
-        self.assertRaises(cache_errors.InvalidRestriction,
+        self.assertRaises(errors.InvalidRestriction,
                           list, self.cache.get_matches({'foo': '*'}))
-        self.assertRaises(cache_errors.InvalidRestriction,
+        self.assertRaises(errors.InvalidRestriction,
                           list, self.cache.get_matches({'bar': '.*'}))
 
         self.cache['foon'] = {'foo': 'baz'}

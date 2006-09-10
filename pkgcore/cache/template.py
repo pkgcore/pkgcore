@@ -6,7 +6,7 @@
 template for cache backend classes
 """
 
-from pkgcore.cache import cache_errors
+from pkgcore.cache import errors
 from pkgcore.util.mappings import ProtectedDict
 from pkgcore.util.obj import make_SlottedDict_kls
 
@@ -78,7 +78,7 @@ class database(object):
         handles the readonly checks.
         """
         if self.readonly:
-            raise cache_errors.ReadOnlyRestriction()
+            raise errors.ReadOnlyRestriction()
         if self.cleanse_keys:
             d = ProtectedDict(values)
             for k in d.iterkeys():
@@ -113,7 +113,7 @@ class database(object):
         handles the readonly checks.
         """
         if self.readonly:
-            raise cache_errors.ReadOnlyRestriction()
+            raise errors.ReadOnlyRestriction()
         if not self.autocommits:
             self.updates += 1
         self._delitem(cpv)
@@ -177,9 +177,9 @@ class database(object):
                 else:
                     restricts[key] = re.compile(match[0], match[1]).match
             except re.error, e:
-                raise cache_errors.InvalidRestriction(key, match, e)
+                raise errors.InvalidRestriction(key, match, e)
             if key not in self._known_keys:
-                raise cache_errors.InvalidRestriction(key, match,
+                raise errors.InvalidRestriction(key, match,
                                                       "Key isn't valid")
 
         for cpv, vals in self.iteritems():
@@ -204,13 +204,13 @@ class database(object):
             # occasionally this occurs in the fs backends.  they suck.
             return {}
         if len(eclasses) % 3 != 0:
-            raise cache_errors.CacheCorruption(
+            raise errors.CacheCorruption(
                 cpv, "_eclasses_ was of invalid len %i" % len(eclasses))
         d = {}
         try:
             for x in xrange(0, len(eclasses), 3):
                 d[eclasses[x]] = (eclasses[x + 1], long(eclasses[x + 2]))
         except ValueError:
-            raise cache_errors.CacheCorruption(
+            raise errors.CacheCorruption(
                 cpv, 'ValueError reading %r' % (eclass_string,))
         return d

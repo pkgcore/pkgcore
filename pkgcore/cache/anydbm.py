@@ -11,7 +11,7 @@ try:
 except ImportError:
     import pickle
 import os
-from pkgcore.cache import fs_template, cache_errors
+from pkgcore.cache import fs_template, errors
 
 
 class database(fs_template.FsBased):
@@ -42,7 +42,7 @@ class database(fs_template.FsBased):
                 self._ensure_dirs(self._db_path)
                 self._ensure_access(self._db_path)
             except (OSError, IOError), e:
-                raise cache_errors.InitializationError(self.__class__, e)
+                raise errors.InitializationError(self.__class__, e)
 
             # try again if failed
             try:
@@ -50,7 +50,7 @@ class database(fs_template.FsBased):
                     self._db = anydbm_module.open(
                         self._db_path, "c", self._perms)
             except anydbm_module.error, e:
-                raise cache_errors.InitializationError(self.__class__, e)
+                raise errors.InitializationError(self.__class__, e)
     __init__.__doc__ = fs_template.FsBased.__init__.__doc__
 
     def iteritems(self):

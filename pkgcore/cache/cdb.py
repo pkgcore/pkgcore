@@ -15,7 +15,7 @@ except ImportError:
 import copy
 import os
 
-from pkgcore.cache import fs_template, cache_errors
+from pkgcore.cache import fs_template, errors
 
 
 class database(fs_template.FsBased):
@@ -41,7 +41,7 @@ class database(fs_template.FsBased):
                 self._ensure_dirs(self._db_path)
                 self._ensure_access(self._db_path)
             except (OSError, IOError), e:
-                raise cache_errors.InitializationError(self.__class__, e)
+                raise errors.InitializationError(self.__class__, e)
 
             try:
                 cm = cdb_module.cdbmake(self._db_path, self._db_path+".tmp")
@@ -49,7 +49,7 @@ class database(fs_template.FsBased):
                 self._ensure_access(self._db_path)
                 self._db = cdb_module.init(self._db_path)
             except cdb_module.error, e:
-                raise cache_errors.InitializationError(self.__class__, e)
+                raise errors.InitializationError(self.__class__, e)
         self._adds = {}
         self._dels = set()
     __init__.__doc__ = fs_template.FsBased.__init__.__doc__

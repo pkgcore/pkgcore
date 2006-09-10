@@ -6,7 +6,7 @@ pysqlite <v2 backend
 """
 
 import os
-from pkgcore.cache import sql_template, fs_template, cache_errors
+from pkgcore.cache import sql_template, fs_template, errors
 sqlite_module = __import__("sqlite")
 
 class database(fs_template.FsBased, sql_template.SQLDatabase):
@@ -29,11 +29,11 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
             self.db = sqlite_module.connect(
                 self._dbpath, mode=self._perms, autocommit=False)
             if not self._ensure_access(self._dbpath):
-                raise cache_errors.InitializationError(
+                raise errors.InitializationError(
                     self.__class__, "can't ensure perms on %s" % self._dbpath)
             self.con = self.db.cursor()
         except self._BaseError, e:
-            raise cache_errors.InitializationError(self.__class__, e)
+            raise errors.InitializationError(self.__class__, e)
 
     def _initdb_con(self, config):
         sql_template.SQLDatabase._initdb_con(self, config)
@@ -46,7 +46,7 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
                 self.con.execute(self.SCHEMA_DELETE_TRIGGER);
                 self.db.commit()
         except self._BaseError, e:
-            raise cache_errors.InitializationError(self.__class__, e)
+            raise errors.InitializationError(self.__class__, e)
 
     def _table_exists(self, tbl):
         """return true/false dependant on a tbl existing"""
@@ -69,12 +69,12 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
                     "INSERT", "REPLACE", 1) %
                 (self.label, cpv))
         except self._BaseError, e:
-            raise cache_errors.CacheCorruption(
+            raise errors.CacheCorruption(
                 cpv, "tried to insert a cpv, but failed: %s" % str(e))
 
         # sums the delete also
         if self.con.rowcount <= 0 or self.con.rowcount > 2:
-            raise cache_errors.CacheCorruption(
+            raise errors.CacheCorruption(
                 cpv, "tried to insert a cpv, but failed- %i rows modified" %
                 self.rowcount)
         return self.con.lastrowid

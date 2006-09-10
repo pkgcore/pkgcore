@@ -5,7 +5,7 @@
 cache backend utilities
 """
 
-from pkgcore.cache import cache_errors
+from pkgcore.cache import errors
 
 def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None,
                  verbose_instance=None):
@@ -68,7 +68,7 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None,
         # needs be, for metadata/cache mainly)
         try:
             trg_cache[x] = entry
-        except cache_errors.CacheError, ce:
+        except errors.CacheError, ce:
             noise.exception(x, ce)
             del ce
             continue
@@ -86,7 +86,7 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None,
     for key in dead_nodes:
         try:
             del trg_cache[key]
-        except cache_errors.CacheError, ce:
+        except errors.CacheError, ce:
             noise.exception(ce)
             del ce
 

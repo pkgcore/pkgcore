@@ -7,7 +7,7 @@ per key file based backend
 
 import os, stat, errno
 from pkgcore.cache import fs_template
-from pkgcore.cache import cache_errors
+from pkgcore.cache import errors
 
 class database(fs_template.FsBased):
 
@@ -31,14 +31,14 @@ class database(fs_template.FsBased):
         except IOError, e:
             if e.errno == errno.ENOENT:
                 raise KeyError(cpv)
-            raise cache_errors.CacheCorruption(cpv, e)
+            raise errors.CacheCorruption(cpv, e)
         except OSError, e:
-            raise cache_errors.CacheCorruption(cpv, e)
+            raise errors.CacheCorruption(cpv, e)
         try:
             d = self._parse_data(myf, os.fstat(myf.fileno()).st_mtime)
         except (OSError, ValueError), e:
             myf.close()
-            raise cache_errors.CacheCorruption(cpv, e)
+            raise errors.CacheCorruption(cpv, e)
         myf.close()
         return d
 
@@ -60,11 +60,11 @@ class database(fs_template.FsBased):
                     self._ensure_dirs(cpv)
                     myf = open(fp, "w", 32384)
                 except (OSError, IOError),e:
-                    raise cache_errors.CacheCorruption(cpv, e)
+                    raise errors.CacheCorruption(cpv, e)
             else:
-                raise cache_errors.CacheCorruption(cpv, ie)
+                raise errors.CacheCorruption(cpv, ie)
         except OSError, e:
-            raise cache_errors.CacheCorruption(cpv, e)
+            raise errors.CacheCorruption(cpv, e)
 
         for k, v in values.iteritems():
             if k != "_mtime_":
@@ -80,7 +80,7 @@ class database(fs_template.FsBased):
             os.rename(fp, new_fp)
         except (OSError, IOError), e:
             os.remove(fp)
-            raise cache_errors.CacheCorruption(cpv, e)
+            raise errors.CacheCorruption(cpv, e)
 
     def _delitem(self, cpv):
         try:
@@ -89,7 +89,7 @@ class database(fs_template.FsBased):
             if e.errno == errno.ENOENT:
                 raise KeyError(cpv)
             else:
-                raise cache_errors.CacheCorruption(cpv, e)
+                raise errors.CacheCorruption(cpv, e)
 
     def __contains__(self, cpv):
         return os.path.exists(os.path.join(self.location, cpv))

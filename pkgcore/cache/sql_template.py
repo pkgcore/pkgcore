@@ -5,7 +5,7 @@
 template for sql backends- needs work
 """
 
-from pkgcore.cache import template, cache_errors
+from pkgcore.cache import template, errors
 
 class SQLDatabase(template.database):
     """template class for RDBM based caches
@@ -87,21 +87,21 @@ class SQLDatabase(template.database):
         self._dbconnect(config)
         if not self._table_exists(self.SCHEMA_PACKAGE_NAME):
             if self.readonly:
-                raise cache_errors.ReadOnlyRestriction(
+                raise errors.ReadOnlyRestriction(
                     "table %s doesn't exist" % self.SCHEMA_PACKAGE_NAME)
             try:
                 self.con.execute(self.SCHEMA_PACKAGE_CREATE)
             except self._BaseError, e:
-                raise cache_errors.InitializationError(self.__class__, e)
+                raise errors.InitializationError(self.__class__, e)
 
         if not self._table_exists(self.SCHEMA_VALUES_NAME):
             if self.readonly:
-                raise cache_errors.ReadOnlyRestriction(
+                raise errors.ReadOnlyRestriction(
                     "table %s doesn't exist" % self.SCHEMA_VALUES_NAME)
             try:
                 self.con.execute(self.SCHEMA_VALUES_CREATE)
             except self._BaseError, e:
-                raise cache_errors.InitializationError(self.__class__, e)
+                raise errors.InitializationError(self.__class__, e)
 
     def _table_exists(self, tbl):
         """return true if a table exists
@@ -120,7 +120,7 @@ class SQLDatabase(template.database):
                     self.SCHEMA_PACKAGE_NAME, self.SCHEMA_VALUES_NAME,
                     self.label, self._sfilter(cpv)))
         except self._BaseError, e:
-            raise cache_errors.CacheCorruption(self, cpv, e)
+            raise errors.CacheCorruption(self, cpv, e)
 
         rows = self.con.fetchall()
 
@@ -144,7 +144,7 @@ class SQLDatabase(template.database):
                 if self.autocommits:
                     self.commit()
             except self._BaseError, e:
-                raise cache_errors.CacheCorruption(self, cpv, e)
+                raise errors.CacheCorruption(self, cpv, e)
             if self.con.rowcount <= 0:
                 raise KeyError(cpv)
         except Exception:
@@ -164,7 +164,7 @@ class SQLDatabase(template.database):
             try:
                 pkgid = self._insert_cpv(cpv)
             except self._BaseError, e:
-                raise cache_errors.CacheCorruption(cpv, e)
+                raise errors.CacheCorruption(cpv, e)
 
             # __getitem__ fills out missing values,
             # so we store only what's handed to us and is a known key
@@ -180,7 +180,7 @@ class SQLDatabase(template.database):
                         "VALUES(\"%s\", %%(key)s, %%(value)s)" %
                         (self.SCHEMA_VALUES_NAME, str(pkgid)), db_values)
                 except self._BaseError, e:
-                    raise cache_errors.CacheCorruption(cpv, e)
+                    raise errors.CacheCorruption(cpv, e)
             if self.autocommits:
                 self.commit()
 
@@ -213,7 +213,7 @@ class SQLDatabase(template.database):
             # just delete it.
             try:
                 del self[cpv]
-            except	(cache_errors.CacheCorruption, KeyError):
+            except	(errors.CacheCorruption, KeyError):
                 pass
             query_str = self.SCHEMA_INSERT_CPV_INTO_PACKAGE
 
@@ -227,7 +227,7 @@ class SQLDatabase(template.database):
             (self.SCHEMA_PACKAGE_NAME, self.label, cpv))
 
         if self.con.rowcount != 1:
-            raise cache_errors.CacheCorruption(
+            raise errors.CacheCorruption(
                 cpv, "Tried to insert the cpv, but found "
                 " %i matches upon the following select!" % (
                     self.con.rowcount))
@@ -238,13 +238,13 @@ class SQLDatabase(template.database):
             try:
                 self.commit()
             except self._BaseError, e:
-                raise cache_errors.GeneralCacheCorruption(e)
+                raise errors.GeneralCacheCorruption(e)
 
         try:
             self.con.execute("SELECT cpv FROM %s WHERE label=%s AND cpv=%s" % \
                 (self.SCHEMA_PACKAGE_NAME, self.label, self._sfilter(cpv)))
         except self._BaseError, e:
-            raise cache_errors.GeneralCacheCorruption(e)
+            raise errors.GeneralCacheCorruption(e)
         return self.con.rowcount > 0
 
     def iterkeys(self):
@@ -252,13 +252,13 @@ class SQLDatabase(template.database):
             try:
                 self.commit()
             except self._BaseError, e:
-                raise cache_errors.GeneralCacheCorruption(e)
+                raise errors.GeneralCacheCorruption(e)
 
         try:
             self.con.execute("SELECT cpv FROM %s WHERE label=%s" %
                 (self.SCHEMA_PACKAGE_NAME, self.label))
         except self._BaseError, e:
-            raise cache_errors.GeneralCacheCorruption(e)
+            raise errors.GeneralCacheCorruption(e)
 
         for x in self.con.fetchall():
             yield x[0]
@@ -271,7 +271,7 @@ class SQLDatabase(template.database):
                    self.label))
         except self._BaseError, e:
             # XXX this makes no sense
-            raise cache_errors.CacheCorruption(self, 'iteritems', e)
+            raise errors.CacheCorruption(self, 'iteritems', e)
 
         oldcpv = None
         l = []
@@ -301,7 +301,7 @@ class SQLDatabase(template.database):
         query_list = []
         for k, v in match_dict.items():
             if k not in self._known_keys:
-                raise cache_errors.InvalidRestriction(
+                raise errors.InvalidRestriction(
                     k, v, "key isn't known to this cache instance")
             v = v.replace("%","\\%")
             v = v.replace(".*","%")
@@ -322,6 +322,6 @@ class SQLDatabase(template.database):
                 "SELECT cpv from package_cache natural join values_cache "
                 "WHERE label=%s %s" % (self.label, query))
         except self._BaseError, e:
-            raise cache_errors.GeneralCacheCorruption(e)
+            raise errors.GeneralCacheCorruption(e)
 
         return [ row[0] for row in self.con.fetchall() ]

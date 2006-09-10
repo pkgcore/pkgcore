@@ -323,11 +323,10 @@ class AliasedVirtuals(virtual.tree):
         self.versions._vals = ForgetfulDict()
 
     def _get_versions(self, catpkg):
-        cat, pkg = catpkg.rsplit("/", 1)
-        if cat != "virtual":
+        if catpkg[0] != "virtual":
             raise KeyError("no %s package in this repository" % catpkg)
         return tuple(x.fullver
-                     for x in self.aliased_repo.itermatch(self._virtuals[pkg]))
+                     for x in self.aliased_repo.itermatch(self._virtuals[catpkg[1]]))
 
     def _fetch_metadata(self, pkg):
         return atom("=%s-%s" % (self._virtuals[pkg.package].key, pkg.fullver))

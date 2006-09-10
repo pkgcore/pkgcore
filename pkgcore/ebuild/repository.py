@@ -138,8 +138,8 @@ class UnconfiguredTree(prototype.tree):
                     str(e)))
 
     def _get_versions(self, catpkg):
-        pkg = catpkg.split("/")[-1]
-        cppath = os.path.join(self.base, catpkg.lstrip(os.path.sep))
+        pkg = catpkg[-1]
+        cppath = os.path.join(self.base, catpkg[0], catpkg[1])
         # 7 == len(".ebuild")
         try:
             return tuple(x[len(pkg):-7].lstrip("-")

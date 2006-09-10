@@ -8,28 +8,16 @@ base repository template
 from pkgcore.util.mappings import LazyValDict
 from pkgcore.util.lists import iflatten_instance
 from pkgcore.ebuild.atom import atom
-from pkgcore.restrictions import values, boolean
+from pkgcore.restrictions import values, boolean, restriction
 from pkgcore.util.compatibility import any
 from pkgcore.restrictions.util import collect_package_restrictions
 
-def ix_callable(a):
-    return "/".join(a)
 
 class IterValLazyDict(LazyValDict):
 
-    def __init__(self, key_func, val_func, override_iter=None,
-                 return_func=ix_callable):
+    def __init__(self, key_func, val_func, override_iter=None):
         LazyValDict.__init__(self, key_func, val_func)
         self._iter_callable = override_iter
-        self.return_mangler = return_func
-
-    def __iter__(self):
-        return (
-            self.return_mangler(k, ver)
-            for k, v in self.iteritems() for ver in v)
-
-    def __contains__(self, key):
-        return key in iter(self)
 
     def __str__(self):
         return str(list(self))
@@ -41,14 +29,12 @@ class IterValLazyDict(LazyValDict):
 
 class PackageIterValLazyDict(IterValLazyDict):
 
-    def __iter__(self):
-        return (k+"/"+x for k in self.iterkeys() for x in self[k])
+#    def __iter__(self):
+#        return ((k,x) for k in self.iterkeys() for x in self[k])
+    pass
 
-    def __contains__(self, key):
-        s = key.rsplit("/", 1)
-        if len(s) != 2:
-            return False
-        return s[1] in self.get(s[0], ())
+#    def iterkeys(self):
+#        return 
 
 
 class CategoryIterValLazyDict(IterValLazyDict):
@@ -73,9 +59,6 @@ class CategoryIterValLazyDict(IterValLazyDict):
     def __iter__(self):
         return self.iterkeys()
 
-    def __contains__(self, key):
-        return key in self.keys()
-
 
 class tree(object):
     """
@@ -97,6 +80,15 @@ class tree(object):
     configured = True
     configure = None
 
+    def _mangle_version_keys(self, packages=None):
+        if packages:
+            p = packages.iteritems()
+        else:
+            p = self.packages.iteritems()
+        for c, v in p:
+            for p in v:
+                yield c,p
+
     def __init__(self, frozen=True):
         """
         @param frozen: controls whether the repository is mutable or immutable
@@ -105,10 +97,10 @@ class tree(object):
         self.categories = CategoryIterValLazyDict(
             self._get_categories, self._get_categories)
         self.packages   = PackageIterValLazyDict(
-            self.categories, self._get_packages)
+            self.categories.iterkeys, self._get_packages)
         self.versions   = IterValLazyDict(
-            self.packages, self._get_versions,
-            return_func=lambda *t:"-".join(t))
+#            self.packages.iteritems, self._get_versions,
+            self._mangle_version_keys, self._get_versions)
 
         self.frozen = frozen
         self.lock = None
@@ -139,8 +131,9 @@ class tree(object):
         raise AttributeError
 
     def __iter__(self):
-        for cpv in self.versions:
-            yield self.package_class(cpv)
+        for cp, t in self.versions.iteritems():
+            for v in t:
+                yield self.package_class("%s/%s-%s" % (cp[0], cp[1], v))
         return
 
     def __len__(self):
@@ -168,7 +161,7 @@ class tree(object):
             sorter = iter
 
         if isinstance(restrict, atom):
-            candidates = [restrict.key]
+            candidates = [(restrict.category, restrict.package)]
         else:
             candidates = self._identify_candidates(restrict, sorter)
 
@@ -186,7 +179,7 @@ class tree(object):
             match = restrict.force_False
         for catpkg in candidates:
             for pkg in sorter(
-                self.package_class(catpkg+"-"+ver)
+                self.package_class("%s/%s-%s" % (catpkg[0], catpkg[1], ver))
                 for ver in self.versions.get(catpkg, [])):
                 if pkg_klass_override is not None:
                     pkg = pkg_klass_override(pkg)
@@ -196,7 +189,10 @@ class tree(object):
 
     def _identify_candidates(self, restrict, sorter):
         # full expansion
-        ret_mangler = self.packages.return_mangler
+        if not isinstance(restrict, restriction.base):
+            raise TypeError("restrict must be a "
+                "pkgcore.restriction.restrictions.base instance")
+
         if not isinstance(restrict, boolean.base) or isinstance(restrict, atom):
             return self._fast_identify_candidates(restrict, sorter)
         dsolutions = [
@@ -210,9 +206,9 @@ class tree(object):
             if not x[0] and not x[1]:
                 # great... one doesn't rely on cat/pkg.
                 if iter is sorter:
-                    return self.packages
+                    return self.versions
                 return (
-                    ret_mangler((c, p))
+                    (c,p)
                     for c in sorter(self.categories)
                     for p in sorter(self.packages.get(c, [])))
         # simple cases first.
@@ -225,13 +221,12 @@ class tree(object):
                 # merde.  so we've got a mix- some specify cats, some
                 # don't, some specify pkgs, some don't.
                 # this may be optimizable
-                return self.packages
+                return self.versions
             # ok. so... one doesn't specify a category, but they all
             # specify packages (or don't)
             pr = values.OrRestriction(*tuple(iflatten_instance(
                         (x[1] for x in dsolutions if x[1]), values.base)))
-            return (
-                ret_mangler((c, p))
+            return ((c,p)
                 for c in sorter(self.categories)
                 for p in sorter(pgetter(c, [])) if pr.match(p))
 
@@ -240,14 +235,18 @@ class tree(object):
             cr = values.OrRestriction(*tuple(iflatten_instance(
                         (x[0] for x in dsolutions), values.base)))
             cats_iter = (c for c in sorter(self.categories) if cr.match(c))
-            return (
-                self.packages.return_mangler((c, p))
+            return ((c, p)
                 for c in cats_iter for p in sorter(pgetter(c, [])))
 
         return self._fast_identify_candidates(restrict, sorter)
 
 
-    def _fast_identify_candidates(self, restrict, sorter):
+    def _fast_identify_candidates(self, *a):
+        i = self._afast_identify_candidates(*a)
+        l = list(i)
+        return l
+
+    def _afast_identify_candidates(self, restrict, sorter):
         pkg_restrict = set()
         cat_restrict = set()
         cat_exact = set()
@@ -271,8 +270,8 @@ class tree(object):
             if not cat_restrict and len(cat_exact) == 1:
                 c = cat_exact.pop()
                 if not pkg_restrict and len(pkg_exact) == 1:
-                    cp = self.packages.return_mangler((c, pkg_exact.pop()))
-                    if cp in self.packages:
+                    cp = (c, pkg_exact.pop())
+                    if cp in self.versions:
                         return [cp]
                     return []
                 cats_iter = [c]
@@ -295,24 +294,23 @@ class tree(object):
                 else:
                     pkg_exact = sorter(pkg_exact)
                 return (
-                    self.packages.return_mangler((c, p))
+                    (c,p)
                     for c in cats_iter for p in pkg_exact)
             else:
                 pkg_restrict.add(values.ContainmentMatch(*pkg_exact))
 
         if pkg_restrict:
-            return (
-                self.packages.return_mangler((c, p))
+            return ((c,p)
                 for c in cats_iter
                 for p in sorter(self.packages.get(c, []))
                 if any(True for r in pkg_restrict if r.match(p)))
         elif not cat_restrict:
             if sorter is iter:
-                return self.packages
+                return self.versions
             else:
-                return (self.packages.return_mangler((c, p)) for c in
+                return ((c,p) for c in
                     cats_iter for p in sorter(self.packages.get(c, [])))
-        return (self.packages.return_mangler((c, p))
+        return ((c,p)
             for c in cats_iter for p in sorter(self.packages.get(c, [])))
 
     def notify_remove_package(self, pkg):

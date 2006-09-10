@@ -26,8 +26,7 @@ class SimpleTree(tree):
         return tuple(self.cpv_dict[category].iterkeys())
 
     def _get_versions(self, cp_key):
-        cat, pkg = cp_key.rsplit("/", 1)
-        return tuple(self.cpv_dict[cat][pkg])
+        return tuple(self.cpv_dict[cp_key[0]][cp_key[1]])
 
 
 class TestPrototype(unittest.TestCase):
@@ -46,10 +45,12 @@ class TestPrototype(unittest.TestCase):
             sorted(self.repo.categories),
             sorted(["dev-lib", "dev-util"]))
         self.assertEqual(
-            sorted(self.repo.packages),
-            sorted(["dev-util/diffball", "dev-util/bsdiff", "dev-lib/fake"]))
+            sorted(map("/".join, self.repo.versions)),
+                sorted([x for x in 
+                ["dev-util/diffball", "dev-util/bsdiff", "dev-lib/fake"]]))
         self.assertEqual(
-            sorted(self.repo.versions),
+            sorted("%s/%s-%s" % (cp[0], cp[1], v)
+                for cp, t in self.repo.versions.iteritems() for v in t),
             sorted(["dev-util/diffball-1.0", "dev-util/diffball-0.7",
                     "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
                     "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1"]))

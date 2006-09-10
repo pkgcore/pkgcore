@@ -39,11 +39,15 @@ class DictCache(template.database):
 
 class TemplateTest(unittest.TestCase):
 
-    def setUp(self):
-        self.cache = DictCache('nowhere', 'dictcache', ['foo'])
-        self.cache.data['spork'] = {'foo': 'bar'}
+    cache_keys = ("foo", "_eclasses_")
+
+    def get_db(self, label='foo', readonly=False):
+        return DictCache('nowhere', 'dictcache', self.cache_keys, 
+            readonly=readonly)
 
     def test_basics(self):
+        self.cache = self.get_db()
+        self.cache['spork'] = {'foo':'bar'}
         self.assertEquals({'foo': 'bar'}, self.cache['spork'])
         self.assertRaises(KeyError, operator.getitem, self.cache, 'notaspork')
 
@@ -65,6 +69,8 @@ class TemplateTest(unittest.TestCase):
         self.assertEquals({}, self.cache['empty'])
 
     def test_eclasses(self):
+        self.cache = self.get_db()
+        self.cache['spork'] = {'foo':'bar'}
         self.cache['spork'] = {'_eclasses_': {'spork': 'here',
                                               'foon': 'there'}}
         self.assertRaises(errors.CacheCorruption,
@@ -79,7 +85,9 @@ class TemplateTest(unittest.TestCase):
                           self.cache['spork']['_eclasses_'])
 
     def test_readonly(self):
-        cache = DictCache('nowhere', 'rodictcache', ['foo'], True)
+        self.cache = self.get_db()
+        self.cache['spork'] = {'foo':'bar'}
+        cache = self.get_db('rodictcache', True)
         cache.data = self.cache.data
         self.assertRaises(errors.ReadOnly,
                           operator.delitem, cache, 'spork')
@@ -87,20 +95,29 @@ class TemplateTest(unittest.TestCase):
                           operator.setitem, cache, 'spork', {'foo': 42})
         self.assertEquals({'foo': 'bar'}, cache['spork'])
 
-    def test_get_matches(self):
-        self.assertRaises(errors.InvalidRestriction,
-                          list, self.cache.get_matches({'foo': '*'}))
-        self.assertRaises(errors.InvalidRestriction,
-                          list, self.cache.get_matches({'bar': '.*'}))
-
-        self.cache['foon'] = {'foo': 'baz'}
-
-        self.assertEquals(['spork'],
-                          list(self.cache.get_matches({'foo': 'bar'})))
-        self.assertEquals(['foon', 'spork'],
-                          sorted(self.cache.get_matches({'foo': 'ba.'})))
-        self.assertEquals(['foon', 'spork'],
-                          sorted(self.cache.get_matches({})))
-
-        self.assertEquals(['spork'],
-                          list(self.cache.get_matches({'foo': ('BAR', re.I)})))
+#
+# XXX: disabled by harring; get_matches is old code, still semi-working,
+# but not even remotely part of the cache interface- that code needs to be
+# gutted/refactored, with the majority of it happening higher up;
+#
+# reiterating; these tests should not be enabled till restriction translation
+# is implemented, likely invalidating this code.
+#
+#    def test_get_matches(self):
+#        self.db = self.get_db()
+#        self.assertRaises(errors.InvalidRestriction,
+#                          list, self.cache.get_matches({'foo': '*'}))
+#        self.assertRaises(errors.InvalidRestriction,
+#                          list, self.cache.get_matches({'bar': '.*'}))
+#
+#        self.cache['foon'] = {'foo': 'baz'}
+#
+#        self.assertEquals(['spork'],
+#                          list(self.cache.get_matches({'foo': 'bar'})))
+#        self.assertEquals(['foon', 'spork'],
+#                          sorted(self.cache.get_matches({'foo': 'ba.'})))
+#        self.assertEquals(['foon', 'spork'],
+#                          sorted(self.cache.get_matches({})))
+#
+#        self.assertEquals(['spork'],
+#                          list(self.cache.get_matches({'foo': ('BAR', re.I)})))

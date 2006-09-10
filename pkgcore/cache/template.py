@@ -41,7 +41,7 @@ class database(object):
         @param readonly: defaults to False,
             controls whether the cache is mutable.
         """
-        self._known_keys = frozenset(list(auxdbkeys) + ["_mtime_", "_eclasses_"])
+        self._known_keys = frozenset(auxdbkeys)
         self._cdict_kls = make_SlottedDict_kls(self._known_keys)
         self.location = location
         self.label = label

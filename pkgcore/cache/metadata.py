@@ -89,7 +89,8 @@ class database(flat_hash.database):
                     d[key] = data[idx].strip()
                 break
 
-        d["_mtime_"] = mtime
+        if self._mtime_used:
+            d["_mtime_"] = mtime
         return d
 
     def _setitem(self, cpv, values):

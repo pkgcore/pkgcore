@@ -45,7 +45,8 @@ class database(fs_template.FsBased):
     def _parse_data(self, data, mtime):
         splitter = (x.rstrip().split("=", 1) for x in data)
         d = self._cdict_kls((k,v) for k,v in splitter if k in self._known_keys)
-        d["_mtime_"] = long(mtime)
+        if self._mtime_used:
+            d["_mtime_"] = long(mtime)
         return d
 
     def _setitem(self, cpv, values):
@@ -71,7 +72,10 @@ class database(fs_template.FsBased):
                 myf.writelines("%s=%s\n" % (k, v))
 
         myf.close()
-        self._ensure_access(fp, mtime=values["_mtime_"])
+        if self._mtime_used:
+            self._ensure_access(fp, mtime=values["_mtime_"])
+        else:
+            self._ensure_access(fp)
 
         #update written.  now we move it.
 

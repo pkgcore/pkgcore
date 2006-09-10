@@ -37,6 +37,9 @@ class FsBased(template.database):
             # normpath.
             self.label = os.path.sep + os.path.normpath(
                 self.label).lstrip(os.path.sep)
+
+        self._mtime_used = "_mtime_" in self._known_keys
+
     __init__.__doc__ = "\n".join(
         x.lstrip() for x in __init__.__doc__.split("\n") + [
             y.lstrip().replace("@param", "@keyword")

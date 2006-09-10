@@ -206,7 +206,10 @@ class DepSetEvaluateTest(unittest.TestCase):
         for vals in (("y", "x? ( y ) !x? ( z )", "x"),
             ("z", "x? ( y ) !x? ( z )"),
             ("", "x? ( y ) y? ( z )"),
-            ("a b", "a !x? ( b )")):
+            ("a b", "a !x? ( b )"),
+            ("a b", "a !x? ( b )", "", ""),
+            ("a b", "a !x? ( b ) y? ( c )", "", "y"),
+            ):
             result = vals[0]
             s = vals[1]
             use, tristate = [], None

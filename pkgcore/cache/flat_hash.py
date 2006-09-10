@@ -50,9 +50,11 @@ class database(fs_template.FsBased):
         return d
 
     def _setitem(self, cpv, values):
-        s = cpv.rfind("/")
+        # might seem weird, but we rely on the trailing +1; this 
+        # makes it behave properly for any cache depth (including no depth)
+        s = cpv.rfind("/") + 1
         fp = os.path.join(self.location,
-                          cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s+1:]))
+            cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s:]))
         try:
             myf = open(fp, "w", 32384)
         except IOError, ie:

@@ -6,8 +6,11 @@ ebuild tree manifest/digest support
 """
 
 from pkgcore.chksum.errors import ParseChksumError
-def parse_digest(path, throw_errors=True):
-    d = {}
+
+size_s = intern("size")
+
+def parse_digest(path, throw_errors=True, kls_override=dict):
+    d = kls_override()
     try:
         f = open(path, "r", 32384)
         for line in f:
@@ -22,10 +25,10 @@ def parse_digest(path, throw_errors=True):
                 continue
 
             #MD5 c08f3a71a51fff523d2cfa00f14fa939 diffball-0.6.2.tar.bz2 305567
-            d.setdefault(l[2], {})[l[0].lower()] = l[1]
-            if "size" not in d[l[2]]:
-                d[l[2]]["size"] = long(l[3])
+            d.setdefault(l[2], {})[intern(l[0].lower())] = l[1]
+            if size_s not in d[l[2]]:
+                d[l[2]][size_s] = long(l[3])
         f.close()
     except (OSError, IOError, TypeError), e:
-        raise ParseChksumError("failed parsing " + path, e)
+        raise ParseChksumError("failed parsing %r" % path, e)
     return d

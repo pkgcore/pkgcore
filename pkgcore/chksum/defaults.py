@@ -190,3 +190,5 @@ for modulename, chksumname in [
         chksum_types[chksumname] = pre_curry(
             loop_over_file, modules.load_attribute('%s.new' % (modulename,)))
 del modulename, chksumname
+
+chksum_types = dict((intern(k), v) for k,v in chksum_types.iteritems())

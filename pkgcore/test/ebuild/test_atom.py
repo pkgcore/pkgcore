@@ -93,3 +93,8 @@ class TestAtom(unittest.TestCase):
         self.assertFalse(atom.atom("%s:0" % as).match(c))
         self.assertTrue(atom.atom("%s:1" % as).match(c))
         self.assertFalse(atom.atom("%s:2" % as).match(c))
+        # shouldn't puke, but has, thus checking"
+        atom.atom("sys-libs/db:4.4")
+        for x in "-+,a":
+            self.assertRaises(atom.MalformedAtom, atom.atom,
+                "%s:%s" % (as, x))

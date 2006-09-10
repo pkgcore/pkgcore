@@ -195,7 +195,7 @@ class atom(boolean.AndRestriction):
                 raise MalformedAtom(atom, "second specification of slotting")
             # slot dep.
             self.slot = atom[s + 1:]
-            if not self.slot or not all(s.isdigit() for s in self.slot):
+            if not self.slot or not all(s.isdigit() or s == '.' for s in self.slot):
                 raise MalformedAtom(
                     atom, "cannot have empty slot deps in slot restriction")
             atom = atom[:s]

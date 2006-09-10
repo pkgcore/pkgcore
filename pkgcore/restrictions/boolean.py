@@ -55,7 +55,7 @@ class base(restriction.base):
 
         """
         if hasattr(self, "type"):
-            if self.__class__.type not in restrictions.valid_type or \
+            if self.__class__.type not in restriction.valid_types or \
                 self.__class__.type != self.type:
                 kwds["node_type"] = self.type
         kwds["negate"] = self.negate

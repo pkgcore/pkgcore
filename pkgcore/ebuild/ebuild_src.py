@@ -202,8 +202,8 @@ class package(metadata.package):
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
                   "license", "src_uri", "license", "provides"])
 
-    def __init__(self, parent, cpv):
-        metadata.package.__init__(self, parent, cpv)
+    def __init__(self, parent, cpv, category, package, version):
+        metadata.package.__init__(self, parent, cpv, category, package, version)
 
     _get_attr = dict(metadata.package._get_attr)
     _get_attr["provides"] = generate_providers
@@ -342,11 +342,12 @@ class package_factory(metadata.factory):
 
         return mydata
 
-    def new_package(self, cpv):
+    def new_package(self, category, package, fullver):
+        cpv = "%s/%s-%s" % (category, package, fullver)
         inst = self._cached_instances.get(cpv, None)
         if inst is None:
             inst = self._cached_instances[cpv] = self.child_class(
-                self, cpv)
+                self, cpv, category, package, fullver)
             o = self._weak_pkglevel_cache.get(inst.key, None)
             if o is None:
                 o = SharedMetadataXml()

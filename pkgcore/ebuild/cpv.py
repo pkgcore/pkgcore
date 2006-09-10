@@ -241,8 +241,8 @@ fake_pkg = "pkg"
 def cpy_ver_cmp(ver1, rev1, ver2, rev2):
     if ver1 == ver2:
         return cmp(rev1, rev2)
-    c = cmp(cpy_CPV(ver1, fake_cat, fake_pkg),
-            cpy_CPV(ver2, fake_cat, fake_pkg))
+    c = cmp(cpy_CPV(ver1, fake_cat, fake_pkg, ver1),
+            cpy_CPV(ver2, fake_cat, fake_pkg, ver2))
     if c != 0:
         return c
     return cmp(rev1, rev2)

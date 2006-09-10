@@ -318,9 +318,14 @@ class AliasedVirtuals(virtual.tree):
         @param repo: L{pkgcore.ebuild.repository.UnconfiguredTree} parent repo
         """
 
-        virtual.tree.__init__(self, virtuals)
+        virtual.tree.__init__(self, virtuals,
+            pkg_args_mangler=self._mangle_args)
         self.aliased_repo = repo
         self.versions._vals = ForgetfulDict()
+
+    @staticmethod
+    def _mangle_args(args):
+        return "%s/%s-%s" % args, args[0], args[1], args[2]
 
     def _get_versions(self, catpkg):
         if catpkg[0] != "virtual":

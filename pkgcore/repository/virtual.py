@@ -7,10 +7,14 @@ virtual repository, pkgs generated via callable
 
 from pkgcore.repository import prototype
 from pkgcore.package import virtual
+from pkgcore.util.currying import pre_curry
+
+def mangle_args(new_package_func, mangler_func, *args):
+    return new_package_func(*mangler_func(args))
 
 class tree(prototype.tree):
 
-    def __init__(self, grab_virtuals_func, livefs=False):
+    def __init__(self, grab_virtuals_func, livefs=False, pkg_args_mangler=None):
         """
         @param grab_virtuals_func: callable to get a package -> versions mapping
         @param livefs: is this a livefs repository?
@@ -26,7 +30,14 @@ class tree(prototype.tree):
         else:
             self._grab_virtuals = grab_virtuals_func
             self._virtuals = None
-        self.package_class = virtual.factory(self).new_package
+
+        vf = virtual.factory(self)
+
+        if pkg_args_mangler:
+            self.package_class = pre_curry(mangle_args, vf.new_package,
+                pkg_args_mangler)
+        else:
+            self.package_class = vf.new_package
 
     def _fetch_metadata(self, pkg):
         if self._grab_virtuals is not None:
@@ -50,7 +61,6 @@ class tree(prototype.tree):
         raise KeyError("no %s category for this repository" % category)
 
     def _get_versions(self, catpkg):
-        cat, pkg = catpkg.rsplit("/", 1)
-        if cat == "virtual":
-            return tuple(self._virtuals[pkg].iterkeys())
+        if catpkg[0] == "virtual":
+            return tuple(self._virtuals[catpkg[1]].iterkeys())
         raise KeyError("no '%s' package in this repository" % catpkg)

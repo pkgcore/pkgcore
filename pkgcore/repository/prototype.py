@@ -133,7 +133,7 @@ class tree(object):
     def __iter__(self):
         for cp, t in self.versions.iteritems():
             for v in t:
-                yield self.package_class("%s/%s-%s" % (cp[0], cp[1], v))
+                yield self.package_class(cp[0], cp[1], v)
         return
 
     def __len__(self):
@@ -178,8 +178,7 @@ class tree(object):
         else:
             match = restrict.force_False
         for catpkg in candidates:
-            for pkg in sorter(
-                self.package_class("%s/%s-%s" % (catpkg[0], catpkg[1], ver))
+            for pkg in sorter(self.package_class(catpkg[0], catpkg[1], ver)
                 for ver in self.versions.get(catpkg, [])):
                 if pkg_klass_override is not None:
                     pkg = pkg_klass_override(pkg)

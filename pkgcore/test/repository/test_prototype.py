@@ -11,8 +11,11 @@ from pkgcore.util.mappings import OrderedDict
 
 rev_sorted = pre_curry(sorted, reverse=True)
 
+def mangle_cpv(cat, pkg, ver):
+    return CPV("%s/%s-%s" % (cat, pkg, ver), cat, pkg, ver)
+
 class SimpleTree(tree):
-    package_class = CPV
+    package_class = staticmethod(mangle_cpv)
     def __init__(self, cpv_dict):
         self.cpv_dict = cpv_dict
         tree.__init__(self)

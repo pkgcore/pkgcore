@@ -96,18 +96,14 @@ class factory(object):
         self._parent_repo = parent_repo
         self._cached_instances = WeakValCache()
 
-    def new_package(self, cpv):
+    def new_package(self, *args):
         """
         generate a new package instance
 
-        @param cpv: cpvstring to parse for the new package
-            (gentoo specific, abstract this out)
-        @type cpv: string
         """
-
-        inst = self._cached_instances.get(cpv)
+        inst = self._cached_instances.get(args)
         if inst is None:
-            inst = self._cached_instances[cpv] = self.child_class(self, cpv)
+            inst = self._cached_instances[args] = self.child_class(self, *args)
         return inst
 
     def __call__(self, *args, **kwds):

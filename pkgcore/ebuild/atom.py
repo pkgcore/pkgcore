@@ -69,7 +69,7 @@ class VersionMatch(restriction.base):
         self.ver, self.rev = ver, rev
         if operator not in ("<=", "<", "=", ">", ">=", "~"):
             # XXX: hack
-            raise MalformedAtom(self.ver, self.rev,
+            raise InvalidVersion(self.ver, self.rev,
                                  "invalid operator, '%s'" % operator)
 
         self.negate = negate

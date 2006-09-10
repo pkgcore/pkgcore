@@ -315,7 +315,13 @@ class IndeterminantDict(dict):
     def __delitem__(self, *args):
         raise TypeError("non modifiable")
 
-    clear = update = pop = popitem = setdefault = __setitem__ = __delitem__
+    def pop(self, key, default=None):
+        try:
+            return self[key]
+        except KeyError:
+            return default
+    
+    clear = update = popitem = setdefault = __setitem__ = __delitem__
     __iter__ = keys = values = items = __len__ = __delitem__
     iteritems = iterkeys = itervalues = __delitem__
 

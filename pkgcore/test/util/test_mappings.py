@@ -218,7 +218,7 @@ class IndeterminantDictTest(unittest.TestCase):
 
     def test_disabled_methods(self):
         d = mappings.IndeterminantDict(lambda *a: None)
-        for x in ("clear", ("update", {}), ("pop", 1), ("setdefault", 1),
+        for x in ("clear", ("update", {}), ("setdefault", 1),
             "__iter__", "__len__", "__hash__", ("__delitem__", 1),
             ("__setitem__", 2), ("popitem", 2), "iteritems", "iterkeys",
             "keys", "items", "itervalues", "values"):

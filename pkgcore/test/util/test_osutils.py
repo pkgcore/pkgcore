@@ -7,7 +7,7 @@ from twisted.trial import unittest
 
 from pkgcore.util.osutils import native_readdir
 
-from pkgcore.test.fs.test_util import TempDirMixin
+from pkgcore.test.mixins import TempDirMixin
 
 
 class NativeListDirTest(unittest.TestCase, TempDirMixin):

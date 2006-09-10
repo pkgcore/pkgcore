@@ -3,7 +3,7 @@
 
 from twisted.trial import unittest
 from pkgcore import spawn
-from pkgcore.test.fs.test_util import TempDirMixin
+from pkgcore.test.mixins import TempDirMixin
 from pkgcore.util.currying import post_curry
 import os, pwd, signal
 

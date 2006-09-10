@@ -3,7 +3,7 @@
 
 from pkgcore.fs import ops, fs, livefs
 from twisted.trial import unittest
-from pkgcore.test.fs.test_util import TempDirMixin
+from pkgcore.test.mixins import TempDirMixin
 import os, shutil
 pjoin = os.path.join
 

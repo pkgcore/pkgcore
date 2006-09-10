@@ -10,23 +10,10 @@ import fcntl
 import shutil
 import tempfile
 
-from twisted.trial import unittest
-
 from pkgcore.fs import util
+from pkgcore.test.mixins import TempDirMixin
 
-
-class TempDirMixin(object):
-
-    def setUp(self):
-        self.dir = tempfile.mkdtemp()
-
-    def tearDown(self):
-        # change permissions back or rmtree can't kill it
-        for root, dirs, files in os.walk(self.dir):
-            for directory in dirs:
-                os.chmod(os.path.join(root, directory), 0777)
-        shutil.rmtree(self.dir)
-
+from twisted.trial import unittest
 
 class EnsureDirsTest(TempDirMixin, unittest.TestCase):
 

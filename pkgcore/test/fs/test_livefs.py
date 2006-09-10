@@ -5,7 +5,7 @@ import os
 from twisted.trial import unittest
 
 from pkgcore.fs import fs, gen_obj, iter_scan
-from pkgcore.test.fs.test_util import TempDirMixin
+from pkgcore.test.mixins import TempDirMixin
 
 
 class FsObjsTest(TempDirMixin, unittest.TestCase):

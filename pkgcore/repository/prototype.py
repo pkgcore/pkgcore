@@ -137,7 +137,7 @@ class tree(object):
         return
 
     def __len__(self):
-        return len(self.versions)
+        return sum(len(v) for v in self.versions.itervalues())
 
     def match(self, atom, **kwds):
         return list(self.itermatch(atom, **kwds))

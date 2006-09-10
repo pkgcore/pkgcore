@@ -54,8 +54,10 @@ class base(restriction.base):
         return a new instance of self.__class__, using supplied restrictions
 
         """
-        if self.__class__.type != self.type:
-            kwds["node_type"] = self.type
+        if hasattr(self, "type"):
+            if self.__class__.type not in restrictions.valid_type or \
+                self.__class__.type != self.type:
+                kwds["node_type"] = self.type
         kwds["negate"] = self.negate
         return self.__class__(*restrictions, **kwds)
 

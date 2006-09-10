@@ -202,3 +202,4 @@ def curry_node_type(klass, node_type, extradoc=None):
 
 value_type = "values"
 package_type = "package"
+valid_types = (value_type, package_type)

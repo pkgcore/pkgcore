@@ -47,17 +47,28 @@ class native_CpvTest(unittest.TestCase):
         return self.kls(cpv)
 
     def test_simple_key(self):
-        for src in [["dev-util/diffball-0.7.1", "dev-util/diffball"],
+        for src in [[("dev-util", "diffball", "0.7.1"), "dev-util/diffball"],
             ["dev-util/diffball"],
             ["dev-perl/mod_perl"],
             ["dev-perl/mod_p"],
-            ["dev-perl/mod-p"],
+            [("dev-perl", "mod-p", ""), "dev-perl/mod-p"],
             ["dev-perl/mod-p-1", "dev-perl/mod-p"],]:
             if len(src) == 1:
                 key = src[0]
             else:
                 key = src[1]
-            self.assertEqual(self.make_inst(*src[0].rsplit("/", 1)).key, key)
+            if isinstance(src[0], basestring):
+                cat, pkgver = src[0].rsplit("/", 1)
+                vals = pkgver.rsplit("-", 1)
+                if len(vals) == 1:
+                    pkg = pkgver
+                    ver = ''
+                else:
+                    pkg, ver = vals
+            else:
+                cat, pkg, ver = src[0]
+
+            self.assertEqual(self.make_inst(cat, pkg, ver).key, key)
 
     def test_parsing(self):
         for cat_ret, cats in [[False, self.good_cats], [True, self.bad_cats]]:
@@ -201,3 +212,7 @@ class CPY_CpvTest(native_CpvTest):
         kls = staticmethod(cpv.cpy_CPV)
     else:
         skip = "cpython cpv extension not available"
+
+class CPY_Cpv_OptionalArgsTest(CPY_CpvTest):
+
+    testing_secondary_args = True

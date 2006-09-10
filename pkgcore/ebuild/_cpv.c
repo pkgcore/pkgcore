@@ -129,29 +129,32 @@ static PyGetSetDef pkgcore_cpv_getsetters[] = {
 };
 
 char *
-pkgcore_cpv_parse_category(const char *start)
+pkgcore_cpv_parse_category(const char *start, int null_is_end)
 {
     char *p = (char *)start;
-    char *end;
     if(NULL == start)
         return NULL;
-    while('\0' != *p) {
-        if('/' == *p)
-            end =p;
-        p++;
+    if(!null_is_end) {
+        char *end;
+        while('\0' != *p) {
+            if('/' == *p)
+                end =p;
+            p++;
+        }
+        p = (char *)start;
+        // ok, we need to eat the cat from the cpvstring.
+        // allowed pattern [a-zA-Z0-9+-]+/
+        while(end != p && (ISALNUM(*p) || '+' == *p || '-' == *p))
+            p++;
+    } else {
+        while('\0' != *p && (ISALNUM(*p) || '+' == *p || '-' == *p))
+            p++;
+        if('\0' != *p)
+            return NULL;
     }
-    if(end - start <= 1) {
-        // just /, or nothing
-        return NULL;
-    }
-    p = (char *)start;
-    // ok, we need to eat the cat from the cpvstring.
-    // allowed pattern [a-zA-Z0-9+-]+/
-    while(end != p && (ISALNUM(*p) || '+' == *p || '-' == *p))
-        p++;
-    if(end != p)
-        return NULL;
-    return end;
+    if(p == start)
+       return NULL;
+    return p;
 }
 
 char *
@@ -340,7 +343,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
     }
     if(!category) {
         cpv_char = PyString_AsString(cpvstr);
-        cpv_pos = pkgcore_cpv_parse_category(cpv_char);
+        cpv_pos = pkgcore_cpv_parse_category(cpv_char, 0);
         if(!cpv_pos || '/' != *cpv_pos)
             goto parse_error;
         category = PyString_FromStringAndSize(cpv_char, cpv_pos - cpv_char);
@@ -349,7 +352,8 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
         cpv_pos++;
 
     } else {
-        p = pkgcore_cpv_parse_category(PyString_AsString(category));
+        p = PyString_AsString(category);
+        p = pkgcore_cpv_parse_category(p, 1);
         if(!p || '\0' != *p)
             goto parse_error;
         Py_INCREF(category);

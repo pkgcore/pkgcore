@@ -10,8 +10,6 @@ from pkgcore.cache import flat_hash
 from pkgcore.ebuild import eclass_cache
 from pkgcore.util.mappings import ProtectedDict
 
-# this is the old cache format, flat_list.  count maintained here.
-magic_line_count = 22
 
 # store the current key order *here*.
 class database(flat_hash.database):
@@ -24,10 +22,15 @@ class database(flat_hash.database):
     to _eclasses_ as required.
     """
     complete_eclass_entries = False
-    auxdbkey_order = ('DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
+
+    auxdbkeys_order = ('DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
         'RESTRICT',  'HOMEPAGE',  'LICENSE', 'DESCRIPTION',
         'KEYWORDS',  'INHERITED', 'IUSE', 'CDEPEND',
         'PDEPEND',   'PROVIDE', 'EAPI')
+    
+    # this is the old cache format, flat_list.  hardcoded, and must
+    # remain that way.
+    magic_line_count = 22
 
     autocommits = True
 
@@ -36,6 +39,9 @@ class database(flat_hash.database):
         super(database, self).__init__(location, *args, **config)
         self.location = os.path.join(loc, "metadata","cache")
         self.ec = eclass_cache.cache(os.path.join(loc, "eclass"), loc)
+        self.hardcoded_auxdbkeys_order = tuple((idx, key)
+            for idx, key in enumerate(self.auxdbkeys_order)
+                if key in self._known_keys)
 
     __init__.__doc__ = flat_hash.database.__init__.__doc__.replace(
         "@keyword location", "@param location")
@@ -56,7 +62,7 @@ class database(flat_hash.database):
     def _parse_data(self, data, mtime):
         # easy attempt first.
         data = list(data)
-        if len(data) != magic_line_count:
+        if len(data) != self.magic_line_count:
             return flat_hash.database._parse_data(self, data, mtime)
 
         # this one's interesting.
@@ -79,7 +85,7 @@ class database(flat_hash.database):
             if not hashed:
                 # non hashed.
                 d.clear()
-                for idx, key in enumerate(self.auxdbkey_order):
+                for idx, key in self.hardcoded_auxdbkeys_order:
                     d[key] = data[idx].strip()
                 break
 

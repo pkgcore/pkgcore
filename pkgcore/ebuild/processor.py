@@ -646,7 +646,7 @@ def expected_ebuild_env(pkg, d=None):
     else:
         d["PR"] = "r%i" % pkg.revision
     d["PVR"] = pkg.fullver
-    d["EBUILD"] = pkg.path
+    d["EBUILD"] = pkg.ebuild.get_path()
     d["PATH"] = ":".join(EBUILD_ENV_PATH + d.get("PATH", "").split(":"))
     return d
 

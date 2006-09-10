@@ -8,6 +8,7 @@ restriction classes designed for package level matching
 import operator
 from pkgcore.restrictions import restriction, boolean
 from pkgcore.util.demandload import demandload
+from pkgcore.util.compatibility import any
 demandload(globals(), "logging")
 
 # Backwards compatibility.
@@ -63,7 +64,10 @@ class PackageRestriction(restriction.base):
     def match(self, pkg):
         try:
             return self.restriction.match(self.__pull_attr(pkg)) != self.negate
-        except AttributeError:
+        except AttributeError, ae:
+            s = self.attr.split(".")
+            if not any(x in s for x in ae.args):
+                raise
             return self.negate
 
 

@@ -77,7 +77,7 @@ def generate_depset(s, c, *keys, **kwds):
         kwds["operators"] = {"||":boolean.OrRestriction,
                              "":boolean.AndRestriction}
     try:
-        return conditionals.DepSet(" ".join([s.data.get(x.upper(), "")
+        return conditionals.DepSet(" ".join([s.data.pop(x.upper(), "")
                                              for x in keys]), c, **kwds)
     except conditionals.ParseError, p:
         raise errors.MetadataException(s, str(keys), str(p))
@@ -91,7 +91,7 @@ def generate_providers(self):
 
     try:
         return conditionals.DepSet(
-            self.data.get("PROVIDE", ""), virtual_ebuild, element_func=func,
+            self.data.pop("PROVIDE", ""), virtual_ebuild, element_func=func,
             operators={"||":boolean.OrRestriction,"":boolean.AndRestriction})
 
     except conditionals.ParseError, p:
@@ -119,7 +119,7 @@ def generate_fetchables(self):
 
 def generate_eapi(self):
     try:
-        val = int(self.data.get("EAPI", 0))
+        val = int(self.data.pop("EAPI", 0))
     except ValueError:
         if self.data["EAPI"] == '':
             val = 0
@@ -180,6 +180,7 @@ def rewrite_restrict(restrict):
             l.add(x)
     return tuple(l)
 
+
 class package(metadata.package):
 
     """
@@ -212,17 +213,17 @@ class package(metadata.package):
     # could *potentially* intern these, but not a huge gain in my testing.
     _get_attr["license"] = post_curry(generate_depset, str, "license",
                                       non_package_type=True)
-    _get_attr["slot"] = lambda s: s.data.get("SLOT", "0").strip()
+    _get_attr["slot"] = lambda s: s.data.pop("SLOT", "0").strip()
     _get_attr["fetchables"] = generate_fetchables
-    _get_attr["description"] = lambda s:s.data.get("DESCRIPTION", "").strip()
+    _get_attr["description"] = lambda s:s.data.pop("DESCRIPTION", "").strip()
     _get_attr["keywords"] = lambda s:tuple(map(intern,
-        s.data.get("KEYWORDS", "").split()))
+        s.data.pop("KEYWORDS", "").split()))
     _get_attr["restrict"] = lambda s:rewrite_restrict(
-            s.data.get("RESTRICT", "").split())
+            s.data.pop("RESTRICT", "").split())
     _get_attr["eapi"] = generate_eapi
     _get_attr["iuse"] = lambda s:tuple(map(intern,
-        s.data.get("IUSE", "").split()))
-    _get_attr["homepage"] = lambda s:s.data.get("HOMEPAGE", "").strip()
+        s.data.pop("IUSE", "").split()))
+    _get_attr["homepage"] = lambda s:s.data.pop("HOMEPAGE", "").strip()
 
     __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])
 
@@ -303,7 +304,7 @@ class package_factory(metadata.factory):
                     continue
 #                if not self.allow_regen:
 #                    return data
-                if long(data.get("_mtime_", -1)) != pkg._mtime_ or \
+                if long(data.pop("_mtime_", -1)) != pkg._mtime_ or \
                     self._invalidated_eclasses(data, pkg):
                     continue
                 return data

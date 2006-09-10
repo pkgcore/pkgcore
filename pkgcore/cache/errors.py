@@ -36,7 +36,7 @@ class InvalidRestriction(CacheError):
         self.key, self.restriction, self.ex = key, restriction, exception
 
 
-class ReadOnlyRestriction(CacheError):
+class ReadOnly(CacheError):
     def __init__(self, info=''):
         CacheError.__init__(self, "cache is non-modifiable %s" % (info,))
         self.info = info

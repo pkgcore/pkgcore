@@ -81,9 +81,9 @@ class TemplateTest(unittest.TestCase):
     def test_readonly(self):
         cache = DictCache('nowhere', 'rodictcache', ['foo'], True)
         cache.data = self.cache.data
-        self.assertRaises(errors.ReadOnlyRestriction,
+        self.assertRaises(errors.ReadOnly,
                           operator.delitem, cache, 'spork')
-        self.assertRaises(errors.ReadOnlyRestriction,
+        self.assertRaises(errors.ReadOnly,
                           operator.setitem, cache, 'spork', {'foo': 42})
         self.assertEquals({'foo': 'bar'}, cache['spork'])
 

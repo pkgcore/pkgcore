@@ -87,7 +87,7 @@ class SQLDatabase(template.database):
         self._dbconnect(config)
         if not self._table_exists(self.SCHEMA_PACKAGE_NAME):
             if self.readonly:
-                raise errors.ReadOnlyRestriction(
+                raise errors.ReadOnly(
                     "table %s doesn't exist" % self.SCHEMA_PACKAGE_NAME)
             try:
                 self.con.execute(self.SCHEMA_PACKAGE_CREATE)
@@ -96,7 +96,7 @@ class SQLDatabase(template.database):
 
         if not self._table_exists(self.SCHEMA_VALUES_NAME):
             if self.readonly:
-                raise errors.ReadOnlyRestriction(
+                raise errors.ReadOnly(
                     "table %s doesn't exist" % self.SCHEMA_VALUES_NAME)
             try:
                 self.con.execute(self.SCHEMA_VALUES_CREATE)

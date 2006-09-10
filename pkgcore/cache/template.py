@@ -78,7 +78,7 @@ class database(object):
         handles the readonly checks.
         """
         if self.readonly:
-            raise errors.ReadOnlyRestriction()
+            raise errors.ReadOnly()
         if self.cleanse_keys:
             d = ProtectedDict(values)
             for k in d.iterkeys():
@@ -113,7 +113,7 @@ class database(object):
         handles the readonly checks.
         """
         if self.readonly:
-            raise errors.ReadOnlyRestriction()
+            raise errors.ReadOnly()
         if not self.autocommits:
             self.updates += 1
         self._delitem(cpv)

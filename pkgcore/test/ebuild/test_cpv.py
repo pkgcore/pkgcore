@@ -35,6 +35,17 @@ class native_CpvTest(unittest.TestCase):
     good_revs = ["-r1", "-r300", ""]
     bad_revs = ["-r", "-ra", "-r", "-R1"]
 
+    testing_secondary_args = False
+
+    def make_inst(self, cat, pkg, fullver=""):
+        if fullver:
+            cpv = "%s/%s-%s" % (cat, pkg, fullver)
+        else:
+            cpv = "%s/%s" % (cat, pkg)
+        if self.testing_secondary_args:
+            return self.kls(cpv, cat, pkg, fullver)
+        return self.kls(cpv)
+
     def test_simple_key(self):
         for src in [["dev-util/diffball-0.7.1", "dev-util/diffball"],
             ["dev-util/diffball"],
@@ -46,7 +57,7 @@ class native_CpvTest(unittest.TestCase):
                 key = src[0]
             else:
                 key = src[1]
-            self.assertEqual(self.kls(src[0]).key, key)
+            self.assertEqual(self.make_inst(*src[0].rsplit("/", 1)).key, key)
 
     def test_parsing(self):
         for cat_ret, cats in [[False, self.good_cats], [True, self.bad_cats]]:
@@ -73,9 +84,9 @@ class native_CpvTest(unittest.TestCase):
 
     def process_pkg(self, ret, cat, pkg):
         if ret:
-            self.assertRaises(cpv.InvalidCPV, self.kls, "%s/%s" % (cat, pkg))
+            self.assertRaises(cpv.InvalidCPV, self.make_inst, cat, pkg)
         else:
-            c = self.kls("%s/%s" % (cat, pkg))
+            c = self.make_inst(cat, pkg)
             self.assertEqual(c.cpvstr, "%s/%s" % (cat, pkg))
             self.assertEqual(c.category, cat)
             self.assertEqual(c.package, pkg)
@@ -87,10 +98,10 @@ class native_CpvTest(unittest.TestCase):
     def process_ver(self, ret, cat, pkg, ver, rev):
         if ret:
             self.assertRaises(
-                cpv.InvalidCPV,
-                self.kls, "%s/%s-%s%s" % (cat, pkg, ver, rev))
+                cpv.InvalidCPV, self.make_inst,
+                cat, pkg,  "%s%s" % (ver, rev))
         else:
-            c = self.kls("%s/%s-%s%s" % (cat, pkg, ver, rev))
+            c = self.make_inst(cat, pkg, ver + rev)
             self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat, pkg, ver, rev))
             self.assertEqual(c.category, cat)
             self.assertEqual(c.package, pkg)
@@ -116,10 +127,10 @@ class native_CpvTest(unittest.TestCase):
     def process_suf(self, ret, cat, pkg, ver, rev):
         if ret:
             self.assertRaises(
-                cpv.InvalidCPV,
-                self.kls, "%s/%s-%s%s" % (cat, pkg, ver, rev))
+                cpv.InvalidCPV, self.make_inst,
+                cat, pkg, ver+rev)
         else:
-            c = self.kls("%s/%s-%s%s" % (cat, pkg, ver, rev))
+            c = self.make_inst(cat, pkg, ver + rev)
             self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat, pkg, ver, rev))
             self.assertEqual(c.category, cat)
             self.assertEqual(c.package, pkg)

@@ -129,25 +129,33 @@ static PyGetSetDef pkgcore_cpv_getsetters[] = {
 };
 
 char *
-pkgcore_cpv_find_category_end(const char *start)
+pkgcore_cpv_parse_category(const char *start)
 {
     char *p = (char *)start;
-    // ok, we need to eat the cat from the cpvstring.
-    // allowed pattern [a-zA-Z0-9+-]+/
-    while('\0' != *p && '/' != *p && (ISALNUM(*p) || '+' == *p
-        || '-' == *p))
+    char *end;
+    if(NULL == start)
+        return NULL;
+    while('\0' != *p) {
+        if('/' == *p)
+            end =p;
         p++;
-    if(p - start <= 1 || '/' != *p) {
+    }
+    if(end - start <= 1) {
         // just /, or nothing
         return NULL;
     }
-    if('\0' == *p)
+    p = (char *)start;
+    // ok, we need to eat the cat from the cpvstring.
+    // allowed pattern [a-zA-Z0-9+-]+/
+    while(end != p && (ISALNUM(*p) || '+' == *p || '-' == *p))
+        p++;
+    if(end != p)
         return NULL;
-    return p;
+    return end;
 }
 
 char *
-pkgcore_cpv_find_package_end(const char *start)
+pkgcore_cpv_parse_package(const char *start)
 {
     // yay- need to eat the pkg next
     // allowed [a-zA-Z0-9](?:[-_+a-zA-Z0-9]*?[+a-zA-Z0-9])??)
@@ -156,6 +164,8 @@ pkgcore_cpv_find_package_end(const char *start)
     // note that pkg regex is non-greedy.
     char *p = (char *)start;
     char *ver_start;
+    if(NULL == start)
+        return NULL;
     start = p;
     p = strchr(start, '-');
     while(NULL != p) {
@@ -195,6 +205,8 @@ pkgcore_cpv_find_package_end(const char *start)
             p++;
         ver_start = p;
     }
+    if('\0' != *ver_start)
+        ver_start--;
     return ver_start;
 }
 
@@ -303,36 +315,63 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
     char *ver_end = NULL;
     char *p = NULL, *s1 = NULL, *s2 = NULL;
     char *start = NULL;
-    PyObject *tmp = NULL, *tmp2 = NULL, *category = NULL, 
+    char *cpv_char = NULL;
+    char *cpv_pos = NULL;
+    PyObject *tmp = NULL, *tmp2 = NULL, *cpvstr = NULL, *category = NULL, 
         *package = NULL, *fullver = NULL;
 
-    static char *kwlist[] = {"category", "package", "fullver",
+    static char *kwlist[] = {"cpvstr", "category", "package", "fullver",
         NULL};
-    if(! PyArg_ParseTupleAndKeywords(args, kwds, "SSS", kwlist,
-        &category, &package, &fullver)) {
+    if(! PyArg_ParseTupleAndKeywords(args, kwds, "S|SSS", kwlist,
+        &cpvstr, &category, &package, &fullver)) {
         return -1;
     }
     
-    
-    // verify it first.
-    s1 = PyString_AsString(category);
-    if(!s1)
-        goto parse_error;
-    if('\0' == *s1)
-        goto parse_error;
-    while(ISALNUM(*s1) || '+' == *s1 || '-' == *s1)
-        s1++;
-    if('\0' != *s1)
-        goto parse_error;
-    tmp2 = category;
-    PyString_InternInPlace(&tmp2);
+    result = 0;
+    if(category)
+        result++;
+    if(package)
+        result++;
+    if(fullver)
+        result++;
+    if(0 != result && 3 != result) {
+        PyErr_SetString(PyExc_TypeError, "cpv accepts either 1 arg, or 4");
+        goto cleanup;
+    }
+    if(!category) {
+        cpv_char = PyString_AsString(cpvstr);
+        cpv_pos = pkgcore_cpv_parse_category(cpv_char);
+        if(!cpv_pos || '/' != *cpv_pos)
+            goto parse_error;
+        category = PyString_FromStringAndSize(cpv_char, cpv_pos - cpv_char);
+        if(!category)
+            goto cleanup;
+        cpv_pos++;
+
+    } else {
+        p = pkgcore_cpv_parse_category(PyString_AsString(category));
+        if(!p || '\0' != *p)
+            goto parse_error;
+        Py_INCREF(category);
+    }
     tmp = self->category;
-    Py_INCREF(tmp2);
-    self->category = tmp2;
+    self->category = category;
     Py_XDECREF(tmp);
 
+    if(!package) {
+        p = pkgcore_cpv_parse_package(cpv_pos);
+        if(!p || ('\0' != *p && '-' != *p))
+            goto parse_error;
+        if(NULL == (package = PyString_FromStringAndSize(cpv_pos, p - cpv_pos)))
+            goto cleanup;
+        cpv_pos = p;
+    } else {
+        p = pkgcore_cpv_parse_package(PyString_AsString(package));
+        if(!p || '\0' != *p)
+            goto parse_error;
+        Py_INCREF(package);
+    }
     tmp = self->package;
-    Py_INCREF(package);
     self->package = package;
     Py_XDECREF(tmp);
 
@@ -372,32 +411,38 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
     if('\0' != *s2)
         goto parse_error;	
 
-    // fullver.
-    p = PyString_AsString(fullver);
-    if(!p)
-        goto cleanup;
+    if(!fullver) {
+        if('\0' != *p)
+            cpv_pos++;
+        p = cpv_pos;
+    } else {
+        p = PyString_AsString(fullver);
+        if(!p)
+            goto cleanup;
+    }
     if('\0' != *p) {
-        tmp = self->fullver;
         result = pkgcore_cpv_parse_version(self, p, &ver_end);
         if(result < 0)
             goto cleanup;
         else if(result > 0)
             goto parse_error;
         // doesn't look right.
-        if('\0' != *ver_end && '-' != *ver_end)
-            goto parse_error;
         if('\0' == *ver_end) {
-            // no rev; set version to fullver
+            if(fullver) {
+                // no rev; set version to fullver
+                Py_INCREF(fullver);
+            } else {
+                if(NULL == 
+                    (fullver = PyString_FromStringAndSize(cpv_pos, ver_end - p)))
+                    goto cleanup;
+            }
             tmp = self->version;
-            Py_INCREF(fullver);
             self->version = fullver;
             Py_XDECREF(tmp);
-            tmp = self->revision;
-            self->revision = NULL;
-            Py_XDECREF(tmp);
+            Py_CLEAR(self->revision);
+            Py_INCREF(fullver);
         } else if('-' == *ver_end) {
-            tmp = PyString_FromStringAndSize(p, ver_end - p);
-            if(!tmp)
+            if(NULL == (tmp = PyString_FromStringAndSize(p, ver_end - p)))
                 goto cleanup;
             tmp2 = self->version;
             self->version = tmp;
@@ -423,77 +468,53 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
             tmp2 = self->revision;
             self->revision = tmp;
             Py_XDECREF(tmp2);
+            if(!fullver) {
+                if(NULL == (fullver = PyString_FromStringAndSize(cpv_pos,
+                    p - cpv_pos)))
+                    goto cleanup;
+            } else {
+                Py_INCREF(fullver);
+            }
         } else {
             goto parse_error;
         }
-        Py_INCREF(fullver);
+        tmp = self->fullver;
         self->fullver = fullver;
         Py_XDECREF(tmp);
     } else {
         Py_CLEAR(self->fullver);
         Py_CLEAR(self->version);
         Py_CLEAR(self->revision);
-
     }
 
 
     // by now, category, package, version, revision, and fullver should
     // be initialized.  key, and cpvstr now.
-    tmp = PyString_FromFormat("%s/%s", PyString_AsString(self->category),
-        PyString_AsString(self->package));
-    if(!tmp)
-        goto cleanup;
-    tmp2 = self->key;
-    self->key = tmp;
-    Py_XDECREF(tmp2);
 
-    char *cp, *pp, *vp;
-    cp = PyString_AsString(category);
-    if(!cp)
-        goto cleanup;
-
-    pp = PyString_AsString(package);
-    if(!pp)
-        goto cleanup;
-    
-    if(NULL != self->version) {
-    	vp = PyString_AsString(fullver);
-        if(!vp)
-            goto cleanup;
-
-    	tmp = PyString_FromFormat("%s/%s-%s", cp, pp, vp);
-    } else {
-        tmp = PyString_FromFormat("%s/%s", cp, pp);
-    }
-    if(!tmp)
-        goto cleanup;
-
-
+    Py_INCREF(cpvstr);
     tmp2 = self->cpvstr;
-    self->cpvstr = tmp;
+    self->cpvstr = cpvstr;
     Py_XDECREF(tmp2);
 
     if(NULL == self->version) {
         Py_INCREF(self->cpvstr);
-        tmp = self->key;
-        self->key = self->cpvstr;
-        Py_XDECREF(tmp);
+        tmp = self->cpvstr;
     } else {
         tmp = PyString_FromFormat("%s/%s", PyString_AsString(self->category),
             PyString_AsString(self->package));
         if(!tmp)
             goto cleanup;
-        tmp2 = self->key;
-        self->key = tmp;
-        Py_XDECREF(tmp2);
     }
+    tmp2 = self->key;
+    self->key = tmp;
+    Py_XDECREF(tmp2);
     return 0;
 
 parse_error:
     // yay.  well, set an exception.
     // if an error from trying to call, let it propagate.  meanwhile, we
     // cleanup our own
-    tmp = PyObject_CallFunction(pkgcore_InvalidCPV_Exc, "O", self->cpvstr);
+    tmp = PyObject_CallFunction(pkgcore_InvalidCPV_Exc, "O", cpvstr);
     if(NULL != tmp) {
         PyErr_SetObject(pkgcore_InvalidCPV_Exc, tmp);
         Py_DECREF(tmp);

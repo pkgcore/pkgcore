@@ -49,7 +49,8 @@ class native_CPV(object):
     __slots__ = ("__weakref__", "cpvstr", "key", "category", "package",
         "version", "revision", "fullver")
 
-    def __init__(self, cpvstr):
+    # if native is being used, forget trying to reuse strings.
+    def __init__(self, cpvstr, *a):
         """
         @param cpvstr: cat/pkg-ver[-rev] of an ebuild package.
             See L{parser} for allowed syntax.

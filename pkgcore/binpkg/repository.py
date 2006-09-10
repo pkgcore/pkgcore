@@ -187,7 +187,7 @@ class tree(prototype.tree):
                     continue
                 x = cpv(category+"/"+x[:-lext])
                 l.add(x.package)
-                d.setdefault(category+"/"+x.package, []).append(x.fullver)
+                d.setdefault((category, x.package), []).append(x.fullver)
         except (OSError, IOError), e:
             raise KeyError("failed fetching packages for category %s: %s" % \
             (os.path.join(self.base, category.lstrip(os.path.sep)), str(e)))

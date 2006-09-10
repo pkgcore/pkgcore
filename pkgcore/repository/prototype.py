@@ -119,7 +119,7 @@ class tree(object):
 
     def __getitem__(self, cpv):
         cpv_inst = self.package_class(cpv)
-        if cpv_inst.fullver not in self.versions[cpv_inst.key]:
+        if cpv_inst.fullver not in self.versions[(cpv.category, cpv.package)]:
             del cpv_inst
             raise KeyError(cpv)
         return cpv_inst

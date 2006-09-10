@@ -6,8 +6,9 @@ import os
 import shutil
 import tempfile
 
+from twisted.trial import unittest
 
-class TempDirMixin(object):
+class TempDirMixin(unittest.TestCase):
 
     def setUp(self):
         self.dir = tempfile.mkdtemp()

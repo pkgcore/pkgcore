@@ -10,7 +10,7 @@ from pkgcore.util.osutils import native_readdir
 from pkgcore.test.mixins import TempDirMixin
 
 
-class NativeListDirTest(unittest.TestCase, TempDirMixin):
+class NativeListDirTest(TempDirMixin):
 
     module = native_readdir
 

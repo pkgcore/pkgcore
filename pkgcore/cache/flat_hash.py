@@ -43,7 +43,8 @@ class database(fs_template.FsBased):
         return d
 
     def _parse_data(self, data, mtime):
-        d = self._cdict_kls(x[:-1].split("=", 1) for x in data)
+        splitter = (x.rstrip().split("=", 1) for x in data)
+        d = self._cdict_kls((k,v) for k,v in splitter if k in self._known_keys)
         d["_mtime_"] = long(mtime)
         return d
 

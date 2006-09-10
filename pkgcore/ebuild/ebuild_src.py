@@ -27,6 +27,14 @@ demandload(globals(), "pkgcore.util.xml:etree")
 demandload(globals(), "errno")
 
 
+def mangle_repo_args(pkg_chunks):
+    """
+    function for mangling default repo args into a form
+    CPV likes.
+    """
+    return "%s/%s-%s" % pkg_chunks, pkg_chunks[0], pkg_chunks[1], pkg_chunks[2]
+
+
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
                               common_files, uri):

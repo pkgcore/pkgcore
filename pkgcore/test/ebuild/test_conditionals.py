@@ -195,3 +195,28 @@ class DepSetConditionalsInspectionTest(unittest.TestCase):
         ):
         locals()["test _node_conds %s" % s[0]] = post_curry(check_conds, *s)
 
+def convert_to_seq(s):
+    if isinstance(s, (list, tuple)):
+        return s
+    return [s]
+
+class DepSetEvaluateTest(unittest.TestCase):
+    
+    def test_evaluation(self):
+        for vals in (("y", "x? ( y ) !x? ( z )", "x"),
+            ("z", "x? ( y ) !x? ( z )"),
+            ("", "x? ( y ) y? ( z )"),
+            ("a b", "a !x? ( b )")):
+            result = vals[0]
+            s = vals[1]
+            use, tristate = [], None
+            if len(vals) > 2:
+                use = convert_to_seq(vals[2])
+            if len(vals) > 3:
+                tristate = convert_to_seq(vals[3])
+            collapsed = gen_depset(s).evaluate_depset(use, 
+                tristate_filter=tristate)
+            self.assertEqual(str(collapsed), result, msg=
+                "%r does not equal %r\nraw depset: %r\nuse: %r, tristate: %r" % 
+                    (str(collapsed), result, s, use, tristate))
+       

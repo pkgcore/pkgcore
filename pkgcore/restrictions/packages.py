@@ -53,11 +53,11 @@ class PackageRestriction(restriction.base):
         except (KeyboardInterrupt, RuntimeError, SystemExit):
             raise
         except AttributeError,ae:
-            logging.debug("failed getting attribute %s from %s, "
+            logging.exception("failed getting attribute %s from %s, "
                           "exception %s" % (self.attr, str(pkg), str(ae)))
             raise
         except Exception, e:
-            logging.warn("caught unexpected exception accessing %s from %s, "
+            logging.exception("caught unexpected exception accessing %s from %s, "
                          "exception %s" % (self.attr, str(pkg), str(e)))
             raise AttributeError(self.attr)
 

@@ -70,7 +70,7 @@ def generate_fetchables(self):
     common = {}
     try:
         d = conditionals.DepSet(
-            self.data["SRC_URI"], fetchable, operators={},
+            self.data.pop("SRC_URI", ""), fetchable, operators={},
             element_func=pre_curry(create_fetchable_from_uri, self, chksums,
                                    mirrors, default_mirrors, common))
         for v in common.itervalues():

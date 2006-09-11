@@ -335,12 +335,11 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 
 
 static int
-pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args)
+pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 {
     int result = 0;
     char *ver_end = NULL;
     char *p = NULL, *s1 = NULL, *s2 = NULL;
-    char *start = NULL;
     char *cpv_char = NULL;
     char *cpv_pos = NULL;
     PyObject *tmp = NULL, *tmp2 = NULL, *cpvstr = NULL, *category = NULL, 
@@ -348,6 +347,13 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args)
 
     if(!PyArg_UnpackTuple(args, "CPV", 1, 3, &category, &package, &fullver))
         return -1;
+
+    if(PyObject_IsTrue(kwds)) {
+        PyErr_SetString(PyExc_TypeError,
+            "cpv accepts either 1 arg (cpvstr), or 3 (category, package, "
+            "version); all must be strings, and no keywords accepted");
+        goto cleanup;
+    }
 
     if(package) {
         if(!fullver || !PyString_CheckExact(category) || 

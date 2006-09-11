@@ -5,12 +5,12 @@
 ebuild tree manifest/digest support
 """
 
-from pkgcore.chksum.errors import ParseChksumError
-
-size_s = intern("size")
+from pkgcore.chksum import errors
+from pkgcore.util.obj import make_SlottedDict_kls
 
 def parse_digest(path, throw_errors=True, kls_override=dict):
     d = kls_override()
+    chf_keys = set(["size"])
     try:
         f = open(path, "r", 32384)
         for line in f:
@@ -19,16 +19,26 @@ def parse_digest(path, throw_errors=True, kls_override=dict):
                 continue
             if len(l) != 4:
                 if throw_errors:
-                    raise ParseChksumError(
+                    raise errors.ParseChksumError(
                         path, "line count was not 4, was %i: '%s'" % (
                             len(l), line))
                 continue
-
+            chf = l[0].lower()
             #MD5 c08f3a71a51fff523d2cfa00f14fa939 diffball-0.6.2.tar.bz2 305567
-            d.setdefault(l[2], {})[intern(l[0].lower())] = l[1]
-            if size_s not in d[l[2]]:
-                d[l[2]][size_s] = long(l[3])
+            d2 = d.get(l[2])
+            if d2 is None:
+                d[l[2]] = {chf:l[1], "size":long(l[3])}
+            else:
+                d2[chf] = l[1]
+            chf_keys.add(chf)
         f.close()
     except (OSError, IOError, TypeError), e:
-        raise ParseChksumError("failed parsing %r" % path, e)
+        raise errors.ParseChksumError("failed parsing %r" % path, e)
+#
+#   mappings.potentially use a TupleBackedDict here.
+#   although no mem gain, and slower.
+#
+    kls = make_SlottedDict_kls(chf_keys)
+    for k, v in d.items():
+        d[k] = kls(v.iteritems())
     return d

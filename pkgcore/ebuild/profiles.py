@@ -20,7 +20,8 @@ from collections import deque
 
 demandload(globals(), "logging "
     "pkgcore.config.errors:InstantiationError "
-    "pkgcore.ebuild:const ")
+    "pkgcore.ebuild:const "
+    "pkgcore.ebuild:ebuild_src ")
 
 # Harring sez-
 # This should be implemented as an auto-exec config addition.
@@ -319,19 +320,15 @@ class AliasedVirtuals(virtual.tree):
         """
 
         virtual.tree.__init__(self, virtuals,
-            pkg_args_mangler=self._mangle_args)
+            pkg_args_mangler=ebuild_src.mangle_repo_args)
         self.aliased_repo = repo
         self.versions._vals = ForgetfulDict()
-
-    @staticmethod
-    def _mangle_args(args):
-        return "%s/%s-%s" % args, args[0], args[1], args[2]
 
     def _get_versions(self, catpkg):
         if catpkg[0] != "virtual":
             raise KeyError("no %s package in this repository" % catpkg)
         return tuple(x.fullver
-                     for x in self.aliased_repo.itermatch(self._virtuals[catpkg[1]]))
+            for x in self.aliased_repo.itermatch(self._virtuals[catpkg[1]]))
 
     def _fetch_metadata(self, pkg):
         return atom("=%s-%s" % (self._virtuals[pkg.package].key, pkg.fullver))

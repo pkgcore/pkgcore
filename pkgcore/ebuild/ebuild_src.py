@@ -10,6 +10,7 @@ from pkgcore.package import metadata, errors
 
 WeakValCache = metadata.WeakValCache
 
+from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.digest import parse_digest
@@ -23,8 +24,8 @@ from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror
 from pkgcore.ebuild import const, processor
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.util.xml:etree")
-demandload(globals(), "errno")
+demandload(globals(), "pkgcore.util.xml:etree "
+    "errno ")
 
 
 def mangle_repo_args(pkg_chunks):
@@ -32,6 +33,7 @@ def mangle_repo_args(pkg_chunks):
     function for mangling default repo args into a form
     CPV likes.
     """
+    import pdb;pdb.set_trace()
     return "%s/%s-%s" % pkg_chunks, pkg_chunks[0], pkg_chunks[1], pkg_chunks[2]
 
 
@@ -394,9 +396,9 @@ class virtual_ebuild(metadata.package):
     package_is_real = False
     built = True
 
-    __slots__ = ("__dict__")
+    __slots__ = ("_orig_data", "data", "actual_pkg")
 
-    def __init__(self, parent_repository, pkg, data, cpv):
+    def __init__(self, parent_repository, pkg, data, cpvstr):
         """
         @param cpv: cpv for the new pkg
         @param parent_repository: actual repository that this pkg should
@@ -404,21 +406,15 @@ class virtual_ebuild(metadata.package):
         @param pkg: parent pkg that is generating this pkg
         @param data: mapping of data to push to use in __getattr__ access
         """
+        c = CPV(cpvstr)
+        if c.fullver is None:
+            cpvstr = cpvstr + "-" + pkg.fullver
+
+        metadata.package.__init__(self, parent_repository, cpvstr)
         sfunc = object.__setattr__
         sfunc(self, "data", IndeterminantDict(lambda *a: str(), data))
         sfunc(self, "_orig_data", data)
         sfunc(self, "actual_pkg", pkg)
-        # ick.
-        state = set(self.__dict__)
-        # hack. :)
-        metadata.package.__init__(self, parent_repository, cpv)
-        if not self.version:
-            for x in self.__dict__.keys():
-                if x not in state:
-                    del self.__dict__[x]
-            metadata.package.__init__(self, parent_repository,
-                cpv+"-"+pkg.fullver)
-            assert self.version
 
     def __getattr__(self, attr):
         if attr in self._orig_data:

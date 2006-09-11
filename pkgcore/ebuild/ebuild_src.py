@@ -55,7 +55,7 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
         if not preexisting:
             new_uri = []
             if "primaryuri" in pkg.restrict:
-                new_uri.append([uri])
+                new_uri.append((uri,))
 
             if default_mirrors is not None and "mirror" not in pkg.restrict:
                 new_uri.append(mirror(filename, default_mirrors,
@@ -71,8 +71,8 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
             new_uri.append(mirror(remaining_uri, mirrors[tier], tier))
             # XXX replace this with an iterable instead
         else:
-            if not new_uri or new_uri[0] != [uri]:
-                new_uri.append([uri])
+            if not new_uri or new_uri[0] != (uri,):
+                new_uri.append((uri,))
 
     # force usage of a ChainedLists, why? because folks may specify
     # multiple uri's resulting in the same file. we basically use

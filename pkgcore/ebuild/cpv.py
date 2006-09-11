@@ -50,12 +50,20 @@ class native_CPV(object):
         "version", "revision", "fullver")
 
     # if native is being used, forget trying to reuse strings.
-    def __init__(self, cpvstr, *a):
+    def __init__(self, *a):
         """
         @param cpvstr: cat/pkg-ver[-rev] of an ebuild package.
             See L{parser} for allowed syntax.
         @type cpvstr: string
         """
+        l = len(a)
+        if l == 1:
+            cpvstr = a[0]
+        elif l == 3:
+            cpvstr = "%s/%s-%s" % a
+        else:
+            raise TypeError("CPV takes 1 arg (cpvstr), or 3 (cat, pkg, ver):"
+                " got %r" % args)
         if not isinstance(cpvstr, basestring):
             raise TypeError(self.cpvstr)
         m = parser.match(cpvstr)
@@ -241,8 +249,8 @@ fake_pkg = "pkg"
 def cpy_ver_cmp(ver1, rev1, ver2, rev2):
     if ver1 == ver2:
         return cmp(rev1, rev2)
-    c = cmp(cpy_CPV(ver1, fake_cat, fake_pkg, ver1),
-            cpy_CPV(ver2, fake_cat, fake_pkg, ver2))
+    c = cmp(cpy_CPV(fake_cat, fake_pkg, ver1),
+            cpy_CPV(fake_cat, fake_pkg, ver2))
     if c != 0:
         return c
     return cmp(rev1, rev2)

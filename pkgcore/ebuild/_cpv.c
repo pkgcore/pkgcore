@@ -61,7 +61,6 @@ static const unsigned long pkgcore_ebuild_default_suffixes[] = {4, 0};
 
 typedef struct {
     PyObject_HEAD
-    PyObject *cpvstr;
     PyObject *category;
     PyObject *package;
     PyObject *key;
@@ -69,10 +68,36 @@ typedef struct {
     PyObject *version;
     PyObject *revision;
     unsigned long *suffixes;
+    long hash_val;
     int cvs;
 } pkgcore_cpv;
 
 static PyObject *pkgcore_InvalidCPV_Exc = NULL;
+
+
+static int
+pkgcore_cpv_set_cpvstr(pkgcore_cpv *self, PyObject *v, void *closure)
+{
+    PyErr_SetString(PyExc_AttributeError, "cpvstr is immutable");
+    return -1;
+}
+
+static PyObject *
+pkgcore_cpv_get_cpvstr(pkgcore_cpv *self, void *closure)
+{
+    if (!self->category || !self->package) {
+        Py_RETURN_NONE;
+    }
+    if (!self->fullver) {
+        return PyString_FromFormat("%s/%s",
+            PyString_AsString(self->category),
+            PyString_AsString(self->package));
+    }
+    return PyString_FromFormat("%s/%s-%s",
+        PyString_AsString(self->category),
+        PyString_AsString(self->package),
+        PyString_AsString(self->fullver));
+}
 
 #define PKGCORE_IMMUTABLE_ATTRIBUTE(getter, setter, name, attribute)    \
 static int                                                              \
@@ -92,8 +117,6 @@ getter (pkgcore_cpv *self, void *closure)   \
     return self->attribute;                 \
 }
 
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_cpvstr,   pkgcore_cpv_set_cpvstr,
-    "cpvstr", cpvstr);
 PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_category, pkgcore_cpv_set_category,
     "category", category);
 PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_package,  pkgcore_cpv_set_package,
@@ -312,7 +335,7 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 
 
 static int
-pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
+pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args)
 {
     int result = 0;
     char *ver_end = NULL;
@@ -323,24 +346,30 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
     PyObject *tmp = NULL, *tmp2 = NULL, *cpvstr = NULL, *category = NULL, 
         *package = NULL, *fullver = NULL;
 
-    static char *kwlist[] = {"cpvstr", "category", "package", "fullver",
-        NULL};
-    if(! PyArg_ParseTupleAndKeywords(args, kwds, "S|SSS", kwlist,
-        &cpvstr, &category, &package, &fullver)) {
+    if(!PyArg_UnpackTuple(args, "CPV", 1, 3, &category, &package, &fullver))
         return -1;
+
+    if(package) {
+        if(!fullver || !PyString_CheckExact(category) || 
+            !PyString_CheckExact(package) || !PyString_CheckExact(fullver)) {
+            PyErr_SetString(PyExc_TypeError,
+                "cpv accepts either 1 arg (cpvstr), or 3 (category, package, "
+                "version); all must be strings");
+            goto cleanup;
+        }
+    } else {
+        if (!PyString_CheckExact(category)) {
+            PyErr_SetString(PyExc_TypeError,
+                "cpv accepts either 1 arg (cpvstr), or 3 (category, package, "
+                "version); all must be strings");
+            goto cleanup;
+        }
+        cpvstr = category;
+        category = NULL;
     }
-    
-    result = 0;
-    if(category)
-        result++;
-    if(package)
-        result++;
-    if(fullver)
-        result++;
-    if(0 != result && 3 != result) {
-        PyErr_SetString(PyExc_TypeError, "cpv accepts either 1 arg, or 4");
-        goto cleanup;
-    }
+
+    self->hash_val = -1;
+
     if(!category) {
         cpv_char = PyString_AsString(cpvstr);
         cpv_pos = pkgcore_cpv_parse_category(cpv_char, 0);
@@ -495,15 +524,17 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
     // by now, category, package, version, revision, and fullver should
     // be initialized.  key, and cpvstr now.
 
-    Py_INCREF(cpvstr);
-    tmp2 = self->cpvstr;
-    self->cpvstr = cpvstr;
-    Py_XDECREF(tmp2);
-
-    if(NULL == self->version) {
-        Py_INCREF(self->cpvstr);
-        tmp = self->cpvstr;
-    } else {
+    tmp = NULL;
+    if(cpvstr) {
+        self->hash_val = PyObject_Hash(cpvstr);
+        if(self->hash_val == -1)
+            goto cleanup;
+        if(!self->fullver) {
+            Py_INCREF(cpvstr);
+            tmp = cpvstr;
+        }
+    }
+    if(!tmp) {
         tmp = PyString_FromFormat("%s/%s", PyString_AsString(self->category),
             PyString_AsString(self->package));
         if(!tmp)
@@ -518,6 +549,12 @@ parse_error:
     // yay.  well, set an exception.
     // if an error from trying to call, let it propagate.  meanwhile, we
     // cleanup our own
+    if(!cpvstr) {
+        cpvstr = PyString_FromFormat("%s/%s-%s", PyString_AsString(category),
+            PyString_AsString(package), PyString_AsString(fullver));
+        if(!cpvstr)
+            goto cleanup;
+    }
     tmp = PyObject_CallFunction(pkgcore_InvalidCPV_Exc, "O", cpvstr);
     if(NULL != tmp) {
         PyErr_SetObject(pkgcore_InvalidCPV_Exc, tmp);
@@ -525,7 +562,6 @@ parse_error:
     } 
 cleanup:
 
-    Py_CLEAR(self->cpvstr);
     Py_CLEAR(self->category);
     Py_CLEAR(self->package);
     Py_CLEAR(self->key);
@@ -547,7 +583,6 @@ cleanup:
 static void
 pkgcore_cpv_dealloc(pkgcore_cpv *self)
 {
-    Py_CLEAR(self->cpvstr);
     Py_CLEAR(self->category);
     Py_CLEAR(self->package);
     Py_CLEAR(self->key);
@@ -714,51 +749,51 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 static long
 pkgcore_cpv_hash(pkgcore_cpv *self)
 {
-    if (self->cpvstr == NULL) {
-        return -2;
+    if (self->hash_val == -1) {
+        PyObject *s = PyObject_GetAttrString((PyObject *)self, "cpvstr");
+        if(!s)
+            return -1;
+        self->hash_val = PyObject_Hash(s);
+        Py_DECREF(s);
     }
-    return PyObject_Hash(self->cpvstr);
+    return self->hash_val;
 }
 
 
 static PyObject *
 pkgcore_cpv_str(pkgcore_cpv *self)
 {
-    PyObject *s;
-    if(self->cpvstr == NULL) {
-        Py_INCREF(Py_None);
-        s = PyObject_Str(Py_None);
-        Py_DECREF(Py_None);
-    } else {
-        s = self->cpvstr;
-        Py_INCREF(s);
+    PyObject *s = PyObject_GetAttrString((PyObject *)self, "cpvstr");
+    if(!s)
+        return (PyObject *)NULL;
+    if(s != Py_None) {
+        return s;
     }
-    return s;
+    PyObject *s2 = PyObject_Str(s);
+    Py_DECREF(s);
+    return s2;
 }
 
 
 static PyObject *
 pkgcore_cpv_repr(pkgcore_cpv *self)
 {
-    PyObject *s;
-    if(self->cpvstr == NULL) {
-        Py_INCREF(Py_None);
-        s = PyObject_Repr(Py_None);
-        Py_DECREF(Py_None);
-    } else {
-        s = PyObject_Repr(self->cpvstr);
-        if(!s)
-            return (PyObject *)NULL;
-        char *str = PyString_AsString(s);
-        if(!s) {
-            Py_DECREF(s);
-            return (PyObject *)NULL;
-        }
-        PyObject *s2 = PyString_FromFormat("CPV(%s)", str);
+    PyObject *s, *cpv;
+    cpv = PyObject_GetAttrString((PyObject *)self, "cpvstr");
+    if(!cpv)
+        return (PyObject *)NULL;
+    s = PyObject_Repr(cpv);
+    Py_DECREF(cpv);
+    if(!s)
+        return (PyObject *)NULL;
+    char *str = PyString_AsString(s);
+    if(!s) {
         Py_DECREF(s);
-        s = s2;
+        return (PyObject *)NULL;
     }
-    return s;
+    PyObject *s2 = PyString_FromFormat("CPV(%s)", str);
+    Py_DECREF(s);
+    return s2;
 }
         
 static PyTypeObject pkgcore_cpvType = {

@@ -38,12 +38,12 @@ class native_CpvTest(unittest.TestCase):
     testing_secondary_args = False
 
     def make_inst(self, cat, pkg, fullver=""):
+        if self.testing_secondary_args:
+            return self.kls(cat, pkg, fullver)
         if fullver:
             cpv = "%s/%s-%s" % (cat, pkg, fullver)
         else:
             cpv = "%s/%s" % (cat, pkg)
-        if self.testing_secondary_args:
-            return self.kls(cpv, cat, pkg, fullver)
         return self.kls(cpv)
 
     def test_simple_key(self):

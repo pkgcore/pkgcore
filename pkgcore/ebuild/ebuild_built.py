@@ -141,12 +141,10 @@ class package_factory(metadata.factory):
     def _get_metadata(self, pkg):
         return self._parent_repo._get_metadata(pkg)
 
-    def new_package(self, cat, pkg, ver):
-        cpv = "%s/%s-%s" % (cat, pkg, ver)
-        inst = self._cached_instances.get(cpv, None)
+    def new_package(self, *args):
+        inst = self._cached_instances.get(args, None)
         if inst is None:
-            inst = self._cached_instances[cpv] = self.child_class(self,
-                cpv, cat, pkg, ver)
+            inst = self._cached_instances[args] = self.child_class(self, *args)
         return inst
 
     _generate_format_install_op   = _generic_format_install_op

@@ -33,6 +33,7 @@ def mangle_repo_args(pkg_chunks):
     function for mangling default repo args into a form
     CPV likes.
     """
+    return pkg_chunks
     return "%s/%s-%s" % pkg_chunks, pkg_chunks[0], pkg_chunks[1], pkg_chunks[2]
 
 def generate_depset(s, c, *keys, **kwds):
@@ -203,9 +204,6 @@ class package(metadata.package):
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
                   "license", "src_uri", "license", "provides"])
 
-    def __init__(self, parent, cpv, category, package, version):
-        metadata.package.__init__(self, parent, cpv, category, package, version)
-
     _get_attr = dict(metadata.package._get_attr)
     _get_attr["provides"] = generate_providers
     _get_attr["depends"] = post_curry(generate_depset, atom, "depend")
@@ -351,12 +349,11 @@ class package_factory(metadata.factory):
 
         return mydata
 
-    def new_package(self, category, package, fullver):
-        cpv = "%s/%s-%s" % (category, package, fullver)
-        inst = self._cached_instances.get(cpv, None)
+    def new_package(self, *args):
+        inst = self._cached_instances.get(args, None)
         if inst is None:
-            inst = self._cached_instances[cpv] = self.child_class(
-                self, cpv, category, package, fullver)
+            inst = self._cached_instances[args] = self.child_class(
+                self, *args)
             o = self._weak_pkglevel_cache.get(inst.key, None)
             if o is None:
                 o = SharedMetadataXml()

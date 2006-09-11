@@ -8,6 +8,7 @@ in memory representation of on disk eclass stacking order
 
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.config.introspect import ConfigHint
+from pkgcore.util.mappings import TupleBackedDict
 
 from pkgcore.util.demandload import demandload
 demandload(globals(),
@@ -57,7 +58,7 @@ class cache(base):
                 except OSError:
                     continue
                 ys = y[:-eclass_len]
-                self.eclasses[ys] = (self.eclassdir, long(mtime))
+                self.eclasses[intern(ys)] = (self.eclassdir, long(mtime))
 
 
     def is_eclass_data_valid(self, ec_dict):
@@ -86,16 +87,8 @@ class cache(base):
         this cache.
         """
 
-        ec_dict = {}
-        for x in inherits:
-            try:
-                ec_dict[x] = self.eclasses[x]
-            except:
-                print "ec=", ec_dict
-                print "inherit=", x
-                raise
-
-        return ec_dict
+        return TupleBackedDict((intern(x), self.eclasses[x])
+            for x in inherits)
 
     def get_eclass(self, eclass):
         o = self.eclasses.get(eclass, None)

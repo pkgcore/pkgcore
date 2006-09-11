@@ -407,7 +407,7 @@ class ListBackedDict(DictMixin):
     _key_grabber = operator.itemgetter(0)
     _value_grabber = operator.itemgetter(1)
 
-    def __init__(self, iterables=[]):
+    def __init__(self, iterables=()):
         self._data = [(k,v) for k,v in iterables]
         
     def __setitem__(self, key, val):
@@ -453,5 +453,5 @@ class TupleBackedDict(ListBackedDict):
     __slots__ = ()
     __externally_mutable__ = False
 
-    def __init__(self, iterables=[]):
+    def __init__(self, iterables=()):
         self._data = tuple((k,v) for k,v in iterables)

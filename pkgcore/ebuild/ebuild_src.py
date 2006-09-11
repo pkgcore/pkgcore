@@ -21,7 +21,7 @@ from pkgcore.restrictions.packages import AndRestriction
 from pkgcore.restrictions import boolean
 from pkgcore.chksum.errors import MissingChksum
 from pkgcore.fetch.errors import UnknownMirror
-from pkgcore.fetch import fetchable, mirror
+from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import const, processor
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.xml:etree "
@@ -33,54 +33,7 @@ def mangle_repo_args(pkg_chunks):
     function for mangling default repo args into a form
     CPV likes.
     """
-    import pdb;pdb.set_trace()
     return "%s/%s-%s" % pkg_chunks, pkg_chunks[0], pkg_chunks[1], pkg_chunks[2]
-
-
-# utility func.
-def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
-                              common_files, uri):
-
-    filename = os.path.basename(uri)
-
-    preexisting = filename in common_files
-
-    if not preexisting:
-        if filename not in chksums:
-            raise MissingChksum(filename)
-
-    if filename == uri:
-        new_uri = []
-    else:
-        if not preexisting:
-            new_uri = []
-            if "primaryuri" in pkg.restrict:
-                new_uri.append((uri,))
-
-            if default_mirrors is not None and "mirror" not in pkg.restrict:
-                new_uri.append(mirror(filename, default_mirrors,
-                                      "conf_default_mirrors"))
-        else:
-            new_uri = common_files[filename].uri
-
-        if uri.startswith("mirror://"):
-            # mirror:// is 9 chars.
-            tier, remaining_uri = uri[9:].split("/", 1)
-            if tier not in mirrors:
-                raise UnknownMirror(tier, remaining_uri)
-            new_uri.append(mirror(remaining_uri, mirrors[tier], tier))
-            # XXX replace this with an iterable instead
-        else:
-            if not new_uri or new_uri[0] != (uri,):
-                new_uri.append((uri,))
-
-    # force usage of a ChainedLists, why? because folks may specify
-    # multiple uri's resulting in the same file. we basically use
-    # ChainedList's _list as a mutable space we directly modify.
-    if not preexisting:
-        common_files[filename] = fetchable(
-            filename, ChainedLists(*new_uri), chksums[filename])
-    return common_files[filename]
 
 def generate_depset(s, c, *keys, **kwds):
     if kwds.pop("non_package_type", False):
@@ -88,7 +41,7 @@ def generate_depset(s, c, *keys, **kwds):
                              "":boolean.AndRestriction}
     try:
         return conditionals.DepSet(" ".join([s.data.pop(x.upper(), "")
-                                             for x in keys]), c, **kwds)
+            for x in keys]), c, **kwds)
     except conditionals.ParseError, p:
         raise errors.MetadataException(s, str(keys), str(p))
 
@@ -111,21 +64,65 @@ def generate_fetchables(self):
     chksums = parse_digest(os.path.join(
         os.path.dirname(self._parent._get_ebuild_path(self)), "files",
         "digest-%s-%s" % (self.package, self.fullver)))
+
+    mirrors = getattr(self._parent, "mirrors", {})
+    default_mirrors = getattr(self._parent, "default_mirrors", None)
+    common = {}
     try:
-        mirrors = self._parent.mirrors
-    except AttributeError:
-        mirrors = {}
-    try:
-        default_mirrors = self._parent.default_mirrors
-    except AttributeError:
-        default_mirrors = None
-    try:
-        return conditionals.DepSet(
+        d = conditionals.DepSet(
             self.data["SRC_URI"], fetchable, operators={},
             element_func=pre_curry(create_fetchable_from_uri, self, chksums,
-                                   mirrors, default_mirrors, {}))
+                                   mirrors, default_mirrors, common))
+        for v in common.itervalues():
+            v.uri.finalize()
+        return d
     except conditionals.ParseError, p:
         raise errors.MetadataException(self, "src_uri", str(p))
+
+# utility func.
+def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
+     common_files, uri):
+
+    filename = os.path.basename(uri)
+
+    preexisting = filename in common_files
+
+    if not preexisting:
+        if filename not in chksums:
+            raise MissingChksum(filename)
+        uris = uri_list(filename)
+    else:
+        uris = common_files[filename].uri
+        
+    if filename == uri:
+        uris.add_uri(filename)
+    else:
+        if not preexisting:
+            if "primaryuri" in pkg.restrict:
+                uris.add_uri(uri)
+
+            if default_mirrors and "mirror" not in pkg.restrict:
+                uris.add_mirror(default_mirrors)
+
+        if uri.startswith("mirror://"):
+            # mirror:// is 9 chars.
+
+            tier, remaining_uri = uri[9:].split("/", 1)
+
+            if tier not in mirrors:
+                raise UnknownMirror(tier, remaining_uri)
+
+            uris.add_mirror(mirrors[tier])
+
+        else:
+            uris.add_uri(uri)
+
+    # force usage of a ChainedLists, why? because folks may specify
+    # multiple uri's resulting in the same file. we basically use
+    # ChainedList's _list as a mutable space we directly modify.
+    if not preexisting:
+        common_files[filename] = fetchable(filename, uris, chksums[filename])
+    return common_files[filename]
 
 def generate_eapi(self):
     try:
@@ -295,8 +292,16 @@ class package_factory(metadata.factory):
         super(package_factory, self).__init__(parent, *args, **kwargs)
         self._cache = cachedb
         self._ecache = eclass_cache
+        if mirrors:
+            mirrors = dict((k, mirror(v, k)) for k,v in mirrors.iteritems())
+
         self.mirrors = mirrors
-        self.default_mirrors = default_mirrors
+        if default_mirrors:
+            self.default_mirrors = default_mirror(default_mirrors,
+                "conf. default mirror")
+        else:
+            self.default_mirrors = None
+
         self._weak_pkglevel_cache = WeakValCache()
 
     def get_ebuild_src(self, pkg):
@@ -364,6 +369,11 @@ class package_factory(metadata.factory):
                 self._weak_pkglevel_cache[inst.key] = o
             object.__setattr__(inst, "_pkg_metadata_shared", o)
         return inst
+
+    def request_mirror(self, mirror_name):
+        """
+        either get a mirror, or return None
+        """
 
 
 class SharedMetadataXml(object):

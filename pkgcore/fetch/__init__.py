@@ -5,7 +5,6 @@
 functionality related to downloading files
 """
 
-
 class fetchable(object):
 
     """class representing uri sources for a file and chksum information."""
@@ -36,26 +35,67 @@ class mirror(object):
     """
     uri source representing a mirror tier
     """
-    __slots__ = ("uri", "mirrors", "mirror_name")
-    def __init__(self, uri, mirrors, mirror_name):
+    __slots__ = ("mirrors", "mirror_name")
+
+    def __init__(self, mirrors, mirror_name):
         """
         @param uri: the uri to try accessing per mirror server
         @param mirrors: list of hosts that comprise this mirror tier
         @param mirror_name: name of the mirror tier
         """
 
-        self.uri = uri
+        if not isinstance(mirrors, tuple):
+            mirrors = tuple(mirrors)
         self.mirrors = mirrors
         self.mirror_name = mirror_name
 
     def __iter__(self):
-        return ("%s/%s" % (x, self.uri) for x in self.mirrors)
+        return iter(self.mirrors)
 
     def __str__(self):
-        return "mirror://%s/%s" % (self.mirror_name, self.uri)
+        return "mirror://%s" % self.mirror_name
 
     def __len__(self):
         return len(self.mirrors)
 
     def __getitem__(self, idx):
-        return "%s/%s" % (self.mirrors[idx], self.uri)
+        return self.mirrors[idx]
+
+    def __repr__(self):
+        return "<%s mirror tier=%r>" % (self.__class__, self.mirror_name)
+
+class default_mirror(mirror):
+    pass
+
+
+class uri_list(object):
+
+    __slots__ = ("_uri_source", "filename", "__weakref__")
+
+    def __init__(self, filename):
+        self._uri_source = []
+        self.filename = filename
+    
+    def add_mirror(self, mirror_inst):
+        if not isinstance(mirror_inst, mirror):
+            raise TypeError("mirror must be a pkgcore.fetch.mirror instance")
+        self._uri_source.append(mirror_inst)
+    
+    def add_uri(self, uri):
+        self._uri_source.append(uri)
+    
+    def finalize(self):
+        self._uri_source = tuple(self._uri_source)
+
+    def __iter__(self):
+        fname = self.filename
+        for entry in self._uri_source:
+            if isinstance(entry, basestring):
+                yield entry
+            else:
+                for base_uri in entry:
+                    yield "%s/%s" % (base_uri, fname)
+
+    def __str__(self):
+        return "file: %s, uri: %s" % (self.filename, 
+            ', '.join(str(x) for x in self._uri_source))

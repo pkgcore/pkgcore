@@ -8,7 +8,8 @@ in memory representation of on disk eclass stacking order
 
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.config.introspect import ConfigHint
-from pkgcore.util.mappings import TupleBackedDict
+from pkgcore.util.mappings import ImmutableDict
+from pkgcore.util.weakrefs import WeakValCache
 
 from pkgcore.util.demandload import demandload
 demandload(globals(),
@@ -43,6 +44,7 @@ class cache(base):
         self.eclassdir = normpath(path)
         self.portdir = portdir
         self.update_eclasses()
+        self._eclass_data_inst_cache = WeakValCache()
 
     def update_eclasses(self):
         """Force an update of the internal view of on disk/remote eclasses."""
@@ -87,8 +89,12 @@ class cache(base):
         this cache.
         """
 
-        return TupleBackedDict((intern(x), self.eclasses[x])
-            for x in inherits)
+        keys = tuple(sorted(inherits))
+        o = self._eclass_data_inst_cache.get(keys, None)
+        if o is None:
+            o = ImmutableDict((k, self.eclasses[k]) for k in keys)
+            self._eclass_data_inst_cache[keys] = o
+        return o
 
     def get_eclass(self, eclass):
         o = self.eclasses.get(eclass, None)

@@ -126,15 +126,9 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
 
 def generate_eapi(self):
     try:
-        val = int(self.data.pop("EAPI", 0))
+        return int(self.data.pop("EAPI", 0))
     except ValueError:
-        if self.data["EAPI"] == '':
-            val = 0
-        else:
-            val = const.unknown_eapi
-    except KeyError:
-        val = 0
-    return val
+        return const.unknown_eapi
 
 metadata_xml_attr_map = {"maintainers":0, "herds":1, "longdescription":2}
 

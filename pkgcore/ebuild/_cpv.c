@@ -348,7 +348,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
     if(!PyArg_UnpackTuple(args, "CPV", 1, 3, &category, &package, &fullver))
         return -1;
 
-    if(PyObject_IsTrue(kwds)) {
+    if(kwds && PyObject_IsTrue(kwds)) {
         PyErr_SetString(PyExc_TypeError,
             "cpv accepts either 1 arg (cpvstr), or 3 (category, package, "
             "version); all must be strings, and no keywords accepted");

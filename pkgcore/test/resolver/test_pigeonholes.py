@@ -11,7 +11,8 @@ class fake_blocker(restriction.base):
         restriction.base.__init__(self)
         if not isinstance(blocks, (list, tuple)):
             blocks = [blocks]
-        self.key, self.blocks = key, blocks
+        object.__setattr__(self, "key", key)
+        object.__setattr__(self, "blocks", blocks)
 
     def __str__(self):
         return "fake_atom(%s, %s)" % (self.key, self.blocks)

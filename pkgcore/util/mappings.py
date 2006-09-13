@@ -105,12 +105,12 @@ class DictMixin(object):
         raise NotImplementedError(self, "__getitem__")
     
     def __setitem__(self, key, val):
-        if not self.__externally_modifiable__:
+        if not self.__externally_mutable__:
             raise AttributeError(self, "__setitem__")
         raise NotImplementedError(self, "__setitem__")
     
     def __delitem__(self, key):
-        if not self.__externally_modifiable__:
+        if not self.__externally_mutable__:
             raise AttributeError(self, "__delitem__")
         raise NotImplementedError(self, "__delitem__")
         

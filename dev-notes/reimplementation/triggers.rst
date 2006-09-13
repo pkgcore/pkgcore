@@ -13,12 +13,12 @@ The following is missing functionality in pkgcore that exists in portage, and
 must be reimplemented- studying ``pkgcore.merge.triggers`` is suggested 
 prior to attempting it.  The protocol is *extremely* simple.
 
-- config protect.  Needs to be implemented as a pre_modify trigger that 
-  modifies the ``modify`` cset; specifically, it renames files as needed.
+- config protect; unmerge mangling isn't implemented
 
 - ``bin/ebuild-helpers/prepall`` functionality should be converted to trigger 
   based, and the call removed from dyn_install in 
-  ``bin/ebuild-env/ebuild-default.sh``
+  ``bin/ebuild-env/ebuild-default.sh``;
+  This doesn't fly perfectly for ebuild calls.
 
 - all QA checks from dyn_install need to be converted to triggers.
   This likely will require creation of a new cset; study 
@@ -34,6 +34,9 @@ prior to attempting it.  The protocol is *extremely* simple.
   during replace operations.  We'll need a post_modify scanner to clean
   those out.
 
+- .keep creation.  see above, basically would be used when need to be
+  compatible with portage
+
 
 Additionally, fun functionality folks can hack on if they're bored- these 
 will be optional.
@@ -45,6 +48,8 @@ will be optional.
 - man/info page compression.  This can either be implemented as a post_modify 
   (yuck), or (cleanly) as an extension to merge_contents so that triggers can
   register callables to do the actual copying to the livefs.
+
+  This is a bit tricky when it comes to fs symlinking of files.
 
 - size sanity_check prior to attempting the merge; this will be tricky since 
   it requires figuring out all mounts and space available for each.

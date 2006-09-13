@@ -5,6 +5,7 @@ kindly check over HORKED; stuff here is "would be nice", but horked comes first.
 Difficulty estimate indicated by '*', based on either codebase in question, or knowledge of python tricks
 none == easy, >=5 of 'em, tricky.
 
+- CONFIG_PROTECT unmerge support
 - pkgcore.fetchable.__init__: __eq__/__hash__
 
 - manifest/manifest2 support, marking of digest supplied chksums as from digest in some way for a pcheck check.

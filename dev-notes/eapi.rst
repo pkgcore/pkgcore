@@ -43,3 +43,4 @@ Version 1
 - potentially add '<>dev-util/diffball-1.0' support; would require supporting tildes also; to head off the "but blockers exist",
   blockers are statements of "I will not work with any matches to this in the graph, get rid of them", not "I'll work with this
   range" which <> is.
+- drop -* from keywords; it's package.masking, use that instead (-arch is acceptable although daft)

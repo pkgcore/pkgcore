@@ -3,6 +3,7 @@
 
 from operator import attrgetter
 from pkgcore.util.currying import pre_curry
+from pkgcore.util.mappings import DictMixin
 
 def alias_method(getter, self, *a, **kwd):
     return getter(self.__obj__)(*a, **kwd)
@@ -115,14 +116,12 @@ def make_SlottedDict_kls(keys):
     new_keys = tuple(sorted(keys))
     o = slotted_dict_cache.get(new_keys, None)
     if o is None:
-        class SlottedDict(object):
+        class SlottedDict(DictMixin):
             __slots__ = new_keys
+            __externally_mutable__ = True
 
-            def __new__(cls, iterables=None):
-                return object.__new__(cls)
-            
-            def __init__(self, iterables=None):
-                if iterables is not None:
+            def __init__(self, iterables=()):
+                if iterables:
                     self.update(iterables)
             
             __setitem__ = object.__setattr__
@@ -138,21 +137,11 @@ def make_SlottedDict_kls(keys):
                 return iter(self)
             
             def keys(self):
-                return list(self.__slots__)
+                return list(self)
             
             def itervalues(self):
                 for k in self:
                     yield self[k]
-            
-            def values(self):
-                return list(self.itervalues())
-            
-            def iteritems(self):
-                for k in self:
-                    yield k, self[k]
-            
-            def items(self):
-                return list(self.iteritems())
             
             def get(self, key, default=None):
                 return getattr(self, key, default)
@@ -183,10 +172,8 @@ def make_SlottedDict_kls(keys):
                 return len(self.keys())
             
             def __contains__(self, key):
-                for k in self:
-                    if k == key:
-                        return True
-                return False
+                return hasattr(self, key)
+
         o = SlottedDict
         slotted_dict_cache[new_keys] = o
     return o

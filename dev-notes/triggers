@@ -1,4 +1,0 @@
-lesse....
-
-1) class wrapping, with consumers that want to know the real target path doing some form of "strip down to the raw" (icky)
-2) grow an additional attribute.  doesn't scale all that well (mem cost just for potential config_protect)

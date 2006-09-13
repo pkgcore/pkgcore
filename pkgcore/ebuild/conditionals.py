@@ -221,7 +221,7 @@ class DepSet(boolean.AndRestriction):
     @property
     def node_conds(self):
         if self._node_conds is False:
-            self._node_conds = {}
+           object.__setattr__(self, "_node_conds", {})
         elif self._node_conds is True:
             nc = {}
 
@@ -246,7 +246,7 @@ class DepSet(boolean.AndRestriction):
             for k in nc:
                 nc[k] = tuple(nc[k])
 
-            self._node_conds = nc
+            object.__setattr__(self, "_node_conds", nc)
 
         return self._node_conds
 

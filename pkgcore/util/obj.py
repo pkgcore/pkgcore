@@ -136,9 +136,6 @@ def make_SlottedDict_kls(keys):
             def iterkeys(self):
                 return iter(self)
             
-            def keys(self):
-                return list(self)
-            
             def itervalues(self):
                 for k in self:
                     yield self[k]

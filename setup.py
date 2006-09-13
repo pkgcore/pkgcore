@@ -121,6 +121,7 @@ core.setup(
 			'data/*',
 			'bin/ebuild-env/*',
 			'bin/ebuild-helpers/*',
+			'heapdef.h',
 			],
 		'src': [
 			'filter-env/*.c',

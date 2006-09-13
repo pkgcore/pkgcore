@@ -135,3 +135,4 @@ class StackedCaches(cache):
             self.portdir = os.path.dirname(self.eclassdir.rstrip(os.path.sep))
 
         self.eclasses = StackedDict(*[ec.eclasses for ec in caches])
+        self._eclass_data_inst_cache = WeakValCache()

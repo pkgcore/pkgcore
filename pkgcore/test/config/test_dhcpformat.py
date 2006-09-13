@@ -28,7 +28,7 @@ class DHCPConfigTest(unittest.TestCase):
         skip = skip_test
 
     def test_basics(self):
-        config = dhcpformat.configFromFile(StringIO('''
+        config = dhcpformat.config_from_file(StringIO('''
 test {
     hi there;
 }
@@ -40,7 +40,7 @@ test {
         self.assertEquals(section.get_value(None, 'hi', 'str'), 'there')
 
     def test_basic_types(self):
-        config = dhcpformat.configFromFile(StringIO('''
+        config = dhcpformat.config_from_file(StringIO('''
 test {
     list one two three;
     string hi;
@@ -58,7 +58,7 @@ test {
             self.assertEquals(section.get_value(None, name, typename), value)
 
     def test_section_ref(self):
-        config = dhcpformat.configFromFile(StringIO('''
+        config = dhcpformat.config_from_file(StringIO('''
 target {
     type testtype;
     class pkgcore.test.config.test_dhcpformat.passthrough;
@@ -86,7 +86,7 @@ test {
             ((), {'hi': 'here'}))
 
     def test_multiple_section_ref(self):
-        config = dhcpformat.configFromFile(StringIO('''
+        config = dhcpformat.config_from_file(StringIO('''
 target {
     type testtype;
     class pkgcore.test.config.test_dhcpformat.passthrough;
@@ -124,7 +124,7 @@ test {
                 self.fail('no exception raised')
 
     def test_section_refs(self):
-        config = dhcpformat.configFromFile(StringIO('''
+        config = dhcpformat.config_from_file(StringIO('''
 target {
     type testtype;
     class pkgcore.test.config.test_dhcpformat.passthrough;
@@ -148,7 +148,7 @@ test {
             [((), {'hi': 'there'}), ((), {'hi': 'here'})])
 
     def test_one_section_refs(self):
-        config = dhcpformat.configFromFile(StringIO('''
+        config = dhcpformat.config_from_file(StringIO('''
 target {
     type testtype;
     class pkgcore.test.config.test_dhcpformat.passthrough;
@@ -176,7 +176,7 @@ test {
             [((), {'hi': 'there'})])
 
     def test_invalid_values(self):
-        config = dhcpformat.configFromFile(StringIO('''
+        config = dhcpformat.config_from_file(StringIO('''
 test {
     bool maybe;
     string la la;

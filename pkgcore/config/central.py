@@ -12,7 +12,7 @@ from pkgcore.config import introspect
 
 class ConfigManager(object):
 
-    def __init__(self, configTypes, configs):
+    def __init__(self, config_types, configs):
         """Initialize.
 
         @param configTypes: sequence of mappings of strings to ConfigType.
@@ -22,7 +22,7 @@ class ConfigManager(object):
         self.configs = list(configs)
         self.instantiated = {}
         self.types = {}
-        for types in configTypes:
+        for types in config_types:
             for type_name, type_obj in types.iteritems():
                 if type_name in self.types:
                     raise errors.BaseException(
@@ -87,7 +87,7 @@ class ConfigManager(object):
             class_obj = type_override.get_value(self, "class",
                                                 type_obj.types["class"])
             if getattr(class_obj, "pkgcore_config_type", False):
-                type_obj = introspect.configTypeFromCallable(class_obj)
+                type_obj = introspect.config_type_from_callable(class_obj)
         del type_override
 
         # collapse, honoring incrementals.

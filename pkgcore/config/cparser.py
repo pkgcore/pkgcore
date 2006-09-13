@@ -17,7 +17,7 @@ class CaseSensitiveConfigParser(ConfigParser):
         return val
 
 
-def configFromIni(file_obj):
+def config_from_file(file_obj):
     """
     generate a config dict
 
@@ -32,7 +32,7 @@ def configFromIni(file_obj):
     return mappings.LazyValDict(cparser.sections, get_section)
 
 
-def configTypesFromIni(file_object):
+def config_types_from_file(file_object):
     """parse config types from ini file object"""
     types = {}
     config = CaseSensitiveConfigParser()

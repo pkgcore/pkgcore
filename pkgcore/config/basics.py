@@ -229,54 +229,55 @@ def SectionAlias(new_section, section):
         {"type": "alias", "section": section})
 
 
-def list_parser(s):
+def list_parser(string):
     """split on whitespace honoring quoting for new tokens"""
     l = []
     i = 0
-    e = len(s)
+    e = len(string)
     # check for stringness because we return something interesting if
     # feeded a sequence of strings
-    if not isinstance(s, basestring):
-        raise TypeError('expected a string, got %r' % s)
+    if not isinstance(string, basestring):
+        raise TypeError('expected a string, got %r' % (string,))
     while i < e:
-        if not s[i].isspace():
-            if s[i] in ("'", '"'):
+        if not string[i].isspace():
+            if string[i] in ("'", '"'):
                 q = i
                 i += 1
                 res = []
-                while i < e and s[i] != s[q]:
-                    if s[i] == '\\':
+                while i < e and string[i] != string[q]:
+                    if string[i] == '\\':
                         i += 1
-                    res.append(s[i])
+                    res.append(string[i])
                     i += 1
                 if i >= e:
-                    raise errors.QuoteInterpretationError(s)
+                    raise errors.QuoteInterpretationError(string)
                 l.append(''.join(res))
             else:
                 res = []
-                while i < e and not (s[i].isspace() or s[i] in ("'", '"')):
-                    if s[i] == '\\':
+                while i < e and not (string[i].isspace() or
+                                     string[i] in ("'", '"')):
+                    if string[i] == '\\':
                         i += 1
-                    res.append(s[i])
+                    res.append(string[i])
                     i += 1
-                if i < e and s[i] in ("'", '"'):
-                    raise errors.QuoteInterpretationError(s)
+                if i < e and string[i] in ("'", '"'):
+                    raise errors.QuoteInterpretationError(string)
                 l.append(''.join(res))
         i += 1
     return l
 
-def str_parser(s):
+def str_parser(string):
     """yank leading/trailing whitespace and quotation, along with newlines"""
-    if not isinstance(s, basestring):
-        raise TypeError('expected a string, got %r' % s)
-    s = s.strip()
+    if not isinstance(string, basestring):
+        raise TypeError('expected a string, got %r' % (string,))
+    s = string.strip()
     if len(s) > 1 and s[0] in '"\'' and s[0] == s[-1]:
         s = s[1:-1]
     return s.replace('\n', ' ').replace('\t', ' ')
 
-def bool_parser(s):
+def bool_parser(string):
     """convert a string to a boolean"""
-    s = str_parser(s).lower()
+    s = str_parser(string).lower()
     if s in ("no", "false", "0"):
         return False
     if s in ("yes", "true", "1"):

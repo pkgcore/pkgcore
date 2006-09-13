@@ -26,6 +26,9 @@ typedef int Py_ssize_t;
 #include <structmember.h>
 #include <string.h>
 
+/* From heapy */
+#include "../heapdef.h"
+
 // dev-util/diffball-cvs.2006.0_alpha1_alpha2
 // dev-util/diffball
 
@@ -848,6 +851,60 @@ PyDoc_STRVAR(
     pkgcore_cpv_documentation,
     "C reimplementation of pkgcore.ebuild.cpv.");
 
+/* Copied from stdtypes.c in guppy */
+#define VISIT(SLOT) \
+    if (SLOT) { \
+        err = visit((PyObject *)(SLOT), arg); \
+        if (err) \
+            return err; \
+    }
+
+#define ATTR(name) \
+    if ((PyObject *)v->name == r->tgt &&                                \
+        (r->visit(NYHR_ATTRIBUTE, PyString_FromString(#name), r)))      \
+        return 1;
+
+static int
+pkgcore_cpv_heapytraverse(NyHeapTraverse* traverse)
+{
+    pkgcore_cpv *cpv = (pkgcore_cpv*)traverse->obj;
+    void *arg = traverse->arg;
+    visitproc visit = traverse->visit;
+    int err;
+    VISIT(cpv->category);
+    VISIT(cpv->package);
+    VISIT(cpv->key);
+    VISIT(cpv->fullver);
+    VISIT(cpv->version);
+    VISIT(cpv->revision);
+    return 0;
+}
+
+static int
+pkgcore_cpv_heapyrelate(NyHeapRelate *r)
+{
+    pkgcore_cpv *v = (pkgcore_cpv*)r->src;
+    ATTR(category);
+    ATTR(package);
+    ATTR(key);
+    ATTR(fullver);
+    ATTR(version);
+    ATTR(revision);
+    return 0;
+}
+
+static NyHeapDef pkgcore_cpv_heapdefs[] = {
+    {
+        0,                            /* flags */
+        &pkgcore_cpvType,             /* type */
+        0,                            /* size */
+        pkgcore_cpv_heapytraverse,    /* traverse */
+        pkgcore_cpv_heapyrelate       /* relate */
+    },
+    {0}
+};
+
+
 #ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
 #define PyMODINIT_FUNC void
 #endif
@@ -855,7 +912,7 @@ PyMODINIT_FUNC
 init_cpv(void)
 {
     PyObject *m, *s;
-    
+
     // this may be redundant; do this so __builtins__["__import__"] is used.
     s = PyString_FromString("pkgcore.ebuild.cpv_errors");
     if(NULL == s)
@@ -878,4 +935,11 @@ init_cpv(void)
 
     Py_INCREF(&pkgcore_cpvType);
     PyModule_AddObject(m, "CPV", (PyObject *)&pkgcore_cpvType);
+    PyObject *cobject = PyCObject_FromVoidPtrAndDesc(&pkgcore_cpv_heapdefs,
+                                                     "NyHeapDef[] v1.0",
+                                                     0);
+    /* XXX this error handling here is messed up */
+    if (cobject) {
+        PyModule_AddObject(m, "_NyHeapDefs_", cobject);
+    }
 }

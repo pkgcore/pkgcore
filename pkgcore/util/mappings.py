@@ -239,6 +239,7 @@ class ProtectedDict(DictMixin):
     def __delitem__(self, key):
         if key in self.new:
             del self.new[key]
+            self.blacklist[key] = True
             return
         elif key in self.orig:
             if key not in self.blacklist:
@@ -283,14 +284,14 @@ class ImmutableDict(dict):
     __setattr__ = __setitem__
 
 
-class IndeterminantDict(dict):
+class IndeterminantDict(object):
 
     """A wrapped dict with constant defaults, and a function for other keys."""
 
     __slots__ = ("__initial", "__pull")
 
     def __init__(self, pull_func, starter_dict=None):
-        dict.__init__(self)
+        object.__init__(self)
         if starter_dict is None:
             self.__initial = {}
         else:

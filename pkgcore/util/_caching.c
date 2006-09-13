@@ -24,6 +24,15 @@ typedef int Py_ssize_t;
 typedef Py_ssize_t (*lenfunc)(PyObject *);
 #endif
 
+/* From heapy */
+#include "../heapdef.h"
+
+/* Copied from stdtypes.c in guppy */
+#define INTERATTR(name) \
+    if ((PyObject *)v->name == r->tgt &&                                \
+        (r->visit(NYHR_INTERATTR, PyString_FromString(#name), r)))      \
+		return 1;
+
 /*
  * WeakValFinalizer: holds a reference to a dict and key,
  * does "del dict[key]" when called. Used as weakref callback.
@@ -78,6 +87,15 @@ pkgcore_WeakValFinalizer_traverse(
     return 0;
 }
 
+static int
+pkgcore_WeakValFinalizer_heapyrelate(NyHeapRelate *r)
+{
+    pkgcore_WeakValFinalizer *v = (pkgcore_WeakValFinalizer*)r->src;
+    INTERATTR(dict);
+    INTERATTR(key);
+    return 0;
+}
+
 static PyTypeObject pkgcore_WeakValFinalizerType = {
     PyObject_HEAD_INIT(NULL)
     0,                                               /* ob_size */
@@ -104,6 +122,25 @@ static PyTypeObject pkgcore_WeakValFinalizerType = {
     (traverseproc)pkgcore_WeakValFinalizer_traverse, /* tp_traverse */
 };
 
+static pkgcore_WeakValFinalizer *
+pkgcore_WeakValFinalizer_create(PyObject *dict, PyObject *key)
+{
+    pkgcore_WeakValFinalizer *finalizer = PyObject_GC_New(
+        pkgcore_WeakValFinalizer, &pkgcore_WeakValFinalizerType);
+
+    if (NULL == finalizer)
+        return NULL;
+
+    Py_INCREF(dict);
+    finalizer->dict = dict;
+    Py_INCREF(key);
+    finalizer->key = key;
+
+    PyObject_GC_Track(finalizer);
+
+    return finalizer;
+}
+
 typedef struct {
     PyObject_HEAD
     PyObject *dict;
@@ -129,6 +166,14 @@ pkgcore_WeakValCache_traverse(
     pkgcore_WeakValCache *self, visitproc visit, void *arg)
 {
     Py_VISIT(self->dict);
+    return 0;
+}
+
+static int
+pkgcore_WeakValCache_heapyrelate(NyHeapRelate *r)
+{
+    pkgcore_WeakValCache *v = (pkgcore_WeakValCache*) r->src;
+    INTERATTR(dict);
     return 0;
 }
 
@@ -174,18 +219,10 @@ pkgcore_WeakValCache_setitem(pkgcore_WeakValCache *self, PyObject *key,
         return -1;
     }
 
-    pkgcore_WeakValFinalizer *finalizer = PyObject_GC_New(
-        pkgcore_WeakValFinalizer, &pkgcore_WeakValFinalizerType);
-
-    if (NULL == finalizer)
+    pkgcore_WeakValFinalizer *finalizer = pkgcore_WeakValFinalizer_create(
+        self->dict, key);
+    if (!finalizer)
         return -1;
-
-    Py_INCREF(self->dict);
-    finalizer->dict = self->dict;
-    Py_INCREF(key);
-    finalizer->key = key;
-
-    PyObject_GC_Track(finalizer);
 
     PyObject *weakref = PyWeakref_NewRef(val, (PyObject*)finalizer);
     Py_DECREF(finalizer);
@@ -533,19 +570,13 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
         return NULL;
     }
 
-    pkgcore_WeakValFinalizer *finalizer = PyObject_GC_New(
-        pkgcore_WeakValFinalizer, &pkgcore_WeakValFinalizerType);
+    pkgcore_WeakValFinalizer *finalizer = pkgcore_WeakValFinalizer_create(
+        self->inst_dict, key);
     if (!finalizer) {
         Py_DECREF(key);
         Py_DECREF(resobj);
         return NULL;
     }
-    Py_INCREF(self->inst_dict);
-    finalizer->dict = self->inst_dict;
-    Py_INCREF(key);
-    finalizer->key = key;
-
-    PyObject_GC_Track(finalizer);
 
     PyObject *weakref = PyWeakref_NewRef(resobj, (PyObject*)finalizer);
     Py_DECREF(finalizer);
@@ -633,6 +664,24 @@ static PyTypeObject pkgcore_WeakInstMetaType = {
 };
 
 
+static NyHeapDef pkgcore_caching_heapdefs[] = {
+    {
+        0,                            /* flags */
+        &pkgcore_WeakValFinalizerType, /* type */
+        0,                            /* size */
+        0,                            /* traverse */
+        pkgcore_WeakValFinalizer_heapyrelate /* relate */
+    },
+    {
+        0,                            /* flags */
+        &pkgcore_WeakValCacheType,    /* type */
+        0,                            /* size */
+        0,                            /* traverse */
+        pkgcore_WeakValCache_heapyrelate /* relate */
+    },
+    {0}
+};
+
 /* Module initialization */
 
 PyDoc_STRVAR(
@@ -667,6 +716,15 @@ init_caching()
     Py_INCREF(&pkgcore_WeakValCacheType);
     PyModule_AddObject(m, "WeakValCache",
         (PyObject *)&pkgcore_WeakValCacheType);
+
+    PyObject *cobject = PyCObject_FromVoidPtrAndDesc(&pkgcore_caching_heapdefs,
+                                                     "NyHeapDef[] v1.0",
+                                                     0);
+    /* XXX this error handling here is messed up */
+    if (cobject) {
+        PyModule_AddObject(m, "_NyHeapDefs_", cobject);
+    }
+
     if (PyErr_Occurred())
         Py_FatalError("can't initialize module _caching");
 }

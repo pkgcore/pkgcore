@@ -145,6 +145,10 @@ class ProtectedDictTest(unittest.TestCase):
         # and add it back
         self.dict[1] = -1
         check_after_adding()
+        # Change an existing value, then remove it:
+        self.dict[1] = 33
+        del self.dict[1]
+        self.assertNotIn(1, self.dict)
 
 
 class ImmutableDictTest(unittest.TestCase):

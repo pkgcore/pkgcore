@@ -29,16 +29,16 @@ def load_config(user_conf_file=USER_CONF_FILE,
     from pkgcore.config import central, cparser
     import os
 
-    types_def = cparser.configTypesFromIni(open(types_file))
+    types_def = cparser.config_types_from_file(open(types_file))
     have_system_conf = os.path.isfile(system_conf_file)
     have_user_conf = os.path.isfile(user_conf_file)
     if have_system_conf or have_user_conf:
         configs = []
         if have_user_conf:
-            configs.append(cparser.configFromIni(open(user_conf_file)))
+            configs.append(cparser.config_from_file(open(user_conf_file)))
         if have_system_conf:
-            configs.append(cparser.configFromIni(open(system_conf_file)))
-        configs.append(cparser.configFromIni(open(global_conf_file)))
+            configs.append(cparser.config_from_file(open(system_conf_file)))
+        configs.append(cparser.config_from_file(open(global_conf_file)))
         c = central.ConfigManager([types_def], configs)
     else:
         # make.conf...

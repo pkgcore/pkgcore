@@ -56,12 +56,12 @@ class ConfigTypeFromFunctionTest(unittest.TestCase):
 
     def test_invalid(self):
         self.assertRaises(TypeError,
-                          introspect.configTypeFromCallable, argsfunc)
+                          introspect.config_type_from_callable, argsfunc)
         self.assertRaises(TypeError,
-                          introspect.configTypeFromCallable, kwargsfunc)
+                          introspect.config_type_from_callable, kwargsfunc)
 
     def test_basic(self):
-        nonopt_type = introspect.configTypeFromCallable(nonopt)
+        nonopt_type = introspect.config_type_from_callable(nonopt)
         self.assertEquals(nonopt_type.typename, 'nonopt')
         self.assertEquals(
             nonopt_type.types,
@@ -73,7 +73,7 @@ class ConfigTypeFromFunctionTest(unittest.TestCase):
         self.assertEquals(nonopt_type.defaults.keys(), [])
 
     def test_default_types(self):
-        test_type = introspect.configTypeFromCallable(alltypes)
+        test_type = introspect.config_type_from_callable(alltypes)
         self.assertEquals(
             test_type.types,
             {'alist': 'list', 'astr': 'str', 'abool': 'bool',
@@ -86,7 +86,7 @@ class ConfigTypeFromFunctionTest(unittest.TestCase):
             ['abool', 'alist', 'aref', 'astr'])
 
     def _test_class_member(self, func):
-        test_type = introspect.configTypeFromCallable(func)
+        test_type = introspect.config_type_from_callable(func)
         self.assertEquals(test_type.typename, 'member')
         self.assertEquals(test_type.required, ['one'])
 
@@ -106,7 +106,7 @@ class ConfigTypeFromFunctionTest(unittest.TestCase):
 class ConfigTypeFromClassTest(unittest.TestCase):
 
     def _test_basics(self, klass, name, two_override='section_ref'):
-        test_type = introspect.configTypeFromCallable(klass)
+        test_type = introspect.config_type_from_callable(klass)
         self.assertEquals(test_type.typename, name)
         self.assertEquals(sorted(test_type.required), ['one', 'two'])
         self.assertEquals(

@@ -2,6 +2,8 @@
 # License: GPL2
 
 
+import operator
+
 from twisted.trial import unittest
 
 from pkgcore.config import central, basics, errors
@@ -19,6 +21,16 @@ def passthrough(*args, **kwargs):
 
 
 class ConfigManagerTest(unittest.TestCase):
+
+    def check_error(self, message, func, *args, **kwargs):
+        """Like assertRaises but checks for the message string too."""
+        klass = kwargs.pop('klass', errors.ConfigurationError)
+        try:
+            func(*args, **kwargs)
+        except klass, e:
+            self.assertEquals(message, str(e))
+        else:
+            self.fail('no exception raised')
 
     def test_sections(self):
         manager = central.ConfigManager(
@@ -53,39 +65,29 @@ class ConfigManagerTest(unittest.TestCase):
 
 
     def test_duplicate_type(self):
-        try:
-            central.ConfigManager(
-                [{'foo': basics.ConfigType('foo', {})},
-                 {'foo': basics.ConfigType('foo2', {})}],
-            [])
-        except errors.BaseException, e:
-            self.assertEquals("type 'foo' was defined twice", str(e))
-        else:
-            self.fail('no exception raised')
+        self.check_error(
+            "type 'foo' was defined twice",
+            central.ConfigManager,
+            [{'foo': basics.ConfigType('foo', {})},
+             {'foo': basics.ConfigType('foo2', {})}],
+            [],
+            klass=errors.BaseException)
 
     def test_no_type(self):
         manager = central.ConfigManager(
             [],
             [{'foo': basics.HardCodedConfigSection(
                         'foo', {'class': passthrough})}])
-        try:
-            manager.instantiate_section('foo')
-        except errors.ConfigurationError, e:
-            self.assertEquals('foo: type not set', str(e))
-        else:
-            self.fail('no exception raised')
+        self.check_error('foo: type not set',
+                         manager.instantiate_section, 'foo')
 
     def test_no_class(self):
         manager = central.ConfigManager(
             [{'footype': basics.ConfigType('foo', {})}],
             [{'foo': basics.HardCodedConfigSection(
                         'foo', {'type': 'footype'})}])
-        try:
-            manager.instantiate_section('foo')
-        except errors.ConfigurationError, e:
-            self.assertEquals('foo: no class specified', str(e))
-        else:
-            self.fail('no exception raised')
+        self.check_error('foo: no class specified',
+                         manager.instantiate_section, 'foo')
 
     def test_default_class(self):
         manager = central.ConfigManager(
@@ -115,14 +117,9 @@ class ConfigManagerTest(unittest.TestCase):
                             'class': passthrough,
                             }),
               }])
-        try:
-            manager.repo['rsync repo']
-        except errors.ConfigurationError, e:
-            self.assertEquals(
-                "type 'repo' needs a setting for 'cache' in section "
-                "'rsync repo'", str(e))
-        else:
-            self.fail('no exception raised')
+        self.check_error(
+            "type 'repo' needs a setting for 'cache' in section 'rsync repo'",
+            operator.getitem, manager.repo, 'rsync repo')
 
     def test_missing_inherit_target(self):
         manager = central.ConfigManager(
@@ -137,13 +134,9 @@ class ConfigManagerTest(unittest.TestCase):
                             'inherit': ['baserepo'],
                             }),
               }])
-        try:
-            manager.repo['myrepo']
-        except errors.ConfigurationError, e:
-            self.failUnless(
-                "inherit target 'baserepo' cannot be found" in str(e))
-        else:
-            self.fail('no exception raised')
+        self.check_error(
+            "myrepo: inherit target 'baserepo' cannot be found",
+            operator.getitem, manager.repo, 'myrepo')
 
     def test_inherit_unknown_type(self):
         manager = central.ConfigManager(
@@ -161,14 +154,9 @@ class ConfigManagerTest(unittest.TestCase):
                             'inherit': ['baserepo'],
                             }),
               }])
-        try:
-            manager.repo['actual repo']
-        except errors.ConfigurationError, e:
-            self.assertEquals(
-                "'actual repo': type of 'cache' inherited from 'baserepo' "
-                "unknown", str(e))
-        else:
-            self.fail('no exception raised')
+        self.check_error(
+            "'actual repo': type of 'cache' inherited from 'baserepo' unknown",
+            operator.getitem, manager.repo, 'actual repo')
 
     def test_inherit(self):
         manager = central.ConfigManager(
@@ -224,6 +212,8 @@ class ConfigManagerTest(unittest.TestCase):
                             }),
               }])
         try:
+            # "Statement seems to have no effect"
+            # pylint: disable-msg=W0104
             manager.repo['myrepo']
         except errors.BaseException, e:
             self.failUnless(str(e).startswith(
@@ -241,12 +231,9 @@ class ConfigManagerTest(unittest.TestCase):
                             'class': None,
                             }),
               }])
-        try:
-            manager.repo['myrepo']
-        except errors.BaseException, e:
-            self.assertTrue("import" in str(e))
-        else:
-            self.fail('no exception raised')
+        self.check_error(
+            "'test': cannot import None",
+            operator.getitem, manager.repo, 'myrepo')
 
     def test_raises_instantiationerror(self):
         def inst():
@@ -259,13 +246,10 @@ class ConfigManagerTest(unittest.TestCase):
                             'class': inst,
                             }),
               }])
-        try:
-            manager.repo['myrepo']
-        except errors.BaseException, e:
-            self.assertEquals(
-                str(e), "Caught exception 'I raised' instantiating None")
-        else:
-            self.fail('no exception raised')
+        self.check_error(
+            "Caught exception 'I raised' instantiating None",
+            operator.getitem, manager.repo, 'myrepo',
+            klass=errors.InstantiationError)
 
     def test_raises(self):
         def inst():
@@ -278,12 +262,9 @@ class ConfigManagerTest(unittest.TestCase):
                             'class': inst,
                             }),
               }])
-        try:
-            manager.repo['myrepo']
-        except ValueError, e:
-            self.assertEquals(str(e), "I raised")
-        else:
-            self.fail('no exception raised')
+        self.check_error(
+            'I raised', operator.getitem, manager.repo, 'myrepo',
+            klass=ValueError)
 
     def test_pargs(self):
         manager = central.ConfigManager(

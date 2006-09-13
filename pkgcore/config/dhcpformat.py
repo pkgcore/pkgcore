@@ -51,6 +51,9 @@ _value = (pyp.Word(pyp.alphanums + './_') |
 
 _section_contents = pyp.dictOf(
     _value, pyp.Group(pyp.OneOrMore(_value | _section)) + pyp.Suppress(';'))
+
+# "statement seems to have no effect"
+# pylint: disable-msg=W0104
 _section << pyp.Group(pyp.Suppress('{') + _section_contents +
                       pyp.Suppress('}'))
 
@@ -128,12 +131,12 @@ class ConfigSection(basics.ConfigSection):
                 }[arg_type](value[0])
 
 
-def configFromFile(file_obj):
+def config_from_file(file_obj):
     try:
         config = parser.parseFile(file_obj)
     except pyp.ParseException, e:
         name = getattr(file_obj, 'name', file_obj)
         raise errors.ConfigurationError('%s: %s' % (name, e))
-    def buildSection(name):
+    def build_section(name):
         return ConfigSection(config[name])
-    return mappings.LazyValDict(config.keys, buildSection)
+    return mappings.LazyValDict(config.keys, build_section)

@@ -27,7 +27,7 @@ class CaseSensitiveConfigParserTest(unittest.TestCase):
 class TypesConfigFromIniTest(unittest.TestCase):
 
     def test_basic(self):
-        types = cparser.configTypesFromIni(StringIO("""
+        types = cparser.config_types_from_file(StringIO("""
 # random comment
 
 [profile]
@@ -55,7 +55,7 @@ stuff = basic
         self.assertEquals(types['profile'].defaults.keys(), ['class'])
 
     def test_defaults(self):
-        types = cparser.configTypesFromIni(StringIO('''
+        types = cparser.config_types_from_file(StringIO('''
 [test]
 defaults = foo
 foo = bar
@@ -73,7 +73,7 @@ defaults = foo
 ''')
         self.assertRaises(
             errors.TypeDefinitionError,
-            cparser.configTypesFromIni, types)
+            cparser.config_types_from_file, types)
 
     def test_leftover_defaults(self):
         types = StringIO('''
@@ -84,7 +84,7 @@ bar = baz
 ''')
         self.assertRaises(
             errors.TypeDefinitionError,
-            cparser.configTypesFromIni, types)
+            cparser.config_types_from_file, types)
 
     def test_duplicate_type(self):
         types = StringIO('''
@@ -94,13 +94,13 @@ list = foo
 ''')
         self.assertRaises(
             errors.TypeDefinitionError,
-            cparser.configTypesFromIni, types)
+            cparser.config_types_from_file, types)
 
 
 class ConfigFromIniTest(unittest.TestCase):
 
     def test_config_from_ini(self):
-        config = cparser.configFromIni(StringIO('''
+        config = cparser.config_from_file(StringIO('''
 [test]
 string = 'hi I am a string'
 list = foo bar baz
@@ -118,7 +118,7 @@ false = no
             self.assertEquals(section.get_value(None, key, arg_type), value)
 
     def test_missing_section_ref(self):
-        config = cparser.configFromIni(StringIO('''
+        config = cparser.config_from_file(StringIO('''
 [test]
 ref = 'missing'
 '''))

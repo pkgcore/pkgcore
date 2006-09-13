@@ -194,6 +194,19 @@ class Conditional(PackageRestriction):
     def __iter__(self):
         return iter(self.payload)
 
+    def __hash__(self):
+        return hash((self.attr, self.negate, self.restriction, self.payload))
+
+    def __eq__(self, other):
+        if self is other:
+            return True
+        return (
+            self.__class__ is other.__class__ and
+            self.negate == other.negate and
+            self.attr == other.attr and
+            self.restriction == other.restriction
+            and self.payload == other.payload)
+
 
 # "Invalid name" (pylint uses the module const regexp, not the class regexp)
 # pylint: disable-msg=C0103

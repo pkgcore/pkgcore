@@ -17,7 +17,7 @@ class DummyIntersectingValues(values.base):
 
     def __init__(self, val, iself=False):
         values.base.__init__(self)
-        self.val = val
+        object.__setattr__(self, "val", val)
 
     def intersect(self, other):
         return DummyIntersectingValues((self.val, other.val))
@@ -58,3 +58,23 @@ class PackageRestrictionTest(unittest.TestCase):
             self.assertEquals((1, 2), i1.restriction.val)
             self.assertEquals(negate, i1.negate)
             self.assertEquals('one', i1.attr)
+
+class ConditionalTest(unittest.TestCase):
+
+    def test_eq(self):
+        p = (packages.PackageRestriction('one', values.AlwaysTrue),)
+        p2 = (packages.PackageRestriction('one', values.AlwaysFalse),)
+        v = values.AlwaysTrue
+        v2 = values.AlwaysFalse
+        self.assertEquals(
+            packages.Conditional('use', v, p),
+            packages.Conditional('use', v, p))
+        self.assertNotEqual(
+            packages.Conditional('use', v2, p),
+            packages.Conditional('use', v, p))
+        self.assertNotEqual(
+            packages.Conditional('use', v, p),
+            packages.Conditional('use', v, p2))
+        self.assertNotEqual(
+            packages.Conditional('use1', v, p),
+            packages.Conditional('use', v, p))

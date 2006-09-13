@@ -26,8 +26,8 @@ class KeyedAndRestriction(boolean.AndRestriction):
         key = kwds.pop("key", None)
         tag = kwds.pop("tag", None)
         boolean.AndRestriction.__init__(self, *a, **kwds)
-        self.key = key
-        self.tag = tag
+        object.__setattr__(self, "key", key)
+        object.__setattr__(self, "tag", tag)
 
     def __str__(self):
         if self.tag is None:

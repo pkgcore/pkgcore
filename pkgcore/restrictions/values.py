@@ -89,17 +89,18 @@ class StrRegex(StrMatch):
         """
 
         super(StrRegex, self).__init__(**kwds)
-        self.regex = regex
-        self.ismatch = match
+        sf = object.__setattr__
+        sf(self, "regex", regex)
+        sf(self, "ismatch", match)
         flags = 0
         if not case_sensitive:
             flags = re.I
-        self.flags = flags
+        sf(self, "flags", flags)
         compiled_re = re.compile(regex, flags)
         if match:
-            self._matchfunc = compiled_re.match
+            sf(self, "_matchfunc", compiled_re.match)
         else:
-            self._matchfunc = compiled_re.search
+            sf(self, "_matchfunc", compiled_re.search)
 
     def match(self, value):
         if not isinstance(value, basestring):
@@ -165,12 +166,13 @@ class StrExactMatch(StrMatch):
         """
 
         super(StrExactMatch, self).__init__(**kwds)
+        sf = object.__setattr__
         if not case_sensitive:
-            self.flags = re.I
-            self.exact = str(exact).lower()
+            sf(self, "flags", re.I)
+            sf(self, "exact", str(exact).lower())
         else:
-            self.flags = 0
-            self.exact = str(exact)
+            sf(self, "flags", 0)
+            sf(self, "exact", str(exact))
 
     def match(self, value):
         if self.flags == re.I:
@@ -232,13 +234,14 @@ class StrGlobMatch(StrMatch):
         """
 
         super(StrGlobMatch, self).__init__(**kwds)
+        sf = object.__setattr__
         if not case_sensitive:
-            self.flags = re.I
-            self.glob = str(glob).lower()
+            sf(self, "flags", re.I)
+            sf(self, "glob", str(glob).lower())
         else:
-            self.flags = 0
-            self.glob = str(glob)
-        self.prefix = prefix
+            sf(self, "flags", 0)
+            sf(self, "glob", str(glob))
+        sf(self, "prefix", prefix)
 
     def match(self, value):
         value = str(value)
@@ -339,7 +342,8 @@ class ComparisonMatch(base):
         @param negate: should the results be negated?
         """
         base.__init__(self, negate=negate)
-        self.cmp_func = cmp_func
+        sf = object.__setattr__
+        sf(self, "cmp_func", cmp_func)
 
         if not isinstance(matching_vals, (tuple, list)):
             if isinstance(matching_vals, basestring):
@@ -349,14 +353,14 @@ class ComparisonMatch(base):
             else:
                 raise TypeError("matching_vals must be a list/tuple")
 
-        self.data = data
+        sf(self, "data", data)
         if negate:
-            self.matching_vals = tuple(
-                set([-1, 0, 1]).difference(_mangle_cmp_val(x)
-                                           for x in matching_vals))
+            sf(self, "matching_vals", 
+                tuple(set([-1, 0, 1]).difference(_mangle_cmp_val(x)
+                    for x in matching_vals)))
         else:
-            self.matching_vals = tuple(_mangle_cmp_val(x)
-                                       for x in matching_vals)
+            sf(self, "matching_vals",
+                tuple(_mangle_cmp_val(x) for x in matching_vals))
 
     def match(self, actual_val):
         return _mangle_cmp_val(
@@ -401,12 +405,12 @@ class ContainmentMatch(base):
         @keyword negate: should the match results be negated?
         """
 
-        self.all = bool(kwds.pop("all", False))
+        object.__setattr__(self, "all", bool(kwds.pop("all", False)))
         super(ContainmentMatch, self).__init__(**kwds)
         # note that we're discarding any specialized __getitem__ on vals here.
         # this isn't optimal, and should be special cased for known
         # types (lists/tuples fex)
-        self.vals = frozenset(vals)
+        object.__setattr__(self, "vals", frozenset(vals))
 
     def match(self, val):
         if isinstance(val, basestring):
@@ -589,8 +593,8 @@ class FlatteningRestriction(base):
         @param childrestriction: restriction applied to the flattened list.
         """
         base.__init__(self, negate)
-        self.dont_iter = dont_iter
-        self.restriction = childrestriction
+        object.__setattr__(self, "dont_iter", dont_iter)
+        object.__setattr__(self, "restriction", childrestriction)
 
     def match(self, val):
         return self.restriction.match(

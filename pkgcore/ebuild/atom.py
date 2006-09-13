@@ -66,26 +66,28 @@ class VersionMatch(restriction.base):
 
         kwd["negate"] = False
         super(self.__class__, self).__init__(**kwd)
-        self.ver, self.rev = ver, rev
+        sf = object.__setattr__
+        sf(self, "ver", ver)
+        sf(self, "rev", rev)
         if operator not in ("<=", "<", "=", ">", ">=", "~"):
             # XXX: hack
             raise InvalidVersion(self.ver, self.rev,
                                  "invalid operator, '%s'" % operator)
 
-        self.negate = negate
+        sf(self, "negate", negate)
         if operator == "~":
             if ver is None:
                 raise ValueError(
                     "for ~ op, version must be something other then None")
-            self.droprev = True
-            self.vals = (0,)
+            sf(self, "droprev", True)
+            sf(self, "vals", (0,))
         else:
-            self.droprev = False
+            sf(self, "droprev", False)
             l = []
             if "<" in operator:	l.append(-1)
             if "=" in operator:	l.append(0)
             if ">" in operator:	l.append(1)
-            self.vals = tuple(sorted(l))
+            sf(self, "vals", tuple(sorted(l)))
 
     def match(self, pkginst):
         if self.droprev:
@@ -157,10 +159,12 @@ class atom(boolean.AndRestriction):
         """
         boolean.AndRestriction.__init__(self)
 
-        atom = orig_atom = atom.strip()
-        self.hash = hash(atom)
+        sf = object.__setattr__
 
-        self.blocks = atom[0] == "!"
+        atom = orig_atom = atom.strip()
+        sf(self, "hash", hash(atom))
+
+        sf(self, "blocks", atom[0] == "!")
         if self.blocks:
             pos = 1
         else:
@@ -168,9 +172,9 @@ class atom(boolean.AndRestriction):
         while atom[pos] in ("<", ">", "=", "~"):
             pos += 1
         if self.blocks:
-            self.op = atom[1:pos]
+            sf(self, "op", atom[1:pos])
         else:
-            self.op = atom[:pos]
+            sf(self, "op", atom[:pos])
         if self.op not in ("<=", "<", "=", ">", ">=", "~", ""):
             # XXX: hack
             raise MalformedAtom(
@@ -182,25 +186,25 @@ class atom(boolean.AndRestriction):
             u2 = atom.find("]", u)
             if u2 == -1:
                 raise MalformedAtom(atom, "use restriction isn't completed")
-            self.use = tuple(x.strip() for x in atom[u+1:u2].split(','))
+            sf(self, "use", tuple(x.strip() for x in atom[u+1:u2].split(',')))
             if not all(x.rstrip("-") for x in self.use):
                 raise MalformedAtom(
                     atom, "cannot have empty use deps in use restriction")
             atom = atom[0:u]+atom[u2 + 1:]
         else:
-            self.use = ()
+            sf(self, "use", ())
         s = atom.find(":")
         if s != -1:
             if atom.find(":", s+1) != -1:
                 raise MalformedAtom(atom, "second specification of slotting")
             # slot dep.
-            self.slot = atom[s + 1:]
+            sf(self, "slot", atom[s + 1:])
             if not self.slot or not all(s.isdigit() or s == '.' for s in self.slot):
                 raise MalformedAtom(
                     atom, "cannot have empty slot deps in slot restriction")
             atom = atom[:s]
         else:
-            self.slot = None
+            sf(self, "slot", None)
         del u, s
 
         if atom.endswith("*"):
@@ -209,29 +213,29 @@ class atom(boolean.AndRestriction):
                     orig_atom, "range operators on a range are nonsencial, "
                     "drop the globbing or use =cat/pkg* or !=cat/pkg*, not %s"
                     % self.op)
-            self.glob = True
-            self.cpvstr = atom[pos:-1]
+            sf(self, "glob", True)
+            sf(self, "cpvstr", atom[pos:-1])
             # may have specified a period to force calculation
             # limitation there- hence rstrip'ing it for the cpv
             # generation
         else:
-            self.glob = False
-            self.cpvstr = atom[pos:]
+            sf(self, "glob", False)
+            sf(self, "cpvstr", atom[pos:])
 
         c = cpv.CPV(self.cpvstr)
-        self.key = c.key
-        self.package = c.package
-        self.category = c.category
-        self.version = c.version
-        self.fullver = c.fullver
-        self.revision = c.revision
+        sf(self, "key", c.key)
+        sf(self, "package", c.package)
+        sf(self, "category", c.category)
+        sf(self, "version", c.version)
+        sf(self, "fullver", c.fullver)
+        sf(self, "revision", c.revision)
 
-        self.negate_vers = negate_vers
+        sf(self, "negate_vers", negate_vers)
         if "~" in self.op:
             if self.version is None:
                 raise MalformedAtom(orig_atom, "~ operator requires a version")
         # force jitting of it.
-        del self.restrictions
+        object.__delattr__(self, "restrictions")
 
     def __repr__(self):
         atom = self.op + self.cpvstr
@@ -305,7 +309,7 @@ class atom(boolean.AndRestriction):
             if self.slot is not None:
                 r.append(packages.PackageRestriction(
                         "slot", values.StrExactMatch(self.slot)))
-            setattr(self, attr, tuple(r))
+            object.__setattr__(self, attr, tuple(r))
             return r
 
         raise AttributeError(attr)

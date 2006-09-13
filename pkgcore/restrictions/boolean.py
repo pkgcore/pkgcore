@@ -33,16 +33,17 @@ class base(restriction.base):
         @keyword negate: should the logic be negated?
         """
 
+        sf = object.__setattr__
         node_type = kwds.pop("node_type", None)
         if node_type is not None:
-            self.type = node_type
+            sf(self, "type", node_type)
         super(base, self).__init__(negate=kwds.pop("negate", False))
 
-        self.restrictions = []
+        sf(self, "restrictions", [])
         if restrictions:
             self.add_restriction(*restrictions)
         if kwds.pop("finalize", True):
-            self.restrictions = tuple(self.restrictions)
+            self.finalize()
         if kwds:
             kwds.pop("disable_inst_caching", None)
             if kwds:
@@ -90,7 +91,7 @@ class base(restriction.base):
         """
         finalize the restriction instance, disallowing adding restrictions.
         """
-        self.restrictions = tuple(self.restrictions)
+        object.__setattr__(self, "restrictions", tuple(self.restrictions))
 
     def __repr__(self):
         return '<%s restrictions=%r @%#8x>' % (

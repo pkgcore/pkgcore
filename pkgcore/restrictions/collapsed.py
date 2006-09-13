@@ -76,6 +76,8 @@ class DictBased(restriction.base):
 
         self.get_pkg_key = get_key_from_package
 
+    __setattr__ = object.__setattr__
+
 
     def match(self, pkginst):
         try:

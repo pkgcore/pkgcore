@@ -29,16 +29,13 @@ class base(object):
         """
         @param negate: should the match results be negated?
         """
-        self.negate = negate
+        object.__setattr__(self, "negate", negate)
 
-#	def __setattr__(self, name, value):
-#		import traceback;traceback.print_stack()
-#		object.__setattr__(self, name, value)
-#		try:	getattr(self, name)
-#
-#		except AttributeError:
-#			object.__setattr__(self, name, value)
-#		else:	raise AttributeError
+    def __setattr__(self, attr, val):
+        raise TypeError(self, "is immutable")
+
+    def __delattr__(self, attr):
+        raise TypeError(self, "is immutable")
 
     def match(self, *arg, **kwargs):
         raise NotImplementedError
@@ -79,7 +76,7 @@ class AlwaysBool(base):
         @param negate: boolean to return for the match
         """
         base.__init__(self, negate=negate)
-        self.type = node_type
+        object.__setattr__(self, "type", node_type)
 
     def match(self, *a, **kw):
         return self.negate
@@ -111,8 +108,9 @@ class Negate(base):
         @param restrict: L{pkgcore.restrictions.restriction.base} instance
             to negate
         """
-        self.type = restrict.type
-        self._restrict = restrict
+        sf = object.__setattr__
+        sf(self, "type", restrict.type)
+        sf(self, "_restrict", restrict)
 
     def match(self, *a, **kw):
         return not self._restrict.match(*a, **kw)
@@ -136,8 +134,9 @@ class FakeType(base):
             to wrap
         @param new_type: new node_type
         """
-        self.type = new_type
-        self._restrict = restrict
+        sf = object.__setattr__
+        sf(self, "type", new_type)
+        sf(self, "_restrict", restrict)
 
     def match(self, *a, **kw):
         return self._restrict.match(*a, **kw)
@@ -161,7 +160,9 @@ class AnyMatch(base):
         @param restriction_type: type of this restriction.
         """
         base.__init__(self, negate)
-        self.restriction, self.type = childrestriction, node_type
+        sf = object.__setattr__
+        sf(self, "restriction", childrestriction)
+        sf(self, "type", node_type)
 
     def match(self, val):
         return any(self.restriction.match(x) for x in val) != self.negate

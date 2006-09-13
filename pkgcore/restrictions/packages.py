@@ -36,13 +36,14 @@ class PackageRestriction(restriction.base):
             to pass attr to for matching
         @param negate: should the results be negated?
         """
-        super(PackageRestriction, self).__init__(negate=negate)
-        self.attr_split = tuple(operator.attrgetter(x)
-                                for x in attr.split("."))
-        self.attr = attr
         if not childrestriction.type == self.subtype:
             raise TypeError("restriction must be of type %r" % (self.subtype,))
-        self.restriction = childrestriction
+        super(PackageRestriction, self).__init__(negate=negate)
+        sf = object.__setattr__
+        sf(self, "attr_split", 
+            tuple(operator.attrgetter(x) for x in attr.split(".")))
+        sf(self, "attr", attr)
+        sf(self, "restriction", childrestriction)
 
     def __pull_attr(self, pkg):
         try:
@@ -174,7 +175,7 @@ class Conditional(PackageRestriction):
         @param kwds: additional args to pass to L{PackageRestriction}
         """
         super(Conditional, self).__init__(attr, childrestriction, **kwds)
-        self.payload = tuple(payload)
+        object.__setattr__(self, "payload", tuple(payload))
 
     def __str__(self):
         return "( Conditional: %s payload: [ %s ] )" % (

@@ -40,6 +40,8 @@ class DepSet(boolean.AndRestriction):
     type = packages.package_type
     negate = False
 
+    __inst_caching__ = False
+
     def __init__(self, dep_str, element_class, \
         operators={"||":packages.OrRestriction,"":packages.AndRestriction},
         element_func=None):
@@ -55,16 +57,17 @@ class DepSet(boolean.AndRestriction):
         @param element_class: class of generated elements
         """
 
-        self._known_conditionals = None
-        self.restrictions = []
-        self.element_class = element_class
+        sf = object.__setattr__
+        sf(self, "_known_conditionals", None)
+        sf(self, "restrictions", [])
+        sf(self, "element_class", element_class)
         if element_func is None:
             element_func = element_class
-        self._node_conds = False
 
         raw_conditionals = []
         depsets = [self.restrictions]
 
+        node_conds = False
         words = iter(dep_str.split())
         try:
             for k in words:
@@ -75,7 +78,7 @@ class DepSet(boolean.AndRestriction):
                     if not depsets[-1]:
                         raise ParseError(dep_str)
                     elif raw_conditionals[-1].endswith('?'):
-                        self._node_conds = True
+                        node_conds = True
 
                         c = convert_use_reqs((raw_conditionals[-1][:-1],))
 
@@ -129,7 +132,9 @@ class DepSet(boolean.AndRestriction):
         # check if any closures required
         if len(depsets) != 1:
             raise ParseError(dep_str)
-        self.restrictions = tuple(self.restrictions)
+
+        sf(self, "_node_conds", node_conds)
+        sf(self, "restrictions", tuple(self.restrictions))
 
 
     def evaluate_depset(self, cond_dict, tristate_filter=None):
@@ -194,7 +199,7 @@ class DepSet(boolean.AndRestriction):
                 count -= 1
                 restricts.pop(-1)
 
-        flat_deps.restrictions = tuple(base_restrict)
+        object.__setattr__(flat_deps, "restrictions", tuple(base_restrict))
         return flat_deps
 
     @staticmethod
@@ -258,7 +263,8 @@ class DepSet(boolean.AndRestriction):
             for payload, restrictions in self.find_cond_nodes(
                 self.restrictions):
                 kc.update(iflatten_instance(x.vals for x in restrictions))
-            kc = self._known_conditionals = frozenset(kc)
+            kc = frozenset(kc)
+            object.__setattr__(self, "_known_conditionals", kc)
             return kc
         return self._known_conditionals
 

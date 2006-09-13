@@ -157,17 +157,19 @@ class OnDiskProfile(profiles.base):
         self.visibility = tuple(visibility)
         del sys, visibility, pkgs
         
+        full_stack = [self.basepath] + stack
         self.bashrc = tuple(local_source(path)
-            for path in (pjoin(x, 'profile.bashrc') for x in stack)
+            for path in (pjoin(x, 'profile.bashrc') for x in full_stack)
                 if os.path.exists(path))
-        self.use_mask = tuple(incremental_profile_files(stack, "use.mask"))
-        self.maskers = tuple(set(self.visibility).union(atom(x) for x in 
-            incremental_profile_files(stack, "package.mask")))
 
-        self.package_use_mask  = self.load_atom_dict(stack, "package.use.mask")
-        self.package_use_force = self.load_atom_dict(stack, "package.use.force")
-        if self.package_use_force:
-            import pdb;pdb.set_trace()
+        self.use_mask = tuple(incremental_profile_files(full_stack, "use.mask"))
+        self.maskers = tuple(set(self.visibility).union(atom(x) for x in 
+            incremental_profile_files(full_stack, "package.mask")))
+
+        self.package_use_mask  = self.load_atom_dict(full_stack,
+            "package.use.mask")
+        self.package_use_force = self.load_atom_dict(full_stack,
+            "package.use.force")
 
         d = {}
         for fp, dc in loop_iter_read((pjoin(prof, "make.defaults")

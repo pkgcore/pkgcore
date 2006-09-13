@@ -157,6 +157,10 @@ class tree(object):
             if sorting the results, use this instead of sorting externally.
         """
 
+        if not isinstance(restrict, restriction.base):
+            raise TypeError("restrict must be a "
+                "pkgcore.restriction.restrictions.base instance")
+
         if sorter is None:
             sorter = iter
 
@@ -188,9 +192,6 @@ class tree(object):
 
     def _identify_candidates(self, restrict, sorter):
         # full expansion
-        if not isinstance(restrict, restriction.base):
-            raise TypeError("restrict must be a "
-                "pkgcore.restriction.restrictions.base instance")
 
         if not isinstance(restrict, boolean.base) or isinstance(restrict, atom):
             return self._fast_identify_candidates(restrict, sorter)

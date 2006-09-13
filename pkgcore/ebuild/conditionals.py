@@ -151,7 +151,7 @@ class DepSet(boolean.AndRestriction):
         if not self.has_conditionals:
             return self
 
-        flat_deps = self.__class__("", str)
+        flat_deps = self.__class__("", self.element_class)
 
         stack = [packages.AndRestriction, iter(self.restrictions)]
         base_restrict = []

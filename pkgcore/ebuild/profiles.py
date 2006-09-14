@@ -47,11 +47,14 @@ def loop_iter_read(files, func=iter_read_bash):
 def incremental_set(fp, iterable, stack):
     for p in iterable:
         if p[0] == "-":
-            try:
-                stack.remove(p[1:])
-            except KeyError:
-                logging.warn("%s is reversed in %s, but isn't set yet!"
-                    % (p[1:], fp))
+            if p == "-*":
+                stack.clear()
+            else:
+                try:
+                    stack.remove(p[1:])
+                except KeyError:
+                    logging.warn("%s is reversed in %s, but isn't set yet!"
+                        % (p[1:], fp))
         else:
             stack.add(p)
 

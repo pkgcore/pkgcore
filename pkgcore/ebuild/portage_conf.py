@@ -270,9 +270,15 @@ def configFromMakeConf(location="/etc/"):
     pkgdir = conf_dict.pop("PKGDIR", None)
     default_repos = "repo-stack"
     if pkgdir is not None:
-        pkgdir = abspath(pkgdir)
-        if os.path.isdir(pkgdir):
-            new_config["binpkg"] = basics.ConfigSectionFromStringDict("binpkg",
+        try:
+            pkgdir = abspath(pkgdir)
+        except OSError, oe:
+            if oe.errno != errno.ENOENT:
+                raise
+            pkgdir = None
+        if pkgdir and os.path.isdir(pkgdir):
+            new_config["binpkg"] = \
+                basics.ConfigSectionFromStringDict("binpkg",
                 {"class":"pkgcore.binpkg.repository.tree", "type":"repo",
                 "location":pkgdir})
             default_repos += " binpkg"

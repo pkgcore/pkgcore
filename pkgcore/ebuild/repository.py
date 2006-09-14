@@ -6,6 +6,7 @@ ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 """
 
 import os, stat, operator
+from itertools import chain
 from pkgcore.repository import prototype, errors, configured
 from pkgcore.util.file import read_dict
 from pkgcore.util import currying
@@ -33,7 +34,7 @@ class UnconfiguredTree(prototype.tree):
             "eclass", "profiles", "packages", "distfiles",
             "licenses", "scripts", "CVS", ".svn"])
     configured = False
-    configurables = ("settings",)
+    configurables = ("domain", "settings",)
     configure = None
     format_magic = "ebuild_src"
 
@@ -182,7 +183,7 @@ class ConfiguredTree(configured.tree):
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
                   "license", "src_uri", "license", "provides"])
 
-    def __init__(self, raw_repo, domain_settings, fetcher=None):
+    def __init__(self, raw_repo, domain, domain_settings, fetcher=None):
         """
         @param raw_repo: L{UnconfiguredTree} instance
         @param domain_settings: environment settings to bind
@@ -195,7 +196,9 @@ class ConfiguredTree(configured.tree):
                     self.__class__,))
 
         configured.tree.__init__(self, raw_repo, self.config_wrappables)
-        self.default_use = tuple(domain_settings["USE"])
+        self.default_use = list(domain.use)
+        self.immutable_use = frozenset(domain.immutable_use)
+        self._get_pkg_use = domain.get_package_use
         self.domain_settings = domain_settings
         if fetcher is None:
             self.fetcher = self.domain_settings["fetcher"]
@@ -203,12 +206,16 @@ class ConfiguredTree(configured.tree):
             self.fetcher = fetcher
         self._delayed_iuse = make_kls(frozenset)
 
+    def _get_delayed_immutable(self, pkg, extras=()):
+        return frozenset(pkg.iuse).difference(
+            chain(self.immutable_use, extras))
 
     def _get_pkg_kwds(self, pkg):
+        disabled, enabled = self._get_pkg_use(self.default_use, pkg)
         return {
-            "initial_settings": self.default_use,
+            "initial_settings": enabled,
             "unchangable_settings": InvertedContains(
-                self._delayed_iuse(self._get_iuse, pkg)),
+                self._delayed_iuse(self._get_delayed_immutable, pkg, disabled)),
             "build_callback":self.generate_buildop}
 
     def generate_buildop(self, pkg):

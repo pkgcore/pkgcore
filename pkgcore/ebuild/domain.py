@@ -121,12 +121,14 @@ class domain(pkgcore.config.domain.domain):
         # here has already, but still more to add)
         pkg_maskers = list(profile.maskers)
         pkg_unmaskers, pkg_keywords, pkg_license = [], [], []
+        pkg_use = []
 
         for key, val, action in (
             ("package.mask", pkg_maskers, generate_restriction),
             ("package.unmask", pkg_unmaskers, generate_restriction),
             ("package.keywords", pkg_keywords, package_keywords_splitter),
-            ("package.license", pkg_license, package_keywords_splitter)):
+            ("package.license", pkg_license, package_keywords_splitter),
+            ("package.use", pkg_use, package_keywords_splitter)):
 
             if key in settings:
                 for fp in settings[key]:
@@ -180,6 +182,8 @@ class domain(pkgcore.config.domain.domain):
 
         use, license, default_keywords = [], [], []
         self.use = use
+        self.immutable_use = ()
+        self.package_use = {}
         master_license = []
         for k, v in (("USE", use),
                      ("ACCEPT_KEYWORDS", default_keywords),
@@ -239,6 +243,18 @@ class domain(pkgcore.config.domain.domain):
                         'user-specified bashrc %r does not exist' % (data,))
                 bashrc.append(source)
 
+        # finally, package.use
+        self.use, self.package_use = self.make_per_package_use(
+            self.use, pkg_use)
+        self.profile_use_force = tuple(profile.use_force)
+        self.profile_use_mask = tuple("-"+x for x in profile.use_mask)
+        new_d = dict((k, tuple(v.iteritems()))
+            for k,v in profile.package_use_force.iteritems())
+        self.profile_package_use = ((), new_d)
+        new_d = dict((k, tuple(v.iteritems()))
+            for k,v in profile.package_use_mask.iteritems())
+        self.profile_package_use_mask = ((), new_d)
+
         self.settings["bashrc"] = bashrc
         self.repos = []
         self.vdb = []
@@ -293,9 +309,8 @@ class domain(pkgcore.config.domain.domain):
     def apply_license_filter(data, pkg, mode):
         # note we're not using a restriction here; no point, this is faster.
         repo, data = data
-        license = incremental_negations("license",
-                chain(repo, iflatten_instance(
-                    generic_collapse_data(data, pkg))))
+        license = incremental_negations("license", chain(repo,
+                iflatten_instance(generic_collapse_data(data, pkg))))
         if mode == "match":
             return operator.truth(license.intersection(pkg.license))
         return getattr(packages.PackageRestriction("license", 
@@ -333,7 +348,32 @@ class domain(pkgcore.config.domain.domain):
         # note we ignore mode; keywords aren't influenced by conditionals.
         # note also, we're not using a restriction here.  this is faster.
         repo, data = data
-        allowed = incremental_negations("license",
-                chain(repo, iflatten_instance(
-                    generic_collapse_data(data, pkg))))
+        allowed = incremental_negations("license", chain(repo,
+                iflatten_instance(generic_collapse_data(data, pkg))))
         return operator.truth(allowed.intersection(pkg.keywords))
+
+    def make_per_package_use(self, default_use, pkg_use):
+        if not pkg_use:
+            return default,use, ((), {})
+        data = make_data_dict(pkg_use)
+        repo = data[0].pop(0)
+        repo = tuple(incremental_negations("use",
+            chain(default_use, (x[1] for x in repo))))
+        data[0] = tuple(filter(None, data[0]))
+        data = tuple(data)
+        return default_use, data
+
+    def get_package_use(self, default_use, pkg):
+        disabled = set(iflatten_instance(chain(
+            generic_collapse_data(self.profile_package_use_mask,
+                pkg),
+            self.profile_use_mask)))
+              
+                
+        enabled = incremental_negations("use", chain(default_use,
+            iflatten_instance([
+                    generic_collapse_data(self.package_use, pkg),
+                    generic_collapse_data(self.profile_package_use, pkg)]),
+            self.profile_use_force))
+        enabled.difference_update(disabled)
+        return disabled,enabled                

@@ -25,7 +25,7 @@ class OverlayRepo(multiplex.tree):
         required=("trees",), positional=("trees",))
 
     configured = False
-    configurables = ("settings",)
+    configurables = ("domain", "settings",)
     configure = repository.ConfiguredTree
 
     # sucks a bit, need to work something better out here

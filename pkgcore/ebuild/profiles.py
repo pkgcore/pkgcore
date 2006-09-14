@@ -166,6 +166,8 @@ class OnDiskProfile(profiles.base):
                 if os.path.exists(path))
 
         self.use_mask = tuple(incremental_profile_files(full_stack, "use.mask"))
+        self.use_force = tuple(incremental_profile_files(full_stack, "use.force"))
+
         self.maskers = tuple(set(self.visibility).union(atom(x) for x in 
             incremental_profile_files(full_stack, "package.mask")))
 

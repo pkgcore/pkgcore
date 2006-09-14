@@ -43,31 +43,18 @@ def loop_iter_read(files, func=iter_read_bash):
                     "failed reading '%s': %s" % (e.filename, str(e)))
             del e
 
-
-def incremental_set(fp, iterable, stack):
-    for p in iterable:
-        if p[0] == "-":
-            if p == "-*":
-                stack.clear()
-            else:
-                try:
-                    stack.remove(p[1:])
-                except KeyError:
-                    logging.warn("%s is reversed in %s, but isn't set yet!"
-                        % (p[1:], fp))
-        else:
-            stack.add(p)
-
 def incremental_profile_files(stack, filename):
     s = set()
     pjoin = os.path.join
     for fp, i in loop_iter_read(pjoin(prof, filename) for prof in stack):
-        incremental_set(fp, i, s)
+        incremental_negations(fp, i, s)
     return s
 
 
-def incremental_list_negations(setting, orig_list):
-    l = set()
+def incremental_negations(setting, orig_list, orig_set=None):
+    l = orig_set
+    if l is None:
+        l = set()
     for x in orig_list:
         if x.startswith("-"):
             if x.startswith("-*"):
@@ -75,8 +62,8 @@ def incremental_list_negations(setting, orig_list):
             else:
                 if len(x) == 1:
                     raise ValueError("negation of a setting in '%s', "
-                       	"but name negated isn't completed (%s)" % (
-                            setting, orig_list))
+                         "but name negated isn't completed (%s)" % (
+                         setting, orig_list))
                 x = x[1:]
                 if x in l:
                     l.remove(x)

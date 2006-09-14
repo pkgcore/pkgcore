@@ -7,21 +7,24 @@ gentoo configuration domain
 
 # XXX doc this up better...
 
-import os
+import os, operator
 import pkgcore.config.domain
-from pkgcore.restrictions.collapsed import DictBased
-from pkgcore.restrictions import packages, values
+from itertools import chain, imap
+from pkgcore.restrictions.delegated import delegate
+from pkgcore.restrictions import packages, values, restriction
 from pkgcore.util.file import iter_read_bash
-from pkgcore.ebuild.atom import (atom, generate_collapsed_restriction,
-    get_key_from_package)
+from pkgcore.ebuild.atom import (atom, generate_collapsed_restriction)
 from pkgcore.repository import multiplex, visibility
 from pkgcore.restrictions.values import StrGlobMatch, ContainmentMatch
-from pkgcore.util.lists import stable_unique, unstable_unique
+from pkgcore.util.lists import (stable_unique, unstable_unique,
+    iflatten_instance)
 from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.config.errors import BaseException
 from pkgcore.util.demandload import demandload
-from pkgcore.ebuild.profiles import incremental_list_negations
+from pkgcore.ebuild.profiles import incremental_negations
+from pkgcore.util.commandline import generate_restriction
+
 demandload(globals(), "warnings")
 
 class MissingFile(BaseException):
@@ -39,7 +42,7 @@ class Failure(BaseException):
 
 def package_keywords_splitter(val):
     v = val.split()
-    return atom(v[0]), stable_unique(v[1:])
+    return generate_restriction(v[0]), stable_unique(v[1:])
 
 
 # ow ow ow ow ow ow....
@@ -50,6 +53,56 @@ def package_keywords_splitter(val):
 # instantiation manglers, and then the ebuild specific chunk (which is
 # selected by config)
 # ~harring
+
+
+def make_data_dict(*iterables):
+    """
+    descriptive, no?
+    
+    Basically splits an iterable of restrict:data into
+    level of specificity, repo, cat, pkg, atom (dict) for use
+    in filters
+    """
+
+    repo = []    
+    cat = []
+    pkg = []
+    atom_d = {}
+    for iterable in iterables:
+        for a, data in iterable:
+            if not data:
+                if not isinstance(a, (atom, packages.PackageRestriction,
+                    restriction.AlwaysBool)):
+                    raise ValueError("%r is not a AlwaysBool, "
+                        "PackageRestriction, or atom: data %r" % (a, data))
+                continue
+            if isinstance(a, atom):
+                atom_d.setdefault(a.key, []).append((a, data))
+            elif isinstance(a, packages.PackageRestriction):
+                if a.attr == "category":
+                    cat.append((a, data))
+                elif a.attr == "package":
+                    pkg.append((a, data))
+                else:
+                    raise ValueError("%r doesn't operate on package/category: "
+                        "data %r" % (a, data))
+            elif isinstance(a, restriction.AlwaysBool):
+                repo.append((a, data))
+            else:
+                raise ValueError("%r is not a AlwaysBool, PackageRestriction, "
+                    "or atom: data %r" % (a, data))
+
+    return [[repo, cat, pkg], 
+        dict((k, tuple(v)) for k, v in atom_d.iteritems())]
+
+def generic_collapse_data(specifics_tuple, pkg):
+    for specific in specifics_tuple[0]:
+        for restrict, data in specific:
+            if restrict.match(pkg):
+                yield data
+    for atom, data in specifics_tuple[1].get(pkg.key, ()):
+        if atom.match(pkg):
+            yield data
 
 
 def generate_masking_restrict(masks):
@@ -70,8 +123,8 @@ class domain(pkgcore.config.domain.domain):
         pkg_unmaskers, pkg_keywords, pkg_license = [], [], []
 
         for key, val, action in (
-            ("package.mask", pkg_maskers, atom),
-            ("package.unmask", pkg_unmaskers, atom),
+            ("package.mask", pkg_maskers, generate_restriction),
+            ("package.unmask", pkg_unmaskers, generate_restriction),
             ("package.keywords", pkg_keywords, package_keywords_splitter),
             ("package.license", pkg_license, package_keywords_splitter)):
 
@@ -134,7 +187,7 @@ class domain(pkgcore.config.domain.domain):
             if k not in settings:
                 raise Failure("No %s setting detected from profile, "
                               "or user config" % k)
-            v.extend(incremental_list_negations(k, settings[k]))
+            v.extend(incremental_negations(k, settings[k]))
             settings[k] = v
 
         for u in profile.use_expand:
@@ -154,25 +207,15 @@ class domain(pkgcore.config.domain.domain):
                 default_keywords.append(x.lstrip("~"))
         default_keywords = unstable_unique(default_keywords + [arch])
 
-        keywords_filter = self.generate_keywords_filter(
-            arch, default_keywords, pkg_keywords,
-            already_unstable=("~%s" % arch.lstrip("~") in default_keywords))
-        vfilter.add_restriction(keywords_filter)
-        del keywords_filter
+        vfilter.add_restriction(self.make_keywords_filter(
+            arch, default_keywords, pkg_keywords))
+
+        del default_keywords
         # we can finally close that fricking
         # "DISALLOW NON FOSS LICENSES" bug via this >:)
         if master_license:
-            if license:
-                r = packages.OrRestriction(negate=True)
-                r.add_restriction(packages.PackageRestriction(
-                        "license", ContainmentMatch(*master_license)))
-                r.add_restriction(DictBased(license, get_key_from_package))
-                vfilter.add_restriction(r)
-            else:
-                vfilter.add_restriction(packages.PackageRestriction(
-                        "license", ContainmentMatch(*master_license)))
-        elif license:
-            vfilter.add_restriction(DictBased(license, get_key_from_package))
+            vfilter.add_restriction(self.make_license_filter(
+                master_license, license))
 
         del master_license, license
 
@@ -229,86 +272,68 @@ class domain(pkgcore.config.domain.domain):
         if profile_repo is not None:
             self.repos = [profile_repo] + self.repos
 
+    def make_license_filter(self, master_license, pkg_licenses):
+        if not pkg_licenses:
+            # simple case.
+            return packages.PackageRestriction("license",
+                values.ContainmentMatch(*master_license))
 
-    def generate_keywords_filter(self, arch, default_keys, pkg_keywords,
-                                 already_unstable=False):
+        # not so simple case.
+        data = make_data_dict(pkg_licenses)
+        # integrate any repo stackings now, stupid as they may be.
+        repo = data[0].pop(0)
+        repo = tuple(incremental_negations("license", 
+            chain(master_license, (x[1] for x in repo))))
+        # finalize it, and filter any unused specific blocks
+        data[0] = tuple(filter(None, data[0]))
+        data = tuple(data)
+        return delegate(self.apply_license_filter, (repo, data))
+
+    @staticmethod
+    def apply_license_filter(data, pkg, mode):
+        # note we're not using a restriction here; no point, this is faster.
+        repo, data = data
+        license = incremental_negations("license",
+                chain(repo, iflatten_instance(
+                    generic_collapse_data(data, pkg))))
+        if mode == "match":
+            return operator.truth(license.intersection(pkg.license))
+        return getattr(packages.PackageRestriction("license", 
+            values.ContainmentMatch(*license)), mode)(pkg)
+
+    def make_keywords_filter(self, arch, default_keys, pkg_keywords):
         """Generates a restrict that matches iff the keywords are allowed."""
         if not pkg_keywords:
             return packages.PackageRestriction(
                 "keywords", values.ContainmentMatch(*default_keys))
 
-        keywords_filter = {}
-
-        # save on instantiation caching/creation costs.
-        if already_unstable:
-            unstable_restrict = ContainmentMatch(*default_keys)
-        else:
-            unstable_restrict = ContainmentMatch("~%s" % arch.lstrip("~"),
-                                                 *default_keys)
-        unstable_pkg_restrict = packages.PackageRestriction("keywords",
-                                                            unstable_restrict)
-        default_restrict = ContainmentMatch(*default_keys)
-        default_keys = set(default_keys)
-
-        second_level_restricts = {}
-        for pkgatom, vals in pkg_keywords:
-            if not vals:
-                # if we already are unstable, no point in adding this exemption
-                if already_unstable:
-                    continue
-                r = unstable_pkg_restrict
-            else:
-                per, glob, negated = [], [], []
-                for x in vals:
-                    s = x.lstrip("-")
-                    negate = x.startswith("-")
-                    if "~*" == s:
-                        if negate:
-                            raise Failure("can't negate -~* keywords")
-                        glob.append(StrGlobMatch("~"))
-                    elif "*" == s:
-                        if negate:
-                            warnings.warn("-* detected in keywords stack; "
-                                          "-* isn't a valid target, ignoring")
-                            continue
-                        # stable only, exempt unstable
-                        glob.append(StrGlobMatch("~", negate=True))
-                    elif negate:
-                        negated.append(s)
-                    else:
-                        per.append(s)
-                r = values.OrRestriction(finalize=False, 
-                    disable_inst_caching=False)
-                if per:
-                    r.add_restriction(ContainmentMatch(*per))
-                if glob:
-                    r.add_restriction(*glob)
-                if negated:
-                    if r.restrictions:
-                        r.add_restriction(values.ContainmentMatch(
-                                *default_keys.difference(negated)))
-                    else:
-                        # strictly a limiter of defaults.  yay.
-                        r = values.ContainmentMatch(
-                            *default_keys.difference(negated))
+        if "~" + arch.lstrip("~") not in default_keys:
+            # stable; thus empty entries == ~arch
+            unstable = "~" + arch
+            def f(r, v):
+                if not v:
+                    return r, unstable
                 else:
-                    r.add_restriction(default_restrict)
-                r = packages.PackageRestriction("keywords", r)
-            second_level_restricts.setdefault(pkgatom.key, []).append(pkgatom)
-            keywords_filter[pkgatom] = r
-
-        second_level_restricts = dict(
-            (k, tuple(unstable_unique(v)))
-            for k, v in second_level_restricts.iteritems())
-
-        keywords_filter["__DEFAULT__"] = packages.PackageRestriction(
-            "keywords", default_restrict)
-        def redirecting_splitter(collapsed_inst, pkg):
-            key = get_key_from_package(collapsed_inst, pkg)
-            for pkgatom in second_level_restricts.get(key, []):
-                if pkgatom.match(pkg):
-                    return pkgatom
-            return "__DEFAULT__"
-            return key
-
-        return DictBased(keywords_filter.iteritems(), redirecting_splitter)
+                    return r, v
+            data = make_data_dict(f(*i) for i in pkg_keywords)
+        else:
+            data = make_data_dict(pkg_keywords)
+        
+        repo = data[0].pop(0)
+        repo = tuple(incremental_negations("keywords",
+            chain(default_keys, (x[1] for x in repo))))
+        # finalize it, and filter any unused specific blocks
+        data[0] = tuple(filter(None, data[0]))
+        data = tuple(data)
+        
+        return delegate(self.apply_keywords_filter, (repo, data))
+    
+    @staticmethod
+    def apply_keywords_filter(data, pkg, mode):
+        # note we ignore mode; keywords aren't influenced by conditionals.
+        # note also, we're not using a restriction here.  this is faster.
+        repo, data = data
+        allowed = incremental_negations("license",
+                chain(repo, iflatten_instance(
+                    generic_collapse_data(data, pkg))))
+        return operator.truth(allowed.intersection(pkg.keywords))

@@ -13,7 +13,7 @@ from pkgcore.util.compatibility import all
 from pkgcore.ebuild import cpv
 from pkgcore.package import errors
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.restrictions.collapsed:DictBased ")
+demandload(globals(), "pkgcore.restrictions.delegated:delegate ")
 
 class MalformedAtom(errors.InvalidDependency):
 
@@ -371,9 +371,15 @@ def split_atom(inst):
         a = []
     return inst.category + "/" + inst.package, a
 
-def get_key_from_package(collapsed_inst, pkg):
-    return pkg.key
+def _collapsed_restrict_match(data, pkg, mode):
+    # mode is ignored; non applicable.
+    for r in data.get(pkg.key, ()):
+        if r.match(pkg):
+            return True
+    return False
 
 def generate_collapsed_restriction(atoms, negate=False):
-    return DictBased((split_atom(x) for x in atoms), get_key_from_package,
-                     negate=negate)
+    d = {}
+    for a in atoms:
+        d.setdefault(a.key, []).append(a)
+    return delegate(_collapsed_restrict_match, d, negate=negate)

@@ -7,12 +7,13 @@ ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 
 import os, stat, operator
 from pkgcore.repository import prototype, errors, configured
-from pkgcore.util.containers import InvertedContains
 from pkgcore.util.file import read_dict
 from pkgcore.util import currying
 from pkgcore.util.osutils import listdir_files, listdir_dirs
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
 from pkgcore.util.demandload import demandload
+from pkgcore.util.containers import InvertedContains
+from pkgcore.util.obj import make_kls
 demandload(globals(), "pkgcore.ebuild.ebd:buildable "
     "pkgcore.interfaces.data_source:local_source ")
 
@@ -168,26 +169,6 @@ class UnconfiguredTree(prototype.tree):
             self.base, id(self))
 
 
-class DelayedInvertedContains(InvertedContains):
-    __slot__ = ("_func", "_data")
-    def __new__(cls, func, data):
-        # This only exists because set.__new__ explodes if it gets our args.
-        return set.__new__(cls)
-
-    def __init__(self, func, data):
-        """Call func on data and update with the result when "in" is called."""
-        InvertedContains.__init__(self)
-        self._func = func
-        self._data = data
-
-    def __contains__(self, key):
-        if self._func is not None:
-            s = self._func(self._data)
-            self._data = self._func = None
-            self.update(s)
-        return InvertedContains.__contains__(self, key)
-
-
 class ConfiguredTree(configured.tree):
 
     """
@@ -220,13 +201,14 @@ class ConfiguredTree(configured.tree):
             self.fetcher = self.domain_settings["fetcher"]
         else:
             self.fetcher = fetcher
+        self._delayed_iuse = make_kls(frozenset)
 
 
     def _get_pkg_kwds(self, pkg):
         return {
             "initial_settings": self.default_use,
-            "unchangable_settings": DelayedInvertedContains(self._get_iuse,
-                                                            pkg),
+            "unchangable_settings": InvertedContains(
+                self._delayed_iuse(self._get_iuse, pkg)),
             "build_callback":self.generate_buildop}
 
     def generate_buildop(self, pkg):

@@ -363,7 +363,7 @@ class buildable(ebd, build.base):
         ebd.__init__(self, pkg, initial_env=domain_settings,
                      features=domain_settings["FEATURES"])
 
-        self.env["FILESDIR"] = os.path.join(os.path.dirname(pkg.path), "files")
+        self.env["FILESDIR"] = os.path.join(os.path.dirname(pkg.ebuild.get_path()), "files")
         self.eclass_cache = eclass_cache
         self.env["ECLASSDIR"] = eclass_cache.eclassdir
         self.env["PORTDIR"] = eclass_cache.portdir

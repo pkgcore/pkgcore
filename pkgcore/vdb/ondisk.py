@@ -250,13 +250,15 @@ class install(repo_interfaces.install):
 
         # ebuild_data is the actual ebuild- no point in holding onto
         # it for built ebuilds, but if it's there, we store it.
-        o = getattr(self.pkg, "raw_ebuild", None)
+        o = getattr(self.pkg, "ebuild", None)
         if o is None:
             logging.warn(
                 "doing install/replace op, "
                 "but source package doesn't provide the actual ebuild data.  "
                 "Creating an empty file")
             o = ''
+        else:
+            o = o.get_fileobj().read()
         # XXX lil hackish accessing PF
         open(os.path.join(dirpath, self.pkg.PF + ".ebuild"), "w").write(o)
 

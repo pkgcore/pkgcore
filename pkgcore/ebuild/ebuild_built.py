@@ -180,13 +180,15 @@ class fake_package_factory(package_factory):
         self.image_root = image_root
         self.environment_path = environment_path
         # lambda redirects path to environment path
-        obj = self.child_class(self, pkg.cpvstr,
-                               lambda *x:self.environment_path)
+        obj = self.child_class(self, pkg.cpvstr)
         for x in self._forced_copy:
             # bypass setattr restrictions.
             obj.__dict__[x] = getattr(self.pkg, x)
         obj.__dict__["use"] = self.pkg.use
         return obj
+
+    def get_ebuild_src(self, pkg):
+        return self.pkg.ebuild
 
     def scan_contents(self, location):
         return scan(location, offset=location)

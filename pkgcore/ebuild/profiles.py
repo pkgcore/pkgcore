@@ -56,8 +56,8 @@ def incremental_negations(setting, orig_list, orig_set=None):
     if l is None:
         l = set()
     for x in orig_list:
-        if x.startswith("-"):
-            if x.startswith("-*"):
+        if x[0] == "-":
+            if x == "-*":
                 l.clear()
             else:
                 if len(x) == 1:

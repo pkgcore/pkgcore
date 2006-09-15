@@ -204,7 +204,7 @@ class ConfiguredTree(configured.tree):
             self.fetcher = self.domain_settings["fetcher"]
         else:
             self.fetcher = fetcher
-        self._delayed_iuse = make_kls(frozenset)
+        self._delayed_iuse = make_kls(InvertedContains)
 
     def _get_delayed_immutable(self, pkg, extras=()):
         return frozenset(pkg.iuse).difference(
@@ -214,8 +214,8 @@ class ConfiguredTree(configured.tree):
         disabled, enabled = self._get_pkg_use(self.default_use, pkg)
         return {
             "initial_settings": enabled,
-            "unchangable_settings": InvertedContains(
-                self._delayed_iuse(self._get_delayed_immutable, pkg, disabled)),
+            "unchangable_settings": self._delayed_iuse(
+                self._get_delayed_immutable, pkg, disabled),
             "build_callback":self.generate_buildop}
 
     def generate_buildop(self, pkg):

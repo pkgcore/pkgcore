@@ -364,16 +364,15 @@ class domain(pkgcore.config.domain.domain):
         return default_use, data
 
     def get_package_use(self, default_use, pkg):
-        disabled = set(iflatten_instance(chain(
-            generic_collapse_data(self.profile_package_use_mask,
-                pkg),
-            self.profile_use_mask)))
-              
+        disabled = list(self.profile_use_mask)
+        for data in generic_collapse_data(self.profile_package_use_mask, pkg):
+            disabled += data
                 
-        enabled = incremental_negations("use", chain(default_use,
-            iflatten_instance([
-                    generic_collapse_data(self.package_use, pkg),
-                    generic_collapse_data(self.profile_package_use, pkg)]),
-            self.profile_use_force))
+        enabled = set(default_use)
+        for data in generic_collapse_data(self.package_use, pkg):
+            incremental_negations("use", data, enabled)
+        for data in generic_collapse_data(self.profile_package_use, pkg):
+            incremental_negations("use", data, enabled)
+        enabled.update(self.profile_use_force)
         enabled.difference_update(disabled)
         return disabled,enabled                

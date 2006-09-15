@@ -24,6 +24,9 @@ class TestDependantMethods(unittest.TestCase):
 
         return Class()
 
+    def test_no_dependant_methods(self):
+        self.failUnless(self.generate_instance({}, {}))
+
     def test_return_checking(self):
         results = []
         o = self.generate_instance(

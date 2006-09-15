@@ -27,18 +27,7 @@ typedef int Py_ssize_t;
 
 static PyObject *
 build_initial_iterables(PyObject *l) {
-    /* Build the initial "iterables" of [iter((l,))].
-     * We use this instead of simply [iter(l)] because "l" might be a thing
-     * we cannot iterate over (list(iflatten_instance(42)) should be [42], and
-     * more importantly list(iflatten_instance((1, 2), (tuple,))) should be
-     * [(1, 2)]).
-     */
-    PyObject *result, *iter, *inner = PyTuple_Pack(1, l);
-    if (!inner)
-        return NULL;
-
-    iter = PyObject_GetIter(inner);
-    Py_DECREF(inner);
+    PyObject *result, *iter = PyObject_GetIter(l);
     if (!iter)
         return NULL;
 
@@ -73,15 +62,36 @@ pkgcore_iflatten_func_new(PyTypeObject *type,
                               PyObject *args, PyObject *kwargs)
 {
     pkgcore_iflatten_func *self;
-    PyObject *l=NULL, *skip_func=NULL;
+    PyObject *l=NULL, *skip_func=NULL, *tmp;
+    int res;
 
     if (kwargs) {
         PyErr_SetString(PyExc_TypeError,
                         "iflatten_func takes no keyword arguments");
         return NULL;
     }
-    if (!PyArg_ParseTuple(args, "OO", &l, &skip_func))
+	if (!PyArg_UnpackTuple(args, "iflatten_func", 2, 2, &l, &skip_func)) {
+		return NULL;
+    }
+
+    /* Check if we got a single argument that should be skipped. */
+    tmp = PyObject_CallFunctionObjArgs(skip_func, l, NULL);
+    if (!tmp) {
         return NULL;
+    }
+    res = PyObject_IsTrue(tmp);
+    Py_DECREF(tmp);
+    if (res == -1) {
+        return NULL;
+    } else if (res) {
+        PyObject *tuple = PyTuple_Pack(1, l);
+        if (!tuple) {
+            return NULL;
+        }
+        PyObject *iter = PyObject_GetIter(tuple);
+        Py_DECREF(tuple);
+        return iter;
+    }
 
     self = (pkgcore_iflatten_func *)type->tp_alloc(type, 0);
     if (!self)
@@ -108,9 +118,10 @@ pkgcore_iflatten_func_iternext(pkgcore_iflatten_func *self) {
 
     if (self->in_iternext) {
         /* We do not allow this because it means our list could be
-         * manipulated while we are running. */
-        /* TODO which exception makes sense here */
-        PyErr_SetString(PyExc_Exception,
+         * manipulated while we are running. Exception raised matches
+         * what a generator raises if you try the same thing.
+         */
+        PyErr_SetString(PyExc_ValueError,
                         "Recursive calls to iflatten_func.next are illegal");
         return NULL;
     }
@@ -260,14 +271,31 @@ pkgcore_iflatten_instance_new(PyTypeObject *type,
 {
     pkgcore_iflatten_instance *self;
     PyObject *l=NULL, *skip_flattening=(PyObject*)&PyBaseString_Type;
+    int res;
 
     if (kwargs) {
         PyErr_SetString(PyExc_TypeError,
                         "iflatten_instance takes no keyword arguments");
         return NULL;
     }
-    if (!PyArg_ParseTuple(args, "O|O", &l, &skip_flattening))
+    if (!PyArg_UnpackTuple(args, "iflatten_instance", 1, 2,
+                           &l, &skip_flattening)) {
         return NULL;
+    }
+
+    /* Check if we got a single argument that should be skipped. */
+    res = PyObject_IsInstance(l, skip_flattening);
+    if (res == -1) {
+        return NULL;
+    } else if (res) {
+        PyObject *tuple = PyTuple_Pack(1, l);
+        if (!tuple) {
+            return NULL;
+        }
+        PyObject *iter = PyObject_GetIter(tuple);
+        Py_DECREF(tuple);
+        return iter;
+    }
 
     self = (pkgcore_iflatten_instance *)type->tp_alloc(type, 0);
     if (!self)
@@ -293,10 +321,11 @@ pkgcore_iflatten_instance_iternext(pkgcore_iflatten_instance *self) {
 
     if (self->in_iternext) {
         /* We do not allow this because it means our list could be
-         * manipulated while we are running. */
-        /* TODO which exception makes sense here */
+         * manipulated while we are running. Exception raised matches
+         * what a generator raises if you try the same thing.
+         */
         PyErr_SetString(
-            PyExc_Exception,
+            PyExc_ValueError,
             "Recursive calls to iflatten_instance.next are illegal");
         return NULL;
     }

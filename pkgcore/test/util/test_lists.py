@@ -86,8 +86,24 @@ class Test_iflatten_instance(unittest.TestCase):
             ["asdf", "asdf", "asdf", 1, None], basestring),
             ([o, 1, "fds"], [o, 1, "fds"], (basestring, OrderedDict)),
             ([o, 1, "fds"], range(10) + [1, "fds"], basestring),
+            ("fds", ["fds"], basestring),
             ]:
-            self.assertEqual(list(self.func(l, skip)), correct)
+            iterator = self.func(l, skip)
+            self.assertEqual(list(iterator), correct)
+            self.assertEqual([], list(iterator))
+        # There is a small difference between the cpython and native
+        # version: the cpython one raises immediately, for native we
+        # have to iterate.
+        def fail():
+            return list(self.func(None))
+        self.assertRaises(TypeError, fail)
+
+        # Yes, no sane code does this, but even insane code shouldn't
+        # kill the cpython version.
+        iters = []
+        iterator = self.func(iters)
+        iters.append(iterator)
+        self.assertRaises(ValueError, iterator.next)
 
 
 class Test_iflatten_func(unittest.TestCase):
@@ -100,9 +116,24 @@ class Test_iflatten_func(unittest.TestCase):
             ["asdf", "asdf", "asdf", 1, None], basestring),
             ([o, 1, "fds"], [o, 1, "fds"], (basestring, OrderedDict)),
             ([o, 1, "fds"], range(10) + [1, "fds"], basestring),
+            ("fds", ["fds"], basestring),
             ]:
-            self.assertEqual(list(self.func(l, lambda x:isinstance(x, skip))),
-                             correct)
+            iterator = self.func(l, lambda x:isinstance(x, skip))
+            self.assertEqual(list(iterator), correct)
+            self.assertEqual(list(iterator), [])
+        # There is a small difference between the cpython and native
+        # version: the cpython one raises immediately, for native we
+        # have to iterate.
+        def fail():
+            return list(self.func(None, lambda x: False))
+        self.assertRaises(TypeError, fail)
+
+        # Yes, no sane code does this, but even insane code shouldn't
+        # kill the cpython version.
+        iters = []
+        iterator = self.func(iters, lambda x: False)
+        iters.append(iterator)
+        self.assertRaises(ValueError, iterator.next)
 
 
 if lists.cpy_builtin:

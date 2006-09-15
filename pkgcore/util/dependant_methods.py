@@ -66,10 +66,10 @@ class ForcedDepends(type):
     to look at for example usage.
     """
     def __call__(cls, *a, **kw):
-        if not getattr(cls, "stage_depends"):
-            return super(ForcedDepends, cls).__call_(*a, **kw)
-
         o = super(ForcedDepends, cls).__call__(*a, **kw)
+        if not getattr(cls, "stage_depends"):
+            return o
+
         if not hasattr(o, "_stage_state"):
             o._stage_state = set()
 

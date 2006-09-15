@@ -296,7 +296,6 @@ class FlatteningRestrictionTest(unittest.TestCase):
                 negate=negate)
             self.assertEqual(not negate, inst.match([7, 8, [9, None]]))
             self.assertEqual(negate, inst.match([7, 8, (9, None)]))
-            self.assertEqual(not negate, inst.match(None))
             # Just check this does not raise
             self.assertTrue(str(inst))
             self.assertTrue(repr(inst))

@@ -81,25 +81,21 @@ searching the cache, let the cache do it. Assume what you're
 delegating to knows the best way to handle the request, and probably 
 can do it's job better then some external caller (essentially).
 
-Actual configuration is pretty heavily redesigned. Look at
-conf_default_types (likely renamed at some point). It's the
-meta-definition of the config... sort of. Basically the global config
-class knows nothing, and needs to be initialized with configuration item
-type definitions- this is what conf_default_type provides, the initial 
-type definitions.. The intention is that the on disk configuration
-format is encapsulated, so it can be remote or completely different
-from the win.ini format natively supported.
+Actual configuration is pretty heavily redesigned. Classes and
+functions that should be constructed based on data from the user's
+configuration have a "hint" describing their arguments. The global
+config class uses these hints to convert and typecheck the values in
+the user's configuration. Actual configuration file reading and type
+conversion is done by a separate class, meaning the global manager is
+not tied to a single format, or even to configuration read from a file
+on disk.
 
 Encapsulation, extensibility/modularity, delegation, and allowing
 parallelizing of development should be key focuses in
 implementing/refining this high level design doc. Realize
 parallelizing is a funky statement, but it's apt; work on the repo
 implementations can proceed without being held up by cache work, and
-vice versa. Config is the central hold up, but that is because it
-instantiates everything, so the protocol for it needs to be nailed
-down so that you know what positional/optional args your
-class/callable will be receiving (that said, positiona/optional is
-configurable via section definitions too).
+vice versa.
 
 Final comment re: design goals, defining chunks of callable code and
 plugging it into the framework is another bit of a goal. Think
@@ -247,10 +243,9 @@ to the user defined configs, although only interest/poking at it
 should be to get a domain object from it.
 
 domain object is instantiated by config object via user defined
-configuration (/etc/portage/config namely). domains hold instantiated
-repositories, bind profile + user prefs (use/accept_keywords)
-together, and _should_ simplify this data into somewhat user friendly
-methods. (define this better).
+configuration. domains hold instantiated repositories, bind profile +
+user prefs (use/accept_keywords) together, and _should_ simplify this
+data into somewhat user friendly methods. (define this better).
 
 Normal/default domain doesn't know about other domains, nor give a
 damn. Embedded targets are domains, and _will_ need to know about the
@@ -288,35 +283,7 @@ requested.
 global config object (from pkgcore.config.load_config())
 --------------------------------------------------------
 
-Simple bugger.
-
-.get_types()
-  get the section types.
-.get_object()
-  return instantiated section
-.list_objects(type)
-  iterable, given a type, yield section names of that type.
-.domains
-  IndexableSequence, iterating == section labels, index == instantiate
-  and return that section type
-
-convenience function in pkgcore.config.* (somewhere):
-
-default_domain(config_obj)
-  returns instantiated domain object of the default domain from
-  config_obj. Nothing incredibly fancy, finds default domain via
-  config._cparser.defaults().get("domain"), or via iterating over
-  config.domain, returning the first domain that is root="/".
-
-What does the cparser bit map out to in the config?
-
-::
-  [DEFAULT]
-  domain = some-section-label
-
-The iterating route sucks, and will be a bit slower. Default approach
-is recommended.
-
+see config.rst.
 
 domain object
 -------------

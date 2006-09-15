@@ -34,6 +34,10 @@ class _ConfigMapping(mappings.DictMixin):
     def iterkeys(self):
         return self.manager.sections(self.typename)
 
+    def __contains__(self, key):
+        conf = self.manager.collapse_named_section(key, raise_on_missing=False)
+        return conf is not None and conf.type.name == self.typename
+
 
 class CollapsedConfig(object):
 

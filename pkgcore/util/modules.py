@@ -34,13 +34,12 @@ def load_module(name):
 
 def load_attribute(name):
     """load a specific attribute, rather then a module"""
+    i = name.rfind(".")
+    if i == -1:
+        raise FailedImport(name, "it isn't an attribute, it's a module")
     try:
-        i = name.rfind(".")
-        if i == -1:
-            raise FailedImport(name, "it isn't an attribute, it's a module")
         m = load_module(name[:i])
         m = getattr(m, name[i+1:])
         return m
     except (AttributeError, ImportError), e:
         raise FailedImport(name, e)
-

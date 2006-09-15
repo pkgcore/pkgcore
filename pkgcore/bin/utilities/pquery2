@@ -7,23 +7,14 @@
 """Extract information from repositories."""
 
 
-import sys
 import optparse
 
-from pkgcore.config import load_config, errors as cerrors
 from pkgcore.util import (
-    repo_utils, commandline, formatters, packages as pkgutils)
+    commandline, repo_utils, parserestrict, formatters, packages as pkgutils)
 from pkgcore.restrictions import packages, values
 from pkgcore.package import errors as perrors
 from pkgcore.ebuild import conditionals, atom
 
-
-class ParseError(ValueError):
-    """Raised if parsing a restriction expression failed."""
-
-
-# Functions that turn a string into a restriction or raise ParseError.
-# These are used by both the expression-parsing and the optparse code.
 
 # To add a new restriction you have to do the following:
 # - add a parse function for it here.
@@ -31,21 +22,13 @@ class ParseError(ValueError):
 # - add an optparse option using the name you used in the dict as
 #   both the typename and the long option name.
 
-def parse_match(value):
-    """Parse value with L{pkgcore.util.commandline.generate_restriction}."""
-    try:
-        # XXX shouldn't be ebuild specific via cpv msg
-        return commandline.generate_restriction(value)
-    except perrors.InvalidPackage:
-        raise ParseError('invalid cpv')
-
 def parse_revdep(value):
     """Value should be an atom, packages with deps intersecting that match."""
     try:
         targetatom = atom.atom(value)
     except perrors.InvalidPackage:
         # XXX shouldn't be ebuild specific via cpv msg
-        raise ParseError('invalid cpv')
+        raise parserestrict.ParseError('invalid cpv')
     val_restrict = values.FlatteningRestriction(
         atom.atom, values.AnyMatch(AtomIntersectsAtom(targetatom)))
     return packages.OrRestriction(finalize=True, *list(
@@ -58,19 +41,6 @@ def parse_description(value):
     return packages.OrRestriction(finalize=True, *list(
             packages.PackageRestriction(attr, matcher)
             for attr in ('description', 'longdescription')))
-
-def comma_separated_containment(attr):
-    """Helper for parsing comma-separated strings to a ContainmentMatch."""
-    def _parse(value):
-        return packages.PackageRestriction(attr, values.ContainmentMatch(*(
-                    piece.strip() for piece in value.split(','))))
-    return _parse
-
-def parse_owns(value):
-    """Value is a string that has to match a contents path exactly."""
-    return packages.PackageRestriction(
-        'contents', values.ContainmentMatch(value))
-
 
 def parse_ownsre(value):
     """Value is a regexp matched against the string form of an fs object.
@@ -114,17 +84,27 @@ def parse_envmatch(value):
 
 
 PARSE_FUNCS = {
-    'match': parse_match,
     'revdep': parse_revdep,
     'description': parse_description,
-    'herd': comma_separated_containment('herds'),
-    'license': comma_separated_containment('license'),
-    'hasuse': comma_separated_containment('iuse'),
-    'owns': parse_owns,
     'ownsre': parse_ownsre,
-    'maintainer': comma_separated_containment('maintainers'),
     'environment': parse_envmatch,
     }
+
+# This is not just a blind "update" because we really need a config
+# option for everything in this dict (so parserestrict growing parsers
+# would break us).
+for _name in ['match']:
+    PARSE_FUNCS[_name] = parserestrict.parse_funcs[_name]
+
+for _name, _attr in [
+    ('herd', 'herds'),
+    ('license', 'license'),
+    ('hasuse', 'iuse'),
+    ('maintainer', 'maintainers'),
+    ]:
+    PARSE_FUNCS[_name] = parserestrict.comma_separated_containment(_attr)
+
+del _name, _attr
 
 
 def parse_expression(string):
@@ -135,7 +115,7 @@ def parse_expression(string):
     try:
         import pyparsing as pyp
     except ImportError:
-        raise ParseError('pyparsing is not installed.')
+        raise parserestrict.ParseError('pyparsing is not installed.')
 
     grammar = getattr(parse_expression, 'grammar', None)
     if grammar is None:
@@ -198,7 +178,7 @@ def parse_expression(string):
     try:
         return grammar.parseString(string)[0]
     except pyp.ParseException, e:
-        raise ParseError(e.msg)
+        raise parserestrict.ParseError(e.msg)
 
 
 class AtomIntersectsAtom(values.base):
@@ -254,7 +234,7 @@ def optparse_type(parsefunc):
     def _typecheck(option, opt, value):
         try:
             return parsefunc(value)
-        except ParseError, e:
+        except parserestrict.ParseError, e:
             raise optparse.OptionValueError('option %s: %s' % (opt, e))
     return _typecheck
 
@@ -262,7 +242,7 @@ def optparse_type(parsefunc):
 extras = dict((parser_name, optparse_type(parser_func))
               for parser_name, parser_func in PARSE_FUNCS.iteritems())
 
-class MyOption(optparse.Option):
+class Option(optparse.Option):
     """C{optparse.Option} subclass supporting our custom types."""
     TYPES = optparse.Option.TYPES + tuple(extras.keys())
     # Copy the original dict
@@ -270,12 +250,13 @@ class MyOption(optparse.Option):
     TYPE_CHECKER.update(extras)
 
 
-class MyOptionParser(optparse.OptionParser):
+class OptionParser(commandline.OptionParser):
 
     """Option parser with custom option postprocessing and validation."""
 
     def check_values(self, vals, args):
         """Sanity check and postprocess after parsing."""
+        vals, args = commandline.OptionParser.check_values(self, vals, args)
         if vals.contents:
             vals.vdb = True
 
@@ -304,7 +285,7 @@ class MyOptionParser(optparse.OptionParser):
             expr = ' '.join(args)
             try:
                 vals.extrarestrict = parse_expression(expr)
-            except ParseError, e:
+            except parserestrict.ParseError, e:
                 self.error('failure parsing "%s": %s' % (expr, e))
         else:
             vals.extrarestrict = None
@@ -314,7 +295,7 @@ class MyOptionParser(optparse.OptionParser):
 
 def build_option_parser():
     """Construct our option parser."""
-    parser = MyOptionParser(description=__doc__, option_class=MyOption)
+    parser = OptionParser(description=__doc__, option_class=Option)
 
     parser.add_option('--domain', action='store',
                       help='domain name to use (default used if omitted).')
@@ -326,8 +307,6 @@ def build_option_parser():
                       help='show only the lowest version for each package.')
     parser.add_option('--max', action='store_true',
                       help='show only the highest version for each package.')
-    parser.add_option('--debug', action='store_true',
-                      help='print some extra info useful for pkgcore devs.')
 
     repo = parser.add_option_group('Source repo')
     repo.add_option('--raw', action='store_true',
@@ -419,93 +398,113 @@ def stringify_attr(config, pkg, attr):
     return str(value)
 
 
-def print_package(options, stream, pkg):
+def print_package(options, out, err, pkg):
     """Print a package."""
     if options.verbose:
-        f = stream
-        green = f.fg('green')
-        f.write(f.bold, green, ' * ', f.fg(), pkg.cpvstr)
-        f.write(green, '     description: ', f.fg(), pkg.description)
-        f.write(green, '     homepage:    ', f.fg(), pkg.homepage)
-        f.write(green, '     license:     ', f.fg(), pkg.license)
+        green = out.fg('green')
+        out.write(out.bold, green, ' * ', out.fg(), pkg.cpvstr)
+        out.wrap = True
+        out.later_prefix = ['                  ']
+        out.write(green, '     description: ', out.fg(), pkg.description)
+        out.write(green, '     homepage:    ', out.fg(), pkg.homepage)
+        out.write(green, '     license:     ', out.fg(), pkg.license)
         for attr in options.attr:
-            f.write(green, '     %s: ' % (attr,), f.fg(),
-                    stringify_attr(options, pkg, attr))
-        f.write()
+            out.write(green, '     %s: ' % (attr,), out.fg(),
+                      stringify_attr(options, pkg, attr))
+        out.write()
+        out.later_prefix = []
+        out.wrap = False
     elif options.oneattr:
-        print stringify_attr(options, pkg, options.oneattr)
+        out.write(stringify_attr(options, pkg, options.oneattr))
     else:
         printed_something = False
+        out.autoline = False
         if (not options.contents) or options.cpv:
             printed_something = True
             if options.atom:
-                print '=' + pkg.cpvstr,
-            else:
-                print pkg.cpvstr,
+                out.write('=')
+            out.write(pkg.cpvstr)
         for attr in options.attr:
+            if printed_something:
+                out.write(' ')
             printed_something = True
-            print '%s="%s"' % (
-                attr, stringify_attr(options, pkg, attr)),
+            out.write('%s="%s"' % (attr, stringify_attr(options, pkg, attr)))
         # If we printed anything at all print the newline now
+        out.autoline = True
         if printed_something:
-            print
+            out.write()
 
     if options.contents:
         try:
             contents = pkg.contents
         except AttributeError:
-            print >> sys.stderr, 'no contents for %r' % (pkg,)
+            err.write('no contents for %r' % (pkg,))
         else:
             for thing in contents:
-                print thing.location
+                out.write(thing.location)
 
-def print_packages_noversion(options, stream, pkgs):
+def print_packages_noversion(options, out, err, pkgs):
     """Print a summary of all versions for a single package."""
     if options.verbose:
-        f = stream
-        green = f.fg('green')
-        f.write(f.bold, green, ' * ', f.fg(), pkgs[0].key)
+        green = out.fg('green')
+        out.write(out.bold, green, ' * ', out.fg(), pkgs[0].key)
+        out.wrap = True
+        out.later_prefix = ['                  ']
         if len(pkgs) == 1:
-            f.write(green, '     single version : ', f.fg(), pkgs[0].fullver)
+            out.write(green, '     single version : ', out.fg(),
+                      pkgs[0].fullver)
         else:
-            f.write(green, '     highest version: ', f.fg(), max(pkgs).fullver)
-            f.write(green, '     lowest version : ', f.fg(), min(pkgs).fullver)
+            out.write(green, '     highest version: ', out.fg(),
+                      max(pkgs).fullver)
+            out.write(green, '     lowest version : ', out.fg(),
+                      min(pkgs).fullver)
         for attr in options.attr:
-            f.write(green, '     %s: ' % (attr,), f.fg(),
-                    stringify_attr(options, pkgs[0], attr))
-        f.write()
+            out.write(green, '     %s: ' % (attr,), out.fg(),
+                      stringify_attr(options, pkgs[0], attr))
+        out.write()
+        out.wrap = False
+        out.later_prefix = []
     elif options.oneattr:
-        print stringify_attr(options, pkgs[0], options.oneattr)
+        out.write(stringify_attr(options, pkgs[0], options.oneattr))
     else:
-        print pkgs[0].key,
+        out.autoline = False
+        out.write(pkgs[0].key)
         for attr in options.attr:
-            print '%s="%s"' % (attr, stringify_attr(options, pkgs[0], attr)),
-        print
+            out.write(' %s="%s"' % (attr, stringify_attr(options, pkgs[0],
+                                                         attr)))
+        out.autoline = True
+        out.write()
 
 
-def main(config, options):
+def main(config, options, out, err):
     """Do stuff.
 
     @param config: pkgcore config central.
     @param options: optparse option values.
+    @type  out: L{pkgcore.util.formatters.Formatter} instance.
+    @param out: stream to output on.
+    @type  err: file-like object
+    @param err: stream for errors (usually C{sys.stderr})
+
+    @returns: the exit code.
     """
     # Get a domain object.
     if options.domain:
         try:
             domain = config.domain[options.domain]
         except KeyError:
-            print >> sys.stderr, 'domain %s not found' % (options.domain,)
-            print >> sys.stderr, 'Valid domains: %s' % (
-                ', '.join(config.domain.keys()),)
+            err.write('domain %s not found\n' % (options.domain,))
+            err.write('Valid domains: %s\n' %
+                      (', '.join(config.domain.keys()),))
             return 1
     else:
         domain = config.get_default('domain')
         if domain is None:
-            print >> sys.stderr, (
+            err.write(
                 'No default domain found, fix your configuration '
-                'or pass --domain')
-            print >> sys.stderr, 'Valid domains: %s' % (
-                ', '.join(config.domain.keys(),))
+                'or pass --domain\n')
+            err.write('Valid domains: %s\n' %
+                      (', '.join(config.domain.keys()),))
             return 1
 
     # Get repo(s) to operate on
@@ -522,7 +521,10 @@ def main(config, options):
     restrict = []
     for attr in PARSE_FUNCS.keys():
         val = getattr(options, attr)
-        if val:
+        if len(val) == 1:
+            # Omit the boolean.
+            restrict.append(val[0])
+        elif val:
             restrict.append(packages.OrRestriction(finalize=True, *val))
 
     if options.extrarestrict:
@@ -538,17 +540,11 @@ def main(config, options):
         # "And" them all together
         restrict = packages.AndRestriction(finalize=True, *restrict)
 
-    # Get a pretty-printer if we need one
-    if options.verbose:
-        f = formatters.TerminfoFormatter()
-    else:
-        f = None
-
     if options.debug:
         for repo in repos:
-            print 'repo: %r' % (repo,)
-        print 'restrict: %r' % (restrict,)
-        print
+            out.write('repo: %r' % (repo,))
+        out.write('restrict: %r' % (restrict,))
+        out.write()
 
     # Run the query
     for repo in repos:
@@ -557,15 +553,15 @@ def main(config, options):
                 repo.itermatch(restrict, sorter=sorted)):
                 pkgs = list(pkgs)
                 if options.noversion:
-                    print_packages_noversion(options, f, pkgs)
+                    print_packages_noversion(options, out, err, pkgs)
                 elif options.min or options.max:
                     if options.min:
-                        print_package(options, f, min(pkgs))
+                        print_package(options, out, err, min(pkgs))
                     if options.max:
-                        print_package(options, f, max(pkgs))
+                        print_package(options, out, err, max(pkgs))
                 else:
                     for pkg in pkgs:
-                        print_package(options, f, pkg)
+                        print_package(options, out, err, pkg)
                         if options.earlyout:
                             break
                 if options.earlyout:
@@ -574,24 +570,10 @@ def main(config, options):
         except KeyboardInterrupt:
             raise
         except Exception:
-            print >> sys.stderr, 'caught an exception!'
-            print >> sys.stderr, 'repo:', repr(repo)
-            print >> sys.stderr, 'restrict:', repr(restrict)
+            err.write('caught an exception!\n')
+            err.write('repo: %r\n' % (repo,))
+            err.write('restrict: %r\n' % (restrict,))
             raise
 
 if __name__ == '__main__':
-    try:
-        parsed_options, remaining_args = build_option_parser().parse_args()
-        try:
-            # Yes, we really want main() inside this block (to catch
-            # delayed InstantiationErrors)
-            exitstatus = main(load_config(debug=parsed_options.debug),
-                              parsed_options)
-        except cerrors.ConfigurationError, e:
-            if parsed_options.debug:
-                raise
-            print >> sys.stderr, 'Error in configuration: %s' % (e,)
-            exitstatus = 1
-    except KeyboardInterrupt:
-        exitstatus = 1
-    sys.exit(exitstatus)
+    commandline.main(build_option_parser(), main)

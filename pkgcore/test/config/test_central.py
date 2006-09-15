@@ -58,6 +58,13 @@ class ConfigManagerTest(unittest.TestCase):
         self.assertEquals(list(manager.sections('drawer')), ['barinst'])
         self.assertEquals(manager.drawer, {'barinst': (None, None)})
 
+    def test_contains(self):
+        manager = central.ConfigManager(
+            [{'spork': basics.HardCodedConfigSection({'class': drawer})}],
+            [RemoteSource()])
+        self.assertIn('spork', manager.drawer)
+        self.assertNotIn('foon', manager.drawer)
+
     def test_no_class(self):
         manager = central.ConfigManager(
             [{'foo': basics.HardCodedConfigSection({})}], [object()])

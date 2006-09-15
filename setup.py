@@ -136,7 +136,9 @@ core.setup(
     scripts=(
         glob.glob('pkgcore/bin/utilities/*.py') +
         ['pkgcore/bin/utilities/pquery',
-        'pkgcore/bin/utilities/pquery2']),
+         'pkgcore/bin/utilities/pquery2',
+         'pkgcore/bin/utilities/pconfig',
+         ]),
     ext_modules=[
         core.Extension('pkgcore.util._caching', ['pkgcore/util/_caching.c'],
                        extra_compile_args=extra_flags),

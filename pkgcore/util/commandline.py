@@ -1,100 +1,92 @@
-# Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-"""
-common commandline processing, including simplified atom generation
-"""
 
-from pkgcore.util.containers import InvertedContains
-from pkgcore.restrictions import packages, values, util
-from pkgcore.ebuild import atom
+"""Utilities for writing commandline utilities."""
 
 
-def convert_glob(token):
-    if '*' in token[1:-1]:
-        raise TypeError(
-            "'*' must be specified at the end or beginning of a matching field")
-    l = len(token)
-    if token.startswith("*") and l > 1:
-        if token.endswith("*"):
-            if l == 2:
-                return None
-            return values.ContainmentMatch(token.strip("*"))
-        return values.StrGlobMatch(token.strip("*"), prefix=False)
-    elif token.endswith("*") and l > 1:
-        return values.StrGlobMatch(token.strip("*"), prefix=True)
-    elif l <= 1:
-        return None
-    return values.StrExactMatch(token)
+import sys
+import optparse
 
-def collect_ops(text):
-    i = 0
-    while text[i] in ("<", "=", ">", "~"):
-        i+=1
-    return text[0:i], text[i:]
+from pkgcore.config import load_config, errors
 
-def generate_restriction(text):
+from pkgcore.util import formatters
 
-    """generate appropriate restriction for text
 
-    Parsing basically breaks it down into chunks split by /, with each
-    chunk allowing for prefix/postfix globbing- note that a postfixed
-    glob on package token is treated as package attribute matching,
-    B{not} as necessarily a version match.
+class OptionParser(optparse.OptionParser):
 
-    If only one chunk is found, it's treated as a package chunk.
-    Finally, it supports a nonstandard variation of atom syntax where
-    the category can be dropped.
+    """Our common OptionParser subclass.
 
-    Examples-
-      - "*": match all
-      - "dev-*/*": category must start with dev-
-      - "dev-*": package must start with dev-
-      - *-apps/portage*: category must end in -apps,
-          package must start with portage
-      - >=portage-2.1: atom syntax, package portage,
-          version greater then or equal to 2.1
-
-    @param text: string to attempt to parse
-    @type text: string
-    @return: L{package restriction<pkgcore.restrictions.packages>} derivative
+    Currently mostly empty, just adds some common options. Will
+    probably grow though.
     """
 
-    orig_text = text = text.strip()
-    if "!" in text:
-        raise ValueError(
-            "!, or any form of blockers make no sense in this usage: %s" % (
-                text,))
-    tsplit = text.rsplit("/", 1)
-    if len(tsplit) == 1:
-        ops, text = collect_ops(text)
-        if not ops:
-            if "*" in text:
-                r = convert_glob(text)
-                if r is None:
-                    return packages.AlwaysTrue
-                return packages.PackageRestriction("package", r)
-        elif text.startswith("*"):
-            raise ValueError(
-                "cannot do prefix glob matches with version ops: %s" % (
-                    orig_text,))
-        # ok... fake category.  whee.
-        r = list(util.collect_package_restrictions(
-                atom.atom("%scategory/%s" % (ops, text)).restrictions,
-                attrs=InvertedContains(["category"])))
-        if len(r) == 1:
-            return r[0]
-        return packages.AndRestriction(*r)
-    if "*" not in text:
-        return atom.atom(text)
+    standard_option_list = optparse.OptionParser.standard_option_list + [
+        optparse.Option('--debug', action='store_true',
+                        help='print some extra info useful for pkgcore devs.'),
+        optparse.Option('--nocolor', action='store_true',
+                        help='disable color in the output.'),
+        ]
 
-    r = map(convert_glob, tsplit)
-    if not r[0] and not r[1]:
-        return packages.AlwaysTrue
-    if not r[0]:
-        return packages.PackageRestriction("package", r[1])
-    elif not r[1]:
-        return packages.PackageRestriction("category", r[0])
-    return packages.AndRestriction(
-        packages.PackageRestriction("category", r[0]),
-        packages.PackageRestriction("package", r[1]))
+
+def main(option_parser, main_func, args=None, sys_exit=True):
+    """Function to use in an "if __name__ == '__main__'" block in a script.
+
+    @type  option_parser: instance of L{OptionParser} (or a subclass).
+    @param option_parser: option parser used to parse sys.argv.
+    @type  main_func: callable, main_func(config, options, out, err)
+    @param main_func: function called after the options are parsed and config
+        is loaded. Arguments are the result of load_config(),
+        an optparse.Values instance, a L{pkgcore.util.formatters.Formatter}
+        for output and a filelike for errors (C{sys.stderr}). It should return
+        an integer used as exit status or None as synonym for 0.
+    @type  args: sequence of strings
+    @param args: arguments to parse, defaulting to C{sys.argv[1:]}.
+    @type  sys_exit: boolean
+    @param sys_exit: if True C{sys.exit} is called when done, otherwise
+        the exitstatus is returned.
+
+    Options are parsed before the config is loaded. This means you
+    should do any extra validation of options that you do not need the
+    config for in check_values of your option parser (if that fails
+    the config is never loaded, so it will be faster).
+
+    Handling the unparsed "args" from the option parser should be done
+    in check_values too (added to the values object). Unhandled args
+    are treated as an error by this function.
+
+    Any ConfigurationErrors raised from your function (by the config
+    manager) are handled. Other exceptions are not (trigger a traceback).
+    """
+    try:
+        options, args = option_parser.parse_args(args)
+        # Checked here and not in OptionParser because we want our
+        # check_values to run before the user's, not after it (may do
+        # stuff there at some point).
+        if args:
+            option_parser.error("I don't know what to do with %s" %
+                                (' '.join(args),))
+            # We should not get here, this is protection against
+            # weird OptionParser subclasses.
+            exitstatus = 1
+        else:
+            if options.nocolor:
+                out = formatters.PlainTextFormatter(sys.stdout)
+            else:
+                out = formatters.get_formatter(sys.stdout)
+            try:
+                # Yes, we really want main() inside this block (to catch
+                # delayed InstantiationErrors)
+                exitstatus = main_func(load_config(debug=options.debug),
+                                       options, out, sys.stderr)
+            except errors.ConfigurationError, e:
+                if options.debug:
+                    raise
+                sys.stderr.write('Error in configuration:\n%s\n' % (e,))
+                exitstatus = 1
+    except KeyboardInterrupt:
+        exitstatus = 1
+    if sys_exit:
+        sys.exit(exitstatus)
+    else:
+        return exitstatus

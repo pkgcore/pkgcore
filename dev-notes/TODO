@@ -5,6 +5,15 @@ kindly check over HORKED; stuff here is "would be nice", but horked comes first.
 Difficulty estimate indicated by '*', based on either codebase in question, or knowledge of python tricks
 none == easy, >=5 of 'em, tricky.
 
+- Possibly convert to cpython:
+  - flat_hash.database._parse_data
+  - metadata.database._parse_data
+  - posixpath (os.path)
+
+- Rework digest api to allow running checksums in parallel.
+  Meaning: don't load the file three times for applying three checksums.
+  Need to work out how to do this with fchksum and the "size" checksum.
+
 - CONFIG_PROTECT unmerge support
 - pkgcore.fetchable.__init__: __eq__/__hash__
 
@@ -13,11 +22,8 @@ none == easy, >=5 of 'em, tricky.
 
 - package.use, package.use.mask, and use.force support in domain.
 
-- tool to dump config definitions to term; useful for A) emerge --info, B) debugging cranky-ass make.conf translation
-  (marienz has this)
-
-- conf_default_types , gut all of the ebuild specific crap and shift it into introspective configuration objs.
-  (marienz has this)
+- tool to dump config definitions without collapsing them.
+  pconfig --dump works contains lots of duplicated information.
 
 - pkgcore.fs.ops.merge_contents; doesn't rewite the contents set when a file it's mergeing is relying on symlinked
   directories for the full path; eg, /usr/share/X11/xkb/compiled -> /var/blah, it records the former instead of 
@@ -58,10 +64,7 @@ none == easy, >=5 of 'em, tricky.
     the plugins ebuild can install a section conf tweak, and use it.
   - configuration 'types' , list, bool, str, etc, should be extendable, lifted from a config most likely.  Defaults should be
     avail in code, but should have a method of extending it
-  - exec section implementation.  Any section of exec type is automatically executed, able to mangle the central config directly.
-    This *is* the hook for having configs stored on a central server, and it's nifty ;)
   - integration of make.globals type data; defaults effectively, but a bit more complex.
-  (marienz has this?)
 
 - 'app bundles'.  Reliant on serious overhauling of deps to do 'locked deps', but think of it as rpath based app stacks,
   a full apache stack compiled to run from /opt/blah for example.

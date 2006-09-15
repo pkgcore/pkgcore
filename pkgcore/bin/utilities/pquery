@@ -6,7 +6,7 @@ import os, operator
 from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.currying import pre_curry
-from pkgcore.util import repo_utils, commandline
+from pkgcore.util import repo_utils, parserestrict
 from pkgcore.util.packages import groupby_pkg
 
 def grab_arg(arg, args):
@@ -89,7 +89,7 @@ if __name__ == "__main__":
         if grab_arg(s, args):
             results_filter = func
 
-    atoms = map(commandline.generate_restriction, args)
+    atoms = map(parserestrict.generate_restriction, args)
 
     if len(atoms) > 1:
         atoms = packages.OrRestriction(*atoms)

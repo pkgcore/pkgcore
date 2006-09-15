@@ -19,6 +19,7 @@ from pkgcore.binpkg.tar import generate_contents
 from pkgcore.util.bzip2 import decompress
 from pkgcore.interfaces.build import empty_build_op
 from pkgcore.ebuild.ebuild_built import pkg_uses_default_preinst
+from pkgcore.config import ConfigHint
 from pkgcore.util.demandload import demandload
 demandload(globals(),
            "pkgcore.merge:engine "
@@ -142,6 +143,8 @@ class tree(prototype.tree):
     # yes, the period is required. no, do not try and remove it
     # (harring says it stays)
     extension = ".tbz2"
+
+    pkgcore_config_type = ConfigHint(typename='repo')
 
     def __init__(self, location):
         super(tree, self).__init__()

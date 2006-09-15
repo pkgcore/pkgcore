@@ -537,10 +537,10 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
             PyErr_ExceptionMatches(PyExc_NotImplementedError)) {
             PyErr_Clear();
             PyObject *format, *formatargs, *message;
-            if (format = PyString_FromString(
-                    "caching for %s, key=%s is unhashable")) {
-                if (formatargs = PyTuple_Pack(2, self, key)) {
-                    if (message = PyString_Format(format, formatargs)) {
+            if ((format = PyString_FromString(
+                     "caching for %s, key=%s is unhashable"))) {
+                if ((formatargs = PyTuple_Pack(2, self, key))) {
+                    if ((message = PyString_Format(format, formatargs))) {
                         /* Leave resobj NULL if PyErr_Warn raises. */
                         if (!PyErr_Warn(
                                 PyExc_UserWarning,

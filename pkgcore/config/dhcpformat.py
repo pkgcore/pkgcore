@@ -63,6 +63,7 @@ _section << pyp.Group(pyp.Suppress('{') + _section_contents +
 # parser = pyp.dictOf(value, section)
 parser = pyp.Dict(pyp.OneOrMore(pyp.Group(_value + _section)))
 parser.ignore(pyp.pythonStyleComment)
+parser = pyp.stringStart + parser + pyp.stringEnd
 
 
 class ConfigSection(basics.ConfigSection):
@@ -88,7 +89,10 @@ class ConfigSection(basics.ConfigSection):
             if not isinstance(value, basestring):
                 raise errors.ConfigurationError(
                     'need a callable, not a section')
-            value = modules.load_attribute(value)
+            try:
+                value = modules.load_attribute(value)
+            except modules.FailedImport:
+                raise errors.ConfigurationError('cannot import %r' % (value,))
             if not callable(value):
                 raise errors.ConfigurationError('%r is not callable' % value)
             return value
@@ -98,21 +102,19 @@ class ConfigSection(basics.ConfigSection):
             value = value[0]
             if isinstance(value, basestring):
                 # it's a section ref
-                return central.instantiate_section(value)
+                return central.collapse_named_section(value)
             else:
                 # it's an anonymous inline section
-                return central.instantiate_section(
-                    'anonymous', conf=ConfigSection(value))
+                return central.collapse_section(ConfigSection(value))
         elif arg_type == 'section_refs':
             result = []
             for ref in value:
                 if isinstance(ref, basestring):
                     # it's a section ref
-                    result.append(central.instantiate_section(ref))
+                    result.append(central.collapse_named_section(ref))
                 else:
                     # it's an anonymous inline section
-                    result.append(central.instantiate_section(
-                            'anonymous', conf=ConfigSection(ref)))
+                    result.append(central.collapse_section(ConfigSection(ref)))
             return result
         elif arg_type == 'list':
             if not isinstance(value, basestring):

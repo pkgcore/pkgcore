@@ -8,7 +8,7 @@ Gentoo Linux Security Advisories (GLSA) support
 import os
 from pkgcore.util.iterables import caching_iter
 from pkgcore.restrictions import packages, restriction, boolean, values
-from pkgcore.config.introspect import ConfigHint
+from pkgcore.config import ConfigHint
 from pkgcore.util.demandload import demandload
 
 demandload(globals(), "pkgcore.util.xml:etree "
@@ -43,7 +43,7 @@ class GlsaDirSet(object):
     (rsync tree is the usual source.)
     """
 
-    pkgcore_config_type = ConfigHint(types={"src":"section_ref"})
+    pkgcore_config_type = ConfigHint({'src': 'ref:repo'}, typename='pkgset')
     op_translate = {"ge":">=", "gt":">", "lt":"<", "le":"<=", "eq":"="}
 
     def __init__(self, src):
@@ -222,8 +222,9 @@ class SecurityUpgrades(object):
     generates set of restrictions of required upgrades.
     """
 
-    pkgcore_config_type = ConfigHint(types={"ebuild_repo":"section_ref",
-                                            "vdb":"section_ref"})
+    pkgcore_config_type = ConfigHint({'ebuild_repo': 'ref:repo',
+                                      'vdb': 'ref:vdb'},
+                                     typename='pkgset')
 
     def __init__(self, ebuild_repo, vdb, arch):
         self.glsa_src = GlsaDirSet(ebuild_repo)

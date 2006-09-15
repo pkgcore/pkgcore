@@ -10,7 +10,7 @@ from pkgcore.spawn import spawn_bash, userpriv_capable
 from pkgcore.os_data import portage_uid, portage_gid
 from pkgcore.fs.util import ensure_dirs
 from pkgcore.fetch import errors, base, fetchable
-
+from pkgcore.config import ConfigHint
 
 class MalformedCommand(errors.base):
 
@@ -21,6 +21,10 @@ class MalformedCommand(errors.base):
 
 
 class fetcher(base.fetcher):
+
+    pkgcore_config_type = ConfigHint(
+        {'userpriv': 'bool', 'required_chksums': 'list',
+         'distdir': 'str', 'command': 'str', 'resume_command': 'str'})
 
     def __init__(self, distdir, command, resume_command=None,
                  required_chksums=None, userpriv=True, attempts=10,

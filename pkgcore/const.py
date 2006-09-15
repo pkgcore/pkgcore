@@ -23,7 +23,6 @@ PORTAGE_BIN_PATH    = osp.join(PORTAGE_BASE_PATH, 'bin')
 PORTAGE_DATA_PATH   = osp.join(PORTAGE_BASE_PATH, 'data')
 SYSTEM_CONF_FILE    = '/etc/pkgcore.conf'
 USER_CONF_FILE      = osp.expanduser('~/.pkgcore.conf')
-CONF_DEFAULTS       = PORTAGE_DATA_PATH+"/conf_default_types"
 
 GLOBAL_CONF_FILE    = PORTAGE_DATA_PATH + '/global_conf'
 #PORTAGE_PYM_PATH   = PORTAGE_BASE_PATH+"/pym"

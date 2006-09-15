@@ -10,65 +10,113 @@ L{configuration exception<pkgcore.config.errors.ConfigurationError>}
 """
 
 
-from pkgcore.config import errors
+from pkgcore.config import errors, configurable, ConfigHint
+from pkgcore.util import currying
 from pkgcore.util.demandload import demandload
-demandload(globals(),
-    "pkgcore.util:modules ")
+demandload(globals(), "inspect pkgcore.util:modules")
 
 type_names = (
-    "list", "str", "bool", "section_ref", "section_refs", "section_name")
+    "list", "str", "bool", "section_ref", "section_refs")
 
 
 class ConfigType(object):
 
-    """A configurable 'type"""
+    """A configurable type.
 
-    def __init__(self, typename, types, positional=None, incrementals=None, \
-        required=None, defaults=None, allow_unknowns=False):
+    @ivar name: string specifying the protocol the instantiated object
+        conforms to.
+    @ivar callable: callable used to instantiate this type.
+    @ivar types: dict mapping key names to type strings.
+    @ivar positional: container holding positional arguments.
+    @ivar incrementals: container holding incrementals.
+    @ivar required: container holding required arguments.
+    @ivar allow_unknowns: controls whether unknown settings should error.
+    """
 
+    def __init__(self, func_obj):
+        """Create from a callable (function, member function, class).
+
+        It uses the defaults to determine type:
+         - True or False mean it's a boolean
+         - a tuple means it's a list (of strings)
+         - a str means it's a string
+         - some other object means it's a section_ref
+
+        If an argument has no default, it is assumed to be a string-
+        exception to this is if the callable has a pkgcore_config_type
+        attr that is a L{ConfigHint} instance, in which case those
+        override.
         """
-        @param typename: name of the type, used in errors.
-        @param types: dict mapping key names to type strings.
-        @param positional: container holding positional arguments.
-        @param incrementals: container holding incrementals.
-        @param required: container holding required arguments.
-        @param defaults: L{ConfigSection} with default values.
-        @param allow_unknowns: controls whether unknown settings should error.
-        """
-
-        if positional is None:
-            positional = []
-        if incrementals is None:
-            incrementals = []
-        if required is None:
-            required = []
+        self.name = func_obj.__name__
+        self.callable = func_obj
+        if inspect.isclass(func_obj):
+            func = func_obj.__init__
+        else:
+            func = func_obj
+        args, varargs, varkw, defaults = inspect.getargspec(func)
+        if inspect.ismethod(func):
+            # chop off 'self'
+            args = args[1:]
+        self.types = {}
+        # getargspec is weird
         if defaults is None:
-            defaults = HardCodedConfigSection(
-                'empty defaults for %r' % typename, {})
+            defaults = ()
+        # iterate through defaults backwards, so they match up to argnames
+        for i, default in enumerate(defaults[::-1]):
+            argname = args[-1 - i]
+            if default is True or default is False:
+                self.types[argname] = 'bool'
+            elif isinstance(default, tuple):
+                self.types[argname] = 'list'
+            elif isinstance(default, str):
+                self.types[argname] = 'str'
+            else:
+                self.types[argname] = 'section_ref'
+        # just [:-len(defaults)] doesn't work if there are no defaults
+        self.positional = args[:len(args)-len(defaults)]
+        # no defaults to determine the type from -> default to str.
+        for arg in self.positional:
+            self.types[arg] = 'str'
+        self.required = list(self.positional)
+        self.incrementals = []
+        self.allow_unknowns = False
 
-        self.typename = typename
-        self.positional = positional
-        self.incrementals = incrementals
-        self.required = required
-        self.defaults = defaults
-        self.allow_unknowns = bool(allow_unknowns)
+        # Process ConfigHint (if any)
+        hint_overrides = getattr(func_obj, "pkgcore_config_type", None)
+        if hint_overrides is not None:
+            if not isinstance(hint_overrides, ConfigHint):
+                raise TypeError('pkgcore_config_type should be a ConfigHint')
+            self.types.update(hint_overrides.types)
+            if hint_overrides.required:
+                self.required = list(hint_overrides.required)
+            if hint_overrides.positional:
+                self.positional = list(hint_overrides.positional)
+            if hint_overrides.typename:
+                self.name = hint_overrides.typename
+            if hint_overrides.incrementals:
+                self.incrementals = hint_overrides.incrementals
+            self.allow_unknowns = hint_overrides.allow_unknowns
+        elif varargs is not None or varkw is not None:
+            raise TypeError(
+                'func %s accepts *args or **kwargs, and no ConfigHint is '
+                'provided' % (self.callable,))
 
         for var, var_typename in (
             ('class', 'callable'),
-            ('type', 'str'),
             ('inherit', 'list'),
+            ('default', 'bool'),
             ):
-            if var in types:
+            if var in self.types:
                 raise errors.TypeDefinitionError(
-                    '%s: you cannot change the type of %r' % (typename, var))
-            types[var] = var_typename
-        self.types = types
+                    '%s: you cannot change the type of %r' % (
+                        self.callable, var))
+            self.types[var] = var_typename
 
         for var in self.positional:
             if var not in self.required:
                 raise errors.TypeDefinitionError(
                     '%s: %r is in positionals but not in required' %
-                    (typename, var))
+                    (self.callable, var))
 
 
 class ConfigSection(object):
@@ -92,35 +140,21 @@ class ConfigSection(object):
         """Return a setting, converted to the requested type."""
         raise NotImplementedError
 
-    def get_section_ref(self, central, section, msg):
-        assert central is not None
-        if not isinstance(section, basestring):
-            raise errors.ConfigurationError(msg % (
-                    "got section %r which isn't a basestring; indicates "
-                    "HardCodedConfigSection definition is broke" % (section,)))
-        try:
-            conf = central.get_section_config(section)
-        except KeyError:
-            raise errors.ConfigurationError(msg % 'not found')
-        try:
-            return central.instantiate_section(section, conf=conf)
-        except (SystemExit, KeyboardInterrupt, AssertionError):
-            raise
-        except errors.ConfigurationError:
-            raise
-        except Exception, e:
-            s = "Exception " + str(e)
-            raise errors.ConfigurationError(msg % s)
 
+class DictConfigSection(ConfigSection):
 
+    """Turns a dict and a conversion function into a ConfigSection."""
 
-class ConfigSectionFromStringDict(ConfigSection):
+    def __init__(self, conversion_func, source_dict):
+        """Initialize.
 
-    """Useful for string-based config implementations."""
-
-    def __init__(self, name, source_dict):
+        @type  conversion_func: callable.
+        @param conversion_func: called with a ConfigManager, a value from
+            the dict and a type name.
+        @type  source_dict: dict with string keys and arbitrary values.
+        """
         ConfigSection.__init__(self)
-        self.name = name
+        self.func = conversion_func
         self.dict = source_dict
 
     def __contains__(self, name):
@@ -130,103 +164,96 @@ class ConfigSectionFromStringDict(ConfigSection):
         return self.dict.keys()
 
     def get_value(self, central, name, arg_type):
-        value = self.dict[name]
-        if arg_type == 'callable':
-            try:
-                func = modules.load_attribute(value)
-            except modules.FailedImport:
-                raise errors.ConfigurationError(
-                    '%r: cannot import %r' % (self.name, value))
-            if not callable(func):
-                raise errors.ConfigurationError(
-                    '%r: %r is not callable' % (self.name, value))
-            return func
-        elif arg_type == 'section_refs':
-            result = []
-            if "cache" in value:
-                print value, list_parser(value)
-            value = list_parser(value)
-            for x in value:
-                result.append(self.get_section_ref(
-                        central, x,
-                        "%r: requested section refs %r for section %r, "
-                        "section %r: error %%s" %
-                        (self.name, value, name, x)))
-            return result
-        elif arg_type == 'section_ref':
-            value = str_parser(value)
-            return self.get_section_ref(central, value,
-                "%r: requested section ref %r for section %r: error %%s" %
-                (self.name, name, value))
-        return {
-            'list': list_parser,
-            'str': str_parser,
-            'bool': bool_parser,
-            }[arg_type](value)
+        try:
+            return self.func(central, self.dict[name], arg_type)
+        except errors.ConfigurationError, e:
+            e.stack.append('Converting argument %r to %s' % (name, arg_type))
+            raise
 
 
-class HardCodedConfigSection(ConfigSection):
+def convert_string(central, value, arg_type):
+    """Conversion func for a string-based DictConfigSection."""
+    assert isinstance(value, basestring), value
+    if arg_type == 'callable':
+        try:
+            func = modules.load_attribute(value)
+        except modules.FailedImport:
+            raise errors.ConfigurationError('cannot import %r' % (value,))
+        if not callable(func):
+            raise errors.ConfigurationError('%r is not callable' % (value,))
+        return func
+    elif arg_type == 'section_refs':
+        return list(central.collapse_named_section(ref)
+                    for ref in list_parser(value))
+    elif arg_type == 'section_ref':
+        return central.collapse_named_section(str_parser(value))
+    return {
+        'list': list_parser,
+        'str': str_parser,
+        'bool': bool_parser,
+        }[arg_type](value)
 
-    """Just wrap around a dict."""
-
-    def __init__(self, name, source_dict):
-        ConfigSection.__init__(self)
-        self.name = name
-        self.dict = source_dict
-
-    def __contains__(self, name):
-        return name in self.dict
-
-    def keys(self):
-        return self.dict.keys()
-
-    def get_value(self, central, name, arg_type):
-        types = {
-            'list': list,
-            'str': str,
-            'bool': bool,
-            }
-        value = self.dict[name]
-        if arg_type == 'callable':
-            if not callable(value):
-                try:
-                    value = modules.load_attribute(value)
-                except modules.FailedImport:
-                    raise errors.ConfigurationError(
-                        '%r: cannot import %r' % (self.name, value))
-                if not callable(value):
-                    raise errors.ConfigurationError(
-                        '%r: %r is not callable' % (self.name, value))
-
-        elif arg_type == 'section_ref':
-            value = self.get_section_ref(central, value,
-                "%r: requested section %r for section %r: error %%s" %
-                (self.name, name, value))
-
-        elif arg_type == 'section_refs':
-            l = []
-            for x in value:
-                l.append(self.get_section_ref(
-                        central, x,
-                        "%r: requested section refs %r for section %r, "
-                        "section ref %r: error %%s" %
-                        (self.name, value, name, x)))
-            value = l
-
-        elif not isinstance(value, types[arg_type]):
-            raise errors.ConfigurationError(
-                '%s: %r does not have type %r' % (self.name, name, arg_type))
-
+def convert_asis(central, value, arg_type):
+    """"Conversion" func assuming the types are already correct."""
+    if arg_type == 'callable':
+        if not callable(value):
+            raise errors.ConfigurationError('%r is not callable' % (value,))
         return value
+    elif arg_type == 'section_ref':
+        if not isinstance(value, ConfigSection):
+            raise errors.ConfigurationError('%r is not a config section' %
+                                            (value,))
+        return central.collapse_section(value)
+    elif arg_type == 'section_refs':
+        l = []
+        for section in value:
+            if not isinstance(section, ConfigSection):
+                raise errors.ConfigurationError('%r is not a config section' %
+                                                (value,))
+            l.append(central.collapse_section(section))
+        return l
+    elif not isinstance(value, {'list': (list, tuple),
+                                'str': str,
+                                'bool': bool}[arg_type]):
+        raise errors.ConfigurationError(
+            '%r does not have type %r' % (value, arg_type))
+    return value
 
-def SectionAlias(new_section, section):
-    """convience function to generate a section alias
-    @param new_section: str name of the new section
-    @param section: str name of the section to alias
-    @return: L{ConfigSectionFromStringDict}
+def convert_hybrid(central, value, arg_type):
+    """Automagically switch between L{convert_string} and L{convert_asis}.
+
+    L{convert_asis} is used for arg_type str and if value is not a basestring.
+    L{convert_string} is used for the rest.
+
+    Be careful about handing in escaped strings: they are not
+    unescaped (for arg_type str).
     """
-    return ConfigSectionFromStringDict(new_section,
-        {"type": "alias", "section": section})
+    if arg_type != 'str' and isinstance(value, basestring):
+        return convert_string(central, value, arg_type)
+    return convert_asis(central, value, arg_type)
+
+# "Invalid name" (pylint thinks these are module-level constants)
+# pylint: disable-msg=C0103
+HardCodedConfigSection = currying.pre_curry(DictConfigSection, convert_asis)
+ConfigSectionFromStringDict = currying.pre_curry(DictConfigSection,
+                                                 convert_string)
+AutoConfigSection = currying.pre_curry(DictConfigSection, convert_hybrid)
+
+
+def section_alias(target, typename=None):
+    """Build a ConfigSection that instantiates a named reference.
+
+    Because of central's caching our instantiated value will be
+    identical to our target's.
+    """
+    if typename is None:
+        target_type = 'section_ref'
+    else:
+        target_type = 'ref:' + typename
+    @configurable({'target': target_type}, typename=typename)
+    def alias(target):
+        return target
+    return AutoConfigSection({'class': alias, 'target': target})
 
 
 def list_parser(string):
@@ -283,3 +310,15 @@ def bool_parser(string):
     if s in ("yes", "true", "1"):
         return True
     raise errors.ConfigurationError('%r is not a boolean' % s)
+
+
+@configurable({'path': 'str', 'parser': 'callable'}, typename='configsection')
+def parse_config_file(path, parser):
+    try:
+        f = open(path, 'r')
+    except (IOError, OSError), e:
+        raise errors.InstantiationError(e.strerror)
+    try:
+        return parser(f)
+    finally:
+        f.close()

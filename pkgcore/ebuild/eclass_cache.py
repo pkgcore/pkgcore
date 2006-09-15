@@ -7,7 +7,7 @@ in memory representation of on disk eclass stacking order
 """
 
 from pkgcore.interfaces.data_source import local_source
-from pkgcore.config.introspect import ConfigHint
+from pkgcore.config import ConfigHint
 from pkgcore.util.mappings import ImmutableDict
 from pkgcore.util.weakrefs import WeakValCache
 
@@ -32,7 +32,8 @@ class cache(base):
     Set to None if that method isn't possible.
     """
 
-    pkgcore_config_type = ConfigHint({"path":"str", "portdir":"str"})
+    pkgcore_config_type = ConfigHint({"path":"str", "portdir":"str"},
+                                     typename='eclass_cache')
 
     def __init__(self, path, portdir=None):
         """
@@ -111,8 +112,9 @@ class StackedCaches(cache):
     Does L->R searching for eclass matches.
     """
 
-    pkgcore_config_type = ConfigHint({"caches":"section_refs", "portdir":"str",
-                                      "eclassdir":"str"})
+    pkgcore_config_type = ConfigHint(
+        {'caches': 'refs:eclass_cache', 'portdir': 'str', 'eclassdir': 'str'},
+        typename='eclass_cache')
 
     def __init__(self, caches, **kwds):
         """

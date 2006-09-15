@@ -8,12 +8,24 @@ per key file based backend
 import os, stat, errno
 from pkgcore.cache import fs_template
 from pkgcore.cache import errors
+from pkgcore.config import ConfigHint
+
 
 class database(fs_template.FsBased):
 
     """
     stores cache entries in key=value form, stripping newlines
     """
+
+    # TODO different way of passing in default auxdbkeys and location
+    pkgcore_config_type = ConfigHint(
+        {'readonly': 'bool', 'location': 'str', 'label': 'str',
+         'auxdbkeys': 'list'},
+        required=['location', 'label', 'auxdbkeys'],
+        positional=['location', 'label', 'auxdbkeys'],
+        typename='cache')
+
+
     autocommits = True
 
     def __init__(self, *args, **config):

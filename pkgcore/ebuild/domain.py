@@ -9,6 +9,7 @@ gentoo configuration domain
 
 import os, operator
 import pkgcore.config.domain
+from pkgcore.config import ConfigHint
 from itertools import chain, imap
 from pkgcore.restrictions.delegated import delegate
 from pkgcore.restrictions import packages, values, restriction
@@ -22,6 +23,7 @@ from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.config.errors import BaseException
 from pkgcore.util.demandload import demandload
+from pkgcore.ebuild import const
 from pkgcore.ebuild.profiles import incremental_negations
 from pkgcore.util.commandline import generate_restriction
 
@@ -114,11 +116,34 @@ def generate_unmasking_restrict(unmasks):
 
 
 class domain(pkgcore.config.domain.domain):
-    def __init__(self, incrementals, root, profile, repositories, vdb,
-                 name=None, **settings):
+
+    # XXX ouch, verify this crap and add defaults and stuff
+    _types = {
+        'profile': 'ref:profile', 'fetcher': 'ref:fetcher',
+        'repositories': 'refs:repo', 'vdb': 'refs:repo',
+        'name': 'str',
+        }
+    for _thing in list(const.incrementals) + ['package.unmask', 'bashrc'] + [
+        'package.mask', 'package.keywords', 'package.license', 'package.use']:
+        _types[_thing] = 'list'
+    for _thing in ['root', 'CHOST', 'CFLAGS', 'PATH', 'PORTAGE_TMPDIR',
+                   'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR']:
+        _types[_thing] = 'str'
+
+    # TODO this is missing defaults
+    pkgcore_config_type = ConfigHint(
+            _types, incrementals=const.incrementals, typename='domain',
+            required=['repositories', 'profile', 'vdb', 'fetcher', 'name'],
+            allow_unknowns=True)
+
+    del _types, _thing
+
+    def __init__(self, profile, repositories, vdb, name=None, root='/',
+                 incrementals=const.incrementals, **settings):
         # voodoo, unfortunately (so it goes)
         # break this up into chunks once it's stabilized (most of code
         # here has already, but still more to add)
+        settings.setdefault('ACCEPT_LICENSE', const.ACCEPT_LICENSE)
         pkg_maskers = list(profile.maskers)
         pkg_unmaskers, pkg_keywords, pkg_license = [], [], []
         pkg_use = []
@@ -226,9 +251,6 @@ class domain(pkgcore.config.domain.domain):
         # if it's made it this far...
 
         settings["ROOT"] = root
-        # this should be handled via another means
-        if "default" in settings:
-            del settings["default"]
         self.settings = settings
 
         bashrc = list(profile.bashrc)

@@ -7,8 +7,9 @@ Converts portage configuration files into L{pkgcore.config} form.
 """
 
 import os
-from pkgcore.config import basics, introspect
+from pkgcore.config import basics, configurable
 from pkgcore import const
+from pkgcore.ebuild import const as ebuild_const
 from pkgcore.util.demandload import demandload
 demandload(globals(), "errno pkgcore.config:errors "
     "pkgcore.pkgsets.glsa:SecurityUpgrades "
@@ -17,6 +18,15 @@ demandload(globals(), "errno pkgcore.config:errors "
     "pkgcore.util.osutils:listdir_files ")
 
 
+def my_convert_hybrid(manager, val, arg_type):
+    """Modified convert_hybrid using a sequence of strings for section_refs."""
+    if arg_type == 'section_refs':
+        return list(manager.collapse_named_section(name) for name in val)
+    return basics.convert_hybrid(manager, val, arg_type)
+
+
+@configurable({'ebuild_repo': 'ref:repo', 'vdb': 'ref:repo',
+               'profile': 'ref:profile'})
 def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     """
     generate a GLSA vuln. pkgset limited by profile
@@ -27,16 +37,12 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     """
     arch = profile.conf.get("ARCH")
     if arch is None:
-        raise errors.InstantiationError(
-            "pkgcore.ebuild.portage_conf.SecurityUpgradesViaProfile",
-            (ebuild_repo, vdb, profile), {}, "arch wasn't set in profiles")
+        raise errors.InstantiationError("arch wasn't set in profiles")
     return SecurityUpgrades(ebuild_repo, vdb, arch)
 
-SecurityUpgradesViaProfile.pkgcore_config_type = introspect.ConfigHint(types={
-    "ebuild_repo":"section_ref", "vdb":"section_ref", "profile":"section_ref"})
 
-
-def configFromMakeConf(location="/etc/"):
+@configurable({'location': 'str'}, typename='configsection')
+def config_from_make_conf(location="/etc/"):
     """
     generate a config from a file location
 
@@ -50,7 +56,7 @@ def configFromMakeConf(location="/etc/"):
 
     pjoin = os.path.join
 
-    config_root = os.environ.get("CONFIG_ROOT", "/") + "/"
+    config_root = os.environ.get("CONFIG_ROOT", "/")
     base_path = pjoin(config_root, location.strip("/"))
     portage_base = pjoin(base_path, "portage")
 
@@ -62,8 +68,8 @@ def configFromMakeConf(location="/etc/"):
             sourcing_command="source"))
     conf_dict.setdefault("PORTDIR", "/usr/portage")
     root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
-    gentoo_mirrors = [
-        x+"/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split()]
+    gentoo_mirrors = list(
+        x+"/distfiles" for x in conf_dict.pop("GENTOO_MIRRORS", "").split())
     if not gentoo_mirrors:
         gentoo_mirrors = None
 
@@ -72,60 +78,56 @@ def configFromMakeConf(location="/etc/"):
     new_config = {}
 
     # sets...
-    new_config["world"] = basics.ConfigSectionFromStringDict("world",
-        {"type": "pkgset", "class": "pkgcore.pkgsets.filelist.FileList",
-        "location": "%s/%s" % (root, const.WORLD_FILE)})
-    new_config["system"] = basics.ConfigSectionFromStringDict("system",
-        {"type": "pkgset", "class": "pkgcore.pkgsets.system.SystemSet",
-        "profile": "profile"})
+    new_config["world"] = basics.AutoConfigSection({
+            "class": "pkgcore.pkgsets.filelist.FileList",
+            "location": pjoin(root, const.WORLD_FILE)})
+    new_config["system"] = basics.AutoConfigSection({
+            "class": "pkgcore.pkgsets.system.SystemSet",
+            "profile": "profile"})
 
     set_fp = pjoin(portage_base, "sets")
     if os.path.isdir(set_fp):
         for setname in listdir_files(set_fp):
-            new_config[setname] = basics.ConfigSectionFromStringDict(setname,
-                {"class":"pkgcore.pkgsets.filelist.FileList", "type":"pkgset",
-                "location":pjoin(set_fp, setname)})
+            # Potential for name clashes here, those will just make
+            # the set not show up in config.
+            new_config[setname] = basics.AutoConfigSection({
+                    "class":"pkgcore.pkgsets.filelist.FileList",
+                    "location":pjoin(set_fp, setname)})
 
-
-
-    new_config["vdb"] = basics.ConfigSectionFromStringDict(
-        "vdb", {
-            "type": "repo",
+    new_config["vdb"] = basics.AutoConfigSection({
             "class": "pkgcore.vdb.repository",
-            "location": "%s/var/db/pkg" % config_root.rstrip("/")})
+            "location": pjoin(config_root, 'var', 'db', 'pkg')})
 
+    make_profile = pjoin(base_path, 'make.profile')
     try:
-        profile = os.path.abspath(pjoin(base_path, 
-            os.readlink(pjoin(base_path, "make.profile"))))
-        # normalize...
-        profile = "%s%s" % (os.path.sep, os.path.sep.join(
-            x for x in profile.split(os.path.sep) if x))
+        profile = normpath(abspath(pjoin(
+                    base_path, os.readlink(make_profile))))
     except OSError, oe:
         if oe.errno in (errno.ENOENT, errno.EINVAL):
             raise errors.InstantiationError(
-                "configFromMakeConf", [], {},
-                "%s/make.profile must be a symlink pointing to a real target"
-                % base_path)
-        raise errors.InstantiationError("configFromMakeConf", [], {},
-            "%s/make.profile: unexepect error- %s" % (base_path, oe))
-
-    psplit = [piece for piece in profile.split("/") if piece]
-    # poor mans rindex.
-    try:
-        stop = max(idx for idx, val in enumerate(psplit) if val == "profiles")
-        if stop + 1 >= len(psplit):
-            raise ValueError
-    except ValueError:
+                "%s must be a symlink pointing to a real target" % (
+                    make_profile,))
         raise errors.InstantiationError(
-            "configFromMakeConf", [], {},
-            "%s/make.profile expands to %s, but no profile/profile base "
-            "detected" % (base_path, profile))
+            "%s: unexepect error- %s" % (make_profile, oe.strerror))
 
-    new_config["profile"] = basics.ConfigSectionFromStringDict("profile",
-        {"type": "profile", "class": "pkgcore.ebuild.profiles.OnDiskProfile",
-         "base_path": pjoin("/", *psplit[:stop+1]),
-         "profile": pjoin(*psplit[stop + 1:])})
+    psplit = list(piece for piece in profile.split(os.path.sep) if piece)
+    # poor mans rindex.
+    for i, piece in enumerate(reversed(psplit)):
+        if piece == 'profiles':
+            break
+    else:
+        raise errors.InstantiationError(
+            '%s expands to %s, but no profiles base detected' % (
+                pjoin(base_path, 'make.profile'), profile))
+    if not i:
+        raise errors.InstantiationError(
+            '%s expands to %s, but no profile detected' % (
+                pjoin(base_path, 'make.profile'), profile))
 
+    new_config["profile"] = basics.AutoConfigSection({
+            "class": "pkgcore.ebuild.profiles.OnDiskProfile",
+            "base_path": pjoin("/", *psplit[:-i]),
+            "profile": pjoin(*psplit[-i:])})
 
     portdir = normpath(conf_dict.pop("PORTDIR").strip())
     portdir_overlays = [
@@ -136,110 +138,108 @@ def configFromMakeConf(location="/etc/"):
     fetchcommand = conf_dict.pop("FETCHCOMMAND")
     resumecommand = conf_dict.pop("RESUMECOMMAND", fetchcommand)
 
-    new_config["fetcher"] = basics.ConfigSectionFromStringDict("fetcher",
-        {"type": "fetcher", "distdir": distdir, "command": fetchcommand,
-        "resume_command": resumecommand})
-
-    if os.path.exists(base_path+"portage/modules"):
-        pcache = read_dict(
-            base_path+"portage/modules").get("portdbapi.auxdbmodule", None)
-
-
-    rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache")) \
-        and "metadata-transfer" not in features
+    new_config["fetcher"] = basics.AutoConfigSection({
+            "class": "pkgcore.fetch.custom.fetcher",
+            "distdir": distdir,
+            "command": fetchcommand,
+            "resume_command": resumecommand})
 
     # define the eclasses now.
     all_ecs = []
     for x in [portdir] + portdir_overlays:
         ec_path = pjoin(x, "eclass")
-        new_config[ec_path] = basics.ConfigSectionFromStringDict(
-            ec_path,
-            {"class":"pkgcore.ebuild.eclass_cache.cache",
-             "type":"misc", "path":ec_path, "portdir":portdir})
+        new_config[ec_path] = basics.AutoConfigSection({
+                "class": "pkgcore.ebuild.eclass_cache.cache",
+                "path": ec_path,
+                "portdir": portdir})
         all_ecs.append(ec_path)
 
-    def gen_tree_dict(loc, mirrors):
-        return {"type": "repo", "class": "pkgcore.ebuild.repository.tree",
-            "location":loc, "cache": ("%s cache" % loc,),
-            "default_mirrors": mirrors,
-            "eclass_cache": "eclass stack"}
-
-    def generate_generic_cache(loc):
-        return {"type": "cache",
-                "location": "%s/var/cache/edb/dep" % config_root.rstrip("/"),
-                "label": loc,
-                "class": "pkgcore.cache.flat_hash.database"}
+    new_config['ebuild-repo-common'] = basics.AutoConfigSection({
+            'class': 'pkgcore.ebuild.repository.tree',
+            'default_mirrors': gentoo_mirrors,
+            'eclass_cache': 'eclass stack'})
+    new_config['cache-common'] = basics.AutoConfigSection({
+            'class': 'pkgcore.cache.flat_hash.database',
+            'auxdbkeys': ebuild_const.metadata_keys,
+            'location': pjoin(config_root, 'var', 'cache', 'edb', 'dep'),
+            })
 
     for tree_loc in portdir_overlays:
-        new_config[tree_loc] = basics.HardCodedConfigSection(tree_loc,
-            gen_tree_dict(tree_loc, gentoo_mirrors))
-        new_config["%s cache" % tree_loc] = \
-            basics.ConfigSectionFromStringDict(
-            "%s cache" % tree_loc,
-            generate_generic_cache(tree_loc))
+        new_config[tree_loc] = basics.AutoConfigSection({
+                'inherit': ('ebuild-repo-common',),
+                'location': tree_loc,
+                'cache': (basics.AutoConfigSection({
+                            'inherit': ('cache-common',),
+                            'label': tree_loc}),),
+                })
+
+    rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache")) \
+        and "metadata-transfer" not in features
 
     # if a metadata cache exists, use it
     if rsync_portdir_cache:
-        new_config["portdir cache"] = \
-            basics.ConfigSectionFromStringDict("portdir cache",
-            {"type": "cache", "location": portdir,
-            "label": "portdir cache",
-            "class": "pkgcore.cache.metadata.database"})
+        new_config["portdir cache"] = basics.AutoConfigSection({
+                'class': 'pkgcore.cache.metadata.database',
+                'location': portdir,
+                'label': 'portdir cache',
+                'auxdbkeys': ebuild_const.metadata_keys})
     else:
-        new_config["portdir cache"] = \
-            basics.ConfigSectionFromStringDict("portdir cache",
-            generate_generic_cache(portdir))
+        new_config["portdir cache"] = basics.AutoConfigSection({
+                'inherit': ('cache-common',),
+                'label': portdir})
 
     # setup portdir.
-    d = gen_tree_dict(portdir, gentoo_mirrors)
-    d["cache"] = ("portdir cache",)
-    if len(all_ecs) > 1:
-        s = "%s cache" % portdir
-        new_config[s] = basics.ConfigSectionFromStringDict(s,
-            generate_generic_cache(portdir))
-        if rsync_portdir_cache:
-            d["cache"] = (s,) + d["cache"]
-    new_config[portdir] = basics.HardCodedConfigSection(portdir, d)
-    del d
-
-    # generate standalone portdir now, named 'portdir'
-    if len(all_ecs) == 1:
-        # nothing special, just alias.
-        new_config["portdir"] = basics.SectionAlias("portdir", portdir)
+    cache = ('portdir cache',)
+    if not portdir_overlays:
+        new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, {
+                'inherit': ('ebuild-repo-common',),
+                'location': portdir,
+                'cache': ('portdir cache',)})
+        new_config["eclass stack"] = basics.section_alias(
+            pjoin(portdir, 'eclass'), 'eclass_cache')
+        new_config['portdir'] = basics.section_alias(portdir, 'repo')
+        new_config['repo-stack'] = basics.section_alias(portdir, 'repo')
     else:
-        # something special. ;)
-        # FIX
-        d = gen_tree_dict(portdir, gentoo_mirrors)
-        d["eclass_cache"] = pjoin(portdir, "eclass")
+        # There's always at least one (portdir) so this means len(all_ecs) > 1
+        new_config['%s cache' % (portdir,)] = basics.AutoConfigSection({
+                'inherit': ('cache-common',),
+                'label': portdir})
+        cache = ('portdir cache',)
+        if rsync_portdir_cache:
+            cache = ('%s cache' % (portdir,),) + cache
+        new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, {
+                'inherit': ('ebuild-repo-common',),
+                'location': portdir,
+                'cache': cache})
+
         if rsync_portdir_cache:
             # created higher up; two caches, writes to the local,
             # reads (when possible) from pregenned metadata
-            d["cache"] = ("portdir cache",)
-        new_config["portdir"] = basics.HardCodedConfigSection("portdir", d)
+            cache = ('portdir cache',)
+        else:
+            cache = ('%s cache' % (portdir,),)
+        new_config['portdir'] = basics.DictConfigSection(my_convert_hybrid, {
+                'inherit': ('ebuild-repo-common',),
+                'location': portdir,
+                'cache': cache,
+                'eclass_cache': pjoin(portdir, 'eclass')})
 
-
-    # assemble the eclasses now.
-    if len(all_ecs) > 1:
         # reverse the ordering so that overlays override portdir
         # (portage default)
-        new_config["eclass stack"] = basics.HardCodedConfigSection(
-            "eclass stack",
-            {"class":"pkgcore.ebuild.eclass_cache.StackedCaches",
-             "type":"misc",
-             "caches":tuple(reversed(all_ecs))})
-    else:
-        # via forced portdir above, no need to verify bool(all_ecs),
-        # we know it's just portdir.
-        new_config["eclass stack"] = basics.SectionAlias('eclass stack',
-                                                         all_ecs[0])
-    del all_ecs
+        new_config["eclass stack"] = basics.DictConfigSection(
+            my_convert_hybrid, {
+                'class': 'pkgcore.ebuild.eclass_cache.StackedCaches',
+                'caches': tuple(reversed(all_ecs))})
 
+        new_config['repo-stack'] = basics.DictConfigSection(my_convert_hybrid,
+            {'class': 'pkgcore.ebuild.overlay_repository.OverlayRepo',
+             'trees': tuple([portdir] + portdir_overlays)})
 
-    if portdir_overlays:
-        new_config["repo-stack"] = basics.HardCodedConfigSection("portdir",
-            {"type": "repo",
-             "class": "pkgcore.ebuild.overlay_repository.OverlayRepo",
-             "trees": tuple([portdir] + portdir_overlays)})
+    # XXX I have nfc what all this is about
+
+#     if os.path.exists(base_path+"portage/modules"):
+#         pcache = read_dict(
+#             base_path+"portage/modules").get("portdbapi.auxdbmodule", None)
 
 #        cache_config = {"type": "cache",
 #                        "location": "%s/var/cache/edb/dep" %
@@ -258,17 +258,16 @@ def configFromMakeConf(location="/etc/"):
 #        new_config["cache"] = basics.ConfigSectionFromStringDict(
 #            "cache", cache_config)
 
-    else:
-        new_config['repo-stack'] = basics.SectionAlias('repo-stack', portdir)
 
-
-    new_config["glsa"] = basics.HardCodedConfigSection("glsa",
-        {"type": "pkgset", "class": SecurityUpgradesViaProfile,
-        "ebuild_repo": "repo-stack", "vdb": "vdb", "profile":"profile"})
+    new_config['glsa'] = basics.AutoConfigSection({
+            'class': SecurityUpgradesViaProfile,
+            'ebuild_repo': 'repo-stack',
+            'vdb': 'vdb',
+            'profile': 'profile'})
 
     #binpkg.
-    pkgdir = conf_dict.pop("PKGDIR", None)
-    default_repos = "repo-stack"
+    pkgdir = conf_dict.pop('PKGDIR', None)
+    default_repos = ('repo-stack',)
     if pkgdir is not None:
         try:
             pkgdir = abspath(pkgdir)
@@ -277,29 +276,26 @@ def configFromMakeConf(location="/etc/"):
                 raise
             pkgdir = None
         if pkgdir and os.path.isdir(pkgdir):
-            new_config["binpkg"] = \
-                basics.ConfigSectionFromStringDict("binpkg",
-                {"class":"pkgcore.binpkg.repository.tree", "type":"repo",
-                "location":pkgdir})
-            default_repos += " binpkg"
-
+            new_config['binpkg'] = basics.ConfigSectionFromStringDict({
+                    'class': 'pkgcore.binpkg.repository.tree',
+                    'location': pkgdir})
+            default_repos += ('binpkg',)
 
     # finally... domain.
-
-    d = {"repositories":default_repos, "fetcher": "fetcher", "default": "yes",
-        "vdb": "vdb", "profile": "profile", "type": "domain"}
     conf_dict.update({
-            "repositories": default_repos,
-            "fetcher": "fetcher", "default": "yes",
-            "vdb": "vdb", "profile": "profile", "type": "domain"})
-
-    # finally... package.* additions
+            'class': 'pkgcore.ebuild.domain.domain',
+            'repositories': default_repos,
+            'fetcher': 'fetcher',
+            'default': True,
+            'vdb': ('vdb',),
+            'profile': 'profile',
+            'name': 'livefs domain'})
     for f in (
         "package.mask", "package.unmask", "package.keywords", "package.use"):
         fp = pjoin(portage_base, f)
         if os.path.isfile(fp):
             conf_dict[f] = fp
-    new_config["livefs domain"] = basics.ConfigSectionFromStringDict(
-        "livefs domain", conf_dict)
+    new_config['livefs domain'] = basics.DictConfigSection(my_convert_hybrid,
+                                                           conf_dict)
 
     return new_config

@@ -16,6 +16,7 @@ from pkgcore.interfaces import data_source
 from pkgcore.util.osutils import listdir_dirs
 from pkgcore.repository import multiplex, virtual
 from pkgcore.util import bzip2
+from pkgcore.config import ConfigHint
 from pkgcore.ebuild import ebuild_src
 
 from pkgcore.util.demandload import demandload
@@ -48,6 +49,8 @@ class tree(prototype.tree):
     configurables = ("domain", "settings")
     configure = None
     format_magic = "ebuild_built"
+
+    pkgcore_config_type = ConfigHint({'location': 'str'}, typename='repo')
 
     def __init__(self, location):
         prototype.tree.__init__(self, frozen=False)

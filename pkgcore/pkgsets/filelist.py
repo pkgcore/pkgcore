@@ -7,9 +7,10 @@ pkgset based around loading a list of atoms from a world file
 
 from pkgcore.ebuild.atom import atom
 import pkgcore.const
+from pkgcore.config import ConfigHint
 
 class FileList(object):
-    pkgcore_config_type = True
+    pkgcore_config_type = ConfigHint(typename='pkgset')
 
     def __init__(self, location=pkgcore.const.WORLD_FILE):
         self.path = location

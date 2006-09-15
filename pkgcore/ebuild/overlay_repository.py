@@ -6,8 +6,7 @@ implementation of the standard PORTDIR + PORTDIR_OVERLAY repository stacking
 """
 
 from pkgcore.repository import multiplex
-from pkgcore.config.introspect import ConfigHint
-from pkgcore.config import errors
+from pkgcore.config import ConfigHint, errors
 from pkgcore.ebuild import repository
 from pkgcore.util.lists import unstable_unique
 from pkgcore.restrictions import packages
@@ -21,8 +20,7 @@ class OverlayRepo(multiplex.tree):
     Eclass dir is shared, the first package leftmost returned.
     """
 
-    pkgcore_config_type = ConfigHint(types={"trees":"section_refs"},
-        required=("trees",), positional=("trees",))
+    pkgcore_config_type = ConfigHint({'trees': 'refs:repo'}, typename='repo')
 
     configured = False
     configurables = ("domain", "settings",)
@@ -38,7 +36,7 @@ class OverlayRepo(multiplex.tree):
         """
 
         if not trees or len(trees) < 2:
-            raise errors.InstantiationError(self.__class__, trees, {},
+            raise errors.InstantiationError(
                 "Must specify at least two pathes to ebuild trees to overlay")
 
         multiplex.tree.__init__(self, *trees)

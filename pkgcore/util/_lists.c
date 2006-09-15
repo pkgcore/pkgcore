@@ -128,7 +128,7 @@ pkgcore_iflatten_func_iternext(pkgcore_iflatten_func *self) {
     self->in_iternext = 1;
 
     /* Look at the final iterator on our stack: */
-    while(n = PyList_GET_SIZE(self->iterables)) {
+    while ((n = PyList_GET_SIZE(self->iterables))) {
         tail = PyList_GET_ITEM(self->iterables, n - 1);
 
         /* See if it has any results left: */
@@ -333,7 +333,7 @@ pkgcore_iflatten_instance_iternext(pkgcore_iflatten_instance *self) {
 
     /* Look at the final iterator on our stack: */
 
-    while(n = PyList_GET_SIZE(self->iterables)) {
+    while ((n = PyList_GET_SIZE(self->iterables))) {
         tail = PyList_GET_ITEM(self->iterables, n - 1);
 
         /* See if it has any results left: */

@@ -1,0 +1,153 @@
+#!/usr/bin/env python
+# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
+# License: GPL2
+
+"""Configuration querying utility."""
+
+import sys
+import optparse
+
+from pkgcore.config import load_config, errors
+
+
+class OptionParser(optparse.OptionParser):
+
+    """Our option parser."""
+
+    def __init__(self):
+        optparse.OptionParser.__init__(self, description=__doc__)
+        self.add_option('--info', action='store_true',
+                        help='Print a summary of the configuration.')
+        self.add_option('--dump', action='store_true',
+                        help='Dump the entire configuration.'
+                        'The format used is similar to the ini-like default '
+                        'format, but do not rely on this to always write a '
+                        'loadable config. There may be quoting issues.')
+        self.add_option('--classes', action='store_true',
+                        help='List all classes referenced by the config.')
+        self.add_option('--uncollapsable', action='store_true',
+                        help='show things that could not be collapsed.')
+        self.add_option('--debug', action='store_true',
+                        help='print some extra info useful for pkgcore devs.')
+
+
+    def check_values(self, vals, args):
+        if args:
+            self.error('what do you want me to do with %s?' % (args,))
+        modes = sum(getattr(vals, attr) and 1 or 0
+                    for attr in ['info', 'dump', 'classes', 'uncollapsable'])
+        if modes > 1:
+            self.error('specify only one mode please')
+        if not modes:
+            self.error('nothing to do!')
+        return vals, args
+
+def dump_section(config, sections, indent='    '):
+    print indent + '# type: %s' % (config.type.name,)
+    print indent + 'class %s.%s;' % (config.type.callable.__module__,
+                                       config.type.callable.__name__)
+    for key, val in sorted(config.config.iteritems()):
+        typename = config.type.types.get(key)
+        if typename is None:
+            if config.type.allow_unknowns:
+                typename = 'str'
+            else:
+                print indent + '# huh, no type set for %s (%r)' % (key, val)
+                continue
+        if typename == 'str':
+            print indent + '%s %r;' % (key, val)
+        elif typename == 'bool':
+            print indent + '%s %s;' % (key, bool(val))
+        elif typename == 'list':
+            print indent + '%s %s;' % (
+                key, ' '.join(repr(string) for string in val))
+        elif typename == 'callable':
+            print indent + '%s %s.%s' % (key, val.__module__, val.__name__)
+        elif typename == 'section_ref' or typename.startswith('ref:'):
+            name = sections.get(val)
+            if name is None:
+                print indent + '%s {' % (key,)
+                dump_section(val, sections, indent=indent+'    ')
+                print indent + '};'
+            else:
+                print indent + '%s %r;' % (key, name)
+        elif typename == 'section_refs' or typename.startswith('refs:'):
+            # TODO this thing prints more spaces than it should
+            print indent + '%s' % (key,),
+            for i, subconf in enumerate(val):
+                name = sections.get(subconf)
+                if name is None:
+                    print '{'
+                    dump_section(subconf, sections, indent=indent+'    ')
+                    print indent + '}',
+                else:
+                    print repr(name),
+            print ';'
+        else:
+            print indent + '# %s = %r of unknown type %s' % (
+                key, val, typename)
+
+
+def get_classes(configs):
+    """Return a set of referenced classes."""
+    # Not particularly efficient (doesn't memoize already visited configs)
+    classes = set()
+    for config in configs:
+        classes.add('%s.%s' % (config.type.callable.__module__,
+                               config.type.callable.__name__))
+        for key, val in config.config.iteritems():
+            typename = config.type.types.get(key)
+            if typename is None:
+                continue
+            if typename == 'section_ref' or typename.startswith('ref:'):
+                classes.update(get_classes((val,)))
+            elif typename == 'section_refs' or typename.startswith('refs:'):
+                classes.update(get_classes(val))
+    return classes
+
+
+def main(config, options):
+    sections = []
+    for name in config.sections():
+        try:
+            sections.append((name, config.collapse_named_section(name)))
+        except errors.ConfigurationError, e:
+            if options.uncollapsable:
+                print str(e)
+                print
+            # Otherwise ignore this.
+    if options.uncollapsable:
+        return
+    sections.sort()
+    if options.info:
+        print 'XXX this is pretty useless, try --dump'
+    elif options.dump:
+        revmap = dict((config, name) for name, config in sections)
+        for name, section in sections:
+            print '%r {' % (name,)
+            dump_section(section, revmap)
+            print '}'
+            print
+    elif options.classes:
+        print '\n'.join(sorted(get_classes(section
+                                           for name, section in sections)))
+
+# XXX this entire block is duplicated from pquery2. Should probably be
+# split out to something like pkgcore.util.commandline (along with an
+# OptionParser subclass to make sure we have the debug option).
+if __name__ == '__main__':
+    try:
+        parsed_options, remaining_args = OptionParser().parse_args()
+        try:
+            # Yes, we really want main() inside this block (to catch
+            # delayed InstantiationErrors)
+            exitstatus = main(load_config(debug=parsed_options.debug),
+                              parsed_options)
+        except errors.ConfigurationError, e:
+            if parsed_options.debug:
+                raise
+            print >> sys.stderr, 'Error in configuration: %s' % (e,)
+            exitstatus = 1
+    except KeyboardInterrupt:
+        exitstatus = 1
+    sys.exit(exitstatus)

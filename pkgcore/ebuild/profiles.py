@@ -6,7 +6,7 @@ gentoo profile support
 """
 
 import os, errno
-from pkgcore.config import profiles
+from pkgcore.config import profiles, ConfigHint
 from pkgcore.util.file import iter_read_bash, read_bash_dict
 from pkgcore.util.currying import pre_curry
 from pkgcore.ebuild.atom import atom
@@ -79,9 +79,19 @@ class OnDiskProfile(profiles.base):
 
     api subject to change (not stable)
     """
+    _types = {'profile': 'str', 'base_path': 'str'}
+    for thing in const.incrementals:
+        _types[thing] = 'list'
+    for thing in ['profile_incrementals', 'package.keywords', 'package.use',
+                  'package.unmask', 'package.mask']:
+        _types[thing] = 'list'
 
-    def __init__(self, profile, incrementals=None, base_repo=None,
-                 base_path=None):
+    pkgcore_config_type = ConfigHint(
+        _types, typename='profile', incrementals=const.incrementals)
+    del _types, thing
+
+    def __init__(self, profile, incrementals=const.incrementals,
+                 base_repo=None, base_path=None):
 
         """
         @param profile: profile name to scan
@@ -96,31 +106,20 @@ class OnDiskProfile(profiles.base):
         pjoin = os.path.join
         profile = profile.strip()
 
-        if incrementals is None:
-            incrementals = list(const.incrementals)
         if base_path is None and base_repo is None:
             raise InstantiationError(
-                self.__class__, [profile], {"incrementals": incrementals,
-                                            "base_repo": base_repo,
-                                            "base_path": base_path},
-                "either base_path, or location must be set")
+                "either base_path or location must be set")
 
         if base_repo is not None:
             self.basepath = pjoin(base_repo.base, "profiles")
         elif base_path is not None:
             if not os.path.exists(base_path):
                 raise InstantiationError(
-                    self.__class__, [profile], {
-                        "incrementals": incrementals,
-                        "base_repo": base_repo, "base_path": base_path},
                     "if defined, base_path(%s) must exist-" % base_path)
             self.basepath = base_path
 
         else:
             raise InstantiationError(
-                self.__class__, [profile], {"incrementals": incrementals,
-                                            "base_repo": base_repo,
-                                            "base_path": base_path},
                 "either base_repo or base_path must be configured")
 
         self.load_deprecation_status(profile)

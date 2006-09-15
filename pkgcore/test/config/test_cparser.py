@@ -24,79 +24,6 @@ class CaseSensitiveConfigParserTest(unittest.TestCase):
         self.assertEquals(cp.get('HEADER', 'foo'), 'notbar')
 
 
-class TypesConfigFromIniTest(unittest.TestCase):
-
-    def test_basic(self):
-        types = cparser.config_types_from_file(StringIO("""
-# random comment
-
-[profile]
-list = %(stuff)s extra
-incrementals = %(stuff)s
-class = pkgcore.ebuild blah
-defaults = class
-
-[DEFAULT]
-stuff = basic
-
-"""))
-        self.assertEquals(types.keys(), ['profile'])
-        self.assertEquals(types['profile'].incrementals, ('basic',))
-        self.assertEquals(types['profile'].positional, ())
-        self.assertEquals(types['profile'].required, ())
-        self.assertEquals(
-            types['profile'].types,
-            {'basic': 'list',
-             'extra': 'list',
-             'class': 'callable',
-             'inherit': 'list',
-             'type': 'str',
-             })
-        self.assertEquals(types['profile'].defaults.keys(), ['class'])
-
-    def test_defaults(self):
-        types = cparser.config_types_from_file(StringIO('''
-[test]
-defaults = foo
-foo = bar
-'''))
-        testtype = types['test']
-        self.assertEquals(types['test'].incrementals, ())
-        self.assertEquals(types['test'].positional, ())
-        self.assertEquals(types['test'].required, ())
-        self.assertEquals(testtype.defaults.keys(), ['foo'])
-
-    def test_missing_defaults(self):
-        types = StringIO('''
-[test]
-defaults = foo
-''')
-        self.assertRaises(
-            errors.TypeDefinitionError,
-            cparser.config_types_from_file, types)
-
-    def test_leftover_defaults(self):
-        types = StringIO('''
-[test]
-defaults = foo
-foo = bar
-bar = baz
-''')
-        self.assertRaises(
-            errors.TypeDefinitionError,
-            cparser.config_types_from_file, types)
-
-    def test_duplicate_type(self):
-        types = StringIO('''
-[test]
-str = foo
-list = foo
-''')
-        self.assertRaises(
-            errors.TypeDefinitionError,
-            cparser.config_types_from_file, types)
-
-
 class ConfigFromIniTest(unittest.TestCase):
 
     def test_config_from_ini(self):
@@ -126,4 +53,4 @@ ref = 'missing'
         self.assertRaises(
             errors.ConfigurationError,
             section.get_value,
-            central.ConfigManager([], []), 'ref', 'section_ref')
+            central.ConfigManager([]), 'ref', 'section_ref')

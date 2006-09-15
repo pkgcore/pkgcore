@@ -17,6 +17,7 @@ from pkgcore.util.containers import InvertedContains
 from pkgcore.util.obj import make_kls
 demandload(globals(), "pkgcore.ebuild.ebd:buildable "
     "pkgcore.interfaces.data_source:local_source ")
+from pkgcore.config import ConfigHint
 
 from pkgcore.plugins import get_plugin
 
@@ -37,6 +38,12 @@ class UnconfiguredTree(prototype.tree):
     configurables = ("domain", "settings",)
     configure = None
     format_magic = "ebuild_src"
+
+    pkgcore_config_type = ConfigHint(
+        {'location': 'str', 'cache': 'refs:cache',
+         'eclass_cache': 'ref:eclass_cache', 'mirrors_file': 'str',
+         'default_mirrors': 'list'},
+        typename='repo')
 
     def __init__(self, location, cache=None, eclass_cache=None,
                  mirrors_file=None, default_mirrors=None):

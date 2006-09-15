@@ -2,214 +2,395 @@
 # Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-"""Collapse multiple config- and type-datasources and instantiate from them"""
+"""Collapse multiple config-sources and instantiate from them.
 
-from pkgcore.config import errors
-from pkgcore.util.mappings import LazyValDict
-from pkgcore.util.currying import pre_curry
-from pkgcore.config import introspect
+A lot of extra documentation on this is in dev-notes/config.rst.
+"""
+
+
+from pkgcore.config import errors, basics
+from pkgcore.util import mappings
+
+
+class _ConfigMapping(mappings.DictMixin):
+
+    """Minimal dict-like wrapper returning config sections by type.
+
+    Similar to L{LazyValDict<mappings.LazyValDict>} but __getitem__
+    does not call the key func for __getitem__.
+    """
+
+    def __init__(self, manager, typename):
+        mappings.DictMixin.__init__(self)
+        self.manager = manager
+        self.typename = typename
+
+    def __getitem__(self, key):
+        conf = self.manager.collapse_named_section(key, raise_on_missing=False)
+        if conf is None or conf.type.name != self.typename:
+            raise KeyError(key)
+        return conf.instantiate()
+
+    def iterkeys(self):
+        return self.manager.sections(self.typename)
+
+
+class CollapsedConfig(object):
+
+    """A collapsed config section.
+
+    @type type: L{basics.ConfigType}
+    @ivar type: Our type.
+    @type config: dict
+    @ivar type: The supplied configuration values.
+    @ivar debug: if True exception wrapping is disabled.
+    """
+
+    def __init__(self, type_obj, config, debug=False):
+        """Initialize instance vars."""
+        # Check if we got all values required to instantiate.
+        missing = set(type_obj.required) - set(config)
+        if missing:
+            raise errors.ConfigurationError(
+                'type %s.%s needs settings for %s' %
+                (type_obj.callable.__module__,
+                 type_obj.callable.__name__,
+                 ', '.join(repr(var) for var in missing)))
+
+        self.debug = debug
+        self.type = type_obj
+        self.config = config
+        # Cached instance if we have one.
+        self._instance = None
+
+    def instantiate(self):
+        """Call our type's callable, cache and return the result.
+
+        Calling instantiate more than once will return the cached value.
+        """
+        if self._instance is not None:
+            return self._instance
+
+        # Needed because this code can run twice even with instance
+        # caching if we trigger an InstantiationError.
+        config = mappings.ProtectedDict(self.config)
+
+        # Instantiate section refs.
+        # Careful: not everything we have for needs to be in the conf dict
+        # (because of default values) and not everything in the conf dict
+        # needs to have a type (because of allow_unknowns).
+        for name, val in config.iteritems():
+            typename = self.type.types.get(name)
+            if typename is None:
+                continue
+            # central already checked the type, no need to repeat that here.
+            if typename.startswith('ref:') or typename == 'section_ref':
+                try:
+                    config[name] = val.instantiate()
+                except errors.ConfigurationError, e:
+                    e.stack.append('Instantiating ref %r' % (name,))
+                    raise
+            elif typename.startswith('refs:') or typename == 'section_refs':
+                try:
+                    config[name] = list(ref.instantiate() for ref in val)
+                except errors.ConfigurationError, e:
+                    e.stack.append('Instantiating ref %r' % (name,))
+                    raise
+
+        callable_obj = self.type.callable
+
+        pargs = []
+        for var in self.type.positional:
+            pargs.append(config.pop(var))
+        # Python is basically the worst language ever:
+        # TypeError: repo() argument after ** must be a dictionary
+        configdict = dict(config)
+        try:
+            self._instance = callable_obj(*pargs, **configdict)
+        except errors.InstantiationError, e:
+            # This is probably just paranoia, but better safe than sorry.
+            if e.callable is None:
+                e.callable = callable_obj
+                e.pargs = pargs
+                e.kwargs = config
+            raise
+        except (RuntimeError, SystemExit, KeyboardInterrupt):
+            raise
+        except Exception, e:
+            if self.debug:
+                raise
+            raise errors.InstantiationError(exception=e,
+                                            callable_obj=callable_obj,
+                                            pargs=pargs, kwargs=config)
+        if self._instance is None:
+            raise errors.InstantiationError(
+                'No object returned', callable_obj=callable_obj, pargs=pargs,
+                kwargs=config)
+
+        return self._instance
 
 
 class ConfigManager(object):
 
-    def __init__(self, config_types, configs):
+    """Combine config type definitions and configuration sections.
+
+    Creates instances of a requested type and name by pulling the
+    required data from any number of provided configuration sources.
+
+    The following special type names are recognized:
+
+    configsection: instantiated and used the same way as an entry in the
+        configs L{__init__} arg.
+    remoteconfigsection: Instantiated and used the same way as an entry in the
+        remote_configs L{__init__} arg.
+
+    These "magic" typenames are only recognized if they are used by a
+    section with a name starting with "autoload".
+    """
+
+    def __init__(self, configs=(), remote_configs=(), debug=False):
         """Initialize.
 
-        @param configTypes: sequence of mappings of strings to ConfigType.
-        @param configs: sequence of mappings of strings to ConfigSections.
+        @type  configs: sequence of mappings of string to ConfigSection.
+        @param configs: configuration to use.
+            Can define extra configs that are also loaded.
+        @type remote_configs: sequence of mappings of string to ConfigSection.
+        @param remote_configs: configuration to use.
+            Cannot define extra configs.
+        @param debug: if set to True exception wrapping is disabled.
+            This means things can raise other exceptions than
+            ConfigurationError but tracebacks are complete.
         """
-        # TODO autoexecs
-        self.configs = list(configs)
-        self.instantiated = {}
-        self.types = {}
-        for types in config_types:
-            for type_name, type_obj in types.iteritems():
-                if type_name in self.types:
-                    raise errors.BaseException(
-                        'type %r was defined twice' % type_name)
-                self.types[type_name] = type_obj
-                setattr(self, type_name, LazyValDict(
-                    pre_curry(self.sections, type_name),
-                    self.instantiate_section))
+        self.original_configs = tuple(configs)
+        self.original_remote_configs = tuple(remote_configs)
+        # Set of encountered section names, used to catch recursive references.
+        self._refs = set()
+        self.debug = debug
+        self.reload()
+
+    def reload(self):
+        """Reinitialize us from the config sources originally passed in.
+
+        This throws away all cached instances and re-executes autoloads.
+        """
+        # "Attribute defined outside __init__"
+        # pylint: disable-msg=W0201
+        self.configs = (list(self.original_configs) +
+                        list(self.original_remote_configs))
+        # Cache mapping confname to CollapsedConfig.
+        self.collapsed_configs = {}
+        self._exec_configs(self.original_configs)
+
+    def __getattr__(self, attr):
+        return _ConfigMapping(self, attr)
+
+    def _exec_configs(self, configs):
+        """Pull extra type and config sections from configs and use them.
+
+        Things loaded this way are added after already loaded things
+        (meaning the config containing the autoload section overrides
+        the config(s) added by that section).
+        """
+        new_configs = []
+        for config in configs:
+            for name in config:
+                # Do not even touch the ConfigSection if it's not an autoload.
+                if not name.startswith('autoload'):
+                    continue
+                # If this matches something we previously instantiated
+                # we should probably blow up to prevent massive
+                # amounts of confusion (and recursive autoloads)
+                if name in self.collapsed_configs:
+                    raise errors.ConfigurationError(
+                        'section %r from autoload is already collapsed!' % (
+                            name,))
+                try:
+                    collapsed = self.collapse_named_section(name)
+                except errors.ConfigurationError, e:
+                    e.stack.append('collapsing autoload %r' % (name,))
+                    raise
+                if collapsed.type.name not in (
+                    'configsection', 'remoteconfigsection'):
+                    continue
+                try:
+                    instance = collapsed.instantiate()
+                except errors.ConfigurationError, e:
+                    e.stack.append('instantiating autoload %r' % (name,))
+                    raise
+                if collapsed.type.name == 'configsection':
+                    new_configs.append(instance)
+                elif collapsed.type.name == 'remoteconfigsection':
+                    self.configs.append(instance)
+        if new_configs:
+            self.configs.extend(new_configs)
+            self._exec_configs(new_configs)
 
     def sections(self, type_name=None):
-        """With no arguments, return a list of all section names.
+        """With no arguments, return an iterator of all section names.
 
         With an argument, restrict to sections of that type.
+
+        Careful: this function will collapse all our configs to get at
+        their types, which might be slow if any of them are remote!
         """
-        res = []
-        for config in self.configs:
-            if type_name is None:
-                res.extend(config.keys())
+        if type_name is None:
+            for config in self.configs:
+                for name in config:
+                    yield name
+        else:
+            for config in self.configs:
+                for name in config:
+                    try:
+                        collapsed = self.collapse_named_section(name)
+                    except errors.BaseException:
+                        # Cannot be collapsed, ignore it (this is not
+                        # an error, it can be used as base for
+                        # something that can be collapsed)
+                        pass
+                    else:
+                        if collapsed.type.name == type_name:
+                            yield name
+
+    def collapse_named_section(self, name, raise_on_missing=True):
+        """Collapse a config by name, possibly returning a cached instance.
+
+        @returns: L{CollapsedConfig}.
+
+        If there is no section with this name a ConfigurationError is raised,
+        unless raise_on_missing is False in which case None is returned.
+        """
+        if name in self._refs:
+            raise errors.ConfigurationError(
+                'Reference to %r is recursive' % (name,))
+        self._refs.add(name)
+        try:
+            result = self.collapsed_configs.get(name)
+            if result is not None:
+                return result
+            for config in self.configs:
+                if name in config:
+                    section = config[name]
+                    break
             else:
-                for name, conf in config.iteritems():
-                    if ('type' in conf and
-                        conf.get_value(self, 'type', 'str') == type_name):
-                        res.append(name)
-        return res
+                if raise_on_missing:
+                    raise errors.ConfigurationError(
+                        'no section called %r' % (name,))
+                return None
+            try:
+                result = self.collapse_section(section)
+            except errors.ConfigurationError, e:
+                e.stack.append('Collapsing section named %r' % (name,))
+                raise
+            self.collapsed_configs[name] = result
+            return result
+        finally:
+            self._refs.remove(name)
 
-    def get_section_config(self, section):
-        for config in self.configs:
-            if section in config:
-                return config[section]
-        raise KeyError(section)
-
-    def collapse_config(self, section, conf=None):
-        """collapse a section's config to a dict for instantiating it."""
-        if conf is None:
-            conf = self.get_section_config(section)
-        if 'type' not in conf:
-            raise errors.ConfigurationError('%s: type not set' % section)
-        type_name = conf.get_value(self, 'type', 'str')
-        type_obj = self.types[type_name]
-
-        slist = [(section, conf)]
+    def collapse_section(self, section, _refs=None):
+        """Collapse a ConfigSection to a L{CollapsedConfig}."""
+        # List of (name, ConfigSection) tuples, most specific first.
+        slist = [(None, section)]
 
         # first map out inherits.
+        inherit_names = set()
         for current_section, current_conf in slist:
-            if 'inherit' in current_conf:
-                for inherit in current_conf.get_value(
-                    self, 'inherit', 'list'):
-                    try:
-                        inherited_conf = self.get_section_config(inherit)
-                    except KeyError:
-                        raise errors.ConfigurationError(
-                            '%s: inherit target %r cannot be found' %
-                            (current_section, inherit))
-                    else:
-                        slist.append((inherit, inherited_conf))
-        type_override = None
+            if 'inherit' not in current_conf:
+                continue
+            for inherit in current_conf.get_value(self, 'inherit', 'list'):
+                if inherit in inherit_names:
+                    raise errors.ConfigurationError('Inherit %r is recursive'
+                                                    % (inherit,))
+                inherit_names.add(inherit)
+                for config in self.configs:
+                    if inherit in config:
+                        slist.append((inherit, config[inherit]))
+                        break
+                else:
+                    raise errors.ConfigurationError(
+                        'inherit target %r cannot be found' % (inherit,))
+
+        # Grab the "class" setting first (we need it to get a type obj
+        # to support incrementals in the more general loop)
         for inherit_name, inherit_conf in slist:
             if "class" in inherit_conf:
-                type_override = inherit_conf
+                break
+        else:
+            raise errors.ConfigurationError('no class specified')
 
-        if type_override is not None:
-            class_obj = type_override.get_value(self, "class",
-                                                type_obj.types["class"])
-            if getattr(class_obj, "pkgcore_config_type", False):
-                type_obj = introspect.config_type_from_callable(class_obj)
-        del type_override
+        type_obj = basics.ConfigType(inherit_conf.get_value(self, 'class',
+                                                            'callable'))
 
         # collapse, honoring incrementals.
-
-        # remember that inherit's are l->r.	 So the slist above works
-        # with incrementals, and default overrides (doesn't look it,
-        # but it does. tree isn't needed, list suffices)
-
         conf = {}
-        while slist:
-            inherit_name, inherit_conf = slist.pop(-1)
-            additions = {}
-            for x in inherit_conf.keys():
+        for inherit_name, inherit_conf in slist:
+            for key in inherit_conf.keys():
+                if key in conf and key not in type_obj.incrementals:
+                    continue
                 try:
-                    typename = type_obj.types[x]
+                    typename = type_obj.types[key]
                 except KeyError:
                     if not type_obj.allow_unknowns:
-                        if inherit_name != section:
+                        if inherit_name is not None:
                             raise errors.ConfigurationError(
-                                '%r: type of %r inherited from %r unknown' % (
-                                section, x, inherit_name))
+                                'type of %r inherited from %r unknown' % (
+                                    key, inherit_name))
                         raise errors.ConfigurationError(
-                            '%r: type of %r unknown' % (
-                            section, x))
-
+                            'type of %r unknown' % (key,))
                     typename = 'str'
-                additions[x] = inherit_conf.get_value(self, x, typename)
-            for x in type_obj.incrementals:
-                if x in additions and x in conf:
-                    additions[x] = conf[x] + additions[x]
+                subtypename = None
+                if typename.startswith('refs:'):
+                    subtypename = typename.split(':', 1)[1]
+                    typename = 'section_refs'
+                elif typename.startswith('ref:'):
+                    subtypename = typename.split(':', 1)[1]
+                    typename = 'section_ref'
+                result = inherit_conf.get_value(self, key, typename)
+                if typename == 'section_ref' and subtypename is not None:
+                    if result.type.name != subtypename:
+                        raise errors.ConfigurationError(
+                            '%r should be of type %r, got %r' % (
+                                key, subtypename, result.type.name))
+                if typename == 'section_refs' and subtypename is not None:
+                    for sub in result:
+                        if sub.type.name != subtypename:
+                            raise errors.ConfigurationError(
+                                '%r should be of type %r, got %r' % (
+                                    key, subtypename, sub.type.name))
+                if key in conf and key in type_obj.incrementals:
+                    conf[key] = result + conf[key]
+                else:
+                    conf[key] = result
 
-            conf.update(additions)
-
+        # Remove values internal to the config machinery.
         conf.pop('inherit', None)
+        conf.pop('default', None)
+        conf.pop('class')
 
-        # grab any required defaults from the type
-        for default in type_obj.defaults.keys():
-            if default not in conf:
-                conf[default] = type_obj.defaults.get_value(
-                    self, default, type_obj.types[default])
-
-        for var in type_obj.required:
-            if var not in conf:
-                if type_obj.types.get(var, None) == "section_name":
-                    conf[var] = section
-                    continue
-                raise errors.ConfigurationError(
-                    'type %r needs a setting for %r in section %r' %
-                    (type_name, var, section))
-
-        return conf
-
-    def instantiate_section(self, section, conf=None, allow_reuse=True):
-        """make a section config into an actual object.
-
-        if conf is specified, allow_reuse is forced to false.
-        if conf isn't specified, it's pulled via get_section_config.
-        allow_reuse controls whether existing instantiations of that section
-        can be reused or not.
-        """
-        if allow_reuse:
-            if section in self.instantiated:
-                return self.instantiated[section]
-
-        # collapse_config will call get_section_config if conf is None
-        conf = self.collapse_config(section, conf)
-
-        type_name = conf['type']
-
-        if type_name == "alias":
-            return self.instantiate_section(conf["section"],
-                                            allow_reuse=allow_reuse)
-
-        del conf['type']
-
-        if 'class' not in conf:
-            raise errors.ConfigurationError(
-                '%s: no class specified' % section)
-        callable_obj = conf['class']
-        del conf['class']
-
-        pargs = []
-        for var in self.types[type_name].positional:
-            pargs.append(conf[var])
-            del conf[var]
-        try:
-            obj = callable_obj(*pargs, **conf)
-        except (RuntimeError, SystemExit, errors.InstantiationError):
-            raise
-        except Exception, e:
-            if not __debug__:
-                raise errors.InstantiationError(callable_obj, pargs, conf, e)
-            raise
-        if obj is None:
-            raise errors.InstantiationError(
-                callable_obj, pargs, conf,
-                errors.BaseException('No object returned'))
-
-        if allow_reuse:
-            self.instantiated[section] = obj
-
-        return obj
+        return CollapsedConfig(type_obj, conf, debug=self.debug)
 
     def get_default(self, type_name):
         """Finds the configuration specified default obj of type_name.
 
         Returns C{None} if no defaults.
         """
-        l = []
-        for section_name in getattr(self, type_name).iterkeys():
-            section_config = self.get_section_config(section_name)
-            try:
-                is_default = section_config.get_value(self, "default", "bool")
-            except KeyError:
-                is_default = False
-                pass
-            if is_default:
-                l.append(section_name)
-        if len(l) > 1:
-            raise errors.ConfigurationError(
-                "type %s has multiple defined defaults- %s" % (
-                    type_name, ", ".join(l)))
-        elif l:
-            return getattr(self, type_name)[l[0]]
+        default = None
+        for source in self.configs:
+            for name, section in source.iteritems():
+                try:
+                    is_default = section.get_value(self, 'default', 'bool')
+                except KeyError:
+                    is_default = False
+                if not is_default:
+                    continue
+                type_obj = basics.ConfigType(section.get_value(self, 'class',
+                                                               'callable'))
+                if type_obj.name != type_name:
+                    continue
+                if default is not None:
+                    raise errors.ConfigurationError(
+                        'both %r and %r are default for %r' % (
+                            default, name, type_name))
+                default = name
+            if default is not None:
+                return self.collapse_named_section(default).instantiate()
         return None

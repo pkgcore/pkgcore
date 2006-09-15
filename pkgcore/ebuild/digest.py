@@ -32,11 +32,11 @@ def parse_digest(path, throw_errors=True, kls_override=dict):
             else:
                 d2[chf] = l[1]
             chf_keys.add(chf)
-        f.close()
     except (OSError, IOError, TypeError), e:
-        if f is not None or not f.closed:
-            f.close()
         raise errors.ParseChksumError("failed parsing %r" % path, e)
+    finally:
+        if f is not None or not f.close:
+            f.close()
 #
 #   mappings.potentially use a TupleBackedDict here.
 #   although no mem gain, and slower.

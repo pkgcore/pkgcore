@@ -1,8 +1,15 @@
+# Copyright 2004-2006 Brian Harring <ferringb@gmail.com>
+# Copyright 2006 Marien Zwart <marienz@gentoo.org>
+# Distributed under the terms of the GNU General Public License v2
+
 """
 os specific utilities, FS access mainly
 
-not heavily used right now, but will shift functions over to it as time goes by
 """
+
+import os, stat
+import fcntl
+import errno
 
 # No name '_readdir' in module osutils
 # pylint: disable-msg=E0611
@@ -17,16 +24,7 @@ listdir_dirs = module.listdir_dirs
 listdir_files = module.listdir_files
 
 del module
-# Copyright 2004 Brian Harring <ferringb@gmail.com>
-# Distributed under the terms of the GNU General Public License v2
 
-"""
-misc. livefs related ops
-"""
-
-import os, stat
-import fcntl
-import errno
 
 def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=False):
     """

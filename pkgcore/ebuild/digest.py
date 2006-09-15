@@ -11,6 +11,7 @@ from pkgcore.util.obj import make_SlottedDict_kls
 def parse_digest(path, throw_errors=True, kls_override=dict):
     d = kls_override()
     chf_keys = set(["size"])
+    f = None
     try:
         f = open(path, "r", 32384)
         for line in f:
@@ -33,6 +34,8 @@ def parse_digest(path, throw_errors=True, kls_override=dict):
             chf_keys.add(chf)
         f.close()
     except (OSError, IOError, TypeError), e:
+        if f is not None or not f.closed:
+            f.close()
         raise errors.ParseChksumError("failed parsing %r" % path, e)
 #
 #   mappings.potentially use a TupleBackedDict here.

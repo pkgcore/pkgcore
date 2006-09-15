@@ -13,7 +13,7 @@ from pkgcore.ebuild import const as ebuild_const
 from pkgcore.util.demandload import demandload
 demandload(globals(), "errno pkgcore.config:errors "
     "pkgcore.pkgsets.glsa:SecurityUpgrades "
-    "pkgcore.fs.util:normpath,abspath "
+    "pkgcore.util.osutils:normpath,abspath "
     "pkgcore.util.file:read_bash_dict,read_dict "
     "pkgcore.util.osutils:listdir_files ")
 

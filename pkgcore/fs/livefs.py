@@ -9,7 +9,7 @@ import os, collections
 from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO
 from pkgcore.fs.fs import (
     fsFile, fsDir, fsSymlink, fsDev, fsFifo, get_major_minor)
-from pkgcore.fs.util import normpath
+from pkgcore.util.osutils import normpath
 from pkgcore.fs.contents import contentsSet
 from pkgcore.chksum import get_handlers
 from pkgcore.util.mappings import LazyValDict

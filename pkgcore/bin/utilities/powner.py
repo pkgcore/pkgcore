@@ -3,7 +3,7 @@
 import sys, time
 from pkgcore.restrictions import packages, values
 from pkgcore.config import load_config
-from pkgcore.fs.util import normpath
+from pkgcore.util.osutils import normpath
 
 def grab_arg(arg, args):
     val = False

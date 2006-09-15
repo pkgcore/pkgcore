@@ -11,7 +11,7 @@ from twisted.trial import unittest
 from pkgcore.util.file import (
     iter_read_bash, read_bash, read_dict, AtomicWriteFile, read_bash_dict,
     ParseError)
-from pkgcore.test.fs.test_util import TempDirMixin
+from pkgcore.test.mixins import TempDirMixin
 
 
 class TestBashCommentStripping(unittest.TestCase):

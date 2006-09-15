@@ -9,7 +9,8 @@ L{pkgcore.plugins} to get at these ops.
 """
 
 import os, errno
-from pkgcore.fs import gen_obj, contents, fs, util
+from pkgcore.fs import gen_obj, contents, fs
+from pkgcore.util.osutils import ensure_dirs
 from pkgcore.spawn import spawn
 from pkgcore.const import COPY_BINARY
 from pkgcore.plugins import get_plugin
@@ -108,7 +109,7 @@ def default_copyfile(obj, mkdirs=False):
         basefp = os.path.dirname(obj.real_location)
         if basefp.strip(os.path.sep) and not os.path.exists(basefp):
             if mkdirs:
-                if not util.ensure_dirs(basefp, mode=0750, minimal=True):
+                if not ensure_dirs(basefp, mode=0750, minimal=True):
                     raise
             else:
                 raise

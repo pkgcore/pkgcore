@@ -7,7 +7,8 @@ gentoo/ebuild specific triggers
 
 from pkgcore.merge import triggers
 from pkgcore.util.file import read_bash_dict, AtomicWriteFile
-from pkgcore.fs import util, livefs
+from pkgcore.fs import livefs
+from pkgcore.util.osutils import normpath
 from pkgcore.util.currying import pre_curry
 from pkgcore.restrictions import values
 import os, errno, stat
@@ -102,7 +103,7 @@ def simple_chksum_compare(x, y):
 def gen_config_protect_filter(offset):
     collapsed_d = collapse_envd(os.path.join(offset, "etc/env.d"))
 
-    r = [values.StrGlobMatch(util.normpath(x).rstrip("/") + "/")
+    r = [values.StrGlobMatch(normpath(x).rstrip("/") + "/")
          for x in set(collapsed_d.get("CONFIG_PROTECT", []) + ["/etc"])]
     if len(r) > 1:
         r = values.OrRestriction(*r)
@@ -111,12 +112,12 @@ def gen_config_protect_filter(offset):
     neg = collapsed_d.get("CONFIG_PROTECT_MASK", None)
     if neg is not None:
         if len(neg) == 1:
-            r2 = values.StrGlobMatch(util.normpath(neg[0]).rstrip("/") + "/",
+            r2 = values.StrGlobMatch(normpath(neg[0]).rstrip("/") + "/",
                                      negate=True)
         else:
             r2 = values.OrRestriction(
                 negate=True,
-                *[values.StrGlobMatch(util.normpath(x).rstrip("/") + "/")
+                *[values.StrGlobMatch(normpath(x).rstrip("/") + "/")
                   for x in set(neg)])
         r = values.AndRestriction(r, r2)
     return r

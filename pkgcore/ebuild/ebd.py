@@ -17,7 +17,7 @@ from pkgcore.ebuild.processor import \
     request_ebuild_processor, release_ebuild_processor, \
     expected_ebuild_env, chuck_UnhandledCommand
 from pkgcore.os_data import portage_gid
-from pkgcore.fs.util import ensure_dirs, normpath
+from pkgcore.util.osutils import ensure_dirs, normpath
 from pkgcore.spawn import spawn_bash, spawn
 from pkgcore.util.currying import post_curry, pretty_docs
 from pkgcore.os_data import xargs

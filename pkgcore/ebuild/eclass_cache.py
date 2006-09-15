@@ -13,7 +13,7 @@ from pkgcore.util.weakrefs import WeakValCache
 
 from pkgcore.util.demandload import demandload
 demandload(globals(),
-           "pkgcore.fs.util:normpath pkgcore.util.mappings:StackedDict os")
+           "pkgcore.util.osutils:normpath pkgcore.util.mappings:StackedDict os")
 
 class base(object):
     pass

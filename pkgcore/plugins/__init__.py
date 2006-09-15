@@ -12,7 +12,7 @@ functionality it provides the config subsystem should be able to provide
 
 import os
 from pkgcore.const import plugins_dir
-from pkgcore.fs.util import FsLock, ensure_dirs, NonExistant
+from pkgcore.util.osutils import FsLock, ensure_dirs, NonExistant
 from pkgcore.os_data import portage_gid, root_uid
 from ConfigParser import RawConfigParser
 from pkgcore.util.modules import load_attribute

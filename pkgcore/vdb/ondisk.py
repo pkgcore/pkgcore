@@ -6,7 +6,7 @@ from pkgcore.repository import prototype, errors
 
 #needed to grab the PN
 from pkgcore.ebuild.cpv import CPV as cpv
-from pkgcore.fs.util import ensure_dirs
+from pkgcore.util.osutils import ensure_dirs
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import pre_curry
 from pkgcore.vdb.contents import ContentsFile

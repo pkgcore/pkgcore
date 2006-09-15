@@ -33,6 +33,15 @@ except IndexError: pass
    utf8/ascii
    
 
+-------------------------------------
+Throw self with a NotImplementedError
+
+Reason for this is simple; if you just throw a NotImplementedError, you can't
+tell how the path was hit if derivative classes are involved; thus throw
+NotImplementedError(self, string_name_of_attr)
+
+Far better tbs.
+
 ---------------------------
 Be aware of what the interpretter is actually doing.
 

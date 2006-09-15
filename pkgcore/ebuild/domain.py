@@ -376,7 +376,7 @@ class domain(pkgcore.config.domain.domain):
 
     def make_per_package_use(self, default_use, pkg_use):
         if not pkg_use:
-            return default,use, ((), {})
+            return default_use, ((), {})
         data = make_data_dict(pkg_use)
         repo = data[0].pop(0)
         repo = tuple(incremental_negations("use",

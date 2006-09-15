@@ -89,7 +89,7 @@ if __name__ == "__main__":
         if grab_arg(s, args):
             results_filter = func
 
-    atoms = map(parserestrict.generate_restriction, args)
+    atoms = map(parserestrict.parse_match, args)
 
     if len(atoms) > 1:
         atoms = packages.OrRestriction(*atoms)

@@ -4,7 +4,7 @@ from pkgcore.config import load_config
 from pkgcore.ebuild.atom import atom
 from pkgcore.util.lists import stable_unique
 from pkgcore.util.repo_utils import get_raw_repos
-from pkgcore.util.commandline import generate_restriction, collect_ops
+from pkgcore.util.parserestrict import parse_match, collect_ops
 from pkgcore.ebuild import resolver
 from pkgcore.repository import multiplex
 import sys
@@ -74,7 +74,7 @@ def parse_atom(repos, ignore_failures, *tokens):
     """
     atoms = []
     for x in tokens:
-        a = generate_restriction(x)
+        a = parse_match(x)
         if isinstance(a, atom):
             atoms.append(a)
             continue

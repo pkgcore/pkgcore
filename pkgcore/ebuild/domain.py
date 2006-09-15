@@ -25,7 +25,7 @@ from pkgcore.config.errors import BaseException
 from pkgcore.util.demandload import demandload
 from pkgcore.ebuild import const
 from pkgcore.ebuild.profiles import incremental_negations
-from pkgcore.util.commandline import generate_restriction
+from pkgcore.util.parserestrict import parse_match
 
 demandload(globals(), "warnings")
 
@@ -44,7 +44,7 @@ class Failure(BaseException):
 
 def package_keywords_splitter(val):
     v = val.split()
-    return generate_restriction(v[0]), stable_unique(v[1:])
+    return parse_match(v[0]), stable_unique(v[1:])
 
 
 # ow ow ow ow ow ow....
@@ -149,8 +149,8 @@ class domain(pkgcore.config.domain.domain):
         pkg_use = []
 
         for key, val, action in (
-            ("package.mask", pkg_maskers, generate_restriction),
-            ("package.unmask", pkg_unmaskers, generate_restriction),
+            ("package.mask", pkg_maskers, parse_match),
+            ("package.unmask", pkg_unmaskers, parse_match),
             ("package.keywords", pkg_keywords, package_keywords_splitter),
             ("package.license", pkg_license, package_keywords_splitter),
             ("package.use", pkg_use, package_keywords_splitter)):

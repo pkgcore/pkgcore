@@ -21,17 +21,23 @@ configuration dump could look like::
  <lots of output snipped>
 
  '/usr/local/portage/private' {
-     # type: repo
+     # typename of this section: repo
      class pkgcore.ebuild.repository.UnconfiguredTree;
+     # type: refs:cache
      cache {
-         # type: cache
+         # typename of this section: cache
          class pkgcore.cache.flat_hash.database;
  <some stuff snipped>
+         # type: str
          label '/usr/local/portage/private';
+         # type: str
          location '/var/cache/edb/dep';
-     } ;
+     };
+     # type: list
      default_mirrors 'http://ftp.easynet.nl/mirror/gentoo//distfiles';
+     # type: ref:eclass_cache
      eclass_cache 'eclass stack';
+     # type: str
      location '/usr/local/portage/private';
  }
  <lots of output snipped>
@@ -41,18 +47,18 @@ Starting at the top this means there is a "repo" known to pkgcore as
 "pkgcore.ebuild.repository.UnconfiguredTree". The "repo" type means it
 is something containing packages. The "class" means that this
 particular repo contains unbuilt ebuilds. Below that are various
-parameters specific to this class. How those are interpreted depends
-on the class.
+parameters specific to this class. The "type" comment tells you how
+the argument is interpreted (this depends on the class).
 
 The first is "cache". This is a nested section: it defines a new
 object of the type "cache", class "pkgcore.cache.flat_hash.database".
 Below that are the parameters given to this cache class. It is import
 to understand that the ebuild repository does not care about the exact
-class of the cache. All it needs is something of type "class". There
-could have been some db-based cache here for example.
+class of the cache. All it needs is one or more things of type
+"cache". There could have been some db-based cache here for example.
 
-The next argument to the repo is "default_mirrors" which is simply
-handled as a string, just like "location".
+The next argument to the repo is "default_mirrors" which is handled as
+a list of strings. "location" is a single string.
 
 "eclass_cache" is a section reference pointing to the named section
 "eclass stack" defined elsewhere in the dump (omitted here).
@@ -104,7 +110,7 @@ re-enable that, by putting in one of the configuration files::
 If you then run pconfig --dump you should see among other things::
 
  'autoload-portage' {
-    # type: configsection
+    # typename of this section: configsection
     class pkgcore.ebuild.portage_conf.config_from_make_conf;
  }
 
@@ -113,6 +119,14 @@ configuration data are an exception: they have to start with
 "autoload" or they will not be processed. If you change the section
 name to just "portage" you will still see it show up in pconfig --dump
 but all other things defined in make.conf will disappear.
+
+pconfig can tell you what arguments a class takes::
+
+ $ pconfig --describe-class pkgcore.config.basics.parse_config_file
+ typename is configsection
+
+ parser: callable (required)
+ path: str (required)
 
 If you wanted to remove the overlay mentioned at the top of this
 document from make.conf but keep it available to pkgcore you would
@@ -171,6 +185,9 @@ want to know why it is not collapsable).
 Actually the portage emulation mode uses inherit targets too, so you
 could just have inherited "ebuild-repo-common". Inherit targets do not
 have to live in the same file as they are inherited from.
+
+One last special features: things marked as "incremental" get their
+inherited value appended instead of overriding it.
 
 Different config format
 -----------------------

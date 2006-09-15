@@ -4,8 +4,8 @@
 
 """Configuration querying utility."""
 
-from pkgcore.config import errors
-from pkgcore.util import commandline, formatters
+from pkgcore.config import errors, basics
+from pkgcore.util import commandline, modules
 
 
 class OptionParser(commandline.OptionParser):
@@ -25,21 +25,31 @@ class OptionParser(commandline.OptionParser):
                         help='List all classes referenced by the config.')
         self.add_option('--uncollapsable', action='store_true',
                         help='show things that could not be collapsed.')
+        self.add_option('--describe-class', action='store', type='str',
+                        help='describe the arguments a class needs.')
 
     def check_values(self, vals, args):
         vals, args = commandline.OptionParser.check_values(self, vals, args)
-        modes = sum(getattr(vals, attr) and 1 or 0
-                    for attr in ['info', 'dump', 'classes', 'uncollapsable'])
+        modes = sum(
+            getattr(vals, attr) and 1 or 0
+            for attr in [
+                'info', 'dump', 'classes', 'uncollapsable', 'describe_class'])
         if modes > 1:
             self.error('specify only one mode please')
         if not modes:
             self.error('nothing to do!')
+        if vals.describe_class:
+            try:
+                vals.describe_class = modules.load_attribute(
+                    vals.describe_class)
+            except modules.FailedImport, e:
+                self.error(str(e))
         return vals, args
 
 
 def dump_section(config, out, sections):
     out.first_prefix.append('    ')
-    out.write('# type: %s' % (config.type.name,))
+    out.write('# typename of this section: %s' % (config.type.name,))
     out.write('class %s.%s;' % (config.type.callable.__module__,
                                 config.type.callable.__name__))
     for key, val in sorted(config.config.iteritems()):
@@ -50,6 +60,7 @@ def dump_section(config, out, sections):
             else:
                 out.write('# huh, no type set for %s (%r)' % (key, val))
                 continue
+        out.write('# type: %s' % (typename,))
         if typename == 'str':
             out.write('%s %r;' % (key, val))
         elif typename == 'bool':
@@ -115,6 +126,27 @@ def main(config, options, out, err):
     @type  err: file-like object
     @param err: stream for errors (usually C{sys.stderr})
     """
+    if options.describe_class:
+        # Doesn't actually use config! Do we need util.commandline to
+        # support this somehow?
+        try:
+            type_obj = basics.ConfigType(options.describe_class)
+        except errors.TypeDefinitionError:
+            out.write('Not a valid type!')
+            return 1
+        out.write('typename is %s' % (type_obj.name,))
+        if type_obj.allow_unknowns:
+            out.write('values not listed are handled as strings')
+        out.write()
+        out.autoline = False
+        for name, typename in sorted(type_obj.types.iteritems()):
+            out.write('%s: %s' % (name, typename))
+            if name in type_obj.required:
+                out.write(' (required)')
+            if name in type_obj.incrementals:
+                out.write(' (incremental)')
+            out.write('\n')
+        return
     sections = []
     for name in config.sections():
         try:

@@ -2,8 +2,10 @@
 """Classes wrapping a file-like object to do fancy output on it."""
 
 import os
-import sys
-import curses
+
+
+# "Invalid name" (for fg and bg methods, too short)
+# pylint: disable-msg=C0103
 
 
 class Formatter(object):
@@ -90,6 +92,9 @@ class PlainTextFormatter(Formatter):
             prefix = self.later_prefix
         # This is a bit braindead since it duplicates a lot of code
         # from write. Avoids fun things like word wrapped prefix though.
+
+        # Work if encoding is not set or is set to the empty string
+        encoding = getattr(self.stream, 'encoding', '') or 'ascii'
         for thing in prefix:
             while callable(thing):
                 thing = thing(self)
@@ -176,116 +181,119 @@ class PlainTextFormatter(Formatter):
         return ''
 
 
-class TerminfoColor(object):
+# This is necessary because the curses module is optional (and we
+# should run on a very minimal python for bootstrapping).
+try:
+    import curses
+except ImportError:
+    TerminfoColor = None
+else:
+    class TerminfoColor(object):
 
-    def __init__(self, mode, color):
-        self.mode = mode
-        self.color = color
+        def __init__(self, mode, color):
+            self.mode = mode
+            self.color = color
 
-    def __call__(self, formatter):
-        if self.color is None:
-            formatter._current_colors[self.mode] = None
-            res = formatter._color_reset
-            # slight abuse of boolean True/False and 1/0 equivalence
-            other = formatter._current_colors[not self.mode]
-            if other is not None:
-                res = res + other
-        else:
-            if self.mode == 0:
-                default = curses.COLOR_WHITE
+        def __call__(self, formatter):
+            if self.color is None:
+                formatter._current_colors[self.mode] = None
+                res = formatter._color_reset
+                # slight abuse of boolean True/False and 1/0 equivalence
+                other = formatter._current_colors[not self.mode]
+                if other is not None:
+                    res = res + other
             else:
-                default = curses.COLOR_BLACK
-            color = formatter._colors.get(self.color, default)
-            # The curses module currently segfaults if handed a
-            # bogus template so check explicitly.
-            template = formatter._set_color[self.mode]
-            if template:
-                res = curses.tparm(template, color)
-            else:
-                res = ''
-            formatter._current_colors[self.mode] = res
-        formatter.stream.write(res)
+                if self.mode == 0:
+                    default = curses.COLOR_WHITE
+                else:
+                    default = curses.COLOR_BLACK
+                color = formatter._colors.get(self.color, default)
+                # The curses module currently segfaults if handed a
+                # bogus template so check explicitly.
+                template = formatter._set_color[self.mode]
+                if template:
+                    res = curses.tparm(template, color)
+                else:
+                    res = ''
+                formatter._current_colors[self.mode] = res
+            formatter.stream.write(res)
 
 
-class TerminfoCode(object):
-    def __init__(self, value):
-        self.value = value
+    class TerminfoCode(object):
+        def __init__(self, value):
+            self.value = value
 
-class TerminfoMode(TerminfoCode):
-    def __call__(self, formatter):
-        formatter._modes.add(self)
-        formatter.stream.write(self.value)
+    class TerminfoMode(TerminfoCode):
+        def __call__(self, formatter):
+            formatter._modes.add(self)
+            formatter.stream.write(self.value)
 
-class TerminfoReset(TerminfoCode):
-    def __call__(self, formatter):
-        formatter._modes.clear()
-        formatter.stream.write(self.value)
+    class TerminfoReset(TerminfoCode):
+        def __call__(self, formatter):
+            formatter._modes.clear()
+            formatter.stream.write(self.value)
 
 
-class TerminfoFormatter(PlainTextFormatter):
+    class TerminfoFormatter(PlainTextFormatter):
 
-    """Formatter writing to a tty, using terminfo to do colors."""
+        """Formatter writing to a tty, using terminfo to do colors."""
 
-    _colors = dict(
-        black = curses.COLOR_BLACK,
-        red = curses.COLOR_RED,
-        green = curses.COLOR_GREEN,
-        yellow = curses.COLOR_YELLOW,
-        blue = curses.COLOR_BLUE,
-        magenta = curses.COLOR_MAGENTA,
-        cyan = curses.COLOR_CYAN,
-        white = curses.COLOR_WHITE)
+        _colors = dict(
+            black = curses.COLOR_BLACK,
+            red = curses.COLOR_RED,
+            green = curses.COLOR_GREEN,
+            yellow = curses.COLOR_YELLOW,
+            blue = curses.COLOR_BLUE,
+            magenta = curses.COLOR_MAGENTA,
+            cyan = curses.COLOR_CYAN,
+            white = curses.COLOR_WHITE)
 
-    def __init__(self, stream, term=None, forcetty=False):
-        """Initialize.
+        def __init__(self, stream, term=None, forcetty=False):
+            """Initialize.
 
-        @type  stream: file-like object.
-        @param stream: stream to output to, defaulting to C{sys.stdout}.
-        @type  term: string.
-        @param term: terminal type, pulled from the environment if omitted.
-        @type  forcetty: bool
-        @param forcetty: force output of colors even if the wrapped stream
-                         is not a tty.
-        """
-        PlainTextFormatter.__init__(self, stream)
-        fd = stream.fileno()
-        curses.setupterm(fd=fd, term=term)
-        self.width = curses.tigetnum('cols')
-        self.reset = TerminfoReset(curses.tigetstr('sgr0'))
-        self.bold = TerminfoMode(curses.tigetstr('bold'))
-        self.underline = TerminfoMode(curses.tigetstr('smul'))
-        self._color_reset = curses.tigetstr('op')
-        self._set_color = (curses.tigetstr('setaf'), curses.tigetstr('setab'))
-        self._width = curses.tigetstr('cols')
-        # [fg, bg]
-        self._current_colors = [None, None]
-        self._modes = set()
-        self._pos = 0
-        self._wrap = True
-
-    def nowrap(self, formatter):
-        formatter._wrap = False
-
-    def wrap(self, formatter):
-        formatter._wrap = True
-
-    def fg(self, color=None):
-        return TerminfoColor(0, color)
-
-    def bg(self, color=None):
-        return TerminfoColor(1, color)
-
-    def write(self, *args):
-        PlainTextFormatter.write(self, *args)
-        if self._modes:
-            self.reset(self)
-        if self._current_colors != [None, None]:
+            @type  stream: file-like object.
+            @param stream: stream to output to, defaulting to C{sys.stdout}.
+            @type  term: string.
+            @param term: terminal type, pulled from the environment if omitted.
+            @type  forcetty: bool
+            @param forcetty: force output of colors even if the wrapped stream
+                             is not a tty.
+            """
+            PlainTextFormatter.__init__(self, stream)
+            fd = stream.fileno()
+            curses.setupterm(fd=fd, term=term)
+            self.width = curses.tigetnum('cols')
+            self.reset = TerminfoReset(curses.tigetstr('sgr0'))
+            self.bold = TerminfoMode(curses.tigetstr('bold'))
+            self.underline = TerminfoMode(curses.tigetstr('smul'))
+            self._color_reset = curses.tigetstr('op')
+            self._set_color = (
+                curses.tigetstr('setaf'), curses.tigetstr('setab'))
+            self._width = curses.tigetstr('cols')
+            # [fg, bg]
             self._current_colors = [None, None]
-            self.stream.write(self._color_reset)
+            self._modes = set()
+            self._pos = 0
+
+        def fg(self, color=None):
+            return TerminfoColor(0, color)
+
+        def bg(self, color=None):
+            return TerminfoColor(1, color)
+
+        def write(self, *args):
+            PlainTextFormatter.write(self, *args)
+            if self._modes:
+                self.reset(self)
+            if self._current_colors != [None, None]:
+                self._current_colors = [None, None]
+                self.stream.write(self._color_reset)
 
 
 def get_formatter(stream):
     """TerminfoFormatter if the stream is a tty, else PlainTextFormatter."""
+    if TerminfoFormatter is None:
+        return PlainTextFormatter(stream)
     try:
         fd = stream.fileno()
     except AttributeError:

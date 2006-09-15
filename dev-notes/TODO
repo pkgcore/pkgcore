@@ -24,6 +24,11 @@ none == easy, >=5 of 'em, tricky.
 
 - tool to dump config definitions without collapsing them.
   pconfig --dump works contains lots of duplicated information.
+  May need some reworking of central to avoid reimplementing half of central
+  inside pconfig.
+
+- make pconfig list available classes somehow
+  (walk packages/modules? keep a list somewhere?)
 
 - pkgcore.fs.ops.merge_contents; doesn't rewite the contents set when a file it's mergeing is relying on symlinked
   directories for the full path; eg, /usr/share/X11/xkb/compiled -> /var/blah, it records the former instead of 

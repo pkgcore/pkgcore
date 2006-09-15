@@ -101,16 +101,11 @@ class ConfigType(object):
                 'func %s accepts *args or **kwargs, and no ConfigHint is '
                 'provided' % (self.callable,))
 
-        for var, var_typename in (
-            ('class', 'callable'),
-            ('inherit', 'list'),
-            ('default', 'bool'),
-            ):
+        for var in ('class', 'inherit', 'default'):
             if var in self.types:
                 raise errors.TypeDefinitionError(
                     '%s: you cannot change the type of %r' % (
                         self.callable, var))
-            self.types[var] = var_typename
 
         for var in self.positional:
             if var not in self.required:

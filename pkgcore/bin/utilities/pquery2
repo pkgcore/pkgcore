@@ -10,7 +10,7 @@
 import optparse
 
 from pkgcore.util import (
-    commandline, repo_utils, parserestrict, formatters, packages as pkgutils)
+    commandline, repo_utils, parserestrict, packages as pkgutils)
 from pkgcore.restrictions import packages, values
 from pkgcore.package import errors as perrors
 from pkgcore.ebuild import conditionals, atom
@@ -101,6 +101,7 @@ for _name, _attr in [
     ('license', 'license'),
     ('hasuse', 'iuse'),
     ('maintainer', 'maintainers'),
+    ('owns', 'contents'),
     ]:
     PARSE_FUNCS[_name] = parserestrict.comma_separated_containment(_attr)
 

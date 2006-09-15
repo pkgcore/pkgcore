@@ -328,6 +328,8 @@ class ConfigManager(object):
         conf = {}
         for inherit_name, inherit_conf in slist:
             for key in inherit_conf.keys():
+                if key in ('class', 'inherit', 'default'):
+                    continue
                 if key in conf and key not in type_obj.incrementals:
                     continue
                 try:
@@ -364,11 +366,6 @@ class ConfigManager(object):
                     conf[key] = result + conf[key]
                 else:
                     conf[key] = result
-
-        # Remove values internal to the config machinery.
-        conf.pop('inherit', None)
-        conf.pop('default', None)
-        conf.pop('class')
 
         return CollapsedConfig(type_obj, conf, debug=self.debug)
 

@@ -82,8 +82,7 @@ class ConfigTypeFromFunctionTest(unittest.TestCase):
         self.assertEquals(nonopt_type.name, 'nonopt')
         self.assertEquals(
             nonopt_type.types,
-            {'one': 'str', 'two': 'str', 'default': 'bool',
-             'class': 'callable', 'inherit': 'list'})
+            {'one': 'str', 'two': 'str'})
         self.assertEquals(nonopt_type.incrementals, [])
         self.assertEquals(nonopt_type.required, ['one', 'two'])
         self.assertEquals(nonopt_type.positional, ['one', 'two'])
@@ -93,8 +92,7 @@ class ConfigTypeFromFunctionTest(unittest.TestCase):
         self.assertEquals(
             test_type.types,
             {'alist': 'list', 'astr': 'str', 'abool': 'bool',
-             'aref': 'section_ref', 'default': 'bool',
-             'class': 'callable', 'inherit': 'list'})
+             'aref': 'section_ref'})
         self.assertEquals(test_type.required, [])
 
     def _test_class_member(self, func):
@@ -123,8 +121,7 @@ class ConfigTypeFromClassTest(unittest.TestCase):
         self.assertEquals(sorted(test_type.required), ['one'])
         self.assertEquals(
             test_type.types,
-            {'one': 'str', 'two': two_override,
-             'class': 'callable', 'inherit': 'list', 'default': 'bool'})
+            {'one': 'str', 'two': two_override})
 
     def test_oldstyle(self):
         self._test_basics(OldStyleClass, 'OldStyleClass')

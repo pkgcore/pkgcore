@@ -70,8 +70,8 @@ pkgcore_iflatten_func_new(PyTypeObject *type,
                         "iflatten_func takes no keyword arguments");
         return NULL;
     }
-	if (!PyArg_UnpackTuple(args, "iflatten_func", 2, 2, &l, &skip_func)) {
-		return NULL;
+    if (!PyArg_UnpackTuple(args, "iflatten_func", 2, 2, &l, &skip_func)) {
+        return NULL;
     }
 
     /* Check if we got a single argument that should be skipped. */

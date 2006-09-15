@@ -136,9 +136,12 @@ class Test_iflatten_func(unittest.TestCase):
         self.assertRaises(ValueError, iterator.next)
 
 
-if lists.cpy_builtin:
-    class CPY_Test_iflatten_instance(Test_iflatten_instance):
-        func = staticmethod(lists.iflatten_instance)
+class CPY_Test_iflatten_instance(Test_iflatten_instance):
+    func = staticmethod(lists.iflatten_instance)
+    if not lists.cpy_builtin:
+        skip = "cpython extension isn't available"
 
-    class CPY_Test_iflatten_func(Test_iflatten_func):
-        func = staticmethod(lists.iflatten_func)
+class CPY_Test_iflatten_func(Test_iflatten_func):
+    func = staticmethod(lists.iflatten_func)
+    if not lists.cpy_builtin:
+        skip = "cpython extension isn't available"

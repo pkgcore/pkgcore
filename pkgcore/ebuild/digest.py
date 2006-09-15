@@ -46,3 +46,12 @@ def parse_digest(path, throw_errors=True, kls_override=dict):
     for k, v in d.items():
         d[k] = kls(v.iteritems())
     return d
+
+pgp_header = '-----BEGIN PGP SIGNATURE-----'
+pgp_footer = '-----END PGP SIGNATURE-----'
+
+def parse_manifest(path, throw_errors=True, kls_override=dict):
+    d = kls_override()
+    try:
+        f = open(path, "r", 32384)
+        

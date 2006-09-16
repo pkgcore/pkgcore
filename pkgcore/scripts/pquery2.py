@@ -205,7 +205,7 @@ class AtomIntersectsAtom(values.base):
         @param queryatom: the atom the dep needs to intersect with.
         """
         values.base.__init__(self, negate)
-        self.atom = queryatom
+        object.__setattr__(self, "atom", queryatom)
 
     def match(self, val):
         # If the "key" (cat/pkg) does not match we never match.

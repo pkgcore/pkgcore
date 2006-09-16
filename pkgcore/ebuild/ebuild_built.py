@@ -109,6 +109,13 @@ class package(ebuild_src.package):
         return self._parent._add_format_triggers(self, *args, **kwds)
 
     @property
+    def ebuild(self):
+        o = self.data.get("ebuild", None)
+        if o is not None:
+            return o
+        return self._parent._get_ebuild_src(self)
+
+    @property
     def _mtime_(self):
         raise AttributeError(self, "_mtime_")
 

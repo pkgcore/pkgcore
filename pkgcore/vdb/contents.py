@@ -119,7 +119,8 @@ class ContentsFile(contentsSet):
                 elif line[0] == "obj":
                     #file: path, md5, time
                     obj = fs.fsFile(
-                        line[1], chksums={"md5":line[2]}, mtime=line[3],
+                        line[1], chksums={"md5":long(line[2], 16)},
+                            mtime=line[3],
                         strict=False)
                 elif line[0] == "sym":
                     #path, target, ' -> ', mtime
@@ -143,8 +144,9 @@ class ContentsFile(contentsSet):
             for obj in sorted(self):
 
                 if isinstance(obj, fs.fsFile):
-                    s = "\t".join(("obj", obj.location, obj.chksums["md5"],
-                                   str(obj.mtime)))
+                    s = "\t".join(("obj", obj.location, "%x" % 
+                        obj.chksums["md5"],
+                        str(obj.mtime)))
 
                 elif isinstance(obj, fs.fsLink):
                     # write the tab, *and spaces*.  tab's for delimiting.

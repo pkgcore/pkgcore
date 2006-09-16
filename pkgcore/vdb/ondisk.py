@@ -130,6 +130,9 @@ class tree(prototype.tree):
                 data = data_source.local_source(fp)
             else:
                 data = bz2_data_source(fp+".bz2")
+        elif key == "ebuild":
+            fp = os.path.join(os.path.basename(path.rstrip(os.path.sep)))
+            data = data_source.local_source(fp)
         else:
             try:
                 data = open(os.path.join(path, key), "r").read().strip()

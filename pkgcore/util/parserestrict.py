@@ -33,7 +33,7 @@ def comma_separated_containment(attr):
 
 def convert_glob(token):
     if '*' in token[1:-1]:
-        raise TypeError(
+        raise ParseError(
             "'*' must be specified at the end or beginning of a matching field")
     l = len(token)
     if token.startswith("*") and l > 1:

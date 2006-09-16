@@ -1,0 +1,34 @@
+#!/usr/bin/env python
+
+"""Wrapper script that messes with sys.path and runs scripts.
+
+If it sees a ../pkgcore/__init__.py relative to its absolute location
+it adds .. to sys.path. It then imports and runs pkgcore.scripts.<sys.argv[0]>.
+"""
+
+import os.path as osp
+import sys
+
+try:
+    from pkgcore.util import modules, commandline
+except ImportError:
+    print >> sys.stderr, 'Cannot import pkgcore!'
+    print >> sys.stderr, 'Verify it is properly installed and/or ' \
+        'PYTHONPATH is set correctly.'
+    print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
+    if '--debug' in sys.argv:
+        raise
+    sys.exit(1)
+
+if __name__ == '__main__':
+    name = osp.basename(sys.argv[0])
+    try:
+        script = modules.load_module('pkgcore.scripts.%s' % (name,))
+    except modules.FailedImport:
+        print >> sys.stderr, 'Cannot load script %s.' % (name,)
+        print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
+        if '--debug' in sys.argv:
+            raise
+        sys.exit(1)
+    else:
+        commandline.main(script.OptionParser(), script.main)

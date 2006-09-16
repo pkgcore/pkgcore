@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
@@ -171,7 +170,3 @@ def main(config, options, out, err):
     elif options.classes:
         out.write('\n'.join(sorted(get_classes(
                         section for name, section in sections))))
-
-
-if __name__ == '__main__':
-    commandline.main(OptionParser(), main)

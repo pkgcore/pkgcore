@@ -66,6 +66,8 @@ class TestExtendedRestrictionGeneration(unittest.TestCase):
         for token in ("*diff*", "*b*"):
             self.verify_text_containment(parserestrict.convert_glob(token),
                                          token)
+        self.assertRaises(
+            parserestrict.ParseError, parserestrict.convert_glob, '***')
 
     def verify_restrict(self, restrict, attr, token):
         self.assertTrue(

@@ -1,4 +1,3 @@
-#!/usr/bin/python
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 # Based on pquery by Brian Harring <ferringb@gmail.com>
@@ -255,6 +254,88 @@ class OptionParser(commandline.OptionParser):
 
     """Option parser with custom option postprocessing and validation."""
 
+    def __init__(self):
+        commandline.OptionParser.__init__(
+            self, description=__doc__, option_class=Option)
+
+        self.add_option('--domain', action='store',
+                        help='domain name to use (default used if omitted).')
+        self.add_option('--earlyout', action='store_true',
+                        help='stop when first match is found.')
+        self.add_option('--noversion', '-n', action='store_true',
+                        help='collapse multiple matching versions together')
+        self.add_option('--min', action='store_true',
+                        help='show only the lowest version for each package.')
+        self.add_option('--max', action='store_true',
+                        help='show only the highest version for each package.')
+
+        repo = self.add_option_group('Source repo')
+        repo.add_option('--raw', action='store_true',
+                        help='unwrap the repos (TODO what does that mean).')
+        repo.add_option(
+            '--virtuals', action='store', choices=('only', 'disable'),
+            help='"only" for only matching virtuals, "disable" to not '
+            'match virtuals at all. Default is to match everything.')
+        repo.add_option('--vdb', action='store_true',
+                        help='match only vdb (installed) packages.')
+
+        restrict = self.add_option_group(
+            'Package matching',
+            'Each option specifies a restriction displayed packages must '
+            'match. Specifying the same option twice means "or" unless stated '
+            'otherwise. Specifying multiple types of restrictions means "and" '
+            'unless stated otherwise.')
+        restrict.add_option(
+            '--match', '-m', action='append', type='match',
+            help='Glob-like match on category/package-version.')
+        restrict.add_option('--hasuse', action='append', type='hasuse',
+                            help='Exact string match on a USE flag.')
+        restrict.add_option('--revdep', action='append', type='revdep',
+                            help='Dependency on an atom.')
+        restrict.add_option('--description', '-S', action='append',
+                            type='description',
+                            help='regexp search on (long)description. ')
+        restrict.add_option('--herd', action='append', type='herd',
+                            help='exact match on a herd.')
+        restrict.add_option('--license', action='append', type='license',
+                            help='exact match on a license.')
+        restrict.add_option('--owns', action='append', type='owns',
+                            help='exact match on an owned file/dir.')
+        restrict.add_option(
+            '--ownsre', action='append', type='ownsre',
+            help='like "owns" but using a regexp for matching.')
+        restrict.add_option('--maintainer', action='append', type='maintainer',
+                            help='comma-separated list of maintainers.')
+        restrict.add_option(
+            '--environment', action='append', type='environment',
+            help='regexp search in environment.bz2.')
+
+        printable_attrs = ('rdepends', 'depends', 'post_rdepends',
+                           'use', 'iuse', 'description', 'longdescription',
+                           'herds', 'license', 'uris', 'files',
+                           'slot', 'maintainers', 'restrict',
+                           'alldepends', 'path', 'environment', 'keywords')
+
+        output = self.add_option_group('Output formatting')
+        output.add_option(
+            '--cpv', action='store_true',
+            help='Print the category/package-version. This is done '
+            'by default, this option re-enables this if another '
+            'output option (like --contents) disabled it.')
+        output.add_option('--atom', '-a', action='store_true',
+                          help='print =cat/pkg-3 instead of cat/pkg-3. '
+                          'Implies --cpv, has no effect with --noversion')
+        output.add_option('--attr', action='append', choices=printable_attrs,
+                          help="Print this attribute's value "
+                          '(can be specified more than once).')
+        output.add_option('--oneattr', choices=printable_attrs,
+                          help="Print one attribute. Suppresses other output.")
+        output.add_option(
+            '--contents', action='store_true',
+            help='list files owned by the package. Implies --vdb.')
+        output.add_option('--verbose', '-v', action='store_true',
+                          help='human-readable multi-line output per package')
+
     def check_values(self, vals, args):
         """Sanity check and postprocess after parsing."""
         vals, args = commandline.OptionParser.check_values(self, vals, args)
@@ -263,14 +344,6 @@ class OptionParser(commandline.OptionParser):
 
         if vals.atom:
             vals.cpv = True
-
-        # optparse defaults unset lists to None. An empty sequence is
-        # much more convenient (lets you use them in a for loop
-        # without a None check) so fix those up:
-        for container in self.option_groups + [self]:
-            for option in container.option_list:
-                if option.action == 'append':
-                    vals.ensure_value(option.dest, [])
 
         if vals.noversion and vals.contents:
             self.error('both --noversion and --contents does not make sense.')
@@ -292,84 +365,6 @@ class OptionParser(commandline.OptionParser):
             vals.extrarestrict = None
 
         return vals, ()
-
-
-def build_option_parser():
-    """Construct our option parser."""
-    parser = OptionParser(description=__doc__, option_class=Option)
-
-    parser.add_option('--domain', action='store',
-                      help='domain name to use (default used if omitted).')
-    parser.add_option('--earlyout', action='store_true',
-                      help='stop when first match is found.')
-    parser.add_option('--noversion', '-n', action='store_true',
-                      help='collapse multiple matching versions together')
-    parser.add_option('--min', action='store_true',
-                      help='show only the lowest version for each package.')
-    parser.add_option('--max', action='store_true',
-                      help='show only the highest version for each package.')
-
-    repo = parser.add_option_group('Source repo')
-    repo.add_option('--raw', action='store_true',
-                     help='unwrap the repos (TODO what does that mean).')
-    repo.add_option('--virtuals', action='store', choices=('only', 'disable'),
-                    help='"only" for only matching virtuals, "disable" to not '
-                    'match virtuals at all. Default is to match everything.')
-    repo.add_option('--vdb', action='store_true',
-                    help='match only vdb (installed) packages.')
-
-    restrict = parser.add_option_group(
-        'Package matching',
-        'Each option specifies a restriction displayed packages must match. '
-        'Specifying the same option twice means "or" unless stated otherwise. '
-        'Specifying multiple types of restrictions means "and" unless stated '
-        'otherwise.')
-    restrict.add_option('--match', '-m', action='append', type='match',
-                        help='Glob-like match on category/package-version.')
-    restrict.add_option('--hasuse', action='append', type='hasuse',
-                        help='Exact string match on a USE flag.')
-    restrict.add_option('--revdep', action='append', type='revdep',
-                        help='Dependency on an atom.')
-    restrict.add_option('--description', '-S', action='append',
-                        type='description',
-                        help='regexp search on (long)description. ')
-    restrict.add_option('--herd', action='append', type='herd',
-                        help='exact match on a herd.')
-    restrict.add_option('--license', action='append', type='license',
-                        help='exact match on a license.')
-    restrict.add_option('--owns', action='append', type='owns',
-                        help='exact match on an owned file/dir.')
-    restrict.add_option('--ownsre', action='append', type='ownsre',
-                        help='like "owns" but using a regexp for matching.')
-    restrict.add_option('--maintainer', action='append', type='maintainer',
-                        help='comma-separated list of maintainers.')
-    restrict.add_option('--environment', action='append', type='environment',
-                        help='regexp search in environment.bz2.')
-
-    printable_attrs = ('rdepends', 'depends', 'post_rdepends',
-                       'use', 'iuse', 'description', 'longdescription',
-                       'herds', 'license', 'uris', 'files',
-                       'slot', 'maintainers', 'restrict',
-                       'alldepends', 'path', 'environment', 'keywords')
-
-    output = parser.add_option_group('Output formatting')
-    output.add_option('--cpv', action='store_true',
-                      help='Print the category/package-version. This is done '
-                      'by default, this option re-enables this if another '
-                      'output option (like --contents) disabled it.')
-    output.add_option('--atom', '-a', action='store_true',
-                      help='print =cat/pkg-3 instead of cat/pkg-3. '
-                      'Implies --cpv, has no effect with --noversion')
-    output.add_option('--attr', action='append', choices=printable_attrs,
-                      help="Print this attribute's value "
-                      '(can be specified more than once).')
-    output.add_option('--oneattr', choices=printable_attrs,
-                      help="Print one attribute. Suppresses other output.")
-    output.add_option('--contents', action='store_true',
-                      help='list files owned by the package. Implies --vdb.')
-    output.add_option('--verbose', '-v', action='store_true',
-                      help='human-readable multi-line output per package')
-    return parser
 
 
 def stringify_attr(config, pkg, attr):
@@ -575,6 +570,3 @@ def main(config, options, out, err):
             err.write('repo: %r\n' % (repo,))
             err.write('restrict: %r\n' % (restrict,))
             raise
-
-if __name__ == '__main__':
-    commandline.main(build_option_parser(), main)

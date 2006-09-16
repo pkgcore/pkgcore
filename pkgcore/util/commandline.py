@@ -28,6 +28,17 @@ class OptionParser(optparse.OptionParser):
                         help='disable color in the output.'),
         ]
 
+    def check_values(self, vals, args):
+        """Do some basic sanity checking."""
+        # optparse defaults unset lists to None. An empty sequence is
+        # much more convenient (lets you use them in a for loop
+        # without a None check) so fix those up:
+        for container in self.option_groups + [self]:
+            for option in container.option_list:
+                if option.action == 'append':
+                    vals.ensure_value(option.dest, [])
+        return vals, args
+
 
 def main(option_parser, main_func, args=None, sys_exit=True):
     """Function to use in an "if __name__ == '__main__'" block in a script.

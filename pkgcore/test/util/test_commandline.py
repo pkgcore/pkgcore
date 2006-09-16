@@ -2,6 +2,8 @@
 # License: GPL2
 
 
+import optparse
+
 from twisted.trial import unittest
 
 from pkgcore.util import commandline
@@ -31,3 +33,9 @@ class MainTest(unittest.TestCase):
             errors.ConfigurationError,
             commandline.main, commandline.OptionParser(), config_bug_main,
             ['--debug'], False)
+
+    def test_empty_sequence(self):
+        parser = commandline.OptionParser(option_list=[
+                optparse.Option('--seq', action='append')])
+        options, values = parser.parse_args([])
+        self.assertEqual([], list(options.seq))

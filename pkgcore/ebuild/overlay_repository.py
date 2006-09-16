@@ -55,11 +55,10 @@ class OverlayRepo(multiplex.tree):
 
     def itermatch(self, *a, **kwds):
         s = set()
-        for repo in self.trees:
-            for pkg in repo.itermatch(*a, **kwds):
-                if pkg.cpvstr not in s:
-                    yield pkg
-                    s.add(pkg.cpvstr)
+        for pkg in multiplex.tree.itermatch(self, *a, **kwds):
+            if pkg.cpvstr not in s:
+                yield pkg
+                s.add(pkg.cpvstr)
 
     def __iter__(self):
         return self.itermatch(packages.AlwaysTrue)

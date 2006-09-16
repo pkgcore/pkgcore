@@ -13,6 +13,7 @@ rev_sorted = pre_curry(sorted, reverse=True)
 
 class TestMultiplex(unittest.TestCase):
 
+    kls = staticmethod(tree)
     tree1_pkgs = (("dev-util/diffball", ["1.0", "0.7"]),
                     ("dev-lib/fake", ["1.0", "1.0-r1"]))
     tree2_pkgs = (("dev-util/diffball", ["1.0", "1.1"]),
@@ -38,7 +39,7 @@ class TestMultiplex(unittest.TestCase):
             for k in sorted(self.d2, reverse=True))
         self.tree1 = SimpleTree(self.d1)
         self.tree2 = SimpleTree(self.d2)
-        self.ctree = tree(self.tree1, self.tree2)
+        self.ctree = self.kls(self.tree1, self.tree2)
     
     def test_iter(self):
         self.assertEqual(sorted(x.cpvstr for x in self.ctree),

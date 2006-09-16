@@ -43,11 +43,11 @@ class ChksumTest(object):
 
 # trick: create subclasses for each checksum with a useful class name.
 for chf_type, expectedsum in {
-    "rmd160":"b83ad488d624e7911f886420ab230f78f6368b9f",
+    "rmd160":long("b83ad488d624e7911f886420ab230f78f6368b9f", 16),
     "size":long(len(data)*multi),
-    "sha1":"63cd8cce8a1773dffb400ee184be3ec7d89791f5",
-    "md5":"d17ea153bc57ba9e07298c5378664369",
-    "sha256":"68ae37b45e4a4a5df252db33c0cbf79baf5916b5ff6fc15e8159163b6dbe3bae",
+    "sha1":long("63cd8cce8a1773dffb400ee184be3ec7d89791f5", 16),
+    "md5":long("d17ea153bc57ba9e07298c5378664369", 16),
+    "sha256":long("68ae37b45e4a4a5df252db33c0cbf79baf5916b5ff6fc15e8159163b6dbe3bae", 16),
     }.iteritems():
     globals()[chf_type + 'ChksumTest'] = type(
         chf_type + 'ChksumTest',

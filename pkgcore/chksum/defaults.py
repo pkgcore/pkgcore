@@ -36,7 +36,7 @@ def loop_over_file(obj, filename):
             size = size + len(data)
             data = f.read(blocksize)
 
-        return checksum.hexdigest()
+        return long(checksum.hexdigest(), 16)
     finally:
         if wipeit:
             f.close()
@@ -164,7 +164,7 @@ if 'md5' not in chksum_types:
                 if filename.get_path is not None:
                     filename = filename.get_path()
             if isinstance(filename, basestring):
-                return fchksum.fmd5t(filename)[0]
+                return long(fchksum.fmd5t(filename)[0], 16)
             return loop_over_file(md5.new, filename)
 
         chksum_types = {"md5":md5hash}

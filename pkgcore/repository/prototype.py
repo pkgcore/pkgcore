@@ -241,13 +241,7 @@ class tree(object):
 
         return self._fast_identify_candidates(restrict, sorter)
 
-
-    def _fast_identify_candidates(self, *a):
-        i = self._afast_identify_candidates(*a)
-        l = list(i)
-        return l
-
-    def _afast_identify_candidates(self, restrict, sorter):
+    def _fast_identify_candidates(self, restrict, sorter):
         pkg_restrict = set()
         cat_restrict = set()
         cat_exact = set()

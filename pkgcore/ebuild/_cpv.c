@@ -161,22 +161,39 @@ pkgcore_cpv_parse_category(const char *start, int null_is_end)
     if(NULL == start)
         return NULL;
     if(!null_is_end) {
-        char *end;
+        char *end = NULL;
         while('\0' != *p) {
-            if('/' == *p)
-                end =p;
-            p++;
+            while(ISALNUM(*p) || '+' == *p || '-' == *p)
+                p++;
+            if('/' == *p) {
+                end = p;
+                p++;
+                if('/' == *p)
+                    return NULL;
+            } else {
+                break;
+            }
         }
-        p = (char *)start;
-        // ok, we need to eat the cat from the cpvstring.
-        // allowed pattern [a-zA-Z0-9+-]+/
-        while(end != p && (ISALNUM(*p) || '+' == *p || '-' == *p))
-            p++;
+        if(end) {
+            p = end;
+        } else if (!end) {
+            // no '/', must be '\0'
+            if('\0' != *p)
+                return NULL;
+       }
     } else {
-        while('\0' != *p && (ISALNUM(*p) || '+' == *p || '-' == *p))
-            p++;
-        if('\0' != *p)
-            return NULL;
+        for (;;) {
+            while('\0' != *p && (ISALNUM(*p) || '+' == *p || '-' == *p))
+                p++;
+            if('/' == *p) {
+                p++;
+                if('/' == *p)
+                    return NULL;
+            } else if('\0' == *p)
+                break;
+            else
+                return NULL;
+        }
     }
     if(p == start)
        return NULL;
@@ -559,8 +576,13 @@ parse_error:
     // if an error from trying to call, let it propagate.  meanwhile, we
     // cleanup our own
     if(!cpvstr) {
-        cpvstr = PyString_FromFormat("%s/%s-%s", PyString_AsString(category),
-            PyString_AsString(package), PyString_AsString(fullver));
+        if(PySequence_Length(fullver) != 0) {
+            cpvstr = PyString_FromFormat("%s/%s-%s", PyString_AsString(category),
+                PyString_AsString(package), PyString_AsString(fullver));
+        } else {
+            cpvstr = PyString_FromFormat("%s/%s", PyString_AsString(category),
+                PyString_AsString(package));
+        }
         if(!cpvstr)
             goto cleanup;
     }

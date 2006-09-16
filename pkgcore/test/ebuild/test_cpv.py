@@ -10,8 +10,8 @@ class native_CpvTest(unittest.TestCase):
     kls = staticmethod(cpv.native_CPV)
     good_cats = [
         "dev-util", "asdf", "dev+", "dev-util+", "DEV-UTIL", "aaa0", "zzz9",
-        "aaa-0", "bbb-9"]
-    bad_cats  = ["dev.util", "dev_", "", "dev-util "]
+        "aaa-0", "multi/depth"]
+    bad_cats  = ["dev.util", "dev_", "", "dev-util ", "multi//depth"]
     good_pkgs = ["diffball", "a9", "a9+", "a-100dpi", "a-cvs"]
     bad_pkgs  = ["diffball "]
 

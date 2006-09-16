@@ -24,12 +24,13 @@ class PackageRestriction(restriction.base):
     # subclass adds attributes. So if you do that, override the
     # methods.
 
-    __slots__ = ("attr_split", "attr", "restriction")
+    __slots__ = ("attr_split", "attr", "restriction", "ignore_missing")
     type = restriction.package_type
     subtype = restriction.value_type
+    
     __inst_caching__ = True
 
-    def __init__(self, attr, childrestriction, negate=False):
+    def __init__(self, attr, childrestriction, negate=False, ignore_missing=False):
         """
         @param attr: package attribute to match against
         @param childrestriction: a L{pkgcore.restrictions.values.base} instance
@@ -44,6 +45,8 @@ class PackageRestriction(restriction.base):
             tuple(operator.attrgetter(x) for x in attr.split(".")))
         sf(self, "attr", attr)
         sf(self, "restriction", childrestriction)
+        if ignore_missing:
+            sf(self, "ignore_missing", True)
 
     def __pull_attr(self, pkg):
         try:
@@ -54,8 +57,9 @@ class PackageRestriction(restriction.base):
         except (KeyboardInterrupt, RuntimeError, SystemExit):
             raise
         except AttributeError,ae:
-            logging.exception("failed getting attribute %s from %s, "
-                          "exception %s" % (self.attr, str(pkg), str(ae)))
+            if not self.ignore_missing:
+                logging.exception("failed getting attribute %s from %s, "
+                              "exception %s" % (self.attr, str(pkg), str(ae)))
             raise
         except Exception, e:
             logging.exception("caught unexpected exception accessing %s from %s, "

@@ -624,7 +624,7 @@ class merge_plan(object):
                 "actual_pkg",
                 restriction.FakeType(choices.current_pkg.versioned_atom,
                                      values.value_type),
-                negate=True),
+                negate=True, ignore_missing=True),
             blocker, finalize=True)
         return new_atom
 

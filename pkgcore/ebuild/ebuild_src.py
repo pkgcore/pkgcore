@@ -127,7 +127,10 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
 
 def generate_eapi(self):
     try:
-        return int(self.data.pop("EAPI", 0))
+        d = self.data.pop("EAPI", 0)
+        if d == "":
+            return 0
+        return int(d)
     except ValueError:
         return const.unknown_eapi
 

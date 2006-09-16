@@ -45,8 +45,7 @@ class PackageRestriction(restriction.base):
             tuple(operator.attrgetter(x) for x in attr.split(".")))
         sf(self, "attr", attr)
         sf(self, "restriction", childrestriction)
-        if ignore_missing:
-            sf(self, "ignore_missing", True)
+        sf(self, "ignore_missing", True)
 
     def __pull_attr(self, pkg):
         try:

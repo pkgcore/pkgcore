@@ -6,10 +6,15 @@ repository that combines multiple repositories together
 """
 
 from pkgcore.repository import prototype, errors
+from pkgcore.util.currying import pre_curry
+from pkgcore.util.iterables import iter_sort
+from operator import itemgetter
 
 class tree(prototype.tree):
 
     """repository combining multiple repositories into one"""
+
+    zero_index_grabber = itemgetter(0)
 
     def __init__(self, *trees):
         """
@@ -72,10 +77,20 @@ class tree(prototype.tree):
         return tuple(d)
 
     def itermatch(self, restrict, **kwds):
-        return (
-            match
-            for repo in self.trees
-            for match in repo.itermatch(restrict, **kwds))
+        sorter = kwds.get("sorter", None)
+        if sorter is None or sorter is iter:
+            return (match for repo in self.trees
+                for match in repo.itermatch(restrict, **kwds))
+        # ugly, and a bit slow, but works.
+        def f(x, y):
+            l = sorter([x, y])
+            if l[0] == y:
+                return 1
+            return -1
+        f = pre_curry(sorted, cmp=f)
+        return iter_sort(f,
+            *[repo.itermatch(restrict, **kwds) for repo in self.trees])
+
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
         "@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
 

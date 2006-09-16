@@ -198,5 +198,4 @@ def iter_sort(sorter, *iterables):
                     yield x
                 break
             continue
-        if l[0][0] < l[1][0]:
-            l = sorter(l)
+        l = sorter(l)

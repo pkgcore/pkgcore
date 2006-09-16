@@ -509,7 +509,18 @@ class merge_plan(object):
                 # versions, but not our exact self)
                 # this might be suspect mind you...
                 # disabled, but something to think about.
-
+                
+                # check for any matches; none, try and insert vdb nodes.
+                if not self.vdb_preloaded and \
+                    not choices.current_pkg.repo.livefs and \
+                    not self.state.match_atom(x):
+                    for repo, cache in self.livefs_dbs.iteritems():
+                        m = self.get_db_match(repo, cache, x)
+                        if m:
+                            self.state.add_pkg(choice_point(x, m),
+                                force=True)
+                            break;
+                    
                 l = self.state.add_blocker(self.generate_mangled_blocker(
                         choices, x), key=x.key)
                 if l:

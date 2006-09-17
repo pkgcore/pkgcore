@@ -56,6 +56,14 @@ class choice_point(object):
         self._prdep_solutions = [-2, 0, ()]
         self._provides_solutions = [-2, 0, ()]
 
+    @property
+    def state(self):
+        return (len(self.solution_filters),
+            self._dep_solutions[0:2],
+            self._rdep_solutions[0:2],
+            self._prdep_solutions[0:2],
+            self._provides_solutions[0:2])
+
     def reduce_atoms(self, atom):
 
         if self.matches_idx is None:

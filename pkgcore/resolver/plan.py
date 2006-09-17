@@ -120,8 +120,8 @@ def default_depset_reorder(resolver, depset, mode):
             continue
         for atom in or_block:
             if not atom.blocks and caching_iter(
-                p for r, c in resolver.livefs_dbs.iteritems()
-                for p in resolver.get_db_match(r, c, atom)):
+                p for r in resolver.livefs_dbs
+                for p in r.match(atom)):
                 vdb.append(atom)
             else:
                 non_vdb.append(atom)
@@ -129,6 +129,25 @@ def default_depset_reorder(resolver, depset, mode):
             yield vdb + non_vdb
         else:
             yield or_block
+
+
+class caching_repo(object):
+
+    def __init__(self, db, strategy):
+        self.__db__ = db
+        self.__strategy__ = strategy
+        self.__cache__ = {}
+
+    def match(self, restrict):
+        v = self.__cache__.get(restrict)
+        if v is None:
+            v = self.__cache__[restrict] = \
+                caching_iter(self.__db__.itermatch(restrict,
+                    sorter=self.__strategy__))
+        return v
+    
+    def __getattr__(self, attr):
+        return getattr(self.__db__, attr)
 
 
 class merge_plan(object):
@@ -142,18 +161,13 @@ class merge_plan(object):
                  drop_cycles=False):
         if not isinstance(dbs, (list, tuple)):
             dbs = [dbs]
-        self.all_dbs = OrderedDict((r, {}) for r in dbs)
-        self.cached_queries = {}
-        self.forced_atoms = set()
-        self.livefs_dbs = OrderedDict((k, v)
-                                      for k, v in self.all_dbs.iteritems()
-                                      if k.livefs)
-        self.dbs = OrderedDict((k, v)
-                               for k, v in self.all_dbs.iteritems()
-                               if not k.livefs)
         self.depset_reorder = depset_reorder_strategy
         self.per_repo_strategy = per_repo_strategy
         self.global_strategy = global_strategy
+        self.all_dbs = [caching_repo(x, self.per_repo_strategy) for x in dbs]
+        self.forced_atoms = set()
+        self.livefs_dbs = [x for x in self.all_dbs if x.livefs]
+        self.dbs = [x for x in self.all_dbs if not x.livefs]
         self.state = plan_state()
         self.insoluble = set()
         self.vdb_preloaded = False
@@ -170,13 +184,6 @@ class merge_plan(object):
                         "couldn't load vdb state, %s %s" %
                         (pkg.versioned_atom, ret))
         self.vdb_preloaded = True
-
-    def get_db_match(self, db, cache, atom):
-        v = cache.get(atom)
-        if v is None:
-            v = cache[atom] = caching_iter(db.itermatch(
-                    atom, sorter=self.per_repo_strategy))
-        return v
 
     def add_atom(self, atom, dbs=None):
         """add an atom, recalculating as necessary.
@@ -322,8 +329,8 @@ class merge_plan(object):
             if not l:
                 # hmm. ok... no conflicts, so we insert in vdb matches
                 # to trigger a replace instead of an install
-                for repo, cache in self.livefs_dbs.iteritems():
-                    m = self.get_db_match(repo, cache, slotted_atom)
+                for repo  in self.livefs_dbs:
+                    m = repo.match(slotted_atom)
                     if m:
                         self.state.add_pkg(choice_point(slotted_atom, m),
                                            force=True)
@@ -456,7 +463,14 @@ class merge_plan(object):
 
         blocks = []
         failures = []
+        
+        last_state = None
         while choices:
+            new_state = choices.state
+            if last_state == new_state:
+                import pdb;pdb.set_trace()
+            assert last_state != new_state
+            last_state = new_state
             additions, blocks = [], []
 
             l = self.process_depends(
@@ -514,8 +528,8 @@ class merge_plan(object):
                 if not self.vdb_preloaded and \
                     not choices.current_pkg.repo.livefs and \
                     not self.state.match_atom(x):
-                    for repo, cache in self.livefs_dbs.iteritems():
-                        m = self.get_db_match(repo, cache, x)
+                    for repo in self.livefs_dbs:
+                        m = repo.match(x)
                         if m:
                             self.state.add_pkg(choice_point(x, m),
                                 force=True)
@@ -635,8 +649,7 @@ class merge_plan(object):
     def prefer_highest_version_strategy(self, dbs, atom):
         # XXX rework caching_iter so that it iter's properly
         return iter_sort(highest_iter_sort,
-                         *[self.get_db_match(r, c, atom)
-                           for r, c in dbs.iteritems()])
+                         *[repo.match(atom) for repo in dbs])
         #return iter_sort(highest_iter_sort,
         #                 default_global_strategy(self, dbs, atom))
 
@@ -647,13 +660,13 @@ class merge_plan(object):
 
     @staticmethod
     def prefer_reuse_strategy(self, dbs, atom):
-        for r, c in dbs.iteritems():
+        for r in dbs:
             if r.livefs:
-                for p in self.get_db_match(r, c, atom):
+                for p in r.match(atom):
                     yield p
-        for r, c in dbs.iteritems():
+        for r in dbs:
             if not r.livefs:
-                for p in self.get_db_match(r, c, atom):
+                for p in r.match(atom):
                     yield p
 
     def generic_force_version_strategy(self, vdb, dbs, atom, iter_sorter,

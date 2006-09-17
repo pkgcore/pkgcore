@@ -1,9 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-sig_header = '-----BEGIN PGP SIGNATURE-----'
+sig_header = '-----BEGIN PGP'
 sig_header_len = len(sig_header)
-sig_footer = '-----END PGP SIGNATURE-----'
+sig_footer = '-----END PGP'
 sig_footer_len = len(sig_footer)
 
 def skip_signatures(iterable):

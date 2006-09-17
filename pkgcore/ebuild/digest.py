@@ -85,6 +85,8 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True, kls_override=None
                 i = gpg.skip_signatures(f)
             for data in i:
                 line = data.split()
+                if not line:
+                    continue
                 for t, d in types:
                     if line[0] != t:
                         continue

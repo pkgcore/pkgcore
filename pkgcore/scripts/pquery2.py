@@ -330,6 +330,14 @@ class OptionParser(commandline.OptionParser):
                           '(can be specified more than once).')
         output.add_option('--oneattr', choices=printable_attrs,
                           help="Print one attribute. Suppresses other output.")
+        output.add_option('--forceattr', action='append', dest='attr',
+                          help='Like --attr but accepts any string as '
+                          'attribute name instead of only explicitly '
+                          'supported names.')
+        output.add_option('--forceoneattr',
+                          help='Like --oneattr but accepts any string as '
+                          'attribute name instead of only explicitly '
+                          'supported names.')
         output.add_option(
             '--contents', action='store_true',
             help='list files owned by the package. Implies --vdb.')
@@ -358,6 +366,12 @@ class OptionParser(commandline.OptionParser):
         if vals.verbose:
             vals.attr.insert(0, 'homepage')
             vals.attr.insert(0, 'description')
+
+        if vals.forceoneattr:
+            if vals.oneattr:
+                self.error(
+                    '--oneattr and --forceoneattr are mutually exclusive.')
+            vals.oneattr = vals.forceoneattr
 
         if args:
             expr = ' '.join(args)

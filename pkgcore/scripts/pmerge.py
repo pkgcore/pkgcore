@@ -81,10 +81,10 @@ def parse_atom(token, repo, return_none=False):
     """
     # XXX this should be in parserestrict in some form, perhaps.
     ops, text = parserestrict.collect_ops(token)
-    package = None
     if ops:
         l = text.rsplit("/", 1)
         restriction = parserestrict.parse_match("%sfoo/%s" % (ops, l[-1]))
+        package = restriction.package
         fullver = restriction.fullver
         if len(l) == 1:
             # force atom

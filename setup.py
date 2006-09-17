@@ -112,7 +112,7 @@ except OSError, oe:
     del oe
 
 
-extra_flags = ['-Wall', '-Werror']
+extra_flags = ['-Wall']
 
 extensions = []
 if sys.version_info < (2, 5):

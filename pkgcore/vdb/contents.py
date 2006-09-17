@@ -72,7 +72,7 @@ class ContentsFile(contentsSet):
         if isinstance(self._source, basestring):
             if write:
                 return AtomicWriteFile(self._source)
-            return open(self._source, "r", 32384)
+            return open(self._source, "r", 32768)
         fobj = self._source.get_fileobj()
         if write:
             fobj.seek(0, 0)

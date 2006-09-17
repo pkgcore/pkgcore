@@ -14,7 +14,7 @@ def parse_digest(path, throw_errors=True):
     try:
         f = None
         try:
-            f = open(path, "r", 32384)
+            f = open(path, "r", 32768)
             for line in f:
                 l = line.split()
                 if not l:
@@ -64,7 +64,7 @@ def parse_manifest(path, throw_errors=True):
     try:
         f = None
         try:
-            f = open(path, "r", 32384)
+            f = open(path, "r", 32768)
             for data in gpg.skip_signatures(f):
                 l = data.split()
                 for t, d in types:

@@ -249,7 +249,7 @@ class install(repo_interfaces.install):
                     s += "\n"
                 open(os.path.join(
                         dirpath,
-                        rewrite.get(k, k.upper())), "w", 32384).write(s)
+                        rewrite.get(k, k.upper())), "w", 32768).write(s)
 
         # ebuild_data is the actual ebuild- no point in holding onto
         # it for built ebuilds, but if it's there, we store it.

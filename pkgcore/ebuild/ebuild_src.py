@@ -62,9 +62,7 @@ def generate_providers(self):
         raise errors.MetadataException(self, "provide", str(p))
 
 def generate_fetchables(self):
-    chksums = parse_digest(os.path.join(
-        os.path.dirname(self._parent._get_ebuild_path(self)), "files",
-        "digest-%s-%s" % (self.package, self.fullver)))
+    chksums = self.repo._get_digests(self)
 
     mirrors = getattr(self._parent, "mirrors", {})
     default_mirrors = getattr(self._parent, "default_mirrors", None)
@@ -311,8 +309,6 @@ class package_factory(metadata.factory):
                     data = cache[pkg.cpvstr]
                 except KeyError:
                     continue
-#                if not self.allow_regen:
-#                    return data
                 if long(data.pop("_mtime_", -1)) != pkg._mtime_ or \
                     self._invalidated_eclasses(data, pkg):
                     continue

@@ -16,7 +16,9 @@ from pkgcore.util.demandload import demandload
 from pkgcore.util.containers import InvertedContains
 from pkgcore.util.obj import make_kls
 demandload(globals(), "pkgcore.ebuild.ebd:buildable "
-    "pkgcore.interfaces.data_source:local_source ")
+    "pkgcore.interfaces.data_source:local_source "
+    "pkgcore.ebuild:digest ")
+
 from pkgcore.config import ConfigHint
 
 from pkgcore.plugins import get_plugin
@@ -168,6 +170,11 @@ class UnconfiguredTree(prototype.tree):
     def _get_metadata_xml_path(self, pkg):
         return os.path.join(os.path.dirname(self._get_ebuild_path(pkg)),
             "metadata.xml")
+
+    def _get_digests(self, pkg):
+        return digest.parse_digest(os.path.join(
+            os.path.dirname(self._get_ebuild_path(pkg)), "files",
+            "digest-%s-%s" % (pkg.package, pkg.fullver)))
 
     def __str__(self):
         return "%s: location %s" % (self.__class__, self.base)

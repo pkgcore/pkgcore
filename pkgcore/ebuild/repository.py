@@ -190,9 +190,9 @@ class UnconfiguredTree(prototype.tree):
         return repo_objs.Manifest(os.path.join(self.base, category, package,
             "Manifest"), enforce_gpg=self.enable_gpg)
 
-    def _get_digests(self, pkg):
+    def _get_digests(self, pkg, force_manifest1=False):
         manifest = pkg._shared_pkg_data.manifest
-        if manifest.version == 2:
+        if manifest.version == 2 and not force_manifest1:
             return manifest.distfiles
         return digest.parse_digest(os.path.join(
             os.path.dirname(self._get_ebuild_path(pkg)), "files",

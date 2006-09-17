@@ -22,7 +22,7 @@ class OptionParser(optparse.OptionParser):
     """
 
     standard_option_list = optparse.OptionParser.standard_option_list + [
-        optparse.Option('--debug', action='store_true',
+        optparse.Option('--debug', '-d', action='store_true',
                         help='print some extra info useful for pkgcore devs.'),
         optparse.Option('--nocolor', action='store_true',
                         help='disable color in the output.'),
@@ -69,8 +69,10 @@ def main(option_parser, main_func, args=None, sys_exit=True):
     @param sys_exit: if True C{sys.exit} is called when done, otherwise
         the exitstatus is returned.
     """
+    reraise_keyboard_interrupt = False
     try:
         options, args = option_parser.parse_args(args)
+        reraise_keyboard_interrupt = options.debug
         # Checked here and not in OptionParser because we want our
         # check_values to run before the user's, not after it (may do
         # stuff there at some point).
@@ -96,6 +98,8 @@ def main(option_parser, main_func, args=None, sys_exit=True):
                 sys.stderr.write('Error in configuration:\n%s\n' % (e,))
                 exitstatus = 1
     except KeyboardInterrupt:
+        if reraise_keyboard_interrupt:
+            raise
         exitstatus = 1
     if sys_exit:
         sys.exit(exitstatus)

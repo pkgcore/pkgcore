@@ -55,11 +55,11 @@ class OptionParser(commandline.OptionParser):
 
 
 class AmbiguousQuery(parserestrict.ParseError):
-    def __init__(self, token, matches):
+    def __init__(self, token, keys):
         parserestrict.ParseError.__init__(
-            self, '%s: multiple matches (%s)' % (
-                token, ', '.join(match.cpvstr for match in matches)))
-        self.matches = matches
+            self, '%s: multiple matches (%s)' % (token, ', '.join(keys)))
+        self.token = token
+        self.keys = keys
 
 class NoMatches(parserestrict.ParseError):
     def __init__(self, token):
@@ -80,15 +80,15 @@ def parse_atom(token, repo, return_none=False):
     """
     # XXX this should be in parserestrict in some form, perhaps.
     restriction = parserestrict.parse_match(token)
-    matches = repo.match(restriction)
-    if not matches:
+    key = None
+    for match in repo.itermatch(restriction):
+        if key is not None and key != match.key:
+            raise AmbiguousQuery(token, (key, match.key))
+        key = match.key
+    if key is None:
         if return_none:
             return None
         raise NoMatches(token)
-    keys = set(pkg.key for pkg in matches)
-    if len(keys) > 1:
-        raise AmbiguousQuery(token, matches)
-    key = list(keys)[0]
     ops, text = parserestrict.collect_ops(token)
     if not ops:
         return atom.atom(key)

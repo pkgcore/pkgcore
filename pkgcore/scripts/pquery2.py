@@ -355,6 +355,10 @@ class OptionParser(commandline.OptionParser):
             vals.attr.remove('alldepends')
             vals.attr.extend(['depends', 'rdepends', 'post_rdepends'])
 
+        if vals.verbose:
+            vals.attr.insert(0, 'homepage')
+            vals.attr.insert(0, 'description')
+
         if args:
             expr = ' '.join(args)
             try:
@@ -401,9 +405,6 @@ def print_package(options, out, err, pkg):
         out.write(out.bold, green, ' * ', out.fg(), pkg.cpvstr)
         out.wrap = True
         out.later_prefix = ['                  ']
-        out.write(green, '     description: ', out.fg(), pkg.description)
-        out.write(green, '     homepage:    ', out.fg(), pkg.homepage)
-        out.write(green, '     license:     ', out.fg(), pkg.license)
         for attr in options.attr:
             out.write(green, '     %s: ' % (attr,), out.fg(),
                       stringify_attr(options, pkg, attr))
@@ -431,13 +432,8 @@ def print_package(options, out, err, pkg):
             out.write()
 
     if options.contents:
-        try:
-            contents = pkg.contents
-        except AttributeError:
-            err.write('no contents for %r' % (pkg,))
-        else:
-            for thing in contents:
-                out.write(thing.location)
+        for thing in getattr(pkg, 'contents', ()):
+            out.write(thing.location)
 
 def print_packages_noversion(options, out, err, pkgs):
     """Print a summary of all versions for a single package."""

@@ -59,3 +59,11 @@ class filterTree(prototype.tree):
         if self.restriction.match(v) != self.sentinel_val:
             raise KeyError(key)
         return v
+
+    def __repr__(self):
+        return '<%s raw_repo=%r restriction=%r sentinel=%r @%#8x>' % (
+            self.__class__.__name__,
+            getattr(self, 'raw_repo', 'unset'),
+            getattr(self, 'restriction', 'unset'),
+            getattr(self, 'sentinel_val', 'unset'),
+            id(self))

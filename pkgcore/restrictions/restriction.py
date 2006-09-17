@@ -52,13 +52,6 @@ class base(object):
     def __len__(self):
         return 1
 
-    def __repr__(self):
-        return str(self)
-
-    def __str__(self):
-        # without this __repr__ recurses...
-        raise NotImplementedError
-
 
 class AlwaysBool(base):
     """

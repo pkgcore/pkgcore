@@ -53,6 +53,3 @@ class delegate(restriction.base):
         if self.negate:
             return self._transform(self._data, pkginst, "force_true")
         return self._transform(self._data, pkginst, "force_false")
-
-    def __str__(self):
-        return "%s: %s" % (self.__class__, self._restricts_dict)

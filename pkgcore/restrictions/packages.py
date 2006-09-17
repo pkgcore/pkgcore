@@ -74,22 +74,33 @@ class PackageRestriction(restriction.base):
                 raise
             return self.negate
 
-
     def force_False(self, pkg):
-        if self.negate:
-            return self.restriction.force_True(pkg, self.attr,
-                                               self.__pull_attr(pkg))
-        else:
-            return self.restriction.force_False(pkg, self.attr,
-                                                self.__pull_attr(pkg))
+        try:
+            if self.negate:
+                return self.restriction.force_True(pkg, self.attr,
+                                                   self.__pull_attr(pkg))
+            else:
+                return self.restriction.force_False(pkg, self.attr,
+                                                    self.__pull_attr(pkg))
+        except AttributeError, ae:
+            s = self.attr.split('.')
+            if not any(x in s for x in ae.args):
+                raise
+            return not self.negate
 
     def force_True(self, pkg):
-        if self.negate:
-            return self.restriction.force_False(pkg, self.attr,
-                                                self.__pull_attr(pkg))
-        else:
-            return self.restriction.force_True(pkg, self.attr,
-                                               self.__pull_attr(pkg))
+        try:
+            if self.negate:
+                return self.restriction.force_False(pkg, self.attr,
+                                                    self.__pull_attr(pkg))
+            else:
+                return self.restriction.force_True(pkg, self.attr,
+                                                   self.__pull_attr(pkg))
+        except AttributeError, ae:
+            s = self.attr.split('.')
+            if not any(x in s for x in ae.args):
+                raise
+            return self.negate
 
     def __len__(self):
         if not isinstance(self.restriction, boolean.base):
@@ -179,6 +190,11 @@ class Conditional(PackageRestriction):
         """
         super(Conditional, self).__init__(attr, childrestriction, **kwds)
         object.__setattr__(self, "payload", tuple(payload))
+
+    def intersect(self, other):
+        # PackageRestriction defines this but its implementation won't
+        # work for us, so fail explicitly.
+        raise NotImplementedError(self)
 
     def __str__(self):
         return "( Conditional: %s payload: [ %s ] )" % (

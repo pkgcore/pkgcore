@@ -88,14 +88,17 @@ class MainMixin(object):
         errstream = StringIO.StringIO()
         outformatter = formatters.PlainTextFormatter(outstream)
         self.main(config, options, outformatter, errstream)
-        for strings, stream in [(out, outstream), (err, errstream)]:
+        diffs = []
+        for name, strings, stream in [('out', out, outstream),
+                                      ('err', err, errstream)]:
             actual = stream.getvalue()
             if strings:
                 expected = '\n'.join(strings) + '\n'
             else:
                 expected = ''
             if expected != actual:
-                diff = difflib.unified_diff(
-                    strings, actual.split('\n')[:-1],
-                    'expected', 'actual', lineterm='')
-                self.fail('\n' + '\n'.join(diff))
+                diffs.extend(difflib.unified_diff(
+                        strings, actual.split('\n')[:-1],
+                        'expected %s' % (name,), 'actual', lineterm=''))
+        if diffs:
+            self.fail('\n' + '\n'.join(diffs))

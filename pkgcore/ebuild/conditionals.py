@@ -14,20 +14,6 @@ from pkgcore.util.iterables import expandable_chain
 from pkgcore.util.lists import iflatten_instance
 from pkgcore.ebuild.atom import atom
 
-def convert_use_reqs(uses):
-    assert len(uses)
-    use_asserts = tuple(x for x in uses if x[0] != "!")
-    if len(use_asserts) != len(uses):
-        use_negates = values.ContainmentMatch(
-            all=True, negate=True, *tuple(x[1:] for x in uses if x[0] == "!"))
-        assert len(use_negates.vals)
-        if not use_asserts:
-            return use_negates
-    else:
-        return values.ContainmentMatch(all=True, *use_asserts)
-    return values.AndRestriction(
-        values.ContainmentMatch(all=True, *use_asserts), use_negates)
-
 
 class DepSet(boolean.AndRestriction):
 
@@ -79,8 +65,11 @@ class DepSet(boolean.AndRestriction):
                         raise ParseError(dep_str)
                     elif raw_conditionals[-1].endswith('?'):
                         node_conds = True
-
-                        c = convert_use_reqs((raw_conditionals[-1][:-1],))
+                        c = raw_conditionals[-1]
+                        if c[0] == "!":
+                            c = values.ContainmentMatch(c[1:-1], negate=True)
+                        else:
+                            c = values.ContainmentMatch(c[:-1])
 
                         depsets[-2].append(
                             packages.Conditional("use", c, tuple(depsets[-1])))

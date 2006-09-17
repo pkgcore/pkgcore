@@ -37,6 +37,9 @@ class nodeps_repo(object):
     def __getattr__(self, k):
         return getattr(self.__repo, k)
 
+    def __iter__(self):
+        return self.itermatch(packages.AlwaysTrue)
+
 
 def index_gen(iterable):
     """returns zero for no match, else the negative len offset for the match"""
@@ -164,8 +167,8 @@ class merge_plan(object):
         self.depset_reorder = depset_reorder_strategy
         self.per_repo_strategy = per_repo_strategy
         self.global_strategy = global_strategy
-        self.all_dbs = [caching_repo(x, self.per_repo_strategy) for x in dbs]
         self.forced_atoms = set()
+        self.all_dbs = [caching_repo(x, self.per_repo_strategy) for x in dbs]
         self.livefs_dbs = [x for x in self.all_dbs if x.livefs]
         self.dbs = [x for x in self.all_dbs if not x.livefs]
         self.state = plan_state()
@@ -175,7 +178,7 @@ class merge_plan(object):
 
     def load_vdb_state(self):
         for r in self.livefs_dbs:
-            for pkg in r:
+            for pkg in r.__db__:
                 dprint("inserting %s from %s", (pkg, r), "vdb")
                 ret = self.add_atom(pkg.versioned_atom, dbs=self.livefs_dbs)
                 dprint("insertion of %s from %s: %s", (pkg, r, ret), "vdb")

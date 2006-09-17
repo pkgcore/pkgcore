@@ -51,6 +51,12 @@ class VersionMatch(restriction.base):
     type = packages.package_type
     attr = "fullver"
 
+    _convert_op2str = {(-1,):"<", (-1,0): "<=", (0,):"=",
+        (0, 1):">=", (1,):">"}
+
+    _convert_str2op = dict([(v,k) for k,v in _convert_op2str.iteritems()])    
+    del k,v
+    
     def __init__(self, operator, ver, rev=None, negate=False, **kwd):
         """
         @param operator: version comparison to do,
@@ -69,8 +75,7 @@ class VersionMatch(restriction.base):
         sf = object.__setattr__
         sf(self, "ver", ver)
         sf(self, "rev", rev)
-        if operator not in ("<=", "<", "=", ">", ">=", "~"):
-            # XXX: hack
+        if operator != "~" and operator not in self._convert_str2op:
             raise InvalidVersion(self.ver, self.rev,
                                  "invalid operator, '%s'" % operator)
 
@@ -83,11 +88,7 @@ class VersionMatch(restriction.base):
             sf(self, "vals", (0,))
         else:
             sf(self, "droprev", False)
-            l = []
-            if "<" in operator:	l.append(-1)
-            if "=" in operator:	l.append(0)
-            if ">" in operator:	l.append(1)
-            sf(self, "vals", tuple(sorted(l)))
+            sf(self, "vals", self._convert_str2op[operator])
 
     def match(self, pkginst):
         if self.droprev:
@@ -99,20 +100,16 @@ class VersionMatch(restriction.base):
             != self.negate
 
     def __str__(self):
-        l = []
-        for x in self.vals:
-            if x == -1:		l.append("<")
-            elif x == 0:	l.append("=")
-            elif x == 1:	l.append(">")
-        l.sort()
-        l = ''.join(l)
+        s = self._convert_op2str[self.vals]
+
         if self.negate:
             n = "not "
         else:
             n = ''
+
         if self.droprev or self.rev is None:
-            return "ver %s%s %s" % (n, l, self.ver)
-        return "ver-rev %s%s %s-r%s" % (n, l, self.ver, self.rev)
+            return "ver %s%s %s" % (n, s, self.ver)
+        return "ver-rev %s%s %s-r%s" % (n, s, self.ver, self.rev)
 
     @staticmethod
     def _convert_ops(inst):

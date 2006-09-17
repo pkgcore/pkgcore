@@ -41,6 +41,7 @@ class UnconfiguredTree(prototype.tree):
     configurables = ("domain", "settings",)
     configure = None
     format_magic = "ebuild_src"
+    enable_gpg = False
 
     pkgcore_config_type = ConfigHint(
         {'location': 'str', 'cache': 'refs:cache',
@@ -111,7 +112,7 @@ class UnconfiguredTree(prototype.tree):
         self.cache = cache
         self.package_class = get_plugin("format", self.format_magic)(
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
-        self._metadata_xml_cache = WeakValCache()
+        self._shared_pkg_cache = WeakValCache()
 
 
     def rebind(self, **kwds):
@@ -170,16 +171,29 @@ class UnconfiguredTree(prototype.tree):
     def _get_ebuild_src(self, pkg):
         return local_source(self._get_ebuild_path(pkg))
 
-    def _get_metadata_xml(self, category, package):
+    def _get_shared_pkg_data(self, category, package):
         key = (category, package)
-        o = self._metadata_xml_cache.get(key, None)
+        o = self._shared_pkg_cache.get(key, None)
         if o is None:
-            src = local_source(os.path.join(self.base, category, package,
-                "metadata.xml"))
-            o = self._metadata_xml_cache[key] = repo_objs.MetadataXml(src)
+            mxml = self._get_metadata_xml(category, package)
+            manifest = self._get_manifest(category, package)
+            o = repo_objs.SharedPkgData(mxml, manifest)
+            self._shared_pkg_cache[key] = o
         return o
+        
+    def _get_metadata_xml(self, category, package):
+        src = local_source(os.path.join(self.base, category, package,
+            "metadata.xml"))
+        return repo_objs.MetadataXml(src)
+
+    def _get_manifest(self, category, package):
+        return repo_objs.Manifest(os.path.join(self.base, category, package,
+            "Manifest"), enforce_gpg=self.enable_gpg)
 
     def _get_digests(self, pkg):
+        manifest = pkg._shared_pkg_data.manifest
+        if manifest.version == 2:
+            return manifest.distfiles
         return digest.parse_digest(os.path.join(
             os.path.dirname(self._get_ebuild_path(pkg)), "files",
             "digest-%s-%s" % (pkg.package, pkg.fullver)))

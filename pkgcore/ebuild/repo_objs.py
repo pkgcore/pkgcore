@@ -5,8 +5,13 @@
 package class for buildable ebuilds
 """
 
-from pkgcore.util.xml import etree
 from pkgcore.util.currying import post_curry
+from pkgcore.util.demandload import demandload
+demandload(globals(),
+    "pkgcore.util.xml:etree "
+    "pkgcore.ebuild:digest "
+    "pkgcore.util:mappings ")
+
 
 class MetadataXml(object):
     """
@@ -61,3 +66,50 @@ class MetadataXml(object):
             longdesc = ' '.join(longdesc.strip().split())
         self._longdescription = longdesc
         self._source = None
+
+
+class Manifest(object):
+    
+    def __init__(self, source, enforce_gpg=False):
+        self._source = (source, not enforce_gpg)
+
+    def _pull_manifest(self):
+        if self._source is None:
+            return
+        source, gpg = self._source
+        data = digest.parse_manifest(source, ignore_gpg=gpg,
+            kls_override=mappings.ImmutableDict)
+        self._dist, self._aux, self._ebuild, self._misc = data[0]
+        self._version = data[1]
+        self._source = None
+    
+    @property
+    def version(self):
+        self._pull_manifest()
+        return self._version
+    
+    @property
+    def required_files(self):
+        self._pull_manifest()
+        return mappings.StackedDict(self._ebuild, self._misc)
+
+    @property
+    def aux_files(self):
+        self._pull_manifest()
+        return self._aux
+
+    @property
+    def distfiles(self):
+        self._pull_manifest()
+        if self.version != 2:
+            raise TypeError("only manifest2 instances carry digest data")
+        return self._dist
+
+
+class SharedPkgData(object):
+
+    __slots__ = ("__weakref__", "metadata_xml", "manifest")
+    
+    def __init__(self, metadata_xml, manifest):
+        self.metadata_xml = metadata_xml
+        self.manifest = manifest

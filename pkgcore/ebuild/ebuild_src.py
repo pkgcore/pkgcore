@@ -209,25 +209,25 @@ class base(metadata.package):
 
 class package(base):
     
-    __slots__ = ("_metadata_xml")
+    __slots__ = ("_shared_pkg_data")
     
     _get_attr = dict(base._get_attr)
     
-    def __init__(self, metadata_xml, *args, **kwargs):
+    def __init__(self, shared_pkg_data, *args, **kwargs):
         base.__init__(self, *args, **kwargs)
-        object.__setattr__(self, "_metadata_xml", metadata_xml)
+        object.__setattr__(self, "_shared_pkg_data", shared_pkg_data)
         
     @property
     def maintainers(self):
-        return self._metadata_xml.maintainers
+        return self._shared_pkg_data.metadata_xml.maintainers
     
     @property
     def herds(self):
-        return self._metadata_xml.herds
+        return self._shared_pkg_data.metadata_xml.herds
     
     @property
     def longdescription(self):
-        return self._metadata_xml.longdescription
+        return self._shared_pkg_data.metadata_xml.longdescription
     
     @property
     def _mtime_(self):
@@ -305,7 +305,7 @@ class package_factory(metadata.factory):
         inst = self._cached_instances.get(args, None)
         if inst is None:
             # key being cat/pkg
-            mxml = self._parent_repo._get_metadata_xml(args[0], args[1])
+            mxml = self._parent_repo._get_shared_pkg_data(args[0], args[1])
             inst = self._cached_instances[args] = self.child_class(
                 mxml, self, *args)
         return inst

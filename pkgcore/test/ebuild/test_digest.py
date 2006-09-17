@@ -5,6 +5,7 @@ from twisted.trial import unittest
 from pkgcore.ebuild import digest
 from pkgcore.chksum import gpg
 from pkgcore.chksum.errors import ParseChksumError
+from pkgcore.interfaces.data_source import local_source
 import tempfile, os
 
 # "Line too long" (and our custom more agressive version of that)
@@ -29,12 +30,13 @@ files = ["Python-2.4.2.tar.bz2", "python-2.4-patches-1.tar.bz2"]
 
 class TestDigest(unittest.TestCase):
 
-    @staticmethod
-    def gen_digest(data=digest_contents, **flags):
+    convert_source = staticmethod(lambda x:x)
+    
+    def gen_digest(self, data=digest_contents, **flags):
         fn = tempfile.mktemp()
         open(fn, "w").write(data)
         try:
-            return digest.parse_digest(fn, **flags)
+            return digest.parse_digest(self.convert_source(fn), **flags)
         finally:
             os.unlink(fn)
 
@@ -55,6 +57,11 @@ class TestDigest(unittest.TestCase):
         self.assertEqual(2,
             len(self.gen_digest(
                     digest_contents+"\nMD5 asdfasdf", throw_errors=False)))
+
+
+class TestDigestDataSource(TestDigest):
+
+    convert_source = staticmethod(lambda x:local_source(x))
 
 
 # ripped straight from the glep

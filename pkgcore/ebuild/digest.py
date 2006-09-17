@@ -8,13 +8,16 @@ from itertools import izip
 from pkgcore.chksum import errors, gpg
 from pkgcore.util.obj import make_SlottedDict_kls
 
-def parse_digest(path, throw_errors=True):
+def parse_digest(source, throw_errors=True):
     d = {}
     chf_keys = set(["size"])
     try:
         f = None
         try:
-            f = open(path, "r", 32768)
+            if isinstance(source, basestring):
+                f = open(source, "r", 32768)
+            else:
+                f = source.get_fileobj()
             for line in f:
                 l = line.split()
                 if not l:
@@ -22,7 +25,7 @@ def parse_digest(path, throw_errors=True):
                 if len(l) != 4:
                     if throw_errors:
                         raise errors.ParseChksumError(
-                            path, "line count was not 4, was %i: '%s'" % (
+                            source, "line count was not 4, was %i: '%s'" % (
                                 len(l), line))
                     continue
                 chf = l[0].lower()
@@ -34,7 +37,7 @@ def parse_digest(path, throw_errors=True):
                     d2[chf] = long(l[1], 16)
                 chf_keys.add(chf)
         except (OSError, IOError, TypeError), e:
-            raise errors.ParseChksumError("failed parsing %r" % path, e)
+            raise errors.ParseChksumError("failed parsing %r" % source, e)
     finally:
         if f is not None or not f.close:
             f.close()
@@ -47,9 +50,8 @@ def parse_digest(path, throw_errors=True):
         d[k] = kls(v.iteritems())
     return d
 
-
     
-def parse_manifest(path, throw_errors=True):
+def parse_manifest(source, throw_errors=True, ignore_gpg=True, kls_override=None):
     d = {}
     dist, aux, ebuild, misc = {}, {}, {}, {}
     types = (("DIST", dist), ("AUX", aux), ("EBUILD", ebuild), ("MISC", misc))
@@ -64,15 +66,20 @@ def parse_manifest(path, throw_errors=True):
     try:
         f = None
         try:
-            f = open(path, "r", 32768)
-            for data in gpg.skip_signatures(f):
+            if isinstance(source, basestring):
+                i = f = open(source, "r", 32768)
+            else:
+                i = f = source.get_fileobj()
+            if ignore_gpg:
+                i = gpg.skip_signatures(f)
+            for data in i:
                 l = data.split()
                 for t, d in types:
                     if l[0] != t:
                         continue
                     if len(l) % 2 != 1:
                         if throw_errors:
-                            raise errors.ParseChksumError(path,
+                            raise errors.ParseChksumError(source,
                                 "manifest 2 entry doesn't have right "
                                 "number of tokens, %i: %r" % 
                                 (len(line), line))
@@ -88,7 +95,7 @@ def parse_manifest(path, throw_errors=True):
                 else:
                     if len(l) != 4:
                         if throw_errors:
-                            raise errors.ParseChksumError(path,
+                            raise errors.ParseChksumError(source,
                                 "line count was not 4, was %i: %r" %
                                 (len(l, line)))
                         continue
@@ -97,7 +104,7 @@ def parse_manifest(path, throw_errors=True):
                         [long(l[3]), l[0].lower(), long(l[1], 16)])
             
         except (OSError, IOError, TypeError), e:
-            raise errors.ParseChksumError("failed parsing %r" % path, e)
+            raise errors.ParseChksumError("failed parsing %r" % source, e)
     finally:
         if f is not None or not f.close:
             f.close()
@@ -122,7 +129,7 @@ def parse_manifest(path, throw_errors=True):
             if existing:
                 if existing[0][1] != chksum[0]:
                     if throw_errors:
-                        raise errors.ParseChksumError(path,
+                        raise errors.ParseChksumError(source,
                             "size collision for file %s" % fname)
                 else:
                     existing.append(chksum[1:])
@@ -136,7 +143,10 @@ def parse_manifest(path, throw_errors=True):
     kls = make_SlottedDict_kls(x.lower() for x in chf_types)        
     ret = []
     for t, d in types:
-        for k, v in d.items():
-            d[k] = kls(v)
+        if kls_override is None:
+            for k, v in d.items():
+                d[k] = kls(v)
+        else:
+            d = kls_override((k, kls(v)) for k,v in d.iteritems())
         ret.append(d)
     return ret

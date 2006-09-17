@@ -75,7 +75,8 @@ class StackedXpakDict(DictMixin):
 
     _metadata_rewrites = {
         "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
-        "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
+        "provides":"PROVIDE", "use":"USE", "eapi":"EAPI",
+        "CONTENTS":"contents"}
 
     def __init__(self, parent, pkg):
         self._pkg = pkg
@@ -94,7 +95,7 @@ class StackedXpakDict(DictMixin):
         if key in self._wipes:
             raise KeyError(self, key)
         if key == "contents":
-            data = object.__setattr_(self, "contents",
+            data = object.__setattr__(self, "contents",
                 generate_contents(self._parent._get_path(self._pkg)))
         elif key == "environment":
             data = self._xpak.get("environment.bz2", None)

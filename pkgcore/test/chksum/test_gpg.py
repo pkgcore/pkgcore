@@ -8,13 +8,13 @@ class TestSkipSignatures(unittest.TestCase):
     
     def test_simple_skipping(self):
         for header in ([],
-            ["-----BEGIN PGP SIGNED MESSAGE-----\n", "Hash: Sha1\n", ""]):
-            d = ["asdf",
-                "fdsa",
-                "-----BEGIN PGP SIGNATURE-----",
-                "this isn't a valid sig...",
-                "-----END PGP SIGNATURE-----",
-                "foon"]
+            ["-----BEGIN PGP SIGNED MESSAGE-----\n", "Hash: Sha1\n", "\n"]):
+            d = ["asdf\n",
+                "fdsa\n",
+                "-----BEGIN PGP SIGNATURE-----\n",
+                "this isn't a valid sig...\n",
+                "-----END PGP SIGNATURE-----\n",
+                "foon\n"]
             d2 = header + d
             parsed = list(gpg.skip_signatures(d2))
             required = [d[0], d[1], d[-1]]

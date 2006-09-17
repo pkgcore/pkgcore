@@ -24,7 +24,7 @@ from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import const, processor
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.util.xml:etree "
+demandload(globals(), "pkgcore.ebuild.repo_ops:MetadataXml "
     "errno ")
 
 
@@ -184,7 +184,7 @@ def rewrite_restrict(restrict):
     return tuple(l)
 
 
-class package(metadata.package):
+class base(metadata.package):
 
     """
     ebuild package
@@ -195,11 +195,9 @@ class package(metadata.package):
         re-evaluating attributes dependant on configuration
     """
 
-    immutable = False
-    allow_regen = True
-    tracked_attributes = [
+    tracked_attributes = (
         "PF", "depends", "rdepends", "post_rdepends", "provides", "license",
-        "slot", "keywords", "eapi", "restrict", "eapi", "description", "iuse"]
+        "slot", "keywords", "eapi", "restrict", "eapi", "description", "iuse")
 
     _config_wrappables = dict((x, alias_class_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
@@ -249,22 +247,6 @@ class package(metadata.package):
     def ebuild(self):
         return self._parent.get_ebuild_src(self)
     
-    @property
-    def maintainers(self):
-        return pull_metadata_xml(self, "maintainers")
-    
-    @property
-    def herds(self):
-        return pull_metadata_xml(self, "herds")
-    
-    @property
-    def longdescription(self):
-        return pull_metadata_xml(self, "longdescription")
-    
-    @property
-    def _mtime_(self):
-        return self._parent._get_ebuild_mtime(self)
-
     def _fetch_metadata(self):
         d = self._parent._get_metadata(self)
         return d
@@ -274,6 +256,34 @@ class package(metadata.package):
 
     def __repr__(self):
         return "<%s cpv=%r @%#8x>" % (self.__class__, self.cpvstr, id(self))
+
+
+class package(base):
+    
+    __slots__ = ("_metadata_xml")
+    
+    _get_attr = dict(base._get_attr)
+    
+    def __init__(self, metadata_xml, *args, **kwargs):
+        base.__init__(self, *args, **kwargs)
+        object.__setattr__(self, "_metadata_xml", metadata_xml)
+        
+    @property
+    def maintainers(self):
+        return self._metadata_xml.maintainers
+    
+    @property
+    def herds(self):
+        return self._metadata_xml.herds
+    
+    @property
+    def longdescription(self):
+        return self._metadata_xml.longdescription
+    
+    @property
+    def _mtime_(self):
+        return self._parent._get_ebuild_mtime(self)
+
 
 
 class package_factory(metadata.factory):
@@ -293,8 +303,6 @@ class package_factory(metadata.factory):
                 "conf. default mirror")
         else:
             self.default_mirrors = None
-
-        self._weak_pkglevel_cache = WeakValCache()
 
     def get_ebuild_src(self, pkg):
         return self._parent_repo._get_ebuild_src(pkg)
@@ -350,13 +358,10 @@ class package_factory(metadata.factory):
     def new_package(self, *args):
         inst = self._cached_instances.get(args, None)
         if inst is None:
+            # key being cat/pkg
+            mxml = self._parent_repo._get_metadata_xml(args[0], args[1])
             inst = self._cached_instances[args] = self.child_class(
-                self, *args)
-            o = self._weak_pkglevel_cache.get(inst.key, None)
-            if o is None:
-                o = SharedMetadataXml()
-                self._weak_pkglevel_cache[inst.key] = o
-            object.__setattr__(inst, "_pkg_metadata_shared", o)
+                mxml, self, *args)
         return inst
 
     def request_mirror(self, mirror_name):

@@ -15,12 +15,13 @@ from pkgcore.ebuild import eclass_cache as eclass_cache_module
 from pkgcore.util.demandload import demandload
 from pkgcore.util.containers import InvertedContains
 from pkgcore.util.obj import make_kls
+from pkgcore.util.weakrefs import WeakValCache
 demandload(globals(), "pkgcore.ebuild.ebd:buildable "
     "pkgcore.interfaces.data_source:local_source "
-    "pkgcore.ebuild:digest ")
+    "pkgcore.ebuild:digest "
+    "pkgcore.ebuild:repo_objs ")
 
 from pkgcore.config import ConfigHint
-
 from pkgcore.plugins import get_plugin
 
 metadata_offset = "profiles"
@@ -110,6 +111,8 @@ class UnconfiguredTree(prototype.tree):
         self.cache = cache
         self.package_class = get_plugin("format", self.format_magic)(
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
+        self._metadata_xml_cache = WeakValCache()
+
 
     def rebind(self, **kwds):
 
@@ -167,9 +170,14 @@ class UnconfiguredTree(prototype.tree):
     def _get_ebuild_src(self, pkg):
         return local_source(self._get_ebuild_path(pkg))
 
-    def _get_metadata_xml_path(self, pkg):
-        return os.path.join(os.path.dirname(self._get_ebuild_path(pkg)),
-            "metadata.xml")
+    def _get_metadata_xml(self, category, package):
+        key = (category, package)
+        o = self._metadata_xml_cache.get(key, None)
+        if o is None:
+            src = local_source(os.path.join(self.base, category, package,
+                "metadata.xml"))
+            o = self._metadata_xml_cache[key] = repo_objs.MetadataXml(src)
+        return o
 
     def _get_digests(self, pkg):
         return digest.parse_digest(os.path.join(

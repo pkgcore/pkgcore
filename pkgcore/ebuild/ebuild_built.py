@@ -50,15 +50,16 @@ def pkg_uses_default_preinst(pkg):
 def wrap_inst(self, wrap, inst):
     return wrap(inst(self), self.use)
 
-class package(ebuild_src.package):
+class package(ebuild_src.base):
 
     """
     built form of an ebuild
     """
 
     immutable = True
-    tracked_attributes = ebuild_src.package.tracked_attributes[:]
+    tracked_attributes = list(ebuild_src.package.tracked_attributes)
     tracked_attributes.extend(["contents", "use", "environment"])
+    tracked_attributes = tuple(tracked_attributes)
     allow_regen = False
 
     built = True
@@ -79,10 +80,6 @@ class package(ebuild_src.package):
     _get_attr["use"] = lambda s:DelayedInstantiation(tuple,
         lambda: tuple(s.data["USE"].split()))
     _get_attr["depends"] = lambda s:DepSet("", atom)
-
-    for x in ("maintainers", "longdescription", "herds"):
-        locals()[x] = property(lambda s:None)
-    del x
 
     def _update_metadata(self, pkg):
         raise NotImplementedError()

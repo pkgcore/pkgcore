@@ -63,6 +63,7 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True, kls_override=None
     # old style manifest
     # CHF sum filename size
     chf_types = set(["size"])
+    manifest_type = 1
     try:
         f = None
         try:
@@ -91,6 +92,7 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True, kls_override=None
                         d[l[1]] = [("size", long(l[2]))] + \
                             [(chf.lower(), long(sum, 16))
                                 for chf, sum in izip(i, i)]
+                    manifest_type = 2
                     break
                 else:
                     if len(l) != 4:
@@ -149,4 +151,4 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True, kls_override=None
         else:
             d = kls_override((k, kls(v)) for k,v in d.iteritems())
         ret.append(d)
-    return ret
+    return ret, manifest_type

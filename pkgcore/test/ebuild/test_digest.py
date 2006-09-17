@@ -92,12 +92,13 @@ for x in pure_manifest2.split("\n"):
 
 class TestManifest(unittest.TestCase):
     
-    @staticmethod
-    def get_manifest(data):
+    convert_source = staticmethod(lambda x:x)
+    
+    def get_manifest(self, data):
         fn = tempfile.mktemp()
         open(fn, "w").write(data)
         try:
-            return digest.parse_manifest(fn)
+            return digest.parse_manifest(self.convert_source(fn))
         finally:
             os.unlink(fn)
     
@@ -109,8 +110,8 @@ class TestManifest(unittest.TestCase):
             s += "\n".join(data[2:])
         else:
             s = digest_contents
-        dist, aux, ebuild, misc = \
-            self.get_manifest(s)
+        (dist, aux, ebuild, misc), version = self.get_manifest(s)
+        self.assertEqual(version, 1)
         self.assertFalse(dist)
         self.assertFalse(ebuild)
         self.assertFalse(aux)
@@ -129,8 +130,11 @@ class TestManifest(unittest.TestCase):
         self.test_gpg_filtering(False)
 
     def test_manifest2(self):
-        dist, aux, ebuild, misc = \
+        (dist, aux, ebuild, misc), version = \
             self.get_manifest(pure_manifest2)
+
+        self.assertEqual(version, 2)
+
         for dtype, d in (("DIST", dist), ("AUX", aux),
             ("EBUILD", ebuild), ("MISC", misc)):
             req_d = pure_manifest2_chksums[dtype]
@@ -140,3 +144,8 @@ class TestManifest(unittest.TestCase):
                 i2 = sorted(d[k].iteritems())
                 self.assertEqual(i1, i2, msg="%r != %r\nfor %s %s" %
                     (i1, i2, dtype, k))
+
+
+class TestManifestDataSource(TestManifest):
+    convert_source = staticmethod(lambda x: local_source(x))
+

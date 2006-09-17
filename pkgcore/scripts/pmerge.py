@@ -91,8 +91,7 @@ def parse_atom(token, repo, return_none=False):
             restriction = packages.PackageRestriction("package",
                 values.StrExactMatch(package))
         else:
-            restrict = parserestrict.parse_match("%s/%s" % 
-                text[0], package)
+            restriction = parserestrict.parse_match(token)
     else:
         restriction = parserestrict.parse_match(token)
     key = None

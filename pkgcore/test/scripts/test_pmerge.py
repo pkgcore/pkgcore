@@ -5,10 +5,24 @@ from twisted.trial import unittest
 
 from pkgcore.scripts import pmerge
 from pkgcore.test.scripts import helpers
+from pkgcore.test.repository import util
 from pkgcore.config import basics
 
 
-class pquery2Test(unittest.TestCase, helpers.MainMixin):
+class parse_atom_test(unittest.TestCase):
+
+    def test_parse_atom(self):
+        repo = util.SimpleTree({'spork': {'foon': ('1', '2')}})
+        for cat in ('', 'spork/'):
+            a = pmerge.parse_atom('=%sfoon-1' % (cat,), repo)
+            self.assertEqual(a.cpvstr, 'spork/foon-1')
+            self.assertEqual(a.op, '=')
+            a = pmerge.parse_atom('%sfoon' % (cat,), repo)
+            self.assertEqual(a.cpvstr, 'spork/foon')
+            self.assertEqual(a.op, '')
+
+
+class pmerge_test(unittest.TestCase, helpers.MainMixin):
 
     parser = helpers.mangle_parser(pmerge.OptionParser())
     main = pmerge.main

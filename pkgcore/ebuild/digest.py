@@ -50,6 +50,16 @@ def parse_digest(source, throw_errors=True):
         d[k] = kls(v.iteritems())
     return d
 
+
+def convert_chksums(iterable):
+    for chf, sum in iterable:
+        chf = chf.lower()
+        if chf == 'size':
+            # explicit size entries are stupid, format has implicit size
+            continue
+        else:
+            yield chf, long(sum, 16)
+
     
 def parse_manifest(source, throw_errors=True, ignore_gpg=True, kls_override=None):
     d = {}
@@ -90,8 +100,7 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True, kls_override=None
                         # [size, 1] becomes [(size, 1)]
                         i = iter(line[3:])
                         d[line[1]] = [("size", long(line[2]))] + \
-                            [(chf.lower(), long(sum, 16))
-                                for chf, sum in izip(i, i)]
+                            list(convert_chksums(izip(i, i)))
                     manifest_type = 2
                     break
                 else:

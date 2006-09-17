@@ -132,48 +132,6 @@ def generate_eapi(self):
     except ValueError:
         return const.unknown_eapi
 
-metadata_xml_attr_map = {"maintainers":0, "herds":1, "longdescription":2}
-
-def pull_metadata_xml(self, attr):
-    o = getattr(self._pkg_metadata_shared, attr)
-    if o == -1:
-        try:
-            tree = etree.parse(self._parent._get_metadata_xml_path(self))
-            maintainers = []
-            for x in tree.findall("maintainer"):
-                name = email = None
-                for e in x:
-                    if e.tag == "name":
-                        name = e.text
-                    elif e.tag == "email":
-                        email = e.text
-                if name is not None:
-                    if email is not None:
-                        maintainers.append("%s <%s>" % (name, email))
-                    else:
-                        maintainers.append(name)
-                elif email is not None:
-                    maintainers.append(email)
-
-            self._pkg_metadata_shared.maintainers = tuple(maintainers)
-            self._pkg_metadata_shared.herds = tuple(str(x.text)
-                for x in tree.findall("herd"))
-
-            # Could be unicode!
-            longdesc = tree.findtext("longdescription")
-            if longdesc:
-                longdesc = ' '.join(longdesc.strip().split())
-            self._pkg_metadata_shared.longdescription = longdesc
-
-        except IOError, i:
-            if i.errno != errno.ENOENT:
-                raise
-            self._pkg_metadata_shared.herds = ()
-            self._pkg_metadata_shared.maintainers = ()
-            self._pkg_metadata_shared.longdescription = None
-        o = getattr(self._pkg_metadata_shared, attr)
-    return o
-
 def rewrite_restrict(restrict):
     l = set()
     for x in restrict:
@@ -368,25 +326,6 @@ class package_factory(metadata.factory):
         """
         either get a mirror, or return None
         """
-
-
-class SharedMetadataXml(object):
-    """
-    metadata.xml parsed reseults
-    
-    attributes are set to -1 if unloaded, None if no entry, or the value
-    if loaded
-    
-    """
-    
-    __slots__ = ("__weakref__", "maintainers", "herds", "longdescription")
-    
-    
-    def __init__(self):
-        self.maintainers = -1
-        self.herds = -1
-        self.longdescription = -1 
-    
 
 generate_new_factory = package_factory
 

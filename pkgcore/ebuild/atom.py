@@ -312,12 +312,10 @@ class atom(boolean.AndRestriction):
         raise AttributeError(attr)
 
     def __str__(self):
-        s = ""
         if self.blocks:
-            s += "!"
-        s += self.op + self.category + "/" + self.package
-        if self.version:
-            s += "-"+self.fullver
+            s = "!%s%s" % (self.op, self.cpvstr)
+        else:
+            s = self.op + self.cpvstr
         if self.glob:
             s += "*"
         if self.use:

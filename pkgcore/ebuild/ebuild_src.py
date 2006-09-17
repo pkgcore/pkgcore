@@ -233,6 +233,9 @@ class package(base):
     def _mtime_(self):
         return self._parent._get_ebuild_mtime(self)
 
+    @property
+    def manifest(self):
+        return self._shared_pkg_data.manifest
 
 
 class package_factory(metadata.factory):

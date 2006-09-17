@@ -8,6 +8,7 @@
 
 import time
 
+from pkgcore.restrictions import packages, values
 from pkgcore.util import commandline, parserestrict, lists, repo_utils
 from pkgcore.ebuild import resolver, atom
 from pkgcore.repository import multiplex
@@ -79,7 +80,21 @@ def parse_atom(token, repo, return_none=False):
     @return: an atom or C{None}.
     """
     # XXX this should be in parserestrict in some form, perhaps.
-    restriction = parserestrict.parse_match(token)
+    ops, text = parserestrict.collect_ops(token)
+    package = None
+    if ops:
+        l = text.rsplit("/", 1)
+        restriction = parserestrict.parse_match("%sfoo/%s" % (ops, l[-1]))
+        fullver = restriction.fullver
+        if len(l) == 1:
+            # force atom
+            restriction = packages.PackageRestriction("package",
+                values.StrExactMatch(package))
+        else:
+            restrict = parserestrict.parse_match("%s/%s" % 
+                text[0], package)
+    else:
+        restriction = parserestrict.parse_match(token)
     key = None
     for match in repo.itermatch(restriction):
         if key is not None and key != match.key:
@@ -89,11 +104,9 @@ def parse_atom(token, repo, return_none=False):
         if return_none:
             return None
         raise NoMatches(token)
-    ops, text = parserestrict.collect_ops(token)
     if not ops:
         return atom.atom(key)
-    # XXX what to do?
-    raise parserestrict.ParseError('got ops for token %s?' % (token,))
+    return atom.atom("%s%s-%s" % (ops, key, fullver))
 
 
 class Failure(ValueError):

@@ -1,9 +1,6 @@
 ==========
 Rough TODO
 ==========
-kindly check over HORKED; stuff here is "would be nice", but horked comes first.
-Difficulty estimate indicated by '*', based on either codebase in question, or knowledge of python tricks
-none == easy, >=5 of 'em, tricky.
 
 - Possibly convert to cpython:
   - flat_hash.database._parse_data
@@ -17,85 +14,83 @@ none == easy, >=5 of 'em, tricky.
 - CONFIG_PROTECT unmerge support
 - pkgcore.fetchable.__init__: __eq__/__hash__
 
-- manifest/manifest2 support, marking of digest supplied chksums as from digest in some way for a pcheck check.
-  (harring has this)
-
-- package.use, package.use.mask, and use.force support in domain.
-
-- tool to dump config definitions without collapsing them.
-  pconfig --dump works contains lots of duplicated information.
-  May need some reworking of central to avoid reimplementing half of central
-  inside pconfig.
-
-- make pconfig list available classes somehow
-  (walk packages/modules? keep a list somewhere?)
-
-- pkgcore.fs.ops.merge_contents; doesn't rewite the contents set when a file it's mergeing is relying on symlinked
-  directories for the full path; eg, /usr/share/X11/xkb/compiled -> /var/blah, it records the former instead of 
+- pkgcore.fs.ops.merge_contents; doesn't rewite the contents set when a file
+  it's mergeing is relying on symlinked directories for the full path; eg,
+  /usr/share/X11/xkb/compiled -> /var/blah, it records the former instead of 
   recording the true absolute path.
 
 - pmerge exit code; ambiguousquery doesn't seem to result in ret != 0
 
-- pmerge mods; [ --skip-set SET ] , [ --skip atom ], use similar restriction to --replace to prefer
-  vdb for matching atoms
+- pmerge mods; [ --skip-set SET ] , [ --skip atom ], use similar restriction
+  to --replace to prefer vdb for matching atoms
 
 - info regeneration trigger; **
 
-- refactor pkgcore.ebuild.cpv.ver_cmp usage to avoid full cpv parsing when _cpv is in use; **
+- refactor pkgcore.ebuild.cpv.ver_cmp usage to avoid full cpv parsing when 
+  _cpv is in use; 
   'nuff said, look in pkgcore.ebuild.cpv.cpy_ver_cmp
 
 - finish off trigger registration; **
-  Right now it's hardcoded in merge.engine; this sucks, need to convert the gentoo specific triggers over to
-  being registered on the fly via domain/configuration.
+  Right now it's hardcoded in merge.engine; this sucks, need to convert the 
+  gentoo specific triggers over to being registered on the fly via
+  domain/configuration.
   
 - testing of fakeroot integration: **
-  it was working back in the ebd branch days; things have changed since then (heavily), enabling/disabling
-  should work fine, but will need to take a look at the contentset generation to ensure perms/gid leaks through
-  correctly.
+  it was working back in the ebd branch days; things have changed since then 
+  (heavily), enabling/disabling should work fine, but will need to take a look
+  at the contentset generation to ensure perms/gid leaks through correctly.
 
 - sync subsystem. ***
-  Threw out the old refactoring, too portage specific; exists in sandbox/dead_code , design sucked also.
+  Threw out the old refactoring, too portage specific; exists in 
+  sandbox/dead_code , design sucked also.
 
 - modify repository.prototype.tree.match to take an optional comparison *
-  reasoning being that if we're just going to do a max, pass in the max so it has the option of doing the initial
-  sorting without passing through visibility filters (which will trigger metadata lookups)
+  reasoning being that if we're just going to do a max, pass in the max so it 
+  has the option of doing the initial sorting without passing through
+  visibility filters (which will trigger metadata lookups)
 
 - pkgcore.config.central features: ***
-  These may or may not be picked off as development continues; the main requirement for this functionality is 
-  plugins, which the framework intends... so... prior to a release, it will be added.
+  These may or may not be picked off as development continues; the main
+  requirement for this functionality is plugins, which the framework 
+  intends... so... prior to a release, it will be added.
 
-  - needs method to do lookups of further object restrictions/section_ref/etc from a common dir, based on name.
-    this one requires some thought;  essentially, if loading portage-mysql.cache, try 1, or try this opt, look in a dir
-    the plugins ebuild can install a section conf tweak, and use it.
-  - configuration 'types' , list, bool, str, etc, should be extendable, lifted from a config most likely.  Defaults should be
-    avail in code, but should have a method of extending it
-  - integration of make.globals type data; defaults effectively, but a bit more complex.
+  - needs method to do lookups of further object restrictions/section_ref/etc
+    from a common dir, based on name.  this one requires some thought;
+    essentially, if loading portage-mysql.cache, try 1, or try this opt,
+    look in a dir the plugins ebuild can install a section conf tweak, and
+    use it.
+  - configuration 'types' , list, bool, str, etc, should be extendable, lifted
+    from a config most likely.  Defaults should be avail in code, but should
+    have a method of extending it
+  - integration of make.globals type data; defaults effectively, but a bit
+    more complex.
 
-- 'app bundles'.  Reliant on serious overhauling of deps to do 'locked deps', but think of it as rpath based app stacks,
-  a full apache stack compiled to run from /opt/blah for example.
+- 'app bundles'.  Reliant on serious overhauling of deps to do 'locked deps',
+  but think of it as rpath based app stacks, a full apache stack compiled to
+  run from /opt/blah for example.
 
 - pkgcore.ebuild.gpgtree ****
-  derivative of pkgcore.ebuild.ebuild_repository, this overloads ebuild_factory and eclass_cache so that gpg checks are done.
-  This requires some hackery, partially dependant on config.central changes (see above).
-  Need a way to specify the trust ring to use, 'severity' level (different class targets works for me).
+  derivative of pkgcore.ebuild.ebuild_repository, this overloads
+  ebuild_factory and eclass_cache so that gpg checks are done.
+  This requires some hackery, partially dependant on config.central changes
+  (see above).  Need a way to specify the trust ring to use, 'severity' level
+  (different class targets works for me).
   Anyone who implements this deserves massive cookies.
 
 - pkgcore.ebuild.gpgprofile ****
   Same as above.
-
-- pkgcore.config.domain ***
-  Redesign, seperation of it into ebuild specific chunk (domain class), and generic abstraction layer.
-  cleanup needed already, imo :/
 
 - pkgcore.fetch.bundled_lib:
   clean this beast up.
 
 - IPV6 handling:
   bug 37124 # syncing
-  check over BINHOST code replacement for any code that resolve to a specific IP
+  check over BINHOST code replacement for any code that resolve to a specific
+  IP
 
 - locking unification.  see plugins for an example of why it's needed
 
 - extend packages.* parsing to support globs in pkg: *
   http://bugs.gentoo.org/show_bug.cgi?id=57153
-  could just use util.commandline for it offhand, but may not play perfectly with domains atom splitting for collapsed
+  could just use util.commandline for it offhand, but may not play perfectly
+  with domains atom splitting for collapsed

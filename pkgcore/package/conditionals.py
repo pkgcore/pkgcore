@@ -230,19 +230,16 @@ class PackageWrapper(object):
 
     def __cmp__(self, other):
         if isinstance(other, PackageWrapper):
-            if isinstance(other._raw_pkg, self._raw_pkg.__class__):
-                c = cmp(self._raw_pkg, other._raw_pkg)
-                if c:
-                    return c
-                if self._configurable == other._configurable:
-                    return 0
-                # sucky, but comparing sets isn't totally possible.
-                # potentially do sub/super tests instead?
-                raise TypeError
-        elif isinstance(other, self._raw_pkg.__class__):
-            return cmp(self._raw_pkg, other)
+            c = cmp(self._raw_pkg, other._raw_pkg)
+            if c:
+                return c
+            if self._configurable == other._configurable:
+                return 0
+            # sucky, but comparing sets isn't totally possible.
+            # potentially do sub/super tests instead?
+            raise TypeError
         else:
-            c = cmp(other, self)
+            c = cmp(other, self._raw_pkg)
             if c == 0:
                 return 0
             return -c

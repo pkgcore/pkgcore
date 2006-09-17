@@ -28,7 +28,7 @@ inactive_ebp_list = []
 active_ebp_list = []
 
 import pkgcore.spawn, os
-from pkgcore.util.currying import post_curry, pre_curry
+from pkgcore.util.currying import post_curry, partial
 from pkgcore.const import (
     depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH)
 from pkgcore.util.demandload import demandload
@@ -97,9 +97,8 @@ def release_ebuild_processor(ebp):
     @param ebp: L{EbuildProcessor} instance
     @return: boolean indicating release results- if the processor isn't known
         as active, False is returned.
-
-    If a processor isn't known as active, this means either calling
-    error or an internal error.
+        If a processor isn't known as active, this means either calling
+        error or an internal error.
     """
 
     try:
@@ -568,7 +567,7 @@ class EbuildProcessor:
             handlers[x] = f
         del f
 
-        handlers["phases"] = pre_curry(
+        handlers["phases"] = partial(
             chuck_StoppingCommand, lambda f: f.lower().strip() == "succeeded")
 
         if additional_commands is not None:

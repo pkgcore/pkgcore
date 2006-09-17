@@ -4,7 +4,7 @@
 from twisted.trial import unittest
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.package.base import base
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 
 def passthru(val, self):
     return val
@@ -15,7 +15,7 @@ class FakePkg(base):
         base.__init__(self)
         self.pkg = pkg
         self.ver = ver
-        self._get_attr = dict((k, pre_curry(passthru, v))
+        self._get_attr = dict((k, partial(passthru, v))
             for k,v in data.iteritems())
 
     # disable protection.  don't want it here

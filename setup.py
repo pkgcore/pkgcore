@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import glob
-import os, errno
+import os
+import sys
+import errno
 
 from distutils import core, ccompiler, log
 from distutils.command import build, sdist, build_py
@@ -112,6 +114,14 @@ except OSError, oe:
 
 extra_flags = ['-Wall', '-Werror']
 
+extensions = []
+if sys.version_info < (2, 5):
+    # Almost unmodified copy from the python 2.5 source.
+    extensions.append(core.Extension(
+            'pkgcore.util._functools', ['pkgcore/util/_functoolsmodule.c'],
+            extra_compile_args=extra_flags))
+
+
 core.setup(
     name='pkgcore',
     version='0',
@@ -147,7 +157,7 @@ core.setup(
         core.Extension('pkgcore.util.osutils._readdir',
                        ['pkgcore/util/osutils/_readdir.c'],
                        extra_compile_args=extra_flags),
-        ],
+        ] + extensions,
     cmdclass={'build_filter_env': build_filter_env,
               'sdist': mysdist,
               'build_py': hacked_build_py},

@@ -2,14 +2,41 @@
 # License: GPL2
 
 """
-function currying, generating a functor with a set of args/defaults pre bound
+Function currying, generating a functor with a set of args/defaults pre bound.
+
+L{pre_curry} and L{post_curry} return "normal" python functions.
+L{partial} returns a callable object. The difference between
+L{pre_curry} and L{partial} is this::
+
+    >>> def func(arg=None, self=None):
+    ...     return arg, self
+    >>> curry = pre_curry(func, True)
+    >>> part = partial(func, True)
+    >>> class Test(object):
+    ...     curry = pre_curry(func, True)
+    ...     part = partial(func, True)
+    ...     def __repr__(self):
+    ...         return '<Test object>'
+    >>> curry()
+    (True, None)
+    >>> Test().curry()
+    (True, <Test object>)
+    >>> part()
+    (True, None)
+    >>> Test().part()
+    (True, None)
+
+If your curried function is not used as a class attribute the results
+should be identical. Because L{partial} has an implementation in c
+while L{pre_curry} is python you should use L{partial} if possible.
 """
 
 from operator import attrgetter
 
-__all__ = ["pre_curry", "post_curry", "pretty_docs", "alias_class_method"]
+__all__ = [
+    "pre_curry", "partial", "post_curry", "pretty_docs", "alias_class_method"]
 
-def native_pre_curry(func, *args, **kwargs):
+def pre_curry(func, *args, **kwargs):
     """passed in args are prefixed, with further args appended"""
 
     if not kwargs:
@@ -29,15 +56,30 @@ def native_pre_curry(func, *args, **kwargs):
     callit.func = func
     return callit
 
-# native_pre_curry is always defined, if pre_curry is not identical to
-# native_pre_curry the tests test both.
+
+class native_partial(object):
+
+    """Like pre_curry, but does not get turned into an instance method."""
+
+    def __init__(self, func, *args, **kwargs):
+        self.func = func
+        self.args = args
+        self.kwargs = kwargs
+
+    def __call__(self, *moreargs, **morekwargs):
+        kw = self.kwargs.copy()
+        kw.update(morekwargs)
+        return self.func(*(self.args + moreargs), **kw)
 
 # Unused import, unable to import
 # pylint: disable-msg=W0611,F0401
 try:
-    from functools import partial as pre_curry
+    from functools import partial
 except ImportError:
-    pre_curry = native_pre_curry
+    try:
+        from pkgcore.util._functools import partial
+    except ImportError:
+        partial = native_partial
 
 
 def post_curry(func, *args, **kwargs):

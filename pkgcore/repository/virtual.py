@@ -7,7 +7,7 @@ virtual repository, pkgs generated via callable
 
 from pkgcore.repository import prototype
 from pkgcore.package import virtual
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 
 def mangle_args(new_package_func, mangler_func, *args):
     return new_package_func(*mangler_func(args))
@@ -34,7 +34,7 @@ class tree(prototype.tree):
         vf = virtual.factory(self)
 
         if pkg_args_mangler:
-            self.package_class = pre_curry(mangle_args, vf.new_package,
+            self.package_class = partial(mangle_args, vf.new_package,
                 pkg_args_mangler)
         else:
             self.package_class = vf.new_package

@@ -186,11 +186,11 @@ class AtomIntersectsAtom(values.base):
     """Fuzzy intersection used for the revdep match.
 
     Intended effect is roughly:
-    - if you query for just "dev-lang/python" it "intersects" both
-      "dev-lang/python" and ">=dev-lang/python-2.4"
-    - if you query for "=dev-lang/python-2.4" it "intersects"
-      ">=dev-lang/python-2.4" and "dev-lang/python" but not
-      "<dev-lang/python-2.3"
+      - if you query for just "dev-lang/python" it "intersects" both
+        "dev-lang/python" and ">=dev-lang/python-2.4"
+      - if you query for "=dev-lang/python-2.4" it "intersects"
+        ">=dev-lang/python-2.4" and "dev-lang/python" but not
+        "<dev-lang/python-2.3"
 
     The block/nonblock state of the atom is ignored.
 

@@ -9,7 +9,7 @@ from pkgcore.merge import triggers
 from pkgcore.util.file import read_bash_dict, AtomicWriteFile
 from pkgcore.fs import livefs
 from pkgcore.util.osutils import normpath
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 from pkgcore.restrictions import values
 import os, errno, stat
 
@@ -192,7 +192,7 @@ def config_protect_func_install(existing_cset, install_cset, engine, csets):
 def config_protect_trigger_install(existing_cset="install_existing",
                                    modifying_cset="install"):
     return triggers.trigger([existing_cset, modifying_cset],
-                            pre_curry(config_protect_func_install,
+                            partial(config_protect_func_install,
                                       existing_cset, modifying_cset))
 
 
@@ -218,7 +218,7 @@ def config_protect_func_uninstall(existing_cset, uninstall_cset, engine, csets):
 def config_protect_trigger_uninstall(existing_cset="uninstall_existing",
                                      modifying_cset="uninstall"):
     return triggers.trigger([existing_cset, modifying_cset],
-                            pre_curry(config_protect_func_uninstall,
+                            partial(config_protect_func_uninstall,
                                       existing_cset, modifying_cset))
 
 def preinst_contents_reset_func(format_op, engine, cset):
@@ -235,6 +235,6 @@ def preinst_contents_reset_register(trigger, hook_name, triggers_list):
 
 def preinst_contents_reset_trigger(format_op):
     return triggers.SimpleTrigger("install",
-        pre_curry(preinst_contents_reset_func, format_op),
+        partial(preinst_contents_reset_func, format_op),
         register_func=preinst_contents_reset_register,
         label="preinst_contents_reset")

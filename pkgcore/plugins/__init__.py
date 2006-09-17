@@ -182,7 +182,7 @@ class GlobalPluginRegistry(object):
 
 
 registry = None
-from pkgcore.util.currying import pre_curry, pretty_docs
+from pkgcore.util.currying import partial, pretty_docs
 
 def proxy_it(method, *a, **kw):
     global registry
@@ -191,7 +191,7 @@ def proxy_it(method, *a, **kw):
     return getattr(registry, method)(*a, **kw)
 
 for name in ["register", "deregister", "query_plugins", "get_plugin"]:
-    v = pre_curry(proxy_it, name)
+    v = partial(proxy_it, name)
     doc = getattr(GlobalPluginRegistry, name).__doc__
     if doc is None:
         doc = ''

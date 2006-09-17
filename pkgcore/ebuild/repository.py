@@ -57,7 +57,7 @@ class UnconfiguredTree(prototype.tree):
             to use for storing metadata
         @param eclass_cache: If not None, L{pkgcore.ebuild.eclass_cache}
             instance representing the eclasses available,
-        if None, generates the eclass_cache itself
+            if None, generates the eclass_cache itself
         @param mirrors_file: file parsed via L{read_dict} to get mirror tiers
         @param default_mirrors: Either None, or sequence of mirrors to try
             fetching from first, then falling back to other uri

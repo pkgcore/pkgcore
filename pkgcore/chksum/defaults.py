@@ -6,7 +6,7 @@
 default chksum handlers implementation- sha1, sha256, rmd160, and md5
 """
 
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 from pkgcore.util import modules
 from pkgcore.interfaces.data_source import base as base_data_source
 blocksize = 32768
@@ -135,7 +135,7 @@ else:
         ('sha1', 'sha1'),
         ('sha256', 'sha256'),
         ]:
-        chksum_types[chksumname] = pre_curry(
+        chksum_types[chksumname] = partial(
             loop_over_file, getattr(hashlib, hashlibname))
     # May or may not be available depending on openssl. List
     # determined through trial and error.
@@ -147,8 +147,8 @@ else:
         except ValueError:
             pass # This hash is not available.
         else:
-            chksum_types[chksumname] = pre_curry(
-                loop_over_file, pre_curry(hashlib.new, hashlibname))
+            chksum_types[chksumname] = partial(
+                loop_over_file, partial(hashlib.new, hashlibname))
     del hashlibname, chksumname
 
 
@@ -175,7 +175,7 @@ for k, v in (("sha1", "SHA"), ("sha256", "SHA256"), ("rmd160", "RIPEMD")):
     if k in chksum_types:
         continue
     try:
-        chksum_types[k] = pre_curry(loop_over_file, modules.load_attribute(
+        chksum_types[k] = partial(loop_over_file, modules.load_attribute(
                 "Crypto.Hash.%s.new" % v))
     except modules.FailedImport:
         pass
@@ -187,7 +187,7 @@ for modulename, chksumname in [
     ('md5', 'md5'),
     ]:
     if chksumname not in chksum_types:
-        chksum_types[chksumname] = pre_curry(
+        chksum_types[chksumname] = partial(
             loop_over_file, modules.load_attribute('%s.new' % (modulename,)))
 del modulename, chksumname
 

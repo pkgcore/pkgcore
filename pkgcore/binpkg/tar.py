@@ -10,7 +10,7 @@ from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsFifo
 from pkgcore.fs import contents
 from pkgcore.util.mappings import OrderedDict
 from pkgcore.interfaces.data_source import data_source
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 
 class tar_data_source(data_source):
 
@@ -41,7 +41,7 @@ def converter(src_tar):
             yield fsDir(location, **d)
         elif member.isreg():
             d["size"] = long(member.size)
-            d["data_source"] = tar_data_source(pre_curry(
+            d["data_source"] = tar_data_source(partial(
                     src_tar.extractfile, member.name))
             yield fsFile(location, **d)
         elif member.issym():

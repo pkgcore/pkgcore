@@ -7,7 +7,7 @@ wrap a repository, binding configuration to pkgs returned from the repository
 
 from pkgcore.repository import prototype
 from pkgcore.package.conditionals import PackageWrapper
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 
 
 class tree(prototype.tree):
@@ -43,7 +43,7 @@ class tree(prototype.tree):
         kwds.setdefault("force", True)
         o = kwds.get("pkg_klass_override", None)
         if o is not None:
-            kwds["pkg_klass_override"] = pre_curry(self.package_class, o)
+            kwds["pkg_klass_override"] = partial(self.package_class, o)
         else:
             kwds["pkg_klass_override"] = self.package_class
         return self.raw_repo.itermatch(restrict, **kwds)

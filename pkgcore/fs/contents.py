@@ -23,7 +23,7 @@ class contentsSet(object):
         """
         @param initial: initial fs objs for this set
         @type initial: sequence
-        @param frozen: controls if it modifiable after initialization
+        @param mutable: controls if it modifiable after initialization
         """
         self._dict = {}
         if initial is not None:

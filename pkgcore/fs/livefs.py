@@ -30,10 +30,8 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_path=None):
     given a fs path, and an optional stat, create an appropriate fs obj.
 
     @param stat: stat object to reuse if available
-    @param datasource: real path to the object if path is the desired location,
-        rather then existant location- alternatively, can be a
-        L{<pkgcore.interfaces.data_source.base>data_source} instance to pull
-        data from.
+    @param real_path: real path to the object if path is the desired location,
+        rather then existant location.
     @raise KeyError: if no obj type matches the stat checks
     @return: L{pkgcore.fs.fs.fsBase} derivative
     """

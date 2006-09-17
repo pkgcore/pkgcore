@@ -84,13 +84,13 @@ class MergeEngine(object):
     install_csets = {"install_existing":"get_install_livefs_intersect"}
     uninstall_csets = {
         "uninstall_existing":"get_uninstall_livefs_intersect",
-        "uninstall":currying.pre_curry(alias_cset, "old_cset")}
+        "uninstall":currying.partial(alias_cset, "old_cset")}
     replace_csets = dict(install_csets)
     replace_csets.update(uninstall_csets)
 
     install_csets.update({}.fromkeys(["install", "replace"],
-        currying.pre_curry(alias_cset, "new_cset")))
-    replace_csets["install"] = currying.pre_curry(alias_cset, "new_cset")
+        currying.partial(alias_cset, "new_cset")))
+    replace_csets["install"] = currying.partial(alias_cset, "new_cset")
     replace_csets["modifying"] = (
         lambda e, c: c["install"].intersection(c["uninstall"]))
     replace_csets["uninstall"] = "get_remove_cset"
@@ -134,7 +134,7 @@ class MergeEngine(object):
 
         self.regenerate_csets()
         for x in hooks.keys():
-            setattr(self, x, currying.pre_curry(self.execute_hook, x))
+            setattr(self, x, currying.partial(self.execute_hook, x))
 
     @classmethod
     def install(cls, pkg, offset=None):

@@ -14,7 +14,7 @@ from pkgcore.util.osutils import ensure_dirs
 from pkgcore.spawn import spawn
 from pkgcore.const import COPY_BINARY
 from pkgcore.plugins import get_plugin
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 
 __all__ = [
     "merge_contents", "unmerge_contents", "default_ensure_perms",
@@ -182,7 +182,7 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
                 raise TypeError("offset must be a dir, or not exist")
         else:
             mkdir(fs.fsDir(offset, strict=False))
-        iterate = pre_curry(offset_rewriter, offset.rstrip(os.path.sep))
+        iterate = partial(offset_rewriter, offset.rstrip(os.path.sep))
     else:
         iterate = iter
 
@@ -228,7 +228,7 @@ def unmerge_contents(cset, offset=None, callback=lambda obj:None):
 
     iterate = iter
     if offset is not None:
-        iterate = pre_curry(offset_rewriter, offset.rstrip(os.path.sep))
+        iterate = partial(offset_rewriter, offset.rstrip(os.path.sep))
 
     for x in iterate(cset.iterdirs(invert=True)):
         callback(x)

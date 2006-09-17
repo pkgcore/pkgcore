@@ -146,8 +146,6 @@ def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
     @param fd_pipes: controls what fd's are left open in the spawned process-
     @param returnpid: controls whether spawn waits for the process to finish,
         or returns the pid.
-
-    rest of the options are fairly self explanatory.
     """
     if env is None:
         env = {}

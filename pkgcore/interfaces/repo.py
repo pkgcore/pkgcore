@@ -6,7 +6,7 @@ repository modifications (installing, removing, replacing)
 """
 
 from pkgcore.util.dependant_methods import ForcedDepends
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 from pkgcore.merge.engine import MergeEngine, errors as merge_errors
 
 def decorate_ui_callback(stage, status_obj, original, *a, **kw):
@@ -42,7 +42,7 @@ class base(object):
         self.status_obj = status_obj
         if status_obj is not None:
             for x in self.stage_hooks:
-                setattr(self, x, pre_curry(
+                setattr(self, x, partial(
                         decorate_ui_callback, x, status_obj, getattr(self, x)))
 
     def _get_format_op_args_kwds(self):

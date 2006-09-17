@@ -7,7 +7,7 @@ base restriction class
 
 from pkgcore.util import caching
 from pkgcore.util.compatibility import any
-from pkgcore.util.currying import pre_curry, pretty_docs
+from pkgcore.util.currying import partial, pretty_docs
 
 class base(object):
 
@@ -156,8 +156,8 @@ class AnyMatch(base):
 
         @type  childrestriction: restriction
         @param childrestriction: child restriction applied to every value.
-        @type  restriction_type: string
-        @param restriction_type: type of this restriction.
+        @type  node_type: string
+        @param node_type: type of this restriction.
         """
         base.__init__(self, negate)
         sf = object.__setattr__
@@ -178,7 +178,7 @@ class AnyMatch(base):
 def curry_node_type(klass, node_type, extradoc=None):
     """Helper function for creating restrictions of a certain type.
 
-    This uses pre_curry to pass a node_type to the wrapped class,
+    This uses L{partial} to pass a node_type to the wrapped class,
     and extends the docstring.
 
     @param klass: callable (usually a class) that is wrapped.
@@ -191,7 +191,7 @@ def curry_node_type(klass, node_type, extradoc=None):
     if extradoc is None:
         extradoc = "Automatically set to %s type." % (node_type,)
     doc = klass.__doc__
-    result = pre_curry(klass, node_type=node_type)
+    result = partial(klass, node_type=node_type)
     if doc is None:
         doc = ''
     else:

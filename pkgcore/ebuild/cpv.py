@@ -33,11 +33,11 @@ class native_CPV(object):
     """
     base ebuild package class
 
-        @ivar category: str category
-        @ivar package: str package
+    @ivar category: str category
+    @ivar package: str package
     @ivar key: strkey (cat/pkg)
-        @ivar version: str version
-        @ivar revision: int revision
+    @ivar version: str version
+    @ivar revision: int revision
     @ivar versioned_atom: atom matching this exact version
     @ivar unversioned_atom: atom matching all versions of this package
     @cvar _get_attr: mapping of attr:callable to generate attributes on the fly
@@ -52,9 +52,13 @@ class native_CPV(object):
     # if native is being used, forget trying to reuse strings.
     def __init__(self, *a):
         """
-        @param cpvstr: cat/pkg-ver[-rev] of an ebuild package.
-            See L{parser} for allowed syntax.
-        @type cpvstr: string
+        Can be called with one string or with three string args.
+
+        If called with one arg that is the cpv string. (See L{parser}
+        for allowed syntax).
+
+        If called with three args they are the category, package and
+        version components of the cpv string respectively.
         """
         l = len(a)
         if l == 1:
@@ -274,11 +278,11 @@ class CPV(base.base, base_CPV):
     """
     base ebuild package class
 
-        @ivar category: str category
-        @ivar package: str package
+    @ivar category: str category
+    @ivar package: str package
     @ivar key: strkey (cat/pkg)
-        @ivar version: str version
-        @ivar revision: int revision
+    @ivar version: str version
+    @ivar revision: int revision
     @ivar versioned_atom: atom matching this exact version
     @ivar unversioned_atom: atom matching all versions of this package
     @cvar _get_attr: mapping of attr:callable to generate attributes on the fly

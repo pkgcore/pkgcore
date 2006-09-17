@@ -12,6 +12,9 @@ class Formatter(object):
 
     """Abstract formatter base class.
 
+    The types of most of the instance attributes is undefined (depends
+    on the implementation of the particular Formatter subclass).
+
     @ivar bold: object to pass to L{write} to switch to bold mode.
     @ivar underline: object to pass to L{write} to switch to underlined mode.
     @ivar reset: object to pass to L{write} to turn off bold and underline.
@@ -19,9 +22,6 @@ class Formatter(object):
     @ivar wrap: object to pass to L{write} to turn word wrapping on (default).
     @ivar autoline: boolean indicating we are in auto-newline mode
         (defaults to on).
-
-    The types of most of these objects is undefined (depends on the
-    implementation of the particular Formatter subclass).
     """
 
     def __init__(self):
@@ -31,11 +31,12 @@ class Formatter(object):
         """Write something to the stream.
 
         Acceptable arguments are:
-        - Strings are simply written to the stream.
-        - C{None} is ignored.
-        - Functions are called with the formatter as argument.
-          Their return value is then used the same way as the other arguments.
-        - Formatter subclasses might special-case certain objects.
+          - Strings are simply written to the stream.
+          - C{None} is ignored.
+          - Functions are called with the formatter as argument.
+            Their return value is then used the same way as the other
+            arguments.
+          - Formatter subclasses might special-case certain objects.
 
         The formatter has a couple of attributes that are useful as argument
         to write.

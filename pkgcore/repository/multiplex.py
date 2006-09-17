@@ -6,7 +6,7 @@ repository that combines multiple repositories together
 """
 
 from pkgcore.repository import prototype, errors
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 from pkgcore.util.iterables import iter_sort
 from operator import itemgetter
 
@@ -87,7 +87,7 @@ class tree(prototype.tree):
             if l[0] == y:
                 return 1
             return -1
-        f = pre_curry(sorted, cmp=f)
+        f = partial(sorted, cmp=f)
         return iter_sort(f,
             *[repo.itermatch(restrict, **kwds) for repo in self.trees])
 

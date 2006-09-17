@@ -46,7 +46,7 @@ class CollapsedConfig(object):
     @type type: L{basics.ConfigType}
     @ivar type: Our type.
     @type config: dict
-    @ivar type: The supplied configuration values.
+    @ivar config: The supplied configuration values.
     @ivar debug: if True exception wrapping is disabled.
     """
 
@@ -142,11 +142,10 @@ class ConfigManager(object):
     required data from any number of provided configuration sources.
 
     The following special type names are recognized:
-
-    configsection: instantiated and used the same way as an entry in the
+      - configsection: instantiated and used the same way as an entry in the
         configs L{__init__} arg.
-    remoteconfigsection: Instantiated and used the same way as an entry in the
-        remote_configs L{__init__} arg.
+      - remoteconfigsection: Instantiated and used the same way as an entry in
+        theremote_configs L{__init__} arg.
 
     These "magic" typenames are only recognized if they are used by a
     section with a name starting with "autoload".

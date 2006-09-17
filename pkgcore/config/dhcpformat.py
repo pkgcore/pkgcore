@@ -3,39 +3,39 @@
 
 """Parse a dhcpd.conf(5) style configuration file.
 
-Example of the supported format (not a complete config):
+Example of the supported format (not a complete config)::
 
-# this is a comment.
-# this is a config section.
-metadata {
-    # strings may be quoted or unquoted. semicolon terminator.
-    type cache;
-    class pkgcore.cache.metadata.database;
-    # true, yes or 1 for boolean True (case-insensitive).
-    readonly true;
-    location /usr/portage/
-}
-
-# this needs to be quoted because it has a space in it
-"livefs domain" {
-    # this could be unquoted.
-    type "domain";
-    package.keywords "/etc/portage/package.keywords";
-    default yes;
-    # this is a section reference, with a nested anonymous section.
-    repositories {
-        type repo;
-        class pkgcore.ebuild.repository.tree;
-        location /usr/portage;
-        # this is also a section reference, but instead of a nested section
-        # we refer to the named metadata section above
-        cache metadata;
-    };
-    fetcher {
-        type fetcher;
-        distdir /usr/portage/distfiles;
+    # this is a comment.
+    # this is a config section.
+    metadata {
+        # strings may be quoted or unquoted. semicolon terminator.
+        type cache;
+        class pkgcore.cache.metadata.database;
+        # true, yes or 1 for boolean True (case-insensitive).
+        readonly true;
+        location /usr/portage/
     }
-}
+
+    # this needs to be quoted because it has a space in it
+    "livefs domain" {
+        # this could be unquoted.
+        type "domain";
+        package.keywords "/etc/portage/package.keywords";
+        default yes;
+        # this is a section reference, with a nested anonymous section.
+        repositories {
+            type repo;
+            class pkgcore.ebuild.repository.tree;
+            location /usr/portage;
+            # this is also a section reference, but instead of a nested section
+            # we refer to the named metadata section above
+            cache metadata;
+        };
+        fetcher {
+            type fetcher;
+            distdir /usr/portage/distfiles;
+        }
+    }
 """
 
 from pkgcore.util import mappings, modules

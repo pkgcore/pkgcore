@@ -65,10 +65,10 @@ class NoMatches(parserestrict.ParseError):
     def __init__(self, token):
         parserestrict.ParseError.__init__(self, '%s: no matches' % (token,))
 
-def parse_atom(token, repos, return_none=False):
+def parse_atom(token, repo, return_none=False):
     """Use L{parserestrict.parse_match} to produce a single atom.
 
-    This matches the restriction against the repos, raises
+    This matches the restriction against the repo, raises
     AmbiguousQuery if they belong to multiple cat/pkgs, returns an
     atom otherwise.
 
@@ -80,7 +80,7 @@ def parse_atom(token, repos, return_none=False):
     """
     # XXX this should be in parserestrict in some form, perhaps.
     restriction = parserestrict.parse_match(token)
-    matches = repos.match(restriction)
+    matches = repo.match(restriction)
     if not matches:
         if return_none:
             return None

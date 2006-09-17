@@ -37,7 +37,7 @@ class cache(base):
 
     def __init__(self, path, portdir=None):
         """
-        @param porttree: ondisk location of the tree we're working with
+        @param portdir: ondisk location of the tree we're working with
         """
         base.__init__(self)
         # generate this.

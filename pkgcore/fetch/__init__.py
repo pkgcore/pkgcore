@@ -39,7 +39,6 @@ class mirror(object):
 
     def __init__(self, mirrors, mirror_name):
         """
-        @param uri: the uri to try accessing per mirror server
         @param mirrors: list of hosts that comprise this mirror tier
         @param mirror_name: name of the mirror tier
         """

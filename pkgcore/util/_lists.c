@@ -200,9 +200,10 @@ pkgcore_iflatten_func_iternext(pkgcore_iflatten_func *self) {
 
 PyDoc_STRVAR(
     pkgcore_iflatten_func_documentation,
-    "collapse [(1),2] into [1,2]\n"
+    "iflatten_func(iters, func): collapse [(1),2] into [1,2]\n"
     "\n"
-    "@param skip_flattening: list of classes to not descend through\n"
+    "func is called with one argument and should return true if this \n"
+    "should not be iterated over.\n"
     );
 
 static PyTypeObject pkgcore_iflatten_func_type = {
@@ -396,9 +397,10 @@ pkgcore_iflatten_instance_iternext(pkgcore_iflatten_instance *self) {
 
 PyDoc_STRVAR(
     pkgcore_iflatten_instance_documentation,
-    "collapse [(1),2] into [1,2]\n"
+    "iflatten_func(iters, skip_flattening=basestring)\n"
     "\n"
-    "@param skip_flattening: list of classes to not descend through\n"
+    "collapse [(1),2] into [1,2]\n"
+    "skip_flattening is a list of classes to not descend through\n"
     );
 
 static PyTypeObject pkgcore_iflatten_instance_type = {

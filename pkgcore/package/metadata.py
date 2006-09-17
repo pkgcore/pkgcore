@@ -41,7 +41,7 @@ def DeriveMetadataKls(original_kls):
         def __init__(self, parent_repository, *a, **kwds):
             """
             wrapper for %s.__init__; see %s.__init__ for allowed args/kwds,
-                they're passed directly to it
+            they're passed directly to it
 
             @param parent_repository: parent repository this package belongs to
             @type parent_repository: L{pkgcore.repository.prototype.tree}

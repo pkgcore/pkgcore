@@ -8,7 +8,7 @@ if b is called first.
 """
 
 from pkgcore.util.lists import iflatten_instance
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 
 __all__ = ["ForcedDepends"]
 
@@ -78,7 +78,7 @@ class ForcedDepends(type):
         for x in set(x for x in iflatten_instance(o.stage_depends.iteritems())
                      if x):
             f = getattr(o, x)
-            f2 = pre_curry(ensure_deps, o, x)
+            f2 = partial(ensure_deps, o, x)
             f2.raw_func = f
             setattr(o, x, f2)
 

@@ -3,7 +3,7 @@
 
 from twisted.trial import unittest
 from pkgcore.package import base
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 
 class TestBasePkg(unittest.TestCase):
 
@@ -22,7 +22,7 @@ class TestBasePkg(unittest.TestCase):
 
     def test_getattr(self):
         class Class(base.base):
-            _get_attr = dict((str(x), pre_curry((lambda a, s: a), x))
+            _get_attr = dict((str(x), partial((lambda a, s: a), x))
                              for x in xrange(10))
             _get_attr["a"] = lambda s:"foo"
 

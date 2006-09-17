@@ -17,11 +17,11 @@ class fetcher(object):
         internal function for derivatives.
 
         digs through chksums, and returns:
-        -1: iff (size chksum is available, and
-            file is smaller than stated chksum) or file doesn't exist.
-        0:  iff all chksums match
-        1:  iff file is too large (if size chksums are available)
-            or else size is right but a chksum didn't match.
+          - -1: iff (size chksum is available, and
+                file is smaller than stated chksum) or file doesn't exist.
+          - 0:  iff all chksums match
+          - 1:  iff file is too large (if size chksums are available)
+                or else size is right but a chksum didn't match.
 
         if required is None, all chksums must match
         """

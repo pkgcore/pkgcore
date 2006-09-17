@@ -10,7 +10,7 @@ from pkgcore.repository import prototype, errors
 
 #needed to grab the PN
 from pkgcore.ebuild.cpv import CPV as cpv
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 from pkgcore.plugins import get_plugin
 from pkgcore.util.mappings import DictMixin
 from pkgcore.util.osutils import listdir_dirs, listdir_files
@@ -55,8 +55,8 @@ def wrap_factory(klass, *args, **kwds):
 
                 label = "forced_decompression"
                 t = SimpleTrigger("install",
-                    pre_curry(force_unpack_trigger, format_op_inst),
-                    register_func=pre_curry(generic_register, label),
+                    partial(force_unpack_trigger, format_op_inst),
+                    register_func=partial(generic_register, label),
                     label=label)
                 engine_inst.add_triggers("sanity_check", t)
 

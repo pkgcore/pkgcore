@@ -8,7 +8,7 @@ from pkgcore.repository import prototype, errors
 from pkgcore.ebuild.cpv import CPV as cpv
 from pkgcore.util.osutils import ensure_dirs
 from pkgcore.util.mappings import IndeterminantDict
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 from pkgcore.vdb.contents import ContentsFile
 from pkgcore.plugins import get_plugin
 from pkgcore.interfaces import repo as repo_interfaces
@@ -112,7 +112,7 @@ class tree(prototype.tree):
         "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
 
     def _get_metadata(self, pkg):
-        return IndeterminantDict(pre_curry(self._internal_load_key,
+        return IndeterminantDict(partial(self._internal_load_key,
             os.path.join(self.base, pkg.category,
                 "%s-%s" % (pkg.package, pkg.fullver))))
 

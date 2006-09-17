@@ -4,7 +4,7 @@
 from pkgcore.restrictions.packages import OrRestriction
 from pkgcore.repository import multiplex, virtual
 from pkgcore.vdb.ondisk import tree as vdb_repository
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 
 def _grab_virtuals(parent_repo):
     virtuals = {}
@@ -25,6 +25,6 @@ def _grab_virtuals(parent_repo):
 def repository(*args, **kwargs):
     r = vdb_repository(*args, **kwargs)
     return multiplex.tree(
-        r, virtual.tree(pre_curry(_grab_virtuals, r), livefs=True))
+        r, virtual.tree(partial(_grab_virtuals, r), livefs=True))
 
 repository = vdb_repository

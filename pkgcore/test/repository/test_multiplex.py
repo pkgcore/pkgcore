@@ -5,11 +5,11 @@ from pkgcore.repository.multiplex import tree
 from pkgcore.restrictions import packages, values
 from pkgcore.test.repository.util import SimpleTree
 from pkgcore.util.mappings import OrderedDict
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 
 from twisted.trial import unittest
 
-rev_sorted = pre_curry(sorted, reverse=True)
+rev_sorted = partial(sorted, reverse=True)
 
 class TestMultiplex(unittest.TestCase):
 

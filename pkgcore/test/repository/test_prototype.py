@@ -6,11 +6,8 @@ from twisted.trial import unittest
 from pkgcore.restrictions import packages, values
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
-from pkgcore.util.currying import pre_curry
 from pkgcore.util.mappings import OrderedDict
 from pkgcore.test.repository.util import SimpleTree
-
-rev_sorted = pre_curry(sorted, reverse=True)
 
 
 class TestPrototype(unittest.TestCase):

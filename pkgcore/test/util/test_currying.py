@@ -5,6 +5,9 @@ from twisted.trial import unittest
 from pkgcore.util import currying
 
 
+# Magic to make trial doctest our docstrings.
+__doctests__ = [currying]
+
 def passthrough(*args, **kwargs):
     return args, kwargs
 
@@ -70,10 +73,30 @@ class PreCurryTest(unittest.TestCase):
                 currying.pretty_docs(self.pre_curry(func)).__doc__,
                 func.__doc__)
 
+    def test_instancemethod(self):
+        class Test(object):
+            method = self.pre_curry(passthrough, 'test')
+        test = Test()
+        self.assertEquals((('test', test), {}), test.method())
 
-if currying.pre_curry is not currying.native_pre_curry:
-    class NativePrecurryTest(PreCurryTest):
-        pre_curry = staticmethod(currying.native_pre_curry)
+
+class NativePartialTest(PreCurryTest):
+
+    pre_curry = staticmethod(currying.native_partial)
+
+    def test_instancemethod(self):
+        class Test(object):
+            method = self.pre_curry(passthrough, 'test')
+        test = Test()
+        self.assertEquals((('test',), {}), test.method())
+
+
+class CPyPartialTest(NativePartialTest):
+
+    pre_curry = staticmethod(currying.partial)
+
+    if currying.native_partial is currying.partial:
+        skip = 'cpy partial not available.'
 
 
 class PostCurryTest(unittest.TestCase):
@@ -114,6 +137,11 @@ class PostCurryTest(unittest.TestCase):
         self.assertIdentical(
             currying.post_curry(passthrough).func, passthrough)
 
+    def test_instancemethod(self):
+        class Test(object):
+            method = currying.post_curry(passthrough, 'test')
+        test = Test()
+        self.assertEquals(((test, 'test'), {}), test.method())
 
 class TestAliasClassAttr(unittest.TestCase):
     def test_alias_class_method(self):

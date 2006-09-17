@@ -8,7 +8,7 @@ gentoo profile support
 import os, errno
 from pkgcore.config import profiles, ConfigHint
 from pkgcore.util.file import iter_read_bash, read_bash_dict
-from pkgcore.util.currying import pre_curry
+from pkgcore.util.currying import partial
 from pkgcore.ebuild.atom import atom
 from pkgcore.config.basics import list_parser
 from pkgcore.util.mappings import ProtectedDict
@@ -192,7 +192,7 @@ class OnDiskProfile(profiles.base):
                 c = cpv.CPV(p[0])
                 virtuals[c.package] = atom(p[1])
 
-        self.virtuals = pre_curry(AliasedVirtuals, virtuals)
+        self.virtuals = partial(AliasedVirtuals, virtuals)
         # collapsed make.defaults.  now chunkify the bugger.
         self.conf = d
 

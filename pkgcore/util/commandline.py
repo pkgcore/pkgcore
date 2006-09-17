@@ -43,6 +43,18 @@ class OptionParser(optparse.OptionParser):
 def main(option_parser, main_func, args=None, sys_exit=True):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
+    Options are parsed before the config is loaded. This means you
+    should do any extra validation of options that you do not need the
+    config for in check_values of your option parser (if that fails
+    the config is never loaded, so it will be faster).
+
+    Handling the unparsed "args" from the option parser should be done
+    in check_values too (added to the values object). Unhandled args
+    are treated as an error by this function.
+
+    Any ConfigurationErrors raised from your function (by the config
+    manager) are handled. Other exceptions are not (trigger a traceback).
+
     @type  option_parser: instance of L{OptionParser} (or a subclass).
     @param option_parser: option parser used to parse sys.argv.
     @type  main_func: callable, main_func(config, options, out, err)
@@ -56,18 +68,6 @@ def main(option_parser, main_func, args=None, sys_exit=True):
     @type  sys_exit: boolean
     @param sys_exit: if True C{sys.exit} is called when done, otherwise
         the exitstatus is returned.
-
-    Options are parsed before the config is loaded. This means you
-    should do any extra validation of options that you do not need the
-    config for in check_values of your option parser (if that fails
-    the config is never loaded, so it will be faster).
-
-    Handling the unparsed "args" from the option parser should be done
-    in check_values too (added to the values object). Unhandled args
-    are treated as an error by this function.
-
-    Any ConfigurationErrors raised from your function (by the config
-    manager) are handled. Other exceptions are not (trigger a traceback).
     """
     try:
         options, args = option_parser.parse_args(args)

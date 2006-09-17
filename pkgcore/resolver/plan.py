@@ -8,7 +8,7 @@ from pkgcore.util.iterables import caching_iter, iter_sort
 from pkgcore.util.mappings import OrderedDict
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.resolver.choice_point import choice_point
-from pkgcore.util.currying import pre_curry, post_curry
+from pkgcore.util.currying import partial, post_curry
 from pkgcore.restrictions import packages, values, restriction
 from pkgcore.package.mutated import MutatedPkg
 
@@ -68,7 +68,7 @@ class InsolubleSolution(Exception):
 
 
 #iter/pkg sorting functions for selection strategy
-pkg_sort_highest = pre_curry(sorted, reverse=True)
+pkg_sort_highest = partial(sorted, reverse=True)
 pkg_sort_lowest = sorted
 
 pkg_grabber = operator.itemgetter(0)

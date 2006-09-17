@@ -15,7 +15,7 @@ from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.digest import parse_digest
 from pkgcore.util.mappings import IndeterminantDict
-from pkgcore.util.currying import post_curry, alias_class_method, pre_curry
+from pkgcore.util.currying import post_curry, alias_class_method, partial
 from pkgcore.util.lists import ChainedLists
 from pkgcore.restrictions.packages import AndRestriction
 from pkgcore.restrictions import boolean
@@ -39,8 +39,8 @@ def generate_depset(s, c, *keys, **kwds):
 
 def generate_providers(self):
     rdep = AndRestriction(self.versioned_atom, finalize=True)
-    func = pre_curry(virtual_ebuild, self._parent, self,
-                      {"rdepends":rdep, "slot":self.version})
+    func = partial(virtual_ebuild, self._parent, self,
+                   {"rdepends":rdep, "slot":self.version})
     # re-enable license at some point.
     #, "license":self.license})
 
@@ -61,8 +61,8 @@ def generate_fetchables(self):
     try:
         d = conditionals.DepSet(
             self.data.pop("SRC_URI", ""), fetchable, operators={},
-            element_func=pre_curry(create_fetchable_from_uri, self, chksums,
-                                   mirrors, default_mirrors, common))
+            element_func=partial(create_fetchable_from_uri, self, chksums,
+                                 mirrors, default_mirrors, common))
         for v in common.itervalues():
             v.uri.finalize()
         return d
@@ -327,7 +327,7 @@ class virtual_ebuild(metadata.package):
 
     def __init__(self, parent_repository, pkg, data, cpvstr):
         """
-        @param cpv: cpv for the new pkg
+        @param cpvstr: cpv for the new pkg
         @param parent_repository: actual repository that this pkg should
             claim it belongs to
         @param pkg: parent pkg that is generating this pkg

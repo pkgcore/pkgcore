@@ -73,11 +73,11 @@ class DictMixin(object):
                 len(args) + 1)
         try:
             val = self[key]
+            del self[key]
         except KeyError:
             if args:
                 return args[0]
             raise
-        del self[key]
         return val
     
     def setdefault(self, key, default=None):

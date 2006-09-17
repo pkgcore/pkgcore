@@ -17,7 +17,6 @@ from pkgcore.util.osutils import listdir_dirs
 from pkgcore.repository import multiplex, virtual
 from pkgcore.util import bzip2
 from pkgcore.config import ConfigHint
-from pkgcore.ebuild import ebuild_src
 
 from pkgcore.util.demandload import demandload
 demandload(globals(),
@@ -161,8 +160,7 @@ class ConfiguredTree(multiplex.tree):
         self.domain = domain
         self.domain_settings = domain_settings
         self.raw_vdb = raw_vdb
-        self.raw_virtual = virtual.tree(self._grab_virtuals, livefs=True,
-            pkg_args_mangler=ebuild_src.mangle_repo_args)
+        self.raw_virtual = virtual.tree(self._grab_virtuals, livefs=True)
         multiplex.tree.__init__(self, raw_vdb, self.raw_virtual)
         self.frozen = raw_vdb.frozen
 

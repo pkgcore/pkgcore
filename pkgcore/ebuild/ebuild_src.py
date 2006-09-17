@@ -24,17 +24,8 @@ from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import const, processor
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.ebuild.repo_ops:MetadataXml "
-    "errno ")
+demandload(globals(), "errno ")
 
-
-def mangle_repo_args(pkg_chunks):
-    """
-    function for mangling default repo args into a form
-    CPV likes.
-    """
-    return pkg_chunks
-    return "%s/%s-%s" % pkg_chunks, pkg_chunks[0], pkg_chunks[1], pkg_chunks[2]
 
 def generate_depset(s, c, *keys, **kwds):
     if kwds.pop("non_package_type", False):

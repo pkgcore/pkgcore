@@ -20,8 +20,7 @@ from collections import deque
 
 demandload(globals(), "logging "
     "pkgcore.config.errors:InstantiationError "
-    "pkgcore.ebuild:const "
-    "pkgcore.ebuild:ebuild_src ")
+    "pkgcore.ebuild:const ")
 
 # Harring sez-
 # This should be implemented as an auto-exec config addition.
@@ -312,8 +311,7 @@ class AliasedVirtuals(virtual.tree):
         @param repo: L{pkgcore.ebuild.repository.UnconfiguredTree} parent repo
         """
 
-        virtual.tree.__init__(self, virtuals,
-            pkg_args_mangler=ebuild_src.mangle_repo_args)
+        virtual.tree.__init__(self, virtuals)
         self.aliased_repo = repo
         self.versions._vals = ForgetfulDict()
 

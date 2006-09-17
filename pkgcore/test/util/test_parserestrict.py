@@ -109,3 +109,7 @@ class TestExtendedRestrictionGeneration(unittest.TestCase):
             self.assertEqual(len(i), 2)
             self.verify_restrict(i[0], "category", token.split("/")[0])
             self.verify_restrict(i[1], "package", token.split("/")[1])
+
+    def test_atom_globbed(self):
+        o = parserestrict.parse_match("=sys-devel/gcc-4*")
+        self.assertTrue(isinstance(o, atom), msg="%r must be an atom" % o)

@@ -109,6 +109,8 @@ def parse_match(text):
         if len(r) == 1:
             return r[0]
         return packages.AndRestriction(*r)
+    elif text[0] in "=<>~":
+        return atom.atom(text)
     if "*" not in text:
         try:
             return atom.atom(text)

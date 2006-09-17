@@ -74,36 +74,36 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True, kls_override=None
             if ignore_gpg:
                 i = gpg.skip_signatures(f)
             for data in i:
-                l = data.split()
+                line = data.split()
                 for t, d in types:
-                    if l[0] != t:
+                    if line[0] != t:
                         continue
-                    if len(l) % 2 != 1:
+                    if len(line) % 2 != 1:
                         if throw_errors:
                             raise errors.ParseChksumError(source,
                                 "manifest 2 entry doesn't have right "
                                 "number of tokens, %i: %r" % 
                                 (len(line), line))
                     else:
-                        chf_types.update(l[3::2])
+                        chf_types.update(line[3::2])
                         # this is a trick to do pairwise collapsing;
                         # [size, 1] becomes [(size, 1)]
-                        i = iter(l[3:])
-                        d[l[1]] = [("size", long(l[2]))] + \
+                        i = iter(line[3:])
+                        d[line[1]] = [("size", long(line[2]))] + \
                             [(chf.lower(), long(sum, 16))
                                 for chf, sum in izip(i, i)]
                     manifest_type = 2
                     break
                 else:
-                    if len(l) != 4:
+                    if len(line) != 4:
                         if throw_errors:
                             raise errors.ParseChksumError(source,
                                 "line count was not 4, was %i: %r" %
-                                (len(l, line)))
+                                (len(line), line))
                         continue
-                    chf_types.add(l[0])
-                    files.setdefault(l[2], []).append(
-                        [long(l[3]), l[0].lower(), long(l[1], 16)])
+                    chf_types.add(line[0])
+                    files.setdefault(line[2], []).append(
+                        [long(line[3]), line[0].lower(), long(line[1], 16)])
             
         except (OSError, IOError, TypeError), e:
             raise errors.ParseChksumError("failed parsing %r" % source, e)

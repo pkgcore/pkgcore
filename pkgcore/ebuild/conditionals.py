@@ -78,10 +78,10 @@ class DepSet(boolean.AndRestriction):
                             operators[raw_conditionals[-1]](finalize=True,
                                                             *depsets[-1]))
 
-                    raw_conditionals.pop(-1)
-                    depsets.pop(-1)
+                    raw_conditionals.pop()
+                    depsets.pop()
 
-                elif k.endswith('?') or k in operators or k == "(":
+                elif k == "(" or k.endswith('?') or k in operators:
                     if k != "(":
                         # use conditional or custom op.
                         # no tokens left == bad dep_str.
@@ -173,7 +173,7 @@ class DepSet(boolean.AndRestriction):
                 restricts.append([])
                 break
             else:
-                stack.pop(-1)
+                stack.pop()
                 l = len(restricts)
                 if l != 1:
                     if restricts[-1]:
@@ -184,9 +184,9 @@ class DepSet(boolean.AndRestriction):
                             restricts[-2].extend(restricts[-1])
                         else:
                             restricts[-2].append(stack[-1](*restricts[-1]))
-                    stack.pop(-1)
+                    stack.pop()
                 count -= 1
-                restricts.pop(-1)
+                restricts.pop()
 
         object.__setattr__(flat_deps, "restrictions", tuple(base_restrict))
         return flat_deps

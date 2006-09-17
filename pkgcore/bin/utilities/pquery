@@ -26,6 +26,7 @@ if __name__ == "__main__":
     force_vdb = grab_arg("--vdb", args)
     force_virtuals = grab_arg("--virtuals-only", args)
     disable_virtuals = grab_arg("--disable-virtuals", args)
+    debug = grab_arg("--debug", args)
 
     if "--atomstr" in args:
         def atomstr(a, l=False):
@@ -45,9 +46,9 @@ if __name__ == "__main__":
         atomstr = lambda x, y=False: str(x)
 
     if len(args) == 0 or "--help" in args or (force_virtuals and disable_virtuals) or ("--max" in args and "--min" in args):
-        print "supported args: [--raw] [--virtuals-only || --disable-virtuals ] [--vdb] [ --max || --min ] [--atomstr] [atom [ --attr attr ] ]*"
+        print "supported args: [--raw] [--virtuals-only || --disable-virtuals ] [--vdb] [ --max || --min ] [--atomstr] [atom [ --attr attr ] ]* [ --debug ]"
         sys.exit(1)
-    conf = pkgcore.config.load_config()
+    conf = pkgcore.config.load_config(debug=debug)
     domain = conf.get_default("domain")
     if domain is None:
         print "no default domain specified in configuration- please fix your configuration"

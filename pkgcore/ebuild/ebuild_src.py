@@ -265,9 +265,6 @@ class package_factory(metadata.factory):
     def get_ebuild_src(self, pkg):
         return self._parent_repo._get_ebuild_src(pkg)
 
-    def _get_metadata_xml_path(self, pkg):
-        return self._parent_repo._get_metadata_xml_path(pkg)
-
     def _get_metadata(self, pkg):
         for cache in self._cache:
             if cache is not None:
@@ -322,10 +319,6 @@ class package_factory(metadata.factory):
                 mxml, self, *args)
         return inst
 
-    def request_mirror(self, mirror_name):
-        """
-        either get a mirror, or return None
-        """
 
 generate_new_factory = package_factory
 

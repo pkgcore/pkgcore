@@ -207,6 +207,10 @@ def main(config, options, out, err):
 
     # This mode does not care about sets and packages so bypass all that.
     if options.unmerge:
+        if not options.force:
+            err.write("you must explicitly enable unmerging via --force "
+                "for this release (will be removed in the next major release)\n")
+            return
         try:
             unmerge(
                 out, vdb, options.targets, pretend=options.pretend,
@@ -331,7 +335,7 @@ def main(config, options, out, err):
         out.write(out.bold, '%.2f' % (vdb_time,), out.reset,
                   ' seconds preloading vdb state')
     if not options.force and not options.fetchonly:
-        err.write("you must explicitly enable merging via --I-am-in-a-chroot "
+        err.write("you must explicitly enable merging via --force "
             "for this release (will be removed in the next major release)\n")
         return
     if options.pretend:

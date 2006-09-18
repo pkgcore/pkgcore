@@ -55,7 +55,6 @@ class PlainTextFormatterTest(unittest.TestCase):
             self.assertEqual(output, stream.getvalue())
 
     def test_later_prefix(self):
-        # As many sporks as fit in 20 chars.
         for inputs, output in [
             ((u'\N{SNOWMAN}',), '?'),
             ((7 * 'spork ',),
@@ -79,15 +78,30 @@ class PlainTextFormatterTest(unittest.TestCase):
             self.assertEqual(output, stream.getvalue())
 
     def test_wrap_autoline(self):
-        stream = StringIO.StringIO()
-        formatter = formatters.PlainTextFormatter(stream)
-        formatter.wrap = True
-        formatter.width = 10
-        formatter.later_prefix = ['foon']
-        formatter.write('spork')
-        formatter.write('spork')
-        formatter.write('spork')
-        self.assertEquals('spork\nspork\nspork\n', stream.getvalue())
+        for inputs, output in [
+            ((3 * ('spork',)), 'spork\nspork\nspork\n'),
+            (3 * (('spork',),), 'spork\nspork\nspork\n'),
+            (((3 * 'spork',),),
+             '\n'
+             'foonsporks\n'
+             'foonporksp\n'
+             'foonork\n'),
+            ((('fo',), (2 * 'spork',),), 'fo\nsporkspork\n'),
+            ((('fo',), (3 * 'spork',),),
+             'fo\n'
+             '\n'
+             'foonsporks\n'
+             'foonporksp\n'
+             'foonork\n'),
+            ]:
+            stream = StringIO.StringIO()
+            formatter = formatters.PlainTextFormatter(stream)
+            formatter.wrap = True
+            formatter.width = 10
+            formatter.later_prefix = ['foon']
+            for input in inputs:
+                formatter.write(*input)
+            self.assertEquals(output, stream.getvalue())
 
 
 class TerminfoFormatterTest(unittest.TestCase):

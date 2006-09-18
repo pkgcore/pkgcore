@@ -162,6 +162,7 @@ class PlainTextFormatter(Formatter):
                 self.stream.write('\n')
                 self._pos = 0
                 self._in_first_line = False
+                self._wrote_something = False
                 self._write_prefix()
 
             # This fits.
@@ -172,6 +173,7 @@ class PlainTextFormatter(Formatter):
             self.stream.write(arg)
         if self.autoline:
             self.stream.write('\n')
+            self._wrote_something = False
             self._pos = 0
             self._in_first_line = True
 

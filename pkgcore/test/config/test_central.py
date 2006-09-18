@@ -170,6 +170,7 @@ class ConfigManagerTest(unittest.TestCase):
             [{'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
               }], [object()])
         self.check_error(
+            "Instantiating named section 'myrepo':\n"
             "'I raised' instantiating pkgcore.test.config.test_central.myrepo",
             operator.getitem, manager.myrepo, 'myrepo',
             klass=errors.InstantiationError)
@@ -181,6 +182,7 @@ class ConfigManagerTest(unittest.TestCase):
             [{'myrepo': basics.HardCodedConfigSection({'class': myrepo})
               }], [object()])
         self.check_error(
+            "Instantiating named section 'myrepo':\n"
             "Caught exception 'I raised' instantiating "
             'pkgcore.test.config.test_central.myrepo',
             operator.getitem, manager.myrepo, 'myrepo')

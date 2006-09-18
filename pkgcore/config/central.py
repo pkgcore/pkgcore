@@ -29,7 +29,11 @@ class _ConfigMapping(mappings.DictMixin):
         conf = self.manager.collapse_named_section(key, raise_on_missing=False)
         if conf is None or conf.type.name != self.typename:
             raise KeyError(key)
-        return conf.instantiate()
+        try:
+            return conf.instantiate()
+        except errors.ConfigurationError, e:
+            e.stack.append('Instantiating named section %r' % (key,))
+            raise
 
     def iterkeys(self):
         return self.manager.sections(self.typename)
@@ -392,5 +396,16 @@ class ConfigManager(object):
                             default, name, type_name))
                 default = name
             if default is not None:
-                return self.collapse_named_section(default).instantiate()
+                try:
+                    collapsed = self.collapse_named_section(default)
+                except errors.ConfigurationError, e:
+                    e.stack.append('Collapsing default %s %r' %
+                                   (type_name, default))
+                    raise
+                try:
+                    return collapsed.instantiate()
+                except errors.ConfigurationError, e:
+                    e.stack.append('Instantiating default %s %r' %
+                                   (type_name, default))
+                    raise
         return None

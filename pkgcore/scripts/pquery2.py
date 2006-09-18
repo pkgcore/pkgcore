@@ -82,31 +82,6 @@ def parse_envmatch(value):
                 values.StrRegex(value))))
 
 
-PARSE_FUNCS = {
-    'revdep': parse_revdep,
-    'description': parse_description,
-    'ownsre': parse_ownsre,
-    'environment': parse_envmatch,
-    }
-
-# This is not just a blind "update" because we really need a config
-# option for everything in this dict (so parserestrict growing parsers
-# would break us).
-for _name in ['match']:
-    PARSE_FUNCS[_name] = parserestrict.parse_funcs[_name]
-
-for _name, _attr in [
-    ('herd', 'herds'),
-    ('license', 'license'),
-    ('hasuse', 'iuse'),
-    ('maintainer', 'maintainers'),
-    ('owns', 'contents'),
-    ]:
-    PARSE_FUNCS[_name] = parserestrict.comma_separated_containment(_attr)
-
-del _name, _attr
-
-
 def parse_expression(string):
     """Convert a string to a restriction object using pyparsing."""
     # Two reasons to delay this import: we want to deal if it is
@@ -179,6 +154,32 @@ def parse_expression(string):
         return grammar.parseString(string)[0]
     except pyp.ParseException, e:
         raise parserestrict.ParseError(e.msg)
+
+
+PARSE_FUNCS = {
+    'revdep': parse_revdep,
+    'description': parse_description,
+    'ownsre': parse_ownsre,
+    'environment': parse_envmatch,
+    'expr': parse_expression,
+    }
+
+# This is not just a blind "update" because we really need a config
+# option for everything in this dict (so parserestrict growing parsers
+# would break us).
+for _name in ['match']:
+    PARSE_FUNCS[_name] = parserestrict.parse_funcs[_name]
+
+for _name, _attr in [
+    ('herd', 'herds'),
+    ('license', 'license'),
+    ('hasuse', 'iuse'),
+    ('maintainer', 'maintainers'),
+    ('owns', 'contents'),
+    ]:
+    PARSE_FUNCS[_name] = parserestrict.comma_separated_containment(_attr)
+
+del _name, _attr
 
 
 class AtomIntersectsAtom(values.base):
@@ -260,9 +261,10 @@ class OptionParser(commandline.OptionParser):
 
         self.add_option('--domain', action='store',
                         help='domain name to use (default used if omitted).')
-        self.add_option('--earlyout', action='store_true',
+        self.add_option('--early-out', action='store_true', dest='earlyout',
                         help='stop when first match is found.')
-        self.add_option('--noversion', '-n', action='store_true',
+        self.add_option('--no-version', '-n', action='store_true',
+                        dest='noversion',
                         help='collapse multiple matching versions together')
         self.add_option('--min', action='store_true',
                         help='show only the lowest version for each package.')
@@ -271,7 +273,11 @@ class OptionParser(commandline.OptionParser):
 
         repo = self.add_option_group('Source repo')
         repo.add_option('--raw', action='store_true',
-                        help='unwrap the repos (TODO what does that mean).')
+                        help='Without this switch your configuration affects '
+                        'what packages are visible (through masking) and what '
+                        'USE flags are applied to depends and fetchables. '
+                        'With this switch your configuration values are '
+                        'and you see the "raw" repository data.')
         repo.add_option(
             '--virtuals', action='store', choices=('only', 'disable'),
             help='"only" for only matching virtuals, "disable" to not '
@@ -288,7 +294,8 @@ class OptionParser(commandline.OptionParser):
         restrict.add_option(
             '--match', '-m', action='append', type='match',
             help='Glob-like match on category/package-version.')
-        restrict.add_option('--hasuse', action='append', type='hasuse',
+        restrict.add_option('--has-use', action='append', type='hasuse',
+                            dest='hasuse',
                             help='Exact string match on a USE flag.')
         restrict.add_option('--revdep', action='append', type='revdep',
                             help='Dependency on an atom.')
@@ -302,13 +309,19 @@ class OptionParser(commandline.OptionParser):
         restrict.add_option('--owns', action='append', type='owns',
                             help='exact match on an owned file/dir.')
         restrict.add_option(
-            '--ownsre', action='append', type='ownsre',
+            '--owns-re', action='append', type='ownsre', dest='ownsre',
             help='like "owns" but using a regexp for matching.')
         restrict.add_option('--maintainer', action='append', type='maintainer',
                             help='comma-separated list of maintainers.')
         restrict.add_option(
             '--environment', action='append', type='environment',
             help='regexp search in environment.bz2.')
+        restrict.add_option(
+            '--expr', action='append', type='expr',
+            help='Boolean combinations of other restrictions, like '
+            '\'and(not(herd("python")), match("dev-python/*"))\'. '
+            'WARNING: currently not completely reliable.')
+        # XXX fix the negate stuff and remove that warning.
 
         printable_attrs = ('rdepends', 'depends', 'post_rdepends',
                            'use', 'iuse', 'description', 'longdescription',
@@ -328,13 +341,13 @@ class OptionParser(commandline.OptionParser):
         output.add_option('--attr', action='append', choices=printable_attrs,
                           help="Print this attribute's value "
                           '(can be specified more than once).')
-        output.add_option('--oneattr', choices=printable_attrs,
+        output.add_option('--one-attr', choices=printable_attrs,
                           help="Print one attribute. Suppresses other output.")
-        output.add_option('--forceattr', action='append', dest='attr',
+        output.add_option('--force-attr', action='append', dest='attr',
                           help='Like --attr but accepts any string as '
                           'attribute name instead of only explicitly '
                           'supported names.')
-        output.add_option('--forceoneattr',
+        output.add_option('--force-one-attr',
                           help='Like --oneattr but accepts any string as '
                           'attribute name instead of only explicitly '
                           'supported names.')
@@ -354,10 +367,10 @@ class OptionParser(commandline.OptionParser):
             vals.cpv = True
 
         if vals.noversion and vals.contents:
-            self.error('both --noversion and --contents does not make sense.')
+            self.error('both --no-version and --contents does not make sense.')
 
         if vals.noversion and (vals.min or vals.max):
-            self.error('--noversion with --min or --max does not make sense.')
+            self.error('--no-version with --min or --max does not make sense.')
 
         if 'alldepends' in vals.attr:
             vals.attr.remove('alldepends')
@@ -367,22 +380,13 @@ class OptionParser(commandline.OptionParser):
             vals.attr.insert(0, 'homepage')
             vals.attr.insert(0, 'description')
 
-        if vals.forceoneattr:
-            if vals.oneattr:
+        if vals.force_one_attr:
+            if vals.one_attr:
                 self.error(
-                    '--oneattr and --forceoneattr are mutually exclusive.')
-            vals.oneattr = vals.forceoneattr
+                    '--one-attr and --force-one-attr are mutually exclusive.')
+            vals.one_attr = vals.force_one_attr
 
-        if args:
-            expr = ' '.join(args)
-            try:
-                vals.extrarestrict = parse_expression(expr)
-            except parserestrict.ParseError, e:
-                self.error('failure parsing "%s": %s' % (expr, e))
-        else:
-            vals.extrarestrict = None
-
-        return vals, ()
+        return vals, args
 
 
 def stringify_attr(config, pkg, attr):
@@ -425,8 +429,8 @@ def print_package(options, out, err, pkg):
         out.write()
         out.later_prefix = []
         out.wrap = False
-    elif options.oneattr:
-        out.write(stringify_attr(options, pkg, options.oneattr))
+    elif options.one_attr:
+        out.write(stringify_attr(options, pkg, options.one_attr))
     else:
         printed_something = False
         out.autoline = False
@@ -470,7 +474,7 @@ def print_packages_noversion(options, out, err, pkgs):
         out.write()
         out.wrap = False
         out.later_prefix = []
-    elif options.oneattr:
+    elif options.one_attr:
         out.write(stringify_attr(options, pkgs[0], options.oneattr))
     else:
         out.autoline = False
@@ -532,9 +536,6 @@ def main(config, options, out, err):
             restrict.append(val[0])
         elif val:
             restrict.append(packages.OrRestriction(finalize=True, *val))
-
-    if options.extrarestrict:
-        restrict.append(options.extrarestrict)
 
     if not restrict:
         # Match everything in the repo.

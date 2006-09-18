@@ -46,8 +46,8 @@ class pquery2Test(unittest.TestCase, helpers.MainMixin):
 
     def test_parser(self):
         self.assertError(
-            '--noversion with --min or --max does not make sense.',
-            '--noversion', '--max', '--min')
+            '--no-version with --min or --max does not make sense.',
+            '--no-version', '--max', '--min')
         self.assertTrue(self.parser.parse_args([]))
 
     def test_no_domain(self):

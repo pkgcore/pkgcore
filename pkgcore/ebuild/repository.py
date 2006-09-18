@@ -49,7 +49,7 @@ class UnconfiguredTree(prototype.tree):
          'default_mirrors': 'list'},
         typename='repo')
 
-    def __init__(self, location, cache=None, eclass_cache=None,
+    def __init__(self, location, cache=(), eclass_cache=None,
                  mirrors_file=None, default_mirrors=None):
 
         """

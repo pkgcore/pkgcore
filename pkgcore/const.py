@@ -38,7 +38,7 @@ BASH_BINARY          = "/bin/bash"
 MOVE_BINARY          = "/bin/mv"
 COPY_BINARY          = "/bin/cp"
 PRELINK_BINARY       = "/usr/sbin/prelink"
-depends_phase_path   = PORTAGE_BIN_PATH+":/bin:/usr/bin"
+depends_phase_path   = PORTAGE_BIN_PATH+"/ebuild-env/:/bin:/usr/bin"
 EBUILD_ENV_PATH      = [PORTAGE_BIN_PATH+"/"+x for x in [
                            "ebuild-env", "ebuild-helpers"]] \
                      + ["/sbin", "/bin", "/usr/sbin", "/usr/bin"]

@@ -395,8 +395,8 @@ class OrderedDict(DictMixin):
         return iter(self._order)
 
     def clear(self):
-        dict.clear(self)
         self._order = deque()
+        self._data = {}
 
     def __contains__(self, key):
         return key in self._data

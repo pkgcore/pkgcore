@@ -311,3 +311,6 @@ class TestOrderedDict(unittest.TestCase):
         d.setdefault(120)
         d.setdefault(110)
         self.assertEqual(list(d), list(range(100)) + [120, 110])
+
+    def test_clear(self):
+        self.gen_dict().clear()

@@ -625,7 +625,7 @@ class UnhandledCommand(ProcessingInterruption):
         self.line = line
 
 
-def expected_ebuild_env(pkg, d=None):
+def expected_ebuild_env(pkg, d=None, env_source_override=None):
     """
     setup expected ebuild vars
 
@@ -644,7 +644,12 @@ def expected_ebuild_env(pkg, d=None):
     else:
         d["PR"] = "r%i" % pkg.revision
     d["PVR"] = pkg.fullver
-    d["EBUILD"] = pkg.ebuild.get_path()
+    if env_source_override:
+        path = env_source_override.get_path
+        if path is not None:
+            d["EBUILD"] = path()
+    else:
+        d["EBUILD"] = pkg.ebuild.get_path()
     d["PATH"] = ":".join(EBUILD_ENV_PATH + d.get("PATH", "").split(":"))
     return d
 

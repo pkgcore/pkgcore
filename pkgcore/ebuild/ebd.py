@@ -105,7 +105,7 @@ class ebd(object):
         if "FEATURES" in self.env:
             del self.env["FEATURES"]
 
-        expected_ebuild_env(pkg, self.env)
+        expected_ebuild_env(pkg, self.env, env_source_override=self.env_data_source)
 
         self.env["USE"] = ' '.join(str(x) for x in pkg.use)
         self.env["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", {}))

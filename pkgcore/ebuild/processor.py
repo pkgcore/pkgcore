@@ -482,8 +482,9 @@ class EbuildProcessor:
         """
 
         self.write("process_ebuild depend")
+        e = expected_ebuild_env(package_inst)
         e["PATH"] = depends_phase_path
-        self.send_env(expected_ebuild_env(package_inst))
+        self.send_env(e)
         self.set_sandbox_state(True)
         self.write("start_processing")
 

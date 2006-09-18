@@ -18,21 +18,41 @@ class OptionParser(commandline.OptionParser):
 
     def __init__(self):
         commandline.OptionParser.__init__(self, description=__doc__)
-        self.add_option('--deep', '-D', action='store_true')
-        self.add_option('--unmerge', '-C', action='store_true')
-        self.add_option('--upgrade', '-u', action='store_true')
-        self.add_option('--set', '-s', action='append')
-        self.add_option('--ignore-failures', action='store_true')
-        self.add_option('--preload-vdb-state', action='store_true')
-        self.add_option('--pretend', '-p', action='store_true')
-        self.add_option('--fetchonly', '-f', action='store_true')
-        self.add_option('--ignore-cycles', '-i', action='store_true')
-        self.add_option('--nodeps', action='store_true')
-        self.add_option('--replace', '-r', action='store_true')
+        self.add_option('--deep', '-D', action='store_true',
+            help='force the resolver to verify already installed dependencies')
+        self.add_option('--unmerge', '-C', action='store_true',
+            help='unmerge a package')
+        self.add_option('--upgrade', '-u', action='store_true',
+            help='try to upgrade already installed packages/depencies')
+        self.add_option('--set', '-s', action='append',
+            help='specify a pkgset to use')
+        self.add_option('--ignore-failures', action='store_true',
+            help='ignore resolution failures')
+        self.add_option('--preload-vdb-state', action='store_true',
+            help=\
+"""enable preloading of the installed packages database
+This causes the resolver to work with a complete graph, thus disallowing
+actions that confict with installed packages.  If disabled, it's possible
+for the requested action to conflict with already installed dependencies
+that aren't involved in the graph of the requested operation""")
+        self.add_option('--pretend', '-p', action='store_true',
+            help="do the resolution, but don't merge/fetch anything")
+        self.add_option('--fetchonly', '-f', action='store_true',
+            help="do only the fetch steps of the resolved plan")
+        self.add_option('--ignore-cycles', '-i', action='store_true',
+            help=\
+"""ignore cycles if they're found to be unbreakable;
+a depends on b, and b depends on a, with neither involved is an example""")
+        self.add_option('--nodeps', action='store_true',
+            help='disable dependency resolution')
+        self.add_option('--replace', '-r', action='store_true',
+            help="reinstall target atoms even if they're already installed")
         self.add_option('--usepkg', '-k', action='store_true')
-        self.add_option('--usepkgonly', '-K', action='store_true')
-        self.add_option('--pdb', action='store_true')
-        self.add_option('--empty', '-e', action='store_true')
+        self.add_option('--usepkgonly', '-K', action='store_true',
+            help="use only built packages")
+        self.add_option('--empty', '-e', action='store_true',
+            help="force rebuilding of all involved packages, using installed "
+                "packages only to satisfy building the replacements")
         self.add_option('--I-am-in-a-chroot', action='store_true',
                         dest='force')
 
@@ -307,6 +327,10 @@ def main(config, options, out, err):
     if vdb_time:
         out.write(out.bold, '%.2f' % (vdb_time,), out.reset,
                   ' seconds preloading vdb state')
+    if not options.force:
+        err.write("you must explicitly enable merging via --I-am-in-a-chroot "
+            "for this release (will be removed in the next major release)\n")
+        return
     if options.pretend:
         return
     for op, pkgs in changes:

@@ -53,8 +53,11 @@ a depends on b, and b depends on a, with neither involved is an example""")
         self.add_option('--empty', '-e', action='store_true',
             help="force rebuilding of all involved packages, using installed "
                 "packages only to satisfy building the replacements")
-        self.add_option('--I-am-in-a-chroot', action='store_true',
-                        dest='force')
+        self.add_option('--force', action='store_true',
+                        dest='force',
+            help="temporary option; required to do any modifications to the"
+            "vdb (mergeing/unmerging).  Added for initial protection, will be"
+            "removed in the next release")
 
     def check_values(self, options, args):
         options, args = commandline.OptionParser.check_values(
@@ -327,7 +330,7 @@ def main(config, options, out, err):
     if vdb_time:
         out.write(out.bold, '%.2f' % (vdb_time,), out.reset,
                   ' seconds preloading vdb state')
-    if not options.force:
+    if not options.force and not options.fetchonly:
         err.write("you must explicitly enable merging via --I-am-in-a-chroot "
             "for this release (will be removed in the next major release)\n")
         return

@@ -284,7 +284,8 @@ class OptionParser(commandline.OptionParser):
             'match virtuals at all. Default is to match everything.')
         repo.add_option('--vdb', action='store_true',
                         help='match only vdb (installed) packages.')
-
+        repo.add_option('--all-repos', action='store_true', dest='all_repos',
+                        help='search all repos, vdb included')
         restrict = self.add_option_group(
             'Package matching',
             'Each option specifies a restriction displayed packages must '
@@ -520,6 +521,8 @@ def main(config, options, out, err):
     # Get repo(s) to operate on
     if options.vdb:
         repos = domain.vdb
+    elif options.all_repos:
+        repos = domain.repos + domain.vdb
     else:
         repos = domain.repos
     if options.raw or options.virtuals:

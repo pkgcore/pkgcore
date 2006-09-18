@@ -212,7 +212,7 @@ def main(config, options, out, err):
         try:
             pkgset = config.pkgset[setname]
         except KeyError:
-            err.write('No set called %r!\n' % (setname,))
+            err.write('No set called %r!\nknown sets: %r\n' % (setname, config.pkgset.keys()))
             return 1
         atoms.extend(list(pkgset))
 

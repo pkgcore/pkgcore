@@ -3,7 +3,7 @@
 
 from twisted.trial import unittest
 
-from pkgcore.scripts import pquery2
+from pkgcore.scripts import pquery
 from pkgcore.test.scripts import helpers
 from pkgcore.config import basics, ConfigHint, configurable
 from pkgcore.test.repository import util
@@ -39,10 +39,10 @@ domain_config = basics.HardCodedConfigSection({
         })
 
 
-class pquery2Test(unittest.TestCase, helpers.MainMixin):
+class pqueryTest(unittest.TestCase, helpers.MainMixin):
 
-    parser = helpers.mangle_parser(pquery2.OptionParser())
-    main = staticmethod(pquery2.main)
+    parser = helpers.mangle_parser(pquery.OptionParser())
+    main = staticmethod(pquery.main)
 
     def test_parser(self):
         self.assertError(

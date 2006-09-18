@@ -95,8 +95,8 @@ class StackedXpakDict(DictMixin):
         if key in self._wipes:
             raise KeyError(self, key)
         if key == "contents":
-            data = object.__setattr__(self, "contents",
-                generate_contents(self._parent._get_path(self._pkg)))
+            data = generate_contents(self._parent._get_path(self._pkg))
+            object.__setattr__(self, "contents", data)
         elif key == "environment":
             data = self._xpak.get("environment.bz2", None)
             if data is None:

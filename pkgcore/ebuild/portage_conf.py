@@ -229,6 +229,7 @@ def config_from_make_conf(location="/etc/"):
         new_config["eclass stack"] = basics.DictConfigSection(
             my_convert_hybrid, {
                 'class': 'pkgcore.ebuild.eclass_cache.StackedCaches',
+                'eclassdir': pjoin(portdir, "eclass"),
                 'caches': tuple(reversed(all_ecs))})
 
         new_config['repo-stack'] = basics.DictConfigSection(my_convert_hybrid,

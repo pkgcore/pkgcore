@@ -295,7 +295,7 @@ else:
 
 def get_formatter(stream):
     """TerminfoFormatter if the stream is a tty, else PlainTextFormatter."""
-    if TerminfoFormatter is None:
+    if TerminfoColor is None:
         return PlainTextFormatter(stream)
     try:
         fd = stream.fileno()

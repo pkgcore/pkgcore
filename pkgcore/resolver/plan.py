@@ -264,6 +264,7 @@ class merge_plan(object):
                 additions.append(datom)
                 break
             else: # didn't find any solutions to this or block.
+                choices.reduce_atoms(datom_potentials)
                 return [datom_potentials]
         else: # all potentials were usable.
             return additions, blocks
@@ -319,6 +320,7 @@ class merge_plan(object):
                 additions.append(ratom)
                 break
             else: # didn't find any solutions to this or block.
+                choices.reduce_atoms(ratom_potentials)
                 return [ratom_potentials]
         else: # all potentials were usable.
             return additions, blocks
@@ -488,7 +490,6 @@ class merge_plan(object):
             if len(l) == 1:
                 dprint("reseting for %s%s because of depends: %s",
                        (depth*2*" ", atom, l[0][-1]))
-                choices.reduce_atoms(l[0])
                 self.state.reset_state(saved_state)
                 failures = l[0]
                 continue

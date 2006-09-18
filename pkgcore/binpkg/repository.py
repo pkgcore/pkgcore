@@ -108,6 +108,10 @@ class StackedXpakDict(DictMixin):
                         "malformed binpkg?")
             else:
                 data = data_source(decompress(data), mutable=True)
+        elif key == "ebuild":
+            data = self._xpak.get("%s-%s.ebuild" %
+                (self._pkg.package, self._pkg.fullver), "")
+            data = data_source(data)
         else:
             try:
                 data = self._xpak[key]

@@ -211,6 +211,10 @@ def main(config, options, out, err):
             err.write("you must explicitly enable unmerging via --force "
                 "for this release (will be removed in the next major release)\n")
             return
+        err.write("please be aware that pkgcore currently doesn't write status"
+            " updates to the term when removing files; as such its active, but"
+            " you won't see info written to the term\n"
+            "hence the required --force\n\n")
         try:
             unmerge(
                 out, vdb, options.targets, pretend=options.pretend,
@@ -338,6 +342,11 @@ def main(config, options, out, err):
         err.write("you must explicitly enable merging via --force "
             "for this release (will be removed in the next major release)\n")
         return
+    if options.force and not options.fetchonly:
+        err.write("please be aware that pkgcore currently doesn't write status"
+            " updates to the term when removing files; as such its active, but"
+            " you won't see info written to the term\n"
+            "hence the required --force\n\n")
     if options.pretend:
         return
     for op, pkgs in changes:

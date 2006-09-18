@@ -294,7 +294,7 @@ def main(config, options, out, err):
         ret = resolver_inst.add_atom(restrict)
         if ret:
             write_error(out, 'Resolver returned %r' % (ret,))
-            write_error('resolution failed')
+            write_error(out, 'resolution failed')
             failures.append(restrict)
             if not options.ignore_failures:
                 break

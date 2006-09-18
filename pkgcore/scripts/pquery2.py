@@ -276,7 +276,7 @@ class OptionParser(commandline.OptionParser):
                         help='Without this switch your configuration affects '
                         'what packages are visible (through masking) and what '
                         'USE flags are applied to depends and fetchables. '
-                        'With this switch your configuration values are '
+                        "With this switch your configuration values aren't used "
                         'and you see the "raw" repository data.')
         repo.add_option(
             '--virtuals', action='store', choices=('only', 'disable'),

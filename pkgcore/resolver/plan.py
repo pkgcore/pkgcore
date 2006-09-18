@@ -264,7 +264,7 @@ class merge_plan(object):
                 additions.append(datom)
                 break
             else: # didn't find any solutions to this or block.
-                return [[datom_potentials]]
+                return [datom_potentials]
         else: # all potentials were usable.
             return additions, blocks
 
@@ -319,7 +319,7 @@ class merge_plan(object):
                 additions.append(ratom)
                 break
             else: # didn't find any solutions to this or block.
-                return [[ratom_potentials]]
+                return [ratom_potentials]
         else: # all potentials were usable.
             return additions, blocks
 
@@ -471,8 +471,13 @@ class merge_plan(object):
         while choices:
             new_state = choices.state
             if last_state == new_state:
-                import pdb;pdb.set_trace()
-            assert last_state != new_state
+                raise AssertionError("no state change detected, "
+                    "old %r != new %r\nchoices(%r)\ncurrent(%r)\ndepends(%r)\n"
+                    "rdepends(%r)\npost_rdepends(%r)\nprovides(%r)" %
+                    (last_state, new_state, tuple(choices.matches),
+                        choices.current_pkg, choices.depends,
+                        choices.rdepends, choices.post_rdepends,
+                        choices.provides))
             last_state = new_state
             additions, blocks = [], []
 
@@ -483,6 +488,7 @@ class merge_plan(object):
             if len(l) == 1:
                 dprint("reseting for %s%s because of depends: %s",
                        (depth*2*" ", atom, l[0][-1]))
+                choices.reduce_atoms(l[0])
                 self.state.reset_state(saved_state)
                 failures = l[0]
                 continue
@@ -534,6 +540,8 @@ class merge_plan(object):
                     for repo in self.livefs_dbs:
                         m = repo.match(x)
                         if m:
+                            dprint("inserting vdb node for blocker"
+                                " %s %s" % (x, m[0]))
                             self.state.add_pkg(choice_point(x, m),
                                 force=True)
                             break;

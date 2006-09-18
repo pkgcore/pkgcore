@@ -337,7 +337,7 @@ class OptionParser(commandline.OptionParser):
             'output option (like --contents) disabled it.')
         output.add_option('--atom', '-a', action='store_true',
                           help='print =cat/pkg-3 instead of cat/pkg-3. '
-                          'Implies --cpv, has no effect with --noversion')
+                          'Implies --cpv, has no effect with --no-version')
         output.add_option('--attr', action='append', choices=printable_attrs,
                           help="Print this attribute's value "
                           '(can be specified more than once).')

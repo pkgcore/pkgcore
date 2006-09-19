@@ -151,6 +151,10 @@ class tree(prototype.tree):
                 # silently swallow it;
                 del oe
 
+    def __str__(self):
+        return '%s.%s: location %s' % (
+            self.__class__.__module__, self.__class__.__name__, self.base)
+
 
 class ConfiguredTree(multiplex.tree):
 

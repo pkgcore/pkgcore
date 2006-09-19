@@ -199,7 +199,8 @@ class UnconfiguredTree(prototype.tree):
             "digest-%s-%s" % (pkg.package, pkg.fullver)))
 
     def __str__(self):
-        return "%s: location %s" % (self.__class__, self.base)
+        return "%s.%s: location %s" % (
+            self.__class__.__module__, self.__class__.__name__, self.base)
 
     def __repr__(self):
         return "<ebuild %s location=%r @%#8x>" % (self.__class__.__name__,

@@ -284,7 +284,7 @@ class OptionParser(commandline.OptionParser):
             'match virtuals at all. Default is to match everything.')
         repo.add_option('--vdb', action='store_true',
                         help='match only vdb (installed) packages.')
-        repo.add_option('--all-repos', action='store_true', dest='all_repos',
+        repo.add_option('--all-repos', action='store_true',
                         help='search all repos, vdb included')
         restrict = self.add_option_group(
             'Package matching',
@@ -327,7 +327,7 @@ class OptionParser(commandline.OptionParser):
         printable_attrs = ('rdepends', 'depends', 'post_rdepends',
                            'use', 'iuse', 'description', 'longdescription',
                            'herds', 'license', 'uris', 'files',
-                           'slot', 'maintainers', 'restrict',
+                           'slot', 'maintainers', 'restrict', 'repo',
                            'alldepends', 'path', 'environment', 'keywords')
 
         output = self.add_option_group('Output formatting')
@@ -454,21 +454,21 @@ def print_package(options, out, err, pkg):
         for thing in getattr(pkg, 'contents', ()):
             out.write(thing.location)
 
-def print_packages_noversion(options, out, err, pkgs):
+def print_packages_noversion(options, out, err, pkgs, vdbs):
     """Print a summary of all versions for a single package."""
     if options.verbose:
         green = out.fg('green')
         out.write(out.bold, green, ' * ', out.fg(), pkgs[0].key)
         out.wrap = True
         out.later_prefix = ['                  ']
-        if len(pkgs) == 1:
-            out.write(green, '     single version : ', out.fg(),
-                      pkgs[0].fullver)
-        else:
-            out.write(green, '     highest version: ', out.fg(),
-                      max(pkgs).fullver)
-            out.write(green, '     lowest version : ', out.fg(),
-                      min(pkgs).fullver)
+        versions = ' '.join(pkg.fullver for pkg in sorted(pkgs))
+        out.write(green, '     versions: ', out.fg(), versions)
+        # If we are already matching on all repos we do not need to duplicate.
+        if not (options.vdb or options.all_repos):
+            versions = sorted(
+                pkg.fullver for vdb in vdbs
+                for pkg in vdb.itermatch(pkgs[0].unversioned_atom))
+            out.write(green, '     installed: ', out.fg(), ' '.join(versions))
         for attr in options.attr:
             out.write(green, '     %s: ' % (attr,), out.fg(),
                       stringify_attr(options, pkgs[0], attr))
@@ -518,7 +518,12 @@ def main(config, options, out, err):
                       (', '.join(config.domain.keys()),))
             return 1
 
-    # Get repo(s) to operate on
+    # Get the vdb if we need it.
+    if options.verbose and options.noversion:
+        vdbs = domain.vdb
+    else:
+        vdbs = None
+    # Get repo(s) to operate on.
     if options.vdb:
         repos = domain.vdb
     elif options.all_repos:
@@ -563,7 +568,7 @@ def main(config, options, out, err):
                 repo.itermatch(restrict, sorter=sorted)):
                 pkgs = list(pkgs)
                 if options.noversion:
-                    print_packages_noversion(options, out, err, pkgs)
+                    print_packages_noversion(options, out, err, pkgs, vdbs)
                 elif options.min or options.max:
                     if options.min:
                         print_package(options, out, err, min(pkgs))

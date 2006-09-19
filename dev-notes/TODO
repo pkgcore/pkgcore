@@ -2,6 +2,13 @@
 Rough TODO
 ==========
 
+
+- sync subsystem. ***
+  Threw out the old refactoring, too portage specific; exists in 
+  sandbox/dead_code , design sucked also.
+
+- observer objects for reporting back events from merging/unmerging
+
 - Possibly convert to cpython:
   - flat_hash.database._parse_data
   - metadata.database._parse_data
@@ -39,10 +46,6 @@ Rough TODO
   it was working back in the ebd branch days; things have changed since then 
   (heavily), enabling/disabling should work fine, but will need to take a look
   at the contentset generation to ensure perms/gid leaks through correctly.
-
-- sync subsystem. ***
-  Threw out the old refactoring, too portage specific; exists in 
-  sandbox/dead_code , design sucked also.
 
 - modify repository.prototype.tree.match to take an optional comparison *
   reasoning being that if we're just going to do a max, pass in the max so it 
@@ -89,8 +92,3 @@ Rough TODO
   IP
 
 - locking unification.  see plugins for an example of why it's needed
-
-- extend packages.* parsing to support globs in pkg: *
-  http://bugs.gentoo.org/show_bug.cgi?id=57153
-  could just use util.commandline for it offhand, but may not play perfectly
-  with domains atom splitting for collapsed

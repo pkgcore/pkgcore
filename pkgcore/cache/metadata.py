@@ -63,6 +63,35 @@ class database(flat_hash.database):
         # easy attempt first.
         data = list(data)
         if len(data) != self.magic_line_count:
+            raise errors.CacheCorruption("wrong line count")
+
+        # this one's interesting.
+        d = self._cdict_kls()
+        for idx, key in self.hardcoded_auxdbkeys_order:
+            d[key] = data[idx].strip()
+
+        if self._mtime_used:
+            d["_mtime_"] = mtime
+        return d
+
+    def _setitem(self, cpv, values):
+        values = ProtectedDict(values)
+
+        # hack. proper solution is to make this a __setitem__ override, since
+        # template.__setitem__ serializes _eclasses_, then we reconstruct it.
+        if "_eclasses_" in values:
+            values["INHERITED"] = ' '.join(
+                self.reconstruct_eclasses(cpv, values["_eclasses_"]).keys())
+            del values["_eclasses_"]
+
+        flat_hash.database._setitem(self, cpv, values)
+
+class protective_database(database):
+
+    def _parse_data(self, data, mtime):
+        # easy attempt first.
+        data = list(data)
+        if len(data) != self.magic_line_count:
             return flat_hash.database._parse_data(self, data, mtime)
 
         # this one's interesting.
@@ -93,14 +122,4 @@ class database(flat_hash.database):
             d["_mtime_"] = mtime
         return d
 
-    def _setitem(self, cpv, values):
-        values = ProtectedDict(values)
 
-        # hack. proper solution is to make this a __setitem__ override, since
-        # template.__setitem__ serializes _eclasses_, then we reconstruct it.
-        if "_eclasses_" in values:
-            values["INHERITED"] = ' '.join(
-                self.reconstruct_eclasses(cpv, values["_eclasses_"]).keys())
-            del values["_eclasses_"]
-
-        flat_hash.database._setitem(self, cpv, values)

@@ -3,11 +3,7 @@
 
 # disable sandbox for any pyc regens
 import os
-env = os.environ.get("SANDBOX_PREDICT", "")
-if env:
-    env = "%s:" % env
-os.environ["SANDBOX_PREDICT"] = "%s%s" % (env, os.path.dirname(os.__file__))
-del env
+env = os.environ["SANDBOX_ON"] = "0"
 
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.iterables:caching_iter "+

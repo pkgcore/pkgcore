@@ -361,6 +361,8 @@ def main(config, options, out, err):
             except Exception, e:
                 ret = e
         else:
+            out.write("forcing cleaning of workdir")
+            buildop.clean()
             out.write("building...")
             built_pkg = buildop.finalize()
             if built_pkg is not False:

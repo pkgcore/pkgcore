@@ -21,7 +21,6 @@ Rough TODO
   Meaning: don't load the file three times for applying three checksums.
   Need to work out how to do this with fchksum and the "size" checksum.
 
-- CONFIG_PROTECT unmerge support
 - pkgcore.fetchable.__init__: __eq__/__hash__
 
 - get the tree clean of direct /var/db/pkg access

@@ -138,7 +138,6 @@ class ebd(object):
             del self.env[k]
         del wipes, k, v
 
-        build.base.__init__(self)
         self.__init_workdir__()
         self.setup_env_data_source(env_data_source)
 
@@ -360,6 +359,7 @@ class buildable(ebd, build.base):
             access our required files for building
         """
 
+        build.base.__init__(self)
         ebd.__init__(self, pkg, initial_env=domain_settings,
                      features=domain_settings["FEATURES"])
 

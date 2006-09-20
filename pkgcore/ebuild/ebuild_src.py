@@ -133,6 +133,12 @@ def rewrite_restrict(restrict):
     return tuple(l)
 
 
+def get_slot(self):
+    o = self.data.pop("SLOT", "0")
+    if not o:
+        raise ValueError(self, "SLOT cannot be unset")
+    return o
+
 class base(metadata.package):
 
     """
@@ -159,7 +165,7 @@ class base(metadata.package):
     _get_attr["post_rdepends"] = post_curry(generate_depset, atom, "pdepend")
     _get_attr["license"] = post_curry(generate_depset,
         intern, "license", non_package_type=True)
-    _get_attr["slot"] = lambda s: s.data.pop("SLOT", "0").strip()
+    _get_attr["slot"] = get_slot # lambda s: s.data.pop("SLOT", "0").strip()
     _get_attr["fetchables"] = generate_fetchables
     _get_attr["description"] = lambda s:s.data.pop("DESCRIPTION", "").strip()
     _get_attr["keywords"] = lambda s:tuple(map(intern,

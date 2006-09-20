@@ -136,7 +136,7 @@ class tree(prototype.tree):
             try:
                 data = open(os.path.join(path, key), "r").read().strip()
             except (OSError, IOError):
-                data = ''
+                raise KeyError(key)
         return data
 
     def notify_remove_package(self, pkg):

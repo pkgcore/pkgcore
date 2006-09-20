@@ -31,6 +31,7 @@ Version 1
 - use groups in some form.
 - drop reliance on PORTDIR and ECLASSDIR(s); they break any potential remote, and are dodgey as all hell for multiple
   repos combined together.
+- disallow direct access to /var/db/pkg
 - deprecate ebuild access/awareness of PORTAGE_* vars; perl ebuilds security fix for PORTAGE_TMPDIR (rpath stripping in a way) 
   might make this harder.
 - use/slot deps, optionally repository deps.

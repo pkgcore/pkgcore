@@ -2,12 +2,15 @@
 Rough TODO
 ==========
 
+- sandbox and fakeroot don't work right now (doesn't properly disable)
 
 - sync subsystem. ***
   Threw out the old refactoring, too portage specific; exists in 
   sandbox/dead_code , design sucked also.
 
 - observer objects for reporting back events from merging/unmerging
+  cpython 'tee' is needed, contact harring for details.
+  elog is bound to this also
 
 - Possibly convert to cpython:
   - flat_hash.database._parse_data
@@ -20,6 +23,10 @@ Rough TODO
 
 - CONFIG_PROTECT unmerge support
 - pkgcore.fetchable.__init__: __eq__/__hash__
+
+- get the tree clean of direct /var/db/pkg access
+
+- vdb2 format (ask harring for details).
 
 - pkgcore.fs.ops.merge_contents; doesn't rewite the contents set when a file
   it's mergeing is relying on symlinked directories for the full path; eg,

@@ -2,6 +2,7 @@
 # License: GPL2
 
 import operator
+from itertools import chain
 from collections import deque
 from pkgcore.util.compatibility import any
 from pkgcore.util.iterables import caching_iter, iter_sort
@@ -109,10 +110,7 @@ def lowest_iter_sort(l):
 
 
 def default_global_strategy(resolver, dbs, atom):
-    return (p
-            for r, cache in dbs.iteritems()
-            for p in resolver.get_db_match(r, cache, atom))
-
+    return chain(*[repo.match(atom) for repo in dbs])
 
 def default_depset_reorder(resolver, depset, mode):
     for or_block in depset:

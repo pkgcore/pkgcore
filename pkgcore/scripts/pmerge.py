@@ -338,6 +338,8 @@ def main(config, options, out, err):
     if vdb_time:
         out.write(out.bold, '%.2f' % (vdb_time,), out.reset,
                   ' seconds preloading vdb state')
+    if options.pretend:
+        return
     if not options.force and not options.fetchonly:
         err.write("you must explicitly enable merging via --force "
             "for this release (will be removed in the next major release)\n")
@@ -347,8 +349,6 @@ def main(config, options, out, err):
             " updates to the term when removing files; as such its active, but"
             " you won't see info written to the term\n"
             "hence the required --force\n\n")
-    if options.pretend:
-        return
     for op, pkgs in changes:
         out.write("processing %s" % (pkgs[0],))
         buildop = pkgs[0].build()

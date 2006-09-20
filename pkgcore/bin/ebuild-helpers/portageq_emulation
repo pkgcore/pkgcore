@@ -1,7 +1,13 @@
 #!/usr/bin/python -O
-# Copyright 1999-2006 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
-# $Id: portageq 3483 2006-06-10 21:40:40Z genone $
+# Copyright 2006 Brian Harring <ferringb@gmail.com>
+
+# disable sandbox for any pyc regens
+import os
+env = os.environ.get("SANDBOX_WRITE", "")
+if env:
+    env = "%s:" % env
+os.environ["SANDBOX_WRITE"] = "%s%s" % (env, os.path.dirname(os.__file__))
+del env
 
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.iterables:caching_iter "+

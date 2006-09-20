@@ -45,3 +45,4 @@ Version 1
   blockers are statements of "I will not work with any matches to this in the graph, get rid of them", not "I'll work with this
   range" which <> is.
 - drop -* from keywords; it's package.masking, use that instead (-arch is acceptable although daft)
+- blockers aren't allowed in PDEPEND (the result of that is serious insanity for resolving)

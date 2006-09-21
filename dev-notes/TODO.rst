@@ -27,6 +27,9 @@ Rough TODO
 
 - vdb2 format (ask harring for details).
 
+- verify proper temporal handling of rdep blockers when a pkg gets dumped 
+  from the graph (namely, boot the block).
+
 - pkgcore.fs.ops.merge_contents; doesn't rewite the contents set when a file
   it's mergeing is relying on symlinked directories for the full path; eg,
   /usr/share/X11/xkb/compiled -> /var/blah, it records the former instead of 

@@ -150,6 +150,8 @@ class caching_repo(object):
     def __getattr__(self, attr):
         return getattr(self.__db__, attr)
 
+    def clear(self):
+        self.__cache__.clear()
 
 class merge_plan(object):
 
@@ -652,6 +654,9 @@ class merge_plan(object):
             blocker, finalize=True)
         return new_atom
 
+    def free_caches(self):
+        for repo in self.all_dbs:
+            repo.clear()
 
     # selection strategies for atom matches
 

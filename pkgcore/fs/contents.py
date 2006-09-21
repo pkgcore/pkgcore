@@ -18,7 +18,7 @@ def check_instance(obj):
 class contentsSet(object):
     """set of L{fs<pkgcore.fs.fs>} objects"""
 
-    def __init__(self, initial=None, mutable=True):
+    def __init__(self, initial=None, mutable=False):
 
         """
         @param initial: initial fs objs for this set

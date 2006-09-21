@@ -195,7 +195,7 @@ class fake_package_factory(package_factory):
         return self.pkg.ebuild
 
     def scan_contents(self, location):
-        return scan(location, offset=location)
+        return scan(location, offset=location, mutable=True)
 
     def _get_metadata(self, pkg):
         return IndeterminantDict(self.__pull_metadata)

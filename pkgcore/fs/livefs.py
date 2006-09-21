@@ -117,4 +117,5 @@ def scan(*a, **kw):
     calls list(iter_scan(*a, **kw))
     Look at iter_scan for valid args
     """
-    return contentsSet(iter_scan(*a, **kw))
+    mutable = kw.pop("mutable", True)
+    return contentsSet(iter_scan(*a, **kw), mutable=mutable)

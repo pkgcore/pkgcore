@@ -361,6 +361,7 @@ class OptionParser(commandline.OptionParser):
     def check_values(self, vals, args):
         """Sanity check and postprocess after parsing."""
         vals, args = commandline.OptionParser.check_values(self, vals, args)
+
         if vals.contents:
             vals.vdb = True
 
@@ -387,7 +388,10 @@ class OptionParser(commandline.OptionParser):
                     '--one-attr and --force-one-attr are mutually exclusive.')
             vals.one_attr = vals.force_one_attr
 
-        return vals, args
+        if args:
+            vals.match.extend(parserestrict.parse_match(x) for x in args)
+        
+        return vals, ()
 
 
 def stringify_attr(config, pkg, attr):

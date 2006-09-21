@@ -166,16 +166,19 @@ class atom(boolean.AndRestriction):
             pos = 1
         else:
             pos = 0
-        while atom[pos] in ("<", ">", "=", "~"):
+
+        if atom[pos] in ('<', '>'):
+            if atom[pos + 1] == '=':
+                pos += 2
+            else:
+                pos += 1
+        elif atom[pos] in ('~', '='):
             pos += 1
+
         if self.blocks:
             sf(self, "op", atom[1:pos])
         else:
             sf(self, "op", atom[:pos])
-        if self.op not in ("<=", "<", "=", ">", ">=", "~", ""):
-            # XXX: hack
-            raise MalformedAtom(
-                "%s: invalid operator, '%s'" % (orig_atom, self.op))
 
         u = atom.find("[")
         if u != -1:
@@ -204,8 +207,8 @@ class atom(boolean.AndRestriction):
             sf(self, "slot", None)
         del u, s
 
-        if atom.endswith("*"):
-            if self.op != "=":
+        if atom[-1] == '*':
+            if self.op != '=':
                 raise MalformedAtom(
                     orig_atom, "range operators on a range are nonsencial, "
                     "drop the globbing or use =cat/pkg* or !=cat/pkg*, not %s"
@@ -228,7 +231,7 @@ class atom(boolean.AndRestriction):
         sf(self, "revision", c.revision)
 
         sf(self, "negate_vers", negate_vers)
-        if "~" in self.op:
+        if "~" == self.op:
             if self.version is None:
                 raise MalformedAtom(orig_atom, "~ operator requires a version")
         # force jitting of it.

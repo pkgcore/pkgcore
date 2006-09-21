@@ -28,8 +28,11 @@ def collect_package_restrictions(restrict, attrs=None):
                 "restrict must be of a restriction.base, not %s: %r" % (
                     r.__class__.__name__, r))
     if attrs is None:
-        attrs = InvertedContains()
-    elif isinstance(attrs, (list, tuple)):
-        attrs = frozenset(attrs)
-    return (r for r in iflatten_func(restrict, _is_package_instance)
-        if getattr(r, "attr", None) in attrs)
+        for r in iflatten_func(restrict, _is_package_instance):
+            yield r
+    else:
+        if isinstance(attrs, (list, tuple)):
+            attrs = frozenset(attrs)
+        for r in iflatten_func(restrict, _is_package_instance):
+            if getattr(r, "attr", None) in attrs:
+                yield r

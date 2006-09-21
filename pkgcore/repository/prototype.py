@@ -272,13 +272,9 @@ class tree(object):
                 cats_iter = [c]
             else:
                 cat_restrict.add(values.ContainmentMatch(*cat_exact))
-                cats_iter = sorter(
-                    x for x in self.categories
-                    if any(True for r in cat_restrict if r.match(x)))
+                cats_iter = sorter(self._cat_filter(cat_restrict))
         elif cat_restrict:
-            cats_iter = sorter(
-                x for x in self.categories
-                if any(True for r in cat_restrict if r.match(x)))
+            cats_iter = self._cat_filter(cat_restrict)
         else:
             cats_iter = sorter(self.categories)
 
@@ -295,10 +291,7 @@ class tree(object):
                 pkg_restrict.add(values.ContainmentMatch(*pkg_exact))
 
         if pkg_restrict:
-            return ((c,p)
-                for c in cats_iter
-                for p in sorter(self.packages.get(c, []))
-                if any(True for r in pkg_restrict if r.match(p)))
+            return self._package_filter(cats_iter, pkg_restrict)
         elif not cat_restrict:
             if sorter is iter:
                 return self.versions
@@ -307,6 +300,24 @@ class tree(object):
                     cats_iter for p in sorter(self.packages.get(c, [])))
         return ((c,p)
             for c in cats_iter for p in sorter(self.packages.get(c, [])))
+
+    def _cat_filter(self, cat_restricts):
+        cats = [x.match for x in cat_restricts]
+        for x in self.categories:
+            for match in cats:
+                if match(x):
+                    yield x
+                    break
+
+    def _package_filter(self, cats_iter, pkg_restricts):
+        restricts = [x.match for x in pkg_restricts]
+        pkgs_dict = self.packages
+        for cat in cats_iter:
+            for pkg in pkgs_dict.get(cat, ()):
+                for match in restricts:
+                    if match(pkg):
+                        yield (cat, pkg)
+                        break
 
     def notify_remove_package(self, pkg):
         """

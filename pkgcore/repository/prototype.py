@@ -5,7 +5,7 @@
 base repository template
 """
 
-from pkgcore.util.mappings import LazyValDict
+from pkgcore.util.mappings import LazyValDict, DictMixin
 from pkgcore.util.lists import iflatten_instance
 from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import values, boolean, restriction
@@ -60,6 +60,60 @@ class CategoryIterValLazyDict(IterValLazyDict):
         return self.iterkeys()
 
 
+class VersionMapping(DictMixin):
+
+    def __init__(self, parent_mapping, pull_vals):
+        self._cache = {}
+        self._parent = parent_mapping
+        self._pull_vals = pull_vals
+        self._known_keys = {}
+
+    def __getitem__(self, key):
+        o = self._cache.get(key)
+        if o is not None:
+            return o
+        cat, pkg = key
+        known_pkgs = self._known_keys.get(cat)
+        if known_pkgs is None:
+            if self._parent is None:
+                raise KeyError(key)
+            self._known_keys[cat] = known_pkgs = set(self._parent[cat])
+        if pkg not in known_pkgs:
+            raise KeyError(key)
+
+        val = self._pull_vals(key)
+        self._cache[key] = val
+        known_pkgs.remove(pkg)
+        return val
+
+    def iterkeys(self):
+        for key in self._cache:
+            yield key
+
+        if self._parent is not None:
+            for cat, pkgs in self._parent.iteritems():
+                if cat in self._known_keys:
+                    continue
+                s = set()
+                for pkg in pkgs:
+                    if (cat, pkg) in self._cache:
+                        continue
+                    s.add(pkg)
+                self._known_keys[cat] = s
+            self._parent = None
+
+        for cat, pkgs in self._known_keys.iteritems():
+            for pkg in list(pkgs):
+                yield cat, pkg
+
+    def __contains__(self, key):
+        try:
+            self[key]
+            return True
+        except KeyError:
+            return False            
+
+
 class tree(object):
     """
     repository template
@@ -98,9 +152,7 @@ class tree(object):
             self._get_categories, self._get_categories)
         self.packages   = PackageIterValLazyDict(
             self.categories.iterkeys, self._get_packages)
-        self.versions   = IterValLazyDict(
-#            self.packages.iteritems, self._get_versions,
-            self._mangle_version_keys, self._get_versions)
+        self.versions = VersionMapping(self.packages, self._get_versions)
 
         self.frozen = frozen
         self.lock = None

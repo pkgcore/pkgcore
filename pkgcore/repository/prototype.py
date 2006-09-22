@@ -67,6 +67,7 @@ class VersionMapping(DictMixin):
         self._parent = parent_mapping
         self._pull_vals = pull_vals
         self._known_keys = {}
+        self._finalized = False
 
     def __getitem__(self, key):
         o = self._cache.get(key)
@@ -75,7 +76,7 @@ class VersionMapping(DictMixin):
         cat, pkg = key
         known_pkgs = self._known_keys.get(cat)
         if known_pkgs is None:
-            if self._parent is None:
+            if self._finalized:
                 raise KeyError(key)
             self._known_keys[cat] = known_pkgs = set(self._parent[cat])
         if pkg not in known_pkgs:
@@ -90,7 +91,7 @@ class VersionMapping(DictMixin):
         for key in self._cache:
             yield key
 
-        if self._parent is not None:
+        if not self._finalized:
             for cat, pkgs in self._parent.iteritems():
                 if cat in self._known_keys:
                     continue
@@ -100,7 +101,7 @@ class VersionMapping(DictMixin):
                         continue
                     s.add(pkg)
                 self._known_keys[cat] = s
-            self._parent = None
+            self._finalized = True
 
         for cat, pkgs in self._known_keys.iteritems():
             for pkg in list(pkgs):
@@ -112,6 +113,12 @@ class VersionMapping(DictMixin):
             return True
         except KeyError:
             return False            
+
+    def force_regen(self, key):
+        self._cache.pop(key, None)
+        if key[0] in self._known_keys:
+            self._known_keys[key[0]].add(key[1])
+        self._finalized = False
 
 
 class tree(object):
@@ -387,16 +394,11 @@ class tree(object):
 
         notify the repository that a pkg it provides is being removed
         """
-        cp = "%s/%s" % (pkg.category, pkg.package)
-        self.versions.force_regen(cp)
-        if len(self.versions.get(cp, [])) == 0:
+        l = len(self.versions[(pkg.category, pkg.package)])
+        if l == 1:
             # dead package
             self.packages.force_regen(pkg.category)
-            if len(self.packages.get(pkg.category, [])) == 0:
-                #  dead category
-                self.categories.force_remove(pkg.category)
-                self.packages.force_regen(pkg.category)
-            self.versions.force_regen(cp)
+        self.versions.force_regen((pkg.category, pkg.package))
 
     def notify_add_package(self, pkg):
         """
@@ -404,12 +406,12 @@ class tree(object):
 
         notify the repository that a pkg is being addeded to it
         """
-        cp = "%s/%s" % (pkg.category, pkg.package)
         if pkg.category not in self.categories:
-            self.categories.force_add(pkg.category)
-        if cp not in self.packages:
+            self.category.force_add(pkg.category)
+#            self.categories.force_regen(pkg.category)
+        if pkg.category not in self.packages:
             self.packages.force_regen(pkg.category)
-        self.packages.force_regen(cp)
+        self.versions.force_regen((pkg.category, pkg.package))
 
     def install(self, pkg, *a, **kw):
         """

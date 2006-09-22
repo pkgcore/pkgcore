@@ -128,9 +128,7 @@ class empty_tree_merge_plan(plan.merge_plan):
 
     def add_atom(self, atom):
         return plan.merge_plan.add_atom(
-            self,
-            KeyedAndRestriction(self._vdb_restriction, atom, key=atom.key),
-            dbs=self.all_dbs)
+            self, atom, dbs=self.dbs)
 
 
 def generate_replace_resolver_kls(resolver_kls):

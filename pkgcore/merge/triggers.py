@@ -185,7 +185,8 @@ def fix_special_bits_world_writable(fix_perms=True, cset="new_cset"):
         reporter = engine.reporter
         l = []
         for x in cset:
-            if (x.mode & 06000) and (x.mode & 00001):
+            # check for either sgid or suid, then write.
+            if (x.mode & 06000) and (x.mode & 0002):
                 l.append(x)
         if reporter is not None:
             for x in l:
@@ -197,9 +198,9 @@ def fix_special_bits_world_writable(fix_perms=True, cset="new_cset"):
                         "UNSAFE world writable SetUID: %s" % (x.real_path,))
 
         if l:
-            # filters the 01, for those who aren't accustomed to
+            # filters the 02, for those who aren't accustomed to
             # screwing with mode.
-            cset.update(x.change_attributes(mode=x.mode & ~01) for x in l)
+            cset.update(x.change_attributes(mode=x.mode & ~02) for x in l)
     return SimpleTrigger(cset, perm_func)
 
 def notice_world_writable(fix_perms=False, cset="new_cset"):

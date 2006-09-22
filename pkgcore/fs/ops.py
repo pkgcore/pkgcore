@@ -58,10 +58,10 @@ def default_ensure_perms(d1, d2=None):
         except AttributeError:
             do_mtime = True
 
-    if do_mode and m is not None:
-        os.chmod(d1.real_location, m)
     if do_chown and (o != -1 or g != -1):
         os.lchown(d1.real_location, o, g)
+    if do_mode and m is not None:
+        os.chmod(d1.real_location, m)
     if do_mtime and t is not None:
         os.utime(d1.real_location, (t, t))
     return True

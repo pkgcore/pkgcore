@@ -361,7 +361,7 @@ class OptionParser(commandline.OptionParser):
     def check_values(self, vals, args):
         """Sanity check and postprocess after parsing."""
         vals, args = commandline.OptionParser.check_values(self, vals, args)
-        if vals.contents:
+        if vals.contents or vals.owns or vals.ownsre:
             vals.vdb = True
 
         if vals.atom:

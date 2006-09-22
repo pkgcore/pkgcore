@@ -114,6 +114,10 @@ class ebd(object):
 
         for x in ("sandbox", "userpriv", "fakeroot"):
             setattr(self, x, self.feat_or_bool(x) and not (x in self.restrict))
+        if self.fakeroot:
+            warnings.warn("disabling fakeroot; unusable till coreutils/fakeroot" +
+                " interaction is fixed")
+            self.fakeroot = False
         if self.userpriv and os.getuid() != 0:
             self.userpriv = False
 

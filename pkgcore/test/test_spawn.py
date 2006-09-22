@@ -127,6 +127,8 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
         os.unlink(fp1)
         os.unlink(fp2)
         os.unlink(savefile)
+    test_fakeroot.todo = "fakeroot was broken by recent coreutils; fix this"
+
 
     def test_process_exit_code(self):
         self.assertEqual(0, spawn.process_exit_code(0), "exit code failed")

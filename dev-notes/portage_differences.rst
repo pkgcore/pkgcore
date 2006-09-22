@@ -19,8 +19,6 @@ machine.
 - portageq based functions are disabled in the global scope.  Reasoning for this 
   is that of QA- has_version/best_version **must not** affect the generated 
   metadata.  As such, portageq calls in the global scope are disabled.
-  They aren't currently, but shall be accessible in non-global scope calls-
-  namely the phase calls.
 
 - inherit is disabled in all phases but depend and setup.  Folks no longer do 
   it, but inherit from within one of the build/install phases is now actively

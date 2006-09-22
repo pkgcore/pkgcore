@@ -4,7 +4,7 @@ Rough TODO
 
 - sandbox and fakeroot don't work right now (doesn't properly disable)
 
-- sync subsystem. ***
+- sync subsystem. * * *
   Threw out the old refactoring, too portage specific; exists in 
   sandbox/dead_code , design sucked also.
 
@@ -61,7 +61,7 @@ Rough TODO
   has the option of doing the initial sorting without passing through
   visibility filters (which will trigger metadata lookups)
 
-- pkgcore.config.central features: ***
+- pkgcore.config.central features: * * *
   These may or may not be picked off as development continues; the main
   requirement for this functionality is plugins, which the framework 
   intends... so... prior to a release, it will be added.
@@ -81,7 +81,7 @@ Rough TODO
   but think of it as rpath based app stacks, a full apache stack compiled to
   run from /opt/blah for example.
 
-- pkgcore.ebuild.gpgtree ****
+- pkgcore.ebuild.gpgtree * * * *
   derivative of pkgcore.ebuild.ebuild_repository, this overloads
   ebuild_factory and eclass_cache so that gpg checks are done.
   This requires some hackery, partially dependant on config.central changes
@@ -89,7 +89,7 @@ Rough TODO
   (different class targets works for me).
   Anyone who implements this deserves massive cookies.
 
-- pkgcore.ebuild.gpgprofile ****
+- pkgcore.ebuild.gpgprofile * * * *
   Same as above.
 
 - pkgcore.fetch.bundled_lib:

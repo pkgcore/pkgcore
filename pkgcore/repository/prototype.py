@@ -195,7 +195,7 @@ class tree(object):
         return list(self.itermatch(atom, **kwds))
 
     def itermatch(self, restrict, restrict_solutions=None, sorter=None,
-                  pkg_klass_override=None, force=None):
+                  pkg_klass_override=None, force=None, yield_none=False):
 
         """
         generator that yields packages match a restriction.
@@ -207,6 +207,13 @@ class tree(object):
             Don't play with it unless you know what you're doing
         @param sorter: callable to do sorting during searching-
             if sorting the results, use this instead of sorting externally.
+        @param yield_none: if True then itermatch will yield None for every
+            non-matching package. This is meant for use in combination with
+            C{twisted.task.cooperate} or other async uses where itermatch
+            should not wait many (wallclock) seconds between yielding
+            packages. If you override this method you should yield
+            None in long-running loops, strictly calling it for every package
+            is not necessary.
         """
 
         if not isinstance(restrict, restriction.base):
@@ -223,10 +230,11 @@ class tree(object):
             candidates = self._identify_candidates(restrict, sorter)
 
         return self._internal_match(
-            candidates, restrict, sorter, pkg_klass_override, force)
+            candidates, restrict, sorter, pkg_klass_override, force,
+            yield_none=yield_none)
 
     def _internal_match(self, candidates, restrict, sorter,
-                        pkg_klass_override, force):
+                        pkg_klass_override, force, yield_none=False):
         #actual matching.
         if force is None:
             match = restrict.match
@@ -242,6 +250,8 @@ class tree(object):
 
                 if match(pkg):
                     yield pkg
+                elif yield_none:
+                    yield None
 
     def _identify_candidates(self, restrict, sorter):
         # full expansion

@@ -405,12 +405,20 @@ def stringify_attr(config, pkg, attr):
                 return ' '.join(node.uri or ())
         return conditionals.stringify_boolean(data, _format)
 
+    if attr == 'use':
+        # Combine a list of all enabled (including irrelevant) and all
+        # available flags into a "enabled -disabled" style string.
+        use = set(getattr(pkg, 'use', ()))
+        iuse = set(getattr(pkg, 'iuse', ()))
+        result = sorted(iuse & use) + sorted('-' + val for val in (iuse - use))
+        return ' '.join(result)
+
     # TODO: is a missing or None attr an error?
     value = getattr(pkg, attr, None)
     if value is None:
         return 'MISSING'
 
-    if attr in ('use', 'herds', 'iuse', 'maintainers', 'restrict', 'keywords'):
+    if attr in ('herds', 'iuse', 'maintainers', 'restrict', 'keywords'):
         return ' '.join(sorted(value))
     if attr == 'environment':
         return ''.join(value.get_fileobj())

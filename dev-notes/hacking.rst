@@ -1,8 +1,13 @@
-python code guidelines.
+=========================
+ python code guidelines.
+=========================
 
-lingo-
-fex == for example
-imo == in my opinion; 'my' refering to the author
+lingo:
+
+fex
+  for example
+imo
+  in my opinion; 'my' refering to the author
 
 Note not all of the existing code follows this.
 Doesn't mean existing code is correct however ;)
@@ -11,30 +16,34 @@ Stats are all from a sempron 1.6ghz with python 2.4.2
 
 Finally, code _should_ be documented, following epydoc/epytext guidelines
 
----------------------------
-Follow pep8, with following exemptions-
+Follow pep8, with following exemptions
+======================================
 
--  <80 char limit is only applicable where it doesn't make the logic ugly.
-   This is not an excuse to have a 200 char if statement (fix your logic).  Use common sense.
--  combining imports is ok.
--  use absolute imports
--  _simple_ try/except combined lines are acceptable, but not forced (your call)- example
+- <80 char limit is only applicable where it doesn't make the logic
+  ugly. This is not an excuse to have a 200 char if statement (fix
+  your logic). Use common sense.
+- combining imports is ok.
+- use absolute imports
+- _simple_ try/except combined lines are acceptable, but not forced
+  (your call). example::
 
-try: l.remove(blah)
-except IndexError: pass
+   try: l.remove(blah)
+   except IndexError: pass
 
--  for comments. 2 spaces trailing is pointless- not needed.
--  classes should be named SomeClass , functions/methods should be named some_func
-   Exceptions are classes.  Don't raise strings either.
--  avoid __var 'private' attributes unless you absolutely have a reason to hide it, 
-   and the class won't be inherited (or that attribute must _not_ be accessed)
--  using string module functions when you could use a string method is evil.  Don't do it.
--  use isinstance(str_instance, basestring) unless you _really_ need to know if it's 
-   utf8/ascii
-   
+- for comments. 2 spaces trailing is pointless- not needed.
+- classes should be named SomeClass, functions/methods should be named
+  some_func.
+- Exceptions are classes.  Don't raise strings either.
+- avoid __var 'private' attributes unless you absolutely have a reason
+  to hide it, and the class won't be inherited (or that attribute
+  must _not_ be accessed)
+- using string module functions when you could use a string method is
+  evil. Don't do it.
+- use isinstance(str_instance, basestring) unless you _really_ need to
+   know if it's utf8/ascii
 
--------------------------------------
 Throw self with a NotImplementedError
+=====================================
 
 Reason for this is simple; if you just throw a NotImplementedError, you can't
 tell how the path was hit if derivative classes are involved; thus throw
@@ -42,175 +51,181 @@ NotImplementedError(self, string_name_of_attr)
 
 Far better tbs.
 
----------------------------
 Be aware of what the interpretter is actually doing.
+====================================================
 
-Don't use len(list_instance) when you just want to know if it's nonempty/empty
-l=[1]
-if l: blah
-# instead of
-if len(l): blah
+Don't use len(list_instance) when you just want to know if it's
+nonempty/empty::
 
-python looks for __nonzero__, then __len__.  It's a fair sight faster 
-then if you try to be explicit there.
+  l=[1]
+  if l: blah
+  # instead of
+  if len(l): blah
 
+python looks for __nonzero__, then __len__. It's a fair sight faster
+then if you try to be explicit there::
 
-python -m timeit -s 'l=[]' 'if len(l) > 0: pass'
-1000000 loops, best of 3: 0.705 usec per loop
+  python -m timeit -s 'l=[]' 'if len(l) > 0: pass'
+  1000000 loops, best of 3: 0.705 usec per loop
 
-python -m timeit -s 'l=[]' 'if len(l): pass'
-1000000 loops, best of 3: 0.689 usec per loop
+  python -m timeit -s 'l=[]' 'if len(l): pass'
+  1000000 loops, best of 3: 0.689 usec per loop
 
-python -m timeit -s 'l=[]' 'if l: pass'
-1000000 loops, best of 3: 0.302 usec per loop
+  python -m timeit -s 'l=[]' 'if l: pass'
+  1000000 loops, best of 3: 0.302 usec per loop
 
-
---------------------------
 don't explicitly use has_key.  rely on the 'in' operator.
+=========================================================
 
-python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' 'd.has_key(1999999)'
-1000000 loops, best of 3: 0.512 usec per loop
+::
 
-python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' '1999999 in d'
-1000000 loops, best of 3: 0.279 usec per loop
+  python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' 'd.has_key(1999999)'
+  1000000 loops, best of 3: 0.512 usec per loop
 
-Python interprets the 'in' command by using __contains__ on the instance.  The interpretter
-is faster at doing getattr's then actual python code is; fex, the code above uses
-d.__contains__ , if you do d.has_key or d.__contains__, it's the same speed.  Using 
-'in' instead has the interpretter do the lookup, and is faster.
+  python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' '1999999 in d'
+  1000000 loops, best of 3: 0.279 usec per loop
 
-So... be aware of how the interpretter will execute that code.  Python code specified attribute
-access is slower then the interpretter doing it on it's own.
+Python interprets the 'in' command by using __contains__ on the
+instance. The interpretter is faster at doing getattr's then actual
+python code is; fex, the code above uses d.__contains__ , if you do
+d.has_key or d.__contains__, it's the same speed. Using 'in' instead
+has the interpretter do the lookup, and is faster.
+
+So... be aware of how the interpretter will execute that code. Python
+code specified attribute access is slower then the interpretter doing
+it on it's own.
 
 If in doubt, python -m timeit is your friend. ;-)
 
-
----------------------------
 Do not use [] or {} as default args in function/method definitions.
+===================================================================
 
->>> def f(default=[]):
->>>   default.append(1)
->>>   return default
->>> print f()
-[1]
->>> print f()
-[1,1]
+::
 
-When the function/class/method is defined, the default args are instantiated _then_, not per
-call.  End result is that if it's a mutable default arg, you should use None and test; this is 
-exempted if you _know_ the code doesn't mangle the default.
+  >>> def f(default=[]):
+  >>>   default.append(1)
+  >>>   return default
+  >>> print f()
+  [1]
+  >>> print f()
+  [1,1]
 
+When the function/class/method is defined, the default args are
+instantiated _then_, not per call. End result is that if it's a
+mutable default arg, you should use None and test; this is exempted if
+you _know_ the code doesn't mangle the default.
 
----------------------------
 Visible curried functions should have documentation.
+====================================================
 
-When using the currying methods (pkgcore.util.currying) for function mangling, preserve the 
-documentation via pretty_docs.
+When using the currying methods (pkgcore.util.currying) for function
+mangling, preserve the documentation via pretty_docs.
 
 If this is exempted, pydoc output for objects isn't incredibly useful.
 
-
----------------------------
 unit testing.
+=============
 
 All code _should_ have test case functionality.  We use twisted.trial; should
 be running >=2.2 (<2.2 results in false positives in the spawn tests).
 Regressions should be test cased, exempting idiot mistakes (typos fex).
 
-More then willing to look at code that lacks tests, but merging/integrating the code
-requires tests.
+More then willing to look at code that lacks tests, but
+merging/integrating the code requires tests.
 
-One area that is (atm) exempted from this is the ebuild interaction; testing that interface
-is extremely hard, although it _does_ need to be implemented.
+One area that is (atm) exempted from this is the ebuild interaction;
+testing that interface is extremely hard, although it _does_ need to
+be implemented.
 
-If tests are missing from code (author didn't write tests initially), new tests desired. :)
+If tests are missing from code (author didn't write tests initially),
+new tests desired. :)
 
 
----------------------------
 If it's FS related code, it's _usually_ cheaper to try then to ask then try.
+============================================================================
+
 ...but you should verify it ;)
 
 
-...existing file (but empty to avoid reading overhead)...
+existing file (but empty to avoid reading overhead)::
 
-echo > dar
+  echo > dar
 
-python -m 'timeit' -s 'import os' 'os.path.exists("dar") and open("dar").read()'
-10000 loops, best of 3: 36.4 usec per loop
+  python -m 'timeit' -s 'import os' 'os.path.exists("dar") and open("dar").read()'
+  10000 loops, best of 3: 36.4 usec per loop
 
-python -m 'timeit' -s 'import os' $'try:open("dar").read()\nexcept IOError: pass'
-10000 loops, best of 3: 22 usec per loop
+  python -m 'timeit' -s 'import os' $'try:open("dar").read()\nexcept IOError: pass'
+  10000 loops, best of 3: 22 usec per loop
 
-...nonexistant file...
+nonexistant file::
 
-rm foo
+  rm foo
 
-python -m 'timeit' -s 'import os' 'os.path.exists("foo") and open("foo").read()'
-10000 loops, best of 3: 29.8 usec per loop
+  python -m 'timeit' -s 'import os' 'os.path.exists("foo") and open("foo").read()'
+  10000 loops, best of 3: 29.8 usec per loop
 
-python -m 'timeit' -s 'import os' $'try:open("foo").read()\nexcept IOError: pass'
-10000 loops, best of 3: 27.7 usec per loop
+  python -m 'timeit' -s 'import os' $'try:open("foo").read()\nexcept IOError: pass'
+  10000 loops, best of 3: 27.7 usec per loop
 
-	
 Bit of a difference, no?
 
-Note that I qualified this with "If it's FS related code"; syscalls aren't cheap- if it's 
-not triggering syscalls, next section is relevant.
+Note that I qualified this with "If it's FS related code"; syscalls
+aren't cheap- if it's not triggering syscalls, next section is
+relevant.
 
-
----------------------------
 Catching Exceptions in python code (rather then cpython) isn't cheap.
+=====================================================================
 
 stats from python-2.4.2
 
-When an exception is caught-
+When an exception is caught::
 
-python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'try: d[1999]\nexcept KeyError: pass'
-100000 loops, best of 3: 8.7 usec per loop
+  python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'try: d[1999]\nexcept KeyError: pass'
+  100000 loops, best of 3: 8.7 usec per loop
 
+  python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'1999 in d and d[1999]'
+  1000000 loops, best of 3: 0.492 usec per loop
 
-python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'1999 in d and d[1999]'
-1000000 loops, best of 3: 0.492 usec per loop
+When no exception is caught, overhead of try/except setup::
 
+  python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'try: d[0]\nexcept KeyError: pass'
+  1000000 loops, best of 3: 0.532 usec per loop
 
-When no exception is caught, overhead of try/except setup
-
-python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'try: d[0]\nexcept KeyError: pass'
-1000000 loops, best of 3: 0.532 usec per loop
-
-python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'d[0]'
-1000000 loops, best of 3: 0.407 usec per loop
+  python -m 'timeit' -s 'd=dict(zip(range(1000), range(1000)))' $'d[0]'
+  1000000 loops, best of 3: 0.407 usec per loop
 
 
-Not advocating writing code that doesn't protect itself- just be aware of what the code is actually doing, 
-and be aware that exceptions in python code are costly due to machinery involved.
+Not advocating writing code that doesn't protect itself- just be aware
+of what the code is actually doing, and be aware that exceptions in
+python code are costly due to machinery involved.
 
 Another example is when to use or not to use dict's setdefault or get methods:
 
-key exists.
+key exists::
 
-# Through exception handling
-python -m timeit -s 'd=dict.fromkeys(range(100))' 'try: x=d[1]' 'except KeyError: x=42'
-1000000 loops, best of 3: 0.548 usec per loop
+  # Through exception handling
+  python -m timeit -s 'd=dict.fromkeys(range(100))' 'try: x=d[1]' 'except KeyError: x=42'
+  1000000 loops, best of 3: 0.548 usec per loop
 
-# d.get
-python -m timeit -s 'd=dict.fromkeys(range(100))' 'x=d.get(1, 42)'
-1000000 loops, best of 3: 1.01 usec per loop
-
-
-key doesn't exist.
-
-# Through exception handling
-python -m timeit -s 'd=dict.fromkeys(range(100))' 'try: x=d[101]' 'except KeyError: x=42'
-100000 loops, best of 3: 8.8 usec per loop
-
-# d.get
-python -m timeit -s 'd=dict.fromkeys(range(100))' 'x=d.get(101, 42)'
-1000000 loops, best of 3: 1.05 usec per loop
+  # d.get
+  python -m timeit -s 'd=dict.fromkeys(range(100))' 'x=d.get(1, 42)'
+  1000000 loops, best of 3: 1.01 usec per loop
 
 
-Short version?  If you know the key is there, get is slower.  If you don't, get is your friend.
-IOW, use it instead of doing a containment test then accessing the key.
+key doesn't exist::
+
+  # Through exception handling
+  python -m timeit -s 'd=dict.fromkeys(range(100))' 'try: x=d[101]' 'except KeyError: x=42'
+  100000 loops, best of 3: 8.8 usec per loop
+
+  # d.get
+  python -m timeit -s 'd=dict.fromkeys(range(100))' 'x=d.get(101, 42)'
+  1000000 loops, best of 3: 1.05 usec per loop
+
+
+Short version? If you know the key is there, get is slower. If you
+don't, get is your friend. IOW, use it instead of doing a containment
+test then accessing the key.
 
 Of course this only considers the case where the default value is
 simple. If it's something more costly "except" will do relatively
@@ -219,43 +234,47 @@ needed. So if in doubt and in a performance-critical piece of code:
 benchmark parts of it with timeit instead of assuming "exceptions are
 slow" or "[] is fast".
 
-
----------------------------
 cpython 'leaks' vars into local namespace for certain constructs
+================================================================
 
-def f(s):
-	while True:
-		try:
-			some_func_that_throws_exception()
-		except Exception, e:
-			# e exists in this namespace now.
-			pass
-		# some other code here...
+::
 
-from the code above, e bled into the f namespace- that's referenced memory that isn't used, 
-and will linger until the while loop exits.
+  def f(s):
+      while True:
+          try:
+              some_func_that_throws_exception()
+          except Exception, e:
+              # e exists in this namespace now.
+              pass
+          # some other code here...
 
-Python _does_ bleed variables into the local namespace- be aware of this, and explicitly
-delete references you don't need when dealing in large objs, especially dealing with exceptions.
+from the code above, e bled into the f namespace- that's referenced
+memory that isn't used, and will linger until the while loop exits.
 
-class c:
-	d = {}
-	for x in range(1000):
-		d[x] = x
+Python _does_ bleed variables into the local namespace- be aware of
+this, and explicitly delete references you don't need when dealing in
+large objs, especially dealing with exceptions::
 
-Granted the class above is contrived, but the thing to note is that c.x is now valid-
-the x from the for loop bleeds into the class namespace and stays put.
+  class c:
+      d = {}
+      for x in range(1000):
+          d[x] = x
+
+Granted the class above is contrived, but the thing to note is that
+c.x is now valid- the x from the for loop bleeds into the class
+namespace and stays put.
 
 Don't leave uneeded vars lingering in class namespace.
 
-Variables that leak from for loops _normally_ isn't an issue, just be aware it occurs- 
-especially if the var is referencing a large object (thus keeping it in memory).
+Variables that leak from for loops _normally_ isn't an issue, just be
+aware it occurs- especially if the var is referencing a large object
+(thus keeping it in memory).
 
-So... for loops leak, list comps leak, dependant on your except clause, can leak also.
+So... for loops leak, list comps leak, dependant on your except
+clause, can leak also.
 
-
----------------------
 Unless you need to generate (and save) a range result, use xrange.
+==================================================================
 
 python -m timeit 'for x in range(10000): pass'
 100 loops, best of 3: 2.01 msec per loop
@@ -263,164 +282,171 @@ python -m timeit 'for x in range(10000): pass'
 $ python -m timeit 'for x in xrange(10000): pass'
 1000 loops, best of 3: 1.69 msec per loop
 
-
---------------------
 Removals from a list aren't cheap, especially left most.
+========================================================
+
 If you _do_ need to do left most removals, deque module is your friend.
 
-Rightmost ain't all that cheap either, depending on what idiocy folks come up with
-to try and 'help' the interpretter-
+Rightmost ain't all that cheap either, depending on what idiocy folks
+come up with to try and 'help' the interpretter::
 
-python -m timeit $'l=range(1000);i=0;\nwhile i < len(l):\n\tif l[i]!="asdf":del l[i]\n\telse:i+=1'
-100 loops, best of 3: 4.12 msec per loop
+  python -m timeit $'l=range(1000);i=0;\nwhile i < len(l):\n\tif l[i]!="asdf":del l[i]\n\telse:i+=1'
+  100 loops, best of 3: 4.12 msec per loop
 
-python -m timeit $'l=range(1000);\nfor i in xrange(len(l)-1,-1,-1):\n\tif l[i]!="asdf":del l[i]'
-100 loops, best of 3: 3 msec per loop
+  python -m timeit $'l=range(1000);\nfor i in xrange(len(l)-1,-1,-1):\n\tif l[i]!="asdf":del l[i]'
+  100 loops, best of 3: 3 msec per loop
 
-python -m timeit 'l=range(1000);l=[x for x in l if x == "asdf"]'
-1000 loops, best of 3: 1 msec per loop
+  python -m timeit 'l=range(1000);l=[x for x in l if x == "asdf"]'
+  1000 loops, best of 3: 1 msec per loop
 
 Granted, that's worst case, but worst case is usually where folks get bit.
 (best case still is faster for list comp btw).
 
 Related note, don't pop unless you have a reason to.
 
-
--------------------------
 If you're testing for None specifically, be aware of the 'is' operator.
-Is avoids the equality protocol, and does a straight ptr comparison.
+=======================================================================
 
-python -m timeit '1 != None'
-1000000 loops, best of 3: 0.721 usec per loop
+Is avoids the equality protocol, and does a straight ptr comparison::
 
-$ python -m timeit '1 is not None'
-1000000 loops, best of 3: 0.343 usec per loop
+  python -m timeit '1 != None'
+  1000000 loops, best of 3: 0.721 usec per loop
 
+  $ python -m timeit '1 is not None'
+  1000000 loops, best of 3: 0.343 usec per loop
 
--------------------------
 Deprecated/crappy modules
+=========================
 
-Don't use types module.  Use isinstance (this isn't a speed reason, types sucks).
-Don't use strings module.  There are exceptions, but use string methods when available.
-Don't use stat module just to get a stat attribute- fex
+- Don't use types module. Use isinstance (this isn't a speed reason,
+  types sucks).
+- Don't use strings module. There are exceptions, but use string
+  methods when available.
+- Don't use stat module just to get a stat attribute- fex::
+    import stats
+    l=os.stat("asdf")[stat.ST_MODE]
 
-import stats
-l=os.stat("asdf")[stat.ST_MODE]
-
-# can be done as (and a bit cleaner)
-l=os.stat("asdf").st_mode
+    # can be done as (and a bit cleaner)
+    l=os.stat("asdf").st_mode
 
 
--------------------------
 Know the exceptions that are thrown, and catch just those you're interested in.
+===============================================================================
 
-try:
-	blah
-except Exception:
-	blah2
-	
-^^^ major issue here.  It catches SystemExit exceptions (trigger by keyboard interupts); 
-meaning this code, which was just crappy exception handling now swallows ctrl+c (meaning it 
-now screws with UI code).
+::
+
+  try:
+      blah
+  except Exception:
+      blah2
+
+^^^ major issue here. It catches SystemExit exceptions (trigger by
+keyboard interupts); meaning this code, which was just crappy
+exception handling now swallows ctrl+c (meaning it now screws with UI
+code).
 
 Catch what you're interested in *only*.
 
-
-------------------------
 tuples versus lists.
+====================
 
 Former is immutable, latter is mutable.
 
-Latter  over-allocates (cpython thing), meaning it takes up more memory then is used 
-(this is actually a good thing usually).
+Latter over-allocates (cpython thing), meaning it takes up more memory
+then is used (this is actually a good thing usually).
 
-If you're generating/storing a lot of sequences that shouldn't be modified, use tuples.
-Cheaper in memory, and folks can reference the tuple directly without concerns of it being
-mutated elsewhere.
+If you're generating/storing a lot of sequences that shouldn't be
+modified, use tuples. Cheaper in memory, and folks can reference the
+tuple directly without concerns of it being mutated elsewhere.
 
-Using lists there however would require each consumer to copy the list to protect themselves
-from mutation.  So... over-allocation + allocating a new list for each consumer.
+Using lists there however would require each consumer to copy the list
+to protect themselves from mutation. So... over-allocation +
+allocating a new list for each consumer.
 
 Bad, mm'kay.
 
+for immutable instances (tuples/strings fex), trying to copy them is dumb
+=========================================================================
 
------------------------
-for instances that are immutable (tuples/strings fex), trying to copy them is dumb.
-
-fex;
-copy.copy((1,2,3)) is dumb; nobody makes a mistake that obvious, but in larger code
-folks do (folks even try using [:] to copy a string; it returns the same string since
-it's immutable).
+fex: copy.copy((1,2,3)) is dumb; nobody makes a mistake that obvious,
+but in larger code folks do (folks even try using [:] to copy a
+string; it returns the same string since it's immutable).
 
 Can't modify them, thus there is no point in trying to make copies of them.
 
 
------------------------
-__del__ methods have the annoying side affect of blocking garbage collection
-when that instance is involved in a cycle- basically, the interpretter doesn't
-know what __del__ is going to reference, so its unknowable (general case) how to
-break the cycle.
+__del__ methods mes with garbage collection
+===========================================
 
-So... if you're using __del__ methods, make sure the instance doesn't wind up in
-a cycle (whether careful data structs, or weakref usage).
+__del__ methods have the annoying side affect of blocking garbage
+collection when that instance is involved in a cycle- basically, the
+interpretter doesn't know what __del__ is going to reference, so its
+unknowable (general case) how to break the cycle.
 
+So... if you're using __del__ methods, make sure the instance doesn't
+wind up in a cycle (whether careful data structs, or weakref usage).
 
------------------------
 (General) python isn't slow, your algorithm is.
+===============================================
 
-l = []
-for x in data_generator():
-	if x not in l:
-		l.append(x)
+::
 
-That code is _best_ case O(1) (yielding all 0's fex)
-Worst case is O(N^2).
+  l = []
+  for x in data_generator():
+  	if x not in l:
+  		l.append(x)
 
-l=set()
-for x in data_generator():
-	if x not in l:
-		l.add(x)
+That code is _best_ case O(1) (yielding all 0's fex). Worst case is
+O(N^2).
 
-Best/Worst are now constant (not quite due to potential expansion of the set internally,
-but that's ignorable in this case).
+::
 
-Further, the first loop actually invokes the __eq__ protocol for x for each element, 
-which can potentially be *quite* slow if dealing in complex objs.
+  l=set()
+  for x in data_generator():
+      if x not in l:
+          l.add(x)
+
+Best/Worst are now constant (not quite due to potential expansion of
+the set internally, but that's ignorable in this case).
+
+Further, the first loop actually invokes the __eq__ protocol for x for
+each element, which can potentially be *quite* slow if dealing in
+complex objs.
 
 The second loop invokes __hash__ once on x instead.  Seeing the gain?
 
-Technically, second loop still is a bit innefficient-
+Technically, second loop still is a bit innefficient::
 
-l=set(data_generator())
+  l=set(data_generator())
 
 being simpler and faster.
 
-example data for folks who don't see how _bad_ this can get-
+example data for folks who don't see how _bad_ this can get::
 
-python -m timeit $'l=[]\nfor x in xrange(1000):\n\tif x not in l:l.append(x)'
-10 loops, best of 3: 74.4 msec per loop
+  python -m timeit $'l=[]\nfor x in xrange(1000):\n\tif x not in l:l.append(x)'
+  10 loops, best of 3: 74.4 msec per loop
 
-python -m timeit $'l=set()\nfor x in xrange(1000):\n\tif x not in l:l.add(x)'
-1000 loops, best of 3: 1.24 msec per loop
+  python -m timeit $'l=set()\nfor x in xrange(1000):\n\tif x not in l:l.add(x)'
+  1000 loops, best of 3: 1.24 msec per loop
 
-python -m timeit 'l=set(xrange(1000))'
-1000 loops, best of 3: 278 usec per loop
-
+  python -m timeit 'l=set(xrange(1000))'
+  1000 loops, best of 3: 278 usec per loop
 
 Bit of a difference, no?
 
-This does _not_ mean that sets are automatically/better everywhere, just be aware of 
-what you're doing- for a single search of a range (fex), the overhead of is far
-slower then a linear search.  Kind of a 'duh', but folks do do this sometimes.
+This does _not_ mean that sets are automatically/better everywhere,
+just be aware of what you're doing- for a single search of a range
+(fex), the overhead of is far slower then a linear search. Kind of a
+'duh', but folks do do this sometimes::
 
-python -m timeit -s 'l=range(50)' $'if 1001 in set(l): pass'
-100000 loops, best of 3: 12.2 usec per loop
+  python -m timeit -s 'l=range(50)' $'if 1001 in set(l): pass'
+  100000 loops, best of 3: 12.2 usec per loop
 
-python -m timeit -s 'l=range(50)' $'if 1001 in l: pass'
-10000 loops, best of 3: 7.68 usec per loop
+  python -m timeit -s 'l=range(50)' $'if 1001 in l: pass'
+  10000 loops, best of 3: 7.68 usec per loop
 
 What's up with __hash__ and dicts
----------------------------------
+=================================
 
 A bunch of things (too many things most likely) in the codebase define
 __hash__. The rule for __hash__ is (quoted from
@@ -473,7 +499,7 @@ So what does this mean?
 
 
 __eq__ and __ne__
-_________________
+=================
 
 From http://docs.python.org/ref/customization.html:
 
@@ -485,7 +511,7 @@ From http://docs.python.org/ref/customization.html:
 They really mean that. If you define __eq__ but not __ne__ doing "!="
 on instances compares them by identity. This is surprisingly easy to
 miss, especially since the natural way to write unit tests for classes
-with custom comparisons goes like this:
+with custom comparisons goes like this::
 
   self.assertEquals(YourClass(1), YourClass(1))
   # Repeat for more possible values. Uses == and therefore __eq__,
@@ -501,11 +527,11 @@ Adding a __ne__ that just does "return not self == other" fixes this.
 
 
 __eq__/__hash__ and subclassing
--------------------------------
+===============================
 
 If your class has a custom __eq__ and it might be subclassed you have
 to be very careful about how you "compare" to instances of a subclass.
-Usually you will want to be "different" from those unconditionally:
+Usually you will want to be "different" from those unconditionally::
 
   def __eq__(self, other):
       if self.__class is not YourClass or other.__class__ is not YourClass:
@@ -538,10 +564,10 @@ restrictions they're in compare equal independent of their "payload".
 
 
 Exception subclassing
----------------------
+=====================
 
 It is pretty common for an Exception subclass to want to customize the
-return value of str() on an instance. The easiest way to do that is:
+return value of str() on an instance. The easiest way to do that is::
 
   class MyException(Exception):
 

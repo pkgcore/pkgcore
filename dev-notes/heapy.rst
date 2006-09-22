@@ -154,6 +154,7 @@ all the dicts lumped together. A more useful one is::
  <132 more rows. Type e.g. '_.more' to view.>
 
 What this does is:
+
 - for every object, find all its referrers
 - Classify those referrers using the "Clodo" relation you saw earlier
 - Create a set of those classifiers of referrers. That means a set of

@@ -1,4 +1,4 @@
-# Copyright: 2005 Jason Stubbs <jstubbs@gentoo.org>
+# Copyright: 2005 Brian harring <ferringb@gmail.com>
 # License: GPL2
 
 """
@@ -52,13 +52,14 @@ class tree(prototype.tree):
         return ("virtual",)
 
     def _get_packages(self, category):
+        if category != "virtual":
+            raise KeyError("no %s category for this repository" % category)
+            
         if self._grab_virtuals is not None:
             self._virtuals = self._grab_virtuals()
             self._grab_virtuals = None
 
-        if category == "virtual":
-            return tuple(self._virtuals.iterkeys())
-        raise KeyError("no %s category for this repository" % category)
+        return tuple(self._virtuals.iterkeys())
 
     def _get_versions(self, catpkg):
         if catpkg[0] == "virtual":

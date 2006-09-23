@@ -151,7 +151,7 @@ class base(metadata.package):
     """
 
     tracked_attributes = (
-        "PF", "depends", "rdepends", "post_rdepends", "provides", "license",
+        "depends", "rdepends", "post_rdepends", "provides", "license",
         "slot", "keywords", "eapi", "restrict", "eapi", "description", "iuse")
 
     _config_wrappables = dict((x, alias_class_method("evaluate_depset"))

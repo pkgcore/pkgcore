@@ -187,8 +187,8 @@ class fake_package_factory(package_factory):
         obj = self.child_class(self, pkg.cpvstr)
         for x in self._forced_copy:
             # bypass setattr restrictions.
-            obj.__dict__[x] = getattr(self.pkg, x)
-        obj.__dict__["use"] = self.pkg.use
+            object.__setattr__(obj, x, getattr(self.pkg, x))
+        object.__setattr__(obj, "use", self.pkg.use)
         return obj
 
     def get_ebuild_src(self, pkg):

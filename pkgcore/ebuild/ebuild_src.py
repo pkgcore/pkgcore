@@ -16,7 +16,6 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.digest import parse_digest
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import post_curry, alias_class_method, partial
-from pkgcore.util.lists import ChainedLists
 from pkgcore.restrictions.packages import AndRestriction
 from pkgcore.restrictions import boolean
 from pkgcore.chksum.errors import MissingChksum
@@ -107,9 +106,6 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
         else:
             uris.add_uri(uri)
 
-    # force usage of a ChainedLists, why? because folks may specify
-    # multiple uri's resulting in the same file. we basically use
-    # ChainedList's _list as a mutable space we directly modify.
     if not preexisting:
         common_files[filename] = fetchable(filename, uris, chksums[filename])
     return common_files[filename]

@@ -12,7 +12,7 @@ from pkgcore.fetch import errors
 
 class fetcher(object):
 
-    def _verify(self, file_location, target, required=None):
+    def _verify(self, file_location, target, all_chksums=True, handlers=None):
         """
         internal function for derivatives.
 
@@ -23,13 +23,15 @@ class fetcher(object):
           - 1:  iff file is too large (if size chksums are available)
                 or else size is right but a chksum didn't match.
 
-        if required is None, all chksums must match
+        if all_chksums is True, all chksums must be verified; if false, all
+        a handler can be found for are used.
         """
         if not os.path.exists(file_location):
             return -1
 
-        handlers = get_handlers(target.chksums.keys())
-        if required:
+        if handlers is None:
+            handlers = get_handlers(target.chksums)
+        if all_chksums:
             for x in target.chksums:
                 if x not in handlers:
                     raise errors.RequiredChksumDataMissing(target, x)

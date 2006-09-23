@@ -20,6 +20,7 @@ class native_ro_StringIO(StringIO.StringIO):
 del generic_immutable_method
 
 class write_StringIO(StringIO.StringIO):
+
     def __init__(self, callback, *args, **kwds):
         if not callable(callback):
             raise TypeError("callback must be callable")
@@ -29,7 +30,8 @@ class write_StringIO(StringIO.StringIO):
     def close(self):
         self.flush()
         if self._callback is not None:
-            self._callback(self.get_value())
+            self.seek(0)
+            self._callback(self.read())
             self._callback = None
         StringIO.StringIO.close(self)
 

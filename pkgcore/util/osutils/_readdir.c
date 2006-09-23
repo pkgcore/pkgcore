@@ -169,7 +169,7 @@ pkgcore_readdir_listdir(PyObject* self, PyObject* args)
     if (!the_dir) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
-
+    errno = 0;
     struct dirent *entry;
     while ((entry = readdir(the_dir))) {
         const char *name = entry->d_name;

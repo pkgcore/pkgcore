@@ -2,6 +2,10 @@
 Rough TODO
 ==========
 
+- collision-protect trigger
+
+- recreate verify-rdepends also
+
 - sandbox and fakeroot don't work right now (doesn't properly disable)
 
 - sync subsystem.

@@ -479,17 +479,17 @@ def print_packages_noversion(options, out, err, pkgs, vdbs):
             out.write(green, '     installed: ', out.fg(), ' '.join(versions))
         for attr in options.attr:
             out.write(green, '     %s: ' % (attr,), out.fg(),
-                      stringify_attr(options, pkgs[0], attr))
+                      stringify_attr(options, pkgs[-1], attr))
         out.write()
         out.wrap = False
         out.later_prefix = []
     elif options.one_attr:
-        out.write(stringify_attr(options, pkgs[0], options.oneattr))
+        out.write(stringify_attr(options, pkgs[-1], options.oneattr))
     else:
         out.autoline = False
         out.write(pkgs[0].key)
         for attr in options.attr:
-            out.write(' %s="%s"' % (attr, stringify_attr(options, pkgs[0],
+            out.write(' %s="%s"' % (attr, stringify_attr(options, pkgs[-1],
                                                          attr)))
         out.autoline = True
         out.write()

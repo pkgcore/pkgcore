@@ -4,7 +4,7 @@ Rough TODO
 
 - sandbox and fakeroot don't work right now (doesn't properly disable)
 
-- sync subsystem. * * *
+- sync subsystem.
   Threw out the old refactoring, too portage specific; exists in 
   sandbox/dead_code , design sucked also.
 
@@ -13,6 +13,7 @@ Rough TODO
   elog is bound to this also
 
 - Possibly convert to cpython:
+
   - flat_hash.database._parse_data
   - metadata.database._parse_data
   - posixpath (os.path)
@@ -40,28 +41,32 @@ Rough TODO
 - pmerge mods; [ --skip-set SET ] , [ --skip atom ], use similar restriction
   to --replace to prefer vdb for matching atoms
 
-- info regeneration trigger; **
+- info regeneration trigger
 
 - refactor pkgcore.ebuild.cpv.ver_cmp usage to avoid full cpv parsing when 
   _cpv is in use; 
   'nuff said, look in pkgcore.ebuild.cpv.cpy_ver_cmp
 
-- finish off trigger registration; **
+- finish off trigger registration
+
   Right now it's hardcoded in merge.engine; this sucks, need to convert the 
   gentoo specific triggers over to being registered on the fly via
   domain/configuration.
   
-- testing of fakeroot integration: **
+- testing of fakeroot integration
+
   it was working back in the ebd branch days; things have changed since then 
   (heavily), enabling/disabling should work fine, but will need to take a look
   at the contentset generation to ensure perms/gid leaks through correctly.
 
-- modify repository.prototype.tree.match to take an optional comparison *
+- modify repository.prototype.tree.match to take an optional comparison
+
   reasoning being that if we're just going to do a max, pass in the max so it 
   has the option of doing the initial sorting without passing through
   visibility filters (which will trigger metadata lookups)
 
-- pkgcore.config.central features: * * *
+- pkgcore.config.central features
+
   These may or may not be picked off as development continues; the main
   requirement for this functionality is plugins, which the framework 
   intends... so... prior to a release, it will be added.
@@ -81,7 +86,8 @@ Rough TODO
   but think of it as rpath based app stacks, a full apache stack compiled to
   run from /opt/blah for example.
 
-- pkgcore.ebuild.gpgtree * * * *
+- pkgcore.ebuild.gpgtree
+
   derivative of pkgcore.ebuild.ebuild_repository, this overloads
   ebuild_factory and eclass_cache so that gpg checks are done.
   This requires some hackery, partially dependant on config.central changes
@@ -89,7 +95,7 @@ Rough TODO
   (different class targets works for me).
   Anyone who implements this deserves massive cookies.
 
-- pkgcore.ebuild.gpgprofile * * * *
+- pkgcore.ebuild.gpgprofile: 
   Same as above.
 
 - pkgcore.fetch.bundled_lib:

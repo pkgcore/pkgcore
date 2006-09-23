@@ -1,3 +1,12 @@
+=======
+WARNING
+=======
+
+This is the original brain dump from harring; it *is* not guranteed to
+be accurate to the current design, it's kept around to give an idea
+of where things came from to contrast to what is in place now.
+
+
 ==============
  Introduction
 ==============

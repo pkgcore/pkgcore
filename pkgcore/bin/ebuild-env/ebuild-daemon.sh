@@ -80,22 +80,26 @@ fi
 export PORTAGE_PRELOADED_ECLASSES=''
 unset_colors
 
+
 sigint_handler() {
-    echo "EBD caught a sigint" >&2
     EBD_DISABLE_DIEFUNC="asdf"
-    speak "killed"
+    exec 2>/dev/null
+    exec 1>/dev/null
     kill -2 $PPID
+    speak "killed"
     exit 2
 }
 trap sigint_handler SIGINT
 
 sigkill_handler() {
-    echo "EBD caught a sigkill" >&2
     EBD_DISABLE_DIEFUNC="asdf"
-    speak "killed"
+    exec 2>/dev/null
+    exec 1>/dev/null
     kill -9 $$PID
+    speak "killed"
     exit 9
 }
+
 trap sigkill_handler SIGKILL
 
 

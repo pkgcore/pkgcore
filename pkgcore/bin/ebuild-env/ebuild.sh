@@ -124,11 +124,6 @@ dump_trace() {
 	done
 }
 
-killparent() {
-	trap INT
-#	kill ${PORTAGE_MASTER_PID}
-}
-
 hasq() {
         local x
 
@@ -600,7 +595,6 @@ execute_phases() {
 			SANDBOX_ON="1"
 			MUST_EXPORT_ENV="no"
 
-			trap 'killparent' INT
 			if [ -z "$QA_CONTROLLED_EXTERNALLY" ]; then
 				enable_qa_interceptors
 			fi
@@ -610,7 +604,6 @@ execute_phases() {
 			if [ -z "$QA_CONTROLLED_EXTERNALLY" ]; then
 				disable_qa_interceptors
 			fi
-			trap - INT
 
 			set -f
 			[ "${DEPEND:-unset}" != "unset" ] && 		speak "key DEPEND=$(echo $DEPEND)"

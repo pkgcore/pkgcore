@@ -148,15 +148,23 @@ def run_ldconfig(engine, ld_so_conf_file="etc/ld.so.conf"):
                 "ldconfig returned %i from execution" % ret)
 
 
+def _merge_contents(engine, cset):
+    op = get_plugin("fs_ops", "merge_contents")
+    return op(cset, callback=engine.observer.installing_fs_obj)
+
 def merge_trigger(cset="install"):
     """generate a trigger for the actual copy to the livefs"""
-    return SimpleTrigger(cset,
-        lambda engine, cset: get_plugin("fs_ops", "merge_contents")(cset))
+    return SimpleTrigger(cset, _merge_contents)
+
+
+def _unmerge_contents(engine, cset):
+    op = get_plugin("fs_ops", "unmerge_contents")
+    return op(cset, callback=engine.observer.removing_fs_obj)
 
 def unmerge_trigger(cset="uninstall"):
     """generate a trigger for the actual unmerge from the livefs"""
-    return SimpleTrigger(
-        cset, lambda e, c: get_plugin("fs_ops", "unmerge_contents")(c))
+    return SimpleTrigger(cset, _unmerge_contents)
+
 
 def ldconfig_trigger():
     """generate a trigger to execute any ldconfig calls required"""

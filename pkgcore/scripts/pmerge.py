@@ -12,7 +12,7 @@ from pkgcore.restrictions import packages, values
 from pkgcore.util import commandline, parserestrict, lists, repo_utils
 from pkgcore.ebuild import resolver, atom
 from pkgcore.repository import multiplex
-
+from pkgcore.interfaces import observer
 
 class OptionParser(commandline.OptionParser):
 
@@ -349,9 +349,13 @@ def main(config, options, out, err):
             " updates to the term when removing files; as such its active, but"
             " you won't see info written to the term\n"
             "hence the required --force\n\n")
+
+    build_obs = observer.build_observer()
+    repo_obs = observer.repo_observer()
+    
     for op, pkgs in changes:
         out.write("processing %s" % (pkgs[0],))
-        buildop = pkgs[0].build()
+        buildop = pkgs[0].build(observer=build_obs)
         if options.fetchonly:
             out.write("\n%i files required-" % len(pkgs[0].fetchables))
             try:
@@ -369,9 +373,9 @@ def main(config, options, out, err):
                 out.write()
                 out.write("merge op: %s %s" % (op, pkgs))
                 if op == "add":
-                    i = vdb.install(built_pkg)
+                    i = vdb.install(built_pkg, observer=repo_obs)
                 elif op == "replace":
-                    i = vdb.replace(pkgs[1], built_pkg)
+                    i = vdb.replace(pkgs[1], built_pkg, observer=repo_obs)
                 ret = i.finish()
                 buildop.clean()
             else:

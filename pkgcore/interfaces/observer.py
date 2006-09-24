@@ -6,7 +6,8 @@ from pkgcore.util.currying import pre_curry
 class base(object):
     pass
 
-class build_observer(object):
+
+class phase_observer(object):
 
     def phase_start(self, phase):
         print "starting %s" % phase
@@ -15,6 +16,30 @@ class build_observer(object):
     def phase_end(self, phase, status):
         print "finished %s: %s" % (phase, status)
         pass
+
+
+class build_observer(base, phase_observer):
+    pass
+
+
+class repo_base(base):
+    pass
+
+
+class repo_observer(repo_base, phase_observer):
+    
+    def trigger_start(self, hook, trigger):
+        print "hook %s: trigger: starting %r" % (hook, trigger)
+    
+    def trigger_end(self, hook, trigger):
+        print "hook %s: trigger: finished %r" % (hook, trigger)
+
+    def installing_fs_obj(self, obj):
+        print ">>> %s" % obj
+
+    def removing_fs_obj(self, obj):
+        print "<<< %s" % obj
+
 
 def wrap_build_method(phase, method, self, *args, **kwds):
     if self.observer is None:
@@ -34,3 +59,5 @@ def decorate_build_method(phase):
     def f(func):
         return pre_curry(wrap_build_method, phase, func)
     return f
+
+

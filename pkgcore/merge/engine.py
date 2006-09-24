@@ -19,6 +19,7 @@ from pkgcore.util.mappings import LazyValDict, ImmutableDict, StackedDict
 from pkgcore.util import currying
 from pkgcore.merge import triggers, errors
 from pkgcore.ebuild import triggers as ebuild_triggers
+from pkgcore.interfaces import observer as observer_mod
 
 REPLACING_MODE = 0
 INSTALL_MODE = 1
@@ -102,7 +103,10 @@ class MergeEngine(object):
     replace_csets_preserve = ["new_cset", "old_cset"]
 
 
-    def __init__(self, mode, hooks, csets, preserves, offset=None):
+    def __init__(self, mode, hooks, csets, preserves, observer, offset=None):
+        if observer is None:
+            observer = observer_mod.repo_observer()
+        self.observer = observer
         self.mode = mode
         self.reporter = None
 
@@ -137,7 +141,7 @@ class MergeEngine(object):
             setattr(self, x, currying.partial(self.execute_hook, x))
 
     @classmethod
-    def install(cls, pkg, offset=None):
+    def install(cls, pkg, offset=None, observer=None):
 
         """
         generate a MergeEngine instance configured for uninstalling a pkg
@@ -156,7 +160,7 @@ class MergeEngine(object):
             csets["new_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
         o = cls(
             INSTALL_MODE, hooks, csets, cls.install_csets_preserve,
-            offset=offset)
+            observer, offset=offset)
 
         if offset:
             # wrap the results of new_cset to pass through an offset generator
@@ -167,7 +171,7 @@ class MergeEngine(object):
         return o
 
     @classmethod
-    def uninstall(cls, pkg, offset=None):
+    def uninstall(cls, pkg, offset=None, observer=None):
 
         """
         generate a MergeEngine instance configured for uninstalling a pkg
@@ -186,7 +190,7 @@ class MergeEngine(object):
             csets["old_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
         o = cls(
             UNINSTALL_MODE, hooks, csets, cls.uninstall_csets_preserve,
-            offset=offset)
+            observer, offset=offset)
 
         if offset:
             # wrap the results of new_cset to pass through an offset generator
@@ -197,7 +201,7 @@ class MergeEngine(object):
         return o
 
     @classmethod
-    def replace(cls, old, new, offset=None):
+    def replace(cls, old, new, offset=None, observer=None):
 
         """
         generate a MergeEngine instance configured for replacing a pkg.
@@ -221,7 +225,7 @@ class MergeEngine(object):
 
         o = cls(
             REPLACING_MODE, hooks, csets, cls.replace_csets_preserve,
-            offset=offset)
+            observer, offset=offset)
 
         if offset:
             for k in ("old_cset", "new_cset"):
@@ -241,7 +245,11 @@ class MergeEngine(object):
         self.regenerate_csets()
         for x in self.hooks[hook]:
             # error checking needed here.
-            x(self, self.csets)
+            self.observer.trigger_start(hook, x)
+            try:
+                x(self, self.csets)
+            finally:
+                self.observer.trigger_end(hook, x)
 
     def regenerate_csets(self):
         """

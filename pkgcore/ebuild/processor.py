@@ -187,6 +187,8 @@ class EbuildProcessor:
                    for x in ("BASHRC", "BASH_ENV"))
         args = []
         if sandbox:
+            if not pkgcore.spawn.sandbox_capable:
+                raise ValueError("spawn lacks sandbox capabilities")
             if fakeroot:
                 # XXX improve this (Exception subclass etc)
                 raise Exception('fakeroot was on, but sandbox was also on')
@@ -195,6 +197,9 @@ class EbuildProcessor:
 #			env.update({"SANDBOX_DEBUG":"1", "SANDBOX_DEBUG_LOG":"/var/tmp/test"})
 
         elif fakeroot:
+            if not pkgcore.spawn.fakeroot_capable:
+                raise ValueError("spawn lacks fakeroot capabilities")
+            assert pkgcore.spawn.fakeroot_capable
             self.__fakeroot = True
             spawn_func = pkgcore.spawn.spawn_fakeroot
             args.append(save_file)

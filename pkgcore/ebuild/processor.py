@@ -423,7 +423,7 @@ class EbuildProcessor:
             # thrown only if failure occured instantiation.
             return False
 
-    def shutdown_processor(self, ignore_keyboard_interrupt):
+    def shutdown_processor(self, ignore_keyboard_interrupt=False):
         """
         tell the daemon to shut itself down, and mark this instance as dead
         """
@@ -432,8 +432,11 @@ class EbuildProcessor:
                 self.write("shutdown_daemon", disable_runtime_exceptions=True)
                 self.ebd_write.close()
                 self.ebd_read.close()
-
+            else:
+                return
         except (IOError, OSError):
+            if self.pid is None:
+                return
             os.kill(self.pid, signal.SIGTERM)
 
         # now we wait.

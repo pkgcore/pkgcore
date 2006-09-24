@@ -38,7 +38,6 @@ if ! source "${PORTAGE_BIN_PATH}/ebuild.sh" daemonize; then
 fi
 
 if [ -n "$SANDBOX_LOG" ]; then
-    echo "sandbox init" >&2
 	listen com
 	if [ "$com" != "sandbox_log?" ]; then
 		echo "unknown com '$com'"

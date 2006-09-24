@@ -27,7 +27,7 @@ __all__ = (
 inactive_ebp_list = []
 active_ebp_list = []
 
-import pkgcore.spawn, os
+import pkgcore.spawn, os, signal, errno
 from pkgcore.util.currying import post_curry, partial
 from pkgcore.const import (
     depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH)
@@ -264,7 +264,7 @@ class EbuildProcessor:
         """Is this instance going to be discarded after usage (fakerooted)?"""
         return self.__fakeroot
 
-    def write(self, string, flush=True):
+    def write(self, string, flush=True, disable_runtime_exceptions=False):
         """send something to the bash side.
 
         @param string: string to write to the bash processor.
@@ -273,12 +273,17 @@ class EbuildProcessor:
             immediately.  Disabling flush is useful when dumping large
             amounts of data.
         """
-        if string[-1] == "\n":
-            self.ebd_write.write(string)
-        else:
-            self.ebd_write.write(string +"\n")
-        if flush:
-            self.ebd_write.flush()
+        try:
+            if string[-1] == "\n":
+                self.ebd_write.write(string)
+            else:
+                self.ebd_write.write(string +"\n")
+            if flush:
+                self.ebd_write.flush()
+        except IOError, ie:
+            if ie.errno == errno.EPIPE and not disable_runtime_exceptions:
+                raise RuntimeError(ie)
+            raise
 
     def expect(self, want):
         """read from the daemon, check if the returned string is expected.
@@ -286,18 +291,21 @@ class EbuildProcessor:
         @param want: string we're expecting
         @return: boolean, was what was read == want?
         """
-        got = self.ebd_read.readline()
+        got = self.read()
         return want == got.rstrip("\n")
 
     def read(self, lines=1):
         """
         read data from the daemon.  Shouldn't be called except internally
         """
-        mydata = ''
+        mydata = []
         while lines > 0:
-            mydata += self.ebd_read.readline()
+            mydata.append(self.ebd_read.readline())
+            if mydata[-1].startswith("killed"):
+                self.shutdown_processor()
+                chuck_KeyboardInterrupt()
             lines -= 1
-        return mydata
+        return "\n".join(mydata)
 
     def sandbox_summary(self, move_log=False):
         """
@@ -388,7 +396,17 @@ class EbuildProcessor:
         yet it should.
         """
         try:
-            return self.pid is not None
+            if self.pid is None:
+                return False
+            try:
+                os.kill(self.pid, 0)
+                return True
+            except OSError:
+                # pid is dead.
+                pass
+            self.pid = None
+            return False
+                
         except AttributeError:
             # thrown only if failure occured instantiation.
             return False
@@ -399,15 +417,16 @@ class EbuildProcessor:
         """
         try:
             if self.is_alive:
-                self.write("shutdown_daemon")
+                self.write("shutdown_daemon", disable_runtime_exceptions=True)
                 self.ebd_write.close()
                 self.ebd_read.close()
 
-                # now we wait.
-                os.waitpid(self.pid, 0)
-
         except (IOError, OSError):
-            pass
+            os.kill(self.pid, signal.SIGTERM)
+
+        # now we wait.
+        os.waitpid(self.pid, 0)
+
 
         # currently, this assumes all went well.
         # which isn't always true.
@@ -563,13 +582,15 @@ class EbuildProcessor:
 
         handlers = {"request_sandbox_summary":self.__class__.sandbox_summary}
         f = post_curry(chuck_UnhandledCommand, False)
-        for x in ("prob", "env_receiving_failed"):
+        for x in ("prob", "env_receiving_failed", "failed"):
             handlers[x] = f
         del f
 
         handlers["phases"] = partial(
             chuck_StoppingCommand, lambda f: f.lower().strip() == "succeeded")
-
+        
+        handlers["killed"] = chuck_KeyboardInterrupt
+        
         if additional_commands is not None:
             for x in additional_commands:
                 if not callable(additional_commands[x]):
@@ -596,6 +617,9 @@ class EbuildProcessor:
             del fp
             return v
 
+def chuck_KeyboardInterrupt(*arg):
+    import pdb;pdb.set_trace()
+    raise KeyboardInterrupt()
 
 def chuck_UnhandledCommand(processor, line):
     raise UnhandledCommand(line)

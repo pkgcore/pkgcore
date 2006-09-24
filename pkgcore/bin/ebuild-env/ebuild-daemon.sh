@@ -80,6 +80,24 @@ fi
 export PORTAGE_PRELOADED_ECLASSES=''
 unset_colors
 
+sigint_handler() {
+    echo "EBD caught a sigint" >&2
+    EBD_DISABLE_DIEFUNC="asdf"
+    speak "killed"
+    kill -2 $PPID
+    exit 2
+}
+trap sigint_handler SIGINT
+
+sigkill_handler() {
+    echo "EBD caught a sigkill" >&2
+    EBD_DISABLE_DIEFUNC="asdf"
+    speak "killed"
+    kill -9 $$PID
+    exit 9
+}
+trap sigkill_handler SIGKILL
+
 
 # XXX this sucks even more then the rest, we're talking loss of chrome on a trailer hitch type suck.
 #PATH='/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:${PORTAGE_BIN_PATH}'

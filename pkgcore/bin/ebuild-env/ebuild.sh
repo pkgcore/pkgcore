@@ -72,6 +72,10 @@ alias restore_IFS='if [ "${portage_old_IFS:-unset}" != "unset" ]; then IFS="${po
 
 diefunc() {
 	set +x
+	# if we were signaled to die...
+	if [[ -n $EBD_DISABLE_DIEFUNC ]]; then
+	    return
+	fi
 	local funcname="$1" lineno="$2" exitcode="$3"
 	shift 3
 	echo >&2

@@ -15,6 +15,8 @@ __all__ = [
 import os, atexit, signal, sys
 
 from pkgcore.util.mappings import ProtectedDict
+from pkgcore.util.obj import DelayedInstantiation
+
 from pkgcore.const import (
     BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH)
 
@@ -39,12 +41,6 @@ if os.path.isdir("/proc/%i/fd" % os.getpid()):
             return slow_get_open_fds()
 else:
     get_open_fds = slow_get_open_fds
-
-# this should be JIT determination.
-sandbox_capable = (os.path.isfile(SANDBOX_BINARY) and
-                   os.access(SANDBOX_BINARY, os.X_OK))
-userpriv_capable = (os.getuid() == 0)
-fakeroot_capable = False
 
 
 def spawn_bash(mycommand, debug=False, opt_name=None, **keywords):
@@ -468,12 +464,25 @@ class CommandNotFound(ExecutionFailure):
             self, "CommandNotFound Exception: Couldn't find '%s'" % (command,))
         self.command = command
 
+# JIT'd capabilities
 
-if os.path.exists(FAKED_PATH) and os.path.exists(LIBFAKEROOT_PATH):
-    try:
-        r, s = spawn_get_output(["fakeroot", "--version"], fd_pipes={2:1, 1:1})
-        fakeroot_capable = (r == 0) and (len(s) == 1) and ("version 1." in s[0])
-    except ExecutionFailure:
-        fakeroot_capable = False
+def _determine_fakeroot_usable():
+    if os.path.exists(FAKED_PATH) and os.path.exists(LIBFAKEROOT_PATH):
+        try:
+            r, s = spawn_get_output(["fakeroot", "--version"],
+                fd_pipes={2:1, 1:1})
+            return (r == 0) and (len(s) == 1) and ("version 1." in s[0])
+        except ExecutionFailure:
+            return False
 
+def _determine_sandbox_usable():
+    return os.path.isfile(SANDBOX_BINARY) and \
+        os.access(SANDBOX_BINARY, os.X_OK)
+
+def _determine_userpriv_usable():
+    return os.getuid() == 0
+
+sandbox_capable = DelayedInstantiation(bool, _determine_sandbox_usable)
+userpriv_capable = DelayedInstantiation(bool, _determine_userpriv_usable)
+fakeroot_capable = DelayedInstantiation(bool, _determine_fakeroot_usable)
 

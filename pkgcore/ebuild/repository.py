@@ -255,9 +255,9 @@ class ConfiguredTree(configured.tree):
                 self._get_delayed_immutable, pkg, disabled),
             "build_callback":self.generate_buildop}
 
-    def generate_buildop(self, pkg):
+    def generate_buildop(self, pkg, **kwds):
         return buildable(pkg, self.domain_settings, pkg.repo.eclass_cache,
-                         self.fetcher)
+                         self.fetcher, **kwds)
 
 UnconfiguredTree.configure = ConfiguredTree
 tree = UnconfiguredTree

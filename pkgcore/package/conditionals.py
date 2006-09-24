@@ -223,9 +223,9 @@ class PackageWrapper(object):
         self.commit()
         self._configurable = list(self._configurable)
 
-    def build(self):
+    def build(self, **kwds):
         if self._buildable:
-            return self._buildable(self)
+            return self._buildable(self, **kwds)
         return None
 
     def __cmp__(self, other):

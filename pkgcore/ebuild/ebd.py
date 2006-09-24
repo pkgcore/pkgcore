@@ -71,7 +71,8 @@ class ebd(object):
             will be broken down at some point
         """
 
-        self.observer = observer
+        if not hasattr(self, "observer"):
+            self.observer = observer
         if pkg.eapi not in eapi_capable:
             raise TypeError(
                 "pkg isn't of a supported eapi!, %i not in %s for %s" % (

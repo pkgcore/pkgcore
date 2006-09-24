@@ -87,7 +87,8 @@ sigint_handler() {
     exec 1>/dev/null
     kill -2 $PPID
     speak "killed"
-    exit 2
+    # this relies on the python side to *not* discard the killed
+    #exit 2
 }
 trap sigint_handler SIGINT
 

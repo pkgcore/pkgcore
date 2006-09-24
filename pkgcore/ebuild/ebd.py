@@ -11,8 +11,8 @@ api, per phase methods for example
 
 
 import os, errno, shutil, operator
-import warnings
-from pkgcore.interfaces import build, data_source
+
+from pkgcore.interfaces import format, data_source
 from pkgcore.ebuild.processor import \
     request_ebuild_processor, release_ebuild_processor, \
     expected_ebuild_env, chuck_UnhandledCommand
@@ -22,9 +22,12 @@ from pkgcore.spawn import spawn_bash, spawn, sandbox_capable, fakeroot_capable
 from pkgcore.util.currying import post_curry, pretty_docs
 from pkgcore.os_data import xargs
 from pkgcore.ebuild.const import eapi_capable
+from pkgcore.interfaces import observer
+
 from pkgcore.util.demandload import demandload
 demandload(globals(),
-           "pkgcore.ebuild.ebuild_built:fake_package_factory,package")
+           "pkgcore.ebuild.ebuild_built:fake_package_factory,package "
+           "warnings ")
 
 
 def _reset_env_data_source(method):
@@ -54,7 +57,7 @@ def _reset_env_data_source(method):
 class ebd(object):
 
     def __init__(self, pkg, initial_env=None, env_data_source=None,
-                 features=None):
+                 features=None, observer=None):
         """
         @param pkg:
             L{ebuild package instance<pkgcore.ebuild.ebuild_src.package>}
@@ -68,6 +71,7 @@ class ebd(object):
             will be broken down at some point
         """
 
+        self.observer = observer
         if pkg.eapi not in eapi_capable:
             raise TypeError(
                 "pkg isn't of a supported eapi!, %i not in %s for %s" % (
@@ -165,7 +169,7 @@ class ebd(object):
             else:
                 if not ensure_dirs(self.env["T"], mode=0770, gid=portage_gid,
                                    minimal=True):
-                    raise build.FailedDirectory(
+                    raise format.FailedDirectory(
                         self.env['T'],
                         "%s doesn't fulfill minimum mode %o and gid %i" % (
                             self.env['T'], 0770, portage_gid))
@@ -177,7 +181,7 @@ class ebd(object):
     def setup_logging(self):
         if self.logging and not ensure_dirs(os.path.dirname(self.logging),
                                             mode=02770, gid=portage_gid):
-            raise build.FailedDirectory(
+            raise format.FailedDirectory(
                 os.path.dirname(self.logging),
                 "failed ensuring PORT_LOGDIR as 02770 and %i" % portage_gid)
 
@@ -186,7 +190,7 @@ class ebd(object):
         for k in ("HOME", "T", "WORKDIR", "D"):
             if not ensure_dirs(self.env[k], mode=0770, gid=portage_gid,
                                minimal=True):
-                raise build.FailedDirectory(
+                raise format.FailedDirectory(
                     self.env[k],
                     "%s doesn't fulfill minimum mode %o and gid %i" % (
                         k, 0770, portage_gid))
@@ -208,17 +212,17 @@ class ebd(object):
                     "request_inherit":
                         post_curry(ebd.__class__._inherit, self.eclass_cache),
                     "request_profiles":self._request_bashrcs}):
-                raise build.GenericBuildError(
+                raise format.GenericBuildError(
                     "setup: Failed building (False/0 return from handler)")
         except Exception, e:
             # regardless of what occured, we kill the processor.
             ebd.shutdown_processor()
             release_ebuild_processor(ebd)
             # either we know what it is, or it's a shutdown.  re-raise
-            if isinstance(e, (SystemExit, build.GenericBuildError)):
+            if isinstance(e, (SystemExit, format.GenericBuildError)):
                 raise
             # wrap.
-            raise build.GenericBuildError(
+            raise format.GenericBuildError(
                 "setup: Caught exception while building: " + str(e))
 
         release_ebuild_processor(ebd)
@@ -263,27 +267,28 @@ class ebd(object):
                            logging=self.logging)
             ebd.write("start_processing")
             if not ebd.generic_handler(additional_commands=extra_handlers):
-                raise build.GenericBuildError(
+                raise format.GenericBuildError(
                     phase + ": Failed building (False/0 return from handler)")
 
         except Exception, e:
             ebd.shutdown_processor()
             release_ebuild_processor(ebd)
-            if isinstance(e, (SystemExit, build.GenericBuildError)):
+            if isinstance(e, (SystemExit, format.GenericBuildError)):
                 raise
-            raise build.GenericBuildError(
+            raise format.GenericBuildError(
                 phase + ": Caught exception while building: %s" % e)
 
         release_ebuild_processor(ebd)
         return True
 
+    @observer.decorate_build_method("clean")
     def clean(self):
         if not os.path.exists(self.builddir):
             return True
         try:
             shutil.rmtree(self.builddir)
         except OSError, oe:
-            raise build.GenericBuildError(
+            raise format.GenericBuildError(
                 "clean: Caught exception while cleansing: %s" % oe)
         return True
 
@@ -314,11 +319,15 @@ class install_op(ebd):
     """
 
     preinst = pretty_docs(
-        post_curry(ebd._generic_phase, "preinst", False, False, False),
-        "run the postinst phase")
+        observer.decorate_build_method("preinst")(
+            post_curry(
+            ebd._generic_phase, "preinst", False, False, False)),
+            "run the postinst phase")
     postinst = pretty_docs(
-        post_curry(ebd._generic_phase, "postinst", False, False, False),
-        "run the postinst phase")
+        observer.decorate_build_method("postinst")(
+            post_curry(
+            ebd._generic_phase, "postinst", False, False, False)),
+            "run the postinst phase")
 
 
 class uninstall_op(ebd):
@@ -326,11 +335,15 @@ class uninstall_op(ebd):
     phase operations and steps for uninstall execution
     """
     prerm = pretty_docs(
-        post_curry(ebd._generic_phase, "prerm", False, False, False),
-        "run the prerm phase")
+        observer.decorate_build_method("prerm")(
+            post_curry(
+            ebd._generic_phase, "prerm", False, False, False)),
+            "run the prerm phase")
     postrm = pretty_docs(
-        post_curry(ebd._generic_phase, "postrm", False, False, False),
-        "run the postrm phase")
+        observer.decorate_build_method("postrm")(
+            post_curry(
+            ebd._generic_phase, "postrm", False, False, False)),
+            "run the postrm phase")
 
 
 class replace_op(uninstall_op, install_op):
@@ -340,7 +353,7 @@ class replace_op(uninstall_op, install_op):
     pass
 
 
-class buildable(ebd, build.base):
+class buildable(ebd, format.build):
 
     """
     build operation
@@ -350,7 +363,7 @@ class buildable(ebd, build.base):
 
     # XXX this is unclean- should be handing in strictly what is build
     # env, rather then dumping domain settings as env.
-    def __init__(self, pkg, domain_settings, eclass_cache, fetcher):
+    def __init__(self, pkg, domain_settings, eclass_cache, fetcher, observer=None):
 
         """
         @param pkg: L{pkgcore.ebuild.ebuild_src.package} instance we'll be
@@ -363,7 +376,7 @@ class buildable(ebd, build.base):
             access our required files for building
         """
 
-        build.base.__init__(self)
+        format.build.__init__(self, observer=observer)
         ebd.__init__(self, pkg, initial_env=domain_settings,
                      features=domain_settings["FEATURES"])
 
@@ -421,14 +434,14 @@ class buildable(ebd, build.base):
                         os.unlink(self.env["DISTDIR"])
 
             except OSError, oe:
-                raise build.FailedDirectory(
+                raise format.FailedDirectory(
                     self.env["DISTDIR"],
                     "failed removing existing file/dir/link at: exception %s"
                     % oe)
 
             if not ensure_dirs(self.env["DISTDIR"], mode=0770,
                                gid=portage_gid):
-                raise build.FailedDirectory(
+                raise format.FailedDirectory(
                     self.env["DISTDIR"],
                     "failed creating distdir symlink directory")
 
@@ -439,10 +452,11 @@ class buildable(ebd, build.base):
                     os.symlink(src, dest)
 
             except OSError, oe:
-                raise build.GenericBuildError(
+                raise format.GenericBuildError(
                     "Failed symlinking in distfiles for src %s -> %s: %s" % (
                         src, dest, str(oe)))
 
+    @observer.decorate_build_method("setup")
     def setup(self):
         """
         execute the setup phase, mapping out to pkg_setup in the ebuild
@@ -454,7 +468,7 @@ class buildable(ebd, build.base):
             for p in ("", "/lock", "/state"):
                 if not ensure_dirs(os.path.join(self.env["DISTCC_DIR"], p),
                                    mode=02775, gid=portage_gid):
-                    raise build.FailedDirectory(
+                    raise format.FailedDirectory(
                         os.path.join(self.env["DISTCC_DIR"], p),
                         "failed creating needed distcc directory")
         if self.ccache:
@@ -466,7 +480,7 @@ class buildable(ebd, build.base):
                 st = None
                 if not ensure_dirs(self.env["CCACHE_DIR"], mode=02775,
                                    gid=portage_gid):
-                    raise build.FailedDirectory(
+                    raise format.FailedDirectory(
                         self.env["CCACHE_DIR"],
                         "failed creation of ccache dir")
 
@@ -484,18 +498,18 @@ class buildable(ebd, build.base):
                             os.chown(self.env["CCACHE_DIR"], -1, portage_gid)
                             os.chdir(cwd)
                             if 0 != spawn(["chgrp", "-R", str(portage_gid)]):
-                                raise build.FailedDirectory(
+                                raise format.FailedDirectory(
                                     self.env["CCACHE_DIR"],
                                     "failed changing ownership for CCACHE_DIR")
                             if 0 != spawn_bash(
                                 "find . -type d | %s chmod 02775" % xargs):
-                                raise build.FailedDirectory(
+                                raise format.FailedDirectory(
                                     self.env["CCACHE_DIR"],
                                     "failed correcting perms for CCACHE_DIR")
                         finally:
                             os.chdir(cwd)
                 except OSError:
-                    raise build.FailedDirectory(
+                    raise format.FailedDirectory(
                         self.env["CCACHE_DIR"],
                         "failed ensuring perms/group owner for CCACHE_DIR")
         return ebd.setup(self)
@@ -512,12 +526,17 @@ class buildable(ebd, build.base):
         return True
 
     unpack = pretty_docs(
-        post_curry(ebd._generic_phase, "unpack", True, True, False),
-        "run the unpack phase (maps to src_unpack)")
+        observer.decorate_build_method("unpack")(
+            post_curry(
+            ebd._generic_phase, "unpack", True, True, False)),
+            "run the unpack phase (maps to src_unpack)")
     compile = pretty_docs(
-        post_curry(ebd._generic_phase, "compile", True, True, False),
-        "run the compile phase (maps to src_compile)")
+        observer.decorate_build_method("compile")(
+            post_curry(
+            ebd._generic_phase, "compile", True, True, False)),
+            "run the compile phase (maps to src_compile)")
 
+    @observer.decorate_build_method("install")
     @_reset_env_data_source
     def install(self):
         """run the install phase (maps to src_install)"""
@@ -526,6 +545,7 @@ class buildable(ebd, build.base):
         else:
             return self._generic_phase("install", True, True, False)
 
+    @observer.decorate_build_method("test")
     @_reset_env_data_source
     def test(self):
         """run the test phase (if enabled), maps to src_test"""

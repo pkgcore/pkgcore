@@ -28,7 +28,15 @@ def _raw_fetch(self):
     return True
 
 
-class base(object):
+class build_base(object):
+    stage_depends = {}
+
+    __metaclass__ = ForcedDepends
+
+    def __init__(self, observer=None):
+        self.observer = observer
+
+class build(build_base):
     stage_depends = {
         "setup":"fetch",
         "unpack":"setup",
@@ -37,8 +45,6 @@ class base(object):
         "test":"compile",
         "install":"test",
         "finalize":"install"}
-
-    __metaclass__ = ForcedDepends
 
     def setup(self):
         return True
@@ -102,13 +108,14 @@ class fetch(object):
         return True
 
 
-class empty_build_op(object):
+class empty_build_op(build_base):
 
     stage_depends = {}
 
 #	__metaclass__ = ForcedDepends
 
-    def __init__(self, pkg):
+    def __init__(self, pkg, observer=None):
+        build_base.__init__(self, observer)
         self.pkg = pkg
 
     def clean(self):

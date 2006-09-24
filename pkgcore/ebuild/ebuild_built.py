@@ -15,6 +15,8 @@ from pkgcore.ebuild.conditionals import DepSet
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild import ebd
 from pkgcore.util.obj import DelayedInstantiation
+from pkgcore.interfaces.format import empty_build_op
+
 from pkgcore.util.demandload import demandload
 demandload(globals(),
            "pkgcore.merge:engine "
@@ -99,8 +101,8 @@ class package(ebuild_src.base):
     def __str__(self):
         return "built ebuild: %s" % (self.cpvstr)
 
-    def build(self):
-        return self.repo.generate_buildop(self)
+    def build(self, observer=None):
+        return empty_build_op(self, observer=observer)
 
     def add_format_triggers(self, *args, **kwds):
         return self._parent._add_format_triggers(self, *args, **kwds)
@@ -126,17 +128,17 @@ def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
                 ebuild_triggers.preinst_contents_reset_trigger(format_op_inst))
 
 
-def _generic_format_install_op(self, pkg, domain_settings):
+def _generic_format_install_op(self, pkg, domain_settings, **kwds):
     return ebd.install_op(pkg, initial_env=domain_settings,
-                          env_data_source=pkg.environment)
+                          env_data_source=pkg.environment, **kwds)
 
-def _generic_format_uninstall_op(self, pkg, domain_settings):
+def _generic_format_uninstall_op(self, pkg, domain_settings, **kwds):
     return ebd.uninstall_op(pkg, initial_env=domain_settings,
-                            env_data_source=pkg.environment)
+                            env_data_source=pkg.environment, **kwds)
 
-def _generic_format_replace_op(self, pkg, domain_settings):
+def _generic_format_replace_op(self, pkg, domain_settings, **kwds):
     return ebd.replace_op(pkg, initial_env=domain_settings,
-                          env_data_source=pkg.environment)
+                          env_data_source=pkg.environment, **kwds)
 
 
 class package_factory(metadata.factory):

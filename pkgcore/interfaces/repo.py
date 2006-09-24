@@ -9,10 +9,6 @@ from pkgcore.util.dependant_methods import ForcedDepends
 from pkgcore.util.currying import partial
 from pkgcore.merge.engine import MergeEngine, errors as merge_errors
 
-def decorate_ui_callback(stage, status_obj, original, *a, **kw):
-    status_obj.phase(stage)
-    return original(*a, **kw)
-
 
 class fake_lock:
     def __init__(self):
@@ -28,22 +24,15 @@ class base(object):
     stage_depends = {}
     stage_hooks = []
 
-    def __init__(self, repo, pkg, status_obj=None, offset=None):
+    def __init__(self, repo, observer=None, offset=None):
         self.repo = repo
-        self.pkg = pkg
         self.underway = False
         self.offset = offset
-        assert bool(getattr(self, "_op_name", None))
-        op_args, op_kwds = self._get_format_op_args_kwds()
-        self.op = getattr(pkg, self._op_name)(*op_args, **op_kwds)
+        self.observer = observer
+        self.op = self._get_op()
         self.lock = getattr(repo, "lock")
         if self.lock is None:
             self.lock = fake_lock()
-        self.status_obj = status_obj
-        if status_obj is not None:
-            for x in self.stage_hooks:
-                setattr(self, x, partial(
-                        decorate_ui_callback, x, status_obj, getattr(self, x)))
 
     def _get_format_op_args_kwds(self):
         return (), {}
@@ -69,8 +58,7 @@ class base(object):
 
     def __del__(self):
         if self.underway:
-            print "warning: %s merge was underway, but wasn't completed" % (
-                self.pkg,)
+            print "warning: %s merge was underway, but wasn't completed"
             self.lock.release_write_lock()
 
 
@@ -87,10 +75,20 @@ class install(base):
     stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
     _op_name = "_repo_install_op"
 
+    def __init__(self, repo, pkg, *args, **kwds):
+        self.new_pkg = pkg
+        base.__init__(self, repo, *args, **kwds)
+
+    def _get_op(self):
+        assert bool(getattr(self, "_op_name", None))
+        op_args, op_kwds = self._get_format_op_args_kwds()
+        op_kwds["observer"] = self.observer
+        return getattr(self.new_pkg, self._op_name)(*op_args, **op_kwds)
+
     def start(self):
         """start the install transaction"""
-        engine = MergeEngine.install(self.pkg, offset=self.offset)
-        self.pkg.add_format_triggers(self, self.op, engine)
+        engine = MergeEngine.install(self.new_pkg, offset=self.offset)
+        self.new_pkg.add_format_triggers(self, self.op, engine)
         return base.start(self, engine)
 
     def preinst(self):
@@ -107,7 +105,7 @@ class install(base):
         return True
 
     def _notify_repo(self):
-        self.repo.notify_add_package(self.pkg)
+        self.repo.notify_add_package(self.new_pkg)
 
     def postinst(self):
         """execute any post-transfer steps required"""
@@ -131,10 +129,20 @@ class uninstall(base):
     stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
     _op_name = "_repo_uninstall_op"
 
+    def __init__(self, repo, pkg, *args, **kwds):
+        self.old_pkg = pkg
+        base.__init__(self, repo, *args, **kwds)
+    
+    def _get_op(self):
+        assert bool(getattr(self, "_op_name", None))
+        op_args, op_kwds = self._get_format_op_args_kwds()
+        op_kwds["observer"] = self.observer
+        return getattr(self.old_pkg, self._op_name)(*op_args, **op_kwds)
+
     def start(self):
         """start the uninstall transaction"""
-        engine = MergeEngine.uninstall(self.pkg, offset=self.offset)
-        self.pkg.add_format_triggers(self, self.op, engine)
+        engine = MergeEngine.uninstall(self.old_pkg, offset=self.offset)
+        self.old_pkg.add_format_triggers(self, self.op, engine)
         return base.start(self, engine)
 
     def prerm(self):
@@ -155,7 +163,7 @@ class uninstall(base):
         return self.op.postrm()
 
     def _notify_repo(self):
-        self.repo.notify_remove_package(self.pkg)
+        self.repo.notify_remove_package(self.old_pkg)
 
     def unmerge_metadata(self):
         """unmerge pkg metadata from the repository.  Must be overrided."""
@@ -163,8 +171,8 @@ class uninstall(base):
 
     def __del__(self):
         if self.underway:
-            print "warning: %s unmerge was underway, but wasn't completed" % (
-                self.pkg,)
+            print "warning: %s unmerge was underway, but wasn't completed" % \
+                self.old_pkg
             self.lock.release_write_lock()
 
 
@@ -186,23 +194,27 @@ class replace(install, uninstall):
         "preinst", "unmerge_metadata", "merge_metadata"]
     _op_name = "_repo_replace_op"
 
-    def __init__(self, repo, oldpkg, newpkg, status_obj=None, offset=None):
-        base.__init__(self, repo, newpkg, status_obj=status_obj, offset=offset)
-        self.oldpkg = oldpkg
+    def __init__(self, repo, oldpkg, newpkg, **kwds):
+        self.old_pkg = oldpkg
+        self.new_pkg = newpkg
+        base.__init__(self, repo, **kwds)
+    
+    _get_op = install._get_op
 
     def start(self):
         """start the transaction"""
-        engine = MergeEngine.replace(self.oldpkg, self.pkg, offset=self.offset)
-        self.pkg.add_format_triggers(self, self.op, engine)
-        self.oldpkg.add_format_triggers(self, self.op, engine)
+        engine = MergeEngine.replace(self.old_pkg, self.new_pkg,
+            offset=self.offset)
+        self.old_pkg.add_format_triggers(self, self.op, engine)
+        self.new_pkg.add_format_triggers(self, self.op, engine)
         return base.start(self, engine)
 
     def _notify_repo(self):
-        self.repo.notify_remove_package(self.oldpkg)
-        self.repo.notify_add_package(self.pkg)
+        self.repo.notify_remove_package(self.old_pkg)
+        self.repo.notify_add_package(self.new_pkg)
 
     def __del__(self):
         if self.underway:
             print "warning: %s -> %s replacement was underway, " \
-                "but wasn't completed" % (self.oldpkg, self.pkg)
+                "but wasn't completed" % (self.old_pkg, self.new_pkg)
             self.lock.release_write_lock()

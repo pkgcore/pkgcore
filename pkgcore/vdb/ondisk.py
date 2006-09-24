@@ -198,7 +198,7 @@ class ConfiguredTree(multiplex.tree):
 
 tree.configure = ConfiguredTree
 
-def _get_ebuild_op_args_kwds(self):
+def _get_default_ebuild_op_args_kwds(self):
     return (dict(self.domain_settings),), {}
 
 class install(repo_interfaces.install):
@@ -209,7 +209,7 @@ class install(repo_interfaces.install):
         self.domain_settings = domain_settings
         repo_interfaces.install.__init__(self, repo, pkg, *a, **kw)
 
-    _get_format_op_args_kwds = _get_ebuild_op_args_kwds
+    _get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
 
     def merge_metadata(self, dirpath=None):
         # error checking?
@@ -217,7 +217,7 @@ class install(repo_interfaces.install):
             dirpath = self.dirpath
         ensure_dirs(dirpath)
         rewrite = self.repo._metadata_rewrites
-        for k in self.pkg.tracked_attributes:
+        for k in self.new_pkg.tracked_attributes:
             if k == "contents":
                 v = ContentsFile(os.path.join(dirpath, "CONTENTS"),
                                  mutable=True, create=True)
@@ -230,7 +230,8 @@ class install(repo_interfaces.install):
                         v.add(x)
                 v.flush()
             elif k == "environment":
-                data = bzip2.compress(self.pkg.environment.get_fileobj().read())
+                data = bzip2.compress(
+                    self.new_pkg.environment.get_fileobj().read())
                 open(os.path.join(dirpath, "environment.bz2"), "w").write(data)
                 del data
             elif isinstance(k, boolean.base):
@@ -239,7 +240,7 @@ class install(repo_interfaces.install):
                 else:
                     s = conditionals.stringify_boolean(k)
             else:
-                v = getattr(self.pkg, k)
+                v = getattr(self.new_pkg, k)
                 if not isinstance(v, basestring):
                     try:
                         s = ' '.join(v)
@@ -255,7 +256,7 @@ class install(repo_interfaces.install):
 
         # ebuild_data is the actual ebuild- no point in holding onto
         # it for built ebuilds, but if it's there, we store it.
-        o = getattr(self.pkg, "ebuild", None)
+        o = getattr(self.new_pkg, "ebuild", None)
         if o is None:
             logging.warn(
                 "doing install/replace op, "
@@ -265,7 +266,7 @@ class install(repo_interfaces.install):
         else:
             o = o.get_fileobj().read()
         # XXX lil hackish accessing PF
-        open(os.path.join(dirpath, self.pkg.PF + ".ebuild"), "w").write(o)
+        open(os.path.join(dirpath, self.new_pkg.PF + ".ebuild"), "w").write(o)
 
         # XXX finally, hack to keep portage from doing stupid shit.
         # relies on counter to discern what to punt during
@@ -288,13 +289,14 @@ class uninstall(repo_interfaces.uninstall):
         repo_interfaces.uninstall.__init__(
             self, repo, pkg, offset=offset, *a, **kw)
 
-    _get_format_op_args_kwds = _get_ebuild_op_args_kwds
+    _get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
 
     def unmerge_metadata(self, dirpath=None):
         if dirpath is None:
             dirpath = self.dirpath
         shutil.rmtree(self.dirpath)
         return True
+
 
 # should convert these to mixins.
 class replace(install, uninstall, repo_interfaces.replace):
@@ -310,7 +312,7 @@ class replace(install, uninstall, repo_interfaces.replace):
         self.domain_settings = domain_settings
         repo_interfaces.replace.__init__(self, repo, pkg, newpkg, *a, **kw)
 
-    _get_format_op_args_kwds = _get_ebuild_op_args_kwds
+    _get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
 
     def merge_metadata(self, *a, **kw):
         kw["dirpath"] = self.tmpdirpath

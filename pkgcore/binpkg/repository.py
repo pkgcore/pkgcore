@@ -17,7 +17,6 @@ from pkgcore.util.osutils import listdir_dirs, listdir_files
 from pkgcore.binpkg.xpak import Xpak
 from pkgcore.binpkg.tar import generate_contents
 from pkgcore.util.bzip2 import decompress
-from pkgcore.interfaces.build import empty_build_op
 from pkgcore.ebuild.ebuild_built import pkg_uses_default_preinst
 from pkgcore.config import ConfigHint
 from pkgcore.util.demandload import demandload
@@ -215,7 +214,3 @@ class tree(prototype.tree):
 
     def _get_metadata(self, pkg):
         return StackedXpakDict(self, pkg)
-
-
-    def generate_buildop(self, pkg):
-        return empty_build_op(pkg)

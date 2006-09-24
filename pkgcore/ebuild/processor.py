@@ -35,20 +35,28 @@ from pkgcore.util.demandload import demandload
 from pkgcore.os_data import portage_uid, portage_gid
 demandload(globals(), "logging")
 
+import traceback
 
 def shutdown_all_processors():
     """kill off all known processors"""
-    while active_ebp_list:
-        try:
-            active_ebp_list.pop().shutdown_processor()
-        except (IOError, OSError):
-            pass
+    try:
+        while active_ebp_list:
+            try:
+                active_ebp_list.pop().shutdown_processor(
+                    ignore_keyboard_interrupt=True)
+            except (IOError, OSError):
+                pass
 
-    while inactive_ebp_list:
-        try:
-            inactive_ebp_list.pop().shutdown_processor()
-        except (IOError, OSError):
-            pass
+        while inactive_ebp_list:
+            try:
+                inactive_ebp_list.pop().shutdown_processor(
+                    ignore_keyboard_interrupt=True)
+            except (IOError, OSError):
+                pass
+    except Exception,e:
+        traceback.print_exc()
+        print e
+        raise
 
 pkgcore.spawn.atexit_register(shutdown_all_processors)
 
@@ -81,6 +89,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
                 inactive_ebp_list.remove(x)
                 active_ebp_list.append(x)
                 return x
+
     e = EbuildProcessor(userpriv, sandbox, fakeroot, save_file)
     active_ebp_list.append(e)
     return e
@@ -273,8 +282,11 @@ class EbuildProcessor:
             immediately.  Disabling flush is useful when dumping large
             amounts of data.
         """
+        if self.ebd_write.closed or self.ebd_read.closed:
+            raise AssertionError("attempted operating on a shutdown processor")
+        string = str(string)
         try:
-            if string[-1] == "\n":
+            if string == "\n":
                 self.ebd_write.write(string)
             else:
                 self.ebd_write.write(string +"\n")
@@ -294,7 +306,7 @@ class EbuildProcessor:
         got = self.read()
         return want == got.rstrip("\n")
 
-    def read(self, lines=1):
+    def read(self, lines=1, ignore_killed=False):
         """
         read data from the daemon.  Shouldn't be called except internally
         """
@@ -302,7 +314,7 @@ class EbuildProcessor:
         while lines > 0:
             mydata.append(self.ebd_read.readline())
             if mydata[-1].startswith("killed"):
-                self.shutdown_processor()
+#                self.shutdown_processor()
                 chuck_KeyboardInterrupt()
             lines -= 1
         return "\n".join(mydata)
@@ -411,7 +423,7 @@ class EbuildProcessor:
             # thrown only if failure occured instantiation.
             return False
 
-    def shutdown_processor(self):
+    def shutdown_processor(self, ignore_keyboard_interrupt):
         """
         tell the daemon to shut itself down, and mark this instance as dead
         """
@@ -425,7 +437,11 @@ class EbuildProcessor:
             os.kill(self.pid, signal.SIGTERM)
 
         # now we wait.
-        os.waitpid(self.pid, 0)
+        try:
+            os.waitpid(self.pid, 0)
+        except KeyboardInterrupt:
+            if not ignore_keyboard_interrupt:
+                raise
 
 
         # currently, this assumes all went well.
@@ -618,8 +634,7 @@ class EbuildProcessor:
             return v
 
 def chuck_KeyboardInterrupt(*arg):
-    import pdb;pdb.set_trace()
-    raise KeyboardInterrupt()
+    raise KeyboardInterrupt("ctrl+c encountered")
 
 def chuck_UnhandledCommand(processor, line):
     raise UnhandledCommand(line)

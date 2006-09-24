@@ -592,7 +592,7 @@ def main(config, options, out, err):
 
         except KeyboardInterrupt:
             raise
-        except Exception:
+        except Exception, e:
             err.write('caught an exception!\n')
             err.write('repo: %r\n' % (repo,))
             err.write('restrict: %r\n' % (restrict,))

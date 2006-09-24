@@ -13,6 +13,7 @@ from pkgcore.util import commandline, parserestrict, lists, repo_utils
 from pkgcore.ebuild import resolver, atom
 from pkgcore.repository import multiplex
 from pkgcore.interfaces import observer
+from pkgcore.util.formatters import ObserverFormatter
 
 class OptionParser(commandline.OptionParser):
 
@@ -350,8 +351,8 @@ def main(config, options, out, err):
             " you won't see info written to the term\n"
             "hence the required --force\n\n")
 
-    build_obs = observer.build_observer()
-    repo_obs = observer.repo_observer()
+    build_obs = observer.file_build_observer(ObserverFormatter(out))
+    repo_obs = observer.file_repo_observer(ObserverFormatter(out))
     
     for op, pkgs in changes:
         out.write("processing %s" % (pkgs[0],))

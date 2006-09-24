@@ -292,6 +292,22 @@ else:
                 self._current_colors = [None, None]
                 self.stream.write(self._color_reset)
 
+class ObserverFormatter(object):
+
+    def __init__(self, real_formatter):
+        self._formatter = real_formatter
+    
+    def write(self, *args):
+        old_autoline = self._formatter.autoline
+        try:
+            self._formatter.autoline = False
+            self._formatter.write(*args)
+        finally:
+            self._formatter.autoline = old_autoline
+    
+    def __getattr__(self, attr):
+        return getattr(self._formatter, attr)
+
 
 def get_formatter(stream):
     """TerminfoFormatter if the stream is a tty, else PlainTextFormatter."""

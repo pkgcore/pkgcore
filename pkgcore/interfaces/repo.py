@@ -87,7 +87,8 @@ class install(base):
 
     def start(self):
         """start the install transaction"""
-        engine = MergeEngine.install(self.new_pkg, offset=self.offset)
+        engine = MergeEngine.install(self.new_pkg, offset=self.offset,
+            observer=self.observer)
         self.new_pkg.add_format_triggers(self, self.op, engine)
         return base.start(self, engine)
 
@@ -141,7 +142,8 @@ class uninstall(base):
 
     def start(self):
         """start the uninstall transaction"""
-        engine = MergeEngine.uninstall(self.old_pkg, offset=self.offset)
+        engine = MergeEngine.uninstall(self.old_pkg, offset=self.offset,
+            observer=self.observer)
         self.old_pkg.add_format_triggers(self, self.op, engine)
         return base.start(self, engine)
 
@@ -204,7 +206,7 @@ class replace(install, uninstall):
     def start(self):
         """start the transaction"""
         engine = MergeEngine.replace(self.old_pkg, self.new_pkg,
-            offset=self.offset)
+            offset=self.offset, observer=self.observer)
         self.old_pkg.add_format_triggers(self, self.op, engine)
         self.new_pkg.add_format_triggers(self, self.op, engine)
         return base.start(self, engine)

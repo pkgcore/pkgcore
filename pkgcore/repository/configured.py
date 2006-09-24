@@ -56,3 +56,10 @@ class tree(prototype.tree):
 
     def __iter__(self):
         return (self.package_class(cpv) for cpv in self.raw_repo)
+
+    def __repr__(self):
+        return '<%s.%s raw_repo=%r wrapped=%r @%#8x>' % (
+            self.__class__.__module__, self.__class__.__name__,
+            getattr(self, 'raw_repo', 'unset'),
+            getattr(self, 'wrapped_attrs', {}).keys(),
+            id(self))

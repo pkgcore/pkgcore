@@ -267,6 +267,10 @@ class TestContainmentMatch(unittest.TestCase):
         self.assertEquals(
             values.ContainmentMatch("asdf", "bzip").match("pbzip2"), True)
 
+    def test_force_basestring(self):
+        restrict = values.ContainmentMatch('asdf', 'bzip')
+        self.assertEquals(True, restrict.force_True(None, None, 'pbzip2'))
+        self.assertEquals(False, restrict.force_False(None, None, 'pbzip2'))
 
     def test__eq__(self):
         for negate in (True, False):

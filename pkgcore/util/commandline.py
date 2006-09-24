@@ -97,7 +97,7 @@ def main(option_parser, main_func, args=None, sys_exit=True):
                     raise
                 sys.stderr.write('Error in configuration:\n%s\n' % (e,))
                 exitstatus = 1
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, formatters.StreamClosed):
         if reraise_keyboard_interrupt:
             raise
         exitstatus = 1

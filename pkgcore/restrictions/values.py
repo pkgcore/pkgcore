@@ -449,16 +449,9 @@ class ContainmentMatch(base):
         # pylint: disable-msg=C0321
 
         # XXX pretty much positive this isn't working.
-        if isinstance(val, (str, unicode)):
+        if isinstance(val, basestring):
             # unchangable
-            if self.all:
-                if len(self.vals) != 1:
-                    return False
-                else:
-                    return (self.vals[0] in val) != self.negate
-            else:
-                return (val in self.vals) != self.negate
-            return False
+            return not self.match(val)
 
         if self.negate:
             if self.all:
@@ -503,16 +496,9 @@ class ContainmentMatch(base):
 
         # XXX pretty much positive this isn't working.
 
-        if isinstance(val, (str, unicode)):
+        if isinstance(val, basestring):
             # unchangable
-            if self.all:
-                if len(self.vals) != 1:
-                    return False
-                else:
-                    return (self.vals[0] in val) != self.negate
-            else:
-                return (val in self.vals) != self.negate
-            return False
+            return self.match(val)
 
         if not self.negate:
             if not self.all:

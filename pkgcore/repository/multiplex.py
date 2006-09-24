@@ -109,3 +109,9 @@ class tree(prototype.tree):
                 pass
         # made it here, no match.
         raise KeyError("package %s not found" % key)
+
+    def __repr__(self):
+        return '<%s.%s trees=%r @%#8x>' % (
+            self.__class__.__module__, self.__class__.__name__,
+            getattr(self, 'trees', 'unset'),
+            id(self))

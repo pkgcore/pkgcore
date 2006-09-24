@@ -8,11 +8,11 @@ Set PYTHONPATH
 Set PYTHONPATH to include your pkgcore directory, so that python can find the
 pkgcore code. Fore example::
 
- # export PYTHONPATH="${PYTHONPATH}:/home/user/pkgcore/"
+ $ export PYTHONPATH="${PYTHONPATH}:/home/user/pkgcore/"
 
 Now test to see if it works::
 
- # python -c'import pkgcore'
+ $ python -c'import pkgcore'
 
 Python will scan pkgcore, see the pkgcore directory in it (and that it has
 __init__.py), and use that.
@@ -35,7 +35,7 @@ Test pkgcore
 
 Drop back to normal user, and try::
 
- # python
+ $ python
  >>> import pkgcore.config
  >>> conf=pkgcore.config.load_config()
  >>> tree=conf.get_default('domain').repos[1]
@@ -51,6 +51,6 @@ or email ferringb (at) gmail.com' with the traceback.
 Build filter-env
 ================
 
-Finally, you need filter-env for the ebuild daemon:
+Finally, you need filter-env for the ebuild daemon::
 
- #python setup.py build_filter_env
+ $ python setup.py build_filter_env

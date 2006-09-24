@@ -9,7 +9,7 @@
 import optparse
 
 from pkgcore.util import (
-    commandline, repo_utils, parserestrict, packages as pkgutils)
+    commandline, repo_utils, parserestrict, packages as pkgutils, formatters)
 from pkgcore.restrictions import packages, values
 from pkgcore.package import errors as perrors
 from pkgcore.ebuild import conditionals, atom
@@ -590,7 +590,7 @@ def main(config, options, out, err):
                 if options.earlyout:
                     break
 
-        except KeyboardInterrupt:
+        except (KeyboardInterrupt, formatters.StreamClosed):
             raise
         except Exception, e:
             err.write('caught an exception!\n')

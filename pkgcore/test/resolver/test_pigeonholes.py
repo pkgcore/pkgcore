@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.test.resolver.test_choice_point import fake_package
 from pkgcore.restrictions import restriction
@@ -23,7 +23,7 @@ class fake_blocker(restriction.base):
                 return True
         return False
 
-class SlotTesting(unittest.TestCase):
+class SlotTesting(TestCase):
 
     def test_add(self):
         c = PigeonHoledSlots()

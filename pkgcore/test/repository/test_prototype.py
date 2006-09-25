@@ -2,7 +2,7 @@
 # License: GPL2
 
 from pkgcore.repository.prototype import tree
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.restrictions import packages, values
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
@@ -10,7 +10,7 @@ from pkgcore.util.mappings import OrderedDict
 from pkgcore.test.repository.util import SimpleTree
 
 
-class TestPrototype(unittest.TestCase):
+class TestPrototype(TestCase):
 
     def setUp(self):
         # we an orderreddict here specifically to trigger any sorter

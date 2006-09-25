@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.restrictions import packages, values
 
 
@@ -23,7 +23,7 @@ class DummyIntersectingValues(values.base):
         return DummyIntersectingValues((self.val, other.val))
 
 
-class PackageRestrictionTest(unittest.TestCase):
+class PackageRestrictionTest(TestCase):
 
     def test_eq(self):
         self.assertEquals(
@@ -59,7 +59,7 @@ class PackageRestrictionTest(unittest.TestCase):
             self.assertEquals(negate, i1.negate)
             self.assertEquals('one', i1.attr)
 
-class ConditionalTest(unittest.TestCase):
+class ConditionalTest(TestCase):
 
     def test_eq(self):
         p = (packages.PackageRestriction('one', values.AlwaysTrue),)

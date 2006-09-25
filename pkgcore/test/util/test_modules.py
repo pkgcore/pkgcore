@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 import os
 import sys
@@ -12,7 +12,7 @@ import tempfile
 from pkgcore.util import modules
 
 
-class ModulesTest(unittest.TestCase):
+class ModulesTest(TestCase):
 
     def setUp(self):
         # set up some test modules for our use

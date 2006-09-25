@@ -7,11 +7,11 @@ from pkgcore.test.repository.util import SimpleTree
 from pkgcore.util.mappings import OrderedDict
 from pkgcore.util.currying import partial
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 rev_sorted = partial(sorted, reverse=True)
 
-class TestMultiplex(unittest.TestCase):
+class TestMultiplex(TestCase):
 
     kls = staticmethod(tree)
     tree1_pkgs = (("dev-util/diffball", ["1.0", "0.7"]),

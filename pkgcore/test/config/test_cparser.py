@@ -3,12 +3,12 @@
 
 from StringIO import StringIO
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.config import cparser, central, errors
 
 
-class CaseSensitiveConfigParserTest(unittest.TestCase):
+class CaseSensitiveConfigParserTest(TestCase):
 
     def test_case_sensitivity(self):
         cp = cparser.CaseSensitiveConfigParser()
@@ -24,7 +24,7 @@ class CaseSensitiveConfigParserTest(unittest.TestCase):
         self.assertEquals(cp.get('HEADER', 'foo'), 'notbar')
 
 
-class ConfigFromIniTest(unittest.TestCase):
+class ConfigFromIniTest(TestCase):
 
     def test_config_from_ini(self):
         config = cparser.config_from_file(StringIO('''

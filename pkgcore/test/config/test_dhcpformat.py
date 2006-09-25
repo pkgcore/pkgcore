@@ -4,7 +4,7 @@
 
 from StringIO import StringIO
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 try:
     import pyparsing
@@ -28,7 +28,7 @@ def testtype(*args, **kwargs):
     return args, kwargs
 
 
-class DHCPConfigTest(unittest.TestCase):
+class DHCPConfigTest(TestCase):
     if skip_test is not None:
         skip = skip_test
 

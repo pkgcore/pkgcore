@@ -2,7 +2,7 @@
 # License: GPL2
 
 from pkgcore.fs import ops, fs, livefs
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.test.mixins import TempDirMixin
 import os, shutil
 pjoin = os.path.join
@@ -21,7 +21,7 @@ class VerifyMixin(object):
             self.assertEqual((stat.st_mode & 04777), kwds["mode"])
 
 
-class TestDefaultEnsurePerms(VerifyMixin, TempDirMixin, unittest.TestCase):
+class TestDefaultEnsurePerms(VerifyMixin, TempDirMixin, TestCase):
 
     def common_bits(self, creator_func, kls):
         kwds = {"mtime":01234, "uid":os.getuid(), "gid":os.getgid(),
@@ -45,7 +45,7 @@ class TestDefaultEnsurePerms(VerifyMixin, TempDirMixin, unittest.TestCase):
         self.common_bits(lambda s:open(s, "w"), fs.fsFile)
 
 
-class TestDefaultMkdir(TempDirMixin, unittest.TestCase):
+class TestDefaultMkdir(TempDirMixin, TestCase):
 
     def test_it(self):
         o = fs.fsDir(pjoin(self.dir, "mkdir_test"), strict=False)
@@ -61,7 +61,7 @@ class TestDefaultMkdir(TempDirMixin, unittest.TestCase):
         self.assertEqual(os.stat(o.location).st_mode & 04777, 0750)
 
 
-class TestCopyFile(VerifyMixin, TempDirMixin, unittest.TestCase):
+class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
 
     def test_it(self):
         src = pjoin(self.dir, "copy_test_src")
@@ -80,7 +80,7 @@ class TestCopyFile(VerifyMixin, TempDirMixin, unittest.TestCase):
             fs.fsDir(pjoin(self.dir, "puke_dir"), strict=False))
 
 
-class ContentsMixin(VerifyMixin, TempDirMixin, unittest.TestCase):
+class ContentsMixin(VerifyMixin, TempDirMixin, TestCase):
 
     entries_norm1 = {
         "file1":["reg"],

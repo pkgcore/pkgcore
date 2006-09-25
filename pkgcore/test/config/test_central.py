@@ -4,7 +4,7 @@
 
 import operator
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.config import central, basics, errors, configurable
 
@@ -37,7 +37,7 @@ class RemoteSource(object):
         raise NotImplementedError()
 
 
-class ConfigManagerTest(unittest.TestCase):
+class ConfigManagerTest(TestCase):
 
     def check_error(self, message, func, *args, **kwargs):
         """Like assertRaises but checks for the message string too."""

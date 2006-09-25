@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.config import basics, errors, ConfigHint, configurable
 
@@ -11,7 +11,7 @@ def passthrough(*args, **kwargs):
     return args, kwargs
 
 
-class ConfigTypeTest(unittest.TestCase):
+class ConfigTypeTest(TestCase):
 
     def test_invalid_types(self):
         for var in ('class', 'inherit'):
@@ -71,7 +71,7 @@ class OldStyleClass:
         """Newstyle memberfunc."""
 
 
-class ConfigTypeFromFunctionTest(unittest.TestCase):
+class ConfigTypeFromFunctionTest(TestCase):
 
     def test_invalid(self):
         self.assertRaises(TypeError, basics.ConfigType, argsfunc)
@@ -113,7 +113,7 @@ class ConfigTypeFromFunctionTest(unittest.TestCase):
         self._test_class_member(OldStyleClass.member)
 
 
-class ConfigTypeFromClassTest(unittest.TestCase):
+class ConfigTypeFromClassTest(TestCase):
 
     def _test_basics(self, klass, name, two_override='section_ref'):
         test_type = basics.ConfigType(klass)
@@ -141,7 +141,7 @@ class ConfigTypeFromClassTest(unittest.TestCase):
 
 
 
-class ConfigHintDecoratorTest(unittest.TestCase):
+class ConfigHintDecoratorTest(TestCase):
 
     def test_configurable(self):
         @configurable(typename='spork', types={'foon': 'str'})
@@ -153,7 +153,7 @@ class ConfigHintDecoratorTest(unittest.TestCase):
         self.assertEquals((('spork',), {}), stuff('spork'))
 
 
-class ConfigSectionTest(unittest.TestCase):
+class ConfigSectionTest(TestCase):
 
     def test_basics(self):
         section = basics.ConfigSection()
@@ -163,7 +163,7 @@ class ConfigSectionTest(unittest.TestCase):
             NotImplementedError, section.get_value, None, 'a', 'str')
 
 
-class ConfigSectionFromStringDictTest(unittest.TestCase):
+class ConfigSectionFromStringDictTest(TestCase):
 
     def setUp(self):
         self.source = {
@@ -238,7 +238,7 @@ class ConfigSectionFromStringDictTest(unittest.TestCase):
             errors.ConfigurationError,
             section.get_value, TestCentral(), 'badrefs', 'section_refs')
 
-class HardCodedConfigSectionTest(unittest.TestCase):
+class HardCodedConfigSectionTest(TestCase):
 
     def setUp(self):
         self.source = {
@@ -281,7 +281,7 @@ class HardCodedConfigSectionTest(unittest.TestCase):
             section.get_value, None, 'refs', 'section_refs')
 
 
-class AliasTest(unittest.TestCase):
+class AliasTest(TestCase):
 
     def test_alias(self):
         foon = object()
@@ -299,7 +299,7 @@ class AliasTest(unittest.TestCase):
                              alias.get_value(manager, 'target', 'section_ref'))
 
 
-class ParsersTest(unittest.TestCase):
+class ParsersTest(TestCase):
 
     def test_bool_parser(self):
         # abuse Identical to make sure we get actual bools, not some

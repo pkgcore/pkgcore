@@ -4,7 +4,7 @@
 
 import optparse
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.util import commandline
 from pkgcore.config import errors
@@ -14,7 +14,7 @@ def main(config, options, out, err):
     return options
 
 
-class MainTest(unittest.TestCase):
+class MainTest(TestCase):
 
     def test_weird_parser(self):
         class WeirdParser(commandline.OptionParser):

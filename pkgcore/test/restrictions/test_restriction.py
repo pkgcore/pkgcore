@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.restrictions import restriction
 
@@ -13,7 +13,7 @@ class SillyBool(restriction.base):
         return not self.negate
 
 
-class BaseTest(unittest.TestCase):
+class BaseTest(TestCase):
 
     def test_base(self):
         base = restriction.base()
@@ -34,7 +34,7 @@ class BaseTest(unittest.TestCase):
         self.failUnless(false.force_False(None))
 
 
-class AlwaysBoolTest(unittest.TestCase):
+class AlwaysBoolTest(TestCase):
 
     def test_true(self):
         true = restriction.AlwaysBool('foo', True)
@@ -60,7 +60,7 @@ class NoneMatch(restriction.base):
         return 'NoneMatch'
 
 
-class AnyMatchTest(unittest.TestCase):
+class AnyMatchTest(TestCase):
 
     def test_basic(self):
         for negate in (False, True):

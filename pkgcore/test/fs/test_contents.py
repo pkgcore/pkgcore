@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.fs import fs, contents
 from pkgcore.util.currying import post_curry
@@ -9,10 +9,10 @@ from pkgcore.util.currying import post_curry
 import os
 
 
-class TestContentsSet(unittest.TestCase):
+class TestContentsSet(TestCase):
 
     def __init__(self, *a, **kw):
-        unittest.TestCase.__init__(self, *a, **kw)
+        TestCase.__init__(self, *a, **kw)
         self.files = [fs.fsFile(x, strict=False) for x in [
                 "/etc/blah", "/etc/foo", "/etc/dar", "/tmp/dar",
                 "/tmp/blah/foo/long/ass/file/name/but/not/that/bad/really"]]

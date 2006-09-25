@@ -1,7 +1,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.scripts import pmerge
 from pkgcore.test.scripts import helpers
@@ -9,7 +9,7 @@ from pkgcore.test.repository import util
 from pkgcore.config import basics
 
 
-class parse_atom_test(unittest.TestCase):
+class parse_atom_test(TestCase):
 
     def test_parse_atom(self):
         repo = util.SimpleTree({'spork': {'foon': ('1', '2')}})
@@ -22,7 +22,7 @@ class parse_atom_test(unittest.TestCase):
             self.assertEqual(a.op, '')
 
 
-class pmerge_test(unittest.TestCase, helpers.MainMixin):
+class pmerge_test(TestCase, helpers.MainMixin):
 
     parser = helpers.mangle_parser(pmerge.OptionParser())
     main = pmerge.main

@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest, util
+from pkgcore.test import TestCase
 from pkgcore.util import caching
 
 def gen_test(WeakInstMeta):
@@ -32,7 +32,7 @@ def gen_test(WeakInstMeta):
     class reenabled_weak_inst(automatic_disabled_weak_inst):
         __inst_caching__ = True
 
-    class TestWeakInstMeta(unittest.TestCase):
+    class TestWeakInstMeta(TestCase):
 
         def test_reuse(self, kls=weak_inst):
             kls.reset()
@@ -117,7 +117,7 @@ def gen_test(WeakInstMeta):
         # These are applied in reverse order. Effect is UserWarning is
         # ignored and everything else is an error.
         test_uncachable.suppress = [
-            util.suppress('error'), util.suppress(category=UserWarning)]
+            (('error',), {}), (('ignore',), {'category': UserWarning})]
 
         def test_uncachable_warning(self):
             # This name is *important*, see above.
@@ -132,7 +132,7 @@ def gen_test(WeakInstMeta):
                                   RaisingHashForTestUncachableWarnings(x))
 
         test_uncachable_warning.suppress = [
-            util.suppress('error', category=UserWarning)]
+            (('error',), {'category': UserWarning})]
 
         def test_hash_collision(self):
             class BrokenHash(object):

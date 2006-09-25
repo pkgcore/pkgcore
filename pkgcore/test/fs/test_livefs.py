@@ -2,13 +2,13 @@
 # License: GPL2
 
 import os
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.fs import fs, gen_obj, iter_scan
 from pkgcore.test.mixins import TempDirMixin
 
 
-class FsObjsTest(TempDirMixin, unittest.TestCase):
+class FsObjsTest(TempDirMixin, TestCase):
 
     def check_attrs(self, obj, path):
         st = os.lstat(path)

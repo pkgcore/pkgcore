@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.ebuild import atom
 from pkgcore.ebuild.cpv import CPV
 
@@ -12,7 +12,7 @@ class FakePkg(CPV):
         object.__setattr__(self, "use", use)
         object.__setattr__(self, "slot", str(slot))
 
-class TestAtom(unittest.TestCase):
+class TestAtom(TestCase):
 
     def test_glob(self):
         self.assertRaises(atom.MalformedAtom, atom.atom, "dev-util/diffball-1*")

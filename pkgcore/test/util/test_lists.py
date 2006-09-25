@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.util import lists
 from pkgcore.util.mappings import OrderedDict
 
@@ -12,7 +12,7 @@ class UnhashableComplex(complex):
         raise TypeError
 
 
-class UniqueTest(unittest.TestCase):
+class UniqueTest(TestCase):
 
     def common_check(self, func):
         # silly
@@ -35,7 +35,7 @@ class UniqueTest(unittest.TestCase):
             res == [uc(1, 0), uc(0, 1)] or res == [uc(0, 1), uc(1, 0)], res)
 
 
-class ChainedListsTest(unittest.TestCase):
+class ChainedListsTest(TestCase):
 
     @staticmethod
     def gen_cl():
@@ -76,7 +76,7 @@ class ChainedListsTest(unittest.TestCase):
         self.assertEquals(150, len(cl))
 
 
-class Test_iflatten_instance(unittest.TestCase):
+class Test_iflatten_instance(TestCase):
     func = staticmethod(lists.native_iflatten_instance)
 
     def test_it(self):
@@ -106,7 +106,7 @@ class Test_iflatten_instance(unittest.TestCase):
         self.assertRaises(ValueError, iterator.next)
 
 
-class Test_iflatten_func(unittest.TestCase):
+class Test_iflatten_func(TestCase):
     func = staticmethod(lists.native_iflatten_func)
 
     def test_it(self):

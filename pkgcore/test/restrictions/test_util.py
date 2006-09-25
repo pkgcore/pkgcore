@@ -2,9 +2,9 @@
 # License: GPL2
 
 from pkgcore.restrictions import util, packages, values
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
-class Test_collect_package_restrictions(unittest.TestCase):
+class Test_collect_package_restrictions(TestCase):
 
     def test_collect_all(self):
         prs = [packages.PackageRestriction("category", values.AlwaysTrue)] * 10

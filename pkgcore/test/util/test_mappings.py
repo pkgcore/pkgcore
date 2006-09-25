@@ -4,7 +4,7 @@
 
 import operator
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.util import mappings
 from itertools import chain
 
@@ -57,7 +57,7 @@ class LazyValDictTestMixin(object):
 
 
 class LazyValDictWithListTest(
-    unittest.TestCase, LazyValDictTestMixin, RememberingNegateMixin):
+    TestCase, LazyValDictTestMixin, RememberingNegateMixin):
 
     def setUp(self):
         RememberingNegateMixin.setUp(self)
@@ -82,7 +82,7 @@ class LazyValDictWithListTest(
         self.assertEqual(True, self.dict.has_key(1))
 
 class LazyValDictWithFuncTest(
-    unittest.TestCase, LazyValDictTestMixin, RememberingNegateMixin):
+    TestCase, LazyValDictTestMixin, RememberingNegateMixin):
 
     def setUp(self):
         RememberingNegateMixin.setUp(self)
@@ -92,7 +92,7 @@ class LazyValDictWithFuncTest(
         RememberingNegateMixin.tearDown(self)
 
 
-class LazyValDictTest(unittest.TestCase):
+class LazyValDictTest(TestCase):
 
     def test_invalid_init_args(self):
         self.assertRaises(TypeError, mappings.LazyValDict, [1], 42)
@@ -101,7 +101,7 @@ class LazyValDictTest(unittest.TestCase):
 
 # TODO check for valid values for dict.new, since that seems to be
 # part of the interface?
-class ProtectedDictTest(unittest.TestCase):
+class ProtectedDictTest(TestCase):
 
     def setUp(self):
         self.orig = {1: -1, 2: -2}
@@ -151,7 +151,7 @@ class ProtectedDictTest(unittest.TestCase):
         self.assertNotIn(1, self.dict)
 
 
-class ImmutableDictTest(unittest.TestCase):
+class ImmutableDictTest(TestCase):
 
     def setUp(self):
         self.dict = mappings.ImmutableDict(**{1: -1, 2: -2})
@@ -169,7 +169,7 @@ class ImmutableDictTest(unittest.TestCase):
         self.assertRaises(TypeError, self.dict.setdefault, 6, -6)
         self.assertEquals(initial_hash, hash(self.dict))
 
-class StackedDictTest(unittest.TestCase):
+class StackedDictTest(TestCase):
 
     orig_dict = dict.fromkeys(xrange(100))
     new_dict = dict.fromkeys(xrange(100, 200))
@@ -218,7 +218,7 @@ class StackedDictTest(unittest.TestCase):
             sorted(self.orig_dict.keys() + self.new_dict.keys()))
 
 
-class IndeterminantDictTest(unittest.TestCase):
+class IndeterminantDictTest(TestCase):
 
     def test_disabled_methods(self):
         d = mappings.IndeterminantDict(lambda *a: None)
@@ -265,7 +265,7 @@ class IndeterminantDictTest(unittest.TestCase):
         self.assertEqual(d.get(3), True)
 
 
-class TestOrderedDict(unittest.TestCase):
+class TestOrderedDict(TestCase):
 
     @staticmethod
     def gen_dict():

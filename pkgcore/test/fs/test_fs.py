@@ -2,9 +2,9 @@
 # License: GPL2
 
 from pkgcore.fs import fs
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
-class Test_fsFile(unittest.TestCase):
+class Test_fsFile(TestCase):
 
     def test_init(self):
         raise NotImplementedError(self)

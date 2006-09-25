@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase, SkipTest
 from pkgcore import chksum
 from pkgcore.interfaces.data_source import data_source, local_source
 import tempfile, os
@@ -14,7 +14,7 @@ class ChksumTest(object):
         try:
             self.chf = chksum.get_handler(self.chf_type)
         except KeyError:
-            raise unittest.SkipTest(
+            raise SkipTest(
                 'no handler for %s, do you need to install PyCrypto?' % (
                     self.chf_type,))
         self.fn = tempfile.mktemp()
@@ -51,7 +51,7 @@ for chf_type, expectedsum in {
     }.iteritems():
     globals()[chf_type + 'ChksumTest'] = type(
         chf_type + 'ChksumTest',
-        (ChksumTest, unittest.TestCase),
+        (ChksumTest, TestCase),
         dict(chf_type=chf_type, sum=expectedsum))
 
 del chf_type

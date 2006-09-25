@@ -5,7 +5,7 @@
 import tempfile, os
 from StringIO import StringIO
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 # ick, a module shadowing a builtin. import its contents instead.
 from pkgcore.util.file import (
@@ -14,7 +14,7 @@ from pkgcore.util.file import (
 from pkgcore.test.mixins import TempDirMixin
 
 
-class TestBashCommentStripping(unittest.TestCase):
+class TestBashCommentStripping(TestCase):
 
     def test_iter_read_bash(self):
         self.assertEquals(
@@ -33,7 +33,7 @@ class TestBashCommentStripping(unittest.TestCase):
             ['I am not'])
 
 
-class TestReadBashConfig(unittest.TestCase):
+class TestReadBashConfig(TestCase):
 
     def test_read_dict(self):
         self.assertEquals(
@@ -59,7 +59,7 @@ class TestReadBashConfig(unittest.TestCase):
             {'foo': 'bar'})
 
 
-class ReadBashDictTest(unittest.TestCase):
+class ReadBashDictTest(TestCase):
 
     def setUp(self):
         self.valid_file = tempfile.NamedTemporaryFile()
@@ -160,7 +160,7 @@ class ReadBashDictTest(unittest.TestCase):
         self.assertRaises(ParseError, read_bash_dict, self.unclosed_file.name)
 
 
-class TestAtomicWriteFile(TempDirMixin, unittest.TestCase):
+class TestAtomicWriteFile(TempDirMixin, TestCase):
 
     def test_normal_ops(self):
         fp = os.path.join(self.dir, "target")

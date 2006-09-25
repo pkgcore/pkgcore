@@ -9,7 +9,7 @@ from pkgcore.interfaces import data_source
 from pkgcore.util.currying import partial
 
 from pkgcore.test.mixins import TempDirMixin
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 repeating_str = 'asdf'
 data = repeating_str * 4000
@@ -20,7 +20,7 @@ chksums = dict((chf, f(data_source.data_source(data)))
 # get a non size based chksum
 known_chksum = [x for x in chksums if x != "size"][0]
 
-class TestFetcher(TempDirMixin, unittest.TestCase):
+class TestFetcher(TempDirMixin, TestCase):
     
     def setUp(self):
         TempDirMixin.setUp(self)

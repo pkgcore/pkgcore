@@ -7,7 +7,7 @@ import grp
 import stat
 import fcntl
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase, SkipTest
 from pkgcore.util import osutils
 from pkgcore.util.osutils import native_readdir
 from pkgcore.test.mixins import TempDirMixin
@@ -58,7 +58,7 @@ class CPyListDirTest(NativeListDirTest):
     if _readdir is None:
         skip = "cpython extension isn't available"
 
-class EnsureDirsTest(TempDirMixin, unittest.TestCase):
+class EnsureDirsTest(TempDirMixin, TestCase):
 
     def check_dir(self, path, uid, gid, mode):
         self.failUnless(os.path.isdir(path))
@@ -110,8 +110,8 @@ class EnsureDirsTest(TempDirMixin, unittest.TestCase):
         # abuse the portage group as secondary group
         portage_gid = grp.getgrnam('portage')[2]
         if portage_gid not in os.getgroups():
-            raise unittest.SkipTest('you are not in the portage group')
-        path = os.path.join('group', 'group')
+            raise SkipTest('you are not in the portage group')
+        path = os.path.join(self.dir, 'group', 'group')
         self.failUnless(osutils.ensure_dirs(path, gid=portage_gid))
         self.check_dir(path, os.geteuid(), portage_gid, 0777)
         self.failUnless(osutils.ensure_dirs(path))
@@ -120,7 +120,7 @@ class EnsureDirsTest(TempDirMixin, unittest.TestCase):
         self.check_dir(path, os.geteuid(), os.getegid(), 0777)
 
 
-class SymlinkTest(TempDirMixin, unittest.TestCase):
+class SymlinkTest(TempDirMixin, TestCase):
 
     def test_abssymlink(self):
         target = os.path.join(self.dir, 'target')
@@ -130,7 +130,7 @@ class SymlinkTest(TempDirMixin, unittest.TestCase):
         self.assertEquals(osutils.abssymlink(linkname), target)
 
 
-class NormPathTest(unittest.TestCase):
+class NormPathTest(TestCase):
 
     def test_normpath(self):
         self.assertEquals(
@@ -138,7 +138,7 @@ class NormPathTest(unittest.TestCase):
 
 
 # TODO: more error condition testing
-class FsLockTest(TempDirMixin, unittest.TestCase):
+class FsLockTest(TempDirMixin, TestCase):
 
     def test_nonexistant(self):
         self.assertRaises(osutils.NonExistant, osutils.FsLock, 

@@ -1,11 +1,11 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.package import base
 from pkgcore.util.currying import partial
 
-class TestBasePkg(unittest.TestCase):
+class TestBasePkg(TestCase):
 
     def test_setattr(self):
         self.assertRaises(AttributeError, base.base().__setattr__, "asdf", 1)

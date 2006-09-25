@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.package.base import base
 from pkgcore.util.currying import partial
@@ -25,7 +25,7 @@ class FakePkg(base):
         return cmp(self.ver, other.ver)
 
 
-class TestMutatedPkg(unittest.TestCase):
+class TestMutatedPkg(TestCase):
 
     def make_fakepkg(self, pkg="dar", ver=1, data=None):
         if data is None:

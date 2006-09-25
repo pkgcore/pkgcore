@@ -1,14 +1,14 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.util.weakrefs import WeakValCache
 from weakref import WeakValueDictionary
 
 class RefObj(object):
     pass
 
-class TestWeakValCache(unittest.TestCase):
+class TestWeakValCache(TestCase):
     if WeakValueDictionary is WeakValCache:
         skip = "WeakValCache is weakref.WeakValueDictionary; indicates " \
             "pkgcore.util._caching isn't compiled"

@@ -1,11 +1,11 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.util.iterables import expandable_chain, caching_iter, iter_sort
 
 
-class ExpandableChainTest(unittest.TestCase):
+class ExpandableChainTest(TestCase):
 
     def test_normal_function(self):
         i = [iter(xrange(100)) for x in xrange(3)]
@@ -40,7 +40,7 @@ class ExpandableChainTest(unittest.TestCase):
         self.assertRaises(StopIteration, e.append, [])
 
 
-class CachingIterTest(unittest.TestCase):
+class CachingIterTest(TestCase):
 
     def test_iter_consumption(self):
         i = iter(xrange(100))
@@ -91,7 +91,7 @@ class CachingIterTest(unittest.TestCase):
         self.assertEquals(c, tuple(xrange(1, 101)))
 
 
-class iter_sortTest(unittest.TestCase):
+class iter_sortTest(TestCase):
     def test_ordering(self):
         f = lambda l: sorted(l, key=lambda x:x[0])
         self.assertEquals(

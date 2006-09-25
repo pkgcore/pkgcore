@@ -3,10 +3,10 @@
 
 from pkgcore import fetch
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 
-class TestFetchable(unittest.TestCase):
+class TestFetchable(TestCase):
 
     def test_init(self):
         o = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf":1})
@@ -15,7 +15,7 @@ class TestFetchable(unittest.TestCase):
         self.assertEqual(o.chksums, {"asdf":1})
 
 
-class TestMirror(unittest.TestCase):
+class TestMirror(TestCase):
 
     kls = fetch.mirror
     
@@ -44,7 +44,7 @@ class TestDefaultMirror(TestMirror):
     kls = fetch.default_mirror
 
 
-class Test_uri_list(unittest.TestCase):
+class Test_uri_list(TestCase):
 
     def setUp(self):
         self.uril = fetch.uri_list("cows")

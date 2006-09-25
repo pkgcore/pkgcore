@@ -6,7 +6,7 @@
 
 import tempfile
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.config import load_config, configurable
 
@@ -16,7 +16,7 @@ def passthrough(*args, **kwargs):
     return args, kwargs
 
 
-class ConfigLoadingTest(unittest.TestCase):
+class ConfigLoadingTest(TestCase):
 
     def setUp(self):
         self.user_config = tempfile.NamedTemporaryFile()

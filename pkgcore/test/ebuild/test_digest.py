@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.ebuild import digest
 from pkgcore.chksum import gpg
 from pkgcore.chksum.errors import ParseChksumError
@@ -28,7 +28,7 @@ digest_chksum = (
 
 files = ["Python-2.4.2.tar.bz2", "python-2.4-patches-1.tar.bz2"]
 
-class TestDigest(unittest.TestCase):
+class TestDigest(TestCase):
 
     convert_source = staticmethod(lambda x:x)
     
@@ -90,7 +90,7 @@ for x in pure_manifest2.split("\n"):
     del chksum, l, i
 
 
-class TestManifest(unittest.TestCase):
+class TestManifest(TestCase):
     
     convert_source = staticmethod(lambda x:x)
     

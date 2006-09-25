@@ -7,7 +7,7 @@ from pkgcore.interfaces import data_source
 import os
 
 from pkgcore.test.mixins import TempDirMixin
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 class FakeEclassCache(eclass_cache.base):
 
@@ -18,7 +18,7 @@ class FakeEclassCache(eclass_cache.base):
             "eclass2":(path, 200)}
 
 
-class TestBase(TempDirMixin, unittest.TestCase):
+class TestBase(TempDirMixin, TestCase):
 
     def setUp(self):
         TempDirMixin.setUp(self)

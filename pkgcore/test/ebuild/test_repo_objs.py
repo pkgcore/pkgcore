@@ -5,10 +5,10 @@ from pkgcore.ebuild import repo_objs
 from pkgcore.interfaces.data_source import data_source
 from pkgcore.util.xml import escape
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 
-class TestMetadataXml(unittest.TestCase):
+class TestMetadataXml(TestCase):
 
     @staticmethod
     def get_metadata_xml(herds=(), maintainers=(), longdescription=None):

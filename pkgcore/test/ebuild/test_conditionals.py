@@ -1,7 +1,7 @@
 # Copyright: 2005 Brian Harring <ferringb@gentoo.org>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.ebuild.conditionals import DepSet, ParseError
 from pkgcore.restrictions import boolean, packages
@@ -18,7 +18,7 @@ def gen_depset(string, operators=None, func=None):
         operators = {"":boolean.AndRestriction, "||":boolean.OrRestriction}
     return DepSet(string, str, operators=operators, **kwds)
 
-class DepSetParsingTest(unittest.TestCase):
+class DepSetParsingTest(TestCase):
 
     # generate a lot of parse error assertions.
     for x in ("( )", "( a b c", "(a b c )",
@@ -31,7 +31,7 @@ class DepSetParsingTest(unittest.TestCase):
         "a|", "a?", "a(b", "a)", "a||b",
         "a(", "a)b", "x? y", "( x )?", "||?"):
         locals()["test assert ParseError '%s'" % x] = post_curry(
-            unittest.TestCase.assertRaises, ParseError, gen_depset, x)
+            TestCase.assertRaises, ParseError, gen_depset, x)
     del x
 
     @staticmethod
@@ -141,7 +141,7 @@ class DepSetParsingTest(unittest.TestCase):
             {"operators":{"":boolean.AndRestriction}})
 
 
-class DepSetConditionalsInspectionTest(unittest.TestCase):
+class DepSetConditionalsInspectionTest(TestCase):
 
     def test_sanity_has_conditionals(self):
         self.assertFalse(bool(gen_depset("a b").has_conditionals))
@@ -200,7 +200,7 @@ def convert_to_seq(s):
         return s
     return [s]
 
-class DepSetEvaluateTest(unittest.TestCase):
+class DepSetEvaluateTest(TestCase):
     
     def test_evaluation(self):
         for vals in (("y", "x? ( y ) !x? ( z )", "x"),

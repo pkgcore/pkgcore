@@ -1,14 +1,14 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.test.repository.test_prototype import SimpleTree
 from pkgcore.repository.visibility import filterTree
 from pkgcore.restrictions import packages, values
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 
-class TestVisibility(unittest.TestCase):
+class TestVisibility(TestCase):
 
     def setup_repos(self, restrictions=None):
         repo = SimpleTree({

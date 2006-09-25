@@ -5,7 +5,7 @@
 import re
 import operator
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.cache import template, errors
 
@@ -37,7 +37,7 @@ class DictCache(template.database):
         return self.data.iterkeys()
 
 
-class TemplateTest(unittest.TestCase):
+class TemplateTest(TestCase):
 
     cache_keys = ("foo", "_eclasses_")
 

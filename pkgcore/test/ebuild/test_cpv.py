@@ -1,11 +1,11 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.ebuild import cpv
 
 
-class native_CpvTest(unittest.TestCase):
+class native_CpvTest(TestCase):
 
     kls = staticmethod(cpv.native_CPV)
     good_cats = [

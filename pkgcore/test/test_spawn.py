@@ -1,13 +1,13 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase, SkipTest
 from pkgcore import spawn
 from pkgcore.test.mixins import TempDirMixin
 from pkgcore.util.currying import post_curry
 import os, pwd, signal
 
-class SpawnTest(TempDirMixin, unittest.TestCase):
+class SpawnTest(TempDirMixin, TestCase):
 
     def __init__(self, *a, **kw):
         try:
@@ -35,7 +35,7 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
         os.chmod(fp, 0650)
         self.assertRaises(spawn.CommandNotFound, spawn.find_binary, script_name)
         os.chmod(fp, 0750)
-        self.failUnlessSubstring(self.dir, spawn.find_binary(script_name))
+        self.assertIn(self.dir, spawn.find_binary(script_name))
         os.unlink(fp)
 
     def generate_script(self, filename, text):
@@ -65,7 +65,7 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
         try:
             spawn.find_binary("sandbox")
         except spawn.CommandNotFound:
-            raise unittest.SkipTest(
+            raise SkipTest(
                 "sandbox is not available, thus testing isn't possible")
         self.assertTrue(spawn.sandbox_capable, "sandbox_capable boolean test")
         fp = self.generate_script(
@@ -79,14 +79,14 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
         try:
             spawn.find_binary("fakeroot")
         except spawn.CommandNotFound:
-            raise unittest.SkipTest(
+            raise SkipTest(
                 "fakeroot is not available, thus testing isn't possible")
         self.assertTrue(
             spawn.fakeroot_capable, "fakeroot_capable boolean test")
         try:
             l = pwd.getpwnam("nobody")
         except KeyError:
-            raise unittest.SkipTest(
+            raise SkipTest(
                 "system lacks nobody user, thus can't test fakeroot")
 
         nobody_uid = l[2]
@@ -139,7 +139,7 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
         try:
             return spawn.spawn(["sleep", "3600s"], returnpid=True)[0]
         except spawn.CommandNotFound:
-            raise unittest.SkipTest(
+            raise SkipTest(
                 "can't complete the test, sleep binary doesn't exist")
 
     def test_spawn_returnpid(self):
@@ -158,7 +158,7 @@ class SpawnTest(TempDirMixin, unittest.TestCase):
         pid = self.generate_background_pid()
         spawn.cleanup_pids([pid])
         self.assertRaises(OSError, post_curry(os.kill, pid, 0))
-        self.failIfIn(
+        self.assertNotIn(
             pid, spawn.spawned_pids, "pid wasn't removed from global pids")
 
     def test_bash(self):

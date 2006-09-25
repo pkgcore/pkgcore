@@ -1,7 +1,7 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.util import currying
 
 
@@ -16,7 +16,7 @@ def passthrough(*args, **kwargs):
 def documented():
     """original docstring"""
 
-class PreCurryTest(unittest.TestCase):
+class PreCurryTest(TestCase):
 
     pre_curry = staticmethod(currying.pre_curry)
 
@@ -99,7 +99,7 @@ class CPyPartialTest(NativePartialTest):
         skip = 'cpy partial not available.'
 
 
-class PostCurryTest(unittest.TestCase):
+class PostCurryTest(TestCase):
 
     def test_post_curry(self):
         noop = currying.post_curry(passthrough)
@@ -143,7 +143,7 @@ class PostCurryTest(unittest.TestCase):
         test = Test()
         self.assertEquals(((test, 'test'), {}), test.method())
 
-class TestAliasClassAttr(unittest.TestCase):
+class TestAliasClassAttr(TestCase):
     def test_alias_class_method(self):
         class kls(object):
             __len__ = lambda s: 3

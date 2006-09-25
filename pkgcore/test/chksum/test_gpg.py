@@ -1,10 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.chksum import gpg
 
-class TestSkipSignatures(unittest.TestCase):
+class TestSkipSignatures(TestCase):
     
     def test_simple_skipping(self):
         for header in ([],

@@ -1,7 +1,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.scripts import pconfig
 from pkgcore.test.scripts import helpers
@@ -15,7 +15,7 @@ def foon():
     pass
 
 
-class pconfigTest(unittest.TestCase, helpers.MainMixin):
+class pconfigTest(TestCase, helpers.MainMixin):
 
     parser = helpers.mangle_parser(pconfig.OptionParser())
     main = staticmethod(pconfig.main)

@@ -5,12 +5,12 @@
 import StringIO
 import tempfile
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.util import formatters
 
 
-class PlainTextFormatterTest(unittest.TestCase):
+class PlainTextFormatterTest(TestCase):
 
     def test_basics(self):
         # As many sporks as fit in 20 chars.
@@ -104,7 +104,7 @@ class PlainTextFormatterTest(unittest.TestCase):
             self.assertEquals(output, stream.getvalue())
 
 
-class TerminfoFormatterTest(unittest.TestCase):
+class TerminfoFormatterTest(TestCase):
 
     def _test_stream(self, stream, formatter, *data):
         for inputs, outputs in data:

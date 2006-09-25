@@ -5,7 +5,7 @@ from pkgcore.test.cache import util
 from pkgcore.cache import flat_hash
 from pkgcore.test.mixins import TempDirMixin
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 class TestFlatHash(util.GenericCacheMixin, TempDirMixin):
 

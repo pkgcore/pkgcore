@@ -4,9 +4,9 @@
 from pkgcore.util import demandload
 import sys
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
-class TestDemandLoadTargets(unittest.TestCase):
+class TestDemandLoadTargets(TestCase):
 
     matching_types = [
         type(getattr(demandload, x)) for x in (

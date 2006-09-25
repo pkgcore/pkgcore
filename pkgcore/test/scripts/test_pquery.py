@@ -1,7 +1,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.scripts import pquery
 from pkgcore.test.scripts import helpers
@@ -39,7 +39,7 @@ domain_config = basics.HardCodedConfigSection({
         })
 
 
-class pqueryTest(unittest.TestCase, helpers.MainMixin):
+class pqueryTest(TestCase, helpers.MainMixin):
 
     parser = helpers.mangle_parser(pquery.OptionParser())
     main = staticmethod(pquery.main)

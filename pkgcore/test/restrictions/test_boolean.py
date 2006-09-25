@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 from pkgcore.restrictions import boolean, restriction
 
@@ -19,7 +19,7 @@ class AlwaysForcableBool(boolean.base):
     match = force_False = force_True
 
 
-class BaseTest(unittest.TestCase):
+class BaseTest(TestCase):
 
     def test_invalid_restrictions(self):
         self.assertRaises(TypeError, boolean.base, 42, node_type='foo')
@@ -51,7 +51,7 @@ class BaseTest(unittest.TestCase):
     # TODO total_len? what does it do?
 
 # TODO these tests are way too limited
-class AndRestrictionTest(unittest.TestCase):
+class AndRestrictionTest(TestCase):
 
     def test_match(self):
         self.failUnless(boolean.AndRestriction(
@@ -105,7 +105,7 @@ class AndRestrictionTest(unittest.TestCase):
         self.assertEquals(boolean.AndRestriction().cnf_solutions(), [])
 
 
-class OrRestrictionTest(unittest.TestCase):
+class OrRestrictionTest(TestCase):
 
     def test_match(self):
         self.failUnless(boolean.OrRestriction(

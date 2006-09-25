@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 
@@ -14,7 +14,7 @@ class fake_package(object):
             ("slot", 0), ("key", None), ("marker", None)):
             setattr(self, k, kwds.get(k, v))
 
-class TestChoicePoint(unittest.TestCase):
+class TestChoicePoint(TestCase):
 
     @staticmethod
     def gen_choice_point():

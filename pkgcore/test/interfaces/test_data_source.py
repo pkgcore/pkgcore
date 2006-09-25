@@ -5,11 +5,11 @@ import os
 from pkgcore.interfaces import data_source
 
 from pkgcore.test.mixins import TempDirMixin
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 
 
-class TestDataSource(unittest.TestCase):
+class TestDataSource(TestCase):
 
     def get_obj(self, mutable=False):
         return data_source.data_source("foonani", mutable=mutable)

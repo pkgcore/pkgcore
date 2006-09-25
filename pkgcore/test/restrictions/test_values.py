@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.restrictions import values
 
 
@@ -12,7 +12,7 @@ class SillyBool(values.base):
         return not self.negate
 
 
-class BaseTest(unittest.TestCase):
+class BaseTest(TestCase):
 
     def test_force(self):
         true = SillyBool(negate=False)
@@ -23,7 +23,7 @@ class BaseTest(unittest.TestCase):
         self.failUnless(false.force_False(None, None, None))
 
 
-class GetAttrTest(unittest.TestCase):
+class GetAttrTest(TestCase):
 
     """Test bits of GetAttrRestriction that differ from PackageRestriction."""
 
@@ -53,7 +53,7 @@ class GetAttrTest(unittest.TestCase):
         self.failUnless(fails.force_False(pkg, 'value', dummy))
 
 
-class StrRegexTest(unittest.TestCase):
+class StrRegexTest(TestCase):
 
     def test_match(self):
         for x in (True, False):
@@ -94,7 +94,7 @@ class StrRegexTest(unittest.TestCase):
             self.failUnless(repr(restr).startswith(string), (restr, string))
 
 
-class TestStrExactMatch(unittest.TestCase):
+class TestStrExactMatch(TestCase):
 
     def test_case_sensitive(self):
         for x in (True, False):
@@ -149,7 +149,7 @@ class TestStrExactMatch(unittest.TestCase):
                     "rsync", case_sensitive=False, negate=negate))
 
 
-class TestStrGlobMatch(unittest.TestCase):
+class TestStrGlobMatch(TestCase):
 
     def test_case_sensitive(self):
         for x in (True, False):
@@ -212,7 +212,7 @@ class TestStrGlobMatch(unittest.TestCase):
             values.StrGlobMatch("rsync", negate=False))
 
 
-class TestEqualityMatch(unittest.TestCase):
+class TestEqualityMatch(TestCase):
 
     def test_match(self):
         for x, y, ret in (("asdf", "asdf", True), ("asdf", "fdsa", False),
@@ -242,7 +242,7 @@ class TestEqualityMatch(unittest.TestCase):
             values.EqualityMatch("asdf", negate=False))
 
 
-class TestContainmentMatch(unittest.TestCase):
+class TestContainmentMatch(TestCase):
 
     def test_match(self):
         for x, y, ret in (
@@ -291,7 +291,7 @@ class TestContainmentMatch(unittest.TestCase):
                 values.ContainmentMatch(1, 2, 3, all=True, negate=negate))
 
 
-class FlatteningRestrictionTest(unittest.TestCase):
+class FlatteningRestrictionTest(TestCase):
 
     def test_basic(self):
         for negate in (False, True):

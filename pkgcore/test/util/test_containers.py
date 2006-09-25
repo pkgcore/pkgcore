@@ -2,11 +2,11 @@
 # License: GPL2
 
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.util import containers
 
 
-class InvertedContainsTest(unittest.TestCase):
+class InvertedContainsTest(TestCase):
 
     def setUp(self):
         self.set = containers.InvertedContains(range(12))
@@ -16,7 +16,7 @@ class InvertedContainsTest(unittest.TestCase):
         self.failUnless(-7 in self.set)
 
 
-class LimitedChangeSetTest(unittest.TestCase):
+class LimitedChangeSetTest(TestCase):
 
     def setUp(self):
         self.set = containers.LimitedChangeSet(range(12))
@@ -111,7 +111,7 @@ class LimitedChangeSetTest(unittest.TestCase):
         c.add(99)
         self.assertEquals(c, containers.LimitedChangeSet(range(100)))
 
-class LimitedChangeSetWithBlacklistTest(unittest.TestCase):
+class LimitedChangeSetWithBlacklistTest(TestCase):
 
     def setUp(self):
         self.set = containers.LimitedChangeSet(range(12), [3, 13])

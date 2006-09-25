@@ -1,12 +1,12 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.pkgsets.filelist import FileList
 from pkgcore.ebuild.atom import atom
 import tempfile, os
 
-class TestFileList(unittest.TestCase):
+class TestFileList(TestCase):
     def setUp(self):
         self.fn = tempfile.mktemp()
 

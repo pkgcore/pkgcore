@@ -2,7 +2,7 @@
 # License: GPL2
 
 from pkgcore.cache import errors
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 
 generic_data = \
     ("sys-libs/libtrash-2.4",
@@ -31,7 +31,7 @@ generic_data = \
     ),
 )
 
-class GenericCacheMixin(unittest.TestCase):
+class GenericCacheMixin(TestCase):
 
     cache_keys = ("DEPENDS", "RDEPEND", "EAPI", "HOMEPAGE", "KEYWORDS",
         "LICENSE", "PDEPEND", "PROVIDE", "RESTRICT", "SLOT", "SRC_URI",

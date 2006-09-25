@@ -2,14 +2,14 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util import parserestrict
 from pkgcore.util.currying import post_curry
 
 
-class MatchTest(unittest.TestCase):
+class MatchTest(TestCase):
 
     def test_comma_separated_containment(self):
         parser = parserestrict.comma_separated_containment('utensil')
@@ -23,7 +23,7 @@ class MatchTest(unittest.TestCase):
         self.assertFalse(valrestrict.match(('foo',)))
 
 
-class TestExtendedRestrictionGeneration(unittest.TestCase):
+class TestExtendedRestrictionGeneration(TestCase):
 
     def verify_text_glob(self, restrict, token):
         self.assertTrue(

@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.util import dependant_methods as dm
 from pkgcore.util import currying
 
@@ -11,7 +11,7 @@ def func(self, seq, data, val=True):
     return val
 
 
-class TestDependantMethods(unittest.TestCase):
+class TestDependantMethods(TestCase):
 
     @staticmethod
     def generate_instance(methods, dependencies):

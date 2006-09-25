@@ -1,14 +1,14 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from twisted.trial import unittest
+from pkgcore.test import TestCase
 from pkgcore.util import obj
 
 # sorry, but the name is good, just too long for these tests
 make_DI = obj.DelayedInstantiation
 make_DIkls = obj.DelayedInstantiation_kls
 
-class TestDelayedInstantiation(unittest.TestCase):
+class TestDelayedInstantiation(TestCase):
 
     def test_simple(self):
         t = tuple([1,2,3])

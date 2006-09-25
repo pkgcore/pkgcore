@@ -292,7 +292,8 @@ def config_from_make_conf(location="/etc/"):
             'profile': 'profile',
             'name': 'livefs domain'})
     for f in (
-        "package.mask", "package.unmask", "package.keywords", "package.use"):
+        "package.mask", "package.unmask", "package.keywords", "package.use",
+            "bashrc"):
         fp = pjoin(portage_base, f)
         if os.path.isfile(fp):
             conf_dict[f] = fp

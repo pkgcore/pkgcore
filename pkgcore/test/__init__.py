@@ -126,7 +126,12 @@ class TestCase(unittest.TestCase, object):
                     testMethod()
                     ok = True
                 except self.failureException:
-                    result.addFailure(self, sys.exc_info())
+                    exc = sys.exc_info()
+                    if todo is not None and todo.expected(exc[0]):
+                        _tryResultCall(result, 'addExpectedFailure',
+                                       self, str(exc[1]), todo)
+                    else:
+                        result.addFailure(self, sys.exc_info())
                 except SkipTest, e:
                     _tryResultCall(result, 'addSkip', self, str(e))
                 except KeyboardInterrupt:

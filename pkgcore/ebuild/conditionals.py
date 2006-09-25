@@ -277,6 +277,10 @@ def stringify_boolean(node, func=str):
     if isinstance(node, boolean.OrRestriction):
         return "|| ( %s )" % " ".join(stringify_boolean(x)
                                       for x in node.restrictions)
+    elif isinstance(node, boolean.AndRestriction) and \
+        not isinstance(node, atom):
+        return "( %s )" % " ".join(stringify_boolean(x)
+            for x in node.restrictions)
     elif isinstance(node, packages.Conditional):
         assert len(node.restriction.vals) == 1
         return "%s%s? ( %s )" % (

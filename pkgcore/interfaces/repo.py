@@ -186,9 +186,10 @@ class replace(install, uninstall):
     """
 
     stage_depends = {
-        "finish":"unmerge_metadata", "unmerge_metadata":"postrm",
-        "postrm":"remove","remove":"prerm", "prerm":"merge_metadata",
-        "merge_metadata":"postinst", "postinst":"transfer",
+        "finish":"postinst", "postinst":"unmerge_metadata", 
+        "unmerge_metadata":"postrm", "postrm":"remove",
+        "remove":"prerm", "prerm":"merge_metadata",
+        "merge_metadata":"transfer",
         "transfer":"preinst", "preinst":"start"}
 
     stage_hooks = [

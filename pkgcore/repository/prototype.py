@@ -25,17 +25,8 @@ class IterValLazyDict(LazyValDict):
     def force_regen(self, key):
         if key in self._vals:
             del self._vals[key]
-
-
-class PackageIterValLazyDict(IterValLazyDict):
-
-#    def __iter__(self):
-#        return ((k,x) for k in self.iterkeys() for x in self[k])
-    pass
-
-#    def iterkeys(self):
-#        return 
-
+        else:
+            self._keys = tuple(x for x in self._keys if x != key)
 
 class CategoryIterValLazyDict(IterValLazyDict):
 
@@ -58,6 +49,39 @@ class CategoryIterValLazyDict(IterValLazyDict):
 
     def __iter__(self):
         return self.iterkeys()
+
+    def __contains__(self, key):
+        # suck.
+        return key in self.keys()
+
+
+class PackageMapping(DictMixin):
+
+    def __init__(self, parent_mapping, pull_vals):
+        self._cache = {}
+        self._parent = parent_mapping
+        self._pull_vals = pull_vals
+    
+    def __getitem__(self, key):
+        o = self._cache.get(key)
+        if o is not None:
+            return o
+        if key not in self._parent:
+            raise KeyError(key)
+        self._cache[key] = vals = self._pull_vals(key)
+        return vals
+
+    def iterkeys(self):
+        return self._parent.iterkeys()
+    
+    def __contains__(self, key):
+        return key in self._cache or key in self._parent
+    
+    def force_regen(self, cat):
+        try:
+            del self._cache[cat]
+        except KeyError:
+            pass
 
 
 class VersionMapping(DictMixin):
@@ -114,11 +138,12 @@ class VersionMapping(DictMixin):
         except KeyError:
             return False            
 
-    def force_regen(self, key):
-        self._cache.pop(key, None)
-        if key[0] in self._known_keys:
-            self._known_keys[key[0]].add(key[1])
-        self._finalized = False
+    def force_regen(self, key, val):
+        if val:
+            self._cache[key] = val
+        else:
+            self._cache.pop(key, None)
+            self._known_keys.pop(key[0], None)
 
 
 class tree(object):
@@ -157,8 +182,8 @@ class tree(object):
 
         self.categories = CategoryIterValLazyDict(
             self._get_categories, self._get_categories)
-        self.packages   = PackageIterValLazyDict(
-            self.categories.iterkeys, self._get_packages)
+        self.packages   = PackageMapping(self.categories,
+            self._get_packages)
         self.versions = VersionMapping(self.packages, self._get_versions)
 
         self.frozen = frozen
@@ -394,11 +419,15 @@ class tree(object):
 
         notify the repository that a pkg it provides is being removed
         """
-        l = len(self.versions[(pkg.category, pkg.package)])
-        if l == 1:
+        ver_key = (pkg.category, pkg.package)
+        l = [x for x in self.versions[ver_key] if x != pkg.fullver]
+        if not l:
             # dead package
+            wipe = list(self.packages[pkg.category]) == [pkg.package]
             self.packages.force_regen(pkg.category)
-        self.versions.force_regen((pkg.category, pkg.package))
+            if wipe:
+                self.categories.force_regen(pkg.category)
+        self.versions.force_regen(ver_key, tuple(l))
 
     def notify_add_package(self, pkg):
         """
@@ -406,12 +435,13 @@ class tree(object):
 
         notify the repository that a pkg is being addeded to it
         """
+        ver_key = (pkg.category, pkg.package)
+        s = set(self.versions.get(ver_key, []))
+        s.add(pkg.fullver)
         if pkg.category not in self.categories:
-            self.category.force_add(pkg.category)
-#            self.categories.force_regen(pkg.category)
-        if pkg.category not in self.packages:
-            self.packages.force_regen(pkg.category)
-        self.versions.force_regen((pkg.category, pkg.package))
+            self.categories.force_add(pkg.category)
+        self.packages.force_regen(pkg.category)
+        self.versions.force_regen(ver_key, tuple(s))
 
     def install(self, pkg, *a, **kw):
         """

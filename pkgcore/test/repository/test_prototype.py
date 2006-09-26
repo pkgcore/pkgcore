@@ -112,3 +112,43 @@ class TestPrototype(TestCase):
                     "dev-util/diffball-1.0", "dev-util/diffball-0.7",
                     "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
                     "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
+
+    def test_notify_remove(self):
+        pkg = CPV("dev-util/diffball-1.0")
+        self.repo.notify_remove_package(pkg)
+        self.assertEqual(list(self.repo.versions[
+            (pkg.category, pkg.package)]), ["0.7"])
+
+        # test version being emptied, and package updated
+        pkg = CPV("dev-util/diffball-0.7")
+        self.repo.notify_remove_package(pkg)
+        self.assertNotIn((pkg.category, pkg.package), self.repo.versions)
+        self.assertNotIn(pkg.package, self.repo.packages[pkg.category])
+        
+        # test no remaining packages, category updated
+        pkg = CPV("dev-util/bsdiff-0.4.1")
+        self.repo.notify_remove_package(pkg)
+
+        pkg = CPV("dev-util/bsdiff-0.4.2")
+        self.repo.notify_remove_package(pkg)
+        self.assertNotIn((pkg.category, pkg.package), self.repo.versions)
+        self.assertNotIn(pkg.category, self.repo.packages)
+        self.assertNotIn(pkg.category, self.repo.categories)
+
+    def test_notify_add(self):
+        pkg = CPV("dev-util/diffball-1.2")
+        self.repo.notify_add_package(pkg)
+        self.assertEqual(sorted(self.repo.versions[
+            (pkg.category, pkg.package)]), sorted(["1.0", "1.2", "0.7"]))
+
+        pkg = CPV("foo/bar-1.0")
+        self.repo.notify_add_package(pkg)
+        self.assertIn(pkg.category, self.repo.categories)
+        self.assertIn(pkg.category, self.repo.packages)
+        ver_key = (pkg.category, pkg.package)
+        self.assertIn(ver_key, self.repo.versions)
+        self.assertEqual(list(self.repo.versions[ver_key]), ["1.0"])
+        
+        pkg = CPV("foo/cows-1.0")
+        self.repo.notify_add_package(pkg)
+        self.assertIn((pkg.category, pkg.package), self.repo.versions)

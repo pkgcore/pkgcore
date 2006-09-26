@@ -21,3 +21,18 @@ class SimpleTree(tree):
     def _get_versions(self, cp_key):
         return tuple(self.cpv_dict[cp_key[0]][cp_key[1]])
 
+    def notify_remove_package(self, pkg):
+        vers = self.cpv_dict[pkg.category][pkg.package]
+        vers = [x for x in vers if x != pkg.fullver]
+        if vers:
+            self.cpv_dict[pkg.category][pkg.package] = vers
+        else:
+            del self.cpv_dict[pkg.category][pkg.package]
+            if not self.cpv_dict[pkg.category]:
+                del self.cpv_dict[pkg.category]
+        tree.notify_remove_package(self, pkg)
+
+    def notify_add_package(self, pkg):
+        self.cpv_dict.setdefault(pkg.category,
+            {}).setdefault(pkg.package, []).append(pkg.fullver)
+        tree.notify_add_package(self, pkg)

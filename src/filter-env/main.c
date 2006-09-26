@@ -40,14 +40,20 @@
 #define DESIRED_NONMATCH    0
 
 static int regex_matches(regex_t *re, const char *buff, int desired_value);
-static const char *process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, regex_t *func_re, char endchar);
-static int append_to_filter_list(char ***list, int *count, int *alloced, const char *string);
+static const char *process_scope(FILE *out_fd, const char *buff,
+    const char *end, regex_t *var_re, regex_t *func_re, char endchar);
+static int append_to_filter_list(char ***list, int *count, int *alloced,
+    const char *string);
 static const char *build_regex_string(const char **list, size_t count);
-static inline const char *walk_command_no_parsing(const char *p, const char *end, const char endchar);
-static inline const char *walk_command_dollared_parsing(const char *p, const char *end, const char endchar);
-static inline const char *walk_command_escaped_parsing(const char *p, const char *end, const char endchar);
+static inline const char *walk_command_no_parsing(const char *p,
+    const char *end, const char endchar);
+static inline const char *walk_command_dollared_parsing(const char *p,
+    const char *end, const char endchar);
+static inline const char *walk_command_escaped_parsing(const char *p,
+    const char *end, const char endchar);
 static inline const char *walk_command_pound(const char *p);
-static const char *walk_command_complex(const char *p, const char *end, char endchar, const char interpret_level);
+static const char *walk_command_complex(const char *p, const char *end,
+    char endchar, const char interpret_level);
 static inline const char *is_function(const char *p, char **start, char **end);
 static inline const char *is_envvar(const char *p, char **start, char **end);
 static void *xmalloc(size_t size);
@@ -85,7 +91,8 @@ static void *xmalloc(size_t size) {
 no_return void usage(int exit_status)
 {
     fprintf((exit_status ? stderr : stdout),
-        "Usage: [-i file] [-F] [-f func1,func2,func3,...] [-V] [-v var1,var2,var3,...]\n");
+        "Usage: [-i file] [-F] [-f func1,func2,func3,...] [-V] "
+            "[-v var1,var2,var3,...]\n");
     exit(exit_status);
 }
 
@@ -129,12 +136,16 @@ int main(int argc, char *const *argv)
             break;
         case 'f':
             d2printf("wassube.  opt_art=%s\n", optarg);
-            if (append_to_filter_list(&funcs, &funcs_count, &funcs_alloced, optarg))
-                err(USAGE_FAIL, "-f arg '%s', isn't valid.  must be comma delimited\n", optarg);
+            if (append_to_filter_list(&funcs, &funcs_count, &funcs_alloced,
+                optarg))
+                err(USAGE_FAIL, "-f arg '%s', isn't valid.  must be comma "
+                    "delimited\n", optarg);
             break;
         case 'v':
-            if (append_to_filter_list(&vars, &vars_count, &vars_alloced, optarg))
-                err(USAGE_FAIL, "-v arg '%s', isn't valid.  must be comma delimited\n", optarg);
+            if (append_to_filter_list(&vars, &vars_count, &vars_alloced,
+                optarg))
+                err(USAGE_FAIL, "-v arg '%s', isn't valid.  must be comma "
+                    "delimited\n", optarg);
             break;
         case 'F':
             desired_func_match = DESIRED_NONMATCH;
@@ -153,7 +164,8 @@ int main(int argc, char *const *argv)
         usage(USAGE_FAIL);
 
     if (file_size == 0) {
-        /* print usage if user attempts to call filter-env from cmdline directly */         
+        /* print usage if user attempts to call filter-env from cmdline
+            directly */         
         if (ttyname(0) != NULL)
             usage(EXIT_FAILURE);
         file_in = stdin;
@@ -209,7 +221,8 @@ int main(int argc, char *const *argv)
             file_size += c;
             /* realloc +1 for null termination. */
             if (buff_alloced < file_size + 4096) {
-                if ((file_buff = (char *)realloc(file_buff, buff_alloced + 4096)) == NULL) {
+                if ((file_buff = (char *)realloc(file_buff,
+                    buff_alloced + 4096)) == NULL) {
                     err(MEM_FAIL, "failed allocing needed memory for file.\n");
                 }
                 buff_alloced += 4096;
@@ -220,7 +233,8 @@ int main(int argc, char *const *argv)
     file_buff[file_size] = '\0';
     fclose(file_in);
 
-    end = process_scope(file_out,file_buff, file_buff + file_size,pvre, pfre, '\0');
+    end = process_scope(file_out,file_buff, file_buff + file_size, pvre,
+        pfre, '\0');
     d1printf("%zi == %zi\n", end - file_buff, file_size);
 
     fflush(file_out);
@@ -232,7 +246,8 @@ int main(int argc, char *const *argv)
 }
 
 static int
-append_to_filter_list(char ***list, int *count, int *alloced, const char *string)
+append_to_filter_list(char ***list, int *count, int *alloced,
+    const char *string)
 {
     char *d = NULL;
     char **l = *list;
@@ -247,7 +262,8 @@ append_to_filter_list(char ***list, int *count, int *alloced, const char *string
 
     while (d != NULL) {
         if (*alloced == *count) {
-            if ((l=(char **)realloc(l, sizeof(char*) * (*alloced + 10))) == NULL)
+            if ((l=(char **)realloc(l, sizeof(char*) * (*alloced + 10)))
+                == NULL)
                 return 1;
             *alloced += 10;
         }
@@ -316,7 +332,8 @@ build_regex_string(const char **list, size_t count)
 static const inline char *
 is_function(const char *p, char **start, char **end)
 {
-    #define SKIP_SPACES(p) while('\0' != *(p) && (' ' == *(p) || '\t' == *(p))) ++p;
+    #define SKIP_SPACES(p) while('\0' != *(p) && \
+        (' ' == *(p) || '\t' == *(p))) ++p;
     #define FUNC_LEN 8
     SKIP_SPACES(p);
     if(strncmp(p, "function", FUNC_LEN) == 0)
@@ -324,7 +341,8 @@ is_function(const char *p, char **start, char **end)
     while('\0' != *p && isspace(*p))
         ++p;
     *start = (char *)p;
-    while('\0' != *p && ' ' != *p && '\t' != *p && '\n' != *p && '=' != *p && '"' != *p && '\'' != *p && '(' != *p && ')' != *p)
+    while('\0' != *p && ' ' != *p && '\t' != *p && '\n' != *p &&
+        '=' != *p && '"' != *p && '\'' != *p && '(' != *p && ')' != *p)
         ++p;
     *end = (char *)p;
     if(*end == *start)
@@ -382,12 +400,15 @@ regex_matches(regex_t *re, const char *buff, int desired_value)
     assert(buff != NULL);
     assert(re != NULL);
     regexec(re, buff, 1, match, 0);
-//    fprintf(stderr,"result was %i for %s, returning %i\n", match[0].rm_so, buff,i);
+/*    fprintf(stderr,"result was %i for %s, returning %i\n", match[0].rm_so,
+        buff,i);
+*/
     return match[0].rm_so != desired_value ? 1 : 0;
 }
 
 static const char *
-process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, regex_t *func_re, char endchar)
+process_scope(FILE *out_fd, const char *buff, const char *end,
+    regex_t *var_re, regex_t *func_re, char endchar)
 {
     const char *p = NULL;
     const char *window_start = NULL, *window_end = NULL;
@@ -431,7 +452,9 @@ process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, 
 
             new_p = process_scope(NULL, new_p, end, NULL, NULL, '}');
             d1printf("ended processing  '%s'\n", temp_string);
-            if (func_re != NULL && regex_matches(func_re, temp_string, desired_func_match)) {
+            if (func_re != NULL && regex_matches(func_re, temp_string,
+                desired_func_match)) {
+                
                 /* well, it matched.  so it gets skipped. */
                 d1printf("filtering func '%s'\n", temp_string);
                 window_end = com_start;
@@ -494,7 +517,8 @@ process_scope(FILE *out_fd, const char *buff, const char *end, regex_t *var_re, 
                     }
                     ++p;
                 }
-                if (var_re && regex_matches(var_re, temp_string, desired_var_match)) {
+                if (var_re && regex_matches(var_re, temp_string,
+                    desired_var_match)) {
                     //this would be filtered.
                     window_end = com_start;
                 }
@@ -527,7 +551,8 @@ walk_command_no_parsing(const char *p, const char *end, const char endchar)
 }
 
 static inline const char *
-walk_command_dollared_parsing(const char *p, const char *end, const char endchar)
+walk_command_dollared_parsing(const char *p, const char *end,
+    const char endchar)
 {
     while (p < end) {
         if (*p == endchar) {
@@ -545,13 +570,15 @@ walk_here_command(const char *p, const char *end)
 {
     char *end_here, *temp_string;
     ++p;
-    d2printf("starting here processing for COMMAND and l2 at p == '%.10s'\n", p);
+    d2printf("starting here processing for COMMAND and l2 at p == '%.10s'\n",
+        p);
     if (p >= end) {
         fprintf(stderr, "bailing\n");
         return p;
     }
     if ('<' == *p) {
-        d2printf("correction, it's a third level here.  Handing back to command parsing\n");
+        d2printf("correction, it's a third level here.  Handing back to "
+            "command parsing\n");
         return ++p;
     }
     while (p < end && (isspace(*p) || '-' == *p))
@@ -566,14 +593,17 @@ walk_here_command(const char *p, const char *end)
     temp_string = xmalloc(end_here -p + 1);
     memcpy(temp_string, p, end_here - p);
     temp_string[end_here - p] = '\0';
-    d2printf("matched len('%zi')/'%s' for a here word\n", end_here - p, temp_string);
-    // XXX watch this.  potential for horkage.  need to do the quote removal thing.
-    //this sucks.
-
+    d2printf("matched len('%zi')/'%s' for a here word\n", end_here - p,
+        temp_string);
+    /* XXX watch this.  potential for horkage.  need to do the quote
+        removal thing.
+        this sucks.
+    */
     ++end_here;
     if (end_here >= end)
         return end_here;
-    end_here = (char *)bmh_search((unsigned char*)temp_string, (unsigned char*)end_here, end - end_here);
+    end_here = (char *)bmh_search((unsigned char*)temp_string,
+        (unsigned char*)end_here, end - end_here);
     d1printf("bmh returned %p\n", end_here);
     if (end_here) {
         d2printf("bmh = %.10s\n", end_here);
@@ -598,7 +628,8 @@ walk_command_pound(const char *p)
 }
 
 static const char *
-walk_command_complex(const char *p, const char *end, char endchar, const char interpret_level)
+walk_command_complex(const char *p, const char *end, char endchar,
+    const char interpret_level)
 {
     int here_count = 0;
     const char *start = p;
@@ -673,4 +704,3 @@ walk_command_escaped_parsing(const char *p, const char *end, char endchar)
     }
     return p;
 }
-

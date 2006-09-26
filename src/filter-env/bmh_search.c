@@ -11,7 +11,8 @@ aparently distributed by Addison-Wesley Publishing Co. Inc, http://aw.com/
 #include <string.h>
 #define MAXCHAR 256
 
-const char *bmh_search(const unsigned char *pat, const unsigned char *text, int n)
+const char *bmh_search(const unsigned char *pat, const unsigned char *text,
+    int n)
 {
     int i, j, m, k, skip[MAXCHAR];
 

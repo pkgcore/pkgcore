@@ -109,7 +109,7 @@ class tree(prototype.tree):
 
     _metadata_rewrites = {
         "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
-        "use":"USE", "eapi":"EAPI", "CONTENTS":"contents"}
+        "use":"USE", "eapi":"EAPI", "CONTENTS":"contents", "provides":"PROVIDE"}
 
     def _get_metadata(self, pkg):
         return IndeterminantDict(partial(self._internal_load_key,
@@ -119,7 +119,7 @@ class tree(prototype.tree):
     def _internal_load_key(self, path, key):
         key = self._metadata_rewrites.get(key, key)
         if key == "contents":
-            data = ContentsFile(os.path.join(path, "CONTENTS"))
+            data = ContentsFile(os.path.join(path, "CONTENTS"), mutable=True)
         elif key == "environment":
             fp = os.path.join(path, key)
             if not os.path.exists(fp+".bz2"):

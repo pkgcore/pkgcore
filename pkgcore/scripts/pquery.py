@@ -328,7 +328,8 @@ class OptionParser(commandline.OptionParser):
                            'use', 'iuse', 'description', 'longdescription',
                            'herds', 'license', 'uris', 'files',
                            'slot', 'maintainers', 'restrict', 'repo',
-                           'alldepends', 'path', 'environment', 'keywords')
+                           'alldepends', 'path', 'environment', 'keywords',
+                           'homepage')
 
         output = self.add_option_group('Output formatting')
         output.add_option(

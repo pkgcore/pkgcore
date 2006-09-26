@@ -124,9 +124,6 @@ econf()
 			EXTRA_ECONF="--libdir=${CONF_LIBDIR_RESULT} ${EXTRA_ECONF}"
 		fi
 		local EECONF_CACHE
-		if request_confcache "${T}/local_cache"; then
-			EECONF_CACHE="--cache-file=${T}/local_cache"
-		fi
 		echo ${ECONF_SOURCE}/configure \
 			--prefix=/usr \
 			--host=${CHOST} \
@@ -159,10 +156,7 @@ econf()
 			die "econf failed"
 		fi
 
-		# store the returned exit code.  don't rely on update_confcache returning true.
-		ret=$?
-		update_confcache "${T}/local_cache"
-		return $ret
+		return $?
 	else
 		die "no configure script found"
 	fi

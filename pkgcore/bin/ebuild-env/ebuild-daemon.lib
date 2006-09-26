@@ -18,63 +18,6 @@ request_sandbox_summary() {
 	done
 }		
 
-# request the global confcache be transferred to $1 for usage.
-# flips the sandbox vars as needed.
-request_confcache() {
-	if ! hasq confcache $FEATURES || ! hasq sandbox $FEATURES || hasq confcache $RESTRICT; then
-		return 1
-	fi
-	local line
-	speak "request_confcache $1"
-	listen line s
-	while [ "${line#request}" != "${line}" ]; do
-		# var requests for updating the cache's ac_cv_env
-		# send set, then val
-		line="$(echo ${line#request})"
-		if [ "${!line:+set}" == "set" ]; then
-			speak set
-			speak "${!line}"
-		else
-			speak unset
-		fi
-		listen line
-	done
-	if [ "${line:0:9}" == "location:" ]; then
-		cp -v "${line:10}" $1
-	elif [ "${line}" == "empty" ]; then
-		echo ">>> Confcache is empty, starting anew"
-	fi
-	if hasq "${line/: *}" location empty; then
-		echo ">>> Temporary configure cache file is $1"
-		export PORTAGE_CONFCACHE_STATE=1
-		export SANDBOX_DEBUG_LOG="${T}/debug_log"
-		export SANDBOX_DEBUG=1
-		return 0
-	fi
-	return 1
-}
-
-# notify python side configure calls are finished.
-update_confcache() {
-	local line
-	if [ "$PORTAGE_CONFCACHE_STATE" != "1" ]; then
-		return 0
-	fi
-	unset SANDBOX_DEBUG
-	unset PORTAGE_CONFCACHE_STATE
-	if ! hasq sandbox $FEATURES; then
-		echo "not updating confcache, sandbox isn't set in features" >&2
-		return 1
-	fi
-	speak "update_confcache $SANDBOX_DEBUG_LOG $1"
-	unset SANDBOX_DEBUG_LOG
-	listen line
-	if [ "$line" == "updated" ]; then
-		return 0
-	fi
-	return 1
-}
-
 internal_inherit() {
 	local line
 	if [ "$#" != "1" ]; then

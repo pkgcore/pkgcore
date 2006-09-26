@@ -324,7 +324,7 @@ class OptionParser(commandline.OptionParser):
             'WARNING: currently not completely reliable.')
         # XXX fix the negate stuff and remove that warning.
 
-        printable_attrs = ('rdepends', 'depends', 'post_rdepends',
+        printable_attrs = ('rdepends', 'depends', 'post_rdepends', 'provides',
                            'use', 'iuse', 'description', 'longdescription',
                            'herds', 'license', 'uris', 'files',
                            'slot', 'maintainers', 'restrict', 'repo',

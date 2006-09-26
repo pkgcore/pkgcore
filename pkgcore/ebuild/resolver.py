@@ -7,6 +7,7 @@ resolver configuration to match portage behaviour (misbehaviour in a few spots)
 
 __all__ = ["upgrade_resolver", "min_install_resolver"]
 
+from pkgcore.repository import virtual
 from pkgcore.resolver import plan
 from pkgcore.util.demandload import demandload
 
@@ -125,10 +126,13 @@ class empty_tree_merge_plan(plan.merge_plan):
             for valid args
         """
         plan.merge_plan.__init__(self, *args, **kwds)
+        # XXX *cough*, hack.
+        self._empty_dbs = list(self.dbs) + [x for x in self.livefs_dbs
+            if isinstance(x.__db__, virtual.tree)]
 
     def add_atom(self, atom):
         return plan.merge_plan.add_atom(
-            self, atom, dbs=self.dbs)
+            self, atom, dbs=self._empty_dbs)
 
 
 def generate_replace_resolver_kls(resolver_kls):

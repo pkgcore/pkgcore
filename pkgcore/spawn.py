@@ -300,7 +300,7 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask):
     os.execve(binary, myargs, env)
 
 
-def find_binary(binary):
+def find_binary(binary, paths=None):
     """look through the PATH environment, finding the binary to execute"""
 
     if os.path.isabs(binary):
@@ -308,7 +308,10 @@ def find_binary(binary):
             raise CommandNotFound(binary)
         return binary
 
-    for path in os.environ.get("PATH", "").split(":"):
+    if paths is None:
+        paths = os.environ.get("PATH", "").split(":")
+    
+    for path in paths:
         filename = "%s/%s" % (path, binary)
         if os.access(filename, os.X_OK) and os.path.isfile(filename):
             return filename

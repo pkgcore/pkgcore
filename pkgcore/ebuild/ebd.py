@@ -152,7 +152,7 @@ class ebd(object):
 
     def __init_workdir__(self):
         # don't fool with this, without fooling with setup.
-        self.base_tmpdir = self.env.pop("PORTAGE_TMPDIR")
+        self.base_tmpdir = self.env["PORTAGE_TMPDIR"]
         self.tmpdir = normpath(os.path.join(self.base_tmpdir, "portage"))
         self.env["HOME"] = os.path.join(self.tmpdir, "homedir")
 

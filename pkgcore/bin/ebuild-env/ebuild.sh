@@ -21,9 +21,12 @@
 # few notes on general env stuff- if it's not ebuild specific or a user option, it's typically marked
 # readonly.  This limits users, but also helps to ensure that reloaded envs from older portages don't
 # overwrite an internal ebd.sh function that has since changed.
+
 ORIG_VARS=`declare | egrep '^[^[:space:]{}()]+=' | cut -s -d '=' -f 1`
 ORIG_FUNCS=`declare -F | cut -s -d ' ' -f 3`
+
 DONT_EXPORT_FUNCS='portageq speak'
+
 DONT_EXPORT_VARS="ORIG_VARS GROUPS ORIG_FUNCS FUNCNAME DAEMONIZED CCACHE.* DISTCC.* AUTOCLEAN CLEAN_DELAY SYNC
 \(TMP\|\)DIR FEATURES CONFIG_PROTECT.* P\?WORKDIR \(FETCH\|RESUME\) COMMAND RSYNC_.* GENTOO_MIRRORS 
 \(DIST\|FILES\|RPM\|ECLASS\)DIR HOME MUST_EXPORT_ENV QA_CONTROLLED_EXTERNALLY COLORTERM COLS ROWS HOSTNAME
@@ -31,6 +34,7 @@ myarg SANDBOX_.* BASH.* EUID PPID SHELLOPTS UID ACCEPT_\(KEYWORDS\|LICENSE\) BUI
 DISPLAY \(EBUILD\)\?_PHASE PORTAGE_.* RC_.* SUDO_.* IFS PATH LD_PRELOAD ret line phases D EMERGE_FROM
 PORT\(_LOGDIR\|DIR\(_OVERLAY\)\?\) ROOT TERM _ done e ENDCOLS PROFILE_.* BRACKET BAD WARN GOOD NORMAL EBUILD ECLASS LINENO
 HILITE IMAGE TMP"
+
 # flip this on to enable extra noisy output for debugging.
 #DEBUGGING="yes"
 
@@ -155,34 +159,62 @@ umask 022
 # the sandbox is disabled by default except when overridden in the relevant stages
 export SANDBOX_ON="0"
 
+escape_regex() {
+    local f
+    while [ -n "$1" ]; do
+        f="${1//+/\+}"
+        f="${f//.*/[A-Za-z0-9_-+./]*}"
+        echo -n "$f"
+        shift
+    done
+}
+
 gen_func_filter() {
-	if [ "$#" == "1" ]; then 
-		echo -n "$1"
-		return
-	fi
-	echo -n "\($1"
-	shift
-	while [ -n "$1" ]; do
-		# expand .* to a sane range
-		echo -n "\|${1//.*/[A-Za-z0-9_-+./]*}"
-		shift
-	done
-	echo -n "\)"
+    while [ -n "$1" ]; do
+        echo -n "$(escape_regex "$1")"
+        [ "$#" != 1 ] && echo -n ','
+        shift
+    done
+}
+
+gen_regex_func_filter() {
+    local f
+    if [ "$1" == 1 ]; then
+        echo -n "$(escape_regex "$1")"
+        return
+    fi
+    echo -n "\($(escape_regex "$1")"
+    shift
+    while [ -n "$1" ]; do
+        echo -n "\|$(escape_regex "$1")"
+        shift
+    done
+    echo -n "\)"
 }
 
 gen_var_filter() {
-	if [ "$#" == 1 ]; then 
-		echo -n "$1"
-		return
-	fi
-	echo -n "\($1"
-	shift
-	while [ -n "$1" ]; do
-		# expand .* to a sane range
-		echo -n "\|${1//.*/[A-Za-z0-9_+]*}"
-		shift
-	done
-	echo -n "\)"
+    local _internal_var
+    while [ -n "$1" ]; do
+        echo -n "$1"
+        [ "$#" != 1 ] && echo -n ','
+        shift
+    done
+}
+
+
+gen_regex_var_filter() {
+    local _internal_var
+    if [ "$#" == 1 ]; then
+        echo -n "$1"
+        return
+    fi
+    echo -n "\($1"
+    shift
+    while [ -n "$1" ]; do
+        echo -n "\|$1"
+        shift
+    done
+    echo -n '\)'
 }
 
 # func for beeping and delaying a defined period of time.
@@ -210,39 +242,21 @@ dump_environ() {
 	#env dump, if it doesn't match a var pattern, stop processing, else print only if
 	#it doesn't match one of the filter lists.
 	# vars, then funcs.
-	declare |  sed -n "/[a-zA-Z0-9_]\+=/! { q; }; /^$(gen_var_filter ${DONT_EXPORT_VARS} f x)=/! p;"
-	fails=
-	for x in $(declare -F | sed -n "s/^declare -f[^ ]* \+\([^ ]\+\) *\$/\1/; /^$(gen_func_filter ${DONT_EXPORT_FUNCS})$/! p;"); do
-		y=$(declare -f "$x" 2> /dev/null)
-		if [[ $? != 0 ]]; then
-			# older bash that lacks declare -f x-y validity check fix.
-			fails="${fails:+${fails} }$x"
-		else
-			echo "$y"
-		fi
-	done
-	if [ -n "$fails" ]; then
-		declare | filter-env -F -f "${fails// /,}" -v '.*'
-	fi
-	unset fails
+    declare | filter-env -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x )"
 	if ! hasq "--no-attributes" "$@"; then
 		echo $'reinstate_loaded_env_attributes ()\n{'
-#		echo "echo starting reinstate \${EBUILD_PHASE}>&2;"
 		for y in export 'declare -i' readonly; do
-			x=$(${y} | sed -n "/declare \(-[^ ]\+ \)*/!d; s:^declare \(-[^ ]\+ \)*\([A-Za-z0-9_+]\+\)\(=.*$\)\?$:\2:; /^$(gen_var_filter ${DONT_EXPORT_VARS} x y)$/! p;")
+			x=$(${y} | sed -n "/declare \(-[^ ]\+ \)*/!d; s:^declare \(-[^ ]\+ \)*\([A-Za-z0-9_+]\+\)\(=.*$\)\?$:\2:; /^$(gen_regex_var_filter ${DONT_EXPORT_VARS} x y)$/! p;")
 			[ -n "$x" ] && echo "    ${y} $(echo $x);"
-#			echo "echo dump- $y $(echo $x) >&2;"
-#			echo "echo dump- $y original was $(echo $(${y})) >&2"
 		done
 		
 		# if it's just declare -f some_func, filter it, else drop it if it's one of the filtered funcs
-		declare -F | sed -n "/^declare -[^ ]\( \|[^ ]? $(gen_func_filter ${DONT_EXPORT_FUNCS})$\)\?/d; s/^/    /;s/;*$/;/p;"
+		declare -F | sed -n "/^declare -[^ ]\( \|[^ ]? $(gen_regex_func_filter ${DONT_EXPORT_FUNCS})$\)\?/d; s/^/    /;s/;*$/;/p;"
 
 		shopt -p | sed -e 's:^:    :; s/;*$/;/;'
 		echo "}"
 	fi
 	
-#	debug-print "dumped"
 	if [ -n "${DEBUGGING}" ]; then
 		echo "#dumping debug info"
 		echo "#var filter..."
@@ -662,7 +676,7 @@ f="$(declare | {
 if [ -z "${ORIG_VARS}" ]; then
 	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} ${f}"
 else
-	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $(echo "${f}" | egrep -v "^$(gen_var_filter ${ORIG_VARS})\$")"
+	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $(echo "${f}" | egrep -v "^$(gen_regex_var_filter ${ORIG_VARS})\$")"
 fi
 unset f
 

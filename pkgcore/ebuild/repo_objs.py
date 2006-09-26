@@ -10,7 +10,8 @@ from pkgcore.util.demandload import demandload
 demandload(globals(),
     "pkgcore.util.xml:etree "
     "pkgcore.ebuild:digest "
-    "pkgcore.util:mappings ")
+    "pkgcore.util:mappings "
+    "errno ")
 
 
 class MetadataXml(object):
@@ -39,7 +40,17 @@ class MetadataXml(object):
     del attr
 
     def _parse_xml(self):
-        tree = etree.parse(self._source.get_fileobj())
+        # XXX we probably should not be checking for IOError here. The
+        # source should raise some more abstract exception (since
+        # get_fileobj() may not return a normal local file).
+        try:
+            tree = etree.parse(self._source.get_fileobj())
+        except IOError, e:
+            if e.errno != errno.ENOENT:
+                raise
+            self._maintainers = self._herds = ()
+            self._longdescription = self._source = None
+            return
         maintainers = []
         for x in tree.findall("maintainer"):
             name = email = None

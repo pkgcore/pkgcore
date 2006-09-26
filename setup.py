@@ -5,7 +5,7 @@ import os
 import sys
 import errno
 
-from distutils import core, ccompiler, log
+from distutils import core, ccompiler, log, sysconfig
 from distutils.command import build, sdist, build_py
 from stat import ST_MODE
 
@@ -64,6 +64,19 @@ class build_filter_env(core.Command):
     def run(self):
         compiler = ccompiler.new_compiler(
             compiler=self.compiler, dry_run=self.dry_run, force=self.force)
+        sysconfig.customize_compiler(compiler)
+        cc = ' '.join(compiler.compiler)
+        
+        for x in ("BASECFLAGS", "CCSHARED", "LDFLAGS"):
+            f = sysconfig.get_config_var(x)
+            if isinstance(f, basestring):
+                cc = cc.replace(f, '')
+            elif f is None:
+                continue
+            else:
+                cc = cc.replace(" ".join(f), '')
+
+        compiler.set_executables(compiler=cc, compiler_so=cc)
         objects = compiler.compile(list(
                 os.path.join('src', 'filter-env', name)
                 for name in ('main.c', 'bmh_search.c')), debug=self.debug)

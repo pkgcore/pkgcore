@@ -63,4 +63,4 @@ tc-arch ()
 }
 """
         self.assertIn('tc-arch', "".join(
-            self.get_output(data, vars='MODULE_NAMES', gdb=True)))
+            self.get_output(data, vars='MODULE_NAMES')))

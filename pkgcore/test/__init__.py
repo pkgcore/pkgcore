@@ -94,6 +94,13 @@ class TestCase(unittest.TestCase, object):
         self.failUnless(
             needle not in haystack, reason or '%r in %r' % (needle, haystack))
 
+    # unittest and twisted each have a differing count of how many frames
+    # to pop off when displaying an exception; thus we force an extra
+    # frame so that trial results are usable
+    @staticmethod
+    def forced_extra_frame(test):
+        test()
+
     def run(self, result=None):
         if result is None:
             result = self.defaultTestResult()
@@ -123,7 +130,7 @@ class TestCase(unittest.TestCase, object):
             ok = False
             try:
                 try:
-                    testMethod()
+                    self.forced_extra_frame(testMethod)
                     ok = True
                 except self.failureException:
                     exc = sys.exc_info()
@@ -131,7 +138,7 @@ class TestCase(unittest.TestCase, object):
                         _tryResultCall(result, 'addExpectedFailure',
                                        self, str(exc[1]), todo)
                     else:
-                        result.addFailure(self, sys.exc_info())
+                        result.addFailure(self, exc)
                 except SkipTest, e:
                     _tryResultCall(result, 'addSkip', self, str(e))
                 except KeyboardInterrupt:

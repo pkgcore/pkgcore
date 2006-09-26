@@ -49,8 +49,10 @@ static inline const char *walk_command_no_parsing(const char *p,
     const char *end, const char endchar);
 static inline const char *walk_command_dollared_parsing(const char *p,
     const char *end, const char endchar);
-static inline const char *walk_command_escaped_parsing(const char *p,
-    const char *end, const char endchar);
+#define walk_command_escaped_parsing(start, end, endchar) \
+    raw_walk_command_escaped_parsing((start), (end), (endchar), 0)
+static inline const char *raw_walk_command_escaped_parsing(const char *p,
+    const char *end, const char endchar, char var_expansion);
 static inline const char *walk_command_pound(const char *p);
 static const char *walk_command_complex(const char *p, const char *end,
     char endchar, const char interpret_level);
@@ -499,7 +501,8 @@ process_scope(FILE *out_fd, const char *buff, const char *end,
                         } else if ('\'' == p[1]) {
                             p = walk_command_dollared_parsing(p + 2, end, '\'');
                         } else if ('{' == p[1]) {
-                            p = walk_command_escaped_parsing(p + 2, end, '}');
+                            p = raw_walk_command_escaped_parsing(p + 2, end,
+                                '}', 1);
                         } else {
                             while (p < end && !isspace(*p)) {
                                 if ('\\' == *p)
@@ -671,7 +674,8 @@ walk_command_complex(const char *p, const char *end, char endchar,
 }
 
 static const char *
-walk_command_escaped_parsing(const char *p, const char *end, char endchar)
+raw_walk_command_escaped_parsing(const char *p, const char *end, char endchar,
+    char var_expansion)
 {
     int dollared = 0;
     while (p < end) {
@@ -683,15 +687,17 @@ walk_command_escaped_parsing(const char *p, const char *end, char endchar)
             // if double quote parsing, must be ${, else can be either
             if('"' != endchar || dollared) {
                 //process_scope.  this gets fun.
-                p = walk_command_escaped_parsing(p + 1, end, '}');
+                p = raw_walk_command_escaped_parsing(p + 1, end, '}',
+                    dollared ? 1 : var_expansion);
             }
         } else if ('(' == *p) {
             // if double quote parsing, must be $(, else can be either
-            if('"' != endchar || dollared) {
-                p = walk_command_escaped_parsing(p + 1, end, ')');
+            if(('"' != endchar || dollared) && !var_expansion) {
+                p = raw_walk_command_escaped_parsing(p + 1, end, ')',
+                    0);
             }
         } else if ('`' == *p || '"' == *p) {
-            p = walk_command_escaped_parsing(p + 1, end, *p);
+            p = raw_walk_command_escaped_parsing(p + 1, end, *p, var_expansion);
         } else if ('\'' == *p && '"' != endchar) {
             p = walk_command_no_parsing(p + 1, end, '\'');
         } else if('$' == *p) {

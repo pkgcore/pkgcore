@@ -35,18 +35,19 @@ class CategoryIterValLazyDict(IterValLazyDict):
             # force lazyvaldict to do the _keys_func work
             self[key]
         except KeyError:
-            self._keys.add(key)
+            s = set(self._keys)
+            s.add(key)
+            self._keys = tuple(s)
 
     def force_remove(self, key):
         try:
             # force lazyvaldict to do the _keys_func work
             self[key]
-            self._keys.remove(key)
-            if key in self._vals:
-                del self._vals[key]
+            if key in self:
+                self._keys = tuple(x for x in self._keys if x != key)
         except KeyError:
             pass
-
+    
     def __iter__(self):
         return self.iterkeys()
 

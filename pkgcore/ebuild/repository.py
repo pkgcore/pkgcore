@@ -182,9 +182,8 @@ class UnconfiguredTree(prototype.tree):
         return o
         
     def _get_metadata_xml(self, category, package):
-        src = local_source(os.path.join(self.base, category, package,
-            "metadata.xml"))
-        return repo_objs.MetadataXml(src)
+        return repo_objs.LocalMetadataXml(os.path.join(self.base, category,
+            package, "metadata.xml"))
 
     def _get_manifest(self, category, package):
         return repo_objs.Manifest(os.path.join(self.base, category, package,

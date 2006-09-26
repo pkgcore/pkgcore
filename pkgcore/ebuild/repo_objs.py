@@ -39,18 +39,10 @@ class MetadataXml(object):
         locals()[attr] = property(post_curry(_generic_attr, "_"+attr))
     del attr
 
-    def _parse_xml(self):
-        # XXX we probably should not be checking for IOError here. The
-        # source should raise some more abstract exception (since
-        # get_fileobj() may not return a normal local file).
-        try:
-            tree = etree.parse(self._source.get_fileobj())
-        except IOError, e:
-            if e.errno != errno.ENOENT:
-                raise
-            self._maintainers = self._herds = ()
-            self._longdescription = self._source = None
-            return
+    def _parse_xml(self, source=None):
+        if source is None:
+            source = self._source.get_fileobj()
+        tree = etree.parse(source)
         maintainers = []
         for x in tree.findall("maintainer"):
             name = email = None
@@ -77,6 +69,23 @@ class MetadataXml(object):
             longdesc = ' '.join(longdesc.strip().split())
         self._longdescription = longdesc
         self._source = None
+
+
+class LocalMetadataXml(MetadataXml):
+
+    __slots__ = ()
+    
+    def _parse_xml(self):
+        try:
+            MetadataXml._parse_xml(self, open(self._source, "rb", 32768))
+        except IOError, oe:
+            if oe.errno != errno.ENOENT:
+                raise
+            self._maintainers = ()
+            self._herds = ()
+            self._longdescription = None
+            self._source = None
+            
 
 
 class Manifest(object):

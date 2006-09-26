@@ -44,26 +44,22 @@ class TestContentsSet(TestCase):
         self.assertEqual(
             len(cs),
             len(set(x.location for x in self.files + self.dirs + self.links)))
-        self.assertRaises(
-            AttributeError,
-            lambda:contents.contentsSet().add(self.devs[0]))
+        self.assertRaises(AttributeError,
+            lambda:contents.contentsSet(mutable=False).add(self.devs[0]))
         self.assertRaises(TypeError, cs.add, 1)
         self.assertRaises(TypeError, cs.add, self.fifos)
 
     def test_remove(self):
-        self.assertRaises(
-            AttributeError,
-            contents.contentsSet().remove, self.devs[0])
-        self.assertRaises(AttributeError, contents.contentsSet().remove, 1)
+        self.assertRaises(AttributeError,
+            contents.contentsSet(mutable=False).remove, self.devs[0])
+        self.assertRaises(AttributeError,
+            contents.contentsSet(mutable=False).remove, 1)
         cs = contents.contentsSet(self.all, mutable=True)
         map(cs.remove, self.all)
         cs = contents.contentsSet(self.all, mutable=True)
         map(cs.remove, (x.location for x in self.all))
         self.assertEqual(len(cs), 0)
         self.assertRaises(KeyError, cs.remove, self.all[0])
-        self.assertRaises(
-            AttributeError,
-            lambda:contents.contentsSet().remove(self.devs[0]))
 
     def test_contains(self):
         cs = contents.contentsSet(mutable=True)

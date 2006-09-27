@@ -43,12 +43,12 @@ if [ -z "$PORTAGE_BIN_PATH" ]; then
 	declare -rx PORTAGE_BIN_PATH="/usr/lib/portage/bin"
 fi
 
-# knock the sandbox vars back to the defaults.
+# knock the sandbox vars back to the pkgs defaults.
 reset_sandbox() {
 	export SANDBOX_ON="1"
-	export SANDBOX_PREDICT="${SANDBOX_PREDICT:+${SANDBOX_PREDICT}:}/proc/self/maps:/dev/console:/usr/lib/portage/pym:/dev/random"
-	export SANDBOX_WRITE="${SANDBOX_WRITE:+${SANDBOX_WRITE}:}/dev/shm"
-	export SANDBOX_READ="${SANDBOX_READ:+${SANDBOX_READ}:}/dev/shm"
+	export SANDBOX_PREDICT="${SANDBOX_PREDICT:+${SANDBOX_PREDICT}:}/proc/self/maps:/dev/console:/dev/random:${PORTAGE_TMPDIR}"
+	export SANDBOX_WRITE="${SANDBOX_WRITE:+${SANDBOX_WRITE}:}/dev/shm:${PORTAGE_TMPDIR}"
+	export SANDBOX_READ="${SANDBOX_READ:+${SANDBOX_READ}:}/dev/shm:${PORTAGE_TMPDIR}"
 	local s
 	for x in CCACHE_DIR DISTCC_DIR D WORKDIR T; do
 		if [ -n "${!x}" ]; then

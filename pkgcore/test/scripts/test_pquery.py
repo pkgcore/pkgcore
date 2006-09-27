@@ -6,7 +6,7 @@ from pkgcore.test import TestCase
 from pkgcore.scripts import pquery
 from pkgcore.test.scripts import helpers
 from pkgcore.config import basics, ConfigHint, configurable
-from pkgcore.test.repository import util
+from pkgcore.repository import util
 
 
 class FakeDomain(object):

@@ -143,9 +143,9 @@ class Failure(ValueError):
     """Raised internally to indicate an "expected" failure condition."""
 
 
-def unmerge(out, vdb, tokens, pretend=True, ignore_failures=False,
-            force=False):
-    """Unmerge tokens."""
+def unmerge(out, err, vdb, tokens, pretend=True, ignore_failures=False,
+            force=False, world_set=None):
+    """Unmerge tokens. hackish, should be rolled back into the resolver"""
     all_matches = set()
     for token in tokens:
         # Catch restrictions matching across more than one category.
@@ -191,9 +191,14 @@ def unmerge(out, vdb, tokens, pretend=True, ignore_failures=False,
         ret = op.finish()
         if not ret:
             if not ignore_failures:
-                raise Failure('failed unmerging %s' % (token,))
-            out.write(out.fg(out.red), 'failed unmerging ', token)
-
+                raise Failure('failed unmerging %s' % (match,))
+            out.write(out.fg(out.red), 'failed unmerging ', match)
+        if world_set is not None:
+            try:
+                world_set.remove(match.unversioned_atom)
+                world_set.flush()
+            except KeyError:
+                pass
 
 def write_error(out, message):
     # XXX should have a convenience thing on formatter for this.
@@ -204,6 +209,15 @@ def write_error(out, message):
     out.wrap = False
     out.first_prefix = []
     out.later_prefix = []
+
+
+def get_pkgset(config, setname):
+    try:
+        return config.pkgset[setname]
+    except KeyError:
+        err.write('No set called %r!\nknown sets: %r\n' %
+            (setname, config.pkgset.keys()))
+        return None
 
 
 def main(config, options, out, err):
@@ -219,10 +233,18 @@ def main(config, options, out, err):
             err.write("you must explicitly enable unmerging via --force "
                 "for this release (will be removed in the next major release)\n")
             return
+        world_set = None
+        if not options.oneshot:
+            world_set = get_pkgset(config, "world")
+            if world_set is None:
+                err.write("disable world updating via --oneshot, or fix your "
+                    "config")
+                return 1
         try:
             unmerge(
-                out, vdb, options.targets, pretend=options.pretend,
-                ignore_failures=options.ignore_failures, force=options.force)
+                out, err, vdb, options.targets, pretend=options.pretend,
+                ignore_failures=options.ignore_failures, force=options.force,
+                world_set=world_set)
         except (parserestrict.ParseError, Failure), e:
             write_error(out, str(e))
             return 1
@@ -244,10 +266,8 @@ def main(config, options, out, err):
 
     atoms = []
     for setname in options.set:
-        try:
-            pkgset = config.pkgset[setname]
-        except KeyError:
-            err.write('No set called %r!\nknown sets: %r\n' % (setname, config.pkgset.keys()))
+        pkgset = get_pkgset(config, setname)
+        if pkgset is None:
             return 1
         atoms.extend(list(pkgset))
 
@@ -271,11 +291,10 @@ def main(config, options, out, err):
     update_worldfile = set()
     world_set = None
     if not options.set and not options.oneshot:
-        try:
-            world_set = config.pkgset["world"]
-        except KeyError:
-            err.write('No set called world!\nknown sets: %r\ndisable via '
-                '--oneshot ' % (setname, config.pkgset.keys()))
+        world_set = get_pkgset(config, 'world')
+        if world_set is None:
+            err.write("disable world updating via --oneshot, or fix your "
+                "config")
             return 1
         update_worldfile.update(atoms)
 

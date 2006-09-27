@@ -7,7 +7,7 @@ portageq() {
 	if [[ $EBUILD_PHASE == depend ]]; then
 		die "portageq calls in depends phase is disallowed"
 	fi
-	portageq_emulation "$1" "${PKGCORE_DOMAIN}" "$3"
+	portageq_emulation --domain "${PKGCORE_DOMAIN}" "$@"
 }
 
 has_version()

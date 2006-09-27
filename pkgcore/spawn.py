@@ -62,9 +62,11 @@ def spawn_sandbox(mycommand, opt_name=None, **keywords):
     if not sandbox_capable:
         return spawn_bash(mycommand, opt_name=opt_name, **keywords)
     args = [SANDBOX_BINARY]
+    if isinstance(mycommand, basestring):
+        mycommand = mycommand.split()
     if not opt_name:
-        opt_name = os.path.basename(mycommand.split()[0])
-    args.append(mycommand)
+        opt_name = os.path.basename(mycommand[0])
+    args.extend(mycommand)
     return spawn(args, opt_name=opt_name, **keywords)
 
 _exithandlers = []

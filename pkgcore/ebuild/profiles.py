@@ -13,14 +13,16 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.config.basics import list_parser
 from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source
-from pkgcore.repository import virtual
-from pkgcore.ebuild import cpv
+from pkgcore.repository import virtual, util
+from pkgcore.ebuild import cpv, ebuild_src
 from pkgcore.util.demandload import demandload
 from collections import deque
 
 demandload(globals(), "logging "
     "pkgcore.config.errors:InstantiationError "
-    "pkgcore.ebuild:const ")
+    "pkgcore.ebuild:const "
+    "pkgcore.util.containers:InvertedContains ")
+
 
 # Harring sez-
 # This should be implemented as an auto-exec config addition.
@@ -155,6 +157,19 @@ class OnDiskProfile(profiles.base):
 
         self.maskers = tuple(set(self.visibility).union(atom(x) for x in 
             incremental_profile_files(full_stack, "package.mask")))
+        pkg_provided = {}
+        for x in incremental_profile_files(full_stack, "package.provided"):
+            a = atom(x)
+            pkg_provided.setdefault(a.category, {}).setdefault(
+                a.package, []).append(a.fullver)
+
+        if pkg_provided:
+            i = InvertedContains(())
+            ptree = util.SimpleTree(pkg_provided,
+                pkg_klass=partial(PkgProvided, i))
+        else:
+            ptree = None
+        self.package_provided_repo = ptree
 
         self.package_use_mask  = self.load_atom_dict(full_stack,
             "package.use.mask")
@@ -289,6 +304,17 @@ class OnDiskProfile(profiles.base):
                 stack.extend([False, x] for x in new_parents)
                 full_stack.extend(new_parents)
         return full_stack
+
+
+class PkgProvided(ebuild_src.base):
+
+    def __init__(self, keywords, *a, **kwds):
+        # 'None' repo.
+        ebuild_src.base.__init__(self, None, *a, **kwds)
+        object.__setattr__(self, "keywords", keywords)
+        object.__setattr__(self, "use", [])
+        object.__setattr__(self, "data", {})
+
 
 class ForgetfulDict(dict):
 

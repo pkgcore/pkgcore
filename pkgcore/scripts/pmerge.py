@@ -174,6 +174,8 @@ def unmerge(out, err, vdb, tokens, pretend=True, ignore_failures=False,
         out.write(match.cpvstr)
     out.prefix = []
 
+    repo_obs = observer.file_repo_observer(ObserverFormatter(out))
+
     if pretend:
         return
 
@@ -187,7 +189,7 @@ def unmerge(out, err, vdb, tokens, pretend=True, ignore_failures=False,
             raise Failure('vdb is frozen')
 
     for match in matches:
-        op = vdb.uninstall(match)
+        op = vdb.uninstall(match, observer=repo_obs)
         ret = op.finish()
         if not ret:
             if not ignore_failures:

@@ -184,7 +184,7 @@ def config_protect_func_install(existing_cset, install_cset, engine, csets):
             except KeyError:
                 # this shouldn't occur...
                 continue
-            new_fn = pjoin(dir_loc, "._cfg%02i_%s" % (count, fname))
+            new_fn = pjoin(dir_loc, "._cfg%04i_%s" % (count, fname))
             install_cset.add(entry.change_attributes(real_location=new_fn))
         del updates
 

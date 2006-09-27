@@ -54,9 +54,13 @@ def process_decompress(in_data):
 try:
     from bz2 import compress, decompress
 except ImportError:
+    # We need this because if we are not native then TarFile.bz2open will fail
+    # (and some code needs to be able to check that).
+    native = False
     # trigger it to throw a CommandNotFound if missing
     find_binary("bzip2")
     compress = process_compress
     decompress = process_decompress
-
+else:
+    native = True
 

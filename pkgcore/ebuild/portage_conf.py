@@ -15,6 +15,7 @@ demandload(globals(), "errno pkgcore.config:errors "
     "pkgcore.pkgsets.glsa:SecurityUpgrades "
     "pkgcore.util.osutils:normpath,abspath "
     "pkgcore.util.file:read_bash_dict,read_dict "
+    "pkgcore.util:bzip2 "
     "pkgcore.util.osutils:listdir_files ")
 
 
@@ -276,7 +277,9 @@ def config_from_make_conf(location="/etc/"):
             if oe.errno != errno.ENOENT:
                 raise
             pkgdir = None
-        if pkgdir and os.path.isdir(pkgdir):
+        # If we are not using the native bzip2 then the Tarfile.bz2open
+        # the binpkg repository uses will fail.
+        if pkgdir and os.path.isdir(pkgdir) and bzip2.native:
             new_config['binpkg'] = basics.ConfigSectionFromStringDict({
                     'class': 'pkgcore.binpkg.repository.tree',
                     'location': pkgdir})

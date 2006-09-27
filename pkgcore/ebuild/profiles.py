@@ -308,6 +308,8 @@ class OnDiskProfile(profiles.base):
 
 class PkgProvided(ebuild_src.base):
 
+    package_is_real = False
+
     def __init__(self, keywords, *a, **kwds):
         # 'None' repo.
         ebuild_src.base.__init__(self, None, *a, **kwds)

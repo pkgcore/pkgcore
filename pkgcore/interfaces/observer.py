@@ -18,14 +18,16 @@ class phase_observer(object):
 
 class file_phase_observer(phase_observer):
 
-    def __init__(self, out):
+    def __init__(self, out, semiquiet=True):
         self._out = out
+        self._semiquiet = semiquiet
 
     def phase_start(self, phase):
         self._out.write("starting %s\n" % phase)
     
     def phase_end(self, phase, status):
-        self._out.write("finished %s: %s\n" % (phase, status))
+        if not self._semiquiet:
+            self._out.write("finished %s: %s\n" % (phase, status))
 
 
 class build_observer(base, phase_observer):
@@ -52,13 +54,19 @@ class repo_observer(repo_base, phase_observer):
 class file_build_observer(build_observer, file_phase_observer):
     pass
 
+
 class file_repo_observer(repo_base, file_phase_observer):
+    
+    def __init__(self, out, semiquiet=True):
+        self._out = out
+        self._semiquiet = semiquiet
     
     def trigger_start(self, hook, trigger):
         self._out.write("hook %s: trigger: starting %r\n" % (hook, trigger))
     
     def trigger_end(self, hook, trigger):
-        self._out.write("hook %s: trigger: finished %r\n" % (hook, trigger))
+        if not self._semiquiet:
+            self._out.write("hook %s: trigger: finished %r\n" % (hook, trigger))
 
     def installing_fs_obj(self, obj):
         self._out.write(">>> %s\n" % obj)

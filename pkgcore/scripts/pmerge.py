@@ -201,6 +201,8 @@ def unmerge(out, err, vdb, tokens, pretend=True, ignore_failures=False,
                 world_set.flush()
             except KeyError:
                 pass
+    out.write("finished")
+
 
 def write_error(out, message):
     # XXX should have a convenience thing on formatter for this.
@@ -433,4 +435,5 @@ def main(config, options, out, err):
                     break
             if mangled:
                 world_set.flush()
+    out.write("finished")
     return 0

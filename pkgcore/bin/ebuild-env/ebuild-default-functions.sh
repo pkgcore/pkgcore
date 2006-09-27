@@ -170,9 +170,7 @@ dyn_unpack()
 	
 	install -m0700 -d "${WORKDIR}" || die "Failed to create dir '${WORKDIR}'"
 	[ -d "$WORKDIR" ] && cd "${WORKDIR}"
-	echo ">>> Unpacking source..."
 	src_unpack
-	echo ">>> Source unpacked."
 	trap SIGINT SIGQUIT
 }
 

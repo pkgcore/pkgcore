@@ -1,0 +1,12 @@
+[copyfile]
+version = 1
+namespace = pkgcore.fs.ops.default_copyfile
+
+[ensure_perms]
+version = 1
+namespace = pkgcore.fs.ops.default_ensure_perms
+
+[mkdir]
+version = 1
+namespace = pkgcore.fs.ops.default_mkdir
+

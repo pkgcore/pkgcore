@@ -5,9 +5,16 @@
 
 """Very minimal test runner."""
 
-import os
+import os.path
 import sys
 import unittest
+
+# XXX nasty hack: point the plugin system at a predefined directory
+# (to make it work without the global plugin registry being there).
+# The plugin system reworking should kill this.
+from pkgcore import const
+const.plugins_dir = os.path.join(os.path.dirname(__file__), 'test-plugins')
+
 from pkgcore import test
 from pkgcore.util import modules
 

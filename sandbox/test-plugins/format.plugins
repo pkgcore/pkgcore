@@ -1,0 +1,8 @@
+[ebuild_src]
+version = 0.0
+namespace = pkgcore.ebuild.ebuild_src.generate_new_factory
+
+[ebuild_built]
+version = 0.0
+namespace = pkgcore.ebuild.ebuild_built.generate_new_factory
+

@@ -97,5 +97,5 @@ class QuoteInterpretationError(BaseException):
     """
 
     def __init__(self, string):
-        BaseException.__init__(self, "Parsing of %r failed" % (str,))
+        BaseException.__init__(self, "Parsing of %r failed" % (string,))
         self.str = string

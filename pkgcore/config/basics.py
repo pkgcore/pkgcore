@@ -178,15 +178,23 @@ def convert_string(central, value, arg_type):
             raise errors.ConfigurationError('%r is not callable' % (value,))
         return func
     elif arg_type == 'section_refs':
-        return list(central.collapse_named_section(ref)
-                    for ref in list_parser(value))
+        try:
+            return list(central.collapse_named_section(ref)
+                        for ref in list_parser(value))
+        except errors.QuoteInterpretationError, e:
+            # TODO improve this (maybe)
+            raise errors.ConfigurationError(str(e))
     elif arg_type == 'section_ref':
         return central.collapse_named_section(str_parser(value))
-    return {
-        'list': list_parser,
-        'str': str_parser,
-        'bool': bool_parser,
-        }[arg_type](value)
+    try:
+        return {
+            'list': list_parser,
+            'str': str_parser,
+            'bool': bool_parser,
+            }[arg_type](value)
+    except errors.QuoteInterpretationError, e:
+        # TODO improve this (maybe)
+        raise errors.ConfigurationError(str(e))
 
 def convert_asis(central, value, arg_type):
     """"Conversion" func assuming the types are already correct."""

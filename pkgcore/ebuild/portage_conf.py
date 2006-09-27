@@ -79,7 +79,7 @@ def config_from_make_conf(location="/etc/"):
 
     # sets...
     new_config["world"] = basics.AutoConfigSection({
-            "class": "pkgcore.pkgsets.filelist.FileList",
+            "class": "pkgcore.pkgsets.filelist.WorldFile",
             "location": pjoin(root, const.WORLD_FILE)})
     new_config["system"] = basics.AutoConfigSection({
             "class": "pkgcore.pkgsets.system.SystemSet",

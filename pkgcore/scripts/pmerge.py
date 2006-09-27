@@ -36,6 +36,7 @@ This causes the resolver to work with a complete graph, thus disallowing
 actions that confict with installed packages.  If disabled, it's possible
 for the requested action to conflict with already installed dependencies
 that aren't involved in the graph of the requested operation""")
+
         self.add_option('--pretend', '-p', action='store_true',
             help="do the resolution, but don't merge/fetch anything")
         self.add_option('--fetchonly', '-f', action='store_true',
@@ -44,6 +45,7 @@ that aren't involved in the graph of the requested operation""")
             help=\
 """ignore cycles if they're found to be unbreakable;
 a depends on b, and b depends on a, with neither involved is an example""")
+
         self.add_option('--nodeps', action='store_true',
             help='disable dependency resolution')
         self.add_option('--replace', '-r', action='store_true',
@@ -59,6 +61,11 @@ a depends on b, and b depends on a, with neither involved is an example""")
             help="temporary option; required to do any modifications to the"
             "vdb (mergeing/unmerging).  Added for initial protection, will be"
             "removed in the next release")
+        self.add_option('--oneshot', '-o', action='store_true',
+            default=False,
+            help="do not record changes in the world file; if a set is "
+            "involved, defaults to forcing oneshot")
+
 
     def check_values(self, options, args):
         options, args = commandline.OptionParser.check_values(
@@ -261,6 +268,17 @@ def main(config, options, out, err):
 
     atoms = lists.stable_unique(atoms)
 
+    update_worldfile = set()
+    world_set = None
+    if not options.set and not options.oneshot:
+        try:
+            world_set = config.pkgset["world"]
+        except KeyError:
+            err.write('No set called world!\nknown sets: %r\ndisable via '
+                '--oneshot ' % (setname, config.pkgset.keys()))
+            return 1
+        update_worldfile.update(atoms)
+
     if options.upgrade:
         resolver_kls = resolver.upgrade_resolver
     else:
@@ -385,4 +403,13 @@ def main(config, options, out, err):
                 return 1
         elif not options.fetchonly:
             buildop.clean()
+            # inefficient, but works.
+            mangled = False
+            for a in update_worldfile:
+                if a.match(pkgs[0]):
+                    world_set.add(pkgs[0])
+                    mangled = True
+                    break
+            if mangled:
+                world_set.flush()
     return 0

@@ -3,7 +3,7 @@
 
 from pkgcore.repository.multiplex import tree
 from pkgcore.restrictions import packages, values
-from pkgcore.test.repository.util import SimpleTree
+from pkgcore.repository.util import SimpleTree
 from pkgcore.util.mappings import OrderedDict
 from pkgcore.util.currying import partial
 

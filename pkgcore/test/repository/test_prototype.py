@@ -7,7 +7,7 @@ from pkgcore.restrictions import packages, values
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.util.mappings import OrderedDict
-from pkgcore.test.repository.util import SimpleTree
+from pkgcore.repository.util import SimpleTree
 
 
 class TestPrototype(TestCase):

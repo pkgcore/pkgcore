@@ -96,3 +96,8 @@ class TestAtom(TestCase):
         # shouldn't puke, but has, thus checking"
         atom.atom("sys-libs/db:4.4")
         self.assertRaises(atom.MalformedAtom, atom.atom, "dev-util/foo:")
+
+    def test_invalid_ops(self):
+        self.assertRaises(atom.MalformedAtom, atom.atom, '~dev-util/spork')
+        self.assertRaises(atom.MalformedAtom, atom.atom, '>dev-util/spork')
+        self.assertRaises(atom.MalformedAtom, atom.atom, 'dev-util/spork-3')

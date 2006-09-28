@@ -231,9 +231,10 @@ class atom(boolean.AndRestriction):
         sf(self, "revision", c.revision)
 
         sf(self, "negate_vers", negate_vers)
-        if "~" == self.op:
-            if self.version is None:
-                raise MalformedAtom(orig_atom, "~ operator requires a version")
+        if self.op and self.version is None:
+            raise MalformedAtom(orig_atom, "operator requires a version")
+        if not self.op and self.version is not None:
+            raise MalformedAtom('versioned atom requires an operator')
         # force jitting of it.
         object.__delattr__(self, "restrictions")
 

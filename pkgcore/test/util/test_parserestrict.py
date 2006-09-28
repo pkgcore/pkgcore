@@ -113,3 +113,13 @@ class TestExtendedRestrictionGeneration(TestCase):
     def test_atom_globbed(self):
         o = parserestrict.parse_match("=sys-devel/gcc-4*")
         self.assertTrue(isinstance(o, atom), msg="%r must be an atom" % o)
+
+    def test_use_atom(self):
+        o = parserestrict.parse_match("net-misc/openssh[-X]")
+        self.assertTrue(isinstance(o, atom), msg="%r must be an atom" % o)
+        self.assertTrue(o.use)
+
+    def test_slot_atom(self):
+        o = parserestrict.parse_match("sys-devel/automake:1.6")
+        self.assertTrue(isinstance(o, atom), msg="%r must be an atom" % o)
+        self.assertTrue(o.slot)

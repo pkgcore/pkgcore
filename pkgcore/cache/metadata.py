@@ -35,16 +35,20 @@ class database(flat_hash.database):
     autocommits = True
 
     def __init__(self, location, *args, **config):
-        loc = location
+        self.base_loc = location
         super(database, self).__init__(location, *args, **config)
-        self.location = os.path.join(loc, "metadata","cache")
-        self.ec = eclass_cache.cache(os.path.join(loc, "eclass"), loc)
+        self.ec = eclass_cache.cache(os.path.join(self.base_loc, "eclass"),
+            self.base_loc)
         self.hardcoded_auxdbkeys_order = tuple((idx, key)
             for idx, key in enumerate(self.auxdbkeys_order)
                 if key in self._known_keys)
 
     __init__.__doc__ = flat_hash.database.__init__.__doc__.replace(
         "@keyword location", "@param location")
+
+
+    def _format_location(self):
+        return os.path.join(self.location, "metadata", "cache")
 
     def __getitem__(self, cpv):
         d = flat_hash.database.__getitem__(self, cpv)

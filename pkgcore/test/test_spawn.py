@@ -7,6 +7,13 @@ from pkgcore.test.mixins import TempDirMixin
 from pkgcore.util.currying import post_curry
 import os, pwd, signal
 
+def capability_based(capable, msg):
+    def internal_f(f):
+        if not capable:
+            f.skip = msg
+        return f
+    return internal_f
+
 class SpawnTest(TempDirMixin, TestCase):
 
     def __init__(self, *a, **kw):
@@ -60,14 +67,8 @@ class SpawnTest(TempDirMixin, TestCase):
 
         os.unlink(fp)
 
-    # should probably use a mixin for these.
+    @capability_based(spawn.sandbox_capable, "sandbox binary wasn't found")
     def test_sandbox(self):
-        try:
-            spawn.find_binary("sandbox")
-        except spawn.CommandNotFound:
-            raise SkipTest(
-                "sandbox is not available, thus testing isn't possible")
-        self.assertTrue(spawn.sandbox_capable, "sandbox_capable boolean test")
         fp = self.generate_script(
             "portage-spawn-sandbox.sh", "echo $LD_PRELOAD")
         self.assertIn("libsandbox.so", [os.path.basename(x.strip()) for x in
@@ -75,14 +76,9 @@ class SpawnTest(TempDirMixin, TestCase):
                     fp, spawn_type=spawn.spawn_sandbox)[1][0].split(":")])
         os.unlink(fp)
 
+
+    @capability_based(spawn.fakeroot_capable, "fakeroot binary wasn't found")
     def test_fakeroot(self):
-        try:
-            spawn.find_binary("fakeroot")
-        except spawn.CommandNotFound:
-            raise SkipTest(
-                "fakeroot is not available, thus testing isn't possible")
-        self.assertTrue(
-            spawn.fakeroot_capable, "fakeroot_capable boolean test")
         try:
             l = pwd.getpwnam("nobody")
         except KeyError:
@@ -127,8 +123,6 @@ class SpawnTest(TempDirMixin, TestCase):
         os.unlink(fp1)
         os.unlink(fp2)
         os.unlink(savefile)
-    test_fakeroot.todo = "fakeroot was broken by recent coreutils; fix this"
-
 
     def test_process_exit_code(self):
         self.assertEqual(0, spawn.process_exit_code(0), "exit code failed")

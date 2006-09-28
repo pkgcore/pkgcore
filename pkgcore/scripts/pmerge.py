@@ -287,8 +287,18 @@ def main(config, options, out, err):
                     out, 'No package matches for %r, but there is a set with '
                     'that name. Use -s to specify a set.' % (token,))
                 return 2
+            elif not options.ignore_failures:
+                write_error(out,
+                    'No matches for %r; ignoring' % token)
+            else:
+                return -1
         else:
             atoms.append(a)
+
+    if not atoms:
+        write_error(out,
+            'No targets specified- nothing to do')
+        return 1
 
     atoms = lists.stable_unique(atoms)
 

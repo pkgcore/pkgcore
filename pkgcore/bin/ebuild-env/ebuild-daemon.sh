@@ -197,6 +197,7 @@ while [ "$alive" == "1" ]; do
 				declare -fr $x &> /dev/null
 			done
 			for e in $phases; do
+				umask 0022
 				if [ -z $PORTAGE_LOGFILE ]; then
 					execute_phases ${e}
 					ret=$?
@@ -208,6 +209,7 @@ while [ "$alive" == "1" ]; do
 					# less then bash v3 however hates it.  And I hate less then v3.
 					# circle of hate you see.
 					execute_phases ${e} 2>&1 | {
+						# this applies to the subshell only.
 						umask 0002
 						tee -i -a $PORTAGE_LOGFILE
 					}

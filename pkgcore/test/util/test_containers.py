@@ -45,7 +45,7 @@ class LimitedChangeSetTest(TestCase):
         self.assertEquals(13, len(self.set))
         self.assertEquals(sorted(list(self.set)), list(range(12)) + [13])
         self.assertEquals(1, self.set.changes_count())
-        self.assertRaises(containers.Unchangable, self.set.add, 13)
+        self.set.add(13)
         self.assertRaises(containers.Unchangable, self.set.remove, 13)
 
     def test_add_rollback(self):
@@ -75,6 +75,7 @@ class LimitedChangeSetTest(TestCase):
         self.assertEquals(sorted(list(self.set)), list(range(1, 12)))
         self.assertEquals(1, self.set.changes_count())
         self.assertRaises(containers.Unchangable, self.set.add, 0)
+        self.assertRaises(KeyError, self.set.remove, 0)
 
     def test_remove_rollback(self):
         self.set.remove(0)

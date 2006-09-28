@@ -51,6 +51,8 @@ class LimitedChangeSet(object):
     def add(self, key):
         if key in self.__changed or key in self.__blacklist:
             # it's been del'd already once upon a time.
+            if key in self._new:
+                return
             raise Unchangable(key)
 
         self._new.add(key)
@@ -59,6 +61,8 @@ class LimitedChangeSet(object):
 
     def remove(self, key):
         if key in self.__changed or key in self.__blacklist:
+            if key not in self._new:
+                raise KeyError(key)
             raise Unchangable(key)
 
         if key in self._new:

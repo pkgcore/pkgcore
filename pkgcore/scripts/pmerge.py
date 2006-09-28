@@ -12,7 +12,7 @@ from pkgcore.restrictions import packages, values
 from pkgcore.util import commandline, parserestrict, lists, repo_utils
 from pkgcore.ebuild import resolver, atom
 from pkgcore.repository import multiplex
-from pkgcore.interfaces import observer
+from pkgcore.interfaces import observer, format
 from pkgcore.util.formatters import ObserverFormatter
 
 class OptionParser(commandline.OptionParser):
@@ -215,7 +215,7 @@ def write_error(out, message):
     out.later_prefix = []
 
 
-def get_pkgset(config, setname):
+def get_pkgset(config, err, setname):
     try:
         return config.pkgset[setname]
     except KeyError:
@@ -239,7 +239,7 @@ def main(config, options, out, err):
             return
         world_set = None
         if not options.oneshot:
-            world_set = get_pkgset(config, "world")
+            world_set = get_pkgset(config, err, "world")
             if world_set is None:
                 err.write("disable world updating via --oneshot, or fix your "
                     "config")
@@ -270,7 +270,7 @@ def main(config, options, out, err):
 
     atoms = []
     for setname in options.set:
-        pkgset = get_pkgset(config, setname)
+        pkgset = get_pkgset(config, err, setname)
         if pkgset is None:
             return 1
         atoms.extend(list(pkgset))
@@ -295,7 +295,7 @@ def main(config, options, out, err):
     update_worldfile = set()
     world_set = None
     if not options.set and not options.oneshot:
-        world_set = get_pkgset(config, 'world')
+        world_set = get_pkgset(config, err, 'world')
         if world_set is None:
             err.write("disable world updating via --oneshot, or fix your "
                 "config")
@@ -386,8 +386,10 @@ def main(config, options, out, err):
     build_obs = observer.file_build_observer(ObserverFormatter(out))
     repo_obs = observer.file_repo_observer(ObserverFormatter(out))
     
-    for op, pkgs in changes:
-        out.write("processing %s" % (pkgs[0],))
+    change_count = len(changes)
+    for count, data in enumerate(changes):
+        op, pkgs = data
+        out.write("processing %s, %i/%i" % (pkgs[0], count + 1, change_count))
         buildop = pkgs[0].build(observer=build_obs)
         if options.fetchonly:
             out.write("\n%i files required-" % len(pkgs[0].fetchables))
@@ -400,9 +402,13 @@ def main(config, options, out, err):
         else:
             out.write("forcing cleaning of workdir")
             buildop.clean()
+            ret = None
             out.write("building...")
-            built_pkg = buildop.finalize()
-            if built_pkg is not False:
+            try:
+                built_pkg = buildop.finalize()
+            except format.errors, e:
+                ret = e
+            if ret is None:
                 out.write()
                 out.write("merge op: %s %s" % (op, pkgs))
                 if op == "add":
@@ -411,16 +417,17 @@ def main(config, options, out, err):
                     i = vdb.replace(pkgs[1], built_pkg, observer=repo_obs)
                 ret = i.finish()
                 buildop.clean()
+                del built_pkg
             else:
-                write_error(out, "failure building %s" % (pkgs[0],))
+                write_error(out, "failure building %s: %s" % (pkgs[0],
+                    ret))
                 if not options.ignore_failures:
                     return 1
 
             # force this explicitly- can hold onto a helluva lot more
             # then we would like.
-            del built_pkg
         if ret != True:
-            write_error(
+            write_error(out,
                 "got %s for a phase execution for %s" % (ret, pkgs[0]))
             if not options.ignore_failures:
                 return 1

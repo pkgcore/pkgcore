@@ -37,9 +37,11 @@ Drop back to normal user, and try::
 
  $ python
  >>> import pkgcore.config
+ >>> from pkgcore.ebuild.atom import atom
  >>> conf=pkgcore.config.load_config()
  >>> tree=conf.get_default('domain').repos[1]
- >>> pkg=tree["dev-util/diffball-0.6.5"]
+ >>> pkg=max(tree.itermatch(atom("dev-util/diffball")))
+ >>> print pkg
  >>> print pkg.depends
  >=dev-libs/openssl-0.9.6j >=sys-libs/zlib-1.1.4 >=app-arch/bzip2-1.0.2
 

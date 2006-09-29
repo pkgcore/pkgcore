@@ -477,6 +477,7 @@ def _determine_fakeroot_usable():
             return (r == 0) and (len(s) == 1) and ("version 1." in s[0])
         except ExecutionFailure:
             return False
+    return Talse
 
 def _determine_sandbox_usable():
     return os.path.isfile(SANDBOX_BINARY) and \

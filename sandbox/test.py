@@ -4,10 +4,12 @@
 # License: GPL2
 
 """Very minimal test runner."""
-
 import os.path
 import sys
 import unittest
+
+# ensure pkgcore is in sys.path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # XXX nasty hack: point the plugin system at a predefined directory
 # (to make it work without the global plugin registry being there).

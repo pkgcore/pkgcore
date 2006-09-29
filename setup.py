@@ -19,6 +19,8 @@ class mysdist(sdist.sdist):
                 self.filelist.extend(glob.glob(os.path.join(key, pattern)))
         self.filelist.append("ChangeLog")
         self.filelist.append("AUTHORS")
+        self.filelist.append("sandbox/test.py")
+        self.filelist.extend(glob.glob("sandbox/test-plugins/*"))
         sdist.sdist.get_file_list(self)
 
     def run(self):

@@ -12,6 +12,8 @@ class TempDirMixin(TestCase):
 
     def setUp(self):
         self.dir = tempfile.mkdtemp()
+        # force it, since sticky bits spread.
+        os.chmod(self.dir, 0700)
 
     def tearDown(self):
         # change permissions back or rmtree can't kill it

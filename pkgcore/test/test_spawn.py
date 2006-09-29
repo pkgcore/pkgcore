@@ -35,11 +35,11 @@ class SpawnTest(TempDirMixin, TestCase):
         TempDirMixin.tearDown(self)
 
     def test_find_binary(self):
-        script_name = "portage-findpath-test.sh"
+        script_name = "pkgcore-findpath-test.sh"
         self.assertRaises(spawn.CommandNotFound, spawn.find_binary, script_name)
         fp = os.path.join(self.dir, script_name)
         open(fp,"w")
-        os.chmod(fp, 0650)
+        os.chmod(fp, 0640)
         self.assertRaises(spawn.CommandNotFound, spawn.find_binary, script_name)
         os.chmod(fp, 0750)
         self.assertIn(self.dir, spawn.find_binary(script_name))
@@ -53,7 +53,7 @@ class SpawnTest(TempDirMixin, TestCase):
         return fp
 
     def test_get_output(self):
-        filename = "portage-spawn-getoutput.sh"
+        filename = "pkgcore-spawn-getoutput.sh"
         for r, s, text, args in [
             [0, ["dar\n"], "echo dar\n", {}],
             [0, ["dar"], "echo -n dar", {}],
@@ -70,12 +70,11 @@ class SpawnTest(TempDirMixin, TestCase):
     @capability_based(spawn.sandbox_capable, "sandbox binary wasn't found")
     def test_sandbox(self):
         fp = self.generate_script(
-            "portage-spawn-sandbox.sh", "echo $LD_PRELOAD")
+            "pkgcore-spawn-sandbox.sh", "echo $LD_PRELOAD")
         self.assertIn("libsandbox.so", [os.path.basename(x.strip()) for x in
             spawn.spawn_get_output(
                     fp, spawn_type=spawn.spawn_sandbox)[1][0].split(":")])
         os.unlink(fp)
-
 
     @capability_based(spawn.fakeroot_capable, "fakeroot binary wasn't found")
     def test_fakeroot(self):
@@ -92,12 +91,12 @@ class SpawnTest(TempDirMixin, TestCase):
         if os.getuid() == 0:
             kw = {"uid":l[2], "gid":l[3]}
 
-        fp2 = self.generate_script("portage-spawn-fakeroot2.sh",
+        fp2 = self.generate_script("pkgcore-spawn-fakeroot2.sh",
                                    "#!%s\nimport os\ns=os.stat('/tmp')\n"
                                    "print s.st_uid\nprint s.st_gid\n" %
                                    spawn.find_binary("python"))
 
-        fp1 = self.generate_script("portage-spawn-fakeroot.sh",
+        fp1 = self.generate_script("pkgcore-spawn-fakeroot.sh",
             "#!%s\nchown %i:%i /tmp;%s;\n" % (
                 self.bash_path, nobody_uid, nobody_gid, fp2))
 
@@ -123,6 +122,8 @@ class SpawnTest(TempDirMixin, TestCase):
         os.unlink(fp1)
         os.unlink(fp2)
         os.unlink(savefile)
+    test_fakeroot.skip = "new coreutils screws with fakeroot, disabled till " \
+        "fixed"
 
     def test_process_exit_code(self):
         self.assertEqual(0, spawn.process_exit_code(0), "exit code failed")

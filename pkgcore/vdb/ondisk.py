@@ -22,7 +22,8 @@ from pkgcore.util.demandload import demandload
 demandload(globals(),
            "logging time "
            "pkgcore.ebuild:conditionals "
-           "pkgcore.restrictions:boolean,packages ")
+           "pkgcore.restrictions:boolean,packages "
+           "pkgcore.const ")
 
 
 class bz2_data_source(data_source.base):
@@ -277,6 +278,10 @@ class install(repo_interfaces.install):
         # creation/counting to per CP for this trick to behave
         # perfectly.
         open(os.path.join(dirpath, "COUNTER"), "w").write(str(int(time.time())))
+        
+        #finally, we mark who made this.
+        open(os.path.join(dirpath, "PKGMANAGER"), "w").write(
+            "pkgcore-%s" % pkgcore.const.VERSION)
         return True
 
 

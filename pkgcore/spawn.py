@@ -470,14 +470,14 @@ class CommandNotFound(ExecutionFailure):
 # JIT'd capabilities
 
 def _determine_fakeroot_usable():
-    if os.path.exists(FAKED_PATH) and os.path.exists(LIBFAKEROOT_PATH):
-        try:
-            r, s = spawn_get_output(["fakeroot", "--version"],
-                fd_pipes={2:1, 1:1})
-            return (r == 0) and (len(s) == 1) and ("version 1." in s[0])
-        except ExecutionFailure:
-            return False
-    return False
+    if not (os.path.exists(FAKED_PATH) and os.path.exists(LIBFAKEROOT_PATH)):
+        return False
+    try:
+        r, s = spawn_get_output(["fakeroot", "--version"],
+            fd_pipes={2:1, 1:1})
+        return (r == 0) and (len(s) == 1) and ("version 1." in s[0])
+    except ExecutionFailure:
+        return False
 
 def _determine_sandbox_usable():
     return os.path.isfile(SANDBOX_BINARY) and \

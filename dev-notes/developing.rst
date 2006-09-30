@@ -1,4 +1,18 @@
 ====================
+ Getting a bzr repo
+====================
+
+If you're just installing pkgcore from a released tarball, skip this section.
+
+The quickest way to get a copy of the integration (release) branch is via
+downloading
+http://dev.gentooexperimental.org/~pkgcore/releases/pkgcore/hourly-snapshot.tar.bz2
+
+This is a full branched bzr repo; just untar it, and you're good to go, full
+history.
+
+
+====================
  Installing pkgcore
 ====================
 

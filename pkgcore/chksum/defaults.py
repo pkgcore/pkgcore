@@ -12,7 +12,7 @@ from pkgcore.interfaces.data_source import base as base_data_source
 blocksize = 32768
 
 
-def loop_over_file(obj, filename):
+def loop_over_file(filename, *objs):
     if isinstance(filename, base_data_source):
         if filename.get_path is not None:
             filename = filename.get_path()
@@ -30,13 +30,14 @@ def loop_over_file(obj, filename):
         data = f.read(blocksize)
         # XXX why is size tracked here? It seems to be unused...
         size = 0L
-        checksum = obj()
+        chfs = [chf() for chf in objs]
         while data:
-            checksum.update(data)
+            for chf in chfs:
+                chf.update(data)
             size = size + len(data)
             data = f.read(blocksize)
 
-        return long(checksum.hexdigest(), 16)
+        return [long(chf.hexdigest(), 16) for chf in chfs]
     finally:
         if wipeit:
             f.close()
@@ -52,7 +53,7 @@ class Chksummer(object):
         return self.obj()
 
     def __call__(self, filename):
-        return loop_over_file(self.obj, filename)
+        return loop_over_file(filename, self.obj)[0]
 
     def __str__(self):
         return "%s chksummer" % self.chf_type
@@ -190,7 +191,7 @@ if 'md5' not in chksum_types:
                         filename = filename.get_path()
                 if isinstance(filename, basestring):
                     return long(fchksum.fmd5t(filename)[0], 16)
-                return loop_over_file(md5.new, filename)
+                return loop_over_file(filename, md5.new)[0]
 
         chksum_types = {"md5":MD5Chksummer()}
 

@@ -44,13 +44,14 @@ that aren't involved in the graph of the requested operation""")
         self.add_option('--ignore-cycles', '-i', action='store_true',
             help=\
 """ignore cycles if they're found to be unbreakable;
-a depends on b, and b depends on a, with neither involved is an example""")
+a depends on b, and b depends on a, with neither built is an example""")
 
         self.add_option('--nodeps', action='store_true',
             help='disable dependency resolution')
         self.add_option('--replace', '-r', action='store_true',
             help="reinstall target atoms even if they're already installed")
-        self.add_option('--usepkg', '-k', action='store_true')
+        self.add_option('--usepkg', '-k', action='store_true',
+            help="prefer to use binpkgs")
         self.add_option('--usepkgonly', '-K', action='store_true',
             help="use only built packages")
         self.add_option('--empty', '-e', action='store_true',
@@ -58,9 +59,9 @@ a depends on b, and b depends on a, with neither involved is an example""")
                 "packages only to satisfy building the replacements")
         self.add_option('--force', action='store_true',
                         dest='force',
-            help="temporary option; required to do any modifications to the"
-            "vdb (mergeing/unmerging).  Added for initial protection, will be"
-            "removed in the next release")
+            help="temporary option; required to do any modifications to the "
+            "vdb (mergeing/unmerging) and fetching.  Added for initial "
+            "protection, will be removed in the next release")
         self.add_option('--oneshot', '-o', action='store_true',
             default=False,
             help="do not record changes in the world file; if a set is "

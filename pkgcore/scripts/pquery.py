@@ -280,7 +280,7 @@ class OptionParser(commandline.OptionParser):
                         'and you see the "raw" repository data.')
         repo.add_option(
             '--virtuals', action='store', choices=('only', 'disable'),
-            help='"only" for only matching virtuals, "disable" to not '
+            help='arg "only" for only matching virtuals, "disable" to not '
             'match virtuals at all. Default is to match everything.')
         repo.add_option('--vdb', action='store_true',
                         help='match only vdb (installed) packages.')
@@ -288,8 +288,8 @@ class OptionParser(commandline.OptionParser):
                         help='search all repos, vdb included')
         restrict = self.add_option_group(
             'Package matching',
-            'Each option specifies a restriction displayed packages must '
-            'match. Specifying the same option twice means "or" unless stated '
+            'Each option specifies a restriction packages must match.  '
+            'Specifying the same option twice means "or" unless stated '
             'otherwise. Specifying multiple types of restrictions means "and" '
             'unless stated otherwise.')
         restrict.add_option(
@@ -301,8 +301,8 @@ class OptionParser(commandline.OptionParser):
         restrict.add_option('--revdep', action='append', type='revdep',
                             help='Dependency on an atom.')
         restrict.add_option('--description', '-S', action='append',
-                            type='description',
-                            help='regexp search on (long)description. ')
+            type='description',
+            help='regexp search on description and longdescription.')
         restrict.add_option('--herd', action='append', type='herd',
                             help='exact match on a herd.')
         restrict.add_option('--license', action='append', type='license',
@@ -341,8 +341,8 @@ class OptionParser(commandline.OptionParser):
                           help='print =cat/pkg-3 instead of cat/pkg-3. '
                           'Implies --cpv, has no effect with --no-version')
         output.add_option('--attr', action='append', choices=printable_attrs,
-                          help="Print this attribute's value "
-                          '(can be specified more than once).')
+            help="Print this attribute's value (can be specified more than "
+            "once).  --attr=help will get you the list of valid attrs.")
         output.add_option('--one-attr', choices=printable_attrs,
                           help="Print one attribute. Suppresses other output.")
         output.add_option('--force-attr', action='append', dest='attr',

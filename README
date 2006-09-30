@@ -1,5 +1,63 @@
-Pkgcore is a replacement for portage. Not yet ready however.
+  pkgcore-0.1 <http://dev.gentooexperimental.org/pkgcore-trac>
 
-More information:
-	INSTALL
-	#pkgcore, irc.freenode.net
+These are the release notes for version 0.1.  Please read them carefully as they
+will clarify the intention of pkgcore, getting around the source, who to
+contact if a bug is found, and finally, how to install it.
+
+
+WHAT IS PKGCORE?
+
+  pkgcore is a framework for package management; via appropriate class plugins,
+  design should allow for any underlying repository/config/format to be used;
+  slackwares tgzs being exempted due to lack of any real metadata, and
+  autopackage format being exempted due to the fact they effectively embed the
+  manager in each package (pkgcore *does* require being able to treat the pkg as
+  data, instead of autopackages method of handing resolution/all manager ops off
+  to the package script).
+
+
+WHO TO CONTACT IF I FIND A BUG?
+
+  Please submit a bug/ticket via http://dev.gentooexperimental.org/pkgcore-trac
+  barring that, please at least send the details to
+  pkgcore-dev@googlegroups.com .  Please do not use bugs.gentoo.org as the first
+  step; any bugs, pkgcore devs should filter before passing up at this point.
+
+
+DOCUMENTATION?
+
+  Please look in dev-notes/ ; additionally, the code for the most part has 
+  docstrings, thus pydoc is a good reference.
+  
+  For just getting started, dev-notes/developing.rst is a good intro
+
+
+TESTS?
+
+  A standalone test runner is available in sandbox; to run, just execute
+  sandbox/test.py .
+  Aside from that, our runner of choice is twisteds trial; ran via-
+
+  trial pkgcore
+  
+  if doing development, trial is significantly friendlier; the standalone
+  runner is designed to be used mainly for installations of pkgcore, where
+  all tests must pass, else installation is aborted.
+
+
+INSTALLING:
+
+  pretty simple-
+  
+    tar jxf pkgcore-0.XX.tar.bz2
+    cd pkgcore-0.XX
+    python setup.py build
+
+  if after running tests,
+    
+    python setup.py build_ext -if
+    sandbox/test.py
+  
+  finally, installing-
+  
+    python setup.py install

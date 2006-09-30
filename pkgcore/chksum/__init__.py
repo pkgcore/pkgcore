@@ -7,7 +7,9 @@ chksum verification/generation subsystem
 
 from pkgcore.interfaces.data_source import base as base_data_source
 from pkgcore.util.demandload import demandload
-demandload(globals(), "os sys logging pkgcore.util.modules:load_module")
+demandload(globals(), "os sys logging "
+    "pkgcore.util.modules:load_module "
+    "pkgcore.util.osutils:listdir_files ")
 
 chksum_types = {}
 __inited__ = False
@@ -69,7 +71,7 @@ def init(additional_handlers=None):
     chksum_types["size"] = size
     __inited__ = False
     loc = os.path.dirname(sys.modules[__name__].__file__)
-    for f in os.listdir(loc):
+    for f in listdir_files(loc):
         if not f.endswith(".py") or f.startswith("__init__."):
             continue
         try:

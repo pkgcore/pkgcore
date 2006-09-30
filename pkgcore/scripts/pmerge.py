@@ -59,9 +59,7 @@ a depends on b, and b depends on a, with neither built is an example""")
                 "packages only to satisfy building the replacements")
         self.add_option('--force', action='store_true',
                         dest='force',
-            help="temporary option; required to do any modifications to the "
-            "vdb (mergeing/unmerging) and fetching.  Added for initial "
-            "protection, will be removed in the next release")
+            help="force merging to a repo, regardless of if it's frozen")
         self.add_option('--oneshot', '-o', action='store_true',
             default=False,
             help="do not record changes in the world file; if a set is "
@@ -232,10 +230,6 @@ def main(config, options, out, err):
 
     # This mode does not care about sets and packages so bypass all that.
     if options.unmerge:
-        if not options.force:
-            err.write("you must explicitly enable unmerging via --force "
-                "for this release (will be removed in the next major release)\n")
-            return
         world_set = None
         if not options.oneshot:
             world_set = get_pkgset(config, err, "world")
@@ -386,10 +380,6 @@ def main(config, options, out, err):
         out.write(out.bold, '%.2f' % (vdb_time,), out.reset,
                   ' seconds preloading vdb state')
     if options.pretend:
-        return
-    if not options.force and not options.fetchonly:
-        err.write("you must explicitly enable merging via --force "
-            "for this release (will be removed in the next major release)\n")
         return
 
     build_obs = observer.file_build_observer(ObserverFormatter(out))

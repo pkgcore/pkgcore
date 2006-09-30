@@ -16,6 +16,7 @@ from pkgcore.interfaces import data_source
 from pkgcore.util.osutils import listdir_dirs
 from pkgcore.repository import multiplex, virtual
 from pkgcore.util import bzip2
+from pkgcore.util.lists import iflatten_instance
 from pkgcore.config import ConfigHint
 
 from pkgcore.util.demandload import demandload
@@ -183,7 +184,7 @@ class ConfiguredTree(multiplex.tree):
     def _grab_virtuals(self):
         virtuals = {}
         for pkg in self.raw_vdb:
-            for virtualpkg in pkg.provides.evaluate_depset(pkg.use):
+            for virtualpkg in iflatten_instance(pkg.provides.evaluate_depset(pkg.use)):
                 virtuals.setdefault(virtualpkg.package, {}).setdefault(
                     pkg.fullver, []).append(pkg)
 
@@ -235,14 +236,16 @@ class install(repo_interfaces.install):
                     self.new_pkg.environment.get_fileobj().read())
                 open(os.path.join(dirpath, "environment.bz2"), "w").write(data)
                 del data
-            elif isinstance(k, boolean.base):
-                if isinstance(k, conditionals.DepSet):
-                    s = str(k)
-                else:
-                    s = conditionals.stringify_boolean(k)
             else:
                 v = getattr(self.new_pkg, k)
-                if not isinstance(v, basestring):
+                if k == 'provides':
+                    def versionless_providers(b):
+                        return b.key
+                    v = getattr(self.new_pkg, k).restrictions
+                    s = ' '.join(conditionals.stringify_boolean(x, 
+                        func=versionless_providers)
+                        for x in v)
+                elif not isinstance(v, basestring):
                     try:
                         s = ' '.join(v)
                     except TypeError:

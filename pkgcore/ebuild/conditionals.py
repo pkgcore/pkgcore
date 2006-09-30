@@ -275,11 +275,11 @@ class DepSet(boolean.AndRestriction):
 def stringify_boolean(node, func=str):
     """func is used to stringify the actual content. Useful for fetchables."""
     if isinstance(node, boolean.OrRestriction):
-        return "|| ( %s )" % " ".join(stringify_boolean(x)
+        return "|| ( %s )" % " ".join(stringify_boolean(x, func)
                                       for x in node.restrictions)
     elif isinstance(node, boolean.AndRestriction) and \
         not isinstance(node, atom):
-        return "( %s )" % " ".join(stringify_boolean(x)
+        return "( %s )" % " ".join(stringify_boolean(x, func)
             for x in node.restrictions)
     elif isinstance(node, packages.Conditional):
         assert len(node.restriction.vals) == 1

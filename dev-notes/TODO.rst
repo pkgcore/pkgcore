@@ -2,6 +2,10 @@
 Rough TODO
 ==========
 
+- pmaint (sync, quickpkging/non-merge pkg transfering, cache transfering)
+
+- install-sources trigger
+
 - collision-protect trigger
 
 - recreate verify-rdepends also

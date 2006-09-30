@@ -1,0 +1,29 @@
+Release Notes:
+
+  See ChangeLog for full commit logs.
+
+pkgcore 0.1: 
+
+  Initial release.
+  
+  * Sync functionality doesn't yet exist (pmaint script will be in 0.2)
+  
+  * pmerge vdb modification requires --force; this will be disabled in 0.2, 
+    mainly is in place so that folks who are just looking, don't inadvertantly
+    trigger an actual modification.
+  
+  * not all portage FEATURES are implemented; same for QA.
+  
+  * If overlays are in use, pkgcore may defer to it's a seperate cache to avoid 
+    pkgcore causing cache regen for portage (and vice versa); this occurs due
+    to pkgcore treating overlays as their own repo and combining them at a 
+    higher level; portage smushes them all together thus rendering each subtree
+    unusable in any standalone fashion.
+
+  * pkgcore is far more anal about blocking bad behaviour in ebuilds during
+    metadata regeneration; tree is clean, but if you do something wrong in 
+    global scope, it *will* catch it and block it.
+  
+  * EBD; daemonized ebuild.sh processing (effectively), pkgcore reuses old
+    ebuild.sh processes to avoid bash startup, speeding regen up by roughly
+    2x.

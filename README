@@ -32,6 +32,16 @@ DOCUMENTATION?
   For just getting started, dev-notes/developing.rst is a good intro
 
 
+TOOLS?
+  
+  pquery: generic utility for querying info about repositories, revdeps, pkg 
+    search, vdb search, etc.
+
+  pmerge: generic utility for doing resolution, fetching, merging/unmerging,
+    etc.
+
+  pregen: script for doing ebuild metadata regeneration; can be parallelized
+
 TESTS?
 
   A standalone test runner is available in sandbox; to run, just execute

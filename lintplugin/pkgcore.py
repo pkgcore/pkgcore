@@ -4,7 +4,6 @@
 
 from pylint import interfaces, checkers
 from logilab.astng import nodes, raw_building, utils
-from logilab.common import interface
 
 
 class BasicLinesChecker(checkers.BaseChecker):

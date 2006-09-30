@@ -597,6 +597,34 @@ class FlatteningRestriction(base):
             id(self))
 
 
+class FunctionRestriction(base):
+
+    """Convenience class for creating special restrictions."""
+
+    __slots__ = ('func',)
+
+    def __init__(self, func, negate=False):
+        """Initialize.
+
+        C{func} is used as match function.
+
+        It will usually be impossible for the backend to optimize this
+        restriction. So even though you can implement an arbitrary
+        restriction using this class you should only use it if it is
+        very unlikely backend-specific optimizations will be possible.
+        """
+        base.__init__(self, negate)
+        object.__setattr__(self, 'func', func)
+
+    def match(self, val):
+        return self.func(val) != self.negate
+
+    def __repr__(self):
+        return '<%s func=%r negate=%r @%#8x>' % (
+            self.__class__.__name__, self.func, self.negate, id(self))
+
+
+
 # "Invalid name" (pylint uses the module const regexp, not the class regexp)
 # pylint: disable-msg=C0103
 

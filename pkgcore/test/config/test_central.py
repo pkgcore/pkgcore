@@ -55,7 +55,7 @@ class ConfigManagerTest(TestCase):
               'barinst': basics.HardCodedConfigSection({'class': drawer}),
               }])
         self.assertEquals(['barinst', 'fooinst'], sorted(manager.sections()))
-        self.assertEquals(list(manager.sections('drawer')), ['barinst'])
+        self.assertEquals(manager.drawer.keys(), ['barinst'])
         self.assertEquals(manager.drawer, {'barinst': (None, None)})
 
     def test_contains(self):

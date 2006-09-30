@@ -10,7 +10,7 @@ gentoo ebuild atom, should be generalized into an agnostic base
 
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
-from pkgcore.ebuild import cpv
+from pkgcore.ebuild import cpv, cpv_errors
 from pkgcore.package import errors
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.restrictions.delegated:delegate ")
@@ -222,7 +222,10 @@ class atom(boolean.AndRestriction):
             sf(self, "glob", False)
             sf(self, "cpvstr", atom[pos:])
 
-        c = cpv.CPV(self.cpvstr)
+        try:
+            c = cpv.CPV(self.cpvstr)
+        except cpv_errors.InvalidCPV, e:
+            raise MalformedAtom(orig_atom, str(e))
         sf(self, "key", c.key)
         sf(self, "package", c.package)
         sf(self, "category", c.category)
@@ -234,7 +237,8 @@ class atom(boolean.AndRestriction):
         if self.op and self.version is None:
             raise MalformedAtom(orig_atom, "operator requires a version")
         if not self.op and self.version is not None:
-            raise MalformedAtom('versioned atom requires an operator')
+            raise MalformedAtom(orig_atom,
+                                'versioned atom requires an operator')
         # force jitting of it.
         object.__delattr__(self, "restrictions")
 
@@ -354,11 +358,164 @@ class atom(boolean.AndRestriction):
 
         return cmp(self.op, other.op)
 
-    def __ne__(self, other):
-        return self is not other
+    def intersects(self, other):
+        """Check if a passed in atom "intersects" this restriction's atom.
 
-    def __eq__(self, other):
-        return self is other
+        Two atoms "intersect" if a package can be constructed that
+        matches both:
+          - if you query for just "dev-lang/python" it "intersects" both
+            "dev-lang/python" and ">=dev-lang/python-2.4"
+          - if you query for "=dev-lang/python-2.4" it "intersects"
+            ">=dev-lang/python-2.4" and "dev-lang/python" but not
+            "<dev-lang/python-2.3"
+
+        USE and slot deps are also taken into account.
+
+        The block/nonblock state of the atom is ignored.
+        """
+        # Our "key" (cat/pkg) must match exactly:
+        if self.key != other.key:
+            return False
+        # Slot dep only matters if we both have one. If we do they
+        # must be identical:
+        if (self.slot is not None and other.slot is not None and
+            self.slot != other.slot):
+            return False
+
+        # Use deps are similar: if one of us forces a flag on and the
+        # other forces it off we do not intersect. If only one of us
+        # cares about a flag it is irrelevant.
+
+        # Skip the (very common) case of one of us not having use deps:
+        if self.use and other.use:
+            # Set of flags we do not have in common:
+            flags = set(self.use) ^ set(other.use)
+            for flag in flags:
+                # If this is unset and we also have the set version we fail:
+                if flag[0] == '-' and flag[1:] in flags:
+                    return False
+
+        # Remaining thing to check is version restrictions. Get the
+        # ones we can check without actual version comparisons out of
+        # the way first.
+
+        # If one of us is unversioned we intersect:
+        if not self.op or not other.op:
+            return True
+
+        # If we are both "unbounded" in the same direction we intersect:
+        if (('<' in self.op and '<' in other.op) or
+            ('>' in self.op and '>' in other.op)):
+            return True
+
+        # Trick used here: just use the atoms as sufficiently
+        # package-like object to pass to these functions (all that is
+        # needed is a version and revision attr).
+
+        # If one of us is an exact match we intersect if the other matches it:
+        if self.op == '=' and not self.glob:
+            return VersionMatch(
+                other.op, other.version, other.revision).match(self)
+        if other.op == '=' and not other.glob:
+            return VersionMatch(
+                self.op, self.version, self.revision).match(other)
+
+        # If we are both ~ matches we match if we are identical:
+        if self.op == other.op == '~':
+            return (self.version == other.version and
+                    self.revision == other.revision)
+
+        # If we are both glob matches we match if one of us matches the other.
+        # (No need to check for glob, the not glob case is handled above)
+        if self.op == other.op == '=':
+            return (self.fullver.startswith(other.fullver) or
+                    other.fullver.startswith(self.fullver))
+
+        # If one of us is a glob match and the other a ~ we match if the glob
+        # matches the ~:
+        if self.op == '=' and other.op == '~':
+            return other.fullversion.startswith(self.fullversion)
+        if other.op == '=' and self.op == '~':
+            return self.fullversion.startswith(other.fullversion)
+
+        # If we get here at least one of us is a <, <=, > or >=:
+        if self.op in ('<', '<=', '>', '>='):
+            ranged, other = self, other
+        else:
+            ranged, other = other, self
+
+        if '<' in other.op or '>' in other.op:
+            # We are both ranged, and in the opposite "direction" (or
+            # we would have matched above). We intersect if we both
+            # match the other's endpoint (just checking one endpoint
+            # is not enough, it would give a false positive on <=2 vs >2)
+            return (
+                VersionMatch(
+                    other.op, other.version, other.revision).match(ranged) and
+                VersionMatch(
+                    ranged.op, ranged.version, ranged.revision).match(other))
+
+        if other.op == '~':
+            # Other definitely matches its own version. If ranged also
+            # does we're done:
+            if VersionMatch(
+                ranged.op, ranged.version, ranged.revision).match(other):
+                return True
+            # The only other case where we intersect is if ranged is a
+            # > or >= on other's version and a nonzero revision. In
+            # that case other will match ranged. Be careful not to
+            # give a false positive for ~2 vs <2 here:
+            return ranged.op in ('>', '>=') and VersionMatch(
+                other.op, other.version, other.revision).match(ranged)
+
+        if other.op == '=':
+            # The fun one, since glob matches do not correspond to a
+            # single contiguous region of versions.
+
+            # a glob match definitely matches its own version, so if
+            # ranged does too we're done:
+            if VersionMatch(
+                ranged.op, ranged.version, ranged.revision).match(other):
+                return True
+            # If both the glob and ranged itself match the ranged
+            # restriction we're also done:
+            if '=' in ranged.op and VersionMatch(
+                other.op, other.version, other.revision).match(ranged):
+                return True
+            if '<' in ranged.op:
+                # Remaining cases where this intersects: there is a
+                # package smaller than ranged.fullver and
+                # other.fullver that they both match.
+
+                # If other.revision is not None then other does not
+                # match anything smaller than its own fullver:
+                if other.revision is not None:
+                    return False
+
+                # If other.revision is None then we can always
+                # construct a package smaller than other.fullver by
+                # tagging e.g. an _alpha1 on, since
+                # cat/pkg_beta2_alpha1_alpha1 is a valid version.
+                # (Yes, really. Try it if you don't believe me.)
+                # If and only if other also matches ranged then
+                # ranged will also match one of those smaller packages.
+                # XXX (I think, need to try harder to verify this.)
+                return ranged.fullver.startswith(other.version)
+            else:
+                # Remaining cases where this intersects: there is a
+                # package greater than ranged.fullver and
+                # other.fullver that they both match.
+
+                # We can always construct a package greater than
+                # other.fullver by adding a digit to it.
+                # If ond only if other also matches ranged then
+                # ranged will match such a larger package
+                # XXX (I think, need to try harder to verify this.)
+                return ranged.fullver.startswith(other.version)
+
+        # Handled all possible ops.
+        raise NotImplementedError(
+            'Someone added an op to atom without adding it to intersects')
 
 
 def split_atom(inst):

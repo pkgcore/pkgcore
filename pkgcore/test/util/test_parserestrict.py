@@ -7,6 +7,7 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util import parserestrict
 from pkgcore.util.currying import post_curry
+from pkgcore.repository import util
 
 
 class MatchTest(TestCase):
@@ -123,3 +124,34 @@ class TestExtendedRestrictionGeneration(TestCase):
         o = parserestrict.parse_match("sys-devel/automake:1.6")
         self.assertTrue(isinstance(o, atom), msg="%r must be an atom" % o)
         self.assertTrue(o.slot)
+
+
+class ParsePVTest(TestCase):
+
+    def setUp(self):
+        self.repo = util.SimpleTree({
+                'spork': {
+                    'foon': ('1', '2'),
+                    'spork': ('1', '2'),
+                    },
+                'foon': {
+                    'foon': ('2', '3'),
+                    }})
+
+
+    def test_parse_pv(self):
+        for input, output in [
+            ('spork/foon-3', 'spork/foon-3'),
+            ('spork-1', 'spork/spork-1'),
+            ('foon-3', 'foon/foon-3'),
+            ]:
+            self.assertEquals(
+                output,
+                parserestrict.parse_pv(self.repo, input).cpvstr)
+        for bogus in [
+            'spork',
+            'foon-2',
+            ]:
+            self.assertRaises(
+                parserestrict.ParseError,
+                parserestrict.parse_pv, self.repo, bogus)

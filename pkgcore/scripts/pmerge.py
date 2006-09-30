@@ -209,9 +209,7 @@ def write_error(out, message):
     # XXX should have a convenience thing on formatter for this.
     out.first_prefix = [out.fg('red'), out.bold, '!!! ', out.reset]
     out.later_prefix = out.first_prefix
-    out.wrap = True
-    out.write(message)
-    out.wrap = False
+    out.write(message, wrap=True)
     out.first_prefix = []
     out.later_prefix = []
 

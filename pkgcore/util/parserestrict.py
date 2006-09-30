@@ -10,7 +10,7 @@
 from pkgcore.util.containers import InvertedContains
 from pkgcore.restrictions import packages, values, util
 from pkgcore.package import errors
-from pkgcore.ebuild import atom
+from pkgcore.ebuild import atom, cpv, cpv_errors
 
 
 class ParseError(ValueError):
@@ -104,7 +104,7 @@ def parse_match(text):
             r = list(util.collect_package_restrictions(
                     atom.atom("%scategory/%s" % (ops, text)).restrictions,
                     attrs=InvertedContains(["category"])))
-        except errors.InvalidPackage, e:
+        except atom.MalformedAtom, e:
             raise ParseError(str(e))
         if len(r) == 1:
             return r[0]
@@ -126,6 +126,26 @@ def parse_match(text):
     return packages.AndRestriction(
         packages.PackageRestriction("category", r[0]),
         packages.PackageRestriction("package", r[1]))
+
+
+def parse_pv(repo, text):
+    """Return a CPV instance from either a cpv or a pv string.
+
+    If a pv is passed it needs to match a single cpv in repo.
+    """
+    try:
+        return cpv.CPV(text)
+    except cpv_errors.InvalidCPV:
+        restrict = parse_match('=%s' % (text,))
+        result = None
+        for match in repo.itermatch(restrict):
+            if result is not None:
+                raise ParseError('multiple matches for %s (%s, %s)' % (
+                        text, result.cpvstr, match.cpvstr))
+            result = match
+        if result is None:
+            raise ParseError('no matches for %s' % (text,))
+        return cpv.CPV(result.category, result.package, result.version)
 
 
 parse_funcs = {

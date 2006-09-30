@@ -25,16 +25,16 @@ class Formatter(object):
     @ivar bold: object to pass to L{write} to switch to bold mode.
     @ivar underline: object to pass to L{write} to switch to underlined mode.
     @ivar reset: object to pass to L{write} to turn off bold and underline.
-    @ivar nowrap: object to pass to L{write} to turn off word wrapping.
-    @ivar wrap: object to pass to L{write} to turn word wrapping on (default).
+    @ivar wrap: boolean indicating we auto-linewrap (defaults to off).
     @ivar autoline: boolean indicating we are in auto-newline mode
         (defaults to on).
     """
 
     def __init__(self):
         self.autoline = True
+        self.wrap = False
 
-    def write(self, *args):
+    def write(self, *args, **kwargs):
         """Write something to the stream.
 
         Acceptable arguments are:
@@ -44,6 +44,10 @@ class Formatter(object):
             Their return value is then used the same way as the other
             arguments.
           - Formatter subclasses might special-case certain objects.
+
+        Also accepts wrap and autoline as keyword arguments. Effect is
+        the same as setting them before the write call and resetting
+        them afterwards.
 
         The formatter has a couple of attributes that are useful as argument
         to write.
@@ -86,14 +90,13 @@ class PlainTextFormatter(Formatter):
         self.stream = stream
         self.width = width
         self._pos = 0
-        self.wrap = False
         self._in_first_line = True
         self._wrote_something = False
         self.first_prefix = ['']
         self.later_prefix = ['']
 
 
-    def _write_prefix(self):
+    def _write_prefix(self, wrap):
         if self._in_first_line:
             prefix = self.first_prefix
         else:
@@ -114,16 +117,18 @@ class PlainTextFormatter(Formatter):
             if isinstance(thing, unicode):
                 thing = thing.encode(encoding, 'replace')
             self.stream.write(thing)
-        if self.wrap and self._pos >= self.width:
+        if wrap and self._pos >= self.width:
             # XXX What to do? Our prefix does not fit.
             # This makes sure we still output something,
             # but it is completely arbitrary.
             self._pos = self.width - 10
 
 
-    def write(self, *args):
+    def write(self, *args, **kwargs):
         # Work if encoding is not set or is set to the empty string
         encoding = getattr(self.stream, 'encoding', '') or 'ascii'
+        wrap = kwargs.get('wrap', self.wrap)
+        autoline = kwargs.get('autoline', self.autoline)
         try:
             for arg in args:
                 # If we're at the start of the line, write our prefix.
@@ -132,7 +137,7 @@ class PlainTextFormatter(Formatter):
                 # we will write prefix more than once. This should not
                 # matter.
                 if not self._pos:
-                    self._write_prefix()
+                    self._write_prefix(wrap)
                 while callable(arg):
                     arg = arg(self)
                 if arg is None:
@@ -140,7 +145,7 @@ class PlainTextFormatter(Formatter):
                 if not isinstance(arg, basestring):
                     arg = str(arg)
                 is_unicode = isinstance(arg, unicode)
-                while self.wrap and self._pos + len(arg) > self.width:
+                while wrap and self._pos + len(arg) > self.width:
                     # We have to split.
                     maxlen = self.width - self._pos
                     space = arg.rfind(' ', 0, maxlen)
@@ -172,7 +177,7 @@ class PlainTextFormatter(Formatter):
                     self._pos = 0
                     self._in_first_line = False
                     self._wrote_something = False
-                    self._write_prefix()
+                    self._write_prefix(wrap)
 
                 # This fits.
                 self._wrote_something = True
@@ -180,7 +185,7 @@ class PlainTextFormatter(Formatter):
                 if is_unicode:
                     arg = arg.encode(encoding, 'replace')
                 self.stream.write(arg)
-            if self.autoline:
+            if autoline:
                 self.stream.write('\n')
                 self._wrote_something = False
                 self._pos = 0
@@ -314,15 +319,10 @@ class ObserverFormatter(object):
 
     def __init__(self, real_formatter):
         self._formatter = real_formatter
-    
+
     def write(self, *args):
-        old_autoline = self._formatter.autoline
-        try:
-            self._formatter.autoline = False
-            self._formatter.write(*args)
-        finally:
-            self._formatter.autoline = old_autoline
-    
+        self._formatter.write(autoline=False, *args)
+
     def __getattr__(self, attr):
         return getattr(self._formatter, attr)
 

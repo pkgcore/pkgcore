@@ -18,6 +18,10 @@ class _ConfigMapping(mappings.DictMixin):
 
     Similar to L{LazyValDict<mappings.LazyValDict>} but __getitem__
     does not call the key func for __getitem__.
+
+    Careful: getting the keys for this mapping will collapse all of
+    central's configs to get at their types, which might be slow if
+    any of them are remote!
     """
 
     def __init__(self, manager, typename):
@@ -36,7 +40,18 @@ class _ConfigMapping(mappings.DictMixin):
             raise
 
     def iterkeys(self):
-        return self.manager.sections(self.typename)
+        for config in self.manager.configs:
+            for name in config:
+                try:
+                    collapsed = self.manager.collapse_named_section(name)
+                except errors.BaseException:
+                    # Cannot be collapsed, ignore it (this is not
+                    # an error, it can be used as base for
+                    # something that can be collapsed)
+                    pass
+                else:
+                    if collapsed.type.name == self.typename:
+                        yield name
 
     def __contains__(self, key):
         conf = self.manager.collapse_named_section(key, raise_on_missing=False)
@@ -232,31 +247,11 @@ class ConfigManager(object):
             self.configs.extend(new_configs)
             self._exec_configs(new_configs)
 
-    def sections(self, type_name=None):
-        """With no arguments, return an iterator of all section names.
-
-        With an argument, restrict to sections of that type.
-
-        Careful: this function will collapse all our configs to get at
-        their types, which might be slow if any of them are remote!
-        """
-        if type_name is None:
-            for config in self.configs:
-                for name in config:
-                    yield name
-        else:
-            for config in self.configs:
-                for name in config:
-                    try:
-                        collapsed = self.collapse_named_section(name)
-                    except errors.BaseException:
-                        # Cannot be collapsed, ignore it (this is not
-                        # an error, it can be used as base for
-                        # something that can be collapsed)
-                        pass
-                    else:
-                        if collapsed.type.name == type_name:
-                            yield name
+    def sections(self):
+        """Return an iterator of all section names."""
+        for config in self.configs:
+            for name in config:
+                yield name
 
     def collapse_named_section(self, name, raise_on_missing=True):
         """Collapse a config by name, possibly returning a cached instance.

@@ -11,7 +11,6 @@ import optparse
 from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils, formatters)
 from pkgcore.restrictions import packages, values
-from pkgcore.package import errors as perrors
 from pkgcore.ebuild import conditionals, atom
 
 
@@ -25,11 +24,11 @@ def parse_revdep(value):
     """Value should be an atom, packages with deps intersecting that match."""
     try:
         targetatom = atom.atom(value)
-    except perrors.InvalidPackage:
-        # XXX shouldn't be ebuild specific via cpv msg
-        raise parserestrict.ParseError('invalid cpv')
+    except atom.MalformedAtom, e:
+        raise parserestrict.ParseError(str(e))
     val_restrict = values.FlatteningRestriction(
-        atom.atom, values.AnyMatch(AtomIntersectsAtom(targetatom)))
+        atom.atom,
+        values.AnyMatch(values.FunctionRestriction(targetatom.intersects)))
     return packages.OrRestriction(finalize=True, *list(
             packages.PackageRestriction(dep, val_restrict)
             for dep in ('depends', 'rdepends', 'post_rdepends')))
@@ -182,54 +181,6 @@ for _name, _attr in [
 del _name, _attr
 
 
-class AtomIntersectsAtom(values.base):
-
-    """Fuzzy intersection used for the revdep match.
-
-    Intended effect is roughly:
-      - if you query for just "dev-lang/python" it "intersects" both
-        "dev-lang/python" and ">=dev-lang/python-2.4"
-      - if you query for "=dev-lang/python-2.4" it "intersects"
-        ">=dev-lang/python-2.4" and "dev-lang/python" but not
-        "<dev-lang/python-2.3"
-
-    The block/nonblock state of the atom is ignored.
-
-    I have not figured out yet how this interacts with USE and slot deps, so
-    I pretend those do not exist. Lalalala...
-    """
-
-    def __init__(self, queryatom, negate=False):
-        """Initialize,
-
-        @type  queryatom: L{pkgcore.ebuild.atom.atom}
-        @param queryatom: the atom the dep needs to intersect with.
-        """
-        values.base.__init__(self, negate)
-        object.__setattr__(self, "atom", queryatom)
-
-    def match(self, val):
-        # If the "key" (cat/pkg) does not match we never match.
-        if val.key != self.atom.key:
-            return False
-        # If one of us does not have a version check we always match
-        if not val.op or not self.atom.op:
-            return True
-        # If one cpv matches the other's restriction we match
-        return self.atom.match(val) or val.match(self.atom)
-
-    def __str__(self):
-        return "atom matches %s" % self.atom
-
-    def __repr__(self):
-        if self.negate:
-            return '<%s atom=%r negated @%#8x>' % (
-                self.__class__.__name__, self.atom, id(self))
-        else:
-            return '<%s atom=%r @%#8x>' % (
-                self.__class__.__name__, self.atom, id(self))
-
-
 def optparse_type(parsefunc):
     """Wrap a parsefunc shared with the expression-style code for optparse."""
     def _typecheck(option, opt, value):
@@ -276,8 +227,8 @@ class OptionParser(commandline.OptionParser):
                         help='Without this switch your configuration affects '
                         'what packages are visible (through masking) and what '
                         'USE flags are applied to depends and fetchables. '
-                        "With this switch your configuration values aren't used "
-                        'and you see the "raw" repository data.')
+                        "With this switch your configuration values aren't "
+                        'used and you see the "raw" repository data.')
         repo.add_option(
             '--virtuals', action='store', choices=('only', 'disable'),
             help='arg "only" for only matching virtuals, "disable" to not '
@@ -460,8 +411,9 @@ def print_package(options, out, err, pkg):
             out.write()
 
     if options.contents:
-        for thing in getattr(pkg, 'contents', ()):
-            out.write(thing.location)
+        for location in sorted(obj.location
+                               for obj in getattr(pkg, 'contents', ())):
+            out.write(location)
 
 def print_packages_noversion(options, out, err, pkgs, vdbs):
     """Print a summary of all versions for a single package."""
@@ -593,7 +545,7 @@ def main(config, options, out, err):
 
         except (KeyboardInterrupt, formatters.StreamClosed):
             raise
-        except Exception, e:
+        except Exception:
             err.write('caught an exception!\n')
             err.write('repo: %r\n' % (repo,))
             err.write('restrict: %r\n' % (restrict,))

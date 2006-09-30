@@ -37,7 +37,6 @@ ignore=demandload.py,bundled_elementtree.py,native_readdir.py
 # method could be a function: R0201
 # mention what is locally disabled (I0011)
 # abstract method not overridden: W0223
-# operator not preceded by a space (broken in python 2.4): C0322
 # Metaclass should have "mcs" as first argument (we use "cls", string
 # is hardcoded): C0203
 # Except doesn't do anything (just "pass" in an except clause): W0704
@@ -48,7 +47,11 @@ ignore=demandload.py,bundled_elementtree.py,native_readdir.py
 # Too many statements: R0915
 # Abstract class not referenced: R0921
 # Abstract class only referenced n times: R0922
-disable-msg=W0142,W0613,R0901,R0903,R0904,R0201,I0011,W0223,C0322,C0203,W0704,C0111,R0911,R0912,R0914,R0915,R0921,R0922
+disable-msg=W0142,W0613,R0901,R0903,R0904,R0201,I0011,W0223,C0203,W0704,C0111,R0911,R0912,R0914,R0915,R0921,R0922
+
+[MESSAGES CONTROL]
+# Newer pylints use this one. Keep both locations in sync for now.
+disable-msg=W0142,W0613,R0901,R0903,R0904,R0201,I0011,W0223,C0203,W0704,C0111,R0911,R0912,R0914,R0915,R0921,R0922
 
 [BASIC]
 

@@ -303,3 +303,23 @@ class FlatteningRestrictionTest(TestCase):
             # Just check this does not raise
             self.assertTrue(str(inst))
             self.assertTrue(repr(inst))
+
+
+class FunctionRestrictionTest(TestCase):
+
+    def test_basic(self):
+
+        def yes(val):
+            return True
+        def no(val):
+            return False
+
+        for negate in (False, True):
+            yes_restrict = values.FunctionRestriction(yes, negate=negate)
+            no_restrict = values.FunctionRestriction(no, negate=negate)
+            self.assertEqual(not negate, yes_restrict.match(7))
+            self.assertEqual(negate, no_restrict.match(7))
+            for restrict in yes_restrict, no_restrict:
+                # Just check this does not raise
+                self.assertTrue(str(restrict))
+                self.assertTrue(repr(restrict))

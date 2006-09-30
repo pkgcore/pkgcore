@@ -97,7 +97,41 @@ class TestAtom(TestCase):
         atom.atom("sys-libs/db:4.4")
         self.assertRaises(atom.MalformedAtom, atom.atom, "dev-util/foo:")
 
-    def test_invalid_ops(self):
+    def test_invalid_atom(self):
         self.assertRaises(atom.MalformedAtom, atom.atom, '~dev-util/spork')
         self.assertRaises(atom.MalformedAtom, atom.atom, '>dev-util/spork')
         self.assertRaises(atom.MalformedAtom, atom.atom, 'dev-util/spork-3')
+        self.assertRaises(atom.MalformedAtom, atom.atom, 'spork')
+
+    def test_intersects(self):
+        for this, that, result in [
+            ('cat/pkg', 'pkg/cat', False),
+            ('cat/pkg', 'cat/pkg', True),
+            ('cat/pkg:1', 'cat/pkg:1', True),
+            ('cat/pkg:1', 'cat/pkg:2', False),
+            ('cat/pkg:1', 'cat/pkg[foo]', True),
+            ('cat/pkg[foo]', 'cat/pkg[-bar]', True),
+            ('cat/pkg[foo]', 'cat/pkg[-foo]', False),
+            ('>cat/pkg-3', '>cat/pkg-1', True),
+            ('>cat/pkg-3', '<cat/pkg-3', False),
+            ('>=cat/pkg-3', '<cat/pkg-3', False),
+            ('>cat/pkg-2', '=cat/pkg-2*', True),
+            ('<cat/pkg-2_alpha1', '=cat/pkg-2*', True),
+            ('=cat/pkg-2', '=cat/pkg-2', True),
+            ('=cat/pkg-2*', '=cat/pkg-2.3*', True),
+            ('>cat/pkg-2.4', '=cat/pkg-2*', True),
+            ('<cat/pkg-2.4', '=cat/pkg-2*', True),
+            ('<cat/pkg-1', '=cat/pkg-2*', False),
+            ('~cat/pkg-2', '>cat/pkg-2-r1', True),
+            ('~cat/pkg-2', '<cat/pkg-2', False),
+            ('=cat/pkg-1-r1*', '<cat/pkg-1-r1', False),
+            ('=cat/pkg-1*', '>cat/pkg-2', False),
+            ]:
+            this_atom = atom.atom(this)
+            that_atom = atom.atom(that)
+            self.assertEquals(
+                result, this_atom.intersects(that_atom),
+                '%s intersecting %s should be %s' % (this, that, result))
+            self.assertEquals(
+                result, that_atom.intersects(this_atom),
+                '%s intersecting %s should be %s' % (that, this, result))

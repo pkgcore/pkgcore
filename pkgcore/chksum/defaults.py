@@ -41,6 +41,23 @@ def loop_over_file(obj, filename):
         if wipeit:
             f.close()
 
+
+class Chksummer(object):
+
+    def __init__(self, chf_type, obj):
+        self.obj = obj
+        self.chf_type = chf_type
+
+    def new(self):
+        return self.obj()
+
+    def __call__(self, filename):
+        return loop_over_file(self.obj, filename)
+
+    def __str__(self):
+        return "%s chksummer" % self.chf_type
+
+
 # We have a couple of options:
 #
 # - If we are on python 2.5 or newer we can use hashlib, which uses
@@ -135,8 +152,9 @@ else:
         ('sha1', 'sha1'),
         ('sha256', 'sha256'),
         ]:
-        chksum_types[chksumname] = partial(
-            loop_over_file, getattr(hashlib, hashlibname))
+        chksum_types[chksumname] = Chksummer(chksumname,
+            getattr(hashlib, hashlibname))
+
     # May or may not be available depending on openssl. List
     # determined through trial and error.
     for hashlibname, chksumname in [
@@ -147,8 +165,8 @@ else:
         except ValueError:
             pass # This hash is not available.
         else:
-            chksum_types[chksumname] = partial(
-                loop_over_file, partial(hashlib.new, hashlibname))
+            chksum_types[chksumname] = Chksummer(chksumname,
+                partial(hashlib.new, hashlib))
     del hashlibname, chksumname
 
 
@@ -159,15 +177,22 @@ if 'md5' not in chksum_types:
     except ImportError:
         pass
     else:
-        def md5hash(filename):
-            if isinstance(filename, base_data_source):
-                if filename.get_path is not None:
-                    filename = filename.get_path()
-            if isinstance(filename, basestring):
-                return long(fchksum.fmd5t(filename)[0], 16)
-            return loop_over_file(md5.new, filename)
+        class MD5Chksummer(Chksummer):
+            def __init__(self):
+                self.chf_type = "md5"
 
-        chksum_types = {"md5":md5hash}
+            def new(self):
+                return md5.new()
+
+            def __call__(self, filename):
+                if isinstance(filename, base_data_source):
+                    if filename.get_path is not None:
+                        filename = filename.get_path()
+                if isinstance(filename, basestring):
+                    return long(fchksum.fmd5t(filename)[0], 16)
+                return loop_over_file(md5.new, filename)
+
+        chksum_types = {"md5":MD5Chksummer()}
 
 
 # expand this to load all available at some point
@@ -175,8 +200,8 @@ for k, v in (("sha1", "SHA"), ("sha256", "SHA256"), ("rmd160", "RIPEMD")):
     if k in chksum_types:
         continue
     try:
-        chksum_types[k] = partial(loop_over_file, modules.load_attribute(
-                "Crypto.Hash.%s.new" % v))
+        chksum_types[k] = Chksummer(k, modules.load_attribute(
+            "Crypto.Hash.%s.new" % v))
     except modules.FailedImport:
         pass
 del k, v
@@ -187,8 +212,8 @@ for modulename, chksumname in [
     ('md5', 'md5'),
     ]:
     if chksumname not in chksum_types:
-        chksum_types[chksumname] = partial(
-            loop_over_file, modules.load_attribute('%s.new' % (modulename,)))
+        chksum_types[chksumname] = Chksummer(chksumname,
+            modules.load_attribute('%s.new' % (modulename,)))
 del modulename, chksumname
 
 chksum_types = dict((intern(k), v) for k,v in chksum_types.iteritems())

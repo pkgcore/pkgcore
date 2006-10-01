@@ -302,9 +302,9 @@ else:
         def bg(self, color=None):
             return TerminfoColor(1, color)
 
-        def write(self, *args):
+        def write(self, *args, **kwargs):
             try:
-                PlainTextFormatter.write(self, *args)
+                PlainTextFormatter.write(self, *args, **kwargs)
                 if self._modes:
                     self.reset(self)
                 if self._current_colors != [None, None]:

@@ -69,7 +69,6 @@ def init(additional_handlers=None):
         raise TypeError("additional handlers must be a dict!")
 
     chksum_types.clear()
-    chksum_types["size"] = size
     __inited__ = False
     loc = os.path.dirname(sys.modules[__name__].__file__)
     for f in listdir_files(loc):
@@ -101,30 +100,6 @@ def init(additional_handlers=None):
         chksum_types.update(additional_handlers)
 
     __inited__ = True
-
-
-def size(file_obj):
-    """
-    size based chksum handler
-
-    yes, aware that size isn't much of a chksum. ;)
-
-    Also, don't use this directly, use get_handler from above
-    """
-    if isinstance(file_obj, base_data_source):
-        if file_obj.get_path is not None:
-            file_obj = file_obj.get_path()
-        else:
-            file_obj = file_obj.get_fileobj()
-    if isinstance(file_obj, basestring):
-        try:
-            st_size = os.lstat(file_obj).st_size
-        except OSError:
-            return None
-        return st_size
-    # seek to the end.
-    file_obj.seek(0, 2)
-    return long(file_obj.tell())
 
 
 def get_chksums(location, *chksums):

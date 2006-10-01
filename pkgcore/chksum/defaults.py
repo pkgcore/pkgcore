@@ -5,6 +5,7 @@
 """
 default chksum handlers implementation- sha1, sha256, rmd160, and md5
 """
+import os
 
 from pkgcore.util.currying import partial
 from pkgcore.util import modules
@@ -218,4 +219,40 @@ for modulename, chksumname in [
             modules.load_attribute('%s.new' % (modulename,)))
 del modulename, chksumname
 
+class SizeUpdater(object):
+
+    def __init__(self):
+        self.count = 0
+    
+    def update(self, data):
+        self.count += len(data)
+    
+    def hexdigest(self):
+        return "%x" % self.count
+
+
+class SizeChksummer(Chksummer):
+    """
+    size based chksum handler
+    yes, aware that size isn't much of a chksum. ;)
+    """
+
+    def __call__(self, file_obj):
+        if isinstance(file_obj, base_data_source):
+            if file_obj.get_path is not None:
+                file_obj = file_obj.get_path()
+            else:
+                file_obj = file_obj.get_fileobj()
+        if isinstance(file_obj, basestring):
+            try:
+                st_size = os.lstat(file_obj).st_size
+            except OSError:
+                return None
+            return st_size
+        # seek to the end.
+        file_obj.seek(0, 2)
+        return long(file_obj.tell())
+
+
+chksum_types["size"] = SizeChksummer('size', SizeUpdater)
 chksum_types = dict((intern(k), v) for k,v in chksum_types.iteritems())

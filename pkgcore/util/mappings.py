@@ -208,6 +208,21 @@ class LazyValDict(DictMixin):
         return len(self._keys)
 
 
+class LazyFullValLoadDict(LazyValDict):
+
+    def __getitem__(self, key):
+        if self._keys_func is not None:
+            self._keys = set(self._keys_func())
+            self._keys_func = None
+        if key in self._vals:
+            return self._vals[key]
+        if key in self._keys:
+            if self._val_func is not None:
+                self._vals.update(self._val_func(self._keys))
+                return self._vals[key]
+        raise KeyError(key)            
+
+
 class ProtectedDict(DictMixin):
 
     """

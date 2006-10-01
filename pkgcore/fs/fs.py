@@ -6,8 +6,8 @@ filesystem entry abstractions
 """
 
 import stat
-from pkgcore.util.mappings import LazyValDict
-from pkgcore.chksum import get_handlers, get_handler
+from pkgcore.util.mappings import LazyFullValLoadDict
+from pkgcore.chksum import get_handlers, get_chksums
 from os.path import sep as path_seperator, abspath
 from pkgcore.interfaces.data_source import local_source
 
@@ -111,6 +111,9 @@ class fsBase(object):
             return self._real_location
         return self.location
 
+
+known_handlers = tuple(get_handlers())
+
 class fsFile(fsBase):
 
     """file class"""
@@ -135,7 +138,7 @@ class fsFile(fsBase):
         if chksums is None:
             # this can be problematic offhand if the file is modified
             # but chksum not triggered
-            chksums = LazyValDict(tuple(get_handlers()), self._chksum_callback)
+            chksums = LazyFullValLoadDict(known_handlers, self._chksum_callback)
         kwds["chksums"] = chksums
         fsBase.__init__(self, location, **kwds)
     gen_doc_additions(__init__, __slots__)
@@ -143,8 +146,8 @@ class fsFile(fsBase):
     def __repr__(self):
         return "file:%s" % self.location
 
-    def _chksum_callback(self, chf_type):
-        return get_handler(chf_type)(self.data)
+    def _chksum_callback(self, chfs):
+        return zip(chfs, get_chksums(self.data, *chfs))
 
     @property
     def data(self):

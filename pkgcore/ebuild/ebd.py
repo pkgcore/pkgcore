@@ -416,8 +416,8 @@ class buildable(ebd, format.build):
         path = [piece for piece in path if piece]
         self.env["PATH"] = ":".join(path)
         self.fetchables = pkg.fetchables[:]
-        self.env["A"] = ' '.join(map(
-                operator.attrgetter("filename"), self.fetchables))
+        self.env["A"] = ' '.join(set(x.filename
+            for x in self.fetchables))
 
     def setup_distfiles(self):
         if self.files:

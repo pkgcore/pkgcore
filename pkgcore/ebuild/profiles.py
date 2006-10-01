@@ -159,7 +159,7 @@ class OnDiskProfile(profiles.base):
             incremental_profile_files(full_stack, "package.mask")))
         pkg_provided = {}
         for x in incremental_profile_files(full_stack, "package.provided"):
-            a = atom(x)
+            a = cpv.CPV(x)
             pkg_provided.setdefault(a.category, {}).setdefault(
                 a.package, []).append(a.fullver)
 

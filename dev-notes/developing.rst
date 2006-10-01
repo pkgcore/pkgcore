@@ -8,8 +8,8 @@ The quickest way to get a copy of the integration (release) branch is via
 downloading
 http://dev.gentooexperimental.org/~pkgcore/releases/pkgcore/hourly-snapshot.tar.bz2
 
-This is a full branched bzr repo; just untar it, and you're good to go, full
-history.
+This is a full branched bzr repo; just untar it, run bzr pull --overwrite, and you're
+good to go, full history history.
 
 
 ====================

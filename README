@@ -65,9 +65,12 @@ INSTALLING:
 
   if after running tests,
     
+    cd pkgcore-0.xx
     python setup.py build_ext -if
     sandbox/test.py
   
   finally, installing-
   
+    cd pkgcore-0.xx
     python setup.py install
+    /bin/bash pkgcore/bin/utilities/register.bash

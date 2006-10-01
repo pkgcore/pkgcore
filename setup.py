@@ -21,6 +21,14 @@ class mysdist(sdist.sdist):
         self.filelist.append("AUTHORS")
         self.filelist.append("sandbox/test.py")
         self.filelist.extend(glob.glob("sandbox/test-plugins/*"))
+        self.filelist.extend(glob.glob('doc/*.rst'))
+        self.filelist.extend(glob.glob('dev-notes/*.rst'))
+        self.filelist.extend(glob.glob('dev-notes/reimplementation/*.rst'))
+        self.filelist.extend(glob.glob('dev-notes/framework/*.rst'))
+        self.filelist.append('build_docs.py')
+        # XXX HACK: if you run "setup.py sdist" with python 2.5 this
+        # does not get packaged without this.
+        self.filelist.append('pkgcore/util/_functoolsmodule.c')
         sdist.sdist.get_file_list(self)
 
     def run(self):
@@ -139,7 +147,7 @@ if sys.version_info < (2, 5):
 
 core.setup(
     name='pkgcore',
-    version='0',
+    version='0.1',
     description='package managing framework',
     url='http://gentooexperimental.org/~ferringb/bzr/pkgcore/',
     packages=packages,

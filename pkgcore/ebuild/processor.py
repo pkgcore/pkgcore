@@ -206,6 +206,9 @@ class EbuildProcessor:
         else:
             spawn_func = pkgcore.spawn.spawn
 
+        # force to a neutral dir so that sandbox/fakeroot won't explode if
+        # ran from a nonexistant dir
+        spawn_opts["chdir"] = "/tmp"
         # little trick. we force the pipes to be high up fd wise so
         # nobody stupidly hits 'em.
         max_fd = min(pkgcore.spawn.max_fd_limit, 1024)

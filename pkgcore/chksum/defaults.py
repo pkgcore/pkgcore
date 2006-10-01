@@ -167,7 +167,7 @@ else:
             pass # This hash is not available.
         else:
             chksum_types[chksumname] = Chksummer(chksumname,
-                partial(hashlib.new, hashlib))
+                partial(hashlib.new, hashlibname))
     del hashlibname, chksumname
 
 

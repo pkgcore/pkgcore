@@ -29,6 +29,7 @@ class fetcher(object):
         if not os.path.exists(file_location):
             return -1
 
+        nondefault_handlers = handlers
         if handlers is None:
             handlers = get_handlers(target.chksums)
         if all_chksums:
@@ -43,13 +44,16 @@ class fetcher(object):
                     return -1
                 return 1
 
-        
         chfs = set(target.chksums).intersection(handlers)
         chfs.discard("size")
         chfs = list(chfs)
-        if [target.chksums[x] for x in chfs] != \
+        if nondefault_handlers:
+            for x in chfs:
+                if not handlers[x](file_location) == target.chksums[x]:
+                    return 1
+        elif [target.chksums[x] for x in chfs] != \
             get_chksums(file_location, *chfs):
-            return 1
+                return 1
 
         return 0
 

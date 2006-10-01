@@ -173,6 +173,7 @@ else:
 
 if 'md5' not in chksum_types:
     import md5
+    fchksum = None
     try:
         import fchksum
     except ImportError:
@@ -189,7 +190,7 @@ if 'md5' not in chksum_types:
                 if isinstance(filename, base_data_source):
                     if filename.get_path is not None:
                         filename = filename.get_path()
-                if isinstance(filename, basestring):
+                if isinstance(filename, basestring) and fchksum is not None:
                     return long(fchksum.fmd5t(filename)[0], 16)
                 return loop_over_file(filename, md5.new)[0]
 

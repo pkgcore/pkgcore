@@ -132,4 +132,7 @@ def get_chksums(location, *chksums):
     run multiple chksumers over a data_source/file path
     """
     handlers = get_handlers(chksums)
+    # try to hand off to the per file handler, may be faster.
+    if len(chksums) == 1:
+        return handlers[chksums[0]](location)
     return loop_over_file(location, *[handlers[k].new() for k in chksums])

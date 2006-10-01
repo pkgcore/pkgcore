@@ -9,7 +9,8 @@ from pkgcore.interfaces.data_source import base as base_data_source
 from pkgcore.util.demandload import demandload
 demandload(globals(), "os sys logging "
     "pkgcore.util.modules:load_module "
-    "pkgcore.util.osutils:listdir_files ")
+    "pkgcore.util.osutils:listdir_files "
+    "pkgcore.chksum.defaults:loop_over_file ")
 
 chksum_types = {}
 __inited__ = False
@@ -124,3 +125,11 @@ def size(file_obj):
     # seek to the end.
     file_obj.seek(0, 2)
     return long(file_obj.tell())
+
+
+def get_chksums(location, *chksums):
+    """
+    run multiple chksumers over a data_source/file path
+    """
+    handlers = get_handlers(chksums)
+    return loop_over_file(location, *[handlers[k].new() for k in chksums])

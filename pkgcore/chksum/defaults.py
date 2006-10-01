@@ -50,7 +50,7 @@ class Chksummer(object):
         self.chf_type = chf_type
 
     def new(self):
-        return self.obj()
+        return self.obj
 
     def __call__(self, filename):
         return loop_over_file(filename, self.obj)[0]
@@ -183,7 +183,7 @@ if 'md5' not in chksum_types:
                 self.chf_type = "md5"
 
             def new(self):
-                return md5.new()
+                return md5.new
 
             def __call__(self, filename):
                 if isinstance(filename, base_data_source):

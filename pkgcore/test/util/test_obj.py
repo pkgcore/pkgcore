@@ -40,3 +40,12 @@ class TestDelayedInstantiation(TestCase):
         o = set(dir(object)).difference("__%s__" % x for x in
             ["class", "getattribute", "new", "init"])
         self.assertFalse(o.difference(obj.base_kls_descriptors))
+
+    def test__class__(self):
+        l = []
+        def f():
+            l.append(False)
+            return True
+        o = make_DI(bool, f)
+        self.assertTrue(isinstance(o, bool))
+        self.assertFalse(l)

@@ -10,7 +10,7 @@ def alias_method(getter, self, *a, **kwd):
 
 def instantiate(inst):
     delayed = object.__getattribute__(inst, "__delayed__")
-    obj = delayed[0](*delayed[1], **delayed[2])
+    obj = delayed[1](*delayed[2], **delayed[3])
     object.__setattr__(inst, "__obj__", obj)
     object.__delattr__(inst, "__delayed__")
     return obj
@@ -27,15 +27,18 @@ class BaseDelayedObject(object):
     delay actual instantiation
     """
     
-    def __new__(cls, desired_kls, *a, **kwd):
+    def __new__(cls, desired_kls, func, *a, **kwd):
         o = object.__new__(cls)
-        object.__setattr__(o, "__delayed__", (desired_kls, a, kwd))
+        object.__setattr__(o, "__delayed__", (desired_kls, func, a, kwd))
         object.__setattr__(o, "__obj__", None)
         return o
     
     def __getattribute__(self, attr):
         obj = object.__getattribute__(self, "__obj__")
         if obj is None:
+            if attr == "__class__":
+                return object.__getattribute__(self, "__delayed__")[0]
+
             obj = instantiate(self)
             # now we grow some attributes.
 
@@ -108,7 +111,7 @@ def DelayedInstantiation(resultant_kls, func, *a, **kwd):
     if o is None:
         o = make_kls(resultant_kls)
         class_cache[resultant_kls] = o
-    return o(func, *a, **kwd)
+    return o(resultant_kls, func, *a, **kwd)
     
     
 slotted_dict_cache = {}

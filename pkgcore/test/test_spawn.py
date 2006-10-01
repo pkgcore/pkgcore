@@ -76,6 +76,33 @@ class SpawnTest(TempDirMixin, TestCase):
                     fp, spawn_type=spawn.spawn_sandbox)[1][0].split(":")])
         os.unlink(fp)
 
+
+    @capability_based(spawn.sandbox_capable, "sandbox binary wasn't found")
+    def test_sandbox_empty_dir(self):
+        """
+        sandbox gets pissy if it's ran from a nonexistant dir
+        
+        this verifies our fix works.
+        """
+        fp = self.generate_script(
+            "pkgcore-spawn-sandbox.sh", "echo $LD_PRELOAD")
+        dpath = os.path.join(self.dir, "dar")
+        os.mkdir(dpath)
+        try:
+            cwd = os.getcwd()
+        except OSError:
+            cwd = None
+        try:
+            os.chdir(dpath)
+            os.rmdir(dpath)
+            self.assertIn("libsandbox.so", [os.path.basename(x.strip()) for x in
+                spawn.spawn_get_output(
+                fp, spawn_type=spawn.spawn_sandbox, chdir='/')[1][0].split(":")])
+            os.unlink(fp)
+        finally:
+            if cwd is not None:
+                os.chdir(cwd)
+
     @capability_based(spawn.fakeroot_capable, "fakeroot binary wasn't found")
     def test_fakeroot(self):
         try:

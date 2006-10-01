@@ -6,7 +6,7 @@ prototype fetcher class, all fetchers should derive from this
 """
 
 import os
-from pkgcore.chksum import get_handlers
+from pkgcore.chksum import get_handlers, get_chksums
 from pkgcore.fetch import errors
 
 
@@ -43,10 +43,13 @@ class fetcher(object):
                     return -1
                 return 1
 
-        for x in handlers:
-            if x != "size" or x not in handlers:
-                if not handlers[x](file_location) == target.chksums[x]:
-                    return 1
+        
+        chfs = set(target.chksums).intersection(handlers)
+        chfs.discard("size")
+        chfs = list(chfs)
+        if [target.chksums[x] for x in chfs] != \
+            get_chksums(file_location, *chfs):
+            return 1
 
         return 0
 

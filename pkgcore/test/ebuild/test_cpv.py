@@ -11,7 +11,7 @@ class native_CpvTest(TestCase):
     good_cats = [
         "dev-util", "asdf", "dev+", "dev-util+", "DEV-UTIL", "aaa0", "zzz9",
         "aaa-0", "multi/depth", "cross-dev_idiot.hacks-suck"]
-    bad_cats  = [".util", "dev_", "", "dev-util ", "multi//depth"]
+    bad_cats  = [".util", "_dev", "", "dev-util ", "multi//depth"]
     good_pkgs = ["diffball", "a9", "a9+", "a-100dpi", "a-cvs"]
     bad_pkgs  = ["diffball "]
 

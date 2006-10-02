@@ -130,7 +130,7 @@ def rewrite_restrict(restrict):
 
 
 def get_slot(self):
-    o = self.data.pop("SLOT", "0")
+    o = self.data.pop("SLOT", "0").strip()
     if not o:
         raise ValueError(self, "SLOT cannot be unset")
     return o

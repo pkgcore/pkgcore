@@ -211,7 +211,7 @@ class install(repo_interfaces.install):
         self.domain_settings = domain_settings
         repo_interfaces.install.__init__(self, repo, pkg, *a, **kw)
 
-    _get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
+    install_get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
 
     def merge_metadata(self, dirpath=None):
         # error checking?
@@ -297,7 +297,7 @@ class uninstall(repo_interfaces.uninstall):
         repo_interfaces.uninstall.__init__(
             self, repo, pkg, offset=offset, *a, **kw)
 
-    _get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
+    uninstall_get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
 
     def unmerge_metadata(self, dirpath=None):
         if dirpath is None:

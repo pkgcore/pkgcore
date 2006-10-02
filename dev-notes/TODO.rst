@@ -4,6 +4,8 @@ Rough TODO
 
 - pmaint (sync, quickpkging/non-merge pkg transfering, cache transfering)
 
+- look into converting MULTILIB_STRICT* crap over to a trigger
+
 - install-sources trigger
 
 - collision-protect trigger

@@ -29,7 +29,7 @@ class base(object):
         self.underway = False
         self.offset = offset
         self.observer = observer
-        self.op = self._get_op()
+        self.get_op()
         self.lock = getattr(repo, "lock")
         if self.lock is None:
             self.lock = fake_lock()
@@ -73,28 +73,30 @@ class install(base):
         "finish":"merge_metadata", "merge_metadata":"postinst",
         "postinst":"transfer", "transfer":"preinst", "preinst":"start"}
     stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
-    _op_name = "_repo_install_op"
+    install_op_name = "_repo_install_op"
 
     def __init__(self, repo, pkg, *args, **kwds):
         self.new_pkg = pkg
         base.__init__(self, repo, *args, **kwds)
 
-    def _get_op(self):
-        assert bool(getattr(self, "_op_name", None))
-        op_args, op_kwds = self._get_format_op_args_kwds()
+    install_get_format_op_args_kwds = base._get_format_op_args_kwds
+
+    def get_op(self):
+        op_args, op_kwds = self.install_get_format_op_args_kwds()
         op_kwds["observer"] = self.observer
-        return getattr(self.new_pkg, self._op_name)(*op_args, **op_kwds)
+        self.install_op = getattr(self.new_pkg,
+            self.install_op_name)(*op_args, **op_kwds)
 
     def start(self):
         """start the install transaction"""
         engine = MergeEngine.install(self.new_pkg, offset=self.offset,
             observer=self.observer)
-        self.new_pkg.add_format_triggers(self, self.op, engine)
+        self.new_pkg.add_format_triggers(self, self.install_op, engine)
         return base.start(self, engine)
 
     def preinst(self):
         """execute any pre-transfer steps required"""
-        return self.op.preinst()
+        return self.install_op.preinst()
 
     def transfer(self):
         """execute the actual transfer"""
@@ -110,7 +112,7 @@ class install(base):
 
     def postinst(self):
         """execute any post-transfer steps required"""
-        return self.op.postinst()
+        return self.install_op.postinst()
 
     def merge_metadata(self):
         """merge pkg metadata to the repository.  Must be overrided"""
@@ -128,28 +130,30 @@ class uninstall(base):
         "finish":"unmerge_metadata", "unmerge_metadata":"postrm",
         "postrm":"remove", "remove":"prerm", "prerm":"start"}
     stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
-    _op_name = "_repo_uninstall_op"
+    uninstall_op_name = "_repo_uninstall_op"
 
     def __init__(self, repo, pkg, *args, **kwds):
         self.old_pkg = pkg
         base.__init__(self, repo, *args, **kwds)
     
-    def _get_op(self):
-        assert bool(getattr(self, "_op_name", None))
-        op_args, op_kwds = self._get_format_op_args_kwds()
+    uninstall_get_format_op_args_kwds = base._get_format_op_args_kwds
+
+    def get_op(self):
+        op_args, op_kwds = self.uninstall_get_format_op_args_kwds()
         op_kwds["observer"] = self.observer
-        return getattr(self.old_pkg, self._op_name)(*op_args, **op_kwds)
+        self.uninstall_op = getattr(self.old_pkg,
+            self.uninstall_op_name)(*op_args, **op_kwds)
 
     def start(self):
         """start the uninstall transaction"""
         engine = MergeEngine.uninstall(self.old_pkg, offset=self.offset,
             observer=self.observer)
-        self.old_pkg.add_format_triggers(self, self.op, engine)
+        self.old_pkg.add_format_triggers(self, self.uninstall_op, engine)
         return base.start(self, engine)
 
     def prerm(self):
         """execute any pre-removal steps required"""
-        return self.op.prerm()
+        return self.uninstall_op.prerm()
 
     def remove(self):
         """execute any removal steps required"""
@@ -162,7 +166,7 @@ class uninstall(base):
 
     def postrm(self):
         """execute any post-removal steps required"""
-        return self.op.postrm()
+        return self.uninstall_op.postrm()
 
     def _notify_repo(self):
         self.repo.notify_remove_package(self.old_pkg)
@@ -195,21 +199,22 @@ class replace(install, uninstall):
     stage_hooks = [
         "merge_metadata", "unmerge_metadata", "postrm", "prerm", "postinst",
         "preinst", "unmerge_metadata", "merge_metadata"]
-    _op_name = "_repo_replace_op"
 
     def __init__(self, repo, oldpkg, newpkg, **kwds):
         self.old_pkg = oldpkg
         self.new_pkg = newpkg
         base.__init__(self, repo, **kwds)
     
-    _get_op = install._get_op
+    def get_op(self):
+        install.get_op(self)
+        uninstall.get_op(self)
 
     def start(self):
         """start the transaction"""
         engine = MergeEngine.replace(self.old_pkg, self.new_pkg,
             offset=self.offset, observer=self.observer)
-        self.old_pkg.add_format_triggers(self, self.op, engine)
-        self.new_pkg.add_format_triggers(self, self.op, engine)
+        self.old_pkg.add_format_triggers(self, self.uninstall_op, engine)
+        self.new_pkg.add_format_triggers(self, self.install_op, engine)
         return base.start(self, engine)
 
     def _notify_repo(self):

@@ -58,7 +58,7 @@ def _reset_env_data_source(method):
 class ebd(object):
 
     def __init__(self, pkg, initial_env=None, env_data_source=None,
-                 features=None, observer=None, clean=False):
+                 features=None, observer=None, clean=False, tmp_offset=None):
         """
         @param pkg:
             L{ebuild package instance<pkgcore.ebuild.ebuild_src.package>}
@@ -148,16 +148,19 @@ class ebd(object):
             del self.env[k]
         del wipes, k, v
 
-        self.__init_workdir__()
+        self.__init_workdir__(tmp_offset)
         if clean:
             self.clean()
         self.setup_workdir()
         self.setup_env_data_source(env_data_source)
 
-    def __init_workdir__(self):
+    def __init_workdir__(self, tmp_offset):
         # don't fool with this, without fooling with setup.
         self.base_tmpdir = self.env["PORTAGE_TMPDIR"]
         self.tmpdir = normpath(os.path.join(self.base_tmpdir, "portage"))
+        if tmp_offset:
+            self.tmpdir = os.path.join(self.tmpdir,
+                tmp_offset.strip(os.path.sep))
         self.env["HOME"] = os.path.join(self.tmpdir, "homedir")
 
         self.builddir = os.path.join(self.tmpdir, self.env["CATEGORY"],
@@ -335,7 +338,7 @@ class setup_mixin(object):
         ebd.write("end_request")
 
 
-class install_op(ebd, format.uninstall):
+class install_op(ebd, format.install):
     """
     phase operations and steps for install execution
     """
@@ -357,6 +360,10 @@ class uninstall_op(ebd, format.uninstall):
     phase operations and steps for uninstall execution
     """
 
+    def __init__(self, *args, **kwargs):
+        kwargs["tmp_offset"] = "unmerge"
+        ebd.__init__(self, *args, **kwargs)
+
     prerm = pretty_docs(
         observer.decorate_build_method("prerm")(
             post_curry(
@@ -368,8 +375,11 @@ class uninstall_op(ebd, format.uninstall):
             ebd._generic_phase, "postrm", False, False, False)),
             "run the postrm phase")
 
+
 class replace_op(format.replace, install_op, uninstall_op):
-    pass
+    def __init__(self, *args, **kwargs):
+        import pdb;pdb.set_trace()
+        ebd.__init__(self, *args, **kwargs)
 
 
 class buildable(ebd, setup_mixin, format.build):
@@ -563,7 +573,7 @@ class buildable(ebd, setup_mixin, format.build):
         if self.fakeroot:
             return self._generic_phase("install", True, False, True)
         else:
-            return self._generic_phase("install", True, True, False)
+            return self._generic_phase("install", False, True, False)
 
     @observer.decorate_build_method("test")
     @_reset_env_data_source

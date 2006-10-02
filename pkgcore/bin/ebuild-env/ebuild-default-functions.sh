@@ -146,7 +146,6 @@ dyn_setup()
 
 dyn_unpack()
 {
-	trap "abort_unpack" SIGINT SIGQUIT
 	local newstuff="no"
 	MUST_EXPORT_ENV="yes"
 	if [ -e "${WORKDIR}" ]; then
@@ -168,10 +167,8 @@ dyn_unpack()
 		fi
 	fi
 	
-	install -m0700 -d "${WORKDIR}" || die "Failed to create dir '${WORKDIR}'"
-	[ -d "$WORKDIR" ] && cd "${WORKDIR}"
+	cd "${WORKDIR}"
 	src_unpack
-	trap SIGINT SIGQUIT
 }
 
 abort_handler()
@@ -187,7 +184,6 @@ abort_handler()
 	echo
 	eval ${3}
 	#unset signal handler
-	trap SIGINT SIGQUIT
 }
 
 abort_compile()
@@ -234,7 +230,6 @@ dyn_compile()
 	export DIROPTIONS="-m0755"
 	export MOPREFIX=${PN}
 
-	trap "abort_compile" SIGINT SIGQUIT
 	[ "${CFLAGS-unset}"      != "unset" ] && export CFLAGS
 	[ "${CXXFLAGS-unset}"    != "unset" ] && export CXXFLAGS
 	[ "${LIBCFLAGS-unset}"   != "unset" ] && export LIBCFLAGS
@@ -292,13 +287,11 @@ dyn_compile()
 	if hasq nostrip $FEATURES $RESTRICT; then
 		touch DEBUGBUILD
 	fi
-	trap SIGINT SIGQUIT
 }
 
 
 dyn_test()
 {
-	trap "abort_test" SIGINT SIGQUIT
 
 		echo ">>> Test phase [enabled]: ${CATEGORY}/${PF}"
 		MUST_EXPORT_ENV="yes"
@@ -306,13 +299,11 @@ dyn_test()
 			cd "${S}"
 		fi
 		src_test
-	trap SIGINT SIGQUIT
 }
 
 
 dyn_install()
 {
-	trap "abort_install" SIGINT SIGQUIT
 	rm -rf "${D}"
 	mkdir "${D}"
 	if [ -d "${S}" ]; then
@@ -331,16 +322,6 @@ dyn_install()
 	prepall
 	cd "${D}"
 
-	declare -i UNSAFE=0
-	for i in $(find "${D}/" -type f -perm -2002); do
-		UNSAFE=$(($UNSAFE + 1))
-		echo "UNSAFE SetGID: $i"
-	done
-	for i in $(find "${D}/" -type f -perm -4002); do
-		UNSAFE=$(($UNSAFE + 1))
-		echo "UNSAFE SetUID: $i"
-	done
-	
 	if type -p scanelf > /dev/null ; then
 		# Make sure we disallow insecure RUNPATH/RPATH's
 		# Don't want paths that point to the tree where the package was built
@@ -408,10 +389,6 @@ dyn_install()
 		scanelf -qyRF '%p %n' "${D}" | sed -e 's:^:/:' > "${T}/build-info/NEEDED"
 	fi
 
-	if [[ $UNSAFE > 0 ]]; then
-		die "There are ${UNSAFE} unsafe files.  Portage will not install them."
-	fi
-
 	if hasq multilib-strict ${FEATURES} && [ -x /usr/bin/file -a -x /usr/bin/find -a \
 	     -n "${MULTILIB_STRICT_DIRS}" -a -n "${MULTILIB_STRICT_DENY}" ]; then
 		MULTILIB_STRICT_EXEMPT=${MULTILIB_STRICT_EXEMPT:-"(perl5|gcc|gcc-lib)"}
@@ -425,9 +402,8 @@ dyn_install()
 
 	echo ">>> Completed installing ${PF} into ${D}"
 	echo
-	unset dir UNSAFE
+	unset dir
 	MUST_EXPORT_ENV="yes"
-	trap SIGINT SIGQUIT
 }
 
 dyn_postinst()
@@ -549,7 +525,6 @@ dyn_preinst()
 		fi
 	fi
 	MUST_EXPORT_ENV="yes"
-	trap SIGINT SIGQUIT
 }
 
 

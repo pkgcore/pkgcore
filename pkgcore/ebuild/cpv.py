@@ -19,7 +19,7 @@ suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 # while the package section looks fugly, there is a reason for it-
 # to prevent version chunks from showing up in the package
 
-valid_cat = "[a-zA-Z0-9][-a-zA-Z0-9+.]+"
+valid_cat = "[a-zA-Z0-9][-a-zA-Z0-9+._]+"
 parser = re.compile(
     "^(?P<key>(?P<category>(?:%s)(?:/%s)*)/"
     "(?P<package>[a-zA-Z0-9+][a-zA-Z0-9_+]*"

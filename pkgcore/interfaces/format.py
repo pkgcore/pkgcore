@@ -107,7 +107,7 @@ class install(build_base):
 
 
 class uninstall(build_base):
-    stage_depends = {"postinst":"preinst", "finalize":"postinst"}
+    stage_depends = {"postrm":"prerm", "finalize":"postrm"}
 
     def prerm(self):
         """any pre unmerge steps needed"""

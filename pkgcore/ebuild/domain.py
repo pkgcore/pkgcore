@@ -7,7 +7,8 @@ gentoo configuration domain
 
 # XXX doc this up better...
 
-import os, operator
+import os
+from operator import truth
 import pkgcore.config.domain
 from pkgcore.config import ConfigHint
 from itertools import chain, imap
@@ -237,7 +238,8 @@ class domain(pkgcore.config.domain.domain):
         default_keywords = unstable_unique(default_keywords + [arch])
 
         vfilter.add_restriction(self.make_keywords_filter(
-            arch, default_keywords, pkg_keywords))
+            arch, default_keywords, pkg_keywords, 
+            incremental="package.keywords" in incrementals))
 
         del default_keywords
         # we can finally close that fricking
@@ -334,11 +336,12 @@ class domain(pkgcore.config.domain.domain):
         license = incremental_negations("license", chain(repo,
                 iflatten_instance(generic_collapse_data(data, pkg))))
         if mode == "match":
-            return operator.truth(license.intersection(pkg.license))
+            return truth(license.intersection(pkg.license))
         return getattr(packages.PackageRestriction("license", 
             values.ContainmentMatch(*license)), mode)(pkg)
 
-    def make_keywords_filter(self, arch, default_keys, pkg_keywords):
+    def make_keywords_filter(self, arch, default_keys, pkg_keywords,
+        incremental=False):
         """Generates a restrict that matches iff the keywords are allowed."""
         if not pkg_keywords:
             return packages.PackageRestriction(
@@ -363,16 +366,29 @@ class domain(pkgcore.config.domain.domain):
         data[0] = tuple(filter(None, data[0]))
         data = tuple(data)
         
-        return delegate(self.apply_keywords_filter, (repo, data))
+        if incremental:
+            f = self.incremental_apply_keywords_filter
+        else:
+            f = self.apply_keywords_filter
+        return delegate(f, (repo, data))
     
+    @staticmethod
+    def incremental_apply_keywords_filter(data, pkg, mode):
+        # note we ignore mode; keywords aren't influenced by conditionals.
+        # note also, we're not using a restriction here.  this is faster.
+        repo, data = data
+        allowed = incremental_negations("keywords", chain(repo,
+                iflatten_instance(generic_collapse_data(data, pkg))))
+        return truth(allowed.intersection(pkg.keywords))
+
     @staticmethod
     def apply_keywords_filter(data, pkg, mode):
         # note we ignore mode; keywords aren't influenced by conditionals.
         # note also, we're not using a restriction here.  this is faster.
         repo, data = data
-        allowed = incremental_negations("license", chain(repo,
+        allowed = set(chain(repo,
                 iflatten_instance(generic_collapse_data(data, pkg))))
-        return operator.truth(allowed.intersection(pkg.keywords))
+        return truth(allowed.intersection(pkg.keywords))
 
     def make_per_package_use(self, default_use, pkg_use):
         if not pkg_use:

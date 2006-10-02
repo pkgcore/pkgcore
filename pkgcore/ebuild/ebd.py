@@ -27,18 +27,19 @@ from pkgcore.interfaces import observer
 from pkgcore.util.demandload import demandload
 demandload(globals(),
            "pkgcore.ebuild.ebuild_built:fake_package_factory,package "
-           "warnings ")
+           "warnings "
+           "pkgcore.package.mutated:MutatedPkg ")
 
 
 def _reset_env_data_source(method):
+    return method
     def store_env_data_wrapper(self, *args, **kwds):
         try:
             return method(self, *args, **kwds)
         finally:
             # note that we're *not* return'ing anything ourselves.
             # we want the original val to slide back
-            if self.env_data_source is None and "PORT_ENV_FILE" in self.env:
-                print "\nfiring env_data_source\n"
+            if self.env_data_source is None:
                 try:
                     fp = self.env["PORT_ENV_FILE"]
                     f = self.env_data.get_fileobj()
@@ -57,7 +58,7 @@ def _reset_env_data_source(method):
 class ebd(object):
 
     def __init__(self, pkg, initial_env=None, env_data_source=None,
-                 features=None, observer=None):
+                 features=None, observer=None, clean=False):
         """
         @param pkg:
             L{ebuild package instance<pkgcore.ebuild.ebuild_src.package>}
@@ -95,8 +96,8 @@ class ebd(object):
 
         self.env.setdefault("ROOT", "/")
         self.env_data_source = env_data_source
-        if env_data_source is not None and not isinstance(env_data_source,
-                                                          data_source.base):
+        if env_data_source is not None and \
+            not isinstance(env_data_source, data_source.base):
             raise TypeError(
                 "env_data_source must be None, or a pkgcore.data_source.base "
                 "derivative: %s: %s" % (
@@ -148,6 +149,9 @@ class ebd(object):
         del wipes, k, v
 
         self.__init_workdir__()
+        if clean:
+            self.clean()
+        self.setup_workdir()
         self.setup_env_data_source(env_data_source)
 
     def __init_workdir__(self):
@@ -162,22 +166,26 @@ class ebd(object):
             self.env[x] = os.path.join(self.builddir, y) +"/"
         self.env["IMAGE"] = self.env["D"]
 
+    def get_env_source(self):
+        return data_source.data_source(
+            open(os.path.join(self.env["T"], "environment"), "r").read())
+
     def setup_env_data_source(self, env_data_source):
         self.env_data_source = env_data_source
-        if env_data_source is not None:
-            if self.env_data_source.get_path is not None:
-                self.env["PORT_ENV_FILE"] = env_data_source.get_path()
-            else:
-                if not ensure_dirs(self.env["T"], mode=0770, gid=portage_gid,
-                                   minimal=True):
-                    raise format.FailedDirectory(
-                        self.env['T'],
-                        "%s doesn't fulfill minimum mode %o and gid %i" % (
-                            self.env['T'], 0770, portage_gid))
-                fp = os.path.join(self.env["T"], "env_data_source")
-                open(fp, "w").write(env_data_source.get_fileobj().read())
-                self.env["PORT_ENV_FILE"] = fp
+        if not ensure_dirs(self.env["T"], mode=0770, gid=portage_gid,
+            minimal=True):
+            raise format.FailedDirectory(self.env['T'],
+                "%s doesn't fulfill minimum mode %o and gid %i" % (
+                self.env['T'], 0770, portage_gid))
 
+        if env_data_source is not None:
+            fp = os.path.join(self.env["T"], "environment")
+            # load data first (might be a local_source), *then* right
+            # if it's a src_ebuild being installed, trying to do two steps
+            # stomps the local_sources data.
+            data = self.env_data_source.get_fileobj().read()
+            open(fp, "w").write(data)
+            del data
 
     def setup_logging(self):
         if self.logging and not ensure_dirs(os.path.dirname(self.logging),
@@ -198,55 +206,6 @@ class ebd(object):
             # XXX hack, just 'til pkgcore controls these directories
             if (os.stat(self.env[k]).st_mode & 02000):
                 warnings.warn("%s ( %s ) is setgid" % (self.env[k], k))
-
-    @_reset_env_data_source
-    def setup(self):
-        self.setup_workdir()
-        self.setup_distfiles()
-        self.setup_logging()
-        ebd = request_ebuild_processor(userpriv=False, sandbox=False)
-        try:
-            ebd.prep_phase("setup", self.env, sandbox=self.sandbox,
-                           logging=self.logging)
-            ebd.write("start_processing")
-            if not ebd.generic_handler(additional_commands={
-                    "request_inherit":
-                        post_curry(ebd.__class__._inherit, self.eclass_cache),
-                    "request_profiles":self._request_bashrcs}):
-                raise format.GenericBuildError(
-                    "setup: Failed building (False/0 return from handler)")
-        except Exception, e:
-            # regardless of what occured, we kill the processor.
-            ebd.shutdown_processor()
-            release_ebuild_processor(ebd)
-            # either we know what it is, or it's a shutdown.  re-raise
-            if isinstance(e, (SystemExit, format.GenericBuildError)):
-                raise
-            # wrap.
-            raise format.GenericBuildError(
-                "setup: Caught exception while building: " + str(e))
-
-        release_ebuild_processor(ebd)
-        return True
-
-    def _request_bashrcs(self, ebd, a):
-        if a is not None:
-            chuck_UnhandledCommand(ebd, "bashrc request with arg"+str(a))
-        for source in self.bashrc:
-            if source.get_path is not None:
-                ebd.write("path\n%s" % source.get_path())
-            elif source.get_data is not None:
-                raise NotImplementedError
-            else:
-                chuck_UnhandledCommand(
-                    ebd, "bashrc request: unable to process bashrc "
-                    "due to source '%s' due to lacking usable get_*" % (
-                        source,))
-            if not ebd.expect("next"):
-                chuck_UnhandledCommand(
-                    ebd, "bashrc transfer, didn't receive 'next' response.  "
-                    "failure?")
-        ebd.write("end_request")
 
     @_reset_env_data_source
     def _generic_phase(self, phase, userpriv, sandbox, fakeroot,
@@ -314,7 +273,69 @@ class ebd(object):
         return v
 
 
-class install_op(ebd):
+class setup_mixin(object):
+
+    setup_is_for_src = True
+    
+    def setup(self):
+        self.setup_logging()
+
+        additional_commands = {}
+        phase_name = "setup-binpkg"
+        if self.setup_is_for_src:
+            self.setup_distfiles()
+            phase_name = "setup"
+        
+        ebdp = request_ebuild_processor(userpriv=False, sandbox=False)
+        if self.setup_is_for_src:
+            additional_commands["request_inherit"] = \
+                post_curry(ebdp.__class__._inherit, self.eclass_cache)
+            additional_commands["request_profiles"] = self._request_bashrcs
+
+        try:
+            ebdp.prep_phase(phase_name, self.env, sandbox=self.sandbox,
+                logging=self.logging)
+            ebdp.write("start_processing")
+            if not ebdp.generic_handler(
+                additional_commands=additional_commands):
+                raise format.GenericBuildError(
+                    "setup: Failed building (False/0 return from handler)")
+
+        except Exception, e:
+            # regardless of what occured, we kill the processor.
+            ebdp.shutdown_processor()
+            release_ebuild_processor(ebdp)
+            # either we know what it is, or it's a shutdown.  re-raise
+            if isinstance(e, (SystemExit, format.GenericBuildError)):
+                raise
+            # wrap.
+            raise format.GenericBuildError(
+                "setup: Caught exception while building: " + str(e))
+
+        release_ebuild_processor(ebdp)
+        return True
+
+    def _request_bashrcs(self, ebd, a):
+        if a is not None:
+            chuck_UnhandledCommand(ebd, "bashrc request with arg"+str(a))
+        for source in self.bashrc:
+            if source.get_path is not None:
+                ebd.write("path\n%s" % source.get_path())
+            elif source.get_data is not None:
+                raise NotImplementedError
+            else:
+                chuck_UnhandledCommand(
+                    ebd, "bashrc request: unable to process bashrc "
+                    "due to source '%s' due to lacking usable get_*" % (
+                        source,))
+            if not ebd.expect("next"):
+                chuck_UnhandledCommand(
+                    ebd, "bashrc transfer, didn't receive 'next' response.  "
+                    "failure?")
+        ebd.write("end_request")
+
+
+class install_op(ebd, format.uninstall):
     """
     phase operations and steps for install execution
     """
@@ -331,10 +352,11 @@ class install_op(ebd):
             "run the postinst phase")
 
 
-class uninstall_op(ebd):
+class uninstall_op(ebd, format.uninstall):
     """
     phase operations and steps for uninstall execution
     """
+
     prerm = pretty_docs(
         observer.decorate_build_method("prerm")(
             post_curry(
@@ -346,15 +368,11 @@ class uninstall_op(ebd):
             ebd._generic_phase, "postrm", False, False, False)),
             "run the postrm phase")
 
-
-class replace_op(uninstall_op, install_op):
-    """
-    phase operations and steps for replacing a pkg with another
-    """
+class replace_op(format.replace, install_op, uninstall_op):
     pass
 
 
-class buildable(ebd, format.build):
+class buildable(ebd, setup_mixin, format.build):
 
     """
     build operation
@@ -364,7 +382,8 @@ class buildable(ebd, format.build):
 
     # XXX this is unclean- should be handing in strictly what is build
     # env, rather then dumping domain settings as env.
-    def __init__(self, pkg, domain_settings, eclass_cache, fetcher, observer=None):
+    def __init__(self, pkg, domain_settings, eclass_cache, fetcher,
+        observer=None, **kwargs):
 
         """
         @param pkg: L{pkgcore.ebuild.ebuild_src.package} instance we'll be
@@ -379,7 +398,7 @@ class buildable(ebd, format.build):
 
         format.build.__init__(self, observer=observer)
         ebd.__init__(self, pkg, initial_env=domain_settings,
-                     features=domain_settings["FEATURES"])
+                     features=domain_settings["FEATURES"], **kwargs)
 
         self.env["FILESDIR"] = os.path.join(os.path.dirname(pkg.ebuild.get_path()), "files")
         self.eclass_cache = eclass_cache
@@ -420,11 +439,11 @@ class buildable(ebd, format.build):
             for x in self.fetchables))
 
     def setup_distfiles(self):
+        # cvs/svn ebuilds need to die.
+        #self.env["PORTAGE_ACTUAL_DISTDIR"] = self.env["DISTDIR"]
+        self.env["DISTDIR"] = normpath(
+            os.path.join(self.builddir, "distdir"))+"/"
         if self.files:
-            # cvs/svn ebuilds need to die.
-            #self.env["PORTAGE_ACTUAL_DISTDIR"] = self.env["DISTDIR"]
-            self.env["DISTDIR"] = normpath(
-                os.path.join(self.builddir, "distdir"))+"/"
 
             try:
                 if os.path.exists(self.env["DISTDIR"]):
@@ -513,7 +532,7 @@ class buildable(ebd, format.build):
                     raise format.FailedDirectory(
                         self.env["CCACHE_DIR"],
                         "failed ensuring perms/group owner for CCACHE_DIR")
-        return ebd.setup(self)
+        return setup_mixin.setup(self)
 
     def configure(self):
         """
@@ -567,3 +586,15 @@ class buildable(ebd, format.build):
         """
         return fake_package_factory(self._built_class).new_package(self.pkg,
             self.env["IMAGE"], os.path.join(self.env["T"], "environment"))
+
+
+class binpkg_buildable(ebd, setup_mixin, format.build):
+
+    stage_depends = {"finalize":"setup"}
+    setup_is_for_src = False
+
+    def __init__(self, *args, **kwargs):
+        ebd.__init__(self, *args, **kwargs)
+
+    def finalize(self):
+        return MutatedPkg(self.pkg, {"environment":self.get_env_source()})

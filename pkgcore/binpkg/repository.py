@@ -24,7 +24,10 @@ demandload(globals(),
            "pkgcore.merge:engine "
            "pkgcore.merge.triggers:SimpleTrigger "
            "pkgcore.fs.livefs:scan "
-           "pkgcore.interfaces.data_source:data_source ")
+           "pkgcore.interfaces.data_source:data_source "
+           "pkgcore.repository:wrapper "
+           "pkgcore.package.mutated:MutatedPkg "
+           "pkgcore.ebuild:ebd ")
 
 
 def force_unpack_trigger(op, engine_inst, cset):
@@ -143,10 +146,15 @@ class StackedXpakDict(DictMixin):
 
 
 class tree(prototype.tree):
+
     format_magic = "ebuild_built"
+
     # yes, the period is required. no, do not try and remove it
     # (harring says it stays)
     extension = ".tbz2"
+
+    configured = False
+    configurables = ("settings", )
 
     pkgcore_config_type = ConfigHint(typename='repo')
 
@@ -211,6 +219,26 @@ class tree(prototype.tree):
 
     _get_ebuild_path = _get_path
 
-
     def _get_metadata(self, pkg):
         return StackedXpakDict(self, pkg)
+
+
+class ConfiguredBinpkgTree(wrapper.tree):
+    
+    format_magic = "ebuild_built"
+    configured = True
+    
+    def __init__(self, repo, domain_settings):
+        # rebind to ourselves basically.
+        def package_class(pkg):
+            return MutatedPkg(pkg, 
+                {"build":partial(self._generate_build_op, pkg)})
+        wrapper.tree.__init__(self, repo, package_class=package_class)
+        self.domain_settings = domain_settings
+
+    def _generate_build_op(self, pkg, **kwargs):
+        kwargs["initial_env"] = self.domain_settings
+        kwargs["env_data_source"] = pkg.environment
+        return ebd.binpkg_buildable(pkg, **kwargs)
+
+tree.configure = ConfiguredBinpkgTree

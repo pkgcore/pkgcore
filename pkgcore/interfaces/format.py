@@ -36,6 +36,7 @@ class build_base(object):
     def __init__(self, observer=None):
         self.observer = observer
 
+
 class build(build_base):
     stage_depends = {
         "setup":"fetch",
@@ -89,6 +90,43 @@ class build(build_base):
     del o, k
 
 
+class install(build_base):
+    stage_depends = {"postinst":"preinst", "finalize":"postinst"}
+
+    def preinst(self):
+        """any pre merge steps needed"""
+        return True
+
+    def postinst(self):
+        """any post merge steps needed"""
+        return True
+
+    def finalize(self):
+        """finalize any merge steps required"""
+        return True
+
+
+class uninstall(build_base):
+    stage_depends = {"postinst":"preinst", "finalize":"postinst"}
+
+    def prerm(self):
+        """any pre unmerge steps needed"""
+        return True
+
+    def postinst(self):
+        """any post unmerge steps needed"""
+        return True
+
+    def finalize(self):
+        """finalize any unmerge steps required"""
+        return True
+
+class replace(install, uninstall):
+
+    stage_depends = {"finalize":"postinst", "postinst":"postrm", 
+        "postrm":"prerm", "prerm":"preinst"}
+
+
 class fetch(object):
     __metaclass__ = ForcedDepends
 
@@ -114,7 +152,7 @@ class empty_build_op(build_base):
 
 #	__metaclass__ = ForcedDepends
 
-    def __init__(self, pkg, observer=None):
+    def __init__(self, pkg, observer=None, clean=False):
         build_base.__init__(self, observer)
         self.pkg = pkg
 

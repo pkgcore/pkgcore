@@ -389,7 +389,8 @@ def main(config, options, out, err):
     for count, data in enumerate(changes):
         op, pkgs = data
         out.write("processing %s, %i/%i" % (pkgs[0], count + 1, change_count))
-        buildop = pkgs[0].build(observer=build_obs)
+        out.write("forcing cleaning of workdir")
+        buildop = pkgs[0].build(observer=build_obs, clean=True)
         if options.fetchonly:
             out.write("\n%i files required-" % len(pkgs[0].fetchables))
             try:
@@ -399,8 +400,6 @@ def main(config, options, out, err):
             except Exception, e:
                 ret = e
         else:
-            out.write("forcing cleaning of workdir")
-            buildop.clean()
             ret = None
             out.write("building...")
             try:

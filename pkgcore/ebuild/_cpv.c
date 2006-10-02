@@ -162,8 +162,13 @@ pkgcore_cpv_parse_category(const char *start, int null_is_end)
         return NULL;
     if(!null_is_end) {
         char *end = NULL;
+        /* first char must be alnum, after that it's opened up. */
         while('\0' != *p) {
-            while(ISALNUM(*p) || '+' == *p || '-' == *p)
+            if(!ISALNUM(*p))
+                return NULL;
+            p++;
+            while(ISALNUM(*p) || '+' == *p || '-' == *p || '.' == *p \
+                || '_' == *p)
                 p++;
             if('/' == *p) {
                 end = p;
@@ -183,7 +188,11 @@ pkgcore_cpv_parse_category(const char *start, int null_is_end)
        }
     } else {
         for (;;) {
-            while('\0' != *p && (ISALNUM(*p) || '+' == *p || '-' == *p))
+            if(!ISALNUM(*p))
+                return NULL;
+            p++;
+            while('\0' != *p && (ISALNUM(*p) || '+' == *p || '-' == *p \
+                || '.' == *p || '_' == *p))
                 p++;
             if('/' == *p) {
                 p++;

@@ -325,6 +325,8 @@ load_environ() {
 	SANDBOX_READ="/bin:${SANDBOX_READ}:/dev/urandom:/dev/random:$PORTAGE_BIN_PATH"
 	SANDBOX_ON=$SANDBOX_STATE
 
+    [ ! -f "$1" ] && die "load_environ called with a nonexist env: $1"
+
 	if [ -n "$DEBUGGING" ]; then
 		echo "loading env for $EBUILD_PHASE" >&2
 	fi
@@ -335,43 +337,26 @@ load_environ() {
 	src="$1"
 	[ -n "$DEBUGGING" ] && echo "loading environment from $src" >&2
 
-	# XXX: note all of the *very careful* handling of bash env dumps through this code, and the fact 
-	# it took 4 months to get it right.  There's a reason you can't just pipe the $(export) to a file.
-	# They were implemented wrong, as I stated when the export kludge was added.
-	# so we're just dropping the attributes.  .51-r4 should carry a fixed version, .51 -> .51-r3
-	# aren't worth the trouble.  Drop all inline declare's that would be executed.
-	# potentially handle this via filter-env?
-	# ~harring
-	load_file() {
-		if [ "${src%bz2}" != "${src}" ]; then
-			bzcat "${src}"
-		else
-			cat "${src}"
-		fi
-	}
 	if [ -f "$src" ]; then
-		# double exec.
-#		 #2<>>(grep -v 'readonly' >&2)";
-#		; } 2<>>(grep -v 'readonly' >&2)";
 
-		eval "$(
-				unset DEBUGGING;
-				function declare() {
-					:
-				};
-				shopt -s execfail;
-				eval "$(load_file "$src")"
-				shopt -u execfail;
-				unset -f declare load_file;
-				# leave the existing reinstate attribs in place
-				dump_environ --no-attributes;
-			)"
+    	# XXX: note all of the *very careful* handling of bash env dumps through this code, and the fact 
+    	# it took 4 months to get it right.  There's a reason you can't just pipe the $(export) to a file.
+	    # They were implemented wrong, as I stated when the export kludge was added.
+    	# so we're just dropping the attributes.  .51-r4 should carry a fixed version, .51 -> .51-r3
+	    # aren't worth the trouble.  Drop all inline declare's that would be executed.
+    	# potentially handle this via filter-env?
+	    # ~harring
+		function declare() {
+			:
+		};
+		eval "$(filter-env -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" \
+		    -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x )" -i "$src")"
 		ret=$?
+        unset -f declare
 	else
 		echo "ebuild=${EBUILD}, phase $EBUILD_PHASE" >&2
 		ret=1
 	fi
-	unset -f load_file &> /dev/null;
 	return $(( $ret ))
 }
 
@@ -522,7 +507,7 @@ execute_phases() {
 		prerm|postrm|preinst|postinst|config)
 			export SANDBOX_ON="0"
 
-			if ! load_environ "${PORT_ENV_FILE}"; then
+			if ! load_environ "${T}/environment"; then
 				#hokay.  this sucks.
 				ewarn 
 				ewarn "failed to load env"
@@ -579,29 +564,36 @@ execute_phases() {
 			[[ $PORTAGE_DEBUG -lt 2 ]] && set +x
 			export SANDBOX_ON="0"
 			;;
-		setup)
+		setup|setup-binpkg)
 			#pkg_setup needs to be out of the sandbox for tmp file creation;
 			#for example, awking and piping a file in /tmp requires a temp file to be created
 			#in /etc.  If pkg_setup is in the sandbox, both our lilo and apache ebuilds break.
 
 			export SANDBOX_ON="0"
 
-			[ ! -z "${DISTCC_LOG}" ] && addwrite "$(dirname ${DISTCC_LOG})"
+            # binpkgs don't need to reinitialize the env.
+            if [ "$myarg"  == "setup" ]; then
+    			[ ! -z "${DISTCC_LOG}" ] && addwrite "$(dirname ${DISTCC_LOG})"
 
-			local x
-			# if they aren't set, then holy hell ensues.  deal.
+	    		local x
+		    	# if they aren't set, then holy hell ensues.  deal.
 
-			[ -z "${CCACHE_SIZE}" ] && export CCACHE_SIZE="500M"
-			ccache -M ${CCACHE_SIZE} &> /dev/null
-			[[ $PORTAGE_DEBUG == 2 ]] && set -x
-			init_environ
-			MUST_EXPORT_ENV="yes"
+			    [ -z "${CCACHE_SIZE}" ] && export CCACHE_SIZE="500M"
+    			ccache -M ${CCACHE_SIZE} &> /dev/null
+	    		[[ $PORTAGE_DEBUG == 2 ]] && set -x
+		    	init_environ
+			    MUST_EXPORT_ENV="yes"
+            elif ! load_environ ${T}/environment; then
+                die "failed loading saved env; at ${T}/environment"
+            fi
 
 			[[ -n $PORTAGE_DEBUG ]] && set -x
-			type -p pre_pkg_${EBUILD_PHASE} &> /dev/null && pre_pkg_${EBUILD_PHASE}
-			dyn_${EBUILD_PHASE}
+			type -p pre_pkg_setup &> /dev/null && \
+			    pre_pkg_setup
+			dyn_setup
 			ret=0;
-			type -p post_pkg_${EBUILD_PHASE} &> /dev/null && post_pkg_${EBUILD_PHASE}
+			type -p post_pkg_setup &> /dev/null && \
+			    post_pkg_setup
 			[[ $PORTAGE_DEBUG -lt 2 ]] && set +x
 
 			;;
@@ -647,7 +639,7 @@ execute_phases() {
 		esac
 
 		if [ "${MUST_EXPORT_ENV}" == "yes" ]; then
-			export_environ "${PORT_ENV_FILE:-${T}/environment}"
+			export_environ "${T}/environment"
 			MUST_EXPORT_ENV="no"
 		fi
 		[[ $PORTAGE_DEBUG -lt 4 ]] && set +x

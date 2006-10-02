@@ -247,19 +247,20 @@ def main(config, options, out, err):
             return 1
         return
 
-    repos = domain.all_repos
+    all_repos = domain.all_repos
+    repos = list(all_repos.trees)
     if options.usepkgonly or options.usepkg:
         if options.usepkgonly:
             repos = [
-                repo for repo in repos.trees
+                repo for repo in all_repos.trees
                 if getattr(repo, 'format_magic', None) != 'ebuild_src']
         else:
             repos = [
-                repo for repo in repos.trees
+                repo for repo in all_repos.trees
                 if getattr(repo, 'format_magic', None) == 'ebuild_built'] + [
-                repo for repo in repos.trees
+                repo for repo in all_repos.trees
                 if getattr(repo, 'format_magic', None) != 'ebuild_built']
-        repos = multiplex.tree(*repos)
+        all_repos = multiplex.tree(*repos)
 
     atoms = []
     for setname in options.set:
@@ -270,7 +271,7 @@ def main(config, options, out, err):
 
     for token in options.targets:
         try:
-            a = parse_atom(token, repos, return_none=True)
+            a = parse_atom(token, all_repos, return_none=True)
         except parserestrict.ParseError, e:
             write_error(out, str(e))
             return 1

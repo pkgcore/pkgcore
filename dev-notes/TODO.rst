@@ -111,9 +111,4 @@ Rough TODO
 - pkgcore.fetch.bundled_lib:
   clean this beast up.
 
-- IPV6 handling:
-  bug 37124 # syncing
-  check over BINHOST code replacement for any code that resolve to a specific
-  IP
-
 - locking unification.  see plugins for an example of why it's needed

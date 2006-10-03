@@ -2,6 +2,35 @@ Release Notes:
 
   See ChangeLog for full commit logs.
 
+pkgcore 0.1.1:
+
+  * hang fix for test_filter_env
+  
+  * package.keywords fixes: no longer incremental, supports '*' and '~*'
+    properly
+  
+  * FEATURES="userpriv" support works again.
+  
+  * pmerge repository ordering now behaves properly; prefers src ebuilds, then
+    built pkgs; -k inverts that (previously was semi-undefined)
+  
+  * binpkg fixes: run setup phase
+  
+  * replace op fixes: force seperate WORKDIR for unmerge to protect against 
+    env collisions
+  
+  * loosened category rules: allow _. chars to support cross-dev hack.
+  
+  * build fixes: make $A unique to avoid duplicate unpacks; force distdir
+    creation regardless of whether or not the pkg has any stated SRC_URI
+    (fixes cvs and subversion eclsas usage).  Fix sandbox execution to chdir
+    to an existant directory (sandbox will fail if ran from a nonexistant dir).
+  
+  * change DelayedInstantiation objects to track __class__ themselves; this 
+    fixes pquery to properly shutdown when ctrl+c'd (previously could swallow
+    the interrupt due to cpython isinstance swallowing KeyboardInterrupt).
+  
+  
 pkgcore 0.1: 
 
   Initial release.

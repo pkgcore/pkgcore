@@ -388,6 +388,14 @@ class domain(pkgcore.config.domain.domain):
         repo, data = data
         allowed = set(chain(repo,
                 iflatten_instance(generic_collapse_data(data, pkg))))
+        if "*" in allowed:
+            for k in pkg.keywords:
+                if k[0] not in "-~":
+                    return True
+        if "~*" in allowed:
+            for k in pkg.keywords:
+                if k[0] == "~":
+                    return True
         return truth(allowed.intersection(pkg.keywords))
 
     def make_per_package_use(self, default_use, pkg_use):

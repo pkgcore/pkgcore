@@ -48,7 +48,7 @@ class TestFilterEnv(TempDirMixin, TestCase):
             args.append("-dd")
         if gdb:
             spawn.spawn(["gdb", "--args"] + args + ["-ddd"])
-        retval, data = spawn.spawn_get_output(args, collect_fds=(1,2))
+        retval, data = spawn.spawn_get_output(args, collect_fds=(1,))
         self.assertEqual(retval, 0, "retval %i: %r\nargs: %r" %
             (retval, data, args))
         return data

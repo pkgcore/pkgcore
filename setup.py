@@ -74,19 +74,8 @@ class build_filter_env(core.Command):
     def run(self):
         compiler = ccompiler.new_compiler(
             compiler=self.compiler, dry_run=self.dry_run, force=self.force)
-        sysconfig.customize_compiler(compiler)
-        cc = ' '.join(compiler.compiler)
-        
-        for x in ("BASECFLAGS", "CCSHARED", "LDFLAGS"):
-            f = sysconfig.get_config_var(x)
-            if isinstance(f, basestring):
-                cc = cc.replace(f, '')
-            elif f is None:
-                continue
-            else:
-                cc = cc.replace(" ".join(f), '')
-
-        compiler.set_executables(compiler=cc, compiler_so=cc)
+        cc = "%s %s" % (os.environ.get("CC", "cc"), os.environ.get("CFLAGS", ""))
+        compiler.set_executables(compiler=cc, compiler_so=cc, linker_exe=cc)
         objects = compiler.compile(list(
                 os.path.join('src', 'filter-env', name)
                 for name in ('main.c', 'bmh_search.c')), debug=self.debug)
@@ -147,7 +136,7 @@ if sys.version_info < (2, 5):
 
 core.setup(
     name='pkgcore',
-    version='0.1',
+    version='0.1.1',
     description='package managing framework',
     url='http://gentooexperimental.org/~ferringb/bzr/pkgcore/',
     packages=packages,

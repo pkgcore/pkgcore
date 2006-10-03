@@ -26,6 +26,7 @@ class mysdist(sdist.sdist):
         self.filelist.extend(glob.glob('dev-notes/reimplementation/*.rst'))
         self.filelist.extend(glob.glob('dev-notes/framework/*.rst'))
         self.filelist.append('build_docs.py')
+        self.filelist.exclude_pattern("pkgcore/bin/ebuild-env/filter-env")
         # XXX HACK: if you run "setup.py sdist" with python 2.5 this
         # does not get packaged without this.
         self.filelist.append('pkgcore/util/_functoolsmodule.c')

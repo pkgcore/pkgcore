@@ -105,5 +105,6 @@ class rsyncer(base.syncer):
             elif ret == 11:
                 raise base.syncer_exception("rsync returned error code of "
                     "11; this is an out of space exit code")
-            else:
-                print ret
+           # need to do something here instead of just restarting...
+           # else:
+           #     print ret

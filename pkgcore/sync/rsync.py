@@ -42,7 +42,7 @@ class rsyncer(base.syncer):
         retries=default_retries,
         extra_opts=[]):
         
-        # rsync doesn't gets weird if / isn't trailing.
+        # rsync gets weird if / isn't trailing.
         basedir = basedir.rstrip(os.path.sep) + os.path.sep
         base.syncer.__init__(self, basedir, uri, 2)
         self.rsync_fp = base.require_binary("rsync")
@@ -96,7 +96,7 @@ class rsyncer(base.syncer):
                     self.remote_path),
                  self.basedir,
                 ] + opts
-            ret = base.spawn.spawn(o, fd_pipes=fd_pipes)
+            ret = self._spawn(o, pipes)
             if ret == 0:
                 return True
             elif ret == 1:

@@ -29,6 +29,9 @@ class syncer(object):
         return "%s syncer: %s, %s" % (self.__class__,
             self.basedir, self.uri)
 
+    def _spawn(self, command, pipes):
+        return spawn.spawn(command, fd_pipes=pipes)
+
 
 def require_binary(bin_name, fatal=True):
     try:

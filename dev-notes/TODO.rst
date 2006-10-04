@@ -2,6 +2,11 @@
 Rough TODO
 ==========
 
+- userpriv for pebuild misbehaves..
+
+- http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/491285
+  check into, probably better then my curfty itersort
+  
 - pmaint (sync, quickpkging/non-merge pkg transfering, cache transfering)
 
 - look into converting MULTILIB_STRICT* crap over to a trigger

@@ -2,7 +2,7 @@
 # License: GPL2
 
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore:spawn")
+demandload(globals(), "pkgcore:spawn os pwd")
 
 class syncer(object):
 
@@ -10,8 +10,28 @@ class syncer(object):
     
     def __init__(self, local_path, uri, default_verbosity=0):
         self.verbose = default_verbosity
-        self.basedir = local_path
+        self.basedir = local_path.rstrip(os.path.sep) + os.path.sep
         self.uri = uri
+
+    @staticmethod
+    def split_users(raw_uri):
+        """
+        @param uri: string uri to split users from; harring::ferringb:pass
+          for example is local user 'harring', remote 'ferringb',
+          password 'pass'
+        @return: (local user, remote user, remote pass), None for fields if 
+          unset
+        """
+        uri = raw_uri.split("::", 1)
+        if len(uri) == 1:
+            return None, raw_uri
+        try:
+            if uri[1].startswith("@"):
+                uri[1] = uri[1][1:]
+            return pw.getpwnam(uri[0]).pw_uid, uri[1]
+        except KeyError, e:
+            raise missing_local_user(raw_uri, uri[0], e)
+        
     
     def sync(self, verbosity=None, force=False):
         kwds = {}
@@ -30,7 +50,7 @@ class syncer(object):
             self.basedir, self.uri)
 
     def _spawn(self, command, pipes):
-        return spawn.spawn(command, fd_pipes=pipes)
+        return spawn.spawn(command, fd_pipes=pipes, uid=self.local_user)
 
 
 def require_binary(bin_name, fatal=True):
@@ -46,4 +66,10 @@ class syncer_exception(Exception):
     pass
 
 class uri_exception(syncer_exception):
+    pass
+
+class generic_exception(syncer_exception):
+    pass
+
+class missing_local_user(syncer_exception):
     pass

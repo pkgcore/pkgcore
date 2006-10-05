@@ -43,7 +43,6 @@ class rsyncer(base.syncer):
         extra_opts=[]):
         
         # rsync gets weird if / isn't trailing.
-        basedir = basedir.rstrip(os.path.sep) + os.path.sep
         base.syncer.__init__(self, basedir, uri, 2)
         self.rsync_fp = base.require_binary("rsync")
 

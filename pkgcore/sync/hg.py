@@ -2,9 +2,6 @@
 # License: GPL2
 
 from pkgcore.sync import base
-from pkgcore.config import ConfigHint
-from pkgcore.util.demandload import demandload
-demandload(globals(), "os stat errno")
 
 class hg_syncer(base.dvcs_syncer):
 

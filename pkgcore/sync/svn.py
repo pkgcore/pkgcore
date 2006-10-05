@@ -2,7 +2,6 @@
 # License: GPL2
 
 from pkgcore.sync import base
-from pkgcore.config import ConfigHint
 
 class svn_syncer(base.syncer):
 

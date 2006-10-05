@@ -5,6 +5,8 @@ from pkgcore.sync import base
 
 class hg_syncer(base.dvcs_syncer):
 
+    binary = "hg"
+
     @staticmethod
     def parse_uri(raw_uri):
         if not raw_uri.startswith("hg+"):
@@ -16,7 +18,7 @@ class hg_syncer(base.dvcs_syncer):
         base.dvs_syncer.__init__(self, basedir, uri)
         
     def _initial_pull(self):
-        return ["hg", "clone", self.uri, self.basedir]
+        return [self.binary_path, "clone", self.uri, self.basedir]
 
     def _update_existing(self):
-        return ["hg", "pull", "-u", self.uri]
+        return [self.binary_path, "pull", "-u", self.uri]

@@ -5,6 +5,8 @@ from pkgcore.sync import base
 
 class git_syncer(base.dvcs_syncer):
 
+    binary = "git"
+
     @staticmethod
     def parse_uri(raw_uri):
         if not raw_uri.startswith("git+") and not raw_uri.startswith("git://"):
@@ -19,7 +21,7 @@ class git_syncer(base.dvcs_syncer):
         base.dvcs_syncer(self, basedir, uri)
     
     def _initial_pull(self):
-        return ["git", "clone", self.uri, self.basedir]
+        return [self.binary_path, "clone", self.uri, self.basedir]
 
     def _update_existing(self):
-        return ["git", "pull"]
+        return [self.binary_path, "pull"]

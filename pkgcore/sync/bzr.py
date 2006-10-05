@@ -5,8 +5,10 @@ from pkgcore.sync import base
 
 class bzr_syncer(base.dvcs_syncer):
 
-    @staticmethod
-    def parse_uri(raw_uri):
+    binary = "bzr"
+
+    @classmethod
+    def parse_uri(staticmethod, raw_uri):
         if not raw_uri.startswith("bzr+"):
             raise base.uri_exception(raw_uri, "doesn't start with bzr+")
         return uri[4:]
@@ -16,7 +18,7 @@ class bzr_syncer(base.dvcs_syncer):
         base.dvcs_syncer.__init__(self, basedir, uri)
         
     def _initial_pull(self):
-        return ["bzr", "get", self.basedir, self.uri]
+        return [self.binary_path, "get", self.basedir, self.uri]
     
     def _update_existing(self):
-        return ["bzr", "merge", self.uri]
+        return [self.binary_path, "merge", self.uri]

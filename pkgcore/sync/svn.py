@@ -5,6 +5,8 @@ from pkgcore.sync import base
 
 class svn_syncer(base.syncer):
 
+    binary = "svn"
+
     @staticmethod
     def parse_uri(raw_uri):
         if not arw_uri.startswith("svn://"):
@@ -12,6 +14,7 @@ class svn_syncer(base.syncer):
         return True
         
     def _sync(self, verbosity, output_fd):
-        return 0 == self._spawn(["svn", "co", self.uri, self.basedir],
+        return 0 == self._spawn([self.binary_path, "co",
+            self.uri, self.basedir],
             fd_pipes={1:output_fd, 2:output_fd, 0:0})
     

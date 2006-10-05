@@ -6,20 +6,26 @@ from pkgcore.sync import base
 class cvs_syncer(base.dvcs_syncer):
 
     sets_env = True
+    binary = "cvs"
     
-    @staticmethod
-    def parse_uri(raw_uri):
-        proto = raw_uri.split(":", 1)[0]
-        if not proto in ("cvs", "cvs+ssh"):
-            raise base.uri_exception(raw_uri, "must be cvs:// or cvs+ssh://")
-        return proto, raw_uri.lstrip("/")
+    @classmethod
+    def parse_uri(cls, raw_uri):
+        if not raw_uri.startswith("cvs") and \
+            not raw_uri.startswith("cvs+"):
+            raise base.uri_exception(raw_uri, "must be cvs:// or cvs+${RSH}")
+        if raw_uri.startswith("cvs://"):
+            return None, raw_uri[len("cvs://"):]
+        proto = raw_uri[len("cvs+"):].split("/", 1)
+        if not proto[0]:
+            raise base.uri_exception(raw_uri,
+                "cvs+ requires the rsh alternative to be specified")
+        proto = cls.require_binary(proto[0])
+        return proto[0], proto[1].lstrip("/")
 
     def __init__(self, basedir, uri):
         proto, raw_uri = self.parse_uri(uri)
-        if proto == 'cvs':
-            self.rsh = None
-        else:
-            self.rsh = proto.split("+", 1)[-1]
+        if proto is not None:
+            self.rsh = proto
         host, self.module = uri.rsplit(":" ,1)
         nase.dvcs_syncer.__init__(self, basedir, host)
         
@@ -31,7 +37,7 @@ class cvs_syncer(base.dvcs_syncer):
         return k
 
     def _update_existing(self):
-        return ["cvs", "up"]
+        return [self.binary_path, "up"]
 
     def _initial_pull(self):
-        return ["cvs", "co", "-d", self.basedir]
+        return [self.binary_path, "co", "-d", self.basedir]

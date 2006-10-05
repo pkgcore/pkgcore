@@ -1,6 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from pkgcore.config import ConfigHint
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore:spawn os pwd")
 
@@ -10,13 +11,16 @@ class syncer(object):
     sets_env = False
     binary = None
     
-    def __init__(self, local_path, uri, default_verbosity=0):
+    pkgcore_config_type = ConfigHint({'path':'str', 'uri':'path'},
+        typename='syncer')
+    
+    def __init__(self, path, uri, default_verbosity=0):
         self.verbose = default_verbosity
-        self.basedir = local_path.rstrip(os.path.sep) + os.path.sep
+        self.basedir = path.rstrip(os.path.sep) + os.path.sep
         self.local_user, self.uri = self.split_users(uri)
         if not self.sets_env:
             self.env = {}
-        if not hasattr(self, "binary_path"):
+        if not hasattr(self, 'binary_path'):
             self.binary_path = self.require_binary(self.binary)
 
     @staticmethod

@@ -13,7 +13,7 @@ class syncer(object):
     def __init__(self, local_path, uri, default_verbosity=0):
         self.verbose = default_verbosity
         self.basedir = local_path.rstrip(os.path.sep) + os.path.sep
-        self.uri = uri
+        self.local_user, self.uri = self.split_users(uri)
         if not self.sets_env:
             self.env = {}
         if not hasattr(self, "binary_path"):
@@ -39,7 +39,7 @@ class syncer(object):
                 proto[1] = proto[1].lstrip("/")
                 uri[0] = proto[1]
                 uri[1] = "%s//%s" % (proto[0], uri[1])
-            return pw.getpwnam(uri[0]).pw_uid, uri[1]
+            return pwd.getpwnam(uri[0]).pw_uid, uri[1]
         except KeyError, e:
             raise missing_local_user(raw_uri, uri[0], e)
     

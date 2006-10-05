@@ -11,8 +11,7 @@ class darcs_syncer(base.dvcs_syncer):
     def parse_uri(raw_uri):
         if not raw_uri.startswith("darcs+"):
             raise base.uri_exception(raw_uri, "doesn't start with darcs+")
-        darcs_loc = cls.require_binary(cls.binary)
-        returns darcs_loc, raw_uri[6:]
+        return raw_uri[6:]
     
     def __init__(self, basedir, uri):
         uri = self.parse_uri(uri)

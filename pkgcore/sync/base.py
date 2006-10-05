@@ -8,6 +8,7 @@ class syncer(object):
 
     forcable=False
     sets_env = False
+    binary = None
     
     def __init__(self, local_path, uri, default_verbosity=0):
         self.verbose = default_verbosity
@@ -15,6 +16,8 @@ class syncer(object):
         self.uri = uri
         if not self.sets_env:
             self.env = {}
+        if not hasattr(self, "binary_path"):
+            self.binary_path = self.require_binary(self.binary)
 
     @staticmethod
     def split_users(raw_uri):
@@ -48,6 +51,9 @@ class syncer(object):
             if fatal:
                 raise
             return None
+
+    def set_binary_path(self):
+        self.binary_path = self.require_binary(self.binary)
     
     def sync(self, verbosity=None, force=False):
         kwds = {}

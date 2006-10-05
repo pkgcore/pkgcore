@@ -45,7 +45,7 @@ class rsyncer(base.syncer):
         
         self.rsh, uri = self.parse_uri(uri)
         base.syncer.__init__(self, basedir, uri, 2)
-        self.rsync_fp = self.require_binary(cls.binary)
+        self.set_binary_path(cls.binary)
         if self.rsh:
             self.rsh = self.require_binary(self.rsh)
         self.opts = list(self.default_opts)
@@ -95,7 +95,7 @@ class rsyncer(base.syncer):
         
         # zip limits to the shortest iterable.
         for count, ip in zip(xrange(self.retries), self._get_ips()):
-            o = [self.rsync_fp,
+            o = [self.binary_fp,
                 "rsync://%s/%s" % (self.raw_host.replace(self.hostname, ip),
                     self.remote_path),
                  self.basedir,

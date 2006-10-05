@@ -240,7 +240,8 @@ class ConfiguredTree(configured.tree):
             self.fetcher = self.domain_settings["fetcher"]
         else:
             self.fetcher = fetcher
-        self._delayed_iuse = make_kls(InvertedContains)
+        self._delayed_iuse = currying.partial(make_kls(InvertedContains),
+            InvertedContains)
 
     def _get_delayed_immutable(self, pkg, extras=()):
         return frozenset(pkg.iuse).difference(

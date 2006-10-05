@@ -21,6 +21,7 @@ class rsyncer(base.syncer):
         "--whole-file"] # this one probably shouldn't be a default.
 
     default_retries = 5
+    binary = "rsync"
     
     @classmethod
     def parse_uri(cls, raw_uri):
@@ -29,7 +30,7 @@ class rsyncer(base.syncer):
             raise base.uri_exception(raw_uri,
                 "doesn't start with rsync:// nor rsync+")
         
-        cls.require_binary("rsync")
+        cls.require_binary(cls.binary)
         if raw_uri.startswith("rsync://"):
             return (None, raw_uri)
         proto = raw_uri.split("/", 1)
@@ -44,7 +45,7 @@ class rsyncer(base.syncer):
         
         self.rsh, uri = self.parse_uri(uri)
         base.syncer.__init__(self, basedir, uri, 2)
-        self.rsync_fp = self.require_binary("rsync")
+        self.rsync_fp = self.require_binary(cls.binary)
         if self.rsh:
             self.rsh = self.require_binary(self.rsh)
         self.opts = list(self.default_opts)

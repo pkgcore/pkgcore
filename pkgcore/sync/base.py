@@ -31,6 +31,11 @@ class syncer(object):
         try:
             if uri[1].startswith("@"):
                 uri[1] = uri[1][1:]
+            if '/' in uri[0] or ':' in uri[0]:
+                proto = uri[0].split("/", 1)
+                proto[1] = proto[1].lstrip("/")
+                uri[0] = proto[1]
+                uri[1] = "%s//%s" % (proto[0], uri[1])
             return pw.getpwnam(uri[0]).pw_uid, uri[1]
         except KeyError, e:
             raise missing_local_user(raw_uri, uri[0], e)

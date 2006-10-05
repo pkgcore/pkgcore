@@ -2,8 +2,6 @@
 # License: GPL2
 
 from pkgcore.sync import base
-from pkgcore.util.demandload import demandload
-demandload(globals(), "os stat errno")
 
 class bzr_syncer(base.dvcs_syncer):
 
@@ -14,7 +12,7 @@ class bzr_syncer(base.dvcs_syncer):
         return uri[4:]
 
     def __init__(self, basedir, uri):
-        uri = self.parse_uri
+        uri = self.parse_uri(uri)
         base.dvcs_syncer.__init__(self, basedir, uri)
         
     def _initial_pull(self):

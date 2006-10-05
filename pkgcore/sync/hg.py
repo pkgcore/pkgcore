@@ -11,11 +11,11 @@ class hg_syncer(base.dvcs_syncer):
     def parse_uri(raw_uri):
         if not raw_uri.startswith("hg+"):
             raise base.uri_exception(raw_uri, "doesn't start with hg+")
-        return hg[3:]
+        return raw_uri[3:]
     
     def __init__(self, basedir, uri):
         uri = self.parse_uri(uri)
-        base.dvs_syncer.__init__(self, basedir, uri)
+        base.dvcs_syncer.__init__(self, basedir, uri)
         
     def _initial_pull(self):
         return [self.binary_path, "clone", self.uri, self.basedir]

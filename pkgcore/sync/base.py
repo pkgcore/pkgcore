@@ -47,9 +47,9 @@ class syncer(object):
     def require_binary(bin_name, fatal=True):
         try:
             return spawn.find_binary(bin_name)
-        except spawn.CommandNotFound:
+        except spawn.CommandNotFound, e:
             if fatal:
-                raise
+                raise missing_binary(bin_name, e)
             return None
 
     def set_binary_path(self):
@@ -111,4 +111,7 @@ class generic_exception(syncer_exception):
     pass
 
 class missing_local_user(syncer_exception):
+    pass
+
+class missing_binary(syncer_exception):
     pass

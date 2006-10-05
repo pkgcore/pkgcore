@@ -11,7 +11,7 @@ class bzr_syncer(base.dvcs_syncer):
     def parse_uri(staticmethod, raw_uri):
         if not raw_uri.startswith("bzr+"):
             raise base.uri_exception(raw_uri, "doesn't start with bzr+")
-        return uri[4:]
+        return raw_uri[4:]
 
     def __init__(self, basedir, uri):
         uri = self.parse_uri(uri)

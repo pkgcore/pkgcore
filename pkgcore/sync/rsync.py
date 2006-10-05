@@ -7,7 +7,7 @@ from pkgcore.util.demandload import demandload
 
 demandload(globals(), "os socket")
 
-class rsyncer(base.syncer):
+class rsync_syncer(base.syncer):
 
     default_excludes = ["/distfiles", "/local", "/packages"]
     default_includes = []
@@ -30,13 +30,12 @@ class rsyncer(base.syncer):
             raise base.uri_exception(raw_uri,
                 "doesn't start with rsync:// nor rsync+")
         
-        cls.require_binary(cls.binary)
         if raw_uri.startswith("rsync://"):
             return (None, raw_uri)
-        proto = raw_uri.split("/", 1)
+        proto = raw_uri.split(":", 1)
         proto[0] = proto[0].split("+",1)[1]
         cls.require_binary(proto[0])
-        return proto[0], "rsync:/" + proto[1]
+        return proto[0], "rsync:%s" % proto[1]
     
     def __init__(self, basedir, uri, timeout=default_timeout,
         compress=False, excludes=(), includes=(),
@@ -45,7 +44,6 @@ class rsyncer(base.syncer):
         
         self.rsh, uri = self.parse_uri(uri)
         base.syncer.__init__(self, basedir, uri, 2)
-        self.set_binary_path(cls.binary)
         if self.rsh:
             self.rsh = self.require_binary(self.rsh)
         self.opts = list(self.default_opts)
@@ -58,7 +56,6 @@ class rsyncer(base.syncer):
         self.retries = int(retries)
         self.is_ipv6 = "--ipv6" in self.opts or "-6" in self.opts
         self.is_ipv6 = self.is_ipv6 and socket.has_ipv6
-        self.hostname, self.raw_host, self.remote_path = self.parse_uri(uri)
     
     def _get_ips(self):
         af_fam = socket.AF_INET

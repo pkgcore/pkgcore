@@ -22,16 +22,19 @@ class rsyncer(base.syncer):
 
     default_retries = 5
     
-    @staticmethod
-    def parse_uri(raw_uri):
+    @classmethod
+    def parse_uri(cls, raw_uri):
         if not raw_uri.startswith("rsync://") and \
             not raw_uri.startswith("rsync+"):
             raise base.uri_exception(raw_uri,
                 "doesn't start with rsync:// nor rsync+")
+        
+        cls.require_binary("rsync")
         if raw_uri.startswith("rsync://"):
             return (None, raw_uri)
         proto = raw_uri.split("/", 1)
         proto[0] = proto[0].split("+",1)[1]
+        cls.require_binary(proto[0])
         return proto[0], "rsync:/" + proto[1]
     
     def __init__(self, basedir, uri, timeout=default_timeout,
@@ -41,9 +44,9 @@ class rsyncer(base.syncer):
         
         self.rsh, uri = self.parse_uri(uri)
         base.syncer.__init__(self, basedir, uri, 2)
-        self.rsync_fp = base.require_binary("rsync")
+        self.rsync_fp = self.require_binary("rsync")
         if self.rsh:
-            self.rsh = base.require_binary(self.rsh)
+            self.rsh = self.require_binary(self.rsh)
         self.opts = list(self.default_opts)
         self.opts.extend(extra_opts)
         if compress:

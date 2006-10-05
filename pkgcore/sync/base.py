@@ -39,7 +39,15 @@ class syncer(object):
             return pw.getpwnam(uri[0]).pw_uid, uri[1]
         except KeyError, e:
             raise missing_local_user(raw_uri, uri[0], e)
-        
+    
+    @staticmethod
+    def require_binary(bin_name, fatal=True):
+        try:
+            return spawn.find_binary(bin_name)
+        except spawn.CommandNotFound:
+            if fatal:
+                raise
+            return None
     
     def sync(self, verbosity=None, force=False):
         kwds = {}
@@ -84,16 +92,7 @@ class dvcs_syncer(syncer):
         raise NotImplementedError(self, "_initial_clone")
     
     def _update_existing(self):
-        raise NotImplementedError(self, "_update_existing")
-        
-
-def require_binary(bin_name, fatal=True):
-    try:
-        return spawn.find_binary(bin_name)
-    except spawn.CommandNotFound:
-        if fatal:
-            raise
-        return None
+        raise NotImplementedError(self, "_update_existing")        
 
 
 class syncer_exception(Exception):

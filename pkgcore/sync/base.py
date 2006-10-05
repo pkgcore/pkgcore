@@ -7,11 +7,14 @@ demandload(globals(), "pkgcore:spawn os pwd")
 class syncer(object):
 
     forcable=False
+    sets_env = False
     
     def __init__(self, local_path, uri, default_verbosity=0):
         self.verbose = default_verbosity
         self.basedir = local_path.rstrip(os.path.sep) + os.path.sep
         self.uri = uri
+        if not self.sets_env:
+            self.env = {}
 
     @staticmethod
     def split_users(raw_uri):
@@ -50,8 +53,34 @@ class syncer(object):
             self.basedir, self.uri)
 
     def _spawn(self, command, pipes):
-        return spawn.spawn(command, fd_pipes=pipes, uid=self.local_user)
+        return spawn.spawn(command, fd_pipes=pipes, uid=self.local_user,
+            env=self.env)
 
+
+class dvcs_syncer(syncer):
+
+    def _sync(self, verbosity, output_fd):
+        chdir = None
+        try:
+            st = os.stat(self.basedir)
+        except (IOError, OSError), ie:
+            if errno.ENOENT != ie.errno:
+                raise base.generic_exception(self, self.basedir, ie)
+            command = self._update_existing()
+        else:
+            if not stat.S_ISDIR(st.st_mode):
+                raise base.generic_exception(self, self.basedir,
+                    "isn't a directory")
+            command = self._initial_pull()
+        return 0 == self._spawn(command, chdir=chdir,
+            fd_pipes={1:output_fd, 2:output_fd, 0:0})
+        
+    def _initial_clone(self):
+        raise NotImplementedError(self, "_initial_clone")
+    
+    def _update_existing(self):
+        raise NotImplementedError(self, "_update_existing")
+        
 
 def require_binary(bin_name, fatal=True):
     try:

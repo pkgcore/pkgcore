@@ -339,5 +339,10 @@ def get_formatter(stream):
         # We do this instead of stream.isatty() because TerminfoFormatter
         # needs an fd to pass to curses, not just a filelike talking to a tty.
         if os.isatty(fd):
-            return TerminfoFormatter(stream)
+            try:
+                return TerminfoFormatter(stream)
+            except curses.error:
+                # This happens if TERM is unset and possibly in more cases.
+                # Just fall back to the PlainTextFormatter.
+                pass
     return PlainTextFormatter(stream)

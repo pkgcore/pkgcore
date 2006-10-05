@@ -280,7 +280,7 @@ class OptionParser(commandline.OptionParser):
                            'herds', 'license', 'uris', 'files',
                            'slot', 'maintainers', 'restrict', 'repo',
                            'alldepends', 'path', 'environment', 'keywords',
-                           'homepage')
+                           'homepage', 'fetchables')
 
         output = self.add_option_group('Output formatting')
         output.add_option(

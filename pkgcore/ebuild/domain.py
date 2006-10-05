@@ -229,16 +229,16 @@ class domain(pkgcore.config.domain.domain):
             raise Failure(
                 "No ARCH setting detected from profile, or user config")
 
-        arch = settings["ARCH"]
+        self.arch = settings["ARCH"]
 
         # ~amd64 -> [amd64, ~amd64]
         for x in default_keywords[:]:
             if x.startswith("~"):
                 default_keywords.append(x.lstrip("~"))
-        default_keywords = unstable_unique(default_keywords + [arch])
+        default_keywords = unstable_unique(default_keywords + [self.arch])
 
         vfilter.add_restriction(self.make_keywords_filter(
-            arch, default_keywords, pkg_keywords, 
+            self.arch, default_keywords, pkg_keywords, 
             incremental="package.keywords" in incrementals))
 
         del default_keywords
@@ -421,4 +421,5 @@ class domain(pkgcore.config.domain.domain):
             incremental_negations("use", data, enabled)
         enabled.update(self.profile_use_force)
         enabled.difference_update(disabled)
+        enabled.add(self.arch)
         return disabled,enabled                

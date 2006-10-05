@@ -15,19 +15,28 @@ class cvs_syncer(base.dvcs_syncer):
             raise base.uri_exception(raw_uri, "must be cvs:// or cvs+${RSH}")
         if raw_uri.startswith("cvs://"):
             return None, raw_uri[len("cvs://"):]
-        proto = raw_uri[len("cvs+"):].split("/", 1)
+        proto = raw_uri[len("cvs+"):].split(":", 1)
         if not proto[0]:
             raise base.uri_exception(raw_uri,
                 "cvs+ requires the rsh alternative to be specified")
-        proto = cls.require_binary(proto[0])
+        if proto[0] == "anon":
+            proto[0] = None
+        elif proto[0] != "pserver":
+            proto[0] = cls.require_binary(proto[0])
         return proto[0], proto[1].lstrip("/")
 
-    def __init__(self, basedir, uri):
-        proto, raw_uri = self.parse_uri(uri)
-        if proto is not None:
-            self.rsh = proto
+    def __init__(self, basedir, raw_uri):
+        proto, uri = self.parse_uri(raw_uri)
+        self.rsh = proto
+        if self.rsh is None:
+            uri = ":anoncvs:%s" % uri
+        elif self.rsh == "pserver":
+            uri = ":pserver:%s" % uri
+            self.rsh = None
+        else:
+            uri = ":ext:%s" % uri
         host, self.module = uri.rsplit(":" ,1)
-        nase.dvcs_syncer.__init__(self, basedir, host)
+        base.dvcs_syncer.__init__(self, basedir, host)
         
     @property
     def env(self):

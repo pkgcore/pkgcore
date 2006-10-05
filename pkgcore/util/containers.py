@@ -39,47 +39,47 @@ class LimitedChangeSet(object):
     def __init__(self, initial_keys, unchangable_keys=None):
         self._new = set(initial_keys)
         if unchangable_keys is None:
-            self.__blacklist = []
+            self._blacklist = []
         else:
             if isinstance(unchangable_keys, (list, tuple)):
                 unchangable_keys = set(unchangable_keys)
-            self.__blacklist = unchangable_keys
-        self.__changed = set()
-        self.__change_order = []
-        self.__orig = frozenset(self._new)
+            self._blacklist = unchangable_keys
+        self._changed = set()
+        self._change_order = []
+        self._orig = frozenset(self._new)
 
     def add(self, key):
-        if key in self.__changed or key in self.__blacklist:
+        if key in self._changed or key in self._blacklist:
             # it's been del'd already once upon a time.
             if key in self._new:
                 return
             raise Unchangable(key)
 
         self._new.add(key)
-        self.__changed.add(key)
-        self.__change_order.append((self._added, key))
+        self._changed.add(key)
+        self._change_order.append((self._added, key))
 
     def remove(self, key):
-        if key in self.__changed or key in self.__blacklist:
+        if key in self._changed or key in self._blacklist:
             if key not in self._new:
                 raise KeyError(key)
             raise Unchangable(key)
 
         if key in self._new:
             self._new.remove(key)
-        self.__changed.add(key)
-        self.__change_order.append((self._removed, key))
+        self._changed.add(key)
+        self._change_order.append((self._removed, key))
 
     def __contains__(self, key):
         return key in self._new
 
     def changes_count(self):
-        return len(self.__change_order)
+        return len(self._change_order)
 
     def commit(self):
-        self.__orig = frozenset(self._new)
-        self.__changed.clear()
-        self.__change_order = []
+        self._orig = frozenset(self._new)
+        self._changed.clear()
+        self._change_order = []
 
     def rollback(self, point=0):
         l = self.changes_count()
@@ -87,8 +87,8 @@ class LimitedChangeSet(object):
             raise TypeError(
                 "%s point must be >=0 and <= changes_count()" % point)
         while l > point:
-            change, key = self.__change_order.pop(-1)
-            self.__changed.remove(key)
+            change, key = self._change_order.pop(-1)
+            self._changed.remove(key)
             if change == self._removed:
                 self._new.add(key)
             else:

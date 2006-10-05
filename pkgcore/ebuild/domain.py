@@ -208,7 +208,6 @@ class domain(pkgcore.config.domain.domain):
 
         use, license, default_keywords = [], [], []
         self.use = use
-        self.immutable_use = ()
         self.package_use = {}
         master_license = []
         for k, v in (("USE", use),
@@ -230,6 +229,7 @@ class domain(pkgcore.config.domain.domain):
                 "No ARCH setting detected from profile, or user config")
 
         self.arch = settings["ARCH"]
+        self.immutable_use = (self.arch,)
 
         # ~amd64 -> [amd64, ~amd64]
         for x in default_keywords[:]:
@@ -271,7 +271,7 @@ class domain(pkgcore.config.domain.domain):
         self.use, self.package_use = self.make_per_package_use(
             self.use, pkg_use)
         self.profile_use_force = tuple(profile.use_force)
-        self.profile_use_mask = tuple("-"+x for x in profile.use_mask)
+        self.profile_use_mask = tuple(profile.use_mask)
         new_d = dict((k, tuple(v.iteritems()))
             for k,v in profile.package_use_force.iteritems())
         self.profile_package_use = ((), new_d)

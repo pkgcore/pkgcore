@@ -24,28 +24,26 @@ class rsyncer(base.syncer):
     
     @staticmethod
     def parse_uri(raw_uri):
-        if not raw_uri.startswith("rsync://"):
-            raise base.uri_exception(raw_uri, "doesn't start with rsync://")
-        # split on @ to discern the host from the other crap
-        uri = raw_uri[len("rsync://"):]
-        raw_host, uri = uri.split("/", 1)
-
-        # drop any user:pass@...
-        host = raw_host.split("@", 1)[-1]
-
-        # drop port.
-        host = host.split(":", 1)[0]
-        return host, raw_host, uri
+        if not raw_uri.startswith("rsync://") and \
+            not raw_uri.startswith("rsync+"):
+            raise base.uri_exception(raw_uri,
+                "doesn't start with rsync:// nor rsync+")
+        if raw_uri.startswith("rsync://"):
+            return (None, raw_uri)
+        proto = raw_uri.split("/", 1)
+        proto[0] = proto[0].split("+",1)[1]
+        return proto[0], "rsync:/" + proto[1]
     
     def __init__(self, basedir, uri, timeout=default_timeout,
         compress=False, excludes=(), includes=(),
         retries=default_retries,
         extra_opts=[]):
         
-        # rsync gets weird if / isn't trailing.
+        self.rsh, uri = self.parse_uri(uri)
         base.syncer.__init__(self, basedir, uri, 2)
         self.rsync_fp = base.require_binary("rsync")
-
+        if self.rsh:
+            self.rsh = base.require_binary(self.rsh)
         self.opts = list(self.default_opts)
         self.opts.extend(extra_opts)
         if compress:
@@ -77,6 +75,9 @@ class rsyncer(base.syncer):
     def _sync(self, verbosity, output_fd):
         fd_pipes = {1:output_fd, 2:output_fd}
         opts = list(self.opts)
+        if self.rsh:
+            opts.append("-e")
+            opts.append(self.rsh)
         opts.extend("--exclude=%s" % x for x in self.excludes)
         opts.extend("--include=%s" % x for x in self.includes)
         if verbosity == 0:

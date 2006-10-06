@@ -105,7 +105,7 @@ class dvcs_syncer(syncer):
         return 0 == val
         
     def _initial_pull(self):
-        raise NotImplementedError(self, "_initial_clone")
+        raise NotImplementedError(self, "_initial_pull")
     
     def _update_existing(self):
         raise NotImplementedError(self, "_update_existing")        

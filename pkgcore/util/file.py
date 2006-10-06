@@ -62,7 +62,7 @@ def iter_read_bash(bash_source):
         bash_source = open(bash_source, 'r', 32768)
     for s in bash_source:
         s = s.strip()
-        if s.startswith("#") or not s:
+        if not s or s[0] == "#":
             continue
         yield s
     bash_source.close()

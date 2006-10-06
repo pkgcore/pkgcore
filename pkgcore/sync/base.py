@@ -3,7 +3,7 @@
 
 from pkgcore.config import ConfigHint
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore:spawn os pwd")
+demandload(globals(), "pkgcore:spawn os pwd stat")
 
 class syncer(object):
 
@@ -11,7 +11,7 @@ class syncer(object):
     sets_env = False
     binary = None
     
-    pkgcore_config_type = ConfigHint({'path':'str', 'uri':'path'},
+    pkgcore_config_type = ConfigHint({'path':'str', 'uri':'str'},
         typename='syncer')
     
     def __init__(self, path, uri, default_verbosity=0):
@@ -75,30 +75,36 @@ class syncer(object):
         return "%s syncer: %s, %s" % (self.__class__,
             self.basedir, self.uri)
 
-    def _spawn(self, command, pipes):
+    def _spawn(self, command, pipes, **kwargs):
         return spawn.spawn(command, fd_pipes=pipes, uid=self.local_user,
-            env=self.env)
+            env=self.env, **kwargs)
 
 
 class dvcs_syncer(syncer):
 
     def _sync(self, verbosity, output_fd):
-        chdir = None
         try:
             st = os.stat(self.basedir)
         except (IOError, OSError), ie:
             if errno.ENOENT != ie.errno:
                 raise base.generic_exception(self, self.basedir, ie)
-            command = self._update_existing()
+            command = self._initial_pull()
+            chdir = None
         else:
             if not stat.S_ISDIR(st.st_mode):
                 raise base.generic_exception(self, self.basedir,
                     "isn't a directory")
-            command = self._initial_pull()
-        return 0 == self._spawn(command, chdir=chdir,
-            fd_pipes={1:output_fd, 2:output_fd, 0:0})
+            command = self._update_existing()
+            chdir = self.basedir
+
+        ret = self._spawn(command, {1:output_fd, 2:output_fd, 0:0},
+            chdir=chdir)
+        return ret
+
+    def interpret_exit_code(self, val):
+        return 0 == val
         
-    def _initial_clone(self):
+    def _initial_pull(self):
         raise NotImplementedError(self, "_initial_clone")
     
     def _update_existing(self):

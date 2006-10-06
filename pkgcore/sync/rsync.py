@@ -76,7 +76,6 @@ class rsync_syncer(base.syncer):
                     yield ipaddr[4][0]
 
         except socket.error, e:
-            print self.hostname
             raise base.syncer_exception(self.hostname, af_fam, str(e))
             
     

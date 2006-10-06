@@ -31,7 +31,8 @@ class rsync_syncer(base.syncer):
                 "doesn't start with rsync:// nor rsync+")
         
         if raw_uri.startswith("rsync://"):
-            return (None, raw_uri)
+            return None, raw_uri
+
         proto = raw_uri.split(":", 1)
         proto[0] = proto[0].split("+",1)[1]
         cls.require_binary(proto[0])
@@ -44,6 +45,7 @@ class rsync_syncer(base.syncer):
         
         self.rsh, uri = self.parse_uri(uri)
         base.syncer.__init__(self, basedir, uri, 2)
+        self.hostname = self.parse_hostname(self.uri)
         if self.rsh:
             self.rsh = self.require_binary(self.rsh)
         self.opts = list(self.default_opts)
@@ -56,6 +58,10 @@ class rsync_syncer(base.syncer):
         self.retries = int(retries)
         self.is_ipv6 = "--ipv6" in self.opts or "-6" in self.opts
         self.is_ipv6 = self.is_ipv6 and socket.has_ipv6
+
+    @staticmethod
+    def parse_hostname(uri):
+        return uri[len("rsync://"):].split("@",1)[-1].split("/", 1)[0]
     
     def _get_ips(self):
         af_fam = socket.AF_INET
@@ -70,7 +76,8 @@ class rsync_syncer(base.syncer):
                     yield ipaddr[4][0]
 
         except socket.error, e:
-            raise base.syncer_exception(self.hostname, family, e)
+            print self.hostname
+            raise base.syncer_exception(self.hostname, af_fam, str(e))
             
     
     def _sync(self, verbosity, output_fd):
@@ -92,17 +99,16 @@ class rsync_syncer(base.syncer):
         
         # zip limits to the shortest iterable.
         for count, ip in zip(xrange(self.retries), self._get_ips()):
-            o = [self.binary_fp,
-                "rsync://%s/%s" % (self.raw_host.replace(self.hostname, ip),
-                    self.remote_path),
-                 self.basedir,
-                ] + opts
-            ret = self._spawn(o, pipes)
+            o = [self.binary_path,
+                self.uri.replace(self.hostname, ip),
+                self.basedir] + opts
+
+            ret = self._spawn(o, fd_pipes)
             if ret == 0:
                 return True
             elif ret == 1:
                 # syntax error.
-                raise base.syncer_exception(opts, "syntax error")
+                raise base.syncer_exception(o, "syntax error")
             elif ret == 11:
                 raise base.syncer_exception("rsync returned error code of "
                     "11; this is an out of space exit code")

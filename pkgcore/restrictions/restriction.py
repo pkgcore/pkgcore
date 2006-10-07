@@ -158,7 +158,10 @@ class AnyMatch(base):
         sf(self, "type", node_type)
 
     def match(self, val):
-        return any(self.restriction.match(x) for x in val) != self.negate
+        for x in val:
+            if self.restriction.match(x):
+                return not self.negate
+        return self.negate
 
     def __str__(self):
         return "any: %s match" % (self.restriction,)

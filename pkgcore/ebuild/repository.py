@@ -7,7 +7,7 @@ ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 
 import os, stat, operator
 from itertools import chain
-from pkgcore.repository import prototype, errors, configured
+from pkgcore.repository import prototype, errors, configured, syncable
 from pkgcore.util.file import read_dict
 from pkgcore.util import currying
 from pkgcore.util.osutils import listdir_files, listdir_dirs
@@ -26,7 +26,7 @@ from pkgcore.plugins import get_plugin
 
 metadata_offset = "profiles"
 
-class UnconfiguredTree(prototype.tree):
+class UnconfiguredTree(prototype.tree, syncable.tree_mixin):
 
     """
     raw implementation supporting standard ebuild tree.
@@ -46,11 +46,11 @@ class UnconfiguredTree(prototype.tree):
     pkgcore_config_type = ConfigHint(
         {'location': 'str', 'cache': 'refs:cache',
          'eclass_cache': 'ref:eclass_cache', 'mirrors_file': 'str',
-         'default_mirrors': 'list'},
+         'default_mirrors': 'list', 'sync': 'lazy_ref'},
         typename='repo')
 
     def __init__(self, location, cache=(), eclass_cache=None,
-                 mirrors_file=None, default_mirrors=None):
+                 mirrors_file=None, default_mirrors=None, sync=None):
 
         """
         @param location: on disk location of the tree
@@ -64,7 +64,8 @@ class UnconfiguredTree(prototype.tree):
             fetching from first, then falling back to other uri
         """
 
-        super(UnconfiguredTree, self).__init__()
+        prototype.tree.__init__(self)
+        syncable.tree_mixin.__init__(self, sync)
         self.base = self.location = location
         try:
             st = os.lstat(self.base)

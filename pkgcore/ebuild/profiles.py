@@ -180,18 +180,20 @@ class OnDiskProfile(profiles.base):
         for fp, dc in loop_iter_read((pjoin(prof, "make.defaults")
                                       for prof in stack),
             lambda x:read_bash_dict(x, vars_dict=ProtectedDict(d))):
-            for k, v in dc.items():
+            for k, v in dc.iteritems():
                 # potentially make incrementals a dict for ~O(1) here,
                 # rather then O(N)
-                if k in incrementals:
-                    v = list_parser(dc[k])
-                    if k in d:
-                        d[k] += v
-                    else:
-                        d[k] = v
+                if k in incrementals and k in d:
+                    # We have to keep the value in d a string or
+                    # read_bash_dict explodes if it tries to expand it.
+                    d[k] += ' ' + v
                 else:
                     d[k] = v
 
+        for k in incrementals:
+            v = d.get(k)
+            if v is not None:
+                d[k] = list_parser(v)
         d.setdefault("USE_EXPAND", '')
         if isinstance(d["USE_EXPAND"], str):
             self.use_expand = tuple(d["USE_EXPAND"].split())

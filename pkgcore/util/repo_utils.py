@@ -16,7 +16,7 @@ def get_raw_repos(repo):
         l = []
         map(l.extend, (get_raw_repos(x) for x in repo))
         return l
-    while getattr(repo, "raw_repo"):
+    while getattr(repo, "raw_repo", None) is not None:
         repo = repo.raw_repo
     if hasattr(repo, "trees"):
         l = []

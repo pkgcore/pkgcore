@@ -26,13 +26,13 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "errno ")
 
 
-def generate_depset(s, c, *keys, **kwds):
-    if kwds.pop("non_package_type", False):
-        kwds["operators"] = {"||":boolean.OrRestriction,
-                             "":boolean.AndRestriction}
+def generate_depset(s, c, key, non_package_type=False):
     try:
-        return conditionals.DepSet(" ".join([s.data.pop(x.upper(), "")
-            for x in keys]), c, **kwds)
+        if non_package_type:
+            return conditionals.DepSet(s.data.pop(key, ""), c,
+                operators={"||":boolean.OrRestriction,
+                "":boolean.AndRestriction})
+        return conditionals.DepSet(s.data.pop(key, ""), c)
     except conditionals.ParseError, p:
         raise errors.MetadataException(s, str(keys), str(p))
 
@@ -156,11 +156,11 @@ class base(metadata.package):
 
     _get_attr = dict(metadata.package._get_attr)
     _get_attr["provides"] = generate_providers
-    _get_attr["depends"] = post_curry(generate_depset, atom, "depend")
-    _get_attr["rdepends"] = post_curry(generate_depset, atom, "rdepend")
-    _get_attr["post_rdepends"] = post_curry(generate_depset, atom, "pdepend")
+    _get_attr["depends"] = post_curry(generate_depset, atom, "DEPEND")
+    _get_attr["rdepends"] = post_curry(generate_depset, atom, "RDEPEND")
+    _get_attr["post_rdepends"] = post_curry(generate_depset, atom, "PDEPEND")
     _get_attr["license"] = post_curry(generate_depset,
-        intern, "license", non_package_type=True)
+        intern, "LICENSE", non_package_type=True)
     _get_attr["slot"] = get_slot # lambda s: s.data.pop("SLOT", "0").strip()
     _get_attr["fetchables"] = generate_fetchables
     _get_attr["description"] = lambda s:s.data.pop("DESCRIPTION", "").strip()

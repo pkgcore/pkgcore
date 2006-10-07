@@ -46,7 +46,8 @@ class rsync_syncer(base.syncer):
         compress=False, excludes=(), includes=(),
         retries=default_retries,
         extra_opts=[]):
-        
+
+        uri = uri.rstrip(os.path.sep) + os.path.sep
         self.rsh, uri = self.parse_uri(uri)
         base.syncer.__init__(self, basedir, uri, 2)
         self.hostname = self.parse_hostname(self.uri)
@@ -56,7 +57,7 @@ class rsync_syncer(base.syncer):
         self.opts.extend(extra_opts)
         if compress:
             self.opts.append("--compress")
-        self.opts.append("--timeout=%i" % timeout)
+        self.opts.append("--timeout=%i" % int(timeout))
         self.excludes = list(self.default_excludes) + list(excludes)
         self.includes = list(self.default_includes) + list(includes)
         self.retries = int(retries)
@@ -93,10 +94,10 @@ class rsync_syncer(base.syncer):
         opts.extend("--include=%s" % x for x in self.includes)
         if verbosity == 0:
             opts.append("--quiet")
-        if verbosity > 1:
-            opts.append("--stats")
-        if verbosity >= 2:
+        if verbosity >= 1:
             opts.append("--progress")
+        if verbosity >= 2:
+            opts.append("--stats")
         elif verbosity >= 3:
             opts.append("--verbose")
         

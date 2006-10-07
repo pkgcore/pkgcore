@@ -43,6 +43,31 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     return SecurityUpgrades(ebuild_repo, vdb, arch)
 
 
+def make_syncer(basedir, sync_uri, options):
+    d = {'basedir': basedir, 'uri': sync_uri}
+    if sync_uri.startswith('rsync'):
+        d['extra_opts'] = []
+        if 'RSYNC_TIMEOUT' in options:
+            d['timeout'] = options.pop('RSYNC_TIMEOUT').strip()
+        if 'RSYNC_EXCLUDEFROM' in options:
+            opts.extend('--exclude-from=%s' % x
+                for x in options.pop('RSYNC_EXCLUDEFROM').split())
+        if 'RSYNC_RETRIES' in options:
+            d['retries'] = options.pop('RSYNC_RETRIES').strip()
+        if 'PORTAGE_RSYNC_RETRIES' in options:
+            d['retries'] = options.pop('PORTAGE_RSYNC_RETRIES').strip()
+        if 'PORTAGE_RSYNC_EXTRA_OPTS' in options:
+            d['extra_opts'].extend(
+                options.pop('PORTAGE_RSYNC_EXTRA_OPTS').split())
+        if 'RSYNC_RATELIMIT' in options:
+            d['extra_opts'].append('--bwlimit=%s' %
+                options.pop('RSYNC_RATELIMIT').strip())
+        d['class'] = 'pkgcore.sync.rsync.rsync_syncer'
+    else:
+        raise TypeError("sorry, only rsync is supported now")
+    return d
+
+
 @configurable({'location': 'str'}, typename='configsection')
 def config_from_make_conf(location="/etc/"):
     """
@@ -190,13 +215,19 @@ def config_from_make_conf(location="/etc/"):
                 'inherit': ('cache-common',),
                 'label': portdir})
 
+    syncer = conf_dict.pop("SYNC", None)
+    if syncer is not None:
+        new_config["%s syncer" % portdir] = basics.AutoConfigSection(
+            make_syncer(portdir, syncer, conf_dict))
+    
     # setup portdir.
     cache = ('portdir cache',)
     if not portdir_overlays:
         new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, {
                 'inherit': ('ebuild-repo-common',),
                 'location': portdir,
-                'cache': ('portdir cache',)})
+                'cache': ('portdir cache',),
+                'sync': '%s syncer' % portdir})
         new_config["eclass stack"] = basics.section_alias(
             pjoin(portdir, 'eclass'), 'eclass_cache')
         new_config['portdir'] = basics.section_alias(portdir, 'repo')
@@ -212,7 +243,8 @@ def config_from_make_conf(location="/etc/"):
         new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, {
                 'inherit': ('ebuild-repo-common',),
                 'location': portdir,
-                'cache': cache})
+                'cache': cache,
+                'sync': '%s syncer' % portdir})
 
         if rsync_portdir_cache:
             # created higher up; two caches, writes to the local,
@@ -224,7 +256,8 @@ def config_from_make_conf(location="/etc/"):
                 'inherit': ('ebuild-repo-common',),
                 'location': portdir,
                 'cache': cache,
-                'eclass_cache': pjoin(portdir, 'eclass')})
+                'eclass_cache': pjoin(portdir, 'eclass'),
+                'sync': 'portdir syncer'})
 
         # reverse the ordering so that overlays override portdir
         # (portage default)

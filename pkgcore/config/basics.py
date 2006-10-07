@@ -177,14 +177,14 @@ def convert_string(central, value, arg_type):
         if not callable(func):
             raise errors.ConfigurationError('%r is not callable' % (value,))
         return func
-    elif arg_type == 'section_refs':
+    elif arg_type in ('section_refs', 'lazy_refs'):
         try:
             return list(central.collapse_named_section(ref)
                         for ref in list_parser(value))
         except errors.QuoteInterpretationError, e:
             # TODO improve this (maybe)
             raise errors.ConfigurationError(str(e))
-    elif arg_type == 'section_ref':
+    elif arg_type in ('section_ref', 'lazy_ref'):
         return central.collapse_named_section(str_parser(value))
     try:
         return {

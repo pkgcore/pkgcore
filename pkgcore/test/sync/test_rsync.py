@@ -15,8 +15,8 @@ class TestrsyncParsing(TestCase):
             "/tmp/foon", "rsync+hopefully_nonexistant_binary://foon.com/dar")
         o = valid("/tmp/foon", "rsync://dar/module")
         self.assertEqual(o.rsh, None)
-        self.assertEqual(o.uri, "rsync://dar/module")
+        self.assertEqual(o.uri, "rsync://dar/module/")
         
         o = valid("/tmp/foon", "rsync+/bin/sh://dar/module")
-        self.assertEqual(o.uri, "rsync://dar/module")
+        self.assertEqual(o.uri, "rsync://dar/module/")
         self.assertEqual(o.rsh, "/bin/sh")

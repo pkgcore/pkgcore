@@ -166,6 +166,7 @@ class tree(object):
     package_class = None
     configured = True
     configure = None
+    syncable = False
 
     def _mangle_version_keys(self, packages=None):
         if packages:

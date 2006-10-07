@@ -81,22 +81,21 @@ class DepSet(boolean.AndRestriction):
                     raw_conditionals.pop()
                     depsets.pop()
 
-                elif k == "(" or k.endswith('?') or k in operators:
-                    if k != "(":
-                        # use conditional or custom op.
-                        # no tokens left == bad dep_str.
-                        try:
-                            k2 = words.next()
-                        except StopIteration:
-                            k2 = ''
+                elif k == "(":
+                    k = ''
+                    # push another frame on
+                    depsets.append([])
+                    raw_conditionals.append(k)
+                elif k[-1] == '?' or k in operators:
+                    # use conditional or custom op.
+                    # no tokens left == bad dep_str.
+                    try:
+                        k2 = words.next()
+                    except StopIteration:
+                        k2 = ''
 
-                        if k2 != "(":
-                            raise ParseError(dep_str, k2)
-
-                    else:
-                        # Unconditional subset - useful in the || ( ( a b ) c )
-                        # case
-                        k = ""
+                    if k2 != "(":
+                        raise ParseError(dep_str, k2)
 
                     # push another frame on
                     depsets.append([])

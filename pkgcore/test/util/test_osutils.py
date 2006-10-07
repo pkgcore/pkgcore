@@ -46,6 +46,10 @@ class NativeListDirTest(TempDirMixin):
             ):
             self.assertRaises(OSError, func, os.path.join(self.dir, 'spork'))
 
+    def test_dangling_sym(self):
+        os.symlink("foon", os.path.join(self.dir, "monkeys"))
+        self.assertEqual(["file"], self.module.listdir_files(self.dir))
+
 try:
     # No name "readdir" in module osutils
     # pylint: disable-msg=E0611

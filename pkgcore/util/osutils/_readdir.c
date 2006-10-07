@@ -86,6 +86,11 @@ pkgcore_readdir_actual_listdir(const char* path, int followsyms,
             }
             free(buffer);
             if (ret != 0) {
+                if (followsyms && errno == ENOENT) {
+                    /* hit a dangling symlimk; skip. */
+                    errno = 0;
+                    continue;
+                }
                 Py_DECREF(result);
                 result = NULL;
                 break;

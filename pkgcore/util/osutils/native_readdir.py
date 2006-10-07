@@ -19,25 +19,37 @@
 """Wrapper for readdir which grabs file type from d_type."""
 
 
-import os
+import os, errno
 from stat import S_ISDIR, S_ISREG
 
 
 def listdir(path):
     return os.listdir(path)
 
+def stat_swallow_enoent(path, check, default=False):
+    try:
+        return check(os.stat(path).st_mode)
+    except OSError, oe:
+        if oe.errno == errno.ENOENT:
+            return default
+        raise
+
 def listdir_dirs(path, followSymlinks=True):
     pjoin = os.path.join
+    scheck = S_ISDIR
     if followSymlinks:
-        stat = os.stat
-    else:
-        stat = os.lstat
-    return [x for x in os.listdir(path) if S_ISDIR(stat(pjoin(path, x)).st_mode)]
+        return [x for x in os.listdir(path) if 
+            stat_swallow_enoent(pjoin(path, x), scheck)]
+    stat = os.stat
+    return [x for x in os.listdir(path) if
+        scheck(stat(pjoin(path, x)).st_mode)]
 
 def listdir_files(path, followSymlinks=True):
     pjoin = os.path.join
+    scheck = S_ISREG
     if followSymlinks:
-        stat = os.stat
-    else:
-        stat = os.lstat
-    return [x for x in os.listdir(path) if S_ISREG(stat(pjoin(path, x)).st_mode)]
+        return [x for x in os.listdir(path) if 
+            stat_swallow_enoent(pjoin(path, x), scheck)]
+    stat = os.stat
+    return [x for x in os.listdir(path) if
+        scheck(stat(pjoin(path, x)).st_mode)]

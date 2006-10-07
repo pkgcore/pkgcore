@@ -60,11 +60,15 @@ pkgcore_readdir_actual_listdir(const char* path, int followsyms,
     while ((entry = readdir(the_dir))) {
         const char *name = entry->d_name;
         /* skip over "." and ".." */
-        if (name[0] == '.' && (name[1] == 0 || (name[1] == '.' && name[2] == 0))) {
+        if (name[0] == '.' && (name[1] == 0 || (name[1] == '.' &&
+            name[2] == 0))) {
             continue;
         }
-        if (entry->d_type == DT_UNKNOWN || (followsyms && entry->d_type == DT_LNK)) {
+        if (entry->d_type == DT_UNKNOWN ||
+            (followsyms && entry->d_type == DT_LNK)) {
+            
             /* both path components, the "/", the trailing null */
+            
             size_t size = pathlen + strlen(name) + 2;
             char *buffer = (char *) malloc(size);
             if (!buffer) {
@@ -223,7 +227,8 @@ pkgcore_readdir_read_dir(PyObject* self, PyObject* args)
     while ((entry = readdir(the_dir))) {
         const char *name = entry->d_name;
         /* skip over "." and ".." */
-        if (name[0] == '.' && (name[1] == 0 || (name[1] == '.' && name[2] == 0))) {
+        if (name[0] == '.' && (name[1] == 0 ||
+            (name[1] == '.' && name[2] == 0))) {
             continue;
         }
 

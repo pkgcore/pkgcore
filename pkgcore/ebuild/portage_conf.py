@@ -7,6 +7,7 @@ Converts portage configuration files into L{pkgcore.config} form.
 """
 
 import os
+import stat
 from pkgcore.config import basics, configurable
 from pkgcore import const
 from pkgcore.ebuild import const as ebuild_const
@@ -298,8 +299,18 @@ def config_from_make_conf(location="/etc/"):
         "package.mask", "package.unmask", "package.keywords", "package.use",
             "bashrc"):
         fp = pjoin(portage_base, f)
-        if os.path.isfile(fp):
-            conf_dict[f] = fp
+        try:
+            st = os.stat(fp)
+        except OSError, oe:
+            if oe.errno != errno.ENOENT:
+                raise
+        else:
+            if stat.S_ISREG(st.st_mode):
+                conf_dict[f] = fp
+            elif stat.S_ISDIR(st.st_mode):
+                conf_dict[f] = list(pjoin(fp, c) for c in listdir_files(fp)
+                                    if not c.startswith('.'))
+
     new_config['livefs domain'] = basics.DictConfigSection(my_convert_hybrid,
                                                            conf_dict)
 

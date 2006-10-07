@@ -4,6 +4,7 @@ import glob
 import os
 import sys
 import errno
+import unittest
 
 from distutils import core, ccompiler, log, sysconfig
 from distutils.command import build, sdist, build_py
@@ -109,6 +110,66 @@ class hacked_build_py(build_py.build_py):
             os.chmod(path, mode)
 
 
+
+class TestLoader(unittest.TestLoader):
+
+    """Test loader that knows how to recurse packages."""
+
+    def loadTestsFromModule(self, module):
+        """Recurses if module is actually a package."""
+        paths = getattr(module, '__path__', None)
+        tests = [unittest.TestLoader.loadTestsFromModule(self, module)]
+        if paths is None:
+            # Not a package.
+            return tests[0]
+        for path in paths:
+            for child in os.listdir(path):
+                if (child != '__init__.py' and child.endswith('.py') and
+                    child.startswith('test')):
+                    # Child module.
+                    childname = '%s.%s' % (module.__name__, child[:-3])
+                else:
+                    childpath = os.path.join(path, child)
+                    if not os.path.isdir(childpath):
+                        continue
+                    if not os.path.exists(os.path.join(childpath,
+                                                       '__init__.py')):
+                        continue
+                    # Subpackage.
+                    childname = '%s.%s' % (module.__name__, child)
+                tests.append(self.loadTestsFromName(childname))
+        return self.suiteClass(tests)
+
+
+testLoader = TestLoader()
+
+
+class test(core.Command):
+
+    """Run our unit tests in a built copy.
+
+    Based on code from setuptools.
+    """
+
+    user_options = []
+
+    def initialize_options(self):
+        # Options? What options?
+        pass
+
+    def finalize_options(self):
+        # Options? What options?
+        pass
+
+    def run(self):
+        build_ext = self.reinitialize_command('build_ext')
+        build_ext.inplace = True
+        self.run_command('build_ext')
+        self.run_command('build_filter_env')
+        # Somewhat hackish: this calls sys.exit.
+        unittest.main('pkgcore.test', argv=['setup.py'], testLoader=testLoader)
+
+
 packages = []
 
 for root, dirs, files in os.walk('pkgcore'):
@@ -172,5 +233,7 @@ core.setup(
         ] + extensions,
     cmdclass={'build_filter_env': build_filter_env,
               'sdist': mysdist,
-              'build_py': hacked_build_py},
+              'build_py': hacked_build_py,
+              'test': test,
+              },
     )

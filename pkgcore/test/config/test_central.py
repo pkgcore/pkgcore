@@ -466,3 +466,43 @@ class ConfigManagerTest(TestCase):
 
         manager = central.ConfigManager([])
         self.assertIdentical(None, manager.get_default('drawer'))
+
+    def test_lazy_refs(self):
+        @configurable({'myrepo': 'lazy_ref:repo'}, typename='repo')
+        def reporef(myrepo=None):
+            return myrepo
+        @configurable({'myrepo': 'lazy_refs:repo'}, typename='repo')
+        def reporefs(myrepo=None):
+            return myrepo
+        @configurable(typename='repo')
+        def myrepo():
+            return 'repo!'
+        manager = central.ConfigManager([{
+                    'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
+                    'drawer': basics.HardCodedConfigSection({'class': drawer}),
+                    'right':  basics.AutoConfigSection({'class': reporef,
+                                                        'myrepo': 'myrepo'}),
+                    'wrong':  basics.AutoConfigSection({'class': reporef,
+                                                        'myrepo': 'drawer'}),
+                    }], [object()])
+        self.check_error(
+            "Collapsing section named 'wrong':\n"
+            "'myrepo' should be of type 'repo', got 'drawer'",
+            operator.getitem, manager.repo, 'wrong')
+        self.assertEquals('repo!', manager.repo['right'].instantiate())
+
+        manager = central.ConfigManager([{
+                    'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
+                    'drawer': basics.HardCodedConfigSection({'class': drawer}),
+                    'right':  basics.AutoConfigSection({'class': reporefs,
+                                                        'myrepo': 'myrepo'}),
+                    'wrong':  basics.AutoConfigSection({'class': reporefs,
+                                                        'myrepo': 'drawer'}),
+                    }], [object()])
+        self.check_error(
+            "Collapsing section named 'wrong':\n"
+            "'myrepo' should be of type 'repo', got 'drawer'",
+            operator.getitem, manager.repo, 'wrong')
+        self.assertEquals(
+            ['repo!'],
+            [c.instantiate() for c in manager.repo['right']])

@@ -348,6 +348,12 @@ class ConfigManager(object):
                 elif typename.startswith('ref:'):
                     subtypename = typename.split(':', 1)[1]
                     typename = 'section_ref'
+                elif typename.startswith('lazy_refs:'):
+                    subtypename = typename.split(':', 1)[1]
+                    typename = 'section_refs'
+                elif typename.startswith('lazy_ref:'):
+                    subtypename = typename.split(':', 1)[1]
+                    typename = 'section_ref'
                 result = inherit_conf.get_value(self, key, typename)
                 if typename == 'section_ref' and subtypename is not None:
                     if result.type.name != subtypename:

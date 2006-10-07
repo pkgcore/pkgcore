@@ -21,4 +21,4 @@ class bzr_syncer(base.dvcs_syncer):
         return [self.binary_path, "get", self.basedir, self.uri]
     
     def _update_existing(self):
-        return [self.binary_path, "merge", self.uri]
+        return [self.binary_path, "pull", self.uri]

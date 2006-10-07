@@ -38,6 +38,10 @@ class rsync_syncer(base.syncer):
         cls.require_binary(proto[0])
         return proto[0], "rsync:%s" % proto[1]
     
+    pkgcore_config_type = ConfigHint({'basedir':'str', 'uri':'str',
+        'timeout':'str', 'compress':'bool', 'excludes':'list',
+        'includes':'list', 'retries':'str', 'extra_opts':'list'})
+
     def __init__(self, basedir, uri, timeout=default_timeout,
         compress=False, excludes=(), includes=(),
         retries=default_retries,

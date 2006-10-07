@@ -26,7 +26,7 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "errno ")
 
 
-def generate_depset(s, c, key, non_package_type=False):
+def generate_depset(c, key, non_package_type, s):
     try:
         if non_package_type:
             return conditionals.DepSet(s.data.pop(key, ""), c,
@@ -156,11 +156,11 @@ class base(metadata.package):
 
     _get_attr = dict(metadata.package._get_attr)
     _get_attr["provides"] = generate_providers
-    _get_attr["depends"] = post_curry(generate_depset, atom, "DEPEND")
-    _get_attr["rdepends"] = post_curry(generate_depset, atom, "RDEPEND")
-    _get_attr["post_rdepends"] = post_curry(generate_depset, atom, "PDEPEND")
-    _get_attr["license"] = post_curry(generate_depset,
-        intern, "LICENSE", non_package_type=True)
+    _get_attr["depends"] = partial(generate_depset, atom, "DEPEND", False)
+    _get_attr["rdepends"] = partial(generate_depset, atom, "RDEPEND", False)
+    _get_attr["post_rdepends"] = partial(generate_depset, atom, "PDEPEND", False)
+    _get_attr["license"] = partial(generate_depset,
+        intern, "LICENSE", True)
     _get_attr["slot"] = get_slot # lambda s: s.data.pop("SLOT", "0").strip()
     _get_attr["fetchables"] = generate_fetchables
     _get_attr["description"] = lambda s:s.data.pop("DESCRIPTION", "").strip()

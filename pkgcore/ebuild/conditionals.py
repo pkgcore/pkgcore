@@ -55,6 +55,7 @@ class DepSet(boolean.AndRestriction):
 
         node_conds = False
         words = iter(dep_str.split())
+        k = None
         try:
             for k in words:
                 if k == ")":
@@ -89,10 +90,7 @@ class DepSet(boolean.AndRestriction):
                 elif k[-1] == '?' or k in operators:
                     # use conditional or custom op.
                     # no tokens left == bad dep_str.
-                    try:
-                        k2 = words.next()
-                    except StopIteration:
-                        k2 = ''
+                    k2 = words.next()
 
                     if k2 != "(":
                         raise ParseError(dep_str, k2)
@@ -113,7 +111,10 @@ class DepSet(boolean.AndRestriction):
         except IndexError:
             # [][-1] for a frame access, which means it was a parse error.
             raise
-            raise ParseError(dep_str)
+        except StopIteration:
+            if k is None:
+                raise
+            raise ParseError(dep_str, k)
         except Exception, e:
             raise ParseError(dep_str, e)
 

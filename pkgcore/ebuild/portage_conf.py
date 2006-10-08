@@ -216,18 +216,23 @@ def config_from_make_conf(location="/etc/"):
                 'label': portdir})
 
     syncer = conf_dict.pop("SYNC", None)
+    base_portdir_config = {}
     if syncer is not None:
         new_config["%s syncer" % portdir] = basics.AutoConfigSection(
             make_syncer(portdir, syncer, conf_dict))
+        base_portdir_config = {"sync": "%s syncer" % portdir}
     
     # setup portdir.
     cache = ('portdir cache',)
     if not portdir_overlays:
-        new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, {
-                'inherit': ('ebuild-repo-common',),
-                'location': portdir,
-                'cache': ('portdir cache',),
-                'sync': '%s syncer' % portdir})
+
+        d = dict(base_portdir_config)
+        d['inherit'] = ('ebuild-repo-common',)
+        d['location'] = portdir
+        d['cache'] = ('portdir cache',)
+        
+        new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, d)
+
         new_config["eclass stack"] = basics.section_alias(
             pjoin(portdir, 'eclass'), 'eclass_cache')
         new_config['portdir'] = basics.section_alias(portdir, 'repo')
@@ -240,11 +245,13 @@ def config_from_make_conf(location="/etc/"):
         cache = ('portdir cache',)
         if rsync_portdir_cache:
             cache = ('%s cache' % (portdir,),) + cache
-        new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, {
-                'inherit': ('ebuild-repo-common',),
-                'location': portdir,
-                'cache': cache,
-                'sync': '%s syncer' % portdir})
+
+        d = dict(base_portdir_config)
+        d['inherit'] = ('ebuild-repo-common',)
+        d['location'] = portdir
+        d['cache'] = cache
+        
+        new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, d)
 
         if rsync_portdir_cache:
             # created higher up; two caches, writes to the local,
@@ -256,8 +263,7 @@ def config_from_make_conf(location="/etc/"):
                 'inherit': ('ebuild-repo-common',),
                 'location': portdir,
                 'cache': cache,
-                'eclass_cache': pjoin(portdir, 'eclass'),
-                'sync': 'portdir syncer'})
+                'eclass_cache': pjoin(portdir, 'eclass')})
 
         # reverse the ordering so that overlays override portdir
         # (portage default)

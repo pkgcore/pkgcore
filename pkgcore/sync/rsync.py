@@ -5,7 +5,7 @@ from pkgcore.sync import base
 from pkgcore.config import ConfigHint
 from pkgcore.util.demandload import demandload
 
-demandload(globals(), "os socket")
+demandload(globals(), "os socket errno")
 
 class rsync_syncer(base.syncer):
 
@@ -119,3 +119,39 @@ class rsync_syncer(base.syncer):
            # need to do something here instead of just restarting...
            # else:
            #     print ret
+
+
+class rsync_timestamp_syncer(rsync_syncer):
+    
+    forcable = True
+    
+    def __init__(self, *args, **kwargs):
+        rsync_syncer.__init__(self, *args, **kwargs)
+        self.last_timestamp = self.current_timestamp
+
+    @property
+    def current_timestamp(self):
+        try:
+            return open(os.path.join(self.basedir, "metadata",
+                "timestamp.chk")).read().strip()
+        except OSError, oe:
+            if oe.errno != errno.ENOENT:
+                raise
+            return None
+    
+    def _sync(self, verbosity, output_fd, force=False):
+        doit = force or self.last_timestamp is None
+        if not doit:
+            basedir = self.basedir
+            uri = self.uri
+            try:
+                self.basedir += "/metadata/timestamp.chk"
+                self.uri += "/metadata/timestamp.chk"
+                ret = rsync_syncer._sync(self, verbosity, output_fd)
+            finally:
+                self.basedir = basedir
+                self.uri = uri
+            doit = ret == False or self.last_timestamp != self.current_timestamp
+        if not doit:
+            return True
+        return rsync_syncer._sync(self, verbosity, output_fd)

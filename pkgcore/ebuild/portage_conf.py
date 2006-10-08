@@ -62,7 +62,7 @@ def make_syncer(basedir, sync_uri, options):
         if 'RSYNC_RATELIMIT' in options:
             d['extra_opts'].append('--bwlimit=%s' %
                 options.pop('RSYNC_RATELIMIT').strip())
-        d['class'] = 'pkgcore.sync.rsync.rsync_syncer'
+        d['class'] = 'pkgcore.sync.rsync.rsync_timestamp_syncer'
     else:
         raise TypeError("sorry, only rsync is supported now")
     return d

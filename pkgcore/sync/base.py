@@ -9,7 +9,7 @@ demandload(globals(), "pkgcore:spawn "
 
 class syncer(object):
 
-    forcable=False
+    forcable = False
     sets_env = False
     binary = None
     

@@ -26,7 +26,7 @@ from pkgcore.plugins import get_plugin
 
 metadata_offset = "profiles"
 
-class UnconfiguredTree(prototype.tree, syncable.tree_mixin):
+class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
     """
     raw implementation supporting standard ebuild tree.

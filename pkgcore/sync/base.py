@@ -101,11 +101,8 @@ class dvcs_syncer(syncer):
 
         ret = self._spawn(command, {1:output_fd, 2:output_fd, 0:0},
             chdir=chdir)
-        return ret
+        return ret == 0
 
-    def interpret_exit_code(self, val):
-        return 0 == val
-        
     def _initial_pull(self):
         raise NotImplementedError(self, "_initial_pull")
     

@@ -50,7 +50,7 @@ class rsync_syncer(base.ExternalSyncer):
 
         uri = uri.rstrip(os.path.sep) + os.path.sep
         self.rsh, uri = self.parse_uri(uri)
-        base.syncer.__init__(self, basedir, uri, 2)
+        base.ExternalSyncer.__init__(self, basedir, uri, 2)
         self.hostname = self.parse_hostname(self.uri)
         if self.rsh:
             self.rsh = self.require_binary(self.rsh)

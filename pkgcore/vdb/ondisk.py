@@ -70,7 +70,7 @@ class tree(prototype.tree):
             raise errors.InitializationError(
                 "lstat failed on base %s" % self.base)
 
-        self.package_class = get_plugin('format.' + (self.format_magic,))(self)
+        self.package_class = get_plugin('format.' + self.format_magic)(self)
 
     def _get_categories(self, *optional_category):
         # return if optional_category is passed... cause it's not yet supported

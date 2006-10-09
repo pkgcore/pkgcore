@@ -13,7 +13,7 @@ __all__ = [
 from pkgcore.merge import errors
 from pkgcore.util.demandload import demandload
 demandload(globals(), """os
-    pkgcore.plugins:get_plugin
+    pkgcore.plugin2:get_plugin
     pkgcore.spawn:spawn""")
 import pkgcore.os_data
 
@@ -149,7 +149,7 @@ def run_ldconfig(engine, ld_so_conf_file="etc/ld.so.conf"):
 
 
 def _merge_contents(engine, cset):
-    op = get_plugin("fs_ops", "merge_contents")
+    op = get_plugin("fs_ops.merge_contents")
     return op(cset, callback=engine.observer.installing_fs_obj)
 
 def merge_trigger(cset="install"):
@@ -158,7 +158,7 @@ def merge_trigger(cset="install"):
 
 
 def _unmerge_contents(engine, cset):
-    op = get_plugin("fs_ops", "unmerge_contents")
+    op = get_plugin("fs_ops.unmerge_contents")
     return op(cset, callback=engine.observer.removing_fs_obj)
 
 def unmerge_trigger(cset="uninstall"):

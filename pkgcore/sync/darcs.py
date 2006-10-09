@@ -7,6 +7,10 @@ class darcs_syncer(base.dvcs_syncer):
 
     binary = "darcs"
     
+    supported_uris = (
+        ('darcs+', 5),
+        )
+
     @staticmethod
     def parse_uri(raw_uri):
         if not raw_uri.startswith("darcs+"):

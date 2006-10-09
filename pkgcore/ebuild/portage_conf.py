@@ -22,8 +22,15 @@ demandload(globals(), "errno pkgcore.config:errors "
 
 def my_convert_hybrid(manager, val, arg_type):
     """Modified convert_hybrid using a sequence of strings for section_refs."""
+    subtype = None
     if arg_type == 'section_refs':
-        return list(manager.collapse_named_section(name) for name in val)
+        subtype = 'section_ref'
+    elif arg_type.startswith('refs:'):
+        subtype = 'ref:' + arg_type.split(':', 1)[1]
+    if subtype is not None:
+        return list(
+            basics.LazyNamedSectionRef(manager, subtype, name)
+            for name in val)
     return basics.convert_hybrid(manager, val, arg_type)
 
 
@@ -64,7 +71,7 @@ def make_syncer(basedir, sync_uri, options):
                 options.pop('RSYNC_RATELIMIT').strip())
         d['class'] = 'pkgcore.sync.rsync.rsync_timestamp_syncer'
     else:
-        raise TypeError("sorry, only rsync is supported now")
+        d['class'] = 'pkgcore.sync.base.GenericSyncer'
     return d
 
 

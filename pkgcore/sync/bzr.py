@@ -7,6 +7,10 @@ class bzr_syncer(base.dvcs_syncer):
 
     binary = "bzr"
 
+    supported_uris = (
+        ('bzr+', 5),
+        )
+
     @classmethod
     def parse_uri(staticmethod, raw_uri):
         if not raw_uri.startswith("bzr+"):

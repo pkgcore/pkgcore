@@ -20,8 +20,6 @@ class mysdist(sdist.sdist):
                 self.filelist.extend(glob.glob(os.path.join(key, pattern)))
         self.filelist.append("ChangeLog")
         self.filelist.append("AUTHORS")
-        self.filelist.append("sandbox/test.py")
-        self.filelist.extend(glob.glob("sandbox/test-plugins/*"))
         self.filelist.extend(glob.glob('doc/*.rst'))
         self.filelist.extend(glob.glob('dev-notes/*.rst'))
         self.filelist.extend(glob.glob('dev-notes/reimplementation/*.rst'))

@@ -10,7 +10,7 @@ from pkgcore.util.osutils import ensure_dirs
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import partial
 from pkgcore.vdb.contents import ContentsFile
-from pkgcore.plugins import get_plugin
+from pkgcore.plugin2 import get_plugin
 from pkgcore.interfaces import repo as repo_interfaces
 from pkgcore.interfaces import data_source
 from pkgcore.util.osutils import listdir_dirs
@@ -70,7 +70,7 @@ class tree(prototype.tree):
             raise errors.InitializationError(
                 "lstat failed on base %s" % self.base)
 
-        self.package_class = get_plugin("format", self.format_magic)(self)
+        self.package_class = get_plugin('format.' + (self.format_magic,))(self)
 
     def _get_categories(self, *optional_category):
         # return if optional_category is passed... cause it's not yet supported

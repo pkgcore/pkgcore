@@ -13,7 +13,7 @@ from pkgcore.fs import gen_obj, contents, fs
 from pkgcore.util.osutils import ensure_dirs
 from pkgcore.spawn import spawn
 from pkgcore.const import COPY_BINARY
-from pkgcore.plugins import get_plugin
+from pkgcore.plugin2 import get_plugin
 from pkgcore.util.currying import partial
 
 __all__ = [
@@ -80,7 +80,7 @@ def default_mkdir(d):
     else:
         mode = d.mode
     os.mkdir(d.real_location, mode)
-    get_plugin("fs_ops", "ensure_perms")(d)
+    get_plugin("fs_ops.ensure_perms")(d)
     return True
 
 
@@ -94,7 +94,7 @@ def default_copyfile(obj, mkdirs=False):
     """
 
     existant = False
-    ensure_perms = get_plugin("fs_ops", "ensure_perms")
+    ensure_perms = get_plugin("fs_ops.ensure_perms")
     if not fs.isfs_obj(obj):
         raise TypeError("obj must be fsBase derivative: %r" % obj)
     elif fs.isdir(obj):
@@ -169,9 +169,9 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
         (OSError, although see default_copyfile for specifics).
     """
 
-    ensure_perms = get_plugin("fs_ops", "ensure_perms")
-    copyfile = get_plugin("fs_ops", "copyfile")
-    mkdir = get_plugin("fs_ops", "mkdir")
+    ensure_perms = get_plugin("fs_ops.ensure_perms")
+    copyfile = get_plugin("fs_ops.copyfile")
+    mkdir = get_plugin("fs_ops.mkdir")
 
     if not isinstance(cset, contents.contentsSet):
         raise TypeError("cset must be a contentsSet")
@@ -249,3 +249,9 @@ def unmerge_contents(cset, offset=None, callback=lambda obj:None):
             if not e.errno in (errno.ENOTEMPTY, errno.ENOENT, errno.ENOTDIR):
                 raise
     return True
+
+# Plugin system priorities
+for func in [default_copyfile, default_ensure_perms, default_mkdir,
+             merge_contents, unmerge_contents]:
+    func.priority = 1
+del func

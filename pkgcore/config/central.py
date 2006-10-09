@@ -341,31 +341,32 @@ class ConfigManager(object):
                         raise errors.ConfigurationError(
                             'type of %r unknown' % (key,))
                     typename = 'str'
-                subtypename = None
-                if typename.startswith('refs:'):
-                    subtypename = typename.split(':', 1)[1]
-                    typename = 'section_refs'
-                elif typename.startswith('ref:'):
-                    subtypename = typename.split(':', 1)[1]
+                is_ref = (typename == 'section_ref' or
+                          typename.startswith('ref:'))
+                is_refs = (typename == 'section_refs' or
+                           typename.startswith('refs:'))
+                # The sections do not care about lazy vs nonlazy.
+                if typename == 'lazy_ref':
                     typename = 'section_ref'
-                elif typename.startswith('lazy_refs:'):
-                    subtypename = typename.split(':', 1)[1]
+                elif typename == 'lazy_refs':
                     typename = 'section_refs'
-                elif typename.startswith('lazy_ref:'):
-                    subtypename = typename.split(':', 1)[1]
-                    typename = 'section_ref'
+                elif typename.startswith('lazy_'):
+                    typename = typename[5:]
                 result = inherit_conf.get_value(self, key, typename)
-                if typename == 'section_ref' and subtypename is not None:
-                    if result.type.name != subtypename:
-                        raise errors.ConfigurationError(
-                            '%r should be of type %r, got %r' % (
-                                key, subtypename, result.type.name))
-                if typename == 'section_refs' and subtypename is not None:
-                    for sub in result:
-                        if sub.type.name != subtypename:
-                            raise errors.ConfigurationError(
-                                '%r should be of type %r, got %r' % (
-                                    key, subtypename, sub.type.name))
+                if is_ref:
+                    try:
+                        result = result.collapse()
+                    except errors.ConfigurationError, e:
+                        e.stack.append(
+                            'Collapsing section ref %r' % (key,))
+                        raise
+                elif is_refs:
+                    try:
+                        result = list(ref.collapse() for ref in result)
+                    except errors.ConfigurationError, e:
+                        e.stack.append(
+                            'Collapsing section refs %r' % (key,))
+                        raise
                 if key in conf and key in type_obj.incrementals:
                     conf[key] = result + conf[key]
                 else:

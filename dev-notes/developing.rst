@@ -36,14 +36,17 @@ __init__.py), and use that.
 Registering plugins
 ===================
 
-Pkgcore is pluggable, so even to get the basis working some plugins must be
-registered by running as root::
+Pkgcore uses plugins for some basic functionality. You do not really
+have to do anything to get this working, but things are a bit faster
+if the plugin cache is up to date. This happens automatically if the
+cache is stale and the user running pkgcore may write there, but if
+pkgcore is installed somewhere system-wide and you only run it as user
+you can force a regeneration with::
 
- # pkgcore/bin/utilities/register.bash
+ # python -c \
+     'from pkgcore import plugin2, plugins; plugin2.initialize_cache(plugins)
 
-If you register plugins manually you need to set PYTHONPATH (note that sudo
-cleanses the env normally).  If that fails, your PYTHONPATH is invalid;
-if it works it'll spit back a registering message.  So far, good to go.
+A friendly utility to do this is planned.
 
 Test pkgcore
 ============

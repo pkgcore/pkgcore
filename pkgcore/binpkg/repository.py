@@ -11,7 +11,7 @@ from pkgcore.repository import prototype, errors
 #needed to grab the PN
 from pkgcore.ebuild.cpv import CPV as cpv
 from pkgcore.util.currying import partial
-from pkgcore.plugins import get_plugin
+from pkgcore.plugin2 import get_plugin
 from pkgcore.util.mappings import DictMixin
 from pkgcore.util.osutils import listdir_dirs, listdir_files
 from pkgcore.binpkg.xpak import Xpak
@@ -32,7 +32,7 @@ demandload(globals(),
 
 def force_unpack_trigger(op, engine_inst, cset):
     op.setup_workdir()
-    merge_contents = get_plugin("fs_ops", "merge_contents")
+    merge_contents = get_plugin("fs_ops.merge_contents")
     merge_contents(cset, offset=op.env["D"])
     cset.clear()
     cset.update(scan(op.env["D"], offset=op.env["D"]))
@@ -176,7 +176,7 @@ class tree(prototype.tree):
                 "lstat failed on base %s" % self.base)
 
         self.package_class = wrap_factory(
-            get_plugin("format", self.format_magic), self)
+            get_plugin("format." + self.format_magic), self)
 
     def _get_categories(self, *optional_category):
         # return if optional_category is passed... cause it's not yet supported

@@ -3,6 +3,9 @@
 
 """Configuration querying utility."""
 
+
+import traceback
+
 from pkgcore.config import errors, basics
 from pkgcore.util import commandline, modules
 
@@ -60,6 +63,12 @@ def dump_section(config, out, sections):
                 out.write('# huh, no type set for %s (%r)' % (key, val))
                 continue
         out.write('# type: %s' % (typename,))
+        if typename.startswith('lazy_refs'):
+            typename = 'section_refs'
+            val = list(ref.collapse() for ref in val)
+        elif typename.startswith('lazy_ref'):
+            typename = 'section_ref'
+            val = val.collapse()
         if typename == 'str':
             out.write('%s %r;' % (key, val))
         elif typename == 'bool':
@@ -112,6 +121,10 @@ def get_classes(configs):
                 classes.update(get_classes((val,)))
             elif typename == 'section_refs' or typename.startswith('refs:'):
                 classes.update(get_classes(val))
+            elif typename.startswith('lazy_refs'):
+                classes.update(get_classes(c.collapse() for c in val))
+            elif typename.startswith('lazy_ref'):
+                classes.update(get_classes((val.collapse(),)))
     return classes
 
 
@@ -151,7 +164,9 @@ def main(config, options, out, err):
         try:
             sections.append((name, config.collapse_named_section(name)))
         except errors.ConfigurationError, e:
-            if options.uncollapsable:
+            if options.debug:
+                traceback.print_exc()
+            elif options.uncollapsable:
                 out.write(str(e))
                 out.write()
             # Otherwise ignore this.

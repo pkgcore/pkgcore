@@ -96,25 +96,28 @@ class ConfigSection(basics.ConfigSection):
             if not callable(value):
                 raise errors.ConfigurationError('%r is not callable' % value)
             return value
-        elif arg_type == 'section_ref':
+        elif arg_type == 'section_ref' or arg_type.startswith('ref:'):
             if len(value) != 1:
                 raise errors.ConfigurationError('only one argument required')
             value = value[0]
             if isinstance(value, basestring):
                 # it's a section ref
-                return central.collapse_named_section(value)
+                return basics.LazyNamedSectionRef(central, arg_type, value)
             else:
                 # it's an anonymous inline section
-                return central.collapse_section(ConfigSection(value))
-        elif arg_type == 'section_refs':
+                return basics.LazyUnnamedSectionRef(central, arg_type,
+                                                    ConfigSection(value))
+        elif arg_type == 'section_refs' or arg_type.startswith('refs:'):
             result = []
             for ref in value:
                 if isinstance(ref, basestring):
                     # it's a section ref
-                    result.append(central.collapse_named_section(ref))
+                    result.append(basics.LazyNamedSectionRef(
+                            central, arg_type, ref))
                 else:
                     # it's an anonymous inline section
-                    result.append(central.collapse_section(ConfigSection(ref)))
+                    result.append(basics.LazyUnnamedSectionRef(
+                            central, arg_type, ConfigSection(ref)))
             return result
         elif arg_type == 'list':
             if not isinstance(value, basestring):

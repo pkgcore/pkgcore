@@ -8,6 +8,11 @@ class cvs_syncer(base.dvcs_syncer):
     sets_env = True
     binary = "cvs"
     
+    supported_uris = (
+        ('cvs+', 5),
+        ('cvs://', 5),
+        )
+
     @classmethod
     def parse_uri(cls, raw_uri):
         if not raw_uri.startswith("cvs") and \

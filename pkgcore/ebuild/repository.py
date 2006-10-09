@@ -22,7 +22,7 @@ demandload(globals(), "pkgcore.ebuild.ebd:buildable "
     "pkgcore.ebuild:repo_objs ")
 
 from pkgcore.config import ConfigHint
-from pkgcore.plugins import get_plugin
+from pkgcore.plugin2 import get_plugin
 
 metadata_offset = "profiles"
 
@@ -46,7 +46,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
     pkgcore_config_type = ConfigHint(
         {'location': 'str', 'cache': 'refs:cache',
          'eclass_cache': 'ref:eclass_cache', 'mirrors_file': 'str',
-         'default_mirrors': 'list', 'sync': 'lazy_ref'},
+         'default_mirrors': 'list', 'sync': 'lazy_ref:syncer'},
         typename='repo')
 
     def __init__(self, location, cache=(), eclass_cache=None,
@@ -111,7 +111,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         self.mirrors = mirrors
         self.default_mirrors = default_mirrors
         self.cache = cache
-        self.package_class = get_plugin("format", self.format_magic)(
+        self.package_class = get_plugin("format." + self.format_magic)(
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
         self._shared_pkg_cache = WeakValCache()
 

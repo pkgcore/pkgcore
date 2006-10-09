@@ -212,10 +212,10 @@ a CollapsedConfig for a named section in a way other than
 collapse_named_section (handing the ConfigSection to collapse_section
 bypasses caching).
 
-This means a ConfigSection has to return a CollapsedConfig for a
-section_ref get_value call, not a ConfigSection. If it was a
-ConfigSection that central then collapsed and the reference was
-actually to a named section caching is bypassed.
+This means a ConfigSection cannot return a raw ConfigSection from a
+section_ref get_value call. If it was a ConfigSection that central
+then collapsed and the reference was actually to a named section
+caching is bypassed.
 
 The need for a section name starting with "autoload" is also there to
 avoid unnecessary work. Without this we would have to figure out the

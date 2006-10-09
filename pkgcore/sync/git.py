@@ -7,6 +7,11 @@ class git_syncer(base.dvcs_syncer):
 
     binary = "git"
 
+    supported_uris = (
+        ('git://', 5),
+        ('git+', 5),
+        )
+
     @staticmethod
     def parse_uri(raw_uri):
         if not raw_uri.startswith("git+") and not raw_uri.startswith("git://"):

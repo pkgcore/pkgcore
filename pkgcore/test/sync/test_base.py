@@ -2,13 +2,13 @@
 # License: GPL2
 
 import pwd
-from pkgcore.sync import base
+from pkgcore.sync import base, svn
 from pkgcore.test.sync import make_bogus_syncer, make_valid_syncer
 from pkgcore.test import TestCase
 from pkgcore.os_data import root_uid
 
-valid = make_valid_syncer(base.syncer)
-bogus = make_bogus_syncer(base.syncer)
+valid = make_valid_syncer(base.ExternalSyncer)
+bogus = make_bogus_syncer(base.ExternalSyncer)
 
 existing_user = pwd.getpwall()[0].pw_name
 existing_uid = pwd.getpwnam(existing_user).pw_uid
@@ -34,3 +34,13 @@ class TestBase(TestCase):
         o = valid("/tmp/foon", "%s::foon@site" % existing_user)
         self.assertEqual(o.local_user, existing_uid)
         self.assertEqual(o.uri, "foon@site")
+
+
+class GenericSyncerTest(TestCase):
+
+    def test_init(self):
+        self.assertRaises(
+            base.uri_exception,
+            base.GenericSyncer, '/', 'seriouslynotaprotocol://blah/')
+        syncer = base.GenericSyncer('/', 'svn://blah/')
+        self.assertIdentical(svn.svn_syncer, syncer.syncer.__class__)

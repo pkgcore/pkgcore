@@ -7,6 +7,10 @@ class hg_syncer(base.dvcs_syncer):
 
     binary = "hg"
 
+    supported_uris = (
+        ('hg+', 5),
+        )
+
     @staticmethod
     def parse_uri(raw_uri):
         if not raw_uri.startswith("hg+"):

@@ -214,11 +214,13 @@ class ConfigSectionFromStringDictTest(TestCase):
                 except KeyError:
                     raise errors.ConfigurationError(section)
         self.assertEquals(
-            section.get_value(TestCentral(), 'goodref', 'section_ref'),
+            section.get_value(
+                TestCentral(), 'goodref', 'section_ref').collapse(),
             target_config)
         self.assertRaises(
             errors.ConfigurationError,
-            section.get_value, TestCentral(), 'badref', 'section_ref')
+            section.get_value(
+                TestCentral(), 'badref', 'section_ref').instantiate)
 
     def test_section_refs(self):
         section = basics.ConfigSectionFromStringDict(
@@ -232,11 +234,13 @@ class ConfigSectionFromStringDictTest(TestCase):
                 except KeyError:
                     raise errors.ConfigurationError(section)
         self.assertEquals(
-            section.get_value(TestCentral(), 'goodrefs', 'section_refs'),
+            list(ref.collapse() for ref in section.get_value(
+                    TestCentral(), 'goodrefs', 'section_refs')),
             [config1, config2])
-        self.assertRaises(
-            errors.ConfigurationError,
-            section.get_value, TestCentral(), 'badrefs', 'section_refs')
+        lazy_refs = section.get_value(TestCentral(), 'badrefs', 'section_refs')
+        self.assertEquals(2, len(lazy_refs))
+        self.assertRaises(errors.ConfigurationError, lazy_refs[1].collapse)
+
 
 class HardCodedConfigSectionTest(TestCase):
 
@@ -270,15 +274,23 @@ class HardCodedConfigSectionTest(TestCase):
                         self.section.get_value, None, arg, typename)
 
     def test_section_ref(self):
-        # should have positive assertions here
-        section = basics.HardCodedConfigSection({'ref': 42})
+        ref = basics.HardCodedConfigSection({})
+        section = basics.HardCodedConfigSection({'ref': 42, 'ref2': ref})
         self.assertRaises(errors.ConfigurationError,
             section.get_value, None, 'ref', 'section_ref')
+        self.assertIdentical(
+            ref,
+            section.get_value(None, 'ref2', 'section_ref').section)
 
     def test_section_refs(self):
-        section = basics.HardCodedConfigSection({'refs': [1, 2]})
+        ref = basics.HardCodedConfigSection({})
+        section = basics.HardCodedConfigSection({'refs': [1, 2],
+                                                 'refs2': [ref]})
         self.assertRaises(errors.ConfigurationError,
             section.get_value, None, 'refs', 'section_refs')
+        self.assertIdentical(
+            ref,
+            section.get_value(None, 'refs2', 'section_refs')[0].section)
 
 
 class AliasTest(TestCase):
@@ -295,8 +307,9 @@ class AliasTest(TestCase):
         type_obj = basics.ConfigType(alias.get_value(manager, 'class',
                                                      'callable'))
         self.assertEquals('spork', type_obj.name)
-        self.assertIdentical(foon,
-                             alias.get_value(manager, 'target', 'section_ref'))
+        self.assertIdentical(
+            foon,
+            alias.get_value(manager, 'target', 'section_ref').collapse())
 
 
 class ParsersTest(TestCase):

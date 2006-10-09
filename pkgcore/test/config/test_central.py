@@ -328,7 +328,7 @@ class ConfigManagerTest(TestCase):
         self.assertRaises(KeyError, operator.getitem, manager.repo, 'foon')
         self.check_error(
             "Collapsing section named 'spork':\n"
-            "Converting argument 'content' to section_ref:\n"
+            "Collapsing section ref 'content':\n"
             "no section called 'ref'",
             operator.getitem, manager.repo, 'spork')
 
@@ -361,14 +361,14 @@ class ConfigManagerTest(TestCase):
               }], [object()])
         self.check_error(
             "Collapsing section named 'self':\n"
-            "Converting argument 'content' to section_ref:\n"
+            "Collapsing section ref 'content':\n"
             "Reference to 'self' is recursive",
             operator.getitem, manager.drawer, 'self')
         self.check_error(
             "Collapsing section named 'spork':\n"
-            "Converting argument 'content' to section_ref:\n"
+            "Collapsing section ref 'content':\n"
             "Collapsing section named 'foon':\n"
-            "Converting argument 'content' to section_ref:\n"
+            "Collapsing section ref 'content':\n"
             "Reference to 'spork' is recursive",
             operator.getitem, manager.drawer, 'spork')
 
@@ -429,7 +429,8 @@ class ConfigManagerTest(TestCase):
                     }], [object()])
         self.check_error(
             "Collapsing section named 'wrong':\n"
-            "'myrepo' should be of type 'repo', got 'drawer'",
+            "Collapsing section ref 'myrepo':\n"
+            "reference should be of type 'repo', got 'drawer'",
             operator.getitem, manager.repo, 'wrong')
         self.assertEquals('repo!', manager.repo['right'])
 
@@ -443,7 +444,8 @@ class ConfigManagerTest(TestCase):
                     }], [object()])
         self.check_error(
             "Collapsing section named 'wrong':\n"
-            "'myrepo' should be of type 'repo', got 'drawer'",
+            "Collapsing section refs 'myrepo':\n"
+            "reference should be of type 'repo', got 'drawer'",
             operator.getitem, manager.repo, 'wrong')
         self.assertEquals(['repo!'], manager.repo['right'])
 
@@ -468,12 +470,14 @@ class ConfigManagerTest(TestCase):
         self.assertIdentical(None, manager.get_default('drawer'))
 
     def test_lazy_refs(self):
-        @configurable({'myrepo': 'lazy_ref:repo'}, typename='repo')
-        def reporef(myrepo=None):
-            return myrepo
-        @configurable({'myrepo': 'lazy_refs:repo'}, typename='repo')
-        def reporefs(myrepo=None):
-            return myrepo
+        @configurable({'myrepo': 'lazy_ref:repo', 'thing': 'lazy_ref'},
+                      typename='repo')
+        def reporef(myrepo=None, thing=None):
+            return myrepo, thing
+        @configurable({'myrepo': 'lazy_refs:repo', 'thing': 'lazy_refs'},
+                      typename='repo')
+        def reporefs(myrepo=None, thing=None):
+            return myrepo, thing
         @configurable(typename='repo')
         def myrepo():
             return 'repo!'
@@ -486,10 +490,9 @@ class ConfigManagerTest(TestCase):
                                                         'myrepo': 'drawer'}),
                     }], [object()])
         self.check_error(
-            "Collapsing section named 'wrong':\n"
-            "'myrepo' should be of type 'repo', got 'drawer'",
-            operator.getitem, manager.repo, 'wrong')
-        self.assertEquals('repo!', manager.repo['right'].instantiate())
+            "reference should be of type 'repo', got 'drawer'",
+            manager.repo['wrong'][0].collapse)
+        self.assertEquals('repo!', manager.repo['right'][0].instantiate())
 
         manager = central.ConfigManager([{
                     'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
@@ -500,9 +503,8 @@ class ConfigManagerTest(TestCase):
                                                         'myrepo': 'drawer'}),
                     }], [object()])
         self.check_error(
-            "Collapsing section named 'wrong':\n"
-            "'myrepo' should be of type 'repo', got 'drawer'",
-            operator.getitem, manager.repo, 'wrong')
+            "reference should be of type 'repo', got 'drawer'",
+            manager.repo['wrong'][0][0].collapse)
         self.assertEquals(
             ['repo!'],
-            [c.instantiate() for c in manager.repo['right']])
+            [c.instantiate() for c in manager.repo['right'][0]])

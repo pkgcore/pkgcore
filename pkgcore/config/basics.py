@@ -114,6 +114,58 @@ class ConfigType(object):
                     (self.callable, var))
 
 
+class LazySectionRef(object):
+
+    """Abstract base class for lazy-loaded section references."""
+
+    def __init__(self, central, typename):
+        self.central = central
+        split = typename.split(':', 1)
+        if len(split) == 1:
+            self.typename = None
+        else:
+            self.typename = split[1]
+        self.cached_config = None
+
+    def _collapse(self):
+        """Override this in a subclass."""
+        raise NotImplementedError(self)
+
+    def collapse(self):
+        """@returns: a L{CollapsedConfig<pkgcore.config.CollapsedConfig>}."""
+        if self.cached_config is None:
+            config = self.cached_config = self._collapse()
+            if self.typename is not None and config.type.name != self.typename:
+                raise errors.ConfigurationError(
+                    'reference should be of type %r, got %r' % (
+                        self.typename, config.type.name))
+        return self.cached_config
+
+    def instantiate(self):
+        """Convenience method returning the instantiated section."""
+        return self.collapse().instantiate()
+
+
+class LazyNamedSectionRef(LazySectionRef):
+
+    def __init__(self, central, typename, name):
+        LazySectionRef.__init__(self, central, typename)
+        self.name = name
+
+    def _collapse(self):
+        return self.central.collapse_named_section(self.name)
+
+
+class LazyUnnamedSectionRef(LazySectionRef):
+
+    def __init__(self, central, typename, section):
+        LazySectionRef.__init__(self, central, typename)
+        self.section = section
+
+    def _collapse(self):
+        return self.central.collapse_section(self.section)
+
+
 class ConfigSection(object):
 
     """
@@ -177,21 +229,25 @@ def convert_string(central, value, arg_type):
         if not callable(func):
             raise errors.ConfigurationError('%r is not callable' % (value,))
         return func
-    elif arg_type in ('section_refs', 'lazy_refs'):
+    elif arg_type == 'section_refs' or arg_type.startswith('refs:'):
         try:
-            return list(central.collapse_named_section(ref)
+            return list(LazyNamedSectionRef(central, arg_type, ref)
                         for ref in list_parser(value))
         except errors.QuoteInterpretationError, e:
             # TODO improve this (maybe)
             raise errors.ConfigurationError(str(e))
-    elif arg_type in ('section_ref', 'lazy_ref'):
-        return central.collapse_named_section(str_parser(value))
+    elif arg_type == 'section_ref' or arg_type.startswith('ref:'):
+        return LazyNamedSectionRef(central, arg_type, str_parser(value))
     try:
-        return {
+        func = {
             'list': list_parser,
             'str': str_parser,
             'bool': bool_parser,
-            }[arg_type](value)
+            }[arg_type]
+    except KeyError:
+        raise errors.ConfigurationError('Unknown type %r' % (arg_type,))
+    try:
+        return func(value)
     except errors.QuoteInterpretationError, e:
         # TODO improve this (maybe)
         raise errors.ConfigurationError(str(e))
@@ -202,18 +258,18 @@ def convert_asis(central, value, arg_type):
         if not callable(value):
             raise errors.ConfigurationError('%r is not callable' % (value,))
         return value
-    elif arg_type == 'section_ref':
+    elif arg_type == 'section_ref' or arg_type.startswith('ref:'):
         if not isinstance(value, ConfigSection):
             raise errors.ConfigurationError('%r is not a config section' %
                                             (value,))
-        return central.collapse_section(value)
-    elif arg_type == 'section_refs':
+        return LazyUnnamedSectionRef(central, arg_type, value)
+    elif arg_type == 'section_refs' or arg_type.startswith('refs:'):
         l = []
         for section in value:
             if not isinstance(section, ConfigSection):
                 raise errors.ConfigurationError('%r is not a config section' %
                                                 (value,))
-            l.append(central.collapse_section(section))
+            l.append(LazyUnnamedSectionRef(central, arg_type, section))
         return l
     elif not isinstance(value, {'list': (list, tuple),
                                 'str': str,

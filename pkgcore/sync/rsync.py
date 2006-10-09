@@ -7,7 +7,7 @@ from pkgcore.util.demandload import demandload
 
 demandload(globals(), "os socket errno")
 
-class rsync_syncer(base.syncer):
+class rsync_syncer(base.ExternalSyncer):
 
     default_excludes = ["/distfiles", "/local", "/packages"]
     default_includes = []
@@ -40,7 +40,8 @@ class rsync_syncer(base.syncer):
     
     pkgcore_config_type = ConfigHint({'basedir':'str', 'uri':'str',
         'timeout':'str', 'compress':'bool', 'excludes':'list',
-        'includes':'list', 'retries':'str', 'extra_opts':'list'})
+        'includes':'list', 'retries':'str', 'extra_opts':'list'},
+        typename='syncer')
 
     def __init__(self, basedir, uri, timeout=default_timeout,
         compress=False, excludes=(), includes=(),

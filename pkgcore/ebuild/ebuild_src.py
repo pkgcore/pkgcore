@@ -243,6 +243,9 @@ class package(base):
 class package_factory(metadata.factory):
     child_class = package
 
+    # For the plugin system.
+    priority = 5
+
     def __init__(self, parent, cachedb, eclass_cache, mirrors, default_mirrors,
                  *args, **kwargs):
         super(package_factory, self).__init__(parent, *args, **kwargs)

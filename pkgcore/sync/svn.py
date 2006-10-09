@@ -3,9 +3,14 @@
 
 from pkgcore.sync import base
 
-class svn_syncer(base.syncer):
+class svn_syncer(base.ExternalSyncer):
 
     binary = "svn"
+
+    supported_uris = (
+        ('svn://', 5),
+        ('svn+', 5),
+        )
 
     @staticmethod
     def parse_uri(raw_uri):

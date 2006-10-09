@@ -5,25 +5,20 @@ from pkgcore.config import ConfigHint
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore:spawn "
     "os pwd stat "
+    "pkgcore:plugin2 "
     "pkgcore:os_data ")
+
 
 class syncer(object):
 
     forcable = False
-    sets_env = False
-    binary = None
-    
-    pkgcore_config_type = ConfigHint({'path':'str', 'uri':'str'},
-        typename='syncer')
-    
+
+    supported_uris = ()
+
     def __init__(self, path, uri, default_verbosity=0):
         self.verbose = default_verbosity
         self.basedir = path.rstrip(os.path.sep) + os.path.sep
         self.local_user, self.uri = self.split_users(uri)
-        if not self.sets_env:
-            self.env = {}
-        if not hasattr(self, 'binary_path'):
-            self.binary_path = self.require_binary(self.binary)
 
     @staticmethod
     def split_users(raw_uri):
@@ -48,19 +43,7 @@ class syncer(object):
             return pwd.getpwnam(uri[0]).pw_uid, uri[1]
         except KeyError, e:
             raise missing_local_user(raw_uri, uri[0], e)
-    
-    @staticmethod
-    def require_binary(bin_name, fatal=True):
-        try:
-            return spawn.find_binary(bin_name)
-        except spawn.CommandNotFound, e:
-            if fatal:
-                raise missing_binary(bin_name, e)
-            return None
 
-    def set_binary_path(self):
-        self.binary_path = self.require_binary(self.binary)
-    
     def sync(self, verbosity=None, force=False):
         kwds = {}
         if self.forcable and force:
@@ -77,12 +60,46 @@ class syncer(object):
         return "%s syncer: %s, %s" % (self.__class__,
             self.basedir, self.uri)
 
+    @classmethod
+    def supports_uri(cls, uri):
+        for prefix, level in cls.supported_uris:
+            if uri.startswith(prefix):
+                return level
+        return 0
+
+
+class ExternalSyncer(syncer):
+
+    """Base class for syncers that spawn a binary to do the the actual work."""
+
+    sets_env = False
+    binary = None
+
+    def __init__(self, path, uri, default_verbosity=0):
+        syncer.__init__(self, path, uri, default_verbosity)
+        if not self.sets_env:
+            self.env = {}
+        if not hasattr(self, 'binary_path'):
+            self.binary_path = self.require_binary(self.binary)
+
+    @staticmethod
+    def require_binary(bin_name, fatal=True):
+        try:
+            return spawn.find_binary(bin_name)
+        except spawn.CommandNotFound, e:
+            if fatal:
+                raise missing_binary(bin_name, e)
+            return None
+
+    def set_binary_path(self):
+        self.binary_path = self.require_binary(self.binary)
+
     def _spawn(self, command, pipes, **kwargs):
         return spawn.spawn(command, fd_pipes=pipes, uid=self.local_user,
             env=self.env, **kwargs)
 
 
-class dvcs_syncer(syncer):
+class dvcs_syncer(ExternalSyncer):
 
     def _sync(self, verbosity, output_fd):
         try:
@@ -105,9 +122,9 @@ class dvcs_syncer(syncer):
 
     def _initial_pull(self):
         raise NotImplementedError(self, "_initial_pull")
-    
+
     def _update_existing(self):
-        raise NotImplementedError(self, "_update_existing")        
+        raise NotImplementedError(self, "_update_existing")
 
 
 class syncer_exception(Exception):
@@ -124,3 +141,24 @@ class missing_local_user(syncer_exception):
 
 class missing_binary(syncer_exception):
     pass
+
+
+class GenericSyncer(syncer):
+
+    """Syncer using the plugin system to find a syncer based on uri."""
+
+    pkgcore_config_type = ConfigHint({'basedir':'str', 'uri':'str'},
+        typename='syncer')
+
+    def __init__(self, basedir, uri, default_verbosity=0):
+        syncer.__init__(self, basedir, uri, default_verbosity)
+        plugins = list(
+            (plugin.supports_uri(uri), plugin)
+            for plugin in plugin2.get_plugins('syncer'))
+        plugins.sort()
+        if not plugins or plugins[-1][0] <= 0:
+            raise uri_exception('no known syncer supports %r' % (uri,))
+        # XXX this is random if there is a tie. Should we raise an exception?
+        self.syncer = plugins[-1][1](basedir, uri, default_verbosity)
+        self.forcable = syncer.forcable
+        self._sync = syncer._sync

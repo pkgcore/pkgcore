@@ -144,6 +144,9 @@ def _generic_format_replace_op(self, pkg, domain_settings, **kwds):
 class package_factory(metadata.factory):
     child_class = package
 
+    # For the plugin system.
+    priority = 5
+
     def _get_metadata(self, pkg):
         return self._parent_repo._get_metadata(pkg)
 

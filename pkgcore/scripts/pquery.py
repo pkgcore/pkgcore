@@ -237,12 +237,15 @@ class OptionParser(commandline.OptionParser):
                         help='match only vdb (installed) packages.')
         repo.add_option('--all-repos', action='store_true',
                         help='search all repos, vdb included')
+
         restrict = self.add_option_group(
             'Package matching',
             'Each option specifies a restriction packages must match.  '
             'Specifying the same option twice means "or" unless stated '
             'otherwise. Specifying multiple types of restrictions means "and" '
             'unless stated otherwise.')
+        restrict.add_option('--all', action='store_true',
+                            help='Match all packages (equivalent to -m "*")')
         restrict.add_option(
             '--match', '-m', action='append', type='match',
             help='Glob-like match on category/package-version.')
@@ -349,6 +352,30 @@ class OptionParser(commandline.OptionParser):
                 self.error(
                     '--one-attr and --force-one-attr are mutually exclusive.')
             vals.one_attr = vals.force_one_attr
+
+        # Build up a restriction.
+        vals.restrict = []
+        if vals.all:
+            vals.restrict.append(packages.AlwaysTrue)
+
+        for attr in PARSE_FUNCS.keys():
+            val = getattr(vals, attr)
+            if len(val) == 1:
+                # Omit the boolean.
+                vals.restrict.append(val[0])
+            elif val:
+                vals.restrict.append(
+                    packages.OrRestriction(finalize=True, *val))
+
+        if not vals.restrict:
+            self.error('No restrictions specified.')
+        elif len(vals.restrict) == 1:
+            # Single restriction, omit the AndRestriction for a bit of speed
+            vals.restrict = vals.restrict[0]
+        else:
+            # "And" them all together
+            vals.restrict = packages.AndRestriction(finalize=True,
+                                                    *vals.restrict)
 
         return vals, ()
 
@@ -507,37 +534,17 @@ def main(config, options, out, err):
     if options.virtuals:
         repos = repo_utils.get_virtual_repos(repos, options.virtuals == 'only')
 
-    # Build up a restriction.
-    restrict = []
-    for attr in PARSE_FUNCS.keys():
-        val = getattr(options, attr)
-        if len(val) == 1:
-            # Omit the boolean.
-            restrict.append(val[0])
-        elif val:
-            restrict.append(packages.OrRestriction(finalize=True, *val))
-
-    if not restrict:
-        # Match everything in the repo.
-        restrict = packages.AlwaysTrue
-    elif len(restrict) == 1:
-        # Single restriction, omit the AndRestriction for a bit of speed
-        restrict = restrict[0]
-    else:
-        # "And" them all together
-        restrict = packages.AndRestriction(finalize=True, *restrict)
-
     if options.debug:
         for repo in repos:
             out.write('repo: %r' % (repo,))
-        out.write('restrict: %r' % (restrict,))
+        out.write('restrict: %r' % (options.restrict,))
         out.write()
 
     # Run the query
     for repo in repos:
         try:
             for pkgs in pkgutils.groupby_pkg(
-                repo.itermatch(restrict, sorter=sorted)):
+                repo.itermatch(options.restrict, sorter=sorted)):
                 pkgs = list(pkgs)
                 if options.noversion:
                     print_packages_noversion(options, out, err, pkgs, vdbs)
@@ -559,5 +566,5 @@ def main(config, options, out, err):
         except Exception:
             err.write('caught an exception!\n')
             err.write('repo: %r\n' % (repo,))
-            err.write('restrict: %r\n' % (restrict,))
+            err.write('restrict: %r\n' % (options.restrict,))
             raise

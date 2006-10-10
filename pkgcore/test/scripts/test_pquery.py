@@ -48,7 +48,7 @@ class pqueryTest(TestCase, helpers.MainMixin):
         self.assertError(
             '--no-version with --min or --max does not make sense.',
             '--no-version', '--max', '--min')
-        self.assertTrue(self.parser.parse_args([]))
+        self.assertTrue(self.parser.parse_args(['--all']))
 
     def test_no_domain(self):
         self.assertErr(
@@ -56,7 +56,7 @@ class pqueryTest(TestCase, helpers.MainMixin):
              'pass --domain',
              'Valid domains: ',
              ],
-            {})
+            {}, '--all')
 
     def test_no_description(self):
         self.assertOut(
@@ -66,10 +66,10 @@ class pqueryTest(TestCase, helpers.MainMixin):
              '',
              ],
             {'test domain': domain_config},
-            '-v', '--max')
+            '-v', '--max', '--all')
 
     def test_no_contents(self):
         self.assertOut(
             [],
             {'test domain': domain_config},
-            '--contents')
+            '--contents', '--all')

@@ -8,7 +8,7 @@ ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 import os, stat, operator
 from itertools import chain
 from pkgcore.repository import prototype, errors, configured, syncable
-from pkgcore.util.file import read_dict
+from pkgcore.util.file import read_dict, iter_read_bash
 from pkgcore.util import currying
 from pkgcore.util.osutils import listdir_files, listdir_dirs
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
@@ -19,7 +19,9 @@ from pkgcore.util.weakrefs import WeakValCache
 demandload(globals(), "pkgcore.ebuild.ebd:buildable "
     "pkgcore.interfaces.data_source:local_source "
     "pkgcore.ebuild:digest "
-    "pkgcore.ebuild:repo_objs ")
+    "pkgcore.ebuild:repo_objs "
+    "pkgcore.ebuild:atom "
+    "errno ")
 
 from pkgcore.config import ConfigHint
 from pkgcore.plugin import get_plugin
@@ -206,6 +208,17 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         return "<ebuild %s location=%r @%#8x>" % (self.__class__.__name__,
             self.base, id(self))
 
+    def _visibility_limiters(self):
+        try:
+            return [atom.atom(x.strip())
+                for x in iter_read_bash(
+                os.path.join(self.base, "profiles", "package.mask"))]
+        except IOError, i:
+            if i.errno != errno.ENOENT:
+                raise
+            del i
+            return []
+    
 
 class ConfiguredTree(configured.tree):
 

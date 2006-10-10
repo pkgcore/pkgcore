@@ -147,18 +147,17 @@ class OnDiskProfile(profiles.base):
         self.visibility = tuple(visibility)
         del sys, visibility, pkgs
         
-        full_stack = [self.basepath] + stack
         self.bashrc = tuple(local_source(path)
-            for path in (pjoin(x, 'profile.bashrc') for x in full_stack)
+            for path in (pjoin(x, 'profile.bashrc') for x in stack)
                 if os.path.exists(path))
 
-        self.use_mask = tuple(incremental_profile_files(full_stack, "use.mask"))
-        self.use_force = tuple(incremental_profile_files(full_stack, "use.force"))
+        self.use_mask = tuple(incremental_profile_files(stack, "use.mask"))
+        self.use_force = tuple(incremental_profile_files(stack, "use.force"))
 
         self.maskers = tuple(set(self.visibility).union(atom(x) for x in 
-            incremental_profile_files(full_stack, "package.mask")))
+            incremental_profile_files(stack, "package.mask")))
         pkg_provided = {}
-        for x in incremental_profile_files(full_stack, "package.provided"):
+        for x in incremental_profile_files(stack, "package.provided"):
             a = cpv.CPV(x)
             pkg_provided.setdefault(a.category, {}).setdefault(
                 a.package, []).append(a.fullver)
@@ -171,9 +170,9 @@ class OnDiskProfile(profiles.base):
             ptree = None
         self.package_provided_repo = ptree
 
-        self.package_use_mask  = self.load_atom_dict(full_stack,
+        self.package_use_mask  = self.load_atom_dict(stack,
             "package.use.mask")
-        self.package_use_force = self.load_atom_dict(full_stack,
+        self.package_use_force = self.load_atom_dict(stack,
             "package.use.force")
 
         d = {}

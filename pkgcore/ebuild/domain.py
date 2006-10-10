@@ -145,7 +145,10 @@ class domain(pkgcore.config.domain.domain):
         # break this up into chunks once it's stabilized (most of code
         # here has already, but still more to add)
         settings.setdefault('ACCEPT_LICENSE', const.ACCEPT_LICENSE)
-        pkg_maskers = list(profile.maskers)
+        pkg_maskers = set(profile.maskers)
+        for r in repositories:
+            pkg_maskers.update(r.default_visibility_limiters)
+        pkg_maskers = list(pkg_maskers)
         pkg_unmaskers, pkg_keywords, pkg_license = [], [], []
         pkg_use = []
 

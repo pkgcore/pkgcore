@@ -530,3 +530,11 @@ class tree(object):
             return True
         except StopIteration:
             return False
+
+    @property
+    def default_visibility_limiters(self):
+        # designed this way to allow for easy override
+        return self._visibility_limiters()
+    
+    def _visibility_limiters(self):
+        return []

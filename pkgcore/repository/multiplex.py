@@ -115,3 +115,6 @@ class tree(prototype.tree):
             self.__class__.__module__, self.__class__.__name__,
             getattr(self, 'trees', 'unset'),
             id(self))
+
+    def _visibility_limiters(self):
+        return [x for r in self.trees for x in r.default_visibility_limiters]

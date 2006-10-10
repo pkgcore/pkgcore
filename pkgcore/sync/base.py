@@ -5,7 +5,7 @@ from pkgcore.config import ConfigHint
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore:spawn "
     "os pwd stat "
-    "pkgcore:plugin2 "
+    "pkgcore:plugin "
     "pkgcore:os_data ")
 
 
@@ -153,8 +153,8 @@ class GenericSyncer(syncer):
     def __init__(self, basedir, uri, default_verbosity=0):
         syncer.__init__(self, basedir, uri, default_verbosity)
         plugins = list(
-            (plugin.supports_uri(uri), plugin)
-            for plugin in plugin2.get_plugins('syncer'))
+            (plug.supports_uri(uri), plug)
+            for plug in plugin.get_plugins('syncer'))
         plugins.sort()
         if not plugins or plugins[-1][0] <= 0:
             raise uri_exception('no known syncer supports %r' % (uri,))

@@ -13,7 +13,7 @@ __all__ = [
 from pkgcore.merge import errors
 from pkgcore.util.demandload import demandload
 demandload(globals(), """os
-    pkgcore.plugin2:get_plugin
+    pkgcore.plugin:get_plugin
     pkgcore.spawn:spawn""")
 import pkgcore.os_data
 

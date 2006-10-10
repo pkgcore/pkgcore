@@ -2,6 +2,24 @@ Release Notes:
 
   See ChangeLog for full commit logs.
 
+pkgcore 0.1.2:
+
+  * Make filter_env work on hppa (and possibly more architectures) where using
+    python CFLAGS for this standalone binary does not work.
+
+  * Fall back to plain text output if the TERM variable is unsupported.
+
+  * Deal with dangling symlinks in binpkg repositories.
+
+  * Fix expanding of incrementals (like USE) in make.defaults.
+
+  * pquery: support --attr fetchables, handle extra commandline arguments as
+    -m or --expr restrictions.
+
+  * USE deps once again allow setting a flag only if it is actually settable
+    on the target package.
+
+
 pkgcore 0.1.1:
 
   * hang fix for test_filter_env

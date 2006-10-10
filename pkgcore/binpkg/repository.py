@@ -11,7 +11,7 @@ from pkgcore.repository import prototype, errors
 #needed to grab the PN
 from pkgcore.ebuild.cpv import CPV as cpv
 from pkgcore.util.currying import partial
-from pkgcore.plugin2 import get_plugin
+from pkgcore.plugin import get_plugin
 from pkgcore.util.mappings import DictMixin
 from pkgcore.util.osutils import listdir_dirs, listdir_files
 from pkgcore.binpkg.xpak import Xpak

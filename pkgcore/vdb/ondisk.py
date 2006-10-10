@@ -10,7 +10,7 @@ from pkgcore.util.osutils import ensure_dirs
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import partial
 from pkgcore.vdb.contents import ContentsFile
-from pkgcore.plugin2 import get_plugin
+from pkgcore.plugin import get_plugin
 from pkgcore.interfaces import repo as repo_interfaces
 from pkgcore.interfaces import data_source
 from pkgcore.util.osutils import listdir_dirs

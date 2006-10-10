@@ -9,5 +9,5 @@ import os
 import sys
 
 __path__ = list(
-    os.path.abspath(os.path.join(path, 'pkgcore', 'plugins2'))
+    os.path.abspath(os.path.join(path, 'pkgcore', 'plugins'))
     for path in sys.path)

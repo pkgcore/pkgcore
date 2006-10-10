@@ -3,7 +3,7 @@
 
 
 from pkgcore.test import TestCase
-from pkgcore import plugin2
+from pkgcore import plugin
 
 import os
 import sys
@@ -35,9 +35,9 @@ low_plug = LowPlug()
 
 pkgcore_plugins = {
     'plugtest': [
-        (DisabledPlug, True),
-        (HighPlug, True),
-        (low_plug, False),
+        DisabledPlug,
+        HighPlug(),
+        low_plug,
     ]
 }
 ''')
@@ -59,21 +59,21 @@ pkgcore_plugins = {
         sys.modules.pop('mod_testplug.plug2', None)
 
     def _runit(self, method):
-        plugin2._cache = {}
+        plugin._cache = {}
         method()
         method()
-        plugin2._cache = {}
+        plugin._cache = {}
         method()
         method()
 
     def _test_plug(self):
         import mod_testplug
-        self.assertIdentical(None, plugin2.get_plugin('spork', mod_testplug))
-        plugins = list(plugin2.get_plugins('plugtest', mod_testplug))
+        self.assertIdentical(None, plugin.get_plugin('spork', mod_testplug))
+        plugins = list(plugin.get_plugins('plugtest', mod_testplug))
         self.assertEquals(2, len(plugins), plugins)
         self.assertEquals(
             'HighPlug',
-            plugin2.get_plugin('plugtest', mod_testplug).__class__.__name__)
+            plugin.get_plugin('plugtest', mod_testplug).__class__.__name__)
         lines = list(open(os.path.join(self.packdir, 'plugincache')))
         self.assertEquals(2, len(lines))
         lines.sort()
@@ -87,11 +87,11 @@ pkgcore_plugins = {
 
     def _test_no_unneeded_import(self):
         import mod_testplug
-        list(plugin2.get_plugins('spork', mod_testplug))
+        list(plugin.get_plugins('spork', mod_testplug))
         sys.modules.pop('mod_testplug.plug')
         # This one is not loaded if we are testing with a good cache.
         sys.modules.pop('mod_testplug.plug2', None)
-        list(plugin2.get_plugins('plugtest', mod_testplug))
+        list(plugin.get_plugins('plugtest', mod_testplug))
         self.assertIn('mod_testplug.plug', sys.modules)
         self.assertNotIn('mod_testplug.plug2', sys.modules)
 

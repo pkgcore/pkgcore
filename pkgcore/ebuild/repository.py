@@ -22,7 +22,7 @@ demandload(globals(), "pkgcore.ebuild.ebd:buildable "
     "pkgcore.ebuild:repo_objs ")
 
 from pkgcore.config import ConfigHint
-from pkgcore.plugin2 import get_plugin
+from pkgcore.plugin import get_plugin
 
 metadata_offset = "profiles"
 

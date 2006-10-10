@@ -7,4 +7,4 @@ pkgcore/bin/ebuild-env/filter-env
 _trial_temp
 doc/*.html
 doc/toc.rst
-pkgcore/plugins2/plugincache
+pkgcore/plugins/plugincache

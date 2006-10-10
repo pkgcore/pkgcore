@@ -43,10 +43,10 @@ cache is stale and the user running pkgcore may write there, but if
 pkgcore is installed somewhere system-wide and you only run it as user
 you can force a regeneration with::
 
- # python -c \
-     'from pkgcore import plugin2, plugins; plugin2.initialize_cache(plugins)
+ # pplugincache
 
-A friendly utility to do this is planned.
+If you want to update plugin caches for something other than pkgcore's
+core plugin registry, pass the package name as an argument.
 
 Test pkgcore
 ============

@@ -239,11 +239,6 @@ dyn_compile()
 
 	[ ! -z "${DISTCC_DIR}" ] && addwrite "${DISTCC_DIR}"
 
-	if [ ! -e "${T}/build-info" ];	then
-		mkdir "${T}/build-info"
-	fi
-	cp "${EBUILD}" "${T}/build-info/"
-	
 	if [ -d "${S}" ]; then
 		cd "${S}"
 	fi
@@ -255,35 +250,6 @@ dyn_compile()
 	export PWORKDIR="$WORKDIR"
 	src_compile 
 	#|| abort_compile "fail" 
-	cd "${T}/build-info"
-
-	echo "$ASFLAGS"		> ASFLAGS
-	echo "$CATEGORY"	> CATEGORY
-	echo "$CBUILD"		> CBUILD
-	echo "$CC"		> CC
-	echo "$CDEPEND"		> CDEPEND
-	echo "$CFLAGS"		> CFLAGS
-	echo "$CHOST"		> CHOST
-	echo "$CXX"		> CXX
-	echo "$CXXFLAGS"	> CXXFLAGS
-	echo "$DEPEND"		> DEPEND
-	echo "$EXTRA_ECONF"	> EXTRA_ECONF
-	echo "$FEATURES"	> FEATURES
-	echo "$INHERITED"	> INHERITED
-	echo "$IUSE"		> IUSE
-	echo "$PKGUSE"		> PKGUSE
-	echo "$LDFLAGS"		> LDFLAGS
-	echo "$LIBCFLAGS"	> LIBCFLAGS
-	echo "$LIBCXXFLAGS"	> LIBCXXFLAGS
-	echo "$LICENSE"		> LICENSE
-	echo "$PDEPEND"		> PDEPEND
-	echo "$PF"		> PF
-	echo "$PROVIDE"		> PROVIDE
-	echo "$RDEPEND"		> RDEPEND
-	echo "$RESTRICT"	> RESTRICT
-	echo "$SLOT"		> SLOT
-	echo "$USE"		> USE
-	export_environ "${T}/build-info/environment.bz2" 'bzip2 -c9'
 	if hasq nostrip $FEATURES $RESTRICT; then
 		touch DEBUGBUILD
 	fi
@@ -385,8 +351,9 @@ dyn_install()
 			sleep 1
 		fi
 
+        # disabled by harring; we don't use it currently.
 		# Save NEEDED information
-		scanelf -qyRF '%p %n' "${D}" | sed -e 's:^:/:' > "${T}/build-info/NEEDED"
+		#scanelf -qyRF '%p %n' "${D}" | sed -e 's:^:/:' > "${T}/NEEDED"
 	fi
 
 	if hasq multilib-strict ${FEATURES} && [ -x /usr/bin/file -a -x /usr/bin/find -a \

@@ -10,7 +10,7 @@ import optparse
 
 from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils, formatters)
-from pkgcore.restrictions import packages, values
+from pkgcore.restrictions import packages, values, boolean
 from pkgcore.ebuild import conditionals, atom
 
 
@@ -312,6 +312,8 @@ class OptionParser(commandline.OptionParser):
             help='list files owned by the package. Implies --vdb.')
         output.add_option('--verbose', '-v', action='store_true',
                           help='human-readable multi-line output per package')
+        output.add_option('--highlight-dep', action='append', type='match',
+                          help='highlight dependencies matching this atom')
 
     def check_values(self, vals, args):
         """Sanity check and postprocess after parsing."""
@@ -326,6 +328,11 @@ class OptionParser(commandline.OptionParser):
                     vals.match.append(parserestrict.parse_match(arg))
         except parserestrict.ParseError, e:
             self.error(str(e))
+
+        # TODO come up with something better than "match" for this.
+        for highlight in vals.highlight_dep:
+            if not isinstance(highlight, atom.atom):
+                self.error('highlight-dep must be an atom')
 
         if vals.contents or vals.owns or vals.ownsre:
             vals.vdb = True
@@ -415,6 +422,135 @@ def stringify_attr(config, pkg, attr):
     return str(value)
 
 
+def _default_formatter(out, node):
+    out.write(node, autoline=False)
+    return False
+
+
+def format_depends(out, node, func=_default_formatter):
+    """Pretty-print a depset to a formatter.
+
+    @param out: formatter.
+    @param node: a L{conditionals.DepSet}.
+    @param func: callable taking a formatter and a depset payload.
+        If it can format its value in a single line it should do that
+        without writing a newline and return C{False}.
+        If it needs multiple lines it should first write a newline, not write
+        a terminating newline, and return C{True}.
+    @returns: The same kind of boolean func should return.
+    """
+    oldwrap = out.wrap
+    out.wrap = False
+    try:
+        # Do this first since if it is a DepSet it is also an
+        # AndRestriction (DepSet subclasses that).
+        if isinstance(node, conditionals.DepSet):
+            if not node.restrictions:
+                return False
+            if len(node.restrictions) == 1:
+                return format_depends(out, node.restrictions[0], func)
+            out.write()
+            for child in node.restrictions[:-1]:
+                format_depends(out, child, func)
+                out.write()
+            format_depends(out, node.restrictions[-1], func)
+            return True
+
+        prefix = None
+        if isinstance(node, boolean.OrRestriction):
+            prefix = '|| ('
+            children = node.restrictions
+        elif (isinstance(node, boolean.AndRestriction) and not
+              isinstance(node, atom.atom)):
+            prefix = '('
+            children = node.restrictions
+        elif isinstance(node, packages.Conditional):
+            assert len(node.restriction.vals) == 1
+            prefix = '%s%s? (' % (node.restriction.negate and '!' or '',
+                                  list(node.restriction.vals)[0])
+            children = node.payload
+
+        if prefix:
+            children = list(children)
+            if len(children) == 1:
+                out.write(prefix, ' ', autoline=False)
+                out.first_prefix.append('    ')
+                newline = format_depends(out, children[0], func)
+                out.first_prefix.pop()
+                if newline:
+                    out.write()
+                    out.write(')')
+                    return True
+                else:
+                    out.write(' )', autoline=False)
+                    return False
+            else:
+                out.write(prefix)
+                out.first_prefix.append('    ')
+                for child in children:
+                    format_depends(out, child, func)
+                    out.write()
+                out.first_prefix.pop()
+                out.write(')', autoline=False)
+                return True
+        else:
+            return func(out, node)
+    finally:
+        out.wrap = oldwrap
+
+def format_attr(config, out, pkg, attr):
+    """Grab a package attr and print it through a formatter."""
+    # config is currently unused but may affect display in the future.
+    if attr in ('depends', 'rdepends', 'post_rdepends'):
+        data = getattr(pkg, attr, None)
+        if data is None:
+            out.write('MISSING')
+        else:
+            out.first_prefix.append('        ')
+            if config.highlight_dep:
+                def _format(out, node):
+                    for highlight in config.highlight_dep:
+                        if highlight.intersects(node):
+                            out.write(out.bold, out.fg('cyan'), node,
+                                      autoline=False)
+                            return
+                    out.write(node, autoline=False)
+                format_depends(out, data, _format)
+            else:
+                format_depends(out, data)
+            out.first_prefix.pop()
+            out.write()
+    elif attr in ('files', 'uris'):
+        data = getattr(pkg, 'fetchables', None)
+        if data is None:
+            out.write('MISSING')
+            return
+        if attr == 'files':
+            def _format(out, node):
+                out.write(node.filename, autoline=False)
+        else:
+            def _format(out, node):
+                uris = list(node.uri)
+                if not uris:
+                    return False
+                if len(uris) == 1:
+                    out.write(uris[0], autoline=False)
+                    return False
+                out.write('|| (')
+                out.first_prefix.append('    ')
+                for uri in uris:
+                    out.write(uri)
+                out.first_prefix.pop()
+                out.write(')', autoline=False)
+                return True
+        out.first_prefix.append('        ')
+        format_depends(out, data, _format)
+        out.first_prefix.pop()
+        out.write()
+    else:
+        out.write(stringify_attr(config, pkg, attr))
+
+
 def print_package(options, out, err, pkg):
     """Print a package."""
     if options.verbose:
@@ -423,8 +559,8 @@ def print_package(options, out, err, pkg):
         out.wrap = True
         out.later_prefix = ['                  ']
         for attr in options.attr:
-            out.write(green, '     %s: ' % (attr,), out.fg(),
-                      stringify_attr(options, pkg, attr))
+            out.write(green, '     %s: ' % (attr,), out.fg(), autoline=False)
+            format_attr(options, out, pkg, attr)
         out.write()
         out.later_prefix = []
         out.wrap = False

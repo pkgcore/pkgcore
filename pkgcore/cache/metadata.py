@@ -6,7 +6,9 @@ cache backend designed for rsynced tree's pregenerated metadata.
 """
 
 import os
-from pkgcore.cache import flat_hash
+import errno
+from pkgcore.cache import flat_hash, errors
+from pkgcore.config import ConfigHint
 from pkgcore.ebuild import eclass_cache
 from pkgcore.util.mappings import ProtectedDict
 
@@ -67,7 +69,7 @@ class database(flat_hash.database):
         # easy attempt first.
         data = list(data)
         if len(data) != self.magic_line_count:
-            raise errors.CacheCorruption("wrong line count")
+            raise errors.GeneralCacheCorruption("wrong line count")
 
         # this one's interesting.
         d = self._cdict_kls()
@@ -89,6 +91,67 @@ class database(flat_hash.database):
             del values["_eclasses_"]
 
         flat_hash.database._setitem(self, cpv, values)
+
+
+class flat_list(database):
+
+    """(Hopefully) write a flat_list format cache. Not very well tested."""
+
+    pkgcore_config_type = ConfigHint(
+        {'readonly': 'bool', 'location': 'str', 'label': 'str'},
+        required=['location', 'label'],
+        positional=['location', 'label'],
+        typename='cache')
+
+    def __init__(self, location, *args, **config):
+        config['auxdbkeys'] = self.auxdbkeys_order
+        database.__init__(self, location, *args, **config)
+
+    def _setitem(self, cpv, values):
+        values = ProtectedDict(values)
+
+        # hack. proper solution is to make this a __setitem__ override, since
+        # template.__setitem__ serializes _eclasses_, then we reconstruct it.
+        eclasses = values.pop('_eclasses_', None)
+        if eclasses is not None:
+            eclasses = self.reconstruct_eclasses(cpv, eclasses)
+            values["INHERITED"] = ' '.join(eclasses)
+
+        s = cpv.rfind("/")
+        fp = os.path.join(
+            self.location, cpv[:s],".update.%i.%s" % (os.getpid(), cpv[s+1:]))
+        try:
+            myf=open(fp, "w")
+        except (OSError, IOError), e:
+            if errno.ENOENT == e.errno:
+                try:
+                    self._ensure_dirs(cpv)
+                    myf=open(fp,"w")
+                except (OSError, IOError),e:
+                    raise errors.CacheCorruption(cpv, e)
+            else:
+                raise errors.CacheCorruption(cpv, e)
+
+        for x in self.auxdbkeys_order:
+            myf.write(values.get(x,"")+"\n")
+
+        myf.close()
+        if eclasses:
+            self._ensure_access(
+                fp,
+                mtime=max(max(mtime for path, mtime in eclasses.itervalues()),
+                          values["_mtime_"]))
+        else:
+            self._ensure_access(fp, values["_mtime_"])
+
+        #update written.  now we move it.
+        new_fp = os.path.join(self.location, cpv)
+        try:
+            os.rename(fp, new_fp)
+        except (OSError, IOError), e:
+            os.remove(fp)
+            raise errors.CacheCorruption(cpv, e)
+
 
 class protective_database(database):
 

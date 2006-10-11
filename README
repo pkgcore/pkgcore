@@ -44,8 +44,8 @@ TOOLS?
 
 TESTS?
 
-  A standalone test runner is available in sandbox; to run, just execute
-  sandbox/test.py .
+  A standalone test runner is integrated in setup.py; to run, just execute
+  setup.py test
   Aside from that, our runner of choice is twisteds trial; ran via-
 
   trial pkgcore
@@ -66,11 +66,10 @@ INSTALLING:
   if after running tests,
     
     cd pkgcore-0.xx
-    python setup.py build_ext -if
-    sandbox/test.py
+    python setup.py test
   
   finally, installing-
   
     cd pkgcore-0.xx
     python setup.py install
-    /bin/bash pkgcore/bin/utilities/register.bash
+    pplugincache

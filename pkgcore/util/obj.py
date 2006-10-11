@@ -128,9 +128,22 @@ def make_SlottedDict_kls(keys):
                     self.update(iterables)
             
             __setitem__ = object.__setattr__
-            __getitem__ = object.__getattribute__
-            __delitem__ = object.__delattr__
-            
+
+            def __getitem__(self, key):
+                try:
+                    return getattr(self, key)
+                except AttributeError:
+                    raise KeyError(key)
+
+            def __delitem__(self, key):
+                # Python does not raise anything if you delattr an
+                # unset slot (works ok if __slots__ is not involved).
+                try:
+                    getattr(self, key)
+                except AttributeError:
+                    raise KeyError(key)
+                delattr(self, key)
+
             def __iter__(self):
                 for k in self.__slots__:
                     if hasattr(self, k):

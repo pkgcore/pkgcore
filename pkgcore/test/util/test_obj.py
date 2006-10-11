@@ -1,6 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+
+import operator
+
 from pkgcore.test import TestCase
 from pkgcore.util import obj
 
@@ -49,3 +52,15 @@ class TestDelayedInstantiation(TestCase):
         o = make_DI(bool, f)
         self.assertTrue(isinstance(o, bool))
         self.assertFalse(l)
+
+
+SporkDict = obj.make_SlottedDict_kls(['spork'])
+
+
+class SlottedDictTest(TestCase):
+
+    def test_exceptions(self):
+        d = SporkDict()
+        for op in (operator.getitem, operator.delitem):
+            self.assertRaises(KeyError, op, d, 'spork')
+            self.assertRaises(KeyError, op, d, 'foon')

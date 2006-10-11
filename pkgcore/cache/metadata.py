@@ -93,9 +93,15 @@ class database(flat_hash.database):
         flat_hash.database._setitem(self, cpv, values)
 
 
-class flat_list(database):
+class paludis_flat_list(database):
 
-    """(Hopefully) write a flat_list format cache. Not very well tested."""
+    """
+    (Hopefully) write a paludis specific form of flat_list format cache.
+    Not very well tested.
+    
+    difference from a normal flat_list cache is that mtime is set to ebuild
+    for normal, for paludis it's max mtime of eclasses/ebuild involved.
+    """
 
     pkgcore_config_type = ConfigHint(
         {'readonly': 'bool', 'location': 'str', 'label': 'str'},

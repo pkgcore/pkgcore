@@ -168,15 +168,6 @@ class tree(object):
     configure = None
     syncable = False
 
-    def _mangle_version_keys(self, packages=None):
-        if packages:
-            p = packages.iteritems()
-        else:
-            p = self.packages.iteritems()
-        for c, v in p:
-            for p in v:
-                yield c,p
-
     def __init__(self, frozen=True):
         """
         @param frozen: controls whether the repository is mutable or immutable

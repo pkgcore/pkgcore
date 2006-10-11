@@ -154,6 +154,7 @@ static PyGetSetDef pkgcore_cpv_getsetters[] = {
     {NULL}
 };
 
+
 char *
 pkgcore_cpv_parse_category(const char *start, int null_is_end)
 {
@@ -208,6 +209,7 @@ pkgcore_cpv_parse_category(const char *start, int null_is_end)
        return NULL;
     return p;
 }
+
 
 char *
 pkgcore_cpv_parse_package(const char *start)
@@ -362,7 +364,6 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
     return 0;
 }
 
-
 static int
 pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 {
@@ -380,23 +381,47 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
     if(kwds && PyObject_IsTrue(kwds)) {
         PyErr_SetString(PyExc_TypeError,
             "cpv accepts either 1 arg (cpvstr), or 3 (category, package, "
-            "version); all must be strings, and no keywords accepted");
+            "version); all must be strings, and no keywords accepted; got kwds");
         goto cleanup;
     }
 
     if(package) {
         if(!fullver || !PyString_CheckExact(category) || 
             !PyString_CheckExact(package) || !PyString_CheckExact(fullver)) {
-            PyErr_SetString(PyExc_TypeError,
+            PyObject *err_msg = PyString_FromString(
                 "cpv accepts either 1 arg (cpvstr), or 3 (category, package, "
-                "version); all must be strings");
+                "version); all must be strings: got %r");
+            if(err_msg) {
+                PyObject *new_args = PyTuple_Pack(1, args);
+                if(new_args) {
+                    PyObject *s = PyString_Format(err_msg, new_args);
+                    if(s) {
+                        PyErr_SetString(PyExc_TypeError, PyString_AsString(s));
+                        Py_CLEAR(s);
+                    }
+                    Py_CLEAR(new_args);
+                }
+                Py_CLEAR(err_msg);
+            }
             goto cleanup;
         }
     } else {
         if (!PyString_CheckExact(category)) {
-            PyErr_SetString(PyExc_TypeError,
+            PyObject *err_msg = PyString_FromString(
                 "cpv accepts either 1 arg (cpvstr), or 3 (category, package, "
-                "version); all must be strings");
+                "version); all must be strings: got extra arg %r");
+            if(err_msg) {
+                PyObject *new_args = PyTuple_Pack(1, args);
+                if(new_args) {
+                    PyObject *s = PyString_Format(err_msg, new_args);
+                    if(s) {
+                        PyErr_SetString(PyExc_TypeError, PyString_AsString(s));
+                        Py_CLEAR(s);
+                    }
+                    Py_CLEAR(new_args);
+                }
+                Py_CLEAR(err_msg);
+            }
             goto cleanup;
         }
         cpvstr = category;

@@ -9,52 +9,52 @@ alias assert='_pipestatus="${PIPESTATUS[*]}"; [[ "${_pipestatus// /}" -eq 0 ]] |
 
 # ask the python side to display sandbox complaints.
 request_sandbox_summary() {
-	local line
-	speak "request_sandbox_summary ${SANDBOX_LOG}"
-	listen line
-	while [ "$line" != "end_sandbox_summary" ]; do	
-		echo "$line"
-		listen line
-	done
+    local line
+    speak "request_sandbox_summary ${SANDBOX_LOG}"
+    listen line
+    while [ "$line" != "end_sandbox_summary" ]; do	
+        echo "$line"
+        listen line
+    done
 }		
 
 internal_inherit() {
-	local line
-	if [ "$#" != "1" ]; then
-		die "internal_inherit accepts one arg, requested eclass location.  $* is a bit much"
-	fi
-	speak "request_inherit $1"
-	listen line
-	if [ "$line" == "path" ]; then
-		listen line;
-		source "${line}" || die "failed sources inherit: ${line}"
-	elif [ "$line" == "transfer" ]; then
-		listen line;
-		eval "$line" || die "failed evaluating eclass $x on an inherit transfer"
-	else
-		speak "failed"
-		die "unknown inherit command from pythonic side, '$line' for eclass $x"
-	fi
+    local line
+    if [ "$#" != "1" ]; then
+        die "internal_inherit accepts one arg, requested eclass location.  $* is a bit much"
+    fi
+    speak "request_inherit $1"
+    listen line
+    if [ "$line" == "path" ]; then
+        listen line;
+        source "${line}" || die "failed sources inherit: ${line}"
+    elif [ "$line" == "transfer" ]; then
+        listen line;
+        eval "$line" || die "failed evaluating eclass $x on an inherit transfer"
+    else
+        speak "failed"
+        die "unknown inherit command from pythonic side, '$line' for eclass $x"
+    fi
 }
 
 source_profiles() {
-	local line
-	speak request_profiles
-	listen line
-	while [ "$line" != end_request ]; do
-		if [ "$line" == "path" ]; then
-			listen line;
-			source "${line}"
-		elif [ "$line" == "transfer" ]; then
-			listen line;
-			eval "$line" || die "failed evaluating profile bashrc: ${line}"
-		else
-			speak "failed"
-			die "unknown profile bashrc transfer mode from pythonic side, '$line'"
-		fi
-		speak "next"
-		listen line
-	done
+    local line
+    speak request_profiles
+    listen line
+    while [ "$line" != end_request ]; do
+        if [ "$line" == "path" ]; then
+            listen line;
+            source "${line}"
+        elif [ "$line" == "transfer" ]; then
+            listen line;
+            eval "$line" || die "failed evaluating profile bashrc: ${line}"
+        else
+            speak "failed"
+            die "unknown profile bashrc transfer mode from pythonic side, '$line'"
+        fi
+        speak "next"
+        listen line
+    done
 }
 DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $(declare -F | cut -s -d ' ' -f 3)"
 

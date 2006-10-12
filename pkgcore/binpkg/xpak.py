@@ -35,12 +35,12 @@ class MalformedXpak(Exception):
 class Xpak(object):
     __slots__ = ("_source", "_source_is_path", "xpak_start", "_keys_dict")
     trailer_size = 16
-    trailer_parser = ">8sl4s"
+    trailer_parser = ">8sL4s"
     trailer_pre_magic = "XPAKSTOP"
     trailer_post_magic = "STOP"
 
     header_size = 16
-    header_parser = ">8sll"
+    header_parser = ">8sLL"
     header_pre_magic = "XPAKPACK"
 
 
@@ -98,7 +98,7 @@ class Xpak(object):
         new_data = []
         cur_pos = 0
         for key, val in data.iteritems():
-            new_index.append(struct.pack(">l%isll" % len(key), 
+            new_index.append(struct.pack(">L%isLL" % len(key), 
                 len(key), key, cur_pos, len(val)))
             new_data.append(val)
             cur_pos += len(val)
@@ -117,7 +117,7 @@ class Xpak(object):
         
         handle.seek(start, 0)
         # +12 is len(key) long, data_offset long, data_offset len long
-        handle.write(struct.pack(">%isll%is%is%isl%is" % 
+        handle.write(struct.pack(">%isLL%is%is%isL%is" % 
                 (len(cls.header_pre_magic),
                 len(new_index),
                 len(new_data),
@@ -144,14 +144,14 @@ class Xpak(object):
         data_start = index_start + index_len
         keys_dict = OrderedDict()
         while index_len:
-            key_len = struct.unpack(">l", fd.read(4))[0]
+            key_len = struct.unpack(">L", fd.read(4))[0]
             key = fd.read(key_len)
             if len(key) != key_len:
                 raise MalformedXpak(
                     "tried reading key %i of len %i, but hit EOF" % (
                         len(keys_dict) + 1, key_len))
             try:
-                offset, data_len = struct.unpack(">ll", fd.read(8))
+                offset, data_len = struct.unpack(">LL", fd.read(8))
             except struct.error:
                 raise MalformedXpak(
                     "key %i, tried reading data offset/len but hit EOF" % (

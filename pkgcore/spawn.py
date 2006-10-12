@@ -273,15 +273,32 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask,
     # To protect from cases where direct assignment could
     # clobber needed fds ({1:2, 2:1}) we first dupe the fds
     # into unused fds.
-    for fd in fd_pipes:
-        my_fds[fd] = os.dup(fd_pipes[fd])
-    # Then assign them to what they should be.
-    for fd in my_fds:
-        os.dup2(my_fds[fd], fd)
+
+    protected_fds = set(fd_pipes.itervalues())
+
+    for trg_fd, src_fd in fd_pipes.iteritems():
+        # if it's not the same we care
+        if trg_fd != src_fd:
+            if trg_fd not in protected_fds:
+                # if nothing we care about is there... do it now.
+                # we're not updating protected_fds here due to the fact
+                # dup will not overwrite existing fds, and that the target is
+                # not stated as a src at this point.
+                os.dup2(src_fd, trg_fd)
+            else:
+                x = os.dup(src_fd)
+                protected_fds.add(x)
+                my_fds[trg_fd] = x
+
+    # reassign whats required now.
+    for trg_fd, src_fd in my_fds.iteritems():
+        os.dup2(src_fd, trg_fd)
+
     # Then close _all_ fds that haven't been explictly
     # requested to be kept open.
     for fd in get_open_fds():
-        if fd not in my_fds:
+        # if it's not a target fd, close it.
+        if fd not in fd_pipes:
             try:
                 os.close(fd)
             except OSError:

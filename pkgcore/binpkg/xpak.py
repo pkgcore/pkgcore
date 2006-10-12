@@ -5,12 +5,26 @@
 XPAK container support
 """
 
-from pkgcore.util.mappings import OrderedDict
 import struct
+from pkgcore.util.mappings import OrderedDict
+from pkgcore.util.demandload import demandload
+demandload(globals(), "os errno")
 
+#
 # format is:
 # XPAKPACKIIIIDDDD[index][data]XPAKSTOPOOOOSTOP
-
+# first; all ints/longs are big endian
+# meanwhile, 8 byte format magic
+# 4 bytes of index len, 
+# 4 bytes of data len
+# index items: 4 bytes (len of the key name), then that length of key data
+#   finally, 2 longs; relative offset from data block start, length of the data
+#   repeats till index is full processed
+# for data, just a big blob; offsets into it are determined via the index
+#   table.
+# finally, trailing magic, 4 bytes (positive) of the # of bytes to seek to 
+#   reach the end of the magic, and 'STOP'.  offset is relative to EOS for Xpak
+#
 
 class MalformedXpak(Exception):
     def __init__(self, msg):
@@ -30,14 +44,12 @@ class Xpak(object):
     header_pre_magic = "XPAKPACK"
 
 
-    def __init__(self, source, empty=False):
+    def __init__(self, source):
         self._source_is_path = isinstance(source, basestring)
         self._source = source
         self.xpak_start = None
-        # this becomes an ordereddict after _load_offsets; reason for
+        # _keys_dict becomes an ordereddict after _load_offsets; reason for
         # it is so that reads are serialized.
-        if empty:
-            self._keys_dict = {}
 
     def __getattr__(self, attr):
         if attr == "_keys_dict":
@@ -53,6 +65,74 @@ class Xpak(object):
             return open(self._source, "r")
         return self._source
 
+    @classmethod
+    def write_xpak(cls, target_source, data):
+        """
+        write an xpak dict to disk; overwriting an xpak if it exists
+        @param target_source: string path, or
+            L{pkgcore.interfaces.data_source.base} derivative}
+        @param data: mapping instance to write into the xpak.
+        @return: xpak instance
+        """
+        try:
+            old_xpak = cls(target_source)
+            # force access
+            old_xpak.keys()
+            start = old_xpak.xpak_start
+            source_is_path = old_xpak._source_is_path
+        except (MalformedXpak, IOError):
+            source_is_path = isinstance(target_source, basestring)
+            if source_is_path:
+                try:
+                    start = os.lstat(target_source).st_size
+                except OSError, e:
+                    if e.errno != errno.ENOENT:
+                        raise
+                    start = 0
+            else:
+                f = target_source.get_fileobj().seek(0, 2)
+                start = f.tell()
+        new_index = []
+        new_data = []
+        cur_pos = 0
+        for key, val in data.iteritems():
+            new_index.append(struct.pack(">l%isll" % len(key), 
+                len(key), key, cur_pos, len(val)))
+            new_data.append(val)
+            cur_pos += len(val)
+
+        if source_is_path:
+            # rb+ required since A) binary, B) w truncates from the getgo
+            handle = open(target_source, "rb+")
+        else:
+            handle = target_source.get_fileobj()
+        
+        new_index = ''.join(new_index)
+        new_data = ''.join(new_data)
+        
+        handle.seek(start, 0)
+        # +12 is len(key) long, data_offset long, data_offset len long
+        handle.write(struct.pack(">%isll%is%is%isl%is" % 
+                (len(cls.header_pre_magic),
+                len(new_index),
+                len(new_data),
+                len(cls.trailer_pre_magic),
+                len(cls.trailer_post_magic)),
+            cls.header_pre_magic,
+            len(new_index),
+            len(new_data),
+            new_index,
+            new_data,
+            cls.trailer_pre_magic,
+            # the fun one; 16 for the footer, 8 for index/data longs,
+            # + index/data chunks.
+            len(new_index) + len(new_data) + 24,
+            cls.trailer_post_magic))
+
+        handle.truncate()
+        handle.close()
+        return Xpak(target_source)
+    
     def _load_offsets(self):
         fd = self._fd
         index_start, index_len, data_len = self._check_magic(fd)

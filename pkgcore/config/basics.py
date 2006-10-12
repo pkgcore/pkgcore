@@ -13,11 +13,15 @@ L{configuration exception<pkgcore.config.errors.ConfigurationError>}
 from pkgcore.config import errors, configurable, ConfigHint
 from pkgcore.util import currying
 from pkgcore.util.demandload import demandload
-demandload(globals(), "inspect pkgcore.util:modules")
+demandload(globals(), "pkgcore.util:modules")
 
 type_names = (
     "list", "str", "bool", "section_ref", "section_refs")
 
+
+# Copied from inspect.py which copied it from compile.h.
+# Also documented in http://docs.python.org/ref/types.html.
+CO_VARARGS, CO_VARKEYWORDS = 4, 8
 
 class ConfigType(object):
 
@@ -49,27 +53,34 @@ class ConfigType(object):
         """
         self.name = func_obj.__name__
         self.callable = func_obj
-        if inspect.isclass(func_obj):
-            func = func_obj.__init__
-        else:
-            func = func_obj
-        args, varargs, varkw, defaults = inspect.getargspec(func)
-        if inspect.ismethod(func):
-            # chop off 'self'
+        if not hasattr(func_obj, 'func_code'):
+            # No function or method, should be a class so grab __init__.
+            func_obj = func_obj.__init__
+        # We do not use the inspect module because that is a heavy
+        # thing to import and we can pretty easily get the data we
+        # need without it. Most of the code in its getargs function
+        # deals with tuples inside argument definitions, which we do
+        # not support anyway.
+        code = func_obj.func_code
+        args = code.co_varnames[:code.co_argcount]
+        varargs = bool(code.co_flags & CO_VARARGS)
+        varkw = bool(code.co_flags & CO_VARKEYWORDS)
+        if hasattr(func_obj, 'im_func'):
+            # It is a method. Chop off 'self':
             args = args[1:]
-        self.types = {}
-        # getargspec is weird
+        defaults = func_obj.func_defaults
         if defaults is None:
             defaults = ()
+        self.types = {}
         # iterate through defaults backwards, so they match up to argnames
-        for i, default in enumerate(defaults[::-1]):
+        for i, default in enumerate(reversed(defaults)):
             argname = args[-1 - i]
-            if default is True or default is False:
-                self.types[argname] = 'bool'
-            elif isinstance(default, tuple):
-                self.types[argname] = 'list'
-            elif isinstance(default, str):
-                self.types[argname] = 'str'
+            for typeobj, typename in [(bool, 'bool'),
+                                      (tuple, 'list'),
+                                      (str, 'str')]:
+                if isinstance(default, typeobj):
+                    self.types[argname] = typename
+                    break
             else:
                 self.types[argname] = 'section_ref'
         # just [:-len(defaults)] doesn't work if there are no defaults
@@ -77,26 +88,26 @@ class ConfigType(object):
         # no defaults to determine the type from -> default to str.
         for arg in self.positional:
             self.types[arg] = 'str'
-        self.required = list(self.positional)
+        self.required = tuple(self.positional)
         self.incrementals = []
         self.allow_unknowns = False
 
         # Process ConfigHint (if any)
-        hint_overrides = getattr(func_obj, "pkgcore_config_type", None)
+        hint_overrides = getattr(self.callable, "pkgcore_config_type", None)
         if hint_overrides is not None:
             if not isinstance(hint_overrides, ConfigHint):
                 raise TypeError('pkgcore_config_type should be a ConfigHint')
             self.types.update(hint_overrides.types)
             if hint_overrides.required:
-                self.required = list(hint_overrides.required)
+                self.required = tuple(hint_overrides.required)
             if hint_overrides.positional:
-                self.positional = list(hint_overrides.positional)
+                self.positional = tuple(hint_overrides.positional)
             if hint_overrides.typename:
                 self.name = hint_overrides.typename
             if hint_overrides.incrementals:
                 self.incrementals = hint_overrides.incrementals
             self.allow_unknowns = hint_overrides.allow_unknowns
-        elif varargs is not None or varkw is not None:
+        elif varargs or varkw:
             raise TypeError(
                 'func %s accepts *args or **kwargs, and no ConfigHint is '
                 'provided' % (self.callable,))

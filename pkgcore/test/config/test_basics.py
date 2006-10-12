@@ -84,8 +84,8 @@ class ConfigTypeFromFunctionTest(TestCase):
             nonopt_type.types,
             {'one': 'str', 'two': 'str'})
         self.assertEquals(nonopt_type.incrementals, [])
-        self.assertEquals(nonopt_type.required, ['one', 'two'])
-        self.assertEquals(nonopt_type.positional, ['one', 'two'])
+        self.assertEquals(nonopt_type.required, ('one', 'two'))
+        self.assertEquals(nonopt_type.positional, ('one', 'two'))
 
     def test_default_types(self):
         test_type = basics.ConfigType(alltypes)
@@ -93,12 +93,12 @@ class ConfigTypeFromFunctionTest(TestCase):
             test_type.types,
             {'alist': 'list', 'astr': 'str', 'abool': 'bool',
              'aref': 'section_ref'})
-        self.assertEquals(test_type.required, [])
+        self.assertEquals(test_type.required, ())
 
     def _test_class_member(self, func):
         test_type = basics.ConfigType(func)
         self.assertEquals(test_type.name, 'member')
-        self.assertEquals(test_type.required, ['one'])
+        self.assertEquals(test_type.required, ('one',))
 
     def test_newstyle_instance(self):
         self._test_class_member(NewStyleClass(1).member)

@@ -34,7 +34,7 @@ def generate_depset(c, key, non_package_type, s):
                 "":boolean.AndRestriction})
         return conditionals.DepSet(s.data.pop(key, ""), c)
     except conditionals.ParseError, p:
-        raise errors.MetadataException(s, str(keys), str(p))
+        raise errors.MetadataException(s, str(key), str(p))
 
 def generate_providers(self):
     rdep = AndRestriction(self.versioned_atom, finalize=True)

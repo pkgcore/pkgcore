@@ -74,6 +74,7 @@ class Xpak(object):
         @param data: mapping instance to write into the xpak.
         @return: xpak instance
         """
+        preexisting = True
         try:
             old_xpak = cls(target_source)
             # force access
@@ -81,6 +82,7 @@ class Xpak(object):
             start = old_xpak.xpak_start
             source_is_path = old_xpak._source_is_path
         except (MalformedXpak, IOError):
+            preexisting = False
             source_is_path = isinstance(target_source, basestring)
             if source_is_path:
                 try:
@@ -102,8 +104,11 @@ class Xpak(object):
             cur_pos += len(val)
 
         if source_is_path:
-            # rb+ required since A) binary, B) w truncates from the getgo
-            handle = open(target_source, "rb+")
+            if preexisting:
+                # rb+ required since A) binary, B) w truncates from the getgo
+                handle = open(target_source, "rb+")
+            else:
+                handle = open(target_source, "wb")
         else:
             handle = target_source.get_fileobj()
         

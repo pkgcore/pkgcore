@@ -611,23 +611,7 @@ execute_phases() {
                 disable_qa_interceptors
             fi
 
-            set -f
-            [ "${DEPEND:-unset}" != "unset" ] && 		speak "key DEPEND=$(echo $DEPEND)"
-            [ "${RDEPEND:-unset}" != "unset" ] && 		speak "key RDEPEND=$(echo $RDEPEND)"
-            [ "$SLOT:-unset}" != "unset" ] && 			speak "key SLOT=$(echo $SLOT)"
-            [ "$SRC_URI:-unset}" != "unset" ] && 		speak "key SRC_URI=$(echo $SRC_URI)"
-            [ "$RESTRICT:-unset}" != "unset" ] && 		speak "key RESTRICT=$(echo $RESTRICT)"
-            [ "$HOMEPAGE:-unset}" != "unset" ] && 		speak "key HOMEPAGE=$(echo $HOMEPAGE)"
-            [ "$LICENSE:-unset}" != "unset" ] && 		speak "key LICENSE=$(echo $LICENSE)"
-            [ "$DESCRIPTION:-unset}" != "unset" ] && 	speak "key DESCRIPTION=$(echo $DESCRIPTION)"
-            [ "$KEYWORDS:-unset}" != "unset" ] && 		speak "key KEYWORDS=$(echo $KEYWORDS)"
-            [ "$INHERITED:-unset}" != "unset" ] && 		speak "key INHERITED=$(echo $INHERITED)"
-            [ "$IUSE:-unset}" != "unset" ] && 			speak "key IUSE=$(echo $IUSE)"
-            [ "$CDEPEND:-unset}" != "unset" ] && 		speak "key CDEPEND=$(echo $CDEPEND)"
-            [ "$PDEPEND:-unset}" != "unset" ] && 		speak "key PDEPEND=$(echo $PDEPEND)"
-            [ "$PROVIDE:-unset}" != "unset" ] && 		speak "key PROVIDE=$(echo $PROVIDE)"
-            [ "$EAPI:-unset}" != "unset" ] &&			speak "key EAPI=$(echo $EAPI)"
-            set +f
+            speak "$(pkgcore_dump_metadata_keys)"
             ;;
         *)
             export SANDBOX_ON="1"
@@ -645,6 +629,26 @@ execute_phases() {
         [[ $PORTAGE_DEBUG -lt 4 ]] && set +x
     done
     return ${ret:-0}
+}
+
+pkgcore_dump_metadata_keys() {
+    set -f
+    [ "${DEPEND:-unset}" != "unset" ] && 		echo "key DEPEND=$(echo $DEPEND)"
+    [ "${RDEPEND:-unset}" != "unset" ] && 		echo "key RDEPEND=$(echo $RDEPEND)"
+    [ "$SLOT:-unset}" != "unset" ] && 			echo "key SLOT=$(echo $SLOT)"
+    [ "$SRC_URI:-unset}" != "unset" ] && 		echo "key SRC_URI=$(echo $SRC_URI)"
+    [ "$RESTRICT:-unset}" != "unset" ] && 		echo "key RESTRICT=$(echo $RESTRICT)"
+    [ "$HOMEPAGE:-unset}" != "unset" ] && 		echo "key HOMEPAGE=$(echo $HOMEPAGE)"
+    [ "$LICENSE:-unset}" != "unset" ] && 		echo "key LICENSE=$(echo $LICENSE)"
+    [ "$DESCRIPTION:-unset}" != "unset" ] && 	echo "key DESCRIPTION=$(echo $DESCRIPTION)"
+    [ "$KEYWORDS:-unset}" != "unset" ] && 		echo "key KEYWORDS=$(echo $KEYWORDS)"
+    [ "$INHERITED:-unset}" != "unset" ] && 		echo "key INHERITED=$(echo $INHERITED)"
+    [ "$IUSE:-unset}" != "unset" ] && 			echo "key IUSE=$(echo $IUSE)"
+    [ "$CDEPEND:-unset}" != "unset" ] && 		echo "key CDEPEND=$(echo $CDEPEND)"
+    [ "$PDEPEND:-unset}" != "unset" ] && 		echo "key PDEPEND=$(echo $PDEPEND)"
+    [ "$PROVIDE:-unset}" != "unset" ] && 		echo "key PROVIDE=$(echo $PROVIDE)"
+    [ "$EAPI:-unset}" != "unset" ] &&			echo "key EAPI=$(echo $EAPI)"
+    set +f
 }
 
 #echo, everything has been sourced.  now level the read-only's.

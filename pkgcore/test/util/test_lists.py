@@ -105,6 +105,9 @@ class Test_iflatten_instance(TestCase):
         iters.append(iterator)
         self.assertRaises(ValueError, iterator.next)
 
+        # Regression test: this was triggered through demandload.
+        self.failUnless(self.func((), **{}))
+
 
 class Test_iflatten_func(TestCase):
     func = staticmethod(lists.native_iflatten_func)
@@ -134,6 +137,9 @@ class Test_iflatten_func(TestCase):
         iterator = self.func(iters, lambda x: False)
         iters.append(iterator)
         self.assertRaises(ValueError, iterator.next)
+
+        # Regression test: this was triggered through demandload.
+        self.failUnless(self.func((), lambda x: True, **{}))
 
 
 class CPY_Test_iflatten_instance(Test_iflatten_instance):

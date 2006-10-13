@@ -2,6 +2,8 @@
 """Pylint plugin checking for trailing whitespace."""
 
 
+import sys
+
 from pylint import interfaces, checkers
 from logilab.astng import nodes, raw_building, utils
 
@@ -70,10 +72,16 @@ class RewriteDemandload(utils.ASTWalker):
                 # (not entirely sure though, have not found documentation.
                 # The asname/importedname might be the other way around fex).
                 newstuff = nodes.Import([(mod, None)])
+                newstuff.fromlineno = 1
                 raw_building._attach_local_node(node.frame(), newstuff, mod)
             else:
                 for name in mod[col+1:].split(','):
-                    raw_building.attach_import_node(node.frame(), mod[:col],
+                    if sys.version_info < (2, 5):
+                        newstuff = nodes.From(mod[:col], ((name, None),))
+                    else:
+                        newstuff = nodes.From(mod[:col], ((name, None),), 0)
+                    newstuff.fromlineno = 1
+                    raw_building._attach_local_node(node.frame(), newstuff,
                                                     name)
 
 

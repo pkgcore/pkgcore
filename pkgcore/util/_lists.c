@@ -65,7 +65,7 @@ pkgcore_iflatten_func_new(PyTypeObject *type,
     PyObject *l=NULL, *skip_func=NULL, *tmp;
     int res;
 
-    if (kwargs) {
+    if (kwargs && PyDict_Size(kwargs)) {
         PyErr_SetString(PyExc_TypeError,
                         "iflatten_func takes no keyword arguments");
         return NULL;
@@ -274,7 +274,7 @@ pkgcore_iflatten_instance_new(PyTypeObject *type,
     PyObject *l=NULL, *skip_flattening=(PyObject*)&PyBaseString_Type;
     int res;
 
-    if (kwargs) {
+    if (kwargs && PyDict_Size(kwargs)) {
         PyErr_SetString(PyExc_TypeError,
                         "iflatten_instance takes no keyword arguments");
         return NULL;

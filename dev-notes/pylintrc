@@ -11,7 +11,7 @@
 # Yes, section names are case-sensitive.
 [master]
 
-load-plugins=pkgcore
+load-plugins=pkgcore_lint
 
 
 [MASTER]

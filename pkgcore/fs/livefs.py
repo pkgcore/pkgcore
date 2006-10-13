@@ -24,22 +24,22 @@ def gen_chksums(handlers, location):
     return LazyValDict(handlers, f)
 
 
-def gen_obj(path, stat=None, chksum_handlers=None, real_path=None):
+def gen_obj(path, stat=None, chksum_handlers=None, real_location=None):
 
     """
     given a fs path, and an optional stat, create an appropriate fs obj.
 
     @param stat: stat object to reuse if available
-    @param real_path: real path to the object if path is the desired location,
+    @param real_location: real path to the object if path is the desired location,
         rather then existant location.
     @raise KeyError: if no obj type matches the stat checks
     @return: L{pkgcore.fs.fs.fsBase} derivative
     """
 
-    if real_path is None:
-        real_path = path
+    if real_location is None:
+        real_location = path
     if stat is None:
-        stat = os.lstat(real_path)
+        stat = os.lstat(real_location)
     if chksum_handlers is None:
         chksum_handlers = get_handlers()
 
@@ -50,12 +50,12 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_path=None):
         return fsDir(path, **d)
     elif S_ISREG(mode):
         d["size"] = stat.st_size
-        if real_path != path:
+        if real_location != path:
             # we would've set it above, so is check flies
-            d["data_source"] = local_source(real_path)
+            d["data_source"] = local_source(real_location)
         return fsFile(path, **d)
     elif S_ISLNK(mode):
-        d["target"] = os.readlink(real_path)
+        d["target"] = os.readlink(real_location)
         return fsSymlink(path, **d)
     elif S_ISFIFO(mode):
         return fsFifo(path, **d)
@@ -107,7 +107,7 @@ def iter_scan(path, offset=None):
         for x in os.listdir(offset + base):
             path = base + x
             o = gen_obj(path, chksum_handlers=chksum_handlers,
-                        real_path=offset+path)
+                        real_location=offset+path)
             yield o
             if isinstance(o, fsDir):
                 dirs.append(path)

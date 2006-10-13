@@ -86,7 +86,7 @@ def default_mkdir(d):
 
 def default_copyfile(obj, mkdirs=False):
     """
-    copy a L{fs obj<pkgcore.fs.fs.fsBase>} from real_path to stated location.
+    copy a L{fs obj<pkgcore.fs.fs.fsBase>} from real_location to stated location.
 
     @param obj: L{pkgcore.fs.fs.fsBase} instance, exempting fsDir
     @raise OSError:, for non file objs, Exception (this needs to be fixed
@@ -136,10 +136,10 @@ def default_copyfile(obj, mkdirs=False):
         dev = os.makedev(obj.major, obj.minor)
         os.mknod(fp, obj.mode, dev)
     else:
-        ret = spawn([COPY_BINARY, "-Rp", obj.real_path, fp])
+        ret = spawn([COPY_BINARY, "-Rp", obj.real_location, fp])
         if ret != 0:
             raise Exception(
-                "failed cp'ing %s to %s, ret %s" % (obj.real_path, fp, ret))
+                "failed cp'ing %s to %s, ret %s" % (obj.real_location, fp, ret))
     if not fs.issym(obj):
         ensure_perms(obj.change_attributes(location=fp))
 

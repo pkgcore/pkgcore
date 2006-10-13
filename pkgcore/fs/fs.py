@@ -13,7 +13,6 @@ from pkgcore.interfaces.data_source import local_source
 
 # goofy set of classes representating the fs objects pkgcore knows of.
 
-
 __all__ = [
     "fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo", "isdir", "isreg",
     "isfs_obj"]
@@ -51,7 +50,8 @@ raw_init_doc = \
 class fsBase(object):
 
     """base class, all extensions must derive from this class"""
-    __slots__ = ["location", "_real_location", "mtime", "mode", "uid", "gid"]
+    __slots__ = ("location", "_real_location", "mtime", "mode", "uid", "gid")
+    __attrs__ = __slots__
 
     def __init__(self, location, real_location=None, strict=True, **d):
 
@@ -63,16 +63,16 @@ class fsBase(object):
         d["_real_location"] = real_location
         s = object.__setattr__
         if strict:
-            for k in self.__slots__:
+            for k in self.__attrs__:
                 s(self, k, d[k])
         else:
             for k, v in d.iteritems():
                 s(self, k, v)
-    gen_doc_additions(__init__, __slots__)
+    gen_doc_additions(__init__, __attrs__)
 
     def change_attributes(self, **kwds):
         d = dict((x, getattr(self, x))
-                 for x in self.__slots__ if hasattr(self, x))
+                 for x in self.__attrs__ if hasattr(self, x))
         d.update(kwds)
         # split location out
         location = d.pop("location")
@@ -90,7 +90,7 @@ class fsBase(object):
 
     def __getattr__(self, attr):
         # we would only get called if it doesn't exist.
-        if attr in self.__slots__:
+        if attr in self.__attrs__:
             return None
         raise AttributeError(attr)
 
@@ -118,21 +118,22 @@ class fsFile(fsBase):
 
     """file class"""
 
-    __slots__ = fsBase.__slots__ + ["chksums", "data_source"]
+    __slots__ = ("chksums", "data_source")
+    __attrs__ = fsBase.__attrs__ + __slots__
 
-    def __init__(self, location, chksums=None, real_path=None, **kwds):
+    def __init__(self, location, chksums=None, real_location=None, **kwds):
         """
         @param chksums: dict of checksums, key chksum_type: val hash val.
             See L{pkgcore.chksum}.
         """
         if "mtime" in kwds:
             kwds["mtime"] = long(kwds["mtime"])
-        if real_path is not None:
+        if real_location is not None:
             if "data_source" in kwds:
                 raise TypeError(
-                    "%s: real_path and data_source are mutually exclusive "
+                    "%s: real_location and data_source are mutually exclusive "
                     "options" % self.__class__)
-            kwds["data_source"] = local_source(real_path)
+            kwds["data_source"] = local_source(real_location)
         else:
             kwds.setdefault("data_source", None)
         if chksums is None:
@@ -161,7 +162,7 @@ class fsDir(fsBase):
 
     """dir class"""
 
-    __slots__ = fsBase.__slots__
+    __slots__ = ()
 
     def __repr__(self):
         return "dir:%s" % self.location
@@ -176,7 +177,8 @@ class fsLink(fsBase):
 
     """symlink class"""
 
-    __slots__ = list(fsBase.__slots__) + ["target"]
+    __slots__ = ("target",)
+    __attrs__ = fsBase.__attrs__ + __slots__
 
     def __init__(self, location, target, **kwargs):
         """
@@ -209,7 +211,8 @@ class fsDev(fsBase):
 
     """dev class (char/block objects)"""
 
-    __slots__ = list(fsBase.__slots__) + ["real_path", "major", "minor"]
+    __slots__ = ("major", "minor")
+    __attrs__ = fsBase.__attrs__ + __slots__
 
     def __init__(self, path, major=-1, minor=-1, **kwds):
         if kwds.get("strict", True):
@@ -222,8 +225,6 @@ class fsDev(fsBase):
                         kwds["mode"], stat.S_IFMT(kwds["mode"])))
             kwds["major"] = major
             kwds["minor"] = minor
-        if "real_path" not in kwds:
-            kwds["real_path"] = path
         fsBase.__init__(self, path, **kwds)
 
     def __repr__(self):
@@ -241,12 +242,7 @@ class fsFifo(fsBase):
 
     """fifo class (socket objects)"""
 
-    __slots__ = list(fsBase.__slots__) + ["real_path"]
-
-    def __init__(self, path, **kwds):
-        if "real_path" not in kwds:
-            kwds["real_path"] = path
-        fsBase.__init__(self, path, **kwds)
+    __slots__ = ()
 
     def __repr__(self):
         return "fifo:%s" % self.location
@@ -260,4 +256,3 @@ isdev    = lambda x: isinstance(x, fsDev)
 isfs_obj = lambda x: isinstance(x, fsBase)
 
 del raw_init_doc, gen_doc_additions, _fs_doc
-

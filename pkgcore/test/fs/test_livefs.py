@@ -19,7 +19,7 @@ class FsObjsTest(TempDirMixin, TestCase):
             self.assertEqual(obj.data.get_path(), path)
 
     def test_data_source(self):
-        o = gen_obj("/tmp/etc/passwd", real_path="/etc/passwd")
+        o = gen_obj("/tmp/etc/passwd", real_location="/etc/passwd")
         self.failUnless(o.location, "/tmp/etc/passwd")
         self.failUnless(o.data.get_path(), "/etc/passwd")
         self.failUnless(

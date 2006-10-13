@@ -15,7 +15,7 @@ from pkgcore.plugin import get_plugin
 from pkgcore.util.mappings import DictMixin
 from pkgcore.util.osutils import listdir_dirs, listdir_files
 from pkgcore.binpkg.xpak import Xpak
-from pkgcore.binpkg.tar import generate_contents
+from pkgcore.fs.tar import generate_contents
 from pkgcore.util.bzip2 import decompress
 from pkgcore.ebuild.ebuild_built import pkg_uses_default_preinst
 from pkgcore.config import ConfigHint

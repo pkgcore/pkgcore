@@ -5,11 +5,13 @@
 """
 default chksum handlers implementation- sha1, sha256, rmd160, and md5
 """
-import os
 
 from pkgcore.util.currying import partial
 from pkgcore.util import modules
 from pkgcore.interfaces.data_source import base as base_data_source
+from pkgcore.util.demandload import demandload
+demandload(globals(), "os")
+
 blocksize = 32768
 
 

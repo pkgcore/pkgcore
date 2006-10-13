@@ -11,7 +11,7 @@ the *original* tarfile, they may inadvertantly get ours.
 """
 
 import sys
-t=sys.modules.pop("tarfile", None)
+t = sys.modules.pop("tarfile", None)
 tarfile = __import__("tarfile")
 if t is not None:
     sys.modules["tarfile"] = t

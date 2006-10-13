@@ -39,6 +39,8 @@ that aren't involved in the graph of the requested operation""")
 
         self.add_option('--pretend', '-p', action='store_true',
             help="do the resolution, but don't merge/fetch anything")
+        self.add_option('--ask', '-a', action='store_true',
+            help="do the resolution, but ask to merge/fetch anything")
         self.add_option('--fetchonly', '-f', action='store_true',
             help="do only the fetch steps of the resolved plan")
         self.add_option('--ignore-cycles', '-i', action='store_true',
@@ -142,8 +144,47 @@ class Failure(ValueError):
     """Raised internally to indicate an "expected" failure condition."""
 
 
-def unmerge(out, err, vdb, tokens, pretend=True, ignore_failures=False,
-            force=False, world_set=None):
+def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
+    """Ask the user to choose from a set of options.
+
+    Displays a prompt and a set of responses, then waits for a
+    response which is checked against the responses. If there is an
+    unambiguous match the value is returned.
+
+    @type prompt: C{basestring}.
+    @type out: formatter.
+    @type err: file-like object.
+    @type responses: mapping with C{basestring} keys
+    @param responses: mapping of user input to function result.
+        Defaults to {"Yes": True, "No": False}.
+    @param default_answer: returned if there is no input
+        (user just hits enter). Defaults to True if responses is unset,
+        unused otherwise.
+    @param limit: number of allowed tries.
+    """
+    if responses is None:
+        responses = {'Yes': True, 'No': False}
+        default_answer = True
+    for i in range(limit):
+        response = raw_input('%s [%s] ' % (prompt, '/'.join(responses)))
+        if not response and default_answer is not None:
+            return default_answer
+
+        results = set(
+            (key, value) for key, value in responses.iteritems()
+            if key[:len(response)].upper() == response.upper())
+        if not results:
+            out.write('Sorry, response "%s" not understood.' % (response,))
+        elif len(results) > 1:
+            out.write('Response "%s" is ambiguous (%s)' % (
+                    response, ', '.join(key for key, val in results)))
+        else:
+            return list(results)[0][1]
+
+    raise Failure('You have input a wrong response too many times.')
+
+
+def unmerge(out, err, vdb, tokens, options, world_set=None):
     """Unmerge tokens. hackish, should be rolled back into the resolver"""
     all_matches = set()
     for token in tokens:
@@ -175,11 +216,15 @@ def unmerge(out, err, vdb, tokens, pretend=True, ignore_failures=False,
 
     repo_obs = observer.file_repo_observer(ObserverFormatter(out))
 
-    if pretend:
+    if options.pretend:
+        return
+
+    if (options.ask and not
+        userquery("Would you like to unmerge these packages?", out, err)):
         return
 
     if vdb.frozen:
-        if force:
+        if options.force:
             out.write(
                 out.fg(out.red), out.bold,
                 'warning: vdb is frozen, overriding')
@@ -191,7 +236,7 @@ def unmerge(out, err, vdb, tokens, pretend=True, ignore_failures=False,
         op = vdb.uninstall(match, observer=repo_obs)
         ret = op.finish()
         if not ret:
-            if not ignore_failures:
+            if not options.ignore_failures:
                 raise Failure('failed unmerging %s' % (match,))
             out.write(out.fg(out.red), 'failed unmerging ', match)
         if world_set is not None:
@@ -239,9 +284,7 @@ def main(config, options, out, err):
                 return 1
         try:
             unmerge(
-                out, err, vdb, options.targets, pretend=options.pretend,
-                ignore_failures=options.ignore_failures, force=options.force,
-                world_set=world_set)
+                out, err, vdb, options.targets, options, world_set)
         except (parserestrict.ParseError, Failure), e:
             write_error(out, str(e))
             return 1
@@ -383,9 +426,13 @@ def main(config, options, out, err):
     if options.pretend:
         return
 
+    if (options.ask and not
+        userquery("Would you like to merge these packages?", out, err)):
+        return
+
     build_obs = observer.file_build_observer(ObserverFormatter(out))
     repo_obs = observer.file_repo_observer(ObserverFormatter(out))
-    
+
     change_count = len(changes)
     for count, data in enumerate(changes):
         op, pkgs = data

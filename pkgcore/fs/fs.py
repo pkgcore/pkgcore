@@ -190,7 +190,7 @@ class fsLink(fsBase):
 
     def change_attributes(self, **kwds):
         d = dict((x, getattr(self, x))
-                 for x in self.__slots__ if hasattr(self, x))
+                 for x in self.__attrs__ if hasattr(self, x))
         d.update(kwds)
         # split location out
         location = d.pop("location")

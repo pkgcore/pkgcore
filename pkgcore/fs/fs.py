@@ -129,11 +129,8 @@ class fsFile(fsBase):
         if "mtime" in kwds:
             kwds["mtime"] = long(kwds["mtime"])
         if real_location is not None:
-            if "data_source" in kwds:
-                raise TypeError(
-                    "%s: real_location and data_source are mutually exclusive "
-                    "options" % self.__class__)
-            kwds["data_source"] = local_source(real_location)
+            if "data_source" not in kwds:
+                kwds["data_source"] = local_source(real_location)
         else:
             kwds.setdefault("data_source", None)
         if chksums is None:
@@ -143,6 +140,11 @@ class fsFile(fsBase):
         kwds["chksums"] = chksums
         fsBase.__init__(self, location, **kwds)
     gen_doc_additions(__init__, __slots__)
+
+    def change_attributes(self, **kwargs):
+        if "real_location" in kwargs and "data_source" not in kwargs:
+            kwargs["data_source"] = local_source(kwargs["real_location"])
+        return fsBase.change_attributes(self, **kwargs)
 
     def __repr__(self):
         return "file:%s" % self.location

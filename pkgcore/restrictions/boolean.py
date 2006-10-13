@@ -380,7 +380,7 @@ class OrRestriction(base):
         # each and smash append to the dcnf.
         dcnf = [dcnf]
         for andreq in cnf:
-            dcnf = list([x] + y for x in andreq for y in dcnf)
+            dcnf = list(y + [x] for x in andreq for y in dcnf)
         return dcnf
 
 

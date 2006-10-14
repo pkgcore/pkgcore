@@ -48,7 +48,7 @@ def write_set(contents_set, filepath, compression='bz2'):
     for x in contents_set.iterdirs(invert=True):
         t = fsobj_to_tarinfo(x)
         if t.isreg():
-            tar_fd.addfile(t, fileobj=x.data_source.get_fileobj())
+            tar_fd.addfile(t, fileobj=x.data.get_fileobj())
         else:
             tar_fd.addfile(t)
     tar_fd.close()

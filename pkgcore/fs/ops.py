@@ -101,12 +101,12 @@ def default_copyfile(obj, mkdirs=False):
         raise TypeError("obj must not be a fsDir instance: %r" % obj)
 
     try:
-        if fs.isdir(gen_obj(obj.real_location)):
+        if fs.isdir(gen_obj(obj.location)):
             raise TypeError("fs_copyfile doesn't work on directories")
         existant = True
     except OSError:
         # verify the parent dir is there at least
-        basefp = os.path.dirname(obj.real_location)
+        basefp = os.path.dirname(obj.location)
         if basefp.strip(os.path.sep) and not os.path.exists(basefp):
             if mkdirs:
                 if not ensure_dirs(basefp, mode=0750, minimal=True):
@@ -115,9 +115,10 @@ def default_copyfile(obj, mkdirs=False):
                 raise
         existant = False
 
-    fp = existant_fp = obj.real_location + "#new"
     if not existant:
-        fp = obj.real_location
+        fp = obj.location
+    else:
+        fp = existant_fp = obj.location + "#new"
 
     if fs.isreg(obj):
         src_f = obj.data.get_fileobj()
@@ -144,7 +145,7 @@ def default_copyfile(obj, mkdirs=False):
         ensure_perms(obj.change_attributes(location=fp))
 
     if existant:
-        os.rename(existant_fp, obj.real_location)
+        os.rename(existant_fp, obj.location)
     return True
 
 def offset_rewriter(offset, iterable):

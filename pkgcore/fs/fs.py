@@ -82,6 +82,7 @@ class fsBase(object):
         return self.__class__(location, **d)
 
     def __setattr__(self, key, value):
+        raise AttributeError(key)
         try:
             getattr(self, key)
             raise Exception("non modifiable")
@@ -118,7 +119,7 @@ class fsFile(fsBase):
 
     """file class"""
 
-    __slots__ = ("chksums", "data_source")
+    __slots__ = ("chksums", "_data_source")
     __attrs__ = fsBase.__attrs__ + __slots__
 
     def __init__(self, location, chksums=None, real_location=None, **kwds):
@@ -130,9 +131,12 @@ class fsFile(fsBase):
             kwds["mtime"] = long(kwds["mtime"])
         if real_location is not None:
             if "data_source" not in kwds:
-                kwds["data_source"] = local_source(real_location)
+                kwds["_data_source"] = local_source(real_location)
+            else:
+                kwds["_data_source"] = kwds.pop("data_source")
+            kwds["real_location"] = real_location
         else:
-            kwds.setdefault("data_source", None)
+            kwds.setdefault("_data_source", kwds.pop("data_source", None))
         if chksums is None:
             # this can be problematic offhand if the file is modified
             # but chksum not triggered
@@ -154,7 +158,7 @@ class fsFile(fsBase):
 
     @property
     def data(self):
-        o = self.data_source
+        o = self._data_source
         if o is not None:
             return o
         return local_source(self.real_location)
@@ -220,13 +224,28 @@ class fsDev(fsBase):
         if kwds.get("strict", True):
             if major == -1 or minor == -1:
                 raise TypeError(
-                    "major/minor must be specified and positive ints")
+                   "major/minor must be specified and positive ints")
             if not stat.S_IFMT(kwds["mode"]):
                 raise TypeError(
                     "mode %o: must specify the device type (got %o)" % (
                         kwds["mode"], stat.S_IFMT(kwds["mode"])))
             kwds["major"] = major
             kwds["minor"] = minor
+        else:
+            if major != -1:
+                major = int(major)
+                if major < 0:
+                    raise TypeError(
+                       "major/minor must be specified and positive ints")
+                kwds["major"] = major
+
+            if minor != -1:
+                minor = int(minor)
+                if minor < 1:
+                    raise TypeError(
+                       "major/minor must be specified and positive ints")
+                kwds["minor"] = minor
+
         fsBase.__init__(self, path, **kwds)
 
     def __repr__(self):

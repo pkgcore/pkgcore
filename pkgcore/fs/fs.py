@@ -52,6 +52,7 @@ class fsBase(object):
     """base class, all extensions must derive from this class"""
     __slots__ = ("location", "_real_location", "mtime", "mode", "uid", "gid")
     __attrs__ = __slots__
+    __default_attrs__ = {}
 
     def __init__(self, location, real_location=None, strict=True, **d):
 
@@ -92,7 +93,7 @@ class fsBase(object):
     def __getattr__(self, attr):
         # we would only get called if it doesn't exist.
         if attr in self.__attrs__:
-            return None
+            return self.__default_attrs__.get(attr, None)
         raise AttributeError(attr)
 
     def __hash__(self):
@@ -121,6 +122,7 @@ class fsFile(fsBase):
 
     __slots__ = ("chksums", "_data_source")
     __attrs__ = fsBase.__attrs__ + __slots__
+    __default_attrs__ = {"mtime":0l}
 
     def __init__(self, location, chksums=None, real_location=None, **kwds):
         """
@@ -148,6 +150,7 @@ class fsFile(fsBase):
     def change_attributes(self, **kwargs):
         if "real_location" in kwargs and "data_source" not in kwargs:
             kwargs["data_source"] = local_source(kwargs["real_location"])
+
         return fsBase.change_attributes(self, **kwargs)
 
     def __repr__(self):
@@ -219,6 +222,7 @@ class fsDev(fsBase):
 
     __slots__ = ("major", "minor")
     __attrs__ = fsBase.__attrs__ + __slots__
+    __default_attrs__ = {"major":-1, "minor":-1}
 
     def __init__(self, path, major=-1, minor=-1, **kwds):
         if kwds.get("strict", True):

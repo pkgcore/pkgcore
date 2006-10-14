@@ -15,11 +15,10 @@ class base(object):
         kwds.setdefault("strict", False)
         return self.kls(location, **kwds)
 
-    def test_init(self):
-        raise NotImplementedError(self)
-
-    test_init.todo = "implement..."
-    test_change_attributes = test_init
+    def test_change_attributes(self):
+        # simple test...
+        o = self.make_obj("/foon")
+        self.assertNotEqual(o, o.change_attributes(location="/nanners"))
 
     def test_init(self):
         mkobj = self.make_obj

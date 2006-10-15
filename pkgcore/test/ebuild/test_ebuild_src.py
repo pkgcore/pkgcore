@@ -4,13 +4,20 @@
 from pkgcore.test import TestCase
 from pkgcore.ebuild import ebuild_src
 from pkgcore.ebuild import const
+from pkgcore.util.currying import post_curry
 
 class TestBase(TestCase):
     
-    def get_pkg(self, data, cpv='dev-util/diffball-0.1-r1', repo=None):
+    def get_pkg(self, data=None, cpv='dev-util/diffball-0.1-r1', repo=None):
         o = ebuild_src.base(repo, cpv)
-        object.__setattr__(o, 'data', data)
+        if data is not None:
+            object.__setattr__(o, 'data', data)
         return o
+    
+    def make_parent(self, **methods):
+        class kls:
+            locals().update(methods)
+        return kls()
     
     def test_init(self):
         o = self.get_pkg({}, cpv='dev-util/diffball-0.1-r1')
@@ -23,6 +30,23 @@ class TestBase(TestCase):
         self.assertEqual(o.PR, 1)
         self.assertEqual(self.get_pkg({}, 'dev-util/diffball-0.1').PR,
             0)
+    
+    def test_ebuild(self):
+        l = []
+        def f(self, cpv):
+            l.append(cpv)
+            return 1
+        c = self.make_parent(get_ebuild_src=f)
+        o = self.get_pkg({}, repo=c)
+        self.assertEqual(o.ebuild, 1)
+        self.assertEqual(l, [o])
+    
+    def test_fetch_metadata(self):
+        def f(self, cpv):
+            return {'1':'2'}
+        o = self.get_pkg(repo=self.make_parent(_get_metadata=f))
+        self.assertEqual(o.data, {'1': '2'})
+        
     
     def test_license(self):
         o = self.get_pkg({'LICENSE':'GPL2 FOON'})
@@ -63,5 +87,22 @@ class TestBase(TestCase):
         self.assertEqual(sorted(self.get_pkg(
             {'KEYWORDS':'x86 amd64'}).keywords),
             sorted(['x86', 'amd64']))
-#    def test_eapi(self):
+
+    def generic_check_depends(self, depset, attr, expected=None, data_name=None):
+        if expected is None:
+            expected = depset
+        if data_name is None:
+            data_name = attr.rstrip("s").upper()
+        o = self.get_pkg({data_name:depset})
+        self.assertEqual(str(getattr(o, attr)), expected)
+        o = self.get_pkg({data_name:''})
+        self.assertEqual(str(getattr(o, attr)), '')
+
+    for x in ("depends", "rdepends"):
+        locals()["test_%s" % x] = post_curry(generic_check_depends,
+            'dev-util/diffball || ( x86? ( dev-util/bsdiff ) )', x)
+    del x
+    test_post_rdepends = post_curry(generic_check_depends,
+        'virtual/foo x86? ( virtual/boo )',
+        'post_rdepends', data_name='PDEPEND')
         

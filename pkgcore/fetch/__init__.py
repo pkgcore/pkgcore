@@ -93,7 +93,7 @@ class uri_list(object):
                 yield entry
             else:
                 for base_uri in entry:
-                    yield "%s/%s" % (base_uri, fname)
+                    yield "%s/%s" % (base_uri.rstrip('/'), fname)
 
     def __str__(self):
         return "file: %s, uri: %s" % (self.filename, 

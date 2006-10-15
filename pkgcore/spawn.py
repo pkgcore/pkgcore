@@ -33,6 +33,8 @@ if os.path.isdir("/proc/%i/fd" % os.getpid()):
     def get_open_fds():
         try:
             return map(int, listdir("/proc/%i/fd" % os.getpid()))
+        except (OSError, IOError):
+            return slow_get_open_fds()
         except ValueError, v:
             import warnings
             warnings.warn(

@@ -85,12 +85,46 @@ class database(flat_hash.database):
 
         # hack. proper solution is to make this a __setitem__ override, since
         # template.__setitem__ serializes _eclasses_, then we reconstruct it.
-        if "_eclasses_" in values:
-            values["INHERITED"] = ' '.join(
-                self.reconstruct_eclasses(cpv, values["_eclasses_"]).keys())
-            del values["_eclasses_"]
+        eclasses = values.pop('_eclasses_', None)
+        if eclasses is not None:
+            eclasses = self.reconstruct_eclasses(cpv, eclasses)
+            values["INHERITED"] = ' '.join(eclasses)
 
-        flat_hash.database._setitem(self, cpv, values)
+        s = cpv.rfind("/")
+        fp = os.path.join(
+            self.location, cpv[:s],".update.%i.%s" % (os.getpid(), cpv[s+1:]))
+        try:
+            myf=open(fp, "w")
+        except (OSError, IOError), e:
+            if errno.ENOENT == e.errno:
+                try:
+                    self._ensure_dirs(cpv)
+                    myf=open(fp,"w")
+                except (OSError, IOError),e:
+                    raise errors.CacheCorruption(cpv, e)
+            else:
+                raise errors.CacheCorruption(cpv, e)
+        
+        count = 0
+        for idx, key in self.hardcoded_auxdbkeys_order:
+            myf.write("%s%s" % ("\n" * (idx - count), values.get(key, "")))
+            count = idx
+        myf.write("\n" * (self.magic_line_count - count))
+
+        myf.close()
+        self._set_mtime(fp, values, eclasses)
+
+        #update written.  now we move it.
+        new_fp = os.path.join(self.location, cpv)
+        try:
+            os.rename(fp, new_fp)
+        except (OSError, IOError), e:
+            os.remove(fp)
+            raise errors.CacheCorruption(cpv, e)
+
+    def _set_mtime(self, fp, values, eclasses):
+        if self._mtime_used:
+            self._ensure_access(fp, mtime=values["_mtime_"])
 
 
 class paludis_flat_list(database):
@@ -113,50 +147,16 @@ class paludis_flat_list(database):
         config['auxdbkeys'] = self.auxdbkeys_order
         database.__init__(self, location, *args, **config)
 
-    def _setitem(self, cpv, values):
-        values = ProtectedDict(values)
+    def _set_mtime(self, fp, values, eclasses):
+        mtime = values.get("_mtime_", 0)
 
-        # hack. proper solution is to make this a __setitem__ override, since
-        # template.__setitem__ serializes _eclasses_, then we reconstruct it.
-        eclasses = values.pop('_eclasses_', None)
-        if eclasses is not None:
-            eclasses = self.reconstruct_eclasses(cpv, eclasses)
-            values["INHERITED"] = ' '.join(eclasses)
-
-        s = cpv.rfind("/")
-        fp = os.path.join(
-            self.location, cpv[:s],".update.%i.%s" % (os.getpid(), cpv[s+1:]))
-        try:
-            myf=open(fp, "w")
-        except (OSError, IOError), e:
-            if errno.ENOENT == e.errno:
-                try:
-                    self._ensure_dirs(cpv)
-                    myf=open(fp,"w")
-                except (OSError, IOError),e:
-                    raise errors.CacheCorruption(cpv, e)
-            else:
-                raise errors.CacheCorruption(cpv, e)
-
-        for x in self.auxdbkeys_order:
-            myf.write(values.get(x,"")+"\n")
-
-        myf.close()
         if eclasses:
             self._ensure_access(
                 fp,
                 mtime=max(max(mtime for path, mtime in eclasses.itervalues()),
-                          values["_mtime_"]))
+                          mtime))
         else:
-            self._ensure_access(fp, values["_mtime_"])
-
-        #update written.  now we move it.
-        new_fp = os.path.join(self.location, cpv)
-        try:
-            os.rename(fp, new_fp)
-        except (OSError, IOError), e:
-            os.remove(fp)
-            raise errors.CacheCorruption(cpv, e)
+            self._ensure_access(fp, mtime)
 
 
 class protective_database(database):

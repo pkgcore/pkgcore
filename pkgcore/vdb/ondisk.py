@@ -61,14 +61,14 @@ class tree(prototype.tree):
             st = os.lstat(self.base)
             if not stat.S_ISDIR(st.st_mode):
                 raise errors.InitializationError(
-                    "base not a dir: %s" % self.base)
+                    "base not a dir: %r" % self.base)
             elif not st.st_mode & (os.X_OK|os.R_OK):
                 raise errors.InitializationError(
-                    "base lacks read/executable: %s" % self.base)
+                    "base lacks read/executable: %r" % self.base)
 
         except OSError:
             raise errors.InitializationError(
-                "lstat failed on base %s" % self.base)
+                "lstat failed on base %r" % self.base)
 
         self.package_class = get_plugin('format.' + self.format_magic)(self)
 

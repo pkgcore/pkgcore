@@ -139,8 +139,6 @@ class ConfigTypeFromClassTest(TestCase):
         self._test_basics(Class, 'Class', two_override='bool')
 
 
-
-
 class ConfigHintDecoratorTest(TestCase):
 
     def test_configurable(self):
@@ -151,6 +149,22 @@ class ConfigHintDecoratorTest(TestCase):
         self.assertEquals('spork', stuff.pkgcore_config_type.typename)
         self.assertEquals('str', basics.ConfigType(stuff).types['foon'])
         self.assertEquals((('spork',), {}), stuff('spork'))
+
+
+class ConfigHintCloneTest(TestCase):
+
+    def test_clone(self):
+        c = ConfigHint(types={'foo':'list', 'one':'str'},
+            positional=['one'], required=['one'],
+            incrementals=['foo'], typename='barn')
+        c2 = c.clone(types={'foo':'list', 'one':'str', 'two':'str'},
+            required=['one', 'two'])
+        self.assertEqual(c2.types, {'foo':'list', 'one':'str', 'two':'str'})
+        self.assertEqual(c2.positional, c.positional)
+        self.assertEqual(c2.required, ['one', 'two'])
+        self.assertEqual(c2.incrementals, c.incrementals)
+        self.assertEqual(c2.typename, c.typename)
+        self.assertEqual(c2.allow_unknowns, c.allow_unknowns)
 
 
 class ConfigSectionTest(TestCase):

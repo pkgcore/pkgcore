@@ -10,11 +10,11 @@ configuration subsystem
 # actually needed
 from pkgcore.const import GLOBAL_CONF_FILE, SYSTEM_CONF_FILE, USER_CONF_FILE
 
-
 class ConfigHint(object):
 
     """hint for introspection supplying overrides"""
 
+    # be aware this is used in clone
     __slots__ = ("types", "positional", "required", "typename", "incrementals",
                  "allow_unknowns")
 
@@ -26,6 +26,15 @@ class ConfigHint(object):
         self.incrementals = incrementals or []
         self.typename = typename
         self.allow_unknowns = allow_unknowns
+
+    def clone(self, **kwds):
+        new_kwds = {}
+        for attr in self.__slots__:
+            new_kwds[attr] = kwds.pop(attr, getattr(self, attr))
+        if kwds:
+            raise TypeError("unknown type overrides: %r" % kwds)
+        return self.__class__(**new_kwds)
+        
 
 def configurable(*args, **kwargs):
     """Decorator version of ConfigHint."""

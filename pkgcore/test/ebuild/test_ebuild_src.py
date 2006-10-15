@@ -3,6 +3,8 @@
 
 from pkgcore.test import TestCase
 from pkgcore.ebuild import ebuild_src
+from pkgcore import fetch
+from pkgcore.package import errors
 from pkgcore.ebuild import const
 from pkgcore.util.currying import post_curry
 
@@ -88,21 +90,84 @@ class TestBase(TestCase):
             {'KEYWORDS':'x86 amd64'}).keywords),
             sorted(['x86', 'amd64']))
 
-    def generic_check_depends(self, depset, attr, expected=None, data_name=None):
+    def generic_check_depends(self, depset, attr, expected=None,
+        data_name=None):
         if expected is None:
             expected = depset
         if data_name is None:
-            data_name = attr.rstrip("s").upper()
+            data_name = attr.rstrip('s').upper()
         o = self.get_pkg({data_name:depset})
         self.assertEqual(str(getattr(o, attr)), expected)
         o = self.get_pkg({data_name:''})
         self.assertEqual(str(getattr(o, attr)), '')
+        self.assertRaises(errors.MetadataException, getattr,
+            self.get_pkg({data_name:'|| ( '}), attr)
 
-    for x in ("depends", "rdepends"):
-        locals()["test_%s" % x] = post_curry(generic_check_depends,
+    for x in ('depends', 'rdepends'):
+        locals()['test_%s' % x] = post_curry(generic_check_depends,
             'dev-util/diffball || ( x86? ( dev-util/bsdiff ) )', x)
     del x
     test_post_rdepends = post_curry(generic_check_depends,
-        'virtual/foo x86? ( virtual/boo )',
+        'dev-util/diffball x86? ( virtual/boo )',
         'post_rdepends', data_name='PDEPEND')
         
+    test_provides = post_curry(generic_check_depends,
+        'virtual/foo x86? ( virtual/boo )',
+        'provides', expected='virtual/foo-0.1-r1 x86? ( virtual/boo-0.1-r1 )')
+
+    def test_fetchables(self):
+        l = []
+        def f(self, cpv):
+            l.append(cpv)
+            return {'monkey.tgz': {}, 'boon.tgz': {}}
+        repo = self.make_parent(_get_digests=f)
+        parent = self.make_parent(_parent_repo=repo)
+        # verify it does digest lookups...
+        o = self.get_pkg({'SRC_URI':'http://foo.com/bar.tgz'}, repo=parent)
+        self.assertRaises(errors.MetadataException, getattr, o, 'fetchables')
+        self.assertEqual(l, [o])
+
+        # basic tests;
+        f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz'},
+             repo=parent).fetchables
+        self.assertEqual(list(f[0].uri), ['http://foo.com/monkey.tgz'])
+        self.assertEqual(f[0].filename, 'monkey.tgz')
+
+        # verify it collapses multiple basenames down to the same.
+        f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz '
+            'http://foo.com2/monkey.tgz'}, repo=parent).fetchables
+        self.assertEqual(list(f[0].uri), ['http://foo.com/monkey.tgz',
+            'http://foo.com2/monkey.tgz'])
+
+        mirror = fetch.mirror(['http://boon.com/'], 'mirror1')
+        parent = self.make_parent(_parent_repo=repo, mirrors={
+            'mirror1': mirror})
+        
+        f = self.get_pkg({'SRC_URI': 'mirror://mirror1/monkey.tgz'},
+            repo=parent).fetchables
+        self.assertEqual(list(f[0].uri), ['http://boon.com/monkey.tgz'])
+
+        parent = self.make_parent(_parent_repo=repo, default_mirrors=mirror)
+        f = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz'},
+            repo=parent).fetchables
+        self.assertEqual(list(f[0].uri), ['http://boon.com/monkey.tgz',
+            'http://foo.com/monkey.tgz'])
+
+        # test primaryuri...
+        mirror2 = fetch.mirror(['http://boon2.com/'], 'default')
+        parent = self.make_parent(_parent_repo=repo, default_mirrors=mirror,
+            mirrors={'mirror1':mirror2})
+        f = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz '
+            'mirror://mirror1/boon.tgz', 'RESTRICT':'primaryuri'},
+            repo=parent).fetchables
+        self.assertEqual(list(f[0].uri),
+            ['http://foo.com/monkey.tgz', 'http://boon.com/monkey.tgz'])
+        self.assertEqual(list(f[1].uri),
+            ['http://boon2.com/boon.tgz', 'http://boon.com/boon.tgz'])
+
+        # restrict=mirror..
+        f = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz',
+            'RESTRICT': 'mirror'}, repo=parent).fetchables
+        self.assertEqual(list(f[0].uri),
+            ['http://foo.com/monkey.tgz'])
+            

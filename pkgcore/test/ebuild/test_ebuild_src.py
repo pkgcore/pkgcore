@@ -2,16 +2,19 @@
 # License: GPL2
 
 from pkgcore.test import TestCase
-from pkgcore.ebuild import ebuild_src
+from pkgcore.ebuild import ebuild_src, repo_objs
 from pkgcore import fetch
 from pkgcore.package import errors
 from pkgcore.ebuild import const
 from pkgcore.util.currying import post_curry
 
-class TestBase(TestCase):
+class test_base(TestCase):
     
-    def get_pkg(self, data=None, cpv='dev-util/diffball-0.1-r1', repo=None):
-        o = ebuild_src.base(repo, cpv)
+    kls = ebuild_src.base
+    
+    def get_pkg(self, data=None, cpv='dev-util/diffball-0.1-r1', repo=None,
+        pre_args=()):
+        o = self.kls(*(list(pre_args) + [repo, cpv]))
         if data is not None:
             object.__setattr__(o, 'data', data)
         return o
@@ -171,3 +174,47 @@ class TestBase(TestCase):
         self.assertEqual(list(f[0].uri),
             ['http://foo.com/monkey.tgz'])
             
+
+class test_package(test_base):
+
+    kls = ebuild_src.package
+
+    def get_pkg(self, *args, **kwds):
+        kwds.setdefault("pre_args", (None,))
+        return test_base.get_pkg(self, *args, **kwds)
+
+    def test_init(self):
+        test_base.test_init(self)
+        o = self.get_pkg(pre_args=(1,))
+        self.assertEqual(o._shared_pkg_data, 1)
+
+    def test_mtime_(self):
+        l = []
+        def f(self, cpv):
+            l.append(cpv)
+            return 100l
+
+        parent = self.make_parent(_get_ebuild_mtime=f)
+        o = self.get_pkg(repo=parent)
+        self.assertEqual(o._mtime_, 100l)
+        self.assertEqual(l, [o])
+
+    def make_shared_pkg_data(self, manifest=None, metadata_xml=None):
+        return self.get_pkg(
+            pre_args=(repo_objs.SharedPkgData(metadata_xml, manifest),))
+            
+    def generic_metadata_xml(self, attr):
+        m = repo_objs.MetadataXml(None)
+        object.__setattr__(m, "_"+attr, "foon")
+        object.__setattr__(m, "_source", None)
+        o = self.make_shared_pkg_data(metadata_xml=m)
+        self.assertEqual(getattr(o, attr), "foon")
+
+    for x in ("longdescription", "maintainers", "herds"):
+        locals()["test_%s" % x] = post_curry(generic_metadata_xml, x)
+    del x
+    
+    def test_manifest(self):
+         m = repo_objs.Manifest(None)
+         o = self.make_shared_pkg_data(manifest=m)
+         self.assertIdentical(o.manifest, m)

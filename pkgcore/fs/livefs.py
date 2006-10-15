@@ -14,6 +14,7 @@ from pkgcore.fs.contents import contentsSet
 from pkgcore.chksum import get_handlers
 from pkgcore.util.mappings import LazyValDict
 from pkgcore.interfaces.data_source import local_source
+from pkgcore.util.osutils import listdir
 
 __all__ = ["gen_obj", "scan", "iter_scan"]
 
@@ -104,7 +105,7 @@ def iter_scan(path, offset=None):
 
     while dirs:
         base = dirs.popleft() + sep
-        for x in os.listdir(offset + base):
+        for x in listdir(offset + base):
             path = base + x
             o = gen_obj(path, chksum_handlers=chksum_handlers,
                         real_location=offset+path)

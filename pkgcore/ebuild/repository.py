@@ -218,7 +218,32 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                 raise
             del i
             return []
-    
+
+
+class SlavedTree(UnconfiguredTree):
+
+    """
+    repository that pulls repo metadata from a parent repo; mirrors
+    being the main metadata pulled at this point
+    """
+
+    orig_hint = UnconfiguredTree.pkgcore_config_type
+    d = dict(orig_hint.types.iteritems())
+    d["parent_repo"] = 'section_ref'
+    pkgcore_config_type = orig_hint.clone(types=d,
+        required=list(orig_hint.required) + ["parent_repo"],
+        positional=list(orig_hint.positional) + ["parent_repo"])
+    del d, orig_hint
+
+    def __init__(self, parent_repo, *args, **kwds):
+        UnconfiguredTree.__init__(self, *args, **kwds)
+        for k, v in parent_repo.mirrors.iteritems():
+            if k not in self.mirrors:
+                self.mirrors[k] = v
+        self.package_class = get_plugin("format." + self.format_magic)(
+            self, self.cache, self.eclass_cache, self.mirrors,
+            self.default_mirrors)
+
 
 class ConfiguredTree(configured.tree):
 

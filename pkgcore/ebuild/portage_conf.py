@@ -209,6 +209,8 @@ def config_from_make_conf(location="/etc/"):
                 'cache': (basics.AutoConfigSection({
                             'inherit': ('cache-common',),
                             'label': tree_loc}),),
+                'class': 'pkgcore.ebuild.repository.SlavedTree',
+                'parent_repo': 'portdir'
                 })
 
     rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache")) \

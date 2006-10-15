@@ -12,10 +12,9 @@ demandload(globals(), "os stat errno")
 class LookupFsDev(fs.fsDev):
 
     def __init__(self, path, **kwds):
-        fp = kwds.get("real_location", path)
         if any(x not in kwds for x in ("major", "minor", "mode")):
             try:
-                st = os.lstat(fp)
+                st = os.lstat(path)
             except OSError, oe:
                 if oe.errno != errno.ENOENT:
                     raise

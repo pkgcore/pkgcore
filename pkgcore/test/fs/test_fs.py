@@ -24,7 +24,6 @@ class base(object):
         mkobj = self.make_obj
         o = mkobj("/tmp/foo")
         self.assertEqual(o.location, "/tmp/foo")
-        # we ignore real_location; test_real_location handles it.
         self.assertEqual(mkobj(mtime=100l).mtime, 100l)
         self.assertEqual(mkobj(mode=0660).mode, 0660)
         # ensure the highband stays in..
@@ -38,12 +37,6 @@ class base(object):
         d = {self.make_obj("/tmp/foo"):None}
         d[self.make_obj("/tmp/foo")]
     
-    def test_real_location(self):
-        self.assertEqual(self.make_obj("/tmp/foobar").real_location,
-            "/tmp/foobar")
-        self.assertEqual(self.make_obj("/tmp/foobar",
-            real_location="/dar").real_location, "/dar")
-
     def test_eq(self):
         o = self.make_obj("/tmp/foo")
         self.assertEqual(o, self.make_obj("/tmp/foo"))

@@ -50,18 +50,14 @@ raw_init_doc = \
 class fsBase(object):
 
     """base class, all extensions must derive from this class"""
-    __slots__ = ("location", "_real_location", "mtime", "mode", "uid", "gid")
+    __slots__ = ("location", "mtime", "mode", "uid", "gid")
     __attrs__ = __slots__
     __default_attrs__ = {}
 
-    def __init__(self, location, real_location=None, strict=True, **d):
+    def __init__(self, location, strict=True, **d):
 
         d["location"] = location
 
-        if real_location is not None:
-            if not real_location.startswith(path_seperator):
-                real_location = abspath(real_location)
-        d["_real_location"] = real_location
         s = object.__setattr__
         if strict:
             for k in self.__attrs__:
@@ -107,12 +103,6 @@ class fsBase(object):
     def __ne__(self, other):
         return not self == other
 
-    @property
-    def real_location(self):
-        if self._real_location is not None:
-            return self._real_location
-        return self.location
-
 
 known_handlers = tuple(get_handlers())
 
@@ -120,25 +110,21 @@ class fsFile(fsBase):
 
     """file class"""
 
-    __slots__ = ("chksums", "_data_source")
+    __slots__ = ("chksums", "data_source")
     __attrs__ = fsBase.__attrs__ + __slots__
     __default_attrs__ = {"mtime":0l}
 
-    def __init__(self, location, chksums=None, real_location=None, **kwds):
+    def __init__(self, location, chksums=None, data_source=None, **kwds):
         """
         @param chksums: dict of checksums, key chksum_type: val hash val.
             See L{pkgcore.chksum}.
         """
         if "mtime" in kwds:
             kwds["mtime"] = long(kwds["mtime"])
-        if real_location is not None:
-            if "data_source" not in kwds:
-                kwds["_data_source"] = local_source(real_location)
-            else:
-                kwds["_data_source"] = kwds.pop("data_source")
-            kwds["real_location"] = real_location
-        else:
-            kwds.setdefault("_data_source", kwds.pop("data_source", None))
+        if data_source is None:
+            data_source = local_source(location)
+        kwds["data_source"] = data_source
+
         if chksums is None:
             # this can be problematic offhand if the file is modified
             # but chksum not triggered
@@ -146,12 +132,6 @@ class fsFile(fsBase):
         kwds["chksums"] = chksums
         fsBase.__init__(self, location, **kwds)
     gen_doc_additions(__init__, __slots__)
-
-    def change_attributes(self, **kwargs):
-        if "real_location" in kwargs and "data_source" not in kwargs:
-            kwargs["data_source"] = local_source(kwargs["real_location"])
-
-        return fsBase.change_attributes(self, **kwargs)
 
     def __repr__(self):
         return "file:%s" % self.location
@@ -161,10 +141,7 @@ class fsFile(fsBase):
 
     @property
     def data(self):
-        o = self._data_source
-        if o is not None:
-            return o
-        return local_source(self.real_location)
+        return self.data_source
 
 
 class fsDir(fsBase):

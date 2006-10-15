@@ -51,9 +51,7 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None):
         return fsDir(path, **d)
     elif S_ISREG(mode):
         d["size"] = stat.st_size
-        if real_location != path:
-            # we would've set it above, so is check flies
-            d["data_source"] = local_source(real_location)
+        d["data_source"] = local_source(real_location)
         return fsFile(path, **d)
     elif S_ISLNK(mode):
         d["target"] = os.readlink(real_location)

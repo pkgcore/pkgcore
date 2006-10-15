@@ -1,7 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.fs import ops, fs, livefs
+from pkgcore.fs import ops, fs, livefs, contents
+from pkgcore.interfaces.data_source import local_source
 from pkgcore.test import TestCase
 from pkgcore.test.mixins import TempDirMixin
 import os, shutil
@@ -68,8 +69,8 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
         dest = pjoin(self.dir, "copy_test_dest")
         open(src, "w").writelines("asdf\n" for i in xrange(10))
         kwds = {"mtime":10321, "uid":os.getuid(), "gid":os.getgid(),
-                "mode":0664}
-        o = fs.fsFile(dest, real_location=src, **kwds)
+                "mode":0664, "data_source":local_source(src)}
+        o = fs.fsFile(dest, **kwds)
         self.assertTrue(ops.default_copyfile(o))
         self.assertEqual("asdf\n" * 10, open(dest, "r").read())
         self.verify(o, kwds, os.stat(o.location))
@@ -140,9 +141,10 @@ class Test_merge_contents(ContentsMixin):
             if not isinstance(e, dict):
                 continue
             src, dest, cset = self.generic_merge_bits(e)
-            s = set(ops.offset_rewriter(dest, cset))
+            new_cset = contents.contentsSet(ops.offset_rewriter(dest, cset))
+            s = set(new_cset)
             ops.merge_contents(cset, offset=dest, callback=s.remove)
-            self.assertFalse(s, s)
+            self.assertFalse(s)
 
     def test_empty_overwrite(self):
         self.generic_merge_bits(self.entries_norm1)

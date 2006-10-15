@@ -200,10 +200,10 @@ def fix_special_bits_world_writable(fix_perms=True, cset="new_cset"):
             for x in l:
                 if x.mode & 04000:
                     reporter.error(
-                        "UNSAFE world writable SetGID: %s", (x.real_location,))
+                        "UNSAFE world writable SetGID: %s", (x.location,))
                 else:
                     reporter.error(
-                        "UNSAFE world writable SetUID: %s" % (x.real_location,))
+                        "UNSAFE world writable SetUID: %s" % (x.location,))
 
         if l:
             # filters the 02, for those who aren't accustomed to
@@ -224,7 +224,7 @@ def notice_world_writable(fix_perms=False, cset="new_cset"):
                 l.append(x)
         if reporter is not None:
             for x in l:
-                reporter.warn("world writable file: %s", (x.real_location,))
+                reporter.warn("world writable file: %s", (x.location,))
         if fix_perms:
             cset.update(x.change_attributes(mode=x.mode & ~01) for x in l)
 

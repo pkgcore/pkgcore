@@ -64,10 +64,6 @@ class MergeEngine(object):
             [ebuild_triggers.env_update_trigger, triggers.ldconfig_trigger])
     del k
 
-    install_hooks["pre_merge"].append(
-        ebuild_triggers.config_protect_trigger_install)
-    replace_hooks["pre_merge"].append(
-        ebuild_triggers.config_protect_trigger_install)
     replace_hooks["pre_unmerge"].append(
         ebuild_triggers.config_protect_trigger_uninstall)
     uninstall_hooks["pre_unmerge"].append(
@@ -155,6 +151,11 @@ class MergeEngine(object):
         hooks = dict(
             (k, [y() for y in v])
             for (k, v) in cls.install_hooks.iteritems())
+        # mild hack.
+        o = ebuild_triggers.ConfigProtectInstall()
+        t = o.triggers
+        hooks["pre_merge"].append(t[0])
+        hooks["post_merge"].append(t[1])
         csets = dict(cls.install_csets)
         if "new_cset" not in csets:
             csets["new_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
@@ -217,6 +218,10 @@ class MergeEngine(object):
         hooks = dict(
             (k, [y() for y in v])
             for (k, v) in cls.replace_hooks.iteritems())
+        o = ebuild_triggers.ConfigProtectInstall()
+        t = o.triggers
+        hooks["pre_merge"].append(t[0])
+        hooks["post_merge"].append(t[1])
         csets = dict(cls.replace_csets)
 
         for v, k in ((old, "old_cset"), (new, "new_cset")):

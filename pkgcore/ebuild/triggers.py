@@ -123,77 +123,95 @@ def gen_config_protect_filter(offset):
     return r
 
 
-def config_protect_func_install(existing_cset, install_cset, engine, csets):
-    install_cset = csets[install_cset]
-    existing_cset = csets[existing_cset]
+class ConfigProtectInstall(object):
+    
+    def __init__(self, existing_cset="install_existing",
+        install_cset="install"):
+        self.data = None
+        self.existing_cset = existing_cset
+        self.install_cset = install_cset
+        self.renames = {}
+    
+    def install_rename_trigger(self, engine, existing_cset, install_cset):
+        pjoin = os.path.join
 
-    pjoin = os.path.join
+        # hackish, but it works.
+        protected_filter = gen_config_protect_filter(engine.offset).match
+        protected = {}
 
-    # hackish, but it works.
-    protected_filter = gen_config_protect_filter(engine.offset).match
-    protected = {}
-
-    for x in existing_cset.iterfiles():
-        if x.location.endswith("/.keep"):
-            continue
-        elif protected_filter(x.location):
-            replacement = install_cset[x]
-            if not simple_chksum_compare(replacement, x):
-                protected.setdefault(
-                    pjoin(engine.offset,
-                          os.path.dirname(x.location).lstrip(os.path.sep)),
-                    []).append((os.path.basename(replacement.location),
-                                replacement))
-
-    for dir_loc, entries in protected.iteritems():
-        updates = dict((x[0], []) for x in entries)
-        try:
-            existing = sorted(x for x in os.listdir(dir_loc)
-                              if x.startswith("._cfg"))
-        except OSError, oe:
-            if oe.errno != errno.ENOENT:
-                raise
-            # this shouldn't occur.
-            continue
-
-        for x in existing:
-            try:
-                # ._cfg0000_filename
-                count = int(x[5:9])
-                if x[9] != "_":
-                    raise ValueError
-                fn = x[10:]
-            except (ValueError, IndexError):
+        for x in existing_cset.iterfiles():
+            if x.location.endswith("/.keep"):
                 continue
-            if fn in updates:
-                updates[fn].append((count, fn))
+            elif protected_filter(x.location):
+                replacement = install_cset[x]
+                if not simple_chksum_compare(replacement, x):
+                    protected.setdefault(
+                        pjoin(engine.offset,
+                              os.path.dirname(x.location).lstrip(os.path.sep)),
+                        []).append((os.path.basename(replacement.location),
+                                    replacement))
 
-
-        # now we rename.
-        for fname, entry in entries:
-            # check for any updates with the same chksums.
-            count = 0
-            for cfg_count, cfg_fname in updates[fname]:
-                if simple_chksum_compare(livefs.gen_obj(
-                        pjoin(dir_loc, cfg_fname)), entry):
-                    count = cfg_count
-                    break
-                count = max(count, cfg_count + 1)
+        for dir_loc, entries in protected.iteritems():
+            updates = dict((x[0], []) for x in entries)
             try:
-                install_cset.remove(entry)
+                existing = sorted(x for x in os.listdir(dir_loc)
+                    if x.startswith("._cfg"))
+            except OSError, oe:
+                if oe.errno != errno.ENOENT:
+                    raise
+                # this shouldn't occur.
+                continue
+
+            for x in existing:
+                try:
+                    # ._cfg0000_filename
+                    count = int(x[5:9])
+                    if x[9] != "_":
+                        raise ValueError
+                    fn = x[10:]
+                except (ValueError, IndexError):
+                    continue
+                if fn in updates:
+                    updates[fn].append((count, fn))
+
+
+            # now we rename.
+            for fname, entry in entries:
+                # check for any updates with the same chksums.
+                count = 0
+                for cfg_count, cfg_fname in updates[fname]:
+                    if simple_chksum_compare(livefs.gen_obj(
+                            pjoin(dir_loc, cfg_fname)), entry):
+                        count = cfg_count
+                        break
+                    count = max(count, cfg_count + 1)
+                try:
+                    install_cset.remove(entry)
+                except KeyError:
+                    # this shouldn't occur...
+                    continue
+                new_fn = pjoin(dir_loc, "._cfg%04i_%s" % (count, fname))
+                new_entry = entry.change_attributes(location=new_fn)
+                install_cset.add(new_entry)
+                self.renames[new_entry] = entry
+            del updates
+
+    def metadata_rename_trigger(self, engine, install_cset):
+        for new_entry, old_entry in self.renames.iteritems():
+            try:
+                install_cset.remove(new_entry)
             except KeyError:
-                # this shouldn't occur...
                 continue
-            new_fn = pjoin(dir_loc, "._cfg%04i_%s" % (count, fname))
-            install_cset.add(entry.change_attributes(real_location=new_fn))
-        del updates
+            install_cset.add(old_entry)
+        self.renames.clear()
 
-
-def config_protect_trigger_install(existing_cset="install_existing",
-                                   modifying_cset="install"):
-    return triggers.trigger([existing_cset, modifying_cset],
-                            partial(config_protect_func_install,
-                                      existing_cset, modifying_cset))
+    @property
+    def triggers(self):
+        return [triggers.SimpleTrigger([self.existing_cset, self.install_cset],
+                self.install_rename_trigger, label="install_ConfigProtect"),
+            triggers.SimpleTrigger([self.install_cset],
+                self.metadata_rename_trigger, label="contents_ConfigProtect")
+            ]
 
 
 def config_protect_func_uninstall(existing_cset, uninstall_cset, engine, csets):

@@ -59,11 +59,11 @@ def default_ensure_perms(d1, d2=None):
             do_mtime = True
 
     if do_chown and (o != -1 or g != -1):
-        os.lchown(d1.real_location, o, g)
+        os.lchown(d1.location, o, g)
     if do_mode and m is not None:
-        os.chmod(d1.real_location, m)
+        os.chmod(d1.location, m)
     if do_mtime and t is not None:
-        os.utime(d1.real_location, (t, t))
+        os.utime(d1.location, (t, t))
     return True
 
 
@@ -79,14 +79,14 @@ def default_mkdir(d):
         mode = 0777
     else:
         mode = d.mode
-    os.mkdir(d.real_location, mode)
+    os.mkdir(d.location, mode)
     get_plugin("fs_ops.ensure_perms")(d)
     return True
 
 
 def default_copyfile(obj, mkdirs=False):
     """
-    copy a L{fs obj<pkgcore.fs.fs.fsBase>} from real_location to stated location.
+    copy a L{fs obj<pkgcore.fs.fs.fsBase>} to it's stated location.
 
     @param obj: L{pkgcore.fs.fs.fsBase} instance, exempting fsDir
     @raise OSError:, for non file objs, Exception (this needs to be fixed
@@ -137,10 +137,10 @@ def default_copyfile(obj, mkdirs=False):
         dev = os.makedev(obj.major, obj.minor)
         os.mknod(fp, obj.mode, dev)
     else:
-        ret = spawn([COPY_BINARY, "-Rp", obj.real_location, fp])
+        ret = spawn([COPY_BINARY, "-Rp", obj.location, fp])
         if ret != 0:
             raise Exception(
-                "failed cp'ing %s to %s, ret %s" % (obj.real_location, fp, ret))
+                "failed cp'ing %s to %s, ret %s" % (obj.location, fp, ret))
     if not fs.issym(obj):
         ensure_perms(obj.change_attributes(location=fp))
 
@@ -196,11 +196,11 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
             # we pass in the stat ourselves, using stat instead of
             # lstat gen_obj uses internally; this is the equivalent of
             # "deference that link"
-            obj = gen_obj(x.real_location, stat=os.stat(x.real_location))
+            obj = gen_obj(x.location,  stat=os.stat(x.location))
             if not fs.isdir(obj):
                 raise Exception(
-                    "%s exists and needs to be a dir, but is a %s" % (
-                        x.location, obj))
+                    "%s exists and needs to be a dir, but is a %s" %
+                        (x.location, obj))
             ensure_perms(x, obj)
         except OSError:
             mkdir(x)

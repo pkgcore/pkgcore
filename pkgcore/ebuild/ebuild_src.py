@@ -190,7 +190,7 @@ class base(metadata.package):
     @property
     def PR(self):
         r = self.revision
-        if r is not Nne:
+        if r is not None:
             return r
         return 0
 

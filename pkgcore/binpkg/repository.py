@@ -27,7 +27,9 @@ demandload(globals(),
            "pkgcore.interfaces.data_source:data_source "
            "pkgcore.repository:wrapper "
            "pkgcore.package.mutated:MutatedPkg "
-           "pkgcore.ebuild:ebd ")
+           "pkgcore.ebuild:ebd "
+           "pkgcore.binpkg:repo_ops "
+           "errno ")
 
 
 def force_unpack_trigger(op, engine_inst, cset):
@@ -222,6 +224,24 @@ class tree(prototype.tree):
     def _get_metadata(self, pkg):
         return StackedXpakDict(self, pkg)
 
+    def notify_remove_package(self, pkg):
+        prototype.tree.notify_remove_package(self, pkg)
+        try:
+            os.rmdir(os.path.join(self.base, pkg.category))
+        except OSError, oe:
+            if oe.errno != errno.ENOTEMPTY:
+                raise
+            del oe
+    
+    def _install(self, pkg, *a, **kw):
+        return repo_ops.install(self, pkg, *a, **kw)
+
+    def _uninstall(self, pkg, *a, **kw)
+        return repo_ops.uninstall(self, pkg, *a, **kw)
+    
+    def _replace(self, oldpkg, newpkg, *a, **kw)
+        return repo_ops.replace(self, oldpkg, newpkg, *a, **kw)
+    
 
 class ConfiguredBinpkgTree(wrapper.tree):
     

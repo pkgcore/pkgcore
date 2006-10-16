@@ -236,10 +236,10 @@ class tree(prototype.tree):
     def _install(self, pkg, *a, **kw):
         return repo_ops.install(self, pkg, *a, **kw)
 
-    def _uninstall(self, pkg, *a, **kw)
+    def _uninstall(self, pkg, *a, **kw):
         return repo_ops.uninstall(self, pkg, *a, **kw)
     
-    def _replace(self, oldpkg, newpkg, *a, **kw)
+    def _replace(self, oldpkg, newpkg, *a, **kw):
         return repo_ops.replace(self, oldpkg, newpkg, *a, **kw)
     
 

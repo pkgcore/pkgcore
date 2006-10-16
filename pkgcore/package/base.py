@@ -33,3 +33,24 @@ class base(object):
     @property
     def unversioned_atom(self):
         raise NotImplementedError(self, "versioned_atom")
+
+
+class wrapper(base):
+    
+    __slots__ = ("_raw_pkg",)
+
+    def __init__(self, raw_pkg):
+        object.__setattr__(self, "_raw_pkg", raw_pkg)
+    
+    def __cmp__(self, other):
+        if isinstance(other, wrapper):
+            return cmp(self._raw_pkg, other._raw_pkg)
+        return cmp(self._raw_pkg, other)
+
+    def __eq__(self, other):
+        if isinstance(other, wrapper):
+            return cmp(self._raw_pkg, other._raw_pkg) == 0
+        return cmp(self._raw_pkg, other) == 0
+    
+    def __ne__(self, other):
+        return not self == other

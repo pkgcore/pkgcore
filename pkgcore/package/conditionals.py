@@ -7,11 +7,16 @@ conditional attributes on a package.
 Changing them triggering regen of other attributes on the package instance.
 """
 
+from pkgcore.package.base import wrapper
 from pkgcore.util.containers import LimitedChangeSet, Unchangable
 from pkgcore.util.demandload import demandload
 demandload(globals(), "copy")
 
-class PackageWrapper(object):
+
+class PackageWrapper(wrapper):
+
+    __slots__ = ("_unchangable", "_configurable", "_configurable_name",
+        "_reuse_pt", "_cached_wrapped", "_buildable", "_wrapped_attr")
 
     """Add a new attribute, and evaluate attributes of a wrapped pkg."""
 
@@ -41,22 +46,23 @@ class PackageWrapper(object):
             initial_settings = []
         if unchangable_settings is None:
             unchangable_settings = []
-        self._raw_pkg = pkg_instance
         if attributes_to_wrap is None:
             attributes_to_wrap = {}
-        self._wrapped_attr = attributes_to_wrap
         if configurable_attribute_name.find(".") != -1:
             raise ValueError("can only wrap first level attributes, "
                              "'obj.dar' fex, not '%s'" %
                              (configurable_attribute_name))
-        setattr(self, configurable_attribute_name,
-                LimitedChangeSet(initial_settings, unchangable_settings))
-        self._unchangable = unchangable_settings
-        self._configurable = getattr(self, configurable_attribute_name)
-        self._configurable_name = configurable_attribute_name
-        self._reuse_pt = 0
-        self._cached_wrapped = {}
-        self._buildable = build_callback
+
+        sf = object.__setattr__
+        sf(self, '_wrapped_attr', attributes_to_wrap)
+        sf(self, '_unchangable', unchangable_settings)
+        sf(self, '_configurable',
+            LimitedChangeSet(initial_settings, unchangable_settings))
+        sf(self, '_configurable_name', configurable_attribute_name)
+        sf(self, '_reuse_pt', 0)
+        sf(self, '_cached_wrapped', {})
+        sf(self, '_buildable', build_callback)
+        wrapper.__init__(self, pkg_instance)
 
     def __copy__(self):
         return self.__class__(self._raw_pkg, self._configurable_name,
@@ -73,7 +79,7 @@ class PackageWrapper(object):
         self._configurable.rollback(point)
         # yes, nuking objs isn't necessarily required.  easier this way though.
         # XXX: optimization point
-        self._reuse_pt += 1
+        object.__setattr__(self, '_reuse_pt', self._reuse_pt + 1)
 
     def commit(self):
         """
@@ -82,7 +88,7 @@ class PackageWrapper(object):
         This means that those changes can be reverted from this point out.
         """
         self._configurable.commit()
-        self._reuse_pt = 0
+        object.__setattr__(self, '_reuse_pt',  0)
 
     def changes_count(self):
         """
@@ -136,7 +142,7 @@ class PackageWrapper(object):
         except Unchangable:
             self.rollback(entry_point)
             return False
-        self._reuse_pt += 1
+        object.__setattr__(self, '_reuse_pt', self._reuse_pt + 1)
         return True
 
     def request_disable(self, attr, *vals):
@@ -184,10 +190,12 @@ class PackageWrapper(object):
         except Unchangable:
             self.rollback(entry_point)
             return False
-        self._reuse_pt += 1
+        object.__setattr__(self, '_reuse_pt', self._reuse_pt + 1)
         return True
 
     def __getattr__(self, attr):
+        if attr == self._configurable_name:
+            return getattr(self, self._configurable_name)
         if attr in self._wrapped_attr:
             if attr in self._cached_wrapped:
                 if self._cached_wrapped[attr][0] == self._reuse_pt:
@@ -221,35 +229,9 @@ class PackageWrapper(object):
         commit any outstanding changes and lock the configuration.
         """
         self.commit()
-        self._configurable = list(self._configurable)
+        object.__setattr__(self, '_configurable', list(self._configurable))
 
     def build(self, **kwds):
         if self._buildable:
             return self._buildable(self, **kwds)
         return None
-
-    def __cmp__(self, other):
-        if isinstance(other, PackageWrapper):
-            c = cmp(self._raw_pkg, other._raw_pkg)
-            if c:
-                return c
-            if self._configurable == other._configurable:
-                return 0
-            # sucky, but comparing sets isn't totally possible.
-            # potentially do sub/super tests instead?
-            raise TypeError
-        else:
-            c = cmp(other, self._raw_pkg)
-            if c == 0:
-                return 0
-            return -c
-        raise NotImplementedError
-
-    def __eq__(self, other):
-        if isinstance(other, PackageWrapper):
-            if self._raw_pkg == other._raw_pkg:
-                return self._configurable == other._configurable
-            return False
-        elif isinstance(other, self._raw_pkg.__class__):
-            return self._raw_pkg == other
-        return False

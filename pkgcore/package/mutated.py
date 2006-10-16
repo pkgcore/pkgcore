@@ -5,10 +5,10 @@
 package wrapper class to override a packages attributes
 """
 
-from pkgcore.package.base import base
+from pkgcore.package.base import wrapper
 
-class MutatedPkg(base):
-    __slots__ = ("_raw_pkg", "_overrides")
+class MutatedPkg(wrapper):
+    __slots__ = ("_overrides",)
 
     def __init__(self, pkg, overrides):
         """
@@ -16,8 +16,7 @@ class MutatedPkg(base):
         @param overrides: is an attr -> instance mapping to substitute when
             the attr is requested
         """
-        base.__init__(self)
-        object.__setattr__(self, "_raw_pkg", pkg)
+        wrapper.__init__(self, pkg)
         object.__setattr__(self, "_overrides", overrides)
 
     def __getattr__(self, attr):
@@ -25,11 +24,6 @@ class MutatedPkg(base):
         if o is not None:
             return o
         return getattr(self._raw_pkg, attr)
-
-    def __cmp__(self, other):
-        if isinstance(other, self.__class__):
-            return cmp(self._raw_pkg, other._raw_pkg)
-        return cmp(self._raw_pkg, other)
 
     def __repr__(self):
         return '<%s pkg=%r overrides=%r @%#8x>' % (

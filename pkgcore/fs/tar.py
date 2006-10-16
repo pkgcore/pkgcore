@@ -33,10 +33,10 @@ known_compressors = {"bz2": tarfile.TarFile.bz2open,
     None: tarfile.TarFile.open}
 
 def write_set(contents_set, filepath, compressor='bz2'):
-    if compression not in known_compressors:
+    if compressor not in known_compressors:
         raise ValueError("compression must be one of %r, got %r" % 
-            (known_compressors.keys(), compression))
-    tar_fd = known_compressors[compression](filepath, mode="w")
+            (known_compressors.keys(), compressor))
+    tar_fd = known_compressors[compressor](filepath, mode="w")
 
     # first add directories, then everything else
     # this is just a pkgcore optimization, it prefers to see the dirs first.

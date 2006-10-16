@@ -54,3 +54,11 @@ class wrapper(base):
     
     def __ne__(self, other):
         return not self == other
+
+    @property
+    def versioned_atom(self):
+        return self.raw_pkg.versioned_atom
+    
+    @property
+    def unversioned_atom(self):
+        return self.raw_pkg.unversioned_atom

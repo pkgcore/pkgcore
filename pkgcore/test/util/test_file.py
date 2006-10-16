@@ -68,7 +68,8 @@ class ReadBashDictTest(TestCase):
             'foo1=bar\n'
             "foo2='bar'\n"
             'foo3="bar"\n'
-            'foo4=-/:j4\n')
+            'foo4=-/:j4\n'
+            'foo5=\n')
         self.valid_file.flush()
         self.invalid_file = tempfile.NamedTemporaryFile()
         self.invalid_file.write(
@@ -116,7 +117,8 @@ class ReadBashDictTest(TestCase):
         # TODO this is not even close to complete
         self.assertEquals(
             read_bash_dict(self.valid_file.name),
-            {'foo1': 'bar', 'foo2': 'bar', 'foo3': 'bar', 'foo4': '-/:j4'})
+            {'foo1': 'bar', 'foo2': 'bar', 'foo3': 'bar', 'foo4': '-/:j4',
+                'foo5': ''})
         self.assertRaises(ParseError, read_bash_dict, self.invalid_file.name)
         self.assertEquals(
             read_bash_dict(self.invalid_file.name, ignore_malformed=True),
@@ -126,7 +128,8 @@ class ReadBashDictTest(TestCase):
         # TODO this is not even close to complete
         self.assertEquals(
             read_bash_dict(self.sourcing_file.name, sourcing_command='source'),
-            {'foo1': 'bar', 'foo2': 'bar', 'foo3': 'bar', 'foo4': '-/:j4'})
+            {'foo1': 'bar', 'foo2': 'bar', 'foo3': 'bar', 'foo4': '-/:j4',
+                'foo5':''})
 
     def test_read_advanced(self):
         self.assertEquals(

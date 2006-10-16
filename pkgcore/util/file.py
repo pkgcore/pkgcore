@@ -146,11 +146,13 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
                 if key is None:
                     break
                 eq, val = s.get_token(), s.get_token()
-                if eq != '=' or val is None:
+                if eq != '=':
                     if not ignore_malformed:
                         raise ParseError(bash_source, s.lineno)
                     else:
                         break
+                elif val is None:
+                    val = ''
                 d[key] = val
         except ValueError:
             raise ParseError(bash_source, s.lineno)

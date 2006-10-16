@@ -115,7 +115,7 @@ class PackageWrapper(wrapper):
                 entry_point = self.changes_count()
                 try:
                     map(self._configurable.add, vals)
-                    self._reuse_pt += 1
+                    object.__setattr__(self, '_reuse_pt', self._reuse_pt + 1)
                     return True
                 except Unchangable:
                     self.rollback(entry_point)

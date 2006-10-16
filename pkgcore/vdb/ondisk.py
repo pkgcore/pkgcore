@@ -203,13 +203,13 @@ tree.configure = ConfiguredTree
 def _get_default_ebuild_op_args_kwds(self):
     return (dict(self.domain_settings),), {}
 
-class install(repo_interfaces.install):
+class install(repo_interfaces.livefs_install):
 
     def __init__(self, domain_settings, repo, pkg, *a, **kw):
         self.dirpath = os.path.join(
             repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
         self.domain_settings = domain_settings
-        repo_interfaces.install.__init__(self, repo, pkg, *a, **kw)
+        repo_interfaces.livefs_install.__init__(self, repo, pkg, *a, **kw)
 
     install_get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
 
@@ -288,13 +288,13 @@ class install(repo_interfaces.install):
         return True
 
 
-class uninstall(repo_interfaces.uninstall):
+class uninstall(repo_interfaces.livefs_uninstall):
 
     def __init__(self, domain_settings, repo, pkg, offset=None, *a, **kw):
         self.dirpath = os.path.join(
             repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
         self.domain_settings = domain_settings
-        repo_interfaces.uninstall.__init__(
+        repo_interfaces.livefs_uninstall.__init__(
             self, repo, pkg, offset=offset, *a, **kw)
 
     uninstall_get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
@@ -307,7 +307,7 @@ class uninstall(repo_interfaces.uninstall):
 
 
 # should convert these to mixins.
-class replace(install, uninstall, repo_interfaces.replace):
+class replace(install, uninstall, repo_interfaces.livefs_replace):
 
     def __init__(self, domain_settings, repo, pkg, newpkg, *a, **kw):
         self.dirpath = os.path.join(
@@ -318,7 +318,7 @@ class replace(install, uninstall, repo_interfaces.replace):
             os.path.dirname(self.dirpath),
             ".tmp."+os.path.basename(self.dirpath))
         self.domain_settings = domain_settings
-        repo_interfaces.replace.__init__(self, repo, pkg, newpkg, *a, **kw)
+        repo_interfaces.livefs_replace.__init__(self, repo, pkg, newpkg, *a, **kw)
 
     _get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
 

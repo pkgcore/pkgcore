@@ -20,8 +20,60 @@ class fake_lock:
 
 class base(object):
     __metaclass__ = ForcedDepends
-
+    
     stage_depends = {}
+
+
+class nonlivefs_base(base):
+
+    stage_depends = {'finish':'modify_repo', 'modify_repo':'start'}
+
+    def __init__(self, repo, observer=None):
+        self.repo = repo
+        self.underway = False
+        self.observer = observer
+        self.lock = getattr(repo, "lock")
+        if self.lock is None:
+            self.lock = fake_lock()
+    
+    def start(self):
+        self.underway = True
+        self.lock.acquire_write_lock()
+        return True
+    
+    def modify_repo(self):
+        raise NotImplementedError(self, 'modify_repo')
+    
+    def finish(self):
+        self._notify_repo()
+        self.lock.release_write_lock()
+        self.underway = False
+        return True
+
+
+class nonlivefs_install(nonlivefs_base):
+
+    def __init__(self, repo, pkg, **kwds):
+        nonlivefs_base.__init__(self, repo, **kwds)
+        self.newpkg = pkg
+
+
+class nonlivefs_uninstall(nonlivefs_base):
+
+    def __init__(self, repo, pkg, **kwds):
+        nonlivefs_base.__init__(self, repo, **kwds)
+        self.oldpkg = pkg
+
+
+class nonlivefs_replace(nonlivefs_install, nonlivefs_uninstall):
+
+    def __init__(self, repo, oldpkg, newpkg, **kwds):
+        # yes there is duplicate initialization here.
+        nonlivefs_uninstall.__init__(self, repo, oldpkg, **kwds)
+        nonlivefs_install.__init__(self, repo, newpkg, **kwds)
+    
+
+class livefs_base(base):
     stage_hooks = []
 
     def __init__(self, repo, observer=None, offset=None):
@@ -62,9 +114,9 @@ class base(object):
             self.lock.release_write_lock()
 
 
-class install(base):
+class livefs_install(livefs_base):
 
-    """base interface for installing a pkg from a repo.
+    """base interface for installing a pkg into a livefs repo.
 
     repositories should override as needed.
     """
@@ -77,9 +129,9 @@ class install(base):
 
     def __init__(self, repo, pkg, *args, **kwds):
         self.new_pkg = pkg
-        base.__init__(self, repo, *args, **kwds)
+        livefs_base.__init__(self, repo, *args, **kwds)
 
-    install_get_format_op_args_kwds = base._get_format_op_args_kwds
+    install_get_format_op_args_kwds = livefs_base._get_format_op_args_kwds
 
     def get_op(self):
         op_args, op_kwds = self.install_get_format_op_args_kwds()
@@ -92,7 +144,7 @@ class install(base):
         engine = MergeEngine.install(self.new_pkg, offset=self.offset,
             observer=self.observer)
         self.new_pkg.add_format_triggers(self, self.install_op, engine)
-        return base.start(self, engine)
+        return livefs_base.start(self, engine)
 
     def preinst(self):
         """execute any pre-transfer steps required"""
@@ -119,9 +171,9 @@ class install(base):
         raise NotImplementedError
 
 
-class uninstall(base):
+class livefs_uninstall(livefs_base):
 
-    """base interface for uninstalling a pkg from a repo.
+    """base interface for uninstalling a pkg from a livefs repo.
 
     Repositories should override as needed.
     """
@@ -134,9 +186,9 @@ class uninstall(base):
 
     def __init__(self, repo, pkg, *args, **kwds):
         self.old_pkg = pkg
-        base.__init__(self, repo, *args, **kwds)
+        livefs_base.__init__(self, repo, *args, **kwds)
     
-    uninstall_get_format_op_args_kwds = base._get_format_op_args_kwds
+    uninstall_get_format_op_args_kwds = livefs_base._get_format_op_args_kwds
 
     def get_op(self):
         op_args, op_kwds = self.uninstall_get_format_op_args_kwds()
@@ -149,7 +201,7 @@ class uninstall(base):
         engine = MergeEngine.uninstall(self.old_pkg, offset=self.offset,
             observer=self.observer)
         self.old_pkg.add_format_triggers(self, self.uninstall_op, engine)
-        return base.start(self, engine)
+        return livefs_base.start(self, engine)
 
     def prerm(self):
         """execute any pre-removal steps required"""
@@ -182,9 +234,9 @@ class uninstall(base):
             self.lock.release_write_lock()
 
 
-class replace(install, uninstall):
+class livefs_replace(livefs_install, livefs_uninstall):
 
-    """base interface for replacing a pkg in a repo with another.
+    """base interface for replacing a pkg in a livefs repo with another.
 
     Repositories should override as needed.
     """
@@ -203,11 +255,11 @@ class replace(install, uninstall):
     def __init__(self, repo, oldpkg, newpkg, **kwds):
         self.old_pkg = oldpkg
         self.new_pkg = newpkg
-        base.__init__(self, repo, **kwds)
+        livefs_base.__init__(self, repo, **kwds)
     
     def get_op(self):
-        install.get_op(self)
-        uninstall.get_op(self)
+        livefs_install.get_op(self)
+        livefs_uninstall.get_op(self)
 
     def start(self):
         """start the transaction"""
@@ -215,7 +267,7 @@ class replace(install, uninstall):
             offset=self.offset, observer=self.observer)
         self.old_pkg.add_format_triggers(self, self.uninstall_op, engine)
         self.new_pkg.add_format_triggers(self, self.install_op, engine)
-        return base.start(self, engine)
+        return livefs_base.start(self, engine)
 
     def _notify_repo(self):
         self.repo.notify_remove_package(self.old_pkg)

@@ -40,7 +40,7 @@ def generate_attr_dict(pkg):
                 s = str(v)
         else:
             s = v
-        d[_metadata_rewrites[k]] = s
+        d[_metadata_rewrites.get(k, k.upper())] = s
     d["%s-%s.ebuild" % (pkg.package, pkg.fullver)] = \
         pkg.ebuild.get_fileobj().read()
     return d
@@ -49,11 +49,11 @@ def generate_attr_dict(pkg):
 class install(repo_interfaces.nonlivefs_install):
 
     def modify_repo(self):
-        if observer is None:
+        if self.observer is None:
             end = start = lambda x:None
         else:
-            start = observer.phase_start
-            end = observer.phase_end
+            start = self.observer.phase_start
+            end = self.observer.phase_end
         pkg = self.new_pkg
         final_path = discern_loc(self.repo.base, pkg)
         tmp_path = os.path.join(os.path.dirname(final_path),
@@ -64,7 +64,7 @@ class install(repo_interfaces.nonlivefs_install):
                 os.path.dirname(tmp_path))
         try:
             start("generating tarball: %s" % tmp_path)
-            write_set(pkg.contents, tmp_path, compressor='bz2')
+            tar.write_set(pkg.contents, tmp_path, compressor='bz2')
             end("tarball created")
             start("writing Xpak")
             # ok... got a tarball.  now add xpak.

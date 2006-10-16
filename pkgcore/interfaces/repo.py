@@ -23,10 +23,14 @@ class base(object):
     
     stage_depends = {}
 
+class Failure(Exception):
+    pass
+
 
 class nonlivefs_base(base):
 
-    stage_depends = {'finish':'modify_repo', 'modify_repo':'start'}
+    stage_depends = {'finish': '_notify_repo', '_notify_repo': 'modify_repo',
+        'modify_repo':'start'}
 
     def __init__(self, repo, observer=None):
         self.repo = repo
@@ -43,6 +47,9 @@ class nonlivefs_base(base):
     
     def modify_repo(self):
         raise NotImplementedError(self, 'modify_repo')
+
+    def _notify_repo(self):
+        raise NotImplementedError(self, '_notify_repo')
     
     def finish(self):
         self._notify_repo()
@@ -55,14 +62,20 @@ class nonlivefs_install(nonlivefs_base):
 
     def __init__(self, repo, pkg, **kwds):
         nonlivefs_base.__init__(self, repo, **kwds)
-        self.newpkg = pkg
+        self.new_pkg = pkg
+
+    def _notify_repo(self):
+        self.repo.notify_add_package(self.new_pkg)
 
 
 class nonlivefs_uninstall(nonlivefs_base):
 
     def __init__(self, repo, pkg, **kwds):
         nonlivefs_base.__init__(self, repo, **kwds)
-        self.oldpkg = pkg
+        self.old_pkg = pkg
+
+    def _notify_repo(self):
+        self.repo.notify_remove_package(self.old_pkg)
 
 
 class nonlivefs_replace(nonlivefs_install, nonlivefs_uninstall):
@@ -72,6 +85,10 @@ class nonlivefs_replace(nonlivefs_install, nonlivefs_uninstall):
         nonlivefs_uninstall.__init__(self, repo, oldpkg, **kwds)
         nonlivefs_install.__init__(self, repo, newpkg, **kwds)
     
+    def _notify_repo(self):
+        nonlivefs_uninstall._notify_remove(self)
+        nonlivefs_install._notify_remove(self)
+
 
 class livefs_base(base):
     stage_hooks = []

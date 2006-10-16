@@ -40,6 +40,11 @@ pkgcore 0.2:
   * /etc/portage/package.* files can be directories holding seperate files
     to collapse
 
+  * expanded test coverage.
+  
+  * merged standalone test runner into setup.py; prefered way of running it is
+    python setup.py test
+    now.
 
 pkgcore 0.1.2:
 

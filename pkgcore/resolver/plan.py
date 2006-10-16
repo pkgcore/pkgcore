@@ -661,10 +661,20 @@ class merge_plan(object):
     # selection strategies for atom matches
 
     @staticmethod
+    def prefer_livefs_dbs(dbs):
+        for r in dbs:
+            if r.livefs:
+                yield r
+        for r in dbs:
+            if not r.livefs:
+                yield r
+
+    @staticmethod
     def prefer_highest_version_strategy(self, dbs, atom):
         # XXX rework caching_iter so that it iter's properly
         return iter_sort(highest_iter_sort,
-                         *[repo.match(atom) for repo in dbs])
+                         *[repo.match(atom)
+                         for repo in self.prefer_livefs_dbs(dbs)])
         #return iter_sort(highest_iter_sort,
         #                 default_global_strategy(self, dbs, atom))
 
@@ -675,14 +685,9 @@ class merge_plan(object):
 
     @staticmethod
     def prefer_reuse_strategy(self, dbs, atom):
-        for r in dbs:
-            if r.livefs:
-                for p in r.match(atom):
-                    yield p
-        for r in dbs:
-            if not r.livefs:
-                for p in r.match(atom):
-                    yield p
+        for r in self.prefer_livefs_dbs(dbs):
+            for p in r.match(atom):
+                yield p
 
     def generic_force_version_strategy(self, vdb, dbs, atom, iter_sorter,
                                        pkg_sorter):

@@ -452,6 +452,8 @@ def main(config, options, out, err):
             out.write("building...")
             try:
                 built_pkg = buildop.finalize()
+                if built_pkg is False:
+                    ret = built_pkg
             except format.errors, e:
                 ret = e
             if ret is None:

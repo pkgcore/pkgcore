@@ -195,7 +195,7 @@ class PackageWrapper(wrapper):
 
     def __getattr__(self, attr):
         if attr == self._configurable_name:
-            return getattr(self, self._configurable_name)
+            return self._configurable
         if attr in self._wrapped_attr:
             if attr in self._cached_wrapped:
                 if self._cached_wrapped[attr][0] == self._reuse_pt:

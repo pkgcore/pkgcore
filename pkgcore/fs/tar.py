@@ -32,7 +32,7 @@ known_compressors = {"bz2": tarfile.TarFile.bz2open,
     "gz": tarfile.TarFile.gzopen,
     None: tarfile.TarFile.open}
 
-def write_set(contents_set, filepath, compression='bz2'):
+def write_set(contents_set, filepath, compressor='bz2'):
     if compression not in known_compressors:
         raise ValueError("compression must be one of %r, got %r" % 
             (known_compressors.keys(), compression))

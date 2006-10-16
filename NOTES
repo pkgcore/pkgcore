@@ -2,6 +2,45 @@ Release Notes:
 
   See ChangeLog for full commit logs.
 
+pkgcore 0.2:
+
+  * pmaint script; tool for --sync'ing, doing quickpkging, moving packages
+    between repos for repository conversions.
+
+  * sync subsystem: supports bzr, cvs, darcs, git, mercurial (hg), rsync,
+    and subversion.
+  
+  * binpkg repositories now support modification; FEATURES=buildpkg basically
+
+  * binpkg contents handling is significantly faster.
+
+  * pmerge: supports --ask (thanks to nesl247/alex heck)
+
+  * chksuming now does a single walk over a file for all checksummers,
+    instead of one walk per checksummer.
+
+  * rewritten plugins system, register_plugins is no longer used.
+  
+  * paludis flat_list cache read/write support.
+  
+  * pebuild/pregen/pclone_cache: heavy UI cleanup.
+  
+  * pquery: prettier printing of depends/rdepends/post_rdepends under -v
+  
+  * 'installed' set was added; is a pkgset comprised of all slotted atoms from
+    the vdb; useful for pmerge -e to enable rebuilding of *everything*.
+
+  * overlays now combine mirror targets from their parent repository, and
+    from their own repository data.
+  
+  * configuration: lazy section refs were added (lazy_ref), useful for when
+    the object arguement needs to be instantiated rarely (syncers for
+    repositories for example).
+
+  * /etc/portage/package.* files can be directories holding seperate files
+    to collapse
+
+
 pkgcore 0.1.2:
 
   * Make filter_env work on hppa (and possibly more architectures) where using
@@ -61,7 +100,7 @@ pkgcore 0.1:
   
   * not all portage FEATURES are implemented; same for QA.
   
-  * If overlays are in use, pkgcore may defer to it's a seperate cache to avoid 
+  * If overlays are in use, pkgcore may defer to its' seperate cache to avoid 
     pkgcore causing cache regen for portage (and vice versa); this occurs due
     to pkgcore treating overlays as their own repo and combining them at a 
     higher level; portage smushes them all together thus rendering each subtree

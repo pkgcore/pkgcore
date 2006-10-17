@@ -12,7 +12,7 @@ from pkgcore.util.osutils import normpath
 from pkgcore.util.currying import partial
 from pkgcore.restrictions import values
 from pkgcore.util.osutils import listdir_files
-from pkgcore.util.lists import iflatten_instance
+from pkgcore.util.lists import stable_unique, iflatten_instance
 import os, errno, stat
 
 
@@ -27,10 +27,13 @@ incrementals = frozenset(
      'MANPATH', 'PATH', 'PRELINK_PATH', 'PRELINK_PATH_MASK', 'PYTHONPATH',
      'ROOTPATH', 'PKG_CONFIG_PATH'])
 
+default_ldpath = ('/lib', '/lib64', '/lib32',
+    '/usr/lib', '/usr/lib64', '/usr/lib32')
+
 def collapse_envd(base):
     pjoin = os.path.join
 
-    collapsed_d = {"LDPATH":["/usr/lib"]}
+    collapsed_d = {"LDPATH":list(default_ldpath)}
     for x in sorted(listdir_files(base)):
         if x.endswith(".bak") or x.endswith("~") or x.startswith("._cfg") \
             or len(x) <= 2 or not x[0:2].isdigit():
@@ -40,6 +43,8 @@ def collapse_envd(base):
         for k, v in d.iteritems():
             collapsed_d.setdefault(k, []).append(v)
         del d
+    
+    collapsed_d["LDPATH"] = stable_unique(collapsed_d)
     
     loc_incrementals = set(incrementals)
     loc_colon_parsed = set(colon_parsed)

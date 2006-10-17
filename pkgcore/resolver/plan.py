@@ -2,7 +2,7 @@
 # License: GPL2
 
 import operator
-from itertools import chain
+from itertools import chain, islice
 from collections import deque
 from pkgcore.util.compatibility import any
 from pkgcore.util.iterables import caching_iter, iter_sort
@@ -53,15 +53,30 @@ def index_gen(iterable):
 
 
 def is_cycle(stack, atom, cur_choice, attr):
-    index = index_gen(x.atom.key == atom.key for x in stack)
-    if index != -1:
-        # fun fun.  deque can't be sliced, so slice a copy.
-        dprint("%s level cycle: stack: %s, [%s: %s]\n",
-            (attr, ", ".join("[%s: %s]" % \
-                (str(x.atom), str(x.current_pkg))
-                    for x in list(stack)[index:]),
-                atom, cur_choice.current_pkg), "cycle")
-    return index
+    # short cut...
+    if attr == "post_rdepends":
+        # not possible for a cycle we'll care about to exist.
+        # the 'cut off' point is for the new atom, thus not possible for
+        # a cycle.
+        return -1
+    
+    cycle_start = -1
+    for idx, x in enumerate(stack):
+        if x.mode == "post_rdepends":
+            cycle_start = -1
+        if x.atom.key == atom.key:
+            cycle_start = idx
+
+    if cycle_start != -1:
+        # deque can't be sliced, thus islice
+        s = ', '.join('[%s: %s]' % 
+            (x.atom, x.current_pkg) for x in islice(stack, cycle_start))
+        if s:
+            s += ', '
+        s += '[%s: %s]' % (atom, cur_choice.current_pkg)
+        dprint("%s level cycle: stack: %s\n",
+            (attr, s), "cycle")
+    return cycle_start
 
 
 class InconsistantState(Exception):
@@ -156,6 +171,7 @@ class caching_repo(object):
 
 
 class resolver_frame(object):
+
     __slots__ = ("atom", "choice_point", "mode",)
     
     def __init__(self, atom, choice_point, mode):
@@ -164,8 +180,8 @@ class resolver_frame(object):
         self.mode = mode
     
     def __str__(self):
-        return "frame: mode %r: atom %r: choice %r, current %s" % \
-            (self.mode, self.atom, self.choice_point, self.current_pkg)
+        return "frame: mode %r: atom %s: current %s" % \
+            (self.mode, self.atom, self.current_pkg)
 
     @property
     def current_pkg(self):
@@ -178,7 +194,11 @@ class resolver_frame(object):
 class resolver_stack(deque):
 
     def __str__(self):
-        print 'resolver stack: (%s)' % ' '.join(str(x) for x in self)
+        return 'resolver stack:\n  %s' % '\n  '.join(str(x) for x in self)
+
+    def __repr__(self):
+        return '<%s: %r>' % (self.__class__.__name__, 
+            tuple(repr(x) for x in self))
 
 
 class merge_plan(object):

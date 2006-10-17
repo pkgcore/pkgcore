@@ -171,8 +171,14 @@ class resolver_frame(object):
     def current_pkg(self):
         try:
             return self.choice_point.current_pkg
-        except ValueError:
-            return NOne
+        except IndexError:
+            return None
+
+
+class resolver_stack(deque):
+
+    def __str__(self):
+        print 'resolver stack: (%s)' % ' '.join(str(x) for x in self)
 
 
 class merge_plan(object):
@@ -219,7 +225,7 @@ class merge_plan(object):
         if dbs is None:
             dbs = self.all_dbs
         if atom not in self.forced_atoms:
-            stack = deque()
+            stack = resolver_stack()
             ret = self._rec_add_atom(atom, stack, dbs)
             if ret:
                 dprint("failed- %s", ret)
@@ -443,7 +449,7 @@ class merge_plan(object):
         l = self.state.match_atom(atom)
         if l:
             if current_stack:
-                dprint("pre-solved %s%s, [%s] [%s]",
+                dprint("pre-solved  %s%s, [%s] [%s]",
                        (((depth*2) + 1)*" ", atom, current_stack[-1].atom,
                         ", ".join(str(x) for x in l)))
             else:

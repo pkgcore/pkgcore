@@ -53,12 +53,13 @@ def index_gen(iterable):
 
 
 def is_cycle(stack, atom, cur_choice, attr):
-    index = index_gen(x[0].key == atom.key for x in stack)
+    index = index_gen(x.atom.key == atom.key for x in stack)
     if index != -1:
         # fun fun.  deque can't be sliced, so slice a copy.
         dprint("%s level cycle: stack: %s, [%s: %s]\n",
-               (attr, ", ".join("[%s: %s]" % (str(x[0]), str(x[1].current_pkg))
-                                for x in list(stack)[index:]),
+            (attr, ", ".join("[%s: %s]" % \
+                (str(x.atom), str(x.current_pkg))
+                    for x in list(stack)[index:]),
                 atom, cur_choice.current_pkg), "cycle")
     return index
 
@@ -152,6 +153,27 @@ class caching_repo(object):
 
     def clear(self):
         self.__cache__.clear()
+
+
+class resolver_frame(object):
+    __slots__ = ("atom", "choice_point", "mode",)
+    
+    def __init__(self, atom, choice_point, mode):
+        self.atom = atom
+        self.choice_point = choice_point
+        self.mode = mode
+    
+    def __str__(self):
+        return "frame: mode %r: atom %r: choice %r, current %s" % \
+            (self.mode, self.atom, self.choice_point, self.current_pkg)
+
+    @property
+    def current_pkg(self):
+        try:
+            return self.choice_point.current_pkg
+        except ValueError:
+            return NOne
+
 
 class merge_plan(object):
 
@@ -295,7 +317,7 @@ class merge_plan(object):
                     else:
                         # XXX this is faulty for rdepends/prdepends most likely
 
-                        if current_stack[index][2] == attr:
+                        if current_stack[index].mode == attr:
                             # contained rdepends cycle... ignore it.
                             failure = []
                         else:
@@ -422,7 +444,7 @@ class merge_plan(object):
         if l:
             if current_stack:
                 dprint("pre-solved %s%s, [%s] [%s]",
-                       (((depth*2) + 1)*" ", atom, current_stack[-1][0],
+                       (((depth*2) + 1)*" ", atom, current_stack[-1].atom,
                         ", ".join(str(x) for x in l)))
             else:
                 dprint("pre-solved %s%s, [%s]",
@@ -437,7 +459,7 @@ class merge_plan(object):
             if not choices:
                 s = 'first level'
                 if current_stack:
-                    s = current_stack[-1][0]
+                    s = current_stack[-1].atom
                 dprint("filtering    %s%s  [%s] reduced it to no matches",
                        (depth * 2 * " ", atom, s))
                 matches = None
@@ -448,7 +470,7 @@ class merge_plan(object):
                 self.insoluble.add(atom)
             s = 'first level'
             if current_stack:
-                s = current_stack[-1][0]
+                s = current_stack[-1].atom
             dprint("processing   %s%s  [%s] no matches",
                    (depth *2 * " ", atom, s))
             return [atom]
@@ -459,15 +481,15 @@ class merge_plan(object):
 
         if current_stack:
             if limit_to_vdb:
-                dprint("processing   %s%s  [%s] vdb bound",
-                       (depth *2 * " ", atom, current_stack[-1][0]))
+                dprint("processing   %s%s  [%s]; mode %s vdb bound",
+                       (depth *2 * " ", atom, current_stack[-1].atom, mode))
             else:
-                dprint("processing   %s%s  [%s]",
-                       (depth *2 * " ", atom, current_stack[-1][0]))
+                dprint("processing   %s%s  [%s]; mode %s",
+                       (depth *2 * " ", atom, current_stack[-1].atom, mode))
         else:
             dprint("processing   %s%s", (depth *2 * " ", atom))
 
-        current_stack.append([atom, choices, mode])
+        current_stack.append(resolver_frame(atom, choices, mode))
         saved_state = self.state.current_state()
 
         blocks = []
@@ -571,7 +593,7 @@ class merge_plan(object):
                 l = self.state.add_provider(choices, x)
                 if l and l != [x]:
                     if len(current_stack) > 1:
-                        if not current_stack[-2][0].match(x):
+                        if not current_stack[-2].atom.match(x):
                             print "provider conflicted... how?"
 #                            import pdb;pdb.set_trace()
 #                            print "should do something here, something sane..."

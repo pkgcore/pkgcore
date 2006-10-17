@@ -22,6 +22,9 @@ pkgcore 0.2:
   * rewritten plugins system, register_plugins is no longer used.
   
   * paludis flat_list cache read/write support.
+
+  * portage flat_list cache write support (cache used for
+    $PORTDIR/metadata/sync)
   
   * pebuild/pregen/pclone_cache: heavy UI cleanup.
   
@@ -43,8 +46,10 @@ pkgcore 0.2:
   * expanded test coverage.
   
   * merged standalone test runner into setup.py; prefered way of running it is
-    python setup.py test
-    now.
+    ``python setup.py test`` now.
+
+  * OrRestriction cnf_solutions generation now properly honors OrRestriction 
+    ordering.
 
 pkgcore 0.1.2:
 

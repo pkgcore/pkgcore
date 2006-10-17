@@ -37,10 +37,6 @@ Rough TODO
   - metadata.database._parse_data
   - posixpath (os.path)
 
-- Rework digest api to allow running checksums in parallel.
-  Meaning: don't load the file three times for applying three checksums.
-  Need to work out how to do this with fchksum and the "size" checksum.
-
 - pkgcore.fetchable.__init__: __eq__/__hash__
 
 - get the tree clean of direct /var/db/pkg access
@@ -116,8 +112,5 @@ Rough TODO
 
 - pkgcore.ebuild.gpgprofile: 
   Same as above.
-
-- pkgcore.fetch.bundled_lib:
-  clean this beast up.
 
 - locking unification.  see plugins for an example of why it's needed

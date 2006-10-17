@@ -273,8 +273,12 @@ class merge_plan(object):
                          depth=0, drop_cycles=False):
         failure = []
         additions, blocks, = [], []
-        dprint("rdepends:    %s%s: started: %s",
-               (depth *2 * " ", atom, choices.current_pkg))
+        if attr == "post_rdepends":
+            dprint("prdepends:   %s%s: started: %s",
+                (depth *2 * " ", atom, choices.current_pkg))
+        else:
+            dprint("%s:    %s%s: started: %s",
+                (attr, depth *2 * " ", atom, choices.current_pkg))
         for ratom_potentials in depset:
             failure = []
             for ratom in ratom_potentials:

@@ -33,7 +33,7 @@ default_ldpath = ('/lib', '/lib64', '/lib32',
 def collapse_envd(base):
     pjoin = os.path.join
 
-    collapsed_d = {"LDPATH":list(default_ldpath)}
+    collapsed_d = {}
     for x in sorted(listdir_files(base)):
         if x.endswith(".bak") or x.endswith("~") or x.startswith("._cfg") \
             or len(x) <= 2 or not x[0:2].isdigit():
@@ -43,8 +43,6 @@ def collapse_envd(base):
         for k, v in d.iteritems():
             collapsed_d.setdefault(k, []).append(v)
         del d
-    
-    collapsed_d["LDPATH"] = stable_unique(collapsed_d)
     
     loc_incrementals = set(incrementals)
     loc_colon_parsed = set(colon_parsed)
@@ -92,20 +90,24 @@ def string_collapse_envd(envd_dict, incrementals, colon_incrementals):
             envd_dict[k] = ' '.join(v)
 
 
+def update_ldso(ld_search_path, offset='/'):
+    # we do an atomic rename instead of open and write quick
+    # enough (avoid the race iow)
+    fp = os.path.join(offset, 'etc', 'ld.so.conf')
+    new_f = AtomicWriteFile(fp)
+    new_f.write("# automatically generated, edit env.d files instead\n")
+    new_f.writelines(x.strip()+"\n" for x in ld_search_path)
+    new_f.close()
+    
+
 def raw_env_update(engine, cset):
     pjoin = os.path.join
     offset = engine.offset
     d, inc, colon = collapse_envd(pjoin(offset, "etc/env.d"))
 
-    if "LDPATH" in d:
-        # we do an atomic rename instead of open and write quick
-        # enough (avoid the race iow)
-        fp = pjoin(offset, "etc", "ld.so.conf")
-        new_f = AtomicWriteFile(fp)
-        new_f.write("# automatically generated, edit env.d files instead\n")
-        new_f.writelines(x.strip()+"\n" for x in d["LDPATH"])
-        new_f.close()
-        del d["LDPATH"]
+    l = d.pop("LDPATH", None)
+    if l is not None:
+        update_ldso(l, engine.offset)
 
     string_collapse_envd(d, inc, colon)
 

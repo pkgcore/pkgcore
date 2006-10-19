@@ -120,12 +120,11 @@ class package(ebuild_src.base):
 
 
 def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
-    if (engine_inst.mode in (engine.REPLACING_MODE, engine.INSTALL_MODE)
+    if (engine_inst.mode in (engine.REPLACE_MODE, engine.INSTALL_MODE)
         and pkg == engine_inst.new and pkg.repo is engine_inst.new.repo):
         if not pkg_uses_default_preinst(pkg):
-            engine_inst.add_triggers(
-                "pre_merge",
-                ebuild_triggers.preinst_contents_reset_trigger(format_op_inst))
+            t = ebuild_triggers.preinst_contents_reset(format_op_inst)
+            t.register(engine_inst)
 
 
 def _generic_format_install_op(self, pkg, domain_settings, **kwds):

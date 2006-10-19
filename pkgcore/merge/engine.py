@@ -11,19 +11,20 @@ core engine for livefs modifications
 # post merge triggers
 # ordering?
 
-import os, errno
+import operator
 
 from pkgcore.fs import contents
 from pkgcore.fs import gen_obj as gen_fs_obj
 from pkgcore.util.mappings import LazyValDict, ImmutableDict, StackedDict
 from pkgcore.util import currying
-from pkgcore.merge import triggers, errors
+from pkgcore.plugin import get_plugins, get_plugin
+from pkgcore.merge import errors
 from pkgcore.ebuild import triggers as ebuild_triggers
 from pkgcore.interfaces import observer as observer_mod
+from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
 
-REPLACING_MODE = 0
-INSTALL_MODE = 1
-UNINSTALL_MODE = 2
+from pkgcore.util.demandload import demandload
+demandload(globals(), "errno os")
 
 
 def scan_livefs(cset):
@@ -50,33 +51,6 @@ class MergeEngine(object):
             "sanity_check", "pre_unmerge", "unmerge", "post_unmerge", "final"])
     replace_hooks = dict((x, []) for x in set(
             install_hooks.keys() + uninstall_hooks.keys()))
-
-    install_hooks["merge"].append(triggers.merge_trigger)
-    uninstall_hooks["unmerge"].append(triggers.unmerge_trigger)
-    replace_hooks["merge"].append(triggers.merge_trigger)
-    replace_hooks["unmerge"].append(triggers.unmerge_trigger)
-    install_hooks["post_merge"].append(triggers.ldconfig_trigger)
-    uninstall_hooks["post_unmerge"].append(triggers.ldconfig_trigger)
-
-    # this should be a symlink update only
-    for k in ("post_merge", "post_unmerge"):
-        replace_hooks[k].extend(
-            [ebuild_triggers.env_update_trigger, triggers.ldconfig_trigger])
-    del k
-
-    replace_hooks["pre_unmerge"].append(
-        ebuild_triggers.config_protect_trigger_uninstall)
-    uninstall_hooks["pre_unmerge"].append(
-        ebuild_triggers.config_protect_trigger_uninstall)
-
-    # break this down into configured, right now hardcoded.
-    l = [
-        triggers.fix_default_gid, triggers.fix_default_uid,
-        triggers.fix_special_bits_world_writable,
-        triggers.notice_world_writable]
-    replace_hooks["sanity_check"].extend(l)
-    install_hooks["sanity_check"].extend(l)
-    del l
 
     install_csets = {"install_existing":"get_install_livefs_intersect"}
     uninstall_csets = {
@@ -129,8 +103,16 @@ class MergeEngine(object):
         if offset is None:
             offset = "/"
         self.offset = offset
-        for k, v in hooks.iteritems():
-            self.add_triggers(k, *v)
+
+        # merge in default triggers first.
+        for trigger in get_plugins('triggers'):
+            t = trigger()
+            t.register(self)
+
+        # merge in overrides
+        for hook, triggers in hooks.iteritems():
+            for trigger in triggers:
+                self.add_trigger(hook, trigger)
 
         self.regenerate_csets()
         for x in hooks.keys():
@@ -151,11 +133,7 @@ class MergeEngine(object):
         hooks = dict(
             (k, [y() for y in v])
             for (k, v) in cls.install_hooks.iteritems())
-        # mild hack.
-        o = ebuild_triggers.ConfigProtectInstall()
-        t = o.triggers
-        hooks["pre_merge"].append(t[0])
-        hooks["post_merge"].append(t[1])
+
         csets = dict(cls.install_csets)
         if "new_cset" not in csets:
             csets["new_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
@@ -218,10 +196,7 @@ class MergeEngine(object):
         hooks = dict(
             (k, [y() for y in v])
             for (k, v) in cls.replace_hooks.iteritems())
-        o = ebuild_triggers.ConfigProtectInstall()
-        t = o.triggers
-        hooks["pre_merge"].append(t[0])
-        hooks["post_merge"].append(t[1])
+
         csets = dict(cls.replace_csets)
 
         for v, k in ((old, "old_cset"), (new, "new_cset")):
@@ -229,7 +204,7 @@ class MergeEngine(object):
                 csets[k] = currying.post_curry(cls.get_pkg_contents, v)
 
         o = cls(
-            REPLACING_MODE, hooks, csets, cls.replace_csets_preserve,
+            REPLACE_MODE, hooks, csets, cls.replace_csets_preserve,
             observer, offset=offset)
 
         if offset:
@@ -242,19 +217,6 @@ class MergeEngine(object):
         o.old = old
         o.new = new
         return o
-
-    def execute_hook(self, hook):
-        """
-        execute any triggers bound to a hook point
-        """
-        self.regenerate_csets()
-        for x in self.hooks[hook]:
-            # error checking needed here.
-            self.observer.trigger_start(hook, x)
-            try:
-                x(self, self.csets)
-            finally:
-                self.observer.trigger_end(hook, x)
 
     def regenerate_csets(self):
         """
@@ -295,29 +257,37 @@ class MergeEngine(object):
             raise TypeError("cset_name must be a string")
         self.cset_sources[cset_name] = func
 
-
-    def add_triggers(self, hook_name, *triggerseq):
+    def add_trigger(self, hook_name, trigger):
         """
         register a L{pkgcore.merge.triggers.trigger} instance to be executed
 
         @param hook_name: engine step to hook the trigger into
-        @param triggerseq: L{triggers<pkgcore.merge.triggers.trigger>} to add
+        @param trigger: L{triggers<pkgcore.merge.triggers.base>} to add
         """
         if hook_name not in self.hooks:
             raise KeyError("%s isn't a known hook" % hook_name)
 
-        for x in triggerseq:
-            for rcs in x.required_csets:
+        if trigger.required_csets is not None:
+            for rcs in trigger.required_csets:
                 if rcs not in self.cset_sources:
                     if isinstance(rcs, basestring):
-                        raise errors.TriggerUnknownCset(x, rcs)
-#					elif isinstance(rcs, (tuple, list)):
-#						updates.update([rcs])
-#					elif not callable(rcs):
-#						raise TriggerUnknownCset(x, rcs)
+                        raise errors.TriggerUnknownCset(trigger, rcs)
 
-        for x in triggerseq:
-            x.register(hook_name, self.hooks[hook_name])
+        self.hooks[hook_name].append(trigger)
+
+    def execute_hook(self, hook):
+        """
+        execute any triggers bound to a hook point
+        """
+        self.regenerate_csets()
+        for trigger in sorted(self.hooks[hook],
+            key=operator.attrgetter("priority")):
+            # error checking needed here.
+            self.observer.trigger_start(hook, trigger)
+            try:
+                trigger(self, self.csets)
+            finally:
+                self.observer.trigger_end(hook, trigger)
 
     @staticmethod
     def generate_offset_cset(engine, csets, cset_generator):

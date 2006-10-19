@@ -11,6 +11,7 @@ from pkgcore.repository import prototype, errors
 #needed to grab the PN
 from pkgcore.ebuild.cpv import CPV as cpv
 from pkgcore.util.currying import partial
+from pkgcore.merge import triggers
 from pkgcore.plugin import get_plugin
 from pkgcore.util.mappings import DictMixin
 from pkgcore.util.osutils import listdir_dirs, listdir_files
@@ -22,7 +23,6 @@ from pkgcore.config import ConfigHint
 from pkgcore.util.demandload import demandload
 demandload(globals(),
            "pkgcore.merge:engine "
-           "pkgcore.merge.triggers:SimpleTrigger "
            "pkgcore.fs.livefs:scan "
            "pkgcore.interfaces.data_source:data_source "
            "pkgcore.repository:wrapper "
@@ -32,19 +32,26 @@ demandload(globals(),
            "errno ")
 
 
-def force_unpack_trigger(op, engine_inst, cset):
-    op.setup_workdir()
-    merge_contents = get_plugin("fs_ops.merge_contents")
-    merge_contents(cset, offset=op.env["D"])
-    cset.clear()
-    cset.update(scan(op.env["D"], offset=op.env["D"]))
+class force_unpacking(triggers.base):
+    
+    required_csets = ('install',)
+    _hooks = ('sanity_check',)
+    _priority = 5
+    _label = 'forced decompression'
+    _engine_type = triggers.INSTALLING_MODES
+    
+    def __init__(self, format_op):
+        self.format_op = format_op
 
-def generic_register(label, trigger, hook_name, triggers_list):
-    for x in triggers_list:
-        if x.label == label:
-            break
-    else:
-        triggers_list.insert(0, trigger)
+    def trigger(self, engine, cset):
+        op = self.format_op
+        op.setup_workdir()
+        op.setup_workdir()
+        merge_contents = get_plugin("fs_ops.merge_contents")
+        merge_contents(cset, offset=op.env["D"])
+        cset.clear()
+        cset.update(scan(op.env["D"],
+            offset=op.env["D"]))
 
 
 def wrap_factory(klass, *args, **kwds):
@@ -55,14 +62,10 @@ def wrap_factory(klass, *args, **kwds):
                                  engine_inst):
             if engine.UNINSTALL_MODE != engine_inst.mode and \
                 pkg == engine_inst.new and \
+                pkg.repo is engine_inst.new.repo and \
                 not pkg_uses_default_preinst(pkg):
-
-                label = "forced_decompression"
-                t = SimpleTrigger("install",
-                    partial(force_unpack_trigger, format_op_inst),
-                    register_func=partial(generic_register, label),
-                    label=label)
-                engine_inst.add_triggers("sanity_check", t)
+                t = force_unpacking(op_inst)
+                t.register(engine_inst)
 
             klass._add_format_triggers(
                 self, pkg, op_inst, format_op_inst, engine_inst)

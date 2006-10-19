@@ -2,7 +2,7 @@
 Rough TODO
 ==========
 
-- not hugely important, *but... make a cpython version of SlottedDict from
+- not hugely important, but... make a cpython version of SlottedDict from
   pkgcore.util.obj; 3% reduction for full repo walk, thus not a real huge
   concern atm.
 

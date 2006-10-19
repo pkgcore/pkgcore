@@ -12,10 +12,11 @@ __all__ = [
 
 from pkgcore.merge import errors
 from pkgcore.util.demandload import demandload
-demandload(globals(), """os
-    pkgcore.plugin:get_plugin
-    pkgcore.spawn:spawn""")
+demandload(globals(), "os "
+    "pkgcore.plugin:get_plugin "
+    "pkgcore.spawn:spawn ")
 import pkgcore.os_data
+
 
 class trigger(object):
 

@@ -54,6 +54,9 @@ class Test_uri_list(TestCase):
         mirror = fetch.mirror(["me", "WI"], "asdf")
         self.uril.add_mirror(mirror)
         self.assertEqual(list(self.uril), ["me/cows", "WI/cows"])
+        self.uril.add_mirror(mirror, "foon/boon")
+        self.assertEqual(list(self.uril),
+            ["me/cows", "WI/cows", "me/foon/boon", "WI/foon/boon"])
     
     def test_uris(self):
         self.uril.add_uri("blar")

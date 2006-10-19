@@ -99,7 +99,7 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
             if tier not in mirrors:
                 raise UnknownMirror(tier, remaining_uri)
 
-            uris.add_mirror(mirrors[tier])
+            uris.add_mirror(mirrors[tier], remaining_uri)
 
         else:
             uris.add_uri(uri)

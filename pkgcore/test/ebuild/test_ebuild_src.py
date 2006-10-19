@@ -146,9 +146,9 @@ class test_base(TestCase):
         parent = self.make_parent(_parent_repo=repo, mirrors={
             'mirror1': mirror})
         
-        f = self.get_pkg({'SRC_URI': 'mirror://mirror1/monkey.tgz'},
+        f = self.get_pkg({'SRC_URI': 'mirror://mirror1/foon/monkey.tgz'},
             repo=parent).fetchables
-        self.assertEqual(list(f[0].uri), ['http://boon.com/monkey.tgz'])
+        self.assertEqual(list(f[0].uri), ['http://boon.com/foon/monkey.tgz'])
 
         parent = self.make_parent(_parent_repo=repo, default_mirrors=mirror)
         f = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz'},

@@ -63,6 +63,7 @@ class mirror(object):
     def __repr__(self):
         return "<%s mirror tier=%r>" % (self.__class__, self.mirror_name)
 
+
 class default_mirror(mirror):
     pass
 
@@ -75,10 +76,13 @@ class uri_list(object):
         self._uri_source = []
         self.filename = filename
     
-    def add_mirror(self, mirror_inst):
+    def add_mirror(self, mirror_inst, suburi=None):
         if not isinstance(mirror_inst, mirror):
             raise TypeError("mirror must be a pkgcore.fetch.mirror instance")
-        self._uri_source.append(mirror_inst)
+        if suburi is not None and '/' in suburi:
+            self._uri_source.append((mirror_inst, suburi.lstrip('/')))
+        else:
+            self._uri_source.append(mirror_inst)
     
     def add_uri(self, uri):
         self._uri_source.append(uri)
@@ -91,7 +95,11 @@ class uri_list(object):
         for entry in self._uri_source:
             if isinstance(entry, basestring):
                 yield entry
-            else:
+            elif isinstance(entry, tuple):
+                # mirror with suburi
+                for base_uri in entry[0]:
+                    yield '%s/%s' % (base_uri.rstrip('/'), entry[1])
+            else:    
                 for base_uri in entry:
                     yield "%s/%s" % (base_uri.rstrip('/'), fname)
 

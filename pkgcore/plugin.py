@@ -18,13 +18,12 @@ This is heavily inspired by twisted's plugin system.
 # latter an installed plugin issue. May have to change this if it
 # causes problems.
 
-import errno
 import operator
 import os.path
 
 from pkgcore import plugins
 from pkgcore.util import modules, demandload
-demandload.demandload(globals(), 'logging tempfile')
+demandload.demandload(globals(), 'logging tempfile errno')
 
 
 # Global plugin cache. Mapping of package to package cache, which is a

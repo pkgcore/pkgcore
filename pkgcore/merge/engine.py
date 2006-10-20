@@ -265,7 +265,8 @@ class MergeEngine(object):
         @param trigger: L{triggers<pkgcore.merge.triggers.base>} to add
         """
         if hook_name not in self.hooks:
-            raise KeyError("%s isn't a known hook" % hook_name)
+            raise KeyError("trigger %r's hook %s isn't a known hook" % 
+                (trigger, hook_name))
 
         if trigger.required_csets is not None:
             for rcs in trigger.required_csets:

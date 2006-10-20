@@ -345,10 +345,11 @@ class atom(boolean.AndRestriction):
         if not isinstance(other, self.__class__):
             raise TypeError("other isn't of %s type, is %s" %
                             (self.__class__, other.__class__))
-        c = cmp(self.category, other.category)
-        if c:
-            return c
-        c = cmp(self.package, other.package)
+        for attr in ('category', 'package', 'blocks', 'slot', 'glob'):
+            c = cmp(getattr(self, attr), getattr(other, attr))
+            if c:
+                return c
+        c = cmp(sorted(self.use), sorted(other.use))
         if c:
             return c
         c = cpv.ver_cmp(self.version, self.revision,

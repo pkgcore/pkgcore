@@ -143,7 +143,7 @@ class LazySectionRef(object):
         raise NotImplementedError(self)
 
     def collapse(self):
-        """@returns: a L{CollapsedConfig<pkgcore.config.CollapsedConfig>}."""
+        """@returns: L{pkgcore.config.central.CollapsedConfig}."""
         if self.cached_config is None:
             config = self.cached_config = self._collapse()
             if self.typename is not None and config.type.name != self.typename:

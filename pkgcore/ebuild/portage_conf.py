@@ -14,10 +14,9 @@ from pkgcore.ebuild import const as ebuild_const
 from pkgcore.util.demandload import demandload
 demandload(globals(), "errno pkgcore.config:errors "
     "pkgcore.pkgsets.glsa:SecurityUpgrades "
-    "pkgcore.util.osutils:normpath,abspath "
+    "pkgcore.util.osutils:normpath,abspath,listdir_files "
     "pkgcore.util.file:read_bash_dict,read_dict "
-    "pkgcore.util:bzip2 "
-    "pkgcore.util.osutils:listdir_files ")
+    "pkgcore.util:bzip2 ")
 
 
 def my_convert_hybrid(manager, val, arg_type):
@@ -360,8 +359,7 @@ def config_from_make_conf(location="/etc/"):
             if stat.S_ISREG(st.st_mode):
                 conf_dict[f] = fp
             elif stat.S_ISDIR(st.st_mode):
-                conf_dict[f] = list(pjoin(fp, c) for c in listdir_files(fp)
-                                    if not c.startswith('.'))
+                conf_dict[f + '-dirs'] = fp
 
     new_config['livefs domain'] = basics.DictConfigSection(my_convert_hybrid,
                                                            conf_dict)

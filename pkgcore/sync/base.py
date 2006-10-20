@@ -15,6 +15,9 @@ class syncer(object):
 
     supported_uris = ()
 
+    pkgcore_config_type = ConfigHint(
+        {'path':'str', 'uri':'str'}, typename='syncer')
+
     def __init__(self, path, uri, default_verbosity=0):
         self.verbose = default_verbosity
         self.basedir = path.rstrip(os.path.sep) + os.path.sep
@@ -23,7 +26,7 @@ class syncer(object):
     @staticmethod
     def split_users(raw_uri):
         """
-        @param uri: string uri to split users from; harring::ferringb:pass
+        @param raw_uri: string uri to split users from; harring::ferringb:pass
           for example is local user 'harring', remote 'ferringb',
           password 'pass'
         @return: (local user, remote user, remote pass), defaults to root_uid 

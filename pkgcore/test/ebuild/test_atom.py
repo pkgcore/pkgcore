@@ -135,3 +135,14 @@ class TestAtom(TestCase):
             self.assertEquals(
                 result, that_atom.intersects(this_atom),
                 '%s intersecting %s should be %s' % (that, this, result))
+
+    def test_comparison(self):
+        self.assertNotEquals(atom.atom('cat/pkg:1'), atom.atom('cat/pkg'))
+        self.assertNotEquals(atom.atom('cat/pkg[foo]'), atom.atom('cat/pkg'))
+        self.assertNotEquals(atom.atom('cat/pkg[foo]'),
+                             atom.atom('cat/pkg[-foo]'))
+        self.assertEquals(atom.atom('cat/pkg[foo,-bar]'),
+                          atom.atom('cat/pkg[-bar,foo]'))
+        self.assertNotEquals(atom.atom('cat/pkg'), atom.atom('!cat/pkg'))
+        self.assertNotEquals(atom.atom('<cat/pkg-2'), atom.atom('>cat/pkg-2'))
+        self.assertNotEquals(atom.atom('=cat/pkg-2*'), atom.atom('=cat/pkg-2'))

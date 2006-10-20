@@ -25,6 +25,5 @@ class svn_syncer(base.ExternalSyncer):
         
     def _sync(self, verbosity, output_fd):
         return 0 == self._spawn([self.binary_path, "co",
-            self.uri, self.basedir],
-            fd_pipes={1:output_fd, 2:output_fd, 0:0})
+            self.uri, self.basedir], {1:output_fd, 2:output_fd, 0:0})
     

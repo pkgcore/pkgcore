@@ -28,7 +28,12 @@ from pkgcore.ebuild import const
 from pkgcore.ebuild.profiles import incremental_negations
 from pkgcore.util.parserestrict import parse_match
 
-demandload(globals(), "warnings")
+demandload(
+    globals(),
+    'warnings '
+    'errno '
+    'pkgcore.util:osutils '
+    )
 
 class MissingFile(BaseException):
     def __init__(self, filename, setting):
@@ -124,9 +129,13 @@ class domain(pkgcore.config.domain.domain):
         'repositories': 'refs:repo', 'vdb': 'refs:repo',
         'name': 'str',
         }
-    for _thing in list(const.incrementals) + ['package.unmask', 'bashrc'] + [
-        'package.mask', 'package.keywords', 'package.license', 'package.use']:
+    for _thing in list(const.incrementals) + ['bashrc']:
         _types[_thing] = 'list'
+    for _thing in [
+        'package.mask', 'package.keywords', 'package.license', 'package.use',
+        'package.unmask']:
+        _types[_thing] = 'list'
+        _types[_thing + '-dirs'] = 'list'
     for _thing in ['root', 'CHOST', 'CFLAGS', 'PATH', 'PORTAGE_TMPDIR',
                    'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR']:
         _types[_thing] = 'str'
@@ -159,19 +168,28 @@ class domain(pkgcore.config.domain.domain):
             ("package.license", pkg_license, package_keywords_splitter),
             ("package.use", pkg_use, package_keywords_splitter)):
 
-            if key in settings:
-                for fp in settings[key]:
-                    # unecessary stating.
-                    if os.path.exists(fp):
-                        try:
-                            val.extend(action(x) for x in iter_read_bash(fp))
-                        except (IOError, OSError, ValueError), e:
-                            raise Failure(
-                                "failed reading '%s': %s" % (fp, str(e)))
-                    else:
+            for fp in settings.pop(key, ()):
+                try:
+                    val.extend(action(x) for x in iter_read_bash(fp))
+                except (IOError, OSError), e:
+                    if e.errno == errno.ENOENT:
                         raise MissingFile(settings[key], key)
-                del settings[key]
-
+                    raise Failure("failed reading '%s': %s" % (fp, e))
+                except ValueError, e:
+                    raise Failure("failed reading '%s': %s" % (fp, e))
+            for dirpath in settings.pop('%s-dirs' % (key,), ()):
+                try:
+                    files = osutils.listdir_files(dirpath)
+                except (OSError, IOError), e:
+                    raise Failure('failed listing %r: %s' % (dirpath, e))
+                for fp in files:
+                    if fp.startswith('.'):
+                        continue
+                    fp = os.path.join(dirpath, fp)
+                    try:
+                        val.extend(action(x) for x in iter_read_bash(fp))
+                    except (IOError, OSError, ValueError), e:
+                        raise Failure('failed reading %r: %r' % (fp, str(e)))
 
         self.name = name
         settings.setdefault("PKGCORE_DOMAIN", name)

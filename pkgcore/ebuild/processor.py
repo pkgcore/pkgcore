@@ -78,7 +78,7 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
     """
 
     if sandbox is None:
-        sandbox = pkgcore.spawn.sandbox_capable
+        sandbox = pkgcore.spawn.is_sandbox_capable()
 
     if not fakeroot:
         for x in inactive_ebp_list:
@@ -170,7 +170,7 @@ class EbuildProcessor:
                     "uid":portage_uid, "gid":portage_gid,
                     "groups":[portage_gid], "umask":002})
         else:
-            if pkgcore.spawn.userpriv_capable:
+            if pkgcore.spawn.is_userpriv_capable():
                 spawn_opts.update({"gid":portage_gid,
                                    "groups":[0, portage_gid]})
             self.__userpriv = False
@@ -187,7 +187,7 @@ class EbuildProcessor:
                    for x in ("BASHRC", "BASH_ENV"))
         args = []
         if sandbox:
-            if not pkgcore.spawn.sandbox_capable:
+            if not pkgcore.spawn.is_sandbox_capable():
                 raise ValueError("spawn lacks sandbox capabilities")
             if fakeroot:
                 # XXX improve this (Exception subclass etc)
@@ -197,9 +197,8 @@ class EbuildProcessor:
 #			env.update({"SANDBOX_DEBUG":"1", "SANDBOX_DEBUG_LOG":"/var/tmp/test"})
 
         elif fakeroot:
-            if not pkgcore.spawn.fakeroot_capable:
+            if not pkgcore.spawn.is_fakeroot_capable():
                 raise ValueError("spawn lacks fakeroot capabilities")
-            assert pkgcore.spawn.fakeroot_capable
             self.__fakeroot = True
             spawn_func = pkgcore.spawn.spawn_fakeroot
             args.append(save_file)

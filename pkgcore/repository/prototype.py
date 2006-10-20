@@ -211,7 +211,6 @@ class tree(object):
         for cp, t in self.versions.iteritems():
             for v in t:
                 yield self.package_class(cp[0], cp[1], v)
-        return
 
     def __len__(self):
         return sum(len(v) for v in self.versions.itervalues())

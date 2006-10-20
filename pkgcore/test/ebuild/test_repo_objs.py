@@ -40,12 +40,14 @@ class TestMetadataXml(TestCase):
         names = ("foo@gmail.com", "monkeybone@gmail.com")
         mx = self.get_metadata_xml(maintainers=tuple(
             (x,) for x in names))
-        self.assertEqual(sorted(names), sorted(mx.maintainers))
+        self.assertEqual(sorted(names), sorted(str(m) for m in mx.maintainers))
         # test email/name integration.
         mx = self.get_metadata_xml(
             maintainers=(("funkymonkey@gmail.com", "funky monkey"),))
         self.assertEqual(("funky monkey <funkymonkey@gmail.com>",),
-            mx.maintainers)
+                         tuple(str(m) for m in mx.maintainers))
+        self.assertEqual("funkymonkey@gmail.com", mx.maintainers[0].email)
+        self.assertEqual("funky monkey", mx.maintainers[0].name)
 
     def test_herds(self):
         # empty...

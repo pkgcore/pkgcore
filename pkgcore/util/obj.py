@@ -107,6 +107,20 @@ def DelayedInstantiation_kls(kls, *a, **kwd):
 
 class_cache = {}
 def DelayedInstantiation(resultant_kls, func, *a, **kwd):
+    """Generate an objects that does not get initialized before it is used.
+
+    The returned object can be passed around without triggering
+    initialization. The first time it is actually used (an attribute
+    is accessed) it is initialized once.
+
+    The returned "fake" object cannot completely reliably mimic a
+    builtin type. It will usually work but some corner cases may fail
+    in confusing ways. Make sure to test if DelayedInstantiation has
+    no unwanted side effects.
+
+    @param resultant_kls: type object to fake an instance of.
+    @param func: callable, the return value is used as initialized object.
+    """
     o = class_cache.get(resultant_kls, None)
     if o is None:
         o = make_kls(resultant_kls)

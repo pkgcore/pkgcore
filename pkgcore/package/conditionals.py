@@ -39,7 +39,7 @@ class PackageWrapper(wrapper):
             for revaluating the pkg_instance, using the result
             instead of the wrapped pkgs attr.
         @param build_callback: None, or a callable to be used to get a
-            L{pkgcore.interfaces.build.base} instance
+            L{pkgcore.interfaces.format.build_base} instance
         """
 
         if initial_settings is None:

@@ -18,7 +18,8 @@ from pkgcore.ebuild.processor import \
     expected_ebuild_env, chuck_UnhandledCommand
 from pkgcore.os_data import portage_gid
 from pkgcore.util.osutils import ensure_dirs, normpath
-from pkgcore.spawn import spawn_bash, spawn, sandbox_capable, fakeroot_capable
+from pkgcore.spawn import (
+    spawn_bash, spawn, is_sandbox_capable, is_fakeroot_capable)
 from pkgcore.util.currying import post_curry, pretty_docs
 from pkgcore.os_data import xargs
 from pkgcore.ebuild.const import eapi_capable
@@ -223,8 +224,8 @@ class ebd(object):
             for install phase, and is mutually exclusive with sandbox
         """
         ebd = request_ebuild_processor(userpriv=(self.userpriv and userpriv),
-            sandbox=(self.sandbox and sandbox and sandbox_capable),
-            fakeroot=(self.fakeroot and fakeroot and fakeroot_capable))
+            sandbox=(self.sandbox and sandbox and is_sandbox_capable()),
+            fakeroot=(self.fakeroot and fakeroot and is_fakeroot_capable()))
         try:
             ebd.prep_phase(phase, self.env, sandbox=self.sandbox,
                            logging=self.logging)

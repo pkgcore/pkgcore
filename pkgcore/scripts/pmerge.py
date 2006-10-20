@@ -106,7 +106,7 @@ def parse_atom(token, repo, return_none=False):
     atom otherwise.
 
     @param token: string to convert.
-    @param repo: L{pkgcore.prototype.tree} instance to search in.
+    @param repo: L{pkgcore.repository.prototype.tree} instance to search in.
     @param return_none: indicates if no matches raises or returns C{None}
 
     @return: an atom or C{None}.

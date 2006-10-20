@@ -302,7 +302,7 @@ class ParseError(Exception):
 
     def __init__(self, s, token=None):
         if token is not None:
-            Exception.__init__(self, "%s is unparesable\nflagged token- %s" %
+            Exception.__init__(self, "%s is unparseable\nflagged token- %s" %
                                (s, token))
         else:
             Exception.__init__(self, "%s is unparseable" % (s,))

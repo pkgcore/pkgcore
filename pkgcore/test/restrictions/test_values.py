@@ -323,3 +323,13 @@ class FunctionRestrictionTest(TestCase):
                 # Just check this does not raise
                 self.assertTrue(str(restrict))
                 self.assertTrue(repr(restrict))
+
+
+class AnyMatchTest(TestCase):
+
+    # Most of AnyMatch is tested through test_restriction.
+
+    def test_force(self):
+        restrict = values.AnyMatch(values.AlwaysTrue)
+        self.assertTrue(restrict.force_True(None, None, range(2)))
+        self.assertFalse(restrict.force_False(None, None, range(2)))

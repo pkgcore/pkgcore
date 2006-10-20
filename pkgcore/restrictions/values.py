@@ -624,6 +624,22 @@ class FunctionRestriction(base):
             self.__class__.__name__, self.func, self.negate, id(self))
 
 
+class AnyMatch(restriction.AnyMatch):
+
+    __slots__ = ()
+
+    def __init__(self, childrestriction, negate=False):
+        # Hack: skip calling base.__init__. Doing this would make
+        # restriction.base.__init__ run twice.
+        restriction.AnyMatch.__init__(
+            self, childrestriction, restriction.value_type, negate=negate)
+
+    def force_True(self, pkg, attr, val):
+        return self.match(val)
+
+    def force_False(self, pkg, attr, val):
+        return not self.match(val)
+
 
 # "Invalid name" (pylint uses the module const regexp, not the class regexp)
 # pylint: disable-msg=C0103
@@ -635,9 +651,6 @@ OrRestriction = restriction.curry_node_type(boolean.OrRestriction,
 
 AlwaysBool = restriction.curry_node_type(restriction.AlwaysBool,
                                          restriction.value_type)
-
-AnyMatch = restriction.curry_node_type(restriction.AnyMatch,
-                                       restriction.value_type)
 
 AlwaysTrue = AlwaysBool(negate=True)
 AlwaysFalse = AlwaysBool(negate=False)

@@ -16,7 +16,6 @@ import os, atexit, signal, sys
 
 from pkgcore.util.osutils import listdir
 from pkgcore.util.mappings import ProtectedDict
-from pkgcore.util.obj import DelayedInstantiation
 
 from pkgcore.const import (
     BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH)
@@ -62,7 +61,7 @@ def spawn_bash(mycommand, debug=False, opt_name=None, **keywords):
 def spawn_sandbox(mycommand, opt_name=None, **keywords):
     """spawn the command under sandboxed"""
 
-    if not sandbox_capable:
+    if not is_sandbox_capable():
         return spawn_bash(mycommand, opt_name=opt_name, **keywords)
     args = [SANDBOX_BINARY]
     if not opt_name:
@@ -491,26 +490,41 @@ class CommandNotFound(ExecutionFailure):
             self, "CommandNotFound Exception: Couldn't find '%s'" % (command,))
         self.command = command
 
-# JIT'd capabilities
+# cached capabilities
 
-def _determine_fakeroot_usable():
+def is_fakeroot_capable(force=False):
+    if not force:
+        try:
+            return is_fakeroot_capable.cached_result
+        except AttributeError:
+            pass
     if not (os.path.exists(FAKED_PATH) and os.path.exists(LIBFAKEROOT_PATH)):
-        return False
-    try:
-        r, s = spawn_get_output(["fakeroot", "--version"],
-            fd_pipes={2:1, 1:1})
-        return (r == 0) and (len(s) == 1) and ("version 1." in s[0])
-    except ExecutionFailure:
-        return False
+        res = False
+    else:
+        try:
+            r, s = spawn_get_output(["fakeroot", "--version"],
+                fd_pipes={2:1, 1:1})
+            res = (r == 0) and (len(s) == 1) and ("version 1." in s[0])
+        except ExecutionFailure:
+            res = False
+    is_fakeroot_capable.cached_result = res
+    return res
 
-def _determine_sandbox_usable():
-    return os.path.isfile(SANDBOX_BINARY) and \
-        os.access(SANDBOX_BINARY, os.X_OK)
+def is_sandbox_capable(force=False):
+    if not force:
+        try:
+            return is_sandbox_capable.cached_result
+        except AttributeError:
+            pass
+    res = os.path.isfile(SANDBOX_BINARY) and os.access(SANDBOX_BINARY, os.X_OK)
+    is_sandbox_capable.cached_result = res
+    return res
 
-def _determine_userpriv_usable():
-    return os.getuid() == 0
-
-sandbox_capable = DelayedInstantiation(bool, _determine_sandbox_usable)
-userpriv_capable = DelayedInstantiation(bool, _determine_userpriv_usable)
-fakeroot_capable = DelayedInstantiation(bool, _determine_fakeroot_usable)
-
+def is_userpriv_capable(force=False):
+    if not force:
+        try:
+            return is_userpriv_capable.cached_result
+        except AttributeError:
+            pass
+    res = is_userpriv_capable.cached_result = (os.getuid() == 0)
+    return res

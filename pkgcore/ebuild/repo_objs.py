@@ -14,19 +14,52 @@ demandload(globals(),
     "errno ")
 
 
-class MetadataXml(object):
+class Maintainer(object):
+
+    """Data on a single maintainer.
+
+    At least one of email and name is not C{None}.
+
+    @type email: C{unicode} object or C{None}
+    @ivar email: email address.
+    @type name: C{unicode} object or C{None}
+    @ivar name: full name
+    @type description: C{unicode} object or C{None}
+    @ivar description: description of maintainership.
     """
-    metadata.xml parsed reseults
-    
+
+    __slots__ = ('email', 'description', 'name')
+
+    def __init__(self, email=None, name=None, description=None):
+        if email is None and name is None:
+            raise ValueError('need at least one of name and email')
+        self.email = email
+        self.name = name
+        self.description = description
+
+    def __str__(self):
+        if self.name is not None:
+            if self.email is not None:
+                res = '%s <%s>' % (self.name, self.email)
+            else:
+                res = self.name
+        else:
+            res = self.email
+        if self.description is not None:
+            return '%s (%s)' % (res, self.description)
+        return res
+
+
+class MetadataXml(object):
+    """metadata.xml parsed results
+
     attributes are set to -1 if unloaded, None if no entry, or the value
     if loaded
-    
     """
-    
+
     __slots__ = ("__weakref__", "_maintainers", "_herds", "_longdescription",
         "_source")
-    
-    
+
     def __init__(self, source):
         self._source = source
 
@@ -45,19 +78,16 @@ class MetadataXml(object):
         tree = etree.parse(source)
         maintainers = []
         for x in tree.findall("maintainer"):
-            name = email = None
+            name = email = description = None
             for e in x:
                 if e.tag == "name":
                     name = e.text
                 elif e.tag == "email":
                     email = e.text
-            if name is not None:
-                if email is not None:
-                    maintainers.append("%s <%s>" % (name, email))
-                else:
-                    maintainers.append(name)
-            elif email is not None:
-                maintainers.append(email)
+                elif e.tag == 'description':
+                    description = e.text
+            maintainers.append(Maintainer(
+                    name=name, email=email, description=description))
 
         self._maintainers = tuple(maintainers)
         self._herds = tuple(str(x.text)

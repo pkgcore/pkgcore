@@ -81,6 +81,13 @@ def parse_envmatch(value):
                 values.StrRegex(value))))
 
 
+def parse_maintainer(value):
+    """Exact match on the email bit of metadata.xml's maintainer data."""
+    return packages.PackageRestriction(
+        'maintainers', values.AnyMatch(values.GetAttrRestriction(
+                'email', values.StrExactMatch(value))))
+
+
 def parse_expression(string):
     """Convert a string to a restriction object using pyparsing."""
     # Two reasons to delay this import: we want to deal if it is
@@ -161,6 +168,7 @@ PARSE_FUNCS = {
     'ownsre': parse_ownsre,
     'environment': parse_envmatch,
     'expr': parse_expression,
+    'maintainer': parse_maintainer,
     }
 
 # This is not just a blind "update" because we really need a config
@@ -173,7 +181,6 @@ for _name, _attr in [
     ('herd', 'herds'),
     ('license', 'license'),
     ('hasuse', 'iuse'),
-    ('maintainer', 'maintainers'),
     ('owns', 'contents'),
     ]:
     PARSE_FUNCS[_name] = parserestrict.comma_separated_containment(_attr)
@@ -277,6 +284,9 @@ class OptionParser(commandline.OptionParser):
             '\'and(not(herd("python")), match("dev-python/*"))\'. '
             'WARNING: currently not completely reliable.')
         # XXX fix the negate stuff and remove that warning.
+        restrict.add_option(
+            '--pkgset', action='append',
+            help='is inside a named set of packages (like "world").')
 
         printable_attrs = ('rdepends', 'depends', 'post_rdepends', 'provides',
                            'use', 'iuse', 'description', 'longdescription',
@@ -315,9 +325,9 @@ class OptionParser(commandline.OptionParser):
         output.add_option('--highlight-dep', action='append', type='match',
                           help='highlight dependencies matching this atom')
 
-    def check_values(self, vals, args):
+    def check_values(self, values, args):
         """Sanity check and postprocess after parsing."""
-        vals, args = commandline.OptionParser.check_values(self, vals, args)
+        vals, args = commandline.OptionParser.check_values(self, values, args)
         # Interpret args with parens in them as --expr additions, the
         # rest as --match additions (since parens are invalid in --match).
         try:
@@ -374,16 +384,8 @@ class OptionParser(commandline.OptionParser):
                 vals.restrict.append(
                     packages.OrRestriction(finalize=True, *val))
 
-        if not vals.restrict:
+        if not vals.restrict and not vals.pkgset:
             self.error('No restrictions specified.')
-        elif len(vals.restrict) == 1:
-            # Single restriction, omit the AndRestriction for a bit of speed
-            vals.restrict = vals.restrict[0]
-        else:
-            # "And" them all together
-            vals.restrict = packages.AndRestriction(finalize=True,
-                                                    *vals.restrict)
-
         return vals, ()
 
 
@@ -416,7 +418,7 @@ def stringify_attr(config, pkg, attr):
         return 'MISSING'
 
     if attr in ('herds', 'iuse', 'maintainers', 'restrict', 'keywords'):
-        return ' '.join(sorted(value))
+        return ' '.join(sorted(str(v) for v in value))
     if attr == 'environment':
         return ''.join(value.get_fileobj())
     return str(value)
@@ -675,6 +677,31 @@ def main(config, options, out, err):
             out.write('repo: %r' % (repo,))
         out.write('restrict: %r' % (options.restrict,))
         out.write()
+
+    # Restrictions that need config.
+    if options.pkgset:
+        setrestrictions = []
+        for pkgset in options.pkgset:
+            try:
+                pkgset = config.pkgset[pkgset]
+            except KeyError:
+                err.write('No pkgset named %r\n' % (pkgset,))
+                err.write('Available sets are %s\n' % (
+                        ', '.join(config.pkgset),))
+                return 1
+            setrestrictions.extend(pkgset)
+        if not setrestrictions:
+            err.write('all specified pkgsets are empty\n')
+            return 1
+        options.restrict.append(packages.OrRestriction(*setrestrictions))
+
+    if len(options.restrict) == 1:
+        # Single restriction, omit the AndRestriction for a bit of speed
+        options.restrict = options.restrict[0]
+    else:
+        # "And" them all together
+        options.restrict = packages.AndRestriction(finalize=True,
+                                                   *options.restrict)
 
     # Run the query
     for repo in repos:

@@ -62,7 +62,7 @@ class ForcedDepends(type):
     either a string (name of preceeding method), or list/tuple
     (proceeding methods).
 
-    L{pkgcore.interfaces.build.base} is a consumer of this metaclass
+    L{pkgcore.interfaces.format.build_base} is a consumer of this metaclass
     to look at for example usage.
     """
     def __call__(cls, *a, **kw):

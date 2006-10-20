@@ -9,7 +9,7 @@ import os, pwd, signal
 
 def capability_based(capable, msg):
     def internal_f(f):
-        if not capable:
+        if not capable():
             f.skip = msg
         return f
     return internal_f
@@ -67,7 +67,7 @@ class SpawnTest(TempDirMixin, TestCase):
 
         os.unlink(fp)
 
-    @capability_based(spawn.sandbox_capable, "sandbox binary wasn't found")
+    @capability_based(spawn.is_sandbox_capable, "sandbox binary wasn't found")
     def test_sandbox(self):
         fp = self.generate_script(
             "pkgcore-spawn-sandbox.sh", "echo $LD_PRELOAD")
@@ -77,7 +77,7 @@ class SpawnTest(TempDirMixin, TestCase):
         os.unlink(fp)
 
 
-    @capability_based(spawn.sandbox_capable, "sandbox binary wasn't found")
+    @capability_based(spawn.is_sandbox_capable, "sandbox binary wasn't found")
     def test_sandbox_empty_dir(self):
         """
         sandbox gets pissy if it's ran from a nonexistant dir
@@ -103,7 +103,8 @@ class SpawnTest(TempDirMixin, TestCase):
             if cwd is not None:
                 os.chdir(cwd)
 
-    @capability_based(spawn.fakeroot_capable, "fakeroot binary wasn't found")
+    @capability_based(spawn.is_fakeroot_capable,
+                      "fakeroot binary wasn't found")
     def test_fakeroot(self):
         try:
             l = pwd.getpwnam("nobody")

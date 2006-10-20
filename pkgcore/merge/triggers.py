@@ -68,8 +68,13 @@ class base(object):
             # bad monkey...
             raise TypeError("%r: %r: _hooks needs to be a sequence" %
                 (self, self._hooks))
+
         for hook in self._hooks:
-            engine.add_trigger(hook, self)
+            try:
+                engine.add_trigger(hook, self)
+            except KeyError:
+                # unknown hook.
+                continue
 
     def _get_csets(self, csets):
         return [csets[x] for x in self.required_csets]

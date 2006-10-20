@@ -186,7 +186,7 @@ class ConfigProtectInstall_rename(triggers.base):
     
     def __init__(self, renames_dict):
         triggers.base.__init__(self)
-        self.renames = {}
+        self.renames = renames_dict
 
     def trigger(self, engine, existing_cset, install_cset):
         pjoin = os.path.join
@@ -261,7 +261,7 @@ class ConfigProtectInstall_restore(triggers.base):
 
     def __init__(self, renames_dict):
         triggers.base.__init__(self)
-        self.renames = {}
+        self.renames = renames_dict
 
     def trigger(self, engine, install_cset):
         for new_entry, old_entry in self.renames.iteritems():

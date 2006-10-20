@@ -41,7 +41,7 @@ root_gid = wheelgid = 0
 if uid == 0:
     secpass = 2
 try:
-    wheelgid = grp.getgrnam("wheel")[2]
+    wheelgid = grp.getgrnam("wheel").gr_gid
     if (not secpass) and (wheelgid in os.getgroups()):
         secpass = 1
 except KeyError:
@@ -52,13 +52,17 @@ except KeyError:
 
 #Discover the uid and gid of the portage user/group
 try:
-    portage_uid = pwd.getpwnam("portage")[2]
-    portage_gid = grp.getgrnam("portage")[2]
+    portage_uid = pwd.getpwnam("portage").pw_uid
+    portage_gid = grp.getgrnam("portage").gr_gid
+    portage_user_groups = tuple(x.gr_name for x in grp.getgrall()
+       if 'portage' in x.gr_mem)
+
     if (secpass == 0):
         secpass = 1
 except KeyError:
     portage_uid = 0
     portage_gid = wheelgid
+    portage_user_groups = []
     print
     print "'portage' user or group missing. Please update baselayout"
     print "and merge portage user(250) and group(250) into your passwd"

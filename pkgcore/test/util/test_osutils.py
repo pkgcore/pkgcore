@@ -112,7 +112,7 @@ class EnsureDirsTest(TempDirMixin, TestCase):
 
     def test_gid(self):
         # abuse the portage group as secondary group
-        portage_gid = grp.getgrnam('portage')[2]
+        portage_gid = grp.getgrnam('portage').gr_gid
         if portage_gid not in os.getgroups():
             raise SkipTest('you are not in the portage group')
         path = os.path.join(self.dir, 'group', 'group')

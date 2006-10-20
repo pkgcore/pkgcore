@@ -22,8 +22,12 @@ class OptionParser(commandline.OptionParser):
 
 def do_sync(config, repos, out, err, force):
     failed = []
+    seen = set()
     for x in repos:
         r = config.repo[x]
+        if r in seen:
+            continue
+        seen.add(r)
         if not r.syncable:
             continue
         out.write("*** syncing %r..." % x)

@@ -105,7 +105,7 @@ class rsync_syncer(base.ExternalSyncer):
         # zip limits to the shortest iterable.
         for count, ip in zip(xrange(self.retries), self._get_ips()):
             o = [self.binary_path,
-                self.uri.replace(self.hostname, ip),
+                self.uri.replace(self.hostname, ip, 1),
                 self.basedir] + opts
 
             ret = self._spawn(o, fd_pipes)

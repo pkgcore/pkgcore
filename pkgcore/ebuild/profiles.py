@@ -245,7 +245,7 @@ class OnDiskProfile(profiles.base):
                 d2 = d.setdefault(a.key, {})
                 o = s[1:]
                 if a in d2:
-                    o = filter_negations(fp, d2[a] + o)
+                    o = incremental_negations(fp, d2[a] + o)
                 d2[a] = o
         return d
 

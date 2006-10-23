@@ -139,19 +139,49 @@ class TestContentsSet(TestCase):
         if source is None:
             source = [[fs.fsDir("/tmp", strict=False)],
                       [fs.fsFile("/tmp", strict=False)]]
+
         c1, c2 = [contents.contentsSet(x) for x in source]
+        if name.endswith("_update"):
+            getattr(c1, name)(c2)
+            c3 = c1
+        else:
+            c3 = getattr(c1, name)(c2)
         self.assertEquals(
             set(ret),
-            set(x.location for x in getattr(c1, name)(c2)))
+            set(x.location for x in c3))
+
+        c1, c2 = [contents.contentsSet(x) for x in source]
+        if name.endswith("_update"):
+            getattr(c1, name)(iter(c2))
+            c3 = c1
+        else:
+            c3 = getattr(c1, name)(iter(c2))
+        self.assertEquals(
+            set(ret),
+            set(x.location for x in c3))
 
     test_intersection = post_curry(check_set_op, "intersection", ["/tmp"])
+    test_intersection_update = post_curry(check_set_op,
+        "intersection_update", ["/tmp"])
+
     test_difference = post_curry(check_set_op, "difference", [])
+    test_difference_update = post_curry(check_set_op,
+        "difference_update", [])
+
     test_symmetric_difference1 = post_curry(
         check_set_op, "symmetric_difference", [])
+    test_symmetric_difference1_update = post_curry(
+        check_set_op, "symmetric_difference_update", [])
+
     fstrings = ("/a", "/b", "/c", "/d")
     f = [fs.fsFile(x, strict=False) for x in fstrings]
+
     test_union1 = post_curry(check_set_op, "union", ["/tmp"])
     test_union2 = post_curry(check_set_op, "union", fstrings, [f[:2], f[2:]])
+
     test_symmetric_difference2 = post_curry(
         check_set_op, "symmetric_difference", fstrings, [f[:2], f[2:]])
+    test_symmetric_difference2_update = post_curry(
+        check_set_op, "symmetric_difference", fstrings, [f[:2], f[2:]])
+
     del f, fstrings

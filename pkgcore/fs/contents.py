@@ -68,6 +68,12 @@ class contentsSet(object):
     def remove(self, obj):
         del self[obj]
 
+    def discard(self, obj):
+        if isinstance(obj, fs.fsBase):
+            self._dict.pop(obj.location, None)
+        else:
+            self._dict.pop(obj, None)
+
     def __eq__(self, other):
         if isinstance(other, contentsSet):
             return self._dict == other._dict
@@ -99,28 +105,64 @@ class contentsSet(object):
                 "%s is frozen; no clear functionality" % self.__class__)
         self._dict.clear()
 
+    @staticmethod
+    def _convert_loc(iterable):
+        fs_kls = fs.fsBase
+        for x in iterable:
+            if isinstance(x, fs_kls):
+                yield x.location
+            else:
+                yield x
+
+    @staticmethod
+    def _ensure_fsbase(iterable):
+        fs_kls = fs.fsBase
+        for x in iterable:
+            if not isinstance(x, fs_kls):
+                raise ValueError("must be an fsBase derivative: got %r" % x)
+            yield x
+
     def difference(self, other):
-        if isinstance(other, contentsSet):
-            return contentsSet((x for x in self if x.location not in other))
-        return set.difference(self, other)
+        if not hasattr(other, '__contains__'):
+            other = set(self._convert_loc(other))
+        return contentsSet((x for x in self if x.location not in other),
+            mutable=self.mutable)
+
+    def difference_update(self, other):
+        if not self.mutable:
+            raise TypeError("%r isn't mutable" % self)
+
+        rem = self.remove
+        for x in other:
+            if x in self:
+                rem(x)
 
     def intersection(self, other):
-        return contentsSet((x for x in self if x.location in other))
+        return contentsSet((x for x in other if x in self),
+            mutable=self.mutable)
 
+    def intersection_update(self, other):
+        if not self.mutable:
+            raise TypeError("%r isn't mutable" % self)
+        if not hasattr(other, '__contains__'):
+            other = set(self._convert_loc(other))
+
+        l = []
+        for x in self:
+            if x.location not in other:
+                l.append(x)
+        for x in l:
+            self.remove(x)
+        
     def issubset(self, other):
+        if not hasattr(other, '__contains__'):
+            other = set(self._convert_loc(other))
         return all(x.location in other for x in self._dict)
-
+        
     def issuperset(self, other):
-        if isinstance(other, contentsSet):
-            return other.issubset(self)
         return all(x in self for x in other)
 
     def union(self, other):
-        if not isinstance(other, contentsSet):
-            raise TypeError(
-                "will only do unions with contentsSet derivatives, not %s" %
-                other.__class__)
-
         c = contentsSet(other)
         c.update(self)
         return c
@@ -132,9 +174,29 @@ class contentsSet(object):
         return len(self._dict)
 
     def symmetric_difference(self, other):
-        i = self.intersection(other)
-        return contentsSet(chain(iter(self.difference(i)),
-                                 iter(other.difference(i))))
+        c = contentsSet(mutable=True)
+        c.update(self)
+        c.symmetric_difference_update(other)
+        object.__setattr__(c, 'mutable', self.mutable)
+        return c
+
+    def symmetric_difference_update(self, other):
+        if not self.mutable:
+            raise TypeError("%r isn't mutable" % self)
+        if not hasattr(other, '__contains__'):
+            other = contentsSet(self._ensure_fsbase(other))
+        l = []
+        for x in self:
+            if x in other:
+                l.append(x)
+        add = self.add
+        for x in other:
+            if x not in self:
+                add(x)
+        rem = self.remove
+        for x in l:
+            rem(x)
+        del l, rem
 
     def update(self, iterable):
         self._dict.update((x.location, x) for x in iterable)

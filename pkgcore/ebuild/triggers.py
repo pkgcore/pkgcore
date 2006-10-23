@@ -5,7 +5,7 @@
 gentoo/ebuild specific triggers
 """
 
-from pkgcore.merge import triggers
+from pkgcore.merge import triggers, const
 from pkgcore.util.file import read_bash_dict, AtomicWriteFile
 from pkgcore.fs import livefs
 from pkgcore.util.osutils import normpath
@@ -309,3 +309,24 @@ class preinst_contents_reset(triggers.base):
         # wipe, and get data again.
         cset.clear()
         cset.update(engine.new._parent.scan_contents(self.format_op.env["D"]))
+
+
+class collision_protect(triggers.base):
+
+    required_csets = ('install', 'install_existing')
+    _hooks = ('sanity_check',)
+    _engine_types = triggers.INSTALLING_MODES
+
+    def trigger(self, engine, install, existing):
+        if not existing:
+            return
+
+        # for the moment, we just care about files
+        colliding = existing.difference(install.iterdirs())
+        if not colliding:
+            return
+        if engine.mode == const.REPLACE_MODE:
+            # drop the stuff we're replacing from the old pkg.
+            colliding.difference_update(engine.csets['old_cset'])
+        for x in colliding:
+            engine.reporter.warn("file already exists: %s" % (x.location,))

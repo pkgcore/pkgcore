@@ -5,7 +5,7 @@
 gentoo/ebuild specific triggers
 """
 
-from pkgcore.merge import triggers, const
+from pkgcore.merge import triggers, const, errors
 from pkgcore.util.file import read_bash_dict, AtomicWriteFile
 from pkgcore.fs import livefs
 from pkgcore.util.osutils import normpath
@@ -323,10 +323,20 @@ class collision_protect(triggers.base):
 
         # for the moment, we just care about files
         colliding = existing.difference(install.iterdirs())
+
+        # filter out daft .keep files.
+        l = []
+        for x in colliding:
+            if x.location.endswith(".keep"):
+                l.append(x)
+        colliding.difference_update(l)
+        del l
         if not colliding:
             return
         if engine.mode == const.REPLACE_MODE:
             # drop the stuff we're replacing from the old pkg.
             colliding.difference_update(engine.csets['old_cset'])
-        for x in colliding:
-            engine.reporter.warn("file already exists: %s" % (x.location,))
+        if colliding:
+            raise errors.BlockModification(
+                "collision-protect: file(s) already exist: ( %s )" %
+                ', '.join(repr(x) for x in sorted(colliding)))

@@ -90,7 +90,8 @@ class tree(prototype.tree):
         d = {}
         try:
             for x in listdir_dirs(cpath):
-                if x.endswith(".lockfile") or x.startswith("-MERGING-"):
+                if x.startswith(".tmp.") or x.endswith(".lockfile") \
+                    or x.startswith("-MERGING-"):
                     continue
                 x = cpv(category+"/"+x)
                 l.add(x.package)

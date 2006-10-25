@@ -2,6 +2,7 @@ Release Notes:
 
   See ChangeLog for full commit logs.
 
+
 pkgcore 0.2:
 
   * pmaint script; tool for --sync'ing, doing quickpkging, moving packages
@@ -48,8 +49,13 @@ pkgcore 0.2:
   * merged standalone test runner into setup.py; prefered way of running it is
     ``python setup.py test`` now.
 
-  * OrRestriction cnf_solutions generation now properly honors OrRestriction 
-    ordering.
+
+pkgcore 0.1.3:
+
+  * Always process "|| ( a b )" in the right order.
+
+  * Fix disabling a flag in package.use.mask or package.use.force.
+
 
 pkgcore 0.1.2:
 

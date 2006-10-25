@@ -196,7 +196,7 @@ if sys.version_info < (2, 5):
 
 core.setup(
     name='pkgcore',
-    version='0.1.2',
+    version='0.1.3',
     description='package managing framework',
     url='http://gentooexperimental.org/~ferringb/bzr/pkgcore/',
     packages=packages,

@@ -16,6 +16,7 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.digest import parse_digest
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import post_curry, alias_class_method, partial
+from pkgcore.cache import errors
 from pkgcore.restrictions.packages import AndRestriction
 from pkgcore.restrictions import boolean
 from pkgcore.chksum.errors import MissingChksum
@@ -23,7 +24,7 @@ from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import const, processor
 from pkgcore.util.demandload import demandload
-demandload(globals(), "errno ")
+demandload(globals(), "errno logging")
 
 
 def generate_depset(c, key, non_package_type, s):
@@ -271,6 +272,10 @@ class package_factory(metadata.factory):
                 try:
                     data = cache[pkg.cpvstr]
                 except KeyError:
+                    continue
+                except errors.CacheError, ce:
+                    logging.warn("caught cache error: %s" % ce)
+                    del ce
                     continue
                 if long(data.pop("_mtime_", -1)) != pkg._mtime_ or \
                     self._invalidated_eclasses(data, pkg):

@@ -6,7 +6,8 @@ package class for buildable ebuilds
 """
 
 import os, operator
-from pkgcore.package import metadata, errors
+from pkgcore.package import metadata
+from pkgcore.package import errors as metadata_errors
 
 WeakValCache = metadata.WeakValCache
 
@@ -16,7 +17,7 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.digest import parse_digest
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import post_curry, alias_class_method, partial
-from pkgcore.cache import errors
+from pkgcore.cache import errors as cache_errors
 from pkgcore.restrictions.packages import AndRestriction
 from pkgcore.restrictions import boolean
 from pkgcore.chksum.errors import MissingChksum
@@ -35,7 +36,7 @@ def generate_depset(c, key, non_package_type, s):
                 "":boolean.AndRestriction})
         return conditionals.DepSet(s.data.pop(key, ""), c)
     except conditionals.ParseError, p:
-        raise errors.MetadataException(s, str(key), str(p))
+        raise metadata_errors.MetadataException(s, str(key), str(p))
 
 def generate_providers(self):
     rdep = AndRestriction(self.versioned_atom, finalize=True)
@@ -50,7 +51,7 @@ def generate_providers(self):
             operators={"||":boolean.OrRestriction,"":boolean.AndRestriction})
 
     except conditionals.ParseError, p:
-        raise errors.MetadataException(self, "provide", str(p))
+        raise metadata_errors.MetadataException(self, "provide", str(p))
 
 def generate_fetchables(self):
     chksums = self.repo._get_digests(self)
@@ -67,7 +68,7 @@ def generate_fetchables(self):
             v.uri.finalize()
         return d
     except conditionals.ParseError, p:
-        raise errors.MetadataException(self, "src_uri", str(p))
+        raise metadata_errors.MetadataException(self, "src_uri", str(p))
 
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
@@ -273,7 +274,7 @@ class package_factory(metadata.factory):
                     data = cache[pkg.cpvstr]
                 except KeyError:
                     continue
-                except errors.CacheError, ce:
+                except cache_errors.CacheError, ce:
                     logging.warn("caught cache error: %s" % ce)
                     del ce
                     continue

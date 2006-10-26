@@ -219,7 +219,6 @@ class database(object):
             for x in xrange(0, len(eclasses), mod):
                 d[eclasses[x]] = (long(eclasses[x + skip]))
         except ValueError:
-            import pdb;pdb.set_trace()
             raise errors.CacheCorruption(
                 cpv, 'ValueError reading %r' % (eclass_string,))
         return d

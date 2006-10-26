@@ -193,7 +193,7 @@ class database(object):
     def deconstruct_eclasses(eclass_dict):
         """takes a dict, returns a string representing said dict"""
         return "\t".join(
-            "%s\t%s\t%s" % (k, v[0], str(v[1]))
+            "%s\t%s\t%r" % (k, v[0], v[1])
             for k, v in eclass_dict.iteritems())
 
     @staticmethod
@@ -203,14 +203,23 @@ class database(object):
         if eclasses == [""]:
             # occasionally this occurs in the fs backends.  they suck.
             return {}
-        if len(eclasses) % 3 != 0:
+
+        l = len(eclasses)
+        if not l % 3:
+            mod = 3
+        elif not l % 2:
+            mod = 2
+        else:
             raise errors.CacheCorruption(
-                cpv, "_eclasses_ was of invalid len %i" % len(eclasses))
+                cpv, "_eclasses_ was of invalid len %i (must be mod 3 or mod 2)" % len(eclasses))
+        # edge case.
         d = {}
+        skip = mod - 1
         try:
-            for x in xrange(0, len(eclasses), 3):
-                d[eclasses[x]] = (eclasses[x + 1], long(eclasses[x + 2]))
+            for x in xrange(0, len(eclasses), mod):
+                d[eclasses[x]] = (long(eclasses[x + skip]))
         except ValueError:
+            import pdb;pdb.set_trace()
             raise errors.CacheCorruption(
                 cpv, 'ValueError reading %r' % (eclass_string,))
         return d

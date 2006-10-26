@@ -38,10 +38,13 @@ class base(object):
             up to date, or not
         """
         for eclass, tup in ec_dict.iteritems():
-            if (eclass not in self.eclasses or
-                tuple(tup) != self.eclasses[eclass]):
+            if eclass not in self.eclasses:
                 return False
-
+            elif isinstance(tup, tuple):
+                if not tup[1] == tup[1]:
+                    return False
+            elif tup != self.eclasses[eclass][1]:
+                return False
         return True
 
     def get_eclass_data(self, inherits):

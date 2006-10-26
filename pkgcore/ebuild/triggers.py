@@ -331,11 +331,12 @@ class collision_protect(triggers.base):
         # hackish, but it works.
         protected_filter = gen_config_protect_filter(engine.offset,
             self.extra_protects, self.extra_disables).match
+
         l = []
         for x in colliding:
             if x.location.endswith(".keep"):
                 l.append(x)
-            elif protected_filter(x):
+            elif protected_filter(x.location):
                 l.append(x)
         
         colliding.difference_update(l)

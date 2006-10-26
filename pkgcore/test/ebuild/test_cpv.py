@@ -184,6 +184,8 @@ class native_CpvTest(TestCase):
             kls("dev-util/diffball-cvs.7"), kls("dev-util/diffball-cvs.6"))
         self.verify_gt(kls("da/ba-6a"), kls("da/ba-6"))
         self.verify_gt(kls("da/ba-6a-r1"), kls("da/ba-6a"))
+        self.verify_gt(kls("da/ba-6.0"), kls("da/ba-6"))
+        self.assertEqual(kls("da/ba-6"), kls("da/ba-6"))
 
     def test_no_init(self):
         """Test if the cpv is in a somewhat sane state if __init__ fails.

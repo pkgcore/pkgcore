@@ -93,7 +93,7 @@ class native_CPV(object):
         return getattr(self, 'cpvstr', 'None')
 
     def __eq__(self, other):
-        if isinstance(other, CPV):
+        if isinstance(other, native_CPV):
             return self.cpvstr == other.cpvstr
         return False
 

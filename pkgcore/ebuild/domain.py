@@ -11,7 +11,7 @@ import os
 from operator import truth
 import pkgcore.config.domain
 from pkgcore.config import ConfigHint
-from itertools import chain, imap
+from itertools import chain
 from pkgcore.restrictions.delegated import delegate
 from pkgcore.restrictions import packages, values, restriction
 from pkgcore.util.file import iter_read_bash

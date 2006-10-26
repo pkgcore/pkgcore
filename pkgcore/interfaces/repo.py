@@ -103,6 +103,9 @@ class livefs_base(base):
         if self.lock is None:
             self.lock = fake_lock()
 
+    def customize_engine(self, engine):
+        pass
+
     def _get_format_op_args_kwds(self):
         return (), {}
 
@@ -161,6 +164,7 @@ class livefs_install(livefs_base):
         engine = MergeEngine.install(self.new_pkg, offset=self.offset,
             observer=self.observer)
         self.new_pkg.add_format_triggers(self, self.install_op, engine)
+        self.customize_engine(engine)
         return livefs_base.start(self, engine)
 
     def preinst(self):
@@ -218,6 +222,7 @@ class livefs_uninstall(livefs_base):
         engine = MergeEngine.uninstall(self.old_pkg, offset=self.offset,
             observer=self.observer)
         self.old_pkg.add_format_triggers(self, self.uninstall_op, engine)
+        self.customize_engine(engine)
         return livefs_base.start(self, engine)
 
     def prerm(self):
@@ -284,6 +289,7 @@ class livefs_replace(livefs_install, livefs_uninstall):
             offset=self.offset, observer=self.observer)
         self.old_pkg.add_format_triggers(self, self.uninstall_op, engine)
         self.new_pkg.add_format_triggers(self, self.install_op, engine)
+        self.customize_engine(engine)
         return livefs_base.start(self, engine)
 
     def _notify_repo(self):

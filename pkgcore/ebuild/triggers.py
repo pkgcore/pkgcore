@@ -142,17 +142,19 @@ def simple_chksum_compare(x, y):
     return found
 
 
-def gen_config_protect_filter(offset):
+def gen_config_protect_filter(offset, extra_protects=(), extra_disables=()):
     collapsed_d, inc, colon = collapse_envd(os.path.join(offset, "etc/env.d"))
+    collapsed_d.setdefault("CONFIG_PROTECT", []).extend(extra_protects)
+    collapsed_d.setdefault("CONFIG_PROTECT_MASK", []).extend(extra_disables)
 
     r = [values.StrGlobMatch(normpath(x).rstrip("/") + "/")
-         for x in set(collapsed_d.get("CONFIG_PROTECT", []) + ["/etc"])]
+         for x in set(collapsed_d["CONFIG_PROTECT"] + ["/etc"])]
     if len(r) > 1:
         r = values.OrRestriction(*r)
     else:
         r = r[0]
-    neg = collapsed_d.get("CONFIG_PROTECT_MASK", None)
-    if neg is not None:
+    neg = collapsed_d["CONFIG_PROTECT_MASK"]
+    if neg:
         if len(neg) == 1:
             r2 = values.StrGlobMatch(normpath(neg[0]).rstrip("/") + "/",
                                      negate=True)
@@ -167,32 +169,27 @@ def gen_config_protect_filter(offset):
 
 class ConfigProtectInstall(triggers.base):
     
-    required_csets = ()
-    _hooks = ('pre_merge', 'post_merge')
-    
-    def register(self, engine):
-        renames = {}
-        t1 = ConfigProtectInstall_rename(renames)
-        t1.register(engine)
-        t2 = ConfigProtectInstall_restore(renames)
-        t2.register(engine)
-
-
-class ConfigProtectInstall_rename(triggers.base):
-
     required_csets = ('install_existing', 'install')
     _hooks = ('pre_merge',)
     _priority = 90
-    
-    def __init__(self, renames_dict):
+
+    def __init__(self, extra_protects=(), extra_disables=()):
         triggers.base.__init__(self)
-        self.renames = renames_dict
+        self.renames = {}
+        self.extra_protects = extra_protects
+        self.extra_disables = extra_disables
+    
+    def register(self, engine):
+        triggers.base.register(self, engine)
+        t2 = ConfigProtectInstall_restore(self.renames)
+        t2.register(engine)
 
     def trigger(self, engine, existing_cset, install_cset):
         pjoin = os.path.join
 
         # hackish, but it works.
-        protected_filter = gen_config_protect_filter(engine.offset).match
+        protected_filter = gen_config_protect_filter(engine.offset,
+            self.extra_protects, self.extra_disables).match
         protected = {}
 
         for x in existing_cset.iterfiles():
@@ -317,6 +314,11 @@ class collision_protect(triggers.base):
     _hooks = ('sanity_check',)
     _engine_types = triggers.INSTALLING_MODES
 
+    def __init__(self, extra_protects=(), extra_disables=()):
+        triggers.base.__init__(self)
+        self.extra_protects = extra_protects
+        self.extra_disables = extra_disables
+
     def trigger(self, engine, install, existing):
         if not existing:
             return
@@ -325,14 +327,22 @@ class collision_protect(triggers.base):
         colliding = existing.difference(install.iterdirs())
 
         # filter out daft .keep files.
+
+        # hackish, but it works.
+        protected_filter = gen_config_protect_filter(engine.offset,
+            self.extra_protects, self.extra_disables).match
         l = []
         for x in colliding:
             if x.location.endswith(".keep"):
                 l.append(x)
+            elif protected_filter(x):
+                l.append(x)
+        
         colliding.difference_update(l)
-        del l
+        del l, protected_filter
         if not colliding:
             return
+
         if engine.mode == const.REPLACE_MODE:
             # drop the stuff we're replacing from the old pkg.
             colliding.difference_update(engine.csets['old_cset'])
@@ -340,3 +350,13 @@ class collision_protect(triggers.base):
             raise errors.BlockModification(
                 "collision-protect: file(s) already exist: ( %s )" %
                 ', '.join(repr(x) for x in sorted(colliding)))
+
+
+def customize_engine(domain_settings, engine):
+    engine.add_trigger(env_update())
+    protect = domain_settings.get('CONFIG_PROTECT', '').split()
+    mask = domain_settings.get('CONFIG_PROTECT_MASK', '').split()
+    engine.add_trigger(ConfigProtectInstall(protect, mask))
+    engine.add_trigger(ConfigProtectUninstall())
+    if "collision-protect" in domain_settings.features.split():
+        engine.add_trigger(collision_protect(protect, mask))

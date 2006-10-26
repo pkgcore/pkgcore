@@ -2,7 +2,6 @@
 # License: GPL2
 
 from pkgcore.merge import triggers
-from pkgcore.ebuild import triggers as ebuild_triggers
 
 pkgcore_plugins = {
     'triggers':[
@@ -13,8 +12,5 @@ pkgcore_plugins = {
         triggers.fix_gid_perms,
         triggers.fix_set_bits,
         triggers.detect_world_writable,
-        ebuild_triggers.env_update,
-        ebuild_triggers.ConfigProtectInstall,
-        ebuild_triggers.ConfigProtectUninstall,
         ],
     }

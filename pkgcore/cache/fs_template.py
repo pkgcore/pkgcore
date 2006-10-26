@@ -68,7 +68,7 @@ class FsBased(template.database):
             path = self.location + os.path.sep + os.path.dirname(path)
         else:
             path = self.location
-        return ensure_dirs(path)
+        return ensure_dirs(path, mode=0775, minimal=False)
 
 def gen_label(label):
     """Turn a user-defined label into something usable as a filename."""

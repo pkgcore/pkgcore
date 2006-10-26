@@ -24,7 +24,9 @@ demandload(globals(),
            "logging time "
            "pkgcore.ebuild:conditionals "
            "pkgcore.restrictions:boolean,packages "
-           "pkgcore.const ")
+           "pkgcore.const "
+           "pkgcore.ebuild:triggers "
+    )
 
 
 class bz2_data_source(data_source.base):
@@ -204,6 +206,9 @@ tree.configure = ConfiguredTree
 def _get_default_ebuild_op_args_kwds(self):
     return (dict(self.domain_settings),), {}
 
+def _default_customize_engine(op_inst, engine):
+    triggers.customize_engine(op_inst.domain_settings, engine)
+
 class install(repo_interfaces.livefs_install):
 
     def __init__(self, domain_settings, repo, pkg, *a, **kw):
@@ -213,6 +218,7 @@ class install(repo_interfaces.livefs_install):
         repo_interfaces.livefs_install.__init__(self, repo, pkg, *a, **kw)
 
     install_get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
+    customize_engine = _default_customize_engine
 
     def merge_metadata(self, dirpath=None):
         # error checking?
@@ -299,6 +305,7 @@ class uninstall(repo_interfaces.livefs_uninstall):
             self, repo, pkg, offset=offset, *a, **kw)
 
     uninstall_get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
+    customize_engine = _default_customize_engine
 
     def unmerge_metadata(self, dirpath=None):
         if dirpath is None:
@@ -322,6 +329,7 @@ class replace(install, uninstall, repo_interfaces.livefs_replace):
         repo_interfaces.livefs_replace.__init__(self, repo, pkg, newpkg, *a, **kw)
 
     _get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
+    customize_engine = _default_customize_engine
 
     def merge_metadata(self, *a, **kw):
         kw["dirpath"] = self.tmpdirpath

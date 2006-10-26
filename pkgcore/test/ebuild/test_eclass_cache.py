@@ -28,11 +28,11 @@ class TestBase(TempDirMixin, TestCase):
     def test_is_eclass_data_valid(self):
         self.assertFalse(self.ec.is_eclass_data_valid(
             {"eclass3":("foon", 100)}))
-        self.assertFalse(self.ec.is_eclass_data_valid(
+        self.assertTrue(self.ec.is_eclass_data_valid(
             {"eclass1":("", 100)}))
         self.assertFalse(self.ec.is_eclass_data_valid(
             {"eclass3":(self.dir, 100)}))
-        self.assertFalse(self.ec.is_eclass_data_valid(
+        self.assertTrue(self.ec.is_eclass_data_valid(
             {"eclass1":(self.dir, 200)}))
         self.assertTrue(self.ec.is_eclass_data_valid(
             {"eclass1":(self.ec_locs["eclass1"], 100)}))

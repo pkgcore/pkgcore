@@ -245,6 +245,11 @@ class domain(pkgcore.config.domain.domain):
             if u in settings:
                 use.extend(u2 + x for x in settings[u].split())
 
+        # cleanup incrementals.
+        for x in incrementals:
+            if x in settings:
+                settings[x] = incremental_negations(x, settings[x])
+
         if "ARCH" not in settings:
             raise Failure(
                 "No ARCH setting detected from profile, or user config")

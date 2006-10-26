@@ -148,12 +148,12 @@ def gen_config_protect_filter(offset, extra_protects=(), extra_disables=()):
     collapsed_d.setdefault("CONFIG_PROTECT_MASK", []).extend(extra_disables)
 
     r = [values.StrGlobMatch(normpath(x).rstrip("/") + "/")
-         for x in set(collapsed_d["CONFIG_PROTECT"] + ["/etc"])]
+         for x in set(stable_unique(collapsed_d["CONFIG_PROTECT"] + ["/etc"]))]
     if len(r) > 1:
         r = values.OrRestriction(*r)
     else:
         r = r[0]
-    neg = collapsed_d["CONFIG_PROTECT_MASK"]
+    neg = stable_unique(collapsed_d["CONFIG_PROTECT_MASK"])
     if neg:
         if len(neg) == 1:
             r2 = values.StrGlobMatch(normpath(neg[0]).rstrip("/") + "/",
@@ -353,10 +353,16 @@ class collision_protect(triggers.base):
 
 
 def customize_engine(domain_settings, engine):
-    engine.add_trigger(env_update())
-    protect = domain_settings.get('CONFIG_PROTECT', '').split()
-    mask = domain_settings.get('CONFIG_PROTECT_MASK', '').split()
-    engine.add_trigger(ConfigProtectInstall(protect, mask))
-    engine.add_trigger(ConfigProtectUninstall())
-    if "collision-protect" in domain_settings.features.split():
-        engine.add_trigger(collision_protect(protect, mask))
+    env_update().register(engine)
+
+    protect = domain_settings.get('CONFIG_PROTECT', [])
+    if isinstance(protect, basestring):
+        protect = protect.split()
+    mask = domain_settings.get('CONFIG_PROTECT_MASK', [])
+    if isinstance(protect, basestring):
+        protect = protect.split()
+
+    ConfigProtectInstall(protect, mask).register(engine)
+    ConfigProtectUninstall().register(engine)
+    if "collision-protect" in domain_settings.get("FEATURES", []):
+        collision_protect(protect, mask).register(engine)

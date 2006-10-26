@@ -193,12 +193,15 @@ class database(object):
     def deconstruct_eclasses(eclass_dict):
         """takes a dict, returns a string representing said dict"""
         return "\t".join(
-            "%s\t%s\t%r" % (k, v[0], v[1])
+            "%s\t%s\t%s" % (k, v[0], v[1])
             for k, v in eclass_dict.iteritems())
 
     @staticmethod
     def reconstruct_eclasses(cpv, eclass_string):
         """Turn a string from L{serialize_eclasses} into a dict."""
+        if not isinstance(eclass_string, basestring):
+            raise TypeError("eclass_string must be basestring, got %r" % 
+                eclass_string)
         eclasses = eclass_string.strip().split("\t")
         if eclasses == [""]:
             # occasionally this occurs in the fs backends.  they suck.
@@ -206,18 +209,21 @@ class database(object):
 
         l = len(eclasses)
         if not l % 3:
-            mod = 3
+            paths = True
         elif not l % 2:
-            mod = 2
+            # edge case of a multiple of 6
+            paths = not eclasses[1].isdigit()
         else:
             raise errors.CacheCorruption(
                 cpv, "_eclasses_ was of invalid len %i (must be mod 3 or mod 2)" % len(eclasses))
-        # edge case.
         d = {}
-        skip = mod - 1
         try:
-            for x in xrange(0, len(eclasses), mod):
-                d[eclasses[x]] = (long(eclasses[x + skip]))
+            if paths:
+                for x in xrange(0, len(eclasses), 3):
+                    d[eclasses[x]] = (eclasses[x + 1], long(eclasses[x + 2]))
+            else:
+                for x in xrange(0, len(eclasses), 2):
+                    d[eclasses[x]] = ('', long(eclasses[x + 1]))
         except ValueError:
             raise errors.CacheCorruption(
                 cpv, 'ValueError reading %r' % (eclass_string,))

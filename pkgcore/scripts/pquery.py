@@ -10,7 +10,7 @@ import optparse
 
 from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils, formatters)
-from pkgcore.restrictions import packages, values, boolean
+from pkgcore.restrictions import packages, values, boolean, restriction
 from pkgcore.ebuild import conditionals, atom
 
 
@@ -139,9 +139,7 @@ def parse_expression(string):
         notcall = (pyp.Suppress(pyp.CaselessLiteral('not') + '(') + expr +
                    pyp.Suppress(')'))
         def _parse_not(tokens):
-            restriction = tokens[0]
-            restriction.negate = not restriction.negate
-            return restriction
+            return restriction.Negate(tokens[0])
         notcall.setParseAction(_parse_not)
 
         # "Statement seems to have no effect"
@@ -209,6 +207,25 @@ class Option(optparse.Option):
     TYPE_CHECKER.update(extras)
 
 
+def append_const_callback(option, opt_str, value, parser, const):
+    """Callback version of python 2.5's append_const action."""
+    parser.values.ensure_value(option.dest, []).append(const)
+
+
+def pkgset_callback(option, opt_str, value, parser):
+    try:
+        pkgset = parser.values.config.pkgset[value]
+    except KeyError:
+        raise optparse.OptionValueError(
+            'No pkgset named %r. Available sets are: %s' % (
+                pkgset, ', '.join(parser.values.config.pkgset)))
+    atoms = list(pkgset)
+    if not atoms:
+        # This is currently an error because I am unsure what it should do.
+        raise optparse.OptionValueError('pkgset %s is empty' % (value,))
+    parser.values.pkgset.append(packages.OrRestriction(*atoms))
+
+
 class OptionParser(commandline.OptionParser):
 
     """Option parser with custom option postprocessing and validation."""
@@ -216,6 +233,9 @@ class OptionParser(commandline.OptionParser):
     def __init__(self):
         commandline.OptionParser.__init__(
             self, description=__doc__, option_class=Option)
+
+        self.set_default('pkgset', [])
+        self.set_default('restrict', [])
 
         self.add_option('--domain', action='store',
                         help='domain name to use (default used if omitted).')
@@ -251,7 +271,10 @@ class OptionParser(commandline.OptionParser):
             'Specifying the same option twice means "or" unless stated '
             'otherwise. Specifying multiple types of restrictions means "and" '
             'unless stated otherwise.')
-        restrict.add_option('--all', action='store_true',
+        restrict.add_option('--all', action='callback',
+                            callback=append_const_callback,
+                            callback_args=(packages.AlwaysTrue,),
+                            dest='restrict',
                             help='Match all packages (equivalent to -m "*")')
         restrict.add_option(
             '--match', '-m', action='append', type='match',
@@ -285,7 +308,8 @@ class OptionParser(commandline.OptionParser):
             'WARNING: currently not completely reliable.')
         # XXX fix the negate stuff and remove that warning.
         restrict.add_option(
-            '--pkgset', action='append',
+            '--pkgset', action='callback', callback=pkgset_callback,
+            type='string',
             help='is inside a named set of packages (like "world").')
 
         printable_attrs = ('rdepends', 'depends', 'post_rdepends', 'provides',
@@ -371,11 +395,7 @@ class OptionParser(commandline.OptionParser):
             vals.one_attr = vals.force_one_attr
 
         # Build up a restriction.
-        vals.restrict = []
-        if vals.all:
-            vals.restrict.append(packages.AlwaysTrue)
-
-        for attr in PARSE_FUNCS.keys():
+        for attr in PARSE_FUNCS.keys() + ['pkgset']:
             val = getattr(vals, attr)
             if len(val) == 1:
                 # Omit the boolean.
@@ -384,8 +404,49 @@ class OptionParser(commandline.OptionParser):
                 vals.restrict.append(
                     packages.OrRestriction(finalize=True, *val))
 
-        if not vals.restrict and not vals.pkgset:
+        if not vals.restrict:
             self.error('No restrictions specified.')
+
+        if len(vals.restrict) == 1:
+            # Single restriction, omit the AndRestriction for a bit of speed
+            vals.restrict = vals.restrict[0]
+        else:
+            # "And" them all together
+            vals.restrict = packages.AndRestriction(*vals.restrict)
+
+        # Get a domain object.
+        if vals.domain:
+            try:
+                domain = vals.config.domain[vals.domain]
+            except KeyError:
+                self.error('domain %s not found. Valid domains: %s' % (
+                        vals.domain, ', '.join(vals.config.domain),))
+        else:
+            domain = vals.config.get_default('domain')
+            if domain is None:
+                self.error(
+                    'No default domain found, fix your configuration '
+                    'or pass --domain (Valid domains: %s)' % (
+                        ', '.join(vals.config.domain),))
+
+        # Get the vdb if we need it.
+        if vals.verbose and vals.noversion:
+            vals.vdbs = domain.vdb
+        else:
+            vals.vdbs = None
+        # Get repo(s) to operate on.
+        if vals.vdb:
+            vals.repos = domain.vdb
+        elif vals.all_repos:
+            vals.repos = domain.repos + domain.vdb
+        else:
+            vals.repos = domain.repos
+        if vals.raw or vals.virtuals:
+            vals.repos = repo_utils.get_raw_repos(vals.repos)
+        if vals.virtuals:
+            vals.repos = repo_utils.get_virtual_repos(
+                vals.repos, vals.virtuals == 'only')
+
         return vals, ()
 
 
@@ -591,7 +652,7 @@ def print_package(options, out, err, pkg):
                                for obj in getattr(pkg, 'contents', ())):
             out.write(location)
 
-def print_packages_noversion(options, out, err, pkgs, vdbs):
+def print_packages_noversion(options, out, err, pkgs):
     """Print a summary of all versions for a single package."""
     if options.verbose:
         green = out.fg('green')
@@ -603,7 +664,7 @@ def print_packages_noversion(options, out, err, pkgs, vdbs):
         # If we are already matching on all repos we do not need to duplicate.
         if not (options.vdb or options.all_repos):
             versions = sorted(
-                pkg.fullver for vdb in vdbs
+                pkg.fullver for vdb in options.vdbs
                 for pkg in vdb.itermatch(pkgs[0].unversioned_atom))
             out.write(green, '     installed: ', out.fg(), ' '.join(versions))
         for attr in options.attr:
@@ -624,10 +685,9 @@ def print_packages_noversion(options, out, err, pkgs, vdbs):
         out.write()
 
 
-def main(config, options, out, err):
+def main(options, out, err):
     """Do stuff.
 
-    @param config: pkgcore config central.
     @param options: optparse option values.
     @type  out: L{pkgcore.util.formatters.Formatter} instance.
     @param out: stream to output on.
@@ -636,81 +696,20 @@ def main(config, options, out, err):
 
     @returns: the exit code.
     """
-    # Get a domain object.
-    if options.domain:
-        try:
-            domain = config.domain[options.domain]
-        except KeyError:
-            err.write('domain %s not found\n' % (options.domain,))
-            err.write('Valid domains: %s\n' %
-                      (', '.join(config.domain.keys()),))
-            return 1
-    else:
-        domain = config.get_default('domain')
-        if domain is None:
-            err.write(
-                'No default domain found, fix your configuration '
-                'or pass --domain\n')
-            err.write('Valid domains: %s\n' %
-                      (', '.join(config.domain.keys()),))
-            return 1
-
-    # Get the vdb if we need it.
-    if options.verbose and options.noversion:
-        vdbs = domain.vdb
-    else:
-        vdbs = None
-    # Get repo(s) to operate on.
-    if options.vdb:
-        repos = domain.vdb
-    elif options.all_repos:
-        repos = domain.repos + domain.vdb
-    else:
-        repos = domain.repos
-    if options.raw or options.virtuals:
-        repos = repo_utils.get_raw_repos(repos)
-    if options.virtuals:
-        repos = repo_utils.get_virtual_repos(repos, options.virtuals == 'only')
-
     if options.debug:
-        for repo in repos:
+        for repo in options.repos:
             out.write('repo: %r' % (repo,))
         out.write('restrict: %r' % (options.restrict,))
         out.write()
 
-    # Restrictions that need config.
-    if options.pkgset:
-        setrestrictions = []
-        for pkgset in options.pkgset:
-            try:
-                pkgset = config.pkgset[pkgset]
-            except KeyError:
-                err.write('No pkgset named %r\n' % (pkgset,))
-                err.write('Available sets are %s\n' % (
-                        ', '.join(config.pkgset),))
-                return 1
-            setrestrictions.extend(pkgset)
-        if not setrestrictions:
-            err.write('all specified pkgsets are empty\n')
-            return 1
-        options.restrict.append(packages.OrRestriction(*setrestrictions))
-
-    if len(options.restrict) == 1:
-        # Single restriction, omit the AndRestriction for a bit of speed
-        options.restrict = options.restrict[0]
-    else:
-        # "And" them all together
-        options.restrict = packages.AndRestriction(finalize=True,
-                                                   *options.restrict)
-
     # Run the query
-    for repo in repos:
+    for repo in options.repos:
         try:
             for pkgs in pkgutils.groupby_pkg(
                 repo.itermatch(options.restrict, sorter=sorted)):
                 pkgs = list(pkgs)
                 if options.noversion:
-                    print_packages_noversion(options, out, err, pkgs, vdbs)
+                    print_packages_noversion(options, out, err, pkgs)
                 elif options.min or options.max:
                     if options.min:
                         print_package(options, out, err, min(pkgs))

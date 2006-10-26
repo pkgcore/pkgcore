@@ -23,7 +23,6 @@ demandload(globals(),
            "pkgcore.ebuild:triggers "
            "re ")
 
-ebuild_triggers = triggers
 
 def passthrough(inst, attr, rename=None):
     if rename is None:
@@ -123,7 +122,7 @@ def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
     if (engine_inst.mode in (engine.REPLACE_MODE, engine.INSTALL_MODE)
         and pkg == engine_inst.new and pkg.repo is engine_inst.new.repo):
         if not pkg_uses_default_preinst(pkg):
-            t = ebuild_triggers.preinst_contents_reset(format_op_inst)
+            t = triggers.preinst_contents_reset(format_op_inst)
             t.register(engine_inst)
 
 

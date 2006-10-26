@@ -26,27 +26,26 @@ class OptionParser(commandline.OptionParser):
             self.error(
                 'Need two arguments: cache label to read from and '
                 'cache label to write to.')
-        values.source, values.target = args
+
+        config = values.config
+        try:
+            values.source = config.cache[args[0]]
+        except KeyError:
+            self.error("read cache label '%s' isn't defined." % (args[0],))
+        try:
+            values.target = config.cache[args[1]]
+        except KeyError:
+             self.error("write cache label '%s' isn't defined." % (args[1],))
+
+        if values.target.readonly:
+            self.error("can't update cache label '%s', it's marked readonly." %
+                       (args[1],))
+
         return values, ()
 
 
-def main(config, options, out, err):
-    try:
-	source = config.cache[options.source]
-    except KeyError:
-        err.write("read cache label '%s' isn't defined.\n" % (options.source,))
-        return 1
-    try:
-	target = config.cache[options.target]
-    except KeyError:
-        err.write("write cache label '%s' isn't defined.\n" % (
-                options.target,))
-        return 1
-
-    if target.readonly:
-        err.write("can't update cache label '%s', it's marked readonly." (
-                options.target,))
-        return 2
+def main(options, out, err):
+    source, target = options.source, options.target
     if not target.autocommits:
         target.sync_rate = 1000
     if options.verbose:

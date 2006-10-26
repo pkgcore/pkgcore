@@ -9,7 +9,7 @@ from pkgcore.repository import util
 from pkgcore.config import basics
 
 
-class parse_atom_test(TestCase):
+class AtomParsingTest(TestCase):
 
     def test_parse_atom(self):
         repo = util.SimpleTree({'spork': {'foon': ('1', '2')}})
@@ -22,7 +22,7 @@ class parse_atom_test(TestCase):
             self.assertEqual(a.op, '')
 
 
-class pmerge_test(TestCase, helpers.MainMixin):
+class CommandlineTest(TestCase, helpers.MainMixin):
 
     parser = helpers.mangle_parser(pmerge.OptionParser())
     main = pmerge.main

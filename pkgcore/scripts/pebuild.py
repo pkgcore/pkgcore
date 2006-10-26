@@ -28,8 +28,8 @@ class OptionParser(commandline.OptionParser):
         values.phases = args[1:]
         return values, ()
 
-def main(config, options, out, err):
-    pkgs = config.get_default('domain').all_repos.match(options.atom)
+def main(options, out, err):
+    pkgs = options.config.get_default('domain').all_repos.match(options.atom)
     if not pkgs:
         err.write('got no matches for %s\n' % (options.atom,))
         return 1

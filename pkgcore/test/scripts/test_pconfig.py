@@ -15,14 +15,13 @@ def foon():
     pass
 
 
-class pconfigTest(TestCase, helpers.MainMixin):
+class CommandlineTest(TestCase, helpers.MainMixin):
 
     parser = helpers.mangle_parser(pconfig.OptionParser())
     main = staticmethod(pconfig.main)
 
     def test_parser(self):
-        options, args = self.parser.parse_args(['--dump'])
-        self.assertTrue(options.dump)
+        self.assertTrue(self.parse('--dump').dump)
         self.assertError(
             'specify only one mode please', '--uncollapsable', '--dump')
         self.assertError('nothing to do!')
@@ -36,13 +35,12 @@ class pconfigTest(TestCase, helpers.MainMixin):
             ['typename is spork',
              '',
              'reff: ref:spork (required)'],
-            {}, '--describe-class', 'pkgcore.test.scripts.test_pconfig.spork')
+            '--describe-class', 'pkgcore.test.scripts.test_pconfig.spork')
 
     def test_classes(self):
         self.assertOut(
-            ['pkgcore.test.scripts.test_pconfig.foon'],
-            {'spork': basics.HardCodedConfigSection({'class': foon})},
-            '--classes')
+            ['pkgcore.test.scripts.test_pconfig.foon'], '--classes',
+            spork=basics.HardCodedConfigSection({'class': foon}))
 
     def test_dump(self):
         self.assertOut(
@@ -51,8 +49,20 @@ class pconfigTest(TestCase, helpers.MainMixin):
              '    class pkgcore.test.scripts.test_pconfig.foon;',
              '}',
              ''],
-            {'spork': basics.HardCodedConfigSection({'class': foon})},
-            '--dump')
+            '--dump',
+            spork=basics.HardCodedConfigSection({'class': foon}))
+
+    def test_default(self):
+        self.assertOut(
+            ["'spork' {",
+             '    # typename of this section: foon',
+             '    class pkgcore.test.scripts.test_pconfig.foon;',
+             '    default true;',
+             '}',
+             ''],
+            '--dump',
+            spork=basics.HardCodedConfigSection({'class': foon,
+                                                 'default': True}))
 
     def test_uncollapsable(self):
         self.assertOut(
@@ -60,5 +70,5 @@ class pconfigTest(TestCase, helpers.MainMixin):
              'type pkgcore.test.scripts.test_pconfig.spork needs settings for '
              "'reff'",
              ''],
-            {'spork': basics.HardCodedConfigSection({'class': spork})},
-            '--uncollapsable')
+            '--uncollapsable',
+            spork=basics.HardCodedConfigSection({'class': spork}))

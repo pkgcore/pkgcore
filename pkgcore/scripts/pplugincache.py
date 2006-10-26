@@ -33,7 +33,7 @@ class OptionParser(commandline.OptionParser):
         return values, ()
 
 
-def main(config, options, out, err):
+def main(options, out, err):
     """Update caches."""
     for package in options.packages:
         out.write('Updating cache for %s...' % (package.__name__,))

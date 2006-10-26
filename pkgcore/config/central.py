@@ -67,9 +67,10 @@ class CollapsedConfig(object):
     @type config: dict
     @ivar config: The supplied configuration values.
     @ivar debug: if True exception wrapping is disabled.
+    @ivar default: True if this section is a default.
     """
 
-    def __init__(self, type_obj, config, debug=False):
+    def __init__(self, type_obj, config, debug=False, default=False):
         """Initialize instance vars."""
         # Check if we got all values required to instantiate.
         missing = set(type_obj.required) - set(config)
@@ -80,6 +81,7 @@ class CollapsedConfig(object):
                  type_obj.callable.__name__,
                  ', '.join(repr(var) for var in missing)))
 
+        self.default = default
         self.debug = debug
         self.type = type_obj
         self.config = config
@@ -326,21 +328,24 @@ class ConfigManager(object):
         conf = {}
         for inherit_name, inherit_conf in slist:
             for key in inherit_conf.keys():
-                if key in ('class', 'inherit', 'default'):
+                if key in ('class', 'inherit'):
                     continue
                 if key in conf and key not in type_obj.incrementals:
                     continue
                 try:
                     typename = type_obj.types[key]
                 except KeyError:
-                    if not type_obj.allow_unknowns:
+                    if key == 'default':
+                        typename = 'bool'
+                    elif not type_obj.allow_unknowns:
                         if inherit_name is not None:
                             raise errors.ConfigurationError(
                                 'type of %r inherited from %r unknown' % (
                                     key, inherit_name))
                         raise errors.ConfigurationError(
                             'type of %r unknown' % (key,))
-                    typename = 'str'
+                    else:
+                        typename = 'str'
                 is_ref = (typename == 'section_ref' or
                           typename.startswith('ref:'))
                 is_refs = (typename == 'section_refs' or
@@ -371,8 +376,9 @@ class ConfigManager(object):
                     conf[key] = result + conf[key]
                 else:
                     conf[key] = result
-
-        return CollapsedConfig(type_obj, conf, debug=self.debug)
+        default = conf.pop('default', False)
+        return CollapsedConfig(
+            type_obj, conf, debug=self.debug, default=default)
 
     def get_default(self, type_name):
         """Finds the configuration specified default obj of type_name.

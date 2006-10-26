@@ -54,6 +54,8 @@ def dump_section(config, out, sections):
     out.write('# typename of this section: %s' % (config.type.name,))
     out.write('class %s.%s;' % (config.type.callable.__module__,
                                 config.type.callable.__name__))
+    if config.default:
+        out.write('default true;')
     for key, val in sorted(config.config.iteritems()):
         typename = config.type.types.get(key)
         if typename is None:
@@ -128,10 +130,9 @@ def get_classes(configs):
     return classes
 
 
-def main(config, options, out, err):
+def main(options, out, err):
     """Do stuff.
 
-    @param config: pkgcore config central.
     @param options: optparse option values.
     @type  out: L{pkgcore.util.formatters.Formatter} instance.
     @param out: stream to output on.
@@ -139,8 +140,6 @@ def main(config, options, out, err):
     @param err: stream for errors (usually C{sys.stderr})
     """
     if options.describe_class:
-        # Doesn't actually use config! Do we need util.commandline to
-        # support this somehow?
         try:
             type_obj = basics.ConfigType(options.describe_class)
         except errors.TypeDefinitionError:
@@ -160,6 +159,7 @@ def main(config, options, out, err):
             out.write('\n')
         return
     sections = []
+    config = options.config
     for name in config.sections():
         try:
             sections.append((name, config.collapse_named_section(name)))

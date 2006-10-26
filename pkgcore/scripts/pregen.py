@@ -26,7 +26,7 @@ class OptionParser(commandline.OptionParser):
             self.error('Need a repository name.')
         if len(args) > 2:
             self.error('I do not know what to do with more than 2 arguments')
-        values.repo_name = args[0]
+
         if len(args) == 2:
             try:
                 values.thread_count = int(args[1])
@@ -36,6 +36,13 @@ class OptionParser(commandline.OptionParser):
                 self.error('thread count needs to be at least 1')
         else:
             values.thread_count = 1
+
+        try:
+            values.repo = values.config.repo[args[0]]
+        except KeyError:
+            self.error('repo %r was not found! known repos: %s' % (
+                    args[0], ', '.join(str(x) for x in values.config.repo)))
+
         return values, ()
 
 
@@ -58,14 +65,7 @@ def reclaim_threads(threads, err):
             err.write("caught exception %s reclaiming thread\n" % (e,))
 
 
-def main(config, options, out, err):
-    try:
-        repo = config.repo[options.repo_name]
-    except KeyError:
-        err.write('repo %r was not found!\n' % (repo_name,))
-        err.write('known repos:\n%s\n' % (
-                ', ',join(str(x) for x in conf.repo.iterkeys()),))
-        return 1
+def main(options, out, err):
     start_time = time.time()
     # HACK: store this here so we can assign to it from inside def passthru.
     options.count = 0
@@ -74,7 +74,7 @@ def main(config, options, out, err):
             for x in iterable:
                 options.count += 1
                 yield x
-        regen_iter(passthru(repo), err)
+        regen_iter(passthru(options.repo), err)
     else:
         queue = Queue.Queue(options.thread_count * 2)
         kill = threading.Event()
@@ -95,7 +95,7 @@ def main(config, options, out, err):
                 x.start()
             out.write('started')
             # now we feed the queue.
-            for pkg in repo:
+            for pkg in options.repo:
                 options.count += 1
                 queue.put(pkg)
         except Exception:

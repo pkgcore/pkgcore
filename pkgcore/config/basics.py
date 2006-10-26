@@ -310,6 +310,7 @@ ConfigSectionFromStringDict = currying.pre_curry(DictConfigSection,
 AutoConfigSection = currying.pre_curry(DictConfigSection, convert_hybrid)
 
 
+@configurable({'target': 'section_ref', 'typename': 'str'})
 def section_alias(target, typename=None):
     """Build a ConfigSection that instantiates a named reference.
 

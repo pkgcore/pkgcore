@@ -219,3 +219,11 @@ If you want to get rid of make.conf entirely you can start from the
 output of pconfig --dump. But be careful: pconfig does not escape
 strings exactly the same way dhcpformat parses them, so make sure you
 check the --dump after you disable portage_conf for mistakes.
+
+Aliases
+-------
+
+You may have seen something called "section_alias" in a portage
+compatibility configuration. These are used to make an existing named
+section show up under a second name. You probably do not need them if
+you write your own configuration.

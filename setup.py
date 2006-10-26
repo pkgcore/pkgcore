@@ -7,10 +7,14 @@ import errno
 import unittest
 
 from distutils import core, ccompiler, log, sysconfig
-from distutils.command import build, sdist, build_py
+from distutils.command import build, sdist, build_py, build_scripts, install
 from stat import ST_MODE
 
+
 class mysdist(sdist.sdist):
+
+    """sdist command specifying the right files and generating ChangeLog."""
+
     default_format = dict(sdist.sdist.default_format)
     default_format["posix"] = "bztar"
 
@@ -25,6 +29,7 @@ class mysdist(sdist.sdist):
         self.filelist.extend(glob.glob('dev-notes/reimplementation/*.rst'))
         self.filelist.extend(glob.glob('dev-notes/framework/*.rst'))
         self.filelist.append('build_docs.py')
+        self.filelist.append(glob.glob('bin/*'))
         self.filelist.exclude_pattern("pkgcore/bin/ebuild-env/filter-env")
         # XXX HACK: if you run "setup.py sdist" with python 2.5 this
         # does not get packaged without this.
@@ -82,8 +87,92 @@ class build_filter_env(core.Command):
         compiler.link(compiler.EXECUTABLE, objects, os.path.join(
                 'pkgcore', 'bin', 'ebuild-env', 'filter-env'))
 
-
 build.build.sub_commands.append(('build_filter_env', None))
+
+
+class pkgcore_build_scripts(build_scripts.build_scripts):
+
+    """Build (modify #! line) the pwrapper_installed script."""
+
+    def finalize_options(self):
+        build_scripts.build_scripts.finalize_options(self)
+        self.scripts = [os.path.join('bin', 'pwrapper_installed')]
+
+# pkgcore_{build,install}_scripts are registered as separate commands
+# instead of overriding the default {build,install}_scripts because
+# those are only run if the "scripts" arg to setup is not empty.
+
+build.build.sub_commands.append(('pkgcore_build_scripts', None))
+
+
+class pkgcore_install_scripts(core.Command):
+
+    """Install symlinks to the pwrapper_installed script.
+
+    Adapted from distutils install_scripts.
+    """
+
+    user_options = [
+        ('install-dir=', 'd', "directory to install scripts to"),
+        ('build-dir=','b', "build directory (where to install from)"),
+        ('force', 'f', "force installation (overwrite existing files)"),
+        ('skip-build', None, "skip the build steps"),
+        ]
+
+    boolean_options = ['force', 'skip-build']
+
+    def initialize_options(self):
+        self.install_dir = None
+        self.force = 0
+        self.build_dir = None
+        self.skip_build = None
+
+    def finalize_options(self):
+        self.set_undefined_options('build', ('build_scripts', 'build_dir'))
+        self.set_undefined_options('install',
+                                   ('install_scripts', 'install_dir'),
+                                   ('force', 'force'),
+                                   ('skip_build', 'skip_build'),
+                                   )
+        self.scripts = [
+            path for path in os.listdir('bin')
+            if path not in ('pwrapper', 'pwrapper_installed')]
+
+    def run(self):
+        if not self.skip_build:
+            self.run_command('pkgcore_build_scripts')
+        self.mkpath(self.install_dir)
+        if os.name == 'posix':
+            # Copy the wrapper once.
+            copyname = os.path.join(self.install_dir, self.scripts[0])
+            self.copy_file(os.path.join(self.build_dir, 'pwrapper_installed'),
+                           copyname)
+            # Set the executable bits (owner, group, and world).
+            if self.dry_run:
+                log.info("changing mode of %s", copyname)
+            else:
+                mode = ((os.stat(copyname)[ST_MODE]) | 0555) & 07777
+                log.info("changing mode of %s to %o", copyname, mode)
+                os.chmod(copyname, mode)
+            # Use symlinks for the other scripts.
+            for script in self.scripts[1:]:
+                os.symlink(self.scripts[0],
+                           os.path.join(self.install_dir, script))
+        else:
+            # Just copy all the scripts.
+            for script in self.scripts:
+                self.copy_file(
+                    os.path.join(self.build_dir, 'pwrapper_installed'),
+                    os.path.join(self.install_dir, script))
+
+    def get_inputs(self):
+        return self.scripts
+
+    def get_outputs(self):
+        return self.scripts
+
+install.install.sub_commands.append(('pkgcore_install_scripts', None))
+
 
 class hacked_build_py(build_py.build_py):
 
@@ -214,8 +303,6 @@ core.setup(
             'tbz2tool.c'
             ],
         },
-    # booo, no glob support in distutils for this one
-    scripts=glob.glob('bin/*'),
     ext_modules=[
         core.Extension('pkgcore.util._caching', ['pkgcore/util/_caching.c'],
                        extra_compile_args=extra_flags),
@@ -231,5 +318,7 @@ core.setup(
               'sdist': mysdist,
               'build_py': hacked_build_py,
               'test': test,
+              'pkgcore_build_scripts': pkgcore_build_scripts,
+              'pkgcore_install_scripts': pkgcore_install_scripts,
               },
     )

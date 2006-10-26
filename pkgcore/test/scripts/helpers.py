@@ -51,43 +51,51 @@ class MainMixin(object):
     @cvar main: main function to test.
     """
 
-    def assertError(self, message, *args):
+    def parse(self, *args, **kwargs):
+        """Parse a commandline and return the Values object.
+
+        args are passed to parse_args, keyword args are used as config keys.
+        """
+        values = self.parser.get_default_values()
+        values._config = central.ConfigManager([kwargs])
+        # optparse wants to manipulate the args.
+        options, args = self.parser.parse_args(list(args), values)
+        self.assertFalse(args)
+        return options
+
+    def assertError(self, message, *args, **kwargs):
         """Pass args to the option parser and assert it errors message."""
         try:
-            # optparse wants to manipulate the args.
-            self.parser.parse_args(list(args))
+            self.parse(*args, **kwargs)
         except Error, e:
             self.assertEqual(message, e.msg)
         else:
             self.fail('no error triggered')
 
-    def assertExit(self, status, message, *args):
+    def assertExit(self, status, message, *args, **kwargs):
         """Pass args, assert they trigger the right exit condition."""
         try:
-            # optparse wants to manipulate the args.
-            self.parser.parse_args(list(args))
+            self.parse(*args, **kwargs)
         except Exit, e:
             self.assertEqual(message, e.msg)
             self.assertEqual(status, e.status)
         else:
             self.fail('no exit triggered')
 
-    def assertOut(self, out, config, *args):
+    def assertOut(self, out, *args, **kwargs):
         """Like L{assertOutAndErr} but without err."""
-        self.assertOutAndErr(out, (), config, *args)
+        self.assertOutAndErr(out, (), *args, **kwargs)
 
-    def assertErr(self, err, config, *args):
+    def assertErr(self, err, *args, **kwargs):
         """Like L{assertOutAndErr} but without out."""
-        self.assertOutAndErr((), err, config, *args)
+        self.assertOutAndErr((), err, *args, **kwargs)
 
-    def assertOutAndErr(self, out, err, config, *args):
-        config = central.ConfigManager([config])
-        options, args = self.parser.parse_args(list(args))
-        self.assertFalse(args)
+    def assertOutAndErr(self, out, err, *args, **kwargs):
+        options = self.parse(*args, **kwargs)
         outstream = StringIO.StringIO()
         errstream = StringIO.StringIO()
         outformatter = formatters.PlainTextFormatter(outstream)
-        self.main(config, options, outformatter, errstream)
+        self.main(options, outformatter, errstream)
         diffs = []
         for name, strings, stream in [('out', out, outstream),
                                       ('err', err, errstream)]:

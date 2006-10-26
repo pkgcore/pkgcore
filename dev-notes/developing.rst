@@ -20,8 +20,13 @@ with history again.
 Set PYTHONPATH
 ==============
 
-Set PYTHONPATH to include your pkgcore directory, so that python can find the
-pkgcore code. Fore example::
+If you only want to run scripts from pkgcore itself (the ones in its
+"bin" directory) you do not have to do anything with PYTHONPATH. If
+you want to use pkgcore from an interactive python interpreter session
+you do not have to do anything if you start the interpreter from the
+"root" of the pkgcore source tree. For other uses you probably want to
+set PYTHONPATH to include your pkgcore directory, so that python can
+find the pkgcore code. For example::
 
  $ export PYTHONPATH="${PYTHONPATH}:/home/user/pkgcore/"
 

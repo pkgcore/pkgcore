@@ -39,7 +39,7 @@ domain_config = basics.HardCodedConfigSection({
         })
 
 
-class pqueryTest(TestCase, helpers.MainMixin):
+class CommandlineTest(TestCase, helpers.MainMixin):
 
     parser = helpers.mangle_parser(pquery.OptionParser())
     main = staticmethod(pquery.main)
@@ -48,15 +48,13 @@ class pqueryTest(TestCase, helpers.MainMixin):
         self.assertError(
             '--no-version with --min or --max does not make sense.',
             '--no-version', '--max', '--min')
-        self.assertTrue(self.parser.parse_args(['--all']))
+        self.parse('--all', domain=domain_config)
 
     def test_no_domain(self):
-        self.assertErr(
-            ['No default domain found, fix your configuration or '
-             'pass --domain',
-             'Valid domains: ',
-             ],
-            {}, '--all')
+        self.assertError(
+            'No default domain found, fix your configuration or '
+            'pass --domain (Valid domains: )',
+            '--all')
 
     def test_no_description(self):
         self.assertOut(
@@ -65,11 +63,8 @@ class pqueryTest(TestCase, helpers.MainMixin):
              '     homepage: MISSING',
              '',
              ],
-            {'test domain': domain_config},
-            '-v', '--max', '--all')
+            '-v', '--max', '--all',
+            test_domain=domain_config)
 
     def test_no_contents(self):
-        self.assertOut(
-            [],
-            {'test domain': domain_config},
-            '--contents', '--all')
+        self.assertOut([], '--contents', '--all', test_domain=domain_config)

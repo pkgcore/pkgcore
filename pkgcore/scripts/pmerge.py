@@ -266,7 +266,8 @@ def get_pkgset(config, err, setname):
         return None
 
 
-def main(config, options, out, err):
+def main(options, out, err):
+    config = options.config
     if options.debug:
         resolver.plan.limiters.add(None)
 

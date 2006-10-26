@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+
+"""Wrapper script that runs a pkgcore script from sys.path."""
+
+import os.path as osp
+import sys
+
+if __name__ == '__main__':
+    try:
+        from pkgcore.util import modules, commandline
+    except ImportError:
+        print >> sys.stderr, 'Cannot import pkgcore!'
+        print >> sys.stderr, 'Verify it is properly installed and/or ' \
+            'PYTHONPATH is set correctly.'
+        print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
+        if '--debug' in sys.argv:
+            raise
+        sys.exit(1)
+
+    name = osp.basename(sys.argv[0])
+    try:
+        script = modules.load_module('pkgcore.scripts.%s' % (name,))
+    except modules.FailedImport:
+        print >> sys.stderr, 'Cannot load script %s.' % (name,)
+        print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
+        if '--debug' in sys.argv:
+            raise
+        sys.exit(1)
+    else:
+        commandline.main(script.OptionParser(), script.main)

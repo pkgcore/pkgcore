@@ -19,6 +19,17 @@ class OptionParser(commandline.OptionParser):
         self.add_option("--force", action='store_true', default=False,
             help="force an action")
 
+    def check_values(self, values, args):
+        values, args = commandline.OptionParser.check_values(
+            self, values, args)
+        if not values.sync:
+            self.error(
+                "need at least one directive; "
+                "--sync is the only supported command currently (see --help)")
+        if not values.repo:
+            values.repo = values.config.repo.keys()
+        return values, args
+
 
 def do_sync(config, repos, out, err, force):
     failed = []
@@ -39,16 +50,8 @@ def do_sync(config, repos, out, err, force):
             out.write("*** synced %s" % x)
     return failed
 
-def main(config, options, out, err):
-    if not options.sync:
-        err.write("need at least one directive; --sync is the only supported "
-            "command currently (see --help)\n")
-        return 1
-
-    repos = options.repo
-    if not repos:
-        repos = config.repo.keys()
-    failed = do_sync(config, repos, out, err, options.force)
+def main(options, out, err):
+    failed = do_sync(options.config, options.repo, out, err, options.force)
     if failed:
         err.write("!!! synced: %r\n!!! failed syncing: %r\n" % 
             (sorted(set(repos).differenced(failed)),

@@ -280,15 +280,19 @@ class MergeEngine(object):
         """
         execute any triggers bound to a hook point
         """
-        self.regenerate_csets()
-        for trigger in sorted(self.hooks[hook],
-            key=operator.attrgetter("priority")):
-            # error checking needed here.
-            self.observer.trigger_start(hook, trigger)
-            try:
-                trigger(self, self.csets)
-            finally:
-                self.observer.trigger_end(hook, trigger)
+        try:
+            self.phase = hook
+            self.regenerate_csets()
+            for trigger in sorted(self.hooks[hook],
+                key=operator.attrgetter("priority")):
+                # error checking needed here.
+                self.observer.trigger_start(hook, trigger)
+                try:
+                    trigger(self, self.csets)
+                finally:
+                    self.observer.trigger_end(hook, trigger)
+        finally:
+            self.phase = None
 
     @staticmethod
     def generate_offset_cset(engine, csets, cset_generator):

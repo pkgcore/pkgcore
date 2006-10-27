@@ -155,6 +155,7 @@ class InfoRegen(base):
     
     _hooks = ('pre_merge', 'post_merge', 'post_unmerge')
     _engine_types = None
+    _label = "gnu info regen"
     
     locations = ('/usr/share/info', )
     

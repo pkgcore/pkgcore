@@ -257,7 +257,7 @@ class MergeEngine(object):
             raise TypeError("cset_name must be a string")
         self.cset_sources[cset_name] = func
 
-    def add_trigger(self, hook_name, trigger):
+    def add_trigger(self, hook_name, trigger, required_csets):
         """
         register a L{pkgcore.merge.triggers.trigger} instance to be executed
 
@@ -268,8 +268,8 @@ class MergeEngine(object):
             raise KeyError("trigger %r's hook %s isn't a known hook" % 
                 (trigger, hook_name))
 
-        if trigger.required_csets is not None:
-            for rcs in trigger.required_csets:
+        if required_csets is not None:
+            for rcs in required_csets:
                 if rcs not in self.cset_sources:
                     if isinstance(rcs, basestring):
                         raise errors.TriggerUnknownCset(trigger, rcs)

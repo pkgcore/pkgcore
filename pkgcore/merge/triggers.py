@@ -69,9 +69,16 @@ class base(object):
             raise TypeError("%r: %r: _hooks needs to be a sequence" %
                 (self, self._hooks))
 
+        csets = self.required_csets
+        if csets is None:
+            csets = ()
+        elif not isinstance(csets, tuple):
+            # has to be a dict.
+            csets = csets.get(engine.mode, ())
+
         for hook in self._hooks:
             try:
-                engine.add_trigger(hook, self)
+                engine.add_trigger(hook, self, csets)
             except KeyError:
                 # unknown hook.
                 continue

@@ -22,6 +22,7 @@ demandload(globals(), "os errno "
     "pkgcore.fs.livefs:gen_obj "
     "pkgcore.fs:fs,contents "
     "pkgcore.util.osutils:listdir_files "
+    "pkgcore.util.file:iter_read_bash "
     )
 
 UNINSTALLING_MODES = (const.REPLACE_MODE, const.UNINSTALL_MODE)
@@ -118,28 +119,77 @@ class base(object):
             self.required_csets, id(self))
 
 
+def get_dir_mtimes(locations):
+    mtimes = []
+    for x in locations:
+        try:
+            # we force our own os.stat, instead of genobjs lstat
+            st = os.stat(x)
+        except OSError, oe:
+            if not oe.errno == errno.ENOENT:
+                raise
+            del oe
+            continue
+        obj = gen_obj(x, stat=st)
+        if fs.isdir(obj):
+            mtimes.append(obj)
+    return contents.contentsSet(mtimes)
+
+
 class ldconfig(base):
     
     required_csets = ()
     _engine_types = None
-    _hooks = ("post_unmerge", "post_merge")
+    _hooks = ('pre_merge', 'post_merge', 'pre_unmerge', 'post_unmerge')
     _priority = 10
     
     def __init__(self, ld_so_conf_path="etc/ld.so.conf"):
         self.ld_so_conf_path = ld_so_conf_path.lstrip(os.path.sep)
+        self.saved_mtimes = contents.contentsSet()
+
+    def ld_so_path(self, offset):
+        return os.path.join(offset, self.ld_so_conf_path)
+
+    def read_ld_so_conf(self, offset):
+        fp = self.ld_so_path(offset)
+        basedir = os.path.dirname(fp)
+        if not os.path.exists(basedir):
+            os.mkdir(basedir)
+
+        try:
+            l = [x.lstrip(os.path.sep) for x in iter_read_bash(fp)]
+        except OSError, oe:
+            if oe.errno != errno.ENOENT:
+                raise
+            # touch the file.
+            open(fp, 'w')
+            # fall back to an edjucated guess.
+            l = ['usr/lib','usr/lib64','usr/lib32','lib','lib64','lib32']
+        return [os.path.join(offset, x) for x in l]
 
     def trigger(self, engine):
+        self.offset = engine.offset
         if engine.offset is None:
-            offset = '/'
+            self.offset = '/'
+
+        if engine.phase.startswith('pre_'):
+            self.saved_mtimes = get_dir_mtimes(
+                self.read_ld_so_conf(engine.offset))
+            return
+
+        new_mtimes = get_dir_mtimes(self.read_ld_so_conf(engine.offset))
+
+        for x in new_mtimes:
+            if x not in self.saved_mtimes or \
+                self.saved_mtimes[x].mtime != x.mtime:
+                break
         else:
-            offset = engine.offset
-        basedir = os.path.join(offset, os.path.dirname(self.ld_so_conf_path))
-        if not os.path.exists(basedir):
-            os.mkdir(os.path.join(offset, basedir))
-        f = os.path.join(offset, self.ld_so_conf_path)
-        if not os.path.exists(f):
-            # touch the file basically
-            open(f, "w")
+            if not new_mtimes.difference(self.saved_mtimes):
+                return
+        self.regen(engine.offset)
+        self.saved_mtimes = new_mtimes
+
+    def regen(self, offset):
         ret = spawn.spawn(["/sbin/ldconfig", "-r", offset], fd_pipes={1:1, 2:2})
         if ret != 0:
             raise errors.TriggerWarning(
@@ -153,7 +203,7 @@ class InfoRegen(base):
     # could implement this to look at csets, and do incremental removal and
     # addition; doesn't seem worth while though for the additional complexity
     
-    _hooks = ('pre_merge', 'post_merge', 'post_unmerge')
+    _hooks = ('pre_merge', 'post_merge', 'pre_unmerge', 'post_unmerge')
     _engine_types = None
     _label = "gnu info regen"
     
@@ -161,23 +211,6 @@ class InfoRegen(base):
     
     def __init__(self):
         self.saved_mtimes = contents.contentsSet()
-
-    @staticmethod
-    def get_mtimes(locations):
-        mtimes = []
-        for x in locations:
-            try:
-                # we force our own os.stat, instead of genobjs lstat
-                st = os.stat(x)
-            except OSError, oe:
-                if not oe.errno == errno.ENOENT:
-                    raise
-                del oe
-                continue
-            obj = gen_obj(x, stat=st)
-            if fs.isdir(obj):
-                mtimes.append(obj)
-        return contents.contentsSet(mtimes)
 
     def get_binary_path(self):
         try:
@@ -192,14 +225,14 @@ class InfoRegen(base):
             return
 
         if engine.phase.startswith('pre_'):
-            self.saved_mtimes = self.get_mtimes(self.locations)
+            self.saved_mtimes = get_dir_mtimes(self.locations)
             return
         elif engine.phase == 'post_merge' and \
             engine.mode == const.REPLACE_MODE:
             # skip post_merge for replace.
             # we catch it on unmerge...
             return
-        new_mtimes = self.get_mtimes(self.locations)
+        new_mtimes = get_dir_mtimes(self.locations)
 
         for x in self.saved_mtimes.difference(new_mtimes):
             # locations to wipe the dir file from.

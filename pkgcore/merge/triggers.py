@@ -160,7 +160,7 @@ class InfoRegen(base):
     locations = ('/usr/share/info', )
     
     def __init__(self):
-        self.saved_mtimes = ()
+        self.saved_mtimes = contents.contentsSet()
 
     @staticmethod
     def get_mtimes(locations):

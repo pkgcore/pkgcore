@@ -55,7 +55,7 @@ class base(object):
     def label(self):
         if self._label is not None:
             return self._label
-        return self.__class__
+        return str(self.__class__.__name__)
 
     def register(self, engine):
         """
@@ -110,11 +110,11 @@ class base(object):
 
     def __str__(self):
         return "%s: cset(%s) ftrigger(%s)" % (
-            self.__class__, self.required_csets, self.trigger)
+            self.label, self.required_csets, self.trigger)
 
     def __repr__(self):
         return "<%s cset=%r @#%x>" % (
-            self.__class__.__name__,
+            self.label,
             self.required_csets, id(self))
 
 
@@ -216,7 +216,7 @@ class InfoRegen(base):
 
     def regen(self, binary, basepath):
         pjoin = os.path.join
-        ignore = ("dir", "dir.old")
+        ignores = ("dir", "dir.old")
         files = listdir_files(basepath)
         
         # wipe old indexes.
@@ -225,13 +225,13 @@ class InfoRegen(base):
 
         index = pjoin(basepath, 'dir')
         for x in files:
-            if x in ignore:
+            if x in ignores:
                 continue
             
             ret, data = spawn.spawn_get_output(
                 [binary, '--quiet', pjoin(basepath, x),
                     '--dir-file', index],
-                fd_pipes={2:1, 1:1}, split_lines=False)
+                collect_fds=(1,2), split_lines=False)
 
             if not data or "already exists" in data or \
                 "warning: no info dir entry" in data:

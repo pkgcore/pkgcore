@@ -69,12 +69,9 @@ class base(object):
             raise TypeError("%r: %r: _hooks needs to be a sequence" %
                 (self, self._hooks))
 
-        csets = self.required_csets
+        csets = self.get_required_csets(engine.mode)
         if csets is None:
             csets = ()
-        elif not isinstance(csets, tuple):
-            # has to be a dict.
-            csets = csets.get(engine.mode, ())
 
         for hook in self._hooks:
             try:
@@ -83,17 +80,29 @@ class base(object):
                 # unknown hook.
                 continue
 
-    def _get_csets(self, csets):
-        return [csets[x] for x in self.required_csets]
+    def get_required_csets(self, mode):
+        csets = self.required_csets
+        if csets is not None:
+            if not isinstance(csets, tuple):
+                # has to be a dict.
+                csets = csets.get(engine.mode, None)
+        return csets
+
+    @staticmethod
+    def _get_csets(required_csets, csets):
+        return [csets[x] for x in required_csets]
 
     def trigger(self, engine, csets):
         raise NotImplementedError(self, 'trigger')
 
     def __call__(self, engine, csets):
         """execute the trigger"""
-        if self.required_csets is None:
+
+        required_csets = self.get_required_csets(engine.mode)
+        
+        if required_csets is None:
             return self.trigger(engine, csets)
-        return self.trigger(engine, *self._get_csets(csets))
+        return self.trigger(engine, *self._get_csets(required_csets, csets))
 
     def __str__(self):
         return "%s: cset(%s) ftrigger(%s)" % (

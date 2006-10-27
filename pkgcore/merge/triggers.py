@@ -191,10 +191,15 @@ class InfoRegen(base):
         if bin_path is None:
             return
 
-        new_mtimes = self.get_mtimes(self.locations)
-        if engine.phase.startswith("pre_"):
-            self.saved_mtimes = new_mtimes
+        if engine.phase.startswith('pre_'):
+            self.saved_mtimes = self.get_mtimes(self.locations)
             return
+        elif engine.phase == 'post_merge' and \
+            engine.mode == const.REPLACE_MODE:
+            # skip post_merge for replace.
+            # we catch it on unmerge...
+            return
+        new_mtimes = self.get_mtimes(self.locations)
 
         for x in self.saved_mtimes.difference(new_mtimes):
             # locations to wipe the dir file from.

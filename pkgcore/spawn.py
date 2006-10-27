@@ -417,6 +417,7 @@ def spawn_get_output(
 
     @param spawn_type: the passed in function to call-
        typically spawn_bash, spawn, spawn_sandbox, or spawn_fakeroot.
+       defaults to spawn
     """
 
     pr, pw = None, None

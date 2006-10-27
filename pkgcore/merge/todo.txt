@@ -1,6 +1,6 @@
 missing triggers:
-collision-protect
-config_protect
+implement INSTALL_MASK
+
 
 - misc-functions.sh
  1) big ass scanelf block.
@@ -37,3 +37,4 @@ preplib:
 
 size check (is there enough space on the partitions for merging?)
 revdep check.
+

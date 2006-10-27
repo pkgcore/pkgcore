@@ -4,7 +4,9 @@
 from pkgcore.util.currying import pre_curry
 
 class base(object):
-    pass
+
+    def warn(self, msg):
+        pass
 
 
 class phase_observer(object):
@@ -25,6 +27,9 @@ class file_phase_observer(phase_observer):
     def phase_start(self, phase):
         self._out.write("starting %s\n" % phase)
     
+    def warn(self, msg):
+        self._out.write("warning: %s\n" % msg)
+
     def phase_end(self, phase, status):
         if not self._semiquiet:
             self._out.write("finished %s: %s\n" % (phase, status))

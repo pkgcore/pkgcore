@@ -85,7 +85,7 @@ class base(object):
         if csets is not None:
             if not isinstance(csets, tuple):
                 # has to be a dict.
-                csets = csets.get(engine.mode, None)
+                csets = csets.get(mode, None)
         return csets
 
     @staticmethod

@@ -16,9 +16,13 @@ __all__ = [
 from pkgcore.merge import errors, const
 import pkgcore.os_data
 from pkgcore.util.demandload import demandload
-demandload(globals(), "os "
+demandload(globals(), "os errno "
     "pkgcore.plugin:get_plugin "
-    "pkgcore.spawn:spawn ")
+    "pkgcore:spawn "
+    "pkgcore.fs.livefs:gen_obj "
+    "pkgcore.fs:fs,contents "
+    "pkgcore.util.osutils:listdir_files "
+    )
 
 UNINSTALLING_MODES = (const.REPLACE_MODE, const.UNINSTALL_MODE)
 INSTALLING_MODES = (const.REPLACE_MODE, const.INSTALL_MODE)
@@ -136,12 +140,104 @@ class ldconfig(base):
         if not os.path.exists(f):
             # touch the file basically
             open(f, "w")
-        ret = spawn(["/sbin/ldconfig", "-r", offset], fd_pipes={1:1, 2:2})
+        ret = spawn.spawn(["/sbin/ldconfig", "-r", offset], fd_pipes={1:1, 2:2})
         if ret != 0:
             raise errors.TriggerWarning(
                 "ldconfig returned %i from execution" % ret)
 
 
+class InfoRegen(base):
+
+    required_csets = ()
+
+    # could implement this to look at csets, and do incremental removal and
+    # addition; doesn't seem worth while though for the additional complexity
+    
+    _hooks = ('pre_merge', 'post_merge', 'post_unmerge')
+    _engine_types = None
+    
+    locations = ('/usr/share/info', )
+    
+    def __init__(self):
+        self.saved_mtimes = ()
+
+    @staticmethod
+    def get_mtimes(locations):
+        mtimes = []
+        for x in locations:
+            try:
+                # we force our own os.stat, instead of genobjs lstat
+                st = os.stat(x)
+            except OSError, oe:
+                if not oe.errno == errno.ENOENT:
+                    raise
+                del oe
+                continue
+            obj = gen_obj(x, stat=st)
+            if fs.isdir(obj):
+                mtimes.append(obj)
+        return contents.contentsSet(mtimes)
+
+    def get_binary_path(self):
+        try:
+            return spawn.find_binary('install-info')
+        except spawn.CommandNotFound:
+            # swallow it.
+            return None
+
+    def trigger(self, engine):
+        bin_path = self.get_binary_path()
+        if bin_path is None:
+            return
+
+        new_mtimes = self.get_mtimes(self.locations)
+        if engine.phase.startswith("pre_"):
+            self.saved_mtimes = new_mtimes
+            return
+
+        for x in self.saved_mtimes.difference(new_mtimes):
+            # locations to wipe the dir file from.
+            try:
+                os.remove(x)
+            except OSError:
+                # don't care...
+                continue
+
+        # wiped the oldies.  now force updates.
+        bad = []
+        for x in new_mtimes:
+            if x not in self.saved_mtimes or \
+                self.saved_mtimes[x].mtime != x.mtime:
+                bad.extend(self.regen(bin_path, x.location))
+        self.saved_mtimes = new_mtimes
+        if bad and engine.observer is not None:
+            engine.observer.warn("bad info files: %r" % sorted(bad))
+
+    def regen(self, binary, basepath):
+        pjoin = os.path.join
+        ignore = ("dir", "dir.old")
+        files = listdir_files(basepath)
+        
+        # wipe old indexes.
+        for x in set(ignores).difference(files):
+            os.remove(pjoin(basepath, x))
+
+        index = pjoin(basepath, 'dir')
+        for x in files:
+            if x in ignore:
+                continue
+            
+            ret, data = spawn.spawn_get_output(
+                [binary, '--quiet', pjoin(basepath, x),
+                    '--dir-file', index],
+                fd_pipes={2:1, 1:1}, split_lines=False)
+
+            if not data or "already exists" in data or \
+                "warning: no info dir entry" in data:
+                continue
+            yield pjoin(basepath, x)
+
+    
 class merge(base):
     
     required_csets = ('install',)

@@ -355,6 +355,38 @@ class collision_protect(triggers.base):
                 ', '.join(repr(x) for x in sorted(colliding)))
 
 
+class InfoRegen(triggers.InfoRegen):
+
+    _label = "ebuild info regen"
+
+    def register(self, engine):
+        # wipe pre-existing info triggers.
+        for x in self._hooks:
+            if x not in engine.hooks:
+                continue
+            # yucky, but works.
+            wipes = [y for y in engine.hooks[x]
+                if y.label == triggers.InfoRegen._label]
+            for y in wipes:
+                engine.hooks[x].remove(y)
+        triggers.InfoRegen.register(self, engine)
+
+    def trigger(self, engine, *args):
+        self.engine = engine
+        self.path = os.path.join(engine.offset, "etc/env.d")
+        triggers.InfoRegen.trigger(self, engine, *args)
+
+    @property
+    def locations(self):
+        collapsed_d, inc, colon = collapse_envd(self.path)
+        l = collapsed_d.get("INFOPATH", [])
+        if not l:
+            return triggers.InfoRegen.locations
+        elif isinstance(l, basestring):
+            l = l.split()
+        return l
+
+
 def customize_engine(domain_settings, engine):
     env_update().register(engine)
 
@@ -370,3 +402,5 @@ def customize_engine(domain_settings, engine):
 
     if "collision-protect" in domain_settings.get("FEATURES", []):
         collision_protect(protect, mask).register(engine)
+
+    InfoRegen().register(engine)

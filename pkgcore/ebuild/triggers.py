@@ -310,7 +310,11 @@ class preinst_contents_reset(triggers.base):
 
 class collision_protect(triggers.base):
 
-    required_csets = ('install', 'install_existing')
+    required_csets = {
+        const.INSTALL_MODE:('install', 'install_existing'),
+        const.REPLACE_MODE:('install', 'install_existing', 'old_cset')
+        }
+
     _hooks = ('sanity_check',)
     _engine_types = triggers.INSTALLING_MODES
 
@@ -319,7 +323,7 @@ class collision_protect(triggers.base):
         self.extra_protects = extra_protects
         self.extra_disables = extra_disables
 
-    def trigger(self, engine, install, existing):
+    def trigger(self, engine, install, existing, old_cset=()):
         if not existing:
             return
 
@@ -344,9 +348,7 @@ class collision_protect(triggers.base):
         if not colliding:
             return
 
-        if engine.mode == const.REPLACE_MODE:
-            # drop the stuff we're replacing from the old pkg.
-            colliding.difference_update(engine.csets['old_cset'])
+        colliding.difference_update(old_cset)
         if colliding:
             raise errors.BlockModification(
                 "collision-protect: file(s) already exist: ( %s )" %
@@ -365,5 +367,6 @@ def customize_engine(domain_settings, engine):
 
     ConfigProtectInstall(protect, mask).register(engine)
     ConfigProtectUninstall().register(engine)
+
     if "collision-protect" in domain_settings.get("FEATURES", []):
         collision_protect(protect, mask).register(engine)

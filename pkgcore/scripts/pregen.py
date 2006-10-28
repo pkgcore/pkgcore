@@ -15,9 +15,10 @@ from pkgcore.util import commandline
 
 class OptionParser(commandline.OptionParser):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         commandline.OptionParser.__init__(
-            self, description=__doc__, usage='%prog [options] repo [threads]')
+            self, description=__doc__, usage='%prog [options] repo [threads]',
+            **kwargs)
 
     def check_values(self, values, args):
         values, args = commandline.OptionParser.check_values(

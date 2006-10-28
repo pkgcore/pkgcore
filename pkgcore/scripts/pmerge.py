@@ -17,8 +17,8 @@ from pkgcore.util.formatters import ObserverFormatter
 
 class OptionParser(commandline.OptionParser):
 
-    def __init__(self):
-        commandline.OptionParser.__init__(self, description=__doc__)
+    def __init__(self, **kwargs):
+        commandline.OptionParser.__init__(self, description=__doc__, **kwargs)
         self.add_option('--deep', '-D', action='store_true',
             help='force the resolver to verify already installed dependencies')
         self.add_option('--unmerge', '-C', action='store_true',

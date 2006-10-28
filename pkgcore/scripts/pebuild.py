@@ -12,9 +12,10 @@ from pkgcore.ebuild import atom
 
 class OptionParser(commandline.OptionParser):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         commandline.OptionParser.__init__(
-            self, description=__doc__, usage='%prog [options] atom phases')
+            self, description=__doc__, usage='%prog [options] atom phases',
+            **kwargs)
 
     def check_values(self, values, args):
         values, args = commandline.OptionParser.check_values(

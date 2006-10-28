@@ -9,8 +9,8 @@ from pkgcore.util import commandline
 
 class OptionParser(commandline.OptionParser):
 
-    def __init__(self):
-        commandline.OptionParser.__init__(self, description=__doc__)
+    def __init__(self, **kwargs):
+        commandline.OptionParser.__init__(self, description=__doc__, **kwargs)
         self.add_option("--sync", action='store_true', default=False,
             help="sync repositories")
         self.add_option("-r", "--repo", action='append',

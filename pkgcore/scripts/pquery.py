@@ -230,9 +230,9 @@ class OptionParser(commandline.OptionParser):
 
     """Option parser with custom option postprocessing and validation."""
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         commandline.OptionParser.__init__(
-            self, description=__doc__, option_class=Option)
+            self, description=__doc__, option_class=Option, **kwargs)
 
         self.set_default('pkgset', [])
         self.set_default('restrict', [])

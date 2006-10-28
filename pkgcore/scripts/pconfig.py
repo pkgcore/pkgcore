@@ -7,46 +7,23 @@
 import traceback
 
 from pkgcore.config import errors, basics
-from pkgcore.util import commandline, modules
+from pkgcore.util import commandline, modules, currying
 
 
-class OptionParser(commandline.OptionParser):
+class DescribeClassParser(commandline.OptionParser):
 
     """Our option parser."""
 
-    def __init__(self):
-        commandline.OptionParser.__init__(self, description=__doc__)
-        self.add_option('--info', action='store_true',
-                        help='Print a summary of the configuration.')
-        self.add_option('--dump', action='store_true',
-                        help='Dump the entire configuration.'
-                        'The format used is similar to the ini-like default '
-                        'format, but do not rely on this to always write a '
-                        'loadable config. There may be quoting issues.')
-        self.add_option('--classes', action='store_true',
-                        help='List all classes referenced by the config.')
-        self.add_option('--uncollapsable', action='store_true',
-                        help='show things that could not be collapsed.')
-        self.add_option('--describe-class', action='store', type='str',
-                        help='describe the arguments a class needs.')
-
-    def check_values(self, vals, args):
-        vals, args = commandline.OptionParser.check_values(self, vals, args)
-        modes = sum(
-            getattr(vals, attr) and 1 or 0
-            for attr in [
-                'info', 'dump', 'classes', 'uncollapsable', 'describe_class'])
-        if modes > 1:
-            self.error('specify only one mode please')
-        if not modes:
-            self.error('nothing to do!')
-        if vals.describe_class:
-            try:
-                vals.describe_class = modules.load_attribute(
-                    vals.describe_class)
-            except modules.FailedImport, e:
-                self.error(str(e))
-        return vals, args
+    def check_values(self, values, args):
+        values, args = commandline.OptionParser.check_values(
+            self, values, args)
+        if len(args) != 1:
+            self.error('need exactly one argument: class to describe.')
+        try:
+            values.describe_class = modules.load_attribute(args[0])
+        except modules.FailedImport, e:
+            self.error(str(e))
+        return values, ()
 
 
 def dump_section(config, out, sections):
@@ -108,11 +85,19 @@ def dump_section(config, out, sections):
     out.first_prefix.pop()
 
 
-def get_classes(configs):
-    """Return a set of referenced classes."""
+def classes_main(options, out, err):
+    """List all classes referenced by the config."""
     # Not particularly efficient (doesn't memoize already visited configs)
+    configmanager = options.config
     classes = set()
-    for config in configs:
+    for name in configmanager.sections():
+        try:
+            config = configmanager.collapse_named_section(name)
+        except errors.ConfigurationError:
+            if options.debug:
+                traceback.print_exc()
+            # Otherwise ignore this.
+            continue
         classes.add('%s.%s' % (config.type.callable.__module__,
                                config.type.callable.__name__))
         for key, val in config.config.iteritems():
@@ -127,11 +112,12 @@ def get_classes(configs):
                 classes.update(get_classes(c.collapse() for c in val))
             elif typename.startswith('lazy_ref'):
                 classes.update(get_classes((val.collapse(),)))
-    return classes
+    for classname in sorted(classes):
+        out.write(classname)
 
 
-def main(options, out, err):
-    """Do stuff.
+def describe_class_main(options, out, err):
+    """Describe the arguments a class needs.
 
     @param options: optparse option values.
     @type  out: L{pkgcore.util.formatters.Formatter} instance.
@@ -139,49 +125,67 @@ def main(options, out, err):
     @type  err: file-like object
     @param err: stream for errors (usually C{sys.stderr})
     """
-    if options.describe_class:
+    try:
+        type_obj = basics.ConfigType(options.describe_class)
+    except errors.TypeDefinitionError:
+        out.write('Not a valid type!')
+        return 1
+    out.write('typename is %s' % (type_obj.name,))
+    if type_obj.allow_unknowns:
+        out.write('values not listed are handled as strings')
+    out.write()
+    out.autoline = False
+    for name, typename in sorted(type_obj.types.iteritems()):
+        out.write('%s: %s' % (name, typename))
+        if name in type_obj.required:
+            out.write(' (required)')
+        if name in type_obj.incrementals:
+            out.write(' (incremental)')
+        out.write('\n')
+
+
+def uncollapsable_main(options, out, err):
+    """Show things that could not be collapsed."""
+    config = options.config
+    for name in config.sections():
         try:
-            type_obj = basics.ConfigType(options.describe_class)
-        except errors.TypeDefinitionError:
-            out.write('Not a valid type!')
-            return 1
-        out.write('typename is %s' % (type_obj.name,))
-        if type_obj.allow_unknowns:
-            out.write('values not listed are handled as strings')
-        out.write()
-        out.autoline = False
-        for name, typename in sorted(type_obj.types.iteritems()):
-            out.write('%s: %s' % (name, typename))
-            if name in type_obj.required:
-                out.write(' (required)')
-            if name in type_obj.incrementals:
-                out.write(' (incremental)')
-            out.write('\n')
-        return
+            config.collapse_named_section(name)
+        except errors.ConfigurationError, e:
+            if options.debug:
+                traceback.print_exc()
+            else:
+                out.write(str(e))
+            out.write()
+
+
+def dump_main(options, out, err):
+    """Dump the entire configuration."""
     sections = []
     config = options.config
     for name in config.sections():
         try:
             sections.append((name, config.collapse_named_section(name)))
-        except errors.ConfigurationError, e:
+        except errors.ConfigurationError:
             if options.debug:
                 traceback.print_exc()
-            elif options.uncollapsable:
-                out.write(str(e))
-                out.write()
             # Otherwise ignore this.
-    if options.uncollapsable:
-        return
     sections.sort()
-    if options.info:
-        out.write('XXX this is pretty useless, try --dump')
-    elif options.dump:
-        revmap = dict((config, name) for name, config in sections)
-        for name, section in sections:
-            out.write('%r {' % (name,))
-            dump_section(section, out, revmap)
-            out.write('}')
-            out.write()
-    elif options.classes:
-        out.write('\n'.join(sorted(get_classes(
-                        section for name, section in sections))))
+    revmap = dict((config, name) for name, config in sections)
+    for name, section in sections:
+        out.write('%r {' % (name,))
+        dump_section(section, out, revmap)
+        out.write('}')
+        out.write()
+
+
+commandline_commands = {
+    'dump': (currying.partial(
+            commandline.OptionParser,
+            description='Dump the entire configuration. '
+            'The format used is similar to the ini-like default '
+            'format, but do not rely on this to always write a '
+            'loadable config. There may be quoting issues.'), dump_main),
+    'classes': (commandline.OptionParser, classes_main),
+    'uncollapsable': (commandline.OptionParser, uncollapsable_main),
+    'describe_class': (DescribeClassParser, describe_class_main),
+    }

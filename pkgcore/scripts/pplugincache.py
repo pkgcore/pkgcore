@@ -11,9 +11,9 @@ from pkgcore import plugin
 
 class OptionParser(commandline.OptionParser):
 
-    def __init__(self):
+    def __init__(self, **kwargs):
         commandline.OptionParser.__init__(
-            self, description=__doc__, usage='%prog [packages]')
+            self, description=__doc__, usage='%prog [packages]', **kwargs)
 
     def check_values(self, values, args):
         """Sanity check and postprocess after parsing."""

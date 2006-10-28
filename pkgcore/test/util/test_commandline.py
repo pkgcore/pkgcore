@@ -64,4 +64,4 @@ class MainTest(TestCase):
             def error(self, msg):
                 """Ignore errors."""
         self.assertEquals(
-            1, commandline.main(WeirdParser(), main, ['1'], False))
+            1, commandline.main({None: (WeirdParser, main)}, ['1'], False))

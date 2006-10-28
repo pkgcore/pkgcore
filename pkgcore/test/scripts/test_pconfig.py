@@ -6,6 +6,7 @@ from pkgcore.test import TestCase
 from pkgcore.scripts import pconfig
 from pkgcore.test.scripts import helpers
 from pkgcore.config import configurable, basics
+from pkgcore.util import commandline
 
 @configurable({'reff': 'ref:spork'})
 def spork(reff):
@@ -15,32 +16,43 @@ def foon():
     pass
 
 
-class CommandlineTest(TestCase, helpers.MainMixin):
+class DescribeClassTest(TestCase, helpers.MainMixin):
 
-    parser = helpers.mangle_parser(pconfig.OptionParser())
-    main = staticmethod(pconfig.main)
+    parser = helpers.mangle_parser(pconfig.DescribeClassParser())
+    main = staticmethod(pconfig.describe_class_main)
 
     def test_parser(self):
-        self.assertTrue(self.parse('--dump').dump)
-        self.assertError(
-            'specify only one mode please', '--uncollapsable', '--dump')
-        self.assertError('nothing to do!')
         self.assertError(
             "Failed importing target 'pkgcore.spork': "
-            "''module' object has no attribute 'spork''", '--describe-class',
-            'pkgcore.spork')
+            "''module' object has no attribute 'spork''", 'pkgcore.spork')
+        self.assertError(
+            'need exactly one argument: class to describe.')
+        self.assertError(
+            'need exactly one argument: class to describe.', 'a', 'b')
 
     def test_describe_class(self):
         self.assertOut(
             ['typename is spork',
              '',
              'reff: ref:spork (required)'],
-            '--describe-class', 'pkgcore.test.scripts.test_pconfig.spork')
+            'pkgcore.test.scripts.test_pconfig.spork')
+
+
+class ClassesTest(TestCase, helpers.MainMixin):
+
+    parser = helpers.mangle_parser(commandline.OptionParser())
+    main = staticmethod(pconfig.classes_main)
 
     def test_classes(self):
         self.assertOut(
-            ['pkgcore.test.scripts.test_pconfig.foon'], '--classes',
+            ['pkgcore.test.scripts.test_pconfig.foon'],
             spork=basics.HardCodedConfigSection({'class': foon}))
+
+
+class DumpTest(TestCase, helpers.MainMixin):
+
+    parser = helpers.mangle_parser(commandline.OptionParser())
+    main = staticmethod(pconfig.dump_main)
 
     def test_dump(self):
         self.assertOut(
@@ -49,7 +61,6 @@ class CommandlineTest(TestCase, helpers.MainMixin):
              '    class pkgcore.test.scripts.test_pconfig.foon;',
              '}',
              ''],
-            '--dump',
             spork=basics.HardCodedConfigSection({'class': foon}))
 
     def test_default(self):
@@ -60,9 +71,13 @@ class CommandlineTest(TestCase, helpers.MainMixin):
              '    default true;',
              '}',
              ''],
-            '--dump',
             spork=basics.HardCodedConfigSection({'class': foon,
                                                  'default': True}))
+
+class UncollapsableTest(TestCase, helpers.MainMixin):
+
+    parser = helpers.mangle_parser(commandline.OptionParser())
+    main = staticmethod(pconfig.uncollapsable_main)
 
     def test_uncollapsable(self):
         self.assertOut(
@@ -70,5 +85,4 @@ class CommandlineTest(TestCase, helpers.MainMixin):
              'type pkgcore.test.scripts.test_pconfig.spork needs settings for '
              "'reff'",
              ''],
-            '--uncollapsable',
             spork=basics.HardCodedConfigSection({'class': spork}))

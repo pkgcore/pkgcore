@@ -14,6 +14,7 @@ consistent exception handling.
 
 import sys
 import optparse
+import os.path
 
 from pkgcore.config import load_config, errors
 
@@ -125,7 +126,7 @@ class OptionParser(optparse.OptionParser):
         return values, args
 
 
-def main(option_parser, main_func, args=None, sys_exit=True):
+def main(subcommands, args=None, sys_exit=True):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
     Options are parsed before the config is loaded. This means you
@@ -140,11 +141,11 @@ def main(option_parser, main_func, args=None, sys_exit=True):
     Any ConfigurationErrors raised from your function (by the config
     manager) are handled. Other exceptions are not (trigger a traceback).
 
-    @type  option_parser: instance of L{OptionParser} (or a subclass).
-    @param option_parser: option parser used.
-    @type  main_func: callable, main_func(config, out, err)
-    @param main_func: function called after the options are parsed.
-        Arguments are a L{Values} instance, a
+    @type  subcommands: mapping of string => (OptionParser class, main func)
+    @param subcommands: available commands.
+        The keys are a subcommand name or None for other/unknown/no subcommand.
+        The values are tuples of OptionParser subclasses and functions called
+        as main_func(config, out, err) with a L{Values} instance, a
         L{pkgcore.util.formatters.Formatter} for output and a filelike
         for errors (C{sys.stderr}). It should return an integer used as
         exit status or None as synonym for 0.
@@ -154,7 +155,37 @@ def main(option_parser, main_func, args=None, sys_exit=True):
     @param sys_exit: if True C{sys.exit} is called when done, otherwise
         the exitstatus is returned.
     """
+    if args is None:
+        args = sys.argv[1:]
+    prog = os.path.basename(sys.argv[0])
+    parser_class = None
+    if args:
+        parser_class, main_func = subcommands.get(args[0], (None, None))
+        if parser_class is not None:
+            prog = '%s %s' % (prog, args[0])
+            args = args[1:]
+    if parser_class is None:
+        try:
+            parser_class, main_func = subcommands[None]
+        except KeyError:
+            if not sys_exit:
+                return 1
+            # This tries to print in a format very similar to optparse --help.
+            sys.stderr.write(
+                'Usage: %s <command>\n\nCommands:\n' % (prog,))
+            maxlen = max(len(subcommand) for subcommand in subcommands) + 1
+            for subcommand, (parser, main) in sorted(subcommands.iteritems()):
+                doc = main.__doc__
+                if doc is None:
+                    sys.stderr.write('  %s\n' % (subcommand,))
+                else:
+                    doc = doc.split('\n', 1)[0]
+                    sys.stderr.write('  %-*s %s\n' % (maxlen, subcommand, doc))
+            sys.stderr.write(
+                '\nUse --help after a subcommand for more help.\n')
+            sys.exit(1)
     options = None
+    option_parser = parser_class(prog=prog)
     try:
         options, args = option_parser.parse_args(args)
         # Checked here and not in OptionParser because we want our

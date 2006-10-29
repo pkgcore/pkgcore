@@ -30,21 +30,12 @@ class PigeonHoledSlots(object):
             else:
                 if x.slot == obj.slot:
                     l.append(x)
-#                     if x == obj:
-#                         # exit,with a sanity check.
-#                         for y in (z for z in self.slot_dict[key]
-#                                   if isinstance(z, restriction.base)):
-#                             if y.match(x):
-#                                 raise Exception
-#                         return []
-#                     l.append(x)
         if not l or force:
             self.slot_dict[key].append(obj)
         return l
 
     def get_conflicting_slot(self, pkg):
-        key = pkg.key
-        for x in self.slot_dict.get(key, []):
+        for x in self.slot_dict.get(pkg.key, []):
             if not isinstance(x, restriction.base) and pkg.slot == x.slot:
                 return x
         return None

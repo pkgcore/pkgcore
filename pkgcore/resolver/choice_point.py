@@ -133,6 +133,14 @@ class choice_point(object):
         return existing[2]
 
     @property
+    def slot(self):
+        return self.current_pkg.slot
+
+    @property
+    def key(self):
+        return self.current_pkg.key
+
+    @property
     def current_pkg(self):
         # trigger depends lookup.  cheap, but works.
         self.depends, self.rdepends, self.post_rdepends

@@ -9,6 +9,8 @@ Right now, doesn't provide much, need to change that down the line
 
 class base(object):
 
+    built = False
+    
     __slots__ = ("__weakref__", )
     _get_attr = {}
 

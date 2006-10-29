@@ -33,9 +33,6 @@ class SyncOptionParser(commandline.OptionParser):
     def __init__(self, **kwargs):
         commandline.OptionParser.__init__(self, description=
             "update a local repository to match it's parent", **kwargs)
-        self.add_option("-r", "--repo", action='append',
-            help="specify a specific repo to work on; defaults to all "
-                "applicable otherwise")
         self.add_option("--force", action='store_true', default=False,
             help="force an action")
 
@@ -44,21 +41,21 @@ class SyncOptionParser(commandline.OptionParser):
             self, values, args)
 
         if not args:
-            values.repo = values.config.repo.keys()
+            values.repos = values.config.repo.keys()
         else:
             for x in args:
                 if x not in values.config.repo:
                     self.error("repo %r doesn't exist:\nvalid repos %r" % 
                         (x, values.config.repo.keys()))
-            values.repo = args
-        return values, args
+            values.repos = args
+        return values, []
 
 def sync_main(options, out, err):
     """update a local repositories to match their remote parent"""
     config = options.config
     succeeded, failed = [], []
     seen = set()
-    for x in options.repo:
+    for x in options.repos:
         r = config.repo[x]
         if r in seen:
             continue

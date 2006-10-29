@@ -450,7 +450,7 @@ class merge_plan(object):
                     l = False
 
         else:
-            l = None
+                l = None
         return l
 
     def _rec_add_atom(self, atom, current_stack, dbs, depth=0, mode="none",
@@ -599,8 +599,8 @@ class merge_plan(object):
                                 force=True)
                             break;
                     
-                l = self.state.add_blocker(self.generate_mangled_blocker(
-                        choices, x), key=x.key)
+                l = self.state.add_blocker(choices, 
+                    self.generate_mangled_blocker(choices, x), key=x.key)
                 if l:
                     # blocker caught something. yay.
                     dprint("rdepend blocker %s hit %s for atom %s pkg %s",
@@ -659,8 +659,8 @@ class merge_plan(object):
                 # this might be suspect mind you...
                 # disabled, but something to think about.
 
-                l = self.state.add_blocker(self.generate_mangled_blocker(
-                        choices, x), key=x.key)
+                l = self.state.add_blocker(choices,
+                    self.generate_mangled_blocker(choices, x), key=x.key)
                 if l:
                     # blocker caught something. yay.
                     dprint("rdepend blocker %s hit %s for atom %s pkg %s",
@@ -765,11 +765,14 @@ REMOVE  = 0
 ADD     = 1
 REPLACE = 2
 FORWARD_BLOCK = 3
+REMOVE_FORWARD_BLOCK = 4
 
 class plan_state(object):
     def __init__(self):
         self.state = PigeonHoledSlots()
         self.plan = []
+        self.pkg_choices = {}
+        self.rev_blockers = {}
 
     def add_pkg(self, choices, action=ADD, force=False):
         return self._add_pkg(choices, choices.current_pkg, action, force=force)
@@ -784,10 +787,12 @@ class plan_state(object):
             if l:
                 return l
             self.plan.append((action, choices, force, pkg))
+            self.pkg_choices[pkg] = choices
         elif action == REMOVE:
             # level it even if it's not existant?
             self.state.remove_slotting(pkg)
             self.plan.append((action, choices, force, pkg))
+            del self.pkg_choices[pkg]
         elif action == REPLACE:
             l = self.state.fill_slotting(pkg)
             assert len(l) == 1
@@ -798,42 +803,59 @@ class plan_state(object):
                 l3 = self.state.fill_slotting(l[0])
                 assert not l3
                 return l2
-            self.plan.append((action, choices, force, pkg, l[0]))
+
+            self.plan.append((action, choices, force, pkg, l[0],
+                self.pkg_choices[l[0]]))
+            # wipe the to-be-replaced pkgs blockers
+            self._remove_pkg_blockers(self.pkg_choices[l[0]])
+            del self.pkg_choices[l[0]]
+            self.pkg_choices[pkg] = choices
         return False
 
+    def _remove_pkg_blockers(self, choices):
+        l = self.rev_blockers.get(choices, None)
+        if l is None:
+            return
+        for blocker, key in l:
+            self.plan.append(
+                (REMOVE_FORWARD_BLOCK, choices, blocker, key))
+            self.remove_limiter(blocker, key)
+        del self.rev_blockers[choices]
+        
     def reset_state(self, state_pos):
         assert state_pos <= len(self.plan)
         if len(self.plan) == state_pos:
             return
-#		ps = self._force_rebuild(state_pos)
-#		self.plan = ps.plan
-#		self.state = ps.state
-#		import pdb;pdb.set_trace()
+        pkg_choices = self.pkg_choices
+        rev_blockers = self.rev_blockers
         for change in reversed(self.plan[state_pos:]):
             if change[0] == ADD:
                 self.state.remove_slotting(change[3])
+                del pkg_choices[change[3]]
             elif change[0] == REMOVE:
                 self.state.fill_slotting(change[3], force=change[2])
+                pkg_choices[change[3]] = change[2]
             elif change[0] == REPLACE:
                 self.state.remove_slotting(change[3])
                 self.state.fill_slotting(change[4], force=change[3])
+                del pkg_choices[change[3]]
+                pkg_choices[change[4]] = change[5]
             elif change[0] == FORWARD_BLOCK:
-                self.state.remove_limiter(change[1], key=change[2])
-        self.plan = self.plan[:state_pos]
-
-    def _force_rebuild(self, state_pos):
-        # should revert, rather then force a re-run
-        ps = plan_state()
-        for x in self.plan[:state_pos]:
-            if x[0] == FORWARD_BLOCK:
-                ps.add_blocker(x[1], key=x[2])
-            elif x[0] in (REMOVE, ADD, REPLACE):
-                ps._add_pkg(x[1], x[3], action=x[0], force=x[2])
+                self.state.remove_limiter(change[2], key=change[3])
+                l = [x for x in rev_blockers[change[1]]
+                    if x[0] != change[2]]
+                if l:
+                    rev_blockers[change[1]] = l
+                else:
+                    del rev_blockers[change[1]]
+            elif change[0] == REMOVE_FORWARD_BLOCK:
+                self.rev_blockers.setdefault(change[1],
+                    []).append((change[2], change[3]))
             else:
-                print "unknown %s encountered in rebuilding state" % str(x)
-                import pdb;pdb.set_trace()
-                pass
-        return ps
+                raise AssertionError(
+                    "encountered unknown command reseting state: %r" %
+                    change)
+        self.plan = self.plan[:state_pos]
 
     def iter_pkg_ops(self):
         ops = {ADD:"add", REMOVE:"remove", REPLACE:"replace",
@@ -842,14 +864,17 @@ class plan_state(object):
             if x[0] == FORWARD_BLOCK:
                 continue
             assert x[0] in ops
-            yield ops[x[0]], x[3:]
+            if x[0] == REPLACE:
+                yield ops[x[0]], x[3:5]
+            else:
+                yield ops[x[0]], x[3:]
 
-    def add_blocker(self, blocker, key=None):
+    def add_blocker(self, choices, blocker, key=None):
         """adds blocker, returning any packages blocked"""
         l = self.state.add_limiter(blocker, key=key)
-        self.plan.append((FORWARD_BLOCK, blocker, key))
+        self.plan.append((FORWARD_BLOCK, choices, blocker, key))
+        self.rev_blockers.setdefault(choices, []).append((blocker, key))
         return l
-
 
     def match_atom(self, atom):
         return self.state.find_atom_matches(atom)

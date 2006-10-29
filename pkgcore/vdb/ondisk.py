@@ -135,7 +135,7 @@ class tree(prototype.tree):
             else:
                 data = bz2_data_source(fp+".bz2")
         elif key == "ebuild":
-            fp = os.path.join(os.path.dirname(path), 
+            fp = os.path.join(path,
                 os.path.basename(path.rstrip(os.path.sep))+".ebuild")
             data = data_source.local_source(fp)
         else:

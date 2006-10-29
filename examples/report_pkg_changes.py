@@ -13,8 +13,7 @@ from pkgcore.ebuild.atom import atom
 def main(target_repo, seen, moves):
     # could build the atom from categories/packages, but prefer this;
     # simpler.
-    new_seen = set(x.next().unversioned_atom for x in
-        groupby_pkg(target_repo))
+    new_seen = set(atom("%s/%s" % x) for x in target_repo.versions)
 
     new_pkgs = new_seen.difference(seen)
     # this is simpler if pkgsets are... actually sets. ;)

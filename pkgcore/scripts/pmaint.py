@@ -9,10 +9,18 @@ from pkgcore.util import commandline
 
 commandline_commands = {}
 
+def format_seq(seq, formatter=repr):
+    if not seq:
+        seq = None
+    elif len(seq) == 1:
+        seq = seq[0]
+    return formatter(seq)
+
 class SyncOptionParser(commandline.OptionParser):
 
     def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(self, description=__doc__, **kwargs)
+        commandline.OptionParser.__init__(self, description=
+            "update a local repository to match it's parent", **kwargs)
         self.add_option("-r", "--repo", action='append',
             help="specify a specific repo to work on; defaults to all "
                 "applicable otherwise")
@@ -32,13 +40,6 @@ class SyncOptionParser(commandline.OptionParser):
                         (x, values.config.repo.keys()))
             values.repo = args
         return values, args
-
-def format_seq(seq, formatter=repr):
-    if not seq:
-        seq = None
-    elif len(seq) == 1:
-        seq = seq[0]
-    return formatter(seq)
 
 def sync_main(options, out, err):
     """update a local repositories to match their remote parent"""
@@ -69,3 +70,19 @@ def sync_main(options, out, err):
     return 0
 
 commandline_commands['sync'] = (SyncOptionParser, sync_main)
+
+
+# end sync bits.
+
+class CopyPkgParser(commandline.OptionParser):
+    
+    def __init__(self, **kwargs):
+        commandline.OptionParser.__init__(self, doc=
+            "copy built pkg(s) into a repository", **kwargs)
+        self.add_option("-s", "--source-repo",
+            help="copy from just the specified repository; else defaults "
+                "to finding any match")
+        self.add_option("--force", action='store_true', default=False,
+            help="try and force the copy if the target repository is marked as "
+                "immutable")
+        

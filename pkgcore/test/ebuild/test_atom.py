@@ -84,7 +84,6 @@ class TestAtom(TestCase):
         self.assertTrue(atom.atom("%s[debug]" % as).match(c))
         self.assertFalse(atom.atom("%s[-debug]" % as).match(c))
         self.assertTrue(atom.atom("%s[debug,-not]" % as).match(c))
-        self.assertTrue(atom.atom("%s[debug, -not]" % as).match(c))
         self.assertRaises(atom.MalformedAtom, atom.atom, "%s[]" % as)
 
     def test_slot(self):

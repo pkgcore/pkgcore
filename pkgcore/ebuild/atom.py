@@ -147,6 +147,7 @@ class atom(boolean.AndRestriction):
         "package", "key")
 
     type = packages.package_type
+    negate = False
 
     __inst_caching__ = True
 
@@ -154,31 +155,12 @@ class atom(boolean.AndRestriction):
         """
         @param atom: string, see gentoo ebuild atom syntax
         """
-        boolean.AndRestriction.__init__(self)
+#        boolean.AndRestriction.__init__(self)
 
         sf = object.__setattr__
 
         atom = orig_atom = atom.strip()
         sf(self, "hash", hash(atom))
-
-        sf(self, "blocks", atom[0] == "!")
-        if self.blocks:
-            pos = 1
-        else:
-            pos = 0
-
-        if atom[pos] in ('<', '>'):
-            if atom[pos + 1] == '=':
-                pos += 2
-            else:
-                pos += 1
-        elif atom[pos] in ('~', '='):
-            pos += 1
-
-        if self.blocks:
-            sf(self, "op", atom[1:pos])
-        else:
-            sf(self, "op", atom[:pos])
 
         u = atom.find("[")
         if u != -1:
@@ -186,7 +168,7 @@ class atom(boolean.AndRestriction):
             u2 = atom.find("]", u)
             if u2 == -1:
                 raise MalformedAtom(atom, "use restriction isn't completed")
-            sf(self, "use", tuple(x.strip() for x in atom[u+1:u2].split(',')))
+            sf(self, "use", tuple(atom[u+1:u2].split(',')))
             if not all(x.rstrip("-") for x in self.use):
                 raise MalformedAtom(
                     atom, "cannot have empty use deps in use restriction")
@@ -207,20 +189,34 @@ class atom(boolean.AndRestriction):
             sf(self, "slot", None)
         del u, s
 
-        if atom[-1] == '*':
-            if self.op != '=':
-                raise MalformedAtom(
-                    orig_atom, "range operators on a range are nonsencial, "
-                    "drop the globbing or use =cat/pkg* or !=cat/pkg*, not %s"
-                    % self.op)
-            sf(self, "glob", True)
-            sf(self, "cpvstr", atom[pos:-1])
-            # may have specified a period to force calculation
-            # limitation there- hence rstrip'ing it for the cpv
-            # generation
+        sf(self, "blocks", atom[0] == "!")
+        if self.blocks:
+            atom = atom[1:]
+
+        if atom[0] in ('<', '>'):
+            if atom[1] == '=':
+                sf(self, 'op', atom[:2])
+                atom = atom[2:]
+            else:
+                sf(self, 'op', atom[0])
+                atom = atom[1:]
+            sf(self, 'glob', False)
+        elif atom[0] == '=':
+            if atom[-1] == '*':
+                sf(self, 'glob', True)
+                atom = atom[1:-1]
+            else:
+                sf(self, 'glob', False)
+                atom = atom[1:]
+            sf(self, 'op', '=')
+        elif atom[0] == '~':
+            sf(self, 'op', '~')
+            atom = atom[1:]
+            sf(self, 'glob', False)
         else:
-            sf(self, "glob", False)
-            sf(self, "cpvstr", atom[pos:])
+            sf(self, 'op', '')
+            sf(self, 'glob', False)
+        sf(self, 'cpvstr', atom)
 
         try:
             c = cpv.CPV(self.cpvstr)
@@ -234,9 +230,10 @@ class atom(boolean.AndRestriction):
         sf(self, "revision", c.revision)
 
         sf(self, "negate_vers", negate_vers)
-        if self.op and self.version is None:
-            raise MalformedAtom(orig_atom, "operator requires a version")
-        if not self.op and self.version is not None:
+        if self.op:
+            if self.version is None:
+                raise MalformedAtom(orig_atom, "operator requires a version")
+        elif self.version is not None:
             raise MalformedAtom(orig_atom,
                                 'versioned atom requires an operator')
         # force jitting of it.

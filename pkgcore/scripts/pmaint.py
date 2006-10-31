@@ -63,17 +63,16 @@ def sync_main(options, out, err):
         if not r.syncable:
             continue
         out.write("*** syncing %r..." % x)
-        if not r.sync():
-            failed.append(r, force=options.force)
+        if not r.sync(force=options.force):
             out.write("*** failed syncing %r" % x)
             failed.append(x)
         else:
             succeeded.append(x)
             out.write("*** synced %r" % x)
     if len(succeeded) + len(failed) > 1:
-        out.write("*** synced %s\n" % format_seq(sorted(succeeded)))
+        out.write("*** synced %s" % format_seq(sorted(succeeded)))
         if failed:
-            err.write("!!! failed sync'ing %s\n" % format_seq(sorted(failed)))
+            err.write("!!! failed sync'ing %s" % format_seq(sorted(failed)))
     if failed:
         return 1
     return 0
@@ -143,7 +142,7 @@ def copy_main(options, out, err):
     for candidate in options.candidates:
         matches = src_repo.match(candidate)
         if not matches:
-            err.write("didn't find any matching pkgs for %r\n" % candidate)
+            err.write("didn't find any matching pkgs for %r" % candidate)
             failures = True
             continue
 
@@ -153,7 +152,7 @@ def copy_main(options, out, err):
             pkg = src
             if len(existing) > 1:
                 err.write(
-                    "skipping %r; tried to replace more then one pkg %r...\n" %
+                    "skipping %r; tried to replace more then one pkg %r..." %
                     (src, format_seq(existing)))
                 failures = True
                 continue
@@ -174,13 +173,13 @@ def copy_main(options, out, err):
                     except OSError, oe:
                         if oe.errno != errno.ENOENT:
                             err.write("failed accessing fs obj %r; %r\n"
-                                "aborting this copy\n" %
+                                "aborting this copy" %
                                 (fsobj, oe))
                             failure = True
                             new_contents = None
                             break
                         err.write("warning: dropping fs obj %r since it "
-                            "doesn't exist\n" % fsobj)
+                            "doesn't exist" % fsobj)
                 if new_contents is None:
                     continue
                 pkg = mutated.MutatedPkg(src, {'contents':new_contents})   

@@ -4,7 +4,7 @@
 import pwd
 from pkgcore.sync import base, svn
 from pkgcore.test.sync import make_bogus_syncer, make_valid_syncer
-from pkgcore.test import TestCase
+from pkgcore.test import TestCase, SkipTest
 from pkgcore.os_data import root_uid
 
 valid = make_valid_syncer(base.ExternalSyncer)
@@ -42,5 +42,11 @@ class GenericSyncerTest(TestCase):
         self.assertRaises(
             base.uri_exception,
             base.GenericSyncer, '/', 'seriouslynotaprotocol://blah/')
-        syncer = base.GenericSyncer('/', 'svn://blah/')
+        # TODO this should be using a syncer we know is always available.
+        try:
+            syncer = base.GenericSyncer('/', 'svn://blah/')
+        except base.uri_exception, e:
+            if str(e) == "no known syncer supports 'svn://blah/'":
+                raise SkipTest('svn syncer unavailable')
+            raise
         self.assertIdentical(svn.svn_syncer, syncer.syncer.__class__)

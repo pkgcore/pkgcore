@@ -145,9 +145,9 @@ def main(subcommands, args=None, sys_exit=True):
     @param subcommands: available commands.
         The keys are a subcommand name or None for other/unknown/no subcommand.
         The values are tuples of OptionParser subclasses and functions called
-        as main_func(config, out, err) with a L{Values} instance, a
-        L{pkgcore.util.formatters.Formatter} for output and a filelike
-        for errors (C{sys.stderr}). It should return an integer used as
+        as main_func(config, out, err) with a L{Values} instance, two
+        L{pkgcore.util.formatters.Formatter} instances for output (stdout)
+        and errors (stderr). It should return an integer used as
         exit status or None as synonym for 0.
     @type  args: sequence of strings
     @param args: arguments to parse, defaulting to C{sys.argv[1:]}.
@@ -198,16 +198,18 @@ def main(subcommands, args=None, sys_exit=True):
             exitstatus = 1
         else:
             if options.nocolor:
-                out = formatters.PlainTextFormatter(sys.stdout)
+                formatter_factory = formatters.PlainTextFormatter
             else:
-                out = formatters.get_formatter(sys.stdout)
-            exitstatus = main_func(options, out, sys.stderr)
+                formatter_factory = formatters.get_formatter
+            out = formatter_factory(sys.stdout)
+            err = formatter_factory(sys.stderr)
+            exitstatus = main_func(options, out, err)
     except errors.ConfigurationError, e:
         if options is not None and options.debug:
             raise
         sys.stderr.write('Error in configuration:\n%s\n' % (e,))
         exitstatus = 1
-    except (KeyboardInterrupt, formatters.StreamClosed):
+    except KeyboardInterrupt:
         if options is not None and options.debug:
             raise
         exitstatus = 1

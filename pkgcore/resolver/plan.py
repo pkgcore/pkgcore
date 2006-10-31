@@ -450,7 +450,7 @@ class merge_plan(object):
                     l = False
 
         else:
-                l = None
+            l = None
         return l
 
     def _rec_add_atom(self, atom, current_stack, dbs, depth=0, mode="none",

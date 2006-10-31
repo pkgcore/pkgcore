@@ -261,7 +261,7 @@ def get_pkgset(config, err, setname):
     try:
         return config.pkgset[setname]
     except KeyError:
-        err.write('No set called %r!\nknown sets: %r\n' %
+        err.write('No set called %r!\nknown sets: %r' %
             (setname, config.pkgset.keys()))
         return None
 

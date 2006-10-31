@@ -7,8 +7,14 @@ import os
 import errno
 
 
-class StreamClosed(Exception):
-    """Raised by write() if the stream we are printing to was closed."""
+class StreamClosed(KeyboardInterrupt):
+    """Raised by L{Formatter.write} if the stream it prints to was closed.
+
+    This inherits from C{KeyboardInterrupt} because it should usually
+    be handled the same way: a common way of triggering this exception
+    is by closing a pager before the script finished outputting, which
+    should be handled like control+c, not like an error.
+    """
 
 
 # "Invalid name" (for fg and bg methods, too short)

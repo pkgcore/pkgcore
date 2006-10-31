@@ -14,12 +14,22 @@ import tempfile
 class ModulesTest(TestCase):
 
     def setUp(self):
-        # set up some test modules for our use
+        # Set up some test modules for our use.
         self.dir = tempfile.mkdtemp()
+        self.dir2 = tempfile.mkdtemp()
         self.packdir = os.path.join(self.dir, 'mod_testplug')
-        os.mkdir(self.packdir)
-        # create an empty file
-        open(os.path.join(self.packdir, '__init__.py'), 'w').close()
+        self.packdir2 = os.path.join(self.dir2, 'mod_testplug')
+        for d in [self.packdir, self.packdir2]:
+            os.mkdir(d)
+            init = open(os.path.join(d, '__init__.py'), 'w')
+            init.write('''
+import os
+import sys
+
+__path__ = list(
+    os.path.abspath(os.path.join(path, 'mod_testplug'))
+    for path in sys.path)
+''')
         plug = open(os.path.join(self.packdir, 'plug.py'), 'w')
         plug.write('''
 class DisabledPlug(object):
@@ -45,14 +55,27 @@ pkgcore_plugins = {
         plug2 = open(os.path.join(self.packdir, 'plug2.py'), 'w')
         plug2.write('# I do not have any pkgcore_plugins for you!\n')
         plug2.close()
+        plug = open(os.path.join(self.packdir2, 'plug.py'), 'w')
+        plug.write('''
+# This file is later on sys.path than the plug.py in packdir, so it should
+# not have any effect on the tests.
+
+class HiddenPlug(object):
+    priority = 8
+
+pkgcore_plugins = {'plugtest': [HiddenPlug]}
+''')
         # Append it to the path
+        sys.path.insert(0, self.dir2)
         sys.path.insert(0, self.dir)
 
     def tearDown(self):
         # pop the test module dir from path
         sys.path.pop(0)
+        sys.path.pop(0)
         # and kill it
         shutil.rmtree(self.dir)
+        shutil.rmtree(self.dir2)
         # make sure we don't keep the sys.modules entries around
         sys.modules.pop('mod_testplug', None)
         sys.modules.pop('mod_testplug.plug', None)

@@ -117,14 +117,7 @@ def classes_main(options, out, err):
 
 
 def describe_class_main(options, out, err):
-    """Describe the arguments a class needs.
-
-    @param options: optparse option values.
-    @type  out: L{pkgcore.util.formatters.Formatter} instance.
-    @param out: stream to output on.
-    @type  err: file-like object
-    @param err: stream for errors (usually C{sys.stderr})
-    """
+    """Describe the arguments a class needs."""
     try:
         type_obj = basics.ConfigType(options.describe_class)
     except errors.TypeDefinitionError:

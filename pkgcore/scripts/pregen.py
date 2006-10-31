@@ -54,7 +54,7 @@ def regen_iter(iterable, err):
         except RuntimeError:
             raise
         except Exception, e:
-            err.write("caught exception %s for %s\n" % (e, x))
+            err.write("caught exception %s for %s" % (e, x))
 
 def reclaim_threads(threads, err):
     for x in threads:
@@ -63,7 +63,7 @@ def reclaim_threads(threads, err):
         except RuntimeError:
             raise
         except Exception, e:
-            err.write("caught exception %s reclaiming thread\n" % (e,))
+            err.write("caught exception %s reclaiming thread" % (e,))
 
 
 def main(options, out, err):

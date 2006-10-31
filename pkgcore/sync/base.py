@@ -2,8 +2,8 @@
 # License: GPL2
 
 from pkgcore.config import ConfigHint
-from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore:spawn "
+from pkgcore.util import demandload, descriptors
+demandload.demandload(globals(), "pkgcore:spawn "
     "os pwd stat "
     "pkgcore:plugin "
     "pkgcore:os_data ")
@@ -93,6 +93,18 @@ class ExternalSyncer(syncer):
             if fatal:
                 raise missing_binary(bin_name, e)
             return None
+
+    @descriptors.classproperty
+    def disabled(cls):
+        disabled = getattr(cls, '_disabled', None)
+        if disabled is None:
+            path = getattr(cls, 'binary_path', None)
+            if path is None:
+                disabled = cls._disabled = (
+                    cls.require_binary(cls.binary, fatal=False) is None)
+            else:
+                disabled = cls._disabled = os.path.exists(path)
+        return disabled
 
     def set_binary_path(self):
         self.binary_path = self.require_binary(self.binary)

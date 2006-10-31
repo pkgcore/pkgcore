@@ -57,7 +57,7 @@ class MainMixin(object):
         args are passed to parse_args, keyword args are used as config keys.
         """
         values = self.parser.get_default_values()
-        values._config = central.ConfigManager([kwargs])
+        values._config = central.ConfigManager([kwargs], debug=True)
         # optparse wants to manipulate the args.
         options, args = self.parser.parse_args(list(args), values)
         self.assertFalse(args)
@@ -84,18 +84,28 @@ class MainMixin(object):
 
     def assertOut(self, out, *args, **kwargs):
         """Like L{assertOutAndErr} but without err."""
-        self.assertOutAndErr(out, (), *args, **kwargs)
+        return self.assertOutAndErr(out, (), *args, **kwargs)
 
     def assertErr(self, err, *args, **kwargs):
         """Like L{assertOutAndErr} but without out."""
-        self.assertOutAndErr((), err, *args, **kwargs)
+        return self.assertOutAndErr((), err, *args, **kwargs)
 
     def assertOutAndErr(self, out, err, *args, **kwargs):
+        """Parse options and run main.
+
+        Extra arguments are parsed by the option parser.
+        Keyword arguments are config sections.
+
+        @param out: list of strings produced as output on stdout.
+        @param err: list of strings produced as output on stderr.
+        @return: the L{central.ConfigManager}.
+        """
         options = self.parse(*args, **kwargs)
         outstream = StringIO.StringIO()
         errstream = StringIO.StringIO()
         outformatter = formatters.PlainTextFormatter(outstream)
-        self.main(options, outformatter, errstream)
+        errformatter = formatters.PlainTextFormatter(errstream)
+        self.main(options, outformatter, errformatter)
         diffs = []
         for name, strings, stream in [('out', out, outstream),
                                       ('err', err, errstream)]:
@@ -110,3 +120,4 @@ class MainMixin(object):
                         'expected %s' % (name,), 'actual', lineterm=''))
         if diffs:
             self.fail('\n' + '\n'.join(diffs))
+        return options.config

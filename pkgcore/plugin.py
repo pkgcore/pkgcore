@@ -2,10 +2,7 @@
 # License: GPL2
 
 
-"""New plugin system. Not in its final location yet.
-
-This is heavily inspired by twisted's plugin system.
-"""
+"""Plugin system, heavily inspired by twisted's plugin system."""
 
 # Implementation note: we have to be pretty careful about error
 # handling in here since some core functionality in pkgcore uses this
@@ -38,6 +35,7 @@ def initialize_cache(package):
     """
     # package plugin cache, see above.
     package_cache = {}
+    seen_modnames = set()
     for path in package.__path__:
         # Check if the path actually exists first.
         try:
@@ -75,11 +73,17 @@ def initialize_cache(package):
         cache_stale = False
         # Hunt for modules.
         actual_cache = {}
+        assumed_valid = set()
         for modfullname in modlist:
             modname, modext = os.path.splitext(modfullname)
             if modext not in ('.pyc', '.pyo', '.py'):
                 continue
             if modname == '__init__':
+                continue
+            if modname in seen_modnames:
+                # This module is shadowed by a module earlier in
+                # sys.path. Skip it, assuming its cache is valid.
+                assumed_valid.add(modname)
                 continue
             # It is an actual module. Check if its cache entry is valid.
             mtime = int(os.path.getmtime(os.path.join(path, modfullname)))
@@ -104,7 +108,7 @@ def initialize_cache(package):
                     actual_cache[modname] = (mtime, keys)
         # Cache is also stale if it sees entries that are no longer there.
         for key in stored_cache:
-            if key not in actual_cache:
+            if key not in actual_cache and key not in assumed_valid:
                 cache_stale = True
                 break
         if cache_stale:
@@ -130,6 +134,7 @@ def initialize_cache(package):
                 os.rename(name, stored_cache_name)
         # Update the package_cache.
         for module, (mtime, entries) in actual_cache.iteritems():
+            seen_modnames.add(module)
             for key in entries:
                 package_cache.setdefault(key, []).append(module)
     return package_cache

@@ -9,7 +9,7 @@
 import optparse
 
 from pkgcore.util import (
-    commandline, repo_utils, parserestrict, packages as pkgutils, formatters)
+    commandline, repo_utils, parserestrict, packages as pkgutils)
 from pkgcore.restrictions import packages, values, boolean, restriction
 from pkgcore.ebuild import conditionals, atom
 
@@ -686,23 +686,13 @@ def print_packages_noversion(options, out, err, pkgs):
 
 
 def main(options, out, err):
-    """Do stuff.
-
-    @param options: optparse option values.
-    @type  out: L{pkgcore.util.formatters.Formatter} instance.
-    @param out: stream to output on.
-    @type  err: file-like object
-    @param err: stream for errors (usually C{sys.stderr})
-
-    @returns: the exit code.
-    """
+    """Run a query."""
     if options.debug:
         for repo in options.repos:
             out.write('repo: %r' % (repo,))
         out.write('restrict: %r' % (options.restrict,))
         out.write()
 
-    # Run the query
     for repo in options.repos:
         try:
             for pkgs in pkgutils.groupby_pkg(
@@ -723,10 +713,10 @@ def main(options, out, err):
                 if options.earlyout:
                     break
 
-        except (KeyboardInterrupt, formatters.StreamClosed):
+        except KeyboardInterrupt:
             raise
         except Exception:
-            err.write('caught an exception!\n')
-            err.write('repo: %r\n' % (repo,))
-            err.write('restrict: %r\n' % (options.restrict,))
+            err.write('caught an exception!')
+            err.write('repo: %r' % (repo,))
+            err.write('restrict: %r' % (options.restrict,))
             raise

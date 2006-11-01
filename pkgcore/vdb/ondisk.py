@@ -10,11 +10,12 @@ from pkgcore.util.osutils import ensure_dirs
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import partial
 from pkgcore.vdb.contents import ContentsFile
+from pkgcore.vdb import virtuals
 from pkgcore.plugin import get_plugin
 from pkgcore.interfaces import repo as repo_interfaces
 from pkgcore.interfaces import data_source
 from pkgcore.util.osutils import listdir_dirs
-from pkgcore.repository import multiplex, virtual
+from pkgcore.repository import multiplex
 from pkgcore.util import bzip2
 from pkgcore.util.lists import iflatten_instance
 from pkgcore.config import ConfigHint
@@ -171,7 +172,7 @@ class ConfiguredTree(multiplex.tree):
         self.domain = domain
         self.domain_settings = domain_settings
         self.raw_vdb = raw_vdb
-        self.raw_virtual = virtual.tree(self._grab_virtuals, livefs=True)
+        self.raw_virtual = virtuals.non_caching_virtuals(raw_vdb)
         multiplex.tree.__init__(self, raw_vdb, self.raw_virtual)
         self.frozen = raw_vdb.frozen
 
@@ -186,22 +187,6 @@ class ConfiguredTree(multiplex.tree):
         return replace(
             self.domain_settings, self.raw_vdb, oldpkg, newpkg, *a, **kw)
 
-    def _grab_virtuals(self):
-        virtuals = {}
-        for pkg in self.raw_vdb:
-            for virtualpkg in iflatten_instance(pkg.provides.evaluate_depset(pkg.use)):
-                virtuals.setdefault(virtualpkg.package, {}).setdefault(
-                    pkg.fullver, []).append(pkg)
-
-        for pkg_dict in virtuals.itervalues():
-            for full_ver, rdep_atoms in pkg_dict.iteritems():
-                if len(rdep_atoms) == 1:
-                    pkg_dict[full_ver] = rdep_atoms[0].unversioned_atom
-                else:
-                    pkg_dict[full_ver] = packages.OrRestriction(
-                        finalize=True,
-                        *[x.unversioned_atom for x in rdep_atoms])
-        return virtuals
 
 tree.configure = ConfiguredTree
 

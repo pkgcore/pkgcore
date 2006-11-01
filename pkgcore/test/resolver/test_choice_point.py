@@ -60,8 +60,8 @@ class TestChoicePoint(TestCase):
     def test_reduce(self):
         c = self.gen_choice_point()
         self.assertEqual(c.current_pkg.marker, 1)
-        self.assertEqual(c.reduce_atoms("dependsordep"), True)
-        self.assertEqual(c.reduce_atoms("ordep2"), True)
+        self.assertEqual(c.reduce_atoms("dependsordep"), False)
+        self.assertEqual(c.reduce_atoms("ordep2"), False)
         self.assertEqual(c.reduce_atoms("ordep1"), True)
         self.assertEqual(c.current_pkg.marker, 2)
         c = self.gen_choice_point()

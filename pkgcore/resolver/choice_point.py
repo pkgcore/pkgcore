@@ -7,102 +7,92 @@ import operator
 class choice_point(object):
 
     __slots__ = (
-        "__weakref__", "atom", "matches", "matches_idx", "solution_filters",
-        "_prdep_solutions", "_rdep_solutions", "_dep_solutions",
-        "_provides_solutions")
-
-    depends_getter = operator.attrgetter("depends")
-    rdepends_getter = operator.attrgetter("rdepends")
-    post_rdepends_getter = operator.attrgetter("post_rdepends")
-    provides_getter = operator.attrgetter("provides")
+        "__weakref__", "atom", "matches", "matches_cur", "solution_filters",
+        "_prdeps", "_rdeps", "_deps", "_provides")
 
     def __init__(self, a, matches):
         self.atom = a
-        self.matches = matches
-        self.matches_idx = 0
+        self.matches = iter(matches)
+        self.matches_cur = None
         self.solution_filters = set()
-        # match idx, solution idx, solutions
-        self._dep_solutions = [-2, 0, ()]
-        self._rdep_solutions = [-2, 0, ()]
-        self._prdep_solutions = [-2, 0, ()]
-        self._provides_solutions = [-2, 0, ()]
+        # match solutions, remaining
+        self._deps = None
+        self._rdeps = None
+        self._prdeps = None
 
     @property
     def state(self):
         return (len(self.solution_filters),
-            self._dep_solutions[0:2],
-            self._rdep_solutions[0:2],
-            self._prdep_solutions[0:2],
-            self._provides_solutions[0:2])
+            self.matches_cur,
+            self.matches,
+            self._deps,
+            self._rdeps,
+            self._prdeps)
 
+    @staticmethod
+    def _filter_choices(cnf_reqs, filterset):
+        for choices in cnf_reqs:
+            l = [x for x in choices if x not in filterset]
+            if not l:
+                return
+            yield l
+    
+    def _internal_force_next(self):
+        """
+        force next pkg without triggering a reduce_atoms call
+        @return: True if pkgs remain, False if no more remain
+        """
+        for self.matches_cur in self.matches:
+            self._reset_iters()
+            return True
+        self.matches_cur = self.matches = None
+        return False
+    
     def reduce_atoms(self, atom):
 
-        if self.matches_idx is None:
+        if self.matches is None:
             raise IndexError("no solutions remain")
         if hasattr(atom, "__contains__") and not isinstance(atom, basestring):
             self.solution_filters.update(atom)
         else:
             self.solution_filters.add(atom)
 
-        # ref copies; grab this info now before we screw with the stack
-        # why are we doing this still?
-        orig_dep, orig_rdep, orig_prdep = (
-            self.depends, self.rdepends, self.post_rdepends)
-        orig_provides = self.provides
+        filterset = self.solution_filters
+        if self.matches_cur is None:
+            if not self._internal_force_next():
+                return True
 
-        # lock step checks of each- it's possible for rdepend to push
-        # depend forward
-        starting_idx = rdep_idx = prdep_idx = orig_match_idx = -1
-        try:
-            while orig_match_idx != self.matches_idx:
-                orig_match_idx = self.matches_idx
-                for idx, node in enumerate(self.depends):
-                    node = [x for x in node if not x in self.solution_filters]
-                    if not node:
-                        self.matches_idx += 1
-                        break
-                    self.depends[idx] = node
+        round = -1
+        while True:
+            round += 1
+            if round:
+                if not self._internal_force_next():
+                    return True
 
-                # optimization. don't redo rdep if it forced last
-                # redo, and matches hasn't changed
-                if rdep_idx != self.matches_idx:
-                    for idx, node in enumerate(self.rdepends):
-                        node = [x for x in node
-                                if not x in self.solution_filters]
-                        if not node:
-                            self.matches_idx += 1
-                            break
-                        self.rdepends[idx] = node
+            reqs = list(self._filter_choices(self._deps, filterset))
+            if len(reqs) != len(self._deps):
+                continue
+            self._deps = reqs
+            
+            reqs = list(self._filter_choices(self._rdeps, filterset))
+            if len(reqs) != len(self._rdeps):
+                continue
+            self._rdeps = reqs
+            
+            reqs = list(self._filter_choices(self._prdeps, filterset))
+            if len(reqs) != len(self._prdeps):
+                continue
+            self._prdeps = reqs
 
-                if prdep_idx != self.matches_idx:
-                    for idx, node in enumerate(self.post_rdepends):
-                        node = [x for x in node
-                                if not x in self.solution_filters]
-                        if not node:
-                            self.matches_idx += 1
-                            break
-                        self.post_rdepends[idx] = node
+            return round > 0
+        return True
 
-                rdep_idx = prdep_idx = self.matches_idx
-
-        except IndexError:
-            # shot off the end, no solutions remain
-            self.matches_idx = None
-        return self.matches_idx != starting_idx
-
-    def _common_property(self, existing, getter):
-        # are we beyond this matches solutions?
-        if self.matches_idx == existing[0]:
-            try:
-                return existing[2]
-            except IndexError:
-                self.matches_idx = self.matches_idx + 1
-        elif self.matches_idx is None:
-            raise IndexError
-        existing[0:3] = [self.matches_idx, 0,
-            getter(self.matches[self.matches_idx]).cnf_solutions()]
-        return existing[2]
-
+    def _reset_iters(self):
+        cur = self.matches_cur
+        self._deps = cur.depends.cnf_solutions()
+        self._rdeps = cur.rdepends.cnf_solutions()
+        self._prdeps = cur.post_rdepends.cnf_solutions()
+        
     @property
     def slot(self):
         return self.current_pkg.slot
@@ -113,53 +103,57 @@ class choice_point(object):
 
     @property
     def current_pkg(self):
-        # trigger depends lookup.  cheap, but works.
-        self.depends, self.rdepends, self.post_rdepends
-        return self.matches[self.matches_idx]
+        if self.matches_cur is None:
+            if self.matches is None:
+                raise IndexError("no packages remain")
+            for self.matches_cur in self.matches:
+                break
+            else:
+                self.matches = None
+                raise IndexError("no more packages remain")
+            self._reset_iters()
+        return self.matches_cur
 
     def force_next_pkg(self):
-        if bool(self):
-            self.matches_idx = self.matches_idx + 1
-            return bool(self)
-        return False
+        if self.matches is None:
+            return False
+        for self.matches_cur in self.matches:
+            break
+        else:
+            self.matches_cur = self.matches = None
+            return False
+        return self.reduce_atoms([])
 
     @property
     def depends(self):
-        return self._common_property(self._dep_solutions, self.depends_getter)
+        if not self:
+            raise IndexError("no more solutions remain")
+        return self._deps
 
     @property
     def rdepends(self):
-        return self._common_property(self._rdep_solutions,
-                                     self.rdepends_getter)
+        if not self:
+            raise IndexError("no more solutions remain")
+        return self._rdeps
 
     @property
     def post_rdepends(self):
-        return self._common_property(self._prdep_solutions,
-                                     self.post_rdepends_getter)
+        if not self:
+            raise IndexError("no more solutions remain")
+        return self._prdeps
 
     @property
     def provides(self):
-        if self.matches_idx != self._provides_solutions[0]:
-            self._provides_solutions = [self.matches_idx, 0,
-                self.matches[self.matches_idx].provides]
-        return self._provides_solutions[2]
+        return self.current_pkg.provides
 
     def __nonzero__(self):
-        if self.matches_idx is not None:
-            try:
-                self.depends
-                self.rdepends
-            except IndexError:
+        if self.matches_cur is None:
+            if self.matches is None:
                 return False
-            return True
-        return False
-
-    def clone(self):
-        o = self.__class__(self.atom, self.matches)
-        o.matches_idx = self.matches_idx
-        o.matches_len = self.matches_len
-        o.solutions_filter.update(self.solutions_filter)
-        o._dep_solutions = self._dep_solutions[:]
-        o._rdep_solutions = self._rdep_solutions[:]
-        o._prdep_solutions = self._prdep_solutions[:]
-        o._provides_solutions = self._provides_solutions[:]
+            for self.matches_cur in self.matches:
+                break
+            else:
+                self.matches = None
+                return False
+            self._reset_iters()
+        return True

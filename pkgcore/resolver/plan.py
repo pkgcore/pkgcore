@@ -698,6 +698,9 @@ class merge_plan(object):
 
     def generate_mangled_blocker(self, choices, blocker):
         """converts a blocker into a "cannot block ourself" block"""
+        # note the second Or clause is a bit loose; allows any version to
+        # slip through instead of blocking everything that isn't the
+        # parent pkg
         new_atom = packages.AndRestriction(
             packages.OrRestriction(packages.PackageRestriction(
                 "actual_pkg",

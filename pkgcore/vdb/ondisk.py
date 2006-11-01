@@ -123,10 +123,11 @@ class tree(prototype.tree):
 
     def _internal_load_key(self, path, key):
         key = self._metadata_rewrites.get(key, key)
+        pjoin = os.path.join
         if key == "contents":
-            data = ContentsFile(os.path.join(path, "CONTENTS"), mutable=True)
+            data = ContentsFile(pjoin(path, "CONTENTS"), mutable=True)
         elif key == "environment":
-            fp = os.path.join(path, key)
+            fp = pjoin(path, key)
             if not os.path.exists(fp+".bz2"):
                 if not os.path.exists(fp):
                     # icky.
@@ -135,12 +136,12 @@ class tree(prototype.tree):
             else:
                 data = bz2_data_source(fp+".bz2")
         elif key == "ebuild":
-            fp = os.path.join(path,
+            fp = pjoin(path,
                 os.path.basename(path.rstrip(os.path.sep))+".ebuild")
             data = data_source.local_source(fp)
         else:
             try:
-                data = open(os.path.join(path, key), "r").read().strip()
+                data = open(pjoin(path, key), "r").read().strip()
             except (OSError, IOError):
                 raise KeyError(key)
         return data

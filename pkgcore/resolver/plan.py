@@ -471,10 +471,11 @@ class merge_plan(object):
             if current_stack:
                 dprint("pre-solved  %s%s, [%s] [%s]",
                        (((depth*2) + 1)*" ", atom, current_stack[-1].atom,
-                        ", ".join(str(x) for x in l)))
+                        ", ".join(str(x) for x in l)), 'pre-solved')
             else:
                 dprint("pre-solved %s%s, [%s]",
-                       (depth*2*" ", atom, ", ".join(str(x) for x in l)))
+                       (depth*2*" ", atom, ", ".join(str(x) for x in l)),
+                       'pre-solved')
             return False
         # not in the plan thus far.
         matches = caching_iter(self.global_strategy(self, dbs, atom))

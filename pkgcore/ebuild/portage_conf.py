@@ -131,9 +131,13 @@ def config_from_make_conf(location="/etc/"):
                     "class":"pkgcore.pkgsets.filelist.FileList",
                     "location":pjoin(set_fp, setname)})
 
-    new_config["vdb"] = basics.AutoConfigSection({
-            "class": "pkgcore.vdb.repository",
-            "location": pjoin(config_root, 'var', 'db', 'pkg')})
+    kwds = {"class": "pkgcore.vdb.repository",
+            "location": pjoin(config_root, 'var', 'db', 'pkg')}
+    if "cached-virtuals" in features:
+        kwds["cache_location"] = pjoin(config_root, 'var', 'cache', 'edb', 
+            'dep', 'var', 'db', 'pkg')
+    new_config["vdb"] = basics.AutoConfigSection(kwds)
+        
 
     make_profile = pjoin(base_path, 'make.profile')
     try:

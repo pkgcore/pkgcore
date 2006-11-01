@@ -819,7 +819,7 @@ class plan_state(object):
         for blocker, key in l:
             self.plan.append(
                 (REMOVE_FORWARD_BLOCK, choices, blocker, key))
-            self.remove_limiter(blocker, key)
+            self.state.remove_limiter(blocker, key)
         del self.rev_blockers[choices]
         
     def reset_state(self, state_pos):

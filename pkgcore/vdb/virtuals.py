@@ -21,7 +21,7 @@ def _collect_virtuals(virtuals, iterable):
         for virtualpkg in iflatten_instance(
             pkg.provides.evaluate_depset(pkg.use)):
             virtuals.setdefault(virtualpkg.package, {}).setdefault(
-                pkg.fullver, []).append(pkg.unversioned_atom)
+                pkg.fullver, []).append(pkg.versioned_atom)
 
 def _finalize_virtuals(virtuals):
     for pkg_dict in virtuals.itervalues():
@@ -57,7 +57,7 @@ def _get_mtimes(loc):
     return d
 
 def _write_mtime_cache(mtimes, data, location):
-    old = os.umask(0664)
+    old = os.umask(0115)
     try:
         if not ensure_dirs(os.path.dirname(location),
             gid=portage_gid, mode=0775):
@@ -67,9 +67,10 @@ def _write_mtime_cache(mtimes, data, location):
         # invert the data...
         rev_data = {}
         for pkg, ver_dict in data.iteritems():
-            for fullver, virtual in ver_dict.iteritems():
-                rev_data.setdefault(virtual.category, []).extend(
-                    virtual.package, fullver, str(virtual))
+            for fullver, virtuals in ver_dict.iteritems():
+                for virtual in virtuals:
+                    rev_data.setdefault(virtual.category, []).extend(
+                        (pkg, fullver, str(virtual)))
         for cat, mtime in mtimes.iteritems():
             if cat in rev_data:
                 f.write("%s\t%i\t%s\n" % (cat, mtime,
@@ -86,16 +87,16 @@ def _read_mtime_cache(location):
     f = None
     try:
         d = {}
-        for k,v in read_dict(open(location, 'r'), 
+        for k,v in read_dict(open(location, 'r'), splitter=None,
             source_isiter=True).iteritems():
             v = v.split()
             # mtime pkg1 fullver1 virtual1 pkg2 fullver2 virtual2...
             # if it's not the right length, skip this entry, 
             # cache validation will update it.
-            if len(v) -1 % 3 == 0:
+            if (len(v) -1) % 3 == 0:
                 d[k] = v
         return d  
-    except OSError, e:
+    except IOError, e:
         if e.errno != errno.ENOENT:
             raise
         return {}
@@ -117,16 +118,16 @@ def _caching_grab_virtuals(repo, cache_basedir):
     virtuals = {}
     update = False
     cache = _read_mtime_cache(os.path.join(cache_basedir, 'virtuals.cache'))
-    existing = _get_mtimes(repo_locations)
+    existing = _get_mtimes(repo.location)
     for cat, mtime in existing.iteritems():
         d = cache.pop(cat, None)
-        if d is not None and long(d[1]) == mtime:
-            d = _convert_cache_virtuals(d)
+        if d is not None and long(d[0]) == mtime:
+            d = _convert_cached_virtuals(d)
             if d is not None:
                 for pkg, fullver_d in d.iteritems():
-                    for fullver, virtuals in fullver_d.iteritems():
+                    for fullver, provides in fullver_d.iteritems():
                         virtuals.setdefault(pkg, {}).setdefault(
-                            fullver, []).extend(virtuals)
+                            fullver, []).extend(provides)
         if d is None:
             update = True
             _collect_virtuals(virtuals, repo.itermatch(

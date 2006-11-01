@@ -54,11 +54,13 @@ class tree(prototype.tree):
     configure = None
     format_magic = "ebuild_built"
 
-    pkgcore_config_type = ConfigHint({'location': 'str'}, typename='repo')
+    pkgcore_config_type = ConfigHint({'location': 'str',
+        'cache_location': 'str'}, typename='repo')
 
-    def __init__(self, location):
+    def __init__(self, location, cache_location=None):
         prototype.tree.__init__(self, frozen=False)
         self.base = self.location = location
+        self.cache_location = cache_location
         self._versions_tmp_cache = {}
         try:
             st = os.lstat(self.base)
@@ -172,7 +174,11 @@ class ConfiguredTree(multiplex.tree):
         self.domain = domain
         self.domain_settings = domain_settings
         self.raw_vdb = raw_vdb
-        self.raw_virtual = virtuals.non_caching_virtuals(raw_vdb)
+        if raw_vdb.cache_location is not None:
+            self.raw_virtual = virtuals.caching_virtuals(raw_vdb, 
+                raw_vdb.cache_location)
+        else:
+            self.raw_virtual = virtuals.non_caching_virtuals(raw_vdb)
         multiplex.tree.__init__(self, raw_vdb, self.raw_virtual)
         self.frozen = raw_vdb.frozen
 

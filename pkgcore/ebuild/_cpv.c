@@ -702,6 +702,14 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
     if(self->cvs != other->cvs)
         return self->cvs ? +1 : -1;
 
+    if(self->version) {
+        if(!other->version)
+            return 1;
+    } else if (!other->version) {
+        if(self->version)
+            return -1;
+        return 0;
+    }
     char *s1, *o1;
     s1 = PyString_AsString(self->version);
     if(!s1)

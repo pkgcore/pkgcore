@@ -4,35 +4,6 @@
 from pkgcore.util.lists import stable_unique
 import operator
 
-class CheatingIter(object):
-    __slots__ = ("_src", "_position", "_item", "_iter_obj")
-    def __init__(self, bool_restrict_instance):
-        self._src = bool_restrict_instance
-        self._position = -1
-        self._item = None
-        self._iter_obj = None
-
-    def __getitem__(self, idx):
-        if idx < 0:
-            raise IndexError("piss off, I don't like negative indexes")
-        elif idx < self._position or self._position == -1:
-            self._iter_obj = self._src.iter_dnf_solutions()
-            self._position = -1
-
-        if idx != self._position:
-            try:
-                for i in xrange(idx - self._position):
-                    item = self._iter_obj.next()
-            except StopIteration:
-                self._position = -1
-                raise IndexError
-            self._item = stable_unique(item)
-            self._position = idx
-        return self._item
-
-    def __iter__(self):
-        return self._src.iter_dnf_solutions()
-
 class choice_point(object):
 
     __slots__ = (

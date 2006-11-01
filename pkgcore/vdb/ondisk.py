@@ -141,7 +141,7 @@ class tree(prototype.tree):
             data = data_source.local_source(fp)
         else:
             try:
-                data = open(pjoin(path, key), "r").read().strip()
+                data = open(pjoin(path, key), "r").read()
             except (OSError, IOError):
                 raise KeyError(key)
         return data

@@ -2,13 +2,7 @@
 #include "Python.h"
 #include "structmember.h"
 
-/* only pkgcore change: python 2.4 compatibility. */
-
-#if PY_VERSION_HEX < 0x02050000
-typedef int Py_ssize_t;
-#define PY_SSIZE_T_MAX INT_MAX
-#define PY_SSIZE_T_MIN INT_MIN
-#endif
+#include "py24-compatibility.h"
 
 /* _functools module written and maintained 
    by Hye-Shik Chang <perky@FreeBSD.org>

@@ -13,25 +13,8 @@
 
 #define PY_SSIZE_T_CLEAN
 
-#include "Python.h"
-
-/* Compatibility with python < 2.5 */
-
-#if PY_VERSION_HEX < 0x02050000
-typedef int Py_ssize_t;
-#define PY_SSIZE_T_MAX INT_MAX
-#define PY_SSIZE_T_MIN INT_MIN
-typedef Py_ssize_t (*lenfunc)(PyObject *);
-#endif
-
-/* From heapy */
-#include "../heapdef.h"
-
-/* Copied from stdtypes.c in guppy */
-#define INTERATTR(name) \
-    if ((PyObject *)v->name == r->tgt &&                                \
-        (r->visit(NYHR_INTERATTR, PyString_FromString(#name), r)))      \
-		return 1;
+#include <Python.h>
+#include "py24-compatibility.h"
 
 /*
  * WeakValFinalizer: holds a reference to a dict and key,

@@ -20,7 +20,7 @@ import os.path
 
 from pkgcore import plugins
 from pkgcore.util import modules, demandload
-demandload.demandload(globals(), 'logging tempfile errno')
+demandload.demandload(globals(), 'tempfile errno pkgcore.log:logger')
 
 
 # Global plugin cache. Mapping of package to package cache, which is a
@@ -102,7 +102,7 @@ def initialize_cache(package):
                     # here we cripple pkgcore entirely which may make
                     # fixing the problem impossible. So be noisy but
                     # try to continue.
-                    logging.exception('plugin import failed')
+                    logger.exception('plugin import failed')
                 else:
                     keys = set(getattr(module, 'pkgcore_plugins', {}))
                     actual_cache[modname] = (mtime, keys)
@@ -119,11 +119,11 @@ def initialize_cache(package):
                 # We cannot write a new cache. We should log this
                 # since it will have a performance impact.
 
-                # Use logging.error, not logging.exception for this
-                # one: the traceback is not necessary and too alarming.
-                logging.error('Cannot write cache for %s: %s. '
-                              'Try running pplugincache.',
-                              stored_cache_name, e)
+                # Use error, not exception for this one: the traceback
+                # is not necessary and too alarming.
+                logger.error('Cannot write cache for %s: %s. '
+                             'Try running pplugincache.',
+                             stored_cache_name, e)
             else:
                 cachefile = os.fdopen(fd, 'w')
                 for module, (mtime, entries) in actual_cache.iteritems():

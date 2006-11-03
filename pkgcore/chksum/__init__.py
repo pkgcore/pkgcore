@@ -7,9 +7,10 @@ chksum verification/generation subsystem
 
 from pkgcore.interfaces.data_source import base as base_data_source
 from pkgcore.util.demandload import demandload
-demandload(globals(), "os sys logging "
+demandload(globals(), "os sys "
     "pkgcore.util.modules:load_module "
     "pkgcore.util.osutils:listdir_files "
+    "pkgcore.log:logger "
     "pkgcore.chksum.defaults:loop_over_file ")
 
 chksum_types = {}
@@ -91,7 +92,7 @@ def init(additional_handlers=None):
             chksum_types.update(types)
 
         except ValueError:
-            logging.warn(
+            logger.warn(
                 "%s.%s invalid chksum_types, ValueError Exception" % (
                     __name__, f))
             continue

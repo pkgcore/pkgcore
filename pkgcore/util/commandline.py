@@ -18,7 +18,13 @@ import os.path
 
 from pkgcore.config import load_config, errors
 
-from pkgcore.util import formatters
+from pkgcore.util import formatters, demandload
+
+demandload.demandload(
+    globals(),
+    'pkgcore:version '
+    )
+
 
 
 # Mix in object here or properties do not work (Values is an oldstyle class).
@@ -93,6 +99,7 @@ class OptionParser(optparse.OptionParser):
             'configuration problems.'),
         optparse.Option('--nocolor', action='store_true',
                         help='disable color in the output.'),
+        optparse.Option('--version', action='version'),
         ]
 
     def __init__(self, *args, **kwargs):
@@ -100,6 +107,28 @@ class OptionParser(optparse.OptionParser):
         optparse.OptionParser.__init__(self, *args, **kwargs)
         # It is a callback so it cannot set a default value the "normal" way.
         self.set_default('debug', False)
+
+    def get_version(self):
+        """Add pkgcore's version to the version information."""
+        ver = optparse.OptionParser.get_version(self)
+        pkgcore_ver = version.get_version()
+        if ver:
+            return '\n'.join((ver, pkgcore_ver))
+        return pkgcore_ver
+
+    def print_version(self, file=None):
+        """Print the version to a filelike (defaults to stdout).
+
+        Overridden because the optparse one is a noop if self.version is false.
+        """
+        print >>file, self.get_version()
+
+    def _add_version_option(self):
+        """Override this to be a no-op.
+
+        Needed because optparse does not like our on-demand generation
+        of the version string.
+        """
 
     def get_default_values(self):
         """Slightly simplified copy of optparse code using our Values class."""

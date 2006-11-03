@@ -9,7 +9,7 @@ from pkgcore.util import osutils
 from pkgcore.util.bzip2 import compress
 from pkgcore.ebuild.conditionals import stringify_boolean
 from pkgcore.util.demandload import demandload
-demandload(globals(), "logging")
+demandload(globals(), "pkgcore.log:logger")
 
 def discern_loc(base, pkg):
     return os.path.join(base, pkg.category,
@@ -78,7 +78,7 @@ class install(repo_interfaces.nonlivefs_install):
                 os.unlink(tmp_path)
             except (IOError, OSError), e:
                 if e.errno != errno.ENOENT:
-                    logging.warn("failed removing %r: %r" % (tmp_path, e))
+                    logger.warn("failed removing %r: %r" % (tmp_path, e))
             raise
         return True
         

@@ -84,25 +84,27 @@ rst.roles.register_local_role('trac', trac_role)
 """Spit out a restructuredtext file linking to every .rst in cwd."""
 
 
-def process(directory, force):
+def process(directory, force, do_parent=False):
     """Generate the table of contents and html files."""
     print 'processing %s' % (directory,)
     # Dirs first so we pick up their contents when generating ours.
     for child in os.listdir(directory):
         target = os.path.join(directory, child)
         if os.path.isdir(target):
-            process(target, force)
+            process(target, force, True)
     # Write the table of contents .rst file while processing files.
-    tocpath = os.path.join(directory, 'toc.rst')
-    out = open(tocpath, 'w')
+    indexpath = os.path.join(directory, 'index.rst')
+    out = open(indexpath, 'w')
     try:
         out.write('===================\n')
         out.write(' Table of contents\n')
         out.write('===================\n')
         out.write('\n')
-        for entry in os.listdir(directory):
+        if do_parent:
+            out.write('- `../ <../index.html>`_\n')
+        for entry in sorted(os.listdir(directory)):
             original = os.path.join(directory, entry)
-            if entry == 'toc.rst':
+            if entry == 'index.rst':
                 continue
             if entry.lower().endswith('.rst'):
                 base = entry[:-4]
@@ -118,16 +120,15 @@ def process(directory, force):
                 else:
                     print 'up to date: %s' % (target,)
             elif (os.path.isdir(original) and
-                  os.path.exists(os.path.join(original, 'toc.rst'))):
-                out.write('- `%s <%s.html>`_\n' %
-                          (entry, "%s/toc.rst" % entry))
+                  os.path.exists(os.path.join(original, 'index.rst'))):
+                out.write('- `%s/ <%s/index.html>`_\n' % (entry, entry))
     finally:
         out.close()
-    # And convert the toc.
-    # (Guess we could keep the toc rst only in memory but who knows, someone
+    # And convert the index.
+    # (Guess we could keep its rst only in memory but who knows, someone
     # might want to read it!)
-    core.publish_file(source_path=tocpath,
-                      destination_path=os.path.join(directory, 'toc.html'),
+    core.publish_file(source_path=indexpath,
+                      destination_path=os.path.join(directory, 'index.html'),
                       writer_name='html')
 
 

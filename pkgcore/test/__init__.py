@@ -5,6 +5,9 @@
 """Our unittest extensions."""
 
 
+__all__ = ['scripts', 'SkipTest', 'TestCase']
+
+
 import sys
 import warnings
 import unittest

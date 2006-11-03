@@ -33,7 +33,7 @@ from pkgcore.const import (
     depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH)
 from pkgcore.util.demandload import demandload
 from pkgcore.os_data import portage_uid, portage_gid
-demandload(globals(), "logging")
+demandload(globals(), "pkgcore.log:logger")
 
 import traceback
 
@@ -540,7 +540,7 @@ class EbuildProcessor:
                 "key": post_curry(self.__class__._receive_key, metadata_keys)})
 
         if not val:
-            logging.error("returned val from get_keys was '%s'" % str(val))
+            logger.error("returned val from get_keys was '%s'" % str(val))
             raise Exception(val)
 
         return metadata_keys
@@ -634,8 +634,8 @@ class EbuildProcessor:
                         s.append(None)
                     handlers[s[0]](self, s[1])
                 else:
-                    logging.error("unhandled command '%s', line '%s'" %
-                                  (s[0], line))
+                    logger.error("unhandled command '%s', line '%s'" %
+                                 (s[0], line))
                     raise UnhandledCommand(line)
 
         except FinishedProcessing, fp:

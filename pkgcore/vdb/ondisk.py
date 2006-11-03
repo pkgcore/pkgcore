@@ -22,11 +22,12 @@ from pkgcore.config import ConfigHint
 
 from pkgcore.util.demandload import demandload
 demandload(globals(),
-           "logging time "
+           "time "
            "pkgcore.ebuild:conditionals "
            "pkgcore.restrictions:boolean,packages "
            "pkgcore.const "
            "pkgcore.ebuild:triggers "
+           "pkgcore.log:logger "
     )
 
 
@@ -262,7 +263,7 @@ class install(repo_interfaces.livefs_install):
         # it for built ebuilds, but if it's there, we store it.
         o = getattr(self.new_pkg, "ebuild", None)
         if o is None:
-            logging.warn(
+            logger.warn(
                 "doing install/replace op, "
                 "but source package doesn't provide the actual ebuild data.  "
                 "Creating an empty file")

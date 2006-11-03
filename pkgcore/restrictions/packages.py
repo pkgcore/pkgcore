@@ -9,7 +9,7 @@ import operator
 from pkgcore.restrictions import restriction, boolean
 from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any
-demandload(globals(), "logging")
+demandload(globals(), "pkgcore.log:logger")
 
 # Backwards compatibility.
 package_type = restriction.package_type
@@ -57,11 +57,11 @@ class PackageRestriction(restriction.base):
             raise
         except AttributeError,ae:
             if not self.ignore_missing:
-                logging.exception("failed getting attribute %s from %s, "
+                logger.exception("failed getting attribute %s from %s, "
                               "exception %s" % (self.attr, str(pkg), str(ae)))
             raise
         except Exception, e:
-            logging.exception("caught unexpected exception accessing %s from %s, "
+            logger.exception("caught unexpected exception accessing %s from %s, "
                          "exception %s" % (self.attr, str(pkg), str(e)))
             raise AttributeError(self.attr)
 

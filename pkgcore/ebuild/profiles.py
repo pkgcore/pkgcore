@@ -18,9 +18,10 @@ from pkgcore.ebuild import cpv, ebuild_src
 from pkgcore.util.demandload import demandload
 from collections import deque
 
-demandload(globals(), "logging "
+demandload(globals(),
     "pkgcore.config.errors:InstantiationError "
     "pkgcore.ebuild:const "
+    "pkgcore.log:logger "
     "pkgcore.util.containers:InvertedContains ")
 
 
@@ -232,7 +233,7 @@ class OnDiskProfile(profiles.base):
         dep_path = os.path.join(self.basepath, profile, "deprecated")
         self._deprecated = False
         if os.path.isfile(dep_path):
-            logging.warn("profile '%s' is marked as deprecated, read '%s' "
+            logger.warn("profile '%s' is marked as deprecated, read '%s' "
                 "please" % (profile, dep_path))
             self._deprecated = dep_path
 

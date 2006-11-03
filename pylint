@@ -2,4 +2,4 @@
 
 # Wrapper using our custom pylintrc and plugin.
 
-PYTHONPATH=lintplugin pylint --rcfile=dev-notes/pylintrc "$@"
+PYTHONPATH="lintplugin:$PYTHONPATH" pylint --rcfile=dev-notes/pylintrc "$@"

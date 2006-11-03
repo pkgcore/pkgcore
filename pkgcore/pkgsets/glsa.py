@@ -15,7 +15,7 @@ demandload(globals(), "pkgcore.util.xml:etree "
     "pkgcore.util.repo_utils:get_virtual_repos "
     "pkgcore.package:mutated "
     "pkgcore.ebuild:cpv,atom "
-    "logging ")
+    "pkgcore.log:logger ")
 
 
 class KeyedAndRestriction(boolean.AndRestriction):
@@ -117,8 +117,8 @@ class GlsaDirSet(object):
                         yield fn[5:-4], pkgname, pkgatom, pkg_vuln_restrict
                     except (TypeError, ValueError), v:
                         # thrown from cpv.
-                        logging.warn("invalid glsa- %s, package %s: error %s"
-                                     % (fn, pkgname, v))
+                        logger.warn("invalid glsa- %s, package %s: error %s"
+                                    % (fn, pkgname, v))
                         del v
 
 

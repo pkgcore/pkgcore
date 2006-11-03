@@ -25,7 +25,7 @@ from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import const, processor
 from pkgcore.util.demandload import demandload
-demandload(globals(), "errno logging")
+demandload(globals(), "errno pkgcore.log:logger")
 
 
 def generate_depset(c, key, non_package_type, s):
@@ -275,7 +275,7 @@ class package_factory(metadata.factory):
                 except KeyError:
                     continue
                 except cache_errors.CacheError, ce:
-                    logging.warn("caught cache error: %s" % ce)
+                    logger.warn("caught cache error: %s" % ce)
                     del ce
                     continue
                 if long(data.pop("_mtime_", -1)) != pkg._mtime_ or \

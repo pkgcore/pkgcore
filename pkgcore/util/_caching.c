@@ -181,8 +181,7 @@ static PyObject *
 pkgcore_WeakValCache_clear_method(pkgcore_WeakValCache *self)
 {
     pkgcore_WeakValCache_clear(self);
-    Py_INCREF(Py_None);
-    return Py_None;
+    Py_RETURN_NONE;
 }
 
 static void

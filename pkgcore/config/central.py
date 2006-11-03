@@ -205,8 +205,7 @@ class ConfigManager(object):
         self.collapsed_configs = {}
         self._exec_configs(self.original_configs)
 
-    def __getattr__(self, attr):
-        return _ConfigMapping(self, attr)
+    __getattr__ = _ConfigMapping
 
     def _exec_configs(self, configs):
         """Pull extra type and config sections from configs and use them.

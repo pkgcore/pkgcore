@@ -319,12 +319,22 @@ packages = [
 
 extra_flags = ['-Wall']
 
+def new_Extension(*args, **kwds):
+    # py24-compatibility requires heapdef.h...
+    if 'includes/py24-compatibility.h' in kwds.get('depends', []):
+        if 'includes/heapdef.h' not in kwds["depends"]:
+            kwds['depends'].append('includes/heapdef.h')
+    o = core.Extension(*args, **kwds)
+    o.include_dirs.append("includes")
+    return o
+
 extensions = []
 if sys.version_info < (2, 5):
     # Almost unmodified copy from the python 2.5 source.
-    extensions.append(core.Extension(
+    extensions.append(new_Extension(
             'pkgcore.util._functools', ['pkgcore/util/_functoolsmodule.c'],
-            extra_compile_args=extra_flags))
+            extra_compile_args=extra_flags,
+            depends=['includes/py24-compatibility.h']))
 
 
 core.setup(
@@ -341,24 +351,29 @@ core.setup(
             ],
         },
     ext_modules=[
-        core.Extension('pkgcore.util._klass', ['pkgcore/util/_klass.c'],
+        new_Extension('pkgcore.util._klass', ['pkgcore/util/osutils/_path.c'],
             extra_compile_args=extra_flags,
-            depends=['pkgcore/heapdef.h', 'pkgcore/util/py24-compatibility.h']),
-        core.Extension(
+            depends=['includes/py24-compatibility.h']),
+        new_Extension('pkgcore.util._klass', ['pkgcore/util/_klass.c'],
+            extra_compile_args=extra_flags,
+            depends=['includes/py24-compatibility.h']),
+        new_Extension(
             'pkgcore.util._caching', ['pkgcore/util/_caching.c'],
             extra_compile_args=extra_flags,
-            depends=['pkgcore/heapdef.h', 'pkgcore/util/py24-compatibility.h']),
-        core.Extension(
+            depends=['includes/py24-compatibility.h']),
+        new_Extension(
             'pkgcore.util._lists', ['pkgcore/util/_lists.c'],
             extra_compile_args=extra_flags,
-            depends=['pkgcore/util/py24-compatibility.h']),
-        core.Extension(
+            depends=['includes/py24-compatibility.h']),
+        new_Extension(
             'pkgcore.ebuild._cpv', ['pkgcore/ebuild/_cpv.c'],
-            extra_compile_args=extra_flags, depends=['pkgcore/heapdef.h']),
-        core.Extension(
+            extra_compile_args=extra_flags,
+            depends=['includes/heapdef.h']),
+        new_Extension(
             'pkgcore.util.osutils._readdir',
             ['pkgcore/util/osutils/_readdir.c'],
-            extra_compile_args=extra_flags),
+            extra_compile_args=extra_flags,
+            depends=['includes/py24-compatibility.h']),
         ] + extensions,
     cmdclass={'build_filter_env': build_filter_env,
               'sdist': mysdist,

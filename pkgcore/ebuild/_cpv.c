@@ -13,21 +13,11 @@
 #define PY_SSIZE_T_CLEAN
 
 #include "Python.h"
+#include "py24-compatibility.h"
 
-/* Compatibility with python < 2.5 */
-
-#if PY_VERSION_HEX < 0x02050000
-typedef int Py_ssize_t;
-#define PY_SSIZE_T_MAX INT_MAX
-#define PY_SSIZE_T_MIN INT_MIN
-#endif
-
-#include <Python.h>
 #include <structmember.h>
 #include <string.h>
 
-/* From heapy */
-#include "../heapdef.h"
 
 // dev-util/diffball-cvs.2006.0_alpha1_alpha2
 // dev-util/diffball

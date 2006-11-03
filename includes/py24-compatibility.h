@@ -24,7 +24,7 @@ typedef Py_ssize_t (*lenfunc)(PyObject *);
 #endif
 
 /* From heapy */
-#include "../heapdef.h"
+#include "heapdef.h"
 
 /* Copied from stdtypes.c in guppy */
 #define INTERATTR(name) \

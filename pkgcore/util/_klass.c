@@ -13,6 +13,7 @@
 #define PY_SSIZE_T_CLEAN
 
 #include <Python.h>
+#include <ceval.h>
 #include "py24-compatibility.h"
 
 typedef struct {
@@ -48,16 +49,18 @@ static PyObject *
 pkgcore_GetAttrProxy_call(pkgcore_GetAttrProxy *self, PyObject *args,
     PyObject *kwds)
 {
-    PyObject *attr, *real_obj, *tmp;
+    PyObject *attr, *real_obj, *tmp = NULL;
 
-    if(!PyArg_ParseTuple(args, "OS:__call__", &real_obj, &attr))
-        return NULL;
-    real_obj = PyObject_GenericGetAttr(real_obj, self->redirect_target);
-    if(!real_obj)
-        return NULL;
-
-    tmp = PyObject_GetAttr(real_obj, attr);
-    Py_DECREF(real_obj);
+    if(PyArg_ParseTuple(args, "OS:__call__", &real_obj, &attr)) {
+        if(Py_EnterRecursiveCall(" in GetAttrProxy.__call__ "))
+            return (PyObject*)NULL;
+        real_obj = PyObject_GenericGetAttr(real_obj, self->redirect_target);
+        if(real_obj) {
+            tmp = PyObject_GetAttr(real_obj, attr);
+            Py_DECREF(real_obj);
+        }
+        Py_LeaveRecursiveCall();
+    }
     return (PyObject *)tmp;
 }
 

@@ -32,3 +32,18 @@ class Test_CPY_GetAttrProxy(Test_native_GetAttrProxy):
     kls = staticmethod(klass.GetAttrProxy)
     if klass.GetAttrProxy is klass.native_GetAttrProxy:
         skip = "cpython extension isn't available"
+
+    def test_sane_recursion_bail(self):
+        # people are stupid; if protection isn't in place, we wind up blowing
+        # the c stack, which doesn't result in a friendly Exception being
+        # thrown.
+        # results in a segfault.. so if it's horked, this will bail the test
+        # runner.
+
+        class c(object):
+            __getattr__ = self.kls("obj")
+        
+        o = c()
+        o.obj = o
+        # now it's cyclical.
+        self.assertRaises(RuntimeError, getattr, o, "hooey")

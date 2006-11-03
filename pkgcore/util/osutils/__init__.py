@@ -135,8 +135,7 @@ def native_normpath(mypath):
 try:
     from pkgcore.util.osutils._path import normpath
 except ImportError:
-    normpath == native_normpath
-
+    normpath = native_normpath
 
 class LockException(Exception):
     """Base lock exception class"""

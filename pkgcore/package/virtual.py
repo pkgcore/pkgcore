@@ -18,6 +18,7 @@ class package(metadata.package):
 
     package_is_real = False
     built = True
+    metapkg = True
 
     __slots__ = ("__dict__")
 
@@ -27,8 +28,6 @@ class package(metadata.package):
             val = self.data
         elif key in ("depends", "post_rdepends", "provides"):
             val = OrRestriction(finalize=True)
-        elif key == "metapkg":
-            val = True
         elif key == "slot":
             val = str(self.version)
         else:

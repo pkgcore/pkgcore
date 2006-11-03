@@ -123,7 +123,7 @@ def abspath(path):
             return path
         raise
 
-def normpath(mypath):
+def native_normpath(mypath):
     """
     normalize path- //usr/bin becomes /usr/bin
     """
@@ -131,6 +131,11 @@ def normpath(mypath):
     if newpath.startswith('//'):
         return newpath[1:]
     return newpath
+
+try:
+    from pkgcore.util.osutils._path import normpath
+except ImportError:
+    normpath == native_normpath
 
 
 class LockException(Exception):

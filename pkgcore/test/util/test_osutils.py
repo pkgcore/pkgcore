@@ -134,11 +134,28 @@ class SymlinkTest(TempDirMixin, TestCase):
         self.assertEquals(osutils.abssymlink(linkname), target)
 
 
-class NormPathTest(TestCase):
+class Native_NormPathTest(TestCase):
+
+    func = staticmethod(osutils.native_normpath)
 
     def test_normpath(self):
-        self.assertEquals(
-            osutils.normpath('//foo/.///somewhere//..///bar//'), '/foo/bar')
+        f = self.func
+        self.assertEquals(f('/foo/'), '/foo')
+        self.assertEquals(f('//foo/'), '/foo')
+        self.assertEquals(f('//foo/.'), '/foo')
+        self.assertEquals(f('//..'), '/')
+        self.assertEquals(f('//..//foo'), '/foo')
+        self.assertEquals(f('/foo/..'), '/')
+        self.assertEquals(f('..//foo'), '../foo')
+        self.assertEquals(f('.//foo'), 'foo')
+        self.assertEquals(f('//foo/.///somewhere//..///bar//'), '/foo/bar')
+
+
+class Cpy_NormPathTest(Native_NormPathTest):
+
+    func = staticmethod(osutils.normpath)
+    if osutils.normpath is osutils.native_normpath:
+        skip = "extensions isn't compiled"
 
 
 # TODO: more error condition testing

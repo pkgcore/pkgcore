@@ -351,7 +351,7 @@ core.setup(
             ],
         },
     ext_modules=[
-        new_Extension('pkgcore.util._klass', ['pkgcore/util/osutils/_path.c'],
+        new_Extension('pkgcore.util.osutils._path', ['pkgcore/util/osutils/_path.c'],
             extra_compile_args=extra_flags,
             depends=['includes/py24-compatibility.h']),
         new_Extension('pkgcore.util._klass', ['pkgcore/util/_klass.c'],

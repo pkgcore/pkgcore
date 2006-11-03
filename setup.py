@@ -342,13 +342,16 @@ core.setup(
         },
     ext_modules=[
         core.Extension('pkgcore.util._klass', ['pkgcore/util/_klass.c'],
-             extra_compile_args=extra_flags, depends=['pkgcore/heapdef.h']),
+            extra_compile_args=extra_flags,
+            depends=['pkgcore/heapdef.h', 'pkgcore/util/py24-compatibility.h']),
         core.Extension(
             'pkgcore.util._caching', ['pkgcore/util/_caching.c'],
-            extra_compile_args=extra_flags, depends=['pkgcore/heapdef.h']),
+            extra_compile_args=extra_flags,
+            depends=['pkgcore/heapdef.h', 'pkgcore/util/py24-compatibility.h']),
         core.Extension(
             'pkgcore.util._lists', ['pkgcore/util/_lists.c'],
-            extra_compile_args=extra_flags),
+            extra_compile_args=extra_flags,
+            depends=['pkgcore/util/py24-compatibility.h']),
         core.Extension(
             'pkgcore.ebuild._cpv', ['pkgcore/ebuild/_cpv.c'],
             extra_compile_args=extra_flags, depends=['pkgcore/heapdef.h']),

@@ -9,6 +9,7 @@ filtering repository
 # ~harring
 from pkgcore.repository import prototype, errors
 from pkgcore.restrictions.restriction import base
+from pkgcore.util.klass import GetAttrProxy
 
 class filterTree(prototype.tree):
 
@@ -51,8 +52,7 @@ class filterTree(prototype.tree):
             count += 1
         return count
 
-    def __getattr__(self, attr):
-        return getattr(self.raw_repo, attr)
+    __getattr__ = GetAttrProxy("raw_repo")
 
     def __getitem__(self, key):
         v = self.raw_repo[key]

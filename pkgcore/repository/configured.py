@@ -6,8 +6,9 @@ wrap a repository, binding configuration to pkgs returned from the repository
 """
 
 from pkgcore.repository import prototype
-from pkgcore.package.conditionals import PackageWrapper
+from pkgcore.package.conditionals import make_wrapper
 from pkgcore.util.currying import partial
+from pkgcore.util.klass import GetAttrProxy
 
 
 class tree(prototype.tree):
@@ -28,16 +29,15 @@ class tree(prototype.tree):
         self.attr_filters = frozenset(wrapped_attrs.keys() +
                                       [self.configurable])
 
+        self._klass = make_wrapper(self.configurable, self.wrapped_attrs)
+
     def _get_pkg_kwds(self, pkg):
         raise NotImplementedError()
 
     def package_class(self, pkg, *a):
-        kwds = self._get_pkg_kwds(pkg)
-        kwds.setdefault("attributes_to_wrap", self.wrapped_attrs)
-        return PackageWrapper(pkg, self.configurable, **kwds)
+        return self._klass(pkg, **self._get_pkg_kwds(pkg))
 
-    def __getattr__(self, attr):
-        return getattr(self.raw_repo, attr)
+    __getattr__ = GetAttrProxy("raw_repo")
 
     def itermatch(self, restrict, **kwds):
         kwds.setdefault("force", True)

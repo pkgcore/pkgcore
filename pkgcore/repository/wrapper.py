@@ -8,6 +8,7 @@ simple repository wrapping to override the package instances returned
 # icky.
 # ~harring
 from pkgcore.repository import prototype, errors
+from pkgcore.util.klass import GetAttrProxy
 
 class tree(prototype.tree):
 
@@ -32,8 +33,7 @@ class tree(prototype.tree):
             self.package_class(x)
             for x in self.raw_repo.itermatch(*args, **kwargs))
 
-    def __getattr__(self, attr):
-        return getattr(self.raw_repo, attr)
+    __getattr__ = GetAttrProxy("raw_repo")
 
     def __len__(self):
         return len(self.raw_repo)

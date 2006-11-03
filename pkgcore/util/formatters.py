@@ -6,6 +6,7 @@
 import os
 import errno
 
+from pkgcore.util.klass import GetAttrProxy
 
 class StreamClosed(KeyboardInterrupt):
     """Raised by L{Formatter.write} if the stream it prints to was closed.
@@ -329,8 +330,7 @@ class ObserverFormatter(object):
     def write(self, *args):
         self._formatter.write(autoline=False, *args)
 
-    def __getattr__(self, attr):
-        return getattr(self._formatter, attr)
+    __getattr__ = GetAttrProxy("_formatter")
 
 
 def get_formatter(stream):

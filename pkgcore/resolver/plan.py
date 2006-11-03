@@ -12,6 +12,8 @@ from pkgcore.resolver.choice_point import choice_point
 from pkgcore.util.currying import partial, post_curry
 from pkgcore.restrictions import packages, values, restriction
 from pkgcore.package.mutated import MutatedPkg
+from pkgcore.util.klass import GetAttrProxy
+
 
 limiters = set(["cycle"]) # [None])
 def dprint(fmt, args=None, label=None):
@@ -25,18 +27,17 @@ class nodeps_repo(object):
     default_depends = packages.AndRestriction(finalize=True)
     default_rdepends = packages.AndRestriction(finalize=True)
     def __init__(self, repo):
-        self.__repo = repo
+        self.raw_repo = repo
 
     def itermatch(self, *a, **kwds):
         return (MutatedPkg(x, overrides={"depends":self.default_depends,
                                          "rdepends":self.default_rdepends})
-                for x in self.__repo.itermatch(*a, **kwds))
+                for x in self.raw_repo.itermatch(*a, **kwds))
 
     def match(self, *a, **kwds):
         return list(self.itermatch(*a, **kwds))
 
-    def __getattr__(self, k):
-        return getattr(self.__repo, k)
+    __getattr__ = GetAttrProxy("raw_repo")
 
     def __iter__(self):
         return self.itermatch(packages.AlwaysTrue)
@@ -163,8 +164,7 @@ class caching_repo(object):
                     sorter=self.__strategy__))
         return v
     
-    def __getattr__(self, attr):
-        return getattr(self.__db__, attr)
+    __getattr__ = GetAttrProxy("__db__")
 
     def clear(self):
         self.__cache__.clear()

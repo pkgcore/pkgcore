@@ -304,6 +304,8 @@ core.setup(
             ],
         },
     ext_modules=[
+        core.Extension('pkgcore.util._klass', ['pkgcore/util/_klass.c'],
+                       extra_compile_args=extra_flags),
         core.Extension('pkgcore.util._caching', ['pkgcore/util/_caching.c'],
                        extra_compile_args=extra_flags),
         core.Extension('pkgcore.util._lists', ['pkgcore/util/_lists.c'],

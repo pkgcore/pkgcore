@@ -177,6 +177,13 @@ pkgcore_WeakValCache_clear(pkgcore_WeakValCache *self)
     return 0;
 }
 
+static PyObject *
+pkgcore_WeakValCache_clear_method(pkgcore_WeakValCache *self)
+{
+    pkgcore_WeakValCache_clear(self);
+    return Py_None;
+}
+
 static void
 pkgcore_WeakValCache_dealloc(pkgcore_WeakValCache *self)
 {
@@ -293,6 +300,8 @@ static PyMappingMethods pkgcore_WeakValCache_as_mapping = {
 static PyMethodDef pkgcore_WeakValCache_methods[] = {
     {"get", (PyCFunction)pkgcore_WeakValCache_get, METH_VARARGS,
         "get(key, default=None)"},
+    {"clear", (PyCFunction)pkgcore_WeakValCache_clear_method, METH_NOARGS,
+        "clear()"},
     {NULL}
 };
 

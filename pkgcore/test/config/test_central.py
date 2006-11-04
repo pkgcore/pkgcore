@@ -453,6 +453,8 @@ class ConfigManagerTest(TestCase):
         manager = central.ConfigManager([{
                     'thing': basics.HardCodedConfigSection({'class': drawer,
                                                             'default': True}),
+                    'bug': basics.HardCodedConfigSection({'class': None,
+                                                          'default': True}),
                     }], [object()])
         self.assertEquals((None, None), manager.get_default('drawer'))
         self.assertTrue(manager.collapse_named_section('thing').default)

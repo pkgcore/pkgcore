@@ -393,8 +393,11 @@ class ConfigManager(object):
                     is_default = False
                 if not is_default:
                     continue
-                type_obj = basics.ConfigType(section.get_value(self, 'class',
-                                                               'callable'))
+                try:
+                    type_obj = basics.ConfigType(
+                        section.get_value(self, 'class', 'callable'))
+                except errors.ConfigurationError:
+                    continue
                 if type_obj.name != type_name:
                     continue
                 if default is not None:

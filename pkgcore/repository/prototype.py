@@ -338,7 +338,8 @@ class tree(object):
 
         if cat_exact:
             if not cat_restrict and len(cat_exact) == 1:
-                c = cat_exact.pop()
+                # Cannot use pop here, cat_exact is reused below.
+                c = iter(cat_exact).next()
                 if not pkg_restrict and len(pkg_exact) == 1:
                     cp = (c, pkg_exact.pop())
                     if cp in self.versions:
@@ -368,7 +369,7 @@ class tree(object):
         if pkg_restrict:
             return self._package_filter(cats_iter, pkg_restrict)
         elif not cat_restrict:
-            if sorter is iter:
+            if sorter is iter and not cat_exact:
                 return self.versions
             else:
                 return ((c,p) for c in

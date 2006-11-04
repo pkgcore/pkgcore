@@ -54,6 +54,42 @@ class Values(optparse.Values, object):
             return self._config
 
 
+def config_callback(option, opt_str, value, parser, typename, typedesc=None):
+    """Retrieve a config section.
+
+    Pass the typename of the section as callback_args=('typename',),
+    and set type='string'. You can optionally pass a human-readable
+    typename as second element of callback_args.
+    """
+    if typedesc is None:
+        typedesc = typename
+    mapping = getattr(parser.values.config, typename)
+    try:
+        result = mapping[value]
+    except KeyError:
+        raise optparse.OptionValueError(
+            '%r is not a valid %s for %s (valid values: %s)' % (
+                value, typedesc, opt_str, ', '.join(repr(key)
+                                                    for key in mapping)))
+    setattr(parser.values, option.dest, result)
+
+
+def config_append_callback(option, opt_str, value, parser, typename,
+                           typedesc=None):
+    """Like L{config_callback} but appends instead of sets."""
+    if typedesc is None:
+        typedesc = typename
+    mapping = getattr(parser.values.config, typename)
+    try:
+        result = mapping[value]
+    except KeyError:
+        raise optparse.OptionValueError(
+            '%r is not a valid %s for %s (valid values: %s)' % (
+                value, typedesc, opt_str, ', '.join(repr(key)
+                                                    for key in mapping)))
+    parser.values.ensure_value(option.dest, []).append(result)
+
+
 def debug_callback(option, opt_str, value, parser):
     """Make sure the config central uses debug mode.
 

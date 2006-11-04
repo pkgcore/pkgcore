@@ -212,20 +212,6 @@ def append_const_callback(option, opt_str, value, parser, const):
     parser.values.ensure_value(option.dest, []).append(const)
 
 
-def pkgset_callback(option, opt_str, value, parser):
-    try:
-        pkgset = parser.values.config.pkgset[value]
-    except KeyError:
-        raise optparse.OptionValueError(
-            'No pkgset named %r. Available sets are: %s' % (
-                pkgset, ', '.join(parser.values.config.pkgset)))
-    atoms = list(pkgset)
-    if not atoms:
-        # This is currently an error because I am unsure what it should do.
-        raise optparse.OptionValueError('pkgset %s is empty' % (value,))
-    parser.values.pkgset.append(packages.OrRestriction(*atoms))
-
-
 class OptionParser(commandline.OptionParser):
 
     """Option parser with custom option postprocessing and validation."""
@@ -237,7 +223,9 @@ class OptionParser(commandline.OptionParser):
         self.set_default('pkgset', [])
         self.set_default('restrict', [])
 
-        self.add_option('--domain', action='store',
+        self.add_option('--domain', action='callback', type='string',
+                        callback=commandline.config_callback,
+                        callback_args=('domain',),
                         help='domain name to use (default used if omitted).')
         self.add_option('--early-out', action='store_true', dest='earlyout',
                         help='stop when first match is found.')
@@ -308,8 +296,9 @@ class OptionParser(commandline.OptionParser):
             'WARNING: currently not completely reliable.')
         # XXX fix the negate stuff and remove that warning.
         restrict.add_option(
-            '--pkgset', action='callback', callback=pkgset_callback,
-            type='string',
+            '--pkgset', action='callback', type='string',
+            callback=commandline.config_append_callback,
+            callback_args=('pkgset',),
             help='is inside a named set of packages (like "world").')
 
         printable_attrs = ('rdepends', 'depends', 'post_rdepends', 'provides',
@@ -395,7 +384,7 @@ class OptionParser(commandline.OptionParser):
             vals.one_attr = vals.force_one_attr
 
         # Build up a restriction.
-        for attr in PARSE_FUNCS.keys() + ['pkgset']:
+        for attr in PARSE_FUNCS:
             val = getattr(vals, attr)
             if len(val) == 1:
                 # Omit the boolean.
@@ -403,6 +392,18 @@ class OptionParser(commandline.OptionParser):
             elif val:
                 vals.restrict.append(
                     packages.OrRestriction(finalize=True, *val))
+
+        all_atoms = []
+        for pkgset in vals.pkgset:
+            atoms = list(pkgset)
+            if not atoms:
+                # This is currently an error because I am unsure what
+                # it should do.
+                self.error('Cannot use empty pkgsets')
+            all_atoms.extend(atoms)
+        if all_atoms:
+            vals.restrict.append(packages.OrRestriction(finalize=True,
+                                                        *all_atoms))
 
         if not vals.restrict:
             self.error('No restrictions specified.')
@@ -415,20 +416,15 @@ class OptionParser(commandline.OptionParser):
             vals.restrict = packages.AndRestriction(*vals.restrict)
 
         # Get a domain object.
-        if vals.domain:
-            try:
-                domain = vals.config.domain[vals.domain]
-            except KeyError:
-                self.error('domain %s not found. Valid domains: %s' % (
-                        vals.domain, ', '.join(vals.config.domain),))
-        else:
-            domain = vals.config.get_default('domain')
-            if domain is None:
+        if vals.domain is None:
+            vals.domain = vals.config.get_default('domain')
+            if vals.domain is None:
                 self.error(
                     'No default domain found, fix your configuration '
                     'or pass --domain (Valid domains: %s)' % (
                         ', '.join(vals.config.domain),))
 
+        domain = vals.domain
         # Get the vdb if we need it.
         if vals.verbose and vals.noversion:
             vals.vdbs = domain.vdb

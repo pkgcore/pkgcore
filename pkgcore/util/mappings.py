@@ -200,6 +200,9 @@ class LazyValDict(DictMixin):
         return key in self._keys
 
     def __len__(self):
+        if self._keys_func is not None:
+            self._keys = set(self._keys_func())
+            self._keys_func = None
         return len(self._keys)
 
 

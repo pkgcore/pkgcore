@@ -47,8 +47,7 @@ class mysdist(sdist.sdist):
         self.filelist.append("COPYING")
 
         # src dir
-        self.filelist.include_pattern(
-            '*.[ch]', prefix=os.path.join('src', 'filter-env'))
+        self.filelist.include_pattern('.[ch]', prefix='src')
         self.filelist.include_pattern(
             '*', prefix=os.path.join('src', 'bsd-flags'))
 
@@ -61,13 +60,8 @@ class mysdist(sdist.sdist):
         self.filelist.include_pattern('*', prefix='examples')
 
         self.filelist.include_pattern('*', prefix='bin')
-        self.filelist.append(os.path.join('pkgcore', 'heapdef.h'))
         self.filelist.exclude_pattern(os.path.join(
                 'pkgcore', 'bin', 'ebuild-env', 'filter-env'))
-        # XXX HACK: if you run "setup.py sdist" with python 2.5 this
-        # does not get packaged without this.
-        self.filelist.append(os.path.join(
-                'pkgcore', 'util', '_functoolsmodule.c'))
 
         if self.prune:
             self.prune_file_list()
@@ -318,23 +312,16 @@ packages = [
     if '__init__.py' in files]
 
 extra_flags = ['-Wall']
-
-def new_Extension(*args, **kwds):
-    # py24-compatibility requires heapdef.h...
-    if 'includes/py24-compatibility.h' in kwds.get('depends', []):
-        if 'includes/heapdef.h' not in kwds["depends"]:
-            kwds['depends'].append('includes/heapdef.h')
-    o = core.Extension(*args, **kwds)
-    o.include_dirs.append("includes")
-    return o
+common_includes = ['src/extensions/py24-compatibility.h',
+                   'src/extensions/heapdef.h',
+                   ]
 
 extensions = []
 if sys.version_info < (2, 5):
     # Almost unmodified copy from the python 2.5 source.
-    extensions.append(new_Extension(
-            'pkgcore.util._functools', ['pkgcore/util/_functoolsmodule.c'],
-            extra_compile_args=extra_flags,
-            depends=['includes/py24-compatibility.h']))
+    extensions.append(core.Extension(
+            'pkgcore.util._functools', ['src/extensions/_functoolsmodule.c'],
+            extra_compile_args=extra_flags, depends=common_includes))
 
 
 core.setup(
@@ -351,29 +338,24 @@ core.setup(
             ],
         },
     ext_modules=[
-        new_Extension('pkgcore.util.osutils._path', ['pkgcore/util/osutils/_path.c'],
-            extra_compile_args=extra_flags,
-            depends=['includes/py24-compatibility.h']),
-        new_Extension('pkgcore.util._klass', ['pkgcore/util/_klass.c'],
-            extra_compile_args=extra_flags,
-            depends=['includes/py24-compatibility.h']),
-        new_Extension(
-            'pkgcore.util._caching', ['pkgcore/util/_caching.c'],
-            extra_compile_args=extra_flags,
-            depends=['includes/py24-compatibility.h']),
-        new_Extension(
-            'pkgcore.util._lists', ['pkgcore/util/_lists.c'],
-            extra_compile_args=extra_flags,
-            depends=['includes/py24-compatibility.h']),
-        new_Extension(
-            'pkgcore.ebuild._cpv', ['pkgcore/ebuild/_cpv.c'],
-            extra_compile_args=extra_flags,
-            depends=['includes/heapdef.h']),
-        new_Extension(
-            'pkgcore.util.osutils._readdir',
-            ['pkgcore/util/osutils/_readdir.c'],
-            extra_compile_args=extra_flags,
-            depends=['includes/py24-compatibility.h']),
+        core.Extension(
+            'pkgcore.util.osutils._path', ['src/extensions/_path.c'],
+            extra_compile_args=extra_flags, depends=common_includes),
+        core.Extension(
+            'pkgcore.util._klass', ['src/extensions/_klass.c'],
+            extra_compile_args=extra_flags, depends=common_includes),
+        core.Extension(
+            'pkgcore.util._caching', ['src/extensions/_caching.c'],
+            extra_compile_args=extra_flags, depends=common_includes),
+        core.Extension(
+            'pkgcore.util._lists', ['src/extensions/_lists.c'],
+            extra_compile_args=extra_flags, depends=common_includes),
+        core.Extension(
+            'pkgcore.ebuild._cpv', ['src/extensions/_cpv.c'],
+            extra_compile_args=extra_flags, depends=common_includes),
+        core.Extension(
+            'pkgcore.util.osutils._readdir', ['src/extensions/_readdir.c'],
+            extra_compile_args=extra_flags, depends=common_includes),
         ] + extensions,
     cmdclass={'build_filter_env': build_filter_env,
               'sdist': mysdist,

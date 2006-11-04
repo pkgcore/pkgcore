@@ -386,7 +386,7 @@ class merge_plan(object):
             if not l:
                 # hmm. ok... no conflicts, so we insert in vdb matches
                 # to trigger a replace instead of an install
-                for repo  in self.livefs_dbs:
+                for repo in self.livefs_dbs:
                     m = repo.match(slotted_atom)
                     if m:
                         self.state.add_pkg(choice_point(slotted_atom, m),

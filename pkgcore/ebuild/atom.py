@@ -287,10 +287,6 @@ class atom(boolean.AndRestriction):
                 else:
                     r.append(VersionMatch(self.op, self.version, self.revision,
                                           negate=self.negate_vers))
-            elif self.op:
-                raise MalformedAtom(
-                    str(self),
-                    "cannot specify a version operator without a version")
 
             if self.use:
                 false_use = [x[1:] for x in self.use if x[0] == "-"]

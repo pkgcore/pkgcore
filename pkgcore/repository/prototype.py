@@ -16,10 +16,6 @@ from pkgcore.util.klass import contains
 
 class IterValLazyDict(LazyValDict):
 
-    def __init__(self, key_func, val_func, override_iter=None):
-        LazyValDict.__init__(self, key_func, val_func)
-        self._iter_callable = override_iter
-
     def __str__(self):
         return str(list(self))
 
@@ -28,6 +24,7 @@ class IterValLazyDict(LazyValDict):
             del self._vals[key]
         else:
             self._keys = tuple(x for x in self._keys if x != key)
+
 
 class CategoryIterValLazyDict(IterValLazyDict):
 

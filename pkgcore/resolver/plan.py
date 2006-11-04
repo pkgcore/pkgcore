@@ -771,6 +771,12 @@ ADD     = 1
 REPLACE = 2
 FORWARD_BLOCK = 3
 REMOVE_FORWARD_BLOCK = 4
+state_ops = {ADD:"add",
+    REMOVE:"remove",
+    REPLACE:"replace",
+    FORWARD_BLOCK:None,
+    REMOVE_FORWARD_BLOCK:None
+}
 
 class plan_state(object):
     def __init__(self):
@@ -863,16 +869,15 @@ class plan_state(object):
         self.plan = self.plan[:state_pos]
 
     def iter_pkg_ops(self):
-        ops = {ADD:"add", REMOVE:"remove", REPLACE:"replace",
-               FORWARD_BLOCK:None}
         for x in self.plan:
-            if x[0] == FORWARD_BLOCK:
+            assert x[0] in state_ops
+            val = state_ops[x[0]]
+            if val is None:
                 continue
-            assert x[0] in ops
             if x[0] == REPLACE:
-                yield ops[x[0]], x[3:5]
+                yield val, x[3:5]
             else:
-                yield ops[x[0]], x[3:]
+                yield val, x[3:]
 
     def add_blocker(self, choices, blocker, key=None):
         """adds blocker, returning any packages blocked"""

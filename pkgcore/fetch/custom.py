@@ -8,7 +8,7 @@ fetcher class that pulls files via executing another program to do the fetching
 import os
 from pkgcore.spawn import spawn_bash, is_userpriv_capable
 from pkgcore.os_data import portage_uid, portage_gid
-from pkgcore.util.osutils import ensure_dirs
+from pkgcore.util.osutils import ensure_dirs, join as pjoin
 from pkgcore.fetch import errors, base, fetchable
 from pkgcore.config import ConfigHint
 
@@ -97,7 +97,7 @@ class fetcher(base.fetcher):
             raise TypeError(
                 "target must be fetchable instance/derivative: %s" % target)
 
-        fp = os.path.join(self.distdir, target.filename)
+        fp = pjoin(self.distdir, target.filename)
 
         uri = iter(target.uri)
         if self.userpriv and is_userpriv_capable():

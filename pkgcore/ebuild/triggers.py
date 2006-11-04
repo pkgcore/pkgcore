@@ -13,6 +13,7 @@ from pkgcore.util.currying import partial
 from pkgcore.restrictions import values
 from pkgcore.util.osutils import listdir_files
 from pkgcore.util.lists import stable_unique, iflatten_instance
+from pkgcore.util.osutils import join as pjoin
 import os, errno, stat
 
 
@@ -31,8 +32,6 @@ default_ldpath = ('/lib', '/lib64', '/lib32',
     '/usr/lib', '/usr/lib64', '/usr/lib32')
 
 def collapse_envd(base):
-    pjoin = os.path.join
-
     collapsed_d = {}
     for x in sorted(listdir_files(base)):
         if x.endswith(".bak") or x.endswith("~") or x.startswith("._cfg") \
@@ -93,7 +92,7 @@ def string_collapse_envd(envd_dict, incrementals, colon_incrementals):
 def update_ldso(ld_search_path, offset='/'):
     # we do an atomic rename instead of open and write quick
     # enough (avoid the race iow)
-    fp = os.path.join(offset, 'etc', 'ld.so.conf')
+    fp = pjoin(offset, 'etc', 'ld.so.conf')
     new_f = AtomicWriteFile(fp)
     new_f.write("# automatically generated, edit env.d files instead\n")
     new_f.writelines(x.strip()+"\n" for x in ld_search_path)
@@ -107,7 +106,6 @@ class env_update(triggers.base):
     _priority = 5
     
     def trigger(self, engine):
-        pjoin = os.path.join
         offset = engine.offset
         d, inc, colon = collapse_envd(pjoin(offset, "etc/env.d"))
 
@@ -143,7 +141,7 @@ def simple_chksum_compare(x, y):
 
 
 def gen_config_protect_filter(offset, extra_protects=(), extra_disables=()):
-    collapsed_d, inc, colon = collapse_envd(os.path.join(offset, "etc/env.d"))
+    collapsed_d, inc, colon = collapse_envd(pjoin(offset, "etc/env.d"))
     collapsed_d.setdefault("CONFIG_PROTECT", []).extend(extra_protects)
     collapsed_d.setdefault("CONFIG_PROTECT_MASK", []).extend(extra_disables)
 
@@ -185,8 +183,6 @@ class ConfigProtectInstall(triggers.base):
         t2.register(engine)
 
     def trigger(self, engine, existing_cset, install_cset):
-        pjoin = os.path.join
-
         # hackish, but it works.
         protected_filter = gen_config_protect_filter(engine.offset,
             self.extra_protects, self.extra_disables).match
@@ -373,7 +369,7 @@ class InfoRegen(triggers.InfoRegen):
 
     def trigger(self, engine, *args):
         self.engine = engine
-        self.path = os.path.join(engine.offset, "etc/env.d")
+        self.path = pjoin(engine.offset, "etc/env.d")
         triggers.InfoRegen.trigger(self, engine, *args)
 
     @property

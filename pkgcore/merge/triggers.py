@@ -16,12 +16,12 @@ __all__ = [
 from pkgcore.merge import errors, const
 import pkgcore.os_data
 from pkgcore.util.demandload import demandload
+from pkgcore.util.osutils import listdir_files, join as pjoin
 demandload(globals(), "os errno "
     "pkgcore.plugin:get_plugin "
     "pkgcore:spawn "
     "pkgcore.fs.livefs:gen_obj "
     "pkgcore.fs:fs,contents "
-    "pkgcore.util.osutils:listdir_files "
     "pkgcore.util.file:iter_read_bash "
     )
 
@@ -148,7 +148,7 @@ class ldconfig(base):
         self.saved_mtimes = contents.contentsSet()
 
     def ld_so_path(self, offset):
-        return os.path.join(offset, self.ld_so_conf_path)
+        return pjoin(offset, self.ld_so_conf_path)
 
     def read_ld_so_conf(self, offset):
         fp = self.ld_so_path(offset)
@@ -165,7 +165,7 @@ class ldconfig(base):
             open(fp, 'w')
             # fall back to an edjucated guess.
             l = ['usr/lib','usr/lib64','usr/lib32','lib','lib64','lib32']
-        return [os.path.join(offset, x) for x in l]
+        return [pjoin(offset, x) for x in l]
 
     def trigger(self, engine):
         self.offset = engine.offset
@@ -253,7 +253,6 @@ class InfoRegen(base):
             engine.observer.warn("bad info files: %r" % sorted(bad))
 
     def regen(self, binary, basepath):
-        pjoin = os.path.join
         ignores = ("dir", "dir.old")
         files = listdir_files(basepath)
         

@@ -10,7 +10,7 @@ from itertools import chain
 from pkgcore.repository import prototype, errors, configured, syncable
 from pkgcore.util.file import read_dict, iter_read_bash
 from pkgcore.util import currying
-from pkgcore.util.osutils import listdir_files, listdir_dirs
+from pkgcore.util.osutils import listdir_files, listdir_dirs, join as pjoin
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
 from pkgcore.util.demandload import demandload
 from pkgcore.util.containers import InvertedContains
@@ -80,20 +80,20 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                 "lstat failed on base %s" % self.base)
         if eclass_cache is None:
             self.eclass_cache = eclass_cache_module.cache(
-                os.path.join(self.base, "eclass"), self.base)
+                pjoin(self.base, "eclass"), self.base)
         else:
             self.eclass_cache = eclass_cache
         if mirrors_file:
-            mirrors = read_dict(os.path.join(self.base, metadata_offset,
+            mirrors = read_dict(pjoin(self.base, metadata_offset,
                                              "thirdpartymirrors"))
         else:
             mirrors = {}
-        fp = os.path.join(self.base, metadata_offset, "thirdpartymirrors")
+        fp = pjoin(self.base, metadata_offset, "thirdpartymirrors")
         if os.path.exists(fp):
             from random import shuffle
             f = None
             try:
-                f = open(os.path.join(self.base, metadata_offset,
+                f = open(pjoin(self.base, metadata_offset,
                                       "thirdpartymirrors"), "r")
                 for k, v in read_dict(f, splitter="\t",
                                       source_isiter=True).items():
@@ -146,18 +146,18 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             raise KeyError("failed fetching categories: %s" % str(e))
 
     def _get_packages(self, category):
-        cpath = os.path.join(self.base, category.lstrip(os.path.sep))
+        cpath = pjoin(self.base, category.lstrip(os.path.sep))
         try:
             return tuple(listdir_dirs(cpath))
 
         except (OSError, IOError), e:
             raise KeyError("failed fetching packages for category %s: %s" % \
-                    (os.path.join(self.base, category.lstrip(os.path.sep)), \
+                    (pjoin(self.base, category.lstrip(os.path.sep)), \
                     str(e)))
 
     def _get_versions(self, catpkg):
         pkg = catpkg[-1]
-        cppath = os.path.join(self.base, catpkg[0], catpkg[1])
+        cppath = pjoin(self.base, catpkg[0], catpkg[1])
         # 7 == len(".ebuild")
         try:
             return tuple(x[len(pkg):-7].lstrip("-")
@@ -165,10 +165,10 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                 if x.endswith(".ebuild") and x.startswith(pkg))
         except (OSError, IOError), e:
             raise KeyError("failed fetching versions for package %s: %s" % \
-                (os.path.join(self.base, catpkg.lstrip(os.path.sep)), str(e)))
+                (pjoin(self.base, catpkg.lstrip(os.path.sep)), str(e)))
 
     def _get_ebuild_path(self, pkg):
-        return os.path.join(self.base, pkg.category, pkg.package, \
+        return pjoin(self.base, pkg.category, pkg.package, \
             "%s-%s.ebuild" % (pkg.package, pkg.fullver))
 
     def _get_ebuild_src(self, pkg):
@@ -185,18 +185,18 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         return o
         
     def _get_metadata_xml(self, category, package):
-        return repo_objs.LocalMetadataXml(os.path.join(self.base, category,
+        return repo_objs.LocalMetadataXml(pjoin(self.base, category,
             package, "metadata.xml"))
 
     def _get_manifest(self, category, package):
-        return repo_objs.Manifest(os.path.join(self.base, category, package,
+        return repo_objs.Manifest(pjoin(self.base, category, package,
             "Manifest"), enforce_gpg=self.enable_gpg)
 
     def _get_digests(self, pkg, force_manifest1=False):
         manifest = pkg._shared_pkg_data.manifest
         if manifest.version == 2 and not force_manifest1:
             return manifest.distfiles
-        return digest.parse_digest(os.path.join(
+        return digest.parse_digest(pjoin(
             os.path.dirname(self._get_ebuild_path(pkg)), "files",
             "digest-%s-%s" % (pkg.package, pkg.fullver)))
 
@@ -212,7 +212,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         try:
             return [atom.atom(x.strip())
                 for x in iter_read_bash(
-                os.path.join(self.base, "profiles", "package.mask"))]
+                pjoin(self.base, "profiles", "package.mask"))]
         except IOError, i:
             if i.errno != errno.ENOENT:
                 raise

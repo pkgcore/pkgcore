@@ -6,7 +6,7 @@ from pkgcore.repository import prototype, errors
 
 #needed to grab the PN
 from pkgcore.ebuild.cpv import CPV as cpv
-from pkgcore.util.osutils import ensure_dirs
+from pkgcore.util.osutils import ensure_dirs, join as pjoin
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import partial
 from pkgcore.vdb.contents import ContentsFile
@@ -91,7 +91,7 @@ class tree(prototype.tree):
             pass
 
     def _get_packages(self, category):
-        cpath = os.path.join(self.base, category.lstrip(os.path.sep))
+        cpath = pjoin(self.base, category.lstrip(os.path.sep))
         l = set()
         d = {}
         try:
@@ -104,7 +104,7 @@ class tree(prototype.tree):
                 d.setdefault((category, x.package), []).append(x.fullver)
         except (OSError, IOError), e:
             raise KeyError("failed fetching packages for category %s: %s" % \
-            (os.path.join(self.base, category.lstrip(os.path.sep)), str(e)))
+            (pjoin(self.base, category.lstrip(os.path.sep)), str(e)))
 
         self._versions_tmp_cache.update(d)
         return tuple(l)
@@ -114,7 +114,7 @@ class tree(prototype.tree):
 
     def _get_ebuild_path(self, pkg):
         s = "%s-%s" % (pkg.package, pkg.fullver)
-        return os.path.join(self.base, pkg.category, s, s+".ebuild")
+        return pjoin(self.base, pkg.category, s, s+".ebuild")
 
     _metadata_rewrites = {
         "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
@@ -122,12 +122,11 @@ class tree(prototype.tree):
 
     def _get_metadata(self, pkg):
         return IndeterminantDict(partial(self._internal_load_key,
-            os.path.join(self.base, pkg.category,
+            pjoin(self.base, pkg.category,
                 "%s-%s" % (pkg.package, pkg.fullver))))
 
     def _internal_load_key(self, path, key):
         key = self._metadata_rewrites.get(key, key)
-        pjoin = os.path.join
         if key == "contents":
             data = ContentsFile(pjoin(path, "CONTENTS"), mutable=True)
         elif key == "environment":
@@ -155,7 +154,7 @@ class tree(prototype.tree):
         prototype.tree.notify_remove_package(self, pkg)
         if remove_it:
             try:
-                os.rmdir(os.path.join(self.base, pkg.category))
+                os.rmdir(pjoin(self.base, pkg.category))
             except OSError, oe:
                 if oe.errno != errno.ENOTEMPTY:
                     raise
@@ -206,7 +205,7 @@ def _default_customize_engine(op_inst, engine):
 class install(repo_interfaces.livefs_install):
 
     def __init__(self, domain_settings, repo, pkg, *a, **kw):
-        self.dirpath = os.path.join(
+        self.dirpath = pjoin(
             repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
         self.domain_settings = domain_settings
         repo_interfaces.livefs_install.__init__(self, repo, pkg, *a, **kw)
@@ -222,20 +221,20 @@ class install(repo_interfaces.livefs_install):
         rewrite = self.repo._metadata_rewrites
         for k in self.new_pkg.tracked_attributes:
             if k == "contents":
-                v = ContentsFile(os.path.join(dirpath, "CONTENTS"),
+                v = ContentsFile(pjoin(dirpath, "CONTENTS"),
                                  mutable=True, create=True)
                 for x in self.me.csets["install"]:
                     # $10 this ain't right.  verify this- harring
                     if self.offset:
                         v.add(x.change_attributes(
-                                location=os.path.join(self.offset, x.location)))
+                                location=pjoin(self.offset, x.location)))
                     else:
                         v.add(x)
                 v.flush()
             elif k == "environment":
                 data = bzip2.compress(
                     self.new_pkg.environment.get_fileobj().read())
-                open(os.path.join(dirpath, "environment.bz2"), "w").write(data)
+                open(pjoin(dirpath, "environment.bz2"), "w").write(data)
                 del data
             else:
                 v = getattr(self.new_pkg, k)
@@ -255,7 +254,7 @@ class install(repo_interfaces.livefs_install):
                     s = v
                 if not s.endswith("\n"):
                     s += "\n"
-                open(os.path.join(
+                open(pjoin(
                         dirpath,
                         rewrite.get(k, k.upper())), "w", 32768).write(s)
 
@@ -271,7 +270,7 @@ class install(repo_interfaces.livefs_install):
         else:
             o = o.get_fileobj().read()
         # XXX lil hackish accessing PF
-        open(os.path.join(dirpath, self.new_pkg.PF + ".ebuild"), "w").write(o)
+        open(pjoin(dirpath, self.new_pkg.PF + ".ebuild"), "w").write(o)
 
         # XXX finally, hack to keep portage from doing stupid shit.
         # relies on counter to discern what to punt during
@@ -281,10 +280,10 @@ class install(repo_interfaces.livefs_install):
         # need to get zmedico to localize the counter
         # creation/counting to per CP for this trick to behave
         # perfectly.
-        open(os.path.join(dirpath, "COUNTER"), "w").write(str(int(time.time())))
+        open(pjoin(dirpath, "COUNTER"), "w").write(str(int(time.time())))
         
         #finally, we mark who made this.
-        open(os.path.join(dirpath, "PKGMANAGER"), "w").write(
+        open(pjoin(dirpath, "PKGMANAGER"), "w").write(
             "pkgcore-%s" % pkgcore.const.VERSION)
         return True
 
@@ -292,7 +291,7 @@ class install(repo_interfaces.livefs_install):
 class uninstall(repo_interfaces.livefs_uninstall):
 
     def __init__(self, domain_settings, repo, pkg, offset=None, *a, **kw):
-        self.dirpath = os.path.join(
+        self.dirpath = pjoin(
             repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
         self.domain_settings = domain_settings
         repo_interfaces.livefs_uninstall.__init__(
@@ -312,11 +311,11 @@ class uninstall(repo_interfaces.livefs_uninstall):
 class replace(install, uninstall, repo_interfaces.livefs_replace):
 
     def __init__(self, domain_settings, repo, pkg, newpkg, *a, **kw):
-        self.dirpath = os.path.join(
+        self.dirpath = pjoin(
             repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
-        self.newpath = os.path.join(
+        self.newpath = pjoin(
             repo.base, newpkg.category, newpkg.package+"-"+newpkg.fullver)
-        self.tmpdirpath = os.path.join(
+        self.tmpdirpath = pjoin(
             os.path.dirname(self.dirpath),
             ".tmp."+os.path.basename(self.dirpath))
         self.domain_settings = domain_settings

@@ -7,6 +7,7 @@ cache backend designed for rsynced tree's pregenerated metadata.
 
 import os
 import errno
+from pkgcore.util.osutils import join as pjoin
 from pkgcore.cache import flat_hash, errors
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import eclass_cache
@@ -39,7 +40,7 @@ class database(flat_hash.database):
     def __init__(self, location, *args, **config):
         self.base_loc = location
         super(database, self).__init__(location, *args, **config)
-        self.ec = eclass_cache.cache(os.path.join(self.base_loc, "eclass"),
+        self.ec = eclass_cache.cache(pjoin(self.base_loc, "eclass"),
             self.base_loc)
         self.hardcoded_auxdbkeys_order = tuple((idx, key)
             for idx, key in enumerate(self.auxdbkeys_order)
@@ -50,7 +51,7 @@ class database(flat_hash.database):
 
 
     def _format_location(self):
-        return os.path.join(self.location, "metadata", "cache")
+        return pjoin(self.location, "metadata", "cache")
 
     def __getitem__(self, cpv):
         d = flat_hash.database.__getitem__(self, cpv)
@@ -91,7 +92,7 @@ class database(flat_hash.database):
             values["INHERITED"] = ' '.join(eclasses)
 
         s = cpv.rfind("/")
-        fp = os.path.join(
+        fp = pjoin(
             self.location, cpv[:s],".update.%i.%s" % (os.getpid(), cpv[s+1:]))
         try:
             myf=open(fp, "w")
@@ -115,7 +116,7 @@ class database(flat_hash.database):
         self._set_mtime(fp, values, eclasses)
 
         #update written.  now we move it.
-        new_fp = os.path.join(self.location, cpv)
+        new_fp = pjoin(self.location, cpv)
         try:
             os.rename(fp, new_fp)
         except (OSError, IOError), e:

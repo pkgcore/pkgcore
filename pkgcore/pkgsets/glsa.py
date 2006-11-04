@@ -9,13 +9,15 @@ import os
 from pkgcore.util.iterables import caching_iter
 from pkgcore.restrictions import packages, restriction, boolean, values
 from pkgcore.config import ConfigHint
-from pkgcore.util.demandload import demandload
+from pkgcore.util.osutils import listdir_files, join as pjoin
 
+from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.xml:etree "
     "pkgcore.util.repo_utils:get_virtual_repos "
     "pkgcore.package:mutated "
     "pkgcore.ebuild:cpv,atom "
-    "pkgcore.log:logger ")
+    "pkgcore.log:logger "
+    )
 
 
 class KeyedAndRestriction(boolean.AndRestriction):
@@ -54,7 +56,7 @@ class GlsaDirSet(object):
         """
 
         if not isinstance(src, basestring):
-            src = os.path.join(get_virtual_repos(src, False)[0].base,
+            src = pjoin(get_virtual_repos(src, False)[0].base,
                                "metadata/glsa")
         self.path = src
 
@@ -88,7 +90,7 @@ class GlsaDirSet(object):
         """
         generator yielding each GLSA restriction
         """
-        for fn in os.listdir(self.path):
+        for fn in listdir_files(self.path):
             #"glsa-1234-12.xml
             if not (fn.startswith("glsa-") and fn.endswith(".xml")):
                 continue
@@ -96,7 +98,7 @@ class GlsaDirSet(object):
                 [int(x) for x in fn[5:-4].split("-")]
             except ValueError:
                 continue
-            root = etree.parse(os.path.join(self.path, fn))
+            root = etree.parse(pjoin(self.path, fn))
             glsa_node = root.getroot()
             if glsa_node.tag != 'glsa':
                 raise ValueError("glsa without glsa rootnode")

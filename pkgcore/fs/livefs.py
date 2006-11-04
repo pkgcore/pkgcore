@@ -9,7 +9,7 @@ import os, collections
 from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO
 from pkgcore.fs.fs import (
     fsFile, fsDir, fsSymlink, fsDev, fsFifo, get_major_minor)
-from pkgcore.util.osutils import normpath
+from pkgcore.util.osutils import normpath, join as pjoin
 from pkgcore.fs.contents import contentsSet
 from pkgcore.chksum import get_handlers
 from pkgcore.util.mappings import LazyValDict
@@ -75,6 +75,40 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None):
 # fine doing it this way (specially since we're relying on
 # os.path.sep, not '/' :P)
 
+def _internal_iter_scan(path, chksum_handlers):
+    dirs = collections.deque([normpath(path)])
+    yield gen_obj(dirs[0], chksum_handlers=chksum_handlers)
+    while dirs:
+        base = dirs.popleft()
+        for x in listdir(base):
+            path = pjoin(base, x)
+            o = gen_obj(path, chksum_handlers=chksum_handlers,
+                        real_location=path)
+            yield o
+            if isinstance(o, fsDir):
+                dirs.append(path)
+
+
+def _internal_offset_iter_scan(path, chksum_handlers, offset):
+    offset = normpath(offset)
+    path = normpath(path)
+    dirs = collections.deque([path[len(offset):]])
+    if dirs[0]:
+        yield gen_obj(dirs[0], chksum_handlers=chksum_handlers)
+
+    sep = os.path.sep
+    while dirs:
+        base = dirs.popleft().lstrip(sep)
+        real_base = pjoin(offset, base)
+        for x in listdir(real_base):
+            path = pjoin(base, x)
+            o = gen_obj(path, chksum_handlers=chksum_handlers,
+                        real_location=pjoin(real_base, x))
+            yield o
+            if isinstance(o, fsDir):
+                dirs.append(path)
+    
+
 def iter_scan(path, offset=None):
     """
     Recursively scan a path.
@@ -89,27 +123,11 @@ def iter_scan(path, offset=None):
         if offset is /tmp, /tmp/blah becomes /blah
     """
     chksum_handlers = get_handlers()
-    sep = os.path.sep
-    if offset is None:
-        offset = ""
-        dirs = collections.deque([path.rstrip(sep)])
-        yield gen_obj(dirs[0], chksum_handlers=chksum_handlers)
-    else:
-        offset = normpath(offset.rstrip(sep))+sep
-        path = normpath(path)
-        dirs = collections.deque([path.rstrip(sep)[len(offset):]])
-        if dirs[0]:
-            yield gen_obj(dirs[0], chksum_handlers=chksum_handlers)
 
-    while dirs:
-        base = dirs.popleft() + sep
-        for x in listdir(offset + base):
-            path = base + x
-            o = gen_obj(path, chksum_handlers=chksum_handlers,
-                        real_location=offset+path)
-            yield o
-            if isinstance(o, fsDir):
-                dirs.append(path)
+    if offset is None:
+        return _internal_iter_scan(path, chksum_handlers)
+    return _internal_offset_iter_scan(path, chksum_handlers, offset)
+
 
 def scan(*a, **kw):
     """

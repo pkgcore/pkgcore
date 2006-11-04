@@ -17,7 +17,7 @@ from pkgcore.ebuild.processor import \
     request_ebuild_processor, release_ebuild_processor, \
     expected_ebuild_env, chuck_UnhandledCommand
 from pkgcore.os_data import portage_gid
-from pkgcore.util.osutils import ensure_dirs, normpath
+from pkgcore.util.osutils import ensure_dirs, normpath, join as pjoin
 from pkgcore.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_fakeroot_capable)
 from pkgcore.util.currying import post_curry, pretty_docs
@@ -129,7 +129,7 @@ class ebd(object):
             self.userpriv = False
 
         if "PORT_LOGDIR" in self.env:
-            self.logging = os.path.join(self.env["PORT_LOGDIR"], pkg.category,
+            self.logging = pjoin(self.env["PORT_LOGDIR"], pkg.category,
                                         pkg.cpvstr+".log")
             del self.env["PORT_LOGDIR"]
         else:
@@ -158,21 +158,21 @@ class ebd(object):
     def __init_workdir__(self, tmp_offset):
         # don't fool with this, without fooling with setup.
         self.base_tmpdir = self.env["PORTAGE_TMPDIR"]
-        self.tmpdir = normpath(os.path.join(self.base_tmpdir, "portage"))
+        self.tmpdir = normpath(pjoin(self.base_tmpdir, "portage"))
         if tmp_offset:
-            self.tmpdir = os.path.join(self.tmpdir,
+            self.tmpdir = pjoin(self.tmpdir,
                 tmp_offset.strip(os.path.sep))
-        self.env["HOME"] = os.path.join(self.tmpdir, "homedir")
+        self.env["HOME"] = pjoin(self.tmpdir, "homedir")
 
-        self.builddir = os.path.join(self.tmpdir, self.env["CATEGORY"],
+        self.builddir = pjoin(self.tmpdir, self.env["CATEGORY"],
                                      self.env["PF"])
         for x, y in (("T", "temp"), ("WORKDIR", "work"), ("D", "image")):
-            self.env[x] = os.path.join(self.builddir, y) +"/"
+            self.env[x] = pjoin(self.builddir, y) +"/"
         self.env["IMAGE"] = self.env["D"]
 
     def get_env_source(self):
         return data_source.data_source(
-            open(os.path.join(self.env["T"], "environment"), "r").read())
+            open(pjoin(self.env["T"], "environment"), "r").read())
 
     def setup_env_data_source(self, env_data_source):
         self.env_data_source = env_data_source
@@ -183,7 +183,7 @@ class ebd(object):
                 self.env['T'], 0770, portage_gid))
 
         if env_data_source is not None:
-            fp = os.path.join(self.env["T"], "environment")
+            fp = pjoin(self.env["T"], "environment")
             # load data first (might be a local_source), *then* right
             # if it's a src_ebuild being installed, trying to do two steps
             # stomps the local_sources data.
@@ -411,7 +411,7 @@ class buildable(ebd, setup_mixin, format.build):
         ebd.__init__(self, pkg, initial_env=domain_settings,
                      features=domain_settings["FEATURES"], **kwargs)
 
-        self.env["FILESDIR"] = os.path.join(os.path.dirname(pkg.ebuild.get_path()), "files")
+        self.env["FILESDIR"] = pjoin(os.path.dirname(pkg.ebuild.get_path()), "files")
         self.eclass_cache = eclass_cache
         self.env["ECLASSDIR"] = eclass_cache.eclassdir
         self.env["PORTDIR"] = eclass_cache.portdir
@@ -430,10 +430,10 @@ class buildable(ebd, setup_mixin, format.build):
             setattr(self, s.lower(), b)
             if b:
                 # looks weird I realize, but
-                # os.path.join("/foor/bar", "/barr/foo") == "/barr/foo"
-                # and os.path.join("/foo/bar",".asdf") == "/foo/bar/.asdf"
+                # pjoin("/foor/bar", "/barr/foo") == "/barr/foo"
+                # and pjoin("/foo/bar",".asdf") == "/foo/bar/.asdf"
                 if not (s+"_DIR") in self.env:
-                    self.env[s+"_DIR"] = os.path.join(self.tmpdir,  default)
+                    self.env[s+"_DIR"] = pjoin(self.tmpdir,  default)
 #               for x in ("CC", "CXX"):
 #                   if x in self.env:
 #                       self.env[x] = "%s %s" % (s.lower(), self.env[x])
@@ -453,7 +453,7 @@ class buildable(ebd, setup_mixin, format.build):
         # cvs/svn ebuilds need to die.
         #self.env["PORTAGE_ACTUAL_DISTDIR"] = self.env["DISTDIR"]
         self.env["DISTDIR"] = normpath(
-            os.path.join(self.builddir, "distdir"))+"/"
+            pjoin(self.builddir, "distdir"))+"/"
         if self.files:
 
             try:
@@ -478,7 +478,7 @@ class buildable(ebd, setup_mixin, format.build):
 
             try:
                 for src, dest in [
-                    (k, os.path.join(self.env["DISTDIR"], v.filename))
+                    (k, pjoin(self.env["DISTDIR"], v.filename))
                     for (k, v) in self.files.items()]:
                     os.symlink(src, dest)
 
@@ -497,10 +497,10 @@ class buildable(ebd, setup_mixin, format.build):
         """
         if self.distcc:
             for p in ("", "/lock", "/state"):
-                if not ensure_dirs(os.path.join(self.env["DISTCC_DIR"], p),
+                if not ensure_dirs(pjoin(self.env["DISTCC_DIR"], p),
                                    mode=02775, gid=portage_gid):
                     raise format.FailedDirectory(
-                        os.path.join(self.env["DISTCC_DIR"], p),
+                        pjoin(self.env["DISTCC_DIR"], p),
                         "failed creating needed distcc directory")
         if self.ccache:
             # yuck.
@@ -596,7 +596,7 @@ class buildable(ebd, setup_mixin, format.build):
         @return: L{pkgcore.ebuild.ebuild_built.package} instance
         """
         return fake_package_factory(self._built_class).new_package(self.pkg,
-            self.env["IMAGE"], os.path.join(self.env["T"], "environment"))
+            self.env["IMAGE"], pjoin(self.env["T"], "environment"))
 
 
 class binpkg_buildable(ebd, setup_mixin, format.build):

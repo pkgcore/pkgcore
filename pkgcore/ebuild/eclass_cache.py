@@ -10,6 +10,7 @@ from pkgcore.interfaces.data_source import local_source
 from pkgcore.config import ConfigHint
 from pkgcore.util.mappings import ImmutableDict
 from pkgcore.util.weakrefs import WeakValCache
+from pkgcore.util.osutils import join as pjoin
 
 from pkgcore.util.demandload import demandload
 demandload(globals(),
@@ -67,7 +68,7 @@ class base(object):
         o = self.eclasses.get(eclass, None)
         if o is None:
             return None
-        return local_source(os.path.join(o[0], eclass+".eclass"))
+        return local_source(pjoin(o[0], eclass+".eclass"))
 
 
 class cache(base):
@@ -86,7 +87,6 @@ class cache(base):
         """Force an update of the internal view of on disk/remote eclasses."""
         self.eclasses = {}
         eclass_len = len(".eclass")
-        pjoin = os.path.join
         if os.path.isdir(self.eclassdir):
             for y in os.listdir(self.eclassdir):
                 if not y.endswith(".eclass"):

@@ -6,6 +6,7 @@ per key file based backend
 """
 
 import os, stat, errno
+from pkgcore.util.osutils import join as pjoin
 from pkgcore.cache import fs_template
 from pkgcore.cache import errors
 from pkgcore.config import ConfigHint
@@ -37,12 +38,12 @@ class database(fs_template.FsBased):
     __init__.__doc__ = fs_template.FsBased.__init__.__doc__
 
     def _format_location(self):
-        return os.path.join(self.location, 
+        return pjoin(self.location, 
             self.label.lstrip(os.path.sep).rstrip(os.path.sep))
 
     def _getitem(self, cpv):
         try:
-            myf = open(os.path.join(self.location, cpv), "r", 32768)
+            myf = open(pjoin(self.location, cpv), "r", 32768)
         except IOError, e:
             if e.errno == errno.ENOENT:
                 raise KeyError(cpv)
@@ -68,7 +69,7 @@ class database(fs_template.FsBased):
         # might seem weird, but we rely on the trailing +1; this 
         # makes it behave properly for any cache depth (including no depth)
         s = cpv.rfind("/") + 1
-        fp = os.path.join(self.location,
+        fp = pjoin(self.location,
             cpv[:s], ".update.%i.%s" % (os.getpid(), cpv[s:]))
         try:
             myf = open(fp, "w", 32768)
@@ -96,7 +97,7 @@ class database(fs_template.FsBased):
 
         #update written.  now we move it.
 
-        new_fp = os.path.join(self.location, cpv)
+        new_fp = pjoin(self.location, cpv)
         try:
             os.rename(fp, new_fp)
         except (OSError, IOError), e:
@@ -105,7 +106,7 @@ class database(fs_template.FsBased):
 
     def _delitem(self, cpv):
         try:
-            os.remove(os.path.join(self.location, cpv))
+            os.remove(pjoin(self.location, cpv))
         except OSError, e:
             if e.errno == errno.ENOENT:
                 raise KeyError(cpv)
@@ -113,7 +114,7 @@ class database(fs_template.FsBased):
                 raise errors.CacheCorruption(cpv, e)
 
     def __contains__(self, cpv):
-        return os.path.exists(os.path.join(self.location, cpv))
+        return os.path.exists(pjoin(self.location, cpv))
 
     def iterkeys(self):
         """generator for walking the dir struct"""
@@ -124,7 +125,7 @@ class database(fs_template.FsBased):
             for l in os.listdir(d):
                 if l.endswith(".cpickle"):
                     continue
-                p = os.path.join(d, l)
+                p = pjoin(d, l)
                 st = os.lstat(p)
                 if stat.S_ISDIR(st.st_mode):
                     dirs.append(p)

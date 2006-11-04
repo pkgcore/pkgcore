@@ -6,6 +6,7 @@ binpkg ebuild repository
 """
 
 import os, stat
+from pkgcore.util.osutils import join as pjoin
 from pkgcore.repository import prototype, errors
 
 #needed to grab the PN
@@ -195,7 +196,7 @@ class tree(prototype.tree):
             raise KeyError("failed fetching categories: %s" % str(e))
 
     def _get_packages(self, category):
-        cpath = os.path.join(self.base, category.lstrip(os.path.sep))
+        cpath = pjoin(self.base, category.lstrip(os.path.sep))
         l = set()
         d = {}
         lext = len(self.extension)
@@ -210,7 +211,7 @@ class tree(prototype.tree):
                 d.setdefault((category, x.package), []).append(x.fullver)
         except (OSError, IOError), e:
             raise KeyError("failed fetching packages for category %s: %s" % \
-            (os.path.join(self.base, category.lstrip(os.path.sep)), str(e)))
+            (pjoin(self.base, category.lstrip(os.path.sep)), str(e)))
 
         self._versions_tmp_cache.update(d)
         return tuple(l)
@@ -220,7 +221,7 @@ class tree(prototype.tree):
 
     def _get_path(self, pkg):
         s = "%s-%s" % (pkg.package, pkg.fullver)
-        return os.path.join(self.base, pkg.category, s+".tbz2")
+        return pjoin(self.base, pkg.category, s+".tbz2")
 
     _get_ebuild_path = _get_path
 
@@ -230,7 +231,7 @@ class tree(prototype.tree):
     def notify_remove_package(self, pkg):
         prototype.tree.notify_remove_package(self, pkg)
         try:
-            os.rmdir(os.path.join(self.base, pkg.category))
+            os.rmdir(pjoin(self.base, pkg.category))
         except OSError, oe:
             if oe.errno != errno.ENOTEMPTY:
                 raise

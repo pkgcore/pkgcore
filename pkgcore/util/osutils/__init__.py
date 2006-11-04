@@ -47,9 +47,14 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=True):
             sticky_parent = False
 
             for directory in apath.split(os.path.sep):
-                base = os.path.join(base, directory)
+                base = join(base, directory)
+                print base, len(base)
                 try:
-                    st = os.stat(base)
+                    try:
+                        st = os.stat(base)
+                    except TypeError:
+                        import pdb;pdb.set_trace()
+                        raise
                     if not stat.S_ISDIR(st.st_mode):
                         return False
 

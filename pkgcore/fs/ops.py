@@ -10,7 +10,7 @@ L{pkgcore.plugins} to get at these ops.
 
 import os, errno
 from pkgcore.fs import gen_obj, contents, fs
-from pkgcore.util.osutils import ensure_dirs
+from pkgcore.util.osutils import ensure_dirs, join as pjoin
 from pkgcore.spawn import spawn
 from pkgcore.const import COPY_BINARY
 from pkgcore.plugin import get_plugin
@@ -149,7 +149,6 @@ def default_copyfile(obj, mkdirs=False):
     return True
 
 def offset_rewriter(offset, iterable):
-    pjoin = os.path.join
     sep = os.path.sep
     for x in iterable:
         yield x.change_attributes(

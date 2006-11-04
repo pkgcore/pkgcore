@@ -2,7 +2,7 @@
 # License: GPL2
 
 import os, stat
-from pkgcore.util.osutils import listdir, ensure_dirs
+from pkgcore.util.osutils import listdir, ensure_dirs, join as pjoin
 from pkgcore.restrictions import packages, values
 from pkgcore.ebuild.atom import atom
 from pkgcore.package.errors import InvalidDependency
@@ -48,7 +48,6 @@ def non_caching_virtuals(repo, livefs=True):
 
 def _get_mtimes(loc):
     d = {}
-    pjoin = os.path.join
     sdir = stat.S_ISDIR
     for x in listdir(loc):
         st = os.stat(pjoin(loc, x))
@@ -124,7 +123,7 @@ def _merge_virtuals(virtuals, new_virts):
 def _caching_grab_virtuals(repo, cache_basedir):
     virtuals = {}
     update = False
-    cache = _read_mtime_cache(os.path.join(cache_basedir, 'virtuals.cache'))
+    cache = _read_mtime_cache(pjoin(cache_basedir, 'virtuals.cache'))
     master_mtime = os.stat(repo.location).st_mtime
     if master_mtime == long(cache.pop('.', [-1])[0]):
         # short cut.
@@ -154,7 +153,7 @@ def _caching_grab_virtuals(repo, cache_basedir):
 
     if update or cache:
         _write_mtime_cache(existing, virtuals,
-            os.path.join(cache_basedir, 'virtuals.cache'), master_mtime)
+            pjoin(cache_basedir, 'virtuals.cache'), master_mtime)
     _finalize_virtuals(virtuals)
     return virtuals
 

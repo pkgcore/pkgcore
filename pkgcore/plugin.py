@@ -19,6 +19,7 @@ import operator
 import os.path
 
 from pkgcore import plugins
+from pkgcore.util.osutils import join as pjoin
 from pkgcore.util import modules, demandload
 demandload.demandload(globals(), 'tempfile errno pkgcore.log:logger')
 
@@ -47,7 +48,7 @@ def initialize_cache(package):
         # Directory cache, mapping modulename to
         # (mtime, set([keys]))
         stored_cache = {}
-        stored_cache_name = os.path.join(path, 'plugincache')
+        stored_cache_name = pjoin(path, 'plugincache')
         try:
             cachefile = open(stored_cache_name)
         except IOError:
@@ -86,7 +87,7 @@ def initialize_cache(package):
                 assumed_valid.add(modname)
                 continue
             # It is an actual module. Check if its cache entry is valid.
-            mtime = int(os.path.getmtime(os.path.join(path, modfullname)))
+            mtime = int(os.path.getmtime(pjoin(path, modfullname)))
             if mtime == stored_cache.get(modname, (0, ()))[0]:
                 # Cache is good, use it.
                 actual_cache[modname] = stored_cache[modname]

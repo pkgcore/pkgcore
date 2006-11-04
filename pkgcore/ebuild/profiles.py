@@ -16,6 +16,7 @@ from pkgcore.interfaces.data_source import local_source
 from pkgcore.repository import virtual, util
 from pkgcore.ebuild import cpv, ebuild_src
 from pkgcore.util.demandload import demandload
+from pkgcore.util.osutils import join as pjoin
 from collections import deque
 
 demandload(globals(),
@@ -29,7 +30,7 @@ demandload(globals(),
 # This should be implemented as an auto-exec config addition.
 
 def loop_stack(stack, filename, func=iter_read_bash):
-    return loop_iter_read((os.path.join(x, filename) for x in stack),
+    return loop_iter_read((pjoin(x, filename) for x in stack),
         func=func)
 
 def loop_iter_read(files, func=iter_read_bash):
@@ -47,7 +48,6 @@ def loop_iter_read(files, func=iter_read_bash):
 
 def incremental_profile_files(stack, filename):
     s = set()
-    pjoin = os.path.join
     for fp, i in loop_iter_read(pjoin(prof, filename) for prof in stack):
         incremental_negations(fp, i, s)
     return s
@@ -105,7 +105,6 @@ class OnDiskProfile(profiles.base):
             to base_repo.
         """
 
-        pjoin = os.path.join
         profile = profile.strip()
 
         if base_path is None and base_repo is None:
@@ -230,7 +229,7 @@ class OnDiskProfile(profiles.base):
         return False
 
     def load_deprecation_status(self, profile):
-        dep_path = os.path.join(self.basepath, profile, "deprecated")
+        dep_path = pjoin(self.basepath, profile, "deprecated")
         self._deprecated = False
         if os.path.isfile(dep_path):
             logger.warn("profile '%s' is marked as deprecated, read '%s' "
@@ -251,7 +250,6 @@ class OnDiskProfile(profiles.base):
         return d
 
     def get_inheritance_order(self, profile):
-        pjoin = os.path.join
         pabs = os.path.abspath
         # processed, required, loc, name
         full_stack = [pjoin(self.basepath, profile)]

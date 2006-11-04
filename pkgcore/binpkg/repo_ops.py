@@ -2,6 +2,7 @@
 # License: GPL2
 
 import os, errno
+from pkgcore.util.osutils import join as pjoin
 from pkgcore.interfaces import repo as repo_interfaces
 from pkgcore.fs import tar
 from pkgcore.binpkg import xpak
@@ -12,7 +13,7 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
 
 def discern_loc(base, pkg):
-    return os.path.join(base, pkg.category,
+    return pjoin(base, pkg.category,
         "%s-%s.tbz2" % (pkg.package, pkg.fullver))
 
 
@@ -56,7 +57,7 @@ class install(repo_interfaces.nonlivefs_install):
             end = self.observer.phase_end
         pkg = self.new_pkg
         final_path = discern_loc(self.repo.base, pkg)
-        tmp_path = os.path.join(os.path.dirname(final_path),
+        tmp_path = pjoin(os.path.dirname(final_path),
             ".tmp.%i.%s" % (os.getpid(), os.path.basename(final_path)))
 
         if not osutils.ensure_dirs(os.path.dirname(tmp_path), mode=0755):

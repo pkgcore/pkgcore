@@ -11,10 +11,11 @@ import stat
 from pkgcore.config import basics, configurable
 from pkgcore import const
 from pkgcore.ebuild import const as ebuild_const
+from pkgcore.util.osutils import (normpath, abspath, listdir_files,
+    join as pjoin)
 from pkgcore.util.demandload import demandload
 demandload(globals(), "errno pkgcore.config:errors "
     "pkgcore.pkgsets.glsa:SecurityUpgrades "
-    "pkgcore.util.osutils:normpath,abspath,listdir_files "
     "pkgcore.util.file:read_bash_dict,read_dict "
     "pkgcore.util:bzip2 ")
 
@@ -86,8 +87,6 @@ def config_from_make_conf(location="/etc/"):
     # this actually differs from portage parsing- we allow
     # make.globals to provide vars used in make.conf, portage keeps
     # them seperate (kind of annoying)
-
-    pjoin = os.path.join
 
     config_root = os.environ.get("CONFIG_ROOT", "/")
     base_path = pjoin(config_root, location.strip("/"))

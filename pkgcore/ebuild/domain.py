@@ -185,7 +185,7 @@ class domain(pkgcore.config.domain.domain):
                 for fp in files:
                     if fp.startswith('.'):
                         continue
-                    fp = os.path.join(dirpath, fp)
+                    fp = osutils.join(dirpath, fp)
                     try:
                         val.extend(action(x) for x in iter_read_bash(fp))
                     except (IOError, OSError, ValueError), e:

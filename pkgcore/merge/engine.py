@@ -24,7 +24,8 @@ from pkgcore.interfaces import observer as observer_mod
 from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
 
 from pkgcore.util.demandload import demandload
-demandload(globals(), "errno os")
+demandload(globals(), "errno "
+    "pkgcore.fs.ops:offset_rewriter ")
 
 
 def scan_livefs(cset):
@@ -297,11 +298,8 @@ class MergeEngine(object):
     @staticmethod
     def generate_offset_cset(engine, csets, cset_generator):
         """generate a cset with offset applied"""
-        return contents.contentsSet(
-            x.change_attributes(
-                location=os.path.join(engine.offset,
-                                      x.location.lstrip(os.path.sep)))
-            for x in cset_generator(engine, csets))
+        return contents.contentsSet(offset_rewriter(engine.offset,
+            cset_generator(engine, csets)))
 
     @staticmethod
     def get_pkg_contents(engine, csets, pkg):

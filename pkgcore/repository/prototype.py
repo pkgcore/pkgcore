@@ -11,7 +11,6 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import values, boolean, restriction
 from pkgcore.util.compatibility import any
 from pkgcore.restrictions.util import collect_package_restrictions
-from pkgcore.util.klass import contains
 
 
 class IterValLazyDict(LazyValDict):
@@ -122,8 +121,6 @@ class VersionMapping(DictMixin):
         for cat, pkgs in self._known_keys.iteritems():
             for pkg in list(pkgs):
                 yield cat, pkg
-
-    __contains__ = contains
 
     def force_regen(self, key, val):
         if val:

@@ -37,8 +37,7 @@ class CategoryIterValLazyDict(IterValLazyDict):
         if key in self:
             self._keys = tuple(x for x in self._keys if x != key)
     
-    def __iter__(self):
-        return self.iterkeys()
+    __iter__ = IterValLazyDict.iterkeys
 
     def __contains__(self, key):
         if self._keys_func is not None:

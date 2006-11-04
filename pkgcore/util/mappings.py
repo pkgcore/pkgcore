@@ -8,6 +8,7 @@ miscellanious mapping/dict related classes
 import operator
 from itertools import imap, chain, ifilterfalse, izip
 from pkgcore.util.currying import alias_class_method
+from pkgcore.util.klass import get, contains
 from collections import deque
 
 
@@ -40,13 +41,10 @@ class DictMixin(object):
     def update(self, iterable):
         for k,v in iterable:
             self[k] =v
+
+    get = get
+    __contains__ = contains
     
-    def get(self, key, default=None):
-        try:
-            return self[key]
-        except KeyError:
-            return default
-   
     # default cmp actually operates based on key len comparison, oddly enough
     def __cmp__(self, other):
         for k1, k2 in izip(self, other):
@@ -114,9 +112,6 @@ class DictMixin(object):
             raise AttributeError(self, "__delitem__")
         raise NotImplementedError(self, "__delitem__")
         
-    def __contains__(self, key):
-        raise NotImplementedError(self, "__contains__")
-
     def clear(self):
         if not self.__externally_mutable__:
             raise AttributeError(self, "clear")

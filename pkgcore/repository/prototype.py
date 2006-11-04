@@ -32,29 +32,22 @@ class IterValLazyDict(LazyValDict):
 class CategoryIterValLazyDict(IterValLazyDict):
 
     def force_add(self, key):
-        try:
-            # force lazyvaldict to do the _keys_func work
-            self[key]
-        except KeyError:
+        if key not in self:
             s = set(self._keys)
             s.add(key)
             self._keys = tuple(s)
 
     def force_remove(self, key):
-        try:
-            # force lazyvaldict to do the _keys_func work
-            self[key]
-            if key in self:
-                self._keys = tuple(x for x in self._keys if x != key)
-        except KeyError:
-            pass
+        if key in self:
+            self._keys = tuple(x for x in self._keys if x != key)
     
     def __iter__(self):
         return self.iterkeys()
 
     def __contains__(self, key):
-        # suck.
-        return key in self.keys()
+        if self._keys_func is not None:
+            return key in self.keys()
+        return key in self._keys
 
 
 class PackageMapping(DictMixin):

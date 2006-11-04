@@ -109,9 +109,152 @@ static PyTypeObject pkgcore_GetAttrProxyType = {
 
 };
 
+static PyObject *
+pkgcore_mapping_get(PyObject *self, PyObject *args)
+{
+    PyObject *key, *default_val = Py_None;
+    if(!self) {
+        PyErr_SetString(PyExc_TypeError,
+            "need to be called with a mapping as the first arg");
+        return NULL;
+    }
+    if(!PyArg_UnpackTuple(args, "get", 1, 2, &key, &default_val))
+        return NULL;
+
+    PyObject *ret = PyObject_GetItem(self, key);
+    if(ret) {
+        return ret;
+    } else if (!PyErr_ExceptionMatches(PyExc_KeyError)) {
+        return (PyObject *)NULL;
+    }
+
+    PyErr_Clear();
+    Py_INCREF(default_val);
+    return default_val;
+}
+
+static PyMethodDef pkgcore_mapping_get_def = {
+    "get", pkgcore_mapping_get, METH_VARARGS, NULL};
+
+static PyObject *
+pkgcore_mapping_get_descr(PyObject *self, PyObject *obj, PyObject *type)
+{
+    return PyCFunction_New(&pkgcore_mapping_get_def, obj);
+}
+
+static PyTypeObject pkgcore_GetType = {
+    PyObject_HEAD_INIT(NULL)
+    0,                                               /* ob_size */
+    "pkgcore_get_type",                              /* tp_name */
+    sizeof(PyObject),                                /* tp_basicsize */
+    0,                                               /* tp_itemsize */
+    0,                                               /* tp_dealloc */
+    0,                                               /* tp_print */
+    0,                                               /* tp_getattr */
+    0,                                               /* tp_setattr */
+    0,                                               /* tp_compare */
+    0,                                               /* tp_repr */
+    0,                                               /* tp_as_number */
+    0,                                               /* tp_as_sequence */
+    0,                                               /* tp_as_mapping */
+    0,                                               /* tp_hash  */
+    0,                                               /* tp_call */
+    0,                                               /* tp_str */
+    0,                                               /* tp_getattro */
+    0,                                               /* tp_setattro */
+    0,                                               /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                              /* tp_flags */
+    "type of the get proxy",                         /* tp_doc */
+    0,                                               /* tp_traverse */
+    0,                                               /* tp_clear */
+    0,                                               /* tp_richcompare */
+    0,                                               /* tp_weaklistoffset */
+    0,                                               /* tp_iter */
+    0,                                               /* tp_iternext */
+    0,                                               /* tp_methods */
+    0,                                               /* tp_members */
+    0,                                               /* tp_getset */
+    0,                                               /* tp_base */
+    0,                                               /* tp_dict */
+    pkgcore_mapping_get_descr,                       /* tp_descr_get */
+    0,                                               /* tp_descr_set */
+};
+
+
+static PyObject *
+pkgcore_mapping_contains(PyObject *self, PyObject *key)
+{
+    if(!self) {
+        PyErr_SetString(PyExc_TypeError,
+            "need to be called with a mapping as the first arg");
+        return NULL;
+    }
+
+    PyObject *ret = PyObject_GetItem(self, key);
+    if(ret) {
+        Py_DECREF(ret);
+        ret = Py_True;
+    } else if (!PyErr_ExceptionMatches(PyExc_KeyError)) {
+        return (PyObject *)NULL;
+    } else {
+        PyErr_Clear();
+        ret = Py_False;
+    }
+    Py_INCREF(ret);
+    return ret;
+}
+
+static PyMethodDef pkgcore_mapping_contains_def = {
+    "contains", pkgcore_mapping_contains, METH_O|METH_COEXIST, NULL};
+
+static PyObject *
+pkgcore_mapping_contains_descr(PyObject *self, PyObject *obj, PyObject *type)
+{
+    return PyCFunction_New(&pkgcore_mapping_contains_def, obj);
+}
+
+static PyTypeObject pkgcore_ContainsType = {
+    PyObject_HEAD_INIT(NULL)
+    0,                                               /* ob_size */
+    "pkgcore_contains_type",                         /* tp_name */
+    sizeof(PyObject),                                /* tp_basicsize */
+    0,                                               /* tp_itemsize */
+    0,                                               /* tp_dealloc */
+    0,                                               /* tp_print */
+    0,                                               /* tp_getattr */
+    0,                                               /* tp_setattr */
+    0,                                               /* tp_compare */
+    0,                                               /* tp_repr */
+    0,                                               /* tp_as_number */
+    0,                                               /* tp_as_sequence */
+    0,                                               /* tp_as_mapping */
+    0,                                               /* tp_hash  */
+    0,                                               /* tp_call */
+    0,                                               /* tp_str */
+    0,                                               /* tp_getattro */
+    0,                                               /* tp_setattro */
+    0,                                               /* tp_as_buffer */
+    Py_TPFLAGS_DEFAULT,                              /* tp_flags */
+    "type of the contains proxy",                    /* tp_doc */
+    0,                                               /* tp_traverse */
+    0,                                               /* tp_clear */
+    0,                                               /* tp_richcompare */
+    0,                                               /* tp_weaklistoffset */
+    0,                                               /* tp_iter */
+    0,                                               /* tp_iternext */
+    0,                                               /* tp_methods */
+    0,                                               /* tp_members */
+    0,                                               /* tp_getset */
+    0,                                               /* tp_base */
+    0,                                               /* tp_dict */
+    pkgcore_mapping_contains_descr,                  /* tp_descr_get */
+    0,                                               /* tp_descr_set */
+};
+
 PyDoc_STRVAR(
     pkgcore_klass_documentation,
     "misc cpython class functionality");
+
 
 PyMODINIT_FUNC
 init_klass()
@@ -119,10 +262,26 @@ init_klass()
     if (PyType_Ready(&pkgcore_GetAttrProxyType) < 0)
         return;
 
-    PyObject *m = Py_InitModule3("_klass", NULL,
-        pkgcore_klass_documentation);
+    if (PyType_Ready(&pkgcore_GetType) < 0)
+        return;
+    
+    if (PyType_Ready(&pkgcore_ContainsType) < 0)
+        return;
+
+    PyObject *m = Py_InitModule3("_klass", NULL, pkgcore_klass_documentation);
+
+    PyObject *tmp;
+    if (!(tmp = PyType_GenericNew(&pkgcore_GetType, NULL, NULL)))
+        return;
+    PyModule_AddObject(m, "get", tmp);
+
+    if (!(tmp = PyType_GenericNew(&pkgcore_ContainsType, NULL, NULL)))
+        return;
+    PyModule_AddObject(m, "contains", tmp);
+
 
     Py_INCREF(&pkgcore_GetAttrProxyType);
     PyModule_AddObject(m, "GetAttrProxy",
         (PyObject *)&pkgcore_GetAttrProxyType);
+
 }

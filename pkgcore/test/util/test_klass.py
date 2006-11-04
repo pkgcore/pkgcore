@@ -47,3 +47,41 @@ class Test_CPY_GetAttrProxy(Test_native_GetAttrProxy):
         o.obj = o
         # now it's cyclical.
         self.assertRaises(RuntimeError, getattr, o, "hooey")
+
+
+class Test_native_contains(TestCase):
+    func = staticmethod(klass.native_contains)
+    
+    def test_it(self):
+        class c(dict):
+            __contains__ = self.func
+        d = c({"1":2})
+        self.assertIn("1", d)
+        self.assertNotIn(1, d)
+
+
+class Test_CPY_contains(Test_native_contains):
+    func = staticmethod(klass.contains)
+    
+    if klass.contains is klass.native_contains:
+        skip = "cpython extension isn't available"
+
+
+class Test_native_get(TestCase):
+    func = staticmethod(klass.native_get)
+    
+    def test_it(self):
+        class c(dict):
+            get = self.func
+        d = c({"1":2})
+        self.assertEqual(d.get("1"), 2)
+        self.assertEqual(d.get("1", 3), 2)
+        self.assertEqual(d.get(1), None)
+        self.assertEqual(d.get(1, 3), 3)
+
+class Test_CPY_get(Test_native_get):
+    func = staticmethod(klass.get)
+    
+    if klass.get is klass.native_get:
+        skip = "cpython extension isn't available"
+    

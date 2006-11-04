@@ -48,7 +48,6 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=True):
 
             for directory in apath.split(os.path.sep):
                 base = join(base, directory)
-                print base, len(base)
                 try:
                     try:
                         st = os.stat(base)

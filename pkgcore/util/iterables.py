@@ -117,12 +117,12 @@ class caching_iter(object):
             return True
 
         if self.iterable:
-            try:
-                self.cached_list.append(self.iterable.next())
+            for x in self.iterable:
+                self.cached_list.append(x)
                 return True
-            except StopIteration:
-                self.iterable = self.sorter = None
-                self.cached_list = ()
+            # if we've made it here... then nothing more in the iterable.
+            self.iterable = self.sorter = None
+            self.cached_list = ()
         return False
 
     def __len__(self):
@@ -188,9 +188,10 @@ def iter_sort(sorter, *iterables):
     l = sorter(l)
     while l:
         yield l[0][0]
-        try:
-            l[0][0] = l[0][1].next()
-        except StopIteration:
+        for y in l[0][1]:
+            l[0][0] = y
+            break
+        else:
             del l[0]
             if len(l) == 1:
                 yield l[0][0]

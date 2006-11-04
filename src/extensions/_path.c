@@ -15,6 +15,8 @@
 #include <Python.h>
 #include "py24-compatibility.h"
 
+#define SKIP_SLASHES(ptr) while('/' == *(ptr)) (ptr)++;
+
 static PyObject *
 pkgcore_normpath(PyObject *self, PyObject *old_path)
 {
@@ -35,7 +37,6 @@ pkgcore_normpath(PyObject *self, PyObject *old_path)
         return new_path;
     real_newstart = newstart = newp = PyString_AsString(new_path);
     
-    #define SKIP_SLASHES(ptr) while('/' == *(ptr)) (ptr)++;
 
     int leading_slash;
     Py_ssize_t slash_count = 0;
@@ -97,7 +98,6 @@ pkgcore_normpath(PyObject *self, PyObject *old_path)
         }
     }
 
-    #undef SKIP_SLASHES
     *newp = '\0';
     // protect leading slash, but strip trailing.
     --newp;
@@ -109,9 +109,107 @@ pkgcore_normpath(PyObject *self, PyObject *old_path)
     return new_path;
 }
 
+static PyObject *
+pkgcore_join(PyObject *self, PyObject *args)
+{
+    if(!args) {
+        PyErr_SetString(PyExc_TypeError, "requires at least one path");
+        return (PyObject *)NULL;
+    }
+    PyObject *fast = PySequence_Fast(args, "arg must be a sequence");
+    if(!fast)
+        return (PyObject *)NULL;
+    Py_ssize_t end = PySequence_Fast_GET_SIZE(fast);
+    if(!end) {
+        PyErr_SetString(PyExc_TypeError,
+            "join takes at least one arguement (0 given)");
+        return (PyObject *)NULL;
+    }
+    
+    PyObject **items = PySequence_Fast_ITEMS(fast);
+    Py_ssize_t start = 0, len, i = 0;
+    char *s;
+
+    // find the right most item with a prefixed '/', else 0.
+    for(; i < end; i++) {
+        if(!PyString_CheckExact(items[i])) {
+            PyErr_SetString(PyExc_TypeError, "all args must be strings");
+            Py_DECREF(fast);
+            return (PyObject *)NULL;
+        }
+        s = PyString_AsString(items[i]);
+        if('/' == *s)
+            start = i;
+    }
+    // know the relevant slice now; figure out the size.
+    len = 0;
+    char *s_start;
+    for(i = start; i < end; i++) {
+        // this is safe because we're using CheckExact above.
+        s_start = s = PyString_AS_STRING(items[i]);
+        while('\0' != *s)
+            s++;
+        len += s - s_start;
+        s_start++;
+        char *s_end = s;
+        if(i + 1 != end) {
+            while(s != s_start && '/' == s[-1])
+                s--;
+            len -= s_end - s;
+        }
+    }
+
+    // ok... we know the length.  allocate a string, and copy it.
+    PyObject *ret = PyString_FromStringAndSize(NULL, len + 1);
+    if(!ret)
+        return (PyObject*)NULL;
+    char *buf = PyString_AS_STRING(ret);
+    for(i = start; i < end; i++) {
+        s_start = s = PyString_AS_STRING(items[i]);
+        while('\0' != *s) {
+            *buf = *s;
+            buf++;
+            if('/' == *s) {
+                char *tmp_s = s + 1;
+                SKIP_SLASHES(s);
+                if('\0' == *s) {
+                    if(i + 1  != end) {
+                        buf--;
+                    } else {
+                        // copy the cracked out trailing slashes on the
+                        // last item
+                        while(tmp_s < s) {
+                            *buf = '/';
+                            buf++;
+                            tmp_s++;
+                        }
+                    }
+                    break;
+                } else {
+                    // copy the cracked out intermediate slashes.
+                    while(tmp_s < s) {
+                        *buf = '/';
+                        buf++;
+                        tmp_s++;
+                    }
+                }
+            } else
+                s++;
+        }
+        if(i + 1 != end) {
+            *buf = '/';
+            buf++;
+        }
+    }
+    *buf = '\0';
+    return ret;
+}
+
 static PyMethodDef pkgcore_path_methods[] = {
     {"normpath", (PyCFunction)pkgcore_normpath, METH_O,
         "normalize a path entry"},
+    {"join", pkgcore_join, METH_VARARGS,
+        "join multiple path items"},
     {NULL}
 };
 

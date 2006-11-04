@@ -132,10 +132,13 @@ def native_normpath(mypath):
         return newpath[1:]
     return newpath
 
+native_join = os.path.join
+
 try:
-    from pkgcore.util.osutils._path import normpath
+    from pkgcore.util.osutils._path import normpath, join
 except ImportError:
     normpath = native_normpath
+    join = native_join
 
 class LockException(Exception):
     """Base lock exception class"""

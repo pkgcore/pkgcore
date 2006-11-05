@@ -21,7 +21,6 @@ class TestAtom(TestCase):
             "dev-util/diffball-1.*")
 
         a = atom.atom("=dev-util/diffball-1.2*")
-        self.assertEqual(a.glob, True)
         self.assertTrue(a.match(CPV("dev-util/diffball-1.2")))
         self.assertTrue(a.match(CPV("dev-util/diffball-1.2.0")))
         self.assertTrue(a.match(CPV("dev-util/diffball-1.2-r1")))

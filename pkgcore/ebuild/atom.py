@@ -423,10 +423,10 @@ class atom(boolean.AndRestriction):
         # needed is a version and revision attr).
 
         # If one of us is an exact match we intersect if the other matches it:
-        if self.op == '=' and not self.glob:
+        if self.op == '=':
             return VersionMatch(
                 other.op, other.version, other.revision).match(self)
-        if other.op == '=' and not other.glob:
+        if other.op == '=':
             return VersionMatch(
                 self.op, self.version, self.revision).match(other)
 
@@ -437,7 +437,7 @@ class atom(boolean.AndRestriction):
 
         # If we are both glob matches we match if one of us matches the other.
         # (No need to check for glob, the not glob case is handled above)
-        if self.op == other.op == '=':
+        if self.op == other.op == '=*':
             return (self.fullver.startswith(other.fullver) or
                     other.fullver.startswith(self.fullver))
 
@@ -478,7 +478,7 @@ class atom(boolean.AndRestriction):
             return ranged.op in ('>', '>=') and VersionMatch(
                 other.op, other.version, other.revision).match(ranged)
 
-        if other.op == '=':
+        if other.op == '=*':
             # The fun one, since glob matches do not correspond to a
             # single contiguous region of versions.
 

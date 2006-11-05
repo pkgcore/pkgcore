@@ -339,7 +339,7 @@ core.setup(
         },
     ext_modules=[
         core.Extension(
-            'pkgcore.util.osutils._path', ['src/extensions/_path.c'],
+            'pkgcore.util.osutils._posix', ['src/extensions/_posix.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
             'pkgcore.util._klass', ['src/extensions/_klass.c'],

@@ -14,6 +14,9 @@
 
 #include <Python.h>
 #include "py24-compatibility.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #define SKIP_SLASHES(ptr) while('/' == *(ptr)) (ptr)++;
 
@@ -216,11 +219,58 @@ pkgcore_join(PyObject *self, PyObject *args)
     return ret;
 }
 
+static PyObject *
+pkgcore_readfile(PyObject *self, PyObject *args)
+{
+    PyObject *path, *swallow_missing;
+    if(!args || !PyArg_ParseTuple(args, "S|O:readfile", &path,
+        &swallow_missing)) {
+        return (PyObject *)NULL;
+    }
+    errno = 0;
+    int fd = open(PyString_AS_STRING(path), O_LARGEFILE);
+    if(fd < 0) {
+        if(errno == ENOENT) {
+            if(swallow_missing && PyObject_IsTrue(swallow_missing)) {
+                errno = 0;
+                Py_RETURN_NONE;
+            }
+        }
+        return PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+    }
+    PyObject *ret = NULL;
+    struct stat st;
+    if(fstat(fd, &st)) {
+        ret = PyErr_SetFromErrno(PyExc_OSError);
+        goto cleanup;
+    } else if(S_ISDIR(st.st_mode)) {
+        errno = EISDIR;
+        ret = PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+        goto cleanup;
+    }
+    ret = PyString_FromStringAndSize(NULL, (Py_ssize_t)st.st_size);
+    if(ret) {
+        if(st.st_size != read(fd, PyString_AS_STRING(ret), st.st_size)) {
+            Py_CLEAR(ret);
+            ret = PyErr_SetFromErrnoWithFilenameObject(PyExc_IOError, path);
+        }
+    }
+    cleanup:
+    if(close(fd)) {
+        Py_CLEAR(ret);
+        ret = PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+    }
+    return ret;
+}
+
 static PyMethodDef pkgcore_path_methods[] = {
     {"normpath", (PyCFunction)pkgcore_normpath, METH_O,
         "normalize a path entry"},
     {"join", pkgcore_join, METH_VARARGS,
         "join multiple path items"},
+    {"readfile", pkgcore_readfile, METH_VARARGS,
+        "fast read of a file: requires a string path, and an optional bool "
+        "indicating whether to swallow ENOENT; defaults to false"},
     {NULL}
 };
 

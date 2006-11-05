@@ -138,8 +138,22 @@ def native_normpath(mypath):
 
 native_join = os.path.join
 
+def native_readfile(mypath, none_on_missing=False):
+    """
+    read a file, returning the contents
+    @param mypath: fs path for the file to read
+    @param none_on_missing: whether to return None if the file is missing, 
+        else through the exception
+    """
+    try:
+        return open(mypath, "r").read()
+    except IOError, oe:
+        if none_on_missing and oe.errno == errno.ENOENT:
+            return None
+        raise
+
 try:
-    from pkgcore.util.osutils._path import normpath, join
+    from pkgcore.util.osutils._posix import normpath, join, readfile
 except ImportError:
     normpath = native_normpath
     join = native_join

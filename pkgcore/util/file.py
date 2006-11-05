@@ -65,7 +65,6 @@ def iter_read_bash(bash_source):
         if not s or s[0] == "#":
             continue
         yield s
-    bash_source.close()
 
 
 def read_bash(bash_source):

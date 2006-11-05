@@ -70,7 +70,9 @@ class database(flat_hash.database):
         # easy attempt first.
         data = list(data)
         if len(data) != self.magic_line_count:
-            raise errors.GeneralCacheCorruption("wrong line count")
+            raise errors.GeneralCacheCorruption(
+                "wrong line count, requires %i, got %i" %
+                    (self.magic_line_count, len(data)))
 
         # this one's interesting.
         d = self._cdict_kls()

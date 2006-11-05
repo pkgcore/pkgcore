@@ -16,7 +16,7 @@ from pkgcore.interfaces.data_source import local_source
 from pkgcore.repository import virtual, util
 from pkgcore.ebuild import cpv, ebuild_src
 from pkgcore.util.demandload import demandload
-from pkgcore.util.osutils import join as pjoin
+from pkgcore.util.osutils import join as pjoin, readfile
 from collections import deque
 
 demandload(globals(),
@@ -225,7 +225,7 @@ class OnDiskProfile(profiles.base):
     @property
     def deprecated(self):
         if isinstance(self._deprecated, basestring):
-            return open(self._deprecated, "r").read()
+            return readfile(self._deprecated)
         return False
 
     def load_deprecation_status(self, profile):

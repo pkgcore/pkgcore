@@ -7,7 +7,8 @@ from pkgcore.util.file import AtomicWriteFile
 from pkgcore.interfaces import data_source
 from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
-demandload(globals(), "os stat errno")
+demandload(globals(), "os stat errno "
+    "pkgcore.util.osutils:readlines ")
 
 class LookupFsDev(fs.fsDev):
 
@@ -71,7 +72,7 @@ class ContentsFile(contentsSet):
         if isinstance(self._source, basestring):
             if write:
                 return AtomicWriteFile(self._source)
-            return open(self._source, "r", 32768)
+            return readlines(self._source, True)
         fobj = self._source.get_fileobj()
         if write:
             fobj.seek(0, 0)
@@ -101,39 +102,34 @@ class ContentsFile(contentsSet):
 
     def _read(self):
         self.clear()
-        infile = self._get_fd()
-        try:
-            for line in infile:
-                if "\t" not in line:
-                    line = self._parse_old(line.rstrip("\n"))
-                else:
-                    line = line.rstrip("\n").split("\t")
+        for line in self._get_fd():
+            if "\t" not in line:
+                line = self._parse_old(line)
+            else:
+                line = line.split("\t")
 
-                if line[0] == "dir":
-                    obj = fs.fsDir(line[1], strict=False)
-                elif line[0] == "fif":
-                    obj = fs.fsDir(line[1], strict=False)
-                elif line[0] == "dev":
-                    obj = LookupFsDev(line[1], strict=False)
-                elif line[0] == "obj":
-                    #file: path, md5, time
-                    obj = fs.fsFile(
-                        line[1], chksums={"md5":long(line[2], 16)},
-                            mtime=line[3],
-                        strict=False)
-                elif line[0] == "sym":
-                    #path, target, ' -> ', mtime
-                    obj = fs.fsLink(
-                        line[1], line[2], mtime=line[3], strict=False)
-                else:
-                    if len(line) > 2:
-                        line = line[0], ' '.join(line[1:])
-                    raise Exception(
-                        "unknown entry type %s: %s" % (line[0], line[1]))
-                self.add(obj)
-
-        finally:
-            infile.close()
+            if line[0] == "dir":
+                obj = fs.fsDir(line[1], strict=False)
+            elif line[0] == "fif":
+                obj = fs.fsDir(line[1], strict=False)
+            elif line[0] == "dev":
+                obj = LookupFsDev(line[1], strict=False)
+            elif line[0] == "obj":
+                #file: path, md5, time
+                obj = fs.fsFile(
+                    line[1], chksums={"md5":long(line[2], 16)},
+                        mtime=line[3],
+                    strict=False)
+            elif line[0] == "sym":
+                #path, target, ' -> ', mtime
+                obj = fs.fsLink(
+                    line[1], line[2], mtime=line[3], strict=False)
+            else:
+                if len(line) > 2:
+                    line = line[0], ' '.join(line[1:])
+                raise Exception(
+                    "unknown entry type %s: %s" % (line[0], line[1]))
+            self.add(obj)
 
     def _write(self):
         outfile = None

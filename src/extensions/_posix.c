@@ -383,7 +383,7 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         self->fallback = NULL;
 
     self->map = (char *)mmap(NULL, size, PROT_READ,
-        MAP_SHARED|MAP_NORESERVE, fd, 0);
+        MAP_SHARED|MAP_NORESERVE|MAP_POPULATE, fd, 0);
 
     if(self->map != MAP_FAILED) {
         self->start = self->map;

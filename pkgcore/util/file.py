@@ -8,7 +8,7 @@ file related operations, mainly reading
 import re, os
 from shlex import shlex
 from pkgcore.util.mappings import ProtectedDict
-
+from pkgcore.util.osutils import readlines
 
 class AtomicWriteFile(file):
 
@@ -59,12 +59,11 @@ def iter_read_bash(bash_source):
         or a string holding the filename to open.
     """
     if isinstance(bash_source, basestring):
-        bash_source = open(bash_source, 'r', 32768)
+        bash_source = readlines(bash_source, True)
     for s in bash_source:
         s = s.strip()
-        if not s or s[0] == "#":
-            continue
-        yield s
+        if s and s[0] != "#":
+            yield s
 
 
 def read_bash(bash_source):
@@ -134,7 +133,7 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
         d, protected = ProtectedDict(vars_dict), True
     else:
         d, protected = {}, False
-    f = open(bash_source, 'r', 32768)
+    f = open(bash_source, "r")
     s = bash_parser(f, sourcing_command=sourcing_command, env=d)
 
     try:
@@ -156,7 +155,7 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
         except ValueError:
             raise ParseError(bash_source, s.lineno)
     finally:
-        f.close()
+        del f
     if protected:
         d = d.new
     return d

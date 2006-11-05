@@ -157,6 +157,7 @@ try:
 except ImportError:
     normpath = native_normpath
     join = native_join
+    readfile = native_readfile
 
 class LockException(Exception):
     """Base lock exception class"""

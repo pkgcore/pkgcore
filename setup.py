@@ -320,7 +320,7 @@ extensions = []
 if sys.version_info < (2, 5):
     # Almost unmodified copy from the python 2.5 source.
     extensions.append(core.Extension(
-            'pkgcore.util._functools', ['src/extensions/_functoolsmodule.c'],
+            'pkgcore.util._functools', ['src/extensions/functoolsmodule.c'],
             extra_compile_args=extra_flags, depends=common_includes))
 
 
@@ -339,22 +339,22 @@ core.setup(
         },
     ext_modules=[
         core.Extension(
-            'pkgcore.util.osutils._posix', ['src/extensions/_posix.c'],
+            'pkgcore.util.osutils._posix', ['src/extensions/posix.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.util._klass', ['src/extensions/_klass.c'],
+            'pkgcore.util._klass', ['src/extensions/klass.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.util._caching', ['src/extensions/_caching.c'],
+            'pkgcore.util._caching', ['src/extensions/caching.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.util._lists', ['src/extensions/_lists.c'],
+            'pkgcore.util._lists', ['src/extensions/lists.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.ebuild._cpv', ['src/extensions/_cpv.c'],
+            'pkgcore.ebuild._cpv', ['src/extensions/cpv.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.util.osutils._readdir', ['src/extensions/_readdir.c'],
+            'pkgcore.util.osutils._readdir', ['src/extensions/readdir.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         ] + extensions,
     cmdclass={'build_filter_env': build_filter_env,

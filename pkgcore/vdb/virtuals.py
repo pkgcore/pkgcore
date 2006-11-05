@@ -2,7 +2,7 @@
 # License: GPL2
 
 import os, stat
-from pkgcore.util.osutils import listdir, ensure_dirs, join as pjoin
+from pkgcore.util.osutils import listdir, ensure_dirs, join as pjoin, readlines
 from pkgcore.restrictions import packages, values
 from pkgcore.ebuild.atom import atom
 from pkgcore.package.errors import InvalidDependency
@@ -87,7 +87,7 @@ def _read_mtime_cache(location):
     f = None
     try:
         d = {}
-        for k,v in read_dict(open(location, 'r'), splitter=None,
+        for k,v in read_dict(readlines(location), splitter=None,
             source_isiter=True).iteritems():
             v = v.split()
             # mtime pkg1 fullver1 virtual1 pkg2 fullver2 virtual2...

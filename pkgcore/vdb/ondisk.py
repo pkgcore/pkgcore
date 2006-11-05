@@ -14,7 +14,7 @@ from pkgcore.vdb import virtuals
 from pkgcore.plugin import get_plugin
 from pkgcore.interfaces import repo as repo_interfaces
 from pkgcore.interfaces import data_source
-from pkgcore.util.osutils import listdir_dirs
+from pkgcore.util.osutils import listdir_dirs, readfile
 from pkgcore.repository import multiplex
 from pkgcore.util import bzip2
 from pkgcore.util.lists import iflatten_instance
@@ -39,7 +39,7 @@ class bz2_data_source(data_source.base):
         self.mutable = mutable
 
     def get_fileobj(self):
-        data = bzip2.decompress(open(self.location, 'rb').read())
+        data = bzip2.decompress(readfile(self.location))
         if self.mutable:
             return data_source.write_StringIO(self._set_data, data)
         return data_source.read_StringIO(data)
@@ -143,9 +143,8 @@ class tree(prototype.tree):
                 os.path.basename(path.rstrip(os.path.sep))+".ebuild")
             data = data_source.local_source(fp)
         else:
-            try:
-                data = open(pjoin(path, key), "r").read()
-            except (OSError, IOError):
+            data = readfile(pjoin(path, key), True)
+            if data is None:
                 raise KeyError(key)
         return data
 

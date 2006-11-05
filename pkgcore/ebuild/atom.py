@@ -144,7 +144,6 @@ class atom(boolean.AndRestriction):
         sf = object.__setattr__
 
         atom = orig_atom = atom.strip()
-        sf(self, "hash", hash(atom))
 
         u = atom.find("[")
         if u != -1:
@@ -220,6 +219,8 @@ class atom(boolean.AndRestriction):
         elif self.version is not None:
             raise MalformedAtom(orig_atom,
                                 'versioned atom requires an operator')
+
+        sf(self, "hash", hash(orig_atom))
         # force jitting of it.
         object.__delattr__(self, "restrictions")
 

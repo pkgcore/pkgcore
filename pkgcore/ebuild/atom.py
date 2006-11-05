@@ -118,6 +118,88 @@ class VersionMatch(restriction.base):
         return hash((self.droprev, self.ver, self.rev, self.negate, self.vals))
 
 
+def native_parse_atom(self, atom):
+    sf = object.__setattr__
+
+    orig_atom = atom
+
+    u = atom.find("[")
+    if u != -1:
+        # use dep
+        u2 = atom.find("]", u)
+        if u2 == -1:
+            raise MalformedAtom(atom, "use restriction isn't completed")
+        sf(self, "use", tuple(atom[u+1:u2].split(',')))
+        if not all(x.rstrip("-") for x in self.use):
+            raise MalformedAtom(
+                atom, "cannot have empty use deps in use restriction")
+        atom = atom[0:u]+atom[u2 + 1:]
+    else:
+        sf(self, "use", ())
+    s = atom.find(":")
+    if s != -1:
+        if atom.find(":", s+1) != -1:
+            raise MalformedAtom(atom, "second specification of slotting")
+        # slot dep.
+        sf(self, "slot", atom[s + 1:])
+        if not self.slot:
+            raise MalformedAtom(
+                atom, "cannot have empty slot deps in slot restriction")
+        atom = atom[:s]
+    else:
+        sf(self, "slot", None)
+    del u, s
+
+    sf(self, "blocks", atom[0] == "!")
+    if self.blocks:
+        atom = atom[1:]
+
+    if atom[0] in ('<', '>'):
+        if atom[1] == '=':
+            sf(self, 'op', atom[:2])
+            atom = atom[2:]
+        else:
+            sf(self, 'op', atom[0])
+            atom = atom[1:]
+    elif atom[0] == '=':
+        if atom[-1] == '*':
+            sf(self, 'op', '=*')
+            atom = atom[1:-1]
+        else:
+            atom = atom[1:]
+            sf(self, 'op', '=')
+    elif atom[0] == '~':
+        sf(self, 'op', '~')
+        atom = atom[1:]
+    else:
+        sf(self, 'op', '')
+    sf(self, 'cpvstr', atom)
+
+    try:
+        c = cpv.CPV(self.cpvstr)
+    except cpv_errors.InvalidCPV, e:
+        raise MalformedAtom(orig_atom, str(e))
+    sf(self, "key", c.key)
+    sf(self, "package", c.package)
+    sf(self, "category", c.category)
+    sf(self, "version", c.version)
+    sf(self, "fullver", c.fullver)
+    sf(self, "revision", c.revision)
+
+    if self.op:
+        if self.version is None:
+            raise MalformedAtom(orig_atom, "operator requires a version")
+    elif self.version is not None:
+        raise MalformedAtom(orig_atom,
+                            'versioned atom requires an operator')
+    sf(self, "repo_id", None)
+    sf(self, "hash", hash(orig_atom))
+
+try:
+    from pkgcore.ebuild._atom import parse_atom
+except ImportError:
+    parse_atom = native_parse_atom
+
 class atom(boolean.AndRestriction):
 
     """Currently implements gentoo ebuild atom parsing.
@@ -126,9 +208,9 @@ class atom(boolean.AndRestriction):
     """
 
     __slots__ = (
-        "glob", "blocks", "op", "negate_vers", "cpvstr", "use",
+        "blocks", "op", "negate_vers", "cpvstr", "use",
         "slot", "hash", "category", "version", "revision", "fullver",
-        "package", "key")
+        "package", "key", "repo_id")
 
     type = packages.package_type
     negate = False
@@ -141,86 +223,8 @@ class atom(boolean.AndRestriction):
         """
 #        boolean.AndRestriction.__init__(self)
 
-        sf = object.__setattr__
-
-        atom = orig_atom = atom.strip()
-
-        u = atom.find("[")
-        if u != -1:
-            # use dep
-            u2 = atom.find("]", u)
-            if u2 == -1:
-                raise MalformedAtom(atom, "use restriction isn't completed")
-            sf(self, "use", tuple(atom[u+1:u2].split(',')))
-            if not all(x.rstrip("-") for x in self.use):
-                raise MalformedAtom(
-                    atom, "cannot have empty use deps in use restriction")
-            atom = atom[0:u]+atom[u2 + 1:]
-        else:
-            sf(self, "use", ())
-        s = atom.find(":")
-        if s != -1:
-            if atom.find(":", s+1) != -1:
-                raise MalformedAtom(atom, "second specification of slotting")
-            # slot dep.
-            sf(self, "slot", atom[s + 1:])
-            if not self.slot:
-                raise MalformedAtom(
-                    atom, "cannot have empty slot deps in slot restriction")
-            atom = atom[:s]
-        else:
-            sf(self, "slot", None)
-        del u, s
-
-        sf(self, "blocks", atom[0] == "!")
-        if self.blocks:
-            atom = atom[1:]
-
-        if atom[0] in ('<', '>'):
-            if atom[1] == '=':
-                sf(self, 'op', atom[:2])
-                atom = atom[2:]
-            else:
-                sf(self, 'op', atom[0])
-                atom = atom[1:]
-            sf(self, 'glob', False)
-        elif atom[0] == '=':
-            if atom[-1] == '*':
-                sf(self, 'glob', True)
-                atom = atom[1:-1]
-            else:
-                sf(self, 'glob', False)
-                atom = atom[1:]
-            sf(self, 'op', '=')
-        elif atom[0] == '~':
-            sf(self, 'op', '~')
-            atom = atom[1:]
-            sf(self, 'glob', False)
-        else:
-            sf(self, 'op', '')
-            sf(self, 'glob', False)
-        sf(self, 'cpvstr', atom)
-
-        try:
-            c = cpv.CPV(self.cpvstr)
-        except cpv_errors.InvalidCPV, e:
-            raise MalformedAtom(orig_atom, str(e))
-        sf(self, "key", c.key)
-        sf(self, "package", c.package)
-        sf(self, "category", c.category)
-        sf(self, "version", c.version)
-        sf(self, "fullver", c.fullver)
-        sf(self, "revision", c.revision)
-
-        sf(self, "negate_vers", negate_vers)
-        if self.op:
-            if self.version is None:
-                raise MalformedAtom(orig_atom, "operator requires a version")
-        elif self.version is not None:
-            raise MalformedAtom(orig_atom,
-                                'versioned atom requires an operator')
-
-        sf(self, "hash", hash(orig_atom))
+        parse_atom(self, atom)
+        object.__setattr__(self, "negate_vers", negate_vers)
         # force jitting of it.
         object.__delattr__(self, "restrictions")
 
@@ -228,8 +232,6 @@ class atom(boolean.AndRestriction):
         atom = self.op + self.cpvstr
         if self.blocks:
             atom = '!' + atom
-        if self.glob:
-            atom = atom + '*'
         attrs = [atom]
         if self.use:
             attrs.append('use=' + repr(self.use))
@@ -266,7 +268,7 @@ class atom(boolean.AndRestriction):
                     "category", values.StrExactMatch(self.category))]
 
             if self.version:
-                if self.glob:
+                if self.op == '=*':
                     r.append(packages.PackageRestriction(
                             "fullver", values.StrGlobMatch(self.fullver)))
                 else:
@@ -290,20 +292,24 @@ class atom(boolean.AndRestriction):
                             "use", values.ContainmentMatch(all=True,
                                                            *true_use)))
             if self.slot is not None:
-                r.append(packages.PackageRestriction(
-                        "slot", values.StrExactMatch(self.slot)))
+                if len(self.slot) == 1:
+                    v = values.StrExactMatch(self.slot[0])
+                else:
+                    v = values.OrRestriction(*map(values.StrExactMatch,
+                        self.slot))
+                r.append(packages.PackageRestriction("slot", v))
             object.__setattr__(self, attr, tuple(r))
             return r
 
         raise AttributeError(attr)
 
     def __str__(self):
-        if self.blocks:
-            s = "!%s%s" % (self.op, self.cpvstr)
+        if self.op == '=*':
+            s = "=%s*" %  self.cpvstr
         else:
             s = self.op + self.cpvstr
-        if self.glob:
-            s += "*"
+        if self.blocks:
+            s = "!" + s
         if self.use:
             s += "[%s]" % ",".join(self.use)
         if self.slot:
@@ -340,9 +346,11 @@ class atom(boolean.AndRestriction):
         if c:
             return c
 
-        c = cmp(self.glob, other.glob)
-        if c:
-            return c
+        if self.op == '=*':
+            if other.op != '=*':
+                return True
+        elif other.op == '=*':
+            return False
 
         c = cmp(self.blocks, other.blocks)
         if c:

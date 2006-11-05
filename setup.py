@@ -354,6 +354,9 @@ core.setup(
             'pkgcore.ebuild._cpv', ['src/extensions/cpv.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
+            'pkgcore.ebuild._atom', ['src/extensions/atom.c'],
+            extra_compile_args=extra_flags, depends=common_includes),
+        core.Extension(
             'pkgcore.util.osutils._readdir', ['src/extensions/readdir.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         ] + extensions,

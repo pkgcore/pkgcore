@@ -398,17 +398,19 @@ pkgcore_readlines_iternext(pkgcore_readlines *self)
         return (PyObject *)NULL;
     }
     char *p = self->start;
-    if(p == self->map) {
-        // force the first so it doesn't go infinite
-        p++;
-    }
     while(p != self->end && '\n' != *p)
         p++;
+
+//    printf("returning '%.*s'\n", p - self->start, self->start);
+
     PyObject *ret;
-    if(self->strip_newlines && p != self->end) {
-        ret = PyString_FromStringAndSize(self->start, p - self->start - 1);
-    } else {
+    if(self->strip_newlines) {
         ret = PyString_FromStringAndSize(self->start, p - self->start);
+    } else {
+        if(p == self->end)
+            ret = PyString_FromStringAndSize(self->start, p - self->start);
+        else
+            ret = PyString_FromStringAndSize(self->start, p - self->start + 1);
     }
     if(p != self->end) {
         p++;

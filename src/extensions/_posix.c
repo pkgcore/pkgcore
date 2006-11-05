@@ -303,6 +303,7 @@ typedef struct {
     char *map;
     int fd;
     int strip_newlines;
+    PyObject *fallback;
 } pkgcore_readlines;
 
 
@@ -337,6 +338,7 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         PyObject *tmp = PySeqIter_New(data);
         Py_CLEAR(data);
         return (PyObject *)tmp;
+
     } else if (ret != 0)
         return (PyObject *)NULL;
     
@@ -345,16 +347,44 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     if(!self)
         goto pkgcore_readlines_error;
 
+    self->map = NULL;
+    self->fd = -1;
+    self->fallback = NULL;
     if(strip_newlines) {
         if(PyObject_IsTrue(strip_newlines)) {
             self->strip_newlines = 1;
         }
-        if(PyErr_Occurred())
+        if(PyErr_Occurred()) {
             goto pkgcore_readlines_error;
+        }
     }
 
+    if(size <= 0x4000) {
+        self->fallback = PyString_FromStringAndSize(NULL, size);
+
+        if(!self->fallback)
+            goto pkgcore_readlines_error;
+
+        self->map = PyString_AS_STRING(self->fallback);
+
+        if(size != read(fd, self->map, size))
+            goto pkgcore_readlines_error;
+
+        self->fd = -1;
+        if(close(fd)) {
+            PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+            Py_CLEAR(self);
+            return (PyObject *)NULL;
+        }
+        self->start = self->map;
+        self->end = self->map + size;
+        return (PyObject *)self;
+    } else
+        self->fallback = NULL;
+
     self->map = (char *)mmap(NULL, size, PROT_READ,
-        MAP_SHARED|MAP_NORESERVE|MAP_POPULATE, fd, 0);
+        MAP_SHARED|MAP_NORESERVE, fd, 0);
+
     if(self->map != MAP_FAILED) {
         self->start = self->map;
         self->end = self->map + size;
@@ -377,7 +407,9 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
 static void
 pkgcore_readlines_dealloc(pkgcore_readlines *self)
 {
-    if(self->map) {
+    if(self->fallback) {
+        Py_CLEAR(self->fallback);
+    } else if(self->map) {
         if(munmap(self->map, self->map - self->end))
             // swallow it, no way to signal an error
             errno = 0;
@@ -387,6 +419,7 @@ pkgcore_readlines_dealloc(pkgcore_readlines *self)
             // swallow it, no way to signal an error
             errno = 0;
     }
+    Py_CLEAR(self->fallback);
     self->ob_type->tp_free((PyObject *)self);
 }
 

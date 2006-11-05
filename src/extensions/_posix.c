@@ -454,10 +454,10 @@ pkgcore_readlines_iternext(pkgcore_readlines *self)
 
 PyDoc_STRVAR(
     pkgcore_readlines_documentation,
-    "readline(path [, skip_newlines [, swallow_missing [, none_on_missing]]])"
+    "readline(path [, strip_newlines [, swallow_missing [, none_on_missing]]])"
     " -> iterable yielding"
     " each line of a file\n\n"
-    "if skip_newlines is True, the trailing newline is stripped\n"
+    "if strip_newlines is True, the trailing newline is stripped\n"
     "if swallow_missing is True, for missing files it returns an empty "
     "iterable\n"
     "if none_on_missing and the file is missing, return None instead"

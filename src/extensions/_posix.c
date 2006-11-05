@@ -248,7 +248,7 @@ pkgcore_open_and_stat(PyObject *path, PyObject *swallow_missing,
             }
             
         }
-        PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+        PyErr_SetFromErrnoWithFilenameObject(PyExc_IOError, path);
         return -1;
     }
     struct stat st;

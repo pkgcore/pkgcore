@@ -9,7 +9,8 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.util.demandload import demandload
 import pkgcore.const
 demandload(globals(),
-    "pkgcore.util.file:AtomicWriteFile ")
+    "pkgcore.util.file:AtomicWriteFile "
+    "pkgcore.util.osutils:readlines ")
 
 from pkgcore.config import ConfigHint
 
@@ -24,7 +25,7 @@ class FileList(object):
         if attr != "_atoms":
             raise AttributeError(attr)
         s = set()
-        for x in open(self.path, "r"):
+        for x in readlines(self.path):
             x = x.strip()
             if not x:
                 continue

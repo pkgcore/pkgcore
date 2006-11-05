@@ -152,12 +152,38 @@ def native_readfile(mypath, none_on_missing=False):
             return None
         raise
 
+def native_readlines(mypath, strip_newlines=True, swallow_missing=False,
+    none_on_missing=False):
+    """
+    read a file, yielding each line
+    
+    @param mypath: fs path for the file to read
+    @param strip_newlines: strip trailing newlines?
+    @param swallow_missing: throw an IOError if missing, or swallow it?
+    @param none_on_missing: if the file is missing, return None, else
+        if the file is missing return an empty iterable
+    """
+    try:
+        f = open(mypath, "r")
+    except IOError, ie:
+        if ie.errno != errno.ENOENT or not swallow_missing:
+            raise
+        if none_on_missing:
+            return None
+        return iter([])
+
+    if not strip_newlines:
+        return f
+    return (x.rstrip("\n") for x in f)
+
+
 try:
-    from pkgcore.util.osutils._posix import normpath, join, readfile
+    from pkgcore.util.osutils._posix import normpath, join, readfile, readlines
 except ImportError:
     normpath = native_normpath
     join = native_join
     readfile = native_readfile
+    readlines = native_readlines
 
 class LockException(Exception):
     """Base lock exception class"""

@@ -14,9 +14,15 @@
 
 #include <Python.h>
 #include "py24-compatibility.h"
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+
+// only 2.5.46 kernels and up have this.
+#ifndef MAP_POPULATE
+#define MAP_POPULATE 0
+#endif
 
 #define SKIP_SLASHES(ptr) while('/' == *(ptr)) (ptr)++;
 
@@ -221,49 +227,248 @@ pkgcore_join(PyObject *self, PyObject *args)
     return ret;
 }
 
+// returns 0 on success opening, 1 on ENOENT but ignore, and -1 on failure
+// if failure condition, appropriate exception is set.
+
+int
+pkgcore_open_and_stat(PyObject *path, PyObject *swallow_missing,
+    int *fd, Py_ssize_t *size)
+{
+    errno = 0;
+    int new_fd = open(PyString_AS_STRING(path), O_LARGEFILE);
+    if(new_fd < 0) {
+        if(errno == ENOENT) {
+            if(swallow_missing) {
+                if(PyObject_IsTrue(swallow_missing)) {
+                    errno = 0;
+                    return 1;
+                }
+                if(PyErr_Occurred())
+                    return -1;
+            }
+            
+        }
+        PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+        return -1;
+    }
+    struct stat st;
+    if(fstat(new_fd, &st)) {
+        PyErr_SetFromErrno(PyExc_OSError);
+        return -1;
+    } else if(S_ISDIR(st.st_mode)) {
+        errno = EISDIR;
+        PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+        return -1;
+    }
+    *size = st.st_size;
+    *fd = new_fd;
+    return 0;
+}
+    
+
 static PyObject *
 pkgcore_readfile(PyObject *self, PyObject *args)
 {
-    PyObject *path, *swallow_missing;
+    PyObject *path, *swallow_missing = NULL;
     if(!args || !PyArg_ParseTuple(args, "S|O:readfile", &path,
         &swallow_missing)) {
         return (PyObject *)NULL;
     }
-    errno = 0;
-    int fd = open(PyString_AS_STRING(path), O_LARGEFILE);
-    if(fd < 0) {
-        if(errno == ENOENT) {
-            if(swallow_missing && PyObject_IsTrue(swallow_missing)) {
-                errno = 0;
-                Py_RETURN_NONE;
-            }
-        }
-        return PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
-    }
-    PyObject *ret = NULL;
-    struct stat st;
-    if(fstat(fd, &st)) {
-        ret = PyErr_SetFromErrno(PyExc_OSError);
-        goto cleanup;
-    } else if(S_ISDIR(st.st_mode)) {
-        errno = EISDIR;
-        ret = PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
-        goto cleanup;
-    }
-    ret = PyString_FromStringAndSize(NULL, (Py_ssize_t)st.st_size);
-    if(ret) {
-        if(st.st_size != read(fd, PyString_AS_STRING(ret), st.st_size)) {
-            Py_CLEAR(ret);
-            ret = PyErr_SetFromErrnoWithFilenameObject(PyExc_IOError, path);
+    Py_ssize_t size;
+    int fd;
+    int ret = pkgcore_open_and_stat(path, swallow_missing, &fd, &size);
+    if(ret == 1) {
+        Py_RETURN_NONE;
+    } else if(ret != 0)
+        return (PyObject *)NULL;
+
+    PyObject *data = PyString_FromStringAndSize(NULL, size);
+    if(data) {
+        if(size != read(fd, PyString_AS_STRING(data), size)) {
+            Py_CLEAR(data);
+            data = PyErr_SetFromErrnoWithFilenameObject(PyExc_IOError, path);
         }
     }
-    cleanup:
     if(close(fd)) {
-        Py_CLEAR(ret);
-        ret = PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+        Py_CLEAR(data);
+        data = PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
     }
+    return data;
+}
+
+typedef struct {
+    PyObject_HEAD
+    char *start;
+    char *end;
+    char *map;
+    int fd;
+    int strip_newlines;
+} pkgcore_readlines;
+
+
+static PyObject *
+pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
+{
+    PyObject *path, *swallow_missing = NULL, *strip_newlines = NULL;
+    PyObject *none_on_missing = NULL;
+    pkgcore_readlines *self = NULL;
+    if(kwargs && PyDict_Size(kwargs)) {
+        PyErr_SetString(PyExc_TypeError,
+            "readlines.__new__ doesn't accept keywords");
+        return (PyObject *)NULL;
+    } else if (!PyArg_ParseTuple(args, "S|OOO:readlines.__new__", 
+        &path, &strip_newlines, &swallow_missing, &none_on_missing)) {
+        return (PyObject *)NULL;
+    } 
+    
+    int fd;
+    Py_ssize_t size;
+    int ret = pkgcore_open_and_stat(path, swallow_missing, &fd, &size);
+    if(ret == 1) {
+        // return an empty tuple, and let them iter over that.
+        if(none_on_missing && PyObject_IsTrue(none_on_missing)) {
+            Py_RETURN_NONE;
+        }
+        if(PyErr_Occurred())
+            goto pkgcore_readlines_error;
+        PyObject *data = PyTuple_New(0);
+        if(!data)
+            return (PyObject *)NULL;
+        PyObject *tmp = PySeqIter_New(data);
+        Py_CLEAR(data);
+        return (PyObject *)tmp;
+    } else if (ret != 0)
+        return (PyObject *)NULL;
+    
+    // ok... alloc.
+    self = (pkgcore_readlines *)type->tp_alloc(type, 0);
+    if(!self)
+        goto pkgcore_readlines_error;
+
+    if(strip_newlines) {
+        if(PyObject_IsTrue(strip_newlines)) {
+            self->strip_newlines = 1;
+        }
+        if(PyErr_Occurred())
+            goto pkgcore_readlines_error;
+    }
+
+    self->map = (char *)mmap(NULL, size, PROT_READ,
+        MAP_SHARED|MAP_NORESERVE|MAP_POPULATE, fd, 0);
+    if(self->map != MAP_FAILED) {
+        self->start = self->map;
+        self->end = self->map + size;
+        self->fd = fd;
+        return (PyObject *)self;
+    }
+
+    self->start = self->end = self->map = NULL;
+    self->fd = -1;
+    PyErr_SetFromErrnoWithFilenameObject(PyExc_IOError, path);
+    
+    pkgcore_readlines_error:
+    if(close(fd)) {
+        PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+    }
+    Py_CLEAR(self);
+    return NULL;
+}
+
+static void
+pkgcore_readlines_dealloc(pkgcore_readlines *self)
+{
+    if(self->map) {
+        if(munmap(self->map, self->map - self->end))
+            // swallow it, no way to signal an error
+            errno = 0;
+    }
+    if(self->fd != -1) {
+        if(close(self->fd))
+            // swallow it, no way to signal an error
+            errno = 0;
+    }
+    self->ob_type->tp_free((PyObject *)self);
+}
+
+static PyObject *
+pkgcore_readlines_iternext(pkgcore_readlines *self)
+{
+    if(self->start == self->end) {
+        // at the end, thus return
+        return (PyObject *)NULL;
+    }
+    char *p = self->start;
+    if(p == self->map) {
+        // force the first so it doesn't go infinite
+        p++;
+    }
+    while(p != self->end && '\n' != *p)
+        p++;
+    PyObject *ret;
+    if(self->strip_newlines && p != self->end) {
+        ret = PyString_FromStringAndSize(self->start, p - self->start - 1);
+    } else {
+        ret = PyString_FromStringAndSize(self->start, p - self->start);
+    }
+    if(p != self->end) {
+        p++;
+    }
+    self->start = p;
     return ret;
 }
+
+PyDoc_STRVAR(
+    pkgcore_readlines_documentation,
+    "readline(path [, skip_newlines [, swallow_missing [, none_on_missing]]])"
+    " -> iterable yielding"
+    " each line of a file\n\n"
+    "if skip_newlines is True, the trailing newline is stripped\n"
+    "if swallow_missing is True, for missing files it returns an empty "
+    "iterable\n"
+    "if none_on_missing and the file is missing, return None instead"
+    );
+
+static PyTypeObject pkgcore_readlines_type = {
+    PyObject_HEAD_INIT(NULL)
+    0,                                               /* ob_size*/
+    "pkgcore.util.osutils._posix.readlines",         /* tp_name*/
+    sizeof(pkgcore_readlines),                       /* tp_basicsize*/
+    0,                                               /* tp_itemsize*/
+    (destructor)pkgcore_readlines_dealloc,           /* tp_dealloc*/
+    0,                                               /* tp_print*/
+    0,                                               /* tp_getattr*/
+    0,                                               /* tp_setattr*/
+    0,                                               /* tp_compare*/
+    0,                                               /* tp_repr*/
+    0,                                               /* tp_as_number*/
+    0,                                               /* tp_as_sequence*/
+    0,                                               /* tp_as_mapping*/
+    0,                                               /* tp_hash */
+    (ternaryfunc)0,                                  /* tp_call*/
+    (reprfunc)0,                                     /* tp_str*/
+    0,                                               /* tp_getattro*/
+    0,                                               /* tp_setattro*/
+    0,                                               /* tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT,                              /* tp_flags*/
+    pkgcore_readlines_documentation,                 /* tp_doc */
+    (traverseproc)0,                                 /* tp_traverse */
+    (inquiry)0,                                      /* tp_clear */
+    (richcmpfunc)0,                                  /* tp_richcompare */
+    0,                                               /* tp_weaklistoffset */
+    (getiterfunc)PyObject_SelfIter,                  /* tp_iter */
+    (iternextfunc)pkgcore_readlines_iternext,        /* tp_iternext */
+    0,                                               /* tp_methods */
+    0,                                               /* tp_members */
+    0,                                               /* tp_getset */
+    0,                                               /* tp_base */
+    0,                                               /* tp_dict */
+    0,                                               /* tp_descr_get */
+    0,                                               /* tp_descr_set */
+    0,                                               /* tp_dictoffset */
+    (initproc)0,                                     /* tp_init */
+    0,                                               /* tp_alloc */
+    pkgcore_readlines_new,                           /* tp_new */
+};
 
 static PyMethodDef pkgcore_posix_methods[] = {
     {"normpath", (PyCFunction)pkgcore_normpath, METH_O,
@@ -283,6 +488,15 @@ PyDoc_STRVAR(
 PyMODINIT_FUNC
 init_posix()
 {
-    Py_InitModule3("_posix", pkgcore_posix_methods,
+    if (PyType_Ready(&pkgcore_readlines_type) < 0)
+        return;
+    
+    PyObject *m = Py_InitModule3("_posix", pkgcore_posix_methods,
         pkgcore_posix_documentation);
+    
+    Py_INCREF(&pkgcore_readlines_type);
+    PyModule_AddObject(m, "readlines", (PyObject *)&pkgcore_readlines_type);
+    
+    if (PyErr_Occurred())
+        Py_FatalError("can't initialize module _posix");
 }

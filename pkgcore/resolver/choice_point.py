@@ -22,8 +22,9 @@ class choice_point(object):
 
     @property
     def state(self):
+        m = self.matches_cur
         return (len(self.solution_filters),
-            self.matches_cur,
+            m, m.repo,
             self.matches,
             self._deps,
             self._rdeps,

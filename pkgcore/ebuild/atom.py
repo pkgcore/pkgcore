@@ -11,26 +11,10 @@ gentoo ebuild atom, should be generalized into an agnostic base
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
 from pkgcore.ebuild import cpv, cpv_errors
-from pkgcore.package import errors
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.restrictions.delegated:delegate ")
-
-class MalformedAtom(errors.InvalidDependency):
-
-    def __init__(self, atom, err=''):
-        errors.InvalidDependency.__init__(
-            self, "atom '%s' is malformed: error %s" % (atom, err))
-        self.atom, self.err = atom, err
-
-
-class InvalidVersion(errors.InvalidDependency):
-
-    def __init__(self, ver, rev, err=''):
-        errors.InvalidDependency.__init__(
-            self,
-            "Version restriction ver='%s', rev='%s', is malformed: error %s" %
-            (ver, rev, err))
-        self.ver, self.rev, self.err = ver, rev, err
+demandload(globals(), "pkgcore.restrictions.delegated:delegate "
+    "pkgcore.ebuild.atom_errors:MalformedAtom,InvalidVersion "
+)
 
 
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq,

@@ -158,9 +158,11 @@ pkgcore_join(PyObject *self, PyObject *args)
         s_start++;
         char *s_end = s;
         if(i + 1 != end) {
+//            printf("active %i\n", i);
             while(s != s_start && '/' == s[-1])
                 s--;
-            if(s_end == s && s_start != s) {
+            if(s_end == s && (s_start != s ||
+                (s_end == s_start && i != start))) {
                 len++;
             } else if(s_start != s) {
                 len -= s_end - s -1;

@@ -16,7 +16,7 @@ from pkgcore.interfaces.data_source import local_source
 from pkgcore.repository import virtual, util
 from pkgcore.ebuild import cpv, ebuild_src
 from pkgcore.util.demandload import demandload
-from pkgcore.util.osutils import join as pjoin, readfile
+from pkgcore.util.osutils import join as pjoin, readfile, readlines
 from collections import deque
 
 demandload(globals(),
@@ -34,17 +34,25 @@ def loop_stack(stack, filename, func=iter_read_bash):
         func=func)
 
 def loop_iter_read(files, func=iter_read_bash):
-    for fp in files:
-        try:
-            if func == iter_read_bash:
-                yield fp, func(open(fp, "r"))
-            else:
-                yield fp, func(fp)
-        except (OSError, IOError), e:
-            if e.errno != errno.ENOENT:
-                raise profiles.ProfileException(
-                    "failed reading '%s': %s" % (e.filename, str(e)))
-            del e
+    try:
+        if func is iter_read_bash:
+            for fp in files:
+                data = readlines(fp, False, True, True)
+                if data is not None:
+                    yield fp,  iter_read_bash(data)
+        else:
+            for fp in files:
+                try:
+                    yield fp, func(fp)
+                except IOError, e:
+                    if e.errno != errno.ENOENT:
+                        raise
+                    del e
+    except (OSError, IOError), e:
+        if e.errno != errno.ENOENT:
+            raise profiles.ProfileException(
+                "failed reading '%s': %s" % (e.filename, str(e)))
+        del e
 
 def incremental_profile_files(stack, filename):
     s = set()
@@ -269,14 +277,10 @@ class OnDiskProfile(profiles.base):
             new_parents = []
 
             try:
-                for x in open(pjoin(trg, "parent")):
-                    x = x.strip()
-                    if x.startswith("#") or x == "":
-                        continue
-                    new_parents.append(x)
-
+                new_parents.extend(iter_read_bash(pjoin(trg, "parent")))
                 new_parents = [pabs(pjoin(trg, x))
                     for x in reversed(new_parents)]
+
             except (IOError, OSError), oe:
                 if oe.errno != errno.ENOENT:
                     if parent:

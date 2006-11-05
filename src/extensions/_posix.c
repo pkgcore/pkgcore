@@ -263,7 +263,7 @@ pkgcore_readfile(PyObject *self, PyObject *args)
     return ret;
 }
 
-static PyMethodDef pkgcore_path_methods[] = {
+static PyMethodDef pkgcore_posix_methods[] = {
     {"normpath", (PyCFunction)pkgcore_normpath, METH_O,
         "normalize a path entry"},
     {"join", pkgcore_join, METH_VARARGS,
@@ -275,12 +275,12 @@ static PyMethodDef pkgcore_path_methods[] = {
 };
 
 PyDoc_STRVAR(
-    pkgcore_path_documentation,
+    pkgcore_posix_documentation,
     "cpython posix path functionality");
 
 PyMODINIT_FUNC
-init_path()
+init_posix()
 {
-    Py_InitModule3("_path", pkgcore_path_methods,
-        pkgcore_path_documentation);
+    Py_InitModule3("_posix", pkgcore_posix_methods,
+        pkgcore_posix_documentation);
 }

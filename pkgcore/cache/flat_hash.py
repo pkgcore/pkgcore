@@ -6,7 +6,7 @@ per key file based backend
 """
 
 import os, stat, errno
-from pkgcore.util.osutils import join as pjoin
+from pkgcore.util.osutils import join as pjoin, readlines
 from pkgcore.cache import fs_template
 from pkgcore.cache import errors
 from pkgcore.config import ConfigHint
@@ -42,20 +42,17 @@ class database(fs_template.FsBased):
             self.label.lstrip(os.path.sep).rstrip(os.path.sep))
 
     def _getitem(self, cpv):
+        path = pjoin(self.location, cpv)
         try:
-            myf = open(pjoin(self.location, cpv), "r", 32768)
-        except IOError, e:
-            if e.errno == errno.ENOENT:
-                raise KeyError(cpv)
+            data = readlines(path, True, True, True)
+        except (IOError, OSError), e:
             raise errors.CacheCorruption(cpv, e)
-        except OSError, e:
-            raise errors.CacheCorruption(cpv, e)
+        if data is None:
+            raise KeyError(cpv)
         try:
-            d = self._parse_data(myf, os.fstat(myf.fileno()).st_mtime)
+            d = self._parse_data(data, os.stat(path).st_mtime)
         except (OSError, ValueError), e:
-            myf.close()
             raise errors.CacheCorruption(cpv, e)
-        myf.close()
         return d
 
     def _parse_data(self, data, mtime):

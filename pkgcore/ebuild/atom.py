@@ -12,8 +12,8 @@ from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
 from pkgcore.ebuild import cpv, cpv_errors
 from pkgcore.util.demandload import demandload
+from pkgcore.ebuild.atom_errors import MalformedAtom, InvalidVersion
 demandload(globals(), "pkgcore.restrictions.delegated:delegate "
-    "pkgcore.ebuild.atom_errors:MalformedAtom,InvalidVersion "
 )
 
 

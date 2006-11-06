@@ -38,13 +38,14 @@ class base(object):
         @return: a boolean representing whether that eclass data is still
             up to date, or not
         """
+        ec = self.eclasses
         for eclass, tup in ec_dict.iteritems():
-            if eclass not in self.eclasses:
+            if eclass not in ec:
                 return False
             elif isinstance(tup, tuple):
-                if not tup[1] == tup[1]:
+                if tup[1] != ec[eclass][1]:
                     return False
-            elif tup != self.eclasses[eclass][1]:
+            elif tup != ec[eclass][1]:
                 return False
         return True
 

@@ -47,7 +47,6 @@ class force_unpacking(triggers.base):
     def trigger(self, engine, cset):
         op = self.format_op
         op.setup_workdir()
-        op.setup_workdir()
         merge_contents = get_plugin("fs_ops.merge_contents")
         merge_contents(cset, offset=op.env["D"])
         cset.clear()
@@ -65,7 +64,7 @@ def wrap_factory(klass, *args, **kwds):
                 pkg == engine_inst.new and \
                 pkg.repo is engine_inst.new.repo and \
                 not pkg_uses_default_preinst(pkg):
-                t = force_unpacking(op_inst)
+                t = force_unpacking(op_inst.install_op)
                 t.register(engine_inst)
 
             klass._add_format_triggers(

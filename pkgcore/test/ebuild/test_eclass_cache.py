@@ -33,7 +33,7 @@ class TestBase(TempDirMixin, TestCase):
         self.assertFalse(self.ec.is_eclass_data_valid(
             {"eclass3":(self.dir, 100)}))
         self.assertTrue(self.ec.is_eclass_data_valid(
-            {"eclass1":(self.dir, 200)}))
+            {"eclass1":(self.dir, 100)}))
         self.assertTrue(self.ec.is_eclass_data_valid(
             {"eclass1":(self.ec_locs["eclass1"], 100)}))
 

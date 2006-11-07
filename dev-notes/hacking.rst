@@ -309,11 +309,16 @@ If you're testing for None specifically, be aware of the 'is' operator.
 
 Is avoids the equality protocol, and does a straight ptr comparison::
 
-  python -m timeit '1 != None'
+  python -m timeit '10000000 != None'
   1000000 loops, best of 3: 0.721 usec per loop
 
-  $ python -m timeit '1 is not None'
+  $ python -m timeit '10000000 is not None'
   1000000 loops, best of 3: 0.343 usec per loop
+
+
+Note that we're specificially forcing a large int; using 1 under 2.5 is the
+same runtime, reason being that it defaults to an identity check, then a
+comparison; for small ints, python uses singletons, thus identity kicks in.
 
 Deprecated/crappy modules
 =========================

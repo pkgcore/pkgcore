@@ -563,6 +563,6 @@ init_atom()
         pkgcore_atom_documentation);
     
     if (PyErr_Occurred()) {
-        Py_FatalError("can't initialize module _posix");
+        Py_FatalError("can't initialize module _atom");
     }
 }

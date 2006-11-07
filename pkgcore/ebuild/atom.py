@@ -10,11 +10,13 @@ gentoo ebuild atom, should be generalized into an agnostic base
 
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
-from pkgcore.ebuild import cpv, cpv_errors
+from pkgcore.ebuild import cpv, errors
 from pkgcore.util.demandload import demandload
-from pkgcore.ebuild.atom_errors import MalformedAtom, InvalidVersion
 demandload(globals(), "pkgcore.restrictions.delegated:delegate "
 )
+
+# namespace compatibility...
+MalformedAtom = errors.MalformedAtom
 
 
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq,
@@ -60,7 +62,7 @@ class VersionMatch(restriction.base):
         sf(self, "ver", ver)
         sf(self, "rev", rev)
         if operator != "~" and operator not in self._convert_str2op:
-            raise InvalidVersion(self.ver, self.rev,
+            raise errors.InvalidVersion(self.ver, self.rev,
                                  "invalid operator, '%s'" % operator)
 
         sf(self, "negate", negate)
@@ -128,10 +130,10 @@ def native_parse_atom(self, atom):
         # use dep
         u2 = atom.find("]", u)
         if u2 == -1:
-            raise MalformedAtom(atom, "use restriction isn't completed")
+            raise errors.MalformedAtom(atom, "use restriction isn't completed")
         sf(self, "use", tuple(atom[u+1:u2].split(',')))
         if not all(x.rstrip("-") for x in self.use):
-            raise MalformedAtom(
+            raise errors.MalformedAtom(
                 atom, "cannot have empty use deps in use restriction")
         atom = atom[0:u]+atom[u2 + 1:]
     else:
@@ -139,11 +141,11 @@ def native_parse_atom(self, atom):
     s = atom.find(":")
     if s != -1:
         if atom.find(":", s+1) != -1:
-            raise MalformedAtom(atom, "second specification of slotting")
+            raise errors.MalformedAtom(atom, "second specification of slotting")
         # slot dep.
         sf(self, "slot", atom[s + 1:])
         if not self.slot:
-            raise MalformedAtom(
+            raise errors.MalformedAtom(
                 atom, "cannot have empty slot deps in slot restriction")
         atom = atom[:s]
     else:
@@ -177,8 +179,8 @@ def native_parse_atom(self, atom):
 
     try:
         c = cpv.CPV(self.cpvstr)
-    except cpv_errors.InvalidCPV, e:
-        raise MalformedAtom(orig_atom, str(e))
+    except errors.InvalidCPV, e:
+        raise errors.MalformedAtom(orig_atom, str(e))
     sf(self, "key", c.key)
     sf(self, "package", c.package)
     sf(self, "category", c.category)
@@ -188,9 +190,9 @@ def native_parse_atom(self, atom):
 
     if self.op:
         if self.version is None:
-            raise MalformedAtom(orig_atom, "operator requires a version")
+            raise errors.MalformedAtom(orig_atom, "operator requires a version")
     elif self.version is not None:
-        raise MalformedAtom(orig_atom,
+        raise errors.MalformedAtom(orig_atom,
                             'versioned atom requires an operator')
     sf(self, "repo_id", None)
     sf(self, "hash", hash(orig_atom))

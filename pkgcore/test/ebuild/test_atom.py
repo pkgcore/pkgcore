@@ -2,7 +2,7 @@
 # License: GPL2
 
 from pkgcore.test import TestCase
-from pkgcore.ebuild import atom, atom_errors
+from pkgcore.ebuild import atom, errors
 from pkgcore.ebuild.cpv import CPV
 
 class FakePkg(CPV):
@@ -15,9 +15,9 @@ class FakePkg(CPV):
 class TestAtom(TestCase):
 
     def test_glob(self):
-        self.assertRaises(atom_errors.MalformedAtom, atom.atom,
+        self.assertRaises(errors.MalformedAtom, atom.atom,
             "dev-util/diffball-1*")
-        self.assertRaises(atom_errors.MalformedAtom, atom.atom,
+        self.assertRaises(errors.MalformedAtom, atom.atom,
             "dev-util/diffball-1.*")
 
         a = atom.atom("=dev-util/diffball-1.2*")
@@ -85,7 +85,7 @@ class TestAtom(TestCase):
         self.assertTrue(atom.atom("%s[debug]" % as).match(c))
         self.assertFalse(atom.atom("%s[-debug]" % as).match(c))
         self.assertTrue(atom.atom("%s[debug,-not]" % as).match(c))
-        self.assertRaises(atom_errors.MalformedAtom, atom.atom, "%s[]" % as)
+        self.assertRaises(errors.MalformedAtom, atom.atom, "%s[]" % as)
 
     def test_slot(self):
         as = "dev-util/confcache"
@@ -95,13 +95,13 @@ class TestAtom(TestCase):
         self.assertFalse(atom.atom("%s:2" % as).match(c))
         # shouldn't puke, but has, thus checking"
         atom.atom("sys-libs/db:4.4")
-        self.assertRaises(atom_errors.MalformedAtom, atom.atom, "dev-util/foo:")
+        self.assertRaises(errors.MalformedAtom, atom.atom, "dev-util/foo:")
 
     def test_invalid_atom(self):
-        self.assertRaises(atom_errors.MalformedAtom, atom.atom, '~dev-util/spork')
-        self.assertRaises(atom_errors.MalformedAtom, atom.atom, '>dev-util/spork')
-        self.assertRaises(atom_errors.MalformedAtom, atom.atom, 'dev-util/spork-3')
-        self.assertRaises(atom_errors.MalformedAtom, atom.atom, 'spork')
+        self.assertRaises(errors.MalformedAtom, atom.atom, '~dev-util/spork')
+        self.assertRaises(errors.MalformedAtom, atom.atom, '>dev-util/spork')
+        self.assertRaises(errors.MalformedAtom, atom.atom, 'dev-util/spork-3')
+        self.assertRaises(errors.MalformedAtom, atom.atom, 'spork')
 
     def test_intersects(self):
         for this, that, result in [

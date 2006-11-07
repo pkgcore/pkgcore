@@ -7,7 +7,7 @@
 
 
 from pkgcore.util import commandline
-from pkgcore.ebuild import atom
+from pkgcore.ebuild import atom, errors
 
 
 class OptionParser(commandline.OptionParser):
@@ -24,7 +24,7 @@ class OptionParser(commandline.OptionParser):
             self.error('Specify an atom and at least one phase.')
         try:
             values.atom = atom.atom(args[0])
-        except atom.MalformedAtom, e:
+        except errors.MalformedAtom, e:
             self.error(str(e))
         values.phases = args[1:]
         return values, ()

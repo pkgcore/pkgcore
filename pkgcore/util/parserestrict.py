@@ -10,7 +10,7 @@
 from pkgcore.util.containers import InvertedContains
 from pkgcore.restrictions import packages, values, util
 from pkgcore.package import errors
-from pkgcore.ebuild import atom, cpv, cpv_errors
+from pkgcore.ebuild import atom, cpv, errors
 
 
 class ParseError(ValueError):
@@ -104,7 +104,7 @@ def parse_match(text):
             r = list(util.collect_package_restrictions(
                     atom.atom("%scategory/%s" % (ops, text)).restrictions,
                     attrs=InvertedContains(["category"])))
-        except atom.MalformedAtom, e:
+        except errors.MalformedAtom, e:
             raise ParseError(str(e))
         if len(r) == 1:
             return r[0]
@@ -135,7 +135,7 @@ def parse_pv(repo, text):
     """
     try:
         return cpv.CPV(text)
-    except cpv_errors.InvalidCPV:
+    except errors.InvalidCPV:
         restrict = parse_match('=%s' % (text,))
         result = None
         for match in repo.itermatch(restrict):

@@ -26,3 +26,12 @@ class InvalidVersion(errors.InvalidDependency):
             "Version restriction ver='%s', rev='%s', is malformed: error %s" %
             (ver, rev, err))
         self.ver, self.rev, self.err = ver, rev, err
+
+
+class InvalidCPV(errors.InvalidPackage):
+    """Raised if an invalid cpv was passed in.
+
+    @ivar args: single-element tuple containing the invalid string.
+    @type args: C{tuple}
+    """
+

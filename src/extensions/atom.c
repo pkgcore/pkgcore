@@ -478,7 +478,7 @@ load_external_objects()
 {
     PyObject *s, *m = NULL;
     if(!pkgcore_atom_MalformedAtom_Exc) {
-        s = PyString_FromString("pkgcore.ebuild.atom_errors");
+        s = PyString_FromString("pkgcore.ebuild.errors");
         if(!s)
             return 1;
         m = PyImport_Import(s);

@@ -5,7 +5,7 @@
 
 """gentoo ebuild specific base package class"""
 
-from pkgcore.ebuild.cpv_errors import InvalidCPV
+from pkgcore.ebuild.errors import InvalidCPV
 
 import re
 from pkgcore.package import base

@@ -226,8 +226,9 @@ parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
         PyObject *type, *tb;
         PyErr_Fetch(&type, &tmp, &tb);
         PyObject *res = PyObject_CallFunction(type, "O", tmp);
-        Py_DECREF(tmp);
-        Py_DECREF(type);
+        Py_XDECREF(tmp);
+        Py_XDECREF(type);
+        Py_XDECREF(tb);
         if(!res)
             return 1;
         tmp = PyObject_Str(res);

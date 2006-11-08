@@ -70,12 +70,8 @@ make_use_conditional(char *use_start, char *use_end, PyObject *payload)
 {
     PyObject *val;
     if('!' == *use_start) {
-        Py_INCREF(Py_True);
         val = PyObject_CallFunction(pkgcore_depset_ValContains,
             "s#{ss#}", use_start + 1, use_end - use_start, "negate", Py_True);
-        if(!val) {
-            Py_DECREF(Py_True);
-        }
     } else {
         val = PyObject_CallFunction(pkgcore_depset_ValContains, "s#",
             use_start, use_end - use_start);
@@ -129,10 +125,8 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 element_func, enable_or, 0)))
                 goto internal_parse_depset_error;
 
-            Py_INCREF(Py_True);
             if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
                 Py_DECREF(tmp);
-                Py_DECREF(Py_True);
                 goto internal_parse_depset_error;
             }
 
@@ -190,10 +184,8 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 goto internal_parse_depset_error;
             }
 
-            Py_INCREF(Py_True);
             if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
                 Py_DECREF(item);
-                Py_DECREF(Py_True);
                 goto internal_parse_depset_error;
             }
             tmp = PyObject_Call(pkgcore_depset_PkgAnd, item, kwds);
@@ -232,10 +224,8 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 goto internal_parse_depset_error;
             }
 
-            Py_INCREF(Py_True);
             if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
                 Py_DECREF(tmp);
-                Py_DECREF(Py_True);
                 goto internal_parse_depset_error;
             }
             item = PyObject_Call(pkgcore_depset_PkgOr, tmp, kwds);

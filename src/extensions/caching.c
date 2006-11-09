@@ -393,7 +393,7 @@ pkgcore_WeakInstMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
             return NULL;
         PyErr_Clear();
     }
-    if (PyMapping_SetItemString(d, "__inst_caching__",
+    if (PyDict_SetItemString(d, "__inst_caching__",
                                 inst_caching ? Py_True : Py_False) < 0)
         return NULL;
 
@@ -420,7 +420,7 @@ pkgcore_WeakInstMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
                 Py_DECREF(slottuple);
                 if (!newslots)
                     return NULL;
-                if (PyMapping_SetItemString(d, "__slots__", newslots) < 0) {
+                if (PyDict_SetItemString(d, "__slots__", newslots) < 0) {
                     Py_DECREF(newslots);
                     Py_DECREF(slots);
                     return NULL;
@@ -472,7 +472,7 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
             if (result < 0)
                 return NULL;
 
-            if (PyMapping_DelItemString(kwargs, "disable_inst_caching") < 0)
+            if (PyDict_DelItemString(kwargs, "disable_inst_caching") < 0)
                 return NULL;
 
             if (result)

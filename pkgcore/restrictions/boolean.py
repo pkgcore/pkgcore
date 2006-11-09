@@ -34,16 +34,36 @@ class base(restriction.base):
         """
 
         sf = object.__setattr__
+
         node_type = kwds.pop("node_type", None)
         if node_type is not None:
             sf(self, "type", node_type)
-        super(base, self).__init__(negate=kwds.pop("negate", False))
 
-        sf(self, "restrictions", [])
-        if restrictions:
-            self.add_restriction(*restrictions)
-        if kwds.pop("finalize", True):
-            self.finalize()
+        sf(self, "negate", kwds.pop("negate", False))
+
+        if not kwds.pop("finalize", False):
+            sf(self, "restrictions", [])
+            if restrictions:
+                self.add_restriction(*restrictions)
+
+        if node_type is not None:
+            try:
+                for r in restrictions:
+                    if r.type is not None and r.type != node_type:
+                        raise TypeError(
+                            "instance '%s' is restriction type '%s', "
+                            "must be '%s'" % (r, r.type, node_type))
+            except AttributeError:
+                raise TypeError(
+                    "type '%s' instance '%s' has no restriction type, "
+                    "'%s' required" % (
+                        r.__class__, r, node_type))
+
+        if kwds.pop("finalize", False):
+            sf(self, "restrictions", restrictions)
+        else:
+            sf(self, "restrictions", list(restrictions))
+        
         if kwds:
             kwds.pop("disable_inst_caching", None)
             if kwds:

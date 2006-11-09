@@ -16,6 +16,8 @@
 #include <Python.h>
 #include "py24-compatibility.h"
 
+static PyObject *pkgcore_caching_disable_str = NULL;
+
 /*
  * WeakValFinalizer: holds a reference to a dict and key,
  * does "del dict[key]" when called. Used as weakref callback.
@@ -464,15 +466,15 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
 
     if (kwargs && PyDict_Size(kwargs)) {
         /* If disable_inst_caching=True is passed pop it and disable caching */
-        PyObject *obj = PyMapping_GetItemString(kwargs,
-                                                "disable_inst_caching");
+        PyObject *obj = PyObject_GetItem(kwargs,
+                pkgcore_caching_disable_str);
         if (obj) {
             result = PyObject_IsTrue(obj);
             Py_DECREF(obj);
             if (result < 0)
                 return NULL;
 
-            if (PyDict_DelItemString(kwargs, "disable_inst_caching") < 0)
+            if (PyDict_DelItem(kwargs, pkgcore_caching_disable_str))
                 return NULL;
 
             if (result)
@@ -698,6 +700,13 @@ init_caching()
 
     /* Create the module and add the functions */
     m = Py_InitModule3("_caching", NULL, pkgcore_module_documentation);
+
+    if(!pkgcore_caching_disable_str) {
+        if(!(pkgcore_caching_disable_str = 
+            PyString_FromString("disable_inst_caching")))
+            Py_FatalError("can't initialize module _caching");
+        
+    }
 
     Py_INCREF(&pkgcore_WeakInstMetaType);
     PyModule_AddObject(m, "WeakInstMeta",

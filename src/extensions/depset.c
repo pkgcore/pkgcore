@@ -143,22 +143,24 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 element_func, enable_or, 0)))
                 goto internal_parse_depset_error;
 
-            if(!PyTuple_Size(tmp)) {
+            if(tmp == Py_None) {
                 Py_DECREF(tmp);
                 Err_SetParse(dep_str, "empty payload", start, p);
                 goto internal_parse_depset_error;
-            }
+            } else if(!PyTuple_CheckExact(tmp)) {
+                item = tmp;
+            } else {
+                if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
+                    Py_DECREF(tmp);
+                    goto internal_parse_depset_error;
+                }
 
-            if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
+                item = PyObject_Call(pkgcore_depset_PkgAnd, tmp, kwds);
+                Py_DECREF(kwds);
                 Py_DECREF(tmp);
-                goto internal_parse_depset_error;
+                if(!item)
+                    goto internal_parse_depset_error;
             }
-
-            item = PyObject_Call(pkgcore_depset_PkgAnd, tmp, kwds);
-            Py_DECREF(kwds);
-            Py_DECREF(tmp);
-            if(!item)
-                goto internal_parse_depset_error;
 
         } else if(')' == *start) {
             // end of a frame
@@ -196,26 +198,27 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 element_func, enable_or, 0)))
                 goto internal_parse_depset_error;
 
-            if(!PyTuple_Size(item)) {
+            if(item == Py_None) {
                 Py_DECREF(item);
                 Err_SetParse(dep_str, "empty payload", start, p);
                 goto internal_parse_depset_error;
-            }
 
-            if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
+            } else if(PyTuple_CheckExact(item)) {
+                if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
+                    Py_DECREF(item);
+                    goto internal_parse_depset_error;
+                }
+                tmp = PyObject_Call(pkgcore_depset_PkgAnd, item, kwds);
+                Py_DECREF(kwds);
                 Py_DECREF(item);
-                goto internal_parse_depset_error;
-            }
-            tmp = PyObject_Call(pkgcore_depset_PkgAnd, item, kwds);
-            Py_DECREF(kwds);
-            Py_DECREF(item);
-            if(!tmp)
-                goto internal_parse_depset_error;
+                if(!tmp)
+                    goto internal_parse_depset_error;
             
-            item = make_use_conditional(start, conditional_end, tmp);
-            Py_DECREF(tmp);
-            if(!item)
-                goto internal_parse_depset_error;
+                item = make_use_conditional(start, conditional_end, tmp);
+                Py_DECREF(tmp);
+                if(!item)
+                    goto internal_parse_depset_error;
+            }
             *has_conditionals = 1;
 
         } else if ('|' == *start) {
@@ -241,22 +244,23 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 element_func, enable_or, 0)))
                 goto internal_parse_depset_error;
             
-            if (!PyTuple_Size(tmp)) {
+            if(tmp == Py_None) {
                 Py_DECREF(tmp);
                 Err_SetParse(dep_str, "empty payload", start, p);
                 goto internal_parse_depset_error;
-            }
-
-            if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
+            } else if (!PyTuple_CheckExact(tmp)) {
+                item = tmp;
+            } else {
+                if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
+                    Py_DECREF(tmp);
+                    goto internal_parse_depset_error;
+                }
+                item = PyObject_Call(pkgcore_depset_PkgOr, tmp, kwds);
+                Py_DECREF(kwds);
                 Py_DECREF(tmp);
-                goto internal_parse_depset_error;
+                if(!item)
+                    goto internal_parse_depset_error;
             }
-            item = PyObject_Call(pkgcore_depset_PkgOr, tmp, kwds);
-            Py_DECREF(kwds);
-            Py_DECREF(tmp);
-            if(!item)
-                goto internal_parse_depset_error;
-
         } else {
             item = PyObject_CallFunction(element_func, "s#", start, p - start);
             if(!item)
@@ -294,14 +298,21 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
         start = p;
     }
     if(!restrictions) {
-        restrictions = PyTuple_New(item_count);
-        if(!restrictions)
-            goto internal_parse_depset_error;
-        item_count--;
-        while(item_count >= 0) {
-            PyTuple_SET_ITEM(restrictions, item_count,
-                stack_restricts[item_count]);
+        if(item_count == 0) {
+            restrictions = Py_None;
+            Py_INCREF(restrictions);
+        } else if(item_count == 1) {
+            restrictions = stack_restricts[0];
+        } else {
+            restrictions = PyTuple_New(item_count);
+            if(!restrictions)
+                goto internal_parse_depset_error;
             item_count--;
+            while(item_count >= 0) {
+                PyTuple_SET_ITEM(restrictions, item_count,
+                    stack_restricts[item_count]);
+                item_count--;
+            }
         }
     } else if(item_count < tup_size) {
         if(_PyTuple_Resize(&restrictions, item_count))
@@ -349,6 +360,20 @@ pkgcore_parse_depset(PyObject *self, PyObject *args)
         element_func, enable_or, 1);
     if(!ret)
         return (PyObject *)NULL;
+    if(!PyTuple_Check(ret)) {
+        PyObject *tmp;
+        if(ret == Py_None) {
+            tmp = PyTuple_New(0);
+        } else {
+            tmp = PyTuple_New(1);
+            PyTuple_SET_ITEM(tmp, 0, ret);
+        }
+        if(!tmp) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+        ret = tmp;
+    }
     PyObject *conditionals_bool = has_conditionals ? Py_True : Py_False;
     Py_INCREF(conditionals_bool);
     
@@ -405,9 +430,17 @@ load_external_objects()
         if(!pkgcore_depset_ValContains)
             return 1;
     }
-    if(!pkgcore_depset_PkgAnd || !pkgcore_depset_PkgOr || 
-        !pkgcore_depset_PkgCond) {
+    if(!pkgcore_depset_PkgCond) {
         LOAD_MODULE("pkgcore.restrictions.packages");
+        pkgcore_depset_PkgCond = PyObject_GetAttrString(m, 
+            "Conditional");
+        Py_DECREF(m);
+        if(!pkgcore_depset_PkgCond)
+            return 1;
+    }
+
+    if(!pkgcore_depset_PkgAnd || !pkgcore_depset_PkgOr) {
+        LOAD_MODULE("pkgcore.restrictions.boolean");
     } else
         m = NULL;
         
@@ -422,7 +455,6 @@ load_external_objects()
     }
     LOAD_ATTR(pkgcore_depset_PkgAnd, "AndRestriction");
     LOAD_ATTR(pkgcore_depset_PkgOr, "OrRestriction");
-    LOAD_ATTR(pkgcore_depset_PkgCond, "Conditional");
     #undef LOAD_ATTR
 
     Py_CLEAR(m);

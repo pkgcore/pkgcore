@@ -462,7 +462,7 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
         /* No caching, just do what a "normal" type does */
         return PyType_Type.tp_call((PyObject*)self, args, kwargs);
 
-    if (kwargs) {
+    if (kwargs && PyDict_Size(kwargs)) {
         /* If disable_inst_caching=True is passed pop it and disable caching */
         PyObject *obj = PyMapping_GetItemString(kwargs,
                                                 "disable_inst_caching");

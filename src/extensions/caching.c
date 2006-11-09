@@ -562,10 +562,7 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
                         if (PyErr_Warn(
                                 PyExc_UserWarning,
                                 PyString_AsString(message))) {
-                            Py_DECREF(key);
-                            Py_DECREF(resobj);
-                            Py_DECREF(finalizer);
-                            return NULL;
+                            resobj = NULL;
                         }
                         Py_DECREF(message);
                     }
@@ -573,7 +570,6 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
                 }
                 Py_DECREF(format);
             }
-            Py_DECREF(key);
         }
     }
     Py_DECREF(key);

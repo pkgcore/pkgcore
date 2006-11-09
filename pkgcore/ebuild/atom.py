@@ -357,6 +357,10 @@ class atom(boolean.AndRestriction):
             # want non blockers then blockers.
             return -c
         
+        c = cmp(self.negate_vers, other.negate_vers)
+        if c:
+            return c
+        
         c = cmp(self.slot, other.slot)
         if c:
             return c

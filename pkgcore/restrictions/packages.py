@@ -19,15 +19,15 @@ package_type = restriction.package_type
 class chained_getter(object):
     __metaclass__ = WeakInstMeta
     __slots__ = ('namespace', 'chain')
-    __lru__ = deque()
+    __fifo_cache__ = deque()
     __inst_caching__ = True
     
     def __init__(self, namespace):
         self.namespace = namespace
         self.chain = map(attrgetter, namespace.split("."))
-        if len(self.__lru__) > 10:
-            self.__lru__.popleft()
-        self.__lru__.append(self)
+        if len(self.__fifo_cache__) > 10:
+            self.__fifo_cache__.popleft()
+        self.__fifo_cache__.append(self)
     
     def __hash__(self):
         return hash(self.namespace)

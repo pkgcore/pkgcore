@@ -290,8 +290,8 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             stack_restricts[item_count] = item;
         }
         item_count++;
-        start = p;
         SKIP_SPACES(p);
+        start = p;
     }
     if(!restrictions) {
         restrictions = PyTuple_New(item_count);

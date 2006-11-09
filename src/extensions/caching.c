@@ -464,7 +464,8 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
         /* No caching, just do what a "normal" type does */
         return PyType_Type.tp_call((PyObject*)self, args, kwargs);
 
-    if (kwargs && PyDict_Size(kwargs)) {
+    Py_ssize_t len = kwargs ? PyDict_Size(kwargs) : 0;
+    if (len) {
         /* If disable_inst_caching=True is passed pop it and disable caching */
         PyObject *obj = PyObject_GetItem(kwargs,
                 pkgcore_caching_disable_str);
@@ -488,7 +489,7 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
         if (!(kwlist = PyDict_Items(kwargs)))
             return NULL;
 
-        if (PyList_Sort(kwlist) < 0) {
+        if (len > 1 && PyList_Sort(kwlist) < 0) {
             Py_DECREF(kwlist);
             return NULL;
         }

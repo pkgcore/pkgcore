@@ -120,7 +120,10 @@ class VersionMatch(restriction.base):
         return hash((self.droprev, self.ver, self.rev, self.negate, self.vals))
 
 
-def native_parse_atom(self, atom):
+def native_atom_init(self, atom):
+    """
+    @param atom: string, see gentoo ebuild atom syntax
+    """
     sf = object.__setattr__
 
     orig_atom = atom
@@ -196,11 +199,12 @@ def native_parse_atom(self, atom):
                             'versioned atom requires an operator')
     sf(self, "repo_id", None)
     sf(self, "hash", hash(orig_atom))
+    sf(self, "negate_vers", negate_vers)
 
 try:
-    from pkgcore.ebuild._atom import parse_atom
+    from pkgcore.ebuild._atom import atom_init
 except ImportError:
-    parse_atom = native_parse_atom
+    atom_init = native_atom_init
 
 class atom(boolean.AndRestriction):
 
@@ -219,16 +223,7 @@ class atom(boolean.AndRestriction):
 
     __inst_caching__ = True
 
-    def __init__(self, atom, negate_vers=False):
-        """
-        @param atom: string, see gentoo ebuild atom syntax
-        """
-#        boolean.AndRestriction.__init__(self)
-
-        parse_atom(self, atom)
-        object.__setattr__(self, "negate_vers", negate_vers)
-        # force jitting of it.
-        object.__delattr__(self, "restrictions")
+    __init__ = atom_init
 
     def __repr__(self):
         atom = self.op + self.cpvstr

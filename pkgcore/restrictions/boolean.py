@@ -41,11 +41,6 @@ class base(restriction.base):
 
         sf(self, "negate", kwds.pop("negate", False))
 
-        if not kwds.pop("finalize", False):
-            sf(self, "restrictions", [])
-            if restrictions:
-                self.add_restriction(*restrictions)
-
         if node_type is not None:
             try:
                 for r in restrictions:

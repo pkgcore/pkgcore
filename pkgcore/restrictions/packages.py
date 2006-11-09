@@ -9,10 +9,40 @@ from operator import attrgetter
 from pkgcore.restrictions import restriction, boolean
 from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any
+from pkgcore.util.caching import WeakInstMeta
+from collections import deque
 demandload(globals(), "pkgcore.log:logger")
 
 # Backwards compatibility.
 package_type = restriction.package_type
+
+class chained_getter(object):
+    __metaclass__ = WeakInstMeta
+    __slots__ = ('namespace', 'chain')
+    __lru__ = deque()
+    __inst_caching__ = True
+    
+    def __init__(self, namespace):
+        self.namespace = namespace
+        self.chain = map(attrgetter, namespace.split("."))
+        if len(self.__lru__) > 10:
+            self.__lru__.popleft()
+        self.__lru__.append(self)
+    
+    def __hash__(self):
+        return hash(self.namespace)
+    
+    def __eq__(self, other):
+        return self.namespace == other.namespace
+    
+    def __ne__(self, other):
+        return self.namespace != other.namespace
+    
+    def __call__(self, obj):
+        o = obj
+        for f in self.chain:
+            o = f(o)
+        return o
 
 
 class PackageRestriction(restriction.base):
@@ -42,18 +72,14 @@ class PackageRestriction(restriction.base):
             raise TypeError("restriction must be of type %r" % (self.subtype,))
         sf = object.__setattr__
         sf(self, "negate", negate)
-        sf(self, "attr_split", 
-            tuple(attrgetter(x) for x in attr.split(".")))
+        sf(self, "attr_split", chained_getter(attr))
         sf(self, "attr", attr)
         sf(self, "restriction", childrestriction)
         sf(self, "ignore_missing", ignore_missing)
 
     def __pull_attr(self, pkg):
         try:
-            o = pkg
-            for f in self.attr_split:
-                o = f(o)
-            return o
+            return self.attr_split(pkg)
         except (KeyboardInterrupt, RuntimeError, SystemExit):
             raise
         except AttributeError,ae:

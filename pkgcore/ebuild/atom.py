@@ -340,9 +340,6 @@ class atom(boolean.AndRestriction):
         if c:
             return c
         
-        c = cmp(self.key, other.key)
-        if c:
-            return c
         c = cpv.ver_cmp(self.version, self.revision,
                         other.version, other.revision)
         if c:

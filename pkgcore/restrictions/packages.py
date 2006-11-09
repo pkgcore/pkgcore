@@ -30,7 +30,8 @@ class PackageRestriction(restriction.base):
     
     __inst_caching__ = True
 
-    def __init__(self, attr, childrestriction, negate=False, ignore_missing=False):
+    def __init__(self, attr, childrestriction, negate=False,
+        ignore_missing=True):
         """
         @param attr: package attribute to match against
         @param childrestriction: a L{pkgcore.restrictions.values.base} instance
@@ -39,13 +40,13 @@ class PackageRestriction(restriction.base):
         """
         if not childrestriction.type == self.subtype:
             raise TypeError("restriction must be of type %r" % (self.subtype,))
-        super(PackageRestriction, self).__init__(negate=negate)
         sf = object.__setattr__
+        sf(self, "negate", negate)
         sf(self, "attr_split", 
             tuple(operator.attrgetter(x) for x in attr.split(".")))
         sf(self, "attr", attr)
         sf(self, "restriction", childrestriction)
-        sf(self, "ignore_missing", True)
+        sf(self, "ignore_missing", ignore_missing)
 
     def __pull_attr(self, pkg):
         try:

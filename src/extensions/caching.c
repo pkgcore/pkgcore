@@ -467,8 +467,7 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
     Py_ssize_t len = kwargs ? PyDict_Size(kwargs) : 0;
     if (len) {
         /* If disable_inst_caching=True is passed pop it and disable caching */
-        PyObject *obj = PyObject_GetItem(kwargs,
-                pkgcore_caching_disable_str);
+        PyObject *obj = PyDict_GetItem(kwargs, pkgcore_caching_disable_str);
         if (obj) {
             result = PyObject_IsTrue(obj);
             Py_DECREF(obj);
@@ -480,10 +479,6 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
 
             if (result)
                 return PyType_Type.tp_call((PyObject*)self, args, kwargs);
-        } else {
-            if (!PyErr_ExceptionMatches(PyExc_KeyError))
-                return NULL;
-            PyErr_Clear();
         }
         /* Convert kwargs to a sorted tuple so we can hash it. */
         if (!(kwlist = PyDict_Items(kwargs)))
@@ -511,11 +506,11 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
     if (!key)
         return NULL;
 
-    resobj = PyObject_GetItem(self->inst_dict, key);
+    // borrowed reference from PyDict_GetItem...
+    resobj = PyDict_GetItem(self->inst_dict, key);
     if (resobj) {
         /* We have a weakref cached, return the value if it is still there */
         PyObject *actual = PyWeakref_GetObject(resobj);
-        Py_DECREF(resobj);
         if (!actual) {
             Py_DECREF(key);
             return NULL;
@@ -526,38 +521,9 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
             return actual;
         }
         /* PyWeakref_GetObject returns a borrowed reference, do not clear it */
-    } else {
-        /* Check and warn if GetItem failed because the key is unhashable */
-        if (PyErr_ExceptionMatches(PyExc_TypeError) ||
-            PyErr_ExceptionMatches(PyExc_NotImplementedError)) {
-            PyErr_Clear();
-            PyObject *format, *formatargs, *message;
-            if ((format = PyString_FromString(
-                     "caching for %s, key=%s is unhashable"))) {
-                if ((formatargs = PyTuple_Pack(2, self, key))) {
-                    if ((message = PyString_Format(format, formatargs))) {
-                        /* Leave resobj NULL if PyErr_Warn raises. */
-                        if (!PyErr_Warn(
-                                PyExc_UserWarning,
-                                PyString_AsString(message))) {
-                            resobj = PyType_Type.tp_call((PyObject*)self,
-                                                         args, kwargs);
-                        }
-                        Py_DECREF(message);
-                    }
-                    Py_DECREF(formatargs);
-                }
-                Py_DECREF(format);
-            }
-            Py_DECREF(key);
-            return resobj;
-        } else if (!PyErr_ExceptionMatches(PyExc_KeyError)) {
-            Py_DECREF(key);
-            return NULL;
-        }
-        PyErr_Clear();
     }
-    /* If we get here it was not cached but should be */
+    // if we got here, it's either not cached, or the key is unhashable.
+    // we catch the unhashable when we try to save the key.
 
     resobj = PyType_Type.tp_call((PyObject*)self, args, kwargs);
     if (!resobj) {
@@ -582,12 +548,36 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
     }
 
     result = PyDict_SetItem(self->inst_dict, key, weakref);
-    Py_DECREF(key);
     Py_DECREF(weakref);
+
     if (result < 0) {
-        Py_DECREF(resobj);
-        return NULL;
+        if (PyErr_ExceptionMatches(PyExc_TypeError) ||
+            PyErr_ExceptionMatches(PyExc_NotImplementedError)) {
+            PyErr_Clear();
+            PyObject *format, *formatargs, *message;
+            if ((format = PyString_FromString(
+                     "caching for %s, key=%s is unhashable"))) {
+                if ((formatargs = PyTuple_Pack(2, self, key))) {
+                    if ((message = PyString_Format(format, formatargs))) {
+                        /* Leave resobj NULL if PyErr_Warn raises. */
+                        if (PyErr_Warn(
+                                PyExc_UserWarning,
+                                PyString_AsString(message))) {
+                            Py_DECREF(key);
+                            Py_DECREF(resobj);
+                            Py_DECREF(finalizer);
+                            return NULL;
+                        }
+                        Py_DECREF(message);
+                    }
+                    Py_DECREF(formatargs);
+                }
+                Py_DECREF(format);
+            }
+            Py_DECREF(key);
+        }
     }
+    Py_DECREF(key);
     return resobj;
 }
 

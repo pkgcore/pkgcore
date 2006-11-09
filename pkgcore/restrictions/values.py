@@ -392,7 +392,7 @@ class ContainmentMatch(base):
     note that negation of this *does* not result in a true NAND when all is on.
     """
 
-    __slots__ = ("vals", "all")
+    __slots__ = ("vals", "all", "_hash")
 
     __inst_caching__ = True
 
@@ -411,6 +411,7 @@ class ContainmentMatch(base):
         # this isn't optimal, and should be special cased for known
         # types (lists/tuples fex)
         object.__setattr__(self, "vals", frozenset(vals))
+        object.__setattr__(self, "_hash", None)
 
     def match(self, val):
         if isinstance(val, basestring):
@@ -538,14 +539,18 @@ class ContainmentMatch(base):
 
     def __eq__(self, other):
         try:
-            return (self.all == other.all and
+            return self is other or (self.all == other.all and
                     self.negate == other.negate and
                     self.vals == other.vals)
         except AttributeError:
             return False
 
     def __hash__(self):
-        return hash((self.all, self.negate, self.vals))
+        o = self._hash
+        if o is None:
+            o = hash((self.all, self.negate, self.vals))
+            object.__setattr__(self, "_hash", o)
+        return o
 
     def __repr__(self):
         if self.negate:

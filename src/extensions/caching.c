@@ -56,7 +56,7 @@ pkgcore_WeakValFinalizer_call(pkgcore_WeakValFinalizer *self,
 {
     /* We completely ignore whatever arguments are passed to us
        (should be a single positional (the weakref) we do not need). */
-    if (PyObject_DelItem(self->dict, self->key) < 0)
+    if (PyDict_DelItem(self->dict, self->key) < 0)
         return NULL;
     Py_RETURN_NONE;
 }
@@ -238,7 +238,7 @@ pkgcore_WeakValCache_getitem(pkgcore_WeakValCache *self, PyObject *key)
             actual = NULL;
             /* wipe the weakref err */
             PyErr_Clear();
-            PyObject_DelItem(self->dict, key);
+            PyDict_DelItem(self->dict, key);
             if(!PyErr_Occurred()) {
                 PyErr_SetObject(PyExc_KeyError, key);
             }
@@ -578,7 +578,7 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
         return NULL;
     }
 
-    result = PyObject_SetItem(self->inst_dict, key, weakref);
+    result = PyDict_SetItem(self->inst_dict, key, weakref);
     Py_DECREF(key);
     Py_DECREF(weakref);
     if (result < 0) {

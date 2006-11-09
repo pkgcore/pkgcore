@@ -411,7 +411,11 @@ class ContainmentMatch(base):
         # this isn't optimal, and should be special cased for known
         # types (lists/tuples fex)
         object.__setattr__(self, "vals", frozenset(vals))
-        object.__setattr__(self, "_hash", None)
+        object.__setattr__(self, "_hash",
+            hash((self.all, self.negate, self.vals)))
+
+    def __hash__(self):
+        return self._hash
 
     def match(self, val):
         if isinstance(val, basestring):
@@ -544,13 +548,6 @@ class ContainmentMatch(base):
                     self.vals == other.vals)
         except AttributeError:
             return False
-
-    def __hash__(self):
-        o = self._hash
-        if o is None:
-            o = hash((self.all, self.negate, self.vals))
-            object.__setattr__(self, "_hash", o)
-        return o
 
     def __repr__(self):
         if self.negate:

@@ -256,15 +256,16 @@ pkgcore_WeakValCache_getitem(pkgcore_WeakValCache *self, PyObject *key)
 static PyObject *
 pkgcore_WeakValCache_get(pkgcore_WeakValCache *self, PyObject *args)
 {
-    Py_ssize_t size;
-    size = PySequence_Size(args);
+    Py_ssize_t size = PyTuple_Size(args);
+    if(size == -1)
+        return NULL;
     PyObject *key, *resobj;
     if(size < 1 || size > 2) {
         PyErr_SetString(PyExc_TypeError,
             "get requires one arg (key), with optional default to return");
         return (PyObject *)NULL;
     }
-    key = PySequence_GetItem(args, 0);
+    key = PyTuple_GET_ITEM(args, 0);
     if(!key) {
         assert(PyErr_Occurred());
         return (PyObject *)NULL;
@@ -272,7 +273,6 @@ pkgcore_WeakValCache_get(pkgcore_WeakValCache *self, PyObject *args)
     
     PyErr_Clear();
     resobj = PyObject_GetItem((PyObject *)self, key);
-    Py_DECREF(key);
     if(resobj) {
         assert(!PyErr_Occurred());
         return resobj;
@@ -284,10 +284,10 @@ pkgcore_WeakValCache_get(pkgcore_WeakValCache *self, PyObject *args)
 
     PyErr_Clear();
     if(size == 2) {
-        resobj = PySequence_GetItem(args, 1);
-        assert(resobj);
+        resobj = PyTuple_GET_ITEM(args, 1);
+    } else {
+        resobj = Py_None;
     }
-    resobj = Py_None;
     Py_INCREF(resobj);
     return resobj;
 }

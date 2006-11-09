@@ -31,12 +31,20 @@ void
 _Err_SetParse(PyObject *dep_str, PyObject *msg, char *tok_start, char *tok_end)
 {
     PyObject *ret;
-    ret = PyObject_CallFunction(pkgcore_depset_ParseErrorExc, "S{sSss#}",
-        dep_str, "msg", msg, "token", tok_start, tok_end - tok_start);
-    if(ret) {
-        PyErr_SetObject(pkgcore_depset_ParseErrorExc, ret);
-        Py_DECREF(ret);
+    PyObject *args = Py_BuildValue("(S)", dep_str);
+    if(!args)
+        return;
+    PyObject *kwds = Py_BuildValue("{sSss#}", "msg", msg, 
+        "token", tok_start, tok_end - tok_start);
+    if(kwds) {
+        ret = PyObject_Call(pkgcore_depset_ParseErrorExc, args, kwds);
+        if(ret) {
+            PyErr_SetObject(pkgcore_depset_ParseErrorExc, ret);
+            Py_DECREF(ret);
+        }
+        Py_DECREF(kwds);
     }
+    Py_DECREF(args);
 }
 
 void
@@ -60,7 +68,7 @@ Err_SetParse(PyObject *dep_str, char *msg, char *tok_start, char *tok_end)
 {
     PyObject *s = PyString_FromString(msg);
     if(!s)
-        return
+        return;
     _Err_SetParse(dep_str, s, tok_start, tok_end);
     Py_DECREF(s);
 }
@@ -70,8 +78,18 @@ make_use_conditional(char *use_start, char *use_end, PyObject *payload)
 {
     PyObject *val;
     if('!' == *use_start) {
-        val = PyObject_CallFunction(pkgcore_depset_ValContains,
-            "s#{ss#}", use_start + 1, use_end - use_start, "negate", Py_True);
+        PyObject *kwds = Py_BuildValue("{sO}", "negate", Py_True);
+        if(!kwds)
+            return (PyObject *)NULL;
+        PyObject *args = Py_BuildValue("(s#)", use_start + 1,
+            use_end - use_start -1);
+        if(!args) {
+            Py_DECREF(kwds);
+            return (PyObject *)NULL;
+        }
+        val = PyObject_Call(pkgcore_depset_ValContains, args, kwds);
+        Py_DECREF(args);
+        Py_DECREF(kwds);
     } else {
         val = PyObject_CallFunction(pkgcore_depset_ValContains, "s#",
             use_start, use_end - use_start);
@@ -104,7 +122,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
     PyObject *item = NULL;
     PyObject *tmp = NULL;
     PyObject *kwds = NULL;
-    #define PARSE_DEPSET_STACK_STORAGE 8
+    #define PARSE_DEPSET_STACK_STORAGE 16
     PyObject *stack_restricts[PARSE_DEPSET_STACK_STORAGE];
     Py_ssize_t item_count = 0, tup_size = PARSE_DEPSET_STACK_STORAGE;
 
@@ -125,6 +143,12 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 element_func, enable_or, 0)))
                 goto internal_parse_depset_error;
 
+            if(!PyTuple_Size(tmp)) {
+                Py_DECREF(tmp);
+                Err_SetParse(dep_str, "empty payload", start, p);
+                goto internal_parse_depset_error;
+            }
+
             if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
                 Py_DECREF(tmp);
                 goto internal_parse_depset_error;
@@ -135,12 +159,6 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             Py_DECREF(tmp);
             if(!item)
                 goto internal_parse_depset_error;
-
-            if(!PyTuple_Size(item)) {
-                Py_DECREF(item);
-                Err_SetParse(dep_str, "empty payload", start, p);
-                goto internal_parse_depset_error;
-            }
 
         } else if(')' == *start) {
             // end of a frame
@@ -201,11 +219,16 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             *has_conditionals = 1;
 
         } else if ('|' == *start) {
-            if('|' != p[1] || !enable_or) {
+            if('|' != start[1] || !enable_or) {
                 Err_SetParse(dep_str, "stray |", NULL, NULL);
                 goto internal_parse_depset_error;
             }
-            p += 2;
+
+            if(p - start != 2) {
+                Err_SetParse(dep_str, "|| must have space followed by a (",
+                    start, p);
+                goto internal_parse_depset_error;
+            }
             SKIP_SPACES(p);
             if ('(' != *p || (!ISSPACE(p + 1) && '\0' != p[1])) {
                 Err_SetParse(dep_str,
@@ -235,7 +258,6 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 goto internal_parse_depset_error;
 
         } else {
-            printf("item %i, '%s'\n", p - start, start);
             item = PyObject_CallFunction(element_func, "s#", start, p - start);
             if(!item)
                 goto internal_parse_depset_error;
@@ -243,7 +265,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
 
         // append it.
         if(item_count == tup_size) {
-            if(item_count == PARSE_DEPSET_STACK_STORAGE) {
+            if(!restrictions) {
                 // switch over.
                 restrictions = PyTuple_New(PARSE_DEPSET_STACK_STORAGE << 1);
                 if(!restrictions) {
@@ -255,10 +277,11 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                     PyTuple_SET_ITEM(restrictions, item_count,
                         stack_restricts[item_count]);
                 }
-            } else if(_PyTuple_Resize(&restrictions, tup_size << 1)) {
+            } else if(_PyTuple_Resize(&restrictions, tup_size * 2)) {
                 Py_DECREF(item);
                 goto internal_parse_depset_error;
             }
+            tup_size *= 2;
             // now we're using restrictions.
         }
         if(restrictions) {
@@ -272,13 +295,15 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
     }
     if(!restrictions) {
         restrictions = PyTuple_New(item_count);
+        if(!restrictions)
+            goto internal_parse_depset_error;
         item_count--;
         while(item_count >= 0) {
             PyTuple_SET_ITEM(restrictions, item_count,
                 stack_restricts[item_count]);
             item_count--;
         }
-    } else if(item_count + 1 < tup_size) {
+    } else if(item_count < tup_size) {
         if(_PyTuple_Resize(&restrictions, item_count))
             goto internal_parse_depset_error;
     }
@@ -320,8 +345,22 @@ pkgcore_parse_depset(PyObject *self, PyObject *args)
     char *p = PyString_AsString(dep_str);
     if(!p)
         return (PyObject *)NULL;
-    return internal_parse_depset(dep_str, &p, &has_conditionals,
+    PyObject *ret = internal_parse_depset(dep_str, &p, &has_conditionals,
         element_func, enable_or, 1);
+    if(!ret)
+        return (PyObject *)NULL;
+    PyObject *conditionals_bool = has_conditionals ? Py_True : Py_False;
+    Py_INCREF(conditionals_bool);
+    
+    PyObject *final = PyTuple_New(2);
+    if(!final) {
+        Py_DECREF(ret);
+        Py_DECREF(conditionals_bool);
+        return (PyObject *)NULL;
+    }
+    PyTuple_SET_ITEM(final, 0, conditionals_bool);
+    PyTuple_SET_ITEM(final, 1, ret);
+    return final;
 }
 
 static PyMethodDef pkgcore_depset_methods[] = {

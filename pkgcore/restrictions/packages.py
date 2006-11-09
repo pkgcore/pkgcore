@@ -5,7 +5,7 @@
 restriction classes designed for package level matching
 """
 
-import operator
+from operator import attrgetter
 from pkgcore.restrictions import restriction, boolean
 from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any
@@ -43,7 +43,7 @@ class PackageRestriction(restriction.base):
         sf = object.__setattr__
         sf(self, "negate", negate)
         sf(self, "attr_split", 
-            tuple(operator.attrgetter(x) for x in attr.split(".")))
+            tuple(attrgetter(x) for x in attr.split(".")))
         sf(self, "attr", attr)
         sf(self, "restriction", childrestriction)
         sf(self, "ignore_missing", ignore_missing)

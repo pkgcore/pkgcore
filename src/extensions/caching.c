@@ -483,7 +483,7 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
             PyErr_Clear();
         }
         /* Convert kwargs to a sorted tuple so we can hash it. */
-        if (!(kwlist = PyMapping_Items(kwargs)))
+        if (!(kwlist = PyDict_Items(kwargs)))
             return NULL;
 
         if (PyList_Sort(kwlist) < 0) {

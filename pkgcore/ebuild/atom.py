@@ -146,10 +146,10 @@ def native_atom_init(self, atom, negate_vers=False):
         if atom.find(":", s+1) != -1:
             raise errors.MalformedAtom(atom, "second specification of slotting")
         # slot dep.
-        sf(self, "slot", atom[s + 1:].split(","))
-        if not self.slot:
-            raise errors.MalformedAtom(
-                atom, "cannot have empty slot deps in slot restriction")
+        slots = atom[s+1:].split(",")
+        if not all(slots):
+            raise errors.MalformedAtom(atom, "empty slots aren't allowed")
+        sf(self, "slot", slots)
         atom = atom[:s]
     else:
         sf(self, "slot", None)

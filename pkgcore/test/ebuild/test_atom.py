@@ -99,9 +99,12 @@ class Test_native_atom(TestCase):
         self.assertFalse(self.kls("%s:0" % as).match(c))
         self.assertTrue(self.kls("%s:1" % as).match(c))
         self.assertFalse(self.kls("%s:2" % as).match(c))
+        self.assertTrue(self.kls("%s:0,1" % as).match(c))
+        self.assertFalse(self.kls("%s:0,2" % as).match(c))
         # shouldn't puke, but has, thus checking"
         self.kls("sys-libs/db:4.4")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1,,0")
 
     def test_invalid_atom(self):
         self.assertRaises(errors.MalformedAtom, self.kls, '~dev-util/spork')

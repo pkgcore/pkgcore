@@ -108,7 +108,8 @@ class test_base(TestCase):
 
     for x in ('depends', 'rdepends'):
         locals()['test_%s' % x] = post_curry(generic_check_depends,
-            'dev-util/diffball || ( x86? ( dev-util/bsdiff ) )', x)
+            'dev-util/diffball || ( dev-util/foo x86? ( dev-util/bsdiff ) )',
+             x)
     del x
     test_post_rdepends = post_curry(generic_check_depends,
         'dev-util/diffball x86? ( virtual/boo )',

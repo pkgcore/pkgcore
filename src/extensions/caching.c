@@ -494,9 +494,8 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
             return NULL;
     } else {
         /* null kwargs is equivalent to a zero-length tuple */
-        kwtuple = PyTuple_New(0);
-        if (!kwtuple)
-            return NULL;
+        Py_INCREF(Py_None);
+        kwtuple = Py_None;
     }
 
     /* Construct the dict key. Be careful not to leak this below! */

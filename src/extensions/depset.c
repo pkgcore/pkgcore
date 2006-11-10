@@ -353,7 +353,7 @@ pkgcore_parse_depset(PyObject *self, PyObject *args)
         &or_func))
         return (PyObject *)NULL;
 
-    int has_conditionals;
+    int has_conditionals = 0;
 
     if(and_func == Py_None)
         and_func = NULL;

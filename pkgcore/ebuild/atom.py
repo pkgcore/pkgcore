@@ -120,7 +120,7 @@ class VersionMatch(restriction.base):
         return hash((self.droprev, self.ver, self.rev, self.negate, self.vals))
 
 
-def native_atom_init(self, atom):
+def native_atom_init(self, atom, negate_vers=False):
     """
     @param atom: string, see gentoo ebuild atom syntax
     """

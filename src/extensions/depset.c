@@ -48,7 +48,7 @@ _Err_SetParse(PyObject *dep_str, PyObject *msg, char *tok_start, char *tok_end)
 }
 
 void
-Err_WrapException_SetParse(PyObject *dep_str, char *tok_start,
+Err_WrapException(PyObject *dep_str, char *tok_start,
     char *tok_end)
 {
     PyObject *type, *val, *tb;
@@ -114,7 +114,9 @@ while('\t' != *(ptr) && ' ' != *(ptr) && '\n' != *(ptr) && '\0' != *(ptr))  \
 
 PyObject *
 internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
-    PyObject *element_func, char enable_or, char initial_frame)
+    PyObject *element_func, 
+    PyObject *and_func, PyObject *or_func,
+    char initial_frame)
 {
     char *start = *ptr;
     char *p = NULL;
@@ -133,6 +135,11 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
         SKIP_NONSPACES(p);
         if('(' == *start) {
             // new and frame.
+            if(!and_func) {
+                Err_SetParse(dep_str, "this depset doesn't support and blocks",
+                start, p);
+                goto internal_parse_depset_error;
+            }
             if(p - start != 1) {
                 Err_SetParse(dep_str,
                     "either a space or end of string is required after (",
@@ -140,7 +147,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 goto internal_parse_depset_error;
             }
             if(!(tmp = internal_parse_depset(dep_str, &p, has_conditionals,
-                element_func, enable_or, 0)))
+                element_func, and_func, or_func, 0)))
                 goto internal_parse_depset_error;
 
             if(tmp == Py_None) {
@@ -155,7 +162,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                     goto internal_parse_depset_error;
                 }
 
-                item = PyObject_Call(pkgcore_depset_PkgAnd, tmp, kwds);
+                item = PyObject_Call(and_func, tmp, kwds);
                 Py_DECREF(kwds);
                 Py_DECREF(tmp);
                 if(!item)
@@ -195,7 +202,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             }
             p++;
             if(!(tmp = internal_parse_depset(dep_str, &p, has_conditionals,
-                element_func, enable_or, 0)))
+                element_func, and_func, or_func, 0)))
                 goto internal_parse_depset_error;
 
             if(tmp == Py_None) {
@@ -219,8 +226,10 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             *has_conditionals = 1;
 
         } else if ('|' == *start) {
-            if('|' != start[1] || !enable_or) {
-                Err_SetParse(dep_str, "stray |", NULL, NULL);
+            if('|' != start[1] || !or_func) {
+                Err_SetParse(dep_str,
+                    "stray |, or this depset doesn't support or blocks",
+                    NULL, NULL);
                 goto internal_parse_depset_error;
             }
 
@@ -238,7 +247,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             }
             p++;
             if(!(tmp = internal_parse_depset(dep_str, &p, has_conditionals,
-                element_func, enable_or, 0)))
+                element_func, and_func, or_func, 0)))
                 goto internal_parse_depset_error;
             
             if(tmp == Py_None) {
@@ -252,7 +261,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                     Py_DECREF(tmp);
                     goto internal_parse_depset_error;
                 }
-                item = PyObject_Call(pkgcore_depset_PkgOr, tmp, kwds);
+                item = PyObject_Call(or_func, tmp, kwds);
                 Py_DECREF(kwds);
                 Py_DECREF(tmp);
                 if(!item)
@@ -260,8 +269,10 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             }
         } else {
             item = PyObject_CallFunction(element_func, "s#", start, p - start);
-            if(!item)
+            if(!item) {
+                Err_WrapException(dep_str, start, p);
                 goto internal_parse_depset_error;
+            }
         }
 
         // append it.
@@ -337,24 +348,23 @@ static PyObject *
 pkgcore_parse_depset(PyObject *self, PyObject *args)
 {
     PyObject *dep_str, *element_func;
-    PyObject *disable_or = NULL;
-    if(!PyArg_ParseTuple(args, "SO|O", &dep_str, &element_func, &disable_or))
+    PyObject *and_func = NULL, *or_func = NULL;
+    if(!PyArg_ParseTuple(args, "SO|OO", &dep_str, &element_func, &and_func,
+        &or_func))
         return (PyObject *)NULL;
 
-    int enable_or, has_conditionals;
+    int has_conditionals;
 
-    if(!disable_or) {
-        enable_or = 1;
-    } else {
-        enable_or = PyObject_IsTrue(disable_or);
-        if(enable_or == -1)
-            return (PyObject *)NULL;
-    }
+    if(and_func == Py_None)
+        and_func = NULL;
+    if(or_func == Py_None)
+        or_func = NULL;
+
     char *p = PyString_AsString(dep_str);
     if(!p)
         return (PyObject *)NULL;
     PyObject *ret = internal_parse_depset(dep_str, &p, &has_conditionals,
-        element_func, enable_or, 1);
+        element_func, and_func, or_func, 1);
     if(!ret)
         return (PyObject *)NULL;
     if(!PyTuple_Check(ret)) {

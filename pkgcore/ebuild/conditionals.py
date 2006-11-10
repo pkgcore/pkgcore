@@ -55,12 +55,24 @@ class DepSet(boolean.AndRestriction):
         if element_func is None:
             element_func = element_class
 
-        if parse_depset is not None and operators is None:
-            has_conditionals, restrictions = parse_depset(dep_str, element_func,
-                True)
-            sf(self, "_node_conds", has_conditionals)
-            sf(self, "restrictions", restrictions)
-            return
+        if parse_depset is not None:
+            restrictions = None
+            if operators is None:
+                has_conditionals, restrictions = parse_depset(dep_str, 
+                    element_func, packages.AndRestriction,
+                    packages.OrRestriction)
+            else:
+                for x in operators:
+                    if x not in ("", "||"):
+                        break
+                else:
+                    has_conditionals, restrictions = parse_depset(dep_str,
+                        element_func, operators.get(""), operators.get("||"))
+            
+            if restrictions is not None:
+                sf(self, "_node_conds", has_conditionals)
+                sf(self, "restrictions", restrictions)
+                return
 
         sf(self, "restrictions", [])
         if operators is None:

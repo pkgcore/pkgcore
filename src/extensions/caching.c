@@ -505,6 +505,8 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
         return NULL;
 
     // borrowed reference from PyDict_GetItem...
+    resobj = PyDict_GetItem(self->inst_dict, key);
+
     if (resobj) {
         /* We have a weakref cached, return the value if it is still there */
         PyObject *actual = PyWeakref_GetObject(resobj);

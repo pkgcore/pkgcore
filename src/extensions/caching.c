@@ -504,10 +504,6 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
     if (!key)
         return NULL;
 
-    // micro optimization; python dicts don't check to see if they're empty..
-    if(PyDict_Size(self->inst_dict))
-        resobj = PyDict_GetItem(self->inst_dict, key);
-
     // borrowed reference from PyDict_GetItem...
     if (resobj) {
         /* We have a weakref cached, return the value if it is still there */

@@ -5,6 +5,7 @@ from pkgcore.test import TestCase
 from pkgcore.ebuild import atom, errors
 from pkgcore.ebuild.cpv import CPV
 
+
 class FakePkg(CPV):
     __slots__ = ("__dict__")
     def __init__(self, cpv, use=(), slot=0):
@@ -12,15 +13,21 @@ class FakePkg(CPV):
         object.__setattr__(self, "use", use)
         object.__setattr__(self, "slot", str(slot))
 
-class TestAtom(TestCase):
+
+class Test_native_atom(TestCase):
+
+    class kls(atom.atom):
+        __init__ = atom.native_atom_init
+
+    kls = staticmethod(kls)
 
     def test_glob(self):
-        self.assertRaises(errors.MalformedAtom, atom.atom,
+        self.assertRaises(errors.MalformedAtom, self.kls,
             "dev-util/diffball-1*")
-        self.assertRaises(errors.MalformedAtom, atom.atom,
+        self.assertRaises(errors.MalformedAtom, self.kls,
             "dev-util/diffball-1.*")
 
-        a = atom.atom("=dev-util/diffball-1.2*")
+        a = self.kls("=dev-util/diffball-1.2*")
         self.assertTrue(a.match(CPV("dev-util/diffball-1.2")))
         self.assertTrue(a.match(CPV("dev-util/diffball-1.2.0")))
         self.assertTrue(a.match(CPV("dev-util/diffball-1.2-r1")))
@@ -28,13 +35,12 @@ class TestAtom(TestCase):
         self.assertFalse(a.match(CPV("dev-util/diffball-1")))
 
     def test_nonversioned(self):
-        a = atom.atom("kde-base/kde")
+        a = self.kls("kde-base/kde")
         self.assertTrue(a.match(CPV("kde-base/kde")))
         self.assertFalse(a.match(CPV("kde-base/kde2")))
         self.assertTrue(a.match(CPV("kde-base/kde-3")))
     
-    @staticmethod
-    def make_atom(s, ops, ver):
+    def make_atom(self, s, ops, ver):
         l = []
         if -1 in ops:
             l.append(">")
@@ -42,7 +48,7 @@ class TestAtom(TestCase):
             l.append("=")
         if 1 in ops:
             l.append("<")
-        return atom.atom("%s%s-%s" % (''.join(l), s, ver))
+        return self.kls("%s%s-%s" % (''.join(l), s, ver))
     
     def test_versioned(self):
         as = "app-arch/tarsync"
@@ -73,7 +79,7 @@ class TestAtom(TestCase):
 
     def test_norev(self):
         as = "app-arch/tarsync"
-        a = atom.atom("~%s-1" % as)
+        a = self.kls("~%s-1" % as)
         self.assertTrue(a.match(CPV("%s-1" % as)))
         self.assertTrue(a.match(CPV("%s-1-r1" % as)))
         self.assertFalse(a.match(CPV("%s-2" % as)))
@@ -82,26 +88,26 @@ class TestAtom(TestCase):
     def test_use(self):
         as = "dev-util/bsdiff"
         c = FakePkg(as, ("debug",))
-        self.assertTrue(atom.atom("%s[debug]" % as).match(c))
-        self.assertFalse(atom.atom("%s[-debug]" % as).match(c))
-        self.assertTrue(atom.atom("%s[debug,-not]" % as).match(c))
-        self.assertRaises(errors.MalformedAtom, atom.atom, "%s[]" % as)
+        self.assertTrue(self.kls("%s[debug]" % as).match(c))
+        self.assertFalse(self.kls("%s[-debug]" % as).match(c))
+        self.assertTrue(self.kls("%s[debug,-not]" % as).match(c))
+        self.assertRaises(errors.MalformedAtom, self.kls, "%s[]" % as)
 
     def test_slot(self):
         as = "dev-util/confcache"
         c = FakePkg(as, (), 1)
-        self.assertFalse(atom.atom("%s:0" % as).match(c))
-        self.assertTrue(atom.atom("%s:1" % as).match(c))
-        self.assertFalse(atom.atom("%s:2" % as).match(c))
+        self.assertFalse(self.kls("%s:0" % as).match(c))
+        self.assertTrue(self.kls("%s:1" % as).match(c))
+        self.assertFalse(self.kls("%s:2" % as).match(c))
         # shouldn't puke, but has, thus checking"
-        atom.atom("sys-libs/db:4.4")
-        self.assertRaises(errors.MalformedAtom, atom.atom, "dev-util/foo:")
+        self.kls("sys-libs/db:4.4")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:")
 
     def test_invalid_atom(self):
-        self.assertRaises(errors.MalformedAtom, atom.atom, '~dev-util/spork')
-        self.assertRaises(errors.MalformedAtom, atom.atom, '>dev-util/spork')
-        self.assertRaises(errors.MalformedAtom, atom.atom, 'dev-util/spork-3')
-        self.assertRaises(errors.MalformedAtom, atom.atom, 'spork')
+        self.assertRaises(errors.MalformedAtom, self.kls, '~dev-util/spork')
+        self.assertRaises(errors.MalformedAtom, self.kls, '>dev-util/spork')
+        self.assertRaises(errors.MalformedAtom, self.kls, 'dev-util/spork-3')
+        self.assertRaises(errors.MalformedAtom, self.kls, 'spork')
 
     def test_intersects(self):
         for this, that, result in [
@@ -127,8 +133,8 @@ class TestAtom(TestCase):
             ('=cat/pkg-1-r1*', '<cat/pkg-1-r1', False),
             ('=cat/pkg-1*', '>cat/pkg-2', False),
             ]:
-            this_atom = atom.atom(this)
-            that_atom = atom.atom(that)
+            this_atom = self.kls(this)
+            that_atom = self.kls(that)
             self.assertEquals(
                 result, this_atom.intersects(that_atom),
                 '%s intersecting %s should be %s' % (this, that, result))
@@ -137,12 +143,19 @@ class TestAtom(TestCase):
                 '%s intersecting %s should be %s' % (that, this, result))
 
     def test_comparison(self):
-        self.assertNotEquals(atom.atom('cat/pkg:1'), atom.atom('cat/pkg'))
-        self.assertNotEquals(atom.atom('cat/pkg[foo]'), atom.atom('cat/pkg'))
-        self.assertNotEquals(atom.atom('cat/pkg[foo]'),
-                             atom.atom('cat/pkg[-foo]'))
-        self.assertEquals(atom.atom('cat/pkg[foo,-bar]'),
-                          atom.atom('cat/pkg[-bar,foo]'))
-        self.assertNotEquals(atom.atom('cat/pkg'), atom.atom('!cat/pkg'))
-        self.assertNotEquals(atom.atom('<cat/pkg-2'), atom.atom('>cat/pkg-2'))
-        self.assertNotEquals(atom.atom('=cat/pkg-2*'), atom.atom('=cat/pkg-2'))
+        self.assertNotEquals(self.kls('cat/pkg:1'), self.kls('cat/pkg'))
+        self.assertNotEquals(self.kls('cat/pkg[foo]'), self.kls('cat/pkg'))
+        self.assertNotEquals(self.kls('cat/pkg[foo]'),
+                             self.kls('cat/pkg[-foo]'))
+        self.assertEquals(self.kls('cat/pkg[foo,-bar]'),
+                          self.kls('cat/pkg[-bar,foo]'))
+        self.assertNotEquals(self.kls('cat/pkg'), self.kls('!cat/pkg'))
+        self.assertNotEquals(self.kls('<cat/pkg-2'), self.kls('>cat/pkg-2'))
+        self.assertNotEquals(self.kls('=cat/pkg-2*'), self.kls('=cat/pkg-2'))
+
+
+class Test_cpy_atom(Test_native_atom):
+    
+    kls = staticmethod(atom.atom)
+    if atom.atom.__init__ is atom.native_atom_init:
+        skip = "extension isn't available"

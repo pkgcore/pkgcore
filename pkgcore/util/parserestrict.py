@@ -114,7 +114,7 @@ def parse_match(text):
     if "*" not in text:
         try:
             return atom.atom(text)
-        except errors.InvalidPackage, e:
+        except errors.InvalidCPV, e:
             raise ParseError(str(e))
     r = map(convert_glob, tsplit)
     if not r[0] and not r[1]:

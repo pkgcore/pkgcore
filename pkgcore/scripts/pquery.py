@@ -73,6 +73,8 @@ class DataSourceRestriction(values.base):
     def match(self, value):
         return self.restriction.match(iter(value.get_fileobj())) ^ self.negate
 
+    __hash__ = object.__hash__
+
 
 def parse_envmatch(value):
     """Apply a regexp to the environment."""

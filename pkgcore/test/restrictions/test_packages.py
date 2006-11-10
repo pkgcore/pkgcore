@@ -10,6 +10,8 @@ class AlwaysSelfIntersect(values.base):
     def intersect(self, other):
         return self
 
+    __hash__ = object.__hash__
+
 
 class DummyIntersectingValues(values.base):
 
@@ -18,10 +20,11 @@ class DummyIntersectingValues(values.base):
     def __init__(self, val, iself=False, negate=False):
         object.__setattr__(self, "negate", negate)
         object.__setattr__(self, "val", val)
-
+        
     def intersect(self, other):
         return DummyIntersectingValues((self.val, other.val))
 
+    __hash__ = object.__hash__
 
 class PackageRestrictionTest(TestCase):
 

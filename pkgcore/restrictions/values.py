@@ -25,7 +25,7 @@ class base(restriction.base):
     restrictions! Use the C{type} attribute instead.
     """
 
-    __slots__ = ()
+    __slots__ = ("_hash",)
 
     type = restriction.value_type
 
@@ -35,12 +35,16 @@ class base(restriction.base):
     def force_False(self, pkg, attr, val):
         return not self.match(val)
 
+    def __hash__(self):
+        return self._hash
 
-class GetAttrRestriction(base, packages.PackageRestriction):
+
+class GetAttrRestriction(packages.PackageRestriction):
 
     """Restriction pulling an attribute and applying a child restriction."""
 
     __slots__ = ()
+    type = restriction.value_type
 
     # XXX this needs further thought.
     #
@@ -51,6 +55,12 @@ class GetAttrRestriction(base, packages.PackageRestriction):
     # so we just punt and return True/False depending on the current
     # state without "forcing" anything (default implementation in
     # "base").
+
+    def force_True(self, pkg, attr, val):
+        return self.match(val)
+
+    def force_False(self, pkg, attr, val):
+        return not self.match(val)
 
 
 class VersionRestriction(base):
@@ -101,6 +111,7 @@ class StrRegex(StrMatch):
             sf(self, "_matchfunc", compiled_re.match)
         else:
             sf(self, "_matchfunc", compiled_re.search)
+        sf(self, "_hash", hash((self.regex, self.negate, self.flags, self.ismatch)))
 
     def match(self, value):
         if not isinstance(value, basestring):
@@ -121,9 +132,6 @@ class StrRegex(StrMatch):
                 self.negate == other.negate and
                 self.flags == other.flags and
                 self.ismatch == other.ismatch)
-
-    def __hash__(self):
-        return hash((self.regex, self.negate, self.flags, self.ismatch))
 
     def __repr__(self):
         result = [self.__class__.__name__, repr(self.regex)]
@@ -173,6 +181,7 @@ class StrExactMatch(StrMatch):
         else:
             sf(self, "flags", 0)
             sf(self, "exact", str(exact))
+        sf(self, "_hash", hash((self.exact, self.negate, self.flags)))
 
     def match(self, value):
         if self.flags == re.I:
@@ -193,12 +202,9 @@ class StrExactMatch(StrMatch):
         return None
 
     def __eq__(self, other):
-        return (self.exact == other.exact and
+        return self is other or (self.exact == other.exact and
                 self.negate == other.negate and
                 self.flags == other.flags)
-
-    def __hash__(self):
-        return hash((self.exact, self.negate, self.flags))
 
     def __repr__(self):
         if self.negate:
@@ -242,6 +248,7 @@ class StrGlobMatch(StrMatch):
             sf(self, "flags", 0)
             sf(self, "glob", str(glob))
         sf(self, "prefix", prefix)
+        sf(self, "_hash", hash((self.glob, self.negate, self.flags, self.prefix)))
 
     def match(self, value):
         value = str(value)
@@ -270,9 +277,6 @@ class StrGlobMatch(StrMatch):
                     self.prefix == other.prefix)
         except AttributeError:
             return False
-
-    def __hash__(self):
-        return hash((self.glob, self.negate, self.flags, self.prefix))
 
     def __repr__(self):
         if self.negate:
@@ -363,12 +367,12 @@ class ComparisonMatch(base):
             sf(self, "matching_vals",
                 tuple(_mangle_cmp_val(x) for x in matching_vals))
 
+    def __hash__(self):
+        return hash((self.cmp_func, self.matching_vals, self.data))
+
     def match(self, actual_val):
         return _mangle_cmp_val(
             self.cmp_func(actual_val, self.data)) in self.matching_vals
-
-    def __hash__(self):
-        return hash((self.cmp_func, self.matching_vals, self.data))
 
     def __eq__(self, other):
         try:
@@ -415,9 +419,6 @@ class ContainmentMatch(base):
         sf(self, "vals", frozenset(vals))
         sf(self, "negate", kwds.get("negate", False))
         sf(self, "_hash", hash((self.all, self.negate, self.vals)))
-
-    def __hash__(self):
-        return self._hash
 
     def match(self, val):
         if isinstance(val, basestring):
@@ -572,6 +573,7 @@ class FlatteningRestriction(base):
     """Flatten the values passed in and apply the nested restriction."""
 
     __slots__ = ('dont_iter', 'restriction')
+    __hash__ = object.__hash__
 
     def __init__(self, dont_iter, childrestriction, negate=False):
         """Initialize.
@@ -607,6 +609,8 @@ class FunctionRestriction(base):
 
     __slots__ = ('func',)
 
+    __hash__ = object.__hash__
+
     def __init__(self, func, negate=False):
         """Initialize.
 
@@ -631,6 +635,8 @@ class FunctionRestriction(base):
 class AnyMatch(restriction.AnyMatch):
 
     __slots__ = ()
+
+    __hash__ = object.__hash__
 
     def __init__(self, childrestriction, negate=False):
         # Hack: skip calling base.__init__. Doing this would make

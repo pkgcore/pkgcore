@@ -55,7 +55,7 @@ def _get_mtimes(loc):
             d[x] = st.st_mtime
     return d
 
-def _write_mtime_cache(mtimes, data, location, master_mtime):
+def _write_mtime_cache(mtimes, data, location):
     old = os.umask(0115)
     try:
         if not ensure_dirs(os.path.dirname(location),
@@ -76,7 +76,6 @@ def _write_mtime_cache(mtimes, data, location, master_mtime):
                      '\t'.join(rev_data[cat])))
             else:
                 f.write("%s\t%i\n" % (cat, mtime))
-        f.write(".\t%i\n" % master_mtime)
         f.close()
         del f
     finally:
@@ -124,19 +123,6 @@ def _caching_grab_virtuals(repo, cache_basedir):
     virtuals = {}
     update = False
     cache = _read_mtime_cache(pjoin(cache_basedir, 'virtuals.cache'))
-    master_mtime = os.stat(repo.location).st_mtime
-    if master_mtime == long(cache.pop('.', [-1])[0]):
-        # short cut.
-        for data in cache.itervalues():
-            d = _convert_cached_virtuals(data)
-            if d is None:
-                # merde.
-                virtuals = {}
-                break
-            _merge_virtuals(virtuals, d)
-        else:
-            _finalize_virtuals(virtuals)
-            return virtuals
 
     existing = _get_mtimes(repo.location)
     for cat, mtime in existing.iteritems():
@@ -145,15 +131,16 @@ def _caching_grab_virtuals(repo, cache_basedir):
             d = _convert_cached_virtuals(d)
             if d is not None:
                 _merge_virtuals(virtuals, d)
-        if d is None:
-            update = True
-            _collect_virtuals(virtuals, repo.itermatch(
-                packages.PackageRestriction("category",
-                    values.StrExactMatch(cat))))
+                continue
+
+        update = True
+        _collect_virtuals(virtuals, repo.itermatch(
+            packages.PackageRestriction("category",
+                values.StrExactMatch(cat))))
 
     if update or cache:
         _write_mtime_cache(existing, virtuals,
-            pjoin(cache_basedir, 'virtuals.cache'), master_mtime)
+            pjoin(cache_basedir, 'virtuals.cache'))
     _finalize_virtuals(virtuals)
     return virtuals
 

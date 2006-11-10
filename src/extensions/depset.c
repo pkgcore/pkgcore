@@ -194,31 +194,28 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 goto internal_parse_depset_error;
             }
             p++;
-            if(!(item = internal_parse_depset(dep_str, &p, has_conditionals,
+            if(!(tmp = internal_parse_depset(dep_str, &p, has_conditionals,
                 element_func, enable_or, 0)))
                 goto internal_parse_depset_error;
 
-            if(item == Py_None) {
-                Py_DECREF(item);
+            if(tmp == Py_None) {
+                Py_DECREF(tmp);
                 Err_SetParse(dep_str, "empty payload", start, p);
                 goto internal_parse_depset_error;
 
-            } else if(PyTuple_CheckExact(item)) {
-                if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
+            } else if(!PyTuple_CheckExact(tmp)) {
+                item = PyTuple_New(1);
+                if(!tmp) {
                     Py_DECREF(item);
                     goto internal_parse_depset_error;
                 }
-                tmp = PyObject_Call(pkgcore_depset_PkgAnd, item, kwds);
-                Py_DECREF(kwds);
-                Py_DECREF(item);
-                if(!tmp)
-                    goto internal_parse_depset_error;
-            
-                item = make_use_conditional(start, conditional_end, tmp);
-                Py_DECREF(tmp);
-                if(!item)
-                    goto internal_parse_depset_error;
+                PyTuple_SET_ITEM(item, 0, tmp);
+                tmp = item;
             }
+            item = make_use_conditional(start, conditional_end, tmp);
+            Py_DECREF(tmp);
+            if(!item)
+                goto internal_parse_depset_error;
             *has_conditionals = 1;
 
         } else if ('|' == *start) {

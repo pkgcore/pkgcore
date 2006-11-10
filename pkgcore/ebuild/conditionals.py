@@ -13,7 +13,12 @@ from pkgcore.restrictions import packages, values, boolean
 from pkgcore.util.iterables import expandable_chain
 from pkgcore.util.lists import iflatten_instance
 from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.errors import ParseError
 
+try:
+    from pkgcore.ebuild._depset import parse_depset
+except ImportError:
+    parse_depset = None
 
 class DepSet(boolean.AndRestriction):
 
@@ -29,7 +34,7 @@ class DepSet(boolean.AndRestriction):
     __inst_caching__ = False
 
     def __init__(self, dep_str, element_class, \
-        operators={"||":packages.OrRestriction,"":packages.AndRestriction},
+        operators=None,
         element_func=None):
 
         """
@@ -43,12 +48,23 @@ class DepSet(boolean.AndRestriction):
         @param element_class: class of generated elements
         """
 
+        
         sf = object.__setattr__
         sf(self, "_known_conditionals", None)
-        sf(self, "restrictions", [])
         sf(self, "element_class", element_class)
         if element_func is None:
             element_func = element_class
+
+        if parse_depset is not None and operators is None:
+            has_conditionals, restrictions = parse_depset(dep_str, element_func,
+                True)
+            sf(self, "_node_conds", has_conditionals)
+            sf(self, "restrictions", restrictions)
+            return
+
+        sf(self, "restrictions", [])
+        if operators is None:
+            operators = {"||":boolean.OrRestriction,"":boolean.AndRestriction}
 
         raw_conditionals = []
         depsets = [self.restrictions]
@@ -171,7 +187,10 @@ class DepSet(boolean.AndRestriction):
                                 continue
                     elif not node.restriction.match(cond_dict):
                         continue
-                    stack += [packages.AndRestriction, iter(node.payload)]
+                    if not isinstance(node.payload, tuple):
+                        stack += [packages.AndRestriction, iter((node.payload))]
+                    else:
+                        stack += [packages.AndRestriction, iter(node.payload)]
                 else:
                     stack += [node.change_restrictions,
                               iter(node.restrictions)]
@@ -296,14 +315,3 @@ def stringify_boolean(node, func=str):
     elif isinstance(node, DepSet):
         return ' '.join(stringify_boolean(x, func) for x in node.restrictions)
     return func(node)
-
-
-class ParseError(Exception):
-
-    def __init__(self, s, token=None):
-        if token is not None:
-            Exception.__init__(self, "%s is unparseable\nflagged token- %s" %
-                               (s, token))
-        else:
-            Exception.__init__(self, "%s is unparseable" % (s,))
-        self.dep_str, self.token = s, token

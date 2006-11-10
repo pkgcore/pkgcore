@@ -10,17 +10,17 @@ from pkgcore.ebuild.errors import InvalidCPV
 import re
 from pkgcore.package import base
 # do this to break the cycle.
-from pkgcore.util.demandload import demandload
+from pkgcore.util.demandload import demandload, demand_compile
 demandload(globals(), "pkgcore.ebuild:atom")
 
-suffix_regexp = re.compile("^(alpha|beta|rc|pre|p)(\\d*)$")
+suffix_regexp = demand_compile("^(alpha|beta|rc|pre|p)(\\d*)$")
 suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 
 # while the package section looks fugly, there is a reason for it-
 # to prevent version chunks from showing up in the package
 
 valid_cat = "[a-zA-Z0-9][-a-zA-Z0-9+._]+"
-parser = re.compile(
+parser = demand_compile(
     "^(?P<key>(?P<category>(?:%s)(?:/%s)*)/"
     "(?P<package>[a-zA-Z0-9+][a-zA-Z0-9_+]*"
     "(?:-(?:[0-9]+[a-zA-Z+]{2,}[_+a-zA-Z0-9]*|[a-zA-Z+][a-zA-Z0-9+_]*))*))"

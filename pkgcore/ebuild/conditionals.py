@@ -105,9 +105,13 @@ class DepSet(boolean.AndRestriction):
 
                         depsets[-2].append(
                             packages.Conditional("use", c, tuple(depsets[-1])))
+                        
                     else:
-                        depsets[-2].append(
-                            operators[raw_conditionals[-1]](finalize=True,
+                        if len(depsets[-1]) == 1:
+                            depsets[-2].append(depsets[-1][0])
+                        else:
+                            depsets[-2].append(
+                                operators[raw_conditionals[-1]](finalize=True,
                                                             *depsets[-1]))
 
                     raw_conditionals.pop()

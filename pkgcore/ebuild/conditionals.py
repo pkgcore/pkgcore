@@ -32,6 +32,7 @@ class DepSet(boolean.AndRestriction):
     negate = False
 
     __inst_caching__ = False
+    parse_depset = parse_depset
 
     def __init__(self, dep_str, element_class, \
         operators=None,
@@ -55,10 +56,10 @@ class DepSet(boolean.AndRestriction):
         if element_func is None:
             element_func = element_class
 
-        if parse_depset is not None:
+        if self.parse_depset is not None:
             restrictions = None
             if operators is None:
-                has_conditionals, restrictions = parse_depset(dep_str, 
+                has_conditionals, restrictions = self.parse_depset(dep_str, 
                     element_func, packages.AndRestriction,
                     packages.OrRestriction)
             else:
@@ -66,7 +67,7 @@ class DepSet(boolean.AndRestriction):
                     if x not in ("", "||"):
                         break
                 else:
-                    has_conditionals, restrictions = parse_depset(dep_str,
+                    has_conditionals, restrictions = self.parse_depset(dep_str,
                         element_func, operators.get(""), operators.get("||"))
             
             if restrictions is not None:

@@ -3,23 +3,36 @@
 
 from pkgcore.test import TestCase
 
-from pkgcore.ebuild.conditionals import DepSet, ParseError
+from pkgcore.ebuild import conditionals
+from pkgcore.ebuild.errors import ParseError
 from pkgcore.restrictions import boolean, packages
 from pkgcore.util.currying import post_curry
 from pkgcore.util.iterables import expandable_chain
 from pkgcore.util.lists import iflatten_instance
 
-def gen_depset(string, operators=None, func=None):
-    if func is not None:
-        kwds = {"element_func":func}
-    else:
-        kwds = {}
-    if operators is None:
-        operators = {"":boolean.AndRestriction, "||":boolean.OrRestriction}
-    return DepSet(string, str, operators=operators, **kwds)
 
-class DepSetParsingTest(TestCase):
+class base(TestCase):
 
+    class depset_kls(conditionals.DepSet):
+        parse_depset = None
+
+    depset_kls = staticmethod(depset_kls)
+    
+    def gen_depset(self, string, operators=None, func=None):
+        if func is not None:
+            kwds = {"element_func":func}
+        else:
+            kwds = {}
+        if operators is None:
+            operators = {"":boolean.AndRestriction, "||":boolean.OrRestriction}
+        return self.depset_kls(string, str, operators=operators, **kwds)
+
+
+class native_DepSetParsingTest(base):
+
+    def f(self, x):
+        self.assertRaises(ParseError, self.gen_depset, x)
+    
     # generate a lot of parse error assertions.
     for x in ("( )", "( a b c", "(a b c )",
         "( a b c)", "()", "x?( a )",
@@ -30,8 +43,7 @@ class DepSetParsingTest(TestCase):
         "|| ( x?() )", "|| (x )", "|| ( x)",
         "a|", "a?", "a(b", "a)", "a||b",
         "a(", "a)b", "x? y", "( x )?", "||?"):
-        locals()["test assert ParseError '%s'" % x] = post_curry(
-            TestCase.assertRaises, ParseError, gen_depset, x)
+        locals()["test assert ParseError '%s'" % x] = post_curry(f, x)
     del x
 
     @staticmethod
@@ -78,7 +90,7 @@ class DepSetParsingTest(TestCase):
                     yield x
         self.assertFalse(depth)
 
-    def check(self, s, func=gen_depset):
+    def check(self, s, func=base.gen_depset):
         if isinstance(s, (list, tuple)):
             s, v = s[:]
             v = list(v)
@@ -87,7 +99,7 @@ class DepSetParsingTest(TestCase):
                     v[idx] = set(x)
         else:
             v = s.split()
-        self.assertEqual(list(self.flatten_restricts(func(s))), list(v))
+        self.assertEqual(list(self.flatten_restricts(func(self, s))), list(v))
 
     # generate a lot of assertions of parse results.
     # if it's a list, first arg is string, second is results, if
@@ -132,23 +144,30 @@ class DepSetParsingTest(TestCase):
 
     def test_element_func(self):
         self.assertEqual(
-            gen_depset("asdf fdas", func=post_curry(str)).element_class,
+            self.gen_depset("asdf fdas", func=post_curry(str)).element_class,
             "".__class__)
 
     def test_disabling_or(self):
         self.assertRaises(
-            ParseError, gen_depset, "|| ( a b )",
+            ParseError, self.gen_depset, "|| ( a b )",
             {"operators":{"":boolean.AndRestriction}})
 
 
-class DepSetConditionalsInspectionTest(TestCase):
+class cpy_DepSetParsingTest(native_DepSetParsingTest):
+
+    depset_kls = staticmethod(conditionals.DepSet)
+    if not conditionals.DepSet.parse_depset:
+        skip = "extension not available"
+
+
+class native_DepSetConditionalsInspectionTest(base):
 
     def test_sanity_has_conditionals(self):
-        self.assertFalse(bool(gen_depset("a b").has_conditionals))
+        self.assertFalse(bool(self.gen_depset("a b").has_conditionals))
         self.assertFalse(bool(
-                gen_depset("( a b ) || ( c d )").has_conditionals))
-        self.assertTrue(bool(gen_depset("x? ( a )").has_conditionals))
-        self.assertTrue(bool(gen_depset("( x? ( a ) )").has_conditionals))
+                self.gen_depset("( a b ) || ( c d )").has_conditionals))
+        self.assertTrue(bool(self.gen_depset("x? ( a )").has_conditionals))
+        self.assertTrue(bool(self.gen_depset("( x? ( a ) )").has_conditionals))
 
     def flatten_cond(self, c):
         l = set()
@@ -170,7 +189,7 @@ class DepSetConditionalsInspectionTest(TestCase):
     def check_conds(self, s, r, msg=None):
         nc = dict(
             (k, self.flatten_cond(v))
-            for (k, v) in gen_depset(s).node_conds.iteritems())
+            for (k, v) in self.gen_depset(s).node_conds.iteritems())
         d = dict(r)
         for k, v in d.iteritems():
             if isinstance(v, basestring):
@@ -195,12 +214,22 @@ class DepSetConditionalsInspectionTest(TestCase):
         ):
         locals()["test _node_conds %s" % s[0]] = post_curry(check_conds, *s)
 
+
+class cpy_DepSetConditionalsInspectionTest(
+    native_DepSetConditionalsInspectionTest):
+
+    depset_kls = staticmethod(conditionals.DepSet)
+    if not conditionals.DepSet.parse_depset:
+        skip = "extension not available"
+
+
 def convert_to_seq(s):
     if isinstance(s, (list, tuple)):
         return s
     return [s]
 
-class DepSetEvaluateTest(TestCase):
+
+class native_DepSetEvaluateTest(base):
     
     def test_evaluation(self):
         for vals in (("y", "x? ( y ) !x? ( z )", "x"),
@@ -217,9 +246,15 @@ class DepSetEvaluateTest(TestCase):
                 use = convert_to_seq(vals[2])
             if len(vals) > 3:
                 tristate = convert_to_seq(vals[3])
-            collapsed = gen_depset(s).evaluate_depset(use, 
+            collapsed = self.gen_depset(s).evaluate_depset(use, 
                 tristate_filter=tristate)
             self.assertEqual(str(collapsed), result, msg=
                 "%r does not equal %r\nraw depset: %r\nuse: %r, tristate: %r" % 
                     (str(collapsed), result, s, use, tristate))
        
+
+class cpy_DepSetEvaluateTest(native_DepSetEvaluateTest):
+
+    depset_kls = staticmethod(conditionals.DepSet)
+    if not conditionals.DepSet.parse_depset:
+        skip = "extension not available"

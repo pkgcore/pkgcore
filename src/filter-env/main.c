@@ -634,7 +634,6 @@ static const char *
 walk_command_complex(const char *p, const char *end, char endchar,
     const char interpret_level)
 {
-    int here_count = 0;
     const char *start = p;
     while (p < end) {
         if (*p == endchar || 
@@ -644,10 +643,9 @@ walk_command_complex(const char *p, const char *end, char endchar,
         } else if ('\\' == *p) {
             ++p;
         } else if ('<' == *p) {
-            ++here_count;
-            if (2 == here_count && interpret_level == COMMAND_PARSING) {
+            if(end - 1 != p && '<' == p[1] && interpret_level == COMMAND_PARSING) {
+                p++;
                 p = walk_here_command(p, end);
-                here_count = 0;
             } else {
                 d2printf("noticed '<', interpret_level=%i\n", interpret_level);
             }

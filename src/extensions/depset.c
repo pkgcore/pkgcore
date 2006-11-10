@@ -182,8 +182,9 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                     start, p);
                 goto internal_parse_depset_error;
             }
-            if(*p)
-                p++;
+
+            if(!*p)
+                p--;
             break;
 
         } else if('?' == p[-1]) {
@@ -320,6 +321,20 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
         SKIP_SPACES(p);
         start = p;
     }
+
+    if(initial_frame) {
+        if(*p) {
+            Err_SetParse(dep_str, "stray ')' encountered", start, p);
+            goto internal_parse_depset_error;
+        }
+    } else {
+        if('\0' == *p) {
+            Err_SetParse(dep_str, "depset lacks closure", *ptr, p);
+            goto internal_parse_depset_error;
+        }
+        p++;
+    }
+
     if(!restrictions) {
         if(item_count == 0) {
             restrictions = Py_None;

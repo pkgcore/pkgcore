@@ -79,7 +79,7 @@ class StrRegex(StrMatch):
 
     __inst_caching__ = True
 
-    def __init__(self, regex, case_sensitive=True, match=False, **kwds):
+    def __init__(self, regex, case_sensitive=True, match=False, negate=False):
 
         """
         @param regex: regex pattern to match
@@ -88,10 +88,10 @@ class StrRegex(StrMatch):
         @keyword negate: should the match results be negated?
         """
 
-        super(StrRegex, self).__init__(**kwds)
         sf = object.__setattr__
         sf(self, "regex", regex)
         sf(self, "ismatch", match)
+        sf(self, "negate", negate)
         flags = 0
         if not case_sensitive:
             flags = re.I
@@ -157,7 +157,7 @@ class StrExactMatch(StrMatch):
 
     __inst_caching__ = True
 
-    def __init__(self, exact, case_sensitive=True, **kwds):
+    def __init__(self, exact, case_sensitive=True, negate=False):
 
         """
         @param exact: exact string to match
@@ -165,8 +165,8 @@ class StrExactMatch(StrMatch):
         @keyword negate: should the match results be negated?
         """
 
-        super(StrExactMatch, self).__init__(**kwds)
         sf = object.__setattr__
+        sf(self, "negate", negate)
         if not case_sensitive:
             sf(self, "flags", re.I)
             sf(self, "exact", str(exact).lower())
@@ -223,7 +223,7 @@ class StrGlobMatch(StrMatch):
 
     __inst_caching__ = True
 
-    def __init__(self, glob, case_sensitive=True, prefix=True, **kwds):
+    def __init__(self, glob, case_sensitive=True, prefix=True, negate=False):
 
         """
         @param glob: string chunk that must be matched
@@ -233,8 +233,8 @@ class StrGlobMatch(StrMatch):
         @keyword negate: should the match results be negated?
         """
 
-        super(StrGlobMatch, self).__init__(**kwds)
         sf = object.__setattr__
+        sf(self, "negate", negate)
         if not case_sensitive:
             sf(self, "flags", re.I)
             sf(self, "glob", str(glob).lower())
@@ -341,10 +341,11 @@ class ComparisonMatch(base):
             "result must be less then or equal to".
         @param negate: should the results be negated?
         """
-        base.__init__(self, negate=negate)
+        
         sf = object.__setattr__
         sf(self, "cmp_func", cmp_func)
-
+        sf(self, "negate", negate)
+        
         if not isinstance(matching_vals, (tuple, list)):
             if isinstance(matching_vals, basestring):
                 matching_vals = self.convert_str_op(matching_vals)
@@ -405,14 +406,15 @@ class ContainmentMatch(base):
         @keyword negate: should the match results be negated?
         """
 
-        object.__setattr__(self, "all", bool(kwds.pop("all", False)))
-        super(ContainmentMatch, self).__init__(**kwds)
+        sf = object.__setattr__
+        sf(self, "all", bool(kwds.pop("all", False)))
+
         # note that we're discarding any specialized __getitem__ on vals here.
         # this isn't optimal, and should be special cased for known
         # types (lists/tuples fex)
-        object.__setattr__(self, "vals", frozenset(vals))
-        object.__setattr__(self, "_hash",
-            hash((self.all, self.negate, self.vals)))
+        sf(self, "vals", frozenset(vals))
+        sf(self, "negate", kwds.get("negate", False))
+        sf(self, "_hash", hash((self.all, self.negate, self.vals)))
 
     def __hash__(self):
         return self._hash
@@ -580,7 +582,7 @@ class FlatteningRestriction(base):
         @type  childrestriction: restriction
         @param childrestriction: restriction applied to the flattened list.
         """
-        base.__init__(self, negate)
+        object.__setattr__(self, "negate", negate)
         object.__setattr__(self, "dont_iter", dont_iter)
         object.__setattr__(self, "restriction", childrestriction)
 
@@ -615,7 +617,7 @@ class FunctionRestriction(base):
         restriction using this class you should only use it if it is
         very unlikely backend-specific optimizations will be possible.
         """
-        base.__init__(self, negate)
+        object.__setattr__(self, 'negate', negate)
         object.__setattr__(self, 'func', func)
 
     def match(self, val):

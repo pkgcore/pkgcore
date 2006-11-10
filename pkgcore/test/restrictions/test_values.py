@@ -8,6 +8,9 @@ from pkgcore.restrictions import values
 
 class SillyBool(values.base):
     """Extra stupid version of AlwaysBool to test base.force_{True,False}."""
+    def __init__(self, negate=False):
+        object.__setattr__(self, "negate", negate)
+
     def match(self, something):
         return not self.negate
 

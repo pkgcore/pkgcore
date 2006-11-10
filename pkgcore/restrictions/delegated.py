@@ -24,8 +24,7 @@ class delegate(restriction.base):
     type = packages.package_type
     inst_caching = False
 
-    def __init__(self, transform_func, data,
-                 *args, **kwargs):
+    def __init__(self, transform_func, data, negate=False):
         """
 
         @param transform_func: callable inovked with data, pkg, and mode
@@ -36,7 +35,7 @@ class delegate(restriction.base):
         if not callable(transform_func):
             raise TypeError(transform_func)
 
-        restriction.base.__init__(self, *args, **kwargs)
+        object.__setattr__(self, "negate", negate)
         object.__setattr__(self, "_transform", transform_func)
         object.__setattr__(self, "_data", data)
 

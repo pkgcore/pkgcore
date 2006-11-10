@@ -9,6 +9,10 @@ from pkgcore.restrictions import restriction
 
 class SillyBool(restriction.base):
     """Extra stupid version of AlwaysBool to test base.force_{True,False}."""
+
+    def __init__(self, negate=False):
+        object.__setattr__(self, 'negate', negate)
+    
     def match(self, *args, **kwargs):
         return not self.negate
 

@@ -25,12 +25,6 @@ class base(object):
     __slots__ = ("negate",)
     package_matching = False
 
-    def __init__(self, negate=False):
-        """
-        @param negate: should the match results be negated?
-        """
-        object.__setattr__(self, "negate", negate)
-
     def __setattr__(self, attr, val):
         raise TypeError(self, "is immutable")
 
@@ -68,7 +62,7 @@ class AlwaysBool(base):
             L{pkgcore.restrictions.values.value_type}
         @param negate: boolean to return for the match
         """
-        base.__init__(self, negate=negate)
+        object.__setattr__(self, "negate", negate)
         object.__setattr__(self, "type", node_type)
 
     def match(self, *a, **kw):
@@ -152,8 +146,8 @@ class AnyMatch(base):
         @type  node_type: string
         @param node_type: type of this restriction.
         """
-        base.__init__(self, negate)
         sf = object.__setattr__
+        sf(self, "negate", negate)
         sf(self, "restriction", childrestriction)
         sf(self, "type", node_type)
 

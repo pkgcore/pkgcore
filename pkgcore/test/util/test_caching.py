@@ -136,6 +136,8 @@ def gen_test(WeakInstMeta):
                     raise self.error
 
             self.assertRaises(TypeError, weak_forced, [])
+            self.assertRaises(TypeError, weak_forced, None,
+                disable_inst_caching=True)
 
         # These are applied in reverse order. Effect is UserWarning is
         # ignored and everything else is an error.

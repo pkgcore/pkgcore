@@ -499,7 +499,7 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
                 if((result = PyObject_IsTrue(obj)) < 0)
                     return NULL;
             }
-            if(CACHING_FORCED(self->flags) && !result) {
+            if(CACHING_FORCED(self->flags) && result) {
                 PyErr_SetString(PyExc_TypeError,
                     "instance caching cannot be disabled for this type");
                 return NULL;

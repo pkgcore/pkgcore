@@ -52,9 +52,20 @@ class Formatter(object):
             arguments.
           - Formatter subclasses might special-case certain objects.
 
-        Also accepts wrap and autoline as keyword arguments. Effect is
+        Accepts wrap and autoline as keyword arguments. Effect is
         the same as setting them before the write call and resetting
         them afterwards.
+
+        Accepts first_prefixes and later_prefixes as keyword
+        arguments. They should be sequences that are temporarily
+        appended to the first_prefix and later_prefix attributes.
+
+        Accepts prefixes as a keyword argument. Effect is the same as
+        setting first_prefixes and later_prefixes to the same value.
+
+        Accepts first_prefix, later_prefix and prefix as keyword
+        argument. Effect is the same as setting first_prefixes,
+        later_prefixes or prefixes to a one-element tuple.
 
         The formatter has a couple of attributes that are useful as argument
         to write.
@@ -75,6 +86,16 @@ class Formatter(object):
         @param color: color to change to. A default is used if omitted.
                       C{None} resets to the default color.
         """
+
+    def error(self, message):
+        """Format a string as an error message."""
+        self.write(message, prefixes=(
+                self.fg('red'), self.bold, '!!! ', self.reset))
+
+    def warn(self, message):
+        """Format a string as a warning message."""
+        self.write(message, prefixes=(
+                self.fg('yellow'), self.bold, '*** ', self.reset))
 
 
 class PlainTextFormatter(Formatter):
@@ -136,71 +157,109 @@ class PlainTextFormatter(Formatter):
         encoding = getattr(self.stream, 'encoding', '') or 'ascii'
         wrap = kwargs.get('wrap', self.wrap)
         autoline = kwargs.get('autoline', self.autoline)
+        prefixes = kwargs.get('prefixes')
+        first_prefixes = kwargs.get('first_prefixes')
+        later_prefixes = kwargs.get('later_prefixes')
+        if prefixes is not None:
+            if first_prefixes is not None or later_prefixes is not None:
+                raise TypeError(
+                    'do not pass first_prefixes or later_prefixes '
+                    'if prefixes is passed')
+            first_prefixes = later_prefixes = prefixes
+        prefix = kwargs.get('prefix')
+        first_prefix = kwargs.get('first_prefix')
+        later_prefix = kwargs.get('later_prefix')
+        if prefix is not None:
+            if first_prefix is not None or later_prefix is not None:
+                raise TypeError(
+                    'do not pass first_prefix or later_prefix with prefix')
+            first_prefix = later_prefix = prefix
+        if first_prefix is not None:
+            if first_prefixes is not None:
+                raise TypeError(
+                    'do not pass both first_prefix and first_prefixes')
+            first_prefixes = (first_prefix,)
+        if later_prefix is not None:
+            if later_prefixes is not None:
+                raise TypeError(
+                    'do not pass both later_prefix and later_prefixes')
+            later_prefixes = (later_prefix,)
+        if first_prefixes is not None:
+            self.first_prefix.extend(first_prefixes)
+        if later_prefixes is not None:
+            self.later_prefix.extend(later_prefixes)
+        # Remove this nested try block once we depend on python 2.5
         try:
-            for arg in args:
-                # If we're at the start of the line, write our prefix.
-                # There is a deficiency here: if neither our arg nor our
-                # prefix affect _pos (both are escape sequences or empty)
-                # we will write prefix more than once. This should not
-                # matter.
-                if not self._pos:
-                    self._write_prefix(wrap)
-                while callable(arg):
-                    arg = arg(self)
-                if arg is None:
-                    continue
-                if not isinstance(arg, basestring):
-                    arg = str(arg)
-                is_unicode = isinstance(arg, unicode)
-                while wrap and self._pos + len(arg) > self.width:
-                    # We have to split.
-                    maxlen = self.width - self._pos
-                    space = arg.rfind(' ', 0, maxlen)
-                    if space == -1:
-                        # No space to split on.
+            try:
+                for arg in args:
+                    # If we're at the start of the line, write our prefix.
+                    # There is a deficiency here: if neither our arg nor our
+                    # prefix affect _pos (both are escape sequences or empty)
+                    # we will write prefix more than once. This should not
+                    # matter.
+                    if not self._pos:
+                        self._write_prefix(wrap)
+                    while callable(arg):
+                        arg = arg(self)
+                    if arg is None:
+                        continue
+                    if not isinstance(arg, basestring):
+                        arg = str(arg)
+                    is_unicode = isinstance(arg, unicode)
+                    while wrap and self._pos + len(arg) > self.width:
+                        # We have to split.
+                        maxlen = self.width - self._pos
+                        space = arg.rfind(' ', 0, maxlen)
+                        if space == -1:
+                            # No space to split on.
 
-                        # If we are on the first line we can simply go to
-                        # the next (this helps if the "later" prefix is
-                        # shorter and should not really matter if not).
+                            # If we are on the first line we can simply go to
+                            # the next (this helps if the "later" prefix is
+                            # shorter and should not really matter if not).
 
-                        # If we are on the second line and have already
-                        # written something we can also go to the next
-                        # line.
-                        if self._in_first_line or self._wrote_something:
-                            bit = ''
+                            # If we are on the second line and have already
+                            # written something we can also go to the next
+                            # line.
+                            if self._in_first_line or self._wrote_something:
+                                bit = ''
+                            else:
+                                # Forcibly split this as far to the right as
+                                # possible.
+                                bit = arg[:maxlen]
+                                arg = arg[maxlen:]
                         else:
-                            # Forcibly split this as far to the right as
-                            # possible.
-                            bit = arg[:maxlen]
-                            arg = arg[maxlen:]
-                    else:
-                        bit = arg[:space]
-                        # Omit the space we split on.
-                        arg = arg[space+1:]
-                    if isinstance(bit, unicode):
-                        bit = bit.encode(encoding, 'replace')
-                    self.stream.write(bit)
-                    self.stream.write('\n')
-                    self._pos = 0
-                    self._in_first_line = False
-                    self._wrote_something = False
-                    self._write_prefix(wrap)
+                            bit = arg[:space]
+                            # Omit the space we split on.
+                            arg = arg[space+1:]
+                        if isinstance(bit, unicode):
+                            bit = bit.encode(encoding, 'replace')
+                        self.stream.write(bit)
+                        self.stream.write('\n')
+                        self._pos = 0
+                        self._in_first_line = False
+                        self._wrote_something = False
+                        self._write_prefix(wrap)
 
-                # This fits.
-                self._wrote_something = True
-                self._pos += len(arg)
-                if is_unicode:
-                    arg = arg.encode(encoding, 'replace')
-                self.stream.write(arg)
-            if autoline:
-                self.stream.write('\n')
-                self._wrote_something = False
-                self._pos = 0
-                self._in_first_line = True
-        except IOError, e:
-            if e.errno == errno.EPIPE:
-                raise StreamClosed(e)
-            raise
+                    # This fits.
+                    self._wrote_something = True
+                    self._pos += len(arg)
+                    if is_unicode:
+                        arg = arg.encode(encoding, 'replace')
+                    self.stream.write(arg)
+                if autoline:
+                    self.stream.write('\n')
+                    self._wrote_something = False
+                    self._pos = 0
+                    self._in_first_line = True
+            except IOError, e:
+                if e.errno == errno.EPIPE:
+                    raise StreamClosed(e)
+                raise
+        finally:
+            if first_prefixes is not None:
+                self.first_prefix = self.first_prefix[:-len(first_prefixes)]
+            if later_prefixes is not None:
+                self.later_prefix = self.later_prefix[:-len(later_prefixes)]
 
     def fg(self, color=None):
         return ''

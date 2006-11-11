@@ -1,5 +1,18 @@
-#!/bin/sh
+#!/usr/bin/env python
 
-# Wrapper using our custom pylintrc and plugin.
+"""Wrapper that adds our custom pylintrc and plugin."""
 
-PYTHONPATH="lintplugin:$PYTHONPATH" pylint --rcfile=dev-notes/pylintrc "$@"
+import sys
+import os.path
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lintplugin'))
+
+from pylint import lint
+
+try:
+    lint.Run(['--rcfile', os.path.join(
+                os.path.dirname(__file__), 'dev-notes', 'pylintrc')] +
+             sys.argv[1:])
+except KeyboardInterrupt:
+    sys.exit(1)
+

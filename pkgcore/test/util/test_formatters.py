@@ -46,8 +46,8 @@ class PlainTextFormatterTest(TestCase):
             stream = StringIO.StringIO()
             formatter = formatters.PlainTextFormatter(stream)
             formatter.width = 20
-            formatter.first_prefix = ['foon:']
-            formatter.write(autoline=False, wrap=True, *inputs)
+            formatter.write(autoline=False, wrap=True, first_prefix='foon:',
+                            *inputs)
             self.assertEqual(output, stream.getvalue())
 
     def test_later_prefix(self):
@@ -91,9 +91,8 @@ class PlainTextFormatterTest(TestCase):
             stream = StringIO.StringIO()
             formatter = formatters.PlainTextFormatter(stream)
             formatter.width = 10
-            formatter.later_prefix = ['foon']
             for input in inputs:
-                formatter.write(wrap=True, *input)
+                formatter.write(wrap=True, later_prefix='foon', *input)
             self.assertEquals(output, stream.getvalue())
 
 

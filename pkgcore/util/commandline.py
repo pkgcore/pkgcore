@@ -9,12 +9,15 @@ consistent commandline "look and feel" (and it tries to make life a
 bit easier too). They will probably want to use L{main} from an C{if
 __name__ == '__main__'} block too: it will take care of things like
 consistent exception handling.
+
+See dev-notes/commandline.rst for more complete documentation.
 """
 
 
 import sys
 import optparse
 import os.path
+import logging
 
 from pkgcore.config import load_config, errors
 
@@ -25,6 +28,35 @@ demandload.demandload(
     'pkgcore:version '
     )
 
+
+class FormattingHandler(logging.Handler):
+
+    """Logging handler printing through a formatter."""
+
+    def __init__(self, formatter):
+        logging.Handler.__init__(self)
+        # "formatter" clashes with a Handler attribute.
+        self.out = formatter
+
+    def emit(self, record):
+        if record.levelno >= logging.ERROR:
+            color = 'red'
+        elif record.levelno >= logging.WARNING:
+            color = 'yellow'
+        else:
+            color = 'cyan'
+        first_prefix = (self.out.fg(color), self.out.bold, record.levelname,
+                        self.out.reset, ' ', record.name, ': ')
+        later_prefix = (len(record.levelname) + len(record.name)) * ' ' + ' : '
+        self.out.first_prefix.extend(first_prefix)
+        self.out.later_prefix.append(later_prefix)
+        try:
+            for line in self.format(record).split('\n'):
+                self.out.write(line, wrap=True)
+        finally:
+            self.out.later_prefix.pop()
+            for i in xrange(len(first_prefix)):
+                self.out.first_prefix.pop()
 
 
 # Mix in object here or properties do not work (Values is an oldstyle class).
@@ -111,6 +143,7 @@ def debug_callback(option, opt_str, value, parser):
     parser.values.debug = True
     config = parser.values.config
     config.debug = True
+    logging.root.setLevel(logging.DEBUG)
     for collapsed in config.collapsed_configs.itervalues():
         collapsed.debug = True
 
@@ -180,10 +213,12 @@ class OptionParser(optparse.OptionParser):
         return self.values_class(defaults)
 
     def check_values(self, values, args):
-        """Do some basic sanity checking."""
-        # optparse defaults unset lists to None. An empty sequence is
-        # much more convenient (lets you use them in a for loop
-        # without a None check) so fix those up:
+        """Do some basic sanity checking.
+
+        optparse defaults unset lists to None. An empty sequence is
+        much more convenient (lets you use them in a for loop without
+        a None check) so we fix those up (based on action "append").
+        """
         for container in self.option_groups + [self]:
             for option in container.option_list:
                 if option.action == 'append':
@@ -194,14 +229,8 @@ class OptionParser(optparse.OptionParser):
 def main(subcommands, args=None, sys_exit=True):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
-    Options are parsed before the config is loaded. This means you
-    should do any extra validation of options that you do not need the
-    config for in check_values of your option parser (if that fails
-    the config is never loaded, so it will be faster).
-
-    Handling the unparsed "args" from the option parser should be done
-    in check_values too (added to the values object). Unhandled args
-    are treated as an error by this function.
+    Takes one or more combinations of option parser and main func and
+    runs them, taking care of exception handling and some other things.
 
     Any ConfigurationErrors raised from your function (by the config
     manager) are handled. Other exceptions are not (trigger a traceback).
@@ -268,6 +297,10 @@ def main(subcommands, args=None, sys_exit=True):
                 formatter_factory = formatters.get_formatter
             out = formatter_factory(sys.stdout)
             err = formatter_factory(sys.stderr)
+            if logging.root.handlers:
+                # Remove the default handler.
+                logging.root.handlers.pop(0)
+            logging.root.addHandler(FormattingHandler(err))
             exitstatus = main_func(options, out, err)
     except errors.ConfigurationError, e:
         if options is not None and options.debug:

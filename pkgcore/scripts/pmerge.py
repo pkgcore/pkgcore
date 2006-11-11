@@ -248,15 +248,6 @@ def unmerge(out, err, vdb, tokens, options, world_set=None):
     out.write("finished")
 
 
-def write_error(out, message):
-    # XXX should have a convenience thing on formatter for this.
-    out.first_prefix = [out.fg('red'), out.bold, '!!! ', out.reset]
-    out.later_prefix = out.first_prefix
-    out.write(message, wrap=True)
-    out.first_prefix = []
-    out.later_prefix = []
-
-
 def get_pkgset(config, err, setname):
     try:
         return config.pkgset[setname]
@@ -287,7 +278,7 @@ def main(options, out, err):
             unmerge(
                 out, err, vdb, options.targets, options, world_set)
         except (parserestrict.ParseError, Failure), e:
-            write_error(out, str(e))
+            out.error(str(e))
             return 1
         return
 
@@ -317,25 +308,23 @@ def main(options, out, err):
         try:
             a = parse_atom(token, all_repos, return_none=True)
         except parserestrict.ParseError, e:
-            write_error(out, str(e))
+            out.error(str(e))
             return 1
         if a is None:
             if token in config.pkgset:
-                write_error(
-                    out, 'No package matches for %r, but there is a set with '
+                out.error(
+                    'No package matches for %r, but there is a set with '
                     'that name. Use -s to specify a set.' % (token,))
                 return 2
             elif not options.ignore_failures:
-                write_error(out,
-                    'No matches for %r; ignoring' % token)
+                out.error('No matches for %r; ignoring' % token)
             else:
                 return -1
         else:
             atoms.append(a)
 
     if not atoms:
-        write_error(out,
-            'No targets specified- nothing to do')
+        out.error('No targets specified- nothing to do')
         return 1
 
     atoms = lists.stable_unique(atoms)
@@ -379,8 +368,8 @@ def main(options, out, err):
 #        print "\ncalling resolve for %s..." % restrict
         ret = resolver_inst.add_atom(restrict)
         if ret:
-            write_error(out, 'Resolver returned %r' % (ret,))
-            write_error(out, 'resolution failed')
+            out.error('Resolver returned %r' % (ret,))
+            out.error('resolution failed')
             failures.append(restrict)
             if not options.ignore_failures:
                 break
@@ -389,7 +378,7 @@ def main(options, out, err):
         out.write()
         out.write('Failures encountered:')
         for restrict in failures:
-            write_error(out, "failed '%s'" % (restrict,))
+            out.error("failed '%s'" % (restrict,))
             out.write('potentials:')
             match_count = 0
             for r in repo_utils.get_raw_repos(repos):
@@ -468,16 +457,14 @@ def main(options, out, err):
                 buildop.clean()
                 del built_pkg
             else:
-                write_error(out, "failure building %s: %s" % (pkgs[0],
-                    ret))
+                out.error("failure building %s: %s" % (pkgs[0], ret))
                 if not options.ignore_failures:
                     return 1
 
             # force this explicitly- can hold onto a helluva lot more
             # then we would like.
         if ret != True:
-            write_error(out,
-                "got %s for a phase execution for %s" % (ret, pkgs[0]))
+            out.error("got %s for a phase execution for %s" % (ret, pkgs[0]))
             if not options.ignore_failures:
                 return 1
         elif not options.fetchonly:

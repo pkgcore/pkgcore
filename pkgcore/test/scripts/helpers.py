@@ -58,7 +58,8 @@ class MainMixin(object):
         """
         values = self.parser.get_default_values()
         values._config = central.ConfigManager([kwargs], debug=True)
-        # optparse wants to manipulate the args.
+        # optparse needs a list (it does make a copy, but it uses [:]
+        # to do it, which is a noop on a tuple).
         options, args = self.parser.parse_args(list(args), values)
         self.assertFalse(args)
         return options

@@ -5,9 +5,6 @@
 """pkgcore plugins package."""
 
 
-import os
-import sys
+from pkgutil import extend_path
 
-__path__ = list(
-    os.path.abspath(os.path.join(path, 'pkgcore', 'plugins'))
-    for path in sys.path)
+__path__ = extend_path(__path__, __name__)

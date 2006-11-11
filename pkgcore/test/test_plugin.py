@@ -23,12 +23,9 @@ class ModulesTest(TestCase):
             os.mkdir(d)
             init = open(os.path.join(d, '__init__.py'), 'w')
             init.write('''
-import os
-import sys
+from pkgutil import extend_path
 
-__path__ = list(
-    os.path.abspath(os.path.join(path, 'mod_testplug'))
-    for path in sys.path)
+__path__ = extend_path(__path__, __name__)
 ''')
         plug = open(os.path.join(self.packdir, 'plug.py'), 'w')
         plug.write('''

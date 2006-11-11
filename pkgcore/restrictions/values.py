@@ -25,7 +25,7 @@ class base(restriction.base):
     restrictions! Use the C{type} attribute instead.
     """
 
-    __slots__ = ("_hash",)
+    __slots__ = ()
 
     type = restriction.value_type
 
@@ -35,6 +35,11 @@ class base(restriction.base):
     def force_False(self, pkg, attr, val):
         return not self.match(val)
 
+
+class hashed_base(base):
+
+    __slots__ = ("_hash")
+    
     def __hash__(self):
         return self._hash
 
@@ -71,21 +76,13 @@ class VersionRestriction(base):
     __slots__ = ()
 
 
-class StrMatch(base):
-    """Base string matching restriction.
-
-    All derivatives must be __slot__ based classes.
-    """
-    __slots__ = ("flags",)
-
-
-class StrRegex(StrMatch):
+class StrRegex(hashed_base):
 
     """
     regex based matching
     """
 
-    __slots__ = ('regex', '_matchfunc', 'ismatch', 'negate')
+    __slots__ = ('flags', 'regex', '_matchfunc', 'ismatch', 'negate')
 
     __inst_caching__ = True
 
@@ -155,13 +152,13 @@ class StrRegex(StrMatch):
         return result
 
 
-class StrExactMatch(StrMatch):
+class StrExactMatch(hashed_base):
 
     """
     exact string comparison match
     """
 
-    __slots__ = ('exact', 'flags', 'negate')
+    __slots__ = ('exact', 'case_sensitive', 'negate', '_hash')
 
     __inst_caching__ = True
 
@@ -176,27 +173,27 @@ class StrExactMatch(StrMatch):
         sf = object.__setattr__
         sf(self, "negate", negate)
         if not case_sensitive:
-            sf(self, "flags", re.I)
+            sf(self, "case_sensitive", False)
             sf(self, "exact", str(exact).lower())
         else:
-            sf(self, "flags", 0)
+            sf(self, "case_sensitive", True)
             sf(self, "exact", str(exact))
-        sf(self, "_hash", hash((self.exact, self.negate, self.flags)))
+        sf(self, "_hash", hash((self.exact, self.negate, self.case_sensitive)))
 
     def match(self, value):
-        if self.flags == re.I:
-            return (self.exact == value.lower()) != self.negate
-        else:
+        if self.case_sensitive:
             return (self.exact == value) != self.negate
+        else:
+            return (self.exact == value.lower()) != self.negate
 
     def intersect(self, other):
         s1, s2 = self.exact, other.exact
-        if other.flags and not self.flags:
+        if other.case_sensitive and not self.case_sensitive:
             s1 = s1.lower()
-        elif self.flags and not other.flags:
+        elif self.case_sensitive and not other.case_sensitive:
             s2 = s2.lower()
         if s1 == s2 and self.negate == other.negate:
-            if other.flags:
+            if other.case_sensitive:
                 return other
             return self
         return None
@@ -204,7 +201,7 @@ class StrExactMatch(StrMatch):
     def __eq__(self, other):
         return self is other or (self.exact == other.exact and
                 self.negate == other.negate and
-                self.flags == other.flags)
+                self.case_sensitive == other.case_sensitive)
 
     def __repr__(self):
         if self.negate:
@@ -219,13 +216,13 @@ class StrExactMatch(StrMatch):
         return "== "+self.exact
 
 
-class StrGlobMatch(StrMatch):
+class StrGlobMatch(hashed_base):
 
     """
     globbing matches; essentially startswith and endswith matches
     """
 
-    __slots__ = ('glob', 'prefix', 'negate')
+    __slots__ = ('glob', 'prefix', 'negate', 'flags')
 
     __inst_caching__ = True
 
@@ -308,7 +305,7 @@ def _mangle_cmp_val(val):
     return 0
 
 
-class ComparisonMatch(base):
+class ComparisonMatch(hashed_base):
     """Match if the comparison funcs return value is what's required."""
 
     _op_converter = {"=": (0,)}
@@ -390,7 +387,7 @@ class ComparisonMatch(base):
         return "%s %s" % (self.convert_op_str(self.matching_vals), self.data)
 
 
-class ContainmentMatch(base):
+class ContainmentMatch(hashed_base):
 
     """used for an 'in' style operation, 'x86' in ['x86','~x86'] for example
     note that negation of this *does* not result in a true NAND when all is on.
@@ -567,7 +564,7 @@ class ContainmentMatch(base):
         return s % ', '.join(map(str, self.vals))
 
 
-class FlatteningRestriction(base):
+class FlatteningRestriction(hashed_base):
 
     """Flatten the values passed in and apply the nested restriction."""
 
@@ -602,7 +599,7 @@ class FlatteningRestriction(base):
             id(self))
 
 
-class FunctionRestriction(base):
+class FunctionRestriction(hashed_base):
 
     """Convenience class for creating special restrictions."""
 

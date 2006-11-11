@@ -115,8 +115,8 @@ pkgcore_StrExactMatch_richcompare(pkgcore_StrExactMatch *self,
         result = Py_NotImplemented;
     } else if(self == other) {
         result = op == Py_EQ ? Py_True : Py_False;
-    } else if (self->flags == other->flags) {
-        result = op == Py_EQ ? Py_True : Py_False;
+    } else if (self->flags != other->flags) {
+        result = op == Py_NE ? Py_True : Py_False;
     } else {
         return PyObject_RichCompare(self->exact, other->exact, op);
     }

@@ -353,10 +353,15 @@ static PyTypeObject pkgcore_WeakValCacheType = {
 
 /* WeakInstMeta: metaclass for instance caching. */
 
+#define INST_CACHING    0x1
+#define FORCE_CACHING   0x2
+#define CACHING_ENABLED(flags)  (flags & INST_CACHING)
+#define CACHING_FORCED(flags)  (flags & FORCE_CACHING)
+
 typedef struct {
     PyHeapTypeObject type;
     PyObject *inst_dict;
-    int inst_caching;
+    int flags;
 } pkgcore_WeakInstMeta;
 
 static void
@@ -374,7 +379,7 @@ pkgcore_WeakInstMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     const char *name;
     PyTupleObject *bases;
     PyObject *d;
-    int inst_caching = 0;
+    int flags = 0;
     static char *kwlist[] = {"name", "bases", "dict", 0};
 
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sO!O!", kwlist,
@@ -383,22 +388,40 @@ pkgcore_WeakInstMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
                                      &PyDict_Type, &d))
         return NULL;
 
-    PyObject *cachesetting = PyMapping_GetItemString(d, "__inst_caching__");
-    if (cachesetting) {
-        inst_caching = PyObject_IsTrue(cachesetting);
-        Py_DECREF(cachesetting);
-        if (inst_caching < 0)
-            return NULL;
-    } else {
-        if (!PyErr_ExceptionMatches(PyExc_KeyError))
-            return NULL;
-        PyErr_Clear();
+    {
+        int val;
+        PyObject *tmp = PyDict_GetItemString(d, "__force_caching__");
+        if(tmp) {
+            val = PyObject_IsTrue(tmp);
+            if(val < 0)
+                return NULL;
+            if(val)
+                flags = FORCE_CACHING | INST_CACHING;
+        }
+        tmp = PyDict_GetItemString(d, "__inst_caching__");
+        if (tmp) {
+            val = PyObject_IsTrue(tmp);
+            if (val < 0)
+                return NULL;
+            if(val)
+                flags |= INST_CACHING;
+            else if (CACHING_FORCED(flags)) {
+                PyErr_SetString(PyExc_TypeError,
+                    "caching is forced, yet __inst_caching__ is "
+                    "explicitly set to False");
+                return NULL;
+            }
+        }
     }
     if (PyDict_SetItemString(d, "__inst_caching__",
-                                inst_caching ? Py_True : Py_False) < 0)
+        CACHING_ENABLED(flags) & INST_CACHING ? Py_True : Py_False) < 0)
         return NULL;
 
-    if (inst_caching) {
+    if (PyDict_SetItemString(d, "__force_caching__",
+        CACHING_FORCED(flags) ? Py_True : Py_False) < 0)
+        return NULL;
+
+    if (CACHING_ENABLED(flags)) {
         PyObject *slots = PyMapping_GetItemString(d, "__slots__");
         if (slots) {
             int has_weakref = 0;
@@ -441,9 +464,9 @@ pkgcore_WeakInstMeta_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     if (!self)
         return NULL;
 
-    self->inst_caching = inst_caching;
+    self->flags = flags;
 
-    if (inst_caching) {
+    if (CACHING_ENABLED(flags)) {
         if (!(self->inst_dict = PyDict_New())) {
             Py_DECREF((PyObject*)self);
             return NULL;
@@ -459,7 +482,7 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
 {
     PyObject *key, *kwlist, *kwtuple, *resobj = NULL;
     int result;
-    if (!self->inst_caching)
+    if (!CACHING_ENABLED(self->flags))
         /* No caching, just do what a "normal" type does */
         return PyType_Type.tp_call((PyObject*)self, args, kwargs);
 
@@ -468,11 +491,19 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
         /* If disable_inst_caching=True is passed pop it and disable caching */
         PyObject *obj = PyDict_GetItem(kwargs, pkgcore_caching_disable_str);
         if (obj) {
-            result = PyObject_IsTrue(obj);
-            Py_DECREF(obj);
-            if (result < 0)
+            if(obj == Py_True)
+                result = 1;
+            else if(obj == Py_False)
+                result = 0;
+            else {
+                if((result = PyObject_IsTrue(obj)) < 0)
+                    return NULL;
+            }
+            if(CACHING_FORCED(self->flags) && !result) {
+                PyErr_SetString(PyExc_TypeError,
+                    "instance caching cannot be disabled for this type");
                 return NULL;
-
+            }
             if (PyDict_DelItem(kwargs, pkgcore_caching_disable_str))
                 return NULL;
 
@@ -550,8 +581,9 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
     Py_DECREF(weakref);
 
     if (result < 0) {
-        if (PyErr_ExceptionMatches(PyExc_TypeError) ||
-            PyErr_ExceptionMatches(PyExc_NotImplementedError)) {
+        if (!CACHING_FORCED(self->flags) &&
+            (PyErr_ExceptionMatches(PyExc_TypeError) ||
+            PyErr_ExceptionMatches(PyExc_NotImplementedError))) {
             PyErr_Clear();
             PyObject *format, *formatargs, *message;
             if ((format = PyString_FromString(
@@ -570,6 +602,8 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
                 }
                 Py_DECREF(format);
             }
+        } else {
+            Py_CLEAR(resobj);
         }
     }
     Py_DECREF(key);

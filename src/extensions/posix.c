@@ -223,46 +223,45 @@ pkgcore_join(PyObject *self, PyObject *args)
 // returns 0 on success opening, 1 on ENOENT but ignore, and -1 on failure
 // if failure condition, appropriate exception is set.
 
-int
-pkgcore_open_and_stat(PyObject *path, PyObject *swallow_missing,
+inline int
+pkgcore_open_and_stat(PyObject *path,
     int *fd, Py_ssize_t *size)
 {
-    int new_fd, ret;
     struct stat st;
-    Py_BEGIN_ALLOW_THREADS
     errno = 0;
-    new_fd = open(PyString_AS_STRING(path), O_LARGEFILE);
-    if(new_fd >= 0) {
-        ret = fstat(new_fd, &st);
+    if((*fd = open(PyString_AsString(path), O_LARGEFILE)) >= 0) {
+        int ret = fstat(*fd, &st);
+        if(!ret) {
+            *size = st.st_size;
+            return 0;
+        }
     }
-    Py_END_ALLOW_THREADS
-    if(new_fd < 0) {
+    return 1;
+}
+
+inline int
+handle_failed_open_stat(int fd, Py_ssize_t size, PyObject *path,
+PyObject *swallow_missing)
+{
+    if(fd < 0) {
         if(errno == ENOENT) {
             if(swallow_missing) {
                 if(PyObject_IsTrue(swallow_missing)) {
                     errno = 0;
-                    return 1;
+                    return 0;
                 }
                 if(PyErr_Occurred())
-                    return -1;
+                    return 1;
             }
-            
         }
         PyErr_SetFromErrnoWithFilenameObject(PyExc_IOError, path);
-        return -1;
-    } else if(ret) {
-        PyErr_SetFromErrno(PyExc_OSError);
-        return -1;
-    } else if(S_ISDIR(st.st_mode)) {
-        errno = EISDIR;
-        PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
-        return -1;
+        return 1;
     }
-    *size = st.st_size;
-    *fd = new_fd;
-    return 0;
+    PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+    if(close(fd))
+        PyErr_SetFromErrnoWithFilenameObject(PyExc_IOError, path);
+    return 1;
 }
-    
 
 static PyObject *
 pkgcore_readfile(PyObject *self, PyObject *args)
@@ -274,13 +273,18 @@ pkgcore_readfile(PyObject *self, PyObject *args)
     }
     Py_ssize_t size;
     int fd;
-    int ret = pkgcore_open_and_stat(path, swallow_missing, &fd, &size);
-    if(ret == 1) {
+    Py_BEGIN_ALLOW_THREADS
+    if(pkgcore_open_and_stat(path, &fd, &size)) {
+        Py_BLOCK_THREADS
+        if(handle_failed_open_stat(fd, size, path, swallow_missing))
+            return NULL;
         Py_RETURN_NONE;
-    } else if(ret != 0)
-        return (PyObject *)NULL;
+    }
+    Py_END_ALLOW_THREADS
 
+    int ret = 0;
     PyObject *data = PyString_FromStringAndSize(NULL, size);
+
     Py_BEGIN_ALLOW_THREADS
     errno = 0;
     if(data) {
@@ -288,6 +292,7 @@ pkgcore_readfile(PyObject *self, PyObject *args)
     }
     ret += close(fd);
     Py_END_ALLOW_THREADS
+
     if(ret) {
         Py_CLEAR(data);
         data = PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
@@ -323,102 +328,113 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     
     int fd;
     Py_ssize_t size;
-    int ret = pkgcore_open_and_stat(path, swallow_missing, &fd, &size);
-    if(ret == 1) {
+    void *ptr;
+    PyObject *fallback = NULL;
+    Py_BEGIN_ALLOW_THREADS
+    errno = 0;
+    if(pkgcore_open_and_stat(path, &fd, &size)) {
+        Py_BLOCK_THREADS
+
+        if(handle_failed_open_stat(fd, size, path, swallow_missing))
+            return NULL;
+
         // return an empty tuple, and let them iter over that.
         if(none_on_missing && PyObject_IsTrue(none_on_missing)) {
             Py_RETURN_NONE;
         }
-        if(PyErr_Occurred())
-            goto pkgcore_readlines_error;
+        
         PyObject *data = PyTuple_New(0);
         if(!data)
             return (PyObject *)NULL;
         PyObject *tmp = PySeqIter_New(data);
-        Py_CLEAR(data);
-        return (PyObject *)tmp;
+        Py_DECREF(data);
+        return tmp;
+    }
+    if(size >= 0x4000) {
+        ptr = (char *)mmap(NULL, size, PROT_READ,
+            MAP_SHARED|MAP_NORESERVE|MAP_POPULATE, fd, 0);
+        if(ptr == MAP_FAILED)
+            ptr = NULL;
+    } else {
+        Py_BLOCK_THREADS
+        fallback = PyString_FromStringAndSize(NULL, size);
+        Py_UNBLOCK_THREADS
+        if(fallback) {
+            errno = 0;
+            ptr = (size != read(fd, PyString_AS_STRING(fallback), size)) ?
+                MAP_FAILED : NULL;
+        }
+        int ret = close(fd);
+        Py_BLOCK_THREADS
+        if(ret) {
+            Py_CLEAR(fallback);
+            PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+            return NULL;
+        } else if(!fallback) {
+            return NULL;
+        }
+    }
+    Py_END_ALLOW_THREADS
 
-    } else if (ret != 0)
-        return (PyObject *)NULL;
-    
-    // ok... alloc.
+    if(ptr == MAP_FAILED) {
+        PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+        if(close(fd))
+            PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+        Py_CLEAR(fallback);
+        return NULL;
+    }
+
     self = (pkgcore_readlines *)type->tp_alloc(type, 0);
-    if(!self)
-        goto pkgcore_readlines_error;
+    if(!self) {
+        // you've got to be kidding me...
+        if(ptr) {
+            munmap(ptr, size);
+            close(fd);
+            errno = 0;
+        } else {
+            Py_DECREF(fallback);
+        }
+        return NULL;
+    }
+    self->fallback = fallback;
+    self->map = ptr;
+    if (ptr) {
+        self->start = ptr;
+        self->fd = fd;
+    } else {
+        self->start = PyString_AS_STRING(fallback);
+        self->fd = -1;
+    }
+    self->end = self->start + size;
 
-    self->map = NULL;
-    self->fd = -1;
-    self->fallback = NULL;
     if(strip_newlines) {
+        // die...
         if(PyObject_IsTrue(strip_newlines)) {
             self->strip_newlines = 1;
+        } else if(PyErr_Occurred()) {
+            Py_DECREF(self);
+            return NULL;
+        } else {
+            self->strip_newlines = 0;
         }
-        if(PyErr_Occurred()) {
-            goto pkgcore_readlines_error;
-        }
-    }
-
-    if(size <= 0x4000) {
-        self->fallback = PyString_FromStringAndSize(NULL, size);
-
-        if(!self->fallback)
-            goto pkgcore_readlines_error;
-
-        self->map = PyString_AS_STRING(self->fallback);
-
-        if(size != read(fd, self->map, size))
-            goto pkgcore_readlines_error;
-
-        self->fd = -1;
-        if(close(fd)) {
-            PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
-            Py_CLEAR(self);
-            return (PyObject *)NULL;
-        }
-        self->start = self->map;
-        self->end = self->map + size;
-        return (PyObject *)self;
     } else
-        self->fallback = NULL;
-
-    self->map = (char *)mmap(NULL, size, PROT_READ,
-        MAP_SHARED|MAP_NORESERVE|MAP_POPULATE, fd, 0);
-
-    if(self->map != MAP_FAILED) {
-        self->start = self->map;
-        self->end = self->map + size;
-        self->fd = fd;
-        return (PyObject *)self;
-    }
-
-    self->start = self->end = self->map = NULL;
-    self->fd = -1;
-    PyErr_SetFromErrnoWithFilenameObject(PyExc_IOError, path);
-    
-    pkgcore_readlines_error:
-    if(close(fd)) {
-        PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
-    }
-    Py_CLEAR(self);
-    return NULL;
+        self->strip_newlines = 0;
+    return (PyObject *)self;
 }
 
 static void
 pkgcore_readlines_dealloc(pkgcore_readlines *self)
 {
     if(self->fallback) {
-        Py_CLEAR(self->fallback);
+        Py_DECREF(self->fallback);
     } else if(self->map) {
-        if(munmap(self->map, self->map - self->end))
+        if(munmap(self->map, self->end - self->map))
             // swallow it, no way to signal an error
             errno = 0;
-    }
-    if(self->fd != -1) {
         if(close(self->fd))
             // swallow it, no way to signal an error
             errno = 0;
     }
-    Py_CLEAR(self->fallback);
     self->ob_type->tp_free((PyObject *)self);
 }
 
@@ -430,10 +446,13 @@ pkgcore_readlines_iternext(pkgcore_readlines *self)
         return (PyObject *)NULL;
     }
     char *p = self->start;
+    assert(self->end);
+    assert(self->start);
+    assert(self->map || self->fallback);
+    assert(self->end > self->start);
+
     while(p != self->end && '\n' != *p)
         p++;
-
-//    printf("returning '%.*s'\n", p - self->start, self->start);
 
     PyObject *ret;
     if(self->strip_newlines) {

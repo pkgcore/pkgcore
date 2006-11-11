@@ -18,7 +18,7 @@ class base(restriction.base):
 
     """base template for boolean restrictions"""
 
-    __slots__ = ("restrictions", "type")
+    __slots__ = ('restrictions', 'type', 'negate')
 
     def __init__(self, *restrictions, **kwds):
 

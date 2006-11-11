@@ -54,7 +54,9 @@ class PackageRestriction(restriction.base):
     # subclass adds attributes. So if you do that, override the
     # methods.
 
-    __slots__ = ("attr_split", "attr", "restriction", "ignore_missing")
+    __slots__ = ('attr_split', 'attr', 'restriction', 'ignore_missing',
+        'negate')
+
     type = restriction.package_type
     subtype = restriction.value_type
     
@@ -203,7 +205,7 @@ class Conditional(PackageRestriction):
     used to control whether a payload of restrictions are accessible or not
     """
 
-    __slots__ = ("payload",)
+    __slots__ = ('payload',)
 
     __inst_caching__ = True
 

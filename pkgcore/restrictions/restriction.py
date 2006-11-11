@@ -22,7 +22,7 @@ class base(object):
     __inst_caching__ = True
 
     # __weakref__ here's is implicit via the metaclass
-    __slots__ = ("negate",)
+    __slots__ = ()
     package_matching = False
 
     def __setattr__(self, attr, val):
@@ -51,7 +51,7 @@ class AlwaysBool(base):
     """
     restriction that always yields a specific boolean
     """
-    __slots__ = ("type",)
+    __slots__ = ("type", "negate")
 
     __inst_caching__ = True
 
@@ -136,7 +136,7 @@ class AnyMatch(base):
 
     """Apply a nested restriction to every item in a sequence."""
 
-    __slots__ = ('restriction', 'type')
+    __slots__ = ('restriction', 'type', 'negate')
 
     def __init__(self, childrestriction, node_type, negate=False):
         """Initialize.

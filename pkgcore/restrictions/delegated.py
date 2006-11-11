@@ -20,7 +20,8 @@ class delegate(restriction.base):
     L{pkgcore.ebuild.domain}.
     """
 
-    __slots__ = ("_transform", "_data")
+    __slots__ = ('_transform', '_data', 'negate')
+    
     type = packages.package_type
     inst_caching = False
 

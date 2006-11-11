@@ -85,7 +85,7 @@ class StrRegex(StrMatch):
     regex based matching
     """
 
-    __slots__ = ("regex", "_matchfunc", "ismatch")
+    __slots__ = ('regex', '_matchfunc', 'ismatch', 'negate')
 
     __inst_caching__ = True
 
@@ -161,7 +161,7 @@ class StrExactMatch(StrMatch):
     exact string comparison match
     """
 
-    __slots__ = ("exact", "flags")
+    __slots__ = ('exact', 'flags', 'negate')
 
     __inst_caching__ = True
 
@@ -225,7 +225,7 @@ class StrGlobMatch(StrMatch):
     globbing matches; essentially startswith and endswith matches
     """
 
-    __slots__ = ("glob", "prefix")
+    __slots__ = ('glob', 'prefix', 'negate')
 
     __inst_caching__ = True
 
@@ -323,7 +323,7 @@ class ComparisonMatch(base):
     _rev_op_converter[(-1, 1)] = "!="
     del k, v
 
-    __slots__ = ("data", "cmp_func", "matching_vals")
+    __slots__ = ('data', 'cmp_func', 'matching_vals')
 
     @classmethod
     def convert_str_op(cls, op_str):
@@ -348,7 +348,6 @@ class ComparisonMatch(base):
         
         sf = object.__setattr__
         sf(self, "cmp_func", cmp_func)
-        sf(self, "negate", negate)
         
         if not isinstance(matching_vals, (tuple, list)):
             if isinstance(matching_vals, basestring):
@@ -397,7 +396,7 @@ class ContainmentMatch(base):
     note that negation of this *does* not result in a true NAND when all is on.
     """
 
-    __slots__ = ("vals", "all", "_hash")
+    __slots__ = ('vals', 'all', '_hash', 'negate')
 
     __inst_caching__ = True
 
@@ -572,7 +571,7 @@ class FlatteningRestriction(base):
 
     """Flatten the values passed in and apply the nested restriction."""
 
-    __slots__ = ('dont_iter', 'restriction')
+    __slots__ = ('dont_iter', 'restriction', 'negate')
     __hash__ = object.__hash__
 
     def __init__(self, dont_iter, childrestriction, negate=False):
@@ -607,7 +606,7 @@ class FunctionRestriction(base):
 
     """Convenience class for creating special restrictions."""
 
-    __slots__ = ('func',)
+    __slots__ = ('func', 'negate')
 
     __hash__ = object.__hash__
 

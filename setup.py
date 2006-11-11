@@ -314,6 +314,7 @@ packages = [
 extra_flags = ['-Wall']
 common_includes = ['src/extensions/py24-compatibility.h',
                    'src/extensions/heapdef.h',
+                   'src/extensions/common.h',
                    ]
 
 extensions = []

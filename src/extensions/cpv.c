@@ -14,7 +14,7 @@
 
 #include "Python.h"
 #include "py24-compatibility.h"
-
+#include "common.h"
 #include <structmember.h>
 #include <string.h>
 

@@ -234,8 +234,15 @@ int
 pkgcore_open_and_stat(PyObject *path, PyObject *swallow_missing,
     int *fd, Py_ssize_t *size)
 {
+    int new_fd, ret;
+    struct stat st;
+    Py_BEGIN_ALLOW_THREADS
     errno = 0;
-    int new_fd = open(PyString_AS_STRING(path), O_LARGEFILE);
+    new_fd = open(PyString_AS_STRING(path), O_LARGEFILE);
+    if(new_fd >= 0) {
+        ret = fstat(new_fd, &st);
+    }
+    Py_END_ALLOW_THREADS
     if(new_fd < 0) {
         if(errno == ENOENT) {
             if(swallow_missing) {
@@ -250,9 +257,7 @@ pkgcore_open_and_stat(PyObject *path, PyObject *swallow_missing,
         }
         PyErr_SetFromErrnoWithFilenameObject(PyExc_IOError, path);
         return -1;
-    }
-    struct stat st;
-    if(fstat(new_fd, &st)) {
+    } else if(ret) {
         PyErr_SetFromErrno(PyExc_OSError);
         return -1;
     } else if(S_ISDIR(st.st_mode)) {
@@ -283,13 +288,14 @@ pkgcore_readfile(PyObject *self, PyObject *args)
         return (PyObject *)NULL;
 
     PyObject *data = PyString_FromStringAndSize(NULL, size);
+    Py_BEGIN_ALLOW_THREADS
+    errno = 0;
     if(data) {
-        if(size != read(fd, PyString_AS_STRING(data), size)) {
-            Py_CLEAR(data);
-            data = PyErr_SetFromErrnoWithFilenameObject(PyExc_IOError, path);
-        }
+        ret = size != read(fd, PyString_AS_STRING(data), size) ? 1 : 0;
     }
-    if(close(fd)) {
+    ret += close(fd);
+    Py_END_ALLOW_THREADS
+    if(ret) {
         Py_CLEAR(data);
         data = PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
     }

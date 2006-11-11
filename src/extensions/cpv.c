@@ -92,38 +92,18 @@ pkgcore_cpv_get_cpvstr(pkgcore_cpv *self, void *closure)
         PyString_AsString(self->fullver));
 }
 
-#define PKGCORE_IMMUTABLE_ATTRIBUTE(getter, setter, name, attribute)    \
-static int                                                              \
-setter (pkgcore_cpv *self, PyObject *v, void *closure)                  \
-{                                                                       \
-    PyErr_SetString(PyExc_AttributeError, name" is immutable");         \
-    return -1;                                                          \
-};                                                                      \
-                                                                        \
-static PyObject *                           \
-getter (pkgcore_cpv *self, void *closure)   \
-{                                           \
-    if (self->attribute == NULL) {          \
-        Py_RETURN_NONE;                     \
-    }                                       \
-    Py_INCREF(self->attribute);             \
-    return self->attribute;                 \
-}
-
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_category, pkgcore_cpv_set_category,
-    "category", category);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_package,  pkgcore_cpv_set_package,
-    "package", package);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_fullver,  pkgcore_cpv_set_fullver,
-    "fullver", fullver);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_version,  pkgcore_cpv_set_version,
-    "version", version);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_revision, pkgcore_cpv_set_revision,
-    "revision", revision);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv_get_key, pkgcore_cpv_set_key, "key",
-    key);
-
-#undef PKGCORE_IMMUTABLE_ATTRIBUTE
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, pkgcore_cpv_get_category,
+    pkgcore_cpv_set_category, "category", category);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, pkgcore_cpv_get_package,
+    pkgcore_cpv_set_package, "package", package);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, pkgcore_cpv_get_fullver,
+    pkgcore_cpv_set_fullver, "fullver", fullver);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, pkgcore_cpv_get_version,
+    pkgcore_cpv_set_version, "version", version);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, pkgcore_cpv_get_revision,
+    pkgcore_cpv_set_revision, "revision", revision);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, pkgcore_cpv_get_key,
+    pkgcore_cpv_set_key, "key", key);
 
 
 static PyGetSetDef pkgcore_cpv_getsetters[] = {

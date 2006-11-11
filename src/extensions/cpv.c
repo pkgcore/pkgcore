@@ -658,15 +658,10 @@ pkgcore_cpv_dealloc(pkgcore_cpv *self)
 static int
 pkgcore_nullsafe_compare(PyObject *this, PyObject *other)
 {
-    if ((this == NULL || this == Py_None) &&
-        (other == NULL || other == Py_None)) {
-        return 0;
-    }
     if (this == NULL || this == Py_None) {
-        return -1;
-    }
-    if (other == NULL || other == Py_None) {
-        return +1;
+        return (other == NULL || other == Py_None) ? 0 : -1;
+    } else if (other == NULL || other == Py_None) {
+        return 1;
     }
     return PyObject_Compare(this, other);
 }
@@ -677,13 +672,9 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 {
     int c;
     c = pkgcore_nullsafe_compare(self->category, other->category);
-    if(PyErr_Occurred())
-        return -1;
-    if(c != 0)
+    if(c != 0) {
         return c;
     c = pkgcore_nullsafe_compare(self->package, other->package);
-    if(PyErr_Occurred())
-        return -1;
     if(c != 0)
         return c;
     if(self->version == NULL)

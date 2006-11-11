@@ -153,18 +153,15 @@ pkgcore_join(PyObject *self, PyObject *args)
     // know the relevant slice now; figure out the size.
     len = 0;
     char *s_start;
-//    Py_ssize_t old_len;
     for(i = start; i < end; i++) {
         // this is safe because we're using CheckExact above.
         s_start = s = PyString_AS_STRING(items[i]);
-//        old_len = len;
         while('\0' != *s)
             s++;
         len += s - s_start;
         s_start++;
         char *s_end = s;
         if(i + 1 != end) {
-//            printf("active %i\n", i);
             while(s != s_start && '/' == s[-1])
                 s--;
             if(s_end == s && (s_start != s ||
@@ -174,8 +171,6 @@ pkgcore_join(PyObject *self, PyObject *args)
                 len -= s_end - s -1;
             }
         }
-//        printf("adding %i for %s\n", len - old_len,
-//            PyString_AS_STRING(items[i]));
     }
 
     // ok... we know the length.  allocate a string, and copy it.
@@ -221,9 +216,7 @@ pkgcore_join(PyObject *self, PyObject *args)
         }
     }
     *buf = '\0';
-//    printf("ended at %i, len %i, '%s'\n", buf - PyString_AS_STRING(ret),
-//        len, PyString_AS_STRING(ret));
-    // resize it now.
+    Py_DECREF(fast);
     return ret;
 }
 

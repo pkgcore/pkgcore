@@ -17,6 +17,10 @@ demandload.demandload(globals(), 're pkgcore.util:lists')
 # Backwards compatibility.
 value_type = restriction.value_type
 
+try:
+    from pkgcore.restrictions import _restrictions as extension
+except ImportError:
+    extension = None
 
 class base(restriction.base):
     """Base restriction matching object for values.
@@ -36,12 +40,13 @@ class base(restriction.base):
         return not self.match(val)
 
 
+def reflective_hash(self):
+        return self._hash
+
 class hashed_base(base):
 
     __slots__ = ("_hash")
-    
-    def __hash__(self):
-        return self._hash
+    __hash__ = reflective_hash    
 
 
 class GetAttrRestriction(packages.PackageRestriction):
@@ -152,15 +157,13 @@ class StrRegex(hashed_base):
         return result
 
 
-class StrExactMatch(hashed_base):
+class native_StrExactMatch(object):
 
     """
     exact string comparison match
     """
 
     __slots__ = ('exact', 'case_sensitive', 'negate', '_hash')
-
-    __inst_caching__ = True
 
     def __init__(self, exact, case_sensitive=True, negate=False):
 
@@ -185,6 +188,18 @@ class StrExactMatch(hashed_base):
             return (self.exact == value) != self.negate
         else:
             return (self.exact == value.lower()) != self.negate
+
+    __hash__ = reflective_hash
+
+if extension is None:
+    base_StrExactMatch = native_StrExactMatch
+else:
+    base_StrExactMatch = extension.StrExactMatch
+
+class StrExactMatch(base_StrExactMatch, base):
+
+    __slots__ = ()
+    __inst_caching__ = True
 
     def intersect(self, other):
         s1, s2 = self.exact, other.exact

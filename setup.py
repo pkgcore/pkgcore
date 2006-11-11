@@ -358,7 +358,7 @@ core.setup(
             'pkgcore.ebuild._atom', ['src/extensions/atom.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.ebuild._depset', ['src/extensions/depset.c'],
+            'pkgcore.restrictions._restrictions', ['src/extensions/restrictions.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
             'pkgcore.util.osutils._readdir', ['src/extensions/readdir.c'],

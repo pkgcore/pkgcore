@@ -135,6 +135,7 @@ class Test_native_atom(TestCase):
             ('~cat/pkg-2', '<cat/pkg-2', False),
             ('=cat/pkg-1-r1*', '<cat/pkg-1-r1', False),
             ('=cat/pkg-1*', '>cat/pkg-2', False),
+            ('>=cat/pkg-8.4', '=cat/pkg-8.3.4*', False),
             ]:
             this_atom = self.kls(this)
             that_atom = self.kls(that)

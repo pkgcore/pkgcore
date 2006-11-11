@@ -488,7 +488,7 @@ class atom(boolean.AndRestriction):
             # If both the glob and ranged itself match the ranged
             # restriction we're also done:
             if '=' in ranged.op and VersionMatch(
-                other.op, other.version, other.revision).match(ranged):
+                '=', other.version, other.revision).match(ranged):
                 return True
             if '<' in ranged.op:
                 # Remaining cases where this intersects: there is a

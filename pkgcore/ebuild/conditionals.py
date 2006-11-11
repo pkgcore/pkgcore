@@ -33,6 +33,8 @@ class DepSet(boolean.AndRestriction):
 
     __inst_caching__ = False
     parse_depset = parse_depset
+    if parse_depset is not None:
+        parse_depset = staticmethod(parse_depset)
 
     def __init__(self, dep_str, element_class, \
         operators=None,

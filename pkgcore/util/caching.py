@@ -30,17 +30,11 @@ class native_WeakInstMeta(type):
     L{values<pkgcore.restrictions.values>}
     """
     def __new__(cls, name, bases, d):
-        if d.setdefault("__force_caching__", False):
-            if not d.get("__inst_caching__", True):
-                raise TypeError("__force_caching__ is True, but "
-                    "__inst_caching__ is explicitly disabled")
-            d["__force_caching__"] = True
-            d["__inst_caching__"] = True
-
-        if d.setdefault("__inst_caching__", False):
+        if d.get("__inst_caching__", False):
             d["__inst_caching__"] = True
             d["__inst_dict__"]  = WeakValueDictionary()
-
+        else:
+            d["__inst_caching__"] = False
         slots = d.get('__slots__')
         if slots is not None:
             for base in bases:
@@ -52,9 +46,6 @@ class native_WeakInstMeta(type):
 
     def __call__(cls, *a, **kw):
         """disable caching via disable_inst_caching=True"""
-        if cls.__force_caching__ and kw.get("disable_inst_caching", False):
-            raise TypeError("instance caching cannot be disabled for this type")
-
         if cls.__inst_caching__ and not kw.pop("disable_inst_caching", False):
             kwlist = kw.items()
             kwlist.sort()
@@ -62,8 +53,6 @@ class native_WeakInstMeta(type):
             try:
                 instance = cls.__inst_dict__.get(key)
             except (NotImplementedError, TypeError), t:
-                if cls.__force_caching__:
-                    raise
                 warnings.warn(
                     "caching keys for %s, got %s for a=%s, kw=%s" % (
                         cls, t, a, kw))

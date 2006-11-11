@@ -672,15 +672,14 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
 {
     int c;
     c = pkgcore_nullsafe_compare(self->category, other->category);
-    if(c != 0) {
+    if(c != 0)
         return c;
     c = pkgcore_nullsafe_compare(self->package, other->package);
     if(c != 0)
         return c;
-    if(self->version == NULL)
-        return other->version == NULL ? 0 : -1;
-    if(other->version == NULL)
-        return 1;
+    c = pkgcore_nullsafe_compare(self->version, other->version);
+    if(c != 0)
+        return c;
 
     if(self->cvs != other->cvs)
         return self->cvs ? +1 : -1;

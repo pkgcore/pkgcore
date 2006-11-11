@@ -183,6 +183,11 @@ class native_StrExactMatch(object):
             sf(self, "exact", str(exact))
         sf(self, "_hash", hash((self.exact, self.negate, self.case_sensitive)))
 
+    def __eq__(self, other):
+        return self is other or (self.exact == other.exact and
+                self.negate == other.negate and
+                self.case_sensitive == other.case_sensitive)
+
     def match(self, value):
         if self.case_sensitive:
             return (self.exact == value) != self.negate
@@ -212,11 +217,6 @@ class StrExactMatch(base_StrExactMatch, base):
                 return other
             return self
         return None
-
-    def __eq__(self, other):
-        return self is other or (self.exact == other.exact and
-                self.negate == other.negate and
-                self.case_sensitive == other.case_sensitive)
 
     def __repr__(self):
         if self.negate:

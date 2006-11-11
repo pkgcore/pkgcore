@@ -469,7 +469,6 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
         PyObject *obj = PyDict_GetItem(kwargs, pkgcore_caching_disable_str);
         if (obj) {
             result = PyObject_IsTrue(obj);
-            Py_DECREF(obj);
             if (result < 0)
                 return NULL;
 
@@ -570,6 +569,9 @@ pkgcore_WeakInstMeta_call(pkgcore_WeakInstMeta *self,
                 }
                 Py_DECREF(format);
             }
+        } else {
+            // unexpected exception... let it go.
+            resobj = NULL;
         }
     }
     Py_DECREF(key);

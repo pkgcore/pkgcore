@@ -140,7 +140,7 @@ def native_atom_init(self, atom, negate_vers=False):
                 atom, "cannot have empty use deps in use restriction")
         atom = atom[0:u]+atom[u2 + 1:]
     else:
-        sf(self, "use", ())
+        sf(self, "use", None)
     s = atom.find(":")
     if s != -1:
         if atom.find(":", s+1) != -1:

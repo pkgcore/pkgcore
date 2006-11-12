@@ -363,7 +363,7 @@ class native_atom(boolean.AndRestriction):
             c = cmp(sorted(self.use), sorted(other.use))
             if c:
                 return c
-        elif other.op:
+        elif other.use:
             return -1
 
         return cmp(self.op, other.op)

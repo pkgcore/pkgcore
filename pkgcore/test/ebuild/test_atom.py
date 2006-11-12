@@ -144,6 +144,8 @@ class Test_native_atom(TestCase):
                 '%s intersecting %s should be %s' % (that, this, result))
 
     def test_comparison(self):
+        self.assertEquals(self.kls('cat/pkg'), self.kls('cat/pkg'))
+        self.assertEquals(self.kls('=cat/pkg-0'), self.kls('=cat/pkg-0'))
         self.assertNotEquals(self.kls('cat/pkg:1'), self.kls('cat/pkg'))
         self.assertNotEquals(self.kls('cat/pkg[foo]'), self.kls('cat/pkg'))
         self.assertNotEquals(self.kls('cat/pkg[foo]'),

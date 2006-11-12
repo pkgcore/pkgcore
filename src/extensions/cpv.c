@@ -90,12 +90,12 @@ pkgcore_cpv_get_cpvstr(pkgcore_cpv *self, void *closure)
         PyString_AsString(self->fullver));
 }
 
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, "category", category);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, "package", package);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, "fullver", fullver);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, "version", version);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, "revision", revision);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, "key", key);
+PKGCORE_IMMUTABLE_ATTR(pkgcore_cpv, "category", category);
+PKGCORE_IMMUTABLE_ATTR(pkgcore_cpv, "package", package);
+PKGCORE_IMMUTABLE_ATTR(pkgcore_cpv, "fullver", fullver);
+PKGCORE_IMMUTABLE_ATTR(pkgcore_cpv, "version", version);
+PKGCORE_IMMUTABLE_ATTR(pkgcore_cpv, "revision", revision);
+PKGCORE_IMMUTABLE_ATTR(pkgcore_cpv, "key", key);
 
 
 static PyGetSetDef pkgcore_cpv_getsetters[] = {

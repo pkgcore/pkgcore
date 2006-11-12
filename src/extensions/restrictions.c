@@ -169,39 +169,12 @@ PyDoc_STRVAR(
     "@keyword negate: should the match results be inverted? (default: False)\n"
     );
 
-
-static int
-pkgcore_StrExactMatch_set_negate(pkgcore_StrExactMatch *self, PyObject *v,
-    void *closure)
-{
-    PyErr_SetString(PyExc_AttributeError, "negate is immutable");
-    return -1;
-}
-
-static int
-pkgcore_StrExactMatch_set_case(pkgcore_StrExactMatch *self, PyObject *v,
-    void *closure)
-{
-    PyErr_SetString(PyExc_AttributeError, "case is immutable");
-    return -1;
-}
-
-#define quicky(name, mask)                                      \
-PyObject *                                                      \
-name (pkgcore_StrExactMatch *self, void *closure)               \
-{                                                               \
-    PyObject *ret = self->flags & (mask) ? Py_True : Py_False;  \
-    Py_INCREF(ret);                                             \
-    return ret;                                                 \
-}
-
-quicky(pkgcore_StrExactMatch_get_negate, self->flags & NEGATED_RESTRICT);
-quicky(pkgcore_StrExactMatch_get_case, self->flags & CASE_SENSITIVE);
-
-#undef quicky
-
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_StrExactMatch, "exact", exact);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_StrExactMatch, "_hash", hash);
+PKGCORE_IMMUTABLE_ATTR(pkgcore_StrExactMatch, "exact", exact);
+PKGCORE_IMMUTABLE_ATTR(pkgcore_StrExactMatch, "_hash", hash);
+PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "negate", negate, 
+    (self->flags & NEGATED_RESTRICT));
+PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "case_sensitve", case, 
+    (self->flags & CASE_SENSITIVE));
 
 static PyGetSetDef pkgcore_StrExactMatch_attrs[] = {
 PKGCORE_GETSET(pkgcore_StrExactMatch, "_hash", hash),

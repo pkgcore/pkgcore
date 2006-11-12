@@ -11,14 +11,16 @@
 #include <Python.h>
 #include "py24-compatibility.h"
 
-#define RAW_PKGCORE_IMMUTABLE_ATTR(type, name, attr, ret)               \
+#define PKGCORE_IMMUTABLE_SETTER(type, name, attr)                      \
 static int                                                              \
 type##_set_##attr (type *self, PyObject *v, void *closure)              \
 {                                                                       \
     PyErr_SetString(PyExc_AttributeError, name" is immutable");         \
     return -1;                                                          \
 };                                                                      \
-                                                                        \
+
+#define RAW_PKGCORE_IMMUTABLE_ATTR(type, name, attr, ret)               \
+PKGCORE_IMMUTABLE_SETTER(type, name, attr)                              \
 static PyObject *                                                       \
 type##_get_##attr (type *self, void *closure)                           \
 {                                                                       \
@@ -38,12 +40,7 @@ type##_get_##attr (type *self, void *closure)                           \
 RAW_PKGCORE_IMMUTABLE_ATTR(type, name, attr, Py_None)
 
 #define PKGCORE_IMMUTABLE_ATTR_BOOL(type, name, attr, test)             \
-static int                                                              \
-type##_set_##attr (type *self, PyObject *v, void *closure)              \
-{                                                                       \
-    PyErr_SetString(PyExc_AttributeError, name" is immutable");         \
-    return -1;                                                          \
-};                                                                      \
+PKGCORE_IMMUTABLE_SETTER(type, name, attr)                              \
                                                                         \
 static PyObject *                                                       \
 type##_get_##attr (type *self, void *closure)                           \

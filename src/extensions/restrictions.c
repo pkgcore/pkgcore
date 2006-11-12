@@ -12,8 +12,6 @@
 
 #define PY_SSIZE_T_CLEAN
 
-#include <Python.h>
-#include "py24-compatibility.h"
 #include "common.h"
 
 #define NEGATED_RESTRICT    0x1
@@ -171,12 +169,6 @@ PyDoc_STRVAR(
     "@keyword negate: should the match results be inverted? (default: False)\n"
     );
 
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_StrExactMatch,
-    pkgcore_StrExactMatch_get_exact, pkgcore_StrExactMatch_set_exact, 
-    "exact", exact);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_StrExactMatch,
-    pkgcore_StrExactMatch_get_hash, pkgcore_StrExactMatch_set_hash, 
-    "_hash", hash);
 
 static int
 pkgcore_StrExactMatch_set_negate(pkgcore_StrExactMatch *self, PyObject *v,
@@ -208,15 +200,14 @@ quicky(pkgcore_StrExactMatch_get_case, self->flags & CASE_SENSITIVE);
 
 #undef quicky
 
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_StrExactMatch, "exact", exact);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_StrExactMatch, "_hash", hash);
+
 static PyGetSetDef pkgcore_StrExactMatch_attrs[] = {
-    {"_hash", (getter)pkgcore_StrExactMatch_get_hash,
-        (setter)pkgcore_StrExactMatch_set_hash, "_hash", NULL},
-    {"exact", (getter)pkgcore_StrExactMatch_get_exact,
-        (setter)pkgcore_StrExactMatch_set_exact, "exact", NULL},
-    {"negate", (getter)pkgcore_StrExactMatch_get_negate,
-        (setter)pkgcore_StrExactMatch_set_negate, "negate", NULL},
-    {"case_sensitive", (getter)pkgcore_StrExactMatch_get_case,
-        (setter)pkgcore_StrExactMatch_set_case, "case_sensitive", NULL},
+PKGCORE_GETSET(pkgcore_StrExactMatch, "_hash", hash),
+PKGCORE_GETSET(pkgcore_StrExactMatch, "exact", exact),
+PKGCORE_GETSET(pkgcore_StrExactMatch, "negate", negate),
+PKGCORE_GETSET(pkgcore_StrExactMatch, "case_sensitive", case),
     {NULL}
 };
 

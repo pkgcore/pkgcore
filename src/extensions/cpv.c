@@ -12,8 +12,6 @@
 
 #define PY_SSIZE_T_CLEAN
 
-#include "Python.h"
-#include "py24-compatibility.h"
 #include "common.h"
 #include <structmember.h>
 #include <string.h>
@@ -92,35 +90,22 @@ pkgcore_cpv_get_cpvstr(pkgcore_cpv *self, void *closure)
         PyString_AsString(self->fullver));
 }
 
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, pkgcore_cpv_get_category,
-    pkgcore_cpv_set_category, "category", category);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, pkgcore_cpv_get_package,
-    pkgcore_cpv_set_package, "package", package);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, pkgcore_cpv_get_fullver,
-    pkgcore_cpv_set_fullver, "fullver", fullver);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, pkgcore_cpv_get_version,
-    pkgcore_cpv_set_version, "version", version);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, pkgcore_cpv_get_revision,
-    pkgcore_cpv_set_revision, "revision", revision);
-PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, pkgcore_cpv_get_key,
-    pkgcore_cpv_set_key, "key", key);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, "category", category);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, "package", package);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, "fullver", fullver);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, "version", version);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, "revision", revision);
+PKGCORE_IMMUTABLE_ATTRIBUTE(pkgcore_cpv, "key", key);
 
 
 static PyGetSetDef pkgcore_cpv_getsetters[] = {
-    {"cpvstr",   (getter)pkgcore_cpv_get_cpvstr,
-        (setter)pkgcore_cpv_set_cpvstr,   "cpvstr", NULL},
-    {"category", (getter)pkgcore_cpv_get_category,
-        (setter)pkgcore_cpv_set_category, "category", NULL},
-    {"package",  (getter)pkgcore_cpv_get_package,
-        (setter)pkgcore_cpv_set_package,  "package", NULL},
-    {"key",      (getter)pkgcore_cpv_get_key,
-        (setter)pkgcore_cpv_set_key,      "key", NULL},
-    {"fullver",  (getter)pkgcore_cpv_get_fullver,
-        (setter)pkgcore_cpv_set_fullver,  "fullver", NULL},
-    {"version",  (getter)pkgcore_cpv_get_version,
-        (setter)pkgcore_cpv_set_version,  "version", NULL},
-    {"revision", (getter)pkgcore_cpv_get_revision,
-        (setter)pkgcore_cpv_set_revision, "revision", NULL},
+PKGCORE_GETSET(pkgcore_cpv, "cpvstr", cpvstr),
+PKGCORE_GETSET(pkgcore_cpv, "category", category),
+PKGCORE_GETSET(pkgcore_cpv, "package", package),
+PKGCORE_GETSET(pkgcore_cpv, "key", key),
+PKGCORE_GETSET(pkgcore_cpv, "fullver", fullver),
+PKGCORE_GETSET(pkgcore_cpv, "version", version),
+PKGCORE_GETSET(pkgcore_cpv, "revision", revision),
     {NULL}
 };
 

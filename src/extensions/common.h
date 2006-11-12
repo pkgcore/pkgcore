@@ -8,23 +8,29 @@
 #ifndef PKGCORE_COMMON_HEADER
 #define PKGCORE_COMMON_HEADER 1
 
-#define PKGCORE_IMMUTABLE_ATTRIBUTE(type, getter, setter, name,         \
-attribute)                                                              \
+#include <Python.h>
+#include "py24-compatibility.h"
+
+#define PKGCORE_IMMUTABLE_ATTRIBUTE(type, name, attr)                   \
 static int                                                              \
-setter (type *self, PyObject *v, void *closure)                         \
+type##_set_##attr (type *self, PyObject *v, void *closure)          \
 {                                                                       \
     PyErr_SetString(PyExc_AttributeError, name" is immutable");         \
     return -1;                                                          \
 };                                                                      \
                                                                         \
-static PyObject *                           \
-getter (type *self, void *closure)          \
-{                                           \
-    if (self->attribute == NULL) {          \
-        Py_RETURN_NONE;                     \
-    }                                       \
-    Py_INCREF(self->attribute);             \
-    return self->attribute;                 \
+static PyObject *                                   \
+type##_get_##attr (type *self, void *closure)   \
+{                                                   \
+    if (self->attr == NULL) {                       \
+        Py_RETURN_NONE;                             \
+    }                                               \
+    Py_INCREF(self->attr);                          \
+    return self->attr;                              \
 }
+
+#define PKGCORE_GETSET(type, doc, attr)           \
+    {doc, (getter)type##_get_##attr ,           \
+        (setter)type##_set_##attr , NULL}
 
 #endif

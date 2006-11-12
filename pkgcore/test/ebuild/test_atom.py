@@ -16,10 +16,7 @@ class FakePkg(CPV):
 
 class Test_native_atom(TestCase):
 
-    class kls(atom.atom):
-        __init__ = atom.native_atom_init
-
-    kls = staticmethod(kls)
+    kls = staticmethod(atom.native_atom)
 
     def test_glob(self):
         self.assertRaises(errors.MalformedAtom, self.kls,
@@ -161,5 +158,5 @@ class Test_native_atom(TestCase):
 class Test_cpy_atom(Test_native_atom):
     
     kls = staticmethod(atom.atom)
-    if atom.atom.__init__ is atom.native_atom_init:
+    if atom.native_atom is atom.atom:
         skip = "extension isn't available"

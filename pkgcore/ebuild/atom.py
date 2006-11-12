@@ -534,6 +534,7 @@ try:
     class atom(native_atom):
         __slots__ = ()
         __init__ = extension.atom_init
+        __inst_caching__ = True
 
 except ImportError:
     atom = native_atom

@@ -34,7 +34,7 @@ type##_get_##attr (type *self, void *closure)                           \
     {doc, (getter)type##_get_##attr ,           \
         (setter)type##_set_##attr , NULL}
 
-#define PKGCORE_IMMUTABLE_ATTRIBUTE(type, name, attr)  \
+#define PKGCORE_IMMUTABLE_ATTR(type, name, attr)  \
 RAW_PKGCORE_IMMUTABLE_ATTR(type, name, attr, Py_None)
 
 #define PKGCORE_IMMUTABLE_ATTR_BOOL(type, name, attr, test)             \

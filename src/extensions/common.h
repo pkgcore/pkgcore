@@ -87,7 +87,7 @@ static PyTypeObject func##_type = {                                     \
     0,                                  /* tp_setattro  */              \
     0,                                  /* tp_as_buffer */              \
     Py_TPFLAGS_DEFAULT,                 /* tp_flags     */              \
-    "cpython version of ##name##",      /* tp_doc       */              \
+    "cpython version of "#meth_name,   /* tp_doc       */              \
     0,                                  /* tp_traverse  */              \
     0,                                  /* tp_clear     */              \
     0,                                  /* tp_richcompare    */         \

@@ -31,32 +31,22 @@ except ImportError:
 
 def generic_equality(*attrlist):
 
-    class generic__eq__(object):
-        __slots__ = ("attrlist", "__weakref__")
-    
-        def __init__(self, *attrlist):
-            self.attrlist = tuple(attrgetter(x) for x in attrlist)
-    
-        def __call__(self, inst1, inst2):
-            if inst1 is inst2:
-                return True
-            for f in self.attrlist:
-                if f(inst1) != f(inst2):
-                    return False
-            return True
+    attrlist = tuple(attrgetter(x) for x in attrlist)
 
-    class generic__ne__(object):
-        __slots__ = ("attrlist", "__weakref__")
-    
-        def __init__(self, *attrlist):
-            self.attrlist = tuple(attrgetter(x) for x in attrlist)
-    
-        def __call__(self, inst1, inst2):
-            if inst1 is inst2:
+    def generic__eq__(inst1, inst2, attrlist=attrlist):
+        if inst1 is inst2:
+            return True
+        for f in attrlist:
+            if f(inst1) != f(inst2):
+               return False
+        return True
+
+    def generic__ne__(inst1, inst2, attrlist=attrlist):
+        if inst1 is inst2:
+            return False
+        for f in attrlist:
+            if f(inst1) == f(inst2):
                 return False
-            for f in self.attrlist:
-                if f(inst1) == f(inst2):
-                    return False
-            return True
+        return True
 
-    return generic__eq__(*attrlist), generic__ne__(attrlist)
+    return generic__eq__, generic__ne__

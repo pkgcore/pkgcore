@@ -27,7 +27,7 @@ static PyObject *pkgcore_atom_op_none = NULL;
 static PyObject *pkgcore_atom_op_glob = NULL;
 static PyObject *pkgcore_atom_cpv_parse = NULL;
 // every attr it sets...
-static PyObject *pkgcore_atomstr = NULL;
+static PyObject *pkgcore_atom_cpvstr = NULL;
 static PyObject *pkgcore_atom_key = NULL;
 static PyObject *pkgcore_atom_category = NULL;
 static PyObject *pkgcore_atom_package = NULL;
@@ -275,6 +275,7 @@ parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
         }                                                           \
         Py_DECREF(tmp);
         
+    STORE_ATTR(pkgcore_atom_cpvstr);
     STORE_ATTR(pkgcore_atom_category);
     STORE_ATTR(pkgcore_atom_package);
     STORE_ATTR(pkgcore_atom_key);
@@ -487,7 +488,6 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
     STORE_ATTR(pkgcore_atom_slot, slot);
     STORE_ATTR(pkgcore_atom_repo_id, repo_id);
     STORE_ATTR(pkgcore_atom_negate_vers, negate_vers);
-    STORE_ATTR(pkgcore_atomstr, atom_str)
     #undef STORE_ATTR
 
     Py_RETURN_NONE;
@@ -574,7 +574,7 @@ init_atom()
                 return;                             \
         }
 
-    load_string(pkgcore_atomstr,       "atomstr");
+    load_string(pkgcore_atom_cpvstr,    "cpvstr");
     load_string(pkgcore_atom_key,       "key");
     load_string(pkgcore_atom_category,  "category");
     load_string(pkgcore_atom_package,   "package");

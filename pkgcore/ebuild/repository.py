@@ -37,7 +37,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
     """
 
     false_categories = frozenset([
-            "eclass", "profiles", "packages", "distfiles",
+            "eclass", "profiles", "packages", "distfiles", "metadata",
             "licenses", "scripts", "CVS", ".svn"])
     configured = False
     configurables = ("domain", "settings",)

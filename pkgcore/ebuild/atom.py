@@ -120,7 +120,100 @@ class VersionMatch(restriction.base):
         return hash((self.droprev, self.ver, self.rev, self.negate, self.vals))
 
 
-class native_atom(boolean.AndRestriction):
+def native_init(self, atom, negate_vers=False):
+    """
+    @param atom: string, see gentoo ebuild atom syntax
+    """
+    sf = object.__setattr__
+
+    orig_atom = atom
+
+    u = atom.find("[")
+    if u != -1:
+        # use dep
+        u2 = atom.find("]", u)
+        if u2 == -1:
+            raise errors.MalformedAtom(atom,
+                "use restriction isn't completed")
+        sf(self, "use", tuple(atom[u+1:u2].split(',')))
+        if not all(x.rstrip("-") for x in self.use):
+            raise errors.MalformedAtom(
+                atom, "cannot have empty use deps in use restriction")
+        atom = atom[0:u]+atom[u2 + 1:]
+    else:
+        sf(self, "use", None)
+    s = atom.find(":")
+    if s != -1:
+        if atom.find(":", s+1) != -1:
+            raise errors.MalformedAtom(atom,
+                "second specification of slotting")
+        # slot dep.
+        slots = atom[s+1:].split(",")
+        if not all(slots):
+            raise errors.MalformedAtom(atom,
+                "empty slots aren't allowed")
+        sf(self, "slot", slots)
+        atom = atom[:s]
+    else:
+        sf(self, "slot", None)
+    del u, s
+
+    sf(self, "blocks", atom[0] == "!")
+    if self.blocks:
+        atom = atom[1:]
+
+    if atom[0] in ('<', '>'):
+        if atom[1] == '=':
+            sf(self, 'op', atom[:2])
+            atom = atom[2:]
+        else:
+            sf(self, 'op', atom[0])
+            atom = atom[1:]
+    elif atom[0] == '=':
+        if atom[-1] == '*':
+            sf(self, 'op', '=*')
+            atom = atom[1:-1]
+        else:
+            atom = atom[1:]
+            sf(self, 'op', '=')
+    elif atom[0] == '~':
+        sf(self, 'op', '~')
+        atom = atom[1:]
+    else:
+        sf(self, 'op', '')
+    sf(self, 'cpvstr', atom)
+
+    try:
+        c = cpv.CPV(self.cpvstr)
+    except errors.InvalidCPV, e:
+        raise errors.MalformedAtom(orig_atom, str(e))
+    sf(self, "key", c.key)
+    sf(self, "package", c.package)
+    sf(self, "category", c.category)
+    sf(self, "version", c.version)
+    sf(self, "fullver", c.fullver)
+    sf(self, "revision", c.revision)
+
+    if self.op:
+        if self.version is None:
+            raise errors.MalformedAtom(orig_atom,
+                "operator requires a version")
+    elif self.version is not None:
+        raise errors.MalformedAtom(orig_atom,
+            'versioned atom requires an operator')
+    sf(self, "repo_id", None)
+    sf(self, "hash", hash(orig_atom))
+    sf(self, "negate_vers", negate_vers)
+
+native_atom_overrides = {"__init__":native_init}
+
+try:
+    from pkgcore.ebuild._atom import overrides as atom_overrides
+except ImportError:
+    atom_overrides = native_atom_overrides
+
+
+class atom(boolean.AndRestriction):
 
     """Currently implements gentoo ebuild atom parsing.
 
@@ -137,90 +230,7 @@ class native_atom(boolean.AndRestriction):
 
     __inst_caching__ = True
 
-    def __init__(self, atom, negate_vers=False):
-        """
-        @param atom: string, see gentoo ebuild atom syntax
-        """
-        sf = object.__setattr__
-
-        orig_atom = atom
-
-        u = atom.find("[")
-        if u != -1:
-            # use dep
-            u2 = atom.find("]", u)
-            if u2 == -1:
-                raise errors.MalformedAtom(atom,
-                    "use restriction isn't completed")
-            sf(self, "use", tuple(atom[u+1:u2].split(',')))
-            if not all(x.rstrip("-") for x in self.use):
-                raise errors.MalformedAtom(
-                    atom, "cannot have empty use deps in use restriction")
-            atom = atom[0:u]+atom[u2 + 1:]
-        else:
-            sf(self, "use", None)
-        s = atom.find(":")
-        if s != -1:
-            if atom.find(":", s+1) != -1:
-                raise errors.MalformedAtom(atom,
-                    "second specification of slotting")
-            # slot dep.
-            slots = atom[s+1:].split(",")
-            if not all(slots):
-                raise errors.MalformedAtom(atom,
-                    "empty slots aren't allowed")
-            sf(self, "slot", slots)
-            atom = atom[:s]
-        else:
-            sf(self, "slot", None)
-        del u, s
-
-        sf(self, "blocks", atom[0] == "!")
-        if self.blocks:
-            atom = atom[1:]
-
-        if atom[0] in ('<', '>'):
-            if atom[1] == '=':
-                sf(self, 'op', atom[:2])
-                atom = atom[2:]
-            else:
-                sf(self, 'op', atom[0])
-                atom = atom[1:]
-        elif atom[0] == '=':
-            if atom[-1] == '*':
-                sf(self, 'op', '=*')
-                atom = atom[1:-1]
-            else:
-                atom = atom[1:]
-                sf(self, 'op', '=')
-        elif atom[0] == '~':
-            sf(self, 'op', '~')
-            atom = atom[1:]
-        else:
-            sf(self, 'op', '')
-        sf(self, 'cpvstr', atom)
-
-        try:
-            c = cpv.CPV(self.cpvstr)
-        except errors.InvalidCPV, e:
-            raise errors.MalformedAtom(orig_atom, str(e))
-        sf(self, "key", c.key)
-        sf(self, "package", c.package)
-        sf(self, "category", c.category)
-        sf(self, "version", c.version)
-        sf(self, "fullver", c.fullver)
-        sf(self, "revision", c.revision)
-
-        if self.op:
-            if self.version is None:
-                raise errors.MalformedAtom(orig_atom,
-                    "operator requires a version")
-        elif self.version is not None:
-            raise errors.MalformedAtom(orig_atom,
-                            'versioned atom requires an operator')
-        sf(self, "repo_id", None)
-        sf(self, "hash", hash(orig_atom))
-        sf(self, "negate_vers", negate_vers)
+    locals().update(atom_overrides.iteritems())
 
     def __repr__(self):
         atom = self.op + self.cpvstr
@@ -526,18 +536,6 @@ class native_atom(boolean.AndRestriction):
         # Handled all possible ops.
         raise NotImplementedError(
             'Someone added an op to atom without adding it to intersects')
-
-
-try:
-    from pkgcore.ebuild import _atom as extension
-
-    class atom(native_atom):
-        __slots__ = ()
-        __init__ = extension.atom_init
-        __inst_caching__ = True
-
-except ImportError:
-    atom = native_atom
 
 
 def split_atom(inst):

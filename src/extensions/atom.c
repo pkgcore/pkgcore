@@ -578,10 +578,19 @@ init_atom()
         pkgcore_atom_documentation);
     if(!m)
         return;
+    PyObject *d = PyDict_New();
+    if(!d)
+        return;
+
+    PyObject *overrides = PyDict_New();
+    if(!overrides)
+        return;
     PyObject *tmp = PyType_GenericNew(&pkgcore_atom_init_type, NULL, NULL);
     if(!tmp)
         return;
-    PyModule_AddObject(m, "__init__", tmp);
+    if(PyDict_SetItemString(overrides, "__init__", tmp))
+        return;
+    PyModule_AddObject(m, "overrides", overrides);
     
     if (PyErr_Occurred()) {
         Py_FatalError("can't initialize module _atom");

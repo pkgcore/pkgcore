@@ -12,8 +12,7 @@
 
 #define PY_SSIZE_T_CLEAN
 
-#include <Python.h>
-#include "py24-compatibility.h"
+#include "common.h"
 
 // exceptions, loaded during initialization.
 static PyObject *pkgcore_atom_MalformedAtom_Exc = NULL;
@@ -288,7 +287,7 @@ parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
 }
 
 static PyObject *
-pkgcore_parse_atom(PyObject *self, PyObject *args, PyObject *kwds)
+pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *atom_str, *negate_vers = NULL;
     static char *kwlist[] = {"atom_str", "negate_vers", NULL};
@@ -430,9 +429,8 @@ pkgcore_parse_atom(PyObject *self, PyObject *args, PyObject *kwds)
     }
 
     if(!use) {
-        use = PyTuple_New(0);
-        if(!use)
-            goto pkgcore_atom_parse_error;
+        Py_INCREF(Py_None);
+        use = Py_None;
     }
     if(!slot) {
         Py_INCREF(Py_None);
@@ -478,53 +476,9 @@ pkgcore_parse_atom(PyObject *self, PyObject *args, PyObject *kwds)
     return (PyObject *)NULL;
 }
 
-static PyMethodDef pkgcore_parse_atom_def = {
-    "__init__", pkgcore_parse_atom,
-    METH_VARARGS|METH_KEYWORDS, NULL};
 
-static PyObject *
-pkgcore_atom_get_descr(PyObject *self, PyObject *obj, PyObject *type)
-{
-    return PyCFunction_New(&pkgcore_parse_atom_def, obj);
-}
-
-static PyTypeObject pkgcore_atom_init_type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                                               /* ob_size */
-    "pkgcore_atom_init_type",                              /* tp_name */
-    sizeof(PyObject),                                /* tp_basicsize */
-    0,                                               /* tp_itemsize */
-    0,                                               /* tp_dealloc */
-    0,                                               /* tp_print */
-    0,                                               /* tp_getattr */
-    0,                                               /* tp_setattr */
-    0,                                               /* tp_compare */
-    0,                                               /* tp_repr */
-    0,                                               /* tp_as_number */
-    0,                                               /* tp_as_sequence */
-    0,                                               /* tp_as_mapping */
-    0,                                               /* tp_hash  */
-    0,                                               /* tp_call */
-    0,                                               /* tp_str */
-    0,                                               /* tp_getattro */
-    0,                                               /* tp_setattro */
-    0,                                               /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                              /* tp_flags */
-    "cpython version of atom init",                  /* tp_doc */
-    0,                                               /* tp_traverse */
-    0,                                               /* tp_clear */
-    0,                                               /* tp_richcompare */
-    0,                                               /* tp_weaklistoffset */
-    0,                                               /* tp_iter */
-    0,                                               /* tp_iternext */
-    0,                                               /* tp_methods */
-    0,                                               /* tp_members */
-    0,                                               /* tp_getset */
-    0,                                               /* tp_base */
-    0,                                               /* tp_dict */
-    pkgcore_atom_get_descr,                          /* tp_descr_get */
-    0,                                               /* tp_descr_set */
-};
+PKGCORE_FUNC_DESC("__init__", "pkgcore.ebuild._atom.__init__",
+    pkgcore_atom_init, METH_VARARGS|METH_KEYWORDS);
 
 PyDoc_STRVAR(
     pkgcore_atom_documentation,
@@ -627,7 +581,7 @@ init_atom()
     PyObject *tmp = PyType_GenericNew(&pkgcore_atom_init_type, NULL, NULL);
     if(!tmp)
         return;
-    PyModule_AddObject(m, "atom_init", tmp);
+    PyModule_AddObject(m, "__init__", tmp);
     
     if (PyErr_Occurred()) {
         Py_FatalError("can't initialize module _atom");

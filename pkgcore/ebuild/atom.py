@@ -135,7 +135,7 @@ def native_init(self, atom, negate_vers=False):
         if u2 == -1:
             raise errors.MalformedAtom(atom,
                 "use restriction isn't completed")
-        sf(self, "use", tuple(atom[u+1:u2].split(',')))
+        sf(self, "use", tuple(sorted(atom[u+1:u2].split(','))))
         if not all(x.rstrip("-") for x in self.use):
             raise errors.MalformedAtom(
                 atom, "cannot have empty use deps in use restriction")
@@ -367,14 +367,9 @@ class atom(boolean.AndRestriction):
         if c:
             return c
 
-        if self.use:
-            if not other.use:
-                return 1
-            c = cmp(sorted(self.use), sorted(other.use))
-            if c:
-                return c
-        elif other.use:
-            return -1
+        c = cmp(self.use, other.use)
+        if c:
+            return c
 
         return cmp(self.op, other.op)
 

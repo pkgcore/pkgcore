@@ -16,7 +16,9 @@ class FakePkg(CPV):
 
 class Test_native_atom(TestCase):
 
-    kls = staticmethod(atom.native_atom)
+    class kls(atom.atom):
+        locals().update(atom.native_atom_overrides.iteritems())
+    kls = staticmethod(kls)
 
     def test_glob(self):
         self.assertRaises(errors.MalformedAtom, self.kls,
@@ -160,5 +162,5 @@ class Test_native_atom(TestCase):
 class Test_cpy_atom(Test_native_atom):
     
     kls = staticmethod(atom.atom)
-    if atom.native_atom is atom.atom:
+    if atom.atom_overrides is atom.native_atom_overrides:
         skip = "extension isn't available"

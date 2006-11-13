@@ -83,7 +83,10 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
         p++;
     }
     char *end = p;
-    use = PyTuple_New(len);
+    if(len == 1)
+        use = PyTuple_New(len);
+    else
+        use = PyList_New(len);
     if(!use)
         return 1;
     Py_ssize_t idx = 0;
@@ -104,7 +107,9 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
             s = PyString_FromStringAndSize(start, p - start);
             if(!s)
                 goto cleanup_use_processing;
-            PyTuple_SET_ITEM(use, idx, s);
+            // steals the ref.
+            if(PyList_SetItem(use, idx, s))
+                goto cleanup_use_processing;
             idx++;
             start = p + 1;
         }
@@ -121,14 +126,34 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
         goto cleanup_use_processing;
     }
     s = PyString_FromStringAndSize(start, end - start);
-    if(s) {
-        PyTuple_SET_ITEM(use, idx, s);
-        if(s) {
-            *use_ptr = use;
-            *p_ptr = p + 1;
-            return 0;
+    if(!s) {
+        goto cleanup_use_processing;
+    } else {
+        if(len == 1)
+            PyTuple_SET_ITEM(use, idx, s);
+        else if (PyList_SetItem(use, idx, s)) {
+            goto cleanup_use_processing;
         }
     }
+    if(len > 1) {
+        // weak...
+        if(PyList_Sort(use) < 0)
+            goto cleanup_use_processing;
+        PyObject *t = PyTuple_New(len);
+        if(!t)
+            goto cleanup_use_processing;
+        register PyObject *x;
+        for(idx=0; idx < len; idx++) {
+            x = PyList_GET_ITEM(use, idx);
+            Py_INCREF(x);
+            PyTuple_SET_ITEM(t, idx, x);
+        }
+        Py_DECREF(use);
+        use = t;
+    }
+    *use_ptr = use;
+    *p_ptr = p + 1;
+    return 0;
     cleanup_use_processing:
     Py_CLEAR(use);
     return 1;

@@ -11,10 +11,10 @@
  */
 
 #define PY_SSIZE_T_CLEAN
-
-#include <Python.h>
+#include "common.h"
 #include <ceval.h>
-#include "py24-compatibility.h"
+
+static PyObject *pkgcore_equality_attr = NULL;
 
 typedef struct {
     PyObject_HEAD
@@ -133,6 +133,70 @@ pkgcore_mapping_get(PyObject *self, PyObject *args)
     return default_val;
 }
 
+inline PyObject *
+internal_generic_equality(PyObject *inst1, PyObject *inst2,
+    int desired)
+{
+    if(inst1 == inst2) {
+        PyObject *res = desired == Py_EQ ? Py_True : Py_False;
+        Py_INCREF(res);
+        return res;
+    }
+    
+    PyObject *attrs = PyObject_GetAttr(inst1, pkgcore_equality_attr);
+    if(!attrs)
+        return NULL;
+    if(!PyTuple_CheckExact(attrs)) {
+        PyErr_SetString(PyExc_TypeError,
+            "__attr_comparison__ must be a tuple");
+        return NULL;
+    }
+
+    Py_ssize_t idx = 0;
+    PyObject *attr1, *attr2;
+    // if Py_EQ, break on not equal, else on equal
+    for(; idx < PyTuple_GET_SIZE(attrs); idx++) {
+        if(!(attr1 = PyObject_GetAttr(inst1,
+            PyTuple_GET_ITEM(attrs, idx))))
+            return NULL;
+        if(!(attr2 = PyObject_GetAttr(inst2,
+            PyTuple_GET_ITEM(attrs, idx)))) {
+            Py_DECREF(attr1);
+            return NULL;
+        }
+        int ret = PyObject_RichCompareBool(attr1, attr2, desired);
+        Py_DECREF(attr1);
+        Py_DECREF(attr2);
+        if(ret == -1) {
+            return NULL;
+        } else if (ret == 0) {
+            Py_INCREF(Py_False);
+            return Py_False;
+        }
+    }
+    Py_INCREF(Py_True);
+    return Py_True;
+}
+
+static PyObject *
+pkgcore_generic_equality_eq(PyObject *self, PyObject *other)
+{
+    return internal_generic_equality(self, other, Py_EQ);
+}
+
+static PyObject *
+pkgcore_generic_equality_ne(PyObject *self, PyObject *other)
+{
+    return internal_generic_equality(self, other, Py_NE);
+}
+
+PKGCORE_FUNC_DESC("generic_eq", "pkgcore.util._klass.generic_eq",
+    pkgcore_generic_equality_eq, METH_O|METH_COEXIST);
+
+PKGCORE_FUNC_DESC("generic_ne", "pkgcore.util._klass.generic_ne",
+    pkgcore_generic_equality_ne, METH_O);
+    
+
 static PyMethodDef pkgcore_mapping_get_def = {
     "get", pkgcore_mapping_get, METH_VARARGS, NULL};
 
@@ -179,7 +243,6 @@ static PyTypeObject pkgcore_GetType = {
     pkgcore_mapping_get_descr,                       /* tp_descr_get */
     0,                                               /* tp_descr_set */
 };
-
 
 static PyObject *
 pkgcore_mapping_contains(PyObject *self, PyObject *key)
@@ -268,7 +331,20 @@ init_klass()
     if (PyType_Ready(&pkgcore_ContainsType) < 0)
         return;
 
-    PyObject *m = Py_InitModule3("_klass", NULL, pkgcore_klass_documentation);
+    if (PyType_Ready(&pkgcore_generic_equality_eq_type) < 0)
+        return;
+
+    if (PyType_Ready(&pkgcore_generic_equality_ne_type) < 0)
+        return;
+    
+    if(!pkgcore_equality_attr) {
+        if(!(pkgcore_equality_attr = PyString_FromString(
+            "__attr_comparison__")))
+            return;
+    }
+    
+    PyObject *m = Py_InitModule3("_klass", NULL,
+        pkgcore_klass_documentation);
 
     PyObject *tmp;
     if (!(tmp = PyType_GenericNew(&pkgcore_GetType, NULL, NULL)))
@@ -279,9 +355,18 @@ init_klass()
         return;
     PyModule_AddObject(m, "contains", tmp);
 
-
     Py_INCREF(&pkgcore_GetAttrProxyType);
     PyModule_AddObject(m, "GetAttrProxy",
         (PyObject *)&pkgcore_GetAttrProxyType);
-
+    
+    tmp = PyType_GenericNew(&pkgcore_generic_equality_eq_type,
+        NULL, NULL);
+    if(!tmp)
+        return;
+    PyModule_AddObject(m, "generic_eq", tmp);
+    tmp = PyType_GenericNew(&pkgcore_generic_equality_ne_type,
+        NULL, NULL);
+    if(!tmp)
+        return;
+    PyModule_AddObject(m, "generic_ne", tmp);
 }

@@ -229,6 +229,10 @@ class atom(boolean.AndRestriction):
     type = packages.package_type
     negate = False
 
+    __attr_comparison__ = ("cpvstr", "op", "blocks", "negate_vers",
+        "use", "slot")
+
+    __metaclass__ = generic_equality
     __inst_caching__ = True
 
     locals().update(atom_overrides.iteritems())
@@ -329,9 +333,6 @@ class atom(boolean.AndRestriction):
 
     def __getitem__(self, index):
         return self.restrictions[index]
-
-    __eq__, __ne__ = generic_equality("cpvstr", "op", "blocks",
-        "negate_vers", "use", "slot")
 
     def __cmp__(self, other):
         if not isinstance(other, self.__class__):

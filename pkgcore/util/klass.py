@@ -21,32 +21,43 @@ def native_get(self, key, default=None):
     except KeyError:
         return default
 
+attrlist_getter = attrgetter("__attr_comparison__")
+def native_generic_eq(inst1, inst2):
+    if inst1 is inst2:
+        return True
+    for attr in attrlist_getter(inst1):
+        if getattr(inst1, attr) != getattr(inst2, attr):
+           return False
+    return True
+
+def native_generic_ne(inst1, inst2):
+    if inst1 is inst2:
+        return False
+    for attr in attrlist_getter(inst1):
+        if getattr(inst1, attr) == getattr(inst2, attr):
+            return False
+    return True
+
 try:
-    from pkgcore.util._klass import GetAttrProxy, contains, get
+    from pkgcore.util._klass import (GetAttrProxy, contains, get,
+        generic_eq, generic_ne)
 except ImportError:
     GetAttrProxy = native_GetAttrProxy
     contains = native_contains
     get = native_get
+    generic_eq = native_generic_eq
+    generic_ne = native_generic_ne
 
+def generic_equality(name, bases, scope):
+    attrlist = scope.pop("__attr_comparison__", None)
+    if attrlist is None:
+        raise TypeError("__attr_comparison__ must be in the classes scope")
+    for x in attrlist:
+        if not isinstance(x, str):
+            raise TypeError("all members of attrlist must be strings- "
+                " got %r %s" % (type(x), repr(x)))
 
-def generic_equality(*attrlist):
-
-    attrlist = tuple(attrgetter(x) for x in attrlist)
-
-    def generic__eq__(inst1, inst2, attrlist=attrlist):
-        if inst1 is inst2:
-            return True
-        for f in attrlist:
-            if f(inst1) != f(inst2):
-               return False
-        return True
-
-    def generic__ne__(inst1, inst2, attrlist=attrlist):
-        if inst1 is inst2:
-            return False
-        for f in attrlist:
-            if f(inst1) == f(inst2):
-                return False
-        return True
-
-    return generic__eq__, generic__ne__
+    scope["__attr_comparison__"] = tuple(attrlist)
+    scope.setdefault("__eq__", generic_eq)
+    scope.setdefault("__ne__", generic_ne)
+    return type(name, bases, scope)

@@ -12,12 +12,14 @@ __all__ = ("AndRestriction", "OrRestriction")
 
 from itertools import islice
 from pkgcore.restrictions import restriction
-
+from pkgcore.util.klass import generic_equality
 
 class base(restriction.base):
 
     """base template for boolean restrictions"""
 
+    __metaclass__ = generic_equality
+    __attr_comparison__ = ('negate', 'type', 'restrictions')
     __slots__ = ('restrictions', 'type', 'negate')
 
     def __init__(self, *restrictions, **kwds):

@@ -8,6 +8,7 @@
 gentoo ebuild atom, should be generalized into an agnostic base
 """
 
+from pkgcore.util.klass import generic_equality
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
 from pkgcore.ebuild import cpv, errors
@@ -181,10 +182,10 @@ def native_init(self, atom, negate_vers=False):
         atom = atom[1:]
     else:
         sf(self, 'op', '')
-    sf(self, 'cpvstr', atom)
+    sf(self, 'atomstr', orig_atom)
 
     try:
-        c = cpv.CPV(self.cpvstr)
+        c = cpv.CPV(atom)
     except errors.InvalidCPV, e:
         raise errors.MalformedAtom(orig_atom, str(e))
     sf(self, "key", c.key)
@@ -221,7 +222,7 @@ class atom(boolean.AndRestriction):
     """
 
     __slots__ = (
-        "blocks", "op", "negate_vers", "cpvstr", "use",
+        "blocks", "op", "negate_vers", "use", "atomstr",
         "slot", "hash", "category", "version", "revision", "fullver",
         "package", "key", "repo_id")
 
@@ -233,16 +234,8 @@ class atom(boolean.AndRestriction):
     locals().update(atom_overrides.iteritems())
 
     def __repr__(self):
-        atom = self.op + self.cpvstr
-        if self.blocks:
-            atom = '!' + atom
-        attrs = [atom]
-        if self.use:
-            attrs.append('use=' + repr(self.use))
-        if self.slot:
-            attrs.append('slot=' + repr(self.slot))
         return '<%s %s @#%x>' % (
-            self.__class__.__name__, ' '.join(attrs), id(self))
+            self.__class__.__name__, self.atomstr, id(self))
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
         if full_solution_expansion:
@@ -308,17 +301,7 @@ class atom(boolean.AndRestriction):
         raise AttributeError(attr)
 
     def __str__(self):
-        if self.op == '=*':
-            s = "=%s*" %  self.cpvstr
-        else:
-            s = self.op + self.cpvstr
-        if self.blocks:
-            s = "!" + s
-        if self.use:
-            s += "[%s]" % ",".join(self.use)
-        if self.slot:
-            s += ":%s" % ",".join(self.slot)
-        return s
+        return self.atom_str
 
     def __hash__(self):
         return self.hash
@@ -328,6 +311,8 @@ class atom(boolean.AndRestriction):
 
     def __getitem__(self, index):
         return self.restrictions[index]
+
+    __eq__, __ne__ = generic_equality("atomstr", "negate_vers")
 
     def __cmp__(self, other):
         if not isinstance(other, self.__class__):

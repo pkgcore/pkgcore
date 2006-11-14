@@ -2,6 +2,37 @@
 # License: GPL2
 
 from operator import attrgetter
+from pkgcore.util.caching import WeakInstMeta
+from collections import deque
+
+class chained_getter(object):
+    __metaclass__ = WeakInstMeta
+    __slots__ = ('namespace', 'chain')
+    __fifo_cache__ = deque()
+    __inst_caching__ = True
+
+    def __init__(self, namespace):
+        self.namespace = namespace
+        self.chain = map(attrgetter, namespace.split("."))
+        if len(self.__fifo_cache__) > 10:
+            self.__fifo_cache__.popleft()
+        self.__fifo_cache__.append(self)
+
+    def __hash__(self):
+        return hash(self.namespace)
+
+    def __eq__(self, other):
+        return self.namespace == other.namespace
+
+    def __ne__(self, other):
+        return self.namespace != other.namespace
+
+    def __call__(self, obj):
+        o = obj
+        for f in self.chain:
+            o = f(o)
+        return o
+
 
 def native_GetAttrProxy(target):
     def reflected_getattr(self, attr):

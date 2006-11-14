@@ -57,12 +57,12 @@ class PackageRestriction(restriction.base):
     __init__ = package_restriction_init
     
     def _handle_exception(self, exc):
-        if isinstance(AttributeError, exc):
+        if isinstance(exc, AttributeError):
             if not self.ignore_missing:
                 logger.exception("failed getting attribute %s from %s, "
                               "exception %s" % (self.attr, str(pkg), str(ae)))
             s = self.attr.split('.')
-            if not any(x in s for x in exc.args):
+            if any(x in s for x in exc.args):
                 return False
             return True;
         logger.exception("caught unexpected exception accessing %s from %s, "

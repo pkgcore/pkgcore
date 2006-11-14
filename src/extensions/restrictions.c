@@ -285,9 +285,7 @@ pkgcore_package_restriction_init(PyObject *self, PyObject *args,
     Py_DECREF(self_type);
     
     #define make_bool(ptr)                              \
-    if(!(ptr)) {                                        \
-        (ptr) = Py_False;                               \
-    } else if((ptr) != Py_True && (ptr) != Py_False) {  \
+    if((ptr) != Py_True && (ptr) != Py_False) {         \
         if((ptr) == Py_None) {                          \
             (ptr) = Py_False;                           \
         } else {                                        \
@@ -297,8 +295,16 @@ pkgcore_package_restriction_init(PyObject *self, PyObject *args,
             ptr = ret == 1 ? Py_True : Py_False;        \
         }                                               \
     }
-    make_bool(negate);
-    make_bool(ignore_missing);
+    if(!negate) {
+        negate = Py_False;
+    } else {
+        make_bool(negate);
+    }
+    if(ignore_missing == NULL) {
+        ignore_missing = Py_True;
+    } else {
+        make_bool(ignore_missing);
+    }
     #undef make_bool
 
     #define store_attr(attr, val)                   \

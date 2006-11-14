@@ -79,27 +79,26 @@ class PackageRestriction(restriction.base):
         sf(self, "restriction", childrestriction)
         sf(self, "ignore_missing", ignore_missing)
 
-    def __pull_attr(self, pkg):
-        try:
-            return self.attr_split(pkg)
-        except (KeyboardInterrupt, RuntimeError, SystemExit):
-            raise
-        except AttributeError,ae:
+    def _handle_exception(self, exc):
+        if isinstance(AttributeError, exc):
             if not self.ignore_missing:
                 logger.exception("failed getting attribute %s from %s, "
                               "exception %s" % (self.attr, str(pkg), str(ae)))
-            raise
-        except Exception, e:
-            logger.exception("caught unexpected exception accessing %s from %s, "
-                         "exception %s" % (self.attr, str(pkg), str(e)))
-            raise AttributeError(self.attr)
+            s = self.attr.split('.')
+            if not any(x in s for x in exc.args):
+                return False
+            return True;
+        logger.exception("caught unexpected exception accessing %s from %s, "
+            "exception %s" % (self.attr, str(pkg), str(e)))
+        return False        
 
     def match(self, pkg):
         try:
-            return self.restriction.match(self.__pull_attr(pkg)) != self.negate
-        except AttributeError, ae:
-            s = self.attr.split(".")
-            if not any(x in s for x in ae.args):
+            return self.restriction.match(self.attr_split(pkg)) != self.negate
+        except (KeyboardInterrupt, RuntimeError, SystemExit):
+            raise
+        except Exception, e:
+            if self._handle_exception(e):
                 raise
             return self.negate
 
@@ -107,27 +106,29 @@ class PackageRestriction(restriction.base):
         try:
             if self.negate:
                 return self.restriction.force_True(pkg, self.attr,
-                                                   self.__pull_attr(pkg))
+                                                   self.attr_split(pkg))
             else:
                 return self.restriction.force_False(pkg, self.attr,
-                                                    self.__pull_attr(pkg))
-        except AttributeError, ae:
-            s = self.attr.split('.')
-            if not any(x in s for x in ae.args):
+                                                    self.attr_split(pkg))
+        except (KeyboardInterrupt, RuntimeError, SystemExit):
+            raise
+        except Exception, e:
+            if self._handle_exception(e):
                 raise
-            return not self.negate
+            return self.negate
 
     def force_True(self, pkg):
         try:
             if self.negate:
                 return self.restriction.force_False(pkg, self.attr,
-                                                    self.__pull_attr(pkg))
+                                                    self.attr_split(pkg))
             else:
                 return self.restriction.force_True(pkg, self.attr,
-                                                   self.__pull_attr(pkg))
-        except AttributeError, ae:
-            s = self.attr.split('.')
-            if not any(x in s for x in ae.args):
+                                                   self.attr_split(pkg))
+        except (KeyboardInterrupt, RuntimeError, SystemExit):
+            raise
+        except Exception, e:
+            if self._handle_exception(e):
                 raise
             return self.negate
 

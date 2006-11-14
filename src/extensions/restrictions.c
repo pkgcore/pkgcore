@@ -14,6 +14,15 @@
 
 #include "common.h"
 
+static PyObject *pkgcore_restrictions_getter = NULL;
+static PyObject *pkgcore_restrictions_negate = NULL;
+static PyObject *pkgcore_restrictions_attr = NULL;
+static PyObject *pkgcore_restrictions_attr_split = NULL;
+static PyObject *pkgcore_restrictions_restriction = NULL;
+static PyObject *pkgcore_restrictions_ignore_missing = NULL;
+static PyObject *pkgcore_restrictions_type = NULL;
+static PyObject *pkgcore_restrictions_subtype = NULL;
+
 #define NEGATED_RESTRICT    0x1
 #define CASE_SENSITIVE      0x2
 
@@ -227,6 +236,92 @@ static PyTypeObject pkgcore_StrExactMatch_Type = {
     pkgcore_StrExactMatch_new,                       /* tp_new */
 };
 
+static PyObject *
+pkgcore_package_restriction_init(PyObject *self, PyObject *args,
+    PyObject *kwds)
+{
+    PyObject *attr, *restrict, *negate = NULL, *ignore_missing = NULL;
+    static char *kwdlist[] = {"attr", "childrestriction", "negate", 
+        "ignore_missing", NULL};
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "SO|OO", kwdlist, 
+        &attr, &restrict, &negate, &ignore_missing)) {
+        return NULL;
+    }
+    PyObject *self_type = PyObject_GetAttr(self, pkgcore_restrictions_subtype);
+    if(!self_type)
+        return NULL;
+    PyObject *child_type = PyObject_GetAttr(restrict,
+        pkgcore_restrictions_type);
+    if(!child_type) {
+        Py_DECREF(self_type);
+        return NULL;
+    }
+    int same = PyObject_RichCompareBool(self_type, child_type, Py_EQ);
+    Py_DECREF(child_type);
+    if(same == -1) {
+        Py_DECREF(self_type);
+        return NULL;
+    } else if(same == 0) {
+        // fun.
+        PyObject *rep = PyObject_Repr(self_type);
+        Py_DECREF(self_type);
+        if(!PyString_CheckExact(rep)) {
+            PyObject *tmp = PyObject_Str(rep);
+            Py_DECREF(rep);
+            if(!tmp) {
+                return NULL;
+            }
+            rep = tmp;
+        }
+        if(!rep)
+            return NULL;
+        PyObject *msg = PyString_FromFormat("restriction must be of type %s",
+            PyString_AS_STRING(rep));
+        Py_DECREF(rep);
+        if(msg)
+            PyErr_SetObject(PyExc_TypeError, msg);
+        return NULL;
+    }
+    Py_DECREF(self_type);
+    
+    #define make_bool(ptr)                              \
+    if(!(ptr)) {                                        \
+        (ptr) = Py_False;                               \
+    } else if((ptr) != Py_True && (ptr) != Py_False) {  \
+        if((ptr) == Py_None) {                          \
+            (ptr) = Py_False;                           \
+        } else {                                        \
+            int ret = PyObject_IsTrue(ptr);             \
+            if(ret == -1)                               \
+                return NULL;                            \
+            ptr = ret == 1 ? Py_True : Py_False;        \
+        }                                               \
+    }
+    make_bool(negate);
+    make_bool(ignore_missing);
+    #undef make_bool
+
+    #define store_attr(attr, val)                   \
+    if(PyObject_GenericSetAttr(self, attr,val)) {   \
+        return NULL;                                \
+    }
+    store_attr(pkgcore_restrictions_negate, negate);
+    store_attr(pkgcore_restrictions_attr, attr);
+    store_attr(pkgcore_restrictions_restriction, restrict);
+    store_attr(pkgcore_restrictions_ignore_missing, ignore_missing);
+    PyObject *getter = PyObject_CallFunction(pkgcore_restrictions_getter,
+        "O", attr);
+    if(!getter)
+        return NULL;
+    store_attr(pkgcore_restrictions_attr_split, getter);
+    Py_RETURN_NONE;
+}
+
+PKGCORE_FUNC_DESC("__init__", "pkgcore.restrictions._restrictions."
+    "package_init", pkgcore_package_restriction_init,
+    METH_VARARGS|METH_KEYWORDS|METH_COEXIST);
+    
+
 PyDoc_STRVAR(
     pkgcore_restrictions_documentation,
     "cpython restrictions extensions for speed");
@@ -237,12 +332,52 @@ init_restrictions()
     if (PyType_Ready(&pkgcore_StrExactMatch_Type) < 0)
         return;
     
+    if (PyType_Ready(&pkgcore_package_restriction_init_type) < 0)
+        return;
+
+    if(!pkgcore_restrictions_getter) {
+        PyObject *s = PyString_FromString("pkgcore.util.klass");
+        if(!s)
+            return;
+        PyObject *tmp = PyImport_Import(s);
+        Py_DECREF(s);
+        if(!tmp)
+            return;
+        pkgcore_restrictions_getter = PyObject_GetAttrString(tmp,
+            "chained_getter");
+        Py_DECREF(tmp);
+        if(!pkgcore_restrictions_getter)
+            return;
+    }
+
+    #define LOAD_STR(ptr, val)                      \
+    if(!(ptr)) {                                    \
+        if(!((ptr) = PyString_FromString(val))) {   \
+            return;                                 \
+        }                                           \
+    }
+    
+    LOAD_STR(pkgcore_restrictions_attr, "attr");
+    LOAD_STR(pkgcore_restrictions_negate, "negate");
+    LOAD_STR(pkgcore_restrictions_attr_split, "attr_split");
+    LOAD_STR(pkgcore_restrictions_restriction, "restriction");
+    LOAD_STR(pkgcore_restrictions_ignore_missing, "ignore_missing");
+    LOAD_STR(pkgcore_restrictions_type, "type");
+    LOAD_STR(pkgcore_restrictions_subtype, "subtype");
+    #undef LOAD_STR
+    
     PyObject *m = Py_InitModule3("_restrictions", NULL,
         pkgcore_restrictions_documentation);
     
     Py_INCREF(&pkgcore_StrExactMatch_Type);
     PyModule_AddObject(m, "StrExactMatch",
         (PyObject *)&pkgcore_StrExactMatch_Type);
+
+    PyObject *tmp = PyType_GenericNew(&pkgcore_package_restriction_init_type,
+        NULL, NULL);
+    if(!tmp)
+        return;
+    PyModule_AddObject(m, "package_restriction_init", tmp);
     
     if (PyErr_Occurred())
         Py_FatalError("can't initialize module _restrictions");

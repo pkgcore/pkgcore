@@ -15,6 +15,27 @@ demandload(globals(), "pkgcore.log:logger")
 # Backwards compatibility.
 package_type = restriction.package_type
 
+def native_package_restriction_init(self, attr, childrestriction, negate=False,
+    ignore_missing=True):
+    """
+    @param attr: package attribute to match against
+    @param childrestriction: a L{pkgcore.restrictions.values.base} instance
+        to pass attr to for matching
+    @param negate: should the results be negated?
+    """
+    if not childrestriction.type == self.subtype:
+        raise TypeError("restriction must be of type %r" % (self.subtype,))
+    sf = object.__setattr__
+    sf(self, "negate", negate)
+    sf(self, "attr_split", chained_getter(attr))
+    sf(self, "attr", attr)
+    sf(self, "restriction", childrestriction)
+    sf(self, "ignore_missing", ignore_missing)
+
+try:
+    from pkgcore.restrictions._restrictions import package_restriction_init
+except ImportError:
+    package_restriction_init = native_package_restriction_init
 
 class PackageRestriction(restriction.base):
 
@@ -33,23 +54,8 @@ class PackageRestriction(restriction.base):
     
     __inst_caching__ = True
 
-    def __init__(self, attr, childrestriction, negate=False,
-        ignore_missing=True):
-        """
-        @param attr: package attribute to match against
-        @param childrestriction: a L{pkgcore.restrictions.values.base} instance
-            to pass attr to for matching
-        @param negate: should the results be negated?
-        """
-        if not childrestriction.type == self.subtype:
-            raise TypeError("restriction must be of type %r" % (self.subtype,))
-        sf = object.__setattr__
-        sf(self, "negate", negate)
-        sf(self, "attr_split", chained_getter(attr))
-        sf(self, "attr", attr)
-        sf(self, "restriction", childrestriction)
-        sf(self, "ignore_missing", ignore_missing)
-
+    __init__ = package_restriction_init
+    
     def _handle_exception(self, exc):
         if isinstance(AttributeError, exc):
             if not self.ignore_missing:

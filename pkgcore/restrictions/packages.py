@@ -56,17 +56,17 @@ class PackageRestriction(restriction.base):
 
     __init__ = package_restriction_init
     
-    def _handle_exception(self, exc):
+    def _handle_exception(self, pkg, exc):
         if isinstance(exc, AttributeError):
             if not self.ignore_missing:
                 logger.exception("failed getting attribute %s from %s, "
-                              "exception %s" % (self.attr, str(pkg), str(ae)))
+                              "exception %s" % (self.attr, str(pkg), str(exc)))
             s = self.attr.split('.')
             if any(x in s for x in exc.args):
                 return False
             return True;
         logger.exception("caught unexpected exception accessing %s from %s, "
-            "exception %s" % (self.attr, str(pkg), str(e)))
+            "exception %s" % (self.attr, str(pkg), str(exc)))
         return False        
 
     def match(self, pkg):
@@ -75,7 +75,7 @@ class PackageRestriction(restriction.base):
         except (KeyboardInterrupt, RuntimeError, SystemExit):
             raise
         except Exception, e:
-            if self._handle_exception(e):
+            if self._handle_exception(pkg, e):
                 raise
             return self.negate
 
@@ -90,7 +90,7 @@ class PackageRestriction(restriction.base):
         except (KeyboardInterrupt, RuntimeError, SystemExit):
             raise
         except Exception, e:
-            if self._handle_exception(e):
+            if self._handle_exception(pkg, e):
                 raise
             return self.negate
 
@@ -105,7 +105,7 @@ class PackageRestriction(restriction.base):
         except (KeyboardInterrupt, RuntimeError, SystemExit):
             raise
         except Exception, e:
-            if self._handle_exception(e):
+            if self._handle_exception(pkg, e):
                 raise
             return self.negate
 

@@ -323,9 +323,9 @@ pkgcore_package_restriction_init(PyObject *self, PyObject *args,
     Py_RETURN_NONE;
 }
 
-PKGCORE_FUNC_DESC("__init__", "pkgcore.restrictions._restrictions."
+PKGCORE_FUNC_BINDING("__init__", "pkgcore.restrictions._restrictions."
     "package_init", pkgcore_package_restriction_init,
-    METH_VARARGS|METH_KEYWORDS|METH_COEXIST);
+    METH_VARARGS|METH_KEYWORDS);
     
 
 PyDoc_STRVAR(

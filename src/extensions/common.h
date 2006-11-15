@@ -56,14 +56,8 @@ type##_get_##attr (type *self, void *closure)                           \
 
 
 #define PKGCORE_FUNC_DESC(meth_name, class_name, func, methargs)        \
-                                                                        \
-static PyObject *                                                       \
-func##_get_descr(PyObject *self, PyObject *obj, PyObject *type)         \
-{                                                                       \
-    static PyMethodDef mdef = {meth_name, (PyCFunction)func, methargs,  \
-        NULL};                                                          \
-    return PyCFunction_New(&mdef, obj);                                 \
-}                                                                       \
+_PKGCORE_FUNC_DESC(meth_name, class_name, func, methargs, 0)
+#define _PKGCORE_FUNC_DESC(meth_name, class_name, func, methargs, desc) \
                                                                         \
 static PyTypeObject func##_type = {                                     \
     PyObject_HEAD_INIT(NULL)                                            \
@@ -81,13 +75,13 @@ static PyTypeObject func##_type = {                                     \
     0,                                  /* tp_as_sequence */            \
     0,                                  /* tp_as_mapping  */            \
     0,                                  /* tp_hash      */              \
-    0,                                  /* tp_call      */              \
+    func,                                  /* tp_call      */              \
     0,                                  /* tp_str       */              \
     0,                                  /* tp_getattro  */              \
     0,                                  /* tp_setattro  */              \
     0,                                  /* tp_as_buffer */              \
     Py_TPFLAGS_DEFAULT,                 /* tp_flags     */              \
-    "cpython version of "#meth_name,   /* tp_doc       */              \
+    "cpython version of "#meth_name,   /* tp_doc       */               \
     0,                                  /* tp_traverse  */              \
     0,                                  /* tp_clear     */              \
     0,                                  /* tp_richcompare    */         \
@@ -99,8 +93,21 @@ static PyTypeObject func##_type = {                                     \
     0,                                  /* tp_getset    */              \
     0,                                  /* tp_base      */              \
     0,                                  /* tp_dict      */              \
-    &func##_get_descr,                   /* tp_descr_get */              \
+    desc,                               /* tp_descr_get */              \
     0,                                  /* tp_descr_set */              \
 }; 
+
+#define PKGCORE_FUNC_BINDING(meth_name, class_name, func, methargs)    \
+static PyObject *                                                       \
+func##_get_descr(PyObject *self, PyObject *obj, PyObject *type)         \
+{                                                                       \
+    static PyMethodDef mdef = {meth_name, (PyCFunction)func, methargs,  \
+        NULL};                                                          \
+    return PyCFunction_New(&mdef, obj);                                 \
+}                                                                       \
+                                                                        \
+_PKGCORE_FUNC_DESC(meth_name, class_name, func, methargs,               \
+    func##_get_descr);
+                                                                        
 
 #endif

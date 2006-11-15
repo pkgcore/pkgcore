@@ -12,113 +12,12 @@ from pkgcore.util.klass import generic_equality
 from pkgcore.restrictions import values, packages, boolean, restriction
 from pkgcore.util.compatibility import all
 from pkgcore.ebuild import cpv, errors
+from pkgcore.ebuild.atom_restricts import VersionMatch
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.restrictions.delegated:delegate "
-)
+demandload(globals(), "pkgcore.restrictions.delegated:delegate ")
 
 # namespace compatibility...
 MalformedAtom = errors.MalformedAtom
-
-
-# TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq,
-# ne ops, and convert this to it.
-
-class VersionMatch(restriction.base):
-
-    """
-    package restriction implementing gentoo ebuild version comparison rules
-
-    any overriding of this class *must* maintain numerical order of
-    self.vals, see intersect for reason why. vals also must be a tuple.
-    """
-
-    __slots__ = ("ver", "rev", "vals", "droprev", "negate")
-
-    __inst_caching__ = True
-    type = packages.package_type
-    attr = "fullver"
-
-    _convert_op2str = {(-1,):"<", (-1,0): "<=", (0,):"=",
-        (0, 1):">=", (1,):">"}
-
-    _convert_str2op = dict([(v,k) for k,v in _convert_op2str.iteritems()])    
-    del k,v
-    
-    def __init__(self, operator, ver, rev=None, negate=False, **kwd):
-        """
-        @param operator: version comparison to do,
-            valid operators are ('<', '<=', '=', '>=', '>', '~')
-        @type operator: string
-        @param ver: version to base comparison on
-        @type ver: string
-        @param rev: revision to base comparison on
-        @type rev: None (no rev), or an int
-        @param negate: should the restriction results be negated;
-            currently forced to False
-        """
-
-        kwd["negate"] = False
-        super(self.__class__, self).__init__(**kwd)
-        sf = object.__setattr__
-        sf(self, "ver", ver)
-        sf(self, "rev", rev)
-        if operator != "~" and operator not in self._convert_str2op:
-            raise errors.InvalidVersion(self.ver, self.rev,
-                                 "invalid operator, '%s'" % operator)
-
-        sf(self, "negate", negate)
-        if operator == "~":
-            if ver is None:
-                raise ValueError(
-                    "for ~ op, version must be something other then None")
-            sf(self, "droprev", True)
-            sf(self, "vals", (0,))
-        else:
-            sf(self, "droprev", False)
-            sf(self, "vals", self._convert_str2op[operator])
-
-    def match(self, pkginst):
-        if self.droprev:
-            r1, r2 = None, None
-        else:
-            r1, r2 = self.rev, pkginst.revision
-
-        return (cpv.ver_cmp(pkginst.version, r2, self.ver, r1) in self.vals) \
-            != self.negate
-
-    def __str__(self):
-        s = self._convert_op2str[self.vals]
-
-        if self.negate:
-            n = "not "
-        else:
-            n = ''
-
-        if self.droprev or self.rev is None:
-            return "ver %s%s %s" % (n, s, self.ver)
-        return "ver-rev %s%s %s-r%s" % (n, s, self.ver, self.rev)
-
-    @staticmethod
-    def _convert_ops(inst):
-        if inst.negate:
-            if inst.droprev:
-                return inst.vals
-            return tuple(sorted(set((-1, 0, 1)).difference(inst.vals)))
-        return inst.vals
-
-    def __eq__(self, other):
-        if self is other:
-            return True
-        if isinstance(other, self.__class__):
-            if self.droprev != other.droprev or self.ver != other.ver \
-                or self.rev != other.rev:
-                return False
-            return self._convert_ops(self) == self._convert_ops(other)
-
-        return False
-
-    def __hash__(self):
-        return hash((self.droprev, self.ver, self.rev, self.negate, self.vals))
 
 
 def native_init(self, atom, negate_vers=False):
@@ -206,7 +105,60 @@ def native_init(self, atom, negate_vers=False):
     sf(self, "hash", hash(orig_atom))
     sf(self, "negate_vers", negate_vers)
 
-native_atom_overrides = {"__init__":native_init}
+def native__getattr__(self, attr):
+    if attr != "restrictions":
+        raise AttributeError(attr)
+
+    # ordering here matters; against 24702 ebuilds for
+    # a non matchable atom with package as the first restriction
+    # 10 loops, best of 3: 206 msec per loop
+    # with category as the first(the obvious ordering)
+    # 10 loops, best of 3: 209 msec per loop
+    # why?  because category is more likely to collide;
+    # at the time of this profiling, there were 151 categories.
+    # over 11k packages however.
+    r = [packages.PackageRestriction(
+            "package", values.StrExactMatch(self.package)),
+        packages.PackageRestriction(
+            "category", values.StrExactMatch(self.category))]
+
+    if self.fullver is not None:
+        if self.op == '=*':
+            r.append(packages.PackageRestriction(
+                    "fullver", values.StrGlobMatch(self.fullver)))
+        else:
+            r.append(VersionMatch(self.op, self.version, self.revision,
+                                  negate=self.negate_vers))
+
+    if self.use is not None:
+        false_use = [x[1:] for x in self.use if x[0] == "-"]
+        true_use = [x for x in self.use if x[0] != "-"]
+        if false_use:
+            # XXX: convert this to a value AndRestriction
+            # whenever harring gets off his ass and decides
+            # another round of tinkering with restriction
+            # subsystem is viable (burnt out now)
+            # ~harring
+            r.append(packages.PackageRestriction(
+                    "use", values.ContainmentMatch(
+                        negate=True, all=True, *false_use)))
+        if true_use:
+           r.append(packages.PackageRestriction(
+                   "use", values.ContainmentMatch(all=True,
+                                                  *true_use)))
+    if self.slot is not None:
+        if len(self.slot) == 1:
+            v = values.StrExactMatch(self.slot[0])
+        else:
+            v = values.OrRestriction(*map(values.StrExactMatch,
+                self.slot))
+        r.append(packages.PackageRestriction("slot", v))
+    object.__setattr__(self, attr, tuple(r))
+    return r
+
+
+native_atom_overrides = {"__init__":native_init, 
+    "__getattr__":native__getattr__}
 
 try:
     from pkgcore.ebuild._atom import overrides as atom_overrides
@@ -260,57 +212,6 @@ class atom(boolean.AndRestriction):
             return boolean.AndRestriction.cnf_solutions(
                 self, full_solution_expansion=True)
         return [[self]]
-
-    def __getattr__(self, attr):
-        if attr == "restrictions":
-            # ordering here matters; against 24702 ebuilds for
-            # a non matchable atom with package as the first restriction
-            # 10 loops, best of 3: 206 msec per loop
-            # with category as the first(the obvious ordering)
-            # 10 loops, best of 3: 209 msec per loop
-            # why?  because category is more likely to collide;
-            # at the time of this profiling, there were 151 categories.
-            # over 11k packages however.
-            r = [packages.PackageRestriction(
-                    "package", values.StrExactMatch(self.package)),
-                packages.PackageRestriction(
-                    "category", values.StrExactMatch(self.category))]
-
-            if self.version:
-                if self.op == '=*':
-                    r.append(packages.PackageRestriction(
-                            "fullver", values.StrGlobMatch(self.fullver)))
-                else:
-                    r.append(VersionMatch(self.op, self.version, self.revision,
-                                          negate=self.negate_vers))
-
-            if self.use:
-                false_use = [x[1:] for x in self.use if x[0] == "-"]
-                true_use = [x for x in self.use if x[0] != "-"]
-                if false_use:
-                    # XXX: convert this to a value AndRestriction
-                    # whenever harring gets off his ass and decides
-                    # another round of tinkering with restriction
-                    # subsystem is viable (burnt out now)
-                    # ~harring
-                    r.append(packages.PackageRestriction(
-                            "use", values.ContainmentMatch(
-                                negate=True, all=True, *false_use)))
-                if true_use:
-                    r.append(packages.PackageRestriction(
-                            "use", values.ContainmentMatch(all=True,
-                                                           *true_use)))
-            if self.slot is not None:
-                if len(self.slot) == 1:
-                    v = values.StrExactMatch(self.slot[0])
-                else:
-                    v = values.OrRestriction(*map(values.StrExactMatch,
-                        self.slot))
-                r.append(packages.PackageRestriction("slot", v))
-            object.__setattr__(self, attr, tuple(r))
-            return r
-
-        raise AttributeError(attr)
 
     def __str__(self):
         if self.op == '=*':

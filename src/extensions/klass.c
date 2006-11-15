@@ -190,10 +190,10 @@ pkgcore_generic_equality_ne(PyObject *self, PyObject *other)
     return internal_generic_equality(self, other, Py_NE);
 }
 
-PKGCORE_FUNC_DESC("generic_eq", "pkgcore.util._klass.generic_eq",
+PKGCORE_FUNC_BINDING("generic_eq", "pkgcore.util._klass.generic_eq",
     pkgcore_generic_equality_eq, METH_O|METH_COEXIST);
 
-PKGCORE_FUNC_DESC("generic_ne", "pkgcore.util._klass.generic_ne",
+PKGCORE_FUNC_BINDING("generic_ne", "pkgcore.util._klass.generic_ne",
     pkgcore_generic_equality_ne, METH_O);
     
 

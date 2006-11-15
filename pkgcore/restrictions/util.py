@@ -7,7 +7,7 @@ restriction related utilities
 
 from pkgcore.util.lists import iflatten_func
 from pkgcore.util.containers import InvertedContains
-from pkgcore.restrictions import packages, boolean, restriction
+from pkgcore.restrictions import packages, boolean
 
 def _is_package_instance(inst):
     return (getattr(inst, "type", None) == packages.package_type
@@ -22,11 +22,6 @@ def collect_package_restrictions(restrict, attrs=None):
     """
     if not isinstance(restrict, (list, tuple)):
         restrict = [restrict]
-    for r in restrict:
-        if not isinstance(r, restriction.base):
-            raise TypeError(
-                "restrict must be of a restriction.base, not %s: %r" % (
-                    r.__class__.__name__, r))
     if attrs is None:
         for r in iflatten_func(restrict, _is_package_instance):
             yield r

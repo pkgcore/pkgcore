@@ -19,15 +19,17 @@ class ModulesTest(TestCase):
         self.dir2 = tempfile.mkdtemp()
         self.packdir = os.path.join(self.dir, 'mod_testplug')
         self.packdir2 = os.path.join(self.dir2, 'mod_testplug')
-        for d in [self.packdir, self.packdir2]:
-            os.mkdir(d)
-            init = open(os.path.join(d, '__init__.py'), 'w')
-            init.write('''
-from pkgutil import extend_path
+        os.mkdir(self.packdir)
+        os.mkdir(self.packdir2)
+        init = open(os.path.join(self.packdir, '__init__.py'), 'w')
+        init.write('''
+from pkgcore.plugins import extend_path
 
-__path__ = extend_path(__path__, __name__)
+extend_path(__path__, __name__)
 ''')
-        plug = open(os.path.join(self.packdir, 'plug.py'), 'w')
+        init.close()
+        filename = os.path.join(self.packdir, 'plug.py')
+        plug = open(filename, 'w')
         plug.write('''
 class DisabledPlug(object):
     disabled = True
@@ -49,6 +51,10 @@ pkgcore_plugins = {
 }
 ''')
         plug.close()
+        # Move the mtime 2 seconds into the past so the .pyc file has
+        # a different mtime.
+        st = os.stat(filename)
+        os.utime(filename, (st.st_atime, st.st_mtime - 2))
         plug2 = open(os.path.join(self.packdir, 'plug2.py'), 'w')
         plug2.write('# I do not have any pkgcore_plugins for you!\n')
         plug2.close()
@@ -81,10 +87,16 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
     def _runit(self, method):
         plugin._cache = {}
         method()
+        mtime = os.path.getmtime(os.path.join(self.packdir, 'plugincache'))
         method()
         plugin._cache = {}
         method()
         method()
+        self.assertEquals(
+            mtime, os.path.getmtime(os.path.join(self.packdir, 'plugincache')))
+        # We cannot write this since it contains an unimportable plugin.
+        self.assertFalse(
+            os.path.exists(os.path.join(self.packdir2, 'plugincache')))
 
     def _test_plug(self):
         import mod_testplug

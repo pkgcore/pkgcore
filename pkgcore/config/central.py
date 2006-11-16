@@ -119,7 +119,7 @@ class CollapsedConfig(object):
                 try:
                     config[name] = list(ref.instantiate() for ref in val)
                 except errors.ConfigurationError, e:
-                    e.stack.append('Instantiating ref %r' % (name,))
+                    e.stack.append('Instantiating refs %r' % (name,))
                     raise
 
         callable_obj = self.type.callable
@@ -137,7 +137,7 @@ class CollapsedConfig(object):
             if e.callable is None:
                 e.callable = callable_obj
                 e.pargs = pargs
-                e.kwargs = config
+                e.kwargs = configdict
             raise
         except (RuntimeError, SystemExit, KeyboardInterrupt):
             raise
@@ -146,11 +146,11 @@ class CollapsedConfig(object):
                 raise
             raise errors.InstantiationError(exception=e,
                                             callable_obj=callable_obj,
-                                            pargs=pargs, kwargs=config)
+                                            pargs=pargs, kwargs=configdict)
         if self._instance is None:
             raise errors.InstantiationError(
                 'No object returned', callable_obj=callable_obj, pargs=pargs,
-                kwargs=config)
+                kwargs=configdict)
 
         return self._instance
 
@@ -230,15 +230,17 @@ class ConfigManager(object):
                 try:
                     collapsed = self.collapse_named_section(name)
                 except errors.ConfigurationError, e:
-                    e.stack.append('collapsing autoload %r' % (name,))
+                    e.stack.append('Collapsing autoload %r' % (name,))
                     raise
                 if collapsed.type.name not in (
                     'configsection', 'remoteconfigsection'):
-                    continue
+                    raise errors.ConfigurationError(
+                        'Section %r is marked as autoload but type is %s, not '
+                        '(remote)configsection' % (name, collapsed.type.name))
                 try:
                     instance = collapsed.instantiate()
                 except errors.ConfigurationError, e:
-                    e.stack.append('instantiating autoload %r' % (name,))
+                    e.stack.append('Instantiating autoload %r' % (name,))
                     raise
                 if collapsed.type.name == 'configsection':
                     new_configs.append(instance)
@@ -339,10 +341,10 @@ class ConfigManager(object):
                     elif not type_obj.allow_unknowns:
                         if inherit_name is not None:
                             raise errors.ConfigurationError(
-                                'type of %r inherited from %r unknown' % (
+                                'Type of %r inherited from %r unknown' % (
                                     key, inherit_name))
                         raise errors.ConfigurationError(
-                            'type of %r unknown' % (key,))
+                            'Type of %r unknown' % (key,))
                     else:
                         typename = 'str'
                 is_ref = (typename == 'section_ref' or
@@ -384,38 +386,66 @@ class ConfigManager(object):
 
         Returns C{None} if no defaults.
         """
+        # The name of the "winning" default or None if there is none.
+        default_name = None
+        # The collapsed default section or None.
         default = None
         for source in self.configs:
             for name, section in source.iteritems():
+                collapsed = None
                 try:
                     is_default = section.get_value(self, 'default', 'bool')
                 except KeyError:
                     is_default = False
                 if not is_default:
                     continue
+                # We need to know the type name of this section, for
+                # which we need the class. Try to grab this from the
+                # section directly:
                 try:
-                    type_obj = basics.ConfigType(
-                        section.get_value(self, 'class', 'callable'))
+                    klass = section.get_value(self, 'class', 'callable')
                 except errors.ConfigurationError:
+                    # There is a class setting but it is not valid.
+                    # This means it is definitely not the one we are
+                    # interested in, so just skip this.
                     continue
+                except KeyError:
+                    # There is no class value on the section. Collapse
+                    # it to see if it inherits one:
+                    try:
+                        collapsed = self.collapse_named_section(name)
+                    except errors.ConfigurationError:
+                        # Uncollapsable. Just ignore this, since we
+                        # have no clean way of determining if this
+                        # would be an "interesting" section if it
+                        # could be collapsed (and complaining about
+                        # every uncollapsable section with
+                        # default=true would be too much).
+                        continue
+                    type_obj = collapsed.type
+                else:
+                    # Grabbed the class directly from the section.
+                    type_obj = basics.ConfigType(klass)
                 if type_obj.name != type_name:
                     continue
-                if default is not None:
+                if default_name is not None:
                     raise errors.ConfigurationError(
                         'both %r and %r are default for %r' % (
-                            default, name, type_name))
-                default = name
-            if default is not None:
+                            default_name, name, type_name))
+                default_name = name
+                default = collapsed
+            if default_name is not None:
+                if default is None:
+                    try:
+                        default = self.collapse_named_section(default_name)
+                    except errors.ConfigurationError, e:
+                        e.stack.append('Collapsing default %s %r' % (
+                                type_name, default_name))
+                        raise
                 try:
-                    collapsed = self.collapse_named_section(default)
-                except errors.ConfigurationError, e:
-                    e.stack.append('Collapsing default %s %r' %
-                                   (type_name, default))
-                    raise
-                try:
-                    return collapsed.instantiate()
+                    return default.instantiate()
                 except errors.ConfigurationError, e:
                     e.stack.append('Instantiating default %s %r' %
-                                   (type_name, default))
+                                   (type_name, default_name))
                     raise
         return None

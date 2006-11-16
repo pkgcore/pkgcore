@@ -2,6 +2,9 @@
 # License: GPL2
 
 
+import os
+import tempfile
+
 from pkgcore.test import TestCase
 
 from pkgcore.config import basics, errors, ConfigHint, configurable
@@ -324,6 +327,13 @@ class AliasTest(TestCase):
         self.assertIdentical(
             foon,
             alias.get_value(manager, 'target', 'section_ref').collapse())
+        alias = basics.section_alias('foon')
+        type_obj = basics.ConfigType(alias.get_value(manager, 'class',
+                                                     'callable'))
+        self.assertEquals('alias', type_obj.name)
+        self.assertIdentical(
+            foon,
+            alias.get_value(manager, 'target', 'section_ref').collapse())
 
 
 class ParsersTest(TestCase):
@@ -373,3 +383,23 @@ class ParsersTest(TestCase):
         # make sure this explodes instead of returning something
         # confusing so we explode much later
         self.assertRaises(TypeError, basics.list_parser, ['no', 'string'])
+
+
+class LoaderTest(TestCase):
+
+    def setUp(self):
+        fd, self.name = tempfile.mkstemp()
+        f = os.fdopen(fd, 'w')
+        f.write('foon')
+        f.close()
+
+    def tearDown(self):
+        os.remove(self.name)
+
+    def test_parse_config_file(self):
+        self.assertRaises(
+            errors.InstantiationError,
+            basics.parse_config_file, '/spork', None)
+        def parser(f):
+            return f.read()
+        self.assertEquals('foon', basics.parse_config_file(self.name, parser))

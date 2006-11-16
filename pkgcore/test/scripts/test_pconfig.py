@@ -33,6 +33,7 @@ class DescribeClassTest(TestCase, helpers.MainMixin):
     def test_describe_class(self):
         self.assertOut(
             ['typename is spork',
+             'Test thing.',
              '',
              'reff: ref:spork (required)'],
             'pkgcore.test.scripts.test_pconfig.spork')
@@ -51,7 +52,7 @@ class ClassesTest(TestCase, helpers.MainMixin):
 
 class DumpTest(TestCase, helpers.MainMixin):
 
-    parser = helpers.mangle_parser(commandline.OptionParser())
+    parser = helpers.mangle_parser(pconfig.DumpParser())
     main = staticmethod(pconfig.dump_main)
 
     def test_dump(self):
@@ -86,3 +87,14 @@ class UncollapsableTest(TestCase, helpers.MainMixin):
              "'reff'",
              ''],
             spork=basics.HardCodedConfigSection({'class': spork}))
+
+
+class ConfigurablesTest(TestCase, helpers.MainMixin):
+
+    parser = helpers.mangle_parser(pconfig.ConfigurablesParser())
+    main = staticmethod(pconfig.configurables_main)
+
+    def test_configurables(self):
+        self.assertError(
+            'pass at most one typename',
+            'foo', 'bar')

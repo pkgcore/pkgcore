@@ -2,6 +2,7 @@
 
 import os
 import sys
+import errno
 import subprocess
 import unittest
 
@@ -42,16 +43,13 @@ class mysdist(sdist.sdist):
         for key, globs in self.distribution.package_data.iteritems():
             for pattern in globs:
                 self.filelist.include_pattern(os.path.join(key, pattern))
+
         self.filelist.append("AUTHORS")
         self.filelist.append("NOTES")
         self.filelist.append("COPYING")
 
-        # src dir
         self.filelist.include_pattern('.[ch]', prefix='src')
-        self.filelist.include_pattern(
-            '*', prefix=os.path.join('src', 'bsd-flags'))
 
-        # docs, examples
         for prefix in ['doc', 'dev-notes']:
             self.filelist.include_pattern('.rst', prefix=prefix)
             self.filelist.exclude_pattern(os.path.sep + 'index.rst',
@@ -84,6 +82,7 @@ class mysdist(sdist.sdist):
                 ['bzr', 'log', '--verbose'],
                 stdout=open(os.path.join(base_dir, 'ChangeLog'), 'w')):
                 raise errors.DistutilsExecError('bzr log failed')
+        log.info('generating bzr_verinfo')
         if subprocess.call(
             ['bzr', 'version-info', '--format=python'],
             stdout=open(os.path.join(
@@ -205,8 +204,18 @@ class pkgcore_install_scripts(core.Command):
                 os.chmod(copyname, mode)
             # Use symlinks for the other scripts.
             for script in self.scripts[1:]:
-                os.symlink(self.scripts[0],
-                           os.path.join(self.install_dir, script))
+                # We do not use self.copy_file(link='sym') because we
+                # want to make a relative link and copy_file requires
+                # the "source" to be an actual file.
+                dest = os.path.join(self.install_dir, script)
+                log.info('symlinking %s to %s', dest, self.scripts[0])
+                try:
+                    os.symlink(self.scripts[0], dest)
+                except (IOError, OSError), e:
+                    if e.errno != errno.EEXIST:
+                        raise
+                    os.remove(dest)
+                    os.symlink(self.scripts[0], dest)
         else:
             # Just copy all the scripts.
             for script in self.scripts:
@@ -223,10 +232,21 @@ class pkgcore_install_scripts(core.Command):
 install.install.sub_commands.append(('pkgcore_install_scripts', None))
 
 
-class hacked_build_py(build_py.build_py):
+class pkgcore_build_py(build_py.build_py):
 
     def run(self):
         build_py.build_py.run(self)
+        bzr_ver = self.get_module_outfile(
+            self.build_lib, ('pkgcore',), 'bzr_verinfo')
+        if not os.path.exists(bzr_ver):
+            log.info('generating bzr_verinfo')
+            if subprocess.call(
+                ['bzr', 'version-info', '--format=python'],
+                stdout=open(bzr_ver, 'w')):
+                # Not fatal, just less useful --version output.
+                log.warn('generating bzr_verinfo failed!')
+            else:
+                self.byte_compile([bzr_ver])
 
         fp = os.path.join(self.build_lib, "pkgcore", "bin", "ebuild-helpers")
         for f in os.listdir(fp):
@@ -333,7 +353,6 @@ core.setup(
     packages=packages,
     package_data={
         'pkgcore': [
-            'data/*',
             'bin/ebuild-env/*',
             'bin/ebuild-helpers/*',
             ],
@@ -369,7 +388,7 @@ core.setup(
         ] + extensions,
     cmdclass={'build_filter_env': build_filter_env,
               'sdist': mysdist,
-              'build_py': hacked_build_py,
+              'build_py': pkgcore_build_py,
               'test': test,
               'pkgcore_build_scripts': pkgcore_build_scripts,
               'pkgcore_install_scripts': pkgcore_install_scripts,

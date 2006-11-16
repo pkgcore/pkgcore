@@ -53,6 +53,7 @@ class ConfigType(object):
         """
         self.name = func_obj.__name__
         self.callable = func_obj
+        self.doc = getattr(func_obj, '__doc__', None)
         if not hasattr(func_obj, 'func_code'):
             # No function or method, should be a class so grab __init__.
             func_obj = func_obj.__init__
@@ -95,8 +96,6 @@ class ConfigType(object):
         # Process ConfigHint (if any)
         hint_overrides = getattr(self.callable, "pkgcore_config_type", None)
         if hint_overrides is not None:
-            if not isinstance(hint_overrides, ConfigHint):
-                raise TypeError('pkgcore_config_type should be a ConfigHint')
             self.types.update(hint_overrides.types)
             if hint_overrides.required:
                 self.required = tuple(hint_overrides.required)
@@ -106,6 +105,8 @@ class ConfigType(object):
                 self.name = hint_overrides.typename
             if hint_overrides.incrementals:
                 self.incrementals = hint_overrides.incrementals
+            if hint_overrides.doc:
+                self.doc = hint_overrides.doc
             self.allow_unknowns = hint_overrides.allow_unknowns
         elif varargs or varkw:
             raise TypeError(
@@ -140,7 +141,7 @@ class LazySectionRef(object):
 
     def _collapse(self):
         """Override this in a subclass."""
-        raise NotImplementedError(self)
+        raise NotImplementedError(self._collapse)
 
     def collapse(self):
         """@returns: L{pkgcore.config.central.CollapsedConfig}."""
@@ -366,8 +367,6 @@ def list_parser(string):
 
 def str_parser(string):
     """yank leading/trailing whitespace and quotation, along with newlines"""
-    if not isinstance(string, basestring):
-        raise TypeError('expected a string, got %r' % (string,))
     s = string.strip()
     if len(s) > 1 and s[0] in '"\'' and s[0] == s[-1]:
         s = s[1:-1]

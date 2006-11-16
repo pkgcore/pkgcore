@@ -8,6 +8,7 @@ import traceback
 
 from pkgcore.config import errors, basics
 from pkgcore.util import commandline, modules, currying
+from pkgcore.plugin import get_plugins
 
 
 class DescribeClassParser(commandline.OptionParser):
@@ -116,6 +117,23 @@ def classes_main(options, out, err):
         out.write(classname)
 
 
+def write_type(out, type_obj):
+    out.write('typename is %s' % (type_obj.name,))
+    if type_obj.doc:
+        for line in type_obj.doc.split('\n'):
+            out.write(line.strip(), wrap=True)
+    if type_obj.allow_unknowns:
+        out.write('values not listed are handled as strings')
+    out.write()
+    for name, typename in sorted(type_obj.types.iteritems()):
+        out.write('%s: %s' % (name, typename), autoline=False)
+        if name in type_obj.required:
+            out.write(' (required)', autoline=False)
+        if name in type_obj.incrementals:
+            out.write(' (incremental)', autoline=False)
+        out.write()
+
+
 def describe_class_main(options, out, err):
     """Describe the arguments a class needs."""
     try:
@@ -123,18 +141,7 @@ def describe_class_main(options, out, err):
     except errors.TypeDefinitionError:
         out.write('Not a valid type!')
         return 1
-    out.write('typename is %s' % (type_obj.name,))
-    if type_obj.allow_unknowns:
-        out.write('values not listed are handled as strings')
-    out.write()
-    out.autoline = False
-    for name, typename in sorted(type_obj.types.iteritems()):
-        out.write('%s: %s' % (name, typename))
-        if name in type_obj.required:
-            out.write(' (required)')
-        if name in type_obj.incrementals:
-            out.write(' (incremental)')
-        out.write('\n')
+    write_type(out, type_obj)
 
 
 def uncollapsable_main(options, out, err):
@@ -151,11 +158,45 @@ def uncollapsable_main(options, out, err):
             out.write()
 
 
+class _TypeNameParser(commandline.OptionParser):
+
+    """Base for subcommands that take an optional type name."""
+
+    def check_values(self, values, args):
+        values, args = commandline.OptionParser.check_values(self, values,
+                                                             args)
+        if len(args) > 1:
+            self.error('pass at most one typename')
+        if args:
+            values.typename = args[0]
+        else:
+            values.typename = None
+        return values, ()
+
+
+class DumpParser(_TypeNameParser):
+
+    def __init__(self, **kwargs):
+        # Make sure we do not pass two description kwargs if kwargs has one.
+        kwargs['description'] = (
+            'Dump the entire configuration. '
+            'The format used is similar to the ini-like default '
+            'format, but do not rely on this to always write a '
+            'loadable config. There may be quoting issues. '
+            'With a typename argument only that type is dumped.')
+        kwargs['usage'] = '%prog [options] [typename]'
+        _TypeNameParser.__init__(self, **kwargs)
+
+
 def dump_main(options, out, err):
     """Dump the entire configuration."""
     sections = []
     config = options.config
-    for name in config.sections():
+    if options.typename is None:
+        names = config.sections()
+    else:
+        names = getattr(config, options.typename).iterkeys()
+    for name in names:
         try:
             sections.append((name, config.collapse_named_section(name)))
         except errors.ConfigurationError:
@@ -171,14 +212,35 @@ def dump_main(options, out, err):
         out.write()
 
 
+class ConfigurablesParser(_TypeNameParser):
+
+    def __init__(self, **kwargs):
+        # Make sure we do not pass two description kwargs if kwargs has one.
+        kwargs['description'] = (
+            'List registered configurables (may not be complete). '
+            'With a typename argument only configurables of that type are '
+            'listed.')
+        kwargs['usage'] = '%prog [options] [typename]'
+        _TypeNameParser.__init__(self, **kwargs)
+
+
+def configurables_main(options, out, err):
+    """List registered configurables."""
+    for configurable in get_plugins('configurable'):
+        type_obj = basics.ConfigType(configurable)
+        if options.typename is not None and type_obj.name != options.typename:
+            continue
+        out.write(out.bold, '%s.%s' % (
+                configurable.__module__, configurable.__name__))
+        write_type(out, type_obj)
+        out.write()
+        out.write()
+
+
 commandline_commands = {
-    'dump': (currying.partial(
-            commandline.OptionParser,
-            description='Dump the entire configuration. '
-            'The format used is similar to the ini-like default '
-            'format, but do not rely on this to always write a '
-            'loadable config. There may be quoting issues.'), dump_main),
+    'dump': (DumpParser, dump_main),
     'classes': (commandline.OptionParser, classes_main),
     'uncollapsable': (commandline.OptionParser, uncollapsable_main),
     'describe_class': (DescribeClassParser, describe_class_main),
+    'configurables': (ConfigurablesParser, configurables_main),
     }

@@ -20,11 +20,9 @@ import os.path as osp
 # the pkgcore package directory
 PORTAGE_BASE_PATH   = osp.dirname(osp.abspath(__file__))
 PORTAGE_BIN_PATH    = osp.join(PORTAGE_BASE_PATH, 'bin')
-PORTAGE_DATA_PATH   = osp.join(PORTAGE_BASE_PATH, 'data')
 SYSTEM_CONF_FILE    = '/etc/pkgcore.conf'
 USER_CONF_FILE      = osp.expanduser('~/.pkgcore.conf')
 
-GLOBAL_CONF_FILE    = PORTAGE_DATA_PATH + '/global_conf'
 #PORTAGE_PYM_PATH   = PORTAGE_BASE_PATH+"/pym"
 #PROFILE_PATH       = "/etc/make.profile"
 LOCALE_DATA_PATH    = PORTAGE_BASE_PATH+"/locale"

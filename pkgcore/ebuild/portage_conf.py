@@ -117,9 +117,11 @@ def config_from_make_conf(location="/etc/"):
             "class": "pkgcore.pkgsets.system.SystemSet",
             "profile": "profile"})
     new_config["installed"] = basics.AutoConfigSection({
-            "class": "pkgcore.pkgsets.installed.installed",
+            "class": "pkgcore.pkgsets.installed.Installed",
             "vdb": "vdb"})
-
+    new_config["versioned-installed"] = basics.AutoConfigSection({
+            "class": "pkgcore.pkgsets.installed.VersionedInstalled",
+            "vdb": "vdb"})
 
     set_fp = pjoin(portage_base, "sets")
     if os.path.isdir(set_fp):

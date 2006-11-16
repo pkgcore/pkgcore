@@ -17,7 +17,7 @@ you pick, the pconfig utility will allow you to check if pkgcore
 interprets the configuration the way you intend. Part of a
 configuration dump could look like::
 
- $ pconfig --dump
+ $ pconfig dump
  <lots of output snipped>
 
  '/usr/local/portage/private' {
@@ -64,9 +64,9 @@ a list of strings. "location" is a single string.
 "eclass stack" defined elsewhere in the dump (omitted here).
 
 If your configuration defines a section that does not show up in
---dump you can use --uncollapsable to figure out why::
+dump you can use uncollapsable to figure out why::
 
- $ pconfig --uncollapsable
+ $ pconfig uncollapsable
  Collapsing section named 'ebuild-repo-common':
  type pkgcore.ebuild.repository.UnconfiguredTree needs settings for 'location'
 
@@ -107,7 +107,7 @@ re-enable that, by putting in one of the configuration files::
  [autoload-portage]
  class=pkgcore.ebuild.portage_conf.config_from_make_conf
 
-If you then run pconfig --dump you should see among other things::
+If you then run pconfig dump you should see among other things::
 
  'autoload-portage' {
     # typename of this section: configsection
@@ -117,12 +117,12 @@ If you then run pconfig --dump you should see among other things::
 Section names are usually arbitrary but sections that load extra
 configuration data are an exception: they have to start with
 "autoload" or they will not be processed. If you change the section
-name to just "portage" you will still see it show up in pconfig --dump
+name to just "portage" you will still see it show up in pconfig dump
 but all other things defined in make.conf will disappear.
 
 pconfig can tell you what arguments a class takes::
 
- $ pconfig --describe-class pkgcore.config.basics.parse_config_file
+ $ pconfig describe-class pkgcore.config.basics.parse_config_file
  typename is configsection
 
  parser: callable (required)
@@ -146,7 +146,7 @@ add::
  location='/var/cache/edb/dep'
 
 Because the ini file format does not allow nesting sections we had to
-put the cache in a named section and refer to that. The --dump output
+put the cache in a named section and refer to that. The dump output
 will reflect this but everything else will work just like it did
 before.
 
@@ -175,12 +175,12 @@ bits::
 
 There is nothing special about sections used as target for "inherit".
 They can be complete sections, although they do not have to be. That
-is why pconfig --uncollapsable will mention the
-"stuff-common-to-repos" section: it is uncollapsable (because it
-misses the "location" and "cache" settings) and pconfig cannot know
-that is intentional (it is possible to use a section as both an
-inherit target and a standalone section, in which case you *would*
-want to know why it is not collapsable).
+is why pconfig uncollapsable will mention the "stuff-common-to-repos"
+section: it is uncollapsable (because it misses the "location" and
+"cache" settings) and pconfig cannot know that is intentional (it is
+possible to use a section as both an inherit target and a standalone
+section, in which case you *would* want to know why it is not
+collapsable).
 
 Actually the portage emulation mode uses inherit targets too, so you
 could just have inherited "ebuild-repo-common". Inherit targets do not
@@ -193,7 +193,7 @@ Different config format
 -----------------------
 
 If you have pyparsing installed pkgcore supports a second
-configuration file format that is very similar to the --dump output
+configuration file format that is very similar to the dump output
 (not entirely identical: the string escaping rules are different). It
 does not try to detect what format your config file is in:
 pkgcore.conf is always in "ini" format. But you can load a second
@@ -216,9 +216,9 @@ portage_conf. For example, if .pkgcore.dhcpconf looks like::
 it will load make.conf.
 
 If you want to get rid of make.conf entirely you can start from the
-output of pconfig --dump. But be careful: pconfig does not escape
+output of pconfig dump. But be careful: pconfig does not escape
 strings exactly the same way dhcpformat parses them, so make sure you
-check the --dump after you disable portage_conf for mistakes.
+check the dump after you disable portage_conf for mistakes.
 
 Aliases
 -------

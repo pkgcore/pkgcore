@@ -57,18 +57,18 @@ _section_contents = pyp.dictOf(
 _section << pyp.Group(pyp.Suppress('{') + _section_contents +
                       pyp.Suppress('}'))
 
-# pyp.dictOf uses pyp.ZeroOrMore instead of pyp.OneOrMore, which seems
-# to cause it to succeed with 0 parsed sections if the input is bogus.
-
-# parser = pyp.dictOf(value, section)
-parser = pyp.Dict(pyp.OneOrMore(pyp.Group(_value + _section)))
-parser.ignore(pyp.pythonStyleComment)
-parser = pyp.stringStart + parser + pyp.stringEnd
+parser = (
+    pyp.stringStart +
+    pyp.dictOf(_value, _section).ignore(pyp.pythonStyleComment) +
+    pyp.stringEnd)
 
 
 class ConfigSection(basics.ConfigSection):
 
-    """Expose a section_contents from pyparsing as a ConfigSection."""
+    """Expose a section_contents from pyparsing as a ConfigSection.
+
+    mke2fsformat also uses this.
+    """
 
     def __init__(self, section):
         basics.ConfigSection.__init__(self)

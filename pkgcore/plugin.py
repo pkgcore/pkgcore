@@ -77,7 +77,7 @@ def initialize_cache(package):
         assumed_valid = set()
         for modfullname in modlist:
             modname, modext = os.path.splitext(modfullname)
-            if modext not in ('.pyc', '.pyo', '.py'):
+            if modext != '.py':
                 continue
             if modname == '__init__':
                 continue
@@ -93,6 +93,9 @@ def initialize_cache(package):
                 actual_cache[modname] = stored_cache[modname]
             else:
                 # Cache entry is stale.
+                logger.debug(
+                    'stale because of %s: actual %s != stored %s',
+                    modname, mtime, stored_cache.get(modname, (0, ()))[0])
                 cache_stale = True
                 entries = []
                 qualname = '.'.join((package.__name__, modname))
@@ -110,6 +113,7 @@ def initialize_cache(package):
         # Cache is also stale if it sees entries that are no longer there.
         for key in stored_cache:
             if key not in actual_cache and key not in assumed_valid:
+                logger.debug('stale because %s is no longer there', key)
                 cache_stale = True
                 break
         if cache_stale:

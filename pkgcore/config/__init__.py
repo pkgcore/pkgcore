@@ -8,7 +8,7 @@ configuration subsystem
 # keep these imports as minimal as possible; access to
 # pkgcore.config isn't uncommon, thus don't trigger till
 # actually needed
-from pkgcore.const import GLOBAL_CONF_FILE, SYSTEM_CONF_FILE, USER_CONF_FILE
+from pkgcore.const import SYSTEM_CONF_FILE, USER_CONF_FILE
 
 class ConfigHint(object):
 
@@ -16,9 +16,9 @@ class ConfigHint(object):
 
     # be aware this is used in clone
     __slots__ = ("types", "positional", "required", "typename", "incrementals",
-                 "allow_unknowns")
+                 "allow_unknowns", "doc")
 
-    def __init__(self, types=None, positional=None, required=None,
+    def __init__(self, types=None, positional=None, required=None, doc=None,
                  incrementals=None, typename=None, allow_unknowns=False):
         self.types = types or {}
         self.positional = positional or []
@@ -26,6 +26,7 @@ class ConfigHint(object):
         self.incrementals = incrementals or []
         self.typename = typename
         self.allow_unknowns = allow_unknowns
+        self.doc = doc
 
     def clone(self, **kwds):
         new_kwds = {}
@@ -47,7 +48,6 @@ def configurable(*args, **kwargs):
 
 def load_config(user_conf_file=USER_CONF_FILE,
                 system_conf_file=SYSTEM_CONF_FILE,
-                global_conf_file=GLOBAL_CONF_FILE,
                 debug=False):
     """
     the main entry point for any code looking to use pkgcore.
@@ -60,20 +60,20 @@ def load_config(user_conf_file=USER_CONF_FILE,
     """
 
     from pkgcore.config import central, cparser
+    from pkgcore.plugin import get_plugins
     import os
 
     have_system_conf = os.path.isfile(system_conf_file)
     have_user_conf = os.path.isfile(user_conf_file)
+    configs = []
     if have_system_conf or have_user_conf:
-        configs = []
         if have_user_conf:
             configs.append(cparser.config_from_file(open(user_conf_file)))
         if have_system_conf:
             configs.append(cparser.config_from_file(open(system_conf_file)))
-        configs.append(cparser.config_from_file(open(global_conf_file)))
-        c = central.ConfigManager(configs, debug=debug)
     else:
         # make.conf...
         from pkgcore.ebuild.portage_conf import config_from_make_conf
-        c = central.ConfigManager([config_from_make_conf()], debug=debug)
-    return c
+        configs.append(config_from_make_conf())
+    configs.extend(get_plugins('global_config'))
+    return central.ConfigManager(configs, debug=debug)

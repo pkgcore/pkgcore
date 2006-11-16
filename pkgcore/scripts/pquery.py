@@ -339,6 +339,9 @@ class OptionParser(commandline.OptionParser):
                           help='human-readable multi-line output per package')
         output.add_option('--highlight-dep', action='append', type='match',
                           help='highlight dependencies matching this atom')
+        output.add_option(
+            '--blame', action='store_true',
+            help='shorthand for --attr maintainers --attr herds')
 
     def check_values(self, values, args):
         """Sanity check and postprocess after parsing."""
@@ -370,6 +373,9 @@ class OptionParser(commandline.OptionParser):
 
         if vals.noversion and (vals.min or vals.max):
             self.error('--no-version with --min or --max does not make sense.')
+
+        if vals.blame:
+            vals.attr.extend(['herds', 'maintainers'])
 
         if 'alldepends' in vals.attr:
             vals.attr.remove('alldepends')
@@ -626,6 +632,10 @@ def print_package(options, out, err, pkg):
         out.later_prefix = []
         out.wrap = False
     elif options.one_attr:
+        if options.atom:
+            out.write('=', autoline=False)
+        if options.atom or options.cpv:
+            out.write(pkg.cpvstr, ':', autoline=False)
         out.write(stringify_attr(options, pkg, options.one_attr))
     else:
         printed_something = False
@@ -672,7 +682,11 @@ def print_packages_noversion(options, out, err, pkgs):
         out.wrap = False
         out.later_prefix = []
     elif options.one_attr:
-        out.write(stringify_attr(options, pkgs[-1], options.oneattr))
+        if options.atom:
+            out.write('=', autoline=False)
+        if options.atom or options.cpv:
+            out.write(pkgs[0].key, ':', autoline=False)
+        out.write(stringify_attr(options, pkgs[-1], options.one_attr))
     else:
         out.autoline = False
         out.write(pkgs[0].key)

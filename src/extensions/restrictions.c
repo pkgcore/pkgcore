@@ -14,17 +14,19 @@
 
 #include "common.h"
 
-static PyObject *pkgcore_restrictions_getter = NULL;
-static PyObject *pkgcore_restrictions_negate = NULL;
-static PyObject *pkgcore_restrictions_attr = NULL;
-static PyObject *pkgcore_restrictions_attr_split = NULL;
-static PyObject *pkgcore_restrictions_restriction = NULL;
-static PyObject *pkgcore_restrictions_ignore_missing = NULL;
 static PyObject *pkgcore_restrictions_type = NULL;
 static PyObject *pkgcore_restrictions_subtype = NULL;
 
+// global
 #define NEGATED_RESTRICT    0x1
+
+//strexactmatch
 #define CASE_SENSITIVE      0x2
+
+//packagerestriction
+#define IGNORE_MISSING      0x2
+#define SHALLOW_ATTR        0x4
+
 
 #define IS_NEGATED(flags) (flags & NEGATED_RESTRICT)
 
@@ -182,7 +184,7 @@ PKGCORE_IMMUTABLE_ATTR(pkgcore_StrExactMatch, "exact", exact);
 PKGCORE_IMMUTABLE_ATTR(pkgcore_StrExactMatch, "_hash", hash);
 PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "negate", negate, 
     (self->flags & NEGATED_RESTRICT));
-PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "case_sensitve", case, 
+PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "case_sensitive", case, 
     (self->flags & CASE_SENSITIVE));
 
 static PyGetSetDef pkgcore_StrExactMatch_attrs[] = {
@@ -236,9 +238,17 @@ static PyTypeObject pkgcore_StrExactMatch_Type = {
     pkgcore_StrExactMatch_new,                       /* tp_new */
 };
 
+
+typedef struct {
+    PyObject_HEAD
+    PyObject *attr;
+    PyObject *restrict;
+    char flags;
+} pkgcore_PackageRestriction;
+
 static PyObject *
-pkgcore_package_restriction_init(PyObject *self, PyObject *args,
-    PyObject *kwds)
+pkgcore_PackageRestriction_new(PyTypeObject *type,
+    PyObject *args, PyObject *kwds)
 {
     PyObject *attr, *restrict, *negate = NULL, *ignore_missing = NULL;
     static char *kwdlist[] = {"attr", "childrestriction", "negate", 
@@ -247,86 +257,186 @@ pkgcore_package_restriction_init(PyObject *self, PyObject *args,
         &attr, &restrict, &negate, &ignore_missing)) {
         return NULL;
     }
-    PyObject *self_type = PyObject_GetAttr(self, pkgcore_restrictions_subtype);
-    if(!self_type)
-        return NULL;
-    PyObject *child_type = PyObject_GetAttr(restrict,
-        pkgcore_restrictions_type);
-    if(!child_type) {
-        Py_DECREF(self_type);
-        return NULL;
-    }
-    int same = PyObject_RichCompareBool(self_type, child_type, Py_EQ);
-    Py_DECREF(child_type);
-    if(same == -1) {
-        Py_DECREF(self_type);
-        return NULL;
-    } else if(same == 0) {
-        // fun.
-        PyObject *rep = PyObject_Repr(self_type);
-        Py_DECREF(self_type);
-        if(!PyString_CheckExact(rep)) {
-            PyObject *tmp = PyObject_Str(rep);
-            Py_DECREF(rep);
-            if(!tmp) {
-                return NULL;
-            }
-            rep = tmp;
-        }
-        if(!rep)
-            return NULL;
-        PyObject *msg = PyString_FromFormat("restriction must be of type %s",
-            PyString_AS_STRING(rep));
-        Py_DECREF(rep);
-        if(msg)
-            PyErr_SetObject(PyExc_TypeError, msg);
-        return NULL;
-    }
-    Py_DECREF(self_type);
-    
-    #define make_bool(ptr)                              \
+
+    char flags = 0;
+    #define make_bool(ptr, statement)                   \
     if((ptr) != Py_True && (ptr) != Py_False) {         \
-        if((ptr) == Py_None) {                          \
-            (ptr) = Py_False;                           \
-        } else {                                        \
+        if((ptr) != Py_None) {                          \
             int ret = PyObject_IsTrue(ptr);             \
             if(ret == -1)                               \
                 return NULL;                            \
-            ptr = ret == 1 ? Py_True : Py_False;        \
+            if(ret) { flags |= statement; }             \
         }                                               \
+    } else if ((ptr) == Py_True) { flags |= statement;}; 
+    if(negate) {
+        make_bool(negate, NEGATED_RESTRICT);
     }
-    if(!negate) {
-        negate = Py_False;
+    if(!ignore_missing) {
+        flags |= IGNORE_MISSING;
     } else {
-        make_bool(negate);
-    }
-    if(ignore_missing == NULL) {
-        ignore_missing = Py_True;
-    } else {
-        make_bool(ignore_missing);
+        make_bool(ignore_missing, IGNORE_MISSING);
     }
     #undef make_bool
 
-    #define store_attr(attr, val)                   \
-    if(PyObject_GenericSetAttr(self, attr,val)) {   \
-        return NULL;                                \
-    }
-    store_attr(pkgcore_restrictions_negate, negate);
-    store_attr(pkgcore_restrictions_attr, attr);
-    store_attr(pkgcore_restrictions_restriction, restrict);
-    store_attr(pkgcore_restrictions_ignore_missing, ignore_missing);
-    PyObject *getter = PyObject_CallFunction(pkgcore_restrictions_getter,
-        "O", attr);
-    if(!getter)
+    pkgcore_PackageRestriction *self = \
+        (pkgcore_PackageRestriction *)type->tp_alloc(type, 0);
+    if(!self)
         return NULL;
-    store_attr(pkgcore_restrictions_attr_split, getter);
-    Py_RETURN_NONE;
+    Py_INCREF(attr);
+    self->attr = attr;
+    Py_INCREF(restrict);
+    self->restrict = restrict;
+    if(NULL == index(PyString_AS_STRING(attr), '.'))
+        flags |= SHALLOW_ATTR;
+    self->flags = flags;
+    return (PyObject *)self;
 }
 
-PKGCORE_FUNC_BINDING("__init__", "pkgcore.restrictions._restrictions."
-    "package_init", pkgcore_package_restriction_init,
-    METH_VARARGS|METH_KEYWORDS);
-    
+PyObject *
+pkgcore_PackageRestriction_richcompare(pkgcore_PackageRestriction *self,
+    pkgcore_PackageRestriction *other, int op)
+{
+    if(op != Py_EQ && op != Py_NE) {
+        return Py_INCREF(Py_NotImplemented), Py_NotImplemented;
+    } else if(self == other) {
+        if(op == Py_EQ)
+            Py_RETURN_TRUE;
+        Py_RETURN_FALSE;
+    } else if (self->flags != other->flags) {
+        if(op == Py_EQ)
+            Py_RETURN_FALSE;
+        Py_RETURN_TRUE;
+    } else if(self->attr != other->attr) {
+        if(op == Py_EQ)
+            Py_RETURN_FALSE;
+        Py_RETURN_TRUE;
+    }
+    PyObject *ret = PyObject_RichCompare(self->attr, other->attr, op);
+    if (ret == Py_NotImplemented ||
+        ret == (op == Py_EQ ? Py_False : Py_True)) {
+        return ret;
+    }
+    Py_DECREF(ret);
+    return PyObject_RichCompare(self->restrict, other->restrict, op);
+}
+
+void
+pkgcore_PackageRestriction_dealloc(pkgcore_PackageRestriction *self)
+{
+    Py_CLEAR(self->attr);
+    Py_CLEAR(self->restrict);
+    self->ob_type->tp_free((PyObject *)self);
+}
+
+static PyObject *
+pkgcore_PackageRestriction_pull_attr(pkgcore_PackageRestriction *self,
+    PyObject *inst)
+{
+    if(self->flags & SHALLOW_ATTR) {
+        return PyObject_GetAttr(inst, self->attr);
+    }
+    char *pos = PyString_AS_STRING(self->attr);
+    char *start = pos;
+    PyObject *last = inst;
+    PyObject *new = NULL;
+    // note we're using the pystring comparison, instead of comparing inst
+    // against last; the reason is that a self referential lookup could
+    // return inst, and we'd leak a ref if we relied on that comparison
+    do {
+        while('.' != *pos && '\0' != *pos)
+            pos++;
+        PyObject *s = PyString_FromStringAndSize(start, pos - start);
+        if(!s) {
+            if(start != PyString_AS_STRING(self->attr)) {
+                Py_DECREF(last);
+            }
+            return NULL;
+        }
+        new = PyObject_GetAttr(last, s);
+        Py_DECREF(s);
+        if(start != PyString_AS_STRING(self->attr)) {
+            Py_DECREF(last);
+        }
+        if(!new)
+            return NULL;
+        last = new;
+        if('.' == *pos)
+            pos++;
+        start = pos;
+    } while ('\0' != *pos);
+    return new;
+}
+
+PyDoc_STRVAR(
+    pkgcore_PackageRestriction_documentation,
+    "cpython PackageRestriction base class for speed");
+
+
+PKGCORE_IMMUTABLE_ATTR(pkgcore_PackageRestriction, "restriction",
+    restrict);
+PKGCORE_IMMUTABLE_ATTR(pkgcore_PackageRestriction, "attr", attr);
+PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "negate", negate, 
+    (self->flags & NEGATED_RESTRICT));
+PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "ignore_missing",
+    ignore_missing, (self->flags & IGNORE_MISSING));
+
+static PyGetSetDef pkgcore_PackageRestriction_attrs[] = {
+PKGCORE_GETSET(pkgcore_PackageRestriction, "attr", attr),
+PKGCORE_GETSET(pkgcore_PackageRestriction, "restriction", restrict),
+PKGCORE_GETSET(pkgcore_PackageRestriction, "negate", negate),
+PKGCORE_GETSET(pkgcore_PackageRestriction, "ignore_missing", ignore_missing),
+    {NULL}
+};
+
+static PyMethodDef pkgcore_PackageRestriction_methods[] = {
+    {"_pull_attr", (PyCFunction)pkgcore_PackageRestriction_pull_attr, METH_O},
+    {NULL}
+};
+
+static PyTypeObject pkgcore_PackageRestriction_Type = {
+    PyObject_HEAD_INIT(NULL)
+    0,                                              /* ob_size*/
+    "pkgcore.restrictions._restrictions.PackageRestriction",
+                                                    /* tp_name*/
+    sizeof(pkgcore_PackageRestriction),             /* tp_basicsize*/
+    0,                                              /* tp_itemsize*/
+    (destructor)pkgcore_PackageRestriction_dealloc, /* tp_dealloc*/
+    0,                                              /* tp_print*/
+    0,                                              /* tp_getattr*/
+    0,                                              /* tp_setattr*/
+    0,                                              /* tp_compare*/
+    0,                                              /* tp_repr*/
+    0,                                              /* tp_as_number*/
+    0,                                              /* tp_as_sequence*/
+    0,                                              /* tp_as_mapping*/
+    0,                                              /* tp_hash */
+    (ternaryfunc)0,                                 /* tp_call*/
+    (reprfunc)0,                                    /* tp_str*/
+    0,                                              /* tp_getattro*/
+    0,                                              /* tp_setattro*/
+    0,                                              /* tp_as_buffer*/
+    Py_TPFLAGS_BASETYPE|Py_TPFLAGS_DEFAULT,         /* tp_flags*/
+    pkgcore_PackageRestriction_documentation,       /* tp_doc */
+    (traverseproc)0,                                /* tp_traverse */
+    (inquiry)0,                                     /* tp_clear */
+    (richcmpfunc)pkgcore_PackageRestriction_richcompare,
+                                                    /* tp_richcompare */
+    0,                                              /* tp_weaklistoffset */
+    (getiterfunc)0,                                 /* tp_iter */
+    (iternextfunc)0,                                /* tp_iternext */
+    pkgcore_PackageRestriction_methods,             /* tp_methods */
+    0,                                              /* tp_members */
+    pkgcore_PackageRestriction_attrs,               /* tp_getset */
+    0,                                              /* tp_base */
+    0,                                              /* tp_dict */
+    0,                                              /* tp_descr_get */
+    0,                                              /* tp_descr_set */
+    0,                                              /* tp_dictoffset */
+    0,                                              /* tp_init */
+    0,                                              /* tp_alloc */
+    pkgcore_PackageRestriction_new,                 /* tp_new */
+};
+
 
 PyDoc_STRVAR(
     pkgcore_restrictions_documentation,
@@ -338,23 +448,8 @@ init_restrictions()
     if (PyType_Ready(&pkgcore_StrExactMatch_Type) < 0)
         return;
     
-    if (PyType_Ready(&pkgcore_package_restriction_init_type) < 0)
+    if (PyType_Ready(&pkgcore_PackageRestriction_Type) < 0)
         return;
-
-    if(!pkgcore_restrictions_getter) {
-        PyObject *s = PyString_FromString("pkgcore.util.klass");
-        if(!s)
-            return;
-        PyObject *tmp = PyImport_Import(s);
-        Py_DECREF(s);
-        if(!tmp)
-            return;
-        pkgcore_restrictions_getter = PyObject_GetAttrString(tmp,
-            "chained_getter");
-        Py_DECREF(tmp);
-        if(!pkgcore_restrictions_getter)
-            return;
-    }
 
     #define LOAD_STR(ptr, val)                      \
     if(!(ptr)) {                                    \
@@ -363,11 +458,6 @@ init_restrictions()
         }                                           \
     }
     
-    LOAD_STR(pkgcore_restrictions_attr, "attr");
-    LOAD_STR(pkgcore_restrictions_negate, "negate");
-    LOAD_STR(pkgcore_restrictions_attr_split, "attr_split");
-    LOAD_STR(pkgcore_restrictions_restriction, "restriction");
-    LOAD_STR(pkgcore_restrictions_ignore_missing, "ignore_missing");
     LOAD_STR(pkgcore_restrictions_type, "type");
     LOAD_STR(pkgcore_restrictions_subtype, "subtype");
     #undef LOAD_STR
@@ -379,11 +469,9 @@ init_restrictions()
     PyModule_AddObject(m, "StrExactMatch",
         (PyObject *)&pkgcore_StrExactMatch_Type);
 
-    PyObject *tmp = PyType_GenericNew(&pkgcore_package_restriction_init_type,
-        NULL, NULL);
-    if(!tmp)
-        return;
-    PyModule_AddObject(m, "package_restriction_init", tmp);
+    Py_INCREF(&pkgcore_PackageRestriction_Type);
+    PyModule_AddObject(m, "PackageRestriction",
+        (PyObject *)&pkgcore_PackageRestriction_Type);
     
     if (PyErr_Occurred())
         Py_FatalError("can't initialize module _restrictions");

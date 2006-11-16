@@ -15,30 +15,43 @@ demandload(globals(), "pkgcore.log:logger")
 # Backwards compatibility.
 package_type = restriction.package_type
 
-def native_package_restriction_init(self, attr, childrestriction, negate=False,
-    ignore_missing=True):
-    """
-    @param attr: package attribute to match against
-    @param childrestriction: a L{pkgcore.restrictions.values.base} instance
+class native_PackageRestriction(object):
+    __slots__ = ('_pull_attr', 'attr', 'restriction', 'ignore_missing',
+        'negate')
+
+    def __init__(self, attr, childrestriction, negate=False,
+        ignore_missing=True):
+        """
+        @param attr: package attribute to match against
+        @param childrestriction: a L{pkgcore.restrictions.values.base} instance
         to pass attr to for matching
-    @param negate: should the results be negated?
-    """
-    if not childrestriction.type == self.subtype:
-        raise TypeError("restriction must be of type %r" % (self.subtype,))
-    sf = object.__setattr__
-    sf(self, "negate", negate)
-    sf(self, "attr_split", chained_getter(attr))
-    sf(self, "attr", attr)
-    sf(self, "restriction", childrestriction)
-    sf(self, "ignore_missing", ignore_missing)
+        @param negate: should the results be negated?
+        """
+        if not childrestriction.type == self.subtype:
+            raise TypeError("restriction must be of type %r" % (self.subtype,))
+        sf = object.__setattr__
+        sf(self, "negate", negate)
+        sf(self, "_pull_attr", chained_getter(attr))
+        sf(self, "attr", attr)
+        sf(self, "restriction", childrestriction)
+        sf(self, "ignore_missing", ignore_missing)
 
-try:
-    from pkgcore.restrictions._restrictions import package_restriction_init
-except ImportError:
-    package_restriction_init = native_package_restriction_init
+    def __eq__(self, other):
+        if self is other:
+            return True
+        return (
+            self.__class__ is other.__class__ and
+            self.negate == other.negate and
+            self.attr == other.attr and
+            self.restriction == other.restriction)
 
-class PackageRestriction(restriction.base):
+    def __ne__(self, other):
+        return not self == other
 
+
+class PackageRestriction_mixin(restriction.base):
+
+    __slots__ = ()
     """Package data restriction."""
 
     # Careful: some methods (__eq__, __hash__, intersect) try to work
@@ -46,15 +59,8 @@ class PackageRestriction(restriction.base):
     # subclass adds attributes. So if you do that, override the
     # methods.
 
-    __slots__ = ('attr_split', 'attr', 'restriction', 'ignore_missing',
-        'negate')
-
     type = restriction.package_type
     subtype = restriction.value_type
-    
-    __inst_caching__ = True
-
-    __init__ = package_restriction_init
     
     def _handle_exception(self, pkg, exc):
         if isinstance(exc, AttributeError):
@@ -71,7 +77,7 @@ class PackageRestriction(restriction.base):
 
     def match(self, pkg):
         try:
-            return self.restriction.match(self.attr_split(pkg)) != self.negate
+            return self.restriction.match(self._pull_attr(pkg)) != self.negate
         except (KeyboardInterrupt, RuntimeError, SystemExit):
             raise
         except Exception, e:
@@ -83,10 +89,10 @@ class PackageRestriction(restriction.base):
         try:
             if self.negate:
                 return self.restriction.force_True(pkg, self.attr,
-                                                   self.attr_split(pkg))
+                                                   self._pull_attr(pkg))
             else:
                 return self.restriction.force_False(pkg, self.attr,
-                                                    self.attr_split(pkg))
+                                                    self._pull_attr(pkg))
         except (KeyboardInterrupt, RuntimeError, SystemExit):
             raise
         except Exception, e:
@@ -98,10 +104,10 @@ class PackageRestriction(restriction.base):
         try:
             if self.negate:
                 return self.restriction.force_False(pkg, self.attr,
-                                                    self.attr_split(pkg))
+                                                    self._pull_attr(pkg))
             else:
                 return self.restriction.force_True(pkg, self.attr,
-                                                   self.attr_split(pkg))
+                                                   self._pull_attr(pkg))
         except (KeyboardInterrupt, RuntimeError, SystemExit):
             raise
         except Exception, e:
@@ -145,18 +151,6 @@ class PackageRestriction(restriction.base):
         # method...
         return self.__class__(self.attr, s, negate=self.negate)
 
-    def __eq__(self, other):
-        if self is other:
-            return True
-        return (
-            self.__class__ is other.__class__ and
-            self.negate == other.negate and
-            self.attr == other.attr and
-            self.restriction == other.restriction)
-
-    def __ne__(self, other):
-        return not self == other
-
     def __hash__(self):
         return hash((self.negate, self.attr, self.restriction))
 
@@ -174,6 +168,16 @@ class PackageRestriction(restriction.base):
         return string % (
             self.__class__.__name__, self.attr, self.restriction, id(self))
 
+
+try:
+    from pkgcore.restrictions._restrictions import PackageRestriction as \
+        PackageRestriction_base
+except ImportError:
+    PackageRestriction_base = native_PackageRestriction
+
+class PackageRestriction(PackageRestriction_mixin, PackageRestriction_base):
+    __slots__ = ()
+    __inst_caching__ = True
 
 class Conditional(PackageRestriction):
 

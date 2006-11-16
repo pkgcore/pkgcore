@@ -97,59 +97,78 @@ class StrRegexTest(TestCase):
             self.failUnless(repr(restr).startswith(string), (restr, string))
 
 
-class TestStrExactMatch(TestCase):
+
+class native_TestStrExactMatch(TestCase):
+
+    class kls(values.native_StrExactMatch, values.base):
+        __slots__ = ()
+        __inst_caching__ = True
+
+        intersect = values.StrExactMatch.intersect
+        __repr__ = values.StrExactMatch.__repr__
+        __str__ = values.StrExactMatch.__str__
+
+    kls = staticmethod(kls)
 
     def test_case_sensitive(self):
         for x in (True, False):
             self.assertEquals(
-                values.StrExactMatch("package", negate=not x).match("package"),
+                self.kls("package", negate=not x).match("package"),
                 x)
             self.assertEquals(
-                values.StrExactMatch("portage", negate=not x).match("portage"),
+                self.kls("portage", negate=not x).match("portage"),
                 x)
             self.assertEquals(
-                values.StrExactMatch("Package", negate=not x).match("package"),
+                self.kls("Package", negate=not x).match("package"),
                 not x)
             self.assertEquals(
-                values.StrExactMatch("diffball", negate=not x).match("bsdiff"),
+                self.kls("diffball", negate=not x).match("bsdiff"),
                 not x)
 
     def test_case_insensitve(self):
         for x in (True, False):
             self.assertEquals(
-                values.StrExactMatch(
+                self.kls(
                     "Rsync", case_sensitive=False, negate=not x).match(
                     "rsync"),
                 x)
             self.assertEquals(
-                values.StrExactMatch(
+                self.kls(
                     "rsync", case_sensitive=False, negate=not x).match(
                     "RSYnC"),
                 x)
             self.assertEquals(
-                values.StrExactMatch(
+                self.kls(
                     "PackageA", case_sensitive=False, negate=not x).match(
                     "package"),
                 not x)
             self.assertEquals(
-                values.StrExactMatch(
+                self.kls(
                     "diffball", case_sensitive=False, negate=not x).match(
                     "bsdiff"), not x)
 
     def test__eq__(self):
         for negate in (True, False):
             self.assertEquals(
-                values.StrExactMatch("rsync", negate=negate),
-                values.StrExactMatch("rsync", negate=negate))
+                self.kls("rsync", negate=negate),
+                self.kls("rsync", negate=negate))
             for x in "Ca":
                 self.assertNotEquals(
-                    values.StrExactMatch("rsync", negate=negate),
-                    values.StrExactMatch("rsyn"+x, negate=negate))
+                    self.kls("rsync", negate=negate),
+                    self.kls("rsyn"+x, negate=negate))
             self.assertEquals(
-                values.StrExactMatch(
+                self.kls(
                     "Rsync", case_sensitive=False, negate=negate),
-                values.StrExactMatch(
+                self.kls(
                     "rsync", case_sensitive=False, negate=negate))
+
+
+class cpy_TestStrExactMatch(native_TestStrExactMatch):
+    if values.base_StrExactMatch is values.native_StrExactMatch:
+        skip = "cpython extension not available"
+    else:
+        kls = staticmethod(values.StrExactMatch)
+
 
 
 class TestStrGlobMatch(TestCase):

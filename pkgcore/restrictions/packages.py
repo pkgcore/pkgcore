@@ -199,7 +199,7 @@ class Conditional(PackageRestriction):
         @param payload: payload data, whatever it may be.
         @param kwds: additional args to pass to L{PackageRestriction}
         """
-        super(Conditional, self).__init__(attr, childrestriction, **kwds)
+        PackageRestriction.__init__(self, attr, childrestriction, **kwds)
         object.__setattr__(self, "payload", tuple(payload))
 
     def intersect(self, other):

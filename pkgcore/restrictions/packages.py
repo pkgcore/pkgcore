@@ -189,8 +189,9 @@ class Conditional(PackageRestriction):
 
     __slots__ = ('payload',)
 
-    __inst_caching__ = True
-
+    # note that instance caching is turned off.
+    # rarely pays off for conditionals from a speed/mem comparison
+   
     def __init__(self, attr, childrestriction, payload, **kwds):
         """
         n@param attr: attr to match against

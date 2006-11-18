@@ -85,3 +85,48 @@ class Test_CPY_get(Test_native_get):
     if klass.get is klass.native_get:
         skip = "cpython extension isn't available"
     
+def protect_eq_ops(method):
+    def f2(self, *args):
+        orig_eq = klass.generic_eq
+        orig_ne = klass.generic_ne
+        try:
+            klass.generic_eq = getattr(klass, self.op_prefix + "generic_eq")
+            klass.generic_ne = getattr(klass, self.op_prefix + "generic_ne")
+            method(self, *args)
+        finally:
+            klass.generic_eq = orig_eq
+            klass.generic_ne = orig_ne
+    return f2
+
+class Test_native_generic_equality(TestCase):
+    op_prefix = "native_"
+    
+    @protect_eq_ops
+    def test_it(self):
+        class c(object):
+            __attr_comparison__ = ("foo", "bar")
+            __metaclass__ = klass.generic_equality
+            def __init__(self, foo, bar):
+                self.foo, self.bar = foo, bar
+        
+        self.assertEqual(c(1,2), c(1,2))
+        c1 = c(1,3)
+        self.assertEqual(c1, c1)
+        del c1
+        self.assertNotEqual(c(2,1), c(1,2))
+        c1 = c(1,2)
+        del c1.foo
+        self.assertNotEqual(c(1,2), c1)
+        del c1
+
+    def test_call(self):
+        def mk_class(meta):
+            class c(object):
+                __metaclass__ = meta
+            return c
+        self.assertRaises(TypeError, mk_class)
+
+class Test_cpy_generic_equality(Test_native_generic_equality):
+    op_prefix = ''
+    if klass.native_generic_eq is klass.generic_eq:
+        skip = "extension not available"

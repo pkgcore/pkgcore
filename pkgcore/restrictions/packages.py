@@ -9,7 +9,7 @@ from operator import attrgetter
 from pkgcore.restrictions import restriction, boolean
 from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any
-from pkgcore.util.klass import chained_getter
+from pkgcore.util.klass import chained_getter, generic_equality
 demandload(globals(), "pkgcore.log:logger")
 
 # Backwards compatibility.
@@ -18,6 +18,9 @@ package_type = restriction.package_type
 class native_PackageRestriction(object):
     __slots__ = ('_pull_attr', 'attr', 'restriction', 'ignore_missing',
         'negate')
+
+    __attr_comparison__ = ("__class__", "negate", "attr", "restriction")
+    __metaclass__ = generic_equality
 
     def __init__(self, attr, childrestriction, negate=False,
         ignore_missing=True):
@@ -35,18 +38,6 @@ class native_PackageRestriction(object):
         sf(self, "attr", attr)
         sf(self, "restriction", childrestriction)
         sf(self, "ignore_missing", ignore_missing)
-
-    def __eq__(self, other):
-        if self is other:
-            return True
-        return (
-            self.__class__ is other.__class__ and
-            self.negate == other.negate and
-            self.attr == other.attr and
-            self.restriction == other.restriction)
-
-    def __ne__(self, other):
-        return not self == other
 
 
 class PackageRestriction_mixin(restriction.base):
@@ -189,6 +180,9 @@ class Conditional(PackageRestriction):
 
     __slots__ = ('payload',)
 
+    __attr_comparison__ = ("__class__", "negate", "attr", "restriction",
+        "payload")
+    __metaclass__ = generic_equality
     # note that instance caching is turned off.
     # rarely pays off for conditionals from a speed/mem comparison
    
@@ -227,16 +221,6 @@ class Conditional(PackageRestriction):
 
     def __hash__(self):
         return hash((self.attr, self.negate, self.restriction, self.payload))
-
-    def __eq__(self, other):
-        if self is other:
-            return True
-        return (
-            self.__class__ is other.__class__ and
-            self.negate == other.negate and
-            self.attr == other.attr and
-            self.restriction == other.restriction
-            and self.payload == other.payload)
 
 
 # "Invalid name" (pylint uses the module const regexp, not the class regexp)

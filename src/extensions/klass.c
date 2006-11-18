@@ -157,11 +157,26 @@ internal_generic_equality(PyObject *inst1, PyObject *inst2,
     // if Py_EQ, break on not equal, else on equal
     for(; idx < PyTuple_GET_SIZE(attrs); idx++) {
         if(!(attr1 = PyObject_GetAttr(inst1,
-            PyTuple_GET_ITEM(attrs, idx))))
+            PyTuple_GET_ITEM(attrs, idx)))) {
+            if(PyErr_ExceptionMatches(PyExc_AttributeError)) {
+                PyErr_Clear();
+                if(desired == Py_EQ) {
+                    Py_RETURN_FALSE;
+                }
+                Py_RETURN_TRUE;
+            }
             return NULL;
+        }
         if(!(attr2 = PyObject_GetAttr(inst2,
             PyTuple_GET_ITEM(attrs, idx)))) {
             Py_DECREF(attr1);
+            if(PyErr_ExceptionMatches(PyExc_AttributeError)) {
+                PyErr_Clear();
+                if(desired == Py_EQ) {
+                    Py_RETURN_FALSE;
+                }
+                Py_RETURN_TRUE;
+            }
             return NULL;
         }
         int ret = PyObject_RichCompareBool(attr1, attr2, desired);

@@ -133,19 +133,19 @@ def native__getattr__(self, attr):
     if self.use is not None:
         false_use = [x[1:] for x in self.use if x[0] == "-"]
         true_use = [x for x in self.use if x[0] != "-"]
+        v = []
         if false_use:
-            # XXX: convert this to a value AndRestriction
-            # whenever harring gets off his ass and decides
-            # another round of tinkering with restriction
-            # subsystem is viable (burnt out now)
-            # ~harring
-            r.append(packages.PackageRestriction(
-                    "use", values.ContainmentMatch(
-                        negate=True, all=True, *false_use)))
+            v.append(values.ContainmentMatch(negate=True,
+                all=True, *false_use))
+
         if true_use:
-           r.append(packages.PackageRestriction(
-                   "use", values.ContainmentMatch(all=True,
-                                                  *true_use)))
+            v.append(values.ContainmentMatch(all=True, *true_use))
+        if len(v) == 1:
+            v = v[0]
+        else:
+            v = values.AndRestriction(*v)
+        r.append(packages.PackageRestriction("use", v))
+
     if self.slot is not None:
         if len(self.slot) == 1:
             v = values.StrExactMatch(self.slot[0])

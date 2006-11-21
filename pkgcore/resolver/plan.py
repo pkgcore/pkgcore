@@ -728,6 +728,7 @@ class plan_state(object):
         self.plan = []
         self.pkg_choices = {}
         self.rev_blockers = {}
+        self.blockers_refcnt = {}
 
     def add_pkg(self, choices, action=ADD, force=False):
         return self._add_pkg(choices, choices.current_pkg, action, force=force)
@@ -767,6 +768,19 @@ class plan_state(object):
             self.pkg_choices[pkg] = choices
         return False
 
+    def add_blocker(self, choices, blocker, key=None):
+        """adds blocker, returning any packages blocked"""
+        if blocker not in self.blockers_refcnt:
+            l = self.state.add_limiter(blocker, key=key)
+            self.plan.append((FORWARD_BLOCK, choices, blocker, key))
+            self.rev_blockers.setdefault(choices, []).append((blocker, key))
+            self.blockers_refcnt[blocker] = 1
+            return l
+        # we know that for this blocker to be in... had to already have
+        # passed back the results.  so we return no complaints.
+        self.blockers_refcnt[blocker] += 1
+        return []
+
     def _remove_pkg_blockers(self, choices):
         l = self.rev_blockers.get(choices, None)
         if l is None:
@@ -774,7 +788,10 @@ class plan_state(object):
         for blocker, key in l:
             self.plan.append(
                 (REMOVE_FORWARD_BLOCK, choices, blocker, key))
-            self.state.remove_limiter(blocker, key)
+            if self.blockers_refcnt[blocker] == 1:
+                self.state.remove_limiter(blocker, key)
+            else:
+                self.blockers_refcnt[blocker] -= 1
         del self.rev_blockers[choices]
         
     def backtrack(self, state_pos):
@@ -822,13 +839,6 @@ class plan_state(object):
                 yield val, x[3:5]
             else:
                 yield val, x[3:]
-
-    def add_blocker(self, choices, blocker, key=None):
-        """adds blocker, returning any packages blocked"""
-        l = self.state.add_limiter(blocker, key=key)
-        self.plan.append((FORWARD_BLOCK, choices, blocker, key))
-        self.rev_blockers.setdefault(choices, []).append((blocker, key))
-        return l
 
     def match_atom(self, atom):
         return self.state.find_atom_matches(atom)

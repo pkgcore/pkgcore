@@ -790,6 +790,7 @@ class plan_state(object):
             self.plan.append(
                 (REMOVE_FORWARD_BLOCK, choices, blocker, key))
             if self.blockers_refcnt[blocker] == 1:
+                del self.blockers_refcnt[blocker]
                 self.state.remove_limiter(blocker, key)
             else:
                 self.blockers_refcnt[blocker] -= 1

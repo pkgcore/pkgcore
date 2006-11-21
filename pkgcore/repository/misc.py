@@ -4,6 +4,7 @@
 import operator
 from pkgcore.restrictions import packages, values, restriction
 from pkgcore.package.mutated import MutatedPkg
+from pkgcore.util.iterables import caching_iter
 from pkgcore.util.klass import GetAttrProxy
 
 class nodeps_repo(object):
@@ -24,3 +25,27 @@ class nodeps_repo(object):
 
     def __iter__(self):
         return self.itermatch(packages.AlwaysTrue)
+
+
+class caching_repo(object):
+
+    def __init__(self, db, strategy):
+        self.__db__ = db
+        self.__strategy__ = strategy
+        self.__cache__ = {}
+
+    def match(self, restrict):
+        v = self.__cache__.get(restrict)
+        if v is None:
+            v = self.__cache__[restrict] = \
+                caching_iter(self.__db__.itermatch(restrict,
+                    sorter=self.__strategy__))
+        return v
+    
+    def itermatch(self, restrict):
+        return iter(self.match(restrict))
+    
+    __getattr__ = GetAttrProxy("__db__")
+
+    def clear(self):
+        self.__cache__.clear()

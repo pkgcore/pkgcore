@@ -60,14 +60,6 @@ def is_cycle(stack, atom, cur_choice, attr):
     return cycle_start
 
 
-class InconsistantState(Exception):
-    pass
-
-
-class InsolubleSolution(Exception):
-    pass
-
-
 #iter/pkg sorting functions for selection strategy
 pkg_sort_highest = partial(sorted, reverse=True)
 pkg_sort_lowest = sorted
@@ -127,27 +119,6 @@ def default_depset_reorder(resolver, depset, mode):
             yield vdb + non_vdb
         else:
             yield or_block
-
-
-class caching_repo(object):
-
-    def __init__(self, db, strategy):
-        self.__db__ = db
-        self.__strategy__ = strategy
-        self.__cache__ = {}
-
-    def match(self, restrict):
-        v = self.__cache__.get(restrict)
-        if v is None:
-            v = self.__cache__[restrict] = \
-                caching_iter(self.__db__.itermatch(restrict,
-                    sorter=self.__strategy__))
-        return v
-    
-    __getattr__ = GetAttrProxy("__db__")
-
-    def clear(self):
-        self.__cache__.clear()
 
 
 class resolver_frame(object):

@@ -489,7 +489,7 @@ class merge_plan(object):
             if len(l) == 1:
                 dprint("reseting for %s%s because of depends: %s",
                        (depth*2*" ", atom, l[0][-1]))
-                self.state.reset_state(cur_frame.start_point)
+                self.state.backtrack(cur_frame.start_point)
                 failures = l[0]
                 continue
             additions += l[0]
@@ -501,7 +501,7 @@ class merge_plan(object):
             if len(l) == 1:
                 dprint("reseting for %s%s because of rdepends: %s",
                        (depth*2*" ", atom, l[0]))
-                self.state.reset_state(cur_frame.start_point)
+                self.state.backtrack(cur_frame.start_point)
                 failures = l[0]
                 continue
             additions += l[0]
@@ -518,7 +518,7 @@ class merge_plan(object):
                 return False
             elif l is not None:
                 # failure.
-                self.state.reset_state(cur_frame.start_point)
+                self.state.backtrack(cur_frame.start_point)
                 choices.force_next_pkg()
                 continue
 
@@ -557,7 +557,7 @@ class merge_plan(object):
                 fail = False
             if fail:
                 choices.reduce_atoms(x)
-                self.state.reset_state(cur_frame.start_point)
+                self.state.backtrack(cur_frame.start_point)
                 continue
 
             fail = True
@@ -574,7 +574,7 @@ class merge_plan(object):
             else:
                 fail = False
             if fail:
-                self.state.reset_state(cur_frame.start_point)
+                self.state.backtrack(cur_frame.start_point)
                 choices.force_next_pkg()
                 continue
 
@@ -588,7 +588,7 @@ class merge_plan(object):
             if len(l) == 1:
                 dprint("reseting for %s%s because of rdepends: %s",
                        (depth*2*" ", atom, l[0]))
-                self.state.reset_state(cur_frame.start_point)
+                self.state.backtrack(cur_frame.start_point)
                 failures = l[0]
                 continue
             additions += l[0]
@@ -615,7 +615,7 @@ class merge_plan(object):
             else:
                 fail = False
             if fail:
-                self.state.reset_state(cur_frame.start_point)
+                self.state.backtrack(cur_frame.start_point)
                 choices.force_next_pkg()
                 continue
             break
@@ -623,7 +623,7 @@ class merge_plan(object):
         else:
             dprint("no solution  %s%s", (depth*2*" ", atom))
             current_stack.pop()
-            self.state.reset_state(cur_frame.start_point)
+            self.state.backtrack(cur_frame.start_point)
             # saving roll.  if we're allowed to drop cycles, try it again.
             # this needs to be *far* more fine grained also. it'll try
             # regardless of if it's cycle issue
@@ -777,7 +777,7 @@ class plan_state(object):
             self.state.remove_limiter(blocker, key)
         del self.rev_blockers[choices]
         
-    def reset_state(self, state_pos):
+    def backtrack(self, state_pos):
         assert state_pos <= len(self.plan)
         if len(self.plan) == state_pos:
             return

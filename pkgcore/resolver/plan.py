@@ -123,14 +123,16 @@ def default_depset_reorder(resolver, depset, mode):
 
 class resolver_frame(object):
 
-    __slots__ = ("atom", "choices", "mode", "start_point", "dbs")
+    __slots__ = ("atom", "choices", "mode", "start_point", "dbs", 
+        "depth", "__weakref__")
     
-    def __init__(self, mode, atom, choices, dbs, start_point):
+    def __init__(self, mode, atom, choices, dbs, start_point, depth):
         self.atom = atom
         self.choices = choices
         self.dbs = dbs
         self.mode = mode
         self.start_point = start_point
+        self.depth = depth
     
     def __str__(self):
         return "frame: mode %r: atom %s: current %s" % \
@@ -209,11 +211,11 @@ class merge_plan(object):
         return []
 
     def process_depends(self, current_stack, cur_frame, depset,
-                        depth=0, drop_cycles=False):
+        drop_cycles=False):
         failure = []
         additions, blocks, = [], []
         dprint("depends:     %s%s: started: %s",
-               (depth *2 * " ", cur_frame.atom,
+               (cur_frame.depth *2 * " ", cur_frame.atom,
                 cur_frame.choices.current_pkg))
         for datom_potentials in depset:
             failure = []
@@ -236,9 +238,8 @@ class merge_plan(object):
                     if index != -1:
                         # cycle.
 
-                        failure = self._rec_add_atom(
-                            datom, current_stack, self.livefs_dbs,
-                            depth=depth+1, mode="depends")
+                        failure = self._rec_add_atom(datom, current_stack, 
+                            self.livefs_dbs, mode="depends")
                         if failure and drop_cycles:
                             dprint("depends level cycle: %s: "
                                     "dropping cycle for %s from %s",
@@ -249,13 +250,12 @@ class merge_plan(object):
                             # note we trigger a break ourselves.
                             break
                     else:
-                        failure = self._rec_add_atom(
-                            datom, current_stack, cur_frame.dbs,
-                            depth=depth+1, mode="depends")
+                        failure = self._rec_add_atom(datom, current_stack,
+                            cur_frame.dbs, mode="depends")
 
                     if failure:
                         dprint("depends:     %s%s: reducing %s from %s",
-                               (depth *2 * " ", atom, datom,
+                               (cur_frame.depth *2 * " ", atom, datom,
                                 cur_frame.choices.current_pkg))
                         if cur_frame.choices.reduce_atoms(datom):
                             # this means the pkg just changed under our feet.
@@ -270,16 +270,16 @@ class merge_plan(object):
             return additions, blocks
 
     def process_rdepends(self, current_stack, cur_frame, attr, depset,
-                         depth=0, drop_cycles=False):
+        drop_cycles=False):
         failure = []
         additions, blocks, = [], []
         if attr == "post_rdepends":
             dprint("prdepends:   %s%s: started: %s",
-                (depth *2 * " ", cur_frame.atom,
+                (cur_frame.depth *2 * " ", cur_frame.atom,
                 cur_frame.choices.current_pkg))
         else:
             dprint("%s:    %s%s: started: %s",
-                (attr, depth *2 * " ", cur_frame.atom,
+                (attr, cur_frame.depth *2 * " ", cur_frame.atom,
                 cur_frame.choices.current_pkg))
         for ratom_potentials in depset:
             failure = []
@@ -304,9 +304,8 @@ class merge_plan(object):
                             # force limit_to_vdb to True to try and
                             # isolate the cycle to installed vdb
                             # components
-                            failure = self._rec_add_atom(
-                                ratom, current_stack, self.livefs_dbs,
-                                depth=depth+1, mode=attr)
+                            failure = self._rec_add_atom(ratom, current_stack,
+                                self.livefs_dbs, mode=attr)
                             if failure and drop_cycles:
                                 dprint("rdepends level cycle: %s: "
                                        "dropping cycle for %s from %s",
@@ -316,7 +315,7 @@ class merge_plan(object):
                                 break
                 else:
                     failure = self._rec_add_atom(ratom, current_stack,
-                        cur_frame.dbs, depth=depth+1, mode=attr)
+                        cur_frame.dbs, mode=attr)
                 if failure:
                     # reduce.
                     if cur_frame.choices.reduce_atoms(ratom):
@@ -407,7 +406,7 @@ class merge_plan(object):
             l = None
         return l
 
-    def _rec_add_atom(self, atom, current_stack, dbs, depth=0, mode="none",
+    def _rec_add_atom(self, atom, current_stack, dbs, mode="none",
                       drop_cycles=False):
         """Add an atom.
 
@@ -416,6 +415,7 @@ class merge_plan(object):
         """
         limit_to_vdb = dbs == self.livefs_dbs
 
+        depth = len(current_stack)
         if atom in self.insoluble:
             dprint("processing   %s%s: marked insoluble already",
                    (depth *2 * " ", atom))
@@ -471,7 +471,7 @@ class merge_plan(object):
             dprint("processing   %s%s", (depth *2 * " ", atom))
 
         cur_frame = resolver_frame(mode, atom, choices, dbs,
-            self.state.current_state())
+            self.state.current_state(), depth)
         current_stack.append(cur_frame)
 
         blocks = []
@@ -494,7 +494,7 @@ class merge_plan(object):
             l = self.process_depends(
                 current_stack, cur_frame,
                 self.depset_reorder(self, choices.depends, "depends"),
-                depth=depth, drop_cycles=drop_cycles)
+                drop_cycles=drop_cycles)
             if len(l) == 1:
                 dprint("reseting for %s%s because of depends: %s",
                        (depth*2*" ", atom, l[0][-1]))
@@ -507,7 +507,7 @@ class merge_plan(object):
             l = self.process_rdepends(
                 current_stack, cur_frame, "rdepends",
                 self.depset_reorder(self, choices.rdepends, "rdepends"),
-                depth=depth, drop_cycles=drop_cycles)
+                drop_cycles=drop_cycles)
             if len(l) == 1:
                 dprint("reseting for %s%s because of rdepends: %s",
                        (depth*2*" ", atom, l[0]))
@@ -594,7 +594,7 @@ class merge_plan(object):
                 current_stack, cur_frame, "post_rdepends",
                 self.depset_reorder(self, choices.post_rdepends,
                                     "post_rdepends"),
-                depth=depth, drop_cycles=drop_cycles)
+                drop_cycles=drop_cycles)
 
             if len(l) == 1:
                 dprint("reseting for %s%s because of rdepends: %s",
@@ -642,8 +642,8 @@ class merge_plan(object):
                 dprint("trying saving throw for %s ignoring cycles",
                        atom, "cycle")
                 # note everything is retored to a pristine state prior also.
-                l = self._rec_add_atom(atom, current_stack, dbs, depth=depth,
-                                       mode=mode, drop_cycles=True)
+                l = self._rec_add_atom(atom, current_stack, dbs,
+                    mode=mode, drop_cycles=True)
                 if not l:
                     return False
             return [atom] + failures

@@ -23,16 +23,6 @@ def dprint(fmt, args=None, label=None):
         else:
             print fmt % args
 
-def index_gen(iterable):
-    """returns zero for no match, else the negative len offset for the match"""
-    count = 0
-    for y in iterable:
-        if y:
-            return count
-        count += 1
-    return -1
-
-
 def is_cycle(stack, atom, cur_choice, attr):
     # short cut...
     if attr == "post_rdepends":

@@ -11,7 +11,7 @@ from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.util.currying import partial, post_curry
 from pkgcore.restrictions import packages, values, restriction
-from pkgcore.package.mutated import MutatedPkg
+from pkgcore.repository.misc import caching_repo
 from pkgcore.util.klass import GetAttrProxy
 
 

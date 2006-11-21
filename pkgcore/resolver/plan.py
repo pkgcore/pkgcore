@@ -123,12 +123,14 @@ def default_depset_reorder(resolver, depset, mode):
 
 class resolver_frame(object):
 
-    __slots__ = ("atom", "choice_point", "mode",)
+    __slots__ = ("atom", "choices", "mode", "start_point", "dbs")
     
-    def __init__(self, atom, choice_point, mode):
+    def __init__(self, mode, atom, choices, dbs, start_point):
         self.atom = atom
-        self.choice_point = choice_point
+        self.choices = choices
+        self.dbs = dbs
         self.mode = mode
+        self.start_point = start_point
     
     def __str__(self):
         return "frame: mode %r: atom %s: current %s" % \
@@ -137,7 +139,7 @@ class resolver_frame(object):
     @property
     def current_pkg(self):
         try:
-            return self.choice_point.current_pkg
+            return self.choices.current_pkg
         except IndexError:
             return None
 
@@ -206,12 +208,13 @@ class merge_plan(object):
 
         return []
 
-    def process_depends(self, atom, dbs, current_stack, choices, depset,
+    def process_depends(self, current_stack, cur_frame, depset,
                         depth=0, drop_cycles=False):
         failure = []
         additions, blocks, = [], []
         dprint("depends:     %s%s: started: %s",
-               (depth *2 * " ", atom, choices.current_pkg))
+               (depth *2 * " ", cur_frame.atom,
+                cur_frame.choices.current_pkg))
         for datom_potentials in depset:
             failure = []
             for datom in datom_potentials:
@@ -222,72 +225,72 @@ class merge_plan(object):
                     l = self.state.match_atom(datom)
                     if l:
                         dprint("depends blocker messing with us- "
-                               "dumping to pdb for inspection of "
-                               "atom %s, pkg %s, ret %s",
-                               (atom, choices.current_pkg, l), "blockers")
+                            "dumping to pdb for inspection of "
+                            "atom %s, pkg %s, ret %s",
+                            (cur_frame.atom, cur_frame.choices.current_pkg, l),
+                            "blockers")
                         continue
                 else:
-                    index = is_cycle(current_stack, datom, choices, "depends")
+                    index = is_cycle(current_stack, datom, cur_frame.choices,
+                        "depends")
                     if index != -1:
                         # cycle.
 
-#                        v = values.ContainmentMatch(datom, negate=True)
-#                        import pdb;pdb.set_trace()
-#                        new_atom = packages.AndRestriction(self.current_atom,
-#                            PackageRestriction("depends", v),
-#                            PackageRestriction("rdepends", v))
-#                        import pdb;pdb.set_trace()
-                        # reduce our options.
                         failure = self._rec_add_atom(
                             datom, current_stack, self.livefs_dbs,
                             depth=depth+1, mode="depends")
                         if failure and drop_cycles:
                             dprint("depends level cycle: %s: "
-                                   "dropping cycle for %s from %s",
-                                   (atom, datom, choices.current_pkg), "cycle")
+                                    "dropping cycle for %s from %s",
+                                    (cur_frame.atom, datom,
+                                    cur_frame.current_pkg),
+                                    "cycle")
                             failure = []
                             # note we trigger a break ourselves.
                             break
                     else:
                         failure = self._rec_add_atom(
-                            datom, current_stack, dbs, depth=depth+1,
-                            mode="depends")
+                            datom, current_stack, cur_frame.dbs,
+                            depth=depth+1, mode="depends")
+
                     if failure:
                         dprint("depends:     %s%s: reducing %s from %s",
                                (depth *2 * " ", atom, datom,
-                                choices.current_pkg))
-                        if choices.reduce_atoms(datom):
+                                cur_frame.choices.current_pkg))
+                        if cur_frame.choices.reduce_atoms(datom):
                             # this means the pkg just changed under our feet.
                             return [[datom] + failure]
                         continue
                 additions.append(datom)
                 break
             else: # didn't find any solutions to this or block.
-                choices.reduce_atoms(datom_potentials)
+                cur_frame.choices.reduce_atoms(datom_potentials)
                 return [datom_potentials]
         else: # all potentials were usable.
             return additions, blocks
 
-    def process_rdepends(self, atom, dbs, current_stack, choices, attr, depset,
+    def process_rdepends(self, current_stack, cur_frame, attr, depset,
                          depth=0, drop_cycles=False):
         failure = []
         additions, blocks, = [], []
         if attr == "post_rdepends":
             dprint("prdepends:   %s%s: started: %s",
-                (depth *2 * " ", atom, choices.current_pkg))
+                (depth *2 * " ", cur_frame.atom,
+                cur_frame.choices.current_pkg))
         else:
             dprint("%s:    %s%s: started: %s",
-                (attr, depth *2 * " ", atom, choices.current_pkg))
+                (attr, depth *2 * " ", cur_frame.atom,
+                cur_frame.choices.current_pkg))
         for ratom_potentials in depset:
             failure = []
             for ratom in ratom_potentials:
                 if ratom.blocks:
                     blocks.append(ratom)
                     break
-                index = is_cycle(current_stack, ratom, choices, attr)
+                index = is_cycle(current_stack, ratom, cur_frame.choices, attr)
                 if index != -1:
                     # cycle.  whee.
-                    if dbs is self.livefs_dbs:
+                    if cur_frame.dbs is self.livefs_dbs:
                         # well. we know the node is valid, so we can
                         # ignore this cycle.
                         failure = []
@@ -307,23 +310,23 @@ class merge_plan(object):
                             if failure and drop_cycles:
                                 dprint("rdepends level cycle: %s: "
                                        "dropping cycle for %s from %s",
-                                       (atom, ratom, choices.current_pkg),
+                                       (atom, ratom, cur_frame.current_pkg),
                                        "cycle")
                                 failure = []
                                 break
                 else:
-                    failure = self._rec_add_atom(ratom, current_stack, dbs,
-                                                 depth=depth+1, mode=attr)
+                    failure = self._rec_add_atom(ratom, current_stack,
+                        cur_frame.dbs, depth=depth+1, mode=attr)
                 if failure:
                     # reduce.
-                    if choices.reduce_atoms(ratom):
+                    if cur_frame.choices.reduce_atoms(ratom):
                         # pkg changed.
                         return [[ratom] + failure]
                     continue
                 additions.append(ratom)
                 break
             else: # didn't find any solutions to this or block.
-                choices.reduce_atoms(ratom_potentials)
+                cur_frame.choices.reduce_atoms(ratom_potentials)
                 return [ratom_potentials]
         else: # all potentials were usable.
             return additions, blocks
@@ -467,8 +470,9 @@ class merge_plan(object):
         else:
             dprint("processing   %s%s", (depth *2 * " ", atom))
 
-        current_stack.append(resolver_frame(atom, choices, mode))
-        saved_state = self.state.current_state()
+        cur_frame = resolver_frame(mode, atom, choices, dbs,
+            self.state.current_state())
+        current_stack.append(cur_frame)
 
         blocks = []
         failures = []
@@ -488,26 +492,26 @@ class merge_plan(object):
             additions, blocks = [], []
 
             l = self.process_depends(
-                atom, dbs, current_stack, choices,
+                current_stack, cur_frame,
                 self.depset_reorder(self, choices.depends, "depends"),
                 depth=depth, drop_cycles=drop_cycles)
             if len(l) == 1:
                 dprint("reseting for %s%s because of depends: %s",
                        (depth*2*" ", atom, l[0][-1]))
-                self.state.reset_state(saved_state)
+                self.state.reset_state(cur_frame.start_point)
                 failures = l[0]
                 continue
             additions += l[0]
             blocks += l[1]
 
             l = self.process_rdepends(
-                atom, dbs, current_stack, choices, "rdepends",
+                current_stack, cur_frame, "rdepends",
                 self.depset_reorder(self, choices.rdepends, "rdepends"),
                 depth=depth, drop_cycles=drop_cycles)
             if len(l) == 1:
                 dprint("reseting for %s%s because of rdepends: %s",
                        (depth*2*" ", atom, l[0]))
-                self.state.reset_state(saved_state)
+                self.state.reset_state(cur_frame.start_point)
                 failures = l[0]
                 continue
             additions += l[0]
@@ -524,7 +528,7 @@ class merge_plan(object):
                 return False
             elif l is not None:
                 # failure.
-                self.state.reset_state(saved_state)
+                self.state.reset_state(cur_frame.start_point)
                 choices.force_next_pkg()
                 continue
 
@@ -563,7 +567,7 @@ class merge_plan(object):
                 fail = False
             if fail:
                 choices.reduce_atoms(x)
-                self.state.reset_state(saved_state)
+                self.state.reset_state(cur_frame.start_point)
                 continue
 
             fail = True
@@ -580,14 +584,14 @@ class merge_plan(object):
             else:
                 fail = False
             if fail:
-                self.state.reset_state(saved_state)
+                self.state.reset_state(cur_frame.start_point)
                 choices.force_next_pkg()
                 continue
 
             # reset blocks for pdepend proccesing
             blocks = []
             l = self.process_rdepends(
-                atom, dbs, current_stack, choices, "post_rdepends",
+                current_stack, cur_frame, "post_rdepends",
                 self.depset_reorder(self, choices.post_rdepends,
                                     "post_rdepends"),
                 depth=depth, drop_cycles=drop_cycles)
@@ -595,7 +599,7 @@ class merge_plan(object):
             if len(l) == 1:
                 dprint("reseting for %s%s because of rdepends: %s",
                        (depth*2*" ", atom, l[0]))
-                self.state.reset_state(saved_state)
+                self.state.reset_state(cur_frame.start_point)
                 failures = l[0]
                 continue
             additions += l[0]
@@ -622,7 +626,7 @@ class merge_plan(object):
             else:
                 fail = False
             if fail:
-                self.state.reset_state(saved_state)
+                self.state.reset_state(cur_frame.start_point)
                 choices.force_next_pkg()
                 continue
             break
@@ -630,7 +634,7 @@ class merge_plan(object):
         else:
             dprint("no solution  %s%s", (depth*2*" ", atom))
             current_stack.pop()
-            self.state.reset_state(saved_state)
+            self.state.reset_state(cur_frame.start_point)
             # saving roll.  if we're allowed to drop cycles, try it again.
             # this needs to be *far* more fine grained also. it'll try
             # regardless of if it's cycle issue

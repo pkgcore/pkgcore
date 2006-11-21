@@ -247,7 +247,8 @@ class merge_plan(object):
 
                     if failure:
                         dprint("depends:     %s%s: reducing %s from %s",
-                               (cur_frame.depth *2 * " ", atom, datom,
+                               (cur_frame.depth *2 * " ", cur_frame.atom,
+                                datom,
                                 cur_frame.choices.current_pkg))
                         if cur_frame.choices.reduce_atoms(datom):
                             # this means the pkg just changed under our feet.

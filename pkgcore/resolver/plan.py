@@ -714,13 +714,13 @@ class merge_plan(object):
 REMOVE  = 0
 ADD     = 1
 REPLACE = 2
-FORWARD_BLOCK = 3
-REMOVE_FORWARD_BLOCK = 4
+FORWARD_BLOCK_INCREF = 3
+FORWARD_BLOCK_DECREF = 4
 state_ops = {ADD:"add",
     REMOVE:"remove",
     REPLACE:"replace",
-    FORWARD_BLOCK:None,
-    REMOVE_FORWARD_BLOCK:None
+    FORWARD_BLOCK_INCREF:None,
+    FORWARD_BLOCK_DECREF:None
 }
 
 class plan_state(object):
@@ -771,9 +771,9 @@ class plan_state(object):
 
     def add_blocker(self, choices, blocker, key=None):
         """adds blocker, returning any packages blocked"""
+        self.plan.append((FORWARD_BLOCK_INCREF, choices, blocker, key))
         if blocker not in self.blockers_refcnt:
             l = self.state.add_limiter(blocker, key=key)
-            self.plan.append((FORWARD_BLOCK, choices, blocker, key))
             self.rev_blockers.setdefault(choices, []).append((blocker, key))
             self.blockers_refcnt[blocker] = 1
             return l
@@ -788,7 +788,7 @@ class plan_state(object):
             return
         for blocker, key in l:
             self.plan.append(
-                (REMOVE_FORWARD_BLOCK, choices, blocker, key))
+                (FORWARD_BLOCK_DECREF, choices, blocker, key))
             if self.blockers_refcnt[blocker] == 1:
                 del self.blockers_refcnt[blocker]
                 self.state.remove_limiter(blocker, key)
@@ -814,7 +814,7 @@ class plan_state(object):
                 self.state.fill_slotting(change[4], force=change[3])
                 del pkg_choices[change[3]]
                 pkg_choices[change[4]] = change[5]
-            elif change[0] == FORWARD_BLOCK:
+            elif change[0] == FORWARD_BLOCK_INCREF:
                 self.state.remove_limiter(change[2], key=change[3])
                 l = [x for x in rev_blockers[change[1]]
                     if x[0] != change[2]]
@@ -822,7 +822,7 @@ class plan_state(object):
                     rev_blockers[change[1]] = l
                 else:
                     del rev_blockers[change[1]]
-            elif change[0] == REMOVE_FORWARD_BLOCK:
+            elif change[0] == FORWARD_BLOCK_DECREF:
                 self.rev_blockers.setdefault(change[1],
                     []).append((change[2], change[3]))
             else:

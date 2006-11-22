@@ -57,10 +57,10 @@ def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False,
     if not isinstance(dbs, (list, tuple)):
         dbs = [dbs]
     if nodeps:
-        vdb = map(plan.nodeps_repo, vdb)
-        dbs = map(plan.nodeps_repo, dbs)
+        vdb = map(nodeps_repo, vdb)
+        dbs = map(nodeps_repo, dbs)
     elif not verify_vdb:
-        vdb = map(plan.nodeps_repo, vdb)
+        vdb = map(nodeps_repo, vdb)
 
     if force_replacement:
         resolver_cls = generate_replace_resolver_kls(resolver_cls)
@@ -95,10 +95,10 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True,
     if not isinstance(dbs, (list, tuple)):
         dbs = [dbs]
     if nodeps:
-        vdb = map(plan.nodeps_repo, vdb)
-        dbs = map(plan.nodeps_repo, dbs)
+        vdb = map(nodeps_repo, vdb)
+        dbs = map(nodeps_repo, dbs)
     elif not verify_vdb:
-        vdb = map(plan.nodeps_repo, vdb)
+        vdb = map(nodeps_repo, vdb)
 
     if force_replacement:
         resolver_cls = generate_replace_resolver_kls(resolver_cls)

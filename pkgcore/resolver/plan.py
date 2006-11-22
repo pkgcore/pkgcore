@@ -464,7 +464,7 @@ class merge_plan(object):
             dprint("processing   %s%s", (depth *2 * " ", atom))
 
         cur_frame = resolver_frame(mode, atom, choices, dbs,
-            self.state.current_state(), depth, drop_cycles)
+            self.state.current_state, depth, drop_cycles)
         current_stack.append(cur_frame)
 
         blocks = []
@@ -848,6 +848,7 @@ class plan_state(object):
     def pkg_conflicts(self, pkg):
         return self.state.get_conflicting_slot(pkg)
 
+    @property
     def current_state(self):
         #hack- this doesn't work when insertions are possible
         return len(self.plan)

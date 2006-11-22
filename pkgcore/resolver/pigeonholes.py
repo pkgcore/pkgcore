@@ -13,6 +13,7 @@ class PigeonHoledSlots(object):
 
     def __init__(self):
         self.slot_dict = {}
+        self.limiters = {}
 
     def fill_slotting(self, obj, force=False):
         """Try to insert obj in.
@@ -21,31 +22,29 @@ class PigeonHoledSlots(object):
         """
         key = obj.key
         l = []
-        for x in self.slot_dict.setdefault(key, []):
-            if isinstance(x, restriction.base):
-                if x.match(obj):
-                    # no go.  blocker.
-                    l.append(x)
-            else:
-                if x.slot == obj.slot:
-                    l.append(x)
+        for x in self.limiters.get(key, []):
+            if x.match(obj):
+                l.append(x)
+
+        dslot = obj.slot
+        for x in self.slot_dict.get(key, []):
+            if x.slot == dslot:
+                l.append(x)
         if not l or force:
-            self.slot_dict[key].append(obj)
+            self.slot_dict.setdefault(key, []).append(obj)
         return l
 
     def get_conflicting_slot(self, pkg):
         for x in self.slot_dict.get(pkg.key, []):
-            if not isinstance(x, restriction.base) and pkg.slot == x.slot:
+            if pkg.slot == x.slot:
                 return x
         return None
 
     def find_key_matches(self, key):
-        return [
-            x for x in self.slot_dict.get(key, [])
-            if not isinstance(x, restriction.base)]
+        return self.slot_dict.get(key, [])
 
     def find_atom_matches(self, atom):
-        return [x for x in self.find_key_matches(atom.key) if atom.match(x)]
+        return filter(atom.match, self.slot_dict.get(atom.key, []))
 
     def add_limiter(self, atom, key=None):
         """add a limiter, returning any conflicting objs"""
@@ -55,13 +54,8 @@ class PigeonHoledSlots(object):
 
         if key is None:
             key = atom.key
-        l = []
-        for x in self.slot_dict.setdefault(key, []):
-            if not isinstance(x, restriction.base) and atom.match(x):
-                l.append(x)
-
-        self.slot_dict[key].append(atom)
-        return l
+        self.limiters.setdefault(key, []).append(atom)
+        return filter(atom.match, self.slot_dict.get(key, []))
 
     def remove_slotting(self, obj):
         key = obj.key
@@ -77,12 +71,15 @@ class PigeonHoledSlots(object):
     def remove_limiter(self, atom, key=None):
         if key is None:
             key = atom.key
-        l = [x for x in self.slot_dict[key] if x is not atom]
+        l = [x for x in self.limiters[key] if x is not atom]
+        if len(l) == len(self.limiters[key]):
+            raise KeyError("obj %s isn't slotted" % obj)
         if not l:
-            del self.slot_dict[key]
+            del self.limiters[key]
+        else:
+            self.limiters[key] = l
 
     def __contains__(self, obj):
-        for o in self.slot_dict[obj.key]:
-            if o == obj:
-                return True
-        return False
+        if isinstance(obj, restriction.base):
+            return o in self.limiters.get(obj.key, [])
+        return obj in self.slot_dict.get(obj.key, [])

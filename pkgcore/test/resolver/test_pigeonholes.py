@@ -51,10 +51,10 @@ class SlotTesting(TestCase):
         p, p2 = fake_package(), fake_package(slot=2)
         o = fake_blocker(None, p)
         self.assertEqual([], c.add_limiter(o))
-        c.remove_slotting(o)
+        c.remove_limiter(o)
         self.assertRaises(KeyError, c.remove_slotting, o)
+        self.assertRaises(KeyError, c.remove_limiter, o)
         self.assertEqual([], c.fill_slotting(p))
         self.assertEqual([], c.fill_slotting(p2))
         c.remove_slotting(p)
         c.remove_slotting(p2)
-

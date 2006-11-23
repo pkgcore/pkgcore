@@ -6,6 +6,7 @@ from itertools import chain, islice
 from collections import deque
 from pkgcore.util.compatibility import any
 from pkgcore.util.iterables import caching_iter, iter_sort
+from pkgcore.util.containers import RefCountingSet
 from pkgcore.util.mappings import OrderedDict
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.resolver.choice_point import choice_point
@@ -740,7 +741,7 @@ class plan_state(object):
         self.plan = []
         self.pkg_choices = {}
         self.rev_blockers = {}
-        self.blockers_refcnt = {}
+        self.blockers_refcnt = RefCountingSet()
 
     def add_pkg(self, choices, action=ADD, force=False):
         return self._add_pkg(choices, choices.current_pkg, action, force=force)
@@ -896,12 +897,10 @@ class incref_forward_block_op(blocker_base_op):
             l = plan.state.add_limiter(self.blocker, self.key)
             plan.rev_blockers.setdefault(self.choices, []).append(
                 (self.blocker, self.key))
-            plan.blockers_refcnt[self.blocker] = 1
-            return ;
-        # we know that for this blocker to be in already, code had to deal
-        # with previous matches; so we just incref, and return []
-        plan.blockers_refcnt[self.blocker] += 1
-        return []
+        else:
+            l = []
+        plan.blockers_refcnt.add(self.blocker)
+        return l
     
     def revert(self, plan):
         plan.state.remove_limiter(self.blocker, self.key)
@@ -909,22 +908,18 @@ class incref_forward_block_op(blocker_base_op):
         l.remove((self.blocker, self.key))
         if not l:
             del plan.state.rev_blockers[self.choices]
-        if plan.blockers_refcnt[self.blocker] == 1:
-            del plan.blockers_refcnt[self.blocker]
+        plan.blockers_refcnt.remove(self.blocker)
+        if self.blocker not in plan.blocker_refcnt:
             plan.state.remove_limiter(self.blocker, self.key)
-        else:
-            plan.blockers_refcnt[self.blocker] -= 1
 
 class decref_forward_block_op(blocker_base_op):
     __slots__ = ()
     
     def apply(self, plan):
         plan.plan.append(self)
-        if plan.blockers_refcnt[self.blocker] == 1:
-            del plan.blockers_refcnt[self.blocker]
+        plan.blockers_refcnt.remove(self.blocker)
+        if self.blocker not in plan.blockers_refcnt:
             plan.state.remove_limiter(self.blocker, self.key)
-        else:
-            self.blockers_refcnt[self.blocker] -= 1
         plan.rev_blockers[self.blocker].remove((self.blocker, self.key))
         if not plan.rev_blockers[self.blocker]:
             del plan.rev_blockers[self.blocker]
@@ -932,7 +927,4 @@ class decref_forward_block_op(blocker_base_op):
     def revert(self, plan):
         plan.rev_bllockers.setdefault(self.changes, []).append(
             (self.blocker, self.key))
-        if self.blocker in plan.blockers_refcnt:
-            plan.blockers_refcnt[self.blocker] += 1
-        else:
-            plan.blockers_refcnt[self.blocker] = 0
+        plan.blockers_refcnt.add(self.blocker)

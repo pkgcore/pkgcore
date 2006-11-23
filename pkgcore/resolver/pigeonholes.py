@@ -34,6 +34,13 @@ class PigeonHoledSlots(object):
             self.slot_dict.setdefault(key, []).append(obj)
         return l
 
+
+    def get_conflicting_slot(self, pkg):
+        for x in self.slot_dict.get(pkg.key, []):
+            if pkg.slot == x.slot:
+                return x
+        return None
+ 
     def find_atom_matches(self, atom):
         return filter(atom.match, self.slot_dict.get(atom.key, []))
 

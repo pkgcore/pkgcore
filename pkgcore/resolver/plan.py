@@ -484,17 +484,18 @@ class merge_plan(object):
             last_state = new_state
             additions, blocks = [], []
 
-            l = self.process_depends(
-                current_stack, cur_frame,
-                self.depset_reorder(self, choices.depends, "depends"))
-            if len(l) == 1:
-                dprint("reseting for %s%s because of depends: %s",
-                       (depth*2*" ", atom, l[0][-1]))
-                self.state.backtrack(cur_frame.start_point)
-                failures = l[0]
-                continue
-            additions += l[0]
-            blocks += l[1]
+            if not choices.current_pkg.built:
+                l = self.process_depends(
+                    current_stack, cur_frame,
+                    self.depset_reorder(self, choices.depends, "depends"))
+                if len(l) == 1:
+                    dprint("reseting for %s%s because of depends: %s",
+                           (depth*2*" ", atom, l[0][-1]))
+                    self.state.backtrack(cur_frame.start_point)
+                    failures = l[0]
+                    continue
+                additions += l[0]
+                blocks += l[1]
 
             l = self.process_rdepends(
                 current_stack, cur_frame, "rdepends",

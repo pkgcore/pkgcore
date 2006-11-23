@@ -80,7 +80,6 @@ class package(ebuild_src.base):
 
     _get_attr["use"] = lambda s:DelayedInstantiation(tuple,
         lambda: tuple(s.data["USE"].split()))
-    _get_attr["depends"] = lambda s:DepSet("", atom)
 
     def _update_metadata(self, pkg):
         raise NotImplementedError()

@@ -774,8 +774,6 @@ class plan_state(object):
         assert state_pos <= len(self.plan)
         if len(self.plan) == state_pos:
             return
-        pkg_choices = self.pkg_choices
-        rev_blockers = self.rev_blockers
         for change in reversed(self.plan[state_pos:]):
             change.revert(self)
         self.plan = self.plan[:state_pos]

@@ -156,6 +156,7 @@ class merge_plan(object):
     def __init__(self, dbs, per_repo_strategy,
                  global_strategy=default_global_strategy,
                  depset_reorder_strategy=default_depset_reorder,
+                 process_built_depends=False,
                  drop_cycles=False):
         if not isinstance(dbs, (list, tuple)):
             dbs = [dbs]
@@ -170,6 +171,7 @@ class merge_plan(object):
         self.insoluble = set()
         self.vdb_preloaded = False
         self.drop_cycles = drop_cycles
+        self.process_built_depends = process_built_depends
 
     def load_vdb_state(self):
         for r in self.livefs_dbs:
@@ -484,7 +486,7 @@ class merge_plan(object):
             last_state = new_state
             additions, blocks = [], []
 
-            if not choices.current_pkg.built:
+            if not choices.current_pkg.built or self.process_built_depends:
                 l = self.process_depends(
                     current_stack, cur_frame,
                     self.depset_reorder(self, choices.depends, "depends"))

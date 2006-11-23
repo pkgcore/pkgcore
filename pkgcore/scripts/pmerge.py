@@ -48,6 +48,10 @@ that aren't involved in the graph of the requested operation""")
 """ignore cycles if they're found to be unbreakable;
 a depends on b, and b depends on a, with neither built is an example""")
 
+        self.add_option('-B', '--with-built-depends', action='store_true',
+            default=False,
+            help="whether or not to process build depends for pkgs that "
+            "are already built; defaults to ignoring them"),
         self.add_option('--nodeps', action='store_true',
             help='disable dependency resolution')
         self.add_option('--replace', '-r', action='store_true',
@@ -351,6 +355,7 @@ def main(options, out, err):
     resolver_inst = resolver_kls(
         vdb, repos, verify_vdb=options.deep, nodeps=options.nodeps,
         drop_cycles=options.ignore_cycles, force_replacement=options.replace,
+        process_built_depends=options.with_built_depends,
         **extra_kwargs)
 
     if options.preload_vdb_state:

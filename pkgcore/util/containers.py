@@ -139,3 +139,21 @@ class ProtectedSet(object):
     def add(self, key):
         if key not in self._orig:
             self._new.add(key)
+
+
+class RefCountingSet(dict):
+
+    def __init__(self, iterable=None):
+        if iterable is not None:
+            dict.__init__(self, ((x, 1) for x in iterable))
+
+    def add(self, item):
+        count = self.get(item, 0)
+        self[item] = count + 1
+    
+    def remove(self, item):
+        count = self[item]
+        if count == 1:
+            del self[item]
+        else:
+            self[item] = count - 1

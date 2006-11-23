@@ -131,3 +131,23 @@ class LimitedChangeSetWithBlacklistTest(TestCase):
     def test_removing_blacklisted(self):
         self.assertRaises(containers.Unchangable, self.set.remove, 3)
 
+
+class TestRefCountingSet(TestCase):
+
+    def test_it(self):
+        c = containers.RefCountingSet((1,2))
+        self.assertIn(1, c)
+        self.assertIn(2, c)
+        c.remove(1)
+        self.assertNotIn(1, c)
+        self.assertRaises(KeyError, c.remove, 1)
+        c.add(2)
+        self.assertIn(2, c)
+        c.remove(2)
+        self.assertIn(2, c)
+        c.remove(2)
+        self.assertNotIn(2, c)
+        c.add(3)
+        self.assertIn(3, c)
+        c.remove(3)
+        self.assertNotIn(3, c)

@@ -728,12 +728,6 @@ ADD     = 1
 REPLACE = 2
 FORWARD_BLOCK_INCREF = 3
 FORWARD_BLOCK_DECREF = 4
-state_ops = {ADD:"add",
-    REMOVE:"remove",
-    REPLACE:"replace",
-    FORWARD_BLOCK_INCREF:None,
-    FORWARD_BLOCK_DECREF:None
-}
 
 class plan_state(object):
     def __init__(self):

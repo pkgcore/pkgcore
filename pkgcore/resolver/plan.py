@@ -543,13 +543,7 @@ class merge_plan(object):
             # level blockers.
             fail = True
             for x in blocks:
-                # hackity hack potential- say we did this-
-                # disallowing blockers from blocking what introduced them.
-                # iow, we can't block ourselves (can block other
-                # versions, but not our exact self)
-                # this might be suspect mind you...
-                # disabled, but something to think about.
-                
+
                 # check for any matches; none, try and insert vdb nodes.
                 if not self.vdb_preloaded and \
                     not choices.current_pkg.repo.livefs and \
@@ -559,6 +553,9 @@ class merge_plan(object):
                         if m:
                             dprint("inserting vdb node for blocker"
                                 " %s %s" % (x, m[0]))
+                            # ignore blockers for for vdb atm, since
+                            # when we level this nodes blockers they'll
+                            # hit
                             self.state.add_pkg(choice_point(x, m),
                                 force=True)
                             break;

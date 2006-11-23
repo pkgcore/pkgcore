@@ -397,10 +397,10 @@ def main(options, out, err):
     changes = list(resolver_inst.state.iter_ops())
     for op in changes:
         if op.desc == "replace":
-            out.write("replace: %s, %s" %
+            out.write("replace %s, %s" %
                 (op.old_pkg, op.pkg))
         else:
-            out.write("%s: %s" % (op.desc.ljust(7), op.pkg))
+            out.write("%s %s" % (op.desc.ljust(7), op.pkg))
 
     out.write()
     out.write('Success!')

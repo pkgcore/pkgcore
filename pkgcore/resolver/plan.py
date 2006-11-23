@@ -782,9 +782,6 @@ class plan_state(object):
     def match_atom(self, atom):
         return self.state.find_atom_matches(atom)
 
-    def pkg_conflicts(self, pkg):
-        return self.state.get_conflicting_slot(pkg)
-
     @property
     def current_state(self):
         #hack- this doesn't work when insertions are possible

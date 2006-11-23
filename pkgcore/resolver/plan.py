@@ -579,7 +579,7 @@ class merge_plan(object):
 
             fail = True
             for x in choices.provides:
-                l = self.state.add_provider(choices, x)
+                l = add_op(choices, x).apply(self.state)
                 if l and l != [x]:
                     if len(current_stack) > 1:
                         if not current_stack[-2].atom.match(x):
@@ -740,22 +740,6 @@ class plan_state(object):
         self.pkg_choices = {}
         self.rev_blockers = {}
         self.blockers_refcnt = RefCountingSet()
-
-    def add_pkg(self, choices, action=ADD, force=False):
-        return self._add_pkg(choices, choices.current_pkg, action, force=force)
-
-    def add_provider(self, choices, provider, action=ADD):
-        return self._add_pkg(choices, provider, action)
-
-    def _add_pkg(self, choices, pkg, action, force=False):
-        """returns False (no issues), else the conflicts"""
-        if action == ADD:
-            return add_op(choices, pkg, force).apply(self)
-        elif action == REMOVE:
-            return remove_op(choices, pkg, force).apply(self)
-        elif action == REPLACE:
-            return replace_op(choices, pkg, force).apply(self)
-        return False
 
     def add_blocker(self, choices, blocker, key=None):
         """adds blocker, returning any packages blocked"""

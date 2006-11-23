@@ -231,6 +231,14 @@ class merge_plan(object):
                     if index != -1:
                         # cycle.
 
+                        #weird, but lets try it.
+                        if current_stack[index + 1].current_pkg == \
+                            cur_frame.current_pkg and \
+                            cur_frame.current_pkg.repo.livefs:
+                            # we're in a cycle of depends level vdb nodes;
+                            # they cyclical pkg is installed already, thus
+                            # it's satisfied itself.
+                            break
                         failure = self._rec_add_atom(datom, current_stack, 
                             self.livefs_dbs, mode="depends",
                             drop_cycles=cur_frame.drop_cycles)

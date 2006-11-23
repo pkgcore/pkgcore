@@ -346,13 +346,13 @@ class merge_plan(object):
                 for repo in self.livefs_dbs:
                     m = repo.match(slotted_atom)
                     if m:
-                        self.state.add_pkg(choice_point(slotted_atom, m),
-                                           force=True)
+                        c = choice_point(slotted_atom, m)
+                        add_op(c, c.current_pkg, force=True).apply(self.state)
                         break
 
         # first, check for conflicts.
         # lil bit fugly, but works for the moment
-        conflicts = self.state.add_pkg(choices)
+        conflicts = add_op(choices, choices.current_pkg).apply(self.state)
         if conflicts:
             # this means in this branch of resolution, someone slipped
             # something in already. cycle, basically.
@@ -392,7 +392,8 @@ class merge_plan(object):
                 dprint("replacing a vdb node, so it's valid (need to do a "
                        "recheck of state up to this point however, which "
                        "we're not)")
-                conflicts = self.state.add_pkg(choices, REPLACE)
+                conflicts = replace_op(choices, choices.current_pkg).apply(
+                    self.state)
                 if conflicts:
                     dprint("tried the replace, but got matches still- %s", 
                         conflicts)
@@ -556,8 +557,9 @@ class merge_plan(object):
                             # ignore blockers for for vdb atm, since
                             # when we level this nodes blockers they'll
                             # hit
-                            self.state.add_pkg(choice_point(x, m),
-                                force=True)
+                            c = choice_point(x, m)
+                            add_op(c, c.current_pkg, force=True).apply(
+                                self.state)
                             break;
                     
                 l = self.state.add_blocker(choices, 

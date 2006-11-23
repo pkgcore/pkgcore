@@ -740,61 +740,23 @@ class plan_state(object):
     def _add_pkg(self, choices, pkg, action, force=False):
         """returns False (no issues), else the conflicts"""
         if action == ADD:
-            l = self.state.fill_slotting(pkg, force=force)
-            if l:
-                return l
-            self.plan.append((action, choices, force, pkg))
-            self.pkg_choices[pkg] = choices
+            return add_op(choices, pkg, force).apply(self)
         elif action == REMOVE:
-            # level it even if it's not existant?
-            self.state.remove_slotting(pkg)
-            self.plan.append((action, choices, force, pkg))
-            del self.pkg_choices[pkg]
+            return remove_op(choices, pkg, force).apply(self)
         elif action == REPLACE:
-            l = self.state.fill_slotting(pkg)
-            assert len(l) == 1
-            self.state.remove_slotting(l[0])
-            l2 = self.state.fill_slotting(pkg, force=force)
-            if l2:
-                #revert
-                l3 = self.state.fill_slotting(l[0])
-                assert not l3
-                return l2
-
-            self.plan.append((action, choices, force, pkg, l[0],
-                self.pkg_choices[l[0]]))
-            # wipe the to-be-replaced pkgs blockers
-            self._remove_pkg_blockers(self.pkg_choices[l[0]])
-            del self.pkg_choices[l[0]]
-            self.pkg_choices[pkg] = choices
+            return replace_op(choices, pkg, force).apply(self)
         return False
 
     def add_blocker(self, choices, blocker, key=None):
         """adds blocker, returning any packages blocked"""
-        self.plan.append((FORWARD_BLOCK_INCREF, choices, blocker, key))
-        if blocker not in self.blockers_refcnt:
-            l = self.state.add_limiter(blocker, key=key)
-            self.rev_blockers.setdefault(choices, []).append((blocker, key))
-            self.blockers_refcnt[blocker] = 1
-            return l
-        # we know that for this blocker to be in... had to already have
-        # passed back the results.  so we return no complaints.
-        self.blockers_refcnt[blocker] += 1
-        return []
+        incref_forward_block_op(choices, blocker, key).apply(self)
 
     def _remove_pkg_blockers(self, choices):
         l = self.rev_blockers.get(choices, None)
         if l is None:
             return
-        for blocker, key in l:
-            self.plan.append(
-                (FORWARD_BLOCK_DECREF, choices, blocker, key))
-            if self.blockers_refcnt[blocker] == 1:
-                del self.blockers_refcnt[blocker]
-                self.state.remove_limiter(blocker, key)
-            else:
-                self.blockers_refcnt[blocker] -= 1
-        del self.rev_blockers[choices]
+        for blocker, key in l[:]:
+            decref_forward_block_op(choices, blocker, key).apply(self)
         
     def backtrack(self, state_pos):
         assert state_pos <= len(self.plan)
@@ -803,44 +765,15 @@ class plan_state(object):
         pkg_choices = self.pkg_choices
         rev_blockers = self.rev_blockers
         for change in reversed(self.plan[state_pos:]):
-            if change[0] == ADD:
-                self.state.remove_slotting(change[3])
-                del pkg_choices[change[3]]
-            elif change[0] == REMOVE:
-                self.state.fill_slotting(change[3], force=change[2])
-                pkg_choices[change[3]] = change[2]
-            elif change[0] == REPLACE:
-                self.state.remove_slotting(change[3])
-                self.state.fill_slotting(change[4], force=change[3])
-                del pkg_choices[change[3]]
-                pkg_choices[change[4]] = change[5]
-            elif change[0] == FORWARD_BLOCK_INCREF:
-                self.state.remove_limiter(change[2], key=change[3])
-                l = [x for x in rev_blockers[change[1]]
-                    if x[0] != change[2]]
-                if l:
-                    rev_blockers[change[1]] = l
-                else:
-                    del rev_blockers[change[1]]
-            elif change[0] == FORWARD_BLOCK_DECREF:
-                self.rev_blockers.setdefault(change[1],
-                    []).append((change[2], change[3]))
-            else:
-                raise AssertionError(
-                    "encountered unknown command reseting state: %r" %
-                    change)
+            change.revert(self)
         self.plan = self.plan[:state_pos]
 
-    def iter_pkg_ops(self):
-        for x in self.plan:
-            assert x[0] in state_ops
-            val = state_ops[x[0]]
-            if val is None:
-                continue
-            if x[0] == REPLACE:
-                yield val, x[3:5]
-            else:
-                yield val, x[3:]
+    def iter_ops(self, return_livefs=False):
+        iterable = (x for x in self.plan if not x.internal)
+        if return_livefs:
+            return iterable
+        return (y for y in iterable
+            if not y.pkg.repo.livefs)
 
     def match_atom(self, atom):
         return self.state.find_atom_matches(atom)
@@ -852,3 +785,143 @@ class plan_state(object):
     def current_state(self):
         #hack- this doesn't work when insertions are possible
         return len(self.plan)
+
+
+class base_op(object):
+    __slots__ = ("pkg", "force", "choices")
+    internal = False
+
+    def __init__(self, choices, pkg, force=False):
+        self.choices = choices
+        self.pkg = pkg
+        self.force = force
+
+class add_op(base_op):
+
+    desc = "add"
+    
+    def apply(self, plan):
+        l = plan.state.fill_slotting(self.pkg, force=self.force)
+        if l:
+            return l
+        plan.pkg_choices[self.pkg] = self.choices
+        plan.plan.append(self)
+    
+    def revert(self, plan):
+        plan.state.remove_slotting(self.pkg)
+
+class remove_op(base_op):
+    __slots__ = ()
+
+    desc = "remove"
+    
+    def apply(self, plan):
+        plan.state.remove_slotting(self.pkg)
+        plan._remove_pkg_blockers(plan.pkg_choices)
+        del plan.pkg_choices[pkg]
+        plan.plan.append(self)
+    
+    def revert(self, plan):
+        plan.state.fill_slotting(self.pkg, force=self.force)
+        plan.pkg_choices[self.pkg] = self.choices
+
+class replace_op(base_op):
+    __slots__ = ("old_pkg", "old_choices")
+
+    desc = "replace"
+
+    def apply(self, plan):
+        old = plan.state.get_conflicting_slot(self.pkg)
+        # probably should just convert to an add...
+        assert old is not None
+        plan.state.remove_slotting(old)
+        old_choices = plan.pkg_choices[old]
+        revert_point = plan.current_state
+        plan._remove_pkg_blockers(old_choices)
+        l = plan.state.fill_slotting(self.pkg, force=self.force)
+        if l:
+            # revert... limiter.
+            l2 = plan.state.fill_slotting(old)
+            plan.backtrack(revert_point)
+            assert not l2
+            return l
+
+        # wipe olds blockers.
+        
+        self.old_pkg = old
+        self.old_choices = old_choices
+        del plan.pkg_choices[old]
+        plan.plan.append(self)
+
+    def revert(self, plan):
+        # far simpler, since the apply op generates multiple ops on it's own.
+        # all we have to care about is swap.
+        plan.state.remove_slotting(self.pkg)
+        l = plan.state.fill_slotting(self.old_pkg, force=self.force)
+        assert not l
+        del plan.pkg_choices[self.choices]
+        plan.pkg_choices[self.old_choices] = self.old_pkg
+
+class blocker_base_op(object):
+    __slots__ = ("choices", "blocker", "key")
+    
+    desc = None
+    internal = True
+    
+    def __init__(self, choices, blocker, key=None):
+        if key is None:
+            self.key = blocker.key
+        else:
+            self.key = key
+        self.choices = choices
+        self.blocker = blocker
+    
+class incref_forward_block_op(blocker_base_op):
+    __slots__ = ()
+    
+    def apply(self, plan):
+        plan.plan.append(self)
+        if self.blocker not in plan.blockers_refcnt:
+            l = plan.state.add_limiter(self.blocker, self.key)
+            plan.rev_blockers.setdefault(self.choices, []).append(
+                (self.blocker, self.key))
+            plan.blockers_refcnt[self.blocker] = 1
+            return ;
+        # we know that for this blocker to be in already, code had to deal
+        # with previous matches; so we just incref, and return []
+        plan.blockers_refcnt[self.blocker] += 1
+        return []
+    
+    def revert(self, plan):
+        plan.state.remove_limiter(self.blocker, self.key)
+        l = plan.state.rev_blockers[self.choices]
+        l.remove((self.blocker, self.key))
+        if not l:
+            del plan.state.rev_blockers[self.choices]
+        if plan.blockers_refcnt[self.blocker] == 1:
+            del plan.blockers_refcnt[self.blocker]
+            plan.state.remove_limiter(self.blocker, self.key)
+        else:
+            plan.blockers_refcnt[self.blocker] -= 1
+
+class decref_forward_block_op(blocker_base_op):
+    __slots__ = ()
+    
+    def apply(self, plan):
+        plan.plan.append(self)
+        if plan.blockers_refcnt[self.blocker] == 1:
+            del plan.blockers_refcnt[self.blocker]
+            plan.state.remove_limiter(self.blocker, self.key)
+        else:
+            self.blockers_refcnt[self.blocker] -= 1
+        plan.rev_blockers[self.blocker].remove((self.blocker, self.key))
+        if not plan.rev_blockers[self.blocker]:
+            del plan.rev_blockers[self.blocker]
+    
+    def revert(self, plan):
+        plan.rev_bllockers.setdefault(self.changes, []).append(
+            (self.blocker, self.key))
+        if self.blocker in plan.blockers_refcnt:
+            plan.blockers_refcnt[self.blocker] += 1
+        else:
+            plan.blockers_refcnt[self.blocker] = 0

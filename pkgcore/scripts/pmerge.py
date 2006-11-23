@@ -394,17 +394,13 @@ def main(options, out, err):
                 return 1
 
     out.write(out.bold, ' * ', out.reset, 'buildplan')
-    plan = list(resolver_inst.state.iter_pkg_ops())
-    changes = []
-    for op, pkgs in plan:
-        if pkgs[-1].repo.livefs and op != "replace":
-            continue
-        elif not pkgs[-1].package_is_real:
-            continue
-        changes.append((op, pkgs))
-        out.write(
-            "%s %s" % (
-                op.ljust(8), ", ".join(str(y) for y in reversed(pkgs))))
+    changes = list(resolver_inst.state.iter_ops())
+    for op in changes:
+        if op.desc == "replace":
+            out.write("replace: %s, %s" %
+                (op.old_pkg, op.pkg))
+        else:
+            out.write("%s: %s" % (op.desc.ljust(7), op.pkg))
 
     out.write()
     out.write('Success!')
@@ -424,22 +420,29 @@ def main(options, out, err):
     repo_obs = observer.file_repo_observer(ObserverFormatter(out))
 
     change_count = len(changes)
-    for count, data in enumerate(changes):
-        op, pkgs = data
-        out.write("processing %s, %i/%i" % (pkgs[0], count + 1, change_count))
-        out.write("forcing cleaning of workdir")
-        buildop = pkgs[0].build(observer=build_obs, clean=True)
-        if options.fetchonly:
-            out.write("\n%i files required-" % len(pkgs[0].fetchables))
-            try:
-                ret = buildop.fetch()
-            except (SystemExit, KeyboardInterrupt):
-                raise
-            except Exception, e:
-                ret = e
-        else:
-            ret = None
+    for count, op in enumerate(changes):
+        out.write("processing %s, %i/%i" % (op.pkg, count + 1, change_count))
+        if op.desc != "remove":
+            if not options.fetchonly:
+                out.write("forcing cleaning of workdir")
+            buildop = op.pkg.build(observer=build_obs, clean=True)
+            if options.fetchonly:
+                out.write("\n%i files required-" % len(op.pkg.fetchables))
+                try:
+                    ret = buildop.fetch()
+                except (SystemExit, KeyboardInterrupt):
+                    raise
+                except Exception, e:
+                    ret = e
+                if ret != True:
+                    out.error("got %s for a phase execution for %s" % (ret, op.pkg))
+                    if not options.ignore_failures:
+                        return 1
+                del buildop, ret
+                continue
+
             out.write("building...")
+            ret = None
             try:
                 built_pkg = buildop.finalize()
                 if built_pkg is False:
@@ -448,26 +451,28 @@ def main(options, out, err):
                 ret = e
             if ret is None:
                 out.write()
-                out.write("merge op: %s %s" % (op, pkgs))
-                if op == "add":
+                if op.desc == "replace":
+                    out.write("replace:  %s with %s" % (op.old_pkg, built_pkg))
+                    i = vdb.replace(op.old_pkg, built_pkg, observer=repo_obs)
+                else:
+                    out.write("install: %s" % built_pkg)
                     i = vdb.install(built_pkg, observer=repo_obs)
-                elif op == "replace":
-                    i = vdb.replace(pkgs[1], built_pkg, observer=repo_obs)
-                ret = i.finish()
-                buildop.clean()
-                del built_pkg
+                # force this explicitly- can hold onto a helluva lot more
+                # then we would like.
             else:
-                out.error("failure building %s: %s" % (pkgs[0], ret))
+                out.error("failure building %s: %s" % (op.pkg, ret))
                 if not options.ignore_failures:
                     return 1
-
-            # force this explicitly- can hold onto a helluva lot more
-            # then we would like.
+                continue
+            del built_pkg
+        else:
+            out.write("remove:  %s" % op.pkg)
+            i = vdb.uninstall(op.pkg, observer=repo_objs)
+        ret = i.finish()
         if ret != True:
-            out.error("got %s for a phase execution for %s" % (ret, pkgs[0]))
+            out.error("got %s for a phase execution for %s" % (ret, op.pkg))
             if not options.ignore_failures:
                 return 1
-        elif not options.fetchonly:
             buildop.clean()
             # inefficient, but works.
             mangled = False

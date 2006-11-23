@@ -351,33 +351,37 @@ class merge_plan(object):
                         break
 
         # first, check for conflicts.
-        l = self.state.add_pkg(choices)
         # lil bit fugly, but works for the moment
-        if l:
+        conflicts = self.state.add_pkg(choices)
+        if conflicts:
             # this means in this branch of resolution, someone slipped
             # something in already. cycle, basically.
             dprint("was trying to insert atom '%s' pkg '%s',\n"
-                   "but '[%s]' exists already", (atom, choices.current_pkg,
-                                                 ", ".join(str(y) for y in l)))
+                   "but '[%s]' exists already",
+                   (atom, choices.current_pkg,
+                   ", ".join(map(str, conflicts))))
             # hack.  see if what was insert is enough for us.
 
             # this is tricky... if it's the same node inserted
             # (cycle), then we ignore it; this does *not* perfectly
             # behave though, doesn't discern between repos.
-            if (len(l) == 1 and l[0] == choices.current_pkg and
-                l[0].repo.livefs == choices.current_pkg.repo.livefs and
-                atom.match(l[0])):
+
+            if (len(conflicts) == 1 and conflicts[0] == choices.current_pkg and
+                conflicts[0].repo.livefs == choices.current_pkg.repo.livefs and
+                atom.match(conflicts[0])):
+
                 # early exit. means that a cycle came about, but exact
                 # same result slipped through.
                 dprint("non issue, cycle for %s pkg %s resolved to same pkg" %
                        (repr(atom), choices.current_pkg))
                 return False
             try_rematch = False
-            if any(True for x in l if isinstance(x, restriction.base)):
+            if any(True for x in conflicts if isinstance(x, restriction.base)):
                 # blocker was caught
                 dprint("blocker detected in slotting, trying a re-match")
                 try_rematch = True
-            elif not any (True for x in l if not self.vdb_restrict.match(x)):
+            elif not any (True for x in conflicts if not
+                self.vdb_restrict.match(x)):
                 # vdb entry, replace.
                 if self.vdb_restrict.match(choices.current_pkg):
                     # we're replacing a vdb entry with a vdb entry?  wtf.
@@ -388,9 +392,10 @@ class merge_plan(object):
                 dprint("replacing a vdb node, so it's valid (need to do a "
                        "recheck of state up to this point however, which "
                        "we're not)")
-                l = self.state.add_pkg(choices, REPLACE)
-                if l:
-                    dprint("tried the replace, but got matches still- %s", l)
+                conflicts = self.state.add_pkg(choices, REPLACE)
+                if conflicts:
+                    dprint("tried the replace, but got matches still- %s", 
+                        conflicts)
             else:
                 try_rematch = True
             if try_rematch:
@@ -398,17 +403,17 @@ class merge_plan(object):
                 if l2 == [choices.current_pkg]:
                     dprint("node was pulled in already, same so ignoring it")
                     # stop resolution.
-                    l = False
+                    conflicts = False
                 elif l2:
                     dprint("and we 'parently match it.  ignoring "
                            "(should prune here however)")
                     # need to do cleanup here
 #                    import pdb;pdb.set_trace()
-                    l = False
+                    conflicts = False
 
         else:
-            l = None
-        return l
+            conflicts = None
+        return conflicts
 
     def _rec_add_atom(self, atom, current_stack, dbs, mode="none",
         drop_cycles=False):

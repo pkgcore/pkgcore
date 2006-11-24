@@ -39,7 +39,7 @@ def parse_digest(source, throw_errors=True):
         except (OSError, IOError, TypeError), e:
             raise errors.ParseChksumError("failed parsing %r" % source, e)
     finally:
-        if f is not None or not f.close:
+        if f is not None and not f.close:
             f.close()
 #
 #   mappings.potentially use a TupleBackedDict here.
@@ -119,7 +119,7 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True, kls_override=None
         except (OSError, IOError, TypeError), e:
             raise errors.ParseChksumError("failed parsing %r" % source, e)
     finally:
-        if f is not None or not f.close:
+        if f is not None and not f.close:
             f.close()
 
     # collapse files into 4 types, convert to lower mem dicts

@@ -524,6 +524,9 @@ def main(options, out, err):
             if not options.ignore_failures:
                 return 1
         buildop.clean()
-        update_worldset(world_set, op.pkg, remove=True)
+        if op.desc == "remove":
+            update_worldset(world_set, op.pkg, remove=True)
+        else:
+            update_worldset(world_set, op.pkg)
     out.write("finished")
     return 0

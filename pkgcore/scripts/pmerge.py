@@ -261,12 +261,7 @@ def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
             if not options.ignore_failures:
                 raise Failure('failed unmerging %s' % (match,))
             out.write(out.fg(out.red), 'failed unmerging ', match)
-        if world_set is not None:
-            try:
-                world_set.remove(match.unversioned_atom)
-                world_set.flush()
-            except KeyError:
-                pass
+        update_worldset(world_set, match, remove=True)
     out.write("finished; removed %i packages" % len(matches))
 
 
@@ -278,6 +273,18 @@ def get_pkgset(config, err, setname):
             (setname, config.pkgset.keys()))
         return None
 
+def update_worldset(world_set, pkg, remove=False):
+    if world_set is None:
+        return
+    if remove:
+        try:
+            world_set.remove(pkg)
+        except KeyError:
+            # nothing to remove, thus skip the flush
+            return
+    else:
+        world_set.add(pkg)
+    world_set.flush()
 
 def main(options, out, err):
     config = options.config
@@ -351,15 +358,13 @@ def main(options, out, err):
 
     atoms = lists.stable_unique(atoms)
 
-    update_worldfile = set()
     world_set = None
-    if not options.set and not options.oneshot:
+    if (not options.set or options.clean) and not options.oneshot:
         world_set = get_pkgset(config, err, 'world')
         if world_set is None:
             err.write("disable world updating via --oneshot, or fix your "
                 "config")
             return 1
-        update_worldfile.update(atoms)
 
     if options.upgrade:
         resolver_kls = resolver.upgrade_resolver
@@ -502,13 +507,13 @@ def main(options, out, err):
                 else:
                     out.write("install: %s" % built_pkg)
                     i = vdb.install(built_pkg, observer=repo_obs)
-                # force this explicitly- can hold onto a helluva lot more
-                # then we would like.
             else:
                 out.error("failure building %s: %s" % (op.pkg, ret))
                 if not options.ignore_failures:
                     return 1
                 continue
+            # force this explicitly- can hold onto a helluva lot more
+            # then we would like.
             del built_pkg
         else:
             out.write("remove:  %s" % op.pkg)
@@ -518,15 +523,7 @@ def main(options, out, err):
             out.error("got %s for a phase execution for %s" % (ret, op.pkg))
             if not options.ignore_failures:
                 return 1
-            buildop.clean()
-            # inefficient, but works.
-            mangled = False
-            for a in update_worldfile:
-                if a.match(pkgs[0]):
-                    world_set.add(pkgs[0])
-                    mangled = True
-                    break
-            if mangled:
-                world_set.flush()
+        buildop.clean()
+        update_worldset(world_set, op.pkg, remove=True)
     out.write("finished")
     return 0

@@ -253,7 +253,8 @@ def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
         else:
             raise Failure('vdb is frozen')
 
-    for match in matches:
+    for idx, match in enumerate(matches):
+        out.write("removing %s, %i of %i" % (match, idx + 1, len(matches)))
         op = vdb.uninstall(match, observer=repo_obs)
         ret = op.finish()
         if not ret:
@@ -266,7 +267,7 @@ def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
                 world_set.flush()
             except KeyError:
                 pass
-    out.write("finished")
+    out.write("finished; removed %i packages" % len(matches))
 
 
 def get_pkgset(config, err, setname):

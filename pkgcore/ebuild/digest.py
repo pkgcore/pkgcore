@@ -7,6 +7,11 @@ ebuild tree manifest/digest support
 from itertools import izip
 from pkgcore.chksum import errors, gpg
 from pkgcore.util.obj import make_SlottedDict_kls
+from pkgcore.util.demandload import demandload
+demandload(globals(),
+    "pkgcore.util.file:AtomicWriteFile "
+    "pkgcore.util.lists:iflatten_instance "
+    "pkgcore:fetch ")
 
 def parse_digest(source, throw_errors=True):
     d = {}
@@ -41,15 +46,30 @@ def parse_digest(source, throw_errors=True):
     finally:
         if f is not None and not f.close:
             f.close()
-#
-#   mappings.potentially use a TupleBackedDict here.
-#   although no mem gain, and slower.
-#
+
     kls = make_SlottedDict_kls(chf_keys)
     for k, v in d.items():
         d[k] = kls(v.iteritems())
     return d
 
+def serialize_digest(handle, fetchables):
+    """
+    write out a digest entry for a fetchable
+    
+    throws KeyError if needed chksums are missing.  Requires at least md5
+    and size chksums per fetchable.
+    
+    @param handle: file object to write to
+    @param fetchables: list of L{pkgcore.fetch.fetchable} instances
+    """
+    for fetchable in iflatten_instance(fetchables, fetch.fetchable):
+        d = dict(fetchable.chksums)
+        size = d.pop("size")
+        md5 = d.pop("md5")
+        handle.write("MD5 %s %s %i\n" % (md5, fetchable.filename, size))
+        for chf, sum in d.iteritems():
+            handle.write("%s %s %s %i\n" % (chf.upper(), sum,
+                fetchable.filename, size))
 
 def convert_chksums(iterable):
     for chf, sum in iterable:
@@ -61,7 +81,8 @@ def convert_chksums(iterable):
             yield chf, long(sum, 16)
 
     
-def parse_manifest(source, throw_errors=True, ignore_gpg=True, kls_override=None):
+def parse_manifest(source, throw_errors=True, ignore_gpg=True,
+    kls_override=None):
     d = {}
     dist, aux, ebuild, misc = {}, {}, {}, {}
     types = (("DIST", dist), ("AUX", aux), ("EBUILD", ebuild), ("MISC", misc))

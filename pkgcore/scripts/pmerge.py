@@ -443,8 +443,10 @@ def main(options, out, err):
         repo_obs = observer.file_repo_observer(ObserverFormatter(out))
         do_unmerge(options, out, err, vdb, wipes, world_set, repo_obs)
         return 0;
+
     out.write(out.bold, ' * ', out.reset, 'buildplan')
-    changes = list(resolver_inst.state.iter_ops())
+    changes = list(x for x in resolver_inst.state.iter_ops()
+        if x.pkg.package_is_real)
     for op in changes:
         if op.desc == "replace":
             out.write("replace %s, %s" %

@@ -10,6 +10,7 @@ import time
 
 from pkgcore.restrictions import packages, values
 from pkgcore.util import commandline, parserestrict, lists, repo_utils
+from pkgcore.util.compatibility import any
 from pkgcore.ebuild import resolver, atom
 from pkgcore.repository import multiplex
 from pkgcore.interfaces import observer, format
@@ -526,9 +527,10 @@ def main(options, out, err):
             if not options.ignore_failures:
                 return 1
         buildop.clean()
-        if op.desc == "remove":
-            update_worldset(world_set, op.pkg, remove=True)
-        else:
-            update_worldset(world_set, op.pkg)
+        if world_set:
+            if op.desc == "remove":
+                update_worldset(world_set, op.pkg, remove=True)
+            elif any(x.match(op.pkg) for x in atoms):
+                update_worldset(world_set, op.pkg)
     out.write("finished")
     return 0

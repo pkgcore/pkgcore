@@ -897,9 +897,9 @@ class decref_forward_block_op(blocker_base_op):
         plan.blockers_refcnt.remove(self.blocker)
         if self.blocker not in plan.blockers_refcnt:
             plan.state.remove_limiter(self.blocker, self.key)
-        plan.rev_blockers[self.blocker].remove((self.blocker, self.key))
-        if not plan.rev_blockers[self.blocker]:
-            del plan.rev_blockers[self.blocker]
+        plan.rev_blockers[self.choices].remove((self.blocker, self.key))
+        if not plan.rev_blockers[self.choices]:
+            del plan.rev_blockers[self.choices]
     
     def revert(self, plan):
         plan.rev_bllockers.setdefault(self.changes, []).append(

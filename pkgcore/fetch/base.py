@@ -59,3 +59,12 @@ class fetcher(object):
 
     def __call__(self, *a, **kw):
         return self.fetch(*a, **kw)
+    
+    def get_path(self, fetchable):
+        """
+        return the on disk path to a fetchable if it's available, and fully
+        fetched.
+        
+        If it isn't, return None
+        """
+        raise NotImplementedError(self.get_path)

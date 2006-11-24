@@ -23,6 +23,11 @@ class OptionParser(commandline.OptionParser):
             help='force the resolver to verify already installed dependencies')
         self.add_option('--unmerge', '-C', action='store_true',
             help='unmerge a package')
+        self.add_option('--clean', action='store_true',
+            help='remove installed packages that are not referenced by any '
+            'target packages/sets; defaults to -s world -s system if no targets'
+            ' are specified.  Use with *caution*, this option used incorrectly '
+            'can render your system unusable.  Implies --deep'),
         self.add_option('--upgrade', '-u', action='store_true',
             help='try to upgrade already installed packages/depencies')
         self.add_option('--set', '-s', action='append',
@@ -84,7 +89,16 @@ a depends on b, and b depends on a, with neither built is an example""")
                 self.error("can't combine upgrade and unmerging")
             if not options.targets:
                 self.error("need at least one atom")
-        if options.usepkgonly and options.usepkg:
+            if options.clean:
+                self.error("Sorry, -C cannot be used with --clean")
+        if options.clean:
+            options.deep = True
+            if options.usepkgonly or options.usepkg:
+                self.error(
+                    '--usepkg and --usepkgonly cannot be used with --clean')
+            if not options.set and not options.targets:
+                options.set = ['world', 'system']
+        elif options.usepkgonly and options.usepkg:
             self.error('--usepkg is redundant when --usepkgonly is used')
         if not options.targets and not options.set:
             self.error('Need at least one atom/set')
@@ -168,6 +182,7 @@ def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
     """
     if responses is None:
         responses = {'Yes': True, 'No': False}
+    if default_answer is None:
         default_answer = True
     for i in range(limit):
         response = raw_input('%s [%s] ' % (prompt, '/'.join(responses)))
@@ -226,7 +241,9 @@ def unmerge(out, err, vdb, tokens, options, world_set=None):
     if (options.ask and not
         userquery("Would you like to unmerge these packages?", out, err)):
         return
+    return do_unmerge(options, out, err, vdb, matches, world_set, repo_obs)
 
+def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
     if vdb.frozen:
         if options.force:
             out.write(
@@ -398,6 +415,28 @@ def main(options, out, err):
             if not options.ignore_failures:
                 return 1
 
+    if options.clean:
+        out.write(out.bold, ' * ', out.reset, 'packages to remove')
+        vset = set(vdb)
+        len_vset = len(vset)
+        vset.difference_update(y.pkg for y in 
+            resolver_inst.state.iter_ops(True))
+        wipes = sorted(x for x in vset if x.package_is_real)
+        for x in wipes:
+            out.write("remove %s" % x)
+        out.write()
+        out.write("removing %i packages of %i installed, %0.2f%%." %
+            (len(wipes), len_vset, 100*(len(wipes)/float(len_vset))))
+        if options.pretend:
+            return 0;
+        if options.ask:
+            if not userquery("do you wish to proceed (default answer is no)?",
+                out, err, default_answer=False):
+                return 1
+            out.write()
+        repo_obs = observer.file_repo_observer(ObserverFormatter(out))
+        do_unmerge(options, out, err, vdb, wipes, world_set, repo_obs)
+        return 0;
     out.write(out.bold, ' * ', out.reset, 'buildplan')
     changes = list(resolver_inst.state.iter_ops())
     for op in changes:

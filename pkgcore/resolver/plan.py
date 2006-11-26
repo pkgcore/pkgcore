@@ -881,10 +881,10 @@ class incref_forward_block_op(blocker_base_op):
     
     def revert(self, plan):
         plan.state.remove_limiter(self.blocker, self.key)
-        l = plan.state.rev_blockers[self.choices]
+        l = plan.rev_blockers[self.choices]
         l.remove((self.blocker, self.key))
         if not l:
-            del plan.state.rev_blockers[self.choices]
+            del plan.rev_blockers[self.choices]
         plan.blockers_refcnt.remove(self.blocker)
         if self.blocker not in plan.blocker_refcnt:
             plan.state.remove_limiter(self.blocker, self.key)

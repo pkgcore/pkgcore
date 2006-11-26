@@ -886,7 +886,7 @@ class incref_forward_block_op(blocker_base_op):
         if not l:
             del plan.rev_blockers[self.choices]
         plan.blockers_refcnt.remove(self.blocker)
-        if self.blocker not in plan.blocker_refcnt:
+        if self.blocker not in plan.blockers_refcnt:
             plan.state.remove_limiter(self.blocker, self.key)
 
 class decref_forward_block_op(blocker_base_op):

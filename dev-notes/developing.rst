@@ -4,14 +4,18 @@
 
 If you're just installing pkgcore from a released tarball, skip this section.
 
-The quickest way to get a copy of the integration (release) branch is via
-downloading
-http://dev.gentooexperimental.org/~pkgcore/pkgcore-current.tar.gz
+To get the current (development) code without history, install bazaar_
+(``emerge bzr`` on gentoo) and run::
 
-This does not have history. To get history, bzr get
-http://dev.gentooexperimental.org/~pkgcore/bzr/pkgcore. If this is too
-slow please let someone in #pkgcore know so we can put up a tarball
-with history again.
+  bzr co --lightweight http://dev.gentooexperimental.org/~pkgcore/bzr/<branch>
+
+Currently the "main" branches are ``ferringb/pkgcore-dev`` and
+``marienz/pkgcore-dev``.
+
+If you also want history, omit ``--lightweight`` (beware: this is over
+10 mb of data).
+
+.. _bazaar: http://bazaar-vcs.org/
 
 ====================
  Installing pkgcore
@@ -73,9 +77,10 @@ At the time of writing the domain interface is in flux, so this example might
 fail for you. If it doesn't work ask for assistance in #pkgcore on freenode,
 or email ferringb (at) gmail.com' with the traceback.
 
-Build filter-env
+Build extensions
 ================
 
-Finally, you need filter-env for the ebuild daemon::
+If you want to run pkgcore from its source directory but also want the
+extra speed from the compiled extension modules, compile them in place::
 
- $ python setup.py build_filter_env
+ $ python setup.py build_ext -i

@@ -163,7 +163,7 @@ def parse_expression(string):
 
 
 PARSE_FUNCS = {
-    'revdep': parse_revdep,
+    'restrict_revdep': parse_revdep,
     'description': parse_description,
     'ownsre': parse_ownsre,
     'environment': parse_envmatch,
@@ -198,8 +198,16 @@ def optparse_type(parsefunc):
     return _typecheck
 
 
+def atom_type(option, opt, value):
+    try:
+        return atom.atom(string)
+    except atom.MalformedAtom, e:
+        raise optparse.OptionValueError('option %s: %s' % (opt, e))
+
+
 extras = dict((parser_name, optparse_type(parser_func))
               for parser_name, parser_func in PARSE_FUNCS.iteritems())
+extras['atom'] = atom_type
 
 class Option(optparse.Option):
     """C{optparse.Option} subclass supporting our custom types."""
@@ -212,6 +220,15 @@ class Option(optparse.Option):
 def append_const_callback(option, opt_str, value, parser, const):
     """Callback version of python 2.5's append_const action."""
     parser.values.ensure_value(option.dest, []).append(const)
+
+
+def revdep_callback(option, opt_str, value, parser):
+    try:
+        parser.values.ensure_value('restrict_revdep', []).append(
+            parse_revdep(value))
+        parser.values.ensure_value('print_revdep', []).append(atom.atom(value))
+    except (parserestrict.ParseError, atom.MalformedAtom), e:
+        raise optparse.OptionValueError('option %s: %s' % (opt_str, e))
 
 
 class OptionParser(commandline.OptionParser):
@@ -229,6 +246,10 @@ class OptionParser(commandline.OptionParser):
                         callback=commandline.config_callback,
                         callback_args=('domain',),
                         help='domain name to use (default used if omitted).')
+        self.add_option('--repo', action='callback', type='string',
+                        callback=commandline.config_callback,
+                        callback_args=('repo',),
+                        help='repo to use (default from domain if omitted).')
         self.add_option('--early-out', action='store_true', dest='earlyout',
                         help='stop when first match is found.')
         self.add_option('--no-version', '-n', action='store_true',
@@ -272,8 +293,15 @@ class OptionParser(commandline.OptionParser):
         restrict.add_option('--has-use', action='append', type='hasuse',
                             dest='hasuse',
                             help='Exact string match on a USE flag.')
-        restrict.add_option('--revdep', action='append', type='revdep',
-                            help='Dependency on an atom.')
+        restrict.add_option(
+            '--revdep', action='callback', callback=revdep_callback,
+            type='string',
+            help='shorthand for --restrict-revdep atom --print-revdep atom. '
+            '--print-revdep is slow, use just --restrict-revdep if you just '
+            'need a list.')
+        restrict.add_option(
+                '--restrict-revdep', action='append', type='restrict_revdep',
+                help='Dependency on an atom.')
         restrict.add_option('--description', '-S', action='append',
             type='description',
             help='regexp search on description and longdescription.')
@@ -337,11 +365,14 @@ class OptionParser(commandline.OptionParser):
             help='list files owned by the package. Implies --vdb.')
         output.add_option('--verbose', '-v', action='store_true',
                           help='human-readable multi-line output per package')
-        output.add_option('--highlight-dep', action='append', type='match',
+        output.add_option('--highlight-dep', action='append', type='atom',
                           help='highlight dependencies matching this atom')
         output.add_option(
             '--blame', action='store_true',
             help='shorthand for --attr maintainers --attr herds')
+        output.add_option(
+            '--print-revdep', type='atom', action='append',
+            help='print what condition(s) trigger a dep.')
 
     def check_values(self, values, args):
         """Sanity check and postprocess after parsing."""
@@ -368,11 +399,16 @@ class OptionParser(commandline.OptionParser):
         if vals.atom:
             vals.cpv = True
 
-        if vals.noversion and vals.contents:
-            self.error('both --no-version and --contents does not make sense.')
-
-        if vals.noversion and (vals.min or vals.max):
-            self.error('--no-version with --min or --max does not make sense.')
+        if vals.noversion:
+            if vals.contents:
+                self.error(
+                    'both --no-version and --contents does not make sense.')
+            if vals.min or vals.max:
+                self.error(
+                    '--no-version with --min or --max does not make sense.')
+            if vals.print_revdep:
+                self.error(
+                    '--print-revdep with --no-version does not make sense.')
 
         if vals.blame:
             vals.attr.extend(['herds', 'maintainers'])
@@ -390,6 +426,11 @@ class OptionParser(commandline.OptionParser):
                 self.error(
                     '--one-attr and --force-one-attr are mutually exclusive.')
             vals.one_attr = vals.force_one_attr
+
+        if vals.one_attr and vals.print_revdep:
+            self.error(
+                '--print-revdep with --force-one-attr or --one-attr does not '
+                'make sense.')
 
         # Build up a restriction.
         for attr in PARSE_FUNCS:
@@ -423,8 +464,13 @@ class OptionParser(commandline.OptionParser):
             # "And" them all together
             vals.restrict = packages.AndRestriction(*vals.restrict)
 
-        # Get a domain object.
-        if vals.domain is None:
+        if vals.repo and (vals.vdb or vals.all_repos):
+            self.error(
+                '--repo with --vdb, --all-repos makes no sense')
+
+        # Get a domain object if needed.
+        if vals.domain is None and (
+            vals.verbose or vals.noversion or not vals.repo):
             vals.domain = vals.config.get_default('domain')
             if vals.domain is None:
                 self.error(
@@ -443,6 +489,8 @@ class OptionParser(commandline.OptionParser):
             vals.repos = domain.vdb
         elif vals.all_repos:
             vals.repos = domain.repos + domain.vdb
+        elif vals.repo:
+            vals.repos = [vals.repo]
         else:
             vals.repos = domain.repos
         if vals.raw or vals.virtuals:
@@ -628,6 +676,37 @@ def print_package(options, out, err, pkg):
         for attr in options.attr:
             out.write(green, '     %s: ' % (attr,), out.fg(), autoline=False)
             format_attr(options, out, pkg, attr)
+        for revdep in options.print_revdep:
+            for name in ('depends', 'rdepends', 'post_rdepends'):
+                depset = getattr(pkg, name)
+                for key, restricts in depset.find_cond_nodes(
+                    depset.restrictions, True):
+                    if not restricts and key.intersects(revdep):
+                        out.write(
+                            green, '     revdep: ', out.fg(), name, ' on ',
+                            autoline=False)
+                        if key == revdep:
+                            out.write(out.bold, str(revdep))
+                        else:
+                            out.write(
+                                str(revdep), ' through dep ', out.bold,
+                                str(key))
+                for key, restricts in depset.node_conds.iteritems():
+                    if key.intersects(revdep):
+                        out.write(
+                            green, '     revdep: ', out.fg(), name, ' on ',
+                            autoline=False)
+                        if key == revdep:
+                            out.write(
+                                out.bold, str(revdep), out.reset,
+                                autoline=False)
+                        else:
+                            out.write(
+                                str(revdep), ' through dep ', out.bold,
+                                str(key), out.reset, autoline=False)
+                        out.write(' if USE matches one of:')
+                        for r in restricts:
+                            out.write('                  ', str(r))
         out.write()
         out.later_prefix = []
         out.wrap = False
@@ -650,6 +729,18 @@ def print_package(options, out, err, pkg):
                 out.write(' ')
             printed_something = True
             out.write('%s="%s"' % (attr, stringify_attr(options, pkg, attr)))
+        for revdep in options.print_revdep:
+            for name in ('depends', 'rdepends', 'post_rdepends'):
+                depset = getattr(pkg, name)
+                for key, restricts in depset.find_cond_nodes(
+                    depset.restrictions, True):
+                    if not restricts and key.intersects(revdep):
+                        out.write(' %s on %s through %s' % (name, revdep, key))
+                for key, restricts in depset.node_conds.iteritems():
+                    if key.intersects(revdep):
+                        out.write(' %s on %s through %s if USE %s,' % (
+                                name, revdep, key, ' or '.join(
+                                    str(r) for r in restricts)))
         # If we printed anything at all print the newline now
         out.autoline = True
         if printed_something:

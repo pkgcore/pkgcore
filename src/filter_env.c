@@ -1,334 +1,64 @@
-/* 
- Copyright: 2004-2006 Brian Harring
- Copyright: 2005 Mike Vapier
- License: GPL2
- $Id:$
-*/
+/*
+ * Copyright: 2004-2006 Brian Harring
+ * Copyright: 2005 Mike Vapier
+ * Copyright: 2006 Marien Zwart
+ * License: GPL2
+ */
 
-#define _GNU_SOURCE
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <fcntl.h>
-#include <getopt.h>
+#define PY_SSIZE_T_CLEAN
+
+#include <Python.h>
+#include "py24-compatibility.h"
+
+PyDoc_STRVAR(
+    module_doc,
+    "Filter a bash env dump.\n"
+    );
+
 #include <regex.h>
-#include <unistd.h>
-#include <ctype.h>
-#include <assert.h>
 #include "bmh_search.h"
 
-#ifdef __GNUC__
-# define no_return __attribute__ ((noreturn))
-#else
-# define no_return
-#endif
+#define SPACE_PARSING            2
+#define COMMAND_PARSING          1
 
-#define USAGE_FAIL   1
-#define MEM_FAIL     2
-#define IO_FAIL      3
-#define PARSE_FAIL   4
-
-#define SPACE_PARSING            4
-#define ESCAPED_PARSING          3
-#define COMMAND_PARSING          2
-#define DOLLARED_QUOTE_PARSING   1
-#define NO_PARSING               0
-
-#define DESIRED_MATCH         -1
-#define DESIRED_NONMATCH    0
-
-static int regex_matches(regex_t *re, const char *buff, int desired_value);
-static const char *process_scope(FILE *out_fd, const char *buff,
-    const char *end, regex_t *var_re, regex_t *func_re, char endchar);
-static int append_to_filter_list(char ***list, int *count, int *alloced,
-    const char *string);
-static const char *build_regex_string(const char **list, size_t count);
-static inline const char *walk_command_no_parsing(const char *p,
-    const char *end, const char endchar);
-static inline const char *walk_command_dollared_parsing(const char *p,
-    const char *end, const char endchar);
-#define walk_command_escaped_parsing(start, end, endchar) \
-    raw_walk_command_escaped_parsing((start), (end), (endchar), 0)
 static inline const char *raw_walk_command_escaped_parsing(const char *p,
     const char *end, const char endchar, char var_expansion);
 static inline const char *walk_command_pound(const char *p);
 static const char *walk_command_complex(const char *p, const char *end,
     char endchar, const char interpret_level);
-static inline const char *is_function(const char *p, char **start, char **end);
-static inline const char *is_envvar(const char *p, char **start, char **end);
-static void *xmalloc(size_t size);
-no_return void usage(int exit_status);
+static inline const char *walk_command_no_parsing(const char *p,
+    const char *end, const char endchar);
+static inline const char *walk_command_dollared_parsing(const char *p,
+    const char *end, const char endchar);
 
-/* hackity hack hack hackity hack. */
-static int desired_func_match = DESIRED_MATCH;
-static int desired_var_match = DESIRED_MATCH;
-
-
-static int debugging;
-#define d1printf(fmt, args...) dprintf(1, fmt , ## args)
-#define d2printf(fmt, args...) dprintf(2, fmt , ## args)
-#define dprintf(level, fmt, args...) \
-    do { \
-        if (debugging >= level) \
-            fprintf(stderr, "%s:%i: " fmt, __FUNCTION__, __LINE__ , ## args); \
-    } while (0)
-
-#define err(exit_code, expr...) \
-    do { \
-        fprintf(stderr, expr); \
-        exit(exit_code); \
-    } while (0)
+#define walk_command_escaped_parsing(start, end, endchar) \
+    raw_walk_command_escaped_parsing((start), (end), (endchar), 0)
 
 
-static void *xmalloc(size_t size) {
-    void *ret = malloc(size);
-    if (ret == NULL && size)
-        err(MEM_FAIL, "could not malloc %zi bytes\n", size);
-    return ret;
-}
+static PyObject *log_info = NULL;
+static PyObject *log_debug = NULL;
+static PyObject *write_str = NULL;
 
-
-no_return void usage(int exit_status)
-{
-    fprintf((exit_status ? stderr : stdout),
-        "Usage: [-i file] [-F] [-f func1,func2,func3,...] [-V] "
-            "[-v var1,var2,var3,...]\n");
-    exit(exit_status);
-}
-
-int main(int argc, char *const *argv)
-{
-    FILE *file_in = NULL;
-    FILE *file_out = NULL;
-    char **funcs = NULL, **vars = NULL;
-    char *file_buff = NULL;
-    const char *end = NULL;
-    int funcs_count = 0,   vars_count = 0;
-    int funcs_alloced = 0, vars_alloced = 0;
-    int c;
-    size_t  file_size=0, buff_alloced = 0;
-    regex_t vre, *pvre = NULL;
-    regex_t fre, *pfre = NULL;
-    const char *fsr, *vsr;
-    char *temp = NULL;
-    struct stat st;
-    debugging = 0;
-
-    funcs = (char **)xmalloc(sizeof(char *) * 10);
-    vars = (char **)xmalloc(sizeof(char *) * 10);
-
-    while ((c = getopt(argc, argv, "VFhi:f:v:d")) != EOF) {
-        d2printf("c = %i\n", c);
-
-        switch(c) {
-        case 'd':
-            debugging++;
-            break;
-        case 'i':
-            if (file_in != NULL)
-                err(USAGE_FAIL, "-i cannot be specified twice. bailing\n");
-            if (stat(optarg, &st))
-                err(IO_FAIL, "error stating file %s, bailing\n", optarg);
-            file_size = st.st_size;
-            file_in = fopen(optarg, "r");
-            if (file_in == NULL)
-                err(IO_FAIL, "error opening file %s, bailing\n", optarg);
-            break;
-        case 'f':
-            d2printf("wassube.  opt_art=%s\n", optarg);
-            if (append_to_filter_list(&funcs, &funcs_count, &funcs_alloced,
-                optarg))
-                err(USAGE_FAIL, "-f arg '%s', isn't valid.  must be comma "
-                    "delimited\n", optarg);
-            break;
-        case 'v':
-            if (append_to_filter_list(&vars, &vars_count, &vars_alloced,
-                optarg))
-                err(USAGE_FAIL, "-v arg '%s', isn't valid.  must be comma "
-                    "delimited\n", optarg);
-            break;
-        case 'F':
-            desired_func_match = DESIRED_NONMATCH;
-            break;
-        case 'V':
-            desired_var_match = DESIRED_NONMATCH;
-            break;
-        case 'h':
-            printf("filter-env: compiled %s\n", __DATE__);
-            usage(EXIT_SUCCESS);
-        default:
-            usage(USAGE_FAIL);
-        }
-    }
-    if (optind != argc)
-        usage(USAGE_FAIL);
-
-    if (file_size == 0) {
-        /* print usage if user attempts to call filter-env from cmdline
-            directly */         
-        if (ttyname(0) != NULL)
-            usage(EXIT_FAILURE);
-        file_in = stdin;
-    } else
-        fclose(stdin);
-    file_out = stdout;
-
-    fsr = build_regex_string((const char **)funcs, funcs_count);
-    d1printf("fsr buffer = %s\n", fsr);
-    vsr = build_regex_string((const char **)vars, vars_count);
-    d1printf("vsr buffer = %s\n", vsr);
-    if (fsr) {
-        // prefix ^
-        temp = (char *)xmalloc(strlen(fsr) + 3);
-        temp[0] = '^'; temp[1] = '\0';
-        temp = strcat(temp, fsr);
-        temp = strcat(temp, "$");
-        d1printf("fsr pattern is %s\n", temp);
-        regcomp(&fre, temp, REG_EXTENDED);
-        free(temp);
-        temp = NULL;
-        pfre = &fre;
-        free((void*)fsr);
-        fsr = NULL;
-    } else
-        pfre = NULL;
-
-    if (vsr) {
-        temp = (char *)xmalloc(strlen(vsr) + 3);
-        temp[0] = '^'; temp[1] = '\0';
-        temp = strcat(temp, vsr);
-        temp = strcat(temp, "$");
-        d1printf("vsr pattern is %s\n", temp);
-        regcomp(&vre, temp, REG_EXTENDED);
-        free(temp);
-        temp = NULL;
-        pvre = &vre;
-        free((void*)vsr);
-        vsr = NULL;
-    } else
-        pvre = NULL;
-
-    if (file_size) {
-        file_buff = (char *)xmalloc(file_size + 1);
-        if (file_size != fread(file_buff, 1, file_size, file_in))
-            err(IO_FAIL, "failed reading file\n");
-    } else {
-        file_buff = (char *)xmalloc(4096);
-        buff_alloced = 4096;
-        c = 4096;
-        while (c > 0) {
-            c = fread(file_buff+file_size, 1, 4096, file_in);
-            file_size += c;
-            /* realloc +1 for null termination. */
-            if (buff_alloced < file_size + 4096) {
-                if ((file_buff = (char *)realloc(file_buff,
-                    buff_alloced + 4096)) == NULL) {
-                    err(MEM_FAIL, "failed allocing needed memory for file.\n");
-                }
-                buff_alloced += 4096;
-            }
-        }
-        d1printf("read %zi bytes\n", file_size);
-    }
-    file_buff[file_size] = '\0';
-    fclose(file_in);
-
-    end = process_scope(file_out,file_buff, file_buff + file_size, pvre,
-        pfre, '\0');
-    d1printf("%zi == %zi\n", end - file_buff, file_size);
-
-    fflush(file_out);
-    fclose(file_out);
-    free((void*)fsr);
-    free((void*)vsr);
-    free(file_buff);
-    exit(0);
-}
-
+/* Log a message. Returns -1 on error, 0 on success. */
 static int
-append_to_filter_list(char ***list, int *count, int *alloced,
-    const char *string)
+debug_print(PyObject *logfunc, const char *format, ...)
 {
-    char *d = NULL;
-    char **l = *list;
-    char *s = NULL;
-
-    s = strdup(string);
-    d = strtok(s, ",");
-    if (d == NULL) {
-        free(s);
-        return 1;
-    }
-
-    while (d != NULL) {
-        if (*alloced == *count) {
-            if ((l=(char **)realloc(l, sizeof(char*) * (*alloced + 10)))
-                == NULL)
-                return 1;
-            *alloced += 10;
-        }
-        l[*count] = d;
-        (*count)++;
-        d = strtok(NULL, ",");
-    }
-    *list = l;
-    return 0;
+    /* Sanity check. Should not happen. */
+    if (!logfunc)
+        return -1;
+    va_list vargs;
+    va_start(vargs, format);
+    PyObject *message = PyString_FromFormatV(format, vargs);
+    va_end(vargs);
+    if (!message)
+        return -1;
+    PyObject *result = PyObject_CallFunctionObjArgs(logfunc, message, NULL);
+    Py_DECREF(message);
+    return result ? 0 : -1;
 }
 
-const char *
-build_regex_string(const char **list, size_t count)
-{
-    char *buff, *p;
-    const char *p2;
-    size_t l = 0, x = 0;
-    int escaped = 0;
-
-    for (x = 0; x < count; ++x) {
-        l += strlen(list[x]) + 1;
-        p2 = list[x];
-        // if it's ., substitute a [^ =] internally.
-        while (*p2 != '\0') {
-            if (*p2 == '.')
-                l += 4;
-            ++p2;
-        }
-    }
-    if (l == 0)
-        return NULL;
-    //shave off the extra '|' char, add in '(...)'.  hence, 3.
-    buff = xmalloc(l + 5);
-    memset(buff,0,l+4);
-    buff[0] = '(';
-    p=buff + 1;
-    for (x=0; x < count; ++x) {
-        p2 = list[x];
-        escaped = 0;
-        while (*p2 != '\0') {
-            if (*p2 == '.' && escaped == 0) {
-                strcat(p,"[^= ]");
-                p += 4;
-            } else if (*p2 == '\\') {
-                *p = *p2;
-                ++p2;
-                ++p;
-                escaped ^= 1;
-                continue;
-            } else {
-                *p = *p2;
-            }
-            ++p;
-            ++p2;
-            escaped=0;
-        }
-        *p = '|';
-        ++p;
-    }
-    p[-1] = ')';
-    p[0] = '\0';
-    return buff;
-}
+#define INFO(fmt, args...) debug_print(log_info, fmt, ## args)
+#define DEBUG(fmt, args...) debug_print(log_info, fmt, ## args)
 
 
 static const inline char *
@@ -409,8 +139,9 @@ regex_matches(regex_t *re, const char *buff, int desired_value)
 }
 
 static const char *
-process_scope(FILE *out_fd, const char *buff, const char *end,
-    regex_t *var_re, regex_t *func_re, char endchar)
+process_scope(PyObject *out, const char *buff, const char *end,
+              regex_t *var_re, regex_t *func_re, int desired_var_match,
+              int desired_func_match, char endchar)
 {
     const char *p = NULL;
     const char *window_start = NULL, *window_end = NULL;
@@ -430,8 +161,18 @@ process_scope(FILE *out_fd, const char *buff, const char *end,
 
         /* wander forward to the next non space */
         if (window_end != NULL) {
-            if (out_fd != NULL)
-                fwrite(window_start, window_end - window_start, 1, out_fd);
+            if (out) {
+                PyObject *string = PyString_FromStringAndSize(
+                    window_start, window_end - window_start);
+                if (!string)
+                    return NULL;
+                PyObject *result = PyObject_CallMethodObjArgs(
+                    out, write_str, string, NULL);
+                Py_DECREF(string);
+                if (!result)
+                    return NULL;
+                Py_DECREF(result);
+            }
             window_start = p;
             window_end = NULL;
         }
@@ -449,16 +190,16 @@ process_scope(FILE *out_fd, const char *buff, const char *end,
 
         if(NULL != (new_p = is_function(p, &s, &e))) {
             asprintf(&temp_string, "%.*s", (int)(e - s), s);
-            d1printf("matched func name '%s'\n", temp_string);
+            INFO("matched func name '%s'", temp_string);
             /* output it if it doesn't match */
 
-            new_p = process_scope(NULL, new_p, end, NULL, NULL, '}');
-            d1printf("ended processing  '%s'\n", temp_string);
+            new_p = process_scope(NULL, new_p, end, NULL, NULL, 0, 0, '}');
+            INFO("ended processing  '%s'", temp_string);
             if (func_re != NULL && regex_matches(func_re, temp_string,
                 desired_func_match)) {
                 
                 /* well, it matched.  so it gets skipped. */
-                d1printf("filtering func '%s'\n", temp_string);
+                INFO("filtering func '%s'", temp_string);
                 window_end = com_start;
             }
 
@@ -471,12 +212,14 @@ process_scope(FILE *out_fd, const char *buff, const char *end,
             if (NULL == (new_p = is_envvar(p, &s, &e))) {
                 //exactly as it sounds, non env assignment.
                 p = walk_command_complex(p, end, endchar, COMMAND_PARSING);
+                if (!p)
+                    return NULL;
                 ++p;
             } else {
                 //env assignment
                 asprintf(&temp_string, "%.*s", (int)(e - s), s);
                 p = new_p;
-                d1printf("matched env assign '%s'\n", temp_string);
+                INFO("matched env assign '%s'", temp_string);
 
                 if (p >= end)
                     return p;
@@ -513,6 +256,8 @@ process_scope(FILE *out_fd, const char *buff, const char *end,
                     } else {
                         // blah=cah ; single word.
                         p = walk_command_complex(p, end, ' ', SPACE_PARSING);
+                        if (!p)
+                            return NULL;
                     }
                     if(isspace(*p)) {
                         ++p;
@@ -530,12 +275,21 @@ process_scope(FILE *out_fd, const char *buff, const char *end,
         }
     }
 
-    if (out_fd != NULL) {
+    if (out) {
         if (window_end == NULL)
             window_end = p;
         if (window_end > end)
             window_end = end;
-        fwrite(window_start, window_end - window_start, 1,out_fd);
+        PyObject *string = PyString_FromStringAndSize(
+            window_start, window_end - window_start);
+        if (!string)
+            return NULL;
+        PyObject *result = PyObject_CallMethodObjArgs(
+            out, write_str, string, NULL);
+        Py_DECREF(string);
+        if (!result)
+            return NULL;
+        Py_DECREF(result);
     }
 
     return p;
@@ -568,20 +322,21 @@ walk_command_dollared_parsing(const char *p, const char *end,
     return p;
 }
 
+/* Sets an exception and returns NULL if out of memory. */
 static const char *
 walk_here_command(const char *p, const char *end)
 {
     char *end_here, *temp_string;
     ++p;
-    d2printf("starting here processing for COMMAND and l2 at p == '%.10s'\n",
-        p);
+    /* DEBUG("starting here processing for COMMAND and l2 at p == '%.10s'",
+     * p); */
     if (p >= end) {
         fprintf(stderr, "bailing\n");
         return p;
     }
     if ('<' == *p) {
-        d2printf("correction, it's a third level here.  Handing back to "
-            "command parsing\n");
+        /* d2printf("correction, it's a third level here.  Handing back to "
+         * "command parsing\n"); */
         return ++p;
     }
     while (p < end && (isspace(*p) || '-' == *p))
@@ -591,27 +346,35 @@ walk_here_command(const char *p, const char *end)
         ++p;
     } else {
         end_here = (char *)walk_command_complex(p, end, ' ',SPACE_PARSING);
+        if (!end_here)
+            return NULL;
     }
-    /* d1printf("end_here=%.5s\n",end_here); */
-    temp_string = xmalloc(end_here -p + 1);
+    /* INFO("end_here=%.5s",end_here); */
+    temp_string = malloc(end_here -p + 1);
+    if (!temp_string) {
+        PyErr_NoMemory();
+        return NULL;
+    }
     memcpy(temp_string, p, end_here - p);
     temp_string[end_here - p] = '\0';
-    d2printf("matched len('%zi')/'%s' for a here word\n", end_here - p,
-        temp_string);
+    /* d2printf("matched len('%zi')/'%s' for a here word\n", end_here - p,
+     * temp_string); */
     /* XXX watch this.  potential for horkage.  need to do the quote
         removal thing.
         this sucks.
     */
     ++end_here;
-    if (end_here >= end)
+    if (end_here >= end) {
+        free(temp_string);
         return end_here;
+    }
     end_here = (char *)bmh_search((unsigned char*)temp_string,
-        (unsigned char*)end_here, end - end_here);
-    d1printf("bmh returned %p\n", end_here);
+                                  (unsigned char*)end_here, end - end_here);
+    INFO("bmh returned %p", end_here);
     if (end_here) {
-        d2printf("bmh = %.10s\n", end_here);
+        /* d2printf("bmh = %.10s\n", end_here); */
         p = end_here + strlen(temp_string) -1;
-        d2printf("continuing on at %.10s\n", p);
+        /* d2printf("continuing on at %.10s\n", p); */
     } else {
         p = end;
     }
@@ -630,6 +393,7 @@ walk_command_pound(const char *p)
     return p;
 }
 
+/* Sets an exception and returns NULL if out of memory. */
 static const char *
 walk_command_complex(const char *p, const char *end, char endchar,
     const char interpret_level)
@@ -646,8 +410,10 @@ walk_command_complex(const char *p, const char *end, char endchar,
             if(end - 1 != p && '<' == p[1] && interpret_level == COMMAND_PARSING) {
                 p++;
                 p = walk_here_command(p, end);
+                if (!p)
+                    return NULL;
             } else {
-                d2printf("noticed '<', interpret_level=%i\n", interpret_level);
+                DEBUG("noticed '<', interpret_level=%i\n", interpret_level);
             }
         } else if ('#' == *p) {
             /* echo x#y == x#y, echo x;#a == x */
@@ -669,6 +435,110 @@ walk_command_complex(const char *p, const char *end, char endchar,
         ++p;
     }
     return p;
+}
+
+
+/* Set a sensible exception for a failed regex compilation. */
+static void
+regex_exc(regex_t* reg, int result)
+{
+    ssize_t len = regerror(result, reg, NULL, 0);
+    char *buffer = malloc(len);
+    if (!buffer) {
+        PyErr_NoMemory();
+        return;
+    }
+    regerror(result, reg, buffer, len);
+    PyErr_SetString(PyExc_ValueError, buffer);
+    free(buffer);
+}
+
+
+PyDoc_STRVAR(
+    run_docstring,
+    "Print a filtered environment.\n"
+    "\n"
+    "@param out: file-like object to write to.\n"
+    "@param file_buff: string containing the environment to filter.\n"
+    "    Should end in '\0'.\n"
+    "@param vsr: result of build_regex_string or C{None}, for variables.\n"
+    "@param vsr: result of build_regex_string or C{None}, for functions.\n"
+    "@param desired_var_match: boolean indicating vsr should match or not.\n"
+    "@param desired_func_match: boolean indicating fsr should match or not.\n"
+    );
+
+static PyObject *
+pkgcore_filter_env_run(PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    /* Arguments. */
+    PyObject *out, *desired_var_match_obj, *desired_func_match_obj;
+    const char *file_buff, *vsr, *fsr;
+    Py_ssize_t file_size;
+
+    /* Other vars. */
+
+    regex_t vre, *pvre, fre, *pfre;
+    int result, desired_func_match, desired_var_match;
+
+    static char *kwlist[] = {"out", "file_buff", "vsr", "fsr",
+                             "desired_var_match", "desired_func_match"};
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Os#zzOO", kwlist,
+                                     &out, &file_buff, &file_size, &vsr, &fsr,
+                                     &desired_var_match_obj,
+                                     &desired_func_match_obj))
+        return NULL;
+
+    desired_func_match = PyObject_IsTrue(desired_func_match_obj);
+    if (desired_func_match < 0)
+        return NULL;
+
+    desired_var_match = PyObject_IsTrue(desired_var_match_obj);
+    if (desired_var_match < 0)
+        return NULL;
+
+    if (file_buff[file_size] != '\0') {
+        PyErr_SetString(PyExc_ValueError, "file_buff should end in NULL");
+        return NULL;
+    }
+
+    if (fsr) {
+        result = regcomp(&fre, fsr, REG_EXTENDED);
+        if (result) {
+            regex_exc(&fre, result);
+            regfree(&fre);
+            return NULL;
+        }
+        pfre = &fre;
+    } else
+        pfre = NULL;
+
+    if (vsr) {
+        result = regcomp(&vre, vsr, REG_EXTENDED);
+        if (result) {
+            if (pfre)
+                regfree(pfre);
+            regex_exc(&vre, result);
+            regfree(&vre);
+            return NULL;
+        }
+        pvre = &vre;
+    } else
+        pvre = NULL;
+
+    const char *res_p = process_scope(
+        out, file_buff, file_buff + file_size, pvre, pfre,
+        desired_var_match, desired_func_match, '\0');
+
+    if (pvre)
+        regfree(pvre);
+    if (pfre)
+        regfree(pfre);
+
+    if (!res_p) {
+        PyErr_SetString(PyExc_ValueError, "Parsing failed");
+        return NULL;
+    }
+    Py_RETURN_NONE;
 }
 
 static const char *
@@ -707,4 +577,48 @@ raw_walk_command_escaped_parsing(const char *p, const char *end, char endchar,
         ++p;
     }
     return p;
+}
+
+static PyMethodDef pkgcore_filter_env_methods[] = {
+    {"run", (PyCFunction)pkgcore_filter_env_run, METH_VARARGS | METH_KEYWORDS,
+     run_docstring},
+    {NULL}
+};
+
+PyMODINIT_FUNC
+init_filter_env()
+{
+    /* External objects. */
+    PyObject *s = PyString_FromString("pkgcore.log");
+    if (!s)
+        return;
+    PyObject *log = PyImport_Import(s);
+    Py_DECREF(s);
+    if (!log)
+        return;
+    PyObject *logger = PyObject_GetAttrString(log, "logger");
+    Py_DECREF(log);
+    if (!logger)
+        return;
+    log_debug = PyObject_GetAttrString(logger, "debug");
+    if (!log_debug) {
+        Py_DECREF(logger);
+        return;
+    }
+    log_info = PyObject_GetAttrString(logger, "info");
+    Py_DECREF(logger);
+    if (!log_info) {
+        Py_CLEAR(log_debug);
+        return;
+    }
+
+    /* String constants. */
+    write_str = PyString_FromString("write");
+    if (!write_str) {
+        Py_CLEAR(log_info);
+        Py_CLEAR(log_debug);
+        return;
+    }
+
+    Py_InitModule3("_filter_env", pkgcore_filter_env_methods, module_doc);
 }

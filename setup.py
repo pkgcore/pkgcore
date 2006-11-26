@@ -56,10 +56,7 @@ class mysdist(sdist.sdist):
                                           prefix=prefix)
         self.filelist.append('build_docs.py')
         self.filelist.include_pattern('*', prefix='examples')
-
         self.filelist.include_pattern('*', prefix='bin')
-        self.filelist.exclude_pattern(os.path.join(
-                'pkgcore', 'bin', 'ebuild-env', 'filter-env'))
 
         if self.prune:
             self.prune_file_list()
@@ -88,54 +85,6 @@ class mysdist(sdist.sdist):
             stdout=open(os.path.join(
                     base_dir, 'pkgcore', 'bzr_verinfo.py'), 'w')):
             raise errors.DistutilsExecError('bzr version-info failed')
-
-
-class build_filter_env(core.Command):
-
-    """Build the filter-env utility.
-
-    This rips a bunch of code from the distutils build_clib command.
-    """
-
-    user_options = [
-        ('debug', 'g', 'compile with debugging information'),
-        ('force', 'f', 'compile everything (ignore timestamps)'),
-        ('compiler=', 'c', 'specify the compiler type'),
-        ]
-
-    boolean_options = ['debug', 'force']
-
-    help_options = [
-        ('help-compiler', None,
-         'list available compilers', ccompiler.show_compilers),
-        ]
-
-    def initialize_options(self):
-        """If we had any options we would initialize them here."""
-        self.debug = None
-        self.force = 0
-        self.compiler = None
-
-    def finalize_options(self):
-        """If we had any options we would finalize them here."""
-        self.set_undefined_options(
-            'build',
-            ('debug', 'debug'),
-            ('force', 'force'),
-            ('compiler', 'compiler'))
-
-    def run(self):
-        compiler = ccompiler.new_compiler(
-            compiler=self.compiler, dry_run=self.dry_run, force=self.force)
-        cc = "%s %s" % (os.environ.get("CC", "cc"), os.environ.get("CFLAGS", ""))
-        compiler.set_executables(compiler=cc, compiler_so=cc, linker_exe=cc)
-        objects = compiler.compile(list(
-                os.path.join('src', 'filter-env', name)
-                for name in ('main.c', 'bmh_search.c')), debug=self.debug)
-        compiler.link(compiler.EXECUTABLE, objects, os.path.join(
-                'pkgcore', 'bin', 'ebuild-env', 'filter-env'))
-
-build.build.sub_commands.append(('build_filter_env', None))
 
 
 class pkgcore_build_scripts(build_scripts.build_scripts):
@@ -254,8 +203,6 @@ class pkgcore_build_py(build_py.build_py):
         fp = os.path.join(self.build_lib, "pkgcore", "bin", "ebuild-env")
         for f in ("ebuild.sh", "ebuild-daemon.sh"):
             self.set_chmod(os.path.join(fp, f))
-        if os.path.exists(os.path.join(fp, "filter-env")):
-            self.set_chmod(os.path.join(fp, "filter-env"))
 
     def set_chmod(self, path):
         if self.dry_run:
@@ -321,7 +268,6 @@ class test(core.Command):
         build_ext = self.reinitialize_command('build_ext')
         build_ext.inplace = True
         self.run_command('build_ext')
-        self.run_command('build_filter_env')
         # Somewhat hackish: this calls sys.exit.
         unittest.main('pkgcore.test', argv=['setup.py'], testLoader=testLoader)
 
@@ -332,16 +278,16 @@ packages = [
     if '__init__.py' in files]
 
 extra_flags = ['-Wall']
-common_includes = ['src/extensions/py24-compatibility.h',
-                   'src/extensions/heapdef.h',
-                   'src/extensions/common.h',
+common_includes = ['src/py24-compatibility.h',
+                   'src/heapdef.h',
+                   'src/common.h',
                    ]
 
 extensions = []
 if sys.version_info < (2, 5):
     # Almost unmodified copy from the python 2.5 source.
     extensions.append(core.Extension(
-            'pkgcore.util._functools', ['src/extensions/functoolsmodule.c'],
+            'pkgcore.util._functools', ['src/functoolsmodule.c'],
             extra_compile_args=extra_flags, depends=common_includes))
 
 
@@ -359,38 +305,42 @@ core.setup(
         },
     ext_modules=[
         core.Extension(
-            'pkgcore.util.osutils._posix', ['src/extensions/posix.c'],
+            'pkgcore.util.osutils._posix', ['src/posix.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.util._klass', ['src/extensions/klass.c'],
+            'pkgcore.util._klass', ['src/klass.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.util._caching', ['src/extensions/caching.c'],
+            'pkgcore.util._caching', ['src/caching.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.util._lists', ['src/extensions/lists.c'],
+            'pkgcore.util._lists', ['src/lists.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.ebuild._cpv', ['src/extensions/cpv.c'],
+            'pkgcore.ebuild._cpv', ['src/cpv.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.ebuild._depset', ['src/extensions/depset.c'],
+            'pkgcore.ebuild._depset', ['src/depset.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.ebuild._atom', ['src/extensions/atom.c'],
+            'pkgcore.ebuild._atom', ['src/atom.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.restrictions._restrictions', ['src/extensions/restrictions.c'],
+            'pkgcore.restrictions._restrictions', ['src/restrictions.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         core.Extension(
-            'pkgcore.util.osutils._readdir', ['src/extensions/readdir.c'],
+            'pkgcore.ebuild._filter_env', [
+                'src/filter_env.c', 'src/bmh_search.c'],
+            extra_compile_args=extra_flags, depends=common_includes),
+        core.Extension(
+            'pkgcore.util.osutils._readdir', ['src/readdir.c'],
             extra_compile_args=extra_flags, depends=common_includes),
         ] + extensions,
-    cmdclass={'build_filter_env': build_filter_env,
-              'sdist': mysdist,
-              'build_py': pkgcore_build_py,
-              'test': test,
-              'pkgcore_build_scripts': pkgcore_build_scripts,
-              'pkgcore_install_scripts': pkgcore_install_scripts,
-              },
+    cmdclass={
+        'sdist': mysdist,
+        'build_py': pkgcore_build_py,
+        'test': test,
+        'pkgcore_build_scripts': pkgcore_build_scripts,
+        'pkgcore_install_scripts': pkgcore_install_scripts,
+        },
     )

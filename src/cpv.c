@@ -90,25 +90,21 @@ pkgcore_cpv_get_cpvstr(pkgcore_cpv *self, void *closure)
         PyString_AsString(self->fullver));
 }
 
-PKGCORE_IMMUTABLE_ATTR(pkgcore_cpv, "category", category);
-PKGCORE_IMMUTABLE_ATTR(pkgcore_cpv, "package", package);
-PKGCORE_IMMUTABLE_ATTR(pkgcore_cpv, "fullver", fullver);
-PKGCORE_IMMUTABLE_ATTR(pkgcore_cpv, "version", version);
-PKGCORE_IMMUTABLE_ATTR(pkgcore_cpv, "revision", revision);
-PKGCORE_IMMUTABLE_ATTR(pkgcore_cpv, "key", key);
-
 
 static PyGetSetDef pkgcore_cpv_getsetters[] = {
 PKGCORE_GETSET(pkgcore_cpv, "cpvstr", cpvstr),
-PKGCORE_GETSET(pkgcore_cpv, "category", category),
-PKGCORE_GETSET(pkgcore_cpv, "package", package),
-PKGCORE_GETSET(pkgcore_cpv, "key", key),
-PKGCORE_GETSET(pkgcore_cpv, "fullver", fullver),
-PKGCORE_GETSET(pkgcore_cpv, "version", version),
-PKGCORE_GETSET(pkgcore_cpv, "revision", revision),
     {NULL}
 };
 
+static PyMemberDef pkgcore_cpv_members[] = {
+    {"category", T_OBJECT, offsetof(pkgcore_cpv, category), READONLY},
+    {"package", T_OBJECT, offsetof(pkgcore_cpv, package), READONLY},
+    {"key", T_OBJECT, offsetof(pkgcore_cpv, key), READONLY},
+    {"fullver", T_OBJECT, offsetof(pkgcore_cpv, fullver), READONLY},
+    {"version", T_OBJECT, offsetof(pkgcore_cpv, version), READONLY},
+    {"revision", T_OBJECT, offsetof(pkgcore_cpv, revision), READONLY},
+    {NULL}
+};
 
 char *
 pkgcore_cpv_parse_category(const char *start, int null_is_end)
@@ -848,7 +844,7 @@ static PyTypeObject pkgcore_cpvType = {
     0,                                /* tp_iter */
     0,                                /* tp_iternext */
     0,                                /* tp_methods */
-    0,                                /* tp_members */
+    pkgcore_cpv_members,              /* tp_members */
     pkgcore_cpv_getsetters,           /* tp_getset */
     0,                                /* tp_base */
     0,                                /* tp_dict */

@@ -13,6 +13,7 @@
 #define PY_SSIZE_T_CLEAN
 
 #include "common.h"
+#include <structmember.h>
 
 static PyObject *pkgcore_restrictions_type = NULL;
 static PyObject *pkgcore_restrictions_subtype = NULL;
@@ -180,16 +181,19 @@ PyDoc_STRVAR(
     "@keyword negate: should the match results be inverted? (default: False)\n"
     );
 
-PKGCORE_IMMUTABLE_ATTR(pkgcore_StrExactMatch, "exact", exact);
-PKGCORE_IMMUTABLE_ATTR(pkgcore_StrExactMatch, "_hash", hash);
+
+static PyMemberDef pkgcore_StrExactMatch_members[] = {
+    {"exact", T_OBJECT, offsetof(pkgcore_StrExactMatch, exact), READONLY},
+    {"_hash", T_OBJECT, offsetof(pkgcore_StrExactMatch, hash), READONLY},
+    {NULL}
+};
+
 PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "negate", negate, 
     (self->flags & NEGATED_RESTRICT));
 PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "case_sensitive", case, 
     (self->flags & CASE_SENSITIVE));
 
 static PyGetSetDef pkgcore_StrExactMatch_attrs[] = {
-PKGCORE_GETSET(pkgcore_StrExactMatch, "_hash", hash),
-PKGCORE_GETSET(pkgcore_StrExactMatch, "exact", exact),
 PKGCORE_GETSET(pkgcore_StrExactMatch, "negate", negate),
 PKGCORE_GETSET(pkgcore_StrExactMatch, "case_sensitive", case),
     {NULL}
@@ -226,7 +230,7 @@ static PyTypeObject pkgcore_StrExactMatch_Type = {
     (getiterfunc)0,                                  /* tp_iter */
     (iternextfunc)0,                                 /* tp_iternext */
     pkgcore_StrExactMatch_methods,                   /* tp_methods */
-    0,                                               /* tp_members */
+    pkgcore_StrExactMatch_members,                   /* tp_members */
     pkgcore_StrExactMatch_attrs,                     /* tp_getset */
     0,                                               /* tp_base */
     0,                                               /* tp_dict */
@@ -371,18 +375,19 @@ PyDoc_STRVAR(
     pkgcore_PackageRestriction_documentation,
     "cpython PackageRestriction base class for speed");
 
+static PyMemberDef pkgcore_PackageRestriction_members[] = {
+    {"restriction", T_OBJECT, offsetof(pkgcore_PackageRestriction, restrict),
+     READONLY},
+    {"attr", T_OBJECT, offsetof(pkgcore_PackageRestriction, attr), READONLY},
+    {NULL}
+};
 
-PKGCORE_IMMUTABLE_ATTR(pkgcore_PackageRestriction, "restriction",
-    restrict);
-PKGCORE_IMMUTABLE_ATTR(pkgcore_PackageRestriction, "attr", attr);
 PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "negate", negate, 
     (self->flags & NEGATED_RESTRICT));
 PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "ignore_missing",
     ignore_missing, (self->flags & IGNORE_MISSING));
 
 static PyGetSetDef pkgcore_PackageRestriction_attrs[] = {
-PKGCORE_GETSET(pkgcore_PackageRestriction, "attr", attr),
-PKGCORE_GETSET(pkgcore_PackageRestriction, "restriction", restrict),
 PKGCORE_GETSET(pkgcore_PackageRestriction, "negate", negate),
 PKGCORE_GETSET(pkgcore_PackageRestriction, "ignore_missing", ignore_missing),
     {NULL}
@@ -425,7 +430,7 @@ static PyTypeObject pkgcore_PackageRestriction_Type = {
     (getiterfunc)0,                                 /* tp_iter */
     (iternextfunc)0,                                /* tp_iternext */
     pkgcore_PackageRestriction_methods,             /* tp_methods */
-    0,                                              /* tp_members */
+    pkgcore_PackageRestriction_members,             /* tp_members */
     pkgcore_PackageRestriction_attrs,               /* tp_getset */
     0,                                              /* tp_base */
     0,                                              /* tp_dict */

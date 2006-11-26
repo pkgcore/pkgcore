@@ -44,7 +44,7 @@ def parse_digest(source, throw_errors=True):
         except (OSError, IOError, TypeError), e:
             raise errors.ParseChksumError("failed parsing %r" % source, e)
     finally:
-        if f is not None and not f.close:
+        if f is not None and f.close:
             f.close()
 
     kls = make_SlottedDict_kls(chf_keys)
@@ -140,7 +140,7 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True,
         except (OSError, IOError, TypeError), e:
             raise errors.ParseChksumError("failed parsing %r" % source, e)
     finally:
-        if f is not None and not f.close:
+        if f is not None and f.close:
             f.close()
 
     # collapse files into 4 types, convert to lower mem dicts

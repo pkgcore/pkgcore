@@ -14,7 +14,13 @@ demandload(globals(), "pkgcore.util.iterables:caching_iter "+
 
 def str_pkg(pkg):
     pkg = get_raw_pkg(pkg)
-    return pkg.cpvstr
+    # special casing; old style virtuals come through as the original pkg.
+    if pkg.package_is_real:
+        return pkg.cpvstr
+    if hasattr(pkg, "actual_pkg"):
+        return pkg.actual_pkg.cpvstr
+    # icky, but works.
+    return str(pkg.rdepends).lstrip("=")
 
 def expose_to_commandline(count, **kwds):
     def internal_f(f):

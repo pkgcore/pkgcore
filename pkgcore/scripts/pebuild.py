@@ -37,7 +37,12 @@ def main(options, out, err):
     if len(pkgs) > 1:
         err.write('got multiple matches for %s: %s\n' % (options.atom, pkgs))
         return 1
-    build = pkgs[0].build()
+    # pull clean out.
+    l = list(x for x in options.phases if x != "clean")
+    clean = len(l) != options.phases
+    if clean:
+        options.phases = l
+    build = pkgs[0].build(clean=clean)
     phase_funcs = list(getattr(build, x) for x in options.phases)
     for phase, f in zip(options.phases, phase_funcs):
         out.write()

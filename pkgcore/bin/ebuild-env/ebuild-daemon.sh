@@ -31,12 +31,6 @@ speak "dude!"
 listen PORTAGE_BIN_PATH
 [ -z "$PORTAGE_BIN_PATH" ] && die "PORTAGE_BIN_PATH=$PORTAGE_BIN_PATH , bailing"
 declare -rx PORTAGE_BIN_PATH
-listen PKGCORE_PYTHON
-[ -z "$PKGCORE_PYTHON" ] && die "empty PKGCORE_PYTHON, bailing"
-declare -rx PKGCORE_PYTHON
-listen PKGCORE_PYTHONPATH
-[ -z "$PKGCORE_PYTHONPATH" ] && die "empty PKGCORE_PYTHONPATH, bailing"
-declare -rx PKGCORE_PYTHONPATH
 
 if ! source "${PORTAGE_BIN_PATH}/ebuild.sh" daemonize; then
     speak "failed"
@@ -191,6 +185,10 @@ while [ "$alive" == "1" ]; do
             fi
             if [ -z $RC_NOCOLOR ]; then
                 set_colors
+            fi
+            if ! type -p filter-env &> /dev/null; then
+                echo "couldn't find filter-env in $PATH" >&2
+                die "can't find filter-env!"
             fi
 #			speak "starting ${phases}"
 

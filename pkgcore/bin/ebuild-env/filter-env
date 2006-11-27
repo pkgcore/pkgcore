@@ -1,9 +1,0 @@
-#!/usr/bin/env python
-
-"""Commandline wrapper."""
-
-from pkgcore.scripts import filter_env
-from pkgcore.util import commandline
-
-if __name__ == '__main__':
-    commandline.main({None: (filter_env.OptionParser, filter_env.main)})

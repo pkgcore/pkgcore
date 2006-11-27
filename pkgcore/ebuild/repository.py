@@ -36,6 +36,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
     return packages don't have USE configuration bound to them.
     """
 
+    false_packages = frozenset(["CVS", ".svn"])
     false_categories = frozenset([
             "eclass", "profiles", "packages", "distfiles", "metadata",
             "licenses", "scripts", "CVS", ".svn"])
@@ -148,7 +149,8 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
     def _get_packages(self, category):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))
         try:
-            return tuple(listdir_dirs(cpath))
+            return tuple(x for x in listdir_dirs(cpath) if x not in
+                self.false_packages)
 
         except (OSError, IOError), e:
             raise KeyError("failed fetching packages for category %s: %s" % \

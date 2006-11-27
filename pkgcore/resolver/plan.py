@@ -880,7 +880,6 @@ class incref_forward_block_op(blocker_base_op):
         return l
     
     def revert(self, plan):
-        plan.state.remove_limiter(self.blocker, self.key)
         l = plan.rev_blockers[self.choices]
         l.remove((self.blocker, self.key))
         if not l:
@@ -904,4 +903,6 @@ class decref_forward_block_op(blocker_base_op):
     def revert(self, plan):
         plan.rev_bllockers.setdefault(self.changes, []).append(
             (self.blocker, self.key))
+        if self.blocker not in plan.blockers_refcnt:
+            plan.state.add_limiter(self.blocker, self.key)
         plan.blockers_refcnt.add(self.blocker)

@@ -840,6 +840,7 @@ class replace_op(base_op):
         self.old_pkg = old
         self.old_choices = old_choices
         del plan.pkg_choices[old]
+        plan.pkg_choices[self.pkg] = self.choices
         plan.plan.append(self)
 
     def revert(self, plan):

@@ -798,6 +798,7 @@ class add_op(base_op):
     
     def revert(self, plan):
         plan.state.remove_slotting(self.pkg)
+        del plan.pkg_choices[self.pkg]
 
 class remove_op(base_op):
     __slots__ = ()
@@ -807,7 +808,7 @@ class remove_op(base_op):
     def apply(self, plan):
         plan.state.remove_slotting(self.pkg)
         plan._remove_pkg_blockers(plan.pkg_choices)
-        del plan.pkg_choices[pkg]
+        del plan.pkg_choices[self.pkg]
         plan.plan.append(self)
     
     def revert(self, plan):
@@ -849,8 +850,8 @@ class replace_op(base_op):
         plan.state.remove_slotting(self.pkg)
         l = plan.state.fill_slotting(self.old_pkg, force=self.force)
         assert not l
-        del plan.pkg_choices[self.choices]
-        plan.pkg_choices[self.old_choices] = self.old_pkg
+        del plan.pkg_choices[self.pkg]
+        plan.pkg_choices[self.old_pkg] = self.old_choices
 
 class blocker_base_op(object):
     __slots__ = ("choices", "blocker", "key")

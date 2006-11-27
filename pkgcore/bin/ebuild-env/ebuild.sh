@@ -238,21 +238,11 @@ sleepbeep() {
 # dump the environ to stdout.
 dump_environ() {
     # scope it so we can pass the output through a sed correction for newlines.
-    local x y command
+    local x y;
     #env dump, if it doesn't match a var pattern, stop processing, else print only if
     #it doesn't match one of the filter lists.
     # vars, then funcs.
-    [ ! -e "${PORTAGE_BIN_PATH}/filter-env" ] && die "${PORTAGE_BIN_PATH}/filter-env isn't available"
-    [ ! -x "${PKGCORE_PYTHON}" ] && die "${PKGCORE_PYTHON} forced python interpretter isn't available"
-    # for debugging.
-    if [ "$(type -t filter-env)" == "function" ]; then
-        command=("filter-env")
-    else
-        command=("${PKGCORE_PYTHON}" "${PORTAGE_BIN_PATH}/filter-env")
-    fi
-    declare | PYTHONPATH="${PKGCORE_PYTHONPATH}" "${command[@]}" -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" \
-        -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x command)"
-    set +x
+    declare | PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON}" "${PORTAGE_BIN_PATH}/filter-env" -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x )"
     if ! hasq "--no-attributes" "$@"; then
         echo $'reinstate_loaded_env_attributes ()\n{'
         for y in export 'declare -i' readonly; do

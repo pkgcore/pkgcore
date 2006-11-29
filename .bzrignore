@@ -6,6 +6,5 @@
 ./doc/index.rst
 ./build
 ./dist
-./pkgcore/bin/ebuild-env/filter-env
 ./_trial_temp
 ./pkgcore/plugins/plugincache

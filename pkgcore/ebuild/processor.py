@@ -27,13 +27,16 @@ __all__ = (
 inactive_ebp_list = []
 active_ebp_list = []
 
-import pkgcore.spawn, os, signal, errno
+import pkgcore.spawn, os, signal, errno, sys
 from pkgcore.util.currying import post_curry, partial
 from pkgcore.const import (
     depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH)
 from pkgcore.util.demandload import demandload
 from pkgcore.os_data import portage_uid, portage_gid
-demandload(globals(), "pkgcore.log:logger")
+demandload(
+    globals(),
+    "pkgcore.log:logger "
+    "pkgcore.util:osutils ")
 
 import traceback
 
@@ -230,6 +233,9 @@ class EbuildProcessor:
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
         self.write(EBD_ENV_PATH)
+        self.write(sys.executable)
+        self.write(osutils.join(*osutils.normpath(
+                    osutils.abspath(pkgcore.__file__)).split(os.sep)[:-2]))
         if self.__sandbox:
             self.write("sandbox_log?")
             self.__sandbox_log = self.read().split()[0]

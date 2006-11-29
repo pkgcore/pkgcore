@@ -242,7 +242,7 @@ dump_environ() {
     #env dump, if it doesn't match a var pattern, stop processing, else print only if
     #it doesn't match one of the filter lists.
     # vars, then funcs.
-    declare | filter-env -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x )"
+    declare | PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON}" "${PORTAGE_BIN_PATH}/filter-env" -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x )"
     if ! hasq "--no-attributes" "$@"; then
         echo $'reinstate_loaded_env_attributes ()\n{'
         for y in export 'declare -i' readonly; do
@@ -349,7 +349,9 @@ load_environ() {
         function declare() {
             :
         };
-        eval "$(filter-env -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" \
+        eval "$(PYTHONPATH=${PKGCORE_PYTHONPATH} \
+            "${PKGCORE_PYTHON}" "${PORTAGE_BIN_PATH}/filter-env" \
+            -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" \
             -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x )" -i "$src")"
         ret=$?
         unset -f declare

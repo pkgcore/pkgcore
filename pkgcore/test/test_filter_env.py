@@ -1,58 +1,28 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
 import os
-
-from pkgcore import spawn
-from pkgcore.const import EBUILD_ENV_PATH
+import cStringIO
 
 from pkgcore.test import TestCase, SkipTest
+from pkgcore.ebuild import filter_env
 
-try:
-    path = spawn.find_binary("filter-env", EBUILD_ENV_PATH)
-except spawn.CommandNotFound:
-    path = None    
 
-from pkgcore.test.mixins import TempDirMixin
+class NativeFilterEnvTest(TestCase):
 
-class TestFilterEnv(TempDirMixin, TestCase):
+    filter_env = staticmethod(filter_env.native_run)
 
-    if path is None:
-        skip = "filter-env binary isn't available"
-
-    filter_env_path = path
-    
-    @staticmethod
-    def mangle_args(args):
-        if isinstance(args, basestring):
-            return [args]
-        return args
-    
-    def get_output(self, raw_data, funcs=[], vars=[], invert_funcs=False,
-        invert_vars=False, debug=False, gdb=False):
-
-        args = [self.filter_env_path]
+    def get_output(self, raw_data, funcs=None, vars=None, invert_funcs=False,
+                   invert_vars=False, debug=False):
+        out = cStringIO.StringIO()
         if funcs:
-            args.extend(("-f", ",".join(self.mangle_args(funcs))))
+            funcs = filter_env.build_regex_string(funcs)
         if vars:
-            args.extend(("-v", ",".join(self.mangle_args(vars))))
-        if invert_funcs:
-            args.append("-F")
-        if invert_vars:
-            args.append("-V")
-        # rewrite this to avoid a temp file, using stdin instead.
-        fp = os.path.join(self.dir, "data")
-        open(fp, "w").write(raw_data)
-        args.extend(("-i", fp))
-        if debug or gdb:
-            args.append("-dd")
-        if gdb:
-            spawn.spawn(["gdb", "--args"] + args + ["-ddd"])
-        retval, data = spawn.spawn_get_output(args, collect_fds=(1,))
-        self.assertEqual(retval, 0, "retval %i: %r\nargs: %r" %
-            (retval, data, args))
-        return data
-    
+            vars = filter_env.build_regex_string(vars)
+        self.filter_env(out, raw_data, vars, funcs, invert_vars, invert_funcs)
+        return out.getvalue()
+
     def test1(self):
 	data = \
 """
@@ -64,3 +34,11 @@ tc-arch ()
 """
         self.assertIn('tc-arch', "".join(
             self.get_output(data, vars='MODULE_NAMES')))
+
+
+class CPyFilterEnvTest(NativeFilterEnvTest):
+
+    if filter_env.cpy_run is None:
+        skip = 'cpy filter_env not available.'
+    else:
+        filter_env = staticmethod(filter_env.cpy_run)

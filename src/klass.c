@@ -133,7 +133,7 @@ pkgcore_mapping_get(PyObject *self, PyObject *args)
     return default_val;
 }
 
-inline PyObject *
+static inline PyObject *
 internal_generic_equality(PyObject *inst1, PyObject *inst2,
     int desired)
 {

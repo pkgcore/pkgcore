@@ -24,7 +24,7 @@ class NativeFilterEnvTest(TestCase):
         return out.getvalue()
 
     def test1(self):
-	data = \
+        data = \
 """
 MODULE_NAMES=${MODULE_NAMES//${i}(*};
 tc-arch ()
@@ -32,8 +32,12 @@ tc-arch ()
     tc-ninja_magic_to_arch portage $@
 }
 """
-        self.assertIn('tc-arch', "".join(
+        self.assertIn('tc-arch', ''.join(
             self.get_output(data, vars='MODULE_NAMES')))
+        self.assertNotIn('tc-arch', ''.join(
+                self.get_output(data, funcs='tc-arch')))
+        self.assertIn('tc-arch', ''.join(
+                self.get_output(data, funcs='tc-arch', invert_funcs=True)))
 
 
 class CPyFilterEnvTest(NativeFilterEnvTest):

@@ -27,7 +27,7 @@ static PyObject *pkgcore_depset_PkgOr = NULL;
 #define ISLOWER(c) ('a' <= (c) && 'z' >= (c))
 #define ISALNUM(c) (ISALPHA(c) || ISDIGIT(c))
 
-void
+static void
 _Err_SetParse(PyObject *dep_str, PyObject *msg, char *tok_start, char *tok_end)
 {
     PyObject *ret;
@@ -47,7 +47,7 @@ _Err_SetParse(PyObject *dep_str, PyObject *msg, char *tok_start, char *tok_end)
     Py_DECREF(args);
 }
 
-void
+static void
 Err_WrapException(PyObject *dep_str, char *tok_start,
     char *tok_end)
 {
@@ -63,7 +63,7 @@ Err_WrapException(PyObject *dep_str, char *tok_start,
     Py_XDECREF(tb);
 }
 
-void
+static void
 Err_SetParse(PyObject *dep_str, char *msg, char *tok_start, char *tok_end)
 {
     PyObject *s = PyString_FromString(msg);
@@ -73,7 +73,7 @@ Err_SetParse(PyObject *dep_str, char *msg, char *tok_start, char *tok_end)
     Py_DECREF(s);
 }
 
-inline PyObject *
+static inline PyObject *
 make_use_conditional(char *use_start, char *use_end, PyObject *payload)
 {
     PyObject *val;
@@ -112,7 +112,7 @@ while('\t' != *(ptr) && ' ' != *(ptr) && '\n' != *(ptr) && '\0' != *(ptr))  \
 
 #define ISSPACE(ptr) ('\t' == *(ptr) || ' ' == *(ptr) || '\n' == *(ptr))
 
-PyObject *
+static PyObject *
 internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
     PyObject *element_func, 
     PyObject *and_func, PyObject *or_func,
@@ -437,7 +437,7 @@ PyDoc_STRVAR(
     "cpython depset parsing functionality");
 
 
-int
+static int
 load_external_objects()
 {
     PyObject *s, *m = NULL;

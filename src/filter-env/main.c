@@ -127,6 +127,7 @@ is_envvar(const char *p, char **start, char **end)
 static int
 regex_matches(regex_t *re, const char *buff, int desired_value)
 {
+    INFO("match %s, desired %d", buff, desired_value);
     regmatch_t match[1];
     match[0].rm_so = match[0].rm_eo = -1;
     assert(buff != NULL);
@@ -135,6 +136,7 @@ regex_matches(regex_t *re, const char *buff, int desired_value)
 /*    fprintf(stderr,"result was %i for %s, returning %i\n", match[0].rm_so,
         buff,i);
 */
+    INFO("got %d", match[0].rm_so);
     return match[0].rm_so != desired_value ? 1 : 0;
 }
 
@@ -268,6 +270,7 @@ process_scope(PyObject *out, const char *buff, const char *end,
                 if (var_re && regex_matches(var_re, temp_string,
                     desired_var_match)) {
                     //this would be filtered.
+                    INFO("filtering var '%s'", temp_string);
                     window_end = com_start;
                 }
                 free(temp_string);
@@ -491,10 +494,14 @@ pkgcore_filter_env_run(PyObject *self, PyObject *args, PyObject *kwargs)
     desired_func_match = PyObject_IsTrue(desired_func_match_obj);
     if (desired_func_match < 0)
         return NULL;
+    if (desired_func_match)
+        desired_func_match = -1;
 
     desired_var_match = PyObject_IsTrue(desired_var_match_obj);
     if (desired_var_match < 0)
         return NULL;
+    if (desired_var_match)
+        desired_var_match = -1;
 
     if (file_buff[file_size] != '\0') {
         PyErr_SetString(PyExc_ValueError, "file_buff should end in NULL");

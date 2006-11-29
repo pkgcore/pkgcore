@@ -50,7 +50,7 @@ def main(options, out, err):
     if not target.autocommits:
         target.sync_rate = 1000
     if options.verbose:
-	out.write("grabbing target's existing keys")
+        out.write("grabbing target's existing keys")
     valid = set()
     start = time.time()
     if options.verbose:

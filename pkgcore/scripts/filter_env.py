@@ -9,6 +9,7 @@ import optparse
 
 from pkgcore.util import commandline
 from pkgcore.ebuild import filter_env
+from pkgcore.log import logger
 
 
 def input_callback(option, opt_str, value, parser):
@@ -60,6 +61,22 @@ class OptionParser(commandline.OptionParser):
 
 
 def main(options, out, err):
+    if options.debug:
+        if options.funcs is None:
+            logger.debug('=== Funcs: None')
+        else:
+            logger.debug('=== Funcs:')
+            for thing in options.funcs:
+                logger.debug(repr(thing))
+        if options.vars is None:
+            logger.debug('=== Vars: None')
+        else:
+            logger.debug('=== Vars:')
+            for thing in options.vars:
+                logger.debug(repr(thing))
+        logger.debug('var_match: %r, func_match: %r',
+                     options.var_match, options.func_match)
+
     if options.funcs:
         funcs = filter_env.build_regex_string(options.funcs)
     else:

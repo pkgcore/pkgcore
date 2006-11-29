@@ -223,7 +223,7 @@ pkgcore_join(PyObject *self, PyObject *args)
 // returns 0 on success opening, 1 on ENOENT but ignore, and -1 on failure
 // if failure condition, appropriate exception is set.
 
-inline int
+static inline int
 pkgcore_open_and_stat(PyObject *path,
     int *fd, Py_ssize_t *size)
 {
@@ -239,7 +239,7 @@ pkgcore_open_and_stat(PyObject *path,
     return 1;
 }
 
-inline int
+static inline int
 handle_failed_open_stat(int fd, Py_ssize_t size, PyObject *path,
 PyObject *swallow_missing)
 {

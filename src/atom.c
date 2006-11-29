@@ -62,7 +62,7 @@ static PyObject *pkgcore_atom_restrictions = NULL;
 #define VALID_USE_CHAR(c) (ISALNUM(c) || '-' == (c) \
     || '_' == (c) || '.' == (c) || '+' == (c))
 
-void
+static void
 Err_SetMalformedAtom(PyObject *atom_str, char *raw_msg)
 {
     PyObject *msg = PyString_FromString(raw_msg);
@@ -77,7 +77,7 @@ Err_SetMalformedAtom(PyObject *atom_str, char *raw_msg)
     }
 }
 
-int
+static int
 parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
 {
     char *p = *p_ptr;
@@ -171,7 +171,7 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
     return 1;
 }
 
-int
+static int
 parse_slot_deps(PyObject *atom_str, char **p_ptr, PyObject **slots_ptr)
 {
     char *p = *p_ptr;
@@ -230,7 +230,7 @@ parse_slot_deps(PyObject *atom_str, char **p_ptr, PyObject **slots_ptr)
     return 1;
 }
 
-int
+static int
 parse_repo_id(PyObject *atom_str, char *p, PyObject **repo_id)
 {
     char *start = p;
@@ -252,7 +252,7 @@ parse_repo_id(PyObject *atom_str, char *p, PyObject **repo_id)
     return *repo_id ? 0 : 1;
 }
 
-int
+static int
 parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
     int *has_version)
 {
@@ -513,7 +513,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
     return (PyObject *)NULL;
 }
 
-inline PyObject *
+static inline PyObject *
 make_simple_restrict(PyObject *attr, PyObject *str, PyObject *val_restrict)
 {
     PyObject *tmp = PyObject_CallFunction(val_restrict, "O", str);
@@ -528,7 +528,7 @@ make_simple_restrict(PyObject *attr, PyObject *str, PyObject *val_restrict)
     return NULL;
 }
 
-inline int
+static inline int
 make_version_kwds(PyObject *inst, PyObject **kwds)
 {
     PyObject *negated = PyObject_GetAttr(inst, pkgcore_atom_negate_vers);
@@ -570,7 +570,7 @@ make_version_kwds(PyObject *inst, PyObject **kwds)
 }
 
 // handles complex version restricts, rather then glob matches
-inline PyObject *
+static inline PyObject *
 make_version_restrict(PyObject *inst, PyObject *op)
 {
     PyObject *ver = PyObject_GetAttr(inst, pkgcore_atom_version);
@@ -607,7 +607,7 @@ make_version_restrict(PyObject *inst, PyObject *op)
     return NULL;
 }
 
-inline PyObject *
+static inline PyObject *
 make_slot_restrict(PyObject *slot)
 {
     PyObject *tup = PyTuple_New(PyTuple_GET_SIZE(slot));
@@ -640,7 +640,7 @@ make_slot_restrict(PyObject *slot)
     return tmp;
 }
 
-PyObject *
+static PyObject *
 make_use_val_restrict(PyObject *use)
 {
     if(!PyTuple_CheckExact(use)) {
@@ -888,7 +888,7 @@ PyDoc_STRVAR(
     pkgcore_atom_documentation,
     "cpython atom parsing functionality");
 
-int
+static int
 load_external_objects()
 {
     PyObject *s, *m = NULL;

@@ -36,7 +36,7 @@ struct suffix_ver {
     long val;
 };
 
-struct suffix_ver pkgcore_ebuild_suffixes[] = {
+static struct suffix_ver pkgcore_ebuild_suffixes[] = {
     {"alpha", 5, 0},
     {"beta", 4, 1},
     {"pre", 3, 2},
@@ -106,7 +106,7 @@ static PyMemberDef pkgcore_cpv_members[] = {
     {NULL}
 };
 
-char *
+static char *
 pkgcore_cpv_parse_category(const char *start, int null_is_end)
 {
     char *p = (char *)start;
@@ -162,7 +162,7 @@ pkgcore_cpv_parse_category(const char *start, int null_is_end)
 }
 
 
-char *
+static char *
 pkgcore_cpv_parse_package(const char *start)
 {
     // yay- need to eat the pkg next
@@ -219,7 +219,7 @@ pkgcore_cpv_parse_package(const char *start)
 }
 
 
-int
+static int
 pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start, 
     char **ver_end)
 {

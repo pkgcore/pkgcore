@@ -15,6 +15,10 @@ def spork(reff):
 def foon():
     pass
 
+@configurable(typename='spork')
+def pseudospork():
+    pass
+
 
 class DescribeClassTest(TestCase, helpers.MainMixin):
 
@@ -48,6 +52,13 @@ class ClassesTest(TestCase, helpers.MainMixin):
         self.assertOut(
             ['pkgcore.test.scripts.test_pconfig.foon'],
             spork=basics.HardCodedConfigSection({'class': foon}))
+        self.assertOut(
+            ['pkgcore.test.scripts.test_pconfig.pseudospork',
+             'pkgcore.test.scripts.test_pconfig.spork'],
+            spork=basics.HardCodedConfigSection({
+                    'class': spork,
+                    'reff': basics.HardCodedConfigSection({
+                            'class': pseudospork})}))
 
 
 class DumpTest(TestCase, helpers.MainMixin):

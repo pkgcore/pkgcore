@@ -218,6 +218,7 @@ def process_scope(out, buff, pos, var_match, func_match, endchar):
                 pos += 1
             if var_match is not None and var_match(var_name):
                 # This would be filtered.
+                logger.info("filtering var '%s'", var_name)
                 window_end = com_start
 
     if out is not None:

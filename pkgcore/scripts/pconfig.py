@@ -86,19 +86,10 @@ def dump_section(config, out, sections):
     out.first_prefix.pop()
 
 
-def classes_main(options, out, err):
-    """List all classes referenced by the config."""
+def get_classes(configs):
     # Not particularly efficient (doesn't memoize already visited configs)
-    configmanager = options.config
     classes = set()
-    for name in configmanager.sections():
-        try:
-            config = configmanager.collapse_named_section(name)
-        except errors.ConfigurationError:
-            if options.debug:
-                traceback.print_exc()
-            # Otherwise ignore this.
-            continue
+    for config in configs:
         classes.add('%s.%s' % (config.type.callable.__module__,
                                config.type.callable.__name__))
         for key, val in config.config.iteritems():
@@ -113,7 +104,20 @@ def classes_main(options, out, err):
                 classes.update(get_classes(c.collapse() for c in val))
             elif typename.startswith('lazy_ref'):
                 classes.update(get_classes((val.collapse(),)))
-    for classname in sorted(classes):
+    return classes
+
+def classes_main(options, out, err):
+    """List all classes referenced by the config."""
+    configmanager = options.config
+    sections = []
+    for name in configmanager.sections():
+        try:
+            sections.append(configmanager.collapse_named_section(name))
+        except errors.ConfigurationError:
+            if options.debug:
+                traceback.print_exc()
+            # Otherwise ignore this.
+    for classname in sorted(get_classes(sections)):
         out.write(classname)
 
 

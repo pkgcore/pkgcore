@@ -43,7 +43,7 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=True):
             # if the dir perms would lack +wx, we have to force it
             force_temp_perms = ((mode & 0300) != 0300)
             resets = []
-            apath = normpath(abspath(path))
+            apath = normpath(os.path.abspath(path))
             sticky_parent = False
 
             for directory in apath.split(os.path.sep):

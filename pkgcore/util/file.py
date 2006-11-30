@@ -133,7 +133,10 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
         d, protected = ProtectedDict(vars_dict), True
     else:
         d, protected = {}, False
-    f = open(bash_source, "r")
+    if isinstance(bash_source, basestring):
+        f = open(bash_source, "r")
+    else:
+        f = bash_source
     s = bash_parser(f, sourcing_command=sourcing_command, env=d)
 
     try:

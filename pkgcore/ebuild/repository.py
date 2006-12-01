@@ -273,8 +273,6 @@ class ConfiguredTree(configured.tree):
                     self.__class__,))
 
         configured.tree.__init__(self, raw_repo, self.config_wrappables)
-        self.default_use = list(domain.use)
-        self.immutable_use = frozenset(domain.immutable_use)
         self._get_pkg_use = domain.get_package_use
         self.domain_settings = domain_settings
         if fetcher is None:
@@ -284,16 +282,15 @@ class ConfiguredTree(configured.tree):
         self._delayed_iuse = currying.partial(make_kls(InvertedContains),
             InvertedContains)
 
-    def _get_delayed_immutable(self, pkg, extras=()):
-        return InvertedContains(frozenset(pkg.iuse).difference(
-            chain(self.immutable_use, extras)))
+    def _get_delayed_immutable(self, pkg, immutable):
+        return InvertedContains(frozenset(pkg.iuse).difference(immutable))
 
     def _get_pkg_kwds(self, pkg):
-        disabled, enabled = self._get_pkg_use(self.default_use, pkg)
+        immutable, enabled = self._get_pkg_use(pkg)
         return {
             "initial_settings": enabled,
             "unchangable_settings": self._delayed_iuse(
-                self._get_delayed_immutable, pkg, disabled),
+                self._get_delayed_immutable, pkg, immutable),
             "build_callback":self.generate_buildop}
 
     def generate_buildop(self, pkg, **kwds):

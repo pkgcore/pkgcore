@@ -1,323 +1,376 @@
-# Copyright: 2005 Brian Harring <ferringb@gmail.com>
-# License: GPL2
-
-"""
-gentoo profile support
-"""
-
-import os, errno
-from pkgcore.config import profiles, ConfigHint
+import errno, os
+from pkgcore.config import ConfigHint
+from pkgcore.ebuild import const
+from pkgcore.util.osutils import abspath, join as pjoin, readlines
+from pkgcore.ebuild import ebuild_src
+from pkgcore.util.containers import InvertedContains
 from pkgcore.util.file import iter_read_bash, read_bash_dict
-from pkgcore.util.currying import partial
-from pkgcore.ebuild.atom import atom
-from pkgcore.config.basics import list_parser
-from pkgcore.util.mappings import ProtectedDict
-from pkgcore.interfaces.data_source import local_source
-from pkgcore.repository import virtual, util
-from pkgcore.ebuild import cpv, ebuild_src
+from pkgcore.util.caching import WeakInstMeta
+from pkgcore.repository import virtual
 from pkgcore.util.demandload import demandload
-from pkgcore.util.osutils import join as pjoin, readfile, readlines
-from collections import deque
 
-demandload(globals(),
-    "pkgcore.config.errors:InstantiationError "
-    "pkgcore.ebuild:const "
+demandload(globals(), "pkgcore.interfaces.data_source:local_source "
+    "pkgcore.ebuild:cpv "
+    "pkgcore.ebuild.atom:atom "
+    "pkgcore.repository.util:SimpleTree "
     "pkgcore.log:logger "
-    "pkgcore.util.containers:InvertedContains ")
+    "pkgcore.restrictions:packages "
+    "pkgcore.util:mappings "
+    "pkgcore.util.iterables:expandable_chain "
+    "pkgcore.util.currying:partial ")
 
+class ProfileError(Exception):
 
-# Harring sez-
-# This should be implemented as an auto-exec config addition.
+    def __init__(self, path, filename, error):
+        self.path, self.filename, self.error = path, filename, error
+    
+    def __str__(self):
+        return "ProfileError: profile %r, file %r, error %s" % (
+            self.path, self.filename, self.error)
 
-def loop_stack(stack, filename, func=iter_read_bash):
-    return loop_iter_read((pjoin(x, filename) for x in stack),
-        func=func)
+def make_pkg_provided_repo(provides):
+    d = {}
+    for pkg in provides:
+        d.setdefault(pkg.category, {}).setdefault(
+            pkg.package, []).append(pkg.fullver)
+    return util.SimpleTree(d, pkg_klass=PkgProvided)
 
-def loop_iter_read(files, func=iter_read_bash):
-    try:
-        if func is iter_read_bash:
-            for fp in files:
-                data = readlines(fp, False, True, True)
-                if data is not None:
-                    yield fp,  iter_read_bash(data)
+def load_decorator(filename, handler=iter_read_bash, fallback=()):
+    def f(func):
+        def f2(self, *args):
+            path = pjoin(self.path, filename)
+            try:
+                data = readlines(path, False, True, True)
+                if data is None:
+                    return func(self, fallback, *args)
+                return func(self, handler(data), *args)
+            except (KeyboardInterrupt, RuntimeError, SystemExit):
+                raise
+            except Exception, e:
+                raise ProfileError(self.path, filename, e)
+        return f2
+    return f
+
+def split_negations(data, func):
+    neg, pos = [], []
+    for line in data:
+        if line[0] == '-':
+            neg.append(func(line[1:]))
         else:
-            for fp in files:
-                try:
-                    yield fp, func(fp)
-                except IOError, e:
-                    if e.errno != errno.ENOENT:
-                        raise
-                    del e
-    except (OSError, IOError), e:
-        if e.errno != errno.ENOENT:
-            raise profiles.ProfileException(
-                "failed reading '%s': %s" % (e.filename, str(e)))
-        del e
-
-def incremental_profile_files(stack, filename):
-    s = set()
-    for fp, i in loop_iter_read(pjoin(prof, filename) for prof in stack):
-        incremental_negations(fp, i, s)
-    return s
+            pos.append(func(line))
+    return (tuple(neg), tuple(pos))
 
 
-def incremental_negations(setting, orig_list, orig_set=None):
-    l = orig_set
-    if l is None:
-        l = set()
-    for x in orig_list:
-        if x[0] == "-":
-            if x == "-*":
-                l.clear()
-            else:
-                if len(x) == 1:
-                    raise ValueError("negation of a setting in '%s', "
-                         "but name negated isn't completed (%s)" % (
-                         setting, orig_list))
-                x = x[1:]
-                if x in l:
-                    l.remove(x)
-        else:
-            l.add(x)
-    return l
+class ProfileNode(object):
+    
+    __metaclass__ = WeakInstMeta
+    __inst_caching__ = True
+    
+    def __init__(self, path):
+        if not os.path.isdir(path):
+            raise ProfileError(path, "", "profile doesn't exist")
+        self.path = path
+    
+    def __str__(self):
+        return "Profile at %r" % self.path
 
+    def __repr__(self):
+        return '<%s path=%r, @%#8x>' % (self.__class__.__name__, self.path,
+            id(self))
 
-class OnDiskProfile(profiles.base):
-
-    """
-    On disk profile to scan
-
-    api subject to change (not stable)
-    """
-    _types = {'profile': 'str', 'base_path': 'str'}
-    for thing in const.incrementals:
-        _types[thing] = 'list'
-    for thing in ['profile_incrementals', 'package.keywords', 'package.use',
-                  'package.unmask', 'package.mask']:
-        _types[thing] = 'list'
-
-    pkgcore_config_type = ConfigHint(
-        _types, typename='profile', incrementals=const.incrementals)
-    del _types, thing
-
-    def __init__(self, profile, incrementals=const.incrementals,
-                 base_repo=None, base_path=None):
-
-        """
-        @param profile: profile name to scan
-        @param incrementals: sequence of settings to implement incremental
-            stacking for.
-        @param base_repo: L{pkgcore.ebuild.repository.UnconfiguredTree} to
-            build this profile from, mutually exclusive with base_path.
-        @param base_path: raw filepath for this profile.  Mutually exclusive
-            to base_repo.
-        """
-
-        profile = profile.strip()
-
-        if base_path is None and base_repo is None:
-            raise InstantiationError(
-                "either base_path or location must be set")
-
-        if base_repo is not None:
-            self.basepath = pjoin(base_repo.base, "profiles")
-        elif base_path is not None:
-            if not os.path.exists(base_path):
-                raise InstantiationError(
-                    "if defined, base_path(%s) must exist-" % base_path)
-            self.basepath = base_path
-
-        else:
-            raise InstantiationError(
-                "either base_repo or base_path must be configured")
-
-        self.load_deprecation_status(profile)
-
-        stack = self.get_inheritance_order(profile)
-
-        # build up visibility limiters.
-        stack.reverse()
-
-        pkgs = incremental_profile_files(stack, "packages")
-
-        visibility = []
-        sys = []
-        for p in pkgs:
-            if p[0] == "*":
-                # system set.
-                sys.append(atom(p[1:]))
-            else:
-                # note the negation. this means cat/pkg matchs, but
-                # ver must not, else it's masked.
-                visibility.append(atom(p, negate_vers=True))
-
-        self.sys = tuple(sys)
-        self.visibility = tuple(visibility)
-        del sys, visibility, pkgs
-        
-        self.bashrc = tuple(local_source(path)
-            for path in (pjoin(x, 'profile.bashrc') for x in stack)
-                if os.path.exists(path))
-
-        self.use_mask = tuple(incremental_profile_files(stack, "use.mask"))
-        self.use_force = tuple(incremental_profile_files(stack, "use.force"))
-
-        self.maskers = tuple(set(self.visibility).union(atom(x) for x in 
-            incremental_profile_files(stack, "package.mask")))
-        pkg_provided = {}
-        for x in incremental_profile_files(stack, "package.provided"):
-            a = cpv.CPV(x)
-            pkg_provided.setdefault(a.category, {}).setdefault(
-                a.package, []).append(a.fullver)
-
-        if pkg_provided:
-            i = InvertedContains(())
-            ptree = util.SimpleTree(pkg_provided,
-                pkg_klass=partial(PkgProvided, i))
-        else:
-            ptree = None
-        self.package_provided_repo = ptree
-
-        self.package_use_mask  = self.load_atom_dict(stack,
-            "package.use.mask")
-        self.package_use_force = self.load_atom_dict(stack,
-            "package.use.force")
-
-        d = {}
-        for fp, dc in loop_iter_read((pjoin(prof, "make.defaults")
-                                      for prof in stack),
-            lambda x:read_bash_dict(x, vars_dict=ProtectedDict(d))):
-            for k, v in dc.iteritems():
-                # potentially make incrementals a dict for ~O(1) here,
-                # rather then O(N)
-                if k in incrementals and k in d:
-                    # We have to keep the value in d a string or
-                    # read_bash_dict explodes if it tries to expand it.
-                    d[k] += ' ' + v
+    @load_decorator("packages")
+    def _load_packages(self, data):
+        # sys packages and visibility
+        sys, neg_sys, vis, neg_vis = [], [], [], []
+        for line in data:
+            if line[0] == '-':
+                if line[1] == '*':
+                    line = line[2:]
+                    neg_sys.append(atom(line[2:]))
                 else:
-                    d[k] = v
+                    neg_vis.append(atom(line[1:], negate_vers=True))
+            else:
+                if line[0] == '*':
+                    sys.append(atom(line[1:]))
+                else:
+                    vis.append(atom(line, negate_vers=True))
+                    
+        self.system = (tuple(neg_sys), tuple(sys))
+        self.visibility = (tuple(neg_vis), tuple(vis))
 
-        for k in incrementals:
-            v = d.get(k)
-            if v is not None:
-                d[k] = list_parser(v)
-        d.setdefault("USE_EXPAND", '')
-        if isinstance(d["USE_EXPAND"], str):
-            self.use_expand = tuple(d["USE_EXPAND"].split())
+    @load_decorator("parent")
+    def _load_parents(self, data):
+        self.parents = tuple(ProfileNode(abspath(pjoin(self.path, x)))
+            for x in data)
+        return self.parents
+    
+    @load_decorator("package.provided")
+    def _load_pkg_provided(self, data):
+        self.pkg_provided = split_negations(data, cpv.CPV)
+        return self.pkg_provided
+
+    @load_decorator("virtuals")
+    def _load_virtuals(self, data):
+        d = {}
+        for line in data:
+            l = line.split()
+            if len(l) != 2:
+                raise ValueError("%r is malformated" % line)
+            d[cpv.CPV(l[0]).package] = atom(l[1])
+        self.virtuals = d
+        return d
+
+    @load_decorator("package.mask")
+    def _load_masks(self, data):
+        self.masks = split_negations(data, atom)
+        return self.masks
+
+    @load_decorator("deprecated", lambda i:i, None)
+    def _load_deprecated(self, data):
+        if data is not None:
+            try:
+                replacement = data.next()
+                msg = "\n".join(x.lstrip("#").strip()
+                    for x in data)
+                data = (replacement, msg)
+            except StopIteration:
+                # only an empty replacement could trigger this; thus
+                # formatted badly.
+                raise ValueError("didn't specify a replacement profile")
+        self.deprecated = data
+        return data
+
+    @load_decorator("use.mask")
+    def _load_masked_use(self, data):
+        d = self._load_pkg_use_mask()
+        neg, pos = split_negations(data, str)
+        if neg or pos:
+            d[packages.AlwaysTrue] = (neg, pos)
+        self.masked_use = d
+        return d
+
+    @load_decorator("package.use.mask")
+    def _load_pkg_use_mask(self, data):
+        d = {}
+        for line in data:
+            i = iter(line.split())
+            a = atom(i.next())
+            neg, pos = d.setdefault(a, ([], []))
+            for x in i:
+                if x[0] == '-':
+                    neg.append(x[1:])
+                else:
+                    pos.append(x)
+        for k, v in d.iteritems():
+            d[k] = tuple(v)
+        return d
+    
+    @load_decorator("use.force")
+    def _load_forced_use(self, data):
+        d = self._load_pkg_use_force()
+        neg, pos = split_negations(data, str)
+        if neg or pos:
+            d[package.AlwaysTrue] = (neg, pos)
+        self.forced_use = d
+        return d
+
+    @load_decorator("package.use.force")
+    def _load_pkg_use_force(self, data):
+        d = {}
+        for line in data:
+            i = iter(line.split())
+            a = atom(i.next())
+            neg, pos = d.setdefault(a, ([], []))
+            for x in i:
+                if x[0] == '-':
+                    neg.append(x[1:])
+                else:
+                    pos.append(x)
+        for k, v in d.iteritems():
+            d[k] = tuple(v)
+        return d
+
+    def _load_default_env(self):
+        path = pjoin(self.path, "make.defaults")
+        try:
+            f = open(pjoin(self.path, "make.defaults"), "r")
+        except IOError, ie:
+            if ie.errno != errno.ENOENT:
+                raise ProfileError(self.path, "make.defaults", ie)
+            self.default_env = {}
+            return self.default_env
+        try:
+            try:
+                d = read_bash_dict(f)
+            finally:
+                f.close()
+        except (KeyboardInterrupt, RuntimeError, SystemExit):
+            raise
+        except Exception ,e:
+            raise ProfileError(self.path, "make.defaults", e)
+        self.default_env = d
+        return d
+
+    def _load_bashrc(self):
+        path = pjoin(self.path, "profile.bashrc")
+        if os.path.exists(path):
+            self.bashrc = local_source(path)
         else:
-            self.use_expand = ()
+            self.bashrc = None
+        return self.bashrc
+    
+    def __getattr__(self, attr):
+        if attr in ("system", "visibility"):
+            self._load_packages()
+            return getattr(self, attr)
+        # use objects getattr to bypass our own; prevents infinite recursion
+        # if they request something non existant
+        try:
+            func = object.__getattribute__(self, "_load_%s" % attr)
+        except AttributeError:
+            raise AttributeError(self, attr)
+        if func is None:
+            raise AttributeError(attr)
+        return func()
+            
 
-        # and... default virtuals.
-        virtuals = {}
-        for fp, i in loop_iter_read(pjoin(prof, "virtuals")
-            for prof in stack):
-            for p in i:
-                p = p.split()
-                c = cpv.CPV(p[0])
-                virtuals[c.package] = atom(p[1])
+class EmptyRootNode(ProfileNode):
 
-        self.virtuals = partial(AliasedVirtuals, virtuals)
-        # collapsed make.defaults.  now chunkify the bugger.
-        self.conf = d
+    parents = ()
+    pkg_provided = ()
+    deprecated = None
+    forced_use = masked_use = {}
+    visibility = system = ((), ())
+    virtuals = {}
 
-    def cleanse(self):
-        del self.visibility
-        del self.system
-        del self.use_mask
-        del self.maskers
+
+def incremental_expansion(orig, iterable, msg_prefix=''):
+    for i in iterable:
+        if i[0] == '-':
+            i = i[1:]
+            if not i:
+                raise ValueError("%encountered an incomplete negation, '-'" % s)
+            orig.discard(i)
+        else:
+            orig.add(i)
+
+
+class OnDiskProfile(object):
+
+    pkgcore_config_type = ConfigHint({'basepath':'str', 'profile':'str',
+        'incrementals':'list'}, required=('basepath', 'profile'), 
+        typename='profile')
+
+    def __init__(self, basepath, profile, incrementals=const.incrementals,
+        load_profile_base=True):
+        self.basepath = basepath
+        self.profile = profile
+        self.node = ProfileNode(pjoin(basepath, profile))
+        self.incrementals = incrementals
+        self.load_profile_base = load_profile_base
 
     @property
     def arch(self):
-        return self.conf.get("ARCH", None)
+        return self.default_env.get("ARCH")    
 
-    @property
-    def deprecated(self):
-        if isinstance(self._deprecated, basestring):
-            return readfile(self._deprecated)
-        return False
+    def _load_stack(self):
+        def f(node):
+            for x in node.parents:
+                for y in f(x):
+                    yield y
+            yield node
 
-    def load_deprecation_status(self, profile):
-        dep_path = pjoin(self.basepath, profile, "deprecated")
-        self._deprecated = False
-        if os.path.isfile(dep_path):
-            logger.warn("profile '%s' is marked as deprecated, read '%s' "
-                "please" % (profile, dep_path))
-            self._deprecated = dep_path
-
-    def load_atom_dict(self, stack, filename):
+        l = list(f(self.node))
+        if self.load_profile_base:
+            l = [EmptyRootNode(self.basepath)] + l
+        return tuple(reversed(l))
+    
+    def _collapse_use_dict(self, attr):
         d = {}
-        for fp, i in loop_stack(stack, filename):
-            for line in i:
-                s = line.split()
-                a = atom(s[0])
-                d2 = d.setdefault(a.key, {})
-                o = s[1:]
-                if a in d2:
-                    o = incremental_negations(fp, d2[a] + o)
-                d2[a] = o
+        for node in self.stack:
+            d2 = getattr(node, attr)
+            for key, value in d2.iteritems():
+                s = d.get(key, None)
+                if s is None:
+                    if value[1]:
+                        d[key] = set(value[1])
+                    continue
+                s.difference_update(value[0])
+                s.update(value[1])
+                if not s:
+                    del d[key]
         return d
 
-    def get_inheritance_order(self, profile):
-        pabs = os.path.abspath
-        # processed, required, loc, name
-        full_stack = [pjoin(self.basepath, profile)]
-        stack = deque([[False, full_stack[-1]]])
-        idx = 0
+    def _collapse_generic(self, attr):
+        s = set()
+        for node in self.stack:
+            val = getattr(node, attr)
+            s.difference_update(val[0])
+            s.update(val[1])
+        return s
+    
+    def _collapse_env(self):
+        d = {}
+        inc = self.incrementals
+        if not self.stack:
+            return {}
+        for profile in self.stack:
+            for key, val in profile.default_env.iteritems():
+                if key in inc:
+                    val = val.split()
+                    s = d.get(key, None)
+                    if s is None:
+                        s = d[key] = set()
+                    incremental_expansion(s, val, "expanding %s make.defaults: " % profile)
+                    if not s:
+                        del d[key]
+                else:
+                    d[key] = val
+        return d
 
-        while stack:
-            processed, trg = stack[-1]
-            if processed:
-                stack.pop()
-                continue
-            if len(stack) > 1:
-                parent = stack[-2][1]
-            else:
-                parent = None
-            
-            new_parents = []
-
-            try:
-                new_parents.extend(iter_read_bash(pjoin(trg, "parent")))
-                new_parents = [pabs(pjoin(trg, x))
-                    for x in reversed(new_parents)]
-
-            except (IOError, OSError), oe:
-                if oe.errno != errno.ENOENT:
-                    if parent:
-                        raise profiles.ProfileException(
-                            "%s failed reading parent %s: %s" %
-                            (parent, trg, oe))
-                    raise profiles.ProfileException(
-                        "%s failed reading: %s" % (trg, oe))
-
-                if not os.path.exists(trg):
-                    # never required without a parent.
-                    if oe.errno == errno.ENOENT:
-                        s = "doesn't exist"
-                    else:
-                        s = "wasn't found: %s" % oe
-                    raise profiles.ProfileException(
-                        "%s: parent %s %s" % 
-                            (parent, trg, s))
-                # ok.  no parent, non error.
-                del oe
-            if not new_parents:
-                stack.pop()
-            else:
-                stack[-1][0] = True
-                stack.extend([False, x] for x in new_parents)
-                full_stack.extend(new_parents)
-        return full_stack
+    @property
+    def use_expand(self):
+        if "USE_EXPAND" in self.incrementals:
+            return tuple(self.default_env["USE_EXPAND"])
+        return tuple(self.default_env["USE_EXPAND"].split())
+    
+    def _collapse_virtuals(self):
+        d = {}
+        for profile in self.stack:
+            d.update(profile.virtuals)
+        return partial(AliasedVirtuals, d)
+    
+    def __getattr__(self, attr):
+        if attr == "stack":
+            self.stack = obj = self._load_stack()
+        elif attr in ("forced_use", "masked_use"):
+            obj = self._collapse_use_dict(attr)
+            setattr(self, attr, obj)
+        elif attr == "bashrc":
+            obj = self.bashrc = tuple(x.bashrc
+                for x in self.stack if x.bashrc is not None)
+        elif attr in ('masks', 'system', 'visibility', 'pkg_provided'):
+            obj = self._collapse_generic(attr)
+            setattr(self, attr, obj)
+        elif attr == 'default_env':
+            obj = self.default_env = self._collapse_env()
+        elif attr == 'virtuals':
+            obj = self.virtuals = self._collapse_virtuals()
+        else:
+            raise AttributeError(attr)
+        return obj
 
 
 class PkgProvided(ebuild_src.base):
 
     package_is_real = False
+    __inst_caching__ = True    
 
-    def __init__(self, keywords, *a, **kwds):
+    keywords = InvertedContains(())
+
+    def __init__(self, *a, **kwds):
         # 'None' repo.
         ebuild_src.base.__init__(self, None, *a, **kwds)
-        object.__setattr__(self, "keywords", keywords)
         object.__setattr__(self, "use", [])
         object.__setattr__(self, "data", {})
 

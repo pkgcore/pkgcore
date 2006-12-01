@@ -168,7 +168,7 @@ def config_from_make_conf(location="/etc/"):
 
     new_config["profile"] = basics.AutoConfigSection({
             "class": "pkgcore.ebuild.profiles.OnDiskProfile",
-            "base_path": pjoin("/", *psplit[:-i]),
+            "basepath": pjoin("/", *psplit[:-i]),
             "profile": pjoin(*psplit[-i:])})
 
     portdir = normpath(conf_dict.pop("PORTDIR").strip())

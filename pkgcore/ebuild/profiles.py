@@ -88,7 +88,6 @@ class ProfileNode(object):
         for line in data:
             if line[0] == '-':
                 if line[1] == '*':
-                    line = line[2:]
                     neg_sys.append(atom(line[2:]))
                 else:
                     neg_vis.append(atom(line[1:], negate_vers=True))

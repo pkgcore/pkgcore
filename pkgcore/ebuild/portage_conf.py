@@ -44,7 +44,7 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     @param vdb: L{pkgcore.repository.prototype.tree} instance that is the livefs
     @param profile: L{pkgcore.ebuild.profiles} instance
     """
-    arch = profile.conf.get("ARCH")
+    arch = profile.arch
     if arch is None:
         raise errors.InstantiationError("arch wasn't set in profiles")
     return SecurityUpgrades(ebuild_repo, vdb, arch)

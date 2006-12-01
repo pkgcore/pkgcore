@@ -131,7 +131,7 @@ class ProfileNode(object):
     def _load_deprecated(self, data):
         if data is not None:
             try:
-                replacement = data.next()
+                replacement = data.next().strip()
                 msg = "\n".join(x.lstrip("#").strip()
                     for x in data)
                 data = (replacement, msg)

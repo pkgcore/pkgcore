@@ -58,6 +58,8 @@ def split_negations(data, func):
     neg, pos = [], []
     for line in data:
         if line[0] == '-':
+            if len(line) == 1:
+                raise ValueError("'-' negation without a token")
             neg.append(func(line[1:]))
         else:
             pos.append(func(line))
@@ -164,7 +166,7 @@ class ProfileNode(object):
                 else:
                     pos.append(x)
         for k, v in d.iteritems():
-            d[k] = tuple(v)
+            d[k] = tuple(tuple(x) for x in v)
         return d
     
     @load_decorator("use.force")
@@ -172,7 +174,7 @@ class ProfileNode(object):
         d = self._load_pkg_use_force()
         neg, pos = split_negations(data, str)
         if neg or pos:
-            d[package.AlwaysTrue] = (neg, pos)
+            d[packages.AlwaysTrue] = (neg, pos)
         self.forced_use = d
         return d
 
@@ -189,7 +191,7 @@ class ProfileNode(object):
                 else:
                     pos.append(x)
         for k, v in d.iteritems():
-            d[k] = tuple(v)
+            d[k] = tuple(tuple(x) for x in v)
         return d
 
     def _load_default_env(self):

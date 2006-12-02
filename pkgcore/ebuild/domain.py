@@ -341,7 +341,7 @@ class domain(pkgcore.config.domain.domain):
         self.vdb = []
         profile_repo = None
         if profile.virtuals:
-            profile_repo = profile.virtuals(multiplex.tree(*repositories))
+            profile_repo = profile.make_virtuals_repo(multiplex.tree(*repositories))
         for l, repos in ((self.repos, repositories), (self.vdb, vdb)):
             for repo in repos:
                 if not repo.configured:

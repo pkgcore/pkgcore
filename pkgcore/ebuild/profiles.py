@@ -287,7 +287,7 @@ class OnDiskProfile(object):
         l = list(f(self.node))
         if self.load_profile_base:
             l = [EmptyRootNode(self.basepath)] + l
-        return tuple(reversed(l))
+        return tuple(l)
     
     def _collapse_use_dict(self, attr):
         d = {}
@@ -342,7 +342,8 @@ class OnDiskProfile(object):
         d = {}
         for profile in self.stack:
             d.update(profile.virtuals)
-        return partial(AliasedVirtuals, d)
+        self.virtuals = d
+        self.make_virtuals_repo = partial(AliasedVirtuals, d)
     
     def __getattr__(self, attr):
         if attr == "stack":
@@ -353,13 +354,17 @@ class OnDiskProfile(object):
         elif attr == "bashrc":
             obj = self.bashrc = tuple(x.bashrc
                 for x in self.stack if x.bashrc is not None)
-        elif attr in ('masks', 'system', 'visibility', 'pkg_provided'):
+        elif attr in ('masks', 'system', 'visibility'):
             obj = self._collapse_generic(attr)
             setattr(self, attr, obj)
         elif attr == 'default_env':
             obj = self.default_env = self._collapse_env()
         elif attr == 'virtuals':
-            obj = self.virtuals = self._collapse_virtuals()
+            self._collapse_virtuals()
+            obj = self.virtuals
+        elif attr == 'make_virtuals_repo':
+            self._collapse_virtuals()
+            obj = self.make_virtuals_repo
         else:
             raise AttributeError(attr)
         return obj

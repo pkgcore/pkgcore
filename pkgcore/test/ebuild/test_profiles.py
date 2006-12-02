@@ -1,11 +1,11 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os
+import os, shutil
 from pkgcore.test import TestCase
 from pkgcore.test.mixins import TempDirMixin
 from pkgcore.ebuild import profiles
-from pkgcore.util.osutils import join as pjoin
+from pkgcore.util.osutils import join as pjoin, ensure_dirs
 from pkgcore.util.currying import pre_curry
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
@@ -191,4 +191,183 @@ class TestProfileNode(profile_mixin, TestCase):
         self.write_file('make.defaults', 'y=narf\nx=${y}\n')
         self.assertEqual(ProfileNode(path).default_env,
             {'y':'narf', 'x':'narf'})
+
+    def test_bashrc(self):
+        path = pjoin(self.dir, self.profile)
+        self.assertIdentical(ProfileNode(path).bashrc, None)
+        self.write_file("profile.bashrc", '')
+        self.assertNotEqual(ProfileNode(path).bashrc, None)
         
+
+class test_incremental_expansion(TestCase):
+
+    def test_it(self):
+        s = set(["a", "b"])
+        profiles.incremental_expansion(s, ("-a", "b", "-b", "c"))
+        self.assertEqual(sorted(s), ["c"])
+
+
+class TestOnDiskProfile(TempDirMixin, TestCase):
+
+    def mk_profiles(self, *profiles, **kwds):
+        for x in os.listdir(self.dir):
+            shutil.rmtree(pjoin(self.dir, x))
+        for idx, vals in enumerate(profiles):
+            path = pjoin(self.dir, "base%i" % idx)
+            ensure_dirs(path)
+            for fname, data in vals.iteritems():
+                open(pjoin(path, fname), "w").write(data)
+            if idx:
+                open(pjoin(path, "parent"), "w").write("../base%i" % (idx -1))
+        if kwds:
+            for key, val in kwds.iteritems():
+                open(pjoin(self.dir, key), "w").write(val)
+
+    def get_profile(self, profile, **kwds):
+        return profiles.OnDiskProfile(self.dir, profile, **kwds)
+    
+    def test_stacking(self):
+        self.mk_profiles(
+            {},
+            {}
+        )
+        base = self.get_profile("base0")
+        self.assertEqual([x.path for x in base.stack],
+            [self.dir, pjoin(self.dir, "base0")])
+        self.assertEqual(len(base.system), 0)
+        self.assertEqual(len(base.masks), 0)
+        self.assertEqual(base.virtuals, {})
+        self.assertEqual(base.default_env, {})
+        self.assertEqual(len(base.visibility), 0)
+        self.assertEqual(len(base.masked_use), 0)
+        self.assertEqual(len(base.forced_use), 0)
+        self.assertEqual(len(base.bashrc), 0)
+
+    def test_packages(self):
+        self.mk_profiles(
+            {"packages":"*dev-util/diffball\ndev-util/foo\ndev-util/foo2\n"},
+            {"packages":"*dev-util/foo\n-*dev-util/diffball\n-dev-util/foo2\n"}
+        )
+        p = self.get_profile("base0")
+        self.assertEqual(sorted(p.system), sorted([atom("dev-util/diffball")]))
+        self.assertEqual(sorted(p.visibility),
+            sorted(atom("dev-util/foo%s" % x, negate_vers=True) for x in ['', '2']))
+
+        p = self.get_profile("base1")
+        self.assertEqual(sorted(p.system), sorted([atom("dev-util/foo")]))
+        self.assertEqual(sorted(p.visibility),
+            [atom("dev-util/foo", negate_vers=True)])
+
+    def test_masks(self):
+        self.mk_profiles(
+            {"package.mask":"dev-util/foo"},
+            {},
+            {"package.mask":"-dev-util/confcache\ndev-util/foo"},
+            **{"package.mask":"dev-util/confcache"}
+        )
+        self.assertEqual(sorted(self.get_profile("base0").masks),
+            sorted(atom("dev-util/" + x) for x in ["confcache", "foo"]))
+        self.assertEqual(sorted(self.get_profile("base1").masks),
+            sorted(atom("dev-util/" + x) for x in ["confcache", "foo"]))
+        self.assertEqual(sorted(self.get_profile("base2").masks),
+            [atom("dev-util/foo")])
+
+    def test_bashrc(self):
+        self.mk_profiles(
+            {"profile.bashrc":""},
+            {},
+            {"profile.bashrc":""}
+        )
+        self.assertEqual(len(self.get_profile("base0").bashrc), 1)
+        self.assertEqual(len(self.get_profile("base1").bashrc), 1)
+        self.assertEqual(len(self.get_profile("base2").bashrc), 2)
+
+    def test_virtuals(self):
+        self.mk_profiles(
+            {"virtuals":"virtual/alsa\tdev-util/foo1\nvirtual/blah\tdev-util/blah"},
+            {},
+            {"virtuals":"virtual/alsa\tdev-util/foo2\nvirtual/dar\tdev-util/foo2"}
+        )
+        self.assertEqual(sorted(self.get_profile("base0").virtuals.iteritems()),
+            sorted([("alsa", atom("dev-util/foo1")), ("blah", atom("dev-util/blah"))]))
+        self.assertEqual(sorted(self.get_profile("base1").virtuals.iteritems()),
+            sorted([("alsa", atom("dev-util/foo1")), ("blah", atom("dev-util/blah"))]))
+        self.assertEqual(sorted(self.get_profile("base2").virtuals.iteritems()),
+            sorted([("alsa", atom("dev-util/foo2")), ("blah", atom("dev-util/blah")),
+                ("dar", atom("dev-util/foo2"))]))
+    
+    def test_masked_use(self):
+        self.mk_profiles({})
+        self.assertEqual(self.get_profile("base0").masked_use, {})
+        self.mk_profiles(
+            {"use.mask":"X\nmmx\n"},
+            {},
+            {"use.mask":"-X"})
+
+        f = lambda d: set((k, tuple(v)) for k,v in d.iteritems())
+        self.assertEqual(f(self.get_profile("base0").masked_use),
+            f({packages.AlwaysTrue:('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("base1").masked_use),
+            f({packages.AlwaysTrue:('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("base2").masked_use),
+            f({packages.AlwaysTrue:['mmx']}))
+
+        self.mk_profiles(
+            {"use.mask":"X\nmmx\n", "package.use.mask":"dev-util/foo cups"},
+            {"package.use.mask": "dev-util/foo -cups"},
+            {"use.mask":"-X", "package.use.mask": "dev-util/blah X"})
+
+        self.assertEqual(f(self.get_profile("base0").masked_use),
+            f({packages.AlwaysTrue:('X', 'mmx'),
+            atom("dev-util/foo"):["cups"]}))
+        self.assertEqual(f(self.get_profile("base1").masked_use),
+            f({packages.AlwaysTrue:('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("base2").masked_use),
+            f({packages.AlwaysTrue:['mmx'],
+            atom("dev-util/blah"):['X']}))
+
+    def test_masked_use(self):
+        self.mk_profiles({})
+        self.assertEqual(self.get_profile("base0").forced_use, {})
+        self.mk_profiles(
+            {"use.force":"X\nmmx\n"},
+            {},
+            {"use.force":"-X"})
+
+        f = lambda d: set((k, tuple(v)) for k,v in d.iteritems())
+        self.assertEqual(f(self.get_profile("base0").forced_use),
+            f({packages.AlwaysTrue:('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("base1").forced_use),
+            f({packages.AlwaysTrue:('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("base2").forced_use),
+            f({packages.AlwaysTrue:['mmx']}))
+
+        self.mk_profiles(
+            {"use.force":"X\nmmx\n", "package.use.force":"dev-util/foo cups"},
+            {"package.use.force": "dev-util/foo -cups"},
+            {"use.force":"-X", "package.use.force": "dev-util/blah X"})
+
+        self.assertEqual(f(self.get_profile("base0").forced_use),
+            f({packages.AlwaysTrue:('X', 'mmx'),
+            atom("dev-util/foo"):["cups"]}))
+        self.assertEqual(f(self.get_profile("base1").forced_use),
+            f({packages.AlwaysTrue:('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("base2").forced_use),
+            f({packages.AlwaysTrue:['mmx'],
+            atom("dev-util/blah"):['X']}))
+
+    def test_default_env(self):
+        self.mk_profiles({})
+        self.assertEqual(self.get_profile("base0").default_env, {})
+        self.mk_profiles({"make.defaults":"X=y\n"},
+            {},
+            {"make.defaults":"X=-y\nY=foo\n"})
+        self.assertEqual(self.get_profile('base0',
+            incrementals=['X']).default_env,
+           {'X':set('y')})
+        self.assertEqual(self.get_profile('base1',
+            incrementals=['X']).default_env,
+           {'X':set('y')})
+        self.assertEqual(self.get_profile('base2',
+            incrementals=['X']).default_env,
+           {'Y':'foo'})

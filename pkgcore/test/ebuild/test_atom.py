@@ -158,6 +158,13 @@ class Test_native_atom(TestCase):
         self.assertNotEquals(self.kls('<cat/pkg-2'), self.kls('>cat/pkg-2'))
         self.assertNotEquals(self.kls('=cat/pkg-2*'), self.kls('=cat/pkg-2'))
 
+    def test_compatibility(self):
+        self.assertFalse(self.kls('=dev-util/diffball-0.7').match(
+            FakePkg('dev-util/diffball-0.7.0')))
+        # see bug http://bugs.gentoo.org/152127
+        self.assertFalse(self.kls('>=sys-apps/portage-2.1.0_pre3-r5').match(
+            FakePkg('sys-apps/portage-2.1_pre3-r5')))
+
 
 class Test_cpy_atom(Test_native_atom):
     

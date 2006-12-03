@@ -2,6 +2,7 @@
 # License: GPL2
 
 import errno, os
+from itertools import chain
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const
 from pkgcore.util.osutils import abspath, join as pjoin, readlines
@@ -344,6 +345,10 @@ class OnDiskProfile(object):
             d.setdefault(pkg.category, {}).setdefault(pkg.package,
                 []).append(pkg.fullver)
         return SimpleTree(d, pkg_klass=PkgProvided)
+
+    def _collapse_masks(self):
+        return frozenset(chain(self._collapse_generic("masks"),
+            self._collapse_generic("visibility")))
     
     def __getattr__(self, attr):
         if attr == "stack":
@@ -354,9 +359,10 @@ class OnDiskProfile(object):
         elif attr == "bashrc":
             obj = self.bashrc = tuple(x.bashrc
                 for x in self.stack if x.bashrc is not None)
-        elif attr in ('masks', 'system', 'visibility'):
-            obj = self._collapse_generic(attr)
-            setattr(self, attr, obj)
+        elif attr == 'system':
+            obj = self.system = self._collapse_generic(attr)
+        elif attr == 'masks':
+            obj = self.masks = self._collapse_masks()
         elif attr == 'default_env':
             obj = self.default_env = self._collapse_env()
         elif attr == 'virtuals':

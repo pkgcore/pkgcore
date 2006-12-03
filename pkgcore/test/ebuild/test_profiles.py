@@ -240,7 +240,6 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
         self.assertEqual(len(base.masks), 0)
         self.assertEqual(base.virtuals, {})
         self.assertEqual(base.default_env, {})
-        self.assertEqual(len(base.visibility), 0)
         self.assertEqual(len(base.masked_use), 0)
         self.assertEqual(len(base.forced_use), 0)
         self.assertEqual(len(base.bashrc), 0)
@@ -252,12 +251,12 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
         )
         p = self.get_profile("base0")
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/diffball")]))
-        self.assertEqual(sorted(p.visibility),
+        self.assertEqual(sorted(p.masks),
             sorted(atom("dev-util/foo%s" % x, negate_vers=True) for x in ['', '2']))
 
         p = self.get_profile("base1")
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/foo")]))
-        self.assertEqual(sorted(p.visibility),
+        self.assertEqual(sorted(p.masks),
             [atom("dev-util/foo", negate_vers=True)])
 
     def test_masks(self):

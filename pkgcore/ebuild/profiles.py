@@ -31,13 +31,6 @@ class ProfileError(Exception):
         return "ProfileError: profile %r, file %r, error %s" % (
             self.path, self.filename, self.error)
 
-def make_pkg_provided_repo(provides):
-    d = {}
-    for pkg in provides:
-        d.setdefault(pkg.category, {}).setdefault(
-            pkg.package, []).append(pkg.fullver)
-    return util.SimpleTree(d, pkg_klass=PkgProvided)
-
 def load_decorator(filename, handler=iter_read_bash, fallback=()):
     def f(func):
         def f2(self, *args):
@@ -241,10 +234,9 @@ class ProfileNode(object):
 class EmptyRootNode(ProfileNode):
 
     parents = ()
-    pkg_provided = ()
     deprecated = None
     forced_use = masked_use = {}
-    visibility = system = ((), ())
+    pkg_provided = visibility = system = ((), ())
     virtuals = {}
 
 
@@ -344,6 +336,13 @@ class OnDiskProfile(object):
             d.update(profile.virtuals)
         self.virtuals = d
         self.make_virtuals_repo = partial(AliasedVirtuals, d)
+
+    def _collapse_pkg_provided(self):
+        d = {}
+        for pkg in self._collapse_generic("pkg_provided"):
+            d.setdefault(pkg.category, {}).setdefault(pkg.package,
+                []).append(pkg.fullver)
+        return SimpleTree(d, pkg_klass=PkgProvided)
     
     def __getattr__(self, attr):
         if attr == "stack":
@@ -365,6 +364,8 @@ class OnDiskProfile(object):
         elif attr == 'make_virtuals_repo':
             self._collapse_virtuals()
             obj = self.make_virtuals_repo
+        elif attr == 'provides_repo':
+            obj = self.provides_repo = self._collapse_pkg_provided()
         else:
             raise AttributeError(attr)
         return obj

@@ -359,7 +359,8 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
     def test_default_env(self):
         self.mk_profiles({})
         self.assertEqual(self.get_profile("base0").default_env, {})
-        self.mk_profiles({"make.defaults":"X=y\n"},
+        self.mk_profiles(
+            {"make.defaults":"X=y\n"},
             {},
             {"make.defaults":"X=-y\nY=foo\n"})
         self.assertEqual(self.get_profile('base0',
@@ -371,3 +372,22 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
         self.assertEqual(self.get_profile('base2',
             incrementals=['X']).default_env,
            {'Y':'foo'})
+
+    def test_provides_repo(self):
+        self.mk_profiles({})
+        self.assertEqual(len(self.get_profile("base0").provides_repo), 0)
+
+        self.mk_profiles(
+            {"package.provided":"dev-util/diffball-0.7.1"})
+        self.assertEqual([x.cpvstr for x in
+            self.get_profile("base0").provides_repo],
+            ["dev-util/diffball-0.7.1"])
+
+        self.mk_profiles(
+            {"package.provided":"dev-util/diffball-0.7.1"},
+            {"package.provided":
+                "-dev-util/diffball-0.7.1\ndev-util/bsdiff-0.4"}
+        )
+        self.assertEqual([x.cpvstr for x in
+            sorted(self.get_profile("base1").provides_repo)],
+            ["dev-util/bsdiff-0.4"])

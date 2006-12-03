@@ -245,7 +245,8 @@ def incremental_expansion(orig, iterable, msg_prefix=''):
         if i[0] == '-':
             i = i[1:]
             if not i:
-                raise ValueError("%encountered an incomplete negation, '-'" % s)
+                raise ValueError("%sencountered an incomplete negation, '-'"
+                    % msg_prefix)
             orig.discard(i)
         else:
             orig.add(i)

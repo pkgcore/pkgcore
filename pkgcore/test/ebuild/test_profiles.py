@@ -205,6 +205,8 @@ class test_incremental_expansion(TestCase):
         s = set(["a", "b"])
         profiles.incremental_expansion(s, ("-a", "b", "-b", "c"))
         self.assertEqual(sorted(s), ["c"])
+        self.assertRaises(ValueError, 
+            profiles.incremental_expansion, set(), '-')
 
 
 class TestOnDiskProfile(TempDirMixin, TestCase):

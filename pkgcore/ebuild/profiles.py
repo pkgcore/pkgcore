@@ -11,17 +11,17 @@ from pkgcore.util.containers import InvertedContains
 from pkgcore.util.file import iter_read_bash, read_bash_dict
 from pkgcore.util.caching import WeakInstMeta
 from pkgcore.repository import virtual
+from pkgcore.util.currying import partial
 from pkgcore.util.demandload import demandload
 
 demandload(globals(), "pkgcore.interfaces.data_source:local_source "
     "pkgcore.ebuild:cpv "
-    "pkgcore.ebuild.atom:atom "
-    "pkgcore.repository.util:SimpleTree "
+    "pkgcore.ebuild:atom "
+    "pkgcore.repository:util "
     "pkgcore.log:logger "
     "pkgcore.restrictions:packages "
     "pkgcore.util:mappings "
-    "pkgcore.util.iterables:expandable_chain "
-    "pkgcore.util.currying:partial ")
+    "pkgcore.util.iterables:expandable_chain ")
 
 class ProfileError(Exception):
 
@@ -84,14 +84,14 @@ class ProfileNode(object):
         for line in data:
             if line[0] == '-':
                 if line[1] == '*':
-                    neg_sys.append(atom(line[2:]))
+                    neg_sys.append(atom.atom(line[2:]))
                 else:
-                    neg_vis.append(atom(line[1:], negate_vers=True))
+                    neg_vis.append(atom.atom(line[1:], negate_vers=True))
             else:
                 if line[0] == '*':
-                    sys.append(atom(line[1:]))
+                    sys.append(atom.atom(line[1:]))
                 else:
-                    vis.append(atom(line, negate_vers=True))
+                    vis.append(atom.atom(line, negate_vers=True))
                     
         self.system = (tuple(neg_sys), tuple(sys))
         self.visibility = (tuple(neg_vis), tuple(vis))
@@ -114,13 +114,13 @@ class ProfileNode(object):
             l = line.split()
             if len(l) != 2:
                 raise ValueError("%r is malformated" % line)
-            d[cpv.CPV(l[0]).package] = atom(l[1])
+            d[cpv.CPV(l[0]).package] = atom.atom(l[1])
         self.virtuals = d
         return d
 
     @load_decorator("package.mask")
     def _load_masks(self, data):
-        self.masks = split_negations(data, atom)
+        self.masks = split_negations(data, atom.atom)
         return self.masks
 
     @load_decorator("deprecated", lambda i:i, None)
@@ -152,7 +152,7 @@ class ProfileNode(object):
         d = {}
         for line in data:
             i = iter(line.split())
-            a = atom(i.next())
+            a = atom.atom(i.next())
             neg, pos = d.setdefault(a, ([], []))
             for x in i:
                 if x[0] == '-':
@@ -177,7 +177,7 @@ class ProfileNode(object):
         d = {}
         for line in data:
             i = iter(line.split())
-            a = atom(i.next())
+            a = atom.atom(i.next())
             neg, pos = d.setdefault(a, ([], []))
             for x in i:
                 if x[0] == '-':
@@ -344,7 +344,7 @@ class OnDiskProfile(object):
         for pkg in self._collapse_generic("pkg_provided"):
             d.setdefault(pkg.category, {}).setdefault(pkg.package,
                 []).append(pkg.fullver)
-        return SimpleTree(d, pkg_klass=PkgProvided)
+        return util.SimpleTree(d, pkg_klass=PkgProvided)
 
     def _collapse_masks(self):
         return frozenset(chain(self._collapse_generic("masks"),
@@ -424,4 +424,4 @@ class AliasedVirtuals(virtual.tree):
             for x in self.aliased_repo.itermatch(self._virtuals[catpkg[1]]))
 
     def _fetch_metadata(self, pkg):
-        return atom("=%s-%s" % (self._virtuals[pkg.package].key, pkg.fullver))
+        return atom.atom("=%s-%s" % (self._virtuals[pkg.package].key, pkg.fullver))

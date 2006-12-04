@@ -213,7 +213,7 @@ class bash_parser(shlex):
         tok = ''
         for s, t in self.changed_state:
             if s in ('"', "a"):
-                tok += self.var_expand(t)
+                tok += self.var_expand(t).replace("\\\n", '')
             else:
                 tok += t
         return tok

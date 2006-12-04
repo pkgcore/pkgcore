@@ -124,6 +124,12 @@ class ReadBashDictTest(TestCase):
             read_bash_dict(self.invalid_file.name, ignore_malformed=True),
             {'foo1': 'bar', 'foo2': 'barfoo3'})
 
+    def test_quoting(self):
+        self.assertEquals(read_bash_dict(StringIO("x='y \\\na'")),
+            {'x':'y \\\na'})
+        self.assertEquals(read_bash_dict(StringIO('x="y \\\nasdf"')),
+            {'x':'y asdf'})
+
     def test_sourcing(self):
         # TODO this is not even close to complete
         self.assertEquals(

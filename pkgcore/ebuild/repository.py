@@ -71,8 +71,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         syncable.tree_mixin.__init__(self, sync)
         self.base = self.location = location
         try:
-            st = os.lstat(self.base)
-            if not stat.S_ISDIR(st.st_mode):
+            if not stat.S_ISDIR(os.stat(self.base).st_mode):
                 raise errors.InitializationError(
                     "base not a dir: %s" % self.base)
 

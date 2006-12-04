@@ -64,7 +64,7 @@ class tree(prototype.tree):
         self.cache_location = cache_location
         self._versions_tmp_cache = {}
         try:
-            st = os.lstat(self.base)
+            st = os.stat(self.base)
             if not stat.S_ISDIR(st.st_mode):
                 raise errors.InitializationError(
                     "base not a dir: %r" % self.base)

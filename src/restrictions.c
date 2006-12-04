@@ -250,6 +250,14 @@ typedef struct {
     char flags;
 } pkgcore_PackageRestriction;
 
+static int
+pkgcore_PackageRestriction_traverse(pkgcore_PackageRestriction *self,
+    visitproc visit, void *arg)
+{
+    Py_VISIT(self->restrict);
+    return 0;
+}
+
 static PyObject *
 pkgcore_PackageRestriction_new(PyTypeObject *type,
     PyObject *args, PyObject *kwds)
@@ -422,7 +430,8 @@ static PyTypeObject pkgcore_PackageRestriction_Type = {
     0,                                              /* tp_as_buffer*/
     Py_TPFLAGS_BASETYPE|Py_TPFLAGS_DEFAULT,         /* tp_flags*/
     pkgcore_PackageRestriction_documentation,       /* tp_doc */
-    (traverseproc)0,                                /* tp_traverse */
+    (traverseproc)pkgcore_PackageRestriction_traverse,
+                                                    /* tp_traverse */
     (inquiry)0,                                     /* tp_clear */
     (richcmpfunc)pkgcore_PackageRestriction_richcompare,
                                                     /* tp_richcompare */

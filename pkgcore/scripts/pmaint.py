@@ -81,7 +81,7 @@ commandline_commands['sync'] = (SyncOptionParser, sync_main)
 
 
 class CopyParser(commandline.OptionParser):
-    
+
     def __init__(self, **kwargs):
         commandline.OptionParser.__init__(self, description=
             "copy built pkg(s) into a repository", **kwargs)
@@ -132,6 +132,8 @@ class CopyParser(commandline.OptionParser):
         return values, []
 
 def copy_main(options, out, err):
+    "copy pkgs between repositories"
+    
     trg_repo = options.target_repo
     src_repo = options.source_repo
 

@@ -219,14 +219,13 @@ class domain(pkgcore.config.domain.domain):
 
         self.name = name
         settings.setdefault("PKGCORE_DOMAIN", name)
-        inc_d = set(incrementals)
-        inc_d.update(profile.use_expand)
-        for x in inc_d.intersection(settings):
-            if isinstance(settings[x], basestring):
+        for x in incrementals:
+            if isinstance(settings.get(x), basestring):
                 settings[x] = set(settings[x].split())
+
         for x, v in profile.default_env.iteritems():
             if x in settings:
-                if x in inc_d:
+                if x in incrementals:
                     if isinstance(v, basestring):
                         v = set(v.split())
                     else:
@@ -234,14 +233,22 @@ class domain(pkgcore.config.domain.domain):
                     incremental_expansion(v, settings[x])
                     settings[x] = v
             else:
-                if x in inc_d:
+                if x in incrementals:
                     if isinstance(v, basestring):
                         v = set(v.split())
                     settings[x] = v
                 else:
                     settings[x] = v
-        del inc_d
 
+        # use is collapsed; now stack use_expand.
+        use = settings.setdefault("USE", set())
+        for u in profile.use_expand:
+            v = settings.get(u)
+            if v is None:
+                continue
+            u2 = u.lower()+"_"
+            use.update(u2 + x for x in settings[u].split())
+            
         # visibility mask...
         # if ((package.mask or visibility) and not package.unmask)
         # or not (package.keywords or accept_keywords)
@@ -263,10 +270,9 @@ class domain(pkgcore.config.domain.domain):
             vfilter.add_restriction(r)
         del pkg_unmaskers, pkg_maskers
 
-        use, license, default_keywords = [], [], []
+        license, default_keywords = [], []
         master_license = []
-        for k, v in (("USE", use),
-                     ("ACCEPT_KEYWORDS", default_keywords),
+        for k, v in (("ACCEPT_KEYWORDS", default_keywords),
                      ("ACCEPT_LICENSE", master_license)):
             if k not in settings:
                 raise Failure("No %s setting detected from profile, "
@@ -276,11 +282,6 @@ class domain(pkgcore.config.domain.domain):
             v.extend(s)
             settings[k] = v
 
-        for u in profile.use_expand:
-            if u in settings:
-                u2 = u.lower()+"_"
-                use.extend(u2 + x for x in settings[u])
-                settings[u] = ' '.join(settings[u])
 
         self.use = use
 

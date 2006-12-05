@@ -28,6 +28,7 @@ from pkgcore.util.demandload import demandload
 from pkgcore.ebuild import const
 from pkgcore.ebuild.profiles import incremental_expansion
 from pkgcore.util.parserestrict import parse_match
+from pkgcore.ebuild.misc import collapsed_restrict_to_data
 
 demandload(
     globals(),
@@ -63,81 +64,6 @@ def package_keywords_splitter(val):
 # selected by config)
 # ~harring
 
-
-def make_data_dict(*iterables):
-    """
-    descriptive, no?
-    
-    Basically splits an iterable of restrict:data into
-    level of specificity, repo, cat, pkg, atom (dict) for use
-    in filters
-    """
-
-    always = []
-    repo = []    
-    cat = []
-    pkg = []
-    atom_d = {}
-    for iterable in iterables:
-        for a, data in iterable:
-            if not data:
-                continue
-            if isinstance(a, restriction.AlwaysBool):
-                always.extend(data)
-            elif isinstance(a, atom):
-                atom_d.setdefault(a.key, []).append((a, data))
-            elif isinstance(a, packages.PackageRestriction):
-                if a.attr == "category":
-                    cat.append((a, data))
-                elif a.attr == "package":
-                    pkg.append((a, data))
-                else:
-                    raise ValueError("%r doesn't operate on package/category: "
-                        "data %r" % (a, data))
-            elif isinstance(a, restriction.AlwaysBool):
-                repo.append((a, data))
-            else:
-                raise ValueError("%r is not a AlwaysBool, PackageRestriction, "
-                    "or atom: data %r" % (a, data))
-
-    if always:
-        s = set()
-        incremental_expansion(s, always)
-        always = s
-    else:
-        always = set()
-    return [always, repo, cat, pkg, 
-        dict((k, tuple(v)) for k, v in atom_d.iteritems())]
-
-def generic_collapse_data_gen(specifics_tuple, pkg):
-    for specific in specifics_tuple[0]:
-        yield specific
-    for specific in specifics_tuple[1:3]:
-        for restrict, data in specific:
-            if restrict.match(pkg):
-                for val in data:
-                    yield val
-    for atom, data in specifics_tuple[-1].get(pkg.key, ()):
-        if atom.match(pkg):
-            for val in data:
-                yield val
-
-def generic_collapse_data(specifics_tuple, pkg, force_copy=False):
-    l = []
-    for specific in specifics_tuple[1:3]:
-        for restrict, data in specific:
-            if restrict.match(pkg):
-                l.append(data)
-    for atom, data in specifics_tuple[-1].get(pkg.key, ()):
-        if atom.match(pkg):
-            l.append(data)
-    if not l:
-        if force_copy:
-            return set(specifics_tuple[0])
-        return specifics_tuple[0]
-    s = set(specifics_tuple[0])
-    incremental_expansion(s, iflatten_instance(l))
-    return s
 
 def generate_masking_restrict(masks):
     # if it's masked, it's not a match
@@ -330,12 +256,14 @@ class domain(pkgcore.config.domain.domain):
         # stack use stuff first, then profile.
         # could do an intersect up front to pull out the forced disabled
         # also, although that code would be fugly
-        self.enabled_use = make_data_dict(
+        self.enabled_use = collapsed_restrict_to_data(
             ((packages.AlwaysTrue, self.use),
             (packages.AlwaysTrue, self.arch)), pkg_use)
-        self.forced_use = make_data_dict(profile.forced_use.iteritems(),
+        self.forced_use = collapsed_restrict_to_data(
+            profile.forced_use.iteritems(),
             ((packages.AlwaysTrue, self.arch),))
-        self.disabled_use = make_data_dict(profile.masked_use.iteritems())
+        self.disabled_use = collapsed_restrict_to_data(
+            profile.masked_use.iteritems())
         
         self.settings["bashrc"] = bashrc
         self.repos = []
@@ -371,26 +299,25 @@ class domain(pkgcore.config.domain.domain):
             self.repos = [profile_repo] + self.repos
 
     def make_license_filter(self, master_license, pkg_licenses):
-        if not pkg_licenses:
-            # simple case.
-            return packages.PackageRestriction("license",
-                values.ContainmentMatch(*master_license))
-
-        # not so simple case.
-        data = make_data_dict(((packages.AlwaysTrue, master_license),), 
+        data = collapsed_restrict_to_data(
+            ((packages.AlwaysTrue, master_license),), 
             pkg_licenses)
         return delegate(self.apply_license_filter, data)
 
-    @staticmethod
-    def apply_license_filter(data, pkg, mode):
-        # note we're not using a restriction here; no point, this is faster.
-        repo, data = data
-        license = set()
-        incremental_expansion(license, generic_collapse_data_gen(data, pkg))
-        if mode == "match":
-            return truth(license.intersection(pkg.license))
-        return getattr(packages.PackageRestriction("license", 
-            values.ContainmentMatch(*license)), mode)(pkg)
+    def apply_license_filter(self, data, pkg, mode):
+        # note we're not honoring mode; it's always match.
+        # reason is that of not turning on use flags to get acceptible license
+        # pairs.
+        # maybe change this down the line?
+        allowed_licenses = data.pull_data(pkg)
+        for and_pair in pkg.license.dnf_solutions():
+            for license in and_pair:
+                if license not in allowed_licenses:
+                    break
+            else:
+                # tiz fine.
+                return True
+        return False
 
     def make_keywords_filter(self, arch, default_keys, pkg_keywords,
         incremental=False):
@@ -407,10 +334,12 @@ class domain(pkgcore.config.domain.domain):
                     return r, unstable
                 else:
                     return r, v
-            data = make_data_dict(((packages.AlwaysTrue, default_keys),),
+            data = collapsed_restrict_to_data(
+                ((packages.AlwaysTrue, default_keys),),
                 (f(*i) for i in pkg_keywords))
         else:
-            data = make_data_dict(((packages.AlwaysTrue, default_keys),),
+            data = collapsed_restrict_to_data(
+                ((packages.AlwaysTrue, default_keys),),
                 pkg_keywords)
         
         if incremental:
@@ -424,15 +353,14 @@ class domain(pkgcore.config.domain.domain):
     def incremental_apply_keywords_filter(data, pkg, mode):
         # note we ignore mode; keywords aren't influenced by conditionals.
         # note also, we're not using a restriction here.  this is faster.
-        allowed = set()
-        incremental_expansion(allowed, generic_collapse_data_gen(data, pkg))
+        allowed = data.pull_data(pkg)
         return any(True for x in pkg.keywords if x in allowed)
 
     @staticmethod
     def apply_keywords_filter(data, pkg, mode):
         # note we ignore mode; keywords aren't influenced by conditionals.
         # note also, we're not using a restriction here.  this is faster.
-        allowed = generic_collapse_data(data, pkg)
+        allowed = data.pull_data(pkg)
         if "*" in allowed:
             for k in pkg.keywords:
                 if k[0] not in "-~":
@@ -441,25 +369,24 @@ class domain(pkgcore.config.domain.domain):
             for k in pkg.keywords:
                 if k[0] == "~":
                     return True
-        return truth(allowed.intersection(pkg.keywords))
+        return any(True for x in pkg.keywords if x in allowed)
 
     def make_per_package_use(self, default_use, pkg_use):
         if not pkg_use:
             return default_use, ((), {})
-        data = make_data_dict(default_use, pkg_use)
-        return data
+        return collapsed_restrict_to_data(default_use, pkg_use)
 
     def get_package_use(self, pkg):
-        disabled = generic_collapse_data(self.disabled_use, pkg)
-        enabled = generic_collapse_data(self.enabled_use, pkg, False)
-        immutable = generic_collapse_data(self.forced_use, pkg, False)
+        disabled = self.disabled_use.pull_data(pkg)
+        enabled = self.enabled_use.pull_data(pkg)
+        immutable = self.forced_use.pull_data(pkg, False)
         if disabled:
-            if enabled is self.enabled_use[0]:
+            if enabled is self.enabled_use.defaults:
                 enabled = set(enabled)
-            if immutable is self.forced_use[0]:
+            if immutable is self.forced_use.defaults:
                 immutable = set(immutable)
         elif immutable:
-            if enabled is self.enabled_use[0]:
+            if enabled is self.enabled_use.defaults:
                 enabled = set(enabled)
         else:
             return immutable, enabled

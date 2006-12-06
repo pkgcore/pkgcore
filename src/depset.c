@@ -53,10 +53,8 @@ Err_WrapException(PyObject *dep_str, char *tok_start,
 {
     PyObject *type, *val, *tb;
     PyErr_Fetch(&type, &val, &tb);
-    PyObject *res = PyObject_CallFunction(type, "O", val);
-    if(res) {
-        _Err_SetParse(dep_str, res, tok_start, tok_end);
-        Py_DECREF(res);
+    if(val) {
+        _Err_SetParse(dep_str, val, tok_start, tok_end);
     }
     Py_XDECREF(type);
     Py_XDECREF(val);

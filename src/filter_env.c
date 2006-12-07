@@ -627,5 +627,6 @@ init_filter_env()
         return;
     }
 
+    /* XXX the returns above this point trigger SystemErrors. */
     Py_InitModule3("_filter_env", pkgcore_filter_env_methods, module_doc);
 }

@@ -189,9 +189,9 @@ static PyMemberDef pkgcore_StrExactMatch_members[] = {
 };
 
 PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "negate", negate, 
-    (self->flags & NEGATED_RESTRICT));
+    (self->flags & NEGATED_RESTRICT))
 PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "case_sensitive", case, 
-    (self->flags & CASE_SENSITIVE));
+    (self->flags & CASE_SENSITIVE))
 
 static PyGetSetDef pkgcore_StrExactMatch_attrs[] = {
 PKGCORE_GETSET(pkgcore_StrExactMatch, "negate", negate),
@@ -246,7 +246,7 @@ static PyTypeObject pkgcore_StrExactMatch_Type = {
 typedef struct {
     PyObject_HEAD
     PyObject *attr;
-    PyObject *restrict;
+    PyObject *restriction;
     char flags;
 } pkgcore_PackageRestriction;
 
@@ -262,11 +262,11 @@ static PyObject *
 pkgcore_PackageRestriction_new(PyTypeObject *type,
     PyObject *args, PyObject *kwds)
 {
-    PyObject *attr, *restrict, *negate = NULL, *ignore_missing = NULL;
+    PyObject *attr, *restriction, *negate = NULL, *ignore_missing = NULL;
     static char *kwdlist[] = {"attr", "childrestriction", "negate", 
         "ignore_missing", NULL};
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "SO|OO", kwdlist, 
-        &attr, &restrict, &negate, &ignore_missing)) {
+        &attr, &restriction, &negate, &ignore_missing)) {
         return NULL;
     }
 
@@ -296,8 +296,8 @@ pkgcore_PackageRestriction_new(PyTypeObject *type,
         return NULL;
     Py_INCREF(attr);
     self->attr = attr;
-    Py_INCREF(restrict);
-    self->restrict = restrict;
+    Py_INCREF(restriction);
+    self->restriction = restriction;
     if(NULL == index(PyString_AS_STRING(attr), '.'))
         flags |= SHALLOW_ATTR;
     self->flags = flags;
@@ -329,14 +329,14 @@ pkgcore_PackageRestriction_richcompare(pkgcore_PackageRestriction *self,
         return ret;
     }
     Py_DECREF(ret);
-    return PyObject_RichCompare(self->restrict, other->restrict, op);
+    return PyObject_RichCompare(self->restriction, other->restriction, op);
 }
 
 void
 pkgcore_PackageRestriction_dealloc(pkgcore_PackageRestriction *self)
 {
     Py_CLEAR(self->attr);
-    Py_CLEAR(self->restrict);
+    Py_CLEAR(self->restriction);
     self->ob_type->tp_free((PyObject *)self);
 }
 
@@ -384,16 +384,16 @@ PyDoc_STRVAR(
     "cpython PackageRestriction base class for speed");
 
 static PyMemberDef pkgcore_PackageRestriction_members[] = {
-    {"restriction", T_OBJECT, offsetof(pkgcore_PackageRestriction, restrict),
+    {"restriction", T_OBJECT, offsetof(pkgcore_PackageRestriction, restriction),
      READONLY},
     {"attr", T_OBJECT, offsetof(pkgcore_PackageRestriction, attr), READONLY},
     {NULL}
 };
 
 PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "negate", negate, 
-    (self->flags & NEGATED_RESTRICT));
+    (self->flags & NEGATED_RESTRICT))
 PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "ignore_missing",
-    ignore_missing, (self->flags & IGNORE_MISSING));
+    ignore_missing, (self->flags & IGNORE_MISSING))
 
 static PyGetSetDef pkgcore_PackageRestriction_attrs[] = {
 PKGCORE_GETSET(pkgcore_PackageRestriction, "negate", negate),
@@ -459,9 +459,14 @@ PyDoc_STRVAR(
 PyMODINIT_FUNC
 init_restrictions()
 {
+    PyObject *m = Py_InitModule3("_restrictions", NULL,
+        pkgcore_restrictions_documentation);
+    if (!m)
+        return;
+
     if (PyType_Ready(&pkgcore_StrExactMatch_Type) < 0)
         return;
-    
+
     if (PyType_Ready(&pkgcore_PackageRestriction_Type) < 0)
         return;
 
@@ -471,22 +476,21 @@ init_restrictions()
             return;                                 \
         }                                           \
     }
-    
+
     LOAD_STR(pkgcore_restrictions_type, "type");
     LOAD_STR(pkgcore_restrictions_subtype, "subtype");
     #undef LOAD_STR
-    
-    PyObject *m = Py_InitModule3("_restrictions", NULL,
-        pkgcore_restrictions_documentation);
-    
+
     Py_INCREF(&pkgcore_StrExactMatch_Type);
-    PyModule_AddObject(m, "StrExactMatch",
-        (PyObject *)&pkgcore_StrExactMatch_Type);
+    if (PyModule_AddObject(
+            m, "StrExactMatch", (PyObject *)&pkgcore_StrExactMatch_Type) == -1)
+        return;
 
     Py_INCREF(&pkgcore_PackageRestriction_Type);
-    PyModule_AddObject(m, "PackageRestriction",
-        (PyObject *)&pkgcore_PackageRestriction_Type);
-    
-    if (PyErr_Occurred())
-        Py_FatalError("can't initialize module _restrictions");
+    if (PyModule_AddObject(
+            m, "PackageRestriction",
+            (PyObject *)&pkgcore_PackageRestriction_Type) == -1)
+        return;
+
+    /* Success! */
 }

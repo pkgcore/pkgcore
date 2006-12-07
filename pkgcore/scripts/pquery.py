@@ -200,7 +200,7 @@ def optparse_type(parsefunc):
 
 def atom_type(option, opt, value):
     try:
-        return atom.atom(string)
+        return atom.atom(value)
     except atom.MalformedAtom, e:
         raise optparse.OptionValueError('option %s: %s' % (opt, e))
 
@@ -732,6 +732,11 @@ def print_package(options, out, err, pkg):
         for revdep in options.print_revdep:
             for name in ('depends', 'rdepends', 'post_rdepends'):
                 depset = getattr(pkg, name)
+                if getattr(depset, 'find_cond_nodes', None) is None:
+                    # TODO maybe be smarter here? (this code is
+                    # triggered by virtuals currently).
+                    out.write(' %s on %s' % (name, revdep))
+                    continue
                 for key, restricts in depset.find_cond_nodes(
                     depset.restrictions, True):
                     if not restricts and key.intersects(revdep):

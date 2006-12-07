@@ -448,7 +448,10 @@ PyDoc_STRVAR(
 PyMODINIT_FUNC
 init_lists()
 {
-    PyObject *m;
+    /* Create the module and add the functions */
+    PyObject *m = Py_InitModule3("_lists", NULL, pkgcore_lists_documentation);
+    if (!m)
+        return;
 
     if (PyType_Ready(&pkgcore_iflatten_func_type) < 0)
         return;
@@ -456,18 +459,14 @@ init_lists()
     if (PyType_Ready(&pkgcore_iflatten_instance_type) < 0)
         return;
 
-    /* Create the module and add the functions */
-    m = Py_InitModule3("_lists", NULL, pkgcore_lists_documentation);
-
     Py_INCREF(&pkgcore_iflatten_func_type);
-    PyModule_AddObject(m, "iflatten_func",
-                       (PyObject *)&pkgcore_iflatten_func_type);
+    if (PyModule_AddObject(
+            m, "iflatten_func", (PyObject *)&pkgcore_iflatten_func_type) == -1)
+        return;
 
     Py_INCREF(&pkgcore_iflatten_instance_type);
-    PyModule_AddObject(m, "iflatten_instance",
-                       (PyObject *)&pkgcore_iflatten_instance_type);
-
-    /* Check for errors */
-    if (PyErr_Occurred())
-        Py_FatalError("can't initialize module _lists");
+    if (PyModule_AddObject(
+            m, "iflatten_instance",
+            (PyObject *)&pkgcore_iflatten_instance_type) == -1)
+        return;
 }

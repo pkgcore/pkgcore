@@ -882,7 +882,7 @@ pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
 PKGCORE_FUNC_BINDING("__init__", "pkgcore.ebuild._atom.__init__",
     pkgcore_atom_init, METH_VARARGS|METH_KEYWORDS)
 PKGCORE_FUNC_BINDING("__getattr__", "pkgcore.ebuild._atom.__getattr__",
-    pkgcore_atom_getattr, METH_O|METH_COEXIST);
+    pkgcore_atom_getattr, METH_O|METH_COEXIST)
 
 PyDoc_STRVAR(
     pkgcore_atom_documentation,
@@ -969,6 +969,10 @@ load_external_objects()
 PyMODINIT_FUNC
 init_atom()
 {
+    PyObject *m = Py_InitModule3("_atom", NULL, pkgcore_atom_documentation);
+    if (!m)
+        return;
+
     // first get the exceptions we use.
     if(load_external_objects())
         return;
@@ -978,7 +982,7 @@ init_atom()
 
     if(PyType_Ready(&pkgcore_atom_getattr_type) < 0)
         return;
-    
+
     #define load_string(ptr, str)                   \
         if (!(ptr)) {                               \
             (ptr) = PyString_FromString(str);       \
@@ -1011,11 +1015,7 @@ init_atom()
     load_string(pkgcore_atom_op_droprev,    "~");
     load_string(pkgcore_atom_op_none,       "");
     #undef load_string
-    
-    PyObject *m = Py_InitModule3("_atom", NULL,
-        pkgcore_atom_documentation);
-    if(!m)
-        return;
+
     PyObject *d = PyDict_New();
     if(!d)
         return;

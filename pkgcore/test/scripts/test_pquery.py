@@ -7,6 +7,7 @@ from pkgcore.scripts import pquery
 from pkgcore.test.scripts import helpers
 from pkgcore.config import basics, ConfigHint, configurable
 from pkgcore.repository import util
+from pkgcore.ebuild import atom
 
 
 class FakeDomain(object):
@@ -65,6 +66,11 @@ class CommandlineTest(TestCase, helpers.MainMixin):
              ],
             '-v', '--max', '--all',
             test_domain=domain_config)
+
+    def test_atom(self):
+        config = self.parse(
+            '--print-revdep', 'a/spork', '--all', domain=domain_config)
+        self.assertEquals([atom.atom('a/spork')], config.print_revdep)
 
     def test_no_contents(self):
         self.assertOut([], '--contents', '--all', test_domain=domain_config)

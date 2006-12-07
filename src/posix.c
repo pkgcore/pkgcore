@@ -541,15 +541,18 @@ PyDoc_STRVAR(
 PyMODINIT_FUNC
 init_posix()
 {
+    PyObject *m = Py_InitModule3("_posix", pkgcore_posix_methods,
+                                 pkgcore_posix_documentation);
+    if (!m)
+        return;
+
     if (PyType_Ready(&pkgcore_readlines_type) < 0)
         return;
-    
-    PyObject *m = Py_InitModule3("_posix", pkgcore_posix_methods,
-        pkgcore_posix_documentation);
-    
+
     Py_INCREF(&pkgcore_readlines_type);
-    PyModule_AddObject(m, "readlines", (PyObject *)&pkgcore_readlines_type);
-    
-    if (PyErr_Occurred())
-        Py_FatalError("can't initialize module _posix");
+    if (PyModule_AddObject(
+            m, "readlines", (PyObject *)&pkgcore_readlines_type) == -1)
+        return;
+
+    /* Success! */
 }

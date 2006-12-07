@@ -113,20 +113,24 @@ init_chflags()
     if (!m)
         return;
 
-    PyModule_AddIntConstant(m, "UF_SETTABLE",  UF_SETTABLE);
-    PyModule_AddIntConstant(m, "UF_NODUMP",    UF_NODUMP);
-    PyModule_AddIntConstant(m, "UF_IMMUTABLE", UF_IMMUTABLE);
-    PyModule_AddIntConstant(m, "UF_APPEND",    UF_APPEND);
-    PyModule_AddIntConstant(m, "UF_OPAQUE",    UF_OPAQUE);
-    PyModule_AddIntConstant(m, "UF_NOUNLINK",  UF_NOUNLINK);
+#define addconst(name, value) \
+    if (PyModule_AddIntConstant(m, (name), (value)) == -1) \
+        return;
 
-    PyModule_AddIntConstant(m, "SF_SETTABLE",  SF_SETTABLE);
-    PyModule_AddIntConstant(m, "SF_NODUMP",    SF_NODUMP);
-    PyModule_AddIntConstant(m, "SF_IMMUTABLE", SF_IMMUTABLE);
-    PyModule_AddIntConstant(m, "SF_APPEND",    SF_APPEND);
-    PyModule_AddIntConstant(m, "SF_OPAQUE",    SF_OPAQUE);
-    PyModule_AddIntConstant(m, "SF_NOUNLINK",  SF_NOUNLINK);
-    PyModule_AddIntConstant(m, "SF_SNAPSHOT",  SF_SNAPSHOT);
+    addconst("UF_SETTABLE",  UF_SETTABLE);
+    addconst("UF_NODUMP",    UF_NODUMP);
+    addconst("UF_IMMUTABLE", UF_IMMUTABLE);
+    addconst("UF_APPEND",    UF_APPEND);
+    addconst("UF_OPAQUE",    UF_OPAQUE);
+    addconst("UF_NOUNLINK",  UF_NOUNLINK);
 
-    PyModule_AddIntConstant(m, "PROBLEM_FLAGS", problemflags);
+    addconst("SF_SETTABLE",  SF_SETTABLE);
+    addconst("SF_NODUMP",    SF_NODUMP);
+    addconst("SF_IMMUTABLE", SF_IMMUTABLE);
+    addconst("SF_APPEND",    SF_APPEND);
+    addconst("SF_OPAQUE",    SF_OPAQUE);
+    addconst("SF_NOUNLINK",  SF_NOUNLINK);
+    addconst("SF_SNAPSHOT",  SF_SNAPSHOT);
+
+    addconst("PROBLEM_FLAGS", problemflags);
 }

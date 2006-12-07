@@ -95,10 +95,10 @@ make_use_conditional(char *use_start, char *use_end, PyObject *payload)
     if(!val)
         return (PyObject *)NULL;
     
-    PyObject *restrict = PyObject_CallFunction(pkgcore_depset_PkgCond,
+    PyObject *restriction = PyObject_CallFunction(pkgcore_depset_PkgCond,
         "sOO", "use", val, payload);
     Py_DECREF(val);
-    return restrict;
+    return restriction;
 }
 
 #define SKIP_SPACES(ptr)     \
@@ -502,12 +502,16 @@ init_depset()
 {
     // first get the exceptions we use.
     if(load_external_objects())
+        /* XXX this returns *before* we called Py_InitModule3, so it
+         * triggers a SystemError. But if we initialize the module
+         * first python code can get at uninitialized pointers through
+         * our exported functions, which would be worse.
+         */
+         return;
+
+    if (!Py_InitModule3("_depset", pkgcore_depset_methods,
+                        pkgcore_depset_documentation))
         return;
-    
-    Py_InitModule3("_depset", pkgcore_depset_methods,
-        pkgcore_depset_documentation);
-    
-    if (PyErr_Occurred()) {
-        Py_FatalError("can't initialize module _depset");
-    }
+
+    /* Success! */
 }

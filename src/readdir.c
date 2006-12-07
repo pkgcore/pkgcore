@@ -363,6 +363,9 @@ init_readdir()
 {
     PyObject *m;
 
+    /* XXX we have to initialize these before we call InitModule3 because
+     * the pkgcore_readdir_methods use them, which screws up error handling.
+     */
     pkgcore_DIRSTR = PyString_FromString("directory");
     pkgcore_CHRSTR = PyString_FromString("chardev");
     pkgcore_BLKSTR = PyString_FromString("block");
@@ -386,8 +389,8 @@ init_readdir()
     /* Create the module and add the functions */
     m = Py_InitModule3("_readdir", pkgcore_readdir_methods,
                        pkgcore_module_documentation);
+    if (!m)
+        return;
 
-    if (PyErr_Occurred()) {
-        Py_FatalError("can't initialize module _caching");
-    }
+    /* Success! */
 }

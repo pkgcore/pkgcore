@@ -914,41 +914,45 @@ static NyHeapDef pkgcore_cpv_heapdefs[] = {
 };
 
 
-#ifndef PyMODINIT_FUNC	/* declarations for DLL import/export */
-#define PyMODINIT_FUNC void
-#endif
 PyMODINIT_FUNC
 init_cpv(void)
 {
-    PyObject *m, *s;
+    PyObject *m, *s, *errors;
+
+    m = Py_InitModule3("_cpv", NULL, pkgcore_cpv_documentation);
+    if (!m)
+        return;
 
     // this may be redundant; do this so __builtins__["__import__"] is used.
     s = PyString_FromString("pkgcore.ebuild.errors");
-    if(NULL == s)
+    if (!s)
         return;
-    m = PyImport_Import(s);
-    if(NULL == m)
-        return;
+
+    errors = PyImport_Import(s);
     Py_DECREF(s);
-    pkgcore_InvalidCPV_Exc = PyObject_GetAttrString(m, "InvalidCPV");
-    if(NULL == pkgcore_InvalidCPV_Exc)
+    if (!errors)
         return;
+
+    pkgcore_InvalidCPV_Exc = PyObject_GetAttrString(errors, "InvalidCPV");
+    if (!pkgcore_InvalidCPV_Exc)
+        return;
+
     pkgcore_cpvType.ob_type = &PyType_Type;
 
-    if(PyType_Ready(&pkgcore_cpvType) < 0)
-        return;
-    m = Py_InitModule3("_cpv", NULL, pkgcore_cpv_documentation);
-
-    if (NULL == m)
+    if (PyType_Ready(&pkgcore_cpvType) < 0)
         return;
 
     Py_INCREF(&pkgcore_cpvType);
-    PyModule_AddObject(m, "CPV", (PyObject *)&pkgcore_cpvType);
-    PyObject *cobject = PyCObject_FromVoidPtrAndDesc(&pkgcore_cpv_heapdefs,
-                                                     "NyHeapDef[] v1.0",
-                                                     0);
-    /* XXX this error handling here is messed up */
-    if (cobject) {
-        PyModule_AddObject(m, "_NyHeapDefs_", cobject);
-    }
+    if (PyModule_AddObject(m, "CPV", (PyObject *)&pkgcore_cpvType) == -1)
+        return;
+
+    PyObject *cobject = PyCObject_FromVoidPtrAndDesc(
+        &pkgcore_cpv_heapdefs, "NyHeapDef[] v1.0", 0);
+    if (!cobject)
+        return;
+
+    if (PyModule_AddObject(m, "_NyHeapDefs_", cobject) == -1)
+        return;
+
+    /* Success! */
 }

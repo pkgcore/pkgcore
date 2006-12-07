@@ -17,7 +17,7 @@ type##_set_##attr (type *self, PyObject *v, void *closure)              \
 {                                                                       \
     PyErr_SetString(PyExc_AttributeError, name" is immutable");         \
     return -1;                                                          \
-};                                                                      \
+}                                                                       \
                                                                         \
 static PyObject *                                                       \
 type##_get_##attr (type *self, void *closure)                           \
@@ -52,7 +52,7 @@ static PyTypeObject func##_type = {                                     \
     0,                                  /* tp_as_sequence */            \
     0,                                  /* tp_as_mapping  */            \
     0,                                  /* tp_hash      */              \
-    func,                               /* tp_call      */              \
+    (ternaryfunc)func,                  /* tp_call      */              \
     0,                                  /* tp_str       */              \
     0,                                  /* tp_getattro  */              \
     0,                                  /* tp_setattro  */              \
@@ -84,7 +84,6 @@ func##_get_descr(PyObject *self, PyObject *obj, PyObject *type)         \
 }                                                                       \
                                                                         \
 _PKGCORE_FUNC_DESC(meth_name, class_name, func, methargs,               \
-    func##_get_descr);
-                                                                        
+    func##_get_descr)
 
 #endif

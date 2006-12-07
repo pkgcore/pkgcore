@@ -234,8 +234,8 @@ class EbuildProcessor:
                 "likely a bug")
         self.write(EBD_ENV_PATH)
         self.write(sys.executable)
-        self.write(osutils.join(*osutils.normpath(
-                    osutils.abspath(pkgcore.__file__)).split(os.sep)[:-2]))
+        self.write(osutils.normpath(osutils.abspath(osutils.join(
+                        pkgcore.__file__, os.pardir, os.pardir))))
         if self.__sandbox:
             self.write("sandbox_log?")
             self.__sandbox_log = self.read().split()[0]

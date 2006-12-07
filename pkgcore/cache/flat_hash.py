@@ -77,10 +77,12 @@ class database(fs_template.FsBased):
             myf = open(fp, "w", 32768)
         except IOError, ie:
             if ie.errno == errno.ENOENT:
+                if not self._ensure_dirs(cpv):
+                    raise errors.CacheCorruption(
+                        cpv, 'error creating directory for %r' % (fp,))
                 try:
-                    self._ensure_dirs(cpv)
                     myf = open(fp, "w", 32768)
-                except (OSError, IOError),e:
+                except (OSError, IOError), e:
                     raise errors.CacheCorruption(cpv, e)
             else:
                 raise errors.CacheCorruption(cpv, ie)

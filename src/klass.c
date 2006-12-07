@@ -206,10 +206,10 @@ pkgcore_generic_equality_ne(PyObject *self, PyObject *other)
 }
 
 PKGCORE_FUNC_BINDING("generic_eq", "pkgcore.util._klass.generic_eq",
-    pkgcore_generic_equality_eq, METH_O|METH_COEXIST);
+    pkgcore_generic_equality_eq, METH_O|METH_COEXIST)
 
 PKGCORE_FUNC_BINDING("generic_ne", "pkgcore.util._klass.generic_ne",
-    pkgcore_generic_equality_ne, METH_O);
+    pkgcore_generic_equality_ne, METH_O)
     
 
 static PyMethodDef pkgcore_mapping_get_def = {
@@ -337,12 +337,16 @@ PyDoc_STRVAR(
 PyMODINIT_FUNC
 init_klass()
 {
+    PyObject *m = Py_InitModule3("_klass", NULL, pkgcore_klass_documentation);
+    if (!m)
+        return;
+
     if (PyType_Ready(&pkgcore_GetAttrProxyType) < 0)
         return;
 
     if (PyType_Ready(&pkgcore_GetType) < 0)
         return;
-    
+
     if (PyType_Ready(&pkgcore_ContainsType) < 0)
         return;
 
@@ -351,37 +355,37 @@ init_klass()
 
     if (PyType_Ready(&pkgcore_generic_equality_ne_type) < 0)
         return;
-    
+
     if(!pkgcore_equality_attr) {
         if(!(pkgcore_equality_attr = PyString_FromString(
             "__attr_comparison__")))
             return;
     }
-    
-    PyObject *m = Py_InitModule3("_klass", NULL,
-        pkgcore_klass_documentation);
 
     PyObject *tmp;
     if (!(tmp = PyType_GenericNew(&pkgcore_GetType, NULL, NULL)))
         return;
-    PyModule_AddObject(m, "get", tmp);
+    if (PyModule_AddObject(m, "get", tmp) == -1)
+        return;
 
     if (!(tmp = PyType_GenericNew(&pkgcore_ContainsType, NULL, NULL)))
         return;
-    PyModule_AddObject(m, "contains", tmp);
+    if (PyModule_AddObject(m, "contains", tmp) == -1)
+        return;
 
     Py_INCREF(&pkgcore_GetAttrProxyType);
-    PyModule_AddObject(m, "GetAttrProxy",
-        (PyObject *)&pkgcore_GetAttrProxyType);
-    
-    tmp = PyType_GenericNew(&pkgcore_generic_equality_eq_type,
-        NULL, NULL);
+    if (PyModule_AddObject(
+            m, "GetAttrProxy", (PyObject *)&pkgcore_GetAttrProxyType) == -1)
+        return;
+
+    tmp = PyType_GenericNew(&pkgcore_generic_equality_eq_type, NULL, NULL);
     if(!tmp)
         return;
-    PyModule_AddObject(m, "generic_eq", tmp);
-    tmp = PyType_GenericNew(&pkgcore_generic_equality_ne_type,
-        NULL, NULL);
+    if (PyModule_AddObject(m, "generic_eq", tmp) == -1)
+        return;
+    tmp = PyType_GenericNew(&pkgcore_generic_equality_ne_type, NULL, NULL);
     if(!tmp)
         return;
-    PyModule_AddObject(m, "generic_ne", tmp);
+    if (PyModule_AddObject(m, "generic_ne", tmp) == -1)
+        return;
 }

@@ -673,7 +673,11 @@ PyDoc_STRVAR(
 PyMODINIT_FUNC
 init_caching()
 {
-    PyObject *m;
+    /* Create the module and add the functions */
+    PyObject *m = Py_InitModule3(
+        "_caching", NULL, pkgcore_module_documentation);
+    if (!m)
+        return;
 
     pkgcore_WeakInstMetaType.tp_base = &PyType_Type;
 
@@ -686,34 +690,33 @@ init_caching()
     if (PyType_Ready(&pkgcore_WeakValFinalizerType) < 0)
         return;
 
-    /* Create the module and add the functions */
-    m = Py_InitModule3("_caching", NULL, pkgcore_module_documentation);
-
-    if(!pkgcore_caching_disable_str) {
-        if(!(pkgcore_caching_disable_str = 
+    if (!pkgcore_caching_disable_str) {
+        if (!(pkgcore_caching_disable_str =
             PyString_FromString("disable_inst_caching")))
-            Py_FatalError("can't initialize module _caching");
-        
+            /* We can just return here, since the only way to get at
+             * this is through pkgcore_WeakInstMeta_call and that
+             * cannot be accessed yet.
+             */
+            return;
     }
 
     Py_INCREF(&pkgcore_WeakInstMetaType);
-    PyModule_AddObject(m, "WeakInstMeta",
-        (PyObject *)&pkgcore_WeakInstMetaType);
-    if (PyErr_Occurred())
-        Py_FatalError("can't initialize module _caching");
+    if (PyModule_AddObject(
+            m, "WeakInstMeta", (PyObject *)&pkgcore_WeakInstMetaType) == -1)
+        return;
 
     Py_INCREF(&pkgcore_WeakValCacheType);
-    PyModule_AddObject(m, "WeakValCache",
-        (PyObject *)&pkgcore_WeakValCacheType);
+    if (PyModule_AddObject(
+            m, "WeakValCache", (PyObject *)&pkgcore_WeakValCacheType) == -1)
+        return;
 
-    PyObject *cobject = PyCObject_FromVoidPtrAndDesc(&pkgcore_caching_heapdefs,
-                                                     "NyHeapDef[] v1.0",
-                                                     0);
-    /* XXX this error handling here is messed up */
-    if (cobject) {
-        PyModule_AddObject(m, "_NyHeapDefs_", cobject);
-    }
+    PyObject *cobject = PyCObject_FromVoidPtrAndDesc(
+        &pkgcore_caching_heapdefs, "NyHeapDef[] v1.0", 0);
+    if (!cobject)
+        return;
 
-    if (PyErr_Occurred())
-        Py_FatalError("can't initialize module _caching");
+    if (PyModule_AddObject(m, "_NyHeapDefs_", cobject) == -1)
+        return;
+
+    /* Success! */
 }

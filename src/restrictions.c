@@ -254,7 +254,7 @@ static int
 pkgcore_PackageRestriction_traverse(pkgcore_PackageRestriction *self,
     visitproc visit, void *arg)
 {
-    Py_VISIT(self->restrict);
+    Py_VISIT(self->restriction);
     return 0;
 }
 

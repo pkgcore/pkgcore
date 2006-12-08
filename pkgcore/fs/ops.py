@@ -242,12 +242,14 @@ def unmerge_contents(cset, offset=None, callback=lambda obj:None):
     l.sort()
     l.reverse()
     for x in l:
-        callback(x)
         try:
             os.rmdir(x.location)
         except OSError, e:
-            if not e.errno in (errno.ENOTEMPTY, errno.ENOENT, errno.ENOTDIR):
+            if not e.errno in (errno.ENOTEMPTY, errno.ENOENT, errno.ENOTDIR,
+                               errno.EBUSY):
                 raise
+        else:
+            callback(x)
     return True
 
 # Plugin system priorities

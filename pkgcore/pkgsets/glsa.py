@@ -177,10 +177,10 @@ class GlsaDirSet(object):
             return packages.AndRestriction(
                 atom.VersionMatch("~", base.version),
                 atom.VersionMatch(restrict, base.version, rev=base.revision),
-                finalize=True, negate=True)
+                finalize=True, negate=negate)
         if glob:
             return packages.PackageRestriction("fullver",
-                values.StrGlobMatch(base))
+                values.StrGlobMatch(base.fullver))
         return atom.VersionMatch(restrict, base.version, rev=base.revision,
                                  negate=negate)
 

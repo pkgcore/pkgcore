@@ -140,4 +140,19 @@ class TestGlsaDirSet(TempDirMixin, TestCase):
     def test_iter(self):
         self.mk_glsa(pkgs_set)
         g = glsa.GlsaDirSet(self.dir)
-        self.assertEqual(len(list(g)), 2)
+        l = list(g)
+        self.assertEqual([x.key for x in l],
+            ['dev-util/diffball', 'dev-util/bsdiff'])
+
+    def test_pkg_groupped_iter(self):
+        self.mk_glsa(pkgs_set + (("dev-util/bsdiff", ([], ["~>=2-r1"])),))
+        g = glsa.GlsaDirSet(self.dir)
+        l = list(g.pkg_grouped_iter())
+        self.assertEqual([x.key for x in l], 
+            ['dev-util/diffball', 'dev-util/bsdiff'])
+        # main interest is dev-util/bsdiff
+        r = l[1]
+        pkgs = [cpv.CPV("dev-util/bsdiff-%s" % ver) for ver in 
+            ("0", "1", "1.1", "2", "2-r1")]
+        self.assertEqual([x.fullver for x in pkgs if r.match(x)],
+            ["1.1", "2-r1"])

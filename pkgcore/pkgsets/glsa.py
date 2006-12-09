@@ -112,10 +112,6 @@ class GlsaDirSet(object):
                         if pkg_vuln_restrict is None:
                             continue
                         pkgatom = atom.atom(pkgname)
-                        # some glsa suck. intentionally trigger any
-                        # failures now.
-                        str(pkgatom)
-#                       print pkg_vuln_restrict
                         yield fn[5:-4], pkgname, pkgatom, pkg_vuln_restrict
                     except (TypeError, ValueError), v:
                         # thrown from cpv.

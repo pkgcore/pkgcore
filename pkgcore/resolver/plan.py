@@ -791,7 +791,7 @@ class add_op(base_op):
     
     def apply(self, plan):
         l = plan.state.fill_slotting(self.pkg, force=self.force)
-        if l:
+        if l and not self.force:
             return l
         plan.pkg_choices[self.pkg] = self.choices
         plan.plan.append(self)

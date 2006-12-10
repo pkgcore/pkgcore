@@ -185,6 +185,7 @@ class native_CpvTest(TestCase):
         self.verify_gt(kls("da/ba-6a"), kls("da/ba-6"))
         self.verify_gt(kls("da/ba-6a-r1"), kls("da/ba-6a"))
         self.verify_gt(kls("da/ba-6.0"), kls("da/ba-6"))
+        self.verify_gt(kls("da/ba-6.0b"), kls("da/ba-6.0.0"))
         self.assertEqual(kls("da/ba-6"), kls("da/ba-6"))
 
     def test_no_init(self):

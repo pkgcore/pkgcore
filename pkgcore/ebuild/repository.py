@@ -252,7 +252,6 @@ class ConfiguredTree(configured.tree):
     wrapper around a L{UnconfiguredTree} binding build/configuration data (USE)
     """
 
-    _get_iuse = staticmethod(operator.attrgetter("iuse"))
     configurable = "use"
     config_wrappables = dict(
         (x, currying.alias_class_method("evaluate_depset"))
@@ -282,7 +281,7 @@ class ConfiguredTree(configured.tree):
             InvertedContains)
 
     def _get_delayed_immutable(self, pkg, immutable):
-        return InvertedContains(frozenset(pkg.iuse).difference(immutable))
+        return InvertedContains(pkg.iuse.difference(immutable))
 
     def _get_pkg_kwds(self, pkg):
         immutable, enabled = self._get_pkg_use(pkg)

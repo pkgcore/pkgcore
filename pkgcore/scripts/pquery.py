@@ -520,8 +520,8 @@ def stringify_attr(config, pkg, attr):
     if attr == 'use':
         # Combine a list of all enabled (including irrelevant) and all
         # available flags into a "enabled -disabled" style string.
-        use = set(getattr(pkg, 'use', ()))
-        iuse = set(getattr(pkg, 'iuse', ()))
+        use = set(getattr(pkg, 'use', set()))
+        iuse = set(getattr(pkg, 'iuse', set()))
         result = sorted(iuse & use) + sorted('-' + val for val in (iuse - use))
         return ' '.join(result)
 

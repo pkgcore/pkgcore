@@ -8,6 +8,7 @@ package class for buildable ebuilds
 import os, operator
 from pkgcore.package import metadata
 from pkgcore.package import errors as metadata_errors
+from itertools import imap
 
 WeakValCache = metadata.WeakValCache
 
@@ -172,7 +173,7 @@ class base(metadata.package):
     _get_attr["restrict"] = lambda s:rewrite_restrict(
             s.data.pop("RESTRICT", "").split())
     _get_attr["eapi"] = generate_eapi
-    _get_attr["iuse"] = lambda s:tuple(map(intern,
+    _get_attr["iuse"] = lambda s:frozenset(imap(intern,
         s.data.pop("IUSE", "").split()))
     _get_attr["homepage"] = lambda s:s.data.pop("HOMEPAGE", "").strip()
 

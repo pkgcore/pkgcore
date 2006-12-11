@@ -63,7 +63,7 @@ class test_base(TestCase):
 
     def test_iuse(self):
         o = self.get_pkg({'IUSE':'build pkg foon'})
-        self.assertEqual(list(o.iuse), ['build', 'pkg', 'foon'])
+        self.assertEqual(sorted(o.iuse), ['build', 'foon', 'pkg'])
 
     def test_homepage(self):
         o = self.get_pkg({'HOMEPAGE': ' http://slashdot/ '})

@@ -679,6 +679,12 @@ def print_package(options, out, err, pkg):
         for revdep in options.print_revdep:
             for name in ('depends', 'rdepends', 'post_rdepends'):
                 depset = getattr(pkg, name)
+                find_cond = getattr(depset, 'find_cond_nodes', None)
+                if find_cond is None:
+                    out.write(
+                        green, '     revdep: ', out.fg(), name, ' on ',
+                        str(revdep))
+                    continue
                 for key, restricts in depset.find_cond_nodes(
                     depset.restrictions, True):
                     if not restricts and key.intersects(revdep):
@@ -686,6 +692,7 @@ def print_package(options, out, err, pkg):
                             green, '     revdep: ', out.fg(), name, ' on ',
                             autoline=False)
                         if key == revdep:
+                            # this is never reached...
                             out.write(out.bold, str(revdep))
                         else:
                             out.write(

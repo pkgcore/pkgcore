@@ -258,10 +258,10 @@ class domain(pkgcore.config.domain.domain):
         # also, although that code would be fugly
         self.enabled_use = collapsed_restrict_to_data(
             ((packages.AlwaysTrue, self.use),
-            (packages.AlwaysTrue, self.arch)), pkg_use)
+            (packages.AlwaysTrue, [self.arch])), pkg_use)
         self.forced_use = collapsed_restrict_to_data(
             profile.forced_use.iteritems(),
-            ((packages.AlwaysTrue, self.arch),))
+            ((packages.AlwaysTrue, [self.arch]),))
         self.disabled_use = collapsed_restrict_to_data(
             profile.masked_use.iteritems())
         

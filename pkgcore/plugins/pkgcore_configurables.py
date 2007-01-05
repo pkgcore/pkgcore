@@ -10,6 +10,7 @@ from pkgcore.vdb import ondisk
 from pkgcore.cache import flat_hash, metadata
 from pkgcore.fetch import custom
 from pkgcore.binpkg import repository as binpkg_repo
+from pkgcore.sync import rsync, base
 
 
 pkgcore_plugins = {
@@ -26,6 +27,7 @@ pkgcore_plugins = {
         custom.fetcher,
         binpkg_repo.tree,
         ebuild_repo.UnconfiguredTree,
+        ebuild_repo.SlavedTree,
         profiles.OnDiskProfile,
         domain.domain,
         eclass_cache.cache,
@@ -37,5 +39,7 @@ pkgcore_plugins = {
         installed.VersionedInstalled,
         glsa.GlsaDirSet,
         glsa.SecurityUpgrades,
+        rsync.rsync_syncer,
+        base.GenericSyncer,
         ],
     }

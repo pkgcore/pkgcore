@@ -230,7 +230,7 @@ class SlavedTree(UnconfiguredTree):
 
     orig_hint = UnconfiguredTree.pkgcore_config_type
     d = dict(orig_hint.types.iteritems())
-    d["parent_repo"] = 'section_ref'
+    d["parent_repo"] = 'ref:repo'
     pkgcore_config_type = orig_hint.clone(types=d,
         required=list(orig_hint.required) + ["parent_repo"],
         positional=list(orig_hint.positional) + ["parent_repo"])

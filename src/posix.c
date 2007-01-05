@@ -365,12 +365,13 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
                 MAP_FAILED : NULL;
         }
         int ret = close(fd);
-        Py_BLOCK_THREADS
         if(ret) {
             Py_CLEAR(fallback);
             PyErr_SetFromErrnoWithFilenameObject(PyExc_OSError, path);
+            Py_BLOCK_THREADS
             return NULL;
         } else if(!fallback) {
+            Py_BLOCK_THREADS
             return NULL;
         }
     }

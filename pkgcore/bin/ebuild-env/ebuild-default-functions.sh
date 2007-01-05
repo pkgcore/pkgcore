@@ -99,7 +99,7 @@ unpack()
 
         case "${x##*.}" in
             tar)
-                tar ${tarvars} -xf "${src}${x}" || die "$myfail"
+                tar ${tarvars} -xf "${srcdir}${x}" || die "$myfail"
                 ;;
             tgz)
                 tar ${tarvars} -xzf "${srcdir}${x}" || die "$myfail"

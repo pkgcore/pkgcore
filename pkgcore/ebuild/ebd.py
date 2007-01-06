@@ -129,7 +129,7 @@ class ebd(object):
             self.userpriv = False
 
         if "PORT_LOGDIR" in self.env:
-            self.logging = pjoin(self.env["PORT_LOGDIR"], pkg.category,
+            self.logging = pjoin(self.env["PORT_LOGDIR"],
                                         pkg.cpvstr+".log")
             del self.env["PORT_LOGDIR"]
         else:

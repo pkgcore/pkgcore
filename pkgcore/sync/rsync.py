@@ -5,7 +5,7 @@ from pkgcore.sync import base
 from pkgcore.config import ConfigHint
 from pkgcore.util.demandload import demandload
 
-demandload(globals(), "os socket errno")
+demandload(globals(), "os socket errno pkgcore.util.osutils:pjoin")
 
 class rsync_syncer(base.ExternalSyncer):
 
@@ -128,15 +128,19 @@ class rsync_timestamp_syncer(rsync_syncer):
     
     def __init__(self, *args, **kwargs):
         rsync_syncer.__init__(self, *args, **kwargs)
-        self.last_timestamp = self.current_timestamp
+        self.last_timestamp = self.current_timestamp()
 
-    @property
-    def current_timestamp(self):
+    def current_timestamp(self, path=None):
+        """
+        @param path: override the default path for the timestamp to read
+        @return: string of the timestamp data
+        """
+        if path is None:
+            path = pjoin(self.basedir, "metadata", "timestamp.chk")
         try:
-            return open(os.path.join(self.basedir, "metadata",
-                "timestamp.chk")).read().strip()
-        except OSError, oe:
-            if oe.errno != errno.ENOENT:
+            return open(path).read().strip()
+        except IOError, oe:
+            if oe.errno not in (errno.ENOENT, errno.ENOTDIR):
                 raise
             return None
     
@@ -145,14 +149,26 @@ class rsync_timestamp_syncer(rsync_syncer):
         if not doit:
             basedir = self.basedir
             uri = self.uri
+            new_timestamp = pjoin(self.basedir, "metadata",
+                ".tmp.timestamp.chk")
             try:
-                self.basedir += "/metadata/timestamp.chk"
-                self.uri += "/metadata/timestamp.chk"
+                self.basedir = new_timestamp
+                self.uri = pjoin(self.uri, "metadata", "timestamp.chk")
                 ret = rsync_syncer._sync(self, verbosity, output_fd)
             finally:
                 self.basedir = basedir
                 self.uri = uri
-            doit = ret == False or self.last_timestamp != self.current_timestamp
+            doit = ret == False or self.last_timestamp != \
+                self.current_timestamp(new_timestamp)
         if not doit:
             return True
-        return rsync_syncer._sync(self, verbosity, output_fd)
+        ret = rsync_syncer._sync(self, verbosity, output_fd)
+        if not ret:
+            # ensure the timestamp is back to the old.
+            try:
+                open(pjoin(self.basedir, "metadata", "timestamp.chk"),
+                    "w").write(self.last_timestamp)
+            except IOError:
+                # don't care...
+                pass
+        return ret

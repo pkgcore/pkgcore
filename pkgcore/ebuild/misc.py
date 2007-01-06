@@ -90,3 +90,23 @@ class collapsed_restrict_to_data(object):
             if atom.match(pkg):
                 for item in data:
                     yield item
+
+
+class non_incremental_collapsed_restrict_to_data(collapsed_restrict_to_data):
+    
+    def pull_data(self, pkg, force_copy=False):
+        l = []
+        for specific in self.freeform:
+            for restrict, data in specific:
+                if restrict.match(pkg):
+                    l.append(data)
+        for atom, data in self.atoms.get(pkg.key, ()):
+            if atom.match(pkg):
+                l.append(data)
+        if not l:
+            if force_copy:
+                return set(self.defaults)
+            return self.defaults
+        s = set(self.defaults)
+        s.update(iflatten_instance(l))
+        return s

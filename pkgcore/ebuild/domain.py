@@ -28,7 +28,8 @@ from pkgcore.util.demandload import demandload
 from pkgcore.ebuild import const
 from pkgcore.ebuild.profiles import incremental_expansion
 from pkgcore.util.parserestrict import parse_match
-from pkgcore.ebuild.misc import collapsed_restrict_to_data
+from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
+    non_incremental_collapsed_restrict_to_data)
 
 demandload(
     globals(),
@@ -338,8 +339,11 @@ class domain(pkgcore.config.domain.domain):
                 ((packages.AlwaysTrue, default_keys),),
                 (f(*i) for i in pkg_keywords))
         else:
-            data = collapsed_restrict_to_data(
-                ((packages.AlwaysTrue, default_keys),),
+            if incremental:
+                f = collapsed_restrict_to_data
+            else:
+                f = non_incremental_collapsed_restrict_to_data
+            data = f(((packages.AlwaysTrue, default_keys),),
                 pkg_keywords)
         
         if incremental:

@@ -5,7 +5,7 @@ import os, shutil
 from pkgcore.test import TestCase
 from pkgcore.test.mixins import TempDirMixin
 from pkgcore.ebuild import profiles
-from pkgcore.util.osutils import join as pjoin, ensure_dirs
+from pkgcore.util.osutils import pjoin, ensure_dirs
 from pkgcore.util.currying import pre_curry
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV

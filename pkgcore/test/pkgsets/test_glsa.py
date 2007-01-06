@@ -3,7 +3,7 @@
 
 from pkgcore.test import TestCase
 from pkgcore.test.mixins import TempDirMixin
-from pkgcore.util.osutils import join as pjoin
+from pkgcore.util.osutils import pjoin
 from pkgcore.pkgsets import glsa
 from pkgcore.util.currying import post_curry
 from pkgcore.restrictions.packages import OrRestriction

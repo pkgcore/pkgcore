@@ -5,8 +5,8 @@ from pkgcore.fs import ops, fs, livefs, contents
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.test import TestCase
 from pkgcore.test.mixins import TempDirMixin
+from pkgcore.util.osutils import pjoin
 import os, shutil
-pjoin = os.path.join
 
 
 class VerifyMixin(object):

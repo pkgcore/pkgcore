@@ -185,6 +185,9 @@ except ImportError:
     readfile = native_readfile
     readlines = native_readlines
 
+# convenience.  importing join into a namespace is ugly, pjoin less so
+pjoin = join
+
 class LockException(Exception):
     """Base lock exception class"""
     def __init__(self, path, reason):

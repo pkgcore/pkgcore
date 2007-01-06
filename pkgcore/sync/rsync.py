@@ -146,29 +146,40 @@ class rsync_timestamp_syncer(rsync_syncer):
     
     def _sync(self, verbosity, output_fd, force=False):
         doit = force or self.last_timestamp is None
-        if not doit:
-            basedir = self.basedir
-            uri = self.uri
-            new_timestamp = pjoin(self.basedir, "metadata",
-                ".tmp.timestamp.chk")
-            try:
-                self.basedir = new_timestamp
-                self.uri = pjoin(self.uri, "metadata", "timestamp.chk")
-                ret = rsync_syncer._sync(self, verbosity, output_fd)
-            finally:
-                self.basedir = basedir
-                self.uri = uri
-            doit = ret == False or self.last_timestamp != \
-                self.current_timestamp(new_timestamp)
-        if not doit:
-            return True
-        ret = rsync_syncer._sync(self, verbosity, output_fd)
-        if not ret:
+        wipe = not doit
+        ret = None
+        try:
+            if not doit:
+                basedir = self.basedir
+                uri = self.uri
+                new_timestamp = pjoin(self.basedir, "metadata",
+                    ".tmp.timestamp.chk")
+                try:
+                    self.basedir = new_timestamp
+                    self.uri = pjoin(self.uri, "metadata", "timestamp.chk")
+                    ret = rsync_syncer._sync(self, verbosity, output_fd)
+                finally:
+                    self.basedir = basedir
+                    self.uri = uri
+                doit = ret == False or self.last_timestamp != \
+                    self.current_timestamp(new_timestamp)
+                wipe = doit
+            if not doit:
+                return True
+            ret = rsync_syncer._sync(self, verbosity, output_fd)
+        finally:
+            if ret is not None:
+                if ret:
+                    return ret
             # ensure the timestamp is back to the old.
             try:
-                open(pjoin(self.basedir, "metadata", "timestamp.chk"),
-                    "w").write(self.last_timestamp)
-            except IOError:
+                path = pjoin(self.basedir, "metadata", "timestamp.chk")
+                if self.last_timestamp is None:
+                    os.remove(path)
+                else:
+                    open(pjoin(self.basedir, "metadata", "timestamp.chk"),
+                        "w").write(self.last_timestamp)
+            except (IOError, OSError):
                 # don't care...
                 pass
         return ret

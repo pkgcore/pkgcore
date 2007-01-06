@@ -146,6 +146,15 @@ class Test_merge_contents(ContentsMixin):
             ops.merge_contents(cset, offset=dest, callback=s.remove)
             self.assertFalse(s)
 
+    def test_dangling_symlink(self):
+        src = self.gen_dir("src")
+        self.generate_tree(src, {"dir":["dir"]})
+        cset = livefs.scan(src, offset=src)
+        dest = self.gen_dir("dest")
+        os.symlink(pjoin(dest, "dest"), pjoin(dest, "dir"))
+        self.assertTrue(ops.merge_contents(cset, offset=dest))
+        self.assertEqual(cset, livefs.scan(src, offset=dest))
+
     def test_empty_overwrite(self):
         self.generic_merge_bits(self.entries_norm1)
 

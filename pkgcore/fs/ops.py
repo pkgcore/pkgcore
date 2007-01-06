@@ -201,8 +201,17 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
                     "%s exists and needs to be a dir, but is a %s" %
                         (x.location, obj))
             ensure_perms(x, obj)
-        except OSError:
-            mkdir(x)
+        except OSError, oe:
+            if oe.errno != errno.ENOENT:
+                raise
+            try:
+                # we do this form to catch dangling symlinks
+                mkdir(x)
+            except OSError, oe:
+                if oe.errno != errno.EEXIST:
+                    raise
+                os.unlink(x.location)
+                mkdir(x)
             ensure_perms(x)
     del d
 

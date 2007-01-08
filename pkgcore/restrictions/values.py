@@ -643,6 +643,28 @@ class FunctionRestriction(hashed_base):
             self.__class__.__name__, self.func, self.negate, id(self))
 
 
+class StrConversion(hashed_base):
+
+    """convert passed in data to a str object"""
+    
+    __hash__ = object.__hash__
+    __slots__ = ('restrict',)
+
+    def __init__(self, restrict):
+        object.__setattr__(self, "restrict", restrict)
+
+    def match(self, val):
+        return self.restrict.match(str(val))
+
+
+class UnicodeConversion(StrConversion):
+
+    """convert passed in data to a unicode obj"""
+    
+    def match(self, val):
+        return self.restrict.match(unicode(val))
+
+
 class AnyMatch(restriction.AnyMatch):
 
     __slots__ = ()

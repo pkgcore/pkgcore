@@ -14,6 +14,18 @@ class TestFetchable(TestCase):
         self.assertEqual(o.uri, ["asdf"])
         self.assertEqual(o.chksums, {"asdf":1})
 
+    def test_eq_ne(self):
+        o1 = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf":1})
+        self.assertEqual(o1, o1)
+        o2 = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf":1})
+        self.assertEqual(o1, o2)
+        self.assertNotEqual(o1, 
+            fetch.fetchable("dar1", uri=["asdf"], chksums={"asdf":1}))
+        self.assertNotEqual(o1, 
+            fetch.fetchable("dar", uri=["asdf1"], chksums={"asdf":1}))
+        self.assertNotEqual(o1, 
+            fetch.fetchable("dar", uri=["asdf1"], chksums={"asdf":1, "foon":1}))
+
 
 class TestMirror(TestCase):
 

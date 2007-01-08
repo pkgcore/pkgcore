@@ -5,11 +5,15 @@
 functionality related to downloading files
 """
 
+from pkgcore.util.klass import generic_equality
+
 class fetchable(object):
 
     """class representing uri sources for a file and chksum information."""
 
     __slots__ = ("filename", "uri", "chksums")
+    __attr_comparison__ = __slots__
+    __metaclass__ = generic_equality
 
     def __init__(self, filename, uri=None, chksums=None):
         """

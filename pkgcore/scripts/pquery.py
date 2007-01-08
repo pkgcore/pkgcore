@@ -83,11 +83,36 @@ def parse_envmatch(value):
                 values.StrRegex(value))))
 
 
-def parse_maintainer(value):
-    """Exact match on the email bit of metadata.xml's maintainer data."""
+def parse_maintainer_email(value):
+    """
+    Case insensitive Regex match on the email bit of metadata.xml's
+    maintainer data.
+    """
     return packages.PackageRestriction(
         'maintainers', values.AnyMatch(values.GetAttrRestriction(
-                'email', values.StrExactMatch(value))))
+                'email', values.StrRegex(value.lower(),
+                case_sensitive=False))))
+
+def parse_maintainer_name(value):
+    """
+    Case insensitive Regex match on the name bit of metadata.xml's
+    maintainer data.
+    """
+    return packages.PackageRestriction(
+        'maintainers', values.AnyMatch(values.GetAttrRestriction(
+                'name', values.StrRegex(value.lower(),
+                    case_sensitive=False))))
+
+def parse_maintainer(value):
+    """
+    Case insensitive Regex match on the combined 'name <email>' bit of 
+    metadata.xml's maintainer data.
+    """
+    return packages.PackageRestriction(
+        'maintainers', values.AnyMatch(
+            values.UnicodeConversion(
+                values.StrRegex(value.lower(),
+                    case_sensitive=False))))
 
 
 def parse_expression(string):
@@ -169,6 +194,8 @@ PARSE_FUNCS = {
     'environment': parse_envmatch,
     'expr': parse_expression,
     'maintainer': parse_maintainer,
+    'maintainer_name': parse_maintainer_name,
+    'maintainer_email': parse_maintainer_email,
     }
 
 # This is not just a blind "update" because we really need a config
@@ -315,7 +342,14 @@ class OptionParser(commandline.OptionParser):
             '--owns-re', action='append', type='ownsre', dest='ownsre',
             help='like "owns" but using a regexp for matching.')
         restrict.add_option('--maintainer', action='append', type='maintainer',
-                            help='comma-separated list of maintainers.')
+                            help='comma-separated list of regexes to search for '
+                            'maintainers.')
+        restrict.add_option('--maintainer-name', action='append', type='maintainer_name',
+                            help='comma-separated list of maintainer name regexes '
+                            'to search for.')
+        restrict.add_option('--maintainer-email', action='append', type='maintainer_email',
+                            help='comma-separated list of maintainer email regexes '
+                            'to search for.')
         restrict.add_option(
             '--environment', action='append', type='environment',
             help='regexp search in environment.bz2.')

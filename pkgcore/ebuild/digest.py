@@ -41,8 +41,10 @@ def parse_digest(source, throw_errors=True):
                 else:
                     d2[chf] = long(l[1], 16)
                 chf_keys.add(chf)
-        except (OSError, IOError, TypeError), e:
-            raise errors.ParseChksumError("failed parsing %r" % source, e)
+        except (OSError, IOError), e:
+            raise errors.MissingChksum(source)
+	except TypeError, e:
+            raise errors.ParseChksumError("%r" % source, e)
     finally:
         if f is not None and f.close:
             f.close()

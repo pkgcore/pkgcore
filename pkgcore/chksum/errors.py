@@ -11,7 +11,7 @@ class base(Exception):
 class MissingChksum(base):
 
     def __init__(self, filename):
-        base.__init__(self, "Missing chksum for file '%s'" % (filename,))
+        base.__init__(self, "Missing chksum file '%s'" % (filename,))
         self.file = filename
 
 

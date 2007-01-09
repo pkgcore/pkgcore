@@ -4,7 +4,7 @@
 from pkgcore.test import TestCase
 from pkgcore.ebuild import digest
 from pkgcore.chksum import gpg
-from pkgcore.chksum.errors import ParseChksumError
+from pkgcore.chksum.errors import ParseChksumError, MissingChksum
 from pkgcore.interfaces.data_source import local_source
 import tempfile, os
 
@@ -57,6 +57,12 @@ class TestDigest(TestCase):
         self.assertEqual(2,
             len(self.gen_digest(
                     digest_contents+"\nMD5 asdfasdf", throw_errors=False)))
+        try:
+            d = tempfile.mkdtemp()
+            self.assertRaises(MissingChksum,
+                digest.parse_digest, os.path.join(d, "foo"))
+        finally:
+            os.rmdir(d)
 
 
 class TestDigestDataSource(TestDigest):

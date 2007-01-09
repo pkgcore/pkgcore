@@ -104,6 +104,7 @@ class fetcher(base.fetcher):
             extra = {"uid":portage_uid, "gid":portage_gid}
         else:
             extra = {}
+        extra["umask"] = 0002
         attempts = self.attempts
         try:
             while attempts >= 0:

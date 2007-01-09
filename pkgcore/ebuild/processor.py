@@ -295,8 +295,6 @@ class EbuildProcessor:
             immediately.  Disabling flush is useful when dumping large
             amounts of data.
         """
-        if self.ebd_write.closed or self.ebd_read.closed:
-            raise AssertionError("attempted operating on a shutdown processor")
         string = str(string)
         try:
             if string == "\n":
@@ -447,9 +445,7 @@ class EbuildProcessor:
                 self.ebd_read.close()
             else:
                 return
-        except (IOError, OSError):
-            if self.pid is None:
-                return
+        except (IOError, OSError, ValueError):
             os.kill(self.pid, signal.SIGTERM)
 
         # now we wait.
@@ -458,7 +454,6 @@ class EbuildProcessor:
         except KeyboardInterrupt:
             if not ignore_keyboard_interrupt:
                 raise
-
 
         # currently, this assumes all went well.
         # which isn't always true.

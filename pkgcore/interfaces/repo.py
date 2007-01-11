@@ -110,7 +110,6 @@ class livefs_base(base):
         return (), {}
 
     def start(self, engine):
-        # add the pkgs triggers.
         self.me = engine
         self.underway = True
         self.lock.acquire_write_lock()

@@ -294,8 +294,8 @@ def config_from_make_conf(location="/etc/"):
             {'class': 'pkgcore.ebuild.overlay_repository.OverlayRepo',
              'trees': tuple([portdir] + portdir_overlays)})
 
-    # XXX I have nfc what all this is about
-
+    # disabled code for using portage config defined cache modules;
+    # need to re-examine and see if they're still in sync with our cache subsystem
 #     if os.path.exists(base_path+"portage/modules"):
 #         pcache = read_dict(
 #             base_path+"portage/modules").get("portdbapi.auxdbmodule", None)

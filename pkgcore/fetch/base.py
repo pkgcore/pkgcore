@@ -68,3 +68,9 @@ class fetcher(object):
         If it isn't, return None
         """
         raise NotImplementedError(self.get_path)
+
+    def get_storage_path(self):
+        """return the directory files are stored in
+        returns None if not applicable
+        """
+        return None

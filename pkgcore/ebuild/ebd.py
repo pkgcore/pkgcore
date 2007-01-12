@@ -451,7 +451,11 @@ class buildable(ebd, setup_mixin, format.build):
 
     def setup_distfiles(self):
         # cvs/svn ebuilds need to die.
-        #self.env["PORTAGE_ACTUAL_DISTDIR"] = self.env["DISTDIR"]
+        distdir_write = self.fetcher.get_storage_path()
+        if distdir_write is None:
+            raise format.GenericBuildError("no usable distdir was found "
+                "for PORTAGE_ACTUAL_DISTDIR from fetcher %s" % self.fetcher)
+        self.env["PORTAGE_ACTUAL_DISTDIR"] = distdir_write
         self.env["DISTDIR"] = normpath(
             pjoin(self.builddir, "distdir"))+"/"
         if self.files:

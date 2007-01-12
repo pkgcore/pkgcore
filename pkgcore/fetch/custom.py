@@ -141,3 +141,6 @@ class fetcher(base.fetcher):
         if 0 == self._verify(fp, fetchable):
             return fp
         return None
+
+    def get_storage_path(self):
+        return self.distdir

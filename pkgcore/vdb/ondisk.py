@@ -56,10 +56,11 @@ class tree(prototype.tree):
     format_magic = "ebuild_built"
 
     pkgcore_config_type = ConfigHint({'location': 'str',
-        'cache_location': 'str'}, typename='repo')
+        'cache_location': 'str', 'repo_id':'str'}, typename='repo')
 
-    def __init__(self, location, cache_location=None):
+    def __init__(self, location, cache_location=None, repo_id='vdb'):
         prototype.tree.__init__(self, frozen=False)
+        self.repo_id = repo_id
         self.base = self.location = location
         self.cache_location = cache_location
         self._versions_tmp_cache = {}

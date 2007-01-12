@@ -10,7 +10,8 @@ from itertools import chain
 from pkgcore.repository import prototype, errors, configured, syncable
 from pkgcore.util.file import read_dict, iter_read_bash
 from pkgcore.util import currying
-from pkgcore.util.osutils import listdir_files, listdir_dirs, join as pjoin
+from pkgcore.util.osutils import (listdir_files, readfile, listdir_dirs, 
+    join as pjoin)
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
 from pkgcore.util.demandload import demandload
 from pkgcore.util.containers import InvertedContains
@@ -49,11 +50,13 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
     pkgcore_config_type = ConfigHint(
         {'location': 'str', 'cache': 'refs:cache',
          'eclass_cache': 'ref:eclass_cache', 'mirrors_file': 'str',
-         'default_mirrors': 'list', 'sync': 'lazy_ref:syncer'},
+         'default_mirrors': 'list', 'sync': 'lazy_ref:syncer',
+         'override_repo_id':'str'},
         typename='repo')
 
     def __init__(self, location, cache=(), eclass_cache=None,
-                 mirrors_file=None, default_mirrors=None, sync=None):
+                 mirrors_file=None, default_mirrors=None, sync=None,
+                 override_repo_id=None):
 
         """
         @param location: on disk location of the tree
@@ -69,6 +72,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
         prototype.tree.__init__(self)
         syncable.tree_mixin.__init__(self, sync)
+        self._repo_id = override_repo_id
         self.base = self.location = location
         try:
             if not stat.S_ISDIR(os.stat(self.base).st_mode):
@@ -117,6 +121,17 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
         self._shared_pkg_cache = WeakValCache()
 
+    @property
+    def repo_id(self):
+        if self._repo_id is None:
+            # thank you spb for a stupid location, and stupid file name.
+            r = readfile(pjoin(self.location, "profiles",
+                "repo_name"), True)
+            if r is None:
+                self._repo_id = self.location
+            else:
+                self._repo_id = r.strip()
+        return self._repo_id
 
     def rebind(self, **kwds):
 

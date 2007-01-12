@@ -9,8 +9,12 @@ from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.profiles import incremental_expansion
 from pkgcore.util.lists import iflatten_instance
+from pkgcore.util.klass import generic_equality
 
 class collapsed_restrict_to_data(object):
+    
+    __metaclass__ = generic_equality
+    __attr_comparison__ = ('defaults', 'freeform', 'atoms', '__class__')
     
     def __init__(self, *restrict_pairs):
         """

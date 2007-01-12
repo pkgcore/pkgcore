@@ -44,18 +44,33 @@ def native_init(self, atom, negate_vers=False):
         sf(self, "use", None)
     s = atom.find(":")
     if s != -1:
-        if atom.find(":", s+1) != -1:
-            raise errors.MalformedAtom(atom,
-                "second specification of slotting")
+        i2 = atom.find(":", s + 1)
+        if i2 != -1:
+            repo_id = atom[i2 + 1:]
+            if not repo_id:
+                raise errors.MalformedAtom(atom,
+                    "repo_id must not be empty")
+            elif ":" in repo_id:
+                raise errors.MalformedAtom(atom,
+                    "repo_id may contain only [a-Z0-9_.-+/]")
+            atom = atom[:i2]
+            sf(self, "repo_id", repo_id)
+        else:
+            sf(self, "repo_id", None)
         # slot dep.
         slots = atom[s+1:].split(",")
         if not all(slots):
-            raise errors.MalformedAtom(atom,
-                "empty slots aren't allowed")
+            # if the slot char came in only due to repo_id, force slots to None
+            if len(slots) == 1 and i2 != -1:
+                slots = None
+            else:
+                raise errors.MalformedAtom(atom,
+                    "empty slots aren't allowed")
         sf(self, "slot", slots)
         atom = atom[:s]
     else:
         sf(self, "slot", None)
+        sf(self, "repo_id", None)
     del u, s
 
     sf(self, "blocks", atom[0] == "!")
@@ -101,7 +116,6 @@ def native_init(self, atom, negate_vers=False):
     elif self.version is not None:
         raise errors.MalformedAtom(orig_atom,
             'versioned atom requires an operator')
-    sf(self, "repo_id", None)
     sf(self, "hash", hash(orig_atom))
     sf(self, "negate_vers", negate_vers)
 

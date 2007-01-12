@@ -10,11 +10,17 @@ class svn_syncer(base.ExternalSyncer):
     supported_uris = (
         ('svn://', 5),
         ('svn+', 5),
+        ('http+svn://',5),
+        ('https+svn://',5)
         )
 
     @staticmethod
     def parse_uri(raw_uri):
         if raw_uri.startswith("svn://"):
+            return True
+        elif raw_uri.startswith("http+svn://"):
+            return True
+        elif raw_uri.startswith("https+svn://"):
             return True
         elif raw_uri.startswith("svn+"):
             if raw_uri.startswith("svn+:"):

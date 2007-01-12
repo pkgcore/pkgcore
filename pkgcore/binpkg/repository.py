@@ -161,11 +161,15 @@ class tree(prototype.tree):
     configured = False
     configurables = ("settings", )
 
-    pkgcore_config_type = ConfigHint(typename='repo')
+    pkgcore_config_type = ConfigHint({'location':'str',
+        'repo_id':'str'}, typename='repo')
 
-    def __init__(self, location):
+    def __init__(self, location, repo_id=None):
         super(tree, self).__init__()
         self.base = location
+        if repo_id is None:
+            repo_id = location
+        self.repo_id = repo_id
         self._versions_tmp_cache = {}
         try:
             st = os.lstat(self.base)

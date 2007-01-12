@@ -153,6 +153,11 @@ def native__getattr__(self, attr):
             v = values.OrRestriction(*map(values.StrExactMatch,
                 self.slot))
         r.append(packages.PackageRestriction("slot", v))
+
+    if self.repo_id is not None:
+        r.insert(0, packages.PackageRestriction("repo.repo_id", 
+            values.StrExactMatch(self.repo_id)))
+
     object.__setattr__(self, attr, tuple(r))
     return r
 

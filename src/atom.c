@@ -235,12 +235,13 @@ parse_repo_id(PyObject *atom_str, char *p, PyObject **repo_id)
 {
     char *start = p;
     while('\0' != *p) {
-        if(!VALID_USE_CHAR(*p)) {
+        if(!VALID_USE_CHAR(*p) && '/' != *p) {
             Err_SetMalformedAtom(atom_str,
                 "invalid character in repo_id: "
-                "valid characters are a-Z0-9_.-+");
+                "valid characters are [a-Z0-9_.-+/]");
             return 1;
         }
+        p++;
     }
  
     if(start == p) {
@@ -402,7 +403,8 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
             p++;
             if(':' == *p) {
                 // repo_id.
-                if(!parse_repo_id(atom_str, p, &repo_id))
+                p++;
+                if(parse_repo_id(atom_str, p, &repo_id))
                     goto pkgcore_atom_parse_error;
                 break;
             } else if(slot) {

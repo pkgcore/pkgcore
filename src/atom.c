@@ -49,6 +49,7 @@ static PyObject *pkgcore_atom_hash = NULL;
 static PyObject *pkgcore_atom_use = NULL;
 static PyObject *pkgcore_atom_slot = NULL;
 static PyObject *pkgcore_atom_repo_id = NULL;
+static PyObject *pkgcore_atom_restrict_repo_id = NULL;
 static PyObject *pkgcore_atom_blocks = NULL;
 static PyObject *pkgcore_atom_op = NULL;
 static PyObject *pkgcore_atom_negate_vers = NULL;
@@ -772,7 +773,8 @@ pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
         return NULL;
 
     PyObject *op = NULL, *package = NULL, *category = NULL;
-    PyObject *use = NULL, *slot = NULL, *tup = NULL, *tmp = NULL;
+    PyObject *use = NULL, *slot = NULL, *repo_id = NULL;
+    PyObject *tup = NULL, *tmp = NULL;
 
     // prefer Py_EQ since cpythons string optimizes that case.
     if(1 != PyObject_RichCompareBool(attr, pkgcore_atom_restrictions, Py_EQ)) {
@@ -789,6 +791,7 @@ pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
     MUST_LOAD(category, pkgcore_atom_category);    
     MUST_LOAD(use, pkgcore_atom_use);
     MUST_LOAD(slot, pkgcore_atom_slot);
+    MUST_LOAD(repo_id, pkgcore_atom_repo_id);
     
     #undef MUST_LOAD
 
@@ -798,22 +801,34 @@ pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
         required++;    
     if(slot != Py_None)
         required++;
-
+    if(repo_id != Py_None)
+        required++;
+    
     tup = PyTuple_New(required);
     if(!tup)
         goto pkgcore_atom_getattr_error;
     
+    int idx = 0;
+    if(repo_id != Py_None) {
+        if(!(tmp = make_simple_restrict(pkgcore_atom_restrict_repo_id,
+            repo_id, pkgcore_atom_StrExactMatch)))
+            goto pkgcore_atom_getattr_error;
+        PyTuple_SET_ITEM(tup, 0, tmp);
+        idx++;
+    }
+    
     if(!(tmp = make_simple_restrict(pkgcore_atom_package, package,
         pkgcore_atom_StrExactMatch)))
         goto pkgcore_atom_getattr_error;
-    PyTuple_SET_ITEM(tup, 0, tmp);
+    PyTuple_SET_ITEM(tup, idx, tmp);
+    idx++;
     
     if(!(tmp = make_simple_restrict(pkgcore_atom_category, category,
         pkgcore_atom_StrExactMatch)))
         goto pkgcore_atom_getattr_error;
-    PyTuple_SET_ITEM(tup, 1, tmp);
-
-    int idx = 2;
+    PyTuple_SET_ITEM(tup, idx, tmp);
+    idx++;
+    
     if(op != pkgcore_atom_op_none) {
         if(op == pkgcore_atom_op_glob) {
             PyObject *tmp2 = PyObject_GetAttr(self, pkgcore_atom_fullver);
@@ -871,6 +886,7 @@ pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
     Py_XDECREF(package);
     Py_XDECREF(use);
     Py_XDECREF(slot);
+    Py_XDECREF(repo_id);
     if(failed)
         Py_CLEAR(tup);
     else {
@@ -1003,6 +1019,8 @@ init_atom()
     load_string(pkgcore_atom_use,           "use");
     load_string(pkgcore_atom_slot,          "slot");
     load_string(pkgcore_atom_repo_id,       "repo_id");
+    load_string(pkgcore_atom_restrict_repo_id,
+                                            "repo.repo_id");
     load_string(pkgcore_atom_op_glob,       "=*");
     load_string(pkgcore_atom_blocks,        "blocks");
     load_string(pkgcore_atom_op,            "op");

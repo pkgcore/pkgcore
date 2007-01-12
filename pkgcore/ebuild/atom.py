@@ -243,6 +243,10 @@ class atom(boolean.AndRestriction):
             s += "[%s]" % ",".join(self.use)
         if self.slot:
             s += ":%s" % ",".join(self.slot)
+            if self.repo_id:
+                s += ":%s" % self.repo_id
+        elif self.repo_id:
+            s += "::%s" % self.repo_id
         return s
 
     def __hash__(self):

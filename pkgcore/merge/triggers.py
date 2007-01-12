@@ -93,6 +93,13 @@ class base(object):
                 csets = csets.get(mode, None)
         return csets
 
+    def localize(self, mergeengine):
+        """
+        'localize' a trigger to a specific merge engine process
+        mainly used if the trigger comes from configuration
+        """
+        return self
+
     @staticmethod
     def _get_csets(required_csets, csets):
         return [csets[x] for x in required_csets]
@@ -400,3 +407,29 @@ class detect_world_writable(base):
                 reporter.warn("world writable file: %s", (x.location,))
         if fix_perms:
             cset.update(x.change_attributes(mode=x.mode & ~01) for x in l)
+
+
+class PruneFiles(base):
+    
+    required_csets = ('new_cset',)
+    _hooks = ('pre_merge',)
+    _engine_types = INSTALLING_MODES
+    
+    def __init__(self, sentinel_func):
+        """
+        @param sentinel_func: callable accepting a fsBase entry, returns
+        True if the entry should be removed, False otherwise
+        """
+        base.__init__(self)
+        self.sentinel = sentinel_func
+
+    def trigger(self, engine, cset):
+        f = self.sentinel
+        removal = [x for x in cset if f(x)]
+        noise = engine.reporter
+        if not noise:
+            cset.difference_update(removal)
+        else:
+            for x in removal:
+                noise.info("pruning: %s", (x.location,))
+                cset.discard(x)

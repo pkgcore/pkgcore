@@ -389,43 +389,6 @@ dyn_preinst()
     # Make sure D is where the package expects it
     D=${IMAGE} pkg_preinst
 
-    # remove man pages
-    if hasq noman $FEATURES; then
-        rm -fR "${IMAGE}"/usr/share/man
-    fi
-
-    # remove info pages
-    if hasq noinfo $FEATURES; then
-        rm -fR "${IMAGE}"/usr/share/info
-    fi
-
-    # remove docs
-    if hasq nodoc $FEATURES; then
-        rm -fR "${IMAGE}"/usr/share/doc
-    fi
-
-    # hopefully this will someday allow us to get rid of the no* feature flags
-    # we don't want globbing for initial expansion, but afterwards, we do
-    #XXX: rewrite this to use a while loop instead.
-    local shopts=$-
-    set -o noglob
-    for no_inst in `echo "${INSTALL_MASK}"` ; do
-        set +o noglob
-        einfo "Removing ${no_inst}"
-        # normal stuff
-        rm -Rf "${IMAGE}"/${no_inst} &> /dev/null
-        # we also need to handle globs (*.a, *.h, etc)
-        find "${IMAGE}" -name ${no_inst} -exec rm -fR {} \; &> /dev/null
-    done
-    # set everything back the way we found it
-    set +o noglob
-    set -${shopts}
-
-    # remove share dir if unnessesary
-    if hasq nodoc $FEATURES -o hasq noman $FEATURES -o hasq noinfo $FEATURES; then
-        rmdir "${IMAGE}"/usr/share &> /dev/null
-    fi
-
     # Smart FileSystem Permissions
     if hasq sfperms $FEATURES; then
         for i in $(find "${IMAGE}"/ -type f -perm -4000); do

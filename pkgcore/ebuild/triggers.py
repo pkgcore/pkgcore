@@ -5,6 +5,7 @@
 gentoo/ebuild specific triggers
 """
 
+import os, errno, stat
 from pkgcore.merge import triggers, const, errors
 from pkgcore.util.file import read_bash_dict, AtomicWriteFile
 from pkgcore.fs import livefs
@@ -14,8 +15,8 @@ from pkgcore.restrictions import values
 from pkgcore.util.osutils import listdir_files
 from pkgcore.util.lists import stable_unique, iflatten_instance
 from pkgcore.util.osutils import join as pjoin
-import os, errno, stat
-
+from pkgcore.util.demandload import demandload
+demandload(globals(), "fnmatch")
 
 colon_parsed = frozenset(
     ["ADA_INCLUDE_PATH",  "ADA_OBJECTS_PATH", "INFODIR", "INFOPATH",
@@ -396,7 +397,30 @@ def customize_engine(domain_settings, engine):
     ConfigProtectInstall(protect, mask).register(engine)
     ConfigProtectUninstall().register(engine)
 
-    if "collision-protect" in domain_settings.get("FEATURES", []):
+    features = domain_settings.get("FEATURES", [])
+    if "collision-protect" in features:
         collision_protect(protect, mask).register(engine)
+
+    install_mask = domain_settings.get("INSTALL_MASK", '').split()
+
+    for x in ("man", "info", "doc"):
+        if "no%s" % x in features:
+            install_mask.append("/usr/share/%s" % x)
+    l = []
+    for x in install_mask:
+        x = x.rstrip("/")
+        l.append(values.StrRegex(fnmatch.translate(x)))
+        l.append(values.StrRegex(fnmatch.translate("%s/*" % x)))
+    install_mask = l
+
+    if install_mask:
+        if len(install_mask) == 1:
+            install_mask = install_mask[0]
+        else:
+            install_mask = values.OrRestriction(*install_mask)
+        print install_mask
+        triggers.PruneFiles(install_mask.match).register(engine)
+        # note that if this wipes all /usr/share/ entries, should 
+        # wipe the empty dir.
 
     InfoRegen().register(engine)

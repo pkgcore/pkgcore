@@ -8,11 +8,14 @@ from pkgcore.ebuild.cpv import CPV
 
 class FakePkg(CPV):
     __slots__ = ("__dict__")
-    def __init__(self, cpv, use=(), slot=0):
+    def __init__(self, cpv, use=(), slot=0, repo_id="usr/portage"):
         CPV.__init__(self, cpv)
         object.__setattr__(self, "use", use)
         object.__setattr__(self, "slot", str(slot))
-
+        r = repo_id
+        class foo:
+            repo_id = r
+        object.__setattr__(self, "repo", foo())
 
 class Test_native_atom(TestCase):
 
@@ -104,6 +107,13 @@ class Test_native_atom(TestCase):
         self.kls("sys-libs/db:4.4")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1,,0")
+
+    def test_repo_id(self):
+        as = "dev-util/bsdiff"
+        c = FakePkg(as, repo_id="/usr/portage")
+        self.assertTrue(self.kls("%s" % as).match(c))
+        self.assertTrue(self.kls("%s::/usr/portage" % as).match(c))
+        self.assertFalse(self.kls("%s::/usr/portage2" % as).match(c))
 
     def test_invalid_atom(self):
         self.assertRaises(errors.MalformedAtom, self.kls, '~dev-util/spork')

@@ -270,6 +270,10 @@ class OnDiskProfile(object):
     @property
     def arch(self):
         return self.default_env.get("ARCH")    
+    
+    @property
+    def deprecated(self):
+        return self.node.deprecated
 
     def _load_stack(self):
         def f(node):

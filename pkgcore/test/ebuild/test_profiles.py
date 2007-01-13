@@ -392,3 +392,17 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
         self.assertEqual([x.cpvstr for x in
             sorted(self.get_profile("base1").provides_repo)],
             ["dev-util/bsdiff-0.4"])
+
+    def test_deprecated(self):
+        self.mk_profiles({})
+        self.assertFalse(self.get_profile("base0").deprecated)
+        self.mk_profiles(
+            {"deprecated":"replacement\nfoon\n"},
+            {}
+            )
+        self.assertFalse(self.get_profile("base1").deprecated)
+        self.mk_profiles(
+            {},
+            {"deprecated":"replacement\nfoon\n"}
+            )
+        self.assertTrue(self.get_profile("base1").deprecated)

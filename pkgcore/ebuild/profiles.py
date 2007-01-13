@@ -377,6 +377,8 @@ class OnDiskProfile(object):
             obj = self.make_virtuals_repo
         elif attr == 'provides_repo':
             obj = self.provides_repo = self._collapse_pkg_provided()
+        elif attr == 'path':
+            obj = self.node.path
         else:
             raise AttributeError(attr)
         return obj

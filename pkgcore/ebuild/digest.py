@@ -43,7 +43,7 @@ def parse_digest(source, throw_errors=True):
                 chf_keys.add(chf)
         except (OSError, IOError), e:
             raise errors.MissingChksum(source)
-	except TypeError, e:
+    except TypeError, e:
             raise errors.ParseChksumError("%r" % source, e)
     finally:
         if f is not None and f.close:

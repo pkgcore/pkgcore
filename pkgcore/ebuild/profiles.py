@@ -18,10 +18,7 @@ demandload(globals(), "pkgcore.interfaces.data_source:local_source "
     "pkgcore.ebuild:cpv "
     "pkgcore.ebuild:atom "
     "pkgcore.repository:util "
-    "pkgcore.log:logger "
-    "pkgcore.restrictions:packages "
-    "pkgcore.util:mappings "
-    "pkgcore.util.iterables:expandable_chain ")
+    "pkgcore.restrictions:packages ")
 
 class ProfileError(Exception):
 

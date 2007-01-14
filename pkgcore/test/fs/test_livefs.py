@@ -10,13 +10,23 @@ from pkgcore.test.mixins import TempDirMixin
 
 class FsObjsTest(TempDirMixin, TestCase):
 
-    def check_attrs(self, obj, path):
-        st = os.lstat(path)
+    def check_attrs(self, obj, path, offset=None):
+        if offset is None:
+            st = os.lstat(path)
+        else:
+            st = os.lstat(offset + '/' + path)
+        if offset is not None:
+            self.assertTrue(path.startswith("/"), 
+                msg="path must be absolute, got %r" % path)
         self.assertEqual(obj.mode & 07777, st.st_mode & 07777)
         self.assertEqual(obj.uid, st.st_uid)
         self.assertEqual(obj.gid, st.st_gid)
         if fs.isreg(obj):
-            self.assertEqual(obj.data.get_path(), path)
+            if offset is None:
+                self.assertEqual(obj.data.get_path(), path)
+            else:
+                self.assertEqual(obj.data.get_path(),
+                    offset + path)
 
     def test_data_source(self):
         o = gen_obj("/tmp/etc/passwd", real_location="/etc/passwd")
@@ -76,6 +86,11 @@ class FsObjsTest(TempDirMixin, TestCase):
                 raise Exception(
                     "unknown object popped up in testing dir, '%s'" % obj)
             self.check_attrs(obj, obj.location)
+        # do offset verification now.
+        offset = os.path.join(self.dir, "iscan")
+        for obj in iter_scan(path, offset=offset):
+            self.check_attrs(obj, obj.location, offset=offset)
+
 
     def test_relative_sym(self):
         f = os.path.join(self.dir, "relative-symlink-test")

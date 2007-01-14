@@ -100,6 +100,7 @@ def _internal_offset_iter_scan(path, chksum_handlers, offset):
     while dirs:
         base = dirs.popleft()
         real_base = pjoin(offset, base.lstrip(sep))
+        base = base.rstrip(sep) + sep
         for x in listdir(real_base):
             path = pjoin(base, x)
             o = gen_obj(path, chksum_handlers=chksum_handlers,

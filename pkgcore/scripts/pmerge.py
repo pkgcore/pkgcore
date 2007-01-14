@@ -60,8 +60,9 @@ a depends on b, and b depends on a, with neither built is an example""")
             "are already built; defaults to ignoring them"),
         self.add_option('--nodeps', action='store_true',
             help='disable dependency resolution')
-        self.add_option('--replace', '-r', action='store_true',
-            help="reinstall target atoms even if they're already installed")
+        self.add_option('--noreplace', '-r', action='store_false',
+            dest='replace', default=True,
+            help="don't reinstall target atoms if they're already installed")
         self.add_option('--usepkg', '-k', action='store_true',
             help="prefer to use binpkgs")
         self.add_option('--usepkgonly', '-K', action='store_true',

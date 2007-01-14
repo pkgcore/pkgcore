@@ -95,7 +95,7 @@ unpack()
             srcdir="${DISTDIR}"
         fi
 
-        [ ! -s "${srcdir}/${x}" ] && die "$myfail: empty file"
+        [ ! -s "${srcdir}${x}" ] && die "$myfail: empty file"
 
         case "${x##*.}" in
             tar)

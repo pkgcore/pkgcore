@@ -4,9 +4,9 @@ This form can be used in configuration files, but in doing so portage will have
 issues with the next syntax- thus if you're after maintaining configuration 
 compatibility, limit usage of the extended syntax to commandline only.
 
-==============   ===========================================================
+===============  =========================================================
 token            result
---------------   -----------------------------------------------------------
+===============  =========================================================
 *                match all 
 portage          package name must be ''portage'' 
 dev-util/*       category must be ''dev-util'' 
@@ -19,7 +19,7 @@ dev-*            package must start with ''dev-''
 *-apps/portage*  category must end in ''-apps'', package must start with 
                  ''portage'' 
 =portage-1.0     match version 1.0 of any 'portage' package
-===============  ===========================================================
+===============  =========================================================
 
 
 Additionally, pkgcore supports additional atom extensions that are more 

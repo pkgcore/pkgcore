@@ -281,6 +281,7 @@ def main(subcommands, args=None, sys_exit=True):
             sys.exit(1)
     options = None
     option_parser = parser_class(prog=prog)
+    out = None
     try:
         options, args = option_parser.parse_args(args)
         # Checked here and not in OptionParser because we want our
@@ -307,10 +308,11 @@ def main(subcommands, args=None, sys_exit=True):
     except KeyboardInterrupt:
         if options is not None and options.debug:
             raise
-    if exitstatus:
-        out.title('%s failed' % (os.path.basename(sys.argv[0]),))
-    else:
-        out.title('%s succeeded' % (os.path.basename(sys.argv[0]),))
+    if out is not None:
+        if exitstatus:
+            out.title('%s failed' % (os.path.basename(sys.argv[0]),))
+        else:
+            out.title('%s succeeded' % (os.path.basename(sys.argv[0]),))
     if sys_exit:
         sys.exit(exitstatus)
     else:

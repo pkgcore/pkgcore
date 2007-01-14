@@ -22,8 +22,8 @@ class database(fs_template.FsBased):
     pkgcore_config_type = ConfigHint(
         {'readonly': 'bool', 'location': 'str', 'label': 'str',
          'auxdbkeys': 'list'},
-        required=['location', 'label', 'auxdbkeys'],
-        positional=['location', 'label', 'auxdbkeys'],
+        required=['location', 'label'],
+        positional=['location', 'label'],
         typename='cache')
 
 

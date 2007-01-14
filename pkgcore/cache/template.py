@@ -10,6 +10,10 @@ from pkgcore.cache import errors
 from pkgcore.util.mappings import ProtectedDict
 from pkgcore.util.obj import make_SlottedDict_kls
 
+# temp hack for .2
+from pkgcore.ebuild.const import metadata_keys
+metadata_keys = tuple(metadata_keys)
+
 class database(object):
     # this is for metadata/cache transfer.
     # basically flags the cache needs be updated when transfered cache to cache.
@@ -31,7 +35,7 @@ class database(object):
     cleanse_keys = False
     serialize_eclasses = True
 
-    def __init__(self, location, label, auxdbkeys, readonly=False):
+    def __init__(self, location, label, auxdbkeys=metadata_keys, readonly=False):
         """
         initialize the derived class; specifically, store label/keys
 

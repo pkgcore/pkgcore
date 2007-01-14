@@ -155,9 +155,33 @@ class Cpy_NormPathTest(Native_NormPathTest):
 
     func = staticmethod(osutils.normpath)
     if osutils.normpath is osutils.native_normpath:
-        skip = "extensions isn't compiled"
+        skip = "extension isn't compiled"
 
 
+class Cpy_JoinTest(TestCase):
+
+    if osutils.join is osutils.native_join:
+        skip = "etension isn't compiled"
+
+    def assertSame(self, val):
+        self.assertEqual(osutils.native_join(*val), 
+            osutils.join(*val), 
+            msg="for %r, expected %r, got %r" % (val,
+                osutils.native_join(*val),
+                osutils.join(*val)))
+
+    def test_reimplementation(self):
+        map(self.assertSame, [
+            ["", "foo"],
+            ["foo", "dar"],
+            ["foo", "/bar"],
+            ["/bar", "dar"],
+            ["/bar", "../dar"],
+            ["", "../dar"]
+            ])
+            
+        
+        
 # TODO: more error condition testing
 class FsLockTest(TempDirMixin, TestCase):
 

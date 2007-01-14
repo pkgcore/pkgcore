@@ -138,7 +138,7 @@ pkgcore_join(PyObject *self, PyObject *args)
     PyObject **items = PySequence_Fast_ITEMS(fast);
     Py_ssize_t start = 0, len, i = 0;
     char *s;
-
+    int leading_slash = 0;
     // find the right most item with a prefixed '/', else 0.
     for(; i < end; i++) {
         if(!PyString_CheckExact(items[i])) {
@@ -147,8 +147,10 @@ pkgcore_join(PyObject *self, PyObject *args)
             return (PyObject *)NULL;
         }
         s = PyString_AsString(items[i]);
-        if('/' == *s)
+        if('/' == *s) {
+            leading_slash = 1;
             start = i;
+        }
     }
     // know the relevant slice now; figure out the size.
     len = 0;
@@ -158,12 +160,15 @@ pkgcore_join(PyObject *self, PyObject *args)
         s_start = s = PyString_AS_STRING(items[i]);
         while('\0' != *s)
             s++;
+        if(s_start == s)
+            continue;
         len += s - s_start;
-        s_start++;
         char *s_end = s;
         if(i + 1 != end) {
+            // cut the length down for trailing duplicate slashes
             while(s != s_start && '/' == s[-1])
                 s--;
+            // allocate for a leading slash if needed
             if(s_end == s && (s_start != s ||
                 (s_end == s_start && i != start))) {
                 len++;
@@ -178,8 +183,18 @@ pkgcore_join(PyObject *self, PyObject *args)
     if(!ret)
         return (PyObject*)NULL;
     char *buf = PyString_AS_STRING(ret);
+    if(leading_slash) {
+        *buf = '/';
+        buf++;
+    }
     for(i = start; i < end; i++) {
         s_start = s = PyString_AS_STRING(items[i]);
+        if(i == start && leading_slash) {
+            SKIP_SLASHES(s);
+            s_start = s;
+        }
+        if('\0' == *s)
+            continue;
         while('\0' != *s) {
             *buf = *s;
             buf++;

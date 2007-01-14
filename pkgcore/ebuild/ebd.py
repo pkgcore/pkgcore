@@ -28,7 +28,7 @@ from pkgcore.interfaces import observer
 from pkgcore.util.demandload import demandload
 demandload(globals(),
            "pkgcore.ebuild.ebuild_built:fake_package_factory,package "
-           "warnings "
+           "pkgcore.log:logger "
            "pkgcore.package.mutated:MutatedPkg ")
 
 
@@ -122,7 +122,7 @@ class ebd(object):
         for x in ("sandbox", "userpriv", "fakeroot"):
             setattr(self, x, self.feat_or_bool(x) and not (x in self.restrict))
         if self.fakeroot:
-            warnings.warn("disabling fakeroot; unusable till coreutils/fakeroot" +
+            logger.warn("disabling fakeroot; unusable till coreutils/fakeroot" +
                 " interaction is fixed")
             self.fakeroot = False
         if self.userpriv and os.getuid() != 0:
@@ -209,7 +209,7 @@ class ebd(object):
                         k, 0770, portage_gid))
             # XXX hack, just 'til pkgcore controls these directories
             if (os.stat(self.env[k]).st_mode & 02000):
-                warnings.warn("%s ( %s ) is setgid" % (self.env[k], k))
+                logger.warn("%s ( %s ) is setgid" % (self.env[k], k))
 
     @_reset_env_data_source
     def _generic_phase(self, phase, userpriv, sandbox, fakeroot,
@@ -418,8 +418,13 @@ class buildable(ebd, setup_mixin, format.build):
 
         self.fetcher = fetcher
 
-        self.run_test = (self.feat_or_bool("test", domain_settings)
-                         and not "test" in self.restrict)
+        self.run_test = self.feat_or_bool("test", domain_settings)
+        if "test" in self.restrict:
+            self.run_test = False
+        elif "test" in pkg.iuse and "test" not in pkg.use:
+            if self.run_test:
+                logger.warn("disabling test for %s due to test use flag being disabled")
+            self.run_test = False
 
         # XXX minor hack
         path = self.env["PATH"].split(":")

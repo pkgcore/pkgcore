@@ -262,13 +262,12 @@ class domain(pkgcore.config.domain.domain):
         # stack use stuff first, then profile.
         # could do an intersect up front to pull out the forced disabled
         # also, although that code would be fugly
-        extra_forced = []
         self.enabled_use = collapsed_restrict_to_data(
             ((packages.AlwaysTrue, self.use),
             (packages.AlwaysTrue, [self.arch])), pkg_use)
         self.forced_use = collapsed_restrict_to_data(
             profile.forced_use.iteritems(),
-            ((packages.AlwaysTrue, [self.arch] + extra_forced),))
+            ((packages.AlwaysTrue, [self.arch]),))
         self.disabled_use = collapsed_restrict_to_data(
             profile.masked_use.iteritems())
         

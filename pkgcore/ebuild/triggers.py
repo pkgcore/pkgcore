@@ -418,7 +418,6 @@ def customize_engine(domain_settings, engine):
             install_mask = install_mask[0]
         else:
             install_mask = values.OrRestriction(*install_mask)
-        print install_mask
         triggers.PruneFiles(install_mask.match).register(engine)
         # note that if this wipes all /usr/share/ entries, should 
         # wipe the empty dir.

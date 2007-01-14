@@ -9,26 +9,19 @@ Rough TODO
 - userpriv for pebuild misbehaves..
 
 - http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/491285
-  check into, probably better then my curfty itersort
+  check into, probably better then my curfty itersort; need to see how
+  well heapqu's nlargest pop behaves (looks funky)
   
-- pmaint (sync, quickpkging/non-merge pkg transfering, cache transfering)
-
 - look into converting MULTILIB_STRICT* crap over to a trigger
 
 - install-sources trigger
 
-- collision-protect trigger
-
 - recreate verify-rdepends also
-
-- sandbox and fakeroot don't work right now (doesn't properly disable)
-
-- sync subsystem.
-  Threw out the old refactoring, too portage specific; exists in 
-  sandbox/dead_code , design sucked also.
 
 - observer objects for reporting back events from merging/unmerging
   cpython 'tee' is needed, contact harring for details.
+  basic form of it is in now, but need something more powerful for 
+  parallelization
   elog is bound to this also
 
 - Possibly convert to cpython:
@@ -37,37 +30,22 @@ Rough TODO
   - metadata.database._parse_data
   - posixpath (os.path)
 
-- pkgcore.fetchable.__init__: __eq__/__hash__
-
 - get the tree clean of direct /var/db/pkg access
 
 - vdb2 format (ask harring for details).
-
-- verify proper temporal handling of rdep blockers when a pkg gets dumped 
-  from the graph (namely, boot the block).
 
 - pkgcore.fs.ops.merge_contents; doesn't rewite the contents set when a file
   it's mergeing is relying on symlinked directories for the full path; eg,
   /usr/share/X11/xkb/compiled -> /var/blah, it records the former instead of 
   recording the true absolute path.
 
-- pmerge exit code; ambiguousquery doesn't seem to result in ret != 0
-
 - pmerge mods; [ --skip-set SET ] , [ --skip atom ], use similar restriction
   to --replace to prefer vdb for matching atoms
-
-- info regeneration trigger
 
 - refactor pkgcore.ebuild.cpv.ver_cmp usage to avoid full cpv parsing when 
   _cpv is in use; 
   'nuff said, look in pkgcore.ebuild.cpv.cpy_ver_cmp
 
-- finish off trigger registration
-
-  Right now it's hardcoded in merge.engine; this sucks, need to convert the 
-  gentoo specific triggers over to being registered on the fly via
-  domain/configuration.
-  
 - testing of fakeroot integration
 
   it was working back in the ebd branch days; things have changed since then 
@@ -79,23 +57,6 @@ Rough TODO
   reasoning being that if we're just going to do a max, pass in the max so it 
   has the option of doing the initial sorting without passing through
   visibility filters (which will trigger metadata lookups)
-
-- pkgcore.config.central features
-
-  These may or may not be picked off as development continues; the main
-  requirement for this functionality is plugins, which the framework 
-  intends... so... prior to a release, it will be added.
-
-  - needs method to do lookups of further object restrictions/section_ref/etc
-    from a common dir, based on name.  this one requires some thought;
-    essentially, if loading portage-mysql.cache, try 1, or try this opt,
-    look in a dir the plugins ebuild can install a section conf tweak, and
-    use it.
-  - configuration 'types' , list, bool, str, etc, should be extendable, lifted
-    from a config most likely.  Defaults should be avail in code, but should
-    have a method of extending it
-  - integration of make.globals type data; defaults effectively, but a bit
-    more complex.
 
 - 'app bundles'.  Reliant on serious overhauling of deps to do 'locked deps',
   but think of it as rpath based app stacks, a full apache stack compiled to
@@ -113,4 +74,6 @@ Rough TODO
 - pkgcore.ebuild.gpgprofile: 
   Same as above.
 
-- locking unification.  see plugins for an example of why it's needed
+- reintroduce locking of certain high level components using read/write;
+  mainly, use it as a way to block sync'ing a repo that's being used to build, 
+  lock the vdb for updates, etc.

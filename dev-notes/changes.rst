@@ -17,3 +17,5 @@ hard to list everything mind you, but here is changes re: behaviour
   config with a broken env isn't allowed, cause config won't work;
   installing with a broken env, not allowed cause preinst/postinst
   won't be executed.
+* binpkg building now gets the unmodified contents- thus when merging the
+  binpkg, all files are there unmodified.

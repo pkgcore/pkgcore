@@ -84,6 +84,7 @@ class ContentsFile(contentsSet):
 
     def _parse_old(self, line):
         """parse old contents, non tab based format"""
+        # specifically force splitting on spaces.
         s = line.split()
         if s[0] in ("dir", "dev", "fif"):
             return s[0], ' '.join(s[1:])
@@ -103,10 +104,11 @@ class ContentsFile(contentsSet):
     def _read(self):
         self.clear()
         for line in self._get_fd():
-            if "\t" not in line:
-                line = self._parse_old(line)
-            else:
-                line = line.split("\t")
+            line = self._parse_old(line)
+#            if "\t" not in line:
+#                line = self._parse_old(line)
+#            else:
+#                line = line.split("\t")
 
             if line[0] == "dir":
                 obj = fs.fsDir(line[1], strict=False)
@@ -139,24 +141,22 @@ class ContentsFile(contentsSet):
             for obj in sorted(self):
 
                 if isinstance(obj, fs.fsFile):
-                    s = "\t".join(("obj", obj.location, "%x" % 
+                    s = " ".join(("obj", obj.location, "%x" % 
                         obj.chksums["md5"],
                         str(obj.mtime)))
 
                 elif isinstance(obj, fs.fsLink):
-                    # write the tab, *and spaces*.  tab's for delimiting.
-                    # spaces are for backwards compatability
-                    s = "\t".join(("sym", obj.location, " -> ",
+                    s = " ".join(("sym", obj.location, "->",
                                    obj.target, str(obj.mtime)))
 
                 elif isinstance(obj, fs.fsDir):
-                    s = "dir\t" + obj.location
+                    s = "dir " + obj.location
 
                 elif isinstance(obj, fs.fsDev):
-                    s = "dev\t" + obj.location
+                    s = "dev " + obj.location
 
                 elif isinstance(obj, fs.fsFifo):
-                    s = "fif\t" + obj.location
+                    s = "fif " + obj.location
 
                 else:
                     raise Exception(

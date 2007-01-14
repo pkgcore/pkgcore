@@ -52,7 +52,6 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=True):
                     try:
                         st = os.stat(base)
                     except TypeError:
-                        import pdb;pdb.set_trace()
                         raise
                     if not stat.S_ISDIR(st.st_mode):
                         return False

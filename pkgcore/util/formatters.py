@@ -97,6 +97,8 @@ class Formatter(object):
         self.write(message, prefixes=(
                 self.fg('yellow'), self.bold, '*** ', self.reset))
 
+    def title(self, string):
+        pass
 
 class PlainTextFormatter(Formatter):
 
@@ -380,6 +382,8 @@ else:
                 if e.errno == errno.EPIPE:
                     raise StreamClosed(e)
                 raise
+        def title(self, string):
+            self.stream.write("\x1b]0;%s\x07" % string) 
 
 class ObserverFormatter(object):
 

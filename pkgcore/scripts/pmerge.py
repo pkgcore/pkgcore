@@ -393,6 +393,7 @@ def main(options, out, err):
     failures = []
     resolve_time = time.time()
     out.write(out.bold, ' * ', out.reset, 'Resolving...')
+    out.title('Resolving...')
     for restrict in atoms:
 #        print "\ncalling resolve for %s..." % restrict
         ret = resolver_inst.add_atom(restrict)
@@ -457,6 +458,7 @@ def main(options, out, err):
 
     out.write()
     out.write('Success!')
+    out.title('Resolved')
     out.write(out.bold, '%.2f' % (resolve_time,), out.reset,
               ' seconds resolving')
     if vdb_time:
@@ -474,7 +476,9 @@ def main(options, out, err):
 
     change_count = len(changes)
     for count, op in enumerate(changes):
-        out.write("processing %s, %i/%i" % (op.pkg, count + 1, change_count))
+        string = "processing %s, %i/%i" % (op.pkg, count + 1, change_count)
+        out.write(string)
+        out.title(string)
         if op.desc != "remove":
             if not options.fetchonly:
                 out.write("forcing cleaning of workdir")

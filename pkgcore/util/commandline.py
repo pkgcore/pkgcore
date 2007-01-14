@@ -249,6 +249,7 @@ def main(subcommands, args=None, sys_exit=True):
     @param sys_exit: if True C{sys.exit} is called when done, otherwise
         the exitstatus is returned.
     """
+    exitstatus = 1
     if args is None:
         args = sys.argv[1:]
     prog = os.path.basename(sys.argv[0])
@@ -287,9 +288,6 @@ def main(subcommands, args=None, sys_exit=True):
         if args:
             option_parser.error("I don't know what to do with %s" %
                                 (' '.join(args),))
-            # We should not get here, this is protection against
-            # weird OptionParser subclasses.
-            exitstatus = 1
         else:
             if options.nocolor:
                 formatter_factory = formatters.PlainTextFormatter
@@ -306,11 +304,13 @@ def main(subcommands, args=None, sys_exit=True):
         if options is not None and options.debug:
             raise
         sys.stderr.write('Error in configuration:\n%s\n' % (e,))
-        exitstatus = 1
     except KeyboardInterrupt:
         if options is not None and options.debug:
             raise
-        exitstatus = 1
+    if exitstatus:
+        out.title('%s failed' % (os.path.basename(sys.argv[0]),))
+    else:
+        out.title('%s succeeded' % (os.path.basename(sys.argv[0]),))
     if sys_exit:
         sys.exit(exitstatus)
     else:

@@ -476,9 +476,9 @@ def main(options, out, err):
 
     change_count = len(changes)
     for count, op in enumerate(changes):
-        string = "processing %s, %i/%i" % (op.pkg, count + 1, change_count)
-        out.write(string)
-        out.title(string)
+        status_str = "processing %s, %i/%i" % (op.pkg, count + 1, change_count)
+        out.write(status_str)
+        out.title(status_str)
         if op.desc != "remove":
             if not options.fetchonly:
                 out.write("forcing cleaning of workdir")

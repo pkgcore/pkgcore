@@ -160,9 +160,6 @@ def parse_atom(token, repo, return_none=False):
             return None
         raise NoMatches(token)
     return KeyedAndRestriction(restriction, key=key)
-    if not ops:
-        return atom.atom(key)
-    return atom.atom("%s%s-%s" % (ops, key, fullver))
 
 
 class Failure(ValueError):

@@ -102,6 +102,8 @@ a depends on b, and b depends on a, with neither built is an example""")
                 options.set = ['world', 'system']
         elif options.usepkgonly and options.usepkg:
             self.error('--usepkg is redundant when --usepkgonly is used')
+        if options.set:
+            options.replace = False
         if not options.targets and not options.set:
             self.error('Need at least one atom/set')
         return options, ()

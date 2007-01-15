@@ -12,19 +12,11 @@ from pkgcore.repository.misc import nodeps_repo
 from pkgcore.resolver import plan
 from pkgcore.util.demandload import demandload
 from itertools import chain
+from pkgcore.util.iterables import iter_sort
 
 demandload(globals(),
            "pkgcore.restrictions:packages,values "
            "pkgcore.pkgsets.glsa:KeyedAndRestriction ")
-
-def prefer_old_style_virtuals(pkg1, pkg2):
-    if pkg1.package_is_real:
-        if pkg2.package_is_real:
-            return cmp(pkg1, pkg2)
-        return -1
-    elif pkg2.package_is_real:
-        return 1
-    return cmp(pkg1, pkg2)
 
 def prefer_highest_ver(resolver, dbs, atom):
     try:
@@ -33,9 +25,17 @@ def prefer_highest_ver(resolver, dbs, atom):
             livefs = [x for x in dbs if x.livefs]
             nonlivefs = [x for x in dbs if not x.livefs]
             l = list(resolver.prefer_reuse_strategy(resolver, livefs, atom))
-            l.sort(prefer_old_style_virtuals)
-            return chain(l, resolver.prefer_highest_version_strategy(resolver, 
-                nonlivefs, atom))
+            old_virts = [x for x in l if not x.package_is_real]
+            new_virts = [x for x in l if x.package_is_real]
+
+            old_virts.sort(reverse=True)
+            new_virts.sort(reverse=True)
+            
+            return chain(old_virts, iter_sort(plan.highest_iter_sort,
+                new_virts,
+                resolver.prefer_highest_version_strategy(resolver,
+                    nonlivefs, atom)))
+
     except AttributeError:
         # should do inspection instead...
         pass

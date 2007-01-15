@@ -5,6 +5,7 @@
 misc. stuff we've not found a spot for yet.
 """
 
+from itertools import chain
 from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.profiles import incremental_expansion
@@ -114,3 +115,14 @@ class non_incremental_collapsed_restrict_to_data(collapsed_restrict_to_data):
         s = set(self.defaults)
         s.update(iflatten_instance(l))
         return s
+
+    def iter_pull_data(self, pkg):
+        l = [self.defaults]
+        for specific in self.freeform:
+            l.extend(data for restrict, data in specific if restrict.match(pkg))
+        for atom, data in self.atoms.get(pkg.key, ()):
+            if atom.match(pkg):
+                l.append(data)
+        if len(l) == 1:
+            return iter(self.defaults)
+        return chain(l)

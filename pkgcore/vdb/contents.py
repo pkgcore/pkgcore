@@ -143,11 +143,11 @@ class ContentsFile(contentsSet):
                 if isinstance(obj, fs.fsFile):
                     s = " ".join(("obj", obj.location, "%x" % 
                         obj.chksums["md5"],
-                        str(obj.mtime)))
+                        str(long(obj.mtime))))
 
                 elif isinstance(obj, fs.fsLink):
                     s = " ".join(("sym", obj.location, "->",
-                                   obj.target, str(obj.mtime)))
+                                   obj.target, str(long(obj.mtime))))
 
                 elif isinstance(obj, fs.fsDir):
                     s = "dir " + obj.location

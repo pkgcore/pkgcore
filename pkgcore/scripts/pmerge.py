@@ -16,6 +16,7 @@ from pkgcore.repository import multiplex
 from pkgcore.interfaces import observer, format
 from pkgcore.util.formatters import ObserverFormatter
 from pkgcore.util.packages import get_raw_pkg
+from pkgcore.pkgsets.glsa import KeyedAndRestriction
 
 class OptionParser(commandline.OptionParser):
 
@@ -158,6 +159,7 @@ def parse_atom(token, repo, return_none=False):
         if return_none:
             return None
         raise NoMatches(token)
+    return KeyedAndRestriction(restriction, key=key)
     if not ops:
         return atom.atom(key)
     return atom.atom("%s%s-%s" % (ops, key, fullver))

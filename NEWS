@@ -1,6 +1,7 @@
-Release Notes:
+Pkgcore Release Notes
+=====================
 
-  See ChangeLog for full commit logs.
+See ChangeLog for full commit logs; this is summarized and major changes.
 
 
 pkgcore 0.2:
@@ -18,7 +19,8 @@ pkgcore 0.2:
   * pmerge: supports --ask (thanks to nesl247/alex heck)
 
   * chksuming now does a single walk over a file for all checksummers,
-    instead of one walk per checksummer.
+    instead of one walk per checksummer- less disk thrashing, better
+    performance.
 
   * rewritten plugins system, register_plugins is no longer used.
   

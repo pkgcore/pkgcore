@@ -480,7 +480,8 @@ def main(options, out, err):
 
     change_count = len(changes)
     for count, op in enumerate(changes):
-        status_str = "processing %s, %i/%i" % (op.pkg, count + 1, change_count)
+        status_str = "processing %s, %i/%i" % (raw_pkg(op.pkg), count + 1,
+            change_count)
         out.write(status_str)
         out.title(status_str)
         if op.desc != "remove":

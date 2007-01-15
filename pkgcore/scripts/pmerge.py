@@ -15,6 +15,7 @@ from pkgcore.ebuild import resolver, atom
 from pkgcore.repository import multiplex
 from pkgcore.interfaces import observer, format
 from pkgcore.util.formatters import ObserverFormatter
+from pkgcore.util.packages import get_raw_pkg
 
 class OptionParser(commandline.OptionParser):
 
@@ -455,9 +456,9 @@ def main(options, out, err):
     for op in changes:
         if op.desc == "replace":
             out.write("replace %s, %s" %
-                (op.old_pkg, op.pkg))
+                (get_raw_pkg(op.old_pkg), get_raw_pkg(op.pkg)))
         else:
-            out.write("%s %s" % (op.desc.ljust(7), op.pkg))
+            out.write("%s %s" % (op.desc.ljust(7), get_raw_pkg(op.pkg)))
 
     out.write()
     out.write('Success!')

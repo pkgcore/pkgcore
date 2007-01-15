@@ -866,6 +866,7 @@ pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
                 goto pkgcore_atom_getattr_error;
             PyTuple_SET_ITEM(tup, idx, tmp);
         }
+        idx++;
     }
     if(use != Py_None) {
         tmp = make_use_val_restrict(use);

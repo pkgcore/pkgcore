@@ -2,6 +2,9 @@
 Rough TODO
 ==========
 
+- rip out use.* code from pkgcore_checks.addons.UseAddon.__init__, and 
+  generalize it into pkgcore.ebuild.repository
+
 - not hugely important, but... make a cpython version of SlottedDict from
   pkgcore.util.obj; 3% reduction for full repo walk, thus not a real huge
   concern atm.

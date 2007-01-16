@@ -34,7 +34,7 @@ def is_cycle(stack, atom, cur_choice, attr):
     for idx, x in enumerate(stack):
         if x.mode == "post_rdepends":
             cycle_start = -1
-        if x.atom.key == atom.key:
+        if x.atom == atom:
             cycle_start = idx
 
     if cycle_start != -1:

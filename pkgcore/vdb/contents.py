@@ -141,7 +141,7 @@ class ContentsFile(contentsSet):
             for obj in sorted(self):
 
                 if isinstance(obj, fs.fsFile):
-                    s = " ".join(("obj", obj.location, "%x" % 
+                    s = " ".join(("obj", obj.location, "%x" %
                         obj.chksums["md5"],
                         str(long(obj.mtime))))
 

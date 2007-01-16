@@ -52,8 +52,8 @@ glsa_template = \
 """
 
 ops = {'>':'gt', '<':'lt'}
-ops.update((k+'=', v[0] + 'e') for k,v in ops.items())
-ops.update(('~' + k, 'r' + v) for k,v in ops.items())
+ops.update((k+'=', v[0] + 'e') for k, v in ops.items())
+ops.update(('~' + k, 'r' + v) for k, v in ops.items())
 ops['='] = 'eq'
 def convert_range(text, tag):
     i = 0
@@ -115,7 +115,7 @@ class TestGlsaDirSet(TempDirMixin, TestCase):
             self.assertFalse(restrict.match(pkg),
                 msg="pkg %s must not match for %r: %s" %
                     (pkg, vuln_range, restrict))
-    
+
     test_range_ge = post_curry(check_range, ">=1-r2",
         ["1-r2", "1-r7", "2"], ["0", "1"])
     test_range_gt = post_curry(check_range, ">1-r2",
@@ -148,11 +148,11 @@ class TestGlsaDirSet(TempDirMixin, TestCase):
         self.mk_glsa(pkgs_set + (("dev-util/bsdiff", ([], ["~>=2-r1"])),))
         g = glsa.GlsaDirSet(self.dir)
         l = list(g.pkg_grouped_iter())
-        self.assertEqual([x.key for x in l], 
+        self.assertEqual([x.key for x in l],
             ['dev-util/diffball', 'dev-util/bsdiff'])
         # main interest is dev-util/bsdiff
         r = l[1]
-        pkgs = [cpv.CPV("dev-util/bsdiff-%s" % ver) for ver in 
+        pkgs = [cpv.CPV("dev-util/bsdiff-%s" % ver) for ver in
             ("0", "1", "1.1", "2", "2-r1")]
         self.assertEqual([x.fullver for x in pkgs if r.match(x)],
             ["1.1", "2-r1"])

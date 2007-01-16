@@ -7,7 +7,6 @@
 
 from pkgcore.ebuild.errors import InvalidCPV
 
-import re
 from pkgcore.package import base
 # do this to break the cycle.
 from pkgcore.util.demandload import demandload, demand_compile
@@ -76,7 +75,7 @@ class native_CPV(object):
         if not m:
             raise InvalidCPV(cpvstr)
         object.__setattr__(self, "cpvstr", cpvstr)
-        for k,v in m.groupdict().iteritems():
+        for k, v in m.groupdict().iteritems():
             object.__setattr__(self, k, v)
         r = self.revision
         if r is not None:
@@ -293,9 +292,9 @@ class CPV(base.base, base_CPV):
     @ivar unversioned_atom: atom matching all versions of this package
     @cvar _get_attr: mapping of attr:callable to generate attributes on the fly
     """
-    
+
     __slots__ = ()
-    
+
 #	__metaclass__ = WeakInstMeta
 
 #	__inst_caching__ = True

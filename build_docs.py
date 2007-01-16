@@ -24,8 +24,8 @@ def trac_get_reference(rawtext, link, text):
 
 def trac(name, arguments, options, content, lineno,
          content_offset, block_text, state, state_machine):
-    """Inserts a `reference` node into the document 
-    for a given `TracLink`_, based on the content 
+    """Inserts a `reference` node into the document
+    for a given `TracLink`_, based on the content
     of the arguments.
 
     Usage::

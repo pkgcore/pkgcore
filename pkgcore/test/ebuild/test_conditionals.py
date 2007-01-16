@@ -17,7 +17,7 @@ class base(TestCase):
         parse_depset = None
 
     depset_kls = staticmethod(depset_kls)
-    
+
     def gen_depset(self, string, operators=None, func=None):
         if func is not None:
             kwds = {"element_func":func}
@@ -32,7 +32,7 @@ class native_DepSetParsingTest(base):
 
     def f(self, x):
         self.assertRaises(ParseError, self.gen_depset, x)
-    
+
     # generate a lot of parse error assertions.
     for x in ("( )", "( a b c", "(a b c )",
         "( a b c)", "()", "x?( a )",
@@ -229,7 +229,7 @@ def convert_to_seq(s):
 
 
 class native_DepSetEvaluateTest(base):
-    
+
     def test_evaluation(self):
         for vals in (("y", "x? ( y ) !x? ( z )", "x"),
             ("z", "x? ( y ) !x? ( z )"),
@@ -245,12 +245,12 @@ class native_DepSetEvaluateTest(base):
                 use = convert_to_seq(vals[2])
             if len(vals) > 3:
                 tristate = convert_to_seq(vals[3])
-            collapsed = self.gen_depset(s).evaluate_depset(use, 
+            collapsed = self.gen_depset(s).evaluate_depset(use,
                 tristate_filter=tristate)
             self.assertEqual(str(collapsed), result, msg=
-                "%r does not equal %r\nraw depset: %r\nuse: %r, tristate: %r" % 
+                "%r does not equal %r\nraw depset: %r\nuse: %r, tristate: %r" %
                     (str(collapsed), result, s, use, tristate))
-       
+
 
 class cpy_DepSetEvaluateTest(native_DepSetEvaluateTest):
 

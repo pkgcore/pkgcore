@@ -51,7 +51,7 @@ def convert_glob(token):
 def collect_ops(text):
     i = 0
     while text[i] in ("<", "=", ">", "~"):
-        i+=1
+        i += 1
     return text[0:i], text[i:]
 
 def parse_match(text):

@@ -429,7 +429,7 @@ class EbuildProcessor:
                 pass
             self.pid = None
             return False
-                
+
         except AttributeError:
             # thrown only if failure occured instantiation.
             return False
@@ -615,9 +615,9 @@ class EbuildProcessor:
 
         handlers["phases"] = partial(
             chuck_StoppingCommand, lambda f: f.lower().strip() == "succeeded")
-        
+
         handlers["killed"] = chuck_KeyboardInterrupt
-        
+
         if additional_commands is not None:
             for x in additional_commands:
                 if not callable(additional_commands[x]):

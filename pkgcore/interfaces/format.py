@@ -123,7 +123,7 @@ class uninstall(build_base):
 
 class replace(install, uninstall):
 
-    stage_depends = {"finalize":"postinst", "postinst":"postrm", 
+    stage_depends = {"finalize":"postinst", "postinst":"postrm",
         "postrm":"prerm", "prerm":"preinst"}
 
 

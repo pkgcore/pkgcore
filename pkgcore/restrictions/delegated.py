@@ -15,13 +15,13 @@ class delegate(restriction.base):
 
     """
     hand off matching to a handed in prototype
-    
+
     Example usage of this class should be available in
     L{pkgcore.ebuild.domain}.
     """
 
     __slots__ = ('_transform', '_data', 'negate')
-    
+
     type = packages.package_type
     inst_caching = False
 

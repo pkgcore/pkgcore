@@ -7,13 +7,11 @@ from collections import deque
 from pkgcore.util.compatibility import any
 from pkgcore.util.iterables import caching_iter, iter_sort
 from pkgcore.util.containers import RefCountingSet
-from pkgcore.util.mappings import OrderedDict
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.util.currying import partial, post_curry
 from pkgcore.restrictions import packages, values, restriction
 from pkgcore.repository.misc import caching_repo
-from pkgcore.util.klass import GetAttrProxy
 
 
 limiters = set(["cycle"]) # [None])
@@ -31,7 +29,7 @@ def is_cycle(stack, atom, cur_choice, attr):
         # the 'cut off' point is for the new atom, thus not possible for
         # a cycle.
         return -1
-    
+
     cycle_start = -1
     for idx, x in enumerate(stack):
         if x.mode == "post_rdepends":
@@ -41,7 +39,7 @@ def is_cycle(stack, atom, cur_choice, attr):
 
     if cycle_start != -1:
         # deque can't be sliced, thus islice
-        s = ', '.join('[%s: %s]' % 
+        s = ', '.join('[%s: %s]' %
             (x.atom, x.current_pkg) for x in islice(stack, cycle_start))
         if s:
             s += ', '
@@ -114,9 +112,9 @@ def default_depset_reorder(resolver, depset, mode):
 
 class resolver_frame(object):
 
-    __slots__ = ("atom", "choices", "mode", "start_point", "dbs", 
+    __slots__ = ("atom", "choices", "mode", "start_point", "dbs",
         "depth", "drop_cycles", "__weakref__")
-    
+
     def __init__(self, mode, atom, choices, dbs, start_point, depth,
         drop_cycles):
         self.atom = atom
@@ -126,7 +124,7 @@ class resolver_frame(object):
         self.start_point = start_point
         self.depth = depth
         self.drop_cycles = drop_cycles
-    
+
     def __str__(self):
         return "frame: mode %r: atom %s: current %s" % \
             (self.mode, self.atom, self.current_pkg)
@@ -145,7 +143,7 @@ class resolver_stack(deque):
         return 'resolver stack:\n  %s' % '\n  '.join(str(x) for x in self)
 
     def __repr__(self):
-        return '<%s: %r>' % (self.__class__.__name__, 
+        return '<%s: %r>' % (self.__class__.__name__,
             tuple(repr(x) for x in self))
 
 
@@ -240,7 +238,7 @@ class merge_plan(object):
                             # they cyclical pkg is installed already, thus
                             # it's satisfied itself.
                             break
-                        failure = self._rec_add_atom(datom, current_stack, 
+                        failure = self._rec_add_atom(datom, current_stack,
                             self.livefs_dbs, mode="depends",
                             drop_cycles=cur_frame.drop_cycles)
                         if failure and cur_frame.drop_cycles:
@@ -394,7 +392,7 @@ class merge_plan(object):
                 conflicts = replace_op(choices, choices.current_pkg).apply(
                     self.state)
                 if conflicts:
-                    dprint("tried the replace, but got matches still- %s", 
+                    dprint("tried the replace, but got matches still- %s",
                         conflicts)
             else:
                 try_rematch = True
@@ -484,7 +482,7 @@ class merge_plan(object):
 
         blocks = []
         failures = []
-        
+
         last_state = None
         while choices:
             new_state = choices.state
@@ -559,8 +557,8 @@ class merge_plan(object):
                             add_op(c, c.current_pkg, force=True).apply(
                                 self.state)
                             break;
-                    
-                l = self.state.add_blocker(choices, 
+
+                l = self.state.add_blocker(choices,
                     self.generate_mangled_blocker(choices, x), key=x.key)
                 if l:
                     # blocker caught something. yay.
@@ -748,7 +746,7 @@ class plan_state(object):
             return
         for blocker, key in l[:]:
             decref_forward_block_op(choices, blocker, key).apply(self)
-        
+
     def backtrack(self, state_pos):
         assert state_pos <= len(self.plan)
         if len(self.plan) == state_pos:
@@ -785,14 +783,14 @@ class base_op(object):
 class add_op(base_op):
 
     desc = "add"
-    
+
     def apply(self, plan):
         l = plan.state.fill_slotting(self.pkg, force=self.force)
         if l and not self.force:
             return l
         plan.pkg_choices[self.pkg] = self.choices
         plan.plan.append(self)
-    
+
     def revert(self, plan):
         plan.state.remove_slotting(self.pkg)
         del plan.pkg_choices[self.pkg]
@@ -801,13 +799,13 @@ class remove_op(base_op):
     __slots__ = ()
 
     desc = "remove"
-    
+
     def apply(self, plan):
         plan.state.remove_slotting(self.pkg)
         plan._remove_pkg_blockers(plan.pkg_choices)
         del plan.pkg_choices[self.pkg]
         plan.plan.append(self)
-    
+
     def revert(self, plan):
         plan.state.fill_slotting(self.pkg, force=self.force)
         plan.pkg_choices[self.pkg] = self.choices
@@ -834,7 +832,7 @@ class replace_op(base_op):
             return l
 
         # wipe olds blockers.
-        
+
         self.old_pkg = old
         self.old_choices = old_choices
         del plan.pkg_choices[old]
@@ -852,10 +850,10 @@ class replace_op(base_op):
 
 class blocker_base_op(object):
     __slots__ = ("choices", "blocker", "key")
-    
+
     desc = None
     internal = True
-    
+
     def __init__(self, choices, blocker, key=None):
         if key is None:
             self.key = blocker.key
@@ -863,10 +861,10 @@ class blocker_base_op(object):
             self.key = key
         self.choices = choices
         self.blocker = blocker
-    
+
 class incref_forward_block_op(blocker_base_op):
     __slots__ = ()
-    
+
     def apply(self, plan):
         plan.plan.append(self)
         if self.blocker not in plan.blockers_refcnt:
@@ -877,7 +875,7 @@ class incref_forward_block_op(blocker_base_op):
             l = []
         plan.blockers_refcnt.add(self.blocker)
         return l
-    
+
     def revert(self, plan):
         l = plan.rev_blockers[self.choices]
         l.remove((self.blocker, self.key))
@@ -889,7 +887,7 @@ class incref_forward_block_op(blocker_base_op):
 
 class decref_forward_block_op(blocker_base_op):
     __slots__ = ()
-    
+
     def apply(self, plan):
         plan.plan.append(self)
         plan.blockers_refcnt.remove(self.blocker)
@@ -898,7 +896,7 @@ class decref_forward_block_op(blocker_base_op):
         plan.rev_blockers[self.choices].remove((self.blocker, self.key))
         if not plan.rev_blockers[self.choices]:
             del plan.rev_blockers[self.choices]
-    
+
     def revert(self, plan):
         plan.rev_blockers.setdefault(self.choices, []).append(
             (self.blocker, self.key))

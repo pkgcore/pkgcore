@@ -6,7 +6,7 @@ from pkgcore.sync import base
 class darcs_syncer(base.dvcs_syncer):
 
     binary = "darcs"
-    
+
     supported_uris = (
         ('darcs+', 5),
         )
@@ -16,11 +16,11 @@ class darcs_syncer(base.dvcs_syncer):
         if not raw_uri.startswith("darcs+"):
             raise base.uri_exception(raw_uri, "doesn't start with darcs+")
         return raw_uri[6:]
-    
+
     def __init__(self, basedir, uri):
         uri = self.parse_uri(uri)
         base.dvcs_syncer.__init__(self, basedir, uri)
-        
+
     def _initial_pull(self):
         return [self.binary_path, "clone", self.uri, self.basedir]
 

@@ -383,7 +383,7 @@ else:
                     raise StreamClosed(e)
                 raise
         def title(self, string):
-            self.stream.write("\x1b]0;%s\x07" % string) 
+            self.stream.write("\x1b]0;%s\x07" % string)
 
 class ObserverFormatter(object):
 

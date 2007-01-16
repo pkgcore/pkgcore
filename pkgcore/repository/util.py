@@ -5,7 +5,7 @@ from pkgcore.repository.prototype import tree
 from pkgcore.ebuild.cpv import CPV
 
 class SimpleTree(tree):
-    
+
     def __init__(self, cpv_dict, pkg_klass=None):
         self.cpv_dict = cpv_dict
         if pkg_klass is None:

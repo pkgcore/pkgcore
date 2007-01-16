@@ -150,7 +150,7 @@ class RefCountingSet(dict):
     def add(self, item):
         count = self.get(item, 0)
         self[item] = count + 1
-    
+
     def remove(self, item):
         count = self[item]
         if count == 1:

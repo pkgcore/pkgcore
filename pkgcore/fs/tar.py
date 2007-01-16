@@ -34,7 +34,7 @@ known_compressors = {"bz2": tarfile.TarFile.bz2open,
 
 def write_set(contents_set, filepath, compressor='bz2'):
     if compressor not in known_compressors:
-        raise ValueError("compression must be one of %r, got %r" % 
+        raise ValueError("compression must be one of %r, got %r" %
             (known_compressors.keys(), compressor))
     tar_fd = known_compressors[compressor](filepath, mode="w")
 
@@ -67,7 +67,7 @@ def tarinfo_to_fsobj(src_tar):
         elif member.isreg():
             d["data_source"] = tar_data_source(partial(
                     src_tar.extractfile, member.name))
-            # bit of an optimization; basically, we know size, so 
+            # bit of an optimization; basically, we know size, so
             # we stackdict it so that the original value is used, rather then
             # triggering an full chksum run for size
             f = fsFile(location, **d)
@@ -116,13 +116,13 @@ def fsobj_to_tarinfo(fsobj):
 def generate_contents(path, compressor="bz2"):
     """
     generate a contentset from a tarball
-    
+
     @param path: string path to location on disk
-    @param compressor: defaults to bz2; decompressor to use, see 
+    @param compressor: defaults to bz2; decompressor to use, see
         L{known_compressors} for list of valid compressors
     """
     if compressor not in known_compressors:
-        raise ValueError("compressor needs to be one of %r, got %r" % 
+        raise ValueError("compressor needs to be one of %r, got %r" %
             (known_compressors.keys(), compressor))
     t = known_compressors[compressor](path, mode="r")
     return TarContentsSet(tarinfo_to_fsobj(t), mutable=False)

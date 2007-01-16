@@ -51,7 +51,7 @@ class DepSet(boolean.AndRestriction):
         @param element_class: class of generated elements
         """
 
-        
+
         sf = object.__setattr__
         sf(self, "_known_conditionals", None)
         sf(self, "element_class", element_class)
@@ -61,7 +61,7 @@ class DepSet(boolean.AndRestriction):
         if self.parse_depset is not None:
             restrictions = None
             if operators is None:
-                has_conditionals, restrictions = self.parse_depset(dep_str, 
+                has_conditionals, restrictions = self.parse_depset(dep_str,
                     element_func, packages.AndRestriction,
                     packages.OrRestriction)
             else:
@@ -71,7 +71,7 @@ class DepSet(boolean.AndRestriction):
                 else:
                     has_conditionals, restrictions = self.parse_depset(dep_str,
                         element_func, operators.get(""), operators.get("||"))
-            
+
             if restrictions is not None:
                 sf(self, "_node_conds", has_conditionals)
                 sf(self, "restrictions", restrictions)
@@ -79,7 +79,7 @@ class DepSet(boolean.AndRestriction):
 
         sf(self, "restrictions", [])
         if operators is None:
-            operators = {"||":boolean.OrRestriction,"":boolean.AndRestriction}
+            operators = {"||":boolean.OrRestriction, "":boolean.AndRestriction}
 
         raw_conditionals = []
         depsets = [self.restrictions]
@@ -107,7 +107,7 @@ class DepSet(boolean.AndRestriction):
 
                         depsets[-2].append(
                             packages.Conditional("use", c, tuple(depsets[-1])))
-                        
+
                     else:
                         if len(depsets[-1]) == 1:
                             depsets[-2].append(depsets[-1][0])
@@ -254,7 +254,7 @@ class DepSet(boolean.AndRestriction):
     @property
     def node_conds(self):
         if self._node_conds is False:
-           object.__setattr__(self, "_node_conds", {})
+            object.__setattr__(self, "_node_conds", {})
         elif self._node_conds is True:
             nc = {}
 

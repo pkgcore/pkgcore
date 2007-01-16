@@ -81,7 +81,7 @@ class SpawnTest(TempDirMixin, TestCase):
     def test_sandbox_empty_dir(self):
         """
         sandbox gets pissy if it's ran from a nonexistant dir
-        
+
         this verifies our fix works.
         """
         fp = self.generate_script(

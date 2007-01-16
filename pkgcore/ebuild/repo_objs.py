@@ -104,7 +104,7 @@ class MetadataXml(object):
 class LocalMetadataXml(MetadataXml):
 
     __slots__ = ()
-    
+
     def _parse_xml(self):
         try:
             MetadataXml._parse_xml(self, open(self._source, "rb", 32768))
@@ -115,11 +115,11 @@ class LocalMetadataXml(MetadataXml):
             self._herds = ()
             self._longdescription = None
             self._source = None
-            
+
 
 
 class Manifest(object):
-    
+
     def __init__(self, source, enforce_gpg=False):
         self._source = (source, not enforce_gpg)
 
@@ -132,12 +132,12 @@ class Manifest(object):
         self._dist, self._aux, self._ebuild, self._misc = data[0]
         self._version = data[1]
         self._source = None
-    
+
     @property
     def version(self):
         self._pull_manifest()
         return self._version
-    
+
     @property
     def required_files(self):
         self._pull_manifest()
@@ -159,7 +159,7 @@ class Manifest(object):
 class SharedPkgData(object):
 
     __slots__ = ("__weakref__", "metadata_xml", "manifest")
-    
+
     def __init__(self, metadata_xml, manifest):
         self.metadata_xml = metadata_xml
         self.manifest = manifest

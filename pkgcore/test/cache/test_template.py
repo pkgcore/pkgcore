@@ -2,7 +2,6 @@
 # License: GPL2
 
 
-import re
 import operator
 
 from pkgcore.test import TestCase
@@ -42,7 +41,7 @@ class TemplateTest(TestCase):
     cache_keys = ("foo", "_eclasses_")
 
     def get_db(self, label='foo', readonly=False):
-        return DictCache('nowhere', 'dictcache', self.cache_keys, 
+        return DictCache('nowhere', 'dictcache', self.cache_keys,
             readonly=readonly)
 
     def test_basics(self):

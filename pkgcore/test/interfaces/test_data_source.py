@@ -28,7 +28,7 @@ class TestDataSource(TestCase):
         f.write("dar")
         f.close()
         self.assertEqual(obj.get_fileobj().read(), "darnani")
-        
+
 
 class TestLocalSource(TempDirMixin, TestDataSource):
 
@@ -36,7 +36,7 @@ class TestLocalSource(TempDirMixin, TestDataSource):
         self.fp = os.path.join(self.dir, "localsource.test")
         open(self.fp, "w").write("foonani")
         return data_source.local_source(self.fp, mutable=mutable)
-    
+
     def test_get_path(self):
         self.assertEqual(self.get_obj().get_path(), self.fp)
-    
+

@@ -7,7 +7,7 @@
 import traceback
 
 from pkgcore.config import errors, basics
-from pkgcore.util import commandline, modules, currying
+from pkgcore.util import commandline, modules
 from pkgcore.plugin import get_plugins
 
 

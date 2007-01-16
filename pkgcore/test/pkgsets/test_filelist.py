@@ -9,7 +9,7 @@ import tempfile, os
 class TestFileList(TestCase):
 
     kls = staticmethod(filelist.FileList)
-    
+
     def setUp(self):
         self.fn = tempfile.mktemp()
 
@@ -51,10 +51,10 @@ class TestFileList(TestCase):
         s.flush()
         self.assertEqual(sorted(x.strip() for x in open(self.fn) if x.strip()),
             ["dev-util/bsdiff"])
-    
+
 
 class TestWorldFile(TestFileList):
-    
+
     kls = staticmethod(filelist.WorldFile)
 
     def test_add(self):
@@ -71,4 +71,4 @@ class TestWorldFile(TestFileList):
         s.flush()
         self.assertEqual(sorted(x.strip() for x in open(self.fn) if x.strip()),
             ["dev-util/bsdiff"])
-    
+

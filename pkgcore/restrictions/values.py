@@ -41,12 +41,12 @@ class base(restriction.base):
 
 
 def reflective_hash(self):
-        return self._hash
+    return self._hash
 
 class hashed_base(base):
 
     __slots__ = ("_hash")
-    __hash__ = reflective_hash    
+    __hash__ = reflective_hash
 
 
 class GetAttrRestriction(packages.PackageRestriction):
@@ -357,10 +357,10 @@ class ComparisonMatch(hashed_base):
             "result must be less then or equal to".
         @param negate: should the results be negated?
         """
-        
+
         sf = object.__setattr__
         sf(self, "cmp_func", cmp_func)
-        
+
         if not isinstance(matching_vals, (tuple, list)):
             if isinstance(matching_vals, basestring):
                 matching_vals = self.convert_str_op(matching_vals)
@@ -371,7 +371,7 @@ class ComparisonMatch(hashed_base):
 
         sf(self, "data", data)
         if negate:
-            sf(self, "matching_vals", 
+            sf(self, "matching_vals",
                 tuple(set([-1, 0, 1]).difference(_mangle_cmp_val(x)
                     for x in matching_vals)))
         else:
@@ -646,7 +646,7 @@ class FunctionRestriction(hashed_base):
 class StrConversion(hashed_base):
 
     """convert passed in data to a str object"""
-    
+
     __hash__ = object.__hash__
     __slots__ = ('restrict',)
 
@@ -660,7 +660,7 @@ class StrConversion(hashed_base):
 class UnicodeConversion(StrConversion):
 
     """convert passed in data to a unicode obj"""
-    
+
     def match(self, val):
         return self.restrict.match(unicode(val))
 

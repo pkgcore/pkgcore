@@ -135,7 +135,7 @@ class LimitedChangeSetWithBlacklistTest(TestCase):
 class TestRefCountingSet(TestCase):
 
     def test_it(self):
-        c = containers.RefCountingSet((1,2))
+        c = containers.RefCountingSet((1, 2))
         self.assertIn(1, c)
         self.assertIn(2, c)
         c.remove(1)

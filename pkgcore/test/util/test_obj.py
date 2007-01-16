@@ -14,9 +14,9 @@ make_DIkls = obj.DelayedInstantiation_kls
 class TestDelayedInstantiation(TestCase):
 
     def test_simple(self):
-        t = tuple([1,2,3])
+        t = tuple([1, 2, 3])
         o = make_DI(tuple, lambda:t)
-        objs = [o,t]
+        objs = [o, t]
         self.assertEqual(*map(str, objs))
         self.assertEqual(*map(repr, objs))
         self.assertEqual(*map(hash, objs))
@@ -28,15 +28,15 @@ class TestDelayedInstantiation(TestCase):
         self.assertTrue(t >= o)
         self.assertFalse(t > o)
         self.assertFalse(t != o)
-        
-    
+
+
     def test_descriptor_awareness(self):
         o = set(obj.kls_descriptors.difference(dir(object)))
         o.difference_update(dir(1))
         o.difference_update(dir('s'))
         o.difference_update(dir(list))
         o.difference_update(dir({}))
-        
+
     def test_BaseDelayedObject(self):
         # assert that all methods/descriptors of object
         # are covered via the base.

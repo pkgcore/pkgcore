@@ -6,7 +6,7 @@ from pkgcore.test import TestCase
 
 generic_data = \
     ("sys-libs/libtrash-2.4",
-        (('DEPEND', 'virtual/libc dev-lang/perl'), 
+        (('DEPEND', 'virtual/libc dev-lang/perl'),
         ('DESCRIPTION', 'provides a trash can by intercepting calls...'),
         ('EAPI', ''),
         ('HOMEPAGE', 'http://pages.stern.nyu.edu/~marriaga/software/libtrash/'),
@@ -19,7 +19,7 @@ generic_data = \
         ('RESTRICT', ''),
         ('SLOT', '0'),
         ('SRC_URI', 'http://pages.stern.nyu.edu/~marriaga/software/blah.tgz'),
-        ('_eclasses_', 
+        ('_eclasses_',
             {
                 'toolchain-funcs': ('/usr/portage/eclass', 1155996352L),
                 'multilib': ('/usr/portage/eclass', 1156014349L),

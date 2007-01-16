@@ -105,7 +105,7 @@ def parse_maintainer_name(value):
 
 def parse_maintainer(value):
     """
-    Case insensitive Regex match on the combined 'name <email>' bit of 
+    Case insensitive Regex match on the combined 'name <email>' bit of
     metadata.xml's maintainer data.
     """
     return packages.PackageRestriction(

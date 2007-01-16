@@ -17,5 +17,5 @@ class TestBzrParsing(TestCase):
             "bzr://dar")
         self.assertRaises(base.syncer_exception, bogus,
             "/tmp/foon", "bzr+http://foon.com/dar")
-        o = valid("/tmp/foon", "bzr+http://dar")    
+        o = valid("/tmp/foon", "bzr+http://dar")
         self.assertEqual(o.uri, "http://dar")

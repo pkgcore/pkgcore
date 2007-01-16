@@ -20,7 +20,7 @@ class DummyIntersectingValues(values.base):
     def __init__(self, val, iself=False, negate=False):
         object.__setattr__(self, "negate", negate)
         object.__setattr__(self, "val", val)
-        
+
     def intersect(self, other):
         return DummyIntersectingValues((self.val, other.val))
 
@@ -37,7 +37,7 @@ class native_PackageRestrictionTest(TestCase):
             __slots__ = ()
             __inst_caching__ = True
     kls = staticmethod(kls)
-    
+
     def test_eq(self):
         self.assertEquals(
             self.kls('one', values.AlwaysTrue),

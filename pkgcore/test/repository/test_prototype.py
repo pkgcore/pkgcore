@@ -1,7 +1,6 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.repository.prototype import tree
 from pkgcore.test import TestCase
 from pkgcore.restrictions import packages, values
 from pkgcore.ebuild.atom import atom
@@ -27,7 +26,7 @@ class TestPrototype(TestCase):
             sorted(["dev-lib", "dev-util"]))
         self.assertEqual(
             sorted(map("/".join, self.repo.versions)),
-                sorted([x for x in 
+                sorted([x for x in
                 ["dev-util/diffball", "dev-util/bsdiff", "dev-lib/fake"]]))
         self.assertEqual(
             sorted("%s/%s-%s" % (cp[0], cp[1], v)
@@ -124,7 +123,7 @@ class TestPrototype(TestCase):
         self.repo.notify_remove_package(pkg)
         self.assertNotIn((pkg.category, pkg.package), self.repo.versions)
         self.assertNotIn(pkg.package, self.repo.packages[pkg.category])
-        
+
         # test no remaining packages, category updated
         pkg = CPV("dev-util/bsdiff-0.4.1")
         self.repo.notify_remove_package(pkg)
@@ -148,7 +147,7 @@ class TestPrototype(TestCase):
         ver_key = (pkg.category, pkg.package)
         self.assertIn(ver_key, self.repo.versions)
         self.assertEqual(list(self.repo.versions[ver_key]), ["1.0"])
-        
+
         pkg = CPV("foo/cows-1.0")
         self.repo.notify_add_package(pkg)
         self.assertIn((pkg.category, pkg.package), self.repo.versions)

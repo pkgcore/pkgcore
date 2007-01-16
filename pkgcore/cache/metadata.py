@@ -30,7 +30,7 @@ class database(flat_hash.database):
         'RESTRICT',  'HOMEPAGE',  'LICENSE', 'DESCRIPTION',
         'KEYWORDS',  'INHERITED', 'IUSE', 'CDEPEND',
         'PDEPEND',   'PROVIDE', 'EAPI')
-    
+
     # this is the old cache format, flat_list.  hardcoded, and must
     # remain that way.
     magic_line_count = 22
@@ -97,17 +97,17 @@ class database(flat_hash.database):
         fp = pjoin(
             self.location, cpv[:s],".update.%i.%s" % (os.getpid(), cpv[s+1:]))
         try:
-            myf=open(fp, "w")
+            myf = open(fp, "w")
         except (OSError, IOError), e:
             if errno.ENOENT == e.errno:
                 try:
                     self._ensure_dirs(cpv)
-                    myf=open(fp,"w")
+                    myf = open(fp,"w")
                 except (OSError, IOError),e:
                     raise errors.CacheCorruption(cpv, e)
             else:
                 raise errors.CacheCorruption(cpv, e)
-        
+
         count = 0
         for idx, key in self.hardcoded_auxdbkeys_order:
             myf.write("%s%s" % ("\n" * (idx - count), values.get(key, "")))
@@ -135,7 +135,7 @@ class paludis_flat_list(database):
     """
     (Hopefully) write a paludis specific form of flat_list format cache.
     Not very well tested.
-    
+
     difference from a normal flat_list cache is that mtime is set to ebuild
     for normal, for paludis it's max mtime of eclasses/ebuild involved.
     """

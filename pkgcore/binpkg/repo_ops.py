@@ -82,14 +82,14 @@ class install(repo_interfaces.nonlivefs_install):
                     logger.warn("failed removing %r: %r" % (tmp_path, e))
             raise
         return True
-        
-        
+
+
 class uninstall(repo_interfaces.nonlivefs_uninstall):
 
     def modify_repo(self):
         os.unlink(discern_loc(self.repo.base, self.old_pkg))
         return True
-    
+
 
 class replace(install, uninstall, repo_interfaces.nonlivefs_replace):
 

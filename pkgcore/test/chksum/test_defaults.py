@@ -19,7 +19,7 @@ class ChksumTest(object):
             raise SkipTest(
                 'no handler for %s, do you need to install PyCrypto?' % (
                     self.chf_type,))
-        
+
     def setUp(self):
         self.get_chf()
         self.fn = tempfile.mktemp()
@@ -64,7 +64,7 @@ del chf_type
 
 
 class get_chksums_test(ChksumTest, TestCase):
-    
+
     chfs = [k for k in sorted(checksums) if k != "size"]
     sum = [checksums[k] for k in chfs]
     del k

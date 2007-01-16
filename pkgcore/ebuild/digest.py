@@ -9,7 +9,6 @@ from pkgcore.chksum import errors, gpg
 from pkgcore.util.obj import make_SlottedDict_kls
 from pkgcore.util.demandload import demandload
 demandload(globals(),
-    "pkgcore.util.file:AtomicWriteFile "
     "pkgcore.util.lists:iflatten_instance "
     "pkgcore:fetch ")
 
@@ -57,10 +56,10 @@ def parse_digest(source, throw_errors=True):
 def serialize_digest(handle, fetchables):
     """
     write out a digest entry for a fetchable
-    
+
     throws KeyError if needed chksums are missing.  Requires at least md5
     and size chksums per fetchable.
-    
+
     @param handle: file object to write to
     @param fetchables: list of L{pkgcore.fetch.fetchable} instances
     """
@@ -82,7 +81,7 @@ def convert_chksums(iterable):
         else:
             yield chf, long(sum, 16)
 
-    
+
 def parse_manifest(source, throw_errors=True, ignore_gpg=True,
     kls_override=None):
     d = {}
@@ -117,7 +116,7 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True,
                         if throw_errors:
                             raise errors.ParseChksumError(source,
                                 "manifest 2 entry doesn't have right "
-                                "number of tokens, %i: %r" % 
+                                "number of tokens, %i: %r" %
                                 (len(line), line))
                     else:
                         chf_types.update(line[3::2])
@@ -138,7 +137,7 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True,
                     chf_types.add(line[0])
                     files.setdefault(line[2], []).append(
                         [long(line[3]), line[0].lower(), long(line[1], 16)])
-            
+
         except (OSError, IOError, TypeError), e:
             raise errors.ParseChksumError("failed parsing %r" % source, e)
     finally:
@@ -176,13 +175,13 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True,
     del files
 
     # finally convert it to slotted dict for memory savings.
-    kls = make_SlottedDict_kls(x.lower() for x in chf_types)        
+    kls = make_SlottedDict_kls(x.lower() for x in chf_types)
     ret = []
     for t, d in types:
         if kls_override is None:
             for k, v in d.items():
                 d[k] = kls(v)
         else:
-            d = kls_override((k, kls(v)) for k,v in d.iteritems())
+            d = kls_override((k, kls(v)) for k, v in d.iteritems())
         ret.append(d)
     return ret, manifest_type

@@ -3,7 +3,6 @@
 
 from pkgcore.ebuild import repo_objs
 from pkgcore.interfaces.data_source import data_source
-from pkgcore.util.xml import escape
 
 from pkgcore.test import TestCase
 
@@ -52,7 +51,7 @@ class TestMetadataXml(TestCase):
     def test_herds(self):
         # empty...
         self.assertEqual((), self.get_metadata_xml().herds)
-        
+
         herds = ("video", "sound")
         self.assertEqual(sorted(herds),
             sorted(self.get_metadata_xml(herds).herds))

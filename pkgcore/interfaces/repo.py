@@ -6,7 +6,6 @@ repository modifications (installing, removing, replacing)
 """
 
 from pkgcore.util.dependant_methods import ForcedDepends
-from pkgcore.util.currying import partial
 from pkgcore.merge.engine import MergeEngine, errors as merge_errors
 
 
@@ -20,7 +19,7 @@ class fake_lock:
 
 class base(object):
     __metaclass__ = ForcedDepends
-    
+
     stage_depends = {}
 
 class Failure(Exception):
@@ -39,18 +38,18 @@ class nonlivefs_base(base):
         self.lock = getattr(repo, "lock")
         if self.lock is None:
             self.lock = fake_lock()
-    
+
     def start(self):
         self.underway = True
         self.lock.acquire_write_lock()
         return True
-    
+
     def modify_repo(self):
         raise NotImplementedError(self, 'modify_repo')
 
     def _notify_repo(self):
         raise NotImplementedError(self, '_notify_repo')
-    
+
     def finish(self):
         self._notify_repo()
         self.lock.release_write_lock()
@@ -84,7 +83,7 @@ class nonlivefs_replace(nonlivefs_install, nonlivefs_uninstall):
         # yes there is duplicate initialization here.
         nonlivefs_uninstall.__init__(self, repo, oldpkg, **kwds)
         nonlivefs_install.__init__(self, repo, newpkg, **kwds)
-    
+
     def _notify_repo(self):
         nonlivefs_uninstall._notify_remove(self)
         nonlivefs_install._notify_remove(self)
@@ -207,7 +206,7 @@ class livefs_uninstall(livefs_base):
     def __init__(self, repo, pkg, *args, **kwds):
         self.old_pkg = pkg
         livefs_base.__init__(self, repo, *args, **kwds)
-    
+
     uninstall_get_format_op_args_kwds = livefs_base._get_format_op_args_kwds
 
     def get_op(self):
@@ -263,7 +262,7 @@ class livefs_replace(livefs_install, livefs_uninstall):
     """
 
     stage_depends = {
-        "finish":"postinst", "postinst":"unmerge_metadata", 
+        "finish":"postinst", "postinst":"unmerge_metadata",
         "unmerge_metadata":"postrm", "postrm":"remove",
         "remove":"prerm", "prerm":"merge_metadata",
         "merge_metadata":"transfer",
@@ -277,7 +276,7 @@ class livefs_replace(livefs_install, livefs_uninstall):
         self.old_pkg = oldpkg
         self.new_pkg = newpkg
         livefs_base.__init__(self, repo, **kwds)
-    
+
     def get_op(self):
         livefs_install.get_op(self)
         livefs_uninstall.get_op(self)

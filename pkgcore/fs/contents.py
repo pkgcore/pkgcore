@@ -7,7 +7,6 @@ contents set- container of fs objects
 
 from pkgcore.fs import fs
 from pkgcore.util.compatibility import all
-from itertools import chain
 
 def check_instance(obj):
     if not isinstance(obj, fs.fsBase):
@@ -153,12 +152,12 @@ class contentsSet(object):
                 l.append(x)
         for x in l:
             self.remove(x)
-        
+
     def issubset(self, other):
         if not hasattr(other, '__contains__'):
             other = set(self._convert_loc(other))
         return all(x.location in other for x in self._dict)
-        
+
     def issuperset(self, other):
         return all(x in self for x in other)
 

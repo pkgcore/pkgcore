@@ -7,7 +7,6 @@ miscellanious mapping/dict related classes
 
 import operator
 from itertools import imap, chain, ifilterfalse, izip
-from pkgcore.util.currying import alias_class_method
 from pkgcore.util.klass import get, contains
 from collections import deque
 
@@ -21,30 +20,30 @@ class DictMixin(object):
     __slots__ = ()
 
     __externally_mutable__ = True
-    
+
     def __init__(self, iterable=[]):
-        for k,v in iterable:
+        for k, v in iterable:
             self[k] = v
-    
+
     def __iter__(self):
         return self.iterkeys()
-    
+
     def keys(self):
         return list(self.iterkeys())
-    
+
     def values(self):
         return list(self.itervalues())
-    
+
     def items(self):
         return list(self.iteritems())
-    
+
     def update(self, iterable):
-        for k,v in iterable:
-            self[k] =v
+        for k, v in iterable:
+            self[k] = v
 
     get = get
     __contains__ = contains
-    
+
     # default cmp actually operates based on key len comparison, oddly enough
     def __cmp__(self, other):
         for k1, k2 in izip(self, other):
@@ -56,13 +55,13 @@ class DictMixin(object):
                 return c
         c = cmp(len(self), len(other))
         return c
-    
+
     def __eq__(self, other):
         return self.__cmp__(other) == 0
-    
+
     def __ne__(self, other):
         return self.__cmp__(other) != 0
-    
+
     def pop(self, key, *args):
         if not self.__externally_mutable__:
             raise AttributeError(self, "pop")
@@ -77,7 +76,7 @@ class DictMixin(object):
                 return args[0]
             raise
         return val
-    
+
     def setdefault(self, key, default=None):
         if not self.__externally_mutable__:
             raise AttributeError(self, "setdefault")
@@ -88,7 +87,7 @@ class DictMixin(object):
 
     def has_key(self, key):
         return key in self
-        
+
     def iterkeys(self):
         raise NotImplementedError(self, "iterkeys")
 
@@ -98,39 +97,39 @@ class DictMixin(object):
     def iteritems(self):
         for k in self:
             yield k, self[k]
-        
+
     def __getitem__(self, key):
         raise NotImplementedError(self, "__getitem__")
-    
+
     def __setitem__(self, key, val):
         if not self.__externally_mutable__:
             raise AttributeError(self, "__setitem__")
         raise NotImplementedError(self, "__setitem__")
-    
+
     def __delitem__(self, key):
         if not self.__externally_mutable__:
             raise AttributeError(self, "__delitem__")
         raise NotImplementedError(self, "__delitem__")
-        
+
     def clear(self):
         if not self.__externally_mutable__:
             raise AttributeError(self, "clear")
         # crappy, override if faster method exists.
         map(self.__delitem__, self.keys())
-    
+
     def __len__(self):
         c = 0
         for x in self:
             c += 1
         return c
-    
+
     def popitem(self):
         if not self.__externally_mutable__:
             raise AttributeError(self, "popitem")
         # do it this way so python handles the stopiteration; faster
         for key, val in self.iteritems():
             del self[key]
-            return key,val
+            return key, val
         raise KeyError("container is empty")
 
 
@@ -218,7 +217,7 @@ class LazyFullValLoadDict(LazyValDict):
             if self._val_func is not None:
                 self._vals.update(self._val_func(self._keys))
                 return self._vals[key]
-        raise KeyError(key)            
+        raise KeyError(key)
 
 
 class ProtectedDict(DictMixin):
@@ -334,7 +333,7 @@ class IndeterminantDict(object):
             return self[key]
         except KeyError:
             return default
-    
+
     clear = update = popitem = setdefault = __setitem__ = __delitem__
     __iter__ = keys = values = items = __len__ = __delitem__
     iteritems = iterkeys = itervalues = __delitem__
@@ -422,8 +421,8 @@ class ListBackedDict(DictMixin):
     _value_grabber = operator.itemgetter(1)
 
     def __init__(self, iterables=()):
-        self._data = [(k,v) for k,v in iterables]
-        
+        self._data = [(k, v) for k, v in iterables]
+
     def __setitem__(self, key, val):
         for idx, vals in enumerate(self._data):
             if vals[0] == key:
@@ -431,13 +430,13 @@ class ListBackedDict(DictMixin):
                 break
         else:
             self._data.append((key, val))
-     
+
     def __getitem__(self, key):
         for existing_key, val in self._data:
             if key == existing_key:
                 return val
         raise KeyError(key)
-    
+
     def __delitem__(self, key):
         l = [(k, v) for k, v in self._data if k != key]
         if len(l) == len(self._data):
@@ -450,16 +449,16 @@ class ListBackedDict(DictMixin):
 
     def itervalues(self):
         return imap(self._value_grabber, self._data)
-    
+
     def iteritems(self):
         return iter(self._data)
-    
+
     def __contains__(self, key):
         for k, v in self._data:
             if k == key:
                 return True
         return False
-    
+
     def __len__(self):
         return len(self._data)
 
@@ -468,4 +467,4 @@ class TupleBackedDict(ListBackedDict):
     __externally_mutable__ = False
 
     def __init__(self, iterables=()):
-        self._data = tuple((k,v) for k,v in iterables)
+        self._data = tuple((k, v) for k, v in iterables)

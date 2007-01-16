@@ -30,13 +30,13 @@ class base(object):
         self.assertEqual(mkobj(mode=042660).mode, 042660)
         self.assertEqual(mkobj(uid=0).uid, 0)
         self.assertEqual(mkobj(gid=0).gid, 0)
-    
+
     def test_hash(self):
         # might seem odd, but done this way to avoid the any potential
         # false positives from str's hash returning the same
         d = {self.make_obj("/tmp/foo"):None}
         d[self.make_obj("/tmp/foo")]
-    
+
     def test_eq(self):
         o = self.make_obj("/tmp/foo")
         self.assertEqual(o, self.make_obj("/tmp/foo"))
@@ -58,7 +58,7 @@ class Test_fsFile(TestCase, base):
         o = mkobj("/etc/passwd")
         raw_data = open("/etc/passwd").read()
         self.assertEqual(o.data.get_fileobj().read(), raw_data)
-        o = mkobj("/bin/this-file-should-not-exist-nor-be-read", 
+        o = mkobj("/bin/this-file-should-not-exist-nor-be-read",
             data_source=data_source(raw_data))
         self.assertEqual(o.data.get_fileobj().read(), raw_data)
         keys = o.chksums.keys()

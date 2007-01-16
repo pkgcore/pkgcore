@@ -7,7 +7,7 @@ from pkgcore.util import klass
 
 class Test_native_GetAttrProxy(TestCase):
     kls = staticmethod(klass.native_GetAttrProxy)
-    
+
     def test_it(self):
         class foo1(object):
             def __init__(self, obj):
@@ -16,7 +16,7 @@ class Test_native_GetAttrProxy(TestCase):
 
         class foo2(object):
             pass
-        
+
         o2 = foo2()
         o = foo1(o2)
         self.assertRaises(AttributeError, getattr, o, "blah")
@@ -42,7 +42,7 @@ class Test_CPY_GetAttrProxy(Test_native_GetAttrProxy):
 
         class c(object):
             __getattr__ = self.kls("obj")
-        
+
         o = c()
         o.obj = o
         # now it's cyclical.
@@ -51,7 +51,7 @@ class Test_CPY_GetAttrProxy(Test_native_GetAttrProxy):
 
 class Test_native_contains(TestCase):
     func = staticmethod(klass.native_contains)
-    
+
     def test_it(self):
         class c(dict):
             __contains__ = self.func
@@ -62,14 +62,14 @@ class Test_native_contains(TestCase):
 
 class Test_CPY_contains(Test_native_contains):
     func = staticmethod(klass.contains)
-    
+
     if klass.contains is klass.native_contains:
         skip = "cpython extension isn't available"
 
 
 class Test_native_get(TestCase):
     func = staticmethod(klass.native_get)
-    
+
     def test_it(self):
         class c(dict):
             get = self.func
@@ -81,10 +81,10 @@ class Test_native_get(TestCase):
 
 class Test_CPY_get(Test_native_get):
     func = staticmethod(klass.get)
-    
+
     if klass.get is klass.native_get:
         skip = "cpython extension isn't available"
-    
+
 def protect_eq_ops(method):
     def f2(self, *args):
         orig_eq = klass.generic_eq
@@ -100,7 +100,7 @@ def protect_eq_ops(method):
 
 class Test_native_generic_equality(TestCase):
     op_prefix = "native_"
-    
+
     @protect_eq_ops
     def test_it(self):
         class c(object):
@@ -108,15 +108,15 @@ class Test_native_generic_equality(TestCase):
             __metaclass__ = klass.generic_equality
             def __init__(self, foo, bar):
                 self.foo, self.bar = foo, bar
-        
-        self.assertEqual(c(1,2), c(1,2))
-        c1 = c(1,3)
+
+        self.assertEqual(c(1, 2), c(1, 2))
+        c1 = c(1, 3)
         self.assertEqual(c1, c1)
         del c1
-        self.assertNotEqual(c(2,1), c(1,2))
-        c1 = c(1,2)
+        self.assertNotEqual(c(2, 1), c(1, 2))
+        c1 = c(1, 2)
         del c1.foo
-        self.assertNotEqual(c(1,2), c1)
+        self.assertNotEqual(c(1, 2), c1)
         del c1
 
     def test_call(self):

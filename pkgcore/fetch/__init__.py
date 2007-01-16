@@ -79,7 +79,7 @@ class uri_list(object):
     def __init__(self, filename):
         self._uri_source = []
         self.filename = filename
-    
+
     def add_mirror(self, mirror_inst, suburi=None):
         if not isinstance(mirror_inst, mirror):
             raise TypeError("mirror must be a pkgcore.fetch.mirror instance")
@@ -87,10 +87,10 @@ class uri_list(object):
             self._uri_source.append((mirror_inst, suburi.lstrip('/')))
         else:
             self._uri_source.append(mirror_inst)
-    
+
     def add_uri(self, uri):
         self._uri_source.append(uri)
-    
+
     def finalize(self):
         self._uri_source = tuple(self._uri_source)
 
@@ -103,10 +103,10 @@ class uri_list(object):
                 # mirror with suburi
                 for base_uri in entry[0]:
                     yield '%s/%s' % (base_uri.rstrip('/'), entry[1])
-            else:    
+            else:
                 for base_uri in entry:
                     yield "%s/%s" % (base_uri.rstrip('/'), fname)
 
     def __str__(self):
-        return "file: %s, uri: %s" % (self.filename, 
+        return "file: %s, uri: %s" % (self.filename,
             ', '.join(str(x) for x in self._uri_source))

@@ -5,7 +5,7 @@
 package class for buildable ebuilds
 """
 
-import os, operator
+import os
 from pkgcore.package import metadata
 from pkgcore.package import errors as metadata_errors
 from itertools import imap
@@ -15,9 +15,8 @@ WeakValCache = metadata.WeakValCache
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.digest import parse_digest
 from pkgcore.util.mappings import IndeterminantDict
-from pkgcore.util.currying import post_curry, alias_class_method, partial
+from pkgcore.util.currying import alias_class_method, partial
 from pkgcore.cache import errors as cache_errors
 from pkgcore.restrictions.packages import AndRestriction
 from pkgcore.restrictions import boolean
@@ -26,7 +25,7 @@ from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import const, processor
 from pkgcore.util.demandload import demandload
-demandload(globals(), "errno pkgcore.log:logger")
+demandload(globals(), "pkgcore.log:logger")
 
 
 def generate_depset(c, key, non_package_type, s):
@@ -85,7 +84,7 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
         uris = uri_list(filename)
     else:
         uris = common_files[filename].uri
-        
+
     if filename == uri:
         uris.add_uri(filename)
     else:
@@ -182,7 +181,7 @@ class base(metadata.package):
     @property
     def P(self):
         return "%s-%s" % (self.package, self.version)
-    
+
     @property
     def PF(self):
         return "%s-%s" % (self.package, self.fullver)
@@ -201,7 +200,7 @@ class base(metadata.package):
     @property
     def ebuild(self):
         return self._parent.get_ebuild_src(self)
-    
+
     def _fetch_metadata(self):
         d = self._parent._get_metadata(self)
         return d
@@ -214,27 +213,27 @@ class base(metadata.package):
 
 
 class package(base):
-    
+
     __slots__ = ("_shared_pkg_data")
-    
+
     _get_attr = dict(base._get_attr)
-    
+
     def __init__(self, shared_pkg_data, *args, **kwargs):
         base.__init__(self, *args, **kwargs)
         object.__setattr__(self, "_shared_pkg_data", shared_pkg_data)
-        
+
     @property
     def maintainers(self):
         return self._shared_pkg_data.metadata_xml.maintainers
-    
+
     @property
     def herds(self):
         return self._shared_pkg_data.metadata_xml.herds
-    
+
     @property
     def longdescription(self):
         return self._shared_pkg_data.metadata_xml.longdescription
-    
+
     @property
     def _mtime_(self):
         return self._parent._get_ebuild_mtime(self)
@@ -256,7 +255,7 @@ class package_factory(metadata.factory):
         self._cache = cachedb
         self._ecache = eclass_cache
         if mirrors:
-            mirrors = dict((k, mirror(v, k)) for k,v in mirrors.iteritems())
+            mirrors = dict((k, mirror(v, k)) for k, v in mirrors.iteritems())
 
         self.mirrors = mirrors
         if default_mirrors:

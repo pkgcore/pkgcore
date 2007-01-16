@@ -5,12 +5,11 @@
 ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 """
 
-import os, stat, operator
-from itertools import chain
+import os, stat
 from pkgcore.repository import prototype, errors, configured, syncable
 from pkgcore.util.file import read_dict, iter_read_bash
 from pkgcore.util import currying
-from pkgcore.util.osutils import (listdir_files, readfile, listdir_dirs, 
+from pkgcore.util.osutils import (listdir_files, readfile, listdir_dirs,
     join as pjoin)
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
 from pkgcore.util.demandload import demandload
@@ -199,7 +198,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             o = repo_objs.SharedPkgData(mxml, manifest)
             self._shared_pkg_cache[key] = o
         return o
-        
+
     def _get_metadata_xml(self, category, package):
         return repo_objs.LocalMetadataXml(pjoin(self.base, category,
             package, "metadata.xml"))

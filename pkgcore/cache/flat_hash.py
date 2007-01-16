@@ -38,7 +38,7 @@ class database(fs_template.FsBased):
     __init__.__doc__ = fs_template.FsBased.__init__.__doc__
 
     def _format_location(self):
-        return pjoin(self.location, 
+        return pjoin(self.location,
             self.label.lstrip(os.path.sep).rstrip(os.path.sep))
 
     def _getitem(self, cpv):
@@ -59,7 +59,7 @@ class database(fs_template.FsBased):
         d = self._cdict_kls()
         known = self._known_keys
         for x in data:
-            k,v = x.split("=", 1)
+            k, v = x.split("=", 1)
             if k in known:
                 d[k] = v
 
@@ -68,7 +68,7 @@ class database(fs_template.FsBased):
         return d
 
     def _setitem(self, cpv, values):
-        # might seem weird, but we rely on the trailing +1; this 
+        # might seem weird, but we rely on the trailing +1; this
         # makes it behave properly for any cache depth (including no depth)
         s = cpv.rfind("/") + 1
         fp = pjoin(self.location,

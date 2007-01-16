@@ -7,7 +7,7 @@ class cvs_syncer(base.dvcs_syncer):
 
     sets_env = True
     binary = "cvs"
-    
+
     supported_uris = (
         ('cvs+', 5),
         ('cvs://', 5),
@@ -40,9 +40,9 @@ class cvs_syncer(base.dvcs_syncer):
             self.rsh = None
         else:
             uri = ":ext:%s" % uri
-        host, self.module = uri.rsplit(":" ,1)
+        host, self.module = uri.rsplit(":", 1)
         base.dvcs_syncer.__init__(self, basedir, host)
-        
+
     @property
     def env(self):
         k = {"CVSROOT":self.uri}

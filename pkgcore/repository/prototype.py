@@ -36,7 +36,7 @@ class CategoryIterValLazyDict(IterValLazyDict):
     def force_remove(self, key):
         if key in self:
             self._keys = tuple(x for x in self._keys if x != key)
-    
+
     __iter__ = IterValLazyDict.iterkeys
 
     def __contains__(self, key):
@@ -51,7 +51,7 @@ class PackageMapping(DictMixin):
         self._cache = {}
         self._parent = parent_mapping
         self._pull_vals = pull_vals
-    
+
     def __getitem__(self, key):
         o = self._cache.get(key)
         if o is not None:
@@ -63,10 +63,10 @@ class PackageMapping(DictMixin):
 
     def iterkeys(self):
         return self._parent.iterkeys()
-    
+
     def __contains__(self, key):
         return key in self._cache or key in self._parent
-    
+
     def force_regen(self, cat):
         try:
             del self._cache[cat]
@@ -295,7 +295,7 @@ class tree(object):
             # specify packages (or don't)
             pr = values.OrRestriction(*tuple(iflatten_instance(
                         (x[1] for x in dsolutions if x[1]), values.base)))
-            return ((c,p)
+            return ((c, p)
                 for c in sorter(self.categories)
                 for p in sorter(pgetter(c, [])) if pr.match(p))
 
@@ -365,9 +365,9 @@ class tree(object):
             if sorter is iter and not cat_exact:
                 return self.versions
             else:
-                return ((c,p) for c in
+                return ((c, p) for c in
                     cats_iter for p in sorter(self.packages.get(c, [])))
-        return ((c,p)
+        return ((c, p)
             for c in cats_iter for p in sorter(self.packages.get(c, [])))
 
     def _cat_filter(self, cat_restricts):
@@ -508,6 +508,6 @@ class tree(object):
     def default_visibility_limiters(self):
         # designed this way to allow for easy override
         return self._visibility_limiters()
-    
+
     def _visibility_limiters(self):
         return []

@@ -141,7 +141,7 @@ def native_readfile(mypath, none_on_missing=False):
     """
     read a file, returning the contents
     @param mypath: fs path for the file to read
-    @param none_on_missing: whether to return None if the file is missing, 
+    @param none_on_missing: whether to return None if the file is missing,
         else through the exception
     """
     try:
@@ -155,7 +155,7 @@ def native_readlines(mypath, strip_newlines=True, swallow_missing=False,
     none_on_missing=False):
     """
     read a file, yielding each line
-    
+
     @param mypath: fs path for the file to read
     @param strip_newlines: strip trailing newlines?
     @param swallow_missing: throw an IOError if missing, or swallow it?

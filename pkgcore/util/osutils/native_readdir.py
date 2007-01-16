@@ -38,7 +38,7 @@ def listdir_dirs(path, followSymlinks=True):
     pjoin = os.path.join
     scheck = S_ISDIR
     if followSymlinks:
-        return [x for x in os.listdir(path) if 
+        return [x for x in os.listdir(path) if
             stat_swallow_enoent(pjoin(path, x), scheck)]
     stat = os.stat
     return [x for x in os.listdir(path) if
@@ -48,7 +48,7 @@ def listdir_files(path, followSymlinks=True):
     pjoin = os.path.join
     scheck = S_ISREG
     if followSymlinks:
-        return [x for x in os.listdir(path) if 
+        return [x for x in os.listdir(path) if
             stat_swallow_enoent(pjoin(path, x), scheck)]
     stat = os.stat
     return [x for x in os.listdir(path) if

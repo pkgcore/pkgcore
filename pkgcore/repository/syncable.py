@@ -7,7 +7,7 @@ class tree_mixin(object):
 
     def __init__(self, sync=None):
         self._sync = sync
-    
+
     def sync(self, status_obj=None, force=False):
         # often enough, the syncer is a lazy_ref
         syncer = self._sync

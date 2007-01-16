@@ -26,7 +26,7 @@ def skip_signatures(iterable):
     mh, mhl = msg_header, msg_header_len
 
     for line in i:
-        # so... prune msg first, then 
+        # so... prune msg first, then
         if line.endswith(msg_header):
             line = i.next()
             while line[msg_hash_len:] == msg_hash:

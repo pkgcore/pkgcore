@@ -35,7 +35,7 @@ class ConfigHint(object):
         if kwds:
             raise TypeError("unknown type overrides: %r" % kwds)
         return self.__class__(**new_kwds)
-        
+
 
 def configurable(*args, **kwargs):
     """Decorator version of ConfigHint."""

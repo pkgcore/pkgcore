@@ -5,7 +5,6 @@
 Gentoo Linux Security Advisories (GLSA) support
 """
 
-import os
 from pkgcore.util.iterables import caching_iter
 from pkgcore.restrictions import packages, restriction, boolean, values
 from pkgcore.config import ConfigHint

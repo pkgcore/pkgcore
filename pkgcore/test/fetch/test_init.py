@@ -19,18 +19,18 @@ class TestFetchable(TestCase):
         self.assertEqual(o1, o1)
         o2 = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf":1})
         self.assertEqual(o1, o2)
-        self.assertNotEqual(o1, 
+        self.assertNotEqual(o1,
             fetch.fetchable("dar1", uri=["asdf"], chksums={"asdf":1}))
-        self.assertNotEqual(o1, 
+        self.assertNotEqual(o1,
             fetch.fetchable("dar", uri=["asdf1"], chksums={"asdf":1}))
-        self.assertNotEqual(o1, 
+        self.assertNotEqual(o1,
             fetch.fetchable("dar", uri=["asdf1"], chksums={"asdf":1, "foon":1}))
 
 
 class TestMirror(TestCase):
 
     kls = fetch.mirror
-    
+
     default_mirrors = ["http://foon", "ftp://spoon"]
     def setUp(self):
         self.mirror = self.kls(self.default_mirrors, "fork")
@@ -43,10 +43,10 @@ class TestMirror(TestCase):
 
     def test_iter(self):
         self.assertEqual(list(self.mirror), self.default_mirrors)
-    
+
     def test_len(self):
         self.assertEqual(len(self.mirror), len(self.default_mirrors))
-    
+
     def test_getitem(self):
         self.assertEqual(self.mirror[1], self.default_mirrors[1])
 
@@ -60,7 +60,7 @@ class Test_uri_list(TestCase):
 
     def setUp(self):
         self.uril = fetch.uri_list("cows")
-    
+
     def test_mirrors(self):
         self.assertRaises(TypeError, self.uril.add_mirror, "cows")
         mirror = fetch.mirror(["me", "WI"], "asdf")
@@ -69,11 +69,11 @@ class Test_uri_list(TestCase):
         self.uril.add_mirror(mirror, "foon/boon")
         self.assertEqual(list(self.uril),
             ["me/cows", "WI/cows", "me/foon/boon", "WI/foon/boon"])
-    
+
     def test_uris(self):
         self.uril.add_uri("blar")
         self.assertEqual(list(self.uril), ["blar"])
-    
+
     def test_combined(self):
         l = ["blarn", "me/cows", "WI/cows", "madison",
             "belleville/cows", "verona/cows"]

@@ -5,7 +5,6 @@
 restriction classes designed for package level matching
 """
 
-from operator import attrgetter
 from pkgcore.restrictions import restriction, boolean
 from pkgcore.util.demandload import demandload
 from pkgcore.util.compatibility import any
@@ -52,7 +51,7 @@ class PackageRestriction_mixin(restriction.base):
 
     type = restriction.package_type
     subtype = restriction.value_type
-    
+
     def _handle_exception(self, pkg, exc):
         if isinstance(exc, AttributeError):
             if not self.ignore_missing:
@@ -68,7 +67,7 @@ class PackageRestriction_mixin(restriction.base):
             return True;
         logger.exception("caught unexpected exception accessing %s from %s, "
             "exception %s" % (self.attr, str(pkg), str(exc)))
-        return False        
+        return False
 
     def match(self, pkg):
         try:
@@ -189,7 +188,7 @@ class Conditional(PackageRestriction):
     __metaclass__ = generic_equality
     # note that instance caching is turned off.
     # rarely pays off for conditionals from a speed/mem comparison
-   
+
     def __init__(self, attr, childrestriction, payload, **kwds):
         """
         n@param attr: attr to match against

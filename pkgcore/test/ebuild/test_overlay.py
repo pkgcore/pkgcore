@@ -11,7 +11,7 @@ class TestOverlays(test_multiplex.TestMultiplex):
     @staticmethod
     def kls(*trees):
         return OverlayRepo(trees)
-    
+
     def test_iter(self):
         self.assertEqual(sorted(x.cpvstr for x in self.ctree),
             sorted(set(self.tree1_list + self.tree2_list)))

@@ -11,7 +11,7 @@ import time
 from pkgcore.restrictions import packages, values
 from pkgcore.util import commandline, parserestrict, lists, repo_utils
 from pkgcore.util.compatibility import any
-from pkgcore.ebuild import resolver, atom
+from pkgcore.ebuild import resolver
 from pkgcore.repository import multiplex
 from pkgcore.interfaces import observer, format
 from pkgcore.util.formatters import ObserverFormatter
@@ -430,7 +430,7 @@ def main(options, out, err):
         out.write(out.bold, ' * ', out.reset, 'packages to remove')
         vset = set(vdb)
         len_vset = len(vset)
-        vset.difference_update(y.pkg for y in 
+        vset.difference_update(y.pkg for y in
             resolver_inst.state.iter_ops(True))
         wipes = sorted(x for x in vset if x.package_is_real)
         for x in wipes:

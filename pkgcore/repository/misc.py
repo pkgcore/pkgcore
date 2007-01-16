@@ -1,8 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import operator
-from pkgcore.restrictions import packages, values, restriction
+from pkgcore.restrictions import packages
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.util.iterables import caching_iter
 from pkgcore.util.klass import GetAttrProxy
@@ -41,10 +40,10 @@ class caching_repo(object):
                 caching_iter(self.__db__.itermatch(restrict,
                     sorter=self.__strategy__))
         return v
-    
+
     def itermatch(self, restrict):
         return iter(self.match(restrict))
-    
+
     __getattr__ = GetAttrProxy("__db__")
 
     def clear(self):

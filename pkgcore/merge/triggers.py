@@ -32,7 +32,7 @@ INSTALLING_MODES = (const.REPLACE_MODE, const.INSTALL_MODE)
 class base(object):
 
     """base trigger class
-    
+
     @ivar required_csets: If None, all csets are passed in, else it must be a
         sequence, those specific csets are passed in
     @ivar _label: Either None, or a string to use for this triggers label
@@ -47,11 +47,11 @@ class base(object):
     _hooks = None
     _engine_types = None
     _priority = 50
-    
+
     @property
     def priority(self):
         return self._priority
-    
+
     @property
     def label(self):
         if self._label is not None:
@@ -111,7 +111,7 @@ class base(object):
         """execute the trigger"""
 
         required_csets = self.get_required_csets(engine.mode)
-        
+
         if required_csets is None:
             return self.trigger(engine, csets)
         return self.trigger(engine, *self._get_csets(required_csets, csets))
@@ -144,12 +144,12 @@ def get_dir_mtimes(locations):
 
 
 class ldconfig(base):
-    
+
     required_csets = ()
     _engine_types = None
     _hooks = ('pre_merge', 'post_merge', 'pre_unmerge', 'post_unmerge')
     _priority = 10
-    
+
     def __init__(self, ld_so_conf_path="etc/ld.so.conf"):
         self.ld_so_conf_path = ld_so_conf_path.lstrip(os.path.sep)
         self.saved_mtimes = contents.contentsSet()
@@ -171,7 +171,7 @@ class ldconfig(base):
             # touch the file.
             open(fp, 'w')
             # fall back to an edjucated guess.
-            l = ['usr/lib','usr/lib64','usr/lib32','lib','lib64','lib32']
+            l = ['usr/lib', 'usr/lib64', 'usr/lib32', 'lib', 'lib64', 'lib32']
         return [pjoin(offset, x) for x in l]
 
     def trigger(self, engine):
@@ -209,13 +209,13 @@ class InfoRegen(base):
 
     # could implement this to look at csets, and do incremental removal and
     # addition; doesn't seem worth while though for the additional complexity
-    
+
     _hooks = ('pre_merge', 'post_merge', 'pre_unmerge', 'post_unmerge')
     _engine_types = None
     _label = "gnu info regen"
-    
+
     locations = ('/usr/share/info', )
-    
+
     def __init__(self):
         self.saved_mtimes = contents.contentsSet()
 
@@ -262,7 +262,7 @@ class InfoRegen(base):
     def regen(self, binary, basepath):
         ignores = ("dir", "dir.old")
         files = listdir_files(basepath)
-        
+
         # wipe old indexes.
         for x in set(ignores).difference(files):
             os.remove(pjoin(basepath, x))
@@ -271,7 +271,7 @@ class InfoRegen(base):
         for x in files:
             if x in ignores:
                 continue
-            
+
             ret, data = spawn.spawn_get_output(
                 [binary, '--quiet', pjoin(basepath, x),
                     '--dir-file', index],
@@ -282,13 +282,13 @@ class InfoRegen(base):
                 continue
             yield pjoin(basepath, x)
 
-    
+
 class merge(base):
-    
+
     required_csets = ('install',)
     _engine_types = INSTALLING_MODES
     _hooks = ('merge',)
-    
+
     def trigger(self, engine, merging_cset):
         op = get_plugin('fs_ops.merge_contents')
         return op(merging_cset, callback=engine.observer.installing_fs_obj)
@@ -310,10 +310,10 @@ class fix_uid_perms(base):
     required_csets = ('new_cset',)
     _hooks = ('sanity_check',)
     _engine_types = INSTALLING_MODES
-    
+
     def __init__(self, uid=pkgcore.os_data.portage_uid,
         replacement=pkgcore.os_data.root_uid):
-        
+
         base.__init__(self)
         self.bad_uid = uid
         self.good_uid = replacement
@@ -321,11 +321,11 @@ class fix_uid_perms(base):
     def trigger(self, engine, cset):
         good = self.good_uid
         bad = self.bad_uid
-        
+
         # do it as a list, since we're mutating the set
         resets = [x.change_attributes(uid=good)
             for x in cset if x.uid == bad]
-        
+
         cset.update(resets)
 
 
@@ -334,10 +334,10 @@ class fix_gid_perms(base):
     required_csets = ('new_cset',)
     _hooks = ('sanity_check',)
     _engine_types = INSTALLING_MODES
-    
+
     def __init__(self, gid=pkgcore.os_data.portage_gid,
         replacement=pkgcore.os_data.root_gid):
-        
+
         base.__init__(self)
         self.bad_gid = gid
         self.good_gid = replacement
@@ -345,16 +345,16 @@ class fix_gid_perms(base):
     def trigger(self, engine, cset):
         good = self.good_gid
         bad = self.bad_gid
-        
+
         # do it as a list, since we're mutating the set
         resets = [x.change_attributes(gid=good)
             for x in cset if x.gid == bad]
-        
+
         cset.update(resets)
 
 
 class fix_set_bits(base):
-    
+
     required_csets = ('new_cset',)
     _hooks = ('sanity_check',)
     _engine_types = INSTALLING_MODES
@@ -410,11 +410,11 @@ class detect_world_writable(base):
 
 
 class PruneFiles(base):
-    
+
     required_csets = ('new_cset',)
     _hooks = ('pre_merge',)
     _engine_types = INSTALLING_MODES
-    
+
     def __init__(self, sentinel_func):
         """
         @param sentinel_func: callable accepting a fsBase entry, returns

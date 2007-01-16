@@ -44,7 +44,7 @@ class FileList(object):
 
     def add(self, atom_inst):
         self._atoms.add(atom_inst)
-    
+
     def remove(self, atom_inst):
         self._atoms.remove(atom_inst)
 
@@ -65,7 +65,7 @@ class WorldFile(FileList):
 
     def __init__(self, location=pkgcore.const.WORLD_FILE):
         FileList.__init__(self, location)
-    
+
     def add(self, atom_inst):
         atom_inst = atom(atom_inst.key)
         FileList.add(self, atom_inst)
@@ -73,4 +73,4 @@ class WorldFile(FileList):
     def remove(self, atom_inst):
         atom_inst = atom(atom_inst.key)
         FileList.remove(self, atom_inst)
-        
+

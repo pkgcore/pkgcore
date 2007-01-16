@@ -28,8 +28,8 @@ class svn_syncer(base.ExternalSyncer):
         else:
             raise base.uri_exception(raw_uri, "protocol unknown")
         return True
-        
+
     def _sync(self, verbosity, output_fd):
         return 0 == self._spawn([self.binary_path, "co",
             self.uri, self.basedir], {1:output_fd, 2:output_fd, 0:0})
-    
+

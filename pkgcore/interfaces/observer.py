@@ -13,7 +13,7 @@ class phase_observer(object):
 
     def phase_start(self, phase):
         pass
-    
+
     def phase_end(self, phase, status):
         pass
 
@@ -26,7 +26,7 @@ class file_phase_observer(phase_observer):
 
     def phase_start(self, phase):
         self._out.write("starting %s\n" % phase)
-    
+
     def warn(self, msg):
         self._out.write("warning: %s\n" % msg)
 
@@ -44,10 +44,10 @@ class repo_base(base):
 
 
 class repo_observer(repo_base, phase_observer):
-    
+
     def trigger_start(self, hook, trigger):
         pass
-    
+
     trigger_end = trigger_start
 
     def installing_fs_obj(self, obj):
@@ -61,14 +61,14 @@ class file_build_observer(build_observer, file_phase_observer):
 
 
 class file_repo_observer(repo_base, file_phase_observer):
-    
+
     def __init__(self, out, semiquiet=True):
         self._out = out
         self._semiquiet = semiquiet
-    
+
     def trigger_start(self, hook, trigger):
         self._out.write("hook %s: trigger: starting %r\n" % (hook, trigger))
-    
+
     def trigger_end(self, hook, trigger):
         if not self._semiquiet:
             self._out.write("hook %s: trigger: finished %r\n" % (hook, trigger))
@@ -83,7 +83,6 @@ class file_repo_observer(repo_base, file_phase_observer):
 def wrap_build_method(phase, method, self, *args, **kwds):
     if self.observer is None:
         return method(self, *args, **kwds)
-
     self.observer.phase_start(phase)
     ret = False
     try:
@@ -91,7 +90,7 @@ def wrap_build_method(phase, method, self, *args, **kwds):
     finally:
         self.observer.phase_end(phase, ret)
     return ret
-    
+
 
 def decorate_build_method(phase):
     def f(func):

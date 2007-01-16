@@ -29,7 +29,7 @@ def make_pkg_kls(attrs=(), callbacks={}):
 
 
 class TestMetadataPackage(TestCase):
-    
+
     def test_init(self):
         class repo(object):
             _parent_repo = "foon"

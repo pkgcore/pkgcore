@@ -40,7 +40,7 @@ class PigeonHoledSlots(object):
             if pkg.slot == x.slot:
                 return x
         return None
- 
+
     def find_atom_matches(self, atom):
         return filter(atom.match, self.slot_dict.get(atom.key, []))
 

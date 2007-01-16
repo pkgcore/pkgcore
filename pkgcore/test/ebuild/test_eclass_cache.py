@@ -24,7 +24,7 @@ class TestBase(TempDirMixin, TestCase):
         TempDirMixin.setUp(self)
         self.ec = FakeEclassCache(self.dir)
         self.ec_locs = dict((x, self.dir) for x in ("eclass1", "eclass2"))
- 
+
     def test_is_eclass_data_valid(self):
         self.assertFalse(self.ec.is_eclass_data_valid(
             {"eclass3":("foon", 100)}))
@@ -49,7 +49,7 @@ class TestBase(TempDirMixin, TestCase):
 
 
 class TestEclassCache(TestBase):
-    
+
     def setUp(self):
         TempDirMixin.setUp(self)
         for x, mtime in (("eclass1", 100), ("eclass2", 200)):
@@ -64,9 +64,9 @@ class TestEclassCache(TestBase):
             self.assertTrue(isinstance(handle, data_source.local_source))
             self.assertEqual(os.path.join(self.ec_locs[x], "%s.eclass" % x),
                 handle.path)
-        
+
 class TestStackedCaches(TestEclassCache):
-    
+
     def setUp(self):
         TempDirMixin.setUp(self)
         self.loc1 = os.path.join(self.dir, "stack1")

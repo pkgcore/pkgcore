@@ -10,7 +10,7 @@ Right now, doesn't provide much, need to change that down the line
 class base(object):
 
     built = False
-    
+
     __slots__ = ("__weakref__", )
     _get_attr = {}
 
@@ -38,12 +38,12 @@ class base(object):
 
 
 class wrapper(base):
-    
+
     __slots__ = ("_raw_pkg",)
 
     def __init__(self, raw_pkg):
         object.__setattr__(self, "_raw_pkg", raw_pkg)
-    
+
     def __cmp__(self, other):
         if isinstance(other, wrapper):
             return cmp(self._raw_pkg, other._raw_pkg)
@@ -53,14 +53,14 @@ class wrapper(base):
         if isinstance(other, wrapper):
             return cmp(self._raw_pkg, other._raw_pkg) == 0
         return cmp(self._raw_pkg, other) == 0
-    
+
     def __ne__(self, other):
         return not self == other
 
     @property
     def versioned_atom(self):
         return self.raw_pkg.versioned_atom
-    
+
     @property
     def unversioned_atom(self):
         return self.raw_pkg.unversioned_atom

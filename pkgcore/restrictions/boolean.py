@@ -60,11 +60,11 @@ class base(restriction.base):
             sf(self, "restrictions", restrictions)
         else:
             sf(self, "restrictions", list(restrictions))
-        
+
         if kwds:
             kwds.pop("disable_inst_caching", None)
             if kwds:
-                raise TypeError("unknown keywords to %s: %s" % 
+                raise TypeError("unknown keywords to %s: %s" %
                     (self.__class__, kwds))
 
     def change_restrictions(self, *restrictions, **kwds):

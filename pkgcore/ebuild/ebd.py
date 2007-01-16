@@ -10,7 +10,7 @@ api, per phase methods for example
 """
 
 
-import os, errno, shutil, operator
+import os, errno, shutil
 
 from pkgcore.interfaces import format, data_source
 from pkgcore.ebuild.processor import \
@@ -280,7 +280,7 @@ class ebd(object):
 class setup_mixin(object):
 
     setup_is_for_src = True
-    
+
     def setup(self):
         self.setup_logging()
 
@@ -289,7 +289,7 @@ class setup_mixin(object):
         if self.setup_is_for_src:
             self.setup_distfiles()
             phase_name = "setup"
-        
+
         ebdp = request_ebuild_processor(userpriv=False, sandbox=False)
         if self.setup_is_for_src:
             additional_commands["request_inherit"] = \

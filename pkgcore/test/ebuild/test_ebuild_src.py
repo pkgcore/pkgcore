@@ -9,21 +9,21 @@ from pkgcore.ebuild import const
 from pkgcore.util.currying import post_curry
 
 class test_base(TestCase):
-    
+
     kls = ebuild_src.base
-    
+
     def get_pkg(self, data=None, cpv='dev-util/diffball-0.1-r1', repo=None,
         pre_args=()):
         o = self.kls(*(list(pre_args) + [repo, cpv]))
         if data is not None:
             object.__setattr__(o, 'data', data)
         return o
-    
+
     def make_parent(self, **methods):
         class kls:
             locals().update(methods)
         return kls()
-    
+
     def test_init(self):
         o = self.get_pkg({}, cpv='dev-util/diffball-0.1-r1')
         self.assertEqual(o.category, 'dev-util')
@@ -35,7 +35,7 @@ class test_base(TestCase):
         self.assertEqual(o.PR, 1)
         self.assertEqual(self.get_pkg({}, 'dev-util/diffball-0.1').PR,
             0)
-    
+
     def test_ebuild(self):
         l = []
         def f(self, cpv):
@@ -45,14 +45,14 @@ class test_base(TestCase):
         o = self.get_pkg({}, repo=c)
         self.assertEqual(o.ebuild, 1)
         self.assertEqual(l, [o])
-    
+
     def test_fetch_metadata(self):
         def f(self, cpv):
             return {'1':'2'}
         o = self.get_pkg(repo=self.make_parent(_get_metadata=f))
         self.assertEqual(o.data, {'1': '2'})
-        
-    
+
+
     def test_license(self):
         o = self.get_pkg({'LICENSE':'GPL2 FOON'})
         self.assertEqual(list(o.license), ['GPL2', 'FOON'])
@@ -68,25 +68,25 @@ class test_base(TestCase):
     def test_homepage(self):
         o = self.get_pkg({'HOMEPAGE': ' http://slashdot/ '})
         self.assertEqual(o.homepage, 'http://slashdot/')
-    
+
     def test_slot(self):
         o = self.get_pkg({'SLOT': '0'})
         self.assertEqual(o.slot, '0')
-        self.assertRaises(ValueError, getattr, self.get_pkg({'SLOT':''}), 
+        self.assertRaises(ValueError, getattr, self.get_pkg({'SLOT':''}),
             'slot')
-    
+
     def test_restrict(self):
         o = self.get_pkg({'RESTRICT': 'strip boobs strip'})
         self.assertEqual(*map(sorted, (o.restrict, ['strip', 'boobs'])))
         self.assertEqual(self.get_pkg({'RESTRICT':'nofetch'}).restrict,
             ('fetch',))
-    
+
     def test_eapi(self):
         self.assertEqual(self.get_pkg({'EAPI': '0'}).eapi, 0)
         self.assertEqual(self.get_pkg({'EAPI': ''}).eapi, 0)
-        self.assertEqual(self.get_pkg({'EAPI': 'foon'}).eapi, 
+        self.assertEqual(self.get_pkg({'EAPI': 'foon'}).eapi,
             const.unknown_eapi)
-    
+
     def test_keywords(self):
         self.assertEqual(list(self.get_pkg({'KEYWORDS':''}).keywords), [])
         self.assertEqual(sorted(self.get_pkg(
@@ -114,7 +114,7 @@ class test_base(TestCase):
     test_post_rdepends = post_curry(generic_check_depends,
         'dev-util/diffball x86? ( virtual/boo )',
         'post_rdepends', data_name='PDEPEND')
-        
+
     test_provides = post_curry(generic_check_depends,
         'virtual/foo x86? ( virtual/boo )',
         'provides', expected='virtual/foo-0.1-r1 x86? ( virtual/boo-0.1-r1 )')
@@ -146,7 +146,7 @@ class test_base(TestCase):
         mirror = fetch.mirror(['http://boon.com/'], 'mirror1')
         parent = self.make_parent(_parent_repo=repo, mirrors={
             'mirror1': mirror})
-        
+
         f = self.get_pkg({'SRC_URI': 'mirror://mirror1/foon/monkey.tgz'},
             repo=parent).fetchables
         self.assertEqual(list(f[0].uri), ['http://boon.com/foon/monkey.tgz'])
@@ -174,7 +174,7 @@ class test_base(TestCase):
             'RESTRICT': 'mirror'}, repo=parent).fetchables
         self.assertEqual(list(f[0].uri),
             ['http://foo.com/monkey.tgz'])
-            
+
 
 class test_package(test_base):
 
@@ -203,7 +203,7 @@ class test_package(test_base):
     def make_shared_pkg_data(self, manifest=None, metadata_xml=None):
         return self.get_pkg(
             pre_args=(repo_objs.SharedPkgData(metadata_xml, manifest),))
-            
+
     def generic_metadata_xml(self, attr):
         m = repo_objs.MetadataXml(None)
         object.__setattr__(m, "_"+attr, "foon")
@@ -214,8 +214,8 @@ class test_package(test_base):
     for x in ("longdescription", "maintainers", "herds"):
         locals()["test_%s" % x] = post_curry(generic_metadata_xml, x)
     del x
-    
+
     def test_manifest(self):
-         m = repo_objs.Manifest(None)
-         o = self.make_shared_pkg_data(manifest=m)
-         self.assertIdentical(o.manifest, m)
+        m = repo_objs.Manifest(None)
+        o = self.make_shared_pkg_data(manifest=m)
+        self.assertIdentical(o.manifest, m)

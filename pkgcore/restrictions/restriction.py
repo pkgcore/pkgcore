@@ -6,7 +6,6 @@ base restriction class
 """
 
 from pkgcore.util import caching
-from pkgcore.util.compatibility import any
 from pkgcore.util.currying import partial, pretty_docs
 
 class base(object):

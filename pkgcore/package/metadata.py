@@ -8,9 +8,6 @@ package with it's metadata accessible (think 'no longer abstract')
 
 from pkgcore.util.weakrefs import WeakValCache
 
-from pkgcore.util.demandload import demandload
-demandload(globals(), "warnings")
-
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild.atom import atom
 

@@ -9,7 +9,7 @@ gentoo ebuild atom, should be generalized into an agnostic base
 """
 
 from pkgcore.util.klass import generic_equality
-from pkgcore.restrictions import values, packages, boolean, restriction
+from pkgcore.restrictions import values, packages, boolean
 from pkgcore.util.compatibility import all
 from pkgcore.ebuild import cpv, errors
 from pkgcore.ebuild.atom_restricts import VersionMatch
@@ -169,14 +169,14 @@ def native__getattr__(self, attr):
         r.append(packages.PackageRestriction("slot", v))
 
     if self.repo_id is not None:
-        r.insert(0, packages.PackageRestriction("repo.repo_id", 
+        r.insert(0, packages.PackageRestriction("repo.repo_id",
             values.StrExactMatch(self.repo_id)))
 
     object.__setattr__(self, attr, tuple(r))
     return r
 
 
-native_atom_overrides = {"__init__":native_init, 
+native_atom_overrides = {"__init__":native_init,
     "__getattr__":native__getattr__}
 
 try:
@@ -266,11 +266,11 @@ class atom(boolean.AndRestriction):
         c = cmp(self.category, other.category)
         if c:
             return c
-        
+
         c = cmp(self.package, other.package)
         if c:
             return c
-        
+
         c = cpv.ver_cmp(self.version, self.revision,
                         other.version, other.revision)
         if c:
@@ -287,11 +287,11 @@ class atom(boolean.AndRestriction):
             # invert it; cmp(True, False) == 1
             # want non blockers then blockers.
             return -c
-        
+
         c = cmp(self.negate_vers, other.negate_vers)
         if c:
             return c
-        
+
         c = cmp(self.slot, other.slot)
         if c:
             return c

@@ -5,12 +5,11 @@
 gentoo/ebuild specific triggers
 """
 
-import os, errno, stat
+import os, errno
 from pkgcore.merge import triggers, const, errors
 from pkgcore.util.file import read_bash_dict, AtomicWriteFile
 from pkgcore.fs import livefs
 from pkgcore.util.osutils import normpath
-from pkgcore.util.currying import partial
 from pkgcore.restrictions import values
 from pkgcore.util.osutils import listdir_files
 from pkgcore.util.lists import stable_unique, iflatten_instance
@@ -43,10 +42,10 @@ def collapse_envd(base):
         for k, v in d.iteritems():
             collapsed_d.setdefault(k, []).append(v)
         del d
-    
+
     loc_incrementals = set(incrementals)
     loc_colon_parsed = set(colon_parsed)
-    
+
     # split out env.d defined incrementals..
     # update incrementals *and* colon parsed for colon_seperated;
     # incrementals on it's own is space seperated.
@@ -57,7 +56,7 @@ def collapse_envd(base):
             loc_colon_parsed.update(v)
 
     loc_incrementals.update(loc_colon_parsed)
-    
+
     # now space.
     for x in collapsed_d.pop("SPACE_SEPERATED", []):
         v = x.split()
@@ -98,14 +97,14 @@ def update_ldso(ld_search_path, offset='/'):
     new_f.write("# automatically generated, edit env.d files instead\n")
     new_f.writelines(x.strip()+"\n" for x in ld_search_path)
     new_f.close()
-    
+
 
 class env_update(triggers.base):
-    
+
     required_csets = ()
     _hooks = ('post_unmerge', 'post_merge')
     _priority = 5
-    
+
     def trigger(self, engine):
         offset = engine.offset
         d, inc, colon = collapse_envd(pjoin(offset, "etc/env.d"))
@@ -167,7 +166,7 @@ def gen_config_protect_filter(offset, extra_protects=(), extra_disables=()):
 
 
 class ConfigProtectInstall(triggers.base):
-    
+
     required_csets = ('install_existing', 'install')
     _hooks = ('pre_merge',)
     _priority = 90
@@ -177,7 +176,7 @@ class ConfigProtectInstall(triggers.base):
         self.renames = {}
         self.extra_protects = extra_protects
         self.extra_disables = extra_disables
-    
+
     def register(self, engine):
         triggers.base.register(self, engine)
         t2 = ConfigProtectInstall_restore(self.renames)
@@ -268,7 +267,7 @@ class ConfigProtectInstall_restore(triggers.base):
 
 
 class ConfigProtectUninstall(triggers.base):
-    
+
     required_csets = ('uninstall_existing', 'uninstall')
     _hooks = ('pre_unmerge',)
 
@@ -290,15 +289,15 @@ class ConfigProtectUninstall(triggers.base):
 
 
 class preinst_contents_reset(triggers.base):
-    
+
     required_csets = ('install',)
     _hooks = ('pre_merge',)
     _priority = 1
-    
+
     def __init__(self, format_op):
         triggers.base.__init__(self)
         self.format_op = format_op
-    
+
     def trigger(self, engine, cset):
         # wipe, and get data again.
         cset.clear()
@@ -339,7 +338,7 @@ class collision_protect(triggers.base):
                 l.append(x)
             elif protected_filter(x.location):
                 l.append(x)
-        
+
         colliding.difference_update(l)
         del l, protected_filter
         if not colliding:
@@ -419,7 +418,7 @@ def customize_engine(domain_settings, engine):
         else:
             install_mask = values.OrRestriction(*install_mask)
         triggers.PruneFiles(install_mask.match).register(engine)
-        # note that if this wipes all /usr/share/ entries, should 
+        # note that if this wipes all /usr/share/ entries, should
         # wipe the empty dir.
 
     InfoRegen().register(engine)

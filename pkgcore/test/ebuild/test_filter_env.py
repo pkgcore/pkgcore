@@ -2,10 +2,9 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-import os
 import cStringIO
 
-from pkgcore.test import TestCase, SkipTest
+from pkgcore.test import TestCase
 from pkgcore.ebuild import filter_env
 
 

@@ -36,7 +36,7 @@ class OptionParser(commandline.OptionParser):
         try:
             values.target = config.cache[args[1]]
         except KeyError:
-             self.error("write cache label '%s' isn't defined." % (args[1],))
+            self.error("write cache label '%s' isn't defined." % (args[1],))
 
         if values.target.readonly:
             self.error("can't update cache label '%s', it's marked readonly." %

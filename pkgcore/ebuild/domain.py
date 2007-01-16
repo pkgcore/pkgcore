@@ -7,19 +7,14 @@ gentoo configuration domain
 
 # XXX doc this up better...
 
-import os
-from operator import truth
 import pkgcore.config.domain
 from pkgcore.config import ConfigHint
-from itertools import chain
 from pkgcore.restrictions.delegated import delegate
-from pkgcore.restrictions import packages, values, restriction
+from pkgcore.restrictions import packages, values
 from pkgcore.util.file import iter_read_bash
-from pkgcore.ebuild.atom import (atom, generate_collapsed_restriction)
+from pkgcore.ebuild.atom import (generate_collapsed_restriction)
 from pkgcore.repository import multiplex, visibility
-from pkgcore.restrictions.values import StrGlobMatch, ContainmentMatch
-from pkgcore.util.lists import (stable_unique, unstable_unique,
-    iflatten_instance)
+from pkgcore.util.lists import (stable_unique, unstable_unique)
 from pkgcore.util.compatibility import any
 from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source
@@ -33,7 +28,6 @@ from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
 
 demandload(
     globals(),
-    'warnings '
     'errno '
     'pkgcore.util:osutils '
     )
@@ -169,10 +163,10 @@ class domain(pkgcore.config.domain.domain):
 
         # use is collapsed; now stack use_expand.
         use = settings.setdefault("USE", set())
-    
+
         # hackish implementation; if test is on, flip on the flag
         if "test" in settings.get("FEATURES", []):
-            use.add("test") 
+            use.add("test")
 
         for u in profile.use_expand:
             v = settings.get(u)
@@ -180,7 +174,7 @@ class domain(pkgcore.config.domain.domain):
                 continue
             u2 = u.lower()+"_"
             use.update(u2 + x for x in settings[u].split())
-            
+
         # visibility mask...
         # if ((package.mask or visibility) and not package.unmask)
         # or not (package.keywords or accept_keywords)
@@ -230,7 +224,7 @@ class domain(pkgcore.config.domain.domain):
         default_keywords = unstable_unique(default_keywords + [self.arch])
 
         vfilter.add_restriction(self.make_keywords_filter(
-            self.arch, default_keywords, pkg_keywords, 
+            self.arch, default_keywords, pkg_keywords,
             incremental="package.keywords" in incrementals))
 
         del default_keywords
@@ -270,7 +264,7 @@ class domain(pkgcore.config.domain.domain):
             ((packages.AlwaysTrue, [self.arch]),))
         self.disabled_use = collapsed_restrict_to_data(
             profile.masked_use.iteritems())
-        
+
         self.settings["bashrc"] = bashrc
         self.repos = []
         self.vdb = []
@@ -306,7 +300,7 @@ class domain(pkgcore.config.domain.domain):
 
     def make_license_filter(self, master_license, pkg_licenses):
         data = collapsed_restrict_to_data(
-            ((packages.AlwaysTrue, master_license),), 
+            ((packages.AlwaysTrue, master_license),),
             pkg_licenses)
         return delegate(self.apply_license_filter, data)
 
@@ -350,14 +344,14 @@ class domain(pkgcore.config.domain.domain):
                 f = non_incremental_collapsed_restrict_to_data
             data = f(((packages.AlwaysTrue, default_keys),),
                 pkg_keywords)
-        
+
         if incremental:
             raise NotImplementedError(self.incremental_apply_keywords_filter)
             f = self.incremental_apply_keywords_filter
         else:
             f = self.apply_keywords_filter
         return delegate(f, data)
-    
+
     @staticmethod
     def incremental_apply_keywords_filter(data, pkg, mode):
         # note we ignore mode; keywords aren't influenced by conditionals.

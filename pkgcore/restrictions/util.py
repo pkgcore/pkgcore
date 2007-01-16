@@ -6,7 +6,6 @@ restriction related utilities
 """
 
 from pkgcore.util.lists import iflatten_func
-from pkgcore.util.containers import InvertedContains
 from pkgcore.restrictions import packages, boolean, restriction
 
 def _is_package_instance(inst):

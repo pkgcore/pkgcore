@@ -16,7 +16,7 @@ class FsObjsTest(TempDirMixin, TestCase):
         else:
             st = os.lstat(offset + '/' + path)
         if offset is not None:
-            self.assertTrue(path.startswith("/"), 
+            self.assertTrue(path.startswith("/"),
                 msg="path must be absolute, got %r" % path)
         self.assertEqual(obj.mode & 07777, st.st_mode & 07777)
         self.assertEqual(obj.uid, st.st_uid)

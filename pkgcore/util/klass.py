@@ -29,8 +29,8 @@ def native_generic_eq(inst1, inst2):
         return True
     try:
         for attr in attrlist_getter(inst1):
-           if getattr(inst1, attr) != getattr(inst2, attr):
-            return False
+            if getattr(inst1, attr) != getattr(inst2, attr):
+                return False
         return True
     except AttributeError:
         return False
@@ -79,7 +79,7 @@ class chained_getter(object):
     __fifo_cache__ = deque()
     __inst_caching__ = True
     __attr_comparison__ = ("namespace",)
-    
+
     def __init__(self, namespace):
         self.namespace = namespace
         self.chain = map(attrgetter, namespace.split("."))

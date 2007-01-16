@@ -12,21 +12,21 @@ from pkgcore.util.lists import iflatten_instance
 from pkgcore.util.klass import generic_equality
 
 class collapsed_restrict_to_data(object):
-    
+
     __metaclass__ = generic_equality
     __attr_comparison__ = ('defaults', 'freeform', 'atoms', '__class__')
-    
+
     def __init__(self, *restrict_pairs):
         """
         descriptive, no?
-    
+
         Basically splits an iterable of restrict:data into
         level of specificity, repo, cat, pkg, atom (dict) for use
         in filters
         """
 
         always = []
-        repo = []    
+        repo = []
         cat = []
         pkg = []
         atom_d = {}
@@ -97,7 +97,7 @@ class collapsed_restrict_to_data(object):
 
 
 class non_incremental_collapsed_restrict_to_data(collapsed_restrict_to_data):
-    
+
     def pull_data(self, pkg, force_copy=False):
         l = []
         for specific in self.freeform:

@@ -54,7 +54,7 @@ class tree(prototype.tree):
     def _get_packages(self, category):
         if category != "virtual":
             raise KeyError("no %s category for this repository" % category)
-            
+
         if self._grab_virtuals is not None:
             self._virtuals = self._grab_virtuals()
             self._grab_virtuals = None

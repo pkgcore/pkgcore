@@ -22,22 +22,22 @@ class rsync_syncer(base.ExternalSyncer):
 
     default_retries = 5
     binary = "rsync"
-    
+
     @classmethod
     def parse_uri(cls, raw_uri):
         if not raw_uri.startswith("rsync://") and \
             not raw_uri.startswith("rsync+"):
             raise base.uri_exception(raw_uri,
                 "doesn't start with rsync:// nor rsync+")
-        
+
         if raw_uri.startswith("rsync://"):
             return None, raw_uri
 
         proto = raw_uri.split(":", 1)
-        proto[0] = proto[0].split("+",1)[1]
+        proto[0] = proto[0].split("+", 1)[1]
         cls.require_binary(proto[0])
         return proto[0], "rsync:%s" % proto[1]
-    
+
     pkgcore_config_type = ConfigHint({'basedir':'str', 'uri':'str',
         'timeout':'str', 'compress':'bool', 'excludes':'list',
         'includes':'list', 'retries':'str', 'extra_opts':'list'},
@@ -67,8 +67,8 @@ class rsync_syncer(base.ExternalSyncer):
 
     @staticmethod
     def parse_hostname(uri):
-        return uri[len("rsync://"):].split("@",1)[-1].split("/", 1)[0]
-    
+        return uri[len("rsync://"):].split("@", 1)[-1].split("/", 1)[0]
+
     def _get_ips(self):
         af_fam = socket.AF_INET
         if self.is_ipv6:
@@ -83,8 +83,8 @@ class rsync_syncer(base.ExternalSyncer):
 
         except socket.error, e:
             raise base.syncer_exception(self.hostname, af_fam, str(e))
-            
-    
+
+
     def _sync(self, verbosity, output_fd):
         fd_pipes = {1:output_fd, 2:output_fd}
         opts = list(self.opts)
@@ -101,7 +101,7 @@ class rsync_syncer(base.ExternalSyncer):
             opts.append("--stats")
         elif verbosity >= 3:
             opts.append("--verbose")
-        
+
         # zip limits to the shortest iterable.
         for count, ip in zip(xrange(self.retries), self._get_ips()):
             o = [self.binary_path,
@@ -123,9 +123,9 @@ class rsync_syncer(base.ExternalSyncer):
 
 
 class rsync_timestamp_syncer(rsync_syncer):
-    
+
     forcable = True
-    
+
     def __init__(self, *args, **kwargs):
         rsync_syncer.__init__(self, *args, **kwargs)
         self.last_timestamp = self.current_timestamp()
@@ -143,7 +143,7 @@ class rsync_timestamp_syncer(rsync_syncer):
             if oe.errno not in (errno.ENOENT, errno.ENOTDIR):
                 raise
             return None
-    
+
     def _sync(self, verbosity, output_fd, force=False):
         doit = force or self.last_timestamp is None
         wipe = not doit

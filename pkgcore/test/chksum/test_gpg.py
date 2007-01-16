@@ -5,7 +5,7 @@ from pkgcore.test import TestCase
 from pkgcore.chksum import gpg
 
 class TestSkipSignatures(TestCase):
-    
+
     def test_simple_skipping(self):
         for header in ([],
             ["-----BEGIN PGP SIGNED MESSAGE-----\n", "Hash: Sha1\n", "\n"]):
@@ -18,7 +18,7 @@ class TestSkipSignatures(TestCase):
             d2 = header + d
             parsed = list(gpg.skip_signatures(d2))
             required = [d[0], d[1], d[-1]]
-            self.assertEqual(parsed, required, msg="%r != %r for header %r" % 
+            self.assertEqual(parsed, required, msg="%r != %r for header %r" %
                 (parsed, required, header))
 
     def test_signed_signed(self):

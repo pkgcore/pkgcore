@@ -17,14 +17,12 @@ from pkgcore.interfaces import data_source
 from pkgcore.util.osutils import listdir_dirs, readfile
 from pkgcore.repository import multiplex
 from pkgcore.util import bzip2
-from pkgcore.util.lists import iflatten_instance
 from pkgcore.config import ConfigHint
 
 from pkgcore.util.demandload import demandload
 demandload(globals(),
            "time "
            "pkgcore.ebuild:conditionals "
-           "pkgcore.restrictions:boolean,packages "
            "pkgcore.const "
            "pkgcore.ebuild:triggers "
            "pkgcore.log:logger "
@@ -182,7 +180,7 @@ class ConfiguredTree(multiplex.tree):
         self.domain_settings = domain_settings
         self.raw_vdb = raw_vdb
         if raw_vdb.cache_location is not None:
-            self.raw_virtual = virtuals.caching_virtuals(raw_vdb, 
+            self.raw_virtual = virtuals.caching_virtuals(raw_vdb,
                 raw_vdb.cache_location)
         else:
             self.raw_virtual = virtuals.non_caching_virtuals(raw_vdb)
@@ -249,7 +247,7 @@ class install(repo_interfaces.livefs_install):
                     def versionless_providers(b):
                         return b.key
                     v = getattr(self.new_pkg, k).restrictions
-                    s = ' '.join(conditionals.stringify_boolean(x, 
+                    s = ' '.join(conditionals.stringify_boolean(x,
                         func=versionless_providers)
                         for x in v)
                 elif not isinstance(v, basestring):
@@ -288,7 +286,7 @@ class install(repo_interfaces.livefs_install):
         # creation/counting to per CP for this trick to behave
         # perfectly.
         open(pjoin(dirpath, "COUNTER"), "w").write(str(int(time.time())))
-        
+
         #finally, we mark who made this.
         open(pjoin(dirpath, "PKGMANAGER"), "w").write(
             "pkgcore-%s" % pkgcore.const.VERSION)

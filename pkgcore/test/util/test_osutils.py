@@ -164,8 +164,8 @@ class Cpy_JoinTest(TestCase):
         skip = "etension isn't compiled"
 
     def assertSame(self, val):
-        self.assertEqual(osutils.native_join(*val), 
-            osutils.join(*val), 
+        self.assertEqual(osutils.native_join(*val),
+            osutils.join(*val),
             msg="for %r, expected %r, got %r" % (val,
                 osutils.native_join(*val),
                 osutils.join(*val)))
@@ -179,14 +179,14 @@ class Cpy_JoinTest(TestCase):
             ["/bar", "../dar"],
             ["", "../dar"]
             ])
-            
-        
-        
+
+
+
 # TODO: more error condition testing
 class FsLockTest(TempDirMixin, TestCase):
 
     def test_nonexistant(self):
-        self.assertRaises(osutils.NonExistant, osutils.FsLock, 
+        self.assertRaises(osutils.NonExistant, osutils.FsLock,
             os.path.join(self.dir, 'missing'))
 
     def test_locking(self):

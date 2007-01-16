@@ -5,7 +5,6 @@
 repository maintainence
 """
 
-import os
 from pkgcore.util import commandline
 from pkgcore.util.demandload import demandload
 
@@ -45,7 +44,7 @@ class SyncOptionParser(commandline.OptionParser):
         else:
             for x in args:
                 if x not in values.config.repo:
-                    self.error("repo %r doesn't exist:\nvalid repos %r" % 
+                    self.error("repo %r doesn't exist:\nvalid repos %r" %
                         (x, values.config.repo.keys()))
             values.repos = args
         return values, []
@@ -95,7 +94,7 @@ class CopyParser(commandline.OptionParser):
         self.add_option("--force", action='store_true', default=False,
             help="try and force the copy if the target repository is marked as "
                 "immutable")
-    
+
     def check_values(self, values, args):
         l = len(args)
         if not values.target_repo and l < 2:
@@ -106,13 +105,13 @@ class CopyParser(commandline.OptionParser):
             target_repo = values.target_repo
         else:
             target_repo = args.pop(-1)
-        
+
         try:
             values.target_repo = values.config.repo[target_repo]
         except KeyError:
             self.error("target repo %r was not found, known repos-\n%s" %
                 (target_repo, format_seq(values.config.repo.keys())))
-        
+
         if values.source_repo:
             try:
                 values.source_repo = values.config.repo[values.source_repo]
@@ -121,7 +120,7 @@ class CopyParser(commandline.OptionParser):
                     (values.source_repo, format_seq(values.config.repo.keys())))
         else:
             values.source_repo = multiplex.tree(*values.config.repos.values())
-        
+
         values.candidates = []
         for x in args:
             try:
@@ -133,14 +132,14 @@ class CopyParser(commandline.OptionParser):
 
 def copy_main(options, out, err):
     "copy pkgs between repositories"
-    
+
     trg_repo = options.target_repo
     src_repo = options.source_repo
 
     transfers = []
     failures = False
     kwds = {'force': options.force}
-    
+
     for candidate in options.candidates:
         matches = src_repo.match(candidate)
         if not matches:
@@ -184,11 +183,11 @@ def copy_main(options, out, err):
                             "doesn't exist" % fsobj)
                 if new_contents is None:
                     continue
-                pkg = mutated.MutatedPkg(src, {'contents':new_contents})   
+                pkg = mutated.MutatedPkg(src, {'contents':new_contents})
 
             op = op(*(args + [pkg]), **kwds)
             op.finish()
-                
+
             out.write("completed\n")
     if failures:
         return 1

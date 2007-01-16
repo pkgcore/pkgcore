@@ -9,7 +9,7 @@ atom version restrict
 """
 
 from pkgcore.util.klass import generic_equality
-from pkgcore.restrictions import values, packages, boolean, restriction
+from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild import cpv, errors
 
 
@@ -30,16 +30,16 @@ class VersionMatch(restriction.base):
     __inst_caching__ = True
     __metaclass__ = generic_equality
     __attr_comparison__ = ('negate', 'rev', 'droprev', 'vals')
-    
+
     type = packages.package_type
     attr = "fullver"
 
-    _convert_op2str = {(-1,):"<", (-1,0): "<=", (0,):"=",
+    _convert_op2str = {(-1, ):"<", (-1, 0): "<=", (0, ):"=",
         (0, 1):">=", (1,):">"}
 
-    _convert_str2op = dict([(v,k) for k,v in _convert_op2str.iteritems()])    
-    del k,v
-    
+    _convert_str2op = dict([(v, k) for k, v in _convert_op2str.iteritems()])
+    del k, v
+
     def __init__(self, operator, ver, rev=None, negate=False, **kwd):
         """
         @param operator: version comparison to do,

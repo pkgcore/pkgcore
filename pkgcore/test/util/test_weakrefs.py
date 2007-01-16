@@ -12,17 +12,17 @@ class TestWeakValCache(TestCase):
     if WeakValueDictionary is WeakValCache:
         skip = "WeakValCache is weakref.WeakValueDictionary; indicates " \
             "pkgcore.util._caching isn't compiled"
-    
+
     def setUp(self):
         self.o = RefObj()
         self.w = WeakValCache()
-    
+
     def test_setitem(self):
         s = "asdf"
         self.w[s] = self.o
         self.w["fds"] = self.o
         self.w[s] = self.o
-    
+
     def test_getitem(self):
         s = "asdf"
         self.w[s] = self.o

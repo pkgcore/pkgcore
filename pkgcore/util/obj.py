@@ -19,20 +19,20 @@ def instantiate(inst):
 # we exempt __getattribute__ since we cover it already, same
 # for __new__ and __init__
 base_kls_descriptors = frozenset(
-    ('__delattr__', '__doc__', '__hash__', '__reduce__', 
+    ('__delattr__', '__doc__', '__hash__', '__reduce__',
         '__reduce_ex__', '__repr__', '__setattr__', '__str__'))
 
 class BaseDelayedObject(object):
     """
     delay actual instantiation
     """
-    
+
     def __new__(cls, desired_kls, func, *a, **kwd):
         o = object.__new__(cls)
         object.__setattr__(o, "__delayed__", (desired_kls, func, a, kwd))
         object.__setattr__(o, "__obj__", None)
         return o
-    
+
     def __getattribute__(self, attr):
         obj = object.__getattribute__(self, "__obj__")
         if obj is None:
@@ -46,7 +46,7 @@ class BaseDelayedObject(object):
             # special casing for alias_method
             return obj
         return getattr(obj, attr)
-    
+
     # special case the normal descriptors
     for x in base_kls_descriptors:
         locals()[x] = pre_curry(alias_method, attrgetter(x))
@@ -56,7 +56,7 @@ class BaseDelayedObject(object):
 # note that we ignore __getattribute__; we already handle it.
 kls_descriptors = frozenset([
         # simple comparison protocol...
-        '__cmp__', 
+        '__cmp__',
         # rich comparison protocol...
         '__le__', '__lt__', '__eq__', '__ne__', '__gt__', '__ge__',
         # unicode conversion
@@ -126,8 +126,8 @@ def DelayedInstantiation(resultant_kls, func, *a, **kwd):
         o = make_kls(resultant_kls)
         class_cache[resultant_kls] = o
     return o(resultant_kls, func, *a, **kwd)
-    
-    
+
+
 slotted_dict_cache = {}
 def make_SlottedDict_kls(keys):
     new_keys = tuple(sorted(keys))
@@ -140,7 +140,7 @@ def make_SlottedDict_kls(keys):
             def __init__(self, iterables=()):
                 if iterables:
                     self.update(iterables)
-            
+
             __setitem__ = object.__setattr__
 
             def __getitem__(self, key):
@@ -165,14 +165,14 @@ def make_SlottedDict_kls(keys):
 
             def iterkeys(self):
                 return iter(self)
-            
+
             def itervalues(self):
                 for k in self:
                     yield self[k]
-            
+
             def get(self, key, default=None):
                 return getattr(self, key, default)
-                
+
             def pop(self, key, *a):
                 # faster then the exception form...
                 l = len(a)
@@ -185,19 +185,19 @@ def make_SlottedDict_kls(keys):
                     o = a[0]
                 else:
                     raise KeyError(key)
-                return o  
+                return o
 
             def clear(self):
                 for k in self:
                     del self[k]
-            
+
             def update(self, iterable):
                 for k, v in iterable:
                     setattr(self, k, v)
-            
+
             def __len__(self):
                 return len(self.keys())
-            
+
             def __contains__(self, key):
                 return hasattr(self, key)
 

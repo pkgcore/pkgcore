@@ -17,9 +17,8 @@ from pkgcore.fs import contents
 from pkgcore.fs import gen_obj as gen_fs_obj
 from pkgcore.util.mappings import LazyValDict, ImmutableDict, StackedDict
 from pkgcore.util import currying
-from pkgcore.plugin import get_plugins, get_plugin
+from pkgcore.plugin import get_plugins
 from pkgcore.merge import errors
-from pkgcore.ebuild import triggers as ebuild_triggers
 from pkgcore.interfaces import observer as observer_mod
 from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
 
@@ -266,7 +265,7 @@ class MergeEngine(object):
         @param trigger: L{triggers<pkgcore.merge.triggers.base>} to add
         """
         if hook_name not in self.hooks:
-            raise KeyError("trigger %r's hook %s isn't a known hook" % 
+            raise KeyError("trigger %r's hook %s isn't a known hook" %
                 (trigger, hook_name))
 
         if required_csets is not None:

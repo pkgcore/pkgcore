@@ -30,7 +30,7 @@ def prefer_highest_ver(resolver, dbs, atom):
 
             old_virts.sort(reverse=True)
             new_virts.sort(reverse=True)
-            
+
             return chain(old_virts, iter_sort(plan.highest_iter_sort,
                 new_virts,
                 resolver.prefer_highest_version_strategy(resolver,

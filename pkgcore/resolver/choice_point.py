@@ -1,9 +1,6 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.util.lists import stable_unique
-import operator
-
 class choice_point(object):
 
     __slots__ = (
@@ -37,7 +34,7 @@ class choice_point(object):
             if not l:
                 return
             yield l
-    
+
     def _internal_force_next(self):
         """
         force next pkg without triggering a reduce_atoms call
@@ -48,7 +45,7 @@ class choice_point(object):
             return True
         self.matches_cur = self.matches = None
         return False
-    
+
     def reduce_atoms(self, atom):
 
         if self.matches is None:
@@ -74,12 +71,12 @@ class choice_point(object):
             if len(reqs) != len(self._deps):
                 continue
             self._deps = reqs
-            
+
             reqs = list(self._filter_choices(self._rdeps, filterset))
             if len(reqs) != len(self._rdeps):
                 continue
             self._rdeps = reqs
-            
+
             reqs = list(self._filter_choices(self._prdeps, filterset))
             if len(reqs) != len(self._prdeps):
                 continue
@@ -93,7 +90,7 @@ class choice_point(object):
         self._deps = cur.depends.cnf_solutions()
         self._rdeps = cur.rdepends.cnf_solutions()
         self._prdeps = cur.post_rdepends.cnf_solutions()
-        
+
     @property
     def slot(self):
         return self.current_pkg.slot

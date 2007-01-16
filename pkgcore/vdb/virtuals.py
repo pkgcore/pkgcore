@@ -86,15 +86,15 @@ def _read_mtime_cache(location):
     f = None
     try:
         d = {}
-        for k,v in read_dict(readlines(location), splitter=None,
+        for k, v in read_dict(readlines(location), splitter=None,
             source_isiter=True).iteritems():
             v = v.split()
             # mtime pkg1 fullver1 virtual1 pkg2 fullver2 virtual2...
-            # if it's not the right length, skip this entry, 
+            # if it's not the right length, skip this entry,
             # cache validation will update it.
             if (len(v) -1) % 3 == 0:
                 d[k] = v
-        return d  
+        return d
     except IOError, e:
         if e.errno != errno.ENOENT:
             raise

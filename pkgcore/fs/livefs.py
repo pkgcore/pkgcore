@@ -108,7 +108,7 @@ def _internal_offset_iter_scan(path, chksum_handlers, offset):
             yield o
             if isinstance(o, fsDir):
                 dirs.append(path)
-    
+
 
 def iter_scan(path, offset=None):
     """

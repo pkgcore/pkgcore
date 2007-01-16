@@ -18,9 +18,9 @@ class TestMultiplex(TestCase):
                     ("dev-lib/fake", ["1.0", "1.0-r1"]))
     tree2_pkgs = (("dev-util/diffball", ["1.0", "1.1"]),
                     ("dev-lib/bsdiff", ["1.0", "2.0"]))
-    tree1_list = ["%s-%s" % (k, ver) for k,v in tree1_pkgs
+    tree1_list = ["%s-%s" % (k, ver) for k, v in tree1_pkgs
         for ver in v]
-    tree2_list = ["%s-%s" % (k, ver) for k,v in tree2_pkgs
+    tree2_list = ["%s-%s" % (k, ver) for k, v in tree2_pkgs
         for ver in v]
 
 
@@ -40,7 +40,7 @@ class TestMultiplex(TestCase):
         self.tree1 = SimpleTree(self.d1)
         self.tree2 = SimpleTree(self.d2)
         self.ctree = self.kls(self.tree1, self.tree2)
-    
+
     def test_iter(self):
         self.assertEqual(sorted(x.cpvstr for x in self.ctree),
             sorted(self.tree1_list + self.tree2_list))
@@ -58,7 +58,7 @@ class TestMultiplex(TestCase):
                 if "/diffball" in y])
 
     def test_sorting(self):
-        self.assertEqual(list(x.cpvstr for x in 
+        self.assertEqual(list(x.cpvstr for x in
             self.ctree.match(packages.AlwaysTrue, sorter=rev_sorted)),
             rev_sorted(self.tree1_list + self.tree2_list))
-            
+

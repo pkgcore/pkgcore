@@ -34,13 +34,13 @@ demandload(globals(),
 
 
 class force_unpacking(triggers.base):
-    
+
     required_csets = ('install',)
     _hooks = ('sanity_check',)
     _priority = 5
     _label = 'forced decompression'
     _engine_type = triggers.INSTALLING_MODES
-    
+
     def __init__(self, format_op):
         self.format_op = format_op
 
@@ -89,14 +89,14 @@ class StackedXpakDict(DictMixin):
         self._pkg = pkg
         self._parent = parent
         self._wipes = []
-    
+
     def __getattr__(self, attr):
         if attr == "_xpak":
             data = Xpak(self._parent._get_path(self._pkg))
             object.__setattr__(self, attr, data)
             return data
         raise AttributeError(self, attr)
-    
+
     def __getitem__(self, key):
         key = self._metadata_rewrites.get(key, key)
         if key in self._wipes:
@@ -107,7 +107,7 @@ class StackedXpakDict(DictMixin):
         elif key == "environment":
             data = self._xpak.get("environment.bz2", None)
             if data is None:
-                data = data_source(self._xpak.get("environment", None), 
+                data = data_source(self._xpak.get("environment", None),
                     mutable=True)
                 if data is None:
                     raise KeyError(
@@ -123,9 +123,9 @@ class StackedXpakDict(DictMixin):
             try:
                 data = self._xpak[key]
             except KeyError:
-                data =''
+                data = ''
         return data
-    
+
     def __delitem__(self, key):
         if key in ("contents", "environment"):
             if key in self._wipes:
@@ -133,7 +133,7 @@ class StackedXpakDict(DictMixin):
             self._wipes.append(key)
         else:
             del self._xpak[key]
-    
+
     def __setitem__(self, key, val):
         if key in ("contents", "environment"):
             setattr(self, key, val)
@@ -141,7 +141,7 @@ class StackedXpakDict(DictMixin):
         else:
             self._xpak[key] = val
         return val
-    
+
     def iterkeys(self):
         for k in self._xpak:
             yield k
@@ -239,26 +239,26 @@ class tree(prototype.tree):
             if oe.errno != errno.ENOTEMPTY:
                 raise
             del oe
-    
+
     def _install(self, pkg, *a, **kw):
         return repo_ops.install(self, pkg, *a, **kw)
 
     def _uninstall(self, pkg, *a, **kw):
         return repo_ops.uninstall(self, pkg, *a, **kw)
-    
+
     def _replace(self, oldpkg, newpkg, *a, **kw):
         return repo_ops.replace(self, oldpkg, newpkg, *a, **kw)
-    
+
 
 class ConfiguredBinpkgTree(wrapper.tree):
-    
+
     format_magic = "ebuild_built"
     configured = True
-    
+
     def __init__(self, repo, domain_settings):
         # rebind to ourselves basically.
         def package_class(pkg):
-            return MutatedPkg(pkg, 
+            return MutatedPkg(pkg,
                 {"build":partial(self._generate_build_op, pkg)})
         wrapper.tree.__init__(self, repo, package_class=package_class)
         self.domain_settings = domain_settings

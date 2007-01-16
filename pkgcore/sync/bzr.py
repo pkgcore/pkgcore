@@ -20,9 +20,9 @@ class bzr_syncer(base.dvcs_syncer):
     def __init__(self, basedir, uri):
         uri = self.parse_uri(uri)
         base.dvcs_syncer.__init__(self, basedir, uri)
-        
+
     def _initial_pull(self):
         return [self.binary_path, "get", self.basedir, self.uri]
-    
+
     def _update_existing(self):
         return [self.binary_path, "pull", self.uri]

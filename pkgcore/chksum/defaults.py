@@ -225,10 +225,10 @@ class SizeUpdater(object):
 
     def __init__(self):
         self.count = 0
-    
+
     def update(self, data):
         self.count += len(data)
-    
+
     def hexdigest(self):
         return "%x" % self.count
 
@@ -257,4 +257,4 @@ class SizeChksummer(Chksummer):
 
 
 chksum_types["size"] = SizeChksummer('size', SizeUpdater)
-chksum_types = dict((intern(k), v) for k,v in chksum_types.iteritems())
+chksum_types = dict((intern(k), v) for k, v in chksum_types.iteritems())

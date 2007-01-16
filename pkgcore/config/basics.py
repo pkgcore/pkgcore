@@ -10,7 +10,7 @@ L{configuration exception<pkgcore.config.errors.ConfigurationError>}
 """
 
 
-from pkgcore.config import errors, configurable, ConfigHint
+from pkgcore.config import errors, configurable
 from pkgcore.util import currying
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util:modules")

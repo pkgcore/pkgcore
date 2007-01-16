@@ -16,7 +16,7 @@ from pkgcore.util.osutils import (normpath, abspath, listdir_files,
 from pkgcore.util.demandload import demandload
 demandload(globals(), "errno pkgcore.config:errors "
     "pkgcore.pkgsets.glsa:SecurityUpgrades "
-    "pkgcore.util.file:read_bash_dict,read_dict "
+    "pkgcore.util.file:read_bash_dict "
     "pkgcore.util:bzip2 ")
 
 
@@ -137,7 +137,7 @@ def config_from_make_conf(location="/etc/"):
     kwds["cache_location"] = pjoin(config_root, 'var', 'cache', 'edb', 
         'dep', 'var', 'db', 'pkg')
     new_config["vdb"] = basics.AutoConfigSection(kwds)
-        
+    
 
     make_profile = pjoin(base_path, 'make.profile')
     try:
@@ -237,18 +237,16 @@ def config_from_make_conf(location="/etc/"):
         new_config["%s syncer" % portdir] = basics.AutoConfigSection(
             make_syncer(portdir, syncer, conf_dict))
         base_portdir_config = {"sync": "%s syncer" % portdir}
-    
+
     # setup portdir.
     cache = ('portdir cache',)
     if not portdir_overlays:
-
         d = dict(base_portdir_config)
         d['inherit'] = ('ebuild-repo-common',)
         d['location'] = portdir
         d['cache'] = ('portdir cache',)
-        
-        new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, d)
 
+        new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, d)
         new_config["eclass stack"] = basics.section_alias(
             pjoin(portdir, 'eclass'), 'eclass_cache')
         new_config['portdir'] = basics.section_alias(portdir, 'repo')
@@ -266,7 +264,7 @@ def config_from_make_conf(location="/etc/"):
         d['inherit'] = ('ebuild-repo-common',)
         d['location'] = portdir
         d['cache'] = cache
-        
+
         new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, d)
 
         if rsync_portdir_cache:

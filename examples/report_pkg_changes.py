@@ -25,7 +25,7 @@ def main(target_repo, seen, moves):
     removed.difference_update(moves)
     in_transit = seen_set.intersection(moves)
     in_transit.difference_update(finished_moves)
-    
+
     d = {}
     for x in in_transit:
         if moves[x] in new_seen:
@@ -34,11 +34,11 @@ def main(target_repo, seen, moves):
 
     for l, prefix in ((new_pkgs, "added pkgs"), (removed, "removed pkgs")):
         if l:
-            sys.stdout.write("%s:\n  %s\n\n" % 
+            sys.stdout.write("%s:\n  %s\n\n" %
                 (prefix, "\n  ".join(str(x) for x in sorted(l))))
 
     if finished_moves:
-        sys.stdout.write("moved pkgs:\n  %s\n\n" % 
+        sys.stdout.write("moved pkgs:\n  %s\n\n" %
             "\n  ".join("%s -> %s" % (k, moves[k])
                 for k in sorted(finished_moves)))
     if in_transit:

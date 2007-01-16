@@ -6,7 +6,6 @@ from pkgcore.test import TestCase
 from pkgcore.test.mixins import TempDirMixin
 from pkgcore.ebuild import profiles
 from pkgcore.util.osutils import pjoin, ensure_dirs
-from pkgcore.util.currying import pre_curry
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.restrictions import packages
@@ -16,10 +15,10 @@ class ProfileNode(profiles.ProfileNode):
     pass
 
 class profile_mixin(TempDirMixin):
-    
+
     def mk_profile(self, profile_name):
         os.mkdir(pjoin(self.dir, profile_name))
-        
+
     def setUp(self, default=True):
         TempDirMixin.setUp(self)
         if default:
@@ -30,7 +29,7 @@ class profile_mixin(TempDirMixin):
 empty = ((), ())
 
 class TestProfileNode(profile_mixin, TestCase):
-    
+
     def write_file(self, filename, iterable, profile=None):
         if profile is None:
             profile = self.profile
@@ -63,23 +62,23 @@ class TestProfileNode(profile_mixin, TestCase):
             "-*dev-sys/atom2\nlock-foo/dar")
         p = ProfileNode(pjoin(self.dir, self.profile))
         self.assertEqual(p.system, ((atom("dev-sys/atom2"),), (atom("dev-sys/atom"),)))
-        self.assertEqual([set(x) for x in p.visibility], 
+        self.assertEqual([set(x) for x in p.visibility],
             [set([atom("dev-util/diffball", negate_vers=True)]),
             set([atom("dev-foo/bar", negate_vers=True),
                 atom("lock-foo/dar", negate_vers=True)])
             ])
-    
+
     def test_deprecated(self):
         self.assertEqual(ProfileNode(pjoin(self.dir, self.profile)).deprecated,
             None)
         self.write_file("deprecated", "")
-        self.assertRaises(profiles.ProfileError, getattr, 
+        self.assertRaises(profiles.ProfileError, getattr,
             ProfileNode(pjoin(self.dir, self.profile)), "deprecated")
         self.write_file("deprecated", "foon\n#dar\nfasd")
         self.assertEqual(list(ProfileNode(pjoin(self.dir,
             self.profile)).deprecated),
             ["foon", "dar\nfasd"])
-    
+
     def test_pkg_provided(self):
         self.assertEqual(ProfileNode(pjoin(self.dir,
             self.profile)).pkg_provided,
@@ -91,7 +90,7 @@ class TestProfileNode(profile_mixin, TestCase):
         self.write_file("package.provided", "dev-util/diffball")
         self.assertEqual(ProfileNode(pjoin(self.dir,
             self.profile)).pkg_provided, ((), (CPV("dev-util/diffball"),)))
-            
+
     def test_masks(self):
         path = pjoin(self.dir, self.profile)
         self.assertEqual(ProfileNode(path).masks, empty);
@@ -112,29 +111,29 @@ class TestProfileNode(profile_mixin, TestCase):
         self.parsing_checks("use.mask", "masked_use")
         self.write_file("use.mask", "")
         self.write_file("package.use.mask", "dev-util/bar X")
-        self.assertEqual(ProfileNode(path).masked_use, 
+        self.assertEqual(ProfileNode(path).masked_use,
            {atom("dev-util/bar"):((), ('X',))})
         self.write_file("package.use.mask", "-dev-util/bar X")
         self.assertRaises(profiles.ProfileError, getattr, ProfileNode(path),
             "masked_use")
         self.write_file("package.use.mask", "dev-util/bar -X\ndev-util/foo X")
-        self.assertEqual(ProfileNode(path).masked_use, 
+        self.assertEqual(ProfileNode(path).masked_use,
            {atom("dev-util/bar"):(('X',), ()),
            atom("dev-util/foo"):((), ('X',))})
         self.write_file("use.mask", "mmx")
-        self.assertEqual(ProfileNode(path).masked_use, 
+        self.assertEqual(ProfileNode(path).masked_use,
            {atom("dev-util/bar"):(('X',), ()),
            atom("dev-util/foo"):((), ('X',)),
            packages.AlwaysTrue:((),('mmx',))})
         self.write_file("use.mask", "mmx\n-foon")
-        self.assertEqual(ProfileNode(path).masked_use, 
+        self.assertEqual(ProfileNode(path).masked_use,
            {atom("dev-util/bar"):(('X',), ()),
            atom("dev-util/foo"):((), ('X',)),
            packages.AlwaysTrue:(('foon',),('mmx',))})
         self.write_file("package.use.mask", "")
-        self.assertEqual(ProfileNode(path).masked_use, 
+        self.assertEqual(ProfileNode(path).masked_use,
            {packages.AlwaysTrue:(('foon',),('mmx',))})
-    
+
     def test_forced_use(self):
         path = pjoin(self.dir, self.profile)
         self.assertEqual(ProfileNode(path).forced_use, {})
@@ -144,29 +143,29 @@ class TestProfileNode(profile_mixin, TestCase):
         self.parsing_checks("use.force", "forced_use")
         self.write_file("use.force", "")
         self.write_file("package.use.force", "dev-util/bar X")
-        self.assertEqual(ProfileNode(path).forced_use, 
+        self.assertEqual(ProfileNode(path).forced_use,
            {atom("dev-util/bar"):((), ('X',))})
         self.write_file("package.use.force", "-dev-util/bar X")
         self.assertRaises(profiles.ProfileError, getattr, ProfileNode(path),
             "forced_use")
         self.write_file("package.use.force", "dev-util/bar -X\ndev-util/foo X")
-        self.assertEqual(ProfileNode(path).forced_use, 
+        self.assertEqual(ProfileNode(path).forced_use,
            {atom("dev-util/bar"):(('X',), ()),
            atom("dev-util/foo"):((), ('X',))})
         self.write_file("use.force", "mmx")
-        self.assertEqual(ProfileNode(path).forced_use, 
+        self.assertEqual(ProfileNode(path).forced_use,
            {atom("dev-util/bar"):(('X',), ()),
            atom("dev-util/foo"):((), ('X',)),
            packages.AlwaysTrue:((),('mmx',))})
         self.write_file("use.force", "mmx\n-foon")
-        self.assertEqual(ProfileNode(path).forced_use, 
+        self.assertEqual(ProfileNode(path).forced_use,
            {atom("dev-util/bar"):(('X',), ()),
            atom("dev-util/foo"):((), ('X',)),
            packages.AlwaysTrue:(('foon',),('mmx',))})
         self.write_file("package.use.force", "")
-        self.assertEqual(ProfileNode(path).forced_use, 
+        self.assertEqual(ProfileNode(path).forced_use,
            {packages.AlwaysTrue:(('foon',),('mmx',))})
-    
+
     def test_parents(self):
         path = pjoin(self.dir, self.profile)
         os.mkdir(pjoin(path, 'child'))
@@ -197,7 +196,7 @@ class TestProfileNode(profile_mixin, TestCase):
         self.assertIdentical(ProfileNode(path).bashrc, None)
         self.write_file("profile.bashrc", '')
         self.assertNotEqual(ProfileNode(path).bashrc, None)
-        
+
 
 class test_incremental_expansion(TestCase):
 
@@ -205,7 +204,7 @@ class test_incremental_expansion(TestCase):
         s = set(["a", "b"])
         profiles.incremental_expansion(s, ("-a", "b", "-b", "c"))
         self.assertEqual(sorted(s), ["c"])
-        self.assertRaises(ValueError, 
+        self.assertRaises(ValueError,
             profiles.incremental_expansion, set(), '-')
 
 
@@ -227,7 +226,7 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
 
     def get_profile(self, profile, **kwds):
         return profiles.OnDiskProfile(self.dir, profile, **kwds)
-    
+
     def test_stacking(self):
         self.mk_profiles(
             {},
@@ -296,7 +295,7 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
         self.assertEqual(sorted(self.get_profile("base2").virtuals.iteritems()),
             sorted([("alsa", atom("dev-util/foo2")), ("blah", atom("dev-util/blah")),
                 ("dar", atom("dev-util/foo2"))]))
-    
+
     def test_masked_use(self):
         self.mk_profiles({})
         self.assertEqual(self.get_profile("base0").masked_use, {})
@@ -305,7 +304,7 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             {},
             {"use.mask":"-X"})
 
-        f = lambda d: set((k, tuple(v)) for k,v in d.iteritems())
+        f = lambda d: set((k, tuple(v)) for k, v in d.iteritems())
         self.assertEqual(f(self.get_profile("base0").masked_use),
             f({packages.AlwaysTrue:('X', 'mmx')}))
         self.assertEqual(f(self.get_profile("base1").masked_use),
@@ -335,7 +334,7 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             {},
             {"use.force":"-X"})
 
-        f = lambda d: set((k, tuple(v)) for k,v in d.iteritems())
+        f = lambda d: set((k, tuple(v)) for k, v in d.iteritems())
         self.assertEqual(f(self.get_profile("base0").forced_use),
             f({packages.AlwaysTrue:('X', 'mmx')}))
         self.assertEqual(f(self.get_profile("base1").forced_use),

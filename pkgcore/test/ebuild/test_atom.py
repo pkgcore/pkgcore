@@ -41,7 +41,7 @@ class Test_native_atom(TestCase):
         self.assertTrue(a.match(CPV("kde-base/kde")))
         self.assertFalse(a.match(CPV("kde-base/kde2")))
         self.assertTrue(a.match(CPV("kde-base/kde-3")))
-    
+
     def make_atom(self, s, ops, ver):
         l = []
         if -1 in ops:
@@ -51,7 +51,7 @@ class Test_native_atom(TestCase):
         if 1 in ops:
             l.append("<")
         return self.kls("%s%s-%s" % (''.join(l), s, ver))
-    
+
     def test_versioned(self):
         as = "app-arch/tarsync"
         le_cpv = CPV("%s-0" % as)
@@ -59,7 +59,7 @@ class Test_native_atom(TestCase):
         ge_cpv = CPV("%s-2" % as)
         # <, =, >
         ops = (-1, 0, 1)
-        
+
         for ops, ver in ((-1, "1.0"), (-1, "1.1"),
             (0, "1.1-r2"), (1, "1.1-r3"), (1, "1.2")):
             if not isinstance(ops, (list, tuple)):
@@ -177,7 +177,7 @@ class Test_native_atom(TestCase):
 
 
 class Test_cpy_atom(Test_native_atom):
-    
+
     kls = staticmethod(atom.atom)
     if atom.atom_overrides is atom.native_atom_overrides:
         skip = "extension isn't available"

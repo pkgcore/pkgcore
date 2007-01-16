@@ -22,7 +22,7 @@ class TestBase(TestCase):
         o = valid("/tmp/foon", "http://dar")
         self.assertEqual(o.local_user, root_uid)
         self.assertEqual(o.uri, "http://dar")
-    
+
         o = valid("/tmp/foon", "http://%s::@site" % existing_user)
         self.assertEqual(o.local_user, existing_uid)
         self.assertEqual(o.uri, "http://site")

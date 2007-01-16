@@ -29,7 +29,7 @@ class syncer(object):
         @param raw_uri: string uri to split users from; harring::ferringb:pass
           for example is local user 'harring', remote 'ferringb',
           password 'pass'
-        @return: (local user, remote user, remote pass), defaults to root_uid 
+        @return: (local user, remote user, remote pass), defaults to root_uid
           if no local user specified
         """
         uri = raw_uri.split("::", 1)

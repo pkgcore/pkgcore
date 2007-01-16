@@ -63,7 +63,7 @@ class local_source(base):
 
     def get_fileobj(self):
         if self.mutable:
-            return open(self.path,"rb+", 32768)
+            return open(self.path, "rb+", 32768)
         return open(self.path, "rb", 32768)
 
 

@@ -31,7 +31,7 @@ files = ["Python-2.4.2.tar.bz2", "python-2.4-patches-1.tar.bz2"]
 class TestDigest(TestCase):
 
     convert_source = staticmethod(lambda x:x)
-    
+
     def gen_digest(self, data=digest_contents, **flags):
         fn = tempfile.mktemp()
         open(fn, "w").write(data)
@@ -90,16 +90,16 @@ for x in pure_manifest2.split("\n"):
         continue
     i = iter(l[3:])
     chksum = [("size", long(l[2]))]
-    chksum += [(k.lower(), long(v, 16)) for k,v in zip(i, i)]
+    chksum += [(k.lower(), long(v, 16)) for k, v in zip(i, i)]
     chksum = tuple(chksum)
     pure_manifest2_chksums.setdefault(l[0], {})[l[1]] = chksum
     del chksum, l, i
 
 
 class TestManifest(TestCase):
-    
+
     convert_source = staticmethod(lambda x:x)
-    
+
     def get_manifest(self, data):
         fn = tempfile.mktemp()
         open(fn, "w").write(data)
@@ -107,7 +107,7 @@ class TestManifest(TestCase):
             return digest.parse_manifest(self.convert_source(fn))
         finally:
             os.unlink(fn)
-    
+
     def test_gpg_filtering(self, gpg_insert=True):
         if gpg_insert:
             data = digest_contents.split("\n")
@@ -131,7 +131,7 @@ class TestManifest(TestCase):
         for chf, expectedsum in digest_chksum:
             self.assertEqual(d2[chf], expectedsum)
         self.assertTrue(isinstance(d2["size"], long))
-    
+
     def test_manifest1(self):
         self.test_gpg_filtering(False)
 

@@ -15,14 +15,14 @@ demandload(globals(), "os errno")
 # XPAKPACKIIIIDDDD[index][data]XPAKSTOPOOOOSTOP
 # first; all ints/longs are big endian
 # meanwhile, 8 byte format magic
-# 4 bytes of index len, 
+# 4 bytes of index len,
 # 4 bytes of data len
 # index items: 4 bytes (len of the key name), then that length of key data
 #   finally, 2 longs; relative offset from data block start, length of the data
 #   repeats till index is full processed
 # for data, just a big blob; offsets into it are determined via the index
 #   table.
-# finally, trailing magic, 4 bytes (positive) of the # of bytes to seek to 
+# finally, trailing magic, 4 bytes (positive) of the # of bytes to seek to
 #   reach the end of the magic, and 'STOP'.  offset is relative to EOS for Xpak
 #
 
@@ -98,7 +98,7 @@ class Xpak(object):
         new_data = []
         cur_pos = 0
         for key, val in data.iteritems():
-            new_index.append(struct.pack(">L%isLL" % len(key), 
+            new_index.append(struct.pack(">L%isLL" % len(key),
                 len(key), key, cur_pos, len(val)))
             new_data.append(val)
             cur_pos += len(val)
@@ -111,13 +111,13 @@ class Xpak(object):
                 handle = open(target_source, "wb")
         else:
             handle = target_source.get_fileobj()
-        
+
         new_index = ''.join(new_index)
         new_data = ''.join(new_data)
-        
+
         handle.seek(start, 0)
         # +12 is len(key) long, data_offset long, data_offset len long
-        handle.write(struct.pack(">%isLL%is%is%isL%is" % 
+        handle.write(struct.pack(">%isLL%is%is%isL%is" %
                 (len(cls.header_pre_magic),
                 len(new_index),
                 len(new_data),
@@ -137,7 +137,7 @@ class Xpak(object):
         handle.truncate()
         handle.close()
         return Xpak(target_source)
-    
+
     def _load_offsets(self):
         fd = self._fd
         index_start, index_len, data_len = self._check_magic(fd)
@@ -253,7 +253,7 @@ class Xpak(object):
             o = a[0]
         else:
             raise KeyError(key)
-        return o        
+        return o
 
     def _get_data(self, fd, offset, data_len):
         # optimization for file objs; they cache tell position, but

@@ -333,7 +333,7 @@ def find_binary(binary, paths=None):
 
     if paths is None:
         paths = os.environ.get("PATH", "").split(":")
-    
+
     for path in paths:
         filename = "%s/%s" % (path, binary)
         if os.access(filename, os.X_OK) and os.path.isfile(filename):

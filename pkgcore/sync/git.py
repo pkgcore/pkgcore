@@ -23,11 +23,11 @@ class git_syncer(base.dvcs_syncer):
                     "need to specify the sub protocol if using git+")
             return raw_uri[4:]
         return raw_uri
-    
+
     def __init__(self, basedir, uri):
         uri = self.parse_uri(uri)
         base.dvcs_syncer.__init__(self, basedir, uri)
-    
+
     def _initial_pull(self):
         return [self.binary_path, "clone", self.uri, self.basedir]
 

@@ -24,7 +24,7 @@ class ProfileError(Exception):
 
     def __init__(self, path, filename, error):
         self.path, self.filename, self.error = path, filename, error
-    
+
     def __str__(self):
         return "ProfileError: profile %r, file %r, error %s" % (
             self.path, self.filename, self.error)
@@ -58,15 +58,15 @@ def split_negations(data, func):
 
 
 class ProfileNode(object):
-    
+
     __metaclass__ = WeakInstMeta
     __inst_caching__ = True
-    
+
     def __init__(self, path):
         if not os.path.isdir(path):
             raise ProfileError(path, "", "profile doesn't exist")
         self.path = path
-    
+
     def __str__(self):
         return "Profile at %r" % self.path
 
@@ -89,7 +89,7 @@ class ProfileNode(object):
                     sys.append(atom.atom(line[1:]))
                 else:
                     vis.append(atom.atom(line, negate_vers=True))
-                    
+
         self.system = (tuple(neg_sys), tuple(sys))
         self.visibility = (tuple(neg_vis), tuple(vis))
 
@@ -98,7 +98,7 @@ class ProfileNode(object):
         self.parents = tuple(ProfileNode(abspath(pjoin(self.path, x)))
             for x in data)
         return self.parents
-    
+
     @load_decorator("package.provided")
     def _load_pkg_provided(self, data):
         self.pkg_provided = split_negations(data, cpv.CPV)
@@ -159,7 +159,7 @@ class ProfileNode(object):
         for k, v in d.iteritems():
             d[k] = tuple(tuple(x) for x in v)
         return d
-    
+
     @load_decorator("use.force")
     def _load_forced_use(self, data):
         d = self._load_pkg_use_force()
@@ -213,7 +213,7 @@ class ProfileNode(object):
         else:
             self.bashrc = None
         return self.bashrc
-    
+
     def __getattr__(self, attr):
         if attr in ("system", "visibility"):
             self._load_packages()
@@ -227,7 +227,7 @@ class ProfileNode(object):
         if func is None:
             raise AttributeError(attr)
         return func()
-            
+
 
 class EmptyRootNode(ProfileNode):
 
@@ -253,7 +253,7 @@ def incremental_expansion(orig, iterable, msg_prefix=''):
 class OnDiskProfile(object):
 
     pkgcore_config_type = ConfigHint({'basepath':'str', 'profile':'str',
-        'incrementals':'list'}, required=('basepath', 'profile'), 
+        'incrementals':'list'}, required=('basepath', 'profile'),
         typename='profile')
 
     def __init__(self, basepath, profile, incrementals=const.incrementals,
@@ -266,8 +266,8 @@ class OnDiskProfile(object):
 
     @property
     def arch(self):
-        return self.default_env.get("ARCH")    
-    
+        return self.default_env.get("ARCH")
+
     @property
     def deprecated(self):
         return self.node.deprecated
@@ -283,7 +283,7 @@ class OnDiskProfile(object):
         if self.load_profile_base:
             l = [EmptyRootNode(self.basepath)] + l
         return tuple(l)
-    
+
     def _collapse_use_dict(self, attr):
         d = {}
         for node in self.stack:
@@ -307,7 +307,7 @@ class OnDiskProfile(object):
             s.difference_update(val[0])
             s.update(val[1])
         return s
-    
+
     def _collapse_env(self):
         d = {}
         inc = self.incrementals
@@ -332,7 +332,7 @@ class OnDiskProfile(object):
         if "USE_EXPAND" in self.incrementals:
             return tuple(self.default_env["USE_EXPAND"])
         return tuple(self.default_env["USE_EXPAND"].split())
-    
+
     def _collapse_virtuals(self):
         d = {}
         for profile in self.stack:
@@ -350,7 +350,7 @@ class OnDiskProfile(object):
     def _collapse_masks(self):
         return frozenset(chain(self._collapse_generic("masks"),
             self._collapse_generic("visibility")))
-    
+
     def __getattr__(self, attr):
         if attr == "stack":
             self.stack = obj = self._load_stack()
@@ -384,7 +384,7 @@ class OnDiskProfile(object):
 class PkgProvided(ebuild_src.base):
 
     package_is_real = False
-    __inst_caching__ = True    
+    __inst_caching__ = True
 
     keywords = InvertedContains(())
 

@@ -6,7 +6,7 @@ from pkgcore.repository import prototype, errors
 
 #needed to grab the PN
 from pkgcore.ebuild.cpv import CPV as cpv
-from pkgcore.util.osutils import ensure_dirs, join as pjoin
+from pkgcore.util.osutils import ensure_dirs, pjoin
 from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.util.currying import partial
 from pkgcore.vdb.contents import ContentsFile
@@ -56,12 +56,19 @@ class tree(prototype.tree):
     format_magic = "ebuild_built"
 
     pkgcore_config_type = ConfigHint({'location': 'str',
-        'cache_location': 'str', 'repo_id':'str'}, typename='repo')
+        'cache_location': 'str', 'repo_id':'str',
+        'disable_cache': 'bool'}, typename='repo')
 
-    def __init__(self, location, cache_location=None, repo_id='vdb'):
+    def __init__(self, location, cache_location=None, repo_id='vdb',
+        disable_cache=False):
         prototype.tree.__init__(self, frozen=False)
         self.repo_id = repo_id
         self.base = self.location = location
+        if disable_cache:
+            cache_location = None
+        elif cache_location is None:
+            cache_location = pjoin("/var/cache/edb/dep",
+                location.lstrip("/"))
         self.cache_location = cache_location
         self._versions_tmp_cache = {}
         try:

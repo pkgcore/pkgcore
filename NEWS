@@ -1,7 +1,7 @@
 Pkgcore Release Notes
 =====================
 
-See ChangeLog for full commit logs; this is summarized and major changes.
+See ChangeLog for full commit logs; this is summarized/major changes.
 
 
 pkgcore 0.2:
@@ -11,16 +11,25 @@ pkgcore 0.2:
 
 * sync subsystem: supports bzr, cvs, darcs, git, mercurial (hg), rsync,
   and subversion.
-  
+
 * binpkg repositories now support modification; FEATURES=buildpkg basically
 
 * binpkg contents handling is significantly faster.
 
-* pmerge: supports --ask (thanks to nesl247/alex heck)
+* pmerge: 
+  * supports --ask (thanks to nesl247/alex heck)
+  * pmerge --replace is default now; use --noreplace for original behaviour.
+  * 'installed' set was added; is a pkgset comprised of all slotted atoms from
+    the vdb; useful for pmerge -u to enable upgrades of *everything* installed.
+  * versioned-installed set was added; useful for -e, this set is compromised
+    of exact version of everything installed.
+  * added --with-built-depends, -B; resolver defaults to ignoring 'built'
+    ebuild depends (those from vdb, from binpkgs for example), this option
+    tells it to update those depends.
 
-* chksuming now does a single walk over a file for all checksummers,
-  instead of one walk per checksummer- less disk thrashing, better
-  performance.
+* xterm titles
+
+* massive resolver cleanup, and general fixes.
 
 * rewritten plugins system, register_plugins is no longer used.
   
@@ -31,25 +40,100 @@ pkgcore 0.2:
   
 * pebuild/pregen/pclone_cache: heavy UI cleanup.
  
-* pquery: prettier printing of depends/rdepends/post_rdepends under -v
-  
-* 'installed' set was added; is a pkgset comprised of all slotted atoms from
-  the vdb; useful for pmerge -e to enable rebuilding of *everything*.
+* pquery:
+  * prettier printing of depends/rdepends/post_rdepends under -v
+  * print revdep reasons
+  * now requires an arg always; previously defaulted to '*', which is 
+    still supported but also accessible via --all .
+  * added --maintainers-email and --maintainers-name; use case insensitive 
+    regex by default for --maintainer style options.
+
+* added repo_id atom extension; see doc/extended-atom-syntax.rst for details.
+  short version, sys-apps/portage::gentoo would match portage *only* from 
+  ``gentoo`` repository.
 
 * overlays now combine mirror targets from their parent repository, and
   from their own repository data.
-  
-* configuration: lazy section refs were added (lazy_ref), useful for when
-  the object arguement needs to be instantiated rarely (syncers for
-  repositories for example).
 
-* /etc/portage/package.* files can be directories holding seperate files
-  to collapse
+* configuration subsystem:
+  * configuration: lazy section refs were added (lazy_ref), useful for when
+    the object arguement needs to be instantiated rarely (syncers for
+    repositories for example).
+
+  * mke2fs (literal /etc/mke2fs.conf file) akin configuration format was
+    added, pkgcore.config.mke2fsformat.config_from_file .
 
 * expanded test coverage.
   
 * merged standalone test runner into setup.py; prefered way of running it is
   ``python setup.py test`` now.
+
+* ongoing portage configuration support additions- 
+  * FEATURES=collision-protect support
+  * INSTALL_MASK support, FEATURES noinfo, nodoc, and noman support.
+  * /etc/portage/package.* files can be directories holding seperate files
+    to collapse
+
+* gnu info regeneration trigger added.
+
+* performance improvements:
+  * cpython extensions of select os.path.* functionality; 20x boost for what
+    was converted over (stdlib's posix module is a bit inefficient).
+  
+  * cpython extension for file io in pkgcore.util.osutils: 7x faster on ENOENT
+    cases, 4x-5x on actual reading of small files (think cache files).  If
+    iterating over lines of a file, use pkgcore.util.osutils.readlines- again,
+    faster then standard file object's equivalent- 3x reduction (7.6ms to 2.5ms
+    for full contents  reading).
+
+  * partial cpython reimplementation of atom code; mainly parsing, and
+    critical __getattr__ invocation (2+x faster parse).
+  
+  * partial cpython reimplementation of depset code; strictly just parsing.
+    Faster (given), but mainly is able to do optimizations to the depset
+    cheaply that python side is heavily slowed down by- ( x ( y ) ) becomes
+    ( x y ) for example.
+
+  * chunks of restriction objects were pushed to cpython for memory reasons,
+    and bringing the instantiation cost down as low as possible (the common
+    restrict objects now are around 1-3us for new instantation, .5 to 1us
+    for getting a cached obj instead of instantiating).
+
+  * bug corrected in base repo classes identify_candidates method; should now 
+    force a full walk of the repo only when absolutely required.
+
+  * chksuming now does a single walk over a file for all checksummers,
+    instead of one walk per checksummer- less disk thrashing, better
+    performance.
+
+  * vdb virtuals caching; massive performance boost via reduced IO.  Relies on
+    mtime checks of vdb pkg directories for staleness detection, 
+    auto-regenerating itself as needed.
+
+* heavy profile code cleanup; should only read each common profile node once
+  now when loading up multiple profiles (pcheck).  Far easier code to read 
+  in addition.
+
+* cache eclass staleness verification now relies on mtime comparison only- 
+  allows for eclasses to move between repos; matches portage behaviour.
+
+* pkgcore.util.caching.*, via __force_caching__ class attr in consumers, can 
+  be used to force singleton instance creation/caching (error if unhashable).
+
+* ebuild support:
+  * PORTAGE_ACTUAL_DISTDIR was reenabled, thus cvs/svn equivalent ebuilds are 
+    usable once again.
+  * fixed pkgcore's pkgcore emulation of has_version/best_version matching 
+    behaviour for old style virtuals to match portages (oddity, but ebuilds 
+    rely on the goofy behaviour).
+  * various fixups to unpack function; should match portage behaviour as of 
+    01/07 now.
+  * if FEATURES=test, set USE=test; if USE=test has been explicitly masked for
+    a package, disable src_test run; matches portage 2.1.2 behaviour.
+
+* filter-env now is accessible directly via python; pkgcore.ebuild.filter_env .
+  Needs further work prior to being usable for pcheck inspection of ebuilds, 
+  but it's a good start.
 
 
 pkgcore 0.1.4:

@@ -142,7 +142,7 @@ def parse_atom(token, repo, return_none=False):
     if not key_matches:
         raise NoMatches(token)
     elif len(key_matches) > 1:
-        raise AmbiguousQuery(token, (key, match.key))
+        raise AmbiguousQuery(token, sorted(key_matches))
     if isinstance(restriction, atom):
         # atom is guranteed to be fine, since it's cat/pkg
         return restriction

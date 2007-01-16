@@ -22,6 +22,13 @@ class AtomParsingTest(TestCase):
             self.assertEqual(sorted(x.fullver for x in repo.itermatch(a)),
                 sorted(['1', '1.0.1', '2']))
 
+        repo = util.SimpleTree({'spork': {'foon': ('1',)},
+            'spork2': {'foon': ('2',)}})
+        self.assertRaises(pmerge.NoMatches,
+            pmerge.parse_atom, "foo", repo)
+        self.assertRaises(pmerge.AmbiguousQuery, 
+            pmerge.parse_atom, "foon", repo)
+
 
 class CommandlineTest(TestCase, helpers.MainMixin):
 

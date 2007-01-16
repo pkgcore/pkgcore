@@ -217,7 +217,7 @@ class install(repo_interfaces.livefs_install):
         # error checking?
         if dirpath is None:
             dirpath = self.dirpath
-        ensure_dirs(dirpath, mode=750, minimal=True)
+        ensure_dirs(dirpath, mode=0755, minimal=True)
         rewrite = self.repo._metadata_rewrites
         for k in self.new_pkg.tracked_attributes:
             if k == "contents":

@@ -11,14 +11,16 @@ from pkgcore.repository import util
 class AtomParsingTest(TestCase):
 
     def test_parse_atom(self):
-        repo = util.SimpleTree({'spork': {'foon': ('1', '2')}})
+        repo = util.SimpleTree({'spork': {'foon': ('1', '1.0.1', '2')}})
         for cat in ('', 'spork/'):
             a = pmerge.parse_atom('=%sfoon-1' % (cat,), repo)
-            self.assertEqual(a.cpvstr, 'spork/foon-1')
-            self.assertEqual(a.op, '=')
+            self.assertEqual(a.key, 'spork/foon')
+            self.assertEqual([x.fullver for x in repo.itermatch(a)],
+                ['1'])
             a = pmerge.parse_atom('%sfoon' % (cat,), repo)
-            self.assertEqual(a.cpvstr, 'spork/foon')
-            self.assertEqual(a.op, '')
+            self.assertEqual(a.key, 'spork/foon')
+            self.assertEqual(sorted(x.fullver for x in repo.itermatch(a)),
+                sorted(['1', '1.0.1', '2']))
 
 
 class CommandlineTest(TestCase, helpers.MainMixin):

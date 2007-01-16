@@ -17,6 +17,7 @@ from pkgcore.interfaces import observer, format
 from pkgcore.util.formatters import ObserverFormatter
 from pkgcore.util.packages import get_raw_pkg
 from pkgcore.pkgsets.glsa import KeyedAndRestriction
+from pkgcore.ebuild.atom import atom
 
 class OptionParser(commandline.OptionParser):
 
@@ -136,30 +137,16 @@ def parse_atom(token, repo, return_none=False):
     @return: an atom or C{None}.
     """
     # XXX this should be in parserestrict in some form, perhaps.
-    ops, text = parserestrict.collect_ops(token)
-    if ops:
-        l = text.rsplit("/", 1)
-        restriction = parserestrict.parse_match("%sfoo/%s" % (ops, l[-1]))
-        package = restriction.package
-        fullver = restriction.fullver
-        if len(l) == 1:
-            # force atom
-            restriction = packages.PackageRestriction("package",
-                values.StrExactMatch(package))
-        else:
-            restriction = parserestrict.parse_match(token)
-    else:
-        restriction = parserestrict.parse_match(token)
-    key = None
-    for match in repo.itermatch(restriction):
-        if key is not None and key != match.key:
-            raise AmbiguousQuery(token, (key, match.key))
-        key = match.key
-    if key is None:
-        if return_none:
-            return None
+    restriction = parserestrict.parse_match(token)
+    key_matches = set(x.key for x in repo.itermatch(restriction))
+    if not key_matches:
         raise NoMatches(token)
-    return KeyedAndRestriction(restriction, key=key)
+    elif len(key_matches) > 1:
+        raise AmbiguousQuery(token, (key, match.key))
+    if isinstance(restriction, atom):
+        # atom is guranteed to be fine, since it's cat/pkg
+        return restriction
+    return KeyedAndRestriction(restriction, key=key_matches.pop())
 
 
 class Failure(ValueError):

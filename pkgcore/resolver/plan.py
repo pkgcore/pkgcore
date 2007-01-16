@@ -221,7 +221,7 @@ class merge_plan(object):
                     l = self.state.match_atom(datom)
                     if l:
                         dprint("depends blocker messing with us- "
-                            "dumping to pdb for inspection of "
+                            "skipping "
                             "atom %s, pkg %s, ret %s",
                             (cur_frame.atom, cur_frame.choices.current_pkg, l),
                             "blockers")

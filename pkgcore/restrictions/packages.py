@@ -61,6 +61,10 @@ class PackageRestriction_mixin(restriction.base):
             s = self.attr.split('.')
             if any(x in s for x in exc.args):
                 return False
+            elif any("'%s'" % x in y for x in s for y in exc.args):
+                # this is fairly horrible; probably specific to cpython also.
+                # either way, does a lookup specifically for string
+                return False
             return True;
         logger.exception("caught unexpected exception accessing %s from %s, "
             "exception %s" % (self.attr, str(pkg), str(exc)))

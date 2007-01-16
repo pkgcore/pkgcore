@@ -34,7 +34,7 @@ class VersionMatch(restriction.base):
     type = packages.package_type
     attr = "fullver"
 
-    _convert_op2str = {(-1, ):"<", (-1, 0): "<=", (0, ):"=",
+    _convert_op2str = {(-1,):"<", (-1, 0): "<=", (0,):"=",
         (0, 1):">=", (1,):">"}
 
     _convert_str2op = dict([(v, k) for k, v in _convert_op2str.iteritems()])

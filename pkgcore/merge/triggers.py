@@ -214,7 +214,7 @@ class InfoRegen(base):
     _engine_types = None
     _label = "gnu info regen"
 
-    locations = ('/usr/share/info', )
+    locations = ('/usr/share/info',)
 
     def __init__(self):
         self.saved_mtimes = contents.contentsSet()

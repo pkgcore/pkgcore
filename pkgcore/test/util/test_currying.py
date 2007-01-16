@@ -30,7 +30,7 @@ class PreCurryTest(TestCase):
         one_arg = self.pre_curry(passthrough, 42)
         self.assertEquals(one_arg(), ((42,), {}))
         self.assertEquals(one_arg('foo', 'bar'), ((42, 'foo', 'bar'), {}))
-        self.assertEquals(one_arg(foo='bar'), ((42, ), {'foo': 'bar'}))
+        self.assertEquals(one_arg(foo='bar'), ((42,), {'foo': 'bar'}))
         self.assertEquals(
             one_arg('foo', bar='baz'), ((42, 'foo'), {'bar': 'baz'}))
 
@@ -47,7 +47,7 @@ class PreCurryTest(TestCase):
         self.assertEquals(both(), ((42,), {'foo': 42}))
         self.assertEquals(
             both('foo', 'bar'), ((42, 'foo', 'bar'), {'foo': 42}))
-        self.assertEquals(both(foo='bar'), ((42, ), {'foo': 'bar'}))
+        self.assertEquals(both(foo='bar'), ((42,), {'foo': 'bar'}))
         self.assertEquals(
             both('foo', bar='baz'), ((42, 'foo'), {'bar': 'baz', 'foo': 42}))
 
@@ -111,7 +111,7 @@ class PostCurryTest(TestCase):
         one_arg = currying.post_curry(passthrough, 42)
         self.assertEquals(one_arg(), ((42,), {}))
         self.assertEquals(one_arg('foo', 'bar'), (('foo', 'bar', 42), {}))
-        self.assertEquals(one_arg(foo='bar'), ((42, ), {'foo': 'bar'}))
+        self.assertEquals(one_arg(foo='bar'), ((42,), {'foo': 'bar'}))
         self.assertEquals(
             one_arg('foo', bar='baz'), (('foo', 42), {'bar': 'baz'}))
 
@@ -129,7 +129,7 @@ class PostCurryTest(TestCase):
         self.assertEquals(both(), ((42,), {'foo': 42}))
         self.assertEquals(
             both('foo', 'bar'), (('foo', 'bar', 42), {'foo': 42}))
-        self.assertEquals(both(foo='bar'), ((42, ), {'foo': 42}))
+        self.assertEquals(both(foo='bar'), ((42,), {'foo': 42}))
         self.assertEquals(
             both('foo', bar='baz'), (('foo', 42), {'bar': 'baz', 'foo': 42}))
 

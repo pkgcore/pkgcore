@@ -11,7 +11,7 @@ class base(object):
 
     built = False
 
-    __slots__ = ("__weakref__", )
+    __slots__ = ("__weakref__",)
     _get_attr = {}
 
     def __setattr__(self, attr, value):

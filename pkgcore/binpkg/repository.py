@@ -159,7 +159,7 @@ class tree(prototype.tree):
     extension = ".tbz2"
 
     configured = False
-    configurables = ("settings", )
+    configurables = ("settings",)
 
     pkgcore_config_type = ConfigHint({'location':'str',
         'repo_id':'str'}, typename='repo')

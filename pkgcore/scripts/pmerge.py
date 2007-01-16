@@ -439,13 +439,19 @@ def main(options, out, err):
     out.write(out.bold, ' * ', out.reset, 'buildplan')
     changes = list(x for x in resolver_inst.state.iter_ops()
         if x.pkg.package_is_real)
+    ops_count = {}
     for op in changes:
+        ops_count.setdefault(op.desc, 0)
+        ops_count[op.desc] += 1
         if op.desc == "replace":
             out.write("replace %s, %s" %
                 (get_raw_pkg(op.old_pkg), get_raw_pkg(op.pkg)))
         else:
             out.write("%s %s" % (op.desc.ljust(7), get_raw_pkg(op.pkg)))
 
+    out.write()
+    out.write("%i ops: %s" % (sum(ops_count.itervalues()),
+        ", ".join("%i %ss" % (ops_count[k], k) for k in sorted(ops_count))))
     out.write()
     out.write('Success!')
     out.title('Resolved')

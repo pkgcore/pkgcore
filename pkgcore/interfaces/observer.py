@@ -83,8 +83,7 @@ class file_repo_observer(repo_base, file_phase_observer):
 def wrap_build_method(phase, method, self, *args, **kwds):
     if self.observer is None:
         return method(self, *args, **kwds)
-    if not hasattr(self.observer, "phase_start"):
-        import pdb;pdb.set_trace()
+
     self.observer.phase_start(phase)
     ret = False
     try:

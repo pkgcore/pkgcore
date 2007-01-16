@@ -385,9 +385,8 @@ class merge_plan(object):
                 # vdb entry, replace.
                 if self.vdb_restrict.match(choices.current_pkg):
                     # we're replacing a vdb entry with a vdb entry?  wtf.
-                    print ("internal weirdness spotted, "
-                           "dumping to pdb for inspection")
-                    import pdb;pdb.set_trace()
+                    print ("internal weirdness spotted- vdb restrict matches, "
+                        "but current doesn't, bailing")
                     raise Exception()
                 dprint("replacing a vdb node, so it's valid (need to do a "
                        "recheck of state up to this point however, which "
@@ -409,7 +408,6 @@ class merge_plan(object):
                     dprint("and we 'parently match it.  ignoring "
                            "(should prune here however)")
                     # need to do cleanup here
-#                    import pdb;pdb.set_trace()
                     conflicts = False
 
         else:
@@ -584,7 +582,6 @@ class merge_plan(object):
                     if len(current_stack) > 1:
                         if not current_stack[-2].atom.match(x):
                             print "provider conflicted... how?"
-#                            import pdb;pdb.set_trace()
 #                            print "should do something here, something sane..."
                             fail = [x]
                             break

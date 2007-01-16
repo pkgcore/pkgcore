@@ -379,7 +379,6 @@ class uninstall_op(ebd, format.uninstall):
 
 class replace_op(format.replace, install_op, uninstall_op):
     def __init__(self, *args, **kwargs):
-        import pdb;pdb.set_trace()
         ebd.__init__(self, *args, **kwargs)
 
 

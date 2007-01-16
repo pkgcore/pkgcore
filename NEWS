@@ -6,133 +6,133 @@ See ChangeLog for full commit logs; this is summarized and major changes.
 
 pkgcore 0.2:
 
-  * pmaint script; tool for --sync'ing, doing quickpkging, moving packages
-    between repos for repository conversions.
+* pmaint script; tool for --sync'ing, doing quickpkging, moving packages
+  between repos for repository conversions. General repository maintenance.
 
-  * sync subsystem: supports bzr, cvs, darcs, git, mercurial (hg), rsync,
-    and subversion.
+* sync subsystem: supports bzr, cvs, darcs, git, mercurial (hg), rsync,
+  and subversion.
   
-  * binpkg repositories now support modification; FEATURES=buildpkg basically
+* binpkg repositories now support modification; FEATURES=buildpkg basically
 
-  * binpkg contents handling is significantly faster.
+* binpkg contents handling is significantly faster.
 
-  * pmerge: supports --ask (thanks to nesl247/alex heck)
+* pmerge: supports --ask (thanks to nesl247/alex heck)
 
-  * chksuming now does a single walk over a file for all checksummers,
-    instead of one walk per checksummer- less disk thrashing, better
-    performance.
+* chksuming now does a single walk over a file for all checksummers,
+  instead of one walk per checksummer- less disk thrashing, better
+  performance.
 
-  * rewritten plugins system, register_plugins is no longer used.
+* rewritten plugins system, register_plugins is no longer used.
   
-  * paludis flat_list cache read/write support.
+* paludis flat_list cache read/write support.
 
-  * portage flat_list cache write support (cache used for
-    $PORTDIR/metadata/sync)
+* portage flat_list cache write support (cache used for
+  $PORTDIR/metadata/sync)
   
-  * pebuild/pregen/pclone_cache: heavy UI cleanup.
+* pebuild/pregen/pclone_cache: heavy UI cleanup.
+ 
+* pquery: prettier printing of depends/rdepends/post_rdepends under -v
   
-  * pquery: prettier printing of depends/rdepends/post_rdepends under -v
-  
-  * 'installed' set was added; is a pkgset comprised of all slotted atoms from
-    the vdb; useful for pmerge -e to enable rebuilding of *everything*.
+* 'installed' set was added; is a pkgset comprised of all slotted atoms from
+  the vdb; useful for pmerge -e to enable rebuilding of *everything*.
 
-  * overlays now combine mirror targets from their parent repository, and
-    from their own repository data.
+* overlays now combine mirror targets from their parent repository, and
+  from their own repository data.
   
-  * configuration: lazy section refs were added (lazy_ref), useful for when
-    the object arguement needs to be instantiated rarely (syncers for
-    repositories for example).
+* configuration: lazy section refs were added (lazy_ref), useful for when
+  the object arguement needs to be instantiated rarely (syncers for
+  repositories for example).
 
-  * /etc/portage/package.* files can be directories holding seperate files
-    to collapse
+* /etc/portage/package.* files can be directories holding seperate files
+  to collapse
 
-  * expanded test coverage.
+* expanded test coverage.
   
-  * merged standalone test runner into setup.py; prefered way of running it is
-    ``python setup.py test`` now.
+* merged standalone test runner into setup.py; prefered way of running it is
+  ``python setup.py test`` now.
 
 
 pkgcore 0.1.4:
 
-  * Compatibility with caches written by portage 2.1.2_pre3-r8.
+* Compatibility with caches written by portage 2.1.2_pre3-r8.
 
 
 pkgcore 0.1.3:
 
-  * Always process "|| ( a b )" in the right order.
+* Always process "|| ( a b )" in the right order.
 
   * Fix disabling a flag in package.use.mask or package.use.force.
 
 
 pkgcore 0.1.2:
 
-  * Make filter_env work on hppa (and possibly more architectures) where using
-    python CFLAGS for this standalone binary does not work.
+* Make filter_env work on hppa (and possibly more architectures) where using
+  python CFLAGS for this standalone binary does not work.
 
-  * Fall back to plain text output if the TERM variable is unsupported.
+* Fall back to plain text output if the TERM variable is unsupported.
 
-  * Deal with dangling symlinks in binpkg repositories.
+* Deal with dangling symlinks in binpkg repositories.
 
-  * Fix expanding of incrementals (like USE) in make.defaults.
+* Fix expanding of incrementals (like USE) in make.defaults.
 
-  * pquery: support --attr fetchables, handle extra commandline arguments as
-    -m or --expr restrictions.
+* pquery: support --attr fetchables, handle extra commandline arguments as
+  -m or --expr restrictions.
 
-  * USE deps once again allow setting a flag only if it is actually settable
-    on the target package.
+* USE deps once again allow setting a flag only if it is actually settable
+  on the target package.
 
 
 pkgcore 0.1.1:
 
-  * hang fix for test_filter_env
+* hang fix for test_filter_env
   
-  * package.keywords fixes: no longer incremental, supports '*' and '~*'
-    properly
+* package.keywords fixes: no longer incremental, supports '*' and '~*'
+  properly
   
-  * FEATURES="userpriv" support works again.
+* FEATURES="userpriv" support works again.
   
-  * pmerge repository ordering now behaves properly; prefers src ebuilds, then
-    built pkgs; -k inverts that (previously was semi-undefined)
+* pmerge repository ordering now behaves properly; prefers src ebuilds, then
+  built pkgs; -k inverts that (previously was semi-undefined)
   
-  * binpkg fixes: run setup phase
+* binpkg fixes: run setup phase
   
-  * replace op fixes: force seperate WORKDIR for unmerge to protect against 
-    env collisions
+* replace op fixes: force seperate WORKDIR for unmerge to protect against 
+  env collisions
   
-  * loosened category rules: allow _. chars to support cross-dev hack.
+* loosened category rules: allow _. chars to support cross-dev hack.
   
-  * build fixes: make $A unique to avoid duplicate unpacks; force distdir
-    creation regardless of whether or not the pkg has any stated SRC_URI
-    (fixes cvs and subversion eclsas usage).  Fix sandbox execution to chdir
-    to an existant directory (sandbox will fail if ran from a nonexistant dir).
+* build fixes: make $A unique to avoid duplicate unpacks; force distdir
+  creation regardless of whether or not the pkg has any stated SRC_URI
+  (fixes cvs and subversion eclsas usage).  Fix sandbox execution to chdir
+  to an existant directory (sandbox will fail if ran from a nonexistant dir).
   
-  * change DelayedInstantiation objects to track __class__ themselves; this 
-    fixes pquery to properly shutdown when ctrl+c'd (previously could swallow
-    the interrupt due to cpython isinstance swallowing KeyboardInterrupt).
+* change DelayedInstantiation objects to track __class__ themselves; this 
+  fixes pquery to properly shutdown when ctrl+c'd (previously could swallow
+  the interrupt due to cpython isinstance swallowing KeyboardInterrupt).
   
   
 pkgcore 0.1: 
 
-  Initial release.
+Initial release.
   
-  * Sync functionality doesn't yet exist (pmaint script will be in 0.2)
+* Sync functionality doesn't yet exist (pmaint script will be in 0.2)
   
-  * pmerge vdb modification requires --force; this will be disabled in 0.2, 
-    mainly is in place so that folks who are just looking, don't inadvertantly
-    trigger an actual modification.
+* pmerge vdb modification requires --force; this will be disabled in 0.2, 
+  mainly is in place so that folks who are just looking, don't inadvertantly
+  trigger an actual modification.
   
-  * not all portage FEATURES are implemented; same for QA.
+* not all portage FEATURES are implemented; same for QA.
   
-  * If overlays are in use, pkgcore may defer to its' seperate cache to avoid 
-    pkgcore causing cache regen for portage (and vice versa); this occurs due
-    to pkgcore treating overlays as their own repo and combining them at a 
-    higher level; portage smushes them all together thus rendering each subtree
-    unusable in any standalone fashion.
+* If overlays are in use, pkgcore may defer to its' seperate cache to avoid 
+  pkgcore causing cache regen for portage (and vice versa); this occurs due
+  to pkgcore treating overlays as their own repo and combining them at a 
+  higher level; portage smushes them all together thus rendering each subtree
+  unusable in any standalone fashion.
 
-  * pkgcore is far more anal about blocking bad behaviour in ebuilds during
-    metadata regeneration; tree is clean, but if you do something wrong in 
-    global scope, it *will* catch it and block it.
+* pkgcore is far more anal about blocking bad behaviour in ebuilds during
+  metadata regeneration; tree is clean, but if you do something wrong in 
+  global scope, it *will* catch it and block it.
   
-  * EBD; daemonized ebuild.sh processing (effectively), pkgcore reuses old
-    ebuild.sh processes to avoid bash startup, speeding regen up by roughly
-    2x.
+* EBD; daemonized ebuild.sh processing (effectively), pkgcore reuses old
+  ebuild.sh processes to avoid bash startup, speeding regen up by roughly
+  2x.

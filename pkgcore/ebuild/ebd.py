@@ -251,6 +251,12 @@ class ebd(object):
             return True
         try:
             shutil.rmtree(self.builddir)
+            # try to wipe the cat dir; if not empty, ignore it
+            try:
+                os.rmdir(os.path.dirname(self.builddir))
+            except OSError, e:
+                if e.errno != errno.ENOTEMPTY:
+                    raise
         except OSError, oe:
             raise format.GenericBuildError(
                 "clean: Caught exception while cleansing: %s" % oe)

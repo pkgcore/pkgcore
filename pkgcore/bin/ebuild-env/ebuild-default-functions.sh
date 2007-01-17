@@ -91,6 +91,8 @@ unpack()
         fi
 
         [ ! -s "${srcdir}${x}" ] && die "$myfail: empty file"
+        [ "${x/${DISTDIR}}" != "${x}" ] && \
+            die "Arguments to unpack() should not begin with \${DISTDIR}."
 
         case "${x##*.}" in
             tar)
@@ -99,7 +101,7 @@ unpack()
             tgz)
                 tar xozf "${srcdir}${x}" || die "$myfail"
                 ;;
-            tbz2)
+            tbz2|tbz)
                 bzip2 -dc "${srcdir}${x}" | tar xof -
                 assert "$myfail"
                 ;;
@@ -114,7 +116,7 @@ unpack()
                     gzip -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
                 fi
                 ;;
-            bz2)
+            bz2|bz)
                 if [ "${y}" == "tar" ]; then
                     bzip2 -dc "${srcdir}${x}" | tar xof -
                     assert "$myfail"
@@ -122,11 +124,22 @@ unpack()
                     bzip2 -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
                 fi
                 ;;
+            7Z|7z)
+                local my_output
+                my_output="$(7z x -y "${srcdir}/${x}")"
+                if [ $? -ne 0 ]; then
+                    echo "${my_output}" >&2
+                    die "$myfail"
+                fi
+                ;;
             RAR|rar)
                 unrar x -idq -o+ "${srcdir}/${x}" || die "$myfail"
                 ;;
             LHa|LHA|lha|lzh)
                 lha xqf "${srcdir}/${x}" || die "$myfail"
+                ;;
+            a|deb)
+                ar x "${srcdir}/${x}" || die "$myfail"
                 ;;
             *)
                 echo "unpack ${x}: file format not recognized. Ignoring."

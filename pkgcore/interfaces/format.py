@@ -83,7 +83,7 @@ class build(build_base):
             % k)
     for k in (
         "setup", "fetch", "unpack", "configure", "compile", "test", "install",
-        "finalize", "cleanup"):
+        "finalize"):
         o = locals()[k]
         o.__doc__ = "\n".join(x.lstrip() for x in o.__doc__.split("\n") + [
                 "@return: True on success, False on failure"])
@@ -142,7 +142,7 @@ class fetch(object):
         """finalize any build steps required"""
         return self.pkg
 
-    def clean(self):
+    def cleanup(self):
         return True
 
 
@@ -156,7 +156,7 @@ class empty_build_op(build_base):
         build_base.__init__(self, observer)
         self.pkg = pkg
 
-    def clean(self):
+    def cleanup(self):
         return True
 
     def finalize(self):

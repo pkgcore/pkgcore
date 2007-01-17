@@ -7,6 +7,8 @@ repository modifications (installing, removing, replacing)
 
 from pkgcore.util.dependant_methods import ForcedDepends
 from pkgcore.merge.engine import MergeEngine, errors as merge_errors
+from pkgcore.util.demandload import demandload
+demandload(globals(), "pkgcore.log:logger ")
 
 
 class fake_lock:
@@ -189,6 +191,13 @@ class livefs_install(livefs_base):
         """merge pkg metadata to the repository.  Must be overrided"""
         raise NotImplementedError
 
+    def finish(self):
+        ret = self.install_op.finalize()
+        if not ret:
+            logger.warn("ignoring unexpected result from install finalize- "
+                "%r" % ret)
+        return livefs_base.finish(self)
+
 
 class livefs_uninstall(livefs_base):
 
@@ -247,6 +256,14 @@ class livefs_uninstall(livefs_base):
         """unmerge pkg metadata from the repository.  Must be overrided."""
         raise NotImplementedError
 
+    def finish(self):
+        ret = self.uninstall_op.finalize()
+        self.uninstall_op.cleanup(disable_observer=True)
+        if not ret:
+            logger.warn("ignoring unexpected result from uninstall finalize- "
+                "%r" % ret)
+        return livefs_base.finish(self)
+
     def __del__(self):
         if self.underway:
             print "warning: %s unmerge was underway, but wasn't completed" % \
@@ -293,6 +310,18 @@ class livefs_replace(livefs_install, livefs_uninstall):
     def _notify_repo(self):
         self.repo.notify_remove_package(self.old_pkg)
         self.repo.notify_add_package(self.new_pkg)
+
+    def finish(self):
+        ret = self.install_op.finalize()
+        if not ret:
+            logger.warn("ignoring unexpected result from install finalize- "
+                "%r" % ret)
+        ret = self.uninstall_op.finalize()
+        self.uninstall_op.cleanup(disable_observer=True)
+        if not ret:
+            logger.warn("ignoring unexpected result from uninstall finalize- "
+                "%r" % ret)
+        return livefs_base.finish(self)
 
     def __del__(self):
         if self.underway:

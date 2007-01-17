@@ -151,7 +151,7 @@ class ebd(object):
 
         self.__init_workdir__(tmp_offset)
         if clean:
-            self.clean()
+            self.cleanup()
         self.setup_workdir()
         self.setup_env_data_source(env_data_source)
 
@@ -246,7 +246,7 @@ class ebd(object):
         return True
 
     @observer.decorate_build_method("clean")
-    def clean(self):
+    def cleanup(self):
         if not os.path.exists(self.builddir):
             return True
         try:

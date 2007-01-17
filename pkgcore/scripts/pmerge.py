@@ -527,7 +527,7 @@ def main(options, out, err):
             out.error("got %s for a phase execution for %s" % (ret, op.pkg))
             if not options.ignore_failures:
                 return 1
-        buildop.clean()
+        buildop.cleanup()
         if world_set:
             if op.desc == "remove":
                 update_worldset(world_set, op.pkg, remove=True)

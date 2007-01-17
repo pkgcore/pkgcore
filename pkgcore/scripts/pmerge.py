@@ -453,7 +453,6 @@ def main(options, out, err):
     out.write("%i ops: %s" % (sum(ops_count.itervalues()),
         ", ".join("%i %ss" % (ops_count[k], k) for k in sorted(ops_count))))
     out.write()
-    out.write('Success!')
     out.title('Resolved')
     out.write(out.bold, '%.2f' % (resolve_time,), out.reset,
               ' seconds resolving')
@@ -506,13 +505,15 @@ def main(options, out, err):
             if ret is None:
                 out.write()
                 if op.desc == "replace":
-                    out.write("replace:  %s with %s" % (op.old_pkg, built_pkg))
+                    out.write("replace:  %s with %s" % 
+                        (get_raw_pkg(op.old_pkg), get_raw_pkg(built_pkg)))
                     i = vdb.replace(op.old_pkg, built_pkg, observer=repo_obs)
                 else:
-                    out.write("install: %s" % built_pkg)
+                    out.write("install: %s" % get_raw_pkg(built_pkg))
                     i = vdb.install(built_pkg, observer=repo_obs)
             else:
-                out.error("failure building %s: %s" % (op.pkg, ret))
+                out.error("failure building %s: %s" % (get_raw_pkg(op.pkg),
+                    ret))
                 if not options.ignore_failures:
                     return 1
                 continue
@@ -520,7 +521,7 @@ def main(options, out, err):
             # then we would like.
             del built_pkg
         else:
-            out.write("remove:  %s" % op.pkg)
+            out.write("remove:  %s" % get_raw_pkg(op.pkg))
             i = vdb.uninstall(op.pkg, observer=repo_objs)
         ret = i.finish()
         if ret != True:

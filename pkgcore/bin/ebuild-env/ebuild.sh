@@ -540,11 +540,6 @@ execute_phases() {
             type -p post_pkg_${EBUILD_PHASE} &> /dev/null && post_pkg_${EBUILD_PHASE}
             [[ $PORTAGE_DEBUG -lt 2 ]] && set +x
             ;;
-        clean)
-            einfo "clean phase is now handled in the python side of portage."
-            einfo "ebuild-daemon calls it correctly, upgrading from vanilla portage to ebd" 
-            einfo "always triggers this though.  Please ignore it."
-            ;;
         unpack|compile|test|install)
             if [ "${SANDBOX_DISABLED="0"}" == "0" ]; then
                 export SANDBOX_ON="1"

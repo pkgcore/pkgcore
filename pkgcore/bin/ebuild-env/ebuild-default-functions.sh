@@ -75,12 +75,7 @@ addpredict()
 
 unpack()
 {
-    local x y myfail tarvars srcdir
-    if [ "$USERLAND" == "BSD" ]; then
-        tarvars=""
-    else
-        tarvars="--no-same-owner"
-    fi	
+    local x y myfail srcdir
 
     [ -z "$*" ] && die "Nothing passed to the 'unpack' command"
 
@@ -99,13 +94,13 @@ unpack()
 
         case "${x##*.}" in
             tar)
-                tar ${tarvars} -xf "${srcdir}${x}" || die "$myfail"
+                tar xof "${srcdir}${x}" || die "$myfail"
                 ;;
             tgz)
-                tar ${tarvars} -xzf "${srcdir}${x}" || die "$myfail"
+                tar xozf "${srcdir}${x}" || die "$myfail"
                 ;;
             tbz2)
-                bzip2 -dc "${srcdir}${x}" | tar ${tarvars} -xf -
+                bzip2 -dc "${srcdir}${x}" | tar xof -
                 assert "$myfail"
                 ;;
             ZIP|zip|jar)
@@ -113,7 +108,7 @@ unpack()
                 ;;
             gz|Z|z)
                 if [ "${y}" == "tar" ]; then
-                    gzip -dc "${srcdir}${x}" | tar ${tarvars} -xf -
+                    gzip -dc "${srcdir}${x}" | tar xof -
                     assert "$myfail"
                 else
                     gzip -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
@@ -121,7 +116,7 @@ unpack()
                 ;;
             bz2)
                 if [ "${y}" == "tar" ]; then
-                    bzip2 -dc "${srcdir}${x}" | tar ${tarvars} -xf -
+                    bzip2 -dc "${srcdir}${x}" | tar xof -
                     assert "$myfail"
                 else
                     bzip2 -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"

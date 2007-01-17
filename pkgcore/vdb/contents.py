@@ -120,7 +120,7 @@ class ContentsFile(contentsSet):
                 #file: path, md5, time
                 obj = fs.fsFile(
                     line[1], chksums={"md5":long(line[2], 16)},
-                        mtime=line[3],
+                        mtime=long(line[3]),
                     strict=False)
             elif line[0] == "sym":
                 #path, target, ' -> ', mtime

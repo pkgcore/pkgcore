@@ -333,9 +333,8 @@ class ConfigManager(object):
                     continue
                 if key in conf and key not in type_obj.incrementals:
                     continue
-                try:
-                    typename = type_obj.types[key]
-                except KeyError:
+                typename = type_obj.types.get(key)
+                if key is None:
                     if key == 'default':
                         typename = 'bool'
                     elif not type_obj.allow_unknowns:

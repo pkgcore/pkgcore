@@ -289,7 +289,7 @@ def config_from_make_conf(location="/etc/"):
 
         new_config['repo-stack'] = basics.DictConfigSection(my_convert_hybrid,
             {'class': 'pkgcore.ebuild.overlay_repository.OverlayRepo',
-             'trees': tuple([portdir] + portdir_overlays)})
+             'trees': tuple(reversed([portdir] + portdir_overlays))})
 
     # disabled code for using portage config defined cache modules;
     # need to re-examine and see if they're still in sync with our cache subsystem

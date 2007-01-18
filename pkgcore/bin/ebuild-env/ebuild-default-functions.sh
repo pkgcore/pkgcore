@@ -251,6 +251,9 @@ dyn_compile()
 
     if [ -d "${S}" ]; then
         cd "${S}"
+    else
+        # cd to some random dir that we at least control.
+        cd "${WORKDIR}"
     fi
     #our custom version of libtool uses $S and $D to fix
     #invalid paths in .la files

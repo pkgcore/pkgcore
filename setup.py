@@ -295,7 +295,7 @@ core.setup(
     name='pkgcore',
     version='0.1.9',
     description='package managing framework',
-    url='http://gentooexperimental.org/~ferringb/bzr/pkgcore/',
+    url='http://www.pkgcore.org/',
     packages=packages,
     package_data={
         'pkgcore': [

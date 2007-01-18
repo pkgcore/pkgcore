@@ -7,7 +7,7 @@ If you're just installing pkgcore from a released tarball, skip this section.
 To get the current (development) code without history, install bazaar_
 (``emerge bzr`` on gentoo) and run::
 
-  bzr co --lightweight http://dev.gentooexperimental.org/~pkgcore/bzr/<branch>
+  bzr co --lightweight http://bzr.pkgcore.org/<branch>
 
 Currently the "main" branches are ``ferringb/pkgcore-dev`` and
 ``marienz/pkgcore-dev``.

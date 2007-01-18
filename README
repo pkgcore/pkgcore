@@ -1,8 +1,4 @@
-  pkgcore-0.1.x <http://dev.gentooexperimental.org/pkgcore-trac>
-
-These are the release notes for version 0.1.x.  Please read them carefully as they
-will clarify the intention of pkgcore, getting around the source, who to
-contact if a bug is found, and finally, how to install it.
+pkgcore-0.2 < http://www.pkgcore.org >
 
 
 WHAT IS PKGCORE?
@@ -18,27 +14,35 @@ WHAT IS PKGCORE?
 
 WHO TO CONTACT IF I FIND A BUG?
 
-  Please submit a bug/ticket via http://dev.gentooexperimental.org/pkgcore-trac
-  barring that, please at least send the details to
-  pkgcore-dev@googlegroups.com .  Please do not use bugs.gentoo.org as the first
-  step; any bugs, pkgcore devs should filter before passing up at this point.
+  Please submit a bug/ticket via http://www.pkgcore.org barring that, please at
+  least send the details to pkgcore-bugs@pkgcore.org.  Please do not use
+  bugs.gentoo.org as the first step; any bugs, pkgcore devs should filter before
+  passing up at this point.
+
+  You can also stop by on irc.freenode.net #pkgcore
 
 
 DOCUMENTATION?
 
-  Please look in dev-notes/ ; additionally, the code for the most part has 
-  docstrings, thus pydoc is a good reference.
+  Please take a look at either doc/ and dev-notes/ ; additionally, the code for
+  the most part has  docstrings, thus pydoc is a good reference.
   
   For just getting started, dev-notes/developing.rst is a good intro
 
 
 TOOLS?
   
-  pquery: generic utility for querying info about repositories, revdeps, pkg 
-    search, vdb search, etc.
+  pclone_cache: clone a repository cache
 
+  pebuild: low-level ebuild operations, go through phases manually
+  
+  pmaint: generic utility for repository maintenance (syncing, copying...)
+  
   pmerge: generic utility for doing resolution, fetching, merging/unmerging,
     etc.
+
+  pquery: generic utility for querying info about repositories, revdeps, pkg 
+    search, vdb search, etc.
 
   pregen: script for doing ebuild metadata regeneration; can be parallelized
 

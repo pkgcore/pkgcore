@@ -74,7 +74,7 @@ class domain(pkgcore.config.domain.domain):
     _types = {
         'profile': 'ref:profile', 'fetcher': 'ref:fetcher',
         'repositories': 'refs:repo', 'vdb': 'refs:repo',
-        'name': 'str',
+        'name': 'str', 'config_manager':'ref:config',
         }
     for _thing in list(const.incrementals) + ['bashrc']:
         _types[_thing] = 'list'
@@ -90,17 +90,24 @@ class domain(pkgcore.config.domain.domain):
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
             _types, incrementals=const.incrementals, typename='domain',
-            required=['repositories', 'profile', 'vdb', 'fetcher', 'name'],
+            required=['repositories', 'profile', 'vdb', 'fetcher', 'name',
+                'config_manager'],
             allow_unknowns=True)
 
     del _types, _thing
 
-    def __init__(self, profile, repositories, vdb, name=None, root='/',
-                 incrementals=const.incrementals, **settings):
+    def __init__(self, profile, repositories, vdb, config_manager, name=None,
+        root='/', incrementals=const.incrementals, **settings):
         # voodoo, unfortunately (so it goes)
         # break this up into chunks once it's stabilized (most of code
         # here has already, but still more to add)
         settings.setdefault('ACCEPT_LICENSE', const.ACCEPT_LICENSE)
+
+        # map out sectionname -> config manager immediately.
+        self.named_repos = dict((config_manager.get_section_name(r), r)
+            for r in repositories + vdb)
+        self.named_repos.pop(None, None)
+
         pkg_maskers = set(profile.masks)
         for r in repositories:
             pkg_maskers.update(r.default_visibility_limiters)
@@ -268,10 +275,22 @@ class domain(pkgcore.config.domain.domain):
         self.settings["bashrc"] = bashrc
         self.repos = []
         self.vdb = []
+        self.configured_named_repos = {}
+        self.filtered_named_repos = {}
+
+        rev_names = dict((repo, name) for name, repo in self.named_repos.iteritems())
+
         profile_repo = None
         if profile.virtuals:
             profile_repo = profile.make_virtuals_repo(multiplex.tree(*repositories))
-        for l, repos in ((self.repos, repositories), (self.vdb, vdb)):
+            self.named_repos["profile virtuals"] = profile_repo
+            self.filtered_named_repos["profile virtuals"] = profile_repo
+            self.configured_named_repos["profile virtuals"] = profile_repo
+
+
+        for l, repos, filtered in ((self.repos, repositories, True),
+            (self.vdb, vdb, False)):
+            
             for repo in repos:
                 if not repo.configured:
                     pargs = [repo]
@@ -288,13 +307,17 @@ class domain(pkgcore.config.domain.domain):
                     except AttributeError, ae:
                         raise Failure("failed configuring repo '%s': "
                                       "configurable missing: %s" % (repo, ae))
-                    l.append(repo.configure(*pargs))
+                    wrapped_repo = repo.configure(*pargs)
                 else:
-                    l.append(repo)
-                # do this once at top level instead.
-
-        self.repos = [visibility.filterTree(t, vfilter, True)
-                      for t in self.repos]
+                    wrapped_repo = repo
+                key = rev_names.get(repo)
+                self.configured_named_repos[key] = wrapped_repo
+                if filtered:
+                    wrapped_repo = visibility.filterTree(wrapped_repo,
+                        vfilter, True)
+                self.filtered_named_repos[key] = wrapped_repo
+                l.append(wrapped_repo)
+                    
         if profile_repo is not None:
             self.repos = [profile_repo] + self.repos
 

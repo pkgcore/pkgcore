@@ -70,16 +70,21 @@ class CollapsedConfig(object):
     @ivar default: True if this section is a default.
     """
 
-    def __init__(self, type_obj, config, debug=False, default=False):
+    def __init__(self, type_obj, config, manager, debug=False, default=False):
         """Initialize instance vars."""
         # Check if we got all values required to instantiate.
         missing = set(type_obj.required) - set(config)
         if missing:
-            raise errors.ConfigurationError(
-                'type %s.%s needs settings for %s' %
-                (type_obj.callable.__module__,
-                 type_obj.callable.__name__,
-                 ', '.join(repr(var) for var in missing)))
+            for x in missing:
+                if type_obj.types[x] == 'ref:config':
+                    config[x] = manager
+            missing = set(type_obj.required) - set(config)
+            if missing:
+                raise errors.ConfigurationError(
+                    'type %s.%s needs settings for %s' %
+                    (type_obj.callable.__module__,
+                    type_obj.callable.__name__,
+                    ', '.join(repr(var) for var in missing)))
 
         self.default = default
         self.debug = debug
@@ -87,6 +92,11 @@ class CollapsedConfig(object):
         self.config = config
         # Cached instance if we have one.
         self._instance = None
+
+    def _pull_cached_instance(self):
+        """return the instance if it's been instantiated-
+        if not, None is returned"""
+        return self._instance
 
     def instantiate(self):
         """Call our type's callable, cache and return the result.
@@ -110,6 +120,8 @@ class CollapsedConfig(object):
                 continue
             # central already checked the type, no need to repeat that here.
             if typename.startswith('ref:') or typename == 'section_ref':
+                if typename.endswith(':config'):
+                    continue
                 try:
                     config[name] = val.instantiate()
                 except errors.ConfigurationError, e:
@@ -256,6 +268,12 @@ class ConfigManager(object):
             for name in config:
                 yield name
 
+    def get_section_name(self, obj):
+        for section_name, val in self.collapsed_configs.iteritems():
+            if val._pull_cached_instance() == obj:
+                return section_name
+        return None
+
     def collapse_named_section(self, name, raise_on_missing=True):
         """Collapse a config by name, possibly returning a cached instance.
 
@@ -378,7 +396,7 @@ class ConfigManager(object):
                     conf[key] = result
         default = conf.pop('default', False)
         return CollapsedConfig(
-            type_obj, conf, debug=self.debug, default=default)
+            type_obj, conf, self, debug=self.debug, default=default)
 
     def get_default(self, type_name):
         """Finds the configuration specified default obj of type_name.

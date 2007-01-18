@@ -130,6 +130,7 @@ pkgcore 0.2:
     01/07 now.
   * if FEATURES=test, set USE=test; if USE=test has been explicitly masked for
     a package, disable src_test run; matches portage 2.1.2 behaviour.
+  * cleanup build directory, and unmerge directories upon finishing
 
 * filter-env now is accessible directly via python; pkgcore.ebuild.filter_env .
   Needs further work prior to being usable for pcheck inspection of ebuilds, 

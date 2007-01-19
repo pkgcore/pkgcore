@@ -322,7 +322,11 @@ def main(options, out, err):
         pkgset = get_pkgset(config, err, setname)
         if pkgset is None:
             return 1
-        atoms.extend(list(pkgset))
+        l = list(pkgset)
+        if not l:
+            out.write("skipping set %s: set is empty, nothing to update" % setname)
+        else:
+            atoms.extend(l)
 
     for token in options.targets:
         try:

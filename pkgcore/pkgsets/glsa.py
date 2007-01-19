@@ -5,6 +5,7 @@
 Gentoo Linux Security Advisories (GLSA) support
 """
 
+import os
 from pkgcore.util.iterables import caching_iter
 from pkgcore.restrictions import packages, restriction, boolean, values
 from pkgcore.config import ConfigHint
@@ -55,9 +56,13 @@ class GlsaDirSet(object):
         """
 
         if not isinstance(src, basestring):
-            src = pjoin(get_virtual_repos(src, False)[0].base,
-                               "metadata/glsa")
-        self.path = src
+            src = filter(os.path.isdir, 
+                (pjoin(repo.base, 'metadata', 'glsa') for repo in
+                    get_virtual_repos(src, False) if hasattr(repo, 'base'))
+                )
+        else:
+            src = [src]
+        self.paths = src
 
     def __iter__(self):
         for glsa, catpkg, pkgatom, vuln in self.iter_vulnerabilities():
@@ -89,34 +94,35 @@ class GlsaDirSet(object):
         """
         generator yielding each GLSA restriction
         """
-        for fn in listdir_files(self.path):
-            #"glsa-1234-12.xml
-            if not (fn.startswith("glsa-") and fn.endswith(".xml")):
-                continue
-            try:
-                [int(x) for x in fn[5:-4].split("-")]
-            except ValueError:
-                continue
-            root = etree.parse(pjoin(self.path, fn))
-            glsa_node = root.getroot()
-            if glsa_node.tag != 'glsa':
-                raise ValueError("glsa without glsa rootnode")
-            for affected in root.findall('affected'):
-                for pkg in affected.findall('package'):
-                    try:
-                        pkgname = str(pkg.get('name')).strip()
-                        pkg_vuln_restrict = \
-                            self.generate_intersects_from_pkg_node(
-                            pkg, tag="glsa(%s)" % fn[5:-4])
-                        if pkg_vuln_restrict is None:
-                            continue
-                        pkgatom = atom.atom(pkgname)
-                        yield fn[5:-4], pkgname, pkgatom, pkg_vuln_restrict
-                    except (TypeError, ValueError), v:
-                        # thrown from cpv.
-                        logger.warn("invalid glsa- %s, package %s: error %s"
-                                    % (fn, pkgname, v))
-                        del v
+        for path in self.paths:
+            for fn in listdir_files(path):
+                #"glsa-1234-12.xml
+                if not (fn.startswith("glsa-") and fn.endswith(".xml")):
+                    continue
+                try:
+                    [int(x) for x in fn[5:-4].split("-")]
+                except ValueError:
+                    continue
+                root = etree.parse(pjoin(path, fn))
+                glsa_node = root.getroot()
+                if glsa_node.tag != 'glsa':
+                    raise ValueError("glsa without glsa rootnode")
+                for affected in root.findall('affected'):
+                    for pkg in affected.findall('package'):
+                        try:
+                            pkgname = str(pkg.get('name')).strip()
+                            pkg_vuln_restrict = \
+                                self.generate_intersects_from_pkg_node(
+                                pkg, tag="glsa(%s)" % fn[5:-4])
+                            if pkg_vuln_restrict is None:
+                                continue
+                            pkgatom = atom.atom(pkgname)
+                            yield fn[5:-4], pkgname, pkgatom, pkg_vuln_restrict
+                        except (TypeError, ValueError), v:
+                            # thrown from cpv.
+                            logger.warn("invalid glsa- %s, package %s: error %s"
+                                % (fn, pkgname, v))
+                            del v
 
 
     def generate_intersects_from_pkg_node(self, pkg_node, tag=None):

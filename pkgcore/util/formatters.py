@@ -415,3 +415,16 @@ def get_formatter(stream):
                 # Just fall back to the PlainTextFormatter.
                 pass
     return PlainTextFormatter(stream)
+
+
+def decorate_forced_wrapping(setting=True):
+    def wrapped_func(func):
+        def f(out, *args, **kwds):
+            oldwrap = out.wrap
+            out.wrap = setting
+            try:
+                return func(out, *args, **kwds)
+            finally:
+                out.wrap = oldwrap
+        return f
+    return wrapped_func

@@ -428,7 +428,7 @@ class tree(object):
         @raise AttributeError: if the repository is frozen (immutable)
         @return: L{pkgcore.interfaces.repo.install} instance
         """
-        if self.frozen and not kw.pop("force", False):
+        if not kw.pop('force', False) and self.frozen:
             raise AttributeError("repo is frozen")
         return self._install(pkg, *a, **kw)
 

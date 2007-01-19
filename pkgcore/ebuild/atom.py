@@ -358,9 +358,13 @@ class atom(boolean.AndRestriction):
 
         # If one of us is an exact match we intersect if the other matches it:
         if self.op == '=':
+            if other.op == '=*':
+                return self.fullver.startswith(other.fullver)
             return VersionMatch(
                 other.op, other.version, other.revision).match(self)
         if other.op == '=':
+            if self.op == '=*':
+                return other.fullver.startswith(self.fullver)
             return VersionMatch(
                 self.op, self.version, self.revision).match(other)
 

@@ -6,6 +6,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2:
 
+* glsa pkgset will now include metadata/glsa from overlays.
+
 * pmaint script; tool for --sync'ing, doing quickpkging, moving packages
   between repos for repository conversions. General repository maintenance.
 

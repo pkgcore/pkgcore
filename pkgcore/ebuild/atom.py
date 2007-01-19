@@ -325,6 +325,10 @@ class atom(boolean.AndRestriction):
         if (self.slot is not None and other.slot is not None and
             self.slot != other.slot):
             return False
+        
+        if (self.repo_id is not None and other.repo_id is not None and
+            self.repo_id != other.repo_id):
+            return False
 
         # Use deps are similar: if one of us forces a flag on and the
         # other forces it off we do not intersect. If only one of us

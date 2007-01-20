@@ -537,6 +537,23 @@ class merge_plan(object):
                 choices.force_next_pkg()
                 continue
 
+            fail = True
+            for x in choices.provides:
+                l = add_op(choices, x).apply(self.state)
+                if l and l != [x]:
+                    if len(current_stack) > 1:
+                        if not current_stack[-2].atom.match(x):
+                            print "provider conflicted... how?"
+#                            print "should do something here, something sane..."
+                            fail = [x]
+                            break
+            else:
+                fail = False
+            if fail:
+                self.state.backtrack(cur_frame.start_point)
+                choices.force_next_pkg()
+                continue
+
             # level blockers.
             fail = True
             for x in blocks:
@@ -558,8 +575,8 @@ class merge_plan(object):
                                 self.state)
                             break;
 
-                l = self.state.add_blocker(choices,
-                    self.generate_mangled_blocker(choices, x), key=x.key)
+                rewrote_blocker = self.generate_mangled_blocker(choices, x)
+                l = self.state.add_blocker(choices, rewrote_blocker, key=x.key)
                 if l:
                     # blocker caught something. yay.
                     dprint("rdepend blocker %s hit %s for atom %s pkg %s",
@@ -571,23 +588,6 @@ class merge_plan(object):
             if fail:
                 choices.reduce_atoms(x)
                 self.state.backtrack(cur_frame.start_point)
-                continue
-
-            fail = True
-            for x in choices.provides:
-                l = add_op(choices, x).apply(self.state)
-                if l and l != [x]:
-                    if len(current_stack) > 1:
-                        if not current_stack[-2].atom.match(x):
-                            print "provider conflicted... how?"
-#                            print "should do something here, something sane..."
-                            fail = [x]
-                            break
-            else:
-                fail = False
-            if fail:
-                self.state.backtrack(cur_frame.start_point)
-                choices.force_next_pkg()
                 continue
 
             # reset blocks for pdepend proccesing

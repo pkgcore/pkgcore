@@ -738,7 +738,7 @@ class plan_state(object):
 
     def add_blocker(self, choices, blocker, key=None):
         """adds blocker, returning any packages blocked"""
-        incref_forward_block_op(choices, blocker, key).apply(self)
+        return incref_forward_block_op(choices, blocker, key).apply(self)
 
     def _remove_pkg_blockers(self, choices):
         l = self.rev_blockers.get(choices, None)

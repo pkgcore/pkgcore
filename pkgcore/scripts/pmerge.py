@@ -97,12 +97,14 @@ a depends on b, and b depends on a, with neither built is an example""")
             if options.clean:
                 self.error("Sorry, -C cannot be used with --clean")
         if options.clean:
+            if options.set or options.targets:
+                self.error("--clean currently has set/targets disabled; in "
+                    "other words, accepts no args")
+            options.set = ['world', 'system']
             options.deep = True
             if options.usepkgonly or options.usepkg:
                 self.error(
                     '--usepkg and --usepkgonly cannot be used with --clean')
-            if not options.set and not options.targets:
-                options.set = ['world', 'system']
         elif options.usepkgonly and options.usepkg:
             self.error('--usepkg is redundant when --usepkgonly is used')
         if options.set:

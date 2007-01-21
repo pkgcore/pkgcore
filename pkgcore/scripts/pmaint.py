@@ -9,8 +9,7 @@ from pkgcore.util import commandline
 from pkgcore.util.demandload import demandload
 
 demandload(globals(), "pkgcore.repository:multiplex "
-    "pkgcore.ebuild.atom:atom "
-    "pkgcore.package:errors "
+    "pkgcore.util:parserestrict "
     "pkgcore.package:mutated "
     "pkgcore.fs:contents,livefs "
     "errno "
@@ -124,8 +123,8 @@ class CopyParser(commandline.OptionParser):
         values.candidates = []
         for x in args:
             try:
-                values.candidates.append(atom(x))
-            except errors.InvalidDependency, e:
+                values.candidates.append(parserestrict.parse_match(x))
+            except parserestrict.ParseErrorerrors, e:
                 self.error("arg %r isn't a valid atom: %s" %
                     (x, e))
         return values, []

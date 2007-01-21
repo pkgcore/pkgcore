@@ -290,10 +290,10 @@ if sys.version_info < (2, 5):
             'pkgcore.util._functools', ['src/functoolsmodule.c'],
             extra_compile_args=extra_flags, depends=common_includes))
 
-
+from pkgcore.const import VERSION
 core.setup(
     name='pkgcore',
-    version='0.1.9',
+    version=VERSION,
     description='package managing framework',
     url='http://www.pkgcore.org/',
     packages=packages,

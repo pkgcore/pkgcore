@@ -810,9 +810,10 @@ useq()
     local x
     
     # Make sure we have this USE flag in IUSE
-    if ! hasq "${u}" ${IUSE} ${E_IUSE} && ! hasq "${u}" ${PORTAGE_ARCHLIST} selinux; then
-        echo "QA Notice: USE Flag '${u}' not in IUSE for ${CATEGORY}/${PF}" >&2
-    fi
+    # temp disable due to PORTAGE_ARCHLIST not being exported in
+    #if ! hasq "${u}" ${IUSE} ${E_IUSE} && ! hasq "${u}" ${PORTAGE_ARCHLIST} selinux; then
+    #    echo "QA Notice: USE Flag '${u}' not in IUSE for ${CATEGORY}/${PF}" >&2
+    #fi
 
     for x in ${USE}; do
         if [ "${x}" == "${u}" ]; then

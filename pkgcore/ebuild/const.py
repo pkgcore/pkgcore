@@ -16,7 +16,7 @@ incrementals = (
 
 metadata_keys = (
     'DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI', 'RESTRICT', 'HOMEPAGE', 'LICENSE',
-    'DESCRIPTION', 'KEYWORDS', 'INHERITED', 'IUSE', 'PDEPEND', 'PROVIDE',
+    'DESCRIPTION', 'KEYWORDS', 'INHERITED', 'IUSE', 'PDEPEND', 'PROVIDE', 'EAPI',
     '_mtime_', '_eclasses_')
 
 ACCEPT_LICENSE = ()

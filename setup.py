@@ -269,7 +269,7 @@ class test(core.Command):
         build_ext.inplace = True
         self.run_command('build_ext')
         # Somewhat hackish: this calls sys.exit.
-        unittest.main('pkgcore.test', argv=['setup.py'], testLoader=testLoader)
+        unittest.main('pkgcore.test', argv=['setup.py', '-v'], testLoader=testLoader)
 
 
 packages = [

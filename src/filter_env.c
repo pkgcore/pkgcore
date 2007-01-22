@@ -484,7 +484,7 @@ pkgcore_filter_env_run(PyObject *self, PyObject *args, PyObject *kwargs)
     int result, desired_func_match, desired_var_match;
 
     static char *kwlist[] = {"out", "file_buff", "vsr", "fsr",
-                             "desired_var_match", "desired_func_match"};
+                             "desired_var_match", "desired_func_match", NULL};
     if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Os#zzOO", kwlist,
                                      &out, &file_buff, &file_size, &vsr, &fsr,
                                      &desired_var_match_obj,

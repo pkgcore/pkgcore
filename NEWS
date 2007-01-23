@@ -3,6 +3,14 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.2.1:
+
+* fix corner case for portage configuration support; old system (<=2004)
+  installations may have /etc/portage/sets/world, which confused pmerges
+  world updating, leading to writing bad entries.  Ticket 54.
+
+* fix issues with distcc/ccache (ticket 55) so that they actually work.
+
 
 pkgcore 0.2:
 

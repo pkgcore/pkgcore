@@ -444,6 +444,7 @@ class buildable(ebd, setup_mixin, format.build):
                 # and pjoin("/foo/bar",".asdf") == "/foo/bar/.asdf"
                 if not (s+"_DIR") in self.env:
                     self.env[s+"_DIR"] = pjoin(self.tmpdir,  default)
+                path.insert(0, "/usr/lib/%s/bin" % s.lower())
 #               for x in ("CC", "CXX"):
 #                   if x in self.env:
 #                       self.env[x] = "%s %s" % (s.lower(), self.env[x])

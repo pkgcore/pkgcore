@@ -17,7 +17,8 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "errno pkgcore.config:errors "
     "pkgcore.pkgsets.glsa:SecurityUpgrades "
     "pkgcore.util.file:read_bash_dict "
-    "pkgcore.util:bzip2 ")
+    "pkgcore.util:bzip2 "
+    "pkgcore.log:logger ")
 
 
 def my_convert_hybrid(manager, val, arg_type):
@@ -128,6 +129,10 @@ def config_from_make_conf(location="/etc/"):
         for setname in listdir_files(set_fp):
             # Potential for name clashes here, those will just make
             # the set not show up in config.
+            if setname in ("system", "world"):
+                logger.warn("user defined set %s is disallowed; ignoring" %
+                    pjoin(set_fp, setname))
+                continue
             new_config[setname] = basics.AutoConfigSection({
                     "class":"pkgcore.pkgsets.filelist.FileList",
                     "location":pjoin(set_fp, setname)})

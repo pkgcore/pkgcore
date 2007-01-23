@@ -45,11 +45,11 @@ def dump_section(config, out, sections):
             else:
                 out.write('# huh, no type set for %s (%r)' % (key, val))
                 continue
-        out.write('# type: %s' % (typename,))
         if typename == 'ref:config':
             # ignore it.  it's a special cased internal ref.
             continue
-        elif typename.startswith('lazy_refs'):
+        out.write('# type: %s' % (typename,))
+        if typename.startswith('lazy_refs'):
             typename = 'section_refs'
             val = list(ref.collapse() for ref in val)
         elif typename.startswith('lazy_ref'):

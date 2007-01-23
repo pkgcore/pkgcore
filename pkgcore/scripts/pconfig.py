@@ -28,6 +28,9 @@ class DescribeClassParser(commandline.OptionParser):
 
 
 def dump_section(config, out, sections):
+    # ignore meta type defs.
+    if getattr(config.type, "typename", None) == 'type':
+        return
     out.first_prefix.append('    ')
     out.write('# typename of this section: %s' % (config.type.name,))
     out.write('class %s.%s;' % (config.type.callable.__module__,

@@ -11,6 +11,7 @@ pkgcore 0.2.1:
 
 * fix issues with distcc/ccache (ticket 55) so that they actually work.
 
+* fix pconfig dump traceback; ticket 56.
 
 pkgcore 0.2:
 

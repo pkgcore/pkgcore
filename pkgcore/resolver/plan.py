@@ -413,6 +413,13 @@ class merge_plan(object):
         return conflicts
 
     def _viable(self, atom, current_stack, dbs, depth):
+        """
+        internal function to discern if an atom is viable, returning
+        the matches iter if so
+        
+        @return: 3 possible; None (not viable), True (presolved), 
+          L{caching_iter} (not solved, but viable)
+        """
         if atom in self.insoluble:
             dprint("processing   %s%s: marked insoluble already",
                    (depth *2 * " ", atom))
@@ -427,7 +434,7 @@ class merge_plan(object):
                 dprint("pre-solved %s%s, [%s]",
                        (depth*2*" ", atom, ", ".join(str(x) for x in l)),
                        'pre-solved')
-            return False
+            return True
         # not in the plan thus far.
         matches = caching_iter(self.global_strategy(self, dbs, atom))
         if matches:
@@ -468,9 +475,8 @@ class merge_plan(object):
         matches = self._viable(atom, current_stack, dbs, depth)
         if matches is None:
             return [atom]
-        elif matches is False:
-            return False
-
+        elif matches is True:
+            return None
         choices, matches = matches
         # experiment. ;)
         # see if we can insert or not at this point (if we can't, no
@@ -540,7 +546,7 @@ class merge_plan(object):
                 # this means somehow the node already slipped in.
                 # so we exit now, we are satisfied
                 current_stack.pop()
-                return False
+                return None
             elif l is not None:
                 # failure.
                 self.state.backtrack(cur_frame.start_point)
@@ -656,11 +662,11 @@ class merge_plan(object):
                 l = self._rec_add_atom(atom, current_stack, dbs,
                     mode=mode, drop_cycles=True)
                 if not l:
-                    return False
+                    return None
             return [atom] + failures
 
         current_stack.pop()
-        return False
+        return None
 
     def generate_mangled_blocker(self, choices, blocker):
         """converts a blocker into a "cannot block ourself" block"""

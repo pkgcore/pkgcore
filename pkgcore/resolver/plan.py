@@ -412,16 +412,7 @@ class merge_plan(object):
             conflicts = None
         return conflicts
 
-    def _rec_add_atom(self, atom, current_stack, dbs, mode="none",
-        drop_cycles=False):
-        """Add an atom.
-
-        @return: False on no issues (inserted succesfully),
-            else a list of the stack that screwed it up.
-        """
-        limit_to_vdb = dbs == self.livefs_dbs
-
-        depth = len(current_stack)
+    def _viable(self, atom, current_stack, dbs, depth):
         if atom in self.insoluble:
             dprint("processing   %s%s: marked insoluble already",
                    (depth *2 * " ", atom))
@@ -460,8 +451,27 @@ class merge_plan(object):
                 s = current_stack[-1].atom
             dprint("processing   %s%s  [%s] no matches",
                    (depth *2 * " ", atom, s))
-            return [atom]
+            return None
+        return choices, matches
 
+    def _rec_add_atom(self, atom, current_stack, dbs, mode="none",
+        drop_cycles=False):
+        """Add an atom.
+
+        @return: False on no issues (inserted succesfully),
+            else a list of the stack that screwed it up.
+        """
+        limit_to_vdb = dbs == self.livefs_dbs
+
+        depth = len(current_stack)
+
+        matches = self._viable(atom, current_stack, dbs, depth)
+        if matches is None:
+            return [atom]
+        elif matches is False:
+            return False
+
+        choices, matches = matches
         # experiment. ;)
         # see if we can insert or not at this point (if we can't, no
         # point in descending)

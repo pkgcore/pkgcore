@@ -412,7 +412,7 @@ class merge_plan(object):
             conflicts = None
         return conflicts
 
-    def _viable(self, atom, current_stack, dbs, depth):
+    def _viable(self, atom, current_stack, dbs, limit_to_vdb, depth):
         """
         internal function to discern if an atom is viable, returning
         the matches iter if so
@@ -472,7 +472,7 @@ class merge_plan(object):
 
         depth = len(current_stack)
 
-        matches = self._viable(atom, current_stack, dbs, depth)
+        matches = self._viable(atom, current_stack, dbs, limit_to_vdb, depth)
         if matches is None:
             return [atom]
         elif matches is True:

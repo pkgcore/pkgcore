@@ -751,6 +751,7 @@ class plan_state(object):
         self.pkg_choices = {}
         self.rev_blockers = {}
         self.blockers_refcnt = RefCountingSet()
+        self.match_atom = self.state.find_atom_matches
 
     def add_blocker(self, choices, blocker, key=None):
         """adds blocker, returning any packages blocked"""
@@ -778,12 +779,8 @@ class plan_state(object):
         return (y for y in iterable
             if not y.pkg.repo.livefs)
 
-    def match_atom(self, atom):
-        return self.state.find_atom_matches(atom)
-
     @property
     def current_state(self):
-        #hack- this doesn't work when insertions are possible
         return len(self.plan)
 
 

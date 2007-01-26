@@ -91,6 +91,10 @@ class CopyParser(commandline.OptionParser):
             help="repository to copy packages into; if specified, "
                 "you don't need to specify the target repo as the last arg.  "
                 "Mainly useful for xargs invocations")
+        self.add_option("--ignore-existing", "-i", default=False, 
+            action='store_true',
+            help="skip existing pkgs, instead of treating it as an overwrite "
+            "error")
         self.add_option("--force", action='store_true', default=False,
             help="try and force the copy if the target repository is marked as "
                 "immutable")

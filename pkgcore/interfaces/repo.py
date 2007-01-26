@@ -87,8 +87,8 @@ class nonlivefs_replace(nonlivefs_install, nonlivefs_uninstall):
         nonlivefs_install.__init__(self, repo, newpkg, **kwds)
 
     def _notify_repo(self):
-        nonlivefs_uninstall._notify_remove(self)
-        nonlivefs_install._notify_remove(self)
+        nonlivefs_uninstall._notify_repo(self)
+        nonlivefs_install._notify_repo(self)
 
 
 class livefs_base(base):

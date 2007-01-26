@@ -200,3 +200,30 @@ class CopyTest(TestCase, helpers.MainMixin):
         self.assertEqual(config.target_repo.uninstalled,
             config.target_repo.installed,
             msg="installed should be the same as uninstalled; empty")
+
+    def test_ignore_existing(self):
+        ret, config, out = self.execute_main(
+            '--target-repo', 'trg', '--source-repo', 'src',
+            '*', '--ignore-existing',
+                src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
+                trg=make_repo_config({})
+            )
+        self.assertEqual(ret, 0, "expected non zero exit code")
+        self.assertEqual(map(str, config.target_repo.installed),
+            ['sys-apps/portage-2.1', 'sys-apps/portage-2.3'])
+        self.assertEqual(config.target_repo.uninstalled,
+            config.target_repo.replaced,
+            msg="uninstalled should be the same as replaced; empty")
+
+        ret, config, out = self.execute_main(
+            '--target-repo', 'trg', '--source-repo', 'src',
+            '*', '--ignore-existing',
+                src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
+                trg=make_repo_config({'sys-apps':{'portage':['2.1']}})
+            )
+        self.assertEqual(ret, 0, "expected non zero exit code")
+        self.assertEqual(map(str, config.target_repo.installed),
+            ['sys-apps/portage-2.3'])
+        self.assertEqual(config.target_repo.uninstalled,
+            config.target_repo.replaced,
+            msg="uninstalled should be the same as replaced; empty")

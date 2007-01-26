@@ -23,8 +23,9 @@ def format_seq(seq, formatter=repr):
     elif len(seq) == 1:
         seq = seq[0]
     else:
-        seq = tuple(seq)
+        seq = tuple(sorted(str(x) for x in seq))
     return formatter(seq)
+
 
 class SyncOptionParser(commandline.OptionParser):
 
@@ -111,6 +112,10 @@ class CopyParser(commandline.OptionParser):
             self.error("target repo %r was not found, known repos-\n%s" %
                 (target_repo, format_seq(values.config.repo.keys())))
 
+        if values.target_repo.frozen and not values.force:
+            self.error("target repo %r is frozen; --force is required to override "
+                "this" % target_repo)
+
         if values.source_repo:
             try:
                 values.source_repo = values.config.repo[values.source_repo]
@@ -128,6 +133,7 @@ class CopyParser(commandline.OptionParser):
                 self.error("arg %r isn't a valid atom: %s" %
                     (x, e))
         return values, []
+
 
 def copy_main(options, out, err):
     "copy pkgs between repositories"
@@ -157,6 +163,10 @@ def copy_main(options, out, err):
                 failures = True
                 continue
             elif len(existing) == 1:
+                if options.ignore_existing:
+                    out.write("skipping %s, since %s exists already" %
+                        (src, existing[0]))
+                    continue
                 out.write("replacing %s with %s... " % (src, existing[0]))
                 op = trg_repo.replace
                 args = existing

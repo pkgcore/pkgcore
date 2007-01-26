@@ -22,7 +22,7 @@ def dprint(fmt, args=None, label=None):
         else:
             print fmt % args
 
-def is_cycle(stack, atom, cur_choice, attr):
+def is_cycle(stack, atom, cur_choice, attr, start=0):
     # short cut...
     if attr == "post_rdepends":
         # not possible for a cycle we'll care about to exist.
@@ -31,7 +31,11 @@ def is_cycle(stack, atom, cur_choice, attr):
         return -1
 
     cycle_start = -1
-    for idx, x in enumerate(stack):
+    if start != 0:
+        i = islice(stack, start, None)
+    else:
+        i = stack
+    for idx, x in enumerate(i):
         if x.mode == "post_rdepends":
             cycle_start = -1
         if x.atom == atom:
@@ -39,14 +43,15 @@ def is_cycle(stack, atom, cur_choice, attr):
 
     if cycle_start != -1:
         # deque can't be sliced, thus islice
-        s = ', '.join('[%s: %s]' %
-            (x.atom, x.current_pkg) for x in islice(stack, cycle_start))
-        if s:
-            s += ', '
-        s += '[%s: %s]' % (atom, cur_choice.current_pkg)
-        dprint("%s level cycle: stack: %s\n",
-            (attr, s), "cycle")
-    return cycle_start
+        if attr is not None:
+            s = ', '.join('[%s: %s]' %
+                (x.atom, x.current_pkg) for x in islice(stack, cycle_start))
+            if s:
+                s += ', '
+            s += '[%s: %s]' % (atom, cur_choice.current_pkg)
+            dprint("%s level cycle: stack: %s\n",
+                (attr, s), "cycle")
+    return cycle_start + start
 
 
 #iter/pkg sorting functions for selection strategy
@@ -227,9 +232,8 @@ class merge_plan(object):
                 else:
                     index = is_cycle(current_stack, datom, cur_frame.choices,
                         "depends")
-                    if index != -1:
-                        # cycle.
-
+                    ignore = index == -1
+                    while not ignore and index != -1:
                         #weird, but lets try it.
                         if current_stack[index + 1].current_pkg == \
                             cur_frame.current_pkg and \
@@ -237,19 +241,26 @@ class merge_plan(object):
                             # we're in a cycle of depends level vdb nodes;
                             # they cyclical pkg is installed already, thus
                             # it's satisfied itself.
+                            ignore=True
                             break
-                        failure = self._rec_add_atom(datom, current_stack,
-                            self.livefs_dbs, mode="depends",
-                            drop_cycles=cur_frame.drop_cycles)
-                        if failure and cur_frame.drop_cycles:
-                            dprint("depends level cycle: %s: "
-                                    "dropping cycle for %s from %s",
-                                    (cur_frame.atom, datom,
-                                    cur_frame.current_pkg),
-                                    "cycle")
-                            failure = []
-                            # note we trigger a break ourselves.
-                            break
+                        else:
+                            # if reached here, search the remaining chunk of the stack.
+                            index = is_cycle(current_stack, datom, cur_frame.choices,
+                                None, start=index + 1)
+                    if ignore:
+                        break
+                    failure = self._rec_add_atom(datom, current_stack,
+                        self.livefs_dbs, mode="depends",
+                        drop_cycles=cur_frame.drop_cycles)
+                    if failure and cur_frame.drop_cycles:
+                        dprint("depends level cycle: %s: "
+                               "dropping cycle for %s from %s",
+                                (cur_frame.atom, datom,
+                                 cur_frame.current_pkg),
+                                "cycle")
+                        failure = []
+                        # note we trigger a break ourselves.
+                        break
                     else:
                         failure = self._rec_add_atom(datom, current_stack,
                             cur_frame.dbs, mode="depends")

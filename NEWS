@@ -3,6 +3,16 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.2.2:
+
+* add tests for pmaint copy (quickpkg equivalent), and add
+  --ignore-existing option to copy just pkgs that don't exist in the
+  target repo.
+
+* fix pmerge handling of --clean -B for automake and a few other DEPEND level
+  hard cycles.
+
+
 pkgcore 0.2.1:
 
 * fix corner case for portage configuration support; old system (<=2004)
@@ -12,6 +22,7 @@ pkgcore 0.2.1:
 * fix issues with distcc/ccache (ticket 55) so that they actually work.
 
 * fix pconfig dump traceback; ticket 56.
+
 
 pkgcore 0.2:
 

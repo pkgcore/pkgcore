@@ -273,6 +273,17 @@ aware it occurs- especially if the var is referencing a large object
 So... for loops leak, list comps leak, dependant on your except
 clause, can leak also.
 
+Do not go overboard with this though. If your function will exit soon
+do not bother cleaning up variables by hand. If the "leaking" things
+are small do not bother either.
+
+The current code deletes exception instances explicitly much more
+often than it should since this was believed to clean up the traceback
+object. This does not work: the only thing "del e" frees up is the
+exception instance and the arguments passed to its constructor. "del
+e" also takes a small amount of time to run (clearing up all locals
+when the function exits is faster).
+
 Unless you need to generate (and save) a range result, use xrange.
 ==================================================================
 

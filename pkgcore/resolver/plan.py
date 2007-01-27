@@ -232,7 +232,7 @@ class merge_plan(object):
                 else:
                     index = is_cycle(current_stack, datom, cur_frame.choices,
                         "depends")
-                    ignore = index == -1
+                    ignore = index != -1
                     while not ignore and index != -1:
                         #weird, but lets try it.
                         if current_stack[index + 1].current_pkg == \
@@ -240,13 +240,14 @@ class merge_plan(object):
                             cur_frame.current_pkg.repo.livefs:
                             # we're in a cycle of depends level vdb nodes;
                             # they cyclical pkg is installed already, thus
-                            # it's satisfied itself.
+                            # its satisfied itself.
                             ignore=True
                             break
                         else:
-                            # if reached here, search the remaining chunk of the stack.
-                            index = is_cycle(current_stack, datom, cur_frame.choices,
-                                None, start=index + 1)
+                            # if reached here, search the remaining chunk
+                            # of the stack.
+                            index = is_cycle(current_stack, datom,
+                                cur_frame.choices, None, start=index + 1)
                     if ignore:
                         break
                     failure = self._rec_add_atom(datom, current_stack,

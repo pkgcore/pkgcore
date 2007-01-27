@@ -247,7 +247,8 @@ def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
             raise Failure('vdb is frozen')
 
     for idx, match in enumerate(matches):
-        out.write("removing %s, %i of %i" % (match, idx + 1, len(matches)))
+        out.write("removing %i of %i: %s" % (idx + 1, len(matches), match))
+        out.title("%i/%i: %s" % (idx + 1, len(matches), match))
         op = vdb.uninstall(match, observer=repo_obs)
         ret = op.finish()
         if not ret:
@@ -477,10 +478,11 @@ def main(options, out, err):
 
     change_count = len(changes)
     for count, op in enumerate(changes):
-        status_str = "%i/%i, %s: processing" % (count + 1, change_count,
+        status_str = "%i/%i, %s" % (count + 1, change_count,
             get_raw_pkg(op.pkg))
-        out.write(status_str)
-        out.title(status_str)
+        out.write("processing %i of %i: %s" % (count + 1, change_count,
+            get_raw_pkg(op.pkg)))
+        out.title("%i/%i: %s" % (count + 1, change_count, get_raw_pkg(op.pkg)))
         if op.desc != "remove":
             if not options.fetchonly:
                 out.write("forcing cleaning of workdir")

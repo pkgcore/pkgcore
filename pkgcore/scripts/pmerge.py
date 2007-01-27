@@ -430,8 +430,11 @@ def main(options, out, err):
         for x in wipes:
             out.write("remove %s" % x)
         out.write()
-        out.write("removing %i packages of %i installed, %0.2f%%." %
-            (len(wipes), len_vset, 100*(len(wipes)/float(len_vset))))
+        if len(wipes):
+            out.write("removing %i packages of %i installed, %0.2f%%." %
+                (len(wipes), len_vset, 100*(len(wipes)/float(len_vset))))
+        else:
+            out.write("no packages to remove")
         if options.pretend:
             return 0;
         if options.ask:

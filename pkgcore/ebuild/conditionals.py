@@ -79,7 +79,7 @@ class DepSet(boolean.AndRestriction):
 
         sf(self, "restrictions", [])
         if operators is None:
-            operators = {"||":boolean.OrRestriction, "":boolean.AndRestriction}
+            operators = {"||":packages.OrRestriction, "":packages.AndRestriction}
 
         raw_conditionals = []
         depsets = [self.restrictions]

@@ -48,12 +48,20 @@ def loop_over_file(filename, *objs):
 
 class Chksummer(object):
 
-    def __init__(self, chf_type, obj):
+    def __init__(self, chf_type, obj, str_size):
         self.obj = obj
         self.chf_type = chf_type
+        self.str_size = str_size
 
     def new(self):
         return self.obj
+
+    def long2str(self, val):
+        return "%0.*x" % (self.str_size, val)
+
+    @staticmethod
+    def str2long(val):
+        return long(val, 16)
 
     def __call__(self, filename):
         return loop_over_file(filename, self.obj)[0]
@@ -151,13 +159,13 @@ except ImportError:
 else:
     # Always available according to docs.python.org:
     # md5(), sha1(), sha224(), sha256(), sha384(), and sha512().
-    for hashlibname, chksumname in [
-        ('md5', 'md5'),
-        ('sha1', 'sha1'),
-        ('sha256', 'sha256'),
+    for hashlibname, chksumname, size in [
+        ('md5', 'md5', 16),
+        ('sha1', 'sha1', 40),
+        ('sha256', 'sha256', 64),
         ]:
         chksum_types[chksumname] = Chksummer(chksumname,
-            getattr(hashlib, hashlibname))
+            getattr(hashlib, hashlibname), size)
 
     # May or may not be available depending on openssl. List
     # determined through trial and error.
@@ -170,7 +178,7 @@ else:
             pass # This hash is not available.
         else:
             chksum_types[chksumname] = Chksummer(chksumname,
-                partial(hashlib.new, hashlibname))
+                partial(hashlib.new, hashlibname), 40)
     del hashlibname, chksumname
 
 
@@ -183,8 +191,9 @@ if 'md5' not in chksum_types:
         pass
     else:
         class MD5Chksummer(Chksummer):
-            def __init__(self):
-                self.chf_type = "md5"
+            chf_type = "md5"
+            str_size = 16
+            __init__ = lambda s:None
 
             def new(self):
                 return md5.new
@@ -201,24 +210,25 @@ if 'md5' not in chksum_types:
 
 
 # expand this to load all available at some point
-for k, v in (("sha1", "SHA"), ("sha256", "SHA256"), ("rmd160", "RIPEMD")):
+for k, v, str_size in (("sha1", "SHA", 64), ("sha256", "SHA256", 40),
+    ("rmd160", "RIPEMD", 140)):
     if k in chksum_types:
         continue
     try:
         chksum_types[k] = Chksummer(k, modules.load_attribute(
-            "Crypto.Hash.%s.new" % v))
+            "Crypto.Hash.%s.new" % v), str_size)
     except modules.FailedImport:
         pass
 del k, v
 
 
-for modulename, chksumname in [
-    ('sha', 'sha1'),
-    ('md5', 'md5'),
+for modulename, chksumname, size in [
+    ('sha', 'sha1', 40),
+    ('md5', 'md5', 16),
     ]:
     if chksumname not in chksum_types:
         chksum_types[chksumname] = Chksummer(chksumname,
-            modules.load_attribute('%s.new' % (modulename,)))
+            modules.load_attribute('%s.new' % (modulename,)), size)
 del modulename, chksumname
 
 class SizeUpdater(object):
@@ -239,6 +249,20 @@ class SizeChksummer(Chksummer):
     yes, aware that size isn't much of a chksum. ;)
     """
 
+    def __init__(self):
+        pass
+    obj = SizeUpdater
+    str_size = 1000000000
+    chf_type = 'size'
+
+    @staticmethod
+    def long2str(self, val):
+        return str(val)
+
+    @staticmethod
+    def str2long(self, val):
+        return long(val)
+
     def __call__(self, file_obj):
         if isinstance(file_obj, base_data_source):
             if file_obj.get_path is not None:
@@ -256,5 +280,5 @@ class SizeChksummer(Chksummer):
         return long(file_obj.tell())
 
 
-chksum_types["size"] = SizeChksummer('size', SizeUpdater)
+chksum_types["size"] = SizeChksummer()
 chksum_types = dict((intern(k), v) for k, v in chksum_types.iteritems())

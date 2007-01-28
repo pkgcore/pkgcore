@@ -50,10 +50,18 @@ class ChksumTest(base):
     def test_str2long(self):
         self.assertEqual(self.chf.str2long(self.expected_str),
             self.expected_long)
+        if self.chf_type == 'size':
+            return
+        for x in extra_chksums.get(self.chf_type, []):
+            self.assertEqual(self.chf.str2long(x), long(x, 16))
 
     def test_long2str(self):
         self.assertEqual(self.chf.long2str(self.expected_long),
             self.expected_str)
+        if self.chf_type == 'size':
+            return
+        for x in extra_chksums.get(self.chf_type, []):
+            self.assertEqual(self.chf.long2str(long(x, 16)), x)
 
 checksums = {
     "rmd160":"b83ad488d624e7911f886420ab230f78f6368b9f",
@@ -63,6 +71,14 @@ checksums = {
 }
 checksums.update((k, (long(v, 16), v)) for k, v in checksums.iteritems())
 checksums["size"] = (long(len(data)*multi), str(long(len(data)*multi)))
+
+extra_chksums = {
+    "md5":
+        ["2dfd84279314a178d0fa842af3a40e25577e1bc"]
+}
+
+for k, v in checksums.iteritems():
+    extra_chksums.setdefault(k, []).append('0'*len(v[1]))
 
 # trick: create subclasses for each checksum with a useful class name.
 for chf_type, expected in checksums.iteritems():

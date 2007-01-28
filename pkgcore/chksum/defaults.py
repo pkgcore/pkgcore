@@ -14,6 +14,10 @@ demandload(globals(), "os")
 
 blocksize = 32768
 
+sha1_size = 40
+md5_size = 32
+rmd160_size = 40
+sha256_size = 64
 
 def loop_over_file(filename, *objs):
     if isinstance(filename, base_data_source):
@@ -57,7 +61,7 @@ class Chksummer(object):
         return self.obj
 
     def long2str(self, val):
-        return "%0.*x" % (self.str_size, val)
+        return ("%x" % val).ljust(self.str_size, '0')
 
     @staticmethod
     def str2long(val):
@@ -160,9 +164,9 @@ else:
     # Always available according to docs.python.org:
     # md5(), sha1(), sha224(), sha256(), sha384(), and sha512().
     for hashlibname, chksumname, size in [
-        ('md5', 'md5', 8),
-        ('sha1', 'sha1', 20),
-        ('sha256', 'sha256', 32),
+        ('md5', 'md5', md5_size),
+        ('sha1', 'sha1', sha1_size),
+        ('sha256', 'sha256', sha256_size),
         ]:
         chksum_types[chksumname] = Chksummer(chksumname,
             getattr(hashlib, hashlibname), size)
@@ -178,7 +182,7 @@ else:
             pass # This hash is not available.
         else:
             chksum_types[chksumname] = Chksummer(chksumname,
-                partial(hashlib.new, hashlibname), 20)
+                partial(hashlib.new, hashlibname), rmd160_size)
     del hashlibname, chksumname
 
 
@@ -192,7 +196,7 @@ if 'md5' not in chksum_types:
     else:
         class MD5Chksummer(Chksummer):
             chf_type = "md5"
-            str_size = 16
+            str_size = md5_size
             __init__ = lambda s:None
 
             def new(self):
@@ -210,8 +214,9 @@ if 'md5' not in chksum_types:
 
 
 # expand this to load all available at some point
-for k, v, str_size in (("sha1", "SHA", 32), ("sha256", "SHA256", 20),
-    ("rmd160", "RIPEMD", 20)):
+for k, v, str_size in (("sha1", "SHA", sha1_size),
+    ("sha256", "SHA256", sha256_size),
+    ("rmd160", "RIPEMD", rmd160_size)):
     if k in chksum_types:
         continue
     try:
@@ -223,8 +228,8 @@ del k, v
 
 
 for modulename, chksumname, size in [
-    ('sha', 'sha1', 20),
-    ('md5', 'md5', 8),
+    ('sha', 'sha1', sha1_size),
+    ('md5', 'md5', md5_size),
     ]:
     if chksumname not in chksum_types:
         chksum_types[chksumname] = Chksummer(chksumname,

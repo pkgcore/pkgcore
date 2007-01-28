@@ -160,9 +160,9 @@ else:
     # Always available according to docs.python.org:
     # md5(), sha1(), sha224(), sha256(), sha384(), and sha512().
     for hashlibname, chksumname, size in [
-        ('md5', 'md5', 16),
-        ('sha1', 'sha1', 40),
-        ('sha256', 'sha256', 64),
+        ('md5', 'md5', 8),
+        ('sha1', 'sha1', 20),
+        ('sha256', 'sha256', 32),
         ]:
         chksum_types[chksumname] = Chksummer(chksumname,
             getattr(hashlib, hashlibname), size)
@@ -178,7 +178,7 @@ else:
             pass # This hash is not available.
         else:
             chksum_types[chksumname] = Chksummer(chksumname,
-                partial(hashlib.new, hashlibname), 40)
+                partial(hashlib.new, hashlibname), 20)
     del hashlibname, chksumname
 
 
@@ -210,8 +210,8 @@ if 'md5' not in chksum_types:
 
 
 # expand this to load all available at some point
-for k, v, str_size in (("sha1", "SHA", 64), ("sha256", "SHA256", 40),
-    ("rmd160", "RIPEMD", 140)):
+for k, v, str_size in (("sha1", "SHA", 32), ("sha256", "SHA256", 20),
+    ("rmd160", "RIPEMD", 20)):
     if k in chksum_types:
         continue
     try:
@@ -223,8 +223,8 @@ del k, v
 
 
 for modulename, chksumname, size in [
-    ('sha', 'sha1', 40),
-    ('md5', 'md5', 16),
+    ('sha', 'sha1', 20),
+    ('md5', 'md5', 8),
     ]:
     if chksumname not in chksum_types:
         chksum_types[chksumname] = Chksummer(chksumname,
@@ -256,11 +256,11 @@ class SizeChksummer(Chksummer):
     chf_type = 'size'
 
     @staticmethod
-    def long2str(self, val):
+    def long2str(val):
         return str(val)
 
     @staticmethod
-    def str2long(self, val):
+    def str2long(val):
         return long(val)
 
     def __call__(self, file_obj):

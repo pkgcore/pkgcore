@@ -10,7 +10,7 @@ import tempfile, os
 data = "afsd123klawerponzzbnzsdf;h89y23746123;haas"
 multi = 40000
 
-class ChksumTest(object):
+class base(object):
 
     def get_chf(self):
         try:
@@ -35,38 +35,51 @@ class ChksumTest(object):
             pass
 
     def test_fp_check(self):
-        self.assertEqual(self.chf(self.fn), self.sum)
+        self.assertEqual(self.chf(self.fn), self.expected_long)
 
     def test_fileobj_check(self):
-        self.assertEqual(self.chf(open(self.fn, "r")), self.sum)
+        self.assertEqual(self.chf(open(self.fn, "r")), self.expected_long)
 
     def test_data_source_check(self):
-        self.assertEqual(self.chf(local_source(self.fn)), self.sum)
+        self.assertEqual(self.chf(local_source(self.fn)), self.expected_long)
         self.assertEqual(
-            self.chf(data_source(open(self.fn, "r").read())), self.sum)
+            self.chf(data_source(open(self.fn, "r").read())), self.expected_long)
+
+class ChksumTest(base):
+
+    def test_str2long(self):
+        self.assertEqual(self.chf.str2long(self.expected_str),
+            self.expected_long)
+
+    def test_long2str(self):
+        self.assertEqual(self.chf.long2str(self.expected_long),
+            self.expected_str)
 
 checksums = {
-    "rmd160":long("b83ad488d624e7911f886420ab230f78f6368b9f", 16),
-    "size":long(len(data)*multi),
-    "sha1":long("63cd8cce8a1773dffb400ee184be3ec7d89791f5", 16),
-    "md5":long("d17ea153bc57ba9e07298c5378664369", 16),
-    "sha256":long("68ae37b45e4a4a5df252db33c0cbf79baf5916b5ff6fc15e8159163b6dbe3bae", 16),
+    "rmd160":"b83ad488d624e7911f886420ab230f78f6368b9f",
+    "sha1":"63cd8cce8a1773dffb400ee184be3ec7d89791f5",
+    "md5":"d17ea153bc57ba9e07298c5378664369",
+    "sha256":"68ae37b45e4a4a5df252db33c0cbf79baf5916b5ff6fc15e8159163b6dbe3bae",
 }
+checksums.update((k, (long(v, 16), v)) for k, v in checksums.iteritems())
+checksums["size"] = (long(len(data)*multi), str(long(len(data)*multi)))
 
 # trick: create subclasses for each checksum with a useful class name.
-for chf_type, expectedsum in checksums.iteritems():
+for chf_type, expected in checksums.iteritems():
+    expectedsum = expected[0]
+    expectedstr = expected[1]
     globals()[chf_type + 'ChksumTest'] = type(
         chf_type + 'ChksumTest',
         (ChksumTest, TestCase),
-        dict(chf_type=chf_type, sum=expectedsum))
+        dict(chf_type=chf_type, expected_long=expectedsum, expected_str=expectedstr))
 
 del chf_type
 
 
-class get_chksums_test(ChksumTest, TestCase):
+class get_chksums_test(base, TestCase):
 
     chfs = [k for k in sorted(checksums) if k != "size"]
-    sum = [checksums[k] for k in chfs]
+    expected_long = [checksums[k][0] for k in chfs]
     del k
 
     def get_chf(self):

@@ -8,7 +8,8 @@ from pkgcore.interfaces import data_source
 from pkgcore.util.compatibility import any
 from pkgcore.util.demandload import demandload
 demandload(globals(), "os stat errno "
-    "pkgcore.util.osutils:readlines ")
+    "pkgcore.util.osutils:readlines "
+    "pkgcore.chksum:get_handler ")
 
 class LookupFsDev(fs.fsDev):
 
@@ -134,6 +135,7 @@ class ContentsFile(contentsSet):
             self.add(obj)
 
     def _write(self):
+        md5_handler = get_handler('md5')
         outfile = None
         try:
             outfile = self._get_fd(True)
@@ -141,8 +143,8 @@ class ContentsFile(contentsSet):
             for obj in sorted(self):
 
                 if isinstance(obj, fs.fsFile):
-                    s = " ".join(("obj", obj.location, "%x" %
-                        obj.chksums["md5"],
+                    s = " ".join(("obj", obj.location, 
+                        md5_handler.long2str(obj.chksums["md5"]),
                         str(long(obj.mtime))))
 
                 elif isinstance(obj, fs.fsLink):

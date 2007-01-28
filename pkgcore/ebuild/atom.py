@@ -172,7 +172,8 @@ def native__getattr__(self, attr):
         r.insert(0, packages.PackageRestriction("repo.repo_id",
             values.StrExactMatch(self.repo_id)))
 
-    object.__setattr__(self, attr, tuple(r))
+    r = tuple(r)
+    object.__setattr__(self, attr, r)
     return r
 
 

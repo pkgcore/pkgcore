@@ -220,6 +220,9 @@ class atom(boolean.AndRestriction):
         return '<%s %s @#%x>' % (
             self.__class__.__name__, ' '.join(attrs), id(self))
 
+    def __reduce__(self):
+        return (atom, (str(self), self.negate_vers))
+
     def iter_dnf_solutions(self, full_solution_expansion=False):
         if full_solution_expansion:
             return boolean.AndRestriction.iter_dnf_solutions(

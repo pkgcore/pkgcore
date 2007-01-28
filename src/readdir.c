@@ -237,7 +237,7 @@ pkgcore_readdir_read_dir(PyObject* self, PyObject* args)
             continue;
         }
 
-         PyObject *typestr;
+        PyObject *typestr;
         switch (entry->d_type) {
             case DT_REG:
                 typestr = pkgcore_REGSTR;
@@ -266,6 +266,7 @@ pkgcore_readdir_read_dir(PyObject* self, PyObject* args)
                 size_t size = pathlen + strlen(name) + 2;
                 char *buffer = (char *) malloc(size);
                 if (!buffer) {
+                    closedir(the_dir);
                     return PyErr_NoMemory();
                 }
                 snprintf(buffer, size, "%s/%s", path, name);
@@ -273,6 +274,7 @@ pkgcore_readdir_read_dir(PyObject* self, PyObject* args)
                 int ret = lstat(buffer, &st);
                 free(buffer);
                 if (ret == -1) {
+                    closedir(the_dir);
                     return PyErr_SetFromErrno(PyExc_OSError);
                 }
                 switch (st.st_mode & S_IFMT) {
@@ -333,8 +335,7 @@ pkgcore_readdir_read_dir(PyObject* self, PyObject* args)
             break;
         }
     }
-    closedir(the_dir);
-    if (errno) {
+    if (closedir(the_dir) == -1) {
         return PyErr_SetFromErrno(PyExc_OSError);
     }
     return result;

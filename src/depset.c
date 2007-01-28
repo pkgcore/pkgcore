@@ -286,7 +286,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 Err_WrapException(dep_str, start, p);
                 goto internal_parse_depset_error;
             }
-            assert(!PyErr_Occurred);
+            assert(!PyErr_Occurred());
         }
 
         // append it.

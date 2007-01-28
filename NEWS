@@ -5,6 +5,12 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.2:
 
+* misc fixup for asserts in cpy code when debugging is enabled, and closing
+  directory fds when corner case error paths are taken (out of memory for
+  example).
+
+* atoms are picklable now.
+
 * add tests for pmaint copy (quickpkg equivalent), and add
   --ignore-existing option to copy just pkgs that don't exist in the
   target repo.

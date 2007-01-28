@@ -78,7 +78,7 @@ extra_chksums = {
 }
 
 for k, v in checksums.iteritems():
-    extra_chksums.setdefault(k, []).append('0'*len(v[1]))
+    extra_chksums.setdefault(k, []).extend((''.rjust(len(v[1]), '0'), '01'.rjust(len(v[1]), '0')))
 
 # trick: create subclasses for each checksum with a useful class name.
 for chf_type, expected in checksums.iteritems():

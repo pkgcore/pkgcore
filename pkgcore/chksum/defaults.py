@@ -61,7 +61,7 @@ class Chksummer(object):
         return self.obj
 
     def long2str(self, val):
-        return ("%x" % val).ljust(self.str_size, '0')
+        return ("%x" % val).rjust(self.str_size, '0')
 
     @staticmethod
     def str2long(val):

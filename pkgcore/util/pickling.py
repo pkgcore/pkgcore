@@ -9,3 +9,10 @@ try:
     from cPickle import *
 except ImportError:
     from pickle import *
+
+def iter_stream(stream):
+    try:
+        while True:
+            yield load(stream)
+    except EOFError:
+        pass

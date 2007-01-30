@@ -572,7 +572,7 @@ class EbuildProcessor:
         if eclass is None:
             self.write("failed")
             raise UnhandledCommand(
-                "inherit requires a known eclass, %s cannot be found" % line)
+                "inherit requires an unknown eclass, %s cannot be found" % line)
 
         if eclass.get_path is not None:
             value = eclass.get_path()

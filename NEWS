@@ -5,6 +5,10 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.2:
 
+* The terminfo db is now used for xterm title updates. If title updates
+  worked in pkgcore 0.2 or 0.2.1 and no longer work in 0.2.2 file a bug and
+  include the TERM environment variable setting.
+
 * misc fixup for asserts in cpy code when debugging is enabled, and closing
   directory fds when corner case error paths are taken (out of memory for
   example).

@@ -337,6 +337,14 @@ else:
             cyan = curses.COLOR_CYAN,
             white = curses.COLOR_WHITE)
 
+        # Remapping of TERM setting to more capable equivalent.
+        # Mainly used to force on the hardstatus (aka title bar updates)
+        # capability for terminals that do not support this by default.
+        term_alternates = {
+            'xterm': 'xterm+sl',
+            'screen': 'screen-s',
+            }
+
         def __init__(self, stream, term=None, forcetty=False):
             """Initialize.
 
@@ -350,7 +358,29 @@ else:
             """
             PlainTextFormatter.__init__(self, stream)
             fd = stream.fileno()
-            curses.setupterm(fd=fd, term=term)
+            if term is None:
+                # We only apply the remapping if we are guessing the
+                # terminal type from the environment. If we get a term
+                # type passed explicitly we just use it as-is (if the
+                # caller wants the remap just doing the
+                # term_alternates lookup there is easy enough.)
+                term_env = os.environ.get('TERM')
+                term_alt = self.term_alternates.get(term_env)
+                for term in (term_alt, term_env, 'dumb'):
+                    if term is not None:
+                        try:
+                            curses.setupterm(fd=fd, term=term)
+                        except curses.error:
+                            pass
+                        else:
+                            break
+                else:
+                    raise ValueError(
+                        'no terminfo entries, not even for "dumb"?')
+            else:
+                # TODO maybe do something more useful than raising curses.error
+                # if term is not in the terminfo db here?
+                curses.setupterm(fd=fd, term=term)
             self.width = curses.tigetnum('cols')
             self.reset = TerminfoReset(curses.tigetstr('sgr0'))
             self.bold = TerminfoMode(curses.tigetstr('bold'))
@@ -382,8 +412,17 @@ else:
                 if e.errno == errno.EPIPE:
                     raise StreamClosed(e)
                 raise
+
         def title(self, string):
-            self.stream.write("\x1b]0;%s\x07" % string)
+            # I want to use curses.tigetflag('hs') here but at least
+            # the screen-s entry defines a tsl and fsl string but does
+            # not set the hs flag. So just check for the ability to
+            # jump to and out of the status line, without checking if
+            # the status line we're using exists.
+            if curses.tigetstr('tsl') and curses.tigetstr('fsl'):
+                self.stream.write(
+                    curses.tigetstr('tsl') + string + curses.tigetstr('fsl'))
+
 
 class ObserverFormatter(object):
 

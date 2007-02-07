@@ -7,6 +7,9 @@ import os
 import errno
 
 from pkgcore.util.klass import GetAttrProxy
+from pkgcore.util import demandload
+demandload.demandload(globals(), 'locale')
+
 
 class StreamClosed(KeyboardInterrupt):
     """Raised by L{Formatter.write} if the stream it prints to was closed.
@@ -109,7 +112,7 @@ class PlainTextFormatter(Formatter):
 
     bold = underline = reset = ''
 
-    def __init__(self, stream, width=79):
+    def __init__(self, stream, width=79, encoding=None):
         """Initialize.
 
         @type  stream: file-like object.
@@ -118,6 +121,14 @@ class PlainTextFormatter(Formatter):
         """
         Formatter.__init__(self)
         self.stream = stream
+        if encoding is None:
+            encoding = getattr(self.stream, 'encoding', None)
+        if encoding is None:
+            try:
+                encoding = locale.getpreferredencoding()
+            except locale.Error, e:
+                encoding = 'ascii'
+        self.encoding = encoding
         self.width = width
         self._pos = 0
         self._in_first_line = True
@@ -134,8 +145,6 @@ class PlainTextFormatter(Formatter):
         # This is a bit braindead since it duplicates a lot of code
         # from write. Avoids fun things like word wrapped prefix though.
 
-        # Work if encoding is not set or is set to the empty string
-        encoding = getattr(self.stream, 'encoding', '') or 'ascii'
         for thing in prefix:
             while callable(thing):
                 thing = thing(self)
@@ -145,7 +154,7 @@ class PlainTextFormatter(Formatter):
                 thing = str(thing)
             self._pos += len(thing)
             if isinstance(thing, unicode):
-                thing = thing.encode(encoding, 'replace')
+                thing = thing.encode(self.encoding, 'replace')
             self.stream.write(thing)
         if wrap and self._pos >= self.width:
             # XXX What to do? Our prefix does not fit.
@@ -155,8 +164,6 @@ class PlainTextFormatter(Formatter):
 
 
     def write(self, *args, **kwargs):
-        # Work if encoding is not set or is set to the empty string
-        encoding = getattr(self.stream, 'encoding', '') or 'ascii'
         wrap = kwargs.get('wrap', self.wrap)
         autoline = kwargs.get('autoline', self.autoline)
         prefixes = kwargs.get('prefixes')
@@ -234,7 +241,7 @@ class PlainTextFormatter(Formatter):
                             # Omit the space we split on.
                             arg = arg[space+1:]
                         if isinstance(bit, unicode):
-                            bit = bit.encode(encoding, 'replace')
+                            bit = bit.encode(self.encoding, 'replace')
                         self.stream.write(bit)
                         self.stream.write('\n')
                         self._pos = 0
@@ -246,7 +253,7 @@ class PlainTextFormatter(Formatter):
                     self._wrote_something = True
                     self._pos += len(arg)
                     if is_unicode:
-                        arg = arg.encode(encoding, 'replace')
+                        arg = arg.encode(self.encoding, 'replace')
                     self.stream.write(arg)
                 if autoline:
                     self.stream.write('\n')
@@ -345,7 +352,7 @@ else:
             'screen': 'screen-s',
             }
 
-        def __init__(self, stream, term=None, forcetty=False):
+        def __init__(self, stream, term=None, forcetty=False, encoding=None):
             """Initialize.
 
             @type  stream: file-like object.
@@ -356,7 +363,7 @@ else:
             @param forcetty: force output of colors even if the wrapped stream
                              is not a tty.
             """
-            PlainTextFormatter.__init__(self, stream)
+            PlainTextFormatter.__init__(self, stream, encoding=encoding)
             fd = stream.fileno()
             if term is None:
                 # We only apply the remapping if we are guessing the

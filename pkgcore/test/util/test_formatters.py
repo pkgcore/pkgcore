@@ -23,7 +23,7 @@ class PlainTextFormatterTest(TestCase):
             (30 * ('a',), 20 * 'a' + '\n' + 10 * 'a'),
             ]:
             stream = StringIO.StringIO()
-            formatter = formatters.PlainTextFormatter(stream)
+            formatter = formatters.PlainTextFormatter(stream, encoding='ascii')
             formatter.width = 20
             formatter.write(autoline=False, wrap=True, *inputs)
             self.assertEqual(output, stream.getvalue())
@@ -44,7 +44,7 @@ class PlainTextFormatterTest(TestCase):
             (30 * ('a',), 'foon:' + 15 * 'a' + '\n' + 15 * 'a'),
             ]:
             stream = StringIO.StringIO()
-            formatter = formatters.PlainTextFormatter(stream)
+            formatter = formatters.PlainTextFormatter(stream, encoding='ascii')
             formatter.width = 20
             formatter.write(autoline=False, wrap=True, first_prefix='foon:',
                             *inputs)
@@ -65,7 +65,7 @@ class PlainTextFormatterTest(TestCase):
             (30 * ('a',), 20 * 'a' + '\n' + 'foon:' + 10 * 'a'),
             ]:
             stream = StringIO.StringIO()
-            formatter = formatters.PlainTextFormatter(stream)
+            formatter = formatters.PlainTextFormatter(stream, encoding='ascii')
             formatter.width = 20
             formatter.later_prefix = ['foon:']
             formatter.write(wrap=True, autoline=False, *inputs)
@@ -89,7 +89,7 @@ class PlainTextFormatterTest(TestCase):
              'foonork\n'),
             ]:
             stream = StringIO.StringIO()
-            formatter = formatters.PlainTextFormatter(stream)
+            formatter = formatters.PlainTextFormatter(stream, encoding='ascii')
             formatter.width = 10
             for input in inputs:
                 formatter.write(wrap=True, later_prefix='foon', *input)
@@ -109,7 +109,7 @@ class TerminfoFormatterTest(TestCase):
     def test_terminfo(self):
         esc = '\x1b['
         stream = tempfile.TemporaryFile()
-        f = formatters.TerminfoFormatter(stream, 'ansi', True)
+        f = formatters.TerminfoFormatter(stream, 'ansi', True, 'ascii')
         f.autoline = False
         self._test_stream(
             stream, f,

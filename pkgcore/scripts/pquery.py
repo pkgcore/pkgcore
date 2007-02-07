@@ -565,7 +565,7 @@ def stringify_attr(config, pkg, attr):
         return 'MISSING'
 
     if attr in ('herds', 'iuse', 'maintainers', 'restrict', 'keywords'):
-        return ' '.join(sorted(str(v) for v in value))
+        return ' '.join(sorted(unicode(v) for v in value))
     if attr == 'environment':
         return ''.join(value.get_fileobj())
     return str(value)

@@ -29,7 +29,7 @@ class TestMetadataXml(TestCase):
 <!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
 <pkgmetadata>
 %s%s%s</pkgmetadata>""" % (hs, ms, ls)
-        return repo_objs.MetadataXml(data_source(s))
+        return repo_objs.MetadataXml(data_source(s.encode('utf-8')))
 
     def test_maintainers(self):
         # test empty.
@@ -42,11 +42,12 @@ class TestMetadataXml(TestCase):
         self.assertEqual(sorted(names), sorted(str(m) for m in mx.maintainers))
         # test email/name integration.
         mx = self.get_metadata_xml(
-            maintainers=(("funkymonkey@gmail.com", "funky monkey"),))
-        self.assertEqual(("funky monkey <funkymonkey@gmail.com>",),
-                         tuple(str(m) for m in mx.maintainers))
+            maintainers=(("funkymonkey@gmail.com",
+                          u"funky monkey \N{SNOWMAN}"),))
+        self.assertEqual((u"funky monkey \N{SNOWMAN} <funkymonkey@gmail.com>",),
+                         tuple(unicode(m) for m in mx.maintainers))
         self.assertEqual("funkymonkey@gmail.com", mx.maintainers[0].email)
-        self.assertEqual("funky monkey", mx.maintainers[0].name)
+        self.assertEqual(u"funky monkey \N{SNOWMAN}", mx.maintainers[0].name)
 
     def test_herds(self):
         # empty...

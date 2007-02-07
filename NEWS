@@ -3,6 +3,11 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.2.3:
+
+* Better handling of non-ascii characters in metadata.xml.
+
+
 pkgcore 0.2.2:
 
 * The terminfo db is now used for xterm title updates. If title updates

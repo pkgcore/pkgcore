@@ -90,8 +90,7 @@ class MetadataXml(object):
                     name=name, email=email, description=description))
 
         self._maintainers = tuple(maintainers)
-        self._herds = tuple(str(x.text)
-            for x in tree.findall("herd"))
+        self._herds = tuple(x.text for x in tree.findall("herd"))
 
         # Could be unicode!
         longdesc = tree.findtext("longdescription")

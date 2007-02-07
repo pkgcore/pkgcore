@@ -53,10 +53,10 @@ class Test_native_atom(TestCase):
         return self.kls("%s%s-%s" % (''.join(l), s, ver))
 
     def test_versioned(self):
-        as = "app-arch/tarsync"
-        le_cpv = CPV("%s-0" % as)
-        eq_cpv = CPV("%s-1.1-r2" % as)
-        ge_cpv = CPV("%s-2" % as)
+        astr = "app-arch/tarsync"
+        le_cpv = CPV("%s-0" % astr)
+        eq_cpv = CPV("%s-1.1-r2" % astr)
+        ge_cpv = CPV("%s-2" % astr)
         # <, =, >
         ops = (-1, 0, 1)
 
@@ -64,7 +64,7 @@ class Test_native_atom(TestCase):
             (0, "1.1-r2"), (1, "1.1-r3"), (1, "1.2")):
             if not isinstance(ops, (list, tuple)):
                 ops = (ops,)
-            a = self.make_atom(as, ops, ver)
+            a = self.make_atom(astr, ops, ver)
             if -1 in ops:
                 self.assertTrue(a.match(ge_cpv))
                 self.assertTrue(a.match(eq_cpv))
@@ -80,40 +80,40 @@ class Test_native_atom(TestCase):
                 self.assertTrue(a.match(le_cpv))
 
     def test_norev(self):
-        as = "app-arch/tarsync"
-        a = self.kls("~%s-1" % as)
-        self.assertTrue(a.match(CPV("%s-1" % as)))
-        self.assertTrue(a.match(CPV("%s-1-r1" % as)))
-        self.assertFalse(a.match(CPV("%s-2" % as)))
+        astr = "app-arch/tarsync"
+        a = self.kls("~%s-1" % astr)
+        self.assertTrue(a.match(CPV("%s-1" % astr)))
+        self.assertTrue(a.match(CPV("%s-1-r1" % astr)))
+        self.assertFalse(a.match(CPV("%s-2" % astr)))
 
 
     def test_use(self):
-        as = "dev-util/bsdiff"
-        c = FakePkg(as, ("debug",))
-        self.assertTrue(self.kls("%s[debug]" % as).match(c))
-        self.assertFalse(self.kls("%s[-debug]" % as).match(c))
-        self.assertTrue(self.kls("%s[debug,-not]" % as).match(c))
-        self.assertRaises(errors.MalformedAtom, self.kls, "%s[]" % as)
+        astr = "dev-util/bsdiff"
+        c = FakePkg(astr, ("debug",))
+        self.assertTrue(self.kls("%s[debug]" % astr).match(c))
+        self.assertFalse(self.kls("%s[-debug]" % astr).match(c))
+        self.assertTrue(self.kls("%s[debug,-not]" % astr).match(c))
+        self.assertRaises(errors.MalformedAtom, self.kls, "%s[]" % astr)
 
     def test_slot(self):
-        as = "dev-util/confcache"
-        c = FakePkg(as, (), 1)
-        self.assertFalse(self.kls("%s:0" % as).match(c))
-        self.assertTrue(self.kls("%s:1" % as).match(c))
-        self.assertFalse(self.kls("%s:2" % as).match(c))
-        self.assertTrue(self.kls("%s:0,1" % as).match(c))
-        self.assertFalse(self.kls("%s:0,2" % as).match(c))
+        astr = "dev-util/confcache"
+        c = FakePkg(astr, (), 1)
+        self.assertFalse(self.kls("%s:0" % astr).match(c))
+        self.assertTrue(self.kls("%s:1" % astr).match(c))
+        self.assertFalse(self.kls("%s:2" % astr).match(c))
+        self.assertTrue(self.kls("%s:0,1" % astr).match(c))
+        self.assertFalse(self.kls("%s:0,2" % astr).match(c))
         # shouldn't puke, but has, thus checking"
         self.kls("sys-libs/db:4.4")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1,,0")
 
     def test_repo_id(self):
-        as = "dev-util/bsdiff"
-        c = FakePkg(as, repo_id="/usr/portage")
-        self.assertTrue(self.kls("%s" % as).match(c))
-        self.assertTrue(self.kls("%s::/usr/portage" % as).match(c))
-        self.assertFalse(self.kls("%s::/usr/portage2" % as).match(c))
+        astr = "dev-util/bsdiff"
+        c = FakePkg(astr, repo_id="/usr/portage")
+        self.assertTrue(self.kls("%s" % astr).match(c))
+        self.assertTrue(self.kls("%s::/usr/portage" % astr).match(c))
+        self.assertFalse(self.kls("%s::/usr/portage2" % astr).match(c))
 
     def test_invalid_atom(self):
         self.assertRaises(errors.MalformedAtom, self.kls, '~dev-util/spork')

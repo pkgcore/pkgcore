@@ -652,3 +652,25 @@ class ConfigManagerTest(TestCase):
                     'basic': basics.HardCodedConfigSection({'class': drawer}),
                     }], [RemoteSource()])
         self.assertTrue(manager.get_default('drawer'))
+
+    def test_autoload_default_order(self):
+        @configurable(typename='configsection')
+        def autoloader():
+            return {
+                'spork': basics.HardCodedConfigSection({'class': repo,
+                                                        'cache': 'test',
+                                                        'default': True})}
+
+        manager = central.ConfigManager([{
+                    'autoload-sub': basics.HardCodedConfigSection({
+                            'class': autoloader,
+                            }),
+                    'foon': basics.HardCodedConfigSection({
+                            'class': repo,
+                            'cache': 'foon',
+                            'default': True,
+                            }),
+               }], [object()])
+        self.assertIdentical(
+            manager.collapse_named_section('foon').instantiate(),
+            manager.get_default('repo'))

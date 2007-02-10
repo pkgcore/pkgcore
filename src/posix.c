@@ -44,7 +44,7 @@ pkgcore_normpath(PyObject *self, PyObject *old_path)
     PyObject *new_path = PyString_FromStringAndSize(NULL, len);
     if(!new_path)
         return new_path;
-    real_newstart = newstart = newp = PyString_AsString(new_path);
+    real_newstart = newstart = newp = PyString_AS_STRING(new_path);
     
 
     int leading_slash;

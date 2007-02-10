@@ -17,8 +17,9 @@ class fetcher(object):
         internal function for derivatives.
 
         digs through chksums, and returns:
+          - -2: file doesn't exist.
           - -1: iff (size chksum is available, and
-                file is smaller than stated chksum) or file doesn't exist.
+                file is smaller than stated chksum)
           - 0:  iff all chksums match
           - 1:  iff file is too large (if size chksums are available)
                 or else size is right but a chksum didn't match.
@@ -26,8 +27,6 @@ class fetcher(object):
         if all_chksums is True, all chksums must be verified; if false, all
         a handler can be found for are used.
         """
-        if not os.path.exists(file_location):
-            return -1
 
         nondefault_handlers = handlers
         if handlers is None:
@@ -38,11 +37,16 @@ class fetcher(object):
                     raise errors.RequiredChksumDataMissing(target, x)
 
         if "size" in handlers:
-            c = cmp(handlers["size"](file_location), target.chksums["size"])
+            val = handlers["size"](file_location)
+            if val is None:
+                return -2
+            c = cmp(val, target.chksums["size"])
             if c:
                 if c < 0:
                     return -1
                 return 1
+        elif not os.path.exists(file_location):
+            return -2
 
         chfs = set(target.chksums).intersection(handlers)
         chfs.discard("size")

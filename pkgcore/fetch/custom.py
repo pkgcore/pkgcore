@@ -117,6 +117,8 @@ class fetcher(base.fetcher):
                         command = self.command
                     except OSError, oe:
                         raise errors.UnmodifiableFile(fp, oe)
+                elif c == -2:
+                    command = self.command
                 else:
                     command = self.resume_command
 

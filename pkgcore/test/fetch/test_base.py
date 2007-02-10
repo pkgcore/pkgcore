@@ -77,6 +77,9 @@ class TestFetcher(TempDirMixin, TestCase):
         self.assertEqual(self.fetcher._verify(self.fp, self.obj), 0)
         self.write_data(data[:-1])
         self.assertEqual(self.fetcher._verify(self.fp, self.obj), -1)
+        # verify it returns -2 for missing file paths.
+        os.unlink(self.fp)
+        self.assertEqual(self.fetcher._verify(self.fp, self.obj), -2)
         self.write_data(data + "foon")
         self.assertEqual(self.fetcher._verify(self.fp, self.obj), 1)
 

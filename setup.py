@@ -7,7 +7,8 @@ import subprocess
 import unittest
 
 from distutils import core, ccompiler, log, errors
-from distutils.command import build, sdist, build_py, build_scripts, install
+from distutils.command import (build, sdist, build_py, build_ext,
+    build_scripts, install)
 from stat import ST_MODE
 
 
@@ -181,6 +182,17 @@ class pkgcore_install_scripts(core.Command):
 install.install.sub_commands.append(('pkgcore_install_scripts', None))
 
 
+class pkgcore_build_ext(build_ext.build_ext):
+
+    def build_extensions(self):
+        if self.debug:
+            # say it with me kids... distutils sucks!
+            for x in ("compiler_so", "compiler", "compiler_cxx"):
+                setattr(self.compiler, x, 
+                    [y for y in getattr(self.compiler, x) if y != '-DNDEBUG'])
+        return build_ext.build_ext.build_extensions(self)
+
+
 class pkgcore_build_py(build_py.build_py):
 
     def run(self):
@@ -339,6 +351,7 @@ core.setup(
     cmdclass={
         'sdist': mysdist,
         'build_py': pkgcore_build_py,
+        'build_ext': pkgcore_build_ext,
         'test': test,
         'pkgcore_build_scripts': pkgcore_build_scripts,
         'pkgcore_install_scripts': pkgcore_install_scripts,

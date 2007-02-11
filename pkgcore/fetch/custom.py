@@ -24,11 +24,12 @@ class fetcher(base.fetcher):
 
     pkgcore_config_type = ConfigHint(
         {'userpriv': 'bool', 'required_chksums': 'list',
-         'distdir': 'str', 'command': 'str', 'resume_command': 'str'})
+         'distdir': 'str', 'command': 'str', 'resume_command': 'str'},
+         allow_unknowns=True)
 
     def __init__(self, distdir, command, resume_command=None,
                  required_chksums=None, userpriv=True, attempts=10,
-                 readonly=False):
+                 readonly=False, **extra_env):
         """
         @param distdir: directory to download files to
         @type distdir: string
@@ -82,6 +83,7 @@ class fetcher(base.fetcher):
                 "if not readonly, directory must be 0775, else 0555" % (
                     portage_uid, portage_gid))
 
+        self.extra_env = extra_env
 
     def fetch(self, target):
         """
@@ -105,6 +107,7 @@ class fetcher(base.fetcher):
         else:
             extra = {}
         extra["umask"] = 0002
+        extra["env"] = self.extra_env
         attempts = self.attempts
         try:
             while attempts >= 0:

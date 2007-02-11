@@ -386,6 +386,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
     atom_start = p;
     char *cpv_end = NULL;
     PyObject *slot = NULL, *use = NULL, *repo_id = NULL;
+    char slot_seen = 0;
     while('\0' != *p) {
         if('[' == *p) {
             if(!cpv_end)
@@ -402,19 +403,24 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
             if(!cpv_end)
                 cpv_end = p;
             p++;
-            if(':' == *p) {
+            if(slot_seen) {
                 // repo_id.
-                p++;
                 if(parse_repo_id(atom_str, p, &repo_id))
                     goto pkgcore_atom_parse_error;
                 break;
-            } else if(slot) {
+            } else if(repo_id) {
+                printf("foo");
                 Err_SetMalformedAtom(atom_str,
-                    "multiple slot blocks aren't allowed, use ',' to specify "
-                    "multiple slots");
+                    "multiple slot/repo blocks aren't allowed, use ',' to specify "
+                    "multiple slots, multiple repos aren't allowed yet");
                 goto pkgcore_atom_parse_error;
-            } else if(parse_slot_deps(atom_str, &p, &slot)) {
-                goto pkgcore_atom_parse_error;
+            } else {
+                slot_seen = 1;
+                if (':' != *p) {
+                    if(parse_slot_deps(atom_str, &p, &slot)) {
+                        goto pkgcore_atom_parse_error;
+                    }
+                }
             }
         } else if(cpv_end) {
             // char in between chunks...

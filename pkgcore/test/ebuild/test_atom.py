@@ -8,7 +8,7 @@ from pkgcore.ebuild.cpv import CPV
 
 class FakePkg(CPV):
     __slots__ = ("__dict__")
-    def __init__(self, cpv, use=(), slot=0, repo_id="usr/portage"):
+    def __init__(self, cpv, use=(), slot=0, repo_id="gentoo"):
         CPV.__init__(self, cpv)
         object.__setattr__(self, "use", use)
         object.__setattr__(self, "slot", str(slot))
@@ -110,10 +110,10 @@ class Test_native_atom(TestCase):
 
     def test_repo_id(self):
         astr = "dev-util/bsdiff"
-        c = FakePkg(astr, repo_id="/usr/portage")
+        c = FakePkg(astr, repo_id="gentoo")
         self.assertTrue(self.kls("%s" % astr).match(c))
-        self.assertTrue(self.kls("%s::/usr/portage" % astr).match(c))
-        self.assertFalse(self.kls("%s::/usr/portage2" % astr).match(c))
+        self.assertTrue(self.kls("%s::gentoo" % astr).match(c))
+        self.assertFalse(self.kls("%s::gentoo2" % astr).match(c))
 
     def test_invalid_atom(self):
         self.assertRaises(errors.MalformedAtom, self.kls, '~dev-util/spork')
@@ -178,6 +178,14 @@ class Test_native_atom(TestCase):
         # see bug http://bugs.gentoo.org/152127
         self.assertFalse(self.kls('>=sys-apps/portage-2.1.0_pre3-r5').match(
             FakePkg('sys-apps/portage-2.1_pre3-r5')))
+
+    def test_combined(self):
+        self.assertTrue(self.kls('=dev-util/diffball-0.7::gentoo').match(
+            FakePkg('dev-util/diffball-0.7', repo_id='gentoo')))
+        self.assertTrue(self.kls('dev-util/diffball::gentoo').match(
+            FakePkg('dev-util/diffball-0.7', repo_id='gentoo')))
+        self.assertFalse(self.kls('=dev-util/diffball-0.7:1:gentoo').match(
+            FakePkg('dev-util/diffball-0.7', slot='2')))
 
 
 class Test_cpy_atom(Test_native_atom):

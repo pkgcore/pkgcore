@@ -16,7 +16,7 @@ from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util:modules")
 
 type_names = (
-    "list", "str", "bool", "section_ref", "section_refs")
+    "list", "str", "bool", "int", "section_ref", "section_refs")
 
 
 # Copied from inspect.py which copied it from compile.h.
@@ -78,7 +78,8 @@ class ConfigType(object):
             argname = args[-1 - i]
             for typeobj, typename in [(bool, 'bool'),
                                       (tuple, 'list'),
-                                      (str, 'str')]:
+                                      (str, 'str'),
+                                      ((int, long), 'int')]:
                 if isinstance(default, typeobj):
                     self.types[argname] = typename
                     break
@@ -255,6 +256,7 @@ def convert_string(central, value, arg_type):
             'list': list_parser,
             'str': str_parser,
             'bool': bool_parser,
+            'int': int_parser,
             }[arg_type]
     except KeyError:
         raise errors.ConfigurationError('Unknown type %r' % (arg_type,))
@@ -381,6 +383,13 @@ def bool_parser(string):
         return True
     raise errors.ConfigurationError('%r is not a boolean' % s)
 
+def int_parser(string):
+    """convert a string to a integer"""
+    string = str_parser(string)
+    try:
+        return int(string)
+    except ValueError, v:
+        raise errors.ConfigurationError('%r is not an integer' % string)
 
 @configurable({'path': 'str', 'parser': 'callable'}, typename='configsection')
 def parse_config_file(path, parser):

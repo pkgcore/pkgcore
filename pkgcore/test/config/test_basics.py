@@ -43,7 +43,8 @@ def nonopt(one, two):
     """Function taking two non-optional args."""
 
 
-def alltypes(alist=(), astr='astr', abool=True, aref=object()):
+def alltypes(alist=(), astr='astr', abool=True, aref=object(), anint=3,
+    along=long(3)):
     """Function taking lots of kinds of args."""
 
 
@@ -95,7 +96,7 @@ class ConfigTypeFromFunctionTest(TestCase):
         self.assertEquals(
             test_type.types,
             {'alist': 'list', 'astr': 'str', 'abool': 'bool',
-             'aref': 'section_ref'})
+             'aref': 'section_ref', 'anint': 'int', 'along': 'int'})
         self.assertEquals(test_type.required, ())
 
     def _test_class_member(self, func):
@@ -351,6 +352,13 @@ class ParsersTest(TestCase):
             ('0', False),
             ]:
             self.assertIdentical(basics.bool_parser(string), output)
+
+    def test_int_parser(self):
+        for string, output in [
+            ('\t 1', 1),
+            ('1', 1),
+            ('-100', -100)]:
+            self.assertEqual(basics.int_parser(string), output)
 
     def test_str_parser(self):
         for string, output in [

@@ -450,8 +450,8 @@ init_environ() {
 #	eval "$(cat "${EBUILD}"; echo ; echo 'true')" || die "error sourcing ebuild"
     source "${EBUILD}"
     if [ "${EBUILD_PHASE}" != "depend" ]; then
-        RESTRICT="${PORTAGE_RESTRICT}"
-        unset PORTAGE_RESTRICT
+        RESTRICT="${FINALIZED_RESTRICT}"
+        unset FINALIZED_RESTRICT
     fi
 
     [ -z "${ERRORMSG}" ] || die "${ERRORMSG}"

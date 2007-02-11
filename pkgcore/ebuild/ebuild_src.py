@@ -76,17 +76,17 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
 
     filename = os.path.basename(uri)
 
-    preexisting = filename in common_files
+    preexisting = common_files.get(filename)
 
-    if not preexisting:
+    if preexisting is None:
         if filename not in chksums:
             raise MissingChksum(filename)
         uris = uri_list(filename)
     else:
-        uris = common_files[filename].uri
+        uris = preexisting.uri
 
     if filename != uri:
-        if not preexisting:
+        if preexisting is None:
             if "primaryuri" not in pkg.restrict:
                 if default_mirrors and "mirror" not in pkg.restrict:
                     uris.add_mirror(default_mirrors)
@@ -103,11 +103,11 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
 
         else:
             uris.add_uri(uri)
-        if not preexisting and "primaryuri" in pkg.restrict:
+        if preexisting is None and "primaryuri" in pkg.restrict:
             if default_mirrors and "mirror" not in pkg.restrict:
                 uris.add_mirror(default_mirrors)
 
-    if not preexisting:
+    if preexisting is None:
         common_files[filename] = fetchable(filename, uris, chksums[filename])
     return common_files[filename]
 

@@ -7,6 +7,7 @@ from pkgcore import fetch
 from pkgcore.package import errors
 from pkgcore.ebuild import const
 from pkgcore.util.currying import post_curry
+from pkgcore.util.lists import iflatten_instance
 
 class test_base(TestCase):
 
@@ -168,12 +169,18 @@ class test_base(TestCase):
             ['http://foo.com/monkey.tgz', 'http://boon.com/monkey.tgz'])
         self.assertEqual(list(f[1].uri),
             ['http://boon2.com/boon.tgz', 'http://boon.com/boon.tgz'])
+        self.assertEqual(len(f), 2)
 
         # restrict=mirror..
         f = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz',
             'RESTRICT': 'mirror'}, repo=parent).fetchables
         self.assertEqual(list(f[0].uri),
             ['http://foo.com/monkey.tgz'])
+        self.assertEqual(len(f), 1)
+
+        # test uri for when there *is* no uri
+        f = self.get_pkg({'SRC_URI': 'monkey.tgz'}, repo=parent).fetchables
+        self.assertEqual(list(f[0].uri), [])
 
 
 class test_package(test_base):

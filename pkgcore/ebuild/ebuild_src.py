@@ -85,9 +85,7 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
     else:
         uris = common_files[filename].uri
 
-    if filename == uri:
-        uris.add_uri(filename)
-    else:
+    if filename != uri:
         if not preexisting:
             if "primaryuri" not in pkg.restrict:
                 if default_mirrors and "mirror" not in pkg.restrict:

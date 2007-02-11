@@ -10,6 +10,10 @@ pkgcore 0.2.4:
   since it can lead to fun metadata issues, but certain eclasses do.
 * fix exporting finalized form of RESTRICT to the build env; ticket 61.
 * fix for RESTRICT=fetch to not treat the filename as a uri.
+* expose the full make.conf environment to FETCHCOMMAND and RESUMECOMMAND-
+  ticket 58
+* added support for make.conf defined FETCH_ATTEMPTS; max # of unique uris to
+  attempts per file before giving up, defaults to 10.
 
 
 pkgcore 0.2.3:

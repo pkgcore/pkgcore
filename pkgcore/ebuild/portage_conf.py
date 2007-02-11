@@ -184,11 +184,19 @@ def config_from_make_conf(location="/etc/"):
     fetchcommand = conf_dict.pop("FETCHCOMMAND")
     resumecommand = conf_dict.pop("RESUMECOMMAND", fetchcommand)
 
-    new_config["fetcher"] = basics.AutoConfigSection({
-            "class": "pkgcore.fetch.custom.fetcher",
+    fetcher_dict = dict(conf_dict)
+    # map a config arg to an obj arg, pop a few values
+    if "FETCH_ATTEMPTS" in fetcher_dict:
+        fetcher_dict["attempts"] = fetcher_dict.pop("FETCH_ATTEMPTS")
+    fetcher_dict.pop("readonly", None)
+    fetcher_dict.update(
+        {"class": "pkgcore.fetch.custom.fetcher",
             "distdir": distdir,
             "command": fetchcommand,
-            "resume_command": resumecommand})
+            "resume_command": resumecommand
+        })
+    new_config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
+
 
     # define the eclasses now.
     all_ecs = []

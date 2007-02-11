@@ -4,14 +4,25 @@
 from pkgcore import fetch
 
 from pkgcore.test import TestCase
+from pkgcore.util.lists import iflatten_instance
+
+class base(TestCase):
+
+    def assertUri(self, obj, uri):
+        uri = list(uri)
+        self.assertEqual(list(iflatten_instance(obj)), uri)
+        if uri:
+            self.assertTrue(obj)
+        else:
+            self.assertFalse(obj)
 
 
-class TestFetchable(TestCase):
+class TestFetchable(base):
 
     def test_init(self):
         o = fetch.fetchable("dar", uri=["asdf"], chksums={"asdf":1})
         self.assertEqual(o.filename, "dar")
-        self.assertEqual(o.uri, ["asdf"])
+        self.assertUri(o.uri, ["asdf"])
         self.assertEqual(o.chksums, {"asdf":1})
 
     def test_eq_ne(self):
@@ -27,7 +38,7 @@ class TestFetchable(TestCase):
             fetch.fetchable("dar", uri=["asdf1"], chksums={"asdf":1, "foon":1}))
 
 
-class TestMirror(TestCase):
+class TestMirror(base):
 
     kls = fetch.mirror
 
@@ -56,7 +67,7 @@ class TestDefaultMirror(TestMirror):
     kls = fetch.default_mirror
 
 
-class Test_uri_list(TestCase):
+class Test_uri_list(base):
 
     def setUp(self):
         self.uril = fetch.uri_list("cows")
@@ -67,12 +78,12 @@ class Test_uri_list(TestCase):
         self.uril.add_mirror(mirror)
         self.assertEqual(list(self.uril), ["me/cows", "WI/cows"])
         self.uril.add_mirror(mirror, "foon/boon")
-        self.assertEqual(list(self.uril),
+        self.assertUri(self.uril, 
             ["me/cows", "WI/cows", "me/foon/boon", "WI/foon/boon"])
 
     def test_uris(self):
         self.uril.add_uri("blar")
-        self.assertEqual(list(self.uril), ["blar"])
+        self.assertUri(self.uril, ["blar"])
 
     def test_combined(self):
         l = ["blarn", "me/cows", "WI/cows", "madison",
@@ -82,4 +93,4 @@ class Test_uri_list(TestCase):
         self.uril.add_uri("madison")
         self.uril.add_mirror(fetch.default_mirror(
             ["belleville", "verona"], "foon"))
-        self.assertEqual(list(self.uril), l)
+        self.assertUri(self.uril, l)

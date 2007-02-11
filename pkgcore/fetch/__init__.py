@@ -15,7 +15,7 @@ class fetchable(object):
     __attr_comparison__ = __slots__
     __metaclass__ = generic_equality
 
-    def __init__(self, filename, uri=None, chksums=None):
+    def __init__(self, filename, uri=(), chksums=None):
         """
         @param filename: filename...
         @param uri: either None (no uri),
@@ -110,3 +110,8 @@ class uri_list(object):
     def __str__(self):
         return "file: %s, uri: %s" % (self.filename,
             ', '.join(str(x) for x in self._uri_source))
+
+    def __nonzero__(self):
+        for x in self:
+            return True
+        return False

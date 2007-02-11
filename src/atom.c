@@ -416,7 +416,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
                 goto pkgcore_atom_parse_error;
             } else {
                 slot_seen = 1;
-                if (':' != *p) {
+                if (':' != *p && '[' != *p) {
                     if(parse_slot_deps(atom_str, &p, &slot)) {
                         goto pkgcore_atom_parse_error;
                     }

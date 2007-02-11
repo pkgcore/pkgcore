@@ -843,8 +843,8 @@ pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
         }
         if(!tmp)
             goto pkgcore_atom_getattr_error;
-        PyTuple_SET_ITEM(tup, 2, tmp);
-        idx = 3;
+        PyTuple_SET_ITEM(tup, idx, tmp);
+        idx++;
     }
     if(slot != Py_None) {
         tmp = NULL;

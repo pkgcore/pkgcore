@@ -61,6 +61,9 @@ class mirror(object):
     def __len__(self):
         return len(self.mirrors)
 
+    def __nonzero__(self):
+        return bool(self.mirrors)
+
     def __getitem__(self, idx):
         return self.mirrors[idx]
 

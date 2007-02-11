@@ -3,6 +3,15 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.2.4:
+
+* support for ** in package.keywords
+* export preparsed SLOT to ebuild env; ebuilds shouldn't rely on this
+  since it can lead to fun metadata issues, but certain eclasses do.
+* fix exporting finalized form of RESTRICT to the build env; ticket 61.
+* fix for RESTRICT=fetch to not treat the filename as a uri.
+
+
 pkgcore 0.2.3:
 
 * Better handling of non-ascii characters in metadata.xml.

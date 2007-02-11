@@ -355,8 +355,7 @@ class domain(pkgcore.config.domain.domain):
             def f(r, v):
                 if not v:
                     return r, unstable
-                else:
-                    return r, v
+                return r, v
             data = collapsed_restrict_to_data(
                 ((packages.AlwaysTrue, default_keys),),
                 (f(*i) for i in pkg_keywords))
@@ -387,6 +386,8 @@ class domain(pkgcore.config.domain.domain):
         # note we ignore mode; keywords aren't influenced by conditionals.
         # note also, we're not using a restriction here.  this is faster.
         allowed = data.pull_data(pkg)
+        if '**' in allowed:
+            return True
         if "*" in allowed:
             for k in pkg.keywords:
                 if k[0] not in "-~":

@@ -259,7 +259,7 @@ class MergeEngine(object):
 
     def add_trigger(self, hook_name, trigger, required_csets):
         """
-        register a L{pkgcore.merge.triggers.trigger} instance to be executed
+        register a L{pkgcore.merge.triggers.base} instance to be executed
 
         @param hook_name: engine step to hook the trigger into
         @param trigger: L{triggers<pkgcore.merge.triggers.base>} to add

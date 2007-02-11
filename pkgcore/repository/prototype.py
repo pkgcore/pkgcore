@@ -426,7 +426,8 @@ class tree(object):
         @param a: passed to _install
         @param kw: passed to _install
         @raise AttributeError: if the repository is frozen (immutable)
-        @return: L{pkgcore.interfaces.repo.install} instance
+        @return: L{pkgcore.interfaces.repo.nonlivefs_install} or
+            L{pkgcore.interfaces.repo.livefs_install} instance
         """
         if not kw.pop('force', False) and self.frozen:
             raise AttributeError("repo is frozen")
@@ -439,7 +440,8 @@ class tree(object):
         @param pkg: L{pkgcore.package.metadata.package} instance to install
         @param a: passed to _install
         @param kw: passed to _install
-        @return: L{pkgcore.interfaces.repo.install} instance
+        @return: L{pkgcore.interfaces.repo.nonlivefs_install} or
+            L{pkgcore.interfaces.repo.livefs_install} instance
         """
         raise NotImplementedError(self, "_install")
 
@@ -451,7 +453,8 @@ class tree(object):
         @param a: passed to _install
         @param kw: passed to _install
         @raise AttributeError: if the repository is frozen (immutable)
-        @return: L{pkgcore.interfaces.repo.install} instance
+        @return: L{pkgcore.interfaces.repo.nonlivefs_uninstall} or
+            L{pkgcore.interfaces.repo.livefs_uninstall} instance
         """
         if self.frozen and not kw.pop("force", False):
             raise AttributeError("repo is frozen")
@@ -464,7 +467,8 @@ class tree(object):
         @param pkg: L{pkgcore.package.metadata.package} instance to install
         @param a: passed to _install
         @param kw: passed to _install
-        @return: L{pkgcore.interfaces.repo.install} instance
+        @return: L{pkgcore.interfaces.repo.nonlivefs_uninstall} or
+            L{pkgcore.interfaces.repo.livefs_uninstall} instance
         """
         raise NotImplementedError(self, "_uninstall")
 
@@ -478,7 +482,8 @@ class tree(object):
         @param a: passed to _install
         @param kw: passed to _install
         @raise AttributeError: if the repository is frozen (immutable)
-        @return: L{pkgcore.interfaces.repo.install} instance
+        @return: L{pkgcore.interfaces.repo.nonlivefs_replace} or
+            L{pkgcore.interfaces.repo.livefs_replace} instance
         """
         if self.frozen and not kw.pop("force", False):
             raise AttributeError("repo is frozen")
@@ -493,7 +498,8 @@ class tree(object):
         @param new: L{pkgcore.package.metadata.package} instance to install
         @param a: passed to _install
         @param kw: passed to _install
-        @return: L{pkgcore.interfaces.repo.install} instance
+        @return: L{pkgcore.interfaces.repo.nonlivefs_replace} or
+            L{pkgcore.interfaces.repo.livefs_replace} instance
         """
         raise NotImplementedError(self, "_replace")
 

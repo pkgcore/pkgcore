@@ -32,7 +32,7 @@ pkgcore_normpath(PyObject *self, PyObject *old_path)
     if(!PyString_CheckExact(old_path)) {
         PyErr_SetString(PyExc_TypeError,
             "old_path must be a str");
-        return (PyObject *)NULL;
+        return NULL;
     }
     Py_ssize_t len = PyString_Size(old_path);
     if(!len)
@@ -123,16 +123,16 @@ pkgcore_join(PyObject *self, PyObject *args)
 {
     if(!args) {
         PyErr_SetString(PyExc_TypeError, "requires at least one path");
-        return (PyObject *)NULL;
+        return NULL;
     }
     PyObject *fast = PySequence_Fast(args, "arg must be a sequence");
     if(!fast)
-        return (PyObject *)NULL;
+        return NULL;
     Py_ssize_t end = PySequence_Fast_GET_SIZE(fast);
     if(!end) {
         PyErr_SetString(PyExc_TypeError,
             "join takes at least one arguement (0 given)");
-        return (PyObject *)NULL;
+        return NULL;
     }
     
     PyObject **items = PySequence_Fast_ITEMS(fast);
@@ -144,7 +144,7 @@ pkgcore_join(PyObject *self, PyObject *args)
         if(!PyString_CheckExact(items[i])) {
             PyErr_SetString(PyExc_TypeError, "all args must be strings");
             Py_DECREF(fast);
-            return (PyObject *)NULL;
+            return NULL;
         }
         s = PyString_AsString(items[i]);
         if('/' == *s) {
@@ -181,7 +181,7 @@ pkgcore_join(PyObject *self, PyObject *args)
     // ok... we know the length.  allocate a string, and copy it.
     PyObject *ret = PyString_FromStringAndSize(NULL, len);
     if(!ret)
-        return (PyObject*)NULL;
+        return NULL;
     char *buf = PyString_AS_STRING(ret);
     if(leading_slash) {
         *buf = '/';
@@ -284,7 +284,7 @@ pkgcore_readfile(PyObject *self, PyObject *args)
     PyObject *path, *swallow_missing = NULL;
     if(!args || !PyArg_ParseTuple(args, "S|O:readfile", &path,
         &swallow_missing)) {
-        return (PyObject *)NULL;
+        return NULL;
     }
     Py_ssize_t size;
     int fd;
@@ -335,10 +335,10 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     if(kwargs && PyDict_Size(kwargs)) {
         PyErr_SetString(PyExc_TypeError,
             "readlines.__new__ doesn't accept keywords");
-        return (PyObject *)NULL;
+        return NULL;
     } else if (!PyArg_ParseTuple(args, "S|OOO:readlines.__new__", 
         &path, &strip_newlines, &swallow_missing, &none_on_missing)) {
-        return (PyObject *)NULL;
+        return NULL;
     } 
     
     int fd;
@@ -360,7 +360,7 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         
         PyObject *data = PyTuple_New(0);
         if(!data)
-            return (PyObject *)NULL;
+            return NULL;
         PyObject *tmp = PySeqIter_New(data);
         Py_DECREF(data);
         return tmp;
@@ -459,7 +459,7 @@ pkgcore_readlines_iternext(pkgcore_readlines *self)
 {
     if(self->start == self->end) {
         // at the end, thus return
-        return (PyObject *)NULL;
+        return NULL;
     }
     char *p = self->start;
     assert(self->end);

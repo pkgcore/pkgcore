@@ -783,7 +783,7 @@ pkgcore_cpv_str(pkgcore_cpv *self)
 {
     PyObject *s = PyObject_GetAttrString((PyObject *)self, "cpvstr");
     if(!s)
-        return (PyObject *)NULL;
+        return NULL;
     if(s != Py_None) {
         return s;
     }
@@ -799,15 +799,15 @@ pkgcore_cpv_repr(pkgcore_cpv *self)
     PyObject *s, *cpv;
     cpv = PyObject_GetAttrString((PyObject *)self, "cpvstr");
     if(!cpv)
-        return (PyObject *)NULL;
+        return NULL;
     s = PyObject_Repr(cpv);
     Py_DECREF(cpv);
     if(!s)
-        return (PyObject *)NULL;
+        return NULL;
     char *str = PyString_AsString(s);
     if(!s) {
         Py_DECREF(s);
-        return (PyObject *)NULL;
+        return NULL;
     }
     PyObject *s2 = PyString_FromFormat("CPV(%s)", str);
     Py_DECREF(s);

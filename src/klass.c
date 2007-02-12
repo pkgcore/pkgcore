@@ -53,7 +53,7 @@ pkgcore_GetAttrProxy_call(pkgcore_GetAttrProxy *self, PyObject *args,
 
     if(PyArg_ParseTuple(args, "OS:__call__", &real_obj, &attr)) {
         if(Py_EnterRecursiveCall(" in GetAttrProxy.__call__ "))
-            return (PyObject*)NULL;
+            return NULL;
         real_obj = PyObject_GenericGetAttr(real_obj, self->redirect_target);
         if(real_obj) {
             tmp = PyObject_GetAttr(real_obj, attr);
@@ -125,7 +125,7 @@ pkgcore_mapping_get(PyObject *self, PyObject *args)
     if(ret) {
         return ret;
     } else if (!PyErr_ExceptionMatches(PyExc_KeyError)) {
-        return (PyObject *)NULL;
+        return NULL;
     }
 
     PyErr_Clear();
@@ -273,7 +273,7 @@ pkgcore_mapping_contains(PyObject *self, PyObject *key)
         Py_DECREF(ret);
         ret = Py_True;
     } else if (!PyErr_ExceptionMatches(PyExc_KeyError)) {
-        return (PyObject *)NULL;
+        return NULL;
     } else {
         PyErr_Clear();
         ret = Py_False;

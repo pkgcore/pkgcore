@@ -78,12 +78,12 @@ make_use_conditional(char *use_start, char *use_end, PyObject *payload)
     if('!' == *use_start) {
         PyObject *kwds = Py_BuildValue("{sO}", "negate", Py_True);
         if(!kwds)
-            return (PyObject *)NULL;
+            return NULL;
         PyObject *args = Py_BuildValue("(s#)", use_start + 1,
             use_end - use_start -1);
         if(!args) {
             Py_DECREF(kwds);
-            return (PyObject *)NULL;
+            return NULL;
         }
         val = PyObject_Call(pkgcore_depset_ValContains, args, kwds);
         Py_DECREF(args);
@@ -93,7 +93,7 @@ make_use_conditional(char *use_start, char *use_end, PyObject *payload)
             use_start, use_end - use_start);
     }
     if(!val)
-        return (PyObject *)NULL;
+        return NULL;
     
     PyObject *restriction = PyObject_CallFunction(pkgcore_depset_PkgCond,
         "sOO", "use", val, payload);
@@ -369,7 +369,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             Py_DECREF(restrictions);
     }
     // dealloc.
-    return (PyObject *)NULL;
+    return NULL;
 }            
 
 static PyObject *
@@ -379,7 +379,7 @@ pkgcore_parse_depset(PyObject *self, PyObject *args)
     PyObject *and_func = NULL, *or_func = NULL;
     if(!PyArg_ParseTuple(args, "SO|OO", &dep_str, &element_func, &and_func,
         &or_func))
-        return (PyObject *)NULL;
+        return NULL;
 
     int has_conditionals = 0;
 
@@ -390,11 +390,11 @@ pkgcore_parse_depset(PyObject *self, PyObject *args)
 
     char *p = PyString_AsString(dep_str);
     if(!p)
-        return (PyObject *)NULL;
+        return NULL;
     PyObject *ret = internal_parse_depset(dep_str, &p, &has_conditionals,
         element_func, and_func, or_func, 1);
     if(!ret)
-        return (PyObject *)NULL;
+        return NULL;
     if(!PyTuple_Check(ret)) {
         PyObject *tmp;
         if(ret == Py_None) {
@@ -416,7 +416,7 @@ pkgcore_parse_depset(PyObject *self, PyObject *args)
     if(!final) {
         Py_DECREF(ret);
         Py_DECREF(conditionals_bool);
-        return (PyObject *)NULL;
+        return NULL;
     }
     PyTuple_SET_ITEM(final, 0, conditionals_bool);
     PyTuple_SET_ITEM(final, 1, ret);

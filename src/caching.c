@@ -137,7 +137,7 @@ pkgcore_WeakValCache_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     pkgcore_WeakValCache *self;
     self = (pkgcore_WeakValCache *)type->tp_alloc(type, 0);
     if(!self)
-        return (PyObject *)NULL;
+        return NULL;
     self->dict = PyDict_New();
     if(!self->dict) {
         Py_DECREF(self);
@@ -262,12 +262,12 @@ pkgcore_WeakValCache_get(pkgcore_WeakValCache *self, PyObject *args)
     if(size < 1 || size > 2) {
         PyErr_SetString(PyExc_TypeError,
             "get requires one arg (key), with optional default to return");
-        return (PyObject *)NULL;
+        return NULL;
     }
     key = PyTuple_GET_ITEM(args, 0);
     if(!key) {
         assert(PyErr_Occurred());
-        return (PyObject *)NULL;
+        return NULL;
     }
     
     PyErr_Clear();

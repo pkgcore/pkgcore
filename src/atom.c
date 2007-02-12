@@ -332,7 +332,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"atom_str", "negate_vers", NULL};
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "S|O:atom_init", kwlist,
         &atom_str, &negate_vers))
-        return (PyObject *)NULL;
+        return NULL;
     
     if(!negate_vers) {
         negate_vers = Py_False;
@@ -519,7 +519,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
     Py_CLEAR(slot);
     Py_CLEAR(repo_id);
     Py_CLEAR(negate_vers);
-    return (PyObject *)NULL;
+    return NULL;
 }
 
 static inline PyObject *

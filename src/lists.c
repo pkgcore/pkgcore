@@ -72,11 +72,21 @@ pkgcore_iflatten_func_new(PyTypeObject *type,
     if (!tmp) {
         return NULL;
     }
-    res = PyObject_IsTrue(tmp);
+    // Py_(True|False) are singletons, thus we're trying to bypass
+    // the PyObject_IsTrue triggering __nonzero__ protocol.
+    if(tmp == Py_True) {
+        res = 1;
+    } else if (tmp == Py_False) {
+        res = 0;
+    } else {
+        res = PyObject_IsTrue(tmp);
+        if(res == -1) {
+            Py_DECREF(tmp);
+            return NULL;
+        }
+    }
     Py_DECREF(tmp);
-    if (res == -1) {
-        return NULL;
-    } else if (res) {
+    if (res) {
         PyObject *tuple = PyTuple_Pack(1, l);
         if (!tuple) {
             return NULL;

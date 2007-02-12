@@ -23,6 +23,10 @@ pkgcore 0.2.4:
 * added int_parser type for config instantiation definitions (ConfigHint),
   and usual introspection support.
 
+* fix regression limiting satisifiers for depends to installed only in corner
+  case installed bound cycles; automake/perl specifically trigger this, thus
+  most folks should have seen it if using -B.
+
 
 pkgcore 0.2.3:
 

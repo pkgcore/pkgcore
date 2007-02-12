@@ -51,7 +51,8 @@ def is_cycle(stack, atom, cur_choice, attr, start=0):
             s += '[%s: %s]' % (atom, cur_choice.current_pkg)
             dprint("%s level cycle: stack: %s\n",
                 (attr, s), "cycle")
-    return cycle_start + start
+        return cycle_start + start
+    return -1
 
 
 #iter/pkg sorting functions for selection strategy
@@ -232,9 +233,14 @@ class merge_plan(object):
                 else:
                     index = is_cycle(current_stack, datom, cur_frame.choices,
                         "depends")
-                    ignore = index != -1
-                    while not ignore and index != -1:
-                        #weird, but lets try it.
+                    looped = ignore = False
+
+                    # this logic is admittedly semi tricky.
+                    while index != -1:
+                        looped = True
+                        # see if it's a vdb node already; if it's a cycle between
+                        # the same vdb node, ignore it (ignore self-dependant 
+                        # depends level installed deps for the same node iow)
                         if current_stack[index + 1].current_pkg == \
                             cur_frame.current_pkg and \
                             cur_frame.current_pkg.repo.livefs:
@@ -244,14 +250,31 @@ class merge_plan(object):
                             ignore=True
                             break
                         else:
-                            # if reached here, search the remaining chunk
-                            # of the stack.
+                            # ok, so the first candidate wasn't vdb.
+                            # see if there are more.
                             index = is_cycle(current_stack, datom,
                                 cur_frame.choices, None, start=index + 1)
+                    else:
+                        # ok.  it exited on it's own.  meaning either no cycles,
+                        # or no vdb exemptions where found.
+                        if looped:
+                            # non vdb level cycle.  vdb bound?
+                            # this sucks also- any code that reorders the db
+                            # on the fly to not match livefs_dbs is going to
+                            # have issues here.
+                            if self.livefs_dbs == cur_frame.dbs:
+                                failure = [datom]
+                                continue
+                            # try forcing vdb level match.
+                            dbs = self.livefs_dbs
+                        else:
+                            # use normal db, no cycles.
+                            dbs = cur_frame.dbs
                     if ignore:
+                        # vdb contained cycle; ignore it.
                         break
                     failure = self._rec_add_atom(datom, current_stack,
-                        self.livefs_dbs, mode="depends",
+                        dbs, mode="depends",
                         drop_cycles=cur_frame.drop_cycles)
                     if failure and cur_frame.drop_cycles:
                         dprint("depends level cycle: %s: "
@@ -262,9 +285,6 @@ class merge_plan(object):
                         failure = []
                         # note we trigger a break ourselves.
                         break
-                    else:
-                        failure = self._rec_add_atom(datom, current_stack,
-                            cur_frame.dbs, mode="depends")
 
                     if failure:
                         dprint("depends:     %s%s: reducing %s from %s",

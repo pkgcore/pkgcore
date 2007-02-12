@@ -1,9 +1,3 @@
-/*
- Copyright: 2005 Gentoo Foundation
- License: GPL2
- $Id:$
-*/
-
 /* raided from http://www.dcc.uchile.cl/~rbaeza/handbook/algs/7/713b.srch.c.html
 aparently distributed by Addison-Wesley Publishing Co. Inc, http://aw.com/
 */

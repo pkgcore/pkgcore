@@ -113,7 +113,7 @@ pkgcore_WeakValFinalizer_create(PyObject *dict, PyObject *key)
     pkgcore_WeakValFinalizer *finalizer = PyObject_GC_New(
         pkgcore_WeakValFinalizer, &pkgcore_WeakValFinalizerType);
 
-    if (NULL == finalizer)
+    if (!finalizer)
         return NULL;
 
     Py_INCREF(dict);
@@ -165,16 +165,6 @@ pkgcore_WeakValCache_heapyrelate(NyHeapRelate *r)
 static int
 pkgcore_WeakValCache_clear(pkgcore_WeakValCache *self)
 {
-    /* TODO someone who understands python gc should check if the
-     * following logic makes sense. --marienz
-     *
-     * We could simply Py_CLEAR(self->dict) here but since we must be
-     * in a mostly sane state (at least not segfault) after _clear
-     * that would mean a lot of extra NULL checks in our methods.
-     * Since we only need to clear references that "may have created
-     * cycles" and we should have the only reference to self->dict
-     * ourself just clearing the dict contents should suffice.
-     */
     PyDict_Clear(self->dict);
     return 0;
 }
@@ -203,7 +193,7 @@ static int
 pkgcore_WeakValCache_setitem(pkgcore_WeakValCache *self, PyObject *key,
     PyObject *val)
 {
-    if(NULL == val) {
+    if(!val) {
         return PyDict_SetItem(self->dict, (PyObject*)key, (PyObject*)val);
     }
     if(PyWeakref_Check(val)) {
@@ -211,17 +201,16 @@ pkgcore_WeakValCache_setitem(pkgcore_WeakValCache *self, PyObject *key,
         return -1;
     }
 
+    int ret = -1;
     pkgcore_WeakValFinalizer *finalizer = pkgcore_WeakValFinalizer_create(
         self->dict, key);
-    if (!finalizer)
-        return -1;
-
-    PyObject *weakref = PyWeakref_NewRef(val, (PyObject*)finalizer);
-    Py_DECREF(finalizer);
-    int ret = -1;
-    if (weakref) {
-        ret = PyDict_SetItem(self->dict, key, (PyObject*)weakref);
-        Py_DECREF(weakref);
+    if (finalizer) {
+        PyObject *weakref = PyWeakref_NewRef(val, (PyObject*)finalizer);
+        Py_DECREF(finalizer);
+        if (weakref) {
+            ret = PyDict_SetItem(self->dict, key, (PyObject*)weakref);
+            Py_DECREF(weakref);
+        }
     }
     return ret;
 }
@@ -256,7 +245,7 @@ static PyObject *
 pkgcore_WeakValCache_get(pkgcore_WeakValCache *self, PyObject *args)
 {
     Py_ssize_t size = PyTuple_Size(args);
-    if(size == -1)
+    if(-1 == size)
         return NULL;
     PyObject *key, *resobj;
     if(size < 1 || size > 2) {

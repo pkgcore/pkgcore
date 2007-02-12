@@ -122,6 +122,9 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
     PyObject *item = NULL;
     PyObject *tmp = NULL;
     PyObject *kwds = NULL;
+
+    // should just use alloca here.
+
     #define PARSE_DEPSET_STACK_STORAGE 16
     PyObject *stack_restricts[PARSE_DEPSET_STACK_STORAGE];
     Py_ssize_t item_count = 0, tup_size = PARSE_DEPSET_STACK_STORAGE;

@@ -239,12 +239,12 @@ pkgcore_join(PyObject *self, PyObject *args)
 // if failure condition, appropriate exception is set.
 
 static inline int
-pkgcore_open_and_stat(PyObject *path,
+pkgcore_read_open_and_stat(PyObject *path,
     int *fd, Py_ssize_t *size)
 {
     struct stat st;
     errno = 0;
-    if((*fd = open(PyString_AsString(path), O_LARGEFILE)) >= 0) {
+    if((*fd = open(PyString_AsString(path), O_RDONLY|O_LARGEFILE)) >= 0) {
         int ret = fstat(*fd, &st);
         if(!ret) {
             *size = st.st_size;
@@ -289,7 +289,7 @@ pkgcore_readfile(PyObject *self, PyObject *args)
     Py_ssize_t size;
     int fd;
     Py_BEGIN_ALLOW_THREADS
-    if(pkgcore_open_and_stat(path, &fd, &size)) {
+    if(pkgcore_read_open_and_stat(path, &fd, &size)) {
         Py_BLOCK_THREADS
         if(handle_failed_open_stat(fd, size, path, swallow_missing))
             return NULL;
@@ -347,7 +347,7 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     PyObject *fallback = NULL;
     Py_BEGIN_ALLOW_THREADS
     errno = 0;
-    if(pkgcore_open_and_stat(path, &fd, &size)) {
+    if(pkgcore_read_open_and_stat(path, &fd, &size)) {
         Py_BLOCK_THREADS
 
         if(handle_failed_open_stat(fd, size, path, swallow_missing))

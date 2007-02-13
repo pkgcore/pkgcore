@@ -75,8 +75,6 @@ class base(object):
                 (self, self._hooks))
 
         csets = self.get_required_csets(engine.mode)
-        if csets is None:
-            csets = ()
 
         for hook in self._hooks:
             try:

@@ -1,9 +1,13 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.test import TestCase, mixins
-from pkgcore.merge import triggers
+from pkgcore.merge import triggers, const
+from pkgcore.fs import fs, contents
+from pkgcore.fs.livefs import gen_obj
 from pkgcore.util.currying import partial
+from pkgcore.util.osutils import pjoin
+from pkgcore.test import TestCase, mixins
+import os
 
 class fake_trigger(triggers.base):
 
@@ -131,3 +135,64 @@ class TestBase(TestCase):
             msg="basic mapping through failed")
         self.assertEqual(get_csets([], {}), [[]],
             msg="for no required csets, must have no args passed")
+
+
+class test_module(TestCase):
+
+    def test_constants(self):
+        self.assertEqual(sorted([const.REPLACE_MODE, const.UNINSTALL_MODE]),
+            sorted(triggers.UNINSTALLING_MODES))
+        self.assertEqual(sorted([const.REPLACE_MODE, const.INSTALL_MODE]),
+            sorted(triggers.INSTALLING_MODES))
+
+class Test_get_dir_mtimes(mixins.TempDirMixin, TestCase):
+
+    def test_it(self):
+        self.assertTrue(isinstance(triggers.get_dir_mtimes([self.dir]),
+            contents.contentsSet))
+        o = [gen_obj(self.dir)]
+        self.assertEqual(list(triggers.get_dir_mtimes([self.dir])),
+            o)
+        open(pjoin(self.dir, 'file'), 'w')
+        self.assertEqual(list(triggers.get_dir_mtimes(
+            [self.dir, pjoin(self.dir, 'file')])),
+            o)
+        loc = pjoin(self.dir, 'dir')
+        os.mkdir(loc)
+        o.append(gen_obj(pjoin(self.dir, 'dir')))
+        o.sort()
+        self.assertEqual(sorted(triggers.get_dir_mtimes(
+            [x.location for x in o])), o)
+        
+        # test syms.
+        src = pjoin(self.dir, 'dir2')
+        os.mkdir(src)
+        loc = pjoin(self.dir, 'foo')
+        os.symlink(src, loc)
+        locs = [x.location for x in o]
+
+        # insert a crap location to ensure it handles it.
+        locs.append(pjoin(self.dir, "asdfasdfasdfasfdasdfasdfasdfasdf"))
+
+        locs.append(src)
+        i = gen_obj(src, stat=os.stat(src))
+        o.append(i)
+        o.sort()
+        self.assertEqual(sorted(triggers.get_dir_mtimes(locs)), o)
+        locs[-1] = loc
+        o.remove(i)
+        i = i.change_attributes(location=loc)
+        o.append(i)
+        o.sort()
+        self.assertEqual(sorted(triggers.get_dir_mtimes(locs)), o)
+
+        o.remove(i)
+        os.rmdir(src)
+
+        # check stat_func usage; if lstat, the sym won't be derefed,
+        # thus ignored.
+        self.assertEqual(sorted(triggers.get_dir_mtimes(locs,
+            stat_func=os.lstat)), o)
+
+        # test dead sym filtering for stat.
+        self.assertEqual(sorted(triggers.get_dir_mtimes(locs)), o)

@@ -124,16 +124,27 @@ class base(object):
             self.required_csets, id(self))
 
 
-def get_dir_mtimes(locations):
+def get_dir_mtimes(locations, stat_func=os.stat):
+    """
+    passed a list of locations, return a L{contents.contentsSet} containing
+    those that are directories.
+    
+    If the location doesn't exist, it's ignored.  If stat_func is os.stat
+    and the location is a symlink pointing at a non existant location, it's
+    ignored.
+    
+    @param locations: sequence, file paths to scan
+    @param stat_func: stat'er to use.  defaults to os.stat
+    @returns: L{contents.contetsSet} of directories.
+    """
     mtimes = []
     for x in locations:
         try:
             # we force our own os.stat, instead of genobjs lstat
-            st = os.stat(x)
+            st = stat_func(x)
         except OSError, oe:
             if not oe.errno == errno.ENOENT:
                 raise
-            del oe
             continue
         obj = gen_obj(x, stat=st)
         if fs.isdir(obj):

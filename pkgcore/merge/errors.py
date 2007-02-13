@@ -9,9 +9,11 @@ class ModificationError(Exception):
 
     """Base Exception class for modification errors/warnings"""
 
-    def __init__(self, msg):
-        Exception.__init__(self, "%s: %s" % (self.__class__, msg))
+    def __init__(self, trigger, msg):
+        self.trigger = trigger
         self.msg = msg
+        Exception.__init__(self, "%s: modification error: %s" %
+            (self.trigger, self.msg))
 
 
 class BlockModification(ModificationError):

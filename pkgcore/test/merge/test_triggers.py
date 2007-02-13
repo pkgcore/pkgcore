@@ -3,11 +3,13 @@
 
 from pkgcore.merge import triggers, const
 from pkgcore.fs import fs, contents
-from pkgcore.fs.livefs import gen_obj
+from pkgcore.fs.livefs import gen_obj, scan
 from pkgcore.util.currying import partial
-from pkgcore.util.osutils import pjoin
+from pkgcore.util.osutils import pjoin, ensure_dirs
 from pkgcore.test import TestCase, mixins
-import os
+import os, shutil, time
+from math import floor, ceil
+
 
 class fake_trigger(triggers.base):
 
@@ -145,6 +147,7 @@ class test_module(TestCase):
         self.assertEqual(sorted([const.REPLACE_MODE, const.INSTALL_MODE]),
             sorted(triggers.INSTALLING_MODES))
 
+
 class Test_get_dir_mtimes(mixins.TempDirMixin, TestCase):
 
     def test_it(self):
@@ -196,3 +199,37 @@ class Test_get_dir_mtimes(mixins.TempDirMixin, TestCase):
 
         # test dead sym filtering for stat.
         self.assertEqual(sorted(triggers.get_dir_mtimes(locs)), o)
+    
+    def test_float_mtime(self):
+        cur = os.stat_float_times()
+        try:
+            l = list(triggers.get_dir_mtimes([self.dir]))[0]
+            self.assertTrue(isinstance(l.mtime, float),
+                msg="mtime *must* be a float got %r" % l.mtime)
+        finally:
+            os.stat_float_times(cur)
+
+    def test_race(self):
+        # note this isn't perfect- being a race, triggering it on 
+        # demand is tricky.
+        # hence the 10x loop; can trigger it pretty much each loop
+        # for my 1ghz, so... it's a start.
+        # the race specifically will only rear it's head on extremely
+        # fast io (crazy hardware, or async mount), fs's lacking subsecond,
+        # and just severely crappy chance.
+        # faster the io actions, easier it is to trigger.
+        cur = os.stat_float_times()
+        try:
+            os.stat_float_times(True)
+            for x in xrange(10):
+                now = int(time.time()) + 1
+                os.utime(self.dir, (now + 100, now + 100))
+                triggers.get_dir_mtimes([self.dir])
+                while now > time.time():
+                    triggers.get_dir_mtimes([self.dir])
+                now, st_mtime = time.time(), os.stat(self.dir).st_mtime
+                now, st_mtime = ceil(now), floor(st_mtime)
+                self.assertTrue(now > st_mtime,
+                    msg="%r must be > %r" % (now, st_mtime))
+        finally:
+            os.stat_float_times(cur)

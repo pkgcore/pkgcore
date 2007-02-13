@@ -16,13 +16,16 @@ __all__ = [
 from pkgcore.merge import errors, const
 import pkgcore.os_data
 from pkgcore.util.demandload import demandload
-from pkgcore.util.osutils import listdir_files, join as pjoin
+from pkgcore.util.osutils import listdir_files, pjoin, ensure_dirs
 demandload(globals(), "os errno "
     "pkgcore.plugin:get_plugin "
     "pkgcore:spawn "
     "pkgcore.fs.livefs:gen_obj "
     "pkgcore.fs:fs,contents "
     "pkgcore.util.file:iter_read_bash "
+    "pkgcore.util.compatibility:any "
+    "time "
+    "math:ceil,floor "
     )
 
 UNINSTALLING_MODES = (const.REPLACE_MODE, const.UNINSTALL_MODE)
@@ -133,22 +136,53 @@ def get_dir_mtimes(locations, stat_func=os.stat):
     and the location is a symlink pointing at a non existant location, it's
     ignored.
     
+    Additionally, since this function is used for effectively 'snapshotting'
+    related directories, if any mtimes are *now* (fs doesn't do subsecond
+    resolution, osx for example), induces a sleep for a second to ensure
+    any later re-runs do not get bit by completing within the race window.
+    
+    Finally, if any mtime is detected that is in the future, it is reset
+    to 'now'.
+    
     @param locations: sequence, file paths to scan
     @param stat_func: stat'er to use.  defaults to os.stat
     @returns: L{contents.contetsSet} of directories.
     """
-    mtimes = []
-    for x in locations:
-        try:
-            # we force our own os.stat, instead of genobjs lstat
-            st = stat_func(x)
-        except OSError, oe:
-            if not oe.errno == errno.ENOENT:
-                raise
-            continue
-        obj = gen_obj(x, stat=st)
-        if fs.isdir(obj):
-            mtimes.append(obj)
+    cur = os.stat_float_times()
+    try:
+        os.stat_float_times(True)
+        mtimes = []
+        for x in locations:
+            try:
+                # we force our own os.stat, instead of genobjs lstat
+                st = stat_func(x)
+            except OSError, oe:
+                if not oe.errno == errno.ENOENT:
+                    raise
+                continue
+            obj = gen_obj(x, stat=st)
+            if fs.isdir(obj):
+                mtimes.append(obj)
+    finally:
+        os.stat_float_times(cur)
+    cset = contents.contentsSet(mtimes, mutable=True)
+    now = time.time()
+    resets = [x for x in mtimes if x.mtime > now]
+    past = max(int(now) - 1, 0)
+    for x in resets:
+        cset.add(x.change_attributes(mtime=past))
+        os.utime(x.location, (past, past))
+    if resets and time.time() > ceil(now):
+        time.sleep(1)
+    else:
+        resolution = ceil(now)
+        for x in cset:
+            # the '=' is required; if the fs drops subsecond,
+            # this picks it up.
+            if x.mtime >= resolution:
+                time.sleep(1)
+                break
+
     return contents.contentsSet(mtimes)
 
 
@@ -158,6 +192,9 @@ class ldconfig(base):
     _engine_types = None
     _hooks = ('pre_merge', 'post_merge', 'pre_unmerge', 'post_unmerge')
     _priority = 10
+
+    default_ld_path = ['usr/lib', 'usr/lib64', 'usr/lib32', 'lib',
+        'lib64', 'lib32']
 
     def __init__(self, ld_so_conf_path="etc/ld.so.conf"):
         self.ld_so_conf_path = ld_so_conf_path.lstrip(os.path.sep)
@@ -174,14 +211,25 @@ class ldconfig(base):
 
         try:
             l = [x.lstrip(os.path.sep) for x in iter_read_bash(fp)]
-        except OSError, oe:
+        except IOError, oe:
             if oe.errno != errno.ENOENT:
                 raise
-            # touch the file.
-            open(fp, 'w')
+            self._mk_ld_so_conf(fp)
             # fall back to an edjucated guess.
-            l = ['usr/lib', 'usr/lib64', 'usr/lib32', 'lib', 'lib64', 'lib32']
+            l = self.default_ld_path
         return [pjoin(offset, x) for x in l]
+
+    @staticmethod
+    def _mk_ld_so_conf(fp):
+        if not ensure_dirs(os.path.basename(fp), mode=0755, minimal=True):
+            raise errors.BlockModification(self,
+                "failed creating/setting %s to 0755, root/root for uid/gid" %
+                    os.path.basename(fp))
+            # touch the file.
+        try:
+            open(fp, 'w')
+        except (IOError, OSError), e:
+            raise errors.BlockModification(self, e)
 
     def trigger(self, engine):
         self.offset = engine.offset
@@ -195,20 +243,26 @@ class ldconfig(base):
 
         new_mtimes = get_dir_mtimes(self.read_ld_so_conf(engine.offset))
 
+        # iterate over new, checking mtime first
         for x in new_mtimes:
             if x not in self.saved_mtimes or \
                 self.saved_mtimes[x].mtime != x.mtime:
                 break
         else:
+            # the above implicity is a subset check of new vs old.
+            # since mtimes pass, ensure that old is a subset of new, ie, equal.
+            # if so, skip.
             if not new_mtimes.difference(self.saved_mtimes):
+                self.saved_mtimes = new_mtimes
                 return
         self.regen(engine.offset)
         self.saved_mtimes = new_mtimes
 
     def regen(self, offset):
+        print "firing"
         ret = spawn.spawn(["/sbin/ldconfig", "-r", offset], fd_pipes={1:1, 2:2})
         if ret != 0:
-            raise errors.TriggerWarning(
+            raise errors.TriggerWarning(self,
                 "ldconfig returned %i from execution" % ret)
 
 

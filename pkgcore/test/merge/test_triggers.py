@@ -209,7 +209,7 @@ class Test_get_dir_mtimes(mixins.TempDirMixin, TestCase):
         finally:
             os.stat_float_times(cur)
 
-    def test_race(self):
+    def test_race_protection(self):
         # note this isn't perfect- being a race, triggering it on 
         # demand is tricky.
         # hence the 10x loop; can trigger it pretty much each loop
@@ -233,3 +233,101 @@ class Test_get_dir_mtimes(mixins.TempDirMixin, TestCase):
                     msg="%r must be > %r" % (now, st_mtime))
         finally:
             os.stat_float_times(cur)
+
+
+def castrate_ldconfig(base_kls):
+    class castrated_ldconfig(base_kls):
+
+        def __init__(self, *args, **kwargs):
+            self._passed_in_offset = []
+            triggers.ldconfig.__init__(self, *args, **kwargs)
+    
+        def regen(self, offset):
+            self._passed_in_offset.append(offset)
+
+    return castrated_ldconfig
+
+
+class Test_ldconfig(mixins.TempDirMixin, TestCase):
+
+    # use the kls indirection for when *bsd version of ldconfig trigger
+    # is derived; will be pretty much the same, sans the trigger call.
+    kls = castrate_ldconfig(triggers.ldconfig)
+
+    def setUp(self):
+        mixins.TempDirMixin.setUp(self)
+        self.reset_objs()
+
+    def reset_objs(self):
+        self.engine = fake_engine(offset=self.dir)
+        self.trigger = self.kls()
+
+    def assertPaths(self, expected, tested):
+        expected = sorted(expected)
+        tested = sorted(tested)
+        self.assertEqual(expected, tested,
+            msg="expected %r, got %r" % (expected, tested))
+
+    def test_read_ld_so_conf(self):
+        # test the defaults first.  should create etc and the file.
+        self.assertPaths(self.trigger.read_ld_so_conf(self.dir),
+            [pjoin(self.dir, x) for x in self.trigger.default_ld_path])
+        o = gen_obj(pjoin(self.dir, 'etc'))
+        self.assertEqual(o.mode, 0755)
+        self.assertTrue(fs.isdir(o))
+        self.assertTrue(os.path.exists(pjoin(self.dir, 'etc/ld.so.conf')))
+        
+        # test normal functioning.
+        open(pjoin(self.dir, 'etc/ld.so.conf'), 'w').write("\n".join(
+            ["/foon", "dar", "blarnsball", "#comment"]))
+        self.assertPaths(self.trigger.read_ld_so_conf(self.dir),
+            [pjoin(self.dir, x) for x in ["foon", "dar", "blarnsball"]])
+
+    def assertTrigger(self, touches, ran, dirs=['test-lib', 'test-lib2'],
+        hook='merge', mode=const.INSTALL_MODE, mkdirs=True, same_mtime=False):
+        
+        # wipe whats there.
+        for x in scan(self.dir).iterdirs():
+            if x.location == self.dir:
+                continue
+            shutil.rmtree(x.location)
+        for x in scan(self.dir).iterdirs(True):
+            os.unlink(x.location)
+
+        ensure_dirs(pjoin(self.dir, "etc"))
+        open(pjoin(self.dir, "etc/ld.so.conf"), "w").write(
+            "\n".join('/' + x for x in dirs))
+        # force directory mtime to 1s less.
+        past = int(time.time()) - 1
+        if mkdirs:
+            for x in dirs:
+                ensure_dirs(pjoin(self.dir, x))
+                os.utime(pjoin(self.dir, x), (past, past))
+
+        self.trigger = self.kls()
+        self.engine.phase = 'pre_%s' % hook
+        self.engine.mode = mode
+        self.trigger(self.engine, {})
+        self.assertFalse(self.trigger._passed_in_offset)
+        for x in touches:
+            open(pjoin(self.dir, x.lstrip(os.path.sep)), "w")
+            if same_mtime:
+                os.utime(pjoin(self.dir, x.lstrip(os.path.sep)),
+                    (past, past))
+        if same_mtime:
+            for x in set(os.path.dirname(x) for x in touches):
+                os.utime(pjoin(self.dir, x), (past, past))
+
+        self.engine.phase = 'post_%s' % hook
+        self.trigger(self.engine, {})
+        if ran:
+            self.assertEqual(len(self.trigger._passed_in_offset), 1)
+        else:
+            self.assertEqual(len(self.trigger._passed_in_offset), 0)
+
+    def test_trigger(self):
+        # ensure it doesn't explode for missing dirs.
+        self.assertTrigger([], False, mkdirs=False)
+        self.assertTrigger([], False)
+        self.assertTrigger(['test-lib/foon'], True)
+        self.assertTrigger(['test-lib/foon'], False, same_mtime=True)

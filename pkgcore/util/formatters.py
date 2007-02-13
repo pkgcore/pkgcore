@@ -240,7 +240,7 @@ class PlainTextFormatter(Formatter):
                             bit = arg[:space]
                             # Omit the space we split on.
                             arg = arg[space+1:]
-                        if isinstance(bit, unicode):
+                        if is_unicode:
                             bit = bit.encode(self.encoding, 'replace')
                         self.stream.write(bit)
                         self.stream.write('\n')

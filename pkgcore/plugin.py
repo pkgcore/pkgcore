@@ -108,7 +108,7 @@ def initialize_cache(package):
                     # try to continue.
                     logger.exception('plugin import failed')
                 else:
-                    keys = set(getattr(module, 'pkgcore_plugins', {}))
+                    keys = set(getattr(module, 'pkgcore_plugins', ()))
                     actual_cache[modname] = (mtime, keys)
         # Cache is also stale if it sees entries that are no longer there.
         for key in stored_cache:

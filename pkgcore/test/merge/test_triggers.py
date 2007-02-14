@@ -342,7 +342,7 @@ class Test_ldconfig(mixins.TempDirMixin, TestCase):
 
     def test_trigger(self):
         # ensure it doesn't explode for missing dirs.
-#        self.assertTrigger([], False, mkdirs=False)
-#        self.assertTrigger([], False)
+        self.assertTrigger([], False, mkdirs=False)
+        self.assertTrigger([], False)
         self.assertTrigger(['test-lib/foon'], True)
-#        self.assertTrigger(['test-lib/foon'], False, same_mtime=True)
+        self.assertTrigger(['test-lib/foon'], False, same_mtime=True)

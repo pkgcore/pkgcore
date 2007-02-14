@@ -474,3 +474,12 @@ END-INFO-DIR-ENTRY
         l = self.run_trigger('post_merge', [self.dir])
         self.assertEqual(len(l), 1)
         self.assertIn('tiza grande.info', l[0])
+
+        # verify it holds off on info regen till after unmerge for replaces.
+        self.reset_objects(mode=const.REPLACE_MODE)
+        self.assertFalse(self.run_trigger('pre_merge', []))
+        self.assertFalse(self.run_trigger('post_merge', []))
+        self.assertFalse(self.run_trigger('pre_unmerge', []))
+        os.unlink(pjoin(self.dir, "tiza grande.info"))
+        self.assertFalse(self.run_trigger('post_unmerge', [self.dir]))
+        

@@ -223,6 +223,17 @@ class mtime_watcher(object):
         return False
 
 
+    @mtime_floats
+    def get_changes(self, locations=None, stat_func=os.stat):
+        if locations is None:
+            locations = self.locations
+
+        for x in self._scan_mtimes(locations, stat_func):
+            if x not in self.saved_mtimes or \
+                self.saved_mtimes[x].mtime != x.mtime:
+                yield x
+
+
 class ldconfig(base):
 
     required_csets = ()
@@ -270,8 +281,6 @@ class ldconfig(base):
 
     def trigger(self, engine):
         self.offset = engine.offset
-        if engine.offset is None:
-            self.offset = '/'
 
         locations = self.read_ld_so_conf(engine.offset)
         if engine.phase.startswith('pre_'):
@@ -302,7 +311,7 @@ class InfoRegen(base):
     locations = ('/usr/share/info',)
 
     def __init__(self):
-        self.saved_mtimes = contents.contentsSet()
+        self.saved_mtimes = mtime_watcher()
 
     def get_binary_path(self):
         try:
@@ -316,31 +325,27 @@ class InfoRegen(base):
         if bin_path is None:
             return
 
+        offset = engine.offset
+
+        locs = [pjoin(offset, x.lstrip(os.path.sep)) for x in self.locations]
+
         if engine.phase.startswith('pre_'):
-            self.saved_mtimes = get_dir_mtimes(self.locations)
+            self.saved_mtimes.set_state(locs)
             return
         elif engine.phase == 'post_merge' and \
             engine.mode == const.REPLACE_MODE:
             # skip post_merge for replace.
             # we catch it on unmerge...
             return
-        new_mtimes = get_dir_mtimes(self.locations)
 
-        for x in self.saved_mtimes.difference(new_mtimes):
-            # locations to wipe the dir file from.
-            try:
-                os.remove(x)
-            except OSError:
-                # don't care...
-                continue
+        regens = set(self.saved_mtimes.get_changes(locs))
+        # force regeneration of any directory lacking the info index.
+        regens.update(x for x in locs if not os.path.isfile(pjoin(x, 'dir')))
 
-        # wiped the oldies.  now force updates.
         bad = []
-        for x in new_mtimes:
-            if x not in self.saved_mtimes or \
-                self.saved_mtimes[x].mtime != x.mtime:
-                bad.extend(self.regen(bin_path, x.location))
-        self.saved_mtimes = new_mtimes
+        for x in self.saved_mtimes.get_changes(locations):
+            bad.extend(self.regen(bin_path, x.location))
+
         if bad and engine.observer is not None:
             engine.observer.warn("bad info files: %r" % sorted(bad))
 
@@ -349,9 +354,9 @@ class InfoRegen(base):
         files = listdir_files(basepath)
 
         # wipe old indexes.
-        for x in set(ignores).difference(files):
+        for x in set(ignores).intersection(files):
             os.remove(pjoin(basepath, x))
-
+            
         index = pjoin(basepath, 'dir')
         for x in files:
             if x in ignores:

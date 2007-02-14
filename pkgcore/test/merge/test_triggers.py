@@ -6,7 +6,8 @@ from pkgcore.fs import fs, contents
 from pkgcore.fs.livefs import gen_obj, scan
 from pkgcore.util.currying import partial
 from pkgcore.util.osutils import pjoin, ensure_dirs
-from pkgcore.test import TestCase, mixins
+from pkgcore import spawn
+from pkgcore.test import TestCase, SkipTest, mixins
 import os, shutil, time
 from math import floor, ceil
 
@@ -247,30 +248,26 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
             os.stat_float_times(cur)
 
 
-def castrate_ldconfig(base_kls):
-    class castrated_ldconfig(base_kls):
+def castrate_trigger(base_kls):
+    class castrated_trigger(base_kls):
 
         def __init__(self, *args, **kwargs):
             self._passed_in_offset = []
-            triggers.ldconfig.__init__(self, *args, **kwargs)
+            base_kls.__init__(self, *args, **kwargs)
     
         def regen(self, offset):
             self._passed_in_offset.append(offset)
 
-    return castrated_ldconfig
+    return castrated_trigger
 
 
-class Test_ldconfig(mixins.TempDirMixin, TestCase):
-
-    # use the kls indirection for when *bsd version of ldconfig trigger
-    # is derived; will be pretty much the same, sans the trigger call.
-    kls = castrate_ldconfig(triggers.ldconfig)
-
+class trigger_mixin(mixins.TempDirMixin):
+    
     def setUp(self):
         mixins.TempDirMixin.setUp(self)
-        self.reset_objs()
+        self.reset_objects()
 
-    def reset_objs(self):
+    def reset_objects(self):
         self.engine = fake_engine(offset=self.dir)
         self.trigger = self.kls()
 
@@ -279,6 +276,14 @@ class Test_ldconfig(mixins.TempDirMixin, TestCase):
         tested = sorted(tested)
         self.assertEqual(expected, tested,
             msg="expected %r, got %r" % (expected, tested))
+
+
+class Test_ldconfig(trigger_mixin, TestCase):
+
+    # use the kls indirection for when *bsd version of ldconfig trigger
+    # is derived; will be pretty much the same, sans the trigger call.
+
+    kls = castrate_trigger(triggers.ldconfig)
 
     def test_read_ld_so_conf(self):
         # test the defaults first.  should create etc and the file.
@@ -316,7 +321,7 @@ class Test_ldconfig(mixins.TempDirMixin, TestCase):
                 ensure_dirs(pjoin(self.dir, x))
                 os.utime(pjoin(self.dir, x), (past, past))
 
-        self.trigger = self.kls()
+        self.reset_objects()
         self.engine.phase = 'pre_%s' % hook
         self.engine.mode = mode
         self.trigger(self.engine, {})
@@ -346,3 +351,58 @@ class Test_ldconfig(mixins.TempDirMixin, TestCase):
         self.assertTrigger([], False)
         self.assertTrigger(['test-lib/foon'], True)
         self.assertTrigger(['test-lib/foon'], False, same_mtime=True)
+
+
+class TestInfoRegen(trigger_mixin, TestCase):
+
+    raw_kls = triggers.InfoRegen
+    kls = castrate_trigger(raw_kls)
+
+    info_data = \
+"""INFO-DIR-SECTION Network Applications
+START-INFO-DIR-ENTRY
+* Wget: (wget).         The non-interactive network downloader.
+END-INFO-DIR-ENTRY
+"""
+
+    def reset_objects(self):
+        trigger_mixin.reset_objects(self)
+        self.kls.location = self.dir
+
+    def test_binary_path(self):
+        existing = os.environ.get("PATH", self)
+        try:
+            try:
+                path = spawn.find_binary('install-info')
+            except spawn.CommandNotFound:
+                path = None
+            self.assertEqual(path, self.trigger.get_binary_path())
+            if path is not self:
+                os.environ["PATH"] = ""
+                self.assertEqual(None, self.trigger.get_binary_path())
+        finally:
+            if existing is self:
+                os.environ.pop("PATH", None)
+            else:
+                os.environ["PATH"] = existing
+
+    def test_regen(self):
+        o = self.raw_kls()
+        path = o.get_binary_path()
+        if path is None:
+            raise SkipTest("can't verify regen behaviour due to install-info "
+                "not being available")
+        open(pjoin(self.dir, "foo.info"), 'w').write(self.info_data)
+        # no issues.
+        self.assertEqual(list(o.regen(path, self.dir)), [])
+        self.assertTrue(os.path.exists(pjoin(self.dir, 'dir')),
+            msg="info dir file wasn't created")
+        
+        # drop the last line, verify it returns that file.
+        open(pjoin(self.dir, "foo2.info"), 'w').write(
+            '\n'.join(self.info_data.splitlines()[:-1]))
+        os.unlink(pjoin(self.dir, 'dir'))
+        self.assertEqual(list(o.regen(path, self.dir)),
+            [pjoin(self.dir, 'foo2.info')])
+        self.assertTrue(os.path.exists(pjoin(self.dir, 'dir')),
+            msg="info dir file wasn't created")

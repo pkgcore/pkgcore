@@ -127,7 +127,7 @@ class base(object):
             self.required_csets, id(self))
 
 
-def get_dir_mtimes(locations, stat_func=os.stat):
+class mtime_watcher(object):
     """
     passed a list of locations, return a L{contents.contentsSet} containing
     those that are directories.
@@ -148,13 +148,28 @@ def get_dir_mtimes(locations, stat_func=os.stat):
     @param stat_func: stat'er to use.  defaults to os.stat
     @returns: L{contents.contetsSet} of directories.
     """
-    cur = os.stat_float_times()
-    try:
-        os.stat_float_times(True)
-        mtimes = []
+
+    def __init__(self):
+        self.saved_mtimes = None
+        self.locations = None
+    
+    def mtime_floats(func):
+        def mtime_floats_wrapper(self, *args, **kwargs):
+            cur = os.stat_float_times()
+            try:
+                os.stat_float_times(True)
+                return func(self, *args, **kwargs)
+            finally:
+                os.stat_float_times(cur)
+        return mtime_floats_wrapper
+    
+    def __nonzeroo(self):
+        return bool(self.saved_mtimes)
+    
+    @staticmethod
+    def _scan_mtimes(locations, stat_func):
         for x in locations:
             try:
-                # we force our own os.stat, instead of genobjs lstat
                 st = stat_func(x)
             except OSError, oe:
                 if not oe.errno == errno.ENOENT:
@@ -162,28 +177,50 @@ def get_dir_mtimes(locations, stat_func=os.stat):
                 continue
             obj = gen_obj(x, stat=st)
             if fs.isdir(obj):
-                mtimes.append(obj)
-    finally:
-        os.stat_float_times(cur)
-    cset = contents.contentsSet(mtimes, mutable=True)
-    now = time.time()
-    resets = [x for x in mtimes if x.mtime > now]
-    past = max(int(now) - 1, 0)
-    for x in resets:
-        cset.add(x.change_attributes(mtime=past))
-        os.utime(x.location, (past, past))
-    if resets and time.time() > ceil(now):
-        time.sleep(1)
-    else:
-        resolution = ceil(now)
-        for x in cset:
-            # the '=' is required; if the fs drops subsecond,
-            # this picks it up.
-            if x.mtime >= resolution:
-                time.sleep(1)
-                break
+                yield obj
+    
+    @mtime_floats
+    def set_state(self, locations, stat_func=os.stat, forced_past=2):
+        self.locations = locations
+        mtimes = list(self._scan_mtimes(locations, stat_func))
 
-    return contents.contentsSet(mtimes)
+        cset = contents.contentsSet(mtimes)
+        now = time.time()
+        resolution = ceil(now)
+        pause_cutoff = floor(now)
+        resets = [x for x in mtimes if x.mtime > pause_cutoff]
+        past = max(pause_cutoff - forced_past, 0)
+        for x in resets:
+            cset.add(x.change_attributes(mtime=past))
+            os.utime(x.location, (past, past))
+        if resets:
+            if floor(time.time()) < resolution:
+                time.sleep(1)
+        else:
+            for x in cset:
+                # the '=' is required; if the fs drops subsecond,
+                # this picks it up.
+                if floor(x.mtime) == pause_cutoff:
+                    time.sleep(1)
+                    break
+
+        self.saved_mtimes = cset
+
+
+    @mtime_floats
+    def check_state(self, locations=None, stat_func=os.stat):
+        if locations is None:
+            locations = self.locations
+
+        new_mtimes = contents.contentsSet(
+            self._scan_mtimes(locations, stat_func))
+
+        if new_mtimes != self.saved_mtimes:
+            return True
+        for x in new_mtimes:
+            if x.mtime != self.saved_mtimes[x].mtime:
+                return True
+        return False
 
 
 class ldconfig(base):
@@ -198,7 +235,7 @@ class ldconfig(base):
 
     def __init__(self, ld_so_conf_path="etc/ld.so.conf"):
         self.ld_so_conf_path = ld_so_conf_path.lstrip(os.path.sep)
-        self.saved_mtimes = contents.contentsSet()
+        self.saved_mtimes = mtime_watcher()
 
     def ld_so_path(self, offset):
         return pjoin(offset, self.ld_so_conf_path)
@@ -236,30 +273,15 @@ class ldconfig(base):
         if engine.offset is None:
             self.offset = '/'
 
+        locations = self.read_ld_so_conf(engine.offset)
         if engine.phase.startswith('pre_'):
-            self.saved_mtimes = get_dir_mtimes(
-                self.read_ld_so_conf(engine.offset))
+            self.saved_mtimes.set_state(locations)
             return
 
-        new_mtimes = get_dir_mtimes(self.read_ld_so_conf(engine.offset))
-
-        # iterate over new, checking mtime first
-        for x in new_mtimes:
-            if x not in self.saved_mtimes or \
-                self.saved_mtimes[x].mtime != x.mtime:
-                break
-        else:
-            # the above implicity is a subset check of new vs old.
-            # since mtimes pass, ensure that old is a subset of new, ie, equal.
-            # if so, skip.
-            if not new_mtimes.difference(self.saved_mtimes):
-                self.saved_mtimes = new_mtimes
-                return
-        self.regen(engine.offset)
-        self.saved_mtimes = new_mtimes
+        if self.saved_mtimes.check_state(locations):
+            self.regen(engine.offset)
 
     def regen(self, offset):
-        print "firing"
         ret = spawn.spawn(["/sbin/ldconfig", "-r", offset], fd_pipes={1:1, 2:2})
         if ret != 0:
             raise errors.TriggerWarning(self,

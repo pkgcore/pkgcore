@@ -186,23 +186,12 @@ class mtime_watcher(object):
 
         cset = contents.contentsSet(mtimes)
         now = time.time()
-        resolution = ceil(now)
         pause_cutoff = floor(now)
-        resets = [x for x in mtimes if x.mtime > pause_cutoff]
         past = max(pause_cutoff - forced_past, 0)
+        resets = [x for x in mtimes if x.mtime > past]
         for x in resets:
             cset.add(x.change_attributes(mtime=past))
             os.utime(x.location, (past, past))
-        if resets:
-            if floor(time.time()) < resolution:
-                time.sleep(1)
-        else:
-            for x in cset:
-                # the '=' is required; if the fs drops subsecond,
-                # this picks it up.
-                if floor(x.mtime) == pause_cutoff:
-                    time.sleep(1)
-                    break
 
         self.saved_mtimes = cset
 

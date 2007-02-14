@@ -338,13 +338,13 @@ class InfoRegen(base):
             # we catch it on unmerge...
             return
 
-        regens = set(self.saved_mtimes.get_changes(locs))
+        regens = set(x.location for x in self.saved_mtimes.get_changes(locs))
         # force regeneration of any directory lacking the info index.
         regens.update(x for x in locs if not os.path.isfile(pjoin(x, 'dir')))
 
         bad = []
-        for x in self.saved_mtimes.get_changes(locations):
-            bad.extend(self.regen(bin_path, x.location))
+        for x in regens:
+            bad.extend(self.regen(bin_path, x))
 
         if bad and engine.observer is not None:
             engine.observer.warn("bad info files: %r" % sorted(bad))

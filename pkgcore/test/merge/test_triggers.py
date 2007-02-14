@@ -5,7 +5,7 @@ from pkgcore.merge import triggers, const
 from pkgcore.fs import fs, contents
 from pkgcore.fs.livefs import gen_obj, scan
 from pkgcore.util.currying import partial
-from pkgcore.util.osutils import pjoin, ensure_dirs
+from pkgcore.util.osutils import pjoin, ensure_dirs, normpath
 from pkgcore import spawn
 from pkgcore.test import TestCase, SkipTest, mixins
 import os, shutil, time
@@ -248,15 +248,21 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
             os.stat_float_times(cur)
 
 
-def castrate_trigger(base_kls):
+def castrate_trigger(base_kls, **kwargs):
     class castrated_trigger(base_kls):
 
-        def __init__(self, *args, **kwargs):
-            self._passed_in_offset = []
-            base_kls.__init__(self, *args, **kwargs)
+        enable_regen = False
+        def __init__(self, *args2, **kwargs2):
+            self._passed_in_args = []
+            base_kls.__init__(self, *args2, **kwargs2)
     
-        def regen(self, offset):
-            self._passed_in_offset.append(offset)
+        def regen(self, *args):
+            self._passed_in_args.append(list(args))
+            if self.enable_regen:
+                return base_kls.regen(self, *args)
+            return []
+
+        locals().update(kwargs)
 
     return castrated_trigger
 
@@ -267,8 +273,8 @@ class trigger_mixin(mixins.TempDirMixin):
         mixins.TempDirMixin.setUp(self)
         self.reset_objects()
 
-    def reset_objects(self):
-        self.engine = fake_engine(offset=self.dir)
+    def reset_objects(self, mode=const.INSTALL_MODE):
+        self.engine = fake_engine(offset=self.dir, mode=mode)
         self.trigger = self.kls()
 
     def assertPaths(self, expected, tested):
@@ -325,7 +331,7 @@ class Test_ldconfig(trigger_mixin, TestCase):
         self.engine.phase = 'pre_%s' % hook
         self.engine.mode = mode
         self.trigger(self.engine, {})
-        self.assertFalse(self.trigger._passed_in_offset)
+        self.assertFalse(self.trigger._passed_in_args)
         resets = set()
         for x in touches:
             fp = pjoin(self.dir, x.lstrip('/'))
@@ -341,9 +347,9 @@ class Test_ldconfig(trigger_mixin, TestCase):
         self.trigger(self.engine, {})
 
         if ran:
-            self.assertEqual(len(self.trigger._passed_in_offset), 1)
+            self.assertEqual(self.trigger._passed_in_args, [[self.dir]])
         else:
-            self.assertEqual(len(self.trigger._passed_in_offset), 0)
+            self.assertEqual(self.trigger._passed_in_args, [])
 
     def test_trigger(self):
         # ensure it doesn't explode for missing dirs.
@@ -356,7 +362,9 @@ class Test_ldconfig(trigger_mixin, TestCase):
 class TestInfoRegen(trigger_mixin, TestCase):
 
     raw_kls = triggers.InfoRegen
-    kls = castrate_trigger(raw_kls)
+    @property
+    def kls(self):
+        return castrate_trigger(self.raw_kls, locations=['/'])
 
     info_data = \
 """INFO-DIR-SECTION Network Applications
@@ -365,9 +373,9 @@ START-INFO-DIR-ENTRY
 END-INFO-DIR-ENTRY
 """
 
-    def reset_objects(self):
-        trigger_mixin.reset_objects(self)
-        self.kls.location = self.dir
+    def reset_objects(self, **kwargs):
+        trigger_mixin.reset_objects(self, **kwargs)
+        self.trigger.location = [self.dir]
 
     def test_binary_path(self):
         existing = os.environ.get("PATH", self)
@@ -406,3 +414,63 @@ END-INFO-DIR-ENTRY
             [pjoin(self.dir, 'foo2.info')])
         self.assertTrue(os.path.exists(pjoin(self.dir, 'dir')),
             msg="info dir file wasn't created")
+
+    def run_trigger(self, phase, expected_regen=[]):
+        l = []
+        class foo:
+            warn = staticmethod(l.append)
+        self.engine.observer = foo()
+        self.trigger._passed_in_args = []
+        self.engine.phase = phase
+        self.trigger(self.engine, {})
+        self.assertEqual(map(normpath, (x[1] for x in self.trigger._passed_in_args)), 
+            map(normpath, expected_regen))
+        return l
+        
+    def test_trigger(self):
+        cur = os.environ.get("PATH", self)
+        try:
+            os.environ.pop("PATH", None)
+            # shouldn't run if the binary is missing
+            # although it should warn, and this code will explode when it does.
+            self.assertEqual(None, self.trigger(self.engine, {}))
+        finally:
+            if cur is not self:
+                os.environ["PATH"] = cur
+
+        # verify it runs when dir is missing.
+        # doesn't create the file since no info files.
+        self.reset_objects()
+        self.assertFalse(self.run_trigger('pre_merge', []))
+        self.assertFalse(self.run_trigger('post_merge', [self.dir]))
+
+        # and an info, and verify it generated.
+        open(pjoin(self.dir, 'foo.info'), 'w').write(self.info_data)
+        self.reset_objects()
+        self.trigger.enable_regen = True
+        self.assertFalse(self.run_trigger('pre_merge', []))
+        self.assertFalse(self.run_trigger('post_merge', [self.dir]))
+
+        # verify it doesn't; mtime is fine
+        self.reset_objects()
+        self.trigger.enable_regen = True
+        self.assertFalse(self.run_trigger('pre_merge', []))
+        self.assertFalse(self.run_trigger('post_merge', []))
+
+        # verify it handles quoting properly, and that it ignores 
+        # complaints about duplicates.
+        self.reset_objects()
+        self.trigger.enable_regen = True
+        self.assertFalse(self.run_trigger('pre_merge', []))
+        open(pjoin(self.dir, "blaidd drwg.info"), "w").write(self.info_data)
+        self.assertFalse(self.run_trigger('post_merge', [self.dir]))
+        
+        # verify it passes back failures.
+        self.reset_objects()
+        self.trigger.enable_regen = True
+        self.assertFalse(self.run_trigger('pre_merge', []))
+        open(pjoin(self.dir, "tiza grande.info"), "w").write(
+            '\n'.join(self.info_data.splitlines()[:-1]))
+        l = self.run_trigger('post_merge', [self.dir])
+        self.assertEqual(len(l), 1)
+        self.assertIn('tiza grande.info', l[0])

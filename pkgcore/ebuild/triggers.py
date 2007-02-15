@@ -346,7 +346,7 @@ class collision_protect(triggers.base):
 
         colliding.difference_update(old_cset)
         if colliding:
-            raise errors.BlockModification(
+            raise errors.BlockModification(self,
                 "collision-protect: file(s) already exist: ( %s )" %
                 ', '.join(repr(x) for x in sorted(colliding)))
 

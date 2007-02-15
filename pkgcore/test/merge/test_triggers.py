@@ -2,7 +2,8 @@
 # License: GPL2
 
 from pkgcore.merge import triggers, const
-from pkgcore.fs import fs, contents
+from pkgcore.fs import fs
+from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.livefs import gen_obj, scan
 from pkgcore.util.currying import partial
 from pkgcore.util.osutils import pjoin, ensure_dirs, normpath
@@ -10,7 +11,8 @@ from pkgcore import spawn
 from pkgcore.test import TestCase, SkipTest, mixins
 import os, shutil, time
 from math import floor, ceil
-
+from operator import attrgetter
+from itertools import izip
 
 class fake_trigger(triggers.base):
 
@@ -482,4 +484,67 @@ END-INFO-DIR-ENTRY
         self.assertFalse(self.run_trigger('pre_unmerge', []))
         os.unlink(pjoin(self.dir, "tiza grande.info"))
         self.assertFalse(self.run_trigger('post_unmerge', [self.dir]))
+
+
+class ownership_base(object):
+
+    kls = triggers.fix_uid_perms
+    attr = None
+
+    def test_metadata(self):
+        self.assertEqual(self.kls._engine_types, triggers.INSTALLING_MODES)
+        self.assertEqual(self.kls.required_csets, ('new_cset',))
+        self.assertEqual(self.kls._hooks, ('sanity_check',))
+
+    @property
+    def trigger(self):
+        return self.kls(1, 2)
+
+    def assertContents(self, cset=()):
+        orig = sorted(cset)
+        new = contentsSet(orig)
+        self.trigger(fake_engine(mode=const.INSTALL_MODE),
+            {'new_cset':new})
+        new = sorted(new)
+        self.assertEqual(len(orig), len(new))
+        for x, y in izip(orig, new):
+            self.assertEqual(orig.__class__, new.__class__)
+            for attr in x.__attrs__:
+                if self.attr == attr:
+                    self.assertEqual(getattr(y, attr), 2)
+                elif attr != 'chksums':
+                    # abuse self as unique singleton.
+                    self.assertEqual(getattr(x, attr, self),
+                        getattr(y, attr, self))
         
+    def test_trigger(self):
+        self.assertContents()
+        self.assertContents([fs.fsFile("/foon", mode=0700, uid=2, gid=1,
+            strict=False)])
+        self.assertContents([fs.fsFile("/foon", mode=0700, uid=1, gid=1,
+            strict=False)])
+        self.assertContents([fs.fsFile("/foon", mode=0700, uid=1, gid=2,
+            strict=False)])
+        self.assertContents([fs.fsFile("/blarn", mode=0770, uid=2, gid=2,
+            strict=False),
+            fs.fsDir("/dir", mode=0500, uid=2, gid=2, strict=False)])
+        self.assertContents([fs.fsFile("/blarn", mode=0770, uid=2, gid=2,
+            strict=False),
+            fs.fsDir("/dir", mode=0500, uid=1, gid=2, strict=False)])
+        self.assertContents([fs.fsFile("/blarn", mode=0770, uid=2, gid=2,
+            strict=False),
+            fs.fsDir("/dir", mode=0500, uid=1, gid=1, strict=False)])
+
+
+class Test_fix_uid_perms(ownership_base, TestCase):
+    
+    kls = triggers.fix_uid_perms
+    attr = 'uid'
+    
+
+class Test_fix_gid_perms(ownership_base, TestCase):
+
+    kls = triggers.fix_gid_perms
+    attr = 'gid'
+
+

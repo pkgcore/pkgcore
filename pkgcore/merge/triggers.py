@@ -440,11 +440,9 @@ class fix_set_bits(base):
 
     def trigger(self, engine, cset):
         reporter = engine.reporter
-        l = []
-        for x in cset:
-            # check for either sgid or suid, then write.
-            if (x.mode & 06000) and (x.mode & 0002):
-                l.append(x)
+        # if s(uid|gid) *and* world writable...
+        l = [x for x in cset if
+            (x.mode & 06000) and (x.mode & 0002)]
 
         if reporter is not None:
             for x in l:

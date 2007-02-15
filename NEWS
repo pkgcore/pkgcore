@@ -3,6 +3,14 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
+pkgcore 0.x:
+
+* refactoring of trigger implementations- cleanup and tests.  Additionally,
+  eliminate a potential mtime based frace if the underlying fs (or python version)
+  doesn't do subsecond resolution.
+
+
 pkgcore 0.2.4:
 
 * support for ** in package.keywords

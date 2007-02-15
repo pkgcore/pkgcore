@@ -240,14 +240,12 @@ pkgcore_join(PyObject *self, PyObject *args)
 
 static inline int
 pkgcore_read_open_and_stat(PyObject *path,
-    int *fd, Py_ssize_t *size)
+    int *fd, struct stat *st)
 {
-    struct stat st;
     errno = 0;
     if((*fd = open(PyString_AsString(path), O_RDONLY|O_LARGEFILE)) >= 0) {
-        int ret = fstat(*fd, &st);
+        int ret = fstat(*fd, st);
         if(!ret) {
-            *size = st.st_size;
             return 0;
         }
     }
@@ -285,10 +283,11 @@ pkgcore_readfile(PyObject *self, PyObject *args)
         &swallow_missing)) {
         return NULL;
     }
-    Py_ssize_t size;
+//    Py_ssize_t size;
     int fd;
+    struct stat st;
     Py_BEGIN_ALLOW_THREADS
-    if(pkgcore_read_open_and_stat(path, &fd, &size)) {
+    if(pkgcore_read_open_and_stat(path, &fd, &st)) {
         Py_BLOCK_THREADS
         if(handle_failed_open_stat(fd, path, swallow_missing))
             return NULL;
@@ -297,12 +296,12 @@ pkgcore_readfile(PyObject *self, PyObject *args)
     Py_END_ALLOW_THREADS
 
     int ret = 0;
-    PyObject *data = PyString_FromStringAndSize(NULL, size);
+    PyObject *data = PyString_FromStringAndSize(NULL, st.st_size);
 
     Py_BEGIN_ALLOW_THREADS
     errno = 0;
     if(data) {
-        ret = size != read(fd, PyString_AS_STRING(data), size) ? 1 : 0;
+        ret = read(fd, PyString_AS_STRING(data), st.st_size) != st.st_size ? 1 : 0;
     }
     ret += close(fd);
     Py_END_ALLOW_THREADS
@@ -341,12 +340,13 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     } 
     
     int fd;
-    Py_ssize_t size;
+    struct stat st;
+//    Py_ssize_t size;
     void *ptr = NULL;
     PyObject *fallback = NULL;
     Py_BEGIN_ALLOW_THREADS
     errno = 0;
-    if(pkgcore_read_open_and_stat(path, &fd, &size)) {
+    if(pkgcore_read_open_and_stat(path, &fd, &st)) {
         Py_BLOCK_THREADS
 
         if(handle_failed_open_stat(fd, path, swallow_missing))
@@ -364,18 +364,18 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         Py_DECREF(data);
         return tmp;
     }
-    if(size >= 0x4000) {
-        ptr = (char *)mmap(NULL, size, PROT_READ,
+    if(st.st_size >= 0x4000) {
+        ptr = (char *)mmap(NULL, st.st_size, PROT_READ,
             MAP_SHARED|MAP_NORESERVE|MAP_POPULATE, fd, 0);
         if(ptr == MAP_FAILED)
             ptr = NULL;
     } else {
         Py_BLOCK_THREADS
-        fallback = PyString_FromStringAndSize(NULL, size);
+        fallback = PyString_FromStringAndSize(NULL, st.st_size);
         Py_UNBLOCK_THREADS
         if(fallback) {
             errno = 0;
-            ptr = (size != read(fd, PyString_AS_STRING(fallback), size)) ?
+            ptr = (read(fd, PyString_AS_STRING(fallback), st.st_size) != st.st_size) ?
                 MAP_FAILED : NULL;
         }
         int ret = close(fd);
@@ -403,7 +403,7 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     if(!self) {
         // you've got to be kidding me...
         if(ptr) {
-            munmap(ptr, size);
+            munmap(ptr, st.st_size);
             close(fd);
             errno = 0;
         } else {
@@ -420,7 +420,7 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         self->start = PyString_AS_STRING(fallback);
         self->fd = -1;
     }
-    self->end = self->start + size;
+    self->end = self->start + st.st_size;
 
     if(strip_newlines) {
         // die...

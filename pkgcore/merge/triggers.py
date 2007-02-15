@@ -477,13 +477,13 @@ class detect_world_writable(base):
 
         l = []
         for x in cset:
-            if x.mode & 0001:
+            if x.mode & 0002:
                 l.append(x)
         if reporter is not None:
             for x in l:
-                reporter.warn("world writable file: %s", (x.location,))
-        if fix_perms:
-            cset.update(x.change_attributes(mode=x.mode & ~01) for x in l)
+                reporter.warn("world writable file: %s" % x.location)
+        if self.fix_perms:
+            cset.update(x.change_attributes(mode=x.mode & ~0002) for x in l)
 
 
 class PruneFiles(base):

@@ -255,8 +255,7 @@ pkgcore_read_open_and_stat(PyObject *path,
 }
 
 static inline int
-handle_failed_open_stat(int fd, Py_ssize_t size, PyObject *path,
-PyObject *swallow_missing)
+handle_failed_open_stat(int fd, PyObject *path,PyObject *swallow_missing)
 {
     if(fd < 0) {
         if(errno == ENOENT) {
@@ -291,7 +290,7 @@ pkgcore_readfile(PyObject *self, PyObject *args)
     Py_BEGIN_ALLOW_THREADS
     if(pkgcore_read_open_and_stat(path, &fd, &size)) {
         Py_BLOCK_THREADS
-        if(handle_failed_open_stat(fd, size, path, swallow_missing))
+        if(handle_failed_open_stat(fd, path, swallow_missing))
             return NULL;
         Py_RETURN_NONE;
     }
@@ -343,14 +342,14 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     
     int fd;
     Py_ssize_t size;
-    void *ptr;
+    void *ptr = NULL;
     PyObject *fallback = NULL;
     Py_BEGIN_ALLOW_THREADS
     errno = 0;
     if(pkgcore_read_open_and_stat(path, &fd, &size)) {
         Py_BLOCK_THREADS
 
-        if(handle_failed_open_stat(fd, size, path, swallow_missing))
+        if(handle_failed_open_stat(fd, path, swallow_missing))
             return NULL;
 
         // return an empty tuple, and let them iter over that.

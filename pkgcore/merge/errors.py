@@ -19,6 +19,10 @@ class ModificationError(Exception):
 class BlockModification(ModificationError):
     """Merging cannot proceed"""
 
+    def __str__(self):
+        return "Modification was blocked by %s: %s" % (
+            self.trigger.__class__.__name__, self.msg)
+
 class TriggerUnknownCset(ModificationError):
     """Trigger's required content set isn't known"""
 

@@ -278,6 +278,8 @@ class package_factory(metadata.factory):
                     continue
                 if long(data.pop("_mtime_", -1)) != pkg._mtime_ or \
                     self._invalidated_eclasses(data, pkg):
+                    if not cache.readonly:
+                        del cache[pkg.cpvstr]
                     continue
                 return data
 

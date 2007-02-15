@@ -486,10 +486,16 @@ END-INFO-DIR-ENTRY
         self.assertFalse(self.run_trigger('post_unmerge', [self.dir]))
 
 
-class ownership_base(object):
+class single_attr_change_base(object):
 
     kls = triggers.fix_uid_perms
     attr = None
+
+    bad_val = 1
+
+    @staticmethod
+    def good_val(val):
+        return 2
 
     def test_metadata(self):
         self.assertEqual(self.kls._engine_types, triggers.INSTALLING_MODES)
@@ -503,7 +509,7 @@ class ownership_base(object):
     def assertContents(self, cset=()):
         orig = sorted(cset)
         new = contentsSet(orig)
-        self.trigger(fake_engine(mode=const.INSTALL_MODE),
+        self.trigger(fake_engine(mode=const.INSTALL_MODE, reporter=None),
             {'new_cset':new})
         new = sorted(new)
         self.assertEqual(len(orig), len(new))
@@ -511,7 +517,11 @@ class ownership_base(object):
             self.assertEqual(orig.__class__, new.__class__)
             for attr in x.__attrs__:
                 if self.attr == attr:
-                    self.assertEqual(getattr(y, attr), 2)
+                    val = getattr(x, attr)
+                    if self.bad_val is not None and val == self.bad_val:
+                        self.assertEqual(self.good_val(val), getattr(y, attr))
+                    else:
+                        self.assertEqual(self.good_val(val), getattr(y, attr))
                 elif attr != 'chksums':
                     # abuse self as unique singleton.
                     self.assertEqual(getattr(x, attr, self),
@@ -519,32 +529,43 @@ class ownership_base(object):
         
     def test_trigger(self):
         self.assertContents()
-        self.assertContents([fs.fsFile("/foon", mode=0700, uid=2, gid=1,
+        self.assertContents([fs.fsFile("/foon", mode=0644, uid=2, gid=1,
             strict=False)])
-        self.assertContents([fs.fsFile("/foon", mode=0700, uid=1, gid=1,
+        self.assertContents([fs.fsFile("/foon", mode=0646, uid=1, gid=1,
             strict=False)])
-        self.assertContents([fs.fsFile("/foon", mode=0700, uid=1, gid=2,
+        self.assertContents([fs.fsFile("/foon", mode=04766, uid=1, gid=2,
             strict=False)])
-        self.assertContents([fs.fsFile("/blarn", mode=0770, uid=2, gid=2,
+        self.assertContents([fs.fsFile("/blarn", mode=02700, uid=2, gid=2,
             strict=False),
             fs.fsDir("/dir", mode=0500, uid=2, gid=2, strict=False)])
-        self.assertContents([fs.fsFile("/blarn", mode=0770, uid=2, gid=2,
+        self.assertContents([fs.fsFile("/blarn", mode=02776, uid=2, gid=2,
             strict=False),
-            fs.fsDir("/dir", mode=0500, uid=1, gid=2, strict=False)])
-        self.assertContents([fs.fsFile("/blarn", mode=0770, uid=2, gid=2,
+            fs.fsDir("/dir", mode=02777, uid=1, gid=2, strict=False)])
+        self.assertContents([fs.fsFile("/blarn", mode=06772, uid=2, gid=2,
             strict=False),
-            fs.fsDir("/dir", mode=0500, uid=1, gid=1, strict=False)])
+            fs.fsDir("/dir", mode=04774, uid=1, gid=1, strict=False)])
 
 
-class Test_fix_uid_perms(ownership_base, TestCase):
+class Test_fix_uid_perms(single_attr_change_base, TestCase):
     
     kls = triggers.fix_uid_perms
     attr = 'uid'
     
 
-class Test_fix_gid_perms(ownership_base, TestCase):
+class Test_fix_gid_perms(single_attr_change_base, TestCase):
 
     kls = triggers.fix_gid_perms
     attr = 'gid'
 
 
+class Test_fix_set_bits(single_attr_change_base, TestCase):
+
+    kls = triggers.fix_set_bits
+    trigger = property(lambda self:self.kls())
+    attr = 'mode'
+
+    @staticmethod
+    def good_val(val):
+        if val & 06000:
+            return val & ~00002
+        return val

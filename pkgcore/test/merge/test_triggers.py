@@ -5,7 +5,7 @@ from pkgcore.merge import triggers, const
 from pkgcore.fs import fs
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.livefs import gen_obj, scan
-from pkgcore.util.currying import partial
+from pkgcore.util.currying import partial, post_curry
 from pkgcore.util.osutils import pjoin, ensure_dirs, normpath
 from pkgcore import spawn
 from pkgcore.test import TestCase, SkipTest, mixins
@@ -43,6 +43,12 @@ class fake_engine(object):
         if hook_point in getattr(self, "blocked_hooks", []):
             raise KeyError(hook_point)
         self._triggers.append((hook_point, trigger, required_csets))
+
+
+class fake_reporter(object):
+    def __init__(self, **kwargs):
+        for k, v in kwargs.iteritems():
+            setattr(self, k, v)
 
 
 class TestBase(TestCase):
@@ -603,12 +609,10 @@ class Test_detect_world_writable(single_attr_change_base, TestCase):
             self.kls(fix_perms=True).trigger, fake_engine(), None)
 
     def test_observer_warn(self):
-        self._trigger_override = self.kls()
         warnings = []
-
-        class observer:
-            warn = staticmethod(lambda a: warnings.append(a))
-        engine = fake_engine(reporter=observer())
+        engine = fake_engine(reporter=fake_reporter(warn=warnings.append))
+        
+        self._trigger_override = self.kls()
         
         def run(fs_objs, fix_perms=False):
             self.kls(fix_perms=fix_perms).trigger(engine, 
@@ -630,4 +634,49 @@ class Test_detect_world_writable(single_attr_change_base, TestCase):
         self.assertIn('/dar', ' '.join(warnings))
         self.assertIn('/bar', ' '.join(warnings))
         self.assertNotIn('/far', ' '.join(warnings))
+        
+
+class TestPruneFiles(TestCase):
+    
+    kls = triggers.PruneFiles
+    
+    def test_metadata(self):
+        self.assertEqual(self.kls.required_csets, ('new_cset',))
+        self.assertEqual(self.kls._hooks, ('pre_merge',))
+        self.assertEqual(self.kls._engine_types, triggers.INSTALLING_MODES)
+    
+    def test_it(self):
+        orig = contentsSet([
+            fs.fsFile('/cheddar', strict=False),
+            fs.fsFile('/sporks-suck', strict=False),
+            fs.fsDir('/foons-rule', strict=False),
+            fs.fsDir('/mango', strict=False)
+        ])
+        
+        engine = fake_engine(mode=const.INSTALL_MODE)
+        def run(func):
+            new = contentsSet(orig)
+            self.kls(func)(engine, {'new_cset':new})
+            return new
+
+        self.assertEqual(orig, run(lambda s:False))
+        self.assertEqual([], run(post_curry(isinstance, fs.fsDir)).dirs())
+        self.assertEqual(orig.files(),
+            run(post_curry(isinstance, fs.fsDir)).dirs(True))
+
+        # check noisyness.
+        info = []
+        engine = fake_engine(reporter=fake_reporter(info=info.append),
+            mode=const.REPLACE_MODE)
+        
+        run(lambda s:False)
+        self.assertFalse(info)
+        run(post_curry(isinstance, fs.fsDir))
+        self.assertEqual(len(info), 2)
+
+        # ensure only the relevant files show.
+        self.assertNotIn('/cheddar', ' '.join(info))
+        self.assertNotIn('/sporks-suck', ' '.join(info))
+        self.assertIn('/foons-rule', ' '.join(info))
+        self.assertIn('/mango', ' '.join(info))
         

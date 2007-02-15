@@ -501,12 +501,8 @@ class PruneFiles(base):
         self.sentinel = sentinel_func
 
     def trigger(self, engine, cset):
-        f = self.sentinel
-        removal = [x for x in cset if f(x)]
-        noise = engine.reporter
-        if not noise:
-            cset.difference_update(removal)
-        else:
+        removal = filter(self.sentinel, cset)
+        if engine.reporter:
             for x in removal:
-                noise.info("pruning: %s", (x.location,))
-                cset.discard(x)
+                engine.reporter.info("pruning: %s" % x.location)
+        cset.difference_update(removal)

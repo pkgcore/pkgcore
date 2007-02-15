@@ -32,6 +32,7 @@ class fake_trigger(triggers.base):
 class fake_engine(object):
 
     def __init__(self, **kwargs):
+        kwargs.setdefault("reporter", None)
         self._triggers = []
         for k, v in kwargs.iteritems():
             if callable(v):
@@ -509,7 +510,7 @@ class single_attr_change_base(object):
     def assertContents(self, cset=()):
         orig = sorted(cset)
         new = contentsSet(orig)
-        self.trigger(fake_engine(mode=const.INSTALL_MODE, reporter=None),
+        self.trigger(fake_engine(mode=const.INSTALL_MODE),
             {'new_cset':new})
         new = sorted(new)
         self.assertEqual(len(orig), len(new))
@@ -569,3 +570,64 @@ class Test_fix_set_bits(single_attr_change_base, TestCase):
         if val & 06000:
             return val & ~00002
         return val
+
+
+class Test_detect_world_writable(single_attr_change_base, TestCase):
+
+    kls = triggers.detect_world_writable
+    _trigger_override = None
+
+    attr = 'mode'
+
+    @property
+    def trigger(self):
+        if self._trigger_override is None:
+            return self.kls(fix_perms=True)
+        return self._trigger_override()
+
+    def good_val(self, val):
+        self.assertEqual(self._trigger_override, None,
+            msg="bug in test code; good_val should not be invoked when a "
+                "trigger override is in place.")
+        return val & ~0002            
+
+    def test_lazyness(self):
+        # ensure it doesn't even look if it won't make noise, and no reporter
+        # cset is intentionally *not* a contentset; it'll explode it it tries
+        # to access it.
+        self.kls().trigger(fake_engine(), None)
+        # now verify that the explosion would occur if either settings are on.
+        self.assertRaises((AttributeError, TypeError),
+            self.kls().trigger, fake_engine(reporter=object()), None)
+        self.assertRaises((AttributeError, TypeError),
+            self.kls(fix_perms=True).trigger, fake_engine(), None)
+
+    def test_observer_warn(self):
+        self._trigger_override = self.kls()
+        warnings = []
+
+        class observer:
+            warn = staticmethod(lambda a: warnings.append(a))
+        engine = fake_engine(reporter=observer())
+        
+        def run(fs_objs, fix_perms=False):
+            self.kls(fix_perms=fix_perms).trigger(engine, 
+                contentsSet(fs_objs))
+        
+        run([fs.fsFile('/foon', mode=0770, strict=False)])
+        self.assertFalse(warnings)
+        run([fs.fsFile('/foon', mode=0772, strict=False)])
+        self.assertEqual(len(warnings), 1)
+        self.assertIn('/foon', warnings[0])
+        
+        warnings[:] = []
+        
+        run([fs.fsFile('/dar', mode=0776, strict=False),
+            fs.fsFile('/bar', mode=0776, strict=False),
+            fs.fsFile('/far', mode=0770, strict=False)])
+        
+        self.assertEqual(len(warnings), 2)
+        self.assertIn('/dar', ' '.join(warnings))
+        self.assertIn('/bar', ' '.join(warnings))
+        self.assertNotIn('/far', ' '.join(warnings))
+        

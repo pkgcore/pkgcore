@@ -123,6 +123,7 @@ class ProfileNode(object):
     @load_decorator("deprecated", lambda i:i, None)
     def _load_deprecated(self, data):
         if data is not None:
+            data = iter(data)
             try:
                 replacement = data.next().strip()
                 msg = "\n".join(x.lstrip("#").strip()

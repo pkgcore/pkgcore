@@ -109,8 +109,7 @@ class ebd(object):
 
         self.features = set(x.lower() for x in features)
 
-        if "FEATURES" in self.env:
-            del self.env["FEATURES"]
+        self.env["FEATURES"] = ' '.join(sorted(self.features))
 
         expected_ebuild_env(pkg, self.env, env_source_override=self.env_data_source)
 

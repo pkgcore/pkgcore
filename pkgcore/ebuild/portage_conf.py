@@ -105,6 +105,7 @@ def add_sets(config, root, portage_base_dir):
         if e.errno != errno.ENOENT:
             raise
 
+
 def add_profile(config, base_path):
     make_profile = pjoin(base_path, 'make.profile')
     try:
@@ -131,6 +132,25 @@ def add_profile(config, base_path):
             "class": "pkgcore.ebuild.profiles.OnDiskProfile",
             "basepath": pjoin("/", *psplit[:-profile_start]),
             "profile": pjoin(*psplit[-profile_start:])})
+
+
+def add_fetcher(config, conf_dict, distdir):
+    fetchcommand = conf_dict.pop("FETCHCOMMAND")
+    resumecommand = conf_dict.pop("RESUMECOMMAND", fetchcommand)
+
+    # copy it to prevent modification.
+    fetcher_dict = dict(conf_dict)
+    # map a config arg to an obj arg, pop a few values
+    if "FETCH_ATTEMPTS" in fetcher_dict:
+        fetcher_dict["attempts"] = fetcher_dict.pop("FETCH_ATTEMPTS")
+    fetcher_dict.pop("readonly", None)
+    fetcher_dict.update(
+        {"class": "pkgcore.fetch.custom.fetcher",
+            "distdir": distdir,
+            "command": fetchcommand,
+            "resume_command": resumecommand
+        })
+    config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
 
@@ -181,24 +201,6 @@ def config_from_make_conf(location="/etc/"):
     portdir = normpath(conf_dict.pop("PORTDIR").strip())
     portdir_overlays = [
         normpath(x) for x in conf_dict.pop("PORTDIR_OVERLAY", "").split()]
-
-    #fetcher.
-    distdir = normpath(conf_dict.pop("DISTDIR", pjoin(portdir, "distdir")))
-    fetchcommand = conf_dict.pop("FETCHCOMMAND")
-    resumecommand = conf_dict.pop("RESUMECOMMAND", fetchcommand)
-
-    fetcher_dict = dict(conf_dict)
-    # map a config arg to an obj arg, pop a few values
-    if "FETCH_ATTEMPTS" in fetcher_dict:
-        fetcher_dict["attempts"] = fetcher_dict.pop("FETCH_ATTEMPTS")
-    fetcher_dict.pop("readonly", None)
-    fetcher_dict.update(
-        {"class": "pkgcore.fetch.custom.fetcher",
-            "distdir": distdir,
-            "command": fetchcommand,
-            "resume_command": resumecommand
-        })
-    new_config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
     # define the eclasses now.
@@ -354,6 +356,12 @@ def config_from_make_conf(location="/etc/"):
                     'class': 'pkgcore.binpkg.repository.tree',
                     'location': pkgdir})
             default_repos += ('binpkg',)
+
+    # now add the fetcher- we delay it till here to clean out the environ
+    # it passes to the command.
+    # *everything* in the conf_dict must be str values also.
+    distdir = normpath(conf_dict.pop("DISTDIR", pjoin(portdir, "distdir")))
+    add_fetcher(new_config, conf_dict, distdir)
 
     # finally... domain.
     conf_dict.update({

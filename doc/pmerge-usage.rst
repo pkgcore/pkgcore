@@ -14,10 +14,10 @@ Basic Usage
 -----------
 
 ``pmerge -us world``
-  Update world
+  Update world; don't try to update dependencies for already installed
+  packages.
 ``pmerge -uDs world``
-  Update world deeply - the resolver will check the
-  dependencies of each package's dependencies.
+  Update world, trying to update all encountered dependencies/packages.
 ``pmerge -p dev-util/bzrtools``
   Pretend to install bzrtools
 ``pmerge -C \<sys-kernel/gentoo-sources-2.6.19``
@@ -27,11 +27,21 @@ Basic Usage
 
   **Warning:** This can break your system if
   incorrectly used. Check with --pretend before running it. 
+  
+  Additionally, it currently defaults to identifying only whats
+  required for world/system; installed packages don't require their build
+  depends to be satisfied, as such --clean will identify them for removal if
+  they're not runtime depended upon.
+  
+  If you want --clean to preserve your build depends, use the -B option.
+
 
 Sets
 ----
 
-There are five default sets:
+Available sets are dependant upon your configuration- majority of users still
+use make.conf configuration, which has five default sets:
+
 system, world, installed, version-installed, vuln
 
 system:
@@ -86,7 +96,19 @@ New in pkgcore:
 
 --ignore-failures:
 
-  ignore resolution failures
+  ignore resolution/build failures, skipping to the next step.  Think of it
+  as the equiv of --skipfirst, just without the commandline interuption.
+  
+  Goes without saying, this feature should be used with care- primarily useful
+  for a long chain of non critical updates, where a failure is a non issue.
+  
+  Good example of usage is if you want to build mozilla-firefox and openoffice
+  during the night- both take a long while to build (including their deps), and
+  the user is after getting as many packages built for the targets as possible,
+  rather then having the 5th build out of 80 bail out even attempting the other
+  75.
+  
+  Long term, this feature will likely be replaced with a more fine tuned option.
 
 
 --preload-vdb-state:
@@ -125,18 +147,24 @@ No equivalents:
 
 --info:
 
-  pconfig is the closest equivalent.
+  pconfig is the closest equivalent at the moment- rather verbose.
 
 --config:
 
   This may be implemented in pmaint in the future, possible 0.3.
 
---clean:
-
 --prune:
 
-  These aren't yet implemented, use pmerge --clean to get a depclean
-  equivalent.
+  Currently not implemented; portages implementation of it ignores slots,
+  trying to force a max version for each package- this is problematic however
+  since it can remove needed slotted packages that are of a lesser version.
+  
+  Any package that requires slotting (automake for example) generally will
+  be screwed up by emerge --prunes behaviour.
+
+  Long term intention is to implement this functionality safely- effectively
+  try to minimize the resolved dependency graph to minimal number of packages
+  involved.
 
 --resume:
 
@@ -146,8 +174,9 @@ No equivalents:
 
 --metadata:
 
-  Not implemented - we don't do cache transferance as we don't need it.
+  Not implemented- pkgcore doesn't need cache localization.
 
+  If the user is after copying cache data around, pclone_cache can be used.
 
 --fetch-all-uri:
 
@@ -161,7 +190,24 @@ No equivalents:
 
 --getbinpkgonly:
 
-  This is binhost version 1 specific, which won't be implemented in pkgcore.
+  Remote Binhost v1 support will not be implemented in pkgcore, instead
+  favoring the genpkgindex approach Ned Ludd (solar) has created.
+  
+  Reasoning for this comes down to two main reasons-
+
+  * design of v1 allows for collisions in the package namespace, category 
+    is ignored.  Further, this collision isn't easily detectable- pulling
+    mysql-5.0 from the server may get you virtual/mysql-5.0 or dev-db/mysql-5.0
+
+  * design is god awfully slow.  To get the metadata for a binpkg from an HTTP
+    server, requires (roughly) a HEAD request (tbz2 length), ranged GET request
+    to grab the last 16 bytes for the XPAK segment start, another ranged
+    request to pull the metadata.
+    
+    That's per package.  Can cache, but the roundtrips add up quickly.
+  
+  The package namespace collision issue is the main reason why v1 support will
+  not be added to pkgcore; v2 addresses both issues thus is the route we'll go.
 
 --tree:
 
@@ -169,11 +215,13 @@ No equivalents:
 
 --alphabetical:
 
---changelog:
-
 --columns:
 
   These won't be implemented in pkgcore.
+
+--changelog:
+
+  At some point will be accessible via pquery.
 
 Regen
 -----
@@ -192,7 +240,7 @@ Syncing
 =======
 
 ``pmaint sync <reponame>`` will sync a repository. See config doc for syncing
-info.
+info.  No reponame provided, tries to sync all repositories.
 
 Note: You should look at pmaint --help, because at some point, the 'commands'
 for pmaint will be variable and dependant upon the repositories available, 
@@ -208,5 +256,11 @@ Quickpkg
 Note: this is not a --buildpkg equiv, as buildpkg grabs a package prior to
 any preinst mangling, so a quickpkg'ed binpkg's contents can differ from a
 binpkg built with --buildpkg.
+
+Handy backup of existing system-
+``pmaint copy -s vdb -t binpkg '*' --force``
+
+Alternatively, generating binpkgs only if they don't exist-
+``pmaint copy -s vdb -t binpkg '*' --force --ignore-existing``
 
 .. _pquery-usage: pquery-usage.rst

@@ -242,9 +242,6 @@ class ldconfig(base):
 
     def read_ld_so_conf(self, offset):
         fp = self.ld_so_path(offset)
-        basedir = os.path.dirname(fp)
-        if not os.path.exists(basedir):
-            os.mkdir(basedir)
 
         try:
             l = [x.lstrip(os.path.sep) for x in iter_read_bash(fp)]
@@ -256,9 +253,8 @@ class ldconfig(base):
             l = self.default_ld_path
         return [pjoin(offset, x) for x in l]
 
-    @staticmethod
-    def _mk_ld_so_conf(fp):
-        if not ensure_dirs(os.path.basename(fp), mode=0755, minimal=True):
+    def _mk_ld_so_conf(self, fp):
+        if not ensure_dirs(os.path.dirname(fp), mode=0755, minimal=True):
             raise errors.BlockModification(self,
                 "failed creating/setting %s to 0755, root/root for uid/gid" %
                     os.path.basename(fp))

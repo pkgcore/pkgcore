@@ -4,7 +4,7 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-pkgcore 0.2.5:
+pkgcore 0.2.4:
 
 * refactoring of trigger implementations- cleanup and tests.  Additionally,
   eliminate a potential mtime based frace if the underlying fs (or python version)
@@ -23,7 +23,7 @@ pkgcore 0.2.5:
   around.
 
 
-pkgcore 0.2.4:
+pkgcore 0.2.3:
 
 * support for ** in package.keywords
 
@@ -46,9 +46,6 @@ pkgcore 0.2.4:
 * fix regression limiting satisifiers for depends to installed only in corner
   case installed bound cycles; automake/perl specifically trigger this, thus
   most folks should have seen it if using -B.
-
-
-pkgcore 0.2.3:
 
 * Better handling of non-ascii characters in metadata.xml.
 

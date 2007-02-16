@@ -50,7 +50,7 @@ class database(fs_template.FsBased):
         if data is None:
             raise KeyError(cpv)
         try:
-            d = self._parse_data(data, os.stat(path).st_mtime)
+            d = self._parse_data(data, data.mtime)
         except (OSError, ValueError), e:
             raise errors.CacheCorruption(cpv, e)
         return d

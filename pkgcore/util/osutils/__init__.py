@@ -155,6 +155,16 @@ def native_readfile(mypath, none_on_missing=False):
             return None
         raise
 
+class readlines_iter(object):
+    __slots__ = ("iterable", "mtime")
+    def __init__(self, iterable, mtime):
+        self.iterable = iterable
+        self.mtime = mtime
+    
+    def __iter__(self):
+        return self.iterable
+
+
 def native_readlines(mypath, strip_newlines=True, swallow_missing=False,
     none_on_missing=False):
     """
@@ -173,11 +183,14 @@ def native_readlines(mypath, strip_newlines=True, swallow_missing=False,
             raise
         if none_on_missing:
             return None
+        return readlines_iter(iter([]), None)
+        
         return iter([])
 
     if not strip_newlines:
-        return f
-    return (x.rstrip("\n") for x in f)
+        return readlines_iter(f, os.fstat(f.fileno()))
+
+    return readlines_iter((x.strip("\n") for x in f), os.fstat(f.fileno()))
 
 
 try:

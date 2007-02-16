@@ -12,8 +12,8 @@
 
 #define PY_SSIZE_T_CLEAN
 
-#include <Python.h>
-#include "py24-compatibility.h"
+#include "common.h"
+#include <structmember.h>
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -23,6 +23,10 @@
 #ifndef MAP_POPULATE
 #define MAP_POPULATE 0
 #endif
+
+static PyObject *pkgcore_stat_float_times = NULL;
+static PyObject *pkgcore_empty_tuple = NULL;
+
 
 #define SKIP_SLASHES(ptr) while('/' == *(ptr)) (ptr)++;
 
@@ -253,7 +257,7 @@ pkgcore_read_open_and_stat(PyObject *path,
 }
 
 static inline int
-handle_failed_open_stat(int fd, PyObject *path,PyObject *swallow_missing)
+handle_failed_open_stat(int fd, PyObject *path, PyObject *swallow_missing)
 {
     if(fd < 0) {
         if(errno == ENOENT) {
@@ -320,9 +324,9 @@ typedef struct {
     char *map;
     int fd;
     int strip_newlines;
+    time_t mtime;
     PyObject *fallback;
 } pkgcore_readlines;
-
 
 static PyObject *
 pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
@@ -334,7 +338,7 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         PyErr_SetString(PyExc_TypeError,
             "readlines.__new__ doesn't accept keywords");
         return NULL;
-    } else if (!PyArg_ParseTuple(args, "S|OOO:readlines.__new__", 
+    } else if (!PyArg_ParseTuple(args, "S|OOOO:readlines.__new__", 
         &path, &strip_newlines, &swallow_missing, &none_on_missing)) {
         return NULL;
     } 
@@ -409,10 +413,14 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         } else {
             Py_DECREF(fallback);
         }
+        if(self) {
+            Py_DECREF(self);
+        }
         return NULL;
     }
     self->fallback = fallback;
     self->map = ptr;
+    self->mtime = st.st_mtime;
     if (ptr) {
         self->start = ptr;
         self->fd = fd;
@@ -485,6 +493,48 @@ pkgcore_readlines_iternext(pkgcore_readlines *self)
     return ret;
 }
 
+static int
+pkgcore_readlines_set_mtime(pkgcore_readlines *self, PyObject *v,
+    void *closure)
+{
+    PyErr_SetString(PyExc_AttributeError, "mtime is immutable");
+    return -1;
+}
+
+static PyObject *
+pkgcore_readlines_get_mtime(pkgcore_readlines *self)
+{
+    PyObject *ret = PyObject_Call(pkgcore_stat_float_times,
+        pkgcore_empty_tuple, NULL);
+    if(!ret)
+        return NULL;
+    int is_float;
+    if(ret == Py_True) {
+        is_float = 1;
+    } else if (ret == Py_False) {
+        is_float = 0;
+    } else {
+        is_float = PyObject_IsTrue(ret);
+        if(is_float == -1) {
+            Py_DECREF(ret);
+            return NULL;
+        }
+    }
+    Py_DECREF(ret);
+    if(is_float)
+        return PyFloat_FromDouble(self->mtime);
+#if SIZEOF_TIME_T > SIZEOF_LONG
+    return PyLong_FromLong((Py_LONG_LONG)self->mtime);
+#else
+    return PyInt_FromLong((long)self->mtime);
+#endif
+}
+
+static PyGetSetDef pkgcore_readlines_getsetters[] = {
+PKGCORE_GETSET(pkgcore_readlines, "mtime", mtime),
+    {NULL}
+};
+
 PyDoc_STRVAR(
     pkgcore_readlines_documentation,
     "readline(path [, strip_newlines [, swallow_missing [, none_on_missing]]])"
@@ -495,6 +545,7 @@ PyDoc_STRVAR(
     "iterable\n"
     "if none_on_missing and the file is missing, return None instead"
     );
+
 
 static PyTypeObject pkgcore_readlines_type = {
     PyObject_HEAD_INIT(NULL)
@@ -527,7 +578,7 @@ static PyTypeObject pkgcore_readlines_type = {
     (iternextfunc)pkgcore_readlines_iternext,        /* tp_iternext */
     0,                                               /* tp_methods */
     0,                                               /* tp_members */
-    0,                                               /* tp_getset */
+    pkgcore_readlines_getsetters,                    /* tp_getset */
     0,                                               /* tp_base */
     0,                                               /* tp_dict */
     0,                                               /* tp_descr_get */
@@ -556,6 +607,23 @@ PyDoc_STRVAR(
 PyMODINIT_FUNC
 init_posix()
 {
+    PyObject *s = PyString_FromString("os");
+    if(!s)
+        return;
+    
+    PyObject *mos = PyImport_Import(s);
+    Py_DECREF(s);
+    if(!mos)
+        return;
+    pkgcore_stat_float_times = PyObject_GetAttrString(mos, "stat_float_times");
+    Py_DECREF(mos);
+    if(!pkgcore_stat_float_times)
+        return;
+
+    pkgcore_empty_tuple = PyTuple_New(0);
+    if(!pkgcore_empty_tuple)
+        return;
+
     PyObject *m = Py_InitModule3("_posix", pkgcore_posix_methods,
                                  pkgcore_posix_documentation);
     if (!m)

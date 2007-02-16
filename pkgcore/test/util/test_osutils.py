@@ -2,10 +2,8 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-import os
-import grp
-import stat
-import fcntl
+import os, grp, stat, fcntl
+from itertools import izip
 
 from pkgcore.test import TestCase, SkipTest
 from pkgcore.util import osutils
@@ -249,7 +247,6 @@ class Test_readfile(TempDirMixin, TestCase):
 
     # note no trailing newline.
     line_content = "\n".join(str(x) for x in xrange(100))
-
     func = staticmethod(osutils.native_readfile)
 
     def setUp(self):
@@ -281,3 +278,97 @@ class Test_cpy_readfile(Test_readfile):
         skip = "cpython extension not available"
     else:
         func = staticmethod(osutils.readfile)
+
+
+# mostly out of lazyness, we derive directly from test_readfile instead of 
+# splitting out a common base.  whoever changes readfile, gets to do the split 
+# ;)
+
+class Test_readlines(Test_readfile):
+    
+    func = staticmethod(osutils.native_readlines)
+    lines = Test_readfile.line_content.split("\n")
+    nlines = [x+"\n" for x in lines]
+    nlines[-1] = nlines[-1].rstrip("\n")
+
+    def assertList(self, expected, got):
+        if not isinstance(expected, list):
+            expected = list(expected)
+        if not isinstance(got, list):
+            got = list(got)
+        self.assertEqual(len(expected), len(got))
+        for idx, tup in enumerate(izip(expected, got)):
+            self.assertEqual(tup[0], tup[1], 
+                msg="expected %r, got %r for item %i" %
+                    (tup[0], tup[1], idx))
+
+    def test_it(self):
+        func = self.func
+        fp = self.fp
+        bad_fp = "%s2" % fp
+        
+        self.assertRaises(IOError, func, bad_fp)
+        # check defaults for none_on_missing, and swallow_missing
+        self.assertRaises(IOError, func, bad_fp, False, False)
+        self.assertRaises(IOError, func, bad_fp, False, False, False)
+        # ensure non_on_missing=True && swallow_missing=False pukes
+        self.assertRaises(IOError, func, bad_fp, False, False, True)
+        
+        # the occasional True as the first arg is ensuring strip_newlines
+        # isn't doing anything.
+        
+        self.assertEqual(None, func(bad_fp, False, True, True))
+        self.assertList([], func(bad_fp, False, True, False))
+        self.assertList([], func(bad_fp, True, True, False))
+        
+        self.assertList(self.lines, func(fp))
+        self.assertList(self.lines, func(fp, True))
+        self.assertList(self.nlines, func(fp, False, False, False))
+        
+        # check it does produce an extra line for trailing newline.
+        open(fp, 'a').write("\n")
+        self.assertList([x+"\n" for x in self.lines], func(fp, False))
+        self.assertList(self.lines+[], func(fp))
+        self.assertList(self.lines+[], func(fp, True))
+
+        # test big files.
+        count = (2**19) / len(self.line_content)
+        f = open(self.fp, 'a')
+        for x in xrange(count - 1):
+            f.write(self.line_content+"\n")
+        f.close()
+        self.assertList(self.lines * count, func(fp))
+        self.assertList(self.lines * count, func(fp, True))
+        l = [x + "\n" for x in self.lines] * count
+        self.assertList([x +"\n" for x in self.lines] * count,
+            func(fp, False))
+        self.assertList(self.lines * count, func(fp))
+        self.assertList(self.lines * count, func(fp, True))
+        
+
+    def test_mtime(self):
+        cur = os.stat_float_times()
+        try:
+            for x in (False, True):
+                os.stat_float_times(False)
+                self.assertEqual(os.stat(self.fp).st_mtime,
+                    self.func(self.fp, x).mtime)
+
+                os.stat_float_times(True)
+                self.assertEqual(os.stat(self.fp).st_mtime,
+                    self.func(self.fp, x).mtime)
+
+            # ensure that when swallow, but not none_on_missing, mtime is None
+            self.assertEqual(self.func(self.fp+"2", False, True, False).mtime,
+                None)
+
+        finally:
+            os.stat_float_times(cur)
+
+
+class Test_cpy_readlines(Test_readlines):
+
+    if osutils.native_readlines is osutils.readlines:
+        skip = "cpy extension isn't available"
+    else:
+        func = staticmethod(osutils.readlines)

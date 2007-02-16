@@ -26,6 +26,7 @@
 
 static PyObject *pkgcore_stat_float_times = NULL;
 static PyObject *pkgcore_empty_tuple = NULL;
+static PyObject *pkgcore_readlines_empty_iter_singleton = NULL;
 
 
 #define SKIP_SLASHES(ptr) while('/' == *(ptr)) (ptr)++;
@@ -319,6 +320,70 @@ pkgcore_readfile(PyObject *self, PyObject *args)
 
 typedef struct {
     PyObject_HEAD
+} pkgcore_readlines_empty_iter;
+
+static PyObject *
+pkgcore_readlines_empty_iter_get_mtime(pkgcore_readlines_empty_iter *self)
+{
+    Py_RETURN_NONE;
+}
+
+static int
+pkgcore_readlines_empty_iter_set_mtime(pkgcore_readlines_empty_iter *self,
+    PyObject *v, void *closure)
+{
+    PyErr_SetString(PyExc_AttributeError, "mtime is immutable");
+    return -1;
+}
+
+static PyObject *
+pkgcore_readlines_empty_iter_next(pkgcore_readlines_empty_iter *self)
+{
+    PyErr_SetNone(PyExc_StopIteration);
+    return NULL;
+}
+
+struct PyGetSetDef pkgcore_readlines_empty_iter_getsetters[] = {
+    PKGCORE_GETSET(pkgcore_readlines_empty_iter, "mtime", mtime),
+    {NULL}
+};
+
+static PyTypeObject pkgcore_readlines_empty_iter_type = {
+    PyObject_HEAD_INIT(NULL)
+    0,                                               /* ob_size */
+    "readlines.empty_iter",                          /* tp_name */
+    sizeof(pkgcore_readlines_empty_iter),            /* tp_size */
+    0,                                               /* tp_itemsize*/
+    0,                                               /* tp_dealloc*/
+    0,                                               /* tp_print*/
+    0,                                               /* tp_getattr*/
+    0,                                               /* tp_setattr*/
+    0,                                               /* tp_compare*/
+    0,                                               /* tp_repr*/
+    0,                                               /* tp_as_number*/
+    0,                                               /* tp_as_sequence*/
+    0,                                               /* tp_as_mapping*/
+    0,                                               /* tp_hash */
+    (ternaryfunc)0,                                  /* tp_call*/
+    (reprfunc)0,                                     /* tp_str*/
+    0,                                               /* tp_getattro*/
+    0,                                               /* tp_setattro*/
+    0,                                               /* tp_as_buffer*/
+    Py_TPFLAGS_DEFAULT,                              /* tp_flags*/
+    0,                                               /* tp_doc */
+    (traverseproc)0,                                 /* tp_traverse */
+    (inquiry)0,                                      /* tp_clear */
+    (richcmpfunc)0,                                  /* tp_richcompare */
+    0,                                               /* tp_weaklistoffset */
+    (getiterfunc)PyObject_SelfIter,                  /* tp_iter */
+    (iternextfunc)pkgcore_readlines_empty_iter_next, /* tp_iternext */
+    0,                                               /* tp_methods */
+    0,                                               /* tp_members */
+    pkgcore_readlines_empty_iter_getsetters,         /* tp_getset */
+};
+
+typedef struct {
+    PyObject_HEAD
     char *start;
     char *end;
     char *map;
@@ -361,12 +426,8 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
             Py_RETURN_NONE;
         }
         
-        PyObject *data = PyTuple_New(0);
-        if(!data)
-            return NULL;
-        PyObject *tmp = PySeqIter_New(data);
-        Py_DECREF(data);
-        return tmp;
+        Py_INCREF(pkgcore_readlines_empty_iter_singleton);
+        return pkgcore_readlines_empty_iter_singleton;
     }
     if(st.st_size >= 0x4000) {
         ptr = (char *)mmap(NULL, st.st_size, PROT_READ,
@@ -431,17 +492,19 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     self->end = self->start + st.st_size;
 
     if(strip_newlines) {
-        // die...
-        if(PyObject_IsTrue(strip_newlines)) {
+        if(strip_newlines == Py_True) {
             self->strip_newlines = 1;
-        } else if(PyErr_Occurred()) {
-            Py_DECREF(self);
-            return NULL;
-        } else {
+        } else if (strip_newlines == Py_False) {
             self->strip_newlines = 0;
+        } else {
+            self->strip_newlines = PyObject_IsTrue(strip_newlines) ? 1 : 0;
+            if(PyErr_Occurred()) {
+                Py_DECREF(self);
+                return NULL;
+            }
         }
     } else
-        self->strip_newlines = 0;
+        self->strip_newlines = 1;
     return (PyObject *)self;
 }
 
@@ -631,6 +694,14 @@ init_posix()
 
     if (PyType_Ready(&pkgcore_readlines_type) < 0)
         return;
+
+    if (PyType_Ready(&pkgcore_readlines_empty_iter_type) < 0)
+        return;
+
+    Py_INCREF(&pkgcore_readlines_empty_iter_type);
+    pkgcore_readlines_empty_iter_singleton = _PyObject_New(
+        &pkgcore_readlines_empty_iter_type);
+    
 
     Py_INCREF(&pkgcore_readlines_type);
     if (PyModule_AddObject(

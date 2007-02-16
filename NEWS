@@ -4,11 +4,23 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-pkgcore 0.x:
+pkgcore 0.2.5:
 
 * refactoring of trigger implementations- cleanup and tests.  Additionally,
   eliminate a potential mtime based frace if the underlying fs (or python version)
   doesn't do subsecond resolution.
+
+* force FEATURES into the exported ebuild env always.
+
+* for pmerge -p $target, which prefers reuse normally, *still* prefer the highest
+  versions, just examine vdb first, then nonvdb.
+
+* minor optimization in readlines usage in the backend; kills off a duplicate stat
+  call.
+
+* if a stale cache entry is detected, and the backend is writable, wipe the cache
+  entry.  Little bit slower when detected, but saves parsing the file next time
+  around.
 
 
 pkgcore 0.2.4:

@@ -160,6 +160,7 @@ native_join = os.path.join
 def native_readfile(mypath, none_on_missing=False):
     """
     read a file, returning the contents
+    
     @param mypath: fs path for the file to read
     @param none_on_missing: whether to return None if the file is missing,
         else through the exception

@@ -245,3 +245,39 @@ class FsLockTest(TempDirMixin, TestCase):
         fcntl.flock(f, fcntl.LOCK_UN | fcntl.LOCK_NB)
 
 
+class Test_readfile(TempDirMixin, TestCase):
+
+    # note no trailing newline.
+    line_content = "\n".join(str(x) for x in xrange(100))
+
+    func = staticmethod(osutils.native_readfile)
+
+    def setUp(self):
+        TempDirMixin.setUp(self)
+        self.fp = pjoin(self.dir, "foon")
+        open(self.fp, 'w').write(self.line_content)
+
+    def test_it(self):
+        self.assertRaises(IOError, self.func, self.fp+"2")
+        self.assertRaises(IOError, self.func, self.fp+"2", False)
+        self.assertEqual(None, self.func(self.fp+"2", True))
+        self.assertEqual(self.line_content, self.func(self.fp))
+        # test big files; forces the cpy to switch over to mmap
+        
+        f = open(self.fp, "a")
+        # ~.5MB; keep in mind, we already have a line in the file.
+        count = (2**19) / len(self.line_content)
+        for x in xrange(count -1):
+            f.write(self.line_content)
+        f.close()
+        self.assertEqual(self.line_content * count, self.func(self.fp),
+            msg="big file failed; len(%r) must equal len(%r)" % 
+                (os.stat(self.fp).st_size, len(self.line_content) * count))
+
+
+class Test_cpy_readfile(Test_readfile):
+    
+    if osutils.native_readfile is osutils.readfile:
+        skip = "cpython extension not available"
+    else:
+        func = staticmethod(osutils.readfile)

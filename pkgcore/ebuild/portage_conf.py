@@ -75,6 +75,36 @@ def make_syncer(basedir, sync_uri, options):
         d['class'] = 'pkgcore.sync.base.GenericSyncer'
     return d
 
+def add_sets(config, root, portage_base_dir):
+    config["world"] = basics.AutoConfigSection({
+            "class": "pkgcore.pkgsets.filelist.WorldFile",
+            "location": pjoin(root, const.WORLD_FILE)})
+    config["system"] = basics.AutoConfigSection({
+            "class": "pkgcore.pkgsets.system.SystemSet",
+            "profile": "profile"})
+    config["installed"] = basics.AutoConfigSection({
+            "class": "pkgcore.pkgsets.installed.Installed",
+            "vdb": "vdb"})
+    config["versioned-installed"] = basics.AutoConfigSection({
+            "class": "pkgcore.pkgsets.installed.VersionedInstalled",
+            "vdb": "vdb"})
+
+    set_fp = pjoin(portage_base_dir, "sets")
+    try:
+        for setname in listdir_files(set_fp):
+            # Potential for name clashes here, those will just make
+            # the set not show up in config.
+            if setname in ("system", "world"):
+                logger.warn("user defined set %s is disallowed; ignoring" %
+                    pjoin(set_fp, setname))
+                continue
+            new_config[setname] = basics.AutoConfigSection({
+                    "class":"pkgcore.pkgsets.filelist.FileList",
+                    "location":pjoin(set_fp, setname)})
+    except OSError, e:
+        if e.errno != errno.ENOENT:
+            raise
+
 
 @configurable({'location': 'str'}, typename='configsection')
 def config_from_make_conf(location="/etc/"):
@@ -111,31 +141,7 @@ def config_from_make_conf(location="/etc/"):
     new_config = {}
 
     # sets...
-    new_config["world"] = basics.AutoConfigSection({
-            "class": "pkgcore.pkgsets.filelist.WorldFile",
-            "location": pjoin(root, const.WORLD_FILE)})
-    new_config["system"] = basics.AutoConfigSection({
-            "class": "pkgcore.pkgsets.system.SystemSet",
-            "profile": "profile"})
-    new_config["installed"] = basics.AutoConfigSection({
-            "class": "pkgcore.pkgsets.installed.Installed",
-            "vdb": "vdb"})
-    new_config["versioned-installed"] = basics.AutoConfigSection({
-            "class": "pkgcore.pkgsets.installed.VersionedInstalled",
-            "vdb": "vdb"})
-
-    set_fp = pjoin(portage_base, "sets")
-    if os.path.isdir(set_fp):
-        for setname in listdir_files(set_fp):
-            # Potential for name clashes here, those will just make
-            # the set not show up in config.
-            if setname in ("system", "world"):
-                logger.warn("user defined set %s is disallowed; ignoring" %
-                    pjoin(set_fp, setname))
-                continue
-            new_config[setname] = basics.AutoConfigSection({
-                    "class":"pkgcore.pkgsets.filelist.FileList",
-                    "location":pjoin(set_fp, setname)})
+    add_sets(new_config, root, portage_base)
 
     kwds = {"class": "pkgcore.vdb.repository",
             "location": pjoin(config_root, 'var', 'db', 'pkg')}

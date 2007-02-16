@@ -114,6 +114,10 @@ def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=True):
 def abssymlink(symlink):
     """
     Read a symlink, resolving if it is relative, returning the absolute.
+    If the path doesn't exist, OSError is thrown.
+    
+    @param symlink: filepath to resolve
+    @return: resolve path.
     """
     mylink = os.readlink(symlink)
     if mylink[0] != '/':
@@ -121,7 +125,18 @@ def abssymlink(symlink):
         mylink = mydir+"/"+mylink
     return os.path.normpath(mylink)
 
+
 def abspath(path):
+    """
+    resolve a path absolutely, including symlink resolving.
+    Throws OSError if the path doesn't exist
+    
+    Note that if it's a symlink and the target doesn't exist, it'll still
+    return the target.
+    
+    @param path: filepath to resolve.
+    @return: resolve path
+    """
     path = os.path.abspath(path)
     try:
         return abssymlink(path)
@@ -129,6 +144,7 @@ def abspath(path):
         if e.errno == errno.EINVAL:
             return path
         raise
+
 
 def native_normpath(mypath):
     """

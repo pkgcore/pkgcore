@@ -12,6 +12,7 @@ from pkgcore.util import osutils
 from pkgcore.util.osutils import native_readdir
 from pkgcore.test.mixins import TempDirMixin
 
+pjoin = osutils.pjoin
 
 class NativeListDirTest(TempDirMixin):
 
@@ -19,11 +20,11 @@ class NativeListDirTest(TempDirMixin):
 
     def setUp(self):
         TempDirMixin.setUp(self)
-        self.subdir = os.path.join(self.dir, 'dir')
+        self.subdir = pjoin(self.dir, 'dir')
         os.mkdir(self.subdir)
-        f = open(os.path.join(self.dir, 'file'), 'w')
+        f = open(pjoin(self.dir, 'file'), 'w')
         f.close()
-        os.mkfifo(os.path.join(self.dir, 'fifo'))
+        os.mkfifo(pjoin(self.dir, 'fifo'))
 
     def test_listdir(self):
         self.assertEquals(['dir', 'fifo', 'file'],
@@ -44,10 +45,10 @@ class NativeListDirTest(TempDirMixin):
             self.module.listdir_dirs,
             self.module.listdir_files,
             ):
-            self.assertRaises(OSError, func, os.path.join(self.dir, 'spork'))
+            self.assertRaises(OSError, func, pjoin(self.dir, 'spork'))
 
     def test_dangling_sym(self):
-        os.symlink("foon", os.path.join(self.dir, "monkeys"))
+        os.symlink("foon", pjoin(self.dir, "monkeys"))
         self.assertEqual(["file"], self.module.listdir_files(self.dir))
 
 try:
@@ -75,25 +76,25 @@ class EnsureDirsTest(TempDirMixin, TestCase):
 
     def test_ensure_dirs(self):
         # default settings
-        path = os.path.join(self.dir, 'foo', 'bar')
+        path = pjoin(self.dir, 'foo', 'bar')
         self.failUnless(osutils.ensure_dirs(path))
         self.check_dir(path, os.geteuid(), os.getegid(), 0777)
 
     def test_minimal_nonmodifying(self):
-        path = os.path.join(self.dir, 'foo', 'bar')
+        path = pjoin(self.dir, 'foo', 'bar')
         self.failUnless(osutils.ensure_dirs(path, mode=0755))
         os.chmod(path, 0777)
         self.failUnless(osutils.ensure_dirs(path, mode=0755, minimal=True))
         self.check_dir(path, os.geteuid(), os.getegid(), 0777)
 
     def test_minimal_modifying(self):
-        path = os.path.join(self.dir, 'foo', 'bar')
+        path = pjoin(self.dir, 'foo', 'bar')
         self.failUnless(osutils.ensure_dirs(path, mode=0750))
         self.failUnless(osutils.ensure_dirs(path, mode=0005, minimal=True))
         self.check_dir(path, os.geteuid(), os.getegid(), 0755)
 
     def test_create_unwritable_subdir(self):
-        path = os.path.join(self.dir, 'restricted', 'restricted')
+        path = pjoin(self.dir, 'restricted', 'restricted')
         # create the subdirs without 020 first
         self.failUnless(osutils.ensure_dirs(os.path.dirname(path)))
         self.failUnless(osutils.ensure_dirs(path, mode=0020))
@@ -103,7 +104,7 @@ class EnsureDirsTest(TempDirMixin, TestCase):
         self.check_dir(path, os.geteuid(), os.getegid(), 0777)
 
     def test_mode(self):
-        path = os.path.join(self.dir, 'mode', 'mode')
+        path = pjoin(self.dir, 'mode', 'mode')
         self.failUnless(osutils.ensure_dirs(path, mode=0700))
         self.check_dir(path, os.geteuid(), os.getegid(), 0700)
         # unrestrict it
@@ -115,7 +116,7 @@ class EnsureDirsTest(TempDirMixin, TestCase):
         portage_gid = grp.getgrnam('portage').gr_gid
         if portage_gid not in os.getgroups():
             raise SkipTest('you are not in the portage group')
-        path = os.path.join(self.dir, 'group', 'group')
+        path = pjoin(self.dir, 'group', 'group')
         self.failUnless(osutils.ensure_dirs(path, gid=portage_gid))
         self.check_dir(path, os.geteuid(), portage_gid, 0777)
         self.failUnless(osutils.ensure_dirs(path))
@@ -124,11 +125,27 @@ class EnsureDirsTest(TempDirMixin, TestCase):
         self.check_dir(path, os.geteuid(), os.getegid(), 0777)
 
 
-class SymlinkTest(TempDirMixin, TestCase):
 
-    def test_abssymlink(self):
-        target = os.path.join(self.dir, 'target')
-        linkname = os.path.join(self.dir, 'link')
+class Test_abspath(TempDirMixin, TestCase):
+    
+    func = staticmethod(osutils.abspath)
+    
+    def test_it(self):
+        trg = pjoin(self.dir, "foon")
+        sym = pjoin(self.dir, "spork")
+        os.symlink(trg, sym)
+        self.assertRaises(OSError, self.func, trg)
+        self.assertEqual(trg, self.func(sym))
+        open(trg, 'w')
+        self.assertEqual(trg, self.func(sym))
+        self.assertEqual(trg, self.func(trg))
+
+
+class Test_abssymlink(TempDirMixin, TestCase):
+
+    def test_it(self):
+        target = pjoin(self.dir, 'target')
+        linkname = pjoin(self.dir, 'link')
         os.mkdir(target)
         os.symlink('target', linkname)
         self.assertEquals(osutils.abssymlink(linkname), target)
@@ -161,7 +178,7 @@ class Cpy_NormPathTest(Native_NormPathTest):
 class Cpy_JoinTest(TestCase):
 
     if osutils.join is osutils.native_join:
-        skip = "etension isn't compiled"
+        skip = "extension isn't compiled"
 
     def assertSame(self, val):
         self.assertEqual(osutils.native_join(*val),
@@ -181,16 +198,15 @@ class Cpy_JoinTest(TestCase):
             ])
 
 
-
 # TODO: more error condition testing
 class FsLockTest(TempDirMixin, TestCase):
 
     def test_nonexistant(self):
         self.assertRaises(osutils.NonExistant, osutils.FsLock,
-            os.path.join(self.dir, 'missing'))
+            pjoin(self.dir, 'missing'))
 
     def test_locking(self):
-        path = os.path.join(self.dir, 'lockfile')
+        path = pjoin(self.dir, 'lockfile')
         lock = osutils.FsLock(path, True)
         # do this all non-blocking to avoid hanging tests
         self.failUnless(lock.acquire_read_lock(False))
@@ -227,3 +243,5 @@ class FsLockTest(TempDirMixin, TestCase):
         lock.release_write_lock()
         fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
         fcntl.flock(f, fcntl.LOCK_UN | fcntl.LOCK_NB)
+
+

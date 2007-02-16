@@ -243,7 +243,8 @@ def config_from_make_conf(location="/etc/"):
                 'class': 'pkgcore.cache.metadata.database',
                 'location': portdir,
                 'label': 'portdir cache',
-                'auxdbkeys': ebuild_const.metadata_keys})
+                'auxdbkeys': ebuild_const.metadata_keys,
+                'readonly': 'yes'})
     else:
         new_config["portdir cache"] = basics.AutoConfigSection({
                 'inherit': ('cache-common',),

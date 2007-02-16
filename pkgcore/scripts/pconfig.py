@@ -96,6 +96,8 @@ def get_classes(configs):
     # Not particularly efficient (doesn't memoize already visited configs)
     classes = set()
     for config in configs:
+        if getattr(config.type, 'typename', None) == 'type':
+            continue
         classes.add('%s.%s' % (config.type.callable.__module__,
                                config.type.callable.__name__))
         for key, val in config.config.iteritems():

@@ -48,6 +48,7 @@ class mysdist(sdist.sdist):
         self.filelist.append("AUTHORS")
         self.filelist.append("NOTES")
         self.filelist.append("COPYING")
+        self.filelist.append("NEWS")
 
         self.filelist.include_pattern('.[ch]', prefix='src')
 

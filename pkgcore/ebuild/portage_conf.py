@@ -105,6 +105,34 @@ def add_sets(config, root, portage_base_dir):
         if e.errno != errno.ENOENT:
             raise
 
+def add_profile(config, base_path):
+    make_profile = pjoin(base_path, 'make.profile')
+    try:
+        profile = normpath(abspath(pjoin(
+                    base_path, os.readlink(make_profile))))
+    except OSError, oe:
+        if oe.errno in (errno.ENOENT, errno.EINVAL):
+            raise errors.InstantiationError(
+                "%s must be a symlink pointing to a real target" % (
+                    make_profile,))
+        raise errors.InstantiationError(
+            "%s: unexepect error- %s" % (make_profile, oe.strerror))
+
+    psplit = list(piece for piece in profile.split(os.path.sep) if piece)
+    # poor mans rindex.
+    try:
+        profile_start = psplit.index('profiles')
+    except ValueError:
+        raise errors.InstantiationError(
+            '%s expands to %s, but no profile detected' % (
+                pjoin(base_path, 'make.profile'), profile))
+
+    config["profile"] = basics.AutoConfigSection({
+            "class": "pkgcore.ebuild.profiles.OnDiskProfile",
+            "basepath": pjoin("/", *psplit[:-profile_start]),
+            "profile": pjoin(*psplit[-profile_start:])})
+
+
 
 @configurable({'location': 'str'}, typename='configsection')
 def config_from_make_conf(location="/etc/"):
@@ -142,6 +170,7 @@ def config_from_make_conf(location="/etc/"):
 
     # sets...
     add_sets(new_config, root, portage_base)
+    add_profile(new_config, base_path)
 
     kwds = {"class": "pkgcore.vdb.repository",
             "location": pjoin(config_root, 'var', 'db', 'pkg')}
@@ -149,38 +178,6 @@ def config_from_make_conf(location="/etc/"):
         'dep', 'var', 'db', 'pkg')
     new_config["vdb"] = basics.AutoConfigSection(kwds)
     
-
-    make_profile = pjoin(base_path, 'make.profile')
-    try:
-        profile = normpath(abspath(pjoin(
-                    base_path, os.readlink(make_profile))))
-    except OSError, oe:
-        if oe.errno in (errno.ENOENT, errno.EINVAL):
-            raise errors.InstantiationError(
-                "%s must be a symlink pointing to a real target" % (
-                    make_profile,))
-        raise errors.InstantiationError(
-            "%s: unexepect error- %s" % (make_profile, oe.strerror))
-
-    psplit = list(piece for piece in profile.split(os.path.sep) if piece)
-    # poor mans rindex.
-    for i, piece in enumerate(reversed(psplit)):
-        if piece == 'profiles':
-            break
-    else:
-        raise errors.InstantiationError(
-            '%s expands to %s, but no profiles base detected' % (
-                pjoin(base_path, 'make.profile'), profile))
-    if not i:
-        raise errors.InstantiationError(
-            '%s expands to %s, but no profile detected' % (
-                pjoin(base_path, 'make.profile'), profile))
-
-    new_config["profile"] = basics.AutoConfigSection({
-            "class": "pkgcore.ebuild.profiles.OnDiskProfile",
-            "basepath": pjoin("/", *psplit[:-i]),
-            "profile": pjoin(*psplit[-i:])})
-
     portdir = normpath(conf_dict.pop("PORTDIR").strip())
     portdir_overlays = [
         normpath(x) for x in conf_dict.pop("PORTDIR_OVERLAY", "").split()]

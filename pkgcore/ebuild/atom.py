@@ -139,6 +139,10 @@ def native__getattr__(self, attr):
         packages.PackageRestriction(
             "category", values.StrExactMatch(self.category))]
 
+    if self.repo_id is not None:
+        r.insert(0, packages.PackageRestriction("repo.repo_id",
+            values.StrExactMatch(self.repo_id)))
+
     if self.fullver is not None:
         if self.op == '=*':
             r.append(packages.PackageRestriction(
@@ -146,6 +150,14 @@ def native__getattr__(self, attr):
         else:
             r.append(VersionMatch(self.op, self.version, self.revision,
                                   negate=self.negate_vers))
+
+    if self.slot is not None:
+        if len(self.slot) == 1:
+            v = values.StrExactMatch(self.slot[0])
+        else:
+            v = values.OrRestriction(*map(values.StrExactMatch,
+                self.slot))
+        r.append(packages.PackageRestriction("slot", v))
 
     if self.use is not None:
         false_use = [x[1:] for x in self.use if x[0] == "-"]
@@ -162,18 +174,6 @@ def native__getattr__(self, attr):
         else:
             v = values.AndRestriction(*v)
         r.append(packages.PackageRestriction("use", v))
-
-    if self.slot is not None:
-        if len(self.slot) == 1:
-            v = values.StrExactMatch(self.slot[0])
-        else:
-            v = values.OrRestriction(*map(values.StrExactMatch,
-                self.slot))
-        r.append(packages.PackageRestriction("slot", v))
-
-    if self.repo_id is not None:
-        r.insert(0, packages.PackageRestriction("repo.repo_id",
-            values.StrExactMatch(self.repo_id)))
 
     r = tuple(r)
     object.__setattr__(self, attr, r)

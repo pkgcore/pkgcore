@@ -14,7 +14,10 @@ from pkgcore.util.compatibility import all
 from pkgcore.ebuild import cpv, errors
 from pkgcore.ebuild.atom_restricts import VersionMatch
 from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.restrictions.delegated:delegate ")
+demandload(globals(),
+    "pkgcore.restrictions.delegated:delegate "
+    "pkgcore.util.currying:partial "
+)
 
 # namespace compatibility...
 MalformedAtom = errors.MalformedAtom
@@ -494,4 +497,4 @@ def generate_collapsed_restriction(atoms, negate=False):
     d = {}
     for a in atoms:
         d.setdefault(a.key, []).append(a)
-    return delegate(_collapsed_restrict_match, d, negate=negate)
+    return delegate(partial(_collapsed_restrict_match, d), negate=negate)

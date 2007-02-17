@@ -23,6 +23,7 @@ from pkgcore.util.demandload import demandload
 from pkgcore.ebuild import const
 from pkgcore.ebuild.profiles import incremental_expansion
 from pkgcore.util.parserestrict import parse_match
+from pkgcore.util.currying import partial
 from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
     non_incremental_collapsed_restrict_to_data)
 
@@ -325,7 +326,7 @@ class domain(pkgcore.config.domain.domain):
         data = collapsed_restrict_to_data(
             ((packages.AlwaysTrue, master_license),),
             pkg_licenses)
-        return delegate(self.apply_license_filter, data)
+        return delegate(partial(self.apply_license_filter, data))
 
     def apply_license_filter(self, data, pkg, mode):
         # note we're not honoring mode; it's always match.
@@ -372,7 +373,7 @@ class domain(pkgcore.config.domain.domain):
             f = self.incremental_apply_keywords_filter
         else:
             f = self.apply_keywords_filter
-        return delegate(f, data)
+        return delegate(partial(f, data))
 
     @staticmethod
     def incremental_apply_keywords_filter(data, pkg, mode):

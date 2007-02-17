@@ -20,12 +20,12 @@ class delegate(restriction.base):
     L{pkgcore.ebuild.domain}.
     """
 
-    __slots__ = ('_transform', '_data', 'negate')
+    __slots__ = ('_transform', 'negate')
 
     type = packages.package_type
     inst_caching = False
 
-    def __init__(self, transform_func, data, negate=False):
+    def __init__(self, transform_func, negate=False):
         """
 
         @param transform_func: callable inovked with data, pkg, and mode
@@ -38,18 +38,17 @@ class delegate(restriction.base):
 
         object.__setattr__(self, "negate", negate)
         object.__setattr__(self, "_transform", transform_func)
-        object.__setattr__(self, "_data", data)
 
 
     def match(self, pkginst):
-        return self._transform(self._data, pkginst, "match") != self.negate
+        return self._transform(pkginst, "match") != self.negate
 
     def force_true(self, pkginst):
         if self.negate:
-            return self._transform(self._data, pkginst, "force_false")
-        return self._transform(self._data, pkginst, "force_true")
+            return self._transform(pkginst, "force_false")
+        return self._transform(pkginst, "force_true")
 
-    def force_true(self, pkginst):
+    def force_false(self, pkginst):
         if self.negate:
-            return self._transform(self._data, pkginst, "force_true")
-        return self._transform(self._data, pkginst, "force_false")
+            return self._transform(pkginst, "force_true")
+        return self._transform(pkginst, "force_false")

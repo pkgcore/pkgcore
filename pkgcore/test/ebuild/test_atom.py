@@ -94,6 +94,8 @@ class Test_native_atom(TestCase):
         self.assertTrue(self.kls("%s[debug,-not]" % astr).match(c))
         self.assertRaises(errors.MalformedAtom, self.kls, "%s[]" % astr)
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[foon")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[[fo]")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x][y]")
 
     def test_slot(self):
         astr = "dev-util/confcache"
@@ -107,6 +109,7 @@ class Test_native_atom(TestCase):
         self.kls("sys-libs/db:4.4")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1,,0")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1:")
 
     def test_getattr(self):
         # assert it explodes for bad attr access.

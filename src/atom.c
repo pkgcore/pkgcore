@@ -91,9 +91,14 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
         else if(!VALID_USE_CHAR(*p)) {
             Err_SetMalformedAtom(atom_str,
                 "invalid char in use dep; each flag must be a-Z0-9_.-+");
-            goto cleanup_use_processing;
+            return 1;
         }
         p++;
+    }
+    if('\0' == *p) {
+        Err_SetMalformedAtom(atom_str,
+            "use dep isn't closed");
+        return 1;
     }
     char *end = p;
     if(len == 1)

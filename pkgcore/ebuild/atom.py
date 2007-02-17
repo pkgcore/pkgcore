@@ -22,6 +22,11 @@ demandload(globals(),
 # namespace compatibility...
 MalformedAtom = errors.MalformedAtom
 
+valid_use_chars = set(str(x) for x in xrange(10))
+valid_use_chars.update(chr(x) for x in xrange(ord("a"), ord("z")))
+valid_use_chars.update(chr(x) for x in xrange(ord("A"), ord("Z")))
+valid_use_chars.update(["_", ".", "+", "-"])
+valid_use_chars = frozenset(valid_use_chars)
 
 def native_init(self, atom, negate_vers=False):
     """
@@ -39,6 +44,10 @@ def native_init(self, atom, negate_vers=False):
             raise errors.MalformedAtom(atom,
                 "use restriction isn't completed")
         sf(self, "use", tuple(sorted(atom[u+1:u2].split(','))))
+        for x in self.use:
+            if not all(y in valid_use_chars for y in x):
+                raise errors.MalformedAtom(atom,
+                    "invalid char spotted in use dep")
         if not all(x.rstrip("-") for x in self.use):
             raise errors.MalformedAtom(
                 atom, "cannot have empty use deps in use restriction")

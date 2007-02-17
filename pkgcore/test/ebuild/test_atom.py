@@ -2,7 +2,7 @@
 # License: GPL2
 
 from pkgcore.test import TestCase
-from pkgcore.ebuild import atom, errors
+from pkgcore.ebuild import atom, errors, atom_restricts
 from pkgcore.ebuild.cpv import CPV
 
 
@@ -86,7 +86,6 @@ class Test_native_atom(TestCase):
         self.assertTrue(a.match(CPV("%s-1-r1" % astr)))
         self.assertFalse(a.match(CPV("%s-2" % astr)))
 
-
     def test_use(self):
         astr = "dev-util/bsdiff"
         c = FakePkg(astr, ("debug",))
@@ -94,6 +93,7 @@ class Test_native_atom(TestCase):
         self.assertFalse(self.kls("%s[-debug]" % astr).match(c))
         self.assertTrue(self.kls("%s[debug,-not]" % astr).match(c))
         self.assertRaises(errors.MalformedAtom, self.kls, "%s[]" % astr)
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[foon")
 
     def test_slot(self):
         astr = "dev-util/confcache"
@@ -108,12 +108,71 @@ class Test_native_atom(TestCase):
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1,,0")
 
+    def test_getattr(self):
+        # assert it explodes for bad attr access.
+        obj = self.kls("dev-util/diffball")
+        self.assertRaises(AttributeError, getattr, obj, "__foasdfawe")
+        # assert ordering
+
+
+        def assertAttr(attr):
+            self.assertEqual(restricts[pos].attr, attr,
+                msg="expected attr %r at %i for ver(%s), repo(%s) use(%s), "
+                    "slot(%s): got %r from %r" % (attr, pos, ver, repo, use,
+                    slot, restricts[pos].attr, restricts))
+            return pos + 1
+
+        slot = ''
+        def f():
+            for pref, ver in (('', ''), ('=', '-0.1')):
+               for repo in ('', '::gentoo'):
+                    for slot in ('', ':1'):
+                        for use in ('', '[x]'):
+                            yield pref, ver, repo, slot, use
+        for pref, ver, repo, slot, use in f():
+            pos = 0
+            if slot and repo:
+                repo = repo[1:]
+            o = self.kls("%sdev-util/diffball%s%s%s%s" %
+                (pref, ver, use, slot, repo))
+            count = 2
+            for x in ("use", "repo", "pref", "slot"):
+                if locals()[x]:
+                    count += 1
+
+            restricts = o.restrictions
+            self.assertEqual(len(restricts), count,
+                msg="%r, restrictions count must be %i, got %i" % 
+                    (o, count, len(restricts)))
+            self.assertTrue([getattr(x, 'type', None)
+                for x in restricts], ['package'] * count)
+            if repo:
+                pos = assertAttr('repo.repo_id')
+            pos = assertAttr('package')
+            pos = assertAttr('category')
+            if ver:
+                self.assertTrue(isinstance(restricts[pos],
+                    atom_restricts.VersionMatch),
+                    msg="expected %r, got %r; repo(%s), ver(%s), use(%s) "
+                        "slot(%s)" % (atom_restricts.VersionMatch,
+                        restricts[pos],
+                        repo, ver, use, slot))
+                pos += 1
+            if slot:
+                pos = assertAttr('slot')
+            if use:
+                pos = assertAttr('use')
+            
+
     def test_repo_id(self):
         astr = "dev-util/bsdiff"
         c = FakePkg(astr, repo_id="gentoo")
         self.assertTrue(self.kls("%s" % astr).match(c))
         self.assertTrue(self.kls("%s::gentoo" % astr).match(c))
         self.assertFalse(self.kls("%s::gentoo2" % astr).match(c))
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1:")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:::")
 
     def test_invalid_atom(self):
         self.assertRaises(errors.MalformedAtom, self.kls, '~dev-util/spork')

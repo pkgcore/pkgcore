@@ -237,6 +237,8 @@ class native_DepSetEvaluateTest(base):
             ("a b", "a !x? ( b )"),
             ("a b", "a !x? ( b )", "", ""),
             ("a b", "a !x? ( b ) y? ( c )", "", "y"),
+            ("a || ( c )", "a || ( x? ( b ) c )"),
+            ("a b", "a b"),
             ):
             result = vals[0]
             s = vals[1]
@@ -245,11 +247,14 @@ class native_DepSetEvaluateTest(base):
                 use = convert_to_seq(vals[2])
             if len(vals) > 3:
                 tristate = convert_to_seq(vals[3])
-            collapsed = self.gen_depset(s).evaluate_depset(use,
+            orig = self.gen_depset(s)
+            collapsed = orig.evaluate_depset(use,
                 tristate_filter=tristate)
             self.assertEqual(str(collapsed), result, msg=
-                "%r does not equal %r\nraw depset: %r\nuse: %r, tristate: %r" %
-                    (str(collapsed), result, s, use, tristate))
+                "expected %r got %r\nraw depset: %r\nuse: %r, tristate: %r" %
+                    (result, str(collapsed), s, use, tristate))
+            if '?' not in s:
+                self.assertIdentical(orig, collapsed)
 
 
 class cpy_DepSetEvaluateTest(native_DepSetEvaluateTest):

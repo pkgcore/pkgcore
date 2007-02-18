@@ -143,10 +143,6 @@ class mtime_watcher(object):
     
     Finally, if any mtime is detected that is in the future, it is reset
     to 'now'.
-    
-    @param locations: sequence, file paths to scan
-    @param stat_func: stat'er to use.  defaults to os.stat
-    @returns: L{contents.contetsSet} of directories.
     """
 
     def __init__(self):
@@ -181,6 +177,13 @@ class mtime_watcher(object):
     
     @mtime_floats
     def set_state(self, locations, stat_func=os.stat, forced_past=2):
+        """
+        set the initial state; will adjust ondisk mtimes as needed
+        to avoid race potentials.
+
+        @param locations: sequence, file paths to scan
+        @param stat_func: stat'er to use.  defaults to os.stat
+        """
         self.locations = locations
         mtimes = list(self._scan_mtimes(locations, stat_func))
 
@@ -195,25 +198,33 @@ class mtime_watcher(object):
 
         self.saved_mtimes = cset
 
-
     @mtime_floats
     def check_state(self, locations=None, stat_func=os.stat):
+        """
+        set the initial state; will adjust ondisk mtimes as needed
+        to avoid race potentials.
+
+        @param locations: sequence, file paths to scan; uses the locations
+          from the set_state invocation if not supplised.
+        @param stat_func: stat'er to use.  defaults to os.stat
+        @return: boolean, True if things have changed, False if not.
+        """
         if locations is None:
             locations = self.locations
 
-        new_mtimes = contents.contentsSet(
-            self._scan_mtimes(locations, stat_func))
-
-        if new_mtimes != self.saved_mtimes:
+        for x in self.get_changes(locations=locations, stat_func=stat_func):
             return True
-        for x in new_mtimes:
-            if x.mtime != self.saved_mtimes[x].mtime:
-                return True
         return False
-
 
     @mtime_floats
     def get_changes(self, locations=None, stat_func=os.stat):
+        """
+        generator yielding the fs objs for what has changed.
+
+        @param locations: sequence, file paths to scan; uses the locations
+          from the set_state invocation if not supplised.
+        @param stat_func: stat'er to use.  defaults to os.stat
+        """
         if locations is None:
             locations = self.locations
 

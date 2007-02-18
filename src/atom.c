@@ -227,6 +227,23 @@ parse_slot_deps(PyObject *atom_str, char **p_ptr, PyObject **slots_ptr)
     s = PyString_FromStringAndSize(start, end - start);
     if(s) {
         PyTuple_SET_ITEM(slots, idx, s);
+        if(len > 1) {
+            // bugger. need a list :/
+            PyObject *tmp = PyList_New(len);
+            if(!tmp)
+                goto cleanup_slot_processing;
+            if(PyList_SetSlice(tmp, 0, len, slots)) {
+                Py_DECREF(tmp);
+                goto cleanup_slot_processing;
+            } else if (PyList_Sort(tmp)) {
+                Py_DECREF(tmp);
+                goto cleanup_slot_processing;
+            }
+            for(idx=0; idx < len; idx++) {
+                PyTuple_SET_ITEM(slots, idx, PyList_GET_ITEM(tmp, idx));
+            }
+            Py_DECREF(tmp);
+        }
         *slots_ptr = slots;
         *p_ptr = p;
         return 0;

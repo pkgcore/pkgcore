@@ -70,7 +70,7 @@ def native_init(self, atom, negate_vers=False):
         else:
             sf(self, "repo_id", None)
         # slot dep.
-        slots = atom[s+1:].split(",")
+        slots = tuple(sorted(atom[s+1:].split(",")))
         if not all(slots):
             # if the slot char came in only due to repo_id, force slots to None
             if len(slots) == 1 and i2 != -1:
@@ -287,16 +287,14 @@ class atom(boolean.AndRestriction):
         if c:
             return c
 
+        c = cmp(self.op, other.op)
+        if c:
+            return c
+
         c = cpv.ver_cmp(self.version, self.revision,
                         other.version, other.revision)
         if c:
             return c
-
-        if self.op == '=*':
-            if other.op != '=*':
-                return True
-        elif other.op == '=*':
-            return False
 
         c = cmp(self.blocks, other.blocks)
         if c:
@@ -312,11 +310,7 @@ class atom(boolean.AndRestriction):
         if c:
             return c
 
-        c = cmp(self.use, other.use)
-        if c:
-            return c
-
-        return cmp(self.op, other.op)
+        return cmp(self.use, other.use)
 
     def intersects(self, other):
         """Check if a passed in atom "intersects" this restriction's atom.

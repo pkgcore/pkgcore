@@ -139,6 +139,7 @@ class Test_native_atom(TestCase):
                     for slot in ('', ':1'):
                         for use in ('', '[x]'):
                             yield pref, ver, repo, slot, use
+
         for pref, ver, repo, slot, use in f():
             pos = 0
             if slot and repo:
@@ -205,6 +206,7 @@ class Test_native_atom(TestCase):
             ('>cat/pkg-2', '=cat/pkg-2*', True),
             ('<cat/pkg-2_alpha1', '=cat/pkg-2*', True),
             ('=cat/pkg-2', '=cat/pkg-2', True),
+            ('=cat/pkg-3', '=cat/pkg-2', False),
             ('=cat/pkg-2*', '=cat/pkg-2.3*', True),
             ('>cat/pkg-2.4', '=cat/pkg-2*', True),
             ('<cat/pkg-2.4', '=cat/pkg-2*', True),
@@ -228,18 +230,60 @@ class Test_native_atom(TestCase):
                 result, that_atom.intersects(this_atom),
                 '%s intersecting %s should be %s' % (that, this, result))
 
+    def assertEquals2(self, o1, o2):
+        # logic bugs hidden behind short circuiting comparisons for metadata
+        # is why we test the comparison *both* ways.
+        self.assertEqual(o1, o2)
+        c = cmp(o1, o2)
+        self.assertEqual(c, 0,
+            msg="checking cmp for %r, %r, aren't equal: got %i" % (o1, o2, c))
+        self.assertEqual(o2, o1)
+        c = cmp(o2, o1)
+        self.assertEqual(c, 0,
+            msg="checking cmp for %r, %r,aren't equal: got %i" % (o2, o1, c))
+
+    def assertNotEquals2(self, o1, o2):
+        # is why we test the comparison *both* ways.
+        self.assertNotEqual(o1, o2)
+        c = cmp(o1, o2)
+        self.assertNotEqual(c, 0,
+            msg="checking cmp for %r, %r, not supposed to be equal, got %i" 
+                % (o1, o2, c))
+        self.assertNotEqual(o2, o1)
+        c = cmp(o2, o1)
+        self.assertNotEqual(c, 0,
+            msg="checking cmp for %r, %r, not supposed to be equal, got %i" 
+                % (o2, o1, c))
+        
+
     def test_comparison(self):
-        self.assertEquals(self.kls('cat/pkg'), self.kls('cat/pkg'))
-        self.assertEquals(self.kls('=cat/pkg-0'), self.kls('=cat/pkg-0'))
-        self.assertNotEquals(self.kls('cat/pkg:1'), self.kls('cat/pkg'))
-        self.assertNotEquals(self.kls('cat/pkg[foo]'), self.kls('cat/pkg'))
-        self.assertNotEquals(self.kls('cat/pkg[foo]'),
+        self.assertEquals2(self.kls('cat/pkg'), self.kls('cat/pkg'))
+        self.assertNotEquals2(self.kls('cat/pkg'), self.kls('cat/pkgb'))
+        self.assertNotEquals2(self.kls('cata/pkg'), self.kls('cat/pkg'))
+        self.assertNotEquals2(self.kls('cat/pkg'), self.kls('!cat/pkg'))
+        self.assertEquals2(self.kls('!cat/pkg'), self.kls('!cat/pkg'))
+        self.assertNotEquals2(self.kls('=cat/pkg-0.1:0'),
+            self.kls('=cat/pkg-0.1'))
+        self.assertNotEquals2(self.kls('=cat/pkg-1[foon]'),
+            self.kls('=cat/pkg-1'))
+        self.assertEquals2(self.kls('=cat/pkg-0'), self.kls('=cat/pkg-0'))
+        self.assertNotEquals2(self.kls('<cat/pkg-2'), self.kls('>cat/pkg-2'))
+        self.assertNotEquals2(self.kls('=cat/pkg-2*'), self.kls('=cat/pkg-2'))
+        self.assertNotEquals2(self.kls('=cat/pkg-2', True),
+            self.kls('=cat/pkg-2'))
+
+        # use...
+        self.assertNotEquals2(self.kls('cat/pkg[foo]'), self.kls('cat/pkg'))
+        self.assertNotEquals2(self.kls('cat/pkg[foo]'),
                              self.kls('cat/pkg[-foo]'))
-        self.assertEquals(self.kls('cat/pkg[foo,-bar]'),
+        self.assertEquals2(self.kls('cat/pkg[foo,-bar]'),
                           self.kls('cat/pkg[-bar,foo]'))
-        self.assertNotEquals(self.kls('cat/pkg'), self.kls('!cat/pkg'))
-        self.assertNotEquals(self.kls('<cat/pkg-2'), self.kls('>cat/pkg-2'))
-        self.assertNotEquals(self.kls('=cat/pkg-2*'), self.kls('=cat/pkg-2'))
+        # slots.
+        self.assertNotEquals2(self.kls('cat/pkg:1'), self.kls('cat/pkg'))
+        self.assertEquals2(self.kls('cat/pkg:2'), self.kls('cat/pkg:2'))
+        self.assertEquals2(self.kls('cat/pkg:2,1'), self.kls('cat/pkg:2,1'))
+        self.assertEquals2(self.kls('cat/pkg:2,1'), self.kls('cat/pkg:1,2'))
+
 
     def test_compatibility(self):
         self.assertFalse(self.kls('=dev-util/diffball-0.7').match(

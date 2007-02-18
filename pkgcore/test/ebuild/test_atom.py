@@ -4,7 +4,7 @@
 from pkgcore.test import TestCase
 from pkgcore.ebuild import atom, errors, atom_restricts
 from pkgcore.ebuild.cpv import CPV
-
+from pkgcore.util.pickling import dumps, loads
 
 class FakePkg(CPV):
     __slots__ = ("__dict__")
@@ -17,11 +17,18 @@ class FakePkg(CPV):
             repo_id = r
         object.__setattr__(self, "repo", foo())
 
+
 class Test_native_atom(TestCase):
 
     class kls(atom.atom):
         locals().update(atom.native_atom_overrides.iteritems())
     kls = staticmethod(kls)
+
+    def test_pickling(self):
+        a = self.kls("dev-util/diffball")
+        self.assertEqual(a, loads(dumps(a)))
+        a = self.kls("dev-util/diffball", negate_vers=True)
+        self.assertEqual(a, loads(dumps(a)))
 
     def test_glob(self):
         self.assertRaises(errors.MalformedAtom, self.kls,

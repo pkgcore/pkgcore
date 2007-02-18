@@ -184,6 +184,166 @@ tries among other things to:
   track down a problem in a complex nested config and tracebacks that
   reach back to actual buggy code for developers.
 
+Overview from load_config() to instantiated repo
+------------------------------------------------
+
+When you call load_config() it looks up what config files are
+available (/etc/pkgcore.conf, ~/.pkgcore.conf, /etc/make.conf) and
+loads them. This produces a dict mapping section names to
+ConfigSection instances. For the ini-format pkgcore.conf files this is
+straightforward, for make.conf this is a lot of work done in
+pkgcore.config.portage_conf. I'm not going to describe that module
+here, read the source for details.
+
+The ConfigSections have a pretty straightforward api: they work like
+dicts but get passed a string describing what "type" the value should
+be and a central.ConfigManager instance for reasons described later.
+Passing in this "type" string when getting the value is necessary
+because the way things like lists of strings are stored depends on the
+format of the configuration file but the parser does not have enough
+information to know it should parse as a list instead of a string. For
+example, an ini-format pkgcore.conf could contain::
+  [my-overlay-cache]
+  class=pkgcore.cache.flat_hash.database
+  auxdbkeys=DEPEND RDEPEND
+
+We want to turn that auxdbkeys value into a list of strings in the ini
+file parser code instead of in the central.ConfigManager or even
+higher up because more exotic config sections may want to store this
+in a different way (perhaps as a comma-separated list, or even as
+"<el>DEPEND</el><el>RDEPEND</el>". But there is obviously not enough
+information in the ini file for the parser to know this is meant as a
+list instead of a string with a space in it.
+
+central.ConfigManager gets instantiated with one or more of those
+dicts mapping section names to ConfigSections. They're split up into
+normal and "remote" configs which I'll describe later, let's assume
+they're all "remote" for now. In that case no work is done when the
+ConfigManager is instantiated.
+
+Getting an actual configured object out of the ConfigManager is split
+in two phases. First the involved config sections are "collapsed":
+inherits are processed, values are converted to the right type,
+presence of required arguments is checked, etc. Everything up to
+actually instantiating the target class and actually instantiating any
+section references it needs. The result of this work is bundled in a
+CollapsedConfig instance. Actual instantiation is handled by the
+CollapsedConfig instance.
+
+The ConfigManager manages CollapsedConfig instances. It creates new
+ones if required and makes sure that if a cached instance is available
+it is used.
+
+For the remainder of the example let's assume our config looks like
+this::
+  [spork]
+  inherit=cache
+  auxdbkeys=DEPEND RDEPEND
+
+  [cache]
+  class=pkgcore.cache.flat_hash.database
+
+Running config.repo['spork'] runs
+config.collapse_named_section('spork'). This first checks if this
+section was already collapsed and returns the CollapsedConfig if it is
+available. If it is not in the cache it looks up the ConfigSection
+with that name in the dicts handed to the ConfigManager on
+instantiation and calls collapse_section on it.
+
+collapse_section first recursively finds any inherited sections (just
+the "cache" section in this case). It then grabs the 'class' setting
+(which is always of type 'callable'). In this case that's
+"pkgcore.cache.flat_hash.database", which the ConfigSection imports
+and returns. This is then wrapped in a config.basics.ConfigType. A
+ConfigType contains the information necessary to validate arguments
+passed to the callable. It uses the magic pkgcore_config_type
+attribute if the callable has it and introspection for everything
+else. In this case
+pkgcore.cache.flat_hash.database.pkgcore_config_type is a ConfigHint
+stating the "auxdbkeys" argument is of type "list".
+
+Now that collapse_section has a ConfigType it uses it to retrieve the
+arguments from the ConfigSections and passes the ConfigType and
+arguments to CollapsedConfig's __init__. Then it returns the
+CollapsedConfig instance to collapse_named_section.
+collapse_named_section caches it and returns it.
+
+Now we're back in the __getattr__ triggered by config.repo['spork'].
+This checks if the ConfigType on the CollapsedConfig is actually
+'repo', and returns collapsedConfig.instantiate() if this matches.
+
+Lazy section references
+-----------------------
+
+The main reason the above is so complicated is to support various
+kinds of references to other sections. Example::
+
+  [spork]
+  class=pkgcore.Spork
+  ref=foon
+
+  [foon]
+  class=pkgcore.Foon
+
+Let's say pkgcore.Spork has a ConfigHint stating the type of the "ref"
+argument is "lazy_ref:foon" (lazy reference to a foon) and its typename is
+"repo", and pkgcore.Foon has a ConfigHint stating its typename is
+"foon". a "lazy reference" is an instance of basics.LazySectionRef,
+which is an object containing just enough information to produce a
+CollapsedConfig instance. This is not the most common kind of
+reference, but it is simpler from the config point of view so I'm
+describing this one first.
+
+When collapse_section runs on the "spork" section it calls
+section.get_value(self, 'ref:repo', 'section_ref'). "lazy_ref" in the
+type hint is converted to just "ref" here because the ConfigSections
+do not have to distinguish between lazy and "normal" references.
+Because this particular ConfigSection only supports named
+references it returns a LazyNamedSectionRef(central, 'ref:repo',
+'foon'). This just gets handed to Spork's __init__. If the Spork
+decides to call instantiate() on the LazyNamedSectionRef it calls
+central.collapse_named_section('foon'), checks if the result is of
+type foon, instantiates it and returns it.
+
+The same thing using a dhcp-style config::
+  spork {
+      class pkgcore.Spork;
+      ref {
+          class pkgcore.Foon;
+      };
+  }
+
+In this format the reference is an inline unnamed section. When
+get_value(central, 'ref:repo', 'foon') is called it returns a
+LazyUnnamedSectionRef(central, 'ref:repo', section) where section is a
+ConfigSection instance for the nested section (knowing just that
+"class" is "pkgcore.Foon" in this case). This is handed to
+Spork.__init__. If Spork calls instantiate() on it it calls
+central.collapse_section(self.section) and does the same type checking
+and instantiating LazyNamedSectionRef did.
+
+Notice neither Spork nor ConfigManager care if the reference is inline
+or named. get_value just has to return a LazySectionRef instance
+(LazyUnnamedSectionRef and LazyNamedSectionRef are subclasses of
+this). How this actually gets a referenced config section is up to the
+ConfigSection whose get_value gets called.
+
+Normal section references
+-------------------------
+
+If Spork's ConfigHint defines the type of its "ref" argument as
+"ref:foon" instead of "lazy_ref:foon" it gets handed an actual Foon
+instance instead of a LazySectionRef to one. This is built on top of
+the lazy reference code. For the ConfigSections nothing changes (the
+same get_value call is made). But the ConfigManager now immediately
+calls collapse() on the LazySectionRef, retrieving a CollapsedConfig
+instance (for the "foon"). This is handed to the CollapsedConfig for
+"spork", and when this one is instantiated the referenced
+CollapsedConfig is also instantiated.
+
+Miscellaneous details
+---------------------
+
 The support for nameless sections means neither ConfigSection nor
 CollapsedConfig have a name attribute. This makes the error handling
 code a bit tricky as it has to tag in the name at various points, but

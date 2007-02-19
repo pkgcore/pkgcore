@@ -46,7 +46,6 @@ class mysdist(sdist.sdist):
                 self.filelist.include_pattern(os.path.join(key, pattern))
 
         self.filelist.append("AUTHORS")
-        self.filelist.append("NOTES")
         self.filelist.append("COPYING")
         self.filelist.append("NEWS")
 

@@ -115,7 +115,7 @@ class Translator(nodes.NodeVisitor):
         'field_name' : ('\n.TP\n.B ', '\n'),
         'literal_block' : ('\n.nf\n', '\n.fi\n'),
         'option_list' : ('', ''),
-        'option_list_item' : ('\n.TP', ''),
+        'option_list_item' : ('.TP', ''),
         'reference' : ('', ''),
         'strong' : ('\n.B ', ''),
         'term' : ('\n.B ', '\n'),
@@ -123,7 +123,7 @@ class Translator(nodes.NodeVisitor):
 
     def f(mode, k, val):
         def f2(self, node):
-            print mode,k,node,node,node.astext()
+            print mode,k,node,"\n"
             self.body.append(val)
         return f2
 
@@ -370,13 +370,21 @@ class Translator(nodes.NodeVisitor):
     def depart_line_block(self, node):
         self.body.append('\n')
 
-    def depart_line(self, node):
-        self.body.append('\n.br\n')
-
     def visit_list_item(self, node):
-        self.body.append('\n.TP %d\n%s\n' % (
+        self.body.append('\n.TP %d\n%s' % (
                 self._list_char[-1].get_width(),
                 self._list_char[-1].next(),) )
+
+    def visit_option(self, node):
+        # each form of the option will be presented separately
+        if self.context[-1]>0:
+            self.body.append(', ')
+        if self.context[-3] == '.BI':
+            self.body.append('\\')
+        self.body.append(' ')
+
+    def depart_option(self, node):
+        self.context[-1] += 1
 
     def visit_option_group(self, node):
         # as one option could have several forms it is a group
@@ -394,17 +402,6 @@ class Translator(nodes.NodeVisitor):
         text = self.body[start_position:]
         del self.body[start_position:]
         self.body.append('\n%s%s' % (self.context.pop(), ''.join(text)))
-
-    def visit_option(self, node):
-        # each form of the option will be presented separately
-        if self.context[-1]>0:
-            self.body.append(' ,')
-        if self.context[-3] == '.BI':
-            self.body.append('\\')
-        self.body.append(' ')
-
-    def depart_option(self, node):
-        self.context[-1] += 1
 
     visit_option_string = depart_option_string = noop
 

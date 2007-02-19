@@ -75,7 +75,8 @@ addpredict()
 
 unpack()
 {
-    local x y myfail srcdir
+    local x y myfail srcdir taropts tar_subdir
+    taropts='--no-same-owner'
 
     [ -z "$*" ] && die "Nothing passed to the 'unpack' command"
 
@@ -94,37 +95,27 @@ unpack()
         [ "${x/${DISTDIR}}" != "${x}" ] && \
             die "Arguments to unpack() should not begin with \${DISTDIR}."
 
-        case "${x##*.}" in
-            tar)
-                tar xof "${srcdir}${x}" || die "$myfail"
+        case "${x}" in
+            *.tar)
+                tar xf "${srcdir}${x}" ${taropts} || die "$myfail"
                 ;;
-            tgz)
-                tar xozf "${srcdir}${x}" || die "$myfail"
+            *.tar.gz|*.tgz|*.tar.Z)
+                tar xzf "${srcdir}${x}" ${taropts} || die "$myfail"
                 ;;
-            tbz2|tbz)
-                bzip2 -dc "${srcdir}${x}" | tar xof -
+            *.tar.bz2|*.tbz2|*.tbz)
+                bzip2 -dc "${srcdir}${x}" | tar xf - ${taropts}
                 assert "$myfail"
                 ;;
-            ZIP|zip|jar)
+            *.ZIP|*.zip|*.jar)
                 unzip -qo "${srcdir}${x}" || die "$myfail"
                 ;;
-            gz|Z|z)
-                if [ "${y}" == "tar" ]; then
-                    gzip -dc "${srcdir}${x}" | tar xof -
-                    assert "$myfail"
-                else
-                    gzip -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
-                fi
+            *.gz|*.Z|*.z)
+                gzip -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
                 ;;
-            bz2|bz)
-                if [ "${y}" == "tar" ]; then
-                    bzip2 -dc "${srcdir}${x}" | tar xof -
-                    assert "$myfail"
-                else
-                    bzip2 -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
-                fi
+            *.bz2|*.bz)
+                bzip2 -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
                 ;;
-            7Z|7z)
+            *.7Z|*.7z)
                 local my_output
                 my_output="$(7z x -y "${srcdir}/${x}")"
                 if [ $? -ne 0 ]; then
@@ -132,13 +123,13 @@ unpack()
                     die "$myfail"
                 fi
                 ;;
-            RAR|rar)
+            *.RAR|*.rar)
                 unrar x -idq -o+ "${srcdir}/${x}" || die "$myfail"
                 ;;
-            LHa|LHA|lha|lzh)
+            *.LHa|*.LHA|*.lha|*.lzh)
                 lha xqf "${srcdir}/${x}" || die "$myfail"
                 ;;
-            a|deb)
+            *.a|*.deb)
                 ar x "${srcdir}/${x}" || die "$myfail"
                 ;;
             *)

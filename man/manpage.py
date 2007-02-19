@@ -120,6 +120,7 @@ class Translator(nodes.NodeVisitor):
         'strong' : ('\n.B ', ''),
         'term' : ('\n.B ', '\n'),
     }
+
     def f(val):
         def f2(self, node):
             self.body.append(val)
@@ -128,7 +129,6 @@ class Translator(nodes.NodeVisitor):
     for k,v in simple_defs.iteritems():
         locals()['visit_%s' % k] = f(v[0])
         locals()['depart_%s' % k] = f(v[1])
-        
 
     def __init__(self, document):
         nodes.NodeVisitor.__init__(self, document)
@@ -523,6 +523,8 @@ class Translator(nodes.NodeVisitor):
     visit_tgroup = depart_tgroup = noop
 
     def visit_title(self, node):
+        if len(self.body) and not self.body[-1].endswith("\n"):
+            self.body.append("\n")
         if isinstance(node.parent, nodes.topic):
             self.body.append(self.comment('topic-title'))
         elif isinstance(node.parent, nodes.sidebar):
@@ -534,12 +536,13 @@ class Translator(nodes.NodeVisitor):
             self._docinfo['title'] = node.astext()
             raise nodes.SkipNode
         elif self.section_level == 1:
-            self.body.append('\n.SH ')
+            self.body.append('.SH ')
         else:
-            self.body.append('\n.SS ')
+            self.body.append('.SS ')
 
     def depart_title(self, node):
-        self.body.append('\n')
+        if not self.body[-1].endswith("\n"):
+            self.body.append('\n')
 
     def visit_topic(self, node):
         self.body.append(self.comment('topic: '+node.astext()))

@@ -234,16 +234,17 @@ class merge_plan(object):
                     index = is_cycle(current_stack, datom, cur_frame.choices,
                         "depends")
                     looped = ignore = False
-
+                    stack_end = len(current_stack) - 1
                     # this logic is admittedly semi tricky.
                     while index != -1:
                         looped = True
                         # see if it's a vdb node already; if it's a cycle between
                         # the same vdb node, ignore it (ignore self-dependant 
                         # depends level installed deps for the same node iow)
-                        if current_stack[index + 1].current_pkg == \
-                            cur_frame.current_pkg and \
-                            cur_frame.current_pkg.repo.livefs:
+                        if ((index < stack_end) and 
+                            (current_stack[index + 1].current_pkg == 
+                            cur_frame.current_pkg)
+                            and cur_frame.current_pkg.repo.livefs):
                             # we're in a cycle of depends level vdb nodes;
                             # they cyclical pkg is installed already, thus
                             # its satisfied itself.

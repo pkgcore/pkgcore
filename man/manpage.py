@@ -99,6 +99,14 @@ class Translator(nodes.NodeVisitor):
     words_and_spaces = re.compile(r'\S+| +|\n')
     document_start = """Man page generated from reStructeredText."""
 
+
+    def unimplemented_visit(self, node):
+        raise NotImplementedError('visiting unimplemented node type: %s'
+                                  % node.__class__.__name__)
+
+    def noop(self, node):
+        pass
+
     def __init__(self, document):
         nodes.NodeVisitor.__init__(self, document)
         self.settings = settings = document.settings
@@ -167,9 +175,6 @@ class Translator(nodes.NodeVisitor):
         text = text.replace("'","\\'")
         self.body.append(text)
 
-    def depart_Text(self, node):
-        pass
-
     def list_start(self, node):
         class enum_char:
             enum_style = {
@@ -228,9 +233,6 @@ class Translator(nodes.NodeVisitor):
         self._docinfo['author'] = node.astext()
         raise nodes.SkipNode
 
-    def depart_author(self, node):
-        pass
-
     def visit_authors(self, node):
         self.body.append(self.comment('visit_authors'))
 
@@ -252,9 +254,6 @@ class Translator(nodes.NodeVisitor):
     def visit_colspec(self, node):
         self.colspecs.append(node)
 
-    def depart_colspec(self, node):
-        pass
-
     def write_colspecs(self):
         self.body.append("%s.\n" % ('L '*len(self.colspecs)))
 
@@ -273,21 +272,11 @@ class Translator(nodes.NodeVisitor):
         self._docinfo['copyright'] = node.astext()
         raise nodes.SkipNode
 
-    def visit_danger(self, node):
-        self.visit_admonition(node, 'danger')
-
-    def depart_danger(self, node):
-        self.depart_admonition()
-
     def visit_date(self, node):
         self._docinfo['date'] = node.astext()
         raise nodes.SkipNode
 
-    def visit_decoration(self, node):
-        pass
-
-    def depart_decoration(self, node):
-        pass
+    visit_decoration = depart_decoration = noop
 
     def visit_definition(self, node):
         self.body.append(self.defs['definition'][0])
@@ -329,9 +318,6 @@ class Translator(nodes.NodeVisitor):
                 node[0].set_class('first')
             if isinstance(node[0], nodes.Element):
                 node[-1].set_class('last')
-
-    def depart_docinfo_item(self):
-        pass
 
     def visit_document(self, node):
         self.body.append(self.comment(self.document_start))
@@ -390,17 +376,7 @@ class Translator(nodes.NodeVisitor):
     def depart_enumerated_list(self, node):
         self.list_end()
 
-    def visit_error(self, node):
-        self.visit_admonition(node, 'error')
-
-    def depart_error(self, node):
-        self.depart_admonition()
-
-    def visit_field(self, node):
-        pass
-
-    def depart_field(self, node):
-        pass
+    visit_field = depart_field = noop
 
     def visit_field_body(self, node):
         if self._in_docinfo:
@@ -427,20 +403,13 @@ class Translator(nodes.NodeVisitor):
     def depart_field_name(self, node):
         self.body.append(self.defs['field_name'][1])
 
-    def visit_generated(self, node):
-        pass
-
-    def depart_generated(self, node):
-        pass
+    visit_generated = depart_generated = noop
 
     def visit_line_block(self, node):
         self.body.append('\n')
 
     def depart_line_block(self, node):
         self.body.append('\n')
-
-    def visit_line(self, node):
-        pass
 
     def depart_line(self, node):
         self.body.append('\n.br\n')
@@ -449,9 +418,6 @@ class Translator(nodes.NodeVisitor):
         self.body.append('\n.TP %d\n%s\n' % (
                 self._list_char[-1].get_width(),
                 self._list_char[-1].next(),) )
-
-    def depart_list_item(self, node):
-        pass
 
     def visit_literal(self, node):
         self.body.append(self.comment('visit_literal'))
@@ -506,12 +472,7 @@ class Translator(nodes.NodeVisitor):
     def depart_option(self, node):
         self.context[-1] += 1
 
-    def visit_option_string(self, node):
-        # do not know if .B or .BI
-        pass
-
-    def depart_option_string(self, node):
-        pass
+    visit_option_string = depart_option_string = noop
 
     def visit_option_argument(self, node):
         self.context[-3] = '.BI'
@@ -521,9 +482,6 @@ class Translator(nodes.NodeVisitor):
         else:
             # backslash blank blank
             self.body.append('\\  ')
-
-    def depart_option_argument(self, node):
-        pass
 
     def visit_paragraph(self, node):
         # BUG every but the first paragraph in a list must be intended
@@ -556,9 +514,6 @@ class Translator(nodes.NodeVisitor):
 
     def visit_row(self, node):
         self._active_table.new_row()
-
-    def depart_row(self, node):
-        pass
 
     def visit_section(self, node):
         self.section_level += 1
@@ -616,11 +571,7 @@ class Translator(nodes.NodeVisitor):
     def depart_target(self, node):
         self.body.append(self.comment('depart_target'))
 
-    def visit_tbody(self, node):
-        pass
-
-    def depart_tbody(self, node):
-        pass
+    visit_tbody = depart_tbody = noop
 
     def visit_term(self, node):
         self.body.append(self.defs['term'][0])
@@ -628,11 +579,7 @@ class Translator(nodes.NodeVisitor):
     def depart_term(self, node):
         self.body.append(self.defs['term'][1])
 
-    def visit_tgroup(self, node):
-        pass
-
-    def depart_tgroup(self, node):
-        pass
+    visit_tgroup = depart_tgroup = noop
 
     def visit_title(self, node):
         if isinstance(node.parent, nodes.topic):
@@ -658,10 +605,6 @@ class Translator(nodes.NodeVisitor):
         raise nodes.SkipNode
         ##self.topic_class = node.get('class')
 
-    def depart_topic(self, node):
-        ##self.topic_class = ''
-        pass
-
     def visit_transition(self, node):
         # .PP      Begin a new paragraph and reset prevailing indent.
         # .sp N    leaves N lines of blank space.
@@ -675,23 +618,20 @@ class Translator(nodes.NodeVisitor):
         self._docinfo["version"] = node.astext()
         raise nodes.SkipNode
 
-    def visit_warning(self, node):
-        self.visit_admonition(node, 'warning')
-
-    def depart_warning(self, node):
-        self.depart_admonition()
-
-    def unimplemented_visit(self, node):
-        raise NotImplementedError('visiting unimplemented node type: %s'
-                                  % node.__class__.__name__)
-
-    for x in ("address", "admonition", "attention", "caption", "caution",
-        "caption", "citation", "citation_reference", "classifier",
-        "doctest_block", "figure", "footnote", "footnote_reference",
-        "header", "hint", "image", "important", "label", "legend", "meta",
-        "note", "organization", "problematic", "status", "thread", "tip",
-        "title_reference"):
-        locals()["visit_%s" % x] = unimplemented_visit
-        locals()["depart_%s" % x] = unimplemented_visit
+    def __getattr__(self, attr):
+        if attr.startswith("visit_"):
+            if not hasattr(self, "depart_%s" % attr[7:]):
+                obj = self.unimplemented_visit
+            else:
+                obj = self.noop
+        elif attr.startswith("depart_"):
+            if not hasattr(self, "visit_%s" % attr[7:]):
+                obj = self.unimplemented_visit
+            else:
+                obj = self.noop
+        else:
+            raise AttributeError(self, attr)
+        setattr(self, attr, obj)
+        return obj
 
 # vim: set et ts=4 ai :

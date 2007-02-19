@@ -44,12 +44,15 @@ class Writer(writers.Writer):
     output = None
     """Final translated form of `document`."""
 
-    def __init__(self):
+    def __init__(self, debug_file):
         writers.Writer.__init__(self)
         self.translator_class = Translator
+        self.debug_file = debug_file
 
     def translate(self):
         visitor = self.translator_class(self.document)
+        if self.debug_file:
+            open(self.debug_file, 'w').write(str(self.document))
         self.document.walkabout(visitor)
         self.output = visitor.astext()
 

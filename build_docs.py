@@ -213,20 +213,23 @@ def process_docs(directory, force, do_parent=False):
                       writer_name='html')
 
 
-def process_man(directory, force):
+def process_man(directory, force, debug):
     """Generate manpages."""
     print 'processing %s' % (directory,)
+    debug_loc = None
     for entry in os.listdir(directory):
         original = os.path.join(directory, entry)
         if entry.lower().endswith('rst'):
             base = entry[:-4]
             target = os.path.join(directory, base) + '.man'
+            if debug:
+                debug_loc = os.path.join(directory, base) + '.doctree'
             if force or not os.path.exists(target) or (
                 os.path.getmtime(target) < os.path.getmtime(original)):
                 print 'writing %s' % (target,)
                 core.publish_file(source_path=original,
                                   destination_path=target,
-                                  writer=manpage.Writer())
+                                  writer=manpage.Writer(debug_loc))
             else:
                 print 'up to date: %s' % (target,)
 
@@ -235,6 +238,7 @@ if __name__ == '__main__':
     print 'checking documentation, use --force to force rebuild'
     print
     force = '--force' in sys.argv
+    debug = '--debug' in sys.argv
     for directory in ['dev-notes', 'doc']:
         process_docs(os.path.join(os.path.dirname(__file__), directory), force)
-    process_man(os.path.join(os.path.dirname(__file__), 'man'), force)
+    process_man(os.path.join(os.path.dirname(__file__), 'man'), force, debug)

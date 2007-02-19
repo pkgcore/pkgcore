@@ -14,20 +14,21 @@ WHAT IS PKGCORE?
 
 WHO TO CONTACT IF I FIND A BUG?
 
-  Please submit a bug/ticket via http://www.pkgcore.org barring that, please at
+  Please submit a bug/ticket via http://www.pkgcore.org. Barring that, please at
   least send the details to pkgcore-bugs@pkgcore.org.  Please do not use
   bugs.gentoo.org as the first step; any bugs, pkgcore devs should filter before
   passing up at this point.
 
-  You can also stop by on irc.freenode.net #pkgcore
+  You can also stop by at #pkgcore on irc.freenode.net.
 
 
 DOCUMENTATION?
 
   Please take a look at either doc/ and dev-notes/ ; additionally, the code for
-  the most part has  docstrings, thus pydoc is a good reference.
+  the most part has docstrings, thus pydoc is a good reference.
   
-  For just getting started, dev-notes/developing.rst is a good intro
+  doc/getting-started.rst is a good introduction if you're just getting started.
+  If you want to start hacking, take a look at dev-notes/developing.rst.
 
 
 TOOLS?
@@ -50,29 +51,31 @@ TESTS?
 
   A standalone test runner is integrated in setup.py; to run, just execute
   setup.py test
-  Aside from that, our runner of choice is twisteds trial; ran via-
+  Aside from that, our runner of choice is twisted's trial; ran via-
 
   trial pkgcore
   
-  if doing development, trial is significantly friendlier; the standalone
-  runner is designed to be used mainly for installations of pkgcore, where
+  If you're doing development, trial is significantly friendlier; the standalone
+  runner is designed to be mainly used for installations of pkgcore, where
   all tests must pass, else installation is aborted.
 
 
 INSTALLING:
 
-  pretty simple-
+  To build:
   
     tar jxf pkgcore-0.XX.tar.bz2
     cd pkgcore-0.XX
     python setup.py build
 
-  if after running tests,
+  Run tests:
     
     cd pkgcore-0.xx
     python setup.py test
+	or
+	trial pkgcore/
   
-  finally, installing-
+  To install:
   
     cd pkgcore-0.xx
     python setup.py install

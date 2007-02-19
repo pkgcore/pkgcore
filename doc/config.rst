@@ -7,7 +7,7 @@ Note for portage users
 
 If you already know how to configure portage you can probably just
 skip this file. As long as you do not have an /etc/pkgcore.conf or
-~/.pkgcore.conf pkgcore will read portages configuration files.
+~/.pkgcore.conf pkgcore will read portage's configuration files.
 
 Basics, querying
 ================

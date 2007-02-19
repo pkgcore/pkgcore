@@ -121,14 +121,15 @@ class Translator(nodes.NodeVisitor):
         'term' : ('\n.B ', '\n'),
     }
 
-    def f(val):
+    def f(mode, k, val):
         def f2(self, node):
+            print mode,k,node,node,node.astext()
             self.body.append(val)
         return f2
 
     for k,v in simple_defs.iteritems():
-        locals()['visit_%s' % k] = f(v[0])
-        locals()['depart_%s' % k] = f(v[1])
+        locals()['visit_%s' % k] = f('visit', k, v[0])
+        locals()['depart_%s' % k] = f('depart', k, v[1])
 
     def __init__(self, document):
         nodes.NodeVisitor.__init__(self, document)
@@ -328,34 +329,6 @@ class Translator(nodes.NodeVisitor):
     def depart_emphasis(self, node):
         self.body.append('\n')
 
-    def visit_entry(self, node):
-        # BUG entries have to be on one line separated by tab force it.
-        self.context.append(len(self.body))
-        self._in_entry = 1
-        return
-        if isinstance(node.parent.parent, nodes.thead):
-            tagname = 'th'
-        else:
-            tagname = 'td'
-        atts = {}
-        if node.has_key('morerows'):
-            atts['rowspan'] = node['morerows'] + 1
-        if node.has_key('morecols'):
-            atts['colspan'] = node['morecols'] + 1
-        self.body.append(self.starttag(node, tagname, '', **atts))
-        self.context.append('</%s>\n' % tagname.lower())
-        if len(node) == 0:              # empty cell
-            self.body.append('&nbsp;')
-        else:
-            node[0].set_class('first')
-            node[-1].set_class('last')
-
-    def depart_entry(self, node):
-        start = self.context.pop()
-        self._active_table.append_cell(self.body[start:])
-        del self.body[start:]
-        self._in_entry = 0
-
     def visit_enumerated_list(self, node):
         self.list_start(node)
 
@@ -444,15 +417,10 @@ class Translator(nodes.NodeVisitor):
             # backslash blank blank
             self.body.append('\\  ')
 
-    def visit_paragraph(self, node):
-        # BUG every but the first paragraph in a list must be intended
-        # TODO .PP or new line
-        return
-
     def depart_paragraph(self, node):
         # TODO .PP or an empty line
-        if not self._in_entry:
-            self.body.append('\n\n')
+        if self.body and not self.body[-1].endswith("\n"):
+            self.body.append('\n')
 
     def visit_raw(self, node):
         if node.get('format') == 'manpage':

@@ -123,8 +123,8 @@ class Translator(nodes.NodeVisitor):
 
     def f(mode, k, val):
         def f2(self, node):
-            print mode,k,node,"\n"
-            self.body.append(val)
+            if val:
+                self.body.append(val)
         return f2
 
     for k,v in simple_defs.iteritems():

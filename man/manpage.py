@@ -211,7 +211,6 @@ class Translator(nodes.NodeVisitor):
         if len(self._list_char) > 0:
             self.body.append('\n.RE\n')
 
-
     def append_header(self):
         """append header with .TH and .SH NAME"""
         # TODO before everything
@@ -224,29 +223,6 @@ class Translator(nodes.NodeVisitor):
                 "%(title)s \- %(subtitle)s\n")
         self.body.append(tmpl % self._docinfo)
         self.header_written = 1
-
-    def visit_address(self, node):
-        raise NotImplementedError, node.astext()
-        self.visit_docinfo_item(node, 'address', meta=None)
-
-    def depart_address(self, node):
-        self.depart_docinfo_item()
-
-    def visit_admonition(self, node, name):
-        raise NotImplementedError, node.astext()
-        self.body.append(self.starttag(node, 'div', CLASS=name))
-        self.body.append('<p class="admonition-title">'
-                         + self.language.labels[name] + '</p>\n')
-
-    def depart_admonition(self):
-        raise NotImplementedError, node.astext()
-        self.body.append('</div>\n')
-
-    def visit_attention(self, node):
-        self.visit_admonition(node, 'attention')
-
-    def depart_attention(self, node):
-        self.depart_admonition()
 
     def visit_author(self, node):
         self._docinfo['author'] = node.astext()
@@ -272,58 +248,6 @@ class Translator(nodes.NodeVisitor):
 
     def depart_bullet_list(self, node):
         self.list_end()
-
-    def visit_caption(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(self.starttag(node, 'p', '', CLASS='caption'))
-
-    def depart_caption(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append('</p>\n')
-
-    def visit_caution(self, node):
-        self.visit_admonition(node, 'caution')
-
-    def depart_caution(self, node):
-        self.depart_admonition()
-
-    def visit_citation(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(self.starttag(node, 'table', CLASS='citation',
-                                       frame="void", rules="none"))
-        self.body.append('<colgroup><col class="label" /><col /></colgroup>\n'
-                         '<col />\n'
-                         '<tbody valign="top">\n'
-                         '<tr>')
-        self.footnote_backrefs(node)
-
-    def depart_citation(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append('</td></tr>\n'
-                         '</tbody>\n</table>\n')
-
-    def visit_citation_reference(self, node):
-        raise NotImplementedError, node.astext()
-        href = ''
-        if node.has_key('refid'):
-            href = '#' + node['refid']
-        elif node.has_key('refname'):
-            href = '#' + self.document.nameids[node['refname']]
-        self.body.append(self.starttag(node, 'a', '[', href=href,
-                                       CLASS='citation-reference'))
-
-    def depart_citation_reference(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(']</a>')
-
-    def visit_classifier(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(' <span class="classifier-delimiter">:</span> ')
-        self.body.append(self.starttag(node, 'span', '', CLASS='classifier'))
-
-    def depart_classifier(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append('</span>')
 
     def visit_colspec(self, node):
         self.colspecs.append(node)
@@ -408,14 +332,6 @@ class Translator(nodes.NodeVisitor):
 
     def depart_docinfo_item(self):
         pass
-
-    def visit_doctest_block(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(self.starttag(node, 'pre', CLASS='doctest-block'))
-
-    def depart_doctest_block(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append('\n</pre>\n')
 
     def visit_document(self, node):
         self.body.append(self.comment(self.document_start))
@@ -511,150 +427,11 @@ class Translator(nodes.NodeVisitor):
     def depart_field_name(self, node):
         self.body.append(self.defs['field_name'][1])
 
-    def visit_figure(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(self.starttag(node, 'div', CLASS='figure'))
-
-    def depart_figure(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append('</div>\n')
-
-    def visit_footer(self, node):
-        raise NotImplementedError, node.astext()
-        self.context.append(len(self.body))
-
-    def depart_footer(self, node):
-        raise NotImplementedError, node.astext()
-        start = self.context.pop()
-        footer = (['<hr class="footer"/>\n',
-                   self.starttag(node, 'div', CLASS='footer')]
-                  + self.body[start:] + ['</div>\n'])
-        self.body_suffix[:0] = footer
-        del self.body[start:]
-
-    def visit_footnote(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(self.starttag(node, 'table', CLASS='footnote',
-                                       frame="void", rules="none"))
-        self.body.append('<colgroup><col class="label" /><col /></colgroup>\n'
-                         '<tbody valign="top">\n'
-                         '<tr>')
-        self.footnote_backrefs(node)
-
-    def footnote_backrefs(self, node):
-        raise NotImplementedError, node.astext()
-        if self.settings.footnote_backlinks and node.hasattr('backrefs'):
-            backrefs = node['backrefs']
-            if len(backrefs) == 1:
-                self.context.append('')
-                self.context.append('<a class="fn-backref" href="#%s" '
-                                    'name="%s">' % (backrefs[0], node['id']))
-            else:
-                i = 1
-                backlinks = []
-                for backref in backrefs:
-                    backlinks.append('<a class="fn-backref" href="#%s">%s</a>'
-                                     % (backref, i))
-                    i += 1
-                self.context.append('<em>(%s)</em> ' % ', '.join(backlinks))
-                self.context.append('<a name="%s">' % node['id'])
-        else:
-            self.context.append('')
-            self.context.append('<a name="%s">' % node['id'])
-
-    def depart_footnote(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append('</td></tr>\n'
-                         '</tbody>\n</table>\n')
-
-    def visit_footnote_reference(self, node):
-        raise NotImplementedError, node.astext()
-        href = ''
-        if node.has_key('refid'):
-            href = '#' + node['refid']
-        elif node.has_key('refname'):
-            href = '#' + self.document.nameids[node['refname']]
-        format = self.settings.footnote_references
-        if format == 'brackets':
-            suffix = '['
-            self.context.append(']')
-        elif format == 'superscript':
-            suffix = '<sup>'
-            self.context.append('</sup>')
-        else:                           # shouldn't happen
-            suffix = '???'
-            self.content.append('???')
-        self.body.append(self.starttag(node, 'a', suffix, href=href,
-                                       CLASS='footnote-reference'))
-
-    def depart_footnote_reference(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(self.context.pop() + '</a>')
-
     def visit_generated(self, node):
         pass
 
     def depart_generated(self, node):
         pass
-
-    def visit_header(self, node):
-        raise NotImplementedError, node.astext()
-        self.context.append(len(self.body))
-
-    def depart_header(self, node):
-        raise NotImplementedError, node.astext()
-        start = self.context.pop()
-        self.body_prefix.append(self.starttag(node, 'div', CLASS='header'))
-        self.body_prefix.extend(self.body[start:])
-        self.body_prefix.append('<hr />\n</div>\n')
-        del self.body[start:]
-
-    def visit_hint(self, node):
-        self.visit_admonition(node, 'hint')
-
-    def depart_hint(self, node):
-        self.depart_admonition()
-
-    def visit_image(self, node):
-        raise NotImplementedError, node.astext()
-        atts = node.attributes.copy()
-        atts['src'] = atts['uri']
-        del atts['uri']
-        if not atts.has_key('alt'):
-            atts['alt'] = atts['src']
-        if isinstance(node.parent, nodes.TextElement):
-            self.context.append('')
-        else:
-            self.body.append('<p>')
-            self.context.append('</p>\n')
-        self.body.append(self.emptytag(node, 'img', '', **atts))
-
-    def depart_image(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(self.context.pop())
-
-    def visit_important(self, node):
-        self.visit_admonition(node, 'important')
-
-    def depart_important(self, node):
-        self.depart_admonition()
-
-    def visit_label(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(self.starttag(node, 'td', '%s[' % self.context.pop(),
-                                       CLASS='label'))
-
-    def depart_label(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(']</a></td><td>%s' % self.context.pop())
-
-    def visit_legend(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(self.starttag(node, 'div', CLASS='legend'))
-
-    def depart_legend(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append('</div>\n')
 
     def visit_line_block(self, node):
         self.body.append('\n')
@@ -687,19 +464,6 @@ class Translator(nodes.NodeVisitor):
 
     def depart_literal_block(self, node):
         self.body.append(self.defs['literal_block'][1])
-
-    def visit_meta(self, node):
-        raise NotImplementedError, node.astext()
-        self.head.append(self.emptytag(node, 'meta', **node.attributes))
-
-    def depart_meta(self, node):
-        pass
-
-    def visit_note(self, node):
-        self.visit_admonition(node, 'note')
-
-    def depart_note(self, node):
-        self.depart_admonition()
 
     def visit_option_list(self, node):
         self.body.append(self.defs['option_list'][0])
@@ -761,14 +525,6 @@ class Translator(nodes.NodeVisitor):
     def depart_option_argument(self, node):
         pass
 
-    def visit_organization(self, node):
-        raise NotImplementedError, node.astext()
-        self.visit_docinfo_item(node, 'organization')
-
-    def depart_organization(self, node):
-        raise NotImplementedError, node.astext()
-        self.depart_docinfo_item()
-
     def visit_paragraph(self, node):
         # BUG every but the first paragraph in a list must be intended
         # TODO .PP or new line
@@ -778,21 +534,6 @@ class Translator(nodes.NodeVisitor):
         # TODO .PP or an empty line
         if not self._in_entry:
             self.body.append('\n\n')
-
-    def visit_problematic(self, node):
-        raise NotImplementedError, node.astext()
-        if node.hasattr('refid'):
-            self.body.append('<a href="#%s" name="%s">' % (node['refid'],
-                                                           node['id']))
-            self.context.append('</a>')
-        else:
-            self.context.append('')
-        self.body.append(self.starttag(node, 'span', '', CLASS='problematic'))
-
-    def depart_problematic(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append('</span>')
-        self.body.append(self.context.pop())
 
     def visit_raw(self, node):
         if node.get('format') == 'manpage':
@@ -824,13 +565,6 @@ class Translator(nodes.NodeVisitor):
 
     def depart_section(self, node):
         self.section_level -= 1
-
-    def visit_status(self, node):
-        raise NotImplementedError, node.astext()
-        self.visit_docinfo_item(node, 'status', meta=None)
-
-    def depart_status(self, node):
-        self.depart_docinfo_item()
 
     def visit_strong(self, node):
         self.body.append(self.defs['strong'][1])
@@ -900,24 +634,6 @@ class Translator(nodes.NodeVisitor):
     def depart_tgroup(self, node):
         pass
 
-    def visit_thead(self, node):
-        raise NotImplementedError, node.astext()
-        self.write_colspecs()
-        self.body.append(self.context.pop()) # '</colgroup>\n'
-        # There may or may not be a <thead>; this is for <tbody> to use:
-        self.context.append('')
-        self.body.append(self.starttag(node, 'thead', valign='bottom'))
-
-    def depart_thead(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append('</thead>\n')
-
-    def visit_tip(self, node):
-        self.visit_admonition(node, 'tip')
-
-    def depart_tip(self, node):
-        self.depart_admonition()
-
     def visit_title(self, node):
         if isinstance(node.parent, nodes.topic):
             self.body.append(self.comment('topic-title'))
@@ -936,14 +652,6 @@ class Translator(nodes.NodeVisitor):
 
     def depart_title(self, node):
         self.body.append('\n')
-
-    def visit_title_reference(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append(self.starttag(node, 'cite', ''))
-
-    def depart_title_reference(self, node):
-        raise NotImplementedError, node.astext()
-        self.body.append('</cite>')
 
     def visit_topic(self, node):
         self.body.append(self.comment('topic: '+node.astext()))
@@ -976,5 +684,14 @@ class Translator(nodes.NodeVisitor):
     def unimplemented_visit(self, node):
         raise NotImplementedError('visiting unimplemented node type: %s'
                                   % node.__class__.__name__)
+
+    for x in ("address", "admonition", "attention", "caption", "caution",
+        "caption", "citation", "citation_reference", "classifier",
+        "doctest_block", "figure", "footnote", "footnote_reference",
+        "header", "hint", "image", "important", "label", "legend", "meta",
+        "note", "organization", "problematic", "status", "thread", "tip",
+        "title_reference"):
+        locals()["visit_%s" % x] = unimplemented_visit
+        locals()["depart_%s" % x] = unimplemented_visit
 
 # vim: set et ts=4 ai :

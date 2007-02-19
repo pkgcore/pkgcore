@@ -16,7 +16,7 @@ from pkgcore.interfaces import format, data_source
 from pkgcore.ebuild.processor import \
     request_ebuild_processor, release_ebuild_processor, \
     expected_ebuild_env, chuck_UnhandledCommand
-from pkgcore.os_data import portage_gid
+from pkgcore.os_data import portage_gid, portage_uid
 from pkgcore.util.osutils import ensure_dirs, normpath, join as pjoin
 from pkgcore.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_fakeroot_capable)
@@ -202,8 +202,8 @@ class ebd(object):
     def setup_workdir(self):
         # ensure dirs.
         for k in ("HOME", "T", "WORKDIR", "D"):
-            if not ensure_dirs(self.env[k], mode=0770, gid=portage_gid,
-                               minimal=True):
+            if not ensure_dirs(self.env[k], mode=0770, uid=portage_uid,
+                gid=portage_gid, minimal=True):
                 raise format.FailedDirectory(
                     self.env[k],
                     "%s doesn't fulfill minimum mode %o and gid %i" % (

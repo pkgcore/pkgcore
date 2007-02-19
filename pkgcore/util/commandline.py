@@ -148,6 +148,13 @@ def debug_callback(option, opt_str, value, parser):
         collapsed.debug = True
 
 
+class Option(optparse.Option):
+
+    def __init__(self, *args, **kwargs):
+        self.long_help = kwargs.pop('long_help', None)
+        optparse.Option.__init__(self, *args, **kwargs)
+
+
 class OptionParser(optparse.OptionParser):
 
     """Our common OptionParser subclass.
@@ -161,18 +168,19 @@ class OptionParser(optparse.OptionParser):
     values_class = Values
 
     standard_option_list = optparse.OptionParser.standard_option_list + [
-        optparse.Option(
+        Option(
             '--debug', '-d', action='callback', callback=debug_callback,
             help='print some extra info useful for pkgcore devs. You may have '
             'to set this as first argument for debugging certain '
             'configuration problems.'),
-        optparse.Option('--nocolor', action='store_true',
+        Option('--nocolor', action='store_true',
                         help='disable color in the output.'),
-        optparse.Option('--version', action='version'),
+        Option('--version', action='version'),
         ]
 
     def __init__(self, *args, **kwargs):
         """Initialize."""
+        kwargs.setdefault('option_class', Option)
         optparse.OptionParser.__init__(self, *args, **kwargs)
         # It is a callback so it cannot set a default value the "normal" way.
         self.set_default('debug', False)

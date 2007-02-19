@@ -68,6 +68,8 @@ class CollapsedConfig(object):
     @ivar config: The supplied configuration values.
     @ivar debug: if True exception wrapping is disabled.
     @ivar default: True if this section is a default.
+    @type name: C{str} or C{None}
+    @ivar name: our section name or C{None} for an anonymous section.
     """
 
     def __init__(self, type_obj, config, manager, debug=False, default=False):
@@ -75,28 +77,19 @@ class CollapsedConfig(object):
         # Check if we got all values required to instantiate.
         missing = set(type_obj.required) - set(config)
         if missing:
-            for x in missing:
-                if type_obj.types[x] == 'ref:config':
-                    config[x] = manager
-            missing = set(type_obj.required) - set(config)
-            if missing:
-                raise errors.ConfigurationError(
-                    'type %s.%s needs settings for %s' %
-                    (type_obj.callable.__module__,
+            raise errors.ConfigurationError(
+                'type %s.%s needs settings for %s' % (
+                    type_obj.callable.__module__,
                     type_obj.callable.__name__,
                     ', '.join(repr(var) for var in missing)))
 
+        self.name = None
         self.default = default
         self.debug = debug
         self.type = type_obj
         self.config = config
         # Cached instance if we have one.
         self._instance = None
-
-    def _pull_cached_instance(self):
-        """return the instance if it's been instantiated-
-        if not, None is returned"""
-        return self._instance
 
     def instantiate(self):
         """Call our type's callable, cache and return the result.
@@ -268,12 +261,6 @@ class ConfigManager(object):
             for name in config:
                 yield name
 
-    def get_section_name(self, obj):
-        for section_name, val in self.collapsed_configs.iteritems():
-            if val._pull_cached_instance() == obj:
-                return section_name
-        return None
-
     def collapse_named_section(self, name, raise_on_missing=True):
         """Collapse a config by name, possibly returning a cached instance.
 
@@ -301,6 +288,7 @@ class ConfigManager(object):
                 return None
             try:
                 result = self.collapse_section(section)
+                result.name = name
             except errors.ConfigurationError, e:
                 e.stack.append('Collapsing section named %r' % (name,))
                 raise

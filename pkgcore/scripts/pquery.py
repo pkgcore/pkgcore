@@ -236,7 +236,7 @@ extras = dict((parser_name, optparse_type(parser_func))
               for parser_name, parser_func in PARSE_FUNCS.iteritems())
 extras['atom'] = atom_type
 
-class Option(optparse.Option):
+class Option(commandline.Option):
     """C{optparse.Option} subclass supporting our custom types."""
     TYPES = optparse.Option.TYPES + tuple(extras.keys())
     # Copy the original dict
@@ -357,7 +357,11 @@ class OptionParser(commandline.OptionParser):
             '--expr', action='append', type='expr',
             help='Boolean combinations of other restrictions, like '
             '\'and(not(herd("python")), match("dev-python/*"))\'. '
-            'WARNING: currently not completely reliable.')
+            'WARNING: currently not completely reliable.',
+            long_help='Boolean combinations of other restrictions, like '
+            '``and(not(herd("python")), match("dev-python/*"))``. '
+            '*WARNING*: currently not completely reliable.'
+            )
         # XXX fix the negate stuff and remove that warning.
         restrict.add_option(
             '--pkgset', action='callback', type='string',

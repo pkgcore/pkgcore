@@ -7,6 +7,8 @@ gentoo configuration domain
 
 # XXX doc this up better...
 
+from itertools import izip
+
 import pkgcore.config.domain
 from pkgcore.config import ConfigHint
 from pkgcore.restrictions.delegated import delegate
@@ -74,8 +76,8 @@ class domain(pkgcore.config.domain.domain):
     # XXX ouch, verify this crap and add defaults and stuff
     _types = {
         'profile': 'ref:profile', 'fetcher': 'ref:fetcher',
-        'repositories': 'refs:repo', 'vdb': 'refs:repo',
-        'name': 'str', 'config_manager':'ref:config',
+        'repositories': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
+        'name': 'str',
         }
     for _thing in list(const.incrementals) + ['bashrc']:
         _types[_thing] = 'list'
@@ -91,13 +93,12 @@ class domain(pkgcore.config.domain.domain):
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
             _types, incrementals=const.incrementals, typename='domain',
-            required=['repositories', 'profile', 'vdb', 'fetcher', 'name',
-                'config_manager'],
+            required=['repositories', 'profile', 'vdb', 'fetcher', 'name'],
             allow_unknowns=True)
 
     del _types, _thing
 
-    def __init__(self, profile, repositories, vdb, config_manager, name=None,
+    def __init__(self, profile, repositories, vdb, name=None,
         root='/', incrementals=const.incrementals, **settings):
         # voodoo, unfortunately (so it goes)
         # break this up into chunks once it's stabilized (most of code
@@ -105,8 +106,16 @@ class domain(pkgcore.config.domain.domain):
         settings.setdefault('ACCEPT_LICENSE', const.ACCEPT_LICENSE)
 
         # map out sectionname -> config manager immediately.
-        self.named_repos = dict((config_manager.get_section_name(r), r)
-            for r in repositories + vdb)
+        repositories_collapsed = [r.collapse() for r in repositories]
+        repositories = [r.instantiate() for r in repositories_collapsed]
+        vdb_collapsed = [r.collapse() for r in vdb]
+        vdb = [r.instantiate() for r in vdb_collapsed]
+        self.named_repos = dict(
+            (collapsed.name, repo) for (collapsed, repo) in izip(
+                repositories_collapsed, repositories))
+        self.named_repos.update(
+            (collapsed.name, repo) for (collapsed, repo) in izip(
+                vdb_collapsed, vdb))
         self.named_repos.pop(None, None)
 
         pkg_maskers = set(profile.masks)

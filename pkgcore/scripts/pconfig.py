@@ -27,7 +27,7 @@ class DescribeClassParser(commandline.OptionParser):
         return values, ()
 
 
-def dump_section(config, out, sections):
+def dump_section(config, out):
     # ignore meta type defs.
     if getattr(config.type, "typename", None) == 'type':
         return
@@ -45,9 +45,6 @@ def dump_section(config, out, sections):
             else:
                 out.write('# huh, no type set for %s (%r)' % (key, val))
                 continue
-        if typename == 'ref:config':
-            # ignore it.  it's a special cased internal ref.
-            continue
         out.write('# type: %s' % (typename,))
         if typename.startswith('lazy_refs'):
             typename = 'section_refs'
@@ -65,26 +62,24 @@ def dump_section(config, out, sections):
         elif typename == 'callable':
             out.write('%s %s.%s' % (key, val.__module__, val.__name__))
         elif typename == 'section_ref' or typename.startswith('ref:'):
-            name = sections.get(val)
-            if name is None:
+            if val.name is None:
                 out.write('%s {' % (key,))
-                dump_section(val, out, sections)
+                dump_section(val, out)
                 out.write('};')
             else:
-                out.write('%s %r;' % (key, name))
+                out.write('%s %r;' % (key, val.name))
         elif typename == 'section_refs' or typename.startswith('refs:'):
             out.autoline = False
             out.write('%s' % (key,))
             for i, subconf in enumerate(val):
-                name = sections.get(subconf)
-                if name is None:
+                if subconf.name is None:
                     out.autoline = True
                     out.write(' {')
-                    dump_section(subconf, out, sections)
+                    dump_section(subconf, out)
                     out.autoline = False
                     out.write('}')
                 else:
-                    out.write(' %r' % (name,))
+                    out.write(' %r' % (subconf.name,))
             out.autoline = True
             out.write(';')
         else:
@@ -202,24 +197,20 @@ class DumpParser(_TypeNameParser):
 
 def dump_main(options, out, err):
     """Dump the entire configuration."""
-    sections = []
     config = options.config
     if options.typename is None:
         names = config.sections()
     else:
         names = getattr(config, options.typename).iterkeys()
-    for name in names:
+    for name in sorted(names):
         try:
-            sections.append((name, config.collapse_named_section(name)))
+            section = config.collapse_named_section(name)
         except errors.ConfigurationError:
             if options.debug:
                 traceback.print_exc()
             # Otherwise ignore this.
-    sections.sort()
-    revmap = dict((config, name) for name, config in sections)
-    for name, section in sections:
         out.write('%r {' % (name,))
-        dump_section(section, out, revmap)
+        dump_section(section, out)
         out.write('}')
         out.write()
 

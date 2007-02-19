@@ -674,3 +674,10 @@ class ConfigManagerTest(TestCase):
         self.assertIdentical(
             manager.collapse_named_section('foon').instantiate(),
             manager.get_default('repo'))
+
+    def test_section_names(self):
+        manager = central.ConfigManager([{
+                    'thing': basics.HardCodedConfigSection({'class': drawer}),
+                    }], [RemoteSource()])
+        collapsed = manager.collapse_named_section('thing')
+        self.assertEquals('thing', collapsed.name)

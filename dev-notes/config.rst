@@ -203,6 +203,7 @@ because the way things like lists of strings are stored depends on the
 format of the configuration file but the parser does not have enough
 information to know it should parse as a list instead of a string. For
 example, an ini-format pkgcore.conf could contain::
+
   [my-overlay-cache]
   class=pkgcore.cache.flat_hash.database
   auxdbkeys=DEPEND RDEPEND
@@ -236,6 +237,7 @@ it is used.
 
 For the remainder of the example let's assume our config looks like
 this::
+
   [spork]
   inherit=cache
   auxdbkeys=DEPEND RDEPEND
@@ -306,6 +308,7 @@ central.collapse_named_section('foon'), checks if the result is of
 type foon, instantiates it and returns it.
 
 The same thing using a dhcp-style config::
+
   spork {
       class pkgcore.Spork;
       ref {

@@ -620,12 +620,12 @@ class Translator(nodes.NodeVisitor):
 
     def __getattr__(self, attr):
         if attr.startswith("visit_"):
-            if not hasattr(self, "depart_%s" % attr[7:]):
+            if not hasattr(self, "depart_%s" % attr[6:]):
                 obj = self.unimplemented_visit
             else:
                 obj = self.noop
         elif attr.startswith("depart_"):
-            if not hasattr(self, "visit_%s" % attr[7:]):
+            if not hasattr(self, "visit_%s" % attr[6:]):
                 obj = self.unimplemented_visit
             else:
                 obj = self.noop

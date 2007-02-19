@@ -107,6 +107,29 @@ class Translator(nodes.NodeVisitor):
     def noop(self, node):
         pass
 
+    simple_defs = {
+        'definition' : ('', ''),
+        'definition_list' : ('', ''),
+        'definition_list_item' : ('\n.TP', ''),
+        'description' : ('\n', ''),
+        'field_name' : ('\n.TP\n.B ', '\n'),
+        'literal_block' : ('\n.nf\n', '\n.fi\n'),
+        'option_list' : ('', ''),
+        'option_list_item' : ('\n.TP', ''),
+        'reference' : ('', ''),
+        'strong' : ('\n.B ', ''),
+        'term' : ('\n.B ', '\n'),
+    }
+    def f(val):
+        def f2(self, node):
+            self.body.append(val)
+        return f2
+
+    for k,v in simple_defs.iteritems():
+        locals()['visit_%s' % k] = f(v[0])
+        locals()['depart_%s' % k] = f(v[1])
+        
+
     def __init__(self, document):
         nodes.NodeVisitor.__init__(self, document)
         self.settings = settings = document.settings
@@ -141,19 +164,6 @@ class Translator(nodes.NodeVisitor):
         self.section_level = 0
         # central definition of simple processing rules
         # what to output on : visit, depart
-        self.defs = {
-                'definition' : ('', ''),
-                'definition_list' : ('', ''),
-                'definition_list_item' : ('\n.TP', ''),
-                'description' : ('\n', ''),
-                'field_name' : ('\n.TP\n.B ', '\n'),
-                'literal_block' : ('\n.nf\n', '\n.fi\n'),
-                'option_list' : ('', ''),
-                'option_list_item' : ('\n.TP', ''),
-                'reference' : ('', ''),
-                'strong' : ('\n.B ', ''),
-                'term' : ('\n.B ', '\n'),
-                    }
         # TODO dont specify the newline before a dot-command, but ensure
         # check it is there.
 
@@ -278,30 +288,6 @@ class Translator(nodes.NodeVisitor):
 
     visit_decoration = depart_decoration = noop
 
-    def visit_definition(self, node):
-        self.body.append(self.defs['definition'][0])
-
-    def depart_definition(self, node):
-        self.body.append(self.defs['definition'][1])
-
-    def visit_definition_list(self, node):
-        self.body.append(self.defs['definition_list'][0])
-
-    def depart_definition_list(self, node):
-        self.body.append(self.defs['definition_list'][1])
-
-    def visit_definition_list_item(self, node):
-        self.body.append(self.defs['definition_list_item'][0])
-
-    def depart_definition_list_item(self, node):
-        self.body.append(self.defs['definition_list_item'][1])
-
-    def visit_description(self, node):
-        self.body.append(self.defs['description'][0])
-
-    def depart_description(self, node):
-        self.body.append(self.defs['description'][1])
-
     def visit_docinfo(self, node):
         self._in_docinfo = 1
 
@@ -398,10 +384,10 @@ class Translator(nodes.NodeVisitor):
             self._field_name = node.astext()
             raise nodes.SkipNode
         else:
-            self.body.append(self.defs['field_name'][0])
+            self.body.append(self.simple_defs['field_name'][0])
 
     def depart_field_name(self, node):
-        self.body.append(self.defs['field_name'][1])
+        self.body.append(self.simple_defs['field_name'][1])
 
     visit_generated = depart_generated = noop
 
@@ -418,31 +404,6 @@ class Translator(nodes.NodeVisitor):
         self.body.append('\n.TP %d\n%s\n' % (
                 self._list_char[-1].get_width(),
                 self._list_char[-1].next(),) )
-
-    def visit_literal(self, node):
-        self.body.append(self.comment('visit_literal'))
-
-    def depart_literal(self, node):
-        self.body.append(self.comment('depart_literal'))
-
-    def visit_literal_block(self, node):
-        self.body.append(self.defs['literal_block'][0])
-
-    def depart_literal_block(self, node):
-        self.body.append(self.defs['literal_block'][1])
-
-    def visit_option_list(self, node):
-        self.body.append(self.defs['option_list'][0])
-
-    def depart_option_list(self, node):
-        self.body.append(self.defs['option_list'][1])
-
-    def visit_option_list_item(self, node):
-        # one item of the list
-        self.body.append(self.defs['option_list_item'][0])
-
-    def depart_option_list_item(self, node):
-        self.body.append(self.defs['option_list_item'][1])
 
     def visit_option_group(self, node):
         # as one option could have several forms it is a group
@@ -499,13 +460,6 @@ class Translator(nodes.NodeVisitor):
         # Keep non-HTML raw text out of output:
         raise nodes.SkipNode
 
-    def visit_reference(self, node):
-        """E.g. email address."""
-        self.body.append(self.defs['reference'][0])
-
-    def depart_reference(self, node):
-        self.body.append(self.defs['reference'][1])
-
     def visit_revision(self, node):
         self.visit_docinfo_item(node, 'revision')
 
@@ -520,12 +474,6 @@ class Translator(nodes.NodeVisitor):
 
     def depart_section(self, node):
         self.section_level -= 1
-
-    def visit_strong(self, node):
-        self.body.append(self.defs['strong'][1])
-
-    def depart_strong(self, node):
-        self.body.append(self.defs['strong'][1])
 
     def visit_substitution_definition(self, node):
         """Internal only."""
@@ -572,13 +520,6 @@ class Translator(nodes.NodeVisitor):
         self.body.append(self.comment('depart_target'))
 
     visit_tbody = depart_tbody = noop
-
-    def visit_term(self, node):
-        self.body.append(self.defs['term'][0])
-
-    def depart_term(self, node):
-        self.body.append(self.defs['term'][1])
-
     visit_tgroup = depart_tgroup = noop
 
     def visit_title(self, node):

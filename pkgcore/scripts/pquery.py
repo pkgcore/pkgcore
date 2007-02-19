@@ -564,8 +564,10 @@ def stringify_attr(config, pkg, attr):
     if value is None:
         return 'MISSING'
 
-    if attr in ('herds', 'iuse', 'maintainers', 'restrict', 'keywords'):
+    if attr in ('herds', 'iuse', 'maintainers', 'restrict'):
         return ' '.join(sorted(unicode(v) for v in value))
+    if attr == 'keywords':
+        return ' '.join(sorted(value, key=lambda x:x.lstrip("~")))
     if attr == 'environment':
         return ''.join(value.get_fileobj())
     return str(value)

@@ -243,7 +243,7 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
         try:
             t = self.kls()
             os.stat_float_times(True)
-            for x in xrange(10):
+            for x in xrange(5):
                 now = ceil(time.time()) + 1
                 os.utime(self.dir, (now + 100, now + 100))
                 t.set_state([self.dir])

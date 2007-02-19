@@ -249,6 +249,8 @@ class Test_readfile(TempDirMixin, TestCase):
     line_content = "\n".join(str(x) for x in xrange(100))
     func = staticmethod(osutils.native_readfile)
 
+    largefile_testing_len = 2**17
+
     def setUp(self):
         TempDirMixin.setUp(self)
         self.fp = pjoin(self.dir, "foon")
@@ -262,8 +264,8 @@ class Test_readfile(TempDirMixin, TestCase):
         # test big files; forces the cpy to switch over to mmap
         
         f = open(self.fp, "a")
-        # ~.5MB; keep in mind, we already have a line in the file.
-        count = (2**19) / len(self.line_content)
+        # keep in mind, we already have a line in the file.
+        count = self.largefile_testing_len / len(self.line_content)
         for x in xrange(count -1):
             f.write(self.line_content)
         f.close()
@@ -332,7 +334,7 @@ class Test_readlines(Test_readfile):
         self.assertList(self.lines+[], func(fp, True))
 
         # test big files.
-        count = (2**19) / len(self.line_content)
+        count = self.largefile_testing_len / len(self.line_content)
         f = open(self.fp, 'a')
         for x in xrange(count - 1):
             f.write(self.line_content+"\n")

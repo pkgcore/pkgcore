@@ -4,23 +4,46 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.2.5:
+
+* handle corner case in depend cycle processing where a package directly
+  depends upon itself; fixes processing of sys-devel/libtool specifically.
+
+* for pquery --attr keywords, sort by arch, not by stable/unstable.
+
+* correct misc corner case atom bugs; an intersection bug, miss on an invalid 
+  use dep atom lacking a closure in cpy atom, verification of use chars in
+  native atom,
+
+* osutils extensions tests, correcting a few cpy differences in behaviour from
+  native.
+
+* For unpacking a tarball that doesn't have it's files in a subdir, tar will
+  occasionally try to utime the cwd resulting in a failure- uid owner for 
+  WORKDIR was changed to allow tar to do the utime, thus succeed in unpacking.
+  Only visible for userpriv and with oddball packages, gnuconfig for example.
+
+* Cleanup of a few slow test cases; running the test suite should now be around
+  25%-33% faster.
+
+
 pkgcore 0.2.4:
 
 * refactoring of trigger implementations- cleanup and tests.  Additionally,
-  eliminate a potential mtime based frace if the underlying fs (or python version)
-  doesn't do subsecond resolution.
+  eliminate a potential mtime based frace if the underlying fs (or python
+  version) doesn't do subsecond resolution.
 
 * force FEATURES into the exported ebuild env always.
 
-* for pmerge -p $target, which prefers reuse normally, *still* prefer the highest
-  versions, just examine vdb first, then nonvdb.
+* for pmerge -p $target, which prefers reuse normally, *still* prefer the
+  highest versions, just examine vdb first, then nonvdb.
 
-* minor optimization in readlines usage in the backend; kills off a duplicate stat
-  call.
+* minor optimization in readlines usage in the backend; kills off a duplicate
+  stat call.
 
-* if a stale cache entry is detected, and the backend is writable, wipe the cache
-  entry.  Little bit slower when detected, but saves parsing the file next time
-  around.
+* if a stale cache entry is detected, and the backend is writable, wipe the
+  cache entry.  Little bit slower when detected, but saves parsing the file
+  next time around.
 
 
 pkgcore 0.2.3:

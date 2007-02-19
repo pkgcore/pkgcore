@@ -427,7 +427,7 @@ class buildable(ebd, setup_mixin, format.build):
         self.run_test = self.feat_or_bool("test", domain_settings)
         if "test" in self.restrict:
             self.run_test = False
-        elif "test" in pkg.iuse and "test" not in pkg.use:
+        elif "test" not in pkg.use:
             if self.run_test:
                 logger.warn("disabling test for %s due to test use flag being disabled")
             self.run_test = False

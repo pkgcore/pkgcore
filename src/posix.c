@@ -390,6 +390,7 @@ typedef struct {
     int fd;
     int strip_newlines;
     time_t mtime;
+    unsigned long mtime_nsec;
     PyObject *fallback;
 } pkgcore_readlines;
 
@@ -482,6 +483,11 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
     self->fallback = fallback;
     self->map = ptr;
     self->mtime = st.st_mtime;
+#ifdef HAVE_STAT_TV_NSEC
+    self->mtime_nsec = st.st_mtim.tv_nsec;
+#else
+    self->mtime_nsec = 0;
+#endif
     if (ptr) {
         self->start = ptr;
         self->fd = fd;
@@ -585,7 +591,7 @@ pkgcore_readlines_get_mtime(pkgcore_readlines *self)
     }
     Py_DECREF(ret);
     if(is_float)
-        return PyFloat_FromDouble(self->mtime);
+        return PyFloat_FromDouble(self->mtime + 1e-9 * self->mtime_nsec);
 #if SIZEOF_TIME_T > SIZEOF_LONG
     return PyLong_FromLong((Py_LONG_LONG)self->mtime);
 #else

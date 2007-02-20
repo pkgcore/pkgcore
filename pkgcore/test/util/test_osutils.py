@@ -123,7 +123,6 @@ class EnsureDirsTest(TempDirMixin, TestCase):
         self.check_dir(path, os.geteuid(), os.getegid(), 0777)
 
 
-
 class Test_abspath(TempDirMixin, TestCase):
     
     func = staticmethod(osutils.abspath)

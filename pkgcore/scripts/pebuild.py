@@ -16,6 +16,8 @@ class OptionParser(commandline.OptionParser):
         commandline.OptionParser.__init__(
             self, description=__doc__, usage='%prog [options] atom phases',
             **kwargs)
+        self.add_option("--no-auto", action='store_true', default=False,
+            help="run just the specified phases.  may explode.")
 
     def check_values(self, values, args):
         values, args = commandline.OptionParser.check_values(
@@ -39,12 +41,17 @@ def main(options, out, err):
         return 1
     # pull clean out.
     l = list(x for x in options.phases if x != "clean")
-    clean = len(l) != options.phases
+    clean = len(l) != len(options.phases)
     if clean:
         options.phases = l
+    kwds = {}
+    if options.no_auto:
+        kwds["ignore_deps"] = True
+        if "setup" in l:
+            options.phases.insert(0, "fetch")
     build = pkgs[0].build(clean=clean)
     phase_funcs = list(getattr(build, x) for x in options.phases)
     for phase, f in zip(options.phases, phase_funcs):
         out.write()
         out.write('executing phase %s' % (phase,))
-        f()
+        f(**kwds)

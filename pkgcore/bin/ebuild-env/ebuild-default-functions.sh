@@ -473,7 +473,7 @@ dyn_preinst()
 # in the future might use e* from /etc/init.d/functions.sh if i feel like it
 debug-print()
 {
-    if [ "$EBUILD_PHASE" == "depend" ] && [ -z "${PORTAGE_DEBUG}" ]; then
+    if [ "$EBUILD_PHASE" == "depend" ] && [ -z "${PKGCORE_DEBUG}" ]; then
         return
     fi
     # if $T isn't defined, we're in dep calculation mode and 

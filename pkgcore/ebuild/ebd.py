@@ -92,8 +92,8 @@ class ebd(object):
         # temp hack.
         if "PYTHONPATH" in os.environ:
             self.env["PYTHONPATH"] = os.environ["PYTHONPATH"]
-        if "PORTAGE_DEBUG" in os.environ:
-            self.env["PORTAGE_DEBUG"] = str(int(os.environ["PORTAGE_DEBUG"]))
+        if "PKGCORE_DEBUG" in os.environ:
+            self.env["PKGCORE_DEBUG"] = str(int(os.environ["PKGCORE_DEBUG"]))
 
         self.env.setdefault("ROOT", "/")
         self.env_data_source = env_data_source

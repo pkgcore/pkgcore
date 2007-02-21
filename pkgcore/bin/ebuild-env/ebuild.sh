@@ -243,7 +243,7 @@ dump_environ() {
     #it doesn't match one of the filter lists.
     # vars, then funcs.
     local opts=""
-    [[ $PORTAGE_DEBUG -ge 3 ]] && opts="$opts --debug"
+    [[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
     declare | PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON}" "${PORTAGE_BIN_PATH}/filter-env" $opts -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x )"
     if ! hasq "--no-attributes" "$@"; then
         echo $'reinstate_loaded_env_attributes ()\n{'
@@ -352,8 +352,8 @@ load_environ() {
             :
         };
         local opts=""
-        [[ $PORTAGE_DEBUG -ge 3 ]] && opts="$opts --debug"
-        echo $PORTAGE_DEBUG
+        [[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
+        echo $PKGCORE_DEBUG
         eval "$(PYTHONPATH=${PKGCORE_PYTHONPATH} \
             "${PKGCORE_PYTHON}" "${PORTAGE_BIN_PATH}/filter-env" $opts \
             -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" \
@@ -523,12 +523,12 @@ execute_phases() {
                 sleepbeep 10
             fi	
 
-            [[ $PORTAGE_DEBUG -ge 3 ]] && set -x
+            [[ $PKGCORE_DEBUG -ge 3 ]] && set -x
             if type reinstate_loaded_env_attributes &> /dev/null; then
                 reinstate_loaded_env_attributes
                 unset -f reinstate_loaded_env_attributes
             fi
-            [[ -n $PORTAGE_DEBUG ]] && set -x
+            [[ -n $PKGCORE_DEBUG ]] && set -x
             type -p pre_pkg_${EBUILD_PHASE} &> /dev/null && pre_pkg_${EBUILD_PHASE}
             if type -p dyn_${EBUILD_PHASE}; then
                 dyn_${EBUILD_PHASE}
@@ -538,7 +538,7 @@ execute_phases() {
             ret=0
 
             type -p post_pkg_${EBUILD_PHASE} &> /dev/null && post_pkg_${EBUILD_PHASE}
-            [[ $PORTAGE_DEBUG -lt 2 ]] && set +x
+            [[ $PKGCORE_DEBUG -lt 2 ]] && set +x
             ;;
         unpack|compile|test|install)
             if [ "${SANDBOX_DISABLED="0"}" == "0" ]; then
@@ -547,7 +547,7 @@ execute_phases() {
                 export SANDBOX_ON="0"
             fi
 
-            [[ $PORTAGE_DEBUG -ge 3 ]] && set -x
+            [[ $PKGCORE_DEBUG -ge 3 ]] && set -x
             if ! load_environ ${T}/environment; then
                 ewarn 
                 ewarn "failed to load env.  This is bad, bailing."
@@ -558,12 +558,12 @@ execute_phases() {
                 reinstate_loaded_env_attributes
                 unset -f reinstate_loaded_env_attributes
             fi
-            [[ -n $PORTAGE_DEBUG ]] && set -x
+            [[ -n $PKGCORE_DEBUG ]] && set -x
             type -p pre_src_${EBUILD_PHASE} &> /dev/null && pre_src_${EBUILD_PHASE}
             dyn_${EBUILD_PHASE}
             ret=0
             type -p post_src_${EBUILD_PHASE} &> /dev/null && post_src_${EBUILD_PHASE}
-            [[ $PORTAGE_DEBUG -lt 2 ]] && set +x
+            [[ $PKGCORE_DEBUG -lt 2 ]] && set +x
             export SANDBOX_ON="0"
             ;;
         setup|setup-binpkg)
@@ -582,21 +582,21 @@ execute_phases() {
 
                 [ -z "${CCACHE_SIZE}" ] && export CCACHE_SIZE="500M"
     			ccache -M ${CCACHE_SIZE} &> /dev/null
-        		[[ $PORTAGE_DEBUG == 2 ]] && set -x
+        		[[ $PKGCORE_DEBUG == 2 ]] && set -x
             	init_environ
                 MUST_EXPORT_ENV="yes"
             elif ! load_environ ${T}/environment; then
                 die "failed loading saved env; at ${T}/environment"
             fi
 
-            [[ -n $PORTAGE_DEBUG ]] && set -x
+            [[ -n $PKGCORE_DEBUG ]] && set -x
             type -p pre_pkg_setup &> /dev/null && \
                 pre_pkg_setup
             dyn_setup
             ret=0;
             type -p post_pkg_setup &> /dev/null && \
                 post_pkg_setup
-            [[ $PORTAGE_DEBUG -lt 2 ]] && set +x
+            [[ $PKGCORE_DEBUG -lt 2 ]] && set +x
 
             ;;
         depend)
@@ -628,7 +628,7 @@ execute_phases() {
             export_environ "${T}/environment"
             MUST_EXPORT_ENV="no"
         fi
-        [[ $PORTAGE_DEBUG -lt 4 ]] && set +x
+        [[ $PKGCORE_DEBUG -lt 4 ]] && set +x
     done
     return ${ret:-0}
 }

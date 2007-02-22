@@ -40,6 +40,15 @@ class base(object):
         base.finalize()
         self.assertRaises(AttributeError, base.add_restriction, true)
 
+    def test_change_restrictions(self):
+        base = self.kls(true, false)
+        self.assertEqual(self.kls(false, true),
+            base.change_restrictions(false, true))
+        self.assertNotEqual(self.kls(false, true),
+            base.change_restrictions(false, true, negate=True))
+        self.assertEqual(self.kls(false, true, negate=True),
+            base.change_restrictions(false, true, negate=True))
+
     # TODO total_len? what does it do?
 
 class BaseTest(base, TestCase):

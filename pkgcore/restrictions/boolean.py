@@ -38,9 +38,8 @@ class base(restriction.base):
         sf = object.__setattr__
 
         node_type = kwds.pop("node_type", None)
-        if node_type is not None:
-            sf(self, "type", node_type)
 
+        sf(self, "type", node_type)
         sf(self, "negate", kwds.pop("negate", False))
 
         if node_type is not None:
@@ -76,7 +75,7 @@ class base(restriction.base):
             if self.__class__.type not in restriction.valid_types or \
                 self.__class__.type != self.type:
                 kwds["node_type"] = self.type
-        kwds["negate"] = self.negate
+        kwds.setdefault("negate", self.negate)
         return self.__class__(*restrictions, **kwds)
 
     def add_restriction(self, *new_restrictions):
@@ -111,8 +110,10 @@ class base(restriction.base):
         object.__setattr__(self, "restrictions", tuple(self.restrictions))
 
     def __repr__(self):
-        return '<%s restrictions=%r @%#8x>' % (
-            self.__class__.__name__, self.restrictions, id(self))
+        return '<%s negate=%r type=%r finalized=%r restrictions=%r @%#8x>' % (
+            self.__class__.__name__, self.negate, getattr(self, 'type', None),
+            isinstance(self.restrictions, tuple), self.restrictions,
+            id(self))
 
     def __len__(self):
         return len(self.restrictions)

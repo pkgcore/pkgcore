@@ -79,6 +79,10 @@ class AlwaysBool(base):
     def __str__(self):
         return "always '%s'" % self.negate
 
+    def __repr__(self):
+        return '<%s always %r @%#8x>' % (
+            self.__class__.__name__, self.negate, id(self))
+
 
 class Negate(base):
 

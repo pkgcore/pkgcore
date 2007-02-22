@@ -257,8 +257,6 @@ class install(repo_interfaces.livefs_install):
                         s = str(v)
                 else:
                     s = v
-                if not s.endswith("\n"):
-                    s += "\n"
                 open(pjoin(
                         dirpath,
                         rewrite.get(k, k.upper())), "w", 32768).write(s)

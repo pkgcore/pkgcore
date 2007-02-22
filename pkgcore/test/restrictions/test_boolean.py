@@ -32,13 +32,13 @@ class base(object):
     def test_init_finalize(self):
         final = self.kls(true, node_type='foo', finalize=True)
         # since it becomes a tuple, throws a AttributeError
-        self.assertRaises(AttributeError, final.add_restriction, false)
+        self.assertRaises(TypeError, final.add_restriction, false)
 
     def test_finalize(self):
         base = self.kls(true, node_type='foo', finalize=False)
         base.add_restriction(false)
         base.finalize()
-        self.assertRaises(AttributeError, base.add_restriction, true)
+        self.assertRaises(TypeError, base.add_restriction, true)
 
     def test_change_restrictions(self):
         base = self.kls(true, false)
@@ -48,6 +48,15 @@ class base(object):
             base.change_restrictions(false, true, negate=True))
         self.assertEqual(self.kls(false, true, negate=True),
             base.change_restrictions(false, true, negate=True))
+
+    def test_add_restriction(self):
+        self.assertRaises(TypeError,
+            self.kls(true, finalize=True).add_restriction, false)
+        self.assertRaises(TypeError,
+            self.kls(node_type='foon', finalize=False).add_restriction, false)
+        k = self.kls()
+        k.add_restriction(false)
+        self.assertEqual(k.restrictions, [false])
 
     # TODO total_len? what does it do?
 

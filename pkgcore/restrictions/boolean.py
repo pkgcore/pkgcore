@@ -56,7 +56,10 @@ class base(restriction.base):
                         r.__class__, r, node_type))
 
         if kwds.pop("finalize", False):
-            sf(self, "restrictions", restrictions)
+            if not isinstance(restrictions, tuple):
+                sf(self, "restrictions", tuple(restrictions))
+            else:
+                sf(self, "restrictions", restrictions)
         else:
             sf(self, "restrictions", list(restrictions))
 
@@ -71,7 +74,7 @@ class base(restriction.base):
         return a new instance of self.__class__, using supplied restrictions
 
         """
-        if hasattr(self, "type"):
+        if self.type is not None:
             if self.__class__.type not in restriction.valid_types or \
                 self.__class__.type != self.type:
                 kwds["node_type"] = self.type
@@ -88,7 +91,7 @@ class base(restriction.base):
 
         if not new_restrictions:
             raise TypeError("need at least one restriction handed in")
-        if hasattr(self, "type"):
+        if self.type is not None:
             try:
                 for r in new_restrictions:
                     if r.type is not None and r.type != self.type:
@@ -101,7 +104,10 @@ class base(restriction.base):
                     "'%s' required" % (
                         r.__class__, r, getattr(self, "type", "unset")))
 
-        self.restrictions.extend(new_restrictions)
+        try:
+            self.restrictions.extend(new_restrictions)
+        except AttributeError:
+            raise TypeError("%r is finalized" % self)
 
     def finalize(self):
         """

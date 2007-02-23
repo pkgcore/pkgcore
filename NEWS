@@ -3,6 +3,12 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.2.6:
+
+* pebuild now supports --no-auto to run just the targeted phase.
+
+* mass expansion of test coverage in pkgcore.restrictions.*
+
 
 pkgcore 0.2.5:
 

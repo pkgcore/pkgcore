@@ -61,33 +61,27 @@ class native_PackageRestrictionTest(TestRestriction):
     kls = staticmethod(kls)
 
     @protect_logging(log.logging.root)
-    def run_check(self, mode='match'):
+    def test_matching(self):
         strexact = values.StrExactMatch
-
-        negated = mode == 'force_False'
-        assertMatch = partial(self.assertMatch, mode=mode,
-            negated=negated)
-        assertNotMatch = partial(self.assertNotMatch, mode=mode,
-            negated=negated)
-
 
         log.logging.root.handlers = [quiet_logger]
         args = [simple_obj(category="foon", package="dar")]
-        assertMatch(self.kls("category", strexact("foon")), args)
-        assertMatch(self.kls("package", strexact("dar")), args)
-        assertNotMatch(self.kls("package", strexact("dar"), negate=True), args)
-        assertNotMatch(self.kls("package", strexact("foon")), args)
-        assertMatch(self.kls("package", strexact("foon"), negate=True), args)
+        self.assertMatches(self.kls("category", strexact("foon")), args)
+        self.assertMatches(self.kls("package", strexact("dar")), args)
+        self.assertNotMatches(self.kls("package", strexact("dar"), negate=True),
+            args)
+        self.assertNotMatches(self.kls("package", strexact("foon")), args)
+        self.assertMatches(self.kls("package", strexact("foon"), negate=True),
+            args)
         excepts = []
         # no msg should be thrown, it wasn't an unexpected exception
 
         log.logging.root.addHandler(callback_logger(excepts.append))
-        assertNotMatch(self.kls("foon", AlwaysSelfIntersect), args,
-            mode=mode)
+        self.assertNotMatches(self.kls("foon", AlwaysSelfIntersect), args)
         self.assertFalse(excepts)
 
-        assertMatch(self.kls("foon", AlwaysSelfIntersect, negate=True), args,
-            mode=mode)
+        self.assertMatches(self.kls("foon", AlwaysSelfIntersect, negate=True),
+            args)
         self.assertFalse(excepts)
 
         class foo:
@@ -97,23 +91,20 @@ class native_PackageRestrictionTest(TestRestriction):
                     raise getattr(exceptions, attr[4:])()
                 raise AttributeError("monkey lover")
 
-        self.assertRaises(AttributeError, 
-            getattr(self.kls("foon", AlwaysSelfIntersect), mode),
-            foo())
-        self.assertEqual(len(excepts), 1,
-            msg="expected one exception, got %r" % excepts)
-        
-        # ensure various exceptions are passed through
-        for k in (KeyboardInterrupt, RuntimeError, SystemExit):
-            self.assertRaises(k,
-                getattr(self.kls("exc_%s" % k.__name__, 
-                    AlwaysSelfIntersect), mode),
+        for mode in ("match", "force_True", "force_False"):
+            excepts[:] = []
+            self.assertRaises(AttributeError, 
+                getattr(self.kls("foon", AlwaysSelfIntersect), mode),
                 foo())
-
-    test_match = run_check
-    
-    test_force_true = post_curry(run_check, mode='force_True')
-    test_force_false = post_curry(run_check, mode='force_False')
+            self.assertEqual(len(excepts), 1,
+                msg="expected one exception, got %r" % excepts)
+        
+            # ensure various exceptions are passed through
+            for k in (KeyboardInterrupt, RuntimeError, SystemExit):
+                self.assertRaises(k,
+                    getattr(self.kls("exc_%s" % k.__name__, 
+                        AlwaysSelfIntersect), mode),
+                    foo())
 
     def test_eq(self):
         self.assertEquals(

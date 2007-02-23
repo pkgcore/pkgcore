@@ -152,46 +152,43 @@ class cpy_TestStrExactMatch(native_TestStrExactMatch):
 
 
 
-class TestStrGlobMatch(TestCase):
+class TestStrGlobMatch(TestRestriction):
 
-    def test_case_sensitive(self):
-        for x in (True, False):
-            self.assertEquals(
-                values.StrGlobMatch("pack", negate=not x).match("package"), x)
-            self.assertEquals(
-                values.StrGlobMatch("package", negate=not x).match("package"),
-                x)
-            self.assertEquals(
-                values.StrGlobMatch("port", negate=not x).match("portage"), x)
-            self.assertEquals(
-                values.StrGlobMatch("portagea", negate=not x).match("portage"),
-                not x)
-            self.assertEquals(
-                values.StrGlobMatch("Package", negate=not x).match("package"),
-                not x)
-            self.assertEquals(
-                values.StrGlobMatch("diffball", negate=not x).match("bsdiff"),
-                not x)
+    def test_matching(self):
+        for negated in (True, False):
+            self.assertMatches(values.StrGlobMatch('pack', negate=negated),
+                ['package'], ['package']*3, negated=negated)
+            self.assertNotMatches(values.StrGlobMatch('pack', negate=negated),
+                ['apack'], ['apack']*3, negated=negated)
+            # case sensitive...
+            self.assertMatches(values.StrGlobMatch('pAcK', case_sensitive=False,
+                negate=negated),
+                ['pack'], ['pack']*3, negated=negated)
+            self.assertNotMatches(values.StrGlobMatch('pAcK',
+                case_sensitive=True, negate=negated),
+                ['pack'], ['pack']*3, negated=negated)
+            
+            # check prefix.
+            self.assertMatches(values.StrGlobMatch('pAck', case_sensitive=False,
+                prefix=True, negate=negated),
+                ['packa'], ['packa']*3, negated=negated)
 
-    def test_case_insensitve(self):
-        for x in (True, False):
-            for y in ("c", ''):
-                self.assertEquals(
-                    values.StrGlobMatch(
-                        "Rsyn"+y, case_sensitive=False, negate=not x).match(
-                        "rsync"), x)
-                self.assertEquals(
-                    values.StrGlobMatch(
-                        "rsyn"+y, case_sensitive=False, negate=not x).match(
-                        "RSYnC"), x)
-            self.assertEquals(
-                values.StrGlobMatch(
-                    "PackageA", case_sensitive=False, negate=not x).match(
-                    "package"), not x)
-            self.assertEquals(
-                values.StrGlobMatch(
-                    "diffball", case_sensitive=False, negate=not x).match(
-                    "bsdiff"), not x)
+            self.assertNotMatches(values.StrGlobMatch('pack', prefix=False,
+                negate=negated),
+                ['apacka'], ['apacka']*3, negated=negated)
+
+            self.assertMatches(values.StrGlobMatch('pack', prefix=False,
+                negate=negated),
+                ['apack'], ['apack']*3, negated=negated)
+
+            # daft, but verifies it's not doing contains.
+            self.assertNotMatches(values.StrGlobMatch('pack', prefix=False,
+                negate=negated),
+                ['apacka'], ['apacka']*3, negated=negated)
+
+            self.assertNotMatches(values.StrGlobMatch('pack', prefix=False,
+                case_sensitive=False, negate=negated),
+                ['aPacka'], ['aPacka']*3, negated=negated)
 
     def test__eq__(self):
         self.assertFalse(

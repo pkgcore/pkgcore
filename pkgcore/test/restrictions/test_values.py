@@ -55,42 +55,44 @@ class GetAttrTest(TestRestriction):
 
 class StrRegexTest(TestRestriction):
 
+    kls = values.StrRegex
+    
     def test_match(self):
         for negated in (False, True):
-            self.assertMatches(values.StrRegex('foo.*r', match=True,
+            self.assertMatches(self.kls('foo.*r', match=True,
                 negate=negated),
                 ['foobar'], [None, None, 'foobar'], negated=negated)
-            self.assertNotMatches(values.StrRegex('foo.*r', match=True,
+            self.assertNotMatches(self.kls('foo.*r', match=True,
                 negate=negated),
                 ['afoobar'], [None, None, 'afoobar'], negated=negated)
 
     def test_search(self):
         for negated in (False, True):
-            self.assertMatches(values.StrRegex('foo.*r', negate=negated),
+            self.assertMatches(self.kls('foo.*r', negate=negated),
                 ['asdfoobar'], [None, None, 'asdfoobar'], negated=negated)
-            self.assertNotMatches(values.StrRegex('foo.*r', negate=negated),
+            self.assertNotMatches(self.kls('foo.*r', negate=negated),
                 ['afobar'], [None, None, 'afobar'], negated=negated)
 
     def test_case_sensitivity(self):
-        self.assertNotMatches(values.StrRegex('foo'), ['FoO'], ['FOo']*3)
-        self.assertMatches(values.StrRegex('foo', False), ['FoO'], ['fOo']*3)
+        self.assertNotMatches(self.kls('foo'), ['FoO'], ['FOo']*3)
+        self.assertMatches(self.kls('foo', False), ['FoO'], ['fOo']*3)
 
     def test_str(self):
-        self.assertEquals('search spork', str(values.StrRegex('spork')))
+        self.assertEquals('search spork', str(self.kls('spork')))
         self.assertEquals('not search spork',
-                          str(values.StrRegex('spork', negate=True)))
+                          str(self.kls('spork', negate=True)))
         self.assertEquals('match spork',
-                          str(values.StrRegex('spork', match=True)))
+                          str(self.kls('spork', match=True)))
         self.assertEquals('not match spork',
-                          str(values.StrRegex('spork',
+                          str(self.kls('spork',
                                               match=True, negate=True)))
 
     def test_repr(self):
         for restr, string in [
-            (values.StrRegex('spork'), "<StrRegex 'spork' search @"),
-            (values.StrRegex('spork', match=True),
+            (self.kls('spork'), "<StrRegex 'spork' search @"),
+            (self.kls('spork', match=True),
              "<StrRegex 'spork' match @"),
-            (values.StrRegex('spork', negate=True),
+            (self.kls('spork', negate=True),
              "<StrRegex 'spork' negated search @"),
             ]:
             self.failUnless(repr(restr).startswith(string), (restr, string))
@@ -154,65 +156,69 @@ class cpy_TestStrExactMatch(native_TestStrExactMatch):
 
 class TestStrGlobMatch(TestRestriction):
 
+    kls = values.StrGlobMatch
+
     def test_matching(self):
         for negated in (True, False):
-            self.assertMatches(values.StrGlobMatch('pack', negate=negated),
+            self.assertMatches(self.kls('pack', negate=negated),
                 ['package'], ['package']*3, negated=negated)
-            self.assertNotMatches(values.StrGlobMatch('pack', negate=negated),
+            self.assertNotMatches(self.kls('pack', negate=negated),
                 ['apack'], ['apack']*3, negated=negated)
             # case sensitive...
-            self.assertMatches(values.StrGlobMatch('pAcK', case_sensitive=False,
+            self.assertMatches(self.kls('pAcK', case_sensitive=False,
                 negate=negated),
                 ['pack'], ['pack']*3, negated=negated)
-            self.assertNotMatches(values.StrGlobMatch('pAcK',
+            self.assertNotMatches(self.kls('pAcK',
                 case_sensitive=True, negate=negated),
                 ['pack'], ['pack']*3, negated=negated)
             
             # check prefix.
-            self.assertMatches(values.StrGlobMatch('pAck', case_sensitive=False,
+            self.assertMatches(self.kls('pAck', case_sensitive=False,
                 prefix=True, negate=negated),
                 ['packa'], ['packa']*3, negated=negated)
 
-            self.assertNotMatches(values.StrGlobMatch('pack', prefix=False,
+            self.assertNotMatches(self.kls('pack', prefix=False,
                 negate=negated),
                 ['apacka'], ['apacka']*3, negated=negated)
 
-            self.assertMatches(values.StrGlobMatch('pack', prefix=False,
+            self.assertMatches(self.kls('pack', prefix=False,
                 negate=negated),
                 ['apack'], ['apack']*3, negated=negated)
 
             # daft, but verifies it's not doing contains.
-            self.assertNotMatches(values.StrGlobMatch('pack', prefix=False,
+            self.assertNotMatches(self.kls('pack', prefix=False,
                 negate=negated),
                 ['apacka'], ['apacka']*3, negated=negated)
 
-            self.assertNotMatches(values.StrGlobMatch('pack', prefix=False,
+            self.assertNotMatches(self.kls('pack', prefix=False,
                 case_sensitive=False, negate=negated),
                 ['aPacka'], ['aPacka']*3, negated=negated)
 
     def test__eq__(self):
         self.assertFalse(
-            values.StrGlobMatch("rsync", prefix=False) ==
-            values.StrGlobMatch("rsync", prefix=True))
+            self.kls("rsync", prefix=False) ==
+            self.kls("rsync", prefix=True))
         for negate in (True, False):
             self.assertEquals(
-                values.StrGlobMatch("rsync", negate=negate),
-                values.StrGlobMatch("rsync", negate=negate))
+                self.kls("rsync", negate=negate),
+                self.kls("rsync", negate=negate))
             for x in "Ca":
                 self.assertNotEquals(
-                    values.StrGlobMatch("rsync", negate=negate),
-                    values.StrGlobMatch("rsyn"+x, negate=negate))
+                    self.kls("rsync", negate=negate),
+                    self.kls("rsyn"+x, negate=negate))
             self.assertEquals(
-                values.StrGlobMatch(
+                self.kls(
                     "Rsync", case_sensitive=False, negate=negate),
-                values.StrGlobMatch(
+                self.kls(
                     "rsync", case_sensitive=False, negate=negate))
         self.assertNotEqual(
-            values.StrGlobMatch("rsync", negate=True),
-            values.StrGlobMatch("rsync", negate=False))
+            self.kls("rsync", negate=True),
+            self.kls("rsync", negate=False))
 
 
 class TestEqualityMatch(TestRestriction):
+
+    kls = staticmethod(values.EqualityMatch)
 
     def test_match(self):
         for x, y, ret in (("asdf", "asdf", True), ("asdf", "fdsa", False),
@@ -223,23 +229,25 @@ class TestEqualityMatch(TestRestriction):
             (True, False, False),
             (False, True, False)):
             for negated in (True, False):
-                self.assertMatches(values.EqualityMatch(x, negate=negated),
+                self.assertMatches(self.kls(x, negate=negated),
                     [y], [y]*3, negated=(ret ^ (not negated)))
 
     def test__eq__(self):
         for negate in (True, False):
             self.assertEqual(
-                values.EqualityMatch("asdf", negate=negate),
-                values.EqualityMatch("asdf", negate=negate))
+                self.kls("asdf", negate=negate),
+                self.kls("asdf", negate=negate))
             self.assertNotEqual(
-                values.EqualityMatch(1, negate=negate),
-                values.EqualityMatch(2, negate=negate))
+                self.kls(1, negate=negate),
+                self.kls(2, negate=negate))
         self.assertNotEqual(
-            values.EqualityMatch("asdf", negate=True),
-            values.EqualityMatch("asdf", negate=False))
+            self.kls("asdf", negate=True),
+            self.kls("asdf", negate=False))
 
 
-class TestContainmentMatch(TestCase):
+class TestContainmentMatch(TestRestriction):
+
+    kls = values.ContainmentMatch
 
     def test_match(self):
         for x, y, ret in (
@@ -247,45 +255,46 @@ class TestContainmentMatch(TestCase):
             (range(10), [], False),
             (range(10), set(xrange(10)), True),
             (set(xrange(10)), range(10), True)):
+
             for negate in (True, False):
                 self.assertEquals(
-                    values.ContainmentMatch(
+                    self.kls(
                         negate=negate, disable_inst_caching=True, *x).match(y),
                     ret != negate)
         for negate in (True, False):
             self.assertEquals(
-                values.ContainmentMatch(
+                self.kls(
                     all=True, negate=negate, *range(10)).match(range(10)),
                 not negate)
-        self.assertEquals(values.ContainmentMatch("asdf").match("fdsa"), False)
-        self.assertEquals(values.ContainmentMatch("asdf").match("asdf"), True)
+        self.assertEquals(self.kls("asdf").match("fdsa"), False)
+        self.assertEquals(self.kls("asdf").match("asdf"), True)
         self.assertEquals(
-            values.ContainmentMatch("asdf").match("aasdfa"), True)
+            self.kls("asdf").match("aasdfa"), True)
         self.assertEquals(
-            values.ContainmentMatch("asdf", "bzip").match("pbzip2"), True)
+            self.kls("asdf", "bzip").match("pbzip2"), True)
 
     def test_force_basestring(self):
-        restrict = values.ContainmentMatch('asdf', 'bzip')
+        restrict = self.kls('asdf', 'bzip')
         self.assertEquals(True, restrict.force_True(None, None, 'pbzip2'))
         self.assertEquals(False, restrict.force_False(None, None, 'pbzip2'))
 
     def test__eq__(self):
         for negate in (True, False):
             self.assertEquals(
-                values.ContainmentMatch(negate=negate, *range(100)),
-                values.ContainmentMatch(negate=negate, *range(100)),
+                self.kls(negate=negate, *range(100)),
+                self.kls(negate=negate, *range(100)),
                 msg="range(100), negate=%s" % negate)
-            self.assertNotEqual(values.ContainmentMatch(1, negate=not negate),
-                values.ContainmentMatch(1, negate=negate))
+            self.assertNotEqual(self.kls(1, negate=not negate),
+                self.kls(1, negate=negate))
             self.assertEqual(
-                values.ContainmentMatch(1, 2, 3, all=True, negate=negate),
-                values.ContainmentMatch(1, 2, 3, all=True, negate=negate))
+                self.kls(1, 2, 3, all=True, negate=negate),
+                self.kls(1, 2, 3, all=True, negate=negate))
             self.assertNotEqual(
-                values.ContainmentMatch(1, 2, all=True, negate=negate),
-                values.ContainmentMatch(1, 2, 3, all=True, negate=negate))
+                self.kls(1, 2, all=True, negate=negate),
+                self.kls(1, 2, 3, all=True, negate=negate))
             self.assertNotEqual(
-                values.ContainmentMatch(1, 2, 3, all=False, negate=negate),
-                values.ContainmentMatch(1, 2, 3, all=True, negate=negate))
+                self.kls(1, 2, 3, all=False, negate=negate),
+                self.kls(1, 2, 3, all=True, negate=negate))
 
 
 class FlatteningRestrictionTest(TestCase):

@@ -221,13 +221,17 @@ class TestRestriction(TestCase):
         return self.assertNotMatch(obj, target, mode='force_False',
             negated=negated)
 
-    def assertMatches(self, obj, args):
+    def assertMatches(self, obj, args, force_args=None):
+        if force_args is None:
+            force_args = args
         self.assertMatch(obj, args)
-        self.assertForceTrue(obj, args)
-        self.assertNotForceFalse(obj, args)
+        self.assertForceTrue(obj, force_args)
+        self.assertNotForceFalse(obj, force_args)
     
-    def assertNotMatches(self, obj, args):
+    def assertNotMatches(self, obj, args, force_args=None):
+        if force_args is None:
+            force_args = args
         self.assertNotMatch(obj, args)
-        self.assertNotForceTrue(obj, args)
-        self.assertForceFalse(obj, args)
+        self.assertNotForceTrue(obj, force_args)
+        self.assertForceFalse(obj, force_args)
         

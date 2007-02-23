@@ -4,7 +4,7 @@
 
 from pkgcore.test import TestCase, protect_logging, TestRestriction
 from pkgcore.restrictions import packages, values
-from pkgcore.util.currying import partial
+from pkgcore.util.currying import partial, post_curry
 from pkgcore import log
 import exceptions
 
@@ -65,14 +65,10 @@ class native_PackageRestrictionTest(TestRestriction):
         strexact = values.StrExactMatch
 
         negated = mode == 'force_False'
-        if negated:
-            assertMatch = self.assertNotMatch
-            assertNotMatch = self.assertMatch
-        else:
-            assertMatch = self.assertMatch
-            assertNotMatch = self.assertNotMatch
-        assertMatch = partial(assertMatch, mode=mode)
-        assertNotMatch = partial(assertNotMatch, mode=mode)
+        assertMatch = partial(self.assertMatch, mode=mode,
+            negated=negated)
+        assertNotMatch = partial(self.assertNotMatch, mode=mode,
+            negated=negated)
 
 
         log.logging.root.handlers = [quiet_logger]
@@ -116,11 +112,8 @@ class native_PackageRestrictionTest(TestRestriction):
 
     test_match = run_check
     
-    def test_force_true(self):
-        return self.run_check(mode='force_True')
-
-    def test_force_false(self):
-        return self.run_check(mode='force_False')
+    test_force_true = post_curry(run_check, mode='force_True')
+    test_force_false = post_curry(run_check, mode='force_False')
 
     def test_eq(self):
         self.assertEquals(

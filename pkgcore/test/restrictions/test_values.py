@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from pkgcore.test import TestCase
+from pkgcore.test import TestRestriction, TestCase
 from pkgcore.restrictions import values
 
 
@@ -15,7 +15,7 @@ class SillyBool(values.base):
         return not self.negate
 
 
-class BaseTest(TestCase):
+class BaseTest(TestRestriction):
 
     def test_force(self):
         true = SillyBool(negate=False)

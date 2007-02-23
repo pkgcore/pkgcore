@@ -192,15 +192,15 @@ def protect_logging(target):
 
 class TestRestriction(TestCase):
 
-    def assertMatch(self, obj, target, mode='match', negated=False):
+    def assertMatch(self, obj, args, mode='match', negated=False):
         if negated:
-            self.assertFalse(getattr(obj, mode)(target),
+            self.assertFalse(getattr(obj, mode)(*args),
                 msg="%r must not match %r, mode=%s, negated=%r" %
-                    (obj, target, mode, negated))
+                    (obj, args, mode, negated))
         else:
-            self.assertTrue(getattr(obj, mode)(target),
+            self.assertTrue(getattr(obj, mode)(*args),
                 msg="%r must match %r, mode=%s, not negated" %
-                    (obj, target, mode))
+                    (obj, args, mode))
 
     def assertNotMatch(self, obj, target, mode='match', negated=False):
         return self.assertMatch(obj, target, mode=mode, negated=not negated)

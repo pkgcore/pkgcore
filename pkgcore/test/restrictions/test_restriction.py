@@ -34,13 +34,15 @@ class BaseTest(TestRestriction):
     def test_it(self):
         true = self.bool_kls(negate=False)
         false = self.bool_kls(negate=True)
-        self.assertMatch(true, None)
-        self.assertForceTrue(true, None)
-        self.assertNotForceFalse(true, None)
+        args = [None]
+
+        self.assertMatch(true, args)
+        self.assertForceTrue(true, args)
+        self.assertNotForceFalse(true, args)
         
-        self.assertNotMatch(false, None)
-        self.assertNotForceTrue(false, None)
-        self.assertForceFalse(false, None)
+        self.assertNotMatch(false, args)
+        self.assertNotForceTrue(false, args)
+        self.assertForceFalse(false, args)
 
 
 class AlwaysBoolTest(TestRestriction):
@@ -89,9 +91,9 @@ class AnyMatchTest(TestRestriction):
     def test_basic(self):
         for negate in (False, True):
             inst = restriction.AnyMatch(NoneMatch(), 'spork', negate=negate)
-            self.assertMatch(inst, ['spork', None], negated=negate)
-            self.assertNotMatch(inst, ['spork'], negated=negate)
-            self.assertNotMatch(inst, (), negated=negate)
+            self.assertMatch(inst, [['spork', None]], negated=negate)
+            self.assertNotMatch(inst, [['spork']], negated=negate)
+            self.assertNotMatch(inst, [()], negated=negate)
 
             # just test these do not traceback
             self.assertTrue(repr(inst))

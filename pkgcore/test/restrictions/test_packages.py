@@ -72,21 +72,21 @@ class native_PackageRestrictionTest(TestRestriction):
 
 
         log.logging.root.handlers = [quiet_logger]
-        obj = simple_obj(category="foon", package="dar")
-        assertMatch(self.kls("category", strexact("foon")), obj)
-        assertMatch(self.kls("package", strexact("dar")), obj)
-        assertNotMatch(self.kls("package", strexact("dar"), negate=True), obj)
-        assertNotMatch(self.kls("package", strexact("foon")), obj)
-        assertMatch(self.kls("package", strexact("foon"), negate=True), obj)
+        args = [simple_obj(category="foon", package="dar")]
+        assertMatch(self.kls("category", strexact("foon")), args)
+        assertMatch(self.kls("package", strexact("dar")), args)
+        assertNotMatch(self.kls("package", strexact("dar"), negate=True), args)
+        assertNotMatch(self.kls("package", strexact("foon")), args)
+        assertMatch(self.kls("package", strexact("foon"), negate=True), args)
         excepts = []
         # no msg should be thrown, it wasn't an unexpected exception
 
         log.logging.root.addHandler(callback_logger(excepts.append))
-        assertNotMatch(self.kls("foon", AlwaysSelfIntersect), obj,
+        assertNotMatch(self.kls("foon", AlwaysSelfIntersect), args,
             mode=mode)
         self.assertFalse(excepts)
 
-        assertMatch(self.kls("foon", AlwaysSelfIntersect, negate=True), obj,
+        assertMatch(self.kls("foon", AlwaysSelfIntersect, negate=True), args,
             mode=mode)
         self.assertFalse(excepts)
 

@@ -29,7 +29,7 @@ class delegate(restriction.base):
         """
 
         @param transform_func: callable inovked with data, pkg, and mode
-            mode may be "match", "force_true", or "force_false"
+            mode may be "match", "force_True", or "force_False"
         @param data: data to pass to the transforming func
         """
 
@@ -43,12 +43,12 @@ class delegate(restriction.base):
     def match(self, pkginst):
         return self._transform(pkginst, "match") != self.negate
 
-    def force_true(self, pkginst):
+    def force_True(self, pkginst):
         if self.negate:
-            return self._transform(pkginst, "force_false")
-        return self._transform(pkginst, "force_true")
+            return self._transform(pkginst, "force_False")
+        return self._transform(pkginst, "force_True")
 
-    def force_false(self, pkginst):
+    def force_False(self, pkginst):
         if self.negate:
-            return self._transform(pkginst, "force_true")
-        return self._transform(pkginst, "force_false")
+            return self._transform(pkginst, "force_True")
+        return self._transform(pkginst, "force_False")

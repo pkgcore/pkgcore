@@ -95,7 +95,7 @@ class PackageRestriction_mixin(restriction.base):
         except Exception, e:
             if self._handle_exception(pkg, e):
                 raise
-            return self.negate
+            return not self.negate
 
     def force_True(self, pkg):
         try:

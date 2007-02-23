@@ -4,7 +4,9 @@
 
 from pkgcore.test import TestCase, protect_logging
 from pkgcore.restrictions import packages, values
+from pkgcore.util.currying import partial
 from pkgcore import log
+import exceptions
 
 class callback_logger(log.logging.Handler):
     def __init__(self, callback):
@@ -67,31 +69,66 @@ class native_PackageRestrictionTest(TestCase):
             msg="%r must match %r, mode=%s" % (obj, target, mode))
 
     @protect_logging(log.logging.root)
-    def test_match(self):
+    def run_check(self, mode='match'):
         strexact = values.StrExactMatch
+
+        negated = mode == 'force_False'
+        if negated:
+            assertMatch = self.assertNotMatch
+            assertNotMatch = self.assertMatch
+        else:
+            assertMatch = self.assertMatch
+            assertNotMatch = self.assertNotMatch
+        assertMatch = partial(assertMatch, mode=mode)
+        assertNotMatch = partial(assertNotMatch, mode=mode)
+
+
         log.logging.root.handlers = [quiet_logger]
         obj = simple_obj(category="foon", package="dar")
-        self.assertMatch(self.kls("category", strexact("foon")), obj)
-        self.assertMatch(self.kls("package", strexact("dar")), obj)
-        self.assertNotMatch(self.kls("package", strexact("foon")), obj)
+        assertMatch(self.kls("category", strexact("foon")), obj)
+        assertMatch(self.kls("package", strexact("dar")), obj)
+        assertNotMatch(self.kls("package", strexact("dar"), negate=True), obj)
+        assertNotMatch(self.kls("package", strexact("foon")), obj)
+        assertMatch(self.kls("package", strexact("foon"), negate=True), obj)
         excepts = []
         # no msg should be thrown, it wasn't an unexpected exception
+
         log.logging.root.addHandler(callback_logger(excepts.append))
-        self.assertNotMatch(self.kls("foon", AlwaysSelfIntersect), obj)
+        assertNotMatch(self.kls("foon", AlwaysSelfIntersect), obj,
+            mode=mode)
+        self.assertFalse(excepts)
+
+        assertMatch(self.kls("foon", AlwaysSelfIntersect, negate=True), obj,
+            mode=mode)
         self.assertFalse(excepts)
 
         class foo:
             def __getattr__(self, attr):
+                if attr.startswith("exc"):
+                    import exceptions
+                    raise getattr(exceptions, attr[4:])()
                 raise AttributeError("monkey lover")
 
         self.assertRaises(AttributeError, 
-            self.kls("foon", AlwaysSelfIntersect).match,
+            getattr(self.kls("foon", AlwaysSelfIntersect), mode),
             foo())
         self.assertEqual(len(excepts), 1,
             msg="expected one exception, got %r" % excepts)
         
         # ensure various exceptions are passed through
+        for k in (KeyboardInterrupt, RuntimeError, SystemExit):
+            self.assertRaises(k,
+                getattr(self.kls("exc_%s" % k.__name__, 
+                    AlwaysSelfIntersect), mode),
+                foo())
 
+    test_match = run_check
+    
+    def test_force_true(self):
+        return self.run_check(mode='force_True')
+
+    def test_force_false(self):
+        return self.run_check(mode='force_False')
 
     def test_eq(self):
         self.assertEquals(

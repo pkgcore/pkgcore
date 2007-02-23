@@ -9,6 +9,10 @@ pkgcore 0.2.6:
 
 * mass expansion of test coverage in pkgcore.restrictions.*
 
+* env var PORTAGE_DEBUG for controlling how much debug info the ebuild env
+  generates is now PKGCORE_DEBUG; range is the same, 0 (none), 1 (just the 
+  ebuild/eclass), 2 (1 + relevant setup code), 3 (2 + filter-env data),
+  4 (everything).
 
 pkgcore 0.2.5:
 

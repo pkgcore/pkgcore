@@ -2,9 +2,9 @@
 # License: GPL2
 
 
-from pkgcore.test import TestCase
-
+from pkgcore.test import TestCase, TestRestriction
 from pkgcore.restrictions import restriction
+from pkgcore.util.currying import partial
 
 
 class SillyBool(restriction.base):
@@ -17,7 +17,9 @@ class SillyBool(restriction.base):
         return not self.negate
 
 
-class BaseTest(TestCase):
+class BaseTest(TestRestriction):
+
+    bool_kls = SillyBool
 
     def test_base(self):
         base = restriction.base()
@@ -29,25 +31,37 @@ class BaseTest(TestCase):
         self.assertRaises(NotImplementedError, base.match)
         self.assertIdentical(None, base.intersect(base))
 
-    def test_force(self):
-        true = SillyBool(negate=False)
-        false = SillyBool(negate=True)
-        self.failUnless(true.force_True(None))
-        self.failIf(true.force_False(None))
-        self.failIf(false.force_True(None))
-        self.failUnless(false.force_False(None))
+    def test_it(self):
+        true = self.bool_kls(negate=False)
+        false = self.bool_kls(negate=True)
+        self.assertMatch(true, None)
+        self.assertForceTrue(true, None)
+        self.assertNotForceFalse(true, None)
+        
+        self.assertNotMatch(false, None)
+        self.assertNotForceTrue(false, None)
+        self.assertForceFalse(false, None)
 
 
-class AlwaysBoolTest(TestCase):
+class AlwaysBoolTest(TestRestriction):
+
+    bool_kls = partial(restriction.AlwaysBool, 'foo')
 
     def test_true(self):
-        true = restriction.AlwaysBool('foo', True)
-        false = restriction.AlwaysBool('foo', False)
+        true = self.bool_kls(True)
+        false = self.bool_kls(False)
         self.failUnless(true.match(false))
         self.failIf(false.match(true))
         self.assertEquals(str(true), "always 'True'")
         self.assertEquals(str(false), "always 'False'")
         self.assertNotEqual(hash(true), hash(false))
+        self.assertEqual(hash(true),
+            hash(restriction.AlwaysBool('foo', True)))
+        self.assertEqual(hash(false),
+            hash(restriction.AlwaysBool('foo', False)))
+        self.assertEqual(true, restriction.AlwaysBool('foo', True))
+        self.assertEqual(false, restriction.AlwaysBool('foo', False))
+        self.assertNotEqual(true, false)
 
 
 class NoneMatch(restriction.base):

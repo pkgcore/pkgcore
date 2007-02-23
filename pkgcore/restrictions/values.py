@@ -201,34 +201,41 @@ if extension is None:
 else:
     base_StrExactMatch = extension.StrExactMatch
 
+# these are broken out so that it is easier to
+# generate native/cpy version of the class for 
+# testing each.
+def _StrExact_intersect(self, other):
+    s1, s2 = self.exact, other.exact
+    if other.case_sensitive and not self.case_sensitive:
+        s1 = s1.lower()
+    elif self.case_sensitive and not other.case_sensitive:
+        s2 = s2.lower()
+    if s1 == s2 and self.negate == other.negate:
+        if other.case_sensitive:
+            return other
+        return self
+    return None
+
+def _StrExact__repr__(self):
+    if self.negate:
+        string = '<%s %r negated @%#8x>'
+    else:
+        string = '<%s %r @%#8x>'
+    return string % (self.__class__.__name__, self.exact, id(self))
+
+def _StrExact__str__(self):
+    if self.negate:
+        return "!= "+self.exact
+    return "== "+self.exact
+
 class StrExactMatch(base_StrExactMatch, base):
 
     __slots__ = ()
     __inst_caching__ = True
 
-    def intersect(self, other):
-        s1, s2 = self.exact, other.exact
-        if other.case_sensitive and not self.case_sensitive:
-            s1 = s1.lower()
-        elif self.case_sensitive and not other.case_sensitive:
-            s2 = s2.lower()
-        if s1 == s2 and self.negate == other.negate:
-            if other.case_sensitive:
-                return other
-            return self
-        return None
-
-    def __repr__(self):
-        if self.negate:
-            string = '<%s %r negated @%#8x>'
-        else:
-            string = '<%s %r @%#8x>'
-        return string % (self.__class__.__name__, self.exact, id(self))
-
-    def __str__(self):
-        if self.negate:
-            return "!= "+self.exact
-        return "== "+self.exact
+    intersect = _StrExact_intersect
+    __repr__ = _StrExact__repr__
+    __str__ = _StrExact__str__
 
 
 class StrGlobMatch(hashed_base):

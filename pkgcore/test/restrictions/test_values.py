@@ -18,15 +18,11 @@ class SillyBool(values.base):
 class BaseTest(TestRestriction):
 
     def test_force(self):
-        true = SillyBool(negate=False)
-        false = SillyBool(negate=True)
-        self.failUnless(true.force_True(None, None, None))
-        self.failIf(true.force_False(None, None, None))
-        self.failIf(false.force_True(None, None, None))
-        self.failUnless(false.force_False(None, None, None))
+        self.assertMatches(SillyBool(negate=False), [None], [None]*3)
+        self.assertNotMatches(SillyBool(negate=True), [None], [None]*3)
 
 
-class GetAttrTest(TestCase):
+class GetAttrTest(TestRestriction):
 
     """Test bits of GetAttrRestriction that differ from PackageRestriction."""
 
@@ -50,31 +46,34 @@ class GetAttrTest(TestCase):
 
         pkg = FakePackage()
 
-        self.failUnless(succeeds.force_True(pkg, 'value', dummy))
-        self.failIf(succeeds.force_False(pkg, 'value', dummy))
-        self.failIf(fails.force_True(pkg, 'value', dummy))
-        self.failUnless(fails.force_False(pkg, 'value', dummy))
+        args = [pkg, 'value', dummy]
+        self.assertForceTrue(succeeds, args)
+        self.assertNotForceFalse(succeeds, args)
+        self.assertNotForceTrue(fails, args)
+        self.assertForceFalse(fails, args)
 
 
-class StrRegexTest(TestCase):
+class StrRegexTest(TestRestriction):
 
     def test_match(self):
-        for x in (True, False):
-            self.assertEquals(x, values.StrRegex(
-                    'foo.*r', match=True, negate=not x).match('foobar'))
-            self.assertEquals(not x, values.StrRegex(
-                    'foo.*r', match=True, negate=not x).match('afoobar'))
+        for negated in (False, True):
+            self.assertMatches(values.StrRegex('foo.*r', match=True,
+                negate=negated),
+                ['foobar'], [None, None, 'foobar'], negated=negated)
+            self.assertNotMatches(values.StrRegex('foo.*r', match=True,
+                negate=negated),
+                ['afoobar'], [None, None, 'afoobar'], negated=negated)
 
     def test_search(self):
-        for x in (True, False):
-            self.assertEquals(x, values.StrRegex(
-                    'foo.*r', negate=not x).match('afoobar'))
-            self.assertEquals(not x, values.StrRegex(
-                    '^foo.*r', negate=not x).match('afoobar'))
+        for negated in (False, True):
+            self.assertMatches(values.StrRegex('foo.*r', negate=negated),
+                ['asdfoobar'], [None, None, 'asdfoobar'], negated=negated)
+            self.assertNotMatches(values.StrRegex('foo.*r', negate=negated),
+                ['afobar'], [None, None, 'afobar'], negated=negated)
 
     def test_case_sensitivity(self):
-        self.assertEquals(False, values.StrRegex('foo').match('FOO'))
-        self.assertEquals(True, values.StrRegex('foo', False).match('FOO'))
+        self.assertNotMatches(values.StrRegex('foo'), ['FoO'], ['FOo']*3)
+        self.assertMatches(values.StrRegex('foo', False), ['FoO'], ['fOo']*3)
 
     def test_str(self):
         self.assertEquals('search spork', str(values.StrRegex('spork')))
@@ -98,54 +97,36 @@ class StrRegexTest(TestCase):
 
 
 
-class native_TestStrExactMatch(TestCase):
+class native_TestStrExactMatch(TestRestriction):
 
-    class kls(values.native_StrExactMatch, values.base):
-        __slots__ = ()
-        __inst_caching__ = True
-
-        intersect = values.StrExactMatch.intersect
-        __repr__ = values.StrExactMatch.__repr__
-        __str__ = values.StrExactMatch.__str__
+    if values.base_StrExactMatch is values.native_StrExactMatch:
+        kls = values.StrExactMatch
+    else:
+        class kls(values.native_StrExactMatch, values.base):
+            __slots__ = ()
+            __inst_caching__ = True
+        
+            intersect = values._StrExact_intersect
+            __repr__ = values._StrExact__repr__
+            __str__ = values._StrExact__str__
 
     kls = staticmethod(kls)
 
     def test_case_sensitive(self):
-        for x in (True, False):
-            self.assertEquals(
-                self.kls("package", negate=not x).match("package"),
-                x)
-            self.assertEquals(
-                self.kls("portage", negate=not x).match("portage"),
-                x)
-            self.assertEquals(
-                self.kls("Package", negate=not x).match("package"),
-                not x)
-            self.assertEquals(
-                self.kls("diffball", negate=not x).match("bsdiff"),
-                not x)
+        for negated in (False, True):
+            self.assertMatches(self.kls('package', negate=negated),
+                ['package'], ['package']*3, negated=negated)
+            self.assertNotMatches(self.kls('Package', negate=negated),
+                ['package'], ['package']*3, negated=negated)
 
     def test_case_insensitve(self):
-        for x in (True, False):
-            self.assertEquals(
-                self.kls(
-                    "Rsync", case_sensitive=False, negate=not x).match(
-                    "rsync"),
-                x)
-            self.assertEquals(
-                self.kls(
-                    "rsync", case_sensitive=False, negate=not x).match(
-                    "RSYnC"),
-                x)
-            self.assertEquals(
-                self.kls(
-                    "PackageA", case_sensitive=False, negate=not x).match(
-                    "package"),
-                not x)
-            self.assertEquals(
-                self.kls(
-                    "diffball", case_sensitive=False, negate=not x).match(
-                    "bsdiff"), not x)
+        for negated in (False, True):
+            self.assertMatches(self.kls('package', case_sensitive=True,
+                negate=negated),
+                ['package'], ['package']*3, negated=negated)
+            self.assertMatches(self.kls('Package', case_sensitive=False,
+                 negate=negated),
+                ['package'], ['package']*3, negated=negated)
 
     def test__eq__(self):
         for negate in (True, False):

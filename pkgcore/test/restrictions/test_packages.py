@@ -2,15 +2,34 @@
 # License: GPL2
 
 
-from pkgcore.test import TestCase
+from pkgcore.test import TestCase, protect_logging
 from pkgcore.restrictions import packages, values
+from pkgcore import log
 
+class callback_logger(log.logging.Handler):
+    def __init__(self, callback):
+        log.logging.Handler.__init__(self)
+        self.callback = callback
+    
+    def emit(self, record):
+        self.callback(record)
+
+
+class quiet_logger(log.logging.Handler):
+    def emit(self, record):
+        pass
+
+quiet_logger = quiet_logger()
 
 class AlwaysSelfIntersect(values.base):
     def intersect(self, other):
         return self
 
     __hash__ = object.__hash__
+
+class simple_obj(object):
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
 
 
 class DummyIntersectingValues(values.base):
@@ -35,8 +54,44 @@ class native_PackageRestrictionTest(TestCase):
         class kls(packages.PackageRestriction_mixin,
             packages.native_PackageRestriction):
             __slots__ = ()
-            __inst_caching__ = True
+            __inst_caching__ = packages.PackageRestriction.__inst_caching__
+
     kls = staticmethod(kls)
+
+    def assertMatch(self, obj, target, mode='match'):
+        self.assertTrue(getattr(obj, mode)(target),
+            msg="%r must match %r, mode=%s" % (obj, target, mode))
+
+    def assertNotMatch(self, obj, target, mode='match'):
+        self.assertFalse(getattr(obj, mode)(target),
+            msg="%r must match %r, mode=%s" % (obj, target, mode))
+
+    @protect_logging(log.logging.root)
+    def test_match(self):
+        strexact = values.StrExactMatch
+        log.logging.root.handlers = [quiet_logger]
+        obj = simple_obj(category="foon", package="dar")
+        self.assertMatch(self.kls("category", strexact("foon")), obj)
+        self.assertMatch(self.kls("package", strexact("dar")), obj)
+        self.assertNotMatch(self.kls("package", strexact("foon")), obj)
+        excepts = []
+        # no msg should be thrown, it wasn't an unexpected exception
+        log.logging.root.addHandler(callback_logger(excepts.append))
+        self.assertNotMatch(self.kls("foon", AlwaysSelfIntersect), obj)
+        self.assertFalse(excepts)
+
+        class foo:
+            def __getattr__(self, attr):
+                raise AttributeError("monkey lover")
+
+        self.assertRaises(AttributeError, 
+            self.kls("foon", AlwaysSelfIntersect).match,
+            foo())
+        self.assertEqual(len(excepts), 1,
+            msg="expected one exception, got %r" % excepts)
+        
+        # ensure various exceptions are passed through
+
 
     def test_eq(self):
         self.assertEquals(

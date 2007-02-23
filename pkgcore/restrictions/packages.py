@@ -14,6 +14,7 @@ demandload(globals(), "pkgcore.log:logger")
 # Backwards compatibility.
 package_type = restriction.package_type
 
+
 class native_PackageRestriction(object):
     __slots__ = ('_pull_attr', 'attr', 'restriction', 'ignore_missing',
         'negate')
@@ -62,12 +63,14 @@ class PackageRestriction_mixin(restriction.base):
                 return False
             elif any("'%s'" % x in y for x in s for y in exc.args):
                 # this is fairly horrible; probably specific to cpython also.
-                # either way, does a lookup specifically for string
+                # either way, does a lookup specifically for attr components
+                # in the string exception string, looking for 'attr' in the
+                # text.
+                # if it doesn't match, exception is thrown.
                 return False
-            return True;
         logger.exception("caught unexpected exception accessing %s from %s, "
             "exception %s" % (self.attr, str(pkg), str(exc)))
-        return False
+        return True
 
     def match(self, pkg):
         try:

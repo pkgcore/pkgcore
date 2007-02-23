@@ -176,3 +176,15 @@ class TestCase(unittest.TestCase, object):
 
         finally:
             result.stopTest(self)
+
+
+def protect_logging(target):
+    def f(func):
+        def f_inner(*args, **kwds):
+            handlers = target.handlers[:]
+            try:
+                return func(*args, **kwds)
+            finally:
+                target.handlers[:] = handlers
+        return f_inner
+    return f        

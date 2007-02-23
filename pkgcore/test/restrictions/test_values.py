@@ -212,7 +212,7 @@ class TestStrGlobMatch(TestRestriction):
             values.StrGlobMatch("rsync", negate=False))
 
 
-class TestEqualityMatch(TestCase):
+class TestEqualityMatch(TestRestriction):
 
     def test_match(self):
         for x, y, ret in (("asdf", "asdf", True), ("asdf", "fdsa", False),
@@ -222,12 +222,9 @@ class TestEqualityMatch(TestCase):
             (True, True, True),
             (True, False, False),
             (False, True, False)):
-            for negate in (True, False):
-                self.assertEquals(
-                    values.EqualityMatch(x, negate=negate).match(y),
-                    ret != negate,
-                    msg="testing %s==%s, required %s, negate=%s" % (
-                        repr(x),repr(y), ret, negate))
+            for negated in (True, False):
+                self.assertMatches(values.EqualityMatch(x, negate=negated),
+                    [y], [y]*3, negated=(ret ^ (not negated)))
 
     def test__eq__(self):
         for negate in (True, False):

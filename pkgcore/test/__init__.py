@@ -199,3 +199,15 @@ class TestRestriction(TestCase):
     def assertNotMatch(self, obj, target, mode='match'):
         self.assertFalse(getattr(obj, mode)(target),
             msg="%r must match %r, mode=%s" % (obj, target, mode))
+
+    def assertForceTrue(self, obj, target):
+        return self.assertMatch(obj, target, mode='force_True')
+
+    def assertNotForceTrue(self, obj, target):
+        return self.assertNotMatch(obj, target, mode='force_True')
+
+    def assertForceFalse(self, obj, target):
+        return self.assertMatch(obj, target, mode='force_False')
+
+    def assertNotForceFalse(self, obj, target):
+        return self.assertNotMatch(obj, target, mode='force_False')

@@ -50,17 +50,23 @@ class AlwaysBoolTest(TestRestriction):
     def test_true(self):
         true = self.bool_kls(True)
         false = self.bool_kls(False)
-        self.failUnless(true.match(false))
-        self.failIf(false.match(true))
+        self.assertMatch(true, false)
+        self.assertForceTrue(true, false)
+        self.assertNotForceFalse(true, false)
+        
+        self.assertNotMatch(false, true)
+        self.assertNotForceTrue(false, true)
+        self.assertForceFalse(false, true)
+
         self.assertEquals(str(true), "always 'True'")
         self.assertEquals(str(false), "always 'False'")
         self.assertNotEqual(hash(true), hash(false))
         self.assertEqual(hash(true),
-            hash(restriction.AlwaysBool('foo', True)))
+            hash(self.bool_kls(True)))
         self.assertEqual(hash(false),
-            hash(restriction.AlwaysBool('foo', False)))
-        self.assertEqual(true, restriction.AlwaysBool('foo', True))
-        self.assertEqual(false, restriction.AlwaysBool('foo', False))
+            hash(self.bool_kls(False)))
+        self.assertEqual(true, self.bool_kls(True))
+        self.assertEqual(false, self.bool_kls(False))
         self.assertNotEqual(true, false)
 
 

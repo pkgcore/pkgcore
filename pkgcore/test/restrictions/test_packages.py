@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from pkgcore.test import TestCase, protect_logging
+from pkgcore.test import TestCase, protect_logging, TestRestriction
 from pkgcore.restrictions import packages, values
 from pkgcore.util.currying import partial
 from pkgcore import log
@@ -48,7 +48,7 @@ class DummyIntersectingValues(values.base):
     __hash__ = object.__hash__
 
 
-class native_PackageRestrictionTest(TestCase):
+class native_PackageRestrictionTest(TestRestriction):
 
     if packages.native_PackageRestriction is packages.PackageRestriction_base:
         kls = packages.PackageRestriction
@@ -59,14 +59,6 @@ class native_PackageRestrictionTest(TestCase):
             __inst_caching__ = packages.PackageRestriction.__inst_caching__
 
     kls = staticmethod(kls)
-
-    def assertMatch(self, obj, target, mode='match'):
-        self.assertTrue(getattr(obj, mode)(target),
-            msg="%r must match %r, mode=%s" % (obj, target, mode))
-
-    def assertNotMatch(self, obj, target, mode='match'):
-        self.assertFalse(getattr(obj, mode)(target),
-            msg="%r must match %r, mode=%s" % (obj, target, mode))
 
     @protect_logging(log.logging.root)
     def run_check(self, mode='match'):

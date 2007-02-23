@@ -188,3 +188,14 @@ def protect_logging(target):
                 target.handlers[:] = handlers
         return f_inner
     return f        
+
+
+class TestRestriction(TestCase):
+
+    def assertMatch(self, obj, target, mode='match'):
+        self.assertTrue(getattr(obj, mode)(target),
+            msg="%r must match %r, mode=%s" % (obj, target, mode))
+
+    def assertNotMatch(self, obj, target, mode='match'):
+        self.assertFalse(getattr(obj, mode)(target),
+            msg="%r must match %r, mode=%s" % (obj, target, mode))

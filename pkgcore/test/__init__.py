@@ -192,22 +192,31 @@ def protect_logging(target):
 
 class TestRestriction(TestCase):
 
-    def assertMatch(self, obj, target, mode='match'):
-        self.assertTrue(getattr(obj, mode)(target),
-            msg="%r must match %r, mode=%s" % (obj, target, mode))
+    def assertMatch(self, obj, target, mode='match', negated=False):
+        if negated:
+            self.assertFalse(getattr(obj, mode)(target),
+                msg="%r must not match %r, mode=%s, negated=%r" %
+                    (obj, target, mode, negated))
+        else:
+            self.assertTrue(getattr(obj, mode)(target),
+                msg="%r must match %r, mode=%s, not negated" %
+                    (obj, target, mode))
 
-    def assertNotMatch(self, obj, target, mode='match'):
-        self.assertFalse(getattr(obj, mode)(target),
-            msg="%r must match %r, mode=%s" % (obj, target, mode))
+    def assertNotMatch(self, obj, target, mode='match', negated=False):
+        return self.assertMatch(obj, target, mode=mode, negated=not negated)
 
-    def assertForceTrue(self, obj, target):
-        return self.assertMatch(obj, target, mode='force_True')
+    def assertForceTrue(self, obj, target, negated=False):
+        return self.assertMatch(obj, target, mode='force_True',
+            negated=negated)
 
-    def assertNotForceTrue(self, obj, target):
-        return self.assertNotMatch(obj, target, mode='force_True')
+    def assertNotForceTrue(self, obj, target, negated=False):
+        return self.assertNotMatch(obj, target, mode='force_True',
+            negated=negated)
 
-    def assertForceFalse(self, obj, target):
-        return self.assertMatch(obj, target, mode='force_False')
+    def assertForceFalse(self, obj, target, negated=False):
+        return self.assertMatch(obj, target, mode='force_False',
+            negated=negated)
 
-    def assertNotForceFalse(self, obj, target):
-        return self.assertNotMatch(obj, target, mode='force_False')
+    def assertNotForceFalse(self, obj, target, negated=False):
+        return self.assertNotMatch(obj, target, mode='force_False',
+            negated=negated)

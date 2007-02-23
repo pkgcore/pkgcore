@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from pkgcore.test import TestCase, TestRestriction
+from pkgcore.test import TestRestriction
 from pkgcore.restrictions import restriction
 from pkgcore.util.currying import partial
 
@@ -84,14 +84,15 @@ class NoneMatch(restriction.base):
         return 'NoneMatch'
 
 
-class AnyMatchTest(TestCase):
+class AnyMatchTest(TestRestriction):
 
     def test_basic(self):
         for negate in (False, True):
             inst = restriction.AnyMatch(NoneMatch(), 'spork', negate=negate)
-            self.assertEqual(not negate, inst.match(['spork', None]))
-            self.assertEqual(negate, inst.match(['spork']))
-            self.assertEqual(negate, inst.match(()))
+            self.assertMatch(inst, ['spork', None], negated=negate)
+            self.assertNotMatch(inst, ['spork'], negated=negate)
+            self.assertNotMatch(inst, (), negated=negate)
+
             # just test these do not traceback
             self.assertTrue(repr(inst))
             self.assertTrue(str(inst))

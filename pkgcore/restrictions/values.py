@@ -475,7 +475,8 @@ class ContainmentMatch(hashed_base):
         # pylint: disable-msg=C0321
 
         # XXX pretty much positive this isn't working.
-        if isinstance(val, basestring):
+        if isinstance(val, basestring) or not getattr(pkg, 'configurable',
+            False):
             # unchangable
             return not self.match(val)
 
@@ -522,7 +523,8 @@ class ContainmentMatch(hashed_base):
 
         # XXX pretty much positive this isn't working.
 
-        if isinstance(val, basestring):
+        if isinstance(val, basestring) or not getattr(pkg, 'configurable',
+            False):
             # unchangable
             return self.match(val)
 

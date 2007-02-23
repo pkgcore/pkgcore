@@ -48,6 +48,8 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=()):
         _wrapped_attr = attributes_to_wrap
         _configurable_name = configurable_attribute_name
 
+        configurable = True
+
         locals()[configurable_attribute_name] = \
             property(attrgetter("_configurable"))
 

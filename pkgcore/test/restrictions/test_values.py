@@ -256,27 +256,24 @@ class TestContainmentMatch(TestRestriction):
             (range(10), set(xrange(10)), True),
             (set(xrange(10)), range(10), True)):
 
-            for negate in (True, False):
-                self.assertEquals(
-                    self.kls(
-                        negate=negate, disable_inst_caching=True, *x).match(y),
-                    ret != negate)
-        for negate in (True, False):
-            self.assertEquals(
-                self.kls(
-                    all=True, negate=negate, *range(10)).match(range(10)),
-                not negate)
-        self.assertEquals(self.kls("asdf").match("fdsa"), False)
-        self.assertEquals(self.kls("asdf").match("asdf"), True)
-        self.assertEquals(
-            self.kls("asdf").match("aasdfa"), True)
-        self.assertEquals(
-            self.kls("asdf", "bzip").match("pbzip2"), True)
+            for negated in (False, True):
+                self.assertMatches(self.kls(negate=negated,
+                    disable_inst_caching=True, *x),
+                    [y], [y]*3, negated=(ret == negated))
 
-    def test_force_basestring(self):
-        restrict = self.kls('asdf', 'bzip')
-        self.assertEquals(True, restrict.force_True(None, None, 'pbzip2'))
-        self.assertEquals(False, restrict.force_False(None, None, 'pbzip2'))
+        for negated in (False, True):
+            # intentionally differing for the force_* args; slips in
+            # an extra data set for testing.
+            self.assertMatches(self.kls(all=True, negate=negated, *range(10)),
+                [range(20)], [range(10)]*3, negated=negated)
+            self.assertNotMatches(self.kls(all=True, negate=negated,
+                *range(10)),
+                [range(5)], [range(5)]*3, negated=negated)
+
+        self.assertNotMatches(self.kls("asdf"), ["fdsa"], ["fdas"]*3)
+        self.assertMatches(self.kls("asdf"), ["asdf"], ["asdf"]*3)
+        self.assertMatches(self.kls("asdf"), ["asdffdsa"], ["asdffdsa"]*3)
+        self.assertMatches(self.kls("b"), ["aba"], ["aba"]*3)
 
     def test__eq__(self):
         for negate in (True, False):

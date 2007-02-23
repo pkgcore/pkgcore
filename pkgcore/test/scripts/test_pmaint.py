@@ -7,7 +7,6 @@ from pkgcore.util.formatters import PlainTextFormatter
 from pkgcore.interfaces.repo import (nonlivefs_install,
     nonlivefs_uninstall, nonlivefs_replace)
 from pkgcore.test import TestCase
-from pkgcore.test.misc import Options
 from pkgcore.scripts import pmaint
 from pkgcore.test.scripts import helpers
 from pkgcore.config import basics, ConfigHint
@@ -15,6 +14,12 @@ from pkgcore.repository import util, syncable
 from pkgcore.sync import base
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.util.currying import partial
+
+
+class Options(dict):
+    __getattr__ = dict.__getitem__
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
 
 
 class FakeSyncer(base.syncer):

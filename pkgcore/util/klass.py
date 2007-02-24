@@ -23,28 +23,25 @@ def native_get(self, key, default=None):
     except KeyError:
         return default
 
-attrlist_getter = attrgetter("__attr_comparison__")
-def native_generic_eq(inst1, inst2):
-    if inst1 is inst2:
-        return True
-    try:
-        for attr in attrlist_getter(inst1):
-            if getattr(inst1, attr) != getattr(inst2, attr):
-                return False
-        return True
-    except AttributeError:
-        return False
 
-def native_generic_ne(inst1, inst2):
+attrlist_getter = attrgetter("__attr_comparison__")
+def native_generic_eq(inst1, inst2, sentinel=object()):
+    if inst1 is inst2:
+        return True
+    for attr in attrlist_getter(inst1):
+        if getattr(inst1, attr, sentinel) != \
+            getattr(inst2, attr, sentinel):
+            return False
+    return True
+
+def native_generic_ne(inst1, inst2, sentinel=object()):
     if inst1 is inst2:
         return False
-    try:
-        for attr in attrlist_getter(inst1):
-            if getattr(inst1, attr) == getattr(inst2, attr):
-                return False
-        return True
-    except AttributeError:
-        return True
+    for attr in attrlist_getter(inst1):
+        if getattr(inst1, attr, sentinel) != \
+            getattr(inst2, attr, sentinel):
+            return True
+    return False
 
 try:
     from pkgcore.util._klass import (GetAttrProxy, contains, get,

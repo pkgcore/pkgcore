@@ -156,28 +156,39 @@ internal_generic_equality(PyObject *inst1, PyObject *inst2,
     PyObject *attr1, *attr2;
     // if Py_EQ, break on not equal, else on equal
     for(; idx < PyTuple_GET_SIZE(attrs); idx++) {
-        if(!(attr1 = PyObject_GetAttr(inst1,
-            PyTuple_GET_ITEM(attrs, idx)))) {
-            if(PyErr_ExceptionMatches(PyExc_AttributeError)) {
-                PyErr_Clear();
-                if(desired == Py_EQ) {
-                    Py_RETURN_FALSE;
-                }
-                Py_RETURN_TRUE;
-            }
+
+        attr1 = PyObject_GetAttr(inst1, PyTuple_GET_ITEM(attrs, idx));
+        if(!attr1 && !PyErr_ExceptionMatches(PyExc_AttributeError)) {
             return NULL;
         }
-        if(!(attr2 = PyObject_GetAttr(inst2,
-            PyTuple_GET_ITEM(attrs, idx)))) {
-            Py_DECREF(attr1);
-            if(PyErr_ExceptionMatches(PyExc_AttributeError)) {
-                PyErr_Clear();
+
+        attr2 = PyObject_GetAttr(inst2, PyTuple_GET_ITEM(attrs, idx));
+        if(!attr2 && !PyErr_ExceptionMatches(PyExc_AttributeError)) {
+            Py_XDECREF(attr1);
+            return NULL;
+        }
+        if(!attr1) {
+            if(attr2) {
+                Py_DECREF(attr2);
                 if(desired == Py_EQ) {
                     Py_RETURN_FALSE;
                 }
                 Py_RETURN_TRUE;
             }
-            return NULL;
+            continue;
+        } else if (!attr2) {
+            Py_DECREF(attr1);
+            if(desired == Py_EQ) {
+                Py_RETURN_FALSE;
+            }
+            Py_RETURN_TRUE;
+        } else if (attr1 == attr2) {
+            Py_DECREF(attr1);
+            Py_DECREF(attr2);
+            if(desired != Py_EQ) {
+                Py_RETURN_FALSE;
+            }
+            continue;
         }
         int ret = PyObject_RichCompareBool(attr1, attr2, desired);
         Py_DECREF(attr1);
@@ -185,12 +196,10 @@ internal_generic_equality(PyObject *inst1, PyObject *inst2,
         if(ret == -1) {
             return NULL;
         } else if (ret == 0) {
-            Py_INCREF(Py_False);
-            return Py_False;
+            Py_RETURN_FALSE;
         }
     }
-    Py_INCREF(Py_True);
-    return Py_True;
+    Py_RETURN_TRUE;
 }
 
 static PyObject *

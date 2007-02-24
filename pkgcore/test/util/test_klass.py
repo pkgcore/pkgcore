@@ -109,6 +109,12 @@ class Test_native_generic_equality(TestCase):
             __metaclass__ = self.kls
             def __init__(self, foo, bar):
                 self.foo, self.bar = foo, bar
+            
+            def __repr__(self):
+                return "<c: foo=%r, bar=%r, %i>" % (
+                    getattr(self, 'foo', 'unset'),
+                    getattr(self, 'bar', 'unset'),
+                    id(self))
 
         self.assertEqual(c(1, 2), c(1, 2))
         c1 = c(1, 3)
@@ -117,8 +123,10 @@ class Test_native_generic_equality(TestCase):
         self.assertNotEqual(c(2,1), c(1,2))
         c1 = c(1, 2)
         del c1.foo
-        self.assertNotEqual(c(1, 2), c1)
-        del c1
+        c2 = c(1, 2)
+        self.assertNotEqual(c1, c2)
+        del c2.foo
+        self.assertEqual(c1, c2)
 
     def test_call(self):
         def mk_class(meta):

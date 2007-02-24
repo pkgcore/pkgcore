@@ -97,6 +97,23 @@ class TestCase(unittest.TestCase, object):
         self.failUnless(
             needle not in haystack, reason or '%r in %r' % (needle, haystack))
 
+    def assertEqual(self, obj1, obj2, msg=None, reflective=True):
+        self.failUnless(obj1 == obj2,
+            msg or '%r != %r' % (obj1, obj2))
+        if reflective:
+            self.failUnless(not (obj1 != obj2),
+                msg or 'not (%r != %r)' % (obj1, obj2))
+
+    def assertNotEqual(self, obj1, obj2, msg=None, reflective=True):
+        self.failUnless(obj1 != obj2, 
+            msg or '%r == %r' % (obj1, obj2))
+        if reflective:
+            self.failUnless(not (obj1 == obj2),
+                msg or 'not (%r == %r)' % (obj1, obj2))
+
+    assertNotEquals = assertNotEqual
+    assertEquals = assertEqual
+
     # unittest and twisted each have a differing count of how many frames
     # to pop off when displaying an exception; thus we force an extra
     # frame so that trial results are usable

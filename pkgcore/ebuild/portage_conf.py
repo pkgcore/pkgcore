@@ -98,7 +98,7 @@ def add_sets(config, root, portage_base_dir):
                 logger.warn("user defined set %s is disallowed; ignoring" %
                     pjoin(set_fp, setname))
                 continue
-            new_config[setname] = basics.AutoConfigSection({
+            config[setname] = basics.AutoConfigSection({
                     "class":"pkgcore.pkgsets.filelist.FileList",
                     "location":pjoin(set_fp, setname)})
     except OSError, e:

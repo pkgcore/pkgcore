@@ -42,7 +42,7 @@ def native_generic_ne(inst1, inst2):
         for attr in attrlist_getter(inst1):
             if getattr(inst1, attr) == getattr(inst2, attr):
                 return False
-        return False
+        return True
     except AttributeError:
         return True
 
@@ -57,7 +57,8 @@ except ImportError:
     generic_ne = native_generic_ne
 
 
-def generic_equality(name, bases, scope, real_type=type):
+def generic_equality(name, bases, scope, real_type=type,
+    eq=generic_eq, ne=generic_ne):
     attrlist = scope.pop("__attr_comparison__", None)
     if attrlist is None:
         raise TypeError("__attr_comparison__ must be in the classes scope")
@@ -67,8 +68,8 @@ def generic_equality(name, bases, scope, real_type=type):
                 " got %r %s" % (type(x), repr(x)))
 
     scope["__attr_comparison__"] = tuple(attrlist)
-    scope.setdefault("__eq__", generic_eq)
-    scope.setdefault("__ne__", generic_ne)
+    scope.setdefault("__eq__", eq)
+    scope.setdefault("__ne__", ne)
     return real_type(name, bases, scope)
 
 

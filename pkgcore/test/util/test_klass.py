@@ -135,9 +135,50 @@ class Test_native_generic_equality(TestCase):
             return c
         self.assertRaises(TypeError, mk_class)
 
+
 class Test_cpy_generic_equality(Test_native_generic_equality):
     op_prefix = ''
     if klass.native_generic_eq is klass.generic_eq:
         skip = "extension not available"
 
     kls = staticmethod(klass.generic_equality)
+
+
+class Test_chained_getter(TestCase):
+
+    kls = klass.chained_getter
+    
+    def test_hash(self):
+        self.assertEqual(hash(self.kls("foon")), hash("foon"))
+        self.assertEqual(hash(self.kls("foon.dar")), hash("foon.dar"))
+
+    def test_caching(self):
+        l = []
+        for x in "abcdefghij":
+            l.append(id(self.kls("fa2341f%s" % x)))
+        self.assertEqual(id(self.kls("fa2341fa")), l[0])
+
+    def test_eq(self):
+        self.assertEqual(self.kls("asdf", disable_inst_caching=True),
+            self.kls("asdf", disable_inst_caching=True))
+
+        self.assertNotEqual(self.kls("asdf2", disable_inst_caching=True),
+            self.kls("asdf", disable_inst_caching=True))
+            
+    def test_it(self):
+        class maze(object):
+            def __init__(self, kwargs):
+                self.__data__ = kwargs
+                
+            def __getattr__(self, attr):
+                return self.__data__.get(attr, self)
+
+        d = {}
+        m = maze(d)
+        f = self.kls
+        self.assertEqual(f('foon')(m), m)
+        d["foon"] = 1
+        self.assertEqual(f('foon')(m), 1)
+        self.assertEqual(f('dar.foon')(m), 1)
+        self.assertEqual(f('.'.join(['blah']*10))(m), m)
+        self.assertRaises(AttributeError, f('foon.dar'), m)

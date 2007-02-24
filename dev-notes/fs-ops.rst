@@ -2,7 +2,7 @@
 Filesystem Operations
 =====================
 
-Here we define types of operations that PkgCore will support, as well as the
+Here we define types of operations that pkgcore will support, as well as the
 stages where these operations occur.
 
 ---------------------------

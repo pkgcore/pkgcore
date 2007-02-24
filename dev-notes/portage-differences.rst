@@ -5,8 +5,8 @@ Pkgcore/Portage differences
 Disclaimer
 ----------
 
-Pkgcore moves fairly fast in terms of development- will strive to keep this doc 
-upto date, but it may lag.
+Pkgcore moves fairly fast in terms of development- we will strive to keep this doc 
+up to date, but it may lag behind the actual code.
 
 --------------------------
 Ebuild environment changes
@@ -24,25 +24,25 @@ machine.
   it, but inherit from within one of the build/install phases is now actively
   blocked.
 
-- ebuild env is now *effectively* akin to suspending the process, and restarting
+- The ebuild env is now *effectively* akin to suspending the process, and restarting
   it.  Essentially, transitioning between ebuild phases, the ebuild environment
   is snapshotted, cleaned of irrevelent data (bash forced vars for example, or
   vars that pkgcore sets for the local system on each shift into a phase), and
-  saved.  Portage does this partially (re-execs ebuilds/eclasses, thus stomping
-  the env on each phase change), pkgcore does it fully.  As such, pkgcore is
+  saved. Portage does this partially (re-execs ebuilds/eclasses, thus stomping
+  the env on each phase change), pkgcore does it fully. As such, pkgcore is
   capable of glep33, while portage is not (env fixes are the basis of glep33).
 
-- ebuild.sh now protects itself from basic fiddling.  Ebuild generated state 
+- ebuild.sh now protects itself from basic fiddling. Ebuild generated state 
   **must** work as long as the EAPI is the same, regardless of the generating
   portage version, and the portage version that later uses the saved state 
   (simple example, generated with portage-2.51, if portage 3 is EAPI compliant
   with that env, it must not allow it's internal bash changes to break the env).
   As such, certain funcs are not modifiable by the ebuild- namely, internal
-  portage/pkgcore functionality, hasq/useq for example.  Those functions that
+  portage/pkgcore functionality, hasq/useq for example. Those functions that
   are read-only also are not saved in the ebuild env (they should be supplied
   by the portage/pkgcore instance reloading the env).
 
-- ebuild.sh is daemonized.  Upshot of it is that regen is roughly 2x faster
+- ebuild.sh is daemonized. The upshot of this is that regen is roughly 2x faster
   (careful reuse of ebuild.sh instances rather then forcing bash to spawn
   all over).  Additional upshot of this is that their are bidirectional 
   communication pipes between ebuild.sh and the python parent- env inspection, 
@@ -55,7 +55,8 @@ machine.
 Repository Enhancements
 -----------------------
 
-Pkgcore internally uses a sane/uniform repository abstraction- benefits being
+Pkgcore internally uses a sane/uniform repository abstraction- the benefits
+of this are:
 
 - repository class (which implements the accessing of the on disk/remote tree)
   is pluggable.  Remote vdb/portdir is doable, as is having your repository 

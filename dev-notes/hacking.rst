@@ -1,18 +1,11 @@
 =========================
- python code guidelines.
+ Python Code Guidelines
 =========================
 
-lingo:
+Note that not all of the existing code follows this style guide.
+This doesn't mean existing code is correct.
 
-fex
-  for example
-imo
-  in my opinion; 'my' refering to the author
-
-Note not all of the existing code follows this.
-Doesn't mean existing code is correct however ;)
-
-Stats are all from a sempron 1.6ghz with python 2.4.2
+Stats are all from a sempron 1.6ghz with python 2.4.2.
 
 Finally, code _should_ be documented, following epydoc/epytext guidelines
 
@@ -22,37 +15,37 @@ Follow pep8, with following exemptions
 - <80 char limit is only applicable where it doesn't make the logic
   ugly. This is not an excuse to have a 200 char if statement (fix
   your logic). Use common sense.
-- combining imports is ok.
-- use absolute imports
-- _simple_ try/except combined lines are acceptable, but not forced
-  (your call). example::
+- Combining imports is ok.
+- Use absolute imports
+- _Simple_ try/except combined lines are acceptable, but not forced
+  (this is your call). example::
 
    try: l.remove(blah)
    except IndexError: pass
 
-- for comments. 2 spaces trailing is pointless- not needed.
-- classes should be named SomeClass, functions/methods should be named
+- For comments, 2 spaces trailing is pointless- not needed.
+- Classes should be named SomeClass, functions/methods should be named
   some_func.
-- Exceptions are classes.  Don't raise strings either.
-- avoid __var 'private' attributes unless you absolutely have a reason
+- Exceptions are classes.  Don't raise strings.
+- Avoid __var 'private' attributes unless you absolutely have a reason
   to hide it, and the class won't be inherited (or that attribute
   must _not_ be accessed)
-- using string module functions when you could use a string method is
+- Using string module functions when you could use a string method is
   evil. Don't do it.
-- use isinstance(str_instance, basestring) unless you _really_ need to
+- Use isinstance(str_instance, basestring) unless you _really_ need to
    know if it's utf8/ascii
 
 Throw self with a NotImplementedError
 =====================================
 
-Reason for this is simple; if you just throw a NotImplementedError, you can't
-tell how the path was hit if derivative classes are involved; thus throw
-NotImplementedError(self, string_name_of_attr)
+The reason for this is simple; if you just throw a NotImplementedError,
+you can't tell how the path was hit if derivative classes are involved;
+thus throw NotImplementedError(self, string_name_of_attr)
 
-Far better tbs.
+This gives far better tracebacks.
 
-Be aware of what the interpretter is actually doing.
-====================================================
+Be aware of what the interpreter is actually doing
+==================================================
 
 Don't use len(list_instance) when you just want to know if it's
 nonempty/empty::
@@ -62,7 +55,7 @@ nonempty/empty::
   # instead of
   if len(l): blah
 
-python looks for __nonzero__, then __len__. It's a fair sight faster
+python looks for __nonzero__, then __len__. It's a far faster
 then if you try to be explicit there::
 
   python -m timeit -s 'l=[]' 'if len(l) > 0: pass'
@@ -74,8 +67,8 @@ then if you try to be explicit there::
   python -m timeit -s 'l=[]' 'if l: pass'
   1000000 loops, best of 3: 0.302 usec per loop
 
-don't explicitly use has_key.  rely on the 'in' operator.
-=========================================================
+Don't explicitly use has_key. Rely on the 'in' operator
+=======================================================
 
 ::
 
@@ -86,19 +79,19 @@ don't explicitly use has_key.  rely on the 'in' operator.
   1000000 loops, best of 3: 0.279 usec per loop
 
 Python interprets the 'in' command by using __contains__ on the
-instance. The interpretter is faster at doing getattr's then actual
-python code is; fex, the code above uses d.__contains__ , if you do
+instance. The interpreter is faster at doing getattr's than actual
+python code is: for example, the code above uses d.__contains__ , if you do
 d.has_key or d.__contains__, it's the same speed. Using 'in' instead
-has the interpretter do the lookup, and is faster.
+has the interpreter do the lookup, and is faster.
 
-So... be aware of how the interpretter will execute that code. Python
-code specified attribute access is slower then the interpretter doing
-it on it's own.
+So be aware of how the interpreter will execute that code. Python
+code specified attribute access is slower then the interpreter doing
+it on its own.
 
 If in doubt, python -m timeit is your friend. ;-)
 
-Do not use [] or {} as default args in function/method definitions.
-===================================================================
+Do not use [] or {} as default args in function/method definitions
+==================================================================
 
 ::
 
@@ -111,38 +104,38 @@ Do not use [] or {} as default args in function/method definitions.
   [1,1]
 
 When the function/class/method is defined, the default args are
-instantiated _then_, not per call. End result is that if it's a
-mutable default arg, you should use None and test; this is exempted if
-you _know_ the code doesn't mangle the default.
+instantiated _then_, not per call. The end result of this is that if it's a
+mutable default arg, you should use None and test for it being None; this is
+exempted if you _know_ the code doesn't mangle the default.
 
-Visible curried functions should have documentation.
-====================================================
+Visible curried functions should have documentation
+===================================================
 
 When using the currying methods (pkgcore.util.currying) for function
 mangling, preserve the documentation via pretty_docs.
 
 If this is exempted, pydoc output for objects isn't incredibly useful.
 
-unit testing.
-=============
+Unit testing
+============
 
-All code _should_ have test case functionality.  We use twisted.trial; should
-be running >=2.2 (<2.2 results in false positives in the spawn tests).
-Regressions should be test cased, exempting idiot mistakes (typos fex).
+All code _should_ have test case functionality.  We use twisted.trial - you
+should be running >=2.2 (<2.2 results in false positives in the spawn tests).
+Regressions should be test cased, exempting idiot mistakes (e.g, typos).
 
-More then willing to look at code that lacks tests, but
-merging/integrating the code requires tests.
+We are more than willing to look at code that lacks tests, but
+actually merging the code to integration requires that it has tests.
 
-One area that is (atm) exempted from this is the ebuild interaction;
+One area that is (at the moment) exempted from this is the ebuild interaction;
 testing that interface is extremely hard, although it _does_ need to
 be implemented.
 
-If tests are missing from code (author didn't write tests initially),
-new tests desired. :)
+If tests are missing from code (due to tests not being written initially),
+new tests are always desired.
 
 
-If it's FS related code, it's _usually_ cheaper to try then to ask then try.
-============================================================================
+If it's FS related code, it's _usually_ cheaper to try then to ask then try
+===========================================================================
 
 ...but you should verify it ;)
 
@@ -167,14 +160,14 @@ nonexistant file::
   python -m 'timeit' -s 'import os' $'try:open("foo").read()\nexcept IOError: pass'
   10000 loops, best of 3: 27.7 usec per loop
 
-Bit of a difference, no?
+As you can see, there is a bit of a difference. :)
 
-Note that I qualified this with "If it's FS related code"; syscalls
-aren't cheap- if it's not triggering syscalls, next section is
+Note that this was qualified with "If it's FS related code"; syscalls
+are not cheap- if it's not triggering syscalls, the next section is
 relevant.
 
-Catching Exceptions in python code (rather then cpython) isn't cheap.
-=====================================================================
+Catching Exceptions in python code (rather then cpython) isn't cheap
+====================================================================
 
 stats from python-2.4.2
 
@@ -195,9 +188,9 @@ When no exception is caught, overhead of try/except setup::
   1000000 loops, best of 3: 0.407 usec per loop
 
 
-Not advocating writing code that doesn't protect itself- just be aware
+This doesn't advocate writing code that doesn't protect itself- just be aware
 of what the code is actually doing, and be aware that exceptions in
-python code are costly due to machinery involved.
+python code are costly due to the machinery involved.
 
 Another example is when to use or not to use dict's setdefault or get methods:
 
@@ -223,9 +216,9 @@ key doesn't exist::
   1000000 loops, best of 3: 1.05 usec per loop
 
 
-Short version? If you know the key is there, get is slower. If you
-don't, get is your friend. IOW, use it instead of doing a containment
-test then accessing the key.
+The short version of this is: if you know the key is there, dict.get()
+is slower. If you don't, get is your friend. In other words, use it
+instead of doing a containment test and then accessing the key.
 
 Of course this only considers the case where the default value is
 simple. If it's something more costly "except" will do relatively
@@ -248,7 +241,7 @@ cpython 'leaks' vars into local namespace for certain constructs
               pass
           # some other code here...
 
-from the code above, e bled into the f namespace- that's referenced
+From the code above, e bled into the f namespace- that's referenced
 memory that isn't used, and will linger until the while loop exits.
 
 Python _does_ bleed variables into the local namespace- be aware of
@@ -260,18 +253,18 @@ large objs, especially dealing with exceptions::
       for x in range(1000):
           d[x] = x
 
-Granted the class above is contrived, but the thing to note is that
+While the class above is contrived, the thing to note is that
 c.x is now valid- the x from the for loop bleeds into the class
 namespace and stays put.
 
 Don't leave uneeded vars lingering in class namespace.
 
-Variables that leak from for loops _normally_ isn't an issue, just be
-aware it occurs- especially if the var is referencing a large object
+Variables that leak from for loops _normally_ aren't an issue, just be
+aware it does occur- especially if the var is referencing a large object
 (thus keeping it in memory).
 
 So... for loops leak, list comps leak, dependant on your except
-clause, can leak also.
+clause they can also leak.
 
 Do not go overboard with this though. If your function will exit soon
 do not bother cleaning up variables by hand. If the "leaking" things
@@ -284,22 +277,23 @@ exception instance and the arguments passed to its constructor. "del
 e" also takes a small amount of time to run (clearing up all locals
 when the function exits is faster).
 
-Unless you need to generate (and save) a range result, use xrange.
-==================================================================
+Unless you need to generate (and save) a range result, use xrange
+=================================================================
 
-python -m timeit 'for x in range(10000): pass'
-100 loops, best of 3: 2.01 msec per loop
+::
+  python -m timeit 'for x in range(10000): pass'
+  100 loops, best of 3: 2.01 msec per loop
 
-$ python -m timeit 'for x in xrange(10000): pass'
-1000 loops, best of 3: 1.69 msec per loop
+  $ python -m timeit 'for x in xrange(10000): pass'
+  1000 loops, best of 3: 1.69 msec per loop
 
-Removals from a list aren't cheap, especially left most.
-========================================================
+Removals from a list aren't cheap, especially left most
+=======================================================
 
-If you _do_ need to do left most removals, deque module is your friend.
+If you _do_ need to do left most removals, the deque module is your friend.
 
-Rightmost ain't all that cheap either, depending on what idiocy folks
-come up with to try and 'help' the interpretter::
+Rightmost removals aren't too cheap either, depending on what idiocy people
+come up with to try and 'help' the interpreter::
 
   python -m timeit $'l=range(1000);i=0;\nwhile i < len(l):\n\tif l[i]!="asdf":del l[i]\n\telse:i+=1'
   100 loops, best of 3: 4.12 msec per loop
@@ -310,13 +304,13 @@ come up with to try and 'help' the interpretter::
   python -m timeit 'l=range(1000);l=[x for x in l if x == "asdf"]'
   1000 loops, best of 3: 1 msec per loop
 
-Granted, that's worst case, but worst case is usually where folks get bit.
-(best case still is faster for list comp btw).
+Granted, that's worst case, but the worst case is usually where people
+get bitten (note the best case still is faster for list comprehension).
 
-Related note, don't pop unless you have a reason to.
+On a related note, don't pop() unless you have a reason to.
 
-If you're testing for None specifically, be aware of the 'is' operator.
-=======================================================================
+If you're testing for None specifically, be aware of the 'is' operator
+======================================================================
 
 Is avoids the equality protocol, and does a straight ptr comparison::
 
@@ -328,8 +322,8 @@ Is avoids the equality protocol, and does a straight ptr comparison::
 
 
 Note that we're specificially forcing a large int; using 1 under 2.5 is the
-same runtime, reason being that it defaults to an identity check, then a
-comparison; for small ints, python uses singletons, thus identity kicks in.
+same runtime, the reason for this is that it defaults to an identity check,
+then a comparison; for small ints, python uses singletons, thus identity kicks in.
 
 Deprecated/crappy modules
 =========================
@@ -338,7 +332,7 @@ Deprecated/crappy modules
   types sucks).
 - Don't use strings module. There are exceptions, but use string
   methods when available.
-- Don't use stat module just to get a stat attribute- fex::
+- Don't use stat module just to get a stat attribute- e.g.,::
     import stats
     l=os.stat("asdf")[stat.ST_MODE]
 
@@ -346,8 +340,8 @@ Deprecated/crappy modules
     l=os.stat("asdf").st_mode
 
 
-Know the exceptions that are thrown, and catch just those you're interested in.
-===============================================================================
+Know the exceptions that are thrown, and catch just those you're interested in
+==============================================================================
 
 ::
 
@@ -356,54 +350,53 @@ Know the exceptions that are thrown, and catch just those you're interested in.
   except Exception:
       blah2
 
-^^^ major issue here. It catches SystemExit exceptions (trigger by
-keyboard interupts); meaning this code, which was just crappy
-exception handling now swallows ctrl+c (meaning it now screws with UI
-code).
+There is a major issue here. It catches SystemExit exceptions (triggered by
+keyboard interupts); meaning this code, which was just bad exception handling
+now swallows Ctrl+c (meaning it now screws with UI code).
 
 Catch what you're interested in *only*.
 
 tuples versus lists.
 ====================
 
-Former is immutable, latter is mutable.
+The former is immutable, while the latter is mutable.
 
-Latter over-allocates (cpython thing), meaning it takes up more memory
+Lists over-allocate (a cpython thing), meaning it takes up more memory
 then is used (this is actually a good thing usually).
 
 If you're generating/storing a lot of sequences that shouldn't be
-modified, use tuples. Cheaper in memory, and folks can reference the
-tuple directly without concerns of it being mutated elsewhere.
+modified, use tuples. They're cheaper in memory, and people can reference
+the tuple directly without being concerned about it being mutated elsewhere.
 
-Using lists there however would require each consumer to copy the list
+However, using lists there would require each consumer to copy the list
 to protect themselves from mutation. So... over-allocation +
 allocating a new list for each consumer.
 
 Bad, mm'kay.
 
-for immutable instances (tuples/strings fex), trying to copy them is dumb
-=========================================================================
+Don't trying to copy immutable instances (e.g. tuples/strings)
+==============================================================
 
-fex: copy.copy((1,2,3)) is dumb; nobody makes a mistake that obvious,
-but in larger code folks do (folks even try using [:] to copy a
+Example: copy.copy((1,2,3)) is dumb; nobody makes a mistake that obvious,
+but in larger code people do (people even try using [:] to copy a
 string; it returns the same string since it's immutable).
 
-Can't modify them, thus there is no point in trying to make copies of them.
+You can't modify them, therefore there is no point in trying to make copies of them.
 
 
-__del__ methods mes with garbage collection
+__del__ methods mess with garbage collection
 ===========================================
 
 __del__ methods have the annoying side affect of blocking garbage
 collection when that instance is involved in a cycle- basically, the
-interpretter doesn't know what __del__ is going to reference, so its
+interpreter doesn't know what __del__ is going to reference, so it's
 unknowable (general case) how to break the cycle.
 
 So... if you're using __del__ methods, make sure the instance doesn't
 wind up in a cycle (whether careful data structs, or weakref usage).
 
-(General) python isn't slow, your algorithm is.
-===============================================
+A general point: python isn't slow, your algorithm is
+=====================================================
 
 ::
 
@@ -412,7 +405,7 @@ wind up in a cycle (whether careful data structs, or weakref usage).
   	if x not in l:
   		l.append(x)
 
-That code is _best_ case O(1) (yielding all 0's fex). Worst case is
+That code is _best_ case O(1) (e.g., yielding all 0's). The worst case is
 O(N^2).
 
 ::
@@ -422,22 +415,22 @@ O(N^2).
       if x not in l:
           l.add(x)
 
-Best/Worst are now constant (not quite due to potential expansion of
-the set internally, but that's ignorable in this case).
+Best/Worst are now constant (this isn't strictly true due to the potential
+expansion of the set internally, but that's ignorable in this case).
 
-Further, the first loop actually invokes the __eq__ protocol for x for
+Furthermore, the first loop actually invokes the __eq__ protocol for x for
 each element, which can potentially be *quite* slow if dealing in
 complex objs.
 
-The second loop invokes __hash__ once on x instead.  Seeing the gain?
+The second loop invokes __hash__ once on x instead.
 
-Technically, second loop still is a bit innefficient::
+Technically, the second loop still is a bit innefficient::
 
   l=set(data_generator())
 
-being simpler and faster.
+is simpler and faster.
 
-example data for folks who don't see how _bad_ this can get::
+An example data for people who don't see how _bad_ this can get::
 
   python -m timeit $'l=[]\nfor x in xrange(1000):\n\tif x not in l:l.append(x)'
   10 loops, best of 3: 74.4 msec per loop
@@ -448,12 +441,12 @@ example data for folks who don't see how _bad_ this can get::
   python -m timeit 'l=set(xrange(1000))'
   1000 loops, best of 3: 278 usec per loop
 
-Bit of a difference, no?
+The difference here is obvious.
 
-This does _not_ mean that sets are automatically/better everywhere,
-just be aware of what you're doing- for a single search of a range
-(fex), the overhead of is far slower then a linear search. Kind of a
-'duh', but folks do do this sometimes::
+This does _not_ mean that sets are automatically better everywhere,
+just be aware of what you're doing- for a single search of a range,
+the overhead of is far slower then a linear search. While this may
+seem obvious, people do do this sometimes::
 
   python -m timeit -s 'l=range(50)' $'if 1001 in set(l): pass'
   100000 loops, best of 3: 12.2 usec per loop
@@ -472,20 +465,20 @@ http://docs.python.org/ref/customization.html):
  operations. The only required property is that objects which compare
  equal have the same hash value.
 
-Quick/rough explanation for folks who do not know how a "dict" works
+Here's a quick rough explanation for people who do not know how a "dict" works
 internally:
 
 - Things added to it are dumped in a "bucket" depending on their hash
   value.
 - To check if something is in the dict it first determines the bucket
   to check (based on hash value), then does equality checks (__cmp__
-  or __eq__ if there is one, object identity comparison otherwise) for
+  or __eq__ if there is one, otherwise object identity comparison) for
   everything in the bucket (if there is anything).
 
 So what does this mean?
 
 - There's no reason at all to define your own __hash__ unless you also
-  define __eq__ or __cmp__. Behaviour of your object in dicts/sets
+  define __eq__ or __cmp__. The behaviour of your object in dicts/sets
   will not change, it will just be slower (since your own __hash__ is
   almost certainly slower than the default one).
 - If you define __eq__ or __cmp__ and want your object to be usable in
@@ -497,7 +490,7 @@ So what does this mean?
   for objects that compare equal, or you get *really* weird behaviour
   in dicts/sets ("thing in dict" returning False because the hash
   values differ while "thing in dict.keys()" returns True because that
-  does not use the hash value, only does equality checks).
+  does not use the hash value, only equality checks).
 - If the hash value changes after the object was put in a dict you get
   weird behaviour too ("s=set([thing]); thing.change_hash();thing in s"
   is False, but "thing in list(s)" is True). So if your objects are
@@ -554,7 +547,7 @@ Usually you will want to be "different" from those unconditionally::
 	      return False
 	  # Your actual code goes here
 
-This might seem like overkill, but is necessary to avoid problems if
+This might seem like overkill, but it is necessary to avoid problems if
 you are subclassed and the subclass does not have a new __eq__. If you
 just do an "isinstance(other, self.__class__)" check you will compare
 equal to instances of a subclass, which is usually not what you want.

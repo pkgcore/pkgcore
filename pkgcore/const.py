@@ -47,7 +47,6 @@ WORLD_FILE           = '/var/lib/portage/world'
 #MAKE_CONF_FILE       = "/etc/make.conf"
 #MAKE_DEFAULTS_FILE   = PROFILE_PATH + "/make.defaults"
 
-INVALID_ENV_FILE     = "/etc/spork/is/not/valid/profile.env"
 # XXX this is out of place
 CUSTOM_MIRRORS_FILE  = "/etc/portage/mirrors"
 SANDBOX_PIDS_FILE    = "/tmp/sandboxpids.tmp"

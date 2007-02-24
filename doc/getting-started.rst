@@ -1,3 +1,7 @@
+===============
+Getting Started
+===============
+
 Portage Differences
 +++++++++++++++++++
 

@@ -15,4 +15,4 @@ class CommandlineTest(TestCase, helpers.MainMixin):
     main = staticmethod(pplugincache.main)
 
     def test_parser(self):
-        self.assertEquals([plugins], self.parse().packages)
+        self.assertEqual([plugins], self.parse().packages)

@@ -17,7 +17,7 @@ from pkgcore.test.mixins import TempDirMixin
 class TestBashCommentStripping(TestCase):
 
     def test_iter_read_bash(self):
-        self.assertEquals(
+        self.assertEqual(
             list(iter_read_bash(StringIO(
                         '\n'
                         '# hi I am a comment\n'
@@ -25,7 +25,7 @@ class TestBashCommentStripping(TestCase):
             ['I am not'])
 
     def test_read_bash(self):
-        self.assertEquals(
+        self.assertEqual(
             read_bash(StringIO(
                     '\n'
                     '# hi I am a comment\n'
@@ -36,7 +36,7 @@ class TestBashCommentStripping(TestCase):
 class TestReadBashConfig(TestCase):
 
     def test_read_dict(self):
-        self.assertEquals(
+        self.assertEqual(
             read_dict(StringIO(
                     '\n'
                     '# hi I am a comment\n'
@@ -48,11 +48,11 @@ class TestReadBashConfig(TestCase):
              'foo2': 'bar',
              'foo3': '\'bar"',
              })
-        self.assertEquals(
+        self.assertEqual(
             read_dict(['foo=bar'], source_isiter=True), {'foo': 'bar'})
         self.assertRaises(
             ParseError, read_dict, ['invalid'], source_isiter=True)
-        self.assertEquals(
+        self.assertEqual(
             read_dict(
                 ['invalid', 'foo=bar', '# blah'], source_isiter=True,
                 ignore_malformed=True),
@@ -115,30 +115,30 @@ class ReadBashDictTest(TestCase):
 
     def test_read_bash_dict(self):
         # TODO this is not even close to complete
-        self.assertEquals(
+        self.assertEqual(
             read_bash_dict(self.valid_file.name),
             {'foo1': 'bar', 'foo2': 'bar', 'foo3': 'bar', 'foo4': '-/:j4',
                 'foo5': ''})
         self.assertRaises(ParseError, read_bash_dict, self.invalid_file.name)
-        self.assertEquals(
+        self.assertEqual(
             read_bash_dict(self.invalid_file.name, ignore_malformed=True),
             {'foo1': 'bar', 'foo2': 'barfoo3'})
 
     def test_quoting(self):
-        self.assertEquals(read_bash_dict(StringIO("x='y \\\na'")),
+        self.assertEqual(read_bash_dict(StringIO("x='y \\\na'")),
             {'x':'y \\\na'})
-        self.assertEquals(read_bash_dict(StringIO('x="y \\\nasdf"')),
+        self.assertEqual(read_bash_dict(StringIO('x="y \\\nasdf"')),
             {'x':'y asdf'})
 
     def test_sourcing(self):
         # TODO this is not even close to complete
-        self.assertEquals(
+        self.assertEqual(
             read_bash_dict(self.sourcing_file.name, sourcing_command='source'),
             {'foo1': 'bar', 'foo2': 'bar', 'foo3': 'bar', 'foo4': '-/:j4',
                 'foo5':''})
 
     def test_read_advanced(self):
-        self.assertEquals(
+        self.assertEqual(
             read_bash_dict(self.advanced_file.name),
             {'one1': '1',
              'one_': '1',
@@ -147,18 +147,18 @@ class ReadBashDictTest(TestCase):
              })
 
     def test_env(self):
-        self.assertEquals(
+        self.assertEqual(
             read_bash_dict(self.env_file.name),
             {'imported': ''})
         env = {'external': 'imported foo'}
         env_backup = env.copy()
-        self.assertEquals(
+        self.assertEqual(
             read_bash_dict(self.env_file.name, env),
             {'imported': 'imported foo'})
-        self.assertEquals(env_backup, env)
+        self.assertEqual(env_backup, env)
 
     def test_escaping(self):
-        self.assertEquals(
+        self.assertEqual(
             read_bash_dict(self.escaped_file.name), {
                 'end': 'bye',
                 'quoteddollar': '${dollar}',
@@ -176,16 +176,16 @@ class TestAtomicWriteFile(TempDirMixin, TestCase):
         open(fp, "w").write("me")
         af = AtomicWriteFile(fp)
         af.write("dar")
-        self.assertEquals(open(fp, "r").read(), "me")
+        self.assertEqual(open(fp, "r").read(), "me")
         af.close()
-        self.assertEquals(open(fp, "r").read(), "dar")
+        self.assertEqual(open(fp, "r").read(), "dar")
 
     def test_del(self):
         fp = os.path.join(self.dir, "target")
         open(fp, "w").write("me")
-        self.assertEquals(open(fp, "r").read(), "me")
+        self.assertEqual(open(fp, "r").read(), "me")
         af = AtomicWriteFile(fp)
         af.write("dar")
         del af
-        self.assertEquals(open(fp, "r").read(), "me")
-        self.assertEquals(len(os.listdir(self.dir)), 1)
+        self.assertEqual(open(fp, "r").read(), "me")
+        self.assertEqual(len(os.listdir(self.dir)), 1)

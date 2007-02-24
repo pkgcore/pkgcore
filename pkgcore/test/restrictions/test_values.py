@@ -78,12 +78,12 @@ class StrRegexTest(TestRestriction):
         self.assertMatches(self.kls('foo', False), ['FoO'], ['fOo']*3)
 
     def test_str(self):
-        self.assertEquals('search spork', str(self.kls('spork')))
-        self.assertEquals('not search spork',
+        self.assertEqual('search spork', str(self.kls('spork')))
+        self.assertEqual('not search spork',
                           str(self.kls('spork', negate=True)))
-        self.assertEquals('match spork',
+        self.assertEqual('match spork',
                           str(self.kls('spork', match=True)))
-        self.assertEquals('not match spork',
+        self.assertEqual('not match spork',
                           str(self.kls('spork',
                                               match=True, negate=True)))
 
@@ -132,14 +132,14 @@ class native_TestStrExactMatch(TestRestriction):
 
     def test__eq__(self):
         for negate in (True, False):
-            self.assertEquals(
+            self.assertEqual(
                 self.kls("rsync", negate=negate),
                 self.kls("rsync", negate=negate))
             for x in "Ca":
-                self.assertNotEquals(
+                self.assertNotEqual(
                     self.kls("rsync", negate=negate),
                     self.kls("rsyn"+x, negate=negate))
-            self.assertEquals(
+            self.assertEqual(
                 self.kls(
                     "Rsync", case_sensitive=False, negate=negate),
                 self.kls(
@@ -199,20 +199,20 @@ class TestStrGlobMatch(TestRestriction):
             self.kls("rsync", prefix=False) ==
             self.kls("rsync", prefix=True))
         for negate in (True, False):
-            self.assertEquals(
+            self.assertEqual(
                 self.kls("rsync", negate=negate),
                 self.kls("rsync", negate=negate))
             for x in "Ca":
-                self.assertNotEquals(
+                self.assertNotEqual(
                     self.kls("rsync", negate=negate),
                     self.kls("rsyn"+x, negate=negate))
-            self.assertNotEquals(
+            self.assertNotEqual(
                 self.kls("Rsync", case_sensitive=False, negate=negate),
                 self.kls("rsync", case_sensitive=True, negate=negate))
-            self.assertNotEquals(
+            self.assertNotEqual(
                 self.kls("rsync", case_sensitive=False, negate=negate),
                 self.kls("rsync", case_sensitive=True, negate=negate))
-            self.assertNotEquals(
+            self.assertNotEqual(
                 self.kls("rsync", case_sensitive=False, negate=negate),
                 self.kls("rsync", case_sensitive=True, negate=not negate))
         self.assertNotEqual(
@@ -281,7 +281,7 @@ class TestContainmentMatch(TestRestriction):
 
     def test__eq__(self):
         for negate in (True, False):
-            self.assertEquals(
+            self.assertEqual(
                 self.kls(negate=negate, *range(100)),
                 self.kls(negate=negate, *range(100)),
                 msg="range(100), negate=%s" % negate)

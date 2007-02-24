@@ -45,11 +45,11 @@ test {
 '''),
             ]:
             config = parser(StringIO(text))
-            self.assertEquals(config.keys(), ['test'])
+            self.assertEqual(config.keys(), ['test'])
             section = config['test']
             self.failUnless('hi' in section)
-            self.assertEquals(section.keys(), ['hi'])
-            self.assertEquals(section.get_value(None, 'hi', 'str'), 'there')
+            self.assertEqual(section.keys(), ['hi'])
+            self.assertEqual(section.get_value(None, 'hi', 'str'), 'there')
 
     def test_basic_types(self):
         for parser, text in [
@@ -77,7 +77,7 @@ test {
                 ('bool', 'bool', True),
                 ('callable', 'callable', passthrough),
                 ):
-                self.assertEquals(section.get_value(None, name, typename),
+                self.assertEqual(section.get_value(None, name, typename),
                                   value)
 
     def test_section_ref(self):
@@ -112,10 +112,10 @@ test {
             config = parser(StringIO(text))
             manager = central.ConfigManager([config])
             section = config['test']
-            self.assertEquals(
+            self.assertEqual(
                 section.get_value(manager, 'ref', 'section_ref').instantiate(),
                 ((), {'hi': 'there'}))
-            self.assertEquals(
+            self.assertEqual(
                 section.get_value(
                     manager, 'inline', 'section_ref').instantiate(),
                 ((), {'hi': 'here'}))
@@ -170,7 +170,7 @@ test {
                 try:
                     section.get_value(manager, name, 'section_ref')
                 except errors.ConfigurationError, e:
-                    self.assertEquals('only one argument required', str(e))
+                    self.assertEqual('only one argument required', str(e))
                 else:
                     self.fail('no exception raised')
 
@@ -205,8 +205,8 @@ test {
             manager = central.ConfigManager([config])
             section = config['test']
             refs = section.get_value(manager, 'refs', 'section_refs')
-            self.assertEquals(((), {'hi': 'there'}), refs[0].instantiate())
-            self.assertEquals(((), {'hi': 'here'}), refs[1].instantiate())
+            self.assertEqual(((), {'hi': 'there'}), refs[0].instantiate())
+            self.assertEqual(((), {'hi': 'here'}), refs[1].instantiate())
 
     def test_one_section_refs(self):
         for parser, text in [
@@ -240,11 +240,11 @@ test {
             config = parser(StringIO(text))
             manager = central.ConfigManager([config])
             section = config['test']
-            self.assertEquals(
+            self.assertEqual(
                 section.get_value(
                     manager, 'inline', 'section_refs')[0].instantiate(),
                 ((), {'hi': 'here'}))
-            self.assertEquals(
+            self.assertEqual(
                 section.get_value(
                     manager, 'ref', 'section_refs')[0].instantiate(),
                 ((), {'hi': 'there'}))

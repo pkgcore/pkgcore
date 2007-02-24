@@ -70,7 +70,7 @@ class CommandlineTest(TestCase, helpers.MainMixin):
     def test_atom(self):
         config = self.parse(
             '--print-revdep', 'a/spork', '--all', domain=domain_config)
-        self.assertEquals([atom.atom('a/spork')], config.print_revdep)
+        self.assertEqual([atom.atom('a/spork')], config.print_revdep)
 
     def test_no_contents(self):
         self.assertOut([], '--contents', '--all', test_domain=domain_config)

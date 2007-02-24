@@ -25,17 +25,17 @@ class NativeListDirTest(TempDirMixin):
         os.mkfifo(pjoin(self.dir, 'fifo'))
 
     def test_listdir(self):
-        self.assertEquals(['dir', 'fifo', 'file'],
+        self.assertEqual(['dir', 'fifo', 'file'],
                           sorted(self.module.listdir(self.dir)))
-        self.assertEquals([], self.module.listdir(self.subdir))
+        self.assertEqual([], self.module.listdir(self.subdir))
 
     def test_listdir_dirs(self):
-        self.assertEquals(['dir'], self.module.listdir_dirs(self.dir))
-        self.assertEquals([], self.module.listdir_dirs(self.subdir))
+        self.assertEqual(['dir'], self.module.listdir_dirs(self.dir))
+        self.assertEqual([], self.module.listdir_dirs(self.subdir))
 
     def test_listdir_files(self):
-        self.assertEquals(['file'], self.module.listdir_files(self.dir))
-        self.assertEquals([], self.module.listdir_dirs(self.subdir))
+        self.assertEqual(['file'], self.module.listdir_files(self.dir))
+        self.assertEqual([], self.module.listdir_dirs(self.subdir))
 
     def test_missing(self):
         for func in (
@@ -145,7 +145,7 @@ class Test_abssymlink(TempDirMixin, TestCase):
         linkname = pjoin(self.dir, 'link')
         os.mkdir(target)
         os.symlink('target', linkname)
-        self.assertEquals(osutils.abssymlink(linkname), target)
+        self.assertEqual(osutils.abssymlink(linkname), target)
 
 
 class Native_NormPathTest(TestCase):
@@ -154,15 +154,15 @@ class Native_NormPathTest(TestCase):
 
     def test_normpath(self):
         f = self.func
-        self.assertEquals(f('/foo/'), '/foo')
-        self.assertEquals(f('//foo/'), '/foo')
-        self.assertEquals(f('//foo/.'), '/foo')
-        self.assertEquals(f('//..'), '/')
-        self.assertEquals(f('//..//foo'), '/foo')
-        self.assertEquals(f('/foo/..'), '/')
-        self.assertEquals(f('..//foo'), '../foo')
-        self.assertEquals(f('.//foo'), 'foo')
-        self.assertEquals(f('//foo/.///somewhere//..///bar//'), '/foo/bar')
+        self.assertEqual(f('/foo/'), '/foo')
+        self.assertEqual(f('//foo/'), '/foo')
+        self.assertEqual(f('//foo/.'), '/foo')
+        self.assertEqual(f('//..'), '/')
+        self.assertEqual(f('//..//foo'), '/foo')
+        self.assertEqual(f('/foo/..'), '/')
+        self.assertEqual(f('..//foo'), '../foo')
+        self.assertEqual(f('.//foo'), 'foo')
+        self.assertEqual(f('//foo/.///somewhere//..///bar//'), '/foo/bar')
 
 
 class Cpy_NormPathTest(Native_NormPathTest):

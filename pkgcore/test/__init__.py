@@ -111,8 +111,11 @@ class TestCase(unittest.TestCase, object):
             self.failUnless(not (obj1 == obj2),
                 msg or 'not (%r == %r)' % (obj1, obj2))
 
-    assertNotEquals = assertNotEqual
-    assertEquals = assertEqual
+    def assertEquals(self, obj1, obj2, msg=None):
+        raise AssertionError("don't use assertEquals, use assertEqual")
+
+    def assertNotEquals(self, obj1, obj2, msg=None):
+        raise AssertionError("don't use assertNotEquals, use assertNotEqual")
 
     # unittest and twisted each have a differing count of how many frames
     # to pop off when displaying an exception; thus we force an extra

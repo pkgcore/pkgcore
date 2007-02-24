@@ -92,7 +92,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin._cache = {}
         method()
         method()
-        self.assertEquals(
+        self.assertEqual(
             mtime, os.path.getmtime(os.path.join(self.packdir, 'plugincache')))
         # We cannot write this since it contains an unimportable plugin.
         self.assertFalse(
@@ -102,17 +102,17 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         import mod_testplug
         self.assertIdentical(None, plugin.get_plugin('spork', mod_testplug))
         plugins = list(plugin.get_plugins('plugtest', mod_testplug))
-        self.assertEquals(2, len(plugins), plugins)
-        self.assertEquals(
+        self.assertEqual(2, len(plugins), plugins)
+        self.assertEqual(
             'HighPlug',
             plugin.get_plugin('plugtest', mod_testplug).__class__.__name__)
         lines = list(open(os.path.join(self.packdir, 'plugincache')))
-        self.assertEquals(2, len(lines))
+        self.assertEqual(2, len(lines))
         lines.sort()
         mtime = int(os.path.getmtime(os.path.join(self.packdir, 'plug2.py')))
-        self.assertEquals('plug2:%s:\n' % (mtime,), lines[0])
+        self.assertEqual('plug2:%s:\n' % (mtime,), lines[0])
         mtime = int(os.path.getmtime(os.path.join(self.packdir, 'plug.py')))
-        self.assertEquals('plug:%s:plugtest\n' % (mtime,), lines[1])
+        self.assertEqual('plug:%s:plugtest\n' % (mtime,), lines[1])
 
     def test_plug(self):
         self._runit(self._test_plug)

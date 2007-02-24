@@ -38,11 +38,11 @@ class ConfigLoadingTest(TestCase):
 
     def test_load_config(self):
         manager = load_config(user_conf_file=self.user_config.name)
-        self.assertEquals(manager.foo['foo'], ((), {}))
+        self.assertEqual(manager.foo['foo'], ((), {}))
 
     def test_stacking(self):
         """Test user config overrides system config."""
         manager = load_config(
             user_conf_file=self.user_config.name,
             system_conf_file=self.system_config.name)
-        self.assertEquals(manager.foo['foo'], ((), {}))
+        self.assertEqual(manager.foo['foo'], ((), {}))

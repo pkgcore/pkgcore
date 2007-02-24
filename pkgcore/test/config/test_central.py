@@ -45,7 +45,7 @@ class ConfigManagerTest(TestCase):
         try:
             func(*args, **kwargs)
         except klass, e:
-            self.assertEquals(
+            self.assertEqual(
                 message, str(e),
                 '\nGot:\n%s\nExpected:\n%s\n' % (message, str(e)))
         else:
@@ -56,9 +56,9 @@ class ConfigManagerTest(TestCase):
             [{'fooinst': basics.HardCodedConfigSection({'class': repo}),
               'barinst': basics.HardCodedConfigSection({'class': drawer}),
               }])
-        self.assertEquals(['barinst', 'fooinst'], sorted(manager.sections()))
-        self.assertEquals(manager.drawer.keys(), ['barinst'])
-        self.assertEquals(manager.drawer, {'barinst': (None, None)})
+        self.assertEqual(['barinst', 'fooinst'], sorted(manager.sections()))
+        self.assertEqual(manager.drawer.keys(), ['barinst'])
+        self.assertEqual(manager.drawer, {'barinst': (None, None)})
 
     def test_contains(self):
         manager = central.ConfigManager(
@@ -136,7 +136,7 @@ class ConfigManagerTest(TestCase):
                             }),
               }], [object()])
 
-        self.assertEquals('available', manager.repo['actual repo'])
+        self.assertEqual('available', manager.repo['actual repo'])
 
     def test_incremental(self):
         @configurable({'inc': 'list'}, required=['inc'], incrementals=['inc'])
@@ -150,7 +150,7 @@ class ConfigManagerTest(TestCase):
                             'inc': ['extended']
                             }),
               }], [object()])
-        self.assertEquals(
+        self.assertEqual(
             ((), {'inc': ['basic', 'extended']}),
             manager.myrepo['actual repo'])
 
@@ -221,7 +221,7 @@ class ConfigManagerTest(TestCase):
                             }),
               }], [object()])
 
-        self.assertEquals(
+        self.assertEqual(
             manager.myrepo['myrepo'], (('pos',), {'notp': 'notpos'}))
 
     def test_autoexec(self):
@@ -234,9 +234,9 @@ class ConfigManagerTest(TestCase):
             [{'autoload-sub': basics.HardCodedConfigSection({
                             'class': autoloader,
                             })}])
-        self.assertEquals(['autoload-sub', 'spork'], list(manager.sections()))
-        self.assertEquals(['spork'], manager.repo.keys())
-        self.assertEquals(
+        self.assertEqual(['autoload-sub', 'spork'], list(manager.sections()))
+        self.assertEqual(['spork'], manager.repo.keys())
+        self.assertEqual(
             'test',
             manager.collapse_named_section('spork').instantiate())
 
@@ -251,18 +251,18 @@ class ConfigManagerTest(TestCase):
             [{'autoload-sub': basics.HardCodedConfigSection({
                             'class': autoloader})}])
 
-        self.assertEquals(['autoload-sub', 'spork'], list(manager.sections()))
-        self.assertEquals(['spork'], manager.repo.keys())
+        self.assertEqual(['autoload-sub', 'spork'], list(manager.sections()))
+        self.assertEqual(['spork'], manager.repo.keys())
         collapsedspork = manager.collapse_named_section('spork')
-        self.assertEquals('test', collapsedspork.instantiate())
+        self.assertEqual('test', collapsedspork.instantiate())
         mod_dict['cache'] = 'modded'
         self.assertIdentical(collapsedspork,
                              manager.collapse_named_section('spork'))
-        self.assertEquals('test', collapsedspork.instantiate())
+        self.assertEqual('test', collapsedspork.instantiate())
         manager.reload()
         newspork = manager.collapse_named_section('spork')
         self.assertNotIdentical(collapsedspork, newspork)
-        self.assertEquals(
+        self.assertEqual(
             'modded', newspork.instantiate(),
             'it did not throw away the cached instance')
 
@@ -270,7 +270,7 @@ class ConfigManagerTest(TestCase):
         manager = central.ConfigManager(
             [{'spork': basics.HardCodedConfigSection({'class': drawer})}],
             [object()])
-        self.assertEquals(
+        self.assertEqual(
             (None, None),
             manager.collapse_named_section('spork').instantiate())
 
@@ -283,7 +283,7 @@ class ConfigManagerTest(TestCase):
             [{'spork': basics.HardCodedConfigSection({
                             'class': myrepo, 'spork': 'foon'})}], [object()])
 
-        self.assertEquals(
+        self.assertEqual(
             {'spork': 'foon'},
             manager.collapse_named_section('spork').instantiate())
 
@@ -447,7 +447,7 @@ class ConfigManagerTest(TestCase):
             "Collapsing section ref 'myrepo':\n"
             "reference should be of type 'repo', got 'drawer'",
             operator.getitem, manager.repo, 'wrong')
-        self.assertEquals('repo!', manager.repo['right'])
+        self.assertEqual('repo!', manager.repo['right'])
 
         manager = central.ConfigManager([{
                     'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
@@ -462,7 +462,7 @@ class ConfigManagerTest(TestCase):
             "Collapsing section refs 'myrepo':\n"
             "reference should be of type 'repo', got 'drawer'",
             operator.getitem, manager.repo, 'wrong')
-        self.assertEquals(['repo!'], manager.repo['right'])
+        self.assertEqual(['repo!'], manager.repo['right'])
 
     def test_default(self):
         manager = central.ConfigManager([{
@@ -472,7 +472,7 @@ class ConfigManagerTest(TestCase):
                                                           'default': True}),
                     'ignore': basics.HardCodedConfigSection({'class': drawer}),
                     }], [object()])
-        self.assertEquals((None, None), manager.get_default('drawer'))
+        self.assertEqual((None, None), manager.get_default('drawer'))
         self.assertTrue(manager.collapse_named_section('thing').default)
 
         manager = central.ConfigManager([{
@@ -594,7 +594,7 @@ class ConfigManagerTest(TestCase):
         self.check_error(
             "reference should be of type 'repo', got 'drawer'",
             manager.repo['wrong'][0].collapse)
-        self.assertEquals('repo!', manager.repo['right'][0].instantiate())
+        self.assertEqual('repo!', manager.repo['right'][0].instantiate())
 
         manager = central.ConfigManager([{
                     'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
@@ -607,7 +607,7 @@ class ConfigManagerTest(TestCase):
         self.check_error(
             "reference should be of type 'repo', got 'drawer'",
             manager.repo['wrong'][0][0].collapse)
-        self.assertEquals(
+        self.assertEqual(
             ['repo!'],
             [c.instantiate() for c in manager.repo['right'][0]])
 
@@ -628,14 +628,14 @@ class ConfigManagerTest(TestCase):
                     'right':  basics.AutoConfigSection({'class': reporef,
                                                         'myrepo': 'myrepo'}),
                     }], [object()])
-        self.assertEquals('repo!', manager.repo['right'][0].instantiate())
+        self.assertEqual('repo!', manager.repo['right'][0].instantiate())
 
         manager = central.ConfigManager([{
                     'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
                     'right':  basics.AutoConfigSection({'class': reporefs,
                                                         'myrepo': 'myrepo'}),
                     }], [object()])
-        self.assertEquals(
+        self.assertEqual(
             ['repo!'],
             [c.instantiate() for c in manager.repo['right'][0]])
 
@@ -680,4 +680,4 @@ class ConfigManagerTest(TestCase):
                     'thing': basics.HardCodedConfigSection({'class': drawer}),
                     }], [RemoteSource()])
         collapsed = manager.collapse_named_section('thing')
-        self.assertEquals('thing', collapsed.name)
+        self.assertEqual('thing', collapsed.name)

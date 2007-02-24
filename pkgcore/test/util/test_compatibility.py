@@ -14,9 +14,9 @@ class mixin(object):
     def check_func(self, result1, result2, test3, result3):
         i = iter(xrange(100))
         f = getattr(compatibility, self.func_name)
-        self.assertEquals(f(x==3 for x in i), result1)
-        self.assertEquals(i.next(), result2)
-        self.assertEquals(f(test3), result3)
+        self.assertEqual(f(x==3 for x in i), result1)
+        self.assertEqual(i.next(), result2)
+        self.assertEqual(f(test3), result3)
 
 class AnyTest(TestCase, mixin):
     func_name = "any"

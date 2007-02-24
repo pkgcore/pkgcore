@@ -93,7 +93,7 @@ class PlainTextFormatterTest(TestCase):
             formatter.width = 10
             for input in inputs:
                 formatter.write(wrap=True, later_prefix='foon', *input)
-            self.assertEquals(output, stream.getvalue())
+            self.assertEqual(output, stream.getvalue())
 
 
 class TerminfoFormatterTest(TestCase):
@@ -104,7 +104,7 @@ class TerminfoFormatterTest(TestCase):
             stream.truncate()
             formatter.write(*inputs)
             stream.seek(0)
-            self.assertEquals(''.join(outputs), stream.read())
+            self.assertEqual(''.join(outputs), stream.read())
 
     def test_terminfo(self):
         esc = '\x1b['

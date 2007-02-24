@@ -17,7 +17,7 @@ class MatchTest(TestCase):
         restrict = parser('spork,foon')
         # Icky, should really try to match a fake package.
         self.assertTrue(isinstance(restrict, packages.PackageRestriction))
-        self.assertEquals('utensil', restrict.attr)
+        self.assertEqual('utensil', restrict.attr)
         valrestrict = restrict.restriction
         self.assertTrue(valrestrict.match(('foon',)))
         self.assertFalse(valrestrict.match(('spork,foon',)))
@@ -44,14 +44,14 @@ class TestExtendedRestrictionGeneration(TestCase):
             isinstance(restrict, values.StrExactMatch),
             msg="verifying restrict %r from %r is StrExactMatch" % (
                 restrict, token))
-        self.assertEquals(restrict.exact, token)
+        self.assertEqual(restrict.exact, token)
 
     def verify_text_containment(self, restrict, token):
         self.assertTrue(
             isinstance(restrict, values.ContainmentMatch),
             msg="verifying restrict %r from %r is ContainmentMatch" % (
                 restrict, token))
-        self.assertEquals(list(restrict.vals), [token.strip("*")])
+        self.assertEqual(list(restrict.vals), [token.strip("*")])
 
     def test_convert_glob(self):
         self.verify_text(parserestrict.convert_glob("diffball"), "diffball")
@@ -60,7 +60,7 @@ class TestExtendedRestrictionGeneration(TestCase):
 
         for token in ("*", "**", ""):
             i = parserestrict.convert_glob(token)
-            self.assertEquals(
+            self.assertEqual(
                 i, None,
                 msg="verifying None is returned on pointless restrictions")
 
@@ -145,7 +145,7 @@ class ParsePVTest(TestCase):
             ('spork-1', 'spork/spork-1'),
             ('foon-3', 'foon/foon-3'),
             ]:
-            self.assertEquals(
+            self.assertEqual(
                 output,
                 parserestrict.parse_pv(self.repo, input).cpvstr)
         for bogus in [

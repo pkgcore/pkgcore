@@ -107,16 +107,16 @@ class native_PackageRestrictionTest(TestRestriction):
                     foo())
 
     def test_eq(self):
-        self.assertEquals(
+        self.assertEqual(
             self.kls('one', values.AlwaysTrue),
             self.kls('one', values.AlwaysTrue))
-        self.assertNotEquals(
+        self.assertNotEqual(
             self.kls('one', values.AlwaysTrue),
             self.kls('one', values.AlwaysTrue, negate=True))
-        self.assertNotEquals(
+        self.assertNotEqual(
             self.kls('one', values.AlwaysTrue),
             self.kls('two', values.AlwaysTrue))
-        self.assertNotEquals(
+        self.assertNotEqual(
             self.kls('one', values.AlwaysTrue, negate=True),
             self.kls('one', values.AlwaysFalse, negate=True))
 
@@ -136,9 +136,9 @@ class native_PackageRestrictionTest(TestRestriction):
                 'one', DummyIntersectingValues(2), negate=negate)
             i1 = d1.intersect(d2)
             self.failUnless(i1)
-            self.assertEquals((1, 2), i1.restriction.val)
-            self.assertEquals(negate, i1.negate)
-            self.assertEquals('one', i1.attr)
+            self.assertEqual((1, 2), i1.restriction.val)
+            self.assertEqual(negate, i1.negate)
+            self.assertEqual('one', i1.attr)
 
 
 class cpy_PackageRestrictionTest(native_PackageRestrictionTest):
@@ -155,7 +155,7 @@ class ConditionalTest(TestCase):
         p2 = (packages.PackageRestriction('one', values.AlwaysFalse),)
         v = values.AlwaysTrue
         v2 = values.AlwaysFalse
-        self.assertEquals(
+        self.assertEqual(
             packages.Conditional('use', v, p),
             packages.Conditional('use', v, p))
         self.assertNotEqual(

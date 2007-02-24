@@ -71,12 +71,12 @@ class OptionsTest(TestCase):
                     'afoon': basics.HardCodedConfigSection({'class': test})}])
 
         values, args = parser.parse_args(['--spork', 'afoon'], values)
-        self.assertEquals('foon!', values.spork)
+        self.assertEqual('foon!', values.spork)
 
         try:
             parser.parse_args(['--spork', 'nofoon'], values)
         except helpers.Error, e:
-            self.assertEquals(
+            self.assertEqual(
                 "'nofoon' is not a valid foon for --spork "
                 "(valid values: 'afoon')",
                 str(e))
@@ -86,7 +86,7 @@ class OptionsTest(TestCase):
         try:
             parser.parse_args(['--foon', 'nofoon'], values)
         except helpers.Error, e:
-            self.assertEquals(
+            self.assertEqual(
                 "'nofoon' is not a valid utensil for --foon "
                 "(valid values: 'afoon')",
                 str(e))
@@ -103,5 +103,5 @@ class MainTest(TestCase):
         class WeirdParser(commandline.OptionParser):
             def error(self, msg):
                 """Ignore errors."""
-        self.assertEquals(
+        self.assertEqual(
             1, commandline.main({None: (WeirdParser, main)}, ['1'], False))

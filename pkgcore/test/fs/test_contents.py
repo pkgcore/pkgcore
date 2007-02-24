@@ -28,13 +28,13 @@ class TestContentsSet(TestCase):
         self.all = self.dirs + self.links + self.devs + self.fifos
 
     def test_init(self):
-        self.assertEquals(len(self.all), len(contents.contentsSet(self.all)))
+        self.assertEqual(len(self.all), len(contents.contentsSet(self.all)))
         self.assertRaises(TypeError, contents.contentsSet, self.all + [1])
         contents.contentsSet(self.all)
         contents.contentsSet(self.all, mutable=True)
         # test to ensure no one screwed up the optional initials
         # making it mandatory
-        self.assertEquals(len(contents.contentsSet()), 0)
+        self.assertEqual(len(contents.contentsSet()), 0)
 
     def test_add(self):
         cs = contents.contentsSet(self.files + self.dirs, mutable=True)
@@ -146,7 +146,7 @@ class TestContentsSet(TestCase):
             c3 = c1
         else:
             c3 = getattr(c1, name)(c2)
-        self.assertEquals(
+        self.assertEqual(
             set(ret),
             set(x.location for x in c3))
 
@@ -156,7 +156,7 @@ class TestContentsSet(TestCase):
             c3 = c1
         else:
             c3 = getattr(c1, name)(iter(c2))
-        self.assertEquals(
+        self.assertEqual(
             set(ret),
             set(x.location for x in c3))
 

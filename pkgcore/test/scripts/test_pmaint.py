@@ -60,9 +60,9 @@ class SyncTest(TestCase, helpers.MainMixin):
             "repo 'missing' doesn't exist:\nvalid repos ['repo']",
             'missing', repo=success_section)
         values = self.parse(repo=success_section)
-        self.assertEquals(['repo'], values.repos)
+        self.assertEqual(['repo'], values.repos)
         values = self.parse('repo', repo=success_section)
-        self.assertEquals(['repo'], values.repos)
+        self.assertEqual(['repo'], values.repos)
 
     def test_sync(self):
         config = self.assertOut(

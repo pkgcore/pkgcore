@@ -529,10 +529,10 @@ on instances compares them by identity. This is surprisingly easy to
 miss, especially since the natural way to write unit tests for classes
 with custom comparisons goes like this::
 
-  self.assertEquals(YourClass(1), YourClass(1))
+  self.assertEqual(YourClass(1), YourClass(1))
   # Repeat for more possible values. Uses == and therefore __eq__,
   # behaves as expected.
-  self.assertNotEquals(YourClass(1), YourClass(2))
+  self.assertNotEqual(YourClass(1), YourClass(2))
   # Repeat for more possible values. Uses != and therefore object
   # identity, so they all pass (all different instances)!
 

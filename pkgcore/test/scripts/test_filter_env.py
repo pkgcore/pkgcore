@@ -19,6 +19,6 @@ class CommandlineTest(TestCase, helpers.MainMixin):
             "error opening 'foo' ([Errno 2] No such file or directory: 'foo')",
             '-i', 'foo')
         options = self.parse('-Vf', 'spork,,foon', '-i', __file__)
-        self.assertEquals(['spork', 'foon'], options.funcs)
+        self.assertEqual(['spork', 'foon'], options.funcs)
         self.assertTrue(options.func_match)
         self.assertFalse(options.var_match)

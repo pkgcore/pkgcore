@@ -83,26 +83,26 @@ class ConfigTypeFromFunctionTest(TestCase):
 
     def test_basic(self):
         nonopt_type = basics.ConfigType(nonopt)
-        self.assertEquals(nonopt_type.name, 'nonopt')
-        self.assertEquals(
+        self.assertEqual(nonopt_type.name, 'nonopt')
+        self.assertEqual(
             nonopt_type.types,
             {'one': 'str', 'two': 'str'})
-        self.assertEquals(nonopt_type.incrementals, [])
-        self.assertEquals(nonopt_type.required, ('one', 'two'))
-        self.assertEquals(nonopt_type.positional, ('one', 'two'))
+        self.assertEqual(nonopt_type.incrementals, [])
+        self.assertEqual(nonopt_type.required, ('one', 'two'))
+        self.assertEqual(nonopt_type.positional, ('one', 'two'))
 
     def test_default_types(self):
         test_type = basics.ConfigType(alltypes)
-        self.assertEquals(
+        self.assertEqual(
             test_type.types,
             {'alist': 'list', 'astr': 'str', 'abool': 'bool',
              'aref': 'section_ref', 'anint': 'int', 'along': 'int'})
-        self.assertEquals(test_type.required, ())
+        self.assertEqual(test_type.required, ())
 
     def _test_class_member(self, func):
         test_type = basics.ConfigType(func)
-        self.assertEquals(test_type.name, 'member')
-        self.assertEquals(test_type.required, ('one',))
+        self.assertEqual(test_type.name, 'member')
+        self.assertEqual(test_type.required, ('one',))
 
     def test_newstyle_instance(self):
         self._test_class_member(NewStyleClass(1).member)
@@ -121,9 +121,9 @@ class ConfigTypeFromClassTest(TestCase):
 
     def _test_basics(self, klass, name, two_override='section_ref'):
         test_type = basics.ConfigType(klass)
-        self.assertEquals(test_type.name, name)
-        self.assertEquals(sorted(test_type.required), ['one'])
-        self.assertEquals(
+        self.assertEqual(test_type.name, name)
+        self.assertEqual(sorted(test_type.required), ['one'])
+        self.assertEqual(
             test_type.types,
             {'one': 'str', 'two': two_override})
 
@@ -150,9 +150,9 @@ class ConfigHintDecoratorTest(TestCase):
         def stuff(*args, **kwargs):
             return args, kwargs
 
-        self.assertEquals('spork', stuff.pkgcore_config_type.typename)
-        self.assertEquals('str', basics.ConfigType(stuff).types['foon'])
-        self.assertEquals((('spork',), {}), stuff('spork'))
+        self.assertEqual('spork', stuff.pkgcore_config_type.typename)
+        self.assertEqual('str', basics.ConfigType(stuff).types['foon'])
+        self.assertEqual((('spork',), {}), stuff('spork'))
 
 
 class ConfigHintCloneTest(TestCase):
@@ -203,13 +203,13 @@ class ConfigSectionFromStringDictTest(TestCase):
         self.failUnless('list' in self.section)
 
     def test_keys(self):
-        self.assertEquals(
+        self.assertEqual(
             sorted(self.section.keys()), ['bool', 'callable', 'list', 'str'])
 
     def test_get_value(self):
         # valid gets
         for typename, value in self.destination.iteritems():
-            self.assertEquals(
+            self.assertEqual(
                 value, self.section.get_value(None, typename, typename))
         # invalid gets
         # not callable
@@ -231,7 +231,7 @@ class ConfigSectionFromStringDictTest(TestCase):
                     return {'target': target_config}[section]
                 except KeyError:
                     raise errors.ConfigurationError(section)
-        self.assertEquals(
+        self.assertEqual(
             section.get_value(
                 TestCentral(), 'goodref', 'section_ref').collapse(),
             target_config)
@@ -251,12 +251,12 @@ class ConfigSectionFromStringDictTest(TestCase):
                     return {'1': config1, '2': config2}[section]
                 except KeyError:
                     raise errors.ConfigurationError(section)
-        self.assertEquals(
+        self.assertEqual(
             list(ref.collapse() for ref in section.get_value(
                     TestCentral(), 'goodrefs', 'section_refs')),
             [config1, config2])
         lazy_refs = section.get_value(TestCentral(), 'badrefs', 'section_refs')
-        self.assertEquals(2, len(lazy_refs))
+        self.assertEqual(2, len(lazy_refs))
         self.assertRaises(errors.ConfigurationError, lazy_refs[1].collapse)
 
 
@@ -276,7 +276,7 @@ class HardCodedConfigSectionTest(TestCase):
         self.failUnless('str' in self.section)
 
     def test_keys(self):
-        self.assertEquals(
+        self.assertEqual(
             sorted(self.section.keys()), ['bool', 'callable', 'list', 'str'])
 
     def test_get_value(self):
@@ -284,7 +284,7 @@ class HardCodedConfigSectionTest(TestCase):
         for arg, value in self.source.iteritems():
             for typename in self.source:
                 if arg == typename:
-                    self.assertEquals(
+                    self.assertEqual(
                         value, self.section.get_value(None, arg, typename))
                 else:
                     self.assertRaises(
@@ -324,14 +324,14 @@ class AliasTest(TestCase):
         alias = basics.section_alias('foon', 'spork')
         type_obj = basics.ConfigType(alias.get_value(manager, 'class',
                                                      'callable'))
-        self.assertEquals('spork', type_obj.name)
+        self.assertEqual('spork', type_obj.name)
         self.assertIdentical(
             foon,
             alias.get_value(manager, 'target', 'section_ref').collapse())
         alias = basics.section_alias('foon')
         type_obj = basics.ConfigType(alias.get_value(manager, 'class',
                                                      'callable'))
-        self.assertEquals('alias', type_obj.name)
+        self.assertEqual('alias', type_obj.name)
         self.assertIdentical(
             foon,
             alias.get_value(manager, 'target', 'section_ref').collapse())
@@ -372,7 +372,7 @@ class ParsersTest(TestCase):
             ("'a", "'a"),
             ('"a', '"a'),
             ]:
-            self.assertEquals(basics.str_parser(string), output)
+            self.assertEqual(basics.str_parser(string), output)
 
     def test_list_parser(self):
         for string, output in [
@@ -384,7 +384,7 @@ class ParsersTest(TestCase):
             ('\'"hi\'', ['"hi']),
             ('"\\"hi"', ['"hi']),
             ]:
-            self.assertEquals(basics.list_parser(string), output)
+            self.assertEqual(basics.list_parser(string), output)
         for string in ['"', "'foo", 'ba"r', 'baz"']:
             self.assertRaises(
                 errors.QuoteInterpretationError, basics.list_parser, string)
@@ -410,4 +410,4 @@ class LoaderTest(TestCase):
             basics.parse_config_file, '/spork', None)
         def parser(f):
             return f.read()
-        self.assertEquals('foon', basics.parse_config_file(self.name, parser))
+        self.assertEqual('foon', basics.parse_config_file(self.name, parser))

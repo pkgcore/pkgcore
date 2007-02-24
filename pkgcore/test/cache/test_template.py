@@ -47,16 +47,16 @@ class TemplateTest(TestCase):
     def test_basics(self):
         self.cache = self.get_db()
         self.cache['spork'] = {'foo':'bar'}
-        self.assertEquals({'foo': 'bar'}, self.cache['spork'])
+        self.assertEqual({'foo': 'bar'}, self.cache['spork'])
         self.assertRaises(KeyError, operator.getitem, self.cache, 'notaspork')
 
         self.cache['spork'] = {'foo': 42}
         self.cache['foon'] = {'foo': 42}
-        self.assertEquals({'foo': 42}, self.cache['spork'])
-        self.assertEquals({'foo': 42}, self.cache['foon'])
+        self.assertEqual({'foo': 42}, self.cache['spork'])
+        self.assertEqual({'foo': 42}, self.cache['foon'])
 
-        self.assertEquals(['foon', 'spork'], sorted(self.cache.keys()))
-        self.assertEquals([('foon', {'foo': 42}), ('spork', {'foo': 42})],
+        self.assertEqual(['foon', 'spork'], sorted(self.cache.keys()))
+        self.assertEqual([('foon', {'foo': 42}), ('spork', {'foo': 42})],
                           sorted(self.cache.items()))
         del self.cache['foon']
         self.assertRaises(KeyError, operator.getitem, self.cache, 'foon')
@@ -65,7 +65,7 @@ class TemplateTest(TestCase):
         self.assertFalse(self.cache.has_key('foon'))
 
         self.cache['empty'] = {'foo': ''}
-        self.assertEquals({}, self.cache['empty'])
+        self.assertEqual({}, self.cache['empty'])
 
     def test_eclasses(self):
         self.cache = self.get_db()
@@ -80,7 +80,7 @@ class TemplateTest(TestCase):
         self.assertIn(self.cache.data['spork']['_eclasses_'], [
                 'spork\there\t1\tfoon\tthere\t2',
                 'foon\tthere\t2\tspork\there\t1'])
-        self.assertEquals({'spork': ('here', 1), 'foon': ('there', 2)},
+        self.assertEqual({'spork': ('here', 1), 'foon': ('there', 2)},
                           self.cache['spork']['_eclasses_'])
 
     def test_readonly(self):
@@ -92,7 +92,7 @@ class TemplateTest(TestCase):
                           operator.delitem, cache, 'spork')
         self.assertRaises(errors.ReadOnly,
                           operator.setitem, cache, 'spork', {'foo': 42})
-        self.assertEquals({'foo': 'bar'}, cache['spork'])
+        self.assertEqual({'foo': 'bar'}, cache['spork'])
 
 #
 # XXX: disabled by harring; get_matches is old code, still semi-working,
@@ -111,12 +111,12 @@ class TemplateTest(TestCase):
 #
 #        self.cache['foon'] = {'foo': 'baz'}
 #
-#        self.assertEquals(['spork'],
+#        self.assertEqual(['spork'],
 #                          list(self.cache.get_matches({'foo': 'bar'})))
-#        self.assertEquals(['foon', 'spork'],
+#        self.assertEqual(['foon', 'spork'],
 #                          sorted(self.cache.get_matches({'foo': 'ba.'})))
-#        self.assertEquals(['foon', 'spork'],
+#        self.assertEqual(['foon', 'spork'],
 #                          sorted(self.cache.get_matches({})))
 #
-#        self.assertEquals(['spork'],
+#        self.assertEqual(['spork'],
 #                          list(self.cache.get_matches({'foo': ('BAR', re.I)})))

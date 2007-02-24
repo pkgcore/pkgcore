@@ -23,7 +23,7 @@ class BaseTest(TestRestriction):
 
     def test_base(self):
         base = restriction.base()
-        self.assertEquals(len(base), 1)
+        self.assertEqual(len(base), 1)
         # Just check repr and str do not raise
         self.assertTrue(str(base))
         self.assertTrue(repr(base))
@@ -60,8 +60,8 @@ class AlwaysBoolTest(TestRestriction):
         self.assertNotForceTrue(false, true)
         self.assertForceFalse(false, true)
 
-        self.assertEquals(str(true), "always 'True'")
-        self.assertEquals(str(false), "always 'False'")
+        self.assertEqual(str(true), "always 'True'")
+        self.assertEqual(str(false), "always 'False'")
         self.assertNotEqual(hash(true), hash(false))
         self.assertEqual(hash(true),
             hash(self.bool_kls(True)))

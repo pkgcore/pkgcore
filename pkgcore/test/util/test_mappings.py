@@ -45,11 +45,11 @@ class LazyValDictTestMixin(object):
 
     def test_len(self):
         # Called twice because the first call will trigger a keyfunc call.
-        self.assertEquals(12, len(self.dict))
-        self.assertEquals(12, len(self.dict))
+        self.assertEqual(12, len(self.dict))
+        self.assertEqual(12, len(self.dict))
 
     def test_getkey(self):
-        self.assertEquals(self.dict[3], -3)
+        self.assertEqual(self.dict[3], -3)
         # missing key
         def get():
             return self.dict[42]
@@ -60,7 +60,7 @@ class LazyValDictTestMixin(object):
         # pylint: disable-msg=W0104
         self.dict[11]
         self.dict[11]
-        self.assertEquals(self.negate_calls, [11])
+        self.assertEqual(self.negate_calls, [11])
 
 
 class LazyValDictWithListTest(
@@ -74,13 +74,13 @@ class LazyValDictWithListTest(
         RememberingNegateMixin.tearDown(self)
 
     def test_itervalues(self):
-        self.assertEquals(sorted(self.dict.itervalues()), range(-11, 1))
+        self.assertEqual(sorted(self.dict.itervalues()), range(-11, 1))
 
     def test_len(self):
-        self.assertEquals(len(self.dict), 12)
+        self.assertEqual(len(self.dict), 12)
 
     def test_iter(self):
-        self.assertEquals(list(self.dict), range(12))
+        self.assertEqual(list(self.dict), range(12))
 
     def test_contains(self):
         self.assertIn(1, self.dict)
@@ -115,11 +115,11 @@ class ProtectedDictTest(TestCase):
         self.dict = mappings.ProtectedDict(self.orig)
 
     def test_basic_operations(self):
-        self.assertEquals(self.dict[1], -1)
+        self.assertEqual(self.dict[1], -1)
         def get(i):
             return self.dict[i]
         self.assertRaises(KeyError, get, 3)
-        self.assertEquals(sorted(self.dict.keys()), [1, 2])
+        self.assertEqual(sorted(self.dict.keys()), [1, 2])
         self.failIf(-1 in self.dict)
         self.failUnless(2 in self.dict)
         def remove(i):
@@ -130,9 +130,9 @@ class ProtectedDictTest(TestCase):
         # add something
         self.dict[7] = -7
         def check_after_adding():
-            self.assertEquals(self.dict[7], -7)
+            self.assertEqual(self.dict[7], -7)
             self.failUnless(7 in self.dict)
-            self.assertEquals(sorted(self.dict.keys()), [1, 2, 7])
+            self.assertEqual(sorted(self.dict.keys()), [1, 2, 7])
         check_after_adding()
         # remove it again
         del self.dict[7]
@@ -140,7 +140,7 @@ class ProtectedDictTest(TestCase):
         def get(i):
             return self.dict[i]
         self.assertRaises(KeyError, get, 7)
-        self.assertEquals(sorted(self.dict.keys()), [1, 2])
+        self.assertEqual(sorted(self.dict.keys()), [1, 2])
         # add it back
         self.dict[7] = -7
         check_after_adding()
@@ -148,7 +148,7 @@ class ProtectedDictTest(TestCase):
         del self.dict[1]
         self.failIf(1 in self.dict)
         self.assertRaises(KeyError, get, 1)
-        self.assertEquals(sorted(self.dict.keys()), [2, 7])
+        self.assertEqual(sorted(self.dict.keys()), [2, 7])
         # and add it back
         self.dict[1] = -1
         check_after_adding()
@@ -174,7 +174,7 @@ class ImmutableDictTest(TestCase):
         self.assertRaises(TypeError, self.dict.pop, 1)
         self.assertRaises(TypeError, self.dict.popitem)
         self.assertRaises(TypeError, self.dict.setdefault, 6, -6)
-        self.assertEquals(initial_hash, hash(self.dict))
+        self.assertEqual(initial_hash, hash(self.dict))
 
 class StackedDictTest(TestCase):
 
@@ -217,7 +217,7 @@ class StackedDictTest(TestCase):
         for x in mappings.StackedDict(self.orig_dict, self.new_dict):
             self.failUnless(x in s)
             s.remove(x)
-        self.assertEquals(len(s), 0)
+        self.assertEqual(len(s), 0)
 
     def test_keys(self):
         self.assertEqual(

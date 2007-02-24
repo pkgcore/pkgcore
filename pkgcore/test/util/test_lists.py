@@ -16,9 +16,9 @@ class UniqueTest(TestCase):
 
     def common_check(self, func):
         # silly
-        self.assertEquals(func(()), [])
+        self.assertEqual(func(()), [])
         # hashable
-        self.assertEquals(sorted(func([1, 1, 2, 3, 2])), [1, 2, 3])
+        self.assertEqual(sorted(func([1, 1, 2, 3, 2])), [1, 2, 3])
         # neither
 
     def test_stable_unique(self):
@@ -29,7 +29,7 @@ class UniqueTest(TestCase):
         uc = UnhashableComplex
         res = lists.unstable_unique([uc(1, 0), uc(0, 1), uc(1, 0)])
         # sortable
-        self.assertEquals(sorted(lists.unstable_unique(
+        self.assertEqual(sorted(lists.unstable_unique(
                     [[1, 2], [1, 3], [1, 2], [1, 3]])), [[1, 2], [1, 3]])
         self.failUnless(
             res == [uc(1, 0), uc(0, 1)] or res == [uc(0, 1), uc(1, 0)], res)
@@ -47,10 +47,10 @@ class ChainedListsTest(TestCase):
             self.assertTrue(x in cl)
 
     def test_iter(self):
-        self.assertEquals(list(self.gen_cl()), list(xrange(100)))
+        self.assertEqual(list(self.gen_cl()), list(xrange(100)))
 
     def test_len(self):
-        self.assertEquals(100, len(self.gen_cl()))
+        self.assertEqual(100, len(self.gen_cl()))
 
     def test_getitem(self):
         cl = self.gen_cl()
@@ -68,12 +68,12 @@ class ChainedListsTest(TestCase):
     def test_append(self):
         cl = self.gen_cl()
         cl.append(range(10))
-        self.assertEquals(110, len(cl))
+        self.assertEqual(110, len(cl))
 
     def test_extend(self):
         cl = self.gen_cl()
         cl.extend(range(10) for i in range(5))
-        self.assertEquals(150, len(cl))
+        self.assertEqual(150, len(cl))
 
 
 class Test_iflatten_instance(TestCase):

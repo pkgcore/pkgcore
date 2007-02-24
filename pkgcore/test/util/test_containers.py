@@ -28,9 +28,9 @@ class LimitedChangeSetTest(TestCase):
         self.assertRaises(TypeError, self.set.rollback, changes + 1)
         self.failUnless(0 in self.set)
         self.failIf(12 in self.set)
-        self.assertEquals(12, len(self.set))
-        self.assertEquals(sorted(list(self.set)), list(range(12)))
-        self.assertEquals(changes, self.set.changes_count())
+        self.assertEqual(12, len(self.set))
+        self.assertEqual(sorted(list(self.set)), list(range(12)))
+        self.assertEqual(changes, self.set.changes_count())
         self.assertRaises(TypeError, self.set.rollback, -1)
 
     def test_dummy_commit(self):
@@ -42,9 +42,9 @@ class LimitedChangeSetTest(TestCase):
     def test_adding(self):
         self.set.add(13)
         self.failUnless(13 in self.set)
-        self.assertEquals(13, len(self.set))
-        self.assertEquals(sorted(list(self.set)), list(range(12)) + [13])
-        self.assertEquals(1, self.set.changes_count())
+        self.assertEqual(13, len(self.set))
+        self.assertEqual(sorted(list(self.set)), list(range(12)) + [13])
+        self.assertEqual(1, self.set.changes_count())
         self.set.add(13)
         self.assertRaises(containers.Unchangable, self.set.remove, 13)
 
@@ -58,9 +58,9 @@ class LimitedChangeSetTest(TestCase):
         self.set.add(13)
         self.set.commit()
         # should look like right before commit
-        self.assertEquals(13, len(self.set))
-        self.assertEquals(sorted(list(self.set)), list(range(12)) + [13])
-        self.assertEquals(0, self.set.changes_count())
+        self.assertEqual(13, len(self.set))
+        self.assertEqual(sorted(list(self.set)), list(range(12)) + [13])
+        self.assertEqual(0, self.set.changes_count())
         # and remove...
         self.set.remove(13)
         # should be back to basic, but with 1 change
@@ -71,9 +71,9 @@ class LimitedChangeSetTest(TestCase):
     def test_removing(self):
         self.set.remove(0)
         self.failIf(0 in self.set)
-        self.assertEquals(11, len(self.set))
-        self.assertEquals(sorted(list(self.set)), list(range(1, 12)))
-        self.assertEquals(1, self.set.changes_count())
+        self.assertEqual(11, len(self.set))
+        self.assertEqual(sorted(list(self.set)), list(range(1, 12)))
+        self.assertEqual(1, self.set.changes_count())
         self.assertRaises(containers.Unchangable, self.set.add, 0)
         self.assertRaises(KeyError, self.set.remove, 0)
 
@@ -86,9 +86,9 @@ class LimitedChangeSetTest(TestCase):
         self.set.remove(0)
         self.set.commit()
         self.failIf(0 in self.set)
-        self.assertEquals(11, len(self.set))
-        self.assertEquals(sorted(list(self.set)), list(range(1, 12)))
-        self.assertEquals(0, self.set.changes_count())
+        self.assertEqual(11, len(self.set))
+        self.assertEqual(sorted(list(self.set)), list(range(1, 12)))
+        self.assertEqual(0, self.set.changes_count())
         self.set.add(0)
         self.test_basic(1)
         self.set.commit()
@@ -100,23 +100,23 @@ class LimitedChangeSetTest(TestCase):
         self.set.rollback(1)
         self.set.add(-1)
         self.set.commit()
-        self.assertEquals(sorted(list(self.set)), list(range(-1, 13)))
+        self.assertEqual(sorted(list(self.set)), list(range(-1, 13)))
 
     def test_str(self):
-        self.assertEquals(
+        self.assertEqual(
             str(containers.LimitedChangeSet([7])), 'LimitedChangeSet([7])')
 
 
     def test__eq__(self):
         c = containers.LimitedChangeSet(range(99))
         c.add(99)
-        self.assertEquals(c, containers.LimitedChangeSet(range(100)))
+        self.assertEqual(c, containers.LimitedChangeSet(range(100)))
         s = set(c)
         # ordering here matters.
-        self.assertEquals(c, s, reflective=False)
+        self.assertEqual(c, s, reflective=False)
         s.add(100)
-        self.assertNotEquals(c, s, reflective=False)
-        self.assertNotEquals(c, None, reflective=False)
+        self.assertNotEqual(c, s, reflective=False)
+        self.assertNotEqual(c, None, reflective=False)
 
 
 class LimitedChangeSetWithBlacklistTest(TestCase):
@@ -127,9 +127,9 @@ class LimitedChangeSetWithBlacklistTest(TestCase):
     def test_basic(self):
         self.failUnless(0 in self.set)
         self.failIf(12 in self.set)
-        self.assertEquals(12, len(self.set))
-        self.assertEquals(sorted(list(self.set)), list(range(12)))
-        self.assertEquals(0, self.set.changes_count())
+        self.assertEqual(12, len(self.set))
+        self.assertEqual(sorted(list(self.set)), list(range(12)))
+        self.assertEqual(0, self.set.changes_count())
         self.assertRaises(TypeError, self.set.rollback, -1)
 
     def test_adding_blacklisted(self):

@@ -18,5 +18,5 @@ class ClassProp(object):
 class DescriptorTest(TestCase):
 
     def test_classproperty(self):
-        self.assertEquals(('good', ClassProp), ClassProp.test)
-        self.assertEquals(('good', ClassProp), ClassProp().test)
+        self.assertEqual(('good', ClassProp), ClassProp.test)
+        self.assertEqual(('good', ClassProp), ClassProp().test)

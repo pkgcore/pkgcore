@@ -46,8 +46,8 @@ class TestChoicePoint(TestCase):
         c.reduce_atoms("or1")
         self.assertEqual(c.rdepends, [["or2"]])
         c.reduce_atoms("prdep1")
-        self.assertEquals(c.depends, [['anddep1'], ['anddep2']])
-        self.assertEquals(c.post_rdepends, [["or3"]])
+        self.assertEqual(c.depends, [['anddep1'], ['anddep2']])
+        self.assertEqual(c.post_rdepends, [["or3"]])
         c.reduce_atoms("or3")
         self.assertRaises(IndexError, lambda:c.depends)
 

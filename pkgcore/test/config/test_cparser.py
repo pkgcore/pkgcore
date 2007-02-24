@@ -19,9 +19,9 @@ class CaseSensitiveConfigParserTest(TestCase):
                         '[HEADER]',
                         'foo=notbar',
                         ))))
-        self.assertEquals(cp.get('header', 'foo'), 'bar')
-        self.assertEquals(cp.get('header', 'FOO'), 'BAR')
-        self.assertEquals(cp.get('HEADER', 'foo'), 'notbar')
+        self.assertEqual(cp.get('header', 'foo'), 'bar')
+        self.assertEqual(cp.get('header', 'FOO'), 'BAR')
+        self.assertEqual(cp.get('HEADER', 'foo'), 'notbar')
 
 
 class ConfigFromIniTest(TestCase):
@@ -34,7 +34,7 @@ list = foo bar baz
 true = yes
 false = no
 '''))
-        self.assertEquals(config.keys(), ['test'])
+        self.assertEqual(config.keys(), ['test'])
         section = config['test']
         for key, arg_type, value in [
             ('string', 'str', 'hi I am a string'),
@@ -42,7 +42,7 @@ false = no
             ('true', 'bool', True),
             ('false', 'bool', False),
             ]:
-            self.assertEquals(section.get_value(None, key, arg_type), value)
+            self.assertEqual(section.get_value(None, key, arg_type), value)
 
     def test_missing_section_ref(self):
         config = cparser.config_from_file(StringIO('''

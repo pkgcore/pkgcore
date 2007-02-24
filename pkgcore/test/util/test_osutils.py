@@ -269,6 +269,7 @@ class Test_readfile(TempDirMixin, TestCase):
             f.write(self.line_content)
         f.close()
         self.assertEqual(self.line_content * count, self.func(self.fp),
+            reflective=False,
             msg="big file failed; len(%r) must equal len(%r)" % 
                 (os.stat(self.fp).st_size, len(self.line_content) * count))
 
@@ -299,7 +300,7 @@ class Test_readlines(Test_readfile):
             got = list(got)
         self.assertEqual(len(expected), len(got))
         for idx, tup in enumerate(izip(expected, got)):
-            self.assertEqual(tup[0], tup[1], 
+            self.assertEqual(tup[0], tup[1], reflective=False,
                 msg="expected %r, got %r for item %i" %
                     (tup[0], tup[1], idx))
 

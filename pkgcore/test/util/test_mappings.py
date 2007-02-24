@@ -43,6 +43,11 @@ class LazyValDictTestMixin(object):
         self.failUnlessEqual(sorted(self.dict.keys()), list(xrange(12)))
         self.failUnlessEqual(sorted(self.dict.keys()), list(xrange(12)))
 
+    def test_iterkeys(self):
+        # Called twice because the first call will trigger a keyfunc call.
+        self.failUnlessEqual(sorted(self.dict.iterkeys()), list(xrange(12)))
+        self.failUnlessEqual(sorted(self.dict.iterkeys()), list(xrange(12)))
+
     def test_len(self):
         # Called twice because the first call will trigger a keyfunc call.
         self.assertEqual(12, len(self.dict))
@@ -224,6 +229,12 @@ class StackedDictTest(TestCase):
             sorted(mappings.StackedDict(self.orig_dict, self.new_dict)),
             sorted(self.orig_dict.keys() + self.new_dict.keys()))
 
+    def test_getitem(self):
+        o = mappings.StackedDict({1:1}, {1:1, 2:2}, {1:3, 3:3})
+        self.assertEqual(o[1], 1)
+        self.assertEqual(o[2], 2)
+        self.assertEqual(o[3], 3)
+
 
 class IndeterminantDictTest(TestCase):
 
@@ -257,7 +268,11 @@ class IndeterminantDictTest(TestCase):
             raise KeyError
         self.assertRaises(
             KeyError, mappings.IndeterminantDict(func).__getitem__, 1)
-
+        self.assertEqual(mappings.IndeterminantDict(func).pop(100, 1), 1)
+        self.assertEqual(mappings.IndeterminantDict(func).pop(100), None)
+        
+        d.pop(1)
+        self.assertEqual(d[1], True)
 
     def test_get(self):
         def func(key):

@@ -12,7 +12,7 @@ from pkgcore.test.mixins import TempDirMixin
 
 pjoin = osutils.pjoin
 
-class NativeListDirTest(TempDirMixin):
+class Native_listdir_Test(TempDirMixin):
 
     module = native_readdir
 
@@ -23,19 +23,43 @@ class NativeListDirTest(TempDirMixin):
         f = open(pjoin(self.dir, 'file'), 'w')
         f.close()
         os.mkfifo(pjoin(self.dir, 'fifo'))
+        self.sym = pjoin(self.dir, 'sym')
+        os.symlink(self.subdir, self.sym)
+        os.symlink(pjoin(self.dir, 'non-existant'), 
+            pjoin(self.dir, 'broke-sym'))
 
     def test_listdir(self):
-        self.assertEqual(['dir', 'fifo', 'file'],
+        self.assertEqual(['broke-sym', 'dir', 'fifo', 'file', 'sym'],
                           sorted(self.module.listdir(self.dir)))
         self.assertEqual([], self.module.listdir(self.subdir))
+        self.assertEqual([], self.module.listdir(self.sym))
 
     def test_listdir_dirs(self):
-        self.assertEqual(['dir'], self.module.listdir_dirs(self.dir))
+        self.assertEqual(['dir', 'sym'],
+            sorted(self.module.listdir_dirs(self.dir)))
+        self.assertEqual(['dir', 'sym'],
+            sorted(self.module.listdir_dirs(self.dir, True)))
         self.assertEqual([], self.module.listdir_dirs(self.subdir))
+        self.assertEqual([], self.module.listdir_dirs(self.sym))
+        self.assertEqual(['dir'],
+            sorted(self.module.listdir_dirs(self.dir, False)))
 
     def test_listdir_files(self):
         self.assertEqual(['file'], self.module.listdir_files(self.dir))
+        self.assertEqual(['file'],
+            self.module.listdir_files(self.dir, True))
+        self.assertEqual(['file'],
+            sorted(self.module.listdir_files(self.dir, False)))
         self.assertEqual([], self.module.listdir_dirs(self.subdir))
+        self.assertEqual([], self.module.listdir_dirs(self.sym))
+        os.unlink(self.sym)
+        os.symlink(pjoin(self.dir, 'file'), self.sym)
+        self.assertEqual(['file', 'sym'],
+            sorted(self.module.listdir_files(self.dir)))
+        self.assertEqual(['file', 'sym'],
+            sorted(self.module.listdir_files(self.dir, True)))
+        self.assertEqual(['file'],
+            sorted(self.module.listdir_files(self.dir, False)))
 
     def test_missing(self):
         for func in (
@@ -56,7 +80,7 @@ try:
 except ImportError:
     _readdir = None
 
-class CPyListDirTest(NativeListDirTest):
+class cpy_listdir_Test(Native_listdir_Test):
     module = _readdir
     if _readdir is None:
         skip = "cpython extension isn't available"

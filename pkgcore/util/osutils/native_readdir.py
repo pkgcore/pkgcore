@@ -26,9 +26,9 @@ from stat import S_ISDIR, S_ISREG
 def listdir(path):
     return os.listdir(path)
 
-def stat_swallow_enoent(path, check, default=False):
+def stat_swallow_enoent(path, check, default=False, stat=os.stat):
     try:
-        return check(os.stat(path).st_mode)
+        return check(stat(path).st_mode)
     except OSError, oe:
         if oe.errno == errno.ENOENT:
             return default
@@ -40,9 +40,9 @@ def listdir_dirs(path, followSymlinks=True):
     if followSymlinks:
         return [x for x in os.listdir(path) if
             stat_swallow_enoent(pjoin(path, x), scheck)]
-    stat = os.stat
+    lstat = os.lstat
     return [x for x in os.listdir(path) if
-        scheck(stat(pjoin(path, x)).st_mode)]
+        scheck(lstat(pjoin(path, x)).st_mode)]
 
 def listdir_files(path, followSymlinks=True):
     pjoin = os.path.join
@@ -50,6 +50,6 @@ def listdir_files(path, followSymlinks=True):
     if followSymlinks:
         return [x for x in os.listdir(path) if
             stat_swallow_enoent(pjoin(path, x), scheck)]
-    stat = os.stat
+    lstat = os.lstat
     return [x for x in os.listdir(path) if
-        scheck(stat(pjoin(path, x)).st_mode)]
+        scheck(lstat(pjoin(path, x)).st_mode)]

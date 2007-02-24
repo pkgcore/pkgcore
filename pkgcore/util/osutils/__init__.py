@@ -202,8 +202,6 @@ def native_readlines(mypath, strip_newlines=True, swallow_missing=False,
         if none_on_missing:
             return None
         return readlines_iter(iter([]), None)
-        
-        return iter([])
 
     if not strip_newlines:
         return readlines_iter(f, os.fstat(f.fileno()).st_mtime)

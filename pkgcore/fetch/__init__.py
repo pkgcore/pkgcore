@@ -34,6 +34,11 @@ class fetchable(object):
         return "('%s', '%s', (%s))" % (
             self.filename, self.uri, ', '.join(self.chksums))
 
+    def __repr__(self):
+        return "<%s filename=%r uri=%r chksums=%r @%#8x>" % (
+            self.__class__.__name__, self.filename, self.uri, self.chksums,
+            id(self))
+
 
 class mirror(object):
     """

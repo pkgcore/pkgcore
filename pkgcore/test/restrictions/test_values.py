@@ -121,7 +121,7 @@ class native_TestStrExactMatch(TestRestriction):
             self.assertNotMatches(self.kls('Package', negate=negated),
                 ['package'], ['package']*3, negated=negated)
 
-    def test_case_insensitve(self):
+    def test_case_insensitive(self):
         for negated in (False, True):
             self.assertMatches(self.kls('package', case_sensitive=True,
                 negate=negated),
@@ -206,11 +206,15 @@ class TestStrGlobMatch(TestRestriction):
                 self.assertNotEquals(
                     self.kls("rsync", negate=negate),
                     self.kls("rsyn"+x, negate=negate))
-            self.assertEquals(
-                self.kls(
-                    "Rsync", case_sensitive=False, negate=negate),
-                self.kls(
-                    "rsync", case_sensitive=False, negate=negate))
+            self.assertNotEquals(
+                self.kls("Rsync", case_sensitive=False, negate=negate),
+                self.kls("rsync", case_sensitive=True, negate=negate))
+            self.assertNotEquals(
+                self.kls("rsync", case_sensitive=False, negate=negate),
+                self.kls("rsync", case_sensitive=True, negate=negate))
+            self.assertNotEquals(
+                self.kls("rsync", case_sensitive=False, negate=negate),
+                self.kls("rsync", case_sensitive=True, negate=not negate))
         self.assertNotEqual(
             self.kls("rsync", negate=True),
             self.kls("rsync", negate=False))

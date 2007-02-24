@@ -11,6 +11,7 @@ attr from a package instance and hand it to their wrapped restriction
 """
 
 from pkgcore.restrictions import restriction, boolean, packages
+from pkgcore.util.klass import generic_equality
 from pkgcore.util import demandload
 demandload.demandload(globals(), 're pkgcore.util:lists')
 
@@ -88,7 +89,8 @@ class StrRegex(hashed_base):
     """
 
     __slots__ = ('flags', 'regex', '_matchfunc', 'ismatch', 'negate')
-
+    __metaclass__ = generic_equality
+    __attr_comparison__ = ('_hash',) + __slots__
     __inst_caching__ = True
 
     def __init__(self, regex, case_sensitive=True, match=False, negate=False):
@@ -129,12 +131,6 @@ class StrRegex(hashed_base):
             return self
         return None
 
-    def __eq__(self, other):
-        return (self.regex == other.regex and
-                self.negate == other.negate and
-                self.flags == other.flags and
-                self.ismatch == other.ismatch)
-
     def __repr__(self):
         result = [self.__class__.__name__, repr(self.regex)]
         if self.negate:
@@ -163,7 +159,9 @@ class native_StrExactMatch(object):
     exact string comparison match
     """
 
-    __slots__ = ('exact', 'case_sensitive', 'negate', '_hash')
+    __slots__ = ('_hash', 'exact', 'case_sensitive', 'negate')
+    __metaclass__ = generic_equality
+    __attr_comparison__ = __slots__
 
     def __init__(self, exact, case_sensitive=True, negate=False):
 
@@ -182,11 +180,6 @@ class native_StrExactMatch(object):
             sf(self, "case_sensitive", True)
             sf(self, "exact", str(exact))
         sf(self, "_hash", hash((self.exact, self.negate, self.case_sensitive)))
-
-    def __eq__(self, other):
-        return self is other or (self.exact == other.exact and
-                self.negate == other.negate and
-                self.case_sensitive == other.case_sensitive)
 
     def match(self, value):
         if self.case_sensitive:
@@ -245,7 +238,8 @@ class StrGlobMatch(hashed_base):
     """
 
     __slots__ = ('glob', 'prefix', 'negate', 'flags')
-
+    __attr_comparison__ = ('_hash',) + __slots__
+    __metaclass__ = generic_equality
     __inst_caching__ = True
 
     def __init__(self, glob, case_sensitive=True, prefix=True, negate=False):
@@ -288,21 +282,18 @@ class StrGlobMatch(hashed_base):
                 return self
         return None
 
-    def __eq__(self, other):
-        try:
-            return (self.glob == other.glob and
-                    self.negate == other.negate and
-                    self.flags == other.flags and
-                    self.prefix == other.prefix)
-        except AttributeError:
-            return False
-
     def __repr__(self):
         if self.negate:
-            string = '<%s %r negated @%#8x>'
+            string = '<%s %r case_sensitive=%r negated @%#8x>'
         else:
-            string = '<%s %r @%#8x>'
-        return string % (self.__class__.__name__, self.glob, id(self))
+            string = '<%s %r case_sensitive=%r @%#8x>'
+        if self.prefix:
+            g = self.glob + ".*"
+        else:
+            g = ".*" + self.glob
+        return string % (self.__class__.__name__, g,
+            self.flags == re.I and True or False,
+            id(self))
 
     def __str__(self):
         s = ''
@@ -342,7 +333,9 @@ class ComparisonMatch(hashed_base):
     _rev_op_converter[(-1, 1)] = "!="
     del k, v
 
-    __slots__ = ('data', 'cmp_func', 'matching_vals')
+    __slots__ = ('cmp_func', 'data', 'matching_vals')
+    __metaclass__ = generic_equality
+    __attr_comparison__ = __slots__
 
     @classmethod
     def convert_str_op(cls, op_str):
@@ -392,14 +385,6 @@ class ComparisonMatch(hashed_base):
         return _mangle_cmp_val(
             self.cmp_func(actual_val, self.data)) in self.matching_vals
 
-    def __eq__(self, other):
-        try:
-            return (self.cmp_func == other.cmp_func and
-                    self.matching_vals == other.matching_vals and
-                    self.data == other.data)
-        except AttributeError:
-            return False
-
     def __repr__(self):
         return '<%s %s %r @%#8x>' % (
             self.__class__.__name__, self.convert_op_str(self.matching_vals),
@@ -415,8 +400,9 @@ class ContainmentMatch(hashed_base):
     note that negation of this *does* not result in a true NAND when all is on.
     """
 
-    __slots__ = ('vals', 'all', '_hash', 'negate')
-
+    __slots__ = ('vals', 'all', 'negate')
+    __metaclass__ = generic_equality
+    __attr_comparison__ = ('_hash',) + __slots__
     __inst_caching__ = True
 
     def __init__(self, *vals, **kwds):
@@ -562,15 +548,6 @@ class ContainmentMatch(hashed_base):
                 desired_false=false, desired_true=true):
                 return True
         return False
-
-
-    def __eq__(self, other):
-        try:
-            return self is other or (self.all == other.all and
-                    self.negate == other.negate and
-                    self.vals == other.vals)
-        except AttributeError:
-            return False
 
     def __repr__(self):
         if self.negate:

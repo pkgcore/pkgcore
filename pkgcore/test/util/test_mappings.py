@@ -48,6 +48,11 @@ class LazyValDictTestMixin(object):
         self.failUnlessEqual(sorted(self.dict.iterkeys()), list(xrange(12)))
         self.failUnlessEqual(sorted(self.dict.iterkeys()), list(xrange(12)))
 
+    def test_iteritems(self):
+        i = iter(xrange(12))
+        for idx, kv in enumerate(self.dict.iteritems()):
+            self.assertEqual(kv, (idx, -idx))
+
     def test_len(self):
         # Called twice because the first call will trigger a keyfunc call.
         self.assertEqual(12, len(self.dict))
@@ -181,6 +186,7 @@ class ImmutableDictTest(TestCase):
         self.assertRaises(TypeError, self.dict.setdefault, 6, -6)
         self.assertEqual(initial_hash, hash(self.dict))
 
+
 class StackedDictTest(TestCase):
 
     orig_dict = dict.fromkeys(xrange(100))
@@ -234,6 +240,7 @@ class StackedDictTest(TestCase):
         self.assertEqual(o[1], 1)
         self.assertEqual(o[2], 2)
         self.assertEqual(o[3], 3)
+        self.assertRaises(KeyError, o.__getitem__, 4)
 
 
 class IndeterminantDictTest(TestCase):

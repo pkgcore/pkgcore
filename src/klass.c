@@ -170,6 +170,7 @@ internal_generic_equality(PyObject *inst1, PyObject *inst2,
         if(!attr1) {
             if(attr2) {
                 Py_DECREF(attr2);
+                Py_DECREF(attrs);
                 if(desired == Py_EQ) {
                     Py_RETURN_FALSE;
                 }
@@ -178,28 +179,33 @@ internal_generic_equality(PyObject *inst1, PyObject *inst2,
             continue;
         } else if (!attr2) {
             Py_DECREF(attr1);
+            Py_DECREF(attrs);
             if(desired == Py_EQ) {
                 Py_RETURN_FALSE;
             }
             Py_RETURN_TRUE;
-        } else if (attr1 == attr2) {
-            Py_DECREF(attr1);
-            Py_DECREF(attr2);
-            if(desired != Py_EQ) {
-                Py_RETURN_FALSE;
-            }
-            continue;
         }
         int ret = PyObject_RichCompareBool(attr1, attr2, desired);
         Py_DECREF(attr1);
         Py_DECREF(attr2);
-        if(ret == -1) {
+        if(0 > ret) {
+            Py_DECREF(attrs);
             return NULL;
-        } else if (ret == 0) {
-            Py_RETURN_FALSE;
+        } else if (0 == ret) {
+            if(desired == Py_EQ) {
+                Py_DECREF(attrs);
+                Py_RETURN_FALSE;
+            }
+        } else if(desired == Py_NE) {
+            Py_DECREF(attrs);
+            Py_RETURN_TRUE;
         }
     }
-    Py_RETURN_TRUE;
+    Py_DECREF(attrs);
+    if(desired == Py_EQ) {
+        Py_RETURN_TRUE;
+    }
+    Py_RETURN_FALSE;
 }
 
 static PyObject *

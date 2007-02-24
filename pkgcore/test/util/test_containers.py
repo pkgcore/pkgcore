@@ -113,10 +113,10 @@ class LimitedChangeSetTest(TestCase):
         self.assertEquals(c, containers.LimitedChangeSet(range(100)))
         s = set(c)
         # ordering here matters.
-        self.assertEquals(c, s)
+        self.assertEquals(c, s, reflective=False)
         s.add(100)
-        self.assertNotEquals(c, s)
-        self.assertNotEquals(c, None)
+        self.assertNotEquals(c, s, reflective=False)
+        self.assertNotEquals(c, None, reflective=False)
 
 
 class LimitedChangeSetWithBlacklistTest(TestCase):

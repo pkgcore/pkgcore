@@ -117,6 +117,9 @@ class LimitedChangeSet(object):
             return self._new == other
         return False
 
+    def __ne__(self, other):
+        return not (self == other)
+
 
 class Unchangable(Exception):
 

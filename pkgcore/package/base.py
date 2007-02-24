@@ -16,10 +16,10 @@ class base(object):
     _get_attr = {}
 
     def __setattr__(self, attr, value):
-        raise AttributeError(attr)
+        raise AttributeError(self, attr)
 
     def __delattr__(self, attr):
-        raise AttributeError(attr)
+        raise AttributeError(self, attr)
 
     def __getattr__(self, attr):
         try:
@@ -27,7 +27,7 @@ class base(object):
             object.__setattr__(self, attr, val)
             return val
         except KeyError:
-            raise AttributeError(attr)
+            raise AttributeError(self, attr)
 
     @property
     def versioned_atom(self):

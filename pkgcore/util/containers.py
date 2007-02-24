@@ -7,6 +7,12 @@
 collection of container classes
 """
 
+from pkgcore.util.demandload import demandload
+demandload(globals(),
+    "pkgcore.util.lists:iter_stable_unique "
+    "itertools:chain "
+)
+
 class InvertedContains(set):
 
     """Set that inverts all contains lookups results
@@ -132,6 +138,9 @@ class ProtectedSet(object):
 
     def __contains__(self, key):
         return key in self._orig or key in self._new
+
+    def __iter__(self):
+        return iter_stable_unique(chain(self._new, self._orig))
 
     def __len__(self):
         return len(self._orig.union(self._new))

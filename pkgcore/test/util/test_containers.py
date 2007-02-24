@@ -111,6 +111,13 @@ class LimitedChangeSetTest(TestCase):
         c = containers.LimitedChangeSet(range(99))
         c.add(99)
         self.assertEquals(c, containers.LimitedChangeSet(range(100)))
+        s = set(c)
+        # ordering here matters.
+        self.assertEquals(c, s)
+        s.add(100)
+        self.assertNotEquals(c, s)
+        self.assertNotEquals(c, None)
+
 
 class LimitedChangeSetWithBlacklistTest(TestCase):
 
@@ -130,6 +137,46 @@ class LimitedChangeSetWithBlacklistTest(TestCase):
 
     def test_removing_blacklisted(self):
         self.assertRaises(containers.Unchangable, self.set.remove, 3)
+
+
+class TestProtectedSet(TestCase):
+    
+    kls = containers.ProtectedSet
+    
+    def test_contains(self):
+        c = self.kls(frozenset(xrange(100)))
+        self.assertIn(1, c)
+        self.assertNotIn(100, c)
+        c.add(100)
+        self.assertIn(1, c)
+    
+    def test_len(self):
+        c = self.kls(frozenset(xrange(100)))
+        self.assertEqual(len(c), 100)
+        c.add(1)
+        self.assertEqual(len(c), 100)
+        c.add(100)
+        self.assertEqual(len(c), 101)
+
+    def test_add(self):
+        s = set(xrange(10))
+        c = self.kls(s)
+        c.add(10)
+        self.assertIn(10, c)
+        self.assertNotIn(10, s)
+        # finally, verify it's not adding duplicates to new.
+        c.add(1)
+        s.remove(1)
+        self.assertNotIn(1, c)
+        
+    def test_iter(self):
+        s = set(xrange(100))
+        c = self.kls(s)
+        self.assertEqual(sorted(xrange(100)), sorted(c))
+        c.add(100)
+        s.add(100)
+        self.assertEqual(sorted(xrange(101)), sorted(c))
+
 
 
 class TestRefCountingSet(TestCase):

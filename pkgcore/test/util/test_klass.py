@@ -2,7 +2,7 @@
 # License: GPL2
 
 from pkgcore.test import TestCase
-from pkgcore.util import klass
+from pkgcore.util import klass, currying
 
 
 class Test_native_GetAttrProxy(TestCase):
@@ -26,6 +26,18 @@ class Test_native_GetAttrProxy(TestCase):
         o.foon = "foo"
         self.assertEqual(o.foon, 'foo')
 
+    def test_attrlist(self):
+        def make_class(attr_list=None):
+            class foo(object):
+                __metaclass__ = self.kls
+            
+                if attr_list is not None:
+                    locals()['__attr_comparison__'] = attr_list
+        
+        self.assertRaises(TypeError, make_class)
+        self.assertRaises(TypeError, make_class, [u'foon'])
+        self.assertRaises(TypeError, make_class, [None])
+            
 
 class Test_CPY_GetAttrProxy(Test_native_GetAttrProxy):
 
@@ -85,27 +97,16 @@ class Test_CPY_get(Test_native_get):
     if klass.get is klass.native_get:
         skip = "cpython extension isn't available"
 
-def protect_eq_ops(method):
-    def f2(self, *args):
-        orig_eq = klass.generic_eq
-        orig_ne = klass.generic_ne
-        try:
-            klass.generic_eq = getattr(klass, self.op_prefix + "generic_eq")
-            klass.generic_ne = getattr(klass, self.op_prefix + "generic_ne")
-            method(self, *args)
-        finally:
-            klass.generic_eq = orig_eq
-            klass.generic_ne = orig_ne
-    return f2
-
 class Test_native_generic_equality(TestCase):
     op_prefix = "native_"
 
-    @protect_eq_ops
+    kls = currying.partial(klass.generic_equality,
+        ne=klass.native_generic_ne, eq=klass.native_generic_eq)
+
     def test_it(self):
         class c(object):
             __attr_comparison__ = ("foo", "bar")
-            __metaclass__ = klass.generic_equality
+            __metaclass__ = self.kls
             def __init__(self, foo, bar):
                 self.foo, self.bar = foo, bar
 
@@ -113,7 +114,7 @@ class Test_native_generic_equality(TestCase):
         c1 = c(1, 3)
         self.assertEqual(c1, c1)
         del c1
-        self.assertNotEqual(c(2, 1), c(1, 2))
+        self.assertNotEqual(c(2,1), c(1,2))
         c1 = c(1, 2)
         del c1.foo
         self.assertNotEqual(c(1, 2), c1)
@@ -130,3 +131,5 @@ class Test_cpy_generic_equality(Test_native_generic_equality):
     op_prefix = ''
     if klass.native_generic_eq is klass.generic_eq:
         skip = "extension not available"
+
+    kls = staticmethod(klass.generic_equality)

@@ -4,6 +4,7 @@
 
 from pkgcore.ebuild import eclass_cache
 from pkgcore.interfaces import data_source
+from pkgcore.util.osutils import pjoin
 import os
 
 from pkgcore.test.mixins import TempDirMixin
@@ -34,8 +35,14 @@ class TestBase(TempDirMixin, TestCase):
             {"eclass3":(self.dir, 100)}))
         self.assertTrue(self.ec.is_eclass_data_valid(
             {"eclass1":(self.dir, 100)}))
+        self.assertFalse(self.ec.is_eclass_data_valid(
+            {"eclass1":(self.dir, 200)}))
         self.assertTrue(self.ec.is_eclass_data_valid(
             {"eclass1":(self.ec_locs["eclass1"], 100)}))
+        self.assertTrue(self.ec.is_eclass_data_valid(
+            {"eclass1":100}))
+        self.assertFalse(self.ec.is_eclass_data_valid(
+            {"eclass1":200}))
 
     def test_get_eclass_data(self):
         keys = self.ec.eclasses.keys()
@@ -53,8 +60,10 @@ class TestEclassCache(TestBase):
     def setUp(self):
         TempDirMixin.setUp(self)
         for x, mtime in (("eclass1", 100), ("eclass2", 200)):
-            open(os.path.join(self.dir, "%s.eclass" % x), "w")
-            os.utime(os.path.join(self.dir, "%s.eclass" % x), (mtime, mtime))
+            open(pjoin(self.dir, "%s.eclass" % x), "w")
+            os.utime(pjoin(self.dir, "%s.eclass" % x), (mtime, mtime))
+        # insert a crap file to ensure it doesn't grab it.
+        open(pjoin(self.dir, 'foon-eclass'), 'w')
         self.ec = eclass_cache.cache(self.dir)
         self.ec_locs = dict((x, self.dir) for x in ("eclass1", "eclass2"))
 
@@ -62,26 +71,31 @@ class TestEclassCache(TestBase):
         for x in ("eclass1", "eclass2"):
             handle = self.ec.get_eclass(x)
             self.assertInstance(handle, data_source.local_source)
-            self.assertEqual(os.path.join(self.ec_locs[x], "%s.eclass" % x),
+            self.assertEqual(pjoin(self.ec_locs[x], "%s.eclass" % x),
                 handle.path)
+
+        # note an eclass, thus shouldn't grab it.
+        self.assertEqual(None, self.ec.get_eclass("foon"))
+        self.assertEqual(None, self.ec.get_eclass("foon-eclass"))
+
 
 class TestStackedCaches(TestEclassCache):
 
     def setUp(self):
         TempDirMixin.setUp(self)
-        self.loc1 = os.path.join(self.dir, "stack1")
-        self.loc2 = os.path.join(self.dir, "stack2")
+        self.loc1 = pjoin(self.dir, "stack1")
+        self.loc2 = pjoin(self.dir, "stack2")
 
         os.mkdir(self.loc1)
-        open(os.path.join(self.loc1, 'eclass1.eclass'), 'w')
-        os.utime(os.path.join(self.loc1, 'eclass1.eclass'), (100, 100))
+        open(pjoin(self.loc1, 'eclass1.eclass'), 'w')
+        os.utime(pjoin(self.loc1, 'eclass1.eclass'), (100, 100))
         self.ec1 = eclass_cache.cache(self.loc1)
 
         os.mkdir(self.loc2)
-        open(os.path.join(self.loc2, 'eclass2.eclass'), 'w')
-        os.utime(os.path.join(self.loc2, 'eclass2.eclass'), (100, 100))
+        open(pjoin(self.loc2, 'eclass2.eclass'), 'w')
+        os.utime(pjoin(self.loc2, 'eclass2.eclass'), (100, 100))
         self.ec2 = eclass_cache.cache(self.loc2)
         self.ec = eclass_cache.StackedCaches([self.ec1, self.ec2])
         self.ec_locs = {"eclass1":self.loc1, "eclass2":self.loc2}
         # make a shadowed file to verify it's not seen
-        open(os.path.join(self.loc2, 'eclass1.eclass'), 'w')
+        open(pjoin(self.loc2, 'eclass1.eclass'), 'w')

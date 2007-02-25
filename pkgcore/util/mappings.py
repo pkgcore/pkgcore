@@ -46,7 +46,7 @@ class DictMixin(object):
 
     # default cmp actually operates based on key len comparison, oddly enough
     def __cmp__(self, other):
-        for k1, k2 in izip(self, other):
+        for k1, k2 in izip(sorted(self), sorted(other)):
             c = cmp(k1, k2)
             if c != 0:
                 return c

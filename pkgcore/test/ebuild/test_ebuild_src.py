@@ -152,6 +152,11 @@ class test_base(TestCase):
             repo=parent).fetchables
         self.assertEqual(list(f[0].uri), ['http://boon.com/foon/monkey.tgz'])
 
+        # assert it bails if mirror doesn't exist.
+        self.assertRaises(errors.MetadataException, getattr, self.get_pkg(
+                {'SRC_URI':'mirror://mirror2/foon/monkey.tgz'},
+                repo=parent), 'fetchables')
+
         parent = self.make_parent(_parent_repo=repo, default_mirrors=mirror)
         f = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz'},
             repo=parent).fetchables

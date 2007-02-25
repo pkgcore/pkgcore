@@ -66,6 +66,10 @@ class TestDelayedInstantiation(TestCase):
             l.append(False)
             return True
         o = make_DI(bool, f)
+        # note, this *must* be isinstance, not assertInstance.
+        # assertInstance triggers a repr on it, thus triggering expansion.
+        # we're specifically testing that it doesn't instantiate just for
+        # class.
         self.assertTrue(isinstance(o, bool))
         self.assertFalse(l)
 

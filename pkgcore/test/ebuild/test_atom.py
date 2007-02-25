@@ -162,12 +162,11 @@ class Test_native_atom(TestCase):
             pos = assertAttr('package')
             pos = assertAttr('category')
             if ver:
-                self.assertTrue(isinstance(restricts[pos],
-                    atom_restricts.VersionMatch),
+                self.assertInstance(restricts[pos], atom_restricts.VersionMatch,
                     msg="expected %r, got %r; repo(%s), ver(%s), use(%s) "
-                        "slot(%s)" % (atom_restricts.VersionMatch,
-                        restricts[pos],
-                        repo, ver, use, slot))
+                        "slot(%s)" % 
+                        (atom_restricts.VersionMatch, restricts[pos],
+                            repo, ver, use, slot))
                 pos += 1
             if slot:
                 pos = assertAttr('slot')

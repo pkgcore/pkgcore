@@ -48,7 +48,7 @@ class TestDigest(TestCase):
             sorted(d2.keys()), sorted(x[0] for x in digest_chksum))
         for chf, expectedsum in digest_chksum:
             self.assertEqual(d2[chf], expectedsum)
-        self.assertTrue(isinstance(d2["size"], long))
+        self.assertInstance(d2["size"], long)
 
     def test_throw(self):
         self.assertRaises(
@@ -130,7 +130,7 @@ class TestManifest(TestCase):
             sorted(d2.keys()), sorted(x[0] for x in digest_chksum))
         for chf, expectedsum in digest_chksum:
             self.assertEqual(d2[chf], expectedsum)
-        self.assertTrue(isinstance(d2["size"], long))
+        self.assertInstance(d2["size"], long)
 
     def test_manifest1(self):
         self.test_gpg_filtering(False)

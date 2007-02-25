@@ -109,7 +109,7 @@ class TestContentsSet(TestCase):
         test_list = getattr(cs, name)()
         if obj_class is not None:
             for x in test_list:
-                self.assertTrue(isinstance(x, obj_class))
+                self.assertInstance(x, obj_class)
         self.assertEqual(set(test_list), set(valid_list))
 
     test_iterfiles = post_curry(iterobj, "files", fs.fsFile)

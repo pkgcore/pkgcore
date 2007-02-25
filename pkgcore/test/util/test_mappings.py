@@ -55,7 +55,7 @@ class TestDictMixin(TestCase):
         d = self.test_dict({}.fromkeys(xrange(100)).iteritems())
         i = getattr(d, method)()
         if 'iter' not in method:
-            self.assertTrue(isinstance(i, (list, tuple)))
+            self.assertInstance(i, (list, tuple))
         self.assertEqual(list(i), list(values))
 
     test_iterkeys = currying.post_curry(test_iter, method='iterkeys')

@@ -55,7 +55,7 @@ class FsObjsTest(TempDirMixin, TestCase):
         open(src, "w")
         os.symlink(src, link)
         obj = gen_obj(link)
-        self.failUnless(isinstance(obj, fs.fsSymlink))
+        self.assertInstance(obj, fs.fsSymlink)
         self.check_attrs(obj, link)
         self.assertEqual(os.readlink(link), obj.target)
 
@@ -77,7 +77,7 @@ class FsObjsTest(TempDirMixin, TestCase):
         map(os.mkdir, dirs)
         dirs.append(path)
         for obj in iter_scan(path):
-            self.failUnless(isinstance(obj, fs.fsBase))
+            self.assertInstance(obj, fs.fsBase)
             if fs.isreg(obj):
                 self.failUnless(obj.location in files)
             elif fs.isdir(obj):

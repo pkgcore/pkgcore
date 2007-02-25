@@ -49,7 +49,7 @@ class TestMirror(base):
     def test_init(self):
         self.assertEqual(self.mirror.mirror_name, "fork")
         # explicit test should any tuple like sequence show up
-        self.assertTrue(isinstance(self.mirror.mirrors, tuple))
+        self.assertInstance(self.mirror.mirrors, tuple)
         self.assertEqual(self.mirror.mirrors, tuple(self.default_mirrors))
 
     def test_iter(self):

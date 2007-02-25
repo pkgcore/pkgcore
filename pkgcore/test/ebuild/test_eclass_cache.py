@@ -61,7 +61,7 @@ class TestEclassCache(TestBase):
     def test_get_eclass(self):
         for x in ("eclass1", "eclass2"):
             handle = self.ec.get_eclass(x)
-            self.assertTrue(isinstance(handle, data_source.local_source))
+            self.assertInstance(handle, data_source.local_source)
             self.assertEqual(os.path.join(self.ec_locs[x], "%s.eclass" % x),
                 handle.path)
 

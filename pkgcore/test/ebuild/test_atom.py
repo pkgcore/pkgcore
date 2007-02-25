@@ -4,6 +4,8 @@
 from pkgcore.test import TestCase
 from pkgcore.ebuild import atom, errors, atom_restricts
 from pkgcore.ebuild.cpv import CPV
+from pkgcore.restrictions.boolean import AndRestriction
+from pkgcore.util.currying import partial
 from pkgcore.util.pickling import dumps, loads
 
 class FakePkg(CPV):
@@ -22,7 +24,33 @@ class Test_native_atom(TestCase):
 
     class kls(atom.atom):
         locals().update(atom.native_atom_overrides.iteritems())
+        __inst_caching__ = True
     kls = staticmethod(kls)
+
+    def test_solutions(self):
+        d = self.kls("=dev-util/diffball-0.7.1:2")
+        self.assertEqual(list(d.iter_dnf_solutions()), [[d]])
+        self.assertEqual(d.dnf_solutions(), [[d]])
+        self.assertEqual(list(d.iter_cnf_solutions()), [[d]])
+        self.assertEqual(d.cnf_solutions(), [[d]])
+        bd = AndRestriction(*d.restrictions)
+        self.assertEqual(list(d.iter_dnf_solutions(True)), bd.dnf_solutions())
+        self.assertEqual(list(d.iter_cnf_solutions(True)), bd.cnf_solutions())
+        self.assertEqual(d.dnf_solutions(True), bd.dnf_solutions())
+        self.assertEqual(d.cnf_solutions(True), bd.cnf_solutions())
+
+    def test_str_hash(self):
+        for s in ("dev-util/diffball", "=dev-util/diffball-0.7.1",
+            ">foon/bar-1[-4,3]:2,3", "=foon/bar-2*", "~foon/bar-2.3",
+            "!dev-util/diffball", "!=dev-util/diffball-0.7*",
+            "foon/bar::gentoo", ">=foon/bar-10_alpha1[-not,use]:1:gentoo"):
+            self.assertEqual(str(self.kls(s)), s)
+            self.assertEqual(hash(self.kls(s, disable_inst_caching=True)),
+                hash(self.kls(s, disable_inst_caching=True)))
+
+    def test_iter(self):
+        d = self.kls("!>=dev-util/diffball-0.7[use,x]:1,2:gentoo")
+        self.assertEqual(list(d), list(d.restrictions))
 
     def test_pickling(self):
         a = self.kls("dev-util/diffball")

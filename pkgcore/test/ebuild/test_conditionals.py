@@ -13,10 +13,8 @@ from pkgcore.util.lists import iflatten_instance
 
 class base(TestCase):
 
-    class depset_kls(conditionals.DepSet):
+    class kls(conditionals.DepSet):
         parse_depset = None
-
-    depset_kls = staticmethod(depset_kls)
 
     def gen_depset(self, string, operators=None, func=None):
         if func is not None:
@@ -25,7 +23,7 @@ class base(TestCase):
             kwds = {}
         if operators is None:
             operators = {"":boolean.AndRestriction, "||":boolean.OrRestriction}
-        return self.depset_kls(string, str, operators=operators, **kwds)
+        return self.kls(string, str, operators=operators, **kwds)
 
 
 class native_DepSetParsingTest(base):
@@ -37,7 +35,7 @@ class native_DepSetParsingTest(base):
     for x in ("( )", "( a b c", "(a b c )",
         "( a b c)", "()", "x?( a )",
         "?x (a)", "x? (a )", "x? (a)", "x? ( a b)",
-        "x? ( x? () )", "x? ( x? (a)", "(", ")",
+        "x? ( x? () )", "x? ( x? (a)", "(", ")", "x?",
         "||(", "||()", "||( )", "|| ()",
         "|| (", "|| )", "||)",	"|| ( x? ( )",
         "|| ( x?() )", "|| (x )", "|| ( x)",
@@ -90,16 +88,32 @@ class native_DepSetParsingTest(base):
                     yield x
         self.assertFalse(depth)
 
-    def check(self, s, func=base.gen_depset):
+    def check_depset(self, s, func=base.gen_depset):
         if isinstance(s, (list, tuple)):
-            s, v = s[:]
-            v = list(v)
+            s, v = s
+            v2 = []
             for idx, x in enumerate(v):
                 if isinstance(x, (list, tuple)):
-                    v[idx] = set(x)
+                    v2.append(set(x))
+            v = v2
         else:
             v = s.split()
         self.assertEqual(list(self.flatten_restricts(func(self, s))), list(v))
+
+    def check_str(self, s, func=base.gen_depset):
+        if isinstance(s, (list, tuple)):
+            s, v = s
+            v2 = []
+            for x in v:
+                if isinstance(x, basestring):
+                    v2.append(x)
+                else:
+                    v2.append(x[-1] + '?')
+            v = ' '.join(v2)
+        else:
+            v = ' '.join(s.split())
+        v = ' '.join(v.replace("&&", "").split())
+        self.assertEqual(str(func(self, s)), v)
 
     # generate a lot of assertions of parse results.
     # if it's a list, first arg is string, second is results, if
@@ -112,15 +126,15 @@ class native_DepSetParsingTest(base):
 
         "|| ( a b )",
 
-        ( "a || ( a ( b ) c || ( d ) )",
+        ( "a || ( a ( b  ) c || ( d )  )",
             ["a", "||", "(", "a", "b", "c", "d", ")"]),
 
-        ( "x? ( a b )",
+        ( " x? ( a  b )",
             (["x"], "(", "a", "b", ")")),
 
         # at some point, this should collapse it
         ( "x? ( y? ( a ) )",
-            (["x"], "(", ["y", "x"], "(", "a", ")", ")")),
+            (["x"], "(", ["x", "y"], "(", "a", ")", ")")),
 
         # at some point, this should collapse it
         ("|| ( || ( a b ) )", ["||", "(", "a", "b", ")"]),
@@ -136,10 +150,33 @@ class native_DepSetParsingTest(base):
             )
         )]:
 
-        if isinstance(x, basestring):
-            locals()["test '%s'" % x] = post_curry(check, x)
+        if isinstance(x, (list, tuple)):
+            name = "'%s'" % x[0]
         else:
-            locals()["test '%s'" % x[0]] = post_curry(check, x)
+            name = "'%s'" % x
+#        locals()["test_parse %s" % name] = post_curry(check_depset, x)
+        locals()["test_str %s" % name] = post_curry(check_str, x)
+
+    def check_known_conditionals(self, text, conditionals):
+        d = self.gen_depset(text)
+        self.assertEqual(sorted(d.known_conditionals),
+            sorted(conditionals.split()))
+        # ensure it does the lookup *once*
+        object.__setattr__(d, 'restrictions', ())
+        self.assertFalse(d.restrictions)
+        self.assertEqual(sorted(d.known_conditionals),
+            sorted(conditionals.split()))
+
+    for x, c in [
+        ["a? ( b )", "a"],
+        ["a? ( b a? ( c ) )", "a"],
+        ["a b c d e ( f )", ""],
+        ["!a? ( b? ( c ) )", "a b"]
+        ]:
+        locals()["test_known_conditionals %s" % x] = post_curry(
+            check_known_conditionals, x, c)
+    del x,c
+        
 
     def test_element_func(self):
         self.assertEqual(
@@ -154,7 +191,7 @@ class native_DepSetParsingTest(base):
 
 class cpy_DepSetParsingTest(native_DepSetParsingTest):
 
-    depset_kls = staticmethod(conditionals.DepSet)
+    kls = staticmethod(conditionals.DepSet)
     if not conditionals.DepSet.parse_depset:
         skip = "extension not available"
 
@@ -217,7 +254,7 @@ class native_DepSetConditionalsInspectionTest(base):
 class cpy_DepSetConditionalsInspectionTest(
     native_DepSetConditionalsInspectionTest):
 
-    depset_kls = staticmethod(conditionals.DepSet)
+    kls = staticmethod(conditionals.DepSet)
     if not conditionals.DepSet.parse_depset:
         skip = "extension not available"
 
@@ -259,6 +296,6 @@ class native_DepSetEvaluateTest(base):
 
 class cpy_DepSetEvaluateTest(native_DepSetEvaluateTest):
 
-    depset_kls = staticmethod(conditionals.DepSet)
+    kls = staticmethod(conditionals.DepSet)
     if not conditionals.DepSet.parse_depset:
         skip = "extension not available"

@@ -85,6 +85,16 @@ class TestCase(unittest.TestCase, object):
     def assertLen(self, obj, length, msg=None):
         self.failUnless(len(obj) == length,
             msg or '%r needs to be len %i, is %i' % (obj, length, len(obj)))
+    
+    def assertInstance(self, kls, obj, msg=None):
+        self.failUnless(isinstance(obj, kls),
+            msg or '%r needs to be an instance of %r, is %r' % (obj, kls,
+                getattr(obj, '__class__', "__class__ wasn't pullable")))
+
+    def assertNotInstance(self, kls, obj, msg=None):
+        self.failIf(isinstance(obj, kls),
+            msg or '%r must not be an instance of %r, is %r' % (obj, kls,
+                getattr(obj, '__class__', "__class__ wasn't pullable")))
 
     def assertIdentical(self, this, other, reason=None):
         self.failUnless(

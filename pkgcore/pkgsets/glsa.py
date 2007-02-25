@@ -10,6 +10,7 @@ from pkgcore.util.iterables import caching_iter
 from pkgcore.restrictions import packages, restriction, boolean, values
 from pkgcore.config import ConfigHint
 from pkgcore.util.osutils import listdir_files, join as pjoin
+from pkgcore.util.klass import generic_equality
 
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util.xml:etree "
@@ -48,6 +49,9 @@ class GlsaDirSet(object):
     pkgcore_config_type = ConfigHint({'src': 'ref:repo'}, typename='pkgset')
     op_translate = {"ge":">=", "gt":">", "lt":"<", "le":"<=", "eq":"="}
 
+    __metaclass__ = generic_equality
+    __attr_comparison__ = ('paths',)
+
     def __init__(self, src):
         """
         @param src: where to get the glsa from
@@ -56,10 +60,10 @@ class GlsaDirSet(object):
         """
 
         if not isinstance(src, basestring):
-            src = filter(os.path.isdir, 
+            src = tuple(sorted(filter(os.path.isdir, 
                 (pjoin(repo.base, 'metadata', 'glsa') for repo in
                     get_virtual_repos(src, False) if hasattr(repo, 'base'))
-                )
+                )))
         else:
             src = [src]
         self.paths = src
@@ -228,6 +232,9 @@ class SecurityUpgrades(object):
     pkgcore_config_type = ConfigHint({'ebuild_repo': 'ref:repo',
                                       'vdb': 'ref:vdb'},
                                      typename='pkgset')
+
+    __metaclass__ = generic_equality
+    __attr_comparison__ = ('arch', 'glsa_src', 'vdb')
 
     def __init__(self, ebuild_repo, vdb, arch):
         self.glsa_src = GlsaDirSet(ebuild_repo)

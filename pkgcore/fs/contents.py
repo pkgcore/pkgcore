@@ -7,6 +7,7 @@ contents set- container of fs objects
 
 from pkgcore.fs import fs
 from pkgcore.util.compatibility import all
+from pkgcore.util.klass import generic_equality
 
 def check_instance(obj):
     if not isinstance(obj, fs.fsBase):
@@ -16,6 +17,9 @@ def check_instance(obj):
 
 class contentsSet(object):
     """set of L{fs<pkgcore.fs.fs>} objects"""
+
+    __metaclass__ = generic_equality
+    __attr_comparison__ = ('_dict',)
 
     def __init__(self, initial=None, mutable=True):
 
@@ -72,16 +76,6 @@ class contentsSet(object):
             self._dict.pop(obj.location, None)
         else:
             self._dict.pop(obj, None)
-
-    def __eq__(self, other):
-        if isinstance(other, contentsSet):
-            return self._dict == other._dict
-        return False
-
-    def __ne__(self, other):
-        if isinstance(other, contentsSet):
-            return self._dict != other._dict
-        return True
 
     def __getitem__(self, obj):
         if isinstance(obj, fs.fsBase):

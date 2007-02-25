@@ -81,6 +81,10 @@ class TestCase(unittest.TestCase, object):
         self._testMethodName = methodName
         unittest.TestCase.__init__(self, methodName)
 
+    def assertLen(self, obj, length, msg=None):
+        self.failUnless(len(obj) == length,
+            msg or '%r needs to be len %i, is %i' % (obj, length, len(obj)))
+
     def assertIdentical(self, this, other, reason=None):
         self.failUnless(
             this is other, reason or '%r is not %r' % (this, other))

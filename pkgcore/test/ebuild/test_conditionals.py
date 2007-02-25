@@ -95,6 +95,8 @@ class native_DepSetParsingTest(base):
             for idx, x in enumerate(v):
                 if isinstance(x, (list, tuple)):
                     v2.append(set(x))
+                else:
+                    v2.append(x)
             v = v2
         else:
             v = s.split()
@@ -154,7 +156,7 @@ class native_DepSetParsingTest(base):
             name = "'%s'" % x[0]
         else:
             name = "'%s'" % x
-#        locals()["test_parse %s" % name] = post_curry(check_depset, x)
+        locals()["test_parse %s" % name] = post_curry(check_depset, x)
         locals()["test_str %s" % name] = post_curry(check_str, x)
 
     def check_known_conditionals(self, text, conditionals):

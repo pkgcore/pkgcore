@@ -3,6 +3,7 @@
 
 
 import operator
+from random import random
 
 from pkgcore.test import TestCase
 from pkgcore.util import obj
@@ -69,13 +70,65 @@ class TestDelayedInstantiation(TestCase):
         self.assertFalse(l)
 
 
-SporkDict = obj.make_SlottedDict_kls(['spork'])
-
-
 class SlottedDictTest(TestCase):
 
-    def test_exceptions(self):
-        d = SporkDict()
+    kls = staticmethod(obj.make_SlottedDict_kls)
+
+    def test_reuse(self):
+        # intentionally randomizing this a bit.
+        a_ord = ord('a')
+        z_ord = ord('z')
+        l = []
+        for x in xrange(10):
+            s = ''
+            for c in xrange(10):
+                s += chr(a_ord + int(random() * (z_ord - a_ord)))
+            l.append(s)
+        d = self.kls(l)
+        self.assertEqual(tuple(sorted(l)), d.__slots__)
+        # check sorting.
+        d2 = self.kls(reversed(l))
+        self.assertIdentical(d, d2)
+
+    def test_dict_basics(self):
+        d = self.kls(['spork'])()
         for op in (operator.getitem, operator.delitem):
             self.assertRaises(KeyError, op, d, 'spork')
             self.assertRaises(KeyError, op, d, 'foon')
+
+        d = self.kls(['spork', 'foon'])((('spork', 1),))
+        self.assertLen(d, 1)
+        self.assertEqual(d.get('spork'), 1)
+        self.assertIn('spork', d)
+        del d['spork']
+        self.assertEqual(d.get('spork'), None)
+        self.assertEqual(d.get('spork', 3), 3)
+
+        d['spork'] = 2
+        self.assertLen(d, 1)
+        self.assertEqual(d.get('spork'), 2)
+        self.assertEqual(d.pop('spork'), 2)
+        self.assertRaises(KeyError, d.pop, 'spork')
+        # check pop complains about too many args.
+        self.assertRaises(TypeError, d.pop, 'spork', 'foon', 'dar')
+        self.assertEqual(d.pop('spork', 2), 2)
+        
+        self.assertLen(d, 0)
+        self.assertRaises(KeyError, d.__getitem__, 'spork')
+        self.assertLen(d, 0)
+        self.assertNotIn('spork', d)
+        d['foon'] = 2
+        self.assertIn('foon', d)
+        d['spork'] = 1
+        self.assertIn('spork', d)
+        self.assertLen(d, 2)
+        self.assertEqual(sorted(d), ['foon', 'spork'])
+        self.assertEqual(sorted(d.itervalues()), [1,2])
+        self.assertEqual(sorted(d.iterkeys()), ['foon', 'spork'])
+        self.assertEqual(sorted(d.keys()), sorted(d.iterkeys()),
+            reflective=False)
+        self.assertEqual(sorted(d.values()), sorted(d.itervalues()),
+            reflective=False)
+        d.clear()
+        self.assertLen(d, 0)
+        

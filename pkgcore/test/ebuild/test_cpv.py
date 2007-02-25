@@ -8,6 +8,8 @@ from pkgcore.ebuild import cpv
 class native_CpvTest(TestCase):
 
     kls = staticmethod(cpv.native_CPV)
+    run_cpy_ver_cmp = False
+    
     good_cats = [
         "dev-util", "asdf", "dev+", "dev-util+", "DEV-UTIL", "aaa0", "zzz9",
         "aaa-0", "multi/depth", "cross-dev_idiot.hacks-suck", "a"]
@@ -153,10 +155,20 @@ class native_CpvTest(TestCase):
             self.assertEqual(c.version, ver)
             self.assertEqual(c.fullver, ver + rev)
 
+    def assertGT(self, obj1, obj2):
+        self.failUnless(obj1 > obj2, '%r must be > %r' % (obj1, obj2))
+        # swap the ordering, so that it's no longer obj1.__cmp__, but obj2s
+        self.failUnless(obj2 < obj1, '%r must be < %r' % (obj2, obj1))
 
-    def verify_gt(self, obj1, obj2):
-        self.assertTrue(cmp(obj1, obj2) > 0)
-        self.assertTrue(cmp(obj2, obj1) < 0)
+        if self.run_cpy_ver_cmp and obj1.fullver and obj2.fullver:
+            self.assertTrue(cpv.cpy_ver_cmp(obj1.version, obj1.revision,
+                obj2.version, obj2.revision) > 0,
+                    'cpy_ver_cmp, %r > %r' % (obj1, obj2))
+            self.assertTrue(cpv.cpy_ver_cmp(obj2.version, obj2.revision,
+                obj1.version, obj1.revision) < 0,
+                    'cpy_ver_cmp, %r < %r' % (obj2, obj1))
+            
+                    
 
     def test_cmp(self):
         kls = self.kls
@@ -174,19 +186,24 @@ class native_CpvTest(TestCase):
                     sufs = [suf, suf+"4"]
                 for x in sufs:
                     cur = kls(base+x+rev)
-                    self.assertEqual(cmp(cur, kls(base+x+rev)), 0)
+                    self.assertEqual(cur, kls(base+x+rev))
                     if last is not None:
-                        self.verify_gt(cur, last)
+                        self.assertGT(cur, last)
 
-        self.verify_gt(
+        self.assertGT(
             kls("dev-util/diffball-cvs.6"), kls("dev-util/diffball-600"))
-        self.verify_gt(
+        self.assertGT(
             kls("dev-util/diffball-cvs.7"), kls("dev-util/diffball-cvs.6"))
-        self.verify_gt(kls("da/ba-6a"), kls("da/ba-6"))
-        self.verify_gt(kls("da/ba-6a-r1"), kls("da/ba-6a"))
-        self.verify_gt(kls("da/ba-6.0"), kls("da/ba-6"))
-        self.verify_gt(kls("da/ba-6.0b"), kls("da/ba-6.0.0"))
+        self.assertGT(kls("da/ba-6a"), kls("da/ba-6"))
+        self.assertGT(kls("da/ba-6a-r1"), kls("da/ba-6a"))
+        self.assertGT(kls("da/ba-6.0"), kls("da/ba-6"))
+        self.assertGT(kls("da/ba-6.0b"), kls("da/ba-6.0.0"))
+        self.assertGT(kls("da/ba-6.02"), kls("da/ba-6.0.0"))
+        # float comparison rules.
+        self.assertGT(kls("da/ba-6.2"), kls("da/ba-6.054"))
         self.assertEqual(kls("da/ba-6"), kls("da/ba-6"))
+        self.assertGT(kls("db/ba"), kls("da/ba"))
+        self.assertGT(kls("da/bb"), kls("da/ba"))
 
     def test_no_init(self):
         """Test if the cpv is in a somewhat sane state if __init__ fails.
@@ -215,6 +232,9 @@ class CPY_CpvTest(native_CpvTest):
         kls = staticmethod(cpv.cpy_CPV)
     else:
         skip = "cpython cpv extension not available"
+
+    run_cpy_ver_cmp = True
+
 
 class CPY_Cpv_OptionalArgsTest(CPY_CpvTest):
 

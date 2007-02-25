@@ -16,7 +16,7 @@ class MatchTest(TestCase):
         parser = parserestrict.comma_separated_containment('utensil')
         restrict = parser('spork,foon')
         # Icky, should really try to match a fake package.
-        self.assertTrue(isinstance(restrict, packages.PackageRestriction))
+        self.assertInstance(restrict, packages.PackageRestriction)
         self.assertEqual('utensil', restrict.attr)
         valrestrict = restrict.restriction
         self.assertTrue(valrestrict.match(('foon',)))
@@ -26,10 +26,12 @@ class MatchTest(TestCase):
 
 class TestExtendedRestrictionGeneration(TestCase):
 
+    def assertInstance(self, restrict, kls, token):
+        TestCase.assertInstance(self, restrict, kls,
+            msg="got %r, expected %r for %r" % (restrict, kls, token))
+
     def verify_text_glob(self, restrict, token):
-        self.assertTrue(
-            isinstance(restrict, values.StrGlobMatch),
-            msg="isinstance testing for %r against %r" % (token, restrict))
+        self.assertInstance(restrict, values.StrGlobMatch, token)
         self.assertEqual(
             restrict.prefix, token.endswith("*"),
             msg="testing for %r against %r: val %r" % (
@@ -40,17 +42,11 @@ class TestExtendedRestrictionGeneration(TestCase):
                 restrict.glob, token))
 
     def verify_text(self, restrict, token):
-        self.assertTrue(
-            isinstance(restrict, values.StrExactMatch),
-            msg="verifying restrict %r from %r is StrExactMatch" % (
-                restrict, token))
+        self.assertInstance(restrict, values.StrExactMatch, token)
         self.assertEqual(restrict.exact, token)
 
     def verify_text_containment(self, restrict, token):
-        self.assertTrue(
-            isinstance(restrict, values.ContainmentMatch),
-            msg="verifying restrict %r from %r is ContainmentMatch" % (
-                restrict, token))
+        self.assertInstance(restrict, values.ContainmentMatch, token)
         self.assertEqual(list(restrict.vals), [token.strip("*")])
 
     def test_convert_glob(self):
@@ -71,9 +67,7 @@ class TestExtendedRestrictionGeneration(TestCase):
             parserestrict.ParseError, parserestrict.convert_glob, '***')
 
     def verify_restrict(self, restrict, attr, token):
-        self.assertTrue(
-            isinstance(restrict, packages.PackageRestriction),
-            msg="isinstance verification of %r %r" % (token, restrict))
+        self.assertInstance(restrict, packages.PackageRestriction, token)
         self.assertEqual(
             restrict.attr, attr,
             msg="verifying package attr %r; required(%s), token %s" % (
@@ -102,27 +96,27 @@ class TestExtendedRestrictionGeneration(TestCase):
     test_package = post_curry(generic_single_restrict_check, False)
 
     def test_combined(self):
-        self.assertTrue(
-            isinstance(parserestrict.parse_match("dev-util/diffball"), atom))
+        self.assertInstance(parserestrict.parse_match("dev-util/diffball"),
+            atom, "dev-util/diffball")
         for token in ("dev-*/util", "dev-*/util*", "dev-a/util*"):
             i = parserestrict.parse_match(token)
-            self.assertTrue(isinstance(i, boolean.AndRestriction))
+            self.assertInstance(i, boolean.AndRestriction, token)
             self.assertEqual(len(i), 2)
             self.verify_restrict(i[0], "category", token.split("/")[0])
             self.verify_restrict(i[1], "package", token.split("/")[1])
 
     def test_atom_globbed(self):
-        o = parserestrict.parse_match("=sys-devel/gcc-4*")
-        self.assertTrue(isinstance(o, atom), msg="%r must be an atom" % o)
+        self.assertInstance(parserestrict.parse_match("=sys-devel/gcc-4*"),
+            atom, "=sys-devel/gcc-4*")
 
     def test_use_atom(self):
         o = parserestrict.parse_match("net-misc/openssh[-X]")
-        self.assertTrue(isinstance(o, atom), msg="%r must be an atom" % o)
+        self.assertInstance(o, atom, "net-misc/openssh[-X]")
         self.assertTrue(o.use)
 
     def test_slot_atom(self):
         o = parserestrict.parse_match("sys-devel/automake:1.6")
-        self.assertTrue(isinstance(o, atom), msg="%r must be an atom" % o)
+        self.assertInstance(o, atom, "sys-devel/automake:1.6")
         self.assertTrue(o.slot)
 
 

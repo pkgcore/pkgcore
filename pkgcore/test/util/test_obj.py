@@ -14,7 +14,7 @@ make_DIkls = obj.DelayedInstantiation_kls
 class TestDelayedInstantiation(TestCase):
 
     def test_simple(self):
-        t = tuple([1, 2, 3])
+        t = (1, 2, 3)
         o = make_DI(tuple, lambda:t)
         objs = [o, t]
         self.assertEqual(*map(str, objs))
@@ -28,7 +28,22 @@ class TestDelayedInstantiation(TestCase):
         self.assertTrue(t >= o)
         self.assertFalse(t > o)
         self.assertFalse(t != o)
+        
+        # test pass through; __doc__ is useful anyways, and 
+        # always available on tuple due to it being a builtin
+        self.assertIdentical(t.__doc__, o.__doc__)
 
+    def test_nonspecial(self):
+        class foo(object):
+            pass
+        f = make_DI(foo, lambda:None)
+        # it lies about it's class.  thus bypass it's web of lies...
+        self.assertIdentical(object.__getattribute__(f, '__class__'),
+            obj.BaseDelayedObject)
+
+    def test_DelayedInstantiation_kls(self):
+        t = (1, 2, 3)
+        self.assertEqual(make_DIkls(tuple, [1,2,3]), t)
 
     def test_descriptor_awareness(self):
         o = set(obj.kls_descriptors.difference(dir(object)))

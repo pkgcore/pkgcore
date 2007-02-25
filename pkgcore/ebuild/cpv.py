@@ -6,6 +6,7 @@
 """gentoo ebuild specific base package class"""
 
 from pkgcore.ebuild.errors import InvalidCPV
+from pkgcore.util.klass import generic_equality
 
 from pkgcore.package import base
 # do this to break the cycle.
@@ -44,11 +45,10 @@ class native_CPV(object):
     @cvar _get_attr: mapping of attr:callable to generate attributes on the fly
     """
 
-#	__metaclass__ = WeakInstMeta
-
-#	__inst_caching__ = True
     __slots__ = ("__weakref__", "cpvstr", "key", "category", "package",
         "version", "revision", "fullver")
+    __metaclass__ = generic_equality
+    __attr_comparison__ = ('cpvstr',)
 
     # if native is being used, forget trying to reuse strings.
     def __init__(self, *a):
@@ -90,11 +90,6 @@ class native_CPV(object):
 
     def __str__(self):
         return getattr(self, 'cpvstr', 'None')
-
-    def __eq__(self, other):
-        if isinstance(other, native_CPV):
-            return self.cpvstr == other.cpvstr
-        return False
 
     def __cmp__(self, other):
 

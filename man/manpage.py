@@ -1,6 +1,7 @@
-# $Id: manpage.py 4831 2006-12-11 15:29:50Z grubert $
-# Author: Engelbert Gruber <grubert@users.sourceforge.net>
-# Copyright: This module is put into the public domain.
+# Copyright: 2007 Brian Harring <ferringb@gmail.com>
+# Copyright: ?-2006 Engelbert Gruber <grubert@users.sourceforge.net>
+# Original Author: Englebert Gruber
+# License: Public Domain
 
 """
 Man page formatting for reStructuredText.

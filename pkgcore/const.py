@@ -1,4 +1,4 @@
-# Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
 # Copyright: 2000-2005 Gentoo Foundation
 # License: GPL2
 

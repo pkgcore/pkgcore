@@ -1,4 +1,4 @@
-# Copyright: 2005 Brian harring <ferringb@gmail.com>
+# Copyright: 2005-2006 Brian harring <ferringb@gmail.com>
 # License: GPL2
 
 """

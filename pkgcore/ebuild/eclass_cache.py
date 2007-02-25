@@ -1,5 +1,5 @@
-# Copyright: 2005 Brian Harring <ferringb@gmail.com>
-# Copyright: 2000-2005 Gentoo Foundation
+# Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
+# Based upon eclass_cache from portage; matches api, but was reimplemented.
 # License: GPL2
 
 """

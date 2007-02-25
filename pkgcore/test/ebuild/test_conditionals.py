@@ -1,4 +1,4 @@
-# Copyright: 2005 Brian Harring <ferringb@gentoo.org>
+# Copyright: 2005-2007 Brian Harring <ferringb@gentoo.org>
 # License: GPL2
 
 from pkgcore.test import TestCase

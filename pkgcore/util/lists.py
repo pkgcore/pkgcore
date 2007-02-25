@@ -1,4 +1,5 @@
-# Copyright: 2005 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
+# Copyright: ???? Time Peters, pulled from python cookbook.
 # License: GPL2
 
 """

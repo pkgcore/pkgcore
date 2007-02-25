@@ -1,5 +1,5 @@
 /*
- * Copyright: 2006 Brian Harring <ferringb@gmail.com>
+ * Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
  * License: GPL2
  *
  * C version of some of pkgcore (for extra speed).

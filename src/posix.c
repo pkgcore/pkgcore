@@ -248,7 +248,7 @@ pkgcore_read_open_and_stat(PyObject *path,
     int *fd, struct stat *st)
 {
     errno = 0;
-    if((*fd = open(PyString_AsString(path), O_RDONLY|O_LARGEFILE)) >= 0) {
+    if((*fd = open(PyString_AsString(path), O_RDONLY)) >= 0) {
         int ret = fstat(*fd, st);
         if(!ret) {
             return 0;

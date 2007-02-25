@@ -16,7 +16,7 @@ class collapsed_restrict_to_data(object):
     __metaclass__ = generic_equality
     __attr_comparison__ = ('defaults', 'freeform', 'atoms', '__class__')
 
-    def __init__(self, *restrict_pairs):
+    def __init__(self, *restrict_sources):
         """
         descriptive, no?
 
@@ -30,12 +30,15 @@ class collapsed_restrict_to_data(object):
         cat = []
         pkg = []
         atom_d = {}
-        for iterable in restrict_pairs:
-            for a, data in iterable:
+        for restrict_pairs in restrict_sources:
+            for a, data in restrict_pairs:
                 if not data:
                     continue
                 if isinstance(a, restriction.AlwaysBool):
-                    always.extend(data)
+                    # yes, odd attr name, but negate holds the val to return.
+                    # note also, we're dropping AlwaysFalse; it'll never match.
+                    if a.negate:
+                        always.extend(data)
                 elif isinstance(a, atom):
                     atom_d.setdefault(a.key, []).append((a, data))
                 elif isinstance(a, packages.PackageRestriction):

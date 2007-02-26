@@ -21,3 +21,16 @@ class TempDirMixin(TestCase):
             for directory in dirs:
                 os.chmod(os.path.join(root, directory), 0777)
         shutil.rmtree(self.dir)
+
+def tempdir_decorator(func):
+    def f(self, *args, **kwargs):
+        self.dir = tempfile.mkdtemp()
+        try:
+            os.chmod(self.dir, 0700)
+            return func(self, *args, **kwargs)
+        finally:
+            for root, dirs, files in os.walk(self.dir):
+                for directory in dirs:
+                    os.chmod(os.path.join(root, directory), 0777)
+            shutil.rmtree(self.dir)
+    return f

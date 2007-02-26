@@ -193,7 +193,7 @@ def config_from_make_conf(location="/etc/"):
     add_profile(new_config, base_path)
 
     kwds = {"class": "pkgcore.vdb.repository",
-            "location": pjoin(config_root, 'var', 'db', 'pkg')}
+            "location": pjoin(root, 'var', 'db', 'pkg')}
     kwds["cache_location"] = pjoin(config_root, 'var', 'cache', 'edb', 
         'dep', 'var', 'db', 'pkg')
     new_config["vdb"] = basics.AutoConfigSection(kwds)
@@ -372,7 +372,8 @@ def config_from_make_conf(location="/etc/"):
             'default': True,
             'vdb': ('vdb',),
             'profile': 'profile',
-            'name': 'livefs domain'})
+            'name': 'livefs domain',
+            'ROOT':root})
     for f in (
         "package.mask", "package.unmask", "package.keywords", "package.use",
             "bashrc"):

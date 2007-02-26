@@ -265,6 +265,16 @@ class package_factory(metadata.factory):
     def get_ebuild_src(self, pkg):
         return self._parent_repo._get_ebuild_src(pkg)
 
+    def _get_ebuild_path(self, pkg):
+        return self._parent_repo._get_ebuild_path(pkg)
+
+    def _get_ebuild_mtime(self, pkg):
+        return os.stat(self._get_ebuild_path(pkg)).st_mtime
+
+    def _invalidated_eclasses(self, data, pkg):
+        return (data.get("_eclasses_") is not None and not
+            self._ecache.is_eclass_data_valid(data["_eclasses_"]))
+
     def _get_metadata(self, pkg):
         for cache in self._cache:
             if cache is not None:
@@ -276,7 +286,7 @@ class package_factory(metadata.factory):
                     logger.warn("caught cache error: %s" % ce)
                     del ce
                     continue
-                if long(data.pop("_mtime_", -1)) != pkg._mtime_ or \
+                if long(data.pop("_mtime_", -1)) != long(pkg._mtime_) or \
                     self._invalidated_eclasses(data, pkg):
                     if not cache.readonly:
                         del cache[pkg.cpvstr]
@@ -285,16 +295,6 @@ class package_factory(metadata.factory):
 
         # no cache entries, regen
         return self._update_metadata(pkg)
-
-    def _invalidated_eclasses(self, data, pkg):
-        return (data.get("_eclasses_") is not None and not
-            self._ecache.is_eclass_data_valid(data["_eclasses_"]))
-
-    def _get_ebuild_path(self, pkg):
-        return self._parent_repo._get_ebuild_path(pkg)
-
-    def _get_ebuild_mtime(self, pkg):
-        return long(os.stat(self._get_ebuild_path(pkg)).st_mtime)
 
     def _update_metadata(self, pkg):
         ebp = processor.request_ebuild_processor()

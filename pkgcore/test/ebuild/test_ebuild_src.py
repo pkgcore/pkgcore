@@ -1,13 +1,17 @@
 # Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.test import TestCase
-from pkgcore.ebuild import ebuild_src, repo_objs
-from pkgcore import fetch
+from pkgcore.ebuild import ebuild_src, repo_objs, const, eclass_cache
 from pkgcore.package import errors
-from pkgcore.ebuild import const
-from pkgcore.util.currying import post_curry
+from pkgcore import fetch
+from pkgcore.util.osutils import pjoin
+from pkgcore.util.currying import post_curry, partial
 from pkgcore.util.lists import iflatten_instance
+
+from pkgcore.test import TestCase, mallable_obj
+from pkgcore.test.mixins import tempdir_decorator
+from pkgcore.test.ebuild.test_eclass_cache import FakeEclassCache
+import os
 
 class test_base(TestCase):
 
@@ -231,3 +235,94 @@ class test_package(test_base):
         m = repo_objs.Manifest(None)
         o = self.make_shared_pkg_data(manifest=m)
         self.assertIdentical(o.manifest, m)
+
+
+class test_package_factory(TestCase):
+
+    kls = ebuild_src.package_factory
+
+    def mkinst(self, repo=None, cache=(), eclasses=None, mirrors={},
+        default_mirrors={}, **overrides):
+        o = self.kls(repo, cache, eclasses, mirrors, default_mirrors)
+        for k, v in overrides.iteritems():
+            object.__setattr__(o, k, v)
+        return o
+
+    def test_mirrors(self):
+        mirrors_d = {'gentoo':['http://bar/', 'http://far/']}
+        mirrors = dict((k, fetch.mirror(v,k)) for k,v in mirrors_d.iteritems())
+        pf = self.mkinst(mirrors=mirrors_d)
+        self.assertLen(pf._cache, 0)
+        self.assertEqual(sorted(pf.mirrors), sorted(mirrors))
+        self.assertEqual(pf.mirrors['gentoo'], mirrors['gentoo'])
+        self.assertEqual(pf.default_mirrors, None)
+        
+        def_mirrors = ['http://def1/', 'http://blah1/']
+        pf = self.mkinst(default_mirrors=def_mirrors)
+        self.assertEqual(pf.mirrors, {})
+        self.assertEqual(list(pf.default_mirrors), def_mirrors)
+
+    def test_get_ebuild_src(self):
+        self.assertEqual(self.mkinst(repo=mallable_obj(
+            _get_ebuild_src=lambda s:"lincoln haunts me: %s" % s)
+            ).get_ebuild_src("1"),  "lincoln haunts me: 1")
+
+    @tempdir_decorator
+    def test_get_ebuild_mtime(self):
+        f = pjoin(self.dir, "temp-0.ebuild")
+        open(f, 'w')
+        cur = os.stat_float_times()
+        try:
+            for x in (False, True):
+                os.stat_float_times(x)
+                self.assertEqual(self.mkinst(repo=mallable_obj(
+                    _get_ebuild_path=lambda s:f))._get_ebuild_mtime(None),
+                    os.stat(f).st_mtime)
+        finally:
+            os.stat_float_times(cur)
+    
+    def test_get_metadata(self):
+        ec = FakeEclassCache('/nonexistant/path')
+        pkg = mallable_obj(_mtime_=100, cpvstr='dev-util/diffball-0.71')
+
+        class fake_cache(dict):
+            readonly = False
+        
+        cache1 = fake_cache({pkg.cpvstr:
+            {'_mtime_':100, '_eclasses_':{'eclass1':(None, 100)}, 'marker':1}
+        })
+        cache2 = fake_cache({})
+        
+        class explode_kls(AssertionError):pass
+        
+        def explode(name, *args, **kwargs):
+            raise explode_kls("%s was called with %r and %r, "
+                "shouldn't be invoked." % (name, args, kwargs))
+        
+        pf = self.mkinst(cache=(cache2, cache1), eclasses=ec,
+            _update_metadata=partial(explode, '_update_metadata'))
+
+        self.assertEqual(pf._get_metadata(pkg),
+            {'_eclasses_':{'eclass1':(None, 100)}, 'marker':1},
+            reflective=False)
+        
+        self.assertEqual(cache1.keys(), [pkg.cpvstr])
+        self.assertFalse(cache2)
+
+        # mtime was wiped, thus no longer is usable.
+        # note also, that the caches are writable.
+        self.assertRaises(explode_kls, pf._get_metadata, pkg)
+        self.assertFalse(cache2)
+        self.assertFalse(cache1)
+        
+        cache2.update({pkg.cpvstr:
+            {'_mtime_':200, '_eclasses_':{'eclass1':(None, 100)}, 'marker':2}
+        })
+        cache2.readonly = True
+        self.assertRaises(explode_kls, pf._get_metadata, pkg)
+        self.assertEqual(cache2.keys(), [pkg.cpvstr])
+        # keep in mind the backend assumes it gets it's own copy of the data.
+        # thus, modifying (popping _mtime_) _is_ valid
+        self.assertEqual(cache2[pkg.cpvstr],
+            {'_eclasses_':{'eclass1':(None, 100)}, 'marker':2})
+        

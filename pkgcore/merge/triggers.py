@@ -159,7 +159,7 @@ class mtime_watcher(object):
                 os.stat_float_times(cur)
         return mtime_floats_wrapper
     
-    def __nonzeroo(self):
+    def __nonzero__(self):
         return bool(self.saved_mtimes)
     
     @staticmethod

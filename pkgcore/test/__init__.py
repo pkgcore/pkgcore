@@ -284,3 +284,8 @@ class TestRestriction(TestCase):
         self.assertNotForceTrue(obj, force_args, negated=negated, msg=msg)
         self.assertForceFalse(obj, force_args, negated=negated, msg=msg)
         
+
+class mallable_obj(object):
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+            

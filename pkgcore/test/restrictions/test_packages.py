@@ -3,7 +3,8 @@
 # License: GPL2
 
 
-from pkgcore.test import TestCase, protect_logging, TestRestriction
+from pkgcore.test import (TestCase, protect_logging, TestRestriction,
+    mallable_obj)
 from pkgcore.restrictions import packages, values
 from pkgcore.util.currying import partial, post_curry
 from pkgcore import log
@@ -29,10 +30,6 @@ class AlwaysSelfIntersect(values.base):
         return self
 
     __hash__ = object.__hash__
-
-class simple_obj(object):
-    def __init__(self, **kwds):
-        self.__dict__.update(kwds)
 
 
 class DummyIntersectingValues(values.base):
@@ -66,7 +63,7 @@ class native_PackageRestrictionTest(TestRestriction):
         strexact = values.StrExactMatch
 
         log.logging.root.handlers = [quiet_logger]
-        args = [simple_obj(category="foon", package="dar")]
+        args = [mallable_obj(category="foon", package="dar")]
         self.assertMatches(self.kls("category", strexact("foon")), args)
         self.assertMatches(self.kls("package", strexact("dar")), args)
         self.assertNotMatches(self.kls("package", strexact("dar"), negate=True),

@@ -44,6 +44,9 @@ class mirror(object):
     """
     uri source representing a mirror tier
     """
+    __metaclass__ = generic_equality
+    __attr_comparison__ = ('mirror_name', 'mirrors')
+
     __slots__ = ("mirrors", "mirror_name")
 
     def __init__(self, mirrors, mirror_name):

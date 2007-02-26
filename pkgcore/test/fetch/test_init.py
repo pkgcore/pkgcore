@@ -61,6 +61,11 @@ class TestMirror(base):
     def test_getitem(self):
         self.assertEqual(self.mirror[1], self.default_mirrors[1])
 
+    def test_eq_ne(self):
+        self.assertEqual(self.mirror, self.kls(self.default_mirrors, 'fork'))
+        self.assertNotEqual(self.mirror,
+            self.kls(self.default_mirrors + ['http://fark'], 'fork'))
+
 
 class TestDefaultMirror(TestMirror):
 

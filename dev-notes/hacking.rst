@@ -385,7 +385,7 @@ You can't modify them, therefore there is no point in trying to make copies of t
 
 
 __del__ methods mess with garbage collection
-===========================================
+============================================
 
 __del__ methods have the annoying side affect of blocking garbage
 collection when that instance is involved in a cycle- basically, the

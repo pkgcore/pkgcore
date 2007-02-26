@@ -19,10 +19,10 @@ class FakeEclassCache(eclass_cache.base):
             "eclass2":(path, 200)}
 
 
-class TestBase(TempDirMixin, TestCase):
+class TestBase(TestCase):
 
     def setUp(self):
-        TempDirMixin.setUp(self)
+        self.dir = '/nonexistant/path/'
         self.ec = FakeEclassCache(self.dir)
         self.ec_locs = dict((x, self.dir) for x in ("eclass1", "eclass2"))
 
@@ -55,7 +55,7 @@ class TestBase(TempDirMixin, TestCase):
         self.assertEqual(data, {"eclass1":(self.ec_locs["eclass1"], 100)})
 
 
-class TestEclassCache(TestBase):
+class TestEclassCache(TempDirMixin, TestBase):
 
     def setUp(self):
         TempDirMixin.setUp(self)

@@ -119,7 +119,7 @@ class Translator(nodes.NodeVisitor):
         'field_name' : ('\n.TP\n.B ', '\n'),
         'literal_block' : ('\n.nf\n', '\n.fi\n'),
         'option_list' : ('', ''),
-        'option_list_item' : ('.TP', ''),
+        'option_list_item' : ('\n.TP', ''),
         'reference' : ('', ''),
         'strong' : ('\n.B ', ''),
         'term' : ('\n.B ', '\n'),
@@ -128,7 +128,10 @@ class Translator(nodes.NodeVisitor):
     def f(mode, k, val):
         def f2(self, node):
             if val:
-                self.body.append(val)
+                if self.body and self.body[-1].endswith('\n'):
+                    self.body.append(val.lstrip('\n'))
+                else:
+                    self.body.append(val)
         return f2
 
     for k,v in simple_defs.iteritems():

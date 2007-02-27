@@ -5,14 +5,24 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.6:
 
+* added man page generation: pquery, pmerge
+
 * pebuild now supports --no-auto to run just the targeted phase.
 
-* mass expansion of test coverage in pkgcore.restrictions.*
+* mass expansion of test coverage: pkgcore.restrictions.*,
+  pkgcore.util.*, pkgcore.ebuild.*
+
+* diverge from unittest.TestCase to provide extra checks for normal asserts-
+  assertNotEqual for example, checks both __eq__ and __ne__ now to smoke out
+  any potential oversights in object equality implementation.
+
+* use nsec mtime resolution if available to match python stdlib.
 
 * env var PORTAGE_DEBUG for controlling how much debug info the ebuild env
   generates is now PKGCORE_DEBUG; range is the same, 0 (none), 1 (just the 
   ebuild/eclass), 2 (1 + relevant setup code), 3 (2 + filter-env data),
   4 (everything).
+
 
 pkgcore 0.2.5:
 

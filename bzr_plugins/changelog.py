@@ -11,6 +11,10 @@ class MyLogFormatter(LogFormatter):
 
     def show(self, revno, rev, delta):
 
+        # skip commits that just pulled history in.
+        if not (delta.renamed or delta.removed or delta.modified):
+            return
+
         to_file = self.to_file
         rev_date = format_date(rev.timestamp, rev.timezone or 0,
                 self.show_timezone, date_fmt="%Y-%m-%d",

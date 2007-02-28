@@ -18,6 +18,8 @@ class mysdist(sdist.sdist):
 
     user_options = sdist.sdist.user_options + [
         ('changelog', None, 'create a ChangeLog [default]'),
+        ('changelog-start=', None, 'start rev to dump the changelog from,'
+            ' defaults to 1'),
         ('no-changelog', None, 'do not create the ChangeLog file'),
         ]
 
@@ -32,6 +34,7 @@ class mysdist(sdist.sdist):
     def initialize_options(self):
         sdist.sdist.initialize_options(self)
         self.changelog = True
+        self.changelog_start = None
 
     def get_file_list(self):
         """Get a filelist without doing anything involving MANIFEST files."""
@@ -75,9 +78,12 @@ class mysdist(sdist.sdist):
         """
         sdist.sdist.make_release_tree(self, base_dir, files)
         if self.changelog:
+            args = []
+            if self.changelog_start:
+                args = ['-r', '%s..-1' % self.changelog_start]
             log.info("regenning ChangeLog (may take a while)")
             if subprocess.call(
-                ['bzr', 'log', '--verbose'],
+                ['bzr', 'log', '--verbose'] + args,
                 stdout=open(os.path.join(base_dir, 'ChangeLog'), 'w')):
                 raise errors.DistutilsExecError('bzr log failed')
         log.info('generating bzr_verinfo')

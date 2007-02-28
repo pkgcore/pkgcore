@@ -571,8 +571,8 @@ class Test_fix_set_bits(single_attr_change_base, TestCase):
 
     @staticmethod
     def good_val(val):
-        if val & 06000:
-            return val & ~00002
+        if val & 06000 and val & 0002:
+            return val & ~06002
         return val
 
 

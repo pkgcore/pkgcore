@@ -461,9 +461,8 @@ class fix_set_bits(base):
                         "UNSAFE world writable SetUID: %s" % (x.location,))
 
         if l:
-            # filters the 02, for those who aren't accustomed to
-            # screwing with mode.
-            cset.update(x.change_attributes(mode=x.mode & ~02) for x in l)
+            # wipe setgid/setuid
+            cset.update(x.change_attributes(mode=x.mode & ~06002) for x in l)
 
 
 class detect_world_writable(base):

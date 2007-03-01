@@ -60,7 +60,7 @@ class file_build_observer(build_observer, file_phase_observer):
     pass
 
 
-class file_repo_observer(repo_base, file_phase_observer):
+class file_repo_observer(file_phase_observer, repo_base):
 
     def __init__(self, out, semiquiet=True):
         self._out = out

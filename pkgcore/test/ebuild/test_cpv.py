@@ -4,14 +4,13 @@
 from pkgcore.test import TestCase
 from pkgcore.ebuild import cpv
 
-
 class native_CpvTest(TestCase):
 
     kls = staticmethod(cpv.native_CPV)
     run_cpy_ver_cmp = False
     
     good_cats = [
-        "dev-util", "asdf", "dev+", "dev-util+", "DEV-UTIL", "aaa0", "zzz9",
+        "dev-util", "dev+", "dev-util+", "DEV-UTIL", "aaa0",
         "aaa-0", "multi/depth", "cross-dev_idiot.hacks-suck", "a"]
     bad_cats  = [".util", "_dev", "", "dev-util ", "multi//depth"]
     good_pkgs = ["diffball", "a9", "a9+", "a-100dpi", "a-cvs"]
@@ -21,13 +20,10 @@ class native_CpvTest(TestCase):
         "bbb-9/foon", "dev-util/diffball", "dev-util/diffball-a9",
         "dev-ut-asdf/emacs-cvs", "xfce-base/xfce4", "bah/f-100dpi"]
 
-    good_vers = ["1", "2.3.4", "2.3.4a", "02.3", "2.03"]
-    good_vers = ["cvs.%s" % x for x in good_vers] + good_vers
+    good_vers = ["1", "2.3.4", "2.3.4a", "02.3", "2.03", "cvs.2", "cvs.2.03"]
     bad_vers  = ["2.3a.4", "2.a.3", "2.3_", "2.3 ", "2.3."]
     simple_good_sufs = ["_alpha", "_beta", "_pre", "_p"]
-    good_sufs = (simple_good_sufs +
-                 ["%s1" % x for x in simple_good_sufs] +
-                 ["%s932" % x for x in simple_good_sufs])
+    good_sufs = (simple_good_sufs +["%s1" % x for x in simple_good_sufs])
     l = len(good_sufs)
     good_sufs = good_sufs + [
         good_sufs[x] + good_sufs[l - x - 1] for x in xrange(l)]

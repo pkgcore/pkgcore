@@ -13,5 +13,6 @@ pkgcore_plugins = {
         triggers.fix_set_bits,
         triggers.detect_world_writable,
         triggers.InfoRegen,
+        triggers.CommonDirectoryModes,
         ],
     }

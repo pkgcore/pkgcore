@@ -35,8 +35,6 @@ DISPLAY \(EBUILD\)\?_PHASE PORTAGE_.* RC_.* SUDO_.* IFS PATH LD_PRELOAD ret line
 PORT\(_LOGDIR\|DIR\(_OVERLAY\)\?\) ROOT TERM _ done e ENDCOLS PROFILE_.* BRACKET BAD WARN GOOD NORMAL EBUILD ECLASS LINENO
 HILITE IMAGE TMP"
 
-# flip this on to enable extra noisy output for debugging.
-#DEBUGGING="yes"
 
 # XXX: required for migration from .51 to this.
 if [ -z "$PORTAGE_BIN_PATH" ]; then
@@ -258,27 +256,6 @@ dump_environ() {
         shopt -p | sed -e 's:^:    :; s/;*$/;/;'
         echo "}"
     fi
-    
-    if [ -n "${DEBUGGING}" ]; then
-        echo "#dumping debug info"
-        echo "#var filter..."
-        echo "#$(gen_var_filter ${DONT_EXPORT_VARS} f x | sort)"
-        echo "#"
-        echo "#funcs"
-        declare -F | sed -e 's:^:# :'
-        echo "#"
-        echo "#func filter..."
-        echo "#$(gen_func_filter ${DONT_EXPORT_FUNCS} | sort)"
-        echo "#DONT_EXPORT_VARS follow"
-        for x in `echo $DONT_EXPORT_VARS | sort`; do
-            echo "#    $x";
-        done
-        echo ""
-        echo "#DONT_EXPORT_FUNCS follow"
-        for x in `echo $DONT_EXPORT_FUNCS | sort`; do
-            echo "#    $x";
-        done
-    fi
 }
 
 # dump environ to $1, optionally piping it through $2 and redirecting $2's output to $1.
@@ -329,15 +306,10 @@ load_environ() {
 
     [ ! -f "$1" ] && die "load_environ called with a nonexist env: $1"
 
-    if [ -n "$DEBUGGING" ]; then
-        echo "loading env for $EBUILD_PHASE" >&2
-    fi
-
     if [ -z "$1" ]; then
         die "load_environ called with no args, need args"
     fi
     src="$1"
-    [ -n "$DEBUGGING" ] && echo "loading environment from $src" >&2
 
     if [ -f "$src" ]; then
 

@@ -159,7 +159,8 @@ class base(metadata.package):
     _get_attr["provides"] = generate_providers
     _get_attr["depends"] = partial(generate_depset, atom, "DEPEND", False)
     _get_attr["rdepends"] = partial(generate_depset, atom, "RDEPEND", False)
-    _get_attr["post_rdepends"] = partial(generate_depset, atom, "PDEPEND", False)
+    _get_attr["post_rdepends"] = partial(generate_depset, atom, "PDEPEND",
+                                         False)
     _get_attr["license"] = partial(generate_depset,
         intern, "LICENSE", True)
     _get_attr["slot"] = get_slot # lambda s: s.data.pop("SLOT", "0").strip()

@@ -112,15 +112,13 @@ class CollapsedConfig(object):
             if typename is None:
                 continue
             # central already checked the type, no need to repeat that here.
-            if typename.startswith('ref:') or typename == 'section_ref':
-                if typename.endswith(':config'):
-                    continue
+            if typename.startswith('ref:'):
                 try:
                     config[name] = val.instantiate()
                 except errors.ConfigurationError, e:
                     e.stack.append('Instantiating ref %r' % (name,))
                     raise
-            elif typename.startswith('refs:') or typename == 'section_refs':
+            elif typename.startswith('refs:'):
                 try:
                     config[name] = list(ref.instantiate() for ref in val)
                 except errors.ConfigurationError, e:
@@ -299,6 +297,17 @@ class ConfigManager(object):
 
     def collapse_section(self, section, _refs=None):
         """Collapse a ConfigSection to a L{CollapsedConfig}."""
+
+        # Bail if this is an inherit-only (uncollapsable) section.
+        try:
+            inherit_only = section.get_value(self, 'inherit-only', 'bool')
+        except KeyError:
+            pass
+        else:
+            if inherit_only:
+                raise errors.CollapseInheritOnly(
+                    'cannot collapse inherit-only section')
+
         # List of (name, ConfigSection) tuples, most specific first.
         slist = [(None, section)]
 
@@ -335,7 +344,7 @@ class ConfigManager(object):
         conf = {}
         for inherit_name, inherit_conf in slist:
             for key in inherit_conf.keys():
-                if key in ('class', 'inherit'):
+                if key in ('class', 'inherit', 'inherit-only'):
                     continue
                 if key in conf and key not in type_obj.incrementals:
                     continue
@@ -352,16 +361,10 @@ class ConfigManager(object):
                             'Type of %r unknown' % (key,))
                     else:
                         typename = 'str'
-                is_ref = (typename == 'section_ref' or
-                          typename.startswith('ref:'))
-                is_refs = (typename == 'section_refs' or
-                           typename.startswith('refs:'))
+                is_ref = typename.startswith('ref:')
+                is_refs = typename.startswith('refs:')
                 # The sections do not care about lazy vs nonlazy.
-                if typename == 'lazy_ref':
-                    typename = 'section_ref'
-                elif typename == 'lazy_refs':
-                    typename = 'section_refs'
-                elif typename.startswith('lazy_'):
+                if typename.startswith('lazy_'):
                     typename = typename[5:]
                 result = inherit_conf.get_value(self, key, typename)
                 if is_ref:

@@ -68,7 +68,7 @@ def initialize_cache(package):
                         stored_cache[module] = (mtime, entries)
                 except ValueError:
                     # Corrupt cache, treat as empty.
-                    cachefile = {}
+                    stored_cache = {}
             finally:
                 cachefile.close()
         cache_stale = False
@@ -131,10 +131,12 @@ def initialize_cache(package):
                              stored_cache_name, e)
             else:
                 cachefile = os.fdopen(fd, 'w')
-                for module, (mtime, entries) in actual_cache.iteritems():
-                    cachefile.write(
-                        '%s:%s:%s\n' % (module, mtime, ':'.join(entries)))
-                cachefile.close()
+                try:
+                    for module, (mtime, entries) in actual_cache.iteritems():
+                        cachefile.write(
+                            '%s:%s:%s\n' % (module, mtime, ':'.join(entries)))
+                finally:
+                    cachefile.close()
                 os.chmod(name, 0644)
                 os.rename(name, stored_cache_name)
         # Update the package_cache.

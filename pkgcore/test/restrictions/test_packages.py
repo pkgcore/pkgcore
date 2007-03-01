@@ -4,7 +4,7 @@
 
 
 from pkgcore.test import (TestCase, protect_logging, TestRestriction,
-    mallable_obj)
+    mallable_obj, quiet_logger)
 from pkgcore.restrictions import packages, values
 from pkgcore.util.currying import partial, post_curry
 from pkgcore import log
@@ -18,12 +18,6 @@ class callback_logger(log.logging.Handler):
     def emit(self, record):
         self.callback(record)
 
-
-class quiet_logger(log.logging.Handler):
-    def emit(self, record):
-        pass
-
-quiet_logger = quiet_logger()
 
 class AlwaysSelfIntersect(values.base):
     def intersect(self, other):

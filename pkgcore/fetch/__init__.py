@@ -123,6 +123,4 @@ class uri_list(object):
             ', '.join(str(x) for x in self._uri_source))
 
     def __nonzero__(self):
-        for x in self:
-            return True
-        return False
+        return bool(self._uri_source)

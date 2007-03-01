@@ -12,7 +12,7 @@ from pkgcore.config import central, basics, errors, configurable
 # A bunch of functions used from various tests below.
 def repo(cache):
     return cache
-@configurable({'content': 'section_ref', 'contents': 'section_refs'})
+@configurable({'content': 'ref:drawer', 'contents': 'refs:drawer'})
 def drawer(content=None, contents=None):
     return content, contents
 
@@ -291,10 +291,11 @@ class ConfigManagerTest(TestCase):
         # The most likely bug this tests for is attempting to
         # reprocess already processed section_ref args.
         spork = object()
-        @configurable({'thing': 'section_ref'})
+        @configurable({'thing': 'ref:spork'})
         def myrepo(thing):
             self.assertIdentical(thing, spork)
             raise errors.InstantiationError('I suck')
+        @configurable(typename='spork')
         def spork_producer():
             return spork
         manager = central.ConfigManager(
@@ -318,6 +319,7 @@ class ConfigManagerTest(TestCase):
                 klass=errors.InstantiationError)
 
     def test_instantiation_caching(self):
+        @configurable(typename='drawer')
         def myrepo():
             return object()
 
@@ -511,6 +513,7 @@ class ConfigManagerTest(TestCase):
             manager.get_default, 'broken')
 
     def test_instantiate_broken_ref(self):
+        @configurable(typename='drawer')
         def broken():
             raise errors.InstantiationError('broken')
         manager = central.ConfigManager([{
@@ -611,34 +614,6 @@ class ConfigManagerTest(TestCase):
             ['repo!'],
             [c.instantiate() for c in manager.repo['right'][0]])
 
-    def test_untyped_lazy_refs(self):
-        @configurable({'myrepo': 'lazy_ref', 'thing': 'lazy_ref'},
-                      typename='repo')
-        def reporef(myrepo=None, thing=None):
-            return myrepo, thing
-        @configurable({'myrepo': 'lazy_refs', 'thing': 'lazy_refs'},
-                      typename='repo')
-        def reporefs(myrepo=None, thing=None):
-            return myrepo, thing
-        @configurable(typename='repo')
-        def myrepo():
-            return 'repo!'
-        manager = central.ConfigManager([{
-                    'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
-                    'right':  basics.AutoConfigSection({'class': reporef,
-                                                        'myrepo': 'myrepo'}),
-                    }], [object()])
-        self.assertEqual('repo!', manager.repo['right'][0].instantiate())
-
-        manager = central.ConfigManager([{
-                    'myrepo': basics.HardCodedConfigSection({'class': myrepo}),
-                    'right':  basics.AutoConfigSection({'class': reporefs,
-                                                        'myrepo': 'myrepo'}),
-                    }], [object()])
-        self.assertEqual(
-            ['repo!'],
-            [c.instantiate() for c in manager.repo['right'][0]])
-
     def test_inherited_default(self):
         manager = central.ConfigManager([{
                     'default': basics.HardCodedConfigSection({
@@ -681,3 +656,19 @@ class ConfigManagerTest(TestCase):
                     }], [RemoteSource()])
         collapsed = manager.collapse_named_section('thing')
         self.assertEqual('thing', collapsed.name)
+
+    def test_inherit_only(self):
+        manager = central.ConfigManager([{
+                    'source': basics.HardCodedConfigSection({
+                            'class': drawer,
+                            'inherit-only': True,
+                            }),
+                    'target': basics.HardCodedConfigSection({
+                            'inherit': ['source'],
+                            })}], [RemoteSource()])
+        self.check_error(
+            "Collapsing section named 'source':\n"
+            'cannot collapse inherit-only section',
+            manager.collapse_named_section, 'source',
+            klass=errors.CollapseInheritOnly)
+        self.assertTrue(manager.collapse_named_section('target'))

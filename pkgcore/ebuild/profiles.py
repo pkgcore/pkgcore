@@ -321,7 +321,8 @@ class OnDiskProfile(object):
                     s = d.get(key, None)
                     if s is None:
                         s = d[key] = set()
-                    incremental_expansion(s, val, "expanding %s make.defaults: " % profile)
+                    incremental_expansion(s, val,
+                        "expanding %s make.defaults: " % profile)
                     if not s:
                         del d[key]
                 else:
@@ -428,4 +429,5 @@ class AliasedVirtuals(virtual.tree):
             for x in self.aliased_repo.itermatch(self._virtuals[catpkg[1]]))
 
     def _fetch_metadata(self, pkg):
-        return atom.atom("=%s-%s" % (self._virtuals[pkg.package].key, pkg.fullver))
+        return atom.atom("=%s-%s" % (self._virtuals[pkg.package].key,
+            pkg.fullver))

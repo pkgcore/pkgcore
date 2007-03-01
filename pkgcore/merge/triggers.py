@@ -23,9 +23,8 @@ demandload(globals(), "os errno "
     "pkgcore.fs.livefs:gen_obj "
     "pkgcore.fs:fs,contents "
     "pkgcore.util.file:iter_read_bash "
-    "pkgcore.util.compatibility:any "
     "time "
-    "math:ceil,floor "
+    "math:floor "
     )
 
 UNINSTALLING_MODES = (const.REPLACE_MODE, const.UNINSTALL_MODE)
@@ -131,16 +130,16 @@ class mtime_watcher(object):
     """
     passed a list of locations, return a L{contents.contentsSet} containing
     those that are directories.
-    
+ 
     If the location doesn't exist, it's ignored.  If stat_func is os.stat
     and the location is a symlink pointing at a non existant location, it's
     ignored.
-    
+
     Additionally, since this function is used for effectively 'snapshotting'
     related directories, if any mtimes are *now* (fs doesn't do subsecond
     resolution, osx for example), induces a sleep for a second to ensure
     any later re-runs do not get bit by completing within the race window.
-    
+ 
     Finally, if any mtime is detected that is in the future, it is reset
     to 'now'.
     """
@@ -148,7 +147,7 @@ class mtime_watcher(object):
     def __init__(self):
         self.saved_mtimes = None
         self.locations = None
-    
+ 
     def mtime_floats(func):
         def mtime_floats_wrapper(self, *args, **kwargs):
             cur = os.stat_float_times()
@@ -158,10 +157,10 @@ class mtime_watcher(object):
             finally:
                 os.stat_float_times(cur)
         return mtime_floats_wrapper
-    
+
     def __nonzero__(self):
         return bool(self.saved_mtimes)
-    
+
     @staticmethod
     def _scan_mtimes(locations, stat_func):
         for x in locations:
@@ -174,7 +173,7 @@ class mtime_watcher(object):
             obj = gen_obj(x, stat=st)
             if fs.isdir(obj):
                 yield obj
-    
+ 
     @mtime_floats
     def set_state(self, locations, stat_func=os.stat, forced_past=2):
         """
@@ -352,7 +351,7 @@ class InfoRegen(base):
         # wipe old indexes.
         for x in set(ignores).intersection(files):
             os.remove(pjoin(basepath, x))
-            
+
         index = pjoin(basepath, 'dir')
         for x in files:
             if x in ignores:

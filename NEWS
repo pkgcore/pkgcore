@@ -7,6 +7,8 @@ pkgcore 0.2.6:
 
 * added man page generation: pquery, pmerge
 
+* pconfig now has a "dump-uncollapsed" command to dump the "raw" config.
+
 * pebuild now supports --no-auto to run just the targeted phase.
 
 * mass expansion of test coverage: pkgcore.restrictions.*,

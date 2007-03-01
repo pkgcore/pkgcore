@@ -38,8 +38,10 @@ Example of the supported format (not a complete config)::
     }
 """
 
-from pkgcore.util import mappings, modules
+from pkgcore.util import mappings, modules, demandload
 from pkgcore.config import basics, errors
+
+demandload.demandload(globals(), 'pkgcore.util.compatibility:all')
 
 import pyparsing as pyp
 
@@ -96,7 +98,7 @@ class ConfigSection(basics.ConfigSection):
             if not callable(value):
                 raise errors.ConfigurationError('%r is not callable' % value)
             return value
-        elif arg_type == 'section_ref' or arg_type.startswith('ref:'):
+        elif arg_type.startswith('ref:'):
             if len(value) != 1:
                 raise errors.ConfigurationError('only one argument required')
             value = value[0]
@@ -107,7 +109,7 @@ class ConfigSection(basics.ConfigSection):
                 # it's an anonymous inline section
                 return basics.LazyUnnamedSectionRef(central, arg_type,
                                                     ConfigSection(value))
-        elif arg_type == 'section_refs' or arg_type.startswith('refs:'):
+        elif arg_type.startswith('refs:'):
             result = []
             for ref in value:
                 if isinstance(ref, basestring):
@@ -124,6 +126,24 @@ class ConfigSection(basics.ConfigSection):
                 # sequence
                 value = ' '.join(value)
             return basics.list_parser(value)
+        elif arg_type == 'repr':
+            if len(value) == 1:
+                value = value[0]
+                if isinstance(value, basestring):
+                    return 'str', value
+                else:
+                    return 'ref', ConfigSection(value)
+            else:
+                if all(isinstance(v, basestring) for v in value):
+                    return 'list', list(value)
+                result = []
+                for v in value:
+                    if isinstance(v, basestring):
+                        result.append(v)
+                    else:
+                        result.append(ConfigSection(v))
+                return 'refs', result
+            assert False, 'unreachable'
         else:
             if len(value) != 1:
                 raise errors.ConfigurationError('only one argument required')

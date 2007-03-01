@@ -10,7 +10,6 @@ import os
 import stat
 from pkgcore.config import basics, configurable
 from pkgcore import const
-from pkgcore.ebuild import const as ebuild_const
 from pkgcore.util.osutils import (normpath, abspath, listdir_files,
     join as pjoin)
 from pkgcore.util.demandload import demandload
@@ -23,12 +22,8 @@ demandload(globals(), "errno pkgcore.config:errors "
 
 def my_convert_hybrid(manager, val, arg_type):
     """Modified convert_hybrid using a sequence of strings for section_refs."""
-    subtype = None
-    if arg_type == 'section_refs':
-        subtype = 'section_ref'
-    elif arg_type.startswith('refs:'):
+    if arg_type.startswith('refs:'):
         subtype = 'ref:' + arg_type.split(':', 1)[1]
-    if subtype is not None:
         return list(
             basics.LazyNamedSectionRef(manager, subtype, name)
             for name in val)
@@ -58,7 +53,7 @@ def make_syncer(basedir, sync_uri, options):
         if 'RSYNC_TIMEOUT' in options:
             d['timeout'] = options.pop('RSYNC_TIMEOUT').strip()
         if 'RSYNC_EXCLUDEFROM' in options:
-            opts.extend('--exclude-from=%s' % x
+            d['extra_opts'].extend('--exclude-from=%s' % x
                 for x in options.pop('RSYNC_EXCLUDEFROM').split())
         if 'RSYNC_RETRIES' in options:
             d['retries'] = options.pop('RSYNC_RETRIES').strip()
@@ -216,10 +211,11 @@ def config_from_make_conf(location="/etc/"):
     new_config['ebuild-repo-common'] = basics.AutoConfigSection({
             'class': 'pkgcore.ebuild.repository.tree',
             'default_mirrors': gentoo_mirrors,
+            'inherit-only': True,
             'eclass_cache': 'eclass stack'})
     new_config['cache-common'] = basics.AutoConfigSection({
             'class': 'pkgcore.cache.flat_hash.database',
-            'auxdbkeys': ebuild_const.metadata_keys,
+            'inherit-only': True,
             'location': pjoin(config_root, 'var', 'cache', 'edb', 'dep'),
             })
 
@@ -243,7 +239,6 @@ def config_from_make_conf(location="/etc/"):
                 'class': 'pkgcore.cache.metadata.database',
                 'location': portdir,
                 'label': 'portdir cache',
-                'auxdbkeys': ebuild_const.metadata_keys,
                 'readonly': 'yes'})
     else:
         new_config["portdir cache"] = basics.AutoConfigSection({

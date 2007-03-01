@@ -160,6 +160,7 @@ bits::
  class=pkgcore.ebuild.repository.UnconfiguredTree
  default_mirrors='http://ftp.easynet.nl/mirror/gentoo//distfiles'
  eclass_cache='eclass stack'
+ inherit-only=true
 
  [/usr/local/portage/private]
  inherit=stuff-common-to-repos
@@ -174,13 +175,9 @@ bits::
  ; And do the same thing for the caches.
 
 There is nothing special about sections used as target for "inherit".
-They can be complete sections, although they do not have to be. That
-is why pconfig uncollapsable will mention the "stuff-common-to-repos"
-section: it is uncollapsable (because it misses the "location" and
-"cache" settings) and pconfig cannot know that is intentional (it is
-possible to use a section as both an inherit target and a standalone
-section, in which case you *would* want to know why it is not
-collapsable).
+They can be complete sections, although they do not have to be. If
+they are not complete sections you should set inherit-only to true for
+them, to make pconfig uncollapsable ignore errors in them.
 
 Actually the portage emulation mode uses inherit targets too, so you
 could just have inherited "ebuild-repo-common". Inherit targets do not

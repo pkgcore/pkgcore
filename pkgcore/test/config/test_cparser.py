@@ -53,4 +53,4 @@ ref = 'missing'
         self.assertRaises(
             errors.ConfigurationError,
             section.get_value(
-                central.ConfigManager([]), 'ref', 'section_ref').collapse)
+                central.ConfigManager([]), 'ref', 'ref:drawer').collapse)

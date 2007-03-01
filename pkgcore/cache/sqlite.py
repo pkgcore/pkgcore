@@ -43,7 +43,7 @@ class database(fs_template.FsBased, sql_template.SQLDatabase):
                 "WHERE type=\"trigger\" AND name=%s" %
                 self._sfilter(self.SCHEMA_DELETE_NAME))
             if self.con.rowcount == 0:
-                self.con.execute(self.SCHEMA_DELETE_TRIGGER);
+                self.con.execute(self.SCHEMA_DELETE_TRIGGER)
                 self.db.commit()
         except self._BaseError, e:
             raise errors.InitializationError(self.__class__, e)

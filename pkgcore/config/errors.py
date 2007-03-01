@@ -37,6 +37,13 @@ class ConfigurationError(BaseException):
         return ':\n'.join(reversed(self.stack))
 
 
+class CollapseInheritOnly(ConfigurationError):
+    """Attempt was made to collapse an uncollapsable section.
+
+    Separate exception because pconfig catches it separately.
+    """
+
+
 class InstantiationError(ConfigurationError):
 
     """Exception occured during instantiation.
@@ -88,14 +95,10 @@ class InstantiationError(ConfigurationError):
         return ':\n'.join(reversed([message] + self.stack[1:]))
 
 
-class QuoteInterpretationError(BaseException):
+class QuoteInterpretationError(ConfigurationError):
 
-    """Quoting of a var was screwed up.
-
-    It may be useful to catch this and raise a ConfigurationError at a
-    point where the filename is known.
-    """
+    """Quoting of a var was screwed up."""
 
     def __init__(self, string):
-        BaseException.__init__(self, "Parsing of %r failed" % (string,))
+        ConfigurationError.__init__(self, "Parsing of %r failed" % (string,))
         self.str = string

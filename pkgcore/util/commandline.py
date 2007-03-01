@@ -234,7 +234,12 @@ class OptionParser(optparse.OptionParser):
         return values, args
 
 
-def main(subcommands, args=None, sys_exit=True):
+class MySystemExit(SystemExit):
+    """Subclass of SystemExit the tests can safely catch."""
+
+
+def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
+         script_name=None):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
     Takes one or more combinations of option parser and main func and
@@ -253,14 +258,21 @@ def main(subcommands, args=None, sys_exit=True):
         exit status or None as synonym for 0.
     @type  args: sequence of strings
     @param args: arguments to parse, defaulting to C{sys.argv[1:]}.
-    @type  sys_exit: boolean
-    @param sys_exit: if True C{sys.exit} is called when done, otherwise
-        the exitstatus is returned.
+    @type  outfile: file-like object
+    @param outfile: File to use for stdout, defaults to C{sys.stdout}.
+    @type  errfile: file-like object
+    @param errfile: File to use for stderr, defaults to C{sys.stderr}.
+    @type  script_name: string
+    @param script_name: basename of this script, defaults to the basename
+        of C{sys.argv[0]}.
     """
     exitstatus = 1
     if args is None:
         args = sys.argv[1:]
-    prog = os.path.basename(sys.argv[0])
+    if script_name is None:
+        prog = os.path.basename(sys.argv[0])
+    else:
+        prog = script_name
     parser_class = None
     if args:
         parser_class, main_func = subcommands.get(args[0], (None, None))
@@ -271,22 +283,20 @@ def main(subcommands, args=None, sys_exit=True):
         try:
             parser_class, main_func = subcommands[None]
         except KeyError:
-            if not sys_exit:
-                return 1
             # This tries to print in a format very similar to optparse --help.
-            sys.stderr.write(
+            errfile.write(
                 'Usage: %s <command>\n\nCommands:\n' % (prog,))
             maxlen = max(len(subcommand) for subcommand in subcommands) + 1
             for subcommand, (parser, main) in sorted(subcommands.iteritems()):
                 doc = main.__doc__
                 if doc is None:
-                    sys.stderr.write('  %s\n' % (subcommand,))
+                    errfile.write('  %s\n' % (subcommand,))
                 else:
                     doc = doc.split('\n', 1)[0]
-                    sys.stderr.write('  %-*s %s\n' % (maxlen, subcommand, doc))
-            sys.stderr.write(
+                    errfile.write('  %-*s %s\n' % (maxlen, subcommand, doc))
+            errfile.write(
                 '\nUse --help after a subcommand for more help.\n')
-            sys.exit(1)
+            raise MySystemExit(1)
     options = None
     option_parser = parser_class(prog=prog)
     out = None
@@ -302,8 +312,8 @@ def main(subcommands, args=None, sys_exit=True):
                 formatter_factory = formatters.PlainTextFormatter
             else:
                 formatter_factory = formatters.get_formatter
-            out = formatter_factory(sys.stdout)
-            err = formatter_factory(sys.stderr)
+            out = formatter_factory(outfile)
+            err = formatter_factory(errfile)
             if logging.root.handlers:
                 # Remove the default handler.
                 logging.root.handlers.pop(0)
@@ -312,16 +322,13 @@ def main(subcommands, args=None, sys_exit=True):
     except errors.ConfigurationError, e:
         if options is not None and options.debug:
             raise
-        sys.stderr.write('Error in configuration:\n%s\n' % (e,))
+        errfile.write('Error in configuration:\n%s\n' % (e,))
     except KeyboardInterrupt:
         if options is not None and options.debug:
             raise
     if out is not None:
         if exitstatus:
-            out.title('%s failed' % (os.path.basename(sys.argv[0]),))
+            out.title('%s failed' % (prog,))
         else:
-            out.title('%s succeeded' % (os.path.basename(sys.argv[0]),))
-    if sys_exit:
-        sys.exit(exitstatus)
-    else:
-        return exitstatus
+            out.title('%s succeeded' % (prog,))
+    raise MySystemExit(exitstatus)

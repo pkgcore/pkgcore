@@ -15,8 +15,7 @@ from pkgcore.util import currying
 from pkgcore.util.demandload import demandload
 demandload(globals(), "pkgcore.util:modules")
 
-type_names = (
-    "list", "str", "bool", "int", "section_ref", "section_refs")
+type_names = ("list", "str", "bool", "int")
 
 
 # Copied from inspect.py which copied it from compile.h.
@@ -44,7 +43,8 @@ class ConfigType(object):
          - True or False mean it's a boolean
          - a tuple means it's a list (of strings)
          - a str means it's a string
-         - some other object means it's a section_ref
+
+        Arguments with a default of a different type are ignored.
 
         If an argument has no default, it is assumed to be a string-
         exception to this is if the callable has a pkgcore_config_type
@@ -83,8 +83,6 @@ class ConfigType(object):
                 if isinstance(default, typeobj):
                     self.types[argname] = typename
                     break
-            else:
-                self.types[argname] = 'section_ref'
         # just [:-len(defaults)] doesn't work if there are no defaults
         self.positional = args[:len(args)-len(defaults)]
         # no defaults to determine the type from -> default to str.
@@ -133,11 +131,7 @@ class LazySectionRef(object):
 
     def __init__(self, central, typename):
         self.central = central
-        split = typename.split(':', 1)
-        if len(split) == 1:
-            self.typename = None
-        else:
-            self.typename = split[1]
+        self.typename = typename.split(':', 1)[1]
         self.cached_config = None
 
     def _collapse(self):
@@ -190,15 +184,15 @@ class ConfigSection(object):
 
     def __contains__(self, name):
         """Check if a key is in this section."""
-        raise NotImplementedError
+        raise NotImplementedError(self.__contains__)
 
     def keys(self):
         """Return a list of keys."""
-        raise NotImplementedError
+        raise NotImplementedError(self.keys)
 
     def get_value(self, central, name, arg_type):
         """Return a setting, converted to the requested type."""
-        raise NotImplementedError
+        raise NotImplementedError(self.get_value)
 
 
 class DictConfigSection(ConfigSection):
@@ -242,15 +236,13 @@ def convert_string(central, value, arg_type):
         if not callable(func):
             raise errors.ConfigurationError('%r is not callable' % (value,))
         return func
-    elif arg_type == 'section_refs' or arg_type.startswith('refs:'):
-        try:
-            return list(LazyNamedSectionRef(central, arg_type, ref)
-                        for ref in list_parser(value))
-        except errors.QuoteInterpretationError, e:
-            # TODO improve this (maybe)
-            raise errors.ConfigurationError(str(e))
-    elif arg_type == 'section_ref' or arg_type.startswith('ref:'):
+    elif arg_type.startswith('refs:'):
+        return list(LazyNamedSectionRef(central, arg_type, ref)
+                    for ref in list_parser(value))
+    elif arg_type.startswith('ref:'):
         return LazyNamedSectionRef(central, arg_type, str_parser(value))
+    elif arg_type == 'repr':
+        return 'str', value
     try:
         func = {
             'list': list_parser,
@@ -260,11 +252,7 @@ def convert_string(central, value, arg_type):
             }[arg_type]
     except KeyError:
         raise errors.ConfigurationError('Unknown type %r' % (arg_type,))
-    try:
-        return func(value)
-    except errors.QuoteInterpretationError, e:
-        # TODO improve this (maybe)
-        raise errors.ConfigurationError(str(e))
+    return func(value)
 
 def convert_asis(central, value, arg_type):
     """"Conversion" func assuming the types are already correct."""
@@ -272,12 +260,12 @@ def convert_asis(central, value, arg_type):
         if not callable(value):
             raise errors.ConfigurationError('%r is not callable' % (value,))
         return value
-    elif arg_type == 'section_ref' or arg_type.startswith('ref:'):
+    elif arg_type.startswith('ref:'):
         if not isinstance(value, ConfigSection):
             raise errors.ConfigurationError('%r is not a config section' %
                                             (value,))
         return LazyUnnamedSectionRef(central, arg_type, value)
-    elif arg_type == 'section_refs' or arg_type.startswith('refs:'):
+    elif arg_type.startswith('refs:'):
         l = []
         for section in value:
             if not isinstance(section, ConfigSection):
@@ -285,6 +273,21 @@ def convert_asis(central, value, arg_type):
                                                 (value,))
             l.append(LazyUnnamedSectionRef(central, arg_type, section))
         return l
+    elif arg_type == 'repr':
+        if callable(value):
+            return 'callable', value
+        if isinstance(value, ConfigSection):
+            return 'ref', value
+        if isinstance(value, str):
+            return 'str', value
+        if isinstance(value, bool):
+            return 'bool', value
+        if isinstance(value, (list, tuple)):
+            if not value or isinstance(value[0], str):
+                return 'list', value
+            if isinstance(value[0], ConfigSection):
+                return 'refs', value
+        raise errors.ConfigurationError('unsupported type for %r' % (value,))
     elif not isinstance(value, {'list': (list, tuple),
                                 'str': str,
                                 'bool': bool}[arg_type]):
@@ -313,18 +316,13 @@ ConfigSectionFromStringDict = currying.pre_curry(DictConfigSection,
 AutoConfigSection = currying.pre_curry(DictConfigSection, convert_hybrid)
 
 
-@configurable({'target': 'section_ref', 'typename': 'str'})
-def section_alias(target, typename=None):
+def section_alias(target, typename):
     """Build a ConfigSection that instantiates a named reference.
 
     Because of central's caching our instantiated value will be
     identical to our target's.
     """
-    if typename is None:
-        target_type = 'section_ref'
-    else:
-        target_type = 'ref:' + typename
-    @configurable({'target': target_type}, typename=typename)
+    @configurable({'target': 'ref:' + typename}, typename=typename)
     def alias(target):
         return target
     return AutoConfigSection({'class': alias, 'target': target})

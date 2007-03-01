@@ -23,7 +23,7 @@ from pkgcore.config import central, errors, configurable
 def passthrough(*args, **kwargs):
     return args, kwargs
 
-@configurable(types={'hi': 'str'})
+@configurable(types={'hi': 'str'}, typename='test')
 def testtype(*args, **kwargs):
     return args, kwargs
 
@@ -79,6 +79,15 @@ test {
                 ):
                 self.assertEqual(section.get_value(None, name, typename),
                                   value)
+            for name, typename, value in (
+                ('list', 'list', ['one', 'two', 'three']),
+                ('string', 'str', 'hi'),
+                ('bool', 'str', 'yes'),
+                ('callable', 'str',
+                 'pkgcore.test.config.test_dhcpformat.passthrough'),
+                ):
+                self.assertEqual(
+                    (typename, value), section.get_value(None, name, 'repr'))
 
     def test_section_ref(self):
         for parser, text in [
@@ -113,12 +122,15 @@ test {
             manager = central.ConfigManager([config])
             section = config['test']
             self.assertEqual(
-                section.get_value(manager, 'ref', 'section_ref').instantiate(),
+                section.get_value(manager, 'ref', 'ref:test').instantiate(),
                 ((), {'hi': 'there'}))
             self.assertEqual(
                 section.get_value(
-                    manager, 'inline', 'section_ref').instantiate(),
+                    manager, 'inline', 'ref:test').instantiate(),
                 ((), {'hi': 'here'}))
+            kind, ref = section.get_value(manager, 'inline', 'repr')
+            self.assertEqual('ref', kind)
+            self.assertEqual('here', ref.get_value(None, 'hi', 'str'))
 
     def test_multiple_section_ref(self):
         for parser, text in [
@@ -168,11 +180,16 @@ test {
             section = config['test']
             for name in ('ref', 'inline', 'mix'):
                 try:
-                    section.get_value(manager, name, 'section_ref')
+                    section.get_value(manager, name, 'ref:test')
                 except errors.ConfigurationError, e:
                     self.assertEqual('only one argument required', str(e))
                 else:
                     self.fail('no exception raised')
+            kind, refs = section.get_value(manager, 'mix', 'repr')
+            self.assertEqual('refs', kind)
+            self.assertEqual(2, len(refs))
+            self.assertEqual('target', refs[0])
+            self.assertEqual('here', refs[1].get_value(None, 'hi', 'str'))
 
     def test_section_refs(self):
         for parser, text in [
@@ -204,7 +221,7 @@ test {
             config = parser(StringIO(text))
             manager = central.ConfigManager([config])
             section = config['test']
-            refs = section.get_value(manager, 'refs', 'section_refs')
+            refs = section.get_value(manager, 'refs', 'refs:test')
             self.assertEqual(((), {'hi': 'there'}), refs[0].instantiate())
             self.assertEqual(((), {'hi': 'here'}), refs[1].instantiate())
 
@@ -242,11 +259,11 @@ test {
             section = config['test']
             self.assertEqual(
                 section.get_value(
-                    manager, 'inline', 'section_refs')[0].instantiate(),
+                    manager, 'inline', 'refs:test')[0].instantiate(),
                 ((), {'hi': 'here'}))
             self.assertEqual(
                 section.get_value(
-                    manager, 'ref', 'section_refs')[0].instantiate(),
+                    manager, 'ref', 'refs:test')[0].instantiate(),
                 ((), {'hi': 'there'}))
 
     def test_invalid_values(self):
@@ -288,7 +305,7 @@ test {
                 section.get_value, None, 'borkedimport', 'callable')
             self.assertRaises(
                 errors.ConfigurationError,
-                section.get_value, None, 'ref', 'section_ref')
+                section.get_value, None, 'ref', 'ref:test')
             self.assertRaises(
                 errors.ConfigurationError,
                 section.get_value, None, 'inlinecallable', 'callable')

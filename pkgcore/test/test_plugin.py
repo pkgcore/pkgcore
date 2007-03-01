@@ -2,13 +2,15 @@
 # License: GPL2
 
 
-from pkgcore.test import TestCase
+from pkgcore.test import TestCase, quiet_logger, protect_logging
 from pkgcore import plugin
+from pkgcore.util import lists
 
 import os
 import sys
 import shutil
 import tempfile
+import logging
 
 
 class ModulesTest(TestCase):
@@ -84,6 +86,15 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         sys.modules.pop('mod_testplug.plug', None)
         sys.modules.pop('mod_testplug.plug2', None)
 
+    def test_extend_path(self):
+        import mod_testplug
+        expected = lists.stable_unique(
+            os.path.join(p, 'mod_testplug')
+            for p in sys.path if os.path.isdir(p))
+        self.assertEqual(
+            expected, mod_testplug.__path__,
+            set(expected) ^ set(mod_testplug.__path__))
+
     def _runit(self, method):
         plugin._cache = {}
         method()
@@ -129,3 +140,70 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
 
     def test_no_unneeded_import(self):
         self._runit(self._test_no_unneeded_import)
+
+    def test_cache_corruption(self):
+        import mod_testplug
+        list(plugin.get_plugins('spork', mod_testplug))
+        filename = os.path.join(self.packdir, 'plugincache')
+        cachefile = open(filename, 'a')
+        try:
+            cachefile.write('corruption\n')
+        finally:
+            cachefile.close()
+        # Shift the file into the past a little or the rewritten file
+        # will occasionally have the same mtime as the corrupt one.
+        st = os.stat(filename)
+        corrupt_mtime = st.st_mtime - 2
+        os.utime(filename, (st.st_atime, corrupt_mtime))
+        plugin._cache = {}
+        self._test_plug()
+        good_mtime = os.path.getmtime(
+            os.path.join(self.packdir, 'plugincache'))
+        plugin._cache = {}
+        self._test_plug()
+        self.assertEqual(good_mtime, os.path.getmtime(
+                os.path.join(self.packdir, 'plugincache')))
+        self.assertNotEqual(good_mtime, corrupt_mtime)
+
+    @protect_logging(logging.root)
+    def test_broken_module(self):
+        logging.root.handlers = [quiet_logger]
+        filename = os.path.join(self.packdir, 'bug.py')
+        plug = open(filename, 'w')
+        try:
+            plug.write('this is not actually python\n')
+        finally:
+            plug.close()
+
+        plugin._cache = {}
+        self._test_plug()
+
+        filename = os.path.join(self.packdir, 'plugincache')
+        st = os.stat(filename)
+        mtime = st.st_mtime - 2
+        os.utime(filename, (st.st_atime, mtime))
+
+        plugin._cache = {}
+        self._test_plug()
+
+        # Should never write a usable cache.
+        self.assertNotEqual(
+            mtime, os.path.getmtime(os.path.join(self.packdir, 'plugincache')))
+
+    def test_rewrite_on_remove(self):
+        filename = os.path.join(self.packdir, 'extra.py')
+        plug = open(filename, 'w')
+        try:
+            plug.write('pkgcore_plugins = {"plugtest": [object()]}\n')
+        finally:
+            plug.close()
+
+        plugin._cache = {}
+        import mod_testplug
+        self.assertEqual(
+            3, len(list(plugin.get_plugins('plugtest', mod_testplug))))
+
+        os.unlink(filename)
+
+        plugin._cache = {}
+        self._test_plug()

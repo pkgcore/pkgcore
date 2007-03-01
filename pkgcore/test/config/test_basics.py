@@ -7,7 +7,7 @@ import tempfile
 
 from pkgcore.test import TestCase
 
-from pkgcore.config import basics, errors, ConfigHint, configurable
+from pkgcore.config import basics, errors, ConfigHint, configurable, central
 
 
 def passthrough(*args, **kwargs):
@@ -96,7 +96,7 @@ class ConfigTypeFromFunctionTest(TestCase):
         self.assertEqual(
             test_type.types,
             {'alist': 'list', 'astr': 'str', 'abool': 'bool',
-             'aref': 'section_ref', 'anint': 'int', 'along': 'int'})
+             'anint': 'int', 'along': 'int'})
         self.assertEqual(test_type.required, ())
 
     def _test_class_member(self, func):
@@ -119,13 +119,15 @@ class ConfigTypeFromFunctionTest(TestCase):
 
 class ConfigTypeFromClassTest(TestCase):
 
-    def _test_basics(self, klass, name, two_override='section_ref'):
+    def _test_basics(self, klass, name, two_override=None):
         test_type = basics.ConfigType(klass)
         self.assertEqual(test_type.name, name)
         self.assertEqual(sorted(test_type.required), ['one'])
-        self.assertEqual(
-            test_type.types,
-            {'one': 'str', 'two': two_override})
+        target_types = {'one': 'str'}
+        if two_override is not None:
+            target_types['two'] = two_override
+        self.assertEqual(target_types, test_type.types)
+        self.assertEqual(test_type.name, name)
 
     def test_oldstyle(self):
         self._test_basics(OldStyleClass, 'OldStyleClass')
@@ -139,8 +141,10 @@ class ConfigTypeFromClassTest(TestCase):
 
     def test_config_hint(self):
         class Class(NewStyleClass):
-            pkgcore_config_type = ConfigHint(types={'two':'bool'})
+            pkgcore_config_type = ConfigHint(
+                types={'two':'bool'}, doc='interesting')
         self._test_basics(Class, 'Class', two_override='bool')
+        self.assertEqual('interesting', basics.ConfigType(Class).doc)
 
 
 class ConfigHintDecoratorTest(TestCase):
@@ -160,7 +164,7 @@ class ConfigHintCloneTest(TestCase):
     def test_clone(self):
         c = ConfigHint(types={'foo':'list', 'one':'str'},
             positional=['one'], required=['one'],
-            incrementals=['foo'], typename='barn')
+            incrementals=['foo'], typename='barn', doc='orig doc')
         c2 = c.clone(types={'foo':'list', 'one':'str', 'two':'str'},
             required=['one', 'two'])
         self.assertEqual(c2.types, {'foo':'list', 'one':'str', 'two':'str'})
@@ -169,6 +173,7 @@ class ConfigHintCloneTest(TestCase):
         self.assertEqual(c2.incrementals, c.incrementals)
         self.assertEqual(c2.typename, c.typename)
         self.assertEqual(c2.allow_unknowns, c.allow_unknowns)
+        self.assertEqual(c2.doc, c.doc)
 
 
 class ConfigSectionTest(TestCase):
@@ -211,6 +216,11 @@ class ConfigSectionFromStringDictTest(TestCase):
         for typename, value in self.destination.iteritems():
             self.assertEqual(
                 value, self.section.get_value(None, typename, typename))
+
+        # reprs
+        for typename, value in self.source.iteritems():
+            self.assertEqual(
+                ('str', value), self.section.get_value(None, typename, 'repr'))
         # invalid gets
         # not callable
         self.assertRaises(
@@ -220,11 +230,18 @@ class ConfigSectionFromStringDictTest(TestCase):
         self.assertRaises(
             errors.ConfigurationError,
             self.section.get_value, None, 'bool', 'callable')
+        # Bogus type.
+        self.assertRaises(
+            errors.ConfigurationError,
+            self.section.get_value, None, 'bool', 'frob')
 
     def test_section_ref(self):
         section = basics.ConfigSectionFromStringDict(
             {'goodref': 'target', 'badref': 'missing'})
-        target_config = object()
+        def spoon():
+            """Noop."""
+        target_config = central.CollapsedConfig(
+            basics.ConfigType(spoon), {}, None)
         class TestCentral(object):
             def collapse_named_section(self, section):
                 try:
@@ -233,18 +250,22 @@ class ConfigSectionFromStringDictTest(TestCase):
                     raise errors.ConfigurationError(section)
         self.assertEqual(
             section.get_value(
-                TestCentral(), 'goodref', 'section_ref').collapse(),
+                TestCentral(), 'goodref', 'ref:spoon').collapse(),
             target_config)
         self.assertRaises(
             errors.ConfigurationError,
             section.get_value(
-                TestCentral(), 'badref', 'section_ref').instantiate)
+                TestCentral(), 'badref', 'ref:spoon').instantiate)
 
     def test_section_refs(self):
         section = basics.ConfigSectionFromStringDict(
             {'goodrefs': '1 2', 'badrefs': '2 3'})
-        config1 = object()
-        config2 = object()
+        def spoon():
+            """Noop."""
+        config1 = central.CollapsedConfig(
+            basics.ConfigType(spoon), {}, None)
+        config2 = central.CollapsedConfig(
+            basics.ConfigType(spoon), {}, None)
         class TestCentral(object):
             def collapse_named_section(self, section):
                 try:
@@ -253,9 +274,9 @@ class ConfigSectionFromStringDictTest(TestCase):
                     raise errors.ConfigurationError(section)
         self.assertEqual(
             list(ref.collapse() for ref in section.get_value(
-                    TestCentral(), 'goodrefs', 'section_refs')),
+                    TestCentral(), 'goodrefs', 'refs:spoon')),
             [config1, config2])
-        lazy_refs = section.get_value(TestCentral(), 'badrefs', 'section_refs')
+        lazy_refs = section.get_value(TestCentral(), 'badrefs', 'refs:spoon')
         self.assertEqual(2, len(lazy_refs))
         self.assertRaises(errors.ConfigurationError, lazy_refs[1].collapse)
 
@@ -291,50 +312,59 @@ class HardCodedConfigSectionTest(TestCase):
                         errors.ConfigurationError,
                         self.section.get_value, None, arg, typename)
 
+    def test_repr(self):
+        for typename, value in self.source.iteritems():
+            self.assertEqual(
+                (typename, value),
+                self.section.get_value(None, typename, 'repr'))
+        section = basics.HardCodedConfigSection({'bork': object()})
+        self.assertRaises(
+            errors.ConfigurationError,
+            section.get_value, None, 'bork', 'repr')
+
     def test_section_ref(self):
         ref = basics.HardCodedConfigSection({})
         section = basics.HardCodedConfigSection({'ref': 42, 'ref2': ref})
         self.assertRaises(errors.ConfigurationError,
-            section.get_value, None, 'ref', 'section_ref')
+            section.get_value, None, 'ref', 'ref:spoon')
         self.assertIdentical(
             ref,
-            section.get_value(None, 'ref2', 'section_ref').section)
+            section.get_value(None, 'ref2', 'ref:spoon').section)
+        self.assertEqual(
+            ('ref', ref), section.get_value(None, 'ref2', 'repr'))
 
     def test_section_refs(self):
         ref = basics.HardCodedConfigSection({})
         section = basics.HardCodedConfigSection({'refs': [1, 2],
                                                  'refs2': [ref]})
         self.assertRaises(errors.ConfigurationError,
-            section.get_value, None, 'refs', 'section_refs')
+            section.get_value, None, 'refs', 'refs:spoon')
         self.assertIdentical(
             ref,
-            section.get_value(None, 'refs2', 'section_refs')[0].section)
+            section.get_value(None, 'refs2', 'refs:spoon')[0].section)
+        self.assertEqual(
+            ('refs', [ref]), section.get_value(None, 'refs2', 'repr'))
 
 
 class AliasTest(TestCase):
 
     def test_alias(self):
-        foon = object()
+        def spoon():
+            """Noop."""
+        foon = central.CollapsedConfig(basics.ConfigType(spoon), {}, None)
         class MockManager(object):
             def collapse_named_section(self, name):
                 if name == 'foon':
                     return foon
                 return object()
         manager = MockManager()
-        alias = basics.section_alias('foon', 'spork')
+        alias = basics.section_alias('foon', 'spoon')
         type_obj = basics.ConfigType(alias.get_value(manager, 'class',
                                                      'callable'))
-        self.assertEqual('spork', type_obj.name)
+        self.assertEqual('spoon', type_obj.name)
         self.assertIdentical(
             foon,
-            alias.get_value(manager, 'target', 'section_ref').collapse())
-        alias = basics.section_alias('foon')
-        type_obj = basics.ConfigType(alias.get_value(manager, 'class',
-                                                     'callable'))
-        self.assertEqual('alias', type_obj.name)
-        self.assertIdentical(
-            foon,
-            alias.get_value(manager, 'target', 'section_ref').collapse())
+            alias.get_value(manager, 'target', 'ref:spoon').collapse())
 
 
 class ParsersTest(TestCase):
@@ -359,6 +389,7 @@ class ParsersTest(TestCase):
             ('1', 1),
             ('-100', -100)]:
             self.assertEqual(basics.int_parser(string), output)
+        self.assertRaises(errors.ConfigurationError, basics.int_parser, 'f')
 
     def test_str_parser(self):
         for string, output in [

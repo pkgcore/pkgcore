@@ -125,6 +125,7 @@ class StackedCaches(cache):
                 "%s requires at least two eclass_caches" % self.__class__)
 
         kwds.setdefault("eclassdir", caches[0].eclassdir)
-        kwds.setdefault("portdir", os.path.dirname(kwds["eclassdir"].rstrip(os.path.sep)))
+        kwds.setdefault("portdir",
+            os.path.dirname(kwds["eclassdir"].rstrip(os.path.sep)))
         base.__init__(self, **kwds)
         self.eclasses = StackedDict(*[ec.eclasses for ec in caches])

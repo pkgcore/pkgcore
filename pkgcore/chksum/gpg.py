@@ -21,9 +21,8 @@ def skip_signatures(iterable):
 #"""
 
     # localize this to this scope so it's faster.
-    sh, shl = sig_header, sig_header_len
-    sf, sfl = sig_footer, sig_footer_len
-    mh, mhl = msg_header, msg_header_len
+    sh = sig_header
+    sf = sig_footer
 
     for line in i:
         # so... prune msg first, then

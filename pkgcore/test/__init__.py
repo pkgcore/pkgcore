@@ -13,6 +13,8 @@ import sys
 import warnings
 import unittest
 
+from pkgcore import log
+
 
 def _tryResultCall(result, methodname, *args):
     method = getattr(result, methodname, None)
@@ -219,6 +221,13 @@ class TestCase(unittest.TestCase, object):
             result.stopTest(self)
 
 
+class QuietLogger(log.logging.Handler):
+    def emit(self, record):
+        pass
+
+quiet_logger = QuietLogger()
+
+
 def protect_logging(target):
     def f(func):
         def f_inner(*args, **kwds):
@@ -228,7 +237,7 @@ def protect_logging(target):
             finally:
                 target.handlers[:] = handlers
         return f_inner
-    return f        
+    return f
 
 
 class TestRestriction(TestCase):

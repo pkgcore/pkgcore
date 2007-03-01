@@ -28,9 +28,6 @@ class DescribeClassParser(commandline.OptionParser):
 
 
 def dump_section(config, out):
-    # ignore meta type defs.
-    if getattr(config.type, "typename", None) == 'type':
-        return
     out.first_prefix.append('    ')
     out.write('# typename of this section: %s' % (config.type.name,))
     out.write('class %s.%s;' % (config.type.callable.__module__,
@@ -43,14 +40,13 @@ def dump_section(config, out):
             if config.type.allow_unknowns:
                 typename = 'str'
             else:
-                out.write('# huh, no type set for %s (%r)' % (key, val))
-                continue
+                raise ValueError('no type set for %s (%r)' % (key, val))
         out.write('# type: %s' % (typename,))
         if typename.startswith('lazy_refs'):
-            typename = 'section_refs'
+            typename = typename[5:]
             val = list(ref.collapse() for ref in val)
         elif typename.startswith('lazy_ref'):
-            typename = 'section_ref'
+            typename = typename[5:]
             val = val.collapse()
         if typename == 'str':
             out.write('%s %r;' % (key, val))
@@ -60,15 +56,15 @@ def dump_section(config, out):
             out.write('%s %s;' % (
                     key, ' '.join(repr(string) for string in val)))
         elif typename == 'callable':
-            out.write('%s %s.%s' % (key, val.__module__, val.__name__))
-        elif typename == 'section_ref' or typename.startswith('ref:'):
+            out.write('%s %s.%s;' % (key, val.__module__, val.__name__))
+        elif typename.startswith('ref:'):
             if val.name is None:
                 out.write('%s {' % (key,))
                 dump_section(val, out)
                 out.write('};')
             else:
                 out.write('%s %r;' % (key, val.name))
-        elif typename == 'section_refs' or typename.startswith('refs:'):
+        elif typename.startswith('refs:'):
             out.autoline = False
             out.write('%s' % (key,))
             for i, subconf in enumerate(val):
@@ -91,17 +87,15 @@ def get_classes(configs):
     # Not particularly efficient (doesn't memoize already visited configs)
     classes = set()
     for config in configs:
-        if getattr(config.type, 'typename', None) == 'type':
-            continue
         classes.add('%s.%s' % (config.type.callable.__module__,
                                config.type.callable.__name__))
         for key, val in config.config.iteritems():
             typename = config.type.types.get(key)
             if typename is None:
                 continue
-            if typename == 'section_ref' or typename.startswith('ref:'):
+            if typename.startswith('ref:'):
                 classes.update(get_classes((val,)))
-            elif typename == 'section_refs' or typename.startswith('refs:'):
+            elif typename.startswith('refs:'):
                 classes.update(get_classes(val))
             elif typename.startswith('lazy_refs'):
                 classes.update(get_classes(c.collapse() for c in val))
@@ -116,10 +110,8 @@ def classes_main(options, out, err):
     for name in configmanager.sections():
         try:
             sections.append(configmanager.collapse_named_section(name))
-        except errors.ConfigurationError:
-            if options.debug:
-                traceback.print_exc()
-            # Otherwise ignore this.
+        except errors.CollapseInheritOnly:
+            pass
     for classname in sorted(get_classes(sections)):
         out.write(classname)
 
@@ -146,7 +138,7 @@ def describe_class_main(options, out, err):
     try:
         type_obj = basics.ConfigType(options.describe_class)
     except errors.TypeDefinitionError:
-        out.write('Not a valid type!')
+        err.write('Not a valid type!')
         return 1
     write_type(out, type_obj)
 
@@ -157,6 +149,8 @@ def uncollapsable_main(options, out, err):
     for name in config.sections():
         try:
             config.collapse_named_section(name)
+        except errors.CollapseInheritOnly:
+            pass
         except errors.ConfigurationError, e:
             if options.debug:
                 traceback.print_exc()
@@ -205,10 +199,8 @@ def dump_main(options, out, err):
     for name in sorted(names):
         try:
             section = config.collapse_named_section(name)
-        except errors.ConfigurationError:
-            if options.debug:
-                traceback.print_exc()
-            # Otherwise ignore this.
+        except errors.CollapseInheritOnly:
+            continue
         out.write('%r {' % (name,))
         dump_section(section, out)
         out.write('}')
@@ -240,10 +232,70 @@ def configurables_main(options, out, err):
         out.write()
 
 
+def _dump_uncollapsed_section(config, out, section):
+    """Write a single section."""
+    if isinstance(section, basestring):
+        out.write('named section %r' % (section,))
+        return
+    for key in sorted(section.keys()):
+        kind, value = section.get_value(config, key, 'repr')
+        out.write('# type: %s' % (kind,))
+        out.write('%r = ' % (key,), autoline=False)
+        if kind == 'str':
+            out.write(repr(value))
+        elif kind == 'list':
+            out.write(' '.join(repr(v) for v in value))
+        elif kind == 'callable':
+            out.write(value.__module__, value.__name__)
+        elif kind == 'bool':
+            out.write(str(value))
+        elif kind == 'ref' or kind == 'refs':
+            out.first_prefix.append('    ')
+            try:
+                if kind == 'ref':
+                    out.write()
+                    _dump_uncollapsed_section(config, out, value)
+                else:
+                    out.write()
+                    for subnr, subsection in enumerate(value):
+                        name = 'nested section %s' % (subnr + 1,)
+                        out.write(name)
+                        out.write('=' * len(name))
+                        _dump_uncollapsed_section(config, out, subsection)
+                        out.write()
+            finally:
+                out.first_prefix.pop()
+        else:
+            err.error('unsupported type %r' % (kind,))
+
+
+def dump_uncollapsed_main(options, out, err):
+    out.write('''# Warning:
+# Do not copy this output to a configuration file directly,
+# because the types you see here are only guesses.
+# A value used as "list" in the collapsed config will often
+# show up as "string" here and may need to be converted
+# (for example from space-separated to comma-separated)
+# to work in a config file with a different format.
+''')
+    for i, source in enumerate(options.config.configs):
+        s = 'Source %s' % (i + 1,)
+        out.write(out.bold, '*' * len(s))
+        out.write(out.bold, s)
+        out.write(out.bold, '*' * len(s))
+        out.write()
+        for name, section in sorted(source.iteritems()):
+            out.write('%s' % (name,))
+            out.write('=' * len(name))
+            _dump_uncollapsed_section(options.config, out, section)
+            out.write()
+
+
 commandline_commands = {
     'dump': (DumpParser, dump_main),
     'classes': (commandline.OptionParser, classes_main),
     'uncollapsable': (commandline.OptionParser, uncollapsable_main),
     'describe_class': (DescribeClassParser, describe_class_main),
     'configurables': (ConfigurablesParser, configurables_main),
+    'dump-uncollapsed': (commandline.OptionParser, dump_uncollapsed_main),
     }

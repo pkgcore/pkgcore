@@ -132,15 +132,16 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=()):
             it attempted
 
             @param attr: attr to try and change
-            @param vals: L{pkgcore.restrictions.values.base} instances that we're
-                attempting to make match True
+            @param vals: L{pkgcore.restrictions.values.base} instances that
+                we're attempting to make match True
             """
             if attr not in self._wrapped_attr:
                 if attr == self._configurable_name:
                     entry_point = self.changes_count()
                     try:
                         map(self._configurable.add, vals)
-                        object.__setattr__(self, '_reuse_pt', self._reuse_pt + 1)
+                        object.__setattr__(self, '_reuse_pt',
+                            self._reuse_pt + 1)
                         return True
                     except Unchangable:
                         self.rollback(entry_point)
@@ -181,8 +182,8 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=()):
             it attempted
 
             @param attr: attr to try and change
-            @param vals: L{pkgcore.restrictions.values.base} instances that we're
-                attempting to make match False
+            @param vals: L{pkgcore.restrictions.values.base} instances that
+                we're attempting to make match False
             """
             if attr not in self._wrapped_attr:
                 if attr == self._configurable_name:

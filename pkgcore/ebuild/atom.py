@@ -335,7 +335,7 @@ class atom(boolean.AndRestriction):
         if (self.slot is not None and other.slot is not None and
             self.slot != other.slot):
             return False
-        
+
         if (self.repo_id is not None and other.repo_id is not None and
             self.repo_id != other.repo_id):
             return False

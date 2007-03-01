@@ -32,7 +32,7 @@ class fake_trigger(triggers.base):
 class fake_engine(object):
 
     def __init__(self, **kwargs):
-        kwargs.setdefault("reporter", None)
+        kwargs.setdefault('observer', None)
         self._triggers = []
         for k, v in kwargs.iteritems():
             if callable(v):
@@ -602,13 +602,13 @@ class Test_detect_world_writable(single_attr_change_base, TestCase):
         self.kls().trigger(fake_engine(), None)
         # now verify that the explosion would occur if either settings are on.
         self.assertRaises((AttributeError, TypeError),
-            self.kls().trigger, fake_engine(reporter=object()), None)
+            self.kls().trigger, fake_engine(observer=object()), None)
         self.assertRaises((AttributeError, TypeError),
             self.kls(fix_perms=True).trigger, fake_engine(), None)
 
     def test_observer_warn(self):
         warnings = []
-        engine = fake_engine(reporter=fake_reporter(warn=warnings.append))
+        engine = fake_engine(observer=fake_reporter(warn=warnings.append))
         
         self._trigger_override = self.kls()
         
@@ -664,7 +664,7 @@ class TestPruneFiles(TestCase):
 
         # check noisyness.
         info = []
-        engine = fake_engine(reporter=fake_reporter(info=info.append),
+        engine = fake_engine(observer=fake_reporter(info=info.append),
             mode=const.REPLACE_MODE)
         
         run(lambda s:False)

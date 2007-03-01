@@ -5,6 +5,24 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.6:
 
+* setgid/setuid triggers now match portage behaviour; -s,o-w mode change.
+
+* trigger warnings are now enabled.
+
+* New default trigger added; CommonDirectoryModes, checks for common
+  directories (/usr, /etc, /usr/bin, /usr/lib for example) in the merge set,
+  checking the packages specified modes for them.  If not 0755, throws a 
+  warning.
+
+* For directory on directory merging, ensure_perms (default op) was changed
+  to preserve the existing directories permissions.  Generally speaking, this
+  means that later versions of an ebuild have to use post_inst to correct the
+  perms if they're incorrect- previously, if the new perms/mode were forced on
+  the existing.  Several common ebuilds (openssl for example) will generate
+  weird modes on common directories however (heavily restricted perms), which
+  can break things.  For the time being, the default is scaled down to the
+  looser form portage does.
+
 * added man page generation: pquery, pmerge
 
 * pconfig now has a "dump-uncollapsed" command to dump the "raw" config.

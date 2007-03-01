@@ -5,6 +5,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.6:
 
+* $HOME location for building was shifted into the targeted packages 
+  directory, rather then a shared within $PORTAGE_TMPDIR.
+
 * setgid/setuid triggers now match portage behaviour; -s,o-w mode change.
 
 * trigger warnings are now enabled.

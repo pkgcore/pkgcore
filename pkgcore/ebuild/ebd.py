@@ -163,12 +163,13 @@ class ebd(object):
         if tmp_offset:
             self.tmpdir = pjoin(self.tmpdir,
                 tmp_offset.strip(os.path.sep))
-        self.env["HOME"] = pjoin(self.tmpdir, "homedir")
 
         self.builddir = pjoin(self.tmpdir, self.env["CATEGORY"],
-                                     self.env["PF"])
-        for x, y in (("T", "temp"), ("WORKDIR", "work"), ("D", "image")):
+            self.env["PF"])
+        for x, y in (("T", "temp"), ("WORKDIR", "work"), ("D", "image"),
+            ("HOME", "homedir")):
             self.env[x] = pjoin(self.builddir, y) +"/"
+
         self.env["IMAGE"] = self.env["D"]
 
     def get_env_source(self):
@@ -202,7 +203,7 @@ class ebd(object):
     def setup_workdir(self):
         # ensure dirs.
         for k in ("HOME", "T", "WORKDIR", "D"):
-            if not ensure_dirs(self.env[k], mode=0770, uid=portage_uid,
+            if not ensure_dirs(self.env[k], mode=04770,
                 gid=portage_gid, minimal=True):
                 raise format.FailedDirectory(
                     self.env[k],

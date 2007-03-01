@@ -448,7 +448,7 @@ class fix_set_bits(base):
     def trigger(self, engine, cset):
         reporter = engine.observer
         # if s(uid|gid) *and* world writable...
-        l = [x for x in cset if
+        l = [x for x in cset.iterlinks(True) if
             (x.mode & 06000) and (x.mode & 0002)]
 
         if reporter is not None:
@@ -481,10 +481,7 @@ class detect_world_writable(base):
 
         reporter = engine.observer
 
-        l = []
-        for x in cset:
-            if not fs.issym(x) and x.mode & 0002:
-                l.append(x)
+        l = [x for x in cset.iterlinks(True) if x.mode & 0002]
         if reporter is not None:
             for x in l:
                 reporter.warn("world writable file: %s" % x.location)
@@ -533,7 +530,7 @@ class CommonDirectoryModes(base):
         r = engine.observer
         if not r:
             return
-        for x in cset:
+        for x in cset.iterdirs():
             if x.location not in self.directories:
                 continue
             if x.mode != 0755:

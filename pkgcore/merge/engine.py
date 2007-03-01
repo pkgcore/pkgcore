@@ -78,7 +78,6 @@ class MergeEngine(object):
             observer = observer_mod.repo_observer()
         self.observer = observer
         self.mode = mode
-        self.reporter = None
 
         self.hooks = ImmutableDict((x, []) for x in hooks)
 

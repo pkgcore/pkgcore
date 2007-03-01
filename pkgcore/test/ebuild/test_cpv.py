@@ -3,6 +3,7 @@
 
 from pkgcore.test import TestCase
 from pkgcore.ebuild import cpv
+from random import shuffle
 
 class native_CpvTest(TestCase):
 
@@ -23,7 +24,14 @@ class native_CpvTest(TestCase):
     good_vers = ["1", "2.3.4", "2.3.4a", "02.3", "2.03", "cvs.2", "cvs.2.03"]
     bad_vers  = ["2.3a.4", "2.a.3", "2.3_", "2.3 ", "2.3."]
     simple_good_sufs = ["_alpha", "_beta", "_pre", "_p"]
-    good_sufs = (simple_good_sufs +["%s1" % x for x in simple_good_sufs])
+
+    suf_nums = list(xrange(100))
+    shuffle(suf_nums)
+
+    good_sufs = (simple_good_sufs +["%s%i" % (x, suf_nums.pop()) 
+        for x in simple_good_sufs])
+    del suf_nums
+    
     l = len(good_sufs)
     good_sufs = good_sufs + [
         good_sufs[x] + good_sufs[l - x - 1] for x in xrange(l)]

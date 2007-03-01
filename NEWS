@@ -32,6 +32,9 @@ pkgcore 0.2.6:
 * mass expansion of test coverage: pkgcore.restrictions.*,
   pkgcore.util.*, pkgcore.ebuild.*
 
+* minor cleanup of pkgcore.test.ebuild.test_cpv to reduce redundant data sets;
+  total testcase runtime reduction by about a third.
+
 * diverge from unittest.TestCase to provide extra checks for normal asserts-
   assertNotEqual for example, checks both __eq__ and __ne__ now to smoke out
   any potential oversights in object equality implementation.

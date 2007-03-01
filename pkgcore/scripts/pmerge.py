@@ -502,6 +502,7 @@ def main(options, out, err):
                     out.error("got %s for a phase execution for %s" % (ret, op.pkg))
                     if not options.ignore_failures:
                         return 1
+                buildop.cleanup()
                 del buildop, ret
                 continue
 

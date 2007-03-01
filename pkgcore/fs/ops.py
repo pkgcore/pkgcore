@@ -42,7 +42,11 @@ def default_ensure_perms(d1, d2=None):
 
         do_mode = False
         try:
-            do_mode = (m is not None and m != d2.mode)
+            if fs.isdir(d1) and fs.isdir(d2):
+                # if it's preexisting, keep it's perms.
+                do_mode = False
+            else:
+                do_mode = (m is not None and m != d2.mode)
         except AttributeError:
             # yes.  this _is_ stupid.  vdb's don't always store all attributes
             do_mode = False

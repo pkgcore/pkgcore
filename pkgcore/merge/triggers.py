@@ -16,7 +16,7 @@ __all__ = [
 from pkgcore.merge import errors, const
 import pkgcore.os_data
 from pkgcore.util.demandload import demandload
-from pkgcore.util.osutils import listdir_files, pjoin, ensure_dirs
+from pkgcore.util.osutils import listdir_files, pjoin, ensure_dirs, normpath
 demandload(globals(), "os errno "
     "pkgcore.plugin:get_plugin "
     "pkgcore:spawn "
@@ -446,7 +446,7 @@ class fix_set_bits(base):
     _engine_types = INSTALLING_MODES
 
     def trigger(self, engine, cset):
-        reporter = engine.reporter
+        reporter = engine.observer
         # if s(uid|gid) *and* world writable...
         l = [x for x in cset if
             (x.mode & 06000) and (x.mode & 0002)]
@@ -476,14 +476,14 @@ class detect_world_writable(base):
         self.fix_perms = fix_perms
 
     def trigger(self, engine, cset):
-        if not engine.reporter and not self.fix_perms:
+        if not engine.observer and not self.fix_perms:
             return
 
-        reporter = engine.reporter
+        reporter = engine.observer
 
         l = []
         for x in cset:
-            if x.mode & 0002:
+            if not fs.issym(x) and x.mode & 0002:
                 l.append(x)
         if reporter is not None:
             for x in l:
@@ -508,7 +508,34 @@ class PruneFiles(base):
 
     def trigger(self, engine, cset):
         removal = filter(self.sentinel, cset)
-        if engine.reporter:
+        if engine.observer:
             for x in removal:
-                engine.reporter.info("pruning: %s" % x.location)
+                engine.observer.info("pruning: %s" % x.location)
         cset.difference_update(removal)
+
+
+class CommonDirectoryModes(base):
+
+    required_csets = ('new_cset',)
+    _hooks = ('pre_merge',)
+    _engine_types = INSTALLING_MODES
+    
+    directories = [pjoin('/usr', x) for x in ('.', 'lib', 'lib64', 'lib32',
+        'bin', 'sbin', 'local')]
+    directories.extend(pjoin('/usr/share', x) for x in ('.', 'man', 'info'))
+    directories.extend('/usr/share/man/man%i' % x for x in xrange(1, 10))
+    directories.extend(['/lib', '/lib32', '/lib64', '/etc', '/bin', '/sbin',
+        '/var'])
+    directories = frozenset(map(normpath, directories))
+    del x
+    
+    def trigger(self, engine, cset):
+        r = engine.observer
+        if not r:
+            return
+        for x in cset:
+            if x.location not in self.directories:
+                continue
+            if x.mode != 0755:
+                r.warn('%s path has mode %s, should be 0755' %
+                    (x.location, oct(x.mode)))

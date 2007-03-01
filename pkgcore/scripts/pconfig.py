@@ -270,6 +270,9 @@ def _dump_uncollapsed_section(config, out, section):
 
 
 def dump_uncollapsed_main(options, out, err):
+    """dump the configuration in a raw, uncollapsed form.
+    Not directly usable as a configuration file, mainly used for inspection
+    """
     out.write('''# Warning:
 # Do not copy this output to a configuration file directly,
 # because the types you see here are only guesses.

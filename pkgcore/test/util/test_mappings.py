@@ -68,7 +68,7 @@ class TestDictMixin(TestCase):
         values=[None]*100)
 
     test_iteritems = currying.post_curry(test_iter, method='iteritems',
-        values={}.fromkeys(xrange(100)).iteritems())
+        values={}.fromkeys(xrange(100)).items())
 
     test_items = currying.post_curry(test_iter, method='items',
         values={}.fromkeys(xrange(100)).items())

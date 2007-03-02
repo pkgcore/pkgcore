@@ -31,7 +31,7 @@ DONT_EXPORT_VARS="ORIG_VARS GROUPS ORIG_FUNCS FUNCNAME DAEMONIZED CCACHE.* DISTC
 \(TMP\|\)DIR FEATURES CONFIG_PROTECT.* P\?WORKDIR \(FETCH\|RESUME\) COMMAND RSYNC_.* GENTOO_MIRRORS 
 \(DIST\|FILES\|RPM\|ECLASS\)DIR HOME MUST_EXPORT_ENV QA_CONTROLLED_EXTERNALLY COLORTERM COLS ROWS HOSTNAME
 myarg SANDBOX_.* BASH.* EUID PPID SHELLOPTS UID ACCEPT_\(KEYWORDS\|LICENSE\) BUILD\(_PREFIX\|DIR\) T DIRSTACK
-DISPLAY \(EBUILD\)\?_PHASE PORTAGE_.* RC_.* SUDO_.* IFS PATH LD_PRELOAD ret line phases D EMERGE_FROM
+DISPLAY \(EBUILD\)\?_PHASE PORTAGE_.* RC_.* SUDO_.* IFS LD_PRELOAD ret line phases D EMERGE_FROM
 PORT\(_LOGDIR\|DIR\(_OVERLAY\)\?\) ROOT TERM _ done e ENDCOLS PROFILE_.* BRACKET BAD WARN GOOD NORMAL EBUILD ECLASS LINENO
 HILITE IMAGE TMP"
 
@@ -292,7 +292,7 @@ export_environ() {
 
 # reload a saved env, applying usual filters to the env prior to eval'ing it.
 load_environ() {
-    local src e ret
+    local src e ret EXISTING_PATH
     # localize these so the reload doesn't have the ability to change them
     local DONT_EXPORT_VARS="${DONT_EXPORT_VARS} src e ret"
     local DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} load_file declare"
@@ -311,6 +311,7 @@ load_environ() {
     fi
     src="$1"
 
+    EXISTING_PATH=$PATH
     if [ -f "$src" ]; then
 
     	# XXX: note all of the *very careful* handling of bash env dumps through this code, and the fact 
@@ -329,12 +330,30 @@ load_environ() {
         eval "$(PYTHONPATH=${PKGCORE_PYTHONPATH} \
             "${PKGCORE_PYTHON}" "${PORTAGE_BIN_PATH}/filter-env" $opts \
             -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" \
-            -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x )" -i "$src")"
+            -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x EXISTING_PATH)" -i "$src")"
         ret=$?
         unset -f declare
     else
         echo "ebuild=${EBUILD}, phase $EBUILD_PHASE" >&2
         ret=1
+    fi
+    if [ "${PATH}" != "${EXISTING_PATH}" ]; then
+        local adds
+        save_IFS
+        IFS=':'
+        for x in ${PATH}; do
+            # keep in mind PATH=":foon" is a valid way to say "cwd"
+            [ -z "${x}" ] && continue
+            if ! hasq ${EXISTING_PATH}; then
+                adds="${adds:+${adds}:}${x}"
+            fi
+        done
+        restore_IFS
+        if [ -n "${adds}" ]; then
+            # insert adds at the front.
+            PATH="${adds}${PATH:+:${PATH}}"
+        fi
+        export PATH
     fi
     return $(( $ret ))
 }
@@ -646,15 +665,13 @@ f="$(declare | {
 if [ -z "${ORIG_VARS}" ]; then
     DONT_EXPORT_VARS="${DONT_EXPORT_VARS} ${f}"
 else
-    DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $(echo "${f}" | egrep -v "^$(gen_regex_var_filter ${ORIG_VARS})\$")"
+    DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $(echo "${f}" | grep -v "^$(gen_regex_var_filter ${ORIG_VARS})\$")"
 fi
 unset f
 
 # I see no differance here...
 if [ -z "${ORIG_FUNCS}" ]; then
     DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $(declare -F | cut -s -d ' ' -f 3)"
-else  
-    DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $(declare -F | cut -s -d ' ' -f 3 )"
 fi
 set +f
 

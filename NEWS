@@ -26,7 +26,7 @@ pkgcore 0.2.6:
 * For directory on directory merging, ensure_perms (default op) was changed
   to preserve the existing directories permissions.  Generally speaking, this
   means that later versions of an ebuild have to use post_inst to correct the
-  perms if they're incorrect- previously, if the new perms/mode were forced on
+  perms if they're incorrect- previously, the new perms/mode were forced on
   the existing.  Several common ebuilds (openssl for example) will generate
   weird modes on common directories however (heavily restricted perms), which
   can break things.  For the time being, the default is scaled down to the

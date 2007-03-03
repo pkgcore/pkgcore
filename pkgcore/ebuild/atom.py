@@ -388,17 +388,16 @@ class atom(boolean.AndRestriction):
                     self.revision == other.revision)
 
         # If we are both glob matches we match if one of us matches the other.
-        # (No need to check for glob, the not glob case is handled above)
         if self.op == other.op == '=*':
             return (self.fullver.startswith(other.fullver) or
                     other.fullver.startswith(self.fullver))
 
         # If one of us is a glob match and the other a ~ we match if the glob
-        # matches the ~:
-        if self.op == '=' and other.op == '~':
-            return other.fullversion.startswith(self.fullversion)
-        if other.op == '=' and self.op == '~':
-            return self.fullversion.startswith(other.fullversion)
+        # matches the ~ (ignoring a revision on the glob):
+        if self.op == '=*' and other.op == '~':
+            return other.fullver.startswith(self.version)
+        if other.op == '=*' and self.op == '~':
+            return self.fullver.startswith(other.version)
 
         # If we get here at least one of us is a <, <=, > or >=:
         if self.op in ('<', '<=', '>', '>='):
@@ -439,11 +438,6 @@ class atom(boolean.AndRestriction):
             if VersionMatch(
                 ranged.op, ranged.version, ranged.revision).match(other):
                 return True
-            # If both the glob and ranged itself match the ranged
-            # restriction we're also done:
-            if '=' in ranged.op and VersionMatch(
-                '=', other.version, other.revision).match(ranged):
-                return True
             if '<' in ranged.op:
                 # Remaining cases where this intersects: there is a
                 # package smaller than ranged.fullver and
@@ -470,7 +464,7 @@ class atom(boolean.AndRestriction):
 
                 # We can always construct a package greater than
                 # other.fullver by adding a digit to it.
-                # If ond only if other also matches ranged then
+                # If and only if other also matches ranged then
                 # ranged will match such a larger package
                 # XXX (I think, need to try harder to verify this.)
                 return ranged.fullver.startswith(other.version)

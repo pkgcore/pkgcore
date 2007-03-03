@@ -234,12 +234,21 @@ class Test_native_atom(TestCase):
             ('<cat/pkg-2_alpha1', '=cat/pkg-2*', True),
             ('=cat/pkg-2', '=cat/pkg-2', True),
             ('=cat/pkg-3', '=cat/pkg-2', False),
+            ('=cat/pkg-2', '>cat/pkg-2', False),
+            ('=cat/pkg-2', '>=cat/pkg-2', True),
+            ('~cat/pkg-2', '~cat/pkg-2', True),
+            ('~cat/pkg-2', '~cat/pkg-2.1', False),
             ('=cat/pkg-2*', '=cat/pkg-2.3*', True),
             ('>cat/pkg-2.4', '=cat/pkg-2*', True),
             ('<cat/pkg-2.4', '=cat/pkg-2*', True),
             ('<cat/pkg-1', '=cat/pkg-2*', False),
             ('~cat/pkg-2', '>cat/pkg-2-r1', True),
+            ('~cat/pkg-2', '<=cat/pkg-2', True),
+            ('=cat/pkg-2-r2*', '<=cat/pkg-2-r20', True),
+            ('=cat/pkg-2-r2*', '<cat/pkg-2-r20', True),
+            ('=cat/pkg-2-r2*', '<=cat/pkg-2-r2', True),
             ('~cat/pkg-2', '<cat/pkg-2', False),
+            ('=cat/pkg-1-r10*', '~cat/pkg-1', True),
             ('=cat/pkg-1-r1*', '<cat/pkg-1-r1', False),
             ('=cat/pkg-1*', '>cat/pkg-2', False),
             ('>=cat/pkg-8.4', '=cat/pkg-8.3.4*', False),
@@ -247,6 +256,7 @@ class Test_native_atom(TestCase):
             ('cat/pkg::gentoo', 'cat/pkg::foo', False),
             # known to cause an assplosion, thus redundant test.
             ('=sys-devel/gcc-4.1.1-r3', '=sys-devel/gcc-3.3*', False),
+            ('=sys-libs/db-4*', '~sys-libs/db-4.3.29', True),
             ]:
             this_atom = self.kls(this)
             that_atom = self.kls(that)

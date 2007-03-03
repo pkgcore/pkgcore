@@ -346,7 +346,12 @@ class InfoRegen(base):
 
     def regen(self, binary, basepath):
         ignores = ("dir", "dir.old")
-        files = listdir_files(basepath)
+        try:
+            files = listdir_files(basepath)
+        except OSError, oe:
+            if oe.errno == errno.ENOENT:
+                return
+            raise
 
         # wipe old indexes.
         for x in set(ignores).intersection(files):

@@ -407,6 +407,9 @@ END-INFO-DIR-ENTRY
         if path is None:
             raise SkipTest("can't verify regen behaviour due to install-info "
                 "not being available")
+        # test it without the directory existing.
+        self.assertEqual(list(o.regen(path, pjoin(self.dir, 'foo'))), [])
+        self.assertFalse(os.path.exists(pjoin(self.dir, 'foo')))
         open(pjoin(self.dir, "foo.info"), 'w').write(self.info_data)
         # no issues.
         self.assertEqual(list(o.regen(path, self.dir)), [])

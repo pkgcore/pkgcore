@@ -456,7 +456,7 @@ class merge_plan(object):
         if atom in self.insoluble:
             dprint("processing   %s%s: marked insoluble already",
                    (depth *2 * " ", atom))
-            return [atom]
+            return None
         l = self.state.match_atom(atom)
         if l:
             if current_stack:

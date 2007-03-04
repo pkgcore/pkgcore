@@ -30,6 +30,11 @@ class svn_syncer(base.ExternalSyncer):
         return True
 
     def _sync(self, verbosity, output_fd):
+        uri = self.uri
+        if uri.startswith('svn+http://'):
+            uri.replace('svn+http://', 'http://')
+        elif uri.startswith('svn+https://'):
+            uri.replace('svn+https://', 'https://')
         return 0 == self._spawn([self.binary_path, "co",
-            self.uri, self.basedir], {1:output_fd, 2:output_fd, 0:0})
+            uri, self.basedir], {1:output_fd, 2:output_fd, 0:0})
 

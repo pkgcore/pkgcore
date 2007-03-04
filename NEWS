@@ -3,6 +3,13 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.x
+
+* layman configuration (if available) is now read for portage configuration for
+  sync URI for overlays.  tar syncer is currently unsupported; others may be buggy.
+  Feed back desired (author doesn't use layman).  Ticket #11.
+
+
 pkgcore 0.2.6:
 
 * make intersecting ~ and =* atoms work again (used by pquery --revdep)

@@ -10,14 +10,16 @@ import os
 import stat
 from pkgcore.config import basics, configurable
 from pkgcore import const
-from pkgcore.util.osutils import (normpath, abspath, listdir_files,
-    join as pjoin)
+from pkgcore.util.osutils import normpath, abspath, listdir_files, pjoin
 from pkgcore.util.demandload import demandload
 demandload(globals(), "errno pkgcore.config:errors "
     "pkgcore.pkgsets.glsa:SecurityUpgrades "
     "pkgcore.util.file:read_bash_dict "
     "pkgcore.util:bzip2 "
-    "pkgcore.log:logger ")
+    "pkgcore.log:logger "
+    'pkgcore.util.xml:etree '
+    'ConfigParser:ConfigParser '
+)
 
 
 def my_convert_hybrid(manager, val, arg_type):
@@ -46,29 +48,108 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     return SecurityUpgrades(ebuild_repo, vdb, arch)
 
 
-def make_syncer(basedir, sync_uri, options):
+def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
+    default_loc="etc/layman/layman.cfg",
+    default_conf='overlays.xml'):
+
+    try:
+        f = open(pjoin(config_root, default_loc))
+    except IOError, ie:
+        if ie.errno != errno.ENOENT:
+            raise
+        return {}
+
+    c = ConfigParser()
+    c.read(pjoin(config_root, default_loc))
+    storage_loc = c.get('MAIN', 'storage')
+    overlay_xml = pjoin(storage_loc, default_conf)
+    del c
+    
+    try:
+        xmlconf = etree.parse(overlay_xml)
+    except IOError, ie:
+        if ie.errno != errno.ENOENT:
+            raise
+        return {}
+    overlays = xmlconf.getroot()
+    if overlays.tag != 'overlays':
+        return {}
+
+    new_syncers = {}
+    for overlay in overlays.findall('overlay'):
+        name = overlay.get('name')
+        src_type = overlay.get('type')
+        uri = overlay.get('src')
+        if None in (src_type, uri, name):
+            continue
+        path = pjoin(storage_loc, name)
+        if not os.path.exists(path):
+            continue
+        elif path not in overlay_paths:
+            continue
+        proto = None
+        if src_type == 'tar':
+            continue
+        elif src_type == 'svn':
+            if uri.startswith('http://') or uri.startswith('https://'):
+                uri = 'svn+' + uri
+        elif src_type != 'rsync':
+            uri = '%s+%s' % (src_type, uri)
+        
+        new_syncers[path] = make_syncer(new_config, path, uri, rsync_opts, False)
+    return new_syncers
+
+
+def isolate_rsync_opts(options):
+    """
+    pop the misc RSYNC related options litered in make.conf, returning
+    a base rsync dict, and the full SYNC config
+    """
+    base = {}
+    extra_opts = []
+
+    extra_opts.extend(options.pop('PORTAGE_RSYNC_EXTRA_OPTS', '').split())
+
+    ratelimit = options.pop('RSYNC_RATELIMIT', None)
+    if ratelimit is not None:
+        extra_opts.append('--bwlimit=%s' % ratelimit.strip())
+
+    # keep in mind this pops both potential vals.
+    retries = options.pop('PORTAGE_RSYNC_RETRIES',
+        options.pop('RSYNC_RETRIES', None))
+    if retries is not None:
+        base['retries'] = retries.strip()
+    timeout = options.pop('RSYNC_TIMEOUT', None)
+    if timeout is not None:
+        base['timeout'] = timeout.strip()
+
+    excludes = options.pop('RSYNC_EXCLUDEFROM', None)
+    if excludes is not None:
+        extra_opts.extend('--exclude-from=%s' % x
+            for x in excludes.split())
+    
+    if extra_opts:
+        base['extra_opts'] = tuple(extra_opts)
+
+    return base
+
+
+def make_syncer(new_config, basedir, sync_uri, rsync_opts,
+    allow_timestamps=True):
     d = {'basedir': basedir, 'uri': sync_uri}
     if sync_uri.startswith('rsync'):
-        d['extra_opts'] = []
-        if 'RSYNC_TIMEOUT' in options:
-            d['timeout'] = options.pop('RSYNC_TIMEOUT').strip()
-        if 'RSYNC_EXCLUDEFROM' in options:
-            d['extra_opts'].extend('--exclude-from=%s' % x
-                for x in options.pop('RSYNC_EXCLUDEFROM').split())
-        if 'RSYNC_RETRIES' in options:
-            d['retries'] = options.pop('RSYNC_RETRIES').strip()
-        if 'PORTAGE_RSYNC_RETRIES' in options:
-            d['retries'] = options.pop('PORTAGE_RSYNC_RETRIES').strip()
-        if 'PORTAGE_RSYNC_EXTRA_OPTS' in options:
-            d['extra_opts'].extend(
-                options.pop('PORTAGE_RSYNC_EXTRA_OPTS').split())
-        if 'RSYNC_RATELIMIT' in options:
-            d['extra_opts'].append('--bwlimit=%s' %
-                options.pop('RSYNC_RATELIMIT').strip())
-        d['class'] = 'pkgcore.sync.rsync.rsync_timestamp_syncer'
+        d.update(rsync_opts)
+        if allow_timestamps:
+            d['class'] = 'pkgcore.sync.rsync.rsync_timestamp_syncer'
+        else:
+            d['class'] = 'pkgcore.sync.rsync.rsync_syncer'
     else:
         d['class'] = 'pkgcore.sync.base.GenericSyncer'
-    return d
+
+    name = '%s syncer' % basedir
+    new_config[name] = basics.AutoConfigSection(d)
+    return name
+
 
 def add_sets(config, root, portage_base_dir):
     config["world"] = basics.AutoConfigSection({
@@ -219,8 +300,17 @@ def config_from_make_conf(location="/etc/"):
             'location': pjoin(config_root, 'var', 'cache', 'edb', 'dep'),
             })
 
+
+    # used by PORTDIR syncer, and any layman defined syncers    
+    rsync_opts = isolate_rsync_opts(conf_dict)
+    portdir_syncer = conf_dict.pop("SYNC", None)
+
+    if portdir_overlays:
+        overlay_syncers = add_layman_syncers(new_config, rsync_opts,
+            portdir_overlays, config_root=config_root)
+
     for tree_loc in portdir_overlays:
-        new_config[tree_loc] = basics.AutoConfigSection({
+        kwds = {
                 'inherit': ('ebuild-repo-common',),
                 'location': tree_loc,
                 'cache': (basics.AutoConfigSection({
@@ -228,7 +318,10 @@ def config_from_make_conf(location="/etc/"):
                             'label': tree_loc}),),
                 'class': 'pkgcore.ebuild.repository.SlavedTree',
                 'parent_repo': 'portdir'
-                })
+        }
+        if tree_loc in overlay_syncers:
+            kwds['sync'] = overlay_syncers[tree_loc]
+        new_config[tree_loc] = basics.AutoConfigSection(kwds)
 
     rsync_portdir_cache = os.path.exists(pjoin(portdir, "metadata", "cache")) \
         and "metadata-transfer" not in features
@@ -245,12 +338,10 @@ def config_from_make_conf(location="/etc/"):
                 'inherit': ('cache-common',),
                 'label': portdir})
 
-    syncer = conf_dict.pop("SYNC", None)
     base_portdir_config = {}
-    if syncer is not None:
-        new_config["%s syncer" % portdir] = basics.AutoConfigSection(
-            make_syncer(portdir, syncer, conf_dict))
-        base_portdir_config = {"sync": "%s syncer" % portdir}
+    if portdir_syncer is not None:
+        base_portdir_config = {"sync": make_syncer(new_config, portdir,
+            portdir_syncer, rsync_opts)}
 
     # setup portdir.
     cache = ('portdir cache',)

@@ -305,9 +305,11 @@ def config_from_make_conf(location="/etc/"):
     rsync_opts = isolate_rsync_opts(conf_dict)
     portdir_syncer = conf_dict.pop("SYNC", None)
 
-    if portdir_overlays:
+    if portdir_overlays and '-layman-sync' not in features:
         overlay_syncers = add_layman_syncers(new_config, rsync_opts,
             portdir_overlays, config_root=config_root)
+    else:
+        overlay_syncers = {}
 
     for tree_loc in portdir_overlays:
         kwds = {

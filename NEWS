@@ -3,12 +3,14 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
-pkgcore 0.x
+pkgcore 0.2.7:
 
 * layman configuration (if available) is now read for portage configuration for
   sync URI for overlays.  tar syncer is currently unsupported; others may be buggy.
-  Feed back desired (author doesn't use layman).  Ticket #11.
+  Feed back desired (author doesn't use layman).  Ticket #11.  If you want it
+  disabled, add FEATURES=-layman-sync .
 
+* another fix for daft tarballs that try to touch cwd.
 
 pkgcore 0.2.6:
 

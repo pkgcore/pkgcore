@@ -368,7 +368,7 @@ def config_from_make_conf(location="/etc/"):
             'vdb': ('vdb',),
             'profile': 'profile',
             'name': 'livefs domain',
-            'ROOT':root})
+            'root':root})
     for f in (
         "package.mask", "package.unmask", "package.keywords", "package.use",
             "bashrc"):

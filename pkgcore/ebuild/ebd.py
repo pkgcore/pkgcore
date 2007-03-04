@@ -573,11 +573,16 @@ class buildable(ebd, setup_mixin, format.build):
             return self._generic_phase("configure", True, True, False)
         return True
 
-    unpack = pretty_docs(
-        observer.decorate_build_method("unpack")(
-            post_curry(
-            ebd._generic_phase, "unpack", True, True, False)),
-            "run the unpack phase (maps to src_unpack)")
+    def unpack(self):
+        """
+        execute the unpack phase.
+        """
+        if self.userpriv:
+            if not ensure_dirs(self.env["WORKDIR"], uid=portage_uid):
+                raise format.GenericBuildError(
+                    "failed forcing %i uid for WORKDIR" % portage_uid)
+        return self._generic_phase("unpack", True, True, False)
+
     compile = pretty_docs(
         observer.decorate_build_method("compile")(
             post_curry(

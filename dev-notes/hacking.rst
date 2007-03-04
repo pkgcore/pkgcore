@@ -38,7 +38,7 @@ Follow pep8, with following exemptions
 Throw self with a NotImplementedError
 =====================================
 
-The reason for this is simple; if you just throw a NotImplementedError,
+The reason for this is simple: if you just throw a NotImplementedError,
 you can't tell how the path was hit if derivative classes are involved;
 thus throw NotImplementedError(self, string_name_of_attr)
 
@@ -55,8 +55,8 @@ nonempty/empty::
   # instead of
   if len(l): blah
 
-python looks for __nonzero__, then __len__. It's a far faster
-then if you try to be explicit there::
+python looks for __nonzero__, then __len__. It's far faster
+than if you try to be explicit there::
 
   python -m timeit -s 'l=[]' 'if len(l) > 0: pass'
   1000000 loops, best of 3: 0.705 usec per loop
@@ -81,14 +81,14 @@ Don't explicitly use has_key. Rely on the 'in' operator
 Python interprets the 'in' command by using __contains__ on the
 instance. The interpreter is faster at doing getattr's than actual
 python code is: for example, the code above uses d.__contains__ , if you do
-d.has_key or d.__contains__, it's the same speed. Using 'in' instead
-has the interpreter do the lookup, and is faster.
+d.has_key or d.__contains__, it's the same speed. Using 'in' is faster
+because it has the interpreter do the lookup.
 
 So be aware of how the interpreter will execute that code. Python
 code specified attribute access is slower then the interpreter doing
 it on its own.
 
-If in doubt, python -m timeit is your friend. ;-)
+If you're in doubt, python -m timeit is your friend. ;-)
 
 Do not use [] or {} as default args in function/method definitions
 ==================================================================

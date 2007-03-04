@@ -35,7 +35,8 @@ class database(object):
     cleanse_keys = False
     serialize_eclasses = True
 
-    def __init__(self, location, label, auxdbkeys=metadata_keys, readonly=False):
+    def __init__(self, location, label, auxdbkeys=metadata_keys,
+        readonly=False):
         """
         initialize the derived class; specifically, store label/keys
 
@@ -153,7 +154,7 @@ class database(object):
 
     def sync(self, rate=0):
         self.sync_rate = rate
-        if(rate == 0):
+        if rate == 0:
             self.commit()
 
     def commit(self):
@@ -219,7 +220,8 @@ class database(object):
             paths = not eclasses[1].isdigit()
         else:
             raise errors.CacheCorruption(
-                cpv, "_eclasses_ was of invalid len %i (must be mod 3 or mod 2)" % len(eclasses))
+                cpv, "_eclasses_ was of invalid len %i"
+                "(must be mod 3 or mod 2)" % len(eclasses))
         d = {}
         try:
             if paths:

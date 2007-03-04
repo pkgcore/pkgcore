@@ -19,7 +19,7 @@ import os.path as osp
 
 # the pkgcore package directory
 PORTAGE_BASE_PATH   = osp.dirname(osp.abspath(__file__))
-PORTAGE_BIN_PATH    = osp.join(PORTAGE_BASE_PATH, 'bin')
+PKGCORE_BIN_PATH    = osp.join(PORTAGE_BASE_PATH, 'bin')
 SYSTEM_CONF_FILE    = '/etc/pkgcore.conf'
 USER_CONF_FILE      = osp.expanduser('~/.pkgcore.conf')
 
@@ -27,7 +27,7 @@ USER_CONF_FILE      = osp.expanduser('~/.pkgcore.conf')
 #PROFILE_PATH       = "/etc/make.profile"
 LOCALE_DATA_PATH    = PORTAGE_BASE_PATH+"/locale"
 
-EBUILD_DAEMON_PATH  = PORTAGE_BIN_PATH+"/ebuild-env/ebuild-daemon.sh"
+EBUILD_DAEMON_PATH  = PKGCORE_BIN_PATH+"/ebuild-env/ebuild-daemon.sh"
 
 SANDBOX_BINARY      = "/usr/bin/sandbox"
 
@@ -36,11 +36,11 @@ BASH_BINARY          = "/bin/bash"
 MOVE_BINARY          = "/bin/mv"
 COPY_BINARY          = "/bin/cp"
 PRELINK_BINARY       = "/usr/sbin/prelink"
-depends_phase_path   = PORTAGE_BIN_PATH+"/ebuild-env/:/bin:/usr/bin"
-EBUILD_ENV_PATH      = [PORTAGE_BIN_PATH+"/"+x for x in [
+depends_phase_path   = PKGCORE_BIN_PATH+"/ebuild-env/:/bin:/usr/bin"
+EBUILD_ENV_PATH      = [PKGCORE_BIN_PATH+"/"+x for x in [
                            "ebuild-env", "ebuild-helpers"]] \
                      + ["/sbin", "/bin", "/usr/sbin", "/usr/bin"]
-EBD_ENV_PATH         = PORTAGE_BIN_PATH+"/ebuild-env"
+EBD_ENV_PATH         = PKGCORE_BIN_PATH+"/ebuild-env"
 
 # XXX this is out of place
 WORLD_FILE           = '/var/lib/portage/world'

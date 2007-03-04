@@ -37,8 +37,8 @@ HILITE IMAGE TMP"
 
 
 # XXX: required for migration from .51 to this.
-if [ -z "$PORTAGE_BIN_PATH" ]; then
-    declare -rx PORTAGE_BIN_PATH="/usr/lib/portage/bin"
+if [ -z "$PKGCORE_BIN_PATH" ]; then
+    declare -rx PKGCORE_BIN_PATH="/usr/lib/portage/bin"
 fi
 
 # knock the sandbox vars back to the pkgs defaults.
@@ -242,7 +242,7 @@ dump_environ() {
     # vars, then funcs.
     local opts=""
     [[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
-    declare | PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON}" "${PORTAGE_BIN_PATH}/filter-env" $opts -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x )"
+    declare | PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON}" "${PKGCORE_BIN_PATH}/filter-env" $opts -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x )"
     if ! hasq "--no-attributes" "$@"; then
         echo $'reinstate_loaded_env_attributes ()\n{'
         for y in export 'declare -i' readonly; do
@@ -301,7 +301,7 @@ load_environ() {
     local reload_failure=0
     SANDBOX_ON=0
 
-    SANDBOX_READ="/bin:${SANDBOX_READ}:/dev/urandom:/dev/random:$PORTAGE_BIN_PATH"
+    SANDBOX_READ="/bin:${SANDBOX_READ}:/dev/urandom:/dev/random:$PKGCORE_BIN_PATH"
     SANDBOX_ON=$SANDBOX_STATE
 
     [ ! -f "$1" ] && die "load_environ called with a nonexist env: $1"
@@ -328,7 +328,7 @@ load_environ() {
         [[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
         echo $PKGCORE_DEBUG
         eval "$(PYTHONPATH=${PKGCORE_PYTHONPATH} \
-            "${PKGCORE_PYTHON}" "${PORTAGE_BIN_PATH}/filter-env" $opts \
+            "${PKGCORE_PYTHON}" "${PKGCORE_BIN_PATH}/filter-env" $opts \
             -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" \
             -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x EXISTING_PATH)" -i "$src")"
         ret=$?
@@ -419,7 +419,7 @@ init_environ() {
 
     # if daemonized, it's already loaded these funcs.
     if [ "$DAEMONIZED" != "yes" ]; then
-        source "${PORTAGE_BIN_PATH}/ebuild-functions.sh" || die "failed sourcing ebuild-functions.sh"
+        source "${PKGCORE_BIN_PATH}/ebuild-functions.sh" || die "failed sourcing ebuild-functions.sh"
     fi
     SANDBOX_ON="1"
     export S=${WORKDIR}/${P}
@@ -479,8 +479,8 @@ init_environ() {
 }
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.
-source "${PORTAGE_BIN_PATH}/ebuild-default-functions.sh" || die "failed sourcing ebuild-default-functions.sh"
-source "${PORTAGE_BIN_PATH}/isolated-functions.sh" || die "failed sourcing stripped down functions.sh"
+source "${PKGCORE_BIN_PATH}/ebuild-default-functions.sh" || die "failed sourcing ebuild-default-functions.sh"
+source "${PKGCORE_BIN_PATH}/isolated-functions.sh" || die "failed sourcing stripped down functions.sh"
 
 # general func to call for phase execution.  this handles necessary env loading/dumping, and executing pre/post/dyn
 # calls.

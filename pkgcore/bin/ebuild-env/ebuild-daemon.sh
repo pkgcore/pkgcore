@@ -28,9 +28,9 @@ if [ "$com" != "dude?" ]; then
     exit 1
 fi
 speak "dude!"
-listen PORTAGE_BIN_PATH
-[ -z "$PORTAGE_BIN_PATH" ] && die "PORTAGE_BIN_PATH=$PORTAGE_BIN_PATH , bailing"
-declare -rx PORTAGE_BIN_PATH
+listen PKGCORE_BIN_PATH
+[ -z "$PKGCORE_BIN_PATH" ] && die "PKGCORE_BIN_PATH=$PKGCORE_BIN_PATH , bailing"
+declare -rx PKGCORE_BIN_PATH
 listen PKGCORE_PYTHON
 [ -z "$PKGCORE_PYTHON" ] && die "empty PKGCORE_PYTHON, bailing"
 declare -rx PKGCORE_PYTHON
@@ -38,9 +38,9 @@ listen PKGCORE_PYTHONPATH
 [ -z "$PKGCORE_PYTHONPATH" ] && die "empty PKGCORE_PYTHONPATH, bailing"
 declare -rx PKGCORE_PYTHONPATH
 
-if ! source "${PORTAGE_BIN_PATH}/ebuild.sh" daemonize; then
+if ! source "${PKGCORE_BIN_PATH}/ebuild.sh" daemonize; then
     speak "failed"
-    die "failed sourcing ${PORTAGE_BIN_PATH}/ebuild.sh"
+    die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild.sh"
 fi
 
 if [ -n "$SANDBOX_LOG" ]; then
@@ -65,9 +65,9 @@ speak $re
 unset x re
 
 
-if ! source "${PORTAGE_BIN_PATH}/ebuild-daemon.lib"; then
+if ! source "${PKGCORE_BIN_PATH}/ebuild-daemon.lib"; then
     speak failed
-    die "failed source ${PORTAGE_BIN_PATH}/ebuild-daemon.lib"
+    die "failed source ${PKGCORE_BIN_PATH}/ebuild-daemon.lib"
 fi
 
 DONT_EXPORT_FUNCS="$(declare -F | cut -s -d ' ' -f 3)"
@@ -78,7 +78,7 @@ DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alive com PORTAGE_LOGFILE cont"
 export QA_CONTROLLED_EXTERNALLY="yes"
 enable_qa_interceptors
 
-if ! source "${PORTAGE_BIN_PATH}/ebuild-functions.sh"; then
+if ! source "${PKGCORE_BIN_PATH}/ebuild-functions.sh"; then
     speak failed
     die "failed sourcing ${PORTAGE_LIB}/ebuild-functions.sh"
 fi

@@ -3,7 +3,12 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Id: /var/cvsroot/gentoo-src/portage/bin/doexe,v 1.10.2.1 2004/12/06 03:01:43 carpaski Exp $
 
-source "${PORTAGE_BIN_PATH:-/usr/lib/portage/bin}"/isolated-functions.sh
+
+if [ -z "${PKGCORE_BIN_PATH}" ]; then
+    echo "PKGCORE_BIN_PATH is unset!"
+    exit -1
+fi
+source "${PKGCORE_BIN_PATH}/isolated-functions.sh"
 
 if [[ $# -lt 1 ]] ; then
 	echo "$0: at least one argument needed" 1>&2

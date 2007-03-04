@@ -8,7 +8,7 @@ portageq() {
         die "portageq calls in depends phase is disallowed"
     fi
     PYTHONPATH="$PKGCORE_PYTHONPATH" \
-        "${PKGCORE_PYTHON}" "${PORTAGE_BIN_PATH}/portageq_emulation" \
+        "${PKGCORE_PYTHON}" "${PKGCORE_BIN_PATH}/portageq_emulation" \
         --domain "${PKGCORE_DOMAIN}" "$@"
 }
 

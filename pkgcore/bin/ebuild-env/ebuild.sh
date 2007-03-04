@@ -36,7 +36,7 @@ PORT\(_LOGDIR\|DIR\(_OVERLAY\)\?\) ROOT TERM _ done e ENDCOLS PROFILE_.* BRACKET
 HILITE IMAGE TMP"
 
 
-if -z "$PKGCORE_BIN_PATH" ]; then
+if [ -z "$PKGCORE_BIN_PATH" ]; then
     echo "PKGCORE_BIN_PATH is unset!"
     exit 1
 fi

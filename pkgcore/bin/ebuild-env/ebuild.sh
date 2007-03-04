@@ -36,9 +36,9 @@ PORT\(_LOGDIR\|DIR\(_OVERLAY\)\?\) ROOT TERM _ done e ENDCOLS PROFILE_.* BRACKET
 HILITE IMAGE TMP"
 
 
-# XXX: required for migration from .51 to this.
-if [ -z "$PKGCORE_BIN_PATH" ]; then
-    declare -rx PKGCORE_BIN_PATH="/usr/lib/portage/bin"
+if -z "$PKGCORE_BIN_PATH" ]; then
+    echo "PKGCORE_BIN_PATH is unset!"
+    exit 1
 fi
 
 # knock the sandbox vars back to the pkgs defaults.

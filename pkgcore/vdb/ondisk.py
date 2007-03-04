@@ -26,6 +26,7 @@ demandload(globals(),
            "pkgcore.const "
            "pkgcore.ebuild:triggers "
            "pkgcore.log:logger "
+           "pkgcore.fs.ops:change_offset_rewriter "
     )
 
 
@@ -231,13 +232,12 @@ class install(repo_interfaces.livefs_install):
             if k == "contents":
                 v = ContentsFile(pjoin(dirpath, "CONTENTS"),
                                  mutable=True, create=True)
-                for x in self.me.csets["install"]:
-                    # $10 this ain't right.  verify this- harring
-                    if self.offset:
-                        v.add(x.change_attributes(
-                                location=pjoin(self.offset, x.location)))
-                    else:
-                        v.add(x)
+                # strip the offset.
+                if self.offset:
+                    v.update(change_offset_rewriter(self.offset, '/',
+                        self.me.csets["install"]))
+                else:
+                    v.update(self.me.csets["install"])
                 v.flush()
             elif k == "environment":
                 data = bzip2.compress(

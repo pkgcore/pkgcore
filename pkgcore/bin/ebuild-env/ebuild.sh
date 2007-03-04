@@ -337,8 +337,16 @@ load_environ() {
         echo "ebuild=${EBUILD}, phase $EBUILD_PHASE" >&2
         ret=1
     fi
+    pkgcore_ensure_PATH
+    return $(( $ret ))
+}
+
+# ensure that PATH still includes implementation needed locations.
+pkgcore_ensure_PATH()
+{
+    local EXISTING_PATH="$1"
+    local adds
     if [ "${PATH}" != "${EXISTING_PATH}" ]; then
-        local adds
         save_IFS
         IFS=':'
         for x in ${PATH}; do
@@ -355,8 +363,7 @@ load_environ() {
         fi
         export PATH
     fi
-    return $(( $ret ))
-}
+}                                                                                                                                                                        
 
 # walk the cascaded profile src'ing it's various bashrcs.
 # overriden by daemon normally.
@@ -381,13 +388,8 @@ source_profiles() {
 # do all profile, bashrc's, and ebuild sourcing.  Should only be called in setup phase, unless the
 # env is *completely* missing, as it is occasionally for ebuilds during prerm/postrm.
 init_environ() {
-#	echo "initializating environment" >&2
     OCC="$CC"
     OCXX="$CXX"
-
-
-    # XXX this too, sucks.
-#	export PATH="/sbin:/usr/sbin:/usr/lib/portage/bin:/bin:/usr/bin"
     if [ "${EBUILD_PHASE}" == "setup" ]; then
         #we specifically save the env so it's not stomped on by sourcing.
         #bug 51552
@@ -396,7 +398,6 @@ init_environ() {
         if [ "$USERLAND" == "GNU" ]; then
             local PORTAGE_SHIFTED_PATH="$PATH"
             source /etc/profile.env &>/dev/null
-            PATH="${PORTAGE_SHIFTED_PATH:+${PORTAGE_SHIFTED_PATH}}${PATH:+:${PATH}}"
         fi
         #shift path.  I don't care about 51552, I'm not using the env's supplied path, alright? :)
 
@@ -438,7 +439,6 @@ init_environ() {
         die "EBUILD=${EBUILD}; problem is, it doesn't exist.  bye." >&2
     fi
 
-#	eval "$(cat "${EBUILD}"; echo ; echo 'true')" || die "error sourcing ebuild"
     source "${EBUILD}"
     if [ "${EBUILD_PHASE}" != "depend" ]; then
         RESTRICT="${FINALIZED_RESTRICT}"
@@ -463,12 +463,8 @@ init_environ() {
     # Note: this next line is not the same as export RDEPEND=${RDEPEND:-${DEPEND}}
     # That will test for unset *or* NULL ("").  We want just to set for unset...
 
-    #turn off glob expansion from here on in to prevent *'s and ? in the DEPEND
-    #syntax from getting expanded :)  Fixes bug #1473
-#	set -f
     if [ "${RDEPEND-unset}" == "unset" ]; then
         export RDEPEND="${DEPEND}"
-        debug-print "RDEPEND: not set... Setting to: ${DEPEND}"
     fi
 
     #add in dependency info from eclasses
@@ -479,11 +475,7 @@ init_environ() {
     PDEPEND="$PDEPEND $E_PDEPEND"
 
     unset E_IUSE E_DEPEND E_RDEPEND E_CDEPEND E_PDEPEND
-#	set +f
-
-#	declare -r DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE DESCRIPTION
-#	declare -r KEYWORDS INHERITED IUSE CDEPEND PDEPEND PROVIDE
-#	echo "DONT_EXPORT_FUNCS=$DONT_EXPORT_FUNCS" >&2
+    pkgcore_ensure_PATH
 }
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.

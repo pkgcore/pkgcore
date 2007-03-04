@@ -33,15 +33,21 @@ default_ldpath = ('/lib', '/lib64', '/lib32',
 
 def collapse_envd(base):
     collapsed_d = {}
-    for x in sorted(listdir_files(base)):
-        if x.endswith(".bak") or x.endswith("~") or x.startswith("._cfg") \
-            or len(x) <= 2 or not x[0:2].isdigit():
-            continue
-        d = read_bash_dict(pjoin(base, x))
-        # inefficient, but works.
-        for k, v in d.iteritems():
-            collapsed_d.setdefault(k, []).append(v)
-        del d
+    try:
+        env_d_files = sorted(listdir_files(base))
+    except OSError, oe:
+        if oe.errno != errno.ENOENT:
+            raise
+    else:
+        for x in env_d_files:
+            if x.endswith(".bak") or x.endswith("~") or x.startswith("._cfg") \
+                or len(x) <= 2 or not x[0:2].isdigit():
+                continue
+            d = read_bash_dict(pjoin(base, x))
+            # inefficient, but works.
+            for k, v in d.iteritems():
+                collapsed_d.setdefault(k, []).append(v)
+            del d
 
     loc_incrementals = set(incrementals)
     loc_colon_parsed = set(colon_parsed)

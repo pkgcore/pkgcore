@@ -8,4 +8,4 @@
 ./dist
 ./_trial_temp
 ./pkgcore/plugins/plugincache
-man/*.man
+./man/*.1

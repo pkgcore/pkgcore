@@ -8,7 +8,7 @@ Query repositories
 
 :Date:   2007-02-18
 :Manual section: 1
-:Manual group: text processing
+:Manual group: pkgcore
 
 SYNOPSIS
 ========

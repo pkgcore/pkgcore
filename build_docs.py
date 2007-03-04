@@ -221,7 +221,7 @@ def process_man(directory, force, debug):
         original = os.path.join(directory, entry)
         if entry.lower().endswith('rst'):
             base = entry[:-4]
-            target = os.path.join(directory, base) + '.man'
+            target = os.path.join(directory, base)
             if debug:
                 debug_loc = os.path.join(directory, base) + '.doctree'
             if force or not os.path.exists(target) or (

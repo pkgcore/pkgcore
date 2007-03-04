@@ -27,6 +27,9 @@ class file_phase_observer(phase_observer):
     def phase_start(self, phase):
         self._out.write("starting %s\n" % phase)
 
+    def info(self, msg):
+        self._out.write("info: %s\n" % msg)
+
     def warn(self, msg):
         self._out.write("warning: %s\n" % msg)
 

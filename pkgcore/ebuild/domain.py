@@ -255,7 +255,7 @@ class domain(pkgcore.config.domain.domain):
 
         # if it's made it this far...
 
-        settings["ROOT"] = root
+        self.root = settings["ROOT"] = root
         self.settings = settings
 
         bashrc = list(profile.bashrc)

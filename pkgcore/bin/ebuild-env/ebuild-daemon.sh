@@ -109,9 +109,6 @@ sigkill_handler() {
 
 trap sigkill_handler SIGKILL
 
-
-# XXX this sucks even more then the rest, we're talking loss of chrome on a trailer hitch type suck.
-#PATH='/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:${PORTAGE_BIN_PATH}'
 while [ "$alive" == "1" ]; do
     com=''
     listen com
@@ -133,11 +130,6 @@ while [ "$alive" == "1" ]; do
             listen line
             if [ "$line" == "start_receiving_env" ]; then
                 while listen line && [ "$line" != "end_receiving_env" ]; do #[ "$line" != "end_receiving_env" ]; do
-#					if [[ "${line/SUDO_COMMAND}" != "${line}" ]] && 
-#						[[ "${line/export}" == "${line}" ]]; then
-#						on=1
-#						echo "received $line" >&2
-#					fi
                     save_IFS
                     IFS=$'\0'
                     eval ${line};
@@ -145,7 +137,6 @@ while [ "$alive" == "1" ]; do
                     restore_IFS
                     if [ $val != "0" ]; then
                      	echo "err, env receiving threw an error for '$line': $?" >&2
-#						echo "env_receiving_failed" >&2
                         speak "env_receiving_failed"
                         cont=1
                         break
@@ -162,16 +153,13 @@ while [ "$alive" == "1" ]; do
                 fi
             elif [ "${line:0:7}" == "logging" ]; then
                 PORTAGE_LOGFILE="$(echo ${line#logging})"
-#				echo "logging to $logfile" >&2
                 speak "logging_ack"
             elif [ "${line:0:17}" == "set_sandbox_state" ]; then
                 if [ $((${line:18})) -eq 0 ]; then
                     export SANDBOX_DISABLED=1
-#					echo "disabling sandbox due to '$line'" >&2
                 else
                     export SANDBOX_DISABLED=0
                     export SANDBOX_VERBOSE="no"
-#					echo "enabling sandbox" >&2
                 fi
             elif [ "${line}" == "start_processing" ]; then
                 cont=2
@@ -192,7 +180,6 @@ while [ "$alive" == "1" ]; do
             if [ -z $RC_NOCOLOR ]; then
                 set_colors
             fi
-#			speak "starting ${phases}"
 
             DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} ${PORTAGE_PRELOADED_ECLASSES}"
             for x in $DONT_EXPORT_FUNCS; do

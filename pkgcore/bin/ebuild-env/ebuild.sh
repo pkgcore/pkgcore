@@ -337,32 +337,32 @@ load_environ() {
         echo "ebuild=${EBUILD}, phase $EBUILD_PHASE" >&2
         ret=1
     fi
-    pkgcore_ensure_PATH
+    pkgcore_ensure_PATH "$EXISTING_PATH"
     return $(( $ret ))
 }
 
-# ensure that PATH still includes implementation needed locations.
+# ensure the passed in PATH has its components in $PATH
 pkgcore_ensure_PATH()
 {
     local EXISTING_PATH="$1"
     local adds
-    if [ "${PATH}" != "${EXISTING_PATH}" ]; then
+    # note this isolates the adds in the same order they appear in
+    # the passed in path, maintaining that order.
+    if [ "$EXISTING_PATH" != "$PATH" ]; then
         save_IFS
         IFS=':'
-        for x in ${PATH}; do
+        for x in ${EXISTING_PATH}; do
             # keep in mind PATH=":foon" is a valid way to say "cwd"
             [ -z "${x}" ] && continue
-            if ! hasq ${EXISTING_PATH}; then
+            if ! hasq ${x} ${PATH} && ! hasq ${x} ${adds}; then
                 adds="${adds:+${adds}:}${x}"
             fi
         done
         restore_IFS
-        if [ -n "${adds}" ]; then
-            # insert adds at the front.
-            PATH="${adds}${PATH:+:${PATH}}"
-        fi
+        [ -n "$adds" ] && PATH="${adds}${PATH:+:${PATH}}"
         export PATH
     fi
+    export PATH
 }                                                                                                                                                                        
 
 # walk the cascaded profile src'ing it's various bashrcs.
@@ -390,6 +390,8 @@ source_profiles() {
 init_environ() {
     OCC="$CC"
     OCXX="$CXX"
+    local EXISTING_PATH="$PATH"
+    
     if [ "${EBUILD_PHASE}" == "setup" ]; then
         #we specifically save the env so it's not stomped on by sourcing.
         #bug 51552
@@ -399,7 +401,6 @@ init_environ() {
             local PORTAGE_SHIFTED_PATH="$PATH"
             source /etc/profile.env &>/dev/null
         fi
-        #shift path.  I don't care about 51552, I'm not using the env's supplied path, alright? :)
 
         #restore the saved env vars.
         if ! load_environ "${T}/.temp_env"; then
@@ -475,7 +476,7 @@ init_environ() {
     PDEPEND="$PDEPEND $E_PDEPEND"
 
     unset E_IUSE E_DEPEND E_RDEPEND E_CDEPEND E_PDEPEND
-    pkgcore_ensure_PATH
+    pkgcore_ensure_PATH "$EXISTING_PATH"
 }
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.

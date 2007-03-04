@@ -189,12 +189,15 @@ class ConfiguredTree(multiplex.tree):
 
     def _install(self, pkg, *a, **kw):
         # need to verify it's not in already...
+        kw['offset'] = self.domain.root
         return install(self.domain_settings, self.raw_vdb, pkg, *a, **kw)
 
     def _uninstall(self, pkg, *a, **kw):
+        kw['offset'] = self.domain.root
         return uninstall(self.domain_settings, self.raw_vdb, pkg, *a, **kw)
 
     def _replace(self, oldpkg, newpkg, *a, **kw):
+        kw['offset'] = self.domain.root
         return replace(
             self.domain_settings, self.raw_vdb, oldpkg, newpkg, *a, **kw)
 

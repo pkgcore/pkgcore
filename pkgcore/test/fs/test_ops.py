@@ -204,3 +204,38 @@ class Test_unmerge_contents(ContentsMixin):
         self.assertTrue(ops.unmerge_contents(cset, offset=img))
         self.assertTrue(os.path.exists(fp))
 
+
+class Test_offset_rewriter(TestCase):
+
+    func = staticmethod(ops.offset_rewriter)
+    
+    def test_it(self):
+        f = ["/foon/%i" % x for x in xrange(10)]
+        f.extend("/foon/%i/blah" % x for x in xrange(5))
+        f = [fs.fsFile(x, strict=False) for x in f]
+        self.assertEqual(sorted(f), sorted(self.func('/', f)))
+        self.assertEqual(
+            sorted(x.change_attributes(location="/usr%s" % x.location)
+                for x in f),
+            sorted(self.func('/usr', f)))
+
+
+class Test_change_offset_rewriter(TestCase):
+
+    func = staticmethod(ops.change_offset_rewriter)
+    
+    def test_it(self):
+        f = ["/foon/%i" % x for x in xrange(10)]
+        f.extend("/foon/%i/blah" % x for x in xrange(5))
+        f = [fs.fsFile(x, strict=False) for x in f]
+        self.assertEqual(sorted(x.location for x in f),
+            sorted(y.location for y in self.func('/usr', '/',
+                (x.change_attributes(location='/usr%s' % x.location)
+                    for x in f)
+            )))
+        self.assertEqual(sorted(x.location for x in f),
+            sorted(y.location for y in self.func('/usr', '/',
+                (x.change_attributes(location='/usr/%s' % x.location)
+                    for x in f)
+            )))
+

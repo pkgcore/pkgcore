@@ -10,7 +10,7 @@ L{pkgcore.plugins} to get at these ops.
 
 import os, errno
 from pkgcore.fs import gen_obj, contents, fs
-from pkgcore.util.osutils import ensure_dirs, join as pjoin
+from pkgcore.util.osutils import ensure_dirs, pjoin, normpath
 from pkgcore.spawn import spawn
 from pkgcore.const import COPY_BINARY
 from pkgcore.plugin import get_plugin
@@ -158,6 +158,15 @@ def offset_rewriter(offset, iterable):
         yield x.change_attributes(
             location=pjoin(offset, x.location.lstrip(sep)))
 
+def change_offset_rewriter(orig_offset, new_offset, iterable):
+    offset_len = len(orig_offset.rstrip(os.path.sep))
+    # localize it.
+    npf = normpath
+    for x in iterable:
+        # slip in the '/' default to force it to still generate a
+        # full path still
+        yield x.change_attributes(
+            location=npf(pjoin(new_offset, x.location[offset_len:])))
 
 def merge_contents(cset, offset=None, callback=lambda obj:None):
 

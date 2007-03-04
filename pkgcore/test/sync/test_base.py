@@ -49,4 +49,4 @@ class GenericSyncerTest(TestCase):
             if str(e) == "no known syncer supports 'svn://blah/'":
                 raise SkipTest('svn syncer unavailable')
             raise
-        self.assertIdentical(svn.svn_syncer, syncer.syncer.__class__)
+        self.assertIdentical(svn.svn_syncer, syncer.__class__)

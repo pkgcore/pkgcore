@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.config import ConfigHint
+from pkgcore.config import ConfigHint, configurable
 from pkgcore.util import demandload, descriptors
 demandload.demandload(globals(), "pkgcore:spawn "
     "os pwd stat "
@@ -158,22 +158,14 @@ class missing_binary(syncer_exception):
     pass
 
 
-class GenericSyncer(syncer):
-
+@configurable({'basedir':'str', 'uri':'str'}, typename='syncer')
+def GenericSyncer(basedir, uri, default_verbosity=0):
     """Syncer using the plugin system to find a syncer based on uri."""
-
-    pkgcore_config_type = ConfigHint({'basedir':'str', 'uri':'str'},
-        typename='syncer')
-
-    def __init__(self, basedir, uri, default_verbosity=0):
-        syncer.__init__(self, basedir, uri, default_verbosity)
-        plugins = list(
-            (plug.supports_uri(uri), plug)
-            for plug in plugin.get_plugins('syncer'))
-        plugins.sort()
-        if not plugins or plugins[-1][0] <= 0:
-            raise uri_exception('no known syncer supports %r' % (uri,))
-        # XXX this is random if there is a tie. Should we raise an exception?
-        self.syncer = plugins[-1][1](basedir, uri, default_verbosity)
-        self.forcable = syncer.forcable
-        self._sync = syncer._sync
+    plugins = list(
+        (plug.supports_uri(uri), plug)
+        for plug in plugin.get_plugins('syncer'))
+    plugins.sort()
+    if not plugins or plugins[-1][0] <= 0:
+        raise uri_exception('no known syncer supports %r' % (uri,))
+    # XXX this is random if there is a tie. Should we raise an exception?
+    return plugins[-1][1](basedir, uri, default_verbosity)

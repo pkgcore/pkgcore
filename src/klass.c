@@ -158,14 +158,19 @@ internal_generic_equality(PyObject *inst1, PyObject *inst2,
     for(; idx < PyTuple_GET_SIZE(attrs); idx++) {
 
         attr1 = PyObject_GetAttr(inst1, PyTuple_GET_ITEM(attrs, idx));
-        if(!attr1 && !PyErr_ExceptionMatches(PyExc_AttributeError)) {
-            return NULL;
+        if(!attr1) {
+            if(!PyErr_ExceptionMatches(PyExc_AttributeError))
+                return NULL;
+             PyErr_Clear();
         }
 
         attr2 = PyObject_GetAttr(inst2, PyTuple_GET_ITEM(attrs, idx));
-        if(!attr2 && !PyErr_ExceptionMatches(PyExc_AttributeError)) {
-            Py_XDECREF(attr1);
-            return NULL;
+        if(!attr2) {
+            if(!PyErr_ExceptionMatches(PyExc_AttributeError)) {
+                Py_XDECREF(attr1);
+                return NULL;
+            }
+            PyErr_Clear();
         }
         if(!attr1) {
             if(attr2) {

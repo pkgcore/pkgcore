@@ -5,6 +5,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.6:
 
+* catch a corner case py2.5 bug where AttributeError bleeds through from
+  generic_equality.
+
 * Via solars prodding, finished up the remaining bits for ROOT support.
 
 * resolver traceback for if a requested atom is already known as insoluable.

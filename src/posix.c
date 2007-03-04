@@ -167,6 +167,11 @@ pkgcore_join(PyObject *self, PyObject *args)
             s++;
         if(s_start == s)
             continue;
+        if(i == start && '/' == *s_start) {
+            // seek forward, then back for the following len addition.
+            SKIP_SLASHES(s_start);
+            s_start--;
+        }
         len += s - s_start;
         char *s_end = s;
         if(i + 1 != end) {

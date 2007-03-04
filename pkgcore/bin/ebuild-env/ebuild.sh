@@ -538,7 +538,6 @@ execute_phases() {
                 die "unable to load saved env for phase $EBUILD_PHASE, unwilling to continue"
             fi
             if type reinstate_loaded_env_attributes &> /dev/null; then
-#				echo "reinstating attribs" >&2
                 reinstate_loaded_env_attributes
                 unset -f reinstate_loaded_env_attributes
             fi
@@ -662,10 +661,7 @@ else
 fi
 unset f
 
-# I see no differance here...
-if [ -z "${ORIG_FUNCS}" ]; then
-    DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $(declare -F | cut -s -d ' ' -f 3)"
-fi
+[ -z "${ORIG_FUNCS}" ] && DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $(declare -F | cut -s -d ' ' -f 3)"
 set +f
 
 export XARGS

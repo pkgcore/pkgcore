@@ -10,6 +10,8 @@ pkgcore 0.2.6:
 * resolver traceback for if a requested atom is already known as insoluable.
   Thanks to kojiro for spotting it.
 
+* misc bash code cleanup.
+
 * PATH protection has been loosened slightly to enable 'weird' eclasses that
   are doing global PATH mangling.
 

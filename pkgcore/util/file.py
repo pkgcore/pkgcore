@@ -140,7 +140,7 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
     s = bash_parser(f, sourcing_command=sourcing_command, env=d)
     orig_whitespace = s.whitespace
     assign_whitespace = ''.join(c for c in orig_whitespace if c != '\n')
-    
+ 
     try:
         tok = ""
         try:
@@ -159,13 +159,19 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
                         raise ParseError(bash_source, s.lineno)
                     else:
                         break
-                # reach in and grab the next char, need to know
-                # if it's an empty assign.
-                s.whitespace = assign_whitespace
                 val = s.get_token()
-                s.whitespace = orig_whitespace
                 if val is None:
                     val = ''
+                # look ahead to see if we just got an empty assign.
+                next_tok = s.get_token()
+                if next_tok == '=':
+                    # ... we did.
+                    # leftmost insertions, thus reversed ordering
+                    s.push_token(next_tok)
+                    s.push_token(val)
+                    val = ''
+                else:
+                    s.push_token(next_tok)
                 d[key] = val
         except ValueError:
             raise ParseError(bash_source, s.lineno)

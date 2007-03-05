@@ -167,11 +167,6 @@ pkgcore_join(PyObject *self, PyObject *args)
             s++;
         if(s_start == s)
             continue;
-        if(i == start && '/' == *s_start) {
-            // seek forward, then back for the following len addition.
-            SKIP_SLASHES(s_start);
-            s_start--;
-        }
         len += s - s_start;
         char *s_end = s;
         if(i + 1 != end) {
@@ -200,10 +195,13 @@ pkgcore_join(PyObject *self, PyObject *args)
     for(i = start; i < end; i++) {
         s_start = s = PyString_AS_STRING(items[i]);
         if(i == start && leading_slash) {
-            SKIP_SLASHES(s);
-            s_start = s;
+            // a slash is inserted anywas, thus we skip one ahead
+            // so it doesn't gain an extra.
+            s_start++;
+            s = s_start;
         }
-        if('\0' == *s)
+
+       if('\0' == *s)
             continue;
         while('\0' != *s) {
             *buf = *s;

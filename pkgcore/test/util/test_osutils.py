@@ -215,8 +215,12 @@ class Cpy_JoinTest(TestCase):
             ["foo", "/bar"],
             ["/bar", "dar"],
             ["/bar", "../dar"],
-            ["", "../dar"]
+            ["", "../dar"],
+            ["foo//dar", "foon"],
             ])
+
+    def test_leading_slashes(self):
+        self.assertEqual('/dar/foon', osutils.join('//dar', 'foon'))
 
 
 # TODO: more error condition testing

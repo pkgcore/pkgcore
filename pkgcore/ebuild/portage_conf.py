@@ -440,11 +440,15 @@ def config_from_make_conf(location="/etc/"):
             pkgdir = None
         # If we are not using the native bzip2 then the Tarfile.bz2open
         # the binpkg repository uses will fail.
-        if pkgdir and os.path.isdir(pkgdir) and bzip2.native:
-            new_config['binpkg'] = basics.ConfigSectionFromStringDict({
+        if pkgdir and os.path.isdir(pkgdir):
+            if not bzip2.native:
+                logger.warn("python's bz2 module isn't available: "
+                    "disabling binpkg support")
+            else:
+                new_config['binpkg'] = basics.ConfigSectionFromStringDict({
                     'class': 'pkgcore.binpkg.repository.tree',
                     'location': pkgdir})
-            default_repos += ('binpkg',)
+                default_repos += ('binpkg',)
 
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.

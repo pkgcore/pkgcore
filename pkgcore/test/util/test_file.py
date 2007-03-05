@@ -124,6 +124,17 @@ class ReadBashDictTest(TestCase):
             read_bash_dict(self.invalid_file.name, ignore_malformed=True),
             {'foo1': 'bar', 'foo2': 'barfoo3'})
 
+    def test_empty_assign(self):
+        open(self.valid_file.name, 'w').write("foo=\ndar=blah\n")
+        self.assertEqual(read_bash_dict(self.valid_file.name),
+            {'foo':'', 'dar':'blah'})
+        open(self.valid_file.name, 'w').write("foo=\ndar=\n")
+        self.assertEqual(read_bash_dict(self.valid_file.name),
+            {'foo':'', 'dar':''})
+        open(self.valid_file.name, 'w').write("foo=blah\ndar=\n")
+        self.assertEqual(read_bash_dict(self.valid_file.name),
+            {'foo':'blah', 'dar':''})
+
     def test_quoting(self):
         self.assertEqual(read_bash_dict(StringIO("x='y \\\na'")),
             {'x':'y \\\na'})

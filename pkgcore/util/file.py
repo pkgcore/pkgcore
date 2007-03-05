@@ -138,7 +138,9 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
     else:
         f = bash_source
     s = bash_parser(f, sourcing_command=sourcing_command, env=d)
-
+    orig_whitespace = s.whitespace
+    assign_whitespace = ''.join(c for c in orig_whitespace if c != '\n')
+    
     try:
         tok = ""
         try:
@@ -146,13 +148,23 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
                 key = s.get_token()
                 if key is None:
                     break
-                eq, val = s.get_token(), s.get_token()
+                elif key.isspace():
+                    # we specifically have to check this, since we're
+                    # screwing with the whitespace filters below to 
+                    # detect empty assigns
+                    continue
+                eq = s.get_token()
                 if eq != '=':
                     if not ignore_malformed:
                         raise ParseError(bash_source, s.lineno)
                     else:
                         break
-                elif val is None:
+                # reach in and grab the next char, need to know
+                # if it's an empty assign.
+                s.whitespace = assign_whitespace
+                val = s.get_token()
+                s.whitespace = orig_whitespace
+                if val is None:
                     val = ''
                 d[key] = val
         except ValueError:

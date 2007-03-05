@@ -3,12 +3,24 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.2.8:
+
+* fix a corner case for cpy join spotted by TFKyle where length calculation
+  was incorrect, leading to a trailing null slipping into the calculated
+  path.
+
+* fix bash parsing for a corner case for empty assigns; literally, 
+  x=
+  foo='dar'
+  would incorrectly interpret x=foo, instead of x=''.
+
+
 pkgcore 0.2.7:
 
-* layman configuration (if available) is now read for portage configuration for
-  sync URI for overlays.  tar syncer is currently unsupported; others may be buggy.
-  Feed back desired (author doesn't use layman).  Ticket #11.  If you want it
-  disabled, add FEATURES=-layman-sync .
+* layman configuration (if available) is now read for portage configuration
+  for sync URI for overlays.  tar syncer is currently unsupported; others may
+  be buggy.  Feed back desired (author doesn't use layman).  Ticket #11.  If
+  you want it disabled, add FEATURES=-layman-sync .
 
 * another fix for daft tarballs that try to touch cwd.
 

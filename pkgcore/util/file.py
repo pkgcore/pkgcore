@@ -71,8 +71,7 @@ def read_bash(bash_source):
 read_bash.__doc__ = iter_read_bash.__doc__
 
 
-def read_dict(bash_source, splitter="=", ignore_malformed=False,
-              source_isiter=False):
+def read_dict(bash_source, splitter="=", source_isiter=False):
     """
     read key value pairs, ignoring bash-style comments.
 
@@ -95,18 +94,15 @@ def read_dict(bash_source, splitter="=", ignore_malformed=False,
             try:
                 k, v = k.split(splitter, 1)
             except ValueError:
-                if not ignore_malformed:
-                    raise ParseError(filename, line_count)
-            else:
-                if len(v) > 2 and v[0] == v[-1] and v[0] in ("'", '"'):
-                    v = v[1:-1]
-                d[k] = v
+                raise ParseError(filename, line_count)
+            if len(v) > 2 and v[0] == v[-1] and v[0] in ("'", '"'):
+                v = v[1:-1]
+            d[k] = v
     finally:
         del i
     return d
 
-def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
-                   sourcing_command=None):
+def read_bash_dict(bash_source, vars_dict=None, sourcing_command=None):
     """
     read bash source, yielding a dict of vars
 
@@ -118,10 +114,7 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
     @param sourcing_command: controls whether a source command exists.
         If one does and is encountered, then this func is called.
     @type sourcing_command: callable
-    @param ignore_malformed: if malformed syntax, whether to ignore that line
-        or throw a ParseError
-    @raise ParseError: thrown if ignore_malformed is False, and invalid syntax
-        is encountered.
+    @raise ParseError: thrown if invalid syntax is encountered.
     @return: dict representing the resultant env if bash executed the source.
     """
 
@@ -155,10 +148,7 @@ def read_bash_dict(bash_source, vars_dict=None, ignore_malformed=False,
                     continue
                 eq = s.get_token()
                 if eq != '=':
-                    if not ignore_malformed:
-                        raise ParseError(bash_source, s.lineno)
-                    else:
-                        break
+                    raise ParseError(bash_source, s.lineno)
                 val = s.get_token()
                 if val is None:
                     val = ''

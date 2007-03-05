@@ -52,11 +52,6 @@ class TestReadBashConfig(TestCase):
             read_dict(['foo=bar'], source_isiter=True), {'foo': 'bar'})
         self.assertRaises(
             ParseError, read_dict, ['invalid'], source_isiter=True)
-        self.assertEqual(
-            read_dict(
-                ['invalid', 'foo=bar', '# blah'], source_isiter=True,
-                ignore_malformed=True),
-            {'foo': 'bar'})
 
 
 class ReadBashDictTest(TestCase):
@@ -71,12 +66,6 @@ class ReadBashDictTest(TestCase):
             'foo4=-/:j4\n'
             'foo5=\n')
         self.valid_file.flush()
-        self.invalid_file = tempfile.NamedTemporaryFile()
-        self.invalid_file.write(
-            '# hi I am a comment\n'
-            'foo1=bar\n'
-            "foo2='bar'foo3=\"bar\"")
-        self.invalid_file.flush()
         self.sourcing_file = tempfile.NamedTemporaryFile()
         self.sourcing_file.write('source "%s"\n' % self.valid_file.name)
         self.sourcing_file.flush()
@@ -106,7 +95,6 @@ class ReadBashDictTest(TestCase):
 
     def tearDown(self):
         del self.valid_file
-        del self.invalid_file
         del self.sourcing_file
         del self.advanced_file
         del self.env_file
@@ -119,10 +107,8 @@ class ReadBashDictTest(TestCase):
             read_bash_dict(self.valid_file.name),
             {'foo1': 'bar', 'foo2': 'bar', 'foo3': 'bar', 'foo4': '-/:j4',
                 'foo5': ''})
-        self.assertRaises(ParseError, read_bash_dict, self.invalid_file.name)
-        self.assertEqual(
-            read_bash_dict(self.invalid_file.name, ignore_malformed=True),
-            {'foo1': 'bar', 'foo2': 'barfoo3'})
+        s = "a=b\ny='"
+        self.assertRaises(ParseError, read_bash_dict, StringIO(s))
 
     def test_empty_assign(self):
         open(self.valid_file.name, 'w').write("foo=\ndar=blah\n")

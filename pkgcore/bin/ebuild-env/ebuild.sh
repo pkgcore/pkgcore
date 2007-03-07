@@ -274,8 +274,6 @@ export_environ() {
     temp_umask=`umask`
     umask 0002
 
-    debug-print "exporting env for ${EBUILD_PHASE} to $1, using optional post-processor '${2:-none}'"
-
     if [ "${2:-unset}" == "unset" ]; then
         dump_environ > "$1"
     else
@@ -287,7 +285,6 @@ export_environ() {
     DONT_EXPORT_VARS="${DONT_EXPORT_VARS/ temp_umask /}"
 
     umask $temp_umask
-    debug-print "exported."
 }
 
 # reload a saved env, applying usual filters to the env prior to eval'ing it.
@@ -326,7 +323,7 @@ load_environ() {
         };
         local opts=""
         [[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
-        echo $PKGCORE_DEBUG
+
         eval "$(PYTHONPATH=${PKGCORE_PYTHONPATH} \
             "${PKGCORE_PYTHON}" "${PKGCORE_BIN_PATH}/filter-env" $opts \
             -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" \

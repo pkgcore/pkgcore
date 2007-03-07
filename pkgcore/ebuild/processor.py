@@ -641,7 +641,6 @@ class EbuildProcessor:
 
         except FinishedProcessing, fp:
             v = fp.val
-            del fp
             return v
 
 def chuck_KeyboardInterrupt(*arg):

@@ -5,6 +5,12 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.8:
 
+* shift the misc fs property triggers to pre_merge, rather then sanity_check;
+  sanity_check should be only for "do I have what I need to even do the merge?".
+  running preinst was occasionally wiping the changes the triggers made, thus
+  allowing screwed up ebuilds with custom preinst's to slip in a portage gid
+  for merge.
+
 * fix a corner case for cpy join spotted by TFKyle where length calculation
   was incorrect, leading to a trailing null slipping into the calculated
   path.

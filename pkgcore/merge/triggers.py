@@ -398,7 +398,7 @@ class unmerge(base):
 class fix_uid_perms(base):
 
     required_csets = ('new_cset',)
-    _hooks = ('sanity_check',)
+    _hooks = ('pre_merge',)
     _engine_types = INSTALLING_MODES
 
     def __init__(self, uid=pkgcore.os_data.portage_uid,
@@ -422,7 +422,7 @@ class fix_uid_perms(base):
 class fix_gid_perms(base):
 
     required_csets = ('new_cset',)
-    _hooks = ('sanity_check',)
+    _hooks = ('pre_merge',)
     _engine_types = INSTALLING_MODES
 
     def __init__(self, gid=pkgcore.os_data.portage_gid,
@@ -446,7 +446,7 @@ class fix_gid_perms(base):
 class fix_set_bits(base):
 
     required_csets = ('new_cset',)
-    _hooks = ('sanity_check',)
+    _hooks = ('pre_merge',)
     _engine_types = INSTALLING_MODES
 
     def trigger(self, engine, cset):
@@ -472,7 +472,7 @@ class fix_set_bits(base):
 class detect_world_writable(base):
 
     required_csets = ('new_cset',)
-    _hooks = ('sanity_check',)
+    _hooks = ('pre_merge',)
     _engine_types = INSTALLING_MODES
 
     def __init__(self, fix_perms=False):

@@ -508,7 +508,7 @@ class single_attr_change_base(object):
     def test_metadata(self):
         self.assertEqual(self.kls._engine_types, triggers.INSTALLING_MODES)
         self.assertEqual(self.kls.required_csets, ('new_cset',))
-        self.assertEqual(self.kls._hooks, ('sanity_check',))
+        self.assertEqual(self.kls._hooks, ('pre_merge',))
 
     @property
     def trigger(self):

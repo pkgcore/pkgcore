@@ -73,7 +73,7 @@ INSTALLING:
     cd pkgcore-0.xx
     python setup.py test
      or
-    trial pkgcore/
+    trial pkgcore
 
   To install:
 

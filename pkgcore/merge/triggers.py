@@ -39,7 +39,7 @@ class base(object):
         sequence, those specific csets are passed in
     @ivar _label: Either None, or a string to use for this triggers label
     @ivar _hook: sequence of hook points to register into
-    @ivar _priority: range of 0 to 100, order of execution for triggers per hook.
+    @ivar _priority: range of 0 to 100, order of execution for triggers per hook
     @ivar _engine_types: if None, trigger works for all engine modes, else it's
         limited to that mode, and must be a sequence
     """
@@ -130,7 +130,7 @@ class mtime_watcher(object):
     """
     passed a list of locations, return a L{contents.contentsSet} containing
     those that are directories.
- 
+
     If the location doesn't exist, it's ignored.  If stat_func is os.stat
     and the location is a symlink pointing at a non existant location, it's
     ignored.
@@ -139,7 +139,7 @@ class mtime_watcher(object):
     related directories, if any mtimes are *now* (fs doesn't do subsecond
     resolution, osx for example), induces a sleep for a second to ensure
     any later re-runs do not get bit by completing within the race window.
- 
+
     Finally, if any mtime is detected that is in the future, it is reset
     to 'now'.
     """
@@ -147,7 +147,7 @@ class mtime_watcher(object):
     def __init__(self):
         self.saved_mtimes = None
         self.locations = None
- 
+
     def mtime_floats(func):
         def mtime_floats_wrapper(self, *args, **kwargs):
             cur = os.stat_float_times()
@@ -173,7 +173,7 @@ class mtime_watcher(object):
             obj = gen_obj(x, stat=st)
             if fs.isdir(obj):
                 yield obj
- 
+
     @mtime_floats
     def set_state(self, locations, stat_func=os.stat, forced_past=2):
         """
@@ -520,7 +520,7 @@ class CommonDirectoryModes(base):
     required_csets = ('new_cset',)
     _hooks = ('pre_merge',)
     _engine_types = INSTALLING_MODES
-    
+
     directories = [pjoin('/usr', x) for x in ('.', 'lib', 'lib64', 'lib32',
         'bin', 'sbin', 'local')]
     directories.extend(pjoin('/usr/share', x) for x in ('.', 'man', 'info'))
@@ -529,7 +529,7 @@ class CommonDirectoryModes(base):
         '/var'])
     directories = frozenset(map(normpath, directories))
     del x
-    
+
     def trigger(self, engine, cset):
         r = engine.observer
         if not r:

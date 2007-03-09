@@ -18,10 +18,10 @@ class fetcher(object):
 
         digs through chksums, and returns:
           - -2: file doesn't exist.
-          - -1: iff (size chksum is available, and
+          - -1: if (size chksum is available, and
                 file is smaller than stated chksum)
-          - 0:  iff all chksums match
-          - 1:  iff file is too large (if size chksums are available)
+          - 0:  if all chksums match
+          - 1:  if file is too large (if size chksums are available)
                 or else size is right but a chksum didn't match.
 
         if all_chksums is True, all chksums must be verified; if false, all

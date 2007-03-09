@@ -16,7 +16,7 @@ class MalformedCommand(errors.base):
 
     def __init__(self, command):
         errors.base.__init__(self,
-                             "fetchcommand is malformed: %s" % (command,))
+            "fetchcommand is malformed: %s" % (command,))
         self.command = command
 
 

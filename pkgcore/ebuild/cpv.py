@@ -290,9 +290,9 @@ class CPV(base.base, base_CPV):
 
     __slots__ = ()
 
-#	__metaclass__ = WeakInstMeta
+#    __metaclass__ = WeakInstMeta
 
-#	__inst_caching__ = True
+#    __inst_caching__ = True
 
     def __repr__(self):
         return '<%s cpvstr=%s @%#8x>' % (

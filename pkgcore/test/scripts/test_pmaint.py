@@ -52,7 +52,7 @@ failure_section = basics.HardCodedConfigSection({'class': SyncableRepo,
 
 class SyncTest(TestCase, helpers.MainMixin):
 
-    parser = helpers.mangle_parser(pmaint.SyncOptionParser())
+    parser = helpers.mangle_parser(pmaint.SyncParser())
     main = staticmethod(pmaint.sync_main)
 
     def test_parser(self):

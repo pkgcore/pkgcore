@@ -8,7 +8,6 @@ ini based configuration format
 from ConfigParser import ConfigParser
 
 from pkgcore.util import mappings
-
 from pkgcore.config import basics
 
 

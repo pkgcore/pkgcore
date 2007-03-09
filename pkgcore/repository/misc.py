@@ -47,16 +47,16 @@ class caching_repo(object):
     repository wrapper that overrides match, returning
     L{caching_iter} instances; itermatch is slaved to match,
     in other words iterating over the caching_iter.
-    
+
     Main use for this is to cache results from query lookups;
     if matches restrict arg is in the cache, the caller gets a shared
     caching_iter sequence, which may already be fully loaded with pkg
     instances.
-    
+
     This can boost random lookup time pretty nicely, while helping to
     hold instance in memory to avoid redoing work.
-    
-    Cost of this of course is that involved objects are forced to stay 
+
+    Cost of this of course is that involved objects are forced to stay
     in memory till the cache is cleared.  General use, not usually what
     you want- if you're making a lot of random queries that are duplicates
     (resolver does this for example), caching helps.

@@ -197,7 +197,7 @@ class EbuildProcessor:
                 raise Exception('fakeroot was on, but sandbox was also on')
             self.__sandbox = True
             spawn_func = pkgcore.spawn.spawn_sandbox
-#			env.update({"SANDBOX_DEBUG":"1", "SANDBOX_DEBUG_LOG":"/var/tmp/test"})
+#            env.update({"SANDBOX_DEBUG":"1", "SANDBOX_DEBUG_LOG":"/var/tmp/test"})
 
         elif fakeroot:
             if not pkgcore.spawn.is_fakeroot_capable():

@@ -5,7 +5,11 @@ from pkgcore.sync import base
 from pkgcore.config import ConfigHint
 from pkgcore.util.demandload import demandload
 
-demandload(globals(), "os socket errno pkgcore.util.osutils:pjoin")
+demandload(globals(), "os "
+    "socket "
+    "errno "
+    "pkgcore.util.osutils:pjoin"
+    )
 
 class rsync_syncer(base.ExternalSyncer):
 

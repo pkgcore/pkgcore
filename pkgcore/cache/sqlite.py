@@ -11,8 +11,8 @@ sqlite_module = __import__("sqlite")
 
 class database(fs_template.FsBased, sql_template.SQLDatabase):
 
-    SCHEMA_DELETE_NAME	= "delete_package_values"
-    SCHEMA_DELETE_TRIGGER	= """CREATE TRIGGER %s AFTER DELETE on %s
+    SCHEMA_DELETE_NAME = "delete_package_values"
+    SCHEMA_DELETE_TRIGGER = """CREATE TRIGGER %s AFTER DELETE on %s
     begin
     DELETE FROM %s WHERE pkgid=old.pkgid;
     end;""" % (SCHEMA_DELETE_NAME, sql_template.SQLDatabase.SCHEMA_PACKAGE_NAME,

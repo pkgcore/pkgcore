@@ -27,28 +27,28 @@ class SQLDatabase(template.database):
     modified.
     """
 
-    SCHEMA_PACKAGE_NAME	= "package_cache"
-    SCHEMA_PACKAGE_CREATE 	= (
+    SCHEMA_PACKAGE_NAME = "package_cache"
+    SCHEMA_PACKAGE_CREATE = (
         "CREATE TABLE %s ( "
         "pkgid INTEGER PRIMARY KEY, label VARCHAR(255), cpv VARCHAR(255), "
         "UNIQUE(label, cpv))" % SCHEMA_PACKAGE_NAME)
-    SCHEMA_PACKAGE_DROP	= "DROP TABLE %s" % SCHEMA_PACKAGE_NAME
+    SCHEMA_PACKAGE_DROP = "DROP TABLE %s" % SCHEMA_PACKAGE_NAME
 
-    SCHEMA_VALUES_NAME	= "values_cache"
-    SCHEMA_VALUES_CREATE	= (
+    SCHEMA_VALUES_NAME = "values_cache"
+    SCHEMA_VALUES_CREATE = (
         "CREATE TABLE %s ( "
         "pkgid integer references %s (pkgid) on delete cascade, "
         "key varchar(255), value text, UNIQUE(pkgid, key))" % (
             SCHEMA_VALUES_NAME, SCHEMA_PACKAGE_NAME))
-    SCHEMA_VALUES_DROP	= "DROP TABLE %s" % SCHEMA_VALUES_NAME
-    SCHEMA_INSERT_CPV_INTO_PACKAGE	= (
+    SCHEMA_VALUES_DROP = "DROP TABLE %s" % SCHEMA_VALUES_NAME
+    SCHEMA_INSERT_CPV_INTO_PACKAGE = (
         "INSERT INTO %s (label, cpv) VALUES(%%s, %%s)" % SCHEMA_PACKAGE_NAME)
 
     _BaseError = ()
     _dbClass = None
 
     autocommits = False
-#	cleanse_keys = True
+#    cleanse_keys = True
 
     # boolean indicating if the derived RDBMS class supports replace syntax
     _supports_replace = False

@@ -100,19 +100,19 @@ class quiet_mirroring(object):
     # to call in. quiet defaults to 2^24 -1. Don't call update, 'cept
     # once every 16 million or so :)
     call_update_min = 0xffffff
-    def update(self, key, *arg):	pass
-    def exception(self, key, *arg):	pass
-    def eclass_stale(self, *arg):	pass
-    def missing_entry(self, key):	pass
-    def misc(self, key, *arg):	pass
-    def corruption(self, key, s):	pass
+    def update(self, key, *arg): pass
+    def exception(self, key, *arg): pass
+    def eclass_stale(self, *arg): pass
+    def missing_entry(self, key): pass
+    def misc(self, key, *arg): pass
+    def corruption(self, key, s): pass
 
 class non_quiet_mirroring(quiet_mirroring):
     """prints to stdout each step in cache mirroring"""
 
     call_update_min = 1
-    def update(self, key, *arg):	print "processed", key
-    def exception(self, key, *arg):	print "exec", key, arg
-    def missing(self, key):		print "key %s is missing", key
-    def corruption(self, key, *arg):	print "corrupt %s:" % key, arg
+    def update(self, key, *arg): print "processed", key
+    def exception(self, key, *arg): print "exec", key, arg
+    def missing(self, key): print "key %s is missing", key
+    def corruption(self, key, *arg): print "corrupt %s:" % key, arg
     def eclass_stale(self, key, *arg): print "stale %s:" % key, arg

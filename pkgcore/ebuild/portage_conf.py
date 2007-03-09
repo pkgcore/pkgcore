@@ -64,7 +64,7 @@ def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
     storage_loc = c.get('MAIN', 'storage')
     overlay_xml = pjoin(storage_loc, default_conf)
     del c
-    
+
     try:
         xmlconf = etree.parse(overlay_xml)
     except IOError, ie:
@@ -95,7 +95,7 @@ def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
                 uri = 'svn+' + uri
         elif src_type != 'rsync':
             uri = '%s+%s' % (src_type, uri)
-        
+
         new_syncers[path] = make_syncer(new_config, path, uri, rsync_opts, False)
     return new_syncers
 
@@ -127,7 +127,7 @@ def isolate_rsync_opts(options):
     if excludes is not None:
         extra_opts.extend('--exclude-from=%s' % x
             for x in excludes.split())
-    
+
     if extra_opts:
         base['extra_opts'] = tuple(extra_opts)
 
@@ -273,7 +273,7 @@ def config_from_make_conf(location="/etc/"):
     kwds["cache_location"] = pjoin(config_root, 'var', 'cache', 'edb', 
         'dep', 'var', 'db', 'pkg')
     new_config["vdb"] = basics.AutoConfigSection(kwds)
-    
+
     portdir = normpath(conf_dict.pop("PORTDIR").strip())
     portdir_overlays = [
         normpath(x) for x in conf_dict.pop("PORTDIR_OVERLAY", "").split()]
@@ -414,7 +414,7 @@ def config_from_make_conf(location="/etc/"):
 #            else:
 #                cache_config["class"] = "pkgcore.cache.metadata.database"
 #                cache_config["location"] = portdir
-#        	 cache_config["readonly"] = "true"
+#                cache_config["readonly"] = "true"
 #        else:
 #            cache_config["class"] = pcache
 #

@@ -27,7 +27,7 @@ def format_seq(seq, formatter=repr):
     return formatter(seq)
 
 
-class SyncOptionParser(commandline.OptionParser):
+class SyncParser(commandline.OptionParser):
 
     def __init__(self, **kwargs):
         commandline.OptionParser.__init__(self, description=
@@ -76,7 +76,7 @@ def sync_main(options, out, err):
         return 1
     return 0
 
-commandline_commands['sync'] = (SyncOptionParser, sync_main)
+commandline_commands['sync'] = (SyncParser, sync_main)
 
 
 class CopyParser(commandline.OptionParser):

@@ -241,13 +241,17 @@ class merge_plan(object):
                         # see if it's a vdb node already; if it's a cycle between
                         # the same vdb node, ignore it (ignore self-dependant 
                         # depends level installed deps for the same node iow)
-                        if ((index < stack_end) and 
-                            (current_stack[index + 1].current_pkg == 
+                        if ((index < stack_end and index) and 
+                            (current_stack[index - 1].current_pkg == 
                             cur_frame.current_pkg)
                             and cur_frame.current_pkg.repo.livefs):
                             # we're in a cycle of depends level vdb nodes;
                             # they cyclical pkg is installed already, thus
                             # its satisfied itself.
+                            dprint("depends:     %snonissue: vdb bound cycle "
+                                "for %s via %s, exempting" %
+                                (cur_frame.depth *2 * " ", cur_frame.atom,
+                                cur_frame.choices.current_pkg))
                             ignore=True
                             break
                         else:
@@ -264,6 +268,10 @@ class merge_plan(object):
                             # on the fly to not match livefs_dbs is going to
                             # have issues here.
                             if self.livefs_dbs == cur_frame.dbs:
+                                dprint("depends:     %snon-vdb cycle that "
+                                    "went vdb for %s via %s, failing" %
+                                    (cur_frame.depth *2 * " ", cur_frame.atom,
+                                    cur_frame.choices.current_pkg))
                                 failure = [datom]
                                 continue
                             # try forcing vdb level match.
@@ -350,7 +358,8 @@ class merge_plan(object):
                                 break
                 else:
                     failure = self._rec_add_atom(ratom, current_stack,
-                        cur_frame.dbs, mode=attr, drop_cycles=cur_frame.drop_cycles)
+                        cur_frame.dbs, mode=attr,
+                        drop_cycles=cur_frame.drop_cycles)
                 if failure:
                     # reduce.
                     if cur_frame.choices.reduce_atoms(ratom):

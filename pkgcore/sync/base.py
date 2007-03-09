@@ -79,7 +79,7 @@ class ExternalSyncer(syncer):
     binary = None
 
     def __init__(self, path, uri, default_verbosity=0):
-        syncer.__init__(self, path, uri, default_verbosity)
+        syncer.__init__(self, path, uri, default_verbosity=default_verbosity)
         if not self.sets_env:
             self.env = {}
         if not hasattr(self, 'binary_path'):
@@ -168,4 +168,4 @@ def GenericSyncer(basedir, uri, default_verbosity=0):
     if not plugins or plugins[-1][0] <= 0:
         raise uri_exception('no known syncer supports %r' % (uri,))
     # XXX this is random if there is a tie. Should we raise an exception?
-    return plugins[-1][1](basedir, uri, default_verbosity)
+    return plugins[-1][1](basedir, uri, default_verbosity=default_verbosity)

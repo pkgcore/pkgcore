@@ -17,9 +17,9 @@ class darcs_syncer(base.dvcs_syncer):
             raise base.uri_exception(raw_uri, "doesn't start with darcs+")
         return raw_uri[6:]
 
-    def __init__(self, basedir, uri):
+    def __init__(self, basedir, uri, **kwargs):
         uri = self.parse_uri(uri)
-        base.dvcs_syncer.__init__(self, basedir, uri)
+        base.dvcs_syncer.__init__(self, basedir, uri, **kwargs)
 
     def _initial_pull(self):
         return [self.binary_path, "clone", self.uri, self.basedir]

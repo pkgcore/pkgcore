@@ -30,7 +30,7 @@ class cvs_syncer(base.dvcs_syncer):
             proto[0] = cls.require_binary(proto[0])
         return proto[0], proto[1].lstrip("/")
 
-    def __init__(self, basedir, raw_uri):
+    def __init__(self, basedir, raw_uri, **kwargs):
         proto, uri = self.parse_uri(raw_uri)
         self.rsh = proto
         if self.rsh is None:
@@ -41,7 +41,7 @@ class cvs_syncer(base.dvcs_syncer):
         else:
             uri = ":ext:%s" % uri
         host, self.module = uri.rsplit(":", 1)
-        base.dvcs_syncer.__init__(self, basedir, host)
+        base.dvcs_syncer.__init__(self, basedir, host, **kwargs)
 
     @property
     def env(self):

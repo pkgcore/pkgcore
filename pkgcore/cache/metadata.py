@@ -68,7 +68,6 @@ class database(flat_hash.database):
         return d
 
     def _parse_data(self, data, mtime):
-        # easy attempt first.
         data = list(data)
         if len(data) != self.magic_line_count:
             raise errors.GeneralCacheCorruption(

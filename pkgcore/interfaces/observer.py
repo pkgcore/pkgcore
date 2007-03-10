@@ -85,18 +85,15 @@ class file_repo_observer(file_phase_observer, repo_base):
 
 def wrap_build_method(phase, method, self, *args, **kwds):
     disable_observer = kwds.pop("disable_observer", False)
-    if self.observer is None:
+    if self.observer is None or disable_observer:
         return method(self, *args, **kwds)
-    if not disable_observer:
-        self.observer.phase_start(phase)
+    self.observer.phase_start(phase)
     ret = False
     try:
         ret = method(self, *args, **kwds)
     finally:
-        if not disable_observer:
-            self.observer.phase_end(phase, ret)
+        self.observer.phase_end(phase, ret)
     return ret
-
 
 def decorate_build_method(phase):
     def f(func):

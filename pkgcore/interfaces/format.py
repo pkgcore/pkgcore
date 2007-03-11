@@ -39,8 +39,8 @@ class build_base(object):
 
 class build(build_base):
     stage_depends = {
-        "setup":"fetch",
-        "unpack":"setup",
+        "setup":"start",
+        "unpack":("fetch", "setup"),
         "configure":"unpack",
         "compile":"configure",
         "test":"compile",
@@ -91,7 +91,7 @@ class build(build_base):
 
 
 class install(build_base):
-    stage_depends = {"postinst":"preinst", "finalize":"postinst"}
+    stage_depends = {"preinst":"start", "postinst":"preinst", "finalize":"postinst"}
 
     def preinst(self):
         """any pre merge steps needed"""
@@ -107,7 +107,7 @@ class install(build_base):
 
 
 class uninstall(build_base):
-    stage_depends = {"postrm":"prerm", "finalize":"postrm"}
+    stage_depends = {"prerm":"start", "postrm":"prerm", "finalize":"postrm"}
 
     def prerm(self):
         """any pre unmerge steps needed"""
@@ -124,7 +124,7 @@ class uninstall(build_base):
 class replace(install, uninstall):
 
     stage_depends = {"finalize":"postinst", "postinst":"postrm",
-        "postrm":"prerm", "prerm":"preinst"}
+        "postrm":"prerm", "prerm":"preinst", "preinst":"start"}
 
 
 class fetch(object):

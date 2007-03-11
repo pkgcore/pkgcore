@@ -150,13 +150,20 @@ class ebd(object):
             del self.env[k]
         del wipes, k, v
 
-        self.__init_workdir__(tmp_offset)
-        if clean:
-            self.cleanup()
-        self.setup_workdir()
-        self.setup_env_data_source(env_data_source)
+        self.set_op_vars(tmp_offset)
+        self.clean_at_start = clean
+        self.clean_needed = clean
 
-    def __init_workdir__(self, tmp_offset):
+    def start(self):
+        if self.clean_at_start:
+            if not self.cleanup():
+                return False
+        self.setup_workdir()
+        self.setup_env_data_source()
+        self.clean_needed = True
+        return True
+        
+    def set_op_vars(self, tmp_offset):
         # don't fool with this, without fooling with setup.
         self.base_tmpdir = self.env["PORTAGE_TMPDIR"]
         self.tmpdir = normpath(pjoin(self.base_tmpdir, "portage"))
@@ -176,15 +183,14 @@ class ebd(object):
         return data_source.data_source(
             open(pjoin(self.env["T"], "environment"), "r").read())
 
-    def setup_env_data_source(self, env_data_source):
-        self.env_data_source = env_data_source
+    def setup_env_data_source(self):
         if not ensure_dirs(self.env["T"], mode=0770, gid=portage_gid,
             minimal=True):
             raise format.FailedDirectory(self.env['T'],
                 "%s doesn't fulfill minimum mode %o and gid %i" % (
                 self.env['T'], 0770, portage_gid))
 
-        if env_data_source is not None:
+        if self.env_data_source is not None:
             fp = pjoin(self.env["T"], "environment")
             # load data first (might be a local_source), *then* right
             # if it's a src_ebuild being installed, trying to do two steps
@@ -247,10 +253,15 @@ class ebd(object):
         release_ebuild_processor(ebd)
         return True
 
-    @observer.decorate_build_method("clean")
-    def cleanup(self):
-        if not os.path.exists(self.builddir):
+    def cleanup(self, disable_observer=False):
+        if not self.clean_needed or not os.path.exists(self.builddir):
             return True
+        if disable_observer:
+            return self.do_cleanup(disable_observer=disable_observer)
+        return self.do_cleanup()
+
+    @observer.decorate_build_method("cleanup")
+    def do_cleanup(self):
         try:
             shutil.rmtree(self.builddir)
             # try to wipe the cat dir; if not empty, ignore it

@@ -204,7 +204,7 @@ class ebd(object):
                                             mode=02770, gid=portage_gid):
             raise format.FailedDirectory(
                 os.path.dirname(self.logging),
-                "failed ensuring PORT_LOGDIR as 02770 and %i" % portage_gid)
+                "PORT_LOGDIR, desired mode 02770 and gid %i" % portage_gid)
 
     def setup_workdir(self):
         # ensure dirs.

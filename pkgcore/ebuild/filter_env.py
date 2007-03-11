@@ -65,21 +65,23 @@ else:
 def build_regex_string(tokens):
     if not tokens:
         return None
-    result = ['^(']
+    result = []
     for token in tokens:
         escaped = False
+        l = []
         for ch in token:
             if ch == '.' and not escaped:
-                result.append('[^= ]')
+                l.append('[^= ]')
             else:
-                result.append(ch)
+                l.append(ch)
             if ch == '\\':
                 escaped = not escaped
             else:
                 escaped = False
-        result.append('|')
-    result.append(')$')
-    return ''.join(result)
+            result.append(''.join(l))
+    if len(result) == 1:
+        return '^%s$' % result[0]
+    return '^(%s)$' % '|'.join(result)
 
 
 FUNC_LEN = len('function')

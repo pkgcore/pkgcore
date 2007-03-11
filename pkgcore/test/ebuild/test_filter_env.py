@@ -60,7 +60,12 @@ tc-arch ()
         self.assertIn('tc-arch', ret)
 
     def test_comments(self):
-        data1 = \
+        data = "dar=${yar##.%}\nfoo() {\n:\n}\n"
+        ret = ''.join(self.get_output(data, vars='dar'))
+        self.assertNotIn('dar', ret)
+        self.assertIn('foo', ret)
+
+        data = \
 """
 src_unpack() {
     use idn && {
@@ -74,15 +79,10 @@ src_compile() {
 }
 """
         self.assertIn('src_unpack', ''.join(
-            self.get_output(data1, funcs='src_compile')))
-        ret = ''.join(self.get_output(data1, funcs='src_unpack'))
+            self.get_output(data, funcs='src_compile')))
+        ret = ''.join(self.get_output(data, funcs='src_unpack'))
         self.assertIn('src_compile', ret)
         self.assertNotIn('src_unpack', ret)
-
-        data2 = "dar=${yar##.%}\nfoo() {\n:\n}\n"
-        ret = ''.join(self.get_output(data2, vars='dar'))
-        self.assertNotIn('dar', ret)
-        self.assertIn('foo', ret)
 
 
 class CPyFilterEnvTest(NativeFilterEnvTest):

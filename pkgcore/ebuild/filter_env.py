@@ -216,7 +216,7 @@ def process_scope(out, buff, pos, var_match, func_match, endchar):
                 else:
                     # blah=cah ; single word
                     pos = walk_command_complex(buff, pos, ' ', SPACE_PARSING)
-                if isspace(buff[pos]):
+                if pos < end and isspace(buff[pos]):
                     pos += 1
                     break
                 pos += 1

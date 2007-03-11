@@ -6,7 +6,11 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 pkgcore 0.2.8:
 
 * misc initialization fixes to syncers for when invoked via GenericSyncer.
-  If previously layman integration wasn't working for you, should now.
+  If you were getting __init__ tracebacks under layman integration, this
+  is fixed.
+
+* fallback bundled copy of elementtree import path was invalid, corrected.
+  If you've been hitting any import issues with layman, this fixes it.
 
 * shift the misc fs property triggers to pre_merge, rather then sanity_check;
   sanity_check should be only for "do I have what I need to even do the merge?".

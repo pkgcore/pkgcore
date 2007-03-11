@@ -67,6 +67,8 @@ def build_regex_string(tokens):
         return None
     result = []
     for token in tokens:
+        if not token:
+            continue
         escaped = False
         l = []
         for ch in token:
@@ -78,7 +80,7 @@ def build_regex_string(tokens):
                 escaped = not escaped
             else:
                 escaped = False
-            result.append(''.join(l))
+        result.append(''.join(l))
     if len(result) == 1:
         return '^%s$' % result[0]
     return '^(%s)$' % '|'.join(result)

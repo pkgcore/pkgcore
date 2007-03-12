@@ -255,7 +255,7 @@ def walk_command_dollared_parsing(buff, pos, endchar):
 
 def walk_here_command(buff, pos):
     pos += 1
-    logger.debug('starting here processing for COMMAND and l2 at p == %.10s',
+    logger.debug('starting here processing for COMMAND for level 2 at p == %.10s',
                  pos)
     if buff[pos] == '<':
         logger.debug(
@@ -279,11 +279,12 @@ def walk_here_command(buff, pos):
     end_here += 1
     if end_here >= end:
         return end_here
-    # TODO test if I got this right --marienz
+    # here words are always newline delimited
+    here_word = "\n%s\n" % here_word
     end_here = buff.find(here_word, end_here)
     if end_here == -1:
-        pos = end
-    return pos
+        return end
+    return end_here + len(here_word) - 1
 
 
 def walk_command_pound(buff, pos):
@@ -308,8 +309,11 @@ def walk_command_complex(buff, pos, endchar, interpret_level):
         elif ch == '<':
             if (pos < end - 1 and buff[pos + 1] == '<' and
                 interpret_level == COMMAND_PARSING):
-                pos += 1
-                pos = walk_here_command(buff, pos)
+                pos = walk_here_command(buff, pos + 1)
+                # we continue immediately; walk_here deposits us at the end
+                # of the here op, not consuming the final delimiting char
+                # since it may be an endchar
+                continue
             else:
                 logger.debug('noticed <, interpret_level=%s', interpret_level)
         elif ch == '#':

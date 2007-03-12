@@ -84,6 +84,32 @@ src_compile() {
         self.assertIn('src_compile', ret)
         self.assertNotIn('src_unpack', ret)
 
+    def test_here(self):
+        data = \
+"""
+pkg_setup() {
+        while read line; do elog "${line}"; done <<EOF
+The default behaviour of tcsh has significantly changed starting from
+version 6.14-r1.  In contrast to previous ebuilds, the amount of
+customisation to the default shell's behaviour has been reduced to a
+bare minimum (a customised prompt).
+If you rely on the customisations provided by previous ebuilds, you will
+have to copy over the relevant (now commented out) parts to your own
+~/.tcshrc.  Please check all tcsh-* files in
+/usr/share/doc/${P}/examples/ and include their behaviour in your own
+configuration files.
+The tcsh-complete file is not any longer sourced by the default system
+scripts.
+EOF
+}
+
+pkg_foo() {
+	:
+}
+"""                    
+        self.assertNotIn('pkg_foo', ''.join(self.get_output(data,
+            funcs='pkg_foo')))
+
 
 class CPyFilterEnvTest(NativeFilterEnvTest):
 

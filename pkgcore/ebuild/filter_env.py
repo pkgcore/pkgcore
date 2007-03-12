@@ -280,11 +280,11 @@ def walk_here_command(buff, pos):
     if end_here >= end:
         return end_here
     # here words are always newline delimited
-    here_word = "\n%s\n" % here_word
+    here_word = "%s" % here_word
     end_here = buff.find(here_word, end_here)
     if end_here == -1:
         return end
-    return end_here + len(here_word) - 1
+    return end_here + len(here_word)
 
 
 def walk_command_pound(buff, pos):

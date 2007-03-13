@@ -83,8 +83,58 @@ src_compile() {
         ret = ''.join(self.get_output(data, funcs='src_unpack'))
         self.assertIn('src_compile', ret)
         self.assertNotIn('src_unpack', ret)
+        data = \
+"""src_install() {
+    local -f ${f##*=} 
+}
+
+pkg_postinst() {
+    :
+}
+"""
+        self.assertNotIn('pkg_postinst', 
+            ''.join(self.get_output(data, funcs='pkg_postinst')))
+        data = \
+"""src_unpack() {
+    fnames=$(scanelf -pyqs__uClibc_start_main -F%F#s)
+}
+src_compile() {
+    :
+}
+"""
+        self.assertIn('src_compile',
+            ''.join(self.get_output(data, funcs='src_unpack')))
+
+        data = \
+"""findtclver() {
+    [ "$(#i)" = "3" ]
+}
+
+pkg_setup() {
+    :
+}
+"""
+        self.assertIn('pkg_setup',
+            ''.join(self.get_output(data, funcs='findtclver')))
 
     def test_here(self):
+        data = \
+"""
+src_install() {
+	cat >${D}/etc/modules.d/davfs2 <<EOF
+alias char-major-67	coda
+alias /dev/davfs*	coda
+EOF
+}
+
+pkg_setup() {
+    :
+}
+"""
+        ret = ''.join(self.get_output(data, funcs='pkg_setup'))
+        self.assertNotIn('pkg_setup', ''.join(self.get_output(data,
+            funcs='pkg_setup')))
+
         data = \
 """
 pkg_setup() {
@@ -110,6 +160,58 @@ pkg_foo() {
         self.assertNotIn('pkg_foo', ''.join(self.get_output(data,
             funcs='pkg_foo')))
 
+    def test_vars(self):
+        data = \
+"""
+f() {
+    x=$y
+}
+
+z() {
+    :
+}
+"""
+        self.assertIn('z', ''.join(self.get_output(data,
+            funcs='f')))
+
+        data = \
+"""
+f() {
+    x="${y}"
+}
+
+z() {
+    :
+}
+"""
+        self.assertIn('z', ''.join(self.get_output(data,
+            funcs='f')))
+
+        data = \
+"""src_compile() {
+    $(ABI=foo get_libdir)
+}
+
+pkg_setup() {
+    :
+}
+"""
+        self.assertIn('pkg_setup', ''.join(self.get_output(data,
+            funcs='src_compile')))
+
+    def test_quoting(self):
+        data = \
+"""
+pkg_postinst() {
+    einfo " /bin/ls ${ROOT}etc/init.d/net.* | grep -v '/net.lo$' | xargs -n1 ln -sfvn net.lo"
+}
+
+pkg_setup() {
+    :
+}
+"""
+        self.assertIn('pkg_setup', ''.join(self.get_output(data,
+            funcs='pkg_postinst')))
 
 class CPyFilterEnvTest(NativeFilterEnvTest):
 

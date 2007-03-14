@@ -33,7 +33,7 @@ DONT_EXPORT_VARS="ORIG_VARS GROUPS ORIG_FUNCS FUNCNAME DAEMONIZED CCACHE.* DISTC
 myarg SANDBOX_.* BASH.* EUID PPID SHELLOPTS UID ACCEPT_\(KEYWORDS\|LICENSE\) BUILD\(_PREFIX\|DIR\) T DIRSTACK
 DISPLAY \(EBUILD\)\?_PHASE PORTAGE_.* RC_.* SUDO_.* IFS LD_PRELOAD ret line phases D EMERGE_FROM
 PORT\(_LOGDIR\|DIR\(_OVERLAY\)\?\) ROOT TERM _ done e ENDCOLS PROFILE_.* BRACKET BAD WARN GOOD NORMAL EBUILD ECLASS LINENO
-HILITE IMAGE TMP"
+HILITE IMAGE TMP HISTCMD OPTIND RANDOM OLDPWD PKGCORE_DOMAIN IFS"
 
 
 if [ -z "$PKGCORE_BIN_PATH" ]; then
@@ -167,7 +167,7 @@ escape_regex() {
     done
 }
 
-gen_func_filter() {
+filter_env_func_filter() {
     while [ -n "$1" ]; do
         echo -n "$(escape_regex "$1")"
         [ "$#" != 1 ] && echo -n ','
@@ -177,7 +177,7 @@ gen_func_filter() {
 
 gen_regex_func_filter() {
     local f
-    if [ "$1" == 1 ]; then
+    if [ "$#" == 1 ]; then
         echo -n "$(escape_regex "$1")"
         return
     fi
@@ -190,7 +190,7 @@ gen_regex_func_filter() {
     echo -n "\)"
 }
 
-gen_var_filter() {
+filter_env_var_filter() {
     local _internal_var
     while [ -n "$1" ]; do
         echo -n "$1"
@@ -198,7 +198,6 @@ gen_var_filter() {
         shift
     done
 }
-
 
 gen_regex_var_filter() {
     local _internal_var
@@ -235,26 +234,32 @@ sleepbeep() {
 # selectively saves  the environ- specifically removes things that have been marked to not be exported.
 # dump the environ to stdout.
 dump_environ() {
-    # scope it so we can pass the output through a sed correction for newlines.
     local x y;
+
     #env dump, if it doesn't match a var pattern, stop processing, else print only if
     #it doesn't match one of the filter lists.
     # vars, then funcs.
+
     local opts=""
+
     [[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
-    declare | PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON}" "${PKGCORE_BIN_PATH}/filter-env" $opts -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x )"
+
+    declare | PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON}" \
+        "${PKGCORE_BIN_PATH}/filter-env" $opts -f \
+        "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" -v \
+        "$(filter_env_var_filter ${DONT_EXPORT_VARS} f x )"
+
     if ! hasq "--no-attributes" "$@"; then
-        echo $'reinstate_loaded_env_attributes ()\n{'
-        for y in export 'declare -i' readonly; do
+        echo "# env attributes"
+        for y in export readonly; do
             x=$(${y} | sed -n "/declare \(-[^ ]\+ \)*/!d; s:^declare \(-[^ ]\+ \)*\([A-Za-z0-9_+]\+\)\(=.*$\)\?$:\2:; /^$(gen_regex_var_filter ${DONT_EXPORT_VARS} x y)$/! p;")
-            [ -n "$x" ] && echo "    ${y} $(echo $x);"
+            [ -n "$x" ] && echo "${y} $(echo $x);"
         done
         
         # if it's just declare -f some_func, filter it, else drop it if it's one of the filtered funcs
         declare -F | sed -n "/^declare -[^ ]\( \|[^ ]? $(gen_regex_func_filter ${DONT_EXPORT_FUNCS})$\)\?/d; s/^/    /;s/;*$/;/p;"
 
-        shopt -p | sed -e 's:^:    :; s/;*$/;/;'
-        echo "}"
+        shopt -p 
     fi
 }
 
@@ -309,27 +314,80 @@ load_environ() {
     src="$1"
 
     EXISTING_PATH=$PATH
+    PKGCORE_ATTRS_EXPORTED=
+    PKGCORE_ATTRS_READONLY=
+    PKGCORE_SHOPTS_SET=
+    PKGCORE_SHOPTS_UNSET=
     if [ -f "$src" ]; then
-
-    	# XXX: note all of the *very careful* handling of bash env dumps through this code, and the fact 
-    	# it took 4 months to get it right.  There's a reason you can't just pipe the $(export) to a file.
-        # They were implemented wrong, as I stated when the export kludge was added.
-    	# so we're just dropping the attributes.  .51-r4 should carry a fixed version, .51 -> .51-r3
-        # aren't worth the trouble.  Drop all inline declare's that would be executed.
-    	# potentially handle this via filter-env?
-        # ~harring
+        # other managers shove the export/declares inline; we store it in a 
+        # func so that the var attrs can be dropped if needed.
+        # thus we define these temporarily, to intercept the inlined statements
+        # and push them into a func.
         function declare() {
-            :
+            if [ "$1" == "-r" ]; then
+                PKGCORE_ATTRS_READONLY="${PKGCORE_ATTRS_READONLY} $2"
+            elif [ "$1" == "-x" ]; then
+                PKGCORE_ATTRS_EXPORTED="${PKGCORE_ATTRS_EXPORTED} $2"
+            fi
         };
+        function export() {
+            PKGCORE_ATTRS_EXPORTED="${PKGCORE_ATTRS_EXPORTED} $*"
+        };
+        function readonly() {
+            PKGCORE_ATTRS_READONLY="${PKGCORE_ATTRS_READONLY} $*"
+        };
+        function shopt() {
+            if [ "$1" == "-s" ]; then
+                shift
+                PKGCORE_SHOPTS_SET="${PKGCORE_SHOPTS_SET} $*"
+            elif [ "$1" == "-u" ]; then
+                shift
+                PKGCORE_SHOPTS_UNSET="${PKGCORE_SHOPTS_UNSET} $*"
+            else
+                echo "ignoring unexpected shopt arg in env dump- $*" >&2
+            fi
+        }
         local opts=""
         [[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
 
+        # run the filtered env.
         eval "$(PYTHONPATH=${PKGCORE_PYTHONPATH} \
             "${PKGCORE_PYTHON}" "${PKGCORE_BIN_PATH}/filter-env" $opts \
-            -f "$(gen_func_filter ${DONT_EXPORT_FUNCS} )" \
-            -v "$(gen_var_filter ${DONT_EXPORT_VARS} f x EXISTING_PATH)" -i "$src")"
+            -f "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" \
+            -v "$(filter_env_var_filter ${DONT_EXPORT_VARS} f x EXISTING_PATH)" -i "$src")"
         ret=$?
-        unset -f declare
+
+        # if reinstate_loaded_env_attributes exists, run it to add to the vars.
+        type reinstate_loaded_env_attributes &> /dev/null && \
+            reinstate_loaded_env_attributes
+        unset -f declare readonly export reinstate_loaded_env_attributes shopt
+
+        # do not export/readonly an attr that is filtered- those vars are internal/protected,
+        # thus their state is guranteed
+        # additionally, if the var *was* nonexistant, export'ing it serves to create it
+        
+        pkgcore_tmp_func() {
+            while [ -n "$1" ]; do
+                echo "$1"
+                shift
+            done
+        }
+        
+        filter="^$(gen_regex_var_filter $DONT_EXPORT_VARS XARGS)$"
+        PKGCORE_ATTRS_EXPORTED=$(echo $(pkgcore_tmp_func $PKGCORE_ATTRS_EXPORTED | grep -v "$filter"))
+        PKGCORE_ATTRS_READONLY=$(echo $(pkgcore_tmp_func $PKGCORE_ATTRS_READONLY | grep -v "$filter"))
+        unset pkgcore_tmp_func filter
+
+        # rebuild the func.
+        local body=
+        [ -n "$PKGCORE_ATTRS_EXPORTED" ] && body="export $PKGCORE_ATTRS_EXPORTED;"
+        [ -n "$PKGCORE_ATTRS_READONLY" ] && body="${body} readonly $PKGCORE_ATTRS_READONLY;"
+        [ -n "$PKGCORE_SHOPTS_SET" ]     && body="${body} shopt -s ${PKGCORE_SHOPTS_SET};"
+        [ -n "$PKGCORE_SHOPTS_UNSET" ]   && body="${body} shopt -u ${PKGCORE_SHOPTS_UNSET};"
+        unset PKGCORE_ATTRS_READONLY PKGCORE_ATTRS_EXPORTED PKGCORE_SHOPTS_UNSET PKGCORE_SHOPTS_SET
+
+        # and... finally make the func.
+        eval "reinstate_loaded_env_attributes() { ${body:-:;} };"
     else
         echo "ebuild=${EBUILD}, phase $EBUILD_PHASE" >&2
         ret=1

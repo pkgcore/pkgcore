@@ -5,6 +5,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.8:
 
+* change var attr (exported/readonly) env storage to interop with the others;
+  internally, we still delay the var attr/shopt resetting till execution.
+
 * misc initialization fixes to syncers for when invoked via GenericSyncer.
   If previously layman integration wasn't working for you, should now.
 

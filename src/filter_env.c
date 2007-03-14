@@ -21,18 +21,20 @@ PyDoc_STRVAR(
 #define SPACE_PARSING            2
 #define COMMAND_PARSING          1
 
-static inline const char *raw_walk_command_escaped_parsing(const char *p,
-    const char *end, const char endchar, char var_expansion);
-static inline const char *walk_command_pound(const char *p);
-static const char *walk_command_complex(const char *p, const char *end,
+static inline const char *walk_command_escaped_parsing(
+    const char *start, const char *p, const char *end, const char endchar);
+static inline const char *walk_statement_pound(
+    const char *start, const char *p, char endchar);
+static const char *walk_command_complex(const char *start, const char *p,
+                                        const char *end,
     char endchar, const char interpret_level);
-static inline const char *walk_command_no_parsing(const char *p,
+static inline const char *walk_statement_no_parsing(const char *p,
     const char *end, const char endchar);
-static inline const char *walk_command_dollared_parsing(const char *p,
+static inline const char *walk_statement_dollared_quote_parsing(const char *p,
     const char *end, const char endchar);
-
-#define walk_command_escaped_parsing(start, end, endchar) \
-    raw_walk_command_escaped_parsing((start), (end), (endchar), 0)
+static const char *walk_dollar_expansion(const char *start, const char *p,
+                                         const char *end,
+                                         char endchar, char disable_quote);
 
 
 static PyObject *log_info = NULL;
@@ -141,7 +143,8 @@ regex_matches(regex_t *re, const char *buff, int desired_value)
 }
 
 static const char *
-process_scope(PyObject *out, const char *buff, const char *end,
+process_scope(PyObject *out, const char *start, const char *buff,
+              const char *end,
               regex_t *var_re, regex_t *func_re, int desired_var_match,
               int desired_func_match, char endchar)
 {
@@ -186,7 +189,7 @@ process_scope(PyObject *out, const char *buff, const char *end,
 
         /* ignore comments */
         if (*p == '#') {
-            p = walk_command_pound(p);
+            p = walk_statement_pound(start, p, 0);
             continue;
         }
 
@@ -195,7 +198,8 @@ process_scope(PyObject *out, const char *buff, const char *end,
             INFO("matched func name '%s'", temp_string);
             /* output it if it doesn't match */
 
-            new_p = process_scope(NULL, new_p, end, NULL, NULL, 0, 0, '}');
+            new_p = process_scope(
+                NULL, start, new_p, end, NULL, NULL, 0, 0, '}');
             INFO("ended processing  '%s'", temp_string);
             if (func_re != NULL && regex_matches(func_re, temp_string,
                 desired_func_match)) {
@@ -213,10 +217,14 @@ process_scope(PyObject *out, const char *buff, const char *end,
             // check for env assignment
             if (NULL == (new_p = is_envvar(p, &s, &e))) {
                 //exactly as it sounds, non env assignment.
-                p = walk_command_complex(p, end, endchar, COMMAND_PARSING);
+                p = walk_command_complex(start, p, end,
+                                         endchar, COMMAND_PARSING);
                 if (!p)
                     return NULL;
                 ++p;
+                // icky icky icky icky
+                if (p < end && *p != endchar)
+                    ++p;
             } else {
                 //env assignment
                 asprintf(&temp_string, "%.*s", (int)(e - s), s);
@@ -228,44 +236,27 @@ process_scope(PyObject *out, const char *buff, const char *end,
 
                 while(p < end && !isspace(*p) && ';' != *p) {
                     if ('\'' == *p)
-                        p = walk_command_no_parsing(p + 1, end, *p);
+                        p = walk_statement_no_parsing(p + 1, end, *p);
                     else if ('"' == *p || '`' == *p)
-                        p = walk_command_escaped_parsing(p + 1, end, *p);
-                    else if ('(' == *p)
-                        p = walk_command_escaped_parsing(p + 1, end, ')');
-                    else if (isspace(*p)) {
-                        while (p < end && isspace(*p) && *p != '\n')
-                        ++p;
+                        p = walk_command_escaped_parsing(
+                            start, p + 1, end, *p) + 1;
+                    else if ('(' == *p) {
+                        p = walk_command_escaped_parsing(
+                            start, p + 1, end, ')') + 1;
                     } else if ('$' == *p) {
                         if (p + 1 >= end) {
                             ++p;
                             continue;
                         }
-                        if ('(' == p[1]) {
-                            p = walk_command_escaped_parsing(p + 2, end, ')');
-                        } else if ('\'' == p[1]) {
-                            p = walk_command_dollared_parsing(p + 2, end, '\'');
-                        } else if ('{' == p[1]) {
-                            p = raw_walk_command_escaped_parsing(p + 2, end,
-                                '}', 1);
-                        } else {
-                            while (p < end && !isspace(*p)) {
-                                if ('\\' == *p)
-                                    ++p;
-                                ++p;
-                            }
-                        }
+                        p = walk_dollar_expansion(start, p + 1, end, endchar, 0);
+                        continue;
                     } else {
                         // blah=cah ; single word.
-                        p = walk_command_complex(p, end, ' ', SPACE_PARSING);
+                        p = walk_command_complex(start, p, end,
+                                                 ' ', SPACE_PARSING);
                         if (!p)
                             return NULL;
                     }
-                    if(isspace(*p)) {
-                        ++p;
-                        break;
-                    }
-                    ++p;
                 }
                 if (var_re && regex_matches(var_re, temp_string,
                     desired_var_match)) {
@@ -300,7 +291,7 @@ process_scope(PyObject *out, const char *buff, const char *end,
 
 
 static inline const char *
-walk_command_no_parsing(const char *p, const char *end, const char endchar)
+walk_statement_no_parsing(const char *p, const char *end, const char endchar)
 {
     while (p < end) {
         if (*p == endchar)
@@ -311,7 +302,7 @@ walk_command_no_parsing(const char *p, const char *end, const char endchar)
 }
 
 static inline const char *
-walk_command_dollared_parsing(const char *p, const char *end,
+walk_statement_dollared_quote_parsing(const char *p, const char *end,
     const char endchar)
 {
     while (p < end) {
@@ -327,11 +318,11 @@ walk_command_dollared_parsing(const char *p, const char *end,
 
 /* Sets an exception and returns NULL if out of memory. */
 static const char *
-walk_here_command(const char *p, const char *end)
+walk_here_statement(const char *start, const char *p, const char *end)
 {
     char *end_here, *temp_string;
     ++p;
-    /* DEBUG("starting here processing for COMMAND and l2 at p == '%.10s'",
+    /* DEBUG("starting here processing for COMMAND for level 2 at p == '%.10s'",
      * p); */
     if (p >= end) {
         fprintf(stderr, "bailing\n");
@@ -345,10 +336,11 @@ walk_here_command(const char *p, const char *end)
     while (p < end && (isspace(*p) || '-' == *p))
         ++p;
     if ('\'' == *p || '"' == *p) {
-        end_here = (char *)walk_command_no_parsing(p + 1, end, *p);
+        end_here = (char *)walk_statement_no_parsing(p + 1, end, *p);
         ++p;
     } else {
-        end_here = (char *)walk_command_complex(p, end, ' ',SPACE_PARSING);
+        end_here = (char *)walk_command_complex(start, p, end,
+                                                ' ', SPACE_PARSING);
         if (!end_here)
             return NULL;
     }
@@ -358,8 +350,9 @@ walk_here_command(const char *p, const char *end)
         PyErr_NoMemory();
         return NULL;
     }
-    memcpy(temp_string, p, end_here - p);
-    temp_string[end_here - p] = '\0';
+    int here_len = end_here - p;
+    memcpy(temp_string, p, here_len);
+    temp_string[here_len] = '\0';
     /* d2printf("matched len('%zi')/'%s' for a here word\n", end_here - p,
      * temp_string); */
     /* XXX watch this.  potential for horkage.  need to do the quote
@@ -373,21 +366,50 @@ walk_here_command(const char *p, const char *end)
     }
     end_here = (char *)bmh_search((unsigned char*)temp_string,
                                   (unsigned char*)end_here, end - end_here);
+    while (end_here) {
+        const char *i = end_here + here_len;
+        if (';' == *i || '\n' == *i || '\r' == *i) {
+            i = end_here - 1;
+            while (i != p && ('\t' == *i || ' ' == *i))
+                --i;
+            if (i != p && '\n' == *i)
+                break;
+        }
+        end_here = (char *)bmh_search((unsigned char*)temp_string,
+                                      (unsigned char*)(end_here + here_len),
+                                      end - (end_here + here_len));
+    }
     INFO("bmh returned %p", end_here);
     if (end_here) {
         /* d2printf("bmh = %.10s\n", end_here); */
         p = end_here + strlen(temp_string) -1;
         /* d2printf("continuing on at %.10s\n", p); */
     } else {
-        p = end;
+        free(temp_string);
+        return end;
     }
     free(temp_string);
-    return p;
+    return end_here + here_len;
 }
 
 static const char *
-walk_command_pound(const char *p)
+walk_statement_pound(const char *start, const char *p, char endchar)
 {
+    if (p > start && !isspace(p[-1]))
+        return p + 1;
+    if (endchar == '`') {
+        char *i = strchr(p, '\n');
+        char *i2 = strchr(p, endchar);
+        if (!i) {
+            if (i2)
+                return i2;
+        } else {
+            if (i2)
+                return i < i2 ? i : i2;
+            return i;
+        }
+        return p + strlen(p) - 1;
+    }
     while('\0' != *p) {
         if('\n' == *p)
             return p;
@@ -398,10 +420,10 @@ walk_command_pound(const char *p)
 
 /* Sets an exception and returns NULL if out of memory. */
 static const char *
-walk_command_complex(const char *p, const char *end, char endchar,
-    const char interpret_level)
+walk_command_complex(const char *start, const char *p, const char *end,
+                     char endchar, const char interpret_level)
 {
-    const char *start = p;
+    const char *start_p = p;
     while (p < end) {
         if (*p == endchar ||
             (interpret_level == COMMAND_PARSING && (';'==*p || '\n'==*p)) ||
@@ -412,28 +434,35 @@ walk_command_complex(const char *p, const char *end, char endchar,
         } else if ('<' == *p) {
             if(end - 1 != p && '<' == p[1] && interpret_level == COMMAND_PARSING) {
                 p++;
-                p = walk_here_command(p, end);
+                p = walk_here_statement(start, p + 1, end);
                 if (!p)
                     return NULL;
+                /* We continue immediately; walk_here deposits us at
+                 * the end of the here op, not consuming the final
+                 * delimiting char since it may be an endchar
+                 */
+                continue;
             } else {
                 DEBUG("noticed '<', interpret_level=%i\n", interpret_level);
             }
         } else if ('#' == *p) {
             /* echo x#y == x#y, echo x;#a == x */
-            if (start == p || isspace(p[-1]) || p[-1] == ';')
-                p = walk_command_pound(p);
-            else
+            if (start_p == p || isspace(p[-1]) || p[-1] == ';') {
                 ++p;
+                p = walk_statement_pound(start, p, 0);
+                continue;
+            }
+        } else if ('*' == *p) {
+            p = walk_dollar_expansion(start, p +1, end, endchar, 0);
             continue;
         } else if ('{' == *p) {
-            //process_scope.  this gets fun.
-            p = walk_command_escaped_parsing(p + 1, end, '}');
+            p = walk_command_escaped_parsing(start, p + 1, end, '}');
         } else if ('(' == *p && interpret_level == COMMAND_PARSING) {
-            p = walk_command_escaped_parsing(p + 1, end, ')');
+            p = walk_command_escaped_parsing(start, p + 1, end, ')');
         } else if ('`' == *p || '"' == *p) {
-            p = walk_command_escaped_parsing(p + 1, end, *p);
+            p = walk_command_escaped_parsing(start, p + 1, end, *p);
         } else if ('\'' == *p && '"' != endchar) {
-            p = walk_command_no_parsing(p + 1, end, '\'');
+            p = walk_statement_no_parsing(p + 1, end, '\'');
         }
         ++p;
     }
@@ -533,7 +562,7 @@ pkgcore_filter_env_run(PyObject *self, PyObject *args, PyObject *kwargs)
         pvre = NULL;
 
     const char *res_p = process_scope(
-        out, file_buff, file_buff + file_size, pvre, pfre,
+        out, file_buff, file_buff, file_buff + file_size, pvre, pfre,
         desired_var_match, desired_func_match, '\0');
 
     if (pvre)
@@ -549,41 +578,78 @@ pkgcore_filter_env_run(PyObject *self, PyObject *args, PyObject *kwargs)
 }
 
 static const char *
-raw_walk_command_escaped_parsing(const char *p, const char *end, char endchar,
-    char var_expansion)
+walk_command_escaped_parsing(const char *start, const char *p,
+                             const char *end, char endchar)
 {
-    int dollared = 0;
     while (p < end) {
         if (*p == endchar) {
             return p;
         } else if ('\\' == *p) {
             ++p;
         } else if ('{' == *p) {
-            // if double quote parsing, must be ${, else can be either
-            if('"' != endchar || dollared) {
-                //process_scope.  this gets fun.
-                p = raw_walk_command_escaped_parsing(p + 1, end, '}',
-                    dollared ? 1 : var_expansion);
+            if('"' != endchar) {
+                p = walk_command_escaped_parsing(start, p + 1, end, '}');
             }
         } else if ('(' == *p) {
-            // if double quote parsing, must be $(, else can be either
-            if(('"' != endchar || dollared) && !var_expansion) {
-                p = raw_walk_command_escaped_parsing(p + 1, end, ')',
-                    0);
+            if('"' != endchar) {
+                p = walk_command_escaped_parsing(start, p + 1, end, ')');
             }
         } else if ('`' == *p || '"' == *p) {
-            p = raw_walk_command_escaped_parsing(p + 1, end, *p, var_expansion);
+            p = walk_command_escaped_parsing(start, p + 1, end, *p);
         } else if ('\'' == *p && '"' != endchar) {
-            p = walk_command_no_parsing(p + 1, end, '\'');
+            p = walk_statement_no_parsing(p + 1, end, '\'');
         } else if('$' == *p) {
-            // if dollared, disable, else enable
-            dollared ^= 1;
-        } else {
-            dollared = 0;
+            p = walk_dollar_expansion(start, p + 1, end, endchar, endchar == '"');
+            continue;
+        } else if ('#' == *p && endchar != '"') {
+            p = walk_statement_pound(start, p, endchar);
+            continue;
         }
         ++p;
     }
     return p;
+}
+
+static const char *
+walk_dollar_expansion(const char *start, const char *p, const char *end,
+                      char endchar, char disable_quote)
+{
+    if ('(' == *p)
+        return process_scope(NULL, start, p + 1, end, NULL, NULL, 0, 0, ')') + 1;
+    if ('\'' == *p && !disable_quote)
+        return walk_statement_dollared_quote_parsing(p + 1, end, '\'') + 1;
+    if ('{' != *p) {
+        if ('$' == *p)
+            // short circuit it.
+            return p + 1;
+        while (p < end && endchar != *p) {
+            if (isspace(*p))
+                return p;
+            if ('$' == *p)
+                return walk_dollar_expansion(start, p + 1, end, endchar, 0);
+            if (!isalnum(*p)) {
+                if (';' == *p)
+                    return p;
+                if ('_' != *p)
+                    return p;
+            }
+            ++p;
+        }
+        if (p >= end)
+            return end;
+        return p;
+    }
+    ++p;
+    // shortcut $$ to avoid going too deep.
+    if ('$' == *p)
+        return p + 1;
+    while (p < end && '}' != *p) {
+        if ('$' == *p)
+            p = walk_dollar_expansion(start, p + 1, end, endchar, 0);
+        else
+            ++p;
+    }
+    return p + 1;
 }
 
 static PyMethodDef pkgcore_filter_env_methods[] = {

@@ -66,9 +66,9 @@ pkgcore_readdir_actual_listdir(const char* path, int followsyms,
         }
         if (entry->d_type == DT_UNKNOWN ||
             (followsyms && entry->d_type == DT_LNK)) {
-            
+
             /* both path components, the "/", the trailing null */
-            
+
             size_t size = pathlen + strlen(name) + 2;
             char *buffer = (char *) malloc(size);
             if (!buffer) {

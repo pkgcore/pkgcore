@@ -114,7 +114,7 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
         if(',' == *p) {
             // flag...
             if(start == p) {
-                Err_SetMalformedAtom(atom_str, 
+                Err_SetMalformedAtom(atom_str,
                     "invalid use flag; must be non empty");
                 goto cleanup_use_processing;
             } else if('-' == start[1] && start + 1 == p) {
@@ -205,7 +205,7 @@ parse_slot_deps(PyObject *atom_str, char **p_ptr, PyObject **slots_ptr)
         if(',' == *p) {
             // flag...
             if(start == p) {
-                Err_SetMalformedAtom(atom_str, 
+                Err_SetMalformedAtom(atom_str,
                     "invalid slot dep; all slots must be non empty");
                 goto cleanup_slot_processing;
             }
@@ -266,7 +266,7 @@ parse_repo_id(PyObject *atom_str, char *p, PyObject **repo_id)
         }
         p++;
     }
- 
+
     if(start == p) {
         Err_SetMalformedAtom(atom_str,
             "repo_id must not be empty");
@@ -310,7 +310,7 @@ parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
             goto parse_cpv_error;                                   \
         }                                                           \
         Py_DECREF(tmp);
-        
+
     STORE_ATTR(pkgcore_atom_cpvstr);
     STORE_ATTR(pkgcore_atom_category);
     STORE_ATTR(pkgcore_atom_package);
@@ -336,8 +336,8 @@ parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
             goto parse_cpv_error;
         if(PyObject_GenericSetAttr(self, pkgcore_atom_revision, Py_None))
             goto parse_cpv_error;
-    }        
-    
+    }
+
     #undef STORE_ATTR
     Py_DECREF(cpv);
     return 0;
@@ -355,7 +355,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "S|O:atom_init", kwlist,
         &atom_str, &negate_vers))
         return NULL;
-    
+
     if(!negate_vers) {
         negate_vers = Py_False;
     } else {
@@ -363,7 +363,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
         if (ret == -1)
             return NULL;
         negate_vers = ret ? Py_True : Py_False;
-    }        
+    }
     Py_INCREF(negate_vers);
     char blocks = 0;
     char *p, *atom_start;
@@ -373,9 +373,9 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
         blocks++;
         p++;
     }
-    
+
     // handle op...
-    
+
     PyObject *op = pkgcore_atom_op_none;
     if('<' == *p) {
         if('=' == p[1]) {
@@ -454,7 +454,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
             p++;
         }
     }
-    
+
     PyObject *cpv_str = NULL;
     if(!cpv_end)
         cpv_end = p;
@@ -462,7 +462,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
         Py_INCREF(atom_str);
         cpv_str = atom_str;
     } else {
-        if(op == pkgcore_atom_op_eq && atom_start + 1 < cpv_end && 
+        if(op == pkgcore_atom_op_eq && atom_start + 1 < cpv_end &&
             '*' == cpv_end[-1]) {
             Py_DECREF(op);
             Py_INCREF(pkgcore_atom_op_glob);
@@ -470,7 +470,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
             cpv_str = PyString_FromStringAndSize(atom_start,
                 cpv_end - atom_start -1);
         } else {
-            cpv_str = PyString_FromStringAndSize(atom_start, 
+            cpv_str = PyString_FromStringAndSize(atom_start,
                 cpv_end - atom_start);
         }
         if(!cpv_str)
@@ -648,7 +648,7 @@ make_slot_restrict(PyObject *slot)
     // whee;  convert 'em, basically a map statement.
     // use args repeatedly to avoid allocation; the callee cannot modify it
     // (they can technically, but that's massively broken behavior).
-    
+
     Py_ssize_t idx;
     for(idx=0; idx < PyTuple_GET_SIZE(slot); idx++) {
         PyObject *s = PyTuple_GET_ITEM(slot, idx);
@@ -739,7 +739,7 @@ make_use_val_restrict(PyObject *use)
     }
     PyObject *kwds = PyDict_New();
     if(kwds && (
-        PyDict_SetItemString(kwds, "negate", Py_True) || 
+        PyDict_SetItemString(kwds, "negate", Py_True) ||
         PyDict_SetItemString(kwds, "all", Py_True))) {
         Py_CLEAR(kwds);
     }
@@ -809,33 +809,33 @@ pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
         PyErr_SetObject(PyExc_AttributeError, attr);
         return NULL;
     }
-    
+
     #define MUST_LOAD(ptr, str)                     \
     if(!((ptr) = PyObject_GetAttr(self, (str))))    \
         return NULL;
-    
+
     MUST_LOAD(op, pkgcore_atom_op);
     MUST_LOAD(package, pkgcore_atom_package);
-    MUST_LOAD(category, pkgcore_atom_category);    
+    MUST_LOAD(category, pkgcore_atom_category);
     MUST_LOAD(use, pkgcore_atom_use);
     MUST_LOAD(slot, pkgcore_atom_slot);
     MUST_LOAD(repo_id, pkgcore_atom_repo_id);
-    
+
     #undef MUST_LOAD
 
     if(op != pkgcore_atom_op_none)
         required++;
     if(use != Py_None)
-        required++;    
+        required++;
     if(slot != Py_None)
         required++;
     if(repo_id != Py_None)
         required++;
-    
+
     tup = PyTuple_New(required);
     if(!tup)
         goto pkgcore_atom_getattr_error;
-    
+
     int idx = 0;
     if(repo_id != Py_None) {
         if(!(tmp = make_simple_restrict(pkgcore_atom_restrict_repo_id,
@@ -844,19 +844,19 @@ pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
         PyTuple_SET_ITEM(tup, 0, tmp);
         idx++;
     }
-    
+
     if(!(tmp = make_simple_restrict(pkgcore_atom_package, package,
         pkgcore_atom_StrExactMatch)))
         goto pkgcore_atom_getattr_error;
     PyTuple_SET_ITEM(tup, idx, tmp);
     idx++;
-    
+
     if(!(tmp = make_simple_restrict(pkgcore_atom_category, category,
         pkgcore_atom_StrExactMatch)))
         goto pkgcore_atom_getattr_error;
     PyTuple_SET_ITEM(tup, idx, tmp);
     idx++;
-    
+
     if(op != pkgcore_atom_op_none) {
         if(op == pkgcore_atom_op_glob) {
             PyObject *tmp2 = PyObject_GetAttr(self, pkgcore_atom_fullver);
@@ -885,7 +885,7 @@ pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
                 goto pkgcore_atom_getattr_error;
         } else {
             if(1 == PyTuple_GET_SIZE(slot)) {
-                tmp = make_simple_restrict(pkgcore_atom_slot, slot, 
+                tmp = make_simple_restrict(pkgcore_atom_slot, slot,
                     pkgcore_atom_StrExactMatch);
             } else {
                 tmp = make_slot_restrict(slot);
@@ -946,10 +946,10 @@ load_external_objects()
     Py_DECREF(s);                           \
     if(!m)                                  \
         return 1;
-    
+
     if(!pkgcore_atom_MalformedAtom_Exc) {
         LOAD_MODULE("pkgcore.ebuild.errors");
-        pkgcore_atom_MalformedAtom_Exc = PyObject_GetAttrString(m, 
+        pkgcore_atom_MalformedAtom_Exc = PyObject_GetAttrString(m,
             "MalformedAtom");
         Py_DECREF(m);
         if(!pkgcore_atom_MalformedAtom_Exc) {
@@ -961,7 +961,7 @@ load_external_objects()
     if(!pkgcore_atom_cpv_parse || !pkgcore_atom_InvalidCPV_Exc) {
         LOAD_MODULE("pkgcore.ebuild.cpv");
     }
-    
+
     if(!pkgcore_atom_cpv_parse) {
         pkgcore_atom_cpv_parse = PyObject_GetAttrString(m, "base_CPV");
         if(!pkgcore_atom_cpv_parse)
@@ -975,7 +975,7 @@ load_external_objects()
     if(m) {
         Py_DECREF(m);
     }
-    
+
     if(!pkgcore_atom_VersionMatch) {
         LOAD_MODULE("pkgcore.ebuild.atom_restricts");
         pkgcore_atom_VersionMatch = PyObject_GetAttrString(m,
@@ -987,7 +987,7 @@ load_external_objects()
         LOAD_MODULE("pkgcore.restrictions.values");
     } else
         m = NULL;
-    
+
     #define LOAD_ATTR(ptr, name)                        \
     if(!(ptr) && !                                      \
         ((ptr) = PyObject_GetAttrString(m, (name)))) {  \
@@ -1083,7 +1083,7 @@ init_atom()
     if(PyDict_SetItemString(overrides, "__getattr__", tmp))
         return;
     PyModule_AddObject(m, "overrides", overrides);
-    
+
     if (PyErr_Occurred()) {
         Py_FatalError("can't initialize module _atom");
     }

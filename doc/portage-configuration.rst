@@ -48,14 +48,14 @@ unsupported misc:
 unsupported, unlikely to be implemented:
 
 * noauto  (too tool specific)
-* mirror  (possible to implement it via a custom fetcher, 
+* mirror  (possible to implement it via a custom fetcher,
            but there are betters ways.  use mirror-dist if you want a mirror)
 * lmirror (same)
 
-Aside from that... everything else make.conf wise should be supported with 
+Aside from that... everything else make.conf wise should be supported with
 out issue- if not, please open a ticket at http://pkgcore.org/
 
-For /etc/portage/, we don't support modules (define custom cache modules) 
+For /etc/portage/, we don't support modules (define custom cache modules)
 due the fact our cache subsystem has grown a bit beyond what got imported into
 portage in 2.1; additionally, we do not support package.provided.
 

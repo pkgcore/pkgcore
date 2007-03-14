@@ -20,12 +20,13 @@ import os.path
 import logging
 
 from pkgcore.config import load_config, errors
-
 from pkgcore.util import formatters, demandload
 
 demandload.demandload(
     globals(),
     'pkgcore:version '
+    'pkgcore.restrictions:packages '
+    'pkgcore.util.parserestrict:ParseError,parse_match '
     )
 
 
@@ -232,6 +233,16 @@ class OptionParser(optparse.OptionParser):
                 if option.action == 'append':
                     values.ensure_value(option.dest, [])
         return values, args
+
+    def convert_to_restrict(self, sequence, default=packages.AlwaysTrue):
+        """Convert an iterable to a list of atoms, or return the default"""
+        l = []
+        try:
+            for x in sequence:
+                l.append(parse_match(x))
+        except ParseError, e:
+            self.error("arg %r isn't a valid atom: %s" % (x, e))
+        return l or default
 
 
 class MySystemExit(SystemExit):

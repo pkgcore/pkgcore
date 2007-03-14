@@ -12,6 +12,8 @@ demandload(globals(), "pkgcore.repository:multiplex "
     "pkgcore.util:parserestrict "
     "pkgcore.package:mutated "
     "pkgcore.fs:contents,livefs "
+    "pkgcore.restrictions:packages "
+    "pkgcore.restrictions.boolean:OrRestriction "
     "errno "
     )
 
@@ -91,10 +93,12 @@ class CopyParser(commandline.OptionParser):
             help="repository to copy packages into; if specified, "
                 "you don't need to specify the target repo as the last arg.  "
                 "Mainly useful for xargs invocations")
-        self.add_option("--ignore-existing", "-i", default=False, 
+        self.add_option("--ignore-existing", "-i", default=False,
             action='store_true',
             help="skip existing pkgs, instead of treating it as an overwrite "
             "error")
+        self.add_option("--copy-missing", action="store_true", default=False,
+            help="Copy packages missing in target repo from source repo")
         self.add_option("--force", action='store_true', default=False,
             help="try and force the copy if the target repository is marked as "
                 "immutable")
@@ -130,12 +134,14 @@ class CopyParser(commandline.OptionParser):
             values.source_repo = multiplex.tree(*values.config.repos.values())
 
         values.candidates = []
-        for x in args:
-            try:
-                values.candidates.append(parserestrict.parse_match(x))
-            except parserestrict.ParseErrorerrors, e:
-                self.error("arg %r isn't a valid atom: %s" %
-                    (x, e))
+        if values.copy_missing:
+            restrict = OrRestriction(self.convert_to_restrict(args))
+            for package in values.source_repo.itermatch(restrict):
+                if not values.target_repo.match(package.versioned_atom):
+                    values.candidates.append(package.versioned_atom)
+        else:
+            values.candidates = self.convert_to_restrict(args)
+
         return values, []
 
 

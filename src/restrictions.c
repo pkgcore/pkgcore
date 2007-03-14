@@ -79,7 +79,7 @@ pkgcore_StrExactMatch_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         flags |= CASE_SENSITIVE;
     set_bool(negate, flags |= NEGATED_RESTRICT);
     #undef set_bool
-    
+
     // alloc now.
     pkgcore_StrExactMatch *self = \
         (pkgcore_StrExactMatch *)type->tp_alloc(type, 0);
@@ -102,7 +102,7 @@ pkgcore_StrExactMatch_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         }
         PyTuple_SET_ITEM(tmp, 0, self->exact);
         PyTuple_SET_ITEM(tmp, 1, IS_NEGATED(self->flags) ? Py_True : Py_False);
-        PyTuple_SET_ITEM(tmp, 2, (self->flags & CASE_SENSITIVE) ? 
+        PyTuple_SET_ITEM(tmp, 2, (self->flags & CASE_SENSITIVE) ?
             Py_True : Py_False);
         long hash = PyObject_Hash(tmp);
         PyTuple_SET_ITEM(tmp, 0, NULL);
@@ -117,7 +117,7 @@ pkgcore_StrExactMatch_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 PyObject *
-pkgcore_StrExactMatch_richcompare(pkgcore_StrExactMatch *self, 
+pkgcore_StrExactMatch_richcompare(pkgcore_StrExactMatch *self,
     pkgcore_StrExactMatch *other, int op)
 {
     PyObject *result;
@@ -157,7 +157,7 @@ pkgcore_StrExactMatch_match(pkgcore_StrExactMatch *self,
             return NULL;
         real_value = tmp;
     }
-    PyObject *ret = PyObject_RichCompare(self->exact, real_value, 
+    PyObject *ret = PyObject_RichCompare(self->exact, real_value,
         IS_NEGATED(self->flags) ? Py_NE : Py_EQ);
 
     if(real_value != value) {
@@ -188,9 +188,9 @@ static PyMemberDef pkgcore_StrExactMatch_members[] = {
     {NULL}
 };
 
-PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "negate", negate, 
+PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "negate", negate,
     (self->flags & NEGATED_RESTRICT))
-PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "case_sensitive", case, 
+PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "case_sensitive", case,
     (self->flags & CASE_SENSITIVE))
 
 static PyGetSetDef pkgcore_StrExactMatch_attrs[] = {
@@ -263,9 +263,9 @@ pkgcore_PackageRestriction_new(PyTypeObject *type,
     PyObject *args, PyObject *kwds)
 {
     PyObject *attr, *restriction, *negate = NULL, *ignore_missing = NULL;
-    static char *kwdlist[] = {"attr", "childrestriction", "negate", 
+    static char *kwdlist[] = {"attr", "childrestriction", "negate",
         "ignore_missing", NULL};
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "SO|OO", kwdlist, 
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "SO|OO", kwdlist,
         &attr, &restriction, &negate, &ignore_missing)) {
         return NULL;
     }
@@ -279,7 +279,7 @@ pkgcore_PackageRestriction_new(PyTypeObject *type,
                 return NULL;                            \
             if(ret) { flags |= statement; }             \
         }                                               \
-    } else if ((ptr) == Py_True) { flags |= statement;}; 
+    } else if ((ptr) == Py_True) { flags |= statement;};
     if(negate) {
         make_bool(negate, NEGATED_RESTRICT);
     }
@@ -390,7 +390,7 @@ static PyMemberDef pkgcore_PackageRestriction_members[] = {
     {NULL}
 };
 
-PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "negate", negate, 
+PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "negate", negate,
     (self->flags & NEGATED_RESTRICT))
 PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "ignore_missing",
     ignore_missing, (self->flags & IGNORE_MISSING))

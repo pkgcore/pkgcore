@@ -34,7 +34,7 @@ _Err_SetParse(PyObject *dep_str, PyObject *msg, char *tok_start, char *tok_end)
     PyObject *args = Py_BuildValue("(S)", dep_str);
     if(!args)
         return;
-    PyObject *kwds = Py_BuildValue("{sSss#}", "msg", msg, 
+    PyObject *kwds = Py_BuildValue("{sSss#}", "msg", msg,
         "token", tok_start, tok_end - tok_start);
     if(kwds) {
         ret = PyObject_Call(pkgcore_depset_ParseErrorExc, args, kwds);
@@ -94,7 +94,7 @@ make_use_conditional(char *use_start, char *use_end, PyObject *payload)
     }
     if(!val)
         return NULL;
-    
+
     PyObject *restriction = PyObject_CallFunction(pkgcore_depset_PkgCond,
         "sOO", "use", val, payload);
     Py_DECREF(val);
@@ -112,7 +112,7 @@ while('\t' != *(ptr) && ' ' != *(ptr) && '\n' != *(ptr) && '\0' != *(ptr))  \
 
 static PyObject *
 internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
-    PyObject *element_func, 
+    PyObject *element_func,
     PyObject *and_func, PyObject *or_func,
     char initial_frame)
 {
@@ -256,7 +256,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             if(!(tmp = internal_parse_depset(dep_str, &p, has_conditionals,
                 element_func, and_func, or_func, 0)))
                 goto internal_parse_depset_error;
-            
+
             if(tmp == Py_None) {
                 Py_DECREF(tmp);
                 Err_SetParse(dep_str, "empty payload", start, p);
@@ -359,7 +359,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
     }
     *ptr = p;
     return restrictions;
-    
+
     internal_parse_depset_error:
     if(item_count) {
         if(!restrictions) {
@@ -373,7 +373,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
     }
     // dealloc.
     return NULL;
-}            
+}
 
 static PyObject *
 pkgcore_parse_depset(PyObject *self, PyObject *args)
@@ -414,7 +414,7 @@ pkgcore_parse_depset(PyObject *self, PyObject *args)
     }
     PyObject *conditionals_bool = has_conditionals ? Py_True : Py_False;
     Py_INCREF(conditionals_bool);
-    
+
     PyObject *final = PyTuple_New(2);
     if(!final) {
         Py_DECREF(ret);
@@ -450,10 +450,10 @@ load_external_objects()
     Py_DECREF(s);                       \
     if(!m)                              \
         return 1;
-        
+
     if(!pkgcore_depset_ParseErrorExc) {
         LOAD_MODULE("pkgcore.ebuild.errors");
-        pkgcore_depset_ParseErrorExc = PyObject_GetAttrString(m, 
+        pkgcore_depset_ParseErrorExc = PyObject_GetAttrString(m,
             "ParseError");
         Py_DECREF(m);
         if(!pkgcore_depset_ParseErrorExc) {
@@ -470,7 +470,7 @@ load_external_objects()
     }
     if(!pkgcore_depset_PkgCond) {
         LOAD_MODULE("pkgcore.restrictions.packages");
-        pkgcore_depset_PkgCond = PyObject_GetAttrString(m, 
+        pkgcore_depset_PkgCond = PyObject_GetAttrString(m,
             "Conditional");
         Py_DECREF(m);
         if(!pkgcore_depset_PkgCond)
@@ -481,7 +481,7 @@ load_external_objects()
         LOAD_MODULE("pkgcore.restrictions.boolean");
     } else
         m = NULL;
-        
+
     #undef LOAD_MODULE
 
     #define LOAD_ATTR(ptr, attr)                            \

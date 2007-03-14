@@ -1,28 +1,28 @@
 pkgcore supports an extended form of atom syntax- examples are provided below.
 
 This form can be used in configuration files, but in doing so portage will have
-issues with the next syntax- thus if you're after maintaining configuration 
+issues with the next syntax- thus if you're after maintaining configuration
 compatibility, limit usage of the extended syntax to commandline only.
 
 ===============  =========================================================
 token            result
 ===============  =========================================================
-*                match all 
-portage          package name must be ''portage'' 
-dev-util/*       category must be ''dev-util'' 
-dev-*/*          category must start with ''dev-'' 
-dev-util/*       category must be ''dev-util'' 
-dev-*            package must start with ''dev-'' 
-*cgi*            package name must have ''cgi'' in it 
-*x11*/X*         category must have ''x11'' in it, package must start with 
-                 ''X'' 
-*-apps/portage*  category must end in ''-apps'', package must start with 
-                 ''portage'' 
+*                match all
+portage          package name must be ''portage''
+dev-util/*       category must be ''dev-util''
+dev-*/*          category must start with ''dev-''
+dev-util/*       category must be ''dev-util''
+dev-*            package must start with ''dev-''
+*cgi*            package name must have ''cgi'' in it
+*x11*/X*         category must have ''x11'' in it, package must start with
+                 ''X''
+*-apps/portage*  category must end in ''-apps'', package must start with
+                 ''portage''
 =portage-1.0     match version 1.0 of any 'portage' package
 ===============  =========================================================
 
 
-Additionally, pkgcore supports additional atom extensions that are more 
+Additionally, pkgcore supports additional atom extensions that are more
 'pure' to the atom specification.
 
 
@@ -38,7 +38,7 @@ Syntax:
   normal-atom[enabled_flag1,enabled_flag2,-disabled_flag,-disabled_flag2]
 
 Example-
- 
+
   sys-apps/portage[build]
 
 Would match only sys-apps/portage with the build flag forced on.
@@ -51,7 +51,7 @@ Forcing 'build' off while forcing 'doc' on would be-
 Slot dep atoms
 --------------
 
-Slot dep atoms allow for finer grained matching of packages- portage as of 
+Slot dep atoms allow for finer grained matching of packages- portage as of
 2.1.2 supports them, but they're currently unable to be used in the tree.
 
 Syntax:
@@ -75,7 +75,7 @@ repository- for example, to state "I need python from the gentoo-x86 repository
 _only_"
 
 syntax:
-  
+
   normal-atom::repository-id
 
 Example:
@@ -89,6 +89,5 @@ If you need to do slot matching in addition, it would be
 
   sys-devel/gcc:3.3:gentoo
 
-Which would match slot '3.3' from repository 'gentoo' (defined in 
+Which would match slot '3.3' from repository 'gentoo' (defined in
 profiles/repo_name) of sys-devel/gcc.
-

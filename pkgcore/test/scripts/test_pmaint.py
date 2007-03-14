@@ -114,7 +114,7 @@ class fake_repo(util.SimpleTree):
             pkg_klass=partial(fake_pkg, self))
         self.livefs = livefs
         self.frozen = frozen
-    
+
     def _install(self, pkg, *a, **kw):
         self.installed.append(pkg)
         kw.pop("force", None)
@@ -160,7 +160,7 @@ class CopyTest(TestCase, helpers.MainMixin):
         self.assertError("source repo 'sys-apps/portage' was not found, known "
             "repos-\n('dar', 'foo')", "--source-repo", "sys-apps/portage", "foo",
                 "dar", dar=make_repo_config({}), foo=make_repo_config({}))
-    
+
     def test_force(self):
         self.assertError("target repo 'trg' is frozen; --force is required to override this",
             '--target-repo', 'trg', '--source-repo', 'src',
@@ -232,3 +232,12 @@ class CopyTest(TestCase, helpers.MainMixin):
         self.assertEqual(config.target_repo.uninstalled,
             config.target_repo.replaced,
             msg="uninstalled should be the same as replaced; empty")
+
+    def test_copy_missing(self):
+        ret, config, out = self.execute_main(
+            '--target-repo', 'trg', '--source-repo', 'src',
+            '--copy-missing',
+            src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
+            trg=make_repo_config({'sys-apps':{'portage':['2.1']}})
+            )
+        self.assertEqual(config.candidates[0].cpvstr, "sys-apps/portage-2.3")

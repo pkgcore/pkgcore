@@ -199,7 +199,7 @@ process_scope(PyObject *out, const char *buff, const char *end,
             INFO("ended processing  '%s'", temp_string);
             if (func_re != NULL && regex_matches(func_re, temp_string,
                 desired_func_match)) {
-                
+
                 /* well, it matched.  so it gets skipped. */
                 INFO("filtering func '%s'", temp_string);
                 window_end = com_start;
@@ -403,7 +403,7 @@ walk_command_complex(const char *p, const char *end, char endchar,
 {
     const char *start = p;
     while (p < end) {
-        if (*p == endchar || 
+        if (*p == endchar ||
             (interpret_level == COMMAND_PARSING && (';'==*p || '\n'==*p)) ||
             (interpret_level == SPACE_PARSING && isspace(*p))) {
             return p;

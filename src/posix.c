@@ -42,15 +42,15 @@ pkgcore_normpath(PyObject *self, PyObject *old_path)
     Py_ssize_t len = PyString_Size(old_path);
     if(!len)
         return PyString_FromString(".");
-    
+
     char *oldstart, *oldp, *newstart, *newp, *real_newstart;
     oldstart = oldp = PyString_AsString(old_path);
-    
+
     PyObject *new_path = PyString_FromStringAndSize(NULL, len);
     if(!new_path)
         return new_path;
     real_newstart = newstart = newp = PyString_AS_STRING(new_path);
-    
+
 
     int leading_slash;
     Py_ssize_t slash_count = 0;
@@ -139,7 +139,7 @@ pkgcore_join(PyObject *self, PyObject *args)
             "join takes at least one arguement (0 given)");
         return NULL;
     }
-    
+
     PyObject **items = PySequence_Fast_ITEMS(fast);
     Py_ssize_t start = 0, len, i = 0;
     char *s;
@@ -407,11 +407,11 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         PyErr_SetString(PyExc_TypeError,
             "readlines.__new__ doesn't accept keywords");
         return NULL;
-    } else if (!PyArg_ParseTuple(args, "S|OOOO:readlines.__new__", 
+    } else if (!PyArg_ParseTuple(args, "S|OOOO:readlines.__new__",
         &path, &strip_newlines, &swallow_missing, &none_on_missing)) {
         return NULL;
-    } 
-    
+    }
+
     int fd;
     struct stat st;
 //    Py_ssize_t size;
@@ -429,7 +429,7 @@ pkgcore_readlines_new(PyTypeObject *type, PyObject *args, PyObject *kwargs)
         if(none_on_missing && PyObject_IsTrue(none_on_missing)) {
             Py_RETURN_NONE;
         }
-        
+
         Py_INCREF(pkgcore_readlines_empty_iter_singleton);
         return pkgcore_readlines_empty_iter_singleton;
     }
@@ -682,7 +682,7 @@ init_posix()
     PyObject *s = PyString_FromString("os");
     if(!s)
         return;
-    
+
     PyObject *mos = PyImport_Import(s);
     Py_DECREF(s);
     if(!mos)
@@ -710,7 +710,7 @@ init_posix()
     Py_INCREF(&pkgcore_readlines_empty_iter_type);
     pkgcore_readlines_empty_iter_singleton = _PyObject_New(
         &pkgcore_readlines_empty_iter_type);
-    
+
 
     Py_INCREF(&pkgcore_readlines_type);
     if (PyModule_AddObject(

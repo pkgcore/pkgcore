@@ -25,7 +25,7 @@
 #define ISLOWER(c) ('a' <= (c) && 'z' >= (c))
 #define ISALNUM(c) (ISALPHA(c) || ISDIGIT(c))
 
-typedef enum { SUF_ALPHA=0, SUF_BETA, SUF_PRE, SUF_RC, SUF_NORM, SUF_P } 
+typedef enum { SUF_ALPHA=0, SUF_BETA, SUF_PRE, SUF_RC, SUF_NORM, SUF_P }
     version_suffixes;
 const char * const version_suffixes_str[] = \
     {"alpha", "beta", "pre", "rc", "", "p", NULL};
@@ -193,7 +193,7 @@ pkgcore_cpv_parse_package(const char *start)
         }
         if('\0' == *p)
             break;
-           
+
         // ok.  so, either it's a period, _, or a *single* [a-z].
         if('\0' == *p || '.' == *p || '_' == *p || '-' == *p) {
             break;
@@ -220,7 +220,7 @@ pkgcore_cpv_parse_package(const char *start)
 
 
 static int
-pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start, 
+pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
     char **ver_end)
 {
     // version parsing.
@@ -271,9 +271,9 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
             suffix_count++;
             p = strchr(p + 1, '_');
         } while(NULL != p);
-        
+
         // trailing is 0 0
-        
+
         p = orig_p;
         self->suffixes = PyObject_Malloc(sizeof(long) * (suffix_count + 1) * 2);
         if(NULL == self->suffixes) {
@@ -323,7 +323,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
     char *p = NULL, *s1 = NULL, *s2 = NULL;
     char *cpv_char = NULL;
     char *cpv_pos = NULL;
-    PyObject *tmp = NULL, *tmp2 = NULL, *cpvstr = NULL, *category = NULL, 
+    PyObject *tmp = NULL, *tmp2 = NULL, *cpvstr = NULL, *category = NULL,
         *package = NULL, *fullver = NULL;
 
     if(!PyArg_UnpackTuple(args, "CPV", 1, 3, &category, &package, &fullver))
@@ -337,7 +337,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
     }
 
     if(package) {
-        if(!fullver || !PyString_CheckExact(category) || 
+        if(!fullver || !PyString_CheckExact(category) ||
             !PyString_CheckExact(package) || !PyString_CheckExact(fullver)) {
             PyObject *err_msg = PyString_FromString(
                 "cpv accepts either 1 arg (cpvstr), or 3 (category, package, "
@@ -453,7 +453,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
         }
     }
     if('\0' != *s2)
-        goto parse_error;	
+        goto parse_error;
 
     if(!fullver) {
         if('\0' != *p)
@@ -476,7 +476,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
                 // no rev; set version to fullver
                 Py_INCREF(fullver);
             } else {
-                if(NULL == 
+                if(NULL ==
                     (fullver = PyString_FromStringAndSize(cpv_pos, ver_end - p)))
                     goto cleanup;
             }
@@ -575,7 +575,7 @@ parse_error:
     if(NULL != tmp) {
         PyErr_SetObject(pkgcore_InvalidCPV_Exc, tmp);
         Py_DECREF(tmp);
-    } 
+    }
 cleanup:
 
     Py_CLEAR(self->category);
@@ -701,7 +701,7 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
                 return -1;
             else if((s1 - s_start) > (o1 - o_start))
                 return 1;
-            
+
             char *s_end = s1;
 
             for(s1 = s_start, o1 = o_start; s1 != s_end; s1++, o1++) {
@@ -718,7 +718,7 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
                 else if(*s1 > *o1)
                     return 1;
                 o1++;
-            } else 
+            } else
                 return 1;
             s1++;
         } else if ISALPHA(*o1) {
@@ -761,7 +761,7 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
     // all that remains is revision.
     return pkgcore_nullsafe_compare(self->revision, other->revision);
 }
-    
+
 
 
 static long
@@ -813,13 +813,13 @@ pkgcore_cpv_repr(pkgcore_cpv *self)
     Py_DECREF(s);
     return s2;
 }
-        
+
 static PyTypeObject pkgcore_cpvType = {
     PyObject_HEAD_INIT(NULL)
     0,                                /* ob_size */
     "CPV",
     sizeof(pkgcore_cpv),              /* tp_basicsize */
-    0,				  /* tp_itemsize */
+    0,                                /* tp_itemsize */
     (destructor)pkgcore_cpv_dealloc,  /* tp_dealloc */
     0,                                /* tp_print */
     0,                                /* tp_getattr */

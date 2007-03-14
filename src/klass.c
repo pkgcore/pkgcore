@@ -142,7 +142,7 @@ internal_generic_equality(PyObject *inst1, PyObject *inst2,
         Py_INCREF(res);
         return res;
     }
-    
+
     PyObject *attrs = PyObject_GetAttr(inst1, pkgcore_equality_attr);
     if(!attrs)
         return NULL;
@@ -230,7 +230,7 @@ PKGCORE_FUNC_BINDING("generic_eq", "pkgcore.util._klass.generic_eq",
 
 PKGCORE_FUNC_BINDING("generic_ne", "pkgcore.util._klass.generic_ne",
     pkgcore_generic_equality_ne, METH_O)
-    
+
 
 static PyMethodDef pkgcore_mapping_get_def = {
     "get", pkgcore_mapping_get, METH_VARARGS, NULL};

@@ -4,7 +4,7 @@
 
 #include "py24-compatibility.h"
 
-/* _functools module written and maintained 
+/* _functools module written and maintained
    by Hye-Shik Chang <perky@FreeBSD.org>
    with adaptations by Raymond Hettinger <python@rcn.com>
    Copyright (c) 2004, 2005, 2006 Python Software Foundation.

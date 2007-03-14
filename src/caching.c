@@ -223,7 +223,7 @@ pkgcore_WeakValCache_getitem(pkgcore_WeakValCache *self, PyObject *key)
     if(resobj) {
         actual = PyWeakref_GetObject(resobj);
         if (actual == Py_None) {
-            // PyWeakref_GetObject returns a borrowed reference, do not 
+            // PyWeakref_GetObject returns a borrowed reference, do not
             // clear it
             actual = NULL;
             /* wipe the weakref err */
@@ -258,7 +258,7 @@ pkgcore_WeakValCache_get(pkgcore_WeakValCache *self, PyObject *args)
         assert(PyErr_Occurred());
         return NULL;
     }
-    
+
     PyErr_Clear();
     resobj = PyObject_GetItem((PyObject *)self, key);
     if(resobj) {
@@ -284,7 +284,7 @@ static PyMappingMethods pkgcore_WeakValCache_as_mapping = {
     (lenfunc)pkgcore_WeakValCache_len,               /* len() */
     (binaryfunc)pkgcore_WeakValCache_getitem,        /* getitem */
     (objobjargproc)pkgcore_WeakValCache_setitem,     /* setitem */
-};		
+};
 
 
 static PyMethodDef pkgcore_WeakValCache_methods[] = {

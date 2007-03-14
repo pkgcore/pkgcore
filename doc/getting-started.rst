@@ -30,13 +30,13 @@ Basic Usage
   Remove unused packages.
 
   **Warning:** This can break your system if
-  incorrectly used. Check with --pretend before running it. 
-  
+  incorrectly used. Check with --pretend before running it.
+
   Additionally, it currently defaults to identifying only whats
   required for world/system; installed packages don't require their build
   depends to be satisfied, as such --clean will identify them for removal if
   they're not runtime depended upon.
-  
+
   If you want --clean to preserve your build depends, use the -B option.
 
 
@@ -102,16 +102,16 @@ New in pkgcore:
 
   ignore resolution/build failures, skipping to the next step.  Think of it
   as the equiv of --skipfirst, just without the commandline interuption.
-  
+
   Goes without saying, this feature should be used with care- primarily useful
   for a long chain of non critical updates, where a failure is a non issue.
-  
+
   Good example of usage is if you want to build mozilla-firefox and openoffice
   during the night- both take a long while to build (including their deps), and
   the user is after getting as many packages built for the targets as possible,
   rather then having the 5th build out of 80 bail out even attempting the other
   75.
-  
+
   Long term, this feature will likely be replaced with a more fine tuned option.
 
 
@@ -162,7 +162,7 @@ No equivalents:
   Currently not implemented; portages implementation of it ignores slots,
   trying to force a max version for each package- this is problematic however
   since it can remove needed slotted packages that are of a lesser version.
-  
+
   Any package that requires slotting (automake for example) generally will
   be screwed up by emerge --prunes behaviour.
 
@@ -196,7 +196,7 @@ No equivalents:
 
   Remote Binhost v1 support will not be implemented in pkgcore, instead
   favoring the genpkgindex approach Ned Ludd (solar) has created.
-  
+
   Reasoning for this comes down to two main reasons-
 
   * design of v1 allows for collisions in the package namespace, category 
@@ -207,9 +207,9 @@ No equivalents:
     server, requires (roughly) a HEAD request (tbz2 length), ranged GET request
     to grab the last 16 bytes for the XPAK segment start, another ranged
     request to pull the metadata.
-    
+
     That's per package.  Can cache, but the roundtrips add up quickly.
-  
+
   The package namespace collision issue is the main reason why v1 support will
   not be added to pkgcore; v2 addresses both issues thus is the route we'll go.
 
@@ -247,7 +247,7 @@ Syncing
 info.  No reponame provided, tries to sync all repositories.
 
 Note: You should look at pmaint --help, because at some point, the 'commands'
-for pmaint will be variable and dependant upon the repositories available, 
+for pmaint will be variable and dependant upon the repositories available,
 akin to how bzr's command set changes dependant on what plugins you've enabled
 (commonly bzrtools).
 

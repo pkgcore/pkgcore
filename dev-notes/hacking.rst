@@ -1,11 +1,11 @@
-=========================
+========================
  Python Code Guidelines
-=========================
+========================
 
 Note that not all of the existing code follows this style guide.
 This doesn't mean existing code is correct.
 
-Stats are all from a sempron 1.6ghz with python 2.4.2.
+Stats are all from a sempron 1.6Ghz with python 2.4.2.
 
 Finally, code _should_ be documented, following epydoc/epytext guidelines
 
@@ -374,8 +374,8 @@ allocating a new list for each consumer.
 
 Bad, mm'kay.
 
-Don't trying to copy immutable instances (e.g. tuples/strings)
-==============================================================
+Don't try to copy immutable instances (e.g. tuples/strings)
+===========================================================
 
 Example: copy.copy((1,2,3)) is dumb; nobody makes a mistake that obvious,
 but in larger code people do (people even try using [:] to copy a
@@ -402,8 +402,8 @@ A general point: python isn't slow, your algorithm is
 
   l = []
   for x in data_generator():
-  	if x not in l:
-  		l.append(x)
+      if x not in l:
+          l.append(x)
 
 That code is _best_ case O(1) (e.g., yielding all 0's). The worst case is
 O(N^2).
@@ -544,8 +544,8 @@ Usually you will want to be "different" from those unconditionally::
 
   def __eq__(self, other):
       if self.__class is not YourClass or other.__class__ is not YourClass:
-	      return False
-	  # Your actual code goes here
+          return False
+      # Your actual code goes here
 
 This might seem like overkill, but it is necessary to avoid problems if
 you are subclassed and the subclass does not have a new __eq__. If you

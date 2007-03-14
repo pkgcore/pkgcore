@@ -50,7 +50,7 @@ machine.
   for example) are now handled within the existing processes.  Design of it
   from the python side is that of an extensible event handler, as such it's
   extremely easy to add new commands in, or special case certain things.
-  
+
 -----------------------
 Repository Enhancements
 -----------------------

@@ -26,7 +26,7 @@ demandload.demandload(
     globals(),
     'pkgcore:version '
     'pkgcore.restrictions:packages '
-    'pkgcore.util.parserestrict:ParseError,parse_match '
+    'pkgcore.util:parserestrict '
     )
 
 
@@ -239,8 +239,8 @@ class OptionParser(optparse.OptionParser):
         l = []
         try:
             for x in sequence:
-                l.append(parse_match(x))
-        except ParseError, e:
+                l.append(parserestrict.parse_match(x))
+        except parserestrict.ParseError, e:
             self.error("arg %r isn't a valid atom: %s" % (x, e))
         return l or default
 

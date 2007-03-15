@@ -275,8 +275,6 @@ class ldconfig(base):
             raise errors.BlockModification(self, e)
 
     def trigger(self, engine):
-        self.offset = engine.offset
-
         locations = self.read_ld_so_conf(engine.offset)
         if engine.phase.startswith('pre_'):
             self.saved_mtimes.set_state(locations)

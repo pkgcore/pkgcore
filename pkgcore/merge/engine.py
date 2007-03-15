@@ -139,7 +139,7 @@ class MergeEngine(object):
             INSTALL_MODE, hooks, csets, cls.install_csets_preserve,
             observer, offset=offset)
 
-        if offset:
+        if o.offset != '/':
             # wrap the results of new_cset to pass through an offset generator
             o.cset_sources["new_cset"] = currying.post_curry(
                 o.generate_offset_cset, o.cset_sources["new_cset"])
@@ -169,7 +169,7 @@ class MergeEngine(object):
             UNINSTALL_MODE, hooks, csets, cls.uninstall_csets_preserve,
             observer, offset=offset)
 
-        if offset:
+        if o.offset != '/':
             # wrap the results of new_cset to pass through an offset generator
             o.cset_sources["old_cset"] = currying.post_curry(
                 o.generate_offset_cset, o.cset_sources["old_cset"])
@@ -205,7 +205,7 @@ class MergeEngine(object):
             REPLACE_MODE, hooks, csets, cls.replace_csets_preserve,
             observer, offset=offset)
 
-        if offset:
+        if o.offset != '/':
             for k in ("old_cset", "new_cset"):
                 # wrap the results of new_cset to pass through an
                 # offset generator

@@ -204,7 +204,7 @@ def process_scope(out, buff, pos, var_match, func_match, endchar):
                     pos += 1
                     if pos >= end:
                         continue
-                    pos = walk_dollar_expansion(buff, pos + 1, end, endchar)
+                    pos = walk_dollar_expansion(buff, pos, end, endchar)
                     continue
                 else:
                     # blah=cah ; single word

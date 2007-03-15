@@ -212,6 +212,18 @@ pkg_setup() {
         self.assertIn('pkg_setup', ''.join(self.get_output(data,
             funcs='pkg_postinst')))
 
+        data = \
+"""src_unpack() {
+	testExp=$'\177\105\114\106\001\001\001'
+}
+
+src_install() {
+    :
+}
+"""
+        self.assertIn('src_install', ''.join(self.get_output(data,
+            funcs='src_unpack')))
+
 class CPyFilterEnvTest(NativeFilterEnvTest):
 
     if filter_env.cpy_run is None:

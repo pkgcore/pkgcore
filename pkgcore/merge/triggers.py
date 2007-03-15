@@ -410,11 +410,8 @@ class fix_uid_perms(base):
         good = self.good_uid
         bad = self.bad_uid
 
-        # do it as a list, since we're mutating the set
-        resets = [x.change_attributes(uid=good)
-            for x in cset if x.uid == bad]
-
-        cset.update(resets)
+        cset.update(x.change_attributes(uid=good)
+            for x in cset if x.uid == bad)
 
 
 class fix_gid_perms(base):
@@ -434,11 +431,8 @@ class fix_gid_perms(base):
         good = self.good_gid
         bad = self.bad_gid
 
-        # do it as a list, since we're mutating the set
-        resets = [x.change_attributes(gid=good)
-            for x in cset if x.gid == bad]
-
-        cset.update(resets)
+        cset.update(x.change_attributes(gid=good)
+            for x in cset if x.gid == bad)
 
 
 class fix_set_bits(base):

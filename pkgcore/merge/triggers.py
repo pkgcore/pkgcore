@@ -357,7 +357,7 @@ class InfoRegen(base):
 
         index = pjoin(basepath, 'dir')
         for x in files:
-            if x in ignores:
+            if x in ignores or x.startswith("."):
                 continue
 
             ret, data = spawn.spawn_get_output(

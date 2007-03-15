@@ -419,6 +419,8 @@ END-INFO-DIR-ENTRY
         # drop the last line, verify it returns that file.
         open(pjoin(self.dir, "foo2.info"), 'w').write(
             '\n'.join(self.info_data.splitlines()[:-1]))
+        # should ignore \..* files
+        open(pjoin(self.dir, ".foo.info"), 'w')
         os.unlink(pjoin(self.dir, 'dir'))
         self.assertEqual(list(o.regen(path, self.dir)),
             [pjoin(self.dir, 'foo2.info')])

@@ -5,6 +5,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.8:
 
+* info trigger now ignores any file starting with '.'; no more complaints about
+  .keep in info dirs.
+
 * if an ebuild has a non-default preinst and offset merging, a rescan of ${D}
   is required- offset wasn't being injected, fixed.
 

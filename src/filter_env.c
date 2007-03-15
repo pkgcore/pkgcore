@@ -457,6 +457,79 @@ walk_command_complex(const char *start, const char *p, const char *end,
     return p;
 }
 
+static const char *
+walk_command_escaped_parsing(const char *start, const char *p,
+                             const char *end, const char endchar)
+{
+    while (p < end) {
+        if (*p == endchar) {
+            return p;
+        } else if ('\\' == *p) {
+            ++p;
+        } else if ('{' == *p) {
+            if('"' != endchar) {
+                p = walk_command_escaped_parsing(start, p + 1, end, '}');
+            }
+        } else if ('(' == *p) {
+            if('"' != endchar) {
+                p = walk_command_escaped_parsing(start, p + 1, end, ')');
+            }
+        } else if ('`' == *p || '"' == *p) {
+            p = walk_command_escaped_parsing(start, p + 1, end, *p);
+        } else if ('\'' == *p && '"' != endchar) {
+            p = walk_statement_no_parsing(p + 1, end, '\'');
+        } else if('$' == *p) {
+            p = walk_dollar_expansion(start, p + 1, end, endchar, endchar == '"');
+            continue;
+        } else if ('#' == *p && endchar != '"') {
+            p = walk_statement_pound(start, p, endchar);
+            continue;
+        }
+        ++p;
+    }
+    return p;
+}
+
+static const char *
+walk_dollar_expansion(const char *start, const char *p, const char *end,
+                      char endchar, char disable_quote)
+{
+    if ('(' == *p)
+        return process_scope(NULL, start, p + 1, end, NULL, NULL, 0, 0, ')') + 1;
+    if ('\'' == *p && !disable_quote)
+        return walk_statement_dollared_quote_parsing(p + 1, end, '\'') + 1;
+    if ('{' != *p) {
+        if ('$' == *p)
+            // short circuit it.
+            return p + 1;
+        while (p < end && endchar != *p) {
+            if (isspace(*p))
+                return p;
+            if ('$' == *p)
+                return walk_dollar_expansion(start, p + 1, end, endchar, 0);
+            if (!isalnum(*p)) {
+                if ('_' != *p) {
+                    return p;
+                }
+            }
+            ++p;
+        }
+
+        return p >= end ? end : p;
+    }
+    ++p;
+    // shortcut ${$} to avoid going too deep. ${$a} isn't valid so no concern
+    if ('$' == *p)
+        return p + 1;
+    while (p < end && '}' != *p) {
+        if ('$' == *p)
+            p = walk_dollar_expansion(start, p + 1, end, endchar, 0);
+        else
+            ++p;
+    }
+    return p + 1;
+}
+
 /* Set a sensible exception for a failed regex compilation. */
 static void
 regex_exc(regex_t* reg, int result)
@@ -562,79 +635,6 @@ pkgcore_filter_env_run(PyObject *self, PyObject *args, PyObject *kwargs)
         return NULL;
     }
     Py_RETURN_NONE;
-}
-
-static const char *
-walk_command_escaped_parsing(const char *start, const char *p,
-                             const char *end, const char endchar)
-{
-    while (p < end) {
-        if (*p == endchar) {
-            return p;
-        } else if ('\\' == *p) {
-            ++p;
-        } else if ('{' == *p) {
-            if('"' != endchar) {
-                p = walk_command_escaped_parsing(start, p + 1, end, '}');
-            }
-        } else if ('(' == *p) {
-            if('"' != endchar) {
-                p = walk_command_escaped_parsing(start, p + 1, end, ')');
-            }
-        } else if ('`' == *p || '"' == *p) {
-            p = walk_command_escaped_parsing(start, p + 1, end, *p);
-        } else if ('\'' == *p && '"' != endchar) {
-            p = walk_statement_no_parsing(p + 1, end, '\'');
-        } else if('$' == *p) {
-            p = walk_dollar_expansion(start, p + 1, end, endchar, endchar == '"');
-            continue;
-        } else if ('#' == *p && endchar != '"') {
-            p = walk_statement_pound(start, p, endchar);
-            continue;
-        }
-        ++p;
-    }
-    return p;
-}
-
-static const char *
-walk_dollar_expansion(const char *start, const char *p, const char *end,
-                      char endchar, char disable_quote)
-{
-    if ('(' == *p)
-        return process_scope(NULL, start, p + 1, end, NULL, NULL, 0, 0, ')') + 1;
-    if ('\'' == *p && !disable_quote)
-        return walk_statement_dollared_quote_parsing(p + 1, end, '\'') + 1;
-    if ('{' != *p) {
-        if ('$' == *p)
-            // short circuit it.
-            return p + 1;
-        while (p < end && endchar != *p) {
-            if (isspace(*p))
-                return p;
-            if ('$' == *p)
-                return walk_dollar_expansion(start, p + 1, end, endchar, 0);
-            if (!isalnum(*p)) {
-                if ('_' != *p) {
-                    return p;
-                }
-            }
-            ++p;
-        }
-
-        return p >= end ? end : p;
-    }
-    ++p;
-    // shortcut ${$} to avoid going too deep. ${$a} isn't valid so no concern
-    if ('$' == *p)
-        return p + 1;
-    while (p < end && '}' != *p) {
-        if ('$' == *p)
-            p = walk_dollar_expansion(start, p + 1, end, endchar, 0);
-        else
-            ++p;
-    }
-    return p + 1;
 }
 
 static PyMethodDef pkgcore_filter_env_methods[] = {

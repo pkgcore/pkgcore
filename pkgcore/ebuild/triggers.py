@@ -307,7 +307,10 @@ class preinst_contents_reset(triggers.base):
     def trigger(self, engine, cset):
         # wipe, and get data again.
         cset.clear()
-        cset.update(engine.new._parent.scan_contents(self.format_op.env["D"]))
+        cs = engine.new._parent.scan_contents(self.format_op.env["D"])
+        if engine.offset != '/':
+            cs = cs.insert_offset(engine.offset)
+        cset.update(cs)
 
 
 class collision_protect(triggers.base):

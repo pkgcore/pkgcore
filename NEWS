@@ -5,15 +5,29 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.8:
 
-* change var attr (exported/readonly) env storage to interop with the others;
-  internally, we still delay the var attr/shopt resetting till execution.
+* if an ebuild has a non-default preinst and offset merging, a rescan of ${D}
+  is required- offset wasn't being injected, fixed.
+
+* if offset merging for a binpkg, reuse the original contentsSet class-
+  this prevents quadratic (worst case) seeking of the tarball via preserving
+  the ordering.
+
+* if merging a binpkg and a forced decompression is needed, update the
+  cset in memory instead of forcing a scan of ${D}.
+
+* misc filter-env fixes, cleanup, and tests.
+
+* change var attr (exported/readonly) env storage to better interop with 
+  the others; internally, we still delay the var attr/shopt resetting till
+  execution.
 
 * misc initialization fixes to syncers for when invoked via GenericSyncer.
   If previously layman integration wasn't working for you, should now.
 
 * shift the misc fs property triggers to pre_merge, rather then sanity_check;
-  sanity_check should be only for "do I have what I need to even do the merge?".
-  running preinst was occasionally wiping the changes the triggers made, thus
+  sanity_check should be only for "do I have what I need to even do the merge?"
+  and minimal setup for the op (for example, transfering files into workdir).
+  Running preinst was occasionally wiping the changes the triggers made, thus
   allowing screwed up ebuilds with custom preinst's to slip in a portage gid
   for merge.
 

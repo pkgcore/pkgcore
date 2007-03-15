@@ -10,7 +10,7 @@ from pkgcore.util.compatibility import all
 from pkgcore.util.klass import generic_equality
 from pkgcore.util.demandload import demandload
 demandload(globals(),
-    "pkgcore.fs.ops:offset_rewriter, change_offset_rewriter "
+    "pkgcore.fs.ops:offset_rewriter,change_offset_rewriter "
 )
 
 def check_instance(obj):

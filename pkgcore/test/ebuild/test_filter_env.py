@@ -131,7 +131,6 @@ pkg_setup() {
     :
 }
 """
-        ret = ''.join(self.get_output(data, funcs='pkg_setup'))
         self.assertNotIn('pkg_setup', ''.join(self.get_output(data,
             funcs='pkg_setup')))
 

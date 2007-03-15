@@ -25,6 +25,8 @@ from pkgcore.util.demandload import demandload
 demandload(globals(),
            "pkgcore.merge:engine "
            "pkgcore.fs.livefs:scan "
+           "pkgcore.interfaces.data_source:local_source "
+           "pkgcore.fs.ops:offset_rewriter "
            "pkgcore.interfaces.data_source:data_source "
            "pkgcore.repository:wrapper "
            "pkgcore.package.mutated:MutatedPkg "
@@ -48,10 +50,32 @@ class force_unpacking(triggers.base):
         op = self.format_op
         op.setup_workdir()
         merge_contents = get_plugin("fs_ops.merge_contents")
-        merge_contents(cset, offset=op.env["D"])
-        cset.clear()
-        cset.update(scan(op.env["D"],
-            offset=op.env["D"]))
+        merge_cset = cset
+        if engine.offset:
+            merge_cset = cset.change_offset(engine.offset, '/')
+        merge_contents(merge_cset, offset=op.env["D"])
+
+        # ok.  they're on disk.
+        # now to avoid going back to the binpkg, we rewrite
+        # the data_source for files to the on disk location.
+        # we can update in place also, since we're not changing the mapping.
+        
+        # this rewrites the data_source to the ${D} loc.
+        d = op.env["D"]
+        fi = (x.change_attributes(data_source=local_source(
+                pjoin(d, x.location.lstrip('/'))))
+                for x in merge_cset.iterfiles())
+
+        if engine.offset:
+            # we're using merge_cset above, which has the final offset loc
+            # pruned; this is required for the merge, however, we're updating
+            # the cset so we have to insert the final offset back in.
+            # wrap the iter, iow.
+            fi = offset_rewriter(engine.offset, fi)
+
+        # we *probably* should change the csets class at some point
+        # since it no longer needs to be tar, but that's for another day.
+        cset.update(fi)
 
 
 def wrap_factory(klass, *args, **kwds):

@@ -634,7 +634,7 @@ class buildable(ebd, setup_mixin, format.build):
 
 class binpkg_buildable(ebd, setup_mixin, format.build):
 
-    stage_depends = {"finalize":"setup"}
+    stage_depends = {"finalize":"setup", "setup":"start"}
     setup_is_for_src = False
 
     def __init__(self, *args, **kwargs):

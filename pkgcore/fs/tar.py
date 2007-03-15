@@ -21,9 +21,8 @@ class TarContentsSet(contents.contentsSet):
     def __init__(self, initial=None, mutable=False):
         contents.contentsSet.__init__(self, mutable=True)
         self._dict = OrderedDict()
-        if initial is not None:
-            for x in initial:
-                self.add(x)
+        if initial:
+            self.update(initial)
         self.mutable = mutable
 
 

@@ -48,8 +48,8 @@ class ContentsFile(contentsSet):
         self.mutable = mutable
 
     def clone(self, empty=False):
-        # populate directly from ourselfs instead of going to disk.
-        cset = self.__class__(self._source, mutable=True, create=False)
+        # create is used to block it from reading.
+        cset = self.__class__(self._source, mutable=True, create=True)
         if not empty:
             cset.update(self)
         return cset

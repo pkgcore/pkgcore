@@ -51,7 +51,7 @@ class force_unpacking(triggers.base):
         op.setup_workdir()
         merge_contents = get_plugin("fs_ops.merge_contents")
         merge_cset = cset
-        if engine.offset:
+        if engine.offset != '/':
             merge_cset = cset.change_offset(engine.offset, '/')
         merge_contents(merge_cset, offset=op.env["D"])
 

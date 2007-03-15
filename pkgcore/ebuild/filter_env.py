@@ -183,6 +183,11 @@ def process_scope(out, buff, pos, var_match, func_match, endchar):
             pos = new_p
             logger.debug('matched env assign %r', var_name)
 
+            if var_match is not None and var_match(var_name):
+                # This would be filtered.
+                logger.info("filtering var '%s'", var_name)
+                window_end = com_start
+
             if pos >= end:
                 return pos
 
@@ -196,18 +201,14 @@ def process_scope(out, buff, pos, var_match, func_match, endchar):
                 elif buff[pos] == '(':
                     pos = walk_command_escaped_parsing(buff, pos + 1, ')') + 1
                 elif buff[pos] == '$':
-                    if pos + 1 >= end:
-                        pos += 1
+                    pos += 1
+                    if pos >= end:
                         continue
                     pos = walk_dollar_expansion(buff, pos + 1, end, endchar)
                     continue
                 else:
                     # blah=cah ; single word
                     pos = walk_command_complex(buff, pos, ' ', SPACE_PARSING)
-            if var_match is not None and var_match(var_name):
-                # This would be filtered.
-                logger.info("filtering var '%s'", var_name)
-                window_end = com_start
 
     if out is not None:
         if window_end is None:
@@ -387,10 +388,9 @@ def walk_dollar_expansion(buff, pos, end, endchar, disable_quote=False):
             if buff[pos].isspace():
                 return pos
             if buff[pos] == '$':
+                # shouldn't this be passing disable_quote ?
                 return walk_dollar_expansion(buff, pos + 1, end, endchar)
             if not buff[pos].isalnum():
-                if buff[pos] == ';':
-                    return pos
                 if buff[pos] != '_':
                     return pos
             pos += 1
@@ -400,11 +400,12 @@ def walk_dollar_expansion(buff, pos, end, endchar, disable_quote=False):
         return pos
     
     pos += 1
-    # shortcut $$ to avoid going too deep.
+    # shortcut ${$} to avoid going too deep. ${$a} isn't valid, so no concern
     if pos == '$':
         return pos + 1
     while pos < end and buff[pos] != '}':
         if buff[pos] == '$':
+            # disable_quote?
             pos = walk_dollar_expansion(buff, pos + 1, end, endchar)
         else:
             pos += 1

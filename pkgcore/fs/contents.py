@@ -8,6 +8,10 @@ contents set- container of fs objects
 from pkgcore.fs import fs
 from pkgcore.util.compatibility import all
 from pkgcore.util.klass import generic_equality
+from pkgcore.util.demandload import demandload
+demandload(globals(),
+    "pkgcore.fs.ops:offset_rewriter, change_offset_rewriter "
+)
 
 def check_instance(obj):
     if not isinstance(obj, fs.fsBase):
@@ -241,7 +245,17 @@ class contentsSet(object):
         del s
     del k
 
-    def clone(self, mutable=False):
-        if mutable == self.mutable:
-            return self
-        return self.__class__(self._dict.itervalues(), mutable=mutable)
+    def clone(self, empty=False):
+        if empty:
+            return self.__class__([], mutable=True)
+        return self.__class__(self._dict.itervalues(), mutable=True)
+
+    def insert_offset(self, offset):
+        cset = self.clone(empty=True)
+        cset.update(offset_rewriter(offset, self))
+        return cset            
+
+    def change_offset(self, old_offset, new_offset):
+        cset = self.clone(empty=True)
+        cset.update(change_offset_rewriter(old_offset, new_offset, self))
+        return cset

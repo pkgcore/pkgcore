@@ -302,7 +302,7 @@ class MergeEngine(object):
     @staticmethod
     def get_pkg_contents(engine, csets, pkg):
         """generate the cset of what files shall be merged to the livefs"""
-        return pkg.contents.clone(mutable=True)
+        return pkg.contents.clone()
 
     @staticmethod
     def get_remove_cset(engine, csets):

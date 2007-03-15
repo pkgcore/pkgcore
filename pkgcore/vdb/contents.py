@@ -47,15 +47,12 @@ class ContentsFile(contentsSet):
 
         self.mutable = mutable
 
-    def clone(self, mutable=False):
-        if mutable == self.mutable:
-            return self
+    def clone(self, empty=False):
         # populate directly from ourselfs instead of going to disk.
-        o = self.__class__(self._source, mutable=True, create=False)
-        for x in self:
-            o.add(x)
-        o.mutable = mutable
-        return o
+        cset = self.__class__(self._source, mutable=True, create=False)
+        if not empty:
+            cset.update(self)
+        return cset
 
     def add(self, obj):
         if isinstance(obj, fs.fsFile):

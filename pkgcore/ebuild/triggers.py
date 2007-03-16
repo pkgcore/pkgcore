@@ -392,6 +392,29 @@ class InfoRegen(triggers.InfoRegen):
         return l
 
 
+class FixImageSymlinks(triggers.base):
+    required_csets = ('new_cset',)
+    _hooks = ('pre_merge',)
+
+    def __init__(self, format_op):
+        triggers.base.__init__(self)
+        self.format_op = format_op
+
+    def trigger(self, engine, cset):
+        d = self.format_op.env["D"].rstrip("/") + "/"
+        l = [x for x in cset.iterlinks() if x.target.startswith(d)]
+        if engine.observer:
+            o = engine.observer
+            for x in l:
+                o.warn("correcting %s sym pointing into $D: %s" %
+                    (x.location, x.target))
+        d_len = len(d)
+
+        # drop the leading ${D}, and force an abspath via '/'
+        cset.update(x.change_attributes(target=pjoin('/', x.target[d_len:]))
+            for x in l)
+
+
 def customize_engine(domain_settings, engine):
     env_update().register(engine)
 

@@ -5,6 +5,10 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.8:
 
+* fix bug so that 6_alpha == 6_alpha0 when native_CPV is in use; only possible
+  way to have hit the bug is having all extensions disabled (CPY version gets it
+  right).
+
 * add a trigger to rewrite symlink targets if they point into ${D}
 
 * info trigger now ignores any file starting with '.'; no more complaints about

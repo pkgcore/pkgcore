@@ -415,8 +415,13 @@ walk_command_complex(const char *start, const char *p, const char *end,
                      char endchar, const char interpret_level)
 {
     while (p < end) {
-        if (*p == endchar ||
-            (interpret_level == COMMAND_PARSING && (';'==*p || '\n'==*p)) ||
+        if (*p == endchar) {
+            if('}' != endchar || start == p)
+                return p;
+            if('\n' == p[-1] || ';' == p[-1]) {
+                return p;
+            }
+        } else if ((interpret_level == COMMAND_PARSING && (';'==*p || '\n'==*p)) ||
             (interpret_level == SPACE_PARSING && isspace(*p))) {
             return p;
         } else if ('\\' == *p) {

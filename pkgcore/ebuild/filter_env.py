@@ -309,9 +309,15 @@ def walk_command_complex(buff, pos, endchar, interpret_level):
     end = len(buff)
     while pos < end:
         ch = buff[pos]
-        if ch == endchar or (
-            (interpret_level == COMMAND_PARSING and ch in ';\n') or
-            (interpret_level == SPACE_PARSING and isspace(ch))):
+        if ch == endchar:
+            if endchar != '}':
+                return pos
+            if start == pos:
+                return pos
+            if buff[pos - 1] in ";\n":
+                return pos
+        elif (interpret_level == COMMAND_PARSING and ch in ';\n') or \
+            (interpret_level == SPACE_PARSING and isspace(ch)):
             return pos
         elif ch == '\\':
             pos += 1

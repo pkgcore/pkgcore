@@ -224,6 +224,11 @@ src_install() {
         self.assertIn('src_install', ''.join(self.get_output(data,
             funcs='src_unpack')))
 
+    def test_arg_awareness(self):
+        data = "f() {\n x \{}\n}\n"
+        self.assertNotIn('}', ''.join(self.get_output(data, 'f')))
+
+
 class CPyFilterEnvTest(NativeFilterEnvTest):
 
     if filter_env.cpy_run is None:

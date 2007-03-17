@@ -152,7 +152,7 @@ class ebd(object):
 
         self.set_op_vars(tmp_offset)
         self.clean_at_start = clean
-        self.clean_needed = clean
+        self.clean_needed = False
 
     def start(self):
         if self.clean_at_start:

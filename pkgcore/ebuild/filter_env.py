@@ -1,7 +1,8 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
+# Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 # Based on filter-env by Brian Harring <ferringb@gmail.com>
-# and Mike Vapier <spanky@gentoo.org>
+# and Mike Frysinger <spanky@gentoo.org>
 
 
 """Filter a bash environment dump."""

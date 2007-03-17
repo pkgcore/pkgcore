@@ -1,6 +1,6 @@
 /*
- * Copyright: 2004-2006 Brian Harring
- * Copyright: 2005 Mike Vapier
+ * Copyright: 2004-2007 Brian Harring
+ * Copyright: 2005 Mike Frysinger
  * Copyright: 2006 Marien Zwart
  * License: GPL2
  */

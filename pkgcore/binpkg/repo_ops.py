@@ -32,8 +32,7 @@ def generate_attr_dict(pkg):
             continue
         if k == 'provides':
             versionless_provides = lambda b: b.key
-            s = ' '.join(stringify_boolean(v, func=versionless_provides)
-                for x in v)
+            s = stringify_boolean(v, func=versionless_provides)
         elif not isinstance(v, basestring):
             try:
                 s = ' '.join(v)

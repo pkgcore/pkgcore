@@ -5,6 +5,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.9:
 
+* Fix a bug for binpkg creation where PROVIDES gets duplicated.
+
 * Bit more DepSet optimizations; specifically collapses AND restriction into
   the parent if it is also an AND restriction.
 

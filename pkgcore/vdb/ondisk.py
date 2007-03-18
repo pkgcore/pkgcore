@@ -247,12 +247,9 @@ class install(repo_interfaces.livefs_install):
             else:
                 v = getattr(self.new_pkg, k)
                 if k == 'provides':
-                    def versionless_providers(b):
-                        return b.key
-                    v = getattr(self.new_pkg, k).restrictions
-                    s = ' '.join(conditionals.stringify_boolean(x,
+                    versionless_providers = lambda b:b.key
+                    s = conditionals.stringify_boolean(v,
                         func=versionless_providers)
-                        for x in v)
                 elif not isinstance(v, basestring):
                     try:
                         s = ' '.join(v)

@@ -324,6 +324,8 @@ def stringify_boolean(node, func=str):
     if isinstance(node, boolean.OrRestriction):
         return "|| ( %s )" % " ".join(stringify_boolean(x, func)
                                       for x in node.restrictions)
+    elif isinstance(node, DepSet):
+        return ' '.join(stringify_boolean(x, func) for x in node.restrictions)
     elif isinstance(node, boolean.AndRestriction) and \
         not isinstance(node, atom):
         return "( %s )" % " ".join(stringify_boolean(x, func)
@@ -334,6 +336,4 @@ def stringify_boolean(node, func=str):
             node.restriction.negate and "!" or "",
             list(node.restriction.vals)[0],
             " ".join(stringify_boolean(x, func) for x in node.payload))
-    elif isinstance(node, DepSet):
-        return ' '.join(stringify_boolean(x, func) for x in node.restrictions)
     return func(node)

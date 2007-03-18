@@ -251,7 +251,8 @@ dump_environ() {
 
     if ! hasq "--no-attributes" "$@"; then
         echo "# env attributes"
-        for y in export readonly; do
+        # leave this form so that it's easier to add others in.
+        for y in export ; do
             x=$(${y} | sed -n "/declare \(-[^ ]\+ \)*/!d; s:^declare \(-[^ ]\+ \)*\([A-Za-z0-9_+]\+\)\(=.*$\)\?$:\2:; /^$(gen_regex_var_filter ${DONT_EXPORT_VARS} x y)$/! p;")
             [ -n "$x" ] && echo "${y} $(echo $x);"
         done
@@ -374,14 +375,13 @@ load_environ() {
         }
         
         filter="^$(gen_regex_var_filter $DONT_EXPORT_VARS XARGS)$"
+        # yes we're intentionally ignoring PKGCORE_ATTRS_READONLY.  readonly isn't currently used.
         PKGCORE_ATTRS_EXPORTED=$(echo $(pkgcore_tmp_func $PKGCORE_ATTRS_EXPORTED | grep -v "$filter"))
-        PKGCORE_ATTRS_READONLY=$(echo $(pkgcore_tmp_func $PKGCORE_ATTRS_READONLY | grep -v "$filter"))
         unset pkgcore_tmp_func filter
 
         # rebuild the func.
         local body=
         [ -n "$PKGCORE_ATTRS_EXPORTED" ] && body="export $PKGCORE_ATTRS_EXPORTED;"
-        [ -n "$PKGCORE_ATTRS_READONLY" ] && body="${body} readonly $PKGCORE_ATTRS_READONLY;"
         [ -n "$PKGCORE_SHOPTS_SET" ]     && body="${body} shopt -s ${PKGCORE_SHOPTS_SET};"
         [ -n "$PKGCORE_SHOPTS_UNSET" ]   && body="${body} shopt -u ${PKGCORE_SHOPTS_UNSET};"
         unset PKGCORE_ATTRS_READONLY PKGCORE_ATTRS_EXPORTED PKGCORE_SHOPTS_UNSET PKGCORE_SHOPTS_SET

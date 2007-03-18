@@ -325,10 +325,28 @@ load_environ() {
         # thus we define these temporarily, to intercept the inlined statements
         # and push them into a func.
         function declare() {
-            if [ "$1" == "-r" ]; then
-                PKGCORE_ATTRS_READONLY="${PKGCORE_ATTRS_READONLY} $2"
-            elif [ "$1" == "-x" ]; then
-                PKGCORE_ATTRS_EXPORTED="${PKGCORE_ATTRS_EXPORTED} $2"
+            local r e vars
+            while [ "${1:0:1}" == "-" ]; do
+                if [ "${1/r}" != "$1" ]; then
+                    r=1
+                fi
+                if [ "${1/x}" != "$1" ]; then
+                    e=1
+                fi
+                shift
+            done
+            if [ -z "$r" ] && [ -z "$e" ]; then
+                return
+            fi
+            while [ -n "$1" ]; do
+                vars="${vars} ${1/=*}"
+                shift
+            done
+            if [ -n "$r" ]; then
+                PKGCORE_ATTRS_READONLY="${PKGCORE_ATTRS_READONLY} ${vars}"
+            fi
+            if [ -n "$e" ]; then
+                PKGCORE_ATTRS_EXPORTED="${PKGCORE_ATTRS_EXPORTED} ${vars}"
             fi
         };
         function export() {

@@ -5,6 +5,10 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.9:
 
+* fix noisy regression from 0.2.8 for temp declare overriding; if you saw lots
+  of complaints on env restoration, corrects it.  Superficial bug, but rather
+  noisy.
+
 * Fix a bug for binpkg creation where PROVIDES gets duplicated.
 
 * Bit more DepSet optimizations; specifically collapses AND restriction into

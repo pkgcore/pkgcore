@@ -114,6 +114,7 @@ static PyObject *
 internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
     PyObject *element_func,
     PyObject *and_func, PyObject *or_func,
+    PyObject *parent_func,
     char initial_frame)
 {
     char *start = *ptr;
@@ -128,6 +129,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
     #define PARSE_DEPSET_STACK_STORAGE 16
     PyObject *stack_restricts[PARSE_DEPSET_STACK_STORAGE];
     Py_ssize_t item_count = 0, tup_size = PARSE_DEPSET_STACK_STORAGE;
+    Py_ssize_t item_size = 1;
 
     SKIP_SPACES(start);
     p = start;
@@ -148,7 +150,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 goto internal_parse_depset_error;
             }
             if(!(tmp = internal_parse_depset(dep_str, &p, has_conditionals,
-                element_func, and_func, or_func, 0)))
+                element_func, and_func, or_func, and_func, 0)))
                 goto internal_parse_depset_error;
 
             if(tmp == Py_None) {
@@ -157,6 +159,9 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 goto internal_parse_depset_error;
             } else if(!PyTuple_CheckExact(tmp)) {
                 item = tmp;
+            } else if (parent_func && and_func == parent_func) {
+                item = tmp;
+                item_size = PyTuple_GET_SIZE(item);
             } else {
                 if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
                     Py_DECREF(tmp);
@@ -209,7 +214,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             }
             p++;
             if(!(tmp = internal_parse_depset(dep_str, &p, has_conditionals,
-                element_func, and_func, or_func, 0)))
+                element_func, and_func, or_func, NULL, 0)))
                 goto internal_parse_depset_error;
 
             if(tmp == Py_None) {
@@ -254,7 +259,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             }
             p++;
             if(!(tmp = internal_parse_depset(dep_str, &p, has_conditionals,
-                element_func, and_func, or_func, 0)))
+                element_func, and_func, or_func, NULL, 0)))
                 goto internal_parse_depset_error;
 
             if(tmp == Py_None) {
@@ -293,32 +298,56 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
         }
 
         // append it.
-        if(item_count == tup_size) {
+        if(item_count + item_size > tup_size) {
+            while(tup_size < item_count + item_size)
+                tup_size <<= 1;
             if(!restrictions) {
                 // switch over.
-                restrictions = PyTuple_New(PARSE_DEPSET_STACK_STORAGE << 1);
-                if(!restrictions) {
+                if(!(restrictions = PyTuple_New(tup_size))) {
                     Py_DECREF(item);
                     goto internal_parse_depset_error;
                 }
-                for(item_count=0; item_count < PARSE_DEPSET_STACK_STORAGE;
-                    item_count++) {
-                    PyTuple_SET_ITEM(restrictions, item_count,
-                        stack_restricts[item_count]);
+                Py_ssize_t x = 0;
+                for(; x < item_count; x++) {
+                    PyTuple_SET_ITEM(restrictions, x,
+                        stack_restricts[x]);
                 }
-            } else if(_PyTuple_Resize(&restrictions, tup_size * 2)) {
+            } else if(_PyTuple_Resize(&restrictions, tup_size)) {
                 Py_DECREF(item);
                 goto internal_parse_depset_error;
             }
-            tup_size *= 2;
             // now we're using restrictions.
         }
         if(restrictions) {
-            PyTuple_SET_ITEM(restrictions, item_count, item);
+            if(item_size == 1) {
+                PyTuple_SET_ITEM(restrictions, item_count++, item);
+            } else {
+                Py_ssize_t x = 0;
+                for(; x < item_size; x++) {
+                    Py_INCREF(PyTuple_GET_ITEM(item, x));
+                    PyTuple_SET_ITEM(restrictions, item_count + x,
+                        PyTuple_GET_ITEM(item, x));
+                }
+                item_count += x;
+                item_size = 1;
+                // we're done with the tuple, already stole the items from it.
+                Py_DECREF(item);
+            }
         } else {
-            stack_restricts[item_count] = item;
+            if(item_size == 1) {
+                stack_restricts[item_count++] = item;
+            } else {
+                Py_ssize_t x = 0;
+                for(;x < item_size; x++) {
+                    Py_INCREF(PyTuple_GET_ITEM(item, x));
+                    stack_restricts[item_count + x] = PyTuple_GET_ITEM(item, x);
+                }
+                item_count += item_size;
+                item_size = 1;
+                // we're done with the tuple, already stole the items from it.
+                Py_DECREF(item);
+            }
         }
-        item_count++;
         SKIP_SPACES(p);
         start = p;
     }
@@ -346,11 +375,10 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             restrictions = PyTuple_New(item_count);
             if(!restrictions)
                 goto internal_parse_depset_error;
-            item_count--;
-            while(item_count >= 0) {
-                PyTuple_SET_ITEM(restrictions, item_count,
-                    stack_restricts[item_count]);
-                item_count--;
+            Py_ssize_t x =0;
+            for(;x < item_count; x++) {
+                PyTuple_SET_ITEM(restrictions, x,
+                    stack_restricts[x]);
             }
         }
     } else if(item_count < tup_size) {
@@ -395,7 +423,7 @@ pkgcore_parse_depset(PyObject *self, PyObject *args)
     if(!p)
         return NULL;
     PyObject *ret = internal_parse_depset(dep_str, &p, &has_conditionals,
-        element_func, and_func, or_func, 1);
+        element_func, and_func, or_func, and_func, 1);
     if(!ret)
         return NULL;
     if(!PyTuple_Check(ret)) {

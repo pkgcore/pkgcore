@@ -62,8 +62,8 @@ class DepSet(boolean.AndRestriction):
             restrictions = None
             if operators is None:
                 has_conditionals, restrictions = self.parse_depset(dep_str,
-                    element_func, packages.AndRestriction,
-                    packages.OrRestriction)
+                    element_func, boolean.AndRestriction,
+                    boolean.OrRestriction)
             else:
                 for x in operators:
                     if x not in ("", "||"):
@@ -79,7 +79,7 @@ class DepSet(boolean.AndRestriction):
 
         sf(self, "restrictions", [])
         if operators is None:
-            operators = {"||":packages.OrRestriction, "":packages.AndRestriction}
+            operators = {"||":boolean.OrRestriction, "":boolean.AndRestriction}
 
         raw_conditionals = []
         depsets = [self.restrictions]
@@ -111,6 +111,9 @@ class DepSet(boolean.AndRestriction):
                     else:
                         if len(depsets[-1]) == 1:
                             depsets[-2].append(depsets[-1][0])
+                        elif raw_conditionals[-1] == '' and (len(raw_conditionals) == 1 or ('' == raw_conditionals[-2])):
+                            # if the frame is an and and the parent is an and, collapse it in.
+                            depsets[-2].extend(depsets[-1])
                         else:
                             depsets[-2].append(
                                 operators[raw_conditionals[-1]](finalize=True,
@@ -183,7 +186,7 @@ class DepSet(boolean.AndRestriction):
 
         flat_deps = self.__class__("", self.element_class)
 
-        stack = [packages.AndRestriction, iter(self.restrictions)]
+        stack = [boolean.AndRestriction, iter(self.restrictions)]
         base_restrict = []
         restricts = [base_restrict]
         count = 1
@@ -207,11 +210,11 @@ class DepSet(boolean.AndRestriction):
                     elif not node.restriction.match(cond_dict):
                         continue
                     if not isinstance(node.payload, tuple):
-                        stack += [packages.AndRestriction, iter((node.payload))]
+                        stack += [boolean.AndRestriction, iter((node.payload))]
                     else:
-                        stack += [packages.AndRestriction, iter(node.payload)]
+                        stack += [boolean.AndRestriction, iter(node.payload)]
                 else:
-                    stack += [node.change_restrictions,
+                    stack += [node.__class__,
                               iter(node.restrictions)]
                 count += 1
                 restricts.append([])
@@ -222,9 +225,9 @@ class DepSet(boolean.AndRestriction):
                 if l != 1:
                     if restricts[-1]:
                         # optimization to avoid uneccessary frames.
-                        if l == 1:
+                        if len(restricts[-1]) == 1:
                             restricts[-2].append(restricts[-1][0])
-                        elif stack[-1] is stack[-3] is packages.AndRestriction:
+                        elif stack[-1] is stack[-3] is boolean.AndRestriction:
                             restricts[-2].extend(restricts[-1])
                         else:
                             restricts[-2].append(stack[-1](*restricts[-1]))

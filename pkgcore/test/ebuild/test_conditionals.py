@@ -124,7 +124,7 @@ class native_DepSetParsingTest(base):
         "a b",
         ( "", 	[]),
 
-        ( "( a b )",	("&&", "(", "a", "b", ")")),
+        ( "( a b )", ("a", "b")),
 
         "|| ( a b )",
 
@@ -276,9 +276,11 @@ class native_DepSetEvaluateTest(base):
             ("a b", "a !x? ( b )"),
             ("a b", "a !x? ( b )", "", ""),
             ("a b", "a !x? ( b ) y? ( c )", "", "y"),
-            ("a || ( c )", "a || ( x? ( b ) c )"),
+            ("a || ( b c )", "a || ( x? ( b ) c )", "x"),
+            ("a c", "a || ( x? ( b ) c )"),
             ("a b", "a b"),
             ):
+
             result = vals[0]
             s = vals[1]
             use, tristate = [], None

@@ -1,6 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+
+from pkgcore.util.lists import iter_stable_unique
+
 class choice_point(object):
 
     __slots__ = (
@@ -16,6 +19,7 @@ class choice_point(object):
         self._deps = None
         self._rdeps = None
         self._prdeps = None
+        self._provides = None
 
     @property
     def state(self):
@@ -90,6 +94,7 @@ class choice_point(object):
         self._deps = cur.depends.cnf_solutions()
         self._rdeps = cur.rdepends.cnf_solutions()
         self._prdeps = cur.post_rdepends.cnf_solutions()
+        self._provides = tuple(iter_stable_unique(cur.provides))
 
     @property
     def slot(self):
@@ -142,7 +147,9 @@ class choice_point(object):
 
     @property
     def provides(self):
-        return self.current_pkg.provides
+        if not self:
+            raise IndexError("no more solutions remain")
+        return self._provides
 
     def __nonzero__(self):
         if self.matches_cur is None:

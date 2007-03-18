@@ -121,14 +121,9 @@ def generate_eapi(self):
         return const.unknown_eapi
 
 def rewrite_restrict(restrict):
-    l = set()
-    for x in restrict:
-        if x.startswith("no"):
-            l.add(x[2:])
-        else:
-            l.add(x)
-    return tuple(l)
-
+    if restrict.startswith("no"):
+        return restrict[2:]
+    return restrict
 
 def get_slot(self):
     o = self.data.pop("SLOT", "0").strip()
@@ -153,7 +148,7 @@ class base(metadata.package):
 
     _config_wrappables = dict((x, alias_class_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
-                  "license", "src_uri", "license", "provides"])
+                  "license", "src_uri", "license", "provides", "restrict"])
 
     _get_attr = dict(metadata.package._get_attr)
     _get_attr["provides"] = generate_providers
@@ -168,8 +163,9 @@ class base(metadata.package):
     _get_attr["description"] = lambda s:s.data.pop("DESCRIPTION", "").strip()
     _get_attr["keywords"] = lambda s:tuple(map(intern,
         s.data.pop("KEYWORDS", "").split()))
-    _get_attr["restrict"] = lambda s:rewrite_restrict(
-            s.data.pop("RESTRICT", "").split())
+    _get_attr["restrict"] = lambda s:conditionals.DepSet(
+        s.data.pop("RESTRICT", ''), str, operators={}, 
+        element_func=rewrite_restrict)
     _get_attr["eapi"] = generate_eapi
     _get_attr["iuse"] = lambda s:frozenset(imap(intern,
         s.data.pop("IUSE", "").split()))

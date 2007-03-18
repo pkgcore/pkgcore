@@ -116,7 +116,7 @@ class ebd(object):
         self.env["USE"] = ' '.join(str(x) for x in pkg.use)
         self.env["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", {}))
         self.env["SLOT"] = pkg.slot
-        self.env["FINALIZED_RESTRICT"] = ' '.join(pkg.restrict)
+        self.env["FINALIZED_RESTRICT"] = ' '.join(str(x) for x in pkg.restrict)
 
         self.restrict = pkg.restrict
 

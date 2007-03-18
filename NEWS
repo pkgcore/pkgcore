@@ -5,6 +5,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.9:
 
+* add USE conditional support to RESTRICT.
+
 * fix noisy regression from 0.2.8 for temp declare overriding; if you saw lots
   of complaints on env restoration, corrects it.  Superficial bug, but rather
   noisy.

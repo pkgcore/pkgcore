@@ -3,6 +3,7 @@
 
 from pkgcore.ebuild import ebuild_src, repo_objs, const, eclass_cache
 from pkgcore.package import errors
+from pkgcore.ebuild import errors as ebuild_errors
 from pkgcore import fetch
 from pkgcore.util.osutils import pjoin
 from pkgcore.util.currying import post_curry, partial
@@ -81,10 +82,16 @@ class test_base(TestCase):
             'slot')
 
     def test_restrict(self):
-        o = self.get_pkg({'RESTRICT': 'strip boobs strip'})
-        self.assertEqual(*map(sorted, (o.restrict, ['strip', 'boobs'])))
-        self.assertEqual(self.get_pkg({'RESTRICT':'nofetch'}).restrict,
-            ('fetch',))
+        o = self.get_pkg({'RESTRICT': 'strip fetch strip'})
+        self.assertEqual(*map(sorted, (o.restrict, ['strip', 'fetch', 'strip'])))
+        self.assertEqual(sorted(self.get_pkg({'RESTRICT':'nofetch'}).restrict),
+            ['fetch'])
+        o = self.get_pkg({'RESTRICT': 'x? ( foo ) !x? ( dar )'})
+        self.assertEqual(sorted(o.restrict.evaluate_depset([])),
+            ['dar'])
+        # ensure restrict doesn't have || () in it
+        self.assertRaises(ebuild_errors.ParseError, getattr, 
+            self.get_pkg({'RESTRICT':'|| ( foon dar )'}), 'restrict')
 
     def test_eapi(self):
         self.assertEqual(self.get_pkg({'EAPI': '0'}).eapi, 0)

@@ -3,6 +3,14 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.2.9:
+
+* make --no-auto work correctly for pebuild
+
+* delay DISTDIR setup till unpack phase to prevent any invalid access; also
+  takes care of a pebuild traceback.
+
+
 pkgcore 0.2.8:
 
 * fix bug so that 6_alpha == 6_alpha0 when native_CPV is in use; only possible

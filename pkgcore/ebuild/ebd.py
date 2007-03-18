@@ -306,7 +306,6 @@ class setup_mixin(object):
         additional_commands = {}
         phase_name = "setup-binpkg"
         if self.setup_is_for_src:
-            self.setup_distfiles()
             phase_name = "setup"
 
         ebdp = request_ebuild_processor(userpriv=False, sandbox=False)
@@ -482,8 +481,12 @@ class buildable(ebd, setup_mixin, format.build):
         self.env["PORTAGE_ACTUAL_DISTDIR"] = distdir_write
         self.env["DISTDIR"] = normpath(
             pjoin(self.builddir, "distdir"))+"/"
-        if self.files:
 
+        # added to protect against no-auto usage in pebuild.
+        if not hasattr(self, 'files'):
+            self.fetch()
+
+        if self.files:
             try:
                 if os.path.exists(self.env["DISTDIR"]):
                     if (os.path.isdir(self.env["DISTDIR"])
@@ -588,6 +591,8 @@ class buildable(ebd, setup_mixin, format.build):
         """
         execute the unpack phase.
         """
+        if self.setup_is_for_src:
+            self.setup_distfiles()
         if self.userpriv:
             if not ensure_dirs(self.env["WORKDIR"], uid=portage_uid):
                 raise format.GenericBuildError(

@@ -48,7 +48,7 @@ def generate_providers(self):
     try:
         return conditionals.DepSet(
             self.data.pop("PROVIDE", ""), virtual_ebuild, element_func=func,
-            operators={"||":boolean.OrRestriction,"":boolean.AndRestriction})
+            operators={"":boolean.AndRestriction})
 
     except conditionals.ParseError, p:
         raise metadata_errors.MetadataException(self, "provide", str(p))

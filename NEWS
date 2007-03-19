@@ -3,6 +3,12 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.x.x:
+
+* OR grouppings in PROVIDES was explicitly disabled; no ebuild uses it, but 
+  none should either.
+
+
 pkgcore 0.2.9:
 
 * convert use.mask/package.use.mask, use.force/package.use.force stacking

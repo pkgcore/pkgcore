@@ -326,7 +326,7 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             f({packages.AlwaysTrue:['mmx'],
             atom("dev-util/blah"):['X']}))
 
-    def test_masked_use(self):
+    def test_forced_use(self):
         self.mk_profiles({})
         self.assertEqual(self.get_profile("base0").forced_use, {})
         self.mk_profiles(

@@ -159,6 +159,7 @@ class ProfileNode(object):
                     pos.append(x)
         for k, v in d.iteritems():
             d[k] = tuple(tuple(x) for x in v)
+        self.pkg_use_mask = d
         return d
 
     @load_decorator("use.force")
@@ -184,6 +185,7 @@ class ProfileNode(object):
                     pos.append(x)
         for k, v in d.iteritems():
             d[k] = tuple(tuple(x) for x in v)
+        self.pkg_use_force = d
         return d
 
     def _load_default_env(self):

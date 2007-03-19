@@ -5,6 +5,12 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.2.9:
 
+* convert use.mask/package.use.mask, use.force/package.use.force stacking
+  to match portage behaviour- basically stack use.* and package.* per profile
+  node rather then going incremental for use.*, then package.* .  If you were
+  having issues with default-linux/amd64/2006.1 profile and sse/sse2 flags for
+  mplayer, this ought to correct it.
+
 * add USE conditional support to RESTRICT.
 
 * fix noisy regression from 0.2.8 for temp declare overriding; if you saw lots

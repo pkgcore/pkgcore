@@ -326,6 +326,21 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             f({packages.AlwaysTrue:['mmx'],
             atom("dev-util/blah"):['X']}))
 
+        self.mk_profiles(
+            {"use.mask":"X", "package.use.mask":"dev-util/foo -X"},
+            {"use.mask":"X"},
+            {"package.use.mask":"dev-util/foo -X"})
+
+        self.assertEqual(f(self.get_profile("base0").masked_use),
+            f({packages.AlwaysTrue:["X"],
+            atom("dev-util/foo"):["-X"]}))
+        self.assertEqual(f(self.get_profile("base1").masked_use),
+            f({packages.AlwaysTrue:["X"]}))
+        self.assertEqual(f(self.get_profile("base2").masked_use),
+            f({packages.AlwaysTrue:["X"],
+            atom("dev-util/foo"):["-X"]}))
+
+
     def test_forced_use(self):
         self.mk_profiles({})
         self.assertEqual(self.get_profile("base0").forced_use, {})
@@ -355,6 +370,20 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
         self.assertEqual(f(self.get_profile("base2").forced_use),
             f({packages.AlwaysTrue:['mmx'],
             atom("dev-util/blah"):['X']}))
+
+        self.mk_profiles(
+            {"use.force":"X", "package.use.force":"dev-util/foo -X"},
+            {"use.force":"X"},
+            {"package.use.force":"dev-util/foo -X"})
+
+        self.assertEqual(f(self.get_profile("base0").forced_use),
+            f({packages.AlwaysTrue:["X"],
+            atom("dev-util/foo"):["-X"]}))
+        self.assertEqual(f(self.get_profile("base1").forced_use),
+            f({packages.AlwaysTrue:["X"]}))
+        self.assertEqual(f(self.get_profile("base2").forced_use),
+            f({packages.AlwaysTrue:["X"],
+            atom("dev-util/foo"):["-X"]}))
 
     def test_default_env(self):
         self.mk_profiles({})

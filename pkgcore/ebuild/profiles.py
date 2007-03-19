@@ -288,19 +288,74 @@ class OnDiskProfile(object):
         return tuple(l)
 
     def _collapse_use_dict(self, attr):
-        d = {}
-        for node in self.stack:
-            d2 = getattr(node, attr)
-            for key, value in d2.iteritems():
-                s = d.get(key, None)
-                if s is None:
-                    if value[1]:
-                        d[key] = set(value[1])
+
+        stack = [getattr(x, attr) for x in self.stack]
+
+        global_on = set()
+        puse_on = {}
+        puse_off = {}
+        atrue = packages.AlwaysTrue
+        for mapping in stack:
+            # process globals (use.(mask|force) first)
+            val = mapping.get(atrue)
+            if val is not None:
+                # global wipes everything affecting the flag thus far.
+                global_on.difference_update(val[0])
+                for u in val[0]:
+                    puse_on.pop(u, None)
+                    puse_off.pop(u, None)
+
+                # this *is* right; if it's global, it stomps everything prior.
+                global_on.update(val[1])
+                for u in val[1]:
+                    puse_on.pop(u, None)
+                    puse_off.pop(u, None)
+
+            # process less specific...
+            for key, val in mapping.iteritems():
+                if key == atrue:
                     continue
-                s.difference_update(value[0])
-                s.update(value[1])
-                if not s:
-                    del d[key]
+                for u in val[0]:
+                    # is it even on?  if not, don't level it.
+                    if u in global_on:
+                        if u not in puse_off:
+                            puse_off[u] = set([key])
+                        else:
+                            puse_off[u].add(key)
+                    else:
+                        s = puse_on.get(u)
+                        if s is not None:
+                            # chuck the previous override.
+                            s.discard(key)
+                
+                for u in val[1]:
+                    # if it's on already, no need to set it.
+                    if u not in global_on:
+                        if u not in puse_on:
+                            puse_on[u] = set([key])
+                        else:
+                            puse_on[u].add(key)
+                    else:
+                        s = puse_off.get(u)
+                        if s is not None:
+                            s.discard(key)
+        
+        # now we recompose it into a global on, and a stream of global trins.
+        d = {}
+        if global_on:
+            d[atrue] = set(global_on)
+        # reverse the mapping.
+        for data in (puse_on.iteritems(),
+            (("-"+k, v) for k,v in puse_off.iteritems())):
+            for use, key_set in data:
+                for key in key_set:
+                    s = d.get(key)
+                    if s is None:
+                        d[key] = set([use])
+                    else:
+                        s.add(use)
+        for k, v in d.iteritems():
+            d[k] = tuple(v)
         return d
 
     def _collapse_generic(self, attr):

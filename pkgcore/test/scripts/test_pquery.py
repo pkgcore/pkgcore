@@ -60,6 +60,7 @@ class CommandlineTest(TestCase, helpers.MainMixin):
     def test_no_description(self):
         self.assertOut(
             [' * spork/foon-2',
+             '     repo: MISSING',
              '     description: MISSING',
              '     homepage: MISSING',
              '',

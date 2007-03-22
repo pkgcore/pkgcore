@@ -5,6 +5,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.x.x:
 
+* pquery --attr repo now returns the repo_id if it can get it, instead of
+  the str of the repo object.
+
 * OR grouppings in PROVIDES was explicitly disabled; no ebuild uses it, but 
   none should either.
 

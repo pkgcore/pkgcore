@@ -574,6 +574,8 @@ def stringify_attr(config, pkg, attr):
         return ' '.join(sorted(value, key=lambda x:x.lstrip("~")))
     if attr == 'environment':
         return ''.join(value.get_fileobj())
+    if attr == 'repo':
+        return str(getattr(value, 'repo_id', 'no repo id'))
     return str(value)
 
 

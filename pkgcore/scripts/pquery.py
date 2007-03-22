@@ -456,8 +456,8 @@ class OptionParser(commandline.OptionParser):
             vals.attr.extend(['depends', 'rdepends', 'post_rdepends'])
 
         if vals.verbose:
-            vals.attr.insert(0, 'homepage')
-            vals.attr.insert(0, 'description')
+            # slice assignment to an empty range; behaves as an insertion.
+            vals.attr[0:0] = ['repo', 'description', 'homepage']
 
         if vals.force_one_attr:
             if vals.one_attr:

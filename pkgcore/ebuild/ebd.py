@@ -472,7 +472,10 @@ class buildable(ebd, setup_mixin, format.build):
         self.env["A"] = ' '.join(set(x.filename
             for x in self.fetchables))
 
-    def setup_distfiles(self):
+        if self.setup_is_for_src:
+            self.init_distfiles_env()
+
+    def init_distfiles_env(self):
         # cvs/svn ebuilds need to die.
         distdir_write = self.fetcher.get_storage_path()
         if distdir_write is None:
@@ -482,6 +485,7 @@ class buildable(ebd, setup_mixin, format.build):
         self.env["DISTDIR"] = normpath(
             pjoin(self.builddir, "distdir"))+"/"
 
+    def setup_distfiles(self):
         # added to protect against no-auto usage in pebuild.
         if not hasattr(self, 'files'):
             self.fetch()

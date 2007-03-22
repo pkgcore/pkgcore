@@ -5,6 +5,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.x.x:
 
+* shift PORTAGE_ACTUAL_DISTDIR and DISTDIR definition into the initial env,
+  so that evil git/subversion/cvs class can get at it globally.
+
 * pquery --attr repo now returns the repo_id if it can get it, instead of
   the str of the repo object.
 

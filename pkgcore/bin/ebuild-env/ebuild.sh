@@ -432,7 +432,7 @@ pkgcore_ensure_PATH()
             fi
         done
         restore_IFS
-        [ -n "$adds" ] && PATH="${adds}${PATH:+:${PATH}}"
+        [ -n "$adds" ] && PATH="${PATH}${PATH:+:}${adds}"
         export PATH
     fi
     export PATH

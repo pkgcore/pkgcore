@@ -5,6 +5,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.x.x:
 
+* FEATURES=ccache now corrects perms as needed for when userpriv toggles.
+
 * shift PORTAGE_ACTUAL_DISTDIR and DISTDIR definition into the initial env,
   so that evil git/subversion/cvs class can get at it globally.
 

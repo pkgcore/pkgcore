@@ -218,6 +218,7 @@ class ebd(object):
             # XXX hack, just 'til pkgcore controls these directories
             if (os.stat(self.env[k]).st_mode & 02000):
                 logger.warn("%s ( %s ) is setgid" % (self.env[k], k))
+        
 
     @_reset_env_data_source
     def _generic_phase(self, phase, userpriv, sandbox, fakeroot,
@@ -454,14 +455,8 @@ class buildable(ebd, setup_mixin, format.build):
                 # looks weird I realize, but
                 # pjoin("/foor/bar", "/barr/foo") == "/barr/foo"
                 # and pjoin("/foo/bar",".asdf") == "/foo/bar/.asdf"
-                if not (s+"_DIR") in self.env:
-                    self.env[s+"_DIR"] = pjoin(self.tmpdir,  default)
+                self.env.setdefault(s+"_DIR", pjoin(self.tmpdir, default))
                 path.insert(0, "/usr/lib/%s/bin" % s.lower())
-#               for x in ("CC", "CXX"):
-#                   if x in self.env:
-#                       self.env[x] = "%s %s" % (s.lower(), self.env[x])
-#                   else:
-#                       self.env[x] = s.lower()
             else:
                 for y in ("_PATH", "_DIR"):
                     if s+y in self.env:
@@ -552,32 +547,41 @@ class buildable(ebd, setup_mixin, format.build):
 
                 # XXX this is more then mildly stupid.
                 st = os.stat(self.env["CCACHE_DIR"])
-            if st is None:
-                try:
-                    if st.gid != portage_gid or (st.st_mode & 02070) != 02070:
-                        try:
-                            cwd = os.getcwd()
-                        except OSError:	cwd = "/"
-                        try:
-                            # crap.
-                            os.chmod(self.env["CCACHE_DIR"], 02775)
-                            os.chown(self.env["CCACHE_DIR"], -1, portage_gid)
-                            os.chdir(cwd)
-                            if 0 != spawn(["chgrp", "-R", str(portage_gid)]):
-                                raise format.FailedDirectory(
-                                    self.env["CCACHE_DIR"],
-                                    "failed changing ownership for CCACHE_DIR")
-                            if 0 != spawn_bash(
-                                "find . -type d | %s chmod 02775" % xargs):
-                                raise format.FailedDirectory(
-                                    self.env["CCACHE_DIR"],
-                                    "failed correcting perms for CCACHE_DIR")
-                        finally:
-                            os.chdir(cwd)
-                except OSError:
-                    raise format.FailedDirectory(
-                        self.env["CCACHE_DIR"],
-                        "failed ensuring perms/group owner for CCACHE_DIR")
+            try:
+                if st.st_gid != portage_gid or (st.st_mode & 02775) != 02775:
+                    try:
+                        cwd = os.getcwd()
+                    except OSError:
+                        cwd = "/"
+                    try:
+                        # crap.
+                        os.chmod(self.env["CCACHE_DIR"], 02775)
+                        os.chown(self.env["CCACHE_DIR"], -1, portage_gid)
+                        os.chdir(cwd)
+                        if 0 != spawn(["chgrp", "-R", str(portage_gid),
+                            self.env["CCACHE_DIR"]]):
+                            raise format.FailedDirectory(
+                                self.env["CCACHE_DIR"],
+                                "failed changing ownership for CCACHE_DIR")
+                        if 0 != spawn_bash(
+                            "find '%s' -type d -print0 | %s --null chmod 02775"
+                                % (self.env["CCACHE_DIR"], xargs)):
+                            raise format.FailedDirectory(
+                                self.env["CCACHE_DIR"],
+                                "failed correcting perms for CCACHE_DIR")
+
+                        if 0 != spawn_bash(
+                            "find '%s' -type f -print0 | %s --null chmod 0775"
+                                % (self.env["CCACHE_DIR"], xargs)):
+                            raise format.FailedDirectory(
+                                self.env["CCACHE_DIR"],
+                                "failed correcting perms for CCACHE_DIR")
+                    finally:
+                        os.chdir(cwd)
+            except OSError:
+                raise format.FailedDirectory(
+                    self.env["CCACHE_DIR"],
+                    "failed ensuring perms/group owner for CCACHE_DIR")
         return setup_mixin.setup(self)
 
     def configure(self):

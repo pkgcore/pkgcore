@@ -852,6 +852,13 @@ class base_op(object):
         self.pkg = pkg
         self.force = force
 
+    def __str__(self):
+        s = ''
+        if self.force:
+            s = ' forced'
+        return "%s: %s%s" % (self.desc, self.pkg, s)
+
+
 class add_op(base_op):
 
     desc = "add"
@@ -867,6 +874,7 @@ class add_op(base_op):
         plan.state.remove_slotting(self.pkg)
         del plan.pkg_choices[self.pkg]
 
+
 class remove_op(base_op):
     __slots__ = ()
 
@@ -881,6 +889,7 @@ class remove_op(base_op):
     def revert(self, plan):
         plan.state.fill_slotting(self.pkg, force=self.force)
         plan.pkg_choices[self.pkg] = self.choices
+
 
 class replace_op(base_op):
     __slots__ = ("old_pkg", "old_choices")
@@ -920,6 +929,13 @@ class replace_op(base_op):
         del plan.pkg_choices[self.pkg]
         plan.pkg_choices[self.old_pkg] = self.old_choices
 
+    def __str__(self):
+        s = ''
+        if self.force:
+            s = ' forced'
+        return "replace: %s with %s" % (self.old_pkg, self.pkg)
+
+
 class blocker_base_op(object):
     __slots__ = ("choices", "blocker", "key")
 
@@ -933,6 +949,11 @@ class blocker_base_op(object):
             self.key = key
         self.choices = choices
         self.blocker = blocker
+
+    def __str__(self):
+        return "%s: key %s, %s from %s" % (self.__class__.__name__, self.key,
+            self.blocker, self.choices)
+
 
 class incref_forward_block_op(blocker_base_op):
     __slots__ = ()
@@ -956,6 +977,7 @@ class incref_forward_block_op(blocker_base_op):
         plan.blockers_refcnt.remove(self.blocker)
         if self.blocker not in plan.blockers_refcnt:
             plan.state.remove_limiter(self.blocker, self.key)
+
 
 class decref_forward_block_op(blocker_base_op):
     __slots__ = ()

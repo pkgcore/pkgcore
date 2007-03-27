@@ -21,6 +21,7 @@ demandload(globals(), "pkgcore.ebuild.ebd:buildable "
     "pkgcore.ebuild:digest "
     "pkgcore.ebuild:repo_objs "
     "pkgcore.ebuild:atom "
+    "random:shuffle "
     "errno ")
 
 from pkgcore.config import ConfigHint
@@ -41,21 +42,20 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             "eclass", "profiles", "packages", "distfiles", "metadata",
             "licenses", "scripts", "CVS", ".svn"])
     configured = False
-    configurables = ("domain", "settings",)
+    configurables = ("domain", "settings")
     configure = None
     format_magic = "ebuild_src"
     enable_gpg = False
 
     pkgcore_config_type = ConfigHint(
         {'location': 'str', 'cache': 'refs:cache',
-         'eclass_cache': 'ref:eclass_cache', 'mirrors_file': 'str',
+         'eclass_cache': 'ref:eclass_cache',
          'default_mirrors': 'list', 'sync': 'lazy_ref:syncer',
          'override_repo_id':'str'},
         typename='repo')
 
     def __init__(self, location, cache=(), eclass_cache=None,
-                 mirrors_file=None, default_mirrors=None, sync=None,
-                 override_repo_id=None):
+                 default_mirrors=None, sync=None, override_repo_id=None):
 
         """
         @param location: on disk location of the tree
@@ -64,7 +64,6 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         @param eclass_cache: If not None, L{pkgcore.ebuild.eclass_cache}
             instance representing the eclasses available,
             if None, generates the eclass_cache itself
-        @param mirrors_file: file parsed via L{read_dict} to get mirror tiers
         @param default_mirrors: Either None, or sequence of mirrors to try
             fetching from first, then falling back to other uri
         """
@@ -86,28 +85,19 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                 pjoin(self.base, "eclass"), self.base)
         else:
             self.eclass_cache = eclass_cache
-        if mirrors_file:
-            mirrors = read_dict(pjoin(self.base, metadata_offset,
-                                             "thirdpartymirrors"))
-        else:
-            mirrors = {}
+
         fp = pjoin(self.base, metadata_offset, "thirdpartymirrors")
+        mirrors = {}
         if os.path.exists(fp):
-            from random import shuffle
-            f = None
+            f = open(fp, "r")
             try:
-                f = open(pjoin(self.base, metadata_offset,
-                                      "thirdpartymirrors"), "r")
                 for k, v in read_dict(f, splitter="\t",
-                                      source_isiter=True).items():
+                                      source_isiter=True).iteritems():
                     v = v.split()
                     shuffle(v)
-                    mirrors.setdefault(k, []).extend(v)
-            except OSError:
-                if f is not None:
-                    f.close()
-                raise
-
+                    mirrors[k] = v
+            finally:
+                f.close()
         if isinstance(cache, (tuple, list)):
             cache = tuple(cache)
         else:

@@ -5,6 +5,7 @@
 from pkgcore.test import mixins
 from pkgcore.util import osutils
 from pkgcore.ebuild import repository
+from pkgcore.ebuild.atom import atom
 from pkgcore.repository import errors
 
 
@@ -65,10 +66,12 @@ foon		foon://foons/
             dict(repo.versions))
 
     def test_package_mask(self):
-        open(osutils.pjoin(self.pdir, 'package.mask')).write('''\
+        open(osutils.pjoin(self.pdir, 'package.mask'), 'w').write('''\
 # lalala
 it-is/broken
 <just/newer-than-42
 ''')
         repo = repository.UnconfiguredTree(self.dir)
-        self.assertEqual([], repo.default_visibility_limiters)
+        self.assertEqual(sorted([atom('it-is/broken'),
+            atom('<just/newer-than-42')]),
+            sorted(repo.default_visibility_limiters))

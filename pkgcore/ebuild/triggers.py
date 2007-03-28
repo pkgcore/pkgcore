@@ -56,7 +56,7 @@ def collapse_envd(base):
     # update incrementals *and* colon parsed for colon_seperated;
     # incrementals on it's own is space seperated.
 
-    for x in collapsed_d.pop("COLON_SEPERATED", []):
+    for x in collapsed_d.pop("COLON_SEPARATED", []):
         v = x.split()
         if v:
             loc_colon_parsed.update(v)
@@ -64,7 +64,7 @@ def collapse_envd(base):
     loc_incrementals.update(loc_colon_parsed)
 
     # now space.
-    for x in collapsed_d.pop("SPACE_SEPERATED", []):
+    for x in collapsed_d.pop("SPACE_SEPARATED", []):
         v = x.split()
         if v:
             loc_incrementals.update(v)

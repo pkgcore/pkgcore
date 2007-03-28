@@ -110,6 +110,10 @@ class ReadBashDictTest(TestCase):
         s = "a=b\ny='"
         self.assertRaises(ParseError, read_bash_dict, StringIO(s))
 
+    def test_var_read(self):
+        self.assertEqual(read_bash_dict(StringIO("x=y@a\n")),
+            {'x':'y@a'})
+
     def test_empty_assign(self):
         open(self.valid_file.name, 'w').write("foo=\ndar=blah\n")
         self.assertEqual(read_bash_dict(self.valid_file.name),

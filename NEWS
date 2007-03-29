@@ -3,6 +3,13 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.2.12:
+
+* Ensure PackageRestriction._handle_exceptions filters the check down to
+  just strings; if running pure python, this could trigger a traceback
+  via CPV.__cmp__.
+
+
 pkgcore 0.2.11:
 
 * COLON_SEPARATED, not COLON_SEPERATED for env.d parsing.

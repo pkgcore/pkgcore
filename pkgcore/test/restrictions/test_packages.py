@@ -98,6 +98,16 @@ class native_PackageRestrictionTest(TestRestriction):
                         AlwaysSelfIntersect), mode),
                     foo())
 
+        # check that it only does string comparison in exception catching.
+        class foo:
+            def __cmp__(self, other):
+                raise TypeError
+
+            def __getattr__(self, attr):
+                raise AttributeError(self, attr)
+        
+        self.assertFalse(self.kls("foon", AlwaysSelfIntersect).match(foo()))
+
     def test_eq(self):
         self.assertEqual(
             self.kls('one', values.AlwaysTrue),

@@ -59,7 +59,7 @@ class PackageRestriction_mixin(restriction.base):
                 logger.exception("failed getting attribute %s from %s, "
                               "exception %s" % (self.attr, str(pkg), str(exc)))
             s = self.attr.split('.')
-            if any(x in s for x in exc.args):
+            if any(x in s for x in exc.args if isinstance(x, basestring)):
                 return False
             elif any("'%s'" % x in y for x in s for y in exc.args):
                 # this is fairly horrible; probably specific to cpython also.

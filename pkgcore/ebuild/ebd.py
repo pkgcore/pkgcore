@@ -603,9 +603,12 @@ class buildable(ebd, setup_mixin, format.build):
         if self.setup_is_for_src:
             self.setup_distfiles()
         if self.userpriv:
-            if not ensure_dirs(self.env["WORKDIR"], uid=portage_uid):
+            try:
+                os.chown(self.env["WORKDIR"], portage_uid, -1)
+            except OSError, oe:
                 raise format.GenericBuildError(
-                    "failed forcing %i uid for WORKDIR" % portage_uid)
+                    "failed forcing %i uid for WORKDIR: %s" %
+                        (portage_uid, str(oe)))
         return self._generic_phase("unpack", True, True, False)
 
     compile = pretty_docs(

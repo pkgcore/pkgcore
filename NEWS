@@ -12,6 +12,10 @@ pkgcore 0.2.12:
 * Tweak python native native_CPV.__cmp__ to not explode if given an instance
   that's not a CPV derivative.
 
+* Reorder ||() to use anything matched via the current state graph, aside
+  from normal reordering to prefer vdb.
+
+
 pkgcore 0.2.11:
 
 * COLON_SEPARATED, not COLON_SEPERATED for env.d parsing.

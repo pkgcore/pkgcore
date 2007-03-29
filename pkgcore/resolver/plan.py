@@ -104,8 +104,11 @@ def default_depset_reorder(resolver, depset, mode):
             yield or_block
             continue
         for atom in or_block:
-            if not atom.blocks and caching_iter(
-                p for r in resolver.livefs_dbs
+            if atom.blocks:
+                nonvdb.append(atom)
+            elif resolver.state.match_atom(atom):
+                vdb.append(atom)
+            elif caching_iter(p for r in resolver.livefs_dbs
                 for p in r.match(atom)):
                 vdb.append(atom)
             else:

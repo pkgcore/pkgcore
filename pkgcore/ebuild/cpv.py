@@ -108,13 +108,7 @@ class native_CPV(object):
         return native_ver_cmp(self.version, self.revision, other.version,
                               other.revision)
 
-    def __eq__(self, other):
-        return cmp(self, other) == 0
-    
-    def __ne__(self, other):
-        return cmp(self, other) != 0
 
-    
 def native_ver_cmp(ver1, rev1, ver2, rev2):
 
     # If the versions are the same, comparing revisions will suffice.

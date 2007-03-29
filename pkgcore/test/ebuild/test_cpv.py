@@ -210,6 +210,15 @@ class native_CpvTest(TestCase):
         self.assertGT(kls("da/bb"), kls("da/ba"))
         self.assertGT(kls("da/ba-6.0_alpha0_p1"), kls("da/ba-6.0_alpha"))
         self.assertEqual(kls("da/ba-6.0_alpha"), kls("da/ba-6.0_alpha0"))
+        # Regression test: python does comparison slightly differently
+        # if the classes do not match exactly (it prefers rich
+        # comparison over __cmp__).
+        class DummySubclass(kls):
+            pass
+        self.assertNotEqual(
+            DummySubclass("da/ba-6.0_alpha0_p1"), kls("da/ba-6.0_alpha"))
+        self.assertEqual(
+            DummySubclass("da/ba-6.0_alpha0"), kls("da/ba-6.0_alpha"))
 
     def test_no_init(self):
         """Test if the cpv is in a somewhat sane state if __init__ fails.

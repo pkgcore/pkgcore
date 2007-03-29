@@ -59,9 +59,10 @@ class PackageRestriction_mixin(restriction.base):
                 logger.exception("failed getting attribute %s from %s, "
                               "exception %s" % (self.attr, str(pkg), str(exc)))
             s = self.attr.split('.')
-            if any(x in s for x in exc.args if isinstance(x, basestring)):
+            eargs = [x for x in exc.args if isinstance(x, basestring)]
+            if any(x in s for x in eargs):
                 return False
-            elif any("'%s'" % x in y for x in s for y in exc.args):
+            elif any("'%s'" % x in y for x in s for y in eargs):
                 # this is fairly horrible; probably specific to cpython also.
                 # either way, does a lookup specifically for attr components
                 # in the string exception string, looking for 'attr' in the

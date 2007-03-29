@@ -15,6 +15,8 @@ pkgcore 0.2.12:
 * Reorder ||() to use anything matched via the current state graph, aside
   from normal reordering to prefer vdb.
 
+* default mode for ensure_dirs is now 0755.
+
 
 pkgcore 0.2.11:
 

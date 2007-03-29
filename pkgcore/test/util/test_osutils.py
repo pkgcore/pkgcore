@@ -87,6 +87,8 @@ class cpy_listdir_Test(Native_listdir_Test):
 
 class EnsureDirsTest(TempDirMixin, TestCase):
 
+    default_mode = 0755
+
     def check_dir(self, path, uid, gid, mode):
         self.failUnless(os.path.isdir(path))
         st = os.stat(path)
@@ -100,14 +102,14 @@ class EnsureDirsTest(TempDirMixin, TestCase):
         # default settings
         path = pjoin(self.dir, 'foo', 'bar')
         self.failUnless(osutils.ensure_dirs(path))
-        self.check_dir(path, os.geteuid(), os.getegid(), 0777)
+        self.check_dir(path, os.geteuid(), os.getegid(), self.default_mode)
 
     def test_minimal_nonmodifying(self):
         path = pjoin(self.dir, 'foo', 'bar')
-        self.failUnless(osutils.ensure_dirs(path, mode=0755))
-        os.chmod(path, 0777)
+        self.failUnless(osutils.ensure_dirs(path, mode=0775))
+        self.assertEqual(os.stat(path).st_mode & 07777, 0775)
         self.failUnless(osutils.ensure_dirs(path, mode=0755, minimal=True))
-        self.check_dir(path, os.geteuid(), os.getegid(), 0777)
+        self.check_dir(path, os.geteuid(), os.getegid(), 0775)
 
     def test_minimal_modifying(self):
         path = pjoin(self.dir, 'foo', 'bar')
@@ -122,8 +124,8 @@ class EnsureDirsTest(TempDirMixin, TestCase):
         self.failUnless(osutils.ensure_dirs(path, mode=0020))
         self.check_dir(path, os.geteuid(), os.getegid(), 0020)
         # unrestrict it
-        osutils.ensure_dirs(path)
-        self.check_dir(path, os.geteuid(), os.getegid(), 0777)
+        osutils.ensure_dirs(path, minimal=False)
+        self.check_dir(path, os.geteuid(), os.getegid(), self.default_mode)
 
     def test_mode(self):
         path = pjoin(self.dir, 'mode', 'mode')
@@ -131,7 +133,7 @@ class EnsureDirsTest(TempDirMixin, TestCase):
         self.check_dir(path, os.geteuid(), os.getegid(), 0700)
         # unrestrict it
         osutils.ensure_dirs(path)
-        self.check_dir(path, os.geteuid(), os.getegid(), 0777)
+        self.check_dir(path, os.geteuid(), os.getegid(), self.default_mode)
 
     def test_gid(self):
         # abuse the portage group as secondary group
@@ -140,11 +142,11 @@ class EnsureDirsTest(TempDirMixin, TestCase):
             raise SkipTest('you are not in the portage group')
         path = pjoin(self.dir, 'group', 'group')
         self.failUnless(osutils.ensure_dirs(path, gid=portage_gid))
-        self.check_dir(path, os.geteuid(), portage_gid, 0777)
+        self.check_dir(path, os.geteuid(), portage_gid, self.default_mode)
         self.failUnless(osutils.ensure_dirs(path))
-        self.check_dir(path, os.geteuid(), portage_gid, 0777)
+        self.check_dir(path, os.geteuid(), portage_gid, self.default_mode)
         self.failUnless(osutils.ensure_dirs(path, gid=os.getegid()))
-        self.check_dir(path, os.geteuid(), os.getegid(), 0777)
+        self.check_dir(path, os.geteuid(), os.getegid(), self.default_mode)
 
 
 class Test_abspath(TempDirMixin, TestCase):

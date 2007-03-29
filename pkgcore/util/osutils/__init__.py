@@ -30,7 +30,7 @@ listdir_files = module.listdir_files
 del module
 
 
-def ensure_dirs(path, gid=-1, uid=-1, mode=0777, minimal=True):
+def ensure_dirs(path, gid=-1, uid=-1, mode=0755, minimal=True):
     """
     ensure dirs exist, creating as needed with (optional) gid, uid, and mode.
 

@@ -3,6 +3,7 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
 pkgcore 0.2.12:
 
 * Ensure PackageRestriction._handle_exceptions filters the check down to

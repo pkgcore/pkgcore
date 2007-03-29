@@ -89,25 +89,26 @@ class native_CPV(object):
         return getattr(self, 'cpvstr', 'None')
 
     def __cmp__(self, other):
+        try:
+            if self.cpvstr == other.cpvstr:
+                return 0
 
-        if self.cpvstr == other.cpvstr:
-            return 0
+            if (self.category and other.category and
+                self.category != other.category):
+                return cmp(self.category, other.category)
 
-        if (self.category and other.category and
-            self.category != other.category):
-            return cmp(self.category, other.category)
+            if self.package and other.package and self.package != other.package:
+                return cmp(self.package, other.package)
 
-        if self.package and other.package and self.package != other.package:
-            return cmp(self.package, other.package)
-
-        # note I chucked out valueerror, none checks on versions
-        # passed in. I suck, I know.
-        # ~harring
-        # fails in doing comparison of unversioned atoms against
-        # versioned atoms
-        return native_ver_cmp(self.version, self.revision, other.version,
+            # note I chucked out valueerror, none checks on versions
+            # passed in. I suck, I know.
+            # ~harring
+            # fails in doing comparison of unversioned atoms against
+            # versioned atoms
+            return native_ver_cmp(self.version, self.revision, other.version,
                               other.revision)
-
+        except AttributeError:
+            return 1
 
 def native_ver_cmp(ver1, rev1, ver2, rev2):
 

@@ -171,8 +171,6 @@ class native_CpvTest(TestCase):
             self.assertTrue(cpv.cpy_ver_cmp(obj2.version, obj2.revision,
                 obj1.version, obj1.revision) < 0,
                     'cpy_ver_cmp, %r < %r' % (obj2, obj1))
-            
-                    
 
     def test_cmp(self):
         kls = self.kls
@@ -219,6 +217,8 @@ class native_CpvTest(TestCase):
             DummySubclass("da/ba-6.0_alpha0_p1"), kls("da/ba-6.0_alpha"))
         self.assertEqual(
             DummySubclass("da/ba-6.0_alpha0"), kls("da/ba-6.0_alpha"))
+
+        self.assertNotEqual(DummySubclass("da/ba-6.0"), "foon")
 
     def test_no_init(self):
         """Test if the cpv is in a somewhat sane state if __init__ fails.

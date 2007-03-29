@@ -7,8 +7,10 @@ pkgcore 0.2.12:
 
 * Ensure PackageRestriction._handle_exceptions filters the check down to
   just strings; if running pure python, this could trigger a traceback
-  via CPV.__cmp__.
+  via the python native native_CPV.__cmp__.
 
+* Tweak python native native_CPV.__cmp__ to not explode if given an instance
+  that's not a CPV derivative.
 
 pkgcore 0.2.11:
 

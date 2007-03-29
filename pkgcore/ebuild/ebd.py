@@ -156,6 +156,7 @@ class ebd(object):
 
     def start(self):
         if self.clean_at_start:
+            self.clean_needed = True
             if not self.cleanup():
                 return False
         self.setup_workdir()

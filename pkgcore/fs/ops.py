@@ -105,8 +105,9 @@ def default_copyfile(obj, mkdirs=False):
         raise TypeError("obj must not be a fsDir instance: %r" % obj)
 
     try:
-        if fs.isdir(gen_obj(obj.location)):
-            raise TypeError("fs_copyfile doesn't work on directories")
+        existing = gen_obj(obj.location)
+        if fs.isdir(existing):
+            raise TypeError("tried copying %s over directory %s" % (existing, obj))
         existant = True
     except OSError:
         # verify the parent dir is there at least
@@ -144,7 +145,7 @@ def default_copyfile(obj, mkdirs=False):
         ret = spawn([COPY_BINARY, "-Rp", obj.location, fp])
         if ret != 0:
             raise Exception(
-                "failed cp'ing %s to %s, ret %s" % (obj.location, fp, ret))
+                "failed copying %s to %s, ret %s" % (obj.location, fp, ret))
     if not fs.issym(obj):
         ensure_perms(obj.change_attributes(location=fp))
 
@@ -187,12 +188,12 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
     mkdir = get_plugin("fs_ops.mkdir")
 
     if not isinstance(cset, contents.contentsSet):
-        raise TypeError("cset must be a contentsSet")
+        raise TypeError("cset must be a contentsSet, got %r" % (cset,))
 
     if offset is not None:
         if os.path.exists(offset):
             if not os.path.isdir(offset):
-                raise TypeError("offset must be a dir, or not exist")
+                raise TypeError("offset must be a dir, or not exist: %s" % offset)
         else:
             mkdir(fs.fsDir(offset, strict=False))
         iterate = partial(offset_rewriter, offset.rstrip(os.path.sep))

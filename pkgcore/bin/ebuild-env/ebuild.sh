@@ -513,6 +513,10 @@ init_environ() {
         die "EBUILD=${EBUILD}; problem is, it doesn't exist.  bye." >&2
     fi
 
+    # XXX: temp hack to make misc broken eclasses behave, java-utils-2 for example
+    # XXX: as soon as these eclasses behave, remove this.
+    export DESTTREE=/usr
+
     source "${EBUILD}"
     if [ "${EBUILD_PHASE}" != "depend" ]; then
         RESTRICT="${FINALIZED_RESTRICT}"

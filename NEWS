@@ -17,6 +17,13 @@ pkgcore 0.2.12:
 
 * default mode for ensure_dirs is now 0755.
 
+* Work around broken java-utils-2.eclass state handling in 
+  java-pkg_init_paths_; tries to access DESTTREE in setup phase, which
+  shouldn't be allowed- fix is temporarily shifting the DESTTREE definition
+  to pre-ebuild sourcing so that it behaves.
+
+  Will be removed as soon as the eclass behaves is fixed.
+
 
 pkgcore 0.2.11:
 

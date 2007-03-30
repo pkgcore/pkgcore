@@ -409,9 +409,7 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
     except KeyboardInterrupt:
         if options is not None and options.debug:
             raise
-        out.write()
     if out is not None:
-        out.write()
         if exitstatus:
             out.title('%s failed' % (prog,))
         else:

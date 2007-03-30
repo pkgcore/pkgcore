@@ -10,8 +10,8 @@ appropriate conditionals.
 # TODO: move exceptions elsewhere, bind them to a base exception for pkgcore
 
 from pkgcore.restrictions import packages, values, boolean
-from pkgcore.util.iterables import expandable_chain
-from pkgcore.util.lists import iflatten_instance
+from snakeoil.iterables import expandable_chain
+from snakeoil.lists import iflatten_instance
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.errors import ParseError
 

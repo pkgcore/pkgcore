@@ -12,7 +12,7 @@ __all__ = ("AndRestriction", "OrRestriction")
 
 from itertools import islice
 from pkgcore.restrictions import restriction
-from pkgcore.util.klass import generic_equality
+from snakeoil.klass import generic_equality
 
 class base(restriction.base):
 
@@ -374,14 +374,6 @@ class OrRestriction(base):
 
         if not self.restrictions:
             return []
-
-        def f(arg, *others):
-            if others:
-                for node2 in f(*others):
-                    yield arg + node2
-            else:
-                yield [arg]
-
 
         dcnf = []
         cnf = []

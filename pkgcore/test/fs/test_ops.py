@@ -1,12 +1,12 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+import os, shutil
 from pkgcore.fs import ops, fs, livefs, contents
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.test import TestCase
 from pkgcore.test.mixins import TempDirMixin
-from pkgcore.util.osutils import pjoin
-import os, shutil
+from snakeoil.osutils import pjoin
 
 
 class VerifyMixin(object):

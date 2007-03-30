@@ -19,10 +19,12 @@ import operator
 import os.path
 
 from pkgcore import plugins
-from pkgcore.util.osutils import join as pjoin
-from pkgcore.util import modules, demandload
+from snakeoil.osutils import join as pjoin
+from snakeoil import modules, demandload
 demandload.demandload(globals(), 'tempfile errno pkgcore.log:logger')
 
+
+CACHE_HEADER = 'pkgcore plugin cache v2\n'
 
 # Global plugin cache. Mapping of package to package cache, which is a
 # mapping of plugin key to a list of module names.
@@ -48,7 +50,7 @@ def initialize_cache(package):
         # Directory cache, mapping modulename to
         # (mtime, set([keys]))
         stored_cache = {}
-        stored_cache_name = pjoin(path, 'plugincache')
+        stored_cache_name = pjoin(path, 'plugincache2')
         try:
             cachefile = open(stored_cache_name)
         except IOError:
@@ -61,11 +63,22 @@ def initialize_cache(package):
             try:
                 # Remove this extra nesting once we require python 2.5
                 try:
+                    if cachefile.readline() != CACHE_HEADER:
+                        raise ValueError('bogus header')
                     for line in cachefile:
                         module, mtime, entries = line[:-1].split(':', 2)
                         mtime = int(mtime)
-                        entries = set(entries.split(':'))
-                        stored_cache[module] = (mtime, entries)
+                        result = set()
+                        # Needed because ''.split(':') == [''], not []
+                        if entries:
+                            for s in entries.split(':'):
+                                name, max_prio = s.split(',')
+                                if max_prio:
+                                    max_prio = int(max_prio)
+                                else:
+                                    max_prio = None
+                                result.add((name, max_prio))
+                        stored_cache[module] = (mtime, result)
                 except ValueError:
                     # Corrupt cache, treat as empty.
                     stored_cache = {}
@@ -108,8 +121,23 @@ def initialize_cache(package):
                     # try to continue.
                     logger.exception('plugin import failed')
                 else:
-                    keys = set(getattr(module, 'pkgcore_plugins', ()))
-                    actual_cache[modname] = (mtime, keys)
+                    values = set()
+                    registry = getattr(module, 'pkgcore_plugins', {})
+                    for key, plugs in registry.iteritems():
+                        max_prio = None
+                        for plug in plugs:
+                            priority = getattr(plug, 'priority', None)
+                            if priority is not None \
+                                    and not isinstance(priority, int):
+                                # This happens rather a lot with
+                                # plugins not meant for use with
+                                # get_plugin. Just ignore it.
+                                priority = None
+                            if priority is not None and (
+                                max_prio is None or priority > max_prio):
+                                max_prio = priority
+                        values.add((key, max_prio))
+                    actual_cache[modname] = (mtime, values)
         # Cache is also stale if it sees entries that are no longer there.
         for key in stored_cache:
             if key not in actual_cache and key not in assumed_valid:
@@ -131,10 +159,17 @@ def initialize_cache(package):
                              stored_cache_name, e)
             else:
                 cachefile = os.fdopen(fd, 'w')
+                cachefile.write(CACHE_HEADER)
                 try:
                     for module, (mtime, entries) in actual_cache.iteritems():
+                        strings = []
+                        for plugname, max_prio in entries:
+                            if max_prio is None:
+                                strings.append(plugname + ',')
+                            else:
+                                strings.append('%s,%s' % (plugname, max_prio))
                         cachefile.write(
-                            '%s:%s:%s\n' % (module, mtime, ':'.join(entries)))
+                            '%s:%s:%s\n' % (module, mtime, ':'.join(strings)))
                 finally:
                     cachefile.close()
                 os.chmod(name, 0644)
@@ -142,8 +177,8 @@ def initialize_cache(package):
         # Update the package_cache.
         for module, (mtime, entries) in actual_cache.iteritems():
             seen_modnames.add(module)
-            for key in entries:
-                package_cache.setdefault(key, []).append(module)
+            for key, max_prio in entries:
+                package_cache.setdefault(key, []).append((module, max_prio))
     return package_cache
 
 
@@ -155,7 +190,7 @@ def get_plugins(key, package=plugins):
     cache = _cache.get(package)
     if cache is None:
         cache = _cache[package] = initialize_cache(package)
-    for modname in cache.get(key, ()):
+    for modname, max_prio in cache.get(key, ()):
         module = modules.load_module('.'.join((package.__name__, modname)))
         for obj in module.pkgcore_plugins.get(key, ()):
             if not getattr(obj, 'disabled', False):
@@ -170,8 +205,20 @@ def get_plugin(key, package=plugins):
 
     @return: highest-priority plugin or None if no plugin available.
     """
-    candidates = list(plugin for plugin in get_plugins(key, package))
-    if not candidates:
-        return None
-    candidates.sort(key=operator.attrgetter('priority'))
-    return candidates[-1]
+    cache = _cache.get(package)
+    if cache is None:
+        cache = _cache[package] = initialize_cache(package)
+    modlist = cache.get(key, [])
+    modlist.sort(key=operator.itemgetter(1), reverse=True)
+    plugs = []
+    for i, (modname, max_prio) in enumerate(modlist):
+        module = modules.load_module('.'.join((package.__name__, modname)))
+        plugs.extend(
+            plug for plug in module.pkgcore_plugins.get(key, ())
+            if not getattr(plug, 'disabled', False))
+        if not plugs:
+            continue
+        plugs.sort(key=operator.attrgetter('priority'), reverse=True)
+        if i + 1 == len(modlist) or plugs[0].priority > modlist[i + 1][1]:
+            return plugs[0]
+    return None

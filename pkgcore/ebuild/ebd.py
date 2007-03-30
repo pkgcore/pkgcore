@@ -17,15 +17,15 @@ from pkgcore.ebuild.processor import \
     request_ebuild_processor, release_ebuild_processor, \
     expected_ebuild_env, chuck_UnhandledCommand
 from pkgcore.os_data import portage_gid, portage_uid
-from pkgcore.util.osutils import ensure_dirs, normpath, join as pjoin
 from pkgcore.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_fakeroot_capable)
-from pkgcore.util.currying import post_curry, pretty_docs
 from pkgcore.os_data import xargs
 from pkgcore.ebuild.const import eapi_capable
 from pkgcore.interfaces import observer
 
-from pkgcore.util.demandload import demandload
+from snakeoil.currying import post_curry, pretty_docs
+from snakeoil.osutils import ensure_dirs, normpath, join as pjoin
+from snakeoil.demandload import demandload
 demandload(globals(),
            "pkgcore.ebuild.ebuild_built:fake_package_factory,package "
            "pkgcore.log:logger "
@@ -34,26 +34,27 @@ demandload(globals(),
 
 def _reset_env_data_source(method):
     return method
-    def store_env_data_wrapper(self, *args, **kwds):
-        try:
-            return method(self, *args, **kwds)
-        finally:
-            # note that we're *not* return'ing anything ourselves.
-            # we want the original val to slide back
-            if self.env_data_source is None:
-                try:
-                    fp = self.env["PORT_ENV_FILE"]
-                    f = self.env_data.get_fileobj()
-                    f.seek(0, 0)
-                    f.truncate(0)
-                    f.write(open(fp, "r").read())
-                    del f, fp
-                except (IOError, OSError), oe:
-                    if oe.errno != errno.ENOENT:
-                        raise
+    # unreachable code. -masterdriverz
+    #def store_env_data_wrapper(self, *args, **kwds):
+    #    try:
+    #        return method(self, *args, **kwds)
+    #    finally:
+    #        # note that we're *not* return'ing anything ourselves.
+    #        # we want the original val to slide back
+    #        if self.env_data_source is None:
+    #            try:
+    #                fp = self.env["PORT_ENV_FILE"]
+    #                f = self.env_data.get_fileobj()
+    #                f.seek(0, 0)
+    #                f.truncate(0)
+    #                f.write(open(fp, "r").read())
+    #                del f, fp
+    #            except (IOError, OSError), oe:
+    #                if oe.errno != errno.ENOENT:
+    #                    raise
 
-    store_env_data_wrapper.__doc__ = method.__doc__
-    return store_env_data_wrapper
+    #store_env_data_wrapper.__doc__ = method.__doc__
+    #return store_env_data_wrapper
 
 
 class ebd(object):

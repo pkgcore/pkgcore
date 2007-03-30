@@ -13,26 +13,27 @@ import pkgcore.config.domain
 from pkgcore.config import ConfigHint
 from pkgcore.restrictions.delegated import delegate
 from pkgcore.restrictions import packages, values
-from pkgcore.util.file import iter_read_bash
-from pkgcore.ebuild.atom import (generate_collapsed_restriction)
+from pkgcore.ebuild.atom import generate_collapsed_restriction
 from pkgcore.repository import multiplex, visibility
-from pkgcore.util.lists import (stable_unique, unstable_unique)
-from pkgcore.util.compatibility import any
-from pkgcore.util.mappings import ProtectedDict
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.config.errors import BaseException
-from pkgcore.util.demandload import demandload
 from pkgcore.ebuild import const
 from pkgcore.ebuild.profiles import incremental_expansion
-from pkgcore.util.parserestrict import parse_match
-from pkgcore.util.currying import partial
 from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
     non_incremental_collapsed_restrict_to_data)
+from pkgcore.util.parserestrict import parse_match
 
+from snakeoil.lists import stable_unique, unstable_unique
+from snakeoil.compatibility import any
+from snakeoil.mappings import ProtectedDict
+from snakeoil.fileutils import iter_read_bash
+from snakeoil.currying import partial
+from snakeoil.demandload import demandload
 demandload(
     globals(),
     'errno '
-    'pkgcore.util:osutils '
+    'pkgcore.fs.livefs:iter_scan '
+    'pkgcore.fs.fs:fsFile '
     )
 
 class MissingFile(BaseException):
@@ -92,7 +93,7 @@ class domain(pkgcore.config.domain.domain):
 
     # TODO this is missing defaults
     pkgcore_config_type = ConfigHint(
-            _types, incrementals=const.incrementals, typename='domain',
+            _types, typename='domain',
             required=['repositories', 'profile', 'vdb', 'fetcher', 'name'],
             allow_unknowns=True)
 
@@ -143,17 +144,14 @@ class domain(pkgcore.config.domain.domain):
                     raise Failure("failed reading '%s': %s" % (fp, e))
             for dirpath in settings.pop('%s-dirs' % (key,), ()):
                 try:
-                    files = osutils.listdir_files(dirpath)
+                    for file in iter_scan(dirpath):
+                        if (not isinstance(file, fsFile) or
+                            any(True for thing in file.location.split('/')
+                                if thing.startswith('.'))):
+                            continue
+                        val.extend(action(x) for x in iter_read_bash(file.location))
                 except (OSError, IOError), e:
-                    raise Failure('failed listing %r: %s' % (dirpath, e))
-                for fp in files:
-                    if fp.startswith('.'):
-                        continue
-                    fp = osutils.join(dirpath, fp)
-                    try:
-                        val.extend(action(x) for x in iter_read_bash(fp))
-                    except (IOError, OSError, ValueError), e:
-                        raise Failure('failed reading %r: %r' % (fp, str(e)))
+                    raise Failure('failed reading %r: %s' % (dirpath, e))
 
         self.name = name
         settings.setdefault("PKGCORE_DOMAIN", name)
@@ -185,6 +183,8 @@ class domain(pkgcore.config.domain.domain):
         if "test" in settings.get("FEATURES", []):
             use.add("test")
 
+        self.use_expand = set(profile.use_expand)
+        self.use_expand_hidden = set(profile.use_expand_hidden)
         for u in profile.use_expand:
             v = settings.get(u)
             if v is None:
@@ -300,7 +300,7 @@ class domain(pkgcore.config.domain.domain):
 
         for l, repos, filtered in ((self.repos, repositories, True),
             (self.vdb, vdb, False)):
-            
+
             for repo in repos:
                 if not repo.configured:
                     pargs = [repo]
@@ -327,7 +327,7 @@ class domain(pkgcore.config.domain.domain):
                         vfilter, True)
                 self.filtered_named_repos[key] = wrapped_repo
                 l.append(wrapped_repo)
-                    
+
         if profile_repo is not None:
             self.repos = [profile_repo] + self.repos
 
@@ -379,7 +379,7 @@ class domain(pkgcore.config.domain.domain):
 
         if incremental:
             raise NotImplementedError(self.incremental_apply_keywords_filter)
-            f = self.incremental_apply_keywords_filter
+            #f = self.incremental_apply_keywords_filter
         else:
             f = self.apply_keywords_filter
         return delegate(partial(f, data))

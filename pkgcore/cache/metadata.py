@@ -8,11 +8,11 @@ cache backend designed for rsynced tree's pregenerated metadata.
 
 import os
 import errno
-from pkgcore.util.osutils import join as pjoin
 from pkgcore.cache import flat_hash, errors
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import eclass_cache
-from pkgcore.util.mappings import ProtectedDict
+from snakeoil.osutils import join as pjoin
+from snakeoil.mappings import ProtectedDict
 
 
 # store the current key order *here*.

@@ -4,15 +4,16 @@
 import operator
 from itertools import chain, islice
 from collections import deque
-from pkgcore.util.compatibility import any
-from pkgcore.util.iterables import caching_iter, iter_sort
-from pkgcore.util.containers import RefCountingSet
+
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.resolver.choice_point import choice_point
-from pkgcore.util.currying import partial, post_curry
 from pkgcore.restrictions import packages, values, restriction
 from pkgcore.repository.misc import caching_repo
 
+from snakeoil.currying import partial, post_curry
+from snakeoil.compatibility import any
+from snakeoil.iterables import caching_iter, iter_sort
+from snakeoil.containers import RefCountingSet
 
 limiters = set(["cycle"]) # [None])
 def dprint(fmt, args=None, label=None):
@@ -242,10 +243,10 @@ class merge_plan(object):
                     while index != -1:
                         looped = True
                         # see if it's a vdb node already; if it's a cycle between
-                        # the same vdb node, ignore it (ignore self-dependant 
+                        # the same vdb node, ignore it (ignore self-dependant
                         # depends level installed deps for the same node iow)
-                        if ((index < stack_end and index) and 
-                            (current_stack[index - 1].current_pkg == 
+                        if ((index < stack_end and index) and
+                            (current_stack[index - 1].current_pkg ==
                             cur_frame.current_pkg)
                             and cur_frame.current_pkg.repo.livefs):
                             # we're in a cycle of depends level vdb nodes;
@@ -255,7 +256,7 @@ class merge_plan(object):
                                 "for %s via %s, exempting" %
                                 (cur_frame.depth *2 * " ", cur_frame.atom,
                                 cur_frame.choices.current_pkg))
-                            ignore=True
+                            ignore = True
                             break
                         else:
                             # ok, so the first candidate wasn't vdb.
@@ -263,7 +264,7 @@ class merge_plan(object):
                             index = is_cycle(current_stack, datom,
                                 cur_frame.choices, None, start=index + 1)
                     else:
-                        # ok.  it exited on it's own.  meaning either no cycles,
+                        # ok.  it exited on its own.  meaning either no cycles,
                         # or no vdb exemptions where found.
                         if looped:
                             # non vdb level cycle.  vdb bound?
@@ -461,8 +462,8 @@ class merge_plan(object):
         """
         internal function to discern if an atom is viable, returning
         the matches iter if so
-        
-        @return: 3 possible; None (not viable), True (presolved), 
+
+        @return: 3 possible; None (not viable), True (presolved),
           L{caching_iter} (not solved, but viable)
         """
         if atom in self.insoluble:
@@ -634,7 +635,7 @@ class merge_plan(object):
                             c = choice_point(x, m)
                             add_op(c, c.current_pkg, force=True).apply(
                                 self.state)
-                            break;
+                            break
 
                 rewrote_blocker = self.generate_mangled_blocker(choices, x)
                 l = self.state.add_blocker(choices, rewrote_blocker, key=x.key)
@@ -750,7 +751,7 @@ class merge_plan(object):
     def prefer_livefs_dbs(cls, dbs, just_vdb=None):
         """
         @param dbs: db list to walk
-        @param just_vdb: if None, no filtering; if True, just vdb, if False, 
+        @param just_vdb: if None, no filtering; if True, just vdb, if False,
           non-vdb only
         @return: yields repositories in requested ordering
         """

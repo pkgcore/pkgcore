@@ -5,9 +5,9 @@ from pkgcore.test import TestCase
 from pkgcore.restrictions import packages, values
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
-from pkgcore.util.mappings import OrderedDict
 from pkgcore.repository.util import SimpleTree
 
+from snakeoil.mappings import OrderedDict
 
 class TestPrototype(TestCase):
 

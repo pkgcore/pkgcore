@@ -9,7 +9,7 @@ filtering repository
 # ~harring
 from pkgcore.repository import prototype, errors
 from pkgcore.restrictions.restriction import base
-from pkgcore.util.klass import GetAttrProxy
+from snakeoil.klass import GetAttrProxy
 
 class filterTree(prototype.tree):
 

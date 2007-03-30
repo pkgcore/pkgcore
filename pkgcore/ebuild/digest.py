@@ -6,11 +6,11 @@ ebuild tree manifest/digest support
 """
 from itertools import izip
 from pkgcore.chksum import errors, gpg
-from pkgcore.util.obj import make_SlottedDict_kls
-from pkgcore.util.demandload import demandload
+from snakeoil.obj import make_SlottedDict_kls
+from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore.util.lists:iflatten_instance "
-    "pkgcore:fetch ")
+    "pkgcore:fetch "
+    "snakeoil.lists:iflatten_instance ")
 
 def parse_digest(source, throw_errors=True):
     d = {}

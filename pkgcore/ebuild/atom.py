@@ -8,15 +8,15 @@
 gentoo ebuild atom, should be generalized into an agnostic base
 """
 
-from pkgcore.util.klass import generic_equality
 from pkgcore.restrictions import values, packages, boolean
-from pkgcore.util.compatibility import all
 from pkgcore.ebuild import cpv, errors
 from pkgcore.ebuild.atom_restricts import VersionMatch
-from pkgcore.util.demandload import demandload
+from snakeoil.compatibility import all
+from snakeoil.klass import generic_equality
+from snakeoil.demandload import demandload
 demandload(globals(),
     "pkgcore.restrictions.delegated:delegate "
-    "pkgcore.util.currying:partial "
+    "snakeoil.currying:partial "
 )
 
 # namespace compatibility...

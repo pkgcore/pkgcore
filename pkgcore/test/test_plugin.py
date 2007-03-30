@@ -1,16 +1,14 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-
-from pkgcore.test import TestCase, quiet_logger, protect_logging
-from pkgcore import plugin
-from pkgcore.util import lists
-
 import os
 import sys
 import shutil
 import tempfile
 import logging
+from pkgcore.test import TestCase, quiet_logger, protect_logging
+from pkgcore import plugin
+from snakeoil import lists
 
 
 class ModulesTest(TestCase):
@@ -43,11 +41,12 @@ class LowPlug(object):
     priority = 0
 
 low_plug = LowPlug()
+high_plug = HighPlug()
 
 pkgcore_plugins = {
     'plugtest': [
         DisabledPlug,
-        HighPlug(),
+        high_plug,
         low_plug,
     ]
 }
@@ -98,16 +97,17 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
     def _runit(self, method):
         plugin._cache = {}
         method()
-        mtime = os.path.getmtime(os.path.join(self.packdir, 'plugincache'))
+        mtime = os.path.getmtime(os.path.join(self.packdir, 'plugincache2'))
         method()
         plugin._cache = {}
         method()
         method()
         self.assertEqual(
-            mtime, os.path.getmtime(os.path.join(self.packdir, 'plugincache')))
+            mtime,
+            os.path.getmtime(os.path.join(self.packdir, 'plugincache2')))
         # We cannot write this since it contains an unimportable plugin.
         self.assertFalse(
-            os.path.exists(os.path.join(self.packdir2, 'plugincache')))
+            os.path.exists(os.path.join(self.packdir2, 'plugincache2')))
 
     def _test_plug(self):
         import mod_testplug
@@ -117,13 +117,15 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         self.assertEqual(
             'HighPlug',
             plugin.get_plugin('plugtest', mod_testplug).__class__.__name__)
-        lines = list(open(os.path.join(self.packdir, 'plugincache')))
-        self.assertEqual(2, len(lines))
+        lines = list(open(os.path.join(self.packdir, 'plugincache2')))
+        self.assertEqual(3, len(lines))
+        self.assertEqual(plugin.CACHE_HEADER, lines[0])
+        lines.pop(0)
         lines.sort()
         mtime = int(os.path.getmtime(os.path.join(self.packdir, 'plug2.py')))
         self.assertEqual('plug2:%s:\n' % (mtime,), lines[0])
         mtime = int(os.path.getmtime(os.path.join(self.packdir, 'plug.py')))
-        self.assertEqual('plug:%s:plugtest\n' % (mtime,), lines[1])
+        self.assertEqual('plug:%s:plugtest,7\n' % (mtime,), lines[1])
 
     def test_plug(self):
         self._runit(self._test_plug)
@@ -135,8 +137,9 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         # This one is not loaded if we are testing with a good cache.
         sys.modules.pop('mod_testplug.plug2', None)
         list(plugin.get_plugins('plugtest', mod_testplug))
-        self.assertIn('mod_testplug.plug', sys.modules)
-        self.assertNotIn('mod_testplug.plug2', sys.modules)
+        # Extra messages since getting all of sys.modules printed is annoying.
+        self.assertIn('mod_testplug.plug', sys.modules, 'plug not loaded')
+        self.assertNotIn('mod_testplug.plug2', sys.modules, 'plug2 loaded')
 
     def test_no_unneeded_import(self):
         self._runit(self._test_no_unneeded_import)
@@ -144,7 +147,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
     def test_cache_corruption(self):
         import mod_testplug
         list(plugin.get_plugins('spork', mod_testplug))
-        filename = os.path.join(self.packdir, 'plugincache')
+        filename = os.path.join(self.packdir, 'plugincache2')
         cachefile = open(filename, 'a')
         try:
             cachefile.write('corruption\n')
@@ -158,11 +161,11 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin._cache = {}
         self._test_plug()
         good_mtime = os.path.getmtime(
-            os.path.join(self.packdir, 'plugincache'))
+            os.path.join(self.packdir, 'plugincache2'))
         plugin._cache = {}
         self._test_plug()
         self.assertEqual(good_mtime, os.path.getmtime(
-                os.path.join(self.packdir, 'plugincache')))
+                os.path.join(self.packdir, 'plugincache2')))
         self.assertNotEqual(good_mtime, corrupt_mtime)
 
     @protect_logging(logging.root)
@@ -178,7 +181,7 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
         plugin._cache = {}
         self._test_plug()
 
-        filename = os.path.join(self.packdir, 'plugincache')
+        filename = os.path.join(self.packdir, 'plugincache2')
         st = os.stat(filename)
         mtime = st.st_mtime - 2
         os.utime(filename, (st.st_atime, mtime))
@@ -188,7 +191,8 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
 
         # Should never write a usable cache.
         self.assertNotEqual(
-            mtime, os.path.getmtime(os.path.join(self.packdir, 'plugincache')))
+            mtime,
+            os.path.getmtime(os.path.join(self.packdir, 'plugincache2')))
 
     def test_rewrite_on_remove(self):
         filename = os.path.join(self.packdir, 'extra.py')
@@ -205,5 +209,100 @@ pkgcore_plugins = {'plugtest': [HiddenPlug]}
 
         os.unlink(filename)
 
+        plugin._cache = {}
+        self._test_plug()
+
+    def test_priority_caching(self):
+        plug3 = open(os.path.join(self.packdir, 'plug3.py'), 'w')
+        try:
+            plug3.write('''
+class LowPlug(object):
+    priority = 6
+
+pkgcore_plugins = {
+    'plugtest': [LowPlug()],
+}
+''')
+        finally:
+            plug3.close()
+        plug4 = open(os.path.join(self.packdir, 'plug4.py'), 'w')
+        try:
+            plug4.write('''
+# First file tried, only a disabled plugin.
+class HighDisabledPlug(object):
+    priority = 15
+    disabled = True
+
+pkgcore_plugins = {
+    'plugtest': [HighDisabledPlug()],
+}
+''')
+        finally:
+            plug4.close()
+        plug5 = open(os.path.join(self.packdir, 'plug5.py'), 'w')
+        try:
+            plug5.write('''
+# Second file tried, with a skipped low priority plugin.
+class HighDisabledPlug(object):
+    priority = 12
+    disabled = True
+
+class LowPlug(object):
+    priority = 6
+
+pkgcore_plugins = {
+    'plugtest': [HighDisabledPlug(), LowPlug()],
+}
+''')
+        finally:
+            plug5.close()
+        plug6 = open(os.path.join(self.packdir, 'plug6.py'), 'w')
+        try:
+            plug6.write('''
+# Not tried, bogus priority.
+class BogusPlug(object):
+    priority = 'spoon'
+
+pkgcore_plugins = {
+    'plugtest': [BogusPlug()],
+}
+''')
+        finally:
+            plug6.close()
+        self._runit(self._test_priority_caching)
+
+    def _test_priority_caching(self):
+        import mod_testplug
+        list(plugin.get_plugins('spork', mod_testplug))
+        sys.modules.pop('mod_testplug.plug', None)
+        sys.modules.pop('mod_testplug.plug2', None)
+        sys.modules.pop('mod_testplug.plug3', None)
+        sys.modules.pop('mod_testplug.plug4', None)
+        sys.modules.pop('mod_testplug.plug5', None)
+        sys.modules.pop('mod_testplug.plug6', None)
+        best_plug = plugin.get_plugin('plugtest', mod_testplug)
+        from mod_testplug import plug
+        self.assertEqual(plug.high_plug, best_plug)
+        # Extra messages since getting all of sys.modules printed is annoying.
+        self.assertIn('mod_testplug.plug', sys.modules, 'plug not loaded')
+        self.assertNotIn('mod_testplug.plug2', sys.modules, 'plug2 loaded')
+        self.assertNotIn('mod_testplug.plug3', sys.modules, 'plug3 loaded')
+        self.assertIn('mod_testplug.plug4', sys.modules, 'plug4 not loaded')
+        self.assertIn('mod_testplug.plug5', sys.modules, 'plug4 not loaded')
+        self.assertNotIn('mod_testplug.plug6', sys.modules, 'plug6 loaded')
+
+    def test_header_change_invalidates_cache(self):
+        # Write the cache
+        plugin._cache = {}
+        import mod_testplug
+        list(plugin.get_plugins('testplug', mod_testplug))
+
+        # Modify the cache.
+        filename = os.path.join(self.packdir, 'plugincache2')
+        cache = list(open(filename))
+        cache[0] = 'not really a pkgcore plugin cache\n'
+        open(filename, 'w').write(''.join(cache))
+
+        # And test if it is properly rewritten.
         plugin._cache = {}
         self._test_plug()

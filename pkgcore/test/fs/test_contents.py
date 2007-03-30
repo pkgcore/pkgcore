@@ -1,12 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.test import TestCase
-
-from pkgcore.fs import fs, contents
-from pkgcore.util.currying import post_curry
-
 import os
+from pkgcore.test import TestCase
+from pkgcore.fs import fs, contents
+from snakeoil.currying import post_curry
 
 
 class TestContentsSet(TestCase):

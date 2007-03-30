@@ -2,11 +2,13 @@
 # License: GPL2
 
 from pkgcore.config import ConfigHint, configurable
-from pkgcore.util import demandload, descriptors
-demandload.demandload(globals(), "pkgcore:spawn "
-    "os pwd stat "
+from snakeoil import demandload, descriptors
+demandload.demandload(globals(),
+    "os pwd stat errno "
+    "pkgcore:spawn "
     "pkgcore:plugin "
-    "pkgcore:os_data ")
+    "pkgcore:os_data "
+)
 
 
 class syncer(object):
@@ -120,7 +122,7 @@ class dvcs_syncer(ExternalSyncer):
         try:
             st = os.stat(self.basedir)
         except (IOError, OSError), ie:
-            if errno.ENOENT != ie.errno:
+            if ie.errno != errno.ENOENT:
                 raise base.generic_exception(self, self.basedir, ie)
             command = self._initial_pull()
             chdir = None

@@ -5,9 +5,10 @@
 repository modifications (installing, removing, replacing)
 """
 
-from pkgcore.util.dependant_methods import ForcedDepends
-from pkgcore.merge.engine import MergeEngine, errors as merge_errors
-from pkgcore.util.demandload import demandload
+from pkgcore.merge import errors as merge_errors
+from pkgcore.merge.engine import MergeEngine
+from snakeoil.dependant_methods import ForcedDepends
+from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger ")
 
 

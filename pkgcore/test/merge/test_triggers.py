@@ -1,18 +1,20 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.merge import triggers, const
-from pkgcore.fs import fs
-from pkgcore.fs.contents import contentsSet
-from pkgcore.fs.livefs import gen_obj, scan
-from pkgcore.util.currying import partial, post_curry
-from pkgcore.util.osutils import pjoin, ensure_dirs, normpath
-from pkgcore import spawn
-from pkgcore.test import TestCase, SkipTest, mixins
 import os, shutil, time
 from math import floor, ceil
 from operator import attrgetter
 from itertools import izip
+
+from pkgcore.fs import fs
+from pkgcore import spawn
+from pkgcore.merge import triggers, const
+from pkgcore.fs.contents import contentsSet
+from pkgcore.fs.livefs import gen_obj, scan
+from pkgcore.test import TestCase, SkipTest, mixins
+
+from snakeoil.currying import partial, post_curry
+from snakeoil.osutils import pjoin, ensure_dirs, normpath
 
 class fake_trigger(triggers.base):
 
@@ -54,7 +56,7 @@ class fake_reporter(object):
 class TestBase(TestCase):
 
     kls = fake_trigger
-    
+
     def mk_trigger(self, kls=None, **kwargs):
         if kls is None:
             kls = self.kls
@@ -101,7 +103,7 @@ class TestBase(TestCase):
         self.assertRaises(TypeError, self.mk_trigger(mode=1, _hooks=2).register,
             engine)
         self.assertFalse(engine._triggers)
-        
+
         # shouldn't puke.
         o = self.mk_trigger(mode=1, _hooks=("2"))
         o.register(engine)
@@ -112,13 +114,13 @@ class TestBase(TestCase):
         o = self.mk_trigger(mode=1, _hooks=("2"), required_csets=())
         o.register(engine)
         self.assertEqual(engine._triggers, [('2', o, ())])
-        
+
         # should handle keyerror thrown from the engine for missing hooks.
         engine = fake_engine(mode=1, blocked_hooks=("foon", "dar"))
         self.mk_trigger(mode=1, _hooks="foon").register(engine)
         self.mk_trigger(mode=1, _hooks=("foon", "dar")).register(engine)
         self.assertFalse(engine._triggers)
-        
+
         o = self.mk_trigger(mode=1, _hooks=("foon", "bar"), required_csets=(3,))
         o.register(engine)
         self.assertEqual(engine._triggers, [('bar', o, (3,))])
@@ -177,7 +179,7 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
         o.sort()
         t.set_state([x.location for x in o])
         self.assertEqual(sorted(t.saved_mtimes), o)
-        
+
         # test syms.
         src = pjoin(self.dir, 'dir2')
         os.mkdir(src)
@@ -216,7 +218,7 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
         t.set_state(locs)
         self.assertEqual(sorted(t.saved_mtimes), o)
         self.assertFalse(t.check_state())
-    
+
     def test_float_mtime(self):
         cur = os.stat_float_times()
         try:
@@ -262,7 +264,7 @@ def castrate_trigger(base_kls, **kwargs):
         def __init__(self, *args2, **kwargs2):
             self._passed_in_args = []
             base_kls.__init__(self, *args2, **kwargs2)
-    
+
         def regen(self, *args):
             self._passed_in_args.append(list(args))
             if self.enable_regen:
@@ -275,7 +277,7 @@ def castrate_trigger(base_kls, **kwargs):
 
 
 class trigger_mixin(mixins.TempDirMixin):
-    
+
     def setUp(self):
         mixins.TempDirMixin.setUp(self)
         self.reset_objects()
@@ -306,7 +308,7 @@ class Test_ldconfig(trigger_mixin, TestCase):
         self.assertEqual(o.mode, 0755)
         self.assertTrue(fs.isdir(o))
         self.assertTrue(os.path.exists(pjoin(self.dir, 'etc/ld.so.conf')))
-        
+
         # test normal functioning.
         open(pjoin(self.dir, 'etc/ld.so.conf'), 'w').write("\n".join(
             ["/foon", "dar", "blarnsball", "#comment"]))
@@ -315,7 +317,7 @@ class Test_ldconfig(trigger_mixin, TestCase):
 
     def assertTrigger(self, touches, ran, dirs=['test-lib', 'test-lib2'],
         hook='merge', mode=const.INSTALL_MODE, mkdirs=True, same_mtime=False):
-        
+
         # wipe whats there.
         for x in scan(self.dir).iterdirs():
             if x.location == self.dir:
@@ -415,7 +417,7 @@ END-INFO-DIR-ENTRY
         self.assertEqual(list(o.regen(path, self.dir)), [])
         self.assertTrue(os.path.exists(pjoin(self.dir, 'dir')),
             msg="info dir file wasn't created")
-        
+
         # drop the last line, verify it returns that file.
         open(pjoin(self.dir, "foo2.info"), 'w').write(
             '\n'.join(self.info_data.splitlines()[:-1]))
@@ -438,7 +440,7 @@ END-INFO-DIR-ENTRY
         self.assertEqual(map(normpath, (x[1] for x in self.trigger._passed_in_args)), 
             map(normpath, expected_regen))
         return l
-        
+
     def test_trigger(self):
         cur = os.environ.get("PATH", self)
         try:
@@ -476,7 +478,7 @@ END-INFO-DIR-ENTRY
         self.assertFalse(self.run_trigger('pre_merge', []))
         open(pjoin(self.dir, "blaidd drwg.info"), "w").write(self.info_data)
         self.assertFalse(self.run_trigger('post_merge', [self.dir]))
-        
+
         # verify it passes back failures.
         self.reset_objects()
         self.trigger.enable_regen = True
@@ -536,7 +538,7 @@ class single_attr_change_base(object):
                     # abuse self as unique singleton.
                     self.assertEqual(getattr(x, attr, self),
                         getattr(y, attr, self))
-        
+
     def test_trigger(self):
         self.assertContents()
         self.assertContents([fs.fsFile("/foon", mode=0644, uid=2, gid=1,
@@ -557,10 +559,10 @@ class single_attr_change_base(object):
 
 
 class Test_fix_uid_perms(single_attr_change_base, TestCase):
-    
+
     kls = triggers.fix_uid_perms
     attr = 'uid'
-    
+
 
 class Test_fix_gid_perms(single_attr_change_base, TestCase):
 
@@ -598,7 +600,7 @@ class Test_detect_world_writable(single_attr_change_base, TestCase):
         self.assertEqual(self._trigger_override, None,
             msg="bug in test code; good_val should not be invoked when a "
                 "trigger override is in place.")
-        return val & ~0002            
+        return val & ~0002
 
     def test_lazyness(self):
         # ensure it doesn't even look if it won't make noise, and no reporter
@@ -614,40 +616,40 @@ class Test_detect_world_writable(single_attr_change_base, TestCase):
     def test_observer_warn(self):
         warnings = []
         engine = fake_engine(observer=fake_reporter(warn=warnings.append))
-        
+
         self._trigger_override = self.kls()
-        
+
         def run(fs_objs, fix_perms=False):
             self.kls(fix_perms=fix_perms).trigger(engine, 
                 contentsSet(fs_objs))
-        
+
         run([fs.fsFile('/foon', mode=0770, strict=False)])
         self.assertFalse(warnings)
         run([fs.fsFile('/foon', mode=0772, strict=False)])
         self.assertEqual(len(warnings), 1)
         self.assertIn('/foon', warnings[0])
-        
+
         warnings[:] = []
-        
+
         run([fs.fsFile('/dar', mode=0776, strict=False),
             fs.fsFile('/bar', mode=0776, strict=False),
             fs.fsFile('/far', mode=0770, strict=False)])
-        
+
         self.assertEqual(len(warnings), 2)
         self.assertIn('/dar', ' '.join(warnings))
         self.assertIn('/bar', ' '.join(warnings))
         self.assertNotIn('/far', ' '.join(warnings))
-        
+
 
 class TestPruneFiles(TestCase):
-    
+
     kls = triggers.PruneFiles
-    
+
     def test_metadata(self):
         self.assertEqual(self.kls.required_csets, ('new_cset',))
         self.assertEqual(self.kls._hooks, ('pre_merge',))
         self.assertEqual(self.kls._engine_types, triggers.INSTALLING_MODES)
-    
+
     def test_it(self):
         orig = contentsSet([
             fs.fsFile('/cheddar', strict=False),
@@ -655,7 +657,7 @@ class TestPruneFiles(TestCase):
             fs.fsDir('/foons-rule', strict=False),
             fs.fsDir('/mango', strict=False)
         ])
-        
+
         engine = fake_engine(mode=const.INSTALL_MODE)
         def run(func):
             new = contentsSet(orig)
@@ -671,7 +673,7 @@ class TestPruneFiles(TestCase):
         info = []
         engine = fake_engine(observer=fake_reporter(info=info.append),
             mode=const.REPLACE_MODE)
-        
+
         run(lambda s:False)
         self.assertFalse(info)
         run(post_curry(isinstance, fs.fsDir))
@@ -682,4 +684,3 @@ class TestPruneFiles(TestCase):
         self.assertNotIn('/sporks-suck', ' '.join(info))
         self.assertIn('/foons-rule', ' '.join(info))
         self.assertIn('/mango', ' '.join(info))
-        

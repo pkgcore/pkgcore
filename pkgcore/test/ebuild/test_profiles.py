@@ -2,13 +2,15 @@
 # License: GPL2
 
 import os, shutil
+
 from pkgcore.test import TestCase
 from pkgcore.test.mixins import TempDirMixin
 from pkgcore.ebuild import profiles
-from pkgcore.util.osutils import pjoin, ensure_dirs
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.restrictions import packages
+
+from snakeoil.osutils import pjoin, ensure_dirs
 
 class ProfileNode(profiles.ProfileNode):
     # re-inherited to disable inst-caching
@@ -93,7 +95,7 @@ class TestProfileNode(profile_mixin, TestCase):
 
     def test_masks(self):
         path = pjoin(self.dir, self.profile)
-        self.assertEqual(ProfileNode(path).masks, empty);
+        self.assertEqual(ProfileNode(path).masks, empty)
         self.parsing_checks("package.mask", "masks")
         self.write_file("package.mask", "dev-util/diffball")
         self.assertEqual(ProfileNode(path).masks, ((),

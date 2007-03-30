@@ -87,7 +87,6 @@ class ConfigTypeFromFunctionTest(TestCase):
         self.assertEqual(
             nonopt_type.types,
             {'one': 'str', 'two': 'str'})
-        self.assertEqual(nonopt_type.incrementals, [])
         self.assertEqual(nonopt_type.required, ('one', 'two'))
         self.assertEqual(nonopt_type.positional, ('one', 'two'))
 
@@ -164,16 +163,26 @@ class ConfigHintCloneTest(TestCase):
     def test_clone(self):
         c = ConfigHint(types={'foo':'list', 'one':'str'},
             positional=['one'], required=['one'],
-            incrementals=['foo'], typename='barn', doc='orig doc')
+            typename='barn', doc='orig doc')
         c2 = c.clone(types={'foo':'list', 'one':'str', 'two':'str'},
             required=['one', 'two'])
         self.assertEqual(c2.types, {'foo':'list', 'one':'str', 'two':'str'})
         self.assertEqual(c2.positional, c.positional)
         self.assertEqual(c2.required, ['one', 'two'])
-        self.assertEqual(c2.incrementals, c.incrementals)
         self.assertEqual(c2.typename, c.typename)
         self.assertEqual(c2.allow_unknowns, c.allow_unknowns)
         self.assertEqual(c2.doc, c.doc)
+
+
+class SectionRefTest(TestCase):
+
+    # Silly testcase just to make something drop off the --coverage radar.
+
+    def test_collapse(self):
+        ref = basics.LazySectionRef(None, 'ref:foon')
+        self.assertRaises(NotImplementedError, ref._collapse)
+        self.assertRaises(NotImplementedError, ref.collapse)
+        self.assertRaises(NotImplementedError, ref.instantiate)
 
 
 class ConfigSectionTest(TestCase):
@@ -186,58 +195,152 @@ class ConfigSectionTest(TestCase):
             NotImplementedError, section.get_value, None, 'a', 'str')
 
 
-class ConfigSectionFromStringDictTest(TestCase):
+class DictConfigSectionTest(TestCase):
 
-    def setUp(self):
-        self.source = {
+    def test_misc(self):
+        def convert(central, value, arg_type):
+            return central, value, arg_type
+        section = basics.DictConfigSection(convert, {'list': [1, 2]})
+        self.failIf('foo' in section)
+        self.failUnless('list' in section)
+        self.assertEqual(['list'], section.keys())
+        self.assertEqual(
+            (None, [1, 2], 'spoon'), section.get_value(None, 'list', 'spoon'))
+
+    def test_failure(self):
+        def fail(central, value, arg_type):
+            raise errors.ConfigurationError('fail')
+        section = basics.DictConfigSection(fail, {'list': [1, 2]})
+        self.assertRaises(
+            errors.ConfigurationError,
+            section.get_value, None, 'list', 'spoon')
+
+
+class FakeIncrementalDictConfigSectionTest(TestCase):
+
+    @staticmethod
+    def _convert(central, value, arg_type):
+        return central, value, arg_type
+
+    @staticmethod
+    def _fail(central, value, arg_type):
+        raise errors.ConfigurationError('fail')
+
+    def test_misc(self):
+        section = basics.FakeIncrementalDictConfigSection(
+            self._convert, {'list': [1, 2]})
+        self.failIf('foo' in section)
+        self.failUnless('list' in section)
+        self.assertEqual(['list'], section.keys())
+        self.assertRaises(
+            errors.ConfigurationError,
+            basics.FakeIncrementalDictConfigSection(
+                self._fail, {'a': 'b'}).get_value,
+            None, 'a', 'str')
+
+    def test_fake_incrementals(self):
+        section = basics.FakeIncrementalDictConfigSection(
+            self._convert, {'seq.append': [1, 2]})
+        manager = object()
+        self.assertEqual(
+            [None, None, (manager, [1, 2], 'list')],
+            section.get_value(manager, 'seq', 'list'))
+        def _repr(central, value, arg_type):
+            return 'list', ['thing']
+        section = basics.FakeIncrementalDictConfigSection(
+            _repr, {'foo': None})
+        self.assertEqual(
+            ('list', (None, ['thing'], None)),
+            section.get_value(manager, 'foo', 'repr'))
+        self.assertRaises(
+            errors.ConfigurationError,
+            basics.FakeIncrementalDictConfigSection(
+                self._fail, {'a.prepend': 'b'}).get_value,
+            None, 'a', 'list')
+
+    def test_repr(self):
+        def asis(central, value, arg_type):
+            assert arg_type == 'repr', arg_type
+            return value
+        section = basics.FakeIncrementalDictConfigSection(
+            asis, {'seq.append': ('list', [1, 2]),
+                   'simple': ('bool', True),
+                   'multistr': ('str', 'body'),
+                   'multistr.prepend': ('str', 'head'),
+                   'refs': ('str', 'lost'),
+                   'refs.append': ('ref', 'main'),
+                   'refs.prepend': ('refs', ['a', 'b']),
+                   'strlist': ('callable', asis),
+                   'strlist.prepend': ('str', 'whatever'),
+                   'wrong.prepend': ('wrong', 'wrong'),
+                   })
+        manager = object()
+        self.assertRaises(
+            KeyError, section.get_value, manager, 'spoon', 'repr')
+        self.assertEqual(
+            ('list', [None, None, [1, 2]]),
+            section.get_value(manager, 'seq', 'repr'))
+        self.assertEqual(
+            ('bool', True), section.get_value(manager, 'simple', 'repr'))
+        self.assertEqual(
+            ('str', ['head', 'body', None]),
+            section.get_value(manager, 'multistr', 'repr'))
+        self.assertEqual(
+            ('refs', [['a', 'b'], ['lost'], ['main']]),
+            section.get_value(manager, 'refs', 'repr'))
+        self.assertEqual(
+            ('list', [
+                    ['whatever'],
+                    ['pkgcore.test.config.test_basics.asis'],
+                    None]),
+            section.get_value(manager, 'strlist', 'repr'))
+        self.assertRaises(
+            errors.ConfigurationError,
+            section.get_value, manager, 'wrong', 'repr')
+
+
+class ConvertStringTest(TestCase):
+
+    def test_get_value(self):
+        source = {
             'str': 'pkgcore.test',
             'bool': 'yes',
             'list': '0 1 2',
             'callable': 'pkgcore.test.config.test_basics.passthrough',
             }
-        self.destination = {
+        destination = {
             'str': 'pkgcore.test',
             'bool': True,
             'list': ['0', '1', '2'],
             'callable': passthrough,
             }
-        self.section = basics.ConfigSectionFromStringDict(self.source)
 
-    def test_contains(self):
-        self.failIf('foo' in self.section)
-        self.failUnless('list' in self.section)
-
-    def test_keys(self):
-        self.assertEqual(
-            sorted(self.section.keys()), ['bool', 'callable', 'list', 'str'])
-
-    def test_get_value(self):
         # valid gets
-        for typename, value in self.destination.iteritems():
+        for typename, value in destination.iteritems():
             self.assertEqual(
-                value, self.section.get_value(None, typename, typename))
+                value,
+                basics.convert_string(None, source[typename], typename))
 
         # reprs
-        for typename, value in self.source.iteritems():
+        for typename, value in source.iteritems():
             self.assertEqual(
-                ('str', value), self.section.get_value(None, typename, 'repr'))
+                ('str', value),
+                basics.convert_string(None, source[typename], 'repr'))
         # invalid gets
         # not callable
         self.assertRaises(
             errors.ConfigurationError,
-            self.section.get_value, None, 'str', 'callable')
+            basics.convert_string, None, source['str'], 'callable')
         # not importable
         self.assertRaises(
             errors.ConfigurationError,
-            self.section.get_value, None, 'bool', 'callable')
+            basics.convert_string, None, source['bool'], 'callable')
         # Bogus type.
         self.assertRaises(
             errors.ConfigurationError,
-            self.section.get_value, None, 'bool', 'frob')
+            basics.convert_string, None, source['bool'], 'frob')
 
     def test_section_ref(self):
-        section = basics.ConfigSectionFromStringDict(
-            {'goodref': 'target', 'badref': 'missing'})
         def spoon():
             """Noop."""
         target_config = central.CollapsedConfig(
@@ -249,17 +352,15 @@ class ConfigSectionFromStringDictTest(TestCase):
                 except KeyError:
                     raise errors.ConfigurationError(section)
         self.assertEqual(
-            section.get_value(
-                TestCentral(), 'goodref', 'ref:spoon').collapse(),
+            basics.convert_string(
+                TestCentral(), 'target', 'ref:spoon').collapse(),
             target_config)
         self.assertRaises(
             errors.ConfigurationError,
-            section.get_value(
-                TestCentral(), 'badref', 'ref:spoon').instantiate)
+            basics.convert_string(
+                TestCentral(), 'missing', 'ref:spoon').instantiate)
 
     def test_section_refs(self):
-        section = basics.ConfigSectionFromStringDict(
-            {'goodrefs': '1 2', 'badrefs': '2 3'})
         def spoon():
             """Noop."""
         config1 = central.CollapsedConfig(
@@ -273,32 +374,22 @@ class ConfigSectionFromStringDictTest(TestCase):
                 except KeyError:
                     raise errors.ConfigurationError(section)
         self.assertEqual(
-            list(ref.collapse() for ref in section.get_value(
-                    TestCentral(), 'goodrefs', 'refs:spoon')),
+            list(ref.collapse() for ref in basics.convert_string(
+                    TestCentral(), '1 2', 'refs:spoon')),
             [config1, config2])
-        lazy_refs = section.get_value(TestCentral(), 'badrefs', 'refs:spoon')
+        lazy_refs = basics.convert_string(TestCentral(), '2 3', 'refs:spoon')
         self.assertEqual(2, len(lazy_refs))
         self.assertRaises(errors.ConfigurationError, lazy_refs[1].collapse)
 
 
-class HardCodedConfigSectionTest(TestCase):
+class ConvertAsIsTest(TestCase):
 
-    def setUp(self):
-        self.source = {
-            'str': 'pkgcore.test',
-            'bool': True,
-            'list': ['0', '1', '2'],
-            'callable': passthrough,
-            }
-        self.section = basics.HardCodedConfigSection(self.source)
-
-    def test_contains(self):
-        self.failIf('foo' in self.section)
-        self.failUnless('str' in self.section)
-
-    def test_keys(self):
-        self.assertEqual(
-            sorted(self.section.keys()), ['bool', 'callable', 'list', 'str'])
+    source = {
+        'str': 'pkgcore.test',
+        'bool': True,
+        'list': ['0', '1', '2'],
+        'callable': passthrough,
+        }
 
     def test_get_value(self):
         # try all combinations
@@ -306,44 +397,39 @@ class HardCodedConfigSectionTest(TestCase):
             for typename in self.source:
                 if arg == typename:
                     self.assertEqual(
-                        value, self.section.get_value(None, arg, typename))
+                        value, basics.convert_asis(None, value, typename))
                 else:
                     self.assertRaises(
                         errors.ConfigurationError,
-                        self.section.get_value, None, arg, typename)
+                        basics.convert_asis, None, value, typename)
 
     def test_repr(self):
         for typename, value in self.source.iteritems():
             self.assertEqual(
                 (typename, value),
-                self.section.get_value(None, typename, 'repr'))
-        section = basics.HardCodedConfigSection({'bork': object()})
+                basics.convert_asis(None, value, 'repr'))
         self.assertRaises(
             errors.ConfigurationError,
-            section.get_value, None, 'bork', 'repr')
+            basics.convert_asis, None, object(), 'repr')
 
     def test_section_ref(self):
         ref = basics.HardCodedConfigSection({})
-        section = basics.HardCodedConfigSection({'ref': 42, 'ref2': ref})
         self.assertRaises(errors.ConfigurationError,
-            section.get_value, None, 'ref', 'ref:spoon')
+            basics.convert_asis, None, 42, 'ref:spoon')
         self.assertIdentical(
-            ref,
-            section.get_value(None, 'ref2', 'ref:spoon').section)
+            ref, basics.convert_asis(None, ref, 'ref:spoon').section)
         self.assertEqual(
-            ('ref', ref), section.get_value(None, 'ref2', 'repr'))
+            ('ref', ref), basics.convert_asis(None, ref, 'repr'))
 
     def test_section_refs(self):
         ref = basics.HardCodedConfigSection({})
-        section = basics.HardCodedConfigSection({'refs': [1, 2],
-                                                 'refs2': [ref]})
         self.assertRaises(errors.ConfigurationError,
-            section.get_value, None, 'refs', 'refs:spoon')
+            basics.convert_asis, None, [1, 2], 'refs:spoon')
         self.assertIdentical(
             ref,
-            section.get_value(None, 'refs2', 'refs:spoon')[0].section)
+            basics.convert_asis(None, [ref], 'refs:spoon')[0].section)
         self.assertEqual(
-            ('refs', [ref]), section.get_value(None, 'refs2', 'repr'))
+            ('refs', [ref]), basics.convert_asis(None, [ref], 'repr'))
 
 
 class AliasTest(TestCase):

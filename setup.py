@@ -195,7 +195,7 @@ class pkgcore_build_ext(build_ext.build_ext):
         if self.debug:
             # say it with me kids... distutils sucks!
             for x in ("compiler_so", "compiler", "compiler_cxx"):
-                setattr(self.compiler, x, 
+                setattr(self.compiler, x,
                     [y for y in getattr(self.compiler, x) if y != '-DNDEBUG'])
         return build_ext.build_ext.build_extensions(self)
 
@@ -297,17 +297,6 @@ packages = [
     if '__init__.py' in files]
 
 extra_flags = ['-Wall']
-common_includes = ['src/py24-compatibility.h',
-                   'src/heapdef.h',
-                   'src/common.h',
-                   ]
-
-extensions = []
-if sys.version_info < (2, 5):
-    # Almost unmodified copy from the python 2.5 source.
-    extensions.append(core.Extension(
-            'pkgcore.util._functools', ['src/functoolsmodule.c'],
-            extra_compile_args=extra_flags, depends=common_includes))
 
 from pkgcore.const import VERSION
 core.setup(
@@ -324,37 +313,22 @@ core.setup(
         },
     ext_modules=[
         core.Extension(
-            'pkgcore.util.osutils._posix', ['src/posix.c'],
-            extra_compile_args=extra_flags, depends=common_includes),
-        core.Extension(
-            'pkgcore.util._klass', ['src/klass.c'],
-            extra_compile_args=extra_flags, depends=common_includes),
-        core.Extension(
-            'pkgcore.util._caching', ['src/caching.c'],
-            extra_compile_args=extra_flags, depends=common_includes),
-        core.Extension(
-            'pkgcore.util._lists', ['src/lists.c'],
-            extra_compile_args=extra_flags, depends=common_includes),
-        core.Extension(
             'pkgcore.ebuild._cpv', ['src/cpv.c'],
-            extra_compile_args=extra_flags, depends=common_includes),
+            extra_compile_args=extra_flags),
         core.Extension(
             'pkgcore.ebuild._depset', ['src/depset.c'],
-            extra_compile_args=extra_flags, depends=common_includes),
+            extra_compile_args=extra_flags),
         core.Extension(
             'pkgcore.ebuild._atom', ['src/atom.c'],
-            extra_compile_args=extra_flags, depends=common_includes),
+            extra_compile_args=extra_flags),
         core.Extension(
             'pkgcore.restrictions._restrictions', ['src/restrictions.c'],
-            extra_compile_args=extra_flags, depends=common_includes),
+            extra_compile_args=extra_flags),
         core.Extension(
             'pkgcore.ebuild._filter_env', [
                 'src/filter_env.c', 'src/bmh_search.c'],
-            extra_compile_args=extra_flags, depends=common_includes),
-        core.Extension(
-            'pkgcore.util.osutils._readdir', ['src/readdir.c'],
-            extra_compile_args=extra_flags, depends=common_includes),
-        ] + extensions,
+            extra_compile_args=extra_flags),
+        ],
     cmdclass={
         'sdist': mysdist,
         'build_py': pkgcore_build_py,

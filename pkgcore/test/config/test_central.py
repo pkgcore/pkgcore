@@ -138,22 +138,6 @@ class ConfigManagerTest(TestCase):
 
         self.assertEqual('available', manager.repo['actual repo'])
 
-    def test_incremental(self):
-        @configurable({'inc': 'list'}, required=['inc'], incrementals=['inc'])
-        def myrepo(*args, **kwargs):
-            return args, kwargs
-        manager = central.ConfigManager(
-            [{'baserepo': basics.HardCodedConfigSection({'inc': ['basic']}),
-              'actual repo': basics.HardCodedConfigSection({
-                            'class': myrepo,
-                            'inherit': ['baserepo'],
-                            'inc': ['extended']
-                            }),
-              }], [object()])
-        self.assertEqual(
-            ((), {'inc': ['basic', 'extended']}),
-            manager.myrepo['actual repo'])
-
     def test_no_object_returned(self):
         def noop():
             """Do not do anything."""
@@ -397,23 +381,10 @@ class ConfigManagerTest(TestCase):
               'foon': basics.ConfigSectionFromStringDict({
                             'class': 'pkgcore.test.config.test_central.drawer',
                             'inherit': 'spork'}),
-              'self': basics.ConfigSectionFromStringDict({
-                            'class': 'pkgcore.test.config.test_central.drawer',
-                            'inherit': 'self'}),
               }], [object()])
         self.check_error(
-            "Collapsing section named 'self':\n"
-            "Inherit 'self' is recursive",
-            operator.getitem, manager.drawer, 'self')
-        # There is a small wart here: because collapse_section does
-        # not know the name of the section it is collapsing the
-        # recursive inherit of spork by foon suceeds. The re-inherit
-        # of foon after that does not. As far as I can tell the only
-        # effect of this is the error message is slightly inaccurate
-        # (should be "inherit 'spork' is recursive").
-        self.check_error(
             "Collapsing section named 'spork':\n"
-            "Inherit 'foon' is recursive",
+            "Inherit 'spork' is recursive",
             operator.getitem, manager.drawer, 'spork')
 
     def test_alias(self):
@@ -672,3 +643,84 @@ class ConfigManagerTest(TestCase):
             manager.collapse_named_section, 'source',
             klass=errors.CollapseInheritOnly)
         self.assertTrue(manager.collapse_named_section('target'))
+
+    def test_self_inherit(self):
+        section = basics.HardCodedConfigSection({'inherit': ['self']})
+        manager = central.ConfigManager([{
+                    'self': basics.ConfigSectionFromStringDict({
+                            'class': 'pkgcore.test.config.test_central.drawer',
+                            'inherit': 'self'}),
+                    }], [RemoteSource()])
+        self.check_error(
+            "Collapsing section named 'self':\n"
+            "Self-inherit 'self' cannot be found",
+            operator.getitem, manager.drawer, 'self')
+        self.check_error(
+            "Self-inherit 'self' cannot be found",
+            manager.collapse_section, section)
+
+        manager = central.ConfigManager([{
+                    'self': basics.HardCodedConfigSection({
+                            'inherit': ['self'],
+                            })}, {
+                    'self': basics.HardCodedConfigSection({
+                            'inherit': ['self'],
+                            })}, {
+                    'self': basics.HardCodedConfigSection({
+                            'class': drawer})}], [object()])
+        self.assertTrue(manager.collapse_named_section('self'))
+        self.assertTrue(manager.collapse_section(section))
+
+    def test_prepend_inherit(self):
+        manager = central.ConfigManager([{
+                    'sect': basics.HardCodedConfigSection({
+                            'inherit.prepend': ['self']})}], [object()])
+        self.check_error(
+            "Collapsing section named 'sect':\n"
+            'Prepending or appending to the inherit list makes no sense',
+            manager.collapse_named_section, 'sect')
+
+    def test_list_prepend(self):
+        @configurable({'seq': 'list'})
+        def seq(seq):
+            return seq
+        manager = central.ConfigManager([{
+                    'inh': basics.HardCodedConfigSection({
+                            'inherit': ['sect'],
+                            'seq.prepend': ['pre'],
+                            }),
+                    'sect': basics.HardCodedConfigSection({
+                            'inherit': ['base'],
+                            'seq': ['1', '2'],
+                            })}, {
+                    'base': basics.HardCodedConfigSection({
+                            'class': seq,
+                            'seq.prepend': ['-1'],
+                            'seq.append': ['post'],
+                            })}], [object()])
+        self.assertEqual(['-1', 'post'], manager.seq['base'])
+        self.assertEqual(['1', '2'], manager.seq['sect'])
+        self.assertEqual(['pre', '1', '2'], manager.seq['inh'])
+
+    def test_str_prepend(self):
+        @configurable({'string': 'str'})
+        def sect(string):
+            return string
+        manager = central.ConfigManager([{
+                    'inh': basics.HardCodedConfigSection({
+                            'inherit': ['sect'],
+                            'string.prepend': 'pre',
+                            }),
+                    'sect': basics.HardCodedConfigSection({
+                            'inherit': ['base'],
+                            'string': 'b',
+                            })}, {
+                    'base':
+                        basics.HardCodedConfigSection({
+                            'class': sect,
+                            'string.prepend': 'a',
+                            'string.append': 'c',
+                            })}], [object()])
+        self.assertEqual('a c', manager.sect['base'])
+        self.assertEqual('b', manager.sect['sect'])
+        self.assertEqual('pre b', manager.sect['inh'])

@@ -2,19 +2,18 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
+import exceptions
 
+from pkgcore import log
 from pkgcore.test import (TestCase, protect_logging, TestRestriction,
     mallable_obj, quiet_logger)
 from pkgcore.restrictions import packages, values
-from pkgcore.util.currying import partial, post_curry
-from pkgcore import log
-import exceptions
 
 class callback_logger(log.logging.Handler):
     def __init__(self, callback):
         log.logging.Handler.__init__(self)
         self.callback = callback
-    
+
     def emit(self, record):
         self.callback(record)
 
@@ -79,22 +78,21 @@ class native_PackageRestrictionTest(TestRestriction):
         class foo:
             def __getattr__(self, attr):
                 if attr.startswith("exc"):
-                    import exceptions
                     raise getattr(exceptions, attr[4:])()
                 raise AttributeError("monkey lover")
 
         for mode in ("match", "force_True", "force_False"):
             excepts[:] = []
-            self.assertRaises(AttributeError, 
+            self.assertRaises(AttributeError,
                 getattr(self.kls("foon", AlwaysSelfIntersect), mode),
                 foo())
             self.assertEqual(len(excepts), 1,
                 msg="expected one exception, got %r" % excepts)
-        
+
             # ensure various exceptions are passed through
             for k in (KeyboardInterrupt, RuntimeError, SystemExit):
                 self.assertRaises(k,
-                    getattr(self.kls("exc_%s" % k.__name__, 
+                    getattr(self.kls("exc_%s" % k.__name__,
                         AlwaysSelfIntersect), mode),
                     foo())
 

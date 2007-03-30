@@ -3,16 +3,18 @@
 
 import errno, os
 from itertools import chain
+
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const
-from pkgcore.util.osutils import abspath, join as pjoin, readlines
 from pkgcore.ebuild import ebuild_src
-from pkgcore.util.containers import InvertedContains
-from pkgcore.util.file import iter_read_bash, read_bash_dict
-from pkgcore.util.caching import WeakInstMeta
 from pkgcore.repository import virtual
-from pkgcore.util.currying import partial
-from pkgcore.util.demandload import demandload
+
+from snakeoil.osutils import abspath, join as pjoin, readlines
+from snakeoil.containers import InvertedContains
+from snakeoil.fileutils import iter_read_bash, read_bash_dict
+from snakeoil.caching import WeakInstMeta
+from snakeoil.currying import partial
+from snakeoil.demandload import demandload
 
 demandload(globals(), "pkgcore.interfaces.data_source:local_source "
     "pkgcore.ebuild:cpv "
@@ -391,6 +393,18 @@ class OnDiskProfile(object):
         if "USE_EXPAND" in self.incrementals:
             return tuple(self.default_env["USE_EXPAND"])
         return tuple(self.default_env["USE_EXPAND"].split())
+
+    @property
+    def use_expand_hidden(self):
+        if "USE_EXPAND_HIDDEN" in self.incrementals:
+            return tuple(self.default_env["USE_EXPAND_HIDDEN"])
+        return tuple(self.default_env["USE_EXPAND_HIDDEN"].split())
+
+    @property
+    def use_expand_hidden(self):
+        if "USE_EXPAND_HIDDEN" in self.incrementals:
+            return tuple(self.default_env["USE_EXPAND_HIDDEN"])
+        return tuple(self.default_env["USE_EXPAND_HIDDEN"].split())
 
     def _collapse_virtuals(self):
         d = {}

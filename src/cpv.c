@@ -12,7 +12,7 @@
 
 #define PY_SSIZE_T_CLEAN
 
-#include "common.h"
+#include <snakeoil/common.h>
 #include <structmember.h>
 #include <string.h>
 
@@ -92,7 +92,7 @@ pkgcore_cpv_get_cpvstr(pkgcore_cpv *self, void *closure)
 
 
 static PyGetSetDef pkgcore_cpv_getsetters[] = {
-PKGCORE_GETSET(pkgcore_cpv, "cpvstr", cpvstr),
+snakeoil_GETSET(pkgcore_cpv, "cpvstr", cpvstr),
     {NULL}
 };
 

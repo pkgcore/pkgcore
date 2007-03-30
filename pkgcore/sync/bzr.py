@@ -11,8 +11,8 @@ class bzr_syncer(base.dvcs_syncer):
         ('bzr+', 5),
         )
 
-    @classmethod
-    def parse_uri(staticmethod, raw_uri):
+    @staticmethod
+    def parse_uri(raw_uri):
         if not raw_uri.startswith("bzr+"):
             raise base.uri_exception(raw_uri, "doesn't start with bzr+")
         return raw_uri[4:]

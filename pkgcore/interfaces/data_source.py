@@ -6,9 +6,9 @@ data source.
 
 Think of it as a far more minimal form of file protocol
 """
-from pkgcore.util.currying import pre_curry
 
 import StringIO
+from snakeoil.currying import pre_curry
 
 def generic_immutable_method(attr, self, *a, **kwds):
     raise AttributeError("%s doesn't have %s" % (self.__class__, attr))

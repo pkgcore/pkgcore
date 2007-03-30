@@ -7,9 +7,8 @@ ini based configuration format
 
 from ConfigParser import ConfigParser
 
-from pkgcore.util import mappings
 from pkgcore.config import basics
-
+from snakeoil import mappings
 
 class CaseSensitiveConfigParser(ConfigParser):
     def optionxform(self, val):
@@ -21,7 +20,7 @@ def config_from_file(file_obj):
     generate a config dict
 
     @param file_obj: file protocol instance
-    @return: L{pkgcore.util.mappings.LazyValDict} instance
+    @return: L{snakeoil.mappings.LazyValDict} instance
     """
     cparser = CaseSensitiveConfigParser()
     cparser.readfp(file_obj)

@@ -20,14 +20,20 @@ import os.path
 import logging
 
 from pkgcore.config import load_config, errors
-from pkgcore.util import formatters, demandload
+from snakeoil import formatters, demandload
 
 demandload.demandload(
     globals(),
     'pkgcore:version '
+    'pkgcore.config:basics '
     'pkgcore.restrictions:packages '
     'pkgcore.util:parserestrict '
     )
+
+
+CONFIG_LOADED_MSG = (
+    'Configuration already loaded. If moving the option earlier '
+    'on the commandline does not fix this report it as a bug.')
 
 
 class FormattingHandler(logging.Handler):
@@ -74,9 +80,34 @@ class Values(optparse.Values, object):
      >>> parser.parse_args(args, vals)
     """
 
+    def __init__(self, defaults=None):
+        optparse.Values.__init__(self, defaults)
+        self.new_config = {}
+        self.add_config = {}
+
     def load_config(self):
         """Override this if you need a different way of loading config."""
-        return load_config(debug=self.debug)
+        # This makes mixing --new-config and --add-config sort of
+        # work. Not sure if that is a good thing, but detecting and
+        # erroring is about as much work as making it mostly work :)
+        new_config = dict(
+            (name, basics.ConfigSectionFromStringDict(val))
+            for name, val in self.new_config.iteritems())
+        add_config = {}
+        for name, config in self.add_config.iteritems():
+            inherit = config.pop('inherit', None)
+            # XXX this will likely not be quite correctly quoted.
+            if inherit is None:
+                config['inherit'] = repr(name)
+            else:
+                config['inherit'] = '%s %r' % (inherit, name)
+            add_config[name] = basics.ConfigSectionFromStringDict(config)
+        # Triggers failures if these get mucked with after this point
+        # (instead of silently ignoring).
+        self.add_config = self.new_config = None
+        return load_config(
+            debug=self.debug, prepend_sources=(add_config, new_config),
+            skip_config_files=self.empty_config)
 
     @property
     def config(self):
@@ -149,6 +180,33 @@ def debug_callback(option, opt_str, value, parser):
         collapsed.debug = True
 
 
+def new_config_callback(option, opt_str, value, parser):
+    """Add a configsection to our values object.
+
+    Munges three arguments: section name, key name, value.
+
+    dest defines an attr name on the values object to store in.
+    """
+    if getattr(parser.values, '_config', None) is not None:
+        raise optparse.OptionValueError(CONFIG_LOADED_MSG)
+    section_name, key, val = value
+    section = getattr(parser.values, option.dest).setdefault(section_name, {})
+    if key in section:
+        raise optparse.OptionValueError(
+            '%r is already set (to %r)' % (key, section[key]))
+    section[key] = val
+
+
+def empty_config_callback(option, opt_str, value, parser):
+    """Remember not to load the user/system configuration.
+
+    Error out if we have already loaded it.
+    """
+    if getattr(parser.values, '_config', None) is not None:
+        raise optparse.OptionValueError(CONFIG_LOADED_MSG)
+    parser.values.empty_config = True
+
+
 class Option(optparse.Option):
 
     def __init__(self, *args, **kwargs):
@@ -175,8 +233,21 @@ class OptionParser(optparse.OptionParser):
             'to set this as first argument for debugging certain '
             'configuration problems.'),
         Option('--nocolor', action='store_true',
-                        help='disable color in the output.'),
+            help='disable color in the output.'),
         Option('--version', action='version'),
+        Option(
+            '--add-config', action='callback', callback=new_config_callback,
+            type='str', nargs=3, help='Add a new configuration section. '
+            'Takes three arguments: section name, value name, value.'),
+        Option(
+            '--new-config', action='callback', callback=new_config_callback,
+            type='str', nargs=3, help='Expand a configuration section. '
+            'Just like --add-config but with an implied inherit=sectionname.'),
+        Option(
+            '--empty-config', action='callback',
+            callback=empty_config_callback,
+            help='Do not load the user or system configuration. Can be useful '
+            'combined with --new-config.')
         ]
 
     def __init__(self, *args, **kwargs):
@@ -185,6 +256,7 @@ class OptionParser(optparse.OptionParser):
         optparse.OptionParser.__init__(self, *args, **kwargs)
         # It is a callback so it cannot set a default value the "normal" way.
         self.set_default('debug', False)
+        self.set_default('empty_config', False)
 
     def get_version(self):
         """Add pkgcore's version to the version information."""
@@ -242,7 +314,7 @@ class OptionParser(optparse.OptionParser):
                 l.append(parserestrict.parse_match(x))
         except parserestrict.ParseError, e:
             self.error("arg %r isn't a valid atom: %s" % (x, e))
-        return l or default
+        return l or [default]
 
 
 class MySystemExit(SystemExit):
@@ -264,7 +336,7 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
         The keys are a subcommand name or None for other/unknown/no subcommand.
         The values are tuples of OptionParser subclasses and functions called
         as main_func(config, out, err) with a L{Values} instance, two
-        L{pkgcore.util.formatters.Formatter} instances for output (stdout)
+        L{snakeoil.formatters.Formatter} instances for output (stdout)
         and errors (stderr). It should return an integer used as
         exit status or None as synonym for 0.
     @type  args: sequence of strings
@@ -337,7 +409,9 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
     except KeyboardInterrupt:
         if options is not None and options.debug:
             raise
+        out.write()
     if out is not None:
+        out.write()
         if exitstatus:
             out.title('%s failed' % (prog,))
         else:

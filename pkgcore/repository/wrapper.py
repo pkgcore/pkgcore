@@ -8,7 +8,7 @@ simple repository wrapping to override the package instances returned
 # icky.
 # ~harring
 from pkgcore.repository import prototype, errors
-from pkgcore.util.klass import GetAttrProxy
+from snakeoil.klass import GetAttrProxy
 
 class tree(prototype.tree):
 

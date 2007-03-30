@@ -16,6 +16,9 @@ from pkgcore.config import basics, central, configurable, errors
 
 # Careful: the tests should not hit a load_config() call!
 
+def sect():
+    """Just a no-op to use as configurable class."""
+
 
 class OptionsTest(TestCase):
 
@@ -34,9 +37,6 @@ class OptionsTest(TestCase):
             # We check for an unintended change, not ideal behaviour.
             self.assertFalse(section.debug)
             confdict['sect'] = section
-
-        def sect():
-            """Just a no-op to use as configurable class."""
 
         parser = commandline.OptionParser(option_list=[
                 optparse.Option('-a', action='callback', callback=callback)])
@@ -95,6 +95,74 @@ class OptionsTest(TestCase):
                 str(e))
         else:
             self.fail('no exception raised')
+
+
+class ModifyParser(commandline.OptionParser):
+
+    def _trigger(self, option, opt_str, value, parser):
+        """Fake a config load."""
+        # HACK: force skipping the actual config loading. Might want
+        # to do something more complicated here to allow testing if
+        # --empty-config actually works.
+        parser.values.empty_config = True
+        parser.values.config
+
+    def __init__(self):
+        commandline.OptionParser.__init__(self)
+        self.add_option('--trigger', action='callback', callback=self._trigger)
+
+
+class ModifyConfigTest(TestCase, helpers.MainMixin):
+
+    parser = helpers.mangle_parser(ModifyParser())
+
+    def parse(self, *args, **kwargs):
+        """Overridden to allow the load_config call."""
+        values = self.parser.get_default_values()
+        # optparse needs a list (it does make a copy, but it uses [:]
+        # to do it, which is a noop on a tuple).
+        options, args = self.parser.parse_args(list(args), values)
+        self.assertFalse(args)
+        return options
+
+    def test_empty_config(self):
+        self.assertError(
+            'Configuration already loaded. If moving the option earlier on '
+            'the commandline does not fix this report it as a bug.',
+            '--trigger', '--empty-config')
+        self.assertTrue(self.parse('--empty-config', '--trigger'))
+
+    def test_modify_config(self):
+        self.assertError(
+            'Configuration already loaded. If moving the option earlier on '
+            'the commandline does not fix this report it as a bug.',
+            '--empty-config', '--trigger',
+            '--new-config','foo', 'class', 'sect')
+        values = self.parse(
+            '--empty-config', '--new-config',
+            'foo', 'class', 'pkgcore.test.util.test_commandline.sect',
+            '--trigger')
+        self.assertTrue(values.config.collapse_named_section('foo'))
+        values = self.parse(
+            '--empty-config', '--new-config',
+            'foo', 'class', 'pkgcore.test.util.test_commandline.missing',
+            '--add-config', 'foo', 'class',
+            'pkgcore.test.util.test_commandline.sect',
+            '--trigger')
+        self.assertTrue(values.config.collapse_named_section('foo'))
+        self.assertError(
+            "'class' is already set (to 'first')",
+            '--empty-config',
+            '--new-config', 'foo', 'class', 'first',
+            '--new-config', 'foo', 'class', 'foon',
+            '--trigger')
+        values = self.parse(
+            '--empty-config',
+            '--add-config', 'foo', 'inherit', 'missing',
+            '--trigger')
+        self.assertRaises(
+            errors.ConfigurationError,
+            values.config.collapse_named_section, 'foo')
 
 
 def main(options, out, err):
@@ -160,7 +228,7 @@ Use --help after a subcommand for more help.
             self.assertEqual(options.progname, 'fo sub')
 
         self.assertMain(
-            None, '', '',
+            None, '\n', '',
             {'sub': (SubParser, submain)}, ['sub', 'subarg'], script_name='fo')
 
     def test_configuration_error(self):
@@ -173,7 +241,7 @@ Use --help after a subcommand for more help.
                 values._config = central.ConfigManager()
                 return values
         self.assertMain(
-            1, '', 'Error in configuration:\nbork\n',
+            1, '\n', 'Error in configuration:\nbork\n',
             {None: (NoLoadParser, error_main)}, [])
         self.assertRaises(
             errors.ConfigurationError, self.assertMain,

@@ -8,8 +8,9 @@
 from pkgcore.ebuild.errors import InvalidCPV
 
 from pkgcore.package import base
+from snakeoil.klass import generic_equality
 # do this to break the cycle.
-from pkgcore.util.demandload import demandload, demand_compile
+from snakeoil.demandload import demandload, demand_compile
 demandload(globals(), "pkgcore.ebuild:atom")
 
 suffix_regexp = demand_compile("^(alpha|beta|rc|pre|p)(\\d*)$")
@@ -109,6 +110,7 @@ class native_CPV(object):
                               other.revision)
         except AttributeError:
             return 1
+
 
 def native_ver_cmp(ver1, rev1, ver2, rev2):
 

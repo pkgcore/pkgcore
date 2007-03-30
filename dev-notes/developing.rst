@@ -36,7 +36,7 @@ find the pkgcore code. For example::
 
 Now test to see if it works::
 
- $ python -c'import pkgcore'
+ $ python -c 'import pkgcore'
 
 Python will scan pkgcore, see the pkgcore directory in it (and that it has
 __init__.py), and use that.

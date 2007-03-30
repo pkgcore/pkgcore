@@ -6,22 +6,24 @@ binpkg ebuild repository
 """
 
 import os, stat
-from pkgcore.util.osutils import join as pjoin
-from pkgcore.repository import prototype, errors
 
-#needed to grab the PN
-from pkgcore.ebuild.cpv import CPV as cpv
-from pkgcore.util.currying import partial
+from pkgcore.repository import prototype, errors
 from pkgcore.merge import triggers
 from pkgcore.plugin import get_plugin
-from pkgcore.util.mappings import DictMixin
-from pkgcore.util.osutils import listdir_dirs, listdir_files
 from pkgcore.binpkg.xpak import Xpak
 from pkgcore.fs.tar import generate_contents
-from pkgcore.util.bzip2 import decompress
 from pkgcore.ebuild.ebuild_built import pkg_uses_default_preinst
 from pkgcore.config import ConfigHint
-from pkgcore.util.demandload import demandload
+#needed to grab the PN
+from pkgcore.ebuild.cpv import CPV as cpv
+
+from snakeoil.currying import partial
+from snakeoil.mappings import DictMixin
+from snakeoil.osutils import listdir_dirs, listdir_files
+from pkgcore.util.bzip2 import decompress
+from snakeoil.osutils import join as pjoin
+
+from snakeoil.demandload import demandload
 demandload(globals(),
            "pkgcore.merge:engine "
            "pkgcore.fs.livefs:scan "

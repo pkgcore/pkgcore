@@ -3,17 +3,19 @@
 # License: GPL2
 
 from StringIO import StringIO
-from pkgcore.util.formatters import PlainTextFormatter
+
 from pkgcore.interfaces.repo import (nonlivefs_install,
     nonlivefs_uninstall, nonlivefs_replace)
 from pkgcore.test import TestCase
 from pkgcore.scripts import pmaint
 from pkgcore.test.scripts import helpers
-from pkgcore.config import basics, ConfigHint
+from pkgcore.config import basics, ConfigHint, configurable
 from pkgcore.repository import util, syncable
 from pkgcore.sync import base
 from pkgcore.ebuild.cpv import CPV
-from pkgcore.util.currying import partial
+
+from snakeoil.formatters import PlainTextFormatter
+from snakeoil.currying import partial
 
 
 class Options(dict):
@@ -134,7 +136,7 @@ class fake_repo(util.SimpleTree):
 def make_repo_config(repo_data, livefs=False, frozen=False):
     def repo():
         return fake_repo(repo_data, livefs=livefs, frozen=frozen)
-    repo.pkgcore_config_type=ConfigHint(typename='repo')
+    repo.pkgcore_config_type = ConfigHint(typename='repo')
     return basics.HardCodedConfigSection({'class':repo})
 
 
@@ -237,7 +239,35 @@ class CopyTest(TestCase, helpers.MainMixin):
         ret, config, out = self.execute_main(
             '--target-repo', 'trg', '--source-repo', 'src',
             '--copy-missing',
-            src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
-            trg=make_repo_config({'sys-apps':{'portage':['2.1']}})
+                src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
+                trg=make_repo_config({'sys-apps':{'portage':['2.1']}})
             )
         self.assertEqual(config.candidates[0].cpvstr, "sys-apps/portage-2.3")
+
+
+class TestRegen(TestCase, helpers.MainMixin):
+
+    parser = helpers.mangle_parser(pmaint.RegenParser())
+    main = staticmethod(pmaint.regen_main)
+
+    def test_parser(self):
+
+        class TestSimpleTree(util.SimpleTree):
+            pass
+
+        @configurable(typename='repo')
+        def fake_repo():
+            return TestSimpleTree({})
+
+
+        self.assertError('Need a repository name.')
+        self.assertError('I do not know what to do with more than 2 arguments',
+                         '1', '2', '3')
+        self.assertError('thread count needs to be at least 1', '1', '0')
+        self.assertError("repo 'spork' was not found! known repos: ", 'spork')
+        options = self.parse(
+            'spork', '2', spork=basics.HardCodedConfigSection(
+                {'class': fake_repo}))
+        self.assertEqual(
+            [options.repo.__class__, options.thread_count],
+            [TestSimpleTree, 2])

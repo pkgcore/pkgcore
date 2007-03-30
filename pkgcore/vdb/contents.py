@@ -3,13 +3,14 @@
 
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs import fs
-from pkgcore.util.file import AtomicWriteFile
 from pkgcore.interfaces import data_source
-from pkgcore.util.compatibility import any
-from pkgcore.util.demandload import demandload
+
+from snakeoil.fileutils import AtomicWriteFile
+from snakeoil.compatibility import any
+from snakeoil.demandload import demandload
 demandload(globals(), "os stat errno "
-    "pkgcore.util.osutils:readlines "
-    "pkgcore.chksum:get_handler ")
+    "pkgcore.chksum:get_handler "
+    "snakeoil.osutils:readlines ")
 
 class LookupFsDev(fs.fsDev):
 
@@ -140,7 +141,7 @@ class ContentsFile(contentsSet):
             for obj in sorted(self):
 
                 if isinstance(obj, fs.fsFile):
-                    s = " ".join(("obj", obj.location, 
+                    s = " ".join(("obj", obj.location,
                         md5_handler.long2str(obj.chksums["md5"]),
                         str(long(obj.mtime))))
 

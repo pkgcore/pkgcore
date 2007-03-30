@@ -3,13 +3,13 @@
 
 import os
 
-from pkgcore.fetch import base, fetchable, errors
 from pkgcore import chksum
+from pkgcore.fetch import base, fetchable, errors
 from pkgcore.interfaces import data_source
-from pkgcore.util.currying import partial
-
 from pkgcore.test.mixins import TempDirMixin
 from pkgcore.test import TestCase
+
+from snakeoil.currying import partial
 
 repeating_str = 'asdf'
 data = repeating_str * 4000

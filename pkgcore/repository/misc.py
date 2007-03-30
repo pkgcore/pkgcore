@@ -3,8 +3,8 @@
 
 from pkgcore.restrictions import packages
 from pkgcore.package.mutated import MutatedPkg
-from pkgcore.util.iterables import caching_iter
-from pkgcore.util.klass import GetAttrProxy
+from snakeoil.iterables import caching_iter
+from snakeoil.klass import GetAttrProxy
 
 __all__ = ("nodeps_repo", "caching_repo")
 
@@ -26,7 +26,7 @@ class nodeps_repo(object):
         self.raw_repo = repo
 
     def itermatch(self, *a, **kwds):
-        return (MutatedPkg(x, 
+        return (MutatedPkg(x,
             overrides={"depends":self.default_depends,
                 "rdepends":self.default_rdepends,
                 "post_rdepends":self.default_post_rdepends})

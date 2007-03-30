@@ -3,7 +3,7 @@
  * Modified by Marien Zwart <marienz@gentoo.org>
  */
 
-#include "Python.h"
+#include <Python.h>
 
 #include <sys/stat.h>
 

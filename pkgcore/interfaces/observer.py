@@ -1,7 +1,7 @@
 # Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.util.currying import pre_curry
+from snakeoil.currying import pre_curry
 
 class base(object):
 
@@ -25,10 +25,12 @@ class file_phase_observer(phase_observer):
         self._semiquiet = semiquiet
 
     def phase_start(self, phase):
-        self._out.write("starting %s\n" % phase)
+        if not self._semiquiet:
+            self._out.write("starting %s\n" % phase)
 
     def info(self, msg):
-        self._out.write("info: %s\n" % msg)
+        if not self._semiquiet:
+            self._out.write("info: %s\n" % msg)
 
     def warn(self, msg):
         self._out.write("warning: %s\n" % msg)
@@ -70,7 +72,8 @@ class file_repo_observer(file_phase_observer, repo_base):
         self._semiquiet = semiquiet
 
     def trigger_start(self, hook, trigger):
-        self._out.write("hook %s: trigger: starting %r\n" % (hook, trigger))
+        if not self._semiquiet:
+            self._out.write("hook %s: trigger: starting %r\n" % (hook, trigger))
 
     def trigger_end(self, hook, trigger):
         if not self._semiquiet:

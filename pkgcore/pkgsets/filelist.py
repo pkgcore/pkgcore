@@ -5,14 +5,14 @@
 pkgset based around loading a list of atoms from a world file
 """
 
-from pkgcore.ebuild.atom import atom
-from pkgcore.util.demandload import demandload
 import pkgcore.const
-demandload(globals(),
-    "pkgcore.util.file:AtomicWriteFile "
-    "pkgcore.util.osutils:readlines ")
-
+from pkgcore.ebuild.atom import atom
 from pkgcore.config import ConfigHint
+
+from snakeoil.demandload import demandload
+demandload(globals(),
+    "snakeoil.fileutils:AtomicWriteFile "
+    "snakeoil.osutils:readlines ")
 
 class FileList(object):
     pkgcore_config_type = ConfigHint({'location':'str'}, typename='pkgset')

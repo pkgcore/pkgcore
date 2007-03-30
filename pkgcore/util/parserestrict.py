@@ -7,10 +7,10 @@
 @var parse_funcs: dict of the functions that are available.
 """
 
-from pkgcore.util.containers import InvertedContains
 from pkgcore.restrictions import packages, values, util
 from pkgcore.package import errors
 from pkgcore.ebuild import atom, cpv, errors
+from snakeoil.containers import InvertedContains
 
 
 class ParseError(ValueError):

@@ -5,7 +5,7 @@
 
 from pkgcore.test import TestRestriction
 from pkgcore.restrictions import restriction
-from pkgcore.util.currying import partial
+from snakeoil.currying import partial
 
 
 class SillyBool(restriction.base):
@@ -40,7 +40,7 @@ class BaseTest(TestRestriction):
         self.assertMatch(true, args)
         self.assertForceTrue(true, args)
         self.assertNotForceFalse(true, args)
-        
+
         self.assertNotMatch(false, args)
         self.assertNotForceTrue(false, args)
         self.assertForceFalse(false, args)
@@ -56,7 +56,7 @@ class AlwaysBoolTest(TestRestriction):
         self.assertMatch(true, false)
         self.assertForceTrue(true, false)
         self.assertNotForceFalse(true, false)
-        
+
         self.assertNotMatch(false, true)
         self.assertNotForceTrue(false, true)
         self.assertForceFalse(false, true)

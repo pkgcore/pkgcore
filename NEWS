@@ -328,14 +328,14 @@ pkgcore 0.2:
 * massive resolver cleanup, and general fixes.
 
 * rewritten plugins system, register_plugins is no longer used.
-  
+
 * paludis flat_list cache read/write support.
 
 * portage flat_list cache write support (cache used for
   $PORTDIR/metadata/sync)
-  
+
 * pebuild/pregen/pclone_cache: heavy UI cleanup.
- 
+
 * pquery:
   * prettier printing of depends/rdepends/post_rdepends under -v
   * print revdep reasons
@@ -345,7 +345,7 @@ pkgcore 0.2:
     regex by default for --maintainer style options.
 
 * added repo_id atom extension; see doc/extended-atom-syntax.rst for details.
-  short version, sys-apps/portage::gentoo would match portage *only* from 
+  short version, sys-apps/portage::gentoo would match portage *only* from
   ``gentoo`` repository.
 
 * overlays now combine mirror targets from their parent repository, and
@@ -357,14 +357,14 @@ pkgcore 0.2:
     repositories for example).
 
   * mke2fs (literal /etc/mke2fs.conf file) akin configuration format was
-    added, pkgcore.config.mke2fsformat.config_from_file .
+    added, pkgcore.config.mke2fsformat.config_from_file.
 
 * expanded test coverage.
-  
+
 * merged standalone test runner into setup.py; prefered way of running it is
   ``python setup.py test`` now.
 
-* ongoing portage configuration support additions- 
+* ongoing portage configuration support additions-
   * FEATURES=collision-protect support
   * INSTALL_MASK support, FEATURES noinfo, nodoc, and noman support.
   * /etc/portage/package.* files can be directories holding seperate files
@@ -375,7 +375,7 @@ pkgcore 0.2:
 * performance improvements:
   * cpython extensions of select os.path.* functionality; 20x boost for what
     was converted over (stdlib's posix module is a bit inefficient).
-  
+
   * cpython extension for file io in pkgcore.util.osutils: 7x faster on ENOENT
     cases, 4x-5x on actual reading of small files (think cache files).  If
     iterating over lines of a file, use pkgcore.util.osutils.readlines- again,
@@ -384,7 +384,7 @@ pkgcore 0.2:
 
   * partial cpython reimplementation of atom code; mainly parsing, and
     critical __getattr__ invocation (2+x faster parse).
-  
+
   * partial cpython reimplementation of depset code; strictly just parsing.
     Faster (given), but mainly is able to do optimizations to the depset
     cheaply that python side is heavily slowed down by- ( x ( y ) ) becomes
@@ -395,7 +395,7 @@ pkgcore 0.2:
     restrict objects now are around 1-3us for new instantation, .5 to 1us
     for getting a cached obj instead of instantiating).
 
-  * bug corrected in base repo classes identify_candidates method; should now 
+  * bug corrected in base repo classes identify_candidates method; should now
     force a full walk of the repo only when absolutely required.
 
   * chksuming now does a single walk over a file for all checksummers,
@@ -403,33 +403,33 @@ pkgcore 0.2:
     performance.
 
   * vdb virtuals caching; massive performance boost via reduced IO.  Relies on
-    mtime checks of vdb pkg directories for staleness detection, 
+    mtime checks of vdb pkg directories for staleness detection,
     auto-regenerating itself as needed.
 
 * heavy profile code cleanup; should only read each common profile node once
-  now when loading up multiple profiles (pcheck).  Far easier code to read 
+  now when loading up multiple profiles (pcheck).  Far easier code to read
   in addition.
 
-* cache eclass staleness verification now relies on mtime comparison only- 
+* cache eclass staleness verification now relies on mtime comparison only-
   allows for eclasses to move between repos; matches portage behaviour.
 
-* pkgcore.util.caching.*, via __force_caching__ class attr in consumers, can 
+* pkgcore.util.caching.*, via __force_caching__ class attr in consumers, can
   be used to force singleton instance creation/caching (error if unhashable).
 
 * ebuild support:
-  * PORTAGE_ACTUAL_DISTDIR was reenabled, thus cvs/svn equivalent ebuilds are 
+  * PORTAGE_ACTUAL_DISTDIR was reenabled, thus cvs/svn equivalent ebuilds are
     usable once again.
-  * fixed pkgcore's pkgcore emulation of has_version/best_version matching 
-    behaviour for old style virtuals to match portages (oddity, but ebuilds 
+  * fixed pkgcore's pkgcore emulation of has_version/best_version matching
+    behaviour for old style virtuals to match portages (oddity, but ebuilds
     rely on the goofy behaviour).
-  * various fixups to unpack function; should match portage behaviour as of 
+  * various fixups to unpack function; should match portage behaviour as of
     01/07 now.
   * if FEATURES=test, set USE=test; if USE=test has been explicitly masked for
     a package, disable src_test run; matches portage 2.1.2 behaviour.
   * cleanup build directory, and unmerge directories upon finishing
 
-* filter-env now is accessible directly via python; pkgcore.ebuild.filter_env .
-  Needs further work prior to being usable for pcheck inspection of ebuilds, 
+* filter-env now is accessible directly via python; pkgcore.ebuild.filter_env.
+  Needs further work prior to being usable for pcheck inspection of ebuilds,
   but it's a good start.
 
 
@@ -466,54 +466,54 @@ pkgcore 0.1.2:
 pkgcore 0.1.1:
 
 * hang fix for test_filter_env
-  
+
 * package.keywords fixes: no longer incremental, supports '*' and '~*'
   properly
-  
+
 * FEATURES="userpriv" support works again.
-  
+
 * pmerge repository ordering now behaves properly; prefers src ebuilds, then
   built pkgs; -k inverts that (previously was semi-undefined)
-  
+
 * binpkg fixes: run setup phase
-  
-* replace op fixes: force seperate WORKDIR for unmerge to protect against 
+
+* replace op fixes: force seperate WORKDIR for unmerge to protect against
   env collisions
-  
+
 * loosened category rules: allow _. chars to support cross-dev hack.
-  
+
 * build fixes: make $A unique to avoid duplicate unpacks; force distdir
   creation regardless of whether or not the pkg has any stated SRC_URI
   (fixes cvs and subversion eclsas usage).  Fix sandbox execution to chdir
   to an existant directory (sandbox will fail if ran from a nonexistant dir).
-  
-* change DelayedInstantiation objects to track __class__ themselves; this 
+
+* change DelayedInstantiation objects to track __class__ themselves; this
   fixes pquery to properly shutdown when ctrl+c'd (previously could swallow
   the interrupt due to cpython isinstance swallowing KeyboardInterrupt).
-  
-  
-pkgcore 0.1: 
+
+
+pkgcore 0.1:
 
 Initial release.
-  
+
 * Sync functionality doesn't yet exist (pmaint script will be in 0.2)
-  
-* pmerge vdb modification requires --force; this will be disabled in 0.2, 
+
+* pmerge vdb modification requires --force; this will be disabled in 0.2,
   mainly is in place so that folks who are just looking, don't inadvertantly
   trigger an actual modification.
-  
+
 * not all portage FEATURES are implemented; same for QA.
-  
-* If overlays are in use, pkgcore may defer to its' seperate cache to avoid 
+
+* If overlays are in use, pkgcore may defer to its' seperate cache to avoid
   pkgcore causing cache regen for portage (and vice versa); this occurs due
-  to pkgcore treating overlays as their own repo and combining them at a 
+  to pkgcore treating overlays as their own repo and combining them at a
   higher level; portage smushes them all together thus rendering each subtree
   unusable in any standalone fashion.
 
 * pkgcore is far more anal about blocking bad behaviour in ebuilds during
-  metadata regeneration; tree is clean, but if you do something wrong in 
+  metadata regeneration; tree is clean, but if you do something wrong in
   global scope, it *will* catch it and block it.
-  
+
 * EBD; daemonized ebuild.sh processing (effectively), pkgcore reuses old
   ebuild.sh processes to avoid bash startup, speeding regen up by roughly
   2x.

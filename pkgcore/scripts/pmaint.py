@@ -1,4 +1,5 @@
-# Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
 """
@@ -6,7 +7,7 @@ repository maintainence
 """
 
 from pkgcore.util import commandline
-from pkgcore.util.demandload import demandload
+from snakeoil.demandload import demandload
 
 demandload(globals(), "pkgcore.repository:multiplex "
     "pkgcore.util:parserestrict "
@@ -15,7 +16,11 @@ demandload(globals(), "pkgcore.repository:multiplex "
     "pkgcore.restrictions:packages "
     "pkgcore.restrictions.boolean:OrRestriction "
     "errno "
-    )
+    "threading:Event "
+    "threading:Thread "
+    "Queue:Queue "
+    "time:time "
+)
 
 commandline_commands = {}
 
@@ -52,7 +57,7 @@ class SyncParser(commandline.OptionParser):
         return values, []
 
 def sync_main(options, out, err):
-    """update a local repositories to match their remote parent"""
+    """Update a local repositories to match their remote parent"""
     config = options.config
     succeeded, failed = [], []
     seen = set()
@@ -135,7 +140,7 @@ class CopyParser(commandline.OptionParser):
 
         values.candidates = []
         if values.copy_missing:
-            restrict = OrRestriction(self.convert_to_restrict(args))
+            restrict = OrRestriction(*self.convert_to_restrict(args))
             for package in values.source_repo.itermatch(restrict):
                 if not values.target_repo.match(package.versioned_atom):
                     values.candidates.append(package.versioned_atom)
@@ -146,7 +151,7 @@ class CopyParser(commandline.OptionParser):
 
 
 def copy_main(options, out, err):
-    "copy pkgs between repositories"
+    """Copy pkgs between repositories."""
 
     trg_repo = options.target_repo
     src_repo = options.source_repo
@@ -213,3 +218,109 @@ def copy_main(options, out, err):
     return 0
 
 commandline_commands['copy'] = (CopyParser, copy_main)
+
+
+class RegenParser(commandline.OptionParser):
+
+    def __init__(self, **kwargs):
+        commandline.OptionParser.__init__(
+            self, description=__doc__, usage='%prog [options] repo [threads]',
+            **kwargs)
+
+    def check_values(self, values, args):
+        values, args = commandline.OptionParser.check_values(
+            self, values, args)
+        if not args:
+            self.error('Need a repository name.')
+        if len(args) > 2:
+            self.error('I do not know what to do with more than 2 arguments')
+
+        if len(args) == 2:
+            try:
+                values.thread_count = int(args[1])
+            except ValueError:
+                self.error('%r should be an integer' % (args[1],))
+            if values.thread_count <= 0:
+                self.error('thread count needs to be at least 1')
+        else:
+            values.thread_count = 1
+
+        try:
+            values.repo = values.config.repo[args[0]]
+        except KeyError:
+            self.error('repo %r was not found! known repos: %s' % (
+                    args[0], ', '.join(str(x) for x in values.config.repo)))
+
+        return values, ()
+
+
+def regen_iter(iterable, err):
+    for x in iterable:
+        try:
+            x.keywords
+        except RuntimeError:
+            raise
+        except Exception, e:
+            err.write("caught exception %s for %s" % (e, x))
+
+def reclaim_threads(threads, err):
+    for x in threads:
+        try:
+            x.join()
+        except RuntimeError:
+            raise
+        except Exception, e:
+            err.write("caught exception %s reclaiming thread" % (e,))
+
+def regen_main(options, out, err):
+    """Regenerate a repository cache."""
+    start_time = time()
+    # HACK: store this here so we can assign to it from inside def passthru.
+    options.count = 0
+    if options.thread_count == 1:
+        def passthru(iterable):
+            for x in iterable:
+                options.count += 1
+                yield x
+        regen_iter(passthru(options.repo), err)
+    else:
+        queue = Queue(options.thread_count * 2)
+        kill = Event()
+        kill.clear()
+        def iter_queue(kill, qlist, timeout=0.25):
+            while not kill.isSet():
+                try:
+                    yield qlist.get(timeout=timeout)
+                except Queue.Empty:
+                    continue
+        regen_threads = [
+            Thread(
+                target=regen_iter, args=(iter_queue(kill, queue), err))
+            for x in xrange(options.thread_count)]
+        out.write('starting %d threads' % (options.thread_count,))
+        try:
+            for x in regen_threads:
+                x.start()
+            out.write('started')
+            # now we feed the queue.
+            for pkg in options.repo:
+                options.count += 1
+                queue.put(pkg)
+        except Exception:
+            kill.set()
+            reclaim_threads(regen_threads, err)
+            raise
+
+        # by now, queue is fed. reliable for our uses since the queue
+        # is only subtracted from.
+        while not queue.empty():
+            sleep(.5)
+        kill.set()
+        reclaim_threads(regen_threads, err)
+        assert queue.empty()
+    out.write(
+        "finished %d nodes in in %.2f seconds" % (
+            options.count, time() - start_time))
+    return 0
+
+commandline_commands['regen'] = (RegenParser, regen_main)

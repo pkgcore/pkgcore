@@ -9,7 +9,7 @@ A lot of extra documentation on this is in dev-notes/config.rst.
 
 
 from pkgcore.config import errors, basics
-from pkgcore.util import mappings
+from snakeoil import mappings
 
 
 class _ConfigMapping(mappings.DictMixin):
@@ -275,7 +275,7 @@ class ConfigManager(object):
             result = self.collapsed_configs.get(name)
             if result is not None:
                 return result
-            for config in self.configs:
+            for source_index, config in enumerate(self.configs):
                 if name in config:
                     section = config[name]
                     break
@@ -285,7 +285,7 @@ class ConfigManager(object):
                         'no section called %r' % (name,))
                 return None
             try:
-                result = self.collapse_section(section)
+                result = self.collapse_section(section, name, source_index)
                 result.name = name
             except errors.ConfigurationError, e:
                 e.stack.append('Collapsing section named %r' % (name,))
@@ -295,7 +295,7 @@ class ConfigManager(object):
         finally:
             self._refs.remove(name)
 
-    def collapse_section(self, section, _refs=None):
+    def collapse_section(self, section, _name=None, _index=None):
         """Collapse a ConfigSection to a L{CollapsedConfig}."""
 
         # Bail if this is an inherit-only (uncollapsable) section.
@@ -308,30 +308,47 @@ class ConfigManager(object):
                 raise errors.CollapseInheritOnly(
                     'cannot collapse inherit-only section')
 
-        # List of (name, ConfigSection) tuples, most specific first.
-        slist = [(None, section)]
+        # List of (name, ConfigSection, index) tuples, most specific first.
+        slist = [(_name, section, _index)]
 
         # first map out inherits.
-        inherit_names = set()
-        for current_section, current_conf in slist:
+        inherit_names = set([_name])
+        for current_section, current_conf, index in slist:
             if 'inherit' not in current_conf:
                 continue
-            for inherit in current_conf.get_value(self, 'inherit', 'list'):
-                if inherit in inherit_names:
-                    raise errors.ConfigurationError('Inherit %r is recursive'
-                                                    % (inherit,))
-                inherit_names.add(inherit)
-                for config in self.configs:
-                    if inherit in config:
-                        slist.append((inherit, config[inherit]))
-                        break
+            prepend, inherits, append = current_conf.get_value(
+                self, 'inherit', 'list')
+            if prepend is not None or append is not None:
+                raise errors.ConfigurationError(
+                    'Prepending or appending to the inherit list makes no '
+                    'sense')
+            for inherit in inherits:
+                if inherit == current_section:
+                    # Self-inherit is a bit special.
+                    for i, config in enumerate(self.configs[index + 1:]):
+                        if inherit in config:
+                            slist.append((inherit, config[inherit],
+                                          index + i + 1))
+                            break
+                    else:
+                        raise errors.ConfigurationError(
+                            'Self-inherit %r cannot be found' % (inherit,))
                 else:
-                    raise errors.ConfigurationError(
-                        'inherit target %r cannot be found' % (inherit,))
+                    if inherit in inherit_names:
+                        raise errors.ConfigurationError(
+                            'Inherit %r is recursive' % (inherit,))
+                    inherit_names.add(inherit)
+                    for i, config in enumerate(self.configs):
+                        if inherit in config:
+                            slist.append((inherit, config[inherit], i))
+                            break
+                    else:
+                        raise errors.ConfigurationError(
+                            'inherit target %r cannot be found' % (inherit,))
 
         # Grab the "class" setting first (we need it to get a type obj
-        # to support incrementals in the more general loop)
-        for inherit_name, inherit_conf in slist:
+        # to collapse to the right type in the more general loop)
+        for inherit_name, inherit_conf, index in slist:
             if "class" in inherit_conf:
                 break
         else:
@@ -340,20 +357,18 @@ class ConfigManager(object):
         type_obj = basics.ConfigType(inherit_conf.get_value(self, 'class',
                                                             'callable'))
 
-        # collapse, honoring incrementals.
         conf = {}
-        for inherit_name, inherit_conf in slist:
+        for section_nr, (inherit_name, inherit_conf, index) in \
+                enumerate(reversed(slist)):
             for key in inherit_conf.keys():
                 if key in ('class', 'inherit', 'inherit-only'):
-                    continue
-                if key in conf and key not in type_obj.incrementals:
                     continue
                 typename = type_obj.types.get(key)
                 if typename is None:
                     if key == 'default':
                         typename = 'bool'
                     elif not type_obj.allow_unknowns:
-                        if inherit_name is not None:
+                        if section_nr != len(slist) - 1:
                             raise errors.ConfigurationError(
                                 'Type of %r inherited from %r unknown' % (
                                     key, inherit_name))
@@ -376,15 +391,31 @@ class ConfigManager(object):
                         raise
                 elif is_refs:
                     try:
-                        result = list(ref.collapse() for ref in result)
+                        result = list(
+                            list(ref.collapse() for ref in subresult or ())
+                            for subresult in result)
                     except errors.ConfigurationError, e:
                         e.stack.append(
                             'Collapsing section refs %r' % (key,))
                         raise
-                if key in conf and key in type_obj.incrementals:
-                    conf[key] = result + conf[key]
-                else:
-                    conf[key] = result
+                if typename == 'list' or typename.startswith('refs:'):
+                    prepend, result, append = result
+                    if result is None:
+                        if key in conf:
+                            result = conf[key]
+                        else:
+                            result = []
+                    if prepend:
+                        result = prepend + result
+                    if append:
+                        result += append
+                elif typename == 'str':
+                    prepend, result, append = result
+                    if result is None and key in conf:
+                        result = conf[key]
+                    result = ' '.join(
+                        v for v in (prepend, result, append) if v)
+                conf[key] = result
         default = conf.pop('default', False)
         return CollapsedConfig(
             type_obj, conf, self, debug=self.debug, default=default)

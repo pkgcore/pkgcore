@@ -5,12 +5,12 @@
 package class for buildable ebuilds
 """
 
-from pkgcore.util.currying import post_curry
-from pkgcore.util.demandload import demandload
+from snakeoil.currying import post_curry
+from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore.util.xml:etree "
+    "snakeoil.xml:etree "
     "pkgcore.ebuild:digest "
-    "pkgcore.util:mappings "
+    "snakeoil:mappings "
     "errno ")
 
 

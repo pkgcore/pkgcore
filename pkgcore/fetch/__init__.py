@@ -5,7 +5,7 @@
 functionality related to downloading files
 """
 
-from pkgcore.util.klass import generic_equality
+from snakeoil.klass import generic_equality
 
 class fetchable(object):
 

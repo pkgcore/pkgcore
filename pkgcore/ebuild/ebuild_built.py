@@ -6,15 +6,16 @@ built ebuild packages (vdb packages and binpkgs are derivatives of this)
 """
 
 from pkgcore.ebuild import ebuild_src
-from pkgcore.util.mappings import IndeterminantDict
 from pkgcore.package import metadata
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.fs import scan
-from pkgcore.util.currying import post_curry
 from pkgcore.ebuild import ebd
-from pkgcore.util.obj import DelayedInstantiation
 
-from pkgcore.util.demandload import demandload
+from snakeoil.mappings import IndeterminantDict
+from snakeoil.currying import post_curry
+from snakeoil.obj import DelayedInstantiation
+
+from snakeoil.demandload import demandload
 demandload(globals(),
            "pkgcore.merge:engine "
            "pkgcore.ebuild:triggers "

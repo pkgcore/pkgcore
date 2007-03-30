@@ -1,14 +1,15 @@
 #!/usr/bin/python
 
 import sys, os
-from pkgcore.config import load_config
 
+from pkgcore.config import load_config
+from pkgcore.util.packages import groupby_pkg
+from pkgcore.ebuild.atom import atom
 # we use a WorldFile since it *currently* forces unversioned atoms.
 from pkgcore.pkgsets.filelist import WorldFile
-from pkgcore.util.packages import groupby_pkg
-from pkgcore.util.file import iter_read_bash
-from pkgcore.util.osutils import listdir_files
-from pkgcore.ebuild.atom import atom
+
+from snakeoil.fileutils import iter_read_bash
+from snakeoil.osutils import listdir_files
 
 def main(target_repo, seen, moves):
     # could build the atom from categories/packages, but prefer this;

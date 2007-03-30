@@ -6,17 +6,13 @@ package class for buildable ebuilds
 """
 
 import os
-from pkgcore.package import metadata
-from pkgcore.package import errors as metadata_errors
 from itertools import imap
 
-WeakValCache = metadata.WeakValCache
-
+from pkgcore.package import metadata
+from pkgcore.package import errors as metadata_errors
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
-from pkgcore.util.mappings import IndeterminantDict
-from pkgcore.util.currying import alias_class_method, partial
 from pkgcore.cache import errors as cache_errors
 from pkgcore.restrictions.packages import AndRestriction
 from pkgcore.restrictions import boolean
@@ -24,9 +20,14 @@ from pkgcore.chksum.errors import MissingChksum
 from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import const, processor
-from pkgcore.util.demandload import demandload
+
+from snakeoil.mappings import IndeterminantDict
+from snakeoil.currying import alias_class_method, partial
+
+from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
 
+WeakValCache = metadata.WeakValCache
 
 def generate_depset(c, key, non_package_type, s):
     try:

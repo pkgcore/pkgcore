@@ -4,11 +4,12 @@
 """tests for pkgcore.config's package __init__.py"""
 
 
+import operator
 import tempfile
 
 from pkgcore.test import TestCase
 
-from pkgcore.config import load_config, configurable
+from pkgcore.config import load_config, configurable, basics
 
 
 @configurable(typename='foo')
@@ -40,9 +41,23 @@ class ConfigLoadingTest(TestCase):
         manager = load_config(user_conf_file=self.user_config.name)
         self.assertEqual(manager.foo['foo'], ((), {}))
 
-    def test_stacking(self):
-        """Test user config overrides system config."""
+        # Test user config overrides system config.
         manager = load_config(
             user_conf_file=self.user_config.name,
             system_conf_file=self.system_config.name)
         self.assertEqual(manager.foo['foo'], ((), {}))
+
+        # Test prepends.
+        manager = load_config(
+            user_conf_file=self.user_config.name,
+            prepend_sources=[{'myfoo': basics.HardCodedConfigSection({
+                            'inherit': ['foo']})}])
+        self.assertEqual(manager.foo['myfoo'], ((), {}))
+
+        # Test disabling loading.
+        manager = load_config(
+            user_conf_file=self.user_config.name,
+            skip_config_files=True)
+        self.assertRaises(
+            KeyError,
+            operator.getitem, manager.foo, 'foo')

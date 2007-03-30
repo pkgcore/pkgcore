@@ -7,7 +7,7 @@ virtual repository, pkgs generated via callable
 
 from pkgcore.repository import prototype
 from pkgcore.package import virtual
-from pkgcore.util.currying import partial
+from snakeoil.currying import partial
 
 def mangle_args(new_package_func, mangler_func, *args):
     return new_package_func(*mangler_func(args))

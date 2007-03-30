@@ -3,7 +3,7 @@
 
 
 from pkgcore.test import mixins
-from pkgcore.util import osutils
+from snakeoil import osutils
 from pkgcore.ebuild import repository
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository import errors

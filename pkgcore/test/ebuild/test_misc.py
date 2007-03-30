@@ -2,8 +2,7 @@
 # License: GPL2
 
 from pkgcore.ebuild import misc
-from pkgcore.ebuild.atom import atom
-from pkgcore.restrictions import packages, values
+from pkgcore.restrictions import packages
 
 AlwaysTrue = packages.AlwaysTrue
 AlwaysFalse = packages.AlwaysFalse

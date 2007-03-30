@@ -12,7 +12,7 @@
 
 #define PY_SSIZE_T_CLEAN
 
-#include "common.h"
+#include <snakeoil/common.h>
 #include <structmember.h>
 
 static PyObject *pkgcore_restrictions_type = NULL;
@@ -188,14 +188,14 @@ static PyMemberDef pkgcore_StrExactMatch_members[] = {
     {NULL}
 };
 
-PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "negate", negate,
+snakeoil_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "negate", negate,
     (self->flags & NEGATED_RESTRICT))
-PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "case_sensitive", case,
+snakeoil_IMMUTABLE_ATTR_BOOL(pkgcore_StrExactMatch, "case_sensitive", case,
     (self->flags & CASE_SENSITIVE))
 
 static PyGetSetDef pkgcore_StrExactMatch_attrs[] = {
-PKGCORE_GETSET(pkgcore_StrExactMatch, "negate", negate),
-PKGCORE_GETSET(pkgcore_StrExactMatch, "case_sensitive", case),
+snakeoil_GETSET(pkgcore_StrExactMatch, "negate", negate),
+snakeoil_GETSET(pkgcore_StrExactMatch, "case_sensitive", case),
     {NULL}
 };
 
@@ -390,14 +390,14 @@ static PyMemberDef pkgcore_PackageRestriction_members[] = {
     {NULL}
 };
 
-PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "negate", negate,
+snakeoil_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "negate", negate,
     (self->flags & NEGATED_RESTRICT))
-PKGCORE_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "ignore_missing",
+snakeoil_IMMUTABLE_ATTR_BOOL(pkgcore_PackageRestriction, "ignore_missing",
     ignore_missing, (self->flags & IGNORE_MISSING))
 
 static PyGetSetDef pkgcore_PackageRestriction_attrs[] = {
-PKGCORE_GETSET(pkgcore_PackageRestriction, "negate", negate),
-PKGCORE_GETSET(pkgcore_PackageRestriction, "ignore_missing", ignore_missing),
+snakeoil_GETSET(pkgcore_PackageRestriction, "negate", negate),
+snakeoil_GETSET(pkgcore_PackageRestriction, "ignore_missing", ignore_missing),
     {NULL}
 };
 

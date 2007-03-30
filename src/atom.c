@@ -12,7 +12,7 @@
 
 #define PY_SSIZE_T_CLEAN
 
-#include "common.h"
+#include <snakeoil/common.h>
 
 // exceptions, loaded during initialization.
 static PyObject *pkgcore_atom_MalformedAtom_Exc = NULL;
@@ -926,9 +926,9 @@ pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
     return tup;
 }
 
-PKGCORE_FUNC_BINDING("__init__", "pkgcore.ebuild._atom.__init__",
+snakeoil_FUNC_BINDING("__init__", "pkgcore.ebuild._atom.__init__",
     pkgcore_atom_init, METH_VARARGS|METH_KEYWORDS)
-PKGCORE_FUNC_BINDING("__getattr__", "pkgcore.ebuild._atom.__getattr__",
+snakeoil_FUNC_BINDING("__getattr__", "pkgcore.ebuild._atom.__getattr__",
     pkgcore_atom_getattr, METH_O|METH_COEXIST)
 
 PyDoc_STRVAR(

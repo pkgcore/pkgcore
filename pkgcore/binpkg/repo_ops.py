@@ -2,14 +2,16 @@
 # License: GPL2
 
 import os, errno
-from pkgcore.util.osutils import join as pjoin
+
 from pkgcore.interfaces import repo as repo_interfaces
 from pkgcore.fs import tar
 from pkgcore.binpkg import xpak
-from pkgcore.util import osutils
-from pkgcore.util.bzip2 import compress
 from pkgcore.ebuild.conditionals import stringify_boolean
-from pkgcore.util.demandload import demandload
+
+from snakeoil import osutils
+from pkgcore.util.bzip2 import compress
+from snakeoil.osutils import join as pjoin
+from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
 
 def discern_loc(base, pkg):

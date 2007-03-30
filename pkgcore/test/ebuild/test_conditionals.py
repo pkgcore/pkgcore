@@ -2,13 +2,12 @@
 # License: GPL2
 
 from pkgcore.test import TestCase
-
 from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.errors import ParseError
 from pkgcore.restrictions import boolean, packages
-from pkgcore.util.currying import post_curry
-from pkgcore.util.iterables import expandable_chain
-from pkgcore.util.lists import iflatten_instance
+from snakeoil.currying import post_curry
+from snakeoil.iterables import expandable_chain
+from snakeoil.lists import iflatten_instance
 
 
 class base(TestCase):

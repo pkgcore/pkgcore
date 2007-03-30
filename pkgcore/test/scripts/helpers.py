@@ -4,12 +4,10 @@
 
 """Helpers for testing scripts."""
 
-
-import StringIO
 import difflib
-
-from pkgcore.util import formatters
 from pkgcore.config import central
+from snakeoil.formatters import PlainTextFormatter
+from snakeoil.caching import WeakInstMeta
 
 
 class Exit(Exception):
@@ -42,6 +40,62 @@ def mangle_parser(parser):
     parser.error = noerror
     return parser
 
+class FormatterObject(object):
+    __metaclass__ = WeakInstMeta
+    __inst_caching__ = True
+    def __call__(self, formatter):
+        formatter.stream.write(self)
+
+class Color(FormatterObject):
+    __inst_caching__ = True
+    def __init__(self, mode, color):
+        self.mode = mode
+        self.color = color
+    def __repr__(self):
+        return '<Color: mode - %s; color - %s>' % (self.mode, self.color)
+
+class Reset(FormatterObject):
+    __inst_caching__ = True
+    def __repr__(self):
+        return '<Reset>'
+
+class Bold(FormatterObject):
+    __inst_caching__ = True
+    def __repr__(self):
+        return '<Bold>'
+
+class ListStream(list):
+    def write(self, *args):
+        stringlist = []
+        objectlist = []
+        for arg in args:
+            if isinstance(arg, basestring):
+                stringlist.append(arg)
+            else:
+                objectlist.append(''.join(stringlist))
+                stringlist = []
+                objectlist.append(arg)
+        objectlist.append(''.join(stringlist))
+        # We use len because boolean ops shortcircuit
+        if (len(self) and isinstance(self[-1], basestring) and
+                isinstance(objectlist[0], basestring)):
+            self[-1] = self[-1] + objectlist.pop(0)
+        self.extend(objectlist)
+
+class FakeStreamFormatter(PlainTextFormatter):
+    def __init__(self):
+        PlainTextFormatter.__init__(self, ListStream([]))
+        self.reset = Reset()
+        self.bold = Bold()
+        self.first_prefix = [None]
+    def resetstream(self):
+        self.stream = ListStream([])
+    def fg(self, color=None):
+        return Color('fg', color)
+    def bg(self, color=None):
+        return Color('bg', color)
+    def get_text_stream(self):
+        return ''.join([x for x in self.stream if not isinstance(x, FormatterObject)])
 
 class MainMixin(object):
 
@@ -102,17 +156,15 @@ class MainMixin(object):
         @return: the L{central.ConfigManager}.
         """
         options = self.parse(*args, **kwargs)
-        outstream = StringIO.StringIO()
-        errstream = StringIO.StringIO()
-        outformatter = formatters.PlainTextFormatter(outstream)
-        errformatter = formatters.PlainTextFormatter(errstream)
+        outformatter = FakeStreamFormatter()
+        errformatter = FakeStreamFormatter()
         self.main(options, outformatter, errformatter)
         diffs = []
-        for name, strings, stream in [('out', out, outstream),
-                                      ('err', err, errstream)]:
-            actual = stream.getvalue()
+        for name, strings, formatter in [('out', out, outformatter),
+                                         ('err', err, errformatter)]:
+            actual = formatter.get_text_stream()
             if strings:
-                expected = '\n'.join(strings) + '\n'
+                expected = '\n'.join(strings)
             else:
                 expected = ''
             if expected != actual:

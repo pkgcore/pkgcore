@@ -9,12 +9,14 @@ L{pkgcore.plugins} to get at these ops.
 """
 
 import os, errno
+
 from pkgcore.fs import gen_obj, contents, fs
-from pkgcore.util.osutils import ensure_dirs, pjoin, normpath
 from pkgcore.spawn import spawn
 from pkgcore.const import COPY_BINARY
 from pkgcore.plugin import get_plugin
-from pkgcore.util.currying import partial
+
+from snakeoil.currying import partial
+from snakeoil.osutils import ensure_dirs, pjoin, normpath
 
 __all__ = [
     "merge_contents", "unmerge_contents", "default_ensure_perms",

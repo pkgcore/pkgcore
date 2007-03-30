@@ -5,13 +5,14 @@
 base repository template
 """
 
-from pkgcore.util.mappings import LazyValDict, DictMixin
-from pkgcore.util.lists import iflatten_instance
+
 from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import values, boolean, restriction
-from pkgcore.util.compatibility import any
 from pkgcore.restrictions.util import collect_package_restrictions
 
+from snakeoil.mappings import LazyValDict, DictMixin
+from snakeoil.lists import iflatten_instance
+from snakeoil.compatibility import any
 
 class IterValLazyDict(LazyValDict):
 

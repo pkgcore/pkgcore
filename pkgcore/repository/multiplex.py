@@ -5,10 +5,10 @@
 repository that combines multiple repositories together
 """
 
-from pkgcore.repository import prototype, errors
-from pkgcore.util.currying import partial
-from pkgcore.util.iterables import iter_sort
 from operator import itemgetter
+from pkgcore.repository import prototype, errors
+from snakeoil.currying import partial
+from snakeoil.iterables import iter_sort
 
 class tree(prototype.tree):
 

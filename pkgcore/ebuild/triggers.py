@@ -7,14 +7,16 @@ gentoo/ebuild specific triggers
 
 import os, errno
 from pkgcore.merge import triggers, const, errors
-from pkgcore.util.file import read_bash_dict, AtomicWriteFile
 from pkgcore.fs import livefs
-from pkgcore.util.osutils import normpath
 from pkgcore.restrictions import values
-from pkgcore.util.osutils import listdir_files
-from pkgcore.util.lists import stable_unique, iflatten_instance
-from pkgcore.util.osutils import join as pjoin
-from pkgcore.util.demandload import demandload
+
+from snakeoil.osutils import normpath
+from snakeoil.fileutils import read_bash_dict, AtomicWriteFile
+from snakeoil.osutils import listdir_files
+from snakeoil.lists import stable_unique, iflatten_instance
+from snakeoil.osutils import join as pjoin
+
+from snakeoil.demandload import demandload
 demandload(globals(), "fnmatch")
 
 colon_parsed = frozenset(
@@ -383,7 +385,7 @@ class InfoRegen(triggers.InfoRegen):
 
     @property
     def locations(self):
-        collapsed_d, inc, colon = collapse_envd(self.path)
+        collapsed_d = collapse_envd(self.path)[0]
         l = collapsed_d.get("INFOPATH", [])
         if not l:
             return triggers.InfoRegen.locations

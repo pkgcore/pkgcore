@@ -38,10 +38,10 @@ Example of the supported format (not a complete config)::
     }
 """
 
-from pkgcore.util import mappings, modules, demandload
+from snakeoil import mappings, modules, demandload
 from pkgcore.config import basics, errors
 
-demandload.demandload(globals(), 'pkgcore.util.compatibility:all')
+demandload.demandload(globals(), 'snakeoil.compatibility:all')
 
 import pyparsing as pyp
 
@@ -125,7 +125,7 @@ class ConfigSection(basics.ConfigSection):
             if not isinstance(value, basestring):
                 # sequence
                 value = ' '.join(value)
-            return basics.list_parser(value)
+            return None, basics.list_parser(value), None
         elif arg_type == 'repr':
             if len(value) == 1:
                 value = value[0]
@@ -150,10 +150,13 @@ class ConfigSection(basics.ConfigSection):
             if not isinstance(value[0], basestring):
                 raise errors.ConfigurationError(
                     '%r should be a string' % value)
-            return {
-                'str': basics.str_parser,
-                'bool': basics.bool_parser,
-                }[arg_type](value[0])
+            if arg_type == 'str':
+                return [None, basics.str_parser(value[0]), None]
+            elif arg_type == 'bool':
+                return basics.bool_parser(value[0])
+            else:
+                raise errors.ConfigurationError(
+                    'unsupported type %r' % (arg_type,))
 
 
 def config_from_file(file_obj):

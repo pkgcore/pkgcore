@@ -14,11 +14,12 @@ __all__ = [
 
 import os, atexit, signal, sys
 
-from pkgcore.util.osutils import listdir
-from pkgcore.util.mappings import ProtectedDict
-
 from pkgcore.const import (
     BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH)
+
+from snakeoil.osutils import listdir
+from snakeoil.mappings import ProtectedDict
+
 
 try:
     import resource

@@ -4,7 +4,7 @@
 from pkgcore.test import TestCase
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.package.base import base
-from pkgcore.util.currying import partial
+from snakeoil.currying import partial
 
 def passthru(val, self):
     return val

@@ -3,7 +3,7 @@
 
 from pkgcore.test import TestCase
 from pkgcore.package import base
-from pkgcore.util.currying import partial
+from snakeoil.currying import partial
 
 class TestBasePkg(TestCase):
 

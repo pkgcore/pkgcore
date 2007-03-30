@@ -31,14 +31,17 @@ class ConfigFromIniTest(TestCase):
 [test]
 string = 'hi I am a string'
 list = foo bar baz
+list.prepend = pre bits
+list.append = post bits
 true = yes
 false = no
 '''))
         self.assertEqual(config.keys(), ['test'])
         section = config['test']
         for key, arg_type, value in [
-            ('string', 'str', 'hi I am a string'),
-            ('list', 'list', ['foo', 'bar', 'baz']),
+            ('string', 'str', [None, 'hi I am a string', None]),
+            ('list', 'list', [
+                    ['pre', 'bits'], ['foo', 'bar', 'baz'], ['post', 'bits']]),
             ('true', 'bool', True),
             ('false', 'bool', False),
             ]:

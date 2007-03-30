@@ -5,8 +5,7 @@ from pkgcore.test import TestCase
 from pkgcore.ebuild import atom, errors, atom_restricts
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.restrictions.boolean import AndRestriction
-from pkgcore.util.currying import partial
-from pkgcore.util.pickling import dumps, loads
+from snakeoil.pickling import dumps, loads
 
 class FakePkg(CPV):
     __slots__ = ("__dict__")
@@ -163,7 +162,7 @@ class Test_native_atom(TestCase):
         slot = ''
         def f():
             for pref, ver in (('', ''), ('=', '-0.1')):
-               for repo in ('', '::gentoo'):
+                for repo in ('', '::gentoo'):
                     for slot in ('', ':1'):
                         for use in ('', '[x]'):
                             yield pref, ver, repo, slot, use
@@ -181,7 +180,7 @@ class Test_native_atom(TestCase):
 
             restricts = o.restrictions
             self.assertEqual(len(restricts), count,
-                msg="%r, restrictions count must be %i, got %i" % 
+                msg="%r, restrictions count must be %i, got %i" %
                     (o, count, len(restricts)))
             self.assertTrue([getattr(x, 'type', None)
                 for x in restricts], ['package'] * count)
@@ -192,7 +191,7 @@ class Test_native_atom(TestCase):
             if ver:
                 self.assertInstance(restricts[pos], atom_restricts.VersionMatch,
                     msg="expected %r, got %r; repo(%s), ver(%s), use(%s) "
-                        "slot(%s)" % 
+                        "slot(%s)" %
                         (atom_restricts.VersionMatch, restricts[pos],
                             repo, ver, use, slot))
                 pos += 1
@@ -200,7 +199,7 @@ class Test_native_atom(TestCase):
                 pos = assertAttr('slot')
             if use:
                 pos = assertAttr('use')
-            
+
 
     def test_repo_id(self):
         astr = "dev-util/bsdiff"
@@ -284,14 +283,14 @@ class Test_native_atom(TestCase):
         self.assertNotEqual(o1, o2)
         c = cmp(o1, o2)
         self.assertNotEqual(c, 0,
-            msg="checking cmp for %r, %r, not supposed to be equal, got %i" 
+            msg="checking cmp for %r, %r, not supposed to be equal, got %i"
                 % (o1, o2, c))
         self.assertNotEqual(o2, o1)
         c = cmp(o2, o1)
         self.assertNotEqual(c, 0,
-            msg="checking cmp for %r, %r, not supposed to be equal, got %i" 
+            msg="checking cmp for %r, %r, not supposed to be equal, got %i"
                 % (o2, o1, c))
-        
+
 
     def test_comparison(self):
         self.assertEqual2(self.kls('cat/pkg'), self.kls('cat/pkg'))

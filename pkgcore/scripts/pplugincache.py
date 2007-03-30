@@ -5,9 +5,9 @@
 """Update the plugin cache."""
 
 
-from pkgcore.util import commandline, modules
+from pkgcore.util import commandline
 from pkgcore import plugin
-
+from snakeoil import modules
 
 class OptionParser(commandline.OptionParser):
 

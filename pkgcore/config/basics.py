@@ -11,9 +11,9 @@ L{configuration exception<pkgcore.config.errors.ConfigurationError>}
 
 
 from pkgcore.config import errors, configurable
-from pkgcore.util import currying
-from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.util:modules")
+from snakeoil import currying
+from snakeoil.demandload import demandload
+demandload(globals(), "snakeoil:modules")
 
 type_names = ("list", "str", "bool", "int")
 
@@ -31,7 +31,6 @@ class ConfigType(object):
     @ivar callable: callable used to instantiate this type.
     @ivar types: dict mapping key names to type strings.
     @ivar positional: container holding positional arguments.
-    @ivar incrementals: container holding incrementals.
     @ivar required: container holding required arguments.
     @ivar allow_unknowns: controls whether unknown settings should error.
     """
@@ -89,7 +88,6 @@ class ConfigType(object):
         for arg in self.positional:
             self.types[arg] = 'str'
         self.required = tuple(self.positional)
-        self.incrementals = []
         self.allow_unknowns = False
 
         # Process ConfigHint (if any)
@@ -102,8 +100,6 @@ class ConfigType(object):
                 self.positional = tuple(hint_overrides.positional)
             if hint_overrides.typename:
                 self.name = hint_overrides.typename
-            if hint_overrides.incrementals:
-                self.incrementals = hint_overrides.incrementals
             if hint_overrides.doc:
                 self.doc = hint_overrides.doc
             self.allow_unknowns = hint_overrides.allow_unknowns
@@ -225,6 +221,143 @@ class DictConfigSection(ConfigSection):
             raise
 
 
+class FakeIncrementalDictConfigSection(ConfigSection):
+
+    """Turns a dict and a conversion function into a ConfigSection."""
+
+    def __init__(self, conversion_func, source_dict):
+        """Initialize.
+
+        A request for a section of a list type will look for
+        name.prepend and name.append keys too, using those for values
+        prepended/appended to the inherited values. The conversion
+        func should return a single sequence for list types and in
+        repr for list types.
+
+        @type  conversion_func: callable.
+        @param conversion_func: called with a ConfigManager, a value from
+            the dict and a type name.
+        @type  source_dict: dict with string keys and arbitrary values.
+        """
+        ConfigSection.__init__(self)
+        self.func = conversion_func
+        self.dict = source_dict
+
+    def __contains__(self, name):
+        return name in self.dict or name + '.append' in self.dict or \
+            name + '.prepend' in self.dict
+
+    def keys(self):
+        keys = set()
+        for key in self.dict:
+            if key.endswith('.append'):
+                keys.add(key[:-7])
+            elif key.endswith('.prepend'):
+                keys.add(key[:-8])
+            else:
+                keys.add(key)
+        return list(keys)
+
+    def get_value(self, central, name, arg_type):
+        # Check if we need our special incremental magic.
+        if arg_type in ('list', 'str', 'repr') or arg_type.startswith('refs:'):
+            result = []
+            # Careful: None is a valid dict value, so use something else here.
+            missing = object()
+            for subname in (name + '.prepend', name, name + '.append'):
+                val = self.dict.get(subname, missing)
+                if val is missing:
+                    val = None
+                else:
+                    try:
+                        val = self.func(central, val, arg_type)
+                    except errors.ConfigurationError, e:
+                        e.stack.append('Converting argument %r to %s' % (
+                                subname, arg_type))
+                        raise
+                result.append(val)
+            if result[0] is result[1] is result[2] is None:
+                raise KeyError(name)
+            if arg_type != 'repr':
+                # Done.
+                return result
+            # If "kind" is of some incremental-ish kind or we have
+            # .prepend or .append for this key then we need to
+            # convert everything we have to the same kind and
+            # return all three.
+            #
+            # (we do not get called for separate reprs for the
+            # .prepend or .append because those are filtered from
+            # .keys(). If we do not filter those from .keys()
+            # central gets upset because it does not know their
+            # type. Perhaps this means we should have a separate
+            # .keys() used together with repr, not sure yet
+            # --marienz)
+            #
+            # The problem here is that we may get unsuitable for
+            # incremental or differing types for the three reprs
+            # we run, so we need to convert to a suitable common
+            # kind.
+            if result[0] is None and result[2] is None:
+                # Simple case: no extra data, so no need for any
+                # conversions.
+                kind, val = result[1]
+                if kind in ('list', 'str') or kind == 'refs':
+                    # Caller expects a three-tuple.
+                    return kind, (None, val, None)
+                else:
+                    # non-incremental, just return as-is.
+                    return kind, val
+            # We have more than one return value. Figure out what
+            # target to convert to. Choices are list, str and refs.
+            kinds = set(v[0] for v in result if v is not None)
+            if 'refs' in kinds or 'ref' in kinds:
+                # If we have any refs we have to convert to refs.
+                target_kind = 'refs'
+            elif kinds == set(['str']):
+                # If we have only str we can just use that.
+                target_kind = 'str'
+            else:
+                # Convert to list. May not make any sense, but is
+                # the best we can do.
+                target_kind = 'list'
+            converted = []
+            for val in result:
+                if val is None:
+                    converted.append(None)
+                    continue
+                kind, val = val
+                if kind == 'ref':
+                    assert target_kind == 'refs', target_kind
+                    converted.append([val])
+                elif kind == 'refs':
+                    assert target_kind == 'refs', target_kind
+                    converted.append(val)
+                elif kind == 'list':
+                    assert target_kind != 'str', target_kind
+                    converted.append(val)
+                else:
+                    # Everything else gets converted to a string first.
+                    if kind == 'callable':
+                        val = '%s.%s' % (val.__module__, val.__name__)
+                    elif kind in ('bool', 'int', 'str'):
+                        val = str(val)
+                    else:
+                        raise errors.ConfigurationError(
+                            'unsupported type %r' % (kind,))
+                    # Then convert the str to list if needed.
+                    if target_kind == 'str':
+                        converted.append(val)
+                    else:
+                        converted.append([val])
+            return target_kind, converted
+        # Not incremental.
+        try:
+            return self.func(central, self.dict[name], arg_type)
+        except errors.ConfigurationError, e:
+            e.stack.append('Converting argument %r to %s' % (name, arg_type))
+            raise
+
 def convert_string(central, value, arg_type):
     """Conversion func for a string-based DictConfigSection."""
     assert isinstance(value, basestring), value
@@ -310,10 +443,12 @@ def convert_hybrid(central, value, arg_type):
 
 # "Invalid name" (pylint thinks these are module-level constants)
 # pylint: disable-msg=C0103
-HardCodedConfigSection = currying.pre_curry(DictConfigSection, convert_asis)
-ConfigSectionFromStringDict = currying.pre_curry(DictConfigSection,
-                                                 convert_string)
-AutoConfigSection = currying.pre_curry(DictConfigSection, convert_hybrid)
+HardCodedConfigSection = currying.partial(
+    FakeIncrementalDictConfigSection, convert_asis)
+ConfigSectionFromStringDict = currying.partial(
+    FakeIncrementalDictConfigSection, convert_string)
+AutoConfigSection = currying.partial(
+    FakeIncrementalDictConfigSection, convert_hybrid)
 
 
 def section_alias(target, typename):

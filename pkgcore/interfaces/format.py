@@ -5,7 +5,7 @@
 build operation
 """
 
-from pkgcore.util.dependant_methods import ForcedDepends
+from snakeoil.dependant_methods import ForcedDepends
 
 __all__ = ["base", "FailedDirectory", "GenericBuildError", "errors"]
 

@@ -87,7 +87,7 @@ class TestCase(unittest.TestCase, object):
     def assertLen(self, obj, length, msg=None):
         self.failUnless(len(obj) == length,
             msg or '%r needs to be len %i, is %i' % (obj, length, len(obj)))
-    
+
     def assertInstance(self, obj, kls, msg=None):
         """
         assert that obj is an instance of kls
@@ -284,7 +284,7 @@ class TestRestriction(TestCase):
         self.assertMatch(obj, args, negated=negated, msg=msg)
         self.assertForceTrue(obj, force_args, negated=negated, msg=msg)
         self.assertNotForceFalse(obj, force_args, negated=negated, msg=msg)
-    
+
     def assertNotMatches(self, obj, args, force_args=None, negated=False,
         msg=None):
         if force_args is None:
@@ -292,9 +292,8 @@ class TestRestriction(TestCase):
         self.assertNotMatch(obj, args, negated=negated, msg=msg)
         self.assertNotForceTrue(obj, force_args, negated=negated, msg=msg)
         self.assertForceFalse(obj, force_args, negated=negated, msg=msg)
-        
+
 
 class mallable_obj(object):
     def __init__(self, **kwds):
         self.__dict__.update(kwds)
-            

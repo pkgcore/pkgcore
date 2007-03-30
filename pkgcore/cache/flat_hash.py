@@ -6,11 +6,10 @@ per key file based backend
 """
 
 import os, stat, errno
-from pkgcore.util.osutils import join as pjoin, readlines
 from pkgcore.cache import fs_template
 from pkgcore.cache import errors
 from pkgcore.config import ConfigHint
-
+from snakeoil.osutils import join as pjoin, readlines
 
 class database(fs_template.FsBased):
 

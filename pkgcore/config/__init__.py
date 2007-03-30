@@ -15,15 +15,14 @@ class ConfigHint(object):
     """hint for introspection supplying overrides"""
 
     # be aware this is used in clone
-    __slots__ = ("types", "positional", "required", "typename", "incrementals",
-                 "allow_unknowns", "doc")
+    __slots__ = (
+        "types", "positional", "required", "typename", "allow_unknowns", "doc")
 
     def __init__(self, types=None, positional=None, required=None, doc=None,
-                 incrementals=None, typename=None, allow_unknowns=False):
+                 typename=None, allow_unknowns=False):
         self.types = types or {}
         self.positional = positional or []
         self.required = required or []
-        self.incrementals = incrementals or []
         self.typename = typename
         self.allow_unknowns = allow_unknowns
         self.doc = doc
@@ -48,7 +47,7 @@ def configurable(*args, **kwargs):
 
 def load_config(user_conf_file=USER_CONF_FILE,
                 system_conf_file=SYSTEM_CONF_FILE,
-                debug=False):
+                debug=False, prepend_sources=(), skip_config_files=False):
     """
     the main entry point for any code looking to use pkgcore.
 
@@ -63,17 +62,19 @@ def load_config(user_conf_file=USER_CONF_FILE,
     from pkgcore.plugin import get_plugins
     import os
 
-    have_system_conf = os.path.isfile(system_conf_file)
-    have_user_conf = os.path.isfile(user_conf_file)
-    configs = []
-    if have_system_conf or have_user_conf:
-        if have_user_conf:
-            configs.append(cparser.config_from_file(open(user_conf_file)))
-        if have_system_conf:
-            configs.append(cparser.config_from_file(open(system_conf_file)))
-    else:
-        # make.conf...
-        from pkgcore.ebuild.portage_conf import config_from_make_conf
-        configs.append(config_from_make_conf())
+    configs = list(prepend_sources)
+    if not skip_config_files:
+        have_system_conf = os.path.isfile(system_conf_file)
+        have_user_conf = os.path.isfile(user_conf_file)
+        if have_system_conf or have_user_conf:
+            if have_user_conf:
+                configs.append(cparser.config_from_file(open(user_conf_file)))
+            if have_system_conf:
+                configs.append(
+                    cparser.config_from_file(open(system_conf_file)))
+        else:
+            # make.conf...
+            from pkgcore.ebuild.portage_conf import config_from_make_conf
+            configs.append(config_from_make_conf())
     configs.extend(get_plugins('global_config'))
     return central.ConfigManager(configs, debug=debug)

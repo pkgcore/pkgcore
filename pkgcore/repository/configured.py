@@ -7,8 +7,8 @@ wrap a repository, binding configuration to pkgs returned from the repository
 
 from pkgcore.repository import prototype
 from pkgcore.package.conditionals import make_wrapper
-from pkgcore.util.currying import partial
-from pkgcore.util.klass import GetAttrProxy
+from snakeoil.currying import partial
+from snakeoil.klass import GetAttrProxy
 
 
 class tree(prototype.tree):

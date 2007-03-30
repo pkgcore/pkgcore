@@ -15,14 +15,15 @@ __all__ = [
 
 from pkgcore.merge import errors, const
 import pkgcore.os_data
-from pkgcore.util.demandload import demandload
-from pkgcore.util.osutils import listdir_files, pjoin, ensure_dirs, normpath
+
+from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
+from snakeoil.demandload import demandload
 demandload(globals(), "os errno "
     "pkgcore.plugin:get_plugin "
     "pkgcore:spawn "
     "pkgcore.fs.livefs:gen_obj "
     "pkgcore.fs:fs,contents "
-    "pkgcore.util.file:iter_read_bash "
+    "snakeoil.fileutils:iter_read_bash "
     "time "
     "math:floor "
     )

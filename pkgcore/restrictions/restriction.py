@@ -6,8 +6,8 @@
 base restriction class
 """
 
-from pkgcore.util import caching
-from pkgcore.util.currying import partial, pretty_docs
+from snakeoil import caching
+from snakeoil.currying import partial, pretty_docs
 
 class base(object):
 

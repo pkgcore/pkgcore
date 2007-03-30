@@ -26,7 +26,7 @@ class AtomParsingTest(TestCase):
             'spork2': {'foon': ('2',)}})
         self.assertRaises(pmerge.NoMatches,
             pmerge.parse_atom, "foo", repo)
-        self.assertRaises(pmerge.AmbiguousQuery, 
+        self.assertRaises(pmerge.AmbiguousQuery,
             pmerge.parse_atom, "foon", repo)
 
 
@@ -37,7 +37,12 @@ class CommandlineTest(TestCase, helpers.MainMixin):
 
     def test_parser(self):
         self.assertError(
-            "Sorry, using sets with -C probably isn't wise", '-Cs', 'boo')
+            "Using sets with -C probably isn't wise, aborting", '-Cs', 'boo')
         self.assertError(
             '--usepkg is redundant when --usepkgonly is used', '-Kk')
-        self.assertError("need at least one atom", '--unmerge')
+        self.assertError("You must provide at least one atom", '--unmerge')
+        options = self.parse('-s world')
+        self.assertFalse(options.replace)
+        options = self.parse('--clean')
+        self.assertEqual(options.set, ['world', 'system'])
+        self.assertTrue(options.deep, True)

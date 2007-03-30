@@ -9,7 +9,7 @@ class native_CpvTest(TestCase):
 
     kls = staticmethod(cpv.native_CPV)
     run_cpy_ver_cmp = False
-    
+
     good_cats = [
         "dev-util", "dev+", "dev-util+", "DEV-UTIL", "aaa0",
         "aaa-0", "multi/depth", "cross-dev_idiot.hacks-suck", "a"]
@@ -28,10 +28,10 @@ class native_CpvTest(TestCase):
     suf_nums = list(xrange(100))
     shuffle(suf_nums)
 
-    good_sufs = (simple_good_sufs +["%s%i" % (x, suf_nums.pop()) 
+    good_sufs = (simple_good_sufs +["%s%i" % (x, suf_nums.pop())
         for x in simple_good_sufs])
     del suf_nums
-    
+
     l = len(good_sufs)
     good_sufs = good_sufs + [
         good_sufs[x] + good_sufs[l - x - 1] for x in xrange(l)]

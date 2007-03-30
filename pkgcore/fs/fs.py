@@ -6,10 +6,10 @@ filesystem entry abstractions
 """
 
 import stat
-from pkgcore.util.mappings import LazyFullValLoadDict
 from pkgcore.chksum import get_handlers, get_chksums
 from os.path import sep as path_seperator, abspath
 from pkgcore.interfaces.data_source import local_source
+from snakeoil.mappings import LazyFullValLoadDict
 
 # goofy set of classes representating the fs objects pkgcore knows of.
 

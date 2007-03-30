@@ -1,14 +1,14 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+import os
 
 from pkgcore.ebuild import eclass_cache
 from pkgcore.interfaces import data_source
-from pkgcore.util.osutils import pjoin
-import os
-
 from pkgcore.test.mixins import TempDirMixin
 from pkgcore.test import TestCase
+
+from snakeoil.osutils import pjoin
 
 class FakeEclassCache(eclass_cache.base):
 

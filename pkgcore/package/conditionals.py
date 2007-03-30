@@ -7,12 +7,13 @@ conditional attributes on a package.
 Changing them triggering regen of other attributes on the package instance.
 """
 
-from pkgcore.package.base import wrapper
-from pkgcore.util.containers import LimitedChangeSet, Unchangable
-from pkgcore.util.demandload import demandload
-from pkgcore.util.klass import GetAttrProxy
 from operator import attrgetter
-from pkgcore.util.currying import partial
+from pkgcore.package.base import wrapper
+
+from snakeoil.containers import LimitedChangeSet, Unchangable
+from snakeoil.klass import GetAttrProxy
+from snakeoil.currying import partial
+from snakeoil.demandload import demandload
 demandload(globals(), "copy")
 
 

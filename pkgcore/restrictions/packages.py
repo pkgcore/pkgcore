@@ -6,9 +6,9 @@ restriction classes designed for package level matching
 """
 
 from pkgcore.restrictions import restriction, boolean
-from pkgcore.util.demandload import demandload
-from pkgcore.util.compatibility import any
-from pkgcore.util.klass import chained_getter, generic_equality
+from snakeoil.compatibility import any
+from snakeoil.klass import chained_getter, generic_equality
+from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
 
 # Backwards compatibility.

@@ -15,14 +15,15 @@ import operator
 
 from pkgcore.fs import contents
 from pkgcore.fs import gen_obj as gen_fs_obj
-from pkgcore.util.mappings import LazyValDict, ImmutableDict, StackedDict
-from pkgcore.util import currying
 from pkgcore.plugin import get_plugins
 from pkgcore.merge import errors
 from pkgcore.interfaces import observer as observer_mod
 from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
 
-from pkgcore.util.demandload import demandload
+from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
+from snakeoil import currying
+
+from snakeoil.demandload import demandload
 demandload(globals(), "errno "
 )
 

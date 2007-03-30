@@ -8,9 +8,9 @@ implementation of the standard PORTDIR + PORTDIR_OVERLAY repository stacking
 from pkgcore.repository import multiplex
 from pkgcore.config import ConfigHint, errors
 from pkgcore.ebuild import repository
-from pkgcore.util.lists import unstable_unique
 from pkgcore.restrictions import packages
 
+from snakeoil.lists import unstable_unique
 
 class OverlayRepo(multiplex.tree):
 

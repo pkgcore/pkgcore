@@ -8,13 +8,17 @@ in memory representation of on disk eclass stacking order
 
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.config import ConfigHint
-from pkgcore.util.mappings import ImmutableDict
-from pkgcore.util.weakrefs import WeakValCache
-from pkgcore.util.osutils import join as pjoin
 
-from pkgcore.util.demandload import demandload
+from snakeoil.mappings import ImmutableDict
+from snakeoil.weakrefs import WeakValCache
+from snakeoil.osutils import join as pjoin
+
+from snakeoil.demandload import demandload
 demandload(globals(),
-           "pkgcore.util.osutils:normpath pkgcore.util.mappings:StackedDict os")
+    "os "
+    "snakeoil.osutils:normpath "
+    "snakeoil.mappings:StackedDict "
+)
 
 class base(object):
     """

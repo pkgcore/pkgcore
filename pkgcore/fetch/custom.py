@@ -8,9 +8,9 @@ fetcher class that pulls files via executing another program to do the fetching
 import os
 from pkgcore.spawn import spawn_bash, is_userpriv_capable
 from pkgcore.os_data import portage_uid, portage_gid
-from pkgcore.util.osutils import ensure_dirs, join as pjoin
 from pkgcore.fetch import errors, base, fetchable
 from pkgcore.config import ConfigHint
+from snakeoil.osutils import ensure_dirs, join as pjoin
 
 class MalformedCommand(errors.base):
 

@@ -8,10 +8,9 @@
 atom version restrict
 """
 
-from pkgcore.util.klass import generic_equality
 from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild import cpv, errors
-
+from snakeoil.klass import generic_equality
 
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq,
 # ne ops, and convert this to it.

@@ -39,9 +39,8 @@ Example of the supported format (not a complete config)::
 
 # The tests for this are in test_dhcpformat.
 
-from pkgcore.util import mappings
 from pkgcore.config import dhcpformat, errors
-
+from snakeoil import mappings
 import pyparsing as pyp
 
 

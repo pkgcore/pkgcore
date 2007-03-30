@@ -49,7 +49,8 @@ test {
             section = config['test']
             self.failUnless('hi' in section)
             self.assertEqual(section.keys(), ['hi'])
-            self.assertEqual(section.get_value(None, 'hi', 'str'), 'there')
+            self.assertEqual(section.get_value(None, 'hi', 'str'),
+                             [None, 'there', None])
 
     def test_basic_types(self):
         for parser, text in [
@@ -72,8 +73,8 @@ test {
             config = parser(StringIO(text))
             section = config['test']
             for name, typename, value in (
-                ('list', 'list', ['one', 'two', 'three']),
-                ('string', 'str', 'hi'),
+                ('list', 'list', (None, ['one', 'two', 'three'], None)),
+                ('string', 'str', [None, 'hi', None]),
                 ('bool', 'bool', True),
                 ('callable', 'callable', passthrough),
                 ):
@@ -130,7 +131,8 @@ test {
                 ((), {'hi': 'here'}))
             kind, ref = section.get_value(manager, 'inline', 'repr')
             self.assertEqual('ref', kind)
-            self.assertEqual('here', ref.get_value(None, 'hi', 'str'))
+            self.assertEqual(
+                [None, 'here', None], ref.get_value(None, 'hi', 'str'))
 
     def test_multiple_section_ref(self):
         for parser, text in [
@@ -189,7 +191,8 @@ test {
             self.assertEqual('refs', kind)
             self.assertEqual(2, len(refs))
             self.assertEqual('target', refs[0])
-            self.assertEqual('here', refs[1].get_value(None, 'hi', 'str'))
+            self.assertEqual(
+                [None, 'here', None], refs[1].get_value(None, 'hi', 'str'))
 
     def test_section_refs(self):
         for parser, text in [

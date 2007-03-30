@@ -5,9 +5,9 @@
 from pkgcore.test import TestCase
 from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import packages, values, boolean
-from pkgcore.util import parserestrict
-from pkgcore.util.currying import post_curry
 from pkgcore.repository import util
+from pkgcore.util import parserestrict
+from snakeoil.currying import post_curry
 
 
 class MatchTest(TestCase):

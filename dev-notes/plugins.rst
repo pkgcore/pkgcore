@@ -90,19 +90,22 @@ Import behaviour
 
 Assuming the cache is working correctly (it was generated after
 installing a plugin as root) pkgcore will import all plugin modules
-containing plugins for a requested key. No more, no less. The priority
-and disabled values are not cached (intentionally, since they may
-change without a cache invalidation), so it has to check all plugins
-for the key even if only one of them is requested (``get_plugin``, and
-the same will usually be true for ``get_plugins``).
+containing plugins for a requested key in priority order until it hits
+one that is not disabled. The "disabled" value is not cached (a plugin
+that is unconditionally disabled makes no sense), but the priority
+value is. You can fake a dynamic priority by having two instances of
+your plugin registered and only one of them enabled at the same
+time.
 
 This means it makes sense to have only one kind of plugin per plugin
-module (unless the required imports overlap).
+module (unless the required imports overlap): this avoids pulling in
+imports for other kinds of plugin when one kind of plugin is
+requested.
 
-The disabled and priority values are not cached by the plugin system
-after the plugin module is imported. This means they should be simple
-attributes (either completely constant or set at import time) or
-properties that do their own caching.
+The disabled value is not cached by the plugin system after the plugin
+module is imported. This means it should be a simple attribute (either
+completely constant or set at import time) or property that does its
+own caching.
 
 Adding a plugin package
 =======================

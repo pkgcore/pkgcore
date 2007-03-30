@@ -8,8 +8,9 @@ misc. stuff we've not found a spot for yet.
 from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.profiles import incremental_expansion
-from pkgcore.util.lists import iflatten_instance
-from pkgcore.util.klass import generic_equality
+
+from snakeoil.lists import iflatten_instance
+from snakeoil.klass import generic_equality
 
 class collapsed_restrict_to_data(object):
 

@@ -8,7 +8,7 @@ template for fs based backends
 import os
 from pkgcore.cache import template
 from pkgcore.os_data import portage_gid
-from pkgcore.util.osutils import ensure_dirs
+from snakeoil.osutils import ensure_dirs
 
 class FsBased(template.database):
     """Template wrapping fs needed options.

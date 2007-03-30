@@ -6,10 +6,10 @@
 package with it's metadata accessible (think 'no longer abstract')
 """
 
-from pkgcore.util.weakrefs import WeakValCache
-
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild.atom import atom
+
+from snakeoil.weakrefs import WeakValCache
 
 def DeriveMetadataKls(original_kls):
     if getattr(original_kls, "_derived_metadata_kls", False):

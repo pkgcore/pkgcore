@@ -2,10 +2,9 @@
 # License: GPL2
 
 from pkgcore.test import TestCase
-
 from pkgcore.scripts import pconfig
 from pkgcore.test.scripts import helpers
-from pkgcore.config import configurable, basics
+from pkgcore.config import configurable, basics, errors
 from pkgcore.util import commandline
 
 @configurable({'reff': 'ref:spork'})
@@ -33,7 +32,7 @@ def multi(**kwargs):
 def broken_type(*args):
     """Noop."""
 
-@configurable(incrementals=['inc'], types={'inc': 'list'}, allow_unknowns=True)
+@configurable(types={'inc': 'list'}, allow_unknowns=True)
 def increment(inc=()):
     """Noop."""
 
@@ -51,6 +50,7 @@ class DescribeClassTest(TestCase, helpers.MainMixin):
             'need exactly one argument: class to describe.')
         self.assertError(
             'need exactly one argument: class to describe.', 'a', 'b')
+        self.parse('pkgcore.scripts')
 
     def test_describe_class(self):
         self.assertOut(
@@ -64,7 +64,7 @@ class DescribeClassTest(TestCase, helpers.MainMixin):
              'Noop.',
              'values not listed are handled as strings',
              '',
-             'inc: list (incremental)'],
+             'inc: list'],
             'pkgcore.test.scripts.test_pconfig.increment')
 
     def test_broken_type(self):
@@ -259,7 +259,9 @@ class WeirdSection(basics.ConfigSection):
             raise KeyError(name)
         if arg_type != 'repr':
             raise errors.ConfigurationError('%r unsupported' % (arg_type,))
-        return 'refs', ['spork', basics.HardCodedConfigSection({'foo': 'bar'})]
+        return 'refs', [
+            ['spork', basics.HardCodedConfigSection({'foo': 'bar'})],
+            None, None]
 
 
 class DumpUncollapsedTest(TestCase, helpers.MainMixin):
@@ -297,7 +299,7 @@ class DumpUncollapsedTest(TestCase, helpers.MainMixin):
              '    nested section 2',
              '    ================',
              '    # type: refs',
-             "    'sects' = ",
+             "    'sects.prepend' = ",
              '        nested section 1',
              '        ================',
              "        named section 'spork'",

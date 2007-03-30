@@ -12,8 +12,8 @@ import sys
 
 sys.path.insert(0, osp.dirname(osp.dirname(osp.abspath(__file__))))
 
-from pkgcore.util import modules, commandline
-
+from pkgcore.util import commandline
+from snakeoil import modules
 
 if __name__ == '__main__':
     name = osp.basename(sys.argv[0])

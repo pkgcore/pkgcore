@@ -6,18 +6,20 @@ Gentoo Linux Security Advisories (GLSA) support
 """
 
 import os
-from pkgcore.util.iterables import caching_iter
+
 from pkgcore.restrictions import packages, restriction, boolean, values
 from pkgcore.config import ConfigHint
-from pkgcore.util.osutils import listdir_files, join as pjoin
-from pkgcore.util.klass import generic_equality
 
-from pkgcore.util.demandload import demandload
-demandload(globals(), "pkgcore.util.xml:etree "
-    "pkgcore.util.repo_utils:get_virtual_repos "
+from snakeoil.osutils import listdir_files, join as pjoin
+from snakeoil.klass import generic_equality
+from snakeoil.iterables import caching_iter
+from snakeoil.demandload import demandload
+demandload(globals(),
     "pkgcore.package:mutated "
     "pkgcore.ebuild:cpv,atom "
     "pkgcore.log:logger "
+    "pkgcore.util.repo_utils:get_virtual_repos "
+    "snakeoil.xml:etree "
     )
 
 
@@ -60,7 +62,7 @@ class GlsaDirSet(object):
         """
 
         if not isinstance(src, basestring):
-            src = tuple(sorted(filter(os.path.isdir, 
+            src = tuple(sorted(filter(os.path.isdir,
                 (pjoin(repo.base, 'metadata', 'glsa') for repo in
                     get_virtual_repos(src, False) if hasattr(repo, 'base'))
                 )))
@@ -103,6 +105,7 @@ class GlsaDirSet(object):
                 #"glsa-1234-12.xml
                 if not (fn.startswith("glsa-") and fn.endswith(".xml")):
                     continue
+                # What does this do?
                 try:
                     [int(x) for x in fn[5:-4].split("-")]
                 except ValueError:

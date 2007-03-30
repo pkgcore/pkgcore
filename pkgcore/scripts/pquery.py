@@ -8,11 +8,10 @@
 
 import optparse
 
-from pkgcore.util import (
-    commandline, repo_utils, parserestrict, packages as pkgutils)
 from pkgcore.restrictions import packages, values, boolean, restriction
 from pkgcore.ebuild import conditionals, atom
-
+from pkgcore.util import (
+    commandline, repo_utils, parserestrict, packages as pkgutils)
 
 # To add a new restriction you have to do the following:
 # - add a parse function for it here.

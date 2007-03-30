@@ -8,7 +8,7 @@
 """Filter a bash environment dump."""
 
 
-from pkgcore.util import demandload
+from snakeoil import demandload
 demandload.demandload(
     globals(),
     're '

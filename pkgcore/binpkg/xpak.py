@@ -6,8 +6,8 @@ XPAK container support
 """
 
 import struct
-from pkgcore.util.mappings import OrderedDict
-from pkgcore.util.demandload import demandload
+from snakeoil.mappings import OrderedDict
+from snakeoil.demandload import demandload
 demandload(globals(), "os errno")
 
 #

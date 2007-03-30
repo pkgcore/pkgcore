@@ -4,7 +4,7 @@
 from pkgcore.restrictions.packages import OrRestriction
 from pkgcore.repository import multiplex, virtual
 from pkgcore.vdb.ondisk import tree as vdb_repository
-from pkgcore.util.currying import partial
+from snakeoil.currying import partial
 
 def _grab_virtuals(parent_repo):
     virtuals = {}

@@ -15,7 +15,7 @@ import docutils.utils
 sys.path.append('man')
 import manpage
 
-from pkgcore.util import modules
+from snakeoil import modules
 
 # (limited) support for trac wiki links.
 # This is copied and hacked up from rst.py in the trac source.

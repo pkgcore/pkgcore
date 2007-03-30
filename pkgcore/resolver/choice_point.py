@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from pkgcore.util.lists import iter_stable_unique
+from snakeoil.lists import iter_stable_unique
 
 class choice_point(object):
 

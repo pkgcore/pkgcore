@@ -2,28 +2,28 @@
 # License: GPL2
 
 import os, stat, errno, shutil
-from pkgcore.repository import prototype, errors
 
-#needed to grab the PN
-from pkgcore.ebuild.cpv import CPV as cpv
-from pkgcore.util.osutils import ensure_dirs, pjoin
-from pkgcore.util.mappings import IndeterminantDict
-from pkgcore.util.currying import partial
+from pkgcore.repository import prototype, errors
 from pkgcore.vdb.contents import ContentsFile
 from pkgcore.vdb import virtuals
 from pkgcore.plugin import get_plugin
 from pkgcore.interfaces import repo as repo_interfaces
 from pkgcore.interfaces import data_source
-from pkgcore.util.osutils import listdir_dirs, readfile
 from pkgcore.repository import multiplex
-from pkgcore.util import bzip2
 from pkgcore.config import ConfigHint
+#needed to grab the PN
+from pkgcore.ebuild.cpv import CPV as cpv
 
-from pkgcore.util.demandload import demandload
+from snakeoil.osutils import ensure_dirs, pjoin
+from snakeoil.mappings import IndeterminantDict
+from snakeoil.currying import partial
+from snakeoil.osutils import listdir_dirs, readfile
+from pkgcore.util import bzip2
+from snakeoil.demandload import demandload
 demandload(globals(),
            "time "
            "pkgcore.ebuild:conditionals "
-           "pkgcore.const "
+           "pkgcore.const:VERSION "
            "pkgcore.ebuild:triggers "
            "pkgcore.log:logger "
            "pkgcore.fs.ops:change_offset_rewriter "
@@ -287,7 +287,7 @@ class install(repo_interfaces.livefs_install):
 
         #finally, we mark who made this.
         open(pjoin(dirpath, "PKGMANAGER"), "w").write(
-            "pkgcore-%s" % pkgcore.const.VERSION)
+            "pkgcore-%s" % VERSION)
         return True
 
 

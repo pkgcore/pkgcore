@@ -7,9 +7,9 @@
 import traceback
 
 from pkgcore.config import errors, basics
-from pkgcore.util import commandline, modules
 from pkgcore.plugin import get_plugins
-
+from pkgcore.util import commandline
+from snakeoil import modules
 
 class DescribeClassParser(commandline.OptionParser):
 
@@ -128,8 +128,6 @@ def write_type(out, type_obj):
         out.write('%s: %s' % (name, typename), autoline=False)
         if name in type_obj.required:
             out.write(' (required)', autoline=False)
-        if name in type_obj.incrementals:
-            out.write(' (incremental)', autoline=False)
         out.write()
 
 
@@ -240,29 +238,44 @@ def _dump_uncollapsed_section(config, out, section):
     for key in sorted(section.keys()):
         kind, value = section.get_value(config, key, 'repr')
         out.write('# type: %s' % (kind,))
+        if kind == 'list':
+            for name, val in zip((
+                    key + '.prepend', key, key + '.append'), value):
+                if val:
+                    out.write(
+                        repr(name), ' = ', ' '.join(repr(v) for v in val))
+            continue
+        if kind in ('refs', 'str'):
+            for name, val in zip((
+                    key + '.prepend', key, key + '.append'), value):
+                if not val:
+                    continue
+                out.write(repr(name), ' = ', autoline=False)
+                if kind == 'str':
+                    out.write(repr(val))
+                else:
+                    out.write()
+                    out.first_prefix.append('    ')
+                    try:
+                        for subnr, subsection in enumerate(val):
+                            subname = 'nested section %s' % (subnr + 1,)
+                            out.write(subname)
+                            out.write('=' * len(subname))
+                            _dump_uncollapsed_section(config, out, subsection)
+                            out.write()
+                    finally:
+                        out.first_prefix.pop()
+            continue
         out.write('%r = ' % (key,), autoline=False)
-        if kind == 'str':
-            out.write(repr(value))
-        elif kind == 'list':
-            out.write(' '.join(repr(v) for v in value))
-        elif kind == 'callable':
+        if kind == 'callable':
             out.write(value.__module__, value.__name__)
         elif kind == 'bool':
             out.write(str(value))
-        elif kind == 'ref' or kind == 'refs':
+        elif kind == 'ref':
             out.first_prefix.append('    ')
             try:
-                if kind == 'ref':
-                    out.write()
-                    _dump_uncollapsed_section(config, out, value)
-                else:
-                    out.write()
-                    for subnr, subsection in enumerate(value):
-                        name = 'nested section %s' % (subnr + 1,)
-                        out.write(name)
-                        out.write('=' * len(name))
-                        _dump_uncollapsed_section(config, out, subsection)
-                        out.write()
+                out.write()
+                _dump_uncollapsed_section(config, out, value)
             finally:
                 out.first_prefix.pop()
         else:

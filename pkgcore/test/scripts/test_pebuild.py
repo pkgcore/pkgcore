@@ -17,3 +17,4 @@ class CommandlineTest(TestCase, helpers.MainMixin):
         self.assertError('Specify an atom and at least one phase.', 'foo')
         self.assertError("atom 'spork' is malformed: error spork",
                          'spork', 'unpack')
+        self.assertEqual(self.parse('foo/bar', 'baz', 'spork').phases, ['baz', 'spork'])

@@ -12,7 +12,7 @@ class Test_funcs(TestCase):
         chksum.__inited__ = False
         chksum.chksum_types.clear()
         chksum.init = self._saved_init
-    
+
     def setUp(self):
         chksum.__inited__ = False
         chksum.chksum_types.clear()
@@ -42,4 +42,4 @@ class Test_funcs(TestCase):
         self.assertEqual(1, chksum.get_handler("x"))
         self.assertEqual(2, chksum.get_handler("y"))
         self.assertEqual(self._inited_count, 1)
-        
+

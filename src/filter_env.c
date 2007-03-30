@@ -8,7 +8,7 @@
 #define PY_SSIZE_T_CLEAN
 
 #include <Python.h>
-#include "py24-compatibility.h"
+#include <snakeoil/py24-compatibility.h>
 
 PyDoc_STRVAR(
     module_doc,

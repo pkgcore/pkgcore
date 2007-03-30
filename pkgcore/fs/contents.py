@@ -6,9 +6,9 @@ contents set- container of fs objects
 """
 
 from pkgcore.fs import fs
-from pkgcore.util.compatibility import all
-from pkgcore.util.klass import generic_equality
-from pkgcore.util.demandload import demandload
+from snakeoil.compatibility import all
+from snakeoil.klass import generic_equality
+from snakeoil.demandload import demandload
 demandload(globals(),
     "pkgcore.fs.ops:offset_rewriter,change_offset_rewriter "
 )

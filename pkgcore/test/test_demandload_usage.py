@@ -1,10 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.util import demandload
-import sys
 
+import sys
 from pkgcore.test import TestCase
+from snakeoil import demandload
 
 class TestDemandLoadTargets(TestCase):
 

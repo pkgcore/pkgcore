@@ -5,12 +5,13 @@
 binpkg tar utilities
 """
 import os, stat
-from pkgcore.util.tar import tarfile
 from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsFifo, fsDev
 from pkgcore.fs import contents
-from pkgcore.util.mappings import OrderedDict, StackedDict
 from pkgcore.interfaces.data_source import data_source
-from pkgcore.util.currying import partial
+
+from snakeoil.tar import tarfile
+from snakeoil.mappings import OrderedDict, StackedDict
+from snakeoil.currying import partial
 
 class tar_data_source(data_source):
     def get_fileobj(self):

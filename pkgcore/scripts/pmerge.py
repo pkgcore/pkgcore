@@ -5,19 +5,19 @@
 
 """Mess with the resolver and vdb."""
 
+from time import time
 
-import time
-
-from pkgcore.restrictions import packages, values
-from pkgcore.util import commandline, parserestrict, lists, repo_utils
-from pkgcore.util.compatibility import any
+from pkgcore.util import commandline, parserestrict, repo_utils
 from pkgcore.ebuild import resolver
 from pkgcore.repository import multiplex
 from pkgcore.interfaces import observer, format
-from pkgcore.util.formatters import ObserverFormatter
-from pkgcore.util.packages import get_raw_pkg
+from pkgcore.ebuild.formatter import formatters
 from pkgcore.pkgsets.glsa import KeyedAndRestriction
 from pkgcore.ebuild.atom import atom
+
+from snakeoil import lists
+from snakeoil.formatters import ObserverFormatter
+from snakeoil.compatibility import any
 
 class OptionParser(commandline.OptionParser):
 
@@ -76,11 +76,21 @@ a depends on b, and b depends on a, with neither built is an example""")
         self.add_option('--force', action='store_true',
                         dest='force',
             help="force merging to a repo, regardless of if it's frozen")
-        self.add_option('--oneshot', '-o', action='store_true',
+        self.add_option('--oneshot', '-o', '-1', action='store_true',
             default=False,
             help="do not record changes in the world file; if a set is "
-            "involved, defaults to forcing oneshot")
-
+                "involved, defaults to forcing oneshot")
+        self.add_option(
+            '--formatter', '-F', type='choice', choices=formatters.keys(),
+            default='portage',
+            help='which formatter to output --pretend or --ask output through. '
+            'valid values are: %s' % (', '.join(formatters),))
+        self.add_option('--verbose', '-v', action='store_true',
+            help="be more verbose about the buildplan. Currently only "
+            'supported by the portage formatter')
+        self.add_option('--quiet', '-q', action='store_true',
+            help="be quieter about the buildplan. "
+            "*Not* the same as omitting verbose")
 
     def check_values(self, options, args):
         options, args = commandline.OptionParser.check_values(
@@ -89,13 +99,13 @@ a depends on b, and b depends on a, with neither built is an example""")
 
         if options.unmerge:
             if options.set:
-                self.error("Sorry, using sets with -C probably isn't wise")
+                self.error("Using sets with -C probably isn't wise, aborting")
             if options.upgrade:
-                self.error("can't combine upgrade and unmerging")
+                self.error("Cannot upgrade and unmerge simultaneously")
             if not options.targets:
-                self.error("need at least one atom")
+                self.error("You must provide at least one atom")
             if options.clean:
-                self.error("Sorry, -C cannot be used with --clean")
+                self.error("Cannot use -C with --clean")
         if options.clean:
             if options.set or options.targets:
                 self.error("--clean currently has set/targets disabled; in "
@@ -112,7 +122,6 @@ a depends on b, and b depends on a, with neither built is an example""")
         if not options.targets and not options.set:
             self.error('Need at least one atom/set')
         return options, ()
-
 
 class AmbiguousQuery(parserestrict.ParseError):
     def __init__(self, token, keys):
@@ -155,47 +164,6 @@ class Failure(ValueError):
     """Raised internally to indicate an "expected" failure condition."""
 
 
-def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
-    """Ask the user to choose from a set of options.
-
-    Displays a prompt and a set of responses, then waits for a
-    response which is checked against the responses. If there is an
-    unambiguous match the value is returned.
-
-    @type prompt: C{basestring}.
-    @type out: formatter.
-    @type err: file-like object.
-    @type responses: mapping with C{basestring} keys
-    @param responses: mapping of user input to function result.
-        Defaults to {"Yes": True, "No": False}.
-    @param default_answer: returned if there is no input
-        (user just hits enter). Defaults to True if responses is unset,
-        unused otherwise.
-    @param limit: number of allowed tries.
-    """
-    if responses is None:
-        responses = {'Yes': True, 'No': False}
-    if default_answer is None:
-        default_answer = True
-    for i in range(limit):
-        response = raw_input('%s [%s] ' % (prompt, '/'.join(responses)))
-        if not response and default_answer is not None:
-            return default_answer
-
-        results = set(
-            (key, value) for key, value in responses.iteritems()
-            if key[:len(response)].upper() == response.upper())
-        if not results:
-            out.write('Sorry, response "%s" not understood.' % (response,))
-        elif len(results) > 1:
-            out.write('Response "%s" is ambiguous (%s)' % (
-                    response, ', '.join(key for key, val in results)))
-        else:
-            return list(results)[0][1]
-
-    raise Failure('You have input a wrong response too many times.')
-
-
 def unmerge(out, err, vdb, tokens, options, world_set=None):
     """Unmerge tokens. hackish, should be rolled back into the resolver"""
     all_matches = set()
@@ -215,12 +183,12 @@ def unmerge(out, err, vdb, tokens, options, world_set=None):
         categories = set(pkg.category for pkg in matches)
         if len(categories) > 1:
             raise parserestrict.ParseError(
-                '%s matches in multiple categories (%s)' % (
+                '%s is in multiple categories (%s)' % (
                     token, ', '.join(set(pkg.key for pkg in matches))))
         all_matches.update(matches)
 
     matches = sorted(all_matches)
-    out.write(out.bold, 'Unmerge:')
+    out.write(out.bold, 'The following packages are to be unmerged:')
     out.prefix = [out.bold, ' * ', out.reset]
     for match in matches:
         out.write(match.cpvstr)
@@ -232,7 +200,7 @@ def unmerge(out, err, vdb, tokens, options, world_set=None):
         return
 
     if (options.ask and not
-        userquery("Would you like to unmerge these packages?", out, err)):
+        formatter.ask("Would you like to unmerge these packages?")):
         return
     return do_unmerge(options, out, err, vdb, matches, world_set, repo_obs)
 
@@ -240,7 +208,7 @@ def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
     if vdb.frozen:
         if options.force:
             out.write(
-                out.fg(out.red), out.bold,
+                out.fg('red'), out.bold,
                 'warning: vdb is frozen, overriding')
             vdb.frozen = False
         else:
@@ -254,7 +222,7 @@ def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
         if not ret:
             if not options.ignore_failures:
                 raise Failure('failed unmerging %s' % (match,))
-            out.write(out.fg(out.red), 'failed unmerging ', match)
+            out.write(out.fg('red'), 'failed unmerging ', match)
         update_worldset(world_set, match, remove=True)
     out.write("finished; removed %i packages" % len(matches))
 
@@ -288,14 +256,18 @@ def main(options, out, err):
     domain = config.get_default('domain')
     vdb = domain.all_vdbs
 
+    formatter = formatters[options.formatter](out=out, err=err,
+        verbose=options.verbose, use_expand=domain.use_expand,
+        use_expand_hidden=domain.use_expand_hidden)
+
     # This mode does not care about sets and packages so bypass all that.
     if options.unmerge:
         world_set = None
         if not options.oneshot:
             world_set = get_pkgset(config, err, "world")
             if world_set is None:
-                err.write("disable world updating via --oneshot, or fix your "
-                    "config")
+                err.write("Disable world updating via --oneshot, or fix your "
+                    "configuration")
                 return 1
         try:
             unmerge(
@@ -340,18 +312,18 @@ def main(options, out, err):
         if a is None:
             if token in config.pkgset:
                 out.error(
-                    'No package matches for %r, but there is a set with '
+                    'No package matches %r, but there is a set with '
                     'that name. Use -s to specify a set.' % (token,))
                 return 2
             elif not options.ignore_failures:
-                out.error('No matches for %r; ignoring' % token)
+                out.error('No matches for %r; ignoring it' % token)
             else:
                 return -1
         else:
             atoms.append(a)
 
     if not atoms:
-        out.error('No targets specified- nothing to do')
+        out.error('No targets specified; nothing to do')
         return 1
 
     atoms = lists.stable_unique(atoms)
@@ -360,8 +332,8 @@ def main(options, out, err):
     if (not options.set or options.clean) and not options.oneshot:
         world_set = get_pkgset(config, err, 'world')
         if world_set is None:
-            err.write("disable world updating via --oneshot, or fix your "
-                "config")
+            err.write("Disable world updating via --oneshot, or fix your "
+                "configuration")
             return 1
 
     if options.upgrade:
@@ -381,14 +353,14 @@ def main(options, out, err):
 
     if options.preload_vdb_state:
         out.write(out.bold, ' * ', out.reset, 'Preloading vdb... ')
-        vdb_time = time.time()
+        vdb_time = time()
         resolver_inst.load_vdb_state()
-        vdb_time = time.time() - vdb_time
+        vdb_time = time() - vdb_time
     else:
         vdb_time = 0.0
 
     failures = []
-    resolve_time = time.time()
+    resolve_time = time()
     out.write(out.bold, ' * ', out.reset, 'Resolving...')
     out.title('Resolving...')
     for restrict in atoms:
@@ -400,7 +372,7 @@ def main(options, out, err):
             failures.append(restrict)
             if not options.ignore_failures:
                 break
-    resolve_time = time.time() - resolve_time
+    resolve_time = time() - resolve_time
     if failures:
         out.write()
         out.write('Failures encountered:')
@@ -415,20 +387,20 @@ def main(options, out, err):
                         "repo %s: [ %s ]" % (r, ", ".join(str(x) for x in l)))
                     match_count += len(l)
             if not match_count:
-                out.write("no matches found in %s" % (repos,))
+                out.write("No matches found in %s" % (repos,))
             out.write()
             if not options.ignore_failures:
                 return 1
 
     if options.clean:
-        out.write(out.bold, ' * ', out.reset, 'packages to remove')
+        out.write(out.bold, ' * ', out.reset, 'Packages to be removed:')
         vset = set(vdb)
         len_vset = len(vset)
         vset.difference_update(y.pkg for y in
             resolver_inst.state.iter_ops(True))
         wipes = sorted(x for x in vset if x.package_is_real)
         for x in wipes:
-            out.write("remove %s" % x)
+            out.write("Remove %s" % x)
         out.write()
         if len(wipes):
             out.write("removing %i packages of %i installed, %0.2f%%." %
@@ -436,44 +408,37 @@ def main(options, out, err):
         else:
             out.write("no packages to remove")
         if options.pretend:
-            return 0;
+            return 0
         if options.ask:
-            if not userquery("do you wish to proceed (default answer is no)?",
-                out, err, default_answer=False):
+            if not formatter.ask("Do you wish to proceed?", default_answer=False):
                 return 1
             out.write()
         repo_obs = observer.file_repo_observer(ObserverFormatter(out))
         do_unmerge(options, out, err, vdb, wipes, world_set, repo_obs)
-        return 0;
+        return 0
 
-    out.write(out.bold, ' * ', out.reset, 'buildplan')
     changes = list(x for x in resolver_inst.state.iter_ops()
         if x.pkg.package_is_real)
-    ops_count = {}
-    for op in changes:
-        ops_count.setdefault(op.desc, 0)
-        ops_count[op.desc] += 1
-        if op.desc == "replace":
-            out.write("replace %s, %s" %
-                (get_raw_pkg(op.old_pkg), get_raw_pkg(op.pkg)))
-        else:
-            out.write("%s %s" % (op.desc.ljust(7), get_raw_pkg(op.pkg)))
 
-    out.write()
-    out.write("%i ops: %s" % (sum(ops_count.itervalues()),
-        ", ".join("%i %ss" % (ops_count[k], k) for k in sorted(ops_count))))
-    out.write()
-    out.title('Resolved')
-    out.write(out.bold, '%.2f' % (resolve_time,), out.reset,
-              ' seconds resolving')
+    if options.ask or options.pretend:
+        for op in changes:
+            formatter.format(op)
+        formatter.end()
+
+    if options.verbose:
+        out.write()
+        out.title('Resolved')
+        out.write(out.bold, '%.2f' % (resolve_time,), out.reset,
+            ' seconds resolving')
+
     if vdb_time:
-        out.write(out.bold, '%.2f' % (vdb_time,), out.reset,
-                  ' seconds preloading vdb state')
+        out.write(out.bold, 'Took %.2f' % (vdb_time,), out.reset,
+                  ' seconds to preload vdb state')
     if options.pretend:
         return
 
     if (options.ask and not
-        userquery("Would you like to merge these packages?", out, err)):
+        formatter.ask("Would you like to merge these packages?")):
         return
 
     build_obs = observer.file_build_observer(ObserverFormatter(out))
@@ -481,14 +446,12 @@ def main(options, out, err):
 
     change_count = len(changes)
     for count, op in enumerate(changes):
-        status_str = "%i/%i, %s" % (count + 1, change_count,
-            get_raw_pkg(op.pkg))
-        out.write("processing %i of %i: %s" % (count + 1, change_count,
-            get_raw_pkg(op.pkg)))
-        out.title("%i/%i: %s" % (count + 1, change_count, get_raw_pkg(op.pkg)))
+        out.write("Processing %i of %i: %s" % (count + 1, change_count,
+            op.pkg.cpvstr))
+        out.title("%i/%i: %s" % (count + 1, change_count, op.pkg.cpvstr))
         if op.desc != "remove":
-            if not options.fetchonly:
-                out.write("forcing cleaning of workdir")
+            if not options.fetchonly and options.debug:
+                out.write("Forcing a clean of workdir")
             buildop = op.pkg.build(observer=build_obs, clean=True)
             if options.fetchonly:
                 out.write("\n%i files required-" % len(op.pkg.fetchables))
@@ -506,7 +469,6 @@ def main(options, out, err):
                 del buildop, ret
                 continue
 
-            out.write("building...")
             ret = None
             try:
                 built_pkg = buildop.finalize()
@@ -517,15 +479,18 @@ def main(options, out, err):
             if ret is None:
                 out.write()
                 if op.desc == "replace":
-                    out.write("replace:  %s with %s" % 
-                        (get_raw_pkg(op.old_pkg), get_raw_pkg(built_pkg)))
+                    if op.old_pkg == op.pkg:
+                        out.write(">>> Reinstalling %s" % (built_pkg.cpvstr))
+                    else:
+                        out.write(">>> Replacing %s with %s" % (
+                            op.old_pkg.cpvstr, built_pkg.cpvstr))
                     i = vdb.replace(op.old_pkg, built_pkg, observer=repo_obs)
                 else:
-                    out.write("install: %s" % get_raw_pkg(built_pkg))
+
+                    out.write(">>> Installing %s" % built_pkg.cpvstr)
                     i = vdb.install(built_pkg, observer=repo_obs)
             else:
-                out.error("failure building %s: %s" % (get_raw_pkg(op.pkg),
-                    ret))
+                out.error("Failed to build %s: %s" % (op.pkg, ret))
                 if not options.ignore_failures:
                     return 1
                 continue
@@ -533,7 +498,7 @@ def main(options, out, err):
             # then we would like.
             del built_pkg
         else:
-            out.write("remove:  %s" % get_raw_pkg(op.pkg))
+            out.write(">>> Removing %s" % op.pkg.cpvstr)
             i = vdb.uninstall(op.pkg, observer=repo_objs)
         ret = i.finish()
         if ret != True:
@@ -543,8 +508,10 @@ def main(options, out, err):
         buildop.cleanup()
         if world_set:
             if op.desc == "remove":
+                out.write('>>> Removing %s from world file' % op.pkg.cpvstr)
                 update_worldset(world_set, op.pkg, remove=True)
             elif any(x.match(op.pkg) for x in atoms):
+                out.write('>>> Adding %s to world file' % op.pkg.cpvstr)
                 update_worldset(world_set, op.pkg)
     out.write("finished")
     return 0

@@ -1,11 +1,11 @@
 # Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+import tempfile, os
 from pkgcore.test import TestCase, SkipTest
 from pkgcore import chksum
 from pkgcore.interfaces.data_source import data_source, local_source
-from pkgcore.util.currying import post_curry
-import tempfile, os
+from snakeoil.currying import post_curry
 
 data = "afsd123klawerponzzbnzsdf;h89y23746123;haas"
 multi = 40000

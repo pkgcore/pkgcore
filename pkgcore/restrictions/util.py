@@ -5,8 +5,8 @@
 restriction related utilities
 """
 
-from pkgcore.util.lists import iflatten_func
 from pkgcore.restrictions import packages, boolean, restriction
+from snakeoil.lists import iflatten_func
 
 def _is_package_instance(inst):
     return (getattr(inst, "type", None) == packages.package_type

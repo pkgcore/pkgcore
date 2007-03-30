@@ -6,16 +6,21 @@ ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 """
 
 import os, stat
+
 from pkgcore.repository import prototype, errors, configured, syncable
-from pkgcore.util.file import read_dict, iter_read_bash
-from pkgcore.util import currying
-from pkgcore.util.osutils import (listdir_files, readfile, listdir_dirs,
-    join as pjoin)
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
-from pkgcore.util.demandload import demandload
-from pkgcore.util.containers import InvertedContains
-from pkgcore.util.obj import make_kls
-from pkgcore.util.weakrefs import WeakValCache
+from pkgcore.config import ConfigHint
+from pkgcore.plugin import get_plugin
+
+from snakeoil.fileutils import read_dict, iter_read_bash
+from snakeoil import currying
+from snakeoil.osutils import (listdir_files, readfile, listdir_dirs,
+    join as pjoin)
+from snakeoil.containers import InvertedContains
+from snakeoil.obj import make_kls
+from snakeoil.weakrefs import WeakValCache
+
+from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.ebuild.ebd:buildable "
     "pkgcore.interfaces.data_source:local_source "
     "pkgcore.ebuild:digest "
@@ -24,8 +29,7 @@ demandload(globals(), "pkgcore.ebuild.ebd:buildable "
     "random:shuffle "
     "errno ")
 
-from pkgcore.config import ConfigHint
-from pkgcore.plugin import get_plugin
+
 
 metadata_offset = "profiles"
 

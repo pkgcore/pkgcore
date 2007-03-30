@@ -28,15 +28,16 @@ inactive_ebp_list = []
 active_ebp_list = []
 
 import pkgcore.spawn, os, signal, errno, sys
-from pkgcore.util.currying import post_curry, partial
 from pkgcore.const import (
     depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH)
-from pkgcore.util.demandload import demandload
 from pkgcore.os_data import portage_uid, portage_gid
+
+from snakeoil.currying import post_curry, partial
+from snakeoil.demandload import demandload
 demandload(
     globals(),
     "pkgcore.log:logger "
-    "pkgcore.util:osutils ")
+    "snakeoil:osutils ")
 
 import traceback
 
@@ -131,7 +132,6 @@ def release_ebuild_processor(ebp):
 
     # if it makes it this far, that means ebp was already in the inactive list.
     # which is indicative of an internal fsck up.
-    import traceback
     print ("ebp was requested to be free'd, yet it already is claimed "
            "inactive _and_ was in the active list")
     print "this means somethings horked, badly"
@@ -160,7 +160,6 @@ class EbuildProcessor:
         spawn_opts = {}
 
         if fakeroot and (sandbox or not userpriv):
-            import traceback
             traceback.print_stack()
             print "warning, was asking to enable fakeroot but-"
             print "sandbox", sandbox, "userpriv", userpriv

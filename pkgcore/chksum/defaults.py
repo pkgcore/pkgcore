@@ -5,11 +5,10 @@
 """
 default chksum handlers implementation- sha1, sha256, rmd160, and md5
 """
-
-from pkgcore.util.currying import partial
-from pkgcore.util import modules
 from pkgcore.interfaces.data_source import base as base_data_source
-from pkgcore.util.demandload import demandload
+from snakeoil.currying import partial
+from snakeoil import modules
+from snakeoil.demandload import demandload
 demandload(globals(), "os")
 
 blocksize = 32768
@@ -110,7 +109,7 @@ class Chksummer(object):
 # 37 +/- 1 msec roughly
 #
 # python2.5 -m timeit -s
-#   'from pkgcore.chksum import defaults; from pkgcore.util import currying;'
+#   'from pkgcore.chksum import defaults; from snakeoil import currying;'
 # -s 'import hashlib; hash = currying.pre_curry(hashlib.new, "md5")'
 #   'defaults.loop_over_file(hash, "/home/marienz/tmp/Python-2.4.3.tar.bz2")'
 # 37 +/- 1 msec roughly

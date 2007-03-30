@@ -2,16 +2,18 @@
 # License: GPL2
 
 import os, stat
-from pkgcore.util.osutils import listdir, ensure_dirs, join as pjoin, readlines
+
 from pkgcore.restrictions import packages, values
 from pkgcore.ebuild.atom import atom
 from pkgcore.package.errors import InvalidDependency
 from pkgcore.os_data import portage_gid
-from pkgcore.util.lists import iflatten_instance
 from pkgcore.repository import virtual
-from pkgcore.util.currying import partial
-from pkgcore.util.file import read_dict, AtomicWriteFile
-from pkgcore.util.demandload import demandload
+
+from snakeoil.lists import iflatten_instance
+from snakeoil.osutils import listdir, ensure_dirs, join as pjoin, readlines
+from snakeoil.currying import partial
+from snakeoil.fileutils import read_dict, AtomicWriteFile
+from snakeoil.demandload import demandload
 demandload(globals(), "errno")
 
 # generic functions.
@@ -83,7 +85,6 @@ def _write_mtime_cache(mtimes, data, location):
     os.chown(location, -1, portage_gid)
 
 def _read_mtime_cache(location):
-    f = None
     try:
         d = {}
         for k, v in read_dict(readlines(location), splitter=None,

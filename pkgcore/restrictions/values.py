@@ -12,9 +12,9 @@ attr from a package instance and hand it to their wrapped restriction
 """
 
 from pkgcore.restrictions import restriction, boolean, packages
-from pkgcore.util.klass import generic_equality
-from pkgcore.util import demandload
-demandload.demandload(globals(), 're pkgcore.util:lists')
+from snakeoil.klass import generic_equality
+from snakeoil import demandload
+demandload.demandload(globals(), 're snakeoil:lists')
 
 # Backwards compatibility.
 value_type = restriction.value_type
@@ -196,7 +196,7 @@ else:
     base_StrExactMatch = extension.StrExactMatch
 
 # these are broken out so that it is easier to
-# generate native/cpy version of the class for 
+# generate native/cpy version of the class for
 # testing each.
 def _StrExact_intersect(self, other):
     s1, s2 = self.exact, other.exact
@@ -492,9 +492,9 @@ class ContainmentMatch(hashed_base):
                 return True
         else:
             l = len(self.vals)
-            def filter(truths):		return truths.count(True) < l
-            def true(r, pvals):		return pkg.request_enable(attr, r)
-            def false(r, pvals):	return pkg.request_disable(attr, r)
+            def filter(truths):     return truths.count(True) < l
+            def true(r, pvals):     return pkg.request_enable(attr, r)
+            def false(r, pvals):    return pkg.request_disable(attr, r)
             truths = [x in val for x in self.vals]
             for x in boolean.iterative_quad_toggling(
                 pkg, None, list(self.vals), 0, l, truths, filter,
@@ -540,9 +540,9 @@ class ContainmentMatch(hashed_base):
             if pkg.request_disable(attr, *self.vals):
                 return True
         else:
-            def filter(truths):		return True not in truths
-            def true(r, pvals):		return pkg.request_enable(attr, r)
-            def false(r, pvals):	return pkg.request_disable(attr, r)
+            def filter(truths):     return True not in truths
+            def true(r, pvals):     return pkg.request_enable(attr, r)
+            def false(r, pvals):    return pkg.request_disable(attr, r)
             truths = [x in val for x in self.vals]
             for x in boolean.iterative_quad_toggling(
                 pkg, None, list(self.vals), 0, len(self.vals), truths, filter,
@@ -578,7 +578,7 @@ class FlatteningRestriction(hashed_base):
 
         @type  dont_iter: type or tuple of types
         @param dont_iter: type(s) not to flatten.
-                          Passed to L{pkgcore.util.lists.iflatten_instance}.
+                          Passed to L{snakeoil.lists.iflatten_instance}.
         @type  childrestriction: restriction
         @param childrestriction: restriction applied to the flattened list.
         """

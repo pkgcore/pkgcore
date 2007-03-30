@@ -5,12 +5,12 @@
 
 Modules in here are accessible through the pwrapper script. They
 should have an C{OptionParser} attribute that is a
-L{pkgcore.util.commandline.OptionParser} subclass and a C{main}
+L{snakeoil.commandline.OptionParser} subclass and a C{main}
 attribute that is a function usable with
-L{pkgcore.util.commandline.main}.
+L{snakeoil.commandline.main}.
 
 The goal of this is avoiding boilerplate and making sure the scripts
 have a similar look and feel. If your script needs to do something
-L{pkgcore.util.commandline} does not support please improve it instead
+L{snakeoil.commandline} does not support please improve it instead
 of bypassing it.
 """

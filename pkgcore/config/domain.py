@@ -6,7 +6,7 @@ base class to derive from for domain objects
 
 Bit empty at the moment
 """
-from pkgcore.util.demandload import demandload
+from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.repository:multiplex")
 
 # yes this is basically empty. will fill it out as the base is better

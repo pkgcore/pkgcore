@@ -8,18 +8,19 @@ Converts portage configuration files into L{pkgcore.config} form.
 
 import os
 import stat
+
 from pkgcore.config import basics, configurable
 from pkgcore import const
-from pkgcore.util.osutils import normpath, abspath, listdir_files, pjoin
-from pkgcore.util.demandload import demandload
+from pkgcore.pkgsets.glsa import SecurityUpgrades
+
+from snakeoil.osutils import normpath, abspath, listdir_files, pjoin
+from snakeoil.demandload import demandload
 demandload(globals(), "errno pkgcore.config:errors "
-    "pkgcore.pkgsets.glsa:SecurityUpgrades "
-    "pkgcore.util.file:read_bash_dict "
-    "pkgcore.util:bzip2 "
     "pkgcore.log:logger "
-    'pkgcore.util.xml:etree '
     'ConfigParser:ConfigParser '
-)
+    "snakeoil.fileutils:read_bash_dict "
+    "pkgcore.util:bzip2 "
+    'snakeoil.xml:etree ')
 
 
 def my_convert_hybrid(manager, val, arg_type):
@@ -60,7 +61,7 @@ def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
         return {}
 
     c = ConfigParser()
-    c.read(pjoin(config_root, default_loc))
+    c.readfp(f)
     storage_loc = c.get('MAIN', 'storage')
     overlay_xml = pjoin(storage_loc, default_conf)
     del c
@@ -87,7 +88,6 @@ def add_layman_syncers(new_config, rsync_opts, overlay_paths, config_root='/',
             continue
         elif path not in overlay_paths:
             continue
-        proto = None
         if src_type == 'tar':
             continue
         elif src_type == 'svn':
@@ -270,7 +270,7 @@ def config_from_make_conf(location="/etc/"):
 
     kwds = {"class": "pkgcore.vdb.repository",
             "location": pjoin(root, 'var', 'db', 'pkg')}
-    kwds["cache_location"] = pjoin(config_root, 'var', 'cache', 'edb', 
+    kwds["cache_location"] = pjoin(config_root, 'var', 'cache', 'edb',
         'dep', 'var', 'db', 'pkg')
     new_config["vdb"] = basics.AutoConfigSection(kwds)
 
@@ -301,7 +301,7 @@ def config_from_make_conf(location="/etc/"):
             })
 
 
-    # used by PORTDIR syncer, and any layman defined syncers    
+    # used by PORTDIR syncer, and any layman defined syncers
     rsync_opts = isolate_rsync_opts(conf_dict)
     portdir_syncer = conf_dict.pop("SYNC", None)
 
@@ -353,7 +353,8 @@ def config_from_make_conf(location="/etc/"):
         d['location'] = portdir
         d['cache'] = ('portdir cache',)
 
-        new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, d)
+        new_config[portdir] = basics.FakeIncrementalDictConfigSection(
+            my_convert_hybrid, d)
         new_config["eclass stack"] = basics.section_alias(
             pjoin(portdir, 'eclass'), 'eclass_cache')
         new_config['portdir'] = basics.section_alias(portdir, 'repo')
@@ -372,7 +373,8 @@ def config_from_make_conf(location="/etc/"):
         d['location'] = portdir
         d['cache'] = cache
 
-        new_config[portdir] = basics.DictConfigSection(my_convert_hybrid, d)
+        new_config[portdir] = basics.FakeIncrementalDictConfigSection(
+            my_convert_hybrid, d)
 
         if rsync_portdir_cache:
             # created higher up; two caches, writes to the local,
@@ -380,7 +382,8 @@ def config_from_make_conf(location="/etc/"):
             cache = ('portdir cache',)
         else:
             cache = ('%s cache' % (portdir,),)
-        new_config['portdir'] = basics.DictConfigSection(my_convert_hybrid, {
+        new_config['portdir'] = basics.FakeIncrementalDictConfigSection(
+            my_convert_hybrid, {
                 'inherit': ('ebuild-repo-common',),
                 'location': portdir,
                 'cache': cache,
@@ -388,15 +391,16 @@ def config_from_make_conf(location="/etc/"):
 
         # reverse the ordering so that overlays override portdir
         # (portage default)
-        new_config["eclass stack"] = basics.DictConfigSection(
+        new_config["eclass stack"] = basics.FakeIncrementalDictConfigSection(
             my_convert_hybrid, {
                 'class': 'pkgcore.ebuild.eclass_cache.StackedCaches',
                 'eclassdir': pjoin(portdir, "eclass"),
                 'caches': tuple(reversed(all_ecs))})
 
-        new_config['repo-stack'] = basics.DictConfigSection(my_convert_hybrid,
-            {'class': 'pkgcore.ebuild.overlay_repository.OverlayRepo',
-             'trees': tuple(reversed([portdir] + portdir_overlays))})
+        new_config['repo-stack'] = basics.FakeIncrementalDictConfigSection(
+            my_convert_hybrid, {
+                'class': 'pkgcore.ebuild.overlay_repository.OverlayRepo',
+                'trees': tuple(reversed([portdir] + portdir_overlays))})
 
     # disabled code for using portage config defined cache modules;
     # need to re-examine and see if they're still in sync with our cache subsystem
@@ -481,7 +485,7 @@ def config_from_make_conf(location="/etc/"):
             elif stat.S_ISDIR(st.st_mode):
                 conf_dict[f + '-dirs'] = fp
 
-    new_config['livefs domain'] = basics.DictConfigSection(my_convert_hybrid,
-                                                           conf_dict)
+    new_config['livefs domain'] = basics.FakeIncrementalDictConfigSection(
+        my_convert_hybrid, conf_dict)
 
     return new_config

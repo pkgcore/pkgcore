@@ -7,8 +7,8 @@ template for cache backend classes
 """
 
 from pkgcore.cache import errors
-from pkgcore.util.mappings import ProtectedDict
-from pkgcore.util.obj import make_SlottedDict_kls
+from snakeoil.mappings import ProtectedDict
+from snakeoil.obj import make_SlottedDict_kls
 
 # temp hack for .2
 from pkgcore.ebuild.const import metadata_keys

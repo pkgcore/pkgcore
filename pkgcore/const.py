@@ -62,4 +62,4 @@ RSYNC_HOST           = "rsync.gentoo.org/gentoo-portage"
 
 CVS_BIN              = "/usr/bin/cvs"
 
-VERSION              = '0.2.12'
+VERSION              = '0.2.13'

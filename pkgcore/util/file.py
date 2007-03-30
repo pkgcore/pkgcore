@@ -186,7 +186,7 @@ def nuke_backslash(s):
 class bash_parser(shlex):
     def __init__(self, source, sourcing_command=None, env=None):
         shlex.__init__(self, source, posix=True)
-        self.wordchars += "@${}/.-+/:"
+        self.wordchars += "@${}/.-+/:~^"
         if sourcing_command is not None:
             self.source = sourcing_command
         if env is None:

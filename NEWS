@@ -3,6 +3,10 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.2.13:
+
+* Added '~' to allowed shlex word chars.
+
 
 pkgcore 0.2.12:
 

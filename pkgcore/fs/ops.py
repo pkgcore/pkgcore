@@ -87,6 +87,26 @@ def default_mkdir(d):
     get_plugin("fs_ops.ensure_perms")(d)
     return True
 
+# minor hack.
+
+class FailedCopy(TypeError):
+
+    def __init__(self, obj, msg):
+        self.obj = obj
+        self.msg = msg
+    
+    def __str__(self):
+        return "failed copying %s:" % (self.obj, self.msg)
+
+
+class CannotOverwrite(FailedCopy):
+    def __init__(self, obj, existing):
+        self.obj, self.existing = obj, existing
+    
+    def __str__(self):
+        return "cannot write %s due to %s existing" % (
+            self.obj, self.existing)
+
 
 def default_copyfile(obj, mkdirs=False):
     """
@@ -107,15 +127,15 @@ def default_copyfile(obj, mkdirs=False):
     try:
         existing = gen_obj(obj.location)
         if fs.isdir(existing):
-            raise TypeError("tried copying %s over directory %s" % (existing, obj))
+            raise CannotOverwrite(obj, existing)
         existant = True
-    except OSError:
+    except OSError, oe:
         # verify the parent dir is there at least
         basefp = os.path.dirname(obj.location)
         if basefp.strip(os.path.sep) and not os.path.exists(basefp):
             if mkdirs:
                 if not ensure_dirs(basefp, mode=0750, minimal=True):
-                    raise
+                    raise FailedCopying(obj, str(oe))
             else:
                 raise
         existant = False
@@ -144,8 +164,7 @@ def default_copyfile(obj, mkdirs=False):
     else:
         ret = spawn([COPY_BINARY, "-Rp", obj.location, fp])
         if ret != 0:
-            raise Exception(
-                "failed copying %s to %s, ret %s" % (obj.location, fp, ret))
+            raise FailedCopy(obj, "got %i from %s -Rp" % ret)
     if not fs.issym(obj):
         ensure_perms(obj.change_attributes(location=fp))
 
@@ -153,11 +172,13 @@ def default_copyfile(obj, mkdirs=False):
         os.rename(existant_fp, obj.location)
     return True
 
+
 def offset_rewriter(offset, iterable):
     sep = os.path.sep
     for x in iterable:
         yield x.change_attributes(
             location=pjoin(offset, x.location.lstrip(sep)))
+
 
 def change_offset_rewriter(orig_offset, new_offset, iterable):
     offset_len = len(orig_offset.rstrip(os.path.sep))
@@ -168,6 +189,7 @@ def change_offset_rewriter(orig_offset, new_offset, iterable):
         # full path still
         yield x.change_attributes(
             location=npf(pjoin(new_offset, x.location[offset_len:])))
+
 
 def merge_contents(cset, offset=None, callback=lambda obj:None):
 
@@ -229,9 +251,26 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
             ensure_perms(x)
     del d
 
-    for x in iterate(cset.iterdirs(invert=True)):
-        callback(x)
-        copyfile(x, mkdirs=True)
+    # might look odd, but what this does is minimize the try/except cost
+    # to one time, assuming everything behaves, rather then per item.
+    i = iterate(cset.iterdirs(invert=True))
+    while True:
+        try:
+            for x in i:
+                callback(x)
+                copyfile(x, mkdirs=True)
+            break
+        except CannotOverwrite, cf:
+            if not fs.issym(x):
+                raise
+
+            # by this time, all directories should've been merged.
+            # thus we can check the target
+            try:
+                if not fs.isdir(gen_obj(pjoin(x.location, x.target))):
+                    raise
+            except OSError:
+                raise cf
     return True
 
 

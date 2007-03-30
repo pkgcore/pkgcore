@@ -76,9 +76,24 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
         self.verify(o, kwds, os.stat(o.location))
 
     def test_puke_on_dirs(self):
-        self.assertRaises(
-            TypeError, ops.default_copyfile,
-            fs.fsDir(pjoin(self.dir, "puke_dir"), strict=False))
+        path = pjoin(self.dir, "puke_dir")
+        self.assertRaises(TypeError,
+            ops.default_copyfile,
+            fs.fsDir(path, strict=False))
+        os.mkdir(path)
+        fp = pjoin(self.dir, "foon")
+        open(fp, "w")
+        f = livefs.gen_obj(fp)
+        self.assertRaises(TypeError,
+            livefs.gen_obj(fp).change_attributes(location=path))
+        
+        # test sym over a directory.
+        f = fs.fsSymlink(path, fp, mode=0644, mtime=0, uid=os.getuid(),
+            gid=os.getgid())
+        self.assertRaises(TypeError, ops.default_copyfile, f)
+        os.unlink(fp)
+        os.mkdir(fp)
+        self.assertRaises(ops.CannotOverwrite, ops.default_copyfile, f)
 
 
 class ContentsMixin(VerifyMixin, TempDirMixin, TestCase):
@@ -106,7 +121,7 @@ class ContentsMixin(VerifyMixin, TempDirMixin, TestCase):
             if v[0] == "dir":
                 pass
             elif v[0] == "reg":
-                open(k, "w").write(os.urandom(1000))
+                open(k, "w")
             elif v[0] == "sym":
                 os.symlink(v[1], k)
             else:
@@ -165,6 +180,19 @@ class Test_merge_contents(ContentsMixin):
         src, dest, cset = self.generic_merge_bits(self.entries_norm1)
         self.assertTrue(ops.merge_contents(cset, offset=dest))
 
+    def test_sym_over_dir(self):
+        path = pjoin(self.dir, "sym")
+        fp = pjoin(self.dir, "trg")
+        os.mkdir(path)
+        # test sym over a directory.
+        f = fs.fsSymlink(path, fp, mode=0644, mtime=0, uid=os.getuid(),
+            gid=os.getgid())
+        cset = contents.contentsSet([f])
+        self.assertRaises(ops.FailedCopy, ops.merge_contents, cset)
+        self.assertTrue(fs.isdir(livefs.gen_obj(path)))
+        os.mkdir(fp)
+        ops.merge_contents(cset)
+        
 
 class Test_unmerge_contents(ContentsMixin):
 

@@ -7,6 +7,9 @@ pkgcore 0.2.13:
 
 * Added '~' to allowed shlex word chars.
 
+* Due to amd64 /lib -> /lib64, change the default policy for sym over
+  directory merging to allow it if the target was a directory.
+
 
 pkgcore 0.2.12:
 

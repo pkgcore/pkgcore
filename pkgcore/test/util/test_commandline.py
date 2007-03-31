@@ -228,7 +228,7 @@ Use --help after a subcommand for more help.
             self.assertEqual(options.progname, 'fo sub')
 
         self.assertMain(
-            None, '\n', '',
+            None, '', '',
             {'sub': (SubParser, submain)}, ['sub', 'subarg'], script_name='fo')
 
     def test_configuration_error(self):
@@ -241,7 +241,7 @@ Use --help after a subcommand for more help.
                 values._config = central.ConfigManager()
                 return values
         self.assertMain(
-            1, '\n', 'Error in configuration:\nbork\n',
+            1, '', 'Error in configuration:\nbork\n',
             {None: (NoLoadParser, error_main)}, [])
         self.assertRaises(
             errors.ConfigurationError, self.assertMain,

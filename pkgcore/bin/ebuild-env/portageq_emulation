@@ -5,7 +5,7 @@
 import os
 env = os.environ["SANDBOX_ON"] = "0"
 
-from pkgcore.util.demandload import demandload
+from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.util.iterables:caching_iter "+
     "pkgcore.config:load_config "+
     "pkgcore.ebuild.atom:atom "+

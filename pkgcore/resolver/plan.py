@@ -62,7 +62,7 @@ pkg_sort_lowest = sorted
 
 pkg_grabber = operator.itemgetter(0)
 
-def highest_iter_sort(l):
+def highest_iter_sort(l, pkg_grabber=pkg_grabber):
     def f(x, y):
         c = cmp(x, y)
         if c:
@@ -78,7 +78,7 @@ def highest_iter_sort(l):
     return l
 
 
-def lowest_iter_sort(l):
+def lowest_iter_sort(l, pkg_grabber=pkg_grabber):
     def f(x, y):
         c = cmp(x, y)
         if c:

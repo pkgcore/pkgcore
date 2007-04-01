@@ -23,38 +23,6 @@ def dprint(fmt, args=None, label=None):
         else:
             print fmt % args
 
-def is_cycle(stack, atom, cur_choice, attr, start=0):
-    # short cut...
-    if attr == "post_rdepends":
-        # not possible for a cycle we'll care about to exist.
-        # the 'cut off' point is for the new atom, thus not possible for
-        # a cycle.
-        return -1
-
-    cycle_start = -1
-    if start != 0:
-        i = islice(stack, start, None)
-    else:
-        i = stack
-    for idx, x in enumerate(i):
-        if x.mode == "post_rdepends":
-            cycle_start = -1
-        if x.atom == atom:
-            cycle_start = idx
-
-    if cycle_start != -1:
-        # deque can't be sliced, thus islice
-        if attr is not None:
-            s = ', '.join('[%s: %s]' %
-                (x.atom, x.current_pkg) for x in islice(stack, cycle_start))
-            if s:
-                s += ', '
-            s += '[%s: %s]' % (atom, cur_choice.current_pkg)
-            dprint("%s level cycle: stack: %s\n",
-                (attr, s), "cycle")
-        return cycle_start + start
-    return -1
-
 
 #iter/pkg sorting functions for selection strategy
 pkg_sort_highest = partial(sorted, reverse=True)
@@ -156,6 +124,39 @@ class resolver_stack(deque):
         return '<%s: %r>' % (self.__class__.__name__,
             tuple(repr(x) for x in self))
 
+    def is_cycle(self, atom, cur_choice, attr, start=0):
+        # short cut...
+        if attr == "post_rdepends":
+            # not possible for a cycle we'll care about to exist.
+            # the 'cut off' point is for the new atom, thus not possible for
+            # a cycle.
+            return -1
+
+        cycle_start = -1
+        if start != 0:
+            i = islice(self, start, None)
+        else:
+            i = self
+        for idx, x in enumerate(i):
+            if x.mode == "post_rdepends":
+                cycle_start = -1
+            if x.atom == atom:
+                cycle_start = idx
+
+        if cycle_start != -1:
+            # deque can't be sliced, thus islice
+            if attr is not None:
+                s = ', '.join('[%s: %s]' % (x.atom, x.current_pkg) for x in
+                    islice(self, cycle_start))
+                if s:
+                    s += ', '
+                s += '[%s: %s]' % (atom, cur_choice.current_pkg)
+                dprint("%s level cycle: stack: %s\n",
+                    (attr, s), "cycle")
+            return cycle_start + start
+        return -1
+
+
 
 class merge_plan(object):
 
@@ -235,7 +236,7 @@ class merge_plan(object):
                             "blockers")
                         continue
                 else:
-                    index = is_cycle(current_stack, datom, cur_frame.choices,
+                    index = current_stack.is_cycle(datom, cur_frame.choices,
                         "depends")
                     looped = ignore = False
                     stack_end = len(current_stack) - 1
@@ -261,7 +262,7 @@ class merge_plan(object):
                         else:
                             # ok, so the first candidate wasn't vdb.
                             # see if there are more.
-                            index = is_cycle(current_stack, datom,
+                            index = current_stack.is_cycle(datom,
                                 cur_frame.choices, None, start=index + 1)
                     else:
                         # ok.  it exited on its own.  meaning either no cycles,
@@ -333,7 +334,7 @@ class merge_plan(object):
                 if ratom.blocks:
                     blocks.append(ratom)
                     break
-                index = is_cycle(current_stack, ratom, cur_frame.choices, attr)
+                index = current_stack.is_cycle(ratom, cur_frame.choices, attr)
                 if index != -1:
                     # cycle.  whee.
                     if cur_frame.dbs is self.livefs_dbs:

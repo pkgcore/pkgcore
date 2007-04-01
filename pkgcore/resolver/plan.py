@@ -91,12 +91,24 @@ class resolver_frame(object):
 
 class resolver_stack(deque):
 
+    frame_klass = resolver_frame
+    depth = property(len)
+
     def __str__(self):
         return 'resolver stack:\n  %s' % '\n  '.join(str(x) for x in self)
 
     def __repr__(self):
         return '<%s: %r>' % (self.__class__.__name__,
             tuple(repr(x) for x in self))
+
+    def add_frame(self, mode, atom, choices, dbs, start_point, drop_cycles):
+        frame = self.frame_klass(mode, atom, choices, dbs, start_point,
+            self.depth + 1, drop_cycles)
+        self.append(frame)
+        return frame
+
+    def pop_frame(self):
+        self.pop()
 
     def is_cycle(self, atom, cur_choice, attr, start=0):
         # short cut...
@@ -520,9 +532,8 @@ class merge_plan(object):
         else:
             dprint("processing   %s%s", (depth *2 * " ", atom))
 
-        cur_frame = resolver_frame(mode, atom, choices, dbs,
-            self.state.current_state, depth, drop_cycles)
-        current_stack.append(cur_frame)
+        cur_frame = current_stack.add_frame(mode, atom, choices, dbs,
+            self.state.current_state, drop_cycles)
 
         blocks = []
         failures = []
@@ -573,7 +584,7 @@ class merge_plan(object):
             if l is False:
                 # this means somehow the node already slipped in.
                 # so we exit now, we are satisfied
-                current_stack.pop()
+                current_stack.pop_frame()
                 return None
             elif l is not None:
                 # failure.
@@ -677,7 +688,7 @@ class merge_plan(object):
 
         else:
             dprint("no solution  %s%s", (depth*2*" ", atom))
-            current_stack.pop()
+            current_stack.pop_frame()
             self.state.backtrack(cur_frame.start_point)
             # saving roll.  if we're allowed to drop cycles, try it again.
             # this needs to be *far* more fine grained also. it'll try
@@ -692,7 +703,7 @@ class merge_plan(object):
                     return None
             return [atom] + failures
 
-        current_stack.pop()
+        current_stack.pop_frame()
         return None
 
     def generate_mangled_blocker(self, choices, blocker):

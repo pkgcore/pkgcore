@@ -177,6 +177,25 @@ class merge_plan(object):
         self.drop_cycles = drop_cycles
         self.process_built_depends = process_built_depends
 
+    def notify_starting_mode(self, mode, stack):
+        if mode == "post_rdepends":
+            mode = 'prdepends'
+        dprint("%s:%s%s: started: %s" % 
+            (mode, ' ' * ((stack.current_frame.depth * 2) + 12 - len(mode)),
+                stack.current_frame.atom,
+                stack.current_frame.choices.current_pkg)
+            )
+
+    def notify_trying_choice(self, stack, atom, choices):
+        dprint("choose for %s%s, %s",
+               (stack.depth *2*" ", atom, choices.current_pkg))
+
+    def notify_choice_failed(self, stack, atom, choices, msg, msg_args=()):
+        if msg:
+            msg = ' %s' % (msg % msg_args)
+        dprint("choice for %s%s, %s failed: %s", 
+            (stack.depth * 2 * ' ', atom, choices.current_pkg, msg))
+
     def load_vdb_state(self):
         for r in self.livefs_dbs:
             for pkg in r.__db__:
@@ -212,9 +231,7 @@ class merge_plan(object):
         failure = []
         additions, blocks, = [], []
         cur_frame = stack.current_frame
-        dprint("depends:     %s%s: started: %s",
-               (cur_frame.depth *2 * " ", cur_frame.atom,
-                cur_frame.choices.current_pkg))
+        self.notify_starting_mode("depends", stack)
         for datom_potentials in depset:
             failure = []
             for datom in datom_potentials:
@@ -224,11 +241,11 @@ class merge_plan(object):
                     # get hit by the blocker
                     l = self.state.match_atom(datom)
                     if l:
-                        dprint("depends blocker messing with us- "
-                            "skipping "
-                            "atom %s, pkg %s, ret %s",
-                            (cur_frame.atom, cur_frame.choices.current_pkg, l),
-                            "blockers")
+#                        dprint("depends blocker messing with us- "
+#                            "skipping "
+#                            "atom %s, pkg %s, ret %s",
+#                            (cur_frame.atom, cur_frame.choices.current_pkg, l),
+#                            "blockers")
                         continue
                 else:
                     index = stack.is_cycle(datom, cur_frame.choices,
@@ -316,14 +333,7 @@ class merge_plan(object):
         failure = []
         additions, blocks, = [], []
         cur_frame = stack.current_frame
-        if attr == "post_rdepends":
-            dprint("prdepends:   %s%s: started: %s",
-                (cur_frame.depth *2 * " ", cur_frame.atom,
-                cur_frame.choices.current_pkg))
-        else:
-            dprint("%s:    %s%s: started: %s",
-                (attr, cur_frame.depth *2 * " ", cur_frame.atom,
-                cur_frame.choices.current_pkg))
+        self.notify_starting_mode(attr, stack)
         for ratom_potentials in depset:
             failure = []
             for ratom in ratom_potentials:
@@ -419,7 +429,6 @@ class merge_plan(object):
             try_rematch = False
             if any(True for x in conflicts if isinstance(x, restriction.base)):
                 # blocker was caught
-                dprint("blocker detected in slotting, trying a re-match")
                 try_rematch = True
             elif not any (True for x in conflicts if not
                 self.vdb_restrict.match(x)):
@@ -429,26 +438,17 @@ class merge_plan(object):
                     print ("internal weirdness spotted- vdb restrict matches, "
                         "but current doesn't, bailing")
                     raise Exception()
-                dprint("replacing a vdb node, so it's valid (need to do a "
-                       "recheck of state up to this point however, which "
-                       "we're not)")
                 conflicts = state.replace_op(choices, choices.current_pkg).apply(
                     self.state)
-                if conflicts:
-                    dprint("tried the replace, but got matches still- %s",
-                        conflicts)
             else:
                 try_rematch = True
             if try_rematch:
                 l2 = self.state.match_atom(atom)
                 if l2 == [choices.current_pkg]:
-                    dprint("node was pulled in already, same so ignoring it")
                     # stop resolution.
                     conflicts = False
                 elif l2:
-                    dprint("and we 'parently match it.  ignoring "
-                           "(should prune here however)")
-                    # need to do cleanup here
+                    # potentially need to do some form of cleanup here.
                     conflicts = False
 
         else:
@@ -521,6 +521,7 @@ class merge_plan(object):
         elif matches is True:
             return None
         choices, matches = matches
+
         # experiment. ;)
         # see if we can insert or not at this point (if we can't, no
         # point in descending)
@@ -555,6 +556,8 @@ class merge_plan(object):
             last_state = new_state
             additions, blocks = [], []
 
+            self.notify_trying_choice(stack, atom, choices)
+
             if not choices.current_pkg.built or self.process_built_depends:
                 l = self.process_depends(stack,
                     self.depset_reorder(self, choices.depends, "depends"))
@@ -578,17 +581,18 @@ class merge_plan(object):
             additions += l[0]
             blocks += l[1]
 
-            dprint("choose for   %s%s, %s",
-                   (depth *2*" ", atom, choices.current_pkg))
-
             l = self.insert_choice(atom, stack, choices)
             if l is False:
                 # this means somehow the node already slipped in.
                 # so we exit now, we are satisfied
+                self.notify_choice_failed(stack, atom, choices,
+                    "already exists in the state plan")
                 stack.pop_frame()
                 return None
             elif l is not None:
                 # failure.
+                self.notify_failed_choice(stack, atom, choices,
+                    "failed inserting: %s", l)
                 self.state.backtrack(stack.current_frame.start_point)
                 choices.force_next_pkg()
                 continue
@@ -641,6 +645,8 @@ class merge_plan(object):
             else:
                 fail = False
             if fail:
+                self.notify_choice_failed(stack, atom, choices,
+                    "failed due to %s", x)
                 choices.reduce_atoms(x)
                 self.state.backtrack(stack.current_frame.start_point)
                 continue
@@ -674,8 +680,8 @@ class merge_plan(object):
                     self.generate_mangled_blocker(choices, x), key=x.key)
                 if l:
                     # blocker caught something. yay.
-                    dprint("rdepend blocker %s hit %s for atom %s pkg %s",
-                           (x, l, atom, choices.current_pkg))
+                    self.notify_failed_choice(stack, atom, choices,
+                        "rdepend blocker %s hit %s", (x, l))
                     failures = [x]
                     break
             else:

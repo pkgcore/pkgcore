@@ -131,7 +131,6 @@ class resolver_stack(deque):
         return -1
 
 
-
 class merge_plan(object):
 
     vdb_restrict = packages.PackageRestriction("repo.livefs",
@@ -142,10 +141,13 @@ class merge_plan(object):
                  depset_reorder_strategy=None,
                  process_built_depends=False,
                  drop_cycles=False):
+
         if not isinstance(dbs, (list, tuple)):
             dbs = [dbs]
+
         if global_strategy is None:
             global_strategy = self.default_global_strategy
+
         if depset_reorder_strategy is None:
             depset_reorder_strategy = self.default_depset_reorder_strategy
 
@@ -586,7 +588,6 @@ class merge_plan(object):
                     if len(current_stack) > 1:
                         if not current_stack[-2].atom.match(x):
                             print "provider conflicted... how?"
-#                            print "should do something here, something sane..."
                             fail = [x]
                             break
             else:
@@ -793,8 +794,6 @@ class merge_plan(object):
             yield iter_sort(iter_sorter,
                             *[r.itermatch(atom, sorter=pkg_sorter)
                               for r in [vdb] + dbs]).next()
-#            yield max(itertools.chain(*[r.itermatch(atom)
-#                                        for r in [vdb] + dbs]))
         except StopIteration:
             # twas no matches
             pass

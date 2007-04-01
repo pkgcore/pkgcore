@@ -97,101 +97,48 @@ def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
 
     raise NoChoice()
 
-def filter_use(use, use_expand, use_expand_hidden):
-    """Split USE flags up into "normal" flags and use-expanded ones.
 
-    @type  use: iterable of strings
-    @param use: flags that are set.
-    @type  use_expand: iterable of strings
-    @param use_expand: names of use-expanded variables.
-    @type  use_expand_hidden: set of strings
-    @param use_expand_hidden: names of use-expanded vars that should not
-        be added to the dict.
-    @rtype: sequence of strings, dict mapping a string to a list of strings
-    @return: list of normal flags and a mapping from use_expand name to value
-        (with the use-expanded bit stripped off, so C{"video_cards_alsa"}
-        becomes C{"{'video_cards': ['alsa']}"}).
-    """
-    ue_dict = {}
-    usel = []
-    for flag in use:
-        for expand in use_expand:
-            if flag.startswith(expand.lower() + '_'):
-                if expand not in use_expand_hidden:
-                    ue_dict.setdefault(expand.lower(), []).append(
-                        flag[len(expand) + 1:])
-                break
-        else:
-            usel.append(flag)
-    return usel, ue_dict
+class use_expand_filter(object):
 
-def format_use(out, attr, selectable, choice, oldselectable=None,
-               oldchoice=None):
-    """Write the current selection from a set of flags to a formatter.
-
-    @type  out: formatter
-    @param out: the formatter to write to.
-    @type  attr: string
-    @param attr: the name of the setting.
-    @type  selectable: set of strings
-    @param selectable: the possible values.
-    @type  choice: set of strings
-    @param choice: the chosen values.
-    @type  oldselectable: set of strings
-    @param oldselectable: the values possible in the previous version.
-    @type  oldchoice: set of strings
-    @param oldchoie: the previously chosen values.
-    """
-    red = out.fg('red')
-    green = out.fg('green')
-    blue = out.fg('blue')
-    yellow = out.fg('yellow')
-
-    flags = []
-    enabled = set(selectable) & set(choice)
-    disabled = set(selectable) - set(choice)
-    if oldselectable is not None and oldchoice is not None:
-#        print 'oldselectable: %s' % oldselectable, 'oldchoice: %s' % oldchoice
-        old_enabled = set(oldselectable) & set(oldchoice)
-        old_disabled = set(oldselectable) - set(oldchoice)
-        for flag in sorted(enabled):
-            assert flag
-            if flag in old_enabled:
-                # Unchanged flag.
-                flags.extend((red, flag, ' '))
-            elif flag in old_disabled:
-                # Toggled.
-                # Trailing single space is important, we can pop it below.
-                flags.extend((green, flag, '*', ' '))
+    def __init__(self, use_expand, use_expand_hidden):
+        """
+        @type  use_expand: iterable of strings
+        @param use_expand: names of use-expanded variables.
+        @type  use_expand_hidden: set of strings
+        @param use_expand_hidden: names of use-expanded vars that should not
+            be added to the dict.
+        """
+        self.expand_filters = [(x.lower() +"_",
+            (x in use_expand_hidden, x.lower()))
+            for x in use_expand]
+        self.use_expand = use_expand
+        self.use_expand_hidden = use_expand_hidden
+    
+    def __call__(self, use):
+        """Split USE flags up into "normal" flags and use-expanded ones.
+        @type  use: iterable of strings
+        @param use: flags that are set.
+        @rtype: sequence of strings, dict mapping a string to a list of strings
+        @return: list of normal flags and a mapping from use_expand name to value
+            (with the use-expanded bit stripped off, so C{"video_cards_alsa"}
+            becomes C{"{'video_cards': ['alsa']}"}).
+        """
+        ue_dict = {}
+        usel = []
+        for flag in use:
+            if '_' in flag:
+                for expand, data in self.expand_filters:
+                    if flag.startswith(expand):
+                        if not data[0]:
+                            ue_dict.setdefault(data[1], []).append(
+                                flag[len(expand):])
+                        break
+                else:
+                    # stupid use flag.
+                    usel.append(flag)
             else:
-                # Flag did not exist earlier.
-                flags.extend((yellow, flag, '%', ' '))
-        for flag in sorted(disabled | (set(oldselectable) - set(selectable))):
-            assert flag
-            if flag not in disabled:
-                # Removed flag.
-                flags.extend((yellow, '(-', flag, '%)', ' '))
-            elif flag in old_disabled:
-                # Unchanged.
-                flags.extend((blue, '-', flag, ' '))
-            elif flag in old_enabled:
-                # Toggled.
-                flags.extend((yellow, '-', flag, '*', ' '))
-            else:
-                # New.
-                flags.extend((yellow, '-', flag, '%', ' '))
-    else:
-        for flag in sorted(enabled):
-            flags.extend((red, flag, ' '))
-        for flag in sorted(disabled):
-            flags.extend((yellow, '-', flag, ' '))
-
-    # Only write this if we have something to write
-    if flags:
-        out.write(attr.upper(), '="')
-        # Omit the final space.
-        out.write(*flags[:-1])
-        out.write('" ')
+                usel.append(flag)
+        return usel, ue_dict
 
 
 class Formatter(object):
@@ -242,6 +189,8 @@ class PortageFormatter(Formatter):
         kwargs.setdefault("use_expand", set())
         kwargs.setdefault("use_expand_hidden", set())
         Formatter.__init__(self, **kwargs)
+        self.use_splitter = use_expand_filter(self.use_expand,
+            self.use_expand_hidden)
         # Map repo location to an index.
         self.repos = {}
 
@@ -314,22 +263,90 @@ class PortageFormatter(Formatter):
             uses = (op.pkg.iuse, op.pkg.use, op.old_pkg.iuse, op.old_pkg.use)
         else:
             uses = (op.pkg.iuse, op.pkg.use)
-        stuff = [filter_use(x, self.use_expand, self.use_expand_hidden)
-                 for x in uses]
+        stuff = map(self.use_splitter, uses)
+
         # Convert the list of tuples to a list of lists and a list of
         # dicts (both length 2 or 4).
         uselists, usedicts = zip(*stuff)
-        format_use(out, 'use', *uselists)
+        self.format_use(out, 'use', *uselists)
         for expand in [x for x in self.use_expand
                     if x not in self.use_expand_hidden]:
             flaglists = [d.get(expand.lower(), ()) for d in usedicts]
-            format_use(out, expand, *flaglists)
+            self.format_use(out, expand, *flaglists)
 
         if verbose:
             out.write(out.fg('blue'), " [%d]" % (reponr,))
 
         out.write('\n')
         out.autoline = origautoline
+
+    @staticmethod
+    def format_use(out, attr, selectable, choice, oldselectable=None,
+               oldchoice=None):
+        """Write the current selection from a set of flags to a formatter.
+
+        @type  out: formatter
+        @param out: the formatter to write to.
+        @type  attr: string
+        @param attr: the name of the setting.
+        @type  selectable: set of strings
+        @param selectable: the possible values.
+        @type  choice: set of strings
+        @param choice: the chosen values.
+        @type  oldselectable: set of strings
+        @param oldselectable: the values possible in the previous version.
+        @type  oldchoice: set of strings
+        @param oldchoie: the previously chosen values.
+        """
+        red = out.fg('red')
+        green = out.fg('green')
+        blue = out.fg('blue')
+        yellow = out.fg('yellow')
+
+        flags = []
+        enabled = set(selectable) & set(choice)
+        disabled = set(selectable) - set(choice)
+        if oldselectable is not None and oldchoice is not None:
+            old_enabled = set(oldselectable) & set(oldchoice)
+            old_disabled = set(oldselectable) - set(oldchoice)
+            for flag in sorted(enabled):
+                assert flag
+                if flag in old_enabled:
+                    # Unchanged flag.
+                    flags.extend((red, flag, ' '))
+                elif flag in old_disabled:
+                    # Toggled.
+                    # Trailing single space is important, we can pop it below.
+                    flags.extend((green, flag, '*', ' '))
+                else:
+                    # Flag did not exist earlier.
+                    flags.extend((yellow, flag, '%', ' '))
+            for flag in sorted(disabled | (set(oldselectable) - set(selectable))):
+                assert flag
+                if flag not in disabled:
+                    # Removed flag.
+                    flags.extend((yellow, '(-', flag, '%)', ' '))
+                elif flag in old_disabled:
+                    # Unchanged.
+                    flags.extend((blue, '-', flag, ' '))
+                elif flag in old_enabled:
+                    # Toggled.
+                    flags.extend((yellow, '-', flag, '*', ' '))
+                else:
+                    # New.
+                    flags.extend((yellow, '-', flag, '%', ' '))
+        else:
+            for flag in sorted(enabled):
+                flags.extend((red, flag, ' '))
+            for flag in sorted(disabled):
+                flags.extend((yellow, '-', flag, ' '))
+
+        # Only write this if we have something to write
+        if flags:
+            out.write(attr.upper(), '="')
+            # Omit the final space.
+            out.write(*flags[:-1])
+            out.write('" ')
 
     def end(self):
         if self.verbose:

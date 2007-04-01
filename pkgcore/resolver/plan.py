@@ -62,9 +62,6 @@ def lowest_iter_sort(l, pkg_grabber=pkg_grabber):
     return l
 
 
-def default_global_strategy(resolver, dbs, atom):
-    return chain(*[repo.match(atom) for repo in dbs])
-
 def default_depset_reorder(resolver, depset, mode):
     for or_block in depset:
         vdb = []
@@ -164,12 +161,15 @@ class merge_plan(object):
         values.EqualityMatch(True))
 
     def __init__(self, dbs, per_repo_strategy,
-                 global_strategy=default_global_strategy,
+                 global_strategy=None,
                  depset_reorder_strategy=default_depset_reorder,
                  process_built_depends=False,
                  drop_cycles=False):
         if not isinstance(dbs, (list, tuple)):
             dbs = [dbs]
+        if global_strategy is None:
+            global_strategy = self.default_global_strategy
+
         self.depset_reorder = depset_reorder_strategy
         self.per_repo_strategy = per_repo_strategy
         self.global_strategy = global_strategy
@@ -737,6 +737,10 @@ class merge_plan(object):
     # selection strategies for atom matches
 
     @staticmethod
+    def default_global_strategy(self, dbs, atom):
+        return chain(*[repo.match(atom) for repo in dbs])
+
+    @staticmethod
     def just_livefs_dbs(dbs):
         for r in dbs:
             if r.livefs:
@@ -764,13 +768,11 @@ class merge_plan(object):
         return iter_sort(highest_iter_sort,
                          *[repo.match(atom)
                          for repo in self.prefer_livefs_dbs(dbs)])
-        #return iter_sort(highest_iter_sort,
-        #                 default_global_strategy(self, dbs, atom))
 
     @staticmethod
     def prefer_lowest_version_strategy(self, dbs, atom):
         return iter_sort(lowest_iter_sort,
-                         default_global_strategy(self, dbs, atom))
+                         self.default_global_strategy(self, dbs, atom))
 
     @staticmethod
     def prefer_reuse_strategy(self, dbs, atom):

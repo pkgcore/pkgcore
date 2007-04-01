@@ -93,6 +93,7 @@ class resolver_stack(deque):
 
     frame_klass = resolver_frame
     depth = property(len)
+    current_frame = property(operator.itemgetter(-1))
 
     def __str__(self):
         return 'resolver stack:\n  %s' % '\n  '.join(str(x) for x in self)
@@ -207,9 +208,10 @@ class merge_plan(object):
 
         return []
 
-    def process_depends(self, current_stack, cur_frame, depset):
+    def process_depends(self, current_stack, depset):
         failure = []
         additions, blocks, = [], []
+        cur_frame = current_stack.current_frame
         dprint("depends:     %s%s: started: %s",
                (cur_frame.depth *2 * " ", cur_frame.atom,
                 cur_frame.choices.current_pkg))
@@ -310,9 +312,10 @@ class merge_plan(object):
         else: # all potentials were usable.
             return additions, blocks
 
-    def process_rdepends(self, current_stack, cur_frame, attr, depset):
+    def process_rdepends(self, current_stack, attr, depset):
         failure = []
         additions, blocks, = [], []
+        cur_frame = current_stack.current_frame
         if attr == "post_rdepends":
             dprint("prdepends:   %s%s: started: %s",
                 (cur_frame.depth *2 * " ", cur_frame.atom,
@@ -532,7 +535,7 @@ class merge_plan(object):
         else:
             dprint("processing   %s%s", (depth *2 * " ", atom))
 
-        cur_frame = current_stack.add_frame(mode, atom, choices, dbs,
+        current_stack.add_frame(mode, atom, choices, dbs,
             self.state.current_state, drop_cycles)
 
         blocks = []
@@ -553,25 +556,23 @@ class merge_plan(object):
             additions, blocks = [], []
 
             if not choices.current_pkg.built or self.process_built_depends:
-                l = self.process_depends(
-                    current_stack, cur_frame,
+                l = self.process_depends(current_stack,
                     self.depset_reorder(self, choices.depends, "depends"))
                 if len(l) == 1:
                     dprint("reseting for %s%s because of depends: %s",
                            (depth*2*" ", atom, l[0][-1]))
-                    self.state.backtrack(cur_frame.start_point)
+                    self.state.backtrack(current_stack.current_frame.start_point)
                     failures = l[0]
                     continue
                 additions += l[0]
                 blocks += l[1]
 
-            l = self.process_rdepends(
-                current_stack, cur_frame, "rdepends",
+            l = self.process_rdepends(current_stack, "rdepends",
                 self.depset_reorder(self, choices.rdepends, "rdepends"))
             if len(l) == 1:
                 dprint("reseting for %s%s because of rdepends: %s",
                        (depth*2*" ", atom, l[0]))
-                self.state.backtrack(cur_frame.start_point)
+                self.state.backtrack(current_stack.current_frame.start_point)
                 failures = l[0]
                 continue
             additions += l[0]
@@ -588,7 +589,7 @@ class merge_plan(object):
                 return None
             elif l is not None:
                 # failure.
-                self.state.backtrack(cur_frame.start_point)
+                self.state.backtrack(current_stack.current_frame.start_point)
                 choices.force_next_pkg()
                 continue
 
@@ -604,7 +605,7 @@ class merge_plan(object):
             else:
                 fail = False
             if fail:
-                self.state.backtrack(cur_frame.start_point)
+                self.state.backtrack(current_stack.current_frame.start_point)
                 choices.force_next_pkg()
                 continue
 
@@ -641,20 +642,19 @@ class merge_plan(object):
                 fail = False
             if fail:
                 choices.reduce_atoms(x)
-                self.state.backtrack(cur_frame.start_point)
+                self.state.backtrack(current_stack.current_frame.start_point)
                 continue
 
             # reset blocks for pdepend proccesing
             blocks = []
-            l = self.process_rdepends(
-                current_stack, cur_frame, "post_rdepends",
+            l = self.process_rdepends(current_stack, "post_rdepends",
                 self.depset_reorder(self, choices.post_rdepends,
                                     "post_rdepends"))
 
             if len(l) == 1:
                 dprint("reseting for %s%s because of rdepends: %s",
                        (depth*2*" ", atom, l[0]))
-                self.state.backtrack(cur_frame.start_point)
+                self.state.backtrack(current_stack.current_frame.start_point)
                 failures = l[0]
                 continue
             additions += l[0]
@@ -681,7 +681,7 @@ class merge_plan(object):
             else:
                 fail = False
             if fail:
-                self.state.backtrack(cur_frame.start_point)
+                self.state.backtrack(current_stack.current_frame.start_point)
                 choices.force_next_pkg()
                 continue
             break
@@ -689,7 +689,7 @@ class merge_plan(object):
         else:
             dprint("no solution  %s%s", (depth*2*" ", atom))
             current_stack.pop_frame()
-            self.state.backtrack(cur_frame.start_point)
+            self.state.backtrack(current_stack.current_frame.start_point)
             # saving roll.  if we're allowed to drop cycles, try it again.
             # this needs to be *far* more fine grained also. it'll try
             # regardless of if it's cycle issue

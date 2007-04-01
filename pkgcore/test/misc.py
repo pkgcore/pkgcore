@@ -3,6 +3,7 @@
 
 # misc things useful for tests.
 
+from itertools import ifilter, imap
 from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild.atom import atom
@@ -54,3 +55,18 @@ class FakeProfile(object):
             
     def make_virtuals_repo(self, repo):
         return self.virtuals
+
+
+class FakeRepo(object):
+
+    def __init__(self, pkgs, **kwds):
+        self.pkgs = pkgs
+        for k, v in kwds.iteritems():
+            setattr(self, k, v)
+    
+    def itermatch(self, restrict, sorter=iter, pkg_klass_override=lambda x:x):
+        return ifilter(restrict.match,
+            imap(pkg_klass_override, sorter(self.pkgs)))
+    
+    def match(self, restrict, **kwargs):
+        return list(self.itermatch(restrict, **kwargs))

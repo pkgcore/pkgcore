@@ -208,10 +208,10 @@ class merge_plan(object):
 
         return []
 
-    def process_depends(self, current_stack, depset):
+    def process_depends(self, stack, depset):
         failure = []
         additions, blocks, = [], []
-        cur_frame = current_stack.current_frame
+        cur_frame = stack.current_frame
         dprint("depends:     %s%s: started: %s",
                (cur_frame.depth *2 * " ", cur_frame.atom,
                 cur_frame.choices.current_pkg))
@@ -231,10 +231,10 @@ class merge_plan(object):
                             "blockers")
                         continue
                 else:
-                    index = current_stack.is_cycle(datom, cur_frame.choices,
+                    index = stack.is_cycle(datom, cur_frame.choices,
                         "depends")
                     looped = ignore = False
-                    stack_end = len(current_stack) - 1
+                    stack_end = len(stack) - 1
                     # this logic is admittedly semi tricky.
                     while index != -1:
                         looped = True
@@ -242,7 +242,7 @@ class merge_plan(object):
                         # the same vdb node, ignore it (ignore self-dependant
                         # depends level installed deps for the same node iow)
                         if ((index < stack_end and index) and
-                            (current_stack[index - 1].current_pkg ==
+                            (stack[index - 1].current_pkg ==
                             cur_frame.current_pkg)
                             and cur_frame.current_pkg.repo.livefs):
                             # we're in a cycle of depends level vdb nodes;
@@ -257,7 +257,7 @@ class merge_plan(object):
                         else:
                             # ok, so the first candidate wasn't vdb.
                             # see if there are more.
-                            index = current_stack.is_cycle(datom,
+                            index = stack.is_cycle(datom,
                                 cur_frame.choices, None, start=index + 1)
                     else:
                         # ok.  it exited on its own.  meaning either no cycles,
@@ -282,7 +282,7 @@ class merge_plan(object):
                     if ignore:
                         # vdb contained cycle; ignore it.
                         break
-                    failure = self._rec_add_atom(datom, current_stack,
+                    failure = self._rec_add_atom(datom, stack,
                         dbs, mode="depends",
                         drop_cycles=cur_frame.drop_cycles)
                     if failure and cur_frame.drop_cycles:
@@ -312,10 +312,10 @@ class merge_plan(object):
         else: # all potentials were usable.
             return additions, blocks
 
-    def process_rdepends(self, current_stack, attr, depset):
+    def process_rdepends(self, stack, attr, depset):
         failure = []
         additions, blocks, = [], []
-        cur_frame = current_stack.current_frame
+        cur_frame = stack.current_frame
         if attr == "post_rdepends":
             dprint("prdepends:   %s%s: started: %s",
                 (cur_frame.depth *2 * " ", cur_frame.atom,
@@ -330,7 +330,7 @@ class merge_plan(object):
                 if ratom.blocks:
                     blocks.append(ratom)
                     break
-                index = current_stack.is_cycle(ratom, cur_frame.choices, attr)
+                index = stack.is_cycle(ratom, cur_frame.choices, attr)
                 if index != -1:
                     # cycle.  whee.
                     if cur_frame.dbs is self.livefs_dbs:
@@ -340,14 +340,14 @@ class merge_plan(object):
                     else:
                         # XXX this is faulty for rdepends/prdepends most likely
 
-                        if current_stack[index].mode == attr:
+                        if stack[index].mode == attr:
                             # contained rdepends cycle... ignore it.
                             failure = []
                         else:
                             # force limit_to_vdb to True to try and
                             # isolate the cycle to installed vdb
                             # components
-                            failure = self._rec_add_atom(ratom, current_stack,
+                            failure = self._rec_add_atom(ratom, stack,
                                 self.livefs_dbs, mode=attr,
                                 drop_cycles=cur_frame.drop_cycles)
                             if failure and cur_frame.drop_cycles:
@@ -358,7 +358,7 @@ class merge_plan(object):
                                 failure = []
                                 break
                 else:
-                    failure = self._rec_add_atom(ratom, current_stack,
+                    failure = self._rec_add_atom(ratom, stack,
                         cur_frame.dbs, mode=attr,
                         drop_cycles=cur_frame.drop_cycles)
                 if failure:
@@ -375,7 +375,7 @@ class merge_plan(object):
         else: # all potentials were usable.
             return additions, blocks
 
-    def insert_choice(self, atom, current_stack, choices):
+    def insert_choice(self, atom, stack, choices):
         # well, we got ourselvs a resolution.
         # do a trick to make the resolver now aware of vdb pkgs if needed
         if not self.vdb_preloaded and not choices.current_pkg.repo.livefs:
@@ -455,7 +455,7 @@ class merge_plan(object):
             conflicts = None
         return conflicts
 
-    def _viable(self, atom, current_stack, dbs, limit_to_vdb, depth):
+    def _viable(self, atom, stack, dbs, limit_to_vdb, depth):
         """
         internal function to discern if an atom is viable, returning
         the matches iter if so
@@ -469,9 +469,9 @@ class merge_plan(object):
             return None
         l = self.state.match_atom(atom)
         if l:
-            if current_stack:
+            if stack:
                 dprint("pre-solved  %s%s, [%s] [%s]",
-                       (((depth*2) + 1)*" ", atom, current_stack[-1].atom,
+                       (((depth*2) + 1)*" ", atom, stack[-1].atom,
                         ", ".join(str(x) for x in l)), 'pre-solved')
             else:
                 dprint("pre-solved %s%s, [%s]",
@@ -486,8 +486,8 @@ class merge_plan(object):
             choices.reduce_atoms(self.insoluble)
             if not choices:
                 s = 'first level'
-                if current_stack:
-                    s = current_stack[-1].atom
+                if stack:
+                    s = stack[-1].atom
                 dprint("filtering    %s%s  [%s] reduced it to no matches",
                        (depth * 2 * " ", atom, s))
                 matches = None
@@ -497,14 +497,14 @@ class merge_plan(object):
             if not limit_to_vdb:
                 self.insoluble.add(atom)
             s = 'first level'
-            if current_stack:
-                s = current_stack[-1].atom
+            if stack:
+                s = stack[-1].atom
             dprint("processing   %s%s  [%s] no matches",
                    (depth *2 * " ", atom, s))
             return None
         return choices, matches
 
-    def _rec_add_atom(self, atom, current_stack, dbs, mode="none",
+    def _rec_add_atom(self, atom, stack, dbs, mode="none",
         drop_cycles=False):
         """Add an atom.
 
@@ -513,9 +513,9 @@ class merge_plan(object):
         """
         limit_to_vdb = dbs == self.livefs_dbs
 
-        depth = len(current_stack)
+        depth = len(stack)
 
-        matches = self._viable(atom, current_stack, dbs, limit_to_vdb, depth)
+        matches = self._viable(atom, stack, dbs, limit_to_vdb, depth)
         if matches is None:
             return [atom]
         elif matches is True:
@@ -525,17 +525,17 @@ class merge_plan(object):
         # see if we can insert or not at this point (if we can't, no
         # point in descending)
 
-        if current_stack:
+        if stack:
             if limit_to_vdb:
                 dprint("processing   %s%s  [%s]; mode %s vdb bound",
-                       (depth *2 * " ", atom, current_stack[-1].atom, mode))
+                       (depth *2 * " ", atom, stack[-1].atom, mode))
             else:
                 dprint("processing   %s%s  [%s]; mode %s",
-                       (depth *2 * " ", atom, current_stack[-1].atom, mode))
+                       (depth *2 * " ", atom, stack[-1].atom, mode))
         else:
             dprint("processing   %s%s", (depth *2 * " ", atom))
 
-        current_stack.add_frame(mode, atom, choices, dbs,
+        stack.add_frame(mode, atom, choices, dbs,
             self.state.current_state, drop_cycles)
 
         blocks = []
@@ -556,23 +556,23 @@ class merge_plan(object):
             additions, blocks = [], []
 
             if not choices.current_pkg.built or self.process_built_depends:
-                l = self.process_depends(current_stack,
+                l = self.process_depends(stack,
                     self.depset_reorder(self, choices.depends, "depends"))
                 if len(l) == 1:
                     dprint("reseting for %s%s because of depends: %s",
                            (depth*2*" ", atom, l[0][-1]))
-                    self.state.backtrack(current_stack.current_frame.start_point)
+                    self.state.backtrack(stack.current_frame.start_point)
                     failures = l[0]
                     continue
                 additions += l[0]
                 blocks += l[1]
 
-            l = self.process_rdepends(current_stack, "rdepends",
+            l = self.process_rdepends(stack, "rdepends",
                 self.depset_reorder(self, choices.rdepends, "rdepends"))
             if len(l) == 1:
                 dprint("reseting for %s%s because of rdepends: %s",
                        (depth*2*" ", atom, l[0]))
-                self.state.backtrack(current_stack.current_frame.start_point)
+                self.state.backtrack(stack.current_frame.start_point)
                 failures = l[0]
                 continue
             additions += l[0]
@@ -581,15 +581,15 @@ class merge_plan(object):
             dprint("choose for   %s%s, %s",
                    (depth *2*" ", atom, choices.current_pkg))
 
-            l = self.insert_choice(atom, current_stack, choices)
+            l = self.insert_choice(atom, stack, choices)
             if l is False:
                 # this means somehow the node already slipped in.
                 # so we exit now, we are satisfied
-                current_stack.pop_frame()
+                stack.pop_frame()
                 return None
             elif l is not None:
                 # failure.
-                self.state.backtrack(current_stack.current_frame.start_point)
+                self.state.backtrack(stack.current_frame.start_point)
                 choices.force_next_pkg()
                 continue
 
@@ -597,15 +597,15 @@ class merge_plan(object):
             for x in choices.provides:
                 l = state.add_op(choices, x).apply(self.state)
                 if l and l != [x]:
-                    if len(current_stack) > 1:
-                        if not current_stack[-2].atom.match(x):
+                    if len(stack) > 1:
+                        if not stack[-2].atom.match(x):
                             print "provider conflicted... how?"
                             fail = [x]
                             break
             else:
                 fail = False
             if fail:
-                self.state.backtrack(current_stack.current_frame.start_point)
+                self.state.backtrack(stack.current_frame.start_point)
                 choices.force_next_pkg()
                 continue
 
@@ -642,19 +642,19 @@ class merge_plan(object):
                 fail = False
             if fail:
                 choices.reduce_atoms(x)
-                self.state.backtrack(current_stack.current_frame.start_point)
+                self.state.backtrack(stack.current_frame.start_point)
                 continue
 
             # reset blocks for pdepend proccesing
             blocks = []
-            l = self.process_rdepends(current_stack, "post_rdepends",
+            l = self.process_rdepends(stack, "post_rdepends",
                 self.depset_reorder(self, choices.post_rdepends,
                                     "post_rdepends"))
 
             if len(l) == 1:
                 dprint("reseting for %s%s because of rdepends: %s",
                        (depth*2*" ", atom, l[0]))
-                self.state.backtrack(current_stack.current_frame.start_point)
+                self.state.backtrack(stack.current_frame.start_point)
                 failures = l[0]
                 continue
             additions += l[0]
@@ -681,15 +681,15 @@ class merge_plan(object):
             else:
                 fail = False
             if fail:
-                self.state.backtrack(current_stack.current_frame.start_point)
+                self.state.backtrack(stack.current_frame.start_point)
                 choices.force_next_pkg()
                 continue
             break
 
         else:
             dprint("no solution  %s%s", (depth*2*" ", atom))
-            current_stack.pop_frame()
-            self.state.backtrack(current_stack.current_frame.start_point)
+            stack.pop_frame()
+            self.state.backtrack(stack.current_frame.start_point)
             # saving roll.  if we're allowed to drop cycles, try it again.
             # this needs to be *far* more fine grained also. it'll try
             # regardless of if it's cycle issue
@@ -697,13 +697,13 @@ class merge_plan(object):
                 dprint("trying saving throw for %s ignoring cycles",
                        atom, "cycle")
                 # note everything is retored to a pristine state prior also.
-                l = self._rec_add_atom(atom, current_stack, dbs,
+                l = self._rec_add_atom(atom, stack, dbs,
                     mode=mode, drop_cycles=True)
                 if not l:
                     return None
             return [atom] + failures
 
-        current_stack.pop_frame()
+        stack.pop_frame()
         return None
 
     def generate_mangled_blocker(self, choices, blocker):

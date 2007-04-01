@@ -455,7 +455,7 @@ class merge_plan(object):
             conflicts = None
         return conflicts
 
-    def _viable(self, atom, stack, dbs, limit_to_vdb, depth):
+    def _viable(self, atom, stack, dbs, limit_to_vdb):
         """
         internal function to discern if an atom is viable, returning
         the matches iter if so
@@ -465,17 +465,17 @@ class merge_plan(object):
         """
         if atom in self.insoluble:
             dprint("processing   %s%s: marked insoluble already",
-                   (depth *2 * " ", atom))
+                   (stack.depth *2 * " ", atom))
             return None
         l = self.state.match_atom(atom)
         if l:
             if stack:
                 dprint("pre-solved  %s%s, [%s] [%s]",
-                       (((depth*2) + 1)*" ", atom, stack[-1].atom,
+                       (((stack.depth*2) + 1)*" ", atom, stack[-1].atom,
                         ", ".join(str(x) for x in l)), 'pre-solved')
             else:
                 dprint("pre-solved %s%s, [%s]",
-                       (depth*2*" ", atom, ", ".join(str(x) for x in l)),
+                       (stack.depth*2*" ", atom, ", ".join(str(x) for x in l)),
                        'pre-solved')
             return True
         # not in the plan thus far.
@@ -489,7 +489,7 @@ class merge_plan(object):
                 if stack:
                     s = stack[-1].atom
                 dprint("filtering    %s%s  [%s] reduced it to no matches",
-                       (depth * 2 * " ", atom, s))
+                       (stack.depth * 2 * " ", atom, s))
                 matches = None
                 # and was intractable because it has a hard dep on an
                 # unsolvable atom.
@@ -500,7 +500,7 @@ class merge_plan(object):
             if stack:
                 s = stack[-1].atom
             dprint("processing   %s%s  [%s] no matches",
-                   (depth *2 * " ", atom, s))
+                   (stack.depth *2 * " ", atom, s))
             return None
         return choices, matches
 
@@ -513,9 +513,9 @@ class merge_plan(object):
         """
         limit_to_vdb = dbs == self.livefs_dbs
 
-        depth = len(stack)
+        depth = stack.depth
 
-        matches = self._viable(atom, stack, dbs, limit_to_vdb, depth)
+        matches = self._viable(atom, stack, dbs, limit_to_vdb)
         if matches is None:
             return [atom]
         elif matches is True:

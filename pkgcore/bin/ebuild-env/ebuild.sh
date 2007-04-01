@@ -350,10 +350,10 @@ load_environ() {
             fi
         };
         function export() {
-            PKGCORE_ATTRS_EXPORTED="${PKGCORE_ATTRS_EXPORTED} $*"
+            declare -x "$@"
         };
         function readonly() {
-            PKGCORE_ATTRS_READONLY="${PKGCORE_ATTRS_READONLY} $*"
+            declare -r "$@"
         };
         function shopt() {
             if [ "$1" == "-s" ]; then

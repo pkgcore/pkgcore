@@ -62,29 +62,6 @@ def lowest_iter_sort(l, pkg_grabber=pkg_grabber):
     return l
 
 
-def default_depset_reorder(resolver, depset, mode):
-    for or_block in depset:
-        vdb = []
-        non_vdb = []
-        if len(or_block) == 1:
-            yield or_block
-            continue
-        for atom in or_block:
-            if atom.blocks:
-                nonvdb.append(atom)
-            elif resolver.state.match_atom(atom):
-                vdb.append(atom)
-            elif caching_iter(p for r in resolver.livefs_dbs
-                for p in r.match(atom)):
-                vdb.append(atom)
-            else:
-                non_vdb.append(atom)
-        if vdb:
-            yield vdb + non_vdb
-        else:
-            yield or_block
-
-
 class resolver_frame(object):
 
     __slots__ = ("atom", "choices", "mode", "start_point", "dbs",
@@ -162,13 +139,15 @@ class merge_plan(object):
 
     def __init__(self, dbs, per_repo_strategy,
                  global_strategy=None,
-                 depset_reorder_strategy=default_depset_reorder,
+                 depset_reorder_strategy=None,
                  process_built_depends=False,
                  drop_cycles=False):
         if not isinstance(dbs, (list, tuple)):
             dbs = [dbs]
         if global_strategy is None:
             global_strategy = self.default_global_strategy
+        if depset_reorder_strategy is None:
+            depset_reorder_strategy = self.default_depset_reorder_strategy
 
         self.depset_reorder = depset_reorder_strategy
         self.per_repo_strategy = per_repo_strategy
@@ -735,6 +714,29 @@ class merge_plan(object):
             repo.clear()
 
     # selection strategies for atom matches
+
+    @staticmethod
+    def default_depset_reorder_strategy(self, depset, mode):
+        for or_block in depset:
+            vdb = []
+            non_vdb = []
+            if len(or_block) == 1:
+                yield or_block
+                continue
+            for atom in or_block:
+                if atom.blocks:
+                    nonvdb.append(atom)
+                elif self.state.match_atom(atom):
+                    vdb.append(atom)
+                elif caching_iter(p for r in self.livefs_dbs
+                    for p in r.match(atom)):
+                    vdb.append(atom)
+                else:
+                    non_vdb.append(atom)
+            if vdb:
+                yield vdb + non_vdb
+            else:
+                yield or_block
 
     @staticmethod
     def default_global_strategy(self, dbs, atom):

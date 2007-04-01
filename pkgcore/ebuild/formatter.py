@@ -108,9 +108,8 @@ class use_expand_filter(object):
         @param use_expand_hidden: names of use-expanded vars that should not
             be added to the dict.
         """
-        self.expand_filters = [(x.lower() +"_",
-            (x in use_expand_hidden, x.lower()))
-            for x in use_expand]
+        self.expand_filters = dict((x.lower(), (x in use_expand_hidden, x))
+            for x in use_expand)
         self.use_expand = use_expand
         self.use_expand_hidden = use_expand_hidden
     
@@ -125,19 +124,22 @@ class use_expand_filter(object):
         """
         ue_dict = {}
         usel = []
+        ef = self.expand_filters
         for flag in use:
-            if '_' in flag:
-                for expand, data in self.expand_filters:
-                    if flag.startswith(expand):
-                        if not data[0]:
-                            ue_dict.setdefault(data[1], []).append(
-                                flag[len(expand):])
-                        break
-                else:
-                    # stupid use flag.
-                    usel.append(flag)
+            split_flag = flag.rsplit("_", 1)
+            while len(split_flag) == 2:
+                if split_flag[0] not in ef:
+                    split_flag = split_flag[0].rsplit("_", 1)
+                    continue
+                data = ef[split_flag[0]]
+                if not data[0]:
+                    # wasn't hidden...
+                    ue_dict.setdefault(data[1], []).append(
+                        flag[len(split_flag[0]) + 1:])
+                break
             else:
                 usel.append(flag)
+
         return usel, ue_dict
 
 

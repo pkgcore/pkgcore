@@ -140,7 +140,7 @@ class replace_op(base_op):
         s = ''
         if self.force:
             s = ' forced'
-        return "replace: %s with %s" % (self.old_pkg, self.pkg)
+        return "replace: %s with %s%s" % (self.old_pkg, self.pkg, s)
 
 
 class blocker_base_op(object):

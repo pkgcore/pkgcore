@@ -407,10 +407,6 @@ class merge_plan(object):
         if conflicts:
             # this means in this branch of resolution, someone slipped
             # something in already. cycle, basically.
-            dprint("was trying to insert atom '%s' pkg '%s',\n"
-                   "but '[%s]' exists already",
-                   (atom, choices.current_pkg,
-                   ", ".join(map(str, conflicts))))
             # hack.  see if what was insert is enough for us.
 
             # this is tricky... if it's the same node inserted
@@ -423,9 +419,13 @@ class merge_plan(object):
 
                 # early exit. means that a cycle came about, but exact
                 # same result slipped through.
-                dprint("non issue, cycle for %s pkg %s resolved to same pkg" %
-                       (repr(atom), choices.current_pkg))
                 return False
+
+            dprint("was trying to insert atom '%s' pkg '%s',\n"
+                   "but '[%s]' exists already",
+                   (atom, choices.current_pkg,
+                   ", ".join(map(str, conflicts))))
+
             try_rematch = False
             if any(True for x in conflicts if isinstance(x, restriction.base)):
                 # blocker was caught

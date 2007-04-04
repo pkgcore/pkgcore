@@ -567,7 +567,7 @@ def stringify_attr(config, pkg, attr):
     if value is None:
         return 'MISSING'
 
-    if attr in ('herds', 'iuse', 'maintainers', 'restrict'):
+    if attr in ('herds', 'iuse', 'maintainers'):
         return ' '.join(sorted(unicode(v) for v in value))
     if attr == 'keywords':
         return ' '.join(sorted(value, key=lambda x:x.lstrip("~")))
@@ -657,7 +657,7 @@ def format_depends(out, node, func=_default_formatter):
 def format_attr(config, out, pkg, attr):
     """Grab a package attr and print it through a formatter."""
     # config is currently unused but may affect display in the future.
-    if attr in ('depends', 'rdepends', 'post_rdepends'):
+    if attr in ('depends', 'rdepends', 'post_rdepends', 'restrict'):
         data = getattr(pkg, attr, None)
         if data is None:
             out.write('MISSING')

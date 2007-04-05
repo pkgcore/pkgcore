@@ -24,8 +24,7 @@ from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
 from snakeoil import currying
 
 from snakeoil.demandload import demandload
-demandload(globals(), "errno "
-)
+demandload(globals(), 'errno')
 
 def scan_livefs(cset):
     """generate the intersect of a cset and the livefs"""

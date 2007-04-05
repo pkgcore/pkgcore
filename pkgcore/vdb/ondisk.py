@@ -21,13 +21,13 @@ from snakeoil.osutils import listdir_dirs, readfile
 from pkgcore.util import bzip2
 from snakeoil.demandload import demandload
 demandload(globals(),
-           "time "
-           "pkgcore.ebuild:conditionals "
-           "pkgcore.const:VERSION "
-           "pkgcore.ebuild:triggers "
-           "pkgcore.log:logger "
-           "pkgcore.fs.ops:change_offset_rewriter "
-    )
+    'time',
+    'pkgcore.ebuild:conditionals',
+    'pkgcore.const:VERSION',
+    'pkgcore.ebuild:triggers',
+    'pkgcore.log:logger',
+    'pkgcore.fs.ops:change_offset_rewriter',
+)
 
 
 class bz2_data_source(data_source.base):

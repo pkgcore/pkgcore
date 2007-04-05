@@ -15,12 +15,15 @@ from pkgcore.pkgsets.glsa import SecurityUpgrades
 
 from snakeoil.osutils import normpath, abspath, listdir_files, pjoin
 from snakeoil.demandload import demandload
-demandload(globals(), "errno pkgcore.config:errors "
-    "pkgcore.log:logger "
-    'ConfigParser:ConfigParser '
-    "snakeoil.fileutils:read_bash_dict "
-    "pkgcore.util:bzip2 "
-    'snakeoil.xml:etree ')
+demandload(globals(),
+    'errno',
+    'pkgcore.config:errors',
+    'pkgcore.log:logger',
+    'ConfigParser:ConfigParser',
+    'snakeoil.fileutils:read_bash_dict',
+    'pkgcore.util:bzip2',
+    'snakeoil.xml:etree',
+)
 
 
 def my_convert_hybrid(manager, val, arg_type):

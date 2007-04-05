@@ -11,8 +11,9 @@ from pkgcore.config import ConfigHint
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "snakeoil.fileutils:AtomicWriteFile "
-    "snakeoil.osutils:readlines ")
+    'snakeoil.fileutils:AtomicWriteFile',
+    'snakeoil.osutils:readlines',
+)
 
 class FileList(object):
     pkgcore_config_type = ConfigHint({'location':'str'}, typename='pkgset')

@@ -15,8 +15,8 @@ from snakeoil.compatibility import all
 from snakeoil.klass import generic_equality
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore.restrictions.delegated:delegate "
-    "snakeoil.currying:partial "
+    "pkgcore.restrictions.delegated:delegate",
+    "snakeoil.currying:partial",
 )
 
 # namespace compatibility...

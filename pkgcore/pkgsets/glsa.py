@@ -15,12 +15,12 @@ from snakeoil.klass import generic_equality
 from snakeoil.iterables import caching_iter
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore.package:mutated "
-    "pkgcore.ebuild:cpv,atom "
-    "pkgcore.log:logger "
-    "pkgcore.util.repo_utils:get_virtual_repos "
-    "snakeoil.xml:etree "
-    )
+    'pkgcore.package:mutated',
+    'pkgcore.ebuild:cpv,atom',
+    'pkgcore.log:logger',
+    'pkgcore.util.repo_utils:get_virtual_repos',
+    'snakeoil.xml:etree',
+)
 
 
 class KeyedAndRestriction(boolean.AndRestriction):

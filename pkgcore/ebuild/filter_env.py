@@ -8,12 +8,11 @@
 """Filter a bash environment dump."""
 
 
-from snakeoil import demandload
-demandload.demandload(
-    globals(),
-    're '
-    'pkgcore.log:logger '
-    )
+from snakeoil.demandload import demandload
+demandload(globals(),
+    're',
+    'pkgcore.log:logger'
+)
 
 
 COMMAND_PARSING, SPACE_PARSING = range(2)

@@ -9,8 +9,9 @@ from pkgcore.chksum import errors, gpg
 from snakeoil.obj import make_SlottedDict_kls
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore:fetch "
-    "snakeoil.lists:iflatten_instance ")
+    "pkgcore:fetch",
+    "snakeoil.lists:iflatten_instance",
+)
 
 def parse_digest(source, throw_errors=True):
     d = {}

@@ -15,8 +15,10 @@ from itertools import chain
 from snakeoil.iterables import iter_sort
 from snakeoil.demandload import demandload
 demandload(globals(),
-           "pkgcore.restrictions:packages,values "
-           "pkgcore.pkgsets.glsa:KeyedAndRestriction ")
+    'pkgcore.restrictions:packages,values',
+    'pkgcore.pkgsets.glsa:KeyedAndRestriction',
+)
+
 
 def prefer_highest_ver(resolver, dbs, atom):
     try:

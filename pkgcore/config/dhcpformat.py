@@ -38,9 +38,8 @@ Example of the supported format (not a complete config)::
     }
 """
 
-from snakeoil import mappings, modules, demandload
 from pkgcore.config import basics, errors
-
+from snakeoil import mappings, modules, demandload
 demandload.demandload(globals(), 'snakeoil.compatibility:all')
 
 import pyparsing as pyp

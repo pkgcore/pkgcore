@@ -29,12 +29,11 @@ from snakeoil.mappings import ProtectedDict
 from snakeoil.fileutils import iter_read_bash
 from snakeoil.currying import partial
 from snakeoil.demandload import demandload
-demandload(
-    globals(),
-    'errno '
-    'pkgcore.fs.livefs:iter_scan '
-    'pkgcore.fs.fs:fsFile '
-    )
+demandload(globals(),
+    'errno',
+    'pkgcore.fs.livefs:iter_scan',
+    'pkgcore.fs.fs:fsFile',
+)
 
 class MissingFile(BaseException):
     def __init__(self, filename, setting):

@@ -18,15 +18,17 @@ import pkgcore.os_data
 
 from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
 from snakeoil.demandload import demandload
-demandload(globals(), "os errno "
-    "pkgcore.plugin:get_plugin "
-    "pkgcore:spawn "
-    "pkgcore.fs.livefs:gen_obj "
-    "pkgcore.fs:fs,contents "
-    "snakeoil.fileutils:iter_read_bash "
-    "time "
-    "math:floor "
-    )
+demandload(globals(),
+    'os',
+    'errno',
+    'pkgcore.plugin:get_plugin',
+    'pkgcore:spawn',
+    'pkgcore.fs.livefs:gen_obj',
+    'pkgcore.fs:fs,contents',
+    'snakeoil.fileutils:iter_read_bash',
+    'time',
+    'math:floor',
+)
 
 UNINSTALLING_MODES = (const.REPLACE_MODE, const.UNINSTALL_MODE)
 INSTALLING_MODES = (const.REPLACE_MODE, const.INSTALL_MODE)

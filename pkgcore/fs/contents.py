@@ -10,7 +10,7 @@ from snakeoil.compatibility import all
 from snakeoil.klass import generic_equality
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore.fs.ops:offset_rewriter,change_offset_rewriter "
+    'pkgcore.fs.ops:offset_rewriter,change_offset_rewriter',
 )
 
 def check_instance(obj):

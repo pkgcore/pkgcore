@@ -15,9 +15,9 @@ from snakeoil.osutils import join as pjoin
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "os "
-    "snakeoil.osutils:normpath "
-    "snakeoil.mappings:StackedDict "
+    "os",
+    "snakeoil.osutils:normpath",
+    "snakeoil.mappings:StackedDict",
 )
 
 class base(object):

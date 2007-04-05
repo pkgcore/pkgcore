@@ -7,11 +7,13 @@ chksum verification/generation subsystem
 
 from pkgcore.interfaces.data_source import base as base_data_source
 from snakeoil.demandload import demandload
-demandload(globals(), "os sys "
-    "pkgcore.log:logger "
-    "pkgcore.chksum.defaults:loop_over_file "
-    "snakeoil.modules:load_module "
-    "snakeoil.osutils:listdir_files ")
+demandload(globals(), "os",
+    "sys",
+    "pkgcore.log:logger",
+    "pkgcore.chksum.defaults:loop_over_file",
+    "snakeoil.modules:load_module",
+    "snakeoil.osutils:listdir_files",
+)
 
 chksum_types = {}
 __inited__ = False

@@ -8,7 +8,7 @@ XPAK container support
 import struct
 from snakeoil.mappings import OrderedDict
 from snakeoil.demandload import demandload
-demandload(globals(), "os errno")
+demandload(globals(), "os", "errno")
 
 #
 # format is:

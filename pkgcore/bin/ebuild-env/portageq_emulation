@@ -7,11 +7,13 @@ env = os.environ["SANDBOX_ON"] = "0"
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "snakeoil.iterables:caching_iter "
-    "pkgcore.config:load_config "
-    "pkgcore.ebuild.atom:atom "
-    "pkgcore.util.packages:get_raw_pkg "
-    "sys os ")
+    "snakeoil.iterables:caching_iter",
+    "pkgcore.config:load_config",
+    "pkgcore.ebuild.atom:atom",
+    "pkgcore.util.packages:get_raw_pkg",
+    "sys",
+    "os ",
+)
 
 def str_pkg(pkg):
     pkg = get_raw_pkg(pkg)

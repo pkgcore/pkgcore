@@ -22,13 +22,12 @@ import logging
 from pkgcore.config import load_config, errors
 from snakeoil import formatters, demandload
 
-demandload.demandload(
-    globals(),
-    'pkgcore:version '
-    'pkgcore.config:basics '
-    'pkgcore.restrictions:packages '
-    'pkgcore.util:parserestrict '
-    )
+demandload.demandload(globals(),
+    'pkgcore:version',
+    'pkgcore.config:basics',
+    'pkgcore.restrictions:packages',
+    'pkgcore.util:parserestrict',
+)
 
 
 CONFIG_LOADED_MSG = (

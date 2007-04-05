@@ -34,10 +34,10 @@ from pkgcore.os_data import portage_uid, portage_gid
 
 from snakeoil.currying import post_curry, partial
 from snakeoil.demandload import demandload
-demandload(
-    globals(),
-    "pkgcore.log:logger "
-    "snakeoil:osutils ")
+demandload(globals(),
+    'pkgcore.log:logger',
+    'snakeoil:osutils',
+)
 
 import traceback
 

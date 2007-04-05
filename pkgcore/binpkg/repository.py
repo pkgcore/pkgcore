@@ -25,16 +25,17 @@ from snakeoil.osutils import join as pjoin
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-           "pkgcore.merge:engine "
-           "pkgcore.fs.livefs:scan "
-           "pkgcore.interfaces.data_source:local_source "
-           "pkgcore.fs.ops:offset_rewriter "
-           "pkgcore.interfaces.data_source:data_source "
-           "pkgcore.repository:wrapper "
-           "pkgcore.package.mutated:MutatedPkg "
-           "pkgcore.ebuild:ebd "
-           "pkgcore.binpkg:repo_ops "
-           "errno ")
+    "pkgcore.merge:engine",
+    "pkgcore.fs.livefs:scan",
+    "pkgcore.interfaces.data_source:local_source,"
+    "pkgcore.fs.ops:offset_rewriter",
+    "pkgcore.interfaces.data_source:data_source",
+    "pkgcore.repository:wrapper",
+    "pkgcore.package.mutated:MutatedPkg",
+    "pkgcore.ebuild:ebd",
+    "pkgcore.binpkg:repo_ops",
+    "errno",
+)
 
 
 class force_unpacking(triggers.base):

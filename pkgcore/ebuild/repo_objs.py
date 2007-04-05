@@ -8,10 +8,11 @@ package class for buildable ebuilds
 from snakeoil.currying import post_curry
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "snakeoil.xml:etree "
-    "pkgcore.ebuild:digest "
-    "snakeoil:mappings "
-    "errno ")
+    'snakeoil.xml:etree',
+    'pkgcore.ebuild:digest',
+    'snakeoil:mappings',
+    'errno',
+)
 
 
 class Maintainer(object):

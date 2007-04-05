@@ -13,7 +13,10 @@ Should use this module unless its absolutely critical that bz2 module be used
 
 
 from snakeoil.demandload import demandload
-demandload(globals(), "tempfile pkgcore.spawn:find_binary,spawn_get_output")
+demandload(globals(),
+    'tempfile',
+    'pkgcore.spawn:find_binary,spawn_get_output',
+)
 
 def process_compress(in_data, compress_level=9):
     fd = None

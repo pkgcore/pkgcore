@@ -21,7 +21,7 @@ import os.path
 from pkgcore import plugins
 from snakeoil.osutils import join as pjoin
 from snakeoil import modules, demandload
-demandload.demandload(globals(), 'tempfile errno pkgcore.log:logger')
+demandload.demandload(globals(), 'tempfile', 'errno', 'pkgcore.log:logger')
 
 
 CACHE_HEADER = 'pkgcore plugin cache v2\n'

@@ -17,9 +17,10 @@ from snakeoil.obj import DelayedInstantiation
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore.merge:engine "
-    "pkgcore.ebuild:triggers "
-    "re ")
+    "pkgcore.merge:engine",
+    "pkgcore.ebuild:triggers",
+    "re",
+)
 
 
 def passthrough(inst, attr, rename=None):

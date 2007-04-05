@@ -8,9 +8,13 @@ from pkgcore.interfaces import data_source
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
-demandload(globals(), "os stat errno "
-    "pkgcore.chksum:get_handler "
-    "snakeoil.osutils:readlines ")
+demandload(globals(),
+    'os',
+    'stat',
+    'errno',
+    'pkgcore.chksum:get_handler',
+    'snakeoil.osutils:readlines',
+)
 
 class LookupFsDev(fs.fsDev):
 

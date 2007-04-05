@@ -21,14 +21,15 @@ from snakeoil.obj import make_kls
 from snakeoil.weakrefs import WeakValCache
 
 from snakeoil.demandload import demandload
-demandload(globals(), "pkgcore.ebuild.ebd:buildable "
-    "pkgcore.interfaces.data_source:local_source "
-    "pkgcore.ebuild:digest "
-    "pkgcore.ebuild:repo_objs "
-    "pkgcore.ebuild:atom "
-    "random:shuffle "
-    "errno ")
-
+demandload(globals(),
+    'pkgcore.ebuild.ebd:buildable',
+    'pkgcore.interfaces.data_source:local_source',
+    'pkgcore.ebuild:digest',
+    'pkgcore.ebuild:repo_objs',
+    'pkgcore.ebuild:atom',
+    'random:shuffle',
+    'errno',
+)
 
 
 metadata_offset = "profiles"

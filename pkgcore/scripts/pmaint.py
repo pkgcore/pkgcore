@@ -9,15 +9,16 @@ repository maintainence
 from pkgcore.util import commandline
 from snakeoil.demandload import demandload
 
-demandload(globals(), "pkgcore.repository:multiplex "
-    "pkgcore.package:mutated "
-    "pkgcore.fs:contents,livefs "
-    "pkgcore.restrictions.boolean:OrRestriction "
-    "errno "
-    "threading:Event "
-    "threading:Thread "
-    "Queue:Queue,Empty "
-    "time:time,sleep "
+demandload(globals(),
+    'pkgcore.repository:multiplex',
+    'pkgcore.package:mutated',
+    'pkgcore.fs:contents,livefs',
+    'pkgcore.restrictions.boolean:OrRestriction',
+    'errno',
+    'threading:Event',
+    'threading:Thread',
+    'Queue:Queue,Empty',
+    'time:time,sleep',
 )
 
 commandline_commands = {}

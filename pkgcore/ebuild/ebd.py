@@ -27,9 +27,10 @@ from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.osutils import ensure_dirs, normpath, join as pjoin
 from snakeoil.demandload import demandload
 demandload(globals(),
-           "pkgcore.ebuild.ebuild_built:fake_package_factory,package "
-           "pkgcore.log:logger "
-           "pkgcore.package.mutated:MutatedPkg ")
+    "pkgcore.ebuild.ebuild_built:fake_package_factory,package",
+    "pkgcore.log:logger",
+    "pkgcore.package.mutated:MutatedPkg",
+)
 
 
 def _reset_env_data_source(method):

@@ -4,10 +4,13 @@
 from pkgcore.config import ConfigHint, configurable
 from snakeoil import demandload, descriptors
 demandload.demandload(globals(),
-    "os pwd stat errno "
-    "pkgcore:spawn "
-    "pkgcore:plugin "
-    "pkgcore:os_data "
+    'os',
+    'pwd',
+    'stat',
+    'errno',
+    'pkgcore:spawn',
+    'pkgcore:plugin',
+    'pkgcore:os_data',
 )
 
 

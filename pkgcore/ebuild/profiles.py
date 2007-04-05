@@ -16,11 +16,13 @@ from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import partial
 from snakeoil.demandload import demandload
 
-demandload(globals(), "pkgcore.interfaces.data_source:local_source "
-    "pkgcore.ebuild:cpv "
-    "pkgcore.ebuild:atom "
-    "pkgcore.repository:util "
-    "pkgcore.restrictions:packages ")
+demandload(globals(),
+    'pkgcore.interfaces.data_source:local_source',
+    'pkgcore.ebuild:cpv',
+    'pkgcore.ebuild:atom',
+    'pkgcore.repository:util',
+    'pkgcore.restrictions:packages',
+)
 
 class ProfileError(Exception):
 

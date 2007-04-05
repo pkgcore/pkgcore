@@ -5,8 +5,10 @@
 
 """Our unittest extensions."""
 
+__all__ = ('TestCase', 'SkipTest', 'Todo')
 
-from snakeoil.test import TestCase as TestCaseS
+
+from snakeoil.test import TestCase, SkipTest, Todo
 from pkgcore import log
 
 
@@ -29,7 +31,7 @@ def protect_logging(target):
     return f
 
 
-class TestRestriction(TestCaseS):
+class TestRestriction(TestCase):
 
     def assertMatch(self, obj, args, mode='match', negated=False, msg=None):
         if msg is None:

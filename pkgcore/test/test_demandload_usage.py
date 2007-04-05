@@ -8,10 +8,6 @@ from snakeoil import demandload
 
 class TestDemandLoadTargets(TestCase):
 
-    matching_types = [
-        type(getattr(demandload, x)) for x in (
-            "_replacer_from", "_replacer", "_importer", "_delayed_compiler")]
-
     def test_demandload_targets(self):
         # picks up only the namespace loaded for searching
         remaining = sys.modules.items()

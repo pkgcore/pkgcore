@@ -7,7 +7,8 @@ import sys
 
 if __name__ == '__main__':
     try:
-        from pkgcore.util import modules, commandline
+        from snakeoil import modules
+        from pkgcore.util import commandline
     except ImportError:
         print >> sys.stderr, 'Cannot import pkgcore!'
         print >> sys.stderr, 'Verify it is properly installed and/or ' \

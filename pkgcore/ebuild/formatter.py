@@ -147,9 +147,7 @@ class Formatter(object):
 
     """Base Formatter class: All formatters should be subclasses of this."""
 
-    def __init__(self, out, err, **kwargs):
-        self.out = out
-        self.err = err
+    def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
     def format(self, op):
@@ -367,8 +365,8 @@ class PaludisFormatter(Formatter):
     as much as much as possible.
     """
 
-    def __init__(self, out, err, **kwargs):
-        Formatter.__init__(self, out, err, **kwargs)
+    def __init__(self, **kwargs):
+        Formatter.__init__(self, **kwargs)
         self.packages = self.new = self.upgrades = self.downgrades = 0
         self.nslots = 0
 
@@ -376,7 +374,6 @@ class PaludisFormatter(Formatter):
         out = self.out
         origautoline = out.autoline
         out.autoline = False
-        out = self.out
         self.packages += 1
 
         out.write('* ')

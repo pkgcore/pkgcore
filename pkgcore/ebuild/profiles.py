@@ -193,7 +193,7 @@ class ProfileNode(object):
     def _load_default_env(self):
         path = pjoin(self.path, "make.defaults")
         try:
-            f = open(pjoin(self.path, "make.defaults"), "r")
+            f = open(path, "r")
         except IOError, ie:
             if ie.errno != errno.ENOENT:
                 raise ProfileError(self.path, "make.defaults", ie)

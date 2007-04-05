@@ -3,6 +3,33 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.3:
+
+* pregen has moved into pmaint regen.
+
+* Several example scripts that show how to use the pkgcore api have been
+  added, among others:
+    - repo_list (lists repos and some of their attributes)
+    - changed_use (a poor man's --newuse)
+
+* Pkgcore now supports several different output formats for the buildplan.
+  Portage and Paludis emulation are the notable formats, though plan
+  category/package and the original output are also available as options.
+
+* Large grammer fixes for documentation.
+
+* Miscellaneous pylint cleanups, including whitespace fixes.
+
+* Most of pkgcore.util.* (mainly the non pkgcore-specific bits) have been
+  split out into a seperate package, snakeoil. This includes the relevant cpy
+  extensions.
+
+* Triggers are quieter about what they're doing by default.
+
+* /etc/portage/package.* can now contain unlimited subdirectories and
+  files (ticket 71).
+
+
 pkgcore 0.2.13:
 
 * Added '~' to allowed shlex word chars.

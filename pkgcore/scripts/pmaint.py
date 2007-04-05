@@ -38,7 +38,7 @@ class SyncParser(commandline.OptionParser):
 
     def __init__(self, **kwargs):
         commandline.OptionParser.__init__(self, description=
-            "update a local repository to match it's parent", **kwargs)
+            "update a local repository to match its parent", **kwargs)
         self.add_option("--force", action='store_true', default=False,
             help="force an action")
 
@@ -318,9 +318,8 @@ def regen_main(options, out, err):
         kill.set()
         reclaim_threads(regen_threads, err)
         assert queue.empty()
-    out.write(
-        "finished %d nodes in in %.2f seconds" % (
-            options.count, time() - start_time))
+    out.write("finished %d nodes in in %.2f seconds" % (options.count,
+        time() - start_time))
     return 0
 
 commandline_commands['regen'] = (RegenParser, regen_main)

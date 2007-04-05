@@ -2,7 +2,7 @@
 # License: GPL2
 
 import tempfile, os
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from pkgcore.ebuild import digest
 from pkgcore.chksum import gpg
 from pkgcore.chksum.errors import ParseChksumError, MissingChksum

@@ -3,7 +3,7 @@
 
 import os, shutil
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from snakeoil.osutils import pjoin, ensure_dirs
 
 from pkgcore.test.mixins import TempDirMixin

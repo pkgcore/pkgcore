@@ -7,7 +7,7 @@ import pty
 import StringIO
 import optparse
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 
 from pkgcore.test.scripts import helpers
 from pkgcore.util import commandline

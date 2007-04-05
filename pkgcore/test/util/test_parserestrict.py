@@ -2,7 +2,7 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from snakeoil.currying import post_curry
 
 from pkgcore.repository import util

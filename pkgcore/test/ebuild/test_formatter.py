@@ -3,7 +3,7 @@
 
 import difflib
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from pkgcore.package.metadata import factory
 from pkgcore.ebuild.formatter import (BasicFormatter, PkgcoreFormatter,
     PortageFormatter, PaludisFormatter)

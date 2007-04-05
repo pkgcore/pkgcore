@@ -4,7 +4,7 @@
 
 from StringIO import StringIO
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.currying import partial
 

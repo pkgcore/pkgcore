@@ -3,7 +3,7 @@
 
 
 import sys
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from snakeoil import demandload
 
 class TestDemandLoadTargets(TestCase):

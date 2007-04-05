@@ -1,7 +1,7 @@
 # Copyright: 2005-2007 Brian Harring <ferringb@gentoo.org>
 # License: GPL2
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from snakeoil.currying import post_curry
 from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance

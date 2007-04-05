@@ -6,7 +6,7 @@ from math import floor, ceil
 from operator import attrgetter
 from itertools import izip
 
-from snakeoil.test import TestCase, SkipTest, mixins
+from pkgcore.test import TestCase, SkipTest, mixins
 from snakeoil.currying import partial, post_curry
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
 

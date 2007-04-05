@@ -4,7 +4,7 @@
 
 import exceptions
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from pkgcore import log
 from pkgcore.restrictions import packages, values
 from pkgcore.test import (protect_logging, TestRestriction, mallable_obj,

@@ -3,7 +3,7 @@
 
 import os
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from snakeoil.osutils import pjoin
 from pkgcore.ebuild import eclass_cache
 from pkgcore.interfaces import data_source

@@ -3,7 +3,7 @@
 
 
 import operator
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from pkgcore.config import central, basics, errors, configurable
 
 

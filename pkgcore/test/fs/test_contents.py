@@ -2,7 +2,7 @@
 # License: GPL2
 
 import os
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from snakeoil.currying import post_curry
 from pkgcore.fs import fs, contents
 

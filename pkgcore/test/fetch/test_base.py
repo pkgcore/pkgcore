@@ -3,7 +3,7 @@
 
 import os
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from snakeoil.currying import partial
 
 from pkgcore import chksum

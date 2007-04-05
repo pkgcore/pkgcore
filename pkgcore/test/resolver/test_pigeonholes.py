@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 from pkgcore.test.resolver.test_choice_point import fake_package
 from pkgcore.restrictions import restriction

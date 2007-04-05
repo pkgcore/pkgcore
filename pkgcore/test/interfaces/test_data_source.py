@@ -2,7 +2,7 @@
 # License: GPL2
 
 import os
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from pkgcore.interfaces import data_source
 from pkgcore.test.mixins import TempDirMixin
 

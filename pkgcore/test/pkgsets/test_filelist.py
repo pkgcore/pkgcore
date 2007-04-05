@@ -2,7 +2,7 @@
 # License: GPL2
 
 import tempfile, os
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from pkgcore.pkgsets import filelist
 from pkgcore.ebuild.atom import atom
 

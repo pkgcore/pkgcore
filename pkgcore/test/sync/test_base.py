@@ -2,7 +2,7 @@
 # License: GPL2
 
 import pwd
-from snakeoil.test import TestCase, SkipTest
+from pkgcore.test import TestCase, SkipTest
 from pkgcore.sync import base, svn
 from pkgcore.test.sync import make_bogus_syncer, make_valid_syncer
 from pkgcore.os_data import root_uid

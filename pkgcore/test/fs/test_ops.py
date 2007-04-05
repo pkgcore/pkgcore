@@ -2,7 +2,7 @@
 # License: GPL2
 
 import os, shutil
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from snakeoil.osutils import pjoin
 from pkgcore.fs import ops, fs, livefs, contents
 from pkgcore.interfaces.data_source import local_source

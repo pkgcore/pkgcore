@@ -3,7 +3,7 @@
 # License: GPL2
 
 import cStringIO
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from pkgcore.ebuild import filter_env
 
 

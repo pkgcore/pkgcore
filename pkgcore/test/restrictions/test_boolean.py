@@ -3,7 +3,7 @@
 # License: GPL2
 
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from pkgcore.restrictions import boolean, restriction
 
 

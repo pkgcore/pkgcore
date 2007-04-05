@@ -7,7 +7,7 @@ import shutil
 import tempfile
 import logging
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from snakeoil import lists
 
 from pkgcore.test import quiet_logger, protect_logging

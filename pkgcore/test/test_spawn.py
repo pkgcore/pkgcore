@@ -2,7 +2,7 @@
 # License: GPL2
 
 import os, pwd, signal
-from snakeoil.test import TestCase, SkipTest
+from pkgcore.test import TestCase, SkipTest
 from snakeoil.currying import post_curry
 from pkgcore import spawn
 from pkgcore.test.mixins import TempDirMixin

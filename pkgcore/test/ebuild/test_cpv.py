@@ -2,7 +2,7 @@
 # License: GPL2
 
 from random import shuffle
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from pkgcore.ebuild import cpv
 
 class native_CpvTest(TestCase):

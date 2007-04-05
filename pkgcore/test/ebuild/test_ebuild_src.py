@@ -3,7 +3,7 @@
 
 import os
 
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from snakeoil.osutils import pjoin
 from snakeoil.currying import post_curry, partial
 

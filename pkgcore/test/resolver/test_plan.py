@@ -3,7 +3,7 @@
 
 from operator import itemgetter
 from snakeoil.currying import post_curry
-from snakeoil.test import TestCase
+from pkgcore.test import TestCase
 from pkgcore.resolver import plan
 from pkgcore.test.misc import FakePkg
 

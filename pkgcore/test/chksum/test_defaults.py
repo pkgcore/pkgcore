@@ -2,7 +2,7 @@
 # License: GPL2
 
 import tempfile, os
-from snakeoil.test import TestCase, SkipTest
+from pkgcore.test import TestCase, SkipTest
 from snakeoil.currying import post_curry
 from pkgcore import chksum
 from pkgcore.interfaces.data_source import data_source, local_source

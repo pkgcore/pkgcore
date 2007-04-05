@@ -456,7 +456,7 @@ class fix_set_bits(base):
                             (x.location,))
                 else:
                     reporter.warn(
-                        "correcting unsafe world writable SetUID: %s" % 
+                        "correcting unsafe world writable SetUID: %s" %
                             (x.location,))
 
         if l:

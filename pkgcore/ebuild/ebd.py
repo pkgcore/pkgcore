@@ -164,7 +164,7 @@ class ebd(object):
         self.setup_env_data_source()
         self.clean_needed = True
         return True
-        
+
     def set_op_vars(self, tmp_offset):
         # don't fool with this, without fooling with setup.
         self.base_tmpdir = self.env["PORTAGE_TMPDIR"]
@@ -220,7 +220,7 @@ class ebd(object):
             # XXX hack, just 'til pkgcore controls these directories
             if (os.stat(self.env[k]).st_mode & 02000):
                 logger.warn("%s ( %s ) is setgid" % (self.env[k], k))
-        
+
 
     @_reset_env_data_source
     def _generic_phase(self, phase, userpriv, sandbox, fakeroot,

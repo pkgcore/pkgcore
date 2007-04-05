@@ -17,7 +17,7 @@ has_version()
     portageq 'has_version' "${ROOT}" "$1"
 }
 
-best_version() 
+best_version()
 {
     portageq 'best_version' "${ROOT}" "$1"
 }
@@ -167,7 +167,7 @@ dyn_unpack()
             rm -rf "${WORKDIR}"
         fi
     fi
-    
+
     cd "${WORKDIR}"
     src_unpack
 }
@@ -180,8 +180,8 @@ abort_handler()
     else
         msg="${EBUILD}: ${1} failed; exiting."
     fi
-    echo 
-    echo "$msg" 
+    echo
+    echo "$msg"
     echo
     eval ${3}
     #unset signal handler
@@ -252,8 +252,8 @@ dyn_compile()
     #some packages use an alternative to $S to build in, cause
     #our libtool to create problematic .la files
     export PWORKDIR="$WORKDIR"
-    src_compile 
-    #|| abort_compile "fail" 
+    src_compile
+    #|| abort_compile "fail"
     if hasq nostrip $FEATURES $RESTRICT; then
         touch DEBUGBUILD
     fi
@@ -287,7 +287,7 @@ dyn_install()
     #some packages uses an alternative to $S to build in, cause
     #our libtool to create problematic .la files
     export PWORKDIR="$WORKDIR"
-    src_install 
+    src_install
     #|| abort_install "fail"
     prepall
     cd "${D}"
@@ -476,24 +476,24 @@ debug-print()
     if [ "$EBUILD_PHASE" == "depend" ] && [ -z "${PKGCORE_DEBUG}" ]; then
         return
     fi
-    # if $T isn't defined, we're in dep calculation mode and 
+    # if $T isn't defined, we're in dep calculation mode and
     # shouldn't do anything
     [ -z "$T" ] && return 0
 
     while [ "$1" ]; do
-    
+
         # extra user-configurable targets
         if [ "$ECLASS_DEBUG_OUTPUT" == "on" ]; then
             echo "debug: $1"
         elif [ -n "$ECLASS_DEBUG_OUTPUT" ]; then
             echo "debug: $1" >> $ECLASS_DEBUG_OUTPUT
         fi
-        
+
         # default target
         echo "$1" >> "${T}/eclass-debug.log"
         # let the portage user own/write to this file
         chmod g+w "${T}/eclass-debug.log" &>/dev/null
-        
+
         shift
     done
 }
@@ -502,7 +502,7 @@ debug-print()
 
 debug-print-function()
 {
-    str="$1: entering function" 
+    str="$1: entering function"
     shift
     debug-print "$str, parameters: $*"
 }
@@ -577,7 +577,7 @@ inherit()
 
         #We need to back up the value of DEPEND and RDEPEND to B_DEPEND and B_RDEPEND
         #(if set).. and then restore them after the inherit call.
-    
+
         #turn off glob expansion
         set -f
 
@@ -623,7 +623,7 @@ inherit()
 
         #turn on glob expansion
  		set +f
-        
+
         if hasq $1 $INHERITED && [ $INHERITED_ALREADY == 0 ]; then
 #
 # enable this one eclasses no longer fool with eclass and inherited.
@@ -655,7 +655,7 @@ EXPORT_FUNCTIONS()
         exit 1
     fi
     while [ "$1" ]; do
-        debug-print "EXPORT_FUNCTIONS: ${1} -> ${ECLASS}_${1}" 
+        debug-print "EXPORT_FUNCTIONS: ${1} -> ${ECLASS}_${1}"
         eval "$1() { ${ECLASS}_$1 "\$@" ; }" > /dev/null
         shift
     done
@@ -733,7 +733,7 @@ do_newdepend()
     done
 }
 
-# this is a function for removing any directory matching a passed in pattern from 
+# this is a function for removing any directory matching a passed in pattern from
 # PATH
 remove_path_entry()
 {
@@ -760,7 +760,7 @@ enable_qa_interceptors()
 
     # Turn of extended glob matching so that g++ doesn't get incorrectly matched.
     shopt -u extglob
-    
+
     # QA INTERCEPTORS
     local FUNC_SRC BIN BODY BIN_PATH
     for BIN in ${QA_INTERCEPTORS}; do
@@ -774,7 +774,7 @@ enable_qa_interceptors()
             echo -n \"QA Notice: ${BIN} in global scope: \" >&2
             if [ \$ECLASS_DEPTH -gt 0 ]; then
                 echo \"eclass \${ECLASS}\" >&2
-            else 
+            else
                 echo \"\${CATEGORY}/\${PF}\" >&2
             fi
             ${BODY}
@@ -799,7 +799,7 @@ useq()
         neg=1
     fi
     local x
-    
+
     # Make sure we have this USE flag in IUSE
     # temp disable due to PORTAGE_ARCHLIST not being exported in
     #if ! hasq "${u}" ${IUSE} ${E_IUSE} && ! hasq "${u}" ${PORTAGE_ARCHLIST} selinux; then

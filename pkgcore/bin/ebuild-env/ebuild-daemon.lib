@@ -1,7 +1,7 @@
-#!/bin/bash 
+#!/bin/bash
 # ebuild-daemon.lib; daemon lib code.
 # Copyright 2005-2006 Brian Harring <ferringb@gmail.com>
- 
+
 alias die='diefunc "$FUNCNAME" "$LINENO" "$?"'
 #alias listen='read -u 3 -t 10'
 alias assert='_pipestatus="${PIPESTATUS[*]}"; [[ "${_pipestatus// /}" -eq 0 ]] || diefunc "$FUNCNAME" "$LINENO" "$_pipestatus"'

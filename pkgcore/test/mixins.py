@@ -6,7 +6,7 @@ import os
 import shutil
 import tempfile
 
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 
 class TempDirMixin(TestCase):
 

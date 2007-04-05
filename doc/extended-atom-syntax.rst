@@ -1,3 +1,6 @@
+Atom Syntax
+===========
+
 pkgcore supports an extended form of atom syntax- examples are provided below.
 
 This form can be used in configuration files, but in doing so portage will have
@@ -37,13 +40,13 @@ Syntax:
 
   normal-atom[enabled_flag1,enabled_flag2,-disabled_flag,-disabled_flag2]
 
-Example-
+Example:
 
   sys-apps/portage[build]
 
-Would match only sys-apps/portage with the build flag forced on.
+Would only match sys-apps/portage with the build flag forced on.
 
-Forcing 'build' off while forcing 'doc' on would be-
+Forcing 'build' off while forcing 'doc' on would be:
 
   sys-apps/portage[-build,doc]
 
@@ -68,11 +71,11 @@ Matching python in slot '2.3' or '2.4'
 
 
 repo_id atoms
-_____________
+-------------
 
-Main usage of this form is to limit an atom to match only within a specific
-repository- for example, to state "I need python from the gentoo-x86 repository
-_only_"
+The main usage of this form is to limit an atom to match only within a specific
+repository - for example, to state "I need python from the gentoo-x86
+repository _only_"
 
 syntax:
 
@@ -89,5 +92,5 @@ If you need to do slot matching in addition, it would be
 
   sys-devel/gcc:3.3:gentoo
 
-Which would match slot '3.3' from repository 'gentoo' (defined in
+which would match slot '3.3' from repository 'gentoo' (defined in
 profiles/repo_name) of sys-devel/gcc.

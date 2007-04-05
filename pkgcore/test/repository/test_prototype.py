@@ -1,13 +1,13 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
+from snakeoil.mappings import OrderedDict
+
 from pkgcore.restrictions import packages, values
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.repository.util import SimpleTree
-
-from snakeoil.mappings import OrderedDict
 
 class TestPrototype(TestCase):
 

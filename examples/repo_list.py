@@ -11,8 +11,9 @@ except ImportError:
     print >> sys.stderr, 'Cannot import pkgcore!'
     print >> sys.stderr, 'Verify it is properly installed and/or ' \
         'PYTHONPATH is set correctly.'
-    print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
-    if '--debug' in sys.argv:
+    if '--debug' not in sys.argv:
+        print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
+    else:
         raise
     sys.exit(1)
 

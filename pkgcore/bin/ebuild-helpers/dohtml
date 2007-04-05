@@ -12,18 +12,18 @@
 #
 #
 # Detailed usage:
-# dohtml <list-of-files> 
-#  - will install the files in the list of files (space-separated list) into 
-#    /usr/share/doc/${PF}/html, provided the file ends in .html, .png, .jpg 
+# dohtml <list-of-files>
+#  - will install the files in the list of files (space-separated list) into
+#    /usr/share/doc/${PF}/html, provided the file ends in .html, .png, .jpg
 #     or .css
 # dohtml -r <list-of-files-and-directories>
-#  - will do as 'dohtml', but recurse into all directories, as long as the 
+#  - will do as 'dohtml', but recurse into all directories, as long as the
 #    directory name is not CVS
 # dohtml -A jpe,java [-r] <list-of-files[-and-directories]>
 #  - will do as 'dohtml' but add .jpe,.java (default filter list is
 #    added to your list)
 # dohtml -a png,gif,html,htm [-r] <list-of-files[-and-directories]>
-#  - will do as 'dohtml' but filter on .png,.gif,.html,.htm (default filter 
+#  - will do as 'dohtml' but filter on .png,.gif,.html,.htm (default filter
 #    list is ignored)
 # dohtml -x CVS,SCCS,RCS -r <list-of-files-and-directories>
 #  - will do as 'dohtml -r', but ignore directories named CVS, SCCS, RCS
@@ -73,14 +73,14 @@ class OptionsClass:
         self.PF = ""
         self.D = ""
         self.DOCDESTTREE = ""
-        
+
         if os.environ.has_key("PF"):
             self.PF = os.environ["PF"]
         if os.environ.has_key("D"):
             self.D = os.environ["D"]
         if os.environ.has_key("DOCDESTTREE"):
             self.DOCDESTTREE = os.environ["DOCDESTTREE"]
-        
+
         self.allowed_exts = [ 'png', 'gif', 'html', 'htm', 'jpg', 'css', 'js' ]
         self.allowed_files = []
         self.disallowed_dirs = [ 'CVS' ]
@@ -107,7 +107,7 @@ def print_help():
 def parse_args():
     options = OptionsClass()
     args = []
-    
+
     x = 1
     while x < len(sys.argv):
         arg = sys.argv[x]
@@ -139,7 +139,7 @@ def parse_args():
         else:
             args.append(sys.argv[x])
         x += 1
-    
+
     return (options, args)
 
 def main():
@@ -155,17 +155,17 @@ def main():
         print "Allowed files :", options.allowed_files
 
     success = True
-    
+
     for x in args:
         basename = os.path.basename(x)
         dirname  = os.path.dirname(x)
         success = success and install(basename, dirname, options)
-    
+
     if success:
         retcode = 0
     else:
         retcode = 1
-    
+
     sys.exit(retcode)
 
 if __name__ == "__main__":

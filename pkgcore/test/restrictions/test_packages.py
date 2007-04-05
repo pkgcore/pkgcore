@@ -4,10 +4,11 @@
 
 import exceptions
 
+from snakeoil.test import TestCase
 from pkgcore import log
-from pkgcore.test import (TestCase, protect_logging, TestRestriction,
-    mallable_obj, quiet_logger)
 from pkgcore.restrictions import packages, values
+from pkgcore.test import (protect_logging, TestRestriction, mallable_obj,
+    quiet_logger)
 
 class callback_logger(log.logging.Handler):
     def __init__(self, callback):
@@ -103,7 +104,7 @@ class native_PackageRestrictionTest(TestRestriction):
 
             def __getattr__(self, attr):
                 raise AttributeError(self, attr)
-        
+
         self.assertFalse(self.kls("foon", AlwaysSelfIntersect).match(foo()))
 
     def test_eq(self):

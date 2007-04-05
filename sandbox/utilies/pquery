@@ -111,4 +111,4 @@ if __name__ == "__main__":
                         except AttributeError, ae:
                             print "attr '%s' exception: %s" % (x[0], ae)
                     print
-        
+

@@ -52,7 +52,7 @@ pkgcore 0.2.12:
 
 * default mode for ensure_dirs is now 0755.
 
-* Work around broken java-utils-2.eclass state handling in 
+* Work around broken java-utils-2.eclass state handling in
   java-pkg_init_paths_; tries to access DESTTREE in setup phase, which
   shouldn't be allowed- fix is temporarily shifting the DESTTREE definition
   to pre-ebuild sourcing so that it behaves.
@@ -78,7 +78,7 @@ pkgcore 0.2.10:
 * pquery --attr repo now returns the repo_id if it can get it, instead of
   the str of the repo object.
 
-* OR grouppings in PROVIDES was explicitly disabled; no ebuild uses it, nor 
+* OR grouppings in PROVIDES was explicitly disabled; no ebuild uses it, nor
   should any.
 
 
@@ -130,7 +130,7 @@ pkgcore 0.2.8:
 
 * misc filter-env fixes, cleanup, and tests.
 
-* change var attr (exported/readonly) env storage to better interop with 
+* change var attr (exported/readonly) env storage to better interop with
   the others; internally, we still delay the var attr/shopt resetting till
   execution.
 
@@ -148,7 +148,7 @@ pkgcore 0.2.8:
   was incorrect, leading to a trailing null slipping into the calculated
   path.
 
-* fix bash parsing for a corner case for empty assigns; literally, 
+* fix bash parsing for a corner case for empty assigns; literally,
   x=
   foo='dar'
   would incorrectly interpret x=foo, instead of x=''.
@@ -180,7 +180,7 @@ pkgcore 0.2.6:
 * PATH protection has been loosened slightly to enable 'weird' eclasses that
   are doing global PATH mangling.
 
-* $HOME location for building was shifted into the targeted packages 
+* $HOME location for building was shifted into the targeted packages
   directory, rather then a shared within $PORTAGE_TMPDIR.
 
 * setgid/setuid triggers now match portage behaviour; -s,o-w mode change.
@@ -189,7 +189,7 @@ pkgcore 0.2.6:
 
 * New default trigger added; CommonDirectoryModes, checks for common
   directories (/usr, /etc, /usr/bin, /usr/lib for example) in the merge set,
-  checking the packages specified modes for them.  If not 0755, throws a 
+  checking the packages specified modes for them.  If not 0755, throws a
   warning.
 
 * For directory on directory merging, ensure_perms (default op) was changed
@@ -220,7 +220,7 @@ pkgcore 0.2.6:
 * use nsec mtime resolution if available to match python stdlib.
 
 * env var PORTAGE_DEBUG for controlling how much debug info the ebuild env
-  generates is now PKGCORE_DEBUG; range is the same, 0 (none), 1 (just the 
+  generates is now PKGCORE_DEBUG; range is the same, 0 (none), 1 (just the
   ebuild/eclass), 2 (1 + relevant setup code), 3 (2 + filter-env data),
   4 (everything).
 
@@ -232,7 +232,7 @@ pkgcore 0.2.5:
 
 * for pquery --attr keywords, sort by arch, not by stable/unstable.
 
-* correct misc corner case atom bugs; an intersection bug, miss on an invalid 
+* correct misc corner case atom bugs; an intersection bug, miss on an invalid
   use dep atom lacking a closure in cpy atom, verification of use chars in
   native atom,
 
@@ -240,7 +240,7 @@ pkgcore 0.2.5:
   native.
 
 * For unpacking a tarball that doesn't have it's files in a subdir, tar will
-  occasionally try to utime the cwd resulting in a failure- uid owner for 
+  occasionally try to utime the cwd resulting in a failure- uid owner for
   WORKDIR was changed to allow tar to do the utime, thus succeed in unpacking.
   Only visible for userpriv and with oddball packages, gnuconfig for example.
 
@@ -339,7 +339,7 @@ pkgcore 0.2:
 
 * binpkg contents handling is significantly faster.
 
-* pmerge: 
+* pmerge:
   * supports --ask (thanks to nesl247/alex heck)
   * pmerge --replace is default now; use --noreplace for original behaviour.
   * 'installed' set was added; is a pkgset comprised of all slotted atoms from
@@ -366,9 +366,9 @@ pkgcore 0.2:
 * pquery:
   * prettier printing of depends/rdepends/post_rdepends under -v
   * print revdep reasons
-  * now requires an arg always; previously defaulted to '*', which is 
+  * now requires an arg always; previously defaulted to '*', which is
     still supported but also accessible via --all .
-  * added --maintainers-email and --maintainers-name; use case insensitive 
+  * added --maintainers-email and --maintainers-name; use case insensitive
     regex by default for --maintainer style options.
 
 * added repo_id atom extension; see doc/extended-atom-syntax.rst for details.

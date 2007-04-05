@@ -1,14 +1,15 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.test import TestCase
-from pkgcore.test.mixins import TempDirMixin
-from pkgcore.pkgsets import glsa
-from pkgcore.restrictions.packages import OrRestriction
-from pkgcore.ebuild import cpv
-
+from snakeoil.test import TestCase
 from snakeoil.osutils import pjoin
 from snakeoil.currying import post_curry
+
+from pkgcore.ebuild import cpv
+from pkgcore.pkgsets import glsa
+from pkgcore.test.mixins import TempDirMixin
+from pkgcore.restrictions.packages import OrRestriction
+
 
 # misc setup code for generating glsas for testing
 

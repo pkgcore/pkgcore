@@ -10,16 +10,14 @@ from pkgcore.util import commandline
 from snakeoil.demandload import demandload
 
 demandload(globals(), "pkgcore.repository:multiplex "
-    "pkgcore.util:parserestrict "
     "pkgcore.package:mutated "
     "pkgcore.fs:contents,livefs "
-    "pkgcore.restrictions:packages "
     "pkgcore.restrictions.boolean:OrRestriction "
     "errno "
     "threading:Event "
     "threading:Thread "
-    "Queue:Queue "
-    "time:time "
+    "Queue:Queue,Empty "
+    "time:time,sleep "
 )
 
 commandline_commands = {}
@@ -126,8 +124,8 @@ class CopyParser(commandline.OptionParser):
                 (target_repo, format_seq(values.config.repo.keys())))
 
         if values.target_repo.frozen and not values.force:
-            self.error("target repo %r is frozen; --force is required to override "
-                "this" % target_repo)
+            self.error("target repo %r is frozen; --force is required to "
+                "override this" % target_repo)
 
         if values.source_repo:
             try:
@@ -140,12 +138,12 @@ class CopyParser(commandline.OptionParser):
 
         values.candidates = []
         if values.copy_missing:
-            restrict = OrRestriction(*self.convert_to_restrict(args))
+            restrict = OrRestriction(*commandline.convert_to_restrict(args))
             for package in values.source_repo.itermatch(restrict):
                 if not values.target_repo.match(package.versioned_atom):
                     values.candidates.append(package.versioned_atom)
         else:
-            values.candidates = self.convert_to_restrict(args)
+            values.candidates = commandline.convert_to_restrict(args)
 
         return values, []
 
@@ -156,7 +154,6 @@ def copy_main(options, out, err):
     trg_repo = options.target_repo
     src_repo = options.source_repo
 
-    transfers = []
     failures = False
     kwds = {'force': options.force}
 
@@ -200,7 +197,7 @@ def copy_main(options, out, err):
                             err.write("failed accessing fs obj %r; %r\n"
                                 "aborting this copy" %
                                 (fsobj, oe))
-                            failure = True
+                            failures = True
                             new_contents = None
                             break
                         err.write("warning: dropping fs obj %r since it "
@@ -291,7 +288,7 @@ def regen_main(options, out, err):
             while not kill.isSet():
                 try:
                     yield qlist.get(timeout=timeout)
-                except Queue.Empty:
+                except Empty:
                     continue
         regen_threads = [
             Thread(

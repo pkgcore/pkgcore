@@ -165,7 +165,7 @@ class base(metadata.package):
     _get_attr["keywords"] = lambda s:tuple(map(intern,
         s.data.pop("KEYWORDS", "").split()))
     _get_attr["restrict"] = lambda s:conditionals.DepSet(
-        s.data.pop("RESTRICT", ''), str, operators={}, 
+        s.data.pop("RESTRICT", ''), str, operators={},
         element_func=rewrite_restrict)
     _get_attr["eapi"] = generate_eapi
     _get_attr["iuse"] = lambda s:frozenset(imap(intern,

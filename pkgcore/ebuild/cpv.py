@@ -8,7 +8,6 @@
 from pkgcore.ebuild.errors import InvalidCPV
 
 from pkgcore.package import base
-from snakeoil.klass import generic_equality
 # do this to break the cycle.
 from snakeoil.demandload import demandload, demand_compile
 demandload(globals(), "pkgcore.ebuild:atom")

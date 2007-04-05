@@ -2,12 +2,13 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-from pkgcore.test import TestCase
-from pkgcore.ebuild.atom import atom
-from pkgcore.restrictions import packages, values, boolean
+from snakeoil.test import TestCase
+from snakeoil.currying import post_curry
+
 from pkgcore.repository import util
 from pkgcore.util import parserestrict
-from snakeoil.currying import post_curry
+from pkgcore.ebuild.atom import atom
+from pkgcore.restrictions import packages, values, boolean
 
 
 class MatchTest(TestCase):

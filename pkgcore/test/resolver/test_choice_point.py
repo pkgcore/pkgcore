@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 

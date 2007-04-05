@@ -3,17 +3,13 @@
 
 import difflib
 
-from pkgcore.test import TestCase
-from pkgcore.package.base import wrapper
-from pkgcore.package.mutated import MutatedPkg
+from snakeoil.test import TestCase
 from pkgcore.package.metadata import factory
-from pkgcore.ebuild.cpv import native_CPV
+from pkgcore.ebuild.formatter import (BasicFormatter, PkgcoreFormatter,
+    PortageFormatter, PaludisFormatter)
 from pkgcore.test.misc import FakePkg as FakePkgBase
-from pkgcore.ebuild.formatter import BasicFormatter, PkgcoreFormatter, PortageFormatter, PaludisFormatter
 from pkgcore.test.scripts.helpers import FakeStreamFormatter, Color
 
-from snakeoil.caching import WeakInstMeta
-from snakeoil.formatters import Formatter
 
 class FakeRepo(object):
     def __init__(self, repoid='', location=''):

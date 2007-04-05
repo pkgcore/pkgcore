@@ -6,15 +6,15 @@ from math import floor, ceil
 from operator import attrgetter
 from itertools import izip
 
+from snakeoil.test import TestCase, SkipTest, mixins
+from snakeoil.currying import partial, post_curry
+from snakeoil.osutils import pjoin, ensure_dirs, normpath
+
 from pkgcore.fs import fs
 from pkgcore import spawn
 from pkgcore.merge import triggers, const
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.livefs import gen_obj, scan
-from pkgcore.test import TestCase, SkipTest, mixins
-
-from snakeoil.currying import partial, post_curry
-from snakeoil.osutils import pjoin, ensure_dirs, normpath
 
 class fake_trigger(triggers.base):
 
@@ -141,7 +141,7 @@ class TestBase(TestCase):
             return [list(x[1:]) for x in o._called]
 
         d = object()
-        self.assertEqual(get_csets(None, d, [1]), [[d]], 
+        self.assertEqual(get_csets(None, d, [1]), [[d]],
             msg="raw csets mapping should be passed through without conversion"
                 " for required_csets=None")
 
@@ -233,7 +233,7 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
             os.stat_float_times(cur)
 
     def test_race_protection(self):
-        # note this isn't perfect- being a race, triggering it on 
+        # note this isn't perfect- being a race, triggering it on
         # demand is tricky.
         # hence the 10x loop; can trigger it pretty much each loop
         # for my 1ghz, so... it's a start.
@@ -437,7 +437,7 @@ END-INFO-DIR-ENTRY
         self.trigger._passed_in_args = []
         self.engine.phase = phase
         self.trigger(self.engine, {})
-        self.assertEqual(map(normpath, (x[1] for x in self.trigger._passed_in_args)), 
+        self.assertEqual(map(normpath, (x[1] for x in self.trigger._passed_in_args)),
             map(normpath, expected_regen))
         return l
 
@@ -471,7 +471,7 @@ END-INFO-DIR-ENTRY
         self.assertFalse(self.run_trigger('pre_merge', []))
         self.assertFalse(self.run_trigger('post_merge', []))
 
-        # verify it handles quoting properly, and that it ignores 
+        # verify it handles quoting properly, and that it ignores
         # complaints about duplicates.
         self.reset_objects()
         self.trigger.enable_regen = True
@@ -620,7 +620,7 @@ class Test_detect_world_writable(single_attr_change_base, TestCase):
         self._trigger_override = self.kls()
 
         def run(fs_objs, fix_perms=False):
-            self.kls(fix_perms=fix_perms).trigger(engine, 
+            self.kls(fix_perms=fix_perms).trigger(engine,
                 contentsSet(fs_objs))
 
         run([fs.fsFile('/foon', mode=0770, strict=False)])

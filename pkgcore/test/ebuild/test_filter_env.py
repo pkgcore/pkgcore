@@ -3,8 +3,7 @@
 # License: GPL2
 
 import cStringIO
-
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 from pkgcore.ebuild import filter_env
 
 
@@ -85,14 +84,14 @@ src_compile() {
         self.assertNotIn('src_unpack', ret)
         data = \
 """src_install() {
-    local -f ${f##*=} 
+    local -f ${f##*=}
 }
 
 pkg_postinst() {
     :
 }
 """
-        self.assertNotIn('pkg_postinst', 
+        self.assertNotIn('pkg_postinst',
             ''.join(self.get_output(data, funcs='pkg_postinst')))
         data = \
 """src_unpack() {
@@ -121,9 +120,9 @@ pkg_setup() {
         data = \
 """
 src_install() {
-	cat >${D}/etc/modules.d/davfs2 <<EOF
-alias char-major-67	coda
-alias /dev/davfs*	coda
+    cat >${D}/etc/modules.d/davfs2 <<EOF
+alias char-major-67 coda
+alias /dev/davfs*   coda
 EOF
 }
 
@@ -153,9 +152,9 @@ EOF
 }
 
 pkg_foo() {
-	:
+    :
 }
-"""                    
+"""
         self.assertNotIn('pkg_foo', ''.join(self.get_output(data,
             funcs='pkg_foo')))
 
@@ -214,7 +213,7 @@ pkg_setup() {
 
         data = \
 """src_unpack() {
-	testExp=$'\177\105\114\106\001\001\001'
+    testExp=$'\177\105\114\106\001\001\001'
 }
 
 src_install() {

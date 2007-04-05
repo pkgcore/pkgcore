@@ -6,7 +6,7 @@ We use twisted.trial for our tests, to run the test framework run:
 
  trial pkgcore
 
-Your own tests must be stored in pkgcore.test - furthermore, tests must 
+Your own tests must be stored in pkgcore.test - furthermore, tests must
 pass when ran repeatedly (-u option). You will want at least twisted-2.2
 for that, <2.2 has a few false positives.
 

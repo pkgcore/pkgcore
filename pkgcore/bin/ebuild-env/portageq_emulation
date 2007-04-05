@@ -6,10 +6,11 @@ import os
 env = os.environ["SANDBOX_ON"] = "0"
 
 from snakeoil.demandload import demandload
-demandload(globals(), "pkgcore.util.iterables:caching_iter "+
-    "pkgcore.config:load_config "+
-    "pkgcore.ebuild.atom:atom "+
-    "pkgcore.util.packages:get_raw_pkg "+
+demandload(globals(),
+    "snakeoil.iterables:caching_iter "
+    "pkgcore.config:load_config "
+    "pkgcore.ebuild.atom:atom "
+    "pkgcore.util.packages:get_raw_pkg "
     "sys os ")
 
 def str_pkg(pkg):
@@ -72,7 +73,7 @@ def mass_best_version(domain, *args):
     """
     return ["".join("%s:%s\n" % (x, best_version(domain, x)[0].rstrip())
         for x in args), 0]
-    
+
 @expose_to_commandline(1, swallow_root=True)
 def best_version(domain, arg):
     """
@@ -113,7 +114,7 @@ def usage():
         print k
         print "\n".join("  "+x for x in [s.strip() for s in v.__doc__.split("\n")] if x)
         print
-    
+
 def main():
     a = sys.argv[1:]
     if "--usage" in a or "--help" in a:
@@ -161,12 +162,12 @@ def main():
         domain = load_config().get_default("domain")
     else:
         domain = load_config().domain.get(domain, None)
-    
+
     if domain is None:
         print "no default domain in your configuration, or what was specified manually wasn't found."
         print "known domains- %r" % list(load_config().domain.iterkeys())
         sys.exit(2)
-    
+
     s, ret = command(domain, *a[1:])
     sys.stdout.write(s)
     sys.exit(ret)

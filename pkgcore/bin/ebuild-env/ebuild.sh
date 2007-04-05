@@ -4,18 +4,18 @@
 # Copyright 2004-2005 Gentoo Foundation
 
 # general phase execution path-
-# execute_phases is called, which sets EBUILD_PHASE, and then depending on the phase, 
+# execute_phases is called, which sets EBUILD_PHASE, and then depending on the phase,
 # loads or initializes.  Env is init'd for non src based stages if the env isn't found- otherwise
 # it loads the environ via load_environ call.  In cases where env isn't found for phases setup -> merge,
 # it bails (theres no way the env should be missing- exemption is setup phase).
-# 
+#
 # for env filtering for restoration and reloading, note the updates to DONT_EXPORT_(VARS|FUNCS).
 # those vars are basically used to track what shouldn't be saved/restored.  Whitespace seperated,
 # those vars can support posix (think egrep) regex.  They should hold all vars/funcs that are internal
 # ebuild.sh vars.  Basically, filter all vars/funcs that are specific to ebuild.sh, not the ebuild.
-# 
-# after loading the env, user defined pre hooks are executed, dyn_${EBUILD_PHASE} is executed, 
-# and the post hooks are executed.  If the env needs to be flushed to disk, MUST_EXPORT_ENV is set to 
+#
+# after loading the env, user defined pre hooks are executed, dyn_${EBUILD_PHASE} is executed,
+# and the post hooks are executed.  If the env needs to be flushed to disk, MUST_EXPORT_ENV is set to
 # "yes", and execute_phases will dump it to ${T}/environment.
 #
 # few notes on general env stuff- if it's not ebuild specific or a user option, it's typically marked
@@ -28,7 +28,7 @@ ORIG_FUNCS=`declare -F | cut -s -d ' ' -f 3`
 DONT_EXPORT_FUNCS='portageq speak'
 
 DONT_EXPORT_VARS="ORIG_VARS GROUPS ORIG_FUNCS FUNCNAME DAEMONIZED CCACHE.* DISTCC.* AUTOCLEAN CLEAN_DELAY SYNC
-\(TMP\|\)DIR FEATURES CONFIG_PROTECT.* P\?WORKDIR \(FETCH\|RESUME\) COMMAND RSYNC_.* GENTOO_MIRRORS 
+\(TMP\|\)DIR FEATURES CONFIG_PROTECT.* P\?WORKDIR \(FETCH\|RESUME\) COMMAND RSYNC_.* GENTOO_MIRRORS
 \(DIST\|FILES\|RPM\|ECLASS\)DIR HOME MUST_EXPORT_ENV QA_CONTROLLED_EXTERNALLY COLORTERM COLS ROWS HOSTNAME
 myarg SANDBOX_.* BASH.* EUID PPID SHELLOPTS UID ACCEPT_\(KEYWORDS\|LICENSE\) BUILD\(_PREFIX\|DIR\) T DIRSTACK
 DISPLAY \(EBUILD\)\?_PHASE PORTAGE_.* RC_.* SUDO_.* IFS LD_PRELOAD ret line phases D EMERGE_FROM
@@ -60,7 +60,7 @@ reset_sandbox() {
 # Make sure it's before everything so we don't mess aliases that follow.
 unalias -a
 
-# We need this next line for "die" and "assert". It expands 
+# We need this next line for "die" and "assert". It expands
 # It _must_ preceed all the calls to die and assert.
 shopt -s expand_aliases
 
@@ -87,7 +87,7 @@ diefunc() {
     echo "!!! If you need support, post the topmost build error, NOT this status message." >&2
     if [ "${EBUILD_PHASE/depend}" == "${EBUILD_PHASE}" ]; then
         for x in ${EBUILD_DEATH_HOOKS}; do
-            ${x} ${1} ${2} ${3} "${@}" >&2 1>&2 
+            ${x} ${1} ${2} ${3} "${@}" >&2 1>&2
         done
     fi
     echo >&2
@@ -256,11 +256,11 @@ dump_environ() {
             x=$(${y} | sed -n "/declare \(-[^ ]\+ \)*/!d; s:^declare \(-[^ ]\+ \)*\([A-Za-z0-9_+]\+\)\(=.*$\)\?$:\2:; /^$(gen_regex_var_filter ${DONT_EXPORT_VARS} x y)$/! p;")
             [ -n "$x" ] && echo "${y} $(echo $x);"
         done
-        
+
         # if it's just declare -f some_func, filter it, else drop it if it's one of the filtered funcs
         declare -F | sed -n "/^declare -[^ ]\( \|[^ ]? $(gen_regex_func_filter ${DONT_EXPORT_FUNCS})$\)\?/d; s/^/    /;s/;*$/;/p;"
 
-        shopt -p 
+        shopt -p
     fi
 }
 
@@ -272,8 +272,8 @@ export_environ() {
     fi
 
     #the spaces on both sides are important- otherwise, the later ${DONT_EXPORT_VARS/ temp_umask /} won't match.
-    #we use spaces on both sides, to ensure we don't remove part of a variable w/ the same name- 
-    # ex: temp_umask_for_some_app == _for_some_app.  
+    #we use spaces on both sides, to ensure we don't remove part of a variable w/ the same name-
+    # ex: temp_umask_for_some_app == _for_some_app.
     #Do it with spaces on both sides.
 
     DONT_EXPORT_VARS="${DONT_EXPORT_VARS} temp_umask "
@@ -320,7 +320,7 @@ load_environ() {
     PKGCORE_SHOPTS_SET=
     PKGCORE_SHOPTS_UNSET=
     if [ -f "$src" ]; then
-        # other managers shove the export/declares inline; we store it in a 
+        # other managers shove the export/declares inline; we store it in a
         # func so that the var attrs can be dropped if needed.
         # thus we define these temporarily, to intercept the inlined statements
         # and push them into a func.
@@ -384,14 +384,14 @@ load_environ() {
         # do not export/readonly an attr that is filtered- those vars are internal/protected,
         # thus their state is guranteed
         # additionally, if the var *was* nonexistant, export'ing it serves to create it
-        
+
         pkgcore_tmp_func() {
             while [ -n "$1" ]; do
                 echo "$1"
                 shift
             done
         }
-        
+
         filter="^$(gen_regex_var_filter $DONT_EXPORT_VARS XARGS)$"
         # yes we're intentionally ignoring PKGCORE_ATTRS_READONLY.  readonly isn't currently used.
         PKGCORE_ATTRS_EXPORTED=$(echo $(pkgcore_tmp_func $PKGCORE_ATTRS_EXPORTED | grep -v "$filter"))
@@ -436,7 +436,7 @@ pkgcore_ensure_PATH()
         export PATH
     fi
     export PATH
-}                                                                                                                                                                        
+}
 
 # walk the cascaded profile src'ing it's various bashrcs.
 # overriden by daemon normally.
@@ -464,7 +464,7 @@ init_environ() {
     OCC="$CC"
     OCXX="$CXX"
     local EXISTING_PATH="$PATH"
-    
+
     if [ "${EBUILD_PHASE}" == "setup" ]; then
         #we specifically save the env so it's not stomped on by sourcing.
         #bug 51552
@@ -499,7 +499,7 @@ init_environ() {
     export S=${WORKDIR}/${P}
 
     # Expand KEYWORDS
-    # We need to turn off pathname expansion for -* in KEYWORDS and 
+    # We need to turn off pathname expansion for -* in KEYWORDS and
     # we need to escape ~ to avoid tilde expansion (damn bash) :)
     set -f
     KEYWORDS="$(echo ${KEYWORDS//~/\\~})"
@@ -577,7 +577,7 @@ execute_phases() {
 
             if ! load_environ "${T}/environment"; then
                 #hokay.  this sucks.
-                ewarn 
+                ewarn
                 ewarn "failed to load env"
                 ewarn "this installed pkg may not behave correctly"
                 ewarn
@@ -610,7 +610,7 @@ execute_phases() {
 
             [[ $PKGCORE_DEBUG -ge 3 ]] && set -x
             if ! load_environ ${T}/environment; then
-                ewarn 
+                ewarn
                 ewarn "failed to load env.  This is bad, bailing."
                 die "unable to load saved env for phase $EBUILD_PHASE, unwilling to continue"
             fi
@@ -721,8 +721,8 @@ if [ "$*" != "daemonize" ]; then
     unset x
 fi
 
-f="$(declare | { 
-    read l; 
+f="$(declare | {
+    read l;
     while [ "${l% \(\)}" == "$l" ]; do
         echo "${l/=*}";
         read l;

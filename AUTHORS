@@ -13,5 +13,5 @@ Additionally, pkgcore inherited a set of ebuild helper scripts from portage:
 Mike Frysinger <vapier@gentoo.org>
 
 
-bzr annotate/log if you're curious about the gory details of exactly who 
+bzr annotate/log if you're curious about the gory details of exactly who
 did what.

@@ -6,10 +6,12 @@ import sys
 import shutil
 import tempfile
 import logging
-from pkgcore.test import TestCase, quiet_logger, protect_logging
-from pkgcore import plugin
+
+from snakeoil.test import TestCase
 from snakeoil import lists
 
+from pkgcore.test import quiet_logger, protect_logging
+from pkgcore import plugin
 
 class ModulesTest(TestCase):
 

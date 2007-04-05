@@ -1,11 +1,11 @@
 # Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
+from snakeoil.pickling import dumps, loads
 from pkgcore.ebuild import atom, errors, atom_restricts
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.restrictions.boolean import AndRestriction
-from snakeoil.pickling import dumps, loads
 
 class FakePkg(CPV):
     __slots__ = ("__dict__")

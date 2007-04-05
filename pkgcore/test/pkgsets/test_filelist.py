@@ -1,10 +1,10 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.test import TestCase
+import tempfile, os
+from snakeoil.test import TestCase
 from pkgcore.pkgsets import filelist
 from pkgcore.ebuild.atom import atom
-import tempfile, os
 
 class TestFileList(TestCase):
 

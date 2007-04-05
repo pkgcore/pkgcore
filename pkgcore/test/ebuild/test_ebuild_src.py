@@ -3,17 +3,17 @@
 
 import os
 
-from pkgcore import fetch
-from pkgcore.ebuild import ebuild_src, repo_objs, const
-from pkgcore.package import errors
-from pkgcore.ebuild import errors as ebuild_errors
-from pkgcore import fetch
-from pkgcore.test import TestCase, mallable_obj
-from pkgcore.test.mixins import tempdir_decorator
-from pkgcore.test.ebuild.test_eclass_cache import FakeEclassCache
-
+from snakeoil.test import TestCase
 from snakeoil.osutils import pjoin
 from snakeoil.currying import post_curry, partial
+
+from pkgcore import fetch
+from pkgcore.package import errors
+from pkgcore.test import mallable_obj
+from pkgcore.test.mixins import tempdir_decorator
+from pkgcore.test.ebuild.test_eclass_cache import FakeEclassCache
+from pkgcore.ebuild import ebuild_src, repo_objs, const, errors as ebuild_errors
+
 
 class test_base(TestCase):
 
@@ -91,7 +91,7 @@ class test_base(TestCase):
         self.assertEqual(sorted(o.restrict.evaluate_depset([])),
             ['dar'])
         # ensure restrict doesn't have || () in it
-        self.assertRaises(ebuild_errors.ParseError, getattr, 
+        self.assertRaises(ebuild_errors.ParseError, getattr,
             self.get_pkg({'RESTRICT':'|| ( foon dar )'}), 'restrict')
 
     def test_eapi(self):

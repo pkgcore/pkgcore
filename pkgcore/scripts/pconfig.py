@@ -230,7 +230,7 @@ def configurables_main(options, out, err):
         out.write()
 
 
-def _dump_uncollapsed_section(config, out, section):
+def _dump_uncollapsed_section(config, out, err, section):
     """Write a single section."""
     if isinstance(section, basestring):
         out.write('named section %r' % (section,))
@@ -261,7 +261,7 @@ def _dump_uncollapsed_section(config, out, section):
                             subname = 'nested section %s' % (subnr + 1,)
                             out.write(subname)
                             out.write('=' * len(subname))
-                            _dump_uncollapsed_section(config, out, subsection)
+                            _dump_uncollapsed_section(config, out, err, subsection)
                             out.write()
                     finally:
                         out.first_prefix.pop()
@@ -275,7 +275,7 @@ def _dump_uncollapsed_section(config, out, section):
             out.first_prefix.append('    ')
             try:
                 out.write()
-                _dump_uncollapsed_section(config, out, value)
+                _dump_uncollapsed_section(config, out, err, value)
             finally:
                 out.first_prefix.pop()
         else:
@@ -303,7 +303,7 @@ def dump_uncollapsed_main(options, out, err):
         for name, section in sorted(source.iteritems()):
             out.write('%s' % (name,))
             out.write('=' * len(name))
-            _dump_uncollapsed_section(options.config, out, section)
+            _dump_uncollapsed_section(options.config, out, err, section)
             out.write()
 
 

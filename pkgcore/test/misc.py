@@ -20,7 +20,7 @@ class FakePkg(package):
 
         for x in ("DEPEND", "RDEPEND", "PDEPEND", "IUSE", "LICENSE"):
             data.setdefault(x, "")
-        
+
         cpv = CPV(cpvstr)
         package.__init__(self, shared, repo, cpv.category, cpv.package,
             cpv.fullver)
@@ -52,7 +52,7 @@ class FakeProfile(object):
         self.masked_data = collapsed_restrict_to_data(
             [(AlwaysTrue, default_arches)],
             self.masked_use.iteritems())
-            
+
     def make_virtuals_repo(self, repo):
         return self.virtuals
 

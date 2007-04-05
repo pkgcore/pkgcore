@@ -306,17 +306,6 @@ class OptionParser(optparse.OptionParser):
                     values.ensure_value(option.dest, [])
         return values, args
 
-    def convert_to_restrict(self, sequence, default=packages.AlwaysTrue):
-        """Convert an iterable to a list of atoms, or return the default"""
-        l = []
-        try:
-            for x in sequence:
-                l.append(parserestrict.parse_match(x))
-        except parserestrict.ParseError, e:
-            self.error("arg %r isn't a valid atom: %s" % (x, e))
-        return l or [default]
-
-
 class MySystemExit(SystemExit):
     """Subclass of SystemExit the tests can safely catch."""
 
@@ -415,3 +404,14 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
         else:
             out.title('%s succeeded' % (prog,))
     raise MySystemExit(exitstatus)
+
+def convert_to_restrict(sequence, default=packages.AlwaysTrue):
+    """Convert an iterable to a list of atoms, or return the default"""
+    l = []
+    try:
+        for x in sequence:
+            l.append(parserestrict.parse_match(x))
+    except parserestrict.ParseError, e:
+        raise optparse.OptionValueError("arg %r isn't a valid atom: %s"
+            % (x, e))
+    return l or [default]

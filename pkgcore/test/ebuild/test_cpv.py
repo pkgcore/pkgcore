@@ -1,9 +1,9 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
-from pkgcore.test import TestCase
-from pkgcore.ebuild import cpv
 from random import shuffle
+from snakeoil.test import TestCase
+from pkgcore.ebuild import cpv
 
 class native_CpvTest(TestCase):
 

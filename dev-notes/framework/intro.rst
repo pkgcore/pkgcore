@@ -87,7 +87,7 @@ The general design is intended to heavily abuse OOP.
 Further, delegation of actions down to components *must* be abided by,
 example being repo + cache interaction. repo does what it can, but for
 searching the cache, let the cache do it. Assume what you're
-delegating to knows the best way to handle the request, and probably 
+delegating to knows the best way to handle the request, and probably
 can do it's job better then some external caller (essentially).
 
 Actual configuration is pretty heavily redesigned. Classes and

@@ -1,8 +1,8 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from snakeoil.test import TestCase
 from pkgcore import chksum
-from pkgcore.test import TestCase
 
 
 class Test_funcs(TestCase):

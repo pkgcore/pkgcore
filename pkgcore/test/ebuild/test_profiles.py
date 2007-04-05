@@ -3,14 +3,14 @@
 
 import os, shutil
 
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
+from snakeoil.osutils import pjoin, ensure_dirs
+
 from pkgcore.test.mixins import TempDirMixin
 from pkgcore.ebuild import profiles
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.restrictions import packages
-
-from snakeoil.osutils import pjoin, ensure_dirs
 
 class ProfileNode(profiles.ProfileNode):
     # re-inherited to disable inst-caching

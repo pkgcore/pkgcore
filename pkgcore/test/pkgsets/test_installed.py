@@ -1,9 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from snakeoil.test import TestCase
 from pkgcore.repository.util import SimpleTree
 from pkgcore.pkgsets import installed
-from pkgcore.test import TestCase
 
 class FakePkg(object):
 

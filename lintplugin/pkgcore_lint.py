@@ -8,11 +8,11 @@ from pylint import interfaces, checkers
 from logilab.astng import nodes, raw_building, utils
 
 
-class BasicLinesChecker(checkers.BaseChecker):
+class PkgcoreChecker(checkers.BaseChecker):
 
     __implements__ = (interfaces.IRawChecker, interfaces.IASTNGChecker)
 
-    name = 'pkgcore-lines'
+    name = 'pkgcore'
 
     # XXX move some of those over to RewriteDemandload somehow
     # (current monkey patch running the rewriter does not support that)
@@ -30,6 +30,8 @@ class BasicLinesChecker(checkers.BaseChecker):
                   'A call which is probably a demandload has a second arg '
                   'that is not a string constant. Fix the code to cooperate '
                   'with the dumb checker.'),
+        'WPC03': ('non new-style class',
+                  'All classes should be new-style classes'),
         }
 
     def process_module(self, stream):
@@ -40,6 +42,9 @@ class BasicLinesChecker(checkers.BaseChecker):
             if line.endswith(' ') or line.endswith('\t'):
                 self.add_message('CPC02', linenr)
 
+    def visit_class(self, node):
+        if not node.bases:
+            self.add_message('WPC03', node=node)
 
 class RewriteDemandload(utils.ASTWalker):
 
@@ -114,4 +119,4 @@ def register(linter):
         original_check_astng_module(astng, checkers)
     linter.check_astng_module = pkgcore_check_astng_module
 
-    linter.register_checker(BasicLinesChecker(linter))
+    linter.register_checker(PkgcoreChecker(linter))

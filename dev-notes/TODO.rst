@@ -45,7 +45,7 @@ Rough TODO
 - pmerge mods; [ --skip-set SET ] , [ --skip atom ], use similar restriction
   to --replace to prefer vdb for matching atoms
 
-- refactor pkgcore.ebuild.cpv.ver_cmp usage to avoid full cpv parsing when 
+- refactor pkgcore.ebuild.cpv.ver_cmp usage to avoid full cpv parsing when
   _cpv is in use;
   'nuff said, look in pkgcore.ebuild.cpv.cpy_ver_cmp
 

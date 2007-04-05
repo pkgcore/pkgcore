@@ -1,13 +1,12 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from snakeoil.test import TestCase
 from pkgcore.ebuild import misc
 from pkgcore.restrictions import packages
 
 AlwaysTrue = packages.AlwaysTrue
 AlwaysFalse = packages.AlwaysFalse
-
-from pkgcore.test import TestCase
 
 
 class base(TestCase):
@@ -21,7 +20,7 @@ class base(TestCase):
         self.assertEqual(sorted(obj.atoms), sorted(atoms_dict))
         for k, v in obj.atoms.iteritems():
             l1 = sorted((x[0], list(x[1])) for x in v)
-            l2 = sorted((x[0], list(x[1])) for x, y in 
+            l2 = sorted((x[0], list(x[1])) for x, y in
                 atoms_dict[k])
             self.assertEqual(l1, l2, msg="for %r atom, got %r, expected %r"
                 % (k, l1, l2))

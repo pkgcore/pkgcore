@@ -2,9 +2,7 @@
 # License: GPL2
 
 from StringIO import StringIO
-
-from pkgcore.test import TestCase
-
+from snakeoil.test import TestCase
 from pkgcore.config import cparser, central, errors
 
 

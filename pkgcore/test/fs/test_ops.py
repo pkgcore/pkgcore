@@ -2,11 +2,11 @@
 # License: GPL2
 
 import os, shutil
+from snakeoil.test import TestCase
+from snakeoil.osutils import pjoin
 from pkgcore.fs import ops, fs, livefs, contents
 from pkgcore.interfaces.data_source import local_source
-from pkgcore.test import TestCase
 from pkgcore.test.mixins import TempDirMixin
-from snakeoil.osutils import pjoin
 
 
 class VerifyMixin(object):
@@ -86,7 +86,7 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
         f = livefs.gen_obj(fp)
         self.assertRaises(TypeError,
             livefs.gen_obj(fp).change_attributes(location=path))
-        
+
         # test sym over a directory.
         f = fs.fsSymlink(path, fp, mode=0644, mtime=0, uid=os.getuid(),
             gid=os.getgid())
@@ -192,7 +192,7 @@ class Test_merge_contents(ContentsMixin):
         self.assertTrue(fs.isdir(livefs.gen_obj(path)))
         os.mkdir(fp)
         ops.merge_contents(cset)
-        
+
 
 class Test_unmerge_contents(ContentsMixin):
 
@@ -236,12 +236,12 @@ class Test_unmerge_contents(ContentsMixin):
 class Test_offset_rewriter(TestCase):
 
     func = staticmethod(ops.offset_rewriter)
-    
+
     def test_it(self):
         f = ["/foon/%i" % x for x in xrange(10)]
         f.extend("/foon/%i/blah" % x for x in xrange(5))
         f = [fs.fsFile(x, strict=False) for x in f]
-        self.assertEqual(sorted(x.location for x in f), 
+        self.assertEqual(sorted(x.location for x in f),
             sorted(x.location for x in self.func('/', f)))
         self.assertEqual(
             sorted('/usr%s' % x.location for x in f),
@@ -251,7 +251,7 @@ class Test_offset_rewriter(TestCase):
 class Test_change_offset_rewriter(TestCase):
 
     func = staticmethod(ops.change_offset_rewriter)
-    
+
     def test_it(self):
         f = ["/foon/%i" % x for x in xrange(10)]
         f.extend("/foon/%i/blah" % x for x in xrange(5))

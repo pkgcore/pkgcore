@@ -42,7 +42,7 @@ TOOLS?
   pmerge: generic utility for doing resolution, fetching, merging/unmerging,
     etc.
 
-  pquery: generic utility for querying info about repositories, revdeps, pkg 
+  pquery: generic utility for querying info about repositories, revdeps, pkg
     search, vdb search, etc.
 
   pregen: script for doing ebuild metadata regeneration; can be parallelized

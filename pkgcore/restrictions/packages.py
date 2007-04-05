@@ -41,9 +41,9 @@ class native_PackageRestriction(object):
 
 
 class PackageRestriction_mixin(restriction.base):
+    """Package data restriction."""
 
     __slots__ = ()
-    """Package data restriction."""
 
     # Careful: some methods (__eq__, __hash__, intersect) try to work
     # for subclasses too. They will not behave as intended if a

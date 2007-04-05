@@ -112,7 +112,7 @@ class use_expand_filter(object):
             for x in use_expand)
         self.use_expand = use_expand
         self.use_expand_hidden = use_expand_hidden
-    
+
     def __call__(self, use):
         """Split USE flags up into "normal" flags and use-expanded ones.
         @type  use: iterable of strings
@@ -220,8 +220,7 @@ class PortageFormatter(Formatter):
         # We don't do blockers or --tree stuff yet
         out.write('[ebuild ')
 
-        # Order is important here - look at the diagram in
-        # PortageFormat.formatter
+        # Order is important here - look at the above diagram
         type = op.desc
         if op.desc == "add":
             out.write(out.fg('green'), ' N')
@@ -268,11 +267,11 @@ class PortageFormatter(Formatter):
         # Convert the list of tuples to a list of lists and a list of
         # dicts (both length 2 or 4).
         uselists, usedicts = zip(*stuff)
-        self.format_use(out, 'use', *uselists)
+        self.format_use('use', *uselists)
         for expand in [x for x in self.use_expand
                     if x not in self.use_expand_hidden]:
             flaglists = [d.get(expand.lower(), ()) for d in usedicts]
-            self.format_use(out, expand, *flaglists)
+            self.format_use(expand, *flaglists)
 
         if verbose:
             out.write(out.fg('blue'), " [%d]" % (reponr,))
@@ -280,8 +279,7 @@ class PortageFormatter(Formatter):
         out.write('\n')
         out.autoline = origautoline
 
-    @staticmethod
-    def format_use(out, attr, selectable, choice, oldselectable=None,
+    def format_use(self, attr, selectable, choice, oldselectable=None,
                oldchoice=None):
         """Write the current selection from a set of flags to a formatter.
 
@@ -298,6 +296,7 @@ class PortageFormatter(Formatter):
         @type  oldchoice: set of strings
         @param oldchoie: the previously chosen values.
         """
+        out = self.out
         red = out.fg('red')
         green = out.fg('green')
         blue = out.fg('blue')

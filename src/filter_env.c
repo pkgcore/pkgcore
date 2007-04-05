@@ -247,10 +247,10 @@ process_scope(PyObject *out, const char *start, const char *buff,
                 if ('\'' == *p)
                     p = walk_statement_no_parsing(p + 1, end, '\'') + 1;
                 else if ('"' == *p || '`' == *p)
-                    p = walk_command_escaped_parsing(start, p + 1, end, 
+                    p = walk_command_escaped_parsing(start, p + 1, end,
                         *p) + 1;
                 else if ('(' == *p) {
-                    p = walk_command_escaped_parsing(start, p + 1, end, 
+                    p = walk_command_escaped_parsing(start, p + 1, end,
                         ')') + 1;
                 } else if ('$' == *p) {
                     ++p;
@@ -367,7 +367,7 @@ walk_here_statement(const char *start, const char *p, const char *end)
         free(temp_string);
         return end_here;
     }
-    
+
     end_here = (char *)bmh_search((unsigned char*)temp_string,
                                   (unsigned char*)end_here, end - end_here);
     while(end_here) {

@@ -1,13 +1,13 @@
 # Copyright: 2005-2007 Brian Harring <ferringb@gentoo.org>
 # License: GPL2
 
-from pkgcore.test import TestCase
-from pkgcore.ebuild import conditionals
-from pkgcore.ebuild.errors import ParseError
-from pkgcore.restrictions import boolean, packages
+from snakeoil.test import TestCase
 from snakeoil.currying import post_curry
 from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
+from pkgcore.ebuild import conditionals
+from pkgcore.ebuild.errors import ParseError
+from pkgcore.restrictions import boolean, packages
 
 
 class base(TestCase):
@@ -36,7 +36,7 @@ class native_DepSetParsingTest(base):
         "?x (a)", "x? (a )", "x? (a)", "x? ( a b)",
         "x? ( x? () )", "x? ( x? (a)", "(", ")", "x?",
         "||(", "||()", "||( )", "|| ()",
-        "|| (", "|| )", "||)",	"|| ( x? ( )",
+        "|| (", "|| )", "||)",  "|| ( x? ( )",
         "|| ( x?() )", "|| (x )", "|| ( x)",
         "a|", "a?", "a(b", "a)", "a||b",
         "a(", "a)b", "x? y", "( x )?", "||?"):
@@ -121,7 +121,7 @@ class native_DepSetParsingTest(base):
     # string, the results for testing are determined by splitting the string
     for x in [
         "a b",
-        ( "", 	[]),
+        ( "",   []),
 
         ( "( a b )", ("a", "b")),
 
@@ -177,7 +177,7 @@ class native_DepSetParsingTest(base):
         locals()["test_known_conditionals %s" % x] = post_curry(
             check_known_conditionals, x, c)
     del x,c
-        
+
 
     def test_element_func(self):
         self.assertEqual(

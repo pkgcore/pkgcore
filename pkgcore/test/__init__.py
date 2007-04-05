@@ -6,71 +6,8 @@
 """Our unittest extensions."""
 
 
-__all__ = ['scripts', 'SkipTest', 'TestCase', 'Todo']
-
+from snakeoil.test import TestCase as TestCaseS
 from pkgcore import log
-from snakeoil import test as snake_test
-
-SkipTest = snake_test.SkipTest
-Todo = snake_test.Todo
-
-class TestCase(snake_test.TestCase):
-
-    def assertLen(self, obj, length, msg=None):
-        self.failUnless(len(obj) == length,
-            msg or '%r needs to be len %i, is %i' % (obj, length, len(obj)))
-
-    def assertInstance(self, obj, kls, msg=None):
-        """
-        assert that obj is an instance of kls
-        """
-        self.failUnless(isinstance(obj, kls),
-            msg or '%r needs to be an instance of %r, is %r' % (obj, kls,
-                getattr(obj, '__class__', "__class__ wasn't pullable")))
-
-    def assertNotInstance(self, obj, kls, msg=None):
-        """
-        assert that obj is not an instance of kls
-        """
-        self.failIf(isinstance(obj, kls),
-            msg or '%r must not be an instance of %r, is %r' % (obj, kls,
-                getattr(obj, '__class__', "__class__ wasn't pullable")))
-
-    def assertIdentical(self, this, other, reason=None):
-        self.failUnless(
-            this is other, reason or '%r is not %r' % (this, other))
-
-    def assertNotIdentical(self, this, other, reason=None):
-        self.failUnless(
-            this is not other, reason or '%r is %r' % (this, other))
-
-    def assertIn(self, needle, haystack, reason=None):
-        self.failUnless(
-            needle in haystack, reason or '%r not in %r' % (needle, haystack))
-
-    def assertNotIn(self, needle, haystack, reason=None):
-        self.failUnless(
-            needle not in haystack, reason or '%r in %r' % (needle, haystack))
-
-    def assertEqual(self, obj1, obj2, msg=None, reflective=True):
-        self.failUnless(obj1 == obj2,
-            msg or '%r != %r' % (obj1, obj2))
-        if reflective:
-            self.failUnless(not (obj1 != obj2),
-                msg or 'not (%r != %r)' % (obj1, obj2))
-
-    def assertNotEqual(self, obj1, obj2, msg=None, reflective=True):
-        self.failUnless(obj1 != obj2, 
-            msg or '%r == %r' % (obj1, obj2))
-        if reflective:
-            self.failUnless(not (obj1 == obj2),
-                msg or 'not (%r == %r)' % (obj1, obj2))
-
-    def assertEquals(self, obj1, obj2, msg=None):
-        raise AssertionError("don't use assertEquals, use assertEqual")
-
-    def assertNotEquals(self, obj1, obj2, msg=None):
-        raise AssertionError("don't use assertNotEquals, use assertNotEqual")
 
 
 class QuietLogger(log.logging.Handler):
@@ -92,7 +29,7 @@ def protect_logging(target):
     return f
 
 
-class TestRestriction(TestCase):
+class TestRestriction(TestCaseS):
 
     def assertMatch(self, obj, args, mode='match', negated=False, msg=None):
         if msg is None:

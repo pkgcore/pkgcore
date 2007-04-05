@@ -1,11 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from snakeoil.test import TestCase
 from pkgcore.ebuild import repo_objs
 from pkgcore.interfaces.data_source import data_source
-
-from pkgcore.test import TestCase
-
 
 class TestMetadataXml(TestCase):
 

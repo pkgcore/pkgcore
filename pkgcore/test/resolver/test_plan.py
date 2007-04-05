@@ -1,11 +1,11 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.resolver import plan
-from pkgcore.test import TestCase
-from pkgcore.test.misc import FakePkg
-from snakeoil.currying import post_curry
 from operator import itemgetter
+from snakeoil.currying import post_curry
+from snakeoil.test import TestCase
+from pkgcore.resolver import plan
+from pkgcore.test.misc import FakePkg
 
 class TestPkgSorting(TestCase):
 

@@ -2,9 +2,9 @@
 # License: GPL2
 
 import os
-from pkgcore.test import TestCase
-from pkgcore.fs import fs, contents
+from snakeoil.test import TestCase
 from snakeoil.currying import post_curry
+from pkgcore.fs import fs, contents
 
 
 class TestContentsSet(TestCase):

@@ -1,8 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from snakeoil.test import TestCase
 from pkgcore.test.sync import make_bogus_syncer, make_valid_syncer
-from pkgcore.test import TestCase
 from pkgcore.sync import base, bzr
 
 bogus = make_bogus_syncer(bzr.bzr_syncer)

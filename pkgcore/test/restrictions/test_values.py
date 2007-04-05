@@ -1,8 +1,8 @@
 # Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-
-from pkgcore.test import TestRestriction, TestCase
+from snakeoil.test import TestCase
+from pkgcore.test import TestRestriction
 from pkgcore.restrictions import values
 
 
@@ -56,7 +56,7 @@ class GetAttrTest(TestRestriction):
 class StrRegexTest(TestRestriction):
 
     kls = values.StrRegex
-    
+
     def test_match(self):
         for negated in (False, True):
             self.assertMatches(self.kls('foo.*r', match=True,
@@ -107,7 +107,7 @@ class native_TestStrExactMatch(TestRestriction):
         class kls(values.native_StrExactMatch, values.base):
             __slots__ = ()
             __inst_caching__ = True
-        
+
             intersect = values._StrExact_intersect
             __repr__ = values._StrExact__repr__
             __str__ = values._StrExact__str__
@@ -171,7 +171,7 @@ class TestStrGlobMatch(TestRestriction):
             self.assertNotMatches(self.kls('pAcK',
                 case_sensitive=True, negate=negated),
                 ['pack'], ['pack']*3, negated=negated)
-            
+
             # check prefix.
             self.assertMatches(self.kls('pAck', case_sensitive=False,
                 prefix=True, negate=negated),

@@ -32,8 +32,8 @@ for i in "${D}"opt/*/lib{,32,64} \
 	done
 done
 
-# When installing static libraries into /usr/lib and shared libraries into 
-# /lib, we have to make sure we have a linker script in /usr/lib along side 
+# When installing static libraries into /usr/lib and shared libraries into
+# /lib, we have to make sure we have a linker script in /usr/lib along side
 # the static library, or gcc will utilize the static lib when linking :(.
 # http://bugs.gentoo.org/4411
 for a in "${D}"usr/lib*/*.a ; do

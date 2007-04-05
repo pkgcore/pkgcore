@@ -96,7 +96,7 @@ class FailedCopy(TypeError):
     def __init__(self, obj, msg):
         self.obj = obj
         self.msg = msg
-    
+
     def __str__(self):
         return "failed copying %s:" % (self.obj, self.msg)
 
@@ -104,7 +104,7 @@ class FailedCopy(TypeError):
 class CannotOverwrite(FailedCopy):
     def __init__(self, obj, existing):
         self.obj, self.existing = obj, existing
-    
+
     def __str__(self):
         return "cannot write %s due to %s existing" % (
             self.obj, self.existing)

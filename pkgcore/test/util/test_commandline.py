@@ -7,9 +7,9 @@ import pty
 import StringIO
 import optparse
 
-from pkgcore.test import TestCase
-from pkgcore.test.scripts import helpers
+from snakeoil.test import TestCase
 
+from pkgcore.test.scripts import helpers
 from pkgcore.util import commandline
 from pkgcore.config import basics, central, configurable, errors
 

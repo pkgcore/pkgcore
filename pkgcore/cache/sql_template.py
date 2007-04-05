@@ -213,7 +213,7 @@ class SQLDatabase(template.database):
             # just delete it.
             try:
                 del self[cpv]
-            except	(errors.CacheCorruption, KeyError):
+            except  (errors.CacheCorruption, KeyError):
                 pass
             query_str = self.SCHEMA_INSERT_CPV_INTO_PACKAGE
 
@@ -275,17 +275,17 @@ class SQLDatabase(template.database):
 
         oldcpv = None
         l = []
-        for x, y, v in self.con.fetchall():
-            if oldcpv != x:
+        for cpv, key, v in self.con.fetchall():
+            if oldcpv != cpv:
                 if oldcpv is not None:
                     d = dict(l)
                     if "_eclasses_" in d:
                         d["_eclasses_"] = self.reconstruct_eclasses(
                             oldcpv, d["_eclasses_"])
                     yield oldcpv, d
-                l.clear()
-                oldcpv = x
-            l.append((y, v))
+                l = []
+                oldcpv = cpv
+            l.append((key, v))
 
         if oldcpv is not None:
             d = dict(l)

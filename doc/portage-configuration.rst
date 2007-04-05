@@ -1,5 +1,5 @@
 ========
-overview
+Overview
 ========
 
 pkgcore supports several configuration formats, portage's make.conf included.
@@ -60,7 +60,7 @@ due the fact our cache subsystem has grown a bit beyond what got imported into
 portage in 2.1; additionally, we do not support package.provided.
 
 
-For /etc/portage/package.* files, we support an extended atom syntax which 
+For /etc/portage/package.* files, we support an extended atom syntax which
 can be used in place of normal atoms (goes without saying portage doesn't
 support the extension yet, thus introducing incompatibility if used)- read
 extended-atom-syntax.rst for the details.

@@ -6,9 +6,7 @@
 
 import operator
 import tempfile
-
-from pkgcore.test import TestCase
-
+from snakeoil.test import TestCase
 from pkgcore.config import load_config, configurable, basics
 
 

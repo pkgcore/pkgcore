@@ -13,8 +13,9 @@ except ImportError:
     print >> sys.stderr, 'Cannot import pkgcore!'
     print >> sys.stderr, 'Verify it is properly installed and/or ' \
         'PYTHONPATH is set correctly.'
-    print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
-    if '--debug' in sys.argv:
+    if '--debug' not in sys.argv:
+        print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
+    else:
         raise
     sys.exit(1)
 
@@ -31,25 +32,18 @@ class OptionParser(commandline.OptionParser):
         self.add_option('--verbose', '-v', action='store_true', default=False,
             help='print packages that have not changed too')
         self.add_option('--quiet', '-q', action='store_true', default=False,
-            help='don\'t print changed useflags')
+            help="don't print changed useflags")
 
     def check_values(self, values, args):
         values, args = commandline.OptionParser.check_values(
             self, values, args)
 
         domain = values.config.get_default('domain')
-
         values.vdb = domain.vdb[0]
-        # Get repo(s) to operate on.
-        if values.repo:
-            repos = (values.repo,)
-        else:
-            repos = values.config.get_default('domain').all_repos
-        values.repo = multiplex_tree(*get_virtual_repos(get_raw_repos(repos), False))
+        if not values.repo:
+            values.repo = domain.repos[1]
 
-        values.use = domain.use
-
-        values.restrict = OrRestriction(self.convert_to_restrict(args))
+        values.restrict = OrRestriction(*commandline.convert_to_restrict(args))
         return values, ()
 
 def main(options, out, err):
@@ -58,9 +52,9 @@ def main(options, out, err):
         current = repo.match(built.versioned_atom)
         if current:
             current = current[0]
-            oldflags = built.iuse & set(built.use)
-            newflags = current.iuse & options.use
-            if oldflags != newflags:
+            oldflags = built.iuse & built.use
+            newflags = current.iuse & current.use
+            if newflags != oldflags:
                 changed_flags = oldflags ^ newflags
                 if options.quiet:
                     out.write(current.cpvstr)
@@ -68,7 +62,8 @@ def main(options, out, err):
                     out.write("for package %s, %d flags have changed:\n\t%s" %
                           (current.cpvstr, len(changed_flags), ' '.join(changed_flags)))
             else:
-                if options.verbose: out.write("%s is the same as it was before" % current.cpvstr)
+                if options.verbose:
+                    out.write("%s is the same as it was before" % current.cpvstr)
 
 if __name__ == '__main__':
     commandline.main({None: (OptionParser, main)})

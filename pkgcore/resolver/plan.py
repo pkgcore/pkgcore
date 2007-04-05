@@ -363,7 +363,7 @@ class merge_plan(object):
                             if failure and cur_frame.drop_cycles:
                                 dprint("rdepends level cycle: %s: "
                                        "dropping cycle for %s from %s",
-                                       (atom, ratom, cur_frame.current_pkg),
+                                       (cur_frame.atom, ratom, cur_frame.current_pkg),
                                        "cycle")
                                 failure = []
                                 break
@@ -757,7 +757,7 @@ class merge_plan(object):
                 yield or_block
 
     @staticmethod
-    def default_global_strategy(self, dbs, atom):
+    def default_global_strategy(dbs, atom):
         return chain(*[repo.match(atom) for repo in dbs])
 
     @staticmethod

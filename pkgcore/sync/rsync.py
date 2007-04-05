@@ -150,7 +150,6 @@ class rsync_timestamp_syncer(rsync_syncer):
 
     def _sync(self, verbosity, output_fd, force=False):
         doit = force or self.last_timestamp is None
-        wipe = not doit
         ret = None
         try:
             if not doit:

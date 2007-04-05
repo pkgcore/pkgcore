@@ -13,8 +13,9 @@ if __name__ == '__main__':
         print >> sys.stderr, 'Cannot import pkgcore!'
         print >> sys.stderr, 'Verify it is properly installed and/or ' \
             'PYTHONPATH is set correctly.'
-        print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
-        if '--debug' in sys.argv:
+        if '--debug' not in sys.argv:
+            print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
+        else:
             raise
         sys.exit(1)
 
@@ -23,8 +24,9 @@ if __name__ == '__main__':
         script = modules.load_module('pkgcore.scripts.%s' % (name,))
     except modules.FailedImport:
         print >> sys.stderr, 'Cannot load script %s.' % (name,)
-        print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
-        if '--debug' in sys.argv:
+        if '--debug' not in sys.argv:
+            print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
+        else:
             raise
         sys.exit(1)
     else:

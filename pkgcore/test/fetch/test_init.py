@@ -2,7 +2,7 @@
 # License: GPL2
 
 from pkgcore import fetch
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 from snakeoil.lists import iflatten_instance
 
 class base(TestCase):

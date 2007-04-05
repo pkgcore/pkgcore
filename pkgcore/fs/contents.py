@@ -253,7 +253,7 @@ class contentsSet(object):
     def insert_offset(self, offset):
         cset = self.clone(empty=True)
         cset.update(offset_rewriter(offset, self))
-        return cset            
+        return cset
 
     def change_offset(self, old_offset, new_offset):
         cset = self.clone(empty=True)

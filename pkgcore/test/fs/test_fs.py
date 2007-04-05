@@ -3,9 +3,9 @@
 
 import os
 from pkgcore.fs import fs
-from pkgcore.test import TestCase
 from pkgcore.interfaces.data_source import data_source
 from pkgcore.chksum import get_chksums
+from snakeoil.test import TestCase
 
 class base(object):
 

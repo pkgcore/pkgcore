@@ -3,8 +3,7 @@
 
 
 from StringIO import StringIO
-
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
 
 try:
     import pyparsing

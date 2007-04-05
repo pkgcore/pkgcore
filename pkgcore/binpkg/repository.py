@@ -61,7 +61,7 @@ class force_unpacking(triggers.base):
         # now to avoid going back to the binpkg, we rewrite
         # the data_source for files to the on disk location.
         # we can update in place also, since we're not changing the mapping.
-        
+
         # this rewrites the data_source to the ${D} loc.
         d = op.env["D"]
         fi = (x.change_attributes(data_source=local_source(

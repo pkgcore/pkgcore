@@ -11,6 +11,22 @@ demandload.demandload(globals(),
 )
 
 
+class syncer_exception(Exception):
+    pass
+
+class uri_exception(syncer_exception):
+    pass
+
+class generic_exception(syncer_exception):
+    pass
+
+class missing_local_user(syncer_exception):
+    pass
+
+class missing_binary(syncer_exception):
+    pass
+
+
 class syncer(object):
 
     forcable = False
@@ -123,12 +139,12 @@ class dvcs_syncer(ExternalSyncer):
             st = os.stat(self.basedir)
         except (IOError, OSError), ie:
             if ie.errno != errno.ENOENT:
-                raise base.generic_exception(self, self.basedir, ie)
+                raise generic_exception(self, self.basedir, ie)
             command = self._initial_pull()
             chdir = None
         else:
             if not stat.S_ISDIR(st.st_mode):
-                raise base.generic_exception(self, self.basedir,
+                raise generic_exception(self, self.basedir,
                     "isn't a directory")
             command = self._update_existing()
             chdir = self.basedir
@@ -142,23 +158,6 @@ class dvcs_syncer(ExternalSyncer):
 
     def _update_existing(self):
         raise NotImplementedError(self, "_update_existing")
-
-
-class syncer_exception(Exception):
-    pass
-
-class uri_exception(syncer_exception):
-    pass
-
-class generic_exception(syncer_exception):
-    pass
-
-class missing_local_user(syncer_exception):
-    pass
-
-class missing_binary(syncer_exception):
-    pass
-
 
 @configurable({'basedir':'str', 'uri':'str'}, typename='syncer')
 def GenericSyncer(basedir, uri, default_verbosity=0):

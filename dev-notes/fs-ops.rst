@@ -15,8 +15,8 @@ stages where these operations occur.
 --------------------------------
 - File Addition ( Installation )
 --------------------------------
-  - preinst 
-  - merge files 
+  - preinst
+  - merge files
   - postinst
 
 ----------------------------------

@@ -177,7 +177,7 @@ def process_scope(out, buff, pos, var_match, func_match, endchar):
             pos = walk_command_complex(buff, pos, endchar, COMMAND_PARSING)
             # icky icky icky icky
             if pos < end and buff[pos] != endchar:
-                pos+=1
+                pos += 1
         else:
             # Env assignment.
             var_name = buff[new_start:new_end]
@@ -277,7 +277,7 @@ def walk_here_statement(buff, pos):
             if i >= 0 and buff[i] == '\n':
                 break
         end_here = buff.find(here_word, end_here + here_len)
-            
+
     if end_here == -1:
         return end
     return end_here + len(here_word)
@@ -405,7 +405,7 @@ def walk_dollar_expansion(buff, pos, end, endchar, disable_quote=False):
         if pos >= end:
             return end
         return pos
-    
+
     pos += 1
     # shortcut ${$} to avoid going too deep. ${$a} isn't valid, so no concern
     if pos == '$':

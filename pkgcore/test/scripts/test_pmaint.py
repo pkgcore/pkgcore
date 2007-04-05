@@ -4,18 +4,18 @@
 
 from StringIO import StringIO
 
-from pkgcore.interfaces.repo import (nonlivefs_install,
-    nonlivefs_uninstall, nonlivefs_replace)
-from pkgcore.test import TestCase
+from snakeoil.test import TestCase
+from snakeoil.formatters import PlainTextFormatter
+from snakeoil.currying import partial
+
 from pkgcore.scripts import pmaint
 from pkgcore.test.scripts import helpers
 from pkgcore.config import basics, ConfigHint, configurable
 from pkgcore.repository import util, syncable
 from pkgcore.sync import base
 from pkgcore.ebuild.cpv import CPV
-
-from snakeoil.formatters import PlainTextFormatter
-from snakeoil.currying import partial
+from pkgcore.interfaces.repo import (nonlivefs_install,
+    nonlivefs_uninstall, nonlivefs_replace)
 
 
 class Options(dict):

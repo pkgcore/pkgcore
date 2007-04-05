@@ -17,9 +17,9 @@ from snakeoil.obj import DelayedInstantiation
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-           "pkgcore.merge:engine "
-           "pkgcore.ebuild:triggers "
-           "re ")
+    "pkgcore.merge:engine "
+    "pkgcore.ebuild:triggers "
+    "re ")
 
 
 def passthrough(inst, attr, rename=None):
@@ -76,8 +76,8 @@ class package(ebuild_src.base):
         for k in ebuild_src.package._config_wrappables
         if k in ebuild_src.package.tracked_attributes)
 
-    _get_attr["use"] = lambda s:DelayedInstantiation(tuple,
-        lambda: tuple(s.data["USE"].split()))
+    _get_attr["use"] = lambda s:DelayedInstantiation(frozenset,
+        lambda: frozenset(s.data["USE"].split()))
 
     def _update_metadata(self, pkg):
         raise NotImplementedError()

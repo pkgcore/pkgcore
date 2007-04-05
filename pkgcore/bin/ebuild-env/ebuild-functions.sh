@@ -35,7 +35,7 @@ use_with()
     if [ -z "${UWORD}" ]; then
         UWORD="$1"
     fi
-    
+
     if useq $1; then
         echo "--with-${UWORD}${UW_SUFFIX}"
         return 0
@@ -62,7 +62,7 @@ use_enable()
     if [ -z "${UWORD}" ]; then
         UWORD="$1"
     fi
-    
+
     if useq $1; then
         echo "--enable-${UWORD}${UE_SUFFIX}"
         return 0
@@ -171,7 +171,7 @@ strip_duplicate_slashes ()
     fi
 }
 
-einstall() 
+einstall()
 {
     # CONF_PREFIX is only set if they didn't pass in libdir above
     LIBDIR_VAR="LIBDIR_${ABI}"
@@ -204,7 +204,7 @@ einstall()
             mandir=${D}/usr/share/man \
             sysconfdir=${D}/etc \
             ${EXTRA_EINSTALL} \
-            "$@" install || die "einstall failed" 
+            "$@" install || die "einstall failed"
     else
         die "no Makefile found"
     fi
@@ -212,7 +212,7 @@ einstall()
 
 pkg_setup()
 {
-    return 
+    return
 }
 
 pkg_nofetch()
@@ -242,8 +242,8 @@ src_compile()
     fi
 }
 
-src_test() 
-{ 
+src_test()
+{
     addpredict /
     if make check -n &> /dev/null; then
         echo ">>> Test phase [check]: ${CATEGORY}/${PF}"
@@ -263,9 +263,9 @@ src_test()
     SANDBOX_PREDICT="${SANDBOX_PREDICT%:/}"
 }
 
-src_install() 
-{ 
-    return 
+src_install()
+{
+    return
 }
 
 pkg_preinst()

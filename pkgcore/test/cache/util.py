@@ -1,8 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
+from snakeoil.test import TestCase
 from pkgcore.cache import errors
-from pkgcore.test import TestCase
 
 generic_data = \
     ("sys-libs/libtrash-2.4",

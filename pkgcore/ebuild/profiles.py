@@ -329,7 +329,7 @@ class OnDiskProfile(object):
                         if s is not None:
                             # chuck the previous override.
                             s.discard(key)
-                
+
                 for u in val[1]:
                     # if it's on already, no need to set it.
                     if u not in global_on:
@@ -341,7 +341,7 @@ class OnDiskProfile(object):
                         s = puse_off.get(u)
                         if s is not None:
                             s.discard(key)
-        
+
         # now we recompose it into a global on, and a stream of global trins.
         d = {}
         if global_on:

@@ -1,12 +1,12 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.test import TestCase
+import tempfile, os
+from snakeoil.test import TestCase
 from pkgcore.ebuild import digest
 from pkgcore.chksum import gpg
 from pkgcore.chksum.errors import ParseChksumError, MissingChksum
 from pkgcore.interfaces.data_source import local_source
-import tempfile, os
 
 # "Line too long" (and our custom more agressive version of that)
 # pylint: disable-msg=C0301,CPC01

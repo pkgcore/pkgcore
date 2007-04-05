@@ -3,7 +3,7 @@ Getting Started
 ===============
 
 Portage Differences
-+++++++++++++++++++
+===================
 
 Currently portage handles all actions primarily through one script, emerge.
 pkgcore breaks this functionality down into 3 scripts: ``pmerge``, ``pmaint``,
@@ -225,12 +225,6 @@ No equivalents:
 
   At some point will be accessible via ``pquery``.
 
-Regen
------
-
-To regenerate run ``pregen.py <repo-name> -j <# of processors>``, which scales
-around .9x linear per proc, at least through 4x for testing. This will
-probably be folded into ``pmaint`` by 0.3.
 
 Searching
 =========
@@ -238,19 +232,33 @@ Searching
 All searching in pkgcore is done through ``pquery``. See pquery-usage_ for how
 to use ``pquery``.
 
+Pmaint
+======
+
+``pmaint`` is a repository maintainence tool. It has a number of subcommands
+(see below).
+
+Note: You should also refer to ``pmaint --help`` to determine which
+subcommands are available, because at some point, the subcommands for
+``pmaint`` will be variable and dependent upon the repositories available,
+akin to how bzr's command set changes depending on what plugins you've
+enabled (the most common is bzrtools).
+
+Regen
+-----
+
+To regenerate the cache for a repo run ``pmaint regen <repo-name> -j
+<# of processors>``. This scales pretty well, around .9x linear per processor,
+and at least through 4x for testing.
+
 Syncing
-=======
+-------
 
 ``pmaint sync <reponame>`` will sync a repository. See the config document for
-syncing info. If no reponame provided, it tries to sync all repositories.
-
-Note: You should look at ``pmaint --help``, because at some point, the
-'commands' for ``pmaint`` will be variable and dependent upon the repositories
-available, akin to how bzr's command set changes depending on what plugins
-you've enabled (commonly bzrtools).
+syncing info. If no reponame is provided, it tries to sync all repositories.
 
 Quickpkg
-========
+--------
 
 ``pmaint copy -s vdb -t binpkg sys-apps/portage --force`` will make a binpkg
 (like quickpkg).
@@ -259,10 +267,10 @@ Note: this is not a ``--buildpkg`` equivalent, as buildpkg grabs a package prior
 to any preinstall mangling, so a quickpkged binpkg's contents can differ from a
 binpkg built with ``--buildpkg``.
 
-Handy backup of existing system:
+To package up all installed packages as binpkgs:
 ``pmaint copy -s vdb -t binpkg '*' --force``
 
-Alternatively, generating binpkgs only if they don't exist:
+Alternatively, to generate binpkgs only if they don't exist:
 ``pmaint copy -s vdb -t binpkg '*' --force --ignore-existing``
 
 .. _pquery-usage: pquery-usage.rst

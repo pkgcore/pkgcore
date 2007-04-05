@@ -757,7 +757,7 @@ class merge_plan(object):
                 yield or_block
 
     @staticmethod
-    def default_global_strategy(dbs, atom):
+    def default_global_strategy(self, dbs, atom):
         return chain(*[repo.match(atom) for repo in dbs])
 
     @staticmethod

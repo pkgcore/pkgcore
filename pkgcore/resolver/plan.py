@@ -591,7 +591,7 @@ class merge_plan(object):
                 return None
             elif l is not None:
                 # failure.
-                self.notify_failed_choice(stack, atom, choices,
+                self.notify_choice_failed(stack, atom, choices,
                     "failed inserting: %s", l)
                 self.state.backtrack(stack.current_frame.start_point)
                 choices.force_next_pkg()
@@ -680,7 +680,7 @@ class merge_plan(object):
                     self.generate_mangled_blocker(choices, x), key=x.key)
                 if l:
                     # blocker caught something. yay.
-                    self.notify_failed_choice(stack, atom, choices,
+                    self.notify_choice_failed(stack, atom, choices,
                         "rdepend blocker %s hit %s", (x, l))
                     failures = [x]
                     break

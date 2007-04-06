@@ -45,7 +45,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
     false_packages = frozenset(["CVS", ".svn"])
     false_categories = frozenset([
             "eclass", "profiles", "packages", "distfiles", "metadata",
-            "licenses", "scripts", "CVS", ".svn"])
+            "licenses", "scripts", "CVS", ".svn", "local"])
     configured = False
     configurables = ("domain", "settings")
     configure = None

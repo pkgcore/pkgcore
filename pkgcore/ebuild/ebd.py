@@ -35,6 +35,7 @@ demandload(globals(),
 
 def _reset_env_data_source(method):
     return method
+    
     # unreachable code. -masterdriverz
     #def store_env_data_wrapper(self, *args, **kwds):
     #    try:

@@ -64,7 +64,7 @@ class caching_repo(object):
 
     def __init__(self, db, strategy):
         """
-        @param: db, an instance supporting the repository protocol to cache
+        @param db: an instance supporting the repository protocol to cache
           queries from.
         @param strategy: forced sorting strategy for results.  If you don't
           need sorting, pass in iter.

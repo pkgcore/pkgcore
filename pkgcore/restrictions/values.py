@@ -100,7 +100,7 @@ class StrRegex(hashed_base):
         @param regex: regex pattern to match
         @param case_sensitive: should the match be case sensitive?
         @param match: should C{re.match} be used instead of C{re.search}?
-        @keyword negate: should the match results be negated?
+        @param negate: should the match results be negated?
         """
 
         sf = object.__setattr__
@@ -169,7 +169,7 @@ class native_StrExactMatch(object):
         """
         @param exact: exact string to match
         @param case_sensitive: should the match be case sensitive?
-        @keyword negate: should the match results be negated?
+        @param negate: should the match results be negated?
         """
 
         sf = object.__setattr__
@@ -250,7 +250,7 @@ class StrGlobMatch(hashed_base):
         @param case_sensitive: should the match be case sensitive?
         @param prefix: should the glob be a prefix check for matching,
             or postfix matching
-        @keyword negate: should the match results be negated?
+        @param negate: should the match results be negated?
         """
 
         sf = object.__setattr__

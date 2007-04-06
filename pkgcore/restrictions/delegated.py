@@ -30,7 +30,6 @@ class delegate(restriction.base):
 
         @param transform_func: callable inovked with data, pkg, and mode
             mode may be "match", "force_True", or "force_False"
-        @param data: data to pass to the transforming func
         """
 
         if not callable(transform_func):

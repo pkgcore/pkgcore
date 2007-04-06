@@ -283,8 +283,6 @@ class PortageFormatter(Formatter):
                oldchoice=None):
         """Write the current selection from a set of flags to a formatter.
 
-        @type  out: formatter
-        @param out: the formatter to write to.
         @type  attr: string
         @param attr: the name of the setting.
         @type  selectable: set of strings
@@ -294,7 +292,7 @@ class PortageFormatter(Formatter):
         @type  oldselectable: set of strings
         @param oldselectable: the values possible in the previous version.
         @type  oldchoice: set of strings
-        @param oldchoie: the previously chosen values.
+        @param oldchoice: the previously chosen values.
         """
         out = self.out
         red = out.fg('red')

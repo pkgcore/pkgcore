@@ -171,10 +171,15 @@ class BasicFormatter(Formatter):
 class PkgcoreFormatter(Formatter):
     """The original pkgcore output"""
     def format(self, op):
-        if op.desc == "replace":
-            self.out.write("replace %s, %s" % (op.old_pkg, op.pkg))
+        repo = getattr(op.pkg.repo, 'repo_id', None)
+        if not repo:
+            p = str(op.pkg.cpvstr)
         else:
-            self.out.write("%s %s" % (op.desc.ljust(7), op.pkg))
+            p = "%s::%s" % (op.pkg.cpvstr, repo)
+        if op.desc == "replace":
+            self.out.write("replace %s, %s" % (op.old_pkg.cpvstr, p))
+        else:
+            self.out.write("%s %s" % (op.desc.ljust(7), p))
 
 
 class PortageFormatter(Formatter):

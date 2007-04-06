@@ -111,14 +111,12 @@ class TestPkgcoreFormatter(BaseFormatterTest, TestCase):
             FakeOp(FakeEbuildSrc('dev-util/diffball-1.2'),
                 FakeMutatedPkg('dev-util/diffball-1.1')))
         self.assertOut(
-            "replace MutatedPkg(built ebuild: dev-util/diffball-1.1, "
-            "overrides=('depends', 'rdepends')), config wrapped(use): "
-            "ebuild src: dev-util/diffball-1.2")
+            "replace dev-util/diffball-1.1, "
+            "dev-util/diffball-1.2")
 
         # And again...
         self.formatter.format(FakeOp(FakeEbuildSrc('dev-util/diffball-1.0')))
-        self.assertOut("add     config wrapped(use): "
-            "ebuild src: dev-util/diffball-1.0")
+        self.assertOut("add     dev-util/diffball-1.0")
 
         # unmerge
         #app-arch/bzip2-1.0.3-r6

@@ -9,7 +9,6 @@ from pkgcore.ebuild import ebuild_src
 from pkgcore.package import metadata
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.fs import scan
-from pkgcore.ebuild import ebd
 
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import post_curry
@@ -17,9 +16,10 @@ from snakeoil.obj import DelayedInstantiation
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore.merge:engine",
-    "pkgcore.ebuild:triggers",
-    "re",
+    'pkgcore.merge:engine',
+    'pkgcore.ebuild:triggers',
+    're',
+    'pkgcore.ebuild:ebd',
 )
 
 

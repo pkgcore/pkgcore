@@ -22,12 +22,12 @@ from pkgcore.spawn import (
 from pkgcore.os_data import xargs
 from pkgcore.ebuild.const import eapi_capable
 from pkgcore.interfaces import observer
-
+from pkgcore.ebuild.ebuild_built import fake_package_factory, package
 from snakeoil.currying import post_curry, pretty_docs
 from snakeoil.osutils import ensure_dirs, normpath, join as pjoin
+
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore.ebuild.ebuild_built:fake_package_factory,package",
     "pkgcore.log:logger",
     "pkgcore.package.mutated:MutatedPkg",
 )

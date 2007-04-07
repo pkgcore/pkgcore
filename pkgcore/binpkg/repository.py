@@ -10,8 +10,6 @@ import os, stat
 from pkgcore.repository import prototype, errors
 from pkgcore.merge import triggers
 from pkgcore.plugin import get_plugin
-from pkgcore.binpkg.xpak import Xpak
-from pkgcore.fs.tar import generate_contents
 from pkgcore.ebuild.ebuild_built import pkg_uses_default_preinst
 from pkgcore.config import ConfigHint
 #needed to grab the PN
@@ -35,6 +33,8 @@ demandload(globals(),
     "pkgcore.ebuild:ebd",
     "pkgcore.binpkg:repo_ops",
     "errno",
+    "pkgcore.fs.tar:generate_contents",
+    "pkgcore.binpkg.xpax:Xpak",
 )
 
 

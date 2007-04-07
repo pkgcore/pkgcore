@@ -10,7 +10,8 @@ L{pkgcore.plugins} to get at these ops.
 
 import os, errno
 
-from pkgcore.fs import gen_obj, contents, fs
+from pkgcore.fs import contents, fs
+from pkgcore.fs.livefs import gen_obj
 from pkgcore.spawn import spawn
 from pkgcore.const import COPY_BINARY
 from pkgcore.plugin import get_plugin

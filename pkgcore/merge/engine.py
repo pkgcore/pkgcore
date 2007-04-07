@@ -13,8 +13,7 @@ core engine for livefs modifications
 
 import operator
 
-from pkgcore.fs import contents
-from pkgcore.fs import gen_obj as gen_fs_obj
+from pkgcore.fs import contents, livefs
 from pkgcore.plugin import get_plugins
 from pkgcore.merge import errors
 from pkgcore.interfaces import observer as observer_mod
@@ -28,9 +27,10 @@ demandload(globals(), 'errno')
 
 def scan_livefs(cset):
     """generate the intersect of a cset and the livefs"""
+    f = livefs.gen_obj
     for x in cset:
         try:
-            yield gen_fs_obj(x.location)
+            yield f(x.location)
         except OSError, oe:
             if oe.errno != errno.ENOENT:
                 raise

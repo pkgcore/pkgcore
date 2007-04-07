@@ -12,7 +12,7 @@ demandload(globals(),
     "pkgcore.ebuild.atom:atom",
     "pkgcore.util.packages:get_raw_pkg",
     "sys",
-    "os ",
+    "os",
 )
 
 def str_pkg(pkg):

@@ -18,7 +18,6 @@ from pkgcore.ebuild.cpv import CPV as cpv
 from snakeoil.currying import partial
 from snakeoil.mappings import DictMixin
 from snakeoil.osutils import listdir_dirs, listdir_files
-from pkgcore.util.bzip2 import decompress
 from snakeoil.osutils import join as pjoin
 
 from snakeoil.demandload import demandload
@@ -35,6 +34,7 @@ demandload(globals(),
     "errno",
     "pkgcore.fs.tar:generate_contents",
     "pkgcore.binpkg.xpax:Xpak",
+    "pkgcore.util.bzip2:decompress",
 )
 
 

@@ -209,8 +209,8 @@ def add_profile(config, base_path):
 
     config["profile"] = basics.AutoConfigSection({
             "class": "pkgcore.ebuild.profiles.OnDiskProfile",
-            "basepath": pjoin("/", *psplit[:-profile_start]),
-            "profile": pjoin(*psplit[-profile_start:])})
+            "basepath": pjoin("/", *psplit[:profile_start + 1]),
+            "profile": pjoin(*psplit[profile_start + 1:])})
 
 
 def add_fetcher(config, conf_dict, distdir):

@@ -29,6 +29,9 @@ pkgcore 0.3:
 * /etc/portage/package.* can now contain unlimited subdirectories and
   files (ticket 71).
 
+* livefs functionality is no longer accessible in pkgcore.fs.*; have to access
+  pkgcore.fs.livefs.*
+
 
 pkgcore 0.2.13:
 

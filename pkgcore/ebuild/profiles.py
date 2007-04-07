@@ -373,8 +373,6 @@ class OnDiskProfile(object):
     def _collapse_env(self):
         d = {}
         inc = self.incrementals
-        if not self.stack:
-            return {}
         for profile in self.stack:
             for key, val in profile.default_env.iteritems():
                 if key in inc:

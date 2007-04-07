@@ -33,7 +33,7 @@ demandload(globals(),
     "pkgcore.binpkg:repo_ops",
     "errno",
     "pkgcore.fs.tar:generate_contents",
-    "pkgcore.binpkg.xpax:Xpak",
+    "pkgcore.binpkg.xpak:Xpak",
     "pkgcore.util.bzip2:decompress",
 )
 

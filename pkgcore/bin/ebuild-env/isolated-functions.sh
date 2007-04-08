@@ -52,7 +52,6 @@ einfo() {
 
 einfon() {
     elog_base INFO "$*"
-    [[ ${RC_ENDCOL} != "yes" && ${LAST_E_CMD} == "ebegin" ]] && echo
     echo -ne " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"
     LAST_E_CMD="einfon"
     return 0
@@ -60,7 +59,6 @@ einfon() {
 
 ewarn() {
     elog_base WARN "$*"
-    [[ ${RC_ENDCOL} != "yes" && ${LAST_E_CMD} == "ebegin" ]] && echo
     echo -e " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} $*"
     LAST_E_CMD="ewarn"
     return 0
@@ -68,7 +66,6 @@ ewarn() {
 
 eerror() {
     elog_base ERROR "$*"
-    [[ ${RC_ENDCOL} != "yes" && ${LAST_E_CMD} == "ebegin" ]] && echo
     echo -e " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} $*"
     LAST_E_CMD="eerror"
     return 0
@@ -77,7 +74,7 @@ eerror() {
 ebegin() {
     local msg="$* ..."
     einfon "${msg}"
-    [[ ${RC_ENDCOL} == "yes" ]] && echo
+    echo
     LAST_E_LEN=$(( 3 + ${#msg} ))
     LAST_E_CMD="ebegin"
     return 0
@@ -96,12 +93,7 @@ _eend() {
         msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_BAD}!!${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"
     fi
 
-    if [[ ${RC_ENDCOL} == "yes" ]] ; then
-        echo -e "${ENDCOL}  ${msg}"
-    else
-        [[ ${LAST_E_CMD} == ebegin ]] || LAST_E_LEN=0
-        printf "%$(( COLS - LAST_E_LEN - 6 ))s%b\n" '' "${msg}"
-    fi
+    echo -e "${ENDCOL}  ${msg}"
 
     return ${retval}
 }
@@ -195,5 +187,4 @@ set_colors() {
     PKGCORE_RC_NORMAL=$'\e[0m'
 }
 
-RC_ENDCOL="yes"
 true

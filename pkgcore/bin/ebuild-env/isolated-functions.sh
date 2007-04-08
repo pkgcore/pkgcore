@@ -12,7 +12,7 @@ elog_base() {
             shift
             ;;
         *)
-            echo -e " ${BAD}*${NORMAL} Invalid use of internal function elog_base(), next message will not be logged"
+            echo -e " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} Invalid use of internal function elog_base(), next message will not be logged"
             return 1
             ;;
     esac
@@ -22,7 +22,7 @@ elog_base() {
 
 elog() {
     elog_base LOG "$*"
-    echo -e " ${GOOD}*${NORMAL} $*"
+    echo -e " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"
     return 0
 }
 
@@ -53,7 +53,7 @@ einfo() {
 einfon() {
     elog_base INFO "$*"
     [[ ${RC_ENDCOL} != "yes" && ${LAST_E_CMD} == "ebegin" ]] && echo
-    echo -ne " ${GOOD}*${NORMAL} $*"
+    echo -ne " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"
     LAST_E_CMD="einfon"
     return 0
 }
@@ -61,7 +61,7 @@ einfon() {
 ewarn() {
     elog_base WARN "$*"
     [[ ${RC_ENDCOL} != "yes" && ${LAST_E_CMD} == "ebegin" ]] && echo
-    echo -e " ${WARN}*${NORMAL} ${RC_INDENTATION}$*"
+    echo -e " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} ${RC_INDENTATION}$*"
     LAST_E_CMD="ewarn"
     return 0
 }
@@ -69,7 +69,7 @@ ewarn() {
 eerror() {
     elog_base ERROR "$*"
     [[ ${RC_ENDCOL} != "yes" && ${LAST_E_CMD} == "ebegin" ]] && echo
-    echo -e " ${BAD}*${NORMAL} ${RC_INDENTATION}$*"
+    echo -e " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} ${RC_INDENTATION}$*"
     LAST_E_CMD="eerror"
     return 0
 }
@@ -95,12 +95,12 @@ _eend() {
     shift 2
 
     if [[ ${retval} == "0" ]] ; then
-        msg="${BRACKET}[ ${GOOD}ok${BRACKET} ]${NORMAL}"
+        msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_GOOD}ok${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"
     else
         if [[ -n $* ]] ; then
             ${efunc} "$*"
         fi
-        msg="${BRACKET}[ ${BAD}!!${BRACKET} ]${NORMAL}"
+        msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_BAD}!!${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"
     fi
 
     if [[ ${RC_ENDCOL} == "yes" ]] ; then
@@ -177,12 +177,12 @@ unset_colors() {
     COLS="25 80"
     ENDCOL=
 
-    GOOD=
-    WARN=
-    BAD=
-    NORMAL=
-    HILITE=
-    BRACKET=
+    PKGCORE_RC_GOOD=
+    PKGCORE_RC_WARN=
+    PKGCORE_RC_BAD=
+    PKGCORE_RC_NORMAL=
+    PKGCORE_RC_HILITE=
+    PKGCORE_RC_BRACKET=
 }
 
 set_colors() {
@@ -194,12 +194,12 @@ set_colors() {
     ENDCOL=$'\e[A\e['${COLS}'C'    # Now, ${ENDCOL} will move us to the end of the
                                    # column;  irregardless of character width
 
-    GOOD=$'\e[32;01m'
-    WARN=$'\e[33;01m'
-    BAD=$'\e[31;01m'
-    HILITE=$'\e[36;01m'
-    BRACKET=$'\e[34;01m'
-    NORMAL=$'\e[0m'
+    PKGCORE_RC_GOOD=$'\e[32;01m'
+    PKGCORE_RC_WARN=$'\e[33;01m'
+    PKGCORE_RC_BAD=$'\e[31;01m'
+    PKGCORE_RC_HILITE=$'\e[36;01m'
+    PKGCORE_RC_BRACKET=$'\e[34;01m'
+    PKGCORE_RC_NORMAL=$'\e[0m'
 }
 
 RC_ENDCOL="yes"

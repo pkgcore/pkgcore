@@ -33,6 +33,21 @@ pkgcore 0.3:
   pkgcore.fs.livefs.*
 
 
+pkgcore 0.2.14:
+
+* correct potential for profile path calculation screwup.
+
+* refactor isolated-functions.sh so all internal vars are prefixed with
+  PKGCORE_RC_; shift vars filter to PKGCORE_RC_.* instead of RC_.* .
+  If you were having problems building courier-imap (RC_VER variable),
+  this fixes it.
+
+* better interop with paludis VDB environment dumps.
+
+* treat RESTRICT as a straight depset for UI purposes (minor, but looks
+  better this way).
+
+
 pkgcore 0.2.13:
 
 * Added '~' to allowed shlex word chars.

@@ -46,28 +46,28 @@ esyslog() {
 
 einfo() {
     einfon "$*\n"
-    LAST_E_CMD="einfo"
+    PKGCORE_RC_LAST_CMD="einfo"
     return 0
 }
 
 einfon() {
     elog_base INFO "$*"
     echo -ne " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"
-    LAST_E_CMD="einfon"
+    PKGCORE_RC_LAST_CMD="einfon"
     return 0
 }
 
 ewarn() {
     elog_base WARN "$*"
     echo -e " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} $*"
-    LAST_E_CMD="ewarn"
+    PKGCORE_RC_LAST_CMD="ewarn"
     return 0
 }
 
 eerror() {
     elog_base ERROR "$*"
     echo -e " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} $*"
-    LAST_E_CMD="eerror"
+    PKGCORE_RC_LAST_CMD="eerror"
     return 0
 }
 
@@ -75,8 +75,7 @@ ebegin() {
     local msg="$* ..."
     einfon "${msg}"
     echo
-    LAST_E_LEN=$(( 3 + ${#msg} ))
-    LAST_E_CMD="ebegin"
+    PKGCORE_RC_LAST_CMD="ebegin"
     return 0
 }
 
@@ -93,7 +92,7 @@ _eend() {
         msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_BAD}!!${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"
     fi
 
-    echo -e "${ENDCOL}  ${msg}"
+    echo -e "${PKGCORE_RC_ENDCOL}  ${msg}"
 
     return ${retval}
 }
@@ -148,20 +147,13 @@ KV_to_int() {
     return 1
 }
 
-_RC_GET_KV_CACHE=""
 get_KV() {
-    [[ -z ${_RC_GET_KV_CACHE} ]] \
-        && _RC_GET_KV_CACHE=$(uname -r)
-
-    echo $(KV_to_int "${_RC_GET_KV_CACHE}")
-
-    return $?
+    echo $(KV_to_int "$(uname -r)")
 }
 
 unset_colors() {
-    COLS="25 80"
-    ENDCOL=
-
+    PKGCORE_RC_COLS="25 80"
+    PKGCORE_RC_ENDCOL=
     PKGCORE_RC_GOOD=
     PKGCORE_RC_WARN=
     PKGCORE_RC_BAD=
@@ -171,13 +163,16 @@ unset_colors() {
 }
 
 set_colors() {
-    COLS=${COLUMNS:-0}      # bash's internal COLUMNS variable
-    (( COLS == 0 )) && COLS=$(set -- `stty size 2>/dev/null` ; echo $2)
-    (( COLS > 0 )) || (( COLS = 80 ))
-    COLS=$((${COLS} - 8))	# width of [ ok ] == 7
+    # try setting the column width to bash's internal COLUMNS variable,
+    # then try to get it via stty.  no go? hardcode it to 80.
+    PKGCORE_RC_COLS=${COLUMNS:-0}
+    (( PKGCORE_RC_COLS == 0 )) && PKGCORE_RC_COLS=$(set -- `stty size 2>/dev/null` ; echo $2)
+    (( PKGCORE_RC_COLS > 0 )) || (( PKGCORE_RC_COLS = 80 ))
+    PKGCORE_RC_COLS=$((${PKGCORE_RC_COLS} - 8))	# width of [ ok ] == 7
 
-    ENDCOL=$'\e[A\e['${COLS}'C'    # Now, ${ENDCOL} will move us to the end of the
-                                   # column;  irregardless of character width
+    PKGCORE_RC_ENDCOL=$'\e[A\e['${PKGCORE_RC_COLS}'C'
+    # Now, ${PKGCORE_RC_ENDCOL} will move us to the end of the
+    # column;  irregardless of character width
 
     PKGCORE_RC_GOOD=$'\e[32;01m'
     PKGCORE_RC_WARN=$'\e[33;01m'
@@ -187,4 +182,6 @@ set_colors() {
     PKGCORE_RC_NORMAL=$'\e[0m'
 }
 
+unset_colors
+DONT_EXPORT_VARS="${DONT_EXPORT_VARS} PKGCORE_RC_.*"
 true

@@ -61,7 +61,7 @@ einfon() {
 ewarn() {
     elog_base WARN "$*"
     [[ ${RC_ENDCOL} != "yes" && ${LAST_E_CMD} == "ebegin" ]] && echo
-    echo -e " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} ${RC_INDENTATION}$*"
+    echo -e " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} $*"
     LAST_E_CMD="ewarn"
     return 0
 }
@@ -69,23 +69,16 @@ ewarn() {
 eerror() {
     elog_base ERROR "$*"
     [[ ${RC_ENDCOL} != "yes" && ${LAST_E_CMD} == "ebegin" ]] && echo
-    echo -e " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} ${RC_INDENTATION}$*"
+    echo -e " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} $*"
     LAST_E_CMD="eerror"
     return 0
 }
 
 ebegin() {
-    local msg="$*" dots spaces=${RC_DOT_PATTERN//?/ }
-    if [[ -n ${RC_DOT_PATTERN} ]] ; then
-        dots=$(printf "%$(( COLS - 3 - ${#RC_INDENTATION} - ${#msg} - 7 ))s" '')
-        dots=${dots//${spaces}/${RC_DOT_PATTERN}}
-        msg="${msg}${dots}"
-    else
-        msg="${msg} ..."
-    fi
+    local msg="$* ..."
     einfon "${msg}"
     [[ ${RC_ENDCOL} == "yes" ]] && echo
-    LAST_E_LEN=$(( 3 + ${#RC_INDENTATION} + ${#msg} ))
+    LAST_E_LEN=$(( 3 + ${#msg} ))
     LAST_E_CMD="ebegin"
     return 0
 }
@@ -203,7 +196,4 @@ set_colors() {
 }
 
 RC_ENDCOL="yes"
-RC_INDENTATION=''
-RC_DEFAULT_INDENT=2
-RC_DOT_PATTERN=''
 true

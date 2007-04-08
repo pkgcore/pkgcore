@@ -386,7 +386,6 @@ dyn_preinst()
 {
     # set IMAGE depending if this is a binary or compile merge
     local IMAGE=${D}
-    [ "${EMERGE_FROM}" == "binary" ] && IMAGE=${PKG_TMPDIR}/${PF}/bin/
 
     # Make sure D is where the package expects it
     D=${IMAGE} pkg_preinst

@@ -344,6 +344,8 @@ def main(options, out, err):
     extra_kwargs = {}
     if options.empty:
         extra_kwargs['resolver_cls'] = resolver.empty_tree_merge_plan
+    if options.debug:
+        extra_kwargs['debug'] = True
 
     resolver_inst = resolver_kls(
         vdb, repos, verify_vdb=options.deep, nodeps=options.nodeps,

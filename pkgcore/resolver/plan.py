@@ -153,7 +153,7 @@ class merge_plan(object):
                  global_strategy=None,
                  depset_reorder_strategy=None,
                  process_built_depends=False,
-                 drop_cycles=False):
+                 drop_cycles=False, debug=False):
 
         if not isinstance(dbs, (list, tuple)):
             dbs = [dbs]
@@ -176,6 +176,9 @@ class merge_plan(object):
         self.vdb_preloaded = False
         self.drop_cycles = drop_cycles
         self.process_built_depends = process_built_depends
+        if debug:
+            self._rec_add_atom = partial(self._stack_debugging_rec_add_atom,
+                self._rec_add_atom)
 
     def notify_starting_mode(self, mode, stack):
         if mode == "post_rdepends":
@@ -503,6 +506,16 @@ class merge_plan(object):
                    (stack.depth *2 * " ", atom, s))
             return None
         return choices, matches
+
+    def _stack_debugging_rec_add_atom(self, func, atom, stack, dbs, **kwds):
+        setattr(self, "_debugging_depth",
+            getattr(self, "_debugging_depth", 0) + 1)
+        assert len(stack) == self._debugging_depth -1
+        try:
+            return func(atom, stack, dbs, **kwds)
+        finally:
+            self._debugging_depth -= 1
+            assert len(stack) == self._debugging_depth
 
     def _rec_add_atom(self, atom, stack, dbs, mode="none",
         drop_cycles=False):

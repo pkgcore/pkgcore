@@ -707,8 +707,8 @@ class merge_plan(object):
 
         else:
             dprint("no solution  %s%s", (depth*2*" ", atom))
-            stack.pop_frame()
             self.state.backtrack(stack.current_frame.start_point)
+            stack.pop_frame()
             # saving roll.  if we're allowed to drop cycles, try it again.
             # this needs to be *far* more fine grained also. it'll try
             # regardless of if it's cycle issue

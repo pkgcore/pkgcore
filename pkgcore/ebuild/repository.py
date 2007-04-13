@@ -96,7 +96,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         if os.path.exists(fp):
             f = open(fp, "r")
             try:
-                for k, v in read_dict(f, splitter="\t",
+                for k, v in read_dict(f, splitter=None,
                                       source_isiter=True).iteritems():
                     v = v.split()
                     shuffle(v)

@@ -40,6 +40,10 @@ foon		foon://foons/
         self.assertEqual(
             ['http://moresporks/', 'http://sporks/'],
             sorted(mirrors['spork']))
+        open(osutils.pjoin(self.pdir, 'thirdpartymirrors'), 'w').write(
+            "foon  dar\n")
+        self.assertEqual(repository.UnconfiguredTree(self.dir).mirrors.keys(),
+            ['foon'])
 
     def test_repo_id(self):
         repo = repository.UnconfiguredTree(self.dir)

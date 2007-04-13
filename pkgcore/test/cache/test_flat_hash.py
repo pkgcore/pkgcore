@@ -3,7 +3,7 @@
 
 from pkgcore.test.cache import util
 from pkgcore.cache import flat_hash
-from pkgcore.test.mixins import TempDirMixin
+from snakeoil.test.mixins import TempDirMixin
 
 class TestFlatHash(util.GenericCacheMixin, TempDirMixin):
 

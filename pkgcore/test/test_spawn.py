@@ -3,9 +3,9 @@
 
 import os, pwd, signal
 from pkgcore.test import TestCase, SkipTest
+from snakeoil.test.mixins import TempDirMixin
 from snakeoil.currying import post_curry
 from pkgcore import spawn
-from pkgcore.test.mixins import TempDirMixin
 
 def capability_based(capable, msg):
     def internal_f(f):

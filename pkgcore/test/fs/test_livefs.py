@@ -6,7 +6,7 @@ from pkgcore.test import TestCase
 
 from pkgcore.fs import fs
 from pkgcore.fs.livefs import iter_scan, gen_obj
-from pkgcore.test.mixins import TempDirMixin
+from snakeoil.test.mixins import TempDirMixin
 
 
 class FsObjsTest(TempDirMixin, TestCase):

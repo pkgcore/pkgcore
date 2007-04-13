@@ -3,10 +3,10 @@
 
 import os, shutil
 from pkgcore.test import TestCase
+from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin
 from pkgcore.fs import ops, fs, livefs, contents
 from pkgcore.interfaces.data_source import local_source
-from pkgcore.test.mixins import TempDirMixin
 
 
 class VerifyMixin(object):

@@ -7,7 +7,7 @@ from snakeoil.currying import post_curry
 
 from pkgcore.ebuild import cpv
 from pkgcore.pkgsets import glsa
-from pkgcore.test.mixins import TempDirMixin
+from snakeoil.test.mixins import TempDirMixin
 from pkgcore.restrictions.packages import OrRestriction
 
 

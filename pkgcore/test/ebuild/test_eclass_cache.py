@@ -4,10 +4,10 @@
 import os
 
 from pkgcore.test import TestCase
+from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin
 from pkgcore.ebuild import eclass_cache
 from pkgcore.interfaces import data_source
-from pkgcore.test.mixins import TempDirMixin
 
 class FakeEclassCache(eclass_cache.base):
 

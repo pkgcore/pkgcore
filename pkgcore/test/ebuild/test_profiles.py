@@ -4,9 +4,9 @@
 import os, shutil
 
 from pkgcore.test import TestCase
+from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin, ensure_dirs
 
-from pkgcore.test.mixins import TempDirMixin
 from pkgcore.ebuild import profiles
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV

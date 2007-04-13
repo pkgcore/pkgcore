@@ -9,7 +9,7 @@ from snakeoil.currying import partial
 from pkgcore import chksum
 from pkgcore.fetch import base, fetchable, errors
 from pkgcore.interfaces import data_source
-from pkgcore.test.mixins import TempDirMixin
+from snakeoil.test.mixins import TempDirMixin
 
 repeating_str = 'asdf'
 data = repeating_str * 4000

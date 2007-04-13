@@ -4,7 +4,7 @@
 import os
 from pkgcore.test import TestCase
 from pkgcore.interfaces import data_source
-from pkgcore.test.mixins import TempDirMixin
+from snakeoil.test.mixins import TempDirMixin
 
 
 class TestDataSource(TestCase):

@@ -4,13 +4,13 @@
 import os
 
 from pkgcore.test import TestCase
+from snakeoil.test.mixins import tempdir_decorator
 from snakeoil.osutils import pjoin
 from snakeoil.currying import post_curry, partial
 
 from pkgcore import fetch
 from pkgcore.package import errors
 from pkgcore.test import mallable_obj
-from pkgcore.test.mixins import tempdir_decorator
 from pkgcore.test.ebuild.test_eclass_cache import FakeEclassCache
 from pkgcore.ebuild import ebuild_src, repo_objs, const, errors as ebuild_errors
 

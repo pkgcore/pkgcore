@@ -2,7 +2,7 @@
 # License: GPL2
 
 
-from pkgcore.test import mixins
+from snakeoil.test import mixins
 from snakeoil import osutils
 from pkgcore.ebuild import repository
 from pkgcore.ebuild.atom import atom

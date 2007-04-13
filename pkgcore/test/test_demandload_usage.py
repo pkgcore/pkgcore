@@ -2,30 +2,8 @@
 # License: GPL2
 
 
-import sys
-from pkgcore.test import TestCase
+from snakeoil.test import test_demandload_usage
 
-class TestDemandLoadTargets(TestCase):
-
-    def test_demandload_targets(self):
-        # picks up only the namespace loaded for searching
-        remaining = sys.modules.items()
-        seen = set()
-        while remaining:
-            for name, mod in remaining:
-                self.check_space(name, mod)
-                seen.add(name)
-            remaining = [
-                (k, v) for k, v in sys.modules.iteritems() if k not in seen]
-
-    def check_space(self, name, mod):
-        if not name.startswith("pkgcore."):
-            return
-        for attr in dir(mod):
-            try:
-                obj = getattr(mod, attr)
-                # force __getattribute__ to fire
-                getattr(obj, "__class__", None)
-            except ImportError:
-                # hit one.
-                self.fail("failed 'touching' demandloaded %s.%s" % (name, attr))
+class TestDemandLoadUsage(test_demandload_usage.TestDemandLoadTargets):
+    target_namespace = "pkgcore"
+    ignore_all_import_failures = True

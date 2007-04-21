@@ -14,8 +14,8 @@ from pkgcore.plugin import get_plugin
 
 from snakeoil.fileutils import read_dict, iter_read_bash
 from snakeoil import currying
-from snakeoil.osutils import (listdir_files, readfile, listdir_dirs,
-    join as pjoin)
+from snakeoil.osutils import (listdir_files, readfile, listdir_dirs, pjoin,
+    readlines)
 from snakeoil.containers import InvertedContains
 from snakeoil.obj import make_kls
 from snakeoil.weakrefs import WeakValCache
@@ -144,9 +144,15 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
     def _get_categories(self, *optional_category):
         # why the auto return? current porttrees don't allow/support
         # categories deeper then one dir.
-        if len(optional_category):
+        if optional_category:
             #raise KeyError
             return ()
+        
+        # try reading $LOC/profiles/categories if it's available.
+        cats = readlines(pjoin(self.base, 'profiles', 'categories'), True, True,
+            True)
+        if cats is not None:
+            return tuple(intern(x) for x in cats)
 
         try:
             return tuple(intern(x) for x in listdir_dirs(self.base)

@@ -458,6 +458,16 @@ class merge_plan(object):
             conflicts = None
         return conflicts
 
+    def notify_viable(self, stack, atom, viable, msg='', pre_solved=False):
+        viable = viable and "processing" or "not viable"
+        if pre_solved and viable:
+            viable = "pre-solved"
+        msg = msg and (" "+msg) or ''
+        s=''
+        if stack:
+            s = " for %s " % (stack[-1].atom)
+        dprint("%s%s%s%s%s", (viable.ljust(13), "  "*stack.depth, atom, s, msg))
+
     def _viable(self, atom, stack, dbs, limit_to_vdb):
         """
         internal function to discern if an atom is viable, returning
@@ -467,19 +477,11 @@ class merge_plan(object):
           L{caching_iter} (not solved, but viable)
         """
         if atom in self.insoluble:
-            dprint("processing   %s%s: marked insoluble already",
-                   (stack.depth *2 * " ", atom))
+            self.notify_viable(stack, atom, False, "globally insoluble")
             return None
         l = self.state.match_atom(atom)
         if l:
-            if stack:
-                dprint("pre-solved  %s%s, [%s] [%s]",
-                       (((stack.depth*2) + 1)*" ", atom, stack[-1].atom,
-                        ", ".join(str(x) for x in l)), 'pre-solved')
-            else:
-                dprint("pre-solved %s%s, [%s]",
-                       (stack.depth*2*" ", atom, ", ".join(str(x) for x in l)),
-                       'pre-solved')
+            self.notify_viable(stack, atom, True, pre_solved=True)
             return True
         # not in the plan thus far.
         matches = caching_iter(self.global_strategy(self, dbs, atom))
@@ -487,25 +489,19 @@ class merge_plan(object):
             choices = choice_point(atom, matches)
             # ignore what dropped out, at this juncture we don't care.
             choices.reduce_atoms(self.insoluble)
-            if not choices:
-                s = 'first level'
-                if stack:
-                    s = stack[-1].atom
-                dprint("filtering    %s%s  [%s] reduced it to no matches",
-                       (stack.depth * 2 * " ", atom, s))
-                matches = None
-                # and was intractable because it has a hard dep on an
-                # unsolvable atom.
-        if not matches:
-            if not limit_to_vdb:
-                self.insoluble.add(atom)
-            s = 'first level'
-            if stack:
-                s = stack[-1].atom
-            dprint("processing   %s%s  [%s] no matches",
-                   (stack.depth *2 * " ", atom, s))
-            return None
-        return choices, matches
+            if choices:
+                return choices, matches
+            # and was intractable because it has a hard dep on an
+            # unsolvable atom.
+            self.notify_viable(stack, atom, False, 
+                msg="pruning of insoluble deps left no choices")
+        else:
+            self.notify_viable(stack, atom, False,
+                msg="no matches")
+
+        if not limit_to_vdb:
+            self.insoluble.add(atom)
+        return None
 
     def _stack_debugging_rec_add_atom(self, func, atom, stack, dbs, **kwds):
         setattr(self, "_debugging_depth",

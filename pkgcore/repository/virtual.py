@@ -14,6 +14,8 @@ def mangle_args(new_package_func, mangler_func, *args):
 
 class tree(prototype.tree):
 
+    factory_kls = staticmethod(virtual.factory)
+    
     def __init__(self, grab_virtuals_func, livefs=False, pkg_args_mangler=None):
         """
         @param grab_virtuals_func: callable to get a package -> versions mapping
@@ -31,7 +33,7 @@ class tree(prototype.tree):
             self._grab_virtuals = grab_virtuals_func
             self._virtuals = None
 
-        vf = virtual.factory(self)
+        vf = self.factory_kls(self)
 
         if pkg_args_mangler:
             self.package_class = partial(mangle_args, vf.new_package,

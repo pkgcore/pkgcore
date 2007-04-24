@@ -18,7 +18,6 @@ class package(metadata.package):
 
     package_is_real = False
     built = True
-    metapkg = True
 
     __slots__ = ("__dict__")
 

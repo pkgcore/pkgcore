@@ -42,5 +42,3 @@ class package(metadata.package):
 class factory(metadata.factory):
     child_class = package
 
-    def __init__(self, parent, *args, **kwargs):
-        super(factory, self).__init__(parent, *args, **kwargs)

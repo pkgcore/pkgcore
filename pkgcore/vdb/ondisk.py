@@ -181,11 +181,11 @@ class ConfiguredTree(multiplex.tree):
         self.domain_settings = domain_settings
         self.raw_vdb = raw_vdb
         if raw_vdb.cache_location is not None:
-            self.raw_virtual = virtuals.caching_virtuals(raw_vdb,
+            self.virtuals = virtuals.caching_virtuals(raw_vdb,
                 raw_vdb.cache_location)
         else:
-            self.raw_virtual = virtuals.non_caching_virtuals(raw_vdb)
-        multiplex.tree.__init__(self, raw_vdb, self.raw_virtual)
+            self.virtuals = virtuals.non_caching_virtuals(raw_vdb)
+        multiplex.tree.__init__(self, raw_vdb, self.virtuals)
         self.frozen = raw_vdb.frozen
 
     def _install(self, pkg, *a, **kw):

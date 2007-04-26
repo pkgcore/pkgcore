@@ -289,13 +289,6 @@ class domain(pkgcore.config.domain.domain):
 
         rev_names = dict((repo, name) for name, repo in self.named_repos.iteritems())
 
-        profile_repo = None
-        if profile.virtuals:
-            profile_repo = profile.make_virtuals_repo(multiplex.tree(*repositories))
-            self.named_repos["profile virtuals"] = profile_repo
-            self.filtered_named_repos["profile virtuals"] = profile_repo
-            self.configured_named_repos["profile virtuals"] = profile_repo
-
 
         for l, repos, filtered in ((self.repos, repositories, True),
             (self.vdb, vdb, False)):
@@ -327,7 +320,14 @@ class domain(pkgcore.config.domain.domain):
                 self.filtered_named_repos[key] = wrapped_repo
                 l.append(wrapped_repo)
 
-        if profile_repo is not None:
+        if profile.virtuals:
+            l = filter(None, (getattr(v, 'old_style_virtuals', None)
+                for v in self.vdb))
+            profile_repo = profile.make_virtuals_repo(
+                multiplex.tree(*repositories), *l)
+            self.named_repos["profile virtuals"] = profile_repo
+            self.filtered_named_repos["profile virtuals"] = profile_repo
+            self.configured_named_repos["profile virtuals"] = profile_repo
             self.repos = [profile_repo] + self.repos
 
     def make_license_filter(self, master_license, pkg_licenses):

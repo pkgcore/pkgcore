@@ -32,6 +32,9 @@ pkgcore 0.3:
 * livefs functionality is no longer accessible in pkgcore.fs.*; have to access
   pkgcore.fs.livefs.*
 
+* old style virtual providers from the vdb are now preferred for newer versions
+  over profile defined defaults.
+
 
 pkgcore 0.2.14:
 

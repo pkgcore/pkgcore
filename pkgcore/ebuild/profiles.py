@@ -483,15 +483,38 @@ class AliasedVirtuals(virtual.tree):
     repository generated from a profiles default virtuals
     """
 
-    def __init__(self, virtuals, repo):
+    def __init__(self, virtuals, repo, *overrides):
         """
         @param virtuals: dict of virtual -> providers
         @param repo: L{pkgcore.ebuild.repository.UnconfiguredTree} parent repo
+        @keyword overrides: mapping of virtual pkgname -> matches to override defaults
         """
-
+        if overrides:
+            virtuals = partial(self._delay_apply_overrides, virtuals, overrides)
         virtual.tree.__init__(self, virtuals)
         self.aliased_repo = repo
         self.versions._vals = ForgetfulDict()
+
+    @staticmethod
+    def _delay_apply_overrides(virtuals, overrides):
+        d = {}
+        for vtree in overrides:
+            for virt, provider in vtree.default_providers.iteritems():
+                if virt in d:
+                    d[virt] = d[virt] & provider
+                else:
+                    d[virt] = provider
+                
+        if not d:
+            return virtuals
+        for k, v in d.iteritems():
+            if len(d) == 1:
+                d[k] = tuple(d)[0]
+            else:
+                d[k] = packages.OrRestriction(finalize=True, *v)
+        virtuals = virtuals.copy()
+        virtuals.update(d)
+        return virtuals
 
     def _get_versions(self, catpkg):
         if catpkg[0] != "virtual":
@@ -500,5 +523,10 @@ class AliasedVirtuals(virtual.tree):
             for x in self.aliased_repo.itermatch(self._virtuals[catpkg[1]]))
 
     def _fetch_metadata(self, pkg):
-        return atom.atom("=%s-%s" % (self._virtuals[pkg.package].key,
-            pkg.fullver))
+        data = self._virtuals[pkg.package]
+        if isinstance(data, basestring):
+            data = [data]
+        data = [atom.atom("=%s-%s" % (x.key, pkg.fullver)) for x in data]
+        if len(data) == 1:
+            return data[0]
+        return packages.OrRestriction(finalize=True, *data)

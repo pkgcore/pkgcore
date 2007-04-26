@@ -9,8 +9,8 @@ from pkgcore.package.errors import InvalidDependency
 from pkgcore.os_data import portage_gid
 from pkgcore.repository import virtual
 
-from snakeoil.lists import iflatten_instance
-from snakeoil.osutils import listdir, ensure_dirs, join as pjoin, readlines
+from snakeoil.lists import iflatten_instance, unstable_unique
+from snakeoil.osutils import listdir, ensure_dirs, pjoin, readlines
 from snakeoil.currying import partial
 from snakeoil.fileutils import read_dict, AtomicWriteFile
 from snakeoil.demandload import demandload
@@ -34,16 +34,22 @@ def _finalize_virtuals(virtuals):
                 pkg_dict[full_ver] = \
                     packages.OrRestriction(finalize=True, *rdep_atoms)
 
+def _collect_default_providers(virtuals):
+    return dict((virt,
+        frozenset(atom(x.key) for y in data.itervalues() for x in y))
+        for virt, data in virtuals.iteritems())
+
 # noncaching...
 
 def _grab_virtuals(repo):
     virtuals = {}
     _collect_virtuals(virtuals, repo)
+    defaults = _collect_default_providers(virtuals)
     _finalize_virtuals(virtuals)
-    return virtuals
+    return defaults, virtuals
 
 def non_caching_virtuals(repo, livefs=True):
-    return virtual.tree(partial(_grab_virtuals, repo), livefs=livefs)
+    return OldStyleVirtuals(partial(_grab_virtuals, repo), livefs=livefs)
 
 
 #caching
@@ -142,9 +148,21 @@ def _caching_grab_virtuals(repo, cache_basedir):
     if update or cache:
         _write_mtime_cache(existing, virtuals,
             pjoin(cache_basedir, 'virtuals.cache'))
+
+    defaults = _collect_default_providers(virtuals)
     _finalize_virtuals(virtuals)
-    return virtuals
+    return defaults, virtuals
 
 def caching_virtuals(repo, cache_basedir, livefs=True):
-    return virtual.tree(partial(_caching_grab_virtuals, repo, cache_basedir),
+    return OldStyleVirtuals(partial(_caching_grab_virtuals, repo, cache_basedir),
         livefs=livefs)
+
+
+class OldStyleVirtuals(virtual.tree):
+
+    def __getattr__(self, attr):
+        if attr not in ('default_providers', '_virtuals'):
+            return virtual.tree.__getattr__(self, attr)
+        self.default_providers, self._virtuals = self._grab_virtuals()
+        self._grab_virtuals = None
+        return getattr(self, attr)

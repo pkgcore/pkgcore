@@ -31,7 +31,6 @@ class tree(prototype.tree):
                 self._grab_virtuals = None
         else:
             self._grab_virtuals = grab_virtuals_func
-            self._virtuals = None
 
         vf = self.factory_kls(self)
 
@@ -41,10 +40,14 @@ class tree(prototype.tree):
         else:
             self.package_class = vf.new_package
 
-    def _fetch_metadata(self, pkg):
-        if self._grab_virtuals is not None:
-            self._virtuals = self._grab_virtuals()
+    def __getattr__(self, attr):
+        if attr == '_virtuals':
+            v = self._virtuals = self._grab_virtuals()
             self._grab_virtuals = None
+            return v
+        return prototype.tree.__getattr__(self, attr)
+
+    def _fetch_metadata(self, pkg):
         return self._virtuals[pkg.package][pkg.fullver]
 
     def _get_categories(self, *optional_category):
@@ -56,10 +59,6 @@ class tree(prototype.tree):
     def _get_packages(self, category):
         if category != "virtual":
             raise KeyError("no %s category for this repository" % category)
-
-        if self._grab_virtuals is not None:
-            self._virtuals = self._grab_virtuals()
-            self._grab_virtuals = None
 
         return tuple(self._virtuals.iterkeys())
 

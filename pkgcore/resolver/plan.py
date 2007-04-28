@@ -264,13 +264,15 @@ class merge_plan(object):
                     # don't register, just do a scan. and this sucks
                     # because any later insertions prior to this won't
                     # get hit by the blocker
-                    l = self.state.match_atom(datom)
+                    #self.generate_mangled_blocker(choices, x, key=cur_frame.current_pkg.key)
+                    l = self.state.match_atom(self.generate_mangled_blocker(cur_frame.choices, datom),
+                        key=cur_frame.current_pkg.key)
                     if l:
-#                        dprint("depends blocker messing with us- "
-#                            "skipping "
-#                            "atom %s, pkg %s, ret %s",
-#                            (cur_frame.atom, cur_frame.choices.current_pkg, l),
-#                            "blockers")
+                        dprint("depends blocker messing with us- "
+                            "skipping "
+                            "atom %s, pkg %s, ret %s",
+                            (cur_frame.atom, cur_frame.choices.current_pkg, l),
+                            "blockers")
                         continue
                 else:
                     index = stack.will_cycle(datom, cur_frame.choices,

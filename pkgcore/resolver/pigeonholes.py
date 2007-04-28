@@ -41,8 +41,10 @@ class PigeonHoledSlots(object):
                 return x
         return None
 
-    def find_atom_matches(self, atom):
-        return filter(atom.match, self.slot_dict.get(atom.key, []))
+    def find_atom_matches(self, atom, key=None):
+        if key is None:
+            key = atom.key
+        return filter(atom.match, self.slot_dict.get(key, []))
 
     def add_limiter(self, atom, key=None):
         """add a limiter, returning any conflicting objs"""

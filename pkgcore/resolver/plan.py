@@ -180,6 +180,8 @@ class merge_plan(object):
         if debug:
             self._rec_add_atom = partial(self._stack_debugging_rec_add_atom,
                 self._rec_add_atom)
+            self._debugging_depth = 0
+            self._debugging_drop_cycles = False
 
     def notify_starting_mode(self, mode, stack):
         if mode == "post_rdepends":
@@ -505,14 +507,23 @@ class merge_plan(object):
         return None
 
     def _stack_debugging_rec_add_atom(self, func, atom, stack, dbs, **kwds):
-        setattr(self, "_debugging_depth",
-            getattr(self, "_debugging_depth", 0) + 1)
-        assert len(stack) == self._debugging_depth -1
-        try:
-            return func(atom, stack, dbs, **kwds)
-        finally:
+        current = len(stack)
+        cycles = kwds.get('drop_cycles', False)
+        reset_cycles = False
+        if cycles and not self._debugging_drop_cycles:
+                self._debugging_drop_cycles = reset_cycles = True
+        if not reset_cycles:
+            self._debugging_depth += 1
+            
+        assert current == self._debugging_depth -1
+        ret = func(atom, stack, dbs, **kwds)
+        assert current == len(stack)
+        assert current == self._debugging_depth -1
+        if not reset_cycles:
             self._debugging_depth -= 1
-            assert len(stack) == self._debugging_depth
+        else:
+            self._debugging_drop_cycles = False
+        return ret
 
     def _rec_add_atom(self, atom, stack, dbs, mode="none",
         drop_cycles=False):

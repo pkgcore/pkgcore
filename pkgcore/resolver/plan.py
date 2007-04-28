@@ -78,8 +78,9 @@ class resolver_frame(object):
         self.drop_cycles = drop_cycles
 
     def __str__(self):
-        return "frame: mode %r: atom %s: current %s" % \
-            (self.mode, self.atom, self.current_pkg)
+        return "frame: mode %r: atom %s: current %s%s" % \
+            (self.mode, self.atom, self.current_pkg,
+            self.drop_cycles and " cycle dropping" or '')
 
     @property
     def current_pkg(self):

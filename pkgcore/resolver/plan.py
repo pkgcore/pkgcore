@@ -15,7 +15,7 @@ from snakeoil.compatibility import any
 from snakeoil.iterables import caching_iter, iter_sort
 
 
-limiters = set(["cycle"]) # [None])
+limiters = set([]) #["cycle"]) # [None])
 def dprint(fmt, args=None, label=None):
     if limiters is None or label in limiters:
         if args is None:
@@ -142,6 +142,25 @@ class resolver_stack(deque):
                 dprint("%s level cycle: stack: %s\n",
                     (attr, s), "cycle")
             return cycle_start + start
+        return -1
+
+    def cycles(self, trg_frame, start=0):
+        if start != 0:
+            i = islice(self, start, None)
+        else:
+            i = self
+        for frame in i:
+            if frame.atom == trg_frame.atom:
+                yield trg_frame
+
+    def index(self, frame, start=0, stop=None):
+        if start != 0 or stop is not None:
+            i = slice(self, start, stop)
+        else:
+            i = self
+        for idx, x in enumerate(self):
+            if x == frame:
+                return idx + start
         return -1
 
 
@@ -335,6 +354,19 @@ class merge_plan(object):
         else: # all potentials were usable.
             return additions, blocks
 
+    def check_for_cycles(self, stack, cur_frame):
+        if cur_frame.mode == 'depends':
+            return None
+        if cur_frame.mode == 'post_rdepends':
+            return None
+        elif cur_frame.dbs is self.livefs_dbs and cur_frame.mode == "rdepends":
+            return None
+
+        for frame in stack.cycles(cur_frame):
+            if frame.mode != cur_frame.mode:
+                cur_frame.dbs = self.livefs_dbs
+                return None
+
     def process_rdepends(self, stack, attr, depset):
         failure = []
         additions, blocks, = [], []
@@ -346,8 +378,8 @@ class merge_plan(object):
                 if ratom.blocks:
                     blocks.append(ratom)
                     break
-                index = stack.will_cycle(ratom, cur_frame.choices, attr)
-                if index != -1:
+#                index = stack.will_cycle(ratom, cur_frame.choices, attr)
+                if False and index != -1:
                     # cycle.  whee.
                     if cur_frame.dbs is self.livefs_dbs:
                         # well. we know the node is valid, so we can
@@ -559,6 +591,10 @@ class merge_plan(object):
 
         stack.add_frame(mode, atom, choices, dbs,
             self.state.current_state, drop_cycles)
+        ret = self.check_for_cycles(stack, stack.current_frame)
+        if ret is not None:
+            stack.pop_frame()
+            return [atom]
 
         blocks = []
         failures = []
@@ -624,7 +660,7 @@ class merge_plan(object):
                 if l and l != [x]:
                     if len(stack) > 1:
                         if not stack[-2].atom.match(x):
-                            print "provider conflicted... how?"
+#                            print "provider conflicted... how?"
                             fail = [x]
                             break
             else:

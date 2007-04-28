@@ -112,7 +112,7 @@ class resolver_stack(deque):
     def pop_frame(self):
         self.pop()
 
-    def is_cycle(self, atom, cur_choice, attr, start=0):
+    def will_cycle(self, atom, cur_choice, attr, start=0):
         # short cut...
         if attr == "post_rdepends":
             # not possible for a cycle we'll care about to exist.
@@ -254,7 +254,7 @@ class merge_plan(object):
 #                            "blockers")
                         continue
                 else:
-                    index = stack.is_cycle(datom, cur_frame.choices,
+                    index = stack.will_cycle(datom, cur_frame.choices,
                         "depends")
                     looped = ignore = False
                     stack_end = len(stack) - 1
@@ -280,7 +280,7 @@ class merge_plan(object):
                         else:
                             # ok, so the first candidate wasn't vdb.
                             # see if there are more.
-                            index = stack.is_cycle(datom,
+                            index = stack.will_cycle(datom,
                                 cur_frame.choices, None, start=index + 1)
                     else:
                         # ok.  it exited on its own.  meaning either no cycles,
@@ -346,7 +346,7 @@ class merge_plan(object):
                 if ratom.blocks:
                     blocks.append(ratom)
                     break
-                index = stack.is_cycle(ratom, cur_frame.choices, attr)
+                index = stack.will_cycle(ratom, cur_frame.choices, attr)
                 if index != -1:
                     # cycle.  whee.
                     if cur_frame.dbs is self.livefs_dbs:

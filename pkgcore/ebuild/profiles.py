@@ -524,7 +524,7 @@ class AliasedVirtuals(virtual.tree):
 
     def _fetch_metadata(self, pkg):
         data = self._virtuals[pkg.package]
-        if isinstance(data, basestring):
+        if isinstance(data, atom.atom):
             data = [data]
         data = [atom.atom("=%s-%s" % (x.key, pkg.fullver)) for x in data]
         if len(data) == 1:

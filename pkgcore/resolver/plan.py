@@ -474,10 +474,10 @@ class merge_plan(object):
     def _viable(self, atom, stack, dbs, limit_to_vdb):
         """
         internal function to discern if an atom is viable, returning
-        the matches iter if so
+        the choicepoint/matches iter if viable.
 
         @return: 3 possible; None (not viable), True (presolved),
-          L{caching_iter} (not solved, but viable)
+          L{caching_iter} (not solved, but viable), L{choice_point}
         """
         if atom in self.insoluble:
             self.notify_viable(stack, atom, False, "globally insoluble")

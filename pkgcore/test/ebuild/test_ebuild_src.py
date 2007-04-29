@@ -85,6 +85,9 @@ class test_base(TestCase):
     def test_restrict(self):
         o = self.get_pkg({'RESTRICT': 'strip fetch strip'})
         self.assertEqual(*map(sorted, (o.restrict, ['strip', 'fetch', 'strip'])))
+        # regression test to ensure it onnly grabs 'no' prefix, instead of lstriping it
+        self.assertEqual(list(self.get_pkg({'RESTRICT': 'onoasdf'}).restrict),
+            ['onoasdf'])
         self.assertEqual(sorted(self.get_pkg({'RESTRICT':'nofetch'}).restrict),
             ['fetch'])
         o = self.get_pkg({'RESTRICT': 'x? ( foo ) !x? ( dar )'})

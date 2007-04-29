@@ -22,7 +22,7 @@ from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import const, processor
 
 from snakeoil.mappings import IndeterminantDict
-from snakeoil.currying import alias_class_method, partial, post_curry
+from snakeoil.currying import alias_class_method, partial
 
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
@@ -127,6 +127,12 @@ def get_slot(self):
         raise ValueError(self, "SLOT cannot be unset")
     return o
 
+def rewrite_restrict(restrict):
+    if restrict[0:2] == 'no':
+        return restrict[2:]
+    return restrict
+
+
 class base(metadata.package):
 
     """
@@ -161,7 +167,7 @@ class base(metadata.package):
         s.data.pop("KEYWORDS", "").split()))
     _get_attr["restrict"] = lambda s:conditionals.DepSet(
         s.data.pop("RESTRICT", ''), str, operators={},
-        element_func=post_curry(str.lstrip, 'no'))
+        element_func=rewrite_restrict)
     _get_attr["eapi"] = generate_eapi
     _get_attr["iuse"] = lambda s:frozenset(imap(intern,
         s.data.pop("IUSE", "").split()))

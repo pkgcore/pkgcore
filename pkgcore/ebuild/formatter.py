@@ -118,10 +118,13 @@ class use_expand_filter(object):
         @type  use: iterable of strings
         @param use: flags that are set.
         @rtype: sequence of strings, dict mapping a string to a list of strings
-        @return: set of normal flags and a mapping from use_expand name to value
-            (with the use-expanded bit stripped off, so C{"video_cards_alsa"}
-            becomes C{"{'video_cards': ['alsa']}"}).
+        @return: set of normal flags and a mapping from use_expand name to
+            value (with the use-expanded bit stripped off, so
+            C{"video_cards_alsa"} becomes C{"{'video_cards': ['alsa']}"}).
         """
+        
+        # XXX: note this is fairly slow- actually takes up more time then chunks of
+        # the resolver
         ue_dict = {}
         usel = []
         ef = self.expand_filters
@@ -134,14 +137,17 @@ class use_expand_filter(object):
                 data = ef[split_flag[0]]
                 if not data[0]:
                     # wasn't hidden...
-                    ue_dict.setdefault(data[1], []).append(
-                        flag[len(split_flag[0]) + 1:])
+                    f = flag[len(split_flag[0]) + 1:]
+                    if not data[1] in ue_dict:
+                        ue_dict[data[1]] = set([f])
+                    else:
+                        ue_dict[data[1]].add(f)
                 break
             else:
                 usel.append(flag)
 
-        for k, v in ue_dict.iteritems():
-            ue_dict[k] = frozenset(v)
+#        for k, v in ue_dict.iteritems():
+#            ue_dict[k] = frozenset(v)
 
         return frozenset(usel), ue_dict
 

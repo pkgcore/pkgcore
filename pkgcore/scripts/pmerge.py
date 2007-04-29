@@ -31,7 +31,7 @@ class OptionParser(commandline.OptionParser):
             help='remove installed packages that are not referenced by any '
             'target packages/sets; defaults to -s world -s system if no targets'
             ' are specified.  Use with *caution*, this option used incorrectly '
-            'can render your system unusable.  Implies --deep')
+            'can render your system unusable.  Implies --deep'),
         self.add_option('--upgrade', '-u', action='store_true',
             help='try to upgrade already installed packages/depencies')
         self.add_option('--set', '-s', action='append',
@@ -60,7 +60,7 @@ a depends on b, and b depends on a, with neither built is an example""")
         self.add_option('-B', '--with-built-depends', action='store_true',
             default=False,
             help="whether or not to process build depends for pkgs that "
-            "are already built; defaults to ignoring them")
+            "are already built; defaults to ignoring them"),
         self.add_option('--nodeps', action='store_true',
             help='disable dependency resolution')
         self.add_option('--noreplace', action='store_false',

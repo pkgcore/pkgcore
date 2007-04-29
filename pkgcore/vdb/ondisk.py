@@ -1,7 +1,7 @@
 # Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os, stat, errno, shutil
+import os, stat, errno
 
 from pkgcore.repository import prototype, errors
 from pkgcore.vdb import virtuals
@@ -19,12 +19,6 @@ from snakeoil.osutils import listdir_dirs, readfile
 from pkgcore.util import bzip2
 from snakeoil.demandload import demandload
 demandload(globals(),
-    'time',
-    'pkgcore.ebuild:conditionals',
-    'pkgcore.const:VERSION',
-    'pkgcore.ebuild:triggers',
-    'pkgcore.log:logger',
-    'pkgcore.fs.ops:change_offset_rewriter',
     'pkgcore.vdb:repo_ops',
     'pkgcore.vdb.contents:ContentsFile',
 )
@@ -91,7 +85,8 @@ class tree(prototype.tree):
             return {}
         try:
             try:
-                return tuple(listdir_dirs(self.base))
+                return tuple(x for x in listdir_dirs(self.base) if not
+                             x.startswith('.'))
             except (OSError, IOError), e:
                 raise KeyError("failed fetching categories: %s" % str(e))
         finally:

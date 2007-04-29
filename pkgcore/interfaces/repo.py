@@ -12,7 +12,7 @@ from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
 
 
-class fake_lock:
+class fake_lock(object):
     def __init__(self):
         pass
 

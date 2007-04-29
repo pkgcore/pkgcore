@@ -3,7 +3,6 @@
 
 import os, shutil, time
 from math import floor, ceil
-from operator import attrgetter
 from itertools import izip
 
 from pkgcore.test import TestCase, SkipTest

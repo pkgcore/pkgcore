@@ -1,10 +1,12 @@
 # Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-import os, errno, shutil
+import os, shutil
 
 from pkgcore.interfaces import repo as repo_interfaces
 #needed to grab the PN
+
+from pkgcore.const import VERSION
 
 from snakeoil.osutils import ensure_dirs, pjoin
 from pkgcore.util import bzip2
@@ -12,7 +14,6 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     'time',
     'pkgcore.ebuild:conditionals',
-    'pkgcore.const:VERSION',
     'pkgcore.ebuild:triggers',
     'pkgcore.log:logger',
     'pkgcore.fs.ops:change_offset_rewriter',

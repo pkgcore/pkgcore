@@ -11,6 +11,8 @@ pkgcore 0.3:
   added, among others:
     - repo_list (lists repos and some of their attributes)
     - changed_use (a poor man's --newuse)
+    - pkg_info (show maintainers and herds of a package)
+    - pclean (finds unused distfiles)
 
 * Pkgcore now supports several different output formats for the buildplan.
   Portage and Paludis emulation are the notable formats, though plan

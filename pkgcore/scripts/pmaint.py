@@ -6,19 +6,20 @@
 repository maintainence
 """
 
-from pkgcore.util import commandline
+from pkgcore.util.commandline import convert_to_restrict, OptionParser
 from snakeoil.demandload import demandload
-
 demandload(globals(),
-    'pkgcore.repository:multiplex',
-    'pkgcore.package:mutated',
-    'pkgcore.fs:contents,livefs',
-    'pkgcore.restrictions.boolean:OrRestriction',
     'errno',
     'threading:Event',
     'threading:Thread',
     'Queue:Queue,Empty',
     'time:time,sleep',
+    'snakeoil.osutils:pjoin',
+    'pkgcore.repository:multiplex',
+    'pkgcore.package:mutated',
+    'pkgcore.fs:contents,livefs',
+    'pkgcore.ebuild:atom,errors,digest',
+    'pkgcore.restrictions.boolean:OrRestriction',
 )
 
 commandline_commands = {}
@@ -33,16 +34,16 @@ def format_seq(seq, formatter=repr):
     return formatter(seq)
 
 
-class SyncParser(commandline.OptionParser):
+class SyncParser(OptionParser):
 
     def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(self, description=
+        OptionParser.__init__(self, description=
             "update a local repository to match its parent", **kwargs)
         self.add_option("--force", action='store_true', default=False,
             help="force an action")
 
     def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(
+        values, args = OptionParser.check_values(
             self, values, args)
 
         if not args:
@@ -85,10 +86,10 @@ def sync_main(options, out, err):
 commandline_commands['sync'] = (SyncParser, sync_main)
 
 
-class CopyParser(commandline.OptionParser):
+class CopyParser(OptionParser):
 
     def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(self, description=
+        OptionParser.__init__(self, description=
             "copy built pkg(s) into a repository", **kwargs)
         self.add_option("-s", "--source-repo",
             help="copy from just the specified repository; else defaults "
@@ -139,12 +140,12 @@ class CopyParser(commandline.OptionParser):
 
         values.candidates = []
         if values.copy_missing:
-            restrict = OrRestriction(*commandline.convert_to_restrict(args))
+            restrict = OrRestriction(*convert_to_restrict(args))
             for package in values.source_repo.itermatch(restrict):
                 if not values.target_repo.match(package.versioned_atom):
                     values.candidates.append(package.versioned_atom)
         else:
-            values.candidates = commandline.convert_to_restrict(args)
+            values.candidates = convert_to_restrict(args)
 
         return values, []
 
@@ -218,15 +219,15 @@ def copy_main(options, out, err):
 commandline_commands['copy'] = (CopyParser, copy_main)
 
 
-class RegenParser(commandline.OptionParser):
+class RegenParser(OptionParser):
 
     def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(
+        OptionParser.__init__(
             self, description=__doc__, usage='%prog [options] repo [threads]',
             **kwargs)
 
     def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(
+        values, args = OptionParser.check_values(
             self, values, args)
         if not args:
             self.error('Need a repository name.')
@@ -321,3 +322,68 @@ def regen_main(options, out, err):
     return 0
 
 commandline_commands['regen'] = (RegenParser, regen_main)
+
+
+class DigestParser(OptionParser):
+
+    def __init__(self, **kwargs):
+        OptionParser.__init__(
+            self, description="generate digests for given atoms", **kwargs)
+        self.add_option('-t', '--type', type='choice',
+            choices=("manifest1", "manifest2", "both"), default="both",
+            help="type of manifest to generate (defaults to both). "
+            "valid values are: 'manifest1', 'manifest2', 'both'")
+
+    def check_values(self, values, args):
+        values, args = OptionParser.check_values(
+            self, values, args)
+
+        if not args:
+            self.error('Specify a repo')
+        repo = args.pop(0)
+        try:
+            values.repo = values.config.repo[repo]
+        except KeyError:
+            self.error("repo %r was not found, known repos-\n%s" %
+                (repo, format_seq(values.config.repo.keys())))
+
+        if values.type == "both":
+            values.type = ("manifest1", "manifest2")
+        else:
+            values.type = (values.type,)
+
+        if not args:
+            self.error('Specify an atom')
+        values.atoms = []
+        for arg in args:
+            try:
+                values.atoms.append(atom.atom(arg))
+            except errors.MalformedAtom, e:
+                self.error(str(e))
+
+        return values, ()
+
+
+def digest_main(options, out, err):
+    """Write Manifests and digests"""
+
+    for atom in options.atoms:
+        pkgs = options.repo.match(atom)
+        if not pkgs:
+            err.write('No matches for %s\n' % (options.atom,))
+            return 1
+        for pkg in pkgs:
+            if "manifest1" in options.type:
+                if options.debug:
+                    out.write('Writing digest for %s:' % pkg.cpvstr)
+                location = pjoin(pkg.repo.location, pkg.key, "files",
+                      "digest-%s-%s" % (pkg.versioned_atom.package,
+                                        pkg.versioned_atom.fullver))
+                digest.serialize_digest(open(location, 'w'), pkg.fetchables)
+            if "manifest2" in options.type:
+                if options.debug:
+                    out.write('Writing Manifest for %s:' % pkg.cpvstr)
+                digest.serialize_manifest("%s/%s" %(pkg.repo.location, pkg.key),
+                    pkg.fetchables)
+
+commandline_commands['digest'] = (DigestParser, digest_main)

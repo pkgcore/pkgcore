@@ -21,22 +21,18 @@ class PigeonHoledSlots(object):
         @return: any conflicting objs (empty list if inserted successfully).
         """
         key = obj.key
-        l = []
-        for x in self.limiters.get(key, []):
-            if x.match(obj):
-                l.append(x)
+        l = [x for x in self.limiters.get(key, ()) if x.match(obj)]
 
         dslot = obj.slot
-        for x in self.slot_dict.get(key, []):
-            if x.slot == dslot:
-                l.append(x)
+        l.extend(x for x in self.slot_dict.get(key, ()) if x.slot == dslot)
+
         if not l or force:
             self.slot_dict.setdefault(key, []).append(obj)
         return l
 
 
     def get_conflicting_slot(self, pkg):
-        for x in self.slot_dict.get(pkg.key, []):
+        for x in self.slot_dict.get(pkg.key, ()):
             if pkg.slot == x.slot:
                 return x
         return None
@@ -44,7 +40,7 @@ class PigeonHoledSlots(object):
     def find_atom_matches(self, atom, key=None):
         if key is None:
             key = atom.key
-        return filter(atom.match, self.slot_dict.get(key, []))
+        return filter(atom.match, self.slot_dict.get(key, ()))
 
     def add_limiter(self, atom, key=None):
         """add a limiter, returning any conflicting objs"""
@@ -55,7 +51,7 @@ class PigeonHoledSlots(object):
         if key is None:
             key = atom.key
         self.limiters.setdefault(key, []).append(atom)
-        return filter(atom.match, self.slot_dict.get(key, []))
+        return filter(atom.match, self.slot_dict.get(key, ()))
 
     def remove_slotting(self, obj):
         key = obj.key
@@ -73,7 +69,7 @@ class PigeonHoledSlots(object):
             key = atom.key
         l = [x for x in self.limiters[key] if x is not atom]
         if len(l) == len(self.limiters[key]):
-            raise KeyError("obj %s isn't slotted" % obj)
+            raise KeyError("obj %s isn't slotted" % atom)
         if not l:
             del self.limiters[key]
         else:
@@ -81,5 +77,5 @@ class PigeonHoledSlots(object):
 
     def __contains__(self, obj):
         if isinstance(obj, restriction.base):
-            return o in self.limiters.get(obj.key, [])
-        return obj in self.slot_dict.get(obj.key, [])
+            return obj in self.limiters.get(obj.key, ())
+        return obj in self.slot_dict.get(obj.key, ())

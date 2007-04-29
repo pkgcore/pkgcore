@@ -45,7 +45,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
     false_packages = frozenset(["CVS", ".svn"])
     false_categories = frozenset([
             "eclass", "profiles", "packages", "distfiles", "metadata",
-            "licenses", "scripts", "CVS", ".svn", "local"])
+            "licenses", "scripts", "CVS", "local"])
     configured = False
     configurables = ("domain", "settings")
     configure = None
@@ -147,16 +147,17 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         if optional_category:
             #raise KeyError
             return ()
-        
-        # try reading $LOC/profiles/categories if it's available.
-        cats = readlines(pjoin(self.base, 'profiles', 'categories'), True, True,
-            True)
-        if cats is not None:
-            return tuple(intern(x) for x in cats)
 
         try:
+            # try reading $LOC/profiles/categories if it's available.
+            cats = readlines(pjoin(self.base, 'profiles', 'categories'), True, True,
+                True)
+            if cats is not None:
+                return tuple(intern(x) for x in cats)
+
             return tuple(intern(x) for x in listdir_dirs(self.base)
-                         if x not in self.false_categories)
+                         if not x.startswith('.') and
+                         x not in self.false_categories)
         except (OSError, IOError), e:
             raise KeyError("failed fetching categories: %s" % str(e))
 

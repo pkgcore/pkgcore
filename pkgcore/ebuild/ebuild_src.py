@@ -22,7 +22,7 @@ from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import const, processor
 
 from snakeoil.mappings import IndeterminantDict
-from snakeoil.currying import alias_class_method, partial
+from snakeoil.currying import alias_class_method, partial, post_curry
 
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
@@ -73,7 +73,7 @@ def generate_fetchables(self):
 
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
-     common_files, uri):
+    common_files, uri):
 
     filename = os.path.basename(uri)
 
@@ -121,11 +121,6 @@ def generate_eapi(self):
     except ValueError:
         return const.unknown_eapi
 
-def rewrite_restrict(restrict):
-    if restrict.startswith("no"):
-        return restrict[2:]
-    return restrict
-
 def get_slot(self):
     o = self.data.pop("SLOT", "0").strip()
     if not o:
@@ -166,7 +161,7 @@ class base(metadata.package):
         s.data.pop("KEYWORDS", "").split()))
     _get_attr["restrict"] = lambda s:conditionals.DepSet(
         s.data.pop("RESTRICT", ''), str, operators={},
-        element_func=rewrite_restrict)
+        element_func=post_curry(str.lstrip, 'no'))
     _get_attr["eapi"] = generate_eapi
     _get_attr["iuse"] = lambda s:frozenset(imap(intern,
         s.data.pop("IUSE", "").split()))
@@ -198,8 +193,7 @@ class base(metadata.package):
         return self._parent.get_ebuild_src(self)
 
     def _fetch_metadata(self):
-        d = self._parent._get_metadata(self)
-        return d
+        return self._parent._get_metadata(self)
 
     def __str__(self):
         return "ebuild src: %s" % self.cpvstr

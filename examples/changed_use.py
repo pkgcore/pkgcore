@@ -3,6 +3,7 @@
 # Copyright 2007 Charlie Shepherd
 
 import sys
+from operator import attrgetter
 
 try:
     from pkgcore.util import commandline
@@ -33,6 +34,14 @@ class OptionParser(commandline.OptionParser):
             help='print packages that have not changed too')
         self.add_option('--quiet', '-q', action='store_true', default=False,
             help="don't print changed useflags")
+        self.add_option('--print_type', '-t',
+            type="choice",
+            choices=("slotted_atom", "versioned_atom", "cpvstr"),
+            default="cpvstr",
+            help='''type of atom to output:
+                       'versioned_atom' : a valid versioned atom,
+                       'slotted_atom'   : a valid slotted atom,
+                       'cpvstr'         : the cpv of the package''')
 
     def check_values(self, values, args):
         values, args = commandline.OptionParser.check_values(
@@ -44,6 +53,7 @@ class OptionParser(commandline.OptionParser):
             values.repo = domain.repos[1]
 
         values.restrict = OrRestriction(*commandline.convert_to_restrict(args))
+        values.outputter = attrgetter(values.print_type)
         return values, ()
 
 def main(options, out, err):
@@ -54,10 +64,10 @@ def main(options, out, err):
             current = current[0]
             oldflags = built.iuse & built.use
             newflags = current.iuse & current.use
-            if newflags != oldflags:
-                changed_flags = oldflags ^ newflags
+            if (newflags != oldflags) or (current.iuse ^ built.iuse):
+                changed_flags = (oldflags ^ newflags) | (current.iuse ^ built.iuse)
                 if options.quiet:
-                    out.write(current.cpvstr)
+                    out.write(options.outputter(current))
                 else:
                     out.write("for package %s, %d flags have changed:\n\t%s" %
                           (current.cpvstr, len(changed_flags), ' '.join(changed_flags)))

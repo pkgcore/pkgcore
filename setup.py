@@ -304,6 +304,7 @@ core.setup(
     version=VERSION,
     description='package managing framework',
     url='http://www.pkgcore.org/',
+    license='GPL-2',
     packages=packages,
     package_data={
         'pkgcore': [

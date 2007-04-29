@@ -35,8 +35,8 @@ demandload(globals(),
 
 def _reset_env_data_source(method):
     return method
-    
-    # unreachable code. -masterdriverz
+
+    # unreachable code. --charlie
     #def store_env_data_wrapper(self, *args, **kwds):
     #    try:
     #        return method(self, *args, **kwds)
@@ -232,7 +232,7 @@ class ebd(object):
         @param userpriv: will we drop to
             L{portage_uid<pkgcore.os_data.portage_uid>} and
             L{portage_gid<pkgcore.os_data.portage_gid>} access for this phase?
-        @param sandbox: should this phase be sandboxes?
+        @param sandbox: should this phase be sandboxed?
         @param fakeroot: should the phase be fakeroot'd?  Only really useful
             for install phase, and is mutually exclusive with sandbox
         """

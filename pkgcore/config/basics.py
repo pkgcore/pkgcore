@@ -521,7 +521,7 @@ def int_parser(string):
     string = str_parser(string)
     try:
         return int(string)
-    except ValueError, v:
+    except ValueError:
         raise errors.ConfigurationError('%r is not an integer' % string)
 
 @configurable({'path': 'str', 'parser': 'callable'}, typename='configsection')

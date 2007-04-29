@@ -71,23 +71,17 @@ class choice_point(object):
                 if not self._internal_force_next():
                     return True
 
-            reqs = list(self._filter_choices(self._deps, filterset))
-            if len(reqs) != len(self._deps):
-                continue
-            self._deps = reqs
+            for depset_name in ("_deps", "_rdeps", "_prdeps"):
+                finished = False
+                depset = getattr(self, depset_name)
+                reqs = list(self._filter_choices(depset, filterset))
+                if len(reqs) != len(depset):
+                    break
+                setattr(self, depset_name, reqs)
+                finished = True
 
-            reqs = list(self._filter_choices(self._rdeps, filterset))
-            if len(reqs) != len(self._rdeps):
-                continue
-            self._rdeps = reqs
-
-            reqs = list(self._filter_choices(self._prdeps, filterset))
-            if len(reqs) != len(self._prdeps):
-                continue
-            self._prdeps = reqs
-
-            return round > 0
-        return True
+            if finished:
+                return round > 0
 
     def _reset_iters(self):
         cur = self.matches_cur

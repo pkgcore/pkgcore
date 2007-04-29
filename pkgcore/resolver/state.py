@@ -24,10 +24,8 @@ class plan_state(object):
         return incref_forward_block_op(choices, blocker, key).apply(self)
 
     def _remove_pkg_blockers(self, choices):
-        l = self.rev_blockers.get(choices, None)
-        if l is None:
-            return
-        for blocker, key in l[:]:
+        l = self.rev_blockers.get(choices, ())
+        for blocker, key in l:
             decref_forward_block_op(choices, blocker, key).apply(self)
 
     def backtrack(self, state_pos):

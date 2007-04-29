@@ -118,7 +118,7 @@ class use_expand_filter(object):
         @type  use: iterable of strings
         @param use: flags that are set.
         @rtype: sequence of strings, dict mapping a string to a list of strings
-        @return: list of normal flags and a mapping from use_expand name to value
+        @return: set of normal flags and a mapping from use_expand name to value
             (with the use-expanded bit stripped off, so C{"video_cards_alsa"}
             becomes C{"{'video_cards': ['alsa']}"}).
         """
@@ -140,7 +140,10 @@ class use_expand_filter(object):
             else:
                 usel.append(flag)
 
-        return usel, ue_dict
+        for k, v in ue_dict.iteritems():
+            ue_dict[k] = frozenset(v)
+
+        return frozenset(usel), ue_dict
 
 
 class Formatter(object):
@@ -273,9 +276,8 @@ class PortageFormatter(Formatter):
         # dicts (both length 2 or 4).
         uselists, usedicts = zip(*stuff)
         self.format_use('use', *uselists)
-        for expand in [x for x in self.use_expand
-                    if x not in self.use_expand_hidden]:
-            flaglists = [d.get(expand.lower(), ()) for d in usedicts]
+        for expand in self.use_expand-self.use_expand_hidden:
+            flaglists = [d.get(expand, ()) for d in usedicts]
             self.format_use(expand, *flaglists)
 
         if verbose:

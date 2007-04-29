@@ -504,12 +504,12 @@ class AliasedVirtuals(virtual.tree):
                     d[virt] = d[virt] & provider
                 else:
                     d[virt] = provider
-                
+
         if not d:
             return virtuals
         for k, v in d.iteritems():
-            if len(d) == 1:
-                d[k] = tuple(d)[0]
+            if len(v) == 1:
+                d[k] = tuple(v)[0]
             else:
                 d[k] = packages.OrRestriction(finalize=True, *v)
         virtuals = virtuals.copy()

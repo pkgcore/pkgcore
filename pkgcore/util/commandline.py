@@ -117,6 +117,13 @@ class Values(optparse.Values, object):
             return self._config
 
 
+def read_file_callback(option, opt_str, value, parser):
+    """Read a file ignoring comments."""
+    if not isfile(value):
+        raise OptionValueError("'%s' is not a file" % value)
+    setattr(parser.values, option.dest, iter_read_bash(value))
+
+
 def config_callback(option, opt_str, value, parser, typename, typedesc=None):
     """Retrieve a config section.
 

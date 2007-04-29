@@ -4,9 +4,16 @@
 """
 ebuild tree manifest/digest support
 """
+
 from itertools import izip
-from pkgcore.chksum import errors, gpg
+from os.path import basename, dirname, sep
+
+from pkgcore.chksum import errors, gpg, get_handler
+from pkgcore.fs.livefs import iter_scan
+from pkgcore.fs.fs import fsFile, fsDir
+
 from snakeoil.obj import make_SlottedDict_kls
+from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
 demandload(globals(),
     "pkgcore:fetch",
@@ -67,11 +74,44 @@ def serialize_digest(handle, fetchables):
     for fetchable in iflatten_instance(fetchables, fetch.fetchable):
         d = dict(fetchable.chksums)
         size = d.pop("size")
-        md5 = d.pop("md5")
-        handle.write("MD5 %s %s %i\n" % (md5, fetchable.filename, size))
+        try:
+            md5 = d.pop("md5")
+            handle.write("MD5 %s %s %i\n" % (get_handler('md5').long2str(md5), fetchable.filename, size))
+        except KeyError:
+            pass
         for chf, sum in d.iteritems():
-            handle.write("%s %s %s %i\n" % (chf.upper(), sum,
+            handle.write("%s %s %s %i\n" % (chf.upper(), get_handler(chf).long2str(sum),
                 fetchable.filename, size))
+
+def serialize_manifest(pkgdir, fetchables):
+    """
+    Write a manifest given a pkg_instance
+
+    @param
+    @param
+    """
+    handle = open(pkgdir + '/Manifest', 'w')
+    for file in [x for x in iter_scan(pkgdir) if isinstance(x, fsFile)]:
+        excludes=set(["CVS", ".svn", "Manifest"])
+        if any(True for x in file.location.split(sep) if x in excludes):
+            continue
+        type = 'misc'
+        if 'files' in dirname(file.location):
+            type = 'aux'
+        elif basename(file.location)[-7:] ==  '.ebuild':
+            type = 'ebuild'
+        _write_manifest(handle, type, basename(file.location), dict(file.chksums))
+    type = 'dist'
+    for fetchable in iflatten_instance(fetchables, fetch.fetchable):
+        _write_manifest(handle, type, basename(fetchable.filename), dict(fetchable.chksums))
+
+def _write_manifest(handle, type, filename, chksums):
+    """Convenient, internal method for writing manifests"""
+    size = chksums.pop("size")
+    handle.write("%s %s %i" % (type.upper(), filename, size))
+    for chf, sum in chksums.iteritems():
+        handle.write(" %s %s" %(chf.upper(), get_handler(chf).long2str(sum)))
+    handle.write('\n')
 
 def convert_chksums(iterable):
     for chf, sum in iterable:

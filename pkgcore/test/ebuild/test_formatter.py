@@ -25,6 +25,10 @@ class FakePkg(FakePkgBase):
         self.use = set(use)
         self.iuse = set(iuse)
 
+
+# These two are probably unnecessary with ferringb's changes to
+# PkgcoreFormatter, but as he's the one that uses it there's no point fixing
+# what ain't broke. --charlie
 class FakeMutatedPkg(FakePkg):
     def __str__(self):
         # Yes this should be less hackish (and hardcoded values suck),
@@ -36,6 +40,7 @@ class FakeEbuildSrc(FakePkg):
         # Yes this should be less hackish (and hardcoded values suck)
         # but we can't really subclass ebuild_src so this will have to do
         return "config wrapped(use): ebuild src: %s" % self.cpvstr
+
 
 class FakeOp(object):
     def __init__(self, package, oldpackage=None):
@@ -114,12 +119,20 @@ class TestPkgcoreFormatter(BaseFormatterTest, TestCase):
             "replace dev-util/diffball-1.1, "
             "dev-util/diffball-1.2")
 
-        # And again...
         self.formatter.format(FakeOp(FakeEbuildSrc('dev-util/diffball-1.0')))
         self.assertOut("add     dev-util/diffball-1.0")
 
-        # unmerge
-        #app-arch/bzip2-1.0.3-r6
+        self.formatter.format(FakeOp(FakeEbuildSrc('dev-util/diffball-1.0',
+            repo=factory(FakeRepo('gentoo', '/usr/portage')))))
+        self.assertOut("add     dev-util/diffball-1.0::gentoo")
+
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('dev-util/diffball-1.2',
+                   repo=factory(FakeRepo('gentoo', '/usr/portage'))),
+                FakeMutatedPkg('dev-util/diffball-1.1')))
+        self.assertOut(
+            "replace dev-util/diffball-1.1, "
+            "dev-util/diffball-1.2::gentoo")
 
 class TestPaludisFormatter(BaseFormatterTest, TestCase):
     formatterClass = staticmethod(PaludisFormatter)

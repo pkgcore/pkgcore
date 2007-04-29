@@ -8,6 +8,7 @@ gentoo configuration domain
 # XXX doc this up better...
 
 from itertools import izip
+from os.path import isfile
 
 import pkgcore.config.domain
 from pkgcore.config import ConfigHint
@@ -85,7 +86,6 @@ class domain(pkgcore.config.domain.domain):
         'package.mask', 'package.keywords', 'package.license', 'package.use',
         'package.unmask']:
         _types[_thing] = 'list'
-        _types[_thing + '-dirs'] = 'list'
     for _thing in ['root', 'CHOST', 'CFLAGS', 'PATH', 'PORTAGE_TMPDIR',
                    'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR']:
         _types[_thing] = 'str'
@@ -134,23 +134,24 @@ class domain(pkgcore.config.domain.domain):
 
             for fp in settings.pop(key, ()):
                 try:
-                    val.extend(action(x) for x in iter_read_bash(fp))
+                    if isfile(fp):
+                        val.extend(action(x) for x in iter_read_bash(fp))
+                    else:
+                        # Ok, so it might not be a dir, but iter_scan'ing it
+                        # means we get a nice exception w/o having to set it
+                        # ourselves.
+                        for file in iter_scan(fp):
+                            if (not isinstance(file, fsFile) or
+                                any(True for thing in file.location.split('/')
+                                    if thing.startswith('.'))):
+                                continue
+                            val.extend(action(x) for x in iter_read_bash(file.location))
                 except (IOError, OSError), e:
                     if e.errno == errno.ENOENT:
                         raise MissingFile(settings[key], key)
                     raise Failure("failed reading '%s': %s" % (fp, e))
                 except ValueError, e:
                     raise Failure("failed reading '%s': %s" % (fp, e))
-            for dirpath in settings.pop('%s-dirs' % (key,), ()):
-                try:
-                    for file in iter_scan(dirpath):
-                        if (not isinstance(file, fsFile) or
-                            any(True for thing in file.location.split('/')
-                                if thing.startswith('.'))):
-                            continue
-                        val.extend(action(x) for x in iter_read_bash(file.location))
-                except (OSError, IOError), e:
-                    raise Failure('failed reading %r: %s' % (dirpath, e))
 
         self.name = name
         settings.setdefault("PKGCORE_DOMAIN", name)
@@ -182,8 +183,8 @@ class domain(pkgcore.config.domain.domain):
         if "test" in settings.get("FEATURES", []):
             use.add("test")
 
-        self.use_expand = set(profile.use_expand)
-        self.use_expand_hidden = set(profile.use_expand_hidden)
+        self.use_expand = frozenset(profile.use_expand)
+        self.use_expand_hidden = frozenset(profile.use_expand_hidden)
         for u in profile.use_expand:
             v = settings.get(u)
             if v is None:

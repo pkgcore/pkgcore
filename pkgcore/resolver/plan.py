@@ -205,7 +205,7 @@ class merge_plan(object):
     def notify_starting_mode(self, mode, stack):
         if mode == "post_rdepends":
             mode = 'prdepends'
-        dprint("%s:%s%s: started: %s" % 
+        dprint("%s:%s%s: started: %s" %
             (mode, ' ' * ((stack.current_frame.depth * 2) + 12 - len(mode)),
                 stack.current_frame.atom,
                 stack.current_frame.choices.current_pkg)
@@ -218,7 +218,7 @@ class merge_plan(object):
     def notify_choice_failed(self, stack, atom, choices, msg, msg_args=()):
         if msg:
             msg = ' %s' % (msg % msg_args)
-        dprint("choice for %s%s, %s failed: %s", 
+        dprint("choice for %s%s, %s failed: %s",
             (stack.depth * 2 * ' ', atom, choices.current_pkg, msg))
 
     def load_vdb_state(self):
@@ -227,7 +227,7 @@ class merge_plan(object):
                 dprint("inserting %s from %s", (pkg, r), "vdb")
                 ret = self.add_atom(pkg.versioned_atom, dbs=self.livefs_dbs)
                 dprint("insertion of %s from %s: %s", (pkg, r, ret), "vdb")
-                if ret != []:
+                if ret:
                     raise Exception(
                         "couldn't load vdb state, %s %s" %
                         (pkg.versioned_atom, ret))
@@ -237,7 +237,7 @@ class merge_plan(object):
         """add an atom, recalculating as necessary.
 
         @return: the last unresolvable atom stack if a solution can't be found,
-            else returns [] (meaning the atom was successfully added).
+            else returns None if the atom was successfully added.
         """
         if dbs is None:
             dbs = self.all_dbs
@@ -250,7 +250,7 @@ class merge_plan(object):
             else:
                 self.forced_atoms.add(atom)
 
-        return []
+        return ()
 
     def process_depends(self, stack, depset):
         failure = []
@@ -305,7 +305,7 @@ class merge_plan(object):
                                 cur_frame.choices, None, start=index + 1)
                     else:
                         # ok.  it exited on its own.  meaning either no cycles,
-                        # or no vdb exemptions where found.
+                        # or no vdb exemptions were found.
                         if looped:
                             # non vdb level cycle.  vdb bound?
                             # this sucks also- any code that reorders the db
@@ -335,7 +335,7 @@ class merge_plan(object):
                                 (cur_frame.atom, datom,
                                  cur_frame.current_pkg),
                                 "cycle")
-                        failure = []
+                        failure = None
                         # note we trigger a break ourselves.
                         break
 
@@ -354,7 +354,7 @@ class merge_plan(object):
                 cur_frame.choices.reduce_atoms(datom_potentials)
                 return [datom_potentials]
         else: # all potentials were usable.
-            return additions, blocks
+            return additions, []
 
     def check_for_cycles(self, stack, cur_frame):
         if cur_frame.mode == 'depends':
@@ -530,7 +530,7 @@ class merge_plan(object):
                 return choices, matches
             # and was intractable because it has a hard dep on an
             # unsolvable atom.
-            self.notify_viable(stack, atom, False, 
+            self.notify_viable(stack, atom, False,
                 msg="pruning of insoluble deps left no choices")
         else:
             self.notify_viable(stack, atom, False,
@@ -545,10 +545,10 @@ class merge_plan(object):
         cycles = kwds.get('drop_cycles', False)
         reset_cycles = False
         if cycles and not self._debugging_drop_cycles:
-                self._debugging_drop_cycles = reset_cycles = True
+            self._debugging_drop_cycles = reset_cycles = True
         if not reset_cycles:
             self._debugging_depth += 1
-            
+
         assert current == self._debugging_depth -1
         ret = func(atom, stack, dbs, **kwds)
         assert current == len(stack)
@@ -559,8 +559,7 @@ class merge_plan(object):
             self._debugging_drop_cycles = False
         return ret
 
-    def _rec_add_atom(self, atom, stack, dbs, mode="none",
-        drop_cycles=False):
+    def _rec_add_atom(self, atom, stack, dbs, mode="none", drop_cycles=False):
         """Add an atom.
 
         @return: False on no issues (inserted succesfully),
@@ -584,12 +583,12 @@ class merge_plan(object):
         if stack:
             if limit_to_vdb:
                 dprint("processing   %s%s  [%s]; mode %s vdb bound",
-                       (depth *2 * " ", atom, stack[-1].atom, mode))
+                       (depth*2*" ", atom, stack[-1].atom, mode))
             else:
                 dprint("processing   %s%s  [%s]; mode %s",
-                       (depth *2 * " ", atom, stack[-1].atom, mode))
+                       (depth*2*" ", atom, stack[-1].atom, mode))
         else:
-            dprint("processing   %s%s", (depth *2 * " ", atom))
+            dprint("processing   %s%s", (depth*2*" ", atom))
 
         stack.add_frame(mode, atom, choices, dbs,
             self.state.current_state, drop_cycles)
@@ -632,7 +631,7 @@ class merge_plan(object):
             l = self.process_rdepends(stack, "rdepends",
                 self.depset_reorder(self, choices.rdepends, "rdepends"))
             if len(l) == 1:
-                dprint("reseting for %s%s because of rdepends: %s",
+                dprint("resetting for %s%s because of rdepends: %s",
                        (depth*2*" ", atom, l[0]))
                 self.state.backtrack(stack.current_frame.start_point)
                 failures = l[0]
@@ -717,7 +716,7 @@ class merge_plan(object):
                                     "post_rdepends"))
 
             if len(l) == 1:
-                dprint("reseting for %s%s because of rdepends: %s",
+                dprint("resetting for %s%s because of rdepends: %s",
                        (depth*2*" ", atom, l[0]))
                 self.state.backtrack(stack.current_frame.start_point)
                 failures = l[0]
@@ -802,7 +801,7 @@ class merge_plan(object):
                 continue
             for atom in or_block:
                 if atom.blocks:
-                    nonvdb.append(atom)
+                    non_vdb.append(atom)
                 elif self.state.match_atom(atom):
                     vdb.append(atom)
                 elif caching_iter(p for r in self.livefs_dbs
@@ -821,15 +820,11 @@ class merge_plan(object):
 
     @staticmethod
     def just_livefs_dbs(dbs):
-        for r in dbs:
-            if r.livefs:
-                yield r
+        return (r for r in dbs if r.livefs)
 
     @staticmethod
     def just_nonlivefs_dbs(dbs):
-        for r in dbs:
-            if not r.livefs:
-                yield r
+        return (r for r in dbs if not r.livefs)
 
     @classmethod
     def prefer_livefs_dbs(cls, dbs, just_vdb=None):

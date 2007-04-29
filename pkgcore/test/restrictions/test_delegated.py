@@ -3,7 +3,6 @@
 
 
 from pkgcore.test import TestRestriction
-from pkgcore.restrictions.packages import AlwaysTrue, AlwaysFalse
 from pkgcore.restrictions.delegated import delegate
 
 class Test_delegate(TestRestriction):

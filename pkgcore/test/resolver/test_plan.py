@@ -1,7 +1,6 @@
 # Copyright: 2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from operator import itemgetter
 from snakeoil.currying import post_curry
 from pkgcore.test import TestCase
 from pkgcore.resolver import plan

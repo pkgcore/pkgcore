@@ -80,11 +80,6 @@ class fsBase(object):
 
     def __setattr__(self, key, value):
         raise AttributeError(key)
-        #try:
-        #    getattr(self, key)
-        #    raise Exception("non modifiable")
-        #except AttributeError:
-        #    object.__setattr__(self, key, value)
 
     def __getattr__(self, attr):
         # we would only get called if it doesn't exist.

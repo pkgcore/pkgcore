@@ -6,6 +6,7 @@ ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 """
 
 import os, stat
+from itertools import imap, ifilterfalse
 
 from pkgcore.repository import prototype, errors, configured, syncable
 from pkgcore.ebuild import eclass_cache as eclass_cache_module
@@ -153,20 +154,20 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             cats = readlines(pjoin(self.base, 'profiles', 'categories'), True, True,
                 True)
             if cats is not None:
-                return tuple(intern(x) for x in cats)
+                return tuple(imap(intern, cats))
 
-            return tuple(intern(x) for x in listdir_dirs(self.base)
-                         if not x.startswith('.') and
-                         x not in self.false_categories)
+            return tuple(imap(intern, 
+                ifilterfalse(self.false_categories.__contains__,
+                    (x for x in listdir_dirs(self.base) if x[0:1] != ".")
+                )))
         except (OSError, IOError), e:
             raise KeyError("failed fetching categories: %s" % str(e))
 
     def _get_packages(self, category):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))
         try:
-            return tuple(x for x in listdir_dirs(cpath) if x not in
-                self.false_packages)
-
+            return tuple(ifilterfalse(self.false_packages.__contains__,
+                listdir_dirs(cpath)))
         except (OSError, IOError), e:
             raise KeyError("failed fetching packages for category %s: %s" % \
                     (pjoin(self.base, category.lstrip(os.path.sep)), \

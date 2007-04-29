@@ -174,13 +174,13 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                     str(e)))
 
     def _get_versions(self, catpkg):
-        pkg = catpkg[-1]
         cppath = pjoin(self.base, catpkg[0], catpkg[1])
         # 7 == len(".ebuild")
+        pkg = catpkg[-1] + "-"
+        lp = len(pkg)
         try:
-            return tuple(x[len(pkg):-7].lstrip("-")
-                         for x in listdir_files(cppath)
-                if x.endswith(".ebuild") and x.startswith(pkg))
+            return tuple(x[lp:-7] for x in listdir_files(cppath)
+                if x[-7:] == '.ebuild' and x[:lp] == pkg)
         except (OSError, IOError), e:
             raise KeyError("failed fetching versions for package %s: %s" % \
                 (pjoin(self.base, catpkg.lstrip(os.path.sep)), str(e)))

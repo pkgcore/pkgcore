@@ -72,15 +72,12 @@ class choice_point(object):
                     return True
 
             for depset_name in ("_deps", "_rdeps", "_prdeps"):
-                finished = False
                 depset = getattr(self, depset_name)
                 reqs = list(self._filter_choices(depset, filterset))
                 if len(reqs) != len(depset):
                     break
                 setattr(self, depset_name, reqs)
-                finished = True
-
-            if finished:
+            else:
                 return round > 0
 
     def _reset_iters(self):

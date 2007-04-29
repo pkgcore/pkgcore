@@ -422,7 +422,9 @@ Furthermore, the first loop actually invokes the __eq__ protocol for x for
 each element, which can potentially be *quite* slow if dealing in
 complex objs.
 
-The second loop invokes __hash__ once on x instead.
+The second loop invokes __hash__ once on x instead (technically the set
+implementation may invoke __eq__ if a collision occurs, but that's an implementation
+detail).
 
 Technically, the second loop still is a bit innefficient::
 
@@ -445,8 +447,12 @@ The difference here is obvious.
 
 This does _not_ mean that sets are automatically better everywhere,
 just be aware of what you're doing- for a single search of a range,
-the overhead of is far slower then a linear search. While this may
-seem obvious, people do do this sometimes::
+the setup overhead is far slower then a linear search.  Nature of sets, while
+the implementation may be able to guess the proper list size, it still has to
+add each item in; if it *cannot* guess the size (ie, no size hint, generator, 
+iterator, etc), it has to just keep adding items in, expanding the set as
+needed (which requires linear walks for each expansion).  While this may seem
+obvious, people sometimes do effectively the following::
 
   python -m timeit -s 'l=range(50)' $'if 1001 in set(l): pass'
   100000 loops, best of 3: 12.2 usec per loop

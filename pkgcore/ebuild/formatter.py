@@ -108,10 +108,11 @@ class use_expand_filter(object):
         @param use_expand_hidden: names of use-expanded vars that should not
             be added to the dict.
         """
-        self.expand_filters = dict((x.lower(), (x in use_expand_hidden, x))
+        self.expand_filters = dict((x.lower(), (x not in use_expand_hidden, x))
             for x in use_expand)
         self.use_expand = use_expand
         self.use_expand_hidden = use_expand_hidden
+        self.known_flags = {}
 
     def __call__(self, use):
         """Split USE flags up into "normal" flags and use-expanded ones.
@@ -128,26 +129,34 @@ class use_expand_filter(object):
         ue_dict = {}
         usel = []
         ef = self.expand_filters
-        for flag in use:
-            split_flag = flag.rsplit("_", 1)
-            while len(split_flag) == 2:
-                if split_flag[0] not in ef:
-                    split_flag = split_flag[0].rsplit("_", 1)
-                    continue
-                data = ef[split_flag[0]]
-                if not data[0]:
-                    # wasn't hidden...
-                    f = flag[len(split_flag[0]) + 1:]
-                    if not data[1] in ue_dict:
-                        ue_dict[data[1]] = set([f])
-                    else:
-                        ue_dict[data[1]].add(f)
-                break
-            else:
-                usel.append(flag)
+        kf = self.known_flags
 
-#        for k, v in ue_dict.iteritems():
-#            ue_dict[k] = frozenset(v)
+        for flag in use:
+            data = kf.get(flag)
+            if data is None:
+                split_flag = flag.rsplit("_", 1)
+                while len(split_flag) == 2:
+                    if split_flag[0] not in ef:
+                        split_flag = split_flag[0].rsplit("_", 1)
+                        continue
+                    expand_state = ef[split_flag[0]]
+                    if expand_state[0]:
+                        # not hidden
+                        kf[flag] = data = (expand_state[1], flag[len(split_flag[0]) + 1:])
+                    else:
+                        kf[flag] = data = False
+                    break
+                else:
+                    kf[flag] = data = True
+            if data is True:
+                # straight use flag.
+                usel.append(flag)
+            elif data:
+                # non hidden flag.
+                if not data[0] in ue_dict:
+                    ue_dict[data[0]] = set([data[1]])
+                else:
+                    ue_dict[data[0]].add(data[1])
 
         return frozenset(usel), ue_dict
 

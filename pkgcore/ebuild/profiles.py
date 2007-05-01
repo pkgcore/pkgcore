@@ -400,12 +400,6 @@ class OnDiskProfile(object):
             return tuple(self.default_env["USE_EXPAND_HIDDEN"])
         return tuple(self.default_env["USE_EXPAND_HIDDEN"].split())
 
-    @property
-    def use_expand_hidden(self):
-        if "USE_EXPAND_HIDDEN" in self.incrementals:
-            return tuple(self.default_env["USE_EXPAND_HIDDEN"])
-        return tuple(self.default_env["USE_EXPAND_HIDDEN"].split())
-
     def _collapse_virtuals(self):
         d = {}
         for profile in self.stack:

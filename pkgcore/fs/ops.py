@@ -138,7 +138,7 @@ def default_copyfile(obj, mkdirs=False):
         if basefp.strip(os.path.sep) and not os.path.exists(basefp):
             if mkdirs:
                 if not ensure_dirs(basefp, mode=0750, minimal=True):
-                    raise FailedCopying(obj, str(oe))
+                    raise FailedCopy(obj, str(oe))
             else:
                 raise
         existant = False

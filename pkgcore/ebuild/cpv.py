@@ -64,10 +64,13 @@ class native_CPV(object):
         if l == 1:
             cpvstr = a[0]
         elif l == 3:
+            for x in a:
+                if not isinstance(x, basestring):
+                    raise TypeError("all args must be strings, got %r" % (a,))
             cpvstr = "%s/%s-%s" % a
         else:
             raise TypeError("CPV takes 1 arg (cpvstr), or 3 (cat, pkg, ver):"
-                " got %r" % args)
+                " got %r" % a)
         if not isinstance(cpvstr, basestring):
             raise TypeError(self.cpvstr)
         m = parser.match(cpvstr)

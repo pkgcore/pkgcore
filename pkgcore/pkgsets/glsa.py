@@ -105,7 +105,7 @@ class GlsaDirSet(object):
                 #"glsa-1234-12.xml
                 if not (fn.startswith("glsa-") and fn.endswith(".xml")):
                     continue
-                # What does this do?
+                # This verifies the filename is of the correct syntax.
                 try:
                     [int(x) for x in fn[5:-4].split("-")]
                 except ValueError:

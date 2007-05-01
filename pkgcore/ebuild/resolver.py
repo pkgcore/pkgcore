@@ -10,9 +10,7 @@ __all__ = ["upgrade_resolver", "min_install_resolver"]
 from pkgcore.repository import virtual
 from pkgcore.repository.misc import nodeps_repo
 from pkgcore.resolver import plan
-from itertools import chain
 
-from snakeoil.iterables import iter_sort
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.restrictions:packages,values',
@@ -116,8 +114,7 @@ class empty_tree_merge_plan(plan.merge_plan):
         """
         plan.merge_plan.__init__(self, *args, **kwds)
         # XXX *cough*, hack.
-        self._empty_dbs = list(self.dbs) + [x for x in self.livefs_dbs
-            if isinstance(x.__db__, virtual.tree)]
+        self._empty_dbs = self.dbs
 
     def add_atom(self, atom):
         return plan.merge_plan.add_atom(

@@ -2,7 +2,7 @@
 # License: GPL2
 
 import operator
-from itertools import chain, islice
+from itertools import chain, islice, ifilterfalse
 from collections import deque
 
 from pkgcore.resolver.choice_point import choice_point
@@ -15,7 +15,7 @@ from snakeoil.compatibility import any
 from snakeoil.iterables import caching_iter, iter_sort
 
 
-limiters = set([]) #["cycle"]) # [None])
+limiters = set(["cycle"]) # [None])
 def dprint(fmt, args=None, label=None):
     if limiters is None or label in limiters:
         if args is None:
@@ -65,10 +65,10 @@ def lowest_iter_sort(l, pkg_grabber=pkg_grabber):
 class resolver_frame(object):
 
     __slots__ = ("atom", "choices", "mode", "start_point", "dbs",
-        "depth", "drop_cycles", "__weakref__")
+        "depth", "drop_cycles", "__weakref__", "ignored")
 
     def __init__(self, mode, atom, choices, dbs, start_point, depth,
-        drop_cycles):
+        drop_cycles, ignored=False):
         self.atom = atom
         self.choices = choices
         self.dbs = dbs
@@ -76,11 +76,13 @@ class resolver_frame(object):
         self.start_point = start_point
         self.depth = depth
         self.drop_cycles = drop_cycles
+        self.ignored = False
 
     def __str__(self):
-        return "frame: mode %r: atom %s: current %s%s" % \
+        return "frame: mode %r: atom %s: current %s%s%s" % \
             (self.mode, self.atom, self.current_pkg,
-            self.drop_cycles and " cycle dropping" or '')
+            self.drop_cycles and ": cycle dropping" or '',
+            self.ignored and ": ignored" or '')
 
     @property
     def current_pkg(self):
@@ -95,6 +97,8 @@ class resolver_stack(deque):
     frame_klass = resolver_frame
     depth = property(len)
     current_frame = property(operator.itemgetter(-1))
+    filter_ignored = staticmethod(
+        partial(ifilterfalse, operator.attrgetter("ignored")))
 
     def __str__(self):
         return 'resolver stack:\n  %s' % '\n  '.join(str(x) for x in self)
@@ -144,13 +148,22 @@ class resolver_stack(deque):
             return cycle_start + start
         return -1
 
-    def cycles(self, trg_frame, start=0):
-        if start != 0:
-            i = islice(self, start, None)
+    def cycles(self, trg_frame, start=0, reverse=False, pkg_cycling=False):
+        i = self.filter_ignored(self)
+        if reverse:
+            i = self.filter_ignored(reversed(self))
         else:
-            i = self
+            i = self.filter_ignored(self)
+        if start != 0:
+            i = islice(i, start, None)
+        if not pkg_cycling:
+            for frame in i:
+                if frame is not trg_frame and frame.atom == trg_frame.atom:
+                    yield trg_frame
+            return
+        pkg = trg_frame.current_pkg
         for frame in i:
-            if frame.atom == trg_frame.atom:
+            if frame is not trg_frame and frame.current_pkg == pkg:
                 yield trg_frame
 
     def index(self, frame, start=0, stop=None):
@@ -275,59 +288,8 @@ class merge_plan(object):
                             "blockers")
                         continue
                 else:
-                    index = stack.will_cycle(datom, cur_frame.choices,
-                        "depends")
-                    looped = ignore = False
-                    stack_end = len(stack) - 1
-                    # this logic is admittedly semi tricky.
-                    while index != -1:
-                        looped = True
-                        # see if it's a vdb node already; if it's a cycle between
-                        # the same vdb node, ignore it (ignore self-dependant
-                        # depends level installed deps for the same node iow)
-                        if ((index < stack_end and index) and
-                            (stack[index - 1].current_pkg ==
-                            cur_frame.current_pkg)
-                            and cur_frame.current_pkg.repo.livefs):
-                            # we're in a cycle of depends level vdb nodes;
-                            # they cyclical pkg is installed already, thus
-                            # its satisfied itself.
-                            dprint("depends:     %snonissue: vdb bound cycle "
-                                "for %s via %s, exempting" %
-                                (cur_frame.depth *2 * " ", cur_frame.atom,
-                                cur_frame.choices.current_pkg))
-                            ignore = True
-                            break
-                        else:
-                            # ok, so the first candidate wasn't vdb.
-                            # see if there are more.
-                            index = stack.will_cycle(datom,
-                                cur_frame.choices, None, start=index + 1)
-                    else:
-                        # ok.  it exited on its own.  meaning either no cycles,
-                        # or no vdb exemptions were found.
-                        if looped:
-                            # non vdb level cycle.  vdb bound?
-                            # this sucks also- any code that reorders the db
-                            # on the fly to not match livefs_dbs is going to
-                            # have issues here.
-                            if self.livefs_dbs == cur_frame.dbs:
-                                dprint("depends:     %snon-vdb cycle that "
-                                    "went vdb for %s via %s, failing" %
-                                    (cur_frame.depth *2 * " ", cur_frame.atom,
-                                    cur_frame.choices.current_pkg))
-                                failure = [datom]
-                                continue
-                            # try forcing vdb level match.
-                            dbs = self.livefs_dbs
-                        else:
-                            # use normal db, no cycles.
-                            dbs = cur_frame.dbs
-                    if ignore:
-                        # vdb contained cycle; ignore it.
-                        break
                     failure = self._rec_add_atom(datom, stack,
-                        dbs, mode="depends",
+                        stack.current_frame.dbs, mode="depends",
                         drop_cycles=cur_frame.drop_cycles)
                     if failure and cur_frame.drop_cycles:
                         dprint("depends level cycle: %s: "
@@ -357,17 +319,49 @@ class merge_plan(object):
             return additions, []
 
     def check_for_cycles(self, stack, cur_frame):
-        if cur_frame.mode == 'depends':
-            return None
-        if cur_frame.mode == 'post_rdepends':
-            return None
-        elif cur_frame.dbs is self.livefs_dbs and cur_frame.mode == "rdepends":
-            return None
+        """check the current stack for cyclical issues; 
+        @param stack: current stack, a L{resolver_stack} instance
+        @param cur_frame: current frame, a L{resolver_frame} instance
+        @return: None if no issues and resolution should continue, else
+            the value to return from _rec_add_atom if an issue is detected;
+            this function may reinvoke resolution itself, else may exempt the cycle,
+            or flat out fail the cycle
+        """
+#        if cur_frame.mode == 'post_rdepends':
+#            return None
+#        elif cur_frame.dbs is self.livefs_dbs and cur_frame.mode == "rdepends":
+#            return None
 
-        for frame in stack.cycles(cur_frame):
-            if frame.mode != cur_frame.mode:
-                cur_frame.dbs = self.livefs_dbs
-                return None
+#        if cur_frame.mode == "rdepends":
+#            for frame in stack.cycles(cur_frame, reverse=True):
+#                # perhaps this should exempt prdepends also?
+#                if frame.mode in ("rdepends", "post_rdepends"):
+#                    # no failure, exempt the self rdep.
+#                    return []
+#                # merde.
+#                # this change needs to be tracked somehow
+#                cur_frame.dbs = self.livefs_dbs
+#                break
+#            return None
+
+#        for frame in stack.cycles(cur_frame, reverse=True, pkg_cycling=True):
+#            # bugger.
+#            cur_frame.dbs = self.livefs_dbs
+#            return None
+
+        cycles = False
+        for frame in stack.cycles(cur_frame, reverse=True, pkg_cycling=True):
+            if cur_frame.current_pkg.repo.livefs:
+                # self-depends vdb level cycle, ignore it.
+                # other deps discern if it's satisfiable.
+                return []
+            cycles = True
+        if cycles:
+            # we already know the current pkg isn't livefs; force livefs to sidestep this.
+            cur_frame.ignored = True
+            return self._rec_add_atom(cur_frame.atom, stack,
+                self.livefs_dbs, mode=cur_frame.mode,
+                drop_cycles = cur_frame.drop_cycles)
 
     def process_rdepends(self, stack, attr, depset):
         failure = []
@@ -480,6 +474,10 @@ class merge_plan(object):
                     raise Exception()
                 conflicts = state.replace_op(choices, choices.current_pkg).apply(
                     self.state)
+                if not conflicts:
+                    dprint("replacing vdb entry for   '%s' with pkg '%s'",
+                        (atom, choices.current_pkg))
+                
             else:
                 try_rematch = True
             if try_rematch:
@@ -488,6 +486,7 @@ class merge_plan(object):
                     # stop resolution.
                     conflicts = False
                 elif l2:
+#                    import pdb;pdb.set_trace()
                     # potentially need to do some form of cleanup here.
                     conflicts = False
 
@@ -595,7 +594,7 @@ class merge_plan(object):
         ret = self.check_for_cycles(stack, stack.current_frame)
         if ret is not None:
             stack.pop_frame()
-            return [atom]
+            return ret
 
         blocks = []
         failures = []
@@ -631,7 +630,7 @@ class merge_plan(object):
             l = self.process_rdepends(stack, "rdepends",
                 self.depset_reorder(self, choices.rdepends, "rdepends"))
             if len(l) == 1:
-                dprint("resetting for %s%s because of rdepends: %s",
+                dprint("reseting for %s%s because of rdepends: %s",
                        (depth*2*" ", atom, l[0]))
                 self.state.backtrack(stack.current_frame.start_point)
                 failures = l[0]

@@ -139,7 +139,42 @@ def release_ebuild_processor(ebp):
     return False
 
 
-class EbuildProcessor:
+class ProcessingInterruption(Exception):
+    pass
+
+class FinishedProcessing(ProcessingInterruption):
+
+    def __init__(self, val, msg=None):
+        ProcessingInterruption.__init__(
+            self, "Finished processing with val, %s" % (val,))
+        self.val, self.msg = val, msg
+
+class UnhandledCommand(ProcessingInterruption):
+
+    def __init__(self, line=None):
+        ProcessingInterruption.__init__(
+            self, "unhandled command, %s" % (line,))
+        self.line = line
+
+def chuck_KeyboardInterrupt(*arg):
+    raise KeyboardInterrupt("ctrl+c encountered")
+
+def chuck_UnhandledCommand(processor, line):
+    raise UnhandledCommand(line)
+
+def chuck_StoppingCommand(val, processor, *args):
+    if callable(val):
+        raise FinishedProcessing(val(args[0]))
+    raise FinishedProcessing(val)
+
+
+class InitializationError(Exception):
+    pass
+
+
+
+
+class EbuildProcessor(object):
 
     """abstraction of a running ebuild.sh instance.
 
@@ -164,7 +199,7 @@ class EbuildProcessor:
             print "warning, was asking to enable fakeroot but-"
             print "sandbox", sandbox, "userpriv", userpriv
             print "this isn't valid.  bailing"
-            raise Exception, "cannot initialize with sandbox and fakeroot"
+            raise InitializationError("cannot initialize with sandbox and fakeroot")
 
         if userpriv:
             self.__userpriv = True
@@ -192,8 +227,7 @@ class EbuildProcessor:
             if not pkgcore.spawn.is_sandbox_capable():
                 raise ValueError("spawn lacks sandbox capabilities")
             if fakeroot:
-                # XXX improve this (Exception subclass etc)
-                raise Exception('fakeroot was on, but sandbox was also on')
+                raise InitializationError('fakeroot was on, but sandbox was also on')
             self.__sandbox = True
             spawn_func = pkgcore.spawn.spawn_sandbox
 #            env.update({"SANDBOX_DEBUG":"1", "SANDBOX_DEBUG_LOG":"/var/tmp/test"})
@@ -228,7 +262,7 @@ class EbuildProcessor:
         self.write("dude?")
         if not self.expect("dude!"):
             print "error in server coms, bailing."
-            raise Exception(
+            raise InitializationError(
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
         self.write(EBD_ENV_PATH)
@@ -641,37 +675,6 @@ class EbuildProcessor:
         except FinishedProcessing, fp:
             v = fp.val
             return v
-
-def chuck_KeyboardInterrupt(*arg):
-    raise KeyboardInterrupt("ctrl+c encountered")
-
-def chuck_UnhandledCommand(processor, line):
-    raise UnhandledCommand(line)
-
-def chuck_StoppingCommand(val, processor, *args):
-    if callable(val):
-        raise FinishedProcessing(val(args[0]))
-    raise FinishedProcessing(val)
-
-
-class ProcessingInterruption(Exception):
-    pass
-
-
-class FinishedProcessing(ProcessingInterruption):
-
-    def __init__(self, val, msg=None):
-        ProcessingInterruption.__init__(
-            self, "Finished processing with val, %s" % (val,))
-        self.val, self.msg = val, msg
-
-
-class UnhandledCommand(ProcessingInterruption):
-
-    def __init__(self, line=None):
-        ProcessingInterruption.__init__(self,
-                                        "unhandled command, %s" % (line,))
-        self.line = line
 
 
 def expected_ebuild_env(pkg, d=None, env_source_override=None):

@@ -76,6 +76,12 @@ class native_CpvTest(TestCase):
 
             self.assertEqual(self.make_inst(cat, pkg, ver).key, key)
 
+    def test_init(self):
+        self.kls("dev-util", "diffball", "0.7.1")
+        self.kls("dev-util/diffball-0.7.1")
+        self.assertRaises(TypeError, self.kls, "dev-util", "diffball")
+        self.assertRaises(TypeError, self.kls, "dev-util", "diffball", None)
+
     def test_parsing(self):
         for cat_ret, cats in [[False, self.good_cats], [True, self.bad_cats]]:
             for cat in cats:

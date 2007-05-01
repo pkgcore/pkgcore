@@ -123,7 +123,7 @@ class use_expand_filter(object):
             value (with the use-expanded bit stripped off, so
             C{"video_cards_alsa"} becomes C{"{'video_cards': ['alsa']}"}).
         """
-        
+
         # XXX: note this is fairly slow- actually takes up more time then chunks of
         # the resolver
         ue_dict = {}

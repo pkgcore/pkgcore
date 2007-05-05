@@ -6,14 +6,16 @@
 from itertools import ifilter, imap
 from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.cpv import CPV
+from pkgcore.ebuild.conditionals import DepSet
 from pkgcore.ebuild.atom import atom
 from pkgcore.repository.util import SimpleTree
+from pkgcore.package.metadata import factory
 from pkgcore.ebuild.misc import collapsed_restrict_to_data
 from pkgcore.restrictions.packages import AlwaysTrue
 
 default_arches = set(["x86", "ppc", "amd64", "ia64"])
 
-class FakePkg(package):
+class FakePkgBase(package):
     def __init__(self, cpvstr, data=None, shared=None, repo=None):
         if data is None:
             data = {}
@@ -59,14 +61,30 @@ class FakeProfile(object):
 
 class FakeRepo(object):
 
-    def __init__(self, pkgs, **kwds):
+    def __init__(self, pkgs=(), repoid='', location='', **kwds):
         self.pkgs = pkgs
+        self.repo_id = repoid
+        self.location = location
+
         for k, v in kwds.iteritems():
             setattr(self, k, v)
-    
+
     def itermatch(self, restrict, sorter=iter, pkg_klass_override=lambda x:x):
         return ifilter(restrict.match,
             imap(pkg_klass_override, sorter(self.pkgs)))
-    
+
     def match(self, restrict, **kwargs):
         return list(self.itermatch(restrict, **kwargs))
+
+
+class FakePkg(FakePkgBase):
+    def __init__(self, cpv, slot=0, iuse=(), use=(), repo=FakeRepo(), restrict=''):
+        if isinstance(repo, str):
+            repo = FakeRepo(repo)
+        elif isinstance(repo, (tuple, list)) and len(repo) < 3:
+            repo = FakeRepo(*repo)
+        FakePkgBase.__init__(self, cpv, repo=factory(repo))
+        object.__setattr__(self, "slot", str(slot))
+        object.__setattr__(self, "restrict", DepSet(restrict, str))
+        object.__setattr__(self, "use", set(use))
+        object.__setattr__(self, "iuse", set(iuse))

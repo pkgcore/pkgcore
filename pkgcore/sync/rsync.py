@@ -167,7 +167,6 @@ class rsync_timestamp_syncer(rsync_syncer):
                     self.uri = uri
                 doit = ret == False or self.last_timestamp != \
                     self.current_timestamp(new_timestamp)
-                wipe = doit
             if not doit:
                 return True
             ret = rsync_syncer._sync(self, verbosity, output_fd)

@@ -23,6 +23,7 @@ from pkgcore.config import load_config, errors
 from snakeoil import formatters, demandload
 
 demandload.demandload(globals(),
+    'snakeoil.fileutils:iter_read_bash',
     'pkgcore:version',
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages',
@@ -119,8 +120,8 @@ class Values(optparse.Values, object):
 
 def read_file_callback(option, opt_str, value, parser):
     """Read a file ignoring comments."""
-    if not isfile(value):
-        raise OptionValueError("'%s' is not a file" % value)
+    if not os.path.isfile(value):
+        raise optparse.OptionValueError("'%s' is not a file" % value)
     setattr(parser.values, option.dest, iter_read_bash(value))
 
 

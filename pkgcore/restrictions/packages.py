@@ -195,7 +195,7 @@ class Conditional(PackageRestriction):
 
     def __init__(self, attr, childrestriction, payload, **kwds):
         """
-        n@param attr: attr to match against
+        @param attr: attr to match against
         @param childrestriction: restriction to control whether or not the
             payload is accessible
         @param payload: payload data, whatever it may be.

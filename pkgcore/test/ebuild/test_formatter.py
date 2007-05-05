@@ -4,26 +4,10 @@
 import difflib
 
 from pkgcore.test import TestCase
-from pkgcore.package.metadata import factory
 from pkgcore.ebuild.formatter import (BasicFormatter, PkgcoreFormatter,
     PortageFormatter, PaludisFormatter)
-from pkgcore.test.misc import FakePkg as FakePkgBase
+from pkgcore.test.misc import FakePkg, FakeRepo
 from pkgcore.test.scripts.helpers import FakeStreamFormatter, Color
-
-
-class FakeRepo(object):
-    def __init__(self, repoid='', location=''):
-        self.repo_id = repoid
-        self.location = location
-
-class FakePkg(FakePkgBase):
-    __setattr__ = object.__setattr__
-    def __init__(self, cpv, slot='0', iuse=(), use=(), repo=factory(FakeRepo()), restrict=''):
-        FakePkgBase.__init__(self, cpv, repo=repo)
-        self.slot = slot
-        self.restrict = restrict
-        self.use = set(use)
-        self.iuse = set(iuse)
 
 
 # These two are probably unnecessary with ferringb's changes to
@@ -123,12 +107,12 @@ class TestPkgcoreFormatter(BaseFormatterTest, TestCase):
         self.assertOut("add     dev-util/diffball-1.0")
 
         self.formatter.format(FakeOp(FakeEbuildSrc('dev-util/diffball-1.0',
-            repo=factory(FakeRepo('gentoo', '/usr/portage')))))
+            repo=FakeRepo(repoid='gentoo', location='/usr/portage'))))
         self.assertOut("add     dev-util/diffball-1.0::gentoo")
 
         self.formatter.format(
             FakeOp(FakeEbuildSrc('dev-util/diffball-1.2',
-                   repo=factory(FakeRepo('gentoo', '/usr/portage'))),
+                   repo=FakeRepo(repoid='gentoo', location='/usr/portage')),
                 FakeMutatedPkg('dev-util/diffball-1.1')))
         self.assertOut(
             "replace dev-util/diffball-1.1, "
@@ -139,7 +123,7 @@ class TestPaludisFormatter(BaseFormatterTest, TestCase):
 
     def setUp(self):
         BaseFormatterTest.setUp(self)
-        self.repo = factory(FakeRepo('gentoo', '/usr/portage'))
+        self.repo = FakeRepo(repoid='gentoo', location='/usr/portage')
 
     def FakeEbuildSrc(self, *args, **kwargs):
         kwargs.setdefault("repo", self.repo)
@@ -279,7 +263,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.assertOut('[ebuild ', Color('fg', 'green'), ' N', Color('fg', 'green'),
             'S   ] ', Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6 ')
 
-        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', restrict=['fetch'])))
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', restrict='fetch')))
         self.assertOut('[ebuild ', Color('fg', 'green'), ' N ', Color('fg', 'red'), 'F  ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6 ')
         self.formatter.format(FakeOp(FakeEbuildSrc(
@@ -333,7 +317,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
 
     def setUp(self):
         TestPortageFormatter.setUp(self)
-        self.repo = factory(FakeRepo('gentoo', '/usr/portage'))
+        self.repo = FakeRepo(repo='gentoo', location='/usr/portage')
 
     def newFormatter(self, **kwargs):
         kwargs.setdefault("verbose", 1)

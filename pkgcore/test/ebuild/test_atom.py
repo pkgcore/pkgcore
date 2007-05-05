@@ -1,23 +1,12 @@
 # Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.test import TestCase
 from snakeoil.pickling import dumps, loads
-from pkgcore.ebuild import atom, errors, atom_restricts
+from pkgcore.test import TestCase
 from pkgcore.ebuild.cpv import CPV
+from pkgcore.ebuild import atom, errors, atom_restricts
+from pkgcore.test.misc import FakePkg, FakeRepo
 from pkgcore.restrictions.boolean import AndRestriction
-
-class FakePkg(CPV):
-    __slots__ = ("__dict__")
-    def __init__(self, cpv, use=(), slot=0, repo_id="gentoo"):
-        CPV.__init__(self, cpv)
-        object.__setattr__(self, "use", use)
-        object.__setattr__(self, "slot", str(slot))
-        r = repo_id
-        class foo:
-            repo_id = r
-        object.__setattr__(self, "repo", foo())
-
 
 class Test_native_atom(TestCase):
 
@@ -122,7 +111,7 @@ class Test_native_atom(TestCase):
 
     def test_use(self):
         astr = "dev-util/bsdiff"
-        c = FakePkg(astr, ("debug",))
+        c = FakePkg("%s-1" % astr, use=("debug",))
         self.assertTrue(self.kls("%s[debug]" % astr).match(c))
         self.assertFalse(self.kls("%s[-debug]" % astr).match(c))
         self.assertTrue(self.kls("%s[debug,-not]" % astr).match(c))
@@ -133,7 +122,7 @@ class Test_native_atom(TestCase):
 
     def test_slot(self):
         astr = "dev-util/confcache"
-        c = FakePkg(astr, (), 1)
+        c = FakePkg("%s-1" % astr, slot=1)
         self.assertFalse(self.kls("%s:0" % astr).match(c))
         self.assertTrue(self.kls("%s:1" % astr).match(c))
         self.assertFalse(self.kls("%s:2" % astr).match(c))
@@ -203,7 +192,7 @@ class Test_native_atom(TestCase):
 
     def test_repo_id(self):
         astr = "dev-util/bsdiff"
-        c = FakePkg(astr, repo_id="gentoo")
+        c = FakePkg("%s-1" % astr, repo=FakeRepo(repoid="gentoo"))
         self.assertTrue(self.kls("%s" % astr).match(c))
         self.assertTrue(self.kls("%s::gentoo" % astr).match(c))
         self.assertFalse(self.kls("%s::gentoo2" % astr).match(c))
@@ -329,10 +318,9 @@ class Test_native_atom(TestCase):
             FakePkg('sys-apps/portage-2.1_pre3-r5')))
 
     def test_combined(self):
-        self.assertTrue(self.kls('=dev-util/diffball-0.7::gentoo').match(
-            FakePkg('dev-util/diffball-0.7', repo_id='gentoo')))
-        self.assertTrue(self.kls('dev-util/diffball::gentoo').match(
-            FakePkg('dev-util/diffball-0.7', repo_id='gentoo')))
+        p = FakePkg('dev-util/diffball-0.7', repo=FakeRepo(repoid='gentoo'))
+        self.assertTrue(self.kls('=dev-util/diffball-0.7::gentoo').match(p))
+        self.assertTrue(self.kls('dev-util/diffball::gentoo').match(p))
         self.assertFalse(self.kls('=dev-util/diffball-0.7:1:gentoo').match(
             FakePkg('dev-util/diffball-0.7', slot='2')))
 

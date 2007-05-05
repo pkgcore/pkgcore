@@ -483,10 +483,7 @@ def config_from_make_conf(location="/etc/"):
             if oe.errno != errno.ENOENT:
                 raise
         else:
-            if stat.S_ISREG(st.st_mode):
-                conf_dict[f] = fp
-            elif stat.S_ISDIR(st.st_mode):
-                conf_dict[f + '-dirs'] = fp
+            conf_dict[f] = fp
 
     new_config['livefs domain'] = basics.FakeIncrementalDictConfigSection(
         my_convert_hybrid, conf_dict)

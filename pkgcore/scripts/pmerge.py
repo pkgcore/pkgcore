@@ -502,7 +502,7 @@ def main(options, out, err):
             del built_pkg
         else:
             out.write(">>> Removing %s" % op.pkg.cpvstr)
-            i = vdb.uninstall(op.pkg, observer=repo_objs)
+            i = vdb.uninstall(op.pkg, observer=repo_obs)
         ret = i.finish()
         if ret != True:
             out.error("got %s for a phase execution for %s" % (ret, op.pkg))

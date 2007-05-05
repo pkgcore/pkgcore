@@ -174,11 +174,10 @@ class native_StrExactMatch(object):
 
         sf = object.__setattr__
         sf(self, "negate", negate)
+        sf(self, "case_sensitive", case_sensitive)
         if not case_sensitive:
-            sf(self, "case_sensitive", False)
             sf(self, "exact", str(exact).lower())
         else:
-            sf(self, "case_sensitive", True)
             sf(self, "exact", str(exact))
         sf(self, "_hash", hash((self.exact, self.negate, self.case_sensitive)))
 

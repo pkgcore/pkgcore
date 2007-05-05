@@ -70,7 +70,7 @@ class native_CPV(object):
             cpvstr = "%s/%s-%s" % a
         else:
             raise TypeError("CPV takes 1 arg (cpvstr), or 3 (cat, pkg, ver):"
-                " got %r" % a)
+                " got %r" % (a,))
         if not isinstance(cpvstr, basestring):
             raise TypeError(self.cpvstr)
         m = parser.match(cpvstr)

@@ -3,7 +3,7 @@
 
 
 """
-package with it's metadata accessible (think 'no longer abstract')
+package with its metadata accessible (think 'no longer abstract')
 """
 
 from pkgcore.ebuild.cpv import CPV
@@ -66,7 +66,7 @@ def DeriveMetadataKls(original_kls):
         def _fetch_metadata(self):
             """
             pull the metadata for this package.
-            must be overrode in derivative
+            must be overridden in derivative
             """
             raise NotImplementedError
 

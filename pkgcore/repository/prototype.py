@@ -5,9 +5,8 @@
 base repository template
 """
 
-
 from pkgcore.ebuild.atom import atom
-from pkgcore.restrictions import values, boolean, restriction
+from pkgcore.restrictions import values, boolean, restriction, packages
 from pkgcore.restrictions.util import collect_package_restrictions
 
 from snakeoil.mappings import LazyValDict, DictMixin
@@ -191,9 +190,7 @@ class tree(object):
         raise AttributeError
 
     def __iter__(self):
-        for cp, t in self.versions.iteritems():
-            for v in t:
-                yield self.package_class(cp[0], cp[1], v)
+        return self.itermatch(packages.AlwaysTrue)
 
     def __len__(self):
         return sum(len(v) for v in self.versions.itervalues())
@@ -236,29 +233,33 @@ class tree(object):
         else:
             candidates = self._identify_candidates(restrict, sorter)
 
-        return self._internal_match(
-            candidates, restrict, sorter, pkg_klass_override, force,
-            yield_none=yield_none)
-
-    def _internal_match(self, candidates, restrict, sorter,
-                        pkg_klass_override, force, yield_none=False):
-        #actual matching.
         if force is None:
             match = restrict.match
         elif force:
             match = restrict.force_True
         else:
             match = restrict.force_False
-        for catpkg in candidates:
-            for pkg in sorter(self.package_class(catpkg[0], catpkg[1], ver)
-                for ver in self.versions.get(catpkg, [])):
-                if pkg_klass_override is not None:
-                    pkg = pkg_klass_override(pkg)
+        return self._internal_match(
+            candidates, match, sorter, pkg_klass_override,
+            yield_none=yield_none)
 
-                if match(pkg):
-                    yield pkg
-                elif yield_none:
-                    yield None
+    def _internal_gen_candidates(self, candidates, sorter):
+        pkls = self.package_class
+        for cp in candidates:
+            for pkg in sorter(pkls(cp[0], cp[1], ver)
+                for ver in self.versions.get(cp, ())):
+                yield pkg
+
+    def _internal_match(self, candidates, match_func, sorter,
+                        pkg_klass_override, yield_none=False):
+        for pkg in self._internal_gen_candidates(candidates, sorter):
+            if pkg_klass_override is not None:
+                pkg = pkg_klass_override(pkg)
+
+            if match_func(pkg):
+                yield pkg
+            elif yield_none:
+                yield None
 
     def _identify_candidates(self, restrict, sorter):
         # full expansion
@@ -280,7 +281,7 @@ class tree(object):
                 return (
                     (c,p)
                     for c in sorter(self.categories)
-                    for p in sorter(self.packages.get(c, [])))
+                    for p in sorter(self.packages.get(c, ())))
         # simple cases first.
         # if one specifies categories, and one doesn't
         cat_specified = bool(dsolutions[0][0])
@@ -367,9 +368,9 @@ class tree(object):
                 return self.versions
             else:
                 return ((c, p) for c in
-                    cats_iter for p in sorter(self.packages.get(c, [])))
+                    cats_iter for p in sorter(self.packages.get(c, ())))
         return ((c, p)
-            for c in cats_iter for p in sorter(self.packages.get(c, [])))
+            for c in cats_iter for p in sorter(self.packages.get(c, ())))
 
     def _cat_filter(self, cat_restricts):
         cats = [x.match for x in cat_restricts]
@@ -412,7 +413,7 @@ class tree(object):
         notify the repository that a pkg is being addeded to it
         """
         ver_key = (pkg.category, pkg.package)
-        s = set(self.versions.get(ver_key, []))
+        s = set(self.versions.get(ver_key, ()))
         s.add(pkg.fullver)
         if pkg.category not in self.categories:
             self.categories.force_add(pkg.category)

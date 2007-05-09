@@ -77,8 +77,8 @@ class tree(prototype.tree):
         return tuple(d)
 
     def itermatch(self, restrict, **kwds):
-        sorter = kwds.get("sorter", None)
-        if sorter is None or sorter is iter:
+        sorter = kwds.get("sorter", iter)
+        if sorter is iter:
             return (match for repo in self.trees
                 for match in repo.itermatch(restrict, **kwds))
         # ugly, and a bit slow, but works.

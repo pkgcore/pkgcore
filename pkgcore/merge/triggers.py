@@ -93,7 +93,7 @@ class base(object):
         if csets is not None:
             if not isinstance(csets, tuple):
                 # has to be a dict.
-                csets = csets.get(mode, None)
+                csets = csets.get(mode)
         return csets
 
     def localize(self, mergeengine):

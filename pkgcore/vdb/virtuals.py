@@ -28,11 +28,7 @@ def _collect_virtuals(virtuals, iterable):
 def _finalize_virtuals(virtuals):
     for pkg_dict in virtuals.itervalues():
         for full_ver, rdep_atoms in pkg_dict.iteritems():
-            if len(rdep_atoms) == 1:
-                pkg_dict[full_ver] = rdep_atoms[0]
-            else:
-                pkg_dict[full_ver] = \
-                    packages.OrRestriction(finalize=True, *rdep_atoms)
+            pkg_dict[full_ver] = tuple(rdep_atoms)
 
 def _collect_default_providers(virtuals):
     return dict((virt,
@@ -49,7 +45,7 @@ def _grab_virtuals(repo):
     return defaults, virtuals
 
 def non_caching_virtuals(repo, livefs=True):
-    return OldStyleVirtuals(partial(_grab_virtuals, repo), livefs=livefs)
+    return OldStyleVirtuals(partial(_grab_virtuals, repo))
 
 
 #caching
@@ -150,19 +146,37 @@ def _caching_grab_virtuals(repo, cache_basedir):
             pjoin(cache_basedir, 'virtuals.cache'))
 
     defaults = _collect_default_providers(virtuals)
-    _finalize_virtuals(virtuals)
+#    _finalize_virtuals(virtuals)
     return defaults, virtuals
 
 def caching_virtuals(repo, cache_basedir, livefs=True):
-    return OldStyleVirtuals(partial(_caching_grab_virtuals, repo, cache_basedir),
-        livefs=livefs)
+    return OldStyleVirtuals(partial(_caching_grab_virtuals, repo, cache_basedir))
 
 
 class OldStyleVirtuals(virtual.tree):
 
+    def __init__(self, load_func):
+        virtual.tree.__init__(self, livefs=True)
+        self._load_func = load_func
+    
+    def _load_data(self):
+        self.default_providers, self._virtuals = self._load_func()
+        self.packages._cache['virtual'] = tuple(self._virtuals.iterkeys())
+        self.versions._cache.update((('virtual', k), tuple(ver_dict))
+            for k, ver_dict in self._virtuals.iteritems())
+        self.versions._finalized = True
+        self.versions._known_keys.clear()
+        self._load_func = None
+
+    def _expand_vers(self, cp, ver):
+        return self._virtuals[cp[1]][ver]
+
     def __getattr__(self, attr):
         if attr not in ('default_providers', '_virtuals'):
             return virtual.tree.__getattr__(self, attr)
-        self.default_providers, self._virtuals = self._grab_virtuals()
-        self._grab_virtuals = None
+        if self._load_func is not None:
+            self._load_data()
         return getattr(self, attr)
+
+    def _get_versions(self, cp):
+        return tuple(self._virtuals[cp[1]].iterkeys())

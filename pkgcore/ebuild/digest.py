@@ -189,7 +189,7 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True,
     # doesn't handle files sublists correctly yet
     for fname, data in files.iteritems():
         for t, d in types:
-            existing = d.get(fname, None)
+            existing = d.get(fname)
             if existing is None:
                 continue
             break

@@ -159,7 +159,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=()):
             try:
                 for x in vals:
                     succeeded = False
-                    for reqs in a.node_conds.get(x, []):
+                    for reqs in a.node_conds.get(x, ()):
                         succeeded = reqs.force_True(self)
                         if succeeded:
                             break
@@ -207,7 +207,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=()):
             try:
                 for x in vals:
                     succeeded = False
-                    for reqs in a.node_conds.get(x, []):
+                    for reqs in a.node_conds.get(x, ()):
                         succeeded = reqs.force_False(self)
                         if succeeded:
                             break

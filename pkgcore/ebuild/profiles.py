@@ -377,7 +377,7 @@ class OnDiskProfile(object):
             for key, val in profile.default_env.iteritems():
                 if key in inc:
                     val = val.split()
-                    s = d.get(key, None)
+                    s = d.get(key)
                     if s is None:
                         s = d[key] = set()
                     incremental_expansion(s, val,
@@ -483,11 +483,20 @@ class AliasedVirtuals(virtual.tree):
         @param repo: L{pkgcore.ebuild.repository.UnconfiguredTree} parent repo
         @keyword overrides: mapping of virtual pkgname -> matches to override defaults
         """
-        if overrides:
-            virtuals = partial(self._delay_apply_overrides, virtuals, overrides)
-        virtual.tree.__init__(self, virtuals)
+        virtual.tree.__init__(self, livefs=False)
+        self._original_virtuals = virtuals
+        self._overrides = tuple(overrides)
+        if not overrides:
+            # no point in delaying.
+            self.packages._cache['virtuals'] = tuple(virtuals.iterkeys())
+            self._virtuals = virtuals
         self.aliased_repo = repo
-        self.versions._vals = ForgetfulDict()
+        self._versions_map = {}
+
+    def _load_data(self):
+        self._virtuals = self._delay_apply_overrides(self._original_virtuals, 
+            self._overrides)
+        self.packages._cache['virtual'] = tuple(self._virtuals.iterkeys())
 
     @staticmethod
     def _delay_apply_overrides(virtuals, overrides):
@@ -495,7 +504,7 @@ class AliasedVirtuals(virtual.tree):
         for vtree in overrides:
             for virt, provider in vtree.default_providers.iteritems():
                 if virt in d:
-                    d[virt] = d[virt] & provider
+                    d[virt] &= d[virt] & provider
                 else:
                     d[virt] = provider
 
@@ -513,10 +522,18 @@ class AliasedVirtuals(virtual.tree):
     def _get_versions(self, catpkg):
         if catpkg[0] != "virtual":
             raise KeyError("no %s package in this repository" % catpkg)
-        return tuple(x.fullver
-            for x in self.aliased_repo.itermatch(self._virtuals[catpkg[1]]))
+        vers = set()
+        for pkg in self.aliased_repo.itermatch(self._virtuals[catpkg[1]]):
+            self._versions_map.setdefault(catpkg[1], {}).setdefault(pkg.fullver, []).append(
+                pkg.versioned_atom)
+            vers.add(pkg.fullver)
+        return tuple(vers)
 
+    def _expand_vers(self, cp, ver):
+        return self._versions_map.get(cp[1], {}).get(ver, ())
+        
     def _fetch_metadata(self, pkg):
+        import pdb;pdb.set_trace()
         data = self._virtuals[pkg.package]
         if isinstance(data, atom.atom):
             data = [data]

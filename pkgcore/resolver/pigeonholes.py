@@ -1,4 +1,4 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
 from pkgcore.restrictions import restriction
@@ -45,7 +45,8 @@ class PigeonHoledSlots(object):
     def add_limiter(self, atom, key=None):
         """add a limiter, returning any conflicting objs"""
         if not isinstance(atom, restriction.base):
-            raise TypeError("atom must be a restriction.base derivative")
+            raise TypeError("atom must be a restriction.base derivative: "
+                "got %r, key=%r" % (atom, key))
         # debug.
 
         if key is None:

@@ -108,7 +108,7 @@ class ebd(object):
                     env_data_source.__class__, env_data_source))
 
         if features is None:
-            features = self.env.get("FEATURES", [])
+            features = self.env.get("FEATURES", ())
 
         self.features = set(x.lower() for x in features)
 
@@ -117,7 +117,7 @@ class ebd(object):
         expected_ebuild_env(pkg, self.env, env_source_override=self.env_data_source)
 
         self.env["USE"] = ' '.join(str(x) for x in pkg.use)
-        self.env["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", {}))
+        self.env["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", ()))
         self.env["SLOT"] = pkg.slot
         self.env["FINALIZED_RESTRICT"] = ' '.join(str(x) for x in pkg.restrict)
 
@@ -141,7 +141,7 @@ class ebd(object):
 
         self.env["XARGS"] = xargs
 
-        self.bashrc = self.env.get("bashrc", [])
+        self.bashrc = self.env.get("bashrc", ())
         if self.bashrc:
             del self.env["bashrc"]
 

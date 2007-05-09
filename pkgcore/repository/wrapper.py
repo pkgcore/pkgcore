@@ -37,8 +37,3 @@ class tree(prototype.tree):
 
     def __len__(self):
         return len(self.raw_repo)
-
-    def __iter__(self):
-        if self.package_class is None:
-            return iter(self.raw_repo)
-        return (self.package_class(x) for x in self.raw_repo)

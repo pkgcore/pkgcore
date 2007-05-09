@@ -106,7 +106,7 @@ class package(ebuild_src.base):
 
     @property
     def ebuild(self):
-        o = self.data.get("ebuild", None)
+        o = self.data.get("ebuild")
         if o is not None:
             return o
         return self._parent._get_ebuild_src(self)
@@ -150,7 +150,7 @@ class package_factory(metadata.factory):
         return self._parent_repo._get_metadata(pkg)
 
     def new_package(self, *args):
-        inst = self._cached_instances.get(args, None)
+        inst = self._cached_instances.get(args)
         if inst is None:
             inst = self._cached_instances[args] = self.child_class(self, *args)
         return inst

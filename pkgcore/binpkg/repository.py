@@ -132,9 +132,9 @@ class StackedXpakDict(DictMixin):
             data = generate_contents(self._parent._get_path(self._pkg))
             object.__setattr__(self, "contents", data)
         elif key == "environment":
-            data = self._xpak.get("environment.bz2", None)
+            data = self._xpak.get("environment.bz2")
             if data is None:
-                data = data_source(self._xpak.get("environment", None),
+                data = data_source(self._xpak.get("environment"),
                     mutable=True)
                 if data is None:
                     raise KeyError(
@@ -173,7 +173,7 @@ class StackedXpakDict(DictMixin):
         for k in self._xpak:
             yield k
         for k in ("environment", "contents"):
-            if self.get(k, None) is not None:
+            if self.get(k) is not None:
                 yield k
 
 

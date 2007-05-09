@@ -21,14 +21,19 @@ class package(metadata.package):
 
     __slots__ = ("__dict__")
 
+    def __init__(self, repo, provider, *a, **kwds):
+        metadata.package.__init__(self, repo, *a, **kwds)
+        object.__setattr__(self, 'provider', provider)
+        object.__setattr__(self, 'data', {})
+
     def __getattr__ (self, key):
         val = None
         if key == "rdepends":
-            val = self.data
+            val = self.provider
         elif key in ("depends", "post_rdepends", "provides"):
             val = OrRestriction(finalize=True)
         elif key == "slot":
-            val = str(self.version)
+            val = "%s-%s" % (self.provider.category, self.version)
         else:
             return super(package, self).__getattr__(key)
         self.__dict__[key] = val

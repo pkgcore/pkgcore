@@ -194,7 +194,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
     def _get_shared_pkg_data(self, category, package):
         key = (category, package)
-        o = self._shared_pkg_cache.get(key, None)
+        o = self._shared_pkg_cache.get(key)
         if o is None:
             mxml = self._get_metadata_xml(category, package)
             manifest = self._get_manifest(category, package)

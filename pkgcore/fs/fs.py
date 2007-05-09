@@ -84,7 +84,7 @@ class fsBase(object):
     def __getattr__(self, attr):
         # we would only get called if it doesn't exist.
         if attr in self.__attrs__:
-            return self.__default_attrs__.get(attr, None)
+            return self.__default_attrs__.get(attr)
         raise AttributeError(attr)
 
     def __hash__(self):

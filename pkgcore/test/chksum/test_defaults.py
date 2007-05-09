@@ -52,7 +52,7 @@ class ChksumTest(base):
             self.expected_long)
         if self.chf_type == 'size':
             return
-        for x in extra_chksums.get(self.chf_type, []):
+        for x in extra_chksums.get(self.chf_type, ()):
             self.assertEqual(self.chf.str2long(x), long(x, 16))
 
     def test_long2str(self):
@@ -60,7 +60,7 @@ class ChksumTest(base):
             self.expected_str)
         if self.chf_type == 'size':
             return
-        for x in extra_chksums.get(self.chf_type, []):
+        for x in extra_chksums.get(self.chf_type, ()):
             self.assertEqual(self.chf.long2str(long(x, 16)), x)
 
 checksums = {

@@ -180,7 +180,7 @@ class domain(pkgcore.config.domain.domain):
         use = settings.setdefault("USE", set())
 
         # hackish implementation; if test is on, flip on the flag
-        if "test" in settings.get("FEATURES", []):
+        if "test" in settings.get("FEATURES", ()):
             use.add("test")
 
         self.use_expand = frozenset(profile.use_expand)
@@ -322,8 +322,8 @@ class domain(pkgcore.config.domain.domain):
                 l.append(wrapped_repo)
 
         if profile.virtuals:
-            l = filter(None, (getattr(v, 'old_style_virtuals', None)
-                for v in self.vdb))
+            l = [x for x in (getattr(v, 'old_style_virtuals', None)
+                for v in self.vdb) if x is not None]
             profile_repo = profile.make_virtuals_repo(
                 multiplex.tree(*repositories), *l)
             self.named_repos["profile virtuals"] = profile_repo

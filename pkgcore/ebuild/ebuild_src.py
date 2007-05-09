@@ -42,7 +42,7 @@ def generate_depset(c, key, non_package_type, s):
 def generate_providers(self):
     rdep = AndRestriction(self.versioned_atom, finalize=True)
     func = partial(virtual_ebuild, self._parent, self,
-                   {"rdepends":rdep, "slot":self.version})
+        {"rdepends":rdep, "slot":"%s-%s" % (self.category, self.version)})
     # re-enable license at some point.
     #, "license":self.license})
 
@@ -318,7 +318,7 @@ class package_factory(metadata.factory):
         return mydata
 
     def new_package(self, *args):
-        inst = self._cached_instances.get(args, None)
+        inst = self._cached_instances.get(args)
         if inst is None:
             # key being cat/pkg
             mxml = self._parent_repo._get_shared_pkg_data(args[0], args[1])
@@ -339,7 +339,7 @@ class virtual_ebuild(metadata.package):
     package_is_real = False
     built = True
 
-    __slots__ = ("_orig_data", "data", "actual_pkg")
+    __slots__ = ("_orig_data", "data", "provider")
 
     def __init__(self, parent_repository, pkg, data, cpvstr):
         """
@@ -357,7 +357,7 @@ class virtual_ebuild(metadata.package):
         sfunc = object.__setattr__
         sfunc(self, "data", IndeterminantDict(lambda *a: str(), data))
         sfunc(self, "_orig_data", data)
-        sfunc(self, "actual_pkg", pkg)
+        sfunc(self, "provider", pkg.versioned_atom)
 
     def __getattr__(self, attr):
         if attr in self._orig_data:

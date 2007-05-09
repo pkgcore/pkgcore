@@ -20,7 +20,7 @@ class MutatedPkg(wrapper):
         object.__setattr__(self, "_overrides", overrides)
 
     def __getattr__(self, attr):
-        o = self._overrides.get(attr, None)
+        o = self._overrides.get(attr)
         if o is not None:
             return o
         return getattr(self._raw_pkg, attr)

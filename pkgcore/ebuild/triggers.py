@@ -138,7 +138,7 @@ def simple_chksum_compare(x, y):
     for k, v in x.chksums.iteritems():
         if k == "size":
             continue
-        o = y.chksums.get(k, None)
+        o = y.chksums.get(k)
         if o is not None:
             if o != v:
                 return False
@@ -386,7 +386,7 @@ class InfoRegen(triggers.InfoRegen):
     @property
     def locations(self):
         collapsed_d = collapse_envd(self.path)[0]
-        l = collapsed_d.get("INFOPATH", [])
+        l = collapsed_d.get("INFOPATH", ())
         if not l:
             return triggers.InfoRegen.locations
         elif isinstance(l, basestring):
@@ -420,17 +420,17 @@ class FixImageSymlinks(triggers.base):
 def customize_engine(domain_settings, engine):
     env_update().register(engine)
 
-    protect = domain_settings.get('CONFIG_PROTECT', [])
+    protect = domain_settings.get('CONFIG_PROTECT', ())
     if isinstance(protect, basestring):
         protect = protect.split()
-    mask = domain_settings.get('CONFIG_PROTECT_MASK', [])
+    mask = domain_settings.get('CONFIG_PROTECT_MASK', ())
     if isinstance(protect, basestring):
         protect = protect.split()
 
     ConfigProtectInstall(protect, mask).register(engine)
     ConfigProtectUninstall().register(engine)
 
-    features = domain_settings.get("FEATURES", [])
+    features = domain_settings.get("FEATURES", ())
     if "collision-protect" in features:
         collision_protect(protect, mask).register(engine)
 

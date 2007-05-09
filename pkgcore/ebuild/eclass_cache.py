@@ -63,14 +63,14 @@ class base(object):
         """
 
         keys = tuple(sorted(inherits))
-        o = self._eclass_data_inst_cache.get(keys, None)
+        o = self._eclass_data_inst_cache.get(keys)
         if o is None:
             o = ImmutableDict((k, self.eclasses[k]) for k in keys)
             self._eclass_data_inst_cache[keys] = o
         return o
 
     def get_eclass(self, eclass):
-        o = self.eclasses.get(eclass, None)
+        o = self.eclasses.get(eclass)
         if o is None:
             return None
         return local_source(pjoin(o[0], eclass+".eclass"))

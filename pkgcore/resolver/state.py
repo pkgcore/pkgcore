@@ -168,10 +168,10 @@ class incref_forward_block_op(blocker_base_op):
         plan.plan.append(self)
         if self.blocker not in plan.blockers_refcnt:
             l = plan.state.add_limiter(self.blocker, self.key)
-            plan.rev_blockers.setdefault(self.choices, []).append(
-                (self.blocker, self.key))
         else:
             l = []
+        plan.rev_blockers.setdefault(self.choices, []).append(
+             (self.blocker, self.key))
         plan.blockers_refcnt.add(self.blocker)
         return l
 

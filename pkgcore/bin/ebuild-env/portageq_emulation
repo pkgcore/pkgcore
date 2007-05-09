@@ -163,7 +163,7 @@ def main():
     if domain is None:
         domain = load_config().get_default("domain")
     else:
-        domain = load_config().domain.get(domain, None)
+        domain = load_config().domain.get(domain)
 
     if domain is None:
         print "no default domain in your configuration, or what was specified manually wasn't found."

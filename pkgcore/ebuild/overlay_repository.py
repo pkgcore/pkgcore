@@ -5,10 +5,9 @@
 implementation of the standard PORTDIR + PORTDIR_OVERLAY repository stacking
 """
 
-from pkgcore.repository import multiplex
+from pkgcore.repository import multiplex, prototype
 from pkgcore.config import ConfigHint, errors
 from pkgcore.ebuild import repository
-from pkgcore.restrictions import packages
 
 from snakeoil.lists import unstable_unique
 
@@ -52,6 +51,8 @@ class OverlayRepo(multiplex.tree):
     def _get_versions(self, catpkg):
         return tuple(unstable_unique(multiplex.tree._get_versions(self,
                                                                   catpkg)))
+    # we restore the old prototype, since the filtering logic is there.
+    __iter__ = prototype.tree.__iter__
 
     def itermatch(self, *a, **kwds):
         s = set()
@@ -59,6 +60,3 @@ class OverlayRepo(multiplex.tree):
             if pkg.cpvstr not in s:
                 yield pkg
                 s.add(pkg.cpvstr)
-
-    def __iter__(self):
-        return self.itermatch(packages.AlwaysTrue)

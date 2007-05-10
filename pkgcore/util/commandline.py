@@ -15,12 +15,13 @@ See dev-notes/commandline.rst for more complete documentation.
 
 
 import sys
-import optparse
 import os.path
 import logging
 
 from pkgcore.config import load_config, errors
-from snakeoil import formatters, demandload
+from snakeoil import formatters, demandload, fix_copy
+fix_copy.inject_copy()
+import optparse
 
 demandload.demandload(globals(),
     'snakeoil.fileutils:iter_read_bash',

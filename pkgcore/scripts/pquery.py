@@ -6,12 +6,16 @@
 """Extract information from repositories."""
 
 
-import optparse
 
 from pkgcore.restrictions import packages, values, boolean, restriction
 from pkgcore.ebuild import conditionals, atom
 from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils)
+
+# ordering here matters; pkgcore does a trick to commandline to avoid the 
+# heavy inspect loadup hit.
+import optparse
+
 
 # To add a new restriction you have to do the following:
 # - add a parse function for it here.

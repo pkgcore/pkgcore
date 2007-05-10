@@ -166,6 +166,23 @@ class ProfileNode(object):
         self.pkg_use_mask = d
         return d
 
+    @load_decorator("package.use")
+    def _load_pkg_use(self, data):
+        d = {}
+        for line in data:
+            i = iter(line.split())
+            a = atom.atom(i.next())
+            neg, pos = d.setdefault(a, ([], []))
+            for x in i:
+                if x[0] == '-':
+                    neg.append(x[1:])
+                else:
+                    pos.append(x)
+        for k, v in d.iteritems():
+            d[k] = tuple(tuple(x) for x in v)
+        self.pkg_use = d
+        return d
+
     @load_decorator("use.force")
     def _load_forced_use(self, data):
         d = self._load_pkg_use_force()
@@ -421,10 +438,10 @@ class OnDiskProfile(object):
     def __getattr__(self, attr):
         if attr == "stack":
             self.stack = obj = self._load_stack()
-        elif attr in ("forced_use", "masked_use"):
+        elif attr in ('forced_use', 'masked_use', 'pkg_use'):
             obj = self._collapse_use_dict(attr)
             setattr(self, attr, obj)
-        elif attr == "bashrc":
+        elif attr == 'bashrc':
             obj = self.bashrc = tuple(x.bashrc
                 for x in self.stack if x.bashrc is not None)
         elif attr == 'system':

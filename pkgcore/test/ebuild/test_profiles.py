@@ -168,6 +168,21 @@ class TestProfileNode(profile_mixin, TestCase):
         self.assertEqual(ProfileNode(path).forced_use,
            {packages.AlwaysTrue:(('foon',),('mmx',))})
 
+    def test_pkg_use(self):
+        path = pjoin(self.dir, self.profile)
+        self.assertEqual(ProfileNode(path).pkg_use, {})
+        self.parsing_checks("package.use", "pkg_use")
+        self.write_file("package.use", "dev-util/bar X")
+        self.assertEqual(ProfileNode(path).pkg_use,
+           {atom("dev-util/bar"):((), ('X',))})
+        self.write_file("package.use", "-dev-util/bar X")
+        self.assertRaises(profiles.ProfileError, getattr, ProfileNode(path),
+            "pkg_use")
+        self.write_file("package.use", "dev-util/bar -X\ndev-util/foo X")
+        self.assertEqual(ProfileNode(path).pkg_use,
+           {atom("dev-util/bar"):(('X',), ()),
+           atom("dev-util/foo"):((), ('X',))})
+
     def test_parents(self):
         path = pjoin(self.dir, self.profile)
         os.mkdir(pjoin(path, 'child'))
@@ -386,6 +401,27 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
         self.assertEqual(f(self.get_profile("base2").forced_use),
             f({packages.AlwaysTrue:["X"],
             atom("dev-util/foo"):["-X"]}))
+
+    def test_pkg_use(self):
+        self.mk_profiles({})
+        self.assertEqual(self.get_profile("base0").pkg_use, {})
+        self.mk_profiles(
+            {"package.use":"dev-util/bsdiff X mmx\n"},
+            {},
+            {"package.use":"dev-util/bsdiff -X\n"},
+            {"package.use":"dev-util/bsdiff -mmx\ndev-util/diffball X"})
+
+        f = lambda d: set((k.key, tuple(v)) for k, v in d.iteritems())
+        f2 = lambda d: set((k, tuple(v)) for k, v in d.iteritems())
+        self.assertEqual(f(self.get_profile("base0").pkg_use),
+            f2({'dev-util/bsdiff':('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("base1").pkg_use),
+            f2({'dev-util/bsdiff':('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("base2").pkg_use),
+            f2({'dev-util/bsdiff':['mmx']}))
+        self.assertEqual(f(self.get_profile("base3").pkg_use),
+            f2({'dev-util/diffball':['X']}))
+
 
     def test_default_env(self):
         self.mk_profiles({})

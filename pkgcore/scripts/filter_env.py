@@ -5,9 +5,10 @@
 
 
 import sys
-import optparse
 
 from pkgcore.util import commandline
+# ordering here matters; commandline does a trick to copy to avoid the heavy inspect load.
+import optparse
 from pkgcore.ebuild import filter_env
 from pkgcore.log import logger
 

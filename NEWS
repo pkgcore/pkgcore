@@ -37,6 +37,10 @@ pkgcore 0.3:
 * old style virtual providers from the vdb are now preferred for newer versions
   over profile defined defaults.
 
+* mass resolver cleanup; report any regressions to ferringb
+
+* added profile package.use support.
+
 
 pkgcore 0.2.14:
 

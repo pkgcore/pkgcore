@@ -16,8 +16,8 @@ restriction options. The only exception to that is that restrictions on
 contents automatically select the vdb (installed packages) repository, since
 running them on the portdir repository makes no sense.
 
-Another switch that could do with some extra explanation is --raw. Specifying
---raw makes your configuration not affect the results. Example: ::
+Another switch that could do with some extra explanation is ``--raw``.
+Specifying ``--raw`` makes your configuration not affect the results. Example: ::
 
  $ pquery --attr alldepends -m dbus --max -v
  * sys-apps/dbus-0.62-r1
@@ -51,14 +51,15 @@ have qt in USE in my configuration, so those dependencies do not apply.::
      post_rdepends:
  $
 
-This version is in package.mask, and we can see the use-conditional flags now.
+This version is in ``package.mask``, and we can see the use-conditional flags now.
 
-The --verbose or -v flag tries to print human-readable output (although some
-things like the formatting of depend strings need some improvement). Without -v
-the output is usually a single line per package in a hopefully
+The ``--verbose`` or ``-v`` flag tries to print human-readable output (although
+some things like the formatting of depend strings need some improvement).
+Without ``-v`` the output is usually a single line per package in a hopefully
 machine-parseable format (usable in pipelines). There are some extras like
---atom meant for shell pipeline use. If you have some useful shell pipeline in
-mind that pquery's output could be better formatted for please file a ticket.
+``--atom`` meant for shell pipeline use. If you have some useful shell pipeline
+in mind that pquery's output could be better formatted for please file a
+ticket.
 
 Adding short options is planned but there are some features to add first (want
 most of the features in place to avoid name clashes).
@@ -86,7 +87,7 @@ No equivalent                ``pquery --maintainer seemant``           list all 
 
 It can also do some things equery/emerge do not let you do, like restricting
 based on maintainer or herd and printing various other package attributes. See
---help for those. If you miss a query file a ticket.
+``--help`` for those. If you miss a query file a ticket.
 
 Freeform Restrictions
 =====================

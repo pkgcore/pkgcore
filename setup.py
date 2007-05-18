@@ -12,6 +12,34 @@ from distutils.command import (build, sdist, build_py, build_ext,
 from stat import ST_MODE
 
 
+def write_bzr_verinfo(destination):
+    log.info('generating bzr_verinfo')
+    f = open(destination, 'w')
+    try:
+        if subprocess.call(['bzr', 'version-info', '--format=python'],
+                           stdout=f):
+            raise errors.DistutilsExecError('bzr version-info failed')
+        # HACK: insert the current tag, if possible.
+        try:
+            from bzrlib import branch, errors
+        except ImportError:
+            log.warn('cannot import bzrlib trying to determine tag')
+            return
+
+        try:
+            b = branch.Branch.open_containing(__file__)[0]
+        except errors.NotBranchError, e:
+            log.warn('not a branch (%s) trying to determine tag' % (e,))
+            return
+
+        if b.supports_tags():
+            tags = b.tags.get_reverse_tag_dict().get(b.last_revision())
+            if tags:
+                f.write("version_info['tags'] = %r\n" % (tags,))
+
+    finally:
+        f.close()
+
 class mysdist(sdist.sdist):
 
     """sdist command specifying the right files and generating ChangeLog."""
@@ -87,12 +115,7 @@ class mysdist(sdist.sdist):
                 ['bzr', 'log', '--verbose'] + args,
                 stdout=open(os.path.join(base_dir, 'ChangeLog'), 'w')):
                 raise errors.DistutilsExecError('bzr log failed')
-        log.info('generating bzr_verinfo')
-        if subprocess.call(
-            ['bzr', 'version-info', '--format=python'],
-            stdout=open(os.path.join(
-                    base_dir, 'pkgcore', 'bzr_verinfo.py'), 'w')):
-            raise errors.DistutilsExecError('bzr version-info failed')
+        write_bzr_verinfo(os.path.join(base_dir, 'pkgcore', 'bzr_verinfo.py'))
 
 
 class pkgcore_build_scripts(build_scripts.build_scripts):
@@ -207,10 +230,9 @@ class pkgcore_build_py(build_py.build_py):
         bzr_ver = self.get_module_outfile(
             self.build_lib, ('pkgcore',), 'bzr_verinfo')
         if not os.path.exists(bzr_ver):
-            log.info('generating bzr_verinfo')
-            if subprocess.call(
-                ['bzr', 'version-info', '--format=python'],
-                stdout=open(bzr_ver, 'w')):
+            try:
+                write_bzr_verinfo(bzr_ver)
+            except errors.DistutilsExecError:
                 # Not fatal, just less useful --version output.
                 log.warn('generating bzr_verinfo failed!')
             else:

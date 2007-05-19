@@ -2,20 +2,20 @@
  Configuring pkgcore
 =====================
 
-Note for portage users
+Note for Portage users
 ======================
 
-If you already know how to configure portage you can probably just
-skip this file. As long as you do not have an /etc/pkgcore.conf or
-~/.pkgcore.conf pkgcore will read portage's configuration files.
+If you already know how to configure Portage you can probably just skip this
+file. As long as you do not have an ``/etc/pkgcore.conf`` or ``~/.pkgcore.conf``
+pkgcore will read Portage's configuration files.
 
 Basics, querying
 ================
 
-There are multiple ways to configure pkgcore. No matter which method
-you pick, the pconfig utility will allow you to check if pkgcore
-interprets the configuration the way you intend. Part of a
-configuration dump could look like::
+There are multiple ways to configure pkgcore. No matter which method you pick,
+the ``pconfig`` utility will allow you to check if pkgcore interprets the
+configuration the way you intend. Part of a configuration dump could look
+like::
 
  $ pconfig dump
  <lots of output snipped>
@@ -64,7 +64,7 @@ a list of strings. "location" is a single string.
 "eclass stack" defined elsewhere in the dump (omitted here).
 
 If your configuration defines a section that does not show up in
-dump you can use uncollapsable to figure out why::
+dump you can use ``uncollapsable`` to figure out why::
 
  $ pconfig uncollapsable
  Collapsing section named 'ebuild-repo-common':
@@ -82,45 +82,45 @@ section named 'the-broken-section'" in the output.
 Portage compatibility mode
 ==========================
 
-If you do not have a global (/etc/pkgcore.conf) or local
-(~/.pkgcore.conf) configuration file pkgcore will automatically fall
-back to reading make.conf and the other portage configuration files.
-A noticable difference is pkgcore does not support picking up
-variables like USE from the environment. Apart from that things should
-just work the way you're used to.
+If you do not have a global (``/etc/pkgcore.conf``) or local
+(``~/.pkgcore.conf``) configuration file pkgcore will automatically fall back to
+reading ``/etc/make.conf`` and the other Portage configuration files.  A
+noticable difference is pkgcore does not support picking up variables like USE
+from the environment, so you can't run commands like ``USE="foo" pmerge
+package``. Apart from that things should just work the way you're used to.
 
-Beyond portage compatibility mode
+Beyond Portage compatibility mode
 =================================
 
 Basics
 ------
 
-If you want to define extra repositories pkgcore should know about but
-portage should not you will need a minimal configuration file. pkgcore
-reads two configuration files: ~/.pkgcore.conf and /etc/pkgcore.conf.
-Settings in the former override the ones in the latter.
+If you want to define extra repositories pkgcore should know about but Portage
+should not you will need a minimal configuration file. Pkgcore reads two
+configuration files: ``~/.pkgcore.conf`` and ``/etc/pkgcore.conf``.  Settings in
+the former override the ones in the latter.
 
-If one of them exists this completely disables portage configuration
-file parsing. The first thing you will probably want to do is
-re-enable that, by putting in one of the configuration files::
+If one of them exists this completely disables Portage configuration file
+parsing. The first thing you will probably want to do is re-enable that, by
+putting in one of the configuration files::
 
  [autoload-portage]
  class=pkgcore.ebuild.portage_conf.config_from_make_conf
 
-If you then run pconfig dump you should see among other things::
+If you then run ``pconfig dump`` you should see among other things::
 
  'autoload-portage' {
     # typename of this section: configsection
     class pkgcore.ebuild.portage_conf.config_from_make_conf;
  }
 
-Section names are usually arbitrary but sections that load extra
-configuration data are an exception: they have to start with
-"autoload" or they will not be processed. If you change the section
-name to just "portage" you will still see it show up in pconfig dump
-but all other things defined in make.conf will disappear.
+Section names are usually arbitrary but sections that load extra configuration
+data are an exception: they have to start with "autoload" or they will not be
+processed. If you change the section name to just "portage" you will still see
+it show up in ``pconfig dump`` but all other things defined in
+``/etc/make.conf`` will disappear.
 
-pconfig can tell you what arguments a class takes::
+``pconfig`` can tell you what arguments a class takes::
 
  $ pconfig describe-class pkgcore.config.basics.parse_config_file
  typename is configsection
@@ -128,9 +128,8 @@ pconfig can tell you what arguments a class takes::
  parser: callable (required)
  path: str (required)
 
-If you wanted to remove the overlay mentioned at the top of this
-document from make.conf but keep it available to pkgcore you would
-add::
+If you wanted to remove the overlay mentioned at the top of this document from
+``/etc/make.conf`` but keep it available to pkgcore you would add::
 
  [/usr/local/portage/private]
  class=pkgcore.ebuild.repository.UnconfiguredTree
@@ -179,7 +178,7 @@ They can be complete sections, although they do not have to be. If
 they are not complete sections you should set inherit-only to true for
 them, to make pconfig uncollapsable ignore errors in them.
 
-Actually the portage emulation mode uses inherit targets too, so you
+Actually, the Portage emulation mode uses inherit targets too, so you
 could just have inherited "ebuild-repo-common". Inherit targets do not
 have to live in the same file as they are inherited from.
 
@@ -193,7 +192,7 @@ If you have pyparsing installed pkgcore supports a second
 configuration file format that is very similar to the dump output
 (not entirely identical: the string escaping rules are different). It
 does not try to detect what format your config file is in:
-pkgcore.conf is always in "ini" format. But you can load a second
+``pkgcore.conf`` is always in "ini" format. But you can load a second
 configuration file from there::
 
  [autoload-dhcpformat]
@@ -204,23 +203,23 @@ configuration file from there::
 If you use "pkgcore.config.cparser.config_from_file" as "parser" you
 can use this to load a second ini-style file. The loaded file can also
 contain autoloads of its own, loading more config files or
-portage_conf. For example, if .pkgcore.dhcpconf looks like::
+portage_conf. For example, if ``.pkgcore.dhcpconf`` looks like::
 
  "autoload-portage" {
      class pkgcore.ebuild.portage_conf.config_from_make_conf;
  }
 
-it will load make.conf.
+it will load ``/etc/make.conf``.
 
-If you want to get rid of make.conf entirely you can start from the
-output of pconfig dump. But be careful: pconfig does not escape
-strings exactly the same way dhcpformat parses them, so make sure you
-check the dump after you disable portage_conf for mistakes.
+If you want to get rid of ``/etc/make.conf`` entirely you can start from the
+output of ``pconfig dump``. But be careful: ``pconfig`` does not escape strings
+exactly the same way dhcpformat parses them, so make sure you check the dump
+after you disable portage_conf for mistakes.
 
 Aliases
 -------
 
-You may have seen something called "section_alias" in a portage
+You may have seen something called "section_alias" in a Portage
 compatibility configuration. These are used to make an existing named
 section show up under a second name. You probably do not need them if
 you write your own configuration.

@@ -217,6 +217,10 @@ No equivalents:
 
   This is formatter-dependent; it may be included in 0.3.
 
+``--verbose``:
+
+  Not yet implemented.
+
 ``--alphabetical``, ``--columns``:
 
   These won't be implemented in pkgcore.

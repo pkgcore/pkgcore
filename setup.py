@@ -21,14 +21,14 @@ def write_bzr_verinfo(destination):
             raise errors.DistutilsExecError('bzr version-info failed')
         # HACK: insert the current tag, if possible.
         try:
-            from bzrlib import branch, errors
+            from bzrlib import branch, errors as ebzr
         except ImportError:
             log.warn('cannot import bzrlib trying to determine tag')
             return
 
         try:
             b = branch.Branch.open_containing(__file__)[0]
-        except errors.NotBranchError, e:
+        except ebzr.NotBranchError, e:
             log.warn('not a branch (%s) trying to determine tag' % (e,))
             return
 

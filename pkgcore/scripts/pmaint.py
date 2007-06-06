@@ -386,4 +386,6 @@ def digest_main(options, out, err):
                 digest.serialize_manifest("%s/%s" %(pkg.repo.location, pkg.key),
                     pkg.fetchables)
 
-commandline_commands['digest'] = (DigestParser, digest_main)
+# XXX: harring disabled this for 0.3.
+# re-enable it when the bits update manifest.
+#commandline_commands['digest'] = (DigestParser, digest_main)

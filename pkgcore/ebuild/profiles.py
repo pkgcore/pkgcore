@@ -255,6 +255,8 @@ class ProfileNode(object):
 
 class EmptyRootNode(ProfileNode):
 
+    __inst_caching__ = True
+    
     parents = ()
     deprecated = None
     forced_use = masked_use = {}

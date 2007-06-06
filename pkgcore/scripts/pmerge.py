@@ -18,6 +18,7 @@ from pkgcore.ebuild.atom import atom
 from snakeoil import lists
 from snakeoil.formatters import ObserverFormatter
 from snakeoil.compatibility import any
+from pkgcore.resolver.util import reduce_to_failures
 
 class OptionParser(commandline.OptionParser):
 
@@ -235,6 +236,33 @@ def get_pkgset(config, err, setname):
             (setname, config.pkgset.keys()))
         return None
 
+def display_failures(out, sequence, first_level=True):
+    sequence = iter(sequence)
+    frame = sequence.next()
+    if first_level:
+        # pops below need to exactly match.
+        out.first_prefix.extend((out.fg("red"), "!!!", out.reset))
+    out.first_prefix.append(" ")
+    out.write("request %s, mode %s" % (frame.atom, frame.mode))
+    for pkg, steps in sequence:
+        out.write("trying %s" % str(pkg.cpvstr))
+        out.first_prefix.append(" ")
+        for step in steps:
+            if isinstance(step, list):
+                display_failures(out, step, False)
+            elif step[0] == 'reduce':
+                continue
+            elif step[0] == 'cycle':
+                out.write("%s cycle on %s: %s" % (step[2].mode, step[2].atom, step[3]))
+            elif step[0] == 'viable' and not step[1]:
+                out.write("%s: failed %s" % (step[3], step[4]))
+            else:
+                out.write(step)
+        out.first_prefix.pop()
+    out.first_prefix.pop()
+    if first_level:
+        [out.first_prefix.pop() for x in (1,2,3)]
+
 def update_worldset(world_set, pkg, remove=False):
     if world_set is None:
         return
@@ -366,11 +394,11 @@ def main(options, out, err):
     out.write(out.bold, ' * ', out.reset, 'Resolving...')
     out.title('Resolving...')
     for restrict in atoms:
-#        print "\ncalling resolve for %s..." % restrict
         ret = resolver_inst.add_atom(restrict)
         if ret:
-            out.error('Resolver returned %r' % (ret,))
             out.error('resolution failed')
+            just_failures = reduce_to_failures(ret[1])
+            display_failures(out, just_failures)
             failures.append(restrict)
             if not options.ignore_failures:
                 break

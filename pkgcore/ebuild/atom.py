@@ -493,5 +493,9 @@ def _collapsed_restrict_match(data, pkg, mode):
 def generate_collapsed_restriction(atoms, negate=False):
     d = {}
     for a in atoms:
-        d.setdefault(a.key, []).append(a)
+        k = a.key
+        if k not in d:
+            d[k] = [a]
+        else:
+            d[k].append(a)
     return delegate(partial(_collapsed_restrict_match, d), negate=negate)

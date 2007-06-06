@@ -29,13 +29,13 @@ demandload(globals(), "pkgcore.log:logger")
 
 WeakValCache = metadata.WeakValCache
 
-def generate_depset(c, key, non_package_type, s):
+def generate_depset(c, key, non_package_type, s, **kwds):
     try:
         if non_package_type:
             return conditionals.DepSet(s.data.pop(key, ""), c,
                 operators={"||":boolean.OrRestriction,
-                "":boolean.AndRestriction})
-        return conditionals.DepSet(s.data.pop(key, ""), c)
+                "":boolean.AndRestriction}, **kwds)
+        return conditionals.DepSet(s.data.pop(key, ""), c, **kwds)
     except conditionals.ParseError, p:
         raise metadata_errors.MetadataException(s, str(key), str(p))
 
@@ -158,8 +158,8 @@ class base(metadata.package):
     _get_attr["rdepends"] = partial(generate_depset, atom, "RDEPEND", False)
     _get_attr["post_rdepends"] = partial(generate_depset, atom, "PDEPEND",
                                          False)
-    _get_attr["license"] = partial(generate_depset,
-        intern, "LICENSE", True)
+    _get_attr["license"] = partial(generate_depset, str,
+        "LICENSE", True, element_func=intern)
     _get_attr["slot"] = get_slot # lambda s: s.data.pop("SLOT", "0").strip()
     _get_attr["fetchables"] = generate_fetchables
     _get_attr["description"] = lambda s:s.data.pop("DESCRIPTION", "").strip()

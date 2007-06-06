@@ -18,6 +18,11 @@ pkgcore 0.3:
   Portage and Paludis emulation are the notable formats, though plan
   category/package and the original output are also available as options.
 
+* Portage formatter is now the default.
+
+* Pkgcore formatter (no longer default) output was simplified to be less
+  noisy.
+
 * Large grammer fixes for documentation.
 
 * Miscellaneous pylint cleanups, including whitespace fixes.
@@ -37,9 +42,26 @@ pkgcore 0.3:
 * old style virtual providers from the vdb are now preferred for newer versions
   over profile defined defaults.
 
-* mass resolver cleanup; report any regressions to ferringb
-
 * added profile package.use support.
+
+* ticket 80; $REPO_LOC/profiles/categories awareness; if the file exists, the
+  repo uses it by default.
+
+* resolver refactoring; report any regressions to ferringb.  Integrated in
+  events tracking, so that the choices/events explaining the path the resolver
+  took are recorded- via this, we actually have sane "resolution failed due to"
+  messages, adding emerge -pt/paludis --show-reasons is doable without hacking
+  the resolver directly, spotting which pkgs need to be unmasked/keyworded for
+  a specific request to be satisfied, etc, all of it is doable without having
+  to insert code directly into the resolver.  Anyone interested in adding these
+  featues, please talk to harring.
+  Worth noting, the events api and data structs for the resolver are still a 
+  work in process- meaning the api is not guranteed to stay stable at least
+  till the next minor release.
+
+* old style virtual pkgs are no longer combined into one with multiple 
+  providers; aside from simplifying things, this fixes a few annoying resolution
+  failures involving virtual/modutils.
 
 
 pkgcore 0.2.14:

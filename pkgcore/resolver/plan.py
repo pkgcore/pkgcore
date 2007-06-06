@@ -64,11 +64,13 @@ def lowest_iter_sort(l, pkg_grabber=pkg_grabber):
 
 class resolver_frame(object):
 
-    __slots__ = ("atom", "choices", "mode", "start_point", "dbs",
-        "depth", "drop_cycles", "__weakref__", "ignored", "vdb_limited")
+    __slots__ = ("parent", "atom", "choices", "mode", "start_point", "dbs",
+        "depth", "drop_cycles", "__weakref__", "ignored", "vdb_limited",
+        "events", "succeeded")
 
-    def __init__(self, mode, atom, choices, dbs, start_point, depth,
+    def __init__(self, parent, mode, atom, choices, dbs, start_point, depth,
         drop_cycles, ignored=False, vdb_limited=False):
+        self.parent = parent
         self.atom = atom
         self.choices = choices
         self.dbs = dbs
@@ -78,16 +80,30 @@ class resolver_frame(object):
         self.drop_cycles = drop_cycles
         self.ignored = False
         self.vdb_limited = vdb_limited
+        self.events = []
+        self.succeeded = None
+
+    def reduce_solutions(self, nodes):
+        self.events.append(("reduce", nodes))
+        return self.choices.reduce_atoms(nodes)
 
     def __str__(self):
-        cpv = self.current_pkg.cpvstr
-        pkg = getattr(self.current_pkg.repo, 'repo_id', None)
-        if pkg is not None:
-            pkg = "%s::%s" % (cpv, pkg)
+        pkg = self.current_pkg
+        if pkg is None:
+            pkg = "exhausted"
         else:
-            pkg = str(self.current_pkg)
-        return "frame: mode %r: atom %s: current %s%s%s%s" % \
-            (self.mode, self.atom, pkg,
+            cpv = pkg.cpvstr
+            pkg = getattr(pkg.repo, 'repo_id', None)
+            if pkg is not None:
+                pkg = "%s::%s" % (cpv, pkg)
+            else:
+                pkg = str(pkg)
+        if self.succeeded is not None:
+            result = ": %s" % (self.succeeded and "succeeded" or "failed")
+        else:
+            result = ""
+        return "frame%s: mode %r: atom %s: current %s%s%s%s" % \
+            (result, self.mode, self.atom, pkg,
             self.drop_cycles and ": cycle dropping" or '',
             self.ignored and ": ignored" or '',
             self.vdb_limited and ": vdb limited" or '')
@@ -108,6 +124,12 @@ class resolver_stack(deque):
     filter_ignored = staticmethod(
         partial(ifilterfalse, operator.attrgetter("ignored")))
 
+    # this *has* to be a property, else it creates a cycle.
+    parent = property(lambda s:s)
+    
+    def __init__(self):
+        self.events = []
+
     def __str__(self):
         return 'resolver stack:\n  %s' % '\n  '.join(str(x) for x in self)
 
@@ -116,13 +138,25 @@ class resolver_stack(deque):
             tuple(repr(x) for x in self))
 
     def add_frame(self, mode, atom, choices, dbs, start_point, drop_cycles, vdb_limited=False):
-        frame = self.frame_klass(mode, atom, choices, dbs, start_point,
+        if not self:
+            parent = self
+        else:
+            parent = self[-1]
+        frame = self.frame_klass(parent, mode, atom, choices, dbs, start_point,
             self.depth + 1, drop_cycles, vdb_limited=vdb_limited)
         self.append(frame)
         return frame
 
-    def pop_frame(self):
-        self.pop()
+    def add_event(self, event):
+        if not self:
+            self.events.append(event)
+        else:
+            self[-1].events.append(event)
+
+    def pop_frame(self, result):
+        frame = self.pop()
+        frame.succeeded = bool(result)
+        frame.parent.events.append(frame)
 
     def will_cycle(self, atom, cur_choice, attr, start=0):
         # short cut...
@@ -249,12 +283,21 @@ class merge_plan(object):
     def notify_trying_choice(self, stack, atom, choices):
         dprint("choose for %s%s, %s",
                (stack.depth *2*" ", atom, choices.current_pkg))
+        stack.add_event(('inspecting', choices.current_pkg))
 
     def notify_choice_failed(self, stack, atom, choices, msg, msg_args=()):
         if msg:
-            msg = ' %s' % (msg % msg_args)
-        dprint("choice for %s%s, %s failed: %s",
+            msg = ': %s' % (msg % msg_args)
+        dprint("choice for %s%s, %s failed%s",
             (stack.depth * 2 * ' ', atom, choices.current_pkg, msg))
+#        stack[-1].events.append("failed")
+
+    def notify_choice_succeeded(self, stack, atom, choices, msg='', msg_args=()):
+        if msg:
+            msg = ': %s' % (msg % msg_args)
+        dprint("choice for %s%s, %s succeeded%s",
+            (stack.depth * 2 * ' ', atom, choices.current_pkg, msg))
+#        stack[-1].events.append("succeeded")
 
     def load_vdb_state(self):
         for r in self.livefs_dbs:
@@ -281,7 +324,7 @@ class merge_plan(object):
             ret = self._rec_add_atom(atom, stack, dbs)
             if ret:
                 dprint("failed- %s", ret)
-                return ret
+                return ret, stack.events[0]
             else:
                 self.forced_atoms.add(atom)
 
@@ -291,8 +334,8 @@ class merge_plan(object):
         """check the current stack for cyclical issues; 
         @param stack: current stack, a L{resolver_stack} instance
         @param cur_frame: current frame, a L{resolver_frame} instance
-        @return: True if no issues and resolution should continue, else the value to 
-            return after collapsing the calling frame
+        @return: True if no issues and resolution should continue, else the
+            value to return after collapsing the calling frame
         """
         force_vdb = False
         for frame in stack.slot_cycles(cur_frame, reverse=True):
@@ -306,22 +349,33 @@ class merge_plan(object):
                         # force it to vdb.
                     if cur_frame.current_pkg.repo.livefs:
                         return True
+                    elif cur_frame.current_pkg == frame.current_pkg and \
+                        cur_frame.mode == 'post_rdepends':
+                        # if non vdb and it's a post_rdeps cycle for the cur
+                        # node, exempt it; assuming the stack succeeds,
+                        # it's satisfied
+                        return True
                     force_vdb = True
                     break
                 else:
-                    # should be doing a full walk of the cycle here, seeing if an rdep becomes a dep.
+                    # should be doing a full walk of the cycle here, seeing 
+                    # if an rdep becomes a dep.
                     return None
                 # portage::gentoo -> rysnc -> portage::vdb; let it process it.
                 return True
-            # only need to look at the most recent match; reasoning is simple, logic above forces it to vdb if needed.
+            # only need to look at the most recent match; reasoning is simple,
+            # logic above forces it to vdb if needed.
             break
         if not force_vdb:
             return True
-        # we already know the current pkg isn't livefs; force livefs to sidestep this.
+        # we already know the current pkg isn't livefs; force livefs to
+        # sidestep this.
+        cur_frame.parent.events.append(("cycle", frame, cur_frame, "limiting to vdb"))
         cur_frame.ignored = True
         return self._rec_add_atom(cur_frame.atom, stack,
             self.livefs_dbs, mode=cur_frame.mode,
             drop_cycles = cur_frame.drop_cycles)
+            
 
     def process_dependencies(self, stack, attr, depset):
         failure = []
@@ -349,14 +403,14 @@ class merge_plan(object):
                         failure = None
                         break
 
-                    if cur_frame.choices.reduce_atoms(or_node):
+                    if cur_frame.reduce_solutions(or_node):
                         # pkg changed.
-                        return [[or_node] + failure]
+                        return [failure]
                     continue
                 additions.append(or_node)
                 break
             else: # didn't find any solutions to this or block.
-                cur_frame.choices.reduce_atoms(potentials)
+                cur_frame.reduce_solutions(potentials)
                 return [potentials]
         else: # all potentials were usable.
             return additions, blocks
@@ -436,14 +490,15 @@ class merge_plan(object):
         return conflicts
 
     def notify_viable(self, stack, atom, viable, msg='', pre_solved=False):
-        viable = viable and "processing" or "not viable"
+        t_viable = viable and "processing" or "not viable"
         if pre_solved and viable:
-            viable = "pre-solved"
-        msg = msg and (" "+msg) or ''
+            t_viable = "pre-solved"
+        t_msg = msg and (" "+msg) or ''
         s=''
         if stack:
             s = " for %s " % (stack[-1].atom)
-        dprint("%s%s%s%s%s", (viable.ljust(13), "  "*stack.depth, atom, s, msg))
+        dprint("%s%s%s%s%s", (t_viable.ljust(13), "  "*stack.depth, atom, s, t_msg))
+        stack.add_event(("viable", viable, pre_solved, atom, msg))
 
     def _viable(self, atom, stack, dbs, limit_to_vdb):
         """
@@ -560,7 +615,7 @@ class merge_plan(object):
             self.state.current_state, drop_cycles, vdb_limited=limit_to_vdb)
         ret = self.check_for_cycles(stack, stack.current_frame)
         if ret is not True:
-            stack.pop_frame()
+            stack.pop_frame(ret is None)
             return ret
 
         blocks = []
@@ -601,7 +656,7 @@ class merge_plan(object):
                     failures = ret
                     self.notify_choice_failed(stack, atom, choices,
                         "failed due to %s", (ret,))
-                    choices.reduce_atoms(ret)
+                    stack.current_frame.reduce_solutions(ret)
                     self.state.backtrack(stack.current_frame.start_point)
                     continue
 
@@ -620,9 +675,9 @@ class merge_plan(object):
             if l is False:
                 # this means somehow the node already slipped in.
                 # so we exit now, we are satisfied
-                self.notify_choice_failed(stack, atom, choices,
+                self.notify_choice_succeeded(stack, atom, choices,
                     "already exists in the state plan")
-                stack.pop_frame()
+                stack.pop_frame(True)
                 return None
             elif l is not None:
                 # failure.
@@ -663,7 +718,7 @@ class merge_plan(object):
                 failures = ret
                 self.notify_choice_failed(stack, atom, choices,
                     "failed due to %s", (ret,))
-                choices.reduce_atoms(ret)
+                stack.current_frame.reduce_solutions(ret)
                 self.state.backtrack(stack.current_frame.start_point)
                 continue
 
@@ -687,7 +742,7 @@ class merge_plan(object):
                 failures = ret
                 self.notify_choice_failed(stack, atom, choices,
                     "failed due to %s", (ret,))
-                choices.reduce_atoms(ret)
+                stack.current_frame.reduce_solutions(ret)
                 self.state.backtrack(stack.current_frame.start_point)
                 continue
             # kinky... the request is fully satisfied
@@ -707,12 +762,13 @@ class merge_plan(object):
                 l = self._rec_add_atom(atom, stack, dbs,
                     mode=mode, drop_cycles=True)
                 if not l:
-                    stack.pop_frame()
+                    stack.pop_frame(True)
                     return None
-            stack.pop_frame()
+            stack.pop_frame(False)
             return [atom] + failures
 
-        stack.pop_frame()
+        self.notify_choice_succeeded(stack, atom, choices)
+        stack.pop_frame(True)
         return None
 
     def generate_mangled_blocker(self, choices, blocker):

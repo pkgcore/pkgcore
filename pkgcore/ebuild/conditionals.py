@@ -51,6 +51,9 @@ class DepSet(boolean.AndRestriction):
         @param element_class: class of generated elements
         """
 
+        if not isinstance(element_class, type):
+            # yes, this blocks non new style classes.  touch cookies.
+            raise ValueError("element_class must be a new style class")
 
         sf = object.__setattr__
         sf(self, "_known_conditionals", None)

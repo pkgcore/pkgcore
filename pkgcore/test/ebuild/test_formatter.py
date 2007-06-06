@@ -42,11 +42,32 @@ class BaseFormatterTest(object):
         self.fakeerr = FakeStreamFormatter()
         self.formatter = self.newFormatter()
 
+    @property
+    def verify_formatterClass(self):
+        class state_verifying_class(self.formatterClass):
+            def format(internal_self, *args, **kwds):
+                autoline = self.fakeout.autoline
+                try:
+                    ret = self.formatterClass.format(internal_self, *args, **kwds)
+                except Exception, e:
+                    self.assertEqual(autoline, self.fakeout.autoline, msg=
+                        "exception thrown %s, autoline was %s, now is %s" % (e, autoline, self.fakeout.autoline))
+                    raise
+                self.assertEqual(autoline, self.fakeout.autoline, msg=
+                    "autoline was %s, now is %s" % (autoline, self.fakeout.autoline))
+                return ret
+        return state_verifying_class
+
     def newFormatter(self, **kwargs):
+        disable_method_checks = kwargs.pop("disable_method_checks", False)
         kwargs.setdefault("out", self.fakeout)
         kwargs.setdefault("err", self.fakeerr)
         kwargs.setdefault("verbose", 0)
-        return self.formatterClass(**kwargs)
+        if not disable_method_checks:
+            kls = self.verify_formatterClass
+        else:
+            kls = self.formatterClass
+        return kls(**kwargs)
 
     def assertOut(self, *args, **kwargs):
         stringlist = []
@@ -70,14 +91,6 @@ class BaseFormatterTest(object):
                     'expected', 'actual', lineterm='')))
         self.fakeout.resetstream()
 
-    def test_persistant_autoline(self):
-        origautoline = object()
-        self.fakeout.autoline = origautoline
-        self.formatter = self.newFormatter()
-        self.formatter.format(FakeOp(FakeMutatedPkg('dev-util/diffball-1.1')))
-        self.formatter.end()
-        self.assertEqual(self.fakeout.autoline, origautoline)
-
     def test_end(self):
         """Sub-classes should override this if they print something in end()"""
         self.formatter.format(FakeOp(FakeMutatedPkg('dev-util/diffball-1.1')))
@@ -86,14 +99,14 @@ class BaseFormatterTest(object):
         self.assertOut(suffix=[])
 
 class TestBasicFormatter(BaseFormatterTest, TestCase):
-    formatterClass = staticmethod(BasicFormatter)
+    formatterClass = BasicFormatter
     def test_op(self):
         # Make sure we ignore versions...
         self.formatter.format(FakeOp(FakeMutatedPkg('dev-util/diffball-1.1')))
         self.assertOut('dev-util/diffball')
 
 class TestPkgcoreFormatter(BaseFormatterTest, TestCase):
-    formatterClass = staticmethod(PkgcoreFormatter)
+    formatterClass = PkgcoreFormatter
     def test_op(self):
         # This basically just tests string methods
         self.formatter.format(
@@ -119,7 +132,7 @@ class TestPkgcoreFormatter(BaseFormatterTest, TestCase):
             "dev-util/diffball-1.2::gentoo")
 
 class TestPaludisFormatter(BaseFormatterTest, TestCase):
-    formatterClass = staticmethod(PaludisFormatter)
+    formatterClass = PaludisFormatter
 
     def setUp(self):
         BaseFormatterTest.setUp(self)
@@ -207,7 +220,7 @@ class TestPaludisFormatter(BaseFormatterTest, TestCase):
         self.assertOut('Total: 1 packages (0 new, 1 upgrades, 0 downgrades, 0 in new slots)')
 
 class TestPortageFormatter(BaseFormatterTest, TestCase):
-    formatterClass = staticmethod(PortageFormatter)
+    formatterClass = PortageFormatter
 
     def test_upgrade(self):
         self.formatter.format(

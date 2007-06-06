@@ -252,6 +252,9 @@ def display_failures(out, sequence, first_level=True):
                 display_failures(out, step, False)
             elif step[0] == 'reduce':
                 continue
+            elif step[0] == 'blocker':
+                out.write("blocker %s failed due to %s existing" % (step[1],
+                    ', '.join(str(x) for x in step[2])))
             elif step[0] == 'cycle':
                 out.write("%s cycle on %s: %s" % (step[2].mode, step[2].atom, step[3]))
             elif step[0] == 'viable' and not step[1]:

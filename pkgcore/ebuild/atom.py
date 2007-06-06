@@ -222,7 +222,10 @@ class atom(boolean.AndRestriction):
     locals().update(atom_overrides.iteritems())
 
     def __repr__(self):
-        atom = self.op + self.cpvstr
+        if self.op == '=*':
+            atom = "=%s*" %  self.cpvstr
+        else:
+            atom = self.op + self.cpvstr
         if self.blocks:
             atom = '!' + atom
         attrs = [atom]

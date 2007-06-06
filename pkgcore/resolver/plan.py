@@ -562,6 +562,7 @@ class merge_plan(object):
                 # blocker caught something. yay.
                 dprint("%s blocker %s hit %s for atom %s pkg %s",
                        (stack[-1].mode, x, l, stack[-1].atom, choices.current_pkg))
+                stack.add_event(("blocker", x, l))
                 return [x]
         return None
 

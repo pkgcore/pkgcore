@@ -23,12 +23,12 @@ pkgcore 0.3:
 * Pkgcore formatter (no longer default) output was simplified to be less
   noisy.
 
-* Large grammer fixes for documentation.
+* Large grammar fixes for documentation.
 
 * Miscellaneous pylint cleanups, including whitespace fixes.
 
 * Most of pkgcore.util.* (mainly the non pkgcore-specific bits) have been
-  split out into a seperate package, snakeoil. This includes the relevant cpy
+  split out into a separate package, snakeoil. This includes the relevant cpy
   extensions.
 
 * Triggers are quieter about what they're doing by default.

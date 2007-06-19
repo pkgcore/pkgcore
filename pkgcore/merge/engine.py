@@ -324,3 +324,5 @@ class MergeEngine(object):
     @staticmethod
     def get_uninstall_livefs_intersect(engine, csets):
         return engine._get_livefs_intersect_cset(engine, csets, "uninstall")
+
+    alias_cset = staticmethod(alias_cset)

@@ -76,90 +76,89 @@ econf()
 {
     local ret
     ECONF_SOURCE="${ECONF_SOURCE:-.}"
-    if [ -x "${ECONF_SOURCE}/configure" ]; then
-        if ! hasq autoconfig $RESTRICT; then
-            if [ -e /usr/share/gnuconfig/ ]; then
-                local x
-                for x in $(find ${WORKDIR} -type f '(' -name config.guess -o -name config.sub ')' ); do
-                    echo " * econf: updating ${x/${WORKDIR}\/} with /usr/share/gnuconfig/${x##*/}"
-                    cp -f "/usr/share/gnuconfig/${x##*/}" "${x}"
-                    chmod a+x "${x}"
-                done
-            fi
-        fi
-        if [ ! -z "${CBUILD}" ]; then
-            EXTRA_ECONF="--build=${CBUILD} ${EXTRA_ECONF}"
-        fi
-
-        # if the profile defines a location to install libs to aside from default, pass it on.
-        # if the ebuild passes in --libdir, they're responsible for the conf_libdir fun.
-        LIBDIR_VAR="LIBDIR_${ABI}"
-        if [ -n "${ABI}" -a -n "${!LIBDIR_VAR}" ]; then
-            CONF_LIBDIR="${!LIBDIR_VAR}"
-        fi
-        unset LIBDIR_VAR
-        if [ -n "${CONF_LIBDIR}" ] && [ "${*/--libdir}" == "$*" ]; then
-            if [ "${*/--exec-prefix}" != "$*" ]; then
-                local args="$(echo $*)"
-                local -a pref=($(echo ${args/*--exec-prefix[= ]}))
-                CONF_PREFIX=${pref}
-                [ "${CONF_PREFIX:0:1}" != "/" ] && CONF_PREFIX="/${CONF_PREFIX}"
-            elif [ "${*/--prefix}" != "$*" ]; then
- 				local args="$(echo $*)"
- 				local -a pref=($(echo ${args/*--prefix[= ]}))
- 				CONF_PREFIX=${pref}
-                [ "${CONF_PREFIX:0:1}" != "/" ] && CONF_PREFIX="/${CONF_PREFIX}"
-            else
-                CONF_PREFIX="/usr"
- 			fi
- 			export CONF_PREFIX
-            [ "${CONF_LIBDIR:0:1}" != "/" ] && CONF_LIBDIR="/${CONF_LIBDIR}"
-
-            CONF_LIBDIR_RESULT="${CONF_PREFIX}${CONF_LIBDIR}"
-            for X in 1 2 3; do
-                # The escaping is weird. It will break if you escape the last one.
-                CONF_LIBDIR_RESULT="${CONF_LIBDIR_RESULT//\/\///}"
-            done
-
-            EXTRA_ECONF="--libdir=${CONF_LIBDIR_RESULT} ${EXTRA_ECONF}"
-        fi
-        local EECONF_CACHE
-        echo ${ECONF_SOURCE}/configure \
-            --prefix=/usr \
-            --host=${CHOST} \
-            --mandir=/usr/share/man \
-            --infodir=/usr/share/info \
-            --datadir=/usr/share \
-            --sysconfdir=/etc \
-            --localstatedir=/var/lib \
-            ${EXTRA_ECONF} \
-            ${EECONF_CACHE} \
-            "$@"
-
-        if ! ${ECONF_SOURCE}/configure \
-            --prefix=/usr \
-            --host=${CHOST} \
-            --mandir=/usr/share/man \
-            --infodir=/usr/share/info \
-            --datadir=/usr/share \
-            --sysconfdir=/etc \
-            --localstatedir=/var/lib \
-            ${EXTRA_ECONF} \
-            ${EECONF_CACHE} \
-            "$@" ; then
-
-            if [ -s config.log ]; then
-                echo
-                echo "!!! Please attach the config.log to your bug report:"
-                echo "!!! ${PWD}/config.log"
-            fi
-            die "econf failed"
-        fi
-
-        return $?
-    else
+    if [ ! -x "${ECONF_SOURCE}/configure" ]; then
+        [ -f "${ECONF_SOURCE}/configure" ] && die "configure script isn't executable"
         die "no configure script found"
     fi
+    if ! hasq autoconfig $RESTRICT; then
+        if [ -e /usr/share/gnuconfig/ ]; then
+            local x
+            for x in $(find ${WORKDIR} -type f '(' -name config.guess -o -name config.sub ')' ); do
+                echo " * econf: updating ${x/${WORKDIR}\/} with /usr/share/gnuconfig/${x##*/}"
+                cp -f "/usr/share/gnuconfig/${x##*/}" "${x}"
+                chmod a+x "${x}"
+            done
+        fi
+    fi
+    if [ ! -z "${CBUILD}" ]; then
+        EXTRA_ECONF="--build=${CBUILD} ${EXTRA_ECONF}"
+    fi
+
+    # if the profile defines a location to install libs to aside from default, pass it on.
+    # if the ebuild passes in --libdir, they're responsible for the conf_libdir fun.
+    LIBDIR_VAR="LIBDIR_${ABI}"
+    if [ -n "${ABI}" -a -n "${!LIBDIR_VAR}" ]; then
+        CONF_LIBDIR="${!LIBDIR_VAR}"
+    fi
+    unset LIBDIR_VAR
+    if [ -n "${CONF_LIBDIR}" ] && [ "${*/--libdir}" == "$*" ]; then
+        if [ "${*/--exec-prefix}" != "$*" ]; then
+            local args="$(echo $*)"
+            local -a pref=($(echo ${args/*--exec-prefix[= ]}))
+            CONF_PREFIX=${pref}
+            [ "${CONF_PREFIX:0:1}" != "/" ] && CONF_PREFIX="/${CONF_PREFIX}"
+        elif [ "${*/--prefix}" != "$*" ]; then
+            local args="$(echo $*)"
+ 			local -a pref=($(echo ${args/*--prefix[= ]}))
+ 			CONF_PREFIX=${pref}
+            [ "${CONF_PREFIX:0:1}" != "/" ] && CONF_PREFIX="/${CONF_PREFIX}"
+        else
+            CONF_PREFIX="/usr"
+ 	    fi
+ 		export CONF_PREFIX
+        [ "${CONF_LIBDIR:0:1}" != "/" ] && CONF_LIBDIR="/${CONF_LIBDIR}"
+
+        CONF_LIBDIR_RESULT="${CONF_PREFIX}${CONF_LIBDIR}"
+        for X in 1 2 3; do
+            # The escaping is weird. It will break if you escape the last one.
+            CONF_LIBDIR_RESULT="${CONF_LIBDIR_RESULT//\/\///}"
+        done
+
+        EXTRA_ECONF="--libdir=${CONF_LIBDIR_RESULT} ${EXTRA_ECONF}"
+    fi
+    local EECONF_CACHE
+    echo ${ECONF_SOURCE}/configure \
+        --prefix=/usr \
+        --host=${CHOST} \
+        --mandir=/usr/share/man \
+        --infodir=/usr/share/info \
+        --datadir=/usr/share \
+        --sysconfdir=/etc \
+        --localstatedir=/var/lib \
+        ${EXTRA_ECONF} \
+        ${EECONF_CACHE} \
+        "$@"
+
+    if ! ${ECONF_SOURCE}/configure \
+        --prefix=/usr \
+        --host=${CHOST} \
+        --mandir=/usr/share/man \
+        --infodir=/usr/share/info \
+        --datadir=/usr/share \
+        --sysconfdir=/etc \
+        --localstatedir=/var/lib \
+        ${EXTRA_ECONF} \
+        ${EECONF_CACHE} \
+        "$@" ; then
+
+        if [ -s config.log ]; then
+            echo
+            echo "!!! Please attach the config.log to your bug report:"
+            echo "!!! ${PWD}/config.log"
+        fi
+        die "econf failed"
+    fi
+    return $?
 }
 
 strip_duplicate_slashes ()
@@ -174,6 +173,7 @@ strip_duplicate_slashes ()
 einstall()
 {
     # CONF_PREFIX is only set if they didn't pass in libdir above
+    local LOCAL_EXTRA_EINSTALL="${EXTRA_EINSTALL}"
     LIBDIR_VAR="LIBDIR_${ABI}"
     if [ -n "${ABI}" -a -n "${!LIBDIR_VAR}" ]; then
         CONF_LIBDIR="${!LIBDIR_VAR}"
@@ -182,7 +182,7 @@ einstall()
     if [ -n "${CONF_LIBDIR}" ] && [ "${CONF_PREFIX:-unset}" != "unset" ]; then
         EI_DESTLIBDIR="${D}/${CONF_PREFIX}/${CONF_LIBDIR}"
         EI_DESTLIBDIR="$(strip_duplicate_slashes ${EI_DESTLIBDIR})"
-        EXTRA_EINSTALL="libdir=${EI_DESTLIBDIR} ${EXTRA_EINSTALL}"
+        LOCAL_EXTRA_EINSTALL="libdir=${EI_DESTLIBDIR}"
         unset EI_DESTLIBDIR
     fi
 
@@ -194,7 +194,7 @@ einstall()
           		localstatedir=${D}/var/lib \
                 mandir=${D}/usr/share/man \
                 sysconfdir=${D}/etc \
-                ${EXTRA_EINSTALL} \
+                ${LOCAL_EXTRA_EINSTALL} \
                 "$@" install
         fi
         make prefix=${D}/usr \

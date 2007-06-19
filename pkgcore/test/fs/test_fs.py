@@ -6,6 +6,8 @@ from pkgcore.fs import fs
 from pkgcore.interfaces.data_source import data_source
 from pkgcore.chksum import get_chksums
 from pkgcore.test import TestCase
+from snakeoil.test.mixins import tempdir_decorator
+from snakeoil.osutils import pjoin
 
 class base(object):
 
@@ -35,6 +37,7 @@ class base(object):
         # might seem odd, but done this way to avoid the any potential
         # false positives from str's hash returning the same
         d = {self.make_obj("/tmp/foo"):None}
+        # ensure it's accessible without a KeyError
         d[self.make_obj("/tmp/foo")]
 
     def test_eq(self):
@@ -46,6 +49,25 @@ class base(object):
         o = self.make_obj()
         for attr in o.__attrs__:
             self.assertRaises(AttributeError, setattr, o, attr, "monkies")
+
+    @tempdir_decorator
+    def test_realpath(self):
+        # just to be safe, since this could trash some tests.
+        self.dir = os.path.realpath(self.dir)
+        os.mkdir(pjoin(self.dir, "test1"))
+        obj = self.make_obj(location=pjoin(self.dir, "test1", "foon"))
+        self.assertIdentical(obj, obj.realpath())
+        os.symlink(pjoin(self.dir, "test1"), pjoin(self.dir, "test2"))
+        obj = self.make_obj(location=pjoin(self.dir, "test2", "foon"))
+        new_obj = obj.realpath()
+        self.assertNotIdentical(obj, new_obj)
+        self.assertEqual(new_obj.location, pjoin(self.dir, "test1", "foon"), reflective=False)
+        os.symlink(pjoin(self.dir, "test3"), pjoin(self.dir, "nonexistant"))
+        obj = self.make_obj(pjoin(self.dir, "nonexistant", "foon"))
+        # path is incomplete; should still realpath it.
+        new_obj = obj.realpath()
+        self.assertNotIdentical(obj, new_obj)
+        self.assertEqual(new_obj.location, pjoin(self.dir, "test3", "foon"))
 
 
 class Test_fsFile(TestCase, base):
@@ -74,7 +96,7 @@ class Test_fsLink(TestCase, base):
     kls = fs.fsLink
 
     def make_obj(self, location="/tmp/foo", **kwds):
-        target = kwds.pop("target", os.path.join(location, "target"))
+        target = kwds.pop("target", pjoin(location, "target"))
         kwds.setdefault("strict", False)
         return self.kls(location, target, **kwds)
 

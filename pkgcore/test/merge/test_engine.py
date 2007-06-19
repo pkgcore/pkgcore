@@ -1,0 +1,101 @@
+# Copyright: 2007 Brian Harring <ferringb@gmail.com>
+# License: GPL2
+
+import os
+from pkgcore.fs.contents import contentsSet
+from pkgcore.fs import livefs
+from pkgcore.merge import triggers, engine
+from snakeoil.osutils import pjoin
+
+from pkgcore.test import TestCase
+from snakeoil.test.mixins import TempDirMixin, tempdir_decorator
+from pkgcore.test.fs.fs_util import fsFile, fsDir, fsSymlink
+from pkgcore.test.merge.util import fake_engine, fake_trigger, fake_reporter
+
+class fake_pkg(object):
+
+    def __init__(self, contents, label=None):
+        self.label = label
+        self.contents = contents
+
+    def __str__(self):
+        return "fake_pkg: %s" % self.label
+
+
+class Test_MergeEngine(TestCase):
+
+    simple_cset = list(fsFile(x) for x in ("/foon", "/usr/dar", "/blah"))
+    simple_cset.extend(fsDir(x) for x in ("/usr", "/usr/lib"))
+    simple_cset.append(fsSymlink("/usr/lib/blah", "../../blah"))
+    simple_cset.append(fsSymlink("/broken-symlink", "dar"))
+    simple_cset = contentsSet(simple_cset, mutable=False)
+    
+    kls = engine.MergeEngine
+
+    def assertCsetEqual(self, cset1, cset2):
+        if not isinstance(cset1, contentsSet):
+            cset1 = contentsSet(cset1)
+        if not isinstance(cset2, contentsSet):
+            cset2 = contentsSet(cset2)
+        self.assertEqual(cset1, cset2, reflective=False)
+
+    def assertCsetNotEqual(self, cset1, cset2):
+        if not isinstance(cset1, contentsSet):
+            cset1 = contentsSet(cset1)
+        if not isinstance(cset2, contentsSet):
+            cset2 = contentsSet(cset2)
+        self.assertNotEqual(cset1, cset2, reflective=False)
+
+    def run_cset(self, target, engine, *args):
+        return getattr(self.kls, target)(engine, engine.csets, *args)
+
+    def test_generate_offset_cset(self):
+        engine = fake_engine(csets={"new_cset":self.simple_cset},
+            offset='/')
+        def run(engine, cset):
+            return self.run_cset('generate_offset_cset', engine,
+                lambda e, c:c[cset])
+
+        self.assertCsetEqual(self.simple_cset, run(engine, 'new_cset'))
+        engine.offset = '/foon/'
+        new_cset = run(engine, 'new_cset')
+        self.assertCsetEqual(self.simple_cset.insert_offset(engine.offset),
+            run(engine, 'new_cset'))
+
+    def test_get_pkg_contents(self):
+        new_cset = self.kls.get_pkg_contents(None, None, fake_pkg(self.simple_cset))
+        self.assertCsetEqual(self.simple_cset, new_cset)
+        # must differ; shouldn't be modifying the original cset
+        self.assertNotIdentical(self.simple_cset, new_cset)
+
+    def test_get_remove_cset(self):
+        files = contentsSet(self.simple_cset.iterfiles(invert=True))
+        engine = fake_engine(csets={'new_cset':files,
+            'old_cset':self.simple_cset})
+        self.assertCsetEqual(self.simple_cset.iterfiles(),
+            self.run_cset('get_remove_cset', engine))
+
+    def test_get_replace_cset(self):
+        files = contentsSet(self.simple_cset.iterfiles(invert=True))
+        engine = fake_engine(csets={'new_cset':files,
+            'old_cset':self.simple_cset})
+        self.assertCsetEqual(files,
+            self.run_cset('get_replace_cset', engine))
+
+    @tempdir_decorator
+    def test__get_livefs_intersect_cset(self):
+        old_cset = self.simple_cset.insert_offset(self.dir)
+        # have to add it; scan adds the root node
+        old_cset.add(fsDir(self.dir))
+        os.mkdir(pjoin(self.dir, "usr"))
+        open(pjoin(self.dir, "usr", "dar"), 'w')
+        open(pjoin(self.dir, 'foon'), 'w')
+        # note that this *is* a sym in the cset; adding this specific
+        # check so that if the code differs, the test breaks, and the tests
+        # get updated (additionally, folks may not be aware of the potential)
+        open(pjoin(self.dir, 'broken-symlink'), 'w')
+        engine = fake_engine(csets={'test':old_cset})
+        existant = livefs.scan(self.dir)
+        generated = self.run_cset('_get_livefs_intersect_cset', engine,
+            'test')
+        self.assertEqual(generated, existant)

@@ -304,8 +304,7 @@ def unmerge_contents(cset, offset=None, callback=lambda obj:None):
                 raise
     # this is a fair sight faster then using sorted/reversed
     l = list(iterate(cset.iterdirs()))
-    l.sort()
-    l.reverse()
+    l.sort(reverse=True)
     for x in l:
         try:
             os.rmdir(x.location)

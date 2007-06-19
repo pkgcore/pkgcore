@@ -7,7 +7,7 @@ long chains of restrictions into Nlog N, or generating
 restrictions on the fly
 """
 
-__all__ = ("delegate")
+__all__ = ("delegate",)
 from pkgcore.restrictions import restriction
 from pkgcore.restrictions import packages
 

@@ -7,7 +7,7 @@ from itertools import izip
 
 from pkgcore.test import TestCase, SkipTest
 from snakeoil.test import mixins
-from snakeoil.currying import partial, post_curry
+from snakeoil.currying import post_curry
 from snakeoil.osutils import pjoin, ensure_dirs, normpath
 
 from pkgcore.fs import fs
@@ -15,42 +15,7 @@ from pkgcore import spawn
 from pkgcore.merge import triggers, const
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs.livefs import gen_obj, scan
-
-class fake_trigger(triggers.base):
-
-    def __init__(self, **kwargs):
-        self._called = []
-        if isinstance(kwargs.get('_hooks', False), basestring):
-            kwargs['_hooks'] = (kwargs['_hooks'],)
-        for k, v in kwargs.iteritems():
-            if callable(v):
-                v = patrial(v, self)
-            setattr(self, k, v)
-
-    def trigger(self, *args):
-        self._called.append(args)
-
-
-class fake_engine(object):
-
-    def __init__(self, **kwargs):
-        kwargs.setdefault('observer', None)
-        self._triggers = []
-        for k, v in kwargs.iteritems():
-            if callable(v):
-                v = partial(v, self)
-            setattr(self, k, v)
-
-    def add_trigger(self, hook_point, trigger, required_csets):
-        if hook_point in getattr(self, "blocked_hooks", []):
-            raise KeyError(hook_point)
-        self._triggers.append((hook_point, trigger, required_csets))
-
-
-class fake_reporter(object):
-    def __init__(self, **kwargs):
-        for k, v in kwargs.iteritems():
-            setattr(self, k, v)
+from pkgcore.test.merge.util import fake_trigger, fake_engine, fake_reporter
 
 
 class TestBase(TestCase):

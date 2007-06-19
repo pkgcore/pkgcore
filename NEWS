@@ -3,6 +3,15 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.3.1:
+
+* ticket 86; export FILE for portage_conf FETCHCOMMAND/RESUMECOMMAND support,
+  convert from spawn_bash to spawn, add some extra error detection
+
+* Correct cleanup of unknown state ebp processors; basically discard them if
+  they fail in any way.  Cleanup inherit error msg when under ebd.
+
+
 pkgcore 0.3:
 
 * pregen has moved into pmaint regen.

@@ -37,6 +37,14 @@ class contentsSet(object):
             self._dict.update(check_instance(x) for x in initial)
         self.mutable = mutable
 
+    def __str__(self):
+        return "%s([%s])" % (self.__class__.__name__,
+            ', '.join(str(x) for x in self))
+
+    def __repr__(self):
+        return "%s([%s])" % (self.__class__.__name__,
+            ', '.join(repr(x) for x in self))
+
     def add(self, obj):
 
         """

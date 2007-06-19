@@ -7,15 +7,16 @@ filesystem entry abstractions
 
 import stat
 from pkgcore.chksum import get_handlers, get_chksums
-from os.path import sep as path_seperator, abspath
+from os.path import sep as path_seperator, realpath, abspath
 from pkgcore.interfaces.data_source import local_source
 from snakeoil.mappings import LazyFullValLoadDict
 
 # goofy set of classes representating the fs objects pkgcore knows of.
 
 __all__ = [
-    "fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo", "isdir", "isreg",
-    "isfs_obj"]
+    "fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo", "isdir", "isreg"]
+__all__.extend("is%s" % x for x in ("dir", "reg", "sym", "fifo", "dev",
+    "fs_obj"))
 
 # following are used to generate appropriate __init__, wiped from the
 # namespace at the end of the module
@@ -97,6 +98,18 @@ class fsBase(object):
 
     def __ne__(self, other):
         return not self == other
+
+    def realpath(self, cache=None):
+        """calculate the abspath/canonicalized path for this entry, returning
+        a new instance if the path differs.
+        
+        @keyword cache: Either None (no cache), or a data object of path->
+          resolved.  Currently unused, but left in for forwards compatibility
+        """
+        new_path = realpath(self.location)
+        if new_path == self.location:
+            return self
+        return self.change_attributes(location=new_path)
 
 
 known_handlers = tuple(get_handlers())
@@ -244,12 +257,18 @@ class fsFifo(fsBase):
     def __repr__(self):
         return "fifo:%s" % self.location
 
+def mk_check(target, name):
+    def f(obj):
+        return isinstance(obj, target)
+    f.__name__ = name
+    f.__doc__ = "return True if obj is an instance of L{%s}, else False" % target.__name__
+    return f
 
-isdir    = lambda x: isinstance(x, fsDir)
-isreg    = lambda x: isinstance(x, fsFile)
-issym    = lambda x: isinstance(x, fsSymlink)
-isfifo   = lambda x: isinstance(x, fsFifo)
-isdev    = lambda x: isinstance(x, fsDev)
-isfs_obj = lambda x: isinstance(x, fsBase)
+isdir    = mk_check(fsDir, 'isdir')
+isreg    = mk_check(fsFile, 'isreg')
+issym    = mk_check(fsSymlink, 'issym')
+isfifo   = mk_check(fsFifo, 'isfifo')
+isdev    = mk_check(fsDev, 'isdev')
+isfs_obj = mk_check(fsBase, 'isfs_obj')
 
-del raw_init_doc, gen_doc_additions, _fs_doc
+del raw_init_doc, gen_doc_additions, _fs_doc, mk_check

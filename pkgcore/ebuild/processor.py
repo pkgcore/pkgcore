@@ -119,24 +119,15 @@ def release_ebuild_processor(ebp):
     except ValueError:
         return False
 
-    try:
-        inactive_ebp_list.index(ebp)
-    except ValueError:
-        # if it's a fakeroot'd process, we throw it away.
-        # it's not useful outside of a chain of calls
-        if not ebp.onetime():
-            inactive_ebp_list.append(ebp)
-        else:
-            del ebp
-        return True
-
-    # if it makes it this far, that means ebp was already in the inactive list.
-    # which is indicative of an internal fsck up.
-    print ("ebp was requested to be free'd, yet it already is claimed "
-           "inactive _and_ was in the active list")
-    print "this means somethings horked, badly"
-    traceback.print_stack()
-    return False
+    assert ebp not in inactive_ebp_list
+    # if it's a fakeroot'd process, we throw it away.
+    # it's not useful outside of a chain of calls
+    if ebp.onetime() or ebp.locked:
+        # ok, so the thing is not reusable either way.
+        ebp.shutdown_processor()
+    else:
+        inactive_ebp_list.append(ebp)
+    return True
 
 
 class ProcessingInterruption(Exception):
@@ -191,6 +182,7 @@ class EbuildProcessor(object):
             result in nastyness.
         """
 
+        self.lock()
         self.ebd = EBUILD_DAEMON_PATH
         spawn_opts = {}
 
@@ -274,6 +266,7 @@ class EbuildProcessor(object):
             self.__sandbox_log = self.read().split()[0]
         self.dont_export_vars = self.read().split()
         # locking isn't used much, but w/ threading this will matter
+        self.unlock()
 
 
     def prep_phase(self, phase, env, sandbox=None, logging=None):
@@ -641,7 +634,7 @@ class EbuildProcessor(object):
         # so dig through self.__class__ for it. :P
 
         handlers = {"request_sandbox_summary":self.__class__.sandbox_summary}
-        f = post_curry(chuck_UnhandledCommand, False)
+        f = chuck_UnhandledCommand
         for x in ("prob", "env_receiving_failed", "failed"):
             handlers[x] = f
         del f
@@ -657,6 +650,8 @@ class EbuildProcessor(object):
                     raise TypeError(additional_commands[x])
 
             handlers.update(additional_commands)
+
+        self.lock()
 
         try:
             while True:
@@ -674,6 +669,7 @@ class EbuildProcessor(object):
 
         except FinishedProcessing, fp:
             v = fp.val
+            self.unlock()
             return v
 
 

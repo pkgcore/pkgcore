@@ -6,7 +6,7 @@ fetcher class that pulls files via executing another program to do the fetching
 """
 
 import os
-from pkgcore.spawn import spawn_bash, is_userpriv_capable
+from pkgcore.spawn import spawn, is_userpriv_capable
 from pkgcore.os_data import portage_uid, portage_gid
 from pkgcore.fetch import errors, base, fetchable
 from pkgcore.config import ConfigHint
@@ -59,8 +59,14 @@ class fetcher(base.fetcher):
             new_command = new_command.replace("$DISTDIR", self.distdir)
             new_command = new_command.replace("${URI}", "%(URI)s")
             new_command = new_command.replace("$URI", "%(URI)s")
+            new_command = new_command.replace("${FILE}", "%(FILE)s")
+            new_command = new_command.replace("$FILE", "%(FILE)s")
             if new_command == string:
                 raise MalformedCommand(string)
+            try:
+                new_command % {"URI":"blah", "FILE":"blah"}
+            except KeyError, k:
+                raise Malformedcommand("%s: unexpected key %s" % (command, k.args[0]))
             return new_command
 
         self.command = rewrite_command(command)
@@ -100,6 +106,7 @@ class fetcher(base.fetcher):
                 "target must be fetchable instance/derivative: %s" % target)
 
         fp = pjoin(self.distdir, target.filename)
+        filename = os.path.basename(fp)
 
         uri = iter(target.uri)
         if self.userpriv and is_userpriv_capable():
@@ -132,7 +139,7 @@ class fetcher(base.fetcher):
                     # verify portion of the loop handles this. iow,
                     # don't trust their exit code. trust our chksums
                     # instead.
-                    spawn_bash(command % {"URI":u}, **extra)
+                    spawn(command % {"URI":u, "FILE":filename}, **extra)
                 attempts -= 1
 
         except StopIteration:

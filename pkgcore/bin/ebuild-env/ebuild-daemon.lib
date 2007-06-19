@@ -31,8 +31,9 @@ internal_inherit() {
     elif [ "$line" == "transfer" ]; then
         listen line;
         eval "$line" || die "failed evaluating eclass $x on an inherit transfer"
+    elif [ "$line" == "failed" ]; then
+        die "inherit for $x failed"
     else
-        speak "failed"
         die "unknown inherit command from pythonic side, '$line' for eclass $x"
     fi
 }

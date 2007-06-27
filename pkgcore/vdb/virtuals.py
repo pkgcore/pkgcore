@@ -60,7 +60,7 @@ def _get_mtimes(loc):
     return d
 
 def _write_mtime_cache(mtimes, data, location):
-    old = os.umask(0115)
+    old = os.umask(0113)
     try:
         if not ensure_dirs(os.path.dirname(location),
             gid=portage_gid, mode=0775):

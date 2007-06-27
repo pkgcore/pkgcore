@@ -5,13 +5,15 @@
 implementation of the standard PORTDIR + PORTDIR_OVERLAY repository stacking
 """
 
-from pkgcore.repository import multiplex, prototype
+from pkgcore.repository import prototype
 from pkgcore.config import ConfigHint, errors
 from pkgcore.ebuild import repository
 
 from snakeoil.lists import unstable_unique
+from snakeoil.compatibility import all
+from itertools import chain
 
-class OverlayRepo(multiplex.tree):
+class OverlayRepo(prototype.tree):
 
     """
     Collapse multiple trees into one.
@@ -38,25 +40,47 @@ class OverlayRepo(multiplex.tree):
             raise errors.InstantiationError(
                 "Must specify at least two pathes to ebuild trees to overlay")
 
-        multiplex.tree.__init__(self, *trees)
+        self.trees = tuple(trees)
+        self._rv_trees = tuple(reversed(trees))
+        self._version_owners = {}
+        prototype.tree.__init__(self)
 
-    def _get_categories(self, *category):
-        return tuple(
-            unstable_unique(multiplex.tree._get_categories(self, *category)))
+    def _get_categories(self, category=None):
+        if category is not None:
+            updates = (tree.categories.get(category) for tree in self.trees)
+            updates = [x for x in updates if x is not None]
+            if not updates:
+                raise KeyError(category)
+        else:
+            updates = [tree.categories for tree in self.trees]
+        return tuple(set(chain(*updates)))
 
     def _get_packages(self, category):
-        return tuple(unstable_unique(multiplex.tree._get_packages(self,
-                                                                  category)))
+        updates = (tree.packages.get(category) for tree in self.trees)
+        updates = [x for x in updates if x is not None]
+        if not updates:
+            raise KeyError(category)
+        return tuple(set(chain(*updates)))
 
     def _get_versions(self, catpkg):
-        return tuple(unstable_unique(multiplex.tree._get_versions(self,
-                                                                  catpkg)))
-    # we restore the old prototype, since the filtering logic is there.
-    __iter__ = prototype.tree.__iter__
+        ver_owners = {}
+        fails = 0
+        i = iter(self._rv_trees)
+        for tree in self._rv_trees:
+            new_vers = tree.versions.get(catpkg)
+            if new_vers is not None:
+                ver_owners.update((v, tree) for v in new_vers)
+            else:
+                fails += 1
+        if fails == len(self._rv_trees):
+            raise KeyError(catpkg)
+        self._version_owners[catpkg] = tuple(ver_owners.iteritems())
+        return tuple(ver_owners)
 
-    def itermatch(self, *a, **kwds):
-        s = set()
-        for pkg in multiplex.tree.itermatch(self, *a, **kwds):
-            if pkg.cpvstr not in s:
+    def _internal_gen_candidates(self, candidates, sorter):
+        for cp in candidates:
+            if cp not in self.versions:
+                self.versions.get(cp)
+            for pkg in sorter(repo[cp + (ver,)]
+                for ver, repo in self._version_owners.get(cp, ())):
                 yield pkg
-                s.add(pkg.cpvstr)

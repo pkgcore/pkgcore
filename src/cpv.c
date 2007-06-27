@@ -133,7 +133,7 @@ pkgcore_cpv_parse_category(const char *start, int null_is_end)
         }
         if(end) {
             p = end;
-        } else if (!end) {
+        } else {
             // no '/', must be '\0'
             if('\0' != *p)
                 return NULL;

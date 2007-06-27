@@ -11,6 +11,8 @@ pkgcore 0.3.1:
 * Correct cleanup of unknown state ebp processors; basically discard them if
   they fail in any way.  Cleanup inherit error msg when under ebd.
 
+* Correct permission issue for vdb virtuals cache.
+
 
 pkgcore 0.3:
 

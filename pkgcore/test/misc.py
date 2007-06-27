@@ -12,6 +12,7 @@ from pkgcore.repository.util import SimpleTree
 from pkgcore.package.metadata import factory
 from pkgcore.ebuild.misc import collapsed_restrict_to_data
 from pkgcore.restrictions.packages import AlwaysTrue
+from pkgcore import plugin
 
 default_arches = set(["x86", "ppc", "amd64", "ia64"])
 
@@ -88,3 +89,25 @@ class FakePkg(FakePkgBase):
         object.__setattr__(self, "restrict", DepSet(restrict, str))
         object.__setattr__(self, "use", set(use))
         object.__setattr__(self, "iuse", set(iuse))
+
+
+class DisablePlugins(object):
+
+    default_state = {}
+    wipe_plugin_state = True
+
+    def force_plugin_state(self, wipe=True, **packages):
+        if wipe:
+            plugin._cache.clear()
+        plugin._cache.update(packages)
+
+    def setUp(self):
+        self._plugin_orig_initialize = plugin.initialize_cache
+        self._plugin_orig_cache = plugin._cache.copy()
+        if self.wipe_plugin_state:
+            plugin._cache = {}
+        plugin.initialize_cache = lambda p:()
+
+    def tearDown(self):
+        plugin._cache = self._plugin_orig_cache
+        plugin.initialize_cache = self._plugin_orig_initialize

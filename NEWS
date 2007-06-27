@@ -13,6 +13,9 @@ pkgcore 0.3.1:
 
 * Correct permission issue for vdb virtuals cache.
 
+* ticket 84; rework overlay internals so that sorting order can't accidentally
+  expose a version masked by a higher priority repository in an overlay stack.
+
 
 pkgcore 0.3:
 

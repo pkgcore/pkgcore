@@ -165,7 +165,7 @@ class Failure(ValueError):
     """Raised internally to indicate an "expected" failure condition."""
 
 
-def unmerge(out, err, vdb, tokens, options, world_set=None):
+def unmerge(out, err, vdb, tokens, options, formatter, world_set=None):
     """Unmerge tokens. hackish, should be rolled back into the resolver"""
     all_matches = set()
     for token in tokens:
@@ -302,7 +302,7 @@ def main(options, out, err):
                 return 1
         try:
             unmerge(
-                out, err, vdb, options.targets, options, world_set)
+                out, err, vdb, options.targets, options, formatter, world_set)
         except (parserestrict.ParseError, Failure), e:
             out.error(str(e))
             return 1

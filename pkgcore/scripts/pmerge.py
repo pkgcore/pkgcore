@@ -43,7 +43,7 @@ class OptionParser(commandline.OptionParser):
             help=\
 """enable preloading of the installed packages database
 This causes the resolver to work with a complete graph, thus disallowing
-actions that confict with installed packages.  If disabled, it's possible
+actions that conflict with installed packages.  If disabled, it's possible
 for the requested action to conflict with already installed dependencies
 that aren't involved in the graph of the requested operation""")
 

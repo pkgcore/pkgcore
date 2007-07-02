@@ -3,6 +3,11 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.3.2:
+
+* Stop installing pregen symlink; functionality moved to pmaint regen.
+
+
 pkgcore 0.3.1:
 
 * ticket 86; export FILE for portage_conf FETCHCOMMAND/RESUMECOMMAND support,

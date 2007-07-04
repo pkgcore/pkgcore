@@ -86,6 +86,9 @@ a depends on b, and b depends on a, with neither built is an example""")
             default='portage',
             help='which formatter to output --pretend or --ask output through. '
             'valid values are: %s' % (', '.join(formatters),))
+        self.add_option('--domain', action='callback', type='string',
+            callback=commandline.config_callback, callback_args=('domain',),
+            help='specify which domain to use; else uses the "default" domain')
         self.add_option('--verbose', '-v', action='store_true',
             help="be more verbose about the buildplan. Currently only "
             'supported by the portage formatter')
@@ -284,7 +287,9 @@ def main(options, out, err):
     if options.debug:
         resolver.plan.limiters.add(None)
 
-    domain = config.get_default('domain')
+    domain = options.domain
+    if domain is None:
+        domain = config.get_default('domain')
     vdb = domain.all_vdbs
 
     formatter = formatters[options.formatter](out=out, err=err,

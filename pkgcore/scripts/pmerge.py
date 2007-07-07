@@ -85,12 +85,9 @@ a depends on b, and b depends on a, with neither built is an example""")
             callback=commandline.config_callback,
             callback_args=('pmerge_formatter',),
             help='which formatter to output --pretend or --ask output through.')
-        self.add_option('--verbose', '-v', action='store_true',
-            help="be more verbose about the buildplan. Currently only "
-            'supported by the portage formatter')
-        self.add_option('--quiet', '-q', action='store_true',
-            help="be quieter about the buildplan. "
-            "*Not* the same as omitting verbose")
+        self.add_option('--domain', action='callback', type='string',
+            callback=commandline.config_callback, callback_args=('domain',),
+            help='specify which domain to use; else uses the "default" domain')
 
     def check_values(self, options, args):
         options, args = commandline.OptionParser.check_values(

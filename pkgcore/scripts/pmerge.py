@@ -296,7 +296,7 @@ def main(options, out, err):
     vdb = domain.all_vdbs
 
     formatter = options.formatter(out=out, err=err,
-        verbose=options.verbose, use_expand=domain.use_expand,
+        use_expand=domain.use_expand,
         use_expand_hidden=domain.use_expand_hidden)
 
     # This mode does not care about sets and packages so bypass all that.

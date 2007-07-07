@@ -4,8 +4,8 @@ Atom Syntax
 pkgcore supports an extended form of atom syntax- examples are provided below.
 
 This form can be used in configuration files, but in doing so portage will have
-issues with the next syntax- thus if you're after maintaining configuration
-compatibility, limit usage of the extended syntax to commandline only.
+issues with the syntax, so if you want to maintain configuration
+compatibility, limit your usage of the extended syntax to the commandline only.
 
 ===============  =========================================================
 token            result
@@ -35,6 +35,9 @@ Use Dep atoms
 http://bugs.gentoo.org/2272 has the details, but a use dep atom is basically a
 normal atom that is able to force/disable flags on the target atom.  Portage
 currently doesn't support use deps, although pkgcore and paludis do.
+
+Note: Although paludis supports use deps, the syntax is different to what
+pkgcore uses.
 
 Syntax:
 

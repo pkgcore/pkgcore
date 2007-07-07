@@ -48,15 +48,16 @@ class OptionParser(commandline.OptionParser):
         domain = values.config.get_default('domain')
         values.vdb = domain.vdb
         values.repo = multiplex_tree(*get_virtual_repos(domain.repos, False))
-        values.destdir = domain.settings['fetcher'].distdir
-        values.restrict = OrRestriction(negate=True,
-            *commandline.convert_to_restrict(values.excludes, default=())) \
-                or packages.AlwaysTrue
+        values.distdir = domain.settings['fetcher'].distdir
+        restrict = commandline.convert_to_restrict(values.excludes, default=None)
+        if restrict != [None]:
+            values.restrict = OrRestriction(negate=True, *restrict)
+        else:
+            values.restrict = packages.AlwaysTrue
 
         return values, ()
 
 def main(options, out, err):
-
     if options.debug:
         out.write('starting scanning distdir %s...' % options.distdir)
     files = set(basename(file) for file in listdir_files(options.distdir))
@@ -64,26 +65,28 @@ def main(options, out, err):
     if options.debug:
         out.write('scanning repo...')
 
+    pfiles = set()
     for pkg in options.repo.itermatch(options.restrict, sorter=sorted):
         try:
-            pfiles = set(fetchable.filename for fetchable in
+            pfiles.update(fetchable.filename for fetchable in
                         iflatten_instance(pkg.fetchables, fetchable_kls))
         except ParseChksumError, e:
-            err.write("got corruption error %s with package %s " %
-                (e, pkg.cpvstr), autoline=False)
-            if options.ignorefailures:
+            err.write("got corruption error '%s', with package %s " %
+                (e, pkg.cpvstr))
+            if options.ignore_failures:
                 err.write("skipping...")
+                err.write()
             else:
                 err.write("aborting...")
                 return 1
         except Exception, e:
-            err.write("got error %s, parsing package %s in repo %s" %
+            err.write("got error '%s', parsing package %s in repo '%s'" %
                 (e, pkg.cpvstr, pkg.repo))
             raise
 
-    # Do it this way to minimise getattr calls
-    out.write(*map(partial(pjoin, options.distdir), (files - pfiles)))
-
+    d = options.distdir
+    for file in (files - pfiles):
+        out.write(pjoin(d, file))
 
 if __name__ == '__main__':
     commandline.main({None: (OptionParser, main)})

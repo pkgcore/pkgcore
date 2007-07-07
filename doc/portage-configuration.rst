@@ -41,7 +41,7 @@ Unsupported misc:
 * keepwork
 * distlocks
 * selinux
-* sesandox (selinux context sandbox)
+* sesandbox (selinux context sandbox)
 * fixpackages
 * notitles
 

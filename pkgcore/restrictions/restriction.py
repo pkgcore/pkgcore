@@ -75,7 +75,7 @@ class AlwaysBool(base):
         return not self.negate
 
     def __iter__(self):
-        return iter([])
+        return iter(())
 
     def __str__(self):
         return "always '%s'" % self.negate

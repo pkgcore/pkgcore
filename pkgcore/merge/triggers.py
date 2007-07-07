@@ -454,7 +454,7 @@ class fix_set_bits(base):
             for x in l:
                 if x.mode & 04000:
                     reporter.warn(
-                        "correcing unsafe world writable SetGID: %s",
+                        "correcting unsafe world writable SetGID: %s" %
                             (x.location,))
                 else:
                     reporter.warn(

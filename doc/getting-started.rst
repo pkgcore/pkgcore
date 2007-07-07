@@ -210,8 +210,9 @@ No equivalents:
 
     That's per package. You can cache, but the roundtrips add up quickly.
 
-  The package namespace collision issue is the main reason why v1 support will
-  not be added to pkgcore; v2 addresses both issues thus is the route we'll go.
+  The main reason why v1 support will not be added to pkgcore is the package
+  namespace collision issue; as both of these issues will be addressed in v2
+  pkgcore will go this route.
 
 ``--tree``:
 

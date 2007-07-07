@@ -4,7 +4,7 @@
 from pkgcore.config import basics
 from pkgcore.ebuild import (
     portage_conf, repository as ebuild_repo, profiles, domain, eclass_cache,
-    overlay_repository)
+    overlay_repository, formatter)
 from pkgcore.pkgsets import system, filelist, installed, glsa
 from pkgcore.vdb import ondisk
 from pkgcore.cache import flat_hash, metadata
@@ -33,6 +33,11 @@ pkgcore_plugins = {
         eclass_cache.cache,
         eclass_cache.StackedCaches,
         overlay_repository.OverlayRepo,
+        formatter.basic_factory,
+        formatter.pkgcore_factory,
+        formatter.portage_factory,
+        formatter.paludis_factory,
+        formatter.portage_verbose_factory,
         filelist.FileList,
         filelist.WorldFile,
         installed.Installed,

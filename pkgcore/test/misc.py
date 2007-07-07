@@ -64,7 +64,7 @@ class FakeRepo(object):
 
     def __init__(self, pkgs=(), repoid='', location='', **kwds):
         self.pkgs = pkgs
-        self.repo_id = repoid
+        self.repo_id = repoid or location
         self.location = location
 
         for k, v in kwds.iteritems():

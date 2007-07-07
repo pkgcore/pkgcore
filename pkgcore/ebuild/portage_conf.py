@@ -7,7 +7,6 @@ Converts portage configuration files into L{pkgcore.config} form.
 """
 
 import os
-import stat
 
 from pkgcore.config import basics, configurable
 from pkgcore import const
@@ -478,7 +477,7 @@ def config_from_make_conf(location="/etc/"):
             "bashrc"):
         fp = pjoin(portage_base, f)
         try:
-            st = os.stat(fp)
+            os.stat(fp)
         except OSError, oe:
             if oe.errno != errno.ENOENT:
                 raise

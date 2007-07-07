@@ -6,7 +6,14 @@ from pkgcore.test import TestCase
 from pkgcore.scripts import pmerge
 from pkgcore.test.scripts import helpers
 from pkgcore.repository import util
+from pkgcore.ebuild import formatter
+from pkgcore.config import basics
 
+
+default_formatter = basics.HardCodedConfigSection({
+        'class': formatter.basic_factory,
+        'default': True,
+        })
 
 class AtomParsingTest(TestCase):
 
@@ -37,12 +44,21 @@ class CommandlineTest(TestCase, helpers.MainMixin):
 
     def test_parser(self):
         self.assertError(
-            "Using sets with -C probably isn't wise, aborting", '-Cs', 'boo')
+            'No default formatter found, fix your configuration '
+            'or pass --formatter (Valid formatters: spork)',
+            spork=basics.HardCodedConfigSection({
+                    'class': formatter.basic_factory}))
         self.assertError(
-            '--usepkg is redundant when --usepkgonly is used', '-Kk')
-        self.assertError("You must provide at least one atom", '--unmerge')
-        options = self.parse('-s world')
+            "Using sets with -C probably isn't wise, aborting", '-Cs', 'boo',
+            default_formatter=default_formatter)
+        self.assertError(
+            '--usepkg is redundant when --usepkgonly is used', '-Kk',
+            default_formatter=default_formatter)
+        self.assertError(
+            "You must provide at least one atom", '--unmerge',
+            default_formatter=default_formatter)
+        options = self.parse('-s world', default_formatter=default_formatter)
         self.assertFalse(options.replace)
-        options = self.parse('--clean')
+        options = self.parse('--clean', default_formatter=default_formatter)
         self.assertEqual(options.set, ['world', 'system'])
         self.assertTrue(options.deep, True)

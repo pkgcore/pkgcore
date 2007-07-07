@@ -11,7 +11,6 @@ from pkgcore.util import commandline, parserestrict, repo_utils
 from pkgcore.ebuild import resolver
 from pkgcore.repository import multiplex
 from pkgcore.interfaces import observer, format
-from pkgcore.ebuild.formatter import formatters
 from pkgcore.pkgsets.glsa import KeyedAndRestriction
 from pkgcore.ebuild.atom import atom
 
@@ -82,13 +81,10 @@ a depends on b, and b depends on a, with neither built is an example""")
             help="do not record changes in the world file; if a set is "
                 "involved, defaults to forcing oneshot")
         self.add_option(
-            '--formatter', '-F', type='choice', choices=formatters.keys(),
-            default='portage',
-            help='which formatter to output --pretend or --ask output through. '
-            'valid values are: %s' % (', '.join(formatters),))
-        self.add_option('--domain', action='callback', type='string',
-            callback=commandline.config_callback, callback_args=('domain',),
-            help='specify which domain to use; else uses the "default" domain')
+            '--formatter', '-F', action='callback', type='string',
+            callback=commandline.config_callback,
+            callback_args=('pmerge_formatter',),
+            help='which formatter to output --pretend or --ask output through.')
         self.add_option('--verbose', '-v', action='store_true',
             help="be more verbose about the buildplan. Currently only "
             'supported by the portage formatter')
@@ -100,6 +96,16 @@ a depends on b, and b depends on a, with neither built is an example""")
         options, args = commandline.OptionParser.check_values(
             self, options, args)
         options.targets = args
+
+        # TODO this is rather boilerplate-ish, the commandline module
+        # should somehow do this for us.
+        if options.formatter is None:
+            options.formatter = options.config.get_default('pmerge_formatter')
+            if options.formatter is None:
+                self.error(
+                    'No default formatter found, fix your configuration '
+                    'or pass --formatter (Valid formatters: %s)' % (
+                        ', '.join(options.config.pmerge_formatter),))
 
         if options.unmerge:
             if options.set:
@@ -292,7 +298,7 @@ def main(options, out, err):
         domain = config.get_default('domain')
     vdb = domain.all_vdbs
 
-    formatter = formatters[options.formatter](out=out, err=err,
+    formatter = options.formatter(out=out, err=err,
         verbose=options.verbose, use_expand=domain.use_expand,
         use_expand_hidden=domain.use_expand_hidden)
 
@@ -440,7 +446,7 @@ def main(options, out, err):
         for x in wipes:
             out.write("Remove %s" % x)
         out.write()
-        if len(wipes):
+        if wipes:
             out.write("removing %i packages of %i installed, %0.2f%%." %
                 (len(wipes), len_vset, 100*(len(wipes)/float(len_vset))))
         else:

@@ -13,6 +13,8 @@ formatter available on the commandline.
 
 import operator
 
+from pkgcore.config import configurable
+
 
 class NoChoice(KeyboardInterrupt):
     """Raised by L{userquery} if no choice was made.
@@ -236,9 +238,9 @@ class PortageFormatter(Formatter):
         out.autoline = False
 
         # This is for the summary at the end
-        # TODO prefer repoid over location here?
-        reponr = self.repos.setdefault(op.pkg.repo.location,
-                                       len(self.repos) + 1)
+        reponr = self.repos.setdefault(
+            getattr(op.pkg.repo, "repo_id", "<unknown>"),
+            len(self.repos) + 1)
 
         # We don't do blockers or --tree stuff yet
         out.write('[ebuild ')
@@ -445,9 +447,30 @@ class PaludisFormatter(Formatter):
                 self.nslots))
 
 
-formatters = {
-    'basic': BasicFormatter,
-    'pkgcore': PkgcoreFormatter,
-    'portage': PortageFormatter,
-    'paludis': PaludisFormatter,
-    }
+def formatter_factory_generator(cls):
+    """Factory for formatter factories that take no further arguments.
+
+    A formatter factory is a subclass of Formatter or a callable
+    taking the same keyword arguments.
+
+    This helper wraps such a subclass in an extra no-argument callable
+    that is usable by the configuration system.
+    """
+    @configurable(typename='pmerge_formatter')
+    def factory():
+        return cls
+    return factory
+
+
+basic_factory = formatter_factory_generator(BasicFormatter)
+pkgcore_factory = formatter_factory_generator(PkgcoreFormatter)
+portage_factory = formatter_factory_generator(PortageFormatter)
+paludis_factory = formatter_factory_generator(PaludisFormatter)
+
+@configurable(typename='pmerge_formatter')
+def portage_verbose_factory():
+    """Version of portage-formatter that is always in verbose mode."""
+    def factory(**kwargs):
+        kwargs['verbose'] = True
+        return PortageFormatter(**kwargs)
+    return factory

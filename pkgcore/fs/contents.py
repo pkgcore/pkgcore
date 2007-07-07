@@ -152,10 +152,7 @@ class contentsSet(object):
         if not hasattr(other, '__contains__'):
             other = set(self._convert_loc(other))
 
-        l = []
-        for x in self:
-            if x.location not in other:
-                l.append(x)
+        l = [x for x in self if x.location not in other]
         for x in l:
             self.remove(x)
 

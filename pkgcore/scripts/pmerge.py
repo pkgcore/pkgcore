@@ -466,11 +466,6 @@ def main(options, out, err):
             formatter.format(op)
         formatter.end()
 
-    if options.verbose:
-        out.write()
-        out.title('Resolved')
-        out.write(out.bold, '%.2f' % (resolve_time,), out.reset,
-            ' seconds resolving')
 
     if vdb_time:
         out.write(out.bold, 'Took %.2f' % (vdb_time,), out.reset,

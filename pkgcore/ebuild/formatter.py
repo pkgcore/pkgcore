@@ -231,7 +231,7 @@ class PortageFormatter(Formatter):
         # - U and D are both displayed to show a downgrade - this is kept
         # in order to be consistent with existing portage behaviour
 
-        verbose = self.verbose
+        verbose = getattr(self, "display_repoid", False)
 
         out = self.out
         origautoline = out.autoline

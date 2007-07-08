@@ -84,3 +84,6 @@ class OverlayRepo(prototype.tree):
             for pkg in sorter(repo[cp + (ver,)]
                 for ver, repo in self._version_owners.get(cp, ())):
                 yield pkg
+
+    def _visibility_limiters(self):
+        return [x for r in self.trees for x in r.default_visibility_limiters]

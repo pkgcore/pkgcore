@@ -231,7 +231,6 @@ class PortageFormatter(Formatter):
         # - U and D are both displayed to show a downgrade - this is kept
         # in order to be consistent with existing portage behaviour
 
-        verbose = getattr(self, "display_repoid", False)
 
         out = self.out
         origautoline = out.autoline
@@ -297,7 +296,7 @@ class PortageFormatter(Formatter):
             flaglists = [d.get(expand, ()) for d in usedicts]
             self.format_use(expand, *flaglists)
 
-        if verbose:
+        if self.display_repo:
             out.write(out.fg('blue'), " [%d]" % (reponr,))
 
         out.write('\n')
@@ -370,7 +369,7 @@ class PortageFormatter(Formatter):
             out.write('" ')
 
     def end(self):
-        if self.verbose:
+        if self.display_repo:
             self.out.write()
             repos = self.repos.items()
             repos.sort(key=operator.itemgetter(1))

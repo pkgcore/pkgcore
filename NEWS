@@ -5,6 +5,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.3.2:
 
+* pmerge --verbose is now pmerge --display-repo
+
 * Stop installing pregen symlink; functionality moved to pmaint regen.
 
 * 'pmerge --domain' was added; basically is a way to specify the domain to

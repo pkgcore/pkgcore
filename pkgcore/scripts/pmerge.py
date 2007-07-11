@@ -88,6 +88,8 @@ a depends on b, and b depends on a, with neither built is an example""")
         self.add_option('--domain', action='callback', type='string',
             callback=commandline.config_callback, callback_args=('domain',),
             help='specify which domain to use; else uses the "default" domain')
+        self.add_option('--display-repo', action='store_true', default=False,
+            help="have the formatter display the repo for each pkg, if it's capable")
 
     def check_values(self, options, args):
         options, args = commandline.OptionParser.check_values(
@@ -297,7 +299,8 @@ def main(options, out, err):
 
     formatter = options.formatter(out=out, err=err,
         use_expand=domain.use_expand,
-        use_expand_hidden=domain.use_expand_hidden)
+        use_expand_hidden=domain.use_expand_hidden,
+        display_repo=options.display_repo)
 
     # This mode does not care about sets and packages so bypass all that.
     if options.unmerge:

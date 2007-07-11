@@ -62,7 +62,7 @@ class BaseFormatterTest(object):
         disable_method_checks = kwargs.pop("disable_method_checks", False)
         kwargs.setdefault("out", self.fakeout)
         kwargs.setdefault("err", self.fakeerr)
-        kwargs.setdefault("verbose", 0)
+        kwargs.setdefault("display_repo", False)
         if not disable_method_checks:
             kls = self.verify_formatterClass
         else:
@@ -333,7 +333,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         self.repo = FakeRepo(repo='gentoo', location='/usr/portage')
 
     def newFormatter(self, **kwargs):
-        kwargs.setdefault("verbose", 1)
+        kwargs.setdefault("display_repo", True)
         return TestPortageFormatter.newFormatter(self, **kwargs)
 
     def test_end(self):

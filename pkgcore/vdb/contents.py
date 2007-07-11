@@ -91,7 +91,7 @@ class ContentsFile(contentsSet):
         s = line.split()
         if not s:
             # stupid; just whitespace/newline.  ignore it.
-            continue
+            return None
         if s[0] in ("dir", "dev", "fif"):
             return s[0], ' '.join(s[1:])
         elif s[0] == "obj":
@@ -111,6 +111,8 @@ class ContentsFile(contentsSet):
         self.clear()
         for line in self._get_fd():
             line = self._parse_old(line)
+            if line is None:
+                continue
 #            if "\t" not in line:
 #                line = self._parse_old(line)
 #            else:

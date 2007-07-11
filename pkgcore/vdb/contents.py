@@ -89,6 +89,9 @@ class ContentsFile(contentsSet):
         """parse old contents, non tab based format"""
         # specifically force splitting on spaces.
         s = line.split()
+        if not s:
+            # stupid; just whitespace/newline.  ignore it.
+            continue
         if s[0] in ("dir", "dev", "fif"):
             return s[0], ' '.join(s[1:])
         elif s[0] == "obj":

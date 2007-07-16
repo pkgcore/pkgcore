@@ -106,6 +106,14 @@ a depends on b, and b depends on a, with neither built is an example""")
                     'or pass --formatter (Valid formatters: %s)' % (
                         ', '.join(options.config.pmerge_formatter),))
 
+        if options.domain is None:
+            options.domain = options.config.get_default('domain')
+            if options.domain is None:
+                self.error(
+                    'No default domain found, fix your configuration or pass '
+                    '--domain (valid domains: %s)' % 
+                    (', '.join(options.config.domain),))
+
         if options.unmerge:
             if options.set:
                 self.error("Using sets with -C probably isn't wise, aborting")
@@ -293,8 +301,6 @@ def main(options, out, err):
         resolver.plan.limiters.add(None)
 
     domain = options.domain
-    if domain is None:
-        domain = config.get_default('domain')
     vdb = domain.all_vdbs
 
     formatter = options.formatter(out=out, err=err,

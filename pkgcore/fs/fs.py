@@ -230,7 +230,7 @@ class fsDev(fsBase):
 
             if minor != -1:
                 minor = int(minor)
-                if minor < 1:
+                if minor < 0:
                     raise TypeError(
                        "major/minor must be specified and positive ints")
                 kwds["minor"] = minor

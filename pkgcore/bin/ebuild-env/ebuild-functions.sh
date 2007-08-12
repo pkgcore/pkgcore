@@ -182,13 +182,13 @@ einstall()
     if [ -n "${CONF_LIBDIR}" ] && [ "${CONF_PREFIX:-unset}" != "unset" ]; then
         EI_DESTLIBDIR="${D}/${CONF_PREFIX}/${CONF_LIBDIR}"
         EI_DESTLIBDIR="$(strip_duplicate_slashes ${EI_DESTLIBDIR})"
-        LOCAL_EXTRA_EINSTALL="libdir=${EI_DESTLIBDIR}"
+        LOCAL_EXTRA_EINSTALL="${LOCAL_EXTA_EINSTALL} libdir=${EI_DESTLIBDIR}"
         unset EI_DESTLIBDIR
     fi
 
     if [ -f ./[mM]akefile -o -f ./GNUmakefile ] ; then
         if [ ! -z "${PKGCORE_DEBUG}" ]; then
-            make -n prefix=${D}/usr \
+            ${MAKE:-make} -n prefix=${D}/usr \
                 datadir=${D}/usr/share \
                 infodir=${D}/usr/share/info \
           		localstatedir=${D}/var/lib \
@@ -197,13 +197,13 @@ einstall()
                 ${LOCAL_EXTRA_EINSTALL} \
                 "$@" install
         fi
-        make prefix=${D}/usr \
+        ${MAKE:-make} prefix=${D}/usr \
             datadir=${D}/usr/share \
             infodir=${D}/usr/share/info \
             localstatedir=${D}/var/lib \
             mandir=${D}/usr/share/man \
             sysconfdir=${D}/etc \
-            ${EXTRA_EINSTALL} \
+            ${LOCAL_EXTRA_EINSTALL} \
             "$@" install || die "einstall failed"
     else
         die "no Makefile found"

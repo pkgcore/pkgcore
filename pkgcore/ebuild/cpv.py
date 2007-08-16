@@ -180,8 +180,8 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
             # If one of the components begins with a "0" then they
             # are compared as floats so that 1.1 > 1.02.
             if ver_parts1[x][0] == "0" or ver_parts2[x][0] == "0":
-                v1 = float("0."+ver_parts1[x])
-                v2 = float("0."+ver_parts2[x])
+                v1 = ver_parts1[x]
+                v2 = ver_parts2[x]
             else:
                 v1 = int(ver_parts1[x])
                 v2 = int(ver_parts2[x])

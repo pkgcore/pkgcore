@@ -5,6 +5,11 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.3.2:
 
+* correct a corner case in python implementation of cpv comparison (just
+  python, cpy extension handles it correctly); bug 188449 in gentoo, basically
+  floats have a limited precision, thus it was possible to get truncation in
+  comparison with specially crafted versions.
+
 * handle EOF/IOError on raw_input (for --ask) a bit more gracefully, ticket
   108.
 

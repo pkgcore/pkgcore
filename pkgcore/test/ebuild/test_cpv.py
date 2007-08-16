@@ -214,6 +214,12 @@ class native_CpvTest(TestCase):
         self.assertGT(kls("da/bb"), kls("da/ba"))
         self.assertGT(kls("da/ba-6.0_alpha0_p1"), kls("da/ba-6.0_alpha"))
         self.assertEqual(kls("da/ba-6.0_alpha"), kls("da/ba-6.0_alpha0"))
+        self.assertGT(kls("da/ba-6.1"), kls("da/ba-6.09"))
+        self.assertGT(kls("da/ba-6.0.1"), kls("da/ba-6.0"))
+        for v1, v2 in (("1.001000000000000000001", "1.001000000000000000002"),
+            ("1.00100000000", "1.0010000000000000001"),
+            ("1.01", "1.1")):
+            self.assertGT(kls("da/ba-%s" % v2), kls("da/ba-%s" % v1))
         # Regression test: python does comparison slightly differently
         # if the classes do not match exactly (it prefers rich
         # comparison over __cmp__).

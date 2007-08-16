@@ -428,12 +428,13 @@ def config_from_make_conf(location="/etc/"):
 #            "cache", cache_config)
 
 
-    new_config['glsa'] = basics.AutoConfigSection({
+    new_config['vuln'] = basics.AutoConfigSection({
             'class': SecurityUpgradesViaProfile,
             'ebuild_repo': 'repo-stack',
             'vdb': 'vdb',
             'profile': 'profile'})
-
+    new_config['glsa'] = basics.section_alias('vuln',
+        SecurityUpgradesViaProfile.pkgcore_config_type.typename)
     #binpkg.
     pkgdir = conf_dict.pop('PKGDIR', None)
     default_repos = ('repo-stack',)

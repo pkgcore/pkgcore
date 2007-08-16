@@ -66,7 +66,7 @@ def _write_mtime_cache(mtimes, data, location):
             gid=portage_gid, mode=0775):
             # bugger, can't update..
             return
-        f = AtomicWriteFile(location)
+        f = AtomicWriteFile(location, gid=portage_gid, perms=0664)
         # invert the data...
         rev_data = {}
         for pkg, ver_dict in data.iteritems():

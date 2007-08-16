@@ -88,7 +88,7 @@ class MergeEngine(object):
         for k, v in csets.iteritems():
             if isinstance(v, basestring):
                 v = getattr(self, v, v)
-            elif not callable(v):
+            if not callable(v):
                 raise TypeError(
                     "cset values must be either the string name of "
                     "existing methods, or callables (got %s)" % v)

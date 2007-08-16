@@ -262,11 +262,12 @@ dyn_compile()
 
 dyn_test()
 {
-
         echo ">>> Test phase [enabled]: ${CATEGORY}/${PF}"
         MUST_EXPORT_ENV="yes"
         if [ -d "${S}" ]; then
             cd "${S}"
+        elif [ -d "${WORKDIR}" ]; then
+            cd "${WORKDIR}"
         fi
         src_test
 }
@@ -278,6 +279,8 @@ dyn_install()
     mkdir "${D}"
     if [ -d "${S}" ]; then
         cd "${S}"
+    elif [ -d "${WORKDIR}" ]; then
+        cd "$WORKDIR"
     fi
     echo
     echo ">>> Install ${PF} into ${D} category ${CATEGORY}"

@@ -14,6 +14,7 @@ demandload(globals(),
     'errno',
     'pkgcore.chksum:get_handler',
     'snakeoil.osutils:readlines',
+    'pkgcore:os_data',
 )
 
 class LookupFsDev(fs.fsDev):
@@ -74,7 +75,8 @@ class ContentsFile(contentsSet):
     def _get_fd(self, write=False):
         if isinstance(self._source, basestring):
             if write:
-                return AtomicWriteFile(self._source)
+                return AtomicWriteFile(self._source, uid=os_data.root_uid,
+                    gid=os_data.root_gid, perms=0644)
             return readlines(self._source, True)
         fobj = self._source.get_fileobj()
         if write:

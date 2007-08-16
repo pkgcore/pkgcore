@@ -13,6 +13,7 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     'snakeoil.fileutils:AtomicWriteFile',
     'snakeoil.osutils:readlines',
+    'pkgcore:os_data',
 )
 
 class FileList(object):
@@ -54,7 +55,7 @@ class FileList(object):
         # structured this way to force deletion (thus wiping) if something
         # fails.
         try:
-            f = AtomicWriteFile(self.path)
+            f = AtomicWriteFile(self.path, gid=os_data.portage_gid, perms=0644)
             f.write("\n".join(map(str, self._atoms)))
             f.close()
         finally:

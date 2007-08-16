@@ -5,6 +5,19 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.3.2:
 
+* handle EOF/IOError on raw_input (for --ask) a bit more gracefully, ticket
+  108.
+
+* cd to ${WORKDIR} if ${S} doesn't exist for test/install phases; matches
+  change in portage behaviour.
+
+* Now require snakeoil version 0.2 and up- require new capability of 
+  AtomicWriteFile, ability to specify uid/gid/perms.  Via that, fixes ticket
+  109 (umask leaking through to profile.env).
+
+* the 'glsa' pkgset is now deprecated in favor of 'vuln'; will remain
+  through till 0.4 (ticket #106).
+ 
 * ticket 105/96; fix via andkit, basically a bug in einstall lead to
   extra einstall opts getting dropped instead of passed through.
 

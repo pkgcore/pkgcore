@@ -14,7 +14,8 @@ formatter available on the commandline.
 import operator
 
 from pkgcore.config import configurable
-
+from snakeoil.demandload import demandload
+demandload(globals(), 'errno')
 
 class NoChoice(KeyboardInterrupt):
     """Raised by L{userquery} if no choice was made.
@@ -83,7 +84,16 @@ def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
             out.write(autoline=False, *default_answer_name)
             out.write(')', autoline=False)
         out.write(': ', autoline=False)
-        response = raw_input()
+        try:
+            response = raw_input()
+        except EOFError:
+            out.write("\nNot answerable: EOF on STDIN")
+            raise NoChoice()
+        except IOError, e:
+            if e.errno == errno.EBADF:
+                out.write("\nNot answerable: STDIN is either closed, or not readable")
+                raise NoChoice()
+            raise
         if not response:
             return default_answer
         results = set(

@@ -25,18 +25,6 @@ from snakeoil import currying
 from snakeoil.demandload import demandload
 demandload(globals(), 'errno')
 
-def scan_livefs(cset):
-    """generate the intersect of a cset and the livefs"""
-    f = livefs.gen_obj
-    for x in cset:
-        try:
-            yield f(x.location)
-        except OSError, oe:
-            if oe.errno != errno.ENOENT:
-                raise
-            del oe
-
-
 def alias_cset(alias, engine, csets):
     """alias a cset to another"""
     return csets[alias]
@@ -315,7 +303,7 @@ class MergeEngine(object):
     @staticmethod
     def _get_livefs_intersect_cset(engine, csets, cset_name):
         """generates the livefs intersection against a cset"""
-        return contents.contentsSet(scan_livefs(csets[cset_name]))
+        return contents.contentsSet(livefs.intersect(csets[cset_name]))
 
     @staticmethod
     def get_install_livefs_intersect(engine, csets):

@@ -266,7 +266,7 @@ dyn_test()
         MUST_EXPORT_ENV="yes"
         if [ -d "${S}" ]; then
             cd "${S}"
-        elif [ -d "${WORKDIR}" ]; then
+        else
             cd "${WORKDIR}"
         fi
         src_test
@@ -279,7 +279,7 @@ dyn_install()
     mkdir "${D}"
     if [ -d "${S}" ]; then
         cd "${S}"
-    elif [ -d "${WORKDIR}" ]; then
+    else
         cd "$WORKDIR"
     fi
     echo

@@ -5,7 +5,7 @@
 interaction with the livefs: generating fs objects to represent the livefs.
 """
 
-import os, collections
+import os, collections, errno
 from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO
 
 from pkgcore.fs.fs import (
@@ -139,3 +139,16 @@ def scan(*a, **kw):
     """
     mutable = kw.pop("mutable", True)
     return contentsSet(iter_scan(*a, **kw), mutable=mutable)
+
+
+def intersect(cset):
+    """generate the intersect of a cset and the livefs"""
+    f = gen_obj
+    for x in cset:
+        try:
+            yield f(x.location)
+        except OSError, oe:
+            if oe.errno != errno.ENOENT:
+                raise
+            del oe
+

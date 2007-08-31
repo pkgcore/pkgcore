@@ -223,6 +223,7 @@ class PortageFormatter(Formatter):
     def __init__(self, **kwargs):
         kwargs.setdefault("use_expand", set())
         kwargs.setdefault("use_expand_hidden", set())
+        kwargs.setdefault("display_repo", False)
         Formatter.__init__(self, **kwargs)
         self.use_splitter = use_expand_filter(self.use_expand,
             self.use_expand_hidden)
@@ -480,6 +481,6 @@ paludis_factory = formatter_factory_generator(PaludisFormatter)
 def portage_verbose_factory():
     """Version of portage-formatter that is always in verbose mode."""
     def factory(**kwargs):
-        kwargs['verbose'] = True
+        kwargs['display_repo'] = True
         return PortageFormatter(**kwargs)
     return factory

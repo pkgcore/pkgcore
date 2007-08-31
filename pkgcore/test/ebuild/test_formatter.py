@@ -62,7 +62,6 @@ class BaseFormatterTest(object):
         disable_method_checks = kwargs.pop("disable_method_checks", False)
         kwargs.setdefault("out", self.fakeout)
         kwargs.setdefault("err", self.fakeerr)
-        kwargs.setdefault("display_repo", False)
         if not disable_method_checks:
             kls = self.verify_formatterClass
         else:

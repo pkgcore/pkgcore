@@ -31,7 +31,7 @@ pkgcore 0.3.2:
 * emake now invokes ${MAKE:-make}, instead of make- undocumented ebuild
   req, see bug 186598 at bugs.gentoo.org.
 
-* pmerge --verbose is now pmerge --display-repo
+* pmerge --verbose is now pmerge -F portage-verbose-formatter
 
 * Stop installing pregen symlink; functionality moved to pmaint regen.
 

@@ -7,7 +7,8 @@ build operation
 
 from snakeoil.dependant_methods import ForcedDepends
 
-__all__ = ["base", "FailedDirectory", "GenericBuildError", "errors"]
+__all__ = ('build_base', 'base', 'install', 'uninstall', 'replace', 'fetch',
+    'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'errors')
 
 
 def _raw_fetch(self):
@@ -26,6 +27,19 @@ def _raw_fetch(self):
         self.files[fp] = x
         gotten_fetchables.add(x.filename)
     return True
+
+
+class maintenance(object):
+    stage_depends = {}
+    
+    __metaclass__ = ForcedDepends
+    
+    def __init__(self, pkg, observer=None):
+        self.obvserver = observer
+        self.pkg = pkg
+
+    def config(self):
+        return True
 
 
 class build_base(object):

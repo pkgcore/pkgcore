@@ -7,7 +7,7 @@ from pkgcore.interfaces.data_source import data_source
 from pkgcore.chksum import get_chksums
 from pkgcore.test import TestCase
 from snakeoil.test.mixins import tempdir_decorator
-from snakeoil.osutils import pjoin
+from snakeoil.osutils import pjoin, normpath
 
 class base(object):
 
@@ -16,6 +16,11 @@ class base(object):
     def make_obj(self, location="/tmp/foo", **kwds):
         kwds.setdefault("strict", False)
         return self.kls(location, **kwds)
+
+    def test_location_normalization(self):
+        for loc in ('/tmp/a', '/tmp//a', '/tmp//', '/tmp/a/..'):
+            self.assertEqual(self.make_obj(location=loc).location,
+                normpath(loc), reflective=False)
 
     def test_change_attributes(self):
         # simple test...

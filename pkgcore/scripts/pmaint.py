@@ -6,6 +6,8 @@
 repository maintainence
 """
 
+__all__ = ('CopyParser', 'DigestParser', 'RegenParser', 'SyncParser')
+
 from pkgcore.util.commandline import convert_to_restrict, OptionParser
 from snakeoil.demandload import demandload
 demandload(globals(),

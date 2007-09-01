@@ -137,6 +137,9 @@ unpack()
                 ;;
         esac
     done
+    find . -mindepth 1 -maxdepth 1 ! -type l -print0 | \
+         ${XARGS} -0 chmod -fR a+rX,u+w,g-w,o-w
+                        
 }
 
 dyn_setup()

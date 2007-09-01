@@ -5,6 +5,12 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.3.2:
 
+* ticket 190746 from gentoo; basically need to force the perms of first level
+  directory of an unpacked $DISTDIR to ensure it's at least readable/writable.
+  fixes unpacking of app-misc/screen-4.0.3_p20070403::gentoo-x86 .
+
+* ticket 118; if -u, don't add the node to world set.
+
 * correct a corner case in python implementation of cpv comparison (just
   python, cpy extension handles it correctly); bug 188449 in gentoo, basically
   floats have a limited precision, thus it was possible to get truncation in

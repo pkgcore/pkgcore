@@ -554,7 +554,8 @@ def main(options, out, err):
                 out.write('>>> Removing %s from world file' % op.pkg.cpvstr)
                 update_worldset(world_set, op.pkg, remove=True)
             elif any(x.match(op.pkg) for x in atoms):
-                out.write('>>> Adding %s to world file' % op.pkg.cpvstr)
-                update_worldset(world_set, op.pkg)
+                if not options.upgrade:
+                    out.write('>>> Adding %s to world file' % op.pkg.cpvstr)
+                    update_worldset(world_set, op.pkg)
     out.write("finished")
     return 0

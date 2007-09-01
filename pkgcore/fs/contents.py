@@ -9,9 +9,12 @@ from pkgcore.fs import fs
 from snakeoil.compatibility import all
 from snakeoil.klass import generic_equality
 from snakeoil.demandload import demandload
+from snakeoil.osutils import normpath
 demandload(globals(),
     'pkgcore.fs.ops:offset_rewriter,change_offset_rewriter',
 )
+from itertools import ifilter
+from operator import attrgetter
 
 def check_instance(obj):
     if not isinstance(obj, fs.fsBase):
@@ -57,7 +60,7 @@ class contentsSet(object):
             # weird, but keeping with set.
             raise AttributeError(
                 "%s is frozen; no add functionality" % self.__class__)
-        if not isinstance(obj, fs.fsBase):
+        if not fs.isfs_obj(obj):
             raise TypeError("'%s' is not a fs.fsBase class" % str(obj))
         self._dict[obj.location] = obj
 
@@ -75,29 +78,29 @@ class contentsSet(object):
             # weird, but keeping with set.
             raise AttributeError(
                 "%s is frozen; no remove functionality" % self.__class__)
-        if isinstance(obj, fs.fsBase):
+        if fs.isfs_obj(obj):
             del self._dict[obj.location]
         else:
-            del self._dict[obj]
+            del self._dict[normpath(obj)]
 
     def remove(self, obj):
         del self[obj]
 
     def discard(self, obj):
-        if isinstance(obj, fs.fsBase):
+        if fs.isfs_obj(obj):
             self._dict.pop(obj.location, None)
         else:
             self._dict.pop(obj, None)
 
     def __getitem__(self, obj):
-        if isinstance(obj, fs.fsBase):
+        if fs.isfs_obj(obj):
             return self._dict[obj.location]
-        return self._dict[obj]
+        return self._dict[normpath(obj)]
 
     def __contains__(self, key):
-        if isinstance(key, fs.fsBase):
+        if fs.isfs_obj(key):
             return key.location in self._dict
-        return key in self._dict
+        return normpath(key) in self._dict
 
     def clear(self):
         """
@@ -112,18 +115,18 @@ class contentsSet(object):
 
     @staticmethod
     def _convert_loc(iterable):
-        fs_kls = fs.fsBase
+        f = fs.isfs_obj
         for x in iterable:
-            if isinstance(x, fs_kls):
+            if f(x):
                 yield x.location
             else:
                 yield x
 
     @staticmethod
     def _ensure_fsbase(iterable):
-        fs_kls = fs.fsBase
+        f = fs.isfs_obj
         for x in iterable:
-            if not isinstance(x, fs_kls):
+            if not f(x):
                 raise ValueError("must be an fsBase derivative: got %r" % x)
             yield x
 
@@ -204,31 +207,41 @@ class contentsSet(object):
         self._dict.update((x.location, x) for x in iterable)
 
     def iterfiles(self, invert=False):
-        return (x for x in self if isinstance(x, fs.fsFile) is not invert)
+        if invert:
+            return (x for x in self if not x.is_reg)
+        return ifilter(attrgetter('is_reg'), self)
 
     def files(self, invert=False):
         return list(self.iterfiles(invert=invert))
 
     def iterdirs(self, invert=False):
-        return (x for x in self if isinstance(x, fs.fsDir) is not invert)
+        if invert:
+            return (x for x in self if not x.is_dir)
+        return ifilter(attrgetter('is_dir'), self)
 
     def dirs(self, invert=False):
         return list(self.iterdirs(invert=invert))
 
     def iterlinks(self, invert=False):
-        return (x for x in self if isinstance(x, fs.fsLink) is not invert)
+        if invert:
+            return (x for x in self if not x.is_sym)
+        return ifilter(attrgetter('is_sym'), self)
 
     def links(self, invert=False):
         return list(self.iterlinks(invert=invert))
 
     def iterdevs(self, invert=False):
-        return (x for x in self if isinstance(x, fs.fsDev) is not invert)
+        if invert:
+            return (x for x in self if not x.is_dev)
+        return ifilter(attrgetter('is_dev'), self)
 
     def devs(self, invert=False):
         return list(self.iterdevs(invert=invert))
 
     def iterfifos(self, invert=False):
-        return (x for x in self if isinstance(x, fs.fsFifo) is not invert)
+        if invert:
+            return (x for x in self if not x.is_fifo)
+        return ifilter(attrgetter('is_fifo'), self)
 
     def fifos(self, invert=False):
         return list(self.iterfifos(invert=invert))

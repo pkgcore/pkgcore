@@ -10,11 +10,12 @@ from pkgcore.chksum import get_handlers, get_chksums
 from os.path import sep as path_seperator, realpath, abspath
 from pkgcore.interfaces.data_source import local_source
 from snakeoil.mappings import LazyFullValLoadDict
+from snakeoil.osutils import normpath
 
 # goofy set of classes representating the fs objects pkgcore knows of.
 
 __all__ = [
-    "fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo", "isdir", "isreg"]
+    "fsFile", "fsDir", "fsSymlink", "fsDev", "fsFifo"]
 __all__.extend("is%s" % x for x in ("dir", "reg", "sym", "fifo", "dev",
     "fs_obj"))
 
@@ -55,9 +56,13 @@ class fsBase(object):
     __attrs__ = __slots__
     __default_attrs__ = {}
 
+    locals().update((x.replace("is", "is_"), False) for x in 
+        __all__ if x.startswith("is") and x.islower() and not
+            x.endswith("fs_obj"))
+    
     def __init__(self, location, strict=True, **d):
 
-        d["location"] = location
+        d["location"] = normpath(location)
 
         s = object.__setattr__
         if strict:
@@ -122,6 +127,8 @@ class fsFile(fsBase):
     __attrs__ = fsBase.__attrs__ + __slots__
     __default_attrs__ = {"mtime":0l}
 
+    is_reg = True
+
     def __init__(self, location, chksums=None, data_source=None, **kwds):
         """
         @param chksums: dict of checksums, key chksum_type: val hash val.
@@ -157,6 +164,7 @@ class fsDir(fsBase):
     """dir class"""
 
     __slots__ = ()
+    is_dir = True
 
     def __repr__(self):
         return "dir:%s" % self.location
@@ -173,6 +181,7 @@ class fsLink(fsBase):
 
     __slots__ = ("target",)
     __attrs__ = fsBase.__attrs__ + __slots__
+    is_sym = True
 
     def __init__(self, location, target, **kwargs):
         """
@@ -208,6 +217,7 @@ class fsDev(fsBase):
     __slots__ = ("major", "minor")
     __attrs__ = fsBase.__attrs__ + __slots__
     __default_attrs__ = {"major":-1, "minor":-1}
+    is_dev = True
 
     def __init__(self, path, major=-1, minor=-1, **kwds):
         if kwds.get("strict", True):
@@ -253,6 +263,7 @@ class fsFifo(fsBase):
     """fifo class (socket objects)"""
 
     __slots__ = ()
+    is_fifo = True
 
     def __repr__(self):
         return "fifo:%s" % self.location

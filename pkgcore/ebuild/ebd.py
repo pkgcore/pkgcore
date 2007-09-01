@@ -482,7 +482,9 @@ class buildable(ebd, setup_mixin, format.build):
                 "for PORTAGE_ACTUAL_DISTDIR from fetcher %s" % self.fetcher)
         self.env["PORTAGE_ACTUAL_DISTDIR"] = distdir_write
         self.env["DISTDIR"] = normpath(
-            pjoin(self.builddir, "distdir"))+"/"
+            pjoin(self.builddir, "distdir"))
+        for x in ("PORTAGE_ACTUAL_DISTDIR", "DISTDIR"):
+            self.env[x] = os.path.realpath(self.env[x]).rstrip("/") + "/"
 
     def setup_distfiles(self):
         # added to protect against no-auto usage in pebuild.

@@ -12,7 +12,7 @@ from pkgcore.ebuild import conditionals, atom
 from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils)
 
-# ordering here matters; pkgcore does a trick to commandline to avoid the 
+# ordering here matters; pkgcore does a trick to commandline to avoid the
 # heavy inspect loadup hit.
 import optparse
 

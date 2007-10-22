@@ -13,7 +13,7 @@ from snakeoil.currying import partial
 class tree(prototype.tree):
 
     factory_kls = staticmethod(virtual.factory)
-    
+
     def __init__(self, livefs=False):
         """
         @param grab_virtuals_func: callable to get a package -> versions mapping

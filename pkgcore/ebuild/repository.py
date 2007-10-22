@@ -156,7 +156,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             if cats is not None:
                 return tuple(imap(intern, cats))
 
-            return tuple(imap(intern, 
+            return tuple(imap(intern,
                 ifilterfalse(self.false_categories.__contains__,
                     (x for x in listdir_dirs(self.base) if x[0:1] != ".")
                 )))

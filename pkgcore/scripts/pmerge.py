@@ -109,7 +109,7 @@ a depends on b, and b depends on a, with neither built is an example""")
             if options.domain is None:
                 self.error(
                     'No default domain found, fix your configuration or pass '
-                    '--domain (valid domains: %s)' % 
+                    '--domain (valid domains: %s)' %
                     (', '.join(options.config.domain),))
 
         if options.unmerge:

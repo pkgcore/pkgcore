@@ -158,7 +158,7 @@ class OldStyleVirtuals(virtual.tree):
     def __init__(self, load_func):
         virtual.tree.__init__(self, livefs=True)
         self._load_func = load_func
-    
+
     def _load_data(self):
         self.default_providers, self._virtuals = self._load_func()
         self.packages._cache['virtual'] = tuple(self._virtuals.iterkeys())

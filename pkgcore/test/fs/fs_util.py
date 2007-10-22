@@ -2,10 +2,10 @@
 # License: GPL2
 
 """
-WARNING: this module is for testing usage only; it disables 
+WARNING: this module is for testing usage only; it disables
 the default strictness tests that fsBase.* derivatives have to ease
 testing.  Do not use it in non-test code.
-""" 
+"""
 
 # we use pre_curry to preserve the docs for the wrapped target
 from snakeoil.currying import pre_curry

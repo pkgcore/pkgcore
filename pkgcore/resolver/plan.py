@@ -126,7 +126,7 @@ class resolver_stack(deque):
 
     # this *has* to be a property, else it creates a cycle.
     parent = property(lambda s:s)
-    
+
     def __init__(self):
         self.events = []
 
@@ -331,7 +331,7 @@ class merge_plan(object):
         return ()
 
     def check_for_cycles(self, stack, cur_frame):
-        """check the current stack for cyclical issues; 
+        """check the current stack for cyclical issues;
         @param stack: current stack, a L{resolver_stack} instance
         @param cur_frame: current frame, a L{resolver_frame} instance
         @return: True if no issues and resolution should continue, else the
@@ -358,7 +358,7 @@ class merge_plan(object):
                     force_vdb = True
                     break
                 else:
-                    # should be doing a full walk of the cycle here, seeing 
+                    # should be doing a full walk of the cycle here, seeing
                     # if an rdep becomes a dep.
                     return None
                 # portage::gentoo -> rysnc -> portage::vdb; let it process it.
@@ -375,7 +375,7 @@ class merge_plan(object):
         return self._rec_add_atom(cur_frame.atom, stack,
             self.livefs_dbs, mode=cur_frame.mode,
             drop_cycles = cur_frame.drop_cycles)
-            
+
 
     def process_dependencies(self, stack, attr, depset):
         failure = []
@@ -473,7 +473,7 @@ class merge_plan(object):
                 if not conflicts:
                     dprint("replacing vdb entry for   '%s' with pkg '%s'",
                         (atom, choices.current_pkg))
-                
+
             else:
                 try_rematch = True
             if try_rematch:
@@ -781,7 +781,7 @@ class merge_plan(object):
             return blocker
         return packages.AndRestriction(blocker,
             packages.PackageRestriction("provider.key",
-                values.StrExactMatch(choices.current_pkg.key), 
+                values.StrExactMatch(choices.current_pkg.key),
                 negate=True, ignore_missing=True),
             finalize=True)
 

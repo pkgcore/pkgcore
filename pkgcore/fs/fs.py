@@ -56,10 +56,10 @@ class fsBase(object):
     __attrs__ = __slots__
     __default_attrs__ = {}
 
-    locals().update((x.replace("is", "is_"), False) for x in 
+    locals().update((x.replace("is", "is_"), False) for x in
         __all__ if x.startswith("is") and x.islower() and not
             x.endswith("fs_obj"))
-    
+
     def __init__(self, location, strict=True, **d):
 
         d["location"] = normpath(location)
@@ -107,7 +107,7 @@ class fsBase(object):
     def realpath(self, cache=None):
         """calculate the abspath/canonicalized path for this entry, returning
         a new instance if the path differs.
-        
+
         @keyword cache: Either None (no cache), or a data object of path->
           resolved.  Currently unused, but left in for forwards compatibility
         """

@@ -256,7 +256,7 @@ class ProfileNode(object):
 class EmptyRootNode(ProfileNode):
 
     __inst_caching__ = True
-    
+
     parents = ()
     deprecated = None
     forced_use = masked_use = {}
@@ -513,7 +513,7 @@ class AliasedVirtuals(virtual.tree):
         self._versions_map = {}
 
     def _load_data(self):
-        self._virtuals = self._delay_apply_overrides(self._original_virtuals, 
+        self._virtuals = self._delay_apply_overrides(self._original_virtuals,
             self._overrides)
         self.packages._cache['virtual'] = tuple(self._virtuals.iterkeys())
 
@@ -550,7 +550,7 @@ class AliasedVirtuals(virtual.tree):
 
     def _expand_vers(self, cp, ver):
         return self._versions_map.get(cp[1], {}).get(ver, ())
-        
+
     def _fetch_metadata(self, pkg):
         import pdb;pdb.set_trace()
         data = self._virtuals[pkg.package]

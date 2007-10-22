@@ -29,7 +29,7 @@ class Test_MergeEngine(TestCase):
     simple_cset.append(fsSymlink("/usr/lib/blah", "../../blah"))
     simple_cset.append(fsSymlink("/broken-symlink", "dar"))
     simple_cset = contentsSet(simple_cset, mutable=False)
-    
+
     kls = engine.MergeEngine
 
     def assertCsetEqual(self, cset1, cset2):

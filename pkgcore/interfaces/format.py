@@ -31,9 +31,9 @@ def _raw_fetch(self):
 
 class maintenance(object):
     stage_depends = {}
-    
+
     __metaclass__ = ForcedDepends
-    
+
     def __init__(self, pkg, observer=None):
         self.obvserver = observer
         self.pkg = pkg

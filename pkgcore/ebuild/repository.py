@@ -151,10 +151,13 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
         try:
             # try reading $LOC/profiles/categories if it's available.
-            cats = readlines(pjoin(self.base, 'profiles', 'categories'), True, True,
-                True)
-            if cats is not None:
+            try:
+                cats = iter_read_bash(pjoin(self.base, 'profiles',
+                    'categories'))
                 return tuple(imap(intern, cats))
+            except IOError, e:
+                if e.errno != errno.ENOENT:
+                    raise
 
             return tuple(imap(intern,
                 ifilterfalse(self.false_categories.__contains__,

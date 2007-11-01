@@ -281,8 +281,13 @@ class ConfigManager(object):
                     break
             else:
                 if raise_on_missing:
-                    raise errors.ConfigurationError(
-                        'no section called %r' % (name,))
+                    if name == "portdir":
+                        # gentoo-related usability --jokey
+                        raise errors.ConfigurationError(
+                            "no section called %r, maybe you didn't add autoload-portage to your file" % (name,))
+                    else:
+                        raise errors.ConfigurationError(
+                            'no section called %r' % (name,))
                 return None
             try:
                 result = self.collapse_section(section, name, source_index)

@@ -13,6 +13,7 @@ from pkgcore.repository import multiplex
 from pkgcore.interfaces import observer, format
 from pkgcore.pkgsets.glsa import KeyedAndRestriction
 from pkgcore.ebuild.atom import atom
+from pkgcore.merge import errors as merge_errors
 
 from snakeoil import lists
 from snakeoil.formatters import ObserverFormatter
@@ -543,11 +544,16 @@ def main(options, out, err):
         else:
             out.write(">>> Removing %s" % op.pkg.cpvstr)
             i = vdb.uninstall(op.pkg, observer=repo_obs)
-        ret = i.finish()
-        if ret != True:
-            out.error("got %s for a phase execution for %s" % (ret, op.pkg))
+        try:
+            ret = i.finish()
+        except merge_errors.BlockModification, e:
+            out.error("Failed to merge %s: %s" % (op.pkg, e))
             if not options.ignore_failures:
                 return 1
+            continue
+        except Exception:
+            raise
+
         buildop.cleanup()
         if world_set:
             if op.desc == "remove":

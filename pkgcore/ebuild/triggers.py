@@ -361,6 +361,40 @@ class collision_protect(triggers.base):
                 "collision-protect: file(s) already exist: ( %s )" %
                 ', '.join(repr(x) for x in sorted(colliding)))
 
+class install_into_symdir_protect(triggers.base):
+
+    required_csets = {
+        const.INSTALL_MODE:('install', 'install_existing'),
+        const.REPLACE_MODE:('install', 'install_existing', 'old_cset')
+        }
+
+    _hooks = ('sanity_check',)
+    _engine_types = triggers.INSTALLING_MODES
+
+    def __init__(self, extra_protects=(), extra_disables=()):
+        triggers.base.__init__(self)
+        self.extra_protects = extra_protects
+        self.extra_disables = extra_disables
+
+    def trigger(self, engine, install, existing, old_cset=()):
+        if not existing:
+            return
+
+        # avoid generator madness
+        install_into_symdir = []
+        for linkset in [install.iterlinks(), existing.iterlinks()]:
+            linkset = list(linkset)
+            if linkset:
+                for inst_file in install.iterfiles():
+                    for sym in linkset:
+                        if inst_file.location.startswith(sym.location):
+                            install_into_symdir.append(inst_file)
+
+        if install_into_symdir:
+            raise errors.BlockModification(self,
+                "file(s) installed into symlinked dir, will break when removing files from the original dir: ( %s )" %
+                ', '.join(repr(x) for x in sorted(install_into_symdir)))
+
 
 class InfoRegen(triggers.InfoRegen):
 
@@ -416,7 +450,6 @@ class FixImageSymlinks(triggers.base):
         cset.update(x.change_attributes(target=pjoin('/', x.target[d_len:]))
             for x in l)
 
-
 def customize_engine(domain_settings, engine):
     env_update().register(engine)
 
@@ -434,6 +467,7 @@ def customize_engine(domain_settings, engine):
     if "collision-protect" in features:
         collision_protect(protect, mask).register(engine)
 
+    install_into_symdir_protect(protect, mask).register(engine)
     install_mask = domain_settings.get("INSTALL_MASK", '').split()
 
     for x in ("man", "info", "doc"):

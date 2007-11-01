@@ -44,6 +44,8 @@ pkgcore 0.3.2:
 * 'pmerge --domain' was added; basically is a way to specify the domain to
   use, else usees the configuration defined default domain.
 
+* new ebuild trigger to avoid installing files into symlinked dir (get_libdir
+  is the friend to fix a common /usr/lib -> /usr/lib64 bug), ticket 119
 
 pkgcore 0.3.1:
 

@@ -571,6 +571,7 @@ execute_phases() {
         nofetch)
             init_environ
             pkg_nofetch
+            exit 1
             ;;
         prerm|postrm|preinst|postinst|config)
             export SANDBOX_ON="0"

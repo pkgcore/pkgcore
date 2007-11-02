@@ -351,7 +351,7 @@ def main(options, out, err):
 
     for token in options.targets:
         try:
-            a = parse_atom(token, all_repos, return_none=True)
+            a = parse_atom(str(token), all_repos, return_none=True)
         except parserestrict.ParseError, e:
             out.error(str(e))
             return 1

@@ -6,6 +6,7 @@ build operation
 """
 
 from snakeoil.dependant_methods import ForcedDepends
+from snakeoil.osutils import pjoin
 
 __all__ = ('build_base', 'base', 'install', 'uninstall', 'replace', 'fetch',
     'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'errors')
@@ -21,11 +22,22 @@ def _raw_fetch(self):
     for x in self.fetchables:
         if x.filename in gotten_fetchables:
             continue
-        fp = self.fetcher(x)
-        if fp is None:
-            return False
-        self.files[fp] = x
-        gotten_fetchables.add(x.filename)
+        # fetching files without uri won't fly
+        # XXX hack atm, could use better logic but works for now
+        if not len(x.uri._uri_source):
+            fp = pjoin(self.fetcher.distdir, x.filename)
+            v_ret = self.fetcher._verify(fp, x)
+            if v_ret != 0:
+                self.nofetch()
+            else:
+                self.files[fp] = x
+                gotten_fetchables.add(x.filename)
+        else:    
+            fp = self.fetcher(x)
+            if fp is None:
+                return False
+            self.files[fp] = x
+            gotten_fetchables.add(x.filename)
     return True
 
 

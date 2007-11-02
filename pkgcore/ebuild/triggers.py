@@ -387,7 +387,7 @@ class install_into_symdir_protect(triggers.base):
             if linkset:
                 for inst_file in install.iterfiles():
                     for sym in linkset:
-                        if inst_file.location.startswith(sym.location):
+                        if inst_file.location.startswith(sym.location + '/'):
                             install_into_symdir.append(inst_file)
 
         if install_into_symdir:

@@ -305,13 +305,15 @@ class setup_mixin(object):
 
     setup_is_for_src = True
 
-    def setup(self):
+    def setup(self,  setup_phase_override=None):
         self.setup_logging()
 
         additional_commands = {}
         phase_name = "setup-binpkg"
         if self.setup_is_for_src:
             phase_name = "setup"
+        if setup_phase_override is not None:
+            phase_name = setup_phase_override
 
         ebdp = request_ebuild_processor(userpriv=False, sandbox=False)
         if self.setup_is_for_src:
@@ -600,6 +602,13 @@ class buildable(ebd, setup_mixin, format.build):
         if self.eapi > 0:
             return self._generic_phase("configure", True, True, False)
         return True
+
+    def nofetch(self):
+        """
+        execute the nofetch phase.
+        we need the same prerequisites as setup, so reuse that.
+        """
+        return setup_mixin.setup(self,  "nofetch")
 
     def unpack(self):
         """

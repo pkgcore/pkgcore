@@ -66,7 +66,7 @@ class fetcher(base.fetcher):
             try:
                 new_command % {"URI":"blah", "FILE":"blah"}
             except KeyError, k:
-                raise Malformedcommand("%s: unexpected key %s" % (command, k.args[0]))
+                raise MalformedCommand("%s: unexpected key %s" % (command, k.args[0]))
             return new_command
 
         self.command = rewrite_command(command)

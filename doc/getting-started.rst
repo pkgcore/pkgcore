@@ -158,7 +158,7 @@ No equivalents:
 
 ``--config``:
 
-  This may be implemented in ``pmaint`` in the future, possibly 0.3.
+  This may be implemented in ``pmaint`` in the future, possibly 0.4.x.
 
 ``--prune``:
 
@@ -216,7 +216,7 @@ No equivalents:
 
 ``--tree``:
 
-  This is formatter-dependent; it may be included in 0.3.
+  This is formatter-dependent; it may be included in 0.4.
 
 ``--verbose``:
 

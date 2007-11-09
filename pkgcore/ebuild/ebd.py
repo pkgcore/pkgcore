@@ -599,7 +599,7 @@ class buildable(ebd, setup_mixin, format.build):
         does nothing if the pkg is EAPI=0 (that spec lacks a seperated
         configure phase).
         """
-        if self.eapi > 0:
+        if self.eapi > 1:
             return self._generic_phase("configure", True, True, False)
         return True
 

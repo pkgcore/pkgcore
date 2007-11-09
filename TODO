@@ -1,6 +1,5 @@
-missing triggers:
-implement INSTALL_MASK
-
+pkgcore/merge:
+--------------
 
 - misc-functions.sh
  1) big ass scanelf block.

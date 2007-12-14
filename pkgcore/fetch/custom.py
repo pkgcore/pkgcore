@@ -77,18 +77,7 @@ class fetcher(base.fetcher):
 
         self.attempts = attempts
         self.userpriv = userpriv
-        kw = {"mode":0775}
-        if readonly:
-            kw["mode"] = 0555
-        if userpriv:
-            kw["gid"] = portage_gid
-        kw["minimal"] = True
-        if not ensure_dirs(self.distdir, **kw):
-            raise errors.distdirPerms(
-                self.distdir, "if userpriv, uid must be %i, gid must be %i. "
-                "if not readonly, directory must be 0775, else 0555" % (
-                    portage_uid, portage_gid))
-
+        self.readonly = readonly
         self.extra_env = extra_env
 
     def fetch(self, target):
@@ -104,6 +93,18 @@ class fetcher(base.fetcher):
         if not isinstance(target, fetchable):
             raise TypeError(
                 "target must be fetchable instance/derivative: %s" % target)
+
+        kw = {"mode":0775}
+        if self.readonly:
+            kw["mode"] = 0555
+        if self.userpriv:
+            kw["gid"] = portage_gid
+        kw["minimal"] = True
+        if not ensure_dirs(self.distdir, **kw):
+            raise errors.distdirPerms(
+                self.distdir, "if userpriv, uid must be %i, gid must be %i. "
+                "if not readonly, directory must be 0775, else 0555" % (
+                    portage_uid, portage_gid))
 
         fp = pjoin(self.distdir, target.filename)
         filename = os.path.basename(fp)

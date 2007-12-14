@@ -132,6 +132,14 @@ unpack()
             *.a|*.deb)
                 ar x "${srcdir}/${x}" || die "$myfail"
                 ;;
+            lzma)
+                if [ "${y}" == "tar" ]; then
+                    lzma -dc "${srcdir}${x}" | tar xof - ${taropts}
+                    assert "$myfail"
+                else
+                    lzma -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
+                fi
+                ;;
             *)
                 echo "unpack ${x}: file format not recognized. Ignoring."
                 ;;

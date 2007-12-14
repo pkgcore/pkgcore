@@ -271,8 +271,16 @@ class domain(pkgcore.config.domain.domain):
                 bashrc.append(source)
 
         # stack use stuff first, then profile.
-        # could do an intersect up front to pull out the forced disabled
-        # also, although that code would be fugly
+        def disabled_pkg_use_wrap(restrict_pairs):
+            """note: this is a hack to handle disabled iuses"""
+            for atom, uses in restrict_pairs:
+                disabled = []
+                for use in uses:
+                    if use.startswith("-"):
+                        disabled.append(use[1:])
+                if disabled:
+                    yield (atom, tuple(disabled))
+        
         self.enabled_use = collapsed_restrict_to_data(
             ((packages.AlwaysTrue, self.use),
             (packages.AlwaysTrue, [self.arch])),
@@ -282,7 +290,8 @@ class domain(pkgcore.config.domain.domain):
             profile.forced_use.iteritems(),
             ((packages.AlwaysTrue, [self.arch]),))
         self.disabled_use = collapsed_restrict_to_data(
-            profile.masked_use.iteritems())
+            profile.masked_use.iteritems(), 
+            disabled_pkg_use_wrap(pkg_use))
 
         self.settings["bashrc"] = bashrc
         self.repos = []
@@ -428,9 +437,9 @@ class domain(pkgcore.config.domain.domain):
             if enabled is self.enabled_use.defaults:
                 enabled = set(enabled)
         else:
-            return immutable, enabled
+            return immutable, enabled, disabled
         enabled.update(immutable)
         enabled.difference_update(disabled)
         immutable.update(disabled)
 
-        return immutable, enabled
+        return immutable, enabled, disabled

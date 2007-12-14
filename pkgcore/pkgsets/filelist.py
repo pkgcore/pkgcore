@@ -69,10 +69,20 @@ class WorldFile(FileList):
         FileList.__init__(self, location)
 
     def add(self, atom_inst):
-        atom_inst = atom(atom_inst.key)
-        FileList.add(self, atom_inst)
+        self._modify(atom_inst, FileList.add)
 
     def remove(self, atom_inst):
-        atom_inst = atom(atom_inst.key)
-        FileList.remove(self, atom_inst)
+        self._modify(atom_inst, FileList.remove)
+
+    def _modify(self, atom_inst, func):
+        if atom_inst.slot:
+            for slot in atom_inst.slot:
+                if slot == '0':
+                    new_atom_inst = atom(atom_inst.key)
+                else:
+                    new_atom_inst = atom(atom_inst.key + ":" + slot)
+                func(self, new_atom_inst)
+        else:
+            atom_inst = atom(atom_inst.key)
+            func(self, atom_inst)
 

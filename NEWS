@@ -3,6 +3,15 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.3.3:
+
+* IUSE defaults are respected now, so EAPI=1 implemented
+
+* Write slotted atoms to worldfile as portage supports this now
+
+* Sync up with portage; add support for lzma to unpack- mirror r7991 from
+  portage.
+
 pkgcore 0.3.2:
 
 * ticket 190746 from gentoo; basically need to force the perms of first level

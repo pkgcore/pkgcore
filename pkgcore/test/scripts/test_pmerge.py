@@ -46,6 +46,10 @@ class AtomParsingTest(TestCase):
             pmerge.parse_atom, "foo", repo)
         self.assertRaises(pmerge.AmbiguousQuery,
             pmerge.parse_atom, "foon", repo)
+        # test unicode conversion.
+        a = pmerge.parse_atom(u'=spork/foon-1', repo)
+        self.assertEqual(a.key, 'spork/foon')
+        self.assertTrue(isinstance(a.key, str))
 
 
 class CommandlineTest(TestCase, helpers.MainMixin):

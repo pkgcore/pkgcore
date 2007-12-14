@@ -303,10 +303,25 @@ class ConfiguredTree(configured.tree):
     def _get_delayed_immutable(self, pkg, immutable):
         return InvertedContains(pkg.iuse.difference(immutable))
 
+    # This is a really really bad hack, brian you should find a better way ;)
+    def _process_uses(self, pkg, enabled, disabled):
+        processed_uses = []
+        for useflag in pkg.iuse:
+            if useflag.startswith("+"):
+                if useflag not in disabled:
+                    processed_uses.append(useflag[1:])
+            elif useflag.startswith("-"):
+                if useflag not in enabled:
+                    processed_uses.append("-" + useflag[1:])
+            else:
+                if useflag in enabled:
+                    processed_uses.append(useflag)
+        return processed_uses
+
     def _get_pkg_kwds(self, pkg):
-        immutable, enabled = self._get_pkg_use(pkg)
+        immutable, enabled, disabled = self._get_pkg_use(pkg)
         return {
-            "initial_settings": enabled,
+            "initial_settings": self._process_uses(pkg, enabled, disabled),
             "unchangable_settings": self._delayed_iuse(
                 self._get_delayed_immutable, pkg, immutable),
             "build_callback":self.generate_buildop}

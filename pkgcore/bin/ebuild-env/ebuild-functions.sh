@@ -249,17 +249,10 @@ src_test()
     addpredict /
     if make check -n &> /dev/null; then
         echo ">>> Test phase [check]: ${CATEGORY}/${PF}"
-        if ! make check; then
-            hasq test $FEATURES && die "Make check failed. See above for details."
-            hasq test $FEATURES || eerror "Make check failed. See above for details."
-        fi
+        emake -j1 check || die "Make check failed. See above for details."
     elif make test -n &> /dev/null; then
-        echo ">>> Test phase [test]: ${CATEGORY}/${PF}"
-        if ! make test; then
-            hasq test $FEATURES && die "Make test failed. See above for details."
-            hasq test $FEATURES || eerror "Make test failed. See above for details."
-        fi
-  else
+        make test || die "Make test failed. See above for details."
+    else
         echo ">>> Test phase [none]: ${CATEGORY}/${PF}"
     fi
     SANDBOX_PREDICT="${SANDBOX_PREDICT%:/}"

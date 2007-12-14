@@ -180,6 +180,12 @@ class Formatter(object):
     def __init__(self, **kwargs):
         self.__dict__.update(kwargs)
 
+    def iuse_strip(self, flags):
+        """helper for stripping IUSE default chars"""
+        for flag in flags:
+            flag = flag.lstrip('+-')
+            yield flag
+
     def format(self, op):
         """Formats an op. Subclasses must define this method"""
         raise NotImplementedError(self.format)
@@ -294,9 +300,10 @@ class PortageFormatter(Formatter):
         # 4, else this is a list of length 2. We then pass this to
         # format_use which can take either 2 or 4 arguments.
         if op.desc == 'replace':
-            uses = (op.pkg.iuse, op.pkg.use, op.old_pkg.iuse, op.old_pkg.use)
+            uses = (self.iuse_strip(op.pkg.iuse), op.pkg.use,
+                self.iuse_strip(op.old_pkg.iuse), op.old_pkg.use)
         else:
-            uses = (op.pkg.iuse, op.pkg.use)
+            uses = (self.iuse_strip(op.pkg.iuse), op.pkg.use)
         stuff = map(self.use_splitter, uses)
 
         # Convert the list of tuples to a list of lists and a list of
@@ -437,7 +444,7 @@ class PaludisFormatter(Formatter):
         green = out.fg('green')
         flags = []
         use = set(op.pkg.use)
-        for flag in sorted(op.pkg.iuse):
+        for flag in sorted(self.iuse_strip(op.pkg.iuse)):
             if flag in use:
                 flags.extend((green, flag, ' '))
             else:

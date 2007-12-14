@@ -6,7 +6,7 @@
 Converts portage configuration files into L{pkgcore.config} form.
 """
 
-import os
+import os, os.path
 
 from pkgcore.config import basics, configurable
 from pkgcore import const
@@ -184,7 +184,7 @@ def add_sets(config, root, portage_base_dir):
             raise
 
 
-def add_profile(config, base_path):
+def add_profile(config, base_path, user_profile_path=None):
     make_profile = pjoin(base_path, 'make.profile')
     try:
         profile = normpath(abspath(pjoin(
@@ -206,10 +206,17 @@ def add_profile(config, base_path):
             '%s expands to %s, but no profile detected' % (
                 pjoin(base_path, 'make.profile'), profile))
 
-    config["profile"] = basics.AutoConfigSection({
-            "class": "pkgcore.ebuild.profiles.OnDiskProfile",
-            "basepath": pjoin("/", *psplit[:profile_start + 1]),
-            "profile": pjoin(*psplit[profile_start + 1:])})
+    if os.path.isdir(user_profile_path):
+        config["profile"] = basics.AutoConfigSection({
+                "class": "pkgcore.ebuild.profiles.UserProfile",
+                "parent_path": pjoin("/", *psplit[:profile_start + 1]),
+                "parent_profile": pjoin(*psplit[profile_start + 1:]), 
+                "user_path": user_profile_path})
+    else:
+        config["profile"] = basics.AutoConfigSection({
+                "class": "pkgcore.ebuild.profiles.OnDiskProfile",
+                "basepath": pjoin("/", *psplit[:profile_start + 1]),
+                "profile": pjoin(*psplit[profile_start + 1:])})
 
 
 def add_fetcher(config, conf_dict, distdir):
@@ -268,7 +275,9 @@ def config_from_make_conf(location="/etc/"):
 
     # sets...
     add_sets(new_config, root, portage_base)
-    add_profile(new_config, base_path)
+    
+    user_profile_path = pjoin(base_path, "portage", "profile")
+    add_profile(new_config, base_path, user_profile_path)
 
     kwds = {"class": "pkgcore.vdb.repository",
             "location": pjoin(root, 'var', 'db', 'pkg')}

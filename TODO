@@ -37,3 +37,49 @@ preplib:
 size check (is there enough space on the partitions for merging?)
 revdep check.
 
+
+misc:
+EAPI is stored as negative in cache when it's unsupported
+IUSE defaults
+commandline test control would be nice for *all* pkgs, instead of current IUSE limited ones
+debug-build features from portage; split-debug, etc.
+remote bin repo support (spec is where?).  talk to solar about it.
+news integration
+allow writing slot atoms to worldfile (portage supports it now)
+config/vdb updates from repo updates
+obsolete warnings from portage_config would be nice
+EAPI filtering on vdb (doubt it's there)
+force umask to 022 for perms reasons; sane?  emaint does this.
+
+"keeping up with the smiths/jones"
+
+portage:
+check CHOST storing for binpkgs; portage now checks, we should be storing it if we aren't already.
+portage sets:sets.conf specifically.
+portage ignore EBUSY during unmerge; bug 194081;  mirror it?
+pcheck; readonly var assignment checks; grab EbuildQuoteCheck, EbuildUselessDodoc, EbuildUselessCdS, EbuildNestedDie
+pkgcore.spawn: fd_pipes, ensuring stdout/stderr is flushed.  worth while?; sync the bsd bits potentially.
+ecompress crap.
+binpkg eapi visibility filtering; verify it's there.
+look into potentially supporting PreservedLib crap (leaves libs around after an unmerge)
+USER_CONFIG_PATH ?  new addition, or
+r7990, QA check for .pyc/.pyo in /usr/share;  add the trigger.
+uncoditional logging of file collisions, only bailing under FEATURES='collision-protect'.  worth mirroring?  bug 195527
+openpty trickery; specifically detecting that it's slow/failing (r8119)
+portageq owners; need to be supported?
+USE="multislot" ?  wth?.  bug 19375, r8172
+portage.cache.util changes; originally was pkgcore code, if still in use scan for things to mirror
+make.conf/make.globals.conf are blocked from overriding vars from PROFILE_ONLY_VARIABLES; worth mirroring (first thought is no); rev 8252?
+check out zacs Package/Depedency cleanup of portage resolver; stack approach is similar to what I implemented, one diff being the digraph approach still.
+  same for MergeTask.  same for --consistant implementation (r8341 starting).  rev 8359, pdepend/rdepend ordering hack
+rev 8289: xterm title tweak
+bug #196836#c6, rev 8291; multiple spaces in filename in vdb handling. see rev 8337 also
+FEATURES=lmirror ?
+specific bail out to the fetcher if chksum doesn't match; saves repeated downloads; switch to RESTRICT=primaryuri behaviour after 2 potentially also (scan fetch from portage for details)
+world file aparently can have package sets now (wtf?, rev 8431), rev 8438 also
+world file aparently can have 'multislot' packages; get the specifics
+ROOT support; make.globals no longer honors ROOT (rev 8471)
+
+paludis:
+check into reconcilio from paludis.
+check into --permit-unsafe-uninstalls logic

@@ -466,6 +466,28 @@ class OnDiskProfile(object):
             raise AttributeError(attr)
         return obj
 
+class UserProfileNode(ProfileNode):
+
+    def __init__(self, path, parent_path):
+        self.override_path = pjoin(path, parent_path)
+        ProfileNode.__init__(self, path)
+
+    def _load_parents(self):
+        self.parents = (ProfileNode(self.override_path),)
+        return self.parents
+
+class UserProfile(OnDiskProfile):
+
+    pkgcore_config_type = ConfigHint({'user_path':'str', 'parent_path':'str',
+        'parent_profile':'str', 'incrementals':'list'},
+        required=('user_path','parent_path', 'parent_profile'),
+        typename='profile')
+
+    def __init__(self, user_path, parent_path, parent_profile,
+        incrementals=const.incrementals, load_profiles_base=False):
+        OnDiskProfile.__init__(self, parent_path, parent_profile,
+            incrementals, load_profiles_base)
+        self.node = UserProfileNode(user_path, pjoin(parent_path, parent_profile))
 
 class PkgProvided(ebuild_src.base):
 
@@ -552,7 +574,6 @@ class AliasedVirtuals(virtual.tree):
         return self._versions_map.get(cp[1], {}).get(ver, ())
 
     def _fetch_metadata(self, pkg):
-        import pdb;pdb.set_trace()
         data = self._virtuals[pkg.package]
         if isinstance(data, atom.atom):
             data = [data]

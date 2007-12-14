@@ -44,7 +44,8 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=()):
         """Add a new attribute, and evaluate attributes of a wrapped pkg."""
 
         __slots__ = ("_unchangable", "_configurable",
-            "_reuse_pt", "_cached_wrapped", "_buildable")
+            "_reuse_pt", "_cached_wrapped", "_buildable", 
+            "_disabled")
 
         _wrapped_attr = attributes_to_wrap
         _configurable_name = configurable_attribute_name
@@ -60,7 +61,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=()):
         __getattr__ = GetAttrProxy("_raw_pkg")
 
         def __init__(self, pkg_instance,
-                     initial_settings=None, unchangable_settings=None,
+                     initial_settings=None, disabled_settings=None, unchangable_settings=None,
                      build_callback=None):
 
             """
@@ -78,6 +79,8 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=()):
 
             if initial_settings is None:
                 initial_settings = []
+            if disabled_settings is None:
+                disabled_settings = []
             if unchangable_settings is None:
                 unchangable_settings = []
 
@@ -85,6 +88,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=()):
             sf(self, '_unchangable', unchangable_settings)
             sf(self, '_configurable',
                 LimitedChangeSet(initial_settings, unchangable_settings))
+            sf(self, '_disabled', disabled_settings)
             sf(self, '_reuse_pt', 0)
             sf(self, '_cached_wrapped', {})
             sf(self, '_buildable', build_callback)
@@ -93,6 +97,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=()):
         def __copy__(self):
             return self.__class__(self._raw_pkg, self._configurable_name,
                                   initial_settings=set(self._configurable),
+                                  disabled_settings=self._disabled, 
                                   unchangable_settings=self._unchangable,
                                   attributes_to_wrap=self._wrapped_attr)
 

@@ -32,7 +32,7 @@ class OptionParser(commandline.OptionParser):
         return values, ()
 
 def main(options, out, err):
-    pkgs = options.config.get_default('domain').all_repos.match(options.atom)
+    pkgs = options.config.get_default('domain').all_repos.match(str(options.atom))
     if not pkgs:
         err.write('got no matches for %s\n' % (options.atom,))
         return 1

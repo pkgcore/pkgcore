@@ -447,7 +447,7 @@ class buildable(ebd, setup_mixin, format.build):
             self.run_test = False
         elif "test" not in pkg.use:
             if self.run_test:
-                logger.warn("disabling test for %s due to test use flag being disabled")
+                logger.warn("disabling test for %s due to test use flag being disabled" % pkg)
             self.run_test = False
 
         # XXX minor hack

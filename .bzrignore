@@ -10,3 +10,6 @@
 ./pkgcore/plugins/plugincache
 ./pkgcore/plugins/plugincache2
 ./man/*.1
+pkgcore.e4p
+pkgcore.e4t
+pkgcore.e4q

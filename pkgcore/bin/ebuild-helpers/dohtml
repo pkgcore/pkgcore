@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: /var/cvsroot/gentoo-src/portage/bin/dohtml,v 1.14.2.1 2004/10/27 14:39:29 jstubbs Exp $
+# $Id$
 
 #
 # Typical usage:
@@ -12,40 +12,39 @@
 #
 #
 # Detailed usage:
-# dohtml <list-of-files>
-#  - will install the files in the list of files (space-separated list) into
-#    /usr/share/doc/${PF}/html, provided the file ends in .html, .png, .jpg
-#     or .css
+# dohtml <list-of-files> 
+#  - will install the files in the list of files (space-separated list) into 
+#    /usr/share/doc/${PF}/html, provided the file ends in .htm, .html, .css,
+#      .js, ,gif, .jpeg, .jpg, or .png.
 # dohtml -r <list-of-files-and-directories>
-#  - will do as 'dohtml', but recurse into all directories, as long as the
+#  - will do as 'dohtml', but recurse into all directories, as long as the 
 #    directory name is not CVS
 # dohtml -A jpe,java [-r] <list-of-files[-and-directories]>
 #  - will do as 'dohtml' but add .jpe,.java (default filter list is
 #    added to your list)
 # dohtml -a png,gif,html,htm [-r] <list-of-files[-and-directories]>
-#  - will do as 'dohtml' but filter on .png,.gif,.html,.htm (default filter
+#  - will do as 'dohtml' but filter on .png,.gif,.html,.htm (default filter 
 #    list is ignored)
 # dohtml -x CVS,SCCS,RCS -r <list-of-files-and-directories>
 #  - will do as 'dohtml -r', but ignore directories named CVS, SCCS, RCS
 #
 
 import os
-import string
 import sys
 import types
 
 def dodir(path):
-    os.system("install -d '%s'" % path)
+    os.spawnlp(os.P_WAIT, "install", "install", "-d", path)
 
 def dofile(src,dst):
-
-    os.system("install -m0644 '%s' '%s'" % (src, dst))
+    os.spawnlp(os.P_WAIT, "install", "install", "-m0644", src, dst)
 
 def install(basename, dirname, options, prefix=""):
-
     fullpath = basename
-    if prefix: fullpath = prefix + "/" + fullpath
-    if dirname: fullpath = dirname + "/" + fullpath
+    if prefix:
+        fullpath = prefix + "/" + fullpath
+    if dirname:
+        fullpath = dirname + "/" + fullpath
 
     if options.DOCDESTTREE:
         destdir = options.D + "usr/share/doc/" + options.PF + "/" + options.DOCDESTTREE + "/" + options.doc_prefix + "/" + prefix
@@ -78,10 +77,11 @@ class OptionsClass:
             self.PF = os.environ["PF"]
         if os.environ.has_key("D"):
             self.D = os.environ["D"]
-        if os.environ.has_key("DOCDESTTREE"):
-            self.DOCDESTTREE = os.environ["DOCDESTTREE"]
+        if os.environ.has_key("_E_DOCDESTTREE_"):
+            self.DOCDESTTREE = os.environ["_E_DOCDESTTREE_"]
 
-        self.allowed_exts = [ 'png', 'gif', 'html', 'htm', 'jpg', 'css', 'js' ]
+        self.allowed_exts = [ 'htm', 'html', 'css', 'js',
+            'gif', 'jpeg', 'jpg', 'png' ]
         self.allowed_files = []
         self.disallowed_dirs = [ 'CVS' ]
         self.recurse = False
@@ -95,11 +95,11 @@ def print_help():
     print "       [-r] [-V] <file> [file ...]"
     print
     print " -a   Set the list of allowed to those that are specified."
-    print "      Default:", string.join(opts.allowed_exts, ",")
+    print "      Default:", ",".join(opts.allowed_exts)
     print " -A   Extend the list of allowed file types."
     print " -f   Set list of allowed extensionless file names."
     print " -x   Set directories to be excluded from recursion."
-    print "      Default:", string.join(opts.disallowed_dirs, ",")
+    print "      Default:", ",".join(opts.disallowed_dirs)
     print " -r   Install files and directories recursively."
     print " -V   Be verbose."
     print
@@ -127,7 +127,7 @@ def parse_args():
             elif arg == "-p":
                 options.doc_prefix = sys.argv[x]
             else:
-                values = string.split(sys.argv[x], ",")
+                values = sys.argv[x].split(",")
                 if arg == "-A":
                     options.allowed_exts.extend(values)
                 elif arg == "-a":
@@ -151,7 +151,7 @@ def main():
 
     if options.verbose:
         print "Allowed extensions:", options.allowed_exts
-        print "Document prefix : '" + options.doc_prefix	 + "'"
+        print "Document prefix : '" + options.doc_prefix     + "'"
         print "Allowed files :", options.allowed_files
 
     success = True
@@ -159,7 +159,8 @@ def main():
     for x in args:
         basename = os.path.basename(x)
         dirname  = os.path.dirname(x)
-        success = success and install(basename, dirname, options)
+        if not install(basename, dirname, options):
+            success = False
 
     if success:
         retcode = 0

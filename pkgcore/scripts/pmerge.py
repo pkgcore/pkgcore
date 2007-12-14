@@ -164,7 +164,7 @@ def parse_atom(token, repo, return_none=False):
     @return: an atom or C{None}.
     """
     # XXX this should be in parserestrict in some form, perhaps.
-    restriction = parserestrict.parse_match(token)
+    restriction = parserestrict.parse_match(str(token))
     key_matches = set(x.key for x in repo.itermatch(restriction))
     if not key_matches:
         raise NoMatches(token)
@@ -252,6 +252,8 @@ def get_pkgset(config, err, setname):
         return None
 
 def display_failures(out, sequence, first_level=True):
+    """when resolution fails, display a nicely formatted message"""
+
     sequence = iter(sequence)
     frame = sequence.next()
     if first_level:
@@ -281,7 +283,25 @@ def display_failures(out, sequence, first_level=True):
     if first_level:
         [out.first_prefix.pop() for x in (1,2,3)]
 
+def slotatom_if_slotted(repos, checkatom):
+    """check repos for more than one slot of given atom"""
+
+    if checkatom.slot is None or ncheckatom.slot[0] != "0":
+        return checkatom
+
+    found_slots = ()
+    pkgs = repos.itermatch(checkatom, sorter=sorted)
+    for pkg in pkgs:
+        found_slots.update(pkg.slot[0])
+
+    if len(found_slots) == 1:
+        return atom(checkatom.key)
+
+    return checkatom
+
 def update_worldset(world_set, pkg, remove=False):
+    """record/kill given atom in worldset"""
+
     if world_set is None:
         return
     if remove:
@@ -351,7 +371,7 @@ def main(options, out, err):
 
     for token in options.targets:
         try:
-            a = parse_atom(str(token), all_repos, return_none=True)
+            a = parse_atom(token, all_repos, return_none=True)
         except parserestrict.ParseError, e:
             out.error(str(e))
             return 1
@@ -551,17 +571,17 @@ def main(options, out, err):
             if not options.ignore_failures:
                 return 1
             continue
-        except Exception:
-            raise
 
         buildop.cleanup()
         if world_set:
             if op.desc == "remove":
                 out.write('>>> Removing %s from world file' % op.pkg.cpvstr)
-                update_worldset(world_set, op.pkg, remove=True)
+                removal_pkg = slotatom_if_slotted(all_repos, op.pkg.versioned_atom)
+                update_worldset(world_set, removal_pkg, remove=True)
             elif any(x.match(op.pkg) for x in atoms):
                 if not options.upgrade:
                     out.write('>>> Adding %s to world file' % op.pkg.cpvstr)
-                    update_worldset(world_set, op.pkg)
+                    add_pkg = slotatom_if_slotted(all_repos, op.pkg.versioned_atom)
+                    update_worldset(world_set, add_pkg)
     out.write("finished")
     return 0

@@ -3,6 +3,12 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.3.4:
+
+* IUSEs were filtered, unstated were not respected though breaks with
+  current portage tree, so re-enabling.
+  Also sanely handle -flag enforcing now and kill hackish code for it.
+
 pkgcore 0.3.3:
 
 * IUSE defaults are respected now, so EAPI=1 implemented

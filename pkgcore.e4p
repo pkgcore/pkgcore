@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE Project SYSTEM "Project-4.0.dtd">
 <!-- eric4 project file for project pkgcore -->
+<!-- Saved: 2007-12-25, 21:59:59 -->
 <!-- Copyright (C) 2007 ,  -->
 <Project version="4.0">
-  <ProgLanguage mixed="1">Python</ProgLanguage>
+  <ProgLanguage mixed="0">Python</ProgLanguage>
   <UIType>Console</UIType>
   <Description></Description>
-  <Version>0.4</Version>
+  <Version>0.1</Version>
   <Author></Author>
   <Email></Email>
   <Sources>
@@ -288,17 +289,17 @@
     <Source>
       <Dir>pkgcore</Dir>
       <Dir>ebuild</Dir>
-      <Name>repository.py</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>ebuild</Dir>
       <Name>resolver.py</Name>
     </Source>
     <Source>
       <Dir>pkgcore</Dir>
       <Dir>ebuild</Dir>
       <Name>triggers.py</Name>
+    </Source>
+    <Source>
+      <Dir>pkgcore</Dir>
+      <Dir>ebuild</Dir>
+      <Name>repository.py</Name>
     </Source>
     <Source>
       <Dir>pkgcore</Dir>
@@ -1376,344 +1377,6 @@
     <Source>
       <Name>setup.py</Name>
     </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-env</Dir>
-      <Name>ebuild.sh</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-env</Dir>
-      <Name>ebuild-functions.sh</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-env</Dir>
-      <Name>ebuild-default-functions.sh</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-env</Dir>
-      <Name>ebuild-daemon.sh</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-env</Dir>
-      <Name>ebuild-daemon.lib</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-env</Dir>
-      <Name>filter-env</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-env</Dir>
-      <Name>isolated-functions.sh</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-env</Dir>
-      <Name>portageq_emulation</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>dosbin</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>dosed</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>dosym</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>emake</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>fowners</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>fperms</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>newbin</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>newconfd</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>newdoc</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>newenvd</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>newexe</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>newinitd</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>newins</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>newlib.a</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>newlib.so</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>newman</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>newsbin</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>prepall</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>prepalldocs</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>prepallinfo</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>prepallman</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>prepallstrip</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>prepinfo</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>preplib</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>preplib.so</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>prepman</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>prepstrip</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>dobin</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>doconfd</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>dodir</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>dodoc</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>doenvd</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>doexe</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>dohard</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>dohtml</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>doinfo</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>doinitd</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>doins</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>dolib</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>dolib.a</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>dolib.so</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>doman</Name>
-    </Source>
-    <Source>
-      <Dir>pkgcore</Dir>
-      <Dir>bin</Dir>
-      <Dir>ebuild-helpers</Dir>
-      <Name>domo</Name>
-    </Source>
-    <Source>
-      <Dir>src</Dir>
-      <Name>atom.c</Name>
-    </Source>
-    <Source>
-      <Dir>src</Dir>
-      <Name>bmh_search.c</Name>
-    </Source>
-    <Source>
-      <Dir>src</Dir>
-      <Name>bmh_search.h</Name>
-    </Source>
-    <Source>
-      <Dir>src</Dir>
-      <Name>chflags.c</Name>
-    </Source>
-    <Source>
-      <Dir>src</Dir>
-      <Name>cpv.c</Name>
-    </Source>
-    <Source>
-      <Dir>src</Dir>
-      <Name>depset.c</Name>
-    </Source>
-    <Source>
-      <Dir>src</Dir>
-      <Name>filter_env.c</Name>
-    </Source>
-    <Source>
-      <Dir>src</Dir>
-      <Name>restrictions.c</Name>
-    </Source>
   </Sources>
   <Forms>
   </Forms>
@@ -1724,13 +1387,25 @@
   <Interfaces>
   </Interfaces>
   <Others>
+    <Other>
+      <Dir>bin</Dir>
+      <Name>pmerge</Name>
+    </Other>
   </Others>
+  <MainScript>
+    <Dir>bin</Dir>
+    <Name>pmerge</Name>
+  </MainScript>
   <Vcs>
     <VcsType>None</VcsType>
   </Vcs>
   <FiletypeAssociations>
+    <FiletypeAssociation pattern="*.ui" type="FORMS" />
+    <FiletypeAssociation pattern="*.idl" type="INTERFACES" />
     <FiletypeAssociation pattern="*.ptl" type="SOURCES" />
     <FiletypeAssociation pattern="*.pyw" type="SOURCES" />
+    <FiletypeAssociation pattern="*.ui.h" type="FORMS" />
     <FiletypeAssociation pattern="*.py" type="SOURCES" />
+    <FiletypeAssociation pattern="*.qrc" type="RESOURCES" />
   </FiletypeAssociations>
 </Project>

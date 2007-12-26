@@ -86,6 +86,21 @@ class collapsed_restrict_to_data(object):
         incremental_expansion(s, iflatten_instance(l))
         return s
 
+    def pull_cp_data(self, pkg, force_copy=False):
+        """pull cp-related data"""
+        enabled_flags = set()
+        disabled_flags = set()
+        for atom, data in self.atoms.get(pkg.key, ()):
+            if atom.match(pkg):
+                for entry in data:
+                    if entry.startswith("-"):
+                        enabled_flags.discard(entry[1:])
+                        disabled_flags.add(entry[1:])
+                    else:
+                        disabled_flags.discard(entry)
+                        enabled_flags.add(entry)
+        return enabled_flags, disabled_flags
+
     def iter_pull_data(self, pkg):
         for item in self.defaults:
             yield item

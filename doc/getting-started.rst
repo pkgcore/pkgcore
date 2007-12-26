@@ -47,7 +47,7 @@ Sets
 Available sets are dependent upon your configuration. The majority of users
 still use ``/etc/make.conf`` configuration, which has five default sets:
 
-``system``, ``world``, ``installed``, ``version-installed``, ``vuln``
+``system``, ``world``, ``installed``, ``version-installed``, ``glsa``
 
 ``system``, ``world``:
 
@@ -77,9 +77,10 @@ still use ``/etc/make.conf`` configuration, which has five default sets:
     be a set containing ``app/foo:1 app/foo:2``.
 
 
-``vuln``:
+``glsa``:
 
-  Packages that are vulnerable to security bugs.
+  Packages that are vulnerable to security bugs, as specified in their
+  appropriate Gentoo Linux Security Advisory (GLSA).
 
 Custom Sets
 -----------

@@ -3,6 +3,9 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+* Further extending PortageFormatter to sanely handle worldfile highlights
+  and show repos with both id and location
+
 * Ticket 132: Portage Formatter supports real portage colors now,
   thanks to agaffney for getting the ball rolling
 

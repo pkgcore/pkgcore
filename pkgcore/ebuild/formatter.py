@@ -253,15 +253,24 @@ class PortageFormatter(Formatter):
         origautoline = out.autoline
         out.autoline = False
 
-        self.pkg_disabled_use = self.disabled_use.pull_data(op.pkg)
+        self.pkg_disabled_use = list()
+        if hasattr(self, 'disabled_use'):
+            self.pkg_disabled_use = self.disabled_use.pull_data(op.pkg)
 
         # This is for the summary at the end
-        reponr = self.repos.setdefault(
-            getattr(op.pkg.repo, "repo_id", "<unknown>"),
-            len(self.repos) + 1)
+        reponr = self.repos.setdefault(op.pkg.repo, len(self.repos) + 1)
+
+        pkg_is_bold = False
+        if hasattr(self, 'world_list'):
+            for entry in self.world_list:
+                if entry.match(op.pkg):
+                    pkg_is_bold = True
 
         # We don't do blockers or --tree stuff yet
-        out.write('[', out.fg('green'), 'ebuild', out.reset, ' ')
+        if pkg_is_bold:
+            out.write('[', out.fg('green'), out.bold, 'ebuild', out.reset, ' ')
+        else:
+            out.write('[', out.fg('green'), 'ebuild', out.reset, ' ')
 
         # Order is important here - look at the above diagram
         type = op.desc
@@ -292,7 +301,10 @@ class PortageFormatter(Formatter):
             out.write('  ')
         out.write('] ')
 
-        out.write(out.fg('green'), op.pkg.cpvstr, out.reset)
+        if pkg_is_bold:
+            out.write(out.fg('green'), out.bold, op.pkg.cpvstr, out.reset)
+        else:
+            out.write(out.fg('green'), op.pkg.cpvstr, out.reset)
 
         if type == 'upgrade':
             out.write(' ', out.fg('blue'), out.bold, '[%s]' % op.old_pkg.fullver, out.reset)
@@ -321,7 +333,7 @@ class PortageFormatter(Formatter):
             self.format_use(expand, *flaglists)
 
         if self.display_repo:
-            out.write(out.fg('blue'), " [%d]" % (reponr,))
+            out.write(out.fg('cyan'), " [%d]" % (reponr))
 
         out.write('\n')
         out.autoline = origautoline
@@ -411,7 +423,13 @@ class PortageFormatter(Formatter):
             repos = self.repos.items()
             repos.sort(key=operator.itemgetter(1))
             for k, v in repos:
-                self.out.write(self.out.fg('blue'), "[%d] %s" % (v, k))
+                reponame = getattr(k, 'repo_id')
+                if reponame != k.location:
+                    self.out.write(' ', self.out.fg('cyan'), "[%d]" % v,
+                        self.out.reset, " %s (%s)" % (reponame, k.location))
+                else:
+                    self.out.write(' ', self.out.fg('cyan'), "[%d]" % v,
+                        self.out.reset, " %s" % k.location)
 
 
 class PaludisFormatter(Formatter):

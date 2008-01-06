@@ -45,7 +45,6 @@ class BaseFormatterTest(object):
     @property
     def verify_formatterClass(self):
         class state_verifying_class(self.formatterClass):
-            disabled_use = collapsed_restrict_to_data()
             def format(internal_self, *args, **kwds):
                 autoline = self.fakeout.autoline
                 try:
@@ -381,19 +380,33 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'blue'), Bold(), '-bootstrap', Reset(), ' ',
             '(', Color('fg', 'blue'), Bold(), '-static', Reset(), ')"')
 
+    def test_worldfile_atom(self):
+        from pkgcore.ebuild.atom import atom
+        self.formatter.world_list = [atom('app-arch/bzip2')]
+        self.formatter.format(
+        FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6')))
+        self.assertOut('[', Color('fg', 'green'), Bold(), 'ebuild', Reset(),
+            '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '    ] ',
+            Color('fg', 'green'), Bold(), 'app-arch/bzip2-1.0.3-r6', Reset())
+
 class TestPortageVerboseFormatter(TestPortageFormatter):
-    suffix = [Color("fg", "blue"), ' [1]\n']
+    suffix = [Color("fg", "cyan"), ' [1]\n']
 
     def setUp(self):
         TestPortageFormatter.setUp(self)
-        self.repo = FakeRepo(repo='gentoo', location='/usr/portage')
+        self.repo1 = FakeRepo(repoid='gentoo', location='/usr/portage')
+        self.repo2 = FakeRepo(location='/usr/local/portage')
 
     def newFormatter(self, **kwargs):
         kwargs.setdefault("display_repo", True)
         return TestPortageFormatter.newFormatter(self, **kwargs)
 
     def test_end(self):
-        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo)))
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertOut('\n', Color('fg', 'blue'), '[1] /usr/portage', suffix=['\n'])
+        self.assertOut('\n',
+            ' ', Color('fg', 'cyan'), '[1]', Reset(),' gentoo (/usr/portage)\n',
+            ' ', Color('fg', 'cyan'), '[2]', Reset(),' /usr/local/portage\n',
+            suffix=[''])

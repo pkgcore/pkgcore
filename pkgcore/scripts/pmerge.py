@@ -326,16 +326,17 @@ def main(options, out, err):
 
     domain = options.domain
     vdb = domain.all_vdbs
+    world_set = get_pkgset(config, err, "world")
 
     formatter = options.formatter(out=out, err=err,
         use_expand=domain.use_expand,
-        use_expand_hidden=domain.use_expand_hidden, disabled_use=domain.disabled_use)
+        use_expand_hidden=domain.use_expand_hidden,
+        disabled_use=domain.disabled_use,
+        world_list=list(world_set))
 
     # This mode does not care about sets and packages so bypass all that.
     if options.unmerge:
-        world_set = None
         if not options.oneshot:
-            world_set = get_pkgset(config, err, "world")
             if world_set is None:
                 err.write("Disable world updating via --oneshot, or fix your "
                     "configuration")
@@ -399,9 +400,7 @@ def main(options, out, err):
 
     atoms = lists.stable_unique(atoms)
 
-    world_set = None
     if (not options.set or options.clean) and not options.oneshot:
-        world_set = get_pkgset(config, err, 'world')
         if world_set is None:
             err.write("Disable world updating via --oneshot, or fix your "
                 "configuration")

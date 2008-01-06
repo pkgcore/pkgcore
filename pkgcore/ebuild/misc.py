@@ -40,6 +40,8 @@ class collapsed_restrict_to_data(object):
                     # note also, we're dropping AlwaysFalse; it'll never match.
                     if a.negate:
                         always.extend(data)
+                        for atomlist in atom_d.itervalues():
+                            atomlist.append((a, set([flag for flag in data if flag.startswith("-")])))
                 elif isinstance(a, atom):
                     atom_d.setdefault(a.key, []).append((a, data))
                 elif isinstance(a, packages.PackageRestriction):

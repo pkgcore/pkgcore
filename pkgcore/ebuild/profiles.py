@@ -264,7 +264,7 @@ class EmptyRootNode(ProfileNode):
     virtuals = {}
 
 
-def incremental_expansion(orig, iterable, msg_prefix=''):
+def incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
     for i in iterable:
         if i[0] == '-':
             i = i[1:]
@@ -272,7 +272,10 @@ def incremental_expansion(orig, iterable, msg_prefix=''):
                 raise ValueError("%sencountered an incomplete negation, '-'"
                     % msg_prefix)
             orig.discard(i)
+            if not finalize:
+                orig.add("-" + i)
         else:
+            orig.discard("-" + i)
             orig.add(i)
 
 

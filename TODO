@@ -40,12 +40,10 @@ revdep check.
 
 misc:
 EAPI is stored as negative in cache when it's unsupported
-IUSE defaults
 commandline test control would be nice for *all* pkgs, instead of current IUSE limited ones
 debug-build features from portage; split-debug, etc.
 remote bin repo support (spec is where?).  talk to solar about it.
 news integration
-allow writing slot atoms to worldfile (portage supports it now)
 config/vdb updates from repo updates
 obsolete warnings from portage_config would be nice
 EAPI filtering on vdb (doubt it's there)

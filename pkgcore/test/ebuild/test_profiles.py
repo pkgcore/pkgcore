@@ -224,6 +224,11 @@ class test_incremental_expansion(TestCase):
         self.assertRaises(ValueError,
             profiles.incremental_expansion, set(), '-')
 
+    def test_non_finalized(self):
+        s = set(["a", "b"])
+        profiles.incremental_expansion(s, ("-a", "b", "-b", "c"),'',False)
+        self.assertEqual(sorted(s), ["-a", "-b", "c"])
+
 
 class TestOnDiskProfile(TempDirMixin, TestCase):
 

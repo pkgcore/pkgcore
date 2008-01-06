@@ -166,7 +166,7 @@ class domain(pkgcore.config.domain.domain):
                         v = set(v.split())
                     else:
                         v = set(v)
-                    incremental_expansion(v, settings[x])
+                    incremental_expansion(v, settings[x], '', False)
                     settings[x] = v
             else:
                 if x in incrementals:
@@ -195,7 +195,6 @@ class domain(pkgcore.config.domain.domain):
         # visibility mask...
         # if ((package.mask or visibility) and not package.unmask)
         # or not (package.keywords or accept_keywords)
-
         vfilter = packages.AndRestriction(finalize=False,
             disable_inst_caching=False)
         r = None
@@ -272,9 +271,9 @@ class domain(pkgcore.config.domain.domain):
 
         # stack use stuff first, then profile.
         self.enabled_use = collapsed_restrict_to_data(
+            profile.pkg_use.iteritems(), 
             ((packages.AlwaysTrue, self.use),
             (packages.AlwaysTrue, [self.arch])),
-            profile.pkg_use.iteritems(),
             pkg_use)
         self.forced_use = collapsed_restrict_to_data(
             profile.forced_use.iteritems(),

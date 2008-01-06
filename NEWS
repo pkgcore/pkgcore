@@ -3,6 +3,14 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+* Ticket 132: Portage Formatter supports real portage colors now,
+  thanks to agaffney for getting the ball rolling
+
+* Masked IUSEs were not treated right in all cases, thanks to agaffney
+  for report and help testing
+
+* (0.3.3 Add: diefunc tracebacks beautified)
+
 pkgcore 0.3.4:
 
 * IUSEs were filtered, unstated were not respected though breaks with

@@ -253,47 +253,49 @@ class PortageFormatter(Formatter):
         origautoline = out.autoline
         out.autoline = False
 
+        self.pkg_disabled_use = self.disabled_use.pull_data(op.pkg)
+
         # This is for the summary at the end
         reponr = self.repos.setdefault(
             getattr(op.pkg.repo, "repo_id", "<unknown>"),
             len(self.repos) + 1)
 
         # We don't do blockers or --tree stuff yet
-        out.write('[ebuild ')
+        out.write('[', out.fg('green'), 'ebuild', out.reset, ' ')
 
         # Order is important here - look at the above diagram
         type = op.desc
         if op.desc == "add":
-            out.write(out.fg('green'), ' N')
+            out.write(' ', out.fg('green'), out.bold, 'N', out.reset)
             if op.pkg.slot != '0':
-                out.write(out.fg('green'), 'S')
+                out.write(out.fg('green'), out.bold, 'S', out.reset)
             else:
                 out.write(' ')
         elif op.desc == "replace" and op.pkg == op.old_pkg:
-            out.write(out.fg('yellow'), '  R')
+            out.write('  ', out.fg('yellow'), out.bold, 'R', out.reset)
         else:
             out.write('   ')
             type = 'upgrade'
 
         if 'fetch' in op.pkg.restrict:
-            out.write(out.fg('red'), 'F')
+            out.write(out.fg('red'), out.bold, 'F', out.reset)
         else:
             out.write(' ')
         if type == 'upgrade':
             if op.pkg.fullver != op.old_pkg.fullver:
-                out.write(out.fg('cyan'), 'U')
+                out.write(out.fg('cyan'), out.bold, 'U', out.reset)
                 if op.pkg > op.old_pkg:
                     out.write(' ')
                 else:
-                    out.write(out.fg('blue'), 'D')
+                    out.write(out.fg('blue'), out.bold, 'D', out.reset)
         else:
             out.write('  ')
         out.write('] ')
 
-        out.write(out.fg('green'), '%s ' % op.pkg.cpvstr)
+        out.write(out.fg('green'), op.pkg.cpvstr, out.reset)
 
         if type == 'upgrade':
-            out.write(out.fg('blue'), '[%s] ' % op.old_pkg.fullver)
+            out.write(' ', out.fg('blue'), out.bold, '[%s]' % op.old_pkg.fullver, out.reset)
 
         # Build a list of (useflags, use_expand_dicts) tuples.
         # HACK: if we are in "replace" mode we build a list of length
@@ -309,8 +311,12 @@ class PortageFormatter(Formatter):
         # Convert the list of tuples to a list of lists and a list of
         # dicts (both length 2 or 4).
         uselists, usedicts = zip(*stuff)
+        if uselists[0] and type != 'upgrade':
+            out.write(' ')
         self.format_use('use', *uselists)
-        for expand in self.use_expand-self.use_expand_hidden:
+        for useno, expand in enumerate(self.use_expand-self.use_expand_hidden):
+            if not uselists[0] and useno == 0 and type != 'upgrade':
+                out.write(' ')
             flaglists = [d.get(expand, ()) for d in usedicts]
             self.format_use(expand, *flaglists)
 
@@ -340,6 +346,8 @@ class PortageFormatter(Formatter):
         green = out.fg('green')
         blue = out.fg('blue')
         yellow = out.fg('yellow')
+        bold = out.bold
+        reset = out.reset
 
         flags = []
         enabled = set(selectable) & set(choice)
@@ -351,40 +359,51 @@ class PortageFormatter(Formatter):
                 assert flag
                 if flag in old_enabled:
                     # Unchanged flag.
-                    flags.extend((red, flag, ' '))
+                    flags.extend((red, bold, flag, reset, ' '))
                 elif flag in old_disabled:
                     # Toggled.
                     # Trailing single space is important, we can pop it below.
-                    flags.extend((green, flag, '*', ' '))
+                    flags.extend((green, bold, flag, reset, '*', ' '))
                 else:
                     # Flag did not exist earlier.
-                    flags.extend((yellow, flag, '%', ' '))
+                    flags.extend((yellow, bold, flag, reset, '%*', ' '))
             for flag in sorted(disabled | (set(oldselectable) - set(selectable))):
                 assert flag
-                if flag not in disabled:
+                if flag in self.pkg_disabled_use:
+                    if flag in old_enabled:
+                        flags.extend(('(', green, bold, '-', flag, reset, '*)', ' '))
+                    else:
+                        flags.extend(('(', blue, bold, '-', flag, reset, ')', ' '))
+                elif flag not in disabled:
                     # Removed flag.
-                    flags.extend((yellow, '(-', flag, '%)', ' '))
+                    if flag in old_enabled:
+                        flags.extend(('(', yellow, bold, '-', flag, reset, '%*)', ' '))
+                    else:
+                        flags.extend(('(', yellow, bold, '-', flag, reset, '%)', ' '))
                 elif flag in old_disabled:
                     # Unchanged.
-                    flags.extend((blue, '-', flag, ' '))
+                    flags.extend((blue, bold, '-', flag, reset, ' '))
                 elif flag in old_enabled:
                     # Toggled.
-                    flags.extend((yellow, '-', flag, '*', ' '))
+                    flags.extend((yellow, bold, '-', flag, reset, '*', ' '))
                 else:
                     # New.
-                    flags.extend((yellow, '-', flag, '%', ' '))
+                    flags.extend((yellow, bold, '-', flag, reset, '%', ' '))
         else:
             for flag in sorted(enabled):
-                flags.extend((red, flag, ' '))
+                flags.extend((red, bold, flag, reset, ' '))
             for flag in sorted(disabled):
-                flags.extend((yellow, '-', flag, ' '))
+                if flag in self.pkg_disabled_use:
+                    flags.extend(('(', blue, bold, '-', flag, reset, ')', ' '))
+                else:
+                    flags.extend((blue, bold, '-', flag, reset, ' '))
 
         # Only write this if we have something to write
         if flags:
-            out.write(attr.upper(), '="')
+            out.write(' ', attr.upper(), '="')
             # Omit the final space.
             out.write(*flags[:-1])
-            out.write('" ')
+            out.write('"')
 
     def end(self):
         if self.display_repo:

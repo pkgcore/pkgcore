@@ -39,7 +39,8 @@ Basic Usage
 
   If you want ``--clean`` to preserve your build depends, use the ``-B``
   option.
-
+``pmerge --ask --newuse``
+  Scan installed packages for changed USE flags
 
 Sets
 ----

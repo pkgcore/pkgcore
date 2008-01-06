@@ -14,6 +14,7 @@ from pkgcore.interfaces import observer, format
 from pkgcore.pkgsets.glsa import KeyedAndRestriction
 from pkgcore.ebuild.atom import atom
 from pkgcore.merge import errors as merge_errors
+from pkgcore.restrictions.values import AlwaysTrue
 
 from snakeoil import lists
 from snakeoil.formatters import ObserverFormatter
@@ -53,6 +54,8 @@ that aren't involved in the graph of the requested operation""")
             help="do the resolution, but ask to merge/fetch anything")
         self.add_option('--fetchonly', '-f', action='store_true',
             help="do only the fetch steps of the resolved plan")
+        self.add_option('--newuse', '-N', action='store_true', 
+            help="check for changed useflags in installed packages")
         self.add_option('--ignore-cycles', '-i', action='store_true',
             help=\
 """ignore cycles if they're found to be unbreakable;
@@ -135,8 +138,10 @@ a depends on b, and b depends on a, with neither built is an example""")
             self.error('--usepkg is redundant when --usepkgonly is used')
         if options.set:
             options.replace = False
-        if not options.targets and not options.set:
+        if not options.targets and not options.set and not options.newuse:
             self.error('Need at least one atom/set')
+        if options.newuse and options.set:
+            self.error("Don't specify --newuse when using sets, use it standalone")
         return options, ()
 
 class AmbiguousQuery(parserestrict.ParseError):
@@ -324,7 +329,7 @@ def main(options, out, err):
 
     formatter = options.formatter(out=out, err=err,
         use_expand=domain.use_expand,
-        use_expand_hidden=domain.use_expand_hidden)
+        use_expand_hidden=domain.use_expand_hidden, disabled_use=domain.disabled_use)
 
     # This mode does not care about sets and packages so bypass all that.
     if options.unmerge:
@@ -388,7 +393,7 @@ def main(options, out, err):
         else:
             atoms.append(a)
 
-    if not atoms:
+    if not atoms and not options.newuse:
         out.error('No targets specified; nothing to do')
         return 1
 
@@ -412,6 +417,24 @@ def main(options, out, err):
         extra_kwargs['resolver_cls'] = resolver.empty_tree_merge_plan
     if options.debug:
         extra_kwargs['debug'] = True
+
+    if options.newuse:
+        out.write(out.bold, ' * ', out.reset, 'Scanning for changed USE...')
+        out.title('Scanning for changed USE...')
+        for inst_pkg in vdb.itermatch(AlwaysTrue):
+            if inst_pkg.category == 'virtual':
+                continue
+            src_pkgs = all_repos.match(inst_pkg.versioned_atom)
+            if src_pkgs:
+                src_pkg = max(src_pkgs)
+                inst_use = set(use.lstrip("+-") for use in inst_pkg.iuse)
+                src_use = set(use.lstrip("+-") for use in src_pkg.iuse)
+                oldflags = inst_use & inst_pkg.use
+                newflags = src_use & src_pkg.use
+                changed_flags = (oldflags ^ newflags) | (inst_pkg.iuse ^ src_pkg.iuse)
+                if changed_flags:
+                    #import pdb;pdb.set_trace()
+                    atoms.append(src_pkg.versioned_atom)
 
     resolver_inst = resolver_kls(
         vdb, repos, verify_vdb=options.deep, nodeps=options.nodeps,

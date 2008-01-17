@@ -421,7 +421,7 @@ def main(options, out, err):
         out.write(out.bold, ' * ', out.reset, 'Scanning for changed USE...')
         out.title('Scanning for changed USE...')
         for inst_pkg in vdb.itermatch(packages.PackageRestriction('category',
-            values.StrMatch("virtual"), negate=True):
+            values.StrMatch('virtual'), negate=True)):
             src_pkgs = all_repos.match(inst_pkg.versioned_atom)
             if src_pkgs:
                 src_pkg = max(src_pkgs)

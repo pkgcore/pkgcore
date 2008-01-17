@@ -15,7 +15,7 @@ import operator
 
 from pkgcore.config import configurable
 from snakeoil.demandload import demandload
-demandload(globals(), 'errno')
+demandload(globals(), 'errno', 'snakeoil.compatibility:any')
 
 class NoChoice(KeyboardInterrupt):
     """Raised by L{userquery} if no choice was made.
@@ -260,11 +260,7 @@ class PortageFormatter(Formatter):
         # This is for the summary at the end
         reponr = self.repos.setdefault(op.pkg.repo, len(self.repos) + 1)
 
-        pkg_is_bold = False
-        if hasattr(self, 'world_list'):
-            for entry in self.world_list:
-                if entry.match(op.pkg):
-                    pkg_is_bold = True
+        pkg_is_bold = any(x.match(op.pkg) for x in getattr(self, 'world_list', ()))
 
         # We don't do blockers or --tree stuff yet
         if pkg_is_bold:

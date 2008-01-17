@@ -14,7 +14,7 @@ from pkgcore.interfaces import observer, format
 from pkgcore.pkgsets.glsa import KeyedAndRestriction
 from pkgcore.ebuild.atom import atom
 from pkgcore.merge import errors as merge_errors
-from pkgcore.restrictions.values import AlwaysTrue
+from pkgcore.restrictions import packages, values
 
 from snakeoil import lists
 from snakeoil.formatters import ObserverFormatter
@@ -420,9 +420,8 @@ def main(options, out, err):
     if options.newuse:
         out.write(out.bold, ' * ', out.reset, 'Scanning for changed USE...')
         out.title('Scanning for changed USE...')
-        for inst_pkg in vdb.itermatch(AlwaysTrue):
-            if inst_pkg.category == 'virtual':
-                continue
+        for inst_pkg in vdb.itermatch(packages.PackageRestriction('category',
+            values.StrMatch("virtual"), negate=True):
             src_pkgs = all_repos.match(inst_pkg.versioned_atom)
             if src_pkgs:
                 src_pkg = max(src_pkgs)

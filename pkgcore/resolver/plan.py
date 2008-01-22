@@ -703,7 +703,11 @@ class merge_plan(object):
                             fail = state.replace_op(choices, x).apply(self.state)
                             if not fail:
                                 continue
+                            self.notify_choice_failed(stack, atom, choices,
+                                "failed forcing provider: %s due to conflict %s", (x, p))
                             break
+                    self.notify_choice_failed(stack, atom, choices,
+                        "failed inserting provider: %s due to conflict %s", (x, l))
                     fail = l
                     break
             else:

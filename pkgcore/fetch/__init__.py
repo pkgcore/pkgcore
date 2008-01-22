@@ -123,4 +123,15 @@ class uri_list(object):
             ', '.join(str(x) for x in self._uri_source))
 
     def __nonzero__(self):
-        return bool(self._uri_source)
+        # implemented this way on the off chance an empty sublist is handed in
+        for entry in self:
+            return True
+        return False
+
+    def __len__(self):
+        # we do it this way since each item may be a sublist, and to reuse 
+        # __iter__
+        count =0
+        for entry in self:
+            count += 1
+        return count

@@ -24,20 +24,14 @@ def _raw_fetch(self):
             continue
         # fetching files without uri won't fly
         # XXX hack atm, could use better logic but works for now
-        if not len(x.uri._uri_source):
-            fp = pjoin(self.fetcher.distdir, x.filename)
-            v_ret = self.fetcher._verify(fp, x)
-            if v_ret != 0:
-                self.nofetch()
-            else:
-                self.files[fp] = x
-                gotten_fetchables.add(x.filename)
-        else:    
-            fp = self.fetcher(x)
-            if fp is None:
+        fp = self.fetcher(x)
+        if fp is None:
+            if x.uri:
                 return False
-            self.files[fp] = x
-            gotten_fetchables.add(x.filename)
+            self.nofetch()
+            return False
+        self.files[fp] = x
+        gotten_fetchables.add(x.filename)
     return True
 
 

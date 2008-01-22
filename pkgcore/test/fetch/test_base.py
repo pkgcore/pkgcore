@@ -40,6 +40,16 @@ class TestFetcher(TempDirMixin, TestCase):
         o = c()
         o.fetch(1, foon=True)
         self.assertEqual([(1,), {"foon":True}], l)
+        class d(base.fetcher):
+            __parent = self
+            def get_path(self, fetchable):
+                if self._verify(self.__parent.fp, fetchable) == 0:
+                    return self.__parent.fp
+                return None
+        self.write_data()
+        self.assertEqual(d().get_path(self.obj), self.fp)
+        self.write_data("asdf")
+        self.assertEqual(d().get_path(self.obj), None)
 
     def test_verify_all_chksums(self):
         self.write_data()

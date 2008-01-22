@@ -61,8 +61,10 @@ class fetcher(object):
 
         return 0
 
-    def __call__(self, *a, **kw):
-        return self.fetch(*a, **kw)
+    def __call__(self, fetchable):
+        if not fetchable.uri:
+            return self.get_path(fetchable)
+        return self.fetch(fetchable)
 
     def get_path(self, fetchable):
         """

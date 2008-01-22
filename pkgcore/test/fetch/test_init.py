@@ -76,6 +76,17 @@ class Test_uri_list(base):
     def setUp(self):
         self.uril = fetch.uri_list("cows")
 
+    @staticmethod
+    def mk_uri_list(*iterable, **kwds):
+        filename = kwds.get("filename", "asdf")
+        obj = fetch.uri_list(filename)
+        for x in iterable:
+            if isinstance(x, fetch.mirror):
+                obj.add_mirror(x)
+            else:
+                obj.add_uri(x)
+        return obj
+
     def test_mirrors(self):
         self.assertRaises(TypeError, self.uril.add_mirror, "cows")
         mirror = fetch.mirror(["me", "WI"], "asdf")
@@ -98,3 +109,14 @@ class Test_uri_list(base):
         self.uril.add_mirror(fetch.default_mirror(
             ["belleville", "verona"], "foon"))
         self.assertUri(self.uril, l)
+
+    def test_nonzero(self):
+        self.assertTrue(self.mk_uri_list("asdf"))
+        self.assertFalse(self.mk_uri_list())
+        self.assertFalse(self.mk_uri_list(fetch.mirror((), "mirror")))
+
+    def test_len(self):
+        self.assertLen(self.mk_uri_list(), 0)
+        self.assertLen(self.mk_uri_list("fdas"), 1)
+        self.assertLen(self.mk_uri_list(fetch.mirror((), "mirror")), 0)
+        self.assertLen(self.mk_uri_list(fetch.mirror(("asdf",), "mirror")), 1)

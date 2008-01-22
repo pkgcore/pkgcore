@@ -3,6 +3,9 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
+* Additional debug output for pmerge.
+
 * Further extending PortageFormatter to sanely handle worldfile highlights
   and show repos with both id and location
 
@@ -14,11 +17,13 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 * (0.3.3 Add: diefunc tracebacks beautified)
 
+
 pkgcore 0.3.4:
 
 * IUSEs were filtered, unstated were not respected though breaks with
   current portage tree, so re-enabling.
   Also sanely handle -flag enforcing now and kill hackish code for it.
+
 
 pkgcore 0.3.3:
 
@@ -28,6 +33,7 @@ pkgcore 0.3.3:
 
 * Sync up with portage; add support for lzma to unpack- mirror r7991 from
   portage.
+
 
 pkgcore 0.3.2:
 
@@ -72,6 +78,7 @@ pkgcore 0.3.2:
 
 * new ebuild trigger to avoid installing files into symlinked dir (get_libdir
   is the friend to fix a common /usr/lib -> /usr/lib64 bug), ticket 119
+
 
 pkgcore 0.3.1:
 

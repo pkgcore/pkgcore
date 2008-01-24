@@ -35,7 +35,7 @@ class OptionParser(commandline.OptionParser):
             ' are specified.  Use with *caution*, this option used incorrectly '
             'can render your system unusable.  Implies --deep'),
         self.add_option('--upgrade', '-u', action='store_true',
-            help='try to upgrade already installed packages/dependcies')
+            help='try to upgrade already installed packages/dependencies')
         self.add_option('--set', '-s', action='append',
             help='specify a pkgset to use')
         self.add_option('--ignore-failures', action='store_true',

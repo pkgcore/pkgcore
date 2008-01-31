@@ -132,7 +132,7 @@ unpack()
             *.a|*.deb)
                 ar x "${srcdir}/${x}" || die "$myfail"
                 ;;
-            lzma)
+            *.lzma)
                 if [ "${y}" == "tar" ]; then
                     lzma -dc "${srcdir}${x}" | tar xof - ${taropts}
                     assert "$myfail"

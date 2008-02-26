@@ -185,9 +185,9 @@ class MergeEngine(object):
 
         csets = dict(cls.replace_csets)
 
-        for v, k in ((old, "old_cset"), (new, "new_cset")):
-            if k not in csets:
-                csets[k] = currying.post_curry(cls.get_pkg_contents, v)
+        csets.setdefault('old_cset', currying.post_curry(cls.get_pkg_contents, old))
+        csets.setdefault('raw_new_cset', currying.post_curry(cls.get_pkg_contents, new))
+        csets.setdefault('new_cset', lambda engine, csets:csets['raw_new_cset'].map_directory_structure(csets['old_cset']))
 
         o = cls(
             REPLACE_MODE, hooks, csets, cls.replace_csets_preserve,

@@ -377,6 +377,7 @@ class install_into_symdir_protect(triggers.base):
         self.extra_disables = extra_disables
 
     def trigger(self, engine, install, existing, old_cset=()):
+        return
         if not existing:
             return
 

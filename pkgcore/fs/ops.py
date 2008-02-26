@@ -176,22 +176,18 @@ def default_copyfile(obj, mkdirs=False):
     return True
 
 
-def offset_rewriter(offset, iterable):
-    sep = os.path.sep
-    for x in iterable:
-        yield x.change_attributes(
-            location=pjoin(offset, x.location.lstrip(sep)))
-
-
 def change_offset_rewriter(orig_offset, new_offset, iterable):
     offset_len = len(orig_offset.rstrip(os.path.sep))
     # localize it.
     npf = normpath
+    path_sep = os.path.sep
     for x in iterable:
         # slip in the '/' default to force it to still generate a
         # full path still
         yield x.change_attributes(
-            location=npf(pjoin(new_offset, x.location[offset_len:])))
+            location=npf(pjoin(new_offset, x.location[offset_len:].lstrip(path_sep))))
+
+offset_rewriter = partial(change_offset_rewriter, '/')
 
 
 def merge_contents(cset, offset=None, callback=lambda obj:None):

@@ -233,37 +233,38 @@ class Test_unmerge_contents(ContentsMixin):
         self.assertTrue(os.path.exists(fp))
 
 
-class Test_offset_rewriter(TestCase):
+class Test_offset_rewriting(TestCase):
 
-    func = staticmethod(ops.offset_rewriter)
+    change_offset = staticmethod(ops.change_offset_rewriter)
+    offset_insert = staticmethod(ops.offset_rewriter)
 
-    def test_it(self):
+    def test_offset_rewriter(self):
         f = ["/foon/%i" % x for x in xrange(10)]
         f.extend("/foon/%i/blah" % x for x in xrange(5))
         f = [fs.fsFile(x, strict=False) for x in f]
         self.assertEqual(sorted(x.location for x in f),
-            sorted(x.location for x in self.func('/', f)))
+            sorted(x.location for x in self.offset_insert('/', f)))
         self.assertEqual(
             sorted('/usr%s' % x.location for x in f),
-            sorted(x.location for x in self.func('/usr', f)))
-
-
-class Test_change_offset_rewriter(TestCase):
-
-    func = staticmethod(ops.change_offset_rewriter)
+            sorted(x.location for x in self.offset_insert('/usr', f)))
 
     def test_it(self):
         f = ["/foon/%i" % x for x in xrange(10)]
         f.extend("/foon/%i/blah" % x for x in xrange(5))
         f = [fs.fsFile(x, strict=False) for x in f]
         self.assertEqual(sorted(x.location for x in f),
-            sorted(y.location for y in self.func('/usr', '/',
+            sorted(y.location for y in self.change_offset('/usr', '/',
                 (x.change_attributes(location='/usr%s' % x.location)
                     for x in f)
             )))
         self.assertEqual(sorted(x.location for x in f),
-            sorted(y.location for y in self.func('/usr', '/',
+            sorted(y.location for y in self.change_offset('/usr', '/',
                 (x.change_attributes(location='/usr/%s' % x.location)
+                    for x in f)
+            )))
+        self.assertEqual(sorted("/usr" + x.location for x in f),
+            sorted(y.location for y in self.change_offset('/', '/usr',
+                (x.change_attributes(location='/%s' % x.location)
                     for x in f)
             )))
 

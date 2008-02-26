@@ -10,7 +10,7 @@ from pkgcore.chksum import get_handlers, get_chksums
 from os.path import sep as path_seperator, realpath, abspath
 from pkgcore.interfaces.data_source import local_source
 from snakeoil.mappings import LazyFullValLoadDict
-from snakeoil.osutils import normpath
+from snakeoil.osutils import normpath, pjoin
 
 # goofy set of classes representating the fs objects pkgcore knows of.
 
@@ -202,6 +202,12 @@ class fsLink(fsBase):
         target = d.pop("target")
         d["strict"] = False
         return self.__class__(location, target, **d)
+
+    @property
+    def resolved_target(self):
+        if self.target.startswith("/"):
+            return self.target
+        return normpath(pjoin(self.location, '../', self.target))
 
     def __repr__(self):
         return "symlink:%s->%s" % (self.location, self.target)

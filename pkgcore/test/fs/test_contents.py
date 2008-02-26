@@ -3,26 +3,30 @@
 
 import os
 from pkgcore.test import TestCase
-from snakeoil.currying import post_curry
+from snakeoil.currying import post_curry, partial
 from pkgcore.fs import fs, contents
-
+from snakeoil.osutils import pjoin
 
 class TestContentsSet(TestCase):
 
+    for x in ("File", "Dir", "Link", "Dev", "Fifo"):
+        locals()["mk_" + x.lower()] = partial(getattr(fs, "fs%s" % x),
+            strict=False)
+    del x
+
     def __init__(self, *a, **kw):
         TestCase.__init__(self, *a, **kw)
-        self.files = [fs.fsFile(x, strict=False) for x in [
-                "/etc/blah", "/etc/foo", "/etc/dar", "/tmp/dar",
-                "/tmp/blah/foo/long/ass/file/name/but/not/that/bad/really"]]
-        self.dirs = [fs.fsDir(x, strict=False) for x in [
-                "/tmp", "/blah", "/tmp/dar", "/usr/", "/usr/bin"]]
+        self.files = map(self.mk_file, ["/etc/blah", "/etc/foo", "/etc/dar",
+             "/tmp/dar",
+             "/tmp/blah/foo/long/ass/file/name/but/not/that/bad/really"])
+        self.dirs = map(self.mk_dir, ["/tmp", "/blah", "/tmp/dar",
+            "/usr/", "/usr/bin"])
         self.links = [fs.fsLink(x, os.path.dirname(x), strict=False) for x in
             ["/tmp/foo", "/usr/X11R6/lib", "/nagga/noo"]]
-        self.devs = [fs.fsDev(x, strict=False) for x in
-            [os.path.join("dev", y) for y in (
-                    "sda1", "hda", "hda2", "disks/ide1")]]
-        self.fifos = [fs.fsFifo(x, strict=False) for x in
-            [os.path.join("tmp", y) for y in ("dar", "boo", "bah")]]
+        self.devs = map(self.mk_dev,
+            [pjoin("dev", x) for x in ["sda1", "hda", "hda2", "disks/ide1"]])
+        self.fifos = map(self.mk_fifo,
+            [pjoin("tmp", y) for y in ("dar", "boo", "bah")])
         self.all = self.dirs + self.links + self.devs + self.fifos
 
     def test_init(self):
@@ -183,3 +187,21 @@ class TestContentsSet(TestCase):
         check_set_op, "symmetric_difference", fstrings, [f[:2], f[2:]])
 
     del f, fstrings
+
+    def test_child_nodes(self):
+        cset = contents.contentsSet
+        self.assertEqual(sorted(['/usr', '/usr/bin', '/usr/foo']),
+            sorted(x.location for x in contents.contentsSet(
+                [self.mk_dir("/usr"), self.mk_dir("/usr/bin"),
+                self.mk_file("/usr/foo")])))
+
+    def test_map_directory_structure(self):
+        old = contents.contentsSet([self.mk_file("/dir/a"),
+            self.mk_dir("/dir"), self.mk_link("/sym", "dir")])
+        new = contents.contentsSet([self.mk_file("/sym/a"),
+            self.mk_dir("/sym")])
+        # verify the machinery is working as expected.
+        self.assertNotEqual(list(old.difference(new)), [self.mk_dir("/dir")])
+        ret = new.map_directory_structure(old)
+        self.assertEqual(sorted(ret), sorted([self.mk_dir("/dir"),
+            self.mk_file("/dir/a")]))

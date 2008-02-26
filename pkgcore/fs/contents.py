@@ -12,6 +12,7 @@ from snakeoil.demandload import demandload
 from snakeoil.osutils import normpath
 demandload(globals(),
     'pkgcore.fs.ops:offset_rewriter,change_offset_rewriter',
+    'os:path',
 )
 from itertools import ifilter
 from operator import attrgetter
@@ -277,3 +278,51 @@ class contentsSet(object):
         cset = self.clone(empty=True)
         cset.update(change_offset_rewriter(old_offset, new_offset, self))
         return cset
+
+    def iter_child_nodes(self, start_point):
+        """yield a stream of nodes that are fs entries contained within the
+        passed in start point
+        
+        @param start_point: fs filepath all yielded nodes must be w/in
+        """
+        
+        if isinstance(start_point, fs.fsBase):
+            if start_point.is_sym():
+                start_point = start_point.target
+            else:
+                start_point = start_point.location
+        for x in self:
+            cn_path = normpath(start_point).rstrip(path.sep) + path.sep
+            # what about sym targets?
+            if x.location.startswith(cn_path):
+                yield x
+
+    def child_nodes(self, start_point):
+        """return a clone of this instance, w/ just the child nodes returned
+        from iter_child_nodes
+
+        @param start_point: fs filepath all yielded nodes must be w/in
+        """
+        obj = self.clone(empty=True)
+        obj.update(self.iter_child_nodes(start_point))
+        return obj
+
+    def map_directory_structure(self, other):
+        """resolve the directory structure between this instance, and another contentset,
+        collapsing syms of self into directories of other
+        """
+        conflicts_d = dict((x, x.resolved_target) for x in other.iterlinks())
+        # rebuild the targets first; sorted due to the fact that we want to 
+        # rewrite each node (resolving down the filepath chain)
+        conflicts = sorted(contentsSet(self.iterdirs()).intersection(conflicts_d))
+        obj = self.clone()
+        for conflict in conflicts:
+            # punt the conflict first, since we don't want it getting rewritten
+            obj.remove(conflict)
+            subset = self.child_nodes(conflict.location)
+            obj.difference_update(subset)
+            subset = subset.change_offset(conflict.location, conflict.resolved_target)
+            obj.update(subset)
+            # this looks insane
+            obj.add(other[conflicts_d[conflict]])
+        return obj

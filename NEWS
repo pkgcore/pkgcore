@@ -3,6 +3,12 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+* bug 137; symlink on directory merging failures where pkgcore would wipe
+  files it had just installed invalidly.
+
+* correct issue in offset rewriting (was resetting new_offset to '/')-
+  should only be api visible, no existing consumers known.
+
 * ebuild env lzma unpack support was broken; fixed (ticket 140).
 
 * Additional debug output for pmerge.

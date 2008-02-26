@@ -111,6 +111,12 @@ class Test_fsLink(TestCase, base):
         self.assertEqual(mkobj(target="k9").target, "k9")
         self.assertEqual(mkobj(target="../foon").target, "../foon")
 
+    def test_resolved_target(self):
+        self.assertEqual(self.make_obj(location="/tmp/foon", target="dar").resolved_target,
+            "/tmp/dar")
+        self.assertEqual(self.make_obj(location="/tmp/foon", target="/dar").resolved_target,
+            "/dar")
+
 class Test_fsDev(TestCase, base):
     kls = fs.fsDev
 

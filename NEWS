@@ -3,6 +3,14 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+* FEATURES=sfperms is now a trigger instead of a dyn_preinst hook.
+  Faster, cleaner, etc.
+
+* FEATURES=multilib-strict was converted into a trigger.  Tries to
+  use the python bindings for file first (merge file[python]), falling
+  back to invoking file.  Strongly suggested you have the bindings- fair bit
+  faster.  Finally, verification now runs for binpkgs also.
+
 * bug 137; symlink on directory merging failures where pkgcore would wipe
   files it had just installed invalidly.
 

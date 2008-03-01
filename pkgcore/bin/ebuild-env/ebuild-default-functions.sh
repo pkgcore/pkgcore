@@ -374,17 +374,6 @@ dyn_install()
         #scanelf -qyRF '%p %n' "${D}" | sed -e 's:^:/:' > "${T}/NEEDED"
     fi
 
-    if hasq multilib-strict ${FEATURES} && [ -x /usr/bin/file -a -x /usr/bin/find -a \
-         -n "${MULTILIB_STRICT_DIRS}" -a -n "${MULTILIB_STRICT_DENY}" ]; then
-        MULTILIB_STRICT_EXEMPT=${MULTILIB_STRICT_EXEMPT:-"(perl5|gcc|gcc-lib)"}
-        for dir in ${MULTILIB_STRICT_DIRS}; do
-            [ -d "${D}/${dir}" ] || continue
-            for file in $(find ${D}/${dir} -type f | egrep -v "^${D}/${dir}/${MULTILIB_STRICT_EXEMPT}"); do
-                file ${file} | egrep -q "${MULTILIB_STRICT_DENY}" && die "File ${file} matches a file type that is not allowed in ${dir}"
-            done
-        done
-    fi
-
     echo ">>> Completed installing ${PF} into ${D}"
     echo
     unset dir
@@ -403,20 +392,6 @@ dyn_preinst()
 
     # Make sure D is where the package expects it
     D=${IMAGE} pkg_preinst
-
-    # Smart FileSystem Permissions
-    if hasq sfperms $FEATURES; then
-        for i in $(find "${IMAGE}"/ -type f -perm -4000); do
-            ebegin ">>> SetUID: [chmod go-r] $i "
-            chmod go-r "$i"
-            eend $?
-        done
-        for i in $(find "${IMAGE}"/ -type f -perm -2000); do
-            ebegin ">>> SetGID: [chmod o-r] $i "
-            chmod o-r "$i"
-            eend $?
-        done
-    fi
 
     # total suid control.
     if hasq suidctl $FEATURES > /dev/null ; then

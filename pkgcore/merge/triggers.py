@@ -26,6 +26,7 @@ demandload(globals(),
     'pkgcore.fs.livefs:gen_obj',
     'pkgcore.fs:fs,contents',
     'snakeoil.fileutils:iter_read_bash',
+    're',
     'time',
     'math:floor',
 )
@@ -537,3 +538,59 @@ class CommonDirectoryModes(base):
             if x.mode != 0755:
                 r.warn('%s path has mode %s, should be 0755' %
                     (x.location, oct(x.mode)))
+
+
+class BlockFileType(base):
+
+    required_csets = ('new_cset',)
+    _hooks = ('pre_merge',)
+    _engine_types = INSTALLING_MODES
+
+    def __init__(self, bad_regex, regex_to_check=None, fatal=True):
+        self.bad_regex, self.filter_regex = bad_regex, regex_to_check
+        self.fatal = fatal
+
+    @classmethod
+    def _get_file_func(cls):
+        try:
+            import magic
+        except ImportError:
+            return cls._fallback_file
+        obj = magic.open(magic.MAGIC_NONE)
+        ret = obj.load()
+        if ret != 0:
+            raise RuntimeError("non zero ret from loading magic: %s" % ret)
+        return obj.file
+
+    @staticmethod
+    def _fallback_file(path):
+        ret, out = spawn.spawn_get_output(["file", path])
+        if ret != 0:
+            raise RuntimeError("file output was non zero- ret:%r out:%r" % 
+                (ret, out))
+        out = ''.join(out)
+        if out.startswith(path):
+            out = out[len(path):]
+            if out.startswith(":"):
+                out = out[1:]
+        return out
+
+    def trigger(self, engine, cset):
+        file_typer = self._get_file_func()
+
+        if self.filter_regex is None:
+            filter_re = lambda x:True
+        else:
+            filter_re = re.compile(self.filter_regex).match
+        bad_pat = re.compile(self.bad_regex).match
+
+        bad_files = []
+        # this won't play perfectly w/ binpkgs
+        for x in (x for x in cset.iterfiles() if filter_re(x.location)):
+            if bad_pat(file_typer(x.data_source.path)):
+                engine.observer.warn("disallowed file type: %r" % x)
+                bad_files.append(x)
+        if self.fatal and bad_files:
+            raise errors.BlockModification(self,
+                "blacklisted filetypes were encountered- pattern %r matched files: %r" %
+                    (self.bad_regex, sorted(bad_files)))

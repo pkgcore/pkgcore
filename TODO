@@ -2,6 +2,7 @@ pkgcore/merge:
 --------------
 
 - misc-functions.sh
+ specifically shifting it out of ebuild-default-functions.sh and into triggers.
  1) big ass scanelf block.
  2) install_mask (need to bind domain generation of triggers for it)
  3) preinst_mask (same thing, although that shouldn't wipe mangle the install image)

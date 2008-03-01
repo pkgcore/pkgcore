@@ -144,6 +144,13 @@ class tree(prototype.tree):
             fp = pjoin(path,
                 os.path.basename(path.rstrip(os.path.sep))+".ebuild")
             data = data_source.local_source(fp)
+        elif key == 'repository':
+            # try both, for portage/paludis compatibility.
+            data = readfile(pjoin(path, key), True)
+            if data is None:
+                data = readfile(pjoin(path, key.upper()), True)
+                if data is None:
+                    raise KeyError(key)
         else:
             data = readfile(pjoin(path, key), True)
             if data is None:

@@ -429,6 +429,50 @@ class InfoRegen(triggers.InfoRegen):
         return l
 
 
+class SFPerms(triggers.base):
+    required_csets = ('new_cset',)
+    _hooks = ('pre_merge',)
+    _engine_types = triggers.INSTALLING_MODES
+
+    def trigger(self, engine, cset):
+        resets = []
+        for x in cset.iterfiles():
+            if x.mode & 04000:
+                if x.mode & 0044:
+                    engine.observer.warn("sfperms: dropping group/world read "
+                        "due to SetGID: %r" % x)
+                    resets.append(x.change_attributes(mode=x.mode & ~044))
+            if x.mode & 02000:
+                if x.mode & 0004:
+                    engine.observer.warn("sfperms: dropping world read "
+                        "due to SetUID: %r" % x)
+                    resets.append(x.change_attributes(mode=x.mode & ~004))
+        cset.update(resets)
+
+
+def register_multilib_strict_trigger(domain_settings, engine):
+    locations = domain_settings.get("MULTILIB_STRICT_DIRS")
+    exempt = domain_settings.get("MULTILIB_STRICT_EXEMPT",
+        "(perl5|gcc|gcc-lib)")
+    deny_pattern = domain_settings.get("MULTILIB_STRICT_DENY")
+    if None in (locations, deny_pattern):
+        return
+    locations = locations.split()
+    if not locations:
+        return
+    elif len(locations) == 1:
+        locations = locations[0]
+    else:
+        locations = "(%s)" % "|".join(locations)
+    limit_pattern = "/%s/(?!%s)" % (locations, exempt)
+    while "//" in limit_pattern:
+        limit_pattern = limit_pattern.replace("//", "/")
+    # this seems semi dodgey, specifically, that it won't catch 'em all
+    trig = triggers.BlockFileType(".*%s.*" % deny_pattern, limit_pattern)
+    trig.register(engine)
+    return trig
+
+
 class FixImageSymlinks(triggers.base):
     required_csets = ('new_cset',)
     _hooks = ('pre_merge',)
@@ -467,6 +511,12 @@ def customize_engine(domain_settings, engine):
     features = domain_settings.get("FEATURES", ())
     if "collision-protect" in features:
         collision_protect(protect, mask).register(engine)
+
+    if "multilib-strict" in features:
+        register_multilib_strict_trigger(domain_settings, engine)
+
+    if "sfperms" in features:
+        SFPerms().register(engine)
 
     install_into_symdir_protect(protect, mask).register(engine)
     install_mask = domain_settings.get("INSTALL_MASK", '').split()

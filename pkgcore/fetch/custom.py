@@ -6,7 +6,7 @@ fetcher class that pulls files via executing another program to do the fetching
 """
 
 import os
-from pkgcore.spawn import spawn, is_userpriv_capable
+from pkgcore.spawn import spawn_bash, is_userpriv_capable
 from pkgcore.os_data import portage_uid, portage_gid
 from pkgcore.fetch import errors, base, fetchable
 from pkgcore.config import ConfigHint
@@ -140,7 +140,7 @@ class fetcher(base.fetcher):
                     # verify portion of the loop handles this. iow,
                     # don't trust their exit code. trust our chksums
                     # instead.
-                    spawn(command % {"URI":u, "FILE":filename}, **extra)
+                    spawn_bash(command % {"URI":u, "FILE":filename}, **extra)
                 attempts -= 1
 
         except StopIteration:

@@ -486,6 +486,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
             Py_CLEAR(self->revision);
             Py_INCREF(fullver);
         } else if('-' == *ver_end) {
+            char *rev_start = ver_end;
             if(NULL == (tmp = PyString_FromStringAndSize(p, ver_end - p)))
                 goto cleanup;
             tmp2 = self->version;
@@ -504,20 +505,29 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
             }
             if('\0' != *p || 'r' == p[-1])
                 goto parse_error;
-            tmp = PyInt_FromLong(revision);
-            if(!tmp) {
-                result = -1;
-                goto cleanup;
-            }
-            tmp2 = self->revision;
-            self->revision = tmp;
-            Py_XDECREF(tmp2);
-            if(!fullver) {
+            // if it's "-r0", then we drop the rev.
+            if (p - rev_start == 3 && rev_start[2] == '0') {
+                Py_XDECREF(fullver);
                 if(NULL == (fullver = PyString_FromStringAndSize(cpv_pos,
-                    p - cpv_pos)))
+                    rev_start - cpv_pos)))
                     goto cleanup;
+                Py_CLEAR(self->revision);
             } else {
-                Py_INCREF(fullver);
+                tmp = PyInt_FromLong(revision);
+                if(!tmp) {
+                    result = -1;
+                    goto cleanup;
+                }
+                tmp2 = self->revision;
+                self->revision = tmp;
+                Py_XDECREF(tmp2);
+                if(!fullver) {
+                    if(NULL == (fullver = PyString_FromStringAndSize(cpv_pos,
+                        p - cpv_pos)))
+                        goto cleanup;
+                } else {
+                    Py_INCREF(fullver);
+                }
             }
         } else {
             goto parse_error;

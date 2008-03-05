@@ -3,6 +3,9 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+* =dev-util/diffball-1.0-r0 is now the same as =dev-util/diffball-1.0; ticket
+  140.
+
 * convert FETCHCOMMAND/RESUMECOMMAND support to execute spawn_bash by
   default instead of trying to cut out shell; this kills off the occasional
   incompatibility introduced via portage supplying make.globals.

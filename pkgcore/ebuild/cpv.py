@@ -76,12 +76,18 @@ class native_CPV(object):
         m = parser.match(cpvstr)
         if not m:
             raise InvalidCPV(cpvstr)
+        d = m.groupdict()
+        rev = d["revision"]
+        if rev == '0':
+            d["revision"] = None
+            # chop off the -r0
+            d["fullver"] = d["version"]
+            cpvstr = cpvstr[:-3]
+        elif rev is not None:
+            d["revision"] = int(d["revision"])
         object.__setattr__(self, "cpvstr", cpvstr)
-        for k, v in m.groupdict().iteritems():
+        for k, v in d.iteritems():
             object.__setattr__(self, k, v)
-        r = self.revision
-        if r is not None:
-            object.__setattr__(self, "revision", int(r))
 
     def __hash__(self):
         return hash(self.cpvstr)

@@ -231,6 +231,7 @@ class native_CpvTest(TestCase):
             DummySubclass("da/ba-6.0_alpha0"), kls("da/ba-6.0_alpha"))
 
         self.assertNotEqual(DummySubclass("da/ba-6.0"), "foon")
+        self.assertEqual(DummySubclass("da/ba-6.0"), DummySubclass("da/ba-6.0-r0"))
 
     def test_no_init(self):
         """Test if the cpv is in a somewhat sane state if __init__ fails.
@@ -252,6 +253,12 @@ class native_CpvTest(TestCase):
                 hash(thing)
             except AttributeError:
                 pass
+
+    def test_r0_removal(self):
+        obj = self.kls("dev-util/diffball-1.0-r0")
+        self.assertEqual(obj.fullver, "1.0")
+        self.assertEqual(obj.revision, None)
+        self.assertEqual(str(obj), "dev-util/diffball-1.0")
 
 
 class CPY_CpvTest(native_CpvTest):

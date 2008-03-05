@@ -30,6 +30,13 @@ def alias_cset(alias, engine, csets):
     return csets[alias]
 
 
+def map_new_cset_livefs(engine, csets, cset_name='raw_new_cset'):
+    initial = engine._get_livefs_intersect_cset(engine, csets, cset_name)
+    livefs.recursively_fill_syms(initial)
+    ret = csets[cset_name].map_directory_structure(initial)
+    return ret
+
+
 class MergeEngine(object):
 
     install_hooks = dict((x, []) for x in [
@@ -39,7 +46,8 @@ class MergeEngine(object):
     replace_hooks = dict((x, []) for x in set(
             install_hooks.keys() + uninstall_hooks.keys()))
 
-    install_csets = {"install_existing":"get_install_livefs_intersect"}
+    install_csets = {"install_existing":"get_install_livefs_intersect",
+        "new_cset": map_new_cset_livefs}
     uninstall_csets = {
         "uninstall_existing":"get_uninstall_livefs_intersect",
         "uninstall":currying.partial(alias_cset, "old_cset")}
@@ -121,8 +129,8 @@ class MergeEngine(object):
             for (k, v) in cls.install_hooks.iteritems())
 
         csets = dict(cls.install_csets)
-        if "new_cset" not in csets:
-            csets["new_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
+        if "raw_new_cset" not in csets:
+            csets["raw_new_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
         o = cls(
             INSTALL_MODE, hooks, csets, cls.install_csets_preserve,
             observer, offset=offset)
@@ -187,7 +195,6 @@ class MergeEngine(object):
 
         csets.setdefault('old_cset', currying.post_curry(cls.get_pkg_contents, old))
         csets.setdefault('raw_new_cset', currying.post_curry(cls.get_pkg_contents, new))
-        csets.setdefault('new_cset', lambda engine, csets:csets['raw_new_cset'].map_directory_structure(csets['old_cset']))
 
         o = cls(
             REPLACE_MODE, hooks, csets, cls.replace_csets_preserve,

@@ -9,7 +9,7 @@ import os, collections, errno
 from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO
 
 from pkgcore.fs.fs import (
-    fsFile, fsDir, fsSymlink, fsDev, fsFifo, get_major_minor)
+    fsFile, fsDir, fsSymlink, fsDev, fsFifo, get_major_minor, fsBase)
 from pkgcore.fs.contents import contentsSet
 from pkgcore.chksum import get_handlers
 from pkgcore.interfaces.data_source import local_source
@@ -152,3 +152,27 @@ def intersect(cset):
                 raise
             del oe
 
+
+def recursively_fill_syms(cset, limiter=fsBase):
+    sym_src = [cset.links()]
+    while sym_src:
+        syms = sym_src.pop(-1)
+        new_syms = []
+        for sym in syms:
+            new_loc = sym.resolved_target
+            if new_loc in cset:
+                continue
+            try:
+                obj = gen_obj(new_loc)
+            except (OSError, IOError), e:
+                if e.errno != errno.ENOENT:
+                    raise
+                continue
+            if obj.is_sym:
+                cset.add(obj)
+                new_syms.append(obj)
+            elif isinstance(obj, limiter):
+                cset.add(obj)
+
+        if new_syms:
+            sym_src.append(new_syms)

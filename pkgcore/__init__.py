@@ -6,4 +6,4 @@
 import os
 if os.environ.get("SANDBOX_ON", 0) and not \
     os.environ.get("PKGCORE_INTENTIONALLY_SANDBOXED", False):
-    os.environ["SANDBOX_ON"] = 0
+    os.environ["SANDBOX_ON"] = '0'

@@ -177,6 +177,7 @@ class tree(prototype.tree):
 class ConfiguredTree(multiplex.tree):
 
     livefs = True
+    frozen_settable = False
 
     def __init__(self, raw_vdb, domain, domain_settings):
         self.domain = domain
@@ -188,7 +189,10 @@ class ConfiguredTree(multiplex.tree):
         else:
             self.old_style_virtuals = virtuals.non_caching_virtuals(raw_vdb)
         multiplex.tree.__init__(self, raw_vdb, self.old_style_virtuals)
-        self.frozen = raw_vdb.frozen
+
+    @property
+    def frozen(self):
+        return self.raw_vdb.frozen
 
     def _install(self, pkg, *a, **kw):
         # need to verify it's not in already...

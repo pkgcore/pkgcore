@@ -20,11 +20,11 @@ class domain(object):
                 a = self.all_repos = self.repos[0]
             else:
                 a = self.all_repos = multiplex.tree(*self.repos)
-        elif attr == "all_vdbs":
+        elif attr == "all_livefs_repos":
             if len(self.vdb) == 1:
-                a = self.all_vdbs = self.vdb[0]
+                a = self.all_livefs_repos = self.vdb[0]
             else:
-                a = self.all_vdbs = multiplex.tree(*self.vdb)
+                a = self.all_livefs_repos = multiplex.tree(*self.vdb)
         else:
             raise AttributeError(attr)
         return a

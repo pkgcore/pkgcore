@@ -62,3 +62,7 @@ class TestMultiplex(TestCase):
             self.ctree.match(packages.AlwaysTrue, sorter=rev_sorted)),
             rev_sorted(self.tree1_list + self.tree2_list))
 
+    def test_install(self):
+        raise Exception()
+    test_install.todo = "need to implement tests for multiplexing down repo_ops"
+    test_replace = test_uninstall = test_install

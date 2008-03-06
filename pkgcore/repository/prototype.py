@@ -141,6 +141,8 @@ class tree(object):
         without being configured, set it to False
     @ivar configure: if the repository isn't configured, must be a callable
         yielding a configured form of the repository
+    @ivar frozen_settable: bool controlling whether frozen is able to be set via
+        __init__
     """
 
     raw_repo = None
@@ -149,10 +151,12 @@ class tree(object):
     configured = True
     configure = None
     syncable = False
+    frozen_settable = True
 
-    def __init__(self, frozen=True):
+
+    def __init__(self, frozen=False):
         """
-        @param frozen: controls whether the repository is mutable or immutable
+        @keyword frozen: controls whether the repository is mutable or immutable
         """
 
         self.categories = CategoryIterValLazyDict(
@@ -161,7 +165,8 @@ class tree(object):
             self._get_packages)
         self.versions = VersionMapping(self.packages, self._get_versions)
 
-        self.frozen = frozen
+        if self.frozen_settable:
+            self.frozen = frozen
         self.lock = None
 
     def _get_categories(self, *args):
@@ -432,7 +437,7 @@ class tree(object):
             L{pkgcore.interfaces.repo.livefs_install} instance
         """
         if not kw.pop('force', False) and self.frozen:
-            raise AttributeError("repo is frozen")
+            raise AttributeError("repo %r is frozen" % self)
         return self._install(pkg, *a, **kw)
 
     def _install(self, pkg, *a, **kw):
@@ -459,7 +464,7 @@ class tree(object):
             L{pkgcore.interfaces.repo.livefs_uninstall} instance
         """
         if self.frozen and not kw.pop("force", False):
-            raise AttributeError("repo is frozen")
+            raise AttributeError("repo %r is frozen" % self)
         return self._uninstall(pkg, *a, **kw)
 
     def _uninstall(self, pkg, *a, **kw):
@@ -488,7 +493,7 @@ class tree(object):
             L{pkgcore.interfaces.repo.livefs_replace} instance
         """
         if self.frozen and not kw.pop("force", False):
-            raise AttributeError("repo is frozen")
+            raise AttributeError("repo %r is frozen" % self)
         return self._replace(orig, new, *a, **kw)
 
     def _replace(self, orig, new, *a, **kw):

@@ -6,13 +6,13 @@ from pkgcore.ebuild.cpv import CPV
 
 class SimpleTree(tree):
 
-    def __init__(self, cpv_dict, pkg_klass=None, livefs=False):
+    def __init__(self, cpv_dict, pkg_klass=None, livefs=False, frozen=True):
         self.cpv_dict = cpv_dict
         if pkg_klass is None:
             pkg_klass = CPV
         self.livefs = livefs
         self.package_class = pkg_klass
-        tree.__init__(self)
+        tree.__init__(self, frozen=frozen)
 
     def _get_categories(self, *arg):
         if arg:

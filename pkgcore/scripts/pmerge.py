@@ -325,7 +325,7 @@ def main(options, out, err):
         resolver.plan.limiters.add(None)
 
     domain = options.domain
-    vdb = domain.all_vdbs
+    livefs_repos = domain.all_livefs_repos
     world_set = get_pkgset(config, err, "world")
 
     formatter = options.formatter(out=out, err=err,
@@ -343,7 +343,7 @@ def main(options, out, err):
                 return 1
         try:
             unmerge(
-                out, err, vdb, options.targets, options, formatter, world_set)
+                out, err, livefs_repos, options.targets, options, formatter, world_set)
         except (parserestrict.ParseError, Failure), e:
             out.error(str(e))
             return 1
@@ -420,7 +420,7 @@ def main(options, out, err):
     if options.newuse:
         out.write(out.bold, ' * ', out.reset, 'Scanning for changed USE...')
         out.title('Scanning for changed USE...')
-        for inst_pkg in vdb.itermatch(packages.PackageRestriction('category',
+        for inst_pkg in livefs_repos.itermatch(packages.PackageRestriction('category',
             values.StrExactMatch('virtual'), negate=True)):
             src_pkgs = all_repos.match(inst_pkg.versioned_atom)
             if src_pkgs:
@@ -435,7 +435,7 @@ def main(options, out, err):
                     atoms.append(src_pkg.versioned_atom)
 
     resolver_inst = resolver_kls(
-        vdb, repos, verify_vdb=options.deep, nodeps=options.nodeps,
+        livefs_repos, repos, verify_vdb=options.deep, nodeps=options.nodeps,
         drop_cycles=options.ignore_cycles, force_replacement=options.replace,
         process_built_depends=options.with_built_depends,
         **extra_kwargs)
@@ -483,7 +483,7 @@ def main(options, out, err):
 
     if options.clean:
         out.write(out.bold, ' * ', out.reset, 'Packages to be removed:')
-        vset = set(vdb)
+        vset = set(livefs_repos)
         len_vset = len(vset)
         vset.difference_update(y.pkg for y in
             resolver_inst.state.iter_ops(True))
@@ -503,7 +503,7 @@ def main(options, out, err):
                 return 1
             out.write()
         repo_obs = observer.file_repo_observer(ObserverFormatter(out))
-        do_unmerge(options, out, err, vdb, wipes, world_set, repo_obs)
+        do_unmerge(options, out, err, livefs_repos, wipes, world_set, repo_obs)
         return 0
 
     changes = list(x for x in resolver_inst.state.iter_ops()
@@ -573,18 +573,18 @@ def main(options, out, err):
                 else:
                     out.write(">>> Replacing %s with %s" % (
                         op.old_pkg.cpvstr, built_pkg.cpvstr))
-                i = vdb.replace(op.old_pkg, built_pkg, observer=repo_obs)
+                i = livefs_repos.replace(op.old_pkg, built_pkg, observer=repo_obs)
 
             else:
                 out.write(">>> Installing %s" % built_pkg.cpvstr)
-                i = vdb.install(built_pkg, observer=repo_obs)
+                i = livefs_repos.install(built_pkg, observer=repo_obs)
 
             # force this explicitly- can hold onto a helluva lot more
             # then we would like.
             del built_pkg
         else:
             out.write(">>> Removing %s" % op.pkg.cpvstr)
-            i = vdb.uninstall(op.pkg, observer=repo_obs)
+            i = livefs_repos.uninstall(op.pkg, observer=repo_obs)
         try:
             ret = i.finish()
         except merge_errors.BlockModification, e:

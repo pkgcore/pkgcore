@@ -436,7 +436,7 @@ class OnDiskProfile(object):
                 []).append(pkg.fullver)
         intermediate_parent = PkgProvidedParent()
         obj = util.SimpleTree(d, pkg_klass=partial(PkgProvided,
-            intermediate_parent), livefs=True)
+            intermediate_parent), livefs=True, frozen=True)
         intermediate_parent._parent_repo = obj
         return obj
     def _collapse_masks(self):

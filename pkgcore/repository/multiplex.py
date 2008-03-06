@@ -9,12 +9,14 @@ from operator import itemgetter
 from pkgcore.repository import prototype, errors
 from snakeoil.currying import partial
 from snakeoil.iterables import iter_sort
+from snakeoil.compatibility import all
 
 class tree(prototype.tree):
 
     """repository combining multiple repositories into one"""
 
     zero_index_grabber = itemgetter(0)
+    frozen_settable = False
 
     def __init__(self, *trees):
         """
@@ -118,3 +120,25 @@ class tree(prototype.tree):
 
     def _visibility_limiters(self):
         return [x for r in self.trees for x in r.default_visibility_limiters]
+
+    @property
+    def frozen(self):
+        return all(x.frozen for x in self.trees)
+
+    def _install(self, *args, **kwargs):
+        for x in self.trees:
+            if not x.frozen:
+                return x._install(*args, **kwargs)
+        raise NotImplementedError(self, "_install")
+
+    def _replace(self, *args, **kwargs):
+        for x in self.trees:
+            if not x.frozen:
+                return x._replace(*args, **kwargs)
+        raise NotImplementedError(self, "_replace")
+
+    def _uninstall(self, *args, **kwargs):
+        for x in self.trees:
+            if not x.frozen:
+                return x._uninstall(*args, **kwargs)
+        raise NotImplementedError(self, "_uninstall")

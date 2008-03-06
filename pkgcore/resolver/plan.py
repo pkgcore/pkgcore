@@ -397,7 +397,7 @@ class merge_plan(object):
                     if failure and cur_frame.drop_cycles:
                         dprint("%s level cycle: %s: "
                                "dropping cycle for %s from %s",
-                                (attr, cur_frame.atom, datom,
+                                (attr, cur_frame.atom, or_node,
                                  cur_frame.current_pkg),
                                 "cycle")
                         failure = None

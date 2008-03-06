@@ -3,6 +3,11 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+* multiplex trees now discern their frozen state from their subtrees,
+  and will execute the repo_op for the leftmost subtree if unfrozen.
+
+* pquery --attr eapi was added.
+
 * ticket 94; package.provided is now supported fully both in profiles,
   and in user profile (/etc/portage/profile).
 

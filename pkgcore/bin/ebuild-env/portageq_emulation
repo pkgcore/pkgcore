@@ -64,7 +64,7 @@ def has_version(domain, arg):
     @param atom_str: L{pkgcore.ebuild.atom.atom} instance
     """
     arg = make_atom(arg)
-    if caching_iter(domain.all_vdbs.itermatch(arg)):
+    if caching_iter(domain.all_livefs_repos.itermatch(arg)):
         return ['', 0]
     return ['', 1]
 
@@ -85,7 +85,7 @@ def best_version(domain, arg):
     # temp hack, configured pkgs yield "configured(blah) pkg"
     arg = make_atom(arg)
     try:
-        p = max(domain.all_vdbs.itermatch(arg))
+        p = max(domain.all_livefs_repos.itermatch(arg))
     except ValueError:
         # empty sequence.
         return ['', 1]

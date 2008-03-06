@@ -6,7 +6,7 @@
 Converts portage configuration files into L{pkgcore.config} form.
 """
 
-import os, os.path
+import os
 
 from pkgcore.config import basics, configurable
 from pkgcore import const

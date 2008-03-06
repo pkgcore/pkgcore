@@ -3,6 +3,12 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+* ticket 94; package.provided is now supported fully both in profiles,
+  and in user profile (/etc/portage/profile).
+
+* ticket 116; ignore empty tarfile exception if the exception explicitly
+  states empty header.
+
 * utter corner case compatibility- =dev-util/diffball-1.0-r0 is now the
   same as =dev-util/diffball-1.0 .
 

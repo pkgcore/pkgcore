@@ -117,6 +117,9 @@ class domain(pkgcore.config.domain.domain):
             (collapsed.name, repo) for (collapsed, repo) in izip(
                 vdb_collapsed, vdb))
         self.named_repos.pop(None, None)
+        if profile.provides_repo is not None:
+            self.named_repos['package.provided'] = profile.provides_repo
+            vdb.append(profile.provides_repo)
 
         pkg_maskers = set(profile.masks)
         for r in repositories:

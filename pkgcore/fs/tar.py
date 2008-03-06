@@ -123,5 +123,10 @@ def generate_contents(path, compressor="bz2"):
     if compressor not in known_compressors:
         raise ValueError("compressor needs to be one of %r, got %r" %
             (known_compressors.keys(), compressor))
-    t = known_compressors[compressor](path, mode="r")
+    try:
+        t = known_compressors[compressor](path, mode="r")
+    except tarfile.ReadError, e:
+        if not e.message.endswith("empty header"):
+            raise
+        t = []
     return TarContentsSet(tarinfo_to_fsobj(t), mutable=False)

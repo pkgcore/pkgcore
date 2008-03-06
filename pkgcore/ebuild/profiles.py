@@ -434,8 +434,11 @@ class OnDiskProfile(object):
         for pkg in self._collapse_generic("pkg_provided"):
             d.setdefault(pkg.category, {}).setdefault(pkg.package,
                 []).append(pkg.fullver)
-        return util.SimpleTree(d, pkg_klass=PkgProvided)
-
+        intermediate_parent = PkgProvidedParent()
+        obj = util.SimpleTree(d, pkg_klass=partial(PkgProvided,
+            intermediate_parent), livefs=True)
+        intermediate_parent._parent_repo = obj
+        return obj
     def _collapse_masks(self):
         return frozenset(chain(self._collapse_generic("masks"),
             self._collapse_generic("visibility")))
@@ -469,6 +472,7 @@ class OnDiskProfile(object):
             raise AttributeError(attr)
         return obj
 
+
 class UserProfileNode(ProfileNode):
 
     def __init__(self, path, parent_path):
@@ -478,6 +482,7 @@ class UserProfileNode(ProfileNode):
     def _load_parents(self):
         self.parents = (ProfileNode(self.override_path),)
         return self.parents
+
 
 class UserProfile(OnDiskProfile):
 
@@ -492,6 +497,12 @@ class UserProfile(OnDiskProfile):
             incrementals, load_profiles_base)
         self.node = UserProfileNode(user_path, pjoin(parent_path, parent_profile))
 
+
+class PkgProvidedParent(object):
+    def __init__(self, **kwds):
+        self.__dict__.update(kwds)
+
+
 class PkgProvided(ebuild_src.base):
 
     package_is_real = False
@@ -500,8 +511,7 @@ class PkgProvided(ebuild_src.base):
     keywords = InvertedContains(())
 
     def __init__(self, *a, **kwds):
-        # 'None' repo.
-        ebuild_src.base.__init__(self, None, *a, **kwds)
+        ebuild_src.base.__init__(self, *a, **kwds)
         object.__setattr__(self, "use", [])
         object.__setattr__(self, "data", {})
 

@@ -1,6 +1,6 @@
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
+# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2007 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
-# Based on pquery by Brian Harring <ferringb@gmail.com>
 
 
 """Extract information from repositories."""
@@ -11,10 +11,19 @@ from pkgcore.restrictions import packages, values, boolean, restriction
 from pkgcore.ebuild import conditionals, atom
 from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils)
+from snakeoil.demandload import demandload
+demandload(globals(), 're')
+
 
 # ordering here matters; pkgcore does a trick to commandline to avoid the
 # heavy inspect loadup hit.
 import optparse
+
+def mk_strregex(value, **kwds):
+    try:
+        return values.StrRegex(value, **kwds)
+    except re.error, e:
+        raise optparse.OptionValueError("invalid regex: %r, %s" % (value, e))
 
 
 # To add a new restriction you have to do the following:
@@ -38,7 +47,7 @@ def parse_revdep(value):
 
 def parse_description(value):
     """Value is used as a regexp matching description or longdescription."""
-    matcher = values.StrRegex(value, case_sensitive=False)
+    matcher = mk_strregex(value, case_sensitive=False)
     return packages.OrRestriction(finalize=True, *list(
             packages.PackageRestriction(attr, matcher)
             for attr in ('description', 'longdescription')))
@@ -51,7 +60,7 @@ def parse_ownsre(value):
     """
     return packages.PackageRestriction(
         'contents', values.AnyMatch(values.GetAttrRestriction(
-                'location', values.StrRegex(value))))
+            'location', mk_strregex(value))))
 
 
 class DataSourceRestriction(values.base):
@@ -83,7 +92,7 @@ def parse_envmatch(value):
     """Apply a regexp to the environment."""
     return packages.PackageRestriction(
         'environment', DataSourceRestriction(values.AnyMatch(
-                values.StrRegex(value))))
+                mk_strregex(value))))
 
 
 def parse_maintainer_email(value):
@@ -93,7 +102,7 @@ def parse_maintainer_email(value):
     """
     return packages.PackageRestriction(
         'maintainers', values.AnyMatch(values.GetAttrRestriction(
-                'email', values.StrRegex(value.lower(),
+                'email', mk_strregex(value.lower(),
                 case_sensitive=False))))
 
 def parse_maintainer_name(value):
@@ -103,7 +112,7 @@ def parse_maintainer_name(value):
     """
     return packages.PackageRestriction(
         'maintainers', values.AnyMatch(values.GetAttrRestriction(
-                'name', values.StrRegex(value.lower(),
+                'name', mk_strregex(value.lower(),
                     case_sensitive=False))))
 
 def parse_maintainer(value):
@@ -114,7 +123,7 @@ def parse_maintainer(value):
     return packages.PackageRestriction(
         'maintainers', values.AnyMatch(
             values.UnicodeConversion(
-                values.StrRegex(value.lower(),
+                mk_strregex(value.lower(),
                     case_sensitive=False))))
 
 

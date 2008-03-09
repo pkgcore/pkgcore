@@ -3,6 +3,7 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
 * resolver fixes: vdb loadup wasn't occuring for old style virtuals for
   rdepend blockers, now forces it.  It was possible for a node to be
   considered usable before it's rdepends blockers were leveled- now those

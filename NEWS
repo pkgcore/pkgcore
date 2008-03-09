@@ -3,6 +3,14 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+* resolver fixes: vdb loadup wasn't occuring for old style virtuals for
+  rdepend blockers, now forces it.  It was possible for a node to be
+  considered usable before it's rdepends blockers were leveled- now those
+  must be satisfied before being able to dep on the node.
+
+* resolver events cleanup; pmerge now gives far better info as to why a
+  choice failed, what it attempted to get around it, etc.
+
 * multiplex trees now discern their frozen state from their subtrees,
   and will execute the repo_op for the leftmost subtree if unfrozen.
 

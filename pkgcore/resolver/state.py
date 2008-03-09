@@ -64,6 +64,11 @@ class base_op(object):
             s = ' forced'
         return "%s: %s%s" % (self.desc, self.pkg, s)
 
+    def __repr__(self):
+        return '<%s choices=%r pkg=%r force=%s @#%x>' % (
+            self.__class__.__name__, self.choices, self.pkg, self.force,
+            id(self))
+
 
 class add_op(base_op):
 
@@ -101,6 +106,10 @@ class replace_op(base_op):
     __slots__ = ("old_pkg", "old_choices")
 
     desc = "replace"
+
+    def __init__(self, *args, **kwds):
+        base_op.__init__(self, *args, **kwds)
+        self.old_pkg, self.old_choices = None, None
 
     def apply(self, plan):
         old = plan.state.get_conflicting_slot(self.pkg)
@@ -141,6 +150,11 @@ class replace_op(base_op):
             s = ' forced'
         return "replace: %s with %s%s" % (self.old_pkg, self.pkg, s)
 
+    def __repr__(self):
+        return '<%s old choices=%r new choies=%r old_pkg=%r new_pkg=%r ' \
+            'force=%s @#%x>' % (self.__class__.__name__, self.old_choices,
+            self.choices, self.old_pkg, self.pkg, self.force, id(self))
+
 
 class blocker_base_op(object):
     __slots__ = ("choices", "blocker", "key")
@@ -159,6 +173,11 @@ class blocker_base_op(object):
     def __str__(self):
         return "%s: key %s, %s from %s" % (self.__class__.__name__, self.key,
             self.blocker, self.choices)
+
+    def __repr__(self):
+        return '<%s choices=%r blocker=%r key=%r @#%x>' % (
+            self.__class__.__name__, self.choices, self.blocker, self.key,
+            id(self))
 
 
 class incref_forward_block_op(blocker_base_op):

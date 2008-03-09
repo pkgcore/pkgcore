@@ -256,7 +256,7 @@ def get_pkgset(config, err, setname):
             (setname, config.pkgset.keys()))
         return None
 
-def display_failures(out, sequence, first_level=True):
+def display_failures(out, sequence, first_level=True, debug=False):
     """when resolution fails, display a nicely formatted message"""
 
     sequence = iter(sequence)
@@ -271,9 +271,10 @@ def display_failures(out, sequence, first_level=True):
         out.first_prefix.append(" ")
         for step in steps:
             if isinstance(step, list):
-                display_failures(out, step, False)
+                display_failures(out, step, False, debug=debug)
             elif step[0] == 'reduce':
-                continue
+                out.write("removing choices involving %s" %
+                    ','.join(map(str,step[1])))
             elif step[0] == 'blocker':
                 out.write("blocker %s failed due to %s existing" % (step[1],
                     ', '.join(str(x) for x in step[2])))
@@ -281,6 +282,12 @@ def display_failures(out, sequence, first_level=True):
                 out.write("%s cycle on %s: %s" % (step[2].mode, step[2].atom, step[3]))
             elif step[0] == 'viable' and not step[1]:
                 out.write("%s: failed %s" % (step[3], step[4]))
+            elif step[0] == 'choice':
+                if not step[2]:
+                    out.write("failed due to %s" % (step[3],))
+            elif step[0] == "debug":
+                if debug:
+                    out.write(step[1])
             else:
                 out.write(step)
         out.first_prefix.pop()
@@ -326,13 +333,15 @@ def main(options, out, err):
 
     domain = options.domain
     livefs_repos = domain.all_livefs_repos
-    world_set = get_pkgset(config, err, "world")
+    world_set = world_list = get_pkgset(config, err, "world")
+    if options.oneshot:
+        world_set = None
 
     formatter = options.formatter(out=out, err=err,
         use_expand=domain.use_expand,
         use_expand_hidden=domain.use_expand_hidden,
         disabled_use=domain.disabled_use,
-        world_list=list(world_set))
+        world_list=world_list)
 
     # This mode does not care about sets and packages so bypass all that.
     if options.unmerge:
@@ -457,7 +466,7 @@ def main(options, out, err):
         if ret:
             out.error('resolution failed')
             just_failures = reduce_to_failures(ret[1])
-            display_failures(out, just_failures)
+            display_failures(out, just_failures, debug=options.debug)
             failures.append(restrict)
             if not options.ignore_failures:
                 break
@@ -599,7 +608,7 @@ def main(options, out, err):
                 out.write('>>> Removing %s from world file' % op.pkg.cpvstr)
                 removal_pkg = slotatom_if_slotted(all_repos, op.pkg.versioned_atom)
                 update_worldset(world_set, removal_pkg, remove=True)
-            elif any(x.match(op.pkg) for x in atoms):
+            elif not options.oneshot and any(x.match(op.pkg) for x in atoms):
                 if not options.upgrade:
                     out.write('>>> Adding %s to world file' % op.pkg.cpvstr)
                     add_pkg = slotatom_if_slotted(all_repos, op.pkg.versioned_atom)

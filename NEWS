@@ -33,6 +33,11 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 * FEATURES=sfperms is now a trigger instead of a dyn_preinst hook.
   Faster, cleaner, etc.
 
+* delayed unpacking of binpkgs has been disabled; occasionally can lead to
+  quadratic behaviour in contents accessing, and extreme corner case trigger
+  breakages.  Will be re-enabled once API has been refactored to remove
+  these issues.
+
 * FEATURES=multilib-strict was converted into a trigger.  Tries to
   use the python bindings for file first (merge file[python]), falling
   back to invoking file.  Strongly suggested you have the bindings- fair bit

@@ -28,8 +28,8 @@ class UnknownMirror(base):
         self.host, self.uri = host, uri
 
 class RequiredChksumDataMissing(base):
-    def __init__(self, fetchable, chksum):
-        base.__init__(self, "chksum %s was configured as required, "
+    def __init__(self, fetchable, *chksum):
+        base.__init__(self, "chksum(s) %s were configured as required, "
                       "but the data is missing from fetchable '%s'"
-                      % (chksum, fetchable))
+                      % (', '.join(chksum), fetchable))
         self.fetchable, self.missing_chksum = fetchable, chksum

@@ -209,7 +209,7 @@ if 'md5' not in chksum_types:
                     return long(fchksum.fmd5t(filename)[0], 16)
                 return loop_over_file(filename, md5.new)[0]
 
-        chksum_types = {"md5":MD5Chksummer()}
+        chksum_types["md5"] = MD5Chksummer()
 
 
 # expand this to load all available at some point

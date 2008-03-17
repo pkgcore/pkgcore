@@ -147,9 +147,20 @@ class HelpFormatter(optparse.HelpFormatter):
 
 def script_options(name, arguments, options, content, lineno,
                    content_offset, block_text, state, state_machine):
-    assert len(arguments) == 1, arguments
+    assert len(arguments) == 1
     assert not options, options
     parserclass = modules.load_attribute(arguments[0])
+    if isinstance(parserclass, dict):
+        comp = nodes.compound()
+        base = arguments[0].split(".")[-2] # script location.
+        for command_name, bits in sorted(parserclass.iteritems()):
+            comp += nodes.title(text="%s %s" % (base, command_name))
+            comp += generate_script(bits[0], state)
+        return comp
+    return generate_script(parserclass, state)
+            
+
+def generate_script(parserclass, state):
     optionparser = parserclass()
     formatter = HelpFormatter(state)
     optionparser.format_help(formatter)

@@ -90,7 +90,8 @@ def wrap_factory(klass, *args, **kwds):
             if engine.UNINSTALL_MODE != engine_inst.mode and \
                 pkg == engine_inst.new and \
                 pkg.repo is engine_inst.new.repo and \
-                not pkg_uses_default_preinst(pkg):
+                True:
+#                not pkg_uses_default_preinst(pkg):
                 t = force_unpacking(op_inst.install_op)
                 t.register(engine_inst)
 

@@ -32,9 +32,10 @@ class fetcher(object):
         if handlers is None:
             handlers = get_handlers(target.chksums)
         if all_chksums:
-            for x in target.chksums:
-                if x not in handlers:
-                    raise errors.RequiredChksumDataMissing(target, x)
+            missing = set(target.chksums).difference(handlers)
+            if missing:
+                raise errors.RequiredChksumDataMissing(target,
+                    *sorted(missing))
 
         if "size" in handlers:
             val = handlers["size"](file_location)

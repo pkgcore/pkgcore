@@ -45,15 +45,17 @@ class mysdist(sdist.sdist):
     """sdist command specifying the right files and generating ChangeLog."""
 
     user_options = sdist.sdist.user_options + [
+        ('build-docs', None, 'build docs [default]'),
+        ('no-build-docs', None, 'do not build docs'),
         ('changelog', None, 'create a ChangeLog [default]'),
         ('changelog-start=', None, 'start rev to dump the changelog from,'
             ' defaults to 1'),
         ('no-changelog', None, 'do not create the ChangeLog file'),
         ]
 
-    boolean_options = sdist.sdist.boolean_options + ['changelog']
+    boolean_options = sdist.sdist.boolean_options + ['changelog'] + ['build-docs']
 
-    negative_opt = {'no-changelog': 'changelog'}
+    negative_opt = {'no-changelog': 'changelog', 'no-build-docs':'build-docs'}
     negative_opt.update(sdist.sdist.negative_opt)
 
     default_format = dict(sdist.sdist.default_format)
@@ -63,6 +65,7 @@ class mysdist(sdist.sdist):
         sdist.sdist.initialize_options(self)
         self.changelog = True
         self.changelog_start = None
+        self.build_docs = True
 
     def get_file_list(self):
         """Get a filelist without doing anything involving MANIFEST files."""
@@ -106,6 +109,9 @@ class mysdist(sdist.sdist):
         exist in a working tree.
         """
         sdist.sdist.make_release_tree(self, base_dir, files)
+        if self.build_docs:
+            if subprocess.call(['./build_docs.py'], cwd=base_dir):
+                raise errors.DistutilsExecError("build_docs failed")
         if self.changelog:
             args = []
             if self.changelog_start:

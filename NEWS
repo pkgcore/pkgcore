@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+0.4:
+
 * resolver fixes: vdb loadup wasn't occuring for old style virtuals for
   rdepend blockers, now forces it.  It was possible for a node to be
   considered usable before it's rdepends blockers were leveled- now those
@@ -62,7 +64,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 * Masked IUSEs were not treated right in all cases, thanks to agaffney
   for report and help testing
 
-* (0.3.3 Add: diefunc tracebacks beautified)
+* diefunc tracebacks beautified)
 
 
 pkgcore 0.3.4:

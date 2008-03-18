@@ -36,6 +36,9 @@ DOCUMENTATION?
 
   doc/getting-started.rst is a good introduction if you're just getting started.
   If you want to start hacking, take a look at dev-notes/developing.rst.
+  
+  In addition, html documentation is available at
+  http://api.pkgcore.org/pkgcore/ , as is postscript and pdf.
 
 
 TOOLS?

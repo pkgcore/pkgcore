@@ -215,7 +215,45 @@ class pkgcore_install_scripts(core.Command):
     def get_outputs(self):
         return self.scripts
 
+
+class pkgcore_install_man(core.Command):
+
+    """Install man pages"""
+
+
+    def initialize_options(self):
+        self.install_man = None
+        self.man_pages = []
+
+    def finalize_options(self):
+        self.set_undefined_options('install',
+                                   ('install_base', 'install_man')
+                                   )
+        self.install_man = os.path.join(self.install_man, 'share', 'man')
+        self.man_pages = [
+            os.path.join(os.getcwd(), 'man', path) for path in os.listdir('man')
+            if len(path) > 2 and path[-2] == '.' and path[-1].isdigit()]
+        
+
+    def run(self):
+        for x in sorted(set(page[-1] for page in self.man_pages)):
+            self.mkpath(os.path.join(self.install_man, 'man%s' % x))
+
+        for page in self.man_pages:
+            self.copy_file(
+                page,
+                os.path.join(self.install_man, 'man%s' % page[-1],
+                    os.path.basename(page)))
+
+    def get_inputs(self):
+        return self.man_pages
+
+    def get_outputs(self):
+        return self.man_pages
+
+
 install.install.sub_commands.append(('pkgcore_install_scripts', None))
+install.install.sub_commands.append(('pkgcore_install_man', None))
 
 
 class pkgcore_build_ext(build_ext.build_ext):
@@ -227,6 +265,7 @@ class pkgcore_build_ext(build_ext.build_ext):
                 setattr(self.compiler, x,
                     [y for y in getattr(self.compiler, x) if y != '-DNDEBUG'])
         return build_ext.build_ext.build_extensions(self)
+
 
 
 class pkgcore_build_py(build_py.build_py):
@@ -365,5 +404,6 @@ core.setup(
         'test': test,
         'pkgcore_build_scripts': pkgcore_build_scripts,
         'pkgcore_install_scripts': pkgcore_install_scripts,
+        'pkgcore_install_man': pkgcore_install_man,
         },
     )

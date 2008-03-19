@@ -122,6 +122,10 @@ class mysdist(sdist.sdist):
                 stdout=open(os.path.join(base_dir, 'ChangeLog'), 'w')):
                 raise errors.DistutilsExecError('bzr log failed')
         write_bzr_verinfo(os.path.join(base_dir, 'pkgcore', 'bzr_verinfo.py'))
+        for base, dirs, files in os.walk(base_dir):
+            for x in files:
+                if x.endswith(".pyc") or x.endswith(".pyo"):
+                    os.unlink(os.path.join(base, x))
 
 
 class pkgcore_build_scripts(build_scripts.build_scripts):

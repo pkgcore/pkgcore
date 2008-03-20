@@ -3,6 +3,19 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+* add tar contentsSet rewriting; tarballs sometimes leave out directories,
+  and don't always have the fully resolved path- /usr/lib/blah, when
+  /usr/lib -> /usr/lib64 *should* be /usr/lib64/blah, but tar doesn't force
+  this.  Due to that, can lead to explosions in unpacking- this is now fixed.
+
+* pquery --attr inherited was added; this feature may disappear down the
+  line, adding it meanwhile since it's useful for ebuild devs.
+
+* adjust setup.py so that man page installation properly respects --root
+
+* correct a corner case where a package name of 'dev-3D' was flagged as
+  invalid.
+
 
 0.4:
 

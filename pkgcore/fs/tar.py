@@ -19,11 +19,16 @@ class tar_data_source(data_source):
 
 class TarContentsSet(contents.contentsSet):
 
-    def __init__(self, initial=None, mutable=False):
+    def __init__(self, initial=None, mutable=False,
+        add_missing_directories=False):
+        
         contents.contentsSet.__init__(self, mutable=True)
         self._dict = OrderedDict()
         if initial:
             self.update(initial)
+        # tarballs are a bit stupid; add missing directories.
+        if add_missing_directories:
+            self.add_missing_directories()
         self.mutable = mutable
 
 
@@ -129,4 +134,64 @@ def generate_contents(path, compressor="bz2"):
         if not e.message.endswith("empty header"):
             raise
         t = []
-    return TarContentsSet(tarinfo_to_fsobj(t), mutable=False)
+
+    # regarding the usage of del in this function... bear in mind these sets
+    # could easily have 10k -> 100k entries in extreme cases; thus the del
+    # usage, explicitly trying to ensure we don't keep refs long term.
+
+    # this one is a bit fun.
+    raw = list(tarinfo_to_fsobj(t))
+    # we use the data source as the unique key to get position.
+    files_ordering = list(enumerate(x for x in raw if x.is_reg))
+    files_ordering = dict((x.data_source, idx) for idx, x in files_ordering)
+    t = contents.contentsSet(raw, mutable=True)
+    del raw
+
+    # first rewrite affected syms.
+    raw_syms = t.links()
+    syms = contents.contentsSet(raw_syms)
+    while True:
+        for x in sorted(syms):
+            affected = syms.child_nodes(x.location)
+            if not affected:
+                continue
+            syms.difference_update(affected)
+            syms.update(affected.change_offset(x.location, x.resolved_target))
+            del affected
+            break
+        else:
+            break
+
+    t.difference_update(raw_syms)
+    t.update(syms)
+
+    del raw_syms
+    syms = sorted(syms)
+    # ok, syms are correct.  now we get the rest.
+    for x in syms:
+        affected = t.child_nodes(x.location)
+        if not affected:
+            continue
+        t.difference_update(affected)
+        t.update(affected.change_offset(x.location, x.resolved_target))
+
+    t.add_missing_directories()
+    
+    # finally... an insane sort.
+    def sort_func(x, y):
+        if x.is_dir:
+            if not y.is_dir:
+                return -1
+            return cmp(x, y)
+        elif y.is_dir:
+            return +1
+        elif x.is_reg:
+            if y.is_reg:
+                return cmp(files_ordering[x.data_source],
+                    files_ordering[y.data_source])
+            return +1
+        elif y.is_reg:
+            return -1
+        return cmp(x, y)
+
+    return TarContentsSet(sorted(t, cmp=sort_func), mutable=False)

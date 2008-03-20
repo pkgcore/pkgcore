@@ -13,6 +13,7 @@ from snakeoil.osutils import normpath
 demandload(globals(),
     'pkgcore.fs.ops:offset_rewriter,change_offset_rewriter',
     'os:path',
+    'time',
 )
 from itertools import ifilter
 from operator import attrgetter
@@ -326,3 +327,22 @@ class contentsSet(object):
             # this looks insane
             obj.add(other[conflicts_d[conflict]])
         return obj
+
+    def add_missing_directories(self, mode=0775, uid=0, gid=0, mtime=None):
+        """
+        ensure that a directory node exists for each path; add if missing
+        """
+        missing = (x.dirname for x in self)
+        missing = set(x for x in missing if x not in self)
+        if mtime is None:
+            mtime = time.time()
+        # have to go recursive since many directories may be missing.
+        missing_initial = list(missing)
+        for x in missing_initial:
+            target = path.dirname(x)
+            while target not in missing and target not in self:
+                missing.add(target)
+                target = path.dirname(target)
+        missing.discard("/")
+        self.update(fs.fsDir(location=x, mode=mode, uid=uid, gid=gid, mtime=mtime)
+            for x in missing)

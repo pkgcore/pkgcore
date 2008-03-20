@@ -14,7 +14,7 @@ class native_CpvTest(TestCase):
         "dev-util", "dev+", "dev-util+", "DEV-UTIL", "aaa0",
         "aaa-0", "multi/depth", "cross-dev_idiot.hacks-suck", "a"]
     bad_cats  = [".util", "_dev", "", "dev-util ", "multi//depth"]
-    good_pkgs = ["diffball", "a9", "a9+", "a-100dpi", "a-cvs"]
+    good_pkgs = ["diffball", "a9", "a9+", "a-100dpi", "a-cvs", "a-3D"]
     bad_pkgs  = ["diffball "]
 
     good_cp   = [
@@ -75,6 +75,7 @@ class native_CpvTest(TestCase):
                 cat, pkg, ver = src[0]
 
             self.assertEqual(self.make_inst(cat, pkg, ver).key, key)
+            self.assertRaises(cpv.InvalidCPV, self.make_inst, "da", "ba-3d", "3.3")
 
     def test_init(self):
         self.kls("dev-util", "diffball", "0.7.1")
@@ -107,7 +108,8 @@ class native_CpvTest(TestCase):
 
     def process_pkg(self, ret, cat, pkg):
         if ret:
-            self.assertRaises(cpv.InvalidCPV, self.make_inst, cat, pkg)
+            self.assertRaisesMsg("%s/%s" % (cat,pkg), cpv.InvalidCPV,
+                self.make_inst, cat, pkg)
         else:
             c = self.make_inst(cat, pkg)
             self.assertEqual(c.cpvstr, "%s/%s" % (cat, pkg))
@@ -120,7 +122,7 @@ class native_CpvTest(TestCase):
 
     def process_ver(self, ret, cat, pkg, ver, rev):
         if ret:
-            self.assertRaises(
+            self.assertRaisesMsg("%s/%s-%s%s" % (cat, pkg, ver, rev),
                 cpv.InvalidCPV, self.make_inst,
                 cat, pkg,  "%s%s" % (ver, rev))
         else:
@@ -149,7 +151,7 @@ class native_CpvTest(TestCase):
 
     def process_suf(self, ret, cat, pkg, ver, rev):
         if ret:
-            self.assertRaises(
+            self.assertRaisesMsg("%s/%s-%s%s" % (cat, pkg, ver, rev),
                 cpv.InvalidCPV, self.make_inst,
                 cat, pkg, ver+rev)
         else:

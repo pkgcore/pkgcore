@@ -24,7 +24,7 @@ parser = demand_compile_regexp(
     globals(), 'parser',
     "^(?P<key>(?P<category>(?:%s)(?:/%s)*)/"
     "(?P<package>[a-zA-Z0-9+][a-zA-Z0-9_+]*"
-    "(?:-(?:[0-9]+[a-zA-Z+]{2,}[_+a-zA-Z0-9]*|[a-zA-Z+][a-zA-Z0-9+_]*))*))"
+    "(?:-(?:[0-9]+(?:[a-zA-Z+]{2,}[_+a-zA-Z0-9]*|[A-Z])|[a-zA-Z+][a-zA-Z0-9+_]*))*))"
     "(?:-(?P<fullver>(?P<version>(?:cvs\\.)?(?:\\d+)(?:\\.\\d+)*[a-z]?"
     "(?:_(p(?:re)?|beta|alpha|rc)\\d*)*)"
     "(?:-r(?P<revision>\\d+))?))?$" %

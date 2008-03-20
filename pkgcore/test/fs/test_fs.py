@@ -17,6 +17,14 @@ class base(object):
         kwds.setdefault("strict", False)
         return self.kls(location, **kwds)
 
+    def test_basename(self):
+        self.assertEqual(self.make_obj(location='/asdf').basename, 'asdf')
+        self.assertEqual(self.make_obj(location='/a/b').basename, 'b')
+
+    def test_dirname(self):
+        self.assertEqual(self.make_obj(location='/asdf').dirname, '/')
+        self.assertEqual(self.make_obj(location='/a/b').dirname, '/a')
+
     def test_location_normalization(self):
         for loc in ('/tmp/a', '/tmp//a', '/tmp//', '/tmp/a/..'):
             self.assertEqual(self.make_obj(location=loc).location,

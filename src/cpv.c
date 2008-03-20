@@ -23,6 +23,7 @@
 #define ISDIGIT(c) ('0' <= (c) && '9' >= (c))
 #define ISALPHA(c) (('a' <= (c) && 'z' >= (c)) || ('A' <= (c) && 'Z' >= (c)))
 #define ISLOWER(c) ('a' <= (c) && 'z' >= (c))
+#define ISUPPER(c) ('A' <= (c) && 'Z' >= (c))
 #define ISALNUM(c) (ISALPHA(c) || ISDIGIT(c))
 
 typedef enum { SUF_ALPHA=0, SUF_BETA, SUF_PRE, SUF_RC, SUF_NORM, SUF_P }
@@ -171,13 +172,14 @@ pkgcore_cpv_parse_package(const char *start)
     // "(?:-r(?P<revision>\\d+))?))?$")
     // note that pkg regex is non-greedy.
     char *p = (char *)start;
-    char *ver_start;
+    char *ver_start, *last_ver_start;
     if(NULL == start)
         return NULL;
     start = p;
     p = strchr(start, '-');
     while(NULL != p) {
         ++p;
+        last_ver_start = ver_start;
         ver_start = p;
         if('\0' == *p)
              return NULL;
@@ -201,6 +203,8 @@ pkgcore_cpv_parse_package(const char *start)
             p++;
             if('\0' == *p || '.' == *p || '_' == *p || '-' == *p)
                 break;
+        } else if(ISUPPER(*p)) {
+            ver_start = last_ver_start;
         }
         p = strchr(p, '-');
     }
@@ -437,11 +441,15 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
             s2++;
             while(ISDIGIT(*s2))
                 s2++;
-            if(!ISALPHA(*s2) && '+' != *s2)
-                goto parse_error;
+            if ('+' != *s2) {
+                if(!ISALPHA(*s2))
+                    goto parse_error;
+                if(ISLOWER(*s2)) {
+                    if('\0' == s2[1] || '-' == s2[1])
+                        goto parse_error;
+                }
+            }
             s2++;
-            if(!ISALPHA(*s2) && '+' != *s2)
-                goto parse_error;
             while(ISALNUM(*s2) || '+' == *s2 || '_' == *s2)
                 s2++;
         } else if(ISALPHA(*s2) || '+' == *s2) {

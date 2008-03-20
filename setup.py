@@ -227,13 +227,16 @@ class pkgcore_install_man(core.Command):
 
     def initialize_options(self):
         self.install_man = None
+        self.prefix = None
         self.man_pages = []
 
     def finalize_options(self):
         self.set_undefined_options('install',
-                                   ('install_base', 'install_man')
+                                   ('root', 'install_man'),
+                                   ('install_base', 'prefix'),
                                    )
-        self.install_man = os.path.join(self.install_man, 'share', 'man')
+        self.install_man = os.path.join(self.install_man,
+            self.prefix.lstrip(os.path.sep), 'share', 'man')
         self.man_pages = [
             os.path.join(os.getcwd(), 'man', path) for path in os.listdir('man')
             if len(path) > 2 and path[-2] == '.' and path[-1].isdigit()]

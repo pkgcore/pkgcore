@@ -386,7 +386,7 @@ class OptionParser(commandline.OptionParser):
                            'herds', 'license', 'uris', 'files',
                            'slot', 'maintainers', 'restrict', 'repo',
                            'alldepends', 'path', 'environment', 'keywords',
-                           'homepage', 'fetchables', 'eapi')
+                           'homepage', 'fetchables', 'eapi', 'inherited')
 
         output = self.add_option_group('Output formatting')
         output.add_option(
@@ -576,6 +576,9 @@ def stringify_attr(config, pkg, attr):
         return ' '.join(result)
 
     # TODO: is a missing or None attr an error?
+    if attr == 'inherited':
+        return ' '.join(sorted(getattr(pkg, 'data', {}).get('_eclasses_', {}).keys()))
+
     value = getattr(pkg, attr, None)
     if value is None:
         return 'MISSING'
@@ -588,6 +591,7 @@ def stringify_attr(config, pkg, attr):
         return ''.join(value.get_fileobj())
     if attr == 'repo':
         return str(getattr(value, 'repo_id', 'no repo id'))
+    # hackish.
     return str(value)
 
 

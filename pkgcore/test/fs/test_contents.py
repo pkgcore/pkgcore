@@ -205,3 +205,14 @@ class TestContentsSet(TestCase):
         ret = new.map_directory_structure(old)
         self.assertEqual(sorted(ret), sorted([self.mk_dir("/dir"),
             self.mk_file("/dir/a")]))
+
+    def test_add_missing_directories(self):
+        src = [self.mk_file("/dir1/a"), self.mk_file("/dir2/dir3/b"),
+            self.mk_dir("/dir1/dir4")]
+        cs = contents.contentsSet(src)
+        cs.add_missing_directories()
+        self.assertEqual(sorted(x.location for x in cs),
+            ['/dir1', '/dir1/a', '/dir1/dir4', '/dir2', '/dir2/dir3',
+                '/dir2/dir3/b'])
+        obj = cs['/dir1']
+        self.assertEqual(obj.mode, 0775)

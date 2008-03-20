@@ -7,7 +7,7 @@ filesystem entry abstractions
 
 import stat
 from pkgcore.chksum import get_handlers, get_chksums
-from os.path import sep as path_seperator, realpath, abspath
+from os.path import sep as path_seperator, realpath, abspath, dirname, basename
 from pkgcore.interfaces.data_source import local_source
 from snakeoil.mappings import LazyFullValLoadDict
 from snakeoil.osutils import normpath, pjoin
@@ -115,6 +115,14 @@ class fsBase(object):
         if new_path == self.location:
             return self
         return self.change_attributes(location=new_path)
+
+    @property
+    def basename(self):
+        return basename(self.location)
+
+    @property
+    def dirname(self):
+        return dirname(self.location)
 
 
 known_handlers = tuple(get_handlers())

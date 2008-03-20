@@ -235,7 +235,8 @@ class tree(prototype.tree):
             for x in listdir_files(cpath):
                 # don't use lstat; symlinks may exist
                 if (x.endswith(".lockfile")
-                    or not x[-lext:].lower() == self.extension):
+                    or not x[-lext:].lower() == self.extension or
+                    x.startswith(".tmp.")):
                     continue
                 x = cpv(category+"/"+x[:-lext])
                 l.add(x.package)

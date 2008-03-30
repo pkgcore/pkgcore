@@ -128,6 +128,19 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                 self._repo_id = r.strip()
         return self._repo_id
 
+    def __getitem__(self, cpv):
+        cpv_inst = self.package_class(*cpv)
+        if cpv_inst.fullver not in self.versions[(cpv_inst.category, cpv_inst.package)]:
+            if cpv_inst.revision is None:
+                if '%s-r0' % cpv_inst.fullver in \
+                    self.versions[(cpv_inst.category, cpv_inst.package)]:
+                    # ebuild on disk has an explicit -r0 in it's name
+                    return cpv_inst
+            del cpv_inst
+            raise KeyError(cpv)
+        return cpv_inst
+                                                    
+
     def rebind(self, **kwds):
 
         """
@@ -189,6 +202,11 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                 (pjoin(self.base, catpkg.lstrip(os.path.sep)), str(e)))
 
     def _get_ebuild_path(self, pkg):
+        if pkg.revision is None:
+            if pkg.fullver not in self.versions[(pkg.category, pkg.package)]:
+                # daft explicit -r0 on disk.
+                return pjoin(self.base, pkg.category, pkg.package,
+                    "%s-%s-r0.ebuild" % (pkg.package, pkg.fullver))
         return pjoin(self.base, pkg.category, pkg.package, \
             "%s-%s.ebuild" % (pkg.package, pkg.fullver))
 

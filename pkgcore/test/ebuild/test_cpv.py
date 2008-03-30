@@ -38,7 +38,7 @@ class native_CpvTest(TestCase):
     del l
     bad_sufs  = ["_a", "_9", "_"] + [x+" " for x in simple_good_sufs]
     del simple_good_sufs
-    good_revs = ["-r1", "-r300", ""]
+    good_revs = ["-r1", "-r300", "-r0", ""]
     bad_revs = ["-r", "-ra", "-r", "-R1"]
 
     testing_secondary_args = False
@@ -127,16 +127,18 @@ class native_CpvTest(TestCase):
                 cat, pkg,  "%s%s" % (ver, rev))
         else:
             c = self.make_inst(cat, pkg, ver + rev)
-            self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat, pkg, ver, rev))
+            if rev == "" or rev == "-r0":
+                self.assertEqual(c.cpvstr, "%s/%s-%s" % (cat, pkg, ver))
+                self.assertEqual(c.revision, None)
+                self.assertEqual(c.fullver, ver)
+            else:
+                self.assertEqual(c.revision, int(rev.lstrip("-r")))
+                self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat, pkg, ver, rev))
+                self.assertEqual(c.fullver, ver+rev)
             self.assertEqual(c.category, cat)
             self.assertEqual(c.package, pkg)
             self.assertEqual(c.key, "%s/%s" % (cat, pkg))
-            if rev == "":
-                self.assertEqual(c.revision, None)
-            else:
-                self.assertEqual(c.revision, int(rev.lstrip("-r")))
             self.assertEqual(c.version, ver)
-            self.assertEqual(c.fullver, ver+rev)
 
         for suf in self.good_sufs:
             self.process_suf(ret, cat, pkg, ver + suf, rev)
@@ -155,17 +157,20 @@ class native_CpvTest(TestCase):
                 cpv.InvalidCPV, self.make_inst,
                 cat, pkg, ver+rev)
         else:
+            # redundant in light of process_ver... combine these somehow.
             c = self.make_inst(cat, pkg, ver + rev)
-            self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat, pkg, ver, rev))
+            if rev == '' or rev == '-r0':
+                self.assertEqual(c.cpvstr, "%s/%s-%s" % (cat, pkg, ver))
+                self.assertEqual(c.revision, None)
+                self.assertEqual(c.fullver, ver)
+            else:
+                self.assertEqual(c.cpvstr, "%s/%s-%s%s" % (cat, pkg, ver, rev))
+                self.assertEqual(c.revision, int(rev.lstrip("-r")))
+                self.assertEqual(c.fullver, ver + rev)
             self.assertEqual(c.category, cat)
             self.assertEqual(c.package, pkg)
             self.assertEqual(c.key, "%s/%s" % (cat, pkg))
-            if rev == "":
-                self.assertEqual(c.revision, None)
-            else:
-                self.assertEqual(c.revision, int(rev.lstrip("-r")))
             self.assertEqual(c.version, ver)
-            self.assertEqual(c.fullver, ver + rev)
 
     def assertGT(self, obj1, obj2):
         self.failUnless(obj1 > obj2, '%r must be > %r' % (obj1, obj2))

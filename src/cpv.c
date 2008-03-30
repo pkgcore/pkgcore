@@ -320,11 +320,58 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 }
 
 static int
+pkgcore_cpv_valid_package(PyObject *package)
+{
+    char *s1 = NULL;
+    char *s2 = NULL;
+    // package verification
+    s1 = PyString_AsString(package);
+    if(!s1)
+        return 0;
+    s2 = s1;
+    if(!ISALNUM(*s2))
+        return 0;
+    s2++;
+    while (ISALNUM(*s2) || '_' == *s2 || '+' == *s2)
+        s2++;
+    while('-' == *s2) {
+        s2++;
+        if('\0' == *s2)
+            return 0;
+        if(ISDIGIT(*s2)) {
+            s2++;
+            while(ISDIGIT(*s2))
+                s2++;
+            if ('+' != *s2) {
+                if(!ISALPHA(*s2))
+                    return 0;
+                if(ISLOWER(*s2)) {
+                    if('\0' == s2[1] || '-' == s2[1])
+                        return 0;
+                }
+            }
+            s2++;
+            while(ISALNUM(*s2) || '+' == *s2 || '_' == *s2)
+                s2++;
+        } else if(ISALPHA(*s2) || '+' == *s2) {
+            s2++;
+            while(ISALNUM(*s2) || '+' == *s2 || '_' == *s2)
+                s2++;
+        } else {
+            return 0;
+        }
+    }
+    if('\0' != *s2)
+        return 0;
+    return 1;
+}
+
+static int
 pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
 {
     int result = 0;
     char *ver_end = NULL;
-    char *p = NULL, *s1 = NULL, *s2 = NULL;
+    char *p = NULL;
     char *cpv_char = NULL;
     char *cpv_pos = NULL;
     PyObject *tmp = NULL, *tmp2 = NULL, *cpvstr = NULL, *category = NULL,
@@ -423,44 +470,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
     self->package = package;
     Py_XDECREF(tmp);
 
-    // package verification
-    s1 = PyString_AsString(self->package);
-    if(!s1)
-        goto parse_error;
-    s2 = s1;
-    if(!ISALNUM(*s2))
-        goto parse_error;
-    s2++;
-    while (ISALNUM(*s2) || '_' == *s2 || '+' == *s2)
-        s2++;
-    while('-' == *s2) {
-        s2++;
-        if('\0' == *s2)
-            goto parse_error;
-        if(ISDIGIT(*s2)) {
-            s2++;
-            while(ISDIGIT(*s2))
-                s2++;
-            if ('+' != *s2) {
-                if(!ISALPHA(*s2))
-                    goto parse_error;
-                if(ISLOWER(*s2)) {
-                    if('\0' == s2[1] || '-' == s2[1])
-                        goto parse_error;
-                }
-            }
-            s2++;
-            while(ISALNUM(*s2) || '+' == *s2 || '_' == *s2)
-                s2++;
-        } else if(ISALPHA(*s2) || '+' == *s2) {
-            s2++;
-            while(ISALNUM(*s2) || '+' == *s2 || '_' == *s2)
-                s2++;
-        } else {
-            goto parse_error;
-        }
-    }
-    if('\0' != *s2)
+    if(!pkgcore_cpv_valid_package(self->package))
         goto parse_error;
 
     if(!fullver) {
@@ -494,7 +504,6 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
             Py_CLEAR(self->revision);
             Py_INCREF(fullver);
         } else if('-' == *ver_end) {
-            char *rev_start = ver_end;
             if(NULL == (tmp = PyString_FromStringAndSize(p, ver_end - p)))
                 goto cleanup;
             tmp2 = self->version;
@@ -514,11 +523,9 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
             if('\0' != *p || 'r' == p[-1])
                 goto parse_error;
             // if it's "-r0", then we drop the rev.
-            if (p - rev_start == 3 && rev_start[2] == '0') {
-                Py_XDECREF(fullver);
-                if(NULL == (fullver = PyString_FromStringAndSize(cpv_pos,
-                    rev_start - cpv_pos)))
-                    goto cleanup;
+            if(0 == revision) {
+                Py_INCREF(self->version);
+                fullver = tmp;
                 Py_CLEAR(self->revision);
             } else {
                 tmp = PyInt_FromLong(revision);

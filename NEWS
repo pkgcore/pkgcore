@@ -6,11 +6,15 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 0.4.3:
 
-* EAPI1 IUSE defaults fixups.  stacking order is that default IUSE is
-  basically first in the chain, so any configuration (global, per pkg, etc),
-  will override if possible.  Effectively, this means a default IUSE of
-  "-foon" is pointless, since there is no earlier USE stack to override.
+* pquery --attr use output for EAPI=1 default IUSE is significantly less 
+  ugly.
 
+* ticket #150. EAPI1 IUSE defaults fixups.  stacking order is that default
+  IUSE is basically first in the chain, so any configuration (global, per
+  pkg, etc), will override if possible.  Effectively, this means a default
+  IUSE of "-foon" is pointless, since there is no earlier USE stack to
+  override.
+  
 * pkgcore.ebuild.collapsed_restrict_to_data api was broken outside of a 
   major version bump- specifically pull_cp_data method was removed since
   the lone consumer (pkgcore internals) doesn't need it, and the method

@@ -734,7 +734,7 @@ class merge_plan(object):
             if any(True for x in conflicts if isinstance(x, restriction.base)):
                 # blocker was caught
                 try_rematch = True
-            elif not any (True for x in conflicts if not
+            elif not any(True for x in conflicts if not
                 self.vdb_restrict.match(x)):
                 # vdb entry, replace.
                 if self.vdb_restrict.match(choices.current_pkg):
@@ -788,7 +788,7 @@ class merge_plan(object):
                 # means that vdb was loaded already.
                 # also uses getattr to protect against it *not* being
                 # a virtual provider.
-                if not matches or not matches[0].repo.livefs:
+                if not matches:#
                     for repo in self.livefs_dbs:
                         m = repo.match(x)
                         if m:

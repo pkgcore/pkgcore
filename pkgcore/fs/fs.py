@@ -91,7 +91,7 @@ class fsBase(object):
         # we would only get called if it doesn't exist.
         if attr in self.__attrs__:
             return self.__default_attrs__.get(attr)
-        raise AttributeError(attr)
+        raise AttributeError(self, attr)
 
     def __hash__(self):
         return hash(self.location)

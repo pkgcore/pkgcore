@@ -3,6 +3,26 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
+0.4.2:
+
+* correct handling of ebuilds with explicit -r0 in filename, despite it being
+  implicit.  Thanks to rbrown for intentionally going out of his way to add an
+  -r0 ebuild to gentoo-x86 (breaking policy, and completely out of the blue).
+  not particularly sure what the point was, but it oddly enough made pkgcore
+  (a competitor to one of his projects) go 'boom' if rubygems was involved.
+  fixed either way (keep the bugs coming).
+
+* minor performance optimization to binpkg merging when there is a large # 
+  of symlink rewrites required.
+
+* ticket #153; restore <0.4 behaviour for temporal blocker validation, rather
+  then invalidly relying on the initial vdb state for blocker checks.  Fixes
+  resolution/merging of sys-libs/pam-0.99.10.0
+
+
+0.4.1:
+
 * add tar contentsSet rewriting; tarballs sometimes leave out directories,
   and don't always have the fully resolved path- /usr/lib/blah, when
   /usr/lib -> /usr/lib64 *should* be /usr/lib64/blah, but tar doesn't force

@@ -277,7 +277,8 @@ class domain(pkgcore.config.domain.domain):
             profile.pkg_use.iteritems(), 
             ((packages.AlwaysTrue, self.use),
             (packages.AlwaysTrue, [self.arch])),
-            pkg_use)
+            pkg_use,
+            finalize_defaults=False)
         self.forced_use = collapsed_restrict_to_data(
             profile.forced_use.iteritems(),
             ((packages.AlwaysTrue, [self.arch]),))
@@ -413,31 +414,14 @@ class domain(pkgcore.config.domain.domain):
     def make_per_package_use(self, default_use, pkg_use):
         if not pkg_use:
             return default_use, ((), {})
-        return collapsed_restrict_to_data(default_use, pkg_use)
+        return collapsed_restrict_to_data(default_use, pkg_use,
+            finalize_defaults=False)
 
     def get_package_use(self, pkg):
-        enabled = self.enabled_use.pull_data(pkg)
+        enabled = self.enabled_use.pull_data(pkg, 
+            pre_defaults=(x[1:] for x in pkg.iuse if x[0] == '+'))
         disabled = self.disabled_use.pull_data(pkg)
         immutable = self.forced_use.pull_data(pkg, False)
-
-        # sg=suggested by pkg, lf = local force from package.use
-        pkg_enabled = set(use[1:] for use in pkg.iuse if use[:1] == "+")
-        pkg_disabled = set(use[1:] for use in pkg.iuse if use[:1] == "-")
-        pkg_lf_enabled, pkg_lf_disabled = self.enabled_use.pull_cp_data(pkg)
-
-        if pkg_enabled:
-            pkg_enabled.difference_update(pkg_lf_disabled)
-            if enabled is self.enabled_use.defaults:
-                enabled = pkg_enabled.union(enabled)
-            else:
-                enabled.update(pkg_enabled)
-
-        if pkg_disabled:
-            pkg_disabled.difference_update(pkg_lf_enabled)
-            if pkg_disabled:
-                if enabled is self.enabled_use.defaults:
-                    enabled = set(enabled)
-                enabled.difference_update(pkg_disabled)
 
         if disabled:
             if enabled is self.enabled_use.defaults:

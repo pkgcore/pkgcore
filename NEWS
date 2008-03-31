@@ -6,6 +6,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 0.4.3:
 
+* correct a corner case where a users bash_profile is noisy, specifically
+  disable using $HOME/.bashrc from all spawn_bash calls.
+
 * USE=-* in make.conf support is restored.  ticket 155.
 
 * minor tweak to package.keywords, package.use, and package.license support-

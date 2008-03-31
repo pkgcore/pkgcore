@@ -262,15 +262,14 @@ class domain(pkgcore.config.domain.domain):
 
         bashrc = list(profile.bashrc)
 
-        if "bashrc" in self.settings:
-            for data in self.settings['bashrc']:
-                source = local_source(data)
-                # this is currently local-only so a get_path check is ok
-                # TODO make this more general
-                if source.get_path() is None:
-                    raise Failure(
-                        'user-specified bashrc %r does not exist' % (data,))
-                bashrc.append(source)
+        for data in self.settings.get('bashrc', ()):
+            source = local_source(data)
+            # this is currently local-only so a get_path check is ok
+            # TODO make this more general
+            if source.get_path() is None:
+                raise Failure(
+                    'user-specified bashrc %r does not exist' % (data,))
+            bashrc.append(source)
 
         # stack use stuff first, then profile.
         self.enabled_use = collapsed_restrict_to_data(

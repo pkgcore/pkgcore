@@ -218,16 +218,22 @@ class TestProfileNode(profile_mixin, TestCase):
 class test_incremental_expansion(TestCase):
 
     def test_it(self):
-        s = set(["a", "b"])
-        profiles.incremental_expansion(s, ("-a", "b", "-b", "c"))
+        s = set("ab")
+        profiles.incremental_expansion(s, ("-a", "b", "-b", "-b", "c"))
         self.assertEqual(sorted(s), ["c"])
         self.assertRaises(ValueError,
             profiles.incremental_expansion, set(), '-')
 
     def test_non_finalized(self):
-        s = set(["a", "b"])
-        profiles.incremental_expansion(s, ("-a", "b", "-b", "c"),'',False)
+        s = set("ab")
+        profiles.incremental_expansion(s, ("-a", "b", "-b", "c", "c"),
+            finalize=False)
         self.assertEqual(sorted(s), ["-a", "-b", "c"])
+
+    def test_starred(self):
+        s = set('ab')
+        profiles.incremental_expansion(s, ('c', '-*', 'd'))
+        self.assertEqual(sorted(s), ['d'])
 
 
 class TestOnDiskProfile(TempDirMixin, TestCase):

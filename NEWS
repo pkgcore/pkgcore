@@ -6,6 +6,12 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 0.4.3:
 
+* USE=-* in make.conf support is restored.  ticket 155.
+
+* minor tweak to package.keywords, package.use, and package.license support-
+  -* is properly supported now.  Following portage, if you're trying to 
+  match keywords for a pkg that are '-* x86', you must match on x86.
+
 * pquery --attr use output for EAPI=1 default IUSE is significantly less 
   ugly.
 
@@ -24,11 +30,10 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 0.4.2:
 
 * correct handling of ebuilds with explicit -r0 in filename, despite it being
-  implicit.  Thanks to rbrown for intentionally going out of his way to add an
-  -r0 ebuild to gentoo-x86 (breaking policy, and completely out of the blue).
-  not particularly sure what the point was, but it oddly enough made pkgcore
-  (a competitor to one of his projects) go 'boom' if rubygems was involved.
-  fixed either way (keep the bugs coming).
+  implicit.  Thanks to rbrown for violating gentoo-x86 policy out of the blue
+  w/ an ebuild that has -r0 explicit in the filename for smoking out a bug
+  in pkgcore handling of it.  Ebuild since removed, but the KeyError issue
+  is corrected.  (keep the bugs coming)
 
 * minor performance optimization to binpkg merging when there is a large # 
   of symlink rewrites required.

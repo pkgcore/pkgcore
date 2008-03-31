@@ -265,18 +265,21 @@ class EmptyRootNode(ProfileNode):
 
 
 def incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
-    for i in iterable:
-        if i[0] == '-':
-            i = i[1:]
+    for token in iterable:
+        if token[0] == '-':
+            i = token[1:]
             if not i:
                 raise ValueError("%sencountered an incomplete negation, '-'"
                     % msg_prefix)
-            orig.discard(i)
+            if i == '*':
+                orig.clear()
+            else:
+                orig.discard(i)
             if not finalize:
-                orig.add("-" + i)
+                orig.add(token)
         else:
-            orig.discard("-" + i)
-            orig.add(i)
+            orig.discard("-" + token)
+            orig.add(token)
 
 
 class OnDiskProfile(object):

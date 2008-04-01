@@ -40,7 +40,9 @@ class SyncParser(OptionParser):
 
     def __init__(self, **kwargs):
         OptionParser.__init__(self, description=
-            "update a local repository to match its parent", **kwargs)
+            "update a local repository to match its parent", 
+            usage='pmaint sync [repo(s)]',
+            **kwargs)
         self.add_option("--force", action='store_true', default=False,
             help="force an action")
 

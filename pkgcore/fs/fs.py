@@ -89,9 +89,12 @@ class fsBase(object):
 
     def __getattr__(self, attr):
         # we would only get called if it doesn't exist.
-        if attr in self.__attrs__:
-            return self.__default_attrs__.get(attr)
-        raise AttributeError(self, attr)
+        if attr not in self.__attrs__:
+            raise AttributeError(self, attr)
+        obj = self.__default_attrs__.get(attr)
+        if not callable(obj):
+            return obj
+        return obj(self)
 
     def __hash__(self):
         return hash(self.location)
@@ -125,7 +128,13 @@ class fsBase(object):
         return dirname(self.location)
 
 
-known_handlers = tuple(get_handlers())
+
+class _LazyChksums(LazyFullValLoadDict):
+
+    known_handlers = tuple(get_handlers())
+    def __init__(self, callback):
+        LazyFullValLoadDict.__init__(self, self.known_handlers, callback)
+
 
 class fsFile(fsBase):
 
@@ -151,7 +160,7 @@ class fsFile(fsBase):
         if chksums is None:
             # this can be problematic offhand if the file is modified
             # but chksum not triggered
-            chksums = LazyFullValLoadDict(known_handlers, self._chksum_callback)
+            chksums = _LazyChksums(self._chksum_callback)
         kwds["chksums"] = chksums
         fsBase.__init__(self, location, **kwds)
     gen_doc_additions(__init__, __slots__)
@@ -159,12 +168,18 @@ class fsFile(fsBase):
     def __repr__(self):
         return "file:%s" % self.location
 
-    def _chksum_callback(self, chfs):
-        return zip(chfs, get_chksums(self.data, *chfs))
-
     @property
     def data(self):
         return self.data_source
+
+    def _chksum_callback(self, chfs):
+        return zip(chfs, get_chksums(self.data, *chfs))
+
+    def change_attributes(self, **kwds):
+        if 'data_source' in kwds and ('chksums' not in kwds and
+            isinstance(self.chksums, _LazyChksums)):
+            kwds['chksums'] = None
+        return fsBase.change_attributes(self, **kwds)
 
 
 class fsDir(fsBase):

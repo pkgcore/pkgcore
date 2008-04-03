@@ -14,7 +14,7 @@ demandload(globals(),
     'errno',
     'threading:Event',
     'threading:Thread',
-    'Queue:Queue,Empty',
+    'Queue',
     'time:time,sleep',
     'snakeoil.osutils:pjoin',
     'pkgcore.repository:multiplex',
@@ -41,7 +41,7 @@ class SyncParser(OptionParser):
     def __init__(self, **kwargs):
         OptionParser.__init__(self, description=
             "update a local repository to match its parent", 
-            usage='pmaint sync [repo(s)]',
+            usage='pmaint sync [--force] [repo(s)]',
             **kwargs)
         self.add_option("--force", action='store_true', default=False,
             help="force an action")
@@ -94,7 +94,10 @@ class CopyParser(OptionParser):
 
     def __init__(self, **kwargs):
         OptionParser.__init__(self, description=
-            "copy built pkg(s) into a repository", **kwargs)
+            "copy built pkg(s) into a repository",
+            usage="pmaint copy -s source_repo -t target_repo [options] "
+                "<atoms>",
+            **kwargs)
         self.add_option("-s", "--source-repo",
             help="copy from just the specified repository; else defaults "
                 "to finding any match")
@@ -287,14 +290,14 @@ def regen_main(options, out, err):
                 yield x
         regen_iter(passthru(options.repo), err)
     else:
-        queue = Queue(options.thread_count * 2)
+        queue = Queue.Queue(options.thread_count * 2)
         kill = Event()
         kill.clear()
         def iter_queue(kill, qlist, timeout=0.25):
             while not kill.isSet():
                 try:
                     yield qlist.get(timeout=timeout)
-                except Empty:
+                except Queue.Empty:
                     continue
         regen_threads = [
             Thread(

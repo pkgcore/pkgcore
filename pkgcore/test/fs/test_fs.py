@@ -82,6 +82,20 @@ class base(object):
         self.assertNotIdentical(obj, new_obj)
         self.assertEqual(new_obj.location, pjoin(self.dir, "test3", "foon"))
 
+    def test_default_attrs(self):
+        self.assertEqual(self.make_obj(location="/adsf").mode, None)
+        class tmp(self.kls):
+            __default_attrs__ = self.kls.__default_attrs__.copy()
+            __default_attrs__['tmp'] = lambda self2:getattr(self2, 'a', 1)
+            __attrs__ = self.kls.__attrs__ + ('tmp',)
+        try:
+            self.kls = tmp
+            self.assertEqual(self.make_obj('/adsf', strict=False).tmp, 1)
+            t = self.make_obj('/asdf', a='foon', strict=False)
+            self.assertEqual(t.tmp, "foon")
+        finally:
+            del self.kls
+
 
 class Test_fsFile(TestCase, base):
 
@@ -103,6 +117,23 @@ class Test_fsFile(TestCase, base):
         chksums = dict(o.chksums.iteritems())
         self.assertEqual(sorted(mkobj(chksums=chksums).chksums.iteritems()),
             sorted(chksums.iteritems()))
+
+    def test_chksum_regen(self):
+        data_source = object()
+        obj = self.make_obj("/etc/passwd")
+        self.assertIdentical(obj.chksums,
+            obj.change_attributes(location="/tpp").chksums)
+        chksums1 = obj.chksums
+        self.assertNotIdentical(chksums1,
+            obj.change_attributes(data_source=data_source).chksums)
+
+        self.assertIdentical(chksums1,
+            obj.change_attributes(data_source=data_source,
+                chksums=obj.chksums).chksums)
+
+        obj2 = self.make_obj("/etc/passwd", chksums={1:2})
+        self.assertIdentical(obj2.chksums,
+            obj2.change_attributes(data_source=data_source).chksums)
 
 
 class Test_fsLink(TestCase, base):

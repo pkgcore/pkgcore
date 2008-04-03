@@ -49,7 +49,7 @@ class install(repo_interfaces.livefs_install):
                 v = ContentsFile(pjoin(dirpath, "CONTENTS"),
                                  mutable=True, create=True)
                 # strip the offset.
-                if self.offset:
+                if self.offset not in (None, '/'):
                     v.update(change_offset_rewriter(self.offset, '/',
                         self.me.csets["install"]))
                 else:

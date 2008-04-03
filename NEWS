@@ -4,6 +4,20 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* correct a flaw in tbz2 merging where it repeatedly try to seek in the bz2
+  stream to generate chksums, instead of using the on disk files for
+  chksumming.
+
+* pmaint regen w/ > 1 thread no longer throws an ugly set of tracebacks upon
+  completion.
+
+* binpkg repositories now tell you the offending mode, and what is needed
+  to correct it.  No longer cares if the specified binpkg base location is
+  a symlink also.
+
+* pmaint --help usage descriptions are far more useful now.
+
+
 0.4.3:
 
 * correct a corner case where a users bash_profile is noisy, specifically

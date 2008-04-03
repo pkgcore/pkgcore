@@ -199,18 +199,17 @@ class tree(prototype.tree):
             repo_id = location
         self.repo_id = repo_id
         self._versions_tmp_cache = {}
-        try:
-            st = os.lstat(self.base)
-            if not stat.S_ISDIR(st.st_mode):
-                raise errors.InitializationError(
-                    "base not a dir: %s" % self.base)
-            elif not st.st_mode & (os.X_OK|os.R_OK):
-                raise errors.InitializationError(
-                    "base lacks read/executable: %s" % self.base)
 
-        except OSError:
+        # XXX rewrite this when snakeoil.osutils grows an access equivalent.
+        if not os.access(self.base, os.X_OK|os.R_OK):
+            # either it doesn't exist, or we don't have perms.
+            if not os.path.exists(self.base):
+                raise errors.InitializationError(
+                    "base %r doesn't exist: %s" % self.base)
             raise errors.InitializationError(
-                "lstat failed on base %s" % self.base)
+                "base directory %r with mode 0%03o isn't readable/executable"
+                " by this user" % (self.base,
+                os.stat(self.base).st_mode & 04777))
 
         self.package_class = wrap_factory(
             get_plugin("format." + self.format_magic), self)

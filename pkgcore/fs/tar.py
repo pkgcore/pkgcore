@@ -10,7 +10,7 @@ from pkgcore.fs import contents
 from pkgcore.interfaces.data_source import data_source
 
 from snakeoil.tar import tarfile
-from snakeoil.mappings import OrderedDict, StackedDict
+from snakeoil.mappings import OrderedDict
 from snakeoil.currying import partial
 
 class tar_data_source(data_source):
@@ -71,13 +71,7 @@ def tarinfo_to_fsobj(src_tar):
         elif member.isreg():
             d["data_source"] = tar_data_source(partial(
                     src_tar.extractfile, member.name))
-            # bit of an optimization; basically, we know size, so
-            # we stackdict it so that the original value is used, rather then
-            # triggering an full chksum run for size
-            f = fsFile(location, **d)
-            object.__setattr__(f, "chksums", StackedDict(
-                {"size":long(member.size)}, f.chksums))
-            yield f
+            yield fsFile(location, **d)
         elif member.issym() or member.islnk():
             yield fsSymlink(location, member.linkname, **d)
         elif member.isfifo():

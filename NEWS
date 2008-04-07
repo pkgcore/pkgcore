@@ -19,7 +19,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 * when a merge passes through a symlink for path resolution, that sym is
   no longer pulled in as an entry of that pkg.  Originally this was done for
-  protective reasons, but it serves long term as a way to iandvertantly hold
+  protective reasons, but it serves long term as a way to inadvertantly hold
   onto undesired junk from the users fs, and opens the potential to unmerge
   system/global symlinks when that pkg/slot's refcount hits zero.
 

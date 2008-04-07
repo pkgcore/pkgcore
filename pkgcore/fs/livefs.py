@@ -140,13 +140,33 @@ def scan(*a, **kw):
     mutable = kw.pop("mutable", True)
     return contentsSet(iter_scan(*a, **kw), mutable=mutable)
 
+class _realpath_dir(object):
 
-def intersect(cset):
+    _realpath_func = staticmethod(os.path.realpath)
+
+    def __init__(self):
+        self._cache = {}
+
+    def __call__(self, location):
+        dname, fname = location.rsplit("/", 1)
+        if not dname:
+            return location
+        dname2 = self._cache.get(dname)
+        if dname2 is None:
+            dname2 = self._cache[dname] = self._realpath_func(dname)
+        return pjoin(dname2, fname)
+
+
+def intersect(cset, realpath=False):
     """generate the intersect of a cset and the livefs"""
     f = gen_obj
+    if realpath:
+        f2 = _realpath_dir()
+    else:
+        f2 = lambda x:x
     for x in cset:
         try:
-            yield f(x.location)
+            yield f(f2(x.location))
         except OSError, oe:
             if oe.errno != errno.ENOENT:
                 raise

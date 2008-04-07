@@ -397,6 +397,27 @@ class unmerge(base):
         return op(unmerging_cset, callback=engine.observer.removing_fs_obj)
 
 
+class BaseSystemUnmergeProtection(base):
+
+    required_csets = ('uninstall',)
+    _engine_types = UNINSTALLING_MODES
+    _hooks = ('unmerge',)
+    _priority = -100
+
+    _preserve_sequence = ('/usr', '/usr/lib', '/usr/lib64', '/usr/lib32',
+        '/usr/bin', '/usr/sbin', '/bin', '/sbin', '/lib', '/lib32', '/lib64', 
+        '/etc', '/var', '/home', '/root')
+
+    def __init__(self, preserve_sequence=None):
+        if preserve_sequence is None:
+            preserve_sequence = self._preserve_sequence
+        self._block = tuple(x.lstrip('/') for x in preserve_sequence)
+
+    def trigger(self, engine, uninstall):
+        uninstall.difference_update(pjoin(engine.offset, x) for x in self._block)
+        return True
+
+
 class fix_uid_perms(base):
 
     required_csets = ('new_cset',)

@@ -125,6 +125,10 @@ def isolate_rsync_opts(options):
     if timeout is not None:
         base['timeout'] = timeout.strip()
 
+    proxy = options.pop('RSYNC_PROXY', None)
+    if proxy is not None:
+        base['proxy'] = proxy.strip()
+
     excludes = options.pop('RSYNC_EXCLUDEFROM', None)
     if excludes is not None:
         extra_opts.extend('--exclude-from=%s' % x

@@ -120,6 +120,14 @@ class TestExtendedRestrictionGeneration(TestCase):
         self.assertInstance(o, atom, "sys-devel/automake:1.6")
         self.assertTrue(o.slot)
 
+    def test_exceptions(self):
+        pm = parserestrict.parse_match
+        pe = parserestrict.ParseError
+        self.assertRaises(pe, pm, "!dev-util/diffball")
+        self.assertRaises(pe, pm, "dev-util/diffball-0.4")
+        self.assertRaises(pe, pm, "=dev-util/*diffball-0.4")
+        self.assertRaises(pe, pm, "=*/diffball-0.4")
+
 
 class ParsePVTest(TestCase):
 

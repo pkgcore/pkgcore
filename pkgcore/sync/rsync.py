@@ -45,12 +45,13 @@ class rsync_syncer(base.ExternalSyncer):
 
     pkgcore_config_type = ConfigHint({'basedir':'str', 'uri':'str',
         'timeout':'str', 'compress':'bool', 'excludes':'list',
-        'includes':'list', 'retries':'str', 'extra_opts':'list'},
+        'includes':'list', 'retries':'str', 'extra_opts':'list',
+        'proxy':'str'},
         typename='syncer')
 
     def __init__(self, basedir, uri, timeout=default_timeout,
         compress=False, excludes=(), includes=(),
-        retries=default_retries,
+        retries=default_retries, proxy=None,
         extra_opts=[]):
 
         uri = uri.rstrip(os.path.sep) + os.path.sep
@@ -67,6 +68,10 @@ class rsync_syncer(base.ExternalSyncer):
         self.excludes = list(self.default_excludes) + list(excludes)
         self.includes = list(self.default_includes) + list(includes)
         self.retries = int(retries)
+        self.use_proxy = proxy is not None
+        if self.use_proxy:
+            self.sets_env = True
+            self.env = {'RSYNC_PROXY':proxy}
         self.is_ipv6 = "--ipv6" in self.opts or "-6" in self.opts
         self.is_ipv6 = self.is_ipv6 and socket.has_ipv6
 
@@ -75,6 +80,11 @@ class rsync_syncer(base.ExternalSyncer):
         return uri[len("rsync://"):].split("@", 1)[-1].split("/", 1)[0]
 
     def _get_ips(self):
+        if self.use_proxy:
+            # If we're using a proxy, name resolution is best left to the proxy
+            yield self.hostname
+            return
+
         af_fam = socket.AF_INET
         if self.is_ipv6:
             af_fam = socket.AF_INET6

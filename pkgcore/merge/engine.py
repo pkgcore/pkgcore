@@ -31,9 +31,11 @@ def alias_cset(alias, engine, csets):
 
 
 def map_new_cset_livefs(engine, csets, cset_name='raw_new_cset'):
-    initial = engine._get_livefs_intersect_cset(engine, csets, cset_name)
-    livefs.recursively_fill_syms(initial)
-    ret = csets[cset_name].map_directory_structure(initial)
+    initial = csets[cset_name]
+    ondisk = contents.contentsSet(livefs.intersect(initial.iterdirs(),
+        realpath=True))
+    livefs.recursively_fill_syms(ondisk)
+    ret = initial.map_directory_structure(ondisk, add_conflicting_sym=False)
     return ret
 
 
@@ -47,16 +49,15 @@ class MergeEngine(object):
             install_hooks.keys() + uninstall_hooks.keys()))
 
     install_csets = {"install_existing":"get_install_livefs_intersect",
-        "new_cset": map_new_cset_livefs}
+        "new_cset": map_new_cset_livefs,
+        "install":currying.partial(alias_cset, 'new_cset'),
+        "replace":currying.partial(alias_cset, 'new_cset')}
     uninstall_csets = {
-        "uninstall_existing":"get_uninstall_livefs_intersect",
-        "uninstall":currying.partial(alias_cset, "old_cset")}
+        "uninstall_existing":currying.partial(alias_cset, "old_cset"),
+        "uninstall":currying.partial(alias_cset, "old_cset"),
+        "old_cset":"get_uninstall_livefs_intersect"}
     replace_csets = dict(install_csets)
     replace_csets.update(uninstall_csets)
-
-    install_csets.update({}.fromkeys(["install", "replace"],
-        currying.partial(alias_cset, "new_cset")))
-    replace_csets["install"] = currying.partial(alias_cset, "new_cset")
     replace_csets["modifying"] = (
         lambda e, c: c["install"].intersection(c["uninstall"]))
     replace_csets["uninstall"] = "get_remove_cset"
@@ -159,8 +160,9 @@ class MergeEngine(object):
             (k, [y() for y in v])
             for (k, v) in cls.uninstall_hooks.iteritems())
         csets = dict(cls.uninstall_csets)
-        if "old_cset" not in csets:
-            csets["old_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
+        if "raw_old_cset" not in csets:
+            csets["raw_old_cset"] = currying.post_curry(cls.get_pkg_contents,
+                pkg)
         o = cls(
             UNINSTALL_MODE, hooks, csets, cls.uninstall_csets_preserve,
             observer, offset=offset)
@@ -193,7 +195,7 @@ class MergeEngine(object):
 
         csets = dict(cls.replace_csets)
 
-        csets.setdefault('old_cset', currying.post_curry(cls.get_pkg_contents, old))
+        csets.setdefault('raw_old_cset', currying.post_curry(cls.get_pkg_contents, old))
         csets.setdefault('raw_new_cset', currying.post_curry(cls.get_pkg_contents, new))
 
         o = cls(
@@ -308,9 +310,10 @@ class MergeEngine(object):
         return csets["new_cset"].intersection(csets["old_cset"])
 
     @staticmethod
-    def _get_livefs_intersect_cset(engine, csets, cset_name):
+    def _get_livefs_intersect_cset(engine, csets, cset_name, realpath=True):
         """generates the livefs intersection against a cset"""
-        return contents.contentsSet(livefs.intersect(csets[cset_name]))
+        return contents.contentsSet(livefs.intersect(csets[cset_name],
+            realpath=realpath))
 
     @staticmethod
     def get_install_livefs_intersect(engine, csets):
@@ -318,6 +321,6 @@ class MergeEngine(object):
 
     @staticmethod
     def get_uninstall_livefs_intersect(engine, csets):
-        return engine._get_livefs_intersect_cset(engine, csets, "uninstall")
+        return engine._get_livefs_intersect_cset(engine, csets, "raw_old_cset")
 
     alias_cset = staticmethod(alias_cset)

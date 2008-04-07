@@ -308,7 +308,7 @@ class contentsSet(object):
         obj.update(self.iter_child_nodes(start_point))
         return obj
 
-    def map_directory_structure(self, other):
+    def map_directory_structure(self, other, add_conflicting_sym=True):
         """resolve the directory structure between this instance, and another contentset,
         collapsing syms of self into directories of other
         """
@@ -324,8 +324,8 @@ class contentsSet(object):
             obj.difference_update(subset)
             subset = subset.change_offset(conflict.location, conflict.resolved_target)
             obj.update(subset)
-            # this looks insane
-            obj.add(other[conflicts_d[conflict]])
+            if add_conflicting_sym:
+                obj.add(other[conflicts_d[conflict]])
         return obj
 
     def add_missing_directories(self, mode=0775, uid=0, gid=0, mtime=None):

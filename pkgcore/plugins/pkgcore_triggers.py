@@ -14,5 +14,6 @@ pkgcore_plugins = {
         triggers.detect_world_writable,
         triggers.InfoRegen,
         triggers.CommonDirectoryModes,
+        triggers.BaseSystemUnmergeProtection,
         ],
     }

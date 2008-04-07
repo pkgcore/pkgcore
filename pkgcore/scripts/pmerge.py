@@ -55,7 +55,8 @@ that aren't involved in the graph of the requested operation""")
         self.add_option('--fetchonly', '-f', action='store_true',
             help="do only the fetch steps of the resolved plan")
         self.add_option('--newuse', '-N', action='store_true', 
-            help="check for changed useflags in installed packages")
+            help="check for changed useflags in installed packages "
+                "(implies -1)")
         self.add_option('--ignore-cycles', '-i', action='store_true',
             help=\
 """ignore cycles if they're found to be unbreakable;
@@ -140,8 +141,10 @@ a depends on b, and b depends on a, with neither built is an example""")
             options.replace = False
         if not options.targets and not options.set and not options.newuse:
             self.error('Need at least one atom/set')
-        if options.newuse and options.set:
-            self.error("Don't specify --newuse when using sets, use it standalone")
+        if options.newuse:
+            options.oneshot = True
+            if options.set:
+                self.error("Don't specify --newuse when using sets, use it standalone")
         return options, ()
 
 class AmbiguousQuery(parserestrict.ParseError):

@@ -4,6 +4,31 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* protective trigger was added blocking unmerging of a basic set of
+  directories/syms; mainly /*, and /usr/*.
+
+* when a merge passes through a symlink for path resolution, that sym is
+  no longer pulled in as an entry of that pkg.  Originally this was done for
+  protective reasons, but it serves long term as a way to iandvertantly hold
+  onto undesired junk from the users fs, and opens the potential to unmerge
+  system/global symlinks when that pkg/slot's refcount hits zero.
+
+* detection, and predicting merge locations for syms was doing an unecessary
+  level of stat calls; this has been reduced to bare minimum.
+
+* ticket 159; force an realpath of CONTENTS coming from the vdb due to other
+  managers not always writing realpath'd entries, thus resulting in occasional
+  misidentification of what to remove.
+
+* pkgcore.util.parserestrict no longer throws MalformedAtom, always
+  ParseError.  Removes ugly commandline tracebacks for bad atoms supplied
+  to pmerge.
+
+* ticket 158; honor RSYNC_PROXY for rsync syncer.
+  Thanks to user Ford_Prefect.
+
+* pmerge -N now implies --oneshot.
+
 * correct a flaw in tbz2 merging where it repeatedly try to seek in the bz2
   stream to generate chksums, instead of using the on disk files for
   chksumming.

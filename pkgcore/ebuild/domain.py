@@ -86,8 +86,8 @@ class domain(pkgcore.config.domain.domain):
         'package.mask', 'package.keywords', 'package.license', 'package.use',
         'package.unmask']:
         _types[_thing] = 'list'
-    for _thing in ['root', 'CHOST', 'CFLAGS', 'PATH', 'PORTAGE_TMPDIR',
-                   'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR']:
+    for _thing in ['root', 'CHOST', 'CBUILD', 'CFLAGS', 'PATH',
+        'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR']:
         _types[_thing] = 'str'
 
     # TODO this is missing defaults
@@ -103,6 +103,8 @@ class domain(pkgcore.config.domain.domain):
         # voodoo, unfortunately (so it goes)
         # break this up into chunks once it's stabilized (most of code
         # here has already, but still more to add)
+        if 'CHOST' in settings and 'CBUILD' not in settings:
+            settings['CBUILD'] = settings['CHOST']
         settings.setdefault('ACCEPT_LICENSE', const.ACCEPT_LICENSE)
 
         # map out sectionname -> config manager immediately.

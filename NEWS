@@ -4,6 +4,16 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+0.4.4: 04/06/08
+
+* merging/replacing performance may be a bit slower in this release- the level
+  of stats calls went up in comparison to previous releases, with several
+  duplicates.  This will be corrected in the next release- releasing in the 
+  interim for bugfixes this version contains.
+
+* add CBUILD=${CBUILD:-${CHOST}}; couple of odd ebuilds rely on it despite
+  being outside of PMS.
+
 * protective trigger was added blocking unmerging of a basic set of
   directories/syms; mainly /*, and /usr/*.
 

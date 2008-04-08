@@ -38,8 +38,8 @@ class TemplateTest(TestCase):
 
     cache_keys = ("foo", "_eclasses_")
 
-    def get_db(self, label='foo', readonly=False):
-        return DictCache('nowhere', 'dictcache', self.cache_keys,
+    def get_db(self, readonly=False):
+        return DictCache(auxdbkeys=self.cache_keys,
             readonly=readonly)
 
     def test_basics(self):
@@ -84,7 +84,7 @@ class TemplateTest(TestCase):
     def test_readonly(self):
         self.cache = self.get_db()
         self.cache['spork'] = {'foo':'bar'}
-        cache = self.get_db('rodictcache', True)
+        cache = self.get_db(True)
         cache.data = self.cache.data
         self.assertRaises(errors.ReadOnly,
                           operator.delitem, cache, 'spork')

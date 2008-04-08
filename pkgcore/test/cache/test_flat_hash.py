@@ -8,5 +8,5 @@ from snakeoil.test.mixins import TempDirMixin
 class TestFlatHash(util.GenericCacheMixin, TempDirMixin):
 
     def get_db(self, readonly=False):
-        return flat_hash.database(self.dir, "test",
-            self.cache_keys, readonly=readonly)
+        return flat_hash.database(self.dir,
+            auxdbkeys=self.cache_keys, readonly=readonly)

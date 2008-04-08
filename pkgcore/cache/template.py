@@ -35,21 +35,16 @@ class database(object):
     cleanse_keys = False
     serialize_eclasses = True
 
-    def __init__(self, location, label, auxdbkeys=metadata_keys,
-        readonly=False):
+    def __init__(self, auxdbkeys=metadata_keys, readonly=False):
         """
         initialize the derived class; specifically, store label/keys
 
-        @param location: fs location the cache is stored at
-        @param label: cache label
         @param auxdbkeys: sequence of allowed keys for each cache entry
         @param readonly: defaults to False,
             controls whether the cache is mutable.
         """
         self._known_keys = frozenset(auxdbkeys)
         self._cdict_kls = make_SlottedDict_kls(self._known_keys)
-        self.location = location
-        self.label = label
         self.readonly = readonly
         self.sync_rate = 0
         self.updates = 0

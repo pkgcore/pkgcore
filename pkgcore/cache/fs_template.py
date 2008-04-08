@@ -8,7 +8,7 @@ template for fs based backends
 import os
 from pkgcore.cache import template
 from pkgcore.os_data import portage_gid
-from snakeoil.osutils import ensure_dirs
+from snakeoil.osutils import ensure_dirs, pjoin
 
 class FsBased(template.database):
     """Template wrapping fs needed options.
@@ -17,7 +17,7 @@ class FsBased(template.database):
     the specified owners/perms.
     """
 
-    def __init__(self, *args, **config):
+    def __init__(self, location, label=None,  **config):
         """
         throws InitializationError if needs args aren't specified
 
@@ -31,13 +31,13 @@ class FsBased(template.database):
                 del config[x]
             else:
                 setattr(self, "_"+x, y)
-        super(FsBased, self).__init__(*args, **config)
+        super(FsBased, self).__init__(**config)
 
-        if self.label.startswith(os.path.sep):
-            # normpath.
-            self.label = os.path.sep + os.path.normpath(
-                self.label).lstrip(os.path.sep)
+        if label is not None:
+            location = pjoin(location, label.lstrip(os.path.sep))
 
+        self.location = location
+        
         self._mtime_used = "_mtime_" in self._known_keys
 
     __init__.__doc__ = "\n".join(
@@ -65,16 +65,7 @@ class FsBased(template.database):
     def _ensure_dirs(self, path=None):
         """Make sure a path relative to C{self.location} exists."""
         if path is not None:
-            path = self.location + os.path.sep + os.path.dirname(path)
+            path = pjoin(self.location, os.path.dirname(path))
         else:
             path = self.location
         return ensure_dirs(path, mode=0775, minimal=False)
-
-def gen_label(label):
-    """Turn a user-defined label into something usable as a filename."""
-    if label.find(os.path.sep) == -1:
-        return label
-    label = label.strip("\"").strip("'")
-    label = os.path.join(*(label.rstrip(os.path.sep).split(os.path.sep)))
-    tail = os.path.split(label)[1]
-    return "%s-%X" % (tail, abs(label.__hash__()))

@@ -31,6 +31,8 @@ def alias_cset(alias, engine, csets):
 
 
 def map_new_cset_livefs(engine, csets, cset_name='raw_new_cset'):
+    """find the syms on disk that redirect new_cset, and return a cset
+    localized to the livefs"""
     initial = csets[cset_name]
     ondisk = contents.contentsSet(livefs.intersect(initial.iterdirs(),
         realpath=True))

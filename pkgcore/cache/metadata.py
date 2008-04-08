@@ -25,6 +25,15 @@ class database(flat_hash.database):
     backends entry, and converts old (and incomplete) INHERITED field
     to _eclasses_ as required.
     """
+
+    pkgcore_config_type = ConfigHint(
+        {'readonly': 'bool', 'location': 'str', 'label': 'str',
+        'eclasses':'ref:eclass_cache'},
+        required=['location'],
+        positional=['location'],
+        typename='cache')
+
+
     complete_eclass_entries = False
 
     auxdbkeys_order = ('DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
@@ -39,10 +48,14 @@ class database(flat_hash.database):
     autocommits = True
 
     def __init__(self, location, *args, **config):
-        self.base_loc = location
+        self.ec = config.pop("eclasses", None)
+        if self.ec is None:
+            import pdb;pdb.set_trace()
+            self.ec = eclass_cache.cache(pjoin(location, "eclass"), location)
+
+        config.pop('label', None)
+        location = pjoin(location, 'metadata', 'cache')
         super(database, self).__init__(location, *args, **config)
-        self.ec = eclass_cache.cache(pjoin(self.base_loc, "eclass"),
-            self.base_loc)
         self.hardcoded_auxdbkeys_order = tuple((idx, key)
             for idx, key in enumerate(self.auxdbkeys_order)
                 if key in self._known_keys)
@@ -142,13 +155,13 @@ class paludis_flat_list(database):
 
     pkgcore_config_type = ConfigHint(
         {'readonly': 'bool', 'location': 'str', 'label': 'str'},
-        required=['location', 'label'],
-        positional=['location', 'label'],
+        required=['location'],
+        positional=['location'],
         typename='cache')
 
-    def __init__(self, location, *args, **config):
+    def __init__(self, *args, **config):
         config['auxdbkeys'] = self.auxdbkeys_order
-        database.__init__(self, location, *args, **config)
+        database.__init__(self, *args, **config)
 
     def _set_mtime(self, fp, values, eclasses):
         mtime = values.get("_mtime_", 0)

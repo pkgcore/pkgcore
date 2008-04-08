@@ -21,24 +21,12 @@ class database(fs_template.FsBased):
     pkgcore_config_type = ConfigHint(
         {'readonly': 'bool', 'location': 'str', 'label': 'str',
          'auxdbkeys': 'list'},
-        required=['location', 'label'],
-        positional=['location', 'label'],
+        required=['location'],
+        positional=['location'],
         typename='cache')
 
 
     autocommits = True
-
-    def __init__(self, *args, **config):
-        super(database, self).__init__(*args, **config)
-        self.location = self._format_location()
-
-        if not os.path.exists(self.location):
-            self._ensure_dirs()
-    __init__.__doc__ = fs_template.FsBased.__init__.__doc__
-
-    def _format_location(self):
-        return pjoin(self.location,
-            self.label.lstrip(os.path.sep).rstrip(os.path.sep))
 
     def _getitem(self, cpv):
         path = pjoin(self.location, cpv)

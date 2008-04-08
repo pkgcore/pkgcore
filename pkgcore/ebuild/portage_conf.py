@@ -242,6 +242,17 @@ def add_fetcher(config, conf_dict, distdir):
     config["fetcher"] = basics.AutoConfigSection(fetcher_dict)
 
 
+def mk_simple_cache(config_root, tree_loc, readonly=False,
+    kls='pkgcore.cache.flat_hash.database'):
+    readonly = readonly and 'yes' or 'no'
+    tree_loc = pjoin(config_root, 'var/cache/edb/dep',
+       tree_loc.lstrip('/'))
+
+    return basics.AutoConfigSection({'class': kls,
+        'location': tree_loc,
+        'readonly': readonly,
+        })
+
 
 @configurable({'location': 'str'}, typename='configsection')
 def config_from_make_conf(location="/etc/"):
@@ -309,11 +320,6 @@ def config_from_make_conf(location="/etc/"):
             'default_mirrors': gentoo_mirrors,
             'inherit-only': True,
             'eclass_cache': 'eclass stack'})
-    new_config['cache-common'] = basics.AutoConfigSection({
-            'class': 'pkgcore.cache.flat_hash.database',
-            'inherit-only': True,
-            'location': pjoin(config_root, 'var', 'cache', 'edb', 'dep'),
-            })
 
 
     # used by PORTDIR syncer, and any layman defined syncers
@@ -330,9 +336,7 @@ def config_from_make_conf(location="/etc/"):
         kwds = {
                 'inherit': ('ebuild-repo-common',),
                 'location': tree_loc,
-                'cache': (basics.AutoConfigSection({
-                            'inherit': ('cache-common',),
-                            'label': tree_loc}),),
+                'cache': (mk_simple_cache(config_root, tree_loc),),
                 'class': 'pkgcore.ebuild.repository.SlavedTree',
                 'parent_repo': 'portdir'
         }
@@ -346,14 +350,11 @@ def config_from_make_conf(location="/etc/"):
     # if a metadata cache exists, use it
     if rsync_portdir_cache:
         new_config["portdir cache"] = basics.AutoConfigSection({
-                'class': 'pkgcore.cache.metadata.database',
-                'location': portdir,
-                'label': 'portdir cache',
-                'readonly': 'yes'})
+            'class': 'pkgcore.cache.metadata.database', 'readonly': 'yes',
+            'location': portdir, 'eclasses': pjoin(portdir, 'eclass'),
+        })
     else:
-        new_config["portdir cache"] = basics.AutoConfigSection({
-                'inherit': ('cache-common',),
-                'label': portdir})
+        new_config["portdir cache"] = mk_simple_cache(config_root, portdir)
 
     base_portdir_config = {}
     if portdir_syncer is not None:
@@ -376,9 +377,7 @@ def config_from_make_conf(location="/etc/"):
         new_config['repo-stack'] = basics.section_alias(portdir, 'repo')
     else:
         # There's always at least one (portdir) so this means len(all_ecs) > 1
-        new_config['%s cache' % (portdir,)] = basics.AutoConfigSection({
-                'inherit': ('cache-common',),
-                'label': portdir})
+        new_config['%s cache' % (portdir,)] = mk_simple_cache(config_root, portdir)
         cache = ('portdir cache',)
         if rsync_portdir_cache:
             cache = ('%s cache' % (portdir,),) + cache

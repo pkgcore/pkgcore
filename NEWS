@@ -4,6 +4,19 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* correct invalid passing of force keyword down when the repository isn't
+  frozen.  Occasionally triggered user visible tracebacks in pmaint copy.
+
+* portage broke compatibility with pkgcore a while back for our binpkgs-
+  for some inane reason, portage requires CATEGORY and PF in the xpak
+  segment.  This is being removed from portage in 2.2, but in the interim
+  pkgcore now forces those keys into the binpkgs xpak for compatibility
+  with portage.
+  Shorter version: pmaint copy generated binpkgs work with portage again.
+
+* cbuild/chost/ctarget are available via pquery --attr, and are written to
+  binpkg/vdb now.
+
 * stat removal work: FEATURES=-metadata-cache reuses existing eclass cache
   object, thus one (and only one) scan of ${PORTDIR}/eclass
 

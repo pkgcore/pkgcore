@@ -26,7 +26,8 @@ def _getattr_wrapped(attr, self):
     return o[1]
 
 
-def make_wrapper(configurable_attribute_name, attributes_to_wrap=()):
+def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
+    kls_injections={}):
     """
     @param configurable_attribute_name: attribute name to add,
         and that is used for evaluating attributes_to_wrap
@@ -250,5 +251,9 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=()):
             if self._buildable:
                 return self._buildable(self, **kwds)
             return None
+
+        # we do this last, on the offchance they're doing some *serious*
+        # overrides.
+        locals().update(kls_injections)
 
     return PackageWrapper

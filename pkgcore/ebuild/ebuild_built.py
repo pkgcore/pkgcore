@@ -10,7 +10,7 @@ from pkgcore.package import metadata
 from pkgcore.interfaces.data_source import local_source
 
 from snakeoil.mappings import IndeterminantDict
-from snakeoil.currying import post_curry
+from snakeoil.currying import post_curry, partial
 from snakeoil.obj import DelayedInstantiation
 
 from snakeoil.demandload import demandload
@@ -79,6 +79,18 @@ class package(ebuild_src.base):
 
     _get_attr["use"] = lambda s:DelayedInstantiation(frozenset,
         lambda: frozenset(s.data["USE"].split()))
+
+    def _chost_fallback(initial, self):
+        o = self.data.get(initial)
+        if o is None:
+            o = self.data.get("CHOST")
+            if o is None:
+                return o
+        return o.strip()
+
+    _get_attr["cbuild"] = partial(_chost_fallback, 'CBUILD')
+    _get_attr["chost"] = partial(_chost_fallback, 'CHOST')
+    _get_attr["ctarget"] = partial(_chost_fallback, 'CTARGET')
 
     def _update_metadata(self, pkg):
         raise NotImplementedError()

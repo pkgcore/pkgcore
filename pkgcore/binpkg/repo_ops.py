@@ -23,7 +23,7 @@ _metadata_rewrites = {
     "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
     "use":"USE", "eapi":"EAPI", "CONTENTS":"contents", "provides":"PROVIDE"}
 
-def generate_attr_dict(pkg):
+def generate_attr_dict(pkg, portage_compatible=True):
     d = {}
     for k in pkg.tracked_attributes:
         if k == "contents":
@@ -45,6 +45,13 @@ def generate_attr_dict(pkg):
         d[_metadata_rewrites.get(k, k.upper())] = s
     d["%s-%s.ebuild" % (pkg.package, pkg.fullver)] = \
         pkg.ebuild.get_fileobj().read()
+
+    # this shouldn't be necessary post portage 2.2.
+    # till then, their code requires redundant data,
+    # so we've got this.
+    if portage_compatible:
+        d["CATEGORY"] = pkg.category
+        d["PF"] = pkg.PF
     return d
 
 

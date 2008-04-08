@@ -22,7 +22,7 @@ from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import const, processor
 
 from snakeoil.mappings import IndeterminantDict
-from snakeoil.currying import alias_class_method, partial
+from snakeoil.currying import alias_class_method, partial, post_curry
 
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
@@ -146,7 +146,8 @@ class base(metadata.package):
 
     tracked_attributes = (
         "depends", "rdepends", "post_rdepends", "provides", "license",
-        "slot", "keywords", "eapi", "restrict", "eapi", "description", "iuse")
+        "slot", "keywords", "eapi", "restrict", "eapi", "description", "iuse",
+        "chost", "cbuild", "ctarget")
 
     _config_wrappables = dict((x, alias_class_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
@@ -250,6 +251,7 @@ class package_factory(metadata.factory):
         super(package_factory, self).__init__(parent, *args, **kwargs)
         self._cache = cachedb
         self._ecache = eclass_cache
+
         if mirrors:
             mirrors = dict((k, mirror(v, k)) for k, v in mirrors.iteritems())
 
@@ -268,7 +270,7 @@ class package_factory(metadata.factory):
 
     def _get_ebuild_mtime(self, pkg):
         return os.stat(self._get_ebuild_path(pkg)).st_mtime
-
+    
     def _invalidated_eclasses(self, data, pkg):
         return (data.get("_eclasses_") is not None and not
             self._ecache.is_eclass_data_valid(data["_eclasses_"]))

@@ -1,7 +1,7 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.test import TestCase
+from pkgcore.test import TestCase, Todo
 from snakeoil.mappings import OrderedDict
 
 from pkgcore.restrictions import packages, values
@@ -151,3 +151,10 @@ class TestPrototype(TestCase):
         pkg = CPV("foo/cows-1.0")
         self.repo.notify_add_package(pkg)
         self.assertIn((pkg.category, pkg.package), self.repo.versions)
+
+    def test_uninstall(self):
+        assert False
+
+    test_replace = test_install = test_uninstall
+    test_replace.todo = 'tests for force behaviour (ensuring kwd is popped ' \
+        'among other things) is needed'

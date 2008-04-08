@@ -463,7 +463,7 @@ class tree(object):
         @return: L{pkgcore.interfaces.repo.nonlivefs_uninstall} or
             L{pkgcore.interfaces.repo.livefs_uninstall} instance
         """
-        if self.frozen and not kw.pop("force", False):
+        if not kw.pop("force", False) and self.frozen:
             raise AttributeError("repo %r is frozen" % self)
         return self._uninstall(pkg, *a, **kw)
 
@@ -492,7 +492,7 @@ class tree(object):
         @return: L{pkgcore.interfaces.repo.nonlivefs_replace} or
             L{pkgcore.interfaces.repo.livefs_replace} instance
         """
-        if self.frozen and not kw.pop("force", False):
+        if not kw.pop("force", False) and self.frozen:
             raise AttributeError("repo %r is frozen" % self)
         return self._replace(orig, new, *a, **kw)
 

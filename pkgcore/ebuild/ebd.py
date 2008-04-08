@@ -93,6 +93,11 @@ class ebd(object):
             self.env = {}
 
         # temp hack.
+        for x in ('chost', 'cbuild', 'ctarget'):
+            val = getattr(pkg, x)
+            if val is not None:
+                self.env[x.upper()] = val
+            
         if "PYTHONPATH" in os.environ:
             self.env["PYTHONPATH"] = os.environ["PYTHONPATH"]
         if "PKGCORE_DEBUG" in os.environ:

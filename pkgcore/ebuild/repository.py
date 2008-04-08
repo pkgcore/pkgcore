@@ -303,12 +303,24 @@ class ConfiguredTree(configured.tree):
         @param fetcher: L{pkgcore.fetch.base.fetcher} instance to use
             for getting access to fetchable files
         """
+
         if "USE" not in domain_settings:
             raise errors.InitializationError(
                 "%s requires the following settings: 'USE', not supplied" % (
                     self.__class__,))
 
-        configured.tree.__init__(self, raw_repo, self.config_wrappables)
+        elif 'CHOST' not in domain_settings:
+            raise errors.InitializationError(
+                "%s requires the following settings: 'CHOST', not supplied" % (
+                    self.__class__,))
+
+        chost = domain_settings['CHOST']
+        scope_update = {'chost': chost}
+        scope_update.update((x, domain_settings.get(x.upper, chost))
+            for x in ('cbuild', 'ctarget'))
+
+        configured.tree.__init__(self, raw_repo, self.config_wrappables,
+           pkg_kls_injections=scope_update)
         self._get_pkg_use = domain.get_package_use
         self.domain_settings = domain_settings
         if fetcher is None:

@@ -386,7 +386,8 @@ class OptionParser(commandline.OptionParser):
                            'herds', 'license', 'uris', 'files',
                            'slot', 'maintainers', 'restrict', 'repo',
                            'alldepends', 'path', 'environment', 'keywords',
-                           'homepage', 'fetchables', 'eapi', 'inherited')
+                           'homepage', 'fetchables', 'eapi', 'inherited',
+                           'chost', 'cbuild', 'ctarget')
 
         output = self.add_option_group('Output formatting')
         output.add_option(
@@ -818,7 +819,7 @@ def print_package(options, out, err, pkg):
 
     if options.contents:
         for location in sorted(obj.location
-                               for obj in getattr(pkg, 'contents', ())):
+            for obj in getattr(pkg, 'contents', ())):
             out.write(location)
 
 def print_packages_noversion(options, out, err, pkgs):

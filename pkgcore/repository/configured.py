@@ -14,7 +14,7 @@ from snakeoil.klass import GetAttrProxy
 class tree(prototype.tree):
     configured = True
 
-    def __init__(self, raw_repo, wrapped_attrs):
+    def __init__(self, raw_repo, wrapped_attrs, pkg_kls_injections=()):
 
         """
         @param raw_repo: repo to wrap
@@ -29,7 +29,8 @@ class tree(prototype.tree):
         self.attr_filters = frozenset(wrapped_attrs.keys() +
                                       [self.configurable])
 
-        self._klass = make_wrapper(self.configurable, self.wrapped_attrs)
+        self._klass = make_wrapper(self.configurable, self.wrapped_attrs,
+            kls_injections=pkg_kls_injections)
 
     def _get_pkg_kwds(self, pkg):
         raise NotImplementedError()

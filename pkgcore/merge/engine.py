@@ -55,7 +55,7 @@ class MergeEngine(object):
         "install":currying.partial(alias_cset, 'new_cset'),
         "replace":currying.partial(alias_cset, 'new_cset')}
     uninstall_csets = {
-        "uninstall_existing":currying.partial(alias_cset, "old_cset"),
+        "uninstall_existing":currying.partial(alias_cset, "uninstall"),
         "uninstall":currying.partial(alias_cset, "old_cset"),
         "old_cset":"get_uninstall_livefs_intersect"}
     replace_csets = dict(install_csets)

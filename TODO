@@ -4,7 +4,6 @@ pkgcore/merge:
 - misc-functions.sh
  specifically shifting it out of ebuild-default-functions.sh and into triggers.
  1) big ass scanelf block.
- 3) preinst_mask (same thing, although that shouldn't wipe mangle the install image)
  4) sfperms (feature based), domain bound
  5) suid control.  same thing (see a pattern?)
  6) selinux labelling.  need to override the copies there imo, installing then slapping labels on sucks, although could mangle the image file and use a selinux aware copy
@@ -46,8 +45,6 @@ remote bin repo support (spec is where?).  talk to solar about it.
 news integration
 config/vdb updates from repo updates
 obsolete warnings from portage_config would be nice
-EAPI filtering on vdb (doubt it's there)
-force umask to 022 for perms reasons; sane?  emaint does this.
 
 "keeping up with the smiths/jones"
 

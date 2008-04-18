@@ -353,9 +353,9 @@ static PyObject *
 pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *atom_str, *negate_vers = NULL;
-    Py_ssize_t eapi_int = -1;
+    int eapi_int = -1;
     static char *kwlist[] = {"atom_str", "negate_vers", "eapi", NULL};
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "S|OI:atom_init", kwlist,
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "S|Oi:atom_init", kwlist,
         &atom_str, &negate_vers, &eapi_int))
         return NULL;
 

@@ -4,9 +4,9 @@ pkgcore/merge:
 - misc-functions.sh
  specifically shifting it out of ebuild-default-functions.sh and into triggers.
  1) big ass scanelf block.
- 4) sfperms (feature based), domain bound
- 5) suid control.  same thing (see a pattern?)
- 6) selinux labelling.  need to override the copies there imo, installing then slapping labels on sucks, although could mangle the image file and use a selinux aware copy
+ 2) sfperms (feature based), domain bound
+ 3) suid control.  same thing (see a pattern?)
+ 4) selinux labelling.  need to override the copies there imo, installing then slapping labels on sucks, although could mangle the image file and use a selinux aware copy
 
 prepman:
  1) all of it.  the symlink rewriting might be fun...

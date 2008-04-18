@@ -189,16 +189,33 @@ class Test_native_atom(TestCase):
             if use:
                 pos = assertAttr('use')
 
+    def test_eapi0(self):
+        for postfix in (':1', ':asdf', '::asdf', '::asdf-x86', '[x]', '[x,y]',
+            ':1[x,y]', '[x,y]:1', ':1:repo'):
+            self.assertRaisesMsg("dev-util/foon%s must be invalid in EAPI 0"
+                % postfix, errors.MalformedAtom, self.kls,
+                "dev-util/foon%s" % postfix, eapi=0)
+
+    def test_eapi1(self):
+        for postfix in ('::asdf', '::asdf-x86', '[x]', '[x,y]',
+            ':1[x,y]', '[x,y]:1', ':1:repo'):
+            self.assertRaisesMsg("dev-util/foon%s must be invalid in EAPI 1"
+                % postfix, errors.MalformedAtom, self.kls,
+                "dev-util/foon%s" % postfix, eapi=1)
+        self.kls("dev-util/foon:1", eapi=1)
+        self.kls("dev-util/foon:12", eapi=1)
+
 
     def test_repo_id(self):
         astr = "dev-util/bsdiff"
-        c = FakePkg("%s-1" % astr, repo=FakeRepo(repoid="gentoo"))
+        c = FakePkg("%s-1" % astr, repo=FakeRepo(repoid="gentoo-x86A_"))
         self.assertTrue(self.kls("%s" % astr).match(c))
-        self.assertTrue(self.kls("%s::gentoo" % astr).match(c))
+        self.assertTrue(self.kls("%s::gentoo-x86A_" % astr).match(c))
         self.assertFalse(self.kls("%s::gentoo2" % astr).match(c))
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:::")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::/asdf/")
 
     def test_invalid_atom(self):
         self.assertRaises(errors.MalformedAtom, self.kls, '~dev-util/spork')
@@ -308,6 +325,19 @@ class Test_native_atom(TestCase):
         self.assertEqual2(self.kls('cat/pkg:2'), self.kls('cat/pkg:2'))
         self.assertEqual2(self.kls('cat/pkg:2,1'), self.kls('cat/pkg:2,1'))
         self.assertEqual2(self.kls('cat/pkg:2,1'), self.kls('cat/pkg:1,2'))
+        for lesser, greater in (('0.1', '1'), ('1', '1-r1'), ('1.1', '1.2')):
+            self.assertTrue(self.kls('=d/b-%s' % lesser) <
+                self.kls('=d/b-%s' % greater),
+                msg="d/b-%s < d/b-%s" % (lesser, greater))
+            self.assertFalse(self.kls('=d/b-%s' % lesser) >
+                self.kls('=d/b-%s' % greater),
+                msg="!: d/b-%s < d/b-%s" % (lesser, greater))
+            self.assertTrue(self.kls('=d/b-%s' % greater) >
+                self.kls('=d/b-%s' % lesser),
+                msg="d/b-%s > d/b-%s" % (greater, lesser))
+            self.assertFalse(self.kls('=d/b-%s' % greater) <
+                self.kls('=d/b-%s' % lesser),
+                msg="!: d/b-%s > d/b-%s" % (greater, lesser))
 
 
     def test_compatibility(self):

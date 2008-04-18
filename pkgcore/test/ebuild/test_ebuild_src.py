@@ -102,6 +102,15 @@ class test_base(TestCase):
         self.assertEqual(self.get_pkg({'EAPI': ''}).eapi, 0)
         self.assertEqual(self.get_pkg({'EAPI': 'foon'}).eapi,
             const.unknown_eapi)
+        self.assertRaises(errors.MetadataException, getattr,
+            self.get_pkg({'EAPI':0, 'DEPEND':"d/b:0"}), 'depends')
+        self.assertRaises(errors.MetadataException, getattr,
+            self.get_pkg({'EAPI':0, 'RDEPEND':"d/b:0"}), 'rdepends')
+        self.assertRaises(errors.MetadataException, getattr,
+            self.get_pkg({'EAPI':1, 'DEPEND':"d/b[x,y]"}), 'depends')
+        self.assertRaises(errors.MetadataException, getattr,
+            self.get_pkg({'EAPI':1, 'DEPEND':"d/b::foon"}), 'depends')
+        self.get_pkg({'EAPI':1, 'DEPEND':'d/b:foon'}).slot
 
     def test_keywords(self):
         self.assertEqual(list(self.get_pkg({'KEYWORDS':''}).keywords), [])

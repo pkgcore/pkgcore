@@ -63,6 +63,8 @@ static PyObject *pkgcore_atom_restrictions = NULL;
 #define VALID_USE_CHAR(c) (ISALNUM(c) || '-' == (c) \
     || '_' == (c) || '.' == (c) || '+' == (c))
 
+#define VALID_REPO_CHAR(c) (ISALNUM(c) || '-' == (c) || '_' == (c))
+
 static void
 Err_SetMalformedAtom(PyObject *atom_str, char *raw_msg)
 {
@@ -258,10 +260,10 @@ parse_repo_id(PyObject *atom_str, char *p, PyObject **repo_id)
 {
     char *start = p;
     while('\0' != *p) {
-        if(!VALID_USE_CHAR(*p) && '/' != *p) {
+        if(!VALID_REPO_CHAR(*p)) {
             Err_SetMalformedAtom(atom_str,
                 "invalid character in repo_id: "
-                "valid characters are [a-Z0-9_.-+/]");
+                "valid characters are [c-Z0-9_-/]");
             return 1;
         }
         p++;
@@ -351,9 +353,10 @@ static PyObject *
 pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *atom_str, *negate_vers = NULL;
-    static char *kwlist[] = {"atom_str", "negate_vers", NULL};
-    if(!PyArg_ParseTupleAndKeywords(args, kwds, "S|O:atom_init", kwlist,
-        &atom_str, &negate_vers))
+    Py_ssize_t eapi_int = -1;
+    static char *kwlist[] = {"atom_str", "negate_vers", "eapi", NULL};
+    if(!PyArg_ParseTupleAndKeywords(args, kwds, "S|OI:atom_init", kwlist,
+        &atom_str, &negate_vers, &eapi_int))
         return NULL;
 
     if(!negate_vers) {
@@ -431,7 +434,6 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
                     goto pkgcore_atom_parse_error;
                 break;
             } else if(repo_id) {
-                printf("foo");
                 Err_SetMalformedAtom(atom_str,
                     "multiple slot/repo blocks aren't allowed, use ',' to specify "
                     "multiple slots, multiple repos aren't allowed yet");
@@ -520,6 +522,32 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
         goto pkgcore_atom_parse_error;
     }
     Py_DECREF(tmp);
+
+    if(0 == eapi_int) {
+        if(Py_None != use) {
+            Err_SetMalformedAtom(atom_str,
+                "use deps aren't allowed in eapi 0");
+            goto pkgcore_atom_parse_error;
+        } else if(Py_None != slot) {
+            Err_SetMalformedAtom(atom_str,
+                "slot deps aren't allowed in eapi 0");
+            goto pkgcore_atom_parse_error;
+        } else if(Py_None != repo_id) {
+            Err_SetMalformedAtom(atom_str,
+                "repository deps aren't allowed in eapi 0");
+            goto pkgcore_atom_parse_error;
+        }
+    } else if(1 == eapi_int) {
+        if(Py_None != use) {
+            Err_SetMalformedAtom(atom_str,
+                "use deps aren't allowed in eapi 1");
+            goto pkgcore_atom_parse_error;
+        } else if(Py_None != repo_id) {
+            Err_SetMalformedAtom(atom_str,
+                "repository deps aren't allowed in eapi 1");
+            goto pkgcore_atom_parse_error;
+        }
+    }
 
     #define STORE_ATTR(attr_name, val)              \
     if(PyObject_GenericSetAttr(self, (attr_name), (val)))  \

@@ -25,12 +25,18 @@ MalformedAtom = errors.MalformedAtom
 valid_use_chars = set(str(x) for x in xrange(10))
 valid_use_chars.update(chr(x) for x in xrange(ord("a"), ord("z")))
 valid_use_chars.update(chr(x) for x in xrange(ord("A"), ord("Z")))
-valid_use_chars.update(["_", ".", "+", "-"])
+valid_repo_chars = set(valid_use_chars)
+valid_repo_chars.update("_-")
+valid_use_chars.update("_.+-")
 valid_use_chars = frozenset(valid_use_chars)
+valid_repo_chars = frozenset(valid_repo_chars)
 
-def native_init(self, atom, negate_vers=False):
+def native_init(self, atom, negate_vers=False, eapi=-1):
     """
     @param atom: string, see gentoo ebuild atom syntax
+    @keyword negate_vers: boolean controlling whether the version should be
+        inverted for restriction matching
+    @keyword eapi: string/int controlling what eapi to enforce for this atom
     """
     sf = object.__setattr__
 
@@ -62,9 +68,9 @@ def native_init(self, atom, negate_vers=False):
             if not repo_id:
                 raise errors.MalformedAtom(atom,
                     "repo_id must not be empty")
-            elif ":" in repo_id:
+            elif not valid_repo_chars.issuperset(repo_id):
                 raise errors.MalformedAtom(atom,
-                    "repo_id may contain only [a-Z0-9_.-+/]")
+                    "repo_id may contain only [A-Za-z0-9_-]")
             atom = atom[:i2]
             sf(self, "repo_id", repo_id)
         else:
@@ -110,6 +116,16 @@ def native_init(self, atom, negate_vers=False):
         sf(self, 'op', '')
     sf(self, 'cpvstr', atom)
 
+    if eapi == 0:
+        for x in ('use', 'repo_id', 'slot'):
+            if getattr(self, x) is not None:
+                raise errors.MalformedAtom(orig_atom,
+                    "%s atoms aren't supported for eapi 0" % x)
+    elif eapi == 1:
+        for x in ('use', 'repo_id'):
+            if getattr(self, x) is not None:
+                raise errors.MalformedAtom(orig_atom,
+                    "%s atoms aren't supported for eapi 0" % x)
     try:
         c = cpv.CPV(self.cpvstr)
     except errors.InvalidCPV, e:
@@ -475,16 +491,6 @@ class atom(boolean.AndRestriction):
         # Handled all possible ops.
         raise NotImplementedError(
             'Someone added an op to atom without adding it to intersects')
-
-
-def split_atom(inst):
-    if len(inst.restrictions) > 3:
-        a = packages.AndRestriction(*inst.restrictions[2:])
-    elif len(inst.restrictions) == 3:
-        a = inst.restrictions[2]
-    else:
-        a = []
-    return inst.category + "/" + inst.package, a
 
 def _collapsed_restrict_match(data, pkg, mode):
     # mode is ignored; non applicable.

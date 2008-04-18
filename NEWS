@@ -4,6 +4,13 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* added eapi awareness to atoms, so that an eapi1 atom only allows the 
+  slot extension for example.
+
+* remove a stray printf from cpy atom; visible only when repository atoms
+  are in use.
+
+
 0.4.5: April 9, 2008
 
 * fix collision unprotect trigger exceptions (typically KeyError).

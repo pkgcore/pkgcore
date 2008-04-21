@@ -10,6 +10,7 @@ demandload(globals(),
     'socket',
     'errno',
     'snakeoil.osutils:pjoin',
+    'time',
 )
 
 class rsync_syncer(base.ExternalSyncer):
@@ -140,6 +141,8 @@ class rsync_syncer(base.ExternalSyncer):
 class rsync_timestamp_syncer(rsync_syncer):
 
     forcable = True
+    forward_sync_delay = 25 * 60 # 25 minutes
+    negative_sync_delay = 60 * 60 # 60 minutes
 
     def __init__(self, *args, **kwargs):
         rsync_syncer.__init__(self, *args, **kwargs)
@@ -153,7 +156,12 @@ class rsync_timestamp_syncer(rsync_syncer):
         if path is None:
             path = pjoin(self.basedir, "metadata", "timestamp.chk")
         try:
-            return open(path).read().strip()
+            date, offset = open(path).read().strip().rsplit('+', 1)
+            orig_date = date
+            date = time.mktime(time.strptime(date, "%a, %d %b %Y %H:%M:%S "))
+            # add the hour/minute offset.
+            date += int(offset[:2] * 60) + int(offset[2:])
+            return date
         except IOError, oe:
             if oe.errno not in (errno.ENOENT, errno.ENOTDIR):
                 raise
@@ -175,8 +183,15 @@ class rsync_timestamp_syncer(rsync_syncer):
                 finally:
                     self.basedir = basedir
                     self.uri = uri
-                doit = ret == False or self.last_timestamp != \
-                    self.current_timestamp(new_timestamp)
+                if not ret:
+                    doit = True
+                else:
+                    delta = self.current_timestamp(new_timestamp) - \
+                        self.last_timestamp
+                    if delta >= 0:
+                        doit = delta > self.forward_sync_delay
+                    else:
+                        doit = delta > self.negative_sync_delay
             if not doit:
                 return True
             ret = rsync_syncer._sync(self, verbosity, output_fd)

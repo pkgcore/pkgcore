@@ -306,7 +306,7 @@ def unmerge_contents(cset, offset=None, callback=lambda obj:None):
             os.rmdir(x.location)
         except OSError, e:
             if not e.errno in (errno.ENOTEMPTY, errno.ENOENT, errno.ENOTDIR,
-                               errno.EBUSY):
+                               errno.EBUSY, errno.EEXIST):
                 raise
         else:
             callback(x)

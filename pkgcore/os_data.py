@@ -20,7 +20,7 @@ elif ostype == "Darwin":
     xargs = os.environ["XARGS"] = "xargs"
     def lchown(*pos_args, **key_args):
         pass
-elif ostype in ["FreeBSD", "OpenBSD", "NetBSD"]:
+elif ostype in ["FreeBSD", "OpenBSD", "NetBSD", "SunOS"]:
     userland = "BSD"
     xargs = os.environ["XARGS"] = "xargs"
     lchown = os.lchown

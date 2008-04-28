@@ -623,6 +623,7 @@ class SavePristinePkg(base):
     required_csets = ('raw_new_cset',)
     _hooks = ('sanity_check',)
     _priority = 1000
+    _engine_types = INSTALLING_MODES
 
     pkgcore_config_type = ConfigHint({'target_repo':'ref:repo'},
         typename='trigger', required=['target_repo'])
@@ -649,5 +650,6 @@ class SavePkg(SavePristinePkg):
     required_csets = ('install',)
 
 
-class SavePkg(SavePristinePkg):
+class SavePkgUnmerging(SavePristinePkg):
     required_csets = ('old_cset',)
+    _engine_types = UNINSTALLING_MODES

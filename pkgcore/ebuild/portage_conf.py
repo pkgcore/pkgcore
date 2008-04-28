@@ -478,12 +478,12 @@ def config_from_make_conf(location="/etc/"):
         elif 'pristine-buildpkg' in features:
             new_config['buildpkg_trigger'] = \
                 basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
-                'class':'pkgcore.merge.triggers.SavePkg'})
+                'class':'pkgcore.merge.triggers.SavePristinePkg'})
             triggers.append('buildpkg_trigger')
         elif 'unmerge-backup' in features:
             new_config['unmerge_backup_trigger'] = \
                 basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
-                'class':'pkgcore.merge.triggers.SavePkg'})
+                'class':'pkgcore.merge.triggers.SavePkgUnmerging'})
             triggers.append('unmerge_backup_trigger')
             
 

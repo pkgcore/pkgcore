@@ -4,6 +4,27 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* 'info' messages during merging are now displayed by default- new debug
+  message type was added that isn't displayed by default.
+
+* ebuild domain now accepts triggers configuration directive.
+
+* FEATURES=pristine-buildpkg was added; this is like FEATURES=buildpkg,
+  but tbzs the pkg prior to any modification by triggers.  Upshot of this,
+  you basically have an unmodified binpkg that can be localized to the merging
+  host rather then to the builder.  Simple example, with this if your main
+  system is FEATURES=strip, it tucks away a nonstripped binpkg- so that
+  consumers of the binary repo are able to have debug symbols if they want
+  them.
+
+* FEATURES=buildpkg is now supported.
+
+* the engine used for install/uninstall/replace is now configurable via 
+  engine_kls attribute on the op class.
+
+* dropped exporting of USER='portage' if id is portage.  Ancient var setting,
+  can't find anything reliant on it thus punting it.
+
 * add SunOS to known OS's since it's lchown suffices for our needs.
 
 * added eapi awareness to atoms, so that an eapi1 atom only allows the 

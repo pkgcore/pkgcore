@@ -14,6 +14,7 @@ __all__ = [
 ]
 
 from pkgcore.merge import errors, const
+from pkgcore.config import ConfigHint
 import pkgcore.os_data
 
 from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
@@ -615,3 +616,34 @@ class BlockFileType(base):
             raise errors.BlockModification(self,
                 "blacklisted filetypes were encountered- pattern %r matched files: %r" %
                     (self.bad_regex, sorted(bad_files)))
+
+
+class SavePristinePkg(base):
+
+    required_csets = ('raw_new_cset',)
+    _hooks = ('sanity_check',)
+    _priority = 1000
+
+    pkgcore_config_type = ConfigHint({'target_repo':'ref:repo'},
+        typename='trigger', required=['target_repo'])
+
+    def __init__(self, target_repo):
+        self.target_repo = target_repo
+
+    def trigger(self, engine, cset):
+        pkg = engine.new
+        old_pkg = self.target_repo.match(pkg.versioned_atom)
+        if old_pkg:
+            txt = 'replacing'
+            op = self.target_repo.replace(*(old_pkg + [pkg]))
+        else:
+            txt = 'installing'
+            op = self.target_repo.install(pkg)
+        engine.observer.info("%s %s to %s" %
+            (txt, pkg, self.target_repo))
+        op.finish()
+
+
+class SavePkg(SavePristinePkg):
+    _hooks = ('pre_merge',)
+    required_csets = ('install',)

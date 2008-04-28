@@ -228,8 +228,8 @@ def add_fetcher(config, conf_dict, distdir):
     resumecommand = conf_dict.pop("RESUMECOMMAND", fetchcommand)
 
     # copy it to prevent modification.
-    fetcher_dict = dict(conf_dict)
     # map a config arg to an obj arg, pop a few values
+    fetcher_dict = dict(conf_dict)
     if "FETCH_ATTEMPTS" in fetcher_dict:
         fetcher_dict["attempts"] = fetcher_dict.pop("FETCH_ATTEMPTS")
     fetcher_dict.pop("readonly", None)
@@ -287,6 +287,7 @@ def config_from_make_conf(location="/etc/"):
     features = conf_dict.get("FEATURES", "").split()
 
     new_config = {}
+    triggers = []
 
     # sets...
     add_sets(new_config, root, portage_base)
@@ -469,6 +470,17 @@ def config_from_make_conf(location="/etc/"):
                     'location': pkgdir})
                 default_repos += ('binpkg',)
 
+        if 'buildpkg' in features:
+            new_config['buildpkg_trigger'] = \
+                basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
+                'class':'pkgcore.merge.triggers.SavePkg'})
+            triggers.append('buildpkg_trigger')
+        elif 'pristine-buildpkg' in features:
+            new_config['buildpkg_trigger'] = \
+                basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
+                'class':'pkgcore.merge.triggers.SavePkg'})
+            triggers.append('buildpkg_trigger')
+
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.
     # *everything* in the conf_dict must be str values also.
@@ -497,6 +509,8 @@ def config_from_make_conf(location="/etc/"):
         else:
             conf_dict[f] = fp
 
+    if triggers:
+        conf_dict['triggers'] = tuple(triggers)
     new_config['livefs domain'] = basics.FakeIncrementalDictConfigSection(
         my_convert_hybrid, conf_dict)
 

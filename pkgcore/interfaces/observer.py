@@ -29,8 +29,11 @@ class file_phase_observer(phase_observer):
             self._out.write("starting %s\n" % phase)
 
     def info(self, msg):
+        self._out.write("info: %s\n" % msg)
+
+    def debug(self, msg):
         if not self._semiquiet:
-            self._out.write("info: %s\n" % msg)
+            self._out.write("debug: %s\n" % msg)
 
     def warn(self, msg):
         self._out.write("warning: %s\n" % msg)

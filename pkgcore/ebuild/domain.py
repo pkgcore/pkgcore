@@ -78,7 +78,7 @@ class domain(pkgcore.config.domain.domain):
     _types = {
         'profile': 'ref:profile', 'fetcher': 'ref:fetcher',
         'repositories': 'lazy_refs:repo', 'vdb': 'lazy_refs:repo',
-        'name': 'str',
+        'name': 'str', 'triggers':'lazy_refs:trigger',
         }
     for _thing in list(const.incrementals) + ['bashrc']:
         _types[_thing] = 'list'
@@ -99,10 +99,11 @@ class domain(pkgcore.config.domain.domain):
     del _types, _thing
 
     def __init__(self, profile, repositories, vdb, name=None,
-        root='/', incrementals=const.incrementals, **settings):
+        root='/', incrementals=const.incrementals, triggers=(), **settings):
         # voodoo, unfortunately (so it goes)
         # break this up into chunks once it's stabilized (most of code
         # here has already, but still more to add)
+        self.triggers = triggers
         if 'CHOST' in settings and 'CBUILD' not in settings:
             settings['CBUILD'] = settings['CHOST']
         settings.setdefault('ACCEPT_LICENSE', const.ACCEPT_LICENSE)
@@ -439,3 +440,6 @@ class domain(pkgcore.config.domain.domain):
         immutable.update(disabled)
 
         return immutable, enabled, disabled
+
+    def get_extra_triggers(self):
+        return (x.instantiate() for x in self.triggers)

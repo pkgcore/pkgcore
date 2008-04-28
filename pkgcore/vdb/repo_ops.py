@@ -27,6 +27,7 @@ def _get_default_ebuild_op_args_kwds(self):
 def _default_customize_engine(op_inst, engine):
     triggers.customize_engine(op_inst.domain_settings, engine)
 
+
 class install(repo_interfaces.livefs_install):
 
     def __init__(self, domain_settings, repo, pkg, *a, **kw):

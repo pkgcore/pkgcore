@@ -22,7 +22,7 @@
 # readonly.  This limits users, but also helps to ensure that reloaded envs from older portages don't
 # overwrite an internal ebd.sh function that has since changed.
 
-ORIG_VARS=`declare | egrep '^[^[:space:]{}()]+=' | cut -s -d '=' -f 1`
+ORIG_VARS=`declare | grep -E '^[^[:space:]{}()]+=' | cut -s -d '=' -f 1`
 ORIG_FUNCS=`declare -F | cut -s -d ' ' -f 3`
 
 DONT_EXPORT_FUNCS='portageq speak'
@@ -757,9 +757,6 @@ unset f
 set +f
 
 export XARGS
-if [ "$(id -nu)" == "portage" ] ; then
-    export USER=portage
-fi
 set +H -h
 # if we're being src'd for our functions, do nothing.  if called directly, define a few necessary funcs.
 if [ "$*" != "daemonize" ]; then

@@ -95,15 +95,20 @@ class nonlivefs_replace(nonlivefs_install, nonlivefs_uninstall):
 class livefs_base(base):
     stage_hooks = []
 
-    def __init__(self, repo, observer=None, offset=None):
+    def __init__(self, repo, observer=None, offset=None, triggers=()):
         self.repo = repo
         self.underway = False
         self.offset = offset
         self.observer = observer
+        self.triggers = triggers
         self.get_op()
         self.lock = getattr(repo, "lock")
         if self.lock is None:
             self.lock = fake_lock()
+
+    def _add_triggers(self, engine):
+        for trigger in self.triggers:
+            trigger.register(engine)
 
     def customize_engine(self, engine):
         pass
@@ -147,6 +152,7 @@ class livefs_install(livefs_base):
         "postinst":"transfer", "transfer":"preinst", "preinst":"start"}
     stage_hooks = ["merge_metadata", "postinst", "preinst", "transfer"]
     install_op_name = "_repo_install_op"
+    engine_kls = staticmethod(MergeEngine.install)
 
     def __init__(self, repo, pkg, *args, **kwds):
         self.new_pkg = pkg
@@ -162,9 +168,10 @@ class livefs_install(livefs_base):
 
     def start(self):
         """start the install transaction"""
-        engine = MergeEngine.install(self.new_pkg, offset=self.offset,
+        engine = self.engine_kls(self.new_pkg, offset=self.offset,
             observer=self.observer)
         self.new_pkg.add_format_triggers(self, self.install_op, engine)
+        self._add_triggers(engine)
         self.customize_engine(engine)
         return livefs_base.start(self, engine)
 
@@ -174,9 +181,10 @@ class livefs_install(livefs_base):
 
     def transfer(self):
         """execute the actual transfer"""
-        for x in (self.me.pre_merge, self.me.merge, self.me.post_merge):
+        for merge_phase in (self.me.pre_merge, self.me.merge,
+            self.me.post_merge):
             try:
-                x()
+                merge_phase()
             except merge_errors.NonFatalModification, e:
                 print "warning caught: %s" % e
         return True
@@ -212,6 +220,7 @@ class livefs_uninstall(livefs_base):
         "postrm":"remove", "remove":"prerm", "prerm":"start"}
     stage_hooks = ["merge_metadata", "postrm", "prerm", "remove"]
     uninstall_op_name = "_repo_uninstall_op"
+    engine_kls = staticmethod(MergeEngine.uninstall)
 
     def __init__(self, repo, pkg, *args, **kwds):
         self.old_pkg = pkg
@@ -227,9 +236,10 @@ class livefs_uninstall(livefs_base):
 
     def start(self):
         """start the uninstall transaction"""
-        engine = MergeEngine.uninstall(self.old_pkg, offset=self.offset,
+        engine = self.engine_kls(self.old_pkg, offset=self.offset,
             observer=self.observer)
         self.old_pkg.add_format_triggers(self, self.uninstall_op, engine)
+        self._add_triggers(engine)
         self.customize_engine(engine)
         return livefs_base.start(self, engine)
 
@@ -239,9 +249,10 @@ class livefs_uninstall(livefs_base):
 
     def remove(self):
         """execute any removal steps required"""
-        for x in (self.me.pre_unmerge, self.me.unmerge, self.me.post_unmerge):
+        for unmerge_phase in (self.me.pre_unmerge, self.me.unmerge,
+            self.me.post_unmerge):
             try:
-                x()
+                unmerge_phase()
             except merge_errors.NonFatalModification, e:
                 print "warning caught: %s" % e
         return True
@@ -289,6 +300,7 @@ class livefs_replace(livefs_install, livefs_uninstall):
     stage_hooks = [
         "merge_metadata", "unmerge_metadata", "postrm", "prerm", "postinst",
         "preinst", "unmerge_metadata", "merge_metadata"]
+    engine_kls = staticmethod(MergeEngine.replace)
 
     def __init__(self, repo, oldpkg, newpkg, **kwds):
         self.old_pkg = oldpkg
@@ -301,10 +313,11 @@ class livefs_replace(livefs_install, livefs_uninstall):
 
     def start(self):
         """start the transaction"""
-        engine = MergeEngine.replace(self.old_pkg, self.new_pkg,
+        engine = self.engine_kls(self.old_pkg, self.new_pkg,
             offset=self.offset, observer=self.observer)
         self.old_pkg.add_format_triggers(self, self.uninstall_op, engine)
         self.new_pkg.add_format_triggers(self, self.install_op, engine)
+        self._add_triggers(engine)
         self.customize_engine(engine)
         return livefs_base.start(self, engine)
 

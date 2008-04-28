@@ -647,3 +647,7 @@ class SavePristinePkg(base):
 class SavePkg(SavePristinePkg):
     _hooks = ('pre_merge',)
     required_csets = ('install',)
+
+
+class SavePkg(SavePristinePkg):
+    required_csets = ('old_cset',)

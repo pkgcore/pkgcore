@@ -480,6 +480,12 @@ def config_from_make_conf(location="/etc/"):
                 basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
                 'class':'pkgcore.merge.triggers.SavePkg'})
             triggers.append('buildpkg_trigger')
+        elif 'unmerge-backup' in features:
+            new_config['unmerge_backup_trigger'] = \
+                basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
+                'class':'pkgcore.merge.triggers.SavePkg'})
+            triggers.append('unmerge_backup_trigger')
+            
 
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.

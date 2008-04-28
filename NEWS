@@ -9,6 +9,10 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 * ebuild domain now accepts triggers configuration directive.
 
+* FEATURES=unmerge-buildpkg was added; this effectively quickpkgs a pkg
+  before it's unmerged so you have a snapshot of it's last state before
+  it is replaced.
+
 * FEATURES=pristine-buildpkg was added; this is like FEATURES=buildpkg,
   but tbzs the pkg prior to any modification by triggers.  Upshot of this,
   you basically have an unmodified binpkg that can be localized to the merging

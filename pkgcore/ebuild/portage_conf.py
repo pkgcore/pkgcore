@@ -1,4 +1,4 @@
-# Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
 """make.conf translator.
@@ -473,19 +473,26 @@ def config_from_make_conf(location="/etc/"):
         if 'buildpkg' in features:
             new_config['buildpkg_trigger'] = \
                 basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
-                'class':'pkgcore.merge.triggers.SavePkg'})
+                'class':'pkgcore.merge.triggers.SavePkg',
+                'pristine':'no'})
             triggers.append('buildpkg_trigger')
         elif 'pristine-buildpkg' in features:
             new_config['buildpkg_trigger'] = \
                 basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
-                'class':'pkgcore.merge.triggers.SavePristinePkg'})
+                'class':'pkgcore.merge.triggers.SavePkg', 'pristine':'yes'})
             triggers.append('buildpkg_trigger')
+        elif 'buildsyspkg' in features:
+            new_config['buildpkg_system_trigger'] = \
+                basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
+                'class':'pkgcore.merge.triggers.SavePkgIfInPkgset',
+                'pkgset':'system', 'pristine':'yes'})
+            triggers.append('buildpkg_system_trigger')
         elif 'unmerge-backup' in features:
             new_config['unmerge_backup_trigger'] = \
                 basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
                 'class':'pkgcore.merge.triggers.SavePkgUnmerging'})
             triggers.append('unmerge_backup_trigger')
-            
+
 
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.

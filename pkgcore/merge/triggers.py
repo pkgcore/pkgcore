@@ -1,4 +1,4 @@
-# Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 # $Id:$
 
@@ -30,6 +30,8 @@ demandload(globals(),
     're',
     'time',
     'math:floor',
+    'snakeoil.compatibility:any',
+    'pkgcore.package.mutated:MutatedPkg',
 )
 
 UNINSTALLING_MODES = (const.REPLACE_MODE, const.UNINSTALL_MODE)
@@ -618,38 +620,78 @@ class BlockFileType(base):
                     (self.bad_regex, sorted(bad_files)))
 
 
-class SavePristinePkg(base):
+class SavePkg(base):
 
     required_csets = ('raw_new_cset',)
     _hooks = ('sanity_check',)
     _priority = 1000
     _engine_types = INSTALLING_MODES
 
+    _copy_source = 'new'
+
+    pkgcore_config_type = ConfigHint({'target_repo':'ref:repo',
+        'pristine':'bool'}, typename='trigger', required=['target_repo'])
+
+    def __init__(self, target_repo, pristine=True):
+        if not pristine:
+            self._hooks = ('pre_merge',)
+            self.required_csets = ('install',)
+        self.target_repo = target_repo
+
+    def trigger(self, engine, cset):
+        pkg = getattr(engine, self._copy_source)
+        old_pkg = self.target_repo.match(pkg.versioned_atom)
+        wrapped_pkg = MutatedPkg(pkg, {'contents':cset})
+        if old_pkg:
+            txt = 'replacing'
+            op = self.target_repo.replace(*(old_pkg + [wrapped_pkg]))
+        else:
+            txt = 'installing'
+            op = self.target_repo.install(wrapped_pkg)
+        engine.observer.info("%s %s to %s" %
+            (txt, pkg, self.target_repo))
+        op.finish()
+
+
+class SavePkgIfInPkgset(SavePkg):
+
+    pkgcore_config_type = ConfigHint({'target_repo':'ref:repo',
+        'pristine':'bool', 'pkgset':'ref:pkgset'}, typename='trigger',
+        required=['target_repo', 'pkgset'])
+
+    def __init__(self, target_repo, pkgset, pristine=True):
+        SavePkg.__init__(self, target_repo, pristine=pristine)
+        self.pkgset = pkgset
+
+    def trigger(self, engine, cset):
+        pkg = getattr(engine, self._copy_source)
+        if any(x.match(pkg) for x in self.pkgset):
+            return SavePkg.trigger(self, engine, cset)
+
+
+class SavePkgUnmerging(SavePkg):
+    required_csets = ('old_cset',)
+    _engine_types = UNINSTALLING_MODES
+    _copy_source = 'old'
+ 
     pkgcore_config_type = ConfigHint({'target_repo':'ref:repo'},
         typename='trigger', required=['target_repo'])
 
     def __init__(self, target_repo):
         self.target_repo = target_repo
 
+
+class SavePkgUnmergingIfInPkgset(SavePkgUnmerging):
+    
+    pkgcore_config_type = ConfigHint({'target_repo':'ref:repo',
+        'pkgset':'ref:pkgset'},
+        typename='trigger', required=['target_repo', 'pkgset'])
+
+    def __init__(self, target_repo, pkgset, pristine=True):
+        SavePkgUnmerging.__init__(self, target_repo, pristine=pristine)
+        self.pkgset = pkgset
+
     def trigger(self, engine, cset):
-        pkg = engine.new
-        old_pkg = self.target_repo.match(pkg.versioned_atom)
-        if old_pkg:
-            txt = 'replacing'
-            op = self.target_repo.replace(*(old_pkg + [pkg]))
-        else:
-            txt = 'installing'
-            op = self.target_repo.install(pkg)
-        engine.observer.info("%s %s to %s" %
-            (txt, pkg, self.target_repo))
-        op.finish()
-
-
-class SavePkg(SavePristinePkg):
-    _hooks = ('pre_merge',)
-    required_csets = ('install',)
-
-
-class SavePkgUnmerging(SavePristinePkg):
-    required_csets = ('old_cset',)
-    _engine_types = UNINSTALLING_MODES
+        pkg = getattr(engine, self._copy_source)
+        if any(x.match(pkg) for x in self.pkgset):
+            return SavePkgUnmerging.trigger(self, engine, cset)

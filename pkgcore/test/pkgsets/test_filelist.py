@@ -41,9 +41,9 @@ class TestFileList(TestCase):
         s.add(atom("dev-util/foon"))
         s.add(atom("=dev-util/lib-1"))
         s.flush()
-        self.assertEqual(sorted(x.strip() for x in open(self.fn)),
-            sorted(("dev-util/diffball", "=dev-util/bsdiff-0.4",
-            "dev-util/foon", "=dev-util/lib-1")))
+        self.assertEqual(map(atom, (x.strip() for x in open(self.fn))),
+            sorted(map(atom, ("dev-util/diffball", "=dev-util/bsdiff-0.4",
+            "dev-util/foon", "=dev-util/lib-1"))))
 
     def test_remove(self):
         s = self.gen_pkgset("=dev-util/diffball-0.4\ndev-util/bsdiff")

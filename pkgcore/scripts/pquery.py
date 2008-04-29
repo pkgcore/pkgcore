@@ -264,7 +264,15 @@ def append_const_callback(option, opt_str, value, parser, const):
 def revdep_callback(option, opt_str, value, parser):
     try:
         parser.values.ensure_value('restrict_revdep', []).append(
-            parse_revdep(value))
+            parse_Revdep(value))
+        parser.values.ensure_value('print_revdep', []).append(atom.atom(value))
+    except (parserestrict.ParseError, atom.MalformedAtom), e:
+        raise optparse.OptionValueError('option %s: %s' % (opt_str, e))
+
+def revdep_pkgs_callback(option, opt_str, value, parser):
+    try:
+        parser.values.ensure_value('restrict_revdep_pkgs', []).append(
+            atom.atom(value))
         parser.values.ensure_value('print_revdep', []).append(atom.atom(value))
     except (parserestrict.ParseError, atom.MalformedAtom), e:
         raise optparse.OptionValueError('option %s: %s' % (opt_str, e))
@@ -339,8 +347,17 @@ class OptionParser(commandline.OptionParser):
             '--print-revdep is slow, use just --restrict-revdep if you just '
             'need a list.')
         restrict.add_option(
+            '--revdep-pkgs', action='callback', callback=revdep_pkgs_callback,
+            type='string',
+            help='shorthand for --restrict-revdep-pkgs atom '
+                '--print-revdep-pkgs atom. --print-revdep is slow, use just '
+                '--restrict-revdep if you just need a list.')
+        restrict.add_option(
                 '--restrict-revdep', action='append', type='restrict_revdep',
                 help='Dependency on an atom.')
+        restrict.add_option(
+                '--restrict-revdep-pkgs', action='append', type='atom',
+                help='Dependency on pkgs that match a specific atom.')
         restrict.add_option('--description', '-S', action='append',
             type='description',
             help='regexp search on description and longdescription.')
@@ -483,6 +500,57 @@ class OptionParser(commandline.OptionParser):
                 '--print-revdep with --force-one-attr or --one-attr does not '
                 'make sense.')
 
+        # Get a domain object if needed.
+        if vals.domain is None and (
+            vals.verbose or vals.noversion or not vals.repo):
+            vals.domain = vals.config.get_default('domain')
+            if vals.domain is None:
+                self.error(
+                    'No default domain found, fix your configuration '
+                    'or pass --domain (Valid domains: %s)' % (
+                        ', '.join(vals.config.domain),))
+
+        domain = vals.domain
+
+        if vals.repo and (vals.vdb or vals.all_repos):
+            self.error(
+                '--repo with --vdb, --all-repos makes no sense')
+
+        # Get the vdb if we need it.
+        if vals.verbose and vals.noversion:
+            vals.vdbs = domain.vdb
+        else:
+            vals.vdbs = None
+        # Get repo(s) to operate on.
+        if vals.vdb:
+            vals.repos = domain.vdb
+        elif vals.all_repos:
+            vals.repos = domain.repos + domain.vdb
+        elif vals.repo:
+            vals.repos = [vals.repo]
+        else:
+            vals.repos = domain.repos
+        if vals.raw or vals.virtuals:
+            vals.repos = repo_utils.get_raw_repos(vals.repos)
+        if vals.virtuals:
+            vals.repos = repo_utils.get_virtual_repos(
+                vals.repos, vals.virtuals == 'only')
+
+        revdep_pkgs = getattr(vals, 'restrict_revdep_pkgs')
+        if revdep_pkgs:
+            l = []
+            # odd?  a bit; we allow strs to reuse parse_revdep
+            for atom in revdep_pkgs:
+                for repo in vals.repos:
+                    l.extend(parse_revdep(str(x.versioned_atom))
+                        for x in repo.itermatch(atom))
+            vals.restrict_revdep_pkgs = l
+            if len(l) == 1:
+                vals.restrict.append(l[0])
+            else:
+                vals.restrict.append(packages.OrRestriction(finalize=True,
+                    *l))
+
         # Build up a restriction.
         for attr in PARSE_FUNCS:
             val = getattr(vals, attr)
@@ -514,41 +582,6 @@ class OptionParser(commandline.OptionParser):
         else:
             # "And" them all together
             vals.restrict = packages.AndRestriction(*vals.restrict)
-
-        if vals.repo and (vals.vdb or vals.all_repos):
-            self.error(
-                '--repo with --vdb, --all-repos makes no sense')
-
-        # Get a domain object if needed.
-        if vals.domain is None and (
-            vals.verbose or vals.noversion or not vals.repo):
-            vals.domain = vals.config.get_default('domain')
-            if vals.domain is None:
-                self.error(
-                    'No default domain found, fix your configuration '
-                    'or pass --domain (Valid domains: %s)' % (
-                        ', '.join(vals.config.domain),))
-
-        domain = vals.domain
-        # Get the vdb if we need it.
-        if vals.verbose and vals.noversion:
-            vals.vdbs = domain.vdb
-        else:
-            vals.vdbs = None
-        # Get repo(s) to operate on.
-        if vals.vdb:
-            vals.repos = domain.vdb
-        elif vals.all_repos:
-            vals.repos = domain.repos + domain.vdb
-        elif vals.repo:
-            vals.repos = [vals.repo]
-        else:
-            vals.repos = domain.repos
-        if vals.raw or vals.virtuals:
-            vals.repos = repo_utils.get_raw_repos(vals.repos)
-        if vals.virtuals:
-            vals.repos = repo_utils.get_virtual_repos(
-                vals.repos, vals.virtuals == 'only')
 
         return vals, ()
 

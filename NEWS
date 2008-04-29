@@ -3,7 +3,7 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
-0.4.6: April 29, 2008
+pkgcore 0.4.6: April 29, 2008
 
 * filelist sets (world file for example) are now sorted by atom comparison
   rules.  ticket #178.

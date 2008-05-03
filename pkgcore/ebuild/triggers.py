@@ -110,8 +110,8 @@ def update_ldso(ld_search_path, offset='/'):
 class env_update(triggers.base):
 
     required_csets = ()
+    priority = 5
     _hooks = ('post_unmerge', 'post_merge')
-    _priority = 5
 
     def trigger(self, engine):
         offset = engine.offset
@@ -176,8 +176,8 @@ def gen_config_protect_filter(offset, extra_protects=(), extra_disables=()):
 class ConfigProtectInstall(triggers.base):
 
     required_csets = ('install_existing', 'install')
+    priority = 90
     _hooks = ('pre_merge',)
-    _priority = 90
 
     def __init__(self, extra_protects=(), extra_disables=()):
         triggers.base.__init__(self)
@@ -257,8 +257,8 @@ class ConfigProtectInstall(triggers.base):
 class ConfigProtectInstall_restore(triggers.base):
 
     required_csets = ('install',)
+    priority = 10
     _hooks = ('post_merge',)
-    _priority = 10
 
     def __init__(self, renames_dict):
         triggers.base.__init__(self)
@@ -299,8 +299,8 @@ class ConfigProtectUninstall(triggers.base):
 class preinst_contents_reset(triggers.base):
 
     required_csets = ('install',)
+    priority = 1
     _hooks = ('pre_merge',)
-    _priority = 1
 
     def __init__(self, format_op):
         triggers.base.__init__(self)

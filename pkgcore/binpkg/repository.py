@@ -41,8 +41,8 @@ demandload(globals(),
 class force_unpacking(triggers.base):
 
     required_csets = ('install',)
+    priority = 5
     _hooks = ('sanity_check',)
-    _priority = 5
     _label = 'forced decompression'
     _engine_type = triggers.INSTALLING_MODES
 

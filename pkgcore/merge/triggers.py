@@ -1,6 +1,5 @@
 # Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
 # License: GPL2
-# $Id:$
 
 """
 triggers, callables to bind to a step in a MergeEngine to affect changes
@@ -32,6 +31,8 @@ demandload(globals(),
     'math:floor',
     'snakeoil.compatibility:any',
     'pkgcore.package.mutated:MutatedPkg',
+    'pkgcore.util:file_type',
+    'pkgcore:os_data',
 )
 
 UNINSTALLING_MODES = (const.REPLACE_MODE, const.UNINSTALL_MODE)
@@ -46,7 +47,7 @@ class base(object):
         sequence, those specific csets are passed in
     @ivar _label: Either None, or a string to use for this triggers label
     @ivar _hook: sequence of hook points to register into
-    @ivar _priority: range of 0 to 100, order of execution for triggers per hook
+    @ivar priority: range of 0 to 100, order of execution for triggers per hook
     @ivar _engine_types: if None, trigger works for all engine modes, else it's
         limited to that mode, and must be a sequence
     """
@@ -55,11 +56,7 @@ class base(object):
     _label = None
     _hooks = None
     _engine_types = None
-    _priority = 50
-
-    @property
-    def priority(self):
-        return self._priority
+    priority = 50
 
     @property
     def label(self):
@@ -243,9 +240,9 @@ class mtime_watcher(object):
 class ldconfig(base):
 
     required_csets = ()
+    priority = 10
     _engine_types = None
     _hooks = ('pre_merge', 'post_merge', 'pre_unmerge', 'post_unmerge')
-    _priority = 10
 
     default_ld_path = ['usr/lib', 'usr/lib64', 'usr/lib32', 'lib',
         'lib64', 'lib32']
@@ -403,9 +400,9 @@ class unmerge(base):
 class BaseSystemUnmergeProtection(base):
 
     required_csets = ('uninstall',)
+    priority = -100
     _engine_types = UNINSTALLING_MODES
     _hooks = ('unmerge',)
-    _priority = -100
 
     _preserve_sequence = ('/usr', '/usr/lib', '/usr/lib64', '/usr/lib32',
         '/usr/bin', '/usr/sbin', '/bin', '/sbin', '/lib', '/lib32', '/lib64', 
@@ -574,33 +571,8 @@ class BlockFileType(base):
         self.bad_regex, self.filter_regex = bad_regex, regex_to_check
         self.fatal = fatal
 
-    @classmethod
-    def _get_file_func(cls):
-        try:
-            import magic
-        except ImportError:
-            return cls._fallback_file
-        obj = magic.open(magic.MAGIC_NONE)
-        ret = obj.load()
-        if ret != 0:
-            raise RuntimeError("non zero ret from loading magic: %s" % ret)
-        return obj.file
-
-    @staticmethod
-    def _fallback_file(path):
-        ret, out = spawn.spawn_get_output(["file", path])
-        if ret != 0:
-            raise RuntimeError("file output was non zero- ret:%r out:%r" % 
-                (ret, out))
-        out = ''.join(out)
-        if out.startswith(path):
-            out = out[len(path):]
-            if out.startswith(":"):
-                out = out[1:]
-        return out
-
     def trigger(self, engine, cset):
-        file_typer = self._get_file_func()
+        file_typer = file_type.file_identifier()
 
         if self.filter_regex is None:
             filter_re = lambda x:True
@@ -611,7 +583,7 @@ class BlockFileType(base):
         bad_files = []
         # this won't play perfectly w/ binpkgs
         for x in (x for x in cset.iterfiles() if filter_re(x.location)):
-            if bad_pat(file_typer(x.data_source.path)):
+            if bad_pat(file_typer(x.data_source)):
                 engine.observer.warn("disallowed file type: %r" % x)
                 bad_files.append(x)
         if self.fatal and bad_files:
@@ -623,8 +595,8 @@ class BlockFileType(base):
 class SavePkg(base):
 
     required_csets = ('raw_new_cset',)
+    priority = 1000
     _hooks = ('sanity_check',)
-    _priority = 1000
     _engine_types = INSTALLING_MODES
 
     _copy_source = 'new'
@@ -695,3 +667,125 @@ class SavePkgUnmergingIfInPkgset(SavePkgUnmerging):
         pkg = getattr(engine, self._copy_source)
         if any(x.match(pkg) for x in self.pkgset):
             return SavePkgUnmerging.trigger(self, engine, cset)
+
+
+class BinaryDebug(base):
+
+    required_csets = ('install',)
+    _engine_types = INSTALLING_MODES
+    
+    _hooks = ('pre_merge',)
+
+    default_strip_flags = ('--strip-unneeded',)
+    elf_regex = '(^| )ELF +(\d+-bit )'
+
+    pkgcore_config_type = ConfigHint({'mode':'str', 'strip_binary':'str',
+        'objcopy_binary':'str'}, typename='trigger')
+
+    def __init__(self, mode='split', strip_binary=None, objcopy_binary=None,
+        extra_strip_flags=(), debug_storage='/usr/lib/debug/'):
+        mode = mode.lower()
+        if mode == 'split':
+            self.trigger = self._splitter
+        elif mode == 'strip':
+            self.trigger = self._stripper
+        else:
+            raise TypeError("mode %r is unknown; must be either split "
+                "or strip")
+        self._strip_binary = strip_binary
+        self._objcopy_binary = objcopy_binary
+        self._strip_flags = list(self.default_strip_flags)
+        self._extra_strip_flags = list(extra_strip_flags)
+        self._debug_storage = debug_storage
+
+    def _initialize_paths(self, pkg):
+        for x in ("strip", "objcopy"):
+            obj = getattr(self, "_%s_binary" % x)
+            if obj is None:
+                try:
+                    obj = spawn.find_binary("%s-%s" % (pkg.chost, x))
+                except spawn.CommandNotFound:
+                    obj = find_binary(x)
+            setattr(self, '%s_binary' % x, obj)
+
+    def _strip_fsobj(self, fs_obj, ftype, reporter, quiet=False):
+        if not quiet:
+            reporter.info("stripping %s" % fs_obj)
+        args = self._strip_flags
+        if "executable" in ftype or "shared object" in ftype:
+            args += self._extra_strip_flags
+        elif "current ar archive" in ftype:
+            args = ['-g']
+        ret = spawn.spawn([self.strip_binary] + args + 
+            [fs_obj.data_source.path])
+        if ret != 0:
+            reporter.warn("stripping %s, type %s failed" % (fs_obj, ftype))
+        # need to update chksums here...
+        return (fs_obj,)
+
+    def _elf_filter(self, cset, observer):
+        file_typer = file_type.file_identifier()
+        regex_f = re.compile(self.elf_regex).match
+        observer.debug("starting binarydebug filetype scan")
+        for fs_obj in cset.iterfiles():
+            ftype = file_typer(fs_obj.data_source)
+            if regex_f(ftype):
+                yield fs_obj, ftype
+        observer.debug("completed binarydebug scan")
+
+    def _stripper(self, engine, cset):
+        if 'strip' in getattr(engine.new, 'restrict', ()):
+            engine.observer.info("stripping disabled for %s" % engine.new)
+            return
+        self._initialize_paths(engine.new)
+        modified = []
+        for fs_obj, ftype in self._elf_filter(cset, engine.observer):
+            modified.extend(self._strip_fsobj(fs_obj, ftype,
+                engine.observer))
+        cset.update(modified)
+
+    def _splitter(self, engine, cset):
+        if 'strip' in getattr(engine.new, 'restrict', ()):
+            engine.observer.info("stripping disabled for %s, "
+                "skipping splitdebug" % engine.new)
+            return
+
+        self._initialize_paths(engine.new)
+        modified = contents.contentsSet()
+        debug_store = pjoin(engine.offset, self._debug_storage.lstrip('/'))
+        observer = engine.observer
+        for fs_obj, ftype in self._elf_filter(cset, observer):
+            if 'ar archive' in ftype or ('relocatable' in ftype and not
+                fs_obj.basename.endswith(".ko")):
+                continue
+            debug_loc = pjoin(debug_store, fs_obj.location.lstrip('/'))
+            if debug_loc in cset:
+                continue
+            fpath = fs_obj.data_source.path
+            debug_ondisk = pjoin(os.path.dirname(fpath), 
+                os.path.basename(fpath) + ".debug")
+            observer.info("splitdebug'ing %s into %s" %
+                (fs_obj.location, debug_loc))
+            ret = spawn.spawn([self.objcopy_binary, '--only-keep-debug',
+                fpath, debug_ondisk])
+            if ret != 0:
+                observer.warn("splitdebug'ing %s failed w/ exitcode %s" % 
+                    (fs_obj.location, ret))
+                continue
+            ret = spawn.spawn([self.objcopy_binary,
+                '--add-gnu-debuglink', fpath, debug_ondisk])
+            if ret != 0:
+                observer.warn("splitdebug created debug file %r, but "
+                    "failed adding links to %r" % (debug_loc, fpath))
+                continue
+            debug_obj = gen_obj(debug_loc, real_location=debug_ondisk)
+            modified.add(debug_obj.change_attributes(uid=os_data.root_uid,
+                gid=os_data.root_gid))
+            modified.update(self._strip_fsobj(fs_obj, ftype,
+                observer, quiet=True))
+        modified.add_missing_directories(mode=0775)
+        # add the non directories first.
+        cset.update(modified.iterdirs(invert=True))
+        # punt any intersections, leaving just the new directories.
+        modified.difference_update(cset)
+        cset.update(modified)

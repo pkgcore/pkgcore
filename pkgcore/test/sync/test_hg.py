@@ -13,6 +13,8 @@ class TestHgParsing(TestCase):
     def test_parse(self):
         self.assertEqual(hg.hg_syncer.parse_uri("hg+http://dar"),
             "http://dar")
+        self.assertEqual(hg.hg_syncer.parse_uri("mercurial+http://dar"),
+            "http://dar")
         self.assertRaises(base.uri_exception, hg.hg_syncer.parse_uri,
             "hg://dar")
         self.assertRaises(base.syncer_exception, bogus,

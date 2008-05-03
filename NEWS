@@ -3,6 +3,16 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
+* mercurial+ sync prefix is now supported for hg.
+
+* FEATURES='strip nostrip splitdebug' are now supported in portage
+  configuration (trigger is pkgcore.merge.triggers.BinaryDebug).
+
+* triggers _priority class var is now priority; overload with a property if
+  custom functionality is needed.
+
+
 pkgcore 0.4.6: April 29, 2008
 
 * filelist sets (world file for example) are now sorted by atom comparison

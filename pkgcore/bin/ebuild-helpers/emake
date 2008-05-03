@@ -1,7 +1,6 @@
 #!/bin/bash
 # Copyright 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: emake 1912 2005-08-25 03:54:42Z ferringb $
 #
 # emake: Supplies some default parameters to GNU make. At the moment the
 #        only parameter supplied is -jN, where N is a number of

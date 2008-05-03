@@ -493,6 +493,17 @@ def config_from_make_conf(location="/etc/"):
                 'class':'pkgcore.merge.triggers.SavePkgUnmerging'})
             triggers.append('unmerge_backup_trigger')
 
+    if 'splitdebug' in features:
+        new_config['binary_debug_trigger'] = \
+            basics.ConfigSectionFromStringDict({'mode':'split',
+                'class':'pkgcore.merge.triggers.BinaryDebug'})
+        triggers.append('binary_debug_trigger')
+    elif 'strip' in features or 'nostrip' not in features:
+        new_config['binary_debug_trigger'] = \
+            basics.ConfigSectionFromStringDict({'mode':'strip',
+                'class':'pkgcore.merge.triggers.BinaryDebug'})
+        triggers.append('binary_debug_trigger')
+        
 
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.

@@ -1,7 +1,6 @@
 #!/bin/bash
 # Copyright 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Id: prepallman 1912 2005-08-25 03:54:42Z ferringb $
 
 for x in $(find "${D}" -name man -type d -printf '%P\n') ; do
 	prepman ${x%/man}

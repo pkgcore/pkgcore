@@ -31,17 +31,12 @@ class TestBase(TestCase):
         for x in ("required_csets", "_label", "_hooks", "_engine_types"):
             self.assertEqual(None, getattr(self.kls, x),
                 msg="%s must exist and be None" % x)
-        self.assertEqual(50, self.kls._priority)
+        self.assertEqual(50, self.kls.priority)
 
     def test_label(self):
         self.assertEqual(self.mk_trigger().label, str(self.kls.__name__))
         self.assertEqual(fake_trigger().label, str(fake_trigger.__name__))
         self.assertEqual(fake_trigger(_label='foon').label, 'foon')
-
-    def test_priority(self):
-        self.assertEqual(fake_trigger(_priority=50).priority, 50)
-        self.assertEqual(fake_trigger(_priority=10000).priority, 10000)
-        self.assertEqual(fake_trigger(_priority=0).priority, 0)
 
     def test_localize(self):
         o = self.mk_trigger()

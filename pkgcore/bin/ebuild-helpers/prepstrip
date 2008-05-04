@@ -1,47 +1,67 @@
 #!/bin/bash
-# Copyright 1999-2005 Gentoo Foundation
+# Copyright 1999-2007 Gentoo Foundation
+# Copyright 2008 Brian harring <ferringb@gmail.com>
 # Distributed under the terms of the GNU General Public License v2
 
-if [ "${FEATURES//*nostrip*/true}" == "true" ] || [ "${RESTRICT//*nostrip*/true}" == "true" ] ; then
-	echo "nostrip"
-	STRIP="/bin/false"
-	PORTAGE_STRIP_FLAGS=""
-else
-	STRIP=${STRIP:-${CHOST}-strip}
-	type -p -- ${STRIP} > /dev/null || STRIP=strip
-	PORTAGE_STRIP_FLAGS=${PORTAGE_STRIP_FLAGS:---strip-unneeded}
-fi
+source "${PKGCORE_BIN_PATH}"/isolated-functions.sh
 
-banner=1
-retval=0
+# exit if the feature isn't requested, or the restrict isn't there.
+hasq installsources ${FEATURES} || exit 0
+hasq installsources ${RESTRICT} && exit 0
 
-for x in "$@" ; do
-	if [ -d "${x}" ]; then
-		# We only want files. So make a pass for each directory and call again.
-		find "${x}" -type f \( -perm -0100 -or -perm -0010 -or -perm -0001 -or -name '*.so' -or -name '*.so.*' \) -print0 |
-				$XARGS -0 -n500 prepstrip
-	else
-		if [ ${banner} -eq 1 ] ; then
-			echo "strip: ${STRIP} ${PORTAGE_STRIP_FLAGS}"
-			banner=0
-		fi
-
-		f=$(file "${x}") || continue
-		[ -z "${f}" ] && continue
-
-		if [ -z "${f/*current ar archive*/}" ]; then
-			echo "   ${x:${#D}:${#x}}"
-			${STRIP} -g "${x}"
-		fi
-		if [ -z "${f/*SB executable*/}" ]; then
-			echo "   ${x:${#D}:${#x}}"
-			${STRIP} "${x}"
-		fi
-		if [ -z "${f/*SB shared object*/}" ]; then
-			echo "   ${x:${#D}:${#x}}"
-			${STRIP} ${PORTAGE_STRIP_FLAGS} "${x}"
-		fi
-	fi
+for x in debugedit scanelf rsync sort; do
+    if ! type -P $x >/dev/null ; then
+    	ewarn "FEATURES=installsources is enabled but the $x binary could not"
+	    ewarn "be found. This feature will not work unless debugedit is installed!"
+    	exit 0
+    fi
 done
 
-exit ${retval}
+save_elf_sources() {
+	local x=$1
+	local sources_dir=/usr/src/debug/${CATEGORY}/${PF}
+	debugedit -b "${WORKDIR}" -d "${sources_dir}" \
+		-l "${T}"/debug.sources "${x}"
+	if [[ -s ${T}/debug.sources ]] ; then 
+		[[ -d ${D}${sources_dir} ]] || mkdir -p "${D}${sources_dir}"
+		grep -zv '/<built-in>$' "${T}"/debug.sources | \
+			(cd "${WORKDIR}"; LANG=C sort -z -u | \
+			rsync -rtL0 --files-from=- "${WORKDIR}/" "${D}${sources_dir}/" )
+	fi
+}
+
+# The existance of the section .symtab tells us that a binary is stripped.
+# We want to log already stripped binaries, as this may be a QA violation.
+# They prevent us from getting the splitdebug data.
+if ! hasq binchecks ${RESTRICT} && \
+	! hasq strip ${RESTRICT} ; then
+	f=$(scanelf -yqRBF '#k%F' -k '!.symtab' "$@")
+	if [[ -n ${f} ]] ; then
+		vecho -e "\a\n"
+		ewarn "QA Notice: Pre-stripped files found:"
+		ewarn "${f}"
+		echo "${f}" > "${T}"/scanelf-already-stripped.log
+	fi
+fi
+
+# Now we look for unstripped binaries.
+for x in \
+	$(scanelf -yqRBF '#k%F' -k '.symtab' "$@")
+do
+	f=$(file "${x}") || continue
+	[[ -z ${f} ]] && continue
+
+	# only split debug info for final linked objects
+	# or kernel modules as debuginfo for intermediatary
+	# files (think crt*.o from gcc/glibc) is useless and
+	# actually causes problems.  install sources for all
+	# elf types though cause that stuff is good.
+
+	if [[ ${f} == *"SB executable"* || ${f} == *"SB shared object"* ]] ; then
+		vecho "   ${x:${#D}}"
+		save_elf_sources "${x}"
+	elif [[ ${f} == *"SB relocatable"* ]] ; then
+		vecho "   ${x:${#D}}"
+		save_elf_sources "${x}"
+	fi
+done

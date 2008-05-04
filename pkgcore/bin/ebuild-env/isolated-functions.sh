@@ -182,6 +182,22 @@ set_colors() {
     PKGCORE_RC_NORMAL=$'\e[0m'
 }
 
+hasq() {
+    local x
+
+    local me=$1
+    shift
+
+    # All the TTY checks really only help out depend. Which is nice.
+    # Logging kills all this anyway. Everything becomes a pipe. --NJ
+    for x in "$@"; do
+        if [ "${x}" == "${me}" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
 unset_colors
 DONT_EXPORT_VARS="${DONT_EXPORT_VARS} PKGCORE_RC_.*"
 true

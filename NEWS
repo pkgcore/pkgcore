@@ -4,6 +4,20 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.4.7: May 03, 2008
+
+* prepstrip was updated to match current portage semantics, minus stripping
+  and splitdebug functionality (we handle that via a trigger).  Via this,
+  FEATURES=install-sources and basic bincheck (pre-stripped binaries) is now
+  supported.
+
+* FEATURES='strip nostrip splitdebug' are now supported in portage
+  configuration (trigger is pkgcore.merge.triggers.BinaryDebug).
+
+* added cygwin ostype target for development purposes.  In no shape or form
+  is this currently considered supported, although anyone interested in 
+  developing support for that platform, feel free to contact us.
+
 * in candidate identification in repository restriction matching, it was
   possible for a PackageRestriction that was negated to be ignored, thus
   resulting in no matches.  This has been corrected, although due to
@@ -12,9 +26,6 @@ See ChangeLog for full commit logs; this is summarized/major changes.
   codepath will need reworking to eliminate these scenarios.
 
 * mercurial+ sync prefix is now supported for hg.
-
-* FEATURES='strip nostrip splitdebug' are now supported in portage
-  configuration (trigger is pkgcore.merge.triggers.BinaryDebug).
 
 * triggers _priority class var is now priority; overload with a property if
   custom functionality is needed.

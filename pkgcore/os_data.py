@@ -11,7 +11,7 @@ import os, pwd, grp
 
 ostype = os.uname()[0]
 
-if ostype == "Linux":
+if ostype in ("Linux", "CYGWIN_NT-5.1"):
     userland = "GNU"
     xargs = os.environ["XARGS"] = "xargs -r"
     lchown = os.lchown

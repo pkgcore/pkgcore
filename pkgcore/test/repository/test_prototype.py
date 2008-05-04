@@ -103,6 +103,28 @@ class TestPrototype(TestCase):
                     "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
                     "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
+        self.assertEqual(
+            sorted(self.repo.itermatch(
+                packages.PackageRestriction('category',
+                    values.StrExactMatch('dev-util',negate=True)))),
+            sorted(CPV(x) for x in (
+                "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
+
+        self.assertEqual(
+            sorted(self.repo.itermatch(
+                packages.PackageRestriction('category',
+                    values.StrExactMatch('dev-util'), negate=True))),
+            sorted(CPV(x) for x in (
+                "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
+
+        self.assertEqual(
+            sorted(self.repo.itermatch(
+                packages.PackageRestriction('category',
+                    values.StrExactMatch('dev-lib', negate=True),
+                        negate=True))),
+            sorted(CPV(x) for x in (
+                "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
+
 
     def test_iter(self):
         self.assertEqual(

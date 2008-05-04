@@ -4,6 +4,13 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* in candidate identification in repository restriction matching, it was
+  possible for a PackageRestriction that was negated to be ignored, thus
+  resulting in no matches.  This has been corrected, although due to
+  collect_package_restrictions, it's possible to lose the negation state
+  leading to a similar scenario (no known cases of it currently).  This 
+  codepath will need reworking to eliminate these scenarios.
+
 * mercurial+ sync prefix is now supported for hg.
 
 * FEATURES='strip nostrip splitdebug' are now supported in portage

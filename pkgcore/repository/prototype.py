@@ -278,15 +278,17 @@ class tree(object):
               for p in collect_package_restrictions(x, ["package"])])
             for x in restrict.iter_dnf_solutions(True)]
 
+        # see if any solution state isn't dependant on cat/pkg in anyway.
+        # if so, search whole search space.
         for x in dsolutions:
             if not x[0] and not x[1]:
-                # great... one doesn't rely on cat/pkg.
                 if iter is sorter:
                     return self.versions
                 return (
                     (c,p)
                     for c in sorter(self.categories)
                     for p in sorter(self.packages.get(c, ())))
+
         # simple cases first.
         # if one specifies categories, and one doesn't
         cat_specified = bool(dsolutions[0][0])
@@ -336,6 +338,9 @@ class tree(object):
             e.update(x.exact for x in l)
         del l
 
+        if restrict.negate:
+            cat_exact = pkg_exact = ()
+
         if cat_exact:
             if not cat_restrict and len(cat_exact) == 1:
                 # Cannot use pop here, cat_exact is reused below.
@@ -350,7 +355,8 @@ class tree(object):
                 cat_restrict.add(values.ContainmentMatch(*cat_exact))
                 cats_iter = sorter(self._cat_filter(cat_restrict))
         elif cat_restrict:
-            cats_iter = self._cat_filter(cat_restrict)
+            cats_iter = self._cat_filter(cat_restrict, \
+                negate=restrict.negate)
         else:
             cats_iter = sorter(self.categories)
 
@@ -367,7 +373,8 @@ class tree(object):
                 pkg_restrict.add(values.ContainmentMatch(*pkg_exact))
 
         if pkg_restrict:
-            return self._package_filter(cats_iter, pkg_restrict)
+            return self._package_filter(cats_iter, pkg_restrict,
+                negate=restrict.negate)
         elif not cat_restrict:
             if sorter is iter and not cat_exact:
                 return self.versions
@@ -377,21 +384,23 @@ class tree(object):
         return ((c, p)
             for c in cats_iter for p in sorter(self.packages.get(c, ())))
 
-    def _cat_filter(self, cat_restricts):
+    def _cat_filter(self, cat_restricts, negate=True):
+        sentinel = not negate
         cats = [x.match for x in cat_restricts]
         for x in self.categories:
             for match in cats:
-                if match(x):
+                if match(x) == sentinel:
                     yield x
                     break
 
-    def _package_filter(self, cats_iter, pkg_restricts):
+    def _package_filter(self, cats_iter, pkg_restricts, negate=True):
+        sentinel = not negate
         restricts = [x.match for x in pkg_restricts]
         pkgs_dict = self.packages
         for cat in cats_iter:
             for pkg in pkgs_dict.get(cat, ()):
                 for match in restricts:
-                    if match(pkg):
+                    if match(pkg) == sentinel:
                         yield (cat, pkg)
                         break
 

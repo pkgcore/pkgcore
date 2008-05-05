@@ -384,7 +384,7 @@ class tree(object):
         return ((c, p)
             for c in cats_iter for p in sorter(self.packages.get(c, ())))
 
-    def _cat_filter(self, cat_restricts, negate=True):
+    def _cat_filter(self, cat_restricts, negate=False):
         sentinel = not negate
         cats = [x.match for x in cat_restricts]
         for x in self.categories:
@@ -393,7 +393,7 @@ class tree(object):
                     yield x
                     break
 
-    def _package_filter(self, cats_iter, pkg_restricts, negate=True):
+    def _package_filter(self, cats_iter, pkg_restricts, negate=False):
         sentinel = not negate
         restricts = [x.match for x in pkg_restricts]
         pkgs_dict = self.packages

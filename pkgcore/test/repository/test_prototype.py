@@ -1,13 +1,17 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2
 
-from pkgcore.test import TestCase, Todo
+from pkgcore.test import TestCase, Todo, mallable_obj
 from snakeoil.mappings import OrderedDict
+from snakeoil.currying import post_curry
 
-from pkgcore.restrictions import packages, values
+from pkgcore.restrictions import packages, values, boolean
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
+from pkgcore.package.mutated import MutatedPkg
 from pkgcore.repository.util import SimpleTree
+from pkgcore.repository import wrapper
+
 
 class TestPrototype(TestCase):
 
@@ -110,10 +114,26 @@ class TestPrototype(TestCase):
             sorted(CPV(x) for x in (
                 "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
+        obj = mallable_obj(livefs=False)
+        pkg_kls_override = post_curry(MutatedPkg, {'repo':obj})
+        self.assertEqual(
+            sorted(self.repo.itermatch(
+                boolean.AndRestriction(
+                    boolean.OrRestriction(
+                        packages.PackageRestriction("repo.livefs",
+                            values.EqualityMatch(False)),
+                        packages.PackageRestriction("category",
+                            values.StrExactMatch("virtual"))),
+                    atom("dev-lib/fake")),
+                pkg_klass_override=pkg_kls_override)),
+            sorted(CPV(x) for x in (
+                "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
+
         self.assertEqual(
             sorted(self.repo.itermatch(
                 packages.PackageRestriction('category',
-                    values.StrExactMatch('dev-util'), negate=True))),
+                    values.StrExactMatch('dev-lib', negate=True),
+                        negate=True))),
             sorted(CPV(x) for x in (
                 "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 

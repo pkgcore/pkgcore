@@ -30,6 +30,7 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     "pkgcore.log:logger",
     "pkgcore.package.mutated:MutatedPkg",
+    "time",
 )
 
 
@@ -139,7 +140,8 @@ class ebd(object):
 
         if "PORT_LOGDIR" in self.env:
             self.logging = pjoin(self.env["PORT_LOGDIR"],
-                                        pkg.cpvstr+".log")
+                "%s:%s:%s.log" % (pkg.cpvstr, self.__class__.__name__,
+                    time.strftime("%Y%m%d-%H%M%S", time.localtime())))
             del self.env["PORT_LOGDIR"]
         else:
             self.logging = False

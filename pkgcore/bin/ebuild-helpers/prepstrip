@@ -37,7 +37,7 @@ if ! hasq binchecks ${RESTRICT} && \
 	! hasq strip ${RESTRICT} ; then
 	f=$(scanelf -yqRBF '#k%F' -k '!.symtab' "$@")
 	if [[ -n ${f} ]] ; then
-		vecho -e "\a\n"
+		echo -e "\a\n"
 		ewarn "QA Notice: Pre-stripped files found:"
 		ewarn "${f}"
 		echo "${f}" > "${T}"/scanelf-already-stripped.log
@@ -58,10 +58,8 @@ do
 	# elf types though cause that stuff is good.
 
 	if [[ ${f} == *"SB executable"* || ${f} == *"SB shared object"* ]] ; then
-		vecho "   ${x:${#D}}"
 		save_elf_sources "${x}"
 	elif [[ ${f} == *"SB relocatable"* ]] ; then
-		vecho "   ${x:${#D}}"
 		save_elf_sources "${x}"
 	fi
 done

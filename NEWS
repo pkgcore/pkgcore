@@ -3,7 +3,18 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
-pkgcore 0.4.7.1: may 04, 2008
+
+* ticket #14; tweak PORT_LOGDIR support a bit, so that build, install,
+  and uninstall are seperated into different logs.
+
+* added '@' operator to pmerge as an alias for --set; for example, 
+  'pmerge @system' is the same as 'pmerge --set system'.
+
+* fallback method of using the file binary instead of libmagic module is
+  fixed; ticket #183.
+
+
+pkgcore 0.4.7.1: May 04, 2008
 
 * correct a flaw in repository searching that slipped past the test harness.
   effectively breaks via inverting the negate logic for any complex search.

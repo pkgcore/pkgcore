@@ -97,7 +97,13 @@ a depends on b, and b depends on a, with neither built is an example""")
     def check_values(self, options, args):
         options, args = commandline.OptionParser.check_values(
             self, options, args)
-        options.targets = args
+
+        options.targets = [x for x in args if x[0] != '@']
+        set_targets = [x[1:] for x in args if x[0] == '@']
+        if any(not x for x in set_targets):
+            self.error("empty set name specified via @")
+        options.set.extend(set_targets)
+        
 
         # TODO this is rather boilerplate-ish, the commandline module
         # should somehow do this for us.

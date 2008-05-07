@@ -6,7 +6,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 pkgcore 0.4.7.1: may 04, 2008
 
 * correct a flaw in repository searching that slipped past the test harness.
-  effectively breaks inverted the logic for any complex search.
+  effectively breaks via inverting the negate logic for any complex search.
 
 
 pkgcore 0.4.7: May 03, 2008

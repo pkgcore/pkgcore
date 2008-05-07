@@ -1,3 +1,5 @@
+from pkgcore.spawn import spawn_get_output
+
 class file_identifier(object):
 
     def __init__(self, force_binary=False):
@@ -24,14 +26,14 @@ class file_identifier(object):
         obj = magic.open(magic.MAGIC_NONE)
         ret = obj.load()
         if ret != 0:
-            raise RuntimeError("non zero ret from loading magic: %s" % ret)
+            raise ValueError("non zero ret from loading magic: %s" % ret)
         return obj.file
 
     @staticmethod
     def _fallback_file(path):
-        ret, out = spawn.spawn_get_output(["file", path])
+        ret, out = spawn_get_output(["file", path])
         if ret != 0:
-            raise RuntimeError("file output was non zero- ret:%r out:%r" %
+            raise ValueError("file output was non zero- ret:%r out:%r" %
                 (ret, out))
         out = ''.join(out)
         if out.startswith(path):

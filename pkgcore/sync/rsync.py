@@ -166,6 +166,9 @@ class rsync_timestamp_syncer(rsync_syncer):
             if oe.errno not in (errno.ENOENT, errno.ENOTDIR):
                 raise
             return None
+        except ValueError:
+            # malformed timestamp.
+            return None
 
     def _sync(self, verbosity, output_fd, force=False):
         doit = force or self.last_timestamp is None

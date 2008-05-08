@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* handle malformed rsync timestamps more cleanly.
+
+
 0.4.7.2: May 07, 2008
 
 * new portage configuration feature- 'ignore-paludis-versioning'.  This 

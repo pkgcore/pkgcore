@@ -78,7 +78,7 @@ foon		foon://foons/
                 repo = repository.UnconfiguredTree(self.dir)
                 self.assertRaises(ebuild_errors.InvalidCPV,
                     repo.match, atom('cat/pkg'))
-                repo = repository.UnconfiguredTree(self.dir, ignore_scm=True)
+                repo = repository.UnconfiguredTree(self.dir, ignore_paludis_versioning=True)
                 self.assertEqual(sorted(x.cpvstr for x in
                     repo.itermatch(atom('cat/pkg'))), ['cat/pkg-3'])
                 os.unlink(fp)

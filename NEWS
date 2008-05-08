@@ -4,6 +4,36 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+0.4.7.2: May 07, 2008
+
+* new portage configuration feature- 'ignore-paludis-versioning'.  This 
+  directs pkgcore to ignore nonstandard -scm ebuilds instead of complaining
+  about them.
+  Note this does *not* affect the installed pkgs database- if there is a
+  -scm ebuild in the vdb, pkgcore *must* deal with that ebuild, else if it
+  silently ignores vdb -scm pkgs it can result in overwriting parts of the
+  -scm pkg, and other weirdness.  If you've got a -scm version pkg installed,
+  it's strongly suggested you uninstall it unless you wish to be bound to that
+  nonstandard behaviour of paludis.
+
+  Finally, it's not yet covering *all* paludis version extensions- that will
+  be expanded in coming versions.
+
+* pkgcore is now aware of installed -scm pkgs, and gives a cleaner error
+  message.
+
+* a few versions of portage-2.2 automatically added @PKGSET items to the
+  world file; due to how portage has implemented their sets, this would 
+  effectively convert the data to portage only.  As such, that feature was
+  reversed (thank you genone); that said, a few world files have @pkgset
+  entries from these versions.  Pkgcore now ignores it for worldfiles, and
+  levels a warning that it will clear the @pkgset entry.
+
+* ticket #174; ignore bash style comments (leading #) in pkgsets, although
+  they're wiped on update.  If folks want them preserved, come up with a way
+  that preserves the location in relation to what the comment is about- else
+  wiping seems the best approach.
+
 * ticket #14; tweak PORT_LOGDIR support a bit, so that build, install,
   and uninstall are seperated into different logs.
 

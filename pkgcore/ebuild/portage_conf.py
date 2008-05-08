@@ -320,7 +320,9 @@ def config_from_make_conf(location="/etc/"):
             'class': 'pkgcore.ebuild.repository.tree',
             'default_mirrors': gentoo_mirrors,
             'inherit-only': True,
-            'eclass_cache': 'eclass stack'})
+            'eclass_cache': 'eclass stack',
+            'ignore_paludis_versioning': 
+                ('ignore-paludis-versioning' in features)})
 
 
     # used by PORTDIR syncer, and any layman defined syncers

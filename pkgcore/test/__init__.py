@@ -38,6 +38,15 @@ class QuietLogger(log.logging.Handler):
 quiet_logger = QuietLogger()
 
 
+class callback_logger(log.logging.Handler):
+    def __init__(self, callback):
+        log.logging.Handler.__init__(self)
+        self.callback = callback
+
+    def emit(self, record):
+        self.callback(record)
+
+
 def protect_logging(target):
     def f(func):
         def f_inner(*args, **kwds):

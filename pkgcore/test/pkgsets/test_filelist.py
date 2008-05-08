@@ -2,9 +2,10 @@
 # License: GPL2
 
 import tempfile, os
-from pkgcore.test import TestCase
+from pkgcore.test import TestCase, protect_logging, callback_logger
 from pkgcore.pkgsets import filelist
 from pkgcore.ebuild.atom import atom
+from pkgcore import log
 
 class TestFileList(TestCase):
 
@@ -52,6 +53,14 @@ class TestFileList(TestCase):
         self.assertEqual(sorted(x.strip() for x in open(self.fn) if x.strip()),
             ["dev-util/bsdiff"])
 
+    def test_subset_awareness(self):
+        s = self.gen_pkgset("@world\ndev-util/bsdiff")
+        self.assertRaises(ValueError, sorted, s)
+
+    def test_ignore_comments(self):
+        s = self.gen_pkgset("#foon\ndev-util/bsdiff")
+        self.assertEqual([str(x) for x in s], ['dev-util/bsdiff'])
+
 
 class TestWorldFile(TestFileList):
 
@@ -74,3 +83,18 @@ class TestWorldFile(TestFileList):
         self.assertEqual(sorted(x.strip() for x in open(self.fn) if x.strip()),
             ["dev-util/bsdiff"])
 
+    @protect_logging(log.logging.root)
+    def test_subset_awareness(self):
+        callbacks = []
+        log.logging.root.handlers = [callback_logger(callbacks.append)]
+        s = self.gen_pkgset("@world\ndev-util/bsdiff")
+        self.assertRaises(ValueError, sorted, s)
+
+    @protect_logging(log.logging.root)
+    def test_subset_awareness(self):
+        callbacks = []
+        log.logging.root.handlers = [callback_logger(callbacks.append)]
+        s = self.gen_pkgset("@world\ndev-util/bsdiff")
+        self.assertEqual([str(x) for x in s], ['dev-util/bsdiff'])
+        self.assertIn("set item 'world'", str(callbacks[0]))
+        

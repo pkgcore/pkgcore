@@ -20,14 +20,14 @@ from snakeoil.osutils import (listdir_files, readfile, listdir_dirs, pjoin,
 from snakeoil.containers import InvertedContains
 from snakeoil.obj import make_kls
 from snakeoil.weakrefs import WeakValCache
+from snakeoil.compatibility import any
 
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.ebuild.ebd:buildable',
     'pkgcore.interfaces.data_source:local_source',
-    'pkgcore.ebuild:digest',
-    'pkgcore.ebuild:repo_objs',
-    'pkgcore.ebuild:atom',
+    'pkgcore.ebuild:digest,repo_objs,atom',
+    'pkgcore.ebuild.errors:InvalidCPV',
     'random:shuffle',
     'errno',
 )
@@ -57,11 +57,13 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         {'location': 'str', 'cache': 'refs:cache',
          'eclass_cache': 'ref:eclass_cache',
          'default_mirrors': 'list', 'sync': 'lazy_ref:syncer',
-         'override_repo_id':'str'},
+         'override_repo_id':'str',
+         'ignore_paludis_versioning':'bool'},
         typename='repo')
 
     def __init__(self, location, cache=(), eclass_cache=None,
-                 default_mirrors=None, sync=None, override_repo_id=None):
+                 default_mirrors=None, sync=None, override_repo_id=None,
+                 ignore_paludis_versioning=False):
 
         """
         @param location: on disk location of the tree
@@ -72,6 +74,12 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             if None, generates the eclass_cache itself
         @param default_mirrors: Either None, or sequence of mirrors to try
             fetching from first, then falling back to other uri
+        @param override_repo_id: Either None, or string to force as the
+            repository unique id
+        @param sync: Either None, or a syncer object to use for updating of this
+            repository.
+        @param ignore_paludis_versioning: If False, fail when -scm is encountred.  if True,
+            silently ignore -scm ebuilds.
         """
 
         prototype.tree.__init__(self)
@@ -112,6 +120,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         self.mirrors = mirrors
         self.default_mirrors = default_mirrors
         self.cache = cache
+        self.ignore_paludis_versioning = ignore_paludis_versioning
         self.package_class = get_plugin("format." + self.format_magic)(
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
         self._shared_pkg_cache = WeakValCache()
@@ -195,8 +204,21 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         pkg = catpkg[-1] + "-"
         lp = len(pkg)
         try:
-            return tuple(x[lp:-7] for x in listdir_files(cppath)
+            ret = tuple(x[lp:-7] for x in listdir_files(cppath)
                 if x[-7:] == '.ebuild' and x[:lp] == pkg)
+            if any(('scm' in x or '-try' in x) for x in ret):
+                if not self.ignore_paludis_versioning:
+                    for x in ret:
+                        if 'scm' in x:
+                            raise InvalidCPV("%s/%s-%s has nonstandard -scm "
+                                "version component" % (catpkg + (x,)))
+                        elif 'try' in x:
+                            raise InvalidCPV("%s/%s-%s has nonstandard -try "
+                                "version component" % (catpkg + (x,)))
+                    raise AssertionError('unreachable codepoint was reached')
+                return tuple(x for x in ret
+                    if ('scm' not in x and 'try' not in x))
+            return ret
         except (OSError, IOError), e:
             raise KeyError("failed fetching versions for package %s: %s" % \
                 (pjoin(self.base, catpkg.lstrip(os.path.sep)), str(e)))

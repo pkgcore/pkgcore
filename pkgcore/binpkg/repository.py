@@ -14,6 +14,7 @@ from pkgcore.ebuild.ebuild_built import pkg_uses_default_preinst
 from pkgcore.config import ConfigHint
 #needed to grab the PN
 from pkgcore.ebuild.cpv import CPV as cpv
+from pkgcore.ebuild.errors import InvalidCPV
 
 from snakeoil.currying import partial
 from snakeoil.mappings import DictMixin
@@ -190,15 +191,23 @@ class tree(prototype.tree):
     configurables = ("settings",)
 
     pkgcore_config_type = ConfigHint({'location':'str',
-        'repo_id':'str'}, typename='repo')
+        'repo_id':'str', 'ignore_paludis_versioning':'bool'}, typename='repo')
 
-    def __init__(self, location, repo_id=None):
+    def __init__(self, location, repo_id=None, ignore_paludis_versioning=False):
+        """
+        @param location: root of the tbz2 repository
+        @keyword repo_id: unique repository id to use; else defaults to
+            the location
+        @keyword ignore_paludis_versioning: if False, error when -scm is seen.  If True,
+            silently ignore -scm ebuilds
+        """
         super(tree, self).__init__()
         self.base = location
         if repo_id is None:
             repo_id = location
         self.repo_id = repo_id
         self._versions_tmp_cache = {}
+        self.ignore_paludis_versioning = False
 
         # XXX rewrite this when snakeoil.osutils grows an access equivalent.
         if not os.access(self.base, os.X_OK|os.R_OK):
@@ -237,6 +246,13 @@ class tree(prototype.tree):
                     or not x[-lext:].lower() == self.extension or
                     x.startswith(".tmp.")):
                     continue
+                if "-scm" in x:
+                    i = x.rfind("-scm")
+                    s = x[i + 4:len(self.extension)]
+                    if (len(s) < 2 or not s[-1].isdigit()) \
+                        and not self.ignore_paludis_versioning:
+                        raise InvalidCPV("%s/%s has nonstandard scm version"
+                            " component" % (category, x))
                 x = cpv(category+"/"+x[:-lext])
                 l.add(x.package)
                 d.setdefault((category, x.package), []).append(x.fullver)

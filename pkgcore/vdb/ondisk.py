@@ -11,6 +11,7 @@ from pkgcore.repository import multiplex
 from pkgcore.config import ConfigHint
 #needed to grab the PN
 from pkgcore.ebuild.cpv import CPV as cpv
+from pkgcore.ebuild.errors import InvalidCPV
 
 from snakeoil.osutils import pjoin
 from snakeoil.mappings import IndeterminantDict
@@ -21,6 +22,7 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.vdb:repo_ops',
     'pkgcore.vdb.contents:ContentsFile',
+    'pkgcore.log:logger',
 )
 
 
@@ -101,6 +103,23 @@ class tree(prototype.tree):
                 if x.startswith(".tmp.") or x.endswith(".lockfile") \
                     or x.startswith("-MERGING-"):
                     continue
+                if "-scm" in x:
+                    i = x.rfind("-scm")
+                    s = x[i + 4:]
+                    # -1 is fine (-scm is part of the pkg name)
+                    # -r isn't, and '' isn't (version components)
+                    if len(s) < 2 or not s[1].isdigit():
+                        logger.error("merged -scm pkg detected: %s/%s. "
+                            "throwing exception due to -scm not being a valid"
+                            " version component.  Silently ignoring that "
+                            "specific version is not viable either since it "
+                            "would result in pkgcore stomping whatever it was "
+                            "that -scm version merged.  "
+                            "This is why embrace and extend is bad, mm'kay.  "
+                            "Use the offending pkg manager that merged it to "
+                            "unmerge it." % (category, x))
+                        raise InvalidCPV("%s/%s: -scm version component is "
+                            "not standard." % (category, x))
                 x = cpv(category+"/"+x)
                 l.add(x.package)
                 d.setdefault((category, x.package), []).append(x.fullver)

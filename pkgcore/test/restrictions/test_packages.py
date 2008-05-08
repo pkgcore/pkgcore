@@ -8,15 +8,7 @@ from pkgcore.test import TestCase
 from pkgcore import log
 from pkgcore.restrictions import packages, values
 from pkgcore.test import (protect_logging, TestRestriction, mallable_obj,
-    quiet_logger)
-
-class callback_logger(log.logging.Handler):
-    def __init__(self, callback):
-        log.logging.Handler.__init__(self)
-        self.callback = callback
-
-    def emit(self, record):
-        self.callback(record)
+    quiet_logger, callback_logger)
 
 
 class AlwaysSelfIntersect(values.base):

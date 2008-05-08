@@ -7,6 +7,7 @@ pkgset based around loading a list of atoms from a world file
 
 import pkgcore.const
 from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.errors import MalformedAtom
 from pkgcore.config import ConfigHint
 
 from snakeoil.demandload import demandload
@@ -14,10 +15,12 @@ demandload(globals(),
     'snakeoil.fileutils:AtomicWriteFile',
     'snakeoil.osutils:readlines',
     'pkgcore:os_data',
+    'pkgcore.log:logger',
 )
 
 class FileList(object):
     pkgcore_config_type = ConfigHint({'location':'str'}, typename='pkgset')
+    error_on_subsets = True
 
     def __init__(self, location):
         self.path = location
@@ -29,9 +32,18 @@ class FileList(object):
         s = set()
         for x in readlines(self.path):
             x = x.strip()
-            if not x:
+            if not x or x.startswith("#"):
+                continue
+            elif x.startswith("@"):
+                if self.error_on_subsets:
+                    raise ValueError("set %s isn't a valid atom in pkgset %r" % 
+                        (x, self.path))
+                logger.warning("set item %r found in pkgset %r: it will be "
+                    "wiped on update since portage/pkgcore store set items"
+                    " in a seperate way" % (x[1:], self.path))
                 continue
             s.add(atom(x))
+                
         self._atoms = s
         return s
 
@@ -64,6 +76,7 @@ class FileList(object):
 
 class WorldFile(FileList):
     pkgcore_config_type = ConfigHint(typename='pkgset')
+    error_on_subsets = False
 
     def __init__(self, location=pkgcore.const.WORLD_FILE):
         FileList.__init__(self, location)

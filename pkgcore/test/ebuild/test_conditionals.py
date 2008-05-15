@@ -1,5 +1,5 @@
 # Copyright: 2005-2007 Brian Harring <ferringb@gentoo.org>
-# License: GPL2
+# License: GPL2/BSD
 
 from pkgcore.test import TestCase
 from snakeoil.currying import post_curry

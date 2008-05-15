@@ -1,5 +1,5 @@
 # Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: GPL2/BSD
 
 """make.conf translator.
 
@@ -469,7 +469,9 @@ def config_from_make_conf(location="/etc/"):
             else:
                 new_config['binpkg'] = basics.ConfigSectionFromStringDict({
                     'class': 'pkgcore.binpkg.repository.tree',
-                    'location': pkgdir})
+                    'location': pkgdir,
+                    'ignore_paludis_versioning':
+                        str('ignore-paludis-versioning' in features)})
                 default_repos += ('binpkg',)
 
         if 'buildpkg' in features:

@@ -23,7 +23,7 @@ for x in "$@" ; do
 		cp "${x}" "${T}"
 		mysrc="${T}"/$(/usr/bin/basename "${x}")
 	elif [ -d "${x}" ] ; then
-		vecho "doexe: warning, skipping directory ${x}"
+		echo "doexe: warning, skipping directory ${x}"
 		continue
 	else
 		mysrc="${x}"

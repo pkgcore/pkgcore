@@ -1,5 +1,5 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
-# Copyright: 2005 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # License: GPL2
 
 # potentially use an intermediate base for user config errors,

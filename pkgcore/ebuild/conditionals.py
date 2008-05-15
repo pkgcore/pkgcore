@@ -1,5 +1,5 @@
 # Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: GPL2/BSD
 
 """DepSet parsing.
 

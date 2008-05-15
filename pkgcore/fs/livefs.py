@@ -1,5 +1,5 @@
-# Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD
 
 """
 interaction with the livefs: generating fs objects to represent the livefs.

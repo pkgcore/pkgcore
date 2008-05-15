@@ -1,5 +1,5 @@
-# Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD
 
 from pkgcore.restrictions import packages
 from pkgcore.package.mutated import MutatedPkg

@@ -1,5 +1,5 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD
 
 """
 package wrapper class to override a packages attributes

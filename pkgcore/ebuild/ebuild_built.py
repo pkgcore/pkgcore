@@ -1,5 +1,5 @@
-# Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD
 
 """
 built ebuild packages (vdb packages and binpkgs are derivatives of this)

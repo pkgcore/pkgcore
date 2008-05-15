@@ -1,7 +1,7 @@
 #!/bin/bash
 # ebuild-default-functions.sh; default functions for ebuild env that aren't saved- specific to the portage instance.
-# Copyright 2005-2006 Brian Harring <ferringb@gmail.com>
-# Copyright 2004-2006 Gentoo Foundation
+# Copyright 2005-2006 Brian Harring <ferringb@gmail.com>: BSD/GPL2
+# Copyright 2004-2006 Gentoo Foundation: GPL2
 
 portageq() {
     if [[ $EBUILD_PHASE == depend ]]; then
@@ -461,7 +461,7 @@ dyn_preinst()
 # in the future might use e* from /etc/init.d/functions.sh if i feel like it
 debug-print()
 {
-    if [ "$EBUILD_PHASE" == "depend" ] && [ -z "${PKGCORE_DEBUG}" ]; then
+    if hasq ${EBUILD_PHASE} depend nofetch config info postinst; then
         return
     fi
     # if $T isn't defined, we're in dep calculation mode and

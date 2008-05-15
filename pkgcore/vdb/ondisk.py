@@ -1,5 +1,5 @@
-# Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD
 
 import os, stat, errno
 
@@ -98,31 +98,37 @@ class tree(prototype.tree):
         cpath = pjoin(self.base, category.lstrip(os.path.sep))
         l = set()
         d = {}
+        bad = False
         try:
             for x in listdir_dirs(cpath):
                 if x.startswith(".tmp.") or x.endswith(".lockfile") \
                     or x.startswith("-MERGING-"):
                     continue
-                if "-scm" in x:
-                    i = x.rfind("-scm")
-                    s = x[i + 4:]
-                    # -1 is fine (-scm is part of the pkg name)
-                    # -r isn't, and '' isn't (version components)
-                    if len(s) < 2 or not s[1].isdigit():
-                        logger.error("merged -scm pkg detected: %s/%s. "
-                            "throwing exception due to -scm not being a valid"
-                            " version component.  Silently ignoring that "
-                            "specific version is not viable either since it "
-                            "would result in pkgcore stomping whatever it was "
-                            "that -scm version merged.  "
-                            "This is why embrace and extend is bad, mm'kay.  "
-                            "Use the offending pkg manager that merged it to "
-                            "unmerge it." % (category, x))
-                        raise InvalidCPV("%s/%s: -scm version component is "
-                            "not standard." % (category, x))
-                x = cpv(category+"/"+x)
-                l.add(x.package)
-                d.setdefault((category, x.package), []).append(x.fullver)
+                try:
+                    pkg = cpv(category+"/"+x)
+                except InvalidCPV:
+                    bad = True
+                if bad or not pkg.fullver:
+                    if '-scm' in x:
+                        bad = 'scm'
+                    elif '-try' in x:
+                        bad = 'try'
+                    else:
+                        raise InvalidCPV("%s/%s: no version component" %
+                            (category, x))
+                    logger.error("merged -%s pkg detected: %s/%s. "
+                        "throwing exception due to -%s not being a valid"
+                        " version component.  Silently ignoring that "
+                        "specific version is not viable either since it "
+                        "would result in pkgcore stomping whatever it was "
+                        "that -%s version merged.  "
+                        "This is why embrace and extend is bad, mm'kay.  "
+                        "Use the offending pkg manager that merged it to "
+                        "unmerge it." % (bad, category, x, bad, bad))
+                    raise InvalidCPV("%s/%s: -%s version component is "
+                        "not standard." % (category, x, bad))
+                l.add(pkg.package)
+                d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except (OSError, IOError), e:
             raise KeyError("failed fetching packages for category %s: %s" % \
             (pjoin(self.base, category.lstrip(os.path.sep)), str(e)))

@@ -1,6 +1,6 @@
 # Copyright: 2005 Jason Stubbs <jstubbs@gentoo.org>
 # Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: GPL2/BSD
 
 
 """gentoo ebuild specific base package class"""

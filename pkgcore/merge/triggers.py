@@ -1,5 +1,5 @@
 # Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: GPL2/BSD
 
 """
 triggers, callables to bind to a step in a MergeEngine to affect changes

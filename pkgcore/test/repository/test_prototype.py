@@ -1,5 +1,5 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD
 
 from pkgcore.test import TestCase, Todo, mallable_obj
 from snakeoil.mappings import OrderedDict

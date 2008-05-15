@@ -1,5 +1,5 @@
-# Copyright: 2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD
 
 from pkgcore.sync import base
 from pkgcore.config import ConfigHint
@@ -198,6 +198,8 @@ class rsync_timestamp_syncer(rsync_syncer):
             if not doit:
                 return True
             ret = rsync_syncer._sync(self, verbosity, output_fd)
+            # force a reset of the timestamp.
+            self.last_timestamp = self.current_timestamp()
         finally:
             if ret is not None:
                 if ret:
@@ -209,7 +211,8 @@ class rsync_timestamp_syncer(rsync_syncer):
                     os.remove(path)
                 else:
                     open(pjoin(self.basedir, "metadata", "timestamp.chk"),
-                        "w").write(self.last_timestamp)
+                        "w").write(time.strftime("%a, %d %b %Y %H:%M:%S +0000", 
+                            self.last_timestamp))
             except (IOError, OSError):
                 # don't care...
                 pass

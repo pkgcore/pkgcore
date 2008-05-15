@@ -1,5 +1,5 @@
-# Copyright 2004-2006 Brian Harring <ferringb@gmail.com>
-# License: GPL
+# Copyright 2004-2008 Brian Harring <ferringb@gmail.com>
+# License: GPL/BSD
 
 """
 filesystem entry abstractions

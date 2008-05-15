@@ -1,5 +1,5 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: GPL2/BSD
 
 from pkgcore.restrictions.packages import OrRestriction
 from pkgcore.repository import multiplex, virtual

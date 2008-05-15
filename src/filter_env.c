@@ -1,5 +1,5 @@
 /*
- * Copyright: 2004-2007 Brian Harring
+ * Copyright: 2004-2007 Brian Harring: BSD/GPL2
  * Copyright: 2005 Mike Frysinger
  * Copyright: 2006 Marien Zwart
  * License: GPL2

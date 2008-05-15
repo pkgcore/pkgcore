@@ -1,3 +1,6 @@
+# Copyright: 2008 Brian Harring <ferringb@gmail.com> 
+# License: BSD/GPL2
+
 from pkgcore.spawn import spawn_get_output
 
 class file_identifier(object):

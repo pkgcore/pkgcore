@@ -1,5 +1,5 @@
-# Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD
 
 from snakeoil.pickling import dumps, loads
 from pkgcore.test import TestCase

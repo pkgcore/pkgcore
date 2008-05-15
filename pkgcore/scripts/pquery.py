@@ -1,4 +1,4 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # Copyright: 2006-2007 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
@@ -264,7 +264,7 @@ def append_const_callback(option, opt_str, value, parser, const):
 def revdep_callback(option, opt_str, value, parser):
     try:
         parser.values.ensure_value('restrict_revdep', []).append(
-            parse_Revdep(value))
+            parse_revdep(value))
         parser.values.ensure_value('print_revdep', []).append(atom.atom(value))
     except (parserestrict.ParseError, atom.MalformedAtom), e:
         raise optparse.OptionValueError('option %s: %s' % (opt_str, e))

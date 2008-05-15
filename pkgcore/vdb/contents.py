@@ -1,5 +1,5 @@
 # Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: GPL2/BSD
 
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs import fs

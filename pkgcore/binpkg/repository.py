@@ -1,5 +1,5 @@
 # Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: GPL2/BSD
 
 """
 binpkg ebuild repository
@@ -207,7 +207,7 @@ class tree(prototype.tree):
             repo_id = location
         self.repo_id = repo_id
         self._versions_tmp_cache = {}
-        self.ignore_paludis_versioning = False
+        self.ignore_paludis_versioning = ignore_paludis_versioning
 
         # XXX rewrite this when snakeoil.osutils grows an access equivalent.
         if not os.access(self.base, os.X_OK|os.R_OK):
@@ -239,6 +239,7 @@ class tree(prototype.tree):
         l = set()
         d = {}
         lext = len(self.extension)
+        bad = False
         try:
             for x in listdir_files(cpath):
                 # don't use lstat; symlinks may exist
@@ -246,16 +247,26 @@ class tree(prototype.tree):
                     or not x[-lext:].lower() == self.extension or
                     x.startswith(".tmp.")):
                     continue
-                if "-scm" in x:
-                    i = x.rfind("-scm")
-                    s = x[i + 4:len(self.extension)]
-                    if (len(s) < 2 or not s[-1].isdigit()) \
-                        and not self.ignore_paludis_versioning:
-                        raise InvalidCPV("%s/%s has nonstandard scm version"
-                            " component" % (category, x))
-                x = cpv(category+"/"+x[:-lext])
-                l.add(x.package)
-                d.setdefault((category, x.package), []).append(x.fullver)
+                pv = x[:-lext]
+                try:
+                    pkg = cpv(category+"/"+pv)
+                except InvalidCPV:
+                    bad = True
+                if bad or not pkg.fullver:
+                    if '-scm' in pv:
+                        bad = 'scm'
+                    elif '-try' in pv:
+                        bad = 'try'
+                    else:
+                        raise InvalidCPV("%s/%s: no version component" %
+                            (category, pv))
+                    if self.ignore_paludis_versioning:
+                        bad = False
+                        continue
+                    raise InvalidCPV("%s/%s: -%s version component is "
+                        "not standard." % (category, pv, bad))
+                l.add(pkg.package)
+                d.setdefault((category, pkg.package), []).append(pkg.fullver)
         except (OSError, IOError), e:
             raise KeyError("failed fetching packages for category %s: %s" % \
             (pjoin(self.base, category.lstrip(os.path.sep)), str(e)))

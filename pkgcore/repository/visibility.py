@@ -1,12 +1,10 @@
-# Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD
 
 """
 filtering repository
 """
 
-# icky.
-# ~harring
 from pkgcore.repository import prototype, errors
 from pkgcore.restrictions.restriction import base
 from snakeoil.klass import GetAttrProxy

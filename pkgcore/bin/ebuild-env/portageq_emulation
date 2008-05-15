@@ -1,5 +1,6 @@
 #!/usr/bin/python -O
 # Copyright 2006 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD
 
 # disable sandbox for any pyc regens
 import os

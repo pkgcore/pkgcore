@@ -4,6 +4,15 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* explicit notice that Jason Stubbs, Brian Harring, and Andrew Gaffney
+  contributions are available under either GPL2 (v2 only) or 3 clause BSD.
+  Terms are in root directory under files names BSD, and GPL2.
+
+* expansion of -try/-scm awareness to installed pkgs database.  Binpkg
+  repositories now abid by ignore_paludis_versioning also.
+
+* ticket #184; silence disable debug-print in non build/install phases.
+
 * handle malformed rsync timestamps more cleanly.
 
 

@@ -1,4 +1,4 @@
-# Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>: GPL/BSD2
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 

@@ -1,6 +1,5 @@
-# Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
-# Author(s): Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD
 
 """
 template for cache backend classes

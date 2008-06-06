@@ -71,9 +71,11 @@ class SpawnTest(TempDirMixin, TestCase):
     def test_sandbox(self):
         fp = self.generate_script(
             "pkgcore-spawn-sandbox.sh", "echo $LD_PRELOAD")
+        ret = spawn.spawn_get_output(fp, spawn_type=spawn.spawn_sandbox)
+        self.assertTrue(ret[1], msg="no output; exit code was %s; script "
+            "location %s" % (ret[0], fp))
         self.assertIn("libsandbox.so", [os.path.basename(x.strip()) for x in
-            spawn.spawn_get_output(
-                    fp, spawn_type=spawn.spawn_sandbox)[1][0].split(":")])
+            ret[1][0].split(":")])
         os.unlink(fp)
 
 
@@ -111,6 +113,9 @@ class SpawnTest(TempDirMixin, TestCase):
         except KeyError:
             raise SkipTest(
                 "system lacks nobody user, thus can't test fakeroot")
+        if 'LD_PRELOAD' in os.environ:
+            raise SkipTest("disabling test due to LD_PRELOAD setting, which "
+                "fakeroot relies upon")
 
         nobody_uid = l[2]
         nobody_gid = l[3]
@@ -150,8 +155,6 @@ class SpawnTest(TempDirMixin, TestCase):
         os.unlink(fp1)
         os.unlink(fp2)
         os.unlink(savefile)
-    test_fakeroot.skip = "new coreutils screws with fakeroot, disabled till " \
-        "fixed"
 
     def test_process_exit_code(self):
         self.assertEqual(0, spawn.process_exit_code(0), "exit code failed")

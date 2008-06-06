@@ -509,7 +509,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
             tmp2 = self->version;
             self->version = tmp;
             Py_XDECREF(tmp2);
-            unsigned long revision = 0;
+            unsigned long long revision = 0;
             // ok, revision.
             p = ver_end;
             p++;
@@ -528,7 +528,7 @@ pkgcore_cpv_init(pkgcore_cpv *self, PyObject *args, PyObject *kwds)
                 fullver = tmp;
                 Py_CLEAR(self->revision);
             } else {
-                tmp = PyInt_FromLong(revision);
+                tmp = PyLong_FromLongLong(revision);
                 if(!tmp) {
                     result = -1;
                     goto cleanup;

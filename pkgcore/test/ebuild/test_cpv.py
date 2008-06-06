@@ -38,7 +38,8 @@ class native_CpvTest(TestCase):
     del l
     bad_sufs  = ["_a", "_9", "_"] + [x+" " for x in simple_good_sufs]
     del simple_good_sufs
-    good_revs = ["-r1", "-r300", "-r0", ""]
+    good_revs = ["-r1", "-r300", "-r0", "",
+        "-r1000000000000000000"]
     bad_revs = ["-r", "-ra", "-r", "-R1"]
 
     testing_secondary_args = False

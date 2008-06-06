@@ -705,7 +705,7 @@ class BinaryDebug(base):
                 try:
                     obj = spawn.find_binary("%s-%s" % (pkg.chost, x))
                 except spawn.CommandNotFound:
-                    obj = find_binary(x)
+                    obj = spawn.find_binary(x)
             setattr(self, '%s_binary' % x, obj)
 
     def _strip_fsobj(self, fs_obj, ftype, reporter, quiet=False):

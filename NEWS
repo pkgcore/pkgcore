@@ -4,9 +4,31 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-* explicit notice that Jason Stubbs, Brian Harring, and Andrew Gaffney
-  contributions are available under either GPL2 (v2 only) or 3 clause BSD.
+0.4.7.3: May 16, 2008
+
+* ticket #185; tweak the test to give better debug info.
+
+* add proper handling of very, very large revision ints (up to 64 bits).
+
+* fakeroot tests are enabled again.
+
+* misc bug fixes; pquery --revdep traceback, vecho complaints from do*
+  scripts.
+
+* explicit notice that Jason Stubbs, Brian Harring, Andrew Gaffney, and 
+  Charlie Shephard, Zac Medico contributions are available under either
+  GPL2 (v2 only) or 3 clause BSD.
   Terms are in root directory under files names BSD, and GPL2.
+  Aside from the bash bits Harring implemented during the EBD days, the
+  remaining ebuild bash bits are Gentoo Foundation copyright (GPL2), and
+  the contributions from Marien Zwart are currently GPL2 (config bits, still 
+  need explicit confirmation).
+  
+  What that effectively means is that pkgcore as a whole currently is GPL2-
+  sometime in the near future, the core of pkgcore (non-ebuild bits) will be 
+  BSD/GPL2, and then down the line the bash bits will be rewritten to be
+  BSD/GPL2 (likely dropping the functionality it uses down to something bash/
+  BSD shell compatible).
 
 * expansion of -try/-scm awareness to installed pkgs database.  Binpkg
   repositories now abid by ignore_paludis_versioning also.

@@ -9,6 +9,10 @@ To get the current (development) code with history, install bazaar_
  
   bzr branch bzr://bzr.pkgcore.org/<branch>
 
+Specifically, to get the mainline/integration branch, 
+
+  bzr branch bzr://bzr.pkgcore.org/pkgcore/
+
 If you're using <bzr-1.0, or prefer to get a lightweight checkout (equivalent
 to svn/cvs checkout), run::
 

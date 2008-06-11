@@ -4,6 +4,12 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+0.4.7.4: June 11, 2008
+
+* eapi1 bug fix; check for, and execute if found, ./configure if ECONF_SOURCE
+  is unset.
+
+
 0.4.7.3: May 16, 2008
 
 * ticket #185; tweak the test to give better debug info.

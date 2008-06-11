@@ -236,7 +236,7 @@ src_compile()
 {
     if [ "${EAPI:-0}" == 0 ] ; then
         [ -x ./configure ] && econf
-    elif [ -x ${ECONF_SOURCE}/configure ]; then
+    elif [ -x ${ECONF_SOURCE:-.}/configure ]; then
         econf || die "econf failed"
     fi
     if [ -f Makefile ] || [ -f GNUmakefile ] || [ -f makefile ]; then

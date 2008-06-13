@@ -397,9 +397,6 @@ core.setup(
             'pkgcore.ebuild._depset', ['src/depset.c'],
             extra_compile_args=extra_flags),
         core.Extension(
-            'pkgcore.ebuild._eix', ['src/eix.c'],
-            extra_compile_args=extra_flags),
-        core.Extension(
             'pkgcore.ebuild._filter_env', [
                 'src/filter_env.c', 'src/bmh_search.c'],
             extra_compile_args=extra_flags),

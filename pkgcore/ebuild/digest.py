@@ -87,11 +87,11 @@ def serialize_manifest(pkgdir, fetchables):
     """
     Write a manifest given a pkg_instance
 
-    @param
-    @param
+    @param pkgdir: the location of the package dir
+    @param fetchables: the fetchables of the package
     """
     handle = open(pkgdir + '/Manifest', 'w')
-    for file in [x for x in iter_scan(pkgdir) if isinstance(x, fsFile)]:
+    for file in (x for x in iter_scan(pkgdir) if isinstance(x, fsFile)):
         excludes=set(["CVS", ".svn", "Manifest"])
         if any(True for x in file.location.split(sep) if x in excludes):
             continue
@@ -110,7 +110,7 @@ def _write_manifest(handle, type, filename, chksums):
     size = chksums.pop("size")
     handle.write("%s %s %i" % (type.upper(), filename, size))
     for chf, sum in chksums.iteritems():
-        handle.write(" %s %s" %(chf.upper(), get_handler(chf).long2str(sum)))
+        handle.write(" %s %s" % (chf.upper(), get_handler(chf).long2str(sum)))
     handle.write('\n')
 
 def convert_chksums(iterable):

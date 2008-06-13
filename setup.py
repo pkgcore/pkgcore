@@ -240,7 +240,7 @@ class pkgcore_install_man(core.Command):
         self.man_pages = [
             os.path.join(os.getcwd(), 'man', path) for path in os.listdir('man')
             if len(path) > 2 and path[-2] == '.' and path[-1].isdigit()]
-        
+
 
     def run(self):
         for x in sorted(set(page[-1] for page in self.man_pages)):
@@ -388,20 +388,26 @@ core.setup(
         },
     ext_modules=[
         core.Extension(
+            'pkgcore.ebuild._atom', ['src/atom.c'],
+            extra_compile_args=extra_flags),
+        core.Extension(
             'pkgcore.ebuild._cpv', ['src/cpv.c'],
             extra_compile_args=extra_flags),
         core.Extension(
             'pkgcore.ebuild._depset', ['src/depset.c'],
             extra_compile_args=extra_flags),
         core.Extension(
-            'pkgcore.ebuild._atom', ['src/atom.c'],
-            extra_compile_args=extra_flags),
-        core.Extension(
-            'pkgcore.restrictions._restrictions', ['src/restrictions.c'],
+            'pkgcore.ebuild._eix', ['src/eix.c'],
             extra_compile_args=extra_flags),
         core.Extension(
             'pkgcore.ebuild._filter_env', [
                 'src/filter_env.c', 'src/bmh_search.c'],
+            extra_compile_args=extra_flags),
+        core.Extension(
+            'pkgcore.ebuild._misc', ['src/misc.c'],
+            extra_compile_args=extra_flags),
+        core.Extension(
+            'pkgcore.restrictions._restrictions', ['src/restrictions.c'],
             extra_compile_args=extra_flags),
         ],
     cmdclass={

@@ -97,4 +97,4 @@ class TestWorldFile(TestFileList):
         s = self.gen_pkgset("@world\ndev-util/bsdiff")
         self.assertEqual([str(x) for x in s], ['dev-util/bsdiff'])
         self.assertIn("set item 'world'", str(callbacks[0]))
-        
+

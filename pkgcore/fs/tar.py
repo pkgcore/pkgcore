@@ -21,7 +21,7 @@ class TarContentsSet(contents.contentsSet):
 
     def __init__(self, initial=None, mutable=False,
         add_missing_directories=False):
-        
+
         contents.contentsSet.__init__(self, mutable=True)
         self._dict = OrderedDict()
         if initial:
@@ -174,7 +174,7 @@ def generate_contents(path, compressor="bz2"):
 
     t.update(additions)
     t.add_missing_directories()
-    
+
     # finally... an insane sort.
     def sort_func(x, y):
         if x.is_dir:

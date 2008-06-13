@@ -53,7 +53,7 @@ class rsync_syncer(base.ExternalSyncer):
     def __init__(self, basedir, uri, timeout=default_timeout,
         compress=False, excludes=(), includes=(),
         retries=default_retries, proxy=None,
-        extra_opts=[]):
+        extra_opts=()):
 
         uri = uri.rstrip(os.path.sep) + os.path.sep
         self.rsh, uri = self.parse_uri(uri)
@@ -211,7 +211,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                     os.remove(path)
                 else:
                     open(pjoin(self.basedir, "metadata", "timestamp.chk"),
-                        "w").write(time.strftime("%a, %d %b %Y %H:%M:%S +0000", 
+                        "w").write(time.strftime("%a, %d %b %Y %H:%M:%S +0000",
                             self.last_timestamp))
             except (IOError, OSError):
                 # don't care...

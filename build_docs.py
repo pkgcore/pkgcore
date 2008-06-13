@@ -158,7 +158,7 @@ def script_options(name, arguments, options, content, lineno,
             comp += generate_script(bits[0], state)
         return comp
     return generate_script(parserclass, state)
-            
+
 
 def generate_script(parserclass, state):
     optionparser = parserclass()

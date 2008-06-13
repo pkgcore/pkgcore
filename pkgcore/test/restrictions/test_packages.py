@@ -7,7 +7,7 @@ import exceptions
 from pkgcore.test import TestCase
 from pkgcore import log
 from pkgcore.restrictions import packages, values
-from pkgcore.test import (protect_logging, TestRestriction, mallable_obj,
+from pkgcore.test import (protect_logging, TestRestriction, malleable_obj,
     quiet_logger, callback_logger)
 
 
@@ -49,7 +49,7 @@ class native_PackageRestrictionTest(TestRestriction):
         strexact = values.StrExactMatch
 
         log.logging.root.handlers = [quiet_logger]
-        args = [mallable_obj(category="foon", package="dar")]
+        args = [malleable_obj(category="foon", package="dar")]
         self.assertMatches(self.kls("category", strexact("foon")), args)
         self.assertMatches(self.kls("package", strexact("dar")), args)
         self.assertNotMatches(self.kls("package", strexact("dar"), negate=True),

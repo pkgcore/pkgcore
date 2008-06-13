@@ -22,7 +22,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
   scripts.
 
 * explicit notice that Jason Stubbs, Brian Harring, Andrew Gaffney, and 
-  Charlie Shephard, Zac Medico contributions are available under either
+  Charlie Shepherd, Zac Medico contributions are available under either
   GPL2 (v2 only) or 3 clause BSD.
   Terms are in root directory under files names BSD, and GPL2.
   Aside from the bash bits Harring implemented during the EBD days, the

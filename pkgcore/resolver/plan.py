@@ -778,7 +778,6 @@ class merge_plan(object):
 
     def insert_blockers(self, stack, choices, blocks):
         # level blockers.
-        fail = True
         for x in blocks:
             # check for any matches; none, try and insert vdb nodes.
             if not self.vdb_preloaded and \

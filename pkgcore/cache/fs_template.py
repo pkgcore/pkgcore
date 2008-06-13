@@ -37,7 +37,7 @@ class FsBased(template.database):
             location = pjoin(location, label.lstrip(os.path.sep))
 
         self.location = location
-        
+
         self._mtime_used = "_mtime_" in self._known_keys
 
     __init__.__doc__ = "\n".join(

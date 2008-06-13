@@ -15,8 +15,7 @@ from pkgcore.plugin import get_plugin
 
 from snakeoil.fileutils import read_dict, iter_read_bash
 from snakeoil import currying
-from snakeoil.osutils import (listdir_files, readfile, listdir_dirs, pjoin,
-    readlines)
+from snakeoil.osutils import listdir_files, readfile, listdir_dirs, pjoin
 from snakeoil.containers import InvertedContains
 from snakeoil.obj import make_kls
 from snakeoil.weakrefs import WeakValCache
@@ -148,7 +147,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             del cpv_inst
             raise KeyError(cpv)
         return cpv_inst
-                                                    
+
 
     def rebind(self, **kwds):
 

@@ -199,7 +199,7 @@ def add_profile(config, base_path, user_profile_path=None):
                 "%s must be a symlink pointing to a real target" % (
                     make_profile,))
         raise errors.InstantiationError(
-            "%s: unexepect error- %s" % (make_profile, oe.strerror))
+            "%s: unexpected error- %s" % (make_profile, oe.strerror))
 
     psplit = list(piece for piece in profile.split(os.path.sep) if piece)
     # poor mans rindex.
@@ -214,7 +214,7 @@ def add_profile(config, base_path, user_profile_path=None):
         config["profile"] = basics.AutoConfigSection({
                 "class": "pkgcore.ebuild.profiles.UserProfile",
                 "parent_path": pjoin("/", *psplit[:profile_start + 1]),
-                "parent_profile": pjoin(*psplit[profile_start + 1:]), 
+                "parent_profile": pjoin(*psplit[profile_start + 1:]),
                 "user_path": user_profile_path})
     else:
         config["profile"] = basics.AutoConfigSection({
@@ -291,7 +291,7 @@ def config_from_make_conf(location="/etc/"):
 
     # sets...
     add_sets(new_config, root, portage_base)
-    
+
     user_profile_path = pjoin(base_path, "portage", "profile")
     add_profile(new_config, base_path, user_profile_path)
 
@@ -321,7 +321,7 @@ def config_from_make_conf(location="/etc/"):
             'default_mirrors': gentoo_mirrors,
             'inherit-only': True,
             'eclass_cache': 'eclass stack',
-            'ignore_paludis_versioning': 
+            'ignore_paludis_versioning':
                 ('ignore-paludis-versioning' in features)})
 
 
@@ -507,7 +507,7 @@ def config_from_make_conf(location="/etc/"):
             basics.ConfigSectionFromStringDict({'mode':'strip',
                 'class':'pkgcore.merge.triggers.BinaryDebug'})
         triggers.append('binary_debug_trigger')
-        
+
 
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.

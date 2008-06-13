@@ -6,7 +6,7 @@ dir="${D}usr/share/doc"
 
 [ ! -d "${dir}" ] && exit 0
 
-z=$(find "${dir}" \
+z=$(find "${dir}" -print \
 	'(' -type f -or -type l ')' \
 	-not -name '*.gz' \
 	-not -name '*.bz2' \
@@ -27,6 +27,7 @@ if [ -z "${PORTAGE_COMPRESS_SUFFIX}" ] ; then
 	esac
 fi
 
+IFS=$'\n'
 echo "doc: ${PORTAGE_COMPRESS} ${PORTAGE_COMPRESS_FLAGS}"
 for y in ${z} ; do
 	if [ -L "${y}" ] ; then

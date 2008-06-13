@@ -7,7 +7,6 @@ virtual repository, pkgs generated via callable
 
 from pkgcore.repository import prototype
 from pkgcore.package import virtual
-from snakeoil.currying import partial
 
 
 class tree(prototype.tree):

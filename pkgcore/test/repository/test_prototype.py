@@ -1,7 +1,7 @@
 # Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore.test import TestCase, Todo, mallable_obj
+from pkgcore.test import TestCase, Todo, malleable_obj
 from snakeoil.mappings import OrderedDict
 from snakeoil.currying import post_curry
 
@@ -114,7 +114,7 @@ class TestPrototype(TestCase):
             sorted(CPV(x) for x in (
                 "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
-        obj = mallable_obj(livefs=False)
+        obj = malleable_obj(livefs=False)
         pkg_kls_override = post_curry(MutatedPkg, {'repo':obj})
         self.assertEqual(
             sorted(self.repo.itermatch(

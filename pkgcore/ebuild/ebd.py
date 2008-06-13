@@ -98,7 +98,7 @@ class ebd(object):
             val = getattr(pkg, x)
             if val is not None:
                 self.env[x.upper()] = val
-            
+
         if "PYTHONPATH" in os.environ:
             self.env["PYTHONPATH"] = os.environ["PYTHONPATH"]
         if "PKGCORE_DEBUG" in os.environ:
@@ -603,8 +603,8 @@ class buildable(ebd, setup_mixin, format.build):
         """
         execute the configure phase.
 
-        does nothing if the pkg is EAPI=0 (that spec lacks a seperated
-        configure phase).
+        does nothing if the pkg's EAPI is less than 2 (that spec lacks a
+        seperated configure phase).
         """
         if self.eapi > 1:
             return self._generic_phase("configure", True, True, False)

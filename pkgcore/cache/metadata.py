@@ -50,7 +50,7 @@ class database(flat_hash.database):
     def __init__(self, location, *args, **config):
         self.ec = config.pop("eclasses", None)
         if self.ec is None:
-            import pdb;pdb.set_trace()
+            #import pdb;pdb.set_trace()
             self.ec = eclass_cache.cache(pjoin(location, "eclass"), location)
 
         config.pop('label', None)

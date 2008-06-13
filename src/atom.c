@@ -63,7 +63,7 @@ static PyObject *pkgcore_atom_restrictions = NULL;
 #define VALID_USE_CHAR(c) (ISALNUM(c) || '-' == (c) \
     || '_' == (c) || '.' == (c) || '+' == (c))
 
-#define VALID_REPO_CHAR(c) (ISALNUM(c) || '-' == (c) || '_' == (c))
+#define VALID_REPO_CHAR(c) (ISALNUM(c) || '-' == (c) || '_' == (c) || '/' == (c))
 
 static void
 Err_SetMalformedAtom(PyObject *atom_str, char *raw_msg)
@@ -263,7 +263,7 @@ parse_repo_id(PyObject *atom_str, char *p, PyObject **repo_id)
         if(!VALID_REPO_CHAR(*p)) {
             Err_SetMalformedAtom(atom_str,
                 "invalid character in repo_id: "
-                "valid characters are [c-Z0-9_-/]");
+                "valid characters are [a-Z0-9_-/]");
             return 1;
         }
         p++;

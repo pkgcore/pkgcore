@@ -1,8 +1,6 @@
 # Copyright: 2007-2008 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from itertools import groupby
-
 def group_attempts(sequence, filter_func=lambda x:True):
     last, l = None, []
     for x in sequence:

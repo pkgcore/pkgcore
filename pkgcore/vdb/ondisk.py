@@ -179,7 +179,7 @@ class tree(prototype.tree):
         else:
             data = readfile(pjoin(path, key), True)
             if data is None:
-                raise KeyError(key)
+                raise KeyError((path, key))
         return data
 
     def notify_remove_package(self, pkg):

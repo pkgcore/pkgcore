@@ -176,7 +176,7 @@ class native_DepSetParsingTest(base):
         ]:
         locals()["test_known_conditionals %s" % x] = post_curry(
             check_known_conditionals, x, c)
-    del x,c
+    del x, c
 
 
     def test_element_func(self):

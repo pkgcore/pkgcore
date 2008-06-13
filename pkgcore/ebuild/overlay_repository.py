@@ -9,8 +9,6 @@ from pkgcore.repository import prototype
 from pkgcore.config import ConfigHint, errors
 from pkgcore.ebuild import repository
 
-from snakeoil.lists import unstable_unique
-from snakeoil.compatibility import all
 from itertools import chain
 
 class OverlayRepo(prototype.tree):

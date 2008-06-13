@@ -77,7 +77,7 @@ class install(repo_interfaces.nonlivefs_install):
             end("tarball created")
             start("writing Xpak")
             # ok... got a tarball.  now add xpak.
-            x = xpak.Xpak.write_xpak(tmp_path, generate_attr_dict(pkg))
+            xpak.Xpak.write_xpak(tmp_path, generate_attr_dict(pkg))
             end("wrote Xpak")
             # ok... we tagged the xpak on.
             os.chmod(tmp_path, 0644)

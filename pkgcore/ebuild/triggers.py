@@ -17,7 +17,9 @@ from snakeoil.lists import stable_unique, iflatten_instance
 from snakeoil.osutils import join as pjoin
 
 from snakeoil.demandload import demandload
-demandload(globals(), "fnmatch", 'pkgcore:os_data')
+demandload(globals(),
+    "fnmatch",
+    'pkgcore:os_data')
 
 colon_parsed = frozenset(
     ["ADA_INCLUDE_PATH",  "ADA_OBJECTS_PATH", "INFODIR", "INFOPATH",
@@ -288,9 +290,14 @@ class ConfigProtectUninstall(triggers.base):
                 continue
             if protected_restrict.match(x.location):
                 recorded_ent = uninstall_cset[x]
-                if not simple_chksum_compare(recorded_ent, x):
-                    # chksum differs.  file stays.
-                    remove.append(recorded_ent)
+                try:
+                    if not simple_chksum_compare(recorded_ent, x):
+                        # chksum differs.  file stays.
+                        remove.append(recorded_ent)
+                # If a file doesn't exist we don't need to remove it
+                except IOError, e:
+                    if e.errno != errno.ENOENT:
+                        raise
 
         for x in remove:
             del uninstall_cset[x]

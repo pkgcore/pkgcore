@@ -19,9 +19,8 @@ from pkgcore.repository import multiplex, visibility
 from pkgcore.interfaces.data_source import local_source
 from pkgcore.config.errors import BaseException
 from pkgcore.ebuild import const
-from pkgcore.ebuild.profiles import incremental_expansion
 from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
-    non_incremental_collapsed_restrict_to_data)
+    non_incremental_collapsed_restrict_to_data, incremental_expansion)
 from pkgcore.util.parserestrict import parse_match
 
 from snakeoil.lists import stable_unique, unstable_unique
@@ -172,7 +171,7 @@ class domain(pkgcore.config.domain.domain):
                         v = set(v.split())
                     else:
                         v = set(v)
-                    incremental_expansion(v, settings[x], '', False)
+                    incremental_expansion(v, settings[x], '')
                     settings[x] = v
             else:
                 if x in incrementals:
@@ -276,7 +275,7 @@ class domain(pkgcore.config.domain.domain):
 
         # stack use stuff first, then profile.
         self.enabled_use = collapsed_restrict_to_data(
-            profile.pkg_use.iteritems(), 
+            profile.pkg_use.iteritems(),
             ((packages.AlwaysTrue, self.use),
             (packages.AlwaysTrue, [self.arch])),
             pkg_use,
@@ -420,7 +419,7 @@ class domain(pkgcore.config.domain.domain):
             finalize_defaults=False)
 
     def get_package_use(self, pkg):
-        enabled = self.enabled_use.pull_data(pkg, 
+        enabled = self.enabled_use.pull_data(pkg,
             pre_defaults=(x[1:] for x in pkg.iuse if x[0] == '+'))
         disabled = self.disabled_use.pull_data(pkg)
         immutable = self.forced_use.pull_data(pkg, False)

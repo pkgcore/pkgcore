@@ -22,9 +22,6 @@ from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
 from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
 from snakeoil import currying
 
-from snakeoil.demandload import demandload
-demandload(globals(), 'errno')
-
 def alias_cset(alias, engine, csets):
     """alias a cset to another"""
     return csets[alias]
@@ -112,7 +109,7 @@ class MergeEngine(object):
                 self.add_trigger(hook, trigger)
 
         self.regenerate_csets()
-        for x in hooks.keys():
+        for x in hooks:
             setattr(self, x, currying.partial(self.execute_hook, x))
 
     @classmethod

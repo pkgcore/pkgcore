@@ -5,8 +5,8 @@ import errno, os
 from itertools import chain
 
 from pkgcore.config import ConfigHint
-from pkgcore.ebuild import const
-from pkgcore.ebuild import ebuild_src
+from pkgcore.ebuild import const, ebuild_src
+from pkgcore.ebuild.misc import incremental_expansion
 from pkgcore.repository import virtual
 
 from snakeoil.osutils import abspath, join as pjoin, readlines
@@ -263,23 +263,6 @@ class EmptyRootNode(ProfileNode):
     pkg_provided = visibility = system = ((), ())
     virtuals = {}
 
-
-def incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
-    for token in iterable:
-        if token[0] == '-':
-            i = token[1:]
-            if not i:
-                raise ValueError("%sencountered an incomplete negation, '-'"
-                    % msg_prefix)
-            if i == '*':
-                orig.clear()
-            else:
-                orig.discard(i)
-            if not finalize:
-                orig.add(token)
-        else:
-            orig.discard("-" + token)
-            orig.add(token)
 
 
 class OnDiskProfile(object):

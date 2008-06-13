@@ -129,7 +129,7 @@ class uri_list(object):
         return False
 
     def __len__(self):
-        # we do it this way since each item may be a sublist, and to reuse 
+        # we do it this way since each item may be a sublist, and to reuse
         # __iter__
         count =0
         for entry in self:

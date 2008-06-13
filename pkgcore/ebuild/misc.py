@@ -7,10 +7,34 @@ misc. stuff we've not found a spot for yet.
 
 from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.profiles import incremental_expansion
 
 from snakeoil.lists import iflatten_instance
 from snakeoil.klass import generic_equality
+
+
+def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
+    for token in iterable:
+        if token[0] == '-':
+            i = token[1:]
+            if not i:
+                raise ValueError("%sencountered an incomplete negation, '-'"
+                    % msg_prefix)
+            if i == '*':
+                orig.clear()
+            else:
+                orig.discard(i)
+            if not finalize:
+                orig.add(token)
+        else:
+            orig.discard("-" + token)
+            orig.add(token)
+
+
+try:
+    from pkgcore.ebuild._misc import incremental_expansion
+except ImportError:
+    incremental_expansion = native_incremental_expansion
+
 
 class collapsed_restrict_to_data(object):
 
@@ -24,7 +48,7 @@ class collapsed_restrict_to_data(object):
         Basically splits an iterable of restrict:data into
         level of specificity, repo, cat, pkg, atom (dict) for use
         in filters
-        
+
         Finally, a finalize_defaults kwd is supported to control whether
         incremental_expansion finalizes the initial defaults list.
         defaults to True.
@@ -56,8 +80,6 @@ class collapsed_restrict_to_data(object):
                     else:
                         raise ValueError("%r doesn't operate on package/category: "
                             "data %r" % (a, data))
-                elif isinstance(a, restriction.AlwaysBool):
-                    repo.append((a, data))
                 else:
                     raise ValueError("%r is not a AlwaysBool, PackageRestriction, "
                         "or atom: data %r" % (a, data))

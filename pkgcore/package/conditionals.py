@@ -45,7 +45,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
         """Add a new attribute, and evaluate attributes of a wrapped pkg."""
 
         __slots__ = ("_unchangable", "_configurable",
-            "_reuse_pt", "_cached_wrapped", "_buildable", 
+            "_reuse_pt", "_cached_wrapped", "_buildable",
             "_disabled")
 
         _wrapped_attr = attributes_to_wrap
@@ -98,7 +98,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
         def __copy__(self):
             return self.__class__(self._raw_pkg, self._configurable_name,
                                   initial_settings=set(self._configurable),
-                                  disabled_settings=self._disabled, 
+                                  disabled_settings=self._disabled,
                                   unchangable_settings=self._unchangable,
                                   attributes_to_wrap=self._wrapped_attr)
 

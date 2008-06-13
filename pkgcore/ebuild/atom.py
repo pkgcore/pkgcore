@@ -26,7 +26,7 @@ valid_use_chars = set(str(x) for x in xrange(10))
 valid_use_chars.update(chr(x) for x in xrange(ord("a"), ord("z")))
 valid_use_chars.update(chr(x) for x in xrange(ord("A"), ord("Z")))
 valid_repo_chars = set(valid_use_chars)
-valid_repo_chars.update("_-")
+valid_repo_chars.update("_-/")
 valid_use_chars.update("_.+-")
 valid_use_chars = frozenset(valid_use_chars)
 valid_repo_chars = frozenset(valid_repo_chars)
@@ -70,7 +70,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
                     "repo_id must not be empty")
             elif not valid_repo_chars.issuperset(repo_id):
                 raise errors.MalformedAtom(atom,
-                    "repo_id may contain only [A-Za-z0-9_-]")
+                    "repo_id may contain only [a-Z0-9_-/]")
             atom = atom[:i2]
             sf(self, "repo_id", repo_id)
         else:
@@ -125,7 +125,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
         for x in ('use', 'repo_id'):
             if getattr(self, x) is not None:
                 raise errors.MalformedAtom(orig_atom,
-                    "%s atoms aren't supported for eapi 0" % x)
+                    "%s atoms aren't supported for eapi 1" % x)
     try:
         c = cpv.CPV(self.cpvstr)
     except errors.InvalidCPV, e:
@@ -230,7 +230,7 @@ class atom(boolean.AndRestriction):
     negate = False
 
     __attr_comparison__ = ("cpvstr", "op", "blocks", "negate_vers",
-        "use", "slot")
+        "use", "slot", "repo_id")
 
     __metaclass__ = generic_equality
     __inst_caching__ = True
@@ -249,6 +249,8 @@ class atom(boolean.AndRestriction):
             attrs.append('use=' + repr(self.use))
         if self.slot:
             attrs.append('slot=' + repr(self.slot))
+        if self.repo_id:
+            attrs.append('repoid=' + repr(self.repo_id))
         return '<%s %s @#%x>' % (
             self.__class__.__name__, ' '.join(attrs), id(self))
 
@@ -329,7 +331,11 @@ class atom(boolean.AndRestriction):
         if c:
             return c
 
-        return cmp(self.use, other.use)
+        c = cmp(self.use, other.use)
+        if c:
+            return c
+
+        return cmp(self.repo_id, other.repo_id)
 
     def intersects(self, other):
         """Check if a passed in atom "intersects" this restriction's atom.

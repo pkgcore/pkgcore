@@ -9,7 +9,7 @@ from pkgcore.package.errors import InvalidDependency
 from pkgcore.os_data import portage_gid
 from pkgcore.repository import virtual
 
-from snakeoil.lists import iflatten_instance, unstable_unique
+from snakeoil.lists import iflatten_instance
 from snakeoil.osutils import listdir, ensure_dirs, pjoin, readlines
 from snakeoil.currying import partial
 from snakeoil.fileutils import read_dict, AtomicWriteFile

@@ -40,3 +40,29 @@ class test_collapsed_restrict_to_data(base):
         self.assertState(self.kls([(AlwaysTrue, ['x'])],
             [(AlwaysTrue, ['x', 'y']), (AlwaysTrue, ['-x'])]),
             defaults=['y'])
+
+class test_native_incremental_expansion(TestCase):
+    f = staticmethod(misc.native_incremental_expansion)
+
+    def test_it(self):
+        s = set("ab")
+        self.f(s, ("-a", "b", "-b", "-b", "c"))
+        self.assertEqual(sorted(s), ["c"])
+        self.assertRaises(ValueError,
+            self.f, set(), '-')
+
+    def test_non_finalized(self):
+        s = set("ab")
+        self.f(s, ("-a", "b", "-b", "c", "c"),
+            finalize=False)
+        self.assertEqual(sorted(s), ["-a", "-b", "c"])
+
+    def test_starred(self):
+        s = set('ab')
+        self.f(s, ('c', '-*', 'd'))
+        self.assertEqual(sorted(s), ['d'])
+
+class test_CPY_incremental_expansion(test_native_incremental_expansion):
+    if misc.incremental_expansion == misc.native_incremental_expansion:
+        skip = "CPy extension not available"
+    f = staticmethod(misc.incremental_expansion)

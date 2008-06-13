@@ -122,7 +122,7 @@ it show up in ``pconfig dump`` but all other things defined in
 
 ``pconfig`` can tell you what arguments a class takes::
 
- $ pconfig describe-class pkgcore.config.basics.parse_config_file
+ $ pconfig describe_class pkgcore.config.basics.parse_config_file
  typename is configsection
 
  parser: callable (required)

@@ -7,7 +7,6 @@ resolver configuration to match portage behaviour (misbehaviour in a few spots)
 
 __all__ = ["upgrade_resolver", "min_install_resolver"]
 
-from pkgcore.repository import virtual
 from pkgcore.repository.misc import nodeps_repo
 from pkgcore.resolver import plan
 

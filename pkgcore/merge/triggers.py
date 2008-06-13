@@ -405,7 +405,7 @@ class BaseSystemUnmergeProtection(base):
     _hooks = ('unmerge',)
 
     _preserve_sequence = ('/usr', '/usr/lib', '/usr/lib64', '/usr/lib32',
-        '/usr/bin', '/usr/sbin', '/bin', '/sbin', '/lib', '/lib32', '/lib64', 
+        '/usr/bin', '/usr/sbin', '/bin', '/sbin', '/lib', '/lib32', '/lib64',
         '/etc', '/var', '/home', '/root')
 
     def __init__(self, preserve_sequence=None):
@@ -645,7 +645,7 @@ class SavePkgUnmerging(SavePkg):
     required_csets = ('old_cset',)
     _engine_types = UNINSTALLING_MODES
     _copy_source = 'old'
- 
+
     pkgcore_config_type = ConfigHint({'target_repo':'ref:repo'},
         typename='trigger', required=['target_repo'])
 
@@ -654,7 +654,7 @@ class SavePkgUnmerging(SavePkg):
 
 
 class SavePkgUnmergingIfInPkgset(SavePkgUnmerging):
-    
+
     pkgcore_config_type = ConfigHint({'target_repo':'ref:repo',
         'pkgset':'ref:pkgset'},
         typename='trigger', required=['target_repo', 'pkgset'])
@@ -673,7 +673,7 @@ class BinaryDebug(base):
 
     required_csets = ('install',)
     _engine_types = INSTALLING_MODES
-    
+
     _hooks = ('pre_merge',)
 
     default_strip_flags = ('--strip-unneeded',)
@@ -716,7 +716,7 @@ class BinaryDebug(base):
             args += self._extra_strip_flags
         elif "current ar archive" in ftype:
             args = ['-g']
-        ret = spawn.spawn([self.strip_binary] + args + 
+        ret = spawn.spawn([self.strip_binary] + args +
             [fs_obj.data_source.path])
         if ret != 0:
             reporter.warn("stripping %s, type %s failed" % (fs_obj, ftype))
@@ -762,14 +762,14 @@ class BinaryDebug(base):
             if debug_loc in cset:
                 continue
             fpath = fs_obj.data_source.path
-            debug_ondisk = pjoin(os.path.dirname(fpath), 
+            debug_ondisk = pjoin(os.path.dirname(fpath),
                 os.path.basename(fpath) + ".debug")
             observer.info("splitdebug'ing %s into %s" %
                 (fs_obj.location, debug_loc))
             ret = spawn.spawn([self.objcopy_binary, '--only-keep-debug',
                 fpath, debug_ondisk])
             if ret != 0:
-                observer.warn("splitdebug'ing %s failed w/ exitcode %s" % 
+                observer.warn("splitdebug'ing %s failed w/ exitcode %s" %
                     (fs_obj.location, ret))
                 continue
             ret = spawn.spawn([self.objcopy_binary,

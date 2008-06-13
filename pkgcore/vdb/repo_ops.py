@@ -104,7 +104,7 @@ class install(repo_interfaces.livefs_install):
 
         #finally, we mark who made this.
         open(pjoin(dirpath, "PKGMANAGER"), "w").write(
-            "pkgcore-%s" % VERSION)
+            "pkgcore-%s\n" % VERSION)
         return True
 
 

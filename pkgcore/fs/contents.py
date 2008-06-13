@@ -283,10 +283,10 @@ class contentsSet(object):
     def iter_child_nodes(self, start_point):
         """yield a stream of nodes that are fs entries contained within the
         passed in start point
-        
+
         @param start_point: fs filepath all yielded nodes must be w/in
         """
-        
+
         if isinstance(start_point, fs.fsBase):
             if start_point.is_sym():
                 start_point = start_point.target
@@ -313,7 +313,7 @@ class contentsSet(object):
         collapsing syms of self into directories of other
         """
         conflicts_d = dict((x, x.resolved_target) for x in other.iterlinks())
-        # rebuild the targets first; sorted due to the fact that we want to 
+        # rebuild the targets first; sorted due to the fact that we want to
         # rewrite each node (resolving down the filepath chain)
         conflicts = sorted(contentsSet(self.iterdirs()).intersection(conflicts_d))
         obj = self.clone()

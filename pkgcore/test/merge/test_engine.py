@@ -4,13 +4,13 @@
 import os
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs import livefs
-from pkgcore.merge import triggers, engine
+from pkgcore.merge import engine
 from snakeoil.osutils import pjoin
 
 from pkgcore.test import TestCase
-from snakeoil.test.mixins import TempDirMixin, tempdir_decorator
+from snakeoil.test.mixins import tempdir_decorator
 from pkgcore.test.fs.fs_util import fsFile, fsDir, fsSymlink
-from pkgcore.test.merge.util import fake_engine, fake_trigger, fake_reporter
+from pkgcore.test.merge.util import fake_engine
 
 class fake_pkg(object):
 

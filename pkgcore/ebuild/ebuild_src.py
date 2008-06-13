@@ -22,14 +22,15 @@ from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import const, processor
 
 from snakeoil.mappings import IndeterminantDict
-from snakeoil.currying import alias_class_method, partial, post_curry
+from snakeoil.currying import alias_class_method, partial
 
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
 
 WeakValCache = metadata.WeakValCache
 
-_eapi_limited_atom_kls = tuple(partial(atom, eapi=x) for x in (0, 1))
+_eapi_limited_atom_kls = tuple(partial(atom, eapi=x) for x in
+                               const.eapi_capable)
 
 def generate_depset(c, key, non_package_type, s, **kwds):
     try:
@@ -273,7 +274,7 @@ class package_factory(metadata.factory):
 
     def _get_ebuild_mtime(self, pkg):
         return os.stat(self._get_ebuild_path(pkg)).st_mtime
-    
+
     def _invalidated_eclasses(self, data, pkg):
         return (data.get("_eclasses_") is not None and not
             self._ecache.is_eclass_data_valid(data["_eclasses_"]))

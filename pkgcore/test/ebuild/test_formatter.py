@@ -1,4 +1,4 @@
-# Copyright 2007 Charlie Shepherd <masterdriverz@gentoo.org>
+# Copyright 2007 Charlie Shepherd <masterdriverz@gmail.com>
 # License: GPL2
 
 import difflib
@@ -36,7 +36,8 @@ class FakeOp(object):
             self.desc = 'add'
 
 class BaseFormatterTest(object):
-    suffix = ['\n']
+    prefix = ()
+    suffix = ('\n',)
     def setUp(self):
         self.fakeout = FakeStreamFormatter()
         self.fakeerr = FakeStreamFormatter()
@@ -69,9 +70,29 @@ class BaseFormatterTest(object):
         return kls(**kwargs)
 
     def assertOut(self, *args, **kwargs):
+
         stringlist = []
         objectlist = []
-        for arg in list(args)+kwargs.setdefault("suffix", self.suffix):
+
+        args = list(args)
+
+        prefix = kwargs.setdefault("prefix", self.prefix)
+        if isinstance(prefix, tuple):
+            args = list(prefix) + args
+        elif isinstance(prefix, list):
+            args = prefix + args
+        else:
+            args.insert(0, prefix)
+
+        suffix = kwargs.setdefault("suffix", self.suffix)
+        if isinstance(suffix, tuple):
+            args = args + list(suffix)
+        elif isinstance(suffix, list):
+            args = args + suffix
+        else:
+            args.append(suffix)
+
+        for arg in args:
             if isinstance(arg, basestring):
                 stringlist.append(arg)
             else:
@@ -81,7 +102,8 @@ class BaseFormatterTest(object):
         objectlist.append(''.join(stringlist))
 
         # Hack because a list with an empty string in is True
-        if objectlist == ['']: objectlist = []
+        if objectlist == ['']:
+            objectlist = []
 
         self.assertEqual(self.fakeout.stream, objectlist, '\n' + '\n'.join(
                 difflib.unified_diff(
@@ -91,11 +113,11 @@ class BaseFormatterTest(object):
         self.fakeout.resetstream()
 
     def test_end(self):
-        """Sub-classes should override this if they print something in end()"""
+        # Sub-classes should override this if they print something in end()
         self.formatter.format(FakeOp(FakeMutatedPkg('dev-util/diffball-1.1')))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertOut(suffix=[])
+        self.assertOut(suffix=())
 
 class TestBasicFormatter(BaseFormatterTest, TestCase):
     formatterClass = BasicFormatter
@@ -130,7 +152,51 @@ class TestPkgcoreFormatter(BaseFormatterTest, TestCase):
             "replace dev-util/diffball-1.1, "
             "dev-util/diffball-1.2::gentoo")
 
-class TestPaludisFormatter(BaseFormatterTest, TestCase):
+
+class CountingFormatterTest(BaseFormatterTest):
+
+    endprefix = ""
+    endsuffix = "\n"
+
+    def assertEnd(self, *args, **kwargs):
+        kwargs.setdefault('prefix', self.endprefix)
+        kwargs.setdefault('suffix', self.endsuffix)
+        BaseFormatterTest.assertOut(self, *args, **kwargs)
+
+    def test_end(self):
+        self.formatter.end()
+        self.assertEnd('Total: 0 packages (0 new, 0 upgrades, 0 downgrades, 0 in new slots)')
+
+    def test_end_new(self):
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6')))
+        self.fakeout.resetstream()
+        self.formatter.end()
+        self.assertEnd('Total: 1 packages (1 new, 0 upgrades, 0 downgrades, 0 in new slots)')
+
+    def test_end_newslot(self):
+        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='1')))
+        self.fakeout.resetstream()
+        self.formatter.end()
+        self.assertEnd('Total: 1 packages (0 new, 0 upgrades, 0 downgrades, 1 in new slots)')
+
+    def test_end_downgrade(self):
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6'),
+            FakeMutatedPkg('app-arch/bzip2-1.0.4')))
+        self.fakeout.resetstream()
+        self.formatter.end()
+        self.assertEnd('Total: 1 packages (0 new, 0 upgrades, 1 downgrades, 0 in new slots)')
+
+    def test_end_upgrade(self):
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4'),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
+        self.fakeout.resetstream()
+        self.formatter.end()
+        self.assertEnd('Total: 1 packages (0 new, 1 upgrades, 0 downgrades, 0 in new slots)')
+
+
+class TestPaludisFormatter(CountingFormatterTest, TestCase):
     formatterClass = PaludisFormatter
 
     def setUp(self):
@@ -193,38 +259,6 @@ class TestPaludisFormatter(BaseFormatterTest, TestCase):
         self.assertOut("* ", Color('fg', 'blue'), "app-arch/bzip2", "-1.0.3-r6", "::gentoo ",
             Color('fg', 'blue'), "{:0} ", Color('fg', 'yellow'), "[R] ",
             Color('fg', 'red'), "-bootstrap ", Color('fg', 'green'), "static")
-
-    def test_end(self):
-        self.formatter.end()
-        self.assertOut('Total: 0 packages (0 new, 0 upgrades, 0 downgrades, 0 in new slots)')
-
-    def test_end_new(self):
-        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6')))
-        self.fakeout.resetstream()
-        self.formatter.end()
-        self.assertOut('Total: 1 packages (1 new, 0 upgrades, 0 downgrades, 0 in new slots)')
-
-    def test_end_newslot(self):
-        self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='1')))
-        self.fakeout.resetstream()
-        self.formatter.end()
-        self.assertOut('Total: 1 packages (0 new, 0 upgrades, 0 downgrades, 1 in new slots)')
-
-    def test_end_downgrade(self):
-        self.formatter.format(
-            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6'),
-            FakeMutatedPkg('app-arch/bzip2-1.0.4')))
-        self.fakeout.resetstream()
-        self.formatter.end()
-        self.assertOut('Total: 1 packages (0 new, 0 upgrades, 1 downgrades, 0 in new slots)')
-
-    def test_end_upgrade(self):
-        self.formatter.format(
-            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4'),
-            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
-        self.fakeout.resetstream()
-        self.formatter.end()
-        self.assertOut('Total: 1 packages (0 new, 1 upgrades, 0 downgrades, 0 in new slots)')
 
 class TestPortageFormatter(BaseFormatterTest, TestCase):
     formatterClass = PortageFormatter
@@ -353,7 +387,6 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'yellow'), Bold(), 'static', Reset(), '%* ',
             Color('fg', 'blue'), Bold(), '-bootstrap', Reset(), ' ',
             Color('fg', 'yellow'), Bold(), '-foobar', Reset(), '* ',
-            '(', Color('fg', 'yellow'), Bold(), '-kazaam', Reset(), '%) ',
             Color('fg', 'yellow'), Bold(), '-perl', Reset(), '%"')
 
     def test_use_expand(self):
@@ -398,7 +431,7 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         self.repo2 = FakeRepo(location='/usr/local/portage')
 
     def newFormatter(self, **kwargs):
-        kwargs.setdefault("display_repo", True)
+        kwargs.setdefault("verbose", True)
         return TestPortageFormatter.newFormatter(self, **kwargs)
 
     def test_end(self):

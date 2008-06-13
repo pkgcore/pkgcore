@@ -113,7 +113,7 @@ class CannotOverwrite(FailedCopy):
 
 def default_copyfile(obj, mkdirs=False):
     """
-    copy a L{fs obj<pkgcore.fs.fs.fsBase>} to it's stated location.
+    copy a L{fs obj<pkgcore.fs.fs.fsBase>} to its stated location.
 
     @param obj: L{pkgcore.fs.fs.fsBase} instance, exempting fsDir
     @raise OSError:, for non file objs, Exception (this needs to be fixed

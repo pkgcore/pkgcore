@@ -215,7 +215,6 @@ class Test_native_atom(TestCase):
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:::")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::/asdf/")
 
     def test_invalid_atom(self):
         self.assertRaises(errors.MalformedAtom, self.kls, '~dev-util/spork')
@@ -320,6 +319,11 @@ class Test_native_atom(TestCase):
                              self.kls('cat/pkg[-foo]'))
         self.assertEqual2(self.kls('cat/pkg[foo,-bar]'),
                           self.kls('cat/pkg[-bar,foo]'))
+        # repoid
+        self.assertEqual2(self.kls('cat/pkg::a'), self.kls('cat/pkg::a'))
+        self.assertNotEqual2(self.kls('cat/pkg::a'), self.kls('cat/pkg::b'))
+        self.assertNotEqual2(self.kls('cat/pkg::a'), self.kls('cat/pkg'))
+
         # slots.
         self.assertNotEqual2(self.kls('cat/pkg:1'), self.kls('cat/pkg'))
         self.assertEqual2(self.kls('cat/pkg:2'), self.kls('cat/pkg:2'))

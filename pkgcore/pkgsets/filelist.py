@@ -7,7 +7,6 @@ pkgset based around loading a list of atoms from a world file
 
 import pkgcore.const
 from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.errors import MalformedAtom
 from pkgcore.config import ConfigHint
 
 from snakeoil.demandload import demandload
@@ -36,14 +35,14 @@ class FileList(object):
                 continue
             elif x.startswith("@"):
                 if self.error_on_subsets:
-                    raise ValueError("set %s isn't a valid atom in pkgset %r" % 
+                    raise ValueError("set %s isn't a valid atom in pkgset %r" %
                         (x, self.path))
                 logger.warning("set item %r found in pkgset %r: it will be "
                     "wiped on update since portage/pkgcore store set items"
                     " in a seperate way" % (x[1:], self.path))
                 continue
             s.add(atom(x))
-                
+
         self._atoms = s
         return s
 

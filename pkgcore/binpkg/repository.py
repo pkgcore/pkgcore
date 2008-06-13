@@ -5,7 +5,7 @@
 binpkg ebuild repository
 """
 
-import os, stat
+import os
 
 from pkgcore.repository import prototype, errors
 from pkgcore.merge import triggers

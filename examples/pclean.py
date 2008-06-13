@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright 2007 Charlie Shepherd <masterdriverz@gentoo.org>
+# Copyright 2007 Charlie Shepherd <masterdriverz@gmail.com>
 # License: GPL-2
 
 import sys

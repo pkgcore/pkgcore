@@ -10,7 +10,7 @@ from snakeoil.currying import post_curry, partial
 
 from pkgcore import fetch
 from pkgcore.package import errors
-from pkgcore.test import mallable_obj
+from pkgcore.test import malleable_obj
 from pkgcore.test.ebuild.test_eclass_cache import FakeEclassCache
 from pkgcore.ebuild import ebuild_src, repo_objs, const, errors as ebuild_errors
 
@@ -283,7 +283,7 @@ class test_package_factory(TestCase):
         self.assertEqual(list(pf.default_mirrors), def_mirrors)
 
     def test_get_ebuild_src(self):
-        self.assertEqual(self.mkinst(repo=mallable_obj(
+        self.assertEqual(self.mkinst(repo=malleable_obj(
             _get_ebuild_src=lambda s:"lincoln haunts me: %s" % s)
             ).get_ebuild_src("1"),  "lincoln haunts me: 1")
 
@@ -295,7 +295,7 @@ class test_package_factory(TestCase):
         try:
             for x in (False, True):
                 os.stat_float_times(x)
-                self.assertEqual(self.mkinst(repo=mallable_obj(
+                self.assertEqual(self.mkinst(repo=malleable_obj(
                     _get_ebuild_path=lambda s:f))._get_ebuild_mtime(None),
                     os.stat(f).st_mtime)
         finally:
@@ -303,7 +303,7 @@ class test_package_factory(TestCase):
 
     def test_get_metadata(self):
         ec = FakeEclassCache('/nonexistant/path')
-        pkg = mallable_obj(_mtime_=100, cpvstr='dev-util/diffball-0.71')
+        pkg = malleable_obj(_mtime_=100, cpvstr='dev-util/diffball-0.71')
 
         class fake_cache(dict):
             readonly = False

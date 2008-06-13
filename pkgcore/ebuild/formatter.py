@@ -1,15 +1,7 @@
-# Copyright: 2006 Charlie Shepherd <masterdriverz@gentoo.org>
+# Copyright: 2006 Charlie Shepherd <masterdriverz@gmail.com>
 # License: GPL2
 
-"""PMerge formatting module
-
-To add a new formatter, add the relevant class (which
-should be a subclass of Formatter). Documentation is
-a necessity - things can change/break easily between
-versions. Then add the class name (_not_ an instance) to
-the formatters dictionary - this will instantly make your
-formatter available on the commandline.
-"""
+"""pmerge formatting module"""
 
 import operator
 
@@ -217,8 +209,52 @@ class PkgcoreFormatter(Formatter):
         else:
             self.out.write("%s %s" % (op.desc.ljust(7), p))
 
+class EmptyDict(object):
 
-class PortageFormatter(Formatter):
+    def __getitem__(self, k):
+        return k
+
+    def __setitem__(self, k, v):
+        pass
+
+    def __delitem__(self, k):
+        pass
+
+class CountingFormatter(Formatter):
+
+    """Subclass for formatters that count packages"""
+
+    mappings = EmptyDict()
+
+    def __init__(self, **kwargs):
+        Formatter.__init__(self, **kwargs)
+        self.package_data = {
+            'new':        0,
+            'upgrades':   0,
+            'downgrades': 0,
+            'nslots':     0,
+            'replaces':   0,
+        }
+
+    def handle_package(self, suffix):
+        self.package_data[self.mappings[suffix]] += 1
+
+    def end(self):
+        self.out.write(
+            'Total: %d packages ' % sum(self.package_data.itervalues()),
+            autoline=False)
+        self.out.write(
+            '(%(new)d new, %(upgrades)d upgrades, %(downgrades)d downgrades, '
+            '%(nslots)d in new slots)' % self.package_data)
+common_mappings = {
+    'S': 'nslots',
+    'N': 'new',
+    'U': 'upgrades',
+    'D': 'downgrades',
+    'R': 'replaces',
+}
+
+class PortageFormatter(CountingFormatter):
 
     """Portage formatter
 
@@ -226,11 +262,13 @@ class PortageFormatter(Formatter):
     as much as much as possible.
     """
 
+    mappings = common_mappings
+
     def __init__(self, **kwargs):
         kwargs.setdefault("use_expand", set())
         kwargs.setdefault("use_expand_hidden", set())
-        kwargs.setdefault("display_repo", False)
-        Formatter.__init__(self, **kwargs)
+        kwargs.setdefault("verbose", False)
+        CountingFormatter.__init__(self, **kwargs)
         self.use_splitter = use_expand_filter(self.use_expand,
             self.use_expand_hidden)
         # Map repo location to an index.
@@ -328,7 +366,7 @@ class PortageFormatter(Formatter):
             flaglists = [d.get(expand, ()) for d in usedicts]
             self.format_use(expand, *flaglists)
 
-        if self.display_repo:
+        if self.verbose:
             out.write(out.fg('cyan'), " [%d]" % (reponr))
 
         out.write('\n')
@@ -375,7 +413,7 @@ class PortageFormatter(Formatter):
                 else:
                     # Flag did not exist earlier.
                     flags.extend((yellow, bold, flag, reset, '%*', ' '))
-            for flag in sorted(disabled | (set(oldselectable) - set(selectable))):
+            for flag in sorted(disabled):
                 assert flag
                 if flag in self.pkg_disabled_use:
                     if flag in old_enabled:
@@ -414,8 +452,9 @@ class PortageFormatter(Formatter):
             out.write('"')
 
     def end(self):
-        if self.display_repo:
-            self.out.write()
+        out = self.out
+        if self.verbose:
+            out.write()
             repos = self.repos.items()
             repos.sort(key=operator.itemgetter(1))
             for k, v in repos:
@@ -428,7 +467,7 @@ class PortageFormatter(Formatter):
                         self.out.reset, " %s" % k.location)
 
 
-class PaludisFormatter(Formatter):
+class PaludisFormatter(CountingFormatter):
 
     """Paludis formatter
 
@@ -436,16 +475,12 @@ class PaludisFormatter(Formatter):
     as much as much as possible.
     """
 
-    def __init__(self, **kwargs):
-        Formatter.__init__(self, **kwargs)
-        self.packages = self.new = self.upgrades = self.downgrades = 0
-        self.nslots = 0
+    mappings = common_mappings
 
     def format(self, op):
         out = self.out
         origautoline = out.autoline
         out.autoline = False
-        self.packages += 1
 
         out.write('* ')
         out.write(out.fg('blue'), op.pkg.key)
@@ -455,23 +490,24 @@ class PaludisFormatter(Formatter):
         if op.desc == 'add':
             if op.pkg.slot != '0':
                 suffix = 'S'
-                self.nslots += 1
             else:
                 suffix = 'N'
-                self.new += 1
             out.write(out.fg('yellow'), "[%s]" % suffix)
         elif op.desc == 'replace':
             if op.pkg != op.old_pkg:
                 if op.pkg > op.old_pkg:
-                    suffix = "U"
-                    self.upgrades += 1
+                    suffix = 'U'
                 else:
-                    suffix = "D"
-                    self.downgrades += 1
+                    suffix = 'D'
                 out.write(out.fg('yellow'), "[%s %s]" % (
                         suffix, op.old_pkg.fullver))
             else:
+                suffix = 'R'
                 out.write(out.fg('yellow'), "[R]")
+        else:
+            # Shouldn't reach here
+            assert False
+        self.handle_package(suffix)
 
         red = out.fg('red')
         green = out.fg('green')
@@ -488,13 +524,6 @@ class PaludisFormatter(Formatter):
             out.write(*flags[:-1])
         out.write('\n')
         out.autoline = origautoline
-
-    def end(self):
-        self.out.write(
-            'Total: %d packages '
-            '(%d new, %d upgrades, %d downgrades, %d in new slots)' % (
-                self.packages, self.new, self.upgrades, self.downgrades,
-                self.nslots))
 
 
 def formatter_factory_generator(cls):
@@ -521,6 +550,6 @@ paludis_factory = formatter_factory_generator(PaludisFormatter)
 def portage_verbose_factory():
     """Version of portage-formatter that is always in verbose mode."""
     def factory(**kwargs):
-        kwargs['display_repo'] = True
+        kwargs['verbose'] = True
         return PortageFormatter(**kwargs)
     return factory

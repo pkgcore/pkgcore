@@ -6,7 +6,6 @@ build operation
 """
 
 from snakeoil.dependant_methods import ForcedDepends
-from snakeoil.osutils import pjoin
 
 __all__ = ('build_base', 'base', 'install', 'uninstall', 'replace', 'fetch',
     'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'errors')

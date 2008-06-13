@@ -15,6 +15,7 @@ from pkgcore.pkgsets.glsa import KeyedAndRestriction
 from pkgcore.ebuild.atom import atom
 from pkgcore.merge import errors as merge_errors
 from pkgcore.restrictions import packages, values
+from pkgcore.restrictions.boolean import AndRestriction, OrRestriction
 
 from snakeoil import lists
 from snakeoil.formatters import ObserverFormatter
@@ -54,7 +55,7 @@ that aren't involved in the graph of the requested operation""")
             help="do the resolution, but ask to merge/fetch anything")
         self.add_option('--fetchonly', '-f', action='store_true',
             help="do only the fetch steps of the resolved plan")
-        self.add_option('--newuse', '-N', action='store_true', 
+        self.add_option('--newuse', '-N', action='store_true',
             help="check for changed useflags in installed packages "
                 "(implies -1)")
         self.add_option('--ignore-cycles', '-i', action='store_true',
@@ -103,7 +104,7 @@ a depends on b, and b depends on a, with neither built is an example""")
         if any(not x for x in set_targets):
             self.error("empty set name specified via @")
         options.set.extend(set_targets)
-        
+
 
         # TODO this is rather boilerplate-ish, the commandline module
         # should somehow do this for us.
@@ -149,8 +150,6 @@ a depends on b, and b depends on a, with neither built is an example""")
             self.error('Need at least one atom/set')
         if options.newuse:
             options.oneshot = True
-            if options.set:
-                self.error("Don't specify --newuse when using sets, use it standalone")
         return options, ()
 
 class AmbiguousQuery(parserestrict.ParseError):
@@ -302,12 +301,13 @@ def display_failures(out, sequence, first_level=True, debug=False):
         out.first_prefix.pop()
     out.first_prefix.pop()
     if first_level:
-        [out.first_prefix.pop() for x in (1,2,3)]
+        for x in xrange(3):
+            out.first_prefix.pop()
 
 def slotatom_if_slotted(repos, checkatom):
     """check repos for more than one slot of given atom"""
 
-    if checkatom.slot is None or ncheckatom.slot[0] != "0":
+    if checkatom.slot is None or checkatom.slot[0] != "0":
         return checkatom
 
     found_slots = ()
@@ -435,11 +435,15 @@ def main(options, out, err):
     if options.debug:
         extra_kwargs['debug'] = True
 
+    # XXX: This should recurse on deep
     if options.newuse:
         out.write(out.bold, ' * ', out.reset, 'Scanning for changed USE...')
         out.title('Scanning for changed USE...')
-        for inst_pkg in livefs_repos.itermatch(packages.PackageRestriction('category',
-            values.StrExactMatch('virtual'), negate=True)):
+        restrict = packages.PackageRestriction('category',
+            values.StrExactMatch('virtual'), negate=True)
+        if atoms:
+            restrict = AndRestriction(restrict, OrRestriction(*atoms))
+        for inst_pkg in livefs_repos.itermatch(restrict):
             src_pkgs = all_repos.match(inst_pkg.versioned_atom)
             if src_pkgs:
                 src_pkg = max(src_pkgs)
@@ -449,7 +453,6 @@ def main(options, out, err):
                 newflags = src_use & src_pkg.use
                 changed_flags = (oldflags ^ newflags) | (inst_pkg.iuse ^ src_pkg.iuse)
                 if changed_flags:
-                    #import pdb;pdb.set_trace()
                     atoms.append(src_pkg.versioned_atom)
 
     resolver_inst = resolver_kls(

@@ -53,5 +53,5 @@ for y in ${z} ; do
 			echo "   compressing ${y##*/}"
 			"${PORTAGE_COMPRESS}" ${PORTAGE_COMPRESS_FLAGS} -f "${y}"
 		fi
-	fi	
+	fi
 done

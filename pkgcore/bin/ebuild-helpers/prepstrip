@@ -22,7 +22,7 @@ save_elf_sources() {
 	local sources_dir=/usr/src/debug/${CATEGORY}/${PF}
 	debugedit -b "${WORKDIR}" -d "${sources_dir}" \
 		-l "${T}"/debug.sources "${x}"
-	if [[ -s ${T}/debug.sources ]] ; then 
+	if [[ -s ${T}/debug.sources ]] ; then
 		[[ -d ${D}${sources_dir} ]] || mkdir -p "${D}${sources_dir}"
 		grep -zv '/<built-in>$' "${T}"/debug.sources | \
 			(cd "${WORKDIR}"; LANG=C sort -z -u | \

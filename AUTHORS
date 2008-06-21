@@ -8,7 +8,7 @@ Contributors
 Zac Medico <zmedico@gentoo.org>
 Jason Stubbs <jstubbs@gentoo.og>
 
-Additionally, pkgcore inherited a set of ebuild helper scripts from portage- 
+Additionally, pkgcore inherited a set of ebuild helper scripts from portage-
 primary authors listed below, copyright Gentoo Foundation
 
 Mike Frysinger <vapier@gentoo.org>

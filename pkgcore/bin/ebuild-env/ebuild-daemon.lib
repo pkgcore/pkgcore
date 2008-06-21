@@ -13,11 +13,11 @@ request_sandbox_summary() {
     local line
     speak "request_sandbox_summary ${SANDBOX_LOG}"
     listen line
-    while [ "$line" != "end_sandbox_summary" ]; do	
+    while [ "$line" != "end_sandbox_summary" ]; do
         echo "$line"
         listen line
     done
-}		
+}
 
 internal_inherit() {
     local line

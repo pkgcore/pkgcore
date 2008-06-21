@@ -147,7 +147,7 @@ unpack()
     done
     find . -mindepth 1 -maxdepth 1 ! -type l -print0 | \
          ${XARGS} -0 chmod -fR a+rX,u+w,g-w,o-w
-                        
+
 }
 
 dyn_setup()
@@ -519,7 +519,7 @@ internal_inherit()
     debug-print "inherit: $1 -> $location"
     source "$location" || die "died sourcing $location in inherit()"
     return 0
-}		
+}
 
 # Sources all eclasses in parameters
 declare -ix ECLASS_DEPTH=0

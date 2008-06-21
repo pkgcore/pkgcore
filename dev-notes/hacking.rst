@@ -449,7 +449,7 @@ This does _not_ mean that sets are automatically better everywhere,
 just be aware of what you're doing- for a single search of a range,
 the setup overhead is far slower then a linear search.  Nature of sets, while
 the implementation may be able to guess the proper list size, it still has to
-add each item in; if it *cannot* guess the size (ie, no size hint, generator, 
+add each item in; if it *cannot* guess the size (ie, no size hint, generator,
 iterator, etc), it has to just keep adding items in, expanding the set as
 needed (which requires linear walks for each expansion).  While this may seem
 obvious, people sometimes do effectively the following::

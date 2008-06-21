@@ -581,7 +581,7 @@ execute_phases() {
                 ewarn "this installed pkg may not behave correctly"
                 ewarn
                 sleepbeep 10
-            fi	
+            fi
 
             [[ $PKGCORE_DEBUG -ge 3 ]] && set -x
             if type reinstate_loaded_env_attributes &> /dev/null; then

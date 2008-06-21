@@ -26,7 +26,7 @@ use_with()
         return
     fi
 
-    local UW_SUFFIX=""	
+    local UW_SUFFIX=""
     if [ ! -z "${3}" ]; then
         UW_SUFFIX="=${3}"
     fi
@@ -53,7 +53,7 @@ use_enable()
         return
     fi
 
-    local UE_SUFFIX=""	
+    local UE_SUFFIX=""
     if [ ! -z "${3}" ]; then
         UE_SUFFIX="=${3}"
     fi
@@ -229,7 +229,7 @@ src_unpack()
 {
     if [ "${A}" != "" ]; then
         unpack ${A}
-    fi	
+    fi
 }
 
 src_compile()

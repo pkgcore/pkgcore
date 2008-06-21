@@ -36,17 +36,17 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 * misc bug fixes; pquery --revdep traceback, vecho complaints from do*
   scripts.
 
-* explicit notice that Jason Stubbs, Brian Harring, Andrew Gaffney, and 
+* explicit notice that Jason Stubbs, Brian Harring, Andrew Gaffney, and
   Charlie Shepherd, Zac Medico contributions are available under either
   GPL2 (v2 only) or 3 clause BSD.
   Terms are in root directory under files names BSD, and GPL2.
   Aside from the bash bits Harring implemented during the EBD days, the
   remaining ebuild bash bits are Gentoo Foundation copyright (GPL2), and
-  the contributions from Marien Zwart are currently GPL2 (config bits, still 
+  the contributions from Marien Zwart are currently GPL2 (config bits, still
   need explicit confirmation).
-  
+
   What that effectively means is that pkgcore as a whole currently is GPL2-
-  sometime in the near future, the core of pkgcore (non-ebuild bits) will be 
+  sometime in the near future, the core of pkgcore (non-ebuild bits) will be
   BSD/GPL2, and then down the line the bash bits will be rewritten to be
   BSD/GPL2 (likely dropping the functionality it uses down to something bash/
   BSD shell compatible).
@@ -61,7 +61,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 0.4.7.2: May 07, 2008
 
-* new portage configuration feature- 'ignore-paludis-versioning'.  This 
+* new portage configuration feature- 'ignore-paludis-versioning'.  This
   directs pkgcore to ignore nonstandard -scm ebuilds instead of complaining
   about them.
   Note this does *not* affect the installed pkgs database- if there is a
@@ -78,7 +78,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
   message.
 
 * a few versions of portage-2.2 automatically added @PKGSET items to the
-  world file; due to how portage has implemented their sets, this would 
+  world file; due to how portage has implemented their sets, this would
   effectively convert the data to portage only.  As such, that feature was
   reversed (thank you genone); that said, a few world files have @pkgset
   entries from these versions.  Pkgcore now ignores it for worldfiles, and
@@ -92,7 +92,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 * ticket #14; tweak PORT_LOGDIR support a bit, so that build, install,
   and uninstall are seperated into different logs.
 
-* added '@' operator to pmerge as an alias for --set; for example, 
+* added '@' operator to pmerge as an alias for --set; for example,
   'pmerge @system' is the same as 'pmerge --set system'.
 
 * fallback method of using the file binary instead of libmagic module is
@@ -116,14 +116,14 @@ pkgcore 0.4.7: May 03, 2008
   configuration (trigger is pkgcore.merge.triggers.BinaryDebug).
 
 * added cygwin ostype target for development purposes.  In no shape or form
-  is this currently considered supported, although anyone interested in 
+  is this currently considered supported, although anyone interested in
   developing support for that platform, feel free to contact us.
 
 * in candidate identification in repository restriction matching, it was
   possible for a PackageRestriction that was negated to be ignored, thus
   resulting in no matches.  This has been corrected, although due to
   collect_package_restrictions, it's possible to lose the negation state
-  leading to a similar scenario (no known cases of it currently).  This 
+  leading to a similar scenario (no known cases of it currently).  This
   codepath will need reworking to eliminate these scenarios.
 
 * mercurial+ sync prefix is now supported for hg.
@@ -165,7 +165,7 @@ pkgcore 0.4.6: April 29, 2008
 
 * FEATURES=buildpkg is now supported.
 
-* the engine used for install/uninstall/replace is now configurable via 
+* the engine used for install/uninstall/replace is now configurable via
   engine_kls attribute on the op class.
 
 * dropped exporting of USER='portage' if id is portage.  Ancient var setting,
@@ -173,7 +173,7 @@ pkgcore 0.4.6: April 29, 2008
 
 * add SunOS to known OS's since it's lchown suffices for our needs.
 
-* added eapi awareness to atoms, so that an eapi1 atom only allows the 
+* added eapi awareness to atoms, so that an eapi1 atom only allows the
   slot extension for example.
 
 * remove a stray printf from cpy atom; visible only when repository atoms
@@ -208,7 +208,7 @@ pkgcore 0.4.6: April 29, 2008
   else it'll combine location and label.
 
 * cdb, anydbm, sqlite, and sql_template cache backends have been removed
-  pending updating the code for cache backend cleanups.  If interested in 
+  pending updating the code for cache backend cleanups.  If interested in
   these backends, contact ferringb at irc://freenode.net/#pkgcore .
 
 
@@ -216,7 +216,7 @@ pkgcore 0.4.6: April 29, 2008
 
 * merging/replacing performance may be a bit slower in this release- the level
   of stats calls went up in comparison to previous releases, with several
-  duplicates.  This will be corrected in the next release- releasing in the 
+  duplicates.  This will be corrected in the next release- releasing in the
   interim for bugfixes this version contains.
 
 * add CBUILD=${CBUILD:-${CHOST}}; couple of odd ebuilds rely on it despite
@@ -269,10 +269,10 @@ pkgcore 0.4.6: April 29, 2008
 * USE=-* in make.conf support is restored.  ticket 155.
 
 * minor tweak to package.keywords, package.use, and package.license support-
-  -* is properly supported now.  Following portage, if you're trying to 
+  -* is properly supported now.  Following portage, if you're trying to
   match keywords for a pkg that are '-* x86', you must match on x86.
 
-* pquery --attr use output for EAPI=1 default IUSE is significantly less 
+* pquery --attr use output for EAPI=1 default IUSE is significantly less
   ugly.
 
 * ticket #150. EAPI1 IUSE defaults fixups.  stacking order is that default
@@ -280,8 +280,8 @@ pkgcore 0.4.6: April 29, 2008
   pkg, etc), will override if possible.  Effectively, this means a default
   IUSE of "-foon" is pointless, since there is no earlier USE stack to
   override.
-  
-* pkgcore.ebuild.collapsed_restrict_to_data api was broken outside of a 
+
+* pkgcore.ebuild.collapsed_restrict_to_data api was broken outside of a
   major version bump- specifically pull_cp_data method was removed since
   the lone consumer (pkgcore internals) doesn't need it, and the method
   is semi dangerous to use since it only examines atoms.
@@ -295,7 +295,7 @@ pkgcore 0.4.6: April 29, 2008
   in pkgcore handling of it.  Ebuild since removed, but the KeyError issue
   is corrected.  (keep the bugs coming)
 
-* minor performance optimization to binpkg merging when there is a large # 
+* minor performance optimization to binpkg merging when there is a large #
   of symlink rewrites required.
 
 * ticket #153; restore <0.4 behaviour for temporal blocker validation, rather
@@ -418,13 +418,13 @@ pkgcore 0.3.2: Nov 3, 2007
 * cd to ${WORKDIR} if ${S} doesn't exist for test/install phases; matches
   change in portage behaviour.
 
-* Now require snakeoil version 0.2 and up- require new capability of 
+* Now require snakeoil version 0.2 and up- require new capability of
   AtomicWriteFile, ability to specify uid/gid/perms.  Via that, fixes ticket
   109 (umask leaking through to profile.env).
 
 * the 'glsa' pkgset is now deprecated in favor of 'vuln'; will remain
   through till 0.4 (ticket #106).
- 
+
 * ticket 105/96; fix via andkit, basically a bug in einstall lead to
   extra einstall opts getting dropped instead of passed through.
 
@@ -510,11 +510,11 @@ pkgcore 0.3: Jun 06, 2007
   a specific request to be satisfied, etc, all of it is doable without having
   to insert code directly into the resolver.  Anyone interested in adding these
   featues, please talk to harring.
-  Worth noting, the events api and data structs for the resolver are still a 
+  Worth noting, the events api and data structs for the resolver are still a
   work in process- meaning the api is not guranteed to stay stable at least
   till the next minor release.
 
-* old style virtual pkgs are no longer combined into one with multiple 
+* old style virtual pkgs are no longer combined into one with multiple
   providers; aside from simplifying things, this fixes a few annoying resolution
   failures involving virtual/modutils.
 

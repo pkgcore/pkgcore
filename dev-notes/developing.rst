@@ -6,10 +6,10 @@ If you're just installing pkgcore from a released tarball, skip this section.
 
 To get the current (development) code with history, install bazaar_
 (``emerge bzr`` on gentoo) and run::
- 
+
   bzr branch bzr://bzr.pkgcore.org/<branch>
 
-Specifically, to get the mainline/integration branch, 
+Specifically, to get the mainline/integration branch,
 
   bzr branch bzr://bzr.pkgcore.org/pkgcore/
 
@@ -18,8 +18,8 @@ to svn/cvs checkout), run::
 
   bzr co --lightweight http://bzr.pkgcore.org/<branch>
 
-It's strongly suggested you run at least bzr 1.0, and do a full branch- 
-it's actually quicker then a lightweight checkout the majority of the time.  
+It's strongly suggested you run at least bzr 1.0, and do a full branch-
+it's actually quicker then a lightweight checkout the majority of the time.
 
 If you need full history, and can't get bzr 1.0 or later::
 

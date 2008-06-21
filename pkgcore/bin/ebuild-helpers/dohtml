@@ -12,18 +12,18 @@
 #
 #
 # Detailed usage:
-# dohtml <list-of-files> 
-#  - will install the files in the list of files (space-separated list) into 
+# dohtml <list-of-files>
+#  - will install the files in the list of files (space-separated list) into
 #    /usr/share/doc/${PF}/html, provided the file ends in .htm, .html, .css,
 #      .js, ,gif, .jpeg, .jpg, or .png.
 # dohtml -r <list-of-files-and-directories>
-#  - will do as 'dohtml', but recurse into all directories, as long as the 
+#  - will do as 'dohtml', but recurse into all directories, as long as the
 #    directory name is not CVS
 # dohtml -A jpe,java [-r] <list-of-files[-and-directories]>
 #  - will do as 'dohtml' but add .jpe,.java (default filter list is
 #    added to your list)
 # dohtml -a png,gif,html,htm [-r] <list-of-files[-and-directories]>
-#  - will do as 'dohtml' but filter on .png,.gif,.html,.htm (default filter 
+#  - will do as 'dohtml' but filter on .png,.gif,.html,.htm (default filter
 #    list is ignored)
 # dohtml -x CVS,SCCS,RCS -r <list-of-files-and-directories>
 #  - will do as 'dohtml -r', but ignore directories named CVS, SCCS, RCS

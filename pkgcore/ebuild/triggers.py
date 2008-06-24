@@ -296,7 +296,7 @@ class ConfigProtectUninstall(triggers.base):
                         remove.append(recorded_ent)
                 # If a file doesn't exist we don't need to remove it
                 except IOError, e:
-                    if e.errno != errno.ENOENT:
+                    if e.errno not in (errno.ENOENT, errno.ENOTDIR):
                         raise
 
         for x in remove:

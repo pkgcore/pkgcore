@@ -5,7 +5,7 @@ static PyObject *discard, *clear, *add;
 static PyObject *
 incremental_expansion(PyObject *self, PyObject *args, PyObject *kwargs)
 {
-	int finalize;
+	int finalize = 0;
 	static char *keywords[] = {
 		"orig",
 		"iterable",
@@ -14,20 +14,24 @@ incremental_expansion(PyObject *self, PyObject *args, PyObject *kwargs)
 		NULL
 	};
 	PyObject *orig, *iterable, *finalize_obj = Py_True;
-	PyObject *iterator, *item;
+	PyObject *iterator, *item = NULL;
+	PyObject *tmp = NULL;
 
 	char *msg_prefix = "";
 	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO|sO", keywords,
 		&orig, &iterable, &msg_prefix, &finalize_obj))
 		return NULL;
 
-	iterator = PyObject_GetIter(iterable);
-	if (iterator == NULL)
+	if(NULL == (iterator = PyObject_GetIter(iterable)))
 		return NULL;
 
-	finalize = finalize_obj ? PyObject_IsTrue(finalize_obj) : 0;
-	if (finalize == -1)
-		return NULL;
+	if(finalize_obj) {
+		finalize = PyObject_IsTrue(finalize_obj);
+		if(PyErr_Occurred()) {
+			goto err;
+		}
+	}
+
 	while ((item = PyIter_Next(iterator))) {
 		char *str;
 		if (!PyString_CheckExact(item)) {
@@ -36,34 +40,53 @@ incremental_expansion(PyObject *self, PyObject *args, PyObject *kwargs)
 			goto err;
 		}
 		str = PyString_AS_STRING(item);
-		if (*str == '-') {
+		if ('-' == *str) {
 			str++;
-			if (*str == '\0') {
+			if ('\0' == *str) {
 				PyErr_Format(PyExc_ValueError,
 				"%sencountered an incomplete negation, '-'",
 					msg_prefix);
 				goto err;
 			}
 			if (!strcmp(str, "*")) {
-				if (!PyObject_CallMethodObjArgs(orig, clear, NULL))
+				if (NULL == (tmp = PyObject_CallMethodObjArgs(orig, clear, NULL)))
 					goto err;
+				Py_DECREF(tmp);
 			} else {
-				PyObject *discard = PyString_FromFormat("%s", str);
-				if (!PyObject_CallMethod(orig, "discard",
-					"(O)", discard))
+				PyObject *discard;
+				if (NULL == (discard = PyString_FromFormat("%s", str))) {
 					goto err;
+				}
+				if (NULL == (tmp = PyObject_CallMethod(orig, "discard",
+					"(O)", discard))) {
+					Py_DECREF(discard);
+					goto err;
+				}
+				Py_DECREF(tmp);
+				Py_DECREF(discard);
 			}
 			if (!finalize) {
-				if (!PyObject_CallMethodObjArgs(orig, add, item, NULL))
+				if (NULL == (tmp = PyObject_CallMethodObjArgs(orig, add, item, NULL)))
 					goto err;
+				Py_DECREF(tmp);
 			}
 		} else {
-			PyObject *discard = PyString_FromFormat("-%s", str);
-			if (!discard ||
-			    !PyObject_CallMethod(orig, "discard", "(O)",
-					discard) ||
-			    !PyObject_CallMethodObjArgs(orig, add, item, NULL))
+			PyObject *discard;
+			if(NULL == (discard = PyString_FromFormat("-%s", str)))
 				goto err;
+			if(NULL == (tmp = PyObject_CallMethod(orig, "discard",
+				"(O)", discard))) {
+				Py_DECREF(discard);
+				goto err;
+			}
+			Py_DECREF(tmp);
+			if(NULL == (tmp = PyObject_CallMethodObjArgs(orig, add,
+				item, NULL))) {
+				Py_DECREF(discard);
+				goto err;
+			}
+			Py_DECREF(tmp);
+			Py_DECREF(discard);
 		}
 		Py_DECREF(item);
 	}

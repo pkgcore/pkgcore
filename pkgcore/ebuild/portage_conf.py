@@ -459,7 +459,18 @@ def config_from_make_conf(location="/etc/"):
         except OSError, oe:
             if oe.errno != errno.ENOENT:
                 raise
+            if set(features).intersection(
+                ('buildpkg', 'pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
+                logger.warn("disabling buildpkg related features since PKGDIR doesn't exist")
             pkgdir = None
+    else:
+       if set(features).intersection(
+           ('buildpkg', 'pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
+           logger.warn("disabling buildpkg related features since PKGDIR is unset")
+
+
+    # yes, round two; may be disabled from above and massive else block sucks
+    if pkgdir is not None:
         # If we are not using the native bzip2 then the Tarfile.bz2open
         # the binpkg repository uses will fail.
         if pkgdir and os.path.isdir(pkgdir):

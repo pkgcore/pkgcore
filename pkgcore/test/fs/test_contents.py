@@ -196,15 +196,26 @@ class TestContentsSet(TestCase):
                 self.mk_file("/usr/foo")])))
 
     def test_map_directory_structure(self):
-        old = contents.contentsSet([self.mk_file("/dir/a"),
-            self.mk_dir("/dir"), self.mk_link("/sym", "dir")])
+        old = contents.contentsSet([self.mk_dir("/dir"),
+            self.mk_link("/sym", "dir")])
         new = contents.contentsSet([self.mk_file("/sym/a"),
             self.mk_dir("/sym")])
         # verify the machinery is working as expected.
-        self.assertNotEqual(list(old.difference(new)), [self.mk_dir("/dir")])
         ret = new.map_directory_structure(old)
         self.assertEqual(sorted(ret), sorted([self.mk_dir("/dir"),
             self.mk_file("/dir/a")]))
+
+        # test recursion next.
+        old.add(self.mk_link("/dir/sym", "dir2"))
+        old.add(self.mk_dir("/dir/dir2"))
+        new.add(self.mk_file("/dir/sym/b"))
+        new.add(self.mk_dir("/sym/sym"))
+
+        ret = new.map_directory_structure(old)
+        self.assertEqual(sorted(ret), sorted([self.mk_dir("/dir"),
+            self.mk_file("/dir/a"), self.mk_dir("/dir/dir2"),
+            self.mk_file("/dir/dir2/b")]))
+
 
     def test_add_missing_directories(self):
         src = [self.mk_file("/dir1/a"), self.mk_file("/dir2/dir3/b"),

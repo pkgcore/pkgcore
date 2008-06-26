@@ -41,7 +41,7 @@ demandload(globals(),
 
 class force_unpacking(triggers.base):
 
-    required_csets = ('install',)
+    required_csets = ('new_cset',)
     priority = 5
     _hooks = ('sanity_check',)
     _label = 'forced decompression'

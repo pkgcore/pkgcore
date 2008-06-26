@@ -317,15 +317,20 @@ class contentsSet(object):
         # rewrite each node (resolving down the filepath chain)
         conflicts = sorted(contentsSet(self.iterdirs()).intersection(conflicts_d))
         obj = self.clone()
-        for conflict in conflicts:
-            # punt the conflict first, since we don't want it getting rewritten
-            obj.remove(conflict)
-            subset = self.child_nodes(conflict.location)
-            obj.difference_update(subset)
-            subset = subset.change_offset(conflict.location, conflict.resolved_target)
-            obj.update(subset)
-            if add_conflicting_sym:
-                obj.add(other[conflicts_d[conflict]])
+        while conflicts:
+            for conflict in conflicts:
+                # punt the conflict first, since we don't want it getting rewritten
+                obj.remove(conflict)
+                subset = obj.child_nodes(conflict.location)
+                obj.difference_update(subset)
+                subset = subset.change_offset(conflict.location, conflict.resolved_target)
+                obj.update(subset)
+                if add_conflicting_sym:
+                    obj.add(other[conflicts_d[conflict]])
+
+            # rebuild the targets first; sorted due to the fact that we want to
+            # rewrite each node (resolving down the filepath chain)
+            conflicts = sorted(contentsSet(obj.iterdirs()).intersection(conflicts_d))
         return obj
 
     def add_missing_directories(self, mode=0775, uid=0, gid=0, mtime=None):

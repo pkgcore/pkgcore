@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* make contentsSet.map_directory_structure go recursive-
+  this fixes ticket #204, invalid removal of files previously just merged.
+
 * make --newuse work with atoms/sets
 
 * add a cpy version of incremental_expansion

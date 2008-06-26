@@ -156,6 +156,17 @@ class Test_fsLink(TestCase, base):
         self.assertEqual(self.make_obj(location="/tmp/foon", target="/dar").resolved_target,
             "/dar")
 
+    def test_cmp(self):
+        obj1 = self.make_obj(
+            location='/usr/lib64/opengl/nvidia/lib/libnvidia-tls.so.1',
+            target='../tls/libnvidia-tls.so.1')
+        obj2 = self.make_obj(
+            location='/usr/lib32/opengl/nvidia/lib/libGL.s',
+            target='libGL.so.173.14.09')
+        self.assertTrue(obj1 > obj2)
+        self.assertTrue(obj2 < obj1)
+
+
 class Test_fsDev(TestCase, base):
     kls = fs.fsDev
 

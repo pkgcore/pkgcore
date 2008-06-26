@@ -127,6 +127,8 @@ class fsBase(object):
     def dirname(self):
         return dirname(self.location)
 
+    def __cmp__(self, other):
+        return cmp(self.location, other.location)
 
 
 class _LazyChksums(LazyFullValLoadDict):
@@ -192,11 +194,6 @@ class fsDir(fsBase):
     def __repr__(self):
         return "dir:%s" % self.location
 
-    def __cmp__(self, other):
-        return cmp(
-            self.location.split(path_seperator),
-            other.location.split(path_seperator))
-
 
 class fsLink(fsBase):
 
@@ -231,6 +228,14 @@ class fsLink(fsBase):
         if self.target.startswith("/"):
             return self.target
         return normpath(pjoin(self.location, '../', self.target))
+
+    def __cmp__(self, other):
+        c = cmp(self.location, other.location)
+        if c:
+            return c
+        if isinstance(other, self.__class__):
+            return cmp(self.target, other.target)
+        return 0
 
     def __repr__(self):
         return "symlink:%s->%s" % (self.location, self.target)

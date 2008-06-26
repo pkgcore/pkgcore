@@ -34,7 +34,7 @@ def map_new_cset_livefs(engine, csets, cset_name='raw_new_cset'):
     ondisk = contents.contentsSet(livefs.intersect(initial.iterdirs(),
         realpath=True))
     livefs.recursively_fill_syms(ondisk)
-    ret = initial.map_directory_structure(ondisk, add_conflicting_sym=False)
+    ret = initial.map_directory_structure(ondisk, add_conflicting_sym=True)
     return ret
 
 

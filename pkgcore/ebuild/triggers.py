@@ -19,7 +19,8 @@ from snakeoil.osutils import join as pjoin
 from snakeoil.demandload import demandload
 demandload(globals(),
     "fnmatch",
-    'pkgcore:os_data')
+    'pkgcore:os_data',
+    'pkgcore.merge.engine:map_new_cset_livefs')
 
 colon_parsed = frozenset(
     ["ADA_INCLUDE_PATH",  "ADA_OBJECTS_PATH", "INFODIR", "INFOPATH",
@@ -305,7 +306,7 @@ class ConfigProtectUninstall(triggers.base):
 
 class preinst_contents_reset(triggers.base):
 
-    required_csets = ('install',)
+    required_csets = ('new_cset',)
     priority = 1
     _hooks = ('pre_merge',)
 
@@ -319,6 +320,9 @@ class preinst_contents_reset(triggers.base):
         cs = engine.new._parent.scan_contents(self.format_op.env["D"])
         if engine.offset != '/':
             cs = cs.insert_offset(engine.offset)
+        cset.update(cs)
+        cs = map_new_cset_livefs(engine, {'cset':cset}, 'cset')
+        cset.clear()
         cset.update(cs)
 
 

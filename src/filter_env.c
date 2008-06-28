@@ -70,8 +70,11 @@ is_function(const char *p, char **start, char **end)
         (' ' == *(p) || '\t' == *(p))) ++p;
     #define FUNC_LEN 8
     SKIP_SPACES(p);
-    if(strncmp(p, "function", FUNC_LEN) == 0)
-        p += FUNC_LEN;
+    if(strncmp(p, "function", FUNC_LEN) == 0) {
+        if(isspace(p[FUNC_LEN])) {
+            p += FUNC_LEN;
+        }
+    }
     while('\0' != *p && isspace(*p))
         ++p;
     *start = (char *)p;

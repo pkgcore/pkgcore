@@ -85,52 +85,65 @@ def build_regex_string(tokens):
 
 
 FUNC_LEN = len('function')
+
 def is_function(buff, pos):
     """@returns: start, end, pos or None, None, None tuple."""
     isspace = str.isspace
-    while buff[pos] in ' \t':
+    try:
+        while buff[pos] in ' \t':
+            pos += 1
+        if buff[pos:pos + FUNC_LEN] == 'function':
+            try:
+                if isspace(buff[pos + FUNC_LEN]):
+                    pos += FUNC_LEN + 1
+            except IndexError:
+                # insane, but it could still be a function-
+                # len('f(){:;}') <= FUNC_LEN.
+                pass
+        while isspace(buff[pos]):
+            pos += 1
+        start = pos
+        while buff[pos] not in '\0 \t\n="\'()':
+            pos += 1
+        end = pos
+        if end == start:
+            return None, None, None
+        while buff[pos] in ' \t':
+            pos += 1
+        if buff[pos] != '(':
+            return None, None, None
         pos += 1
-    if buff[pos:pos + FUNC_LEN] == 'function':
-        pos += FUNC_LEN
-    while isspace(buff[pos]):
+        while buff[pos] in ' \t':
+            pos += 1
+        if buff[pos] != ')':
+            return None, None, None
         pos += 1
-    start = pos
-    while buff[pos] not in '\0 \t\n="\'()':
-        pos += 1
-    end = pos
-    if end == start:
+        while isspace(buff[pos]):
+            pos += 1
+        if buff[pos] != '{':
+            return None, None, None
+        return start, end, pos + 1
+    except IndexError:
+        # can't be a function, ran off the end
         return None, None, None
-    while buff[pos] in ' \t':
-        pos += 1
-    if buff[pos] != '(':
-        return None, None, None
-    pos += 1
-    while buff[pos] in ' \t':
-        pos += 1
-    if buff[pos] != ')':
-        return None, None, None
-    pos += 1
-    while isspace(buff[pos]):
-        pos += 1
-    if buff[pos] != '{':
-        return None, None, None
-    return start, end, pos + 1
 
 
 def is_envvar(buff, pos):
     """@returns: start, end, pos or None, None, None tuple."""
-    while buff[pos] in ' \t':
-        pos += 1
-    start = pos
-    while True:
-        if buff[pos] in '\0"\'()- \t\n':
-            return None, None, None
-        if buff[pos] == '=':
-            if pos == start:
+    try:
+        while buff[pos] in ' \t':
+            pos += 1
+        start = pos
+        while True:
+            if buff[pos] in '\0"\'()- \t\n':
                 return None, None, None
-            return start, pos, pos + 1
-        pos += 1
-
+            if buff[pos] == '=':
+                if pos == start:
+                    return None, None, None
+                return start, pos, pos + 1
+            pos += 1
+    except IndexError:
+        return None, None, None
 
 def process_scope(out, buff, pos, var_match, func_match, endchar):
     window_start = pos

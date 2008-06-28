@@ -4,6 +4,13 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* ticket 203; functionfoo() {:;} is not function 'foo', it's 'functionfoo'.
+  Users shouldn't have seen this- thanks to ferdy for spotting it in an audit.
+
+* add 'skip_if_source' option to misc. binpkg merging triggers- defaults to
+  True, controls whether or not if a pkg from the target_repo should be
+  reinstalled to the repo.
+
 * make contentsSet.map_directory_structure go recursive-
   this fixes ticket #204, invalid removal of files previously just merged.
 

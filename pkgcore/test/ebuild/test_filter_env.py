@@ -21,6 +21,12 @@ class NativeFilterEnvTest(TestCase):
         self.filter_env(out, raw_data, vars, funcs, not preserve_vars, not preserve_funcs)
         return out.getvalue()
 
+    def test_function_foo(self):
+        ret = ''.join(self.get_output("function foo() {:;}", funcs="foo"))
+        self.assertEqual(ret, '')
+        ret = ''.join(self.get_output("functionfoo() {:;}", funcs="foo"))
+        self.assertEqual(ret, 'functionfoo() {:;}')
+
     def test_simple(self):
         data = \
 """

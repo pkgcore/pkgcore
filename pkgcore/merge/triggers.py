@@ -602,16 +602,21 @@ class SavePkg(base):
     _copy_source = 'new'
 
     pkgcore_config_type = ConfigHint({'target_repo':'ref:repo',
-        'pristine':'bool'}, typename='trigger', required=['target_repo'])
+        'pristine':'bool', 'skip_if_source':'bool'}, typename='trigger',
+         required=['target_repo'])
 
-    def __init__(self, target_repo, pristine=True):
+    def __init__(self, target_repo, pristine=True, skip_if_source=True):
         if not pristine:
             self._hooks = ('pre_merge',)
             self.required_csets = ('install',)
+        self.skip_if_source = skip_if_source
         self.target_repo = target_repo
 
     def trigger(self, engine, cset):
         pkg = getattr(engine, self._copy_source)
+        if self.skip_if_source and getattr(pkg, 'repo') == self.target_repo:
+            return
+
         old_pkg = self.target_repo.match(pkg.versioned_atom)
         wrapped_pkg = MutatedPkg(pkg, {'contents':cset})
         if old_pkg:

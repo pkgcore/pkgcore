@@ -4,6 +4,20 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+0.4.7.5: July 6, 2008
+
+* incremental_expansion and friends have grown a cpython implementation-
+  this speedup will show up if you are doing lots of profile work (pcheck
+  for example, which has to read effectively all profile).
+
+* if the invoking user isn't part of the portage group, don't throw a
+  traceback due to permission denied for virtuals cache.
+
+* correct a false positive in pkgcore.test.util.test_commandline that occurs
+  when snakeoil c extensions aren't enabled.
+
+* ticket 193; follow symlinks in /etc/portage/*/ directories.
+
 * ticket 203; functionfoo() {:;} is not function 'foo', it's 'functionfoo'.
   Users shouldn't have seen this- thanks to ferdy for spotting it in an audit.
 
@@ -28,6 +42,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
   it's confusing and doesn't match portage behaviour.
 
 * fix ticket 192: ignore non-existant files in config protect checking
+
 
 0.4.7.4: June 11, 2008
 

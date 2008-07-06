@@ -141,7 +141,7 @@ dump_trace() {
 }
 
 hasv() {
-    if hasq "$@"; then
+    if has "$@"; then
         echo "${1}"
         return 0
     fi
@@ -247,7 +247,7 @@ dump_environ() {
         "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" -v \
         "$(filter_env_var_filter ${DONT_EXPORT_VARS} f x )"
 
-    if ! hasq "--no-attributes" "$@"; then
+    if ! has "--no-attributes" "$@"; then
         echo "# env attributes"
         # leave this form so that it's easier to add others in.
         for y in export ; do
@@ -425,7 +425,7 @@ pkgcore_ensure_PATH()
         for x in ${EXISTING_PATH}; do
             # keep in mind PATH=":foon" is a valid way to say "cwd"
             [ -z "${x}" ] && continue
-            if ! hasq ${x} ${PATH} && ! hasq ${x} ${adds}; then
+            if ! has ${x} ${PATH} && ! hasq ${x} ${adds}; then
                 adds="${adds:+${adds}:}${x}"
             fi
         done
@@ -523,7 +523,7 @@ init_environ() {
 
     [ -z "${ERRORMSG}" ] || die "${ERRORMSG}"
 
-    hasq nostrip ${RESTRICT} && export DEBUGBUILD=1
+    has nostrip ${RESTRICT} && export DEBUGBUILD=1
 
     #a reasonable default for $S
     if [ "$S" = "" ]; then

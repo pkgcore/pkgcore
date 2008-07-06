@@ -265,7 +265,7 @@ dyn_compile()
     export PWORKDIR="$WORKDIR"
     src_compile
     #|| abort_compile "fail"
-    if hasq nostrip $FEATURES $RESTRICT; then
+    if has nostrip $FEATURES $RESTRICT; then
         touch DEBUGBUILD
     fi
 }
@@ -332,8 +332,7 @@ dyn_install()
             echo " LDFLAGS='-Wl,-z,now' emerge ${PN}"
             echo "${f}"
             echo -ne '\a\n'
-            [[ ${FEATURES/stricter} != "${FEATURES}" ]] \
-                && die "Aborting due to lazy bindings"
+            has stricter $FEATURES && die "Aborting due to lazy bindings"
             sleep 1
         fi
 
@@ -349,8 +348,7 @@ dyn_install()
             echo " consider writing a patch which addresses this problem."
             echo "${f}"
             echo -ne '\a\n'
-            [[ ${FEATURES/stricter} != "${FEATURES}" ]] \
-                && die "Aborting due to textrels"
+            has stricter $FEATURES && die "Aborting due to textrels"
             sleep 1
         fi
 
@@ -364,8 +362,7 @@ dyn_install()
             echo " at http://bugs.gentoo.org/ to make sure the file is fixed."
             echo "${f}"
             echo -ne '\a\n'
-            [[ ${FEATURES/stricter} != "${FEATURES}" ]] \
-                && die "Aborting due to +x stack"
+            has stricter $FEATURES && die "Aborting due to +x stack"
             sleep 1
         fi
 
@@ -394,7 +391,7 @@ dyn_preinst()
     D=${IMAGE} pkg_preinst
 
     # total suid control.
-    if hasq suidctl $FEATURES > /dev/null ; then
+    if has suidctl $FEATURES > /dev/null ; then
         sfconf=/etc/portage/suidctl.conf
         echo ">>> Preforming suid scan in ${IMAGE}"
         for i in $(find "${IMAGE}"/ -type f \( -perm -4000 -o -perm -2000 \) ); do
@@ -426,7 +423,7 @@ dyn_preinst()
     fi
 
     # SELinux file labeling (needs to always be last in dyn_preinst)
-    if hasq selinux $FEATURES || use selinux; then
+    if has selinux $FEATURES || use selinux; then
         # only attempt to label if setfiles is executable
         # and 'context' is available on selinuxfs.
         if [ -f /selinux/context -a -x /usr/sbin/setfiles ]; then
@@ -461,7 +458,7 @@ dyn_preinst()
 # in the future might use e* from /etc/init.d/functions.sh if i feel like it
 debug-print()
 {
-    if hasq ${EBUILD_PHASE} depend nofetch config info postinst; then
+    if has ${EBUILD_PHASE} depend nofetch config info postinst; then
         return
     fi
     # if $T isn't defined, we're in dep calculation mode and
@@ -532,7 +529,7 @@ inherit()
         SAVED_INHERIT_COUNT=$ECLASS_DEPTH
         ECLASS_DEPTH=0
     fi
-    if hasq $1 $INHERITED && [ "${EBUILD_PHASE}" == "depend" ]; then
+    if has $1 $INHERITED && [ "${EBUILD_PHASE}" == "depend" ]; then
         #echo "QA notice: $1 is inherited multiple times: ${CATEGORY}/${PF}" >&2
         INHERITED_ALREADY=1
     fi
@@ -556,7 +553,7 @@ inherit()
         export ECLASS="$1"
 
         if [ "$EBUILD_PHASE" != "depend" ]; then
-            if ! hasq $ECLASS $INHERITED; then
+            if ! has $ECLASS $INHERITED; then
                 echo
                 echo "QA Notice: ECLASS '$ECLASS' illegal conditional inherit in $CATEGORY/$PF" >&2
                 echo
@@ -612,7 +609,7 @@ inherit()
         #turn on glob expansion
  		set +f
 
-        if hasq $1 $INHERITED && [ $INHERITED_ALREADY == 0 ]; then
+        if has $1 $INHERITED && [ $INHERITED_ALREADY == 0 ]; then
 #
 # enable this one eclasses no longer fool with eclass and inherited.
 #			if [ "${EBUILD_PHASE}" == "depend" ]; then
@@ -790,7 +787,7 @@ useq()
 
     # Make sure we have this USE flag in IUSE
     # temp disable due to PORTAGE_ARCHLIST not being exported in
-    #if ! hasq "${u}" ${IUSE} ${E_IUSE} && ! hasq "${u}" ${PORTAGE_ARCHLIST} selinux; then
+    #if ! has "${u}" ${IUSE} ${E_IUSE} && ! hasq "${u}" ${PORTAGE_ARCHLIST} selinux; then
     #    echo "QA Notice: USE Flag '${u}' not in IUSE for ${CATEGORY}/${PF}" >&2
     #fi
 
@@ -836,7 +833,7 @@ insopts()
     INSOPTIONS=""
     for x in $*; do
         #if we have a debug build, let's not strip anything
-        if hasq nostrip $FEATURES $RESTRICT && [ "$x" == "-s" ]; then
+        if has nostrip $FEATURES $RESTRICT && [ "$x" == "-s" ]; then
             continue
  		else
             INSOPTIONS="$INSOPTIONS $x"
@@ -859,7 +856,7 @@ exeopts()
     EXEOPTIONS=""
     for x in $*; do
         #if we have a debug build, let's not strip anything
-        if hasq nostrip $FEATURES $RESTRICT && [ "$x" == "-s" ]; then
+        if has nostrip $FEATURES $RESTRICT && [ "$x" == "-s" ]; then
             continue
         else
             EXEOPTIONS="$EXEOPTIONS $x"
@@ -873,7 +870,7 @@ libopts()
     LIBOPTIONS=""
     for x in $*; do
         #if we have a debug build, let's not strip anything
-        if hasq nostrip $FEATURES $RESTRICT && [ "$x" == "-s" ]; then
+        if has nostrip $FEATURES $RESTRICT && [ "$x" == "-s" ]; then
             continue
         else
             LIBOPTIONS="$LIBOPTIONS $x"

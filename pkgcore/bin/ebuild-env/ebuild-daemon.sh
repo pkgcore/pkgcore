@@ -58,7 +58,7 @@ fi
 alive='1'
 re="$(readonly | cut -s -d '=' -f 1 | cut -s -d ' ' -f 3)"
 for x in $re; do
-    if ! hasq $x "$DONT_EXPORT_VARS"; then
+    if ! has $x "$DONT_EXPORT_VARS"; then
         DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $x"
     fi
 done

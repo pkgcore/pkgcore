@@ -14,7 +14,9 @@ from snakeoil.osutils import listdir, ensure_dirs, pjoin, readlines
 from snakeoil.currying import partial
 from snakeoil.fileutils import read_dict, AtomicWriteFile
 from snakeoil.demandload import demandload
-demandload(globals(), "errno")
+demandload(globals(),
+    'errno',
+    'pkgcore.log:logger')
 
 # generic functions.
 
@@ -62,32 +64,40 @@ def _get_mtimes(loc):
 def _write_mtime_cache(mtimes, data, location):
     old = os.umask(0113)
     try:
-        if not ensure_dirs(os.path.dirname(location),
-            gid=portage_gid, mode=0775):
-            # bugger, can't update..
-            return
-        f = AtomicWriteFile(location, gid=portage_gid, perms=0664)
-        # invert the data...
-        rev_data = {}
-        for pkg, ver_dict in data.iteritems():
-            for fullver, virtuals in ver_dict.iteritems():
-                for virtual in virtuals:
-                    rev_data.setdefault(virtual.category, []).extend(
-                        (pkg, fullver, str(virtual)))
-        for cat, mtime in mtimes.iteritems():
-            if cat in rev_data:
-                f.write("%s\t%i\t%s\n" % (cat, mtime,
-                     '\t'.join(rev_data[cat])))
-            else:
-                f.write("%s\t%i\n" % (cat, mtime))
-        f.close()
-        del f
+        f = None
+        logger.debug("attempting to update mtime cache at %r", (location,))
+        try:
+            if not ensure_dirs(os.path.dirname(location),
+                gid=portage_gid, mode=0775):
+                # bugger, can't update..
+                return
+            f = AtomicWriteFile(location, gid=portage_gid, perms=0664)
+            # invert the data...
+            rev_data = {}
+            for pkg, ver_dict in data.iteritems():
+                for fullver, virtuals in ver_dict.iteritems():
+                    for virtual in virtuals:
+                        rev_data.setdefault(virtual.category, []).extend(
+                            (pkg, fullver, str(virtual)))
+            for cat, mtime in mtimes.iteritems():
+                if cat in rev_data:
+                    f.write("%s\t%i\t%s\n" % (cat, mtime,
+                         '\t'.join(rev_data[cat])))
+                else:
+                    f.write("%s\t%i\n" % (cat, mtime))
+            f.close()
+            os.chown(location, -1, portage_gid)
+        except IOError, e:
+            if e.errno != errno.EACCES:
+                raise
+            logger.warn("unable to update vdb virtuals cache due to "
+                "lacking permissions")
     finally:
         os.umask(old)
-    os.chown(location, -1, portage_gid)
 
 def _read_mtime_cache(location):
     try:
+        logger.debug("reading mtime cache at %r", (location,))
         d = {}
         for k, v in read_dict(readlines(location), splitter=None,
             source_isiter=True).iteritems():
@@ -101,6 +111,7 @@ def _read_mtime_cache(location):
     except IOError, e:
         if e.errno != errno.ENOENT:
             raise
+        logger.debug("failed reading mtime cache at %r", (location,))
         return {}
 
 def _convert_cached_virtuals(data):

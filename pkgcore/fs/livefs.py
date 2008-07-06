@@ -27,7 +27,8 @@ def gen_chksums(handlers, location):
     return LazyValDict(handlers, f)
 
 
-def gen_obj(path, stat=None, chksum_handlers=None, real_location=None):
+def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
+    stat_func=os.lstat):
 
     """
     given a fs path, and an optional stat, create an appropriate fs obj.
@@ -42,7 +43,12 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None):
     if real_location is None:
         real_location = path
     if stat is None:
-        stat = os.lstat(real_location)
+        try:
+            stat = stat_func(real_location)
+        except (IOError, OSError), e:
+            if stat_func == os.lstat or e.errno != errno.ENOENT:
+                raise
+            stat = os.lstat(real_location)
     if chksum_handlers is None:
         chksum_handlers = get_handlers()
 
@@ -77,26 +83,29 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None):
 # fine doing it this way (specially since we're relying on
 # os.path.sep, not '/' :P)
 
-def _internal_iter_scan(path, chksum_handlers):
+def _internal_iter_scan(path, chksum_handlers, stat_func=os.lstat):
     dirs = collections.deque([normpath(path)])
-    yield gen_obj(dirs[0], chksum_handlers=chksum_handlers)
+    yield gen_obj(dirs[0], chksum_handlers=chksum_handlers,
+        stat_func=stat_func)
     while dirs:
         base = dirs.popleft()
         for x in listdir(base):
             path = pjoin(base, x)
             o = gen_obj(path, chksum_handlers=chksum_handlers,
-                        real_location=path)
+                        real_location=path, stat_func=stat_func)
             yield o
             if isinstance(o, fsDir):
                 dirs.append(path)
 
 
-def _internal_offset_iter_scan(path, chksum_handlers, offset):
+def _internal_offset_iter_scan(path, chksum_handlers, offset,
+    stat_func=os.lstat):
     offset = normpath(offset)
     path = normpath(path)
     dirs = collections.deque([path[len(offset):]])
     if dirs[0]:
-        yield gen_obj(dirs[0], chksum_handlers=chksum_handlers)
+        yield gen_obj(dirs[0], chksum_handlers=chksum_handlers,
+            stat_func=stat_func)
 
     sep = os.path.sep
     while dirs:
@@ -106,13 +115,14 @@ def _internal_offset_iter_scan(path, chksum_handlers, offset):
         for x in listdir(real_base):
             path = pjoin(base, x)
             o = gen_obj(path, chksum_handlers=chksum_handlers,
-                        real_location=pjoin(real_base, x))
+                        real_location=pjoin(real_base, x),
+                        stat_func=os.lstat)
             yield o
             if isinstance(o, fsDir):
                 dirs.append(path)
 
 
-def iter_scan(path, offset=None):
+def iter_scan(path, offset=None, follow_symlinks=False):
     """
     Recursively scan a path.
 
@@ -127,9 +137,10 @@ def iter_scan(path, offset=None):
     """
     chksum_handlers = get_handlers()
 
+    stat_func = follow_symlinks and os.stat or os.lstat
     if offset is None:
-        return _internal_iter_scan(path, chksum_handlers)
-    return _internal_offset_iter_scan(path, chksum_handlers, offset)
+        return _internal_iter_scan(path, chksum_handlers, stat_func)
+    return _internal_offset_iter_scan(path, chksum_handlers, offset, stat_func)
 
 
 def scan(*a, **kw):

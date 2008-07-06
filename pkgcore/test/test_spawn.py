@@ -48,7 +48,9 @@ class SpawnTest(TempDirMixin, TestCase):
     def generate_script(self, filename, text):
         if not os.path.isabs(filename):
             fp = os.path.join(self.dir, filename)
-        open(fp, "w").write(text)
+        f = open(fp, "w")
+        f.write("#!/bin/bash\n")
+        f.write(text)
         os.chmod(fp, 0750)
         return fp
 

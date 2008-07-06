@@ -251,7 +251,10 @@ Use --help after a subcommand for more help.
     def test_tty_detection(self):
         def main(options, out, err):
             for f in (out, err):
-                f.write(f.__class__.__name__, autoline=False)
+                name = f.__class__.__name__
+                if name.startswith("native_"):
+                    name = name[len("native_"):]
+                f.write(name, autoline=False)
 
         for args, out_kind, err_kind in [
             ([], 'TerminfoFormatter', 'PlainTextFormatter'),

@@ -145,10 +145,11 @@ class domain(pkgcore.config.domain.domain):
                         # Ok, so it might not be a dir, but iter_scan'ing it
                         # means we get a nice exception w/o having to set it
                         # ourselves.
-                        for file in iter_scan(fp):
-                            if (not isinstance(file, fsFile) or
-                                any(True for thing in file.location.split('/')
-                                    if thing.startswith('.'))):
+                        for file in iter_scan(fp, follow_symlinks=True):
+                            if any(True for thing in file.location.split('/')
+                                if thing.startswith('.')):
+                                continue
+                            if not isinstance(file, fsFile):
                                 continue
                             val.extend(action(x) for x in iter_read_bash(file.location))
                 except (IOError, OSError), e:

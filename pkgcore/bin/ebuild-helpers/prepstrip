@@ -6,8 +6,8 @@
 source "${PKGCORE_BIN_PATH}"/isolated-functions.sh
 
 # exit if the feature isn't requested, or the restrict isn't there.
-hasq installsources ${FEATURES} || exit 0
-hasq installsources ${RESTRICT} && exit 0
+has installsources ${FEATURES} || exit 0
+has installsources ${RESTRICT} && exit 0
 
 for x in debugedit scanelf rsync sort; do
     if ! type -P $x >/dev/null ; then
@@ -33,8 +33,8 @@ save_elf_sources() {
 # The existance of the section .symtab tells us that a binary is stripped.
 # We want to log already stripped binaries, as this may be a QA violation.
 # They prevent us from getting the splitdebug data.
-if ! hasq binchecks ${RESTRICT} && \
-	! hasq strip ${RESTRICT} ; then
+if ! has binchecks ${RESTRICT} && \
+	! has strip ${RESTRICT} ; then
 	f=$(scanelf -yqRBF '#k%F' -k '!.symtab' "$@")
 	if [[ -n ${f} ]] ; then
 		echo -e "\a\n"

@@ -10,9 +10,9 @@ use()
     return 1
 }
 
-has()
+hasq()
 {
-    if hasq "$@"; then
+    if has "$@"; then
         return 0
     fi
     return 1
@@ -80,7 +80,7 @@ econf()
         [ -f "${ECONF_SOURCE}/configure" ] && die "configure script isn't executable"
         die "no configure script found"
     fi
-    if ! hasq autoconfig $RESTRICT; then
+    if ! has autoconfig $RESTRICT; then
         if [ -e /usr/share/gnuconfig/ ]; then
             local x
             for x in $(find ${WORKDIR} -type f '(' -name config.guess -o -name config.sub ')' ); do

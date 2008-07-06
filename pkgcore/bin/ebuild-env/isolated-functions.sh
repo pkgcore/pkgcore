@@ -182,7 +182,7 @@ set_colors() {
     PKGCORE_RC_NORMAL=$'\e[0m'
 }
 
-hasq() {
+has() {
     local x
 
     local me=$1

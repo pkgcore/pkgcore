@@ -4,7 +4,14 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-0.4.7.5: July 6, 2008
+* ticket 201; pquery --restrict-revdep-pkgs wasn't behaving properly for
+  slot/repository/user atoms, now does.
+
+* Correct potential segfaults in cpython version of PackageRestriction and
+  StrExactMatch's __(eq|ne)__ implementations.
+
+
+pkgcore 0.4.7.5: July 6, 2008
 
 * incremental_expansion and friends have grown a cpython implementation-
   this speedup will show up if you are doing lots of profile work (pcheck
@@ -44,13 +51,13 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 * fix ticket 192: ignore non-existant files in config protect checking
 
 
-0.4.7.4: June 11, 2008
+pkgcore 0.4.7.4: June 11, 2008
 
 * eapi1 bug fix; check for, and execute if found, ./configure if ECONF_SOURCE
   is unset.
 
 
-0.4.7.3: May 16, 2008
+pkgcore 0.4.7.3: May 16, 2008
 
 * ticket #185; tweak the test to give better debug info.
 
@@ -84,7 +91,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 * handle malformed rsync timestamps more cleanly.
 
 
-0.4.7.2: May 07, 2008
+pkgcore 0.4.7.2: May 07, 2008
 
 * new portage configuration feature- 'ignore-paludis-versioning'.  This
   directs pkgcore to ignore nonstandard -scm ebuilds instead of complaining
@@ -205,7 +212,7 @@ pkgcore 0.4.6: April 29, 2008
   are in use.
 
 
-0.4.5: April 9, 2008
+pkgcore 0.4.5: April 9, 2008
 
 * fix collision unprotect trigger exceptions (typically KeyError).
   ticket #165
@@ -237,7 +244,7 @@ pkgcore 0.4.6: April 29, 2008
   these backends, contact ferringb at irc://freenode.net/#pkgcore .
 
 
-0.4.4: April 6, 2008
+pkgcore 0.4.4: April 6, 2008
 
 * merging/replacing performance may be a bit slower in this release- the level
   of stats calls went up in comparison to previous releases, with several
@@ -286,7 +293,7 @@ pkgcore 0.4.6: April 29, 2008
 * pmaint --help usage descriptions are far more useful now.
 
 
-0.4.3: March 31, 2008
+pkgcore 0.4.3: March 31, 2008
 
 * correct a corner case where a users bash_profile is noisy, specifically
   disable using $HOME/.bashrc from all spawn_bash calls.
@@ -312,7 +319,7 @@ pkgcore 0.4.6: April 29, 2008
   is semi dangerous to use since it only examines atoms.
 
 
-0.4.2: March 30, 2008
+pkgcore 0.4.2: March 30, 2008
 
 * correct handling of ebuilds with explicit -r0 in filename, despite it being
   implicit.  Thanks to rbrown for violating gentoo-x86 policy out of the blue
@@ -328,7 +335,7 @@ pkgcore 0.4.6: April 29, 2008
   resolution/merging of sys-libs/pam-0.99.10.0
 
 
-0.4.1: March 20, 2008
+pkgcore 0.4.1: March 20, 2008
 
 * add tar contentsSet rewriting; tarballs sometimes leave out directories,
   and don't always have the fully resolved path- /usr/lib/blah, when
@@ -344,7 +351,7 @@ pkgcore 0.4.6: April 29, 2008
   invalid.
 
 
-0.4: March 18, 2008
+pkgcore 0.4: March 18, 2008
 
 * resolver fixes: vdb loadup wasn't occuring for old style virtuals for
   rdepend blockers, now forces it.  It was possible for a node to be

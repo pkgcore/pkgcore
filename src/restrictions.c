@@ -31,6 +31,26 @@ static PyObject *pkgcore_restrictions_subtype = NULL;
 
 #define IS_NEGATED(flags) (flags & NEGATED_RESTRICT)
 
+
+#define PKGCORE_COMMON_RICHCOMPARE(type, self, other, op)   \
+{                                                           \
+    PyObject *result = NULL;                                \
+    if(op != Py_EQ && op != Py_NE) {                        \
+        result = Py_NotImplemented;                         \
+    } else if(self == other) {                              \
+        result = op == Py_EQ ? Py_True : Py_False;          \
+    } else if(!PyObject_TypeCheck(other, &type)) {          \
+        result = Py_NotImplemented;                         \
+    } else if (self->flags != other->flags) {               \
+        result = op == Py_NE ? Py_True : Py_False;          \
+    }                                                       \
+    if(result) {                                            \
+        Py_INCREF(result);                                  \
+        return result;                                      \
+    }                                                       \
+}
+
+
 typedef struct {
     PyObject_HEAD
     PyObject *exact;
@@ -116,24 +136,6 @@ pkgcore_StrExactMatch_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
-PyObject *
-pkgcore_StrExactMatch_richcompare(pkgcore_StrExactMatch *self,
-    pkgcore_StrExactMatch *other, int op)
-{
-    PyObject *result;
-    if(op != Py_EQ && op != Py_NE) {
-        result = Py_NotImplemented;
-    } else if(self == other) {
-        result = op == Py_EQ ? Py_True : Py_False;
-    } else if (self->flags != other->flags) {
-        result = op == Py_NE ? Py_True : Py_False;
-    } else {
-        return PyObject_RichCompare(self->exact, other->exact, op);
-    }
-    Py_INCREF(result);
-    return result;
-}
-
 static PyObject *
 pkgcore_StrExactMatch_match(pkgcore_StrExactMatch *self,
     PyObject *value)
@@ -199,6 +201,14 @@ snakeoil_GETSET(pkgcore_StrExactMatch, "case_sensitive", case),
     {NULL}
 };
 
+
+// prototype definition needed to break the ref cycle since the func
+// needs the type, type needs the func.
+PyObject *
+pkgcore_StrExactMatch_richcompare(pkgcore_StrExactMatch *self,
+    pkgcore_StrExactMatch *other, int op);
+
+
 static PyTypeObject pkgcore_StrExactMatch_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                               /* ob_size*/
@@ -242,6 +252,13 @@ static PyTypeObject pkgcore_StrExactMatch_Type = {
     pkgcore_StrExactMatch_new,                       /* tp_new */
 };
 
+PyObject *
+pkgcore_StrExactMatch_richcompare(pkgcore_StrExactMatch *self,
+    pkgcore_StrExactMatch *other, int op)
+{
+    PKGCORE_COMMON_RICHCOMPARE(pkgcore_StrExactMatch_Type, self, other, op);
+    return PyObject_RichCompare(self->exact, other->exact, op);
+}
 
 typedef struct {
     PyObject_HEAD
@@ -302,34 +319,6 @@ pkgcore_PackageRestriction_new(PyTypeObject *type,
         flags |= SHALLOW_ATTR;
     self->flags = flags;
     return (PyObject *)self;
-}
-
-PyObject *
-pkgcore_PackageRestriction_richcompare(pkgcore_PackageRestriction *self,
-    pkgcore_PackageRestriction *other, int op)
-{
-    if(op != Py_EQ && op != Py_NE) {
-        return Py_INCREF(Py_NotImplemented), Py_NotImplemented;
-    } else if(self == other) {
-        if(op == Py_EQ)
-            Py_RETURN_TRUE;
-        Py_RETURN_FALSE;
-    } else if (self->flags != other->flags) {
-        if(op == Py_EQ)
-            Py_RETURN_FALSE;
-        Py_RETURN_TRUE;
-    } else if(self->attr != other->attr) {
-        if(op == Py_EQ)
-            Py_RETURN_FALSE;
-        Py_RETURN_TRUE;
-    }
-    PyObject *ret = PyObject_RichCompare(self->attr, other->attr, op);
-    if (ret == Py_NotImplemented ||
-        ret == (op == Py_EQ ? Py_False : Py_True)) {
-        return ret;
-    }
-    Py_DECREF(ret);
-    return PyObject_RichCompare(self->restriction, other->restriction, op);
 }
 
 void
@@ -406,6 +395,10 @@ static PyMethodDef pkgcore_PackageRestriction_methods[] = {
     {NULL}
 };
 
+PyObject *
+pkgcore_PackageRestriction_richcompare(pkgcore_PackageRestriction *self,
+    pkgcore_PackageRestriction *other, int op);
+
 static PyTypeObject pkgcore_PackageRestriction_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                                              /* ob_size*/
@@ -450,6 +443,26 @@ static PyTypeObject pkgcore_PackageRestriction_Type = {
     0,                                              /* tp_alloc */
     pkgcore_PackageRestriction_new,                 /* tp_new */
 };
+
+PyObject *
+pkgcore_PackageRestriction_richcompare(pkgcore_PackageRestriction *self,
+    pkgcore_PackageRestriction *other, int op)
+{
+    PKGCORE_COMMON_RICHCOMPARE(pkgcore_PackageRestriction_Type, self, other, op);
+    if(self->attr != other->attr) {
+        if(op == Py_EQ) {
+            Py_RETURN_FALSE;
+        }
+        Py_RETURN_TRUE;
+    }
+    PyObject *ret = PyObject_RichCompare(self->attr, other->attr, op);
+    if (ret == Py_NotImplemented ||
+        ret == (op == Py_EQ ? Py_False : Py_True)) {
+        return ret;
+    }
+    Py_DECREF(ret);
+    return PyObject_RichCompare(self->restriction, other->restriction, op);
+}
 
 
 PyDoc_STRVAR(

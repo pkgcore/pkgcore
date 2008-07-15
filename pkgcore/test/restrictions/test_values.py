@@ -152,6 +152,9 @@ class cpy_TestStrExactMatch(native_TestStrExactMatch):
     else:
         kls = staticmethod(values.StrExactMatch)
 
+    def test_eq_isinstance_checks(self):
+        # this seems insane, but it's the right alloc to trigger it
+        self.kls("", case_sensitive=False).__ne__(u"\uEFA3\uC2EF\uBE5B\u9D98\uFE2F\uB781\u27C7\u8592")
 
 
 class TestStrGlobMatch(TestRestriction):

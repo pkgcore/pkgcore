@@ -12,7 +12,8 @@ from pkgcore.ebuild import conditionals, atom
 from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils)
 from snakeoil.demandload import demandload
-demandload(globals(), 're')
+from snakeoil.compatibility import any
+demandload(globals(), 're', 'snakeoil.currying:partial')
 
 
 # ordering here matters; pkgcore does a trick to commandline to avoid the
@@ -277,6 +278,8 @@ def revdep_pkgs_callback(option, opt_str, value, parser):
     except (parserestrict.ParseError, atom.MalformedAtom), e:
         raise optparse.OptionValueError('option %s: %s' % (opt_str, e))
 
+def revdep_pkgs_match(pkgs, value):
+    return any(value.match(pkg) for pkg in pkgs)
 
 class OptionParser(commandline.OptionParser):
 
@@ -442,9 +445,9 @@ class OptionParser(commandline.OptionParser):
             '--print-revdep', type='atom', action='append',
             help='print what condition(s) trigger a dep.')
 
-    def check_values(self, values, args):
+    def check_values(self, vals, args):
         """Sanity check and postprocess after parsing."""
-        vals, args = commandline.OptionParser.check_values(self, values, args)
+        vals, args = commandline.OptionParser.check_values(self, vals, args)
         # Interpret args with parens in them as --expr additions, the
         # rest as --match additions (since parens are invalid in --match).
         try:
@@ -540,16 +543,19 @@ class OptionParser(commandline.OptionParser):
         if revdep_pkgs:
             l = []
             # odd?  a bit; we allow strs to reuse parse_revdep
-            for atom in revdep_pkgs:
+            for atom_inst in revdep_pkgs:
                 for repo in vals.repos:
-                    l.extend(parse_revdep(str(x.versioned_atom))
-                        for x in repo.itermatch(atom))
-            vals.restrict_revdep_pkgs = l
-            if len(l) == 1:
-                vals.restrict.append(l[0])
-            else:
-                vals.restrict.append(packages.OrRestriction(finalize=True,
-                    *l))
+                    l.extend(repo.itermatch(atom_inst))
+            # have our pkgs; now build the restrict.
+            r = values.FlatteningRestriction(atom.atom,
+                values.AnyMatch(values.FunctionRestriction(
+                    partial(revdep_pkgs_match, tuple(l))
+                )))
+            vals.restrict_revdep_pkgs = packages.OrRestriction(finalize=True,
+                *list(
+                    packages.PackageRestriction(dep, r)
+                        for dep in ('depends', 'rdepends', 'post_rdepends')))
+            vals.restrict.append(vals.restrict_revdep_pkgs)
 
         # Build up a restriction.
         for attr in PARSE_FUNCS:

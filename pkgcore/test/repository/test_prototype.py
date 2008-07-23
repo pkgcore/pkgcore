@@ -34,7 +34,6 @@ class TestPrototype(TestCase):
             self.repo.match(atom("dev-util/diffball"))
         # should not explode...
         list(iall)
-        
 
     def test_internal_lookups(self):
         self.assertEqual(

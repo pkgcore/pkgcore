@@ -176,7 +176,6 @@ class OldStyleVirtuals(virtual.tree):
         self.versions._cache.update((('virtual', k), tuple(ver_dict))
             for k, ver_dict in self._virtuals.iteritems())
         self.versions._finalized = True
-        self.versions._known_keys.clear()
         self._load_func = None
 
     def _expand_vers(self, cp, ver):

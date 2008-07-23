@@ -212,7 +212,7 @@ class rsync_timestamp_syncer(rsync_syncer):
                 else:
                     open(pjoin(self.basedir, "metadata", "timestamp.chk"),
                         "w").write(time.strftime("%a, %d %b %Y %H:%M:%S +0000",
-                            self.last_timestamp))
+                            time.gmtime(self.last_timestamp)))
             except (IOError, OSError):
                 # don't care...
                 pass

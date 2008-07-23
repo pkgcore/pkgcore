@@ -80,53 +80,27 @@ class VersionMapping(DictMixin):
         self._cache = {}
         self._parent = parent_mapping
         self._pull_vals = pull_vals
-        self._known_keys = {}
-        self._finalized = False
 
     def __getitem__(self, key):
         o = self._cache.get(key)
         if o is not None:
             return o
-        cat, pkg = key
-        known_pkgs = self._known_keys.get(cat)
-        if known_pkgs is None:
-            if self._finalized:
-                raise KeyError(key)
-            self._known_keys[cat] = known_pkgs = set(self._parent[cat])
-        if pkg not in known_pkgs:
+        if not key[1] in self._parent.get(key[0], ()):
             raise KeyError(key)
-
         val = self._pull_vals(key)
         self._cache[key] = val
-        known_pkgs.remove(pkg)
         return val
 
     def iterkeys(self):
-        for key in self._cache:
-            yield key
-
-        if not self._finalized:
-            for cat, pkgs in self._parent.iteritems():
-                if cat in self._known_keys:
-                    continue
-                s = set()
-                for pkg in pkgs:
-                    if (cat, pkg) in self._cache:
-                        continue
-                    s.add(pkg)
-                self._known_keys[cat] = s
-            self._finalized = True
-
-        for cat, pkgs in self._known_keys.iteritems():
-            for pkg in list(pkgs):
-                yield cat, pkg
+        for cat, pkgs in self._parent.iteritems():
+            for pkg in pkgs:
+                yield (cat, pkg)
 
     def force_regen(self, key, val):
         if val:
             self._cache[key] = val
         else:
             self._cache.pop(key, None)
-            self._known_keys.pop(key[0], None)
 
 
 class tree(object):

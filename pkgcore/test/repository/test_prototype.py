@@ -24,6 +24,18 @@ class TestPrototype(TestCase):
         self.repo = SimpleTree(
             OrderedDict((k, d[k]) for k in sorted(d, reverse=True)))
 
+    def test_concurrent_access(self):
+        iall = iter(self.repo)
+        self.repo.match(atom("dev-lib/fake"))
+        pkg = iall.next()
+        if pkg.category == 'dev-util':
+            self.repo.match(atom("dev-lib/fake"))
+        else:
+            self.repo.match(atom("dev-util/diffball"))
+        # should not explode...
+        list(iall)
+        
+
     def test_internal_lookups(self):
         self.assertEqual(
             sorted(self.repo.categories),

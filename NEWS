@@ -4,6 +4,13 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* ticket 213; if stricter is in FEATURES, fail out if insecure rpath is
+  detected- otherwise, correct the entries.
+
+* ticket 207; drop the attempted known_keys/cache optimizations, instead
+  defer to parent's iterkeys always.  This eliminates the concurrency issue,
+  and simplifies staleness detection.  Also kills off a tb for --newuse .
+
 * ticket 201; pquery --restrict-revdep-pkgs wasn't behaving properly for
   slot/repository/user atoms, now does.
 

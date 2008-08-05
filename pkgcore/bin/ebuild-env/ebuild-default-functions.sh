@@ -320,7 +320,9 @@ dyn_install()
             echo " http://bugs.gentoo.org/81745"
             echo "${f}"
             echo -ne '\a\n'
-            die "Insecure binaries detected"
+            has stricter $FEATURES && die "Insecure binaries detected"
+            echo "autofixing rpath..."
+            TMPDIR="${WORKDIR}" scanelf -BXr ${f} -o /dev/null
         fi
 
         # Check for setid binaries but are not built with BIND_NOW

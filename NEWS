@@ -4,6 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix sandbox complaint when PORT_LOGDIR is enabled- sandbox requires abspath
+  for any SANDBOX_WRITE exemptions, if PORT_LOGDIR path includes symlinks,
+  force a `readlink -f` of the sandbox exemption.
+  http://forums.gentoo.org/viewtopic-p-5176414.html
+
 * ticket 213; if stricter is in FEATURES, fail out if insecure rpath is
   detected- otherwise, correct the entries.
 

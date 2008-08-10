@@ -175,7 +175,7 @@ while [ "$alive" == "1" ]; do
             if [ -n "$SANDBOX_LOG" ]; then
                 addwrite $SANDBOX_LOG
                 if [ -n "$PORTAGE_LOGFILE" ]; then
-                    addwrite "$PORTAGE_LOGFILE"
+                    addwrite "$(readlink -f "$PORTAGE_LOGFILE")"
                 fi
             fi
             if [ -z $RC_NOCOLOR ]; then

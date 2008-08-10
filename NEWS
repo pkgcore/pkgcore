@@ -3,6 +3,7 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.4.7.6: August 10, 2008
 
 * fix sandbox complaint when PORT_LOGDIR is enabled- sandbox requires abspath
   for any SANDBOX_WRITE exemptions, if PORT_LOGDIR path includes symlinks,

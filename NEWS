@@ -11,8 +11,8 @@ pkgcore 0.4.7.7: August 11, 2008
 
 * Fix installation issue for manpages for python2.4; os.path.join behaviour
   differs between 2.4 and 2.5.
-  
-* Kill off large memory leak that reared it's head per pkg merge; still is 
+
+* Kill off large memory leak that reared it's head per pkg merge; still is
   a bit of a leak remaining, but nothing near as bad as before.
 
 

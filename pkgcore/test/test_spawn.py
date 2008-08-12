@@ -52,6 +52,7 @@ class SpawnTest(TempDirMixin, TestCase):
         f.write("#!/bin/bash\n")
         f.write(text)
         os.chmod(fp, 0750)
+        self.assertEqual(os.stat(fp).st_mode & 0750, 0750)
         return fp
 
     def test_get_output(self):
@@ -157,6 +158,7 @@ class SpawnTest(TempDirMixin, TestCase):
         os.unlink(fp1)
         os.unlink(fp2)
         os.unlink(savefile)
+    test_fakeroot.skip = "test is flakey w/ recent versions of fakeroot; capabilities unused atm also"
 
     def test_process_exit_code(self):
         self.assertEqual(0, spawn.process_exit_code(0), "exit code failed")

@@ -235,6 +235,8 @@ class pkgcore_install_man(core.Command):
                                    ('root', 'install_man'),
                                    ('install_base', 'prefix'),
                                    )
+        if not self.install_man:
+            self.install_man = '/'
         self.install_man = os.path.join(self.install_man,
             self.prefix.lstrip(os.path.sep), 'share', 'man')
         self.man_pages = [

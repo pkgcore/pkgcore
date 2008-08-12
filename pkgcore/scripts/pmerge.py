@@ -455,6 +455,11 @@ def main(options, out, err):
                 if changed_flags:
                     atoms.append(src_pkg.versioned_atom)
 
+#    left intentionally in place for ease of debugging.
+#    from guppy import hpy
+#    hp = hpy()
+#    hp.setrelheap()
+
     resolver_inst = resolver_kls(
         livefs_repos, repos, verify_vdb=options.deep, nodeps=options.nodeps,
         drop_cycles=options.ignore_cycles, force_replacement=options.replace,
@@ -550,80 +555,96 @@ def main(options, out, err):
     repo_obs = observer.file_repo_observer(ObserverFormatter(out))
 
     change_count = len(changes)
-    for count, op in enumerate(changes):
-        out.write("Processing %i of %i: %s" % (count + 1, change_count,
-            op.pkg.cpvstr))
-        out.title("%i/%i: %s" % (count + 1, change_count, op.pkg.cpvstr))
-        if op.desc != "remove":
-            if not options.fetchonly and options.debug:
-                out.write("Forcing a clean of workdir")
-            buildop = op.pkg.build(observer=build_obs, clean=True)
-            if options.fetchonly:
-                out.write("\n%i files required-" % len(op.pkg.fetchables))
+
+    # left in place for ease of debugging.
+    try:
+        for count, op in enumerate(changes):
+            out.write("Processing %i of %i: %s" % (count + 1, change_count,
+                op.pkg.cpvstr))
+            out.title("%i/%i: %s" % (count + 1, change_count, op.pkg.cpvstr))
+            reset = ['pkg']
+            if op.desc != "remove":
+                if not options.fetchonly and options.debug:
+                    out.write("Forcing a clean of workdir")
+                buildop = op.pkg.build(observer=build_obs, clean=True)
+                if options.fetchonly:
+                    out.write("\n%i files required-" % len(op.pkg.fetchables))
+                    try:
+                        ret = buildop.fetch()
+                    except (SystemExit, KeyboardInterrupt):
+                        raise
+                    except Exception, e:
+                        ret = e
+                    if ret != True:
+                        out.error("got %s for a phase execution for %s" % (ret, op.pkg))
+                        if not options.ignore_failures:
+                            return 1
+                    buildop.cleanup()
+                    del buildop, ret
+                    op.pkg.release_cached_data()
+                    continue
+
+                ret = None
                 try:
-                    ret = buildop.fetch()
-                except (SystemExit, KeyboardInterrupt):
-                    raise
-                except Exception, e:
+                    built_pkg = buildop.finalize()
+                    if built_pkg is False:
+                        ret = built_pkg
+                except format.errors, e:
                     ret = e
-                if ret != True:
-                    out.error("got %s for a phase execution for %s" % (ret, op.pkg))
+                if ret is not None:
+                    out.error("Failed to build %s: %s" % (op.pkg, ret))
                     if not options.ignore_failures:
                         return 1
-                buildop.cleanup()
-                del buildop, ret
-                continue
+                    op.pkg.release_cached_data()
+                    continue
 
-            ret = None
+                out.write()
+                if op.desc == "replace":
+                    if op.old_pkg == op.pkg:
+                        out.write(">>> Reinstalling %s" % (built_pkg.cpvstr))
+                    else:
+                        out.write(">>> Replacing %s with %s" % (
+                            op.old_pkg.cpvstr, built_pkg.cpvstr))
+                    i = livefs_repos.replace(op.old_pkg, built_pkg, observer=repo_obs)
+                    reset.append('old_pkg')
+                else:
+                    out.write(">>> Installing %s" % built_pkg.cpvstr)
+                    i = livefs_repos.install(built_pkg, observer=repo_obs)
+
+                # force this explicitly- can hold onto a helluva lot more
+                # then we would like.
+                del built_pkg
+            else:
+                out.write(">>> Removing %s" % op.pkg.cpvstr)
+                i = livefs_repos.uninstall(op.pkg, observer=repo_obs)
             try:
-                built_pkg = buildop.finalize()
-                if built_pkg is False:
-                    ret = built_pkg
-            except format.errors, e:
-                ret = e
-            if ret is not None:
-                out.error("Failed to build %s: %s" % (op.pkg, ret))
+                ret = i.finish()
+            except merge_errors.BlockModification, e:
+                out.error("Failed to merge %s: %s" % (op.pkg, e))
                 if not options.ignore_failures:
                     return 1
                 continue
 
-            out.write()
-            if op.desc == "replace":
-                if op.old_pkg == op.pkg:
-                    out.write(">>> Reinstalling %s" % (built_pkg.cpvstr))
-                else:
-                    out.write(">>> Replacing %s with %s" % (
-                        op.old_pkg.cpvstr, built_pkg.cpvstr))
-                i = livefs_repos.replace(op.old_pkg, built_pkg, observer=repo_obs)
+            for x in reset:
+                getattr(op, x).release_cached_data()
 
-            else:
-                out.write(">>> Installing %s" % built_pkg.cpvstr)
-                i = livefs_repos.install(built_pkg, observer=repo_obs)
-
-            # force this explicitly- can hold onto a helluva lot more
-            # then we would like.
-            del built_pkg
-        else:
-            out.write(">>> Removing %s" % op.pkg.cpvstr)
-            i = livefs_repos.uninstall(op.pkg, observer=repo_obs)
-        try:
-            ret = i.finish()
-        except merge_errors.BlockModification, e:
-            out.error("Failed to merge %s: %s" % (op.pkg, e))
-            if not options.ignore_failures:
-                return 1
-            continue
-
-        buildop.cleanup()
-        if world_set:
-            if op.desc == "remove":
-                out.write('>>> Removing %s from world file' % op.pkg.cpvstr)
-                removal_pkg = slotatom_if_slotted(all_repos, op.pkg.versioned_atom)
-                update_worldset(world_set, removal_pkg, remove=True)
-            elif not options.oneshot and any(x.match(op.pkg) for x in atoms):
-                if not options.upgrade:
-                    out.write('>>> Adding %s to world file' % op.pkg.cpvstr)
-                    add_pkg = slotatom_if_slotted(all_repos, op.pkg.versioned_atom)
-                    update_worldset(world_set, add_pkg)
+            buildop.cleanup()
+            if world_set:
+                if op.desc == "remove":
+                    out.write('>>> Removing %s from world file' % op.pkg.cpvstr)
+                    removal_pkg = slotatom_if_slotted(all_repos, op.pkg.versioned_atom)
+                    update_worldset(world_set, removal_pkg, remove=True)
+                elif not options.oneshot and any(x.match(op.pkg) for x in atoms):
+                    if not options.upgrade:
+                        out.write('>>> Adding %s to world file' % op.pkg.cpvstr)
+                        add_pkg = slotatom_if_slotted(all_repos, op.pkg.versioned_atom)
+                        update_worldset(world_set, add_pkg)
+#    again... left in place for ease of debugging.
+#    except KeyboardInterrupt:
+#        import pdb;pdb.set_trace()
+#    else:
+#        import pdb;pdb.set_trace()
+    finally:
+        pass
     out.write("finished")
     return 0

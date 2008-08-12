@@ -59,6 +59,13 @@ def DeriveMetadataKls(original_kls):
         def repo(self):
             return self._parent._parent_repo
 
+        def release_cached_data(self):
+            for x in self._get_attr:
+                try:
+                    object.__delattr__(self, x)
+                except AttributeError:
+                    pass
+
         @property
         def slotted_atom(self):
             return atom("%s:%s" % (self.key, self.slot))

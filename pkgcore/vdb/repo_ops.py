@@ -128,7 +128,7 @@ class uninstall(repo_interfaces.livefs_uninstall):
 
 
 # should convert these to mixins.
-class replace(install, uninstall, repo_interfaces.livefs_replace):
+class replace(repo_interfaces.livefs_replace, install, uninstall):
 
     def __init__(self, domain_settings, repo, pkg, newpkg, *a, **kw):
         self.dirpath = pjoin(

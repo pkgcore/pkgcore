@@ -48,12 +48,18 @@ class maintenance(object):
 
 
 class build_base(object):
-    stage_depends = {}
+    stage_depends = {'finish':'start'}
 
     __metaclass__ = ForcedDepends
 
     def __init__(self, observer=None):
         self.observer = observer
+
+    def start(self):
+        return True
+
+    def finish(self):
+        return True
 
 
 class build(build_base):
@@ -130,6 +136,10 @@ class uninstall(build_base):
 
     def prerm(self):
         """any pre unmerge steps needed"""
+        return True
+
+    def postrm(self):
+        """any post unmerge steps needed"""
         return True
 
     def postinst(self):

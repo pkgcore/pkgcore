@@ -4,6 +4,13 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix up interface definitions for >snakeoil-0.2 dependant_methods changes.
+  Via these cleanups and >snakeoil-0.2, memory usage is massively decreased
+  for pmerge invocations.
+
+* swallow EPIPE in pquery when stdout is closed early.
+
+
 pkgcore 0.4.7.7: August 11, 2008
 
 * Disable fakeroot tests due to odd behaviour, and the fact it's currently

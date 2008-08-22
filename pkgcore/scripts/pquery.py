@@ -13,7 +13,7 @@ from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils)
 from snakeoil.demandload import demandload
 from snakeoil.compatibility import any
-demandload(globals(), 're', 'snakeoil.currying:partial')
+demandload(globals(), 're', 'snakeoil.currying:partial', 'errno')
 
 
 # ordering here matters; pkgcore does a trick to commandline to avoid the
@@ -928,7 +928,10 @@ def main(options, out, err):
 
         except KeyboardInterrupt:
             raise
-        except Exception:
+        except Exception, e:
+            if isinstance(e, IOError) and e.errno == errno.EPIPE:
+                # swallow it; receiving end shutdown early.
+                return
             err.write('caught an exception!')
             err.write('repo: %r' % (repo,))
             err.write('restrict: %r' % (options.restrict,))

@@ -23,6 +23,7 @@ __all__ = [
     "merge_contents", "unmerge_contents", "default_ensure_perms",
     "default_copyfile", "default_mkdir"]
 
+
 def default_ensure_perms(d1, d2=None):
 
     """Enforce a fs objects attributes on the livefs.
@@ -67,10 +68,11 @@ def default_ensure_perms(d1, d2=None):
 
     if do_chown and (o != -1 or g != -1):
         os.lchown(d1.location, o, g)
-    if do_mode and m is not None:
-        os.chmod(d1.location, m)
-    if do_mtime and t is not None:
-        os.utime(d1.location, (t, t))
+    if not fs.issym(d1):
+        if do_mode and m is not None:
+            os.chmod(d1.location, m)
+        if do_mtime and t is not None:
+            os.utime(d1.location, (t, t))
     return True
 
 
@@ -168,8 +170,8 @@ def default_copyfile(obj, mkdirs=False):
         ret = spawn([COPY_BINARY, "-Rp", obj.location, fp])
         if ret != 0:
             raise FailedCopy(obj, "got %i from %s -Rp" % ret)
-    if not fs.issym(obj):
-        ensure_perms(obj.change_attributes(location=fp))
+
+    ensure_perms(obj.change_attributes(location=fp))
 
     if existant:
         os.rename(existant_fp, obj.location)

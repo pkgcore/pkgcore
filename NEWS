@@ -4,6 +4,12 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkgcore now properly preserves ownership of symlinks on merging.
+  ensure_perms plugins now need to handle symlinks (lchown at the least).
+
+* free resolver caches after resolution is finished; lower the memory
+  baseline for pmerge.
+
 * fix up interface definitions for >snakeoil-0.2 dependant_methods changes.
   Via these cleanups and >snakeoil-0.2, memory usage is massively decreased
   for pmerge invocations.

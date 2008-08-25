@@ -507,6 +507,8 @@ def main(options, out, err):
             if not options.ignore_failures:
                 return 1
 
+    resolver_inst.free_caches()
+
     if options.clean:
         out.write(out.bold, ' * ', out.reset, 'Packages to be removed:')
         vset = set(livefs_repos)

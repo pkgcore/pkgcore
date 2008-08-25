@@ -1,8 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-import os, shutil
-from pkgcore.test import TestCase
+import os, shutil, pwd
+from pkgcore.test import TestCase, SkipTest
 from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin
 from pkgcore.fs import ops, fs, livefs, contents
@@ -74,6 +74,20 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
         self.assertTrue(ops.default_copyfile(o))
         self.assertEqual("asdf\n" * 10, open(dest, "r").read())
         self.verify(o, kwds, os.stat(o.location))
+
+    def test_sym_perms(self):
+        curgid = os.getgid()
+        group = [x for x in os.getgroups() if x != curgid]
+        if not group and os.getuid() != 0:
+            raise SkipTest("requires root privs for this test, or for this"
+                " user to belong to more then one group")
+        group = group[0]
+        fp = pjoin(self.dir, "sym")
+        o = fs.fsSymlink(fp, mtime=10321, uid=os.getuid(), gid=group,
+            mode=0664, target='target')
+        self.assertTrue(ops.default_copyfile(o))
+        self.assertEqual(os.lstat(fp).st_gid, group)
+        self.assertEqual(os.lstat(fp).st_uid, os.getuid())
 
     def test_puke_on_dirs(self):
         path = pjoin(self.dir, "puke_dir")

@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkpgcore 0.4.7.8: August 28, 2008
+
 * pkgcore now properly preserves ownership of symlinks on merging.
   ensure_perms plugins now need to handle symlinks (lchown at the least).
 

@@ -72,7 +72,8 @@ def generate_fetchables(self):
         d = conditionals.DepSet(
             self.data.pop("SRC_URI", ""), fetchable, operators={},
             element_func=partial(create_fetchable_from_uri, self, chksums,
-                                 mirrors, default_mirrors, common))
+                                 mirrors, default_mirrors, common),
+            allow_src_uri_file_renames=(self.eapi >= 2))
         for v in common.itervalues():
             v.uri.finalize()
         return d
@@ -81,9 +82,10 @@ def generate_fetchables(self):
 
 # utility func.
 def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
-    common_files, uri):
+    common_files, uri, filename=None):
 
-    filename = os.path.basename(uri)
+    if filename is None:
+        filename = os.path.basename(uri)
 
     preexisting = common_files.get(filename)
 

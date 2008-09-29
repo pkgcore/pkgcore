@@ -31,10 +31,27 @@ class Test_native_atom(TestCase):
         for s in ("dev-util/diffball", "=dev-util/diffball-0.7.1",
             ">foon/bar-1[-4,3]:2,3", "=foon/bar-2*", "~foon/bar-2.3",
             "!dev-util/diffball", "!=dev-util/diffball-0.7*",
-            "foon/bar::gentoo", ">=foon/bar-10_alpha1[-not,use]:1:gentoo"):
+            "foon/bar::gentoo", ">=foon/bar-10_alpha1[-not,use]:1:gentoo",
+            "!!dev-util/diffball[use]"):
             self.assertEqual(str(self.kls(s)), s)
             self.assertEqual(hash(self.kls(s, disable_inst_caching=True)),
                 hash(self.kls(s, disable_inst_caching=True)))
+
+    def test_blockers(self):
+        self.assertRaises(errors.MalformedAtom, self.kls,
+            "!!dev-util/diffball", eapi=0)
+        self.assertRaises(errors.MalformedAtom, self.kls,
+            "!!dev-util/diffball", eapi=1)
+        self.assertRaises(errors.MalformedAtom, self.kls,
+            "!!!dev-util/diffball", eapi=2)
+        for x in xrange(0,2):
+            obj = self.kls("!dev-util/diffball", eapi=x)
+            self.assertTrue(obj.blocks)
+            self.assertTrue(obj.blocks_temp_ignorable)
+        obj = self.kls("!!dev-util/diffball", eapi=2)
+        self.assertTrue(obj.blocks)
+        self.assertFalse(obj.blocks_temp_ignorable)
+
 
     def test_iter(self):
         d = self.kls("!>=dev-util/diffball-0.7[use,x]:1,2:gentoo")
@@ -342,6 +359,10 @@ class Test_native_atom(TestCase):
             self.assertFalse(self.kls('=d/b-%s' % greater) <
                 self.kls('=d/b-%s' % lesser),
                 msg="!: d/b-%s > d/b-%s" % (greater, lesser))
+
+        self.assertTrue(self.kls("!!=d/b-1", eapi=2) > self.kls("!=d/b-1"))
+        self.assertTrue(self.kls("!=d/b-1") < self.kls("!!=d/b-1"))
+        self.assertEqual(self.kls("!=d/b-1"), self.kls("!=d/b-1"))
 
 
     def test_compatibility(self):

@@ -234,14 +234,30 @@ src_unpack()
 
 src_compile()
 {
-    if [ "${EAPI:-0}" == 0 ] ; then
-        [ -x ./configure ] && econf
-    elif [ -x "${ECONF_SOURCE:-.}/configure" ]; then
-        econf || die "econf failed"
+    # only eapi 0/1 invoke configure...
+    if has "${EAPI:-0}" 0 1; then
+        if [ "${EAPI:-0}" == 0 ] ; then
+            [ -x ./configure ] && econf
+        elif [ -x "${ECONF_SOURCE:-.}/configure" ]; then
+            econf
+        fi
     fi
     if [ -f Makefile ] || [ -f GNUmakefile ] || [ -f makefile ]; then
         emake || die "emake failed"
     fi
+}
+
+src_configure()
+{
+    has "${EAPI:0}" 0 1 && die "src_configure isn't available from EAPI's below 2"
+    if [[ -x ${ECONF_SOURCE:-.}/configure ]] ; then
+        econf
+    fi
+}
+
+src_prepare() {
+    has "${EAPI:0}" 0 1 && die "src_prepare isn't available from EAPI's below 2"
+    :
 }
 
 src_test()

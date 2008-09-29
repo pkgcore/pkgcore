@@ -148,7 +148,7 @@ class test_base(TestCase):
         l = []
         def f(self, cpv):
             l.append(cpv)
-            return {'monkey.tgz': {}, 'boon.tgz': {}}
+            return {'monkey.tgz': {}, 'boon.tgz': {}, 'foon.tar.gz': {}}
         repo = self.make_parent(_get_digests=f)
         parent = self.make_parent(_parent_repo=repo)
         # verify it does digest lookups...
@@ -157,10 +157,22 @@ class test_base(TestCase):
         self.assertEqual(l, [o])
 
         # basic tests;
-        f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz'},
+        for x in xrange(0,2):
+            f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz',
+                'EAPI':str(x)},
+                 repo=parent).fetchables
+            self.assertEqual(list(f[0].uri), ['http://foo.com/monkey.tgz'])
+            self.assertEqual(f[0].filename, 'monkey.tgz')
+
+        f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz -> foon.tar.gz', 
+            'EAPI':'2'},
              repo=parent).fetchables
         self.assertEqual(list(f[0].uri), ['http://foo.com/monkey.tgz'])
-        self.assertEqual(f[0].filename, 'monkey.tgz')
+        self.assertEqual(f[0].filename, 'foon.tar.gz')
+
+        o = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz -> ', 
+            'EAPI':'2'}, repo=parent)
+        self.assertRaises(errors.MetadataException, getattr, o, 'fetchables')
 
         # verify it collapses multiple basenames down to the same.
         f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz '

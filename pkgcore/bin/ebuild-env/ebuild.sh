@@ -600,7 +600,7 @@ execute_phases() {
             type -p post_pkg_${EBUILD_PHASE} &> /dev/null && post_pkg_${EBUILD_PHASE}
             [[ $PKGCORE_DEBUG -lt 2 ]] && set +x
             ;;
-        unpack|compile|test|install)
+        unpack|prepare|configure|compile|test|install)
             if [ "${SANDBOX_DISABLED="0"}" == "0" ]; then
                 export SANDBOX_ON="1"
             else

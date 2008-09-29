@@ -54,7 +54,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
             if not all(y in valid_use_chars for y in x):
                 raise errors.MalformedAtom(atom,
                     "invalid char spotted in use dep")
-        if not all(x.rstrip("-") for x in self.use):
+        if not all(x.lstrip("-") for x in self.use):
             raise errors.MalformedAtom(
                 atom, "cannot have empty use deps in use restriction")
         atom = atom[0:u]+atom[u2 + 1:]
@@ -94,6 +94,15 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
     sf(self, "blocks", atom[0] == "!")
     if self.blocks:
         atom = atom[1:]
+        # hackish/slow, but lstrip doesn't take a 'prune this many' arg
+        # open to alternatives
+        if eapi not in (0,1) and atom.startswith("!"):
+            atom = atom[1:]
+            sf(self, "blocks_temp_ignorable", False)
+        else:
+            sf(self, "blocks_temp_ignorable", True)
+    else:
+        sf(self, "blocks_temp_ignorable", False)
 
     if atom[0] in ('<', '>'):
         if atom[1] == '=':
@@ -222,8 +231,8 @@ class atom(boolean.AndRestriction):
     """
 
     __slots__ = (
-        "blocks", "op", "negate_vers", "cpvstr", "use",
-        "slot", "hash", "category", "version", "revision", "fullver",
+        "blocks", "blocks_temp_ignorable", "op", "negate_vers", "cpvstr",
+        "use", "slot", "hash", "category", "version", "revision", "fullver",
         "package", "key", "repo_id")
 
     type = packages.package_type
@@ -244,6 +253,11 @@ class atom(boolean.AndRestriction):
             atom = self.op + self.cpvstr
         if self.blocks:
             atom = '!' + atom
+        if self.blocks:
+            if not self.blocks_temp_ignorable:
+                atom = '!!' + atom
+            else:
+                atom = '!' + atom
         attrs = [atom]
         if self.use:
             attrs.append('use=' + repr(self.use))
@@ -275,7 +289,10 @@ class atom(boolean.AndRestriction):
         else:
             s = self.op + self.cpvstr
         if self.blocks:
-            s = "!" + s
+            if not self.blocks_temp_ignorable:
+                s = '!!' + s
+            else:
+                s = '!' + s
         if self.use:
             s += "[%s]" % ",".join(self.use)
         if self.slot:
@@ -321,6 +338,11 @@ class atom(boolean.AndRestriction):
         if c:
             # invert it; cmp(True, False) == 1
             # want non blockers then blockers.
+            return -c
+
+        c = cmp(self.blocks_temp_ignorable, other.blocks_temp_ignorable)
+        if c:
+            # want !! prior to !
             return -c
 
         c = cmp(self.negate_vers, other.negate_vers)

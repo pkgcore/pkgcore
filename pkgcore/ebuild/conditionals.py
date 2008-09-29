@@ -38,7 +38,8 @@ class DepSet(boolean.AndRestriction):
 
     def __init__(self, dep_str, element_class, \
         operators=None,
-        element_func=None):
+        element_func=None,
+        allow_src_uri_file_renames=False):
 
         """
         @param dep_str: string abiding by DepSet syntax
@@ -61,7 +62,7 @@ class DepSet(boolean.AndRestriction):
         if element_func is None:
             element_func = element_class
 
-        if self.parse_depset is not None:
+        if self.parse_depset is not None and not allow_src_uri_file_renames:
             restrictions = None
             if operators is None:
                 has_conditionals, restrictions = self.parse_depset(dep_str,
@@ -89,6 +90,10 @@ class DepSet(boolean.AndRestriction):
 
         node_conds = False
         words = iter(dep_str.split())
+        # we specifically do it this way since expandable_chain has a bit of nasty
+        # overhead to the tune of 33% slower
+        if allow_src_uri_file_renames:
+            words = expandable_chain(words)
         k = None
         try:
             for k in words:
@@ -148,6 +153,19 @@ class DepSet(boolean.AndRestriction):
 
                 elif "|" in k:
                     raise ParseError(dep_str, k)
+                elif allow_src_uri_file_renames:
+                    try:
+                        k2 = words.next()
+                    except StopIteration:
+                        depsets[-1].append(element_func(k))
+                    else:
+                        if k2 != '->':
+                            depsets[-1].append(element_func(k))
+                            words.appendleft(k2)
+                        else:
+                            k3 = words.next()
+                            # file ename.
+                            depsets[-1].append(element_func(k, k3))
                 else:
                     # node/element.
                     depsets[-1].append(element_func(k))
@@ -212,10 +230,7 @@ class DepSet(boolean.AndRestriction):
                                 continue
                     elif not node.restriction.match(cond_dict):
                         continue
-                    if not isinstance(node.payload, tuple):
-                        stack += [boolean.AndRestriction, iter((node.payload))]
-                    else:
-                        stack += [boolean.AndRestriction, iter(node.payload)]
+                    stack += [boolean.AndRestriction, iter(node.payload)]
                 else:
                     stack += [node.__class__,
                               iter(node.restrictions)]

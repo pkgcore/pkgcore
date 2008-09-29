@@ -4,7 +4,18 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-pkpgcore 0.4.7.8: August 28, 2008
+pkgcore 0.4.7.9:
+
+* DepSet has grown a temp option named allow_src_uri_file_names; this
+  is to support eapi 2's -> SRC_URI extension.  This functionality
+  will under go refactoring in the coming days- as such the api addition
+  isn't considered stable.
+
+* we now match the forced phase ordering portage induced via breaking
+  eapi compatibilty for eapi0/1.
+
+
+pkgcore 0.4.7.8: August 28, 2008
 
 * pkgcore now properly preserves ownership of symlinks on merging.
   ensure_perms plugins now need to handle symlinks (lchown at the least).

@@ -610,6 +610,16 @@ class buildable(ebd, setup_mixin, format.build):
             return self._generic_phase("configure", True, True, False)
         return True
 
+    def prepare(self):
+        """
+        execute a source preparation phase
+        
+        does nothing if the pkg's EAPI is less than 2
+        """
+        if self.eapi > 2:
+            return self._generic_phase("prepare", True, True, False)
+        return True
+
     def nofetch(self):
         """
         execute the nofetch phase.

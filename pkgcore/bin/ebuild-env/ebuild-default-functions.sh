@@ -270,7 +270,28 @@ dyn_compile()
     fi
 }
 
+dyn_configure()
+{
+    MUST_EXPORT_ENV="yes"
+    if [ -d "${S}" ]; then
+        cd "${S}"
+    else
+        cd "$WORKDIR"
+    fi
+    src_configure
+}
 
+dyn_prepare()
+{
+    MUST_EXPORT_ENV="yes"
+    if [ -d "${S}" ]; then
+        cd "${S}"
+    else
+        cd "$WORKDIR"
+    fi
+    src_prepare
+}
+    
 dyn_test()
 {
         echo ">>> Test phase [enabled]: ${CATEGORY}/${PF}"

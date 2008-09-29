@@ -66,7 +66,8 @@ class build(build_base):
     stage_depends = {
         "setup":"start",
         "unpack":("fetch", "setup"),
-        "configure":"unpack",
+        "configure":"prepare",
+        "prepare":"unpack",
         "compile":"configure",
         "test":"compile",
         "install":"test",
@@ -78,6 +79,9 @@ class build(build_base):
     fetch = _raw_fetch
 
     def unpack(self):
+        return True
+
+    def prepare(self):
         return True
 
     def configure(self):

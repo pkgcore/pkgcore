@@ -29,9 +29,9 @@ class Test_native_atom(TestCase):
 
     def test_str_hash(self):
         for s in ("dev-util/diffball", "=dev-util/diffball-0.7.1",
-            ">foon/bar-1[-4,3]:2,3", "=foon/bar-2*", "~foon/bar-2.3",
+            ">foon/bar-1:2,3[-4,3]", "=foon/bar-2*", "~foon/bar-2.3",
             "!dev-util/diffball", "!=dev-util/diffball-0.7*",
-            "foon/bar::gentoo", ">=foon/bar-10_alpha1[-not,use]:1:gentoo",
+            "foon/bar::gentoo", ">=foon/bar-10_alpha1:1:gentoo[-not,use]",
             "!!dev-util/diffball[use]"):
             self.assertEqual(str(self.kls(s)), s)
             self.assertEqual(hash(self.kls(s, disable_inst_caching=True)),
@@ -54,7 +54,7 @@ class Test_native_atom(TestCase):
 
 
     def test_iter(self):
-        d = self.kls("!>=dev-util/diffball-0.7[use,x]:1,2:gentoo")
+        d = self.kls("!>=dev-util/diffball-0.7:1,2:gentoo[use,x]")
         self.assertEqual(list(d), list(d.restrictions))
 
     def test_pickling(self):
@@ -128,14 +128,27 @@ class Test_native_atom(TestCase):
 
     def test_use(self):
         astr = "dev-util/bsdiff"
-        c = FakePkg("%s-1" % astr, use=("debug",))
+        c = FakePkg("%s-1" % astr, use=("debug",), slot=1)
         self.assertTrue(self.kls("%s[debug]" % astr).match(c))
         self.assertFalse(self.kls("%s[-debug]" % astr).match(c))
         self.assertTrue(self.kls("%s[debug,-not]" % astr).match(c))
+        self.assertTrue(self.kls("%s:1[debug,-not]" % astr).match(c))
         self.assertRaises(errors.MalformedAtom, self.kls, "%s[]" % astr)
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[foon")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[[fo]")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x][y]")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x]:1")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x]a")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[--]")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x??]")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x=?]")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x?=]")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x==]")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x??]")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[!=]")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[!?]")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[!!x?]")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[!-x?]")
 
     def test_slot(self):
         astr = "dev-util/confcache"
@@ -178,7 +191,7 @@ class Test_native_atom(TestCase):
             if slot and repo:
                 repo = repo[1:]
             o = self.kls("%sdev-util/diffball%s%s%s%s" %
-                (pref, ver, use, slot, repo))
+                (pref, ver, slot, repo, use))
             count = 2
             for x in ("use", "repo", "pref", "slot"):
                 if locals()[x]:
@@ -232,6 +245,9 @@ class Test_native_atom(TestCase):
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:::")
+        for x in xrange(0, 3):
+            self.assertRaises(errors.MalformedAtom, self.kls,
+                "dev-util/foon::gentoo-x86", eapi=x)
 
     def test_invalid_atom(self):
         self.assertRaises(errors.MalformedAtom, self.kls, '~dev-util/spork')

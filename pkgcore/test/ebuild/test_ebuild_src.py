@@ -157,20 +157,20 @@ class test_base(TestCase):
         self.assertEqual(l, [o])
 
         # basic tests;
-        for x in xrange(0,2):
+        for x in xrange(0,3):
             f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz',
                 'EAPI':str(x)},
                  repo=parent).fetchables
             self.assertEqual(list(f[0].uri), ['http://foo.com/monkey.tgz'])
             self.assertEqual(f[0].filename, 'monkey.tgz')
 
-        f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz -> foon.tar.gz', 
+        f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz -> foon.tar.gz',
             'EAPI':'2'},
              repo=parent).fetchables
         self.assertEqual(list(f[0].uri), ['http://foo.com/monkey.tgz'])
         self.assertEqual(f[0].filename, 'foon.tar.gz')
 
-        o = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz -> ', 
+        o = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz -> ',
             'EAPI':'2'}, repo=parent)
         self.assertRaises(errors.MetadataException, getattr, o, 'fetchables')
 
@@ -192,6 +192,23 @@ class test_base(TestCase):
         self.assertRaises(errors.MetadataException, getattr, self.get_pkg(
                 {'SRC_URI':'mirror://mirror2/foon/monkey.tgz'},
                 repo=parent), 'fetchables')
+
+        self.assertEqual([list(x.uri) for x in self.get_pkg({'EAPI':'2',
+            'SRC_URI': 'mirror://mirror1/monkey.tgz -> foon.tar.gz'},
+            repo=parent).fetchables],
+            [['http://boon.com/monkey.tgz']])
+
+        parent = self.make_parent(_parent_repo=repo,
+            mirrors={'mirror1':mirror}, default_mirrors=fetch.default_mirror(
+                ['http://default.com/dist/', 'http://default2.com/'],
+                'default'))
+
+        self.assertEqual([list(x.uri) for x in self.get_pkg({'EAPI':'2',
+            'SRC_URI': 'mirror://mirror1/monkey.tgz -> foon.tar.gz'},
+            repo=parent).fetchables],
+            [['http://default.com/dist/foon.tar.gz',
+            'http://default2.com/foon.tar.gz',
+            'http://boon.com/monkey.tgz']])
 
         parent = self.make_parent(_parent_repo=repo, default_mirrors=mirror)
         f = self.get_pkg({'SRC_URI': 'http://foo.com/monkey.tgz'},

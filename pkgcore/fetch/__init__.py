@@ -94,7 +94,7 @@ class uri_list(object):
     def add_mirror(self, mirror_inst, suburi=None):
         if not isinstance(mirror_inst, mirror):
             raise TypeError("mirror must be a pkgcore.fetch.mirror instance")
-        if suburi is not None and '/' in suburi:
+        if suburi is not None:
             self._uri_source.append((mirror_inst, suburi.lstrip('/')))
         else:
             self._uri_source.append(mirror_inst)

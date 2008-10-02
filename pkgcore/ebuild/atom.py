@@ -42,54 +42,73 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
 
     orig_atom = atom
 
-    u = atom.find("[")
-    if u != -1:
+    use_start = atom.find("[")
+    slot_start = atom.find(":")
+    if use_start != -1:
         # use dep
-        u2 = atom.find("]", u)
-        if u2 == -1:
-            raise errors.MalformedAtom(atom,
+        use_end = atom.find("]", use_start)
+        if use_end == -1:
+            raise errors.MalformedAtom(orig_atom,
                 "use restriction isn't completed")
-        sf(self, "use", tuple(sorted(atom[u+1:u2].split(','))))
+        elif use_end != len(atom) -1:
+            raise errors.MalformedAtom(orig_atom,
+                "trailing garbage after use dep")
+        sf(self, "use", tuple(sorted(atom[use_start + 1:use_end].split(','))))
         for x in self.use:
-            if not all(y in valid_use_chars for y in x):
-                raise errors.MalformedAtom(atom,
-                    "invalid char spotted in use dep")
-        if not all(x.lstrip("-") for x in self.use):
-            raise errors.MalformedAtom(
-                atom, "cannot have empty use deps in use restriction")
-        atom = atom[0:u]+atom[u2 + 1:]
+            # stripped purely for validation reasons
+            try:
+                if x[-1] in "=?":
+                    x = x[:-1]
+                    if x[0] == '!':
+                        x = x[1:]
+                    if x[0] == '-':
+                        raise errors.MalformedAtom(orig_atom,
+                            "malformed use flag: %s" % x)
+                elif x[0] == '-':
+                    x = x[1:]
+                    if x[0] == '-':
+                        raise errors.MalformedAtom(orig_atom,
+                            '- is not a valid use flag leading char')
+                if not x:
+                    raise errors.MalformedAtom(orig_atom,
+                        'empty use dep detected')
+                elif not all(y in valid_use_chars for y in x):
+                    raise errors.MalformedAtom(atom,
+                        "invalid char spotted in use dep")
+            except IndexError:
+                raise errors.MalformedAtom(orig_atom,
+                    'empty use dep detected')
+        atom = atom[0:use_start]+atom[use_end + 1:]
     else:
         sf(self, "use", None)
-    s = atom.find(":")
-    if s != -1:
-        i2 = atom.find(":", s + 1)
+    if slot_start != -1:
+        i2 = atom.find(":", slot_start + 1)
         if i2 != -1:
             repo_id = atom[i2 + 1:]
             if not repo_id:
-                raise errors.MalformedAtom(atom,
+                raise errors.MalformedAtom(orig_atom,
                     "repo_id must not be empty")
             elif not valid_repo_chars.issuperset(repo_id):
-                raise errors.MalformedAtom(atom,
+                raise errors.MalformedAtom(orig_atom,
                     "repo_id may contain only [a-Z0-9_-/]")
             atom = atom[:i2]
             sf(self, "repo_id", repo_id)
         else:
             sf(self, "repo_id", None)
         # slot dep.
-        slots = tuple(sorted(atom[s+1:].split(",")))
+        slots = tuple(sorted(atom[slot_start+1:].split(",")))
         if not all(slots):
             # if the slot char came in only due to repo_id, force slots to None
             if len(slots) == 1 and i2 != -1:
                 slots = None
             else:
-                raise errors.MalformedAtom(atom,
+                raise errors.MalformedAtom(orig_atom,
                     "empty slots aren't allowed")
         sf(self, "slot", slots)
-        atom = atom[:s]
+        atom = atom[:slot_start]
     else:
         sf(self, "slot", None)
         sf(self, "repo_id", None)
-    del u, s
 
     sf(self, "blocks", atom[0] == "!")
     if self.blocks:
@@ -126,15 +145,20 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
     sf(self, 'cpvstr', atom)
 
     if eapi == 0:
-        for x in ('use', 'repo_id', 'slot'):
+        for x in ('use', 'slot'):
             if getattr(self, x) is not None:
                 raise errors.MalformedAtom(orig_atom,
                     "%s atoms aren't supported for eapi 0" % x)
     elif eapi == 1:
-        for x in ('use', 'repo_id'):
-            if getattr(self, x) is not None:
-                raise errors.MalformedAtom(orig_atom,
-                    "%s atoms aren't supported for eapi 1" % x)
+        if self.use is not None:
+            raise errors.MalformedAtom(orig_atom,
+                "use atoms aren't supported for eapi < 2")
+    if self.repo_id is not None and eapi != -1:
+        raise errors.MalformedAtom(orig_atom,
+            "repo_id atoms aren't supported for eapi %i" % eapi)
+    if use_start != -1 and slot_start != -1 and use_start < slot_start:
+        raise errors.MalformedAtom(orig_atom,
+            "slot restriction must proceed use")
     try:
         c = cpv.CPV(self.cpvstr)
     except errors.InvalidCPV, e:
@@ -293,14 +317,14 @@ class atom(boolean.AndRestriction):
                 s = '!!' + s
             else:
                 s = '!' + s
-        if self.use:
-            s += "[%s]" % ",".join(self.use)
         if self.slot:
             s += ":%s" % ",".join(self.slot)
             if self.repo_id:
                 s += ":%s" % self.repo_id
         elif self.repo_id:
             s += "::%s" % self.repo_id
+        if self.use:
+            s += "[%s]" % ",".join(self.use)
         return s
 
     def __hash__(self):

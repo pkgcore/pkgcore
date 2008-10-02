@@ -14,6 +14,13 @@ pkgcore 0.4.7.9:
 * we now match the forced phase ordering portage induced via breaking
   eapi compatibilty for eapi0/1.
 
+* tightened up allowed atom syntax; repository dep is available only when
+  eapi is unspecified (no longer available in eapi2 in other words).
+  atom USE dep parsing now requires it to follow slotting- this is done to
+  match the other EAPI2 standard.
+
+  Beyond that, better error msgs and tighter validation.
+
 
 pkgcore 0.4.7.8: August 28, 2008
 

@@ -613,7 +613,7 @@ class buildable(ebd, setup_mixin, format.build):
     def prepare(self):
         """
         execute a source preparation phase
-        
+
         does nothing if the pkg's EAPI is less than 2
         """
         if self.eapi > 2:

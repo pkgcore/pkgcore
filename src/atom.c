@@ -86,23 +86,57 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
 {
     char *p = *p_ptr;
     char *start = p;
+    char *use_start, *use_end;
     Py_ssize_t len = 1;
     PyObject *use = NULL;
-    while('\0' != *p && ']' != *p) {
-        if (',' == *p)
-            len++;
-        else if(!VALID_USE_CHAR(*p)) {
+
+    // first find the length of tuple we need
+    use_start = p;
+    for(;;p++) {
+        if('\0' == *p) {
             Err_SetMalformedAtom(atom_str,
-                "invalid char in use dep; each flag must be a-Z0-9_.-+");
+                "unclosed use dep");
             return 1;
+        } else if (',' == *p || ']' == *p) {
+            // we flip p back one for ease of coding; rely on compiler
+            // to optimize it out.
+            use_end = p - 1;
+            if(use_end > use_start) {
+                if('-' == *use_start) {
+                    use_start++;
+                } else if('?' == *use_end || '=' == *use_end) {
+                    use_end--;
+                    // commutative use.  ! leading is allowed
+                    if(use_start != use_end && '!' == *use_start) {
+                        use_start++;
+                    }
+                }
+            }
+            if(use_end < use_start) {
+                Err_SetMalformedAtom(atom_str,
+                    "empty use flag detected");
+                return 1;
+            } else if('-' == *use_start) {
+                Err_SetMalformedAtom(atom_str,
+                    "- isn't a valid first char of a use flag");
+                return 1;
+            }
+            while(use_start <= use_end) {
+                if(!VALID_USE_CHAR(*use_start)) {
+                    Err_SetMalformedAtom(atom_str,
+                        "invalid char in use dep; each flag must be a-Z0-9_.-+");
+                    return 1;
+                }
+                use_start++;
+            }
+            if(']' == *p) {
+                break;
+            }
+            len++;
+            use_start = p + 1;
         }
-        p++;
     }
-    if('\0' == *p) {
-        Err_SetMalformedAtom(atom_str,
-            "use dep isn't closed");
-        return 1;
-    }
+    // and now we're validated.
     char *end = p;
     if(len == 1)
         use = PyTuple_New(len);
@@ -112,52 +146,27 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
         return 1;
     Py_ssize_t idx = 0;
     PyObject *s;
-    p = len > 1 ? start : p;
-    while(end != p) {
-        if(',' == *p) {
-            // flag...
-            if(start == p) {
-                Err_SetMalformedAtom(atom_str,
-                    "invalid use flag; must be non empty");
-                goto cleanup_use_processing;
-            } else if('-' == start[1] && start + 1 == p) {
-                Err_SetMalformedAtom(atom_str,
-                    "invalid use flag; must be non empty, got just a negation");
+    p = start;
+    for(;idx < len;idx++) {
+        use_start = p;
+        while(',' != *p && ']' != *p)
+            p++;
+        if(!(s = PyString_FromStringAndSize(use_start, p - use_start))) {
+            goto cleanup_use_processing;
+        }
+        if(len != 1) {
+            // steals the ref.
+            if(PyList_SetItem(use, idx, s)) {
+                Py_DECREF(s);
                 goto cleanup_use_processing;
             }
-            s = PyString_FromStringAndSize(start, p - start);
-            if(!s)
-                goto cleanup_use_processing;
-            // steals the ref.
-            if(PyList_SetItem(use, idx, s))
-                goto cleanup_use_processing;
-            idx++;
-            start = p + 1;
+        } else {
+            PyTuple_SET_ITEM(use, idx, s);
         }
         p++;
     }
-    // one more to add...
-    if(start == p) {
-        Err_SetMalformedAtom(atom_str,
-            "invalid use flag; must be non empty");
-        goto cleanup_use_processing;
-    } else if('-' == start[1] && start + 1 == p) {
-        Err_SetMalformedAtom(atom_str,
-            "invalid use flag; must be non empty, got just a negation");
-        goto cleanup_use_processing;
-    }
-    s = PyString_FromStringAndSize(start, end - start);
-    if(!s) {
-        goto cleanup_use_processing;
-    } else {
-        if(len == 1)
-            PyTuple_SET_ITEM(use, idx, s);
-        else if (PyList_SetItem(use, idx, s)) {
-            goto cleanup_use_processing;
-        }
-    }
     if(len > 1) {
-        // weak...
+        // weak, but it's required for the tuple optimization
         if(PyList_Sort(use) < 0)
             goto cleanup_use_processing;
         PyObject *t = PyTuple_New(len);
@@ -173,7 +182,7 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
         use = t;
     }
     *use_ptr = use;
-    *p_ptr = p + 1;
+    *p_ptr = end;
     return 0;
     cleanup_use_processing:
     Py_CLEAR(use);
@@ -257,10 +266,10 @@ parse_slot_deps(PyObject *atom_str, char **p_ptr, PyObject **slots_ptr)
 }
 
 static int
-parse_repo_id(PyObject *atom_str, char *p, PyObject **repo_id)
+parse_repo_id(PyObject *atom_str, char **p_ptr, PyObject **repo_id)
 {
-    char *start = p;
-    while('\0' != *p) {
+    char *p = *p_ptr;
+    while('\0' != *p && '[' != *p) {
         if(!VALID_REPO_CHAR(*p)) {
             Err_SetMalformedAtom(atom_str,
                 "invalid character in repo_id: "
@@ -270,12 +279,13 @@ parse_repo_id(PyObject *atom_str, char *p, PyObject **repo_id)
         p++;
     }
 
-    if(start == p) {
+    if(*p_ptr == p) {
         Err_SetMalformedAtom(atom_str,
             "repo_id must not be empty");
         return 1;
     }
-    *repo_id = PyString_FromStringAndSize(start, p - start);
+    *repo_id = PyString_FromStringAndSize(*p_ptr, p - *p_ptr);
+    *p_ptr = p;
     return *repo_id ? 0 : 1;
 }
 
@@ -416,50 +426,39 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
     atom_start = p;
     char *cpv_end = NULL;
     PyObject *slot = NULL, *use = NULL, *repo_id = NULL;
-    char slot_seen = 0;
-    while('\0' != *p) {
+    while('\0' != *p && ':' != *p && '[' != *p) {
+        p++;
+    }
+    cpv_end = p;
+    if(':' == *p) {
+        p++;
         if('[' == *p) {
-            if(!cpv_end)
-                cpv_end = p;
-            if(use) {
-                Err_SetMalformedAtom(atom_str,
-                    "multiple use blocks aren't allowed");
-                goto pkgcore_atom_parse_error;
-            }
-            p++;
-            if(parse_use_deps(atom_str, &p, &use))
-                goto pkgcore_atom_parse_error;
-        } else if(':' == *p) {
-            if(!cpv_end)
-                cpv_end = p;
-            p++;
-            if(slot_seen) {
-                // repo_id.
-                if(parse_repo_id(atom_str, p, &repo_id))
-                    goto pkgcore_atom_parse_error;
-                break;
-            } else if(repo_id) {
-                Err_SetMalformedAtom(atom_str,
-                    "multiple slot/repo blocks aren't allowed, use ',' to specify "
-                    "multiple slots, multiple repos aren't allowed yet");
-                goto pkgcore_atom_parse_error;
-            } else {
-                slot_seen = 1;
-                if (':' != *p && '[' != *p) {
-                    if(parse_slot_deps(atom_str, &p, &slot)) {
-                        goto pkgcore_atom_parse_error;
-                    }
-                }
-            }
-        } else if(cpv_end) {
-            // char in between chunks...
             Err_SetMalformedAtom(atom_str,
-                "interstitial characters between use/slot/repo_id blocks "
-                "aren't allowed");
+                "empty slot restriction isn't allowed");
             goto pkgcore_atom_parse_error;
-        } else {
-            p++;
+        } else if(':' != *p) {
+            if(parse_slot_deps(atom_str, &p, &slot)) {
+                goto pkgcore_atom_parse_error;
+            }
         }
+        if(':' == *p) {
+            p++;
+            // empty slotting to get at a repo_id...
+            if(parse_repo_id(atom_str, &p, &repo_id)) {
+                goto pkgcore_atom_parse_error;
+            }
+        }
+    }
+    if('[' == *p) {
+        p++;
+        if(parse_use_deps(atom_str, &p, &use)) {
+            goto pkgcore_atom_parse_error;
+        }
+        p++;
+    }
+    if('\0' != *p) {
+        Err_SetMalformedAtom(atom_str,
+            "trailing garbage detected");
     }
 
     PyObject *cpv_str = NULL;
@@ -531,7 +530,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
     if(0 == eapi_int) {
         if(Py_None != use) {
             Err_SetMalformedAtom(atom_str,
-                "use deps aren't allowed in eapi 0");
+                "use deps aren't allowed in EAPI 0");
             goto pkgcore_atom_parse_error;
         } else if(Py_None != slot) {
             Err_SetMalformedAtom(atom_str,
@@ -547,11 +546,12 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
             Err_SetMalformedAtom(atom_str,
                 "use deps aren't allowed in eapi 1");
             goto pkgcore_atom_parse_error;
-        } else if(Py_None != repo_id) {
-            Err_SetMalformedAtom(atom_str,
-                "repository deps aren't allowed in eapi 1");
-            goto pkgcore_atom_parse_error;
         }
+    }
+    if(eapi_int != -1 && Py_None != repo_id) {
+        Err_SetMalformedAtom(atom_str,
+            "repository deps aren't allowed in EAPI <=2");
+        goto pkgcore_atom_parse_error;
     }
 
     #define STORE_ATTR(attr_name, val)              \

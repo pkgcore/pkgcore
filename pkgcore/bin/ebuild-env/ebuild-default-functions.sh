@@ -291,7 +291,7 @@ dyn_prepare()
     fi
     src_prepare
 }
-    
+
 dyn_test()
 {
         echo ">>> Test phase [enabled]: ${CATEGORY}/${PF}"

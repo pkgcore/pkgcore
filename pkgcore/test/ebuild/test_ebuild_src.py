@@ -111,6 +111,11 @@ class test_base(TestCase):
         self.assertRaises(errors.MetadataException, getattr,
             self.get_pkg({'EAPI':1, 'DEPEND':"d/b::foon"}), 'depends')
         self.get_pkg({'EAPI':1, 'DEPEND':'d/b:foon'}).slot
+        self.assertTrue(self.get_pkg({'EAPI':2, 'DEPEND':'a/b[x=]'})
+            .depends.node_conds)
+        pkg = self.get_pkg({'EAPI':1, 'DEPEND':'a/b[x=]'})
+        self.assertRaises(errors.MetadataException, getattr,
+            pkg, 'depends')
 
     def test_keywords(self):
         self.assertEqual(list(self.get_pkg({'KEYWORDS':''}).keywords), [])

@@ -12,13 +12,14 @@ appropriate conditionals.
 from pkgcore.restrictions import packages, values, boolean
 from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
-from pkgcore.ebuild.atom import atom
+from pkgcore.ebuild.atom import atom, transitive_use_atom
 from pkgcore.ebuild.errors import ParseError
 
 try:
     from pkgcore.ebuild._depset import parse_depset
 except ImportError:
     parse_depset = None
+
 
 class DepSet(boolean.AndRestriction):
 
@@ -38,7 +39,7 @@ class DepSet(boolean.AndRestriction):
 
     def __init__(self, dep_str, element_class, \
         operators=None,
-        element_func=None,
+        element_func=None, transitive_use_atoms=False,
         allow_src_uri_file_renames=False):
 
         """
@@ -62,7 +63,8 @@ class DepSet(boolean.AndRestriction):
         if element_func is None:
             element_func = element_class
 
-        if self.parse_depset is not None and not allow_src_uri_file_renames:
+        if self.parse_depset is not None and not (allow_src_uri_file_renames
+            or transitive_use_atoms):
             restrictions = None
             if operators is None:
                 has_conditionals, restrictions = self.parse_depset(dep_str,
@@ -187,6 +189,14 @@ class DepSet(boolean.AndRestriction):
         if len(depsets) != 1:
             raise ParseError(dep_str)
 
+        if transitive_use_atoms and not node_conds:
+            # localize to this scope for speed.
+            kls = transitive_use_atom
+            for node in self:
+                if isinstance(node, kls):
+                    node_conds = True
+                    break
+
         sf(self, "_node_conds", node_conds)
         sf(self, "restrictions", tuple(self.restrictions))
 
@@ -213,13 +223,16 @@ class DepSet(boolean.AndRestriction):
         count = 1
         while count:
             for node in stack[-1]:
-                if isinstance(node, self.element_class):
+                if getattr(node, 'evaluate_depset', None):
+                    stack += node.evaluate_depset(cond_dict,
+                        tristate_filter=tristate_filter)
+                elif isinstance(node, self.element_class):
                     restricts[-1].append(node)
                     continue
-                if isinstance(node, packages.Conditional):
-                    if not node.payload:
-                        continue
-                    elif tristate_filter is not None:
+                elif isinstance(node, packages.Conditional):
+                    # parsing shouldn't allow an empty node; should collapse on it's own.
+                    assert node.payload
+                    if tristate_filter is not None:
                         assert len(node.restriction.vals) == 1
                         val = list(node.restriction.vals)[0]
                         if val in tristate_filter:
@@ -264,6 +277,8 @@ class DepSet(boolean.AndRestriction):
             if isinstance(cur_node, packages.Conditional):
                 conditions_stack.append(cur_node.restriction)
                 new_set.appendleft(list(cur_node.payload) + [None])
+            elif isinstance(cur_node, transitive_use_atom):
+                new_set.appendleft(cur_node.convert_to_conditionals())
             elif (isinstance(cur_node, boolean.base)
                   and not isinstance(cur_node, atom)):
                 new_set.appendleft(cur_node.restrictions)

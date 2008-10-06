@@ -13,6 +13,8 @@ class Test_native_atom(TestCase):
     class kls(atom.atom):
         locals().update(atom.native_atom_overrides.iteritems())
         __inst_caching__ = True
+        __slots__ = ()
+
     kls = staticmethod(kls)
 
     def test_solutions(self):
@@ -133,6 +135,12 @@ class Test_native_atom(TestCase):
         self.assertFalse(self.kls("%s[-debug]" % astr).match(c))
         self.assertTrue(self.kls("%s[debug,-not]" % astr).match(c))
         self.assertTrue(self.kls("%s:1[debug,-not]" % astr).match(c))
+        kls, vals = self.kls("%s:1[debug=]" % astr).evaluate_depset(["debug"])
+        restrict = kls(*list(vals))
+        self.assertTrue(restrict.match(c))
+        kls, vals = self.kls("%s:1[debug=]" % astr).evaluate_depset([""])
+        restrict = kls(*list(vals))
+        self.assertFalse(restrict.match(c))
         self.assertRaises(errors.MalformedAtom, self.kls, "%s[]" % astr)
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[foon")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[[fo]")

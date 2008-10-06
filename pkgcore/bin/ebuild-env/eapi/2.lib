@@ -1,0 +1,38 @@
+#!/bin/bash
+# ebuild-functions.sh; ebuild env functions, saved with the ebuild (not specific to the portage version).
+# Copyright 2004-2005 Gentoo Foundation
+
+
+pkgcore_eapi2_src_configure()
+{
+    has "${EAPI:0}" 0 1 && die "src_configure isn't available from EAPI's below 2"
+    if [[ -x ${ECONF_SOURCE:-.}/configure ]] ; then
+        econf
+    fi
+}
+
+pkgcore_eapi2_src_prepare() {
+    has "${EAPI:0}" 0 1 && die "src_prepare isn't available from EAPI's below 2"
+    :
+}
+
+for x in pkg_nofetch src_{unpack,compile,test}; do
+    eval "default_${x}() { pkgcore_common_${x}; }"
+done
+unset x
+
+default_src_configure() { pkgcore_eapi2_src_configure; }
+default_src_prepare()   { pkgcore_eapi2_src_prepare; }
+
+default() {
+    if hasq "${EBUILD_PHASE}" pkg_nofetch src_{unpack,compile,test,configure,prepare}; then
+        default_${EBUILD_PHASE}
+    else
+        die "default is not available in ebuild phase '${EBUILD_PHASE}'"
+    fi
+}
+
+inject_phase_funcs pkgcore_eapi2 src_{configure,prepare}
+inject_common_phase_funcs
+
+true

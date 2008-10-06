@@ -210,12 +210,12 @@ einstall()
     fi
 }
 
-pkg_setup()
+common_pkg_setup()
 {
     return
 }
 
-pkg_nofetch()
+common_pkg_nofetch()
 {
     [ -z "${SRC_URI}" ] && return
 
@@ -225,14 +225,14 @@ pkg_nofetch()
     done
 }
 
-src_unpack()
+common_src_unpack()
 {
     if [ "${A}" != "" ]; then
         unpack ${A}
     fi
 }
 
-src_compile()
+common_src_compile()
 {
     # only eapi 0/1 invoke configure...
     if has "${EAPI:-0}" 0 1; then
@@ -247,20 +247,7 @@ src_compile()
     fi
 }
 
-src_configure()
-{
-    has "${EAPI:0}" 0 1 && die "src_configure isn't available from EAPI's below 2"
-    if [[ -x ${ECONF_SOURCE:-.}/configure ]] ; then
-        econf
-    fi
-}
-
-src_prepare() {
-    has "${EAPI:0}" 0 1 && die "src_prepare isn't available from EAPI's below 2"
-    :
-}
-
-src_test()
+common_src_test()
 {
     addpredict /
     if make check -n &> /dev/null; then
@@ -347,4 +334,22 @@ docinto()
     fi
 }
 
+inject_phase_funcs()
+{
+    local pref=$1
+    shift
+    while [ -n "$1" ]; do
+        if [ "$(type -t "$1" )" != "function" ]; then
+            eval "${1}() { ${pref}_${1}; }";
+        fi
+        shift
+    done
+}
+
+inject_common_phase_funcs()
+{
+    inject_phase_funcs common pkg_{setup,nofetch,{pre,post}{inst,rm}} src_{unpack,compile,install,test}
+}
+
+DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} inject_phase_funcs inject_common_phase_funcs"
 true

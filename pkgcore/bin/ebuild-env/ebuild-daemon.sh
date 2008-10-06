@@ -79,9 +79,9 @@ DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alive com PORTAGE_LOGFILE cont"
 export QA_CONTROLLED_EXTERNALLY="yes"
 enable_qa_interceptors
 
-if ! source "${PKGCORE_BIN_PATH}/ebuild-functions.sh"; then
+if ! source "${PKGCORE_BIN_PATH}/eapi/common.lib"; then
     speak failed
-    die "failed sourcing ${PORTAGE_LIB}/ebuild-functions.sh"
+    die "failed sourcing ${PORTAGE_LIB}/eapi/common.lib"
 fi
 
 export PORTAGE_PRELOADED_ECLASSES=''

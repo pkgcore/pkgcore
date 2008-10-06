@@ -491,7 +491,7 @@ init_environ() {
 
     # if daemonized, it's already loaded these funcs.
     if [ "$DAEMONIZED" != "yes" ]; then
-        source "${PKGCORE_BIN_PATH}/ebuild-functions.sh" || die "failed sourcing ebuild-functions.sh"
+        source "${PKGCORE_BIN_PATH}/eapi/common.lib" || die "failed sourcing eapi/common.lib"
     fi
     SANDBOX_ON="1"
     export S=${WORKDIR}/${P}
@@ -550,8 +550,13 @@ init_environ() {
     CDEPEND="$CDEPEND $E_CDEPEND"
     PDEPEND="$PDEPEND $E_PDEPEND"
 
+    EAPI="${EAPI-0}"
+
     unset E_IUSE E_DEPEND E_RDEPEND E_CDEPEND E_PDEPEND
     pkgcore_ensure_PATH "$EXISTING_PATH"
+    if [ "${EBUILD_PHASE}" != "depend" ]; then
+        source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.lib" || die "failed sourcing eapi '${EAPI}'"
+    fi
 }
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.

@@ -17,6 +17,8 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     "pkgcore.restrictions.delegated:delegate",
     "snakeoil.currying:partial",
+    'pkgcore.restrictions.packages:Conditional,AndRestriction@PkgAndRestriction',
+    'pkgcore.restrictions.values:ContainmentMatch',
 )
 
 # namespace compatibility...
@@ -42,6 +44,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
 
     orig_atom = atom
 
+    override_kls = False
     use_start = atom.find("[")
     slot_start = atom.find(":")
     if use_start != -1:
@@ -58,6 +61,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
             # stripped purely for validation reasons
             try:
                 if x[-1] in "=?":
+                    override_kls = True
                     x = x[:-1]
                     if x[0] == '!':
                         x = x[1:]
@@ -78,6 +82,8 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
             except IndexError:
                 raise errors.MalformedAtom(orig_atom,
                     'empty use dep detected')
+        if override_kls:
+            sf(self, '__class__', self._transitive_use_atom)
         atom = atom[0:use_start]+atom[use_end + 1:]
     else:
         sf(self, "use", None)
@@ -269,6 +275,9 @@ class atom(boolean.AndRestriction):
     __inst_caching__ = True
 
     locals().update(atom_overrides.iteritems())
+
+    # overrided in child class if it's supported
+    evaluate_depset = None
 
     def __repr__(self):
         if self.op == '=*':
@@ -543,6 +552,110 @@ class atom(boolean.AndRestriction):
         # Handled all possible ops.
         raise NotImplementedError(
             'Someone added an op to atom without adding it to intersects')
+
+
+class transitive_use_atom(atom):
+
+    __slots__ = ()
+    __inst_caching__ = True
+    _nontransitive_use_atom = atom
+
+    def _stripped_use(self):
+        return str(self).split("[", 1)[0]
+
+    def evaluate_depset(self, cond_dict, tristate_filter=None):
+        if tristate_filter is not None:
+            raise Exception("die in a fire.")
+        req_use_state = []
+        for use in self.use:
+            if use[-1] == '?':
+                if use[0] == '!':
+                    use = use[1:-1]
+                    if use not in cond_dict:
+                        req_use_state.append('-' + use)
+                else:
+                    use = use[:-1]
+                    if use in cond_dict:
+                        req_use_state.append(use)
+            elif use[-1] == '=':
+                if use[0] == '!':
+                    use = use[1:-1]
+                    if use in cond_dict:
+                        # ok... negate the flag.
+                        use = '-' + use
+                else:
+                    use = use[:-1]
+                    if use not in cond_dict:
+                        use = '-' + use
+                req_use_state.append(use)
+            else:
+                req_use_state.append(use)
+
+        if req_use_state:
+            a = self._nontransitive_use_atom('%s[%s]' % (self._stripped_use(),
+                ','.join(req_use_state)))
+        else:
+            a = self._nontransitive_use_atom(self._stripped_use())
+        return (boolean.AndRestriction, iter([a]))
+
+    @staticmethod
+    def _mk_conditional(flag, payload, negate=False):
+        return Conditional('use', ContainmentMatch(flag, negate=negate),
+            payload)
+
+    def _recurse_transitive_use_conds(self, atom_str, forced_use, varied):
+        if not varied:
+            s = ','.join(forced_use)
+            if s:
+               s = '[%s]' % s
+            return (self._nontransitive_use_atom(atom_str + s), )
+
+        flag = varied[0]
+        use = flag.lstrip('!').rstrip('?=')
+        varied = varied[1:]
+        l = []
+        if flag[-1] == '?':
+            # a[x?] == x? ( a[x] ) !x? ( a )
+            # a[!x?] == x? ( a ) !x? ( a[-x] )
+            if flag[0] != '!':
+                return (self._mk_conditional(use,
+                        self._recurse_transitive_use_conds(atom_str,
+                            forced_use + [use], varied)),
+                    self._mk_conditional(use,
+                        self._recurse_transitive_use_conds(atom_str,
+                            forced_use, varied), negate=True)
+                    )
+            return (self._mk_conditional(use,
+                    self._recurse_transitive_use_conds(atom_str,
+                        forced_use, varied)),
+                self._mk_conditional(use,
+                    self._recurse_transitive_use_conds(atom_str,
+                        forced_use + ['-' + use], varied), negate=True)
+                )
+        # a[x=] == x? ( a[x] ) !x? ( a[-x] )
+        # a[!x=] == x? ( a[-x] ) !x? ( a[x] )
+        if flag[0] != '!':
+            use_states = [[use], ['-' + use]]
+        else:
+            use_states = [['-' + use], [use]]
+
+        return (self._mk_conditional(use,
+                self._recurse_transitive_use_conds(atom_str,
+                    forced_use + use_states[0], varied)),
+            self._mk_conditional(use,
+                self._recurse_transitive_use_conds(atom_str,
+                    forced_use + use_states[1], varied), negate=True)
+            )
+
+    def convert_to_conditionals(self):
+        static_use = [use for use in self.use if use[-1] not in '?=']
+        variable = [use for use in self.use if use[-1] in '?=']
+        return PkgAndRestriction(*
+            self._recurse_transitive_use_conds(self._stripped_use(),
+                static_use, variable))
+
+
+atom._transitive_use_atom = transitive_use_atom
 
 def _collapsed_restrict_match(data, pkg, mode):
     # mode is ignored; non applicable.

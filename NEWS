@@ -6,6 +6,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.4.7.9:
 
+* eapi2 is now supported.
+
 * DepSet has grown a temp option named allow_src_uri_file_names; this
   is to support eapi 2's -> SRC_URI extension.  This functionality
   will under go refactoring in the coming days- as such the api addition

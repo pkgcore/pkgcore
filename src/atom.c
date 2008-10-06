@@ -55,6 +55,8 @@ static PyObject *pkgcore_atom_blocks_temp_ignorable = NULL;
 static PyObject *pkgcore_atom_op = NULL;
 static PyObject *pkgcore_atom_negate_vers = NULL;
 static PyObject *pkgcore_atom_restrictions = NULL;
+static PyObject *pkgcore_atom_transitive_use_atom_str = NULL;
+static PyObject *pkgcore_atom__class__ = NULL;
 
 #define ISDIGIT(c) ('0' <= (c) && '9' >= (c))
 #define ISALPHA(c) (('a' <= (c) && 'z' >= (c)) || ('A' <= (c) && 'Z' >= (c)))
@@ -81,12 +83,32 @@ Err_SetMalformedAtom(PyObject *atom_str, char *raw_msg)
     }
 }
 
+
+static int
+reset_class(PyObject *self)
+{
+    PyObject *kls;
+    if(NULL == (kls = PyObject_GetAttr(self, pkgcore_atom_transitive_use_atom_str)))
+        return 1;
+    if(PyObject_GenericSetAttr(self, pkgcore_atom__class__, kls)) {
+        Py_DECREF(kls);
+        return 1;
+    }
+    Py_DECREF(kls);
+    return 0;
+}
+
+// -1 for error
+// 0 for nontransitive
+// 1 for transitive detected (thus class switch needed)
+
 static int
 parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
 {
     char *p = *p_ptr;
     char *start = p;
     char *use_start, *use_end;
+    char transitive_detected = 0;
     Py_ssize_t len = 1;
     PyObject *use = NULL;
 
@@ -96,7 +118,7 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
         if('\0' == *p) {
             Err_SetMalformedAtom(atom_str,
                 "unclosed use dep");
-            return 1;
+            return -1;
         } else if (',' == *p || ']' == *p) {
             // we flip p back one for ease of coding; rely on compiler
             // to optimize it out.
@@ -110,22 +132,23 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
                     if(use_start != use_end && '!' == *use_start) {
                         use_start++;
                     }
+                    transitive_detected = 1;
                 }
             }
             if(use_end < use_start) {
                 Err_SetMalformedAtom(atom_str,
                     "empty use flag detected");
-                return 1;
+                return -1;
             } else if('-' == *use_start) {
                 Err_SetMalformedAtom(atom_str,
                     "- isn't a valid first char of a use flag");
-                return 1;
+                return -1;
             }
             while(use_start <= use_end) {
                 if(!VALID_USE_CHAR(*use_start)) {
                     Err_SetMalformedAtom(atom_str,
                         "invalid char in use dep; each flag must be a-Z0-9_.-+");
-                    return 1;
+                    return -1;
                 }
                 use_start++;
             }
@@ -143,7 +166,7 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
     else
         use = PyList_New(len);
     if(!use)
-        return 1;
+        return -1;
     Py_ssize_t idx = 0;
     PyObject *s;
     p = start;
@@ -183,10 +206,10 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
     }
     *use_ptr = use;
     *p_ptr = end;
-    return 0;
+    return transitive_detected;
     cleanup_use_processing:
     Py_CLEAR(use);
-    return 1;
+    return -1;
 }
 
 static int
@@ -451,8 +474,14 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
     }
     if('[' == *p) {
         p++;
-        if(parse_use_deps(atom_str, &p, &use)) {
-            goto pkgcore_atom_parse_error;
+        switch (parse_use_deps(atom_str, &p, &use)) {
+            case -1:
+                goto pkgcore_atom_parse_error;
+                break;
+            case 1:
+                if(reset_class(self))
+                    goto pkgcore_atom_parse_error;
+                break;
         }
         p++;
     }
@@ -1072,6 +1101,8 @@ init_atom()
                 return;                             \
         }
 
+    load_string(pkgcore_atom_transitive_use_atom_str, "_transitive_use_atom");
+    load_string(pkgcore_atom__class__, "__class__");
     load_string(pkgcore_atom_cpvstr,        "cpvstr");
     load_string(pkgcore_atom_key,           "key");
     load_string(pkgcore_atom_category,      "category");

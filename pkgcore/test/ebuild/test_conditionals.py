@@ -2,10 +2,12 @@
 # License: GPL2/BSD
 
 from pkgcore.test import TestCase
+from snakeoil.compatibility import any
 from snakeoil.currying import post_curry
 from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
 from pkgcore.ebuild import conditionals
+from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.errors import ParseError
 from pkgcore.restrictions import boolean, packages
 
@@ -15,14 +17,13 @@ class base(TestCase):
     class kls(conditionals.DepSet):
         parse_depset = None
 
-    def gen_depset(self, string, operators=None, func=None):
-        if func is not None:
-            kwds = {"element_func":func}
-        else:
-            kwds = {}
+    def gen_depset(self, string, operators=None, element_kls=str,
+        element_func=None, **kwds):
+        if element_func is not None:
+            kwds["element_func"] = element_func
         if operators is None:
             operators = {"":boolean.AndRestriction, "||":boolean.OrRestriction}
-        return self.kls(string, str, operators=operators, **kwds)
+        return self.kls(string, element_kls, operators=operators, **kwds)
 
 
 class native_DepSetParsingTest(base):
@@ -158,8 +159,8 @@ class native_DepSetParsingTest(base):
         locals()["test_parse %s" % name] = post_curry(check_depset, x)
         locals()["test_str %s" % name] = post_curry(check_str, x)
 
-    def check_known_conditionals(self, text, conditionals):
-        d = self.gen_depset(text)
+    def check_known_conditionals(self, text, conditionals, **kwds):
+        d = self.gen_depset(text, **kwds)
         self.assertEqual(sorted(d.known_conditionals),
             sorted(conditionals.split()))
         # ensure it does the lookup *once*
@@ -178,10 +179,14 @@ class native_DepSetParsingTest(base):
             check_known_conditionals, x, c)
     del x, c
 
+    test_known_conditionals_transitive_use = post_curry(
+        check_known_conditionals,
+            "a/b[c=] a/b[!d=] b/a[e?] b/a[!f?]", "c d e f", element_func=atom,
+                transitive_use_atoms=True)
 
     def test_element_func(self):
         self.assertEqual(
-            self.gen_depset("asdf fdas", func=post_curry(str)).element_class,
+            self.gen_depset("asdf fdas", element_func=post_curry(str)).element_class,
             "".__class__)
 
     def test_disabling_or(self):
@@ -223,16 +228,18 @@ class native_DepSetConditionalsInspectionTest(base):
             l.add(frozenset(t))
         return l
 
-    def check_conds(self, s, r, msg=None):
+    def check_conds(self, s, r, msg=None, element_kls=str, **kwds):
         nc = dict(
             (k, self.flatten_cond(v))
-            for (k, v) in self.gen_depset(s).node_conds.iteritems())
-        d = dict(r)
+            for (k, v) in self.gen_depset(s,
+                element_kls=element_kls, **kwds).node_conds.iteritems())
+        d = dict((element_kls(k), v) for k,v in r.iteritems())
         for k, v in d.iteritems():
             if isinstance(v, basestring):
                 d[k] = set([frozenset(v.split())])
             elif isinstance(v, (tuple, list)):
                 d[k] = set(map(frozenset, v))
+
         self.assertEqual(nc, d, msg)
 
     for s in (
@@ -249,7 +256,13 @@ class native_DepSetConditionalsInspectionTest(base):
          "accessible via non conditional path"),
         ("|| ( y? ( x ) z )", {"x":"y"}),
         ):
-        locals()["test _node_conds %s" % s[0]] = post_curry(check_conds, *s)
+        locals()["test_node_conds %s" % s[0]] = post_curry(check_conds, *s)
+
+    for s in (
+        ("a/b[c=]", {"a/b[c]":"c", "a/b[-c]":"!c"}),
+        ):
+        locals()["test_node_conds_atom %s" % s[0]] = post_curry(check_conds,
+            element_kls=atom, transitive_use_atoms=True, *s)
 
 
 class cpy_DepSetConditionalsInspectionTest(
@@ -269,7 +282,8 @@ def convert_to_seq(s):
 class native_DepSetEvaluateTest(base):
 
     def test_evaluation(self):
-        for vals in (("y", "x? ( y ) !x? ( z )", "x"),
+        for vals in (
+            ("y", "x? ( y ) !x? ( z )", "x"),
             ("z", "x? ( y ) !x? ( z )"),
             ("", "x? ( y ) y? ( z )"),
             ("a b", "a !x? ( b )"),
@@ -278,22 +292,34 @@ class native_DepSetEvaluateTest(base):
             ("a || ( b c )", "a || ( x? ( b ) c )", "x"),
             ("a c", "a || ( x? ( b ) c )"),
             ("a b", "a b"),
+            ("a/b[-c]", "a/b[c=]"),
+            ("a/b[c]", "a/b[c=]", "c"),
+            ("a/b", "a/b[c?]"),
+            ("a/b[-c]", "a/b[!c?]"),
+            ("a/b", "a/b[!c?]", "c"),
             ):
 
             result = vals[0]
-            s = vals[1]
-            use, tristate = [], None
+            src = vals[1]
+            use, tristate, kls = [], None, str
             if len(vals) > 2:
                 use = convert_to_seq(vals[2])
             if len(vals) > 3:
                 tristate = convert_to_seq(vals[3])
-            orig = self.gen_depset(s)
+            kwds = {}
+            if '/' in src:
+                kls = atom
+                if any(x[-1] in "=?" for x in src.split("]")):
+                    kwds['transitive_use_atoms'] = True
+            else:
+                kls = str
+            orig = self.gen_depset(src, element_kls=kls, **kwds)
             collapsed = orig.evaluate_depset(use,
                 tristate_filter=tristate)
             self.assertEqual(str(collapsed), result, msg=
                 "expected %r got %r\nraw depset: %r\nuse: %r, tristate: %r" %
-                    (result, str(collapsed), s, use, tristate))
-            if '?' not in s:
+                    (result, str(collapsed), src, use, tristate))
+            if not ('?' in src or kwds.get("transitive_use_atoms")):
                 self.assertIdentical(orig, collapsed)
 
 

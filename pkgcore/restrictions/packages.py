@@ -52,6 +52,7 @@ class PackageRestriction_mixin(restriction.base):
 
     type = restriction.package_type
     subtype = restriction.value_type
+    conditional = False
 
     def _handle_exception(self, pkg, exc):
         if isinstance(exc, AttributeError):
@@ -190,6 +191,8 @@ class Conditional(PackageRestriction):
     __attr_comparison__ = ("__class__", "negate", "attr", "restriction",
         "payload")
     __metaclass__ = generic_equality
+    conditional = True
+
     # note that instance caching is turned off.
     # rarely pays off for conditionals from a speed/mem comparison
 

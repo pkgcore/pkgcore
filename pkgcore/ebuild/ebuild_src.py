@@ -38,11 +38,14 @@ def generate_depset(c, key, non_package_type, s, **kwds):
             return conditionals.DepSet(s.data.pop(key, ""), c,
                 operators={"||":boolean.OrRestriction,
                 "":boolean.AndRestriction}, **kwds)
+        eapi = s.eapi
         try:
-            kwds['element_func'] = _eapi_limited_atom_kls[s.eapi]
+            kwds['element_func'] = _eapi_limited_atom_kls[eapi]
         except IndexError:
             raise metadata_errors.MetadataException(s, 'eapi',
                 "unsupported eapi")
+        if eapi >= 2:
+            kwds['transitive_use_atoms'] = True
         return conditionals.DepSet(s.data.pop(key, ""), c, **kwds)
     except conditionals.ParseError, p:
         raise metadata_errors.MetadataException(s, str(key), str(p))

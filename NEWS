@@ -4,6 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.4.7.10: Oct 7, 2008
+
+* fix in setup.py to install eapi/* files.
+  die distutils, die.
+
 * api for depset inspection for tristate (pcheck visibility mode) is fixed
   to not tell the consumer to lovingly 'die in a fire'.
 
@@ -11,7 +16,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
   missing checksums for nonexistant files
 
 
-pkgcore 0.4.7.9:
+pkgcore 0.4.7.9: Oct 6, 2008
 
 * eapi2 is now supported.
 

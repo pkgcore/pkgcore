@@ -169,6 +169,14 @@ class test_base(TestCase):
             self.assertEqual(list(f[0].uri), ['http://foo.com/monkey.tgz'])
             self.assertEqual(f[0].filename, 'monkey.tgz')
 
+        f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz '
+            'http://dar/boon.tgz', 'EAPI':'2'},
+             repo=parent).fetchables
+        self.assertEqual([list(x.uri) for x in f],
+            [['http://foo.com/monkey.tgz'], ['http://dar/boon.tgz']])
+        self.assertEqual([x.filename for x in f],
+            ['monkey.tgz', 'boon.tgz'])
+
         f = self.get_pkg({'SRC_URI':'http://foo.com/monkey.tgz -> foon.tar.gz',
             'EAPI':'2'},
              repo=parent).fetchables

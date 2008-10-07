@@ -385,6 +385,7 @@ core.setup(
     package_data={
         'pkgcore': [
             'bin/ebuild-env/*',
+            'bin/ebuild-env/eapi/*',
             'bin/ebuild-helpers/*',
             ],
         },

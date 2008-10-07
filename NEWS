@@ -4,6 +4,13 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* api for depset inspection for tristate (pcheck visibility mode) is fixed
+  to not tell the consumer to lovingly 'die in a fire'.
+
+* correct a failure in EAPI=2 src_uri parsing complaining about
+  missing checksums for nonexistant files
+
+
 pkgcore 0.4.7.9:
 
 * eapi2 is now supported.

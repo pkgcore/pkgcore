@@ -163,7 +163,7 @@ class DepSet(boolean.AndRestriction):
                     else:
                         if k2 != '->':
                             depsets[-1].append(element_func(k))
-                            words.appendleft(k2)
+                            words.appendleft((k2,))
                         else:
                             k3 = words.next()
                             # file ename.
@@ -223,10 +223,9 @@ class DepSet(boolean.AndRestriction):
         count = 1
         while count:
             for node in stack[-1]:
-                if getattr(node, 'evaluate_depset', None):
-                    stack += node.evaluate_depset(cond_dict,
-                        tristate_filter=tristate_filter)
-                elif isinstance(node, self.element_class):
+                if getattr(node, 'convert_to_conditionals', None):
+                    node = node.convert_to_conditionals()
+                if isinstance(node, self.element_class):
                     restricts[-1].append(node)
                     continue
                 elif isinstance(node, packages.Conditional):

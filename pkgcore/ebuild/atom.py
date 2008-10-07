@@ -563,41 +563,6 @@ class transitive_use_atom(atom):
     def _stripped_use(self):
         return str(self).split("[", 1)[0]
 
-    def evaluate_depset(self, cond_dict, tristate_filter=None):
-        if tristate_filter is not None:
-            raise Exception("die in a fire.")
-        req_use_state = []
-        for use in self.use:
-            if use[-1] == '?':
-                if use[0] == '!':
-                    use = use[1:-1]
-                    if use not in cond_dict:
-                        req_use_state.append('-' + use)
-                else:
-                    use = use[:-1]
-                    if use in cond_dict:
-                        req_use_state.append(use)
-            elif use[-1] == '=':
-                if use[0] == '!':
-                    use = use[1:-1]
-                    if use in cond_dict:
-                        # ok... negate the flag.
-                        use = '-' + use
-                else:
-                    use = use[:-1]
-                    if use not in cond_dict:
-                        use = '-' + use
-                req_use_state.append(use)
-            else:
-                req_use_state.append(use)
-
-        if req_use_state:
-            a = self._nontransitive_use_atom('%s[%s]' % (self._stripped_use(),
-                ','.join(req_use_state)))
-        else:
-            a = self._nontransitive_use_atom(self._stripped_use())
-        return (boolean.AndRestriction, iter([a]))
-
     @staticmethod
     def _mk_conditional(flag, payload, negate=False):
         return Conditional('use', ContainmentMatch(flag, negate=negate),
@@ -647,12 +612,22 @@ class transitive_use_atom(atom):
                     forced_use + use_states[1], varied), negate=True)
             )
 
+    def __getattr__(self, attr):
+        if attr != 'restrictions':
+            return atom.__getattr__(self, attr)
+        obj = self.convert_to_conditionals()
+        object.__setattr__(self, 'restrictions', obj)
+        return obj
+
     def convert_to_conditionals(self):
         static_use = [use for use in self.use if use[-1] not in '?=']
         variable = [use for use in self.use if use[-1] in '?=']
         return PkgAndRestriction(*
             self._recurse_transitive_use_conds(self._stripped_use(),
                 static_use, variable))
+
+    iter_dnf_solutions = boolean.AndRestriction.iter_dnf_solutions
+    cnf_solutions = boolean.AndRestriction.cnf_solutions
 
 
 atom._transitive_use_atom = transitive_use_atom

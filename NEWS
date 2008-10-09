@@ -4,6 +4,12 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.4.7.11: Oct 10, 2008
+
+* fix EAPI2 issues: default related primarily, invoke src_prepare for
+  >=EAPI2 instead of >EAPI2.
+
+
 pkgcore 0.4.7.10: Oct 7, 2008
 
 * fix in setup.py to install eapi/* files.

@@ -210,12 +210,12 @@ einstall()
     fi
 }
 
-common_pkg_setup()
+pkgcore_common_pkg_setup()
 {
     return
 }
 
-common_pkg_nofetch()
+pkgcore_common_pkg_nofetch()
 {
     [ -z "${SRC_URI}" ] && return
 
@@ -225,14 +225,14 @@ common_pkg_nofetch()
     done
 }
 
-common_src_unpack()
+pkgcore_common_src_unpack()
 {
     if [ "${A}" != "" ]; then
         unpack ${A}
     fi
 }
 
-common_src_compile()
+pkgcore_common_src_compile()
 {
     # only eapi 0/1 invoke configure...
     if has "${EAPI:-0}" 0 1; then
@@ -247,7 +247,7 @@ common_src_compile()
     fi
 }
 
-common_src_test()
+pkgcore_common_src_test()
 {
     addpredict /
     if make check -n &> /dev/null; then
@@ -348,7 +348,7 @@ inject_phase_funcs()
 
 inject_common_phase_funcs()
 {
-    inject_phase_funcs common pkg_{setup,nofetch,{pre,post}{inst,rm}} src_{unpack,compile,install,test}
+    inject_phase_funcs pkgcore_common pkg_{setup,nofetch,{pre,post}{inst,rm}} src_{unpack,compile,install,test}
 }
 
 DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} inject_phase_funcs inject_common_phase_funcs"

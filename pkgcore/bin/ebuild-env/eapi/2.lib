@@ -25,8 +25,12 @@ default_src_configure() { pkgcore_eapi2_src_configure; }
 default_src_prepare()   { pkgcore_eapi2_src_prepare; }
 
 default() {
-    if hasq "${EBUILD_PHASE}" pkg_nofetch src_{unpack,compile,test,configure,prepare}; then
-        default_${EBUILD_PHASE}
+    if has "${EBUILD_PHASE}" nofetch unpack prepare configure compile test; then
+        if [ "${EBUILD_PHASE}" == 'nofetch' ]; then
+            default_pkg_nofetch
+        else
+            default_src_${EBUILD_PHASE}
+        fi
     else
         die "default is not available in ebuild phase '${EBUILD_PHASE}'"
     fi

@@ -616,7 +616,7 @@ class buildable(ebd, setup_mixin, format.build):
 
         does nothing if the pkg's EAPI is less than 2
         """
-        if self.eapi > 2:
+        if self.eapi >= 2:
             return self._generic_phase("prepare", True, True, False)
         return True
 

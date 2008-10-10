@@ -4,6 +4,14 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.4.7.12: Oct 10, 2008 (2 hars after 0.4.7.11 ;)
+
+* security fix; force cwd to something controlled for ebuild env.  This 
+  blocks an attack detailed in glsa 200810-02; namely that an ebuild invoking
+  python -c (which looks in cwd for modules to load) allows for an attacker
+  to slip something in.
+
+
 pkgcore 0.4.7.11: Oct 10, 2008
 
 * fix EAPI2 issues: default related primarily, invoke src_prepare for

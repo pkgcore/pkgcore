@@ -4,7 +4,7 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-pkgcore 0.4.7.12: Oct 10, 2008 (2 hars after 0.4.7.11 ;)
+pkgcore 0.4.7.12: Oct 10, 2008 (2 hours after 0.4.7.11 ;)
 
 * security fix; force cwd to something controlled for ebuild env.  This
   blocks an attack detailed in glsa 200810-02; namely that an ebuild invoking

@@ -3,6 +3,11 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+pkgcore 0.4.7.13: Oct 29, 2008
+
+* bug fix for transitive use atoms; if || ( a/b[x?] ), DepSet wasn't detecting
+  that there were conditionals w/in it, as such wasn't doing evaluation.
+
 
 pkgcore 0.4.7.12: Oct 10, 2008 (2 hours after 0.4.7.11 ;)
 

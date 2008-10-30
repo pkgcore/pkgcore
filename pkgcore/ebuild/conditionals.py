@@ -14,6 +14,7 @@ from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
 from pkgcore.ebuild.atom import atom, transitive_use_atom
 from pkgcore.ebuild.errors import ParseError
+from snakeoil.compatibility import any
 
 try:
     from pkgcore.ebuild._depset import parse_depset
@@ -192,10 +193,9 @@ class DepSet(boolean.AndRestriction):
         if transitive_use_atoms and not node_conds:
             # localize to this scope for speed.
             kls = transitive_use_atom
-            for node in self:
-                if isinstance(node, kls):
-                    node_conds = True
-                    break
+            # we can't rely on iter(self) here since it doesn't
+            # descend through boolean restricts.
+            node_conds = any(isinstance(x, kls) for x in iflatten_instance(self, atom))
 
         sf(self, "_node_conds", node_conds)
         sf(self, "restrictions", tuple(self.restrictions))

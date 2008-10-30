@@ -1,4 +1,4 @@
-pkgcore-0.3 < http://www.pkgcore.org >
+pkgcore-0.4.* < http://www.pkgcore.org >
 
 
 WHAT IS PKGCORE?

@@ -179,9 +179,13 @@ class native_DepSetParsingTest(base):
             check_known_conditionals, x, c)
     del x, c
 
-    test_known_conditionals_transitive_use = post_curry(
-        check_known_conditionals,
+    def test_known_conditionals_transitive_use(self):
+        self.check_known_conditionals(
             "a/b[c=] a/b[!d=] b/a[e?] b/a[!f?]", "c d e f", element_func=atom,
+                transitive_use_atoms=True)
+
+        self.check_known_conditionals(
+            "|| ( b/a[e?] a/c )", "e", element_func=atom,
                 transitive_use_atoms=True)
 
     def test_element_func(self):
@@ -210,6 +214,8 @@ class native_DepSetConditionalsInspectionTest(base):
                 self.gen_depset("( a b ) || ( c d )").has_conditionals))
         self.assertTrue(bool(self.gen_depset("x? ( a )").has_conditionals))
         self.assertTrue(bool(self.gen_depset("( x? ( a ) )").has_conditionals))
+        self.assertTrue(bool(self.gen_depset("|| ( a/b[c=] b/d )", element_kls=atom,
+            transitive_use_atoms=True).has_conditionals))
 
     def flatten_cond(self, c):
         l = set()

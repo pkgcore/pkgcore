@@ -53,7 +53,6 @@ class VersionMatch(restriction.base):
         """
 
         kwd["negate"] = False
-        super(self.__class__, self).__init__(**kwd)
         sf = object.__setattr__
         sf(self, "ver", ver)
         sf(self, "rev", rev)

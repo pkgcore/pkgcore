@@ -3,6 +3,11 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
+* correct a python 2.6 incompatibility; object.__init__() is now strict
+  about taking no keywords.
+
+
 pkgcore 0.4.7.13: Oct 29, 2008
 
 * bug fix for transitive use atoms; if || ( a/b[x?] ), DepSet wasn't detecting

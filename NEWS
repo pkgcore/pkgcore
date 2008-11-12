@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* ticket 187; fix a traceback when a specific subset of cycles are
+  encountered.
+
 * correct a python 2.6 incompatibility; object.__init__() is now strict
   about taking no keywords.
 

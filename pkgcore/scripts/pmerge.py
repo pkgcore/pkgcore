@@ -287,7 +287,7 @@ def display_failures(out, sequence, first_level=True, debug=False):
                 out.write("blocker %s failed due to %s existing" % (step[1],
                     ', '.join(str(x) for x in step[2])))
             elif step[0] == 'cycle':
-                out.write("%s cycle on %s: %s" % (step[2].mode, step[2].atom, step[3]))
+                out.write("%s cycle on %s: %s" % (step[1].mode, step[1].atom, step[2]))
             elif step[0] == 'viable' and not step[1]:
                 out.write("%s: failed %s" % (step[3], step[4]))
             elif step[0] == 'choice':

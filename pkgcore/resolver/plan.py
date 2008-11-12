@@ -539,7 +539,7 @@ class merge_plan(object):
             # this needs to be *far* more fine grained also. it'll try
             # regardless of if it's cycle issue
             if not drop_cycles and self.drop_cycles:
-                stack.add_event(("cycle", frame, cur_frame, "trying to drop any cycles"),)
+                stack.add_event(("cycle", cur_frame, "trying to drop any cycles"),)
                 dprint("trying saving throw for %s ignoring cycles",
                        atom, "cycle")
                 # note everything is retored to a pristine state prior also.
@@ -645,7 +645,7 @@ class merge_plan(object):
             return True
         # we already know the current pkg isn't livefs; force livefs to
         # sidestep this.
-        cur_frame.parent.events.append(("cycle", frame, cur_frame, "limiting to vdb"))
+        cur_frame.parent.events.append(("cycle", cur_frame, "limiting to vdb"))
         cur_frame.ignored = True
         return self._rec_add_atom(cur_frame.atom, stack,
             self.livefs_dbs, mode=cur_frame.mode,

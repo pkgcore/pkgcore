@@ -51,6 +51,8 @@ that aren't involved in the graph of the requested operation""")
 
         self.add_option('--pretend', '-p', action='store_true',
             help="do the resolution, but don't merge/fetch anything")
+        self.add_option('--verbose', '-v', action='store_true',
+            help="be verbose in output")
         self.add_option('--ask', '-a', action='store_true',
             help="do the resolution, but ask to merge/fetch anything")
         self.add_option('--fetchonly', '-f', action='store_true',
@@ -350,7 +352,7 @@ def main(options, out, err):
         use_expand=domain.use_expand,
         use_expand_hidden=domain.use_expand_hidden,
         disabled_use=domain.disabled_use,
-        world_list=world_list)
+        world_list=world_list, verbose=options.verbose)
 
     # This mode does not care about sets and packages so bypass all that.
     if options.unmerge:

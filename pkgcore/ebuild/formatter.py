@@ -240,6 +240,7 @@ class CountingFormatter(Formatter):
         self.package_data[self.mappings[suffix]] += 1
 
     def end(self):
+        self.out.write()
         self.out.write(
             'Total: %d packages ' % sum(self.package_data.itervalues()),
             autoline=False)
@@ -310,12 +311,15 @@ class PortageFormatter(CountingFormatter):
         type = op.desc
         if op.desc == "add":
             out.write(' ', out.fg('green'), out.bold, 'N', out.reset)
+            suffix = "N"
             if op.pkg.slot != '0':
                 out.write(out.fg('green'), out.bold, 'S', out.reset)
+                suffix = "S"
             else:
                 out.write(' ')
         elif op.desc == "replace" and op.pkg == op.old_pkg:
             out.write('  ', out.fg('yellow'), out.bold, 'R', out.reset)
+            suffix = "R"
         else:
             out.write('   ')
             type = 'upgrade'
@@ -327,13 +331,17 @@ class PortageFormatter(CountingFormatter):
         if type == 'upgrade':
             if op.pkg.fullver != op.old_pkg.fullver:
                 out.write(out.fg('cyan'), out.bold, 'U', out.reset)
+                suffix = "U"
                 if op.pkg > op.old_pkg:
                     out.write(' ')
                 else:
                     out.write(out.fg('blue'), out.bold, 'D', out.reset)
+                    suffix = "D"
         else:
             out.write('  ')
         out.write('] ')
+
+        self.handle_package(suffix)
 
         if pkg_is_bold:
             out.write(out.fg('green'), out.bold, op.pkg.cpvstr, out.reset)
@@ -405,7 +413,7 @@ class PortageFormatter(CountingFormatter):
                 assert flag
                 if flag in old_enabled:
                     # Unchanged flag.
-                    flags.extend((red, bold, flag, reset, ' '))
+                    if self.verbose: flags.extend((red, bold, flag, reset, ' '))
                 elif flag in old_disabled:
                     # Toggled.
                     # Trailing single space is important, we can pop it below.
@@ -419,7 +427,7 @@ class PortageFormatter(CountingFormatter):
                     if flag in old_enabled:
                         flags.extend(('(', green, bold, '-', flag, reset, '*)', ' '))
                     else:
-                        flags.extend(('(', blue, bold, '-', flag, reset, ')', ' '))
+                        if self.verbose: flags.extend(('(', blue, bold, '-', flag, reset, ')', ' '))
                 elif flag not in disabled:
                     # Removed flag.
                     if flag in old_enabled:
@@ -428,7 +436,7 @@ class PortageFormatter(CountingFormatter):
                         flags.extend(('(', yellow, bold, '-', flag, reset, '%)', ' '))
                 elif flag in old_disabled:
                     # Unchanged.
-                    flags.extend((blue, bold, '-', flag, reset, ' '))
+                    if self.verbose: flags.extend((blue, bold, '-', flag, reset, ' '))
                 elif flag in old_enabled:
                     # Toggled.
                     flags.extend((yellow, bold, '-', flag, reset, '*', ' '))
@@ -454,6 +462,7 @@ class PortageFormatter(CountingFormatter):
     def end(self):
         out = self.out
         if self.verbose:
+            super(PortageFormatter, self).end()
             out.write()
             repos = self.repos.items()
             repos.sort(key=operator.itemgetter(1))

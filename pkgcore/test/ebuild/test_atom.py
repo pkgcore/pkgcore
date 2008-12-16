@@ -131,11 +131,33 @@ class Test_native_atom(TestCase):
     def test_use(self):
         astr = "dev-util/bsdiff"
         c = FakePkg("%s-1" % astr, use=("debug",), slot=1)
+
+        # Valid chars: [a-zA-Z0-9_@+-]
+        self.kls('%s[zZaA09]' % astr)
+        self.kls('%s[x@y]' % astr)
+        self.kls('%s[x+y]' % astr)
+        self.kls('%s[x-y]' % astr)
+        self.kls('%s[x_y]' % astr)
+
+        # '.' not a valid char in use deps
+        self.assertRaises(errors.MalformedAtom, self.kls, "%s[x.y]" % astr)
+
+        # Use deps start with an alphanumeric char (non-transitive)
+        self.assertRaises(errors.MalformedAtom, self.kls, "%s[@x]" % astr)
+        self.assertRaises(errors.MalformedAtom, self.kls, "%s[_x]" % astr)
+        self.assertRaises(errors.MalformedAtom, self.kls, "%s[+x]" % astr)
+        self.assertRaises(errors.MalformedAtom, self.kls, "%s[-@x]" % astr)
+        self.assertRaises(errors.MalformedAtom, self.kls, "%s[-_x]" % astr)
+        self.assertRaises(errors.MalformedAtom, self.kls, "%s[-+x]" % astr)
+        self.assertRaises(errors.MalformedAtom, self.kls, "%s[--x]" % astr)
+
         self.assertTrue(self.kls("%s[debug]" % astr).match(c))
         self.assertFalse(self.kls("%s[-debug]" % astr).match(c))
         self.assertTrue(self.kls("%s[debug,-not]" % astr).match(c))
         self.assertTrue(self.kls("%s:1[debug,-not]" % astr).match(c))
+
         self.assertRaises(errors.MalformedAtom, self.kls, "%s[]" % astr)
+        self.assertRaises(errors.MalformedAtom, self.kls, "%s[-]" % astr)
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[foon")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[[fo]")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x][y]")
@@ -162,9 +184,15 @@ class Test_native_atom(TestCase):
         self.assertFalse(self.kls("%s:0,2" % astr).match(c))
         # shouldn't puke, but has, thus checking"
         self.kls("sys-libs/db:4.4")
+        self.kls("%s:azAZ.-+_09" % astr)
+        self.kls("%s:_bar" % astr) # According to PMS, underscore and plus-sign are
+        self.kls("%s:+bar" % astr) # not invalid first chars in a slot dep
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1,,0")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1:")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:-1")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:.1")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:1@2")
 
     def test_getattr(self):
         # assert it explodes for bad attr access.
@@ -222,15 +250,15 @@ class Test_native_atom(TestCase):
                 pos = assertAttr('use')
 
     def test_eapi0(self):
-        for postfix in (':1', ':asdf', '::asdf', '::asdf-x86', '[x]', '[x,y]',
-            ':1[x,y]', '[x,y]:1', ':1:repo'):
+        for postfix in (':1', ':1,2', ':asdf', '::asdf', '::asdf-x86', '[x]',
+                        '[x,y]', ':1[x,y]', '[x,y]:1', ':1:repo'):
             self.assertRaisesMsg("dev-util/foon%s must be invalid in EAPI 0"
                 % postfix, errors.MalformedAtom, self.kls,
                 "dev-util/foon%s" % postfix, eapi=0)
 
     def test_eapi1(self):
-        for postfix in ('::asdf', '::asdf-x86', '[x]', '[x,y]',
-            ':1[x,y]', '[x,y]:1', ':1:repo'):
+        for postfix in (':1,2', '::asdf', '::asdf-x86', '[x]',
+                        '[x,y]', ':1[x,y]', '[x,y]:1', ':1:repo'):
             self.assertRaisesMsg("dev-util/foon%s must be invalid in EAPI 1"
                 % postfix, errors.MalformedAtom, self.kls,
                 "dev-util/foon%s" % postfix, eapi=1)
@@ -246,6 +274,7 @@ class Test_native_atom(TestCase):
         self.assertFalse(self.kls("%s::gentoo2" % astr).match(c))
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::")
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::-gentoo-x86")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:::")
         for x in xrange(0, 3):
             self.assertRaises(errors.MalformedAtom, self.kls,

@@ -165,19 +165,19 @@ class CountingFormatterTest(BaseFormatterTest):
 
     def test_end(self):
         self.formatter.end()
-        self.assertEnd('Total: 0 packages (0 new, 0 upgrades, 0 downgrades, 0 in new slots)')
+        self.assertEnd('\nTotal: 0 packages (0 new, 0 upgrades, 0 downgrades, 0 in new slots)')
 
     def test_end_new(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6')))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertEnd('Total: 1 packages (1 new, 0 upgrades, 0 downgrades, 0 in new slots)')
+        self.assertEnd('\nTotal: 1 packages (1 new, 0 upgrades, 0 downgrades, 0 in new slots)')
 
     def test_end_newslot(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', slot='1')))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertEnd('Total: 1 packages (0 new, 0 upgrades, 0 downgrades, 1 in new slots)')
+        self.assertEnd('\nTotal: 1 packages (0 new, 0 upgrades, 0 downgrades, 1 in new slots)')
 
     def test_end_downgrade(self):
         self.formatter.format(
@@ -185,7 +185,7 @@ class CountingFormatterTest(BaseFormatterTest):
             FakeMutatedPkg('app-arch/bzip2-1.0.4')))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertEnd('Total: 1 packages (0 new, 0 upgrades, 1 downgrades, 0 in new slots)')
+        self.assertEnd('\nTotal: 1 packages (0 new, 0 upgrades, 1 downgrades, 0 in new slots)')
 
     def test_end_upgrade(self):
         self.formatter.format(
@@ -193,7 +193,7 @@ class CountingFormatterTest(BaseFormatterTest):
             FakeMutatedPkg('app-arch/bzip2-1.0.3-r6')))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertEnd('Total: 1 packages (0 new, 1 upgrades, 0 downgrades, 0 in new slots)')
+        self.assertEnd('\nTotal: 1 packages (0 new, 1 upgrades, 0 downgrades, 0 in new slots)')
 
 
 class TestPaludisFormatter(CountingFormatterTest, TestCase):
@@ -371,8 +371,7 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '   ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
-            '  USE="', Color('fg', 'red'), Bold(), 'static', Reset(), ' ',
-            Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%"')
+            '  USE="', Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%"')
         self.formatter.format(
             FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6',
                 iuse=['static', 'bootstrap', 'perl', 'foobar', 'rice'],
@@ -385,7 +384,6 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
             Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(), '  USE="',
             Color('fg', 'green'), Bold(), 'rice', Reset(), '* ',
             Color('fg', 'yellow'), Bold(), 'static', Reset(), '%* ',
-            Color('fg', 'blue'), Bold(), '-bootstrap', Reset(), ' ',
             Color('fg', 'yellow'), Bold(), '-foobar', Reset(), '* ',
             Color('fg', 'yellow'), Bold(), '-perl', Reset(), '%"')
 
@@ -434,12 +432,37 @@ class TestPortageVerboseFormatter(TestPortageFormatter):
         kwargs.setdefault("verbose", True)
         return TestPortageFormatter.newFormatter(self, **kwargs)
 
+    def test_changed_use(self):
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', iuse=['static', 'bootstrap'], use=['static']),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6', iuse=['static'], use=['static'])))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '   ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(),
+            '  USE="', Color('fg', 'red'), Bold(), 'static', Reset(), ' ',
+            Color('fg', 'yellow'), Bold(), '-bootstrap', Reset(), '%"')
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6',
+                iuse=['static', 'bootstrap', 'perl', 'foobar', 'rice'],
+                use=['static', 'rice']),
+            FakeMutatedPkg('app-arch/bzip2-1.0.3-r6',
+                iuse=['bootstrap', 'foobar', 'rice', 'kazaam'],
+                use=['foobar'])))
+        self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
+            '   ', Color('fg', 'yellow'), Bold(), 'R', Reset(), '   ] ',
+            Color('fg', 'green'), 'app-arch/bzip2-1.0.3-r6', Reset(), '  USE="',
+            Color('fg', 'green'), Bold(), 'rice', Reset(), '* ',
+            Color('fg', 'yellow'), Bold(), 'static', Reset(), '%* ',
+            Color('fg', 'blue'), Bold(), '-bootstrap', Reset(), ' ',
+            Color('fg', 'yellow'), Bold(), '-foobar', Reset(), '* ',
+            Color('fg', 'yellow'), Bold(), '-perl', Reset(), '%"')
+
     def test_end(self):
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo1)))
         self.formatter.format(FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.3-r6', repo=self.repo2)))
         self.fakeout.resetstream()
         self.formatter.end()
-        self.assertOut('\n',
+        self.assertOut('\nTotal: 2 packages (2 new, 0 upgrades, 0 downgrades, 0 in new slots)\n\n',
             ' ', Color('fg', 'cyan'), '[1]', Reset(),' gentoo (/usr/portage)\n',
             ' ', Color('fg', 'cyan'), '[2]', Reset(),' /usr/local/portage\n',
             suffix=[''])

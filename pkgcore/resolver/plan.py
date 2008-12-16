@@ -476,30 +476,7 @@ class merge_plan(object):
                 choices.force_next_pkg()
                 continue
 
-            # XXX: push this into a method.
-            fail = True
-            for x in choices.provides:
-                l = state.add_op(choices, x).apply(self.state)
-                if l and l != [x]:
-                    # slight hack; basically, should be pruning providers as the parent is removed
-                    # this duplicates it, basically; if it's not a restrict, then it's a pkg.
-                    # thus poke it.
-                    if len(l) == 1 and not isinstance(l[0], restriction.base):
-                        p = getattr(l[0], 'provider', None)
-                        if p is not None and not self.state.match_atom(p):
-                            # ok... force it.
-                            fail = state.replace_op(choices, x).apply(self.state)
-                            if not fail:
-                                continue
-                            self.notify_choice_failed(stack, atom, choices,
-                                "failed forcing provider: %s due to conflict %s", (x, p))
-                            break
-                    self.notify_choice_failed(stack, atom, choices,
-                        "failed inserting provider: %s due to conflict %s", (x, l))
-                    fail = l
-                    break
-            else:
-                fail = False
+            fail = self.insert_providers(stack, atom, choices)
             if fail:
                 self.state.backtrack(stack.current_frame.start_point)
                 choices.force_next_pkg()
@@ -554,6 +531,28 @@ class merge_plan(object):
 
         self.notify_choice_succeeded(stack, atom, choices)
         stack.pop_frame(True)
+        return None
+
+    def insert_providers(self, stack, atom, choices):
+        for x in choices.provides:
+            l = state.add_op(choices, x).apply(self.state)
+            if l and l != [x]:
+                # slight hack; basically, should be pruning providers as the parent is removed
+                # this duplicates it, basically; if it's not a restrict, then it's a pkg.
+                # thus poke it.
+                if len(l) == 1 and not isinstance(l[0], restriction.base):
+                    p = getattr(l[0], 'provider', None)
+                    if p is not None and not self.state.match_atom(p):
+                        # ok... force it.
+                        fail = state.replace_op(choices, x).apply(self.state)
+                        if not fail:
+                            continue
+                        self.notify_choice_failed(stack, atom, choices,
+                            "failed forcing provider: %s due to conflict %s", (x, p))
+                        return fail
+                self.notify_choice_failed(stack, atom, choices,
+                    "failed inserting provider: %s due to conflict %s", (x, l))
+                return l
         return None
 
     def _viable(self, stack, mode, atom, dbs, drop_cycles, limit_to_vdb):

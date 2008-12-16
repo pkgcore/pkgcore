@@ -85,14 +85,14 @@ class ProfileNode(object):
         for line in data:
             if line[0] == '-':
                 if line[1] == '*':
-                    neg_sys.append(atom.atom(line[2:]))
+                    neg_sys.append(self.eapi_atom(line[2:]))
                 else:
-                    neg_vis.append(atom.atom(line[1:], negate_vers=True))
+                    neg_vis.append(self.eapi_atom(line[1:], negate_vers=True))
             else:
                 if line[0] == '*':
-                    sys.append(atom.atom(line[1:]))
+                    sys.append(self.eapi_atom(line[1:]))
                 else:
-                    vis.append(atom.atom(line, negate_vers=True))
+                    vis.append(self.eapi_atom(line, negate_vers=True))
 
         self.system = (tuple(neg_sys), tuple(sys))
         self.visibility = (tuple(neg_vis), tuple(vis))
@@ -115,13 +115,13 @@ class ProfileNode(object):
             l = line.split()
             if len(l) != 2:
                 raise ValueError("%r is malformated" % line)
-            d[cpv.CPV(l[0]).package] = atom.atom(l[1])
+            d[cpv.CPV(l[0]).package] = self.eapi_atom(l[1])
         self.virtuals = d
         return d
 
     @load_decorator("package.mask")
     def _load_masks(self, data):
-        self.masks = split_negations(data, atom.atom)
+        self.masks = split_negations(data, self.eapi_atom)
         return self.masks
 
     @load_decorator("deprecated", lambda i:i, None)
@@ -154,7 +154,7 @@ class ProfileNode(object):
         d = {}
         for line in data:
             i = iter(line.split())
-            a = atom.atom(i.next())
+            a = self.eapi_atom(i.next())
             neg, pos = d.setdefault(a, ([], []))
             for x in i:
                 if x[0] == '-':
@@ -171,7 +171,7 @@ class ProfileNode(object):
         d = {}
         for line in data:
             i = iter(line.split())
-            a = atom.atom(i.next())
+            a = self.eapi_atom(i.next())
             neg, pos = d.setdefault(a, ([], []))
             for x in i:
                 if x[0] == '-':
@@ -197,7 +197,7 @@ class ProfileNode(object):
         d = {}
         for line in data:
             i = iter(line.split())
-            a = atom.atom(i.next())
+            a = self.eapi_atom(i.next())
             neg, pos = d.setdefault(a, ([], []))
             for x in i:
                 if x[0] == '-':
@@ -237,6 +237,21 @@ class ProfileNode(object):
         else:
             self.bashrc = None
         return self.bashrc
+
+    @load_decorator('eapi', fallback=('0',))
+    def _load_eapi(self, data):
+        data = [x.strip() for x in data]
+        data = filter(None, data)
+        if len(data) != 1:
+            raise ProfileError(self.path, 'eapi', "multiple lines detected")
+        elif not (data[0].isdigit() and int(data[0]) in const.eapi_capable):
+            raise ProfileError(self.path, 'eapi', 'unsupported eapi: %s' % data[0])
+        self.eapi = data[0]
+        return self.eapi
+
+    def _load_eapi_atom(self):
+        self.eapi_atom = getattr(atom.atom, 'eapi%s_atom' % self.eapi)
+        return self.eapi_atom
 
     def __getattr__(self, attr):
         if attr in ("system", "visibility"):

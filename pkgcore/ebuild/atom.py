@@ -8,15 +8,16 @@
 gentoo ebuild atom, should be generalized into an agnostic base
 """
 
+import string
 from pkgcore.restrictions import values, packages, boolean
-from pkgcore.ebuild import cpv, errors
+from pkgcore.ebuild import cpv, errors, const
 from pkgcore.ebuild.atom_restricts import VersionMatch
 from snakeoil.compatibility import all
 from snakeoil.klass import generic_equality
 from snakeoil.demandload import demandload
+from snakeoil.currying import partial
 demandload(globals(),
     "pkgcore.restrictions.delegated:delegate",
-    "snakeoil.currying:partial",
     'pkgcore.restrictions.packages:Conditional,AndRestriction@PkgAndRestriction',
     'pkgcore.restrictions.values:ContainmentMatch',
 )
@@ -24,14 +25,17 @@ demandload(globals(),
 # namespace compatibility...
 MalformedAtom = errors.MalformedAtom
 
-valid_use_chars = set(str(x) for x in xrange(10))
-valid_use_chars.update(chr(x) for x in xrange(ord("a"), ord("z")))
-valid_use_chars.update(chr(x) for x in xrange(ord("A"), ord("Z")))
-valid_repo_chars = set(valid_use_chars)
-valid_repo_chars.update("_-/")
-valid_use_chars.update("_.+-")
+alphanum = set(string.letters+string.digits)
+valid_repo_chars = set(alphanum)
+valid_repo_chars.update("_-")
+valid_use_chars = set(alphanum)
+valid_use_chars.update("@+_-")
+valid_slot_chars = set(alphanum)
+valid_slot_chars.update(".+_-")
+alphanum = frozenset(alphanum)
 valid_use_chars = frozenset(valid_use_chars)
 valid_repo_chars = frozenset(valid_repo_chars)
+valid_slot_chars = frozenset(valid_slot_chars)
 
 def native_init(self, atom, negate_vers=False, eapi=-1):
     """
@@ -70,15 +74,16 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
                             "malformed use flag: %s" % x)
                 elif x[0] == '-':
                     x = x[1:]
-                    if x[0] == '-':
-                        raise errors.MalformedAtom(orig_atom,
-                            '- is not a valid use flag leading char')
+
                 if not x:
                     raise errors.MalformedAtom(orig_atom,
                         'empty use dep detected')
-                elif not all(y in valid_use_chars for y in x):
-                    raise errors.MalformedAtom(atom,
-                        "invalid char spotted in use dep")
+                elif x[0] not in alphanum:
+                    raise errors.MalformedAtom(orig_atom,
+                        "invalid first char spotted in use dep '%s' (must be alphanumeric)" % x)
+                if not valid_use_chars.issuperset(x):
+                    raise errors.MalformedAtom(orig_atom,
+                        "invalid char spotted in use dep '%s'" % x)
             except IndexError:
                 raise errors.MalformedAtom(orig_atom,
                     'empty use dep detected')
@@ -94,6 +99,9 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
             if not repo_id:
                 raise errors.MalformedAtom(orig_atom,
                     "repo_id must not be empty")
+            elif repo_id[0] in '-':
+                raise errors.MalformedAtom(orig_atom,
+                    "invalid first char of repo_id '%s' (must not begin with a hyphen)" % repo_id)
             elif not valid_repo_chars.issuperset(repo_id):
                 raise errors.MalformedAtom(orig_atom,
                     "repo_id may contain only [a-Z0-9_-/]")
@@ -110,6 +118,15 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
             else:
                 raise errors.MalformedAtom(orig_atom,
                     "empty slots aren't allowed")
+        else:
+            for x in slots:
+                if x[0] in '-.':
+                    raise errors.MalformedAtom(orig_atom,
+                        "invalid first char of slot dep '%s' (must not begin with a hyphen or a dot)" % x)
+                if not valid_slot_chars.issuperset(x):
+                   raise errors.MalformedAtom(orig_atom,
+                       "invalid char spotted in slot dep '%s'" % x)
+
         sf(self, "slot", slots)
         atom = atom[:slot_start]
     else:
@@ -162,6 +179,9 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
     if self.repo_id is not None and eapi != -1:
         raise errors.MalformedAtom(orig_atom,
             "repo_id atoms aren't supported for eapi %i" % eapi)
+    if self.slot and len(self.slot) > 1 and eapi != -1:
+        raise errors.MalformedAtom(orig_atom,
+            "multiple slot restrictions not supported for eapi %s" % eapi)
     if use_start != -1 and slot_start != -1 and use_start < slot_start:
         raise errors.MalformedAtom(orig_atom,
             "slot restriction must proceed use")
@@ -185,6 +205,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
             'versioned atom requires an operator')
     sf(self, "hash", hash(orig_atom))
     sf(self, "negate_vers", negate_vers)
+
 
 def native__getattr__(self, attr):
     if attr != "restrictions":
@@ -552,6 +573,15 @@ class atom(boolean.AndRestriction):
         # Handled all possible ops.
         raise NotImplementedError(
             'Someone added an op to atom without adding it to intersects')
+
+    def f(cls, *args, **kwds):
+        return cls(*args, **kwds)
+
+    for x in const.eapi_capable:
+        locals()['eapi%i_atom' % x] = classmethod(partial(f, eapi=x))
+
+    del f, x
+
 
 
 class transitive_use_atom(atom):

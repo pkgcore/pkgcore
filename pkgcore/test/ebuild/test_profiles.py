@@ -7,7 +7,7 @@ from pkgcore.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin, ensure_dirs
 
-from pkgcore.ebuild import profiles
+from pkgcore.ebuild import profiles, const
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.restrictions import packages
@@ -37,13 +37,34 @@ class TestProfileNode(profile_mixin, TestCase):
             profile = self.profile
         open(pjoin(self.dir, profile, filename), "w").write(iterable)
 
-    def parsing_checks(self, filename, attr):
+    def parsing_checks(self, filename, attr, data=""):
         path = pjoin(self.dir, self.profile)
-        self.write_file(filename, "")
+        self.write_file(filename, data)
         getattr(ProfileNode(path), attr)
         self.write_file(filename,  "-")
         self.assertRaises(profiles.ProfileError,
             getattr, ProfileNode(path), attr)
+
+    def simple_eapi_awareness_check(self, filename, attr,
+        bad_data="dev-util/diffball\ndev-util/bsdiff:1",
+        good_data="dev-util/diffball\ndev-util/bsdiff"):
+        # validate unset eapi=0 prior
+        self.parsing_checks(filename, attr, data=good_data)
+        self.write_file("eapi", "1")
+        self.parsing_checks(filename, attr, data=good_data)
+        self.parsing_checks(filename, attr, data=bad_data)
+        self.write_file("eapi", "0")
+        self.assertRaises(profiles.ProfileError,
+            self.parsing_checks, filename, attr, data=bad_data)
+
+    def test_eapi(self):
+        path = pjoin(self.dir, self.profile)
+        self.assertEqual(ProfileNode(path).eapi, '0')
+        self.write_file("eapi", "1")
+        self.assertEqual(ProfileNode(path).eapi, '1')
+        self.write_file("eapi", str(const.unknown_eapi))
+        self.assertRaises(profiles.ProfileError, getattr,
+            ProfileNode(path), 'eapi')
 
     def test_packages(self):
         p = ProfileNode(pjoin(self.dir, self.profile))
@@ -69,6 +90,7 @@ class TestProfileNode(profile_mixin, TestCase):
             set([atom("dev-foo/bar", negate_vers=True),
                 atom("lock-foo/dar", negate_vers=True)])
             ])
+        self.simple_eapi_awareness_check('packages', 'system')
 
     def test_deprecated(self):
         self.assertEqual(ProfileNode(pjoin(self.dir, self.profile)).deprecated,
@@ -103,6 +125,7 @@ class TestProfileNode(profile_mixin, TestCase):
         self.write_file("package.mask", "-dev-util/diffball")
         self.assertEqual(ProfileNode(path).masks,
             ((atom("dev-util/diffball"),), ()))
+        self.simple_eapi_awareness_check('package.mask', 'masks')
 
     def test_masked_use(self):
         path = pjoin(self.dir, self.profile)
@@ -135,6 +158,9 @@ class TestProfileNode(profile_mixin, TestCase):
         self.write_file("package.use.mask", "")
         self.assertEqual(ProfileNode(path).masked_use,
            {packages.AlwaysTrue:(('foon',),('mmx',))})
+        self.simple_eapi_awareness_check('package.use.mask', 'masked_use',
+            bad_data='=de/bs-1:1 x\nda/bs y',
+            good_data='=de/bs-1 x\nda/bs y')
 
     def test_forced_use(self):
         path = pjoin(self.dir, self.profile)
@@ -167,6 +193,9 @@ class TestProfileNode(profile_mixin, TestCase):
         self.write_file("package.use.force", "")
         self.assertEqual(ProfileNode(path).forced_use,
            {packages.AlwaysTrue:(('foon',),('mmx',))})
+        self.simple_eapi_awareness_check('package.use.force', 'forced_use',
+            bad_data='=de/bs-1:1 x\nda/bs y',
+            good_data='=de/bs-1 x\nda/bs y')
 
     def test_pkg_use(self):
         path = pjoin(self.dir, self.profile)
@@ -182,6 +211,9 @@ class TestProfileNode(profile_mixin, TestCase):
         self.assertEqual(ProfileNode(path).pkg_use,
            {atom("dev-util/bar"):(('X',), ()),
            atom("dev-util/foo"):((), ('X',))})
+        self.simple_eapi_awareness_check('package.use', 'pkg_use',
+            bad_data='=de/bs-1:1 x\nda/bs y',
+            good_data='=de/bs-1 x\nda/bs y')
 
     def test_parents(self):
         path = pjoin(self.dir, self.profile)
@@ -198,6 +230,9 @@ class TestProfileNode(profile_mixin, TestCase):
         self.write_file("virtuals", "virtual/alsa media-sound/alsalib")
         self.assertEqual(ProfileNode(path).virtuals,
             {'alsa':atom("media-sound/alsalib")})
+        self.simple_eapi_awareness_check('virtuals', 'virtuals',
+            bad_data='virtual/al =de/bs-1:1\nvirtual/foo da/bs',
+            good_data='virtual/al =de/bs-1\nvirtual/foo da/bs')
 
     def test_default_env(self):
         path = pjoin(self.dir, self.profile)

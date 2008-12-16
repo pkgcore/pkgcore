@@ -63,10 +63,15 @@ static PyObject *pkgcore_atom__class__ = NULL;
 #define ISLOWER(c) ('a' <= (c) && 'z' >= (c))
 #define ISALNUM(c) (ISALPHA(c) || ISDIGIT(c))
 
-#define VALID_USE_CHAR(c) (ISALNUM(c) || '-' == (c) \
+#define VALID_SLOT_CHAR(c) (ISALNUM(c) || '-' == (c) \
     || '_' == (c) || '.' == (c) || '+' == (c))
+#define INVALID_SLOT_FIRST_CHAR(c) ('.' == (c) || '-' == (c))
+
+#define VALID_USE_CHAR(c) (ISALNUM(c) || '-' == (c) \
+    || '_' == (c) || '@' == (c) || '+' == (c))
 
 #define VALID_REPO_CHAR(c) (ISALNUM(c) || '-' == (c) || '_' == (c) || '/' == (c))
+#define INVALID_REPO_FIRST_CHAR(c) ('-' == (c))
 
 static void
 Err_SetMalformedAtom(PyObject *atom_str, char *raw_msg)
@@ -139,15 +144,15 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
                 Err_SetMalformedAtom(atom_str,
                     "empty use flag detected");
                 return -1;
-            } else if('-' == *use_start) {
+            } else if(!ISALNUM(*use_start)) {
                 Err_SetMalformedAtom(atom_str,
-                    "- isn't a valid first char of a use flag");
+                    "first char of a use flag must be alphanumeric");
                 return -1;
             }
             while(use_start <= use_end) {
                 if(!VALID_USE_CHAR(*use_start)) {
                     Err_SetMalformedAtom(atom_str,
-                        "invalid char in use dep; each flag must be a-Z0-9_.-+");
+                        "invalid char in use dep; each flag must be a-Z0-9_@-+");
                     return -1;
                 }
                 use_start++;
@@ -217,12 +222,21 @@ parse_slot_deps(PyObject *atom_str, char **p_ptr, PyObject **slots_ptr)
 {
     char *p = *p_ptr;
     char *start = p;
+    char check_valid_first_char = 1;
     Py_ssize_t len = 1;
     PyObject *slots = NULL;
     while('\0' != *p && ':' != *p && '[' != *p) {
-        if (',' == *p)
+        if (',' == *p) {
             len++;
-        else if(!VALID_USE_CHAR(*p)) {
+            check_valid_first_char = 1;
+        } else if (check_valid_first_char) {
+            if (INVALID_SLOT_FIRST_CHAR(*p)) {
+                Err_SetMalformedAtom(atom_str,
+                    "invalid first char of slot dep; must not be '-'");
+                goto cleanup_slot_processing;
+            }
+            check_valid_first_char = 0;
+        } else if(!VALID_SLOT_CHAR(*p)) {
             Err_SetMalformedAtom(atom_str,
                 "invalid char in slot dep; each flag must be a-Z0-9_.-+");
             goto cleanup_slot_processing;
@@ -293,9 +307,14 @@ parse_repo_id(PyObject *atom_str, char **p_ptr, PyObject **repo_id)
 {
     char *p = *p_ptr;
     while('\0' != *p && '[' != *p) {
-        if(!VALID_REPO_CHAR(*p)) {
+        if(p == *p_ptr && INVALID_REPO_FIRST_CHAR(*p)) {
             Err_SetMalformedAtom(atom_str,
-                "invalid character in repo_id: "
+                "invalid first char of repo_id: "
+                "must not be '-'");
+            return 1;
+        } else if(!VALID_REPO_CHAR(*p)) {
+            Err_SetMalformedAtom(atom_str,
+                "invalid char in repo_id: "
                 "valid characters are [a-Z0-9_-/]");
             return 1;
         }
@@ -580,6 +599,11 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
     if(eapi_int != -1 && Py_None != repo_id) {
         Err_SetMalformedAtom(atom_str,
             "repository deps aren't allowed in EAPI <=2");
+        goto pkgcore_atom_parse_error;
+    }
+    if(eapi_int != -1 && Py_None != slot && PyTuple_GET_SIZE(slot) > 1) {
+        Err_SetMalformedAtom(atom_str,
+            "multiple slot deps aren't allowed in any supported EAPI");
         goto pkgcore_atom_parse_error;
     }
 

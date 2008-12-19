@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.4.7.14: Dec 18, 2008
+
 * profile awareness of eapi files, *including* strict validation.
 
 * tighter use dep and atom support in pkgcore for specified eapis.

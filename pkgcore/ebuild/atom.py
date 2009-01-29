@@ -279,22 +279,23 @@ try:
 
     try:
         test().asdf
-    except TypeError, e:
+    except TypeError:
         # function was invoked incorrectly- self and attr were passed in
         # to the meth_o variant.  meaning no __getattr__ descriptor support.
         # 
         try:
-            class test(object):
+            class test2(object):
                 __getattr__ = atom_overrides['__getattr__nondesc']
+            test2().asdf
+        except SystemError:
+            # ...or there was a screwup in the cpy implementation and it's
+            # bitching about the passed in 'attr' key being the wrong type.
+            # retrigger the exception.
             test().asdf
         except AttributeError:
             # old form works.  See the 'else' for why we do this
             atom_overrides['__getattr__'] = atom_overrides['__getattr__nondesc']
-        else:
-            # ...or there was a screwup in the cpy implementation and it's
-            # bitching about the passed in 'attr' key being the wrong type.
-            raise
-        del e
+        del test2
     except AttributeError:
         # function invocation succeeded, but blew up due to our test object
         # missing expected attributes.  This is fine- it was invocable at 

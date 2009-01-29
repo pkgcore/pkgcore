@@ -6,6 +6,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.4.7.15: Jan 28, 2008
 
+* fix docutils-0.5 incompatibility in build_api_docs.py
+
 * python issue 4230 makes __getattr__ support descriptor protocol.
   This unfortunately causes part of config handling to go boom- fixed.
 

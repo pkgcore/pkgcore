@@ -156,8 +156,8 @@ def script_options(name, arguments, options, content, lineno,
         for command_name, bits in sorted(parserclass.iteritems()):
             comp += nodes.title(text="%s %s" % (base, command_name))
             comp += generate_script(bits[0], state)
-        return comp
-    return generate_script(parserclass, state)
+        return [comp]
+    return [generate_script(parserclass, state)]
 
 
 def generate_script(parserclass, state):

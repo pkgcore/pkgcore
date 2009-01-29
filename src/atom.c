@@ -878,15 +878,12 @@ make_use_val_restrict(PyObject *use)
     return tmp;
 }
 
+
 static PyObject *
-pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
+internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 {
     int required = 2;
     int failed = 1;
-
-    PyObject *self = NULL, *attr = NULL;
-    if(!PyArg_ParseTuple(args, "OO", &self, &attr))
-        return NULL;
 
     PyObject *op = NULL, *package = NULL, *category = NULL;
     PyObject *use = NULL, *slot = NULL, *repo_id = NULL;
@@ -1014,10 +1011,32 @@ pkgcore_atom_getattr(PyObject *getattr_inst, PyObject *args)
     return tup;
 }
 
+static PyObject *
+pkgcore_atom_getattr_nondesc(PyObject *getattr_inst, PyObject *args)
+{
+    PyObject *self = NULL, *attr = NULL;
+    if(!PyArg_ParseTuple(args, "OO", &self, &attr)) {
+        return NULL;
+    }
+    return internal_pkgcore_atom_getattr(self, attr);
+}
+
+static PyObject *
+pkgcore_atom_getattr_desc(PyObject *self, PyObject *args)
+{
+    PyObject *attr = NULL;
+    if(!PyArg_ParseTuple(args, "O", &attr)) {
+        return NULL;
+    }
+    return internal_pkgcore_atom_getattr(self, attr);
+}
+
 snakeoil_FUNC_BINDING("__init__", "pkgcore.ebuild._atom.__init__",
     pkgcore_atom_init, METH_VARARGS|METH_KEYWORDS)
-snakeoil_FUNC_BINDING("__getattr__", "pkgcore.ebuild._atom.__getattr__",
-    pkgcore_atom_getattr, METH_O|METH_COEXIST)
+snakeoil_FUNC_BINDING("__getattr__", "pkgcore.ebuild._atom.__getattr__nondesc",
+    pkgcore_atom_getattr_nondesc, METH_O|METH_COEXIST)
+snakeoil_FUNC_BINDING("__getattr__", "pkgcore.ebuild._atom.__getattr__desc",
+    pkgcore_atom_getattr_desc, METH_VARARGS|METH_COEXIST)
 
 PyDoc_STRVAR(
     pkgcore_atom_documentation,
@@ -1115,7 +1134,10 @@ init_atom()
     if(PyType_Ready(&pkgcore_atom_init_type) < 0)
         return;
 
-    if(PyType_Ready(&pkgcore_atom_getattr_type) < 0)
+    if(PyType_Ready(&pkgcore_atom_getattr_desc_type) < 0)
+        return;
+
+    if(PyType_Ready(&pkgcore_atom_getattr_nondesc_type) < 0)
         return;
 
     #define load_string(ptr, str)                   \
@@ -1164,16 +1186,25 @@ init_atom()
     PyObject *overrides = PyDict_New();
     if(!overrides)
         return;
+
     PyObject *tmp = PyType_GenericNew(&pkgcore_atom_init_type, NULL, NULL);
     if(!tmp)
         return;
     if(PyDict_SetItemString(overrides, "__init__", tmp))
         return;
-    tmp = PyType_GenericNew(&pkgcore_atom_getattr_type, NULL, NULL);
+
+    tmp = PyType_GenericNew(&pkgcore_atom_getattr_nondesc_type, NULL, NULL);
     if(!tmp)
         return;
-    if(PyDict_SetItemString(overrides, "__getattr__", tmp))
+    if(PyDict_SetItemString(overrides, "__getattr__nondesc", tmp))
         return;
+
+    tmp = PyType_GenericNew(&pkgcore_atom_getattr_desc_type, NULL, NULL);
+    if(!tmp)
+        return;
+    if(PyDict_SetItemString(overrides, "__getattr__desc", tmp))
+        return;
+
     PyModule_AddObject(m, "overrides", overrides);
 
     if (PyErr_Occurred()) {

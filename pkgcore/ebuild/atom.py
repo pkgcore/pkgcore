@@ -270,6 +270,42 @@ native_atom_overrides = {"__init__":native_init,
 
 try:
     from pkgcore.ebuild._atom import overrides as atom_overrides
+
+    # python issue 4230 complicates things pretty heavily since 
+    # __getattr__ either supports descriptor or doesn't.
+    # so we test it.
+    class test(object):
+        __getattr__ = atom_overrides['__getattr__desc']
+
+    try:
+        test().asdf
+    except TypeError, e:
+        # function was invoked incorrectly- self and attr were passed in
+        # to the meth_o variant.  meaning no __getattr__ descriptor support.
+        # 
+        try:
+            class test(object):
+                __getattr__ = atom_overrides['__getattr__nondesc']
+            test().asdf
+        except AttributeError:
+            # old form works.  See the 'else' for why we do this
+            atom_overrides['__getattr__'] = atom_overrides['__getattr__nondesc']
+        else:
+            # ...or there was a screwup in the cpy implementation and it's
+            # bitching about the passed in 'attr' key being the wrong type.
+            raise
+        del e
+    except AttributeError:
+        # function invocation succeeded, but blew up due to our test object
+        # missing expected attributes.  This is fine- it was invocable at 
+        # least.  Means this python version doesn't support descriptor for
+        # __getattr__
+        pass
+    atom_overrides.setdefault('__getattr__', atom_overrides['__getattr__desc'])
+    del atom_overrides['__getattr__desc']
+    del atom_overrides['__getattr__nondesc']
+    del test
+
 except ImportError:
     atom_overrides = native_atom_overrides
 

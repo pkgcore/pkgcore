@@ -11,6 +11,11 @@ pkgcore 0.4.7.15: Jan 28, 2008
 * python issue 4230 makes __getattr__ support descriptor protocol.
   This unfortunately causes part of config handling to go boom- fixed.
 
+  Unfortunately this also means that we need to support both descriptor
+  and *non* descriptor interpretters at *runtime*- if python is upgraded
+  underfoot, things get unhappy to keep atom.__getattr__ from blowing up.
+  Fixed either way.
+
 * copy HOMEPAGE into vdb/binpkg by default.
 
 

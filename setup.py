@@ -271,8 +271,9 @@ class pkgcore_build_ext(build_ext.build_ext):
         if self.debug:
             # say it with me kids... distutils sucks!
             for x in ("compiler_so", "compiler", "compiler_cxx"):
-                setattr(self.compiler, x,
-                    [y for y in getattr(self.compiler, x) if y != '-DNDEBUG'])
+                l = [y for y in getattr(self.compiler, x) if y != '-DNEDBUG']
+                l.append('-Wall')
+                setattr(self.compiler, x, l)
         return build_ext.build_ext.build_extensions(self)
 
 
@@ -372,8 +373,6 @@ packages = [
     for root, dirs, files in os.walk('pkgcore')
     if '__init__.py' in files]
 
-extra_flags = ['-Wall']
-
 from pkgcore.const import VERSION
 core.setup(
     name='pkgcore',
@@ -393,24 +392,18 @@ core.setup(
         },
     ext_modules=[
         core.Extension(
-            'pkgcore.ebuild._atom', ['src/atom.c'],
-            extra_compile_args=extra_flags),
+            'pkgcore.ebuild._atom', ['src/atom.c']),
         core.Extension(
-            'pkgcore.ebuild._cpv', ['src/cpv.c'],
-            extra_compile_args=extra_flags),
+            'pkgcore.ebuild._cpv', ['src/cpv.c']),
         core.Extension(
-            'pkgcore.ebuild._depset', ['src/depset.c'],
-            extra_compile_args=extra_flags),
+            'pkgcore.ebuild._depset', ['src/depset.c']),
         core.Extension(
             'pkgcore.ebuild._filter_env', [
-                'src/filter_env.c', 'src/bmh_search.c'],
-            extra_compile_args=extra_flags),
+                'src/filter_env.c', 'src/bmh_search.c']),
         core.Extension(
-            'pkgcore.ebuild._misc', ['src/misc.c'],
-            extra_compile_args=extra_flags),
+            'pkgcore.ebuild._misc', ['src/misc.c']),
         core.Extension(
-            'pkgcore.restrictions._restrictions', ['src/restrictions.c'],
-            extra_compile_args=extra_flags),
+            'pkgcore.restrictions._restrictions', ['src/restrictions.c']),
         ],
     cmdclass={
         'sdist': mysdist,

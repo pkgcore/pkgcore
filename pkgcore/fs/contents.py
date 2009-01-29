@@ -14,6 +14,7 @@ demandload(globals(),
     'pkgcore.fs.ops:offset_rewriter,change_offset_rewriter',
     'os:path',
     'time',
+    'snakeoil.mappings:OrderedDict',
 )
 from itertools import ifilter
 from operator import attrgetter
@@ -351,3 +352,21 @@ class contentsSet(object):
         missing.discard("/")
         self.update(fs.fsDir(location=x, mode=mode, uid=uid, gid=gid, mtime=mtime)
             for x in missing)
+
+
+class OrderedContentsSet(contentsSet):
+
+    def __init__(self, initial=None, mutable=False,
+        add_missing_directories=False):
+
+        contentsSet.__init__(self, mutable=True)
+        self._dict = OrderedDict()
+        if initial:
+            self.update(initial)
+        # some sources are a bit stupid, tarballs for example.
+        # add missing directories if requested
+        if add_missing_directories:
+            self.add_missing_directories()
+        self.mutable = mutable
+
+

@@ -160,7 +160,7 @@ class base(metadata.package):
     tracked_attributes = (
         "depends", "rdepends", "post_rdepends", "provides", "license",
         "slot", "keywords", "eapi", "restrict", "eapi", "description", "iuse",
-        "chost", "cbuild", "ctarget")
+        "chost", "cbuild", "ctarget", "homepage")
 
     _config_wrappables = dict((x, alias_class_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",

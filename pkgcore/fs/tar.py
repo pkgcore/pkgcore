@@ -10,27 +10,11 @@ from pkgcore.fs import contents
 from pkgcore.interfaces.data_source import data_source
 
 from snakeoil.tar import tarfile
-from snakeoil.mappings import OrderedDict
 from snakeoil.currying import partial
 
-class tar_data_source(data_source):
+class archive_data_source(data_source):
     def get_fileobj(self):
         return self.data()
-
-class TarContentsSet(contents.contentsSet):
-
-    def __init__(self, initial=None, mutable=False,
-        add_missing_directories=False):
-
-        contents.contentsSet.__init__(self, mutable=True)
-        self._dict = OrderedDict()
-        if initial:
-            self.update(initial)
-        # tarballs are a bit stupid; add missing directories.
-        if add_missing_directories:
-            self.add_missing_directories()
-        self.mutable = mutable
-
 
 known_compressors = {"bz2": tarfile.TarFile.bz2open,
     "gz": tarfile.TarFile.gzopen,
@@ -57,7 +41,7 @@ def write_set(contents_set, filepath, compressor='bz2'):
             tar_fd.addfile(t)
     tar_fd.close()
 
-def tarinfo_to_fsobj(src_tar):
+def archive_to_fsobj(src_tar):
     psep = os.path.sep
     for member in src_tar:
         d = {
@@ -69,7 +53,7 @@ def tarinfo_to_fsobj(src_tar):
                 continue
             yield fsDir(location, **d)
         elif member.isreg():
-            d["data_source"] = tar_data_source(partial(
+            d["data_source"] = archive_data_source(partial(
                     src_tar.extractfile, member.name))
             yield fsFile(location, **d)
         elif member.issym() or member.islnk():
@@ -111,6 +95,9 @@ def fsobj_to_tarinfo(fsobj):
     t.mtime = fsobj.mtime
     return t
 
+
+
+
 def generate_contents(path, compressor="bz2"):
     """
     generate a contentset from a tarball
@@ -128,18 +115,21 @@ def generate_contents(path, compressor="bz2"):
         if not e.message.endswith("empty header"):
             raise
         t = []
+    return convert_archive(t)
 
+
+def convert_archive(archive):
     # regarding the usage of del in this function... bear in mind these sets
     # could easily have 10k -> 100k entries in extreme cases; thus the del
     # usage, explicitly trying to ensure we don't keep refs long term.
 
     # this one is a bit fun.
-    raw = list(tarinfo_to_fsobj(t))
+    raw = list(archive_to_fsobj(archive))
     # we use the data source as the unique key to get position.
     files_ordering = list(enumerate(x for x in raw if x.is_reg))
     files_ordering = dict((x.data_source, idx) for idx, x in files_ordering)
     t = contents.contentsSet(raw, mutable=True)
-    del raw
+    del raw, archive
 
     # first rewrite affected syms.
     raw_syms = t.links()
@@ -192,4 +182,4 @@ def generate_contents(path, compressor="bz2"):
             return -1
         return cmp(x, y)
 
-    return TarContentsSet(sorted(t, cmp=sort_func), mutable=False)
+    return contents.OrderedContentsSet(sorted(t, cmp=sort_func), mutable=False)

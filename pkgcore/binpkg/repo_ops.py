@@ -14,9 +14,9 @@ from snakeoil.osutils import join as pjoin
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
 
-def discern_loc(base, pkg):
+def discern_loc(base, pkg, extension='.tbz2'):
     return pjoin(base, pkg.category,
-        "%s-%s.tbz2" % (pkg.package, pkg.fullver))
+        "%s-%s%s" % (pkg.package, pkg.fullver, extension))
 
 
 _metadata_rewrites = {
@@ -64,7 +64,7 @@ class install(repo_interfaces.nonlivefs_install):
             start = self.observer.phase_start
             end = self.observer.phase_end
         pkg = self.new_pkg
-        final_path = discern_loc(self.repo.base, pkg)
+        final_path = discern_loc(self.repo.base, pkg, self.repo.extension)
         tmp_path = pjoin(os.path.dirname(final_path),
             ".tmp.%i.%s" % (os.getpid(), os.path.basename(final_path)))
 
@@ -95,7 +95,7 @@ class install(repo_interfaces.nonlivefs_install):
 class uninstall(repo_interfaces.nonlivefs_uninstall):
 
     def modify_repo(self):
-        os.unlink(discern_loc(self.repo.base, self.old_pkg))
+        os.unlink(discern_loc(self.repo.base, self.old_pkg, self.repo.extension))
         return True
 
 

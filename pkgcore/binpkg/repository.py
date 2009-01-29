@@ -295,14 +295,18 @@ class tree(prototype.tree):
                 raise
             del oe
 
+    @property
+    def _repo_ops(self):
+        return repo_ops
+
     def _install(self, pkg, *a, **kw):
-        return repo_ops.install(self, pkg, *a, **kw)
+        return self._repo_ops.install(self, pkg, *a, **kw)
 
     def _uninstall(self, pkg, *a, **kw):
-        return repo_ops.uninstall(self, pkg, *a, **kw)
+        return self._repo_ops.uninstall(self, pkg, *a, **kw)
 
     def _replace(self, oldpkg, newpkg, *a, **kw):
-        return repo_ops.replace(self, oldpkg, newpkg, *a, **kw)
+        return self._repo_ops.replace(self, oldpkg, newpkg, *a, **kw)
 
 
 class ConfiguredBinpkgTree(wrapper.tree):

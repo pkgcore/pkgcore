@@ -4,6 +4,14 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.4.7.15: Jan 28, 2008
+
+* python issue 4230 makes __getattr__ support descriptor protocol.
+  This unfortunately causes part of config handling to go boom- fixed.
+
+* copy HOMEPAGE into vdb/binpkg by default.
+
+
 pkgcore 0.4.7.14: Dec 18, 2008
 
 * profile awareness of eapi files, *including* strict validation.

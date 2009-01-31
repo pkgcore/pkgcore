@@ -4,6 +4,13 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix gentoo bug 216492, a change in libsandbox behaviour- specifically
+  libsandbox for >=1.3 is now appending libsandbox.so while failing to
+  spot it already existing in LD_PRELOAD; pkgcore tests were written a bit
+  strict thus were spotting this.  Loosen the test, and fix the case where
+  a different preload is used in conjunction w/ sandbox.
+
+
 pkgcore 0.4.7.15: Jan 28, 2008
 
 * fix docutils-0.5 incompatibility in build_api_docs.py

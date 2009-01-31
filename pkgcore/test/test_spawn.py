@@ -78,7 +78,7 @@ class SpawnTest(TempDirMixin, TestCase):
         self.assertTrue(ret[1], msg="no output; exit code was %s; script "
             "location %s" % (ret[0], fp))
         self.assertIn("libsandbox.so", [os.path.basename(x.strip()) for x in
-            ret[1][0].split(":")])
+            ret[1][0].split()])
         os.unlink(fp)
 
 
@@ -102,7 +102,7 @@ class SpawnTest(TempDirMixin, TestCase):
             os.rmdir(dpath)
             self.assertIn("libsandbox.so", [os.path.basename(x.strip()) for x in
                 spawn.spawn_get_output(
-                fp, spawn_type=spawn.spawn_sandbox, chdir='/')[1][0].split(":")])
+                fp, spawn_type=spawn.spawn_sandbox, chdir='/')[1][0].split()])
             os.unlink(fp)
         finally:
             if cwd is not None:

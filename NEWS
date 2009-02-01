@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix a deprecation warning under 2.6 caused by an impedence between 
+  native_PackageRestriction and the cpy version for __init__ invocation.
+
 * fix gentoo bug 216492, a change in libsandbox behaviour- specifically
   libsandbox for >=1.3 is now appending libsandbox.so while failing to
   spot it already existing in LD_PRELOAD; pkgcore tests were written a bit

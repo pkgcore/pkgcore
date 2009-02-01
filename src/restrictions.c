@@ -279,7 +279,22 @@ static PyObject *
 pkgcore_PackageRestriction_new(PyTypeObject *type,
     PyObject *args, PyObject *kwds)
 {
-    PyObject *attr, *restriction, *negate = NULL, *ignore_missing = NULL;
+    pkgcore_PackageRestriction *self = \
+        (pkgcore_PackageRestriction *)type->tp_alloc(type, 0);
+    if(self) {
+        Py_INCREF(Py_None);
+        Py_INCREF(Py_None);
+        self->attr = self->restriction = Py_None;
+        self->flags = 0;
+    }
+    return (PyObject *)self;
+}
+
+static PyObject *
+pkgcore_PackageRestriction_init(pkgcore_PackageRestriction *self,
+    PyObject *args, PyObject *kwds)
+{
+    PyObject *attr, *restriction, *negate = NULL, *ignore_missing = NULL, *tmp = NULL;
     static char *kwdlist[] = {"attr", "childrestriction", "negate",
         "ignore_missing", NULL};
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "SO|OO", kwdlist,
@@ -307,18 +322,18 @@ pkgcore_PackageRestriction_new(PyTypeObject *type,
     }
     #undef make_bool
 
-    pkgcore_PackageRestriction *self = \
-        (pkgcore_PackageRestriction *)type->tp_alloc(type, 0);
-    if(!self)
-        return NULL;
+    tmp = self->attr;
     Py_INCREF(attr);
     self->attr = attr;
+    Py_DECREF(tmp);
+    tmp = self->restriction;
     Py_INCREF(restriction);
     self->restriction = restriction;
+    Py_DECREF(tmp);
     if(NULL == index(PyString_AS_STRING(attr), '.'))
         flags |= SHALLOW_ATTR;
     self->flags = flags;
-    return (PyObject *)self;
+    return NULL;
 }
 
 void
@@ -439,7 +454,7 @@ static PyTypeObject pkgcore_PackageRestriction_Type = {
     0,                                              /* tp_descr_get */
     0,                                              /* tp_descr_set */
     0,                                              /* tp_dictoffset */
-    0,                                              /* tp_init */
+    pkgcore_PackageRestriction_init,                /* tp_init */
     0,                                              /* tp_alloc */
     pkgcore_PackageRestriction_new,                 /* tp_new */
 };

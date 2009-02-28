@@ -245,7 +245,7 @@ dump_environ() {
     declare | PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON}" \
         "${PKGCORE_BIN_PATH}/filter-env" $opts -f \
         "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" -v \
-        "$(filter_env_var_filter ${DONT_EXPORT_VARS} f x )"
+        "$(filter_env_var_filter ${DONT_EXPORT_VARS} f x )" || die "internal error: filter-env returned non zero: $?"
 
     if ! has "--no-attributes" "$@"; then
         echo "# env attributes"

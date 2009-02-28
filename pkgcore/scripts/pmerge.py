@@ -633,7 +633,7 @@ def main(options, out, err):
                 getattr(op, x).release_cached_data()
 
             buildop.cleanup()
-            if world_set:
+            if world_set is not None:
                 if op.desc == "remove":
                     out.write('>>> Removing %s from world file' % op.pkg.cpvstr)
                     removal_pkg = slotatom_if_slotted(all_repos, op.pkg.versioned_atom)

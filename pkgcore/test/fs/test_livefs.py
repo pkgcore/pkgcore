@@ -4,9 +4,10 @@
 import os
 from pkgcore.test import TestCase
 
-from pkgcore.fs import fs
-from pkgcore.fs.livefs import iter_scan, gen_obj
+from pkgcore.fs import fs, livefs
+from pkgcore.fs.contents import contentsSet
 from snakeoil.test.mixins import TempDirMixin
+from snakeoil.osutils import pjoin
 
 
 class FsObjsTest(TempDirMixin, TestCase):
@@ -30,7 +31,7 @@ class FsObjsTest(TempDirMixin, TestCase):
                     offset + path)
 
     def test_data_source(self):
-        o = gen_obj("/tmp/etc/passwd", real_location="/etc/passwd")
+        o = livefs.gen_obj("/tmp/etc/passwd", real_location="/etc/passwd")
         self.failUnless(o.location, "/tmp/etc/passwd")
         self.failUnless(o.data.get_path(), "/etc/passwd")
         self.failUnless(
@@ -39,12 +40,12 @@ class FsObjsTest(TempDirMixin, TestCase):
     def test_gen_obj_reg(self):
         path = os.path.join(self.dir, "reg_obj")
         open(path, "w")
-        o = gen_obj(path)
+        o = livefs.gen_obj(path)
         self.failUnless(fs.isreg(o))
         self.check_attrs(o, path)
 
     def test_gen_obj_dir(self):
-        o = gen_obj(self.dir)
+        o = livefs.gen_obj(self.dir)
         self.failUnless(fs.isdir(o))
         self.check_attrs(o, self.dir)
 
@@ -55,7 +56,7 @@ class FsObjsTest(TempDirMixin, TestCase):
         link = os.path.join(path, "t")
         open(src, "w")
         os.symlink(src, link)
-        obj = gen_obj(link)
+        obj = livefs.gen_obj(link)
         self.assertInstance(obj, fs.fsSymlink)
         self.check_attrs(obj, link)
         self.assertEqual(os.readlink(link), obj.target)
@@ -63,7 +64,7 @@ class FsObjsTest(TempDirMixin, TestCase):
     def test_gen_obj_fifo(self):
         path = os.path.join(self.dir, "fifo")
         os.mkfifo(path)
-        o = gen_obj(path)
+        o = livefs.gen_obj(path)
         self.check_attrs(o, path)
 
     def test_iterscan(self):
@@ -77,7 +78,7 @@ class FsObjsTest(TempDirMixin, TestCase):
                 "a", "b", "c"]]
         map(os.mkdir, dirs)
         dirs.append(path)
-        for obj in iter_scan(path):
+        for obj in livefs.iter_scan(path):
             self.assertInstance(obj, fs.fsBase)
             if fs.isreg(obj):
                 self.failUnless(obj.location in files)
@@ -89,13 +90,23 @@ class FsObjsTest(TempDirMixin, TestCase):
             self.check_attrs(obj, obj.location)
         # do offset verification now.
         offset = os.path.join(self.dir, "iscan")
-        for obj in iter_scan(path, offset=offset):
+        for obj in livefs.iter_scan(path, offset=offset):
             self.check_attrs(obj, obj.location, offset=offset)
-
 
     def test_relative_sym(self):
         f = os.path.join(self.dir, "relative-symlink-test")
         os.symlink("../sym1/blah", f)
-        o = gen_obj(f)
+        o = livefs.gen_obj(f)
         self.failUnless(o.target == "../sym1/blah")
 
+    def test_intersect(self):
+        open(pjoin(self.dir, 'reg'), 'w')
+        cset = contentsSet([fs.fsFile('reg', strict=False)])
+        cset = cset.insert_offset(self.dir)
+        self.assertEqual(contentsSet(livefs.intersect(cset)), cset)
+        cset = contentsSet([fs.fsFile('reg/foon', strict=False),
+            fs.fsFile('reg/dar', strict=False),
+            fs.fsDir('reg/dir', strict=False)]).insert_offset(self.dir)
+        self.assertEqual(list(livefs.intersect(cset)), [])
+        cset = contentsSet([fs.fsDir('reg', strict=False)])
+        self.assertEqual(list(livefs.intersect(cset)), [])

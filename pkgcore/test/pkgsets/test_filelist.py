@@ -5,11 +5,19 @@ import tempfile, os
 from pkgcore.test import TestCase, protect_logging, callback_logger
 from pkgcore.pkgsets import filelist
 from pkgcore.ebuild.atom import atom
+from pkgcore import os_data
 from pkgcore import log
 
 class TestFileList(TestCase):
 
     kls = staticmethod(filelist.FileList)
+
+    @property
+    def gid(self):
+        grps = os.getgroups()
+        if os_data.portage_gid in grps:
+            return os_data.portage_gid
+        return grps[0]
 
     def setUp(self):
         self.fn = tempfile.mktemp()
@@ -22,7 +30,7 @@ class TestFileList(TestCase):
 
     def gen_pkgset(self, contents):
         open(self.fn, "w").write(contents)
-        return self.kls(self.fn)
+        return self.kls(self.fn, gid=self.gid)
 
     def test_contains(self):
         self.assertIn(

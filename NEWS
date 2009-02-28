@@ -3,6 +3,14 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+* make gid/mode configurable for filelist pkgsets; this fixes 4 failures
+  for when the tests are ran and the user isn't a member of portage.
+
+* fix a cornercase in fs.livefs.intersect where intersecting a file/dir
+  would trigger a traceback.
+
+* fix a corner case where the world file isn't updated if the world file
+  is empty.
 
 * fix a deprecation warning under 2.6 caused by an impedence between
   native_PackageRestriction and the cpy version for __init__ invocation.

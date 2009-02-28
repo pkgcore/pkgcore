@@ -21,8 +21,10 @@ class FileList(object):
     pkgcore_config_type = ConfigHint({'location':'str'}, typename='pkgset')
     error_on_subsets = True
 
-    def __init__(self, location):
+    def __init__(self, location, gid=os_data.portage_gid, mode=0644):
         self.path = location
+        self.gid = gid
+        self.mode = mode
         # note that _atoms is generated on the fly.
 
     def __getattr__(self, attr):
@@ -66,7 +68,7 @@ class FileList(object):
         # structured this way to force deletion (thus wiping) if something
         # fails.
         try:
-            f = AtomicWriteFile(self.path, gid=os_data.portage_gid, perms=0644)
+            f = AtomicWriteFile(self.path, gid=self.gid, perms=self.mode)
             f.write("\n".join(map(str, sorted(self._atoms))))
             f.close()
         finally:
@@ -77,8 +79,9 @@ class WorldFile(FileList):
     pkgcore_config_type = ConfigHint(typename='pkgset')
     error_on_subsets = False
 
-    def __init__(self, location=pkgcore.const.WORLD_FILE):
-        FileList.__init__(self, location)
+    def __init__(self, location=pkgcore.const.WORLD_FILE,
+        gid=os_data.portage_gid, mode=0644):
+        FileList.__init__(self, location, gid=gid, mode=mode)
 
     def add(self, atom_inst):
         self._modify(atom_inst, FileList.add)

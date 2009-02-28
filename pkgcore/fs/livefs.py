@@ -179,7 +179,7 @@ def intersect(cset, realpath=False):
         try:
             yield f(f2(x.location))
         except OSError, oe:
-            if oe.errno != errno.ENOENT:
+            if oe.errno not in (errno.ENOENT, errno.ENOTDIR):
                 raise
             del oe
 

@@ -3,6 +3,7 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
 * make gid/mode configurable for filelist pkgsets; this fixes 4 failures
   for when the tests are ran and the user isn't a member of portage.
 

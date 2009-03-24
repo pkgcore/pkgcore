@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.4.7.16: March 24, 2009
+
 * pmerge is a bit more informative when there is nothing to merge,
   and doesn't ask if in --ask if the users wishes to proceed.
   Thanks to DJ Anderson for pointing out this oversight.
@@ -44,7 +46,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
   a different preload is used in conjunction w/ sandbox.
 
 
-pkgcore 0.4.7.15: Jan 28, 2008
+pkgcore 0.4.7.15: Jan 28, 2009
 
 * fix docutils-0.5 incompatibility in build_api_docs.py
 

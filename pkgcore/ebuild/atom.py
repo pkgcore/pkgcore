@@ -1,4 +1,4 @@
-# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2009 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 # "More than one statement on a single line"

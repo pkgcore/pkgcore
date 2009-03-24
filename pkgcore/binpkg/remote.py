@@ -1,4 +1,4 @@
-# Copyright: 2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2008-2009 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 from snakeoil.mappings import ImmutableDict, StackedDict

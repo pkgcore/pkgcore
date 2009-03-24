@@ -1,4 +1,4 @@
-# Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2009 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 
@@ -36,4 +36,4 @@ WORLD_FILE           = '/var/lib/portage/world'
 LIBFAKEROOT_PATH     = "/usr/lib/libfakeroot.so"
 FAKED_PATH           = "/usr/bin/faked"
 
-VERSION              = '0.4.7.15'
+VERSION              = '0.4.7.16'

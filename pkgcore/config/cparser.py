@@ -5,12 +5,12 @@
 ini based configuration format
 """
 
-from ConfigParser import ConfigParser
+import ConfigParser
 
-from pkgcore.config import basics
+from pkgcore.config import basics, errors
 from snakeoil import mappings
 
-class CaseSensitiveConfigParser(ConfigParser):
+class CaseSensitiveConfigParser(ConfigParser.ConfigParser):
     def optionxform(self, val):
         return val
 
@@ -23,7 +23,10 @@ def config_from_file(file_obj):
     @return: L{snakeoil.mappings.LazyValDict} instance
     """
     cparser = CaseSensitiveConfigParser()
-    cparser.readfp(file_obj)
+    try:
+        cparser.readfp(file_obj)
+    except ConfigParser.ParsingError, pe:
+        raise errors.ParsingError("while parsing %s" % (file_obj,), pe)
     def get_section(section):
         return basics.ConfigSectionFromStringDict(dict(cparser.items(section)))
     return mappings.LazyValDict(cparser.sections, get_section)

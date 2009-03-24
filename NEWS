@@ -4,6 +4,23 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* ensure unicode for pquery --attr longdescription w/in pquery; via this
+  it leaves the unicode question to the formatter, instead of down converting
+  earlier.
+
+* fix a mismatch between src ebuilds and binpkgs for _eclasses_ when
+  doing pquery --attr inherited.  Bit of a hack, but it'll suffice.
+
+* pquery --attr all and --attr allmetadata was added.  'all' gets you
+  all known attrs (environment, contents, etc); bit heavy but useful if
+  you need to see it all.  'allmetadata' gets you the key/val pairs for
+  this host- fetchables, depends, slotting, eapi, repo, cbuild/chost, etc,
+  but no environment/contents.
+
+* fix cycle detection for dev-util/git; specifically there is a cycle on
+  virtual/perl-Module-Built which can be ignored since that chain of deps
+  are pulled in via post_rdepends.
+
 * make gid/mode configurable for filelist pkgsets; this fixes 4 failures
   for when the tests are ran and the user isn't a member of portage.
 

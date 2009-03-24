@@ -208,6 +208,36 @@ class TestPrototype(TestCase):
     def test_uninstall(self):
         assert False
 
-    test_replace = test_install = test_uninstall
-    test_replace.todo = 'tests for force behaviour (ensuring kwd is popped ' \
-        'among other things) is needed'
+    def _simple_redirect_test(self, attr, arg1='=dev-util/diffball-1.0', arg2=None):
+        l = []
+        uniq_obj = object()
+        def f(*a, **kw):
+            l.extend((a, kw))
+            return uniq_obj
+        # if replace, override _replace since replace reflects to it
+        setattr(self.repo, '_' + attr, f)
+        args = [self.repo.match(atom(arg1))]
+        if arg2:
+            args.append(CPV(arg2))
+        op = getattr(self.repo, attr)
+        self.repo.frozen = False
+        def simple_check(op, args, **kw):
+            l[:] = []
+            self.assertEqual(op(*args, **kw), uniq_obj)
+            self.assertEqual(len(l), 2)
+            self.assertEqual(list(l[0]), args)
+            self.assertTrue(l)
+        simple_check(op, args)
+        self.assertFalse(l[1])
+        simple_check(op, args, force=True)
+        self.assertNotIn('force', l[1])
+        self.repo.frozen = True
+        # verify that frozen is accounted for
+        self.assertRaises(AttributeError, simple_check, op, args)
+        self.assertRaises(AttributeError, simple_check, op, args, force=False)
+        simple_check(op, args, force=True)
+        self.assertNotIn('force', l[1])
+
+    test_replace = post_curry(_simple_redirect_test, 'replace', arg2='dev-util/diffball-1.1')
+    test_uninstall = post_curry(_simple_redirect_test, 'uninstall')
+    test_install = post_curry(_simple_redirect_test, 'install')

@@ -613,7 +613,8 @@ class merge_plan(object):
         """
         force_vdb = False
         for frame in stack.slot_cycles(cur_frame, reverse=True):
-            if True:
+            if not any(f.mode == 'post_rdepends' for f in
+                islice(stack, stack.index(frame), stack.index(cur_frame))):
                 # exact same pkg.
                 if frame.mode == 'depends':
                     # ok, we *must* go vdb if not already.

@@ -118,6 +118,23 @@ class Values(optparse.Values, object):
             self._config = self.load_config()
             return self._config
 
+    def load_domain(self):
+        """Override this if you need to change the default domain logic."""
+        if self._domain is None:
+            self._domain = self.config.get_default('domain')
+            if self._domain is None:
+                self._raise_error(
+                'No default domain found, fix your configuration '
+                'or pass --domain (valid domains: %s)' % (
+                ', '.join(self.config.domain),))
+        return self._domain
+
+    @property
+    def domain(self):
+        if self._domain is None:
+            self.load_domain()
+        return self._domain
+
 
 def read_file_callback(option, opt_str, value, parser):
     """Read a file ignoring comments."""
@@ -144,6 +161,19 @@ def config_callback(option, opt_str, value, parser, typename, typedesc=None):
                 value, typedesc, opt_str, ', '.join(repr(key)
                                                     for key in mapping)))
     setattr(parser.values, option.dest, result)
+
+
+def domain_callback(option, opt_str, value, parser):
+    """Retrieve a specified domain
+    """
+
+    try:
+        parser.values._domain = parser.values.config.domain[value]
+    except KeyError:
+        raise optparse.OptionValueError(
+            '%r is not a valid domain (valid values: %s)' % (
+                value, ', '.join(repr(key)
+                    for key in parser.values.config.domain)))
 
 
 def config_append_callback(option, opt_str, value, parser, typename,
@@ -234,6 +264,8 @@ class OptionParser(optparse.OptionParser):
     # You can set this on an instance or subclass to use a different class.
     values_class = Values
 
+    enable_domain_options = False
+
     standard_option_list = optparse.OptionParser.standard_option_list + [
         Option(
             '--debug', '-d', action='callback', callback=debug_callback,
@@ -265,6 +297,11 @@ class OptionParser(optparse.OptionParser):
         # It is a callback so it cannot set a default value the "normal" way.
         self.set_default('debug', False)
         self.set_default('empty_config', False)
+        if self.enable_domain_options:
+            self.add_option('--domain', action='callback', type='string',
+                callback=domain_callback,
+                help='domain name to use (default used if omitted).',
+                dest='_domain')
 
     def get_version(self):
         """Add pkgcore's version to the version information."""
@@ -312,6 +349,9 @@ class OptionParser(optparse.OptionParser):
             for option in container.option_list:
                 if option.action == 'append':
                     values.ensure_value(option.dest, [])
+        # domain option specifically needs to chuck an error on jit'd access,
+        # hence giving a backref to it.
+        values._raise_error = self.error
         return values, args
 
 class MySystemExit(SystemExit):

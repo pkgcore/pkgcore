@@ -54,7 +54,7 @@ class CommandlineTest(TestCase, helpers.MainMixin):
     def test_no_domain(self):
         self.assertError(
             'No default domain found, fix your configuration or '
-            'pass --domain (Valid domains: )',
+            'pass --domain (valid domains: )',
             '--all')
 
     def test_no_description(self):

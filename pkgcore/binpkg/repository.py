@@ -152,7 +152,11 @@ class StackedXpakDict(DictMixin):
             try:
                 data = self._xpak[key]
             except KeyError:
-                data = ''
+                if key == '_eclasses_':
+                    # hack...
+                    data ={}
+                else:
+                    data = ''
         return data
 
     def __delitem__(self, key):

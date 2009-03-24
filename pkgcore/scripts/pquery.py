@@ -13,7 +13,8 @@ from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils)
 from snakeoil.demandload import demandload
 from snakeoil.compatibility import any
-demandload(globals(), 're', 'snakeoil.currying:partial', 'errno')
+demandload(globals(), 're', 'snakeoil.currying:partial', 'errno',
+    'snakeoil.lists:iter_stable_unique')
 
 
 # ordering here matters; pkgcore does a trick to commandline to avoid the
@@ -285,6 +286,19 @@ class OptionParser(commandline.OptionParser):
 
     """Option parser with custom option postprocessing and validation."""
 
+    printable_attrs = ('rdepends', 'depends', 'post_rdepends', 'provides',
+                       'use', 'iuse', 'description', 'longdescription',
+                       'herds', 'license', 'uris', 'files',
+                       'slot', 'maintainers', 'restrict', 'repo',
+                       'alldepends', 'path', 'environment', 'keywords',
+                       'homepage', 'fetchables', 'eapi', 'inherited',
+                       'chost', 'cbuild', 'ctarget', 'all', 'allmetadata')
+
+    metadata_attrs = tuple(x for x in printable_attrs if not x.startswith("all")
+        and x != 'environment')
+
+    enable_domain_options = True
+
     def __init__(self, **kwargs):
         commandline.OptionParser.__init__(
             self, description=__doc__, option_class=Option, **kwargs)
@@ -292,10 +306,6 @@ class OptionParser(commandline.OptionParser):
         self.set_default('pkgset', [])
         self.set_default('restrict', [])
 
-        self.add_option('--domain', action='callback', type='string',
-                        callback=commandline.config_callback,
-                        callback_args=('domain',),
-                        help='domain name to use (default used if omitted).')
         self.add_option('--repo', action='callback', type='string',
                         callback=commandline.config_callback,
                         callback_args=('repo',),
@@ -401,14 +411,6 @@ class OptionParser(commandline.OptionParser):
             callback_args=('pkgset',),
             help='is inside a named set of packages (like "world").')
 
-        printable_attrs = ('rdepends', 'depends', 'post_rdepends', 'provides',
-                           'use', 'iuse', 'description', 'longdescription',
-                           'herds', 'license', 'uris', 'files',
-                           'slot', 'maintainers', 'restrict', 'repo',
-                           'alldepends', 'path', 'environment', 'keywords',
-                           'homepage', 'fetchables', 'eapi', 'inherited',
-                           'chost', 'cbuild', 'ctarget')
-
         output = self.add_option_group('Output formatting')
         output.add_option(
             '--cpv', action='store_true',
@@ -418,10 +420,10 @@ class OptionParser(commandline.OptionParser):
         output.add_option('--atom', '-a', action='store_true',
                           help='print =cat/pkg-3 instead of cat/pkg-3. '
                           'Implies --cpv, has no effect with --no-version')
-        output.add_option('--attr', action='append', choices=printable_attrs,
+        output.add_option('--attr', action='append', choices=self.printable_attrs,
             help="Print this attribute's value (can be specified more than "
             "once).  --attr=help will get you the list of valid attrs.")
-        output.add_option('--one-attr', choices=printable_attrs,
+        output.add_option('--one-attr', choices=self.printable_attrs,
                           help="Print one attribute. Suppresses other output.")
         output.add_option('--force-attr', action='append', dest='attr',
                           help='Like --attr but accepts any string as '
@@ -484,7 +486,14 @@ class OptionParser(commandline.OptionParser):
         if vals.blame:
             vals.attr.extend(['herds', 'maintainers'])
 
-        if 'alldepends' in vals.attr:
+        if 'all' in vals.attr:
+            vals.attr.extend(x for x in self.printable_attrs if not x == 'all')
+            # startswith is used to filter out --attr all --attr allmetadata, etc.
+            vals.attr = [x for x in vals.attr if not x.startswith('all')]
+        elif 'allmetadata' in vals.attr:
+            vals.attr.extend(self.metadata_attrs)
+            vals.attr = [x for x in vals.attr if not x.startswith('all')]
+        elif 'alldepends' in vals.attr:
             vals.attr.remove('alldepends')
             vals.attr.extend(['depends', 'rdepends', 'post_rdepends'])
 
@@ -503,36 +512,24 @@ class OptionParser(commandline.OptionParser):
                 '--print-revdep with --force-one-attr or --one-attr does not '
                 'make sense.')
 
-        # Get a domain object if needed.
-        if vals.domain is None and (
-            vals.verbose or vals.noversion or not vals.repo):
-            vals.domain = vals.config.get_default('domain')
-            if vals.domain is None:
-                self.error(
-                    'No default domain found, fix your configuration '
-                    'or pass --domain (Valid domains: %s)' % (
-                        ', '.join(vals.config.domain),))
-
-        domain = vals.domain
-
         if vals.repo and (vals.vdb or vals.all_repos):
             self.error(
                 '--repo with --vdb, --all-repos makes no sense')
 
         # Get the vdb if we need it.
         if vals.verbose and vals.noversion:
-            vals.vdbs = domain.vdb
+            vals.vdbs = vals.domain.vdb
         else:
             vals.vdbs = None
         # Get repo(s) to operate on.
         if vals.vdb:
-            vals.repos = domain.vdb
+            vals.repos = vals.domain.vdb
         elif vals.all_repos:
-            vals.repos = domain.repos + domain.vdb
+            vals.repos = vals.domain.repos + vals.domain.vdb
         elif vals.repo:
             vals.repos = [vals.repo]
         else:
-            vals.repos = domain.repos
+            vals.repos = vals.domain.repos
         if vals.raw or vals.virtuals:
             vals.repos = repo_utils.get_raw_repos(vals.repos)
         if vals.virtuals:
@@ -589,6 +586,9 @@ class OptionParser(commandline.OptionParser):
             # "And" them all together
             vals.restrict = packages.AndRestriction(*vals.restrict)
 
+        # finally, uniquify the attrs.
+        vals.attr = list(iter_stable_unique(vals.attr))
+
         return vals, ()
 
 
@@ -625,6 +625,8 @@ def stringify_attr(config, pkg, attr):
 
     if attr in ('herds', 'iuse', 'maintainers'):
         return ' '.join(sorted(unicode(v) for v in value))
+    if attr == 'longdescription':
+        return unicode(value)
     if attr == 'keywords':
         return ' '.join(sorted(value, key=lambda x:x.lstrip("~")))
     if attr == 'environment':

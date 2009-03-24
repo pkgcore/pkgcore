@@ -37,6 +37,22 @@ class ConfigurationError(BaseException):
         return ':\n'.join(reversed(self.stack))
 
 
+class ParsingError(ConfigurationError):
+
+    def __init__(self, message=None, exception=None):
+        if message is not None:
+            ConfigurationError.__init__(self, message)
+        elif exception is not None:
+            ConfigurationError.__init__(self, str(exception))
+        else:
+            raise ValueError('specify at least one of message and exception')
+        self.message = message
+        self.exc = exception
+
+    def __str__(self):
+        return "Parsing Failed: %s\n%s" % (self.message, self.exc)
+
+
 class CollapseInheritOnly(ConfigurationError):
     """Attempt was made to collapse an uncollapsable section.
 

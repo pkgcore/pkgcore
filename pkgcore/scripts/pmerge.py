@@ -24,6 +24,8 @@ from pkgcore.resolver.util import reduce_to_failures
 
 class OptionParser(commandline.OptionParser):
 
+    enable_domain_options = True
+
     def __init__(self, **kwargs):
         commandline.OptionParser.__init__(self, description=__doc__, **kwargs)
         self.add_option('--deep', '-D', action='store_true',
@@ -93,9 +95,6 @@ a depends on b, and b depends on a, with neither built is an example""")
             callback=commandline.config_callback,
             callback_args=('pmerge_formatter',),
             help='which formatter to output --pretend or --ask output through.')
-        self.add_option('--domain', action='callback', type='string',
-            callback=commandline.config_callback, callback_args=('domain',),
-            help='specify which domain to use; else uses the "default" domain')
 
     def check_values(self, options, args):
         options, args = commandline.OptionParser.check_values(
@@ -118,13 +117,10 @@ a depends on b, and b depends on a, with neither built is an example""")
                     'or pass --formatter (Valid formatters: %s)' % (
                         ', '.join(options.config.pmerge_formatter),))
 
-        if options.domain is None:
-            options.domain = options.config.get_default('domain')
-            if options.domain is None:
-                self.error(
-                    'No default domain found, fix your configuration or pass '
-                    '--domain (valid domains: %s)' %
-                    (', '.join(options.config.domain),))
+        # this may seem odd, but via touching this attribute we ensure that
+        # there is a valid domain- specifically it'll throw a config exception
+        # if that's not the case.
+        options.domain
 
         if options.unmerge:
             if options.set:

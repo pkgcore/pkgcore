@@ -544,6 +544,10 @@ def main(options, out, err):
     if vdb_time:
         out.write(out.bold, 'Took %.2f' % (vdb_time,), out.reset,
                   ' seconds to preload vdb state')
+    if not changes:
+        out.write("Nothing to merge.")
+        return
+
     if options.pretend:
         return
 

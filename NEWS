@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pmerge is a bit more informative when there is nothing to merge, 
+  and doesn't ask if in --ask if the users wishes to proceed.
+  Thanks to DJ Anderson for pointing out this oversight.
+
 * ensure unicode for pquery --attr longdescription w/in pquery; via this
   it leaves the unicode question to the formatter, instead of down converting
   earlier.

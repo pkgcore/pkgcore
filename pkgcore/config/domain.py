@@ -14,17 +14,32 @@ demandload(globals(), "pkgcore.repository:multiplex")
 
 class domain(object):
 
-    def __getattr__(self, attr):
-        if attr == "all_repos":
+    @property
+    def all_repos(self):
+        """
+        return a single repository representing all repositories from
+        which pkgs can be installed from for this domain
+        """
+        all_repos = getattr(self, '_all_repos', None)
+        if all_repos is None:
             if len(self.repos) == 1:
-                a = self.all_repos = self.repos[0]
+                all_repos = self.repos[0]
             else:
-                a = self.all_repos = multiplex.tree(*self.repos)
-        elif attr == "all_livefs_repos":
+                all_repos = multiplex.tree(*self.repos)
+            self._all_repos = all_repos
+        return all_repos
+
+    @property
+    def all_livefs_repos(self):
+        """
+        return a single repository representing all repositories representing
+        what is installed for this domain.
+        """
+        livefs_repos = getattr(self, '_all_livefs_repos', None)
+        if livefs_repos is None:
             if len(self.vdb) == 1:
-                a = self.all_livefs_repos = self.vdb[0]
+                livefs_repos = self.vdb[0]
             else:
-                a = self.all_livefs_repos = multiplex.tree(*self.vdb)
-        else:
-            raise AttributeError(attr)
-        return a
+                livefs_repos = multiplex.tree(*self.vdb)
+            self._all_livefs_repos = livefs_repos
+        return livefs_repos

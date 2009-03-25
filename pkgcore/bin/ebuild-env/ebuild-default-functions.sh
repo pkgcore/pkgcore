@@ -545,16 +545,12 @@ internal_inherit()
 declare -ix ECLASS_DEPTH=0
 inherit()
 {
-    local SAVED_INHERIT_COUNT=0 INHERITED_ALREADY=0
+    local SAVED_INHERIT_COUNT=0
 
     if [[ $ECLASS_DEPTH < 0 ]] && [ "${EBUILD_PHASE}" == "depend" ]; then
-        echo "QA Notice: ${CATEGORY}/${PF} makes multiple inherit calls: $1" >&2
+        echo "QA Notice: ${CATEGORY}/${PF} makes multiple inherit calls: $*" >&2
         SAVED_INHERIT_COUNT=$ECLASS_DEPTH
         ECLASS_DEPTH=0
-    fi
-    if has $1 $INHERITED && [ "${EBUILD_PHASE}" == "depend" ]; then
-        #echo "QA notice: $1 is inherited multiple times: ${CATEGORY}/${PF}" >&2
-        INHERITED_ALREADY=1
     fi
     ECLASS_DEPTH=$(($ECLASS_DEPTH + 1))
     if [[ $ECLASS_DEPTH > 1 ]]; then
@@ -632,14 +628,7 @@ inherit()
         #turn on glob expansion
  		set +f
 
-        if has $1 $INHERITED && [ $INHERITED_ALREADY == 0 ]; then
-#
-# enable this one eclasses no longer fool with eclass and inherited.
-#			if [ "${EBUILD_PHASE}" == "depend" ]; then
-#				echo "QA Notice: ${CATEGORY}/${PF}: eclass $1 is incorrectly setting \$INHERITED." >&2
-#			fi
-            :
-        else
+        if ! has $1 $INHERITED; then
             INHERITED="$INHERITED $ECLASS"
         fi
         export ECLASS="$PECLASS"

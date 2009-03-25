@@ -4,6 +4,12 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* not surprising on the timing (or spotting it via ciaran spreading it
+  via blog comments), gentoo bug 226505 revisited- change in phase ordering
+  afflicting all eapis.  pkgcore had it right the first time, inverted the
+  ordering in 0.4.7.9.
+
+
 pkgcore 0.4.7.16: March 24, 2009
 
 * pmerge is a bit more informative when there is nothing to merge,

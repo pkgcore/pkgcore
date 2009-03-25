@@ -291,12 +291,15 @@ class livefs_replace(livefs_install, livefs_uninstall):
     """
 
     stage_depends = {
-        "finish":"postrm", "postrm":"unmerge_metadata",
-        "unmerge_metadata":"remove",
-        "remove":"prerm", "prerm":"postinst",
-        "postinst":"merge_metadata",
+        "finish":"unmerge_metadata",
+        "unmerge_metadata":"postinst",
+        "postinst":"postrm",
+        "postrm":"remove",
+        "remove":"prerm",
+        "prerm":"merge_metadata",
         "merge_metadata":"transfer",
-        "transfer":"preinst", "preinst":"start"}
+        "transfer":"preinst",
+        "preinst":"start"}
 
     stage_hooks = [
         "merge_metadata", "unmerge_metadata", "postrm", "prerm", "postinst",

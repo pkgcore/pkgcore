@@ -105,7 +105,7 @@ class ProfileNode(object):
 
     @load_decorator("package.provided")
     def _load_pkg_provided(self, data):
-        self.pkg_provided = split_negations(data, cpv.CPV)
+        self.pkg_provided = split_negations(data, cpv.versioned_CPV)
         return self.pkg_provided
 
     @load_decorator("virtuals")
@@ -115,7 +115,7 @@ class ProfileNode(object):
             l = line.split()
             if len(l) != 2:
                 raise ValueError("%r is malformated" % line)
-            d[cpv.CPV(l[0]).package] = self.eapi_atom(l[1])
+            d[cpv.CPV.unversioned(l[0]).package] = self.eapi_atom(l[1])
         self.virtuals = d
         return d
 

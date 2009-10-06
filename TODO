@@ -1,6 +1,7 @@
 pkgcore/merge:
 --------------
 
+- split out a reusable use env parsing component for the collapse
 - misc-functions.sh
  specifically shifting it out of ebuild-default-functions.sh and into triggers.
  1) big ass scanelf block.

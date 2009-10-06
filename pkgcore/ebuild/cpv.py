@@ -5,6 +5,7 @@
 
 """gentoo ebuild specific base package class"""
 
+from snakeoil.compatibility import all
 from pkgcore.ebuild.errors import InvalidCPV
 
 from pkgcore.package import base
@@ -19,19 +20,38 @@ suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 # while the package section looks fugly, there is a reason for it-
 # to prevent version chunks from showing up in the package
 
-valid_cat = "[a-zA-Z0-9][-a-zA-Z0-9+._]*"
-parser = demand_compile_regexp(
-    globals(), 'parser',
-    "^(?P<key>(?P<category>(?:%s)(?:/%s)*)/"
-    "(?P<package>[a-zA-Z0-9+][a-zA-Z0-9_+]*"
-    "(?:-(?:[0-9]+(?:[a-zA-Z+]{2,}[_+a-zA-Z0-9]*|[A-Z])|[a-zA-Z+][a-zA-Z0-9+_]*))*))"
-    "(?:-(?P<fullver>(?P<version>(?:cvs\\.)?(?:\\d+)(?:\\.\\d+)*[a-z]?"
-    "(?:_(p(?:re)?|beta|alpha|rc)\\d*)*)"
-    "(?:-r(?P<revision>\\d+))?))?$" %
-        (valid_cat, valid_cat))
+
+isvalid_version_re = demand_compile_regexp(
+    globals(), 'isvalid_version_re',
+    "^(?:cvs\\.)?(?:\\d+)(?:\\.\\d+)*[a-z]?"
+    "(?:_(p(?:re)?|beta|alpha|rc)\\d*)*$")
+
+isvalid_cat_re = demand_compile_regexp(
+    globals(), 'isvalid_cat_re',
+    "^(?:[a-zA-Z0-9][-a-zA-Z0-9+._]*(?:/(?!$))?)+$")
+
+_pkg_re = demand_compile_regexp(
+    globals(), '_pkg_re',
+    #empty string is fine, means a -- was encounter.
+    "^[a-zA-Z0-9+_]+$")
+
+def isvalid_pkg_name(chunks):
+    if not chunks[0]:
+        # this means a leading -
+        return False
+    mf = _pkg_re.match
+    if not all(not s or mf(s) for s in chunks):
+        return False
+    if chunks[-1].isdigit() or not chunks[-1]:
+        # not allowed.
+        return False
+    return True
+
+def isvalid_rev(s):
+    return s and s[0] == 'r' and s[1:].isdigit()
 
 
-class native_CPV(object):
+class _native_CPV(object):
 
     """
     base ebuild package class
@@ -50,7 +70,7 @@ class native_CPV(object):
         "version", "revision", "fullver")
 
     # if native is being used, forget trying to reuse strings.
-    def __init__(self, *a):
+    def __init__(self, *a, **kwds):
         """
         Can be called with one string or with three string args.
 
@@ -60,41 +80,90 @@ class native_CPV(object):
         If called with three args they are the category, package and
         version components of the cpv string respectively.
         """
+        versioned = True
+        had_versioned = 'versioned' in kwds
+        if had_versioned:
+            versioned = kwds.pop("versioned")
+        if kwds:
+            raise TypeError("versioned is the only allowed kwds: %r" % (kwds,))
         l = len(a)
         if l == 1:
             cpvstr = a[0]
+            if not had_versioned:
+                raise TypeError("single arguement invocation requires versioned kwd; %r"
+                    % (cpvstr,))
         elif l == 3:
             for x in a:
                 if not isinstance(x, basestring):
                     raise TypeError("all args must be strings, got %r" % (a,))
             cpvstr = "%s/%s-%s" % a
+            versioned = True
         else:
             raise TypeError("CPV takes 1 arg (cpvstr), or 3 (cat, pkg, ver):"
                 " got %r" % (a,))
         if not isinstance(cpvstr, basestring):
             raise TypeError(self.cpvstr)
-        m = parser.match(cpvstr)
-        if not m:
+
+        try:
+            categories, pkgver  = cpvstr.rsplit("/", 1)
+        except ValueError:
+            # occurs if the rsplit yields only one item
             raise InvalidCPV(cpvstr)
-        d = m.groupdict()
-        rev = d["revision"]
-        if rev == '0':
-            d["revision"] = None
-            # chop off the -r0
-            d["fullver"] = d["version"]
-            cpvstr = cpvstr[:-3]
-        elif rev is not None:
-            d["revision"] = int(d["revision"])
-        object.__setattr__(self, "cpvstr", cpvstr)
-        for k, v in d.iteritems():
-            object.__setattr__(self, k, v)
+        if not isvalid_cat_re.match(categories):
+            raise InvalidCPV(cpvstr)
+        sf = object.__setattr__
+        sf(self, 'category', categories)
+        sf(self, 'cpvstr', cpvstr)
+        pkg_chunks = pkgver.split("-")
+        lpkg_chunks = len(pkg_chunks)
+        if versioned:
+            if lpkg_chunks == 1:
+                raise InvalidCPV(cpvstr)
+            if isvalid_rev(pkg_chunks[-1]):
+                if lpkg_chunks < 3:
+                    # needs at least ('pkg', 'ver', 'rev')
+                    raise InvalidCPV(cpvstr)
+                rev = int(pkg_chunks.pop(-1)[1:])
+                if not rev:
+                    rev = None
+                    # reset the stored cpvstr to drop -r0+
+                    sf(self, 'cpvstr', "%s/%s" % (categories,
+                        '-'.join(pkg_chunks)))
+                sf(self, 'revision', rev)
+            else:
+                sf(self, 'revision', None)
+
+            if not isvalid_version_re.match(pkg_chunks[-1]):
+                raise InvalidCPV(cpvstr)
+            sf(self, 'version', pkg_chunks.pop(-1))
+            if self.revision:
+                sf(self, 'fullver', "%s-r%s" % (self.version, self.revision))
+            else:
+                sf(self, 'fullver', self.version)
+
+            if not isvalid_pkg_name(pkg_chunks):
+                raise InvalidCPV(cpvstr)
+            sf(self, 'package', '-'.join(pkg_chunks))
+            sf(self, 'key', "%s/%s" % (categories, self.package))
+        else:
+            if not isvalid_pkg_name(pkg_chunks):
+                raise InvalidCPV(cpvstr)
+            sf(self, 'revision', None)
+            sf(self, 'fullver', None)
+            sf(self, 'version', None)
+            sf(self, 'key', cpvstr)
+            sf(self, 'package', '-'.join(pkg_chunks))
 
     def __hash__(self):
         return hash(self.cpvstr)
 
     def __repr__(self):
-        return '<%s cpvstr=%s @%#8x>' % (
-            self.__class__.__name__, getattr(self, 'cpvstr', None), id(self))
+        try:
+            return '<%s cpvstr=%s @%#8x>' % (
+                self.__class__.__name__, getattr(self, 'cpvstr', None), id(self))
+        except AttributeError, ae:
+            import pdb;pdb.set_trace()
+            raise
 
     def __str__(self):
         return getattr(self, 'cpvstr', 'None')
@@ -263,55 +332,84 @@ def cpy_ver_cmp(ver1, rev1, ver2, rev2):
         ver1 = ''
     if ver2 is None:
         ver2 = ''
-    c = cmp(cpy_CPV(fake_cat, fake_pkg, ver1),
-            cpy_CPV(fake_cat, fake_pkg, ver2))
+    c = cmp(cpy_CPV(fake_cat, fake_pkg, ver1, versioned=bool(ver1)),
+            cpy_CPV(fake_cat, fake_pkg, ver2, versioned=bool(ver2)))
     if c != 0:
         return c
     return cmp(rev1, rev2)
 
 
+def mk_cpv_cls(base_cls):
+    class CPV(base.base, base_cls):
+
+        """
+        base ebuild package class
+
+        @ivar category: str category
+        @ivar package: str package
+        @ivar key: strkey (cat/pkg)
+        @ivar version: str version
+        @ivar revision: int revision
+        @ivar versioned_atom: atom matching this exact version
+        @ivar unversioned_atom: atom matching all versions of this package
+        @cvar _get_attr: mapping of attr:callable to generate attributes on the fly
+        """
+
+        __slots__ = ()
+
+#       __metaclass__ = WeakInstMeta
+
+#       __inst_caching__ = True
+
+        def __repr__(self):
+            return '<%s cpvstr=%s @%#8x>' % (
+                self.__class__.__name__, getattr(self, 'cpvstr', None),
+                id(self))
+
+        @property
+        def versioned_atom(self):
+            return atom.atom("=%s" % self.cpvstr)
+
+        @property
+        def unversioned_atom(self):
+            return atom.atom(self.key)
+
+        @classmethod
+        def versioned(cls, *args):
+            return cls(versioned=True, *args)
+
+        @classmethod
+        def unversioned(cls, *args):
+            return cls(versioned=False, *args)
+
+        def __reduce__(self):
+            return (self.__class__, (self.cpvstr,), None, None, None)
+
+    return CPV
+
+native_CPV = mk_cpv_cls(_native_CPV)
+
 try:
     # No name in module
     # pylint: disable-msg=E0611
-    from pkgcore.ebuild._cpv import CPV as cpy_CPV
-    base_CPV = cpy_CPV
+    from pkgcore.ebuild._cpv import CPV as _cpy_CPV
     ver_cmp = cpy_ver_cmp
     cpy_builtin = True
+    cpy_CPV = CPV = mk_cpv_cls(_cpy_CPV)
 except ImportError:
-    base_CPV = native_CPV
     ver_cmp = native_ver_cmp
     cpy_builtin = False
+    CPV = native_CPV
 
+def unversioned_CPV(*args):
+    return CPV.unversioned(*args)
 
-class CPV(base.base, base_CPV):
+def versioned_CPV(*args):
+    return CPV.versioned(*args)
 
-    """
-    base ebuild package class
-
-    @ivar category: str category
-    @ivar package: str package
-    @ivar key: strkey (cat/pkg)
-    @ivar version: str version
-    @ivar revision: int revision
-    @ivar versioned_atom: atom matching this exact version
-    @ivar unversioned_atom: atom matching all versions of this package
-    @cvar _get_attr: mapping of attr:callable to generate attributes on the fly
-    """
+class versioned_CPV_cls(CPV):
 
     __slots__ = ()
 
-#    __metaclass__ = WeakInstMeta
-
-#    __inst_caching__ = True
-
-    def __repr__(self):
-        return '<%s cpvstr=%s @%#8x>' % (
-            self.__class__.__name__, self.cpvstr, id(self))
-
-    @property
-    def versioned_atom(self):
-        return atom.atom("=%s" % self.cpvstr)
-
-    @property
-    def unversioned_atom(self):
-        return atom.atom(self.key)
+    def __init__(self, *args):
+        CPV.__init__(self, versioned=True, *args)

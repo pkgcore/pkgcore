@@ -108,12 +108,14 @@ class TestProfileNode(profile_mixin, TestCase):
             self.profile)).pkg_provided,
             ((), ()))
         self.parsing_checks("package.provided", "pkg_provided")
-        self.write_file("package.provided", "-dev-util/diffball")
+        self.write_file("package.provided", "-dev-util/diffball-1.0")
         self.assertEqual(ProfileNode(pjoin(self.dir,
-            self.profile)).pkg_provided, ((CPV("dev-util/diffball"),), ()))
-        self.write_file("package.provided", "dev-util/diffball")
+            self.profile)).pkg_provided,
+                ((CPV.versioned("dev-util/diffball-1.0"),), ()))
+        self.write_file("package.provided", "dev-util/diffball-1.0")
         self.assertEqual(ProfileNode(pjoin(self.dir,
-            self.profile)).pkg_provided, ((), (CPV("dev-util/diffball"),)))
+            self.profile)).pkg_provided, ((),
+                (CPV.versioned("dev-util/diffball-1.0"),)))
 
     def test_masks(self):
         path = pjoin(self.dir, self.profile)

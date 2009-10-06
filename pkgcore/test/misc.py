@@ -24,7 +24,7 @@ class FakePkgBase(package):
         for x in ("DEPEND", "RDEPEND", "PDEPEND", "IUSE", "LICENSE"):
             data.setdefault(x, "")
 
-        cpv = CPV(cpvstr)
+        cpv = CPV(cpvstr, versioned=True)
         package.__init__(self, shared, repo, cpv.category, cpv.package,
             cpv.fullver)
         object.__setattr__(self, "data", data)

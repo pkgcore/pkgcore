@@ -36,7 +36,8 @@ static PyObject *pkgcore_atom_op_eq = NULL;
 static PyObject *pkgcore_atom_op_droprev = NULL;
 static PyObject *pkgcore_atom_op_none = NULL;
 static PyObject *pkgcore_atom_op_glob = NULL;
-static PyObject *pkgcore_atom_cpv_parse = NULL;
+static PyObject *pkgcore_atom_cpv_parse_versioned = NULL;
+static PyObject *pkgcore_atom_cpv_parse_unversioned = NULL;
 // every attr it sets...
 static PyObject *pkgcore_atom_cpvstr = NULL;
 static PyObject *pkgcore_atom_key = NULL;
@@ -333,10 +334,12 @@ parse_repo_id(PyObject *atom_str, char **p_ptr, PyObject **repo_id)
 
 static int
 parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
-    int *has_version)
+    int has_version)
 {
-    PyObject *tmp;
-    PyObject *cpv = PyObject_CallFunction(pkgcore_atom_cpv_parse,
+    PyObject *tmp, *cpv;
+    cpv = PyObject_CallFunction(
+        has_version ? pkgcore_atom_cpv_parse_versioned :
+            pkgcore_atom_cpv_parse_unversioned,
         "O", cpv_str);
     if(!cpv) {
         PyObject *type, *tb;
@@ -373,7 +376,6 @@ parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
     tmp = PyObject_GetAttr(cpv, pkgcore_atom_fullver);
     if(!tmp)
         goto parse_cpv_error;
-    *has_version = PyObject_IsTrue(tmp);
     if(PyErr_Occurred()) {
         Py_DECREF(tmp);
         goto parse_cpv_error;
@@ -383,7 +385,7 @@ parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
         goto parse_cpv_error;
     }
     Py_DECREF(tmp);
-    if(*has_version) {
+    if(has_version) {
         STORE_ATTR(pkgcore_atom_version);
         STORE_ATTR(pkgcore_atom_revision);
     } else {
@@ -531,13 +533,17 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
             goto pkgcore_atom_parse_error;
     }
     int has_version;
-    if(parse_cpv(atom_str, cpv_str, self, &has_version)) {
+
+    has_version = (op != pkgcore_atom_op_none);
+
+    if(parse_cpv(atom_str, cpv_str, self, has_version)) {
         Py_DECREF(cpv_str);
         goto pkgcore_atom_parse_error;
     }
     Py_DECREF(cpv_str);
 
     // ok... everythings parsed... sanity checks on the atom.
+/*
     if(op != pkgcore_atom_op_none) {
         if (!has_version) {
             Err_SetMalformedAtom(atom_str,
@@ -549,6 +555,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
             "versioned atom requires an operator");
         goto pkgcore_atom_parse_error;
     }
+*/
 
     if(!use) {
         Py_INCREF(Py_None);
@@ -1065,15 +1072,24 @@ load_external_objects()
         m = NULL;
     }
 
-    if(!pkgcore_atom_cpv_parse || !pkgcore_atom_InvalidCPV_Exc) {
+    if(!pkgcore_atom_cpv_parse_unversioned ||
+        !pkgcore_atom_cpv_parse_versioned ||
+        !pkgcore_atom_InvalidCPV_Exc) {
         LOAD_MODULE("pkgcore.ebuild.cpv");
     }
 
-    if(!pkgcore_atom_cpv_parse) {
-        pkgcore_atom_cpv_parse = PyObject_GetAttrString(m, "base_CPV");
-        if(!pkgcore_atom_cpv_parse)
+    if(!pkgcore_atom_cpv_parse_unversioned) {
+        pkgcore_atom_cpv_parse_unversioned = PyObject_GetAttrString(m, "unversioned_CPV");
+        if(!pkgcore_atom_cpv_parse_unversioned)
             return 1;
     }
+
+    if(!pkgcore_atom_cpv_parse_versioned) {
+        pkgcore_atom_cpv_parse_versioned = PyObject_GetAttrString(m, "versioned_CPV");
+        if(!pkgcore_atom_cpv_parse_versioned)
+            return 1;
+    }
+
     if(!pkgcore_atom_InvalidCPV_Exc) {
         pkgcore_atom_InvalidCPV_Exc = PyObject_GetAttrString(m, "InvalidCPV");
         if(!pkgcore_atom_InvalidCPV_Exc)

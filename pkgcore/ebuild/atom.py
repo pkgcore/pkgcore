@@ -186,7 +186,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
         raise errors.MalformedAtom(orig_atom,
             "slot restriction must proceed use")
     try:
-        c = cpv.CPV(self.cpvstr)
+        c = cpv.CPV(self.cpvstr, versioned=bool(self.op))
     except errors.InvalidCPV, e:
         raise errors.MalformedAtom(orig_atom, str(e))
     sf(self, "key", c.key)

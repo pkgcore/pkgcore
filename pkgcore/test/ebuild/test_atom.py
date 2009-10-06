@@ -72,17 +72,17 @@ class Test_native_atom(TestCase):
             "dev-util/diffball-1.*")
 
         a = self.kls("=dev-util/diffball-1.2*")
-        self.assertTrue(a.match(CPV("dev-util/diffball-1.2")))
-        self.assertTrue(a.match(CPV("dev-util/diffball-1.2.0")))
-        self.assertTrue(a.match(CPV("dev-util/diffball-1.2-r1")))
-        self.assertTrue(a.match(CPV("dev-util/diffball-1.2_alpha")))
-        self.assertFalse(a.match(CPV("dev-util/diffball-1")))
+        self.assertTrue(a.match(FakePkg("dev-util/diffball-1.2")))
+        self.assertTrue(a.match(FakePkg("dev-util/diffball-1.2.0")))
+        self.assertTrue(a.match(FakePkg("dev-util/diffball-1.2-r1")))
+        self.assertTrue(a.match(FakePkg("dev-util/diffball-1.2_alpha")))
+        self.assertFalse(a.match(FakePkg("dev-util/diffball-1")))
 
     def test_nonversioned(self):
         a = self.kls("kde-base/kde")
-        self.assertTrue(a.match(CPV("kde-base/kde")))
-        self.assertFalse(a.match(CPV("kde-base/kde2")))
-        self.assertTrue(a.match(CPV("kde-base/kde-3")))
+        self.assertTrue(a.match(CPV.unversioned("kde-base/kde")))
+        self.assertFalse(a.match(CPV.unversioned("kde-base/kde2")))
+        self.assertTrue(a.match(CPV.versioned("kde-base/kde-3")))
 
     def make_atom(self, s, ops, ver):
         l = []
@@ -96,9 +96,9 @@ class Test_native_atom(TestCase):
 
     def test_versioned(self):
         astr = "app-arch/tarsync"
-        le_cpv = CPV("%s-0" % astr)
-        eq_cpv = CPV("%s-1.1-r2" % astr)
-        ge_cpv = CPV("%s-2" % astr)
+        le_cpv = CPV.versioned("%s-0" % astr)
+        eq_cpv = CPV.versioned("%s-1.1-r2" % astr)
+        ge_cpv = CPV.versioned("%s-2" % astr)
         # <, =, >
         ops = (-1, 0, 1)
 
@@ -124,9 +124,9 @@ class Test_native_atom(TestCase):
     def test_norev(self):
         astr = "app-arch/tarsync"
         a = self.kls("~%s-1" % astr)
-        self.assertTrue(a.match(CPV("%s-1" % astr)))
-        self.assertTrue(a.match(CPV("%s-1-r1" % astr)))
-        self.assertFalse(a.match(CPV("%s-2" % astr)))
+        self.assertTrue(a.match(CPV.versioned("%s-1" % astr)))
+        self.assertTrue(a.match(CPV.versioned("%s-1-r1" % astr)))
+        self.assertFalse(a.match(CPV.versioned("%s-2" % astr)))
 
     def test_use(self):
         astr = "dev-util/bsdiff"

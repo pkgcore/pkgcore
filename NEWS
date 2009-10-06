@@ -4,6 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* comply with PMS corner cases for package names; gentoo bug 263787
+
+* serialization support for cpv derivatives.  Not great, but packages.g.o
+  relies on it, thus it's inclusion.
+
 * not surprising on the timing (or spotting it via ciaran spreading it
   via blog comments), gentoo bug 226505 revisited- change in phase ordering
   afflicting all eapis.  pkgcore had it right the first time, inverted the

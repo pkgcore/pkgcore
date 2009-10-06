@@ -10,7 +10,7 @@ from pkgcore.interfaces import data_source
 from pkgcore.repository import multiplex
 from pkgcore.config import ConfigHint
 #needed to grab the PN
-from pkgcore.ebuild.cpv import CPV as cpv
+from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.errors import InvalidCPV
 
 from snakeoil.osutils import pjoin
@@ -105,7 +105,7 @@ class tree(prototype.tree):
                     or x.startswith("-MERGING-"):
                     continue
                 try:
-                    pkg = cpv(category+"/"+x)
+                    pkg = versioned_CPV(category+"/"+x)
                 except InvalidCPV:
                     bad = True
                 if bad or not pkg.fullver:

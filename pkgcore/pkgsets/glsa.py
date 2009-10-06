@@ -170,7 +170,7 @@ class GlsaDirSet(object):
         glob = base.endswith("*")
         if glob:
             base = base[:-1]
-        base = cpv.CPV("cat/pkg-%s" % base)
+        base = cpv.versioned_CPV("cat/pkg-%s" % base)
         restrict = self.op_translate[op.lstrip("r")]
         if op.startswith("r"):
             if glob:

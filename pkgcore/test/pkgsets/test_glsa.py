@@ -107,13 +107,13 @@ class TestGlsaDirSet(TempDirMixin, TestCase):
         self.assertEqual(len(restrict), 1)
         restrict = restrict[0]
         for ver in ver_matches:
-            pkg = cpv.CPV("dev-util/diffball-%s" % ver)
+            pkg = cpv.versioned_CPV("dev-util/diffball-%s" % ver)
             self.assertTrue(restrict.match(pkg),
                 msg="pkg %s must match for %r: %s" %
                     (pkg, vuln_range, restrict))
 
         for ver in ver_nonmatches:
-            pkg = cpv.CPV("dev-util/diffball-%s" % ver)
+            pkg = cpv.versioned_CPV("dev-util/diffball-%s" % ver)
             self.assertFalse(restrict.match(pkg),
                 msg="pkg %s must not match for %r: %s" %
                     (pkg, vuln_range, restrict))
@@ -154,7 +154,7 @@ class TestGlsaDirSet(TempDirMixin, TestCase):
             ['dev-util/diffball', 'dev-util/bsdiff'])
         # main interest is dev-util/bsdiff
         r = l[1]
-        pkgs = [cpv.CPV("dev-util/bsdiff-%s" % ver) for ver in
+        pkgs = [cpv.versioned_CPV("dev-util/bsdiff-%s" % ver) for ver in
             ("0", "1", "1.1", "2", "2-r1")]
         self.assertEqual([x.fullver for x in pkgs if r.match(x)],
             ["1.1", "2-r1"])

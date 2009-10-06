@@ -2,7 +2,7 @@
 # License: GPL2/BSD
 
 from snakeoil.mappings import ImmutableDict, StackedDict
-from pkgcore.ebuild.cpv import CPV
+from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.chksum import get_handlers
 
 def iter_till_empty_newline(data):
@@ -66,10 +66,10 @@ class PackagesCache(object):
                 break
             count += 1
             try:
-                cpv = CPV(d.pop("CPV"))
+                cpv = versioned_CPV(d.pop("CPV"))
             except KeyError:
                 # wanker, old format.
-                cpv = CPV("%s/%s" % (d.pop("CATEGORY"), d.pop("PF")))
+                cpv = versioned_CPV("%s/%s" % (d.pop("CATEGORY"), d.pop("PF")))
 
             d.setdefault('IUSE', d.get('USE', ''))
             for src, dst in self._rewrite_map.iteritems():

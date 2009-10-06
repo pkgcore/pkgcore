@@ -7,7 +7,7 @@ from snakeoil.currying import post_curry
 
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.cpv import CPV
+from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.repository.util import SimpleTree
 from pkgcore.repository import wrapper
@@ -70,12 +70,12 @@ class TestPrototype(TestCase):
             ["0.7", "1.0"])
         self.assertEqual(
             self.repo.match(packages.OrRestriction(rc, rp), sorter=sorted),
-            sorted(CPV(x) for x in (
+            sorted(versioned_CPV(x) for x in (
                     "dev-util/diffball-0.7", "dev-util/diffball-1.0",
                     "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2")))
         self.assertEqual(
             sorted(self.repo.itermatch(packages.AndRestriction(rc, rp))),
-            sorted(CPV(x) for x in (
+            sorted(versioned_CPV(x) for x in (
                     "dev-util/diffball-0.7", "dev-util/diffball-1.0")))
         self.assertEqual(
             sorted(self.repo),
@@ -96,7 +96,7 @@ class TestPrototype(TestCase):
         # match. they *must* be treated as an or.
         self.assertEqual(
             sorted(self.repo.itermatch(packages.OrRestriction(rp, rc2))),
-            sorted(CPV(x) for x in (
+            sorted(versioned_CPV(x) for x in (
                     "dev-util/diffball-0.7", "dev-util/diffball-1.0",
                     "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
@@ -106,14 +106,14 @@ class TestPrototype(TestCase):
             "package", values.StrExactMatch("fake"))
         r = packages.OrRestriction(atom("dev-util/diffball"), rp2)
         self.assertEqual(sorted(self.repo.itermatch(r)),
-            sorted(CPV(x) for x in (
+            sorted(versioned_CPV(x) for x in (
                     "dev-util/diffball-0.7", "dev-util/diffball-1.0",
                     "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
         self.assertEqual(
             sorted(self.repo.itermatch(
                     packages.OrRestriction(packages.AlwaysTrue, rp2))),
-            sorted(CPV(x) for x in (
+            sorted(versioned_CPV(x) for x in (
                     "dev-util/diffball-0.7", "dev-util/diffball-1.0",
                     "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
                     "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
@@ -122,7 +122,7 @@ class TestPrototype(TestCase):
             sorted(self.repo.itermatch(
                 packages.PackageRestriction('category',
                     values.StrExactMatch('dev-util',negate=True)))),
-            sorted(CPV(x) for x in (
+            sorted(versioned_CPV(x) for x in (
                 "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
         obj = malleable_obj(livefs=False)
@@ -137,7 +137,7 @@ class TestPrototype(TestCase):
                             values.StrExactMatch("virtual"))),
                     atom("dev-lib/fake")),
                 pkg_klass_override=pkg_kls_override)),
-            sorted(CPV(x) for x in (
+            sorted(versioned_CPV(x) for x in (
                 "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
         self.assertEqual(
@@ -145,7 +145,7 @@ class TestPrototype(TestCase):
                 packages.PackageRestriction('category',
                     values.StrExactMatch('dev-lib', negate=True),
                         negate=True))),
-            sorted(CPV(x) for x in (
+            sorted(versioned_CPV(x) for x in (
                 "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
         self.assertEqual(
@@ -153,47 +153,47 @@ class TestPrototype(TestCase):
                 packages.PackageRestriction('category',
                     values.StrExactMatch('dev-lib', negate=True),
                         negate=True))),
-            sorted(CPV(x) for x in (
+            sorted(versioned_CPV(x) for x in (
                 "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
 
     def test_iter(self):
         self.assertEqual(
             sorted(self.repo),
-            sorted(CPV(x) for x in (
+            sorted(versioned_CPV(x) for x in (
                     "dev-util/diffball-1.0", "dev-util/diffball-0.7",
                     "dev-util/bsdiff-0.4.1", "dev-util/bsdiff-0.4.2",
                     "dev-lib/fake-1.0", "dev-lib/fake-1.0-r1")))
 
     def test_notify_remove(self):
-        pkg = CPV("dev-util/diffball-1.0")
+        pkg = versioned_CPV("dev-util/diffball-1.0")
         self.repo.notify_remove_package(pkg)
         self.assertEqual(list(self.repo.versions[
             (pkg.category, pkg.package)]), ["0.7"])
 
         # test version being emptied, and package updated
-        pkg = CPV("dev-util/diffball-0.7")
+        pkg = versioned_CPV("dev-util/diffball-0.7")
         self.repo.notify_remove_package(pkg)
         self.assertNotIn((pkg.category, pkg.package), self.repo.versions)
         self.assertNotIn(pkg.package, self.repo.packages[pkg.category])
 
         # test no remaining packages, category updated
-        pkg = CPV("dev-util/bsdiff-0.4.1")
+        pkg = versioned_CPV("dev-util/bsdiff-0.4.1")
         self.repo.notify_remove_package(pkg)
 
-        pkg = CPV("dev-util/bsdiff-0.4.2")
+        pkg = versioned_CPV("dev-util/bsdiff-0.4.2")
         self.repo.notify_remove_package(pkg)
         self.assertNotIn((pkg.category, pkg.package), self.repo.versions)
         self.assertNotIn(pkg.category, self.repo.packages)
         self.assertNotIn(pkg.category, self.repo.categories)
 
     def test_notify_add(self):
-        pkg = CPV("dev-util/diffball-1.2")
+        pkg = versioned_CPV("dev-util/diffball-1.2")
         self.repo.notify_add_package(pkg)
         self.assertEqual(sorted(self.repo.versions[
             (pkg.category, pkg.package)]), sorted(["1.0", "1.2", "0.7"]))
 
-        pkg = CPV("foo/bar-1.0")
+        pkg = versioned_CPV("foo/bar-1.0")
         self.repo.notify_add_package(pkg)
         self.assertIn(pkg.category, self.repo.categories)
         self.assertIn(pkg.category, self.repo.packages)
@@ -201,7 +201,7 @@ class TestPrototype(TestCase):
         self.assertIn(ver_key, self.repo.versions)
         self.assertEqual(list(self.repo.versions[ver_key]), ["1.0"])
 
-        pkg = CPV("foo/cows-1.0")
+        pkg = versioned_CPV("foo/cows-1.0")
         self.repo.notify_add_package(pkg)
         self.assertIn((pkg.category, pkg.package), self.repo.versions)
 
@@ -218,7 +218,7 @@ class TestPrototype(TestCase):
         setattr(self.repo, '_' + attr, f)
         args = [self.repo.match(atom(arg1))]
         if arg2:
-            args.append(CPV(arg2))
+            args.append(versioned_CPV(arg2))
         op = getattr(self.repo, attr)
         self.repo.frozen = False
         def simple_check(op, args, **kw):

@@ -3,7 +3,7 @@
 
 from pkgcore.test import TestCase
 from pkgcore.ebuild.atom import atom
-from pkgcore.ebuild.cpv import CPV
+from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.test.repository.test_prototype import SimpleTree
 from pkgcore.repository.visibility import filterTree
 from pkgcore.restrictions import packages, values
@@ -32,7 +32,7 @@ class TestVisibility(TestCase):
             sorted(vrepo.itermatch(a)), sorted(repo.itermatch(a)))
         self.assertEqual(
             sorted(vrepo.itermatch(a2)),
-            sorted([CPV("dev-util/diffball-0.7")]))
+            sorted([versioned_CPV("dev-util/diffball-0.7")]))
         repo, vrepo = self.setup_repos(packages.PackageRestriction(
                 "package", values.OrRestriction(
                     *[values.StrExactMatch(x) for x in ("diffball", "fake")])))

@@ -4,10 +4,19 @@
 from random import shuffle
 from pkgcore.test import TestCase
 from pkgcore.ebuild import cpv
+from snakeoil.currying import partial
 
 class native_CpvTest(TestCase):
 
     kls = staticmethod(cpv.native_CPV)
+
+    @classmethod
+    def vkls(cls, *args):
+        return cls.kls(versioned=True, *args)
+
+    def ukls(cls, *args):
+        return cls.kls(versioned=False, *args)
+
     run_cpy_ver_cmp = False
 
     good_cats = [
@@ -46,14 +55,13 @@ class native_CpvTest(TestCase):
 
     def make_inst(self, cat, pkg, fullver=""):
         if self.testing_secondary_args:
-            return self.kls(cat, pkg, fullver)
+            return self.kls(cat, pkg, fullver, versioned=bool(fullver))
         if fullver:
-            cpv = "%s/%s-%s" % (cat, pkg, fullver)
-        else:
-            cpv = "%s/%s" % (cat, pkg)
-        return self.kls(cpv)
+            return self.vkls("%s/%s-%s" % (cat, pkg, fullver))
+        return self.ukls("%s/%s" % (cat, pkg))
 
     def test_simple_key(self):
+        self.assertRaises(cpv.InvalidCPV, self.make_inst, "da", "ba-3", "3.3")
         for src in [[("dev-util", "diffball", "0.7.1"), "dev-util/diffball"],
             ["dev-util/diffball"],
             ["dev-perl/mod_perl"],
@@ -76,15 +84,18 @@ class native_CpvTest(TestCase):
                 cat, pkg, ver = src[0]
 
             self.assertEqual(self.make_inst(cat, pkg, ver).key, key)
-            self.assertRaises(cpv.InvalidCPV, self.make_inst, "da", "ba-3d", "3.3")
 
     def test_init(self):
         self.kls("dev-util", "diffball", "0.7.1")
-        self.kls("dev-util/diffball-0.7.1")
+        self.kls("dev-util/diffball-0.7.1", versioned=True)
         self.assertRaises(TypeError, self.kls, "dev-util", "diffball")
-        self.assertRaises(TypeError, self.kls, "dev-util", "diffball", None)
+        self.assertRaises(TypeError, self.vkls, "dev-util", "diffball", None)
 
     def test_parsing(self):
+        # check for gentoo bug 263787
+        self.process_pkg(False, 'app-text', 'foo-123-bar')
+        self.process_ver(False, 'app-text', 'foo-123-bar', '2.0017a_p', '-r5')
+        self.assertRaises(cpv.InvalidCPV, self.ukls, 'app-text/foo-123')
         for cat_ret, cats in [[False, self.good_cats], [True, self.bad_cats]]:
             for cat in cats:
                 for pkg_ret, pkgs in [[False, self.good_pkgs],
@@ -102,10 +113,6 @@ class native_CpvTest(TestCase):
                         for ver in vers:
                             self.process_ver(ver_ret or rev_ret, cat, pkg,
                                              ver, rev)
-
-
-    locals()["test_parsing (may take awhile)"] = test_parsing
-    del test_parsing
 
     def process_pkg(self, ret, cat, pkg):
         if ret:
@@ -187,12 +194,12 @@ class native_CpvTest(TestCase):
                     'cpy_ver_cmp, %r < %r' % (obj2, obj1))
 
     def test_cmp(self):
-        kls = self.kls
+        ukls, vkls = self.ukls, self.vkls
         self.assertTrue(
-            cmp(kls("dev-util/diffball-0.1"),
-                kls("dev-util/diffball-0.2")) < 0)
+            cmp(vkls("dev-util/diffball-0.1"),
+                vkls("dev-util/diffball-0.2")) < 0)
         base = "dev-util/diffball-0.7.1"
-        self.assertFalse(cmp(kls(base), kls(base)))
+        self.assertFalse(cmp(vkls(base), vkls(base)))
         for rev in ("", "-r1"):
             last = None
             for suf in ["_alpha", "_beta", "_pre", "", "_p"]:
@@ -201,45 +208,49 @@ class native_CpvTest(TestCase):
                 else:
                     sufs = [suf, suf+"4"]
                 for x in sufs:
-                    cur = kls(base+x+rev)
-                    self.assertEqual(cur, kls(base+x+rev))
+                    cur = vkls(base+x+rev)
+                    self.assertEqual(cur, vkls(base+x+rev))
                     if last is not None:
                         self.assertGT(cur, last)
 
         self.assertGT(
-            kls("dev-util/diffball-cvs.6"), kls("dev-util/diffball-600"))
+            vkls("dev-util/diffball-cvs.6"), vkls("dev-util/diffball-600"))
         self.assertGT(
-            kls("dev-util/diffball-cvs.7"), kls("dev-util/diffball-cvs.6"))
-        self.assertGT(kls("da/ba-6a"), kls("da/ba-6"))
-        self.assertGT(kls("da/ba-6a-r1"), kls("da/ba-6a"))
-        self.assertGT(kls("da/ba-6.0"), kls("da/ba-6"))
-        self.assertGT(kls("da/ba-6.0b"), kls("da/ba-6.0.0"))
-        self.assertGT(kls("da/ba-6.02"), kls("da/ba-6.0.0"))
+            vkls("dev-util/diffball-cvs.7"), vkls("dev-util/diffball-cvs.6"))
+        self.assertGT(vkls("da/ba-6a"), vkls("da/ba-6"))
+        self.assertGT(vkls("da/ba-6a-r1"), vkls("da/ba-6a"))
+        self.assertGT(vkls("da/ba-6.0"), vkls("da/ba-6"))
+        self.assertGT(vkls("da/ba-6.0b"), vkls("da/ba-6.0.0"))
+        self.assertGT(vkls("da/ba-6.02"), vkls("da/ba-6.0.0"))
         # float comparison rules.
-        self.assertGT(kls("da/ba-6.2"), kls("da/ba-6.054"))
-        self.assertEqual(kls("da/ba-6"), kls("da/ba-6"))
-        self.assertGT(kls("db/ba"), kls("da/ba"))
-        self.assertGT(kls("da/bb"), kls("da/ba"))
-        self.assertGT(kls("da/ba-6.0_alpha0_p1"), kls("da/ba-6.0_alpha"))
-        self.assertEqual(kls("da/ba-6.0_alpha"), kls("da/ba-6.0_alpha0"))
-        self.assertGT(kls("da/ba-6.1"), kls("da/ba-6.09"))
-        self.assertGT(kls("da/ba-6.0.1"), kls("da/ba-6.0"))
+        self.assertGT(vkls("da/ba-6.2"), vkls("da/ba-6.054"))
+        self.assertEqual(vkls("da/ba-6"), vkls("da/ba-6"))
+        self.assertGT(ukls("db/ba"), ukls("da/ba"))
+        self.assertGT(ukls("da/bb"), ukls("da/ba"))
+        self.assertGT(vkls("da/ba-6.0_alpha0_p1"), vkls("da/ba-6.0_alpha"))
+        self.assertEqual(vkls("da/ba-6.0_alpha"), vkls("da/ba-6.0_alpha0"))
+        self.assertGT(vkls("da/ba-6.1"), vkls("da/ba-6.09"))
+        self.assertGT(vkls("da/ba-6.0.1"), vkls("da/ba-6.0"))
         for v1, v2 in (("1.001000000000000000001", "1.001000000000000000002"),
             ("1.00100000000", "1.0010000000000000001"),
             ("1.01", "1.1")):
-            self.assertGT(kls("da/ba-%s" % v2), kls("da/ba-%s" % v1))
+            self.assertGT(vkls("da/ba-%s" % v2), vkls("da/ba-%s" % v1))
         # Regression test: python does comparison slightly differently
         # if the classes do not match exactly (it prefers rich
         # comparison over __cmp__).
-        class DummySubclass(kls):
+        class DummySubclass(self.kls):
             pass
         self.assertNotEqual(
-            DummySubclass("da/ba-6.0_alpha0_p1"), kls("da/ba-6.0_alpha"))
+            DummySubclass("da/ba-6.0_alpha0_p1", versioned=True),
+                vkls("da/ba-6.0_alpha"))
         self.assertEqual(
-            DummySubclass("da/ba-6.0_alpha0"), kls("da/ba-6.0_alpha"))
+            DummySubclass("da/ba-6.0_alpha0", versioned=True),
+                vkls("da/ba-6.0_alpha"))
 
-        self.assertNotEqual(DummySubclass("da/ba-6.0"), "foon")
-        self.assertEqual(DummySubclass("da/ba-6.0"), DummySubclass("da/ba-6.0-r0"))
+        self.assertNotEqual(DummySubclass("da/ba-6.0", versioned=True),
+            "foon")
+        self.assertEqual(DummySubclass("da/ba-6.0", versioned=True),
+            DummySubclass("da/ba-6.0-r0", versioned=True))
 
     def test_no_init(self):
         """Test if the cpv is in a somewhat sane state if __init__ fails.
@@ -250,7 +261,7 @@ class native_CpvTest(TestCase):
         """
         uninited = self.kls.__new__(self.kls)
         broken = self.kls.__new__(self.kls)
-        self.assertRaises(cpv.InvalidCPV, broken.__init__, 'broken')
+        self.assertRaises(cpv.InvalidCPV, broken.__init__, 'broken', versioned=True)
         for thing in (uninited, broken):
             # the c version returns None, the py version does not have the attr
             getattr(thing, 'cpvstr', None)
@@ -263,7 +274,7 @@ class native_CpvTest(TestCase):
                 pass
 
     def test_r0_removal(self):
-        obj = self.kls("dev-util/diffball-1.0-r0")
+        obj = self.kls("dev-util/diffball-1.0-r0", versioned=True)
         self.assertEqual(obj.fullver, "1.0")
         self.assertEqual(obj.revision, None)
         self.assertEqual(str(obj), "dev-util/diffball-1.0")

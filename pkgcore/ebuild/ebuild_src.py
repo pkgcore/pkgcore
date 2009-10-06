@@ -364,7 +364,7 @@ class virtual_ebuild(metadata.package):
         @param pkg: parent pkg that is generating this pkg
         @param data: mapping of data to push to use in __getattr__ access
         """
-        c = CPV(cpvstr)
+        c = CPV.unversioned(cpvstr)
         if c.fullver is None:
             cpvstr = cpvstr + "-" + pkg.fullver
 

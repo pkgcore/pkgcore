@@ -137,7 +137,7 @@ def parse_pv(repo, text):
     If a pv is passed it needs to match a single cpv in repo.
     """
     try:
-        return cpv.CPV(text)
+        return cpv.CPV.versioned(text)
     except errors.InvalidCPV:
         restrict = parse_match('=%s' % (text,))
         result = None

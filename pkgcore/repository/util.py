@@ -2,14 +2,14 @@
 # License: GPL2/BSD
 
 from pkgcore.repository.prototype import tree
-from pkgcore.ebuild.cpv import CPV
+from pkgcore.ebuild.cpv import versioned_CPV
 
 class SimpleTree(tree):
 
     def __init__(self, cpv_dict, pkg_klass=None, livefs=False, frozen=True):
         self.cpv_dict = cpv_dict
         if pkg_klass is None:
-            pkg_klass = CPV
+            pkg_klass = versioned_CPV
         self.livefs = livefs
         self.package_class = pkg_klass
         tree.__init__(self, frozen=frozen)

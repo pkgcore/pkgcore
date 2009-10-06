@@ -6,7 +6,7 @@
 package with its metadata accessible (think 'no longer abstract')
 """
 
-from pkgcore.ebuild.cpv import CPV
+from pkgcore.ebuild import cpv
 from pkgcore.ebuild.atom import atom
 
 from snakeoil.weakrefs import WeakValCache
@@ -82,7 +82,7 @@ def DeriveMetadataKls(original_kls):
 
     return package
 
-package = DeriveMetadataKls(CPV)
+package = DeriveMetadataKls(cpv.versioned_CPV_cls)
 
 class factory(object):
 

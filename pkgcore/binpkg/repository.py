@@ -13,7 +13,7 @@ from pkgcore.plugin import get_plugin
 from pkgcore.ebuild.ebuild_built import pkg_uses_default_preinst
 from pkgcore.config import ConfigHint
 #needed to grab the PN
-from pkgcore.ebuild.cpv import CPV as cpv
+from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.errors import InvalidCPV
 
 from snakeoil.currying import partial
@@ -253,7 +253,7 @@ class tree(prototype.tree):
                     continue
                 pv = x[:-lext]
                 try:
-                    pkg = cpv(category+"/"+pv)
+                    pkg = versioned_CPV(category+"/"+pv)
                 except InvalidCPV:
                     bad = True
                 if bad or not pkg.fullver:

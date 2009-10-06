@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* gentoo bug 280766; basically some ebuilds are sensitive to a trailing '/'
+  on WORKDIR (portage strips it) leading to failures in path sedding.
+
 * comply with PMS corner cases for package names; gentoo bug 263787
 
 * serialization support for cpv derivatives.  Not great, but packages.g.o

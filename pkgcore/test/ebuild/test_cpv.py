@@ -231,6 +231,9 @@ class native_CpvTest(TestCase):
         self.assertEqual(vkls("da/ba-6.0_alpha"), vkls("da/ba-6.0_alpha0"))
         self.assertGT(vkls("da/ba-6.1"), vkls("da/ba-6.09"))
         self.assertGT(vkls("da/ba-6.0.1"), vkls("da/ba-6.0"))
+        # test for gentoo bug 287848
+        self.assertGT(vkls("dev-lang/erlang-12.2b"),
+            vkls("dev-lang/erlang-12.2.5-r1"))
         for v1, v2 in (("1.001000000000000000001", "1.001000000000000000002"),
             ("1.00100000000", "1.0010000000000000001"),
             ("1.01", "1.1")):

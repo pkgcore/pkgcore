@@ -93,9 +93,9 @@ class database(flat_hash.database):
         for x in i:
             # if we reach here, then bad things occured.
             raise errors.GeneralCacheCorruption(
-                "wrong line count, requires %i" % 
+                "wrong line count, requires %i" %
                     (self.magic_line_count,))
-            
+
         if self._mtime_used:
             d["_mtime_"] = mtime
         return d

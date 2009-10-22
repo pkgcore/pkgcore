@@ -3,6 +3,9 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
+pkgcore 0.5: October 22, 2009
+
 * add protection against multiple python versions, w/ the default python
   invocation being a different major version from what pkgcore was installed
   under.  Primarily a fix to dohtml.

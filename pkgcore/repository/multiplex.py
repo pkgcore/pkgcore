@@ -37,7 +37,7 @@ class operations(repo_interface.operations_proxy):
             if not ops.supports(supports_name):
                 continue
             ret = getattr(ops, op_name)(*args, **kwds)
-            if op_name in self.ops_stop_after_first_supported:
+            if supports_name in self.ops_stop_after_first_supported:
                 return ret
             return ret
         raise NotImplementedError(self, op_name)

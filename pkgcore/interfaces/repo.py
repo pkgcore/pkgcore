@@ -7,7 +7,7 @@ repository modifications (installing, removing, replacing)
 
 from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.demandload import demandload
-from snakeoil.currying import partial
+from snakeoil.currying import partial, post_curry
 demandload(globals(), "pkgcore.log:logger",
     "pkgcore.interfaces:observer@observer_mod",
     "pkgcore:sync",
@@ -379,7 +379,10 @@ class operations(object):
         setattr(self, operation,
             getattr(self, '_cmd_enabled_%s' % operation))
 
-    def _disabled_if_frozen(self):
+    def _disabled_if_frozen(self, command):
+        if self.repo.frozen:
+            logger.debug("disabling repo(%r) command(%r) due to repo being frozen",
+                self.repo, command)
         return not self.repo.frozen
 
     @classmethod
@@ -398,8 +401,8 @@ class operations(object):
             return hasattr(self, '_cmd_enabled_%s' % operation_name)
         return hasattr(self, operation_name)
 
-    def __dir__(self):
-        return list(self._enabled_ops)
+    #def __dir__(self):
+    #    return list(self._enabled_ops)
 
     def _default_observer(self, observer):
         if observer is None:
@@ -419,7 +422,8 @@ class operations(object):
             self._default_observer(observer))
 
     for x in ("install", "uninstall", "replace"):
-        locals()["_cmd_check_support_%s" % x] = _disabled_if_frozen
+        locals()["_cmd_check_support_%s" % x] = post_curry(
+            _disabled_if_frozen, x)
 
     del x
 

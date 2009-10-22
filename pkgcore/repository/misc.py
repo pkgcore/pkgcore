@@ -3,6 +3,7 @@
 
 from pkgcore.restrictions import packages
 from pkgcore.package.mutated import MutatedPkg
+from pkgcore.interfaces.repo import operations_proxy
 from snakeoil.iterables import caching_iter
 from snakeoil.klass import GetAttrProxy
 
@@ -61,6 +62,8 @@ class caching_repo(object):
     you want- if you're making a lot of random queries that are duplicates
     (resolver does this for example), caching helps.
     """
+
+    operations_kls = operations_proxy
 
     def __init__(self, db, strategy):
         """

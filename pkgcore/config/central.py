@@ -44,7 +44,7 @@ class _ConfigMapping(mappings.DictMixin):
             for name in config:
                 try:
                     collapsed = self.manager.collapse_named_section(name)
-                except errors.BaseException:
+                except errors.BaseError:
                     # Cannot be collapsed, ignore it (this is not
                     # an error, it can be used as base for
                     # something that can be collapsed)

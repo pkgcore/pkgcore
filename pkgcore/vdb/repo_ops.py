@@ -30,11 +30,11 @@ def _default_customize_engine(op_inst, engine):
 
 class install(repo_interfaces.livefs_install):
 
-    def __init__(self, domain_settings, repo, pkg, *a, **kw):
+    def __init__(self, domain_settings, repo, pkg, *args):
         self.dirpath = pjoin(
             repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
         self.domain_settings = domain_settings
-        repo_interfaces.livefs_install.__init__(self, repo, pkg, *a, **kw)
+        repo_interfaces.livefs_install.__init__(self, repo, pkg, *args)
 
     install_get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
     customize_engine = _default_customize_engine
@@ -110,12 +110,12 @@ class install(repo_interfaces.livefs_install):
 
 class uninstall(repo_interfaces.livefs_uninstall):
 
-    def __init__(self, domain_settings, repo, pkg, offset=None, *a, **kw):
+    def __init__(self, domain_settings, repo, pkg, *args):
         self.dirpath = pjoin(
             repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
         self.domain_settings = domain_settings
         repo_interfaces.livefs_uninstall.__init__(
-            self, repo, pkg, offset=offset, *a, **kw)
+            self, repo, pkg, *args)
 
     uninstall_get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
     customize_engine = _default_customize_engine
@@ -130,7 +130,7 @@ class uninstall(repo_interfaces.livefs_uninstall):
 # should convert these to mixins.
 class replace(repo_interfaces.livefs_replace, install, uninstall):
 
-    def __init__(self, domain_settings, repo, pkg, newpkg, *a, **kw):
+    def __init__(self, domain_settings, repo, pkg, newpkg, *a):
         self.dirpath = pjoin(
             repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
         self.newpath = pjoin(
@@ -139,7 +139,7 @@ class replace(repo_interfaces.livefs_replace, install, uninstall):
             os.path.dirname(self.dirpath),
             ".tmp."+os.path.basename(self.dirpath))
         self.domain_settings = domain_settings
-        repo_interfaces.livefs_replace.__init__(self, repo, pkg, newpkg, *a, **kw)
+        repo_interfaces.livefs_replace.__init__(self, repo, pkg, newpkg, *a)
 
     _get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
     customize_engine = _default_customize_engine
@@ -156,3 +156,30 @@ class replace(repo_interfaces.livefs_replace, install, uninstall):
             return ret
         os.rename(self.tmpdirpath, self.newpath)
         return True
+
+
+class operations(repo_interfaces.operations):
+
+    def _add_triggers(self, existing_triggers):
+        if existing_triggers is None:
+            existing_triggers = []
+        existing_triggers.extend(self.repo.domain.get_extra_triggers())
+        return existing_triggers
+
+    def _cmd_install(self, pkg, observer, triggers=None):
+        return install(self.repo.domain_settings, self.repo.raw_vdb, pkg,
+            observer,
+            self._add_triggers(triggers),
+            self.repo.domain.root)
+
+    def _cmd_uninstall(self, pkg, observer, triggers=None):
+        return uninstall(self.repo.domain_settings, self.repo.raw_vdb, pkg,
+            observer,
+            self._add_triggers(triggers),
+            self.repo.domain.root)
+
+    def _cmd_replace(self, oldpkg, newpkg, observer, triggers=None):
+        return replace(self.repo.domain_settings, self.repo.raw_vdb,
+            oldpkg, newpkg, observer,
+            self._add_triggers(triggers),
+            self.repo.domain.root)

@@ -203,6 +203,7 @@ class ConfiguredTree(multiplex.tree):
 
     livefs = True
     frozen_settable = False
+    operations_kls = repo_ops.operations
 
     def __init__(self, raw_vdb, domain, domain_settings):
         self.domain = domain

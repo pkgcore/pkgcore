@@ -2,6 +2,7 @@
 # License: GPL2/BSD
 
 from pkgcore.sync import base
+import os
 
 class hg_syncer(base.dvcs_syncer):
 
@@ -11,6 +12,13 @@ class hg_syncer(base.dvcs_syncer):
         ('hg+', 5),
         ('mercurial+', 5),
         )
+
+    @classmethod
+    def is_usable_on_filepath(cls, path):
+        hg_path = os.path.join(path, '.hg')
+        if cls.disabled or not os.path.isdir(hg_path):
+            return None
+        return (cls._rewrite_uri_from_stat(hg_path, 'hg+//'),)
 
     @staticmethod
     def parse_uri(raw_uri):
@@ -29,4 +37,7 @@ class hg_syncer(base.dvcs_syncer):
         return [self.binary_path, "clone", self.uri, self.basedir]
 
     def _update_existing(self):
+        # uri may not be set... happens when autodetecting.
+        if not self.uri.strip("/"):
+            return [self.binary_path, "pull"]
         return [self.binary_path, "pull", "-u", self.uri]

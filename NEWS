@@ -3,6 +3,21 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+* add protection against multiple python versions, w/ the default python
+  invocation being a different major version from what pkgcore was installed
+  under.  Primarily a fix to dohtml.
+
+* ticket 230; tweaks for better >=python2.5 compatibility.
+
+* pkgcore will now try to sync overlays if the overlay is a vcs.  This can
+  be disabled by adding FEATURES="-autodetect-sync" to your make.conf
+
+* pkgcore.sync.base.AutodetectSyncer was added as a way to pull configuration
+  from existing on disk vcs repos, and generate a syncer from them.
+
+* handle cache corruption a bit better- namely, log the warning, and keep
+  going.  Degradation of performance can result, but it's preferable to just
+  bailing.
 
 * gentoo bug 280766; basically some ebuilds are sensitive to a trailing '/'
   on WORKDIR (portage strips it) leading to failures in path sedding.

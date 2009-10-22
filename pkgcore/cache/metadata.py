@@ -8,6 +8,7 @@ cache backend designed for rsynced tree's pregenerated metadata.
 
 import os
 import errno
+from itertools import izip
 from pkgcore.cache import flat_hash, errors
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import eclass_cache
@@ -59,6 +60,9 @@ class database(flat_hash.database):
         self.hardcoded_auxdbkeys_order = tuple((idx, key)
             for idx, key in enumerate(self.auxdbkeys_order)
                 if key in self._known_keys)
+        self.hardcoded_auxdbkeys_processing = tuple(
+            (key in self._known_keys and key or None)
+                for key in self.auxdbkeys_order)
 
     __init__.__doc__ = flat_hash.database.__init__.__doc__.replace(
         "@keyword location", "@param location")
@@ -81,17 +85,17 @@ class database(flat_hash.database):
         return d
 
     def _parse_data(self, data, mtime):
-        data = list(data)
-        if len(data) != self.magic_line_count:
+        i = iter(self.hardcoded_auxdbkeys_processing)
+        d = self._cdict_kls([(key, val) for (key, val) in
+            izip(i, data) if key])
+        # sadly, this is faster then doing a .next() and snagging the
+        # exception
+        for x in i:
+            # if we reach here, then bad things occured.
             raise errors.GeneralCacheCorruption(
-                "wrong line count, requires %i, got %i" %
-                    (self.magic_line_count, len(data)))
-
-        # this one's interesting.
-        d = self._cdict_kls()
-        for idx, key in self.hardcoded_auxdbkeys_order:
-            d[key] = data[idx].strip()
-
+                "wrong line count, requires %i" % 
+                    (self.magic_line_count,))
+            
         if self._mtime_used:
             d["_mtime_"] = mtime
         return d

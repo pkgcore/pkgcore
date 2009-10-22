@@ -32,15 +32,11 @@ class database(fs_template.FsBased):
         path = pjoin(self.location, cpv)
         try:
             data = readlines(path, True, True, True)
-        except (IOError, OSError), e:
+            if data is None:
+                raise KeyError(cpv)
+            return self._parse_data(data, data.mtime)
+        except (IOError, OSError, ValueError), e:
             raise errors.CacheCorruption(cpv, e)
-        if data is None:
-            raise KeyError(cpv)
-        try:
-            d = self._parse_data(data, data.mtime)
-        except (OSError, ValueError), e:
-            raise errors.CacheCorruption(cpv, e)
-        return d
 
     def _parse_data(self, data, mtime):
         d = self._cdict_kls()

@@ -2,6 +2,7 @@
 # License: GPL2/BSD
 
 from pkgcore.sync import base
+import os
 
 class cvs_syncer(base.dvcs_syncer):
 
@@ -12,6 +13,13 @@ class cvs_syncer(base.dvcs_syncer):
         ('cvs+', 5),
         ('cvs://', 5),
         )
+
+    @classmethod
+    def is_usable_on_filepath(cls, path):
+        cvs_path = os.path.join(path, "CVS")
+        if cls.disabled or not os.path.isdir(cvs_path):
+            return None
+        return (cls._rewrite_uri_from_stat(cvs_path, 'cvs://'),)
 
     @classmethod
     def parse_uri(cls, raw_uri):

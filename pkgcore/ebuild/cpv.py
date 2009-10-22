@@ -162,7 +162,6 @@ class _native_CPV(object):
             return '<%s cpvstr=%s @%#8x>' % (
                 self.__class__.__name__, getattr(self, 'cpvstr', None), id(self))
         except AttributeError, ae:
-            import pdb;pdb.set_trace()
             raise
 
     def __str__(self):
@@ -406,6 +405,9 @@ def unversioned_CPV(*args):
 
 def versioned_CPV(*args):
     return CPV.versioned(*args)
+
+versioned_CPV = CPV.versioned
+unversioned_CPV = CPV.unversioned
 
 class versioned_CPV_cls(CPV):
 

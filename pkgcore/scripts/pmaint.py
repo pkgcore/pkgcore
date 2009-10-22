@@ -41,23 +41,24 @@ class SyncParser(OptionParser):
     def __init__(self, **kwargs):
         OptionParser.__init__(self, description=
             "update a local repository to match its parent",
-            usage='pmaint sync [--force] [repo(s)]',
+            usage='pmaint sync [repo(s)]',
             **kwargs)
-        self.add_option("--force", action='store_true', default=False,
-            help="force an action")
 
     def check_values(self, values, args):
         values, args = OptionParser.check_values(
             self, values, args)
 
+        values.repos = []
         if not args:
-            values.repos = values.config.repo.keys()
+            # skip multiplexed repos since we can't see through them.
+            values.repos = [(k,r) for (k,r) in values.config.repo.items()
+                if not hasattr(r, 'trees')]
         else:
             for x in args:
                 if x not in values.config.repo:
                     self.error("repo %r doesn't exist:\nvalid repos %r" %
                         (x, values.config.repo.keys()))
-            values.repos = args
+            values.repos = [(x,values.config.repo[x]) for x in args]
         return values, []
 
 def sync_main(options, out, err):
@@ -65,20 +66,21 @@ def sync_main(options, out, err):
     config = options.config
     succeeded, failed = [], []
     seen = set()
-    for x in options.repos:
-        r = config.repo[x]
-        if r in seen:
+    for name, repo in options.repos:
+        if repo in seen:
+            out.write("*** skipping %r, already synced" % name)
             continue
-        seen.add(r)
-        if not r.syncable:
+        seen.add(repo)
+        ops = repo.operations
+        if not ops.supports("sync"):
             continue
-        out.write("*** syncing %r..." % x)
-        if not r.sync(force=options.force):
-            out.write("*** failed syncing %r" % x)
-            failed.append(x)
+        out.write("*** syncing %r..." % name)
+        if not ops.sync():
+            out.write("*** failed syncing %r" % name)
+            failed.append(name)
         else:
-            succeeded.append(x)
-            out.write("*** synced %r" % x)
+            succeeded.append(name)
+            out.write("*** synced %r" % name)
     if len(succeeded) + len(failed) > 1:
         out.write("*** synced %s" % format_seq(sorted(succeeded)))
         if failed:
@@ -111,9 +113,6 @@ class CopyParser(OptionParser):
             "error")
         self.add_option("--copy-missing", action="store_true", default=False,
             help="Copy packages missing in target repo from source repo")
-        self.add_option("--force", action='store_true', default=False,
-            help="try and force the copy if the target repository is marked as "
-                "immutable")
 
     def check_values(self, values, args):
         l = len(args)
@@ -132,9 +131,12 @@ class CopyParser(OptionParser):
             self.error("target repo %r was not found, known repos-\n%s" %
                 (target_repo, format_seq(values.config.repo.keys())))
 
-        if values.target_repo.frozen and not values.force:
-            self.error("target repo %r is frozen; --force is required to "
-                "override this" % target_repo)
+        if values.target_repo.frozen:
+            self.error("target repo %r is frozen" % target_repo)
+        ops = values.target_repo.operations
+        if not ops.supports("install") or not ops.supports("replace"):
+            self.error("target repo %r doesn't support both install and "
+                "replace operations" % target_repo)
 
         if values.source_repo:
             try:
@@ -161,10 +163,10 @@ def copy_main(options, out, err):
     """Copy pkgs between repositories."""
 
     trg_repo = options.target_repo
+    trg_repo_ops = trg_repo.operations
     src_repo = options.source_repo
 
     failures = False
-    kwds = {'force': options.force}
 
     for candidate in options.candidates:
         matches = src_repo.match(candidate)
@@ -189,11 +191,11 @@ def copy_main(options, out, err):
                         (src, existing[0]))
                     continue
                 out.write("replacing %s with %s... " % (src, existing[0]))
-                op = trg_repo.replace
+                op = trg_repo_ops.replace
                 args = existing
             else:
                 out.write("copying %s... " % src)
-                op = trg_repo.install
+                op = trg_repo_ops.install
 
             if src.repo.livefs:
                 out.write("forcing regen of contents due to src being livefs..")
@@ -215,7 +217,7 @@ def copy_main(options, out, err):
                     continue
                 pkg = mutated.MutatedPkg(src, {'contents':new_contents})
 
-            op = op(*(args + [pkg]), **kwds)
+            op = op(*(args + [pkg]))
             op.finish()
 
             out.write("completed\n")

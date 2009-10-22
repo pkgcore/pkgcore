@@ -74,15 +74,15 @@ class install(repo_interfaces.nonlivefs_install):
         try:
             start("generating tarball: %s" % tmp_path)
             tar.write_set(pkg.contents, tmp_path, compressor='bz2')
-            end("tarball created")
+            end("tarball created", True)
             start("writing Xpak")
             # ok... got a tarball.  now add xpak.
             xpak.Xpak.write_xpak(tmp_path, generate_attr_dict(pkg))
-            end("wrote Xpak")
+            end("wrote Xpak", True)
             # ok... we tagged the xpak on.
             os.chmod(tmp_path, 0644)
             os.rename(tmp_path, final_path)
-        except:
+        except Exception, e:
             try:
                 os.unlink(tmp_path)
             except (IOError, OSError), e:
@@ -104,3 +104,16 @@ class replace(install, uninstall, repo_interfaces.nonlivefs_replace):
     def modify_repo(self):
         uninstall.modify_repo(self)
         install.modify_repo(self)
+
+
+class operations(repo_interfaces.operations):
+
+
+    def _cmd_install(self, *args):
+        return install(self.repo, *args)
+
+    def _cmd_uninstall(self, *args):
+        return uninstall(self.repo, *args)
+
+    def _cmd_replace(self, *args):
+        return replace(self.repo, *args)

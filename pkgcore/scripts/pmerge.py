@@ -244,7 +244,7 @@ def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
     for idx, match in enumerate(matches):
         out.write("removing %i of %i: %s" % (idx + 1, len(matches), match))
         out.title("%i/%i: %s" % (idx + 1, len(matches), match))
-        op = vdb.uninstall(match, observer=repo_obs)
+        op = vdb.operations.uninstall(match, observer=repo_obs)
         ret = op.finish()
         if not ret:
             if not options.ignore_failures:
@@ -609,11 +609,11 @@ def main(options, out, err):
                     else:
                         out.write(">>> Replacing %s with %s" % (
                             op.old_pkg.cpvstr, built_pkg.cpvstr))
-                    i = livefs_repos.replace(op.old_pkg, built_pkg, observer=repo_obs)
+                    i = livefs_repos.operations.replace(op.old_pkg, built_pkg, observer=repo_obs)
                     reset.append('old_pkg')
                 else:
                     out.write(">>> Installing %s" % built_pkg.cpvstr)
-                    i = livefs_repos.install(built_pkg, observer=repo_obs)
+                    i = livefs_repos.operations.install(built_pkg, observer=repo_obs)
 
                 # force this explicitly- can hold onto a helluva lot more
                 # then we would like.

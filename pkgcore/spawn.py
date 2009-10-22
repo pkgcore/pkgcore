@@ -530,3 +530,17 @@ def is_userpriv_capable(force=False):
             pass
     res = is_userpriv_capable.cached_result = (os.getuid() == 0)
     return res
+
+def find_invoking_python():
+    # roughly... use sys.executable if possible, then major ver variations-
+    # look for python2.5, python2, then just python, for example
+    if os.path.exists(sys.executable):
+        return sys.executable
+    chunks = list(str(x) for x in sys.version_info[:2])
+    for potential in (chunks, chunks[:-1], ''):
+        try:
+            command_name = 'python%s' % '.'.join(potential)
+            return find_binary(command_name)
+        except CommandNotFound:
+            continue
+    raise CommandNotFound('python')

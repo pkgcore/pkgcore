@@ -242,7 +242,7 @@ dump_environ() {
 
     [[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
 
-    declare | PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON}" \
+    declare | PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
         "${PKGCORE_BIN_PATH}/filter-env" $opts -f \
         "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" -v \
         "$(filter_env_var_filter ${DONT_EXPORT_VARS} f x )" || die "internal error: filter-env returned non zero: $?"
@@ -369,7 +369,7 @@ load_environ() {
 
         # run the filtered env.
         eval "$(PYTHONPATH=${PKGCORE_PYTHONPATH} \
-            "${PKGCORE_PYTHON}" "${PKGCORE_BIN_PATH}/filter-env" $opts \
+            "${PKGCORE_PYTHON_BINARY}" "${PKGCORE_BIN_PATH}/filter-env" $opts \
             -f "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" \
             -v "$(filter_env_var_filter ${DONT_EXPORT_VARS} f x EXISTING_PATH)" -i "$src")"
         ret=$?

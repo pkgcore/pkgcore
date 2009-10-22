@@ -5,7 +5,7 @@
 implementation of the standard PORTDIR + PORTDIR_OVERLAY repository stacking
 """
 
-from pkgcore.repository import prototype
+from pkgcore.repository import prototype, multiplex
 from pkgcore.config import ConfigHint, errors
 from pkgcore.ebuild import repository
 
@@ -24,6 +24,8 @@ class OverlayRepo(prototype.tree):
     configured = False
     configurables = ("domain", "settings",)
     configure = repository.ConfiguredTree
+
+    operations_kls = multiplex.operations
 
     # sucks a bit, need to work something better out here
     format_magic = "ebuild_src"

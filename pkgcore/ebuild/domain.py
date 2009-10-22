@@ -17,7 +17,7 @@ from pkgcore.restrictions import packages, values
 from pkgcore.ebuild.atom import generate_collapsed_restriction
 from pkgcore.repository import multiplex, visibility
 from pkgcore.interfaces.data_source import local_source
-from pkgcore.config.errors import BaseException
+from pkgcore.config.errors import BaseError
 from pkgcore.ebuild import const
 from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
     non_incremental_collapsed_restrict_to_data, incremental_expansion)
@@ -35,16 +35,16 @@ demandload(globals(),
     'pkgcore.fs.fs:fsFile',
 )
 
-class MissingFile(BaseException):
+class MissingFile(BaseError):
     def __init__(self, filename, setting):
-        BaseException.__init__(self,
+        BaseError.__init__(self,
                                "setting %s points at %s, which doesn't exist."
                                % (setting, filename))
         self.file, self.setting = filename, setting
 
-class Failure(BaseException):
+class Failure(BaseError):
     def __init__(self, text):
-        BaseException.__init__(self, "domain failure: %s" % (text,))
+        BaseError.__init__(self, "domain failure: %s" % (text,))
         self.text = text
 
 

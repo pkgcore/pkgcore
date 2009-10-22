@@ -89,7 +89,7 @@ class cache(base):
 
     def update_eclasses(self):
         """Force an update of the internal view of on disk/remote eclasses."""
-        self.eclasses = {}
+        ec = self.eclasses = {}
         eclass_len = len(".eclass")
         if os.path.isdir(self.eclassdir):
             for y in os.listdir(self.eclassdir):
@@ -100,10 +100,10 @@ class cache(base):
                 except OSError:
                     continue
                 ys = y[:-eclass_len]
-                self.eclasses[intern(ys)] = (self.eclassdir, long(mtime))
+                ec[intern(ys)] = (self.eclassdir, long(mtime))
 
 
-class StackedCaches(cache):
+class StackedCaches(base):
 
     """
     collapse multiple eclass caches into one.

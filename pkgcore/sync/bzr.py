@@ -2,6 +2,8 @@
 # License: GPL2/BSD
 
 from pkgcore.sync import base
+from pkgcore.spawn import spawn_get_output
+import os
 
 class bzr_syncer(base.dvcs_syncer):
 
@@ -10,6 +12,24 @@ class bzr_syncer(base.dvcs_syncer):
     supported_uris = (
         ('bzr+', 5),
         )
+
+    @classmethod
+    def is_usable_on_filepath(cls, path):
+        bzr_path = os.path.join(path, '.bzr')
+        if cls.disabled or not os.path.isdir(bzr_path):
+            return None
+        code, data = spawn_get_output([cls.binary, "info", path])
+        if code != 0:
+            # should alert the user somehow
+            return None
+        for line in data:
+            line = line.strip().split(":", 1)
+            if len(line) != 2:
+                continue
+            if line[0] == 'parent branch':
+                uri = "bzr+%s" % (line[1].strip(),)
+                return (cls._rewrite_uri_from_stat(bzr_path, uri),)
+        return None
 
     @staticmethod
     def parse_uri(raw_uri):

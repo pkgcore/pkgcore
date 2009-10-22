@@ -32,9 +32,9 @@ speak "dude!"
 listen PKGCORE_BIN_PATH
 [ -z "$PKGCORE_BIN_PATH" ] && die "PKGCORE_BIN_PATH=$PKGCORE_BIN_PATH , bailing"
 declare -rx PKGCORE_BIN_PATH
-listen PKGCORE_PYTHON
-[ -z "$PKGCORE_PYTHON" ] && die "empty PKGCORE_PYTHON, bailing"
-declare -rx PKGCORE_PYTHON
+listen PKGCORE_PYTHON_BINARY
+[ -z "$PKGCORE_PYTHON_BINARY" ] && die "empty PKGCORE_PYTHON_BINARY, bailing"
+declare -rx PKGCORE_PYTHON_BINARY
 listen PKGCORE_PYTHONPATH
 [ -z "$PKGCORE_PYTHONPATH" ] && die "empty PKGCORE_PYTHONPATH, bailing"
 declare -rx PKGCORE_PYTHONPATH

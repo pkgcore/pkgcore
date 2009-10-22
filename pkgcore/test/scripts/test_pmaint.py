@@ -15,7 +15,7 @@ from pkgcore.repository import util, syncable
 from pkgcore.sync import base
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.interfaces.repo import (nonlivefs_install,
-    nonlivefs_uninstall, nonlivefs_replace)
+    nonlivefs_uninstall, nonlivefs_replace, operations)
 
 
 class Options(dict):
@@ -62,9 +62,9 @@ class SyncTest(TestCase, helpers.MainMixin):
             "repo 'missing' doesn't exist:\nvalid repos ['repo']",
             'missing', repo=success_section)
         values = self.parse(repo=success_section)
-        self.assertEqual(['repo'], values.repos)
+        self.assertEqual(['repo'], [x[0] for x in values.repos])
         values = self.parse('repo', repo=success_section)
-        self.assertEqual(['repo'], values.repos)
+        self.assertEqual(['repo'], [x[0] for x in values.repos])
 
     def test_sync(self):
         config = self.assertOut(
@@ -73,7 +73,7 @@ class SyncTest(TestCase, helpers.MainMixin):
                 "*** synced 'myrepo'",
                 ],
             myrepo=success_section)
-        self.assertTrue(config.repo['myrepo']._sync.synced)
+        self.assertTrue(config.repo['myrepo']._syncer.synced)
         self.assertOut(
             [
                 "*** syncing 'myrepo'...",
@@ -106,7 +106,25 @@ def derive_op(op, *a, **kw):
             return True
     return new_op(*a, **kw)
 
+
+class fake_operations(operations):
+
+    def _cmd_install(self, pkg, observer):
+        self.repo.installed.append(pkg)
+        return derive_op(nonlivefs_install, self.repo, pkg, observer)
+
+    def _cmd_uninstall(self, pkg, observer):
+        self.repo.uninstalled.append(pkg)
+        return derive_op(nonlivefs_uninstall, self.repo, pkg, observer)
+
+    def _cmd_replace(self, oldpkg, newpkg, observer):
+        self.repo.replaced.append((oldpkg, newpkg))
+        return derive_op(nonlivefs_replace, self.repo, oldpkg, newpkg, observer)
+
+
 class fake_repo(util.SimpleTree):
+
+    operations_kls = fake_operations
 
     def __init__(self, data, frozen=False, livefs=False):
         self.installed = []
@@ -116,21 +134,6 @@ class fake_repo(util.SimpleTree):
             pkg_klass=partial(fake_pkg, self))
         self.livefs = livefs
         self.frozen = frozen
-
-    def _install(self, pkg, *a, **kw):
-        self.installed.append(pkg)
-        kw.pop("force", None)
-        return derive_op(nonlivefs_install, self, pkg, *a, **kw)
-
-    def _replace(self, old, new, *a, **kw):
-        self.replaced.append((old, new))
-        kw.pop("force", None)
-        return derive_op(nonlivefs_replace, self, old, new, *a, **kw)
-
-    def _uninstall(self, pkg, *a, **kw):
-        self.uninstalled.append(pkg)
-        kw.pop("force", None)
-        return derive_op(nonlivefs_uninstall, self, pkg, *a, **kw)
 
 
 def make_repo_config(repo_data, livefs=False, frozen=False):
@@ -162,23 +165,6 @@ class CopyTest(TestCase, helpers.MainMixin):
         self.assertError("source repo 'sys-apps/portage' was not found, known "
             "repos-\n('dar', 'foo')", "--source-repo", "sys-apps/portage", "foo",
                 "dar", dar=make_repo_config({}), foo=make_repo_config({}))
-
-    def test_force(self):
-        self.assertError("target repo 'trg' is frozen; --force is required to override this",
-            '--target-repo', 'trg', '--source-repo', 'src',
-            '=sys-apps/portage-2.1',
-                src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
-                trg=make_repo_config({}, frozen=True)
-            )
-        ret, config, out = self.execute_main(
-            '--target-repo', 'trg', '--source-repo', 'src',
-            '=sys-apps/portage-2.1',
-                src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
-                trg=make_repo_config({})
-            )
-        self.assertEqual(ret, 0, "expected non zero exit code")
-        self.assertEqual(map(str, config.target_repo.installed),
-            ['sys-apps/portage-2.1'])
 
     def test_normal_function(self):
         ret, config, out = self.execute_main(

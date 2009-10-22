@@ -621,10 +621,10 @@ class SavePkg(base):
         wrapped_pkg = MutatedPkg(pkg, {'contents':cset})
         if old_pkg:
             txt = 'replacing'
-            op = self.target_repo.replace(*(old_pkg + [wrapped_pkg]))
+            op = self.target_repo.operations.replace(*(old_pkg + [wrapped_pkg]))
         else:
             txt = 'installing'
-            op = self.target_repo.install(wrapped_pkg)
+            op = self.target_repo.operations.install(wrapped_pkg)
         engine.observer.info("%s %s to %s" %
             (txt, pkg, self.target_repo))
         op.finish()

@@ -7,11 +7,14 @@ filtering repository
 
 from pkgcore.repository import prototype, errors
 from pkgcore.restrictions.restriction import base
+from pkgcore.interfaces.repo import operations_proxy
 from snakeoil.klass import GetAttrProxy
 
 class filterTree(prototype.tree):
 
     """Filter existing repository based upon passed in restrictions."""
+
+    operations_kls = operations_proxy
 
     def __init__(self, repo, restriction, sentinel_val=False):
         self.raw_repo = repo

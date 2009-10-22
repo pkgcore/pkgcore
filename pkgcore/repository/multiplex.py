@@ -9,7 +9,44 @@ from operator import itemgetter
 from pkgcore.repository import prototype, errors
 from snakeoil.currying import partial
 from snakeoil.iterables import iter_sort
-from snakeoil.compatibility import all
+from snakeoil.compatibility import all, any
+from pkgcore.interfaces import repo as repo_interface
+
+
+class operations(repo_interface.operations_proxy):
+
+    ops_stop_after_first_supported = frozenset(["install", "uninstall",
+        "replace"])
+
+    def _collect_operations(self):
+        s = set()
+        for tree in self.repo.trees:
+            s.update(tree.operations._collect_operations())
+        return s
+
+    def _get_target_attrs(self):
+        s = set()
+        for tree in self.repo.trees:
+            s.update(dir(tree.operations))
+        return s
+
+    def _proxy_op(self, op_name, *args, **kwds):
+        supports_name = op_name[len("_cmd_"):]
+        for tree in self.repo.trees:
+            ops = tree.operations
+            if not ops.supports(supports_name):
+                continue
+            ret = getattr(ops, op_name)(*args, **kwds)
+            if op_name in self.ops_stop_after_first_supported:
+                return ret
+            return ret
+        raise NotImplementedError(self, op_name)
+
+    def _proxy_op_support(self, op_name):
+        op_name = op_name[len('_cmd_check_support_'):]
+        return any(tree.operations.supports(op_name)
+            for tree in self.repo.trees)
+
 
 class tree(prototype.tree):
 
@@ -17,6 +54,7 @@ class tree(prototype.tree):
 
     zero_index_grabber = itemgetter(0)
     frozen_settable = False
+    operations_kls = operations
 
     def __init__(self, *trees):
         """
@@ -124,21 +162,3 @@ class tree(prototype.tree):
     @property
     def frozen(self):
         return all(x.frozen for x in self.trees)
-
-    def _install(self, *args, **kwargs):
-        for x in self.trees:
-            if not x.frozen:
-                return x._install(*args, **kwargs)
-        raise NotImplementedError(self, "_install")
-
-    def _replace(self, *args, **kwargs):
-        for x in self.trees:
-            if not x.frozen:
-                return x._replace(*args, **kwargs)
-        raise NotImplementedError(self, "_replace")
-
-    def _uninstall(self, *args, **kwargs):
-        for x in self.trees:
-            if not x.frozen:
-                return x._uninstall(*args, **kwargs)
-        raise NotImplementedError(self, "_uninstall")

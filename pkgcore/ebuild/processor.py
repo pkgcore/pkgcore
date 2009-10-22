@@ -258,7 +258,8 @@ class EbuildProcessor(object):
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
         self.write(EBD_ENV_PATH)
-        self.write(sys.executable)
+        # send PKGCORE_PYTHON_BINARY...
+        self.write(pkgcore.spawn.find_invoking_python())
         self.write(osutils.normpath(osutils.abspath(osutils.join(
                         pkgcore.__file__, os.pardir, os.pardir))))
         if self.__sandbox:

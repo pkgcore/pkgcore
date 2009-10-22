@@ -11,6 +11,7 @@ from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.repository.util import SimpleTree
 from pkgcore.repository import wrapper
+from pkgcore.interfaces.repo import operations
 
 
 class TestPrototype(TestCase):
@@ -205,38 +206,37 @@ class TestPrototype(TestCase):
         self.repo.notify_add_package(pkg)
         self.assertIn((pkg.category, pkg.package), self.repo.versions)
 
-    def test_uninstall(self):
-        assert False
-
     def _simple_redirect_test(self, attr, arg1='=dev-util/diffball-1.0', arg2=None):
         l = []
         uniq_obj = object()
         def f(*a, **kw):
+            a = a[1:-1]
             l.extend((a, kw))
             return uniq_obj
         # if replace, override _replace since replace reflects to it
-        setattr(self.repo, '_' + attr, f)
+
+        class my_ops(operations):
+            locals()['_cmd_%s' % attr] = f
+        self.repo.operations_kls = my_ops
         args = [self.repo.match(atom(arg1))]
         if arg2:
             args.append(versioned_CPV(arg2))
-        op = getattr(self.repo, attr)
         self.repo.frozen = False
+        op = getattr(self.repo.operations, attr)
         def simple_check(op, args, **kw):
             l[:] = []
             self.assertEqual(op(*args, **kw), uniq_obj)
             self.assertEqual(len(l), 2)
             self.assertEqual(list(l[0]), args)
             self.assertTrue(l)
+        self.assertTrue(self.repo.operations.supports(attr))
         simple_check(op, args)
         self.assertFalse(l[1])
-        simple_check(op, args, force=True)
+        simple_check(op, args)#, force=True)
         self.assertNotIn('force', l[1])
         self.repo.frozen = True
-        # verify that frozen is accounted for
-        self.assertRaises(AttributeError, simple_check, op, args)
-        self.assertRaises(AttributeError, simple_check, op, args, force=False)
-        simple_check(op, args, force=True)
-        self.assertNotIn('force', l[1])
+        self.assertFalse(self.repo.operations.supports(attr))
+        self.assertFalse(hasattr(self.repo.operations, attr))
 
     test_replace = post_curry(_simple_redirect_test, 'replace', arg2='dev-util/diffball-1.1')
     test_uninstall = post_curry(_simple_redirect_test, 'uninstall')

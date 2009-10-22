@@ -39,6 +39,10 @@ class syncer(object):
     pkgcore_config_type = ConfigHint(
         {'path':'str', 'uri':'str'}, typename='syncer')
 
+    @classmethod
+    def is_usable_on_filepath(cls, path):
+        return None
+
     def __init__(self, path, uri, default_verbosity=0):
         self.verbose = default_verbosity
         self.basedir = path.rstrip(os.path.sep) + os.path.sep
@@ -64,11 +68,14 @@ class syncer(object):
                 proto[1] = proto[1].lstrip("/")
                 uri[0] = proto[1]
                 uri[1] = "%s//%s" % (proto[0], uri[1])
+
             return pwd.getpwnam(uri[0]).pw_uid, uri[1]
         except KeyError, e:
             raise missing_local_user(raw_uri, uri[0], e)
 
     def sync(self, verbosity=None, force=False):
+        if self.disabled:
+            return False
         kwds = {}
         if self.forcable and force:
             kwds["force"] = True
@@ -90,6 +97,10 @@ class syncer(object):
             if uri.startswith(prefix):
                 return level
         return 0
+
+    @descriptors.classproperty
+    def disabled(cls):
+        return False
 
 
 class ExternalSyncer(syncer):
@@ -134,6 +145,19 @@ class ExternalSyncer(syncer):
         return spawn.spawn(command, fd_pipes=pipes, uid=self.local_user,
             env=self.env, **kwargs)
 
+    @staticmethod
+    def _rewrite_uri_from_stat(path, uri):
+        chunks = uri.split("//", 1)
+        if len(chunks) == 1:
+            return uri
+        try:
+            return "%s//%s::%s" % (chunks[0],
+                 pwd.getpwuid(os.stat(path).st_uid)[0],
+                 chunks[1])
+        except KeyError:
+            # invalid uid, reuse the uri
+            return uri
+
 
 class dvcs_syncer(ExternalSyncer):
 
@@ -173,3 +197,23 @@ def GenericSyncer(basedir, uri, default_verbosity=0):
         raise uri_exception('no known syncer supports %r' % (uri,))
     # XXX this is random if there is a tie. Should we raise an exception?
     return plugins[-1][1](basedir, uri, default_verbosity=default_verbosity)
+
+
+class DisabledSyncer(syncer):
+
+    def __init__(self, basedir, default_verbosity=0):
+        syncer.__init__(self, basedir, '', default_verbosity=default_verbosity)
+
+    @staticmethod
+    def disabled():
+        return True
+
+
+@configurable({'basedir':'str'}, typename='syncer')
+def AutodetectSyncer(basedir, default_verbosity=0):
+    for plug in plugin.get_plugins('syncer'):
+        ret = plug.is_usable_on_filepath(basedir)
+        if ret is not None:
+            return plug(basedir, default_verbosity=default_verbosity, *ret)
+    return DisabledSyncer(basedir, '')
+

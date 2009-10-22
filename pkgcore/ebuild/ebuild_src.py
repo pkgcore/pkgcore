@@ -293,18 +293,18 @@ class package_factory(metadata.factory):
             if cache is not None:
                 try:
                     data = cache[pkg.cpvstr]
+                    if long(data.pop("_mtime_", -1)) != long(pkg._mtime_) or \
+                        self._invalidated_eclasses(data, pkg):
+                        if not cache.readonly:
+                            del cache[pkg.cpvstr]
+                        continue
+                    return data
                 except KeyError:
                     continue
                 except cache_errors.CacheError, ce:
                     logger.warn("caught cache error: %s" % ce)
                     del ce
                     continue
-                if long(data.pop("_mtime_", -1)) != long(pkg._mtime_) or \
-                    self._invalidated_eclasses(data, pkg):
-                    if not cache.readonly:
-                        del cache[pkg.cpvstr]
-                    continue
-                return data
 
         # no cache entries, regen
         return self._update_metadata(pkg)
@@ -327,7 +327,12 @@ class package_factory(metadata.factory):
         if self._cache is not None:
             for cache in self._cache:
                 if not cache.readonly:
-                    cache[pkg.cpvstr] = mydata
+                    try:
+                        cache[pkg.cpvstr] = mydata
+                    except cache_errors.CacheError, ce:
+                        logger.warn("caught cache error: %s" % ce)
+                        del ce
+                        continue
                     break
 
         return mydata

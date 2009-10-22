@@ -157,6 +157,14 @@ def make_syncer(new_config, basedir, sync_uri, rsync_opts,
     return name
 
 
+def make_autodetect_syncer(new_config, basedir):
+    name = '%s syncer' % basedir
+    new_config[name] = basics.AutoConfigSection({
+        'class':'pkgcore.sync.base.AutodetectSyncer',
+        'basedir':basedir})
+    return name
+
+
 def add_sets(config, root, portage_base_dir):
     config["world"] = basics.AutoConfigSection({
             "class": "pkgcore.pkgsets.filelist.WorldFile",
@@ -295,7 +303,7 @@ def config_from_make_conf(location="/etc/"):
     user_profile_path = pjoin(base_path, "portage", "profile")
     add_profile(new_config, base_path, user_profile_path)
 
-    kwds = {"class": "pkgcore.vdb.repository",
+    kwds = {"class": "pkgcore.vdb.ondisk.tree",
             "location": pjoin(root, 'var', 'db', 'pkg')}
     kwds["cache_location"] = pjoin(config_root, 'var', 'cache', 'edb',
         'dep', 'var', 'db', 'pkg')
@@ -334,6 +342,10 @@ def config_from_make_conf(location="/etc/"):
             portdir_overlays, config_root=config_root)
     else:
         overlay_syncers = {}
+    if portdir_overlays and '-autodetect-sync' not in features:
+        for path in portdir_overlays:
+            if path not in overlay_syncers:
+                overlay_syncers[path] = make_autodetect_syncer(new_config, path)
 
     for tree_loc in portdir_overlays:
         kwds = {

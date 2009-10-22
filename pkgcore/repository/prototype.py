@@ -12,6 +12,7 @@ from pkgcore.restrictions.util import collect_package_restrictions
 from snakeoil.mappings import LazyValDict, DictMixin
 from snakeoil.lists import iflatten_instance
 from snakeoil.compatibility import any
+from pkgcore.interfaces import repo
 
 class IterValLazyDict(LazyValDict):
 
@@ -126,6 +127,7 @@ class tree(object):
     configure = None
     syncable = False
     frozen_settable = True
+    operations_kls = repo.operations
 
 
     def __init__(self, frozen=False):
@@ -408,90 +410,12 @@ class tree(object):
         self.packages.force_regen(pkg.category)
         self.versions.force_regen(ver_key, tuple(s))
 
-    def install(self, pkg, *a, **kw):
-        """
-        internal function, install a pkg to the repository
+    @property
+    def operations(self):
+        return self.get_operations()
 
-        @param pkg: L{pkgcore.package.metadata.package} instance to install
-        @param a: passed to _install
-        @param kw: passed to _install
-        @raise AttributeError: if the repository is frozen (immutable)
-        @return: L{pkgcore.interfaces.repo.nonlivefs_install} or
-            L{pkgcore.interfaces.repo.livefs_install} instance
-        """
-        if not kw.pop('force', False) and self.frozen:
-            raise AttributeError("repo %r is frozen" % self)
-        return self._install(pkg, *a, **kw)
-
-    def _install(self, pkg, *a, **kw):
-        """
-        internal install function- must be overrided in derivatives
-
-        @param pkg: L{pkgcore.package.metadata.package} instance to install
-        @param a: passed to _install
-        @param kw: passed to _install
-        @return: L{pkgcore.interfaces.repo.nonlivefs_install} or
-            L{pkgcore.interfaces.repo.livefs_install} instance
-        """
-        raise NotImplementedError(self, "_install")
-
-    def uninstall(self, pkg, *a, **kw):
-        """
-        internal function, uninstall a pkg from the repository
-
-        @param pkg: L{pkgcore.package.metadata.package} instance to install
-        @param a: passed to _install
-        @param kw: passed to _install
-        @raise AttributeError: if the repository is frozen (immutable)
-        @return: L{pkgcore.interfaces.repo.nonlivefs_uninstall} or
-            L{pkgcore.interfaces.repo.livefs_uninstall} instance
-        """
-        if not kw.pop("force", False) and self.frozen:
-            raise AttributeError("repo %r is frozen" % self)
-        return self._uninstall(pkg, *a, **kw)
-
-    def _uninstall(self, pkg, *a, **kw):
-        """
-        internal uninstall function- must be overrided in derivatives
-
-        @param pkg: L{pkgcore.package.metadata.package} instance to install
-        @param a: passed to _install
-        @param kw: passed to _install
-        @return: L{pkgcore.interfaces.repo.nonlivefs_uninstall} or
-            L{pkgcore.interfaces.repo.livefs_uninstall} instance
-        """
-        raise NotImplementedError(self, "_uninstall")
-
-    def replace(self, orig, new, *a, **kw):
-        """
-        internal function, replace a pkg in the repository with another
-
-        @param orig: L{pkgcore.package.metadata.package} instance to install,
-            must be from this repository instance
-        @param new: L{pkgcore.package.metadata.package} instance to install
-        @param a: passed to _install
-        @param kw: passed to _install
-        @raise AttributeError: if the repository is frozen (immutable)
-        @return: L{pkgcore.interfaces.repo.nonlivefs_replace} or
-            L{pkgcore.interfaces.repo.livefs_replace} instance
-        """
-        if not kw.pop("force", False) and self.frozen:
-            raise AttributeError("repo %r is frozen" % self)
-        return self._replace(orig, new, *a, **kw)
-
-    def _replace(self, orig, new, *a, **kw):
-        """
-        internal replace function- must be overrided in derivatives
-
-        @param orig: L{pkgcore.package.metadata.package} instance to install,
-            must be from this repository instance
-        @param new: L{pkgcore.package.metadata.package} instance to install
-        @param a: passed to _install
-        @param kw: passed to _install
-        @return: L{pkgcore.interfaces.repo.nonlivefs_replace} or
-            L{pkgcore.interfaces.repo.livefs_replace} instance
-        """
-        raise NotImplementedError(self, "_replace")
+    def get_operations(self, observer=None):
+        return self.operations_kls(self)
 
     def __nonzero__(self):
         try:

@@ -8,12 +8,15 @@ simple repository wrapping to override the package instances returned
 # icky.
 # ~harring
 from pkgcore.repository import prototype, errors
+from pkgcore.interfaces import repo
 from snakeoil.klass import GetAttrProxy
 from itertools import imap
 
 class tree(prototype.tree):
 
     """wrap an existing repository yielding wrapped packages."""
+
+    operation_kls = repo.operations_proxy
 
     def __init__(self, repo, package_class):
         """

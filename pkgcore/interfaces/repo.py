@@ -5,11 +5,14 @@
 repository modifications (installing, removing, replacing)
 """
 
-from pkgcore.merge import errors as merge_errors
-from pkgcore.merge.engine import MergeEngine
 from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.demandload import demandload
-demandload(globals(), "pkgcore.log:logger")
+from snakeoil.currying import partial
+demandload(globals(), "pkgcore.log:logger",
+    "pkgcore.interfaces:observer@observer_mod",
+    "pkgcore:sync",
+    "pkgcore.merge.engine:MergeEngine",
+    "pkgcore.merge:errors@merge_errors")
 
 
 class fake_lock(object):
@@ -34,11 +37,14 @@ class nonlivefs_base(base):
     stage_depends = {'finish': '_notify_repo', '_notify_repo': 'modify_repo',
         'modify_repo':'start'}
 
-    def __init__(self, repo, observer=None):
+    def __init__(self, repo, observer):
         self.repo = repo
         self.underway = False
         self.observer = observer
-        self.lock = getattr(repo, "lock")
+        try:
+            self.lock = getattr(repo, "lock")
+        except AttributeError:
+            raise
         if self.lock is None:
             self.lock = fake_lock()
 
@@ -62,8 +68,8 @@ class nonlivefs_base(base):
 
 class nonlivefs_install(nonlivefs_base):
 
-    def __init__(self, repo, pkg, **kwds):
-        nonlivefs_base.__init__(self, repo, **kwds)
+    def __init__(self, repo, pkg, observer):
+        nonlivefs_base.__init__(self, repo, observer)
         self.new_pkg = pkg
 
     def _notify_repo(self):
@@ -72,8 +78,8 @@ class nonlivefs_install(nonlivefs_base):
 
 class nonlivefs_uninstall(nonlivefs_base):
 
-    def __init__(self, repo, pkg, **kwds):
-        nonlivefs_base.__init__(self, repo, **kwds)
+    def __init__(self, repo, pkg, observer):
+        nonlivefs_base.__init__(self, repo, observer)
         self.old_pkg = pkg
 
     def _notify_repo(self):
@@ -82,10 +88,10 @@ class nonlivefs_uninstall(nonlivefs_base):
 
 class nonlivefs_replace(nonlivefs_install, nonlivefs_uninstall):
 
-    def __init__(self, repo, oldpkg, newpkg, **kwds):
+    def __init__(self, repo, oldpkg, newpkg, observer):
         # yes there is duplicate initialization here.
-        nonlivefs_uninstall.__init__(self, repo, oldpkg, **kwds)
-        nonlivefs_install.__init__(self, repo, newpkg, **kwds)
+        nonlivefs_uninstall.__init__(self, repo, oldpkg, observer)
+        nonlivefs_install.__init__(self, repo, newpkg, observer)
 
     def _notify_repo(self):
         nonlivefs_uninstall._notify_repo(self)
@@ -95,7 +101,7 @@ class nonlivefs_replace(nonlivefs_install, nonlivefs_uninstall):
 class livefs_base(base):
     stage_hooks = []
 
-    def __init__(self, repo, observer=None, offset=None, triggers=()):
+    def __init__(self, repo, observer, triggers, offset):
         self.repo = repo
         self.underway = False
         self.offset = offset
@@ -135,7 +141,7 @@ class livefs_base(base):
         raise NotImplementedError
 
     def __del__(self):
-        if self.underway:
+        if getattr(self, 'underway', False):
             print "warning: %s merge was underway, but wasn't completed"
             self.lock.release_write_lock()
 
@@ -154,9 +160,9 @@ class livefs_install(livefs_base):
     install_op_name = "_repo_install_op"
     engine_kls = staticmethod(MergeEngine.install)
 
-    def __init__(self, repo, pkg, *args, **kwds):
+    def __init__(self, repo, pkg, observer, triggers, offset):
         self.new_pkg = pkg
-        livefs_base.__init__(self, repo, *args, **kwds)
+        livefs_base.__init__(self, repo, observer, triggers, offset)
 
     install_get_format_op_args_kwds = livefs_base._get_format_op_args_kwds
 
@@ -222,9 +228,9 @@ class livefs_uninstall(livefs_base):
     uninstall_op_name = "_repo_uninstall_op"
     engine_kls = staticmethod(MergeEngine.uninstall)
 
-    def __init__(self, repo, pkg, *args, **kwds):
+    def __init__(self, repo, pkg, observer, triggers, offset):
         self.old_pkg = pkg
-        livefs_base.__init__(self, repo, *args, **kwds)
+        livefs_base.__init__(self, repo, observer, triggers, offset)
 
     uninstall_get_format_op_args_kwds = livefs_base._get_format_op_args_kwds
 
@@ -277,7 +283,7 @@ class livefs_uninstall(livefs_base):
         return livefs_base.finish(self)
 
     def __del__(self):
-        if self.underway:
+        if getattr(self, 'underway', False):
             print "warning: %s unmerge was underway, but wasn't completed" % \
                 self.old_pkg
             self.lock.release_write_lock()
@@ -306,10 +312,10 @@ class livefs_replace(livefs_install, livefs_uninstall):
         "preinst", "unmerge_metadata", "merge_metadata"]
     engine_kls = staticmethod(MergeEngine.replace)
 
-    def __init__(self, repo, oldpkg, newpkg, **kwds):
+    def __init__(self, repo, oldpkg, newpkg, observer, triggers, offset):
         self.old_pkg = oldpkg
         self.new_pkg = newpkg
-        livefs_base.__init__(self, repo, **kwds)
+        livefs_base.__init__(self, repo, observer, triggers, offset)
 
     def get_op(self):
         livefs_install.get_op(self)
@@ -342,7 +348,123 @@ class livefs_replace(livefs_install, livefs_uninstall):
         return livefs_base.finish(self)
 
     def __del__(self):
-        if self.underway:
+        if getattr(self, 'underway', False):
             print "warning: %s -> %s replacement was underway, " \
                 "but wasn't completed" % (self.old_pkg, self.new_pkg)
             self.lock.release_write_lock()
+
+
+class operations(object):
+
+    def __init__(self, repository, disable_overrides=(), enable_overrides=()):
+        self.repo = repository
+        enabled_ops = set(self._filter_disabled_commands(
+            self._collect_operations()))
+        enabled_ops.update(enable_overrides)
+        enabled_ops.difference_update(disable_overrides)
+
+        for op in enabled_ops:
+            self._enable_operation(op)
+
+        self._enabled_ops = frozenset(enabled_ops)
+
+    def _filter_disabled_commands(self, sequence):
+        for command in sequence:
+            check_f = getattr(self, '_cmd_check_support_%s' % command, None)
+            if check_f is not None and not check_f():
+                continue
+            yield command
+
+    def _enable_operation(self, operation):
+        setattr(self, operation,
+            getattr(self, '_cmd_enabled_%s' % operation))
+
+    def _disabled_if_frozen(self):
+        return not self.repo.frozen
+
+    @classmethod
+    def _collect_operations(cls):
+        for x in dir(cls):
+            if x.startswith("_cmd_") and not x.startswith("_cmd_enabled_") \
+                and not x.startswith("_cmd_check_support_"):
+                yield x[len("_cmd_"):]
+
+    def supports(self, operation_name=None, raw=False):
+        if not operation_name:
+            if not raw:
+                return self._enabled_ops
+            return frozenset(self._collect_operations())
+        if raw:
+            return hasattr(self, '_cmd_enabled_%s' % operation_name)
+        return hasattr(self, operation_name)
+
+    def __dir__(self):
+        return list(self._enabled_ops)
+
+    def _default_observer(self, observer):
+        if observer is None:
+            observer = observer_mod.repo_observer()
+        return observer
+
+    def _cmd_enabled_install(self, pkg, observer=None):
+        return self._cmd_install(pkg,
+            self._default_observer(observer))
+
+    def _cmd_enabled_uninstall(self, pkg, observer=None):
+        return self._cmd_uninstall(pkg,
+            self._default_observer(observer))
+
+    def _cmd_enabled_replace(self, oldpkg, newpkg, observer=None):
+        return self._cmd_replace(oldpkg, newpkg,
+            self._default_observer(observer))
+
+    for x in ("install", "uninstall", "replace"):
+        locals()["_cmd_check_support_%s" % x] = _disabled_if_frozen
+
+    del x
+
+    def _cmd_enabled_configure(self, pkg, observer=None):
+        return self._cmd_configure(self.repository, pkg,
+            self._default_observer(observer))
+
+    def _cmd_enabled_sync(self, observer=None):
+        # often enough, the syncer is a lazy_ref
+        return self._cmd_sync(self._default_observer(observer))
+
+    def _cmd_sync(self, observer):
+        return self._get_syncer().sync()
+        return syncer.sync()
+
+    def _get_syncer(self):
+        syncer = self.repo._syncer
+        if not isinstance(syncer, sync.base.syncer):
+            syncer = syncer.instantiate()
+        return syncer
+
+    def _cmd_check_support_sync(self):
+        return getattr(self.repo, '_syncer', None) is not None \
+            and not self._get_syncer().disabled
+
+
+class operations_proxy(operations):
+
+    def __init__(self, repository, *args, **kwds):
+        self.repo = repository
+        for attr in self._get_target_attrs():
+            if attr.startswith("_cmd_"):
+                if attr.startswith("_cmd_check_support_"):
+                    setattr(self, attr, partial(self._proxy_op_support, attr))
+                elif not attr.startswith("_cmd_enabled_"):
+                    setattr(self, attr, partial(self._proxy_op, attr))
+        operations.__init__(self, repository, *args, **kwds)
+
+    def _get_target_attrs(self):
+        return dir(self.repo.raw_repo.operations)
+
+    def _proxy_op(self, op_name, *args, **kwds):
+        return getattr(self.repo.raw_repo.operations, op_name)(*args, **kwds)
+
+    _proxy_op_support = _proxy_op
+
+    def _collect_operations(self):
+        return self.repo.raw_repo.operations._collect_operations()

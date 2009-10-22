@@ -15,6 +15,7 @@ from pkgcore.config import ConfigHint
 #needed to grab the PN
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.ebuild.errors import InvalidCPV
+from pkgcore.binpkg import repo_ops
 
 from snakeoil.currying import partial
 from snakeoil.mappings import DictMixin
@@ -31,7 +32,6 @@ demandload(globals(),
     "pkgcore.repository:wrapper",
     "pkgcore.package.mutated:MutatedPkg",
     "pkgcore.ebuild:ebd",
-    "pkgcore.binpkg:repo_ops",
     "errno",
     "pkgcore.fs.tar:generate_contents",
     "pkgcore.binpkg.xpak:Xpak",
@@ -193,6 +193,7 @@ class tree(prototype.tree):
 
     configured = False
     configurables = ("settings",)
+    operations_kls = repo_ops.operations
 
     pkgcore_config_type = ConfigHint({'location':'str',
         'repo_id':'str', 'ignore_paludis_versioning':'bool'}, typename='repo')
@@ -302,15 +303,6 @@ class tree(prototype.tree):
     @property
     def _repo_ops(self):
         return repo_ops
-
-    def _install(self, pkg, *a, **kw):
-        return self._repo_ops.install(self, pkg, *a, **kw)
-
-    def _uninstall(self, pkg, *a, **kw):
-        return self._repo_ops.uninstall(self, pkg, *a, **kw)
-
-    def _replace(self, oldpkg, newpkg, *a, **kw):
-        return self._repo_ops.replace(self, oldpkg, newpkg, *a, **kw)
 
 
 class ConfiguredBinpkgTree(wrapper.tree):

@@ -9,15 +9,15 @@
 """Exceptions raised by the config code."""
 
 
-class BaseException(Exception):
+class BaseError(Exception):
     pass
 
 
-class TypeDefinitionError(BaseException):
+class TypeDefinitionError(BaseError):
     """Fatal error in type construction."""
 
 
-class ConfigurationError(BaseException):
+class ConfigurationError(BaseError):
 
     """Fatal error in parsing a config section.
 
@@ -30,7 +30,7 @@ class ConfigurationError(BaseException):
     """
 
     def __init__(self, message):
-        BaseException.__init__(self, message)
+        BaseError.__init__(self, message)
         self.stack = [message]
 
     def __str__(self):

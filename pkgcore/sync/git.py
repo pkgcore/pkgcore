@@ -2,6 +2,7 @@
 # License: GPL2/BSD
 
 from pkgcore.sync import base
+import os
 
 class git_syncer(base.dvcs_syncer):
 
@@ -11,6 +12,13 @@ class git_syncer(base.dvcs_syncer):
         ('git://', 5),
         ('git+', 5),
         )
+
+    @classmethod
+    def is_usable_on_filepath(cls, path):
+        git_path = os.path.join(path, '.git')
+        if cls.disabled or not os.path.isdir(git_path):
+            return None
+        return (cls._rewrite_uri_from_stat(git_path, "git://"),)
 
     @staticmethod
     def parse_uri(raw_uri):

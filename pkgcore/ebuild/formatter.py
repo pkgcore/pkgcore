@@ -467,13 +467,14 @@ class PortageFormatter(CountingFormatter):
             repos = self.repos.items()
             repos.sort(key=operator.itemgetter(1))
             for k, v in repos:
-                reponame = getattr(k, 'repo_id')
-                if reponame != k.location:
+                reponame = getattr(k, 'repo_id', 'unknown repo id')
+                location = getattr(k, 'location', 'unspecified location')
+                if reponame != location:
                     self.out.write(' ', self.out.fg('cyan'), "[%d]" % v,
-                        self.out.reset, " %s (%s)" % (reponame, k.location))
+                        self.out.reset, " %s (%s)" % (reponame, location))
                 else:
                     self.out.write(' ', self.out.fg('cyan'), "[%d]" % v,
-                        self.out.reset, " %s" % k.location)
+                        self.out.reset, " %s" % location)
 
 
 class PaludisFormatter(CountingFormatter):

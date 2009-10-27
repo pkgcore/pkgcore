@@ -6,11 +6,17 @@ package class for buildable ebuilds
 """
 
 from snakeoil.currying import post_curry
+from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
+from snakeoil.osutils import pjoin, listdir_files
+from snakeoil.caching import WeakInstMeta
+from itertools import chain
 demandload(globals(),
     'snakeoil.xml:etree',
     'pkgcore.ebuild:digest',
+    'pkgcore.log:logger',
     'snakeoil:mappings',
+    'snakeoil:fileutils',
     'errno',
 )
 
@@ -163,3 +169,145 @@ class SharedPkgData(object):
     def __init__(self, metadata_xml, manifest):
         self.metadata_xml = metadata_xml
         self.manifest = manifest
+
+class Licenses(object):
+
+    __metaclass__ = WeakInstMeta
+    __inst_caching__ = True
+
+    __slots__ = ('_base', '_licenses', '_groups')
+
+    licenses_dir = 'licenses'
+    license_group_location = 'profiles/license_groups'
+
+    def __init__(self, repo_base):
+        object.__setattr__(self, '_base', repo_base)
+        object.__setattr__(self, '_licenses', None)
+        object.__setattr__(self, '_groups', None)
+
+    @property
+    def licenses(self):
+        if self._licenses is None:
+            object.__setattr__(self, '_licenses', self._load_licenses())
+        return self._licenses
+
+    def _load_licenses(self):
+        try:
+            content = listdir_files(pjoin(self._base,
+                self.licenses_dir))
+        except (OSError, IOError):
+            content = ()
+        return frozenset(content)
+
+    @property
+    def groups(self):
+        if self._groups is None:
+            object.__setattr__(self, '_groups', self._load_groups())
+        return self._groups
+
+    def _load_groups(self):
+        try:
+            fp = pjoin(self._base, self.license_group_location)
+            d = fileutils.read_dict(fp, splitter=' ')
+        except (IOError, OSError):
+            return mappings.ImmutableDict()
+        except fileutils.ParseError, pe:
+            logger.error("failed parsing license_groups: %s", pe)
+            return mappings.ImmutableDict()
+        self._expand_groups(d)
+        return mappings.ImmutableDict((k, tuple(v))
+            for (k,v) in d.iteritems())
+
+    def _expand_groups(self, groups):
+        keep_going = True
+        for k,v in groups.iteritems():
+            groups[k] = v.split()
+        while keep_going:
+            keep_going = False
+            for k, v in groups.iteritems():
+                if not any(x[0] == '@' for x in v):
+                    continue
+                keep_going = True
+                l = []
+                for v2 in v:
+                    if v2[0] == '@':
+                        v2 = v2[1:]
+                        if not v2 or v2 not in groups:
+                            logger.error("invalid license group reference: %r in %s",
+                                v2, self)
+                            continue
+                        elif v2 == k:
+                            logger.error("cyclic license group references for %r in %s",
+                                v2, self)
+                            continue
+                        l.extend(groups[v2])
+                    else:
+                        l.append(v2)
+                groups[k] = l
+
+    def refresh(self):
+        self._licenses = None
+        self._groups = None
+
+    def __getitem__(self, license):
+        if not license in self:
+            raise KeyError(license)
+        try:
+            return open(pjoin(self._base, self.licenses_dir, license)).read()
+        except (OSError, IOError):
+            raise KeyError(license)
+
+    def __iter__(self):
+        return iter(self.licenses)
+
+    def __contains__(self, license):
+        return license in self.licenses
+
+
+class OverlayedLicenses(Licenses):
+
+    __inst_caching__ = True
+    __slots__ = ('_license_instances', '_license_sources')
+
+    def __init__(self, *license_sources):
+        object.__setattr__(self, '_license_sources', license_sources)
+        object.__setattr__(self, '_licenses', None)
+        object.__setattr__(self, '_groups', None)
+        self._load_license_instances()
+
+    def _load_groups(self):
+        d = {}
+        for li in self._license_instances:
+            for k,v in li.groups.iteritems():
+                if k in d:
+                    d[k] += v
+                else:
+                    d[k] = v
+        return d
+
+    def _load_licenses(self):
+        return frozenset(chain(*map(iter, self._license_instances)))
+
+    def __getitem__(self, license):
+        for li in self._license_instances:
+            try:
+                return li[license]
+            except KeyError:
+                pass
+        raise KeyError(license)
+
+    def refresh(self):
+        for li in self._license_instances:
+            li.refresh()
+        self._load_license_instances()
+        Licenses.refresh(self)
+
+    def _load_license_instances(self):
+        l = []
+        for x in self._license_sources:
+            if isinstance(x, Licenses):
+                l.append(x)
+            elif hasattr(x, 'licenses'):
+                l.append(x.licenses)
+        object.__setattr__(self, '_license_instances',
+            tuple(l))

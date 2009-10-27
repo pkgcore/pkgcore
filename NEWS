@@ -3,6 +3,17 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
+* portage 2.2 modified make.globals to add a default, non glep23 compliant
+  ACCEPT_LICENSE.  pkgcore's implementation has been modified to be non
+  compliant to glep23, matching portage semantics.
+  
+  If pquery <atom> has suddenly started returning nothing, this was the cause.
+
+* fix a traceback that could occur when doing pmerge -pv for when binpkg
+  repos were involved.
+
+
 pkgcore 0.5.1: October 22, 2009
 
 * correct a python-2.6 incompatibility that rears it's head when doing

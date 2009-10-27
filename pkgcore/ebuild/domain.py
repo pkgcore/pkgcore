@@ -20,7 +20,9 @@ from pkgcore.interfaces.data_source import local_source
 from pkgcore.config.errors import BaseError
 from pkgcore.ebuild import const
 from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
-    non_incremental_collapsed_restrict_to_data, incremental_expansion)
+    non_incremental_collapsed_restrict_to_data, incremental_expansion,
+    incremental_expansion_license)
+from pkgcore.ebuild.repo_objs import OverlayedLicenses
 from pkgcore.util.parserestrict import parse_match
 
 from snakeoil.lists import stable_unique, unstable_unique
@@ -110,6 +112,8 @@ class domain(pkgcore.config.domain.domain):
         # map out sectionname -> config manager immediately.
         repositories_collapsed = [r.collapse() for r in repositories]
         repositories = [r.instantiate() for r in repositories_collapsed]
+
+        self.default_licenses_manager = OverlayedLicenses(*repositories)
         vdb_collapsed = [r.collapse() for r in vdb]
         vdb = [r.instantiate() for r in vdb_collapsed]
         self.named_repos = dict(
@@ -220,16 +224,16 @@ class domain(pkgcore.config.domain.domain):
 
         license, default_keywords = [], []
         master_license = []
-        for k, v in (("ACCEPT_KEYWORDS", default_keywords),
-                     ("ACCEPT_LICENSE", master_license)):
-            if k not in settings:
-                raise Failure("No %s setting detected from profile, "
-                              "or user config" % k)
-            s = set()
-            incremental_expansion(s, settings[k], "while expanding %s: " % k)
-            v.extend(s)
-            settings[k] = v
+        if not 'ACCEPT_KEYWORDS' in settings:
+            raise Failure("No %s setting detected from profile, "
+                          "or user config" % k)
+        s = set()
+        incremental_expansion(s, settings['ACCEPT_KEYWORDS'],
+            'while expanding ACCEPT_KEYWORDS')
+        default_keywords.extend(s)
+        settings['ACCEPT_KEYWORDS'] = default_keywords
 
+        master_license.extend(settings.get('ACCEPT_LICENSE', ()))
 
         self.use = use
 
@@ -337,25 +341,28 @@ class domain(pkgcore.config.domain.domain):
             self.repos = [profile_repo] + self.repos
 
     def make_license_filter(self, master_license, pkg_licenses):
-        data = collapsed_restrict_to_data(
-            ((packages.AlwaysTrue, master_license),),
-            pkg_licenses)
-        return delegate(partial(self.apply_license_filter, data))
+#        data = collapsed_restrict_to_data(
+#            ((packages.AlwaysTrue, master_license),),
+#            pkg_licenses)
+#        return delegate(partial(self.apply_license_filter, data))
+        return delegate(partial(self.apply_license_filter, master_license,
+            pkg_licenses))
 
-    def apply_license_filter(self, data, pkg, mode):
+    def apply_license_filter(self, master_licenses, pkg_licenses, pkg, mode):
         # note we're not honoring mode; it's always match.
         # reason is that of not turning on use flags to get acceptible license
         # pairs.
         # maybe change this down the line?
-        allowed_licenses = data.pull_data(pkg)
+        raw_accepted_licenses = master_licenses + pkg_licenses
+        license_manager = getattr(pkg.repo, 'licenses', self.default_licenses_manager)
         for and_pair in pkg.license.dnf_solutions():
-            for license in and_pair:
-                if license not in allowed_licenses:
-                    break
-            else:
-                # tiz fine.
+            accepted = incremental_expansion_license(and_pair, license_manager.groups,
+                raw_accepted_licenses,
+                msg_prefix="while checking ACCEPT_LICENSE for %s" % (pkg,))
+            if accepted.issuperset(and_pair):
                 return True
         return False
+
 
     def make_keywords_filter(self, arch, default_keys, pkg_keywords,
         incremental=False):

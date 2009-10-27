@@ -8,6 +8,7 @@ implementation of the standard PORTDIR + PORTDIR_OVERLAY repository stacking
 from pkgcore.repository import prototype, multiplex
 from pkgcore.config import ConfigHint, errors
 from pkgcore.ebuild import repository
+from pkgcore.ebuild.repo_objs import OverlayedLicenses
 
 from itertools import chain
 
@@ -44,6 +45,7 @@ class OverlayRepo(prototype.tree):
         self._rv_trees = tuple(reversed(trees))
         self._version_owners = {}
         prototype.tree.__init__(self)
+        self.licenses = OverlayedLicenses(*[t.licenses for t in trees if hasattr(t, 'licenses')])
 
     def _get_categories(self, category=None):
         if category is not None:

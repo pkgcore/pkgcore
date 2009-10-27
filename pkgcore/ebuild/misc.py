@@ -18,7 +18,7 @@ def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
             i = token[1:]
             if not i:
                 raise ValueError("%sencountered an incomplete negation, '-'"
-                    % msg_prefix)
+                    % (msg_prefix,))
             if i == '*':
                 orig.clear()
             else:
@@ -29,12 +29,42 @@ def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
             orig.discard("-" + token)
             orig.add(token)
 
-
 try:
     from pkgcore.ebuild._misc import incremental_expansion
 except ImportError:
     incremental_expansion = native_incremental_expansion
 
+def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix=''):
+    seen = set()
+    for token in iterable:
+        if token[0] == '-':
+            i = token[1:]
+            if not i:
+                raise ValueError("%sencountered an incomplete negation, '-'"
+                    % (msg_prefix,))
+            if i == '*':
+                seen.clear()
+            else:
+                if i[0] == '@':
+                    i = i[1:]
+                    if not i:
+                        raise ValueError("%sencountered an incomplete negation"
+                            " of a license group, '-@'"
+                                % (msg_prefix,))
+                    seen.difference_update(license_groups.get(i, ()))
+                else:
+                    seen.discard(i)
+        elif token[0] == '@':
+            i = token[1:]
+            if not i:
+                raise ValueError("%sencountered an incomplete license group"
+                    ", '@'" % (msg_prefix,))
+            seen.update(license_groups.get(i, ()))
+        elif token == '*':
+            seen.update(licenses)
+        else:
+            seen.add(token)
+    return seen
 
 class collapsed_restrict_to_data(object):
 

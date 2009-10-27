@@ -99,6 +99,8 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         else:
             self.eclass_cache = eclass_cache
 
+        self.licenses = repo_objs.Licenses(location)
+
         fp = pjoin(self.base, metadata_offset, "thirdpartymirrors")
         mirrors = {}
         if os.path.exists(fp):

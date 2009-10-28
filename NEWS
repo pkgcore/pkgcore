@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* touch vdb root on vdb modification as a way to notify alternative PMs
+  that their cache needs updating.  Gentoo bug #290428.  Just leaves paludis
+  to join in on the fun...
+
 * portage 2.2 modified make.globals to add a default, non glep23 compliant
   ACCEPT_LICENSE.  pkgcore's implementation has been modified to be non
   compliant to glep23, matching portage semantics.

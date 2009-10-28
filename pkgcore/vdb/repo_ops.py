@@ -28,6 +28,16 @@ def _default_customize_engine(op_inst, engine):
     triggers.customize_engine(op_inst.domain_settings, engine)
 
 
+def update_mtime(path, timestamp=None):
+    if timestamp is None:
+        timestamp = time.time()
+    logger.debug("updating vdb timestamp for %r", path)
+    try:
+        os.utime(path, (timestamp, timestamp))
+    except (OSError, IOError), e:
+        logger.error("failed updated vdb timestamp for %r: %s", path, e)
+
+
 class install(repo_interfaces.livefs_install):
 
     def __init__(self, domain_settings, repo, pkg, *args):
@@ -44,6 +54,7 @@ class install(repo_interfaces.livefs_install):
         if dirpath is None:
             dirpath = self.dirpath
         ensure_dirs(dirpath, mode=0755, minimal=True)
+        update_mtime(self.repo.base)
         rewrite = self.repo._metadata_rewrites
         for k in self.new_pkg.tracked_attributes:
             if k == "contents":
@@ -107,6 +118,11 @@ class install(repo_interfaces.livefs_install):
             "pkgcore-%s\n" % VERSION)
         return True
 
+    def finish(self):
+        ret = repo_interfaces.livefs_install.finish(self)
+        update_mtime(self.repo.base)
+        return ret
+
 
 class uninstall(repo_interfaces.livefs_uninstall):
 
@@ -123,8 +139,14 @@ class uninstall(repo_interfaces.livefs_uninstall):
     def unmerge_metadata(self, dirpath=None):
         if dirpath is None:
             dirpath = self.dirpath
+        update_mtime(self.repo.base)
         shutil.rmtree(self.dirpath)
         return True
+
+    def finish(self):
+        ret = repo_interfaces.livefs_uninstall.finish(self)
+        update_mtime(self.repo.base)
+        return ret
 
 
 # should convert these to mixins.
@@ -156,6 +178,11 @@ class replace(repo_interfaces.livefs_replace, install, uninstall):
             return ret
         os.rename(self.tmpdirpath, self.newpath)
         return True
+
+    def finish(self):
+        ret = repo_interfaces.livefs_replace.finish(self)
+        update_mtime(self.repo.base)
+        return ret
 
 
 class operations(repo_interfaces.operations):

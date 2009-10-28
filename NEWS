@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.5.2: October 28, 2009
+
 * touch vdb root on vdb modification as a way to notify alternative PMs
   that their cache needs updating.  Gentoo bug #290428.  Just leaves paludis
   to join in on the fun...

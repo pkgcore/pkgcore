@@ -65,3 +65,6 @@ class wrapper(base):
     @property
     def unversioned_atom(self):
         return self.raw_pkg.unversioned_atom
+
+    def __hash__(self):
+        return hash(self._raw_pkg)

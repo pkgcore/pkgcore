@@ -19,7 +19,7 @@ class filterTree(prototype.tree):
     def __init__(self, repo, restriction, sentinel_val=False):
         self.raw_repo = repo
         self.sentinel_val = sentinel_val
-        if not isinstance(self.raw_repo, prototype.tree):
+        if not hasattr(self.raw_repo, 'itermatch'):
             raise errors.InitializationError(
                 "%s is not a repository tree derivative" % (self.raw_repo,))
         if not isinstance(restriction, base):

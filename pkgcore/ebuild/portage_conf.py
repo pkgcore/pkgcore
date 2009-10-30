@@ -395,7 +395,7 @@ def config_from_make_conf(location="/etc/"):
         new_config['%s cache' % (portdir,)] = mk_simple_cache(config_root, portdir)
         cache = ('portdir cache',)
         if rsync_portdir_cache:
-            cache = ('%s cache' % (portdir,),) + cache
+            cache = cache + ('%s cache' % (portdir,),)
 
         d = dict(base_portdir_config)
         d['inherit'] = ('ebuild-repo-common',)

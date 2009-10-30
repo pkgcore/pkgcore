@@ -18,6 +18,7 @@ class plan_state(object):
         self.rev_blockers = {}
         self.blockers_refcnt = RefCountingSet()
         self.match_atom = self.state.find_atom_matches
+        self.vdb_filter = set()
 
     def add_blocker(self, choices, blocker, key=None):
         """adds blocker, returning any packages blocked"""
@@ -96,10 +97,12 @@ class remove_op(base_op):
         plan._remove_pkg_blockers(plan.pkg_choices)
         del plan.pkg_choices[self.pkg]
         plan.plan.append(self)
+        plan.vdb_filter.add(self.pkg)
 
     def revert(self, plan):
         plan.state.fill_slotting(self.pkg, force=self.force)
         plan.pkg_choices[self.pkg] = self.choices
+        plan.vdb_filter.remove(self.pkg)
 
 
 class replace_op(base_op):
@@ -134,6 +137,7 @@ class replace_op(base_op):
         del plan.pkg_choices[old]
         plan.pkg_choices[self.pkg] = self.choices
         plan.plan.append(self)
+        plan.vdb_filter.add(old)
 
     def revert(self, plan):
         # far simpler, since the apply op generates multiple ops on it's own.
@@ -143,6 +147,7 @@ class replace_op(base_op):
         assert not l
         del plan.pkg_choices[self.pkg]
         plan.pkg_choices[self.old_pkg] = self.old_choices
+        plan.vdb_filter.remove(self.old_pkg)
 
     def __str__(self):
         s = ''

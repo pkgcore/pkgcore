@@ -8,6 +8,7 @@ from collections import deque
 from pkgcore.resolver.choice_point import choice_point
 from pkgcore.restrictions import packages, values, restriction
 from pkgcore.repository.misc import caching_repo
+from pkgcore.repository.visibility import filterTree
 from pkgcore.resolver import state
 
 from snakeoil.currying import partial, post_curry
@@ -60,6 +61,16 @@ def lowest_iter_sort(l, pkg_grabber=pkg_grabber):
         return 0
     l.sort(f, key=pkg_grabber)
     return l
+
+
+class MutableContainmentRestriction(values.base):
+
+    __slots__ = ('_blacklist', 'match')
+
+    def __init__(self, blacklist):
+        sf = object.__setattr__
+        sf(self, '_blacklist', blacklist)
+        sf(self, 'match', self._blacklist.__contains__)
 
 
 class resolver_frame(object):
@@ -261,9 +272,10 @@ class merge_plan(object):
         self.global_strategy = global_strategy
         self.forced_atoms = set()
         self.all_dbs = [caching_repo(x, self.per_repo_strategy) for x in dbs]
-        self.livefs_dbs = [x for x in self.all_dbs if x.livefs]
-        self.dbs = [x for x in self.all_dbs if not x.livefs]
         self.state = state.plan_state()
+        vdb_state_filter_restrict = MutableContainmentRestriction(self.state.vdb_filter)
+        self.livefs_dbs = [filterTree(x, vdb_state_filter_restrict) for x in self.all_dbs if x.livefs]
+        self.dbs = [x for x in self.all_dbs if not x.livefs]
         self.insoluble = set()
         self.vdb_preloaded = False
         self.drop_cycles = drop_cycles

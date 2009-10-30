@@ -4,6 +4,18 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* the resolver wasn't properly accounting for planned modifications to
+  the installed pkgs database.  If you've had upgrade issues from
+  blockers, this is the root cause (pam/pambase in particular).
+
+* for portage configuration when PORTDIR_OVERLAY is in use and portdir
+  has a pregenerated cache, check the pregenerated cache first when
+  looking for metadata.  This degrades the usage case where overlays
+  override quite a few core eclasses in favor of the more common case
+  where the pregenerated cache is the majority of the time, accurate.
+  End result is upwards of a 2x reduction in open invocations.
+
+
 pkgcore 0.5.2: October 28, 2009
 
 * touch vdb root on vdb modification as a way to notify alternative PMs

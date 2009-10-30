@@ -10,10 +10,11 @@ from pkgcore.config import ConfigHint
 
 from snakeoil.mappings import ImmutableDict
 from snakeoil.weakrefs import WeakValCache
-from snakeoil.osutils import join as pjoin
+from snakeoil.osutils import join as pjoin, listdir_files
 
 from snakeoil.demandload import demandload
 demandload(globals(),
+    "errno",
     "os",
     "snakeoil.osutils:normpath",
     "snakeoil.mappings:StackedDict",
@@ -28,7 +29,6 @@ class base(object):
         self._eclass_data_inst_cache = WeakValCache()
         # generate this.
         # self.eclasses = {} # {"Name": ("location","_mtime_")}
-        self.eclasses = {}
         self.portdir = portdir
         self.eclassdir = eclassdir
 
@@ -74,6 +74,12 @@ class base(object):
             return None
         return local_source(pjoin(o[0], eclass+".eclass"))
 
+    def __getattr__(self, attr):
+        if attr == 'eclasses':
+            ret = self.eclasses = self._load_eclasses()
+            return ret
+        raise AttributeError(self, attr)
+
 
 class cache(base):
 
@@ -85,22 +91,25 @@ class cache(base):
         @param portdir: ondisk location of the tree we're working with
         """
         base.__init__(self, portdir=portdir, eclassdir=normpath(path))
-        self.update_eclasses()
 
-    def update_eclasses(self):
+    def _load_eclasses(self):
         """Force an update of the internal view of on disk/remote eclasses."""
-        ec = self.eclasses = {}
+        ec = {}
         eclass_len = len(".eclass")
-        if os.path.isdir(self.eclassdir):
-            for y in os.listdir(self.eclassdir):
-                if not y.endswith(".eclass"):
-                    continue
-                try:
-                    mtime = os.stat(pjoin(self.eclassdir, y)).st_mtime
-                except OSError:
-                    continue
-                ys = y[:-eclass_len]
-                ec[intern(ys)] = (self.eclassdir, long(mtime))
+        try:
+            files = listdir_files(self.eclassdir)
+        except (OSError, IOError), e:
+            if e.errno not in (errno.ENOENT, errno.ENOTDIR):
+                raise
+            return ImmutableDict()
+        for y in files:
+            if not y.endswith(".eclass"):
+                continue
+            mtime = os.stat(pjoin(self.eclassdir, y)).st_mtime
+            ys = y[:-eclass_len]
+            ec[intern(ys)] = (self.eclassdir, long(mtime))
+        return ImmutableDict(ec)
+
 
 
 class StackedCaches(base):
@@ -130,5 +139,8 @@ class StackedCaches(base):
         kwds.setdefault("eclassdir", caches[0].eclassdir)
         kwds.setdefault("portdir",
             os.path.dirname(kwds["eclassdir"].rstrip(os.path.sep)))
+        self._caches = caches
         base.__init__(self, **kwds)
-        self.eclasses = StackedDict(*[ec.eclasses for ec in caches])
+
+    def _load_eclasses(self):
+        return StackedDict(*[ec.eclasses for ec in self._caches])

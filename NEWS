@@ -8,6 +8,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
   the installed pkgs database.  If you've had upgrade issues from
   blockers, this is the root cause (pam/pambase in particular).
 
+* eclass scanning is now JIT'd, and the resultant eclass dictionary
+  is now marked immutable for safety reasons.
+
 * for portage configuration when PORTDIR_OVERLAY is in use and portdir
   has a pregenerated cache, check the pregenerated cache first when
   looking for metadata.  This degrades the usage case where overlays

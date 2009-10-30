@@ -20,6 +20,10 @@
 // dev-util/diffball-cvs.2006.0_alpha1_alpha2
 // dev-util/diffball
 
+// yes, it may seem whacked having these defined when 'isdigit' and friends
+// already exist.  that said, they're a helluva lot slower in performance testing
+// of it- presumably due to lack of inlining on a guess...
+
 #define ISDIGIT(c) ('0' <= (c) && '9' >= (c))
 #define ISALPHA(c) (('a' <= (c) && 'z' >= (c)) || ('A' <= (c) && 'Z' >= (c)))
 #define ISLOWER(c) ('a' <= (c) && 'z' >= (c))

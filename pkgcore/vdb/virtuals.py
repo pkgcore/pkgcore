@@ -102,7 +102,7 @@ def _read_mtime_cache(location):
     try:
         logger.debug("reading mtime cache at %r", (location,))
         d = {}
-        for k, v in read_dict(readlines(location), splitter=None,
+        for k, v in read_dict(readlines(location, True), splitter=None,
             source_isiter=True).iteritems():
             v = v.split()
             # mtime pkg1 fullver1 virtual1 pkg2 fullver2 virtual2...

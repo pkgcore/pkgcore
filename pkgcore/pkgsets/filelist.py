@@ -31,8 +31,7 @@ class FileList(object):
         if attr != "_atoms":
             raise AttributeError(attr)
         s = set()
-        for x in readlines(self.path):
-            x = x.strip()
+        for x in readlines(self.path, True):
             if not x or x.startswith("#"):
                 continue
             elif x.startswith("@"):

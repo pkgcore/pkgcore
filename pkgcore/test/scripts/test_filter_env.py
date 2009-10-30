@@ -22,3 +22,8 @@ class CommandlineTest(TestCase, helpers.MainMixin):
         self.assertEqual(['spork', 'foon'], options.funcs)
         self.assertTrue(options.func_match)
         self.assertFalse(options.var_match)
+
+    def test_print_vars(self):
+        raise AssertionError()
+
+    test_print_vars.todo = "do it..."

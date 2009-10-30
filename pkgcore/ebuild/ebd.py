@@ -187,6 +187,7 @@ class ebd(object):
         for x, y in (("T", "temp"), ("WORKDIR", "work"), ("D", "image"),
             ("HOME", "homedir")):
             self.env[x] = normpath(pjoin(self.builddir, y))
+        self.env["D"] += "/"
 
         self.env["IMAGE"] = self.env["D"]
 

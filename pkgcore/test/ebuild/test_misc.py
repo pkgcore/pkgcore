@@ -41,6 +41,15 @@ class test_collapsed_restrict_to_data(base):
             [(AlwaysTrue, ['x', 'y']), (AlwaysTrue, ['-x'])]),
             defaults=['y'])
 
+
+class test_incremental_license_expansion(TestCase):
+
+    def test_it(self):
+        raise AssertionError()
+
+    test_it.todo = "implement this..."
+
+
 class test_native_incremental_expansion(TestCase):
     f = staticmethod(misc.native_incremental_expansion)
 

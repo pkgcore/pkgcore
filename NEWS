@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* certain ebuilds (ssmtp for example) expect D to have a trailing '/'.
+  Force this (outside pms compliance, so we match portage behaviour).
+
+
 pkgcore 0.5.4: October 30, 2009
 
 * minor bug fix release fixing filter-env invocation (wasn't covered

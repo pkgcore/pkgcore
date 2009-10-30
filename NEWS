@@ -4,6 +4,12 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.5.4: October 30, 2009
+
+* minor bug fix release fixing filter-env invocation (wasn't covered
+  by tests)
+
+
 pkgcore 0.5.3: October 30, 2009
 
 * filter-env grew a --print-vars option.  If you've been seeing

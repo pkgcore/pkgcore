@@ -94,16 +94,17 @@ def main(options, out, err):
     file_buff = options.input.read() + '\0'
 
     stream = out.stream
-    var_matches = None
+    var_callback = None
     if options.print_vars:
         import cStringIO
         stream = cStringIO.StringIO()
         var_matches = []
+        var_callback = var_matches.append
 
     # Hack: write to the stream directly.
     filter_env.run(stream, file_buff, vars, funcs,
                    options.var_match, options.func_match,
-                   global_envvar_callback=var_matches.append)
+                   global_envvar_callback=var_callback)
 
     if options.print_vars:
         for var in sorted(var_matches):

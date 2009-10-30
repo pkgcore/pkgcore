@@ -214,7 +214,7 @@ class ConfigProtectInstall(triggers.base):
         for dir_loc, entries in protected.iteritems():
             updates = dict((x[0], []) for x in entries)
             try:
-                existing = sorted(x for x in os.listdir(dir_loc)
+                existing = sorted(x for x in listdir_files(dir_loc)
                     if x.startswith("._cfg"))
             except OSError, oe:
                 if oe.errno != errno.ENOENT:

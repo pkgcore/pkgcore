@@ -19,7 +19,7 @@ import operator
 import os.path
 
 from pkgcore import plugins
-from snakeoil.osutils import join as pjoin
+from snakeoil.osutils import join as pjoin, listdir_files
 from snakeoil import modules, demandload
 demandload.demandload(globals(), 'tempfile', 'errno', 'pkgcore.log:logger')
 
@@ -42,9 +42,9 @@ def initialize_cache(package):
     for path in package.__path__:
         # Check if the path actually exists first.
         try:
-            modlist = os.listdir(path)
+            modlist = listdir_files(path)
         except OSError, e:
-            if e.errno != errno.ENOENT:
+            if e.errno not in (errno.ENOENT, errno.ENOTDIR):
                 raise
             continue
         # Directory cache, mapping modulename to

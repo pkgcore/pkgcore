@@ -55,6 +55,9 @@ def non_caching_virtuals(repo, livefs=True):
 def _get_mtimes(loc):
     d = {}
     sdir = stat.S_ISDIR
+    # yes, listdir here makes sense due to the stating, and the
+    # potential for listdir_dirs to do it's own statting if the
+    # underlying FS doesn't support dt_type...
     for x in listdir(loc):
         st = os.stat(pjoin(loc, x))
         if sdir(st.st_mode):

@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.5.3: October 30, 2009
+
 * filter-env grew a --print-vars option.  If you've been seeing
   "declare: write error: Broken pipe" from build operations, this should
   now be fixed via using this new option.

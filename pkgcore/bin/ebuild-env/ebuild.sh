@@ -212,6 +212,13 @@ gen_regex_var_filter() {
     echo -n '\)'
 }
 
+invoke_filter_env() {
+    local opts
+    [[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
+    PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
+        "${PKGCORE_BIN_PATH}/filter-env" "$@"
+}
+
 # func for beeping and delaying a defined period of time.
 sleepbeep() {
     if [ ! "$#" -lt 3 ] || [ ! "$#" -gt 0 ]; then
@@ -238,12 +245,7 @@ dump_environ() {
     #it doesn't match one of the filter lists.
     # vars, then funcs.
 
-    local opts=""
-
-    [[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
-
-    declare | PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
-        "${PKGCORE_BIN_PATH}/filter-env" $opts -f \
+    declare | invoke_filter_env -f \
         "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" -v \
         "$(filter_env_var_filter ${DONT_EXPORT_VARS} f x )" || die "internal error: filter-env returned non zero: $?"
 
@@ -364,12 +366,9 @@ load_environ() {
                 echo "ignoring unexpected shopt arg in env dump- $*" >&2
             fi
         }
-        local opts=""
-        [[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
 
         # run the filtered env.
-        eval "$(PYTHONPATH=${PKGCORE_PYTHONPATH} \
-            "${PKGCORE_PYTHON_BINARY}" "${PKGCORE_BIN_PATH}/filter-env" $opts \
+        eval "$(invoke_filter_env \
             -f "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" \
             -v "$(filter_env_var_filter ${DONT_EXPORT_VARS} f x EXISTING_PATH)" -i "$src")"
         ret=$?
@@ -725,14 +724,7 @@ if [ "$*" != "daemonize" ]; then
     unset x
 fi
 
-f="$(declare | {
-    read l;
-    while [ "${l% \(\)}" == "$l" ]; do
-        echo "${l/=*}";
-        read l;
-    done;
-    unset l
-   })"
+f="$(declare | invoke_filter_env --print-vars)"
 
 #update the don't export filters.
 if [ -z "${ORIG_VARS}" ]; then

@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* filter-env grew a --print-vars option.  If you've been seeing
+  "declare: write error: Broken pipe" from build operations, this should
+  now be fixed via using this new option.
+
 * the resolver wasn't properly accounting for planned modifications to
   the installed pkgs database.  If you've had upgrade issues from
   blockers, this is the root cause (pam/pambase in particular).

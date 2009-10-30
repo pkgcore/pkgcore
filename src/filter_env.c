@@ -62,6 +62,21 @@ debug_print(PyObject *logfunc, const char *format, ...)
 #define INFO(fmt, args...) debug_print(log_info, fmt, ## args)
 #define DEBUG(fmt, args...) debug_print(log_info, fmt, ## args)
 
+static void
+do_envvar_callback(PyObject *callback, const char *str)
+{
+    if(!callback)
+        return;
+    PyObject *pstr = PyString_FromString(str);
+    if(!pstr)
+        return;
+    PyObject *result = PyObject_CallFunctionObjArgs(callback, pstr, NULL);
+    Py_DECREF(pstr);
+    if(result) {
+        Py_DECREF(result);
+    }
+}
+
 
 static const inline char *
 is_function(const char *p, char **start, char **end)
@@ -149,7 +164,7 @@ static const char *
 process_scope(PyObject *out, const char *start, const char *buff,
               const char *end,
               regex_t *var_re, regex_t *func_re, int desired_var_match,
-              int desired_func_match, const char endchar)
+              int desired_func_match, const char endchar, PyObject *envvar_callback)
 {
     const char *p = NULL;
     const char *window_start = NULL, *window_end = NULL;
@@ -197,12 +212,13 @@ process_scope(PyObject *out, const char *start, const char *buff,
         }
 
         if(NULL != (new_p = is_function(p, &s, &e))) {
-            asprintf(&temp_string, "%.*s", (int)(e - s), s);
+            if(-1 == asprintf(&temp_string, "%.*s", (int)(e - s), s))
+                return NULL;
             INFO("matched func name '%s'", temp_string);
             /* output it if it doesn't match */
 
             new_p = process_scope(
-                NULL, start, new_p, end, NULL, NULL, 0, 0, '}');
+                NULL, start, new_p, end, NULL, NULL, 0, 0, '}', NULL);
             INFO("ended processing  '%s'", temp_string);
             if (func_re != NULL && regex_matches(func_re, temp_string,
                 desired_func_match)) {
@@ -212,8 +228,10 @@ process_scope(PyObject *out, const char *start, const char *buff,
                 window_end = com_start;
             }
 
-            p = new_p;
             free(temp_string);
+            if(!new_p)
+                return NULL;
+            p = new_p;
             ++p;
             continue;
         }
@@ -229,8 +247,11 @@ process_scope(PyObject *out, const char *start, const char *buff,
                 ++p;
         } else {
             //env assignment
-            asprintf(&temp_string, "%.*s", (int)(e - s), s);
+            if(-1 == asprintf(&temp_string, "%.*s", (int)(e - s), s))
+                return NULL;
             INFO("matched env assign '%s'", temp_string);
+
+            do_envvar_callback(envvar_callback, temp_string);
 
             if (var_re && regex_matches(var_re, temp_string,
                 desired_var_match)) {
@@ -503,7 +524,7 @@ walk_dollar_expansion(const char *start, const char *p, const char *end,
                       char endchar, char disable_quote)
 {
     if ('(' == *p)
-        return process_scope(NULL, start, p + 1, end, NULL, NULL, 0, 0, ')') + 1;
+        return process_scope(NULL, start, p + 1, end, NULL, NULL, 0, 0, ')', NULL) + 1;
     if ('\'' == *p && !disable_quote)
         return walk_statement_dollared_quote_parsing(p + 1, end, '\'') + 1;
     if ('{' != *p) {
@@ -571,9 +592,11 @@ static PyObject *
 pkgcore_filter_env_run(PyObject *self, PyObject *args, PyObject *kwargs)
 {
     /* Arguments. */
-    PyObject *out, *desired_var_match_obj, *desired_func_match_obj;
+    PyObject *out, *desired_var_match_obj, *desired_func_match_obj, *envvar_callback=NULL;
     const char *file_buff, *vsr, *fsr;
     Py_ssize_t file_size;
+
+    char *res_p = NULL;
 
     /* Other vars. */
 
@@ -581,11 +604,14 @@ pkgcore_filter_env_run(PyObject *self, PyObject *args, PyObject *kwargs)
     int result, desired_func_match, desired_var_match;
 
     static char *kwlist[] = {"out", "file_buff", "vsr", "fsr",
-                             "desired_var_match", "desired_func_match", NULL};
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Os#zzOO", kwlist,
+                             "desired_var_match", "desired_func_match",
+                             "global_envvar_callback", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Os#zzOO|O", kwlist,
                                      &out, &file_buff, &file_size, &vsr, &fsr,
                                      &desired_var_match_obj,
-                                     &desired_func_match_obj))
+                                     &desired_func_match_obj,
+                                     &envvar_callback))
         return NULL;
 
     desired_func_match = PyObject_IsTrue(desired_func_match_obj);
@@ -629,9 +655,21 @@ pkgcore_filter_env_run(PyObject *self, PyObject *args, PyObject *kwargs)
     } else
         pvre = NULL;
 
-    const char *res_p = process_scope(
+    if(envvar_callback) {
+        int true_ret = PyObject_IsTrue(envvar_callback);
+        if(-1 == true_ret) {
+            goto filter_env_cleanup;
+        }
+        if(!true_ret) {
+            envvar_callback = (PyObject *)NULL;
+        }
+    }
+
+    res_p = (char *)process_scope(
         out, file_buff, file_buff, file_buff + file_size, pvre, pfre,
-        desired_var_match, desired_func_match, '\0');
+        desired_var_match, desired_func_match, '\0', envvar_callback);
+
+filter_env_cleanup:
 
     if (pvre)
         regfree(pvre);

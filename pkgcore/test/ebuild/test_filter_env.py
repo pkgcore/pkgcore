@@ -12,13 +12,14 @@ class NativeFilterEnvTest(TestCase):
     filter_env = staticmethod(filter_env.native_run)
 
     def get_output(self, raw_data, funcs=None, vars=None, preserve_funcs=False,
-                   preserve_vars=False, debug=False):
+                   preserve_vars=False, debug=False, global_envvar_callback=None):
         out = cStringIO.StringIO()
         if funcs:
             funcs = filter_env.build_regex_string(funcs.split(','))
         if vars:
             vars = filter_env.build_regex_string(vars.split(','))
-        self.filter_env(out, raw_data, vars, funcs, not preserve_vars, not preserve_funcs)
+        self.filter_env(out, raw_data, vars, funcs, not preserve_vars, not preserve_funcs,
+            global_envvar_callback=global_envvar_callback)
         return out.getvalue()
 
     def test_function_foo(self):
@@ -232,6 +233,18 @@ src_install() {
     def test_arg_awareness(self):
         data = "f() {\n x \{}\n}\n"
         self.assertNotIn('}', ''.join(self.get_output(data, 'f')))
+
+    def test_print_vars(self):
+        def assertVars(data, var_list, assert_func=self.assertEqual):
+            l = []
+            self.get_output(data, global_envvar_callback=l.append)
+            assert_func(sorted(var_list), sorted(l))
+        assertVars("f(){\nX=dar\n}", [])
+        assertVars("f(){\nX=dar\n}\nY=a", ['Y'])
+        assertVars("f(){\nX=dar\n}\nmy command\nY=a\nf=$(dar)", ['Y', 'f'])
+        assertVars("f(){\nX=dar\n}\nmy command\nY=a\nf=$(dar) foon\n", ['Y'],
+            self.assertNotEqual)
+        assertVars("f(){\nX=dar foon\n}\nY=dar\nf2(){Z=dar;}\n", ['Y'])
 
 
 class CPyFilterEnvTest(NativeFilterEnvTest):

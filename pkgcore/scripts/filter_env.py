@@ -45,6 +45,9 @@ class OptionParser(commandline.OptionParser):
         self.add_option(
             '--vars', '-v', action='callback', type='string',
             callback=append_comma_separated)
+        self.add_option(
+            '--print-vars', action='store_true', default=False,
+            help="print just the global scope environment variables that match")
 
     def check_values(self, values, args):
         values, args = commandline.OptionParser.check_values(
@@ -90,6 +93,18 @@ def main(options, out, err):
 
     file_buff = options.input.read() + '\0'
 
+    stream = out.stream
+    var_matches = None
+    if options.print_vars:
+        import cStringIO
+        stream = cStringIO.StringIO()
+        var_matches = []
+
     # Hack: write to the stream directly.
-    filter_env.run(out.stream, file_buff, vars, funcs,
-                   options.var_match, options.func_match)
+    filter_env.run(stream, file_buff, vars, funcs,
+                   options.var_match, options.func_match,
+                   global_envvar_callback=var_matches.append)
+
+    if options.print_vars:
+        for var in sorted(var_matches):
+            out.write(var.strip())

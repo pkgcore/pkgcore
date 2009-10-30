@@ -17,7 +17,7 @@ COMMAND_PARSING, SPACE_PARSING = range(2)
 
 
 def native_run(out, file_buff, vsr, fsr,
-               desired_var_match, desired_func_match):
+               desired_var_match, desired_func_match, global_envvar_callback=None):
     """Print a filtered environment.
 
     @param out: file-like object to write to.
@@ -48,7 +48,8 @@ def native_run(out, file_buff, vsr, fsr,
             def var_match(data):
                 return vsr.match(data) is None
 
-    process_scope(out, file_buff, 0, var_match, func_match, '\0')
+    process_scope(out, file_buff, 0, var_match, func_match, '\0',
+        global_envvar_callback)
 
 
 try:
@@ -145,7 +146,7 @@ def is_envvar(buff, pos):
     except IndexError:
         return None, None, None
 
-def process_scope(out, buff, pos, var_match, func_match, endchar):
+def process_scope(out, buff, pos, var_match, func_match, endchar, envvar_callback=None):
     window_start = pos
     window_end = None
     isspace = str.isspace
@@ -192,6 +193,8 @@ def process_scope(out, buff, pos, var_match, func_match, endchar):
             # Env assignment.
             var_name = buff[new_start:new_end]
             pos = new_p
+            if envvar_callback:
+                envvar_callback(var_name)
             logger.debug('matched env assign %r', var_name)
 
             if var_match is not None and var_match(var_name):

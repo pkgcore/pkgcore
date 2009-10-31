@@ -9,6 +9,7 @@ from pkgcore.repository import prototype, errors
 from pkgcore.restrictions.restriction import base
 from pkgcore.interfaces.repo import operations_proxy
 from snakeoil.klass import GetAttrProxy
+import itertools
 
 class filterTree(prototype.tree):
 
@@ -27,6 +28,10 @@ class filterTree(prototype.tree):
                 "%s is not a restriction" % (restriction,))
         self.restriction = restriction
         self.raw_repo = repo
+        if sentinel_val:
+            self._filterfunc = itertools.ifilter
+        else:
+            self._filterfunc = itertools.ifilterfalse
 
     def itermatch(self, restrict, **kwds):
         # note that this lets the repo do the initial filtering.
@@ -34,9 +39,8 @@ class filterTree(prototype.tree):
         # the repo, determine what can be done without cost
         # (determined by repo's attributes) versus what does cost
         # (metadata pull for example).
-        for cpv in self.raw_repo.itermatch(restrict, **kwds):
-            if self.restriction.match(cpv) == self.sentinel_val:
-                yield cpv
+        return self._filterfunc(self.restriction.match,
+            self.raw_repo.itermatch(restrict, **kwds))
 
 
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(

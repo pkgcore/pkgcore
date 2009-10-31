@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* for overlayed repositories that have invalid atom stacking in their
+  package.mask, give an appropriate error message indicating the file.
+
 * gentoo bug 196561, PMS doesn't match portage behaviour for '~' atom
   operator.  Being that the pms definition has never been accurate, and
   portage hasn't handled '~' w/ a revision in any sane form, and finally

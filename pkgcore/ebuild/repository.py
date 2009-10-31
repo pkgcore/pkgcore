@@ -26,7 +26,8 @@ demandload(globals(),
     'pkgcore.ebuild.ebd:buildable',
     'pkgcore.interfaces.data_source:local_source',
     'pkgcore.ebuild:digest,repo_objs,atom',
-    'pkgcore.ebuild.errors:InvalidCPV',
+    'pkgcore.ebuild:errors@ebuild_errors',
+    'pkgcore.ebuild:profiles',
     'random:shuffle',
     'errno',
 )
@@ -211,10 +212,10 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                 if not self.ignore_paludis_versioning:
                     for x in ret:
                         if 'scm' in x:
-                            raise InvalidCPV("%s/%s-%s has nonstandard -scm "
+                            raise ebuild_errors.InvalidCPV("%s/%s-%s has nonstandard -scm "
                                 "version component" % (catpkg + (x,)))
                         elif 'try' in x:
-                            raise InvalidCPV("%s/%s-%s has nonstandard -try "
+                            raise ebuild_errors.InvalidCPV("%s/%s-%s has nonstandard -try "
                                 "version component" % (catpkg + (x,)))
                     raise AssertionError('unreachable codepoint was reached')
                 return tuple(x for x in ret
@@ -271,15 +272,17 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             self.base, id(self))
 
     def _visibility_limiters(self):
+        path = pjoin(self.base, 'profiles', 'package.mask')
         try:
             return [atom.atom(x.strip())
-                for x in iter_read_bash(
-                pjoin(self.base, "profiles", "package.mask"))]
+                for x in iter_read_bash(path)]
         except IOError, i:
             if i.errno != errno.ENOENT:
                 raise
-            del i
             return []
+        except ebuild_errors.MalformedAtom, ma:
+            raise profiles.ProfileError(pjoin(self.base, 'profiles'),
+                'package.mask', ma)
 
 
 class SlavedTree(UnconfiguredTree):

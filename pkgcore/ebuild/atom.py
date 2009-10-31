@@ -200,6 +200,9 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
         if self.version is None:
             raise errors.MalformedAtom(orig_atom,
                 "operator requires a version")
+        elif self.op == '~' and self.revision:
+            raise errors.MalformedAtom(orig_atom,
+                "~ revision operater cannot be combined with a revision")
     elif self.version is not None:
         raise errors.MalformedAtom(orig_atom,
             'versioned atom requires an operator')

@@ -4,6 +4,13 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* gentoo bug 196561, PMS doesn't match portage behaviour for '~' atom
+  operator.  Being that the pms definition has never been accurate, and
+  portage hasn't handled '~' w/ a revision in any sane form, and finally
+  do to portage adding a repoman check for this (bug 227225) pkgcore is
+  now strict about disallowing revisions with '~'.  Scream at PMS to
+  fix their doc if it's problematic.
+
 * certain ebuilds (ssmtp for example) expect D to have a trailing '/'.
   Force this (outside pms compliance, so we match portage behaviour).
 

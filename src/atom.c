@@ -334,7 +334,7 @@ parse_repo_id(PyObject *atom_str, char **p_ptr, PyObject **repo_id)
 
 static int
 parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
-    int has_version)
+    int has_version, int *had_revision)
 {
     PyObject *tmp, *cpv;
     cpv = PyObject_CallFunction(
@@ -387,12 +387,21 @@ parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
     Py_DECREF(tmp);
     if(has_version) {
         STORE_ATTR(pkgcore_atom_version);
-        STORE_ATTR(pkgcore_atom_revision);
+        if(NULL == (tmp = PyObject_GetAttr(cpv, pkgcore_atom_revision))) {
+            goto parse_cpv_error;
+        }
+        *had_revision = (Py_None != tmp);
+        if(PyObject_GenericSetAttr(self, pkgcore_atom_revision, tmp)) {
+            Py_DECREF(tmp);
+            goto parse_cpv_error;
+        }
+        Py_DECREF(tmp);
     } else {
         if(PyObject_GenericSetAttr(self, pkgcore_atom_version, Py_None))
             goto parse_cpv_error;
         if(PyObject_GenericSetAttr(self, pkgcore_atom_revision, Py_None))
             goto parse_cpv_error;
+        *had_revision = 1;
     }
 
     #undef STORE_ATTR
@@ -409,6 +418,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 {
     PyObject *atom_str, *negate_vers = NULL;
     int eapi_int = -1;
+    int had_revision = 0;
     static char *kwlist[] = {"atom_str", "negate_vers", "eapi", NULL};
     if(!PyArg_ParseTupleAndKeywords(args, kwds, "S|Oi:atom_init", kwlist,
         &atom_str, &negate_vers, &eapi_int))
@@ -536,7 +546,7 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 
     has_version = (op != pkgcore_atom_op_none);
 
-    if(parse_cpv(atom_str, cpv_str, self, has_version)) {
+    if(parse_cpv(atom_str, cpv_str, self, has_version, &had_revision)) {
         Py_DECREF(cpv_str);
         goto pkgcore_atom_parse_error;
     }
@@ -557,6 +567,13 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
     }
 */
 
+    if(op == pkgcore_atom_op_droprev) {
+        if(had_revision) {
+            Err_SetMalformedAtom(atom_str,
+                "revision isn't allowed with '~' operator");
+            goto pkgcore_atom_parse_error;
+        }
+    }
     if(!use) {
         Py_INCREF(Py_None);
         use = Py_None;

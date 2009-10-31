@@ -126,7 +126,13 @@ class Test_native_atom(TestCase):
         a = self.kls("~%s-1" % astr)
         self.assertTrue(a.match(CPV.versioned("%s-1" % astr)))
         self.assertTrue(a.match(CPV.versioned("%s-1-r1" % astr)))
+        self.assertTrue(a.match(CPV.versioned("%s-1-r0" % astr)))
         self.assertFalse(a.match(CPV.versioned("%s-2" % astr)))
+        self.assertRaises(errors.MalformedAtom, self.kls, "~%s-r1" % astr)
+        self.assertRaises(errors.MalformedAtom, self.kls, "~%s-r2" % astr)
+        # special case- yes -r0 effectively is None, but -r shouldn't be used
+        # with ~
+        self.assertRaises(errors.MalformedAtom, self.kls, "~%s-r0" % astr)
 
     def test_use(self):
         astr = "dev-util/bsdiff"

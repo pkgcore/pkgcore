@@ -11,6 +11,8 @@ from distutils.command import (build, sdist, build_py, build_ext,
     build_scripts, install)
 from stat import ST_MODE
 
+from snakeoil import distutils_extensions as snk_distutils
+
 
 def write_bzr_verinfo(destination):
     log.info('generating bzr_verinfo')
@@ -28,8 +30,8 @@ def write_bzr_verinfo(destination):
 
         try:
             b = branch.Branch.open_containing(__file__)[0]
-        except ebzr.NotBranchError, e:
-            log.warn('not a branch (%s) trying to determine tag' % (e,))
+        except ebzr.NotBranchError:
+            log.warn('not a branch (%s) trying to determine tag' % (__file__,))
             return
 
         if b.supports_tags():
@@ -189,7 +191,9 @@ class pkgcore_install_scripts(core.Command):
             if self.dry_run:
                 log.info("changing mode of %s", copyname)
             else:
-                mode = ((os.stat(copyname)[ST_MODE]) | 0555) & 07777
+                # note, we use the int here for python3k compatibility.
+                # 365 == 0555, 4095 = 0777
+                mode = ((os.stat(copyname)[ST_MODE]) | 365) & 4095
                 log.info("changing mode of %s to %o", copyname, mode)
                 os.chmod(copyname, mode)
             # Use symlinks for the other scripts.
@@ -201,8 +205,10 @@ class pkgcore_install_scripts(core.Command):
                 log.info('symlinking %s to %s', dest, self.scripts[0])
                 try:
                     os.symlink(self.scripts[0], dest)
-                except (IOError, OSError), e:
-                    if e.errno != errno.EEXIST:
+                except (IOError, OSError):
+                    # yes, it would be best to examine the exception...
+                    # but that makes this script non py3k sourcable
+                    if not os.path.exists(dest):
                         raise
                     os.remove(dest)
                     os.symlink(self.scripts[0], dest)
@@ -265,34 +271,11 @@ install.install.sub_commands.append(('pkgcore_install_scripts', None))
 install.install.sub_commands.append(('pkgcore_install_man', None))
 
 
-class pkgcore_build_ext(build_ext.build_ext):
+class pkgcore_build_py(snk_distutils.snk_build_py):
 
-    def build_extensions(self):
-        if self.debug:
-            # say it with me kids... distutils sucks!
-            for x in ("compiler_so", "compiler", "compiler_cxx"):
-                l = [y for y in getattr(self.compiler, x) if y != '-DNEDBUG']
-                l.append('-Wall')
-                setattr(self.compiler, x, l)
-        return build_ext.build_ext.build_extensions(self)
+    package_namespace = 'pkgcore'
 
-
-
-class pkgcore_build_py(build_py.build_py):
-
-    def run(self):
-        build_py.build_py.run(self)
-        bzr_ver = self.get_module_outfile(
-            self.build_lib, ('pkgcore',), 'bzr_verinfo')
-        if not os.path.exists(bzr_ver):
-            try:
-                write_bzr_verinfo(bzr_ver)
-            except errors.DistutilsExecError:
-                # Not fatal, just less useful --version output.
-                log.warn('generating bzr_verinfo failed!')
-            else:
-                self.byte_compile([bzr_ver])
-
+    def _inner_run(self, py3k_rebuilds):
         fp = os.path.join(self.build_lib, "pkgcore", "bin", "ebuild-helpers")
         for f in os.listdir(fp):
             self.set_chmod(os.path.join(fp, f))
@@ -304,74 +287,38 @@ class pkgcore_build_py(build_py.build_py):
         if self.dry_run:
             log.info("changing mode of %s", path)
         else:
-            mode = ((os.stat(path)[ST_MODE]) | 0555) & 07777
+            # note, we use the int here for python3k compatibility.
+            # 365 == 0555, 4095 = 0777
+            mode = ((os.stat(path)[ST_MODE]) | 365) & 4095
             log.info("changing mode of %s to %o", path, mode)
             os.chmod(path, mode)
 
 
+class test(snk_distutils.test):
 
-class TestLoader(unittest.TestLoader):
-
-    """Test loader that knows how to recurse packages."""
-
-    def loadTestsFromModule(self, module):
-        """Recurses if module is actually a package."""
-        paths = getattr(module, '__path__', None)
-        tests = [unittest.TestLoader.loadTestsFromModule(self, module)]
-        if paths is None:
-            # Not a package.
-            return tests[0]
-        for path in paths:
-            for child in os.listdir(path):
-                if (child != '__init__.py' and child.endswith('.py') and
-                    child.startswith('test')):
-                    # Child module.
-                    childname = '%s.%s' % (module.__name__, child[:-3])
-                else:
-                    childpath = os.path.join(path, child)
-                    if not os.path.isdir(childpath):
-                        continue
-                    if not os.path.exists(os.path.join(childpath,
-                                                       '__init__.py')):
-                        continue
-                    # Subpackage.
-                    childname = '%s.%s' % (module.__name__, child)
-                tests.append(self.loadTestsFromName(childname))
-        return self.suiteClass(tests)
-
-
-testLoader = TestLoader()
-
-
-class test(core.Command):
-
-    """Run our unit tests in a built copy.
-
-    Based on code from setuptools.
-    """
-
-    user_options = []
-
-    def initialize_options(self):
-        # Options? What options?
-        pass
-
-    def finalize_options(self):
-        # Options? What options?
-        pass
-
-    def run(self):
-        build_ext = self.reinitialize_command('build_ext')
-        build_ext.inplace = True
-        self.run_command('build_ext')
-        # Somewhat hackish: this calls sys.exit.
-        unittest.main('pkgcore.test', argv=['setup.py', '-v'], testLoader=testLoader)
+    default_test_namespace = 'pkgcore.test'
 
 
 packages = [
     root.replace(os.path.sep, '.')
     for root, dirs, files in os.walk('pkgcore')
     if '__init__.py' in files]
+
+extensions = []
+if not snk_distutils.is_py3k:
+    snk_distutils.OptionalExtension(
+            'pkgcore.ebuild._atom', ['src/atom.c']),
+    snk_distutils.OptionalExtension(
+        'pkgcore.ebuild._cpv', ['src/cpv.c']),
+    snk_distutils.OptionalExtension(
+        'pkgcore.ebuild._depset', ['src/depset.c']),
+    snk_distutils.OptionalExtension(
+        'pkgcore.ebuild._filter_env', [
+            'src/filter_env.c', 'src/bmh_search.c']),
+    snk_distutils.OptionalExtension(
+        'pkgcore.ebuild._misc', ['src/misc.c']),
+    snk_distutils.OptionalExtension(
+        'pkgcore.restrictions._restrictions', ['src/restrictions.c']),
 
 from pkgcore.const import VERSION
 core.setup(
@@ -390,25 +337,11 @@ core.setup(
             'bin/ebuild-helpers/*',
             ],
         },
-    ext_modules=[
-        core.Extension(
-            'pkgcore.ebuild._atom', ['src/atom.c']),
-        core.Extension(
-            'pkgcore.ebuild._cpv', ['src/cpv.c']),
-        core.Extension(
-            'pkgcore.ebuild._depset', ['src/depset.c']),
-        core.Extension(
-            'pkgcore.ebuild._filter_env', [
-                'src/filter_env.c', 'src/bmh_search.c']),
-        core.Extension(
-            'pkgcore.ebuild._misc', ['src/misc.c']),
-        core.Extension(
-            'pkgcore.restrictions._restrictions', ['src/restrictions.c']),
-        ],
+    ext_modules=extensions,
     cmdclass={
         'sdist': mysdist,
         'build_py': pkgcore_build_py,
-        'build_ext': pkgcore_build_ext,
+        'build_ext': snk_distutils.snakeoil_build_ext,
         'test': test,
         'pkgcore_build_scripts': pkgcore_build_scripts,
         'pkgcore_install_scripts': pkgcore_install_scripts,

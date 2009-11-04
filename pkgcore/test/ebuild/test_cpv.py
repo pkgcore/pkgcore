@@ -5,6 +5,23 @@ from random import shuffle
 from pkgcore.test import TestCase
 from pkgcore.ebuild import cpv
 from snakeoil.currying import partial
+from snakeoil.compatibility import cmp
+
+def generate_misc_sufs():
+    simple_good_sufs = ["_alpha", "_beta", "_pre", "_p"]
+    suf_nums = list(xrange(100))
+    shuffle(suf_nums)
+
+    good_sufs = (simple_good_sufs +["%s%i" % (x, suf_nums.pop())
+        for x in simple_good_sufs])
+
+    l = len(good_sufs)
+    good_sufs = good_sufs + [
+        good_sufs[x] + good_sufs[l - x - 1] for x in xrange(l)]
+
+    bad_sufs  = ["_a", "_9", "_"] + [x+" " for x in simple_good_sufs]
+    return good_sufs, bad_sufs
+
 
 class native_CpvTest(TestCase):
 
@@ -32,21 +49,8 @@ class native_CpvTest(TestCase):
 
     good_vers = ["1", "2.3.4", "2.3.4a", "02.3", "2.03", "cvs.2", "cvs.2.03"]
     bad_vers  = ["2.3a.4", "2.a.3", "2.3_", "2.3 ", "2.3."]
-    simple_good_sufs = ["_alpha", "_beta", "_pre", "_p"]
 
-    suf_nums = list(xrange(100))
-    shuffle(suf_nums)
-
-    good_sufs = (simple_good_sufs +["%s%i" % (x, suf_nums.pop())
-        for x in simple_good_sufs])
-    del suf_nums
-
-    l = len(good_sufs)
-    good_sufs = good_sufs + [
-        good_sufs[x] + good_sufs[l - x - 1] for x in xrange(l)]
-    del l
-    bad_sufs  = ["_a", "_9", "_"] + [x+" " for x in simple_good_sufs]
-    del simple_good_sufs
+    good_sufs, bad_sufs = generate_misc_sufs()
     good_revs = ["-r1", "-r300", "-r0", "",
         "-r1000000000000000000"]
     bad_revs = ["-r", "-ra", "-r", "-R1"]

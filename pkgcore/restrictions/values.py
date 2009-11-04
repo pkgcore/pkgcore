@@ -14,6 +14,7 @@ attr from a package instance and hand it to their wrapped restriction
 from pkgcore.restrictions import restriction, boolean, packages
 from snakeoil.klass import generic_equality
 from snakeoil import demandload
+from snakeoil.compatibility import cmp
 demandload.demandload(globals(), 're', 'snakeoil:lists')
 
 # Backwards compatibility.

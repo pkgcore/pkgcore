@@ -23,6 +23,7 @@ from pkgcore.ebuild import const, processor
 
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import alias_class_method, partial
+from snakeoil.compatibility import intern
 
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")

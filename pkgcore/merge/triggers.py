@@ -1,4 +1,4 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -18,6 +18,8 @@ import pkgcore.os_data
 
 from snakeoil.osutils import listdir_files, pjoin, ensure_dirs, normpath
 from snakeoil.demandload import demandload
+from snakeoil.compatibility import is_py3k
+
 demandload(globals(),
     'os',
     'errno',
@@ -547,7 +549,8 @@ class CommonDirectoryModes(base):
     directories.extend(['/lib', '/lib32', '/lib64', '/etc', '/bin', '/sbin',
         '/var'])
     directories = frozenset(map(normpath, directories))
-    del x
+    if not is_py3k:
+        del x
 
     def trigger(self, engine, cset):
         r = engine.observer

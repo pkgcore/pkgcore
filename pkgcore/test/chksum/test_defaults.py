@@ -4,6 +4,7 @@
 import tempfile, os
 from pkgcore.test import TestCase, SkipTest
 from snakeoil.currying import post_curry
+from snakeoil.compatibility import is_py3k
 from pkgcore import chksum
 from pkgcore.interfaces.data_source import data_source, local_source
 
@@ -89,14 +90,15 @@ for chf_type, expected in checksums.iteritems():
         (ChksumTest, TestCase),
         dict(chf_type=chf_type, expected_long=expectedsum, expected_str=expectedstr))
 
-del chf_type
+del chf_type, expected
 
 
 class get_chksums_test(base, TestCase):
 
     chfs = [k for k in sorted(checksums) if k != "size"]
     expected_long = [checksums[k][0] for k in chfs]
-    del k
+    if not is_py3k:
+        del k
 
     def get_chf(self):
         self.chf = post_curry(chksum.get_chksums, *self.chfs)

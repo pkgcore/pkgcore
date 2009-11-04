@@ -1,4 +1,4 @@
-# Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 import os
@@ -14,11 +14,14 @@ from snakeoil.test.mixins import TempDirMixin
 repeating_str = 'asdf'
 data = repeating_str * 4000
 handlers = chksum.get_handlers()
-chksums = dict((chf, f(data_source.data_source(data)))
-    for chf, f in handlers.iteritems())
+
+from snakeoil.mappings import LazyValDict
+def _callback(chf):
+    return handlers[chf](data_source.data_source(data))
+chksums = LazyValDict(frozenset(handlers.iterkeys()), _callback)
 
 # get a non size based chksum
-known_chksum = [x for x in chksums if x != "size"][0]
+known_chksum = [x for x in handlers.iterkeys() if x != "size"][0]
 
 class TestFetcher(TempDirMixin, TestCase):
 

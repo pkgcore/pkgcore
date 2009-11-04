@@ -2,7 +2,7 @@
 # License: GPL2/BSD
 
 import operator
-from itertools import chain, islice, ifilterfalse
+from itertools import chain, islice, ifilterfalse as filterfalse
 from collections import deque
 
 from pkgcore.resolver.choice_point import choice_point
@@ -136,7 +136,7 @@ class resolver_stack(deque):
     depth = property(len)
     current_frame = property(operator.itemgetter(-1))
     filter_ignored = staticmethod(
-        partial(ifilterfalse, operator.attrgetter("ignored")))
+        partial(filterfalse, operator.attrgetter("ignored")))
 
     # this *has* to be a property, else it creates a cycle.
     parent = property(lambda s:s)

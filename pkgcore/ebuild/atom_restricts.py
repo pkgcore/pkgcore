@@ -1,4 +1,4 @@
-# Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2009 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 # "More than one statement on a single line"
@@ -11,6 +11,7 @@ atom version restrict
 from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild import cpv, errors
 from snakeoil.klass import generic_equality
+from snakeoil.compatibility import is_py3k
 
 # TODO: change values.EqualityMatch so it supports le, lt, gt, ge, eq,
 # ne ops, and convert this to it.
@@ -37,7 +38,8 @@ class VersionMatch(restriction.base):
         (0, 1):">=", (1,):">"}
 
     _convert_str2op = dict([(v, k) for k, v in _convert_op2str.iteritems()])
-    del k, v
+    if not is_py3k:
+        del k, v
 
     def __init__(self, operator, ver, rev=None, negate=False, **kwd):
         """

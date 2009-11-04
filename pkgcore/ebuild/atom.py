@@ -12,7 +12,7 @@ import string
 from pkgcore.restrictions import values, packages, boolean
 from pkgcore.ebuild import cpv, errors, const
 from pkgcore.ebuild.atom_restricts import VersionMatch
-from snakeoil.compatibility import all
+from snakeoil.compatibility import all, is_py3k
 from snakeoil.klass import generic_equality
 from snakeoil.demandload import demandload
 from snakeoil.currying import partial
@@ -25,7 +25,12 @@ demandload(globals(),
 # namespace compatibility...
 MalformedAtom = errors.MalformedAtom
 
-alphanum = set(string.letters+string.digits)
+alphanum = set(string.digits)
+if is_py3k:
+    alphanum.update(string.ascii_letters)
+else:
+    alphanum.update(string.letters)
+
 valid_repo_chars = set(alphanum)
 valid_repo_chars.update("_-")
 valid_use_chars = set(alphanum)

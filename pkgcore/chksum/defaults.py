@@ -8,6 +8,7 @@ default chksum handlers implementation- sha1, sha256, rmd160, and md5
 from pkgcore.interfaces.data_source import base as base_data_source
 from snakeoil.currying import partial
 from snakeoil import modules
+from snakeoil.compatibility import intern, is_py3k
 from snakeoil.demandload import demandload
 demandload(globals(), "os")
 
@@ -33,15 +34,32 @@ def loop_over_file(filename, *objs):
         # reposition to start
         f.seek(0, 0)
     try:
-        data = f.read(blocksize)
-        # XXX why is size tracked here? It seems to be unused...
-        size = 0L
         chfs = [chf() for chf in objs]
-        while data:
+        if hasattr(f, 'getvalue'):
+            data = f.getvalue()
+            if is_py3k:
+                if not isinstance(data, bytes):
+                    data = data.encode("ascii")
             for chf in chfs:
                 chf.update(data)
-            size = size + len(data)
+        elif is_py3k:
             data = f.read(blocksize)
+            if isinstance(data, bytes):
+                convert = lambda x:x
+            else:
+                convert = lambda x:x.encode("ascii")
+                data = convert(data)
+            while data:
+                for chf in chfs:
+                    # this probably is wrong...
+                    chf.update(data)
+                data = convert(f.read(blocksize))
+        else:
+            data = f.read(blocksize)
+            while data:
+                for chf in chfs:
+                    chf.update(data)
+                data = f.read(blocksize)
 
         return [long(chf.hexdigest(), 16) for chf in chfs]
     finally:

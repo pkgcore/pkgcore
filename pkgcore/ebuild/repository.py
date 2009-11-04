@@ -19,7 +19,7 @@ from snakeoil.osutils import listdir_files, readfile, listdir_dirs, pjoin
 from snakeoil.containers import InvertedContains
 from snakeoil.obj import make_kls
 from snakeoil.weakrefs import WeakValCache
-from snakeoil.compatibility import any
+from snakeoil.compatibility import any, intern
 
 from snakeoil.demandload import demandload
 demandload(globals(),

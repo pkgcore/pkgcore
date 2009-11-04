@@ -11,7 +11,7 @@ from pkgcore.restrictions.util import collect_package_restrictions
 
 from snakeoil.mappings import LazyValDict, DictMixin
 from snakeoil.lists import iflatten_instance
-from snakeoil.compatibility import any
+from snakeoil.compatibility import any, is_py3k
 from pkgcore.interfaces import repo
 
 class IterValLazyDict(LazyValDict):
@@ -38,7 +38,11 @@ class CategoryIterValLazyDict(IterValLazyDict):
         if key in self:
             self._keys = tuple(x for x in self._keys if x != key)
 
-    __iter__ = IterValLazyDict.iterkeys
+    # 2to3 doesn't pick this one up due to class level, best I can figure.
+    if is_py3k:
+        __iter__ = IterValLazyDict.keys
+    else:
+        __iter__ = IterValLazyDict.iterkeys
 
     def __contains__(self, key):
         if self._keys_func is not None:

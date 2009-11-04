@@ -1,8 +1,6 @@
-# Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>: BSD/GPL2
+# Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
-
-import exceptions
 
 from pkgcore.test import TestCase
 from pkgcore import log
@@ -71,8 +69,11 @@ class native_PackageRestrictionTest(TestRestriction):
         class foo:
             def __getattr__(self, attr):
                 if attr.startswith("exc"):
-                    raise getattr(exceptions, attr[4:])()
+                    raise exceptions_d.get(attr[4:], None)()
                 raise AttributeError("monkey lover")
+
+        exceptions_d = {"KeyboardInterrupt":KeyboardInterrupt,
+            "RuntimeError":RuntimeError, "SystemExit":SystemExit}
 
         for mode in ("match", "force_True", "force_False"):
             excepts[:] = []

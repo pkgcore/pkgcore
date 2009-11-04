@@ -11,6 +11,7 @@ from pkgcore.config import ConfigHint
 from snakeoil.mappings import ImmutableDict
 from snakeoil.weakrefs import WeakValCache
 from snakeoil.osutils import join as pjoin, listdir_files
+from snakeoil.compatibility import intern
 
 from snakeoil.demandload import demandload
 demandload(globals(),

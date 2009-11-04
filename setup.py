@@ -112,7 +112,10 @@ class mysdist(sdist.sdist):
         """
         sdist.sdist.make_release_tree(self, base_dir, files)
         if self.build_docs:
-            if subprocess.call(['./build_docs.py'], cwd=base_dir):
+            # this is icky, but covers up cwd changing issues.
+            my_path = map(os.path.abspath, sys.path)
+            if subprocess.call(['./build_docs.py'], cwd=base_dir,
+                env={"PYTHONPATH":":".join(my_path)}):
                 raise errors.DistutilsExecError("build_docs failed")
         if self.changelog:
             args = []

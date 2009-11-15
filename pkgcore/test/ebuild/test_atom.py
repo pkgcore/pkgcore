@@ -2,6 +2,7 @@
 # License: GPL2/BSD
 
 from snakeoil.pickling import dumps, loads
+from snakeoil.compatibility import cmp
 from pkgcore.test import TestCase
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild import atom, errors, atom_restricts

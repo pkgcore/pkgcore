@@ -93,7 +93,8 @@ class GlsaDirSet(object):
         for pkgname in sorter(pkgs):
             yield KeyedAndRestriction(pkgatoms[pkgname],
                                       packages.OrRestriction(*pkgs[pkgname]),
-                                      key=pkgname)
+                                      key=pkgname,
+                                      finalize=True)
 
 
     def iter_vulnerabilities(self):

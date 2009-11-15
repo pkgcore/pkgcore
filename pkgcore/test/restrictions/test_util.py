@@ -9,10 +9,10 @@ class Test_collect_package_restrictions(TestCase):
     def test_collect_all(self):
         prs = [packages.PackageRestriction("category", values.AlwaysTrue)] * 10
         self.assertEqual(
-            sorted(util.collect_package_restrictions(packages.AndRestriction(
+            list(util.collect_package_restrictions(packages.AndRestriction(
                         packages.OrRestriction(), packages.AndRestriction(),
                         *prs))),
-            sorted(prs))
+            prs)
 
     def test_collect_specific(self):
         prs = {}
@@ -23,11 +23,11 @@ class Test_collect_package_restrictions(TestCase):
             packages.OrRestriction(*prs.values()), packages.AlwaysTrue)
         for k, v in prs.iteritems():
             self.assertEqual(
-                sorted(util.collect_package_restrictions(r, attrs=[k])),
-                sorted([v]))
+                list(util.collect_package_restrictions(r, attrs=[k])),
+                [v])
         r = packages.AndRestriction(packages.OrRestriction(
                 *prs.values()), *prs.values())
         for k, v in prs.iteritems():
             self.assertEqual(
-                sorted(util.collect_package_restrictions(r, attrs=[k])),
-                sorted([v] * 2))
+                list(util.collect_package_restrictions(r, attrs=[k])),
+                [v] * 2)

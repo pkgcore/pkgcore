@@ -6,7 +6,7 @@ template for cache backend classes
 """
 
 from pkgcore.cache import errors
-from snakeoil.mappings import ProtectedDict
+from snakeoil.mappings import ProtectedDict, autoconvert_py3k_methods_metaclass
 from snakeoil.obj import make_SlottedDict_kls
 
 # temp hack for .2
@@ -33,6 +33,8 @@ class database(object):
     autocommits = False
     cleanse_keys = False
     serialize_eclasses = True
+
+    __metaclass__ = autoconvert_py3k_methods_metaclass
 
     def __init__(self, auxdbkeys=metadata_keys, readonly=False):
         """

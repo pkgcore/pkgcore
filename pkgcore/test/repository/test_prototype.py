@@ -3,7 +3,7 @@
 
 from pkgcore.test import TestCase, Todo, malleable_obj
 from snakeoil.mappings import OrderedDict
-from snakeoil.currying import post_curry
+from snakeoil.currying import post_curry, partial
 
 from pkgcore.restrictions import packages, values, boolean
 from pkgcore.ebuild.atom import atom
@@ -84,9 +84,10 @@ class TestPrototype(TestCase):
         # mix/match cat/pkg to check that it handles that corner case
         # properly for sorting.
         self.assertEqual(
-            sorted(self.repo),
+            sorted(self.repo, reverse=True),
             self.repo.match(packages.OrRestriction(
-                    rc, rp, packages.AlwaysTrue), sorter=sorted))
+                    rc, rp, packages.AlwaysTrue),
+                    sorter=partial(sorted, reverse=True)))
         rc2 = packages.PackageRestriction(
             "category", values.StrExactMatch("dev-lib"))
         self.assertEqual(

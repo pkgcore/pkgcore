@@ -7,9 +7,9 @@ repository that combines multiple repositories together
 
 from operator import itemgetter
 from pkgcore.repository import prototype, errors
-from snakeoil.currying import partial
+from snakeoil.currying import partial, post_curry
 from snakeoil.iterables import iter_sort
-from snakeoil.compatibility import all, any
+from snakeoil.compatibility import all, any, sorted_cmp
 from pkgcore.interfaces import repo as repo_interface
 
 
@@ -127,7 +127,7 @@ class tree(prototype.tree):
             if l[0] == y:
                 return 1
             return -1
-        f = partial(sorted, cmp=f)
+        f = post_curry(sorted_cmp, f, key=self.zero_index_grabber)
         return iter_sort(f,
             *[repo.itermatch(restrict, **kwds) for repo in self.trees])
 

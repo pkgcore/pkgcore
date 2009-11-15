@@ -184,7 +184,8 @@ def parse_atom(token, repo, return_none=False):
     if isinstance(restriction, atom):
         # atom is guranteed to be fine, since it's cat/pkg
         return restriction
-    return KeyedAndRestriction(restriction, key=key_matches.pop())
+    return KeyedAndRestriction(restriction, key=key_matches.pop(),
+        finalize=True)
 
 
 class Failure(ValueError):

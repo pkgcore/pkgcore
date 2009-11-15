@@ -96,8 +96,10 @@ _vdb_restrict = packages.OrRestriction(
         packages.PackageRestriction(
             "category", values.StrExactMatch("virtual")),
         packages.PackageRestriction(
-            "package_is_real", values.EqualityMatch(False))
-        )
+            "package_is_real", values.EqualityMatch(False)),
+        finalize=True
+        ),
+        finalize=True
     )
 
 class empty_tree_merge_plan(plan.merge_plan):
@@ -130,6 +132,7 @@ def generate_replace_resolver_kls(resolver_kls):
         def add_atom(self, atom, **kwds):
             return self.overriding_resolver_kls.add_atom(
                 self, KeyedAndRestriction(
-                    self._vdb_restriction, atom, key=atom.key), **kwds)
+                    self._vdb_restriction, atom, key=atom.key, finalize=True),
+                    **kwds)
 
     return replace_resolver

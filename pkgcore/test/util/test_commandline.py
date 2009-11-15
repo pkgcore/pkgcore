@@ -7,6 +7,7 @@ import pty
 import StringIO
 import optparse
 
+from snakeoil import compatibility
 from pkgcore.test import TestCase
 
 from pkgcore.test.scripts import helpers
@@ -248,6 +249,17 @@ Use --help after a subcommand for more help.
             1, '', '',
             {None: (NoLoadParser, error_main)}, ['--debug'])
 
+    def _get_pty_pair(self, encoding='ascii'):
+        master_fd, slave_fd = pty.openpty()
+        master = os.fdopen(master_fd, 'rb', 0)
+        out = os.fdopen(slave_fd, 'wb', 0)
+        if compatibility.is_py3k:
+            # note that 2to3 converts the global StringIO import to io
+            master = io.TextIOWrapper(master)
+            out = io.TextIOWrapper(out)
+        return master, out
+
+
     def test_tty_detection(self):
         def main(options, out, err):
             for f in (out, err):
@@ -260,9 +272,7 @@ Use --help after a subcommand for more help.
             ([], 'TerminfoFormatter', 'PlainTextFormatter'),
             (['--nocolor'], 'PlainTextFormatter', 'PlainTextFormatter'),
             ]:
-            master_fd, slave_fd = pty.openpty()
-            out = os.fdopen(slave_fd, 'a', 0)
-            master = os.fdopen(master_fd, 'r', 0)
+            master, out = self._get_pty_pair()
             err = StringIO.StringIO()
 
             try:

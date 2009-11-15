@@ -2,6 +2,7 @@
 # License: BSD/GPL2
 
 from pkgcore.spawn import spawn_get_output
+from snakeoil.klass import jit_attr
 
 class file_identifier(object):
 
@@ -9,23 +10,17 @@ class file_identifier(object):
         if force_binary:
             self.func = self._fallback_file
 
-    def __getattr__(self, attr):
-        if attr != 'func':
-            raise AttributeError(attr)
-        obj = self.func = self._get_file_func()
-        return obj
-
     def __call__(self, obj):
         if not isinstance(obj, basestring):
             obj = obj.path
         return self.func(obj)
 
-    @classmethod
-    def _get_file_func(cls):
+    @jit_attr
+    def func(self):
         try:
             import magic
         except ImportError:
-            return cls._fallback_file
+            return self._fallback_file
         obj = magic.open(magic.MAGIC_NONE)
         ret = obj.load()
         if ret != 0:

@@ -125,10 +125,10 @@ class AndRestrictionTest(base, TestCase):
                 self.kls(true, true), true).cnf_solutions(),
             [[true], [true], [true]])
         self.assertEqual(
-            sorted(self.kls(
+            list(self.kls(
                     true, true,
                     boolean.OrRestriction(false, true)).cnf_solutions()),
-            sorted([[true], [true], [false, true]]))
+            list([[true], [true], [false, true]]))
         self.assertEqual(self.kls().cnf_solutions(), [])
 
 

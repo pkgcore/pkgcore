@@ -15,8 +15,9 @@ from pkgcore.ebuild.errors import InvalidCPV
 
 from snakeoil.osutils import pjoin
 from snakeoil.mappings import IndeterminantDict
-from snakeoil.currying import partial
-from snakeoil.osutils import listdir_dirs, readfile
+from snakeoil.currying import partial, alias_class_method
+from snakeoil.osutils import listdir_dirs, readfile, readfile_bytes
+from snakeoil import klass
 from pkgcore.util import bzip2
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -33,11 +34,19 @@ class bz2_data_source(data_source.base):
         self.location = location
         self.mutable = mutable
 
-    def get_fileobj(self):
-        data = bzip2.decompress(readfile(self.location))
+    def get_text_fileobj(self):
+        data = bzip2.decompress(readfile_bytes(self.location))
         if self.mutable:
-            return data_source.write_StringIO(self._set_data, data)
-        return data_source.read_StringIO(data)
+            return data_source.text_wr_StringIO(self._set_data, data)
+        return data_source.text_ro_StringIO(data)
+
+    def get_bytes_fileobj(self):
+        data = bzip2.decompress(readfile_bytes(self.location))
+        if self.mutable:
+            return data_source.bytes_wr_StringIO(self._set_data, data)
+        return data_source.bytes_ro_StringIO(data)
+
+    get_fileobj = alias_class_method("get_text_file")
 
     def _set_data(self, data):
         open(self.location, "wb").write(bzip2.compress(data))
@@ -216,9 +225,7 @@ class ConfiguredTree(multiplex.tree):
             self.old_style_virtuals = virtuals.non_caching_virtuals(raw_vdb)
         multiplex.tree.__init__(self, raw_vdb, self.old_style_virtuals)
 
-    @property
-    def frozen(self):
-        return self.raw_vdb.frozen
+    frozen = klass.alias_attr("raw_vdb.frozen")
 
     def _install(self, pkg, *a, **kw):
         # need to verify it's not in already...

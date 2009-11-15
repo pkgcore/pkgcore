@@ -3,6 +3,8 @@
 
 from pkgcore.test import TestCase
 from snakeoil.currying import partial
+from snakeoil.compatibility import cmp
+from snakeoil.klass import inject_richcmp_methods_from_cmp
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.package.base import base
 
@@ -23,6 +25,8 @@ class FakePkg(base):
 
     def __cmp__(self, other):
         return cmp(self.ver, other.ver)
+
+    inject_richcmp_methods_from_cmp(locals())
 
 
 class TestMutatedPkg(TestCase):

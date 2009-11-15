@@ -106,10 +106,10 @@ class Test_fsFile(TestCase, base):
         mkobj = self.make_obj
         o = mkobj("/etc/passwd")
         raw_data = open("/etc/passwd").read()
-        self.assertEqual(o.data.get_fileobj().read(), raw_data)
+        self.assertEqual(o.data.get_text_fileobj().read(), raw_data)
         o = mkobj("/bin/this-file-should-not-exist-nor-be-read",
             data_source=data_source(raw_data))
-        self.assertEqual(o.data.get_fileobj().read(), raw_data)
+        self.assertEqual(o.data.get_text_fileobj().read(), raw_data)
         keys = o.chksums.keys()
         self.assertEqual([o.chksums[x] for x in keys],
             list(get_chksums(data_source(raw_data), *keys)))

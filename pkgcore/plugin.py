@@ -20,6 +20,7 @@ import os.path
 
 from pkgcore import plugins
 from snakeoil.osutils import join as pjoin, listdir_files
+from snakeoil.compatibility import cmp, sort_cmp
 from snakeoil import modules, demandload
 demandload.demandload(globals(), 'tempfile', 'errno', 'pkgcore.log:logger')
 
@@ -209,13 +210,20 @@ def get_plugin(key, package=plugins):
     if cache is None:
         cache = _cache[package] = initialize_cache(package)
     modlist = cache.get(key, [])
-    modlist.sort(key=operator.itemgetter(1), reverse=True)
+    # explicitly force cmp.  for py3k, our compatibility cmp
+    # still allows None comparisons.
+    sort_cmp(modlist, cmp, key=operator.itemgetter(1), reverse=True)
     plugs = []
     for i, (modname, max_prio) in enumerate(modlist):
         module = modules.load_module('.'.join((package.__name__, modname)))
-        plugs.extend(
-            plug for plug in module.pkgcore_plugins.get(key, ())
-            if not getattr(plug, 'disabled', False))
+        for plug in module.pkgcore_plugins.get(key, ()):
+            # sanity check.
+            if getattr(plug, 'disabled', False):
+                logger.debug("pluging %s is disabled, skipping" % plug)
+            elif plug.priority is None:
+                logger.warn("plugin %s has an invalid priority, skipping" % plug)
+            else:
+                plugs.append(plug)
         if not plugs:
             continue
         plugs.sort(key=operator.attrgetter('priority'), reverse=True)

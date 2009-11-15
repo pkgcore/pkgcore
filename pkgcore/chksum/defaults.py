@@ -24,7 +24,7 @@ def loop_over_file(filename, *objs):
         if filename.get_path is not None:
             filename = filename.get_path()
         else:
-            filename = filename.get_fileobj()
+            filename = filename.get_bytes_fileobj()
     wipeit = False
     if isinstance(filename, basestring):
         wipeit = True
@@ -39,7 +39,7 @@ def loop_over_file(filename, *objs):
             data = f.getvalue()
             if is_py3k:
                 if not isinstance(data, bytes):
-                    data = data.encode("ascii")
+                    data = data.encode()
             for chf in chfs:
                 chf.update(data)
         elif is_py3k:
@@ -47,7 +47,7 @@ def loop_over_file(filename, *objs):
             if isinstance(data, bytes):
                 convert = lambda x:x
             else:
-                convert = lambda x:x.encode("ascii")
+                convert = lambda x:x.encode()
                 data = convert(data)
             while data:
                 for chf in chfs:

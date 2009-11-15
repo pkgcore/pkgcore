@@ -192,7 +192,7 @@ def GenericSyncer(basedir, uri, default_verbosity=0):
     plugins = list(
         (plug.supports_uri(uri), plug)
         for plug in plugin.get_plugins('syncer'))
-    plugins.sort()
+    plugins.sort(key=lambda x:x[0])
     if not plugins or plugins[-1][0] <= 0:
         raise uri_exception('no known syncer supports %r' % (uri,))
     # XXX this is random if there is a tie. Should we raise an exception?

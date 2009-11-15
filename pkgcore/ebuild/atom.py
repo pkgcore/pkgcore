@@ -12,8 +12,8 @@ import string
 from pkgcore.restrictions import values, packages, boolean
 from pkgcore.ebuild import cpv, errors, const
 from pkgcore.ebuild.atom_restricts import VersionMatch
-from snakeoil.compatibility import all, is_py3k
-from snakeoil.klass import generic_equality
+from snakeoil.compatibility import all, is_py3k, cmp
+from snakeoil.klass import generic_equality, inject_richcmp_methods_from_cmp
 from snakeoil.demandload import demandload
 from snakeoil.currying import partial
 demandload(globals(),
@@ -265,7 +265,7 @@ def native__getattr__(self, attr):
         if len(v) == 1:
             v = v[0]
         else:
-            v = values.AndRestriction(*v)
+            v = values.AndRestriction(*v, finalize=True)
         r.append(packages.PackageRestriction("use", v))
 
     r = tuple(r)
@@ -342,6 +342,10 @@ class atom(boolean.AndRestriction):
     __attr_comparison__ = ("cpvstr", "op", "blocks", "negate_vers",
         "use", "slot", "repo_id")
 
+    inject_richcmp_methods_from_cmp(locals())
+    # hack; combine these 2 metaclasses at some point...
+    locals().pop("__eq__", None)
+    locals().pop("__ne__", None)
     __metaclass__ = generic_equality
     __inst_caching__ = True
 

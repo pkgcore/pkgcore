@@ -3,6 +3,7 @@
 
 
 from snakeoil.lists import iter_stable_unique
+from snakeoil import klass
 
 class choice_point(object):
 
@@ -87,13 +88,8 @@ class choice_point(object):
         self._prdeps = cur.post_rdepends.cnf_solutions()
         self._provides = tuple(iter_stable_unique(cur.provides))
 
-    @property
-    def slot(self):
-        return self.current_pkg.slot
-
-    @property
-    def key(self):
-        return self.current_pkg.key
+    slot = klass.alias_attr("current_pkg.slot")
+    key = klass.alias_attr("current_pkg.key")
 
     @property
     def current_pkg(self):

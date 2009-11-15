@@ -8,11 +8,12 @@ pkgset based around loading a list of atoms from a world file
 import pkgcore.const
 from pkgcore.ebuild.atom import atom
 from pkgcore.config import ConfigHint
+from snakeoil.klass import jit_attr
 
 from snakeoil.demandload import demandload
 demandload(globals(),
     'snakeoil.fileutils:AtomicWriteFile',
-    'snakeoil.osutils:readlines',
+    'snakeoil.osutils:readlines_ascii',
     'pkgcore:os_data',
     'pkgcore.log:logger',
 )
@@ -27,11 +28,10 @@ class FileList(object):
         self.mode = mode
         # note that _atoms is generated on the fly.
 
-    def __getattr__(self, attr):
-        if attr != "_atoms":
-            raise AttributeError(attr)
+    @jit_attr
+    def _atoms(self):
         s = set()
-        for x in readlines(self.path, True):
+        for x in readlines_ascii(self.path, True):
             if not x or x.startswith("#"):
                 continue
             elif x.startswith("@"):
@@ -44,7 +44,6 @@ class FileList(object):
                 continue
             s.add(atom(x))
 
-        self._atoms = s
         return s
 
     def __iter__(self):

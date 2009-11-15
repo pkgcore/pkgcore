@@ -4,6 +4,14 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* various code cleanups, quite a few conversions to snakeoil.klass
+  decorators/property tricks to simplify the code.
+
+* experimental python3.1 support.  Bugs welcome, although till stated
+  otherwise, it's considered unsupported.
+
+* pkgcore.restrictions.values.ComparisonMatch has been removed.
+
 * for overlayed repositories that have invalid atom stacking in their
   package.mask, give an appropriate error message indicating the file.
 

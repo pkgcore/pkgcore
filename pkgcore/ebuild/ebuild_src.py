@@ -23,12 +23,12 @@ from pkgcore.ebuild import const, processor
 
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import alias_class_method, partial
+from snakeoil import klass
 from snakeoil.compatibility import intern
 
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
 
-WeakValCache = metadata.WeakValCache
 
 _eapi_limited_atom_kls = tuple(partial(atom, eapi=x) for x in
                                const.eapi_capable)
@@ -198,9 +198,7 @@ class base(metadata.package):
     def PF(self):
         return "%s-%s" % (self.package, self.fullver)
 
-    @property
-    def PN(self):
-        return self.package
+    PN = klass.alias_attr("package")
 
     @property
     def PR(self):
@@ -233,25 +231,14 @@ class package(base):
         base.__init__(self, *args, **kwargs)
         object.__setattr__(self, "_shared_pkg_data", shared_pkg_data)
 
-    @property
-    def maintainers(self):
-        return self._shared_pkg_data.metadata_xml.maintainers
-
-    @property
-    def herds(self):
-        return self._shared_pkg_data.metadata_xml.herds
-
-    @property
-    def longdescription(self):
-        return self._shared_pkg_data.metadata_xml.longdescription
+    maintainers = klass.alias_attr("_shared_pkg_data.metadata_xml.maintainers")
+    herds = klass.alias_attr("_shared_pkg_data.metadata_xml.herds")
+    longdescription = klass.alias_attr("_shared_pkg_data.metadata_xml.longdescription")
+    manifest = klass.alias_attr("_shared_pkg_data.manifest")
 
     @property
     def _mtime_(self):
         return self._parent._get_ebuild_mtime(self)
-
-    @property
-    def manifest(self):
-        return self._shared_pkg_data.manifest
 
 
 class package_factory(metadata.factory):

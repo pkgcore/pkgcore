@@ -151,7 +151,7 @@ def default_copyfile(obj, mkdirs=False):
         fp = existant_fp = obj.location + "#new"
 
     if fs.isreg(obj):
-        src_f = obj.data.get_fileobj()
+        src_f = obj.data.get_bytes_fileobj()
         new_f = open(fp, "wb", 32768)
         d = src_f.read(32768)
         while d:

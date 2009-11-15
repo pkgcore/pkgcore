@@ -10,11 +10,15 @@ from pkgcore.fs import contents
 from pkgcore.interfaces.data_source import data_source
 
 from snakeoil.tar import tarfile
-from snakeoil.currying import partial
+from snakeoil.currying import partial, alias_class_method
+from snakeoil.compatibility import cmp, sorted_cmp
 
 class archive_data_source(data_source):
-    def get_fileobj(self):
+    def get_text_fileobj(self):
         return self.data()
+
+    get_fileobj = alias_class_method("get_fileobj")
+
 
 known_compressors = {"bz2": tarfile.TarFile.bz2open,
     "gz": tarfile.TarFile.gzopen,
@@ -36,7 +40,7 @@ def write_set(contents_set, filepath, compressor='bz2'):
     for x in contents_set.iterdirs(invert=True):
         t = fsobj_to_tarinfo(x)
         if t.isreg():
-            tar_fd.addfile(t, fileobj=x.data.get_fileobj())
+            tar_fd.addfile(t, fileobj=x.data.get_bytes_fileobj())
         else:
             tar_fd.addfile(t)
     tar_fd.close()
@@ -182,4 +186,4 @@ def convert_archive(archive):
             return -1
         return cmp(x, y)
 
-    return contents.OrderedContentsSet(sorted(t, cmp=sort_func), mutable=False)
+    return contents.OrderedContentsSet(sorted_cmp(t, sort_func), mutable=False)

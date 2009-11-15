@@ -11,6 +11,9 @@ from os.path import sep as path_seperator, realpath, abspath, dirname, basename
 from pkgcore.interfaces.data_source import local_source
 from snakeoil.mappings import LazyFullValLoadDict
 from snakeoil.osutils import normpath, pjoin
+from snakeoil.compatibility import cmp
+from snakeoil import klass
+
 
 # goofy set of classes representating the fs objects pkgcore knows of.
 
@@ -59,6 +62,8 @@ class fsBase(object):
     locals().update((x.replace("is", "is_"), False) for x in
         __all__ if x.startswith("is") and x.islower() and not
             x.endswith("fs_obj"))
+
+    klass.inject_richcmp_methods_from_cmp(locals())
 
     def __init__(self, location, strict=True, **d):
 
@@ -154,7 +159,8 @@ class fsFile(fsBase):
             See L{pkgcore.chksum}.
         """
         if "mtime" in kwds:
-            kwds["mtime"] = long(kwds["mtime"])
+            if not isinstance(kwds["mtime"], (float, long)):
+                kwds["mtime"] = long(kwds["mtime"])
         if data_source is None:
             data_source = local_source(location)
         kwds["data_source"] = data_source
@@ -170,9 +176,7 @@ class fsFile(fsBase):
     def __repr__(self):
         return "file:%s" % self.location
 
-    @property
-    def data(self):
-        return self.data_source
+    data = klass.alias_attr("data_source")
 
     def _chksum_callback(self, chfs):
         return zip(chfs, get_chksums(self.data, *chfs))

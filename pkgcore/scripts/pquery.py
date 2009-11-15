@@ -85,7 +85,7 @@ class DataSourceRestriction(values.base):
         return string % (self.__class__.__name__, self.restriction, id(self))
 
     def match(self, value):
-        return self.restriction.match(iter(value.get_fileobj())) ^ self.negate
+        return self.restriction.match(iter(value.get_text_fileobj())) ^ self.negate
 
     __hash__ = object.__hash__
 
@@ -398,7 +398,7 @@ class OptionParser(commandline.OptionParser):
         restrict.add_option(
             '--expr', action='append', type='expr',
             help='Boolean combinations of other restrictions, like '
-            '\'and(not(herd("python")), match("dev-python/*"))\'. '
+            '\'and(not(herd("python")), match("dev-python/*"))\'.'
             'WARNING: currently not completely reliable.',
             long_help='Boolean combinations of other restrictions, like '
             '``and(not(herd("python")), match("dev-python/*"))``. '
@@ -630,7 +630,7 @@ def stringify_attr(config, pkg, attr):
     if attr == 'keywords':
         return ' '.join(sorted(value, key=lambda x:x.lstrip("~")))
     if attr == 'environment':
-        return ''.join(value.get_fileobj())
+        return ''.join(value.get_text_fileobj())
     if attr == 'repo':
         return str(getattr(value, 'repo_id', 'no repo id'))
     # hackish.

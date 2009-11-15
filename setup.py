@@ -309,19 +309,21 @@ packages = [
 
 extensions = []
 if not snk_distutils.is_py3k:
-    snk_distutils.OptionalExtension(
+    extensions.extend([
+        snk_distutils.OptionalExtension(
             'pkgcore.ebuild._atom', ['src/atom.c']),
-    snk_distutils.OptionalExtension(
-        'pkgcore.ebuild._cpv', ['src/cpv.c']),
-    snk_distutils.OptionalExtension(
-        'pkgcore.ebuild._depset', ['src/depset.c']),
-    snk_distutils.OptionalExtension(
-        'pkgcore.ebuild._filter_env', [
-            'src/filter_env.c', 'src/bmh_search.c']),
-    snk_distutils.OptionalExtension(
-        'pkgcore.ebuild._misc', ['src/misc.c']),
-    snk_distutils.OptionalExtension(
-        'pkgcore.restrictions._restrictions', ['src/restrictions.c']),
+        snk_distutils.OptionalExtension(
+            'pkgcore.ebuild._cpv', ['src/cpv.c']),
+        snk_distutils.OptionalExtension(
+            'pkgcore.ebuild._depset', ['src/depset.c']),
+        snk_distutils.OptionalExtension(
+            'pkgcore.ebuild._filter_env', [
+                'src/filter_env.c', 'src/bmh_search.c']),
+        snk_distutils.OptionalExtension(
+            'pkgcore.ebuild._misc', ['src/misc.c']),
+        snk_distutils.OptionalExtension(
+            'pkgcore.restrictions._restrictions', ['src/restrictions.c']),
+    ])
 
 from pkgcore.const import VERSION
 core.setup(

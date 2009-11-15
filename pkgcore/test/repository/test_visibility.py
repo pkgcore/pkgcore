@@ -40,6 +40,11 @@ class TestVisibility(TestCase):
             sorted(vrepo.itermatch(packages.AlwaysTrue)),
             sorted(repo.itermatch(atom("dev-util/bsdiff"))))
 
+        # check sentinel value handling.
+        vrepo = filterTree(repo, a2, sentinel_val=True)
+        self.assertEqual(sorted(x.cpvstr for x in vrepo),
+            sorted(['dev-util/diffball-0.7', 'dev-util/diffball-1.0']))
+
     def test_iter(self):
         repo, vrepo = self.setup_repos(packages.PackageRestriction(
                 "package", values.OrRestriction(

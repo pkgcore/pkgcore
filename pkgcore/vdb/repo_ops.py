@@ -69,8 +69,8 @@ class install(repo_interfaces.livefs_install):
                 v.flush()
             elif k == "environment":
                 data = bzip2.compress(
-                    self.new_pkg.environment.get_fileobj().read())
-                open(pjoin(dirpath, "environment.bz2"), "w").write(data)
+                    self.new_pkg.environment.get_bytes_fileobj().read())
+                open(pjoin(dirpath, "environment.bz2"), "wb").write(data)
                 del data
             else:
                 v = getattr(self.new_pkg, k)
@@ -99,7 +99,7 @@ class install(repo_interfaces.livefs_install):
                 "Creating an empty file")
             o = ''
         else:
-            o = o.get_fileobj().read()
+            o = o.get_text_fileobj().read()
         # XXX lil hackish accessing PF
         open(pjoin(dirpath, self.new_pkg.PF + ".ebuild"), "w").write(o)
 

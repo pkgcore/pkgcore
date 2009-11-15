@@ -30,7 +30,7 @@ def generate_attr_dict(pkg, portage_compatible=True):
             continue
         v = getattr(pkg, k)
         if k == 'environment':
-            d['environment.bz2'] = compress(v.get_fileobj().read())
+            d['environment.bz2'] = compress(v.get_bytes_fileobj().read())
             continue
         if k == 'provides':
             versionless_provides = lambda b: b.key
@@ -44,7 +44,7 @@ def generate_attr_dict(pkg, portage_compatible=True):
             s = v
         d[_metadata_rewrites.get(k, k.upper())] = s
     d["%s-%s.ebuild" % (pkg.package, pkg.fullver)] = \
-        pkg.ebuild.get_fileobj().read()
+        pkg.ebuild.get_text_fileobj().read()
 
     # this shouldn't be necessary post portage 2.2.
     # till then, their code requires redundant data,

@@ -12,6 +12,7 @@ from snakeoil.mappings import ImmutableDict
 from snakeoil.weakrefs import WeakValCache
 from snakeoil.osutils import join as pjoin, listdir_files
 from snakeoil.compatibility import intern
+from snakeoil.klass import jit_attr_ext_method
 
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -75,11 +76,7 @@ class base(object):
             return None
         return local_source(pjoin(o[0], eclass+".eclass"))
 
-    def __getattr__(self, attr):
-        if attr == 'eclasses':
-            ret = self.eclasses = self._load_eclasses()
-            return ret
-        raise AttributeError(self, attr)
+    eclasses = jit_attr_ext_method("_load_eclasses", "_eclasses")
 
 
 class cache(base):
@@ -110,7 +107,6 @@ class cache(base):
             ys = y[:-eclass_len]
             ec[intern(ys)] = (self.eclassdir, long(mtime))
         return ImmutableDict(ec)
-
 
 
 class StackedCaches(base):

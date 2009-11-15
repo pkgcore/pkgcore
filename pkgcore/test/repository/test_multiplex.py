@@ -59,7 +59,7 @@ class TestMultiplex(TestCase):
 
     def test_sorting(self):
         self.assertEqual(list(x.cpvstr for x in
-            self.ctree.match(packages.AlwaysTrue, sorter=rev_sorted)),
+            self.ctree.itermatch(packages.AlwaysTrue, sorter=rev_sorted)),
             rev_sorted(self.tree1_list + self.tree2_list))
 
     def test_install(self):

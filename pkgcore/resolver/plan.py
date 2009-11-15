@@ -12,7 +12,7 @@ from pkgcore.repository.visibility import filterTree
 from pkgcore.resolver import state
 
 from snakeoil.currying import partial, post_curry
-from snakeoil.compatibility import any
+from snakeoil.compatibility import any, cmp, sort_cmp
 from snakeoil.iterables import caching_iter, iter_sort
 
 
@@ -43,7 +43,7 @@ def highest_iter_sort(l, pkg_grabber=pkg_grabber):
         elif y.repo.livefs:
             return -1
         return 0
-    l.sort(f, key=pkg_grabber, reverse=True)
+    sort_cmp(l, f, key=pkg_grabber, reverse=True)
     return l
 
 
@@ -59,7 +59,7 @@ def lowest_iter_sort(l, pkg_grabber=pkg_grabber):
         elif y.repo.livefs:
             return 1
         return 0
-    l.sort(f, key=pkg_grabber)
+    sort_cmp(l, f, key=pkg_grabber)
     return l
 
 

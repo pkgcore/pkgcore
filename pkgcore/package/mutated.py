@@ -33,11 +33,3 @@ class MutatedPkg(wrapper):
     def __str__(self):
         return '%s(%s, overrides=%s)' % \
             (self.__class__.__name__, self._raw_pkg, tuple(self._overrides))
-
-    @property
-    def versioned_atom(self):
-        return self._raw_pkg.versioned_atom
-
-    @property
-    def unversioned_atom(self):
-        return self._raw_pkg.unversioned_atom

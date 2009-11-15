@@ -251,6 +251,16 @@ class TestEqualityMatch(TestRestriction):
             self.kls("asdf", negate=True),
             self.kls("asdf", negate=False))
 
+    def test__hash__(self):
+        def f(*args, **kwds):
+            return hash(self.kls(*args, **kwds))
+        self.assertEqual(f("dar"), f("dar"))
+        self.assertEqual(f("dar"), f("dar", negate=False))
+        self.assertNotEqual(f("dar", negate=True), f("dar", negate=False))
+        self.assertEqual(f("dar", negate=True), f("dar", negate=True))
+        self.assertNotEqual(f("dar"), f("dar2"))
+        self.assertNotEqual(f("dar", negate=True), f("dar2"))
+
 
 class TestContainmentMatch(TestRestriction):
 

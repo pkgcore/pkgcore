@@ -28,7 +28,7 @@ class TestCase(orig_TestCase):
         else:
             if hasattr(excClass,'__name__'): excName = excClass.__name__
             else: excName = str(excClass)
-            raise self.failureException, "%s not raised: %s" % (excName, msg)
+            raise self.failureException("%s not raised: %s" % (excName, msg))
 
 
 class QuietLogger(log.logging.Handler):

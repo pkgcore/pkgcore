@@ -35,7 +35,7 @@ class FsObjsTest(TempDirMixin, TestCase):
         self.failUnless(o.location, "/tmp/etc/passwd")
         self.failUnless(o.data.get_path(), "/etc/passwd")
         self.failUnless(
-            o.data.get_fileobj().read(), open("/etc/passwd", "r").read())
+            o.data.get_bytes_fileobj().read(), open("/etc/passwd", "rb").read())
 
     def test_gen_obj_reg(self):
         path = os.path.join(self.dir, "reg_obj")

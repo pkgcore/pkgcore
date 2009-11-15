@@ -10,6 +10,7 @@ from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
 from snakeoil.osutils import pjoin, listdir_files
 from snakeoil.caching import WeakInstMeta
+from snakeoil import klass
 from itertools import chain
 demandload(globals(),
     'snakeoil.xml:etree',
@@ -81,7 +82,7 @@ class MetadataXml(object):
 
     def _parse_xml(self, source=None):
         if source is None:
-            source = self._source.get_fileobj()
+            source = self._source.get_bytes_fileobj()
         tree = etree.parse(source)
         maintainers = []
         for x in tree.findall("maintainer"):
@@ -170,6 +171,7 @@ class SharedPkgData(object):
         self.metadata_xml = metadata_xml
         self.manifest = manifest
 
+
 class Licenses(object):
 
     __metaclass__ = WeakInstMeta
@@ -182,16 +184,9 @@ class Licenses(object):
 
     def __init__(self, repo_base):
         object.__setattr__(self, '_base', repo_base)
-        object.__setattr__(self, '_licenses', None)
-        object.__setattr__(self, '_groups', None)
 
-    @property
+    @klass.jit_attr_none
     def licenses(self):
-        if self._licenses is None:
-            object.__setattr__(self, '_licenses', self._load_licenses())
-        return self._licenses
-
-    def _load_licenses(self):
         try:
             content = listdir_files(pjoin(self._base,
                 self.licenses_dir))
@@ -199,13 +194,8 @@ class Licenses(object):
             content = ()
         return frozenset(content)
 
-    @property
+    @klass.jit_attr_none
     def groups(self):
-        if self._groups is None:
-            object.__setattr__(self, '_groups', self._load_groups())
-        return self._groups
-
-    def _load_groups(self):
         try:
             fp = pjoin(self._base, self.license_group_location)
             d = fileutils.read_dict(fp, splitter=' ')
@@ -271,11 +261,10 @@ class OverlayedLicenses(Licenses):
 
     def __init__(self, *license_sources):
         object.__setattr__(self, '_license_sources', license_sources)
-        object.__setattr__(self, '_licenses', None)
-        object.__setattr__(self, '_groups', None)
         self._load_license_instances()
 
-    def _load_groups(self):
+    @klass.jit_attr_none
+    def groups(self):
         d = {}
         for li in self._license_instances:
             for k,v in li.groups.iteritems():
@@ -285,7 +274,8 @@ class OverlayedLicenses(Licenses):
                     d[k] = v
         return d
 
-    def _load_licenses(self):
+    @klass.jit_attr_none
+    def licenses(self):
         return frozenset(chain(*map(iter, self._license_instances)))
 
     def __getitem__(self, license):
@@ -297,9 +287,9 @@ class OverlayedLicenses(Licenses):
         raise KeyError(license)
 
     def refresh(self):
+        self._load_license_instances()
         for li in self._license_instances:
             li.refresh()
-        self._load_license_instances()
         Licenses.refresh(self)
 
     def _load_license_instances(self):

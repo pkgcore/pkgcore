@@ -7,6 +7,9 @@ base package class; instances should derive from this.
 Right now, doesn't provide much, need to change that down the line
 """
 
+from snakeoil.compatibility import cmp
+from snakeoil import klass
+
 class base(object):
 
     built = False
@@ -42,6 +45,8 @@ class wrapper(base):
 
     __slots__ = ("_raw_pkg",)
 
+    klass.inject_richcmp_methods_from_cmp(locals())
+
     def __init__(self, raw_pkg):
         object.__setattr__(self, "_raw_pkg", raw_pkg)
 
@@ -58,13 +63,8 @@ class wrapper(base):
     def __ne__(self, other):
         return not self == other
 
-    @property
-    def versioned_atom(self):
-        return self.raw_pkg.versioned_atom
-
-    @property
-    def unversioned_atom(self):
-        return self.raw_pkg.unversioned_atom
+    versioned_atom = klass.alias_attr("_raw_pkg.versioned_atom")
+    unversioned_atom = klass.alias_attr("_raw_pkg.unversioned_atom")
 
     def __hash__(self):
         return hash(self._raw_pkg)

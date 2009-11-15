@@ -12,7 +12,7 @@ __all__ = ("AndRestriction", "OrRestriction")
 
 from itertools import islice
 from pkgcore.restrictions import restriction
-from snakeoil.klass import generic_equality
+from snakeoil.klass import generic_equality, cached_hash
 
 class base(restriction.base):
 
@@ -20,7 +20,13 @@ class base(restriction.base):
 
     __metaclass__ = generic_equality
     __attr_comparison__ = ('negate', 'type', 'restrictions')
-    __slots__ = ('restrictions', 'type', 'negate')
+    __slots__ = ('restrictions', 'type', 'negate', '_hash')
+
+    @cached_hash
+    def __hash__(self):
+        if not isinstance(self.restrictions, tuple):
+            raise TypeError("%r isn't finalized" % self)
+        return hash(tuple(getattr(self, x) for x in self.__attr_comparison__))
 
     def __init__(self, *restrictions, **kwds):
 
@@ -151,17 +157,16 @@ class base(restriction.base):
 
 # this beast, handles N^2 permutations.  convert to stack based.
 def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
-                            filter, desired_false=None, desired_true=None,
+                            filter_func, desired_false=None, desired_true=None,
                             kill_switch=None):
     if desired_false is None:
         desired_false = lambda r, a:r.force_False(*a)
     if desired_true is None:
         desired_true = lambda r, a:r.force_True(*a)
 
-#    import pdb;pdb.set_trace()
     reset = True
     if starting == 0:
-        if filter(truths):
+        if filter_func(truths):
             yield True
     for index, rest in islice(enumerate(restrictions), starting, end):
         if reset:
@@ -172,13 +177,12 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
                 reset = True
                 t = truths[:]
                 t[index] = False
-                if filter(t):
+                if filter_func(t):
                     yield True
                 for i in iterative_quad_toggling(
-                    pkg, pvals, restrictions, index + 1, end, t, filter,
+                    pkg, pvals, restrictions, index + 1, end, t, filter_func,
                     desired_false=desired_false, desired_true=desired_true,
                     kill_switch=kill_switch):
-#                    import pdb;pdb.set_trace()
                     yield True
                 reset = True
             else:
@@ -189,17 +193,15 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
                 reset = True
                 t = truths[:]
                 t[index] = True
-                if filter(t):
+                if filter_func(t):
                     yield True
                 for x in iterative_quad_toggling(
-                    pkg, pvals, restrictions, index + 1, end, t, filter,
+                    pkg, pvals, restrictions, index + 1, end, t, filter_func,
                     desired_false=desired_false, desired_true=desired_true):
-#                    import pdb;pdb.set_trace()
                     yield True
                 reset = True
             elif index == end:
-                if filter(truths):
-#                    import pdb;pdb.set_trace()
+                if filter_func(truths):
                     yield True
             else:
                 if kill_switch is not None and kill_switch(truths, index):
@@ -237,12 +239,12 @@ class AndRestriction(base):
         # XXX this is quadratic. patches welcome to dodge the
         # requirement to push through all potential truths.
         truths = [r.match(*pvals) for r in self.restrictions]
-        def filter(truths):
+        def filter_func(truths):
             return False in truths
 
         for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
                                          len(self.restrictions), truths,
-                                         filter):
+                                         filter_func):
             return True
         return False
 
@@ -264,11 +266,11 @@ class AndRestriction(base):
         # XXX this is quadratic. patches welcome to dodge the
         # requirement to push through all potential truths.
         truths = [r.match(*pvals) for r in self.restrictions]
-        def filter(truths):
+        def filter_func(truths):
             return False in truths
         for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
                                          len(self.restrictions), truths,
-                                         filter):
+                                         filter_func):
             return True
         return False
 
@@ -449,11 +451,11 @@ class OrRestriction(base):
         # XXX this is quadratic. patches welcome to dodge the
         # requirement to push through all potential truths.
         truths = [r.match(*pvals) for r in self.restrictions]
-        def filter(truths):
+        def filter_func(truths):
             return True in truths
         for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
                                          len(self.restrictions), truths,
-                                         filter):
+                                         filter_func):
             return True
         return False
 
@@ -476,11 +478,11 @@ class OrRestriction(base):
         # XXX this is quadratic. patches welcome to dodge the
         # requirement to push through all potential truths.
         truths = [r.match(*pvals) for r in self.restrictions]
-        def filter(truths):
+        def filter_func(truths):
             return True in truths
         for i in iterative_quad_toggling(pkg, pvals, self.restrictions, 0,
                                          len(self.restrictions), truths,
-                                         filter):
+                                         filter_func):
             yield True
 
 

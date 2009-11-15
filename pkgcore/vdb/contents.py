@@ -13,7 +13,7 @@ demandload(globals(),
     'stat',
     'errno',
     'pkgcore.chksum:get_handler',
-    'snakeoil.osutils:readlines',
+    'snakeoil.osutils:readlines_ascii',
     'pkgcore:os_data',
 )
 
@@ -77,8 +77,8 @@ class ContentsFile(contentsSet):
             if write:
                 return AtomicWriteFile(self._source, uid=os_data.root_uid,
                     gid=os_data.root_gid, perms=0644)
-            return readlines(self._source, True)
-        fobj = self._source.get_fileobj()
+            return readlines_ascii(self._source, True)
+        fobj = self._source.get_text_fileobj()
         if write:
             fobj.seek(0, 0)
             fobj.truncate(0)

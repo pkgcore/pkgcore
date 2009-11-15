@@ -21,6 +21,7 @@ from snakeoil.currying import partial
 from snakeoil.mappings import DictMixin
 from snakeoil.osutils import listdir_dirs, listdir_files
 from snakeoil.osutils import join as pjoin
+from snakeoil.klass import jit_attr
 
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -119,12 +120,9 @@ class StackedXpakDict(DictMixin):
         self._parent = parent
         self._wipes = []
 
-    def __getattr__(self, attr):
-        if attr == "_xpak":
-            data = Xpak(self._parent._get_path(self._pkg))
-            object.__setattr__(self, attr, data)
-            return data
-        raise AttributeError(self, attr)
+    @jit_attr
+    def xpak(self):
+        return Xpak(self._parent._get_path(self._pkg))
 
     def __getitem__(self, key):
         key = self._metadata_rewrites.get(key, key)
@@ -134,9 +132,9 @@ class StackedXpakDict(DictMixin):
             data = generate_contents(self._parent._get_path(self._pkg))
             object.__setattr__(self, "contents", data)
         elif key == "environment":
-            data = self._xpak.get("environment.bz2")
+            data = self.xpak.get("environment.bz2")
             if data is None:
-                data = data_source(self._xpak.get("environment"),
+                data = data_source(self.xpak.get("environment"),
                     mutable=True)
                 if data is None:
                     raise KeyError(
@@ -145,12 +143,12 @@ class StackedXpakDict(DictMixin):
             else:
                 data = data_source(decompress(data), mutable=True)
         elif key == "ebuild":
-            data = self._xpak.get("%s-%s.ebuild" %
+            data = self.xpak.get("%s-%s.ebuild" %
                 (self._pkg.package, self._pkg.fullver), "")
             data = data_source(data)
         else:
             try:
-                data = self._xpak[key]
+                data = self.xpak[key]
             except KeyError:
                 if key == '_eclasses_':
                     # hack...
@@ -165,18 +163,18 @@ class StackedXpakDict(DictMixin):
                 raise KeyError(self, key)
             self._wipes.append(key)
         else:
-            del self._xpak[key]
+            del self.xpak[key]
 
     def __setitem__(self, key, val):
         if key in ("contents", "environment"):
             setattr(self, key, val)
             self._wipes = [x for x in self._wipes if x != key]
         else:
-            self._xpak[key] = val
+            self.xpak[key] = val
         return val
 
     def iterkeys(self):
-        for k in self._xpak:
+        for k in self.xpak:
             yield k
         for k in ("environment", "contents"):
             if self.get(k) is not None:

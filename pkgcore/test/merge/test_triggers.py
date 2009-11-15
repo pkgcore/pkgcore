@@ -189,6 +189,7 @@ class Test_mtime_watcher(mixins.TempDirMixin, TestCase):
             l = l[0]
             # mtime *must* be a float.
             self.assertInstance(l.mtime, float)
+            self.assertEqual(os.stat_float_times(), cur)
         finally:
             os.stat_float_times(cur)
 

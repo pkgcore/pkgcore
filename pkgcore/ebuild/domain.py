@@ -217,7 +217,8 @@ class domain(pkgcore.config.domain.domain):
             else:
                 r = packages.OrRestriction(
                     r, generate_unmasking_restrict(pkg_unmaskers),
-                    disable_inst_caching=True)
+                    disable_inst_caching=True,
+                    finalize=True)
         if r:
             vfilter.add_restriction(r)
         del pkg_unmaskers, pkg_maskers
@@ -261,6 +262,8 @@ class domain(pkgcore.config.domain.domain):
                 master_license, license))
 
         del master_license, license
+
+        vfilter.finalize()
 
         # if it's made it this far...
 

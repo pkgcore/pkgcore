@@ -47,7 +47,7 @@ def _reset_env_data_source(method):
     #        if self.env_data_source is None:
     #            try:
     #                fp = self.env["PORT_ENV_FILE"]
-    #                f = self.env_data.get_fileobj()
+    #                f = self.env_data.get_text_fileobj()
     #                f.seek(0, 0)
     #                f.truncate(0)
     #                f.write(open(fp, "r").read())
@@ -158,7 +158,6 @@ class ebd(object):
                  if not isinstance(v, basestring)]
         for k in wipes:
             del self.env[k]
-        del wipes, k, v
 
         self.set_op_vars(tmp_offset)
         self.clean_at_start = clean
@@ -192,8 +191,8 @@ class ebd(object):
         self.env["IMAGE"] = self.env["D"]
 
     def get_env_source(self):
-        return data_source.data_source(
-            open(pjoin(self.env["T"], "environment"), "r").read())
+        return data_source.bytes_data_source(
+            open(pjoin(self.env["T"], "environment"), "rb").read())
 
     def setup_env_data_source(self):
         if not ensure_dirs(self.env["T"], mode=0770, gid=portage_gid,
@@ -207,8 +206,8 @@ class ebd(object):
             # load data first (might be a local_source), *then* right
             # if it's a src_ebuild being installed, trying to do two steps
             # stomps the local_sources data.
-            data = self.env_data_source.get_fileobj().read()
-            open(fp, "w").write(data)
+            data = self.env_data_source.get_bytes_fileobj().read()
+            open(fp, "wb").write(data)
             del data
 
     def setup_logging(self):

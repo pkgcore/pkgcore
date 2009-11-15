@@ -33,6 +33,7 @@ from pkgcore.const import (
 from pkgcore.os_data import portage_uid, portage_gid
 
 from snakeoil.currying import post_curry, partial
+from snakeoil import klass
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.log:logger',
@@ -430,12 +431,7 @@ class EbuildProcessor(object):
         """
         self.processing_lock = False
 
-    @property
-    def locked(self):
-        """
-        is the processor locked?
-        """
-        return self.processing_lock
+    locked = klass.alias_attr('processing_lock')
 
     @property
     def is_alive(self):
@@ -607,7 +603,7 @@ class EbuildProcessor(object):
             self.write(value)
         else:
             # XXX $10 this doesn't work.
-            value = eclass.get_fileobj().read()
+            value = eclass.get_text_fileobj().read()
             self.write("transfer")
             self.write(value)
 

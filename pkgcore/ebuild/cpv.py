@@ -5,7 +5,8 @@
 
 """gentoo ebuild specific base package class"""
 
-from snakeoil.compatibility import all
+from snakeoil.compatibility import all, cmp, is_py3k
+from snakeoil.klass import inject_richcmp_methods_from_cmp
 from pkgcore.ebuild.errors import InvalidCPV
 
 from pkgcore.package import base
@@ -356,6 +357,7 @@ def mk_cpv_cls(base_cls):
 
         __slots__ = ()
 
+        inject_richcmp_methods_from_cmp(locals())
 #       __metaclass__ = WeakInstMeta
 
 #       __inst_caching__ = True
@@ -364,6 +366,10 @@ def mk_cpv_cls(base_cls):
             return '<%s cpvstr=%s @%#8x>' % (
                 self.__class__.__name__, getattr(self, 'cpvstr', None),
                 id(self))
+
+        # for some insane reason, py3k doesn't pick up the __hash__... add it
+        # manually.
+        __hash__ = base_cls.__hash__
 
         @property
         def versioned_atom(self):

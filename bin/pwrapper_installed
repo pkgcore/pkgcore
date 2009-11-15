@@ -10,27 +10,24 @@ if __name__ == '__main__':
         from snakeoil import modules
         from pkgcore.util import commandline
     except ImportError:
-        print >> sys.stderr, 'Cannot import pkgcore!'
-        print >> sys.stderr, 'Verify it is properly installed and/or ' \
-            'PYTHONPATH is set correctly.'
-        if '--debug' not in sys.argv:
-            print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
-        else:
+        sys.stderr.write('Cannot import pkgcore!\n')
+        sys.stderr.write('Verify it is properly installed and/or ' \
+            'PYTHONPATH is set correctly.\n')
+        if '--debug' in sys.argv:
             raise
+        sys.stderr.write('Add --debug to the commandline for a traceback.\n')
         sys.exit(1)
 
     name = osp.basename(sys.argv[0])
     try:
         script = modules.load_module('pkgcore.scripts.%s' % (name,))
     except modules.FailedImport:
-        print >> sys.stderr, 'Cannot load script %s.' % (name,)
-        if '--debug' not in sys.argv:
-            print >> sys.stderr, 'Add --debug to the commandline for a traceback.'
-        else:
+        sys.stderr.write('Cannot load script %s.\n' % (name,))
+        if '--debug' in sys.argv:
             raise
+        sys.stderr.write('Add --debug to the commandline for a traceback.\n')
         sys.exit(1)
-    else:
-        subcommands = getattr(script, 'commandline_commands', None)
-        if subcommands is None:
-            subcommands = {None: (script.OptionParser, script.main)}
-        commandline.main(subcommands)
+    subcommands = getattr(script, 'commandline_commands', None)
+    if subcommands is None:
+        subcommands = {None: (script.OptionParser, script.main)}
+    commandline.main(subcommands)

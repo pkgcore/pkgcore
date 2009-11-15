@@ -454,7 +454,7 @@ static PyTypeObject pkgcore_PackageRestriction_Type = {
     0,                                              /* tp_descr_get */
     0,                                              /* tp_descr_set */
     0,                                              /* tp_dictoffset */
-    pkgcore_PackageRestriction_init,                /* tp_init */
+    (initproc)pkgcore_PackageRestriction_init,      /* tp_init */
     0,                                              /* tp_alloc */
     pkgcore_PackageRestriction_new,                 /* tp_new */
 };

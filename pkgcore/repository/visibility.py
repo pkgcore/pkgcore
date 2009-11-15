@@ -9,7 +9,11 @@ from pkgcore.repository import prototype, errors
 from pkgcore.restrictions.restriction import base
 from pkgcore.interfaces.repo import operations_proxy
 from snakeoil.klass import GetAttrProxy
-import itertools
+# these tricks are to keep 2to3 from screwing up.
+from itertools import ifilter, ifilterfalse as filterfalse
+from snakeoil import compatibility
+if compatibility.is_py3k:
+    ifilter = filter
 
 class filterTree(prototype.tree):
 
@@ -29,9 +33,9 @@ class filterTree(prototype.tree):
         self.restriction = restriction
         self.raw_repo = repo
         if sentinel_val:
-            self._filterfunc = itertools.ifilter
+            self._filterfunc = ifilter
         else:
-            self._filterfunc = itertools.ifilterfalse
+            self._filterfunc = filterfalse
 
     def itermatch(self, restrict, **kwds):
         # note that this lets the repo do the initial filtering.

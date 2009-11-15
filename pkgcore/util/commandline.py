@@ -20,7 +20,7 @@ import os.path
 import logging
 
 from pkgcore.config import load_config, errors
-from snakeoil import formatters, demandload, fix_copy
+from snakeoil import formatters, demandload, fix_copy, klass
 fix_copy.inject_copy()
 import optparse
 
@@ -111,30 +111,20 @@ class Values(optparse.Values, object):
             debug=self.debug, prepend_sources=(add_config, new_config),
             skip_config_files=self.empty_config)
 
-    @property
-    def config(self):
-        try:
-            return self._config
-        except AttributeError:
-            self._config = self.load_config()
-            return self._config
-
     def load_domain(self):
         """Override this if you need to change the default domain logic."""
-        if self._domain is None:
-            self._domain = self.config.get_default('domain')
-            if self._domain is None:
-                self._raise_error(
+        domain = self.config.get_default('domain')
+        if domain is None:
+            self._raise_error(
                 'No default domain found, fix your configuration '
                 'or pass --domain (valid domains: %s)' % (
                 ', '.join(self.config.domain),))
-        return self._domain
+        return domain
 
-    @property
-    def domain(self):
-        if self._domain is None:
-            self.load_domain()
-        return self._domain
+    config = klass.jit_attr_ext_method("load_config", "_config",
+        uncached_val=None)
+    domain = klass.jit_attr_ext_method("load_domain", "_domain",
+        uncached_val=None)
 
 
 def read_file_callback(option, opt_str, value, parser):

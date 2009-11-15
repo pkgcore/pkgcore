@@ -5,9 +5,9 @@
 
 
 import operator
-import tempfile
 from pkgcore.test import TestCase
 from pkgcore.config import load_config, configurable, basics
+from snakeoil.test.mixins import mk_named_tempfile
 
 
 @configurable(typename='foo')
@@ -18,13 +18,13 @@ def passthrough(*args, **kwargs):
 class ConfigLoadingTest(TestCase):
 
     def setUp(self):
-        self.user_config = tempfile.NamedTemporaryFile()
+        self.user_config = mk_named_tempfile()
         self.user_config.write(
             '[foo]\n'
             'class = pkgcore.test.config.test_init.passthrough\n'
             )
         self.user_config.flush()
-        self.system_config = tempfile.NamedTemporaryFile()
+        self.system_config = mk_named_tempfile()
         self.system_config.write(
             '[foo]\n'
             'class = also invalid\n'

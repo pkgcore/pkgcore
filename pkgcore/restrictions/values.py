@@ -46,10 +46,14 @@ class base(restriction.base):
 def reflective_hash(self):
     return self._hash
 
-class hashed_base(base):
-
-    __slots__ = ("_hash")
-    __hash__ = reflective_hash
+def hashed_base(name, bases, scope):
+    scope.setdefault("__hash__", reflective_hash)
+    slots = scope.get("__slots__", None)
+    if slots is not None:
+        if "_hash" not in slots:
+            slots = scope["__slots__"] = slots + ("_hash",)
+        scope.setdefault("__attr_comparison__", slots)
+    return generic_equality(name, bases, scope)
 
 
 class GetAttrRestriction(packages.PackageRestriction):
@@ -84,15 +88,14 @@ class VersionRestriction(base):
     __slots__ = ()
 
 
-class StrRegex(hashed_base):
+class StrRegex(base):
 
     """
     regex based matching
     """
 
-    __slots__ = ('flags', 'regex', '_matchfunc', 'ismatch', 'negate')
-    __metaclass__ = generic_equality
-    __attr_comparison__ = ('_hash',) + __slots__
+    __slots__ = ('_hash', 'flags', 'regex', '_matchfunc', 'ismatch', 'negate')
+    __metaclass__ = hashed_base
     __inst_caching__ = True
 
     def __init__(self, regex, case_sensitive=True, match=False, negate=False):
@@ -161,9 +164,8 @@ class native_StrExactMatch(object):
     exact string comparison match
     """
 
-    __slots__ = ('_hash', 'exact', 'case_sensitive', 'negate')
+    __slots__ = __attr_comparison__ = ('_hash', 'exact', 'case_sensitive', 'negate')
     __metaclass__ = generic_equality
-    __attr_comparison__ = __slots__
 
     def __init__(self, exact, case_sensitive=True, negate=False):
 
@@ -232,15 +234,14 @@ class StrExactMatch(base_StrExactMatch, base):
     __str__ = _StrExact__str__
 
 
-class StrGlobMatch(hashed_base):
+class StrGlobMatch(base):
 
     """
     globbing matches; essentially startswith and endswith matches
     """
 
-    __slots__ = ('glob', 'prefix', 'negate', 'flags')
-    __attr_comparison__ = ('_hash',) + __slots__
-    __metaclass__ = generic_equality
+    __slots__ = ('_hash', 'glob', 'prefix', 'negate', 'flags')
+    __metaclass__ = hashed_base
     __inst_caching__ = True
 
     def __init__(self, glob, case_sensitive=True, prefix=True, negate=False):
@@ -305,105 +306,47 @@ class StrGlobMatch(hashed_base):
         return "%s*%s" % (s, self.glob)
 
 
-def EqualityMatch(val, negate=False):
-    """
-    equality test wrapping L{ComparisonMatch}
-    """
-    return ComparisonMatch(cmp, val, [0], negate=negate)
+class EqualityMatch(base):
 
-def _mangle_cmp_val(val):
-    if val < 0:
-        return -1
-    elif val > 0:
-        return 1
-    return 0
-
-
-class ComparisonMatch(hashed_base):
-    """Match if the comparison funcs return value is what's required."""
-
-    _op_converter = {"=": (0,)}
-    _rev_op_converter = {(0,): "="}
-
-    for k, v in (("<", (-1,)), (">", (1,))):
-        _op_converter[k] = v
-        _op_converter[k+"="] = tuple(sorted(v + (0,)))
-        _rev_op_converter[v] = k
-        _rev_op_converter[tuple(sorted(v+(0,)))] = k+"="
-    _op_converter["!="] = _op_converter["<>"] = (-1, 1)
-    _rev_op_converter[(-1, 1)] = "!="
-    del k, v
-
-    __slots__ = ('cmp_func', 'data', 'matching_vals')
+    __slots__ = ('negate', 'data')
     __metaclass__ = generic_equality
     __attr_comparison__ = __slots__
 
-    @classmethod
-    def convert_str_op(cls, op_str):
-        return cls._op_converter[op_str]
-
-    @classmethod
-    def convert_op_str(cls, op):
-        return cls._rev_op_converter[tuple(sorted(op))]
-
-    def __init__(self, cmp_func, data, matching_vals, negate=False):
+    def __init__(self, data, negate=False):
 
         """
-        @param cmp_func: comparison function that compares data against what
-            is passed in during match
         @param data: data to base comparison against
-        @param matching_vals: sequence, composed of
-            [-1 (less then), 0 (equal), and 1 (greater then)].
-            If you specify [-1,0], you're saying
-            "result must be less then or equal to".
         @param negate: should the results be negated?
         """
 
         sf = object.__setattr__
-        sf(self, "cmp_func", cmp_func)
-
-        if not isinstance(matching_vals, (tuple, list)):
-            if isinstance(matching_vals, basestring):
-                matching_vals = self.convert_str_op(matching_vals)
-            elif isinstance(matching_vals, int):
-                matching_vals = [matching_vals]
-            else:
-                raise TypeError("matching_vals must be a list/tuple")
-
+        sf(self, 'negate', negate)
         sf(self, "data", data)
-        if negate:
-            sf(self, "matching_vals",
-                tuple(set([-1, 0, 1]).difference(_mangle_cmp_val(x)
-                    for x in matching_vals)))
-        else:
-            sf(self, "matching_vals",
-                tuple(_mangle_cmp_val(x) for x in matching_vals))
 
     def __hash__(self):
-        return hash((self.cmp_func, self.matching_vals, self.data))
+        return hash((self.__class__, self.negate, self.data))
 
     def match(self, actual_val):
-        return _mangle_cmp_val(
-            self.cmp_func(actual_val, self.data)) in self.matching_vals
+        return (self.data == actual_val) != self.negate
 
     def __repr__(self):
-        return '<%s %s %r @%#8x>' % (
-            self.__class__.__name__, self.convert_op_str(self.matching_vals),
-            self.data, id(self))
+        return '<%s %r negate=%r @%#8x>' % (
+            self.__class__.__name__, self.data, self.negate, id(self))
 
     def __str__(self):
-        return "%s %s" % (self.convert_op_str(self.matching_vals), self.data)
+        if self.negate:
+            return "EqualityMatch: !=%s" % (self.data,)
+        return "EqualityMatch: =%s" % (self.data,)
 
 
-class ContainmentMatch(hashed_base):
+class ContainmentMatch(base):
 
     """used for an 'in' style operation, 'x86' in ['x86','~x86'] for example
     note that negation of this *does* not result in a true NAND when all is on.
     """
 
-    __slots__ = ('vals', 'all', 'negate')
-    __metaclass__ = generic_equality
-    __attr_comparison__ = ('_hash',) + __slots__
+    __slots__ = ('_hash', 'vals', 'all', 'negate')
+    __metaclass__ = hashed_base
     __inst_caching__ = True
 
     def __init__(self, *vals, **kwds):
@@ -566,12 +509,13 @@ class ContainmentMatch(hashed_base):
         return s % ', '.join(map(str, self.vals))
 
 
-class FlatteningRestriction(hashed_base):
+class FlatteningRestriction(base):
 
     """Flatten the values passed in and apply the nested restriction."""
 
-    __slots__ = ('dont_iter', 'restriction', 'negate')
+    __slots__ = __attr_comparison__ = ('dont_iter', 'restriction', 'negate')
     __hash__ = object.__hash__
+    __metaclass__ = generic_equality
 
     def __init__(self, dont_iter, childrestriction, negate=False):
         """Initialize.
@@ -601,13 +545,13 @@ class FlatteningRestriction(hashed_base):
             id(self))
 
 
-class FunctionRestriction(hashed_base):
+class FunctionRestriction(base):
 
     """Convenience class for creating special restrictions."""
 
-    __slots__ = ('func', 'negate')
-
+    __attr_comparison__ = __slots__ = ('func', 'negate')
     __hash__ = object.__hash__
+    __metaclass__ = generic_equality
 
     def __init__(self, func, negate=False):
         """Initialize.
@@ -630,12 +574,13 @@ class FunctionRestriction(hashed_base):
             self.__class__.__name__, self.func, self.negate, id(self))
 
 
-class StrConversion(hashed_base):
+class StrConversion(base):
 
     """convert passed in data to a str object"""
 
     __hash__ = object.__hash__
-    __slots__ = ('restrict',)
+    __attr_comparison__ = __slots__ = ('restrict',)
+    __metaclass__ = generic_equality
 
     def __init__(self, restrict):
         object.__setattr__(self, "restrict", restrict)

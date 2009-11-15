@@ -9,11 +9,12 @@ from pkgcore.ebuild import const, ebuild_src
 from pkgcore.ebuild.misc import incremental_expansion
 from pkgcore.repository import virtual
 
-from snakeoil.osutils import abspath, join as pjoin, readlines
+from snakeoil.osutils import abspath, join as pjoin, readlines_utf8
 from snakeoil.containers import InvertedContains
 from snakeoil.fileutils import iter_read_bash, read_bash_dict
 from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import partial
+from snakeoil.compatibility import next, is_py3k
 from snakeoil.demandload import demandload
 
 demandload(globals(),
@@ -33,12 +34,13 @@ class ProfileError(Exception):
         return "ProfileError: profile %r, file %r, error %s" % (
             self.path, self.filename, self.error)
 
-def load_decorator(filename, handler=iter_read_bash, fallback=()):
+def load_decorator(filename, handler=iter_read_bash, fallback=(),
+    read_func=readlines_utf8):
     def f(func):
         def f2(self, *args):
             path = pjoin(self.path, filename)
             try:
-                data = readlines(path, False, True, True)
+                data = read_func(path, False, True, True)
                 if data is None:
                     return func(self, fallback, *args)
                 return func(self, handler(data), *args)
@@ -124,12 +126,12 @@ class ProfileNode(object):
         self.masks = split_negations(data, self.eapi_atom)
         return self.masks
 
-    @load_decorator("deprecated", lambda i:i, None)
+    @load_decorator("deprecated", (lambda i:i), None)
     def _load_deprecated(self, data):
         if data is not None:
             data = iter(data)
             try:
-                replacement = data.next().strip()
+                replacement = next(data).strip()
                 msg = "\n".join(x.lstrip("#").strip()
                     for x in data)
                 data = (replacement, msg)
@@ -212,7 +214,10 @@ class ProfileNode(object):
     def _load_default_env(self):
         path = pjoin(self.path, "make.defaults")
         try:
-            f = open(path, "r")
+            if is_py3k:
+                f = open(path, 'r', encoding='utf8')
+            else:
+                f = open(path, "r")
         except IOError, ie:
             if ie.errno != errno.ENOENT:
                 raise ProfileError(self.path, "make.defaults", ie)

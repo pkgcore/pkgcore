@@ -2,6 +2,7 @@
 # License: GPL2/BSD
 
 from snakeoil.mappings import ImmutableDict, StackedDict
+from snakeoil import klass
 from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.chksum import get_handlers
 
@@ -33,32 +34,23 @@ class PackagesCache(object):
 
     def __init__(self, source):
         self._source = source
-        self._data = False
-        self._pkgs = None
 
-    @property
+    @klass.jit_attr
     def data(self):
-        if self._data is False:
-            if isinstance(self._source, basestring):
-                self._data= iter(open(self._source))
-            else:
-                self._data = iter(self._source)
-        return self._data
+        if isinstance(self._source, basestring):
+            return iter(open(self._source))
+        return iter(self._source)
 
-    def _parse_header(self):
-        self.defaults = ImmutableDict(
+    @klass.jit_attr
+    def defaults(self):
+        return ImmutableDict(
             (self._header_mangling_map.get(k, k), v)
             for k,v in iter_till_empty_newline(self.data))
 
-    def __getattr__(self, attr):
-        if attr == 'defaults':
-            self._parse_header()
-            return self.defaults
-        raise AttributeError(self, attr)
-
-    def _parse_pkg_entries(self):
+    @klass.jit_attr
+    def pkg_dict(self):
         self.defaults
-        pkgs = self._pkgs = {}
+        pkgs = {}
         count = 0
         while True:
             d = dict(iter_till_empty_newline(self.data))
@@ -78,10 +70,4 @@ class PackagesCache(object):
             pkgs.setdefault(cpv.category, {}).setdefault(cpv.package, {})[
                 cpv.version] = CacheEntry(d, self.defaults)
         assert count == int(self.defaults.get('PACKAGES', count))
-
-    @property
-    def pkg_dict(self):
-        if self._pkgs is None:
-            self._parse_pkg_entries()
-        return self._pkgs
-
+        return pkgs

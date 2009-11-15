@@ -9,7 +9,7 @@ package with its metadata accessible (think 'no longer abstract')
 from pkgcore.ebuild import cpv
 from pkgcore.ebuild.atom import atom
 
-from snakeoil.weakrefs import WeakValCache
+from snakeoil import klass, weakrefs
 
 def DeriveMetadataKls(original_kls):
     if getattr(original_kls, "_derived_metadata_kls", False):
@@ -55,9 +55,7 @@ def DeriveMetadataKls(original_kls):
             return self._fetch_metadata()
         _get_attr["data"] = _get_data
 
-        @property
-        def repo(self):
-            return self._parent._parent_repo
+        repo = klass.alias_attr("_parent._parent_repo")
 
         def release_cached_data(self):
             for x in self._get_attr:
@@ -98,7 +96,7 @@ class factory(object):
 
     def __init__(self, parent_repo):
         self._parent_repo = parent_repo
-        self._cached_instances = WeakValCache()
+        self._cached_instances = weakrefs.WeakValCache()
 
     def new_package(self, *args):
         """

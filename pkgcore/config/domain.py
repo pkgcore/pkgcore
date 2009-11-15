@@ -6,6 +6,7 @@ base class to derive from for domain objects
 
 Bit empty at the moment
 """
+from snakeoil import klass
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.repository:multiplex")
 
@@ -14,32 +15,22 @@ demandload(globals(), "pkgcore.repository:multiplex")
 
 class domain(object):
 
-    @property
+    @klass.jit_attr
     def all_repos(self):
         """
         return a single repository representing all repositories from
         which pkgs can be installed from for this domain
         """
-        all_repos = getattr(self, '_all_repos', None)
-        if all_repos is None:
-            if len(self.repos) == 1:
-                all_repos = self.repos[0]
-            else:
-                all_repos = multiplex.tree(*self.repos)
-            self._all_repos = all_repos
-        return all_repos
+        if len(self.repos) == 1:
+            return self.repos[0]
+        return multiplex.tree(*self.repos)
 
-    @property
+    @klass.jit_attr
     def all_livefs_repos(self):
         """
         return a single repository representing all repositories representing
         what is installed for this domain.
         """
-        livefs_repos = getattr(self, '_all_livefs_repos', None)
-        if livefs_repos is None:
-            if len(self.vdb) == 1:
-                livefs_repos = self.vdb[0]
-            else:
-                livefs_repos = multiplex.tree(*self.vdb)
-            self._all_livefs_repos = livefs_repos
-        return livefs_repos
+        if len(self.vdb) == 1:
+            return self.vdb[0]
+        return multiplex.tree(*self.vdb)

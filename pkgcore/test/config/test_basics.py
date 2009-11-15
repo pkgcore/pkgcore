@@ -1,3 +1,4 @@
+# Copyright: 2009 Brian Harring <ferringb@gmail.com>
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 

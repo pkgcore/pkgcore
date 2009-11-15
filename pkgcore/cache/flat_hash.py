@@ -9,7 +9,7 @@ import os, stat, errno
 from pkgcore.cache import fs_template
 from pkgcore.cache import errors
 from pkgcore.config import ConfigHint
-from snakeoil.osutils import join as pjoin, readlines
+from snakeoil.osutils import join as pjoin, readlines_ascii
 
 class database(fs_template.FsBased):
 
@@ -31,7 +31,7 @@ class database(fs_template.FsBased):
     def _getitem(self, cpv):
         path = pjoin(self.location, cpv)
         try:
-            data = readlines(path, True, True, True)
+            data = readlines_ascii(path, True, True, True)
             if data is None:
                 raise KeyError(cpv)
             return self._parse_data(data, data.mtime)

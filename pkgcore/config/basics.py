@@ -1,3 +1,4 @@
+# Copyright: 2009 Brian Harring <ferringb@gmail.com>
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: GPL2
 
@@ -12,6 +13,7 @@ L{configuration exception<pkgcore.config.errors.ConfigurationError>}
 
 from pkgcore.config import errors, configurable
 from snakeoil import currying
+from snakeoil import compatibility
 from snakeoil.demandload import demandload
 demandload(globals(), "snakeoil:modules")
 
@@ -21,6 +23,12 @@ type_names = ("list", "str", "bool", "int")
 # Copied from inspect.py which copied it from compile.h.
 # Also documented in http://docs.python.org/ref/types.html.
 CO_VARARGS, CO_VARKEYWORDS = 4, 8
+
+
+if compatibility.is_py3k:
+    _code_attrname = '__code__'
+else:
+    _code_attrname = 'func_code'
 
 class ConfigType(object):
 
@@ -53,7 +61,7 @@ class ConfigType(object):
         self.name = func_obj.__name__
         self.callable = func_obj
         self.doc = getattr(func_obj, '__doc__', None)
-        if not hasattr(func_obj, 'func_code'):
+        if not hasattr(func_obj, _code_attrname):
             # No function or method, should be a class so grab __init__.
             func_obj = func_obj.__init__
         # We do not use the inspect module because that is a heavy
@@ -61,13 +69,13 @@ class ConfigType(object):
         # need without it. Most of the code in its getargs function
         # deals with tuples inside argument definitions, which we do
         # not support anyway.
-        code = func_obj.func_code
-        args = code.co_varnames[:code.co_argcount]
+        code = getattr(func_obj, _code_attrname)
+        if code.co_argcount and code.co_varnames[0] == 'self':
+            args = code.co_varnames[1:code.co_argcount]
+        else:
+            args = code.co_varnames[:code.co_argcount]
         varargs = bool(code.co_flags & CO_VARARGS)
         varkw = bool(code.co_flags & CO_VARKEYWORDS)
-        if hasattr(func_obj, 'im_func'):
-            # It is a method. Chop off 'self':
-            args = args[1:]
         defaults = func_obj.func_defaults
         if defaults is None:
             defaults = ()

@@ -195,7 +195,7 @@ class mtime_watcher(object):
         cset = contents.contentsSet(mtimes)
         now = time.time()
         pause_cutoff = floor(now)
-        past = max(pause_cutoff - forced_past, 0)
+        past = float(max(pause_cutoff - forced_past, 0))
         resets = [x for x in mtimes if x.mtime > past]
         for x in resets:
             cset.add(x.change_attributes(mtime=past))

@@ -248,7 +248,7 @@ def native__getattr__(self, attr):
         if len(self.slot) == 1:
             v = values.StrExactMatch(self.slot[0])
         else:
-            v = values.OrRestriction(*map(values.StrExactMatch,
+            v = values.OrRestriction(finalize=True, *map(values.StrExactMatch,
                 self.slot))
         r.append(packages.PackageRestriction("slot", v))
 
@@ -265,7 +265,7 @@ def native__getattr__(self, attr):
         if len(v) == 1:
             v = v[0]
         else:
-            v = values.AndRestriction(*v, finalize=True)
+            v = values.AndRestriction(finalize=True, *v)
         r.append(packages.PackageRestriction("use", v))
 
     r = tuple(r)

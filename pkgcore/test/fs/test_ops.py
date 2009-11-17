@@ -170,7 +170,7 @@ class Test_merge_contents(ContentsMixin):
             if not isinstance(e, dict):
                 continue
             src, dest, cset = self.generic_merge_bits(e)
-            new_cset = contents.contentsSet(ops.offset_rewriter(dest, cset))
+            new_cset = contents.contentsSet(contents.offset_rewriter(dest, cset))
             s = set(new_cset)
             ops.merge_contents(cset, offset=dest, callback=s.remove)
             self.assertFalse(s)
@@ -224,7 +224,7 @@ class Test_unmerge_contents(ContentsMixin):
             if not isinstance(e, dict):
                 continue
             img, cset = self.generic_unmerge_bits(e)
-            s = set(ops.offset_rewriter(img, cset))
+            s = set(contents.offset_rewriter(img, cset))
             ops.unmerge_contents(cset, offset=img, callback=s.remove)
             self.assertFalse(s, s)
 
@@ -245,40 +245,3 @@ class Test_unmerge_contents(ContentsMixin):
         open(fp, "w")
         self.assertTrue(ops.unmerge_contents(cset, offset=img))
         self.assertTrue(os.path.exists(fp))
-
-
-class Test_offset_rewriting(TestCase):
-
-    change_offset = staticmethod(ops.change_offset_rewriter)
-    offset_insert = staticmethod(ops.offset_rewriter)
-
-    def test_offset_rewriter(self):
-        f = ["/foon/%i" % x for x in xrange(10)]
-        f.extend("/foon/%i/blah" % x for x in xrange(5))
-        f = [fs.fsFile(x, strict=False) for x in f]
-        self.assertEqual(sorted(x.location for x in f),
-            sorted(x.location for x in self.offset_insert('/', f)))
-        self.assertEqual(
-            sorted('/usr%s' % x.location for x in f),
-            sorted(x.location for x in self.offset_insert('/usr', f)))
-
-    def test_it(self):
-        f = ["/foon/%i" % x for x in xrange(10)]
-        f.extend("/foon/%i/blah" % x for x in xrange(5))
-        f = [fs.fsFile(x, strict=False) for x in f]
-        self.assertEqual(sorted(x.location for x in f),
-            sorted(y.location for y in self.change_offset('/usr', '/',
-                (x.change_attributes(location='/usr%s' % x.location)
-                    for x in f)
-            )))
-        self.assertEqual(sorted(x.location for x in f),
-            sorted(y.location for y in self.change_offset('/usr', '/',
-                (x.change_attributes(location='/usr/%s' % x.location)
-                    for x in f)
-            )))
-        self.assertEqual(sorted("/usr" + x.location for x in f),
-            sorted(y.location for y in self.change_offset('/', '/usr',
-                (x.change_attributes(location='/%s' % x.location)
-                    for x in f)
-            )))
-

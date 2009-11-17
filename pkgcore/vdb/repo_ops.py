@@ -16,7 +16,7 @@ demandload(globals(),
     'pkgcore.ebuild:conditionals',
     'pkgcore.ebuild:triggers',
     'pkgcore.log:logger',
-    'pkgcore.fs.ops:change_offset_rewriter',
+    'pkgcore.fs.contents:change_offset_rewriter',
     'pkgcore.vdb.contents:ContentsFile',
 )
 

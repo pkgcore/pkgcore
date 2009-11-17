@@ -32,7 +32,7 @@ class native_DepSetParsingTest(base):
         self.assertRaises(ParseError, self.gen_depset, x)
 
     # generate a lot of parse error assertions.
-    for x in ("( )", "( a b c", "(a b c )",
+    for idx, x in enumerate(("( )", "( a b c", "(a b c )",
         "( a b c)", "()", "x?( a )",
         "?x (a)", "x? (a )", "x? (a)", "x? ( a b)",
         "x? ( x? () )", "x? ( x? (a)", "(", ")", "x?",
@@ -40,8 +40,8 @@ class native_DepSetParsingTest(base):
         "|| (", "|| )", "||)",  "|| ( x? ( )",
         "|| ( x?() )", "|| (x )", "|| ( x)",
         "a|", "a?", "a(b", "a)", "a||b",
-        "a(", "a)b", "x? y", "( x )?", "||?"):
-        locals()["test assert ParseError '%s'" % x] = post_curry(f, x)
+        "a(", "a)b", "x? y", "( x )?", "||?")):
+        locals()["test_ParseError_case%i" % (idx + 1)] = post_curry(f, x)
     del x
 
     @staticmethod
@@ -120,7 +120,7 @@ class native_DepSetParsingTest(base):
     # generate a lot of assertions of parse results.
     # if it's a list, first arg is string, second is results, if
     # string, the results for testing are determined by splitting the string
-    for x in [
+    for idx, x in enumerate([
         "a b",
         ( "",   []),
 
@@ -150,14 +150,14 @@ class native_DepSetParsingTest(base):
             "c", ")", "d", ")", "e", ")", "f1",
             ["f"], "(", "g", "h", ")", "i"
             )
-        )]:
+        )]):
 
         if isinstance(x, (list, tuple)):
             name = "'%s'" % x[0]
         else:
             name = "'%s'" % x
-        locals()["test_parse %s" % name] = post_curry(check_depset, x)
-        locals()["test_str %s" % name] = post_curry(check_str, x)
+        locals()["test_parse_case%i" % (idx + 1)] = post_curry(check_depset, x)
+        locals()["test_str_case%i" % (idx + 1)] = post_curry(check_str, x)
 
     def check_known_conditionals(self, text, conditionals, **kwds):
         d = self.gen_depset(text, **kwds)
@@ -169,13 +169,13 @@ class native_DepSetParsingTest(base):
         self.assertEqual(sorted(d.known_conditionals),
             sorted(conditionals.split()))
 
-    for x, c in [
+    for idx, (x, c) in enumerate([
         ["a? ( b )", "a"],
         ["a? ( b a? ( c ) )", "a"],
         ["a b c d e ( f )", ""],
         ["!a? ( b? ( c ) )", "a b"]
-        ]:
-        locals()["test_known_conditionals %s" % x] = post_curry(
+        ]):
+        locals()["test_known_conditionals_case%i" % (idx + 1)] = post_curry(
             check_known_conditionals, x, c)
     del x, c
 
@@ -248,7 +248,7 @@ class native_DepSetConditionalsInspectionTest(base):
 
         self.assertEqual(nc, d, msg)
 
-    for s in (
+    for idx, s in enumerate((
         ("x? ( y )", {"y":"x"}),
         ("x? ( y ) z? ( y )", {"y":["z", "x"]}),
         ("x? ( z? ( w? ( y ) ) )", {"y":"w z x"}),
@@ -261,13 +261,13 @@ class native_DepSetConditionalsInspectionTest(base):
         ("|| ( y? ( x ) x )", {}, "x cannot be filtered down since x is "
          "accessible via non conditional path"),
         ("|| ( y? ( x ) z )", {"x":"y"}),
-        ):
-        locals()["test_node_conds %s" % s[0]] = post_curry(check_conds, *s)
+        )):
+        locals()["test_node_conds_case%i" % (idx + 1)] = post_curry(check_conds, *s)
 
-    for s in (
+    for idx, s in enumerate((
         ("a/b[c=]", {"a/b[c]":"c", "a/b[-c]":"!c"}),
-        ):
-        locals()["test_node_conds_atom %s" % s[0]] = post_curry(check_conds,
+        )):
+        locals()["test_node_conds_atom_%i" % (idx + 1)] = post_curry(check_conds,
             element_kls=atom, transitive_use_atoms=True, *s)
 
 

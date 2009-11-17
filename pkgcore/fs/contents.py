@@ -8,16 +8,30 @@ contents set- container of fs objects
 from pkgcore.fs import fs
 from snakeoil.compatibility import all
 from snakeoil.klass import generic_equality
+from snakeoil.currying import partial
 from snakeoil.demandload import demandload
-from snakeoil.osutils import normpath
+from snakeoil.osutils import normpath, pjoin
 demandload(globals(),
-    'pkgcore.fs.ops:offset_rewriter,change_offset_rewriter',
     'os:path',
     'time',
     'snakeoil.mappings:OrderedDict',
 )
 from itertools import ifilter
 from operator import attrgetter
+
+def change_offset_rewriter(orig_offset, new_offset, iterable):
+    path_sep = path.sep
+    offset_len = len(orig_offset.rstrip(path_sep))
+    # localize it.
+    npf = normpath
+    for x in iterable:
+        # slip in the '/' default to force it to still generate a
+        # full path still
+        yield x.change_attributes(
+            location=npf(pjoin(new_offset, x.location[offset_len:].lstrip(path_sep))))
+
+offset_rewriter = partial(change_offset_rewriter, '/')
+
 
 def check_instance(obj):
     if not isinstance(obj, fs.fsBase):

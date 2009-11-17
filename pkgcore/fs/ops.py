@@ -178,20 +178,6 @@ def default_copyfile(obj, mkdirs=False):
     return True
 
 
-def change_offset_rewriter(orig_offset, new_offset, iterable):
-    offset_len = len(orig_offset.rstrip(os.path.sep))
-    # localize it.
-    npf = normpath
-    path_sep = os.path.sep
-    for x in iterable:
-        # slip in the '/' default to force it to still generate a
-        # full path still
-        yield x.change_attributes(
-            location=npf(pjoin(new_offset, x.location[offset_len:].lstrip(path_sep))))
-
-offset_rewriter = partial(change_offset_rewriter, '/')
-
-
 def merge_contents(cset, offset=None, callback=lambda obj:None):
 
     """
@@ -219,7 +205,7 @@ def merge_contents(cset, offset=None, callback=lambda obj:None):
                 raise TypeError("offset must be a dir, or not exist: %s" % offset)
         else:
             mkdir(fs.fsDir(offset, strict=False))
-        iterate = partial(offset_rewriter, offset.rstrip(os.path.sep))
+        iterate = partial(contents.offset_rewriter, offset.rstrip(os.path.sep))
     else:
         iterate = iter
 
@@ -291,7 +277,7 @@ def unmerge_contents(cset, offset=None, callback=lambda obj:None):
 
     iterate = iter
     if offset is not None:
-        iterate = partial(offset_rewriter, offset.rstrip(os.path.sep))
+        iterate = partial(contents.offset_rewriter, offset.rstrip(os.path.sep))
 
     for x in iterate(cset.iterdirs(invert=True)):
         callback(x)

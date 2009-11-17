@@ -18,4 +18,4 @@ export SNAKEOIL_DEMANDLOAD_PROTECTION=n
 export SNAKEOIL_DEMANDLOAD_DISABLED=y
 epydoc --"${type}" --no-frames --no-frames -n pkgcore --graph=classtree -u \
     http://pkgcore.org/trac/pkgcore --show-imports --show-sourcecode --include-log --include-log \
-    --inheritance=included --quiet --exclude='pkgcore\.test\..*' --exclude='snakeoil\.test\..*' --simple-term pkgcore snakeoil -o "${out}" "$@" 
+    --inheritance=included --quiet --exclude='pkgcore\.test\..*' --exclude='snakeoil\.test\..*' --simple-term pkgcore snakeoil -o "${out}" "$@"

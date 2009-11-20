@@ -31,7 +31,7 @@ class package(metadata.package):
         if key == "rdepends":
             val = self.provider
         elif key in ("depends", "post_rdepends", "provides"):
-            val = OrRestriction(finalize=True)
+            val = OrRestriction()
         elif key == "slot":
             val = "%s-%s" % (self.provider.category, self.version)
         else:

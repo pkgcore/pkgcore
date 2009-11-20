@@ -184,8 +184,7 @@ def parse_atom(token, repo, return_none=False):
     if isinstance(restriction, atom):
         # atom is guranteed to be fine, since it's cat/pkg
         return restriction
-    return KeyedAndRestriction(restriction, key=key_matches.pop(),
-        finalize=True)
+    return KeyedAndRestriction(restriction, key=key_matches.pop())
 
 
 class Failure(ValueError):
@@ -441,8 +440,7 @@ def main(options, out, err):
         restrict = packages.PackageRestriction('category',
             values.StrExactMatch('virtual'), negate=True)
         if atoms:
-            restrict = AndRestriction(restrict, OrRestriction(*atoms),
-                finalize=True)
+            restrict = AndRestriction(restrict, OrRestriction(*atoms))
         for inst_pkg in livefs_repos.itermatch(restrict):
             src_pkgs = all_repos.match(inst_pkg.versioned_atom)
             if src_pkgs:

@@ -785,8 +785,7 @@ class merge_plan(object):
         return packages.AndRestriction(blocker,
             packages.PackageRestriction("provider.key",
                 values.StrExactMatch(choices.current_pkg.key),
-                negate=True, ignore_missing=True),
-            finalize=True)
+                negate=True, ignore_missing=True))
 
     def insert_blockers(self, stack, choices, blocks):
         # level blockers.

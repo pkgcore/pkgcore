@@ -17,7 +17,7 @@ from snakeoil.osutils import pjoin
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import partial, alias_class_method
 from snakeoil.osutils import listdir_dirs, readfile, readfile_bytes
-from snakeoil import klass
+from snakeoil import klass, compatibility
 from pkgcore.util import bzip2
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -35,7 +35,7 @@ class bz2_data_source(data_source.base):
         self.mutable = mutable
 
     def get_text_fileobj(self):
-        data = bzip2.decompress(readfile_bytes(self.location))
+        data = bzip2.decompress(readfile_bytes(self.location)).decode()
         if self.mutable:
             return data_source.text_wr_StringIO(self._set_data, data)
         return data_source.text_ro_StringIO(data)
@@ -49,6 +49,9 @@ class bz2_data_source(data_source.base):
     get_fileobj = alias_class_method("get_text_file")
 
     def _set_data(self, data):
+        if compatibility.is_py3k:
+            if isinstance(data, str):
+                data = data.encode()
         open(self.location, "wb").write(bzip2.compress(data))
 
 

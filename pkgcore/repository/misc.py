@@ -16,9 +16,8 @@ class nodeps_repo(object):
     L{MutatedPkg} that have their depends/rdepends/post_rdepends wiped
     """
 
-    default_depends = packages.AndRestriction(finalize=True)
-    default_rdepends = packages.AndRestriction(finalize=True)
-    default_post_rdepends = packages.AndRestriction(finalize=True)
+    default_depends = default_rdepends = default_post_rdepends = \
+        packages.AndRestriction()
 
     def __init__(self, repo):
         """

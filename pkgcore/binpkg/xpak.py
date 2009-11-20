@@ -98,10 +98,10 @@ class Xpak(object):
         new_data = []
         cur_pos = 0
         for key, val in data.iteritems():
-            if compatibility.is_py3k:
+            if isinstance(val, unicode):
+                val = val.encode()
+            if isinstance(key, unicode):
                 key = key.encode()
-                if isinstance(val, str):
-                    val = val.encode()
             new_index.append(struct.pack(">L%isLL" % len(key),
                 len(key), key, cur_pos, len(val)))
             new_data.append(val)
@@ -116,6 +116,8 @@ class Xpak(object):
         joiner = ''
         if compatibility.is_py3k:
             # can't do str.join(bytes), thus this.
+            # written this way since the py3k translator doesn't allow us to
+            # just do b''
             joiner = joiner.encode()
         new_index = joiner.join(new_index)
         new_data = joiner.join(new_data)

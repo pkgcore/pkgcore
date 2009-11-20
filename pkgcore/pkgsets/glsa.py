@@ -72,7 +72,7 @@ class GlsaDirSet(object):
 
     def __iter__(self):
         for glsa, catpkg, pkgatom, vuln in self.iter_vulnerabilities():
-            yield KeyedAndRestriction(pkgatom, vuln, finalize=True, key=catpkg,
+            yield KeyedAndRestriction(pkgatom, vuln, key=catpkg,
                                       tag="GLSA vulnerable:")
 
     def pkg_grouped_iter(self, sorter=None):
@@ -93,8 +93,7 @@ class GlsaDirSet(object):
         for pkgname in sorter(pkgs):
             yield KeyedAndRestriction(pkgatoms[pkgname],
                                       packages.OrRestriction(*pkgs[pkgname]),
-                                      key=pkgname,
-                                      finalize=True)
+                                      key=pkgname)
 
 
     def iter_vulnerabilities(self):
@@ -145,7 +144,7 @@ class GlsaDirSet(object):
             return None
         elif len(vuln) > 1:
             vuln_list = [self.generate_restrict_from_range(x) for x in vuln]
-            vuln = packages.OrRestriction(finalize=True, *vuln_list)
+            vuln = packages.OrRestriction(*vuln_list)
         else:
             vuln_list = [self.generate_restrict_from_range(vuln[0])]
             vuln = vuln_list[0]
@@ -155,15 +154,15 @@ class GlsaDirSet(object):
         invuln = (pkg_node.findall("unaffected"))
         if not invuln:
             # wrap it.
-            return KeyedAndRestriction(vuln, tag=tag, finalize=True)
+            return KeyedAndRestriction(vuln, tag=tag)
         invuln_list = [self.generate_restrict_from_range(x, negate=True)
                        for x in invuln]
         invuln = [x for x in invuln_list if x not in vuln_list]
         if not invuln:
             if tag is None:
-                return KeyedAndRestriction(vuln, tag=tag, finalize=True)
-            return KeyedAndRestriction(vuln, tag=tag, finalize=True)
-        return KeyedAndRestriction(vuln, finalize=True, tag=tag, *invuln)
+                return KeyedAndRestriction(vuln, tag=tag)
+            return KeyedAndRestriction(vuln, tag=tag)
+        return KeyedAndRestriction(vuln, tag=tag, *invuln)
 
     def generate_restrict_from_range(self, node, negate=False):
         op = str(node.get("range").strip())
@@ -186,7 +185,7 @@ class GlsaDirSet(object):
             return packages.AndRestriction(
                 atom.VersionMatch("~", base.version),
                 atom.VersionMatch(restrict, base.version, rev=base.revision),
-                finalize=True, negate=negate)
+                negate=negate)
         if glob:
             return packages.PackageRestriction("fullver",
                 values.StrGlobMatch(base.fullver))
@@ -249,6 +248,5 @@ class SecurityUpgrades(object):
         for glsa, matches in find_vulnerable_repo_pkgs(self.glsa_src, self.vdb,
                                                        grouped=True,
                                                        arch=self.arch):
-            yield KeyedAndRestriction(glsa[0], restriction.Negate(glsa[1]),
-                                      finalize=True)
+            yield KeyedAndRestriction(glsa[0], restriction.Negate(glsa[1]))
 

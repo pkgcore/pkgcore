@@ -206,7 +206,7 @@ class domain(pkgcore.config.domain.domain):
         # if ((package.mask or visibility) and not package.unmask)
         # or not (package.keywords or accept_keywords)
         vfilter = packages.AndRestriction(finalize=False,
-            disable_inst_caching=False)
+            disable_inst_caching=True)
         r = None
         if pkg_maskers:
             r = generate_masking_restrict(pkg_maskers)
@@ -217,8 +217,7 @@ class domain(pkgcore.config.domain.domain):
             else:
                 r = packages.OrRestriction(
                     r, generate_unmasking_restrict(pkg_unmaskers),
-                    disable_inst_caching=True,
-                    finalize=True)
+                    disable_inst_caching=True)
         if r:
             vfilter.add_restriction(r)
         del pkg_unmaskers, pkg_maskers

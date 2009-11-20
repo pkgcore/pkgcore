@@ -43,14 +43,14 @@ def parse_revdep(value):
     val_restrict = values.FlatteningRestriction(
         atom.atom,
         values.AnyMatch(values.FunctionRestriction(targetatom.intersects)))
-    return packages.OrRestriction(finalize=True, *list(
+    return packages.OrRestriction(*list(
             packages.PackageRestriction(dep, val_restrict)
             for dep in ('depends', 'rdepends', 'post_rdepends')))
 
 def parse_description(value):
     """Value is used as a regexp matching description or longdescription."""
     matcher = mk_strregex(value, case_sensitive=False)
-    return packages.OrRestriction(finalize=True, *list(
+    return packages.OrRestriction(*list(
             packages.PackageRestriction(attr, matcher)
             for attr in ('description', 'longdescription')))
 
@@ -548,7 +548,7 @@ class OptionParser(commandline.OptionParser):
                 values.AnyMatch(values.FunctionRestriction(
                     partial(revdep_pkgs_match, tuple(l))
                 )))
-            vals.restrict_revdep_pkgs = packages.OrRestriction(finalize=True,
+            vals.restrict_revdep_pkgs = packages.OrRestriction(
                 *list(
                     packages.PackageRestriction(dep, r)
                         for dep in ('depends', 'rdepends', 'post_rdepends')))
@@ -562,7 +562,7 @@ class OptionParser(commandline.OptionParser):
                 vals.restrict.append(val[0])
             elif val:
                 vals.restrict.append(
-                    packages.OrRestriction(finalize=True, *val))
+                    packages.OrRestriction(*val))
 
         all_atoms = []
         for pkgset in vals.pkgset:
@@ -573,8 +573,7 @@ class OptionParser(commandline.OptionParser):
                 self.error('Cannot use empty pkgsets')
             all_atoms.extend(atoms)
         if all_atoms:
-            vals.restrict.append(packages.OrRestriction(finalize=True,
-                                                        *all_atoms))
+            vals.restrict.append(packages.OrRestriction(*all_atoms))
 
         if not vals.restrict:
             self.error('No restrictions specified.')

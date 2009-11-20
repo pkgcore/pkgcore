@@ -127,8 +127,7 @@ class DepSet(boolean.AndRestriction):
                             depsets[-2].extend(depsets[-1])
                         else:
                             depsets[-2].append(
-                                operators[raw_conditionals[-1]](finalize=True,
-                                                            *depsets[-1]))
+                                operators[raw_conditionals[-1]](*depsets[-1]))
 
                     raw_conditionals.pop()
                     depsets.pop()
@@ -303,8 +302,7 @@ class DepSet(boolean.AndRestriction):
                     if len(restrictions) == 1:
                         current = restrictions[0]
                     else:
-                        current = values.AndRestriction(finalize=True,
-                            *restrictions)
+                        current = values.AndRestriction(*restrictions)
 
                     nc.setdefault(payload, []).append(current)
 

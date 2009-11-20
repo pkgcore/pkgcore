@@ -38,6 +38,7 @@ class base(restriction.base):
         @type  restrictions: node_type (if that is specified)
         @param restrictions: initial restrictions to add
         @keyword finalize: should this instance be made immutable immediately?
+            defaults to True
         @keyword negate: should the logic be negated?
         """
 
@@ -61,7 +62,7 @@ class base(restriction.base):
                     "'%s' required" % (
                         r.__class__, r, node_type))
 
-        if kwds.pop("finalize", False):
+        if kwds.pop("finalize", True):
             if not isinstance(restrictions, tuple):
                 sf(self, "restrictions", tuple(restrictions))
             else:

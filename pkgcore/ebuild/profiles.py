@@ -574,7 +574,7 @@ class AliasedVirtuals(virtual.tree):
             if len(v) == 1:
                 d[k] = tuple(v)[0]
             else:
-                d[k] = packages.OrRestriction(finalize=True, *v)
+                d[k] = packages.OrRestriction(*v)
         virtuals = virtuals.copy()
         virtuals.update(d)
         return virtuals
@@ -599,4 +599,4 @@ class AliasedVirtuals(virtual.tree):
         data = [atom.atom("=%s-%s" % (x.key, pkg.fullver)) for x in data]
         if len(data) == 1:
             return data[0]
-        return packages.OrRestriction(finalize=True, *data)
+        return packages.OrRestriction(*data)

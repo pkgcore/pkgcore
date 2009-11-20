@@ -34,6 +34,10 @@ class base(object):
         # since it becomes a tuple, throws a AttributeError
         self.assertRaises(TypeError, final.add_restriction, false)
 
+        final = self.kls(true, node_type='foo')
+        # since it becomes a tuple, throws a AttributeError
+        self.assertRaises(TypeError, final.add_restriction, false)
+
     def test_finalize(self):
         base = self.kls(true, node_type='foo', finalize=False)
         base.add_restriction(false)
@@ -53,8 +57,8 @@ class base(object):
         self.assertRaises(TypeError,
             self.kls(true, finalize=True).add_restriction, false)
         self.assertRaises(TypeError,
-            self.kls(node_type='foon', finalize=False).add_restriction, false)
-        k = self.kls()
+            self.kls(node_type='foon').add_restriction, false)
+        k = self.kls(finalize=False)
         k.add_restriction(false)
         self.assertEqual(k.restrictions, [false])
 

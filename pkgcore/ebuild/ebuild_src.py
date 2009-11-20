@@ -52,7 +52,7 @@ def generate_depset(c, key, non_package_type, s, **kwds):
         raise metadata_errors.MetadataException(s, str(key), str(p))
 
 def generate_providers(self):
-    rdep = AndRestriction(self.versioned_atom, finalize=True)
+    rdep = AndRestriction(self.versioned_atom)
     func = partial(virtual_ebuild, self._parent, self,
         {"rdepends":rdep, "slot":"%s-%s" % (self.category, self.version)})
     # re-enable license at some point.

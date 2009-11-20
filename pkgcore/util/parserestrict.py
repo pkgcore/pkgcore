@@ -108,7 +108,7 @@ def parse_match(text):
             raise ParseError(str(e))
         if len(r) == 1:
             return r[0]
-        return packages.AndRestriction(*r)
+        return packages.AndRestriction(finalize=True, *r)
     elif text[0] in "=<>~":
         try:
             return atom.atom(text)
@@ -128,7 +128,8 @@ def parse_match(text):
         return packages.PackageRestriction("category", r[0])
     return packages.AndRestriction(
         packages.PackageRestriction("category", r[0]),
-        packages.PackageRestriction("package", r[1]))
+        packages.PackageRestriction("package", r[1]),
+        finalize=True)
 
 
 def parse_pv(repo, text):

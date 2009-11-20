@@ -235,7 +235,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             "%s-%s.ebuild" % (pkg.package, pkg.fullver))
 
     def _get_ebuild_src(self, pkg):
-        return local_source(self._get_ebuild_path(pkg))
+        return local_source(self._get_ebuild_path(pkg), encoding='utf8')
 
     def _get_shared_pkg_data(self, category, package):
         key = (category, package)

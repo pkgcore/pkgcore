@@ -8,8 +8,9 @@ Think of it as a far more minimal form of file protocol
 """
 
 from StringIO import StringIO
-from snakeoil.currying import pre_curry, alias_class_method
-from snakeoil import compatibility
+from snakeoil.currying import pre_curry, alias_class_method, post_curry
+from snakeoil import compatibility, demandload
+demandload.demandload(globals(), 'codecs')
 
 def generic_immutable_method(attr, self, *a, **kwds):
     raise AttributeError("%s doesn't have %s" % (self.__class__, attr))
@@ -73,19 +74,27 @@ class local_source(base):
 
     buffering_window = 32768
 
-    def __init__(self, path, mutable=False):
+    def __init__(self, path, mutable=False, encoding=None):
         """@param path: file path of the data source"""
         base.__init__(self)
         self.path = path
         self.mutable = mutable
+        self.encoding = encoding
 
     def get_path(self):
         return self.path
 
     def get_text_fileobj(self):
+        opener = post_curry(open, self.buffering_window)
+        if self.encoding:
+            opener = open
+            if not compatibility.is_py3k:
+                opener = codecs.open
+            opener = post_curry(opener, buffering=self.buffering_window,
+                encoding=self.encoding)
         if self.mutable:
-            return open(self.path, "r+", self.buffering_window)
-        return open(self.path, "r", self.buffering_window)
+            return opener(self.path, "r+")
+        return opener(self.path, "r")
 
     def get_bytes_fileobj(self):
         if self.mutable:

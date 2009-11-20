@@ -4,3 +4,7 @@
 """
 gentoo ebuild support
 """
+
+# XXX force this import to break a cycle.
+# breaking the cycle will occur, it just takes a bit of work...
+import pkgcore.ebuild.atom

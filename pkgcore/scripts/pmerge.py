@@ -441,7 +441,8 @@ def main(options, out, err):
         restrict = packages.PackageRestriction('category',
             values.StrExactMatch('virtual'), negate=True)
         if atoms:
-            restrict = AndRestriction(restrict, OrRestriction(*atoms))
+            restrict = AndRestriction(restrict, OrRestriction(*atoms),
+                finalize=True)
         for inst_pkg in livefs_repos.itermatch(restrict):
             src_pkgs = all_repos.match(inst_pkg.versioned_atom)
             if src_pkgs:

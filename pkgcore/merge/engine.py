@@ -27,7 +27,7 @@ def alias_cset(alias, engine, csets):
     return csets[alias]
 
 
-def map_new_cset_livefs(engine, csets, cset_name='raw_new_cset'):
+def map_new_cset_livefs(engine, csets, cset_name='new_cset'):
     """find the syms on disk that redirect new_cset, and return a cset
     localized to the livefs"""
     initial = csets[cset_name]
@@ -48,7 +48,8 @@ class MergeEngine(object):
             install_hooks.keys() + uninstall_hooks.keys()))
 
     install_csets = {"install_existing":"get_install_livefs_intersect",
-        "new_cset": map_new_cset_livefs,
+        "resolved_install": map_new_cset_livefs,
+        'new_cset':currying.partial(alias_cset, 'raw_new_cset'),
         "install":currying.partial(alias_cset, 'new_cset'),
         "replace":currying.partial(alias_cset, 'new_cset')}
     uninstall_csets = {
@@ -58,7 +59,7 @@ class MergeEngine(object):
     replace_csets = dict(install_csets)
     replace_csets.update(uninstall_csets)
     replace_csets["modifying"] = (
-        lambda e, c: c["install"].intersection(c["uninstall"]))
+        lambda e, c: c["resolved_install"].intersection(c["uninstall"]))
     replace_csets["uninstall"] = "get_remove_cset"
     replace_csets["replace"] = "get_replace_cset"
     replace_csets["install_existing"] = "get_install_livefs_intersect"
@@ -99,7 +100,7 @@ class MergeEngine(object):
             offset = "/"
         self.offset = offset
 
-        if disable_plugins:
+        if not disable_plugins:
             # merge in default triggers first.
             for trigger in get_plugins('triggers'):
                 t = trigger()
@@ -303,12 +304,12 @@ class MergeEngine(object):
     @staticmethod
     def get_remove_cset(engine, csets):
         """generate the cset of what files shall be removed from the livefs"""
-        return csets["old_cset"].difference(csets["new_cset"])
+        return csets["old_cset"].difference(csets["resolved_install"])
 
     @staticmethod
     def get_replace_cset(engine, csets):
         """Return the cset of what will be replaced going from old->new pkg."""
-        return csets["new_cset"].intersection(csets["old_cset"])
+        return csets["resolved_install"].intersection(csets["old_cset"])
 
     @staticmethod
     def _get_livefs_intersect_cset(engine, csets, cset_name, realpath=True):

@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* removed a potential in the merge engine where triggers that didn't
+  do an abspath on items they added could incorrectly be moved.
+  Specifically affected FEATURES=debugedit for /usr/lib -> lib64 pathways.
+
 * boolean restrictions now default to being finalized.
 
 * pkgcore.fs.ops.offset_rewriter -> pkgcore.fs.contents.offset_rewriter

@@ -17,8 +17,8 @@ class archive_data_source(data_source):
     def get_text_fileobj(self):
         return self.data()
 
-    get_fileobj = alias_class_method("get_fileobj")
-
+    def get_bytes_fileobj(self):
+        return self.data()
 
 known_compressors = {"bz2": tarfile.TarFile.bz2open,
     "gz": tarfile.TarFile.gzopen,

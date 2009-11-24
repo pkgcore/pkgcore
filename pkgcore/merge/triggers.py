@@ -379,7 +379,7 @@ class InfoRegen(base):
 
 class merge(base):
 
-    required_csets = ('install',)
+    required_csets = ('resolved_install',)
     _engine_types = INSTALLING_MODES
     _hooks = ('merge',)
 

@@ -12,6 +12,7 @@ from snakeoil.test.mixins import tempdir_decorator
 from pkgcore.test.fs.fs_util import fsFile, fsDir, fsSymlink
 from pkgcore.test.merge.util import fake_engine
 
+
 class fake_pkg(object):
 
     def __init__(self, contents, label=None):
@@ -70,17 +71,45 @@ class Test_MergeEngine(TestCase):
 
     def test_get_remove_cset(self):
         files = contentsSet(self.simple_cset.iterfiles(invert=True))
-        engine = fake_engine(csets={'new_cset':files,
+        engine = fake_engine(csets={'resolved_install':files,
             'old_cset':self.simple_cset})
         self.assertCsetEqual(self.simple_cset.iterfiles(),
             self.run_cset('get_remove_cset', engine))
 
     def test_get_replace_cset(self):
         files = contentsSet(self.simple_cset.iterfiles(invert=True))
-        engine = fake_engine(csets={'new_cset':files,
+        engine = fake_engine(csets={'resolved_install':files,
             'old_cset':self.simple_cset})
         self.assertCsetEqual(files,
             self.run_cset('get_replace_cset', engine))
+
+    @tempdir_decorator
+    def test_rewrite_awareness(self):
+        src = contentsSet(self.simple_cset)
+        src.add(fsFile("/usr/lib/donkey"))
+        trg = src.difference(["/usr/lib/donkey"])
+        trg.add(fsFile("/usr/lib64/donkey"))
+        trg = trg.insert_offset(self.dir)
+        os.mkdir(pjoin(self.dir, 'usr'))
+        os.mkdir(pjoin(self.dir, 'usr', 'lib64'))
+        os.symlink('lib64', pjoin(self.dir, 'usr', 'lib'))
+        pkg = fake_pkg(src)
+        engine = self.kls.install(pkg, offset=self.dir)
+        result = engine.csets['resolved_install']
+        self.assertEqual(sorted(result.iterfiles()), sorted(trg.iterfiles()))
+
+    @tempdir_decorator
+    def test_symlink_awareness(self):
+        src = contentsSet(self.simple_cset)
+        src.add(fsFile("/usr/lib/blah/donkey"))
+        trg = src.difference(["/usr/lib/blah/donkey"])
+        trg.add(fsFile("/blah/donkey"))
+        trg = trg.insert_offset(self.dir)
+        pkg = fake_pkg(src)
+        engine = self.kls.install(pkg, offset=self.dir)
+        result = engine.csets['new_cset']
+        self.assertEqual(sorted(result.iterfiles()), sorted(trg.iterfiles()))
+    test_symlink_awareness.skip = "contentset should handle this"
 
     @tempdir_decorator
     def test__get_livefs_intersect_cset(self):

@@ -68,7 +68,8 @@ class MergeEngine(object):
     replace_csets_preserve = ["new_cset", "old_cset"]
 
 
-    def __init__(self, mode, hooks, csets, preserves, observer, offset=None):
+    def __init__(self, mode, hooks, csets, preserves, observer, offset=None,
+        disable_plugins=False):
         if observer is None:
             observer = observer_mod.repo_observer()
         self.observer = observer
@@ -98,10 +99,11 @@ class MergeEngine(object):
             offset = "/"
         self.offset = offset
 
-        # merge in default triggers first.
-        for trigger in get_plugins('triggers'):
-            t = trigger()
-            t.register(self)
+        if disable_plugins:
+            # merge in default triggers first.
+            for trigger in get_plugins('triggers'):
+                t = trigger()
+                t.register(self)
 
         # merge in overrides
         for hook, triggers in hooks.iteritems():
@@ -113,7 +115,7 @@ class MergeEngine(object):
             setattr(self, x, currying.partial(self.execute_hook, x))
 
     @classmethod
-    def install(cls, pkg, offset=None, observer=None):
+    def install(cls, pkg, offset=None, observer=None, disable_plugins=False):
 
         """
         generate a MergeEngine instance configured for uninstalling a pkg
@@ -133,18 +135,18 @@ class MergeEngine(object):
             csets["raw_new_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
         o = cls(
             INSTALL_MODE, hooks, csets, cls.install_csets_preserve,
-            observer, offset=offset)
+            observer, offset=offset, disable_plugins=disable_plugins)
 
         if o.offset != '/':
             # wrap the results of new_cset to pass through an offset generator
-            o.cset_sources["new_cset"] = currying.post_curry(
-                o.generate_offset_cset, o.cset_sources["new_cset"])
+            o.cset_sources["raw_new_cset"] = currying.post_curry(
+                o.generate_offset_cset, o.cset_sources["raw_new_cset"])
 
         o.new = pkg
         return o
 
     @classmethod
-    def uninstall(cls, pkg, offset=None, observer=None):
+    def uninstall(cls, pkg, offset=None, observer=None, disable_plugins=False):
 
         """
         generate a MergeEngine instance configured for uninstalling a pkg
@@ -164,7 +166,7 @@ class MergeEngine(object):
                 pkg)
         o = cls(
             UNINSTALL_MODE, hooks, csets, cls.uninstall_csets_preserve,
-            observer, offset=offset)
+            observer, offset=offset, disable_plugins=disable_plugins)
 
         if o.offset != '/':
             # wrap the results of new_cset to pass through an offset generator
@@ -175,7 +177,7 @@ class MergeEngine(object):
         return o
 
     @classmethod
-    def replace(cls, old, new, offset=None, observer=None):
+    def replace(cls, old, new, offset=None, observer=None, disable_plugins=False):
 
         """
         generate a MergeEngine instance configured for replacing a pkg.
@@ -199,10 +201,10 @@ class MergeEngine(object):
 
         o = cls(
             REPLACE_MODE, hooks, csets, cls.replace_csets_preserve,
-            observer, offset=offset)
+            observer, offset=offset, disable_plugins=disable_plugins)
 
         if o.offset != '/':
-            for k in ("old_cset", "new_cset"):
+            for k in ("raw_old_cset", "raw_new_cset"):
                 # wrap the results of new_cset to pass through an
                 # offset generator
                 o.cset_sources[k] = currying.post_curry(

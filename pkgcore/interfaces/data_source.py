@@ -171,7 +171,7 @@ else:
 
     class bytes_data_source(data_source):
         def __init__(self, data, mutable=False):
-            if not isinstance(data, str):
+            if not isinstance(data, bytes):
                 raise TypeError("data must be bytes")
             data_source.__init__(self, data, mutable=mutable)
 

@@ -274,7 +274,7 @@ install.install.sub_commands.append(('pkgcore_install_scripts', None))
 install.install.sub_commands.append(('pkgcore_install_man', None))
 
 
-class pkgcore_build_py(snk_distutils.snk_build_py):
+class pkgcore_build_py(snk_distutils.build_py):
 
     package_namespace = 'pkgcore'
 
@@ -346,7 +346,7 @@ core.setup(
     cmdclass={
         'sdist': mysdist,
         'build_py': pkgcore_build_py,
-        'build_ext': snk_distutils.snakeoil_build_ext,
+        'build_ext': snk_distutils.build_ext,
         'test': test,
         'pkgcore_build_scripts': pkgcore_build_scripts,
         'pkgcore_install_scripts': pkgcore_install_scripts,

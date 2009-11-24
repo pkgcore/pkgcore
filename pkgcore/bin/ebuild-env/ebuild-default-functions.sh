@@ -548,7 +548,7 @@ inherit()
     local SAVED_INHERIT_COUNT=0
 
     if [[ $ECLASS_DEPTH < 0 ]] && [ "${EBUILD_PHASE}" == "depend" ]; then
-        echo "QA Notice: ${CATEGORY}/${PF} makes multiple inherit calls: $*" >&2
+        #echo "QA Notice: ${CATEGORY}/${PF} makes multiple inherit calls: $*" >&2
         SAVED_INHERIT_COUNT=$ECLASS_DEPTH
         ECLASS_DEPTH=0
     fi

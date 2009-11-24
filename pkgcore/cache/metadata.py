@@ -55,6 +55,7 @@ class database(flat_hash.database):
             self.ec = eclass_cache.cache(pjoin(location, "eclass"), location)
 
         config.pop('label', None)
+        self.mtime_in_entry = config.pop('mtime_in_entry', True)
         location = pjoin(location, 'metadata', 'cache')
         super(database, self).__init__(location, *args, **config)
         self.hardcoded_auxdbkeys_order = tuple((idx, key)
@@ -96,8 +97,8 @@ class database(flat_hash.database):
                 "wrong line count, requires %i" %
                     (self.magic_line_count,))
 
-        if self._mtime_used:
-            d["_mtime_"] = mtime
+        if self._mtime_used: # and not self.mtime_in_entry:
+            d["_mtime_"] = long(mtime)
         return d
 
     def _setitem(self, cpv, values):

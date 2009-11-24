@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* portage changed their flat_hash support a while back, specifically
+  how mtime was stored.  We match that now (although it's daft to do so)
+  for compatibility sake- primarily affected CVS users.
+
 * removed a potential in the merge engine where triggers that didn't
   do an abspath on items they added could incorrectly be moved.
   Specifically affected FEATURES=debugedit for /usr/lib -> lib64 pathways.

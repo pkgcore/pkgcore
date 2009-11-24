@@ -304,7 +304,7 @@ class package_factory(metadata.factory):
         finally:
             processor.release_ebuild_processor(ebp)
 
-        mydata["_mtime_"] = pkg._mtime_
+        mydata["_mtime_"] = long(pkg._mtime_)
         if mydata.get("INHERITED", False):
             mydata["_eclasses_"] = self._ecache.get_eclass_data(
                 mydata["INHERITED"].split())

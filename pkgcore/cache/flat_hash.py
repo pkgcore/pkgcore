@@ -27,6 +27,7 @@ class database(fs_template.FsBased):
 
 
     autocommits = True
+    mtime_in_entry = True
 
     def _getitem(self, cpv):
         path = pjoin(self.location, cpv)
@@ -47,7 +48,10 @@ class database(fs_template.FsBased):
                 d[k] = v
 
         if self._mtime_used:
-            d["_mtime_"] = long(mtime)
+            if self.mtime_in_entry:
+                d["_mtime_"] = long(d["_mtime_"])
+            else:
+                d["_mtime_"] = long(mtime)
         return d
 
     def _setitem(self, cpv, values):
@@ -72,12 +76,16 @@ class database(fs_template.FsBased):
         except OSError, e:
             raise errors.CacheCorruption(cpv, e)
 
-        for k, v in values.iteritems():
-            if k != "_mtime_":
+        if self.mtime_in_entry:
+            for k, v in values.iteritems():
                 myf.writelines("%s=%s\n" % (k, v))
+        else:
+            for k, v in values.iteritems():
+                if k != "_mtime_":
+                    myf.writelines("%s=%s\n" % (k, v))
 
         myf.close()
-        if self._mtime_used:
+        if self._mtime_used and not self.mtime_in_entry:
             self._ensure_access(fp, mtime=values["_mtime_"])
         else:
             self._ensure_access(fp)

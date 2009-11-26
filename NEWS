@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.5.5: November 26th, 2009
+
 * portage changed their flat_hash support a while back, specifically
   how mtime was stored.  We match that now (although it's daft to do so)
   for compatibility sake- primarily affected CVS users.

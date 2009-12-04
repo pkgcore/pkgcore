@@ -22,6 +22,7 @@ demandload(globals(),
     'pkgcore.fs:contents,livefs',
     'pkgcore.ebuild:atom,errors,digest',
     'pkgcore.restrictions.boolean:OrRestriction',
+    'pkgcore.sync:base@sync_base',
 )
 
 commandline_commands = {}
@@ -75,14 +76,22 @@ def sync_main(options, out, err):
         if not ops.supports("sync"):
             continue
         out.write("*** syncing %r..." % name)
-        if not ops.sync():
+        try:
+            ret = ops.sync()
+        except sync_base.syncer_exception, se:
+            out.write("*** failed syncing %r- caught exception %r" % (name, se))
+            failed.append(name)
+            continue
+        if not ret:
             out.write("*** failed syncing %r" % name)
             failed.append(name)
         else:
             succeeded.append(name)
             out.write("*** synced %r" % name)
-    if len(succeeded) + len(failed) > 1:
-        out.write("*** synced %s" % format_seq(sorted(succeeded)))
+    total = len(succeeded) + len(failed)
+    if total > 1:
+        if succeeded:
+            out.write("*** synced %s" % format_seq(sorted(succeeded)))
         if failed:
             err.write("!!! failed sync'ing %s" % format_seq(sorted(failed)))
     if failed:

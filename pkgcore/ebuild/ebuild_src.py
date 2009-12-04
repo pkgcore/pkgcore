@@ -347,7 +347,7 @@ class virtual_ebuild(metadata.package):
     package_is_real = False
     built = True
 
-    __slots__ = ("_orig_data", "data", "provider")
+    #__slots__ = ("_orig_data", "data", "provider")
 
     def __init__(self, parent_repository, pkg, data, cpvstr):
         """

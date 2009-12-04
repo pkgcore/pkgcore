@@ -119,6 +119,7 @@ class rsync_syncer(base.ExternalSyncer):
             opts.append("--verbose")
 
         # zip limits to the shortest iterable.
+        ret = None
         for count, ip in zip(xrange(self.retries), self._get_ips()):
             o = [self.binary_path,
                 self.uri.replace(self.hostname, ip, 1),
@@ -136,6 +137,7 @@ class rsync_syncer(base.ExternalSyncer):
            # need to do something here instead of just restarting...
            # else:
            #     print ret
+        raise base.syncer_exception(ret, "all attempts failed")
 
 
 class rsync_timestamp_syncer(rsync_syncer):

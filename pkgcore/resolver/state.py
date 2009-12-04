@@ -4,11 +4,6 @@
 from snakeoil.containers import RefCountingSet
 from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 
-REMOVE  = 0
-ADD     = 1
-REPLACE = 2
-FORWARD_BLOCK_INCREF = 3
-FORWARD_BLOCK_DECREF = 4
 
 class plan_state(object):
     def __init__(self):

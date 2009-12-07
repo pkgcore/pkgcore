@@ -14,6 +14,7 @@ class plan_state(object):
         self.blockers_refcnt = RefCountingSet()
         self.match_atom = self.state.find_atom_matches
         self.vdb_filter = set()
+        self.forced_restrictions = RefCountingSet()
 
     def add_blocker(self, choices, blocker, key=None):
         """adds blocker, returning any packages blocked"""
@@ -45,7 +46,7 @@ class plan_state(object):
         return len(self.plan)
 
 
-class base_op(object):
+class base_op_state(object):
     __slots__ = ("pkg", "force", "choices")
     internal = False
 
@@ -66,7 +67,7 @@ class base_op(object):
             id(self))
 
 
-class add_op(base_op):
+class add_op(base_op_state):
 
     desc = "add"
 
@@ -82,7 +83,36 @@ class add_op(base_op):
         del plan.pkg_choices[self.pkg]
 
 
-class remove_op(base_op):
+class add_hardref_op(base_op_state):
+
+    desc = None
+    internal = True
+
+    def __init__(self, restriction):
+        self.restriction = restriction
+
+    def apply(self, plan):
+        plan.plan.append(self)
+        plan.forced_restrictions.add(self.restriction)
+
+    def revert(self, plan):
+        plan.forced_restrictions.remove(self.restriction)
+
+
+class add_backref_op(base_op_state):
+
+    desc = None
+    internal = True
+
+    def apply(self, plan):
+        plan.plan.append(self)
+        pass
+
+    def revert(self, plan):
+        pass
+
+
+class remove_op(base_op_state):
     __slots__ = ()
 
     desc = "remove"
@@ -100,13 +130,13 @@ class remove_op(base_op):
         plan.vdb_filter.remove(self.pkg)
 
 
-class replace_op(base_op):
+class replace_op(base_op_state):
     __slots__ = ("old_pkg", "old_choices")
 
     desc = "replace"
 
     def __init__(self, *args, **kwds):
-        base_op.__init__(self, *args, **kwds)
+        base_op_state.__init__(self, *args, **kwds)
         self.old_pkg, self.old_choices = None, None
 
     def apply(self, plan):

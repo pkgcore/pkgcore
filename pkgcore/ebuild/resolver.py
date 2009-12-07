@@ -133,4 +133,9 @@ def generate_replace_resolver_kls(resolver_kls):
                     self._vdb_restriction, atom, key=atom.key),
                     **kwds)
 
+        def add_atoms(self, restricts, **kwds):
+            restricts = [KeyedAndRestriction(self._vdb_restriction, x, key=x.key)
+                for x in restricts]
+            return self.overriding_resolver_kls.add_atoms(self, restricts, **kwds)
+
     return replace_resolver

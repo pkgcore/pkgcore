@@ -270,7 +270,6 @@ class merge_plan(object):
         self.depset_reorder = depset_reorder_strategy
         self.per_repo_strategy = per_repo_strategy
         self.global_strategy = global_strategy
-        self.forced_atoms = set()
         self.all_dbs = [caching_repo(x, self.per_repo_strategy) for x in dbs]
         self.state = state.plan_state()
         vdb_state_filter_restrict = MutableContainmentRestriction(self.state.vdb_filter)
@@ -285,6 +284,13 @@ class merge_plan(object):
                 self._rec_add_atom)
             self._debugging_depth = 0
             self._debugging_drop_cycles = False
+
+    @property
+    def forced_restrictions(self):
+        return frozenset(self.state.forced_restrictions)
+
+    def reset(self, point=0):
+        self.state.backtrack(point)
 
     def notify_starting_mode(self, mode, stack):
         if mode == "post_rdepends":
@@ -337,6 +343,17 @@ class merge_plan(object):
                         (pkg.versioned_atom, ret))
         self.vdb_preloaded = True
 
+    def add_atoms(self, restricts, dbs=None):
+        if restricts:
+            stack = resolver_stack()
+            if dbs is None:
+                dbs = self.all_dbs
+            for restrict in restricts:
+                ret = self._add_atom(restrict, stack, dbs)
+                if ret:
+                    return ret
+        return ()
+
     def add_atom(self, atom, dbs=None):
         """add an atom, recalculating as necessary.
 
@@ -345,15 +362,15 @@ class merge_plan(object):
         """
         if dbs is None:
             dbs = self.all_dbs
-        if atom not in self.forced_atoms:
-            stack = resolver_stack()
-            ret = self._rec_add_atom(atom, stack, dbs)
-            if ret:
-                dprint("failed- %s", ret)
-                return ret, stack.events[0]
-            else:
-                self.forced_atoms.add(atom)
+        stack = resolver_stack()
+        return self._add_atom(atom, stack, dbs)
 
+    def _add_atom(self, atom, stack, dbs):
+        ret = self._rec_add_atom(atom, stack, dbs)
+        if ret:
+            dprint("failed- %s", ret)
+            return ret, stack.events[-1]
+        state.add_hardref_op(atom).apply(self.state)
         return ()
 
     def _stack_debugging_rec_add_atom(self, func, atom, stack, dbs, **kwds):
@@ -612,6 +629,7 @@ class merge_plan(object):
         if ret is not None:
             self.notify_viable(stack, atom, *ret[0], **ret[1])
             if ret[0][0] == True:
+                state.add_backref_op(choices, choices.current_pkg).apply(self.state)
                 return True
             return None
         return choices, matches

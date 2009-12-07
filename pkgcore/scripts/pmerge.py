@@ -474,17 +474,22 @@ def main(options, out, err):
 
     failures = []
     resolve_time = time()
-    out.write(out.bold, ' * ', out.reset, 'Resolving...')
     out.title('Resolving...')
-    for restrict in atoms:
-        ret = resolver_inst.add_atom(restrict)
-        if ret:
-            out.error('resolution failed')
-            just_failures = reduce_to_failures(ret[1])
-            display_failures(out, just_failures, debug=options.debug)
-            failures.append(restrict)
-            if not options.ignore_failures:
-                break
+    out.write(out.bold, ' * ', out.reset, 'Resolving...')
+    orig_atoms = atoms[:]
+    ret = resolver_inst.add_atoms(atoms)
+    while ret:
+        out.error('resolution failed')
+        restrict = ret[0][0]
+        just_failures = reduce_to_failures(ret[1])
+        display_failures(out, just_failures, debug=options.debug)
+        failures.append(restrict)
+        if not options.ignore_failures:
+            break
+        out.write("restarting resolution")
+        atoms = [x for x in atoms if x != restrict]
+        resolver_inst.reset()
+        ret = resolver_inst.add_atoms(atoms)
     resolve_time = time() - resolve_time
 
     if failures:

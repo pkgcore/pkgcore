@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix an encoding issue w/ utf8 ebuilds on merging.
+
+
 pkgcore 0.5.5: November 26th, 2009
 
 * portage changed their flat_hash support a while back, specifically

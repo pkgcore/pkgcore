@@ -99,9 +99,9 @@ class install(repo_interfaces.livefs_install):
                 "Creating an empty file")
             o = ''
         else:
-            o = o.get_text_fileobj().read()
+            o = o.get_bytes_fileobj().read()
         # XXX lil hackish accessing PF
-        open(pjoin(dirpath, self.new_pkg.PF + ".ebuild"), "w").write(o)
+        open(pjoin(dirpath, self.new_pkg.PF + ".ebuild"), "wb").write(o)
 
         # XXX finally, hack to keep portage from doing stupid shit.
         # relies on counter to discern what to punt during

@@ -100,6 +100,7 @@ _vdb_restrict = packages.OrRestriction(
         ),
     )
 
+
 class empty_tree_merge_plan(plan.merge_plan):
 
     _vdb_restriction = _vdb_restrict
@@ -118,6 +119,10 @@ class empty_tree_merge_plan(plan.merge_plan):
     def add_atom(self, atom):
         return plan.merge_plan.add_atom(
             self, atom, dbs=self._empty_dbs)
+
+    def add_atoms(self, restrictions):
+        return plan.merge_plan.add_atoms(
+            self, restrictions, dbs=self._empty_dbs)
 
 
 def generate_replace_resolver_kls(resolver_kls):

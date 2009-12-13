@@ -555,7 +555,8 @@ def main(options, out, err):
         return
 
     if options.pretend:
-        out.write("plan is %i steps\n" % (len(resolver_inst.state.plan),))
+        if options.verbose:
+            out.write(out.bold, ' * ', out.reset, "resolver plan required %i ops\n" % (len(resolver_inst.state.plan),))
         return
 
     if (options.ask and not

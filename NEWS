@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.5.6: December 13th, 2009
+
 * tweak pkgcore configuration subsystem to tell you the parameter involved
   when it's passed an incorrectly typed object.
 

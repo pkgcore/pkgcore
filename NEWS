@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* tweak pkgcore configuration subsystem to tell you the parameter involved
+  when it's passed an incorrectly typed object.
+
 * fix an encoding issue w/ utf8 ebuilds on merging.
 
 

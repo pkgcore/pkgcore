@@ -148,8 +148,8 @@ class LazySectionRef(object):
             config = self.cached_config = self._collapse()
             if self.typename is not None and config.type.name != self.typename:
                 raise errors.ConfigurationError(
-                    'reference should be of type %r, got %r' % (
-                        self.typename, config.type.name))
+                    'reference %r should be of type %r, got %r' % (
+                        self.name, self.typename, config.type.name))
         return self.cached_config
 
     def instantiate(self):
@@ -466,9 +466,9 @@ def section_alias(target, typename):
     identical to our target's.
     """
     @configurable({'target': 'ref:' + typename}, typename=typename)
-    def alias(target):
+    def section_alias(target):
         return target
-    return AutoConfigSection({'class': alias, 'target': target})
+    return AutoConfigSection({'class': section_alias, 'target': target})
 
 
 def list_parser(string):

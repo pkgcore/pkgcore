@@ -21,7 +21,7 @@ class pkgsets_data(OptionParser):
     def run(self, opts, out, err):
         if not opts.pkgsets:
             out.write(out.bold, 'available pkgset: ', out.reset,
-                ', '.join(repr(x) for x in 
+                ', '.join(repr(x) for x in
                    sorted(opts.config.pkgset.iterkeys())))
             return 0
         missing = False

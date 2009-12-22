@@ -11,14 +11,10 @@ from snakeoil import modules
 
 class OptionParser(commandline.OptionParser):
 
-    def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(
-            self, description=__doc__, usage='%prog [packages]', **kwargs)
+    description = __doc__
+    usage = '%prog [packages]'
 
-    def check_values(self, values, args):
-        """Sanity check and postprocess after parsing."""
-        values, args = commandline.OptionParser.check_values(
-            self, values, args)
+    def _check_values(self, values, args):
         if not args:
             args = ['pkgcore.plugins']
         values.packages = []

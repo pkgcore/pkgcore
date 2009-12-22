@@ -25,9 +25,9 @@ from pkgcore.resolver.util import reduce_to_failures
 class OptionParser(commandline.OptionParser):
 
     enable_domain_options = True
+    description = __doc__
 
-    def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(self, description=__doc__, **kwargs)
+    def _register_options(self):
         self.add_option('--deep', '-D', action='store_true',
             help='force the resolver to verify already installed dependencies')
         self.add_option('--unmerge', '-C', action='store_true',
@@ -96,10 +96,7 @@ a depends on b, and b depends on a, with neither built is an example""")
             callback_args=('pmerge_formatter',),
             help='which formatter to output --pretend or --ask output through.')
 
-    def check_values(self, options, args):
-        options, args = commandline.OptionParser.check_values(
-            self, options, args)
-
+    def _check_values(self, options, args):
         options.targets = [x for x in args if x[0] != '@']
         set_targets = [x[1:] for x in args if x[0] == '@']
         if any(not x for x in set_targets):
@@ -254,14 +251,6 @@ def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
     out.write("finished; removed %i packages" % len(matches))
 
 
-def get_pkgset(config, err, setname):
-    try:
-        return config.pkgset[setname]
-    except KeyError:
-        err.write('No set called %r!\nknown sets: %r' %
-            (setname, config.pkgset.keys()))
-        return None
-
 def display_failures(out, sequence, first_level=True, debug=False):
     """when resolution fails, display a nicely formatted message"""
 
@@ -340,7 +329,7 @@ def main(options, out, err):
 
     domain = options.domain
     livefs_repos = domain.all_livefs_repos
-    world_set = world_list = get_pkgset(config, err, "world")
+    world_set = world_list = options.get_pkgset(err, "world")
     if options.oneshot:
         world_set = None
 
@@ -382,7 +371,7 @@ def main(options, out, err):
 
     atoms = []
     for setname in options.set:
-        pkgset = get_pkgset(config, err, setname)
+        pkgset = options.get_pkgset(err, setname)
         if pkgset is None:
             return 1
         l = list(pkgset)

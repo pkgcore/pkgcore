@@ -126,6 +126,17 @@ class Values(optparse.Values, object):
     domain = klass.jit_attr_ext_method("load_domain", "_domain",
         uncached_val=None)
 
+    def get_pkgset(self, err, setname, config=None):
+        if config is None:
+            config = self.config
+        try:
+            return config.pkgset[setname]
+        except KeyError:
+            if err:
+                err.write('No set called %r!\nknown sets: %r' %
+                         (setname, sorted(config.pkgset.keys())))
+            return None
+
 
 def read_file_callback(option, opt_str, value, parser):
     """Read a file ignoring comments."""
@@ -256,6 +267,9 @@ class OptionParser(optparse.OptionParser):
     values_class = Values
 
     enable_domain_options = False
+    description = None
+    usage = None
+    option_class = Option
 
     standard_option_list = optparse.OptionParser.standard_option_list + [
         Option(
@@ -283,7 +297,12 @@ class OptionParser(optparse.OptionParser):
 
     def __init__(self, *args, **kwargs):
         """Initialize."""
-        kwargs.setdefault('option_class', Option)
+        kwargs.setdefault('option_class', self.option_class)
+        for setting in ('description', 'usage'):
+            if not setting in kwargs and hasattr(self, setting):
+                # only set if not overriden, and if there is a usable value.
+                kwargs[setting] = getattr(self, setting)
+
         optparse.OptionParser.__init__(self, *args, **kwargs)
         # It is a callback so it cannot set a default value the "normal" way.
         self.set_default('debug', False)
@@ -293,6 +312,10 @@ class OptionParser(optparse.OptionParser):
                 callback=domain_callback,
                 help='domain name to use (default used if omitted).',
                 dest='_domain')
+        self._register_options()
+
+    def _register_options(self):
+        pass
 
     def get_version(self):
         """Add pkgcore's version to the version information."""
@@ -343,7 +366,11 @@ class OptionParser(optparse.OptionParser):
         # domain option specifically needs to chuck an error on jit'd access,
         # hence giving a backref to it.
         values._raise_error = self.error
+        return self._check_values(values, args)
+
+    def _check_values(self, values, args):
         return values, args
+
 
 class MySystemExit(SystemExit):
     """Subclass of SystemExit the tests can safely catch."""
@@ -384,22 +411,35 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
         prog = os.path.basename(sys.argv[0])
     else:
         prog = script_name
+
     parser_class = None
     if args:
-        parser_class, main_func = subcommands.get(args[0], (None, None))
+        parser_class = subcommands.get(args[0], None)
         if parser_class is not None:
             prog = '%s %s' % (prog, args[0])
             args = args[1:]
     if parser_class is None:
-        try:
-            parser_class, main_func = subcommands[None]
-        except KeyError:
-            # This tries to print in a format very similar to optparse --help.
-            errfile.write(
-                'Usage: %s <command>\n\nCommands:\n' % (prog,))
+        parser_class = subcommands.get(None, (None, None))
+
+    main_func = None
+    try:
+        parser_class, main_func = parser_class
+    except TypeError:
+        # ok... so it's new style, or None
+        pass
+
+    if parser_class is None:
+        # This tries to print in a format very similar to optparse --help.
+        errfile.write('Usage: %s <command>\n\n' % (prog,))
+        if subcommands:
+            errfile.write('Commands:\n')
             maxlen = max(len(subcommand) for subcommand in subcommands) + 1
-            for subcommand, (parser, main) in sorted(subcommands.iteritems()):
-                doc = main.__doc__
+            for subcommand, parser_data in sorted(subcommands.iteritems()):
+                try:
+                    parser_class, main_func = parser_data
+                except TypeError:
+                    main_func = parser_data.run
+                doc = main_func.__doc__
                 if doc is None:
                     errfile.write('  %s\n' % (subcommand,))
                 else:
@@ -407,7 +447,8 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
                     errfile.write('  %-*s %s\n' % (maxlen, subcommand, doc))
             errfile.write(
                 '\nUse --help after a subcommand for more help.\n')
-            raise MySystemExit(1)
+        raise MySystemExit(1)
+
     options = None
     option_parser = parser_class(prog=prog)
     out = None
@@ -429,7 +470,10 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
                 # Remove the default handler.
                 logging.root.handlers.pop(0)
             logging.root.addHandler(FormattingHandler(err))
-            exitstatus = main_func(options, out, err)
+            if main_func is None:
+                exitstatus = option_parser.run(options, out, err)
+            else:
+                exitstatus = main_func(options, out, err)
     except errors.ConfigurationError, e:
         if options is not None and options.debug:
             raise

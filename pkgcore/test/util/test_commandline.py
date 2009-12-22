@@ -184,6 +184,20 @@ class MainTest(TestCase):
         else:
             self.fail('no exception raised')
 
+    def test_method_run(self):
+        class newparser(commandline.OptionParser):
+            def __init__(self, *args, **kwds):
+                commandline.OptionParser.__init__(self, *args, **kwds)
+                self.add_option("--foon", action='store',)
+
+            def run(self, options, out, err):
+                out.write("args: %s" % (options.foon,))
+                return 0
+
+        self.assertMain(
+            0, 'args: dar\n', '',
+            {None:newparser}, args=['--foon', 'dar'])
+
     def test_weird_parser(self):
         class WeirdParser(commandline.OptionParser):
             def error(self, msg):

@@ -12,16 +12,14 @@ from pkgcore.ebuild import atom, errors
 
 class OptionParser(commandline.OptionParser):
 
-    def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(
-            self, description=__doc__, usage='%prog [options] atom phases',
-            **kwargs)
+    description = __doc__
+    usage = '%prog [options] atom phases'
+
+    def _register_options(self):
         self.add_option("--no-auto", action='store_true', default=False,
             help="run just the specified phases.  may explode.")
 
-    def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(
-            self, values, args)
+    def _check_values(self, values, args):
         if len(args) < 2:
             self.error('Specify an atom and at least one phase.')
         try:

@@ -200,7 +200,7 @@ class domain(pkgcore.config.domain.domain):
             if v is None:
                 continue
             u2 = u.lower()+"_"
-            use.update(u2 + x for x in settings[u].split())
+            use.update(u2 + x for x in v.split())
 
         # visibility mask...
         # if ((package.mask or visibility) and not package.unmask)

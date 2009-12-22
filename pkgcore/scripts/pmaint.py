@@ -39,16 +39,10 @@ def format_seq(seq, formatter=repr):
 
 class SyncParser(OptionParser):
 
-    def __init__(self, **kwargs):
-        OptionParser.__init__(self, description=
-            "update a local repository to match its parent",
-            usage='pmaint sync [repo(s)]',
-            **kwargs)
+    description = 'update a local repository to match its parent'
+    usage = 'pmaint sync [repo(s)]'
 
-    def check_values(self, values, args):
-        values, args = OptionParser.check_values(
-            self, values, args)
-
+    def _check_values(self, values, args):
         values.repos = []
         if not args:
             # skip multiplexed repos since we can't see through them.
@@ -103,12 +97,10 @@ commandline_commands['sync'] = (SyncParser, sync_main)
 
 class CopyParser(OptionParser):
 
-    def __init__(self, **kwargs):
-        OptionParser.__init__(self, description=
-            "copy built pkg(s) into a repository",
-            usage="pmaint copy -s source_repo -t target_repo [options] "
-                "<atoms>",
-            **kwargs)
+    description = 'copy built pkg(s) into a repository'
+    usage = 'pmaint copy -s source_repo -t target_repo [options] <atoms>'
+
+    def _register_options(self):
         self.add_option("-s", "--source-repo",
             help="copy from just the specified repository; else defaults "
                 "to finding any match")
@@ -123,7 +115,7 @@ class CopyParser(OptionParser):
         self.add_option("--copy-missing", action="store_true", default=False,
             help="Copy packages missing in target repo from source repo")
 
-    def check_values(self, values, args):
+    def _check_values(self, values, args):
         l = len(args)
         if not values.target_repo and l < 2:
             self.error("target_report wasn't specified- specify it either as "
@@ -239,14 +231,10 @@ commandline_commands['copy'] = (CopyParser, copy_main)
 
 class RegenParser(OptionParser):
 
-    def __init__(self, **kwargs):
-        OptionParser.__init__(
-            self, description=__doc__, usage='%prog [options] repo [threads]',
-            **kwargs)
+    description = 'regenerate the metadata cache for repositories'
+    usage = '%prog [options] repo [threads]'
 
-    def check_values(self, values, args):
-        values, args = OptionParser.check_values(
-            self, values, args)
+    def _check_values(self, values, args):
         if not args:
             self.error('Need a repository name.')
         if len(args) > 2:
@@ -344,9 +332,9 @@ commandline_commands['regen'] = (RegenParser, regen_main)
 
 class DigestParser(OptionParser):
 
-    def __init__(self, **kwargs):
-        OptionParser.__init__(
-            self, description="generate digests for given atoms", **kwargs)
+    description = 'generate digests for given atoms'
+
+    def _register_options(self):
         self.add_option('-t', '--type', type='choice',
             choices=("manifest1", "manifest2", "both"), default="both",
             help="type of manifest to generate (defaults to both). "

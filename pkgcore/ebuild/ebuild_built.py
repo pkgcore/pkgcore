@@ -5,7 +5,7 @@
 built ebuild packages (vdb packages and binpkgs are derivatives of this)
 """
 
-from pkgcore.ebuild import ebuild_src
+from pkgcore.ebuild import ebuild_src, conditionals
 from pkgcore.package import metadata
 from pkgcore.interfaces.data_source import local_source
 
@@ -50,6 +50,9 @@ def pkg_uses_default_preinst(pkg):
 def wrap_inst(self, wrap, inst):
     return wrap(inst(self), self.use)
 
+_empty_fetchable = conditionals.DepSet('', ebuild_src.fetchable,
+    operators={})
+
 class package(ebuild_src.base):
 
     """
@@ -66,8 +69,6 @@ class package(ebuild_src.base):
 
     _get_attr = dict(ebuild_src.package._get_attr)
 
-    del _get_attr["fetchables"]
-
     _get_attr.update((x, post_curry(passthrough, x))
                      for x in ("contents", "environment", "ebuild"))
     _get_attr.update(
@@ -76,6 +77,8 @@ class package(ebuild_src.base):
                        ebuild_src.package._get_attr[k]))
         for k in ebuild_src.package._config_wrappables
         if k in ebuild_src.package.tracked_attributes)
+
+    _get_attr['fetchables'] = lambda self:_empty_fetchable
 
     _get_attr["use"] = lambda s:DelayedInstantiation(frozenset,
         lambda: frozenset(s.data["USE"].split()))

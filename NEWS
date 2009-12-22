@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix a traceback in pmerge -fK when trying to fetch required files for
+  binpkgs.
+
+
 pkgcore 0.5.6: December 13th, 2009
 
 * tweak pkgcore configuration subsystem to tell you the parameter involved

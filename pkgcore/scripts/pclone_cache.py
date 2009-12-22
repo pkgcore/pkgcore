@@ -13,16 +13,14 @@ from pkgcore.util import commandline
 
 class OptionParser(commandline.OptionParser):
 
-    def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(
-            self, description=__doc__, usage='%prog [options] source target',
-            **kwargs)
+    description = __doc__
+    usage = '%prog [options] source target'
+
+    def _register_options(self):
         self.add_option('--verbose', '-v', action='store_true',
                         help='print keys as they are processed')
 
-    def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(
-            self, values, args)
+    def _check_values(self, values, args):
         if len(args) != 2:
             self.error(
                 'Need two arguments: cache label to read from and '

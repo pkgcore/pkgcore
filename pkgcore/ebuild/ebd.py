@@ -687,6 +687,7 @@ class binpkg_buildable(ebd, setup_mixin, format.build):
 
     def __init__(self, *args, **kwargs):
         ebd.__init__(self, *args, **kwargs)
+        self.fetchables = ()
 
     def finalize(self):
         return MutatedPkg(self.pkg, {"environment":self.get_env_source()})

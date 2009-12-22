@@ -29,8 +29,7 @@ def append_comma_separated(option, opt_str, value, parser):
 
 class OptionParser(commandline.OptionParser):
 
-    def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(self, **kwargs)
+    def _register_options(self):
         self.add_option(
             '-V', '--var-match', action='store_false', default=True)
         self.add_option(
@@ -49,10 +48,7 @@ class OptionParser(commandline.OptionParser):
             '--print-vars', action='store_true', default=False,
             help="print just the global scope environment variables that match")
 
-    def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(
-            self, values, args)
-
+    def _check_values(self, values, args):
         if values.input is None:
             # Hack: use stdin if it is not a tty. No util.commandline
             # support for this kind of thing, so mess around with sys

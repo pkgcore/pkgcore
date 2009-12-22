@@ -282,9 +282,14 @@ def revdep_pkgs_callback(option, opt_str, value, parser):
 def revdep_pkgs_match(pkgs, value):
     return any(value.match(pkg) for pkg in pkgs)
 
+
 class OptionParser(commandline.OptionParser):
 
     """Option parser with custom option postprocessing and validation."""
+
+    description = __doc__
+    option_class = Option
+    enable_domain_options = True
 
     printable_attrs = ('rdepends', 'depends', 'post_rdepends', 'provides',
                        'use', 'iuse', 'description', 'longdescription',
@@ -297,12 +302,7 @@ class OptionParser(commandline.OptionParser):
     metadata_attrs = tuple(x for x in printable_attrs if not x.startswith("all")
         and x != 'environment')
 
-    enable_domain_options = True
-
-    def __init__(self, **kwargs):
-        commandline.OptionParser.__init__(
-            self, description=__doc__, option_class=Option, **kwargs)
-
+    def _register_options(self):
         self.set_default('pkgset', [])
         self.set_default('restrict', [])
 
@@ -447,9 +447,7 @@ class OptionParser(commandline.OptionParser):
             '--print-revdep', type='atom', action='append',
             help='print what condition(s) trigger a dep.')
 
-    def check_values(self, vals, args):
-        """Sanity check and postprocess after parsing."""
-        vals, args = commandline.OptionParser.check_values(self, vals, args)
+    def _check_values(self, vals, args):
         # Interpret args with parens in them as --expr additions, the
         # rest as --match additions (since parens are invalid in --match).
         try:
@@ -565,6 +563,7 @@ class OptionParser(commandline.OptionParser):
                     packages.OrRestriction(*val))
 
         all_atoms = []
+        # this should use options.get_pkgset, delayed loadup... potentially.
         for pkgset in vals.pkgset:
             atoms = list(pkgset)
             if not atoms:

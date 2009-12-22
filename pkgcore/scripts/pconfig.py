@@ -15,9 +15,7 @@ class DescribeClassParser(commandline.OptionParser):
 
     """Our option parser."""
 
-    def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(
-            self, values, args)
+    def _check_values(self, values, args):
         if len(args) != 1:
             self.error('need exactly one argument: class to describe.')
         try:
@@ -161,9 +159,7 @@ class _TypeNameParser(commandline.OptionParser):
 
     """Base for subcommands that take an optional type name."""
 
-    def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(self, values,
-                                                             args)
+    def _check_values(self, values, args):
         if len(args) > 1:
             self.error('pass at most one typename')
         if args:
@@ -174,17 +170,11 @@ class _TypeNameParser(commandline.OptionParser):
 
 
 class DumpParser(_TypeNameParser):
-
-    def __init__(self, **kwargs):
-        # Make sure we do not pass two description kwargs if kwargs has one.
-        kwargs['description'] = (
-            'Dump the entire configuration. '
-            'The format used is similar to the ini-like default '
-            'format, but do not rely on this to always write a '
-            'loadable config. There may be quoting issues. '
-            'With a typename argument only that type is dumped.')
-        kwargs['usage'] = '%prog [options] [typename]'
-        _TypeNameParser.__init__(self, **kwargs)
+    description = ('Dump the entire configuration.  The format used is similar '
+        'to the ini-like default format, but do not rely on this to always '
+        'write a loadable config. There may be quoting issues.  With a '
+        'typename argument only that type is dumped.')
+    usage = '%prog [options] [typename]'
 
 
 def dump_main(options, out, err):
@@ -206,15 +196,8 @@ def dump_main(options, out, err):
 
 
 class ConfigurablesParser(_TypeNameParser):
-
-    def __init__(self, **kwargs):
-        # Make sure we do not pass two description kwargs if kwargs has one.
-        kwargs['description'] = (
-            'List registered configurables (may not be complete). '
-            'With a typename argument only configurables of that type are '
-            'listed.')
-        kwargs['usage'] = '%prog [options] [typename]'
-        _TypeNameParser.__init__(self, **kwargs)
+    description = ('List registered configurables (may not be complete).  '
+        'With a typename argument only configurables of that type are listed.')
 
 
 def configurables_main(options, out, err):

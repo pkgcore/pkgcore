@@ -355,17 +355,17 @@ def main(options, out, err):
         return
 
     all_repos = domain.all_repos
-    repos = list(all_repos.trees)
+    repos = list(getattr(all_repos, 'trees', []))
     if options.usepkgonly or options.usepkg:
         if options.usepkgonly:
             repos = [
-                repo for repo in all_repos.trees
+                repo for repo in repos
                 if getattr(repo, 'format_magic', None) != 'ebuild_src']
         else:
             repos = [
-                repo for repo in all_repos.trees
+                repo for repo in repos
                 if getattr(repo, 'format_magic', None) == 'ebuild_built'] + [
-                repo for repo in all_repos.trees
+                repo for repo in repos
                 if getattr(repo, 'format_magic', None) != 'ebuild_built']
         all_repos = multiplex.tree(*repos)
 

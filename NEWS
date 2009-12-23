@@ -4,6 +4,18 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.5.7: December 22, 2009
+
+* added pinspect script; used for basic reporting of metadata usage,
+  and inspection of pkgsets.  Bit simple, but will be expanded down the line.
+
+* filter-env is now installed into PATH; cli api isn't considered stable,
+  but it should be useful for folks playing w/ bash environments or doing
+  ebuild inspection.
+
+* correct a tb in pmerge when the user configuration is strictly a single
+  source repository.  Semi rare, but can occur.
+
 * correct a tb when throwing a missing file error for specifying package.*
   settings directly to domain.
 

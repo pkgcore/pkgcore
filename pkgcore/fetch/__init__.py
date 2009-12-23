@@ -135,3 +135,14 @@ class uri_list(object):
         for entry in self:
             count += 1
         return count
+
+    def visit_mirrors(self, invert=False, treat_default_as_mirror=True):
+        def is_mirror(item):
+            return isinstance(item, mirror) and \
+                treat_default_as_mirror == isinstance(item, default_mirror)
+        for item in self._uri_source:
+            if isinstance(item, tuple):
+                if invert != is_mirror(item[0]):
+                    yield item
+            elif invert != is_mirror(item):
+                yield item

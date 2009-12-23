@@ -158,7 +158,7 @@ class domain(pkgcore.config.domain.domain):
                             val.extend(action(x) for x in iter_read_bash(file.location))
                 except (IOError, OSError), e:
                     if e.errno == errno.ENOENT:
-                        raise MissingFile(settings[key], key)
+                        raise MissingFile(fp, key)
                     raise Failure("failed reading '%s': %s" % (fp, e))
                 except ValueError, e:
                     raise Failure("failed reading '%s': %s" % (fp, e))
@@ -225,8 +225,8 @@ class domain(pkgcore.config.domain.domain):
         license, default_keywords = [], []
         master_license = []
         if not 'ACCEPT_KEYWORDS' in settings:
-            raise Failure("No %s setting detected from profile, "
-                          "or user config" % k)
+            raise Failure("No ACCEPT_KEYWORDS setting detected from profile, "
+                          "or user config")
         s = set()
         incremental_expansion(s, settings['ACCEPT_KEYWORDS'],
             'while expanding ACCEPT_KEYWORDS')

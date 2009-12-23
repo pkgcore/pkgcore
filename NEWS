@@ -4,6 +4,18 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* correct a tb when throwing a missing file error for specifying package.*
+  settings directly to domain.
+
+* correct a tb in profiles expansion code of USE_EXPAND and USE_EXPAND_HIDDEN
+  when they're completely undefined in the profile stack.  Rare, but if a
+  user is building a custom profile stack from the ground up, it's possible
+  to hit it.
+
+* gentoo upstream bug 297933; filter BASHOPTS to keep bash 4.1 happy.
+
+* correct an encoding issue in making binpkgs when an ebuild is utf8
+
 * fix a traceback in pmerge -fK when trying to fetch required files for
   binpkgs.
 

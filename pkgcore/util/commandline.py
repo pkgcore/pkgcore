@@ -439,7 +439,10 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
                     parser_class, main_func = parser_data
                 except TypeError:
                     main_func = parser_data.run
+                    parser_class = parser_data
                 doc = main_func.__doc__
+                if not doc:
+                    doc = getattr(parser_class, 'description', None)
                 if doc is None:
                     errfile.write('  %s\n' % (subcommand,))
                 else:

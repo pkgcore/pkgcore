@@ -99,7 +99,7 @@ class Xpak(object):
         cur_pos = 0
         for key, val in data.iteritems():
             if isinstance(val, unicode):
-                val = val.encode()
+                val = val.encode('utf8')
             if isinstance(key, unicode):
                 key = key.encode()
             new_index.append(struct.pack(">L%isLL" % len(key),

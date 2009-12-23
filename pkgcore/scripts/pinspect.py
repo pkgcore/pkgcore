@@ -5,6 +5,10 @@ from pkgcore.util.commandline import OptionParser
 import os
 from snakeoil.demandload import demandload
 
+demandload(globals(),
+    "snakeoil.lists:iflatten_instance,unstable_unique"
+)
+
 commandline_commands = {}
 
 class pkgsets_data(OptionParser):
@@ -47,20 +51,23 @@ class pkgsets_data(OptionParser):
 
 commandline_commands['pkgset'] = pkgsets_data
 
-def collect_repo_eapi_stats(repo):
-    eapis = {}
-    for pkg in repo:
-        eapis.setdefault(pkg.eapi, 0)
-        eapis[pkg.eapi] += 1
-    return eapis
+
+def print_simple_histogram(data, out, format, sort_by_key=False):
+    # do the division up front...
+
+    total = float(sum(data.itervalues())) / 100
+
+    if sort_by_key:
+        data = sorted(data.iteritems(), key=lambda x:x[0])
+    else:
+        data = sorted(data.iteritems(), key=lambda x:x[1], reverse=True)
+
+    for key, val in data:
+        out.write(format % {'key':str(key), 'val':val,
+            'percent':"%2.2f%%" % (val/total,)})
 
 
-class eapi_data(OptionParser):
-
-    #enable_domain_options = True
-    description = 'get a breakdown of eapi usage for target repositories'
-    usage = ('%prog eapi [repositories to look at] ; if no repositories '
-        'specified the default is to scan all')
+class histo_data(OptionParser):
 
     def _register_options(self):
         self.add_option("--no-summary", action='store_true', default=False,
@@ -78,6 +85,9 @@ class eapi_data(OptionParser):
             opts.repos = sorted(repo_conf.items(), key=lambda x:x[0])
         return opts, ()
 
+    def get_data(self, repo):
+        raise NotImplementedError()
+
     def run(self, opts, out, err):
         global_stats = {}
         position = 0
@@ -87,18 +97,12 @@ class eapi_data(OptionParser):
             position += 1
             out.write(out.bold, "repository", out.reset, ' ',
                 repr(repo_name), ':')
-            data = collect_repo_eapi_stats(repo)
+            data = self.get_data(repo)
             out.first_prefix.append("  ")
             if not data:
                 out.write("no pkgs found")
             else:
-                # do the division up front
-                total = float(sum(data.itervalues())) / 100
-                for key, val in sorted(data.iteritems(), key=lambda x:x[1],
-                    reverse=True):
-                    out.write("eapi: ", repr(str(key)), ' ', val,
-                        " pkgs found, ", ("%2.2f" % (val/total)),
-                        "% of the repository")
+                print_simple_histogram(data, out, self.per_repo_format)
             out.first_prefix.pop()
             for key, val in data.iteritems():
                 global_stats.setdefault(key, 0)
@@ -109,13 +113,52 @@ class eapi_data(OptionParser):
             out.write(out.bold, 'summary', out.reset, ':')
             out.first_prefix.append('  ')
             total = float(sum(global_stats.itervalues())) / 100
-            for key, val in sorted(global_stats.iteritems(), key=lambda x:x[1],
-                reverse=True):
-                out.write("eapi: ", repr(str(key)), ' ', val,
-                    " pkgs found, ", ("%2.2f" % (val/total)),
-                    "% of all repositories")
+            print_simple_histogram(data, out, self.summary_format)
             out.first_prefix.pop()
         return 0
 
 
+class eapi_data(histo_data):
+
+    #enable_domain_options = True
+    description = 'get a breakdown of eapi usage for target repositories'
+    usage = ('%prog eapi [repositories to look at] ; if no repositories '
+        'specified the default is to scan all')
+
+    per_repo_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of the "
+        "repository")
+
+    summary_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of all "
+        "repositories")
+
+    def get_data(self, repo):
+        eapis = {}
+        for pkg in repo:
+            eapis.setdefault(pkg.eapi, 0)
+            eapis[pkg.eapi] += 1
+        return eapis
+
 commandline_commands['eapi'] = eapi_data
+
+
+class license_data(histo_data):
+
+    description = 'get a breakdown of license usage for target repositories'
+    usage = ('%prog license [repositories to look at] ; if no repositories '
+        'specified the default is to scan all')
+
+    per_repo_format = ("license: %(key)r %(val)s pkgs found, %(percent)s of the "
+        "repository")
+
+    summary_format = ("license: %(key)r %(val)s pkgs found, %(percent)s of all "
+        "repositories")
+
+    def get_data(self, repo):
+        data = {}
+        for pkg in repo:
+            for license in unstable_unique(iflatten_instance(pkg.license)):
+                data.setdefault(license, 0)
+                data[license] += 1
+        return data
+
+commandline_commands['license'] = license_data

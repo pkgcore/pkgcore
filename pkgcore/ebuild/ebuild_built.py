@@ -67,6 +67,8 @@ class package(ebuild_src.base):
 
     built = True
 
+    __slots__ = ('cbuild', 'chost', 'ctarget', 'use', 'environment', 'contents')
+
     _get_attr = dict(ebuild_src.package._get_attr)
 
     _get_attr.update((x, post_curry(passthrough, x))

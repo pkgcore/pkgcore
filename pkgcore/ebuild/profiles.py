@@ -505,11 +505,14 @@ class UserProfile(OnDiskProfile):
 
 
 class PkgProvidedParent(object):
+
     def __init__(self, **kwds):
         self.__dict__.update(kwds)
 
 
 class PkgProvided(ebuild_src.base):
+
+    __slots__ = ('use',)
 
     package_is_real = False
     __inst_caching__ = True

@@ -211,8 +211,8 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
     elif self.version is not None:
         raise errors.MalformedAtom(orig_atom,
             'versioned atom requires an operator')
-    sf(self, "hash", hash(orig_atom))
-    sf(self, "negate_vers", negate_vers)
+    sf(self, "_hash", hash(orig_atom))
+    sf(self, "negate", negate_vers)
 
 
 def native__getattr__(self, attr):
@@ -242,7 +242,7 @@ def native__getattr__(self, attr):
                     "fullver", values.StrGlobMatch(self.fullver)))
         else:
             r.append(VersionMatch(self.op, self.version, self.revision,
-                                  negate=self.negate_vers))
+                                  negate=self.negate))
 
     if self.slot is not None:
         if len(self.slot) == 1:
@@ -331,15 +331,15 @@ class atom(boolean.AndRestriction):
     Should be converted into an agnostic dependency base.
     """
 
+    # note we don't need _hash
     __slots__ = (
-        "blocks", "blocks_temp_ignorable", "op", "negate_vers", "cpvstr",
-        "use", "slot", "hash", "category", "version", "revision", "fullver",
-        "package", "key", "repo_id")
+        "blocks", "blocks_temp_ignorable", "op", "cpvstr",
+        "use", "slot", "category", "version", "revision", "fullver",
+        "package", "key", "repo_id", "_hash")
 
     type = packages.package_type
-    negate = False
 
-    __attr_comparison__ = ("cpvstr", "op", "blocks", "negate_vers",
+    __attr_comparison__ = ("cpvstr", "op", "blocks", "negate",
         "use", "slot", "repo_id")
 
     inject_richcmp_methods_from_cmp(locals())
@@ -377,7 +377,7 @@ class atom(boolean.AndRestriction):
             self.__class__.__name__, ' '.join(attrs), id(self))
 
     def __reduce__(self):
-        return (atom, (str(self), self.negate_vers))
+        return (atom, (str(self), self.negate))
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
         if full_solution_expansion:
@@ -412,7 +412,7 @@ class atom(boolean.AndRestriction):
         return s
 
     def __hash__(self):
-        return self.hash
+        return self._hash
 
     def __iter__(self):
         return iter(self.restrictions)
@@ -453,7 +453,7 @@ class atom(boolean.AndRestriction):
             # want !! prior to !
             return -c
 
-        c = cmp(self.negate_vers, other.negate_vers)
+        c = cmp(self.negate, other.negate)
         if c:
             return c
 

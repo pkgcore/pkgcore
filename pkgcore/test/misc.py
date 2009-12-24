@@ -17,6 +17,9 @@ from pkgcore import plugin
 default_arches = set(["x86", "ppc", "amd64", "ia64"])
 
 class FakePkgBase(package):
+
+    __slots__ = ()
+
     def __init__(self, cpvstr, data=None, shared=None, repo=None):
         if data is None:
             data = {}

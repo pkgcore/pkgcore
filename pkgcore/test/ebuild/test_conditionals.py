@@ -15,6 +15,7 @@ from pkgcore.restrictions import boolean, packages
 class base(TestCase):
 
     class kls(conditionals.DepSet):
+        __slots__ = ()
         parse_depset = None
 
     def gen_depset(self, string, operators=None, element_kls=str,

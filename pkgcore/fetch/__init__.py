@@ -80,7 +80,8 @@ class mirror(object):
 
 
 class default_mirror(mirror):
-    pass
+
+    __slots__ = ()
 
 
 class uri_list(object):

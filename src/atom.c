@@ -1189,7 +1189,7 @@ init_atom()
     load_string(pkgcore_atom_version,       "version");
     load_string(pkgcore_atom_revision,      "revision");
     load_string(pkgcore_atom_fullver,       "fullver");
-    load_string(pkgcore_atom_hash,          "hash");
+    load_string(pkgcore_atom_hash,          "_hash");
     load_string(pkgcore_atom_use,           "use");
     load_string(pkgcore_atom_slot,          "slot");
     load_string(pkgcore_atom_repo_id,       "repo_id");
@@ -1200,7 +1200,7 @@ init_atom()
     load_string(pkgcore_atom_blocks_temp_ignorable,
                                             "blocks_temp_ignorable");
     load_string(pkgcore_atom_op,            "op");
-    load_string(pkgcore_atom_negate_vers,   "negate_vers");
+    load_string(pkgcore_atom_negate_vers,   "negate");
     load_string(pkgcore_atom_restrictions,  "restrictions");
 
     load_string(pkgcore_atom_op_ge,         ">=");

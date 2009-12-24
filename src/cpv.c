@@ -85,9 +85,9 @@ pkgcore_cpv_get_cpvstr(pkgcore_cpv *self, void *closure)
         Py_RETURN_NONE;
     }
     if (!self->fullver) {
-        return PyString_FromFormat("%s/%s",
-            PyString_AsString(self->category),
-            PyString_AsString(self->package));
+        PyObject *tmp = self->key;
+        Py_INCREF(tmp);
+        return tmp;
     }
     return PyString_FromFormat("%s/%s-%s",
         PyString_AsString(self->category),
@@ -457,6 +457,7 @@ pkgcore_cpv_parse_from_cpvstr(pkgcore_cpv *self, PyObject *cpvstr,
         return 2;
     }
 
+    PyString_InternInPlace(&tmp);
     tmp2 = self->category;
     self->category = tmp;
     Py_CLEAR(tmp2);
@@ -533,6 +534,7 @@ pkgcore_cpv_parse_from_cpvstr(pkgcore_cpv *self, PyObject *cpvstr,
     if(!(tmp = PyString_FromStringAndSize(pkg_start, cpv_pos - pkg_start))) {
         return 2;
     }
+    PyString_InternInPlace(&tmp);
     tmp2 = self->package;
     self->package = tmp;
     Py_CLEAR(tmp2);
@@ -549,6 +551,7 @@ pkgcore_cpv_parse_from_cpvstr(pkgcore_cpv *self, PyObject *cpvstr,
         Py_INCREF(tmp);
     }
 
+    PyString_InternInPlace(&tmp);
     tmp2 = self->key;
     self->key = tmp;
     Py_XDECREF(tmp2);

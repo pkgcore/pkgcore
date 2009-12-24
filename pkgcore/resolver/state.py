@@ -6,6 +6,7 @@ from pkgcore.resolver.pigeonholes import PigeonHoledSlots
 
 
 class plan_state(object):
+
     def __init__(self):
         self.state = PigeonHoledSlots()
         self.plan = []
@@ -47,6 +48,7 @@ class plan_state(object):
 
 
 class base_op_state(object):
+
     __slots__ = ("pkg", "force", "choices")
     internal = False
 
@@ -69,6 +71,7 @@ class base_op_state(object):
 
 class add_op(base_op_state):
 
+    __slots__ = ()
     desc = "add"
 
     def apply(self, plan):
@@ -85,6 +88,7 @@ class add_op(base_op_state):
 
 class add_hardref_op(base_op_state):
 
+    __slots__ = ('restriction',)
     desc = None
     internal = True
 
@@ -101,6 +105,7 @@ class add_hardref_op(base_op_state):
 
 class add_backref_op(base_op_state):
 
+    __slots__ = ()
     desc = None
     internal = True
 
@@ -113,8 +118,8 @@ class add_backref_op(base_op_state):
 
 
 class remove_op(base_op_state):
-    __slots__ = ()
 
+    __slots__ = ()
     desc = "remove"
 
     def apply(self, plan):
@@ -131,8 +136,8 @@ class remove_op(base_op_state):
 
 
 class replace_op(base_op_state):
-    __slots__ = ("old_pkg", "old_choices")
 
+    __slots__ = ("old_pkg", "old_choices")
     desc = "replace"
 
     def __init__(self, *args, **kwds):
@@ -187,8 +192,8 @@ class replace_op(base_op_state):
 
 
 class blocker_base_op(object):
-    __slots__ = ("choices", "blocker", "key")
 
+    __slots__ = ("choices", "blocker", "key")
     desc = None
     internal = True
 
@@ -211,6 +216,7 @@ class blocker_base_op(object):
 
 
 class incref_forward_block_op(blocker_base_op):
+
     __slots__ = ()
 
     def apply(self, plan):
@@ -235,6 +241,7 @@ class incref_forward_block_op(blocker_base_op):
 
 
 class decref_forward_block_op(blocker_base_op):
+
     __slots__ = ()
 
     def apply(self, plan):

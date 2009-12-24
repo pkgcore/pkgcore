@@ -223,7 +223,7 @@ class base(metadata.package):
 
 class package(base):
 
-    __slots__ = ("_shared_pkg_data")
+    __slots__ = ("_shared_pkg_data",)
 
     _get_attr = dict(base._get_attr)
 
@@ -348,6 +348,7 @@ class virtual_ebuild(metadata.package):
     built = True
 
     #__slots__ = ("_orig_data", "data", "provider")
+    __slotting_intentionally_disabled__ = True
 
     def __init__(self, parent_repository, pkg, data, cpvstr):
         """

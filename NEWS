@@ -4,6 +4,18 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* key is reused as cpvstr for memory savings where possible in cpv
+  extension objects.
+
+* cpv extension objects now intern package, category, and key for
+  memory reduction reasons.
+
+* various slot fixups to reduce memory usage.
+
+* fix the scenario where there is one repo returned from the domain for
+  pmerge... crappy bug feedback on that one lead to it slipping by.
+
+
 pkgcore 0.5.7: December 22, 2009
 
 * added pinspect script; used for basic reporting of metadata usage,

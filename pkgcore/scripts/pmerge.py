@@ -355,7 +355,7 @@ def main(options, out, err):
         return
 
     all_repos = domain.all_repos
-    repos = list(getattr(all_repos, 'trees', []))
+    repos = list(getattr(all_repos, 'trees', [all_repos]))
     if options.usepkgonly or options.usepkg:
         if options.usepkgonly:
             repos = [

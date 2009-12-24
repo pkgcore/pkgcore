@@ -19,6 +19,8 @@ demandload(globals(),
 
 class LookupFsDev(fs.fsDev):
 
+    __slots__ = ()
+
     def __init__(self, path, **kwds):
         if any(x not in kwds for x in ("major", "minor", "mode")):
             try:

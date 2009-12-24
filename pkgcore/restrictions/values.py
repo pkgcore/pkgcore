@@ -593,6 +593,8 @@ class UnicodeConversion(StrConversion):
 
     """convert passed in data to a unicode obj"""
 
+    __slots__ = ()
+
     def match(self, val):
         return self.restrict.match(unicode(val))
 

@@ -11,6 +11,8 @@ from snakeoil.currying import partial
 class SillyBool(restriction.base):
     """Extra stupid version of AlwaysBool to test base.force_{True,False}."""
 
+    __slots__ = ('negate',)
+
     def __init__(self, negate=False):
         object.__setattr__(self, 'negate', negate)
 
@@ -76,6 +78,8 @@ class AlwaysBoolTest(TestRestriction):
 class NoneMatch(restriction.base):
 
     """Only matches None."""
+
+    __slots__ = ()
 
     def match(self, val):
         return val is None

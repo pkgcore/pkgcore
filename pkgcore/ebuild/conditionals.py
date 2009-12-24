@@ -29,7 +29,7 @@ class DepSet(boolean.AndRestriction):
     """
 
     __slots__ = ("has_conditionals", "element_class", "_node_conds",
-                 "restrictions", "_known_conditionals")
+                 "_known_conditionals")
     type = packages.package_type
     negate = False
 

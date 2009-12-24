@@ -13,6 +13,8 @@ false = restriction.AlwaysBool(node_type='foo', negate=False)
 
 class AlwaysForcableBool(boolean.base):
 
+    __slots__ = ()
+
     def force_True(self, action, *args):
         yield True
 

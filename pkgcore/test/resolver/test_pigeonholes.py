@@ -7,6 +7,9 @@ from pkgcore.test.resolver.test_choice_point import fake_package
 from pkgcore.restrictions import restriction
 
 class fake_blocker(restriction.base):
+
+    __slots__ = ('key', 'blocks')
+
     def __init__(self, key, blocks=()):
         restriction.base.__init__(self)
         if not isinstance(blocks, (list, tuple)):

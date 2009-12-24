@@ -19,7 +19,7 @@ class package(metadata.package):
     package_is_real = False
     built = True
 
-    __slots__ = ("__dict__")
+    __slots__ = ("__dict__",)
 
     def __init__(self, repo, provider, *a, **kwds):
         metadata.package.__init__(self, repo, *a, **kwds)

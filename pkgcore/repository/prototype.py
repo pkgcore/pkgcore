@@ -16,6 +16,8 @@ from pkgcore.interfaces import repo
 
 class IterValLazyDict(LazyValDict):
 
+    __slots__ = ()
+
     def __str__(self):
         return str(list(self))
 
@@ -27,6 +29,8 @@ class IterValLazyDict(LazyValDict):
 
 
 class CategoryIterValLazyDict(IterValLazyDict):
+
+    __slots__ = ()
 
     def force_add(self, key):
         if key not in self:

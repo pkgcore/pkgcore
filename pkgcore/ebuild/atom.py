@@ -212,7 +212,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
         raise errors.MalformedAtom(orig_atom,
             'versioned atom requires an operator')
     sf(self, "_hash", hash(orig_atom))
-    sf(self, "negate", negate_vers)
+    sf(self, "negate_vers", negate_vers)
 
 
 def native__getattr__(self, attr):
@@ -242,7 +242,7 @@ def native__getattr__(self, attr):
                     "fullver", values.StrGlobMatch(self.fullver)))
         else:
             r.append(VersionMatch(self.op, self.version, self.revision,
-                                  negate=self.negate))
+                                  negate=self.negate_vers))
 
     if self.slot is not None:
         if len(self.slot) == 1:
@@ -333,13 +333,15 @@ class atom(boolean.AndRestriction):
 
     # note we don't need _hash
     __slots__ = (
-        "blocks", "blocks_temp_ignorable", "op", "cpvstr",
+        "blocks", "blocks_temp_ignorable", "op", "cpvstr", "negate_vers",
         "use", "slot", "category", "version", "revision", "fullver",
         "package", "key", "repo_id", "_hash")
 
     type = packages.package_type
 
-    __attr_comparison__ = ("cpvstr", "op", "blocks", "negate",
+    negate = False
+
+    __attr_comparison__ = ("cpvstr", "op", "blocks", "negate_vers",
         "use", "slot", "repo_id")
 
     inject_richcmp_methods_from_cmp(locals())
@@ -377,7 +379,7 @@ class atom(boolean.AndRestriction):
             self.__class__.__name__, ' '.join(attrs), id(self))
 
     def __reduce__(self):
-        return (atom, (str(self), self.negate))
+        return (atom, (str(self), self.negate_vers))
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
         if full_solution_expansion:
@@ -453,7 +455,7 @@ class atom(boolean.AndRestriction):
             # want !! prior to !
             return -c
 
-        c = cmp(self.negate, other.negate)
+        c = cmp(self.negate_vers, other.negate_vers)
         if c:
             return c
 

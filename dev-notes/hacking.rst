@@ -598,3 +598,23 @@ be calling the base class __init__ anyway.
 (This does not mean you should never store things like "stuff" as
 attrs: it can be very useful for code catching the exception to have
 access to it. Use common sense.)
+
+
+Memory debugging
+================
+
+Either heappy, or dowser are the two currently recommended tools.
+
+To use dowser, insert the following into the code wherever you'd like
+to check the heap- this is blocking also-
+
+  import cherrpy
+  import dowser
+  cherrypy.config.update({'engine.autoreload_on': False})
+  try:
+    cherrypy.quickstart(dowser.Root())
+  except AttributeError:
+    cherrypy.root = dowser.Root()
+    cherrypy.server.start()
+
+For using heappy, see the heappy documentation in pkgcore/dev-notes.

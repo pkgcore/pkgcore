@@ -94,6 +94,14 @@ class VersionMatch(restriction.base):
             return "ver %s%s %s" % (n, s, self.ver)
         return "ver-rev %s%s %s-r%s" % (n, s, self.ver, self.rev)
 
+    def __repr__(self):
+        s = self._convert_op2str[self.vals]
+        s += self.ver
+        if self.rev:
+            s += "-r%s" % (self.rev,)
+        return "<%s %s negate=%s droprrev=%s @#x>" % (
+            self.__class__.__name__, s, self.negate, self.droprev)
+
     @staticmethod
     def _convert_ops(inst):
         if inst.negate:

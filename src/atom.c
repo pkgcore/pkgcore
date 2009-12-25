@@ -1200,7 +1200,7 @@ init_atom()
     load_string(pkgcore_atom_blocks_temp_ignorable,
                                             "blocks_temp_ignorable");
     load_string(pkgcore_atom_op,            "op");
-    load_string(pkgcore_atom_negate_vers,   "negate");
+    load_string(pkgcore_atom_negate_vers,   "negate_vers");
     load_string(pkgcore_atom_restrictions,  "restrictions");
 
     load_string(pkgcore_atom_op_ge,         ">=");

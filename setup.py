@@ -7,7 +7,7 @@ import subprocess
 import unittest
 
 from distutils import core, ccompiler, log, errors
-from distutils.command import (build, sdist, build_py, build_ext,
+from distutils.command import (build, build_py, build_ext,
     build_scripts, install)
 from stat import ST_MODE
 
@@ -42,66 +42,32 @@ def write_bzr_verinfo(destination):
     finally:
         f.close()
 
-class mysdist(sdist.sdist):
+
+class mysdist(snk_distutils.sdist):
 
     """sdist command specifying the right files and generating ChangeLog."""
 
-    user_options = sdist.sdist.user_options + [
+    user_options = snk_distutils.sdist.user_options + [
         ('build-docs', None, 'build docs [default]'),
         ('no-build-docs', None, 'do not build docs'),
-        ('changelog', None, 'create a ChangeLog [default]'),
-        ('changelog-start=', None, 'start rev to dump the changelog from,'
-            ' defaults to 1'),
-        ('no-changelog', None, 'do not create the ChangeLog file'),
         ]
 
-    boolean_options = sdist.sdist.boolean_options + ['changelog'] + ['build-docs']
+    boolean_options = snk_distutils.sdist.boolean_options + ['build-docs']
 
-    negative_opt = {'no-changelog': 'changelog', 'no-build-docs':'build-docs'}
-    negative_opt.update(sdist.sdist.negative_opt)
+    negative_opt = snk_distutils.sdist.negative_opt.copy()
+    negative_opt.update({'no-build-docs':'build-docs'})
 
-    default_format = dict(sdist.sdist.default_format)
-    default_format["posix"] = "bztar"
 
     def initialize_options(self):
-        sdist.sdist.initialize_options(self)
-        self.changelog = True
-        self.changelog_start = None
+        snk_distutils.sdist.initialize_options(self)
         self.build_docs = True
 
-    def get_file_list(self):
-        """Get a filelist without doing anything involving MANIFEST files."""
-        # This is copied from the "Recreate manifest" bit of sdist.
-        self.filelist.findall()
-        if self.use_defaults:
-            self.add_defaults()
-
-        # This bit is roughly equivalent to a MANIFEST.in template file.
-        for key, globs in self.distribution.package_data.iteritems():
-            for pattern in globs:
-                self.filelist.include_pattern(os.path.join(key, pattern))
-
-        self.filelist.append("AUTHORS")
-        self.filelist.append("COPYING")
-        self.filelist.append("NEWS")
-
-        self.filelist.include_pattern('.[ch]', prefix='src')
-
-        for prefix in ['doc', 'dev-notes', 'man']:
-            self.filelist.include_pattern('.rst', prefix=prefix)
-            self.filelist.exclude_pattern(os.path.sep + 'index.rst',
-                                          prefix=prefix)
-        self.filelist.append('build_docs.py')
-        self.filelist.append(os.path.join('man', 'manpage.py'))
-        self.filelist.include_pattern('*', prefix='examples')
-        self.filelist.include_pattern('*', prefix='bin')
-
-        if self.prune:
-            self.prune_file_list()
-
-        # This is not optional: remove_duplicates needs sorted input.
-        self.filelist.sort()
-        self.filelist.remove_duplicates()
+    def _add_to_file_list(self):
+        self.filelist.include_pattern('.rst', prefix='man')
+        self.filelist.exclude_pattern(os.path.sep + 'index.rst',
+            prefix='man')
+        self.filelist.append('man/manpage.py')
+        self.filelist.append('build_api_docs.sh')
 
     def make_release_tree(self, base_dir, files):
         """Create and populate the directory tree that is put in source tars.
@@ -110,27 +76,17 @@ class mysdist(sdist.sdist):
         into the release and adds generated files that should not
         exist in a working tree.
         """
-        sdist.sdist.make_release_tree(self, base_dir, files)
+        snk_distutils.sdist.make_release_tree(self, base_dir, files)
         if self.build_docs:
             # this is icky, but covers up cwd changing issues.
             my_path = map(os.path.abspath, sys.path)
             if subprocess.call(['./build_docs.py'], cwd=base_dir,
                 env={"PYTHONPATH":":".join(my_path)}):
                 raise errors.DistutilsExecError("build_docs failed")
-        if self.changelog:
-            args = []
-            if self.changelog_start:
-                args = ['-r', '%s..-1' % self.changelog_start]
-            log.info("regenning ChangeLog (may take a while)")
-            if subprocess.call(
-                ['bzr', 'log', '--verbose'] + args,
-                stdout=open(os.path.join(base_dir, 'ChangeLog'), 'w')):
-                raise errors.DistutilsExecError('bzr log failed')
+        self.cleanup_post_release_tree(base_dir)
+
+    def generate_bzr_verinfo(self, base_dir):
         write_bzr_verinfo(os.path.join(base_dir, 'pkgcore', 'bzr_verinfo.py'))
-        for base, dirs, files in os.walk(base_dir):
-            for x in files:
-                if x.endswith(".pyc") or x.endswith(".pyo"):
-                    os.unlink(os.path.join(base, x))
 
 
 class pkgcore_build_scripts(build_scripts.build_scripts):

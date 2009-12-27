@@ -227,6 +227,8 @@ def process_docs(directory, force, do_parent=False):
 def process_man(directory, force, debug):
     """Generate manpages."""
     print 'processing %s' % (directory,)
+    print ("please be aware that dir() sometimes throws RuntimeErrors... "
+        "this can be safely ignored")
     debug_loc = None
     for entry in os.listdir(directory):
         original = os.path.join(directory, entry)

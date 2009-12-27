@@ -606,7 +606,7 @@ Memory debugging
 Either heappy, or dowser are the two currently recommended tools.
 
 To use dowser, insert the following into the code wherever you'd like
-to check the heap- this is blocking also-
+to check the heap- this is blocking also::
 
   import cherrpy
   import dowser
@@ -616,5 +616,6 @@ to check the heap- this is blocking also-
   except AttributeError:
     cherrypy.root = dowser.Root()
     cherrypy.server.start()
+
 
 For using heappy, see the heappy documentation in pkgcore/dev-notes.

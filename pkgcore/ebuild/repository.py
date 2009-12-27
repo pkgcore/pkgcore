@@ -52,6 +52,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
     configure = None
     format_magic = "ebuild_src"
     enable_gpg = False
+    extension = '.ebuild'
 
     pkgcore_config_type = ConfigHint(
         {'location': 'str', 'cache': 'refs:cache',
@@ -202,12 +203,13 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
     def _get_versions(self, catpkg):
         cppath = pjoin(self.base, catpkg[0], catpkg[1])
-        # 7 == len(".ebuild")
         pkg = catpkg[-1] + "-"
         lp = len(pkg)
+        extension = self.extension
+        ext_len = len(extension)
         try:
             ret = tuple(x[lp:-7] for x in listdir_files(cppath)
-                if x[-7:] == '.ebuild' and x[:lp] == pkg)
+                if x[-ext_len:] == extension and x[:lp] == pkg)
             if any(('scm' in x or '-try' in x) for x in ret):
                 if not self.ignore_paludis_versioning:
                     for x in ret:
@@ -230,9 +232,9 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
             if pkg.fullver not in self.versions[(pkg.category, pkg.package)]:
                 # daft explicit -r0 on disk.
                 return pjoin(self.base, pkg.category, pkg.package,
-                    "%s-%s-r0.ebuild" % (pkg.package, pkg.fullver))
+                    "%s-%s-r0%s" % (pkg.package, pkg.fullver, self.extension))
         return pjoin(self.base, pkg.category, pkg.package, \
-            "%s-%s.ebuild" % (pkg.package, pkg.fullver))
+            "%s-%s%s" % (pkg.package, pkg.fullver, self.extension))
 
     def _get_ebuild_src(self, pkg):
         return local_source(self._get_ebuild_path(pkg), encoding='utf8')

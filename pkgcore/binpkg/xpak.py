@@ -5,7 +5,7 @@
 XPAK container support
 """
 
-import struct
+from snakeoil import struct_compat as struct
 from snakeoil.mappings import OrderedDict, autoconvert_py3k_methods_metaclass
 from snakeoil import klass, compatibility
 from snakeoil.demandload import demandload
@@ -35,16 +35,16 @@ class MalformedXpak(Exception):
 
 class Xpak(object):
     __slots__ = ("_source", "_source_is_path", "xpak_start", "_keys_dict")
-    trailer_size = 16
-    trailer_parser = ">8sL4s"
-    trailer_pre_magic = "XPAKSTOP"
-    trailer_post_magic = "STOP"
 
     __metaclass__ = autoconvert_py3k_methods_metaclass
 
-    header_size = 16
-    header_parser = ">8sLL"
+    trailer_pre_magic = "XPAKSTOP"
+    trailer_post_magic = "STOP"
+    trailer = struct.Struct(">%isL%is" % (
+        len(trailer_pre_magic), len(trailer_post_magic)))
+
     header_pre_magic = "XPAKPACK"
+    header = struct.Struct(">%isLL" % (len(header_pre_magic),))
 
     if compatibility.is_py3k:
         trailer_post_magic = trailer_post_magic.encode("ascii")
@@ -123,24 +123,16 @@ class Xpak(object):
         new_data = joiner.join(new_data)
 
         handle.seek(start, 0)
-        # +12 is len(key) long, data_offset long, data_offset len long
-        handle.write(struct.pack(">%isLL%is%is%isL%is" %
-                (len(cls.header_pre_magic),
-                len(new_index),
-                len(new_data),
-                len(cls.trailer_pre_magic),
-                len(cls.trailer_post_magic)),
-            cls.header_pre_magic,
-            len(new_index),
-            len(new_data),
-            new_index,
-            new_data,
-            cls.trailer_pre_magic,
-            # the fun one; 16 for the footer, 8 for index/data longs,
-            # + index/data chunks.
-            len(new_index) + len(new_data) + 24,
-            cls.trailer_post_magic))
+        cls.header.write(handle, cls.header_pre_magic, len(new_index),
+            len(new_data))
 
+        handle.write(struct.pack(">%is%is" % (len(new_index), len(new_data)),
+            new_index, new_data))
+
+        # the +8 is for the longs for new_index/new_data
+        cls.trailer.write(handle, cls.trailer_pre_magic,
+            len(new_index) + len(new_data) + cls.trailer.size + 8,
+            cls.trailer_post_magic)
         handle.truncate()
         handle.close()
         return Xpak(target_source)
@@ -175,8 +167,7 @@ class Xpak(object):
     def _check_magic(self, fd):
         fd.seek(-16, 2)
         try:
-            pre, size, post = struct.unpack(
-                self.trailer_parser, fd.read(self.trailer_size))
+            pre, size, post = self.trailer.read(fd)
             if pre != self.trailer_pre_magic or post != self.trailer_post_magic:
                 raise MalformedXpak(
                     "not an xpak segment, trailer didn't match: %r" % fd)
@@ -191,8 +182,7 @@ class Xpak(object):
         fd.seek(-(size + 8), 2)
         self.xpak_start = fd.tell()
         try:
-            pre, index_len, data_len = struct.unpack(
-                self.header_parser, fd.read(self.header_size))
+            pre, index_len, data_len = self.header.read(fd)
             if pre != self.header_pre_magic:
                 raise MalformedXpak(
                     "not an xpak segment, header didn't match: %r" % fd)
@@ -200,7 +190,7 @@ class Xpak(object):
             raise MalformedXpak(
                 "not an xpak segment, failed parsing header: %r" % fd)
 
-        return self.xpak_start + self.header_size, index_len, data_len
+        return self.xpak_start + self.header.size, index_len, data_len
 
     def keys(self):
         return list(self.iterkeys())

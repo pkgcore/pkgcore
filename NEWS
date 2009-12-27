@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.5.8: December 27th, 2009
+
 * >snakeoil-0.3.4 is required for this release.
 
 * key is reused as cpvstr for memory savings where possible in cpv
@@ -12,7 +14,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 * cpv extension objects now intern package, category, and key for
   memory reduction reasons.
 
-* various slot fixups to reduce memory usage.
+* various slot fixups to reduce memory usage and potential corner case
+  bugs.
 
 * fix the scenario where there is one repo returned from the domain for
   pmerge... crappy bug feedback on that one lead to it slipping by.

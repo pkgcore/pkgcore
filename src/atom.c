@@ -80,8 +80,8 @@ Err_SetMalformedAtom(PyObject *atom_str, char *raw_msg)
     PyObject *msg = PyString_FromString(raw_msg);
     if(!msg)
         return;
-    PyObject *err = PyObject_CallFunction(pkgcore_atom_MalformedAtom_Exc,
-        "OO", atom_str, msg);
+    PyObject *err = PyObject_CallFunctionObjArgs(
+        pkgcore_atom_MalformedAtom_Exc, atom_str, msg, NULL);
     Py_DECREF(msg);
     if(err) {
         PyErr_SetObject(pkgcore_atom_MalformedAtom_Exc, err);
@@ -337,14 +337,14 @@ parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
     int has_version, int *had_revision)
 {
     PyObject *tmp, *cpv;
-    cpv = PyObject_CallFunction(
+    cpv = PyObject_CallFunctionObjArgs(
         has_version ? pkgcore_atom_cpv_parse_versioned :
             pkgcore_atom_cpv_parse_unversioned,
-        "O", cpv_str);
+        cpv_str, NULL);
     if(!cpv) {
         PyObject *type, *tb;
         PyErr_Fetch(&type, &tmp, &tb);
-        PyObject *res = PyObject_CallFunction(type, "O", tmp);
+        PyObject *res = PyObject_CallFunctionObjArgs(type, tmp, NULL);
         Py_XDECREF(tmp);
         Py_XDECREF(type);
         Py_XDECREF(tb);
@@ -764,8 +764,8 @@ make_slot_restrict(PyObject *slot)
     Py_ssize_t idx;
     for(idx=0; idx < PyTuple_GET_SIZE(slot); idx++) {
         PyObject *s = PyTuple_GET_ITEM(slot, idx);
-        PyObject *tmp = PyObject_CallFunction(pkgcore_atom_StrExactMatch,
-            "O", s);
+        PyObject *tmp = PyObject_CallFunctionObjArgs(
+            pkgcore_atom_StrExactMatch, s, NULL);
         if(!tmp) {
             Py_DECREF(tup);
             return NULL;

@@ -122,7 +122,6 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
     PyObject *restrictions = NULL;
     PyObject *item = NULL;
     PyObject *tmp = NULL;
-    PyObject *kwds = NULL;
 
     // should just use alloca here.
 
@@ -163,13 +162,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 item = tmp;
                 item_size = PyTuple_GET_SIZE(item);
             } else {
-                if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
-                    Py_DECREF(tmp);
-                    goto internal_parse_depset_error;
-                }
-
-                item = PyObject_Call(and_func, tmp, kwds);
-                Py_DECREF(kwds);
+                item = PyObject_CallObject(and_func, tmp);
                 Py_DECREF(tmp);
                 if(!item)
                     goto internal_parse_depset_error;
@@ -269,12 +262,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
             } else if (!PyTuple_CheckExact(tmp)) {
                 item = tmp;
             } else {
-                if(!(kwds = Py_BuildValue("{sO}", "finalize", Py_True))) {
-                    Py_DECREF(tmp);
-                    goto internal_parse_depset_error;
-                }
-                item = PyObject_Call(or_func, tmp, kwds);
-                Py_DECREF(kwds);
+                item = PyObject_CallObject(or_func, tmp);
                 Py_DECREF(tmp);
                 if(!item)
                     goto internal_parse_depset_error;

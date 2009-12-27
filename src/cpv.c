@@ -668,7 +668,7 @@ parse_error:
     } else {
         cpvstr = category;
     }
-    PyObject *tmp = PyObject_CallFunction(pkgcore_InvalidCPV_Exc, "O", cpvstr);
+    PyObject *tmp = PyObject_CallFunctionObjArgs(pkgcore_InvalidCPV_Exc, cpvstr, NULL);
     if(package) {
         Py_DECREF(cpvstr);
     }

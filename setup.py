@@ -164,7 +164,7 @@ class pkgcore_install_scripts(core.Command):
                 log.info('symlinking %s to %s', dest, self.scripts[0])
                 try:
                     os.symlink(self.scripts[0], dest)
-                except (IOError, OSError):
+                except EnvironmentError:
                     # yes, it would be best to examine the exception...
                     # but that makes this script non py3k sourcable
                     if not os.path.exists(dest):

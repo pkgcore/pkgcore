@@ -291,13 +291,13 @@ class OptionParser(commandline.OptionParser):
     option_class = Option
     enable_domain_options = True
 
-    printable_attrs = ('rdepends', 'depends', 'post_rdepends', 'provides',
-                       'use', 'iuse', 'description', 'longdescription',
-                       'herds', 'license', 'uris', 'files',
-                       'slot', 'maintainers', 'restrict', 'repo',
-                       'alldepends', 'path', 'environment', 'keywords',
-                       'homepage', 'fetchables', 'eapi', 'inherited',
-                       'chost', 'cbuild', 'ctarget', 'all', 'allmetadata')
+    printable_attrs = sorted(('rdepends', 'depends', 'post_rdepends',
+        'provides', 'use', 'iuse', 'description', 'longdescription',
+        'herds', 'license', 'uris', 'files', 'category', 'package',  'slot',
+        'maintainers', 'restrict', 'repo', 'alldepends', 'path', 'version',
+        'revision', 'fullver', 'environment', 'keywords', 'homepage',
+        'fetchables', 'eapi', 'inherited', 'chost', 'cbuild', 'ctarget',
+        'all', 'allmetadata'))
 
     metadata_attrs = tuple(x for x in printable_attrs if not x.startswith("all")
         and x != 'environment')

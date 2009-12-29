@@ -13,6 +13,7 @@ from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils)
 from snakeoil.demandload import demandload
 from snakeoil.compatibility import any
+from snakeoil.formatters import decorate_forced_wrapping
 demandload(globals(), 're', 'snakeoil.currying:partial', 'errno',
     'snakeoil.lists:iter_stable_unique')
 
@@ -640,6 +641,7 @@ def _default_formatter(out, node):
     return False
 
 
+@decorate_forced_wrapping(False)
 def format_depends(out, node, func=_default_formatter):
     """Pretty-print a depset to a formatter.
 
@@ -652,64 +654,61 @@ def format_depends(out, node, func=_default_formatter):
         a terminating newline, and return C{True}.
     @returns: The same kind of boolean func should return.
     """
-    oldwrap = out.wrap
-    out.wrap = False
-    try:
-        # Do this first since if it is a DepSet it is also an
-        # AndRestriction (DepSet subclasses that).
-        if isinstance(node, conditionals.DepSet):
-            if not node.restrictions:
-                return False
-            if len(node.restrictions) == 1:
-                return format_depends(out, node.restrictions[0], func)
+    # Do this first since if it is a DepSet it is also an
+    # AndRestriction (DepSet subclasses that).
+    if isinstance(node, conditionals.DepSet):
+        if not node.restrictions:
+            return False
+        if len(node.restrictions) == 1:
+            return _internal_format_depends(out, node.restrictions[0], func)
+        out.write()
+        for child in node.restrictions[:-1]:
+            _internal_format_depends(out, child, func)
             out.write()
-            for child in node.restrictions[:-1]:
-                format_depends(out, child, func)
+        _internal_format_depends(out, node.restrictions[-1], func)
+        return True
+    # weird..
+    return _internal_format_depends(out, node, func)
+
+def _internal_format_depends(out, node, func):
+    prefix = None
+    if isinstance(node, boolean.OrRestriction):
+        prefix = '|| ('
+        children = node.restrictions
+    elif (isinstance(node, boolean.AndRestriction) and not
+          isinstance(node, atom.atom)):
+        prefix = '('
+        children = node.restrictions
+    elif isinstance(node, packages.Conditional):
+        assert len(node.restriction.vals) == 1
+        prefix = '%s%s? (' % (node.restriction.negate and '!' or '',
+                              list(node.restriction.vals)[0])
+        children = node.payload
+    if prefix:
+        children = list(children)
+        if len(children) == 1:
+            out.write(prefix, ' ', autoline=False)
+            out.first_prefix.append('    ')
+            newline = _internal_format_depends(out, children[0], func)
+            out.first_prefix.pop()
+            if newline:
                 out.write()
-            format_depends(out, node.restrictions[-1], func)
-            return True
-
-        prefix = None
-        if isinstance(node, boolean.OrRestriction):
-            prefix = '|| ('
-            children = node.restrictions
-        elif (isinstance(node, boolean.AndRestriction) and not
-              isinstance(node, atom.atom)):
-            prefix = '('
-            children = node.restrictions
-        elif isinstance(node, packages.Conditional):
-            assert len(node.restriction.vals) == 1
-            prefix = '%s%s? (' % (node.restriction.negate and '!' or '',
-                                  list(node.restriction.vals)[0])
-            children = node.payload
-
-        if prefix:
-            children = list(children)
-            if len(children) == 1:
-                out.write(prefix, ' ', autoline=False)
-                out.first_prefix.append('    ')
-                newline = format_depends(out, children[0], func)
-                out.first_prefix.pop()
-                if newline:
-                    out.write()
-                    out.write(')')
-                    return True
-                else:
-                    out.write(' )', autoline=False)
-                    return False
-            else:
-                out.write(prefix)
-                out.first_prefix.append('    ')
-                for child in children:
-                    format_depends(out, child, func)
-                    out.write()
-                out.first_prefix.pop()
-                out.write(')', autoline=False)
+                out.write(')')
                 return True
+            else:
+                out.write(' )', autoline=False)
+                return False
         else:
-            return func(out, node)
-    finally:
-        out.wrap = oldwrap
+            out.write(prefix)
+            out.first_prefix.append('    ')
+            for child in children:
+                _internal_format_depends(out, child, func)
+                out.write()
+            out.first_prefix.pop()
+            out.write(')', autoline=False)
+            return True
+    else:
+        return func(out, node)
 
 def format_attr(config, out, pkg, attr):
     """Grab a package attr and print it through a formatter."""

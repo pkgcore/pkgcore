@@ -206,10 +206,10 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         pkg = catpkg[-1] + "-"
         lp = len(pkg)
         extension = self.extension
-        ext_len = len(extension)
+        ext_len = -len(extension)
         try:
-            ret = tuple(x[lp:-7] for x in listdir_files(cppath)
-                if x[-ext_len:] == extension and x[:lp] == pkg)
+            ret = tuple(x[lp:ext_len] for x in listdir_files(cppath)
+                if x[ext_len:] == extension and x[:lp] == pkg)
             if any(('scm' in x or '-try' in x) for x in ret):
                 if not self.ignore_paludis_versioning:
                     for x in ret:

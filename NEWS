@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* performance improvements to pquery --attr alldepends -v
+
+
 pkgcore 0.5.8: December 27th, 2009
 
 * >snakeoil-0.3.4 is required for this release.

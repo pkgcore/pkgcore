@@ -64,8 +64,7 @@ class DepSet(boolean.AndRestriction):
         if element_func is None:
             element_func = element_class
 
-        if self.parse_depset is not None and not (allow_src_uri_file_renames
-            or transitive_use_atoms):
+        if self.parse_depset is not None and not (allow_src_uri_file_renames):
             restrictions = None
             if operators is None:
                 has_conditionals, restrictions = self.parse_depset(dep_str,
@@ -80,8 +79,10 @@ class DepSet(boolean.AndRestriction):
                         element_func, operators.get(""), operators.get("||"))
 
             if restrictions is not None:
-                sf(self, "_node_conds", has_conditionals)
                 sf(self, "restrictions", restrictions)
+                if not has_conditionals and transitive_use_atoms:
+                    has_conditionals = self._has_transitive_use_atoms()
+                sf(self, "_node_conds", has_conditionals)
                 return
 
         sf(self, "restrictions", [])
@@ -194,11 +195,15 @@ class DepSet(boolean.AndRestriction):
             kls = transitive_use_atom
             # we can't rely on iter(self) here since it doesn't
             # descend through boolean restricts.
-            node_conds = any(isinstance(x, kls) for x in iflatten_instance(self, atom))
+            node_conds = self._has_transitive_use_atoms()
 
         sf(self, "_node_conds", node_conds)
         sf(self, "restrictions", tuple(self.restrictions))
 
+    def _has_transitive_use_atoms(self):
+        kls = transitive_use_atom
+        ifunc = isinstance
+        return any(ifunc(x, kls) for x in iflatten_instance(self, atom))
 
     def evaluate_depset(self, cond_dict, tristate_filter=None):
         """
@@ -340,7 +345,7 @@ class DepSet(boolean.AndRestriction):
     force_False = force_True = match
 
     def __str__(self):
-        return ' '.join(stringify_boolean(x) for x in self.restrictions)
+        return stringify_boolean(self)
 
     def __iter__(self):
         return iter(self.restrictions)
@@ -351,19 +356,33 @@ class DepSet(boolean.AndRestriction):
 
 def stringify_boolean(node, func=str):
     """func is used to stringify the actual content. Useful for fetchables."""
+    l = []
+    if isinstance(node, DepSet):
+        for x in node.restrictions:
+            _internal_stringify_boolean(x, func, l.append)
+    else:
+        _internal_stringify_boolean(node, func, l.append)
+    return ' '.join(l)
+
+def _internal_stringify_boolean(node, func, visit):
+    """func is used to stringify the actual content. Useful for fetchables."""
+
     if isinstance(node, boolean.OrRestriction):
-        return "|| ( %s )" % " ".join(stringify_boolean(x, func)
-                                      for x in node.restrictions)
-    elif isinstance(node, DepSet):
-        return ' '.join(stringify_boolean(x, func) for x in node.restrictions)
+        visit("|| (")
+        iterable = node.restrictions
     elif isinstance(node, boolean.AndRestriction) and \
         not isinstance(node, atom):
-        return "( %s )" % " ".join(stringify_boolean(x, func)
-            for x in node.restrictions)
+        visit("(")
+        iterable = node.restrictions
     elif isinstance(node, packages.Conditional):
         assert len(node.restriction.vals) == 1
-        return "%s%s? ( %s )" % (
+        iterable = node.payload
+        visit("%s%s? (" % (
             node.restriction.negate and "!" or "",
-            list(node.restriction.vals)[0],
-            " ".join(stringify_boolean(x, func) for x in node.payload))
-    return func(node)
+            list(node.restriction.vals)[0]))
+    else:
+        visit(func(node))
+        return
+    for node in iterable:
+        _internal_stringify_boolean(node, func, visit)
+    visit(")")

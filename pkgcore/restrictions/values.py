@@ -12,7 +12,7 @@ attr from a package instance and hand it to their wrapped restriction
 """
 
 from pkgcore.restrictions import restriction, boolean, packages
-from snakeoil.klass import generic_equality
+from snakeoil.klass import generic_equality, reflective_hash
 from snakeoil import demandload
 from snakeoil.compatibility import cmp
 demandload.demandload(globals(), 're', 'snakeoil:lists')
@@ -43,11 +43,8 @@ class base(restriction.base):
         return not self.match(val)
 
 
-def reflective_hash(self):
-    return self._hash
-
 def hashed_base(name, bases, scope):
-    scope.setdefault("__hash__", reflective_hash)
+    scope.setdefault("__hash__", reflective_hash('_hash'))
     slots = scope.get("__slots__", None)
     if slots is not None:
         if "_hash" not in slots:
@@ -190,7 +187,7 @@ class native_StrExactMatch(object):
         else:
             return (self.exact == value.lower()) != self.negate
 
-    __hash__ = reflective_hash
+    __hash__ = reflective_hash('_hash')
 
 if extension is None:
     base_StrExactMatch = native_StrExactMatch
@@ -506,7 +503,7 @@ class ContainmentMatch(base):
             s = "not contains [%s]"
         else:
             s = "contains [%s]"
-        return s % ', '.join(map(str, self.vals))
+        return s % ', '.join(str(x) for x in self.vals)
 
 
 class FlatteningRestriction(base):

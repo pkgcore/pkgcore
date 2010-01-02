@@ -38,10 +38,6 @@ class TestBase(TestCase):
             {"eclass1":(self.dir, 200)}))
         self.assertTrue(self.ec.is_eclass_data_valid(
             {"eclass1":(self.ec_locs["eclass1"], 100)}))
-        self.assertTrue(self.ec.is_eclass_data_valid(
-            {"eclass1":100}))
-        self.assertFalse(self.ec.is_eclass_data_valid(
-            {"eclass1":200}))
 
     def test_get_eclass_data(self):
         keys = self.ec.eclasses.keys()

@@ -103,7 +103,7 @@ class MetadataXml(object):
         # Could be unicode!
         longdesc = tree.findtext("longdescription")
         if longdesc:
-            longdesc = ' '.join(longdesc.strip().split())
+            longdesc = ' '.join(longdesc.split())
         self._longdescription = longdesc
         self._source = None
 

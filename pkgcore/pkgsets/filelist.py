@@ -67,7 +67,7 @@ class FileList(object):
         # fails.
         try:
             f = AtomicWriteFile(self.path, gid=self.gid, perms=self.mode)
-            f.write("\n".join(map(str, sorted(self._atoms))))
+            f.write("\n".join(str(x) for x in sorted(self._atoms)))
             f.close()
         finally:
             del f

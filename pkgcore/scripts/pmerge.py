@@ -269,7 +269,7 @@ def display_failures(out, sequence, first_level=True, debug=False):
                 display_failures(out, step, False, debug=debug)
             elif step[0] == 'reduce':
                 out.write("removing choices involving %s" %
-                    ','.join(map(str,step[1])))
+                    ','.join(str(x) for x in step[1]))
             elif step[0] == 'blocker':
                 out.write("blocker %s failed due to %s existing" % (step[1],
                     ', '.join(str(x) for x in step[2])))

@@ -13,7 +13,8 @@ from pkgcore.restrictions import values, packages, boolean
 from pkgcore.ebuild import cpv, errors, const
 from pkgcore.ebuild.atom_restricts import VersionMatch
 from snakeoil.compatibility import all, is_py3k, cmp
-from snakeoil.klass import generic_equality, inject_richcmp_methods_from_cmp
+from snakeoil.klass import (generic_equality, inject_richcmp_methods_from_cmp,
+    reflective_hash)
 from snakeoil.demandload import demandload
 from snakeoil.currying import partial
 demandload(globals(),
@@ -413,8 +414,7 @@ class atom(boolean.AndRestriction):
             s += "[%s]" % ",".join(self.use)
         return s
 
-    def __hash__(self):
-        return self._hash
+    __hash__ = reflective_hash('_hash')
 
     def __iter__(self):
         return iter(self.restrictions)

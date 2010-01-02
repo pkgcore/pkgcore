@@ -15,20 +15,11 @@
 #include <snakeoil/common.h>
 #include <structmember.h>
 #include <string.h>
-
+#include <ctype.h>
 
 // dev-util/diffball-cvs.2006.0_alpha1_alpha2
 // dev-util/diffball
 
-// yes, it may seem whacked having these defined when 'isdigit' and friends
-// already exist.  that said, they're a helluva lot slower in performance testing
-// of it- presumably due to lack of inlining on a guess...
-
-#define ISDIGIT(c) ('0' <= (c) && '9' >= (c))
-#define ISALPHA(c) (('a' <= (c) && 'z' >= (c)) || ('A' <= (c) && 'Z' >= (c)))
-#define ISLOWER(c) ('a' <= (c) && 'z' >= (c))
-#define ISUPPER(c) ('A' <= (c) && 'Z' >= (c))
-#define ISALNUM(c) (ISALPHA(c) || ISDIGIT(c))
 
 typedef enum { SUF_ALPHA=0, SUF_BETA, SUF_PRE, SUF_RC, SUF_NORM, SUF_P }
     version_suffixes;
@@ -121,10 +112,10 @@ pkgcore_cpv_parse_category(const char *start, int null_is_end)
         char *end = NULL;
         /* first char must be alnum, after that it's opened up. */
         while('\0' != *p) {
-            if(!ISALNUM(*p))
+            if(!isalnum(*p))
                 return NULL;
             p++;
-            while(ISALNUM(*p) || '+' == *p || '-' == *p || '.' == *p \
+            while(isalnum(*p) || '+' == *p || '-' == *p || '.' == *p \
                 || '_' == *p)
                 p++;
             if('/' == *p) {
@@ -145,10 +136,10 @@ pkgcore_cpv_parse_category(const char *start, int null_is_end)
        }
     } else {
         for (;;) {
-            if(!ISALNUM(*p))
+            if(!isalnum(*p))
                 return NULL;
             p++;
-            while('\0' != *p && (ISALNUM(*p) || '+' == *p || '-' == *p \
+            while('\0' != *p && (isalnum(*p) || '+' == *p || '-' == *p \
                 || '.' == *p || '_' == *p))
                 p++;
             if('/' == *p) {
@@ -180,7 +171,7 @@ pkgcore_cpv_valid_package(char *start, char *end)
     if(end == p)
         return 1;
     while(end != p) {
-        while((ISALNUM(*p) || '_' == *p || '+' == *p) && end != p)
+        while((isalnum(*p) || '_' == *p || '+' == *p) && end != p)
             p++;
         if(end == p)
             break;
@@ -199,7 +190,7 @@ pkgcore_cpv_valid_package(char *start, char *end)
     }
     // revalidate the last token to ensure it's not all digits
     p = tok_start;
-    while(ISDIGIT(*p))
+    while(isdigit(*p))
         p++;
     if(p == end)
         return 1;
@@ -228,13 +219,13 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
     }
     // (\d+)(\.\d+)*[a-z]?
     for(;;) {
-        while(ISDIGIT(*p))
+        while(isdigit(*p))
             p++;
         // safe due to our checks from above, but just in case...
         if(ver_start == p || '.' == p[-1]) {
             return 1;
         }
-        if(ISALPHA(*p)) {
+        if(isalpha(*p)) {
             p++;
             if('\0' != *p && '_' != *p && '-' != *p)
                 return 1;
@@ -278,7 +269,7 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
                     self->suffixes[pos] = sv->val;
                     p += sv->str_len;
                     new_long = 0;
-                    while(ISDIGIT(*p)) {
+                    while(isdigit(*p)) {
                         new_long = (new_long * 10) + *p - '0';
                         p++;
                     }
@@ -319,7 +310,7 @@ pkgcore_cpv_valid_revision(pkgcore_cpv *self, char *rev_start, char *rev_end)
     pos++;
     unsigned long long revision_val = 0;
     while(pos != rev_end) {
-        if(!ISDIGIT(*pos)) {
+        if(!isdigit(*pos)) {
             // not a digit? invalid revision then.
             return 1;
         }
@@ -776,14 +767,14 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
                 else if (*s1 < *o1)
                     return -1;
                 s1++; o1++;
-            } while (ISDIGIT(*s1) && ISDIGIT(*o1));
+            } while (isdigit(*s1) && isdigit(*o1));
 
-            while(ISDIGIT(*s1)) {
+            while(isdigit(*s1)) {
                 if('0' != *s1)
                     return +1;
                 s1++;
             }
-            while(ISDIGIT(*o1)) {
+            while(isdigit(*o1)) {
                 if('0' != *o1)
                     return -1;
                 o1++;
@@ -792,9 +783,9 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
             // int comparison rules.
             char *s_start = s1, *o_start = o1;
 
-            while(ISDIGIT(*s1))
+            while(isdigit(*s1))
                 s1++;
-            while(ISDIGIT(*o1))
+            while(isdigit(*o1))
                 o1++;
 
             if((s1 - s_start) < (o1 - o_start))
@@ -811,8 +802,8 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
                     return 1;
             }
         }
-        if(ISALPHA(*s1)) {
-            if(ISALPHA(*o1)) {
+        if(isalpha(*s1)) {
+            if(isalpha(*o1)) {
                 if(*s1 < *o1)
                     return -1;
                 else if(*s1 > *o1)
@@ -821,7 +812,7 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
             } else
                 return 1;
             s1++;
-        } else if ISALPHA(*o1) {
+        } else if isalpha(*o1) {
             return -1;
         }
         if('.' == *s1)
@@ -831,9 +822,9 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
         // hokay.  no resolution there.
     }
     // ok.  one of the two just ran out of vers; test on suffixes
-    if(ISDIGIT(*s1)) {
+    if(isdigit(*s1)) {
         return +1;
-    } else if(ISDIGIT(*o1)) {
+    } else if(isdigit(*o1)) {
         return -1;
     }
     // bugger.  exact same version string up to suffix pt.

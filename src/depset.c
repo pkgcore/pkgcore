@@ -14,6 +14,7 @@
 
 #include <Python.h>
 #include <snakeoil/py24-compatibility.h>
+#include <ctype.h>
 
 // exceptions, loaded during initialization.
 static PyObject *pkgcore_depset_ParseErrorExc = NULL;
@@ -22,10 +23,6 @@ static PyObject *pkgcore_depset_PkgCond = NULL;
 static PyObject *pkgcore_depset_PkgAnd = NULL;
 static PyObject *pkgcore_depset_PkgOr = NULL;
 
-#define ISDIGIT(c) ('0' <= (c) && '9' >= (c))
-#define ISALPHA(c) (('a' <= (c) && 'z' >= (c)) || ('A' <= (c) && 'Z' >= (c)))
-#define ISLOWER(c) ('a' <= (c) && 'z' >= (c))
-#define ISALNUM(c) (ISALPHA(c) || ISDIGIT(c))
 
 static void
 _Err_SetParse(PyObject *dep_str, PyObject *msg, char *tok_start, char *tok_end)
@@ -102,13 +99,11 @@ make_use_conditional(char *use_start, char *use_end, PyObject *payload)
 }
 
 #define SKIP_SPACES(ptr)     \
-while ('\t' == *(ptr) || ' ' == *(ptr) || '\n' == *(ptr)) (ptr)++;
+while(isspace(*(ptr))) (ptr)++;
 
-#define SKIP_NONSPACES(ptr)                                                  \
-while('\t' != *(ptr) && ' ' != *(ptr) && '\n' != *(ptr) && '\0' != *(ptr))  \
-    (ptr)++;
+#define SKIP_NONSPACES(ptr)       \
+while(!isspace(*(ptr)) && '\0' != *(ptr)) (ptr)++;
 
-#define ISSPACE(ptr) ('\t' == *(ptr) || ' ' == *(ptr) || '\n' == *(ptr))
 
 static PyObject *
 internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
@@ -199,7 +194,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                     "( has to be the next token for a conditional",
                     start, p);
                 goto internal_parse_depset_error;
-            } else if(!ISSPACE(p + 1) || '\0' == p[1]) {
+            } else if(!isspace(*(p + 1)) || '\0' == p[1]) {
                 Err_SetParse(dep_str,
                     "( has to be followed by whitespace",
                     start, p);
@@ -244,7 +239,7 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
                 goto internal_parse_depset_error;
             }
             SKIP_SPACES(p);
-            if ('(' != *p || (!ISSPACE(p + 1) && '\0' != p[1])) {
+            if ('(' != *p || (!isspace(*(p + 1)) && '\0' != p[1])) {
                 Err_SetParse(dep_str,
                     "( has to be the next token for a conditional",
                     start, p);

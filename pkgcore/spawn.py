@@ -396,8 +396,8 @@ def spawn_fakeroot(mycommand, save_file, env=None, opt_name=None,
 
     # by now we have our very own daemonized faked.  yay.
     env["FAKEROOTKEY"] = str(fakekey)
-    env["LD_PRELOAD"] = ":".join(
-        [LIBFAKEROOT_PATH] + env.get("LD_PRELOAD", "").split(":"))
+    paths = [LIBFAKEROOT_PATH] + env.get("LD_PRELOAD", "").split(":")
+    env["LD_PRELOAD"] = ":".join(x for x in paths if x)
 
     try:
         ret = spawn(

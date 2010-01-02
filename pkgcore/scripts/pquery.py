@@ -616,7 +616,7 @@ def stringify_attr(config, pkg, attr):
 
     # TODO: is a missing or None attr an error?
     if attr == 'inherited':
-        return ' '.join(sorted(getattr(pkg, 'data', {}).get('_eclasses_', {}).keys()))
+        return ' '.join(sorted(getattr(pkg, 'data', {}).get('_eclasses_', {})))
 
     value = getattr(pkg, attr, None)
     if value is None:

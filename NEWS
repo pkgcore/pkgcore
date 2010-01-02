@@ -4,6 +4,12 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* re-enable cpython implementation of DepSet parsing for eapi2- roughly
+  a 31% speedup for current gentoo-x86 repository dependency parsing.
+
+* performance improvements to pquery --attr alldepends; specifically
+  depset.stringify_boolean is now 20% faster.
+
 * performance improvements to pquery --attr alldepends -v
 
 

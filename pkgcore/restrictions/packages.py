@@ -215,7 +215,7 @@ class Conditional(PackageRestriction):
     def __str__(self):
         return "( Conditional: %s payload: [ %s ] )" % (
             PackageRestriction.__str__(self),
-            ", ".join(map(str, self.payload)))
+            ", ".join(str(x) for x in self.payload))
 
     def __repr__(self):
         if self.negate:

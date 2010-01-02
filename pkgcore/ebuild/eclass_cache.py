@@ -47,10 +47,7 @@ class base(object):
         for eclass, tup in ec_dict.iteritems():
             if eclass not in ec:
                 return False
-            elif isinstance(tup, tuple):
-                if tup[1] != ec[eclass][1]:
-                    return False
-            elif tup != ec[eclass][1]:
+            if tup[1] != ec[eclass][1]:
                 return False
         return True
 

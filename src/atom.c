@@ -13,6 +13,7 @@
 #define PY_SSIZE_T_CLEAN
 
 #include <snakeoil/common.h>
+#include <ctype.h>
 
 // exceptions, loaded during initialization.
 static PyObject *pkgcore_atom_MalformedAtom_Exc = NULL;
@@ -59,19 +60,15 @@ static PyObject *pkgcore_atom_restrictions = NULL;
 static PyObject *pkgcore_atom_transitive_use_atom_str = NULL;
 static PyObject *pkgcore_atom__class__ = NULL;
 
-#define ISDIGIT(c) ('0' <= (c) && '9' >= (c))
-#define ISALPHA(c) (('a' <= (c) && 'z' >= (c)) || ('A' <= (c) && 'Z' >= (c)))
-#define ISLOWER(c) ('a' <= (c) && 'z' >= (c))
-#define ISALNUM(c) (ISALPHA(c) || ISDIGIT(c))
 
-#define VALID_SLOT_CHAR(c) (ISALNUM(c) || '-' == (c) \
+#define VALID_SLOT_CHAR(c) (isalnum(c) || '-' == (c) \
     || '_' == (c) || '.' == (c) || '+' == (c))
 #define INVALID_SLOT_FIRST_CHAR(c) ('.' == (c) || '-' == (c))
 
-#define VALID_USE_CHAR(c) (ISALNUM(c) || '-' == (c) \
+#define VALID_USE_CHAR(c) (isalnum(c) || '-' == (c) \
     || '_' == (c) || '@' == (c) || '+' == (c))
 
-#define VALID_REPO_CHAR(c) (ISALNUM(c) || '-' == (c) || '_' == (c) || '/' == (c))
+#define VALID_REPO_CHAR(c) (isalnum(c) || '-' == (c) || '_' == (c) || '/' == (c))
 #define INVALID_REPO_FIRST_CHAR(c) ('-' == (c))
 
 static void
@@ -145,7 +142,7 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
                 Err_SetMalformedAtom(atom_str,
                     "empty use flag detected");
                 return -1;
-            } else if(!ISALNUM(*use_start)) {
+            } else if(!isalnum(*use_start)) {
                 Err_SetMalformedAtom(atom_str,
                     "first char of a use flag must be alphanumeric");
                 return -1;

@@ -62,6 +62,7 @@ class contentsSet(object):
             ', '.join(str(x) for x in self))
 
     def __repr__(self):
+        # this should include the id among other things
         return "%s([%s])" % (self.__class__.__name__,
             ', '.join(repr(x) for x in self))
 

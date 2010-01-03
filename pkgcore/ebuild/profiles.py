@@ -284,7 +284,6 @@ class EmptyRootNode(ProfileNode):
     virtuals = {}
 
 
-
 class OnDiskProfile(object):
 
     pkgcore_config_type = ConfigHint({'basepath':'str', 'profile':'str',
@@ -444,6 +443,11 @@ class OnDiskProfile(object):
         obj = util.SimpleTree(d, pkg_klass=partial(PkgProvided,
             intermediate_parent), livefs=True, frozen=True)
         intermediate_parent._parent_repo = obj
+
+        if not d:
+            def _empty_iterable(*args, **kwds):
+                return ()
+            obj.match = obj.itermatch = _empty_iterable
         return obj
     def _collapse_masks(self):
         return frozenset(chain(self._collapse_generic("masks"),

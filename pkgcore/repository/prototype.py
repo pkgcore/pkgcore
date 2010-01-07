@@ -184,6 +184,15 @@ class tree(object):
     def __len__(self):
         return sum(len(v) for v in self.versions.itervalues())
 
+    def has_match(self, atom, **kwds):
+
+        kwds.pop("sorter", None)
+        kwds.pop("yield_none", None)
+
+        for pkg in self.itermatch(atom, **kwds):
+            return True
+        return False
+
     def match(self, atom, **kwds):
         return list(self.itermatch(atom, **kwds))
 

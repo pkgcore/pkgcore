@@ -158,7 +158,7 @@ class PackageRestriction_mixin(restriction.base):
         return hash((self.negate, self.attr, self.restriction))
 
     def __str__(self):
-        s = self.attr+" "
+        s = "%s " % (self.attr, )
         if self.negate:
             s += "not "
         return s + str(self.restriction)

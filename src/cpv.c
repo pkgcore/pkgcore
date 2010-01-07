@@ -804,17 +804,25 @@ pkgcore_cpv_compare(pkgcore_cpv *self, pkgcore_cpv *other)
         }
         if(isalpha(*s1)) {
             if(isalpha(*o1)) {
-                if(*s1 < *o1)
+                if(*s1 < *o1) {
                     return -1;
-                else if(*s1 > *o1)
+                } else if(*s1 > *o1) {
                     return 1;
+                }
                 o1++;
-            } else
+            } else if('.'  == *o1) {
+                return -1;
+            } else {
                 return 1;
+            }
             s1++;
-        } else if isalpha(*o1) {
+        } else if(isalpha(*o1)) {
+            if('.' == *s1) {
+                return +1;
+            }
             return -1;
         }
+
         if('.' == *s1)
             s1++;
         if('.' == *o1)

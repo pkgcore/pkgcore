@@ -224,7 +224,7 @@ class native_CpvTest(TestCase):
         self.assertGT(vkls("da/ba-6a"), vkls("da/ba-6"))
         self.assertGT(vkls("da/ba-6a-r1"), vkls("da/ba-6a"))
         self.assertGT(vkls("da/ba-6.0"), vkls("da/ba-6"))
-        self.assertGT(vkls("da/ba-6.0b"), vkls("da/ba-6.0.0"))
+        self.assertGT(vkls("da/ba-6.0.0"), vkls("da/ba-6.0b"))
         self.assertGT(vkls("da/ba-6.02"), vkls("da/ba-6.0.0"))
         # float comparison rules.
         self.assertGT(vkls("da/ba-6.2"), vkls("da/ba-6.054"))
@@ -235,9 +235,16 @@ class native_CpvTest(TestCase):
         self.assertEqual(vkls("da/ba-6.0_alpha"), vkls("da/ba-6.0_alpha0"))
         self.assertGT(vkls("da/ba-6.1"), vkls("da/ba-6.09"))
         self.assertGT(vkls("da/ba-6.0.1"), vkls("da/ba-6.0"))
+        self.assertGT(vkls("da/ba-12.2.5"), vkls("da/ba-12.2b"))
+
         # test for gentoo bug 287848
-        self.assertGT(vkls("dev-lang/erlang-12.2b"),
-            vkls("dev-lang/erlang-12.2.5-r1"))
+        self.assertGT(vkls("dev-lang/erlang-12.2.5"),
+            vkls("dev-lang/erlang-12.2b"))
+        self.assertGT(vkls("dev-lang/erlang-12.2.5-r1"),
+            vkls("dev-lang/erlang-12.2b"))
+
+        self.assertEqual(vkls("da/ba-6.01.0"), vkls("da/ba-6.010.0"))
+
         for v1, v2 in (("1.001000000000000000001", "1.001000000000000000002"),
             ("1.00100000000", "1.0010000000000000001"),
             ("1.01", "1.1")):

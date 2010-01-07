@@ -35,8 +35,8 @@ class native_PackageRestrictionTest(TestRestriction):
     if packages.native_PackageRestriction is packages.PackageRestriction_base:
         kls = packages.PackageRestriction
     else:
-        class kls(packages.PackageRestriction_mixin,
-            packages.native_PackageRestriction):
+        class kls(packages.native_PackageRestriction,
+            packages.PackageRestriction_mixin):
             __slots__ = ()
             __inst_caching__ = packages.PackageRestriction.__inst_caching__
 
@@ -53,6 +53,7 @@ class native_PackageRestrictionTest(TestRestriction):
         self.assertNotMatches(self.kls("package", strexact("dar"), negate=True),
             args)
         self.assertNotMatches(self.kls("package", strexact("foon")), args)
+
         self.assertMatches(self.kls("package", strexact("foon"), negate=True),
             args)
         excepts = []
@@ -99,6 +100,12 @@ class native_PackageRestrictionTest(TestRestriction):
                 raise AttributeError(self, attr)
 
         self.assertFalse(self.kls("foon", AlwaysSelfIntersect).match(foo()))
+
+    def test_attr(self):
+        self.assertEqual(self.kls('val', values.AlwaysTrue).attr,
+            'val')
+        self.assertEqual(self.kls('val.dar', values.AlwaysTrue).attr,
+            ('val', 'dar'))
 
     def test_eq(self):
         self.assertEqual(

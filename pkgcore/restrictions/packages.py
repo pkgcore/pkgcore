@@ -35,9 +35,23 @@ class native_PackageRestriction(object):
         sf = object.__setattr__
         sf(self, "negate", negate)
         sf(self, "_pull_attr", chained_getter(attr))
+        if '.' in attr:
+            # this is done purely for compatibility w/ cpy (yes we prefer
+            # the cpy implementation)
+            attr = tuple(attr.split('.'))
         sf(self, "attr", attr)
         sf(self, "restriction", childrestriction)
         sf(self, "ignore_missing", ignore_missing)
+
+    def match(self, pkg):
+        try:
+            return self.restriction.match(self._pull_attr(pkg)) != self.negate
+        except (KeyboardInterrupt, RuntimeError, SystemExit):
+            raise
+        except Exception, e:
+            if self._handle_exception(pkg, e):
+                raise
+            return self.negate
 
 
 class PackageRestriction_mixin(restriction.base):
@@ -73,16 +87,6 @@ class PackageRestriction_mixin(restriction.base):
         logger.exception("caught unexpected exception accessing %s from %s, "
             "exception %s" % (self.attr, str(pkg), str(exc)))
         return True
-
-    def match(self, pkg):
-        try:
-            return self.restriction.match(self._pull_attr(pkg)) != self.negate
-        except (KeyboardInterrupt, RuntimeError, SystemExit):
-            raise
-        except Exception, e:
-            if self._handle_exception(pkg, e):
-                raise
-            return self.negate
 
     def force_False(self, pkg):
         try:
@@ -174,7 +178,7 @@ try:
 except ImportError:
     PackageRestriction_base = native_PackageRestriction
 
-class PackageRestriction(PackageRestriction_mixin, PackageRestriction_base):
+class PackageRestriction(PackageRestriction_base, PackageRestriction_mixin):
     __slots__ = ()
     __inst_caching__ = True
 

@@ -5,6 +5,7 @@
 
 """gentoo ebuild specific base package class"""
 
+from itertools import izip
 from snakeoil.compatibility import all, cmp, is_py3k
 from snakeoil.klass import inject_richcmp_methods_from_cmp
 from pkgcore.ebuild.errors import InvalidCPV
@@ -236,35 +237,32 @@ def native_ver_cmp(ver1, rev1, ver2, rev2):
         len_list = (ver_parts1_len, ver_parts2_len)
 
         # Iterate through the components
-        for x in xrange(max(len_list)):
-
-            # If we've run out components, we can figure out who wins
-            # now. If the version that ran out of components has a
-            # letter suffix, it wins. Otherwise, the other version wins.
-            if x in len_list:
-                if x == ver_parts1_len:
-                    return cmp(letters[0], 0)
-                else:
-                    return cmp(0, letters[1])
+        for v1, v2 in izip(ver_parts1, ver_parts2):
 
             # If the string components are equal, the numerical
             # components will be equal too.
-            if ver_parts1[x] == ver_parts2[x]:
+            if v1 == v2:
                 continue
 
             # If one of the components begins with a "0" then they
-            # are compared as floats so that 1.1 > 1.02.
-            if ver_parts1[x][0] == "0" or ver_parts2[x][0] == "0":
-                v1 = ver_parts1[x]
-                v2 = ver_parts2[x]
+            # are compared as floats so that 1.1 > 1.02; else ints.
+            if v1[0] != "0" and v2[0] != "0":
+                v1 = int(v1)
+                v2 = int(v2)
             else:
-                v1 = int(ver_parts1[x])
-                v2 = int(ver_parts2[x])
+                # handle the 0.060 == 0.060 case.
+                v1 = v1.rstrip("0")
+                v2 = v2.rstrip("0")
 
             # If they are not equal, the higher value wins.
             c = cmp(v1, v2)
             if c:
                 return c
+
+        if ver_parts1_len > ver_parts2_len:
+            return 1
+        elif ver_parts2_len > ver_parts1_len:
+            return -1
 
         # The dotted components were equal. Let's compare any single
         # letter suffixes.

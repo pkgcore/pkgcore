@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* add cpy implementation of PackageRestriction.match
+
 * for package.provided repositories, short circuit their itermatch/match
   if there aren't any results possible.
 

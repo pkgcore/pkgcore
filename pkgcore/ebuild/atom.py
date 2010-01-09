@@ -384,14 +384,17 @@ class atom(boolean.AndRestriction):
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
         if full_solution_expansion:
-            return boolean.AndRestriction.iter_dnf_solutions(
-                self, full_solution_expansion=True)
+            return boolean.AndRestriction.iter_dnf_solutions(self, True)
+        return iter([[self]])
+
+    def iter_cnf_solutions(self, full_solution_expansion=False):
+        if full_solution_expansion:
+            return boolean.AndRestriction.iter_cnf_solutions(self, True)
         return iter([[self]])
 
     def cnf_solutions(self, full_solution_expansion=False):
         if full_solution_expansion:
-            return boolean.AndRestriction.cnf_solutions(
-                self, full_solution_expansion=True)
+            return boolean.AndRestriction.cnf_solutions(self, True)
         return [[self]]
 
     def __str__(self):

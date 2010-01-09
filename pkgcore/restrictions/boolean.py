@@ -298,16 +298,16 @@ class AndRestriction(base):
         hardreqs = []
         optionals = []
         for x in self.restrictions:
-            if isinstance(x, base):
-                s2 = x.dnf_solutions(
-                    full_solution_expansion=full_solution_expansion)
+            method = getattr(x, 'dnf_solutions', None)
+            if method is None:
+                hardreqs.append(x)
+            else:
+                s2 = method(full_solution_expansion)
                 assert s2
                 if len(s2) == 1:
                     hardreqs.extend(s2[0])
                 else:
                     optionals.append(s2)
-            else:
-                hardreqs.append(x)
         def f(arg, *others):
             if others:
                 for node in arg:
@@ -327,6 +327,26 @@ class AndRestriction(base):
         """
         return list(self.iter_dnf_solutions(*args, **kwds))
 
+    def iter_cnf_solutions(self, full_solution_expansion=False):
+
+        """
+        returns solutions in CNF (conjunctive normalized form) of this instance
+
+        @param full_solution_expansion: controls whether to expand everything
+            (break apart atoms for example); this isn't likely what you want
+        """
+
+        if self.negate:
+            raise NotImplementedError("negation for solutions on "
+                                      "AndRestriction isn't implemented yet")
+        for x in self.restrictions:
+            method = getattr(x, 'iter_cnf_solutions', None)
+            if method is None:
+                yield [x]
+            else:
+                for y in method(full_solution_expansion):
+                    yield y
+
     def cnf_solutions(self, full_solution_expansion=False):
 
         """
@@ -341,11 +361,11 @@ class AndRestriction(base):
                                       "AndRestriction isn't implemented yet")
         andreqs = []
         for x in self.restrictions:
-            if isinstance(x, base):
-                andreqs.extend(x.cnf_solutions(
-                        full_solution_expansion=full_solution_expansion))
-            else:
+            method = getattr(x, 'iter_cnf_solutions', None)
+            if method is None:
                 andreqs.append([x])
+            else:
+                andreqs.extend(method(full_solution_expansion))
         return andreqs
 
     def __str__(self):
@@ -381,9 +401,11 @@ class OrRestriction(base):
         dcnf = []
         cnf = []
         for x in self.restrictions:
-            if isinstance(x, base):
-                s2 = x.dnf_solutions(
-                    full_solution_expansion=full_solution_expansion)
+            method = getattr(x, 'dnf_solutions', None)
+            if method is None:
+                dcnf.append(x)
+            else:
+                s2 = method(full_solution_expansion)
                 if len(s2) == 1:
                     cnf.extend(s2)
                 else:
@@ -392,8 +414,6 @@ class OrRestriction(base):
                             dcnf.append(y[0])
                         else:
                             cnf.append(y)
-            else:
-                dcnf.append(x)
 
         # combinatorial explosion. if it's got cnf, we peel off one of
         # each and smash append to the dcnf.
@@ -401,7 +421,6 @@ class OrRestriction(base):
         for andreq in cnf:
             dcnf = list(y + [x] for x in andreq for y in dcnf)
         return dcnf
-
 
     def iter_dnf_solutions(self, full_solution_expansion=False):
         """
@@ -421,12 +440,12 @@ class OrRestriction(base):
             yield []
             return
         for x in self.restrictions:
-            if isinstance(x, base):
-                for y in x.iter_dnf_solutions(
-                    full_solution_expansion=full_solution_expansion):
-                    yield y
-            else:
+            method = getattr(x, 'iter_dnf_solutions', None)
+            if method is None:
                 yield [x]
+            else:
+                for y in method(full_solution_expansion):
+                    yield y
 
     def dnf_solutions(self, *args, **kwds):
         """

@@ -6,6 +6,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.5.9: January 8th, 2010
 
+
+* this release of pkgcore requires snakeoil >=0.3.6
+
 * expand repository api slightly adding has_match; this is intended
   as a simple boolean check if a repo has it.  It should *only* be
   used for containment- if you need the results don't test then itermatch,

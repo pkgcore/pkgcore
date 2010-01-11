@@ -550,20 +550,6 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
     Py_DECREF(cpv_str);
 
     // ok... everythings parsed... sanity checks on the atom.
-/*
-    if(op != pkgcore_atom_op_none) {
-        if (!has_version) {
-            Err_SetMalformedAtom(atom_str,
-                "operator requires a version");
-            goto pkgcore_atom_parse_error;
-        }
-    } else if(has_version) {
-        Err_SetMalformedAtom(atom_str,
-            "versioned atom requires an operator");
-        goto pkgcore_atom_parse_error;
-    }
-*/
-
     if(op == pkgcore_atom_op_droprev) {
         if(had_revision) {
             Err_SetMalformedAtom(atom_str,

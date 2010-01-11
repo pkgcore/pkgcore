@@ -189,6 +189,10 @@ class Test_native_atom(TestCase):
         self.assertFalse(self.kls("%s:2" % astr).match(c))
         self.assertTrue(self.kls("%s:0,1" % astr).match(c))
         self.assertFalse(self.kls("%s:0,2" % astr).match(c))
+        # note the above isn't compliant with eapi2/3; thus this test
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:0,2", eapi=2)
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foo:0,2", eapi=3)
+
         # shouldn't puke, but has, thus checking"
         self.kls("sys-libs/db:4.4")
         self.kls("%s:azAZ.-+_09" % astr)

@@ -46,6 +46,12 @@ static const unsigned long pkgcore_ebuild_default_suffixes[] = {4, 0};
 #define PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF 4
 #define PKGCORE_EBUILD_SUFFIX_DEFAULT_VAL 0
 
+
+/*
+  all attrs are strings, and immutable by everything by
+  the cpy... thus no GC registration.
+*/
+
 typedef struct {
     PyObject_HEAD
     PyObject *category;
@@ -308,22 +314,44 @@ pkgcore_cpv_valid_revision(pkgcore_cpv *self, char *rev_start, char *rev_end)
         return 1;
     }
     pos++;
-    unsigned long long revision_val = 0;
-    while(pos != rev_end) {
-        if(!isdigit(*pos)) {
-            // not a digit? invalid revision then.
-            return 1;
+    if(19 >= rev_end - pos) {
+        unsigned long long revision_val = 0;
+        while(pos != rev_end) {
+            if(!isdigit(*pos)) {
+                // not a digit? invalid revision then.
+                return 1;
+            }
+            revision_val = (revision_val * 10) + *pos - '0';
+            pos++;
         }
-        revision_val = (revision_val * 10) + *pos - '0';
-        pos++;
+        if(revision_val) {
+            if(!(revision = PyLong_FromLongLong(revision_val))) {
+                // XXX... this gets swallowed unfortunately due to the code flow.
+                return 2;
+            }
+        }
+    } else {
+        // verify it's all digits, then hand it over to the slower
+        // pythong long machinery
+        char *char_p = pos, non_zero = 0;
+        while(char_p != rev_end) {
+            if(!isdigit(*char_p))
+                return 1;
+            else if ('0' != *char_p)
+                non_zero = 1;
+            char_p++;
+        }
+        // ok... all digits.
+        if(non_zero) {
+            // and an actual value instead of some dev being an ass
+            if(!(revision = PyLong_FromString(pos, NULL, 10))) {
+                return 2;
+            }
+        }
     }
-    if(!revision_val) {
+    if(!revision) {
         Py_CLEAR(self->revision);
     } else {
-        if(!(revision = PyLong_FromLongLong(revision_val))) {
-            // XXX... this gets swallowed unfortunately due to the code flow.
-            return 2;
-        }
         tmp = self->revision;
         self->revision = revision;
         Py_XDECREF(tmp);

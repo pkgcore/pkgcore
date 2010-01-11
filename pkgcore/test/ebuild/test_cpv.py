@@ -118,6 +118,13 @@ class native_CpvTest(TestCase):
                             self.process_ver(ver_ret or rev_ret, cat, pkg,
                                              ver, rev)
 
+        for x in (10, 18, 19, 36, 100):
+            self.assertEqual(self.kls("da", "ba", "1-r0%s" % ("0" * x)).revision,
+                None)
+            self.assertEqual(long(self.kls("da", "ba", "1-r1%s1" % ("0" * x)).revision),
+                long("1%s1" % ("0" * x)))
+
+
     def process_pkg(self, ret, cat, pkg):
         if ret:
             self.assertRaisesMsg("%s/%s" % (cat,pkg), cpv.InvalidCPV,
@@ -249,6 +256,16 @@ class native_CpvTest(TestCase):
             ("1.00100000000", "1.0010000000000000001"),
             ("1.01", "1.1")):
             self.assertGT(vkls("da/ba-%s" % v2), vkls("da/ba-%s" % v1))
+
+        for x in (18, 36, 100):
+            s = "0" * x
+            self.assertGT(vkls("da/ba-10%s1" % s), vkls("da/ba-1%s1" % s))
+
+        for x in (18, 36, 100):
+            s = "0" * x
+            self.assertGT(vkls("da/ba-1-r10%s1" % s),
+                vkls("da/ba-1-r1%s1" % s))
+
         # Regression test: python does comparison slightly differently
         # if the classes do not match exactly (it prefers rich
         # comparison over __cmp__).

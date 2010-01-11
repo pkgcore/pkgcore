@@ -4,8 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-pkgcore 0.5.9: January 8th, 2010
+* pkgcore now supports arbitrary length revisions.
 
+
+pkgcore 0.5.9: January 8th, 2010
 
 * this release of pkgcore requires snakeoil >=0.3.6
 

@@ -309,7 +309,7 @@ class merge_plan(object):
         self._ensure_livefs_is_loaded = \
             self._ensure_livefs_is_loaded_preloaded
 
-    def add_atoms(self, restricts):
+    def add_atoms(self, restricts, finalize=False):
         if restricts:
             stack = resolver_stack()
             for restrict in restricts:
@@ -319,7 +319,14 @@ class merge_plan(object):
                 ret = self._add_atom(restrict, stack, dbs)
                 if ret:
                     return ret
+        if finalize:
+            # note via this being outside the recurssion, backtracking
+            # is excluded... inline it somehow.
+            self.process_finalize()
         return ()
+
+    def process_finalize(self):
+        pass
 
     def add_atom(self, atom):
         """add an atom, recalculating as necessary.
@@ -665,10 +672,9 @@ class merge_plan(object):
         if not l:
             # hmm. ok... no conflicts, so we insert in vdb matches
             # to trigger a replace instead of an install
-            m = self.livefs_dbs.match(restrict)
-            if m:
-                dprint("inserting vdb node for %s %s", (restrict, m[0]))
-                c = choice_point(restrict, m)
+            for pkg in self.livefs_dbs.itermatch(restrict):
+                dprint("inserting vdb node for %s %s", (restrict, pkg))
+                c = choice_point(restrict, [pkg])
                 state.add_op(c, c.current_pkg, force=True).apply(self.state)
 
     def insert_choice(self, atom, stack, choices):

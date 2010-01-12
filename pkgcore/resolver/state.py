@@ -91,6 +91,9 @@ class add_hardref_op(base_op_state):
     __slots__ = ('restriction',)
     desc = None
     internal = True
+    force = True
+    choices = None
+    pkg = None
 
     def __init__(self, restriction):
         self.restriction = restriction

@@ -53,7 +53,7 @@ static PyObject *pkgcore_atom_slot = NULL;
 static PyObject *pkgcore_atom_repo_id = NULL;
 static PyObject *pkgcore_atom_restrict_repo_id = NULL;
 static PyObject *pkgcore_atom_blocks = NULL;
-static PyObject *pkgcore_atom_blocks_temp_ignorable = NULL;
+static PyObject *pkgcore_atom_blocks_strongly = NULL;
 static PyObject *pkgcore_atom_op = NULL;
 static PyObject *pkgcore_atom_negate_vers = NULL;
 static PyObject *pkgcore_atom_restrictions = NULL;
@@ -619,8 +619,8 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
         goto pkgcore_atom_parse_error;
 
     STORE_ATTR(pkgcore_atom_blocks, blocks ? Py_True : Py_False);
-    STORE_ATTR(pkgcore_atom_blocks_temp_ignorable,
-        (blocks && blocks != 2) ? Py_True : Py_False);
+    STORE_ATTR(pkgcore_atom_blocks_strongly,
+        (blocks && blocks != 2) ? Py_False : Py_True);
     STORE_ATTR(pkgcore_atom_op, op);
     STORE_ATTR(pkgcore_atom_use, use);
     STORE_ATTR(pkgcore_atom_slot, slot);
@@ -1180,8 +1180,7 @@ init_atom()
                                             "repo.repo_id");
     load_string(pkgcore_atom_op_glob,       "=*");
     load_string(pkgcore_atom_blocks,        "blocks");
-    load_string(pkgcore_atom_blocks_temp_ignorable,
-                                            "blocks_temp_ignorable");
+    load_string(pkgcore_atom_blocks_strongly,"blocks_strongly");
     load_string(pkgcore_atom_op,            "op");
     load_string(pkgcore_atom_negate_vers,   "negate_vers");
     load_string(pkgcore_atom_restrictions,  "restrictions");

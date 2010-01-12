@@ -146,11 +146,11 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
         # open to alternatives
         if eapi not in (0,1) and atom.startswith("!"):
             atom = atom[1:]
-            sf(self, "blocks_temp_ignorable", False)
+            sf(self, "blocks_strongly", True)
         else:
-            sf(self, "blocks_temp_ignorable", True)
+            sf(self, "blocks_strongly", False)
     else:
-        sf(self, "blocks_temp_ignorable", False)
+        sf(self, "blocks_strongly", False)
 
     if atom[0] in ('<', '>'):
         if atom[1] == '=':
@@ -334,7 +334,7 @@ class atom(boolean.AndRestriction):
 
     # note we don't need _hash
     __slots__ = (
-        "blocks", "blocks_temp_ignorable", "op", "cpvstr", "negate_vers",
+        "blocks", "blocks_strongly", "op", "cpvstr", "negate_vers",
         "use", "slot", "category", "version", "revision", "fullver",
         "package", "key", "repo_id", "_hash")
 
@@ -357,6 +357,10 @@ class atom(boolean.AndRestriction):
     # overrided in child class if it's supported
     evaluate_depset = None
 
+    @property
+    def blocks_temp_ignorable(self):
+        return not self.blocks_strongly
+
     def __repr__(self):
         if self.op == '=*':
             atom = "=%s*" %  self.cpvstr
@@ -365,7 +369,7 @@ class atom(boolean.AndRestriction):
         if self.blocks:
             atom = '!' + atom
         if self.blocks:
-            if not self.blocks_temp_ignorable:
+            if self.blocks_strongly:
                 atom = '!!' + atom
             else:
                 atom = '!' + atom
@@ -403,7 +407,7 @@ class atom(boolean.AndRestriction):
         else:
             s = self.op + self.cpvstr
         if self.blocks:
-            if not self.blocks_temp_ignorable:
+            if self.blocks_strongly:
                 s = '!!' + s
             else:
                 s = '!' + s
@@ -453,10 +457,10 @@ class atom(boolean.AndRestriction):
             # want non blockers then blockers.
             return -c
 
-        c = cmp(self.blocks_temp_ignorable, other.blocks_temp_ignorable)
+        c = cmp(self.blocks_strongly, other.blocks_strongly)
         if c:
             # want !! prior to !
-            return -c
+            return c
 
         c = cmp(self.negate_vers, other.negate_vers)
         if c:

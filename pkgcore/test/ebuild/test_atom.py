@@ -51,9 +51,11 @@ class Test_native_atom(TestCase):
             obj = self.kls("!dev-util/diffball", eapi=x)
             self.assertTrue(obj.blocks)
             self.assertTrue(obj.blocks_temp_ignorable)
+            self.assertFalse(obj.blocks_strongly)
         obj = self.kls("!!dev-util/diffball", eapi=2)
         self.assertTrue(obj.blocks)
         self.assertFalse(obj.blocks_temp_ignorable)
+        self.assertTrue(obj.blocks_strongly)
 
 
     def test_iter(self):

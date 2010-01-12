@@ -466,7 +466,7 @@ def main(options, out, err):
     out.title('Resolving...')
     out.write(out.bold, ' * ', out.reset, 'Resolving...')
     orig_atoms = atoms[:]
-    ret = resolver_inst.add_atoms(atoms)
+    ret = resolver_inst.add_atoms(atoms, finalize=True)
     while ret:
         out.error('resolution failed')
         restrict = ret[0][0]
@@ -478,7 +478,7 @@ def main(options, out, err):
         out.write("restarting resolution")
         atoms = [x for x in atoms if x != restrict]
         resolver_inst.reset()
-        ret = resolver_inst.add_atoms(atoms)
+        ret = resolver_inst.add_atoms(atoms, finalize=True)
     resolve_time = time() - resolve_time
 
     if failures:

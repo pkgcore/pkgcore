@@ -229,6 +229,7 @@ class merge_plan(object):
         self.total_ordering_strategy = global_strategy
         self.all_raw_dbs = [misc.caching_repo(x, self.per_repo_strategy) for x in dbs]
         self.all_dbs = global_strategy(self, self.all_raw_dbs)
+        self.default_dbs = self.all_dbs
 
         self.state = state.plan_state()
         vdb_state_filter_restrict = MutableContainmentRestriction(self.state.vdb_filter)
@@ -238,6 +239,8 @@ class merge_plan(object):
 
         self.insoluble = set()
         self.vdb_preloaded = False
+        self._ensure_livefs_is_loaded = \
+            self._ensure_livefs_is_loaded_nonpreloaded
         self.drop_cycles = drop_cycles
         self.process_built_depends = process_built_depends
         self._debugging = debug
@@ -303,21 +306,22 @@ class merge_plan(object):
                     "couldn't load vdb state, %s %s" %
                     (pkg.versioned_atom, ret))
         self.vdb_preloaded = True
+        self._ensure_livefs_is_loaded = \
+            self._ensure_livefs_is_loaded_preloaded
 
-    def add_atoms(self, restricts, dbs=None):
+    def add_atoms(self, restricts):
         if restricts:
             stack = resolver_stack()
-            if dbs is None:
-                dbs = self.all_dbs
-            else:
-                dbs = self.total_ordering_strategy(self, dbs)
+            for restrict in restricts:
+                state.add_hardref_op(restrict).apply(self.state)
+            dbs = self.default_dbs
             for restrict in restricts:
                 ret = self._add_atom(restrict, stack, dbs)
                 if ret:
                     return ret
         return ()
 
-    def add_atom(self, atom, dbs=None):
+    def add_atom(self, atom):
         """add an atom, recalculating as necessary.
 
         @return: the last unresolvable atom stack if a solution can't be found,
@@ -330,7 +334,6 @@ class merge_plan(object):
         if ret:
             dprint("failed- %s", ret)
             return ret, stack.events[-1]
-        state.add_hardref_op(atom).apply(self.state)
         return ()
 
     def _stack_debugging_rec_add_atom(self, func, atom, stack, dbs, **kwds):
@@ -387,7 +390,6 @@ class merge_plan(object):
             stack.pop_frame(ret is None)
             return ret
 
-        blocks = []
         failures = []
 
         debugging = self._debugging
@@ -404,7 +406,7 @@ class merge_plan(object):
                             choices.rdepends, choices.post_rdepends,
                             choices.provides))
                 last_state = new_state
-            additions, blocks = [], []
+            additions = []
 
             self.notify_trying_choice(stack, atom, choices)
 
@@ -629,43 +631,45 @@ class merge_plan(object):
                 failure = self._rec_add_atom(or_node, stack,
                     cur_frame.dbs, mode=attr,
                     drop_cycles=cur_frame.drop_cycles)
-                if failure:
-                    # XXX this is whacky tacky fantastically crappy
-                    # XXX kill it; purpose seems... questionable.
-                    if failure and cur_frame.drop_cycles:
-                        dprint("%s level cycle: %s: "
-                               "dropping cycle for %s from %s",
-                                (attr, cur_frame.atom, or_node,
-                                 cur_frame.current_pkg),
-                                "cycle")
-                        failure = None
-                        break
+                if not failure:
+                    additions.append(or_node)
+                    break
+                # XXX this is whacky tacky fantastically crappy
+                # XXX kill it; purpose seems... questionable.
+                if cur_frame.drop_cycles:
+                    dprint("%s level cycle: %s: "
+                           "dropping cycle for %s from %s",
+                            (attr, cur_frame.atom, or_node,
+                            cur_frame.current_pkg),
+                            "cycle")
+                    failure = None
+                    break
 
-                    if cur_frame.reduce_solutions(or_node):
-                        # pkg changed.
-                        return [failure]
-                    continue
-                additions.append(or_node)
-                break
+                if cur_frame.reduce_solutions(or_node):
+                    # pkg changed.
+                    return [failure]
+                continue
             else: # didn't find any solutions to this or block.
                 cur_frame.reduce_solutions(potentials)
                 return [potentials]
         else: # all potentials were usable.
             return additions, blocks
 
-    def _ensure_livefs_is_loaded(self, restrict):
+    def _ensure_livefs_is_loaded_preloaded(self, restrict):
+        return
+
+    def _ensure_livefs_is_loaded_nonpreloaded(self, restrict):
         # do a trick to make the resolver now aware of vdb pkgs if needed
         # check for any matches; none, try and insert vdb nodes.
-        if not self.vdb_preloaded:
-            l = self.state.match_atom(restrict)
-            if not l:
-                # hmm. ok... no conflicts, so we insert in vdb matches
-                # to trigger a replace instead of an install
-                m = self.livefs_dbs.match(restrict)
-                if m:
-                    dprint("inserting vdb node for %s %s", (restrict, m[0]))
-                    c = choice_point(restrict, m)
-                    state.add_op(c, c.current_pkg, force=True).apply(self.state)
+        l = self.state.match_atom(restrict)
+        if not l:
+            # hmm. ok... no conflicts, so we insert in vdb matches
+            # to trigger a replace instead of an install
+            m = self.livefs_dbs.match(restrict)
+            if m:
+                dprint("inserting vdb node for %s %s", (restrict, m[0]))
+                c = choice_point(restrict, m)
+                state.add_op(c, c.current_pkg, force=True).apply(self.state)
 
     def insert_choice(self, atom, stack, choices):
         # first, check for conflicts.

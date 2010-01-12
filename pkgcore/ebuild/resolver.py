@@ -7,7 +7,7 @@ resolver configuration to match portage behaviour (misbehaviour in a few spots)
 
 __all__ = ["upgrade_resolver", "min_install_resolver"]
 
-from pkgcore.repository.misc import nodeps_repo
+from pkgcore.repository import misc, multiplex
 from pkgcore.resolver import plan
 
 from snakeoil.demandload import demandload
@@ -42,10 +42,10 @@ def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False,
     if not isinstance(dbs, (list, tuple)):
         dbs = [dbs]
     if nodeps:
-        vdb = map(nodeps_repo, vdb)
-        dbs = map(nodeps_repo, dbs)
+        vdb = map(misc.nodeps_repo, vdb)
+        dbs = map(misc.nodeps_repo, dbs)
     elif not verify_vdb:
-        vdb = map(nodeps_repo, vdb)
+        vdb = map(misc.nodeps_repo, vdb)
 
     if force_replacement:
         resolver_cls = generate_replace_resolver_kls(resolver_cls)
@@ -80,10 +80,10 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True,
     if not isinstance(dbs, (list, tuple)):
         dbs = [dbs]
     if nodeps:
-        vdb = map(nodeps_repo, vdb)
-        dbs = map(nodeps_repo, dbs)
+        vdb = map(misc.nodeps_repo, vdb)
+        dbs = map(misc.nodeps_repo, dbs)
     elif not verify_vdb:
-        vdb = map(nodeps_repo, vdb)
+        vdb = map(misc.nodeps_repo, vdb)
 
     if force_replacement:
         resolver_cls = generate_replace_resolver_kls(resolver_cls)
@@ -114,11 +114,8 @@ class empty_tree_merge_plan(plan.merge_plan):
         """
         plan.merge_plan.__init__(self, dbs, *args, **kwds)
         # XXX *cough*, hack.
-        self._empty_dbs = [x for x in self.all_raw_dbs if not x.livefs]
-
-    def add_atoms(self, restrictions):
-        return plan.merge_plan.add_atoms(
-            self, restrictions, dbs=self._empty_dbs)
+        self.default_dbs = multiplex.tree(*
+            [x for x in self.all_raw_dbs if not x.livefs])
 
 
 def generate_replace_resolver_kls(resolver_kls):

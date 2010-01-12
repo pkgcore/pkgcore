@@ -63,7 +63,7 @@ class tree(prototype.tree):
         """
         super(tree, self).__init__()
         for x in trees:
-            if not isinstance(x, prototype.tree):
+            if not hasattr(x, 'itermatch'):
                 raise errors.InitializationError(
                     "%s is not a repository tree derivative" % (x,))
         self.trees = trees

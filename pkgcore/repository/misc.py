@@ -6,6 +6,8 @@ from pkgcore.package.mutated import MutatedPkg
 from pkgcore.interfaces.repo import operations_proxy
 from snakeoil.iterables import caching_iter
 from snakeoil.klass import GetAttrProxy
+from snakeoil.currying import partial
+from snakeoil.iterables import iter_sort
 
 __all__ = ("nodeps_repo", "caching_repo")
 
@@ -90,3 +92,23 @@ class caching_repo(object):
 
     def clear(self):
         self.__cache__.clear()
+
+
+class multiplex_sorting_repo(object):
+
+    def __init__(self, sorter, *repos):
+        self.__repos__ = repos
+        self.__sorter__ = sorter
+
+    def itermatch(self, restrict):
+        return iter_sort(self.__sorter__,
+            *[repo.itermatch(restrict) for repo in self.__repos__])
+
+    def match(self, restrict):
+        return list(self.itermatch(restrict))
+
+    def has_match(self, restrict):
+        for repo in self.__repos__:
+            if repo.has_match(restrict):
+                return True
+        return False

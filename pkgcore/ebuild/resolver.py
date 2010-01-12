@@ -105,20 +105,16 @@ class empty_tree_merge_plan(plan.merge_plan):
 
     _vdb_restriction = _vdb_restrict
 
-    def __init__(self, *args, **kwds):
+    def __init__(self, dbs, *args, **kwds):
         """
         @param args: see L{pkgcore.resolver.plan.merge_plan.__init__}
             for valid args
         @param kwds: see L{pkgcore.resolver.plan.merge_plan.__init__}
             for valid args
         """
-        plan.merge_plan.__init__(self, *args, **kwds)
+        plan.merge_plan.__init__(self, dbs, *args, **kwds)
         # XXX *cough*, hack.
-        self._empty_dbs = self.dbs
-
-    def add_atom(self, atom):
-        return plan.merge_plan.add_atom(
-            self, atom, dbs=self._empty_dbs)
+        self._empty_dbs = [x for x in self.all_raw_dbs if not x.livefs]
 
     def add_atoms(self, restrictions):
         return plan.merge_plan.add_atoms(
@@ -131,12 +127,6 @@ def generate_replace_resolver_kls(resolver_kls):
     class replace_resolver(resolver_kls):
         overriding_resolver_kls = resolver_kls
         _vdb_restriction = _vdb_restrict
-
-        def add_atom(self, atom, **kwds):
-            return self.overriding_resolver_kls.add_atom(
-                self, KeyedAndRestriction(
-                    self._vdb_restriction, atom, key=atom.key),
-                    **kwds)
 
         def add_atoms(self, restricts, **kwds):
             restricts = [KeyedAndRestriction(self._vdb_restriction, x, key=x.key)

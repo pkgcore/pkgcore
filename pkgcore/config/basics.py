@@ -259,11 +259,10 @@ class FakeIncrementalDictConfigSection(ConfigSection):
         keys = set()
         for key in self.dict:
             if key.endswith('.append'):
-                keys.add(key[:-7])
+                key = key[:-7]
             elif key.endswith('.prepend'):
-                keys.add(key[:-8])
-            else:
-                keys.add(key)
+                key = key[:-8]
+            keys.add(key)
         return list(keys)
 
     def get_value(self, central, name, arg_type):

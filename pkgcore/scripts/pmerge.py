@@ -527,6 +527,17 @@ def main(options, out, err):
         do_unmerge(options, out, err, livefs_repos, wipes, world_set, repo_obs)
         return 0
 
+    if options.debug:
+        out.write()
+        out.write(out.bold, ' * ', out.reset, 'debug: all ops')
+        out.first_prefix.append(" ")
+        plan_len = len(str(len(resolver_inst.state.plan)))
+        for pos, op in enumerate(resolver_inst.state.plan):
+            out.write(str(pos + 1).rjust(plan_len), ': ', str(op))
+        out.first_prefix.pop()
+        out.write(out.bold, ' * ', out.reset, 'debug: end all ops')
+        out.write()
+
     changes = list(x for x in resolver_inst.state.iter_ops()
         if x.pkg.package_is_real)
 

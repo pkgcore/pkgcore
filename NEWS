@@ -3,6 +3,7 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+* ticket 234; handle refs properly in dhcpformat/mke2fsformat.
 
 * pkgcore atom objects blocks_temp_ignorable data is now stored in
   blocks_strongly; the old attr is aliased, although will be removed.

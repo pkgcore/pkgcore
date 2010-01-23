@@ -224,8 +224,8 @@ test {
             manager = central.ConfigManager([config])
             section = config['test']
             refs = section.get_value(manager, 'refs', 'refs:test')
-            self.assertEqual(((), {'hi': 'there'}), refs[0].instantiate())
-            self.assertEqual(((), {'hi': 'here'}), refs[1].instantiate())
+            self.assertEqual(((), {'hi': 'there'}), refs[1][0].instantiate())
+            self.assertEqual(((), {'hi': 'here'}), refs[1][1].instantiate())
 
     def test_one_section_refs(self):
         for parser, text in [
@@ -261,11 +261,11 @@ test {
             section = config['test']
             self.assertEqual(
                 section.get_value(
-                    manager, 'inline', 'refs:test')[0].instantiate(),
+                    manager, 'inline', 'refs:test')[1][0].instantiate(),
                 ((), {'hi': 'here'}))
             self.assertEqual(
                 section.get_value(
-                    manager, 'ref', 'refs:test')[0].instantiate(),
+                    manager, 'ref', 'refs:test')[1][0].instantiate(),
                 ((), {'hi': 'there'}))
 
     def test_invalid_values(self):

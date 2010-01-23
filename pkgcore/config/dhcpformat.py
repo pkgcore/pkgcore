@@ -119,7 +119,7 @@ class ConfigSection(basics.ConfigSection):
                     # it's an anonymous inline section
                     result.append(basics.LazyUnnamedSectionRef(
                             central, arg_type, ConfigSection(ref)))
-            return result
+            return None, result, None
         elif arg_type == 'list':
             if not isinstance(value, basestring):
                 # sequence
@@ -130,19 +130,15 @@ class ConfigSection(basics.ConfigSection):
                 value = value[0]
                 if isinstance(value, basestring):
                     return 'str', value
-                else:
-                    return 'ref', ConfigSection(value)
-            else:
-                if all(isinstance(v, basestring) for v in value):
-                    return 'list', list(value)
-                result = []
-                for v in value:
-                    if isinstance(v, basestring):
-                        result.append(v)
-                    else:
-                        result.append(ConfigSection(v))
-                return 'refs', result
-            assert False, 'unreachable'
+                return 'ref', ConfigSection(value)
+            if all(isinstance(v, basestring) for v in value):
+                return 'list', list(value)
+            result = []
+            for v in value:
+                if not isinstance(v, basestring):
+                    v = ConfigSection(v)
+                result.append(v)
+            return 'refs', result
         else:
             if len(value) != 1:
                 raise errors.ConfigurationError('only one argument required')

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+0#!/usr/bin/env python
 
 import os
 import sys
@@ -276,10 +276,12 @@ if not snk_distutils.is_py3k:
             'pkgcore.ebuild._filter_env', [
                 'src/filter_env.c', 'src/bmh_search.c']),
         snk_distutils.OptionalExtension(
-            'pkgcore.ebuild._misc', ['src/misc.c']),
-        snk_distutils.OptionalExtension(
             'pkgcore.restrictions._restrictions', ['src/restrictions.c']),
     ])
+    if float(sys.version[:3]) >= 2.5:
+        extensions.append(snk_distutils.OptionalExtension(
+                'pkgcore.ebuild._misc', ['src/misc.c']))
+
 
 from pkgcore.const import VERSION
 core.setup(

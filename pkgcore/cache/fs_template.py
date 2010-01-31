@@ -46,7 +46,7 @@ class FsBased(template.database):
             for y in template.database.__init__.__doc__.split("\n")
             if "@param" in y])
 
-    def _ensure_access(self, path, mtime=-1):
+    def _ensure_access(self, path, mtime=None):
         """Ensure access to a path.
 
         @param mtime: if specified change mtime to this value.
@@ -55,7 +55,7 @@ class FsBased(template.database):
         try:
             os.chown(path, -1, self._gid)
             os.chmod(path, self._perms)
-            if mtime:
+            if mtime is not None:
                 mtime = long(mtime)
                 os.utime(path, (mtime, mtime))
         except (OSError, IOError):

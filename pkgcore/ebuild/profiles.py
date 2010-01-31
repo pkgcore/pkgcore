@@ -285,7 +285,7 @@ class EmptyRootNode(ProfileNode):
 
 
 def _empty_provides_iterable(*args, **kwds):
-    return ()
+    return iter(())
 
 def _empty_provides_has_match(*args, **kwds):
     return False

@@ -378,7 +378,7 @@ walk_here_statement(const char *start, const char *p, const char *end)
         return NULL;
     }
     int here_len = end_here - p;
-    memcpy(temp_string, p, here_len);
+    Py_MEMCPY(temp_string, p, here_len);
     temp_string[here_len] = '\0';
     /* d2printf("matched len('%zi')/'%s' for a here word\n", end_here - p,
      * temp_string); */

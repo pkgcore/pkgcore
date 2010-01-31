@@ -3,6 +3,23 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
+* EBUILD_PHASE was set to setup-binpkg for pkg_setup phase w/ binpkgs-
+  ebuilds expected setup however, thus EBUILD_PHASE is now set to setup
+  always for pkg_setup phase.
+
+* fixup env filtering- backslash escaping wasn't needed in the patterns
+  resulting in failed matches.  Mostly protective cleanup.
+
+* tweak cache backend to not stamp cache entries where mtime is no longer
+  external w/ an mtime of '-1'.  Didn't hurt anything but was a pointless op.
+
+* fix the cpy incremental_expansion implementation; not sure how it slipped
+  in being slower then native python, but the cpy version is now 60% faster
+  than the native equivalent.
+  Additionally, this extension is now disabled under py2.4 since it makes
+  heavy use of PySet apis.
+
 * ticket 234; handle refs properly in dhcpformat/mke2fsformat.
 
 * pkgcore atom objects blocks_temp_ignorable data is now stored in

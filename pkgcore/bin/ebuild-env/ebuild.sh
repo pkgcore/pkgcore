@@ -28,12 +28,12 @@ ORIG_FUNCS=`declare -F | cut -s -d ' ' -f 3`
 DONT_EXPORT_FUNCS='portageq speak'
 
 DONT_EXPORT_VARS="ORIG_VARS GROUPS ORIG_FUNCS FUNCNAME DAEMONIZED CCACHE.* DISTCC.* SYNC
-\(TMP\|\)DIR FEATURES CONFIG_PROTECT.* P\?WORKDIR RSYNC_.* GENTOO_MIRRORS
-\(DIST\|FILES\|RPM\|ECLASS\)DIR HOME MUST_EXPORT_ENV QA_CONTROLLED_EXTERNALLY COLORTERM HOSTNAME
-myarg SANDBOX_.* BASH.* EUID PPID SHELLOPTS UID ACCEPT_\(KEYWORDS\|LICENSE\) BUILD\(_PREFIX\|DIR\) T DIRSTACK
-DISPLAY \(EBUILD\)\?_PHASE PORTAGE_.* SUDO_.* LD_PRELOAD ret line phases D IMAGE
-PORT\(_LOGDIR\|DIR\(_OVERLAY\)\?\) ROOT TERM _ done e PROFILE_.* EBUILD ECLASS LINENO
-HILITE TMP HISTCMD OPTIND RANDOM OLDPWD PKGCORE_DOMAIN IFS BASHOPTS"
+(TMP)?DIR FEATURES CONFIG_PROTECT.* WORKDIR RSYNC_.* GENTOO_MIRRORS
+(DIST|FILES|RPM|ECLASS)DIR HOME MUST_EXPORT_ENV QA_CONTROLLED_EXTERNALLY COLORTERM HOSTNAME
+myarg SANDBOX_.* BASH.* EUID PPID SHELLOPTS UID ACCEPT_(KEYWORDS|LICENSE) BUILD(_PREFIX|DIR) T DIRSTACK
+DISPLAY (PKGCORE_)?EBUILD_PHASE PORTAGE_.* SUDO_.* LD_PRELOAD ret line phases D IMAGE
+PORT(_LOGDIR|DIR(_OVERLAY)?) ROOT TERM _ done e PROFILE_.* EBUILD ECLASS LINENO
+HILITE TMP HISTCMD OPTIND RANDOM OLDPWD PKGCORE_DOMAIN IFS BASHOPTS PKGCORE_DEBUG"
 
 
 if [ -z "$PKGCORE_BIN_PATH" ]; then
@@ -301,6 +301,7 @@ load_environ() {
     local DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} load_file declare"
     local SANDBOX_STATE=$SANDBOX_ON
     local EBUILD_PHASE=$EBUILD_PHASE
+    local PKGCORE_EBUILD_PHASE=$PKGCORE_EBUILD_PHASE
     local reload_failure=0
     SANDBOX_ON=0
 
@@ -462,7 +463,7 @@ init_environ() {
     OCXX="$CXX"
     local EXISTING_PATH="$PATH"
 
-    if [ "${EBUILD_PHASE}" == "setup" ]; then
+    if [ "${PKGCORE_EBUILD_PHASE}" == "setup" ]; then
         #we specifically save the env so it's not stomped on by sourcing.
         #bug 51552
         dump_environ --no-attributes > "${T}/.temp_env"
@@ -482,7 +483,7 @@ init_environ() {
         source_profiles
     fi
 
-    if [ "${EBUILD_PHASE}" != "depend" ]; then
+    if [ "${PKGCORE_EBUILD_PHASE}" != "depend" ]; then
         [ ! -z "$OCC" ] && export CC="$OCC"
         [ ! -z "$OCXX" ] && export CXX="$OCXX"
 
@@ -515,7 +516,7 @@ init_environ() {
     export DESTTREE=/usr
 
     source "${EBUILD}"
-    if [ "${EBUILD_PHASE}" != "depend" ]; then
+    if [ "${PKGCORE_EBUILD_PHASE}" != "depend" ]; then
         RESTRICT="${FINALIZED_RESTRICT}"
         unset FINALIZED_RESTRICT
     fi
@@ -553,7 +554,7 @@ init_environ() {
 
     unset E_IUSE E_DEPEND E_RDEPEND E_CDEPEND E_PDEPEND
     pkgcore_ensure_PATH "$EXISTING_PATH"
-    if [ "${EBUILD_PHASE}" != "depend" ]; then
+    if [ "${PKGCORE_EBUILD_PHASE}" != "depend" ]; then
         source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.lib" || die "failed sourcing eapi '${EAPI}'"
     fi
 }
@@ -567,8 +568,8 @@ source "${PKGCORE_BIN_PATH}/isolated-functions.sh" || die "failed sourcing strip
 execute_phases() {
     local ret
     for myarg in $*; do
+        PKGCORE_EBUILD_PHASE="$myarg"
         EBUILD_PHASE="$myarg"
-        MUST_EXPORT_ENV="no"
         case $EBUILD_PHASE in
         nofetch)
             init_environ
@@ -634,6 +635,7 @@ execute_phases() {
             #for example, awking and piping a file in /tmp requires a temp file to be created
             #in /etc.  If pkg_setup is in the sandbox, both our lilo and apache ebuilds break.
 
+            EBUILD_PHASE="setup"
             export SANDBOX_ON="0"
 
             # binpkgs don't need to reinitialize the env.

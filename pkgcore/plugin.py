@@ -1,5 +1,5 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: GPL2
+# License: BSD/GPL2
 
 
 """Plugin system, heavily inspired by twisted's plugin system."""

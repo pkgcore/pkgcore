@@ -567,7 +567,7 @@ PyDoc_STRVAR(
     "cpython restrictions extensions for speed");
 
 PyMODINIT_FUNC
-init_restrictions()
+init_restrictions(void)
 {
     PyObject *m = Py_InitModule3("_restrictions", NULL,
         pkgcore_restrictions_documentation);

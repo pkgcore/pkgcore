@@ -1,5 +1,5 @@
 # Copyright: 2007 Marien Zwart <marienz@gentoo.org>
-# License: GPL2
+# License: BSD/GPL2
 
 from pkgcore.ebuild import ebuild_src
 

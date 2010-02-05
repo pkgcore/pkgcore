@@ -25,7 +25,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 * pkgcore atom objects blocks_temp_ignorable data is now stored in
   blocks_strongly; the old attr is aliased, although will be removed.
 
-* pkgcore now supports arbitrary length revisions.
+* pkgcore now supports revisions of arbitrary length (previously was <31 bits).
 
 
 pkgcore 0.5.9: January 8th, 2010

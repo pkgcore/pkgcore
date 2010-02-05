@@ -1,5 +1,5 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
-# License: GPL2
+# License: BSD/GPL2
 
 """Parse a mke2fs.conf(5) style configuration file.
 

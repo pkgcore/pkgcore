@@ -1,6 +1,6 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# Copyright: 2007 Brian Harring <ferringb@gmail.com>: BSD/GPL2
-# License: GPL2
+# Copyright: 2007 Brian Harring <ferringb@gmail.com>
+# License: BSD/GPL2
 
 
 """Filter a bash environment dump."""

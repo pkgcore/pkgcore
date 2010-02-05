@@ -1,5 +1,5 @@
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
-# License: GPL2
+# License: BSD/GPL2
 
 from StringIO import StringIO
 from pkgcore.test import TestCase

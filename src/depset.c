@@ -450,7 +450,7 @@ PyDoc_STRVAR(
 
 
 static int
-load_external_objects()
+load_external_objects(void)
 {
     PyObject *s, *m = NULL;
     #define LOAD_MODULE(module)         \
@@ -512,7 +512,7 @@ load_external_objects()
 
 
 PyMODINIT_FUNC
-init_depset()
+init_depset(void)
 {
     // first get the exceptions we use.
     if(load_external_objects())

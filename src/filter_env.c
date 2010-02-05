@@ -690,7 +690,7 @@ static PyMethodDef pkgcore_filter_env_methods[] = {
 };
 
 PyMODINIT_FUNC
-init_filter_env()
+init_filter_env(void)
 {
     /* External objects. */
     PyObject *s = PyString_FromString("pkgcore.log");

@@ -1,5 +1,5 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: GPL2
+# License: BSD/GPL2
 
 
 """Helpers for testing scripts."""

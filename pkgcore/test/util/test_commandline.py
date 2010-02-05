@@ -1,5 +1,5 @@
 # Copyright: 2006-2007 Marien Zwart <marienz@gentoo.org>
-# License: GPL2
+# License: BSD/GPL2
 
 
 import os

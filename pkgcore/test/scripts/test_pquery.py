@@ -1,6 +1,6 @@
 # Copyright: 2009 Brian Harring <ferringb@gmail.com>
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: GPL2/BSD
+# License: BSD/GPL2
 
 from pkgcore.test import TestCase
 

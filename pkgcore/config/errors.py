@@ -1,6 +1,6 @@
-# Copyright: 2005-2009 Brian Harring <ferringb@gmail.com>: BSD/GPL2
+# Copyright: 2005-2009 Brian Harring <ferringb@gmail.com>
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
-# License: GPL2
+# License: BSD/GPL2
 
 # potentially use an intermediate base for user config errors,
 # seperate base for instantiation?

@@ -1050,7 +1050,7 @@ PyDoc_STRVAR(
     "cpython atom parsing functionality");
 
 static int
-load_external_objects()
+load_external_objects(void)
 {
     PyObject *s, *m = NULL;
     #define LOAD_MODULE(char_p)             \
@@ -1137,7 +1137,7 @@ load_external_objects()
 
 
 PyMODINIT_FUNC
-init_atom()
+init_atom(void)
 {
     PyObject *m = Py_InitModule3("_atom", NULL, pkgcore_atom_documentation);
     if (!m)

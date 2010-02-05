@@ -167,7 +167,7 @@ class SpawnTest(TempDirMixin, TestCase):
 
     def generate_background_pid(self):
         try:
-            return spawn.spawn(["sleep", "3600s"], returnpid=True)[0]
+            return spawn.spawn(["sleep", "60s"], returnpid=True)[0]
         except spawn.CommandNotFound:
             raise SkipTest(
                 "can't complete the test, sleep binary doesn't exist")
@@ -187,7 +187,7 @@ class SpawnTest(TempDirMixin, TestCase):
     def test_cleanup_pids(self):
         pid = self.generate_background_pid()
         spawn.cleanup_pids([pid])
-        self.assertRaises(OSError, post_curry(os.kill, pid, 0))
+        self.assertRaises(OSError, os.kill, pid, 0)
         self.assertNotIn(
             pid, spawn.spawned_pids, "pid wasn't removed from global pids")
 

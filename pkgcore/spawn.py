@@ -109,6 +109,7 @@ spawned_pids = []
 def cleanup_pids(pids=None):
     """reap list of pids if specified, else all children"""
 
+    global spawned_pids
     if pids is None:
         pids = spawned_pids
     elif pids is not spawned_pids:

@@ -1,5 +1,5 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: GPL2
+# License: BSD/GPL2
 
 """Commandline interface to L{pkgcore.ebuild.filter_env}."""
 

@@ -1,6 +1,6 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>: BSD/GPL2
 # Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
-# License: GPL2
+# License: BSD/GPL2
 
 from StringIO import StringIO
 

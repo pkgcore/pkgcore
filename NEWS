@@ -4,6 +4,14 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.5.10: February 7th, 2010
+
+* EAPI=3 support; pkgcore already preserved mtimes at the second level,
+  remaining bits were added for full EAPI3 support.
+
+  Pkgcore doesn't currently fully PREFIX offset merges, but that will be
+  added in the next release or two most likely.
+
 * EBUILD_PHASE was set to setup-binpkg for pkg_setup phase w/ binpkgs-
   ebuilds expected setup however, thus EBUILD_PHASE is now set to setup
   always for pkg_setup phase.

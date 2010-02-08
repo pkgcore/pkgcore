@@ -106,6 +106,13 @@ unpack()
                 bzip2 -dc "${srcdir}${x}" | tar xf - ${taropts}
                 assert "$myfail"
                 ;;
+            *.tar.xz)
+                if hasq "$EAPI" 0 1 2; then
+                    echo "xv is a supported extension in eapi3 and above only" >&2
+                    continue;
+                fi
+                xz -dc "${srcdir}${x}" | tar xf ${taropts} || die "$myfail"
+                ;;
             *.ZIP|*.zip|*.jar)
                 unzip -qo "${srcdir}${x}" || die "$myfail"
                 ;;
@@ -114,6 +121,13 @@ unpack()
                 ;;
             *.bz2|*.bz)
                 bzip2 -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
+                ;;
+            *.xz)
+                if hasq "$EAPI" 0 1 2; then
+                    echo "xv is a supported extension in eapi3 and above only" >&2
+                    continue;
+                fi
+                xz -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
                 ;;
             *.7Z|*.7z)
                 local my_output

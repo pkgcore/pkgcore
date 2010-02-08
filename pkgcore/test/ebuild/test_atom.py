@@ -278,6 +278,12 @@ class Test_native_atom(TestCase):
         self.kls("dev-util/foon:1", eapi=1)
         self.kls("dev-util/foon:12", eapi=1)
 
+    def test_eapi3(self):
+        self.kls("dev-util/foon:1", eapi=3)
+        self.kls("dev-util/foon:2", eapi=3)
+        self.kls("!dev-util/foon:1", eapi=3)
+        self.kls("dev-util/foon:1[x]", eapi=3)
+        self.kls("dev-util/foon:1[x?]", eapi=3)
 
     def test_repo_id(self):
         astr = "dev-util/bsdiff"

@@ -105,6 +105,13 @@ class ebd(object):
             self.env["PKGCORE_DEBUG"] = str(int(os.environ["PKGCORE_DEBUG"]))
 
         self.env.setdefault("ROOT", "/")
+
+
+        # XXX: note this is just eapi3 compatibility; not full prefix, soon..
+        if pkg.eapi not in (0,1,2):
+            self.env['EROOT'] = self.env['ROOT']
+            self.env['EPREFIX'] = ''
+
         self.env_data_source = env_data_source
         if env_data_source is not None and \
             not isinstance(env_data_source, data_source.base):
@@ -187,8 +194,12 @@ class ebd(object):
             ("HOME", "homedir")):
             self.env[x] = normpath(pjoin(self.builddir, y))
         self.env["D"] += "/"
-
         self.env["IMAGE"] = self.env["D"]
+
+        # XXX: note that this is just eapi3 support, not yet prefix
+        # full awareness.
+        if self.eapi not in (0,1,2):
+            self.env["ED"] = self.env["D"]
 
     def get_env_source(self):
         return data_source.bytes_data_source(

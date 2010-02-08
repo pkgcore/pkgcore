@@ -6,8 +6,8 @@
 ebuild internal constants
 """
 
-eapi_capable = (0, 1, 2)
-unknown_eapi = 3
+eapi_capable = (0, 1, 2, 3)
+unknown_eapi = 4
 
 incrementals = (
     "USE", "FEATURES", "ACCEPT_KEYWORDS", "ACCEPT_LICENSE",

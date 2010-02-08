@@ -182,12 +182,13 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
         if self.use is not None:
             raise errors.MalformedAtom(orig_atom,
                 "use atoms aren't supported for eapi < 2")
-    if self.repo_id is not None and eapi != -1:
-        raise errors.MalformedAtom(orig_atom,
-            "repo_id atoms aren't supported for eapi %i" % eapi)
-    if self.slot and len(self.slot) > 1 and eapi != -1:
-        raise errors.MalformedAtom(orig_atom,
-            "multiple slot restrictions not supported for eapi %s" % eapi)
+    if eapi != -1:
+        if self.repo_id is not None:
+            raise errors.MalformedAtom(orig_atom,
+                "repo_id atoms aren't supported for eapi %i" % eapi)
+        if self.slot and len(self.slot) > 1:
+            raise errors.MalformedAtom(orig_atom,
+                "multiple slot restrictions not supported for eapi %s" % eapi)
     if use_start != -1 and slot_start != -1 and use_start < slot_start:
         raise errors.MalformedAtom(orig_atom,
             "slot restriction must proceed use")

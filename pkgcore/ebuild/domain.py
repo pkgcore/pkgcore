@@ -87,7 +87,7 @@ class domain(pkgcore.config.domain.domain):
         'package.mask', 'package.keywords', 'package.license', 'package.use',
         'package.unmask']:
         _types[_thing] = 'list'
-    for _thing in ['root', 'CHOST', 'CBUILD', 'CFLAGS', 'PATH',
+    for _thing in ['root', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
         'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR']:
         _types[_thing] = 'str'
 

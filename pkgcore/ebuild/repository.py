@@ -344,7 +344,7 @@ class ConfiguredTree(configured.tree):
 
         chost = domain_settings['CHOST']
         scope_update = {'chost': chost}
-        scope_update.update((x, domain_settings.get(x.upper, chost))
+        scope_update.update((x, domain_settings.get(x.upper(), chost))
             for x in ('cbuild', 'ctarget'))
 
         configured.tree.__init__(self, raw_repo, self.config_wrappables,

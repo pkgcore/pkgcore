@@ -6,6 +6,8 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.5.10: February 7th, 2010
 
+* ticket 235; CBUILD/CTARGET values were being stomped w/ CHOST.
+
 * EAPI=3 support; pkgcore already preserved mtimes at the second level,
   remaining bits were added for full EAPI3 support.
 

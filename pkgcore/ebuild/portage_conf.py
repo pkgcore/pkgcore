@@ -275,7 +275,7 @@ def config_from_make_conf(location="/etc/"):
     # make.globals to provide vars used in make.conf, portage keeps
     # them seperate (kind of annoying)
 
-    config_root = os.environ.get("CONFIG_ROOT", "/")
+    config_root = os.environ.get("PORTAGE_CONFIGROOT", "/")
     base_path = pjoin(config_root, location.strip("/"))
     portage_base = pjoin(base_path, "portage")
 

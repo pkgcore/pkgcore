@@ -4,6 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* rename support for env var CONFIG_ROOT to PORTAGE_CONFIGROOT; seems
+  that changed in portage at some point.  This should fully restore
+  crossdev support.
+
+
 pkgcore 0.5.10: February 7th, 2010
 
 * ticket 235; CBUILD/CTARGET values were being stomped w/ CHOST.

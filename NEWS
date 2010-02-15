@@ -4,6 +4,15 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* FEATURES=splitdebug works once again.
+
+* It's strongly suggested that you run >snakeoil-0.3.6.1 due to fixes
+  in extension building- specifically forcing -fno-strict-aliasing back
+  into cflags since python is invalidly dropping them out.
+
+  In addition, if you're running pkgcore on a py3k machine, installation
+  now is parallelized for 2to3 conversion- should be a fair bit faster.
+
 * rename support for env var CONFIG_ROOT to PORTAGE_CONFIGROOT; seems
   that changed in portage at some point.  This should fully restore
   crossdev support.

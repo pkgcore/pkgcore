@@ -684,7 +684,7 @@ class BinaryDebug(base):
 
     _hooks = ('pre_merge',)
 
-    default_strip_flags = ('--strip-unneeded',)
+    default_strip_flags = ('--strip-unneeded', '-R', '.comment')
     elf_regex = '(^| )ELF +(\d+-bit )'
 
     pkgcore_config_type = ConfigHint({'mode':'str', 'strip_binary':'str',
@@ -717,13 +717,13 @@ class BinaryDebug(base):
             setattr(self, '%s_binary' % x, obj)
 
     def _strip_fsobj(self, fs_obj, ftype, reporter, quiet=False):
-        if not quiet:
-            reporter.info("stripping %s" % fs_obj)
         args = self._strip_flags
         if "executable" in ftype or "shared object" in ftype:
             args += self._extra_strip_flags
         elif "current ar archive" in ftype:
             args = ['-g']
+        if not quiet:
+            reporter.info("stripping: %s %s" % (fs_obj, ' '.join(args)))
         ret = spawn.spawn([self.strip_binary] + args +
             [fs_obj.data_source.path])
         if ret != 0:
@@ -781,7 +781,7 @@ class BinaryDebug(base):
                     (fs_obj.location, ret))
                 continue
             ret = spawn.spawn([self.objcopy_binary,
-                '--add-gnu-debuglink', fpath, debug_ondisk])
+                '--add-gnu-debuglink', debug_ondisk, fpath])
             if ret != 0:
                 observer.warn("splitdebug created debug file %r, but "
                     "failed adding links to %r" % (debug_loc, fpath))

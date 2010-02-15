@@ -781,7 +781,7 @@ class BinaryDebug(base):
                     (fs_obj.location, ret))
                 continue
             ret = spawn.spawn([self.objcopy_binary,
-                '--add-gnu-debuglink', debug_ondisk, fpath])
+                '--add-gnu-debuglink', debug_loc, fpath])
             if ret != 0:
                 observer.warn("splitdebug created debug file %r, but "
                     "failed adding links to %r" % (debug_loc, fpath))

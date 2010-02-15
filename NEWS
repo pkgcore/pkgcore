@@ -3,7 +3,6 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
-
 * FEATURES=splitdebug works once again.
 
 * It's strongly suggested that you run >snakeoil-0.3.6.1 due to fixes

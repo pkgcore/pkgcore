@@ -766,7 +766,7 @@ class BinaryDebug(base):
             if 'ar archive' in ftype or ('relocatable' in ftype and not
                 fs_obj.basename.endswith(".ko")):
                 continue
-            debug_loc = pjoin(debug_store, fs_obj.location.lstrip('/'))
+            debug_loc = pjoin(debug_store, fs_obj.location.lstrip('/') + ".debug")
             if debug_loc in cset:
                 continue
             fpath = fs_obj.data_source.path
@@ -781,7 +781,7 @@ class BinaryDebug(base):
                     (fs_obj.location, ret))
                 continue
             ret = spawn.spawn([self.objcopy_binary,
-                '--add-gnu-debuglink', debug_loc, fpath])
+                '--add-gnu-debuglink', debug_ondisk, fpath])
             if ret != 0:
                 observer.warn("splitdebug created debug file %r, but "
                     "failed adding links to %r" % (debug_loc, fpath))

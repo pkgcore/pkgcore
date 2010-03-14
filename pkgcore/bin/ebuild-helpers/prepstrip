@@ -10,11 +10,11 @@ has installsources ${FEATURES} || exit 0
 has installsources ${RESTRICT} && exit 0
 
 for x in debugedit scanelf rsync sort; do
-    if ! type -P $x >/dev/null ; then
-    	ewarn "FEATURES=installsources is enabled but the $x binary could not"
+	if ! type -P $x >/dev/null ; then
+		ewarn "FEATURES=installsources is enabled but the $x binary could not"
 	    ewarn "be found. This feature will not work unless debugedit is installed!"
-    	exit 0
-    fi
+		exit 0
+	fi
 done
 
 save_elf_sources() {

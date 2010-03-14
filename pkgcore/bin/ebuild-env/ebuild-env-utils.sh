@@ -1,241 +1,148 @@
+# Copyright 2005-2010 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # this functionality is all related to saving/loading environmental dumps for ebuilds
 
-escape_regex() {
-    local f
-    while [ -n "$1" ]; do
-        f="${1//+/\+}"
-        f="${f//.*/[A-Za-z0-9_-+./]*}"
-        echo -n "$f"
-        shift
-    done
-}
-
 filter_env_func_filter() {
-    while [ -n "$1" ]; do
-        echo -n "$(escape_regex "$1")"
-        [ "$#" != 1 ] && echo -n ','
-        shift
-    done
-}
-
-gen_regex_func_filter() {
-    local f
-    if [ "$#" == 1 ]; then
-        echo -n "$(escape_regex "$1")"
-        return
-    fi
-    echo -n "\($(escape_regex "$1")"
-    shift
-    while [ -n "$1" ]; do
-        echo -n "\|$(escape_regex "$1")"
-        shift
-    done
-    echo -n "\)"
+	while [ -n "$1" ]; do
+		echo -n "$1"
+		[ "$#" != 1 ] && echo -n ','
+		shift
+	done
 }
 
 filter_env_var_filter() {
-    local _internal_var
-    while [ -n "$1" ]; do
-        echo -n "$1"
-        [ "$#" != 1 ] && echo -n ','
-        shift
-    done
+	local _internal_var
+	while [ -n "$1" ]; do
+		echo -n "$1"
+		[ "$#" != 1 ] && echo -n ','
+		shift
+	done
 }
 
-gen_regex_var_filter() {
-    local _internal_var
-    if [ "$#" == 1 ]; then
-        echo -n "$1"
-        return
-    fi
-    echo -n "\($1"
-    shift
-    while [ -n "$1" ]; do
-        echo -n "\|$1"
-        shift
-    done
-    echo -n '\)'
+regex_filter_input() {
+	local l
+	local regex="${1}"
+	shift
+	while [ -n "$1" ]; do
+		regex="${regex}|${1}"
+		shift
+	done
+	regex="^(${regex})$"
+	# use egrep if possible... tis faster.
+	if type -p egrep &> /dev/null; then
+		grep -E -v "${regex}"
+	else
+		while read l; do
+			[[ $l =~ $regex ]] || echo "${l}"
+		done
+	fi
 }
 
 invoke_filter_env() {
-    local opts
-    [[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
-    PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
-        "${PKGCORE_BIN_PATH}/filter-env" "$@"
+	local opts
+	[[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
+	PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
+		"${PKGCORE_BIN_PATH}/filter-env" "$@"
 }
 
 # selectively saves  the environ- specifically removes things that have been marked to not be exported.
 # dump the environ to stdout.
 dump_environ() {
-    local x y;
+	local x
 
-    #env dump, if it doesn't match a var pattern, stop processing, else print only if
-    #it doesn't match one of the filter lists.
-    # vars, then funcs.
+	# dump funcs.
+	declare -F | cut -d ' ' -f 3- | regex_filter_input ${DONT_EXPORT_FUNCS} | sort -g | while read x; do
+		declare -f "${x}" || die "failed outputting func ${x}" >&2
+	done
 
-    declare | invoke_filter_env -f \
-        "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" -v \
-        "$(filter_env_var_filter ${DONT_EXPORT_VARS} f x )" || die "internal error: filter-env returned non zero: $?"
-
-    if ! has "--no-attributes" "$@"; then
-        echo "# env attributes"
-        # leave this form so that it's easier to add others in.
-        for y in export ; do
-            x=$(${y} | sed -n "/declare \(-[^ ]\+ \)*/!d; s:^declare \(-[^ ]\+ \)*\([A-Za-z0-9_+]\+\)\(=.*$\)\?$:\2:; /^$(gen_regex_var_filter ${DONT_EXPORT_VARS} x y)$/! p;")
-            [ -n "$x" ] && echo "${y} $(echo $x);"
-        done
-
-        # if it's just declare -f some_func, filter it, else drop it if it's one of the filtered funcs
-        declare -F | sed -n "/^declare -[^ ]\( \|[^ ]? $(gen_regex_func_filter ${DONT_EXPORT_FUNCS})$\)\?/d; s/^/    /;s/;*$/;/p;"
-
-        shopt -p
-    fi
+	declare | invoke_filter_env --print-vars | regex_filter_input ${DONT_EXPORT_VARS} | sort -g | while read x; do
+		declare -p "${x}" || die "failed outputting variable ${x}" >&2
+	done
 }
 
 # dump environ to $1, optionally piping it through $2 and redirecting $2's output to $1.
 export_environ() {
-    local temp_umask
-    if [ "${1:-unset}" == "unset" ]; then
-        die "export_environ requires at least one arguement"
-    fi
+	local temp_umask
+	if [ "${1:-unset}" == "unset" ]; then
+		die "export_environ requires at least one arguement"
+	fi
 
-    #the spaces on both sides are important- otherwise, the later ${DONT_EXPORT_VARS/ temp_umask /} won't match.
-    #we use spaces on both sides, to ensure we don't remove part of a variable w/ the same name-
-    # ex: temp_umask_for_some_app == _for_some_app.
-    #Do it with spaces on both sides.
+	#the spaces on both sides are important- otherwise, the later ${DONT_EXPORT_VARS/ temp_umask /} won't match.
+	#we use spaces on both sides, to ensure we don't remove part of a variable w/ the same name-
+	# ex: temp_umask_for_some_app == _for_some_app.
+	#Do it with spaces on both sides.
 
-    DONT_EXPORT_VARS="${DONT_EXPORT_VARS} temp_umask "
-    temp_umask=`umask`
-    umask 0002
+	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} temp_umask "
+	temp_umask=`umask`
+	umask 0002
 
-    if [ "${2:-unset}" == "unset" ]; then
-        dump_environ > "$1"
-    else
-        dump_environ | $2 > "$1"
-    fi
-    chown portage:portage "$1" &>/dev/null
-    chmod 0664 "$1" &>/dev/null
+	if [ "${2:-unset}" == "unset" ]; then
+		dump_environ > "$1"
+	else
+		dump_environ | $2 > "$1"
+	fi
+	chown portage:portage "$1" &>/dev/null
+	chmod 0664 "$1" &>/dev/null
 
-    DONT_EXPORT_VARS="${DONT_EXPORT_VARS/ temp_umask /}"
+	DONT_EXPORT_VARS="${DONT_EXPORT_VARS/ temp_umask /}"
 
-    umask $temp_umask
+	umask $temp_umask
 }
 
 # reload a saved env, applying usual filters to the env prior to eval'ing it.
-load_environ() {
-    local src e ret EXISTING_PATH
-    # localize these so the reload doesn't have the ability to change them
-    local DONT_EXPORT_VARS="${DONT_EXPORT_VARS} src e ret"
-    local DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} load_file declare"
-    local SANDBOX_STATE=$SANDBOX_ON
-    local EBUILD_PHASE=$EBUILD_PHASE
-    local PKGCORE_EBUILD_PHASE=$PKGCORE_EBUILD_PHASE
-    local reload_failure=0
-    SANDBOX_ON=0
+scrub_environ() {
+	local src e ret EXISTING_PATH
+	# localize these so the reload doesn't have the ability to change them
 
-    SANDBOX_READ="/bin:${SANDBOX_READ}:/dev/urandom:/dev/random:$PKGCORE_BIN_PATH"
-    SANDBOX_ON=$SANDBOX_STATE
+	[ ! -f "$1" ] && die "scrub_environ called with a nonexist env: $1"
 
-    [ ! -f "$1" ] && die "load_environ called with a nonexist env: $1"
+	if [ -z "$1" ]; then
+		die "load_environ called with no args, need args"
+	fi
+	src="$1"
 
-    if [ -z "$1" ]; then
-        die "load_environ called with no args, need args"
-    fi
-    src="$1"
+	# here's how this goes; we do an eval'd loadup of the target env w/in a subshell..
+	# declares and such will slide past filter-env (so it goes).  we then use our own
+	# dump_environ from within to get a clean dump from that env, and load it into
+	# the parent eval.
+	(
 
-    EXISTING_PATH=$PATH
-    PKGCORE_ATTRS_EXPORTED=
-    PKGCORE_ATTRS_READONLY=
-    PKGCORE_SHOPTS_SET=
-    PKGCORE_SHOPTS_UNSET=
-    if [ -f "$src" ]; then
-        # other managers shove the export/declares inline; we store it in a
-        # func so that the var attrs can be dropped if needed.
-        # thus we define these temporarily, to intercept the inlined statements
-        # and push them into a func.
-        function declare() {
-            local r e vars
-            while [ "${1:0:1}" == "-" ]; do
-                if [ "${1/r}" != "$1" ]; then
-                    r=1
-                fi
-                if [ "${1/x}" != "$1" ]; then
-                    e=1
-                fi
-                shift
-            done
-            if [ -z "$r" ] && [ -z "$e" ]; then
-                return
-            fi
-            while [ -n "$1" ]; do
-                vars="${vars} ${1/=*}"
-                shift
-            done
-            if [ -n "$r" ]; then
-                PKGCORE_ATTRS_READONLY="${PKGCORE_ATTRS_READONLY} ${vars}"
-            fi
-            if [ -n "$e" ]; then
-                PKGCORE_ATTRS_EXPORTED="${PKGCORE_ATTRS_EXPORTED} ${vars}"
-            fi
-        };
-        function export() {
-            declare -x "$@"
-        };
-        function readonly() {
-            declare -r "$@"
-        };
-        function shopt() {
-            if [ "$1" == "-s" ]; then
-                shift
-                PKGCORE_SHOPTS_SET="${PKGCORE_SHOPTS_SET} $*"
-            elif [ "$1" == "-u" ]; then
-                shift
-                PKGCORE_SHOPTS_UNSET="${PKGCORE_SHOPTS_UNSET} $*"
-            else
-                echo "ignoring unexpected shopt arg in env dump- $*" >&2
-            fi
-        }
+		# protect the core vars and functions needed to do a dump_environ
+		# some of these are already readonly- we still are forcing it to be safe.
+		declare -r PKGCORE_PYTHONPATH="${PKGCORE_PYTHONPATH}" &> /dev/null
+		declare -r PKGCORE_PYTHON_BINARY="${PKGCORE_PYTHON_BINARY}" &> /dev/null
+		declare -r DONT_EXPORT_VARS="${DONT_EXPORT_VARS}" &> /dev/null
+		declare -r DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS}" &> /dev/null
+		declare -r SANDBOX_ON="${SANDBOX_ON}" &> /dev/null
+#		declare -rx PATH="${PATH}" &> /dev/null
 
-        # run the filtered env.
-        eval "$(invoke_filter_env \
-            -f "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" \
-            -v "$(filter_env_var_filter ${DONT_EXPORT_VARS} f x EXISTING_PATH)" -i "$src")"
-        ret=$?
+		readonly -f invoke_filter_env &> /dev/null
+		readonly -f dump_environ &> /dev/null
+		readonly -f regex_filter_input &> /dev/null
 
-        # if reinstate_loaded_env_attributes exists, run it to add to the vars.
-        type reinstate_loaded_env_attributes &> /dev/null && \
-            reinstate_loaded_env_attributes
-        unset -f declare readonly export reinstate_loaded_env_attributes shopt
+		rm -f "${T}/.pre-scrubbed-env" || die "failed rm'ing"
+		# run the filtered env.
+		invoke_filter_env \
+			-f "$(filter_env_func_filter ${DONT_EXPORT_FUNCS} )" \
+			-v "$(filter_env_var_filter ${DONT_EXPORT_VARS} src x EXISTING_PATH)" -i "$src" \
+			> "${T}/.pre-scrubbed-env" || die "failed first step of scrubbing the env to load"
 
-        # do not export/readonly an attr that is filtered- those vars are internal/protected,
-        # thus their state is guranteed
-        # additionally, if the var *was* nonexistant, export'ing it serves to create it
+		source "${src}" || die "failed sourcing scrubbed env"
 
-        pkgcore_tmp_func() {
-            while [ -n "$1" ]; do
-                echo "$1"
-                shift
-            done
-        }
 
-        filter="^$(gen_regex_var_filter $DONT_EXPORT_VARS XARGS)$"
-        # yes we're intentionally ignoring PKGCORE_ATTRS_READONLY.  readonly isn't currently used.
-        PKGCORE_ATTRS_EXPORTED=$(echo $(pkgcore_tmp_func $PKGCORE_ATTRS_EXPORTED | grep -v "$filter"))
-        unset pkgcore_tmp_func filter
+		# if reinstate_loaded_env_attributes exists, run it to add to the vars.
+		# old pkgcore env saving approach, long before portage/paludis were around...
+		type reinstate_loaded_env_attributes &> /dev/null && \
+			reinstate_loaded_env_attributes
+		unset -f reinstate_loaded_env_attributes
 
-        # rebuild the func.
-        local body=
-        [ -n "$PKGCORE_ATTRS_EXPORTED" ] && body="export $PKGCORE_ATTRS_EXPORTED;"
-        [ -n "$PKGCORE_SHOPTS_SET" ]     && body="${body} shopt -s ${PKGCORE_SHOPTS_SET};"
-        [ -n "$PKGCORE_SHOPTS_UNSET" ]   && body="${body} shopt -u ${PKGCORE_SHOPTS_UNSET};"
-        unset PKGCORE_ATTRS_READONLY PKGCORE_ATTRS_EXPORTED PKGCORE_SHOPTS_UNSET PKGCORE_SHOPTS_SET
+		# ok. it's loaded into this subshell... now we use our dump mechanism (which we trust)
+		# to output it- this mechanism is far more bulletproof then the load filtering (since
+		# declare and friends can set vars via many, many different ways), thus we use it
+		# as the final filtering.
 
-        # and... finally make the func.
-        eval "reinstate_loaded_env_attributes() { ${body:-:;} };"
-    else
-        echo "ebuild=${EBUILD}, phase $EBUILD_PHASE" >&2
-        ret=1
-    fi
-    pkgcore_ensure_PATH "$EXISTING_PATH"
-    return $(( $ret ))
+		unset -v EXISTING_PATH old_phase
+
+		rm -f "${T}/.scrubbed-env"
+		dump_environ > ${T}/.scrubbed-env || die "dumping environment failed"
+	) || exit 1 # note no die usage here... exit instead, since we don't want another tb thrown
 }

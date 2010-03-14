@@ -3,6 +3,20 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
+pkgcore 0.5.11: March 14th, 2010
+
+* took me a full night of debugging, but traced down yet another portage
+  incompatibility introduced.  gentoo bug 303369; if you've been seeing
+  issues where portage merged ebuild envs aren't reused in pkgcore, this
+  is now fixed.  Env handling in general was heavily rewritten to be as
+  robust as possible and protect against any further breakages from portage.
+
+* env processing is a bit faster now- uses egrep where possible, falling
+  back to bash regex where not.
+
+* shell scripts now are tabs based rather than spaces.
+
 * FEATURES=splitdebug works once again.
 
 * It's strongly suggested that you run >snakeoil-0.3.6.1 due to fixes

@@ -3,6 +3,11 @@ Pkgcore Release Notes
 
 See ChangeLog for full commit logs; this is summarized/major changes.
 
+
+* add missing eapi3 phase support- basically just reuses eapi2's since
+  the only changes are environmental.
+
+
 pkgcore 0.5.11: March 14th, 2010
 
 * took me a full night of debugging, but traced down yet another portage

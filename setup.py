@@ -293,10 +293,8 @@ core.setup(
     packages=packages,
     package_data={
         'pkgcore':
-            ['bin/ebuild-env/%s' % x for x in
-                ['ebuild-daemon.lib', 'ebuild-daemon.sh', 'ebuild-default-functions.sh', 'ebuild.sh',
-                'filter-env', 'isolated-functions.sh', 'portageq_emulation']] +
-            ['bin/ebuild-env/eapi/*',
+            ['bin/ebuild-env/*',
+            'bin/ebuild-env/eapi/*',
             'bin/ebuild-helpers/*',
             ],
         },

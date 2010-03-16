@@ -9,6 +9,10 @@ pkgcore 0.5.11.1: March 15th, 2010
 * fix a major release bug; ebuild-env-utils.sh wasn't packaged in the
   released 0.5.11, this version adds the missing file.
 
+* more declare related fixups; this one a regression from 0.5.10- in
+  sourcing /etc/profile.env, it's contents weren't being preserved
+  fully due to declare.
+
 * add missing eapi3 phase support- basically just reuses eapi2's since
   the only changes are environmental.
 

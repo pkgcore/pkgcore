@@ -77,8 +77,16 @@ alias restore_IFS='if [ "${portage_old_IFS:-unset}" != "unset" ]; then IFS="${po
 # as such, the sourcing statement has to be in the same scope as the invoker of load_environ for that scope to get the changes
 alias load_environ='{
 	[ -z "${TARGET_ENV}" ] && die "load_environ was invoked w/out TARGET_ENV set";
+	[ -z "${T}" ] && die "init_environ requires \$T to be set";
 	EXISTING_PATH=${PATH};
 	scrub_environ "${TARGET_ENV}";source "${T}/.scrubbed-env" || die "sourcing scrubbed env failed";
+	pkgcore_ensure_PATH "${EXISTING_PATH}";
+	unset -v EXISTING_PATH;
+}'
+
+alias init_environ='{
+    EXISTING_PATH=${PATH};
+    eval "$(generate_initial_ebuild_environ)" || die "failed loading initialized environment";
 	pkgcore_ensure_PATH "${EXISTING_PATH}";
 	unset -v EXISTING_PATH;
 }'
@@ -100,13 +108,13 @@ diefunc() {
 		((linespacing < ${#lineno}))     && linespacing=${#lineno}
 	done
 
-	echo "!!! ERROR: $CATEGORY/$PF failed."
-	dump_trace 2 ${filespacing} ${linespacing}
-	echo "!!!   $(printf "%${filespacing}s" "${BASH_SOURCE[1]##*/}"), line $(printf "%${linespacing}s" "${BASH_LINENO[0]}"):  Called die"
-	echo "!!! The die message:"
-	echo "!!!  ${*:-(no error message)}"
-	echo "!!!"
-	echo "!!! If you need support, post the topmost build error, and the call stack if relevant."
+	echo "!!! ERROR: $CATEGORY/$PF failed." >&2
+	dump_trace 2 ${filespacing} ${linespacing} >&2
+	echo "!!!   $(printf "%${filespacing}s" "${BASH_SOURCE[1]##*/}"), line $(printf "%${linespacing}s" "${BASH_LINENO[0]}"):  Called die" >&2
+	echo "!!! The die message:" >&2
+	echo "!!!  ${*:-(no error message)}" >&2
+	echo "!!!" >&2
+	echo "!!! If you need support, post the topmost build error, and the call stack if relevant." >&2
 	if [[ "${EBUILD_PHASE/depend}" == "${EBUILD_PHASE}" ]] ; then
 		local x
 		for x in $EBUILD_DEATH_HOOKS; do
@@ -228,7 +236,7 @@ source_profiles() {
 
 # do all profile, bashrc's, and ebuild sourcing.  Should only be called in setup phase, unless the
 # env is *completely* missing, as it is occasionally for ebuilds during prerm/postrm.
-init_environ() {
+generate_initial_ebuild_environ() {
 	OCC="$CC"
 	OCXX="$CXX"
 	local EXISTING_PATH="$PATH"
@@ -329,6 +337,7 @@ init_environ() {
 	if [ "${PKGCORE_EBUILD_PHASE}" != "depend" ]; then
 		source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.lib" || die "failed sourcing eapi '${EAPI}'"
 	fi
+	dump_environ || die "dump_environ returned non zero"
 }
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.

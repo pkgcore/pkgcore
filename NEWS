@@ -4,6 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.5.11.2: March 16th, 2010
+
+* silence spurious grep QA warnings during metadata sourcing.
+
+
 pkgcore 0.5.11.1: March 15th, 2010
 
 * fix a major release bug; ebuild-env-utils.sh wasn't packaged in the

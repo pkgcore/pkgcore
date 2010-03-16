@@ -28,8 +28,10 @@ regex_filter_input() {
 	done
 	regex="^(${regex})$"
 	# use egrep if possible... tis faster.
-	if type -p egrep &> /dev/null; then
-		grep -E -v "${regex}"
+	l=$(type -P egrep)
+	if [[ -n $l ]]; then
+		# use type -p; qa_interceptors may be be active.
+		"$l" -v "${regex}"
 	else
 		while read l; do
 			[[ $l =~ $regex ]] || echo "${l}"

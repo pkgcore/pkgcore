@@ -4,6 +4,12 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* force all einfo/elog/ewarn style bits to stderr.
+
+* add path attribute to ebuild derived pkg instances; not a guranteed
+  part of the api yet, but accessible via pquery --attr path
+
+
 pkgcore 0.5.11.2: March 16th, 2010
 
 * silence spurious grep QA warnings during metadata sourcing.

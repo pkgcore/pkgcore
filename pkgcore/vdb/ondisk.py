@@ -155,6 +155,10 @@ class tree(prototype.tree):
         s = "%s-%s" % (pkg.package, pkg.fullver)
         return pjoin(self.base, pkg.category, s, s+".ebuild")
 
+    def _get_path(self, pkg):
+        s = "%s-%s" % (pkg.package, pkg.fullver)
+        return pjoin(self.base, pkg.category, s)
+
     _metadata_rewrites = {
         "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
         "use":"USE", "eapi":"EAPI", "CONTENTS":"contents", "provides":"PROVIDE"}

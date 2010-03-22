@@ -12,7 +12,7 @@ elog_base() {
 			shift
 			;;
 		*)
-			echo -e " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} Invalid use of internal function elog_base(), next message will not be logged"
+			echo -e " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} Invalid use of internal function elog_base(), next message will not be logged" >&2
 			return 1
 			;;
 	esac
@@ -22,7 +22,7 @@ elog_base() {
 
 elog() {
 	elog_base LOG "$*"
-	echo -e " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"
+	echo -e " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*" >&2
 	return 0
 }
 
@@ -46,27 +46,27 @@ esyslog() {
 
 einfo() {
 	einfon "$*\n"
-	PKGCORE_RC_LAST_CMD="einfo"
+	PKGCORE_RC_LAST_CMD="einfo" >&2
 	return 0
 }
 
 einfon() {
 	elog_base INFO "$*"
-	echo -ne " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*"
+	echo -ne " ${PKGCORE_RC_GOOD}*${PKGCORE_RC_NORMAL} $*" >&2
 	PKGCORE_RC_LAST_CMD="einfon"
 	return 0
 }
 
 ewarn() {
 	elog_base WARN "$*"
-	echo -e " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} $*"
+	echo -e " ${PKGCORE_RC_WARN}*${PKGCORE_RC_NORMAL} $*" >&2
 	PKGCORE_RC_LAST_CMD="ewarn"
 	return 0
 }
 
 eerror() {
 	elog_base ERROR "$*"
-	echo -e " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} $*"
+	echo -e " ${PKGCORE_RC_BAD}*${PKGCORE_RC_NORMAL} $*" >&2
 	PKGCORE_RC_LAST_CMD="eerror"
 	return 0
 }
@@ -92,7 +92,7 @@ _eend() {
 		msg="${PKGCORE_RC_BRACKET}[ ${PKGCORE_RC_BAD}!!${PKGCORE_RC_BRACKET} ]${PKGCORE_RC_NORMAL}"
 	fi
 
-	echo -e "${PKGCORE_RC_ENDCOL}  ${msg}"
+	echo -e "${PKGCORE_RC_ENDCOL}  ${msg}" >&2
 
 	return ${retval}
 }

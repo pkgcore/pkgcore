@@ -172,6 +172,9 @@ class package_factory(metadata.factory):
             inst = self._cached_instances[args] = self.child_class(self, *args)
         return inst
 
+    def _get_ebuild_path(self, pkg):
+        return self._parent_repo._get_path(pkg)
+
     _generate_format_install_op   = _generic_format_install_op
     _generate_format_uninstall_op = _generic_format_uninstall_op
     _generate_format_replace_op   = _generic_format_replace_op

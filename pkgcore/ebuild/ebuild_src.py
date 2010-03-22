@@ -208,6 +208,10 @@ class base(metadata.package):
         return 0
 
     @property
+    def path(self):
+        return self._parent._get_ebuild_path(self)
+
+    @property
     def ebuild(self):
         return self._parent.get_ebuild_src(self)
 

@@ -46,7 +46,7 @@ esyslog() {
 
 einfo() {
 	einfon "$*\n"
-	PKGCORE_RC_LAST_CMD="einfo" >&2
+	PKGCORE_RC_LAST_CMD="einfo"
 	return 0
 }
 
@@ -74,7 +74,7 @@ eerror() {
 ebegin() {
 	local msg="$* ..."
 	einfon "${msg}"
-	echo
+	echo >&2
 	PKGCORE_RC_LAST_CMD="ebegin"
 	return 0
 }

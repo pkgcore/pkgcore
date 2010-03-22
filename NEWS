@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.5.11.3: March 22nd, 2010
+
 * force all einfo/elog/ewarn style bits to stderr.
 
 * add path attribute to ebuild derived pkg instances; not a guranteed

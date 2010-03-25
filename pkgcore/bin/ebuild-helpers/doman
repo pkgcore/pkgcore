@@ -6,7 +6,10 @@ if [ -z "${PKGCORE_BIN_PATH}" ]; then
 	echo "PKGCORE_BIN_PATH is unset!"
 	exit -1
 fi
-source "${PKGCORE_BIN_PATH}/isolated-functions.sh"
+source "${PKGCORE_BIN_PATH}/isolated-functions.bash" || {
+	echo "failed sourcing isolated-functions"
+	exit -1
+}
 
 if [[ $# -lt 1 ]] ; then
 	echo "$0: at least one argument needed" 1>&2

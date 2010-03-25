@@ -4,6 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* drop CDEPEND tracking (unused, hold over from '04 days), and
+  newdepend (same era).  Neither are used in >=EAPI0 ; if your
+  ebuild breaks, rebase the ebulid to a valid EAPI.
+
+
 pkgcore 0.5.11.3: March 22nd, 2010
 
 * force all einfo/elog/ewarn style bits to stderr.

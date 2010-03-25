@@ -22,21 +22,6 @@ best_version()
 	portageq 'best_version' "${ROOT}" "$1"
 }
 
-check_KV()
-{
-	if [ -z "${KV}" ]; then
-		eerror ""
-		eerror "Could not determine your kernel version."
-		eerror "Make sure that you have /usr/src/linux symlink."
-		eerror "And that said kernel has been configured."
-		eerror "You can also simply run the following command"
-		eerror "in the kernel referenced by /usr/src/linux:"
-		eerror " make include/linux/version.h"
-		eerror ""
-		die
-	fi
-}
-
 # adds ".keep" files so that dirs aren't auto-cleaned
 keepdir()
 {
@@ -44,7 +29,7 @@ keepdir()
 	local x
 	if [ "$1" == "-R" ] || [ "$1" == "-r" ]; then
 		shift
-		find "$@" -type d -printf "${D}/%p/.keep\n" | tr "\n" "\0" | $XARGS -0 -n100 touch || die "Failed to recursive create .keep files"
+		find "$@" -type d -printf "${D}/%p/.keep\0" | $XARGS -0 -n100 touch || die "Failed to recursive create .keep files"
 	else
 		for x in "$@"; do
 			touch "${D}/${x}/.keep" || die "Failed to create .keep in ${D}/${x}"
@@ -577,7 +562,6 @@ inherit()
 	local B_IUSE
 	local B_DEPEND
 	local B_RDEPEND
-	local B_CDEPEND
 	local B_PDEPEND
 	while [ -n "$1" ]; do
 
@@ -600,13 +584,12 @@ inherit()
 		set -f
 
 		# Retain the old data and restore it later.
-		unset B_IUSE B_DEPEND B_RDEPEND B_CDEPEND B_PDEPEND
+		unset B_IUSE B_DEPEND B_RDEPEND B_PDEPEND
 		[ "${IUSE-unset}"    != "unset" ] && B_IUSE="${IUSE}"
 		[ "${DEPEND-unset}"  != "unset" ] && B_DEPEND="${DEPEND}"
 		[ "${RDEPEND-unset}" != "unset" ] && B_RDEPEND="${RDEPEND}"
-		[ "${CDEPEND-unset}" != "unset" ] && B_CDEPEND="${CDEPEND}"
 		[ "${PDEPEND-unset}" != "unset" ] && B_PDEPEND="${PDEPEND}"
-		unset   IUSE   DEPEND   RDEPEND   CDEPEND   PDEPEND
+		unset   IUSE   DEPEND   RDEPEND   PDEPEND
 		#turn on glob expansion
 		set +f
 		if ! internal_inherit "$1"; then
@@ -621,7 +604,6 @@ inherit()
 		[ "${IUSE-unset}"    != "unset" ] && export E_IUSE="${E_IUSE} ${IUSE}"
 		[ "${DEPEND-unset}"  != "unset" ] && export E_DEPEND="${E_DEPEND} ${DEPEND}"
 		[ "${RDEPEND-unset}" != "unset" ] && export E_RDEPEND="${E_RDEPEND} ${RDEPEND}"
-		[ "${CDEPEND-unset}" != "unset" ] && export E_CDEPEND="${E_CDEPEND} ${CDEPEND}"
 		[ "${PDEPEND-unset}" != "unset" ] && export E_PDEPEND="${E_PDEPEND} ${PDEPEND}"
 
 		[ "${B_IUSE-unset}"    != "unset" ] && IUSE="${B_IUSE}"
@@ -632,9 +614,6 @@ inherit()
 
 		[ "${B_RDEPEND-unset}" != "unset" ] && RDEPEND="${B_RDEPEND}"
 		[ "${B_RDEPEND-unset}" != "unset" ] || unset RDEPEND
-
-		[ "${B_CDEPEND-unset}" != "unset" ] && CDEPEND="${B_CDEPEND}"
-		[ "${B_CDEPEND-unset}" != "unset" ] || unset CDEPEND
 
 		[ "${B_PDEPEND-unset}" != "unset" ] && PDEPEND="${B_PDEPEND}"
 		[ "${B_PDEPEND-unset}" != "unset" ] || unset PDEPEND
@@ -668,78 +647,6 @@ EXPORT_FUNCTIONS()
 	while [ "$1" ]; do
 		debug-print "EXPORT_FUNCTIONS: ${1} -> ${ECLASS}_${1}"
 		eval "$1() { ${ECLASS}_$1 "\$@" ; }" > /dev/null
-		shift
-	done
-}
-
-# adds all parameters to E_DEPEND and E_RDEPEND, which get added to DEPEND
-# and RDEPEND after the ebuild has been processed. This is important to
-# allow users to use DEPEND="foo" without frying dependencies added by an
-# earlier inherit. It also allows RDEPEND to work properly, since a lot
-# of ebuilds assume that an unset RDEPEND gets its value from DEPEND.
-# Without eclasses, this is true. But with them, the eclass may set
-# RDEPEND itself (or at least used to) which would prevent RDEPEND from
-# getting its value from DEPEND. This is a side-effect that made eclasses
-# have unreliable dependencies.
-
-newdepend()
-{
-	debug-print-function newdepend $*
-	debug-print "newdepend: E_DEPEND=$E_DEPEND E_RDEPEND=$E_RDEPEND"
-
-	while [ -n "$1" ]; do
-		case $1 in
-		"/autotools")
-			do_newdepend DEPEND sys-devel/autoconf sys-devel/automake sys-devel/make
-			;;
-		"/c")
-			do_newdepend DEPEND sys-devel/gcc virtual/libc
-			do_newdepend RDEPEND virtual/libc
-			;;
-		*)
-			do_newdepend DEPEND $1
-			;;
-		esac
-		shift
-	done
-}
-
-newrdepend()
-{
-	debug-print-function newrdepend $*
-	do_newdepend RDEPEND $1
-}
-
-newcdepend()
-{
-	debug-print-function newcdepend $*
-	do_newdepend CDEPEND $1
-}
-
-newpdepend()
-{
-	debug-print-function newpdepend $*
-	do_newdepend PDEPEND $1
-}
-
-do_newdepend()
-{
-	# This function does a generic change determining whether we're in an
-	# eclass or not. If we are, we change the E_* variables for deps.
-	debug-print-function do_newdepend $*
-	[ -z "$1" ] && die "do_newdepend without arguments"
-
-	# Grab what we're affecting... Figure out if we're affecting eclasses.
-	[[ ${ECLASS_DEPTH} > 0 ]] && TARGET="E_$1"
-	[[ ${ECLASS_DEPTH} > 0 ]] || TARGET="$1"
-	shift # $1 was a variable name.
-
-	while [ -n "$1" ]; do
-		# This bit of evil takes TARGET and uses it to evaluate down to a
-		# variable. This is a sneaky way to make this infinately expandable.
-		# The normal translation of this would look something like this:
-		# E_DEPEND="${E_DEPEND} $1"  ::::::  Cool, huh? :)
-		eval export ${TARGET}=\"\${${TARGET}} \$1\"
 		shift
 	done
 }
@@ -840,18 +747,6 @@ usev()
 		return 0
 	fi
 	return 1
-}
-
-# Used to generate the /lib/cpp and /usr/bin/cc wrappers
-gen_wrapper()
-{
-	cat > $1 << END
-#!/bin/sh
-
-$2 "\$@"
-END
-
-	chmod 0755 $1
 }
 
 insopts()

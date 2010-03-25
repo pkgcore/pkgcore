@@ -271,7 +271,7 @@ generate_initial_ebuild_environ() {
 
 	# if daemonized, it's already loaded these funcs.
 	if [ "$DAEMONIZED" != "yes" ]; then
-		source "${PKGCORE_BIN_PATH}/eapi/common.lib" || die "failed sourcing eapi/common.lib"
+		source "${PKGCORE_BIN_PATH}/eapi/common.bash" || die "failed sourcing eapi/common.bash"
 	fi
 	SANDBOX_ON="1"
 	export S=${WORKDIR}/${P}
@@ -283,8 +283,8 @@ generate_initial_ebuild_environ() {
 	KEYWORDS="$(echo ${KEYWORDS//~/\\~})"
 	set +f
 
-	unset   IUSE   DEPEND   RDEPEND   CDEPEND   PDEPEND
-	unset E_IUSE E_DEPEND E_RDEPEND E_CDEPEND E_PDEPEND
+	unset   IUSE   DEPEND   RDEPEND   PDEPEND
+	unset E_IUSE E_DEPEND E_RDEPEND E_PDEPEND
 
 	if [ ! -f "${EBUILD}" ]; then
 		echo "bailing, ebuild not found at '$EBUILD'"
@@ -327,23 +327,22 @@ generate_initial_ebuild_environ() {
 	IUSE="$IUSE $E_IUSE"
 	DEPEND="${DEPEND} ${E_DEPEND}"
 	RDEPEND="$RDEPEND $E_RDEPEND"
-	CDEPEND="$CDEPEND $E_CDEPEND"
 	PDEPEND="$PDEPEND $E_PDEPEND"
 
 	EAPI="${EAPI-0}"
 
-	unset E_IUSE E_DEPEND E_RDEPEND E_CDEPEND E_PDEPEND
+	unset E_IUSE E_DEPEND E_RDEPEND E_PDEPEND
 	pkgcore_ensure_PATH "$EXISTING_PATH"
 	if [ "${PKGCORE_EBUILD_PHASE}" != "depend" ]; then
-		source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.lib" || die "failed sourcing eapi '${EAPI}'"
+		source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.bash" || die "failed sourcing eapi '${EAPI}'"
 	fi
 	dump_environ || die "dump_environ returned non zero"
 }
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.
-source "${PKGCORE_BIN_PATH}/ebuild-default-functions.sh" || die "failed sourcing ebuild-default-functions.sh"
-source "${PKGCORE_BIN_PATH}/isolated-functions.sh" || die "failed sourcing stripped down functions.sh"
-source "${PKGCORE_BIN_PATH}/ebuild-env-utils.sh" || die "failed sourcing ebuild-env-utils.sh"
+source "${PKGCORE_BIN_PATH}/ebuild-default-functions.bash" || die "failed sourcing ebuild-default-functions.bash"
+source "${PKGCORE_BIN_PATH}/isolated-functions.bash" || die "failed sourcing stripped down functions.bash"
+source "${PKGCORE_BIN_PATH}/ebuild-env-utils.bash" || die "failed sourcing ebuild-env-utils.bash"
 
 # general func to call for phase execution.  this handles necessary env loading/dumping, and executing pre/post/dyn
 # calls.
@@ -490,7 +489,6 @@ pkgcore_dump_metadata_keys() {
 	[ "$KEYWORDS:-unset}" != "unset" ] && 		echo "key KEYWORDS=$(echo $KEYWORDS)"
 	[ "$INHERITED:-unset}" != "unset" ] && 		echo "key INHERITED=$(echo $INHERITED)"
 	[ "$IUSE:-unset}" != "unset" ] && 			echo "key IUSE=$(echo $IUSE)"
-	[ "$CDEPEND:-unset}" != "unset" ] && 		echo "key CDEPEND=$(echo $CDEPEND)"
 	[ "$PDEPEND:-unset}" != "unset" ] && 		echo "key PDEPEND=$(echo $PDEPEND)"
 	[ "$PROVIDE:-unset}" != "unset" ] && 		echo "key PROVIDE=$(echo $PROVIDE)"
 	[ "$EAPI:-unset}" != "unset" ] &&			echo "key EAPI=$(echo $EAPI)"

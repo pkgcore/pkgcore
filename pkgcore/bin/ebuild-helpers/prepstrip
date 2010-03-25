@@ -3,7 +3,10 @@
 # Copyright 2008 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # Distributed under the terms of the GNU General Public License v2
 
-source "${PKGCORE_BIN_PATH}"/isolated-functions.sh
+source "${PKGCORE_BIN_PATH}"/isolated-functions.bash || {
+	echo "failed sourcing isolated-functions"
+	exit -1
+}
 
 # exit if the feature isn't requested, or the restrict isn't there.
 has installsources ${FEATURES} || exit 0

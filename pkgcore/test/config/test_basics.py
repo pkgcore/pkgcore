@@ -200,7 +200,7 @@ class DictConfigSectionTest(TestCase):
         def convert(central, value, arg_type):
             return central, value, arg_type
         section = basics.DictConfigSection(convert, {'list': [1, 2]})
-        self.failIf('foo' in section)
+        self.assertFalse('foo' in section)
         self.failUnless('list' in section)
         self.assertEqual(['list'], section.keys())
         self.assertEqual(
@@ -228,7 +228,7 @@ class FakeIncrementalDictConfigSectionTest(TestCase):
     def test_misc(self):
         section = basics.FakeIncrementalDictConfigSection(
             self._convert, {'list': [1, 2]})
-        self.failIf('foo' in section)
+        self.assertFalse('foo' in section)
         self.failUnless('list' in section)
         self.assertEqual(['list'], section.keys())
         self.assertRaises(

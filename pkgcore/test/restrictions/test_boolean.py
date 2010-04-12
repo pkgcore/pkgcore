@@ -89,9 +89,9 @@ class AndRestrictionTest(base, TestCase):
     def test_match(self):
         self.failUnless(self.kls(
                 true, true, node_type='foo').match(None))
-        self.failIf(self.kls(
+        self.assertFalse(self.kls(
                 false, true, true, node_type='foo').match(None))
-        self.failIf(self.kls(
+        self.assertFalse(self.kls(
                 true, false, true, node_type='foo').match(None))
 
     def test_negate_match(self):
@@ -104,7 +104,7 @@ class AndRestrictionTest(base, TestCase):
         self.failUnless(
             self.kls(false, false,
                 node_type='foo', negate=True).match(None))
-        self.failIf(
+        self.assertFalse(
             self.kls(true, true,
                 node_type='foo', negate=True).match(None))
 
@@ -151,12 +151,12 @@ class OrRestrictionTest(base, TestCase):
                 true, false, false, node_type='foo').match(None))
         self.failUnless(self.kls(
                 false, false, true, node_type='foo').match(None))
-        self.failIf(self.kls(
+        self.assertFalse(self.kls(
                 false, false, node_type='foo').match(None))
 
     def test_negate_match(self):
         for x in ((true, false), (false, true), (true, true)):
-            self.failIf(self.kls(
+            self.assertFalse(self.kls(
                     node_type='foo', negate=True, *x).match(None))
         self.failUnless(self.kls(
                 false, false, node_type='foo', negate=True).match(None))

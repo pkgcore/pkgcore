@@ -6,7 +6,7 @@ restriction classes designed for package level matching
 """
 
 from pkgcore.restrictions import restriction, boolean
-from snakeoil.compatibility import any, is_py3k_like
+from snakeoil.compatibility import any, is_py3k
 from snakeoil.klass import chained_getter, generic_equality
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
@@ -183,7 +183,7 @@ class PackageRestriction(PackageRestriction_base, PackageRestriction_mixin):
     __slots__ = ()
     __inst_caching__ = True
 
-    if is_py3k_like:
+    if is_py3k:
         __hash__ = PackageRestriction_mixin.__hash__
         __eq__ = PackageRestriction_base.__eq__
 

@@ -136,10 +136,14 @@ class native_PackageRestrictionTest(TestRestriction):
             d2 = self.kls(
                 'one', DummyIntersectingValues(2), negate=negate)
             i1 = d1.intersect(d2)
-            self.failUnless(i1)
+            self.assertTrue(i1)
             self.assertEqual((1, 2), i1.restriction.val)
             self.assertEqual(negate, i1.negate)
             self.assertEqual('one', i1.attr)
+
+    def test_hash(self):
+        inst = self.kls('one.dar', AlwaysSelfIntersect())
+        hash(inst)
 
 
 class cpy_PackageRestrictionTest(native_PackageRestrictionTest):

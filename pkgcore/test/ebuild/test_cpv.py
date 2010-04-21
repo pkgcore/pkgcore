@@ -192,9 +192,9 @@ class native_CpvTest(TestCase):
             self.assertEqual(c.version, ver)
 
     def assertGT(self, obj1, obj2):
-        self.failUnless(obj1 > obj2, '%r must be > %r' % (obj1, obj2))
+        self.assertTrue(obj1 > obj2, '%r must be > %r' % (obj1, obj2))
         # swap the ordering, so that it's no longer obj1.__cmp__, but obj2s
-        self.failUnless(obj2 < obj1, '%r must be < %r' % (obj2, obj1))
+        self.assertTrue(obj2 < obj1, '%r must be < %r' % (obj2, obj1))
 
         if self.run_cpy_ver_cmp and obj1.fullver and obj2.fullver:
             self.assertTrue(cpv.cpy_ver_cmp(obj1.version, obj1.revision,

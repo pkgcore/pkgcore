@@ -30,7 +30,7 @@ class BaseTest(TestRestriction):
         # Just check repr and str do not raise
         self.assertTrue(str(base))
         self.assertTrue(repr(base))
-        self.failUnless(hash(base))
+        self.assertTrue(hash(base))
         self.assertRaises(NotImplementedError, base.match)
         self.assertIdentical(None, base.intersect(base))
 

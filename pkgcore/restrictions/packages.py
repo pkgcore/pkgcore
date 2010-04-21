@@ -182,6 +182,10 @@ class PackageRestriction(PackageRestriction_base, PackageRestriction_mixin):
     __slots__ = ()
     __inst_caching__ = True
 
+
+    __hash__ = PackageRestriction_mixin.__hash__
+    __eq__ = PackageRestriction_base.__eq__
+
 class Conditional(PackageRestriction):
 
     """

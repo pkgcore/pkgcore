@@ -201,7 +201,7 @@ class DictConfigSectionTest(TestCase):
             return central, value, arg_type
         section = basics.DictConfigSection(convert, {'list': [1, 2]})
         self.assertFalse('foo' in section)
-        self.failUnless('list' in section)
+        self.assertTrue('list' in section)
         self.assertEqual(['list'], section.keys())
         self.assertEqual(
             (None, [1, 2], 'spoon'), section.get_value(None, 'list', 'spoon'))
@@ -229,7 +229,7 @@ class FakeIncrementalDictConfigSectionTest(TestCase):
         section = basics.FakeIncrementalDictConfigSection(
             self._convert, {'list': [1, 2]})
         self.assertFalse('foo' in section)
-        self.failUnless('list' in section)
+        self.assertTrue('list' in section)
         self.assertEqual(['list'], section.keys())
         self.assertRaises(
             errors.ConfigurationError,

@@ -87,7 +87,7 @@ class AndRestrictionTest(base, TestCase):
     kls = boolean.AndRestriction
 
     def test_match(self):
-        self.failUnless(self.kls(
+        self.assertTrue(self.kls(
                 true, true, node_type='foo').match(None))
         self.assertFalse(self.kls(
                 false, true, true, node_type='foo').match(None))
@@ -95,13 +95,13 @@ class AndRestrictionTest(base, TestCase):
                 true, false, true, node_type='foo').match(None))
 
     def test_negate_match(self):
-        self.failUnless(
+        self.assertTrue(
             self.kls(false, true,
                 node_type='foo', negate=True).match(None))
-        self.failUnless(
+        self.assertTrue(
             self.kls(true, false,
                 node_type='foo', negate=True).match(None))
-        self.failUnless(
+        self.assertTrue(
             self.kls(false, false,
                 node_type='foo', negate=True).match(None))
         self.assertFalse(
@@ -143,13 +143,13 @@ class OrRestrictionTest(base, TestCase):
     kls = boolean.OrRestriction
 
     def test_match(self):
-        self.failUnless(self.kls(
+        self.assertTrue(self.kls(
                 true, true, node_type='foo').match(None))
-        self.failUnless(self.kls(
+        self.assertTrue(self.kls(
                 false, true, false, node_type='foo').match(None))
-        self.failUnless(self.kls(
+        self.assertTrue(self.kls(
                 true, false, false, node_type='foo').match(None))
-        self.failUnless(self.kls(
+        self.assertTrue(self.kls(
                 false, false, true, node_type='foo').match(None))
         self.assertFalse(self.kls(
                 false, false, node_type='foo').match(None))
@@ -158,7 +158,7 @@ class OrRestrictionTest(base, TestCase):
         for x in ((true, false), (false, true), (true, true)):
             self.assertFalse(self.kls(
                     node_type='foo', negate=True, *x).match(None))
-        self.failUnless(self.kls(
+        self.assertTrue(self.kls(
                 false, false, node_type='foo', negate=True).match(None))
 
     def test_dnf_solutions(self):

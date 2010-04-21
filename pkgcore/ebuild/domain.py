@@ -127,6 +127,7 @@ class domain(pkgcore.config.domain.domain):
             self.named_repos['package.provided'] = profile.provides_repo
             vdb.append(profile.provides_repo)
 
+        self.profile = profile
         pkg_maskers = set(profile.masks)
         for r in repositories:
             pkg_maskers.update(r.default_visibility_limiters)

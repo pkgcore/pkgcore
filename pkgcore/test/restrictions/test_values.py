@@ -95,7 +95,7 @@ class StrRegexTest(TestRestriction):
             (self.kls('spork', negate=True),
              "<StrRegex 'spork' negated search @"),
             ]:
-            self.failUnless(repr(restr).startswith(string), (restr, string))
+            self.assertTrue(repr(restr).startswith(string), (restr, string))
 
 
 

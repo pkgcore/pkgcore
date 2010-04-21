@@ -32,21 +32,21 @@ class FsObjsTest(TempDirMixin, TestCase):
 
     def test_data_source(self):
         o = livefs.gen_obj("/tmp/etc/passwd", real_location="/etc/passwd")
-        self.failUnless(o.location, "/tmp/etc/passwd")
-        self.failUnless(o.data.get_path(), "/etc/passwd")
-        self.failUnless(
+        self.assertTrue(o.location, "/tmp/etc/passwd")
+        self.assertTrue(o.data.get_path(), "/etc/passwd")
+        self.assertTrue(
             o.data.get_bytes_fileobj().read(), open("/etc/passwd", "rb").read())
 
     def test_gen_obj_reg(self):
         path = os.path.join(self.dir, "reg_obj")
         open(path, "w")
         o = livefs.gen_obj(path)
-        self.failUnless(fs.isreg(o))
+        self.assertTrue(fs.isreg(o))
         self.check_attrs(o, path)
 
     def test_gen_obj_dir(self):
         o = livefs.gen_obj(self.dir)
-        self.failUnless(fs.isdir(o))
+        self.assertTrue(fs.isdir(o))
         self.check_attrs(o, self.dir)
 
     def test_gen_obj_sym(self):
@@ -81,9 +81,9 @@ class FsObjsTest(TempDirMixin, TestCase):
         for obj in livefs.iter_scan(path):
             self.assertInstance(obj, fs.fsBase)
             if fs.isreg(obj):
-                self.failUnless(obj.location in files)
+                self.assertTrue(obj.location in files)
             elif fs.isdir(obj):
-                self.failUnless(obj.location in dirs)
+                self.assertTrue(obj.location in dirs)
             else:
                 raise Exception(
                     "unknown object popped up in testing dir, '%s'" % obj)
@@ -97,7 +97,7 @@ class FsObjsTest(TempDirMixin, TestCase):
         f = os.path.join(self.dir, "relative-symlink-test")
         os.symlink("../sym1/blah", f)
         o = livefs.gen_obj(f)
-        self.failUnless(o.target == "../sym1/blah")
+        self.assertTrue(o.target == "../sym1/blah")
 
     def test_intersect(self):
         open(pjoin(self.dir, 'reg'), 'w')

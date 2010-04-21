@@ -46,7 +46,7 @@ test {
             config = parser(StringIO(text))
             self.assertEqual(config.keys(), ['test'])
             section = config['test']
-            self.failUnless('hi' in section)
+            self.assertTrue('hi' in section)
             self.assertEqual(section.keys(), ['hi'])
             self.assertEqual(section.get_value(None, 'hi', 'str'),
                              [None, 'there', None])

@@ -298,7 +298,7 @@ Use --help after a subcommand for more help.
                 self.assertEqual(None, e.args[0])
                 # There can be an xterm title update after this.
                 out_name = master.read()
-                self.failUnless(
+                self.assertTrue(
                     out_name.startswith(out_kind),
                     'expected %r, got %r' % (out_kind, out_name))
                 self.assertEqual(err_kind, err.getvalue())

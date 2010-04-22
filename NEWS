@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.5.11.4: April 21st, 2010
+
 * fix py3k regression when trying to hash a PackageRestriction.
 
 * drop CDEPEND tracking (unused, hold over from '04 days), and

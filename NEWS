@@ -4,6 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.5.11.5: April 22nd, 2010
+
+* fix yet *another* fucking distutils bit of idiocy.  Piece Of Shit.
+
+
 pkgcore 0.5.11.4: April 21st, 2010
 
 * fix py3k regression when trying to hash a PackageRestriction.

@@ -239,7 +239,7 @@ class pkgcore_build_py(snk_distutils.build_py):
         for f in os.listdir(fp):
             self.set_chmod(os.path.join(fp, f))
         fp = os.path.join(self.build_lib, "pkgcore", "bin", "ebuild-env")
-        for f in ("ebuild.sh", "ebuild-daemon.sh"):
+        for f in ("ebuild.sh", "ebuild-daemon.bash"):
             self.set_chmod(os.path.join(fp, f))
 
     def set_chmod(self, path):
@@ -294,7 +294,7 @@ core.setup(
     package_data={
         'pkgcore':
             ['bin/ebuild-env/%s' % x for x in
-                ['filter-env', 'portageq_emulation', '*.lib', '*.sh', 'eapi/*']
+                ['filter-env', 'portageq_emulation', '*.lib', '*.sh', 'eapi/*', '*.bash']
             ] + [
             'bin/ebuild-helpers/*',
             ],

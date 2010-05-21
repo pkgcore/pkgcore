@@ -6,6 +6,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 pkgcore 0.5.11.6: May 21st, 2010
 
+* add a bit of a hack to tty detection tests; PlainTextFormatter is valid for
+  broken terminfo entries.
+
 * fix support for unpacking of xz tarballs.
 
 

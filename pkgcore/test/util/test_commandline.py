@@ -299,7 +299,7 @@ Use --help after a subcommand for more help.
                 # There can be an xterm title update after this.
                 out_name = master.read()
                 self.assertTrue(
-                    out_name.startswith(out_kind),
+                    out_name.startswith(out_kind) or out_name == 'PlainTextFormatter',
                     'expected %r, got %r' % (out_kind, out_name))
                 self.assertEqual(err_kind, err.getvalue())
             else:

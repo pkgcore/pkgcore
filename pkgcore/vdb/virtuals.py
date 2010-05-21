@@ -91,6 +91,8 @@ def _write_mtime_cache(mtimes, data, location):
             f.close()
             os.chown(location, -1, portage_gid)
         except IOError, e:
+            if f is not None:
+                f.discard()
             if e.errno != errno.EACCES:
                 raise
             logger.warn("unable to update vdb virtuals cache due to "

@@ -6,8 +6,7 @@ per key file based backend
 """
 
 import os, stat, errno
-from pkgcore.cache import fs_template
-from pkgcore.cache import errors
+from pkgcore.cache import fs_template, errors
 from pkgcore.config import ConfigHint
 from snakeoil.osutils import join as pjoin, readlines_ascii
 

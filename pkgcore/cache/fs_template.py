@@ -6,11 +6,11 @@ template for fs based backends
 """
 
 import os
-from pkgcore.cache import template
+from pkgcore.cache import base
 from pkgcore.os_data import portage_gid
 from snakeoil.osutils import ensure_dirs, pjoin
 
-class FsBased(template.database):
+class FsBased(base):
     """Template wrapping fs needed options.
 
     Provides _ensure_access as a way to attempt to ensure files have
@@ -43,7 +43,7 @@ class FsBased(template.database):
     __init__.__doc__ = "\n".join(
         x.lstrip() for x in __init__.__doc__.split("\n") + [
             y.lstrip().replace("@param", "@keyword")
-            for y in template.database.__init__.__doc__.split("\n")
+            for y in base.__init__.__doc__.split("\n")
             if "@param" in y])
 
     def _ensure_access(self, path, mtime=None):

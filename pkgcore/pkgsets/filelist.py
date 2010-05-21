@@ -63,14 +63,14 @@ class FileList(object):
 
     def flush(self):
         f = None
-        # structured this way to force deletion (thus wiping) if something
-        # fails.
         try:
             f = AtomicWriteFile(self.path, gid=self.gid, perms=self.mode)
             f.write("\n".join(str(x) for x in sorted(self._atoms)))
             f.close()
-        finally:
-            del f
+        except:
+            if f is not None:
+                f.discard()
+            raise
 
 
 class WorldFile(FileList):

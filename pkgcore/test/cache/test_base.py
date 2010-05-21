@@ -4,10 +4,10 @@
 
 import operator
 from pkgcore.test import TestCase
-from pkgcore.cache import template, errors
+from pkgcore.cache import base, errors
 
 
-class DictCache(template.database):
+class DictCache(base):
 
     """Minimal dict-backed cache for testing."""
 
@@ -15,7 +15,7 @@ class DictCache(template.database):
     cleanse_keys = True
 
     def __init__(self, *args, **kwargs):
-        template.database.__init__(self, *args, **kwargs)
+        base.__init__(self, *args, **kwargs)
         self.data = {}
 
     def _getitem(self, cpv):

@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix support for unpacking of xz tarballs.
+
+
 pkgcore 0.5.11.5: April 22nd, 2010
 
 * fix yet *another* fucking distutils bit of idiocy.  Piece Of Shit.

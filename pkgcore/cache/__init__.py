@@ -141,6 +141,9 @@ class base(object):
     def iterkeys(self):
         raise NotImplementedError
 
+    def __iter__(self):
+        return self.iterkeys()
+
     def iteritems(self):
         for x in self.iterkeys():
             yield (x, self[x])

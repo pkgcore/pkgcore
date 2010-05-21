@@ -96,7 +96,7 @@ unpack()
 					echo "xv is a supported extension in eapi3 and above only" >&2
 					continue;
 				fi
-				xz -dc "${srcdir}${x}" | tar xf ${taropts} || die "$myfail"
+				xz -dc "${srcdir}${x}" | tar xf - ${taropts} || die "$myfail"
 				;;
 			*.ZIP|*.zip|*.jar)
 				unzip -qo "${srcdir}${x}" || die "$myfail"

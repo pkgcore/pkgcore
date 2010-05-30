@@ -7,7 +7,7 @@ gentoo configuration domain
 
 # XXX doc this up better...
 
-from itertools import izip
+from itertools import izip, imap
 from os.path import isfile
 
 import pkgcore.config.domain
@@ -21,11 +21,11 @@ from pkgcore.config.errors import BaseError
 from pkgcore.ebuild import const
 from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
     non_incremental_collapsed_restrict_to_data, incremental_expansion,
-    incremental_expansion_license)
+    incremental_expansion_license, optimize_incrementals)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
 from pkgcore.util.parserestrict import parse_match
 
-from snakeoil.lists import stable_unique, unstable_unique
+from snakeoil.lists import stable_unique, unstable_unique, predicate_split
 from snakeoil.compatibility import any
 from snakeoil.mappings import ProtectedDict
 from snakeoil.fileutils import iter_read_bash
@@ -35,6 +35,8 @@ demandload(globals(),
     'errno',
     'pkgcore.fs.livefs:iter_scan',
     'pkgcore.fs.fs:fsFile',
+    're',
+    'operator:itemgetter',
 )
 
 class MissingFile(BaseError):
@@ -168,27 +170,32 @@ class domain(pkgcore.config.domain.domain):
         settings.setdefault("PKGCORE_DOMAIN", name)
         for x in incrementals:
             if isinstance(settings.get(x), basestring):
-                settings[x] = set(settings[x].split())
+                settings[x] = tuple(settings[x].split())
 
-        for x, v in profile.default_env.iteritems():
-            if x in settings:
-                if x in incrementals:
-                    if isinstance(v, basestring):
-                        v = set(v.split())
-                    else:
-                        v = set(v)
-                    incremental_expansion(v, settings[x], '')
-                    settings[x] = v
-            else:
-                if x in incrementals:
-                    if isinstance(v, basestring):
-                        v = set(v.split())
-                    settings[x] = v
-                else:
-                    settings[x] = v
+        # roughly... all incremental stacks should be interpreted left -> right
+        # as such we start with the profile settings, and append ours onto it.
+        for k, v in profile.default_env.iteritems():
+            if k not in settings:
+                settings[k] = v
+                continue
+            if k in incrementals:
+                settings[k] = v + tuple(settings[k])
+
+        # next we finalize incrementals.
+        for incremental in incrementals:
+            # skip USE for the time being; hack; we need the negations currently
+            # so that pkg iuse induced enablings can be disabled by negations.
+            # think of the profile doing USE=-cdr for brasero w/ IUSE=+cdr
+            # for example
+            if incremental not in settings or incremental == "USE":
+                continue
+            s = set()
+            incremental_expansion(s, settings[incremental])
+            settings[incremental] = tuple(s)
 
         # use is collapsed; now stack use_expand.
-        use = settings.setdefault("USE", set())
+        use = settings['USE'] = set(optimize_incrementals(
+            settings.get("USE", ())))
 
         # hackish implementation; if test is on, flip on the flag
         if "test" in settings.get("FEATURES", ()):
@@ -343,6 +350,9 @@ class domain(pkgcore.config.domain.domain):
             self.configured_named_repos["profile virtuals"] = profile_repo
             self.repos = [profile_repo] + self.repos
 
+        self.use_expand_re = re.compile("^(?:[+-])?(%s)_(.*)$" %
+            "|".join(x.lower() for x in sorted(self.use_expand, reverse=True)))
+
     def make_license_filter(self, master_license, pkg_licenses):
 #        data = collapsed_restrict_to_data(
 #            ((packages.AlwaysTrue, master_license),),
@@ -430,8 +440,23 @@ class domain(pkgcore.config.domain.domain):
             finalize_defaults=False)
 
     def get_package_use(self, pkg):
+        # roughly, this alog should result in the following, evaluated l->r
+        # non USE_EXPAND; profiles, pkg iuse, global configuration, package.use configuration, commandline?
+        # stack profiles + pkg iuse; split it into use and use_expanded use;
+        # do global configuration + package.use configuration overriding of non-use_expand use
+        # if global configuration has a setting for use_expand,
+
+#        import pdb;pdb.set_trace()
+        pre_defaults = [x[1:] for x in pkg.iuse if x[0] == '+']
+        if pre_defaults:
+            pre_defaults = izip(imap(self.use_expand_re.match, pre_defaults), pre_defaults)
+            flags, ue_flags = predicate_split(bool, pre_defaults, itemgetter(0))
+            pre_defaults = map(itemgetter(1), flags)
+            pre_defaults.extend(x[1]
+                for x in ue_flags if x[0].groups()[0].upper() not in self.settings)
+
         enabled = self.enabled_use.pull_data(pkg,
-            pre_defaults=(x[1:] for x in pkg.iuse if x[0] == '+'))
+            pre_defaults=pre_defaults)
         disabled = self.disabled_use.pull_data(pkg)
         immutable = self.forced_use.pull_data(pkg, False)
 

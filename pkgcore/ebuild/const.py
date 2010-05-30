@@ -14,6 +14,8 @@ incrementals = (
     "CONFIG_PROTECT_MASK", "CONFIG_PROTECT", "PRELINK_PATH",
     "PRELINK_PATH_MASK")
 
+incrementals_unfinalized = ("USE",)
+
 metadata_keys = (
     'DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI', 'RESTRICT', 'HOMEPAGE', 'LICENSE',
     'DESCRIPTION', 'KEYWORDS', 'INHERITED', 'IUSE', 'PDEPEND', 'PROVIDE',

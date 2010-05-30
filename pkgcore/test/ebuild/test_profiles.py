@@ -459,10 +459,10 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             {"make.defaults":"X=-y\nY=foo\n"})
         self.assertEqual(self.get_profile('base0',
             incrementals=['X']).default_env,
-           {'X':set('y')})
+           {'X':tuple('y')})
         self.assertEqual(self.get_profile('base1',
             incrementals=['X']).default_env,
-           {'X':set('y')})
+           {'X':tuple('y')})
         self.assertEqual(self.get_profile('base2',
             incrementals=['X']).default_env,
            {'Y':'foo'})

@@ -298,11 +298,13 @@ class OnDiskProfile(object):
         typename='profile')
 
     def __init__(self, basepath, profile, incrementals=const.incrementals,
-        load_profile_base=True):
+        load_profile_base=True,
+        incrementals_unfinalized=const.incrementals_unfinalized):
         self.basepath = basepath
         self.profile = profile
         self.node = ProfileNode(pjoin(basepath, profile))
         self.incrementals = incrementals
+        self.incrementals_unfinalized = frozenset(incrementals_unfinalized)
         self.load_profile_base = load_profile_base
 
     @property
@@ -406,20 +408,29 @@ class OnDiskProfile(object):
 
     def _collapse_env(self):
         d = {}
-        inc = self.incrementals
+        incrementals = self.incrementals
         for profile in self.stack:
             for key, val in profile.default_env.iteritems():
-                if key in inc:
-                    val = val.split()
-                    s = d.get(key)
-                    if s is None:
-                        s = d[key] = set()
-                    incremental_expansion(s, val,
-                        "expanding %s make.defaults: " % profile)
-                    if not s:
-                        del d[key]
+                if key in incrementals:
+                    d.setdefault(key, []).extend(val.split())
                 else:
                     d[key] = val
+        for incremental in incrementals:
+            if incremental not in d:
+                continue
+            val = d[incremental]
+            if not val:
+                del d[val]
+                continue
+            if incremental in self.incrementals_unfinalized:
+                d[incremental] = tuple(val)
+            else:
+                s = set()
+                incremental_expansion(s, val)
+                if s:
+                    d[incremental] = tuple(s)
+                else:
+                    del d[incremental]
         return d
 
     @property

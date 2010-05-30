@@ -109,6 +109,7 @@ diefunc() {
 	done
 
 	echo "!!! ERROR: $CATEGORY/$PF failed." >&2
+	echo "!!! die invoked from directory $(pwd)" >&2
 	dump_trace 2 ${filespacing} ${linespacing} >&2
 	echo "!!!   $(printf "%${filespacing}s" "${BASH_SOURCE[1]##*/}"), line $(printf "%${linespacing}s" "${BASH_LINENO[0]}"):  Called die" >&2
 	echo "!!! The die message:" >&2

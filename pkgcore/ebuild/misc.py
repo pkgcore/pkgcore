@@ -12,6 +12,31 @@ from snakeoil.lists import iflatten_instance
 from snakeoil.klass import generic_equality
 
 
+def optimize_incrementals(sequence):
+    # roughly the algorithm walks sequences right->left,
+    # identifying terminal points for incrementals; aka, -x x, 'x'
+    # is the terminal point- no point in having -x.
+    finalized = set()
+    result = []
+    for item in reversed(sequence):
+        if item[0] == '-':
+            i = item[1:]
+            if not i:
+                raise ValueError("%sencountered an incomplete negation, '-'"
+                    % (msg_prefix,))
+            if i == '*':
+                # seen enough.
+                yield item
+                return
+            if i not in finalized:
+                finalized.add(i)
+                yield item
+        else:
+            if item not in finalized:
+                yield item
+                finalized.add(item)
+
+
 def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
     for token in iterable:
         if token[0] == '-':

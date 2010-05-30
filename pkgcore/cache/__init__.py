@@ -8,6 +8,7 @@ cache subsystem, typically used for storing package metadata
 from pkgcore.cache import errors
 from snakeoil.mappings import ProtectedDict, autoconvert_py3k_methods_metaclass
 from snakeoil.obj import make_SlottedDict_kls
+from snakeoil import klass
 
 # temp hack for .2
 from pkgcore.ebuild.const import metadata_keys
@@ -200,3 +201,45 @@ class base(object):
             raise errors.CacheCorruption(
                 cpv, 'ValueError reading %r' % (eclass_string,))
         return d
+
+
+class bulk(base):
+
+    def __init__(self, *args, **kwds):
+        base.__init__(self, *args, **kwds)
+        self._pending_updates = []
+
+    @klass.jit_attr
+    def data(self):
+        return self._read_data()
+
+    def _read_data(self):
+        raise NotImplementedError(self, '_read_data')
+
+    def _write_data(self):
+        raise NotImplementedError(self, '_write_data')
+
+    def __contains__(self, key):
+        return key in self.data
+
+    def _getitem(self, key):
+        return self.data[key]
+
+    def iterkeys(self):
+        return self.data.iterkeys()
+
+    def iteritems(self):
+        return self.data.iteritems()
+
+    def _setitem(self, key, val):
+        val = self._cdict_kls(val.iteritems())
+        self._pending_updates.append((key, val))
+        self.data[key] = val
+
+    def _delitem(self, key):
+        del self.data[key]
+        self._pending_updates.append((key, None))
+
+    def commit(self):
+        self._write_data()
+        self._pending_updates = []

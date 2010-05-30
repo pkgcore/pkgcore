@@ -4,6 +4,14 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* USE collapsing now should match portage behaviour.  Essentially now,
+  pkg IUSE + profile overrides + make.conf overrides + user config package.use
+  overrides.  Previous behaviour didn't get edge cases correct.
+
+* USE_EXPAND default iuse is now fully overridden if the target USE_EXPAND
+  groupping is defined in configuration.  Mostly relevant for qemu-kvm.
+
+
 pkgcore 0.5.11.6: May 21st, 2010
 
 * add a bit of a hack to tty detection tests; PlainTextFormatter is valid for

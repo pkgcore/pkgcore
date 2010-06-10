@@ -4,8 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-* fixed a bug in installed pkgs virtual cache staleness detection- this
-  accounted for a surprisingly hefty ~25% for simple pquery invocations.
+* fixed a validation bug in installed pkgs virtual cache staleness detection-
+  this accounted for a surprisingly hefty ~25% for simple pquery invocations.
 
 * USE is now locked an intersection of the pkgs IUSE, with forced flags
   (things like arch, userland, prefix, etc) added on.  Mild speed up from

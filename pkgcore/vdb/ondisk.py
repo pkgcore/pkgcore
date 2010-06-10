@@ -34,15 +34,19 @@ class bz2_data_source(data_source.base):
         self.location = location
         self.mutable = mutable
 
-    def get_text_fileobj(self):
+    def get_text_fileobj(self, writable=False):
         data = bzip2.decompress(readfile_bytes(self.location)).decode()
-        if self.mutable:
+        if writable:
+            if not self.mutable:
+                raise TypeError("data source %s is not mutable" % (self,))
             return data_source.text_wr_StringIO(self._set_data, data)
         return data_source.text_ro_StringIO(data)
 
-    def get_bytes_fileobj(self):
+    def get_bytes_fileobj(self, writable=False):
         data = bzip2.decompress(readfile_bytes(self.location))
-        if self.mutable:
+        if writable:
+            if not self.mutable:
+                raise TypeError("data source %s is not mutable" % (self,))
             return data_source.bytes_wr_StringIO(self._set_data, data)
         return data_source.bytes_ro_StringIO(data)
 

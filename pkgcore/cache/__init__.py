@@ -14,6 +14,7 @@ from snakeoil import klass
 from pkgcore.ebuild.const import metadata_keys
 metadata_keys = tuple(metadata_keys)
 
+
 class base(object):
     # this is for metadata/cache transfer.
     # basically flags the cache needs be updated when transfered cache to cache.
@@ -34,10 +35,13 @@ class base(object):
     autocommits = False
     cleanse_keys = False
     serialize_eclasses = True
+    default_sync_rate = 1
+
+    default_keys = metadata_keys
 
     __metaclass__ = autoconvert_py3k_methods_metaclass
 
-    def __init__(self, auxdbkeys=metadata_keys, readonly=False):
+    def __init__(self, auxdbkeys=None, readonly=False):
         """
         initialize the derived class; specifically, store label/keys
 
@@ -45,10 +49,12 @@ class base(object):
         @param readonly: defaults to False,
             controls whether the cache is mutable.
         """
+        if auxdbkeys is None:
+            auxdbkeys = self.default_keys
         self._known_keys = frozenset(auxdbkeys)
         self._cdict_kls = make_SlottedDict_kls(self._known_keys)
         self.readonly = readonly
-        self.sync_rate = 0
+        self.set_sync_rate(self.default_sync_rate)
         self.updates = 0
 
     def __getitem__(self, cpv):
@@ -96,7 +102,7 @@ class base(object):
         self._setitem(cpv, d)
         if not self.autocommits:
             self.updates += 1
-            if self.updates > self.sync_rate:
+            if self.updates >= self.sync_rate:
                 self.commit()
                 self.updates = 0
 
@@ -152,12 +158,16 @@ class base(object):
     def items(self):
         return list(self.iteritems())
 
-    def sync(self, rate=0):
+    def clear(self):
+        for key in list(self):
+            del self[key]
+
+    def set_sync_rate(self, rate=0):
         self.sync_rate = rate
         if rate == 0:
             self.commit()
 
-    def commit(self):
+    def commit(self, force=False):
         if not self.autocommits:
             raise NotImplementedError
 
@@ -205,6 +215,8 @@ class base(object):
 
 class bulk(base):
 
+    default_sync_rate = 100
+
     def __init__(self, *args, **kwds):
         base.__init__(self, *args, **kwds)
         self._pending_updates = []
@@ -232,7 +244,8 @@ class bulk(base):
         return self.data.iteritems()
 
     def _setitem(self, key, val):
-        val = self._cdict_kls(val.iteritems())
+        known = self._known_keys
+        val = self._cdict_kls((k, v) for k,v in val.iteritems() if k in known)
         self._pending_updates.append((key, val))
         self.data[key] = val
 
@@ -240,6 +253,7 @@ class bulk(base):
         del self.data[key]
         self._pending_updates.append((key, None))
 
-    def commit(self):
-        self._write_data()
-        self._pending_updates = []
+    def commit(self, force=False):
+        if self._pending_updates or force:
+            self._write_data()
+            self._pending_updates = []

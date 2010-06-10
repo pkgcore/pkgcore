@@ -4,12 +4,29 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fixed a bug in installed pkgs virtual cache staleness detection- this
+  accounted for a surprisingly hefty ~25% for simple pquery invocations.
+
+* USE is now locked an intersection of the pkgs IUSE, with forced flags
+  (things like arch, userland, prefix, etc) added on.  Mild speed up from
+  dealing with a reduced set, more importantly portage switched to controlled
+  USE here, so we can force it finally.
+
 * USE collapsing now should match portage behaviour.  Essentially now,
   pkg IUSE + profile overrides + make.conf overrides + user config package.use
   overrides.  Previous behaviour didn't get edge cases correct.
 
 * USE_EXPAND default iuse is now fully overridden if the target USE_EXPAND
   groupping is defined in configuration.  Mostly relevant for qemu-kvm.
+
+* data_source.get_(text|bytes)_fileobj invocations now require writable=True
+  if you wish to mutate the data source.  Via making the intention explicit,
+  consumers will get just what they need- a 3x speed up for
+  pquery --attr environment is from that internal optimization alone.
+
+* commandline.OptionParser now does a shallow copy of all items in
+  standard_options_list; this protects against class/instance level cycles
+  inherint in optparse.OptionParser's design.
 
 
 pkgcore 0.5.11.6: May 21st, 2010

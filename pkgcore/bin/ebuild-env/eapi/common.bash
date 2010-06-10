@@ -27,9 +27,11 @@ use_with()
     fi
 
     local UW_SUFFIX=""
-    if [ ! -z "${3}" ]; then
-        UW_SUFFIX="=${3}"
-    fi
+	if has "${EAPI:-0}" 0 1 2 3; then
+		UW_SUFFIX=${3:+=$3}
+	else
+		UW_SUFFIX=${3+=$3}
+	fi
 
     local UWORD="$2"
     if [ -z "${UWORD}" ]; then
@@ -54,9 +56,11 @@ use_enable()
     fi
 
     local UE_SUFFIX=""
-    if [ ! -z "${3}" ]; then
-        UE_SUFFIX="=${3}"
-    fi
+	if has "${EAPI:-0}" 0 1 2 3; then
+		UE_SUFFIX=${3:+=$3}
+	else
+		UE_SUFFIX=${3+=$3}
+	fi
 
     local UWORD="$2"
     if [ -z "${UWORD}" ]; then

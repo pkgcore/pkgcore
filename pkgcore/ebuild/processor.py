@@ -34,6 +34,7 @@ from pkgcore.os_data import portage_uid, portage_gid
 
 from snakeoil.currying import post_curry, partial
 from snakeoil import klass
+from snakeoil.weakrefs import WeakRefFinalizer
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.log:logger',
@@ -172,6 +173,8 @@ class EbuildProcessor(object):
 
     Contains the env, functions, etc that ebuilds expect.
     """
+
+    __metaclass__ = WeakRefFinalizer
 
     def __init__(self, userpriv, sandbox, fakeroot, save_file):
         """

@@ -80,7 +80,7 @@ class ContentsFile(contentsSet):
                 return AtomicWriteFile(self._source, uid=os_data.root_uid,
                     gid=os_data.root_gid, perms=0644)
             return readlines_ascii(self._source, True)
-        fobj = self._source.get_text_fileobj()
+        fobj = self._source.get_text_fileobj(writable=write)
         if write:
             fobj.seek(0, 0)
             fobj.truncate(0)

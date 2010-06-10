@@ -97,6 +97,20 @@ class OptionsTest(TestCase):
         else:
             self.fail('no exception raised')
 
+    def test_copy_protections(self):
+        class myparser(commandline.OptionParser):
+            standard_options_list = [commandline.Option("-d", "--debug")]
+        inst = myparser()
+        self.assertNotIdentical(myparser.standard_option_list, inst.standard_option_list)
+        self.assertEqual(len(myparser.standard_option_list),
+            len(inst.standard_option_list))
+        for kls_item, inst_item in zip(myparser.standard_option_list, inst.standard_option_list):
+            self.assertNotIdentical(kls_item, inst_item)
+            self.assertFalse(hasattr(kls_item, 'container'))
+            # just verify our assumptions; if this fails, then we can't
+            # trust the tests above since optparse has changed behaviour.
+            self.assertTrue(hasattr(inst_item, 'container'))
+
 
 class ModifyParser(commandline.OptionParser):
 

@@ -198,9 +198,6 @@ class fake_package_factory(package_factory):
         self.child_class = child_class
         self._parent_repo = None
 
-    def __del__(self):
-        pass
-
     _forced_copy = ebuild_src.package.tracked_attributes
 
     def new_package(self, pkg, image_root, environment_path):

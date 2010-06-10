@@ -146,7 +146,7 @@ def _caching_grab_virtuals(repo, cache_basedir):
     existing = _get_mtimes(repo.location)
     for cat, mtime in existing.iteritems():
         d = cache.pop(cat, None)
-        if d is not None and long(d[0]) == mtime:
+        if d is not None and long(d[0]) == long(mtime):
             d = _convert_cached_virtuals(d)
             if d is not None:
                 _merge_virtuals(virtuals, d)

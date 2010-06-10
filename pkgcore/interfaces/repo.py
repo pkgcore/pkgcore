@@ -6,6 +6,7 @@ repository modifications (installing, removing, replacing)
 """
 
 from snakeoil.dependant_methods import ForcedDepends
+from snakeoil.weakrefs import WeakRefFinalizer
 from snakeoil.demandload import demandload
 from snakeoil.currying import partial, post_curry
 demandload(globals(), "pkgcore.log:logger",
@@ -27,6 +28,10 @@ class base(object):
     __metaclass__ = ForcedDepends
 
     stage_depends = {}
+
+class finalizer_base(WeakRefFinalizer, ForcedDepends):
+
+    pass
 
 class Failure(Exception):
     pass
@@ -99,6 +104,9 @@ class nonlivefs_replace(nonlivefs_install, nonlivefs_uninstall):
 
 
 class livefs_base(base):
+
+    __metaclass__ = finalizer_base
+
     stage_hooks = []
 
     def __init__(self, repo, observer, triggers, offset):

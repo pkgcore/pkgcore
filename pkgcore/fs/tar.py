@@ -14,10 +14,14 @@ from snakeoil.currying import partial, alias_class_method
 from snakeoil.compatibility import cmp, sorted_cmp
 
 class archive_data_source(data_source):
-    def get_text_fileobj(self):
+    def get_text_fileobj(self, writable=False):
+        if writable:
+            raise TypeError("data source %s data is immutable" % (self,))
         return self.data()
 
-    def get_bytes_fileobj(self):
+    def get_bytes_fileobj(self, writable=False):
+        if writable:
+            raise TypeError("data source %s data is immutable" % (self,))
         return self.data()
 
 known_compressors = {"bz2": tarfile.TarFile.bz2open,

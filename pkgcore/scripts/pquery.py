@@ -629,7 +629,7 @@ def stringify_attr(config, pkg, attr):
     if attr == 'keywords':
         return ' '.join(sorted(value, key=lambda x:x.lstrip("~")))
     if attr == 'environment':
-        return ''.join(value.get_text_fileobj())
+        return value.get_text_fileobj().read()
     if attr == 'repo':
         return str(getattr(value, 'repo_id', 'no repo id'))
     # hackish.

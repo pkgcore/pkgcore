@@ -147,6 +147,8 @@ class collapsed_restrict_to_data(object):
         else:
             always = set()
         self.defaults = always
+        self.defaults_finalized = set(x for x in self.defaults
+            if not x.startswith("-"))
         self.freeform = tuple(x for x in (repo, cat, pkg) if x)
         self.atoms = atom_d
 
@@ -162,20 +164,15 @@ class collapsed_restrict_to_data(object):
         for atom, data in self.atoms.get(pkg.key, ()):
             if atom.match(pkg):
                 l.append(data)
-        if not l:
-            if pre_defaults:
-                s = set(pre_defaults)
-                incremental_expansion(s, self.defaults)
-                return s
-            if force_copy:
-                return set(self.defaults)
-            return self.defaults
+
         if pre_defaults:
             s = set(pre_defaults)
             incremental_expansion(s, self.defaults)
         else:
-            s = set(self.defaults)
-        incremental_expansion(s, iflatten_instance(l))
+            s = set(self.defaults_finalized)
+
+        if l:
+            incremental_expansion(s, iflatten_instance(l))
         return s
 
     def iter_pull_data(self, pkg, pre_defaults=()):

@@ -2,25 +2,26 @@
 # License: GPL2/BSD
 
 from snakeoil.mappings import ImmutableDict, StackedDict
-from snakeoil.containers import RefCountingSet
-from snakeoil.fileutils import AtomicWriteFile
 from snakeoil import klass
-from snakeoil.compatibility import all
-from pkgcore.ebuild.cpv import versioned_CPV
-from pkgcore.restrictions.packages import AlwaysTrue
-from pkgcore.chksum import get_chksums
-from operator import itemgetter, attrgetter
-from itertools import izip
 from pkgcore import cache
+from snakeoil.weakrefs import WeakRefFinalizer
+from itertools import izip
 import os
+from snakeoil.demandload import demandload
+demandload(globals(), 'errno',
+    'pkgcore.chksum:get_chksums',
+    'snakeoil.fileutils:AtomicWriteFile',
+    'snakeoil.containers:RefCountingSet',
+    'snakeoil.osutils:readlines',
+    'operator:itemgetter',
+)
 
 def iter_till_empty_newline(data):
     for x in data:
-        x = x.strip()
         if not x:
             return
         k, v = x.split(':', 1)
-        yield k.strip(), v.strip()
+        yield k, v.strip()
 
 
 class CacheEntry(StackedDict):
@@ -38,20 +39,31 @@ def find_best_savings(stream, line_prefix):
     return max(stream, key=lambda (k, v):(len(k) + line_overhead) * v)[0]
 
 
+cache_meta = WeakRefFinalizer
+if type != cache.bulk.__metaclass__:
+    class cache_meta(WeakRefFinalizer, cache.bulk.__metaclass__):
+        pass
+
+
 class PackagesCacheV0(cache.bulk):
+
+    __metaclass__ = cache_meta
 
     _header_mangling_map = ImmutableDict({
         'FEATURES':'UPSTREAM_FEATURES',
         'ACCEPT_KEYWORDS':'KEYWORDS'})
 
-    _rewrite_map = {'DESC':'DESCRIPTION', 'repo':'repository'}
+    commit_rate = 200
+
+    _rewrite_map = {'DESC':'DESCRIPTION', 'repo':'repository', 'MTIME':'mtime'}
     _write_translate = {"DEPENDS": "DEPEND", "RDEPENDS": "RDEPEND",
-        "POST_RDEPENDS":"POST_RDEPEND", "DESCRIPTION":"DESC"}
-    inheritable = frozenset(('USE', 'CBUILD', 'CHOST', 'repository'))
+        "POST_RDEPENDS":"POST_RDEPEND", "DESCRIPTION":"DESC", 'mtime':'MTIME'}
+    inheritable = frozenset(('CBUILD', 'CHOST', 'repository'))
     _sequences = ('use', 'keywords', 'iuse')
     _pkg_defaults = dict.fromkeys(('BUILD_TIME', 'DEPEND', 'IUSE', 'KEYWORDS',
         'LICENSE', 'PATH', 'PDEPEND', 'PROPERTIES', 'PROVIDE', 'RDEPEND',
-        'RESTRICT', 'USE', 'DEFINED_PHASES', 'CHOST', 'CBUILD', 'DESC', 'repo'),
+        'USE', 'DEFINED_PHASES', 'CHOST', 'CBUILD', 'DESC', 'repository',
+        'DESCRIPTION'),
         '')
     _pkg_defaults.update({'EAPI':'0', 'SLOT':'0'})
     _pkg_defaults = ImmutableDict(_pkg_defaults)
@@ -62,15 +74,15 @@ class PackagesCacheV0(cache.bulk):
 
     def __init__(self, location, *args, **kwds):
         self._location = location
-        cache.bulk.__init__(self, *args, **kwds)
         vkeys = set(self._stored_chfs)
         vkeys.update(self._pkg_defaults)
         vkeys.add("CPV")
         vkeys.update(x.upper() for x in self._stored_chfs)
-        self._valid_keys = frozenset(vkeys)
+        kwds["auxdbkeys"] = vkeys
+        cache.bulk.__init__(self, *args, **kwds)
 
     def _handle(self):
-        return iter(open(self._location))
+        return readlines(self._location, True, False, False)
 
     def read_preamble(self, handle):
         return ImmutableDict(
@@ -78,12 +90,22 @@ class PackagesCacheV0(cache.bulk):
             for k,v in iter_till_empty_newline(handle))
 
     def _read_data(self):
-        handle = self._handle()
-        preamble = self.preamble = self.read_preamble(handle)
+        try:
+            handle = self._handle()
+        except EnvironmentError, e:
+            if e.errno == errno.ENOENT:
+                return {}
+            raise
+        self.preamble = self.read_preamble(handle)
+
+        defaults = dict(self._pkg_defaults.iteritems())
+        defaults.update((k, v) for k,v in self.preamble.iteritems()
+            if k in self.inheritable)
+        defaults = ImmutableDict(defaults)
 
         pkgs = {}
         count = 0
-        vkeys = self._valid_keys
+        vkeys = self._known_keys
         while True:
             raw_d = dict(iter_till_empty_newline(handle))
 
@@ -95,12 +117,14 @@ class PackagesCacheV0(cache.bulk):
             if cpv is None:
                 cpv = "%s/%s" % (d.pop("CATEGORY"), d.pop("PF"))
 
-            d.setdefault('IUSE', d.get('USE', ''))
+            if 'USE' in d:
+                d.setdefault('IUSE', d.get('USE', ''))
             for src, dst in self._rewrite_map.iteritems():
-                d.setdefault(dst, d.pop(src, ''))
+                if src in d:
+                    d.setdefault(dst, d.pop(src))
 
-            pkgs[cpv] = CacheEntry(d, preamble)
-        assert count == int(preamble.get('PACKAGES', count))
+            pkgs[cpv] = CacheEntry(d, defaults)
+        assert count == int(self.preamble.get('PACKAGES', count))
         return pkgs
 
     @classmethod
@@ -147,7 +171,6 @@ class PackagesCacheV0(cache.bulk):
             raise
 
     def _serialize_to_handle(self, data, handler):
-#        data = [self._assemble_pkg_dict(pkg) for pkg in targets]
         preamble = self._assemble_preamble_dict(data)
 
         for key in sorted(preamble):
@@ -158,14 +181,15 @@ class PackagesCacheV0(cache.bulk):
         if self.version != 0:
             spacer = ''
 
-        vkeys = self._valid_keys
+        vkeys = self._known_keys
         for cpv, pkg_data in sorted(data, key=itemgetter(0)):
             handler.write("CPV:%s%s\n" % (spacer, cpv))
-            for key in sorted(pkg_data):
-                write_key = self._write_translate.get(key, key)
+            data = [(self._write_translate.get(key, key), value)
+                for key, value in pkg_data.iteritems()]
+            for write_key, value in sorted(data):
                 if write_key not in vkeys:
                     continue
-                value = pkg_data[key]
+                value = str(value).strip()
                 if write_key in preamble:
                     if value != preamble[write_key]:
                         if value:
@@ -176,6 +200,20 @@ class PackagesCacheV0(cache.bulk):
                     handler.write("%s:%s%s\n" % (write_key, spacer, value))
             handler.write('\n')
 
+    def update_from_xpak(self, pkg, xpak):
+        # invert the lookups here; if you do .iteritems() on an xpak,
+        # it'll load up the contents in full.
+        new_dict = dict((k, xpak[k]) for k in
+            self._known_keys if k in xpak)
+        new_dict['mtime'] = xpak.mtime
+        chfs = [x for x in self._stored_chfs if x != 'mtime']
+        for key, value in izip(chfs, get_chksums(pkg.path, *chfs)):
+            if key != 'size':
+                value = "%x" % (value,)
+            new_dict[key.upper()] = value
+        self[pkg.cpvstr] = new_dict
+        return new_dict
+
     def update_from_repo(self, repo):
         # try to collapse certain keys down to the profile preamble
         targets = repo.match(AlwaysTrue, sorter=sorted)
@@ -185,12 +223,19 @@ class PackagesCacheV0(cache.bulk):
             open(self._location, 'wb')
             return
 
+    def __del__(self):
+        self.commit()
+
 
 
 class PackagesCacheV1(PackagesCacheV0):
 
     inheritable = PackagesCacheV0.inheritable.union(('SLOT', 'EAPI', 'LICENSE',
-        'KEYWORDS'))
+        'KEYWORDS', 'USE', 'RESTRICT'))
+
+    _pkg_defaults = ImmutableDict(PackagesCacheV0._pkg_defaults.items() +
+        [('RESTRICT', '')])
+
 
     @classmethod
     def _assemble_pkg_dict(cls, pkg):
@@ -205,6 +250,14 @@ class PackagesCacheV1(PackagesCacheV0):
         return d
 
     version = 1
+
+def get_cache_kls(version):
+    version = str(version)
+    if version == '0':
+        return PackagesCacheV0
+    elif version in ('1', '-1'):
+        return PackagesCacheV1
+    raise KeyError("cache version %s unsupported" % (version,))
 
 
 def write_index(filepath, repo, version=-1):

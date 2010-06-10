@@ -92,7 +92,8 @@ class Xpak(object):
                         raise
                     start = 0
             else:
-                f = target_source.get_bytes_fileobj().seek(0, 2)
+                f = target_source.get_bytes_fileobj(writable=True)
+                f.seek(0, 2)
                 start = f.tell()
         new_index = []
         new_data = []
@@ -111,7 +112,7 @@ class Xpak(object):
             # rb+ required since A) binary, B) w truncates from the getgo
             handle = open(target_source, "r+b")
         else:
-            handle = target_source.get_bytes_fileobj()
+            handle = target_source.get_bytes_fileobj(writable=True)
 
         joiner = ''
         if compatibility.is_py3k:

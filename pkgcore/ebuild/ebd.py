@@ -63,7 +63,8 @@ def _reset_env_data_source(method):
 class ebd(object):
 
     def __init__(self, pkg, initial_env=None, env_data_source=None,
-                 features=None, observer=None, clean=False, tmp_offset=None):
+                 features=None, observer=None, clean=False, tmp_offset=None,
+                use_override=None):
         """
         @param pkg:
             L{ebuild package instance<pkgcore.ebuild.ebuild_src.package>}
@@ -76,6 +77,11 @@ class ebd(object):
         @param features: ebuild features, hold over from portage,
             will be broken down at some point
         """
+
+        if use_override is not None:
+            use = use_override
+        else:
+            use = pkg.use
 
         if not hasattr(self, "observer"):
             self.observer = observer
@@ -129,7 +135,7 @@ class ebd(object):
 
         expected_ebuild_env(pkg, self.env, env_source_override=self.env_data_source)
 
-        self.env["USE"] = ' '.join(str(x) for x in pkg.use)
+        self.env["USE"] = ' '.join(str(x) for x in use)
         self.env["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", ()))
         self.env["SLOT"] = pkg.slot
         self.env["FINALIZED_RESTRICT"] = ' '.join(str(x) for x in pkg.restrict)
@@ -449,6 +455,8 @@ class buildable(ebd, setup_mixin, format.build):
             access our required files for building
         """
 
+        use = kwargs.get("use_override", pkg.use)
+
         format.build.__init__(self, observer=observer)
         ebd.__init__(self, pkg, initial_env=domain_settings,
                      features=domain_settings["FEATURES"], **kwargs)
@@ -463,7 +471,7 @@ class buildable(ebd, setup_mixin, format.build):
         self.run_test = self.feat_or_bool("test", domain_settings)
         if "test" in self.restrict:
             self.run_test = False
-        elif "test" not in pkg.use:
+        elif "test" not in use:
             if self.run_test:
                 logger.warn("disabling test for %s due to test use flag being disabled" % pkg)
             self.run_test = False

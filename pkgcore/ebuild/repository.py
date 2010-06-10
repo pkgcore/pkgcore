@@ -349,7 +349,8 @@ class ConfiguredTree(configured.tree):
 
         configured.tree.__init__(self, raw_repo, self.config_wrappables,
            pkg_kls_injections=scope_update)
-        self._get_pkg_use = domain.get_package_use
+        self._get_pkg_use = domain.get_package_use_unconfigured
+        self._get_pkg_use_for_building = domain.get_package_use_buildable
         self.domain_settings = domain_settings
         if fetcher is None:
             self.fetcher = self.domain_settings["fetcher"]
@@ -371,7 +372,9 @@ class ConfiguredTree(configured.tree):
 
     def generate_buildop(self, pkg, **kwds):
         return buildable(pkg, self.domain_settings, pkg.repo.eclass_cache,
-                         self.fetcher, **kwds)
+                         self.fetcher,
+                         use_override=self._get_pkg_use_for_building(pkg),
+                         **kwds)
 
 UnconfiguredTree.configure = ConfiguredTree
 tree = UnconfiguredTree

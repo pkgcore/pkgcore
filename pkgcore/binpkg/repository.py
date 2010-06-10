@@ -18,7 +18,7 @@ from pkgcore.ebuild.errors import InvalidCPV
 from pkgcore.binpkg import repo_ops
 
 from snakeoil.currying import partial
-from snakeoil.mappings import DictMixin
+from snakeoil.mappings import DictMixin, StackedDict
 from snakeoil.osutils import listdir_dirs, listdir_files
 from snakeoil.osutils import join as pjoin
 from snakeoil.klass import jit_attr
@@ -37,6 +37,7 @@ demandload(globals(),
     "pkgcore.fs.tar:generate_contents",
     "pkgcore.binpkg.xpak:Xpak",
     "pkgcore.util.bzip2:decompress",
+    'pkgcore.binpkg:remote',
 )
 
 
@@ -108,7 +109,7 @@ def wrap_factory(klass, *args, **kwds):
 
 class StackedXpakDict(DictMixin):
     __slots__ = ("_xpak", "_parent", "_pkg", "contents",
-        "_wipes")
+        "_wipes", "_mtime")
 
     _metadata_rewrites = {
         "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
@@ -118,11 +119,15 @@ class StackedXpakDict(DictMixin):
     def __init__(self, parent, pkg):
         self._pkg = pkg
         self._parent = parent
-        self._wipes = []
+        self._wipes = set()
 
     @jit_attr
     def xpak(self):
         return Xpak(self._parent._get_path(self._pkg))
+
+    @jit_attr
+    def mtime(self):
+        return int(os.stat(self._parent._get_path(self._pkg)).st_mtime)
 
     def __getitem__(self, key):
         key = self._metadata_rewrites.get(key, key)
@@ -161,14 +166,14 @@ class StackedXpakDict(DictMixin):
         if key in ("contents", "environment"):
             if key in self._wipes:
                 raise KeyError(self, key)
-            self._wipes.append(key)
+            self._wipes.add(key)
         else:
             del self.xpak[key]
 
     def __setitem__(self, key, val):
         if key in ("contents", "environment"):
             setattr(self, key, val)
-            self._wipes = [x for x in self._wipes if x != key]
+            self._wipes.discard(remove)
         else:
             self.xpak[key] = val
         return val
@@ -179,6 +184,25 @@ class StackedXpakDict(DictMixin):
         for k in ("environment", "contents"):
             if self.get(k) is not None:
                 yield k
+
+    def __contains__(self, key):
+        translated_key = self._metadata_rewrites.get(key, key)
+        if translated_key in self._wipes:
+            return False
+        elif key in ('ebuild', 'environment', 'contents'):
+            return True
+        return translated_key in self.xpak
+
+
+class StackedCache(StackedDict):
+
+    __externally_mutable__ = True
+
+    def __init__(self, cache_entry, xpak):
+        StackedDict.__init__(self, cache_entry, xpak)
+
+    def __delitem__(self, key):
+        self._dicts[0].pop(key)
 
 
 class tree(prototype.tree):
@@ -192,11 +216,13 @@ class tree(prototype.tree):
     configured = False
     configurables = ("settings",)
     operations_kls = repo_ops.operations
+    cache_name = "Packages"
 
     pkgcore_config_type = ConfigHint({'location':'str',
         'repo_id':'str', 'ignore_paludis_versioning':'bool'}, typename='repo')
 
-    def __init__(self, location, repo_id=None, ignore_paludis_versioning=False):
+    def __init__(self, location, repo_id=None, ignore_paludis_versioning=False,
+        cache_version='0'):
         """
         @param location: root of the tbz2 repository
         @keyword repo_id: unique repository id to use; else defaults to
@@ -223,6 +249,7 @@ class tree(prototype.tree):
                 " by this user" % (self.base,
                 os.stat(self.base).st_mode & 04777))
 
+        self.cache = remote.get_cache_kls(cache_version)(pjoin(self.base, self.cache_name))
         self.package_class = wrap_factory(
             get_plugin("format." + self.format_magic), self)
 
@@ -287,7 +314,16 @@ class tree(prototype.tree):
     _get_ebuild_path = _get_path
 
     def _get_metadata(self, pkg):
-        return StackedXpakDict(self, pkg)
+        xpak = StackedXpakDict(self, pkg)
+        try:
+            cache_data = self.cache[pkg.cpvstr]
+            if int(cache_data['mtime']) != int(xpak.mtime):
+                raise KeyError
+        except KeyError, ke:
+            cache_data = self.cache.update_from_xpak(pkg, xpak)
+        obj = StackedCache(cache_data, xpak)
+        return obj
+
 
     def notify_remove_package(self, pkg):
         prototype.tree.notify_remove_package(self, pkg)

@@ -84,7 +84,9 @@ class local_source(base):
     def get_path(self):
         return self.path
 
-    def get_text_fileobj(self):
+    def get_text_fileobj(self, writable=False):
+        if writable and not self.mutable:
+            raise TypeError("data source %s is immutable" % (self,))
         opener = post_curry(open, self.buffering_window)
         if self.encoding:
             opener = open
@@ -92,12 +94,14 @@ class local_source(base):
                 opener = codecs.open
             opener = post_curry(opener, buffering=self.buffering_window,
                 encoding=self.encoding)
-        if self.mutable:
+        if writable:
             return opener(self.path, "r+")
         return opener(self.path, "r")
 
-    def get_bytes_fileobj(self):
-        if self.mutable:
+    def get_bytes_fileobj(self, writable=False):
+        if writable:
+            if not self.mutable:
+                raise TypeError("data source %s is immutable" % (self,))
             return open(self.path, "rb+", self.buffering_window)
         return open(self.path, 'rb', self.buffering_window)
 
@@ -127,8 +131,10 @@ class data_source(base):
         def _convert_data(self, mode):
             return self.data
 
-    def get_text_fileobj(self):
-        if self.mutable:
+    def get_text_fileobj(self, writable=False):
+        if writable:
+            if not self.mutable:
+                raise TypeError("data source %s is not mutable" % (self,))
             return text_wr_StringIO(self._reset_data,
                 self._convert_data('text'))
         return text_ro_StringIO(self._convert_data('text'))
@@ -147,8 +153,10 @@ class data_source(base):
 
     get_fileobj = alias_class_method("get_text_fileobj")
 
-    def get_bytes_fileobj(self):
-        if self.mutable:
+    def get_bytes_fileobj(self, writable=False):
+        if writable:
+            if not self.mutable:
+                raise TypeError("data source %s is not mutable" % (self,))
             return bytes_wr_StringIO(self._reset_data,
                 self._convert_data('bytes'))
         return bytes_ro_StringIO(self._convert_data('bytes'))

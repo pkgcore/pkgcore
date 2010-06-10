@@ -23,6 +23,7 @@ from pkgcore.config import load_config, errors
 from snakeoil import formatters, demandload, fix_copy, klass
 fix_copy.inject_copy()
 import optparse
+import copy
 
 demandload.demandload(globals(),
     'snakeoil.fileutils:iter_read_bash',
@@ -254,7 +255,28 @@ class Option(optparse.Option):
         optparse.Option.__init__(self, *args, **kwargs)
 
 
-class OptionParser(optparse.OptionParser):
+class ProtectiveCopy(type):
+
+    def __call__(cls, *args, **kwds):
+        # always clone standard_options_list if it exists...
+        # we do not want the raw option being used, period,
+        # else you'll get bleed through of instances.
+        instance = cls.__new__(cls,*args, **kwds)
+        if instance.standard_option_list:
+            l = []
+            for option in instance.standard_option_list:
+                copier = getattr(option, 'copy', None)
+                if copier is None:
+                    l.append(copy.copy(option))
+                else:
+                    l.append(copier())
+            instance.standard_option_list = l
+        instance.__init__(*args, **kwds)
+        return instance
+
+
+
+class OptionParser(optparse.OptionParser, object):
 
     """Our common OptionParser subclass.
 
@@ -262,6 +284,8 @@ class OptionParser(optparse.OptionParser):
     default to an empty sequence instead of None, uses our custom
     Values class with the config property.
     """
+
+    __metaclass__ = ProtectiveCopy
 
     # You can set this on an instance or subclass to use a different class.
     values_class = Values

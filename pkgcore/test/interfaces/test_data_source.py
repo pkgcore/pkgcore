@@ -21,18 +21,22 @@ class TestDataSource(TestCase):
         obj = self.get_obj()
         self.assertEqual(obj.get_text_fileobj().read(), "foonani")
         val = getattr(obj.get_text_fileobj(), 'write', None)
+        self.assertRaises(TypeError, obj.get_text_fileobj, True)
         if val is not None:
             self.assertRaises((IOError, AttributeError), val, 'dar')
 
         obj = self.get_obj(True)
         self.assertEqual(obj.get_text_fileobj().read(), "foonani")
-        f = obj.get_text_fileobj()
+        f = obj.get_text_fileobj(True)
         f.write("dar")
         f.close()
         self.assertEqual(obj.get_text_fileobj().read(), "darnani")
 
     def test_get_bytes_fileobj(self):
-        self.get_obj().get_bytes_fileobj()
+        obj = self.get_obj()
+        self.assertRaises(TypeError, obj.get_bytes_fileobj, True)
+        obj = self.get_obj(True)
+        self.assertTrue(obj.get_bytes_fileobj())
 
 
 class TestLocalSource(TempDirMixin, TestDataSource):

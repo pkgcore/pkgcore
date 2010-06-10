@@ -433,30 +433,34 @@ class domain(pkgcore.config.domain.domain):
                     return True
         return any(True for x in pkg.keywords if x in allowed)
 
-    def make_per_package_use(self, default_use, pkg_use):
-        if not pkg_use:
-            return default_use, ((), {})
-        return collapsed_restrict_to_data(default_use, pkg_use,
-            finalize_defaults=False)
+    def split_use_expand_flags(self, use_stream):
+        matcher = self.use_expand_re.match
+        stream = ((matcher(x), x) for x in use_stream)
+        flags, ue_flags = predicate_split(bool, stream, itemgetter(0))
+        return map(itemgetter(1), flags), [(x[0].groups(), x[1]) for x in ue_flags]
 
-    def get_package_use(self, pkg):
+    def get_package_use_unconfigured(self, pkg, for_metadata=True):
         # roughly, this alog should result in the following, evaluated l->r
         # non USE_EXPAND; profiles, pkg iuse, global configuration, package.use configuration, commandline?
         # stack profiles + pkg iuse; split it into use and use_expanded use;
         # do global configuration + package.use configuration overriding of non-use_expand use
         # if global configuration has a setting for use_expand,
 
-#        import pdb;pdb.set_trace()
         pre_defaults = [x[1:] for x in pkg.iuse if x[0] == '+']
         if pre_defaults:
-            pre_defaults = izip(imap(self.use_expand_re.match, pre_defaults), pre_defaults)
-            flags, ue_flags = predicate_split(bool, pre_defaults, itemgetter(0))
-            pre_defaults = map(itemgetter(1), flags)
+            pre_defaults, ue_flags = self.split_use_expand_flags(pre_defaults)
+#            pre_defaults = izip(imap(self.use_expand_re.match, pre_defaults), pre_defaults)
+#            flags, ue_flags = predicate_split(bool, pre_defaults, itemgetter(0))
             pre_defaults.extend(x[1]
-                for x in ue_flags if x[0].groups()[0].upper() not in self.settings)
+                for x in ue_flags if x[0][0].upper() not in self.settings)
 
+        # lock the configurable use flags to only what's in IUSE, and what's forced
+        # from the profiles (things like userland_GNU and arch)
         enabled = self.enabled_use.pull_data(pkg,
             pre_defaults=pre_defaults)
+        if for_metadata:
+            enabled = enabled.intersection(x.lstrip("-+") for x in pkg.iuse)
+
         disabled = self.disabled_use.pull_data(pkg)
         immutable = self.forced_use.pull_data(pkg, False)
 
@@ -475,6 +479,21 @@ class domain(pkgcore.config.domain.domain):
         immutable.update(disabled)
 
         return immutable, enabled, disabled
+
+    def get_package_use_buildable(self, pkg):
+        # we append USE_EXPAND flags into the build env;
+        # this is done for things like linguas.
+        changed_use = set(pkg.use)
+        immutable, enabled, disabled = self.get_package_use_unconfigured(pkg)
+        new_enabled = enabled.difference(changed_use)
+        new_disabled = changed_use.difference(enabled)
+        # we've isolated what's changed.  now get the buildable use,
+        # and apply those changes
+        immutable, enabled, disabled = self.get_package_use_unconfigured(pkg,
+            for_metadata=False)
+        enabled.update(new_enabled)
+        enabled.difference_update(new_disabled)
+        return enabled
 
     def get_extra_triggers(self):
         return (x.instantiate() for x in self.triggers)

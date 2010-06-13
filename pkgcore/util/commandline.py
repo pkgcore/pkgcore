@@ -376,6 +376,13 @@ class OptionParser(optparse.OptionParser, object):
                 defaults[option.dest] = option.check_value(opt_str, default)
         return self.values_class(defaults)
 
+    def parse_args(self, args=None, values=None):
+        """Extend optparse to clear the ref values -> parser it adds."""
+        try:
+            return optparse.OptionParser.parse_args(self, args, values)
+        finally:
+            self.values = None
+
     def check_values(self, values, args):
         """Do some basic sanity checking.
 

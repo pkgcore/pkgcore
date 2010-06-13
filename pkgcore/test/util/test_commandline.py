@@ -3,9 +3,11 @@
 
 
 import os
+import gc
 import pty
 import StringIO
 import optparse
+import weakref
 
 from snakeoil import compatibility
 from pkgcore.test import TestCase
@@ -98,18 +100,53 @@ class OptionsTest(TestCase):
             self.fail('no exception raised')
 
     def test_copy_protections(self):
+
         class myparser(commandline.OptionParser):
-            standard_options_list = [commandline.Option("-d", "--debug")]
+            pass
+
         inst = myparser()
         self.assertNotIdentical(myparser.standard_option_list, inst.standard_option_list)
         self.assertEqual(len(myparser.standard_option_list),
             len(inst.standard_option_list))
+
+        # verify that we didn't typo above...
+        self.assertTrue(myparser.standard_option_list)
+
         for kls_item, inst_item in zip(myparser.standard_option_list, inst.standard_option_list):
             self.assertNotIdentical(kls_item, inst_item)
             self.assertFalse(hasattr(kls_item, 'container'))
             # just verify our assumptions; if this fails, then we can't
             # trust the tests above since optparse has changed behaviour.
             self.assertTrue(hasattr(inst_item, 'container'))
+
+    def test_optparse_parser_leak(self):
+        # This makes sure there is no global reference to the parser.
+        # That is not usually critical, but an extra safety net in case
+        # the parser (incorrectly) keeps important references around.
+        # (at some point it kept the values object alive).
+        # This test would fail if standard_option_list was used.
+        parser = commandline.OptionParser()
+        values, args = parser.parse_args([])
+        parserref = weakref.ref(parser)
+        del parser
+        # XXX I think this is a bug: the values object has a strong
+        # ref to the parser via _raise_error...
+        del values
+        # This is necessary because the parser and its options have
+        # cyclical references to each other.
+        gc.collect()
+        self.assertIdentical(None, parserref())
+
+    def test_optparse_values_leak(self):
+        # This makes sure nothing keeps a reference to the optparse
+        # "values" object. This is somewhat important because that
+        # "values" object has a reference to the config central
+        # object, which keeps a ton of things alive.
+        parser = commandline.OptionParser()
+        values, args = parser.parse_args([])
+        valuesref = weakref.ref(values)
+        del values
+        self.assertIdentical(None, valuesref())
 
 
 class ModifyParser(commandline.OptionParser):

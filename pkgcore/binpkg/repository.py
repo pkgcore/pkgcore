@@ -313,9 +313,11 @@ class tree(prototype.tree):
 
     _get_ebuild_path = _get_path
 
-    def _get_metadata(self, pkg):
+    def _get_metadata(self, pkg, force=False):
         xpak = StackedXpakDict(self, pkg)
         try:
+            if force:
+                raise KeyError
             cache_data = self.cache[pkg.cpvstr]
             if int(cache_data['mtime']) != int(xpak.mtime):
                 raise KeyError
@@ -324,6 +326,11 @@ class tree(prototype.tree):
         obj = StackedCache(cache_data, xpak)
         return obj
 
+    def notify_add_package(self, pkg):
+        prototype.tree.notify_add_package(self, pkg)
+        # XXX horrible hack.
+        self._get_metadata(self.match(pkg.versioned_atom)[0], force=True)
+        self.cache.commit()
 
     def notify_remove_package(self, pkg):
         prototype.tree.notify_remove_package(self, pkg)

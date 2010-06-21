@@ -50,8 +50,6 @@ class bz2_data_source(data_source.base):
             return data_source.bytes_wr_StringIO(self._set_data, data)
         return data_source.bytes_ro_StringIO(data)
 
-    get_fileobj = alias_class_method("get_text_file")
-
     def _set_data(self, data):
         if compatibility.is_py3k:
             if isinstance(data, str):

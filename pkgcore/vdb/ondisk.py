@@ -6,7 +6,7 @@ import os, stat, errno
 from pkgcore.repository import prototype, errors
 from pkgcore.vdb import virtuals
 from pkgcore.plugin import get_plugin
-from pkgcore.interfaces import data_source
+from snakeoil import data_source
 from pkgcore.repository import multiplex
 from pkgcore.config import ConfigHint
 #needed to grab the PN

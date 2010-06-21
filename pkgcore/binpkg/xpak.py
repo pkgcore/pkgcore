@@ -72,7 +72,7 @@ class Xpak(object):
         """
         write an xpak dict to disk; overwriting an xpak if it exists
         @param target_source: string path, or
-            L{pkgcore.interfaces.data_source.base} derivative
+            L{snakeoil.data_source.base} derivative
         @param data: mapping instance to write into the xpak.
         @return: xpak instance
         """

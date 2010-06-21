@@ -4,9 +4,9 @@
 import tempfile, os
 from pkgcore.test import TestCase
 from pkgcore.ebuild import digest
-from pkgcore.chksum import gpg
-from pkgcore.chksum.errors import ParseChksumError, MissingChksum
-from pkgcore.interfaces.data_source import local_source
+from pkgcore import gpg
+from pkgcore.package.errors import ParseChksumError, MissingChksum
+from snakeoil.data_source import local_source
 
 # "Line too long" (and our custom more agressive version of that)
 # pylint: disable-msg=C0301,CPC01

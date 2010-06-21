@@ -2,11 +2,15 @@
 # License: BSD/GPL2
 
 #base class
-class InvalidPackage(ValueError):
+
+
+class PackageError(ValueError):
     pass
 
+class InvalidPackageName(PackageError):
+    pass
 
-class MetadataException(Exception):
+class MetadataException(PackageError):
 
     def __init__(self, pkg, attr, error):
         Exception.__init__(self,
@@ -14,5 +18,21 @@ class MetadataException(Exception):
                            (pkg, attr, error))
         self.pkg, self.attr, self.error = pkg, attr, error
 
-class InvalidDependency(ValueError):
+class InvalidDependency(PackageError):
     pass
+
+
+class ChksumBase(Exception):
+    pass
+
+class MissingChksum(ChksumBase):
+
+    def __init__(self, filename):
+        ChksumBase.__init__(self, "Missing chksum data for %r" % filename)
+        self.file = filename
+
+class ParseChksumError(ChksumBase):
+    def __init__(self, filename, error):
+        ChksumBase.__init__(self, "Failed parsing %r chksum due to %s" %
+                      (filename, error))
+        self.file, self.error = filename, error

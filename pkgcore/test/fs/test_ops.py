@@ -6,7 +6,7 @@ from pkgcore.test import TestCase, SkipTest
 from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin
 from pkgcore.fs import ops, fs, livefs, contents
-from pkgcore.interfaces.data_source import local_source
+from snakeoil.data_source import local_source
 
 
 class VerifyMixin(object):

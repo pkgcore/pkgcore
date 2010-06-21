@@ -16,7 +16,7 @@ from pkgcore.ebuild.atom import atom
 from pkgcore.cache import errors as cache_errors
 from pkgcore.restrictions.packages import AndRestriction
 from pkgcore.restrictions import boolean
-from pkgcore.chksum.errors import MissingChksum
+from pkgcore.package.errors import MissingChksum
 from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
 from pkgcore.ebuild import const, processor

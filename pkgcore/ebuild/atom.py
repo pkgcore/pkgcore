@@ -99,9 +99,9 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
     else:
         sf(self, "use", None)
     if slot_start != -1:
-        i2 = atom.find(":", slot_start + 1)
+        i2 = atom.find("::", slot_start)
         if i2 != -1:
-            repo_id = atom[i2 + 1:]
+            repo_id = atom[i2 + 2:]
             if not repo_id:
                 raise errors.MalformedAtom(orig_atom,
                     "repo_id must not be empty")
@@ -110,7 +110,7 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
                     "invalid first char of repo_id '%s' (must not begin with a hyphen)" % repo_id)
             elif not valid_repo_chars.issuperset(repo_id):
                 raise errors.MalformedAtom(orig_atom,
-                    "repo_id may contain only [a-Z0-9_-/]")
+                    "repo_id may contain only [a-Z0-9_-/], found %r" % (repo_id,))
             atom = atom[:i2]
             sf(self, "repo_id", repo_id)
         else:
@@ -414,9 +414,7 @@ class atom(boolean.AndRestriction):
                 s = '!' + s
         if self.slot:
             s += ":%s" % ",".join(self.slot)
-            if self.repo_id:
-                s += ":%s" % self.repo_id
-        elif self.repo_id:
+        if self.repo_id:
             s += "::%s" % self.repo_id
         if self.use:
             s += "[%s]" % ",".join(self.use)

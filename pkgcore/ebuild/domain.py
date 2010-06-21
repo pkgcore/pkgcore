@@ -16,7 +16,7 @@ from pkgcore.restrictions.delegated import delegate
 from pkgcore.restrictions import packages, values
 from pkgcore.ebuild.atom import generate_collapsed_restriction
 from pkgcore.repository import multiplex, visibility
-from pkgcore.interfaces.data_source import local_source
+from snakeoil.data_source import local_source
 from pkgcore.config.errors import BaseError
 from pkgcore.ebuild import const
 from pkgcore.ebuild.misc import (collapsed_restrict_to_data,

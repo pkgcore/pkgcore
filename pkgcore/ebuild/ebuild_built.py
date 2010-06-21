@@ -7,7 +7,7 @@ built ebuild packages (vdb packages and binpkgs are derivatives of this)
 
 from pkgcore.ebuild import ebuild_src, conditionals
 from pkgcore.package import metadata
-from pkgcore.interfaces.data_source import local_source
+from snakeoil.data_source import local_source
 
 from snakeoil.mappings import IndeterminantDict
 from snakeoil.currying import post_curry, partial

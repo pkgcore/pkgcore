@@ -7,7 +7,7 @@ from pkgcore.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin
 from pkgcore.ebuild import eclass_cache
-from pkgcore.interfaces import data_source
+from snakeoil import data_source
 
 class FakeEclassCache(eclass_cache.base):
 

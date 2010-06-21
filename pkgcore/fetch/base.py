@@ -6,7 +6,7 @@ prototype fetcher class, all fetchers should derive from this
 """
 
 import os
-from pkgcore.chksum import get_handlers, get_chksums
+from snakeoil.chksum import get_handlers, get_chksums
 from pkgcore.fetch import errors
 from snakeoil.compatibility import cmp
 

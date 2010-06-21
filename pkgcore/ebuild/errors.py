@@ -28,7 +28,7 @@ class InvalidVersion(errors.InvalidDependency):
         self.ver, self.rev, self.err = ver, rev, err
 
 
-class InvalidCPV(errors.InvalidPackage):
+class InvalidCPV(errors.InvalidPackageName):
     """Raised if an invalid cpv was passed in.
 
     @ivar args: single-element tuple containing the invalid string.

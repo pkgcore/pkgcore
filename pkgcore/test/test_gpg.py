@@ -1,10 +1,9 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-from pkgcore.test import TestCase
-from pkgcore.chksum import gpg
+from pkgcore import test, gpg
 
-class TestSkipSignatures(TestCase):
+class TestSkipSignatures(test.TestCase):
 
     def test_simple_skipping(self):
         for header in ([],

@@ -24,7 +24,7 @@ from snakeoil.compatibility import any, intern
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.ebuild.ebd:buildable',
-    'pkgcore.interfaces.data_source:local_source',
+    'snakeoil.data_source:local_source',
     'pkgcore.ebuild:digest,repo_objs,atom',
     'pkgcore.ebuild:errors@ebuild_errors',
     'pkgcore.ebuild:profiles',
@@ -105,16 +105,15 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
 
         fp = pjoin(self.base, metadata_offset, "thirdpartymirrors")
         mirrors = {}
-        if os.path.exists(fp):
-            f = open(fp, "r")
-            try:
-                for k, v in read_dict(f, splitter=None,
-                                      source_isiter=True).iteritems():
-                    v = v.split()
-                    shuffle(v)
-                    mirrors[k] = v
-            finally:
-                f.close()
+        try:
+            for k, v in read_dict(fp, splitter=None).iteritems():
+                v = v.split()
+                shuffle(v)
+                mirrors[k] = v
+        except EnvironmentError, ee:
+            if ee.errno != errno.ENOENT:
+                raise
+
         if isinstance(cache, (tuple, list)):
             cache = tuple(cache)
         else:

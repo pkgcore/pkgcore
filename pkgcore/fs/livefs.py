@@ -11,8 +11,8 @@ from stat import S_IMODE, S_ISDIR, S_ISREG, S_ISLNK, S_ISFIFO
 from pkgcore.fs.fs import (
     fsFile, fsDir, fsSymlink, fsDev, fsFifo, get_major_minor, fsBase)
 from pkgcore.fs.contents import contentsSet
-from pkgcore.chksum import get_handlers
-from pkgcore.interfaces.data_source import local_source
+from snakeoil.chksum import get_handlers
+from snakeoil.data_source import local_source
 
 from snakeoil.osutils import normpath, join as pjoin
 from snakeoil.mappings import LazyValDict

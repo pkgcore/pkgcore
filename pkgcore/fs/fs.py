@@ -6,9 +6,9 @@ filesystem entry abstractions
 """
 
 import stat
-from pkgcore.chksum import get_handlers, get_chksums
+from snakeoil.chksum import get_handlers, get_chksums
 from os.path import sep as path_seperator, realpath, abspath, dirname, basename
-from pkgcore.interfaces.data_source import local_source
+from snakeoil.data_source import local_source
 from snakeoil.mappings import LazyFullValLoadDict
 from snakeoil.osutils import normpath, pjoin
 from snakeoil.compatibility import cmp

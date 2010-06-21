@@ -431,30 +431,6 @@ def config_from_make_conf(location="/etc/"):
                 'class': 'pkgcore.ebuild.overlay_repository.OverlayRepo',
                 'trees': tuple(reversed([portdir] + portdir_overlays))})
 
-    # disabled code for using portage config defined cache modules;
-    # need to re-examine and see if they're still in sync with our cache subsystem
-#     if os.path.exists(base_path+"portage/modules"):
-#         pcache = read_dict(
-#             base_path+"portage/modules").get("portdbapi.auxdbmodule", None)
-
-#        cache_config = {"type": "cache",
-#                        "location": "%s/var/cache/edb/dep" %
-#                           config_root.rstrip("/"),
-#                        "label": "make_conf_overlay_cache"}
-#        if pcache is None:
-#            if portdir_overlays or ("metadata-transfer" not in features):
-#                cache_config["class"] = "pkgcore.cache.flat_hash.database"
-#            else:
-#                cache_config["class"] = "pkgcore.cache.metadata.database"
-#                cache_config["location"] = portdir
-#                cache_config["readonly"] = "true"
-#        else:
-#            cache_config["class"] = pcache
-#
-#        new_config["cache"] = basics.ConfigSectionFromStringDict(
-#            "cache", cache_config)
-
-
     new_config['vuln'] = basics.AutoConfigSection({
             'class': SecurityUpgradesViaProfile,
             'ebuild_repo': 'repo-stack',

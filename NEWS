@@ -28,6 +28,26 @@ See ChangeLog for full commit logs; this is summarized/major changes.
   standard_options_list; this protects against class/instance level cycles
   inherint in optparse.OptionParser's design.
 
+* pkgcore.interfaces.data_source moved to snakeoil.data_source.
+
+* pkgcore.chksum moved to snakeoil.chksum.  A compatibility shim was left in
+  for pkgcore-checks, which will be removed in 0.7 of pkgcore.
+
+
+pkgcore 0.5.11.7: June 20th, 2010
+
+* use_enable/use_with; make use_enable/use_with 3rd arg form match pms in eapi4,
+  match long standing portage behaviour for eapi's 0 through 3.
+
+* when combining repository and slot restrictions in an atom, repository is now
+  always prefixed with ::, not intermixed.  sys-apps/portage:0::gentoo for
+  example specifies slotting 0, repository gentoo.
+
+* fixed a bug in installed pkgs virtual cache staleness detection- this
+  accounted for a surprisingly hefty ~25% for simple pquery invocations.
+
+* fix typo in env protection code- load the scrubbed env, not the raw source.
+
 
 pkgcore 0.5.11.6: May 21st, 2010
 

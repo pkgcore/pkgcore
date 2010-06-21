@@ -128,7 +128,8 @@ scrub_environ() {
 			-v "$(filter_env_var_filter ${DONT_EXPORT_VARS} src x EXISTING_PATH)" -i "$src" \
 			> "${T}/.pre-scrubbed-env" || die "failed first step of scrubbing the env to load"
 
-		source "${src}" || die "failed sourcing scrubbed env"
+		[ -s "${T}/.pre-scrubbed-env" ] || die "empty pre-scrubbed-env file.  pkgcore bug?"
+		source "${T}/.pre-scrubbed-env" || die "failed sourcing scrubbed env"
 
 
 		# if reinstate_loaded_env_attributes exists, run it to add to the vars.

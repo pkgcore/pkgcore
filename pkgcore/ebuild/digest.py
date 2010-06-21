@@ -8,7 +8,9 @@ ebuild tree manifest/digest support
 from itertools import izip
 from os.path import basename, dirname, sep
 
-from pkgcore.chksum import errors, gpg, get_handler
+from snakeoil.chksum import get_handler
+from pkgcore import gpg
+from pkgcore.package import errors
 from pkgcore.fs.livefs import iter_scan
 from pkgcore.fs.fs import fsFile, fsDir
 

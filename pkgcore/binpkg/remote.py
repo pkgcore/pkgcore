@@ -9,7 +9,7 @@ from itertools import izip
 import os
 from snakeoil.demandload import demandload
 demandload(globals(), 'errno',
-    'pkgcore.chksum:get_chksums',
+    'snakeoil.chksum:get_chksums',
     'snakeoil.fileutils:AtomicWriteFile',
     'snakeoil.containers:RefCountingSet',
     'snakeoil.osutils:readlines',

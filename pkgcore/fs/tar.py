@@ -7,7 +7,7 @@ binpkg tar utilities
 import os, stat
 from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsFifo, fsDev
 from pkgcore.fs import contents
-from pkgcore.interfaces.data_source import data_source
+from snakeoil.data_source import data_source
 
 from snakeoil.tar import tarfile
 from snakeoil.currying import partial, alias_class_method

@@ -3,7 +3,7 @@
 
 from pkgcore.test import TestCase
 from pkgcore.ebuild import repo_objs
-from pkgcore.interfaces.data_source import data_source
+from snakeoil.data_source import data_source
 
 class TestMetadataXml(TestCase):
 

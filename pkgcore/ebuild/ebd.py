@@ -12,7 +12,8 @@ api, per phase methods for example
 
 import os, errno, shutil
 
-from pkgcore.interfaces import format, data_source
+from pkgcore.interfaces import format
+from snakeoil import data_source
 from pkgcore.ebuild.processor import \
     request_ebuild_processor, release_ebuild_processor, \
     expected_ebuild_env, chuck_UnhandledCommand

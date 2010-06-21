@@ -18,7 +18,7 @@ from snakeoil.compatibility import next, is_py3k
 from snakeoil.demandload import demandload
 
 demandload(globals(),
-    'pkgcore.interfaces.data_source:local_source',
+    'snakeoil.data_source:local_source',
     'pkgcore.ebuild:cpv',
     'pkgcore.ebuild:atom',
     'pkgcore.repository:util',
@@ -40,7 +40,7 @@ def load_decorator(filename, handler=iter_read_bash, fallback=(),
         def f2(self, *args):
             path = pjoin(self.path, filename)
             try:
-                data = read_func(path, False, True, True)
+                data = read_func(path, True, True, True)
                 if data is None:
                     return func(self, fallback, *args)
                 return func(self, handler(data), *args)

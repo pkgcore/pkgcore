@@ -34,7 +34,7 @@ class Test_native_atom(TestCase):
         for s in ("dev-util/diffball", "=dev-util/diffball-0.7.1",
             ">foon/bar-1:2,3[-4,3]", "=foon/bar-2*", "~foon/bar-2.3",
             "!dev-util/diffball", "!=dev-util/diffball-0.7*",
-            "foon/bar::gentoo", ">=foon/bar-10_alpha1:1:gentoo[-not,use]",
+            "foon/bar::gentoo", ">=foon/bar-10_alpha1:1::gentoo[-not,use]",
             "!!dev-util/diffball[use]"):
             self.assertEqual(str(self.kls(s)), s)
             self.assertEqual(hash(self.kls(s, disable_inst_caching=True)),
@@ -59,7 +59,7 @@ class Test_native_atom(TestCase):
 
 
     def test_iter(self):
-        d = self.kls("!>=dev-util/diffball-0.7:1,2:gentoo[use,x]")
+        d = self.kls("!>=dev-util/diffball-0.7:1,2::gentoo[use,x]")
         self.assertEqual(list(d), list(d.restrictions))
 
     def test_pickling(self):
@@ -231,8 +231,6 @@ class Test_native_atom(TestCase):
 
         for pref, ver, repo, slot, use in f():
             pos = 0
-            if slot and repo:
-                repo = repo[1:]
             o = self.kls("%sdev-util/diffball%s%s%s%s" %
                 (pref, ver, slot, repo, use))
             count = 2
@@ -264,7 +262,7 @@ class Test_native_atom(TestCase):
 
     def test_eapi0(self):
         for postfix in (':1', ':1,2', ':asdf', '::asdf', '::asdf-x86', '[x]',
-                        '[x,y]', ':1[x,y]', '[x,y]:1', ':1:repo'):
+                        '[x,y]', ':1[x,y]', '[x,y]:1', ':1::repo'):
             self.assertRaisesMsg("dev-util/foon%s must be invalid in EAPI 0"
                 % postfix, errors.MalformedAtom, self.kls,
                 "dev-util/foon%s" % postfix, eapi=0)
@@ -284,12 +282,14 @@ class Test_native_atom(TestCase):
         self.kls("!dev-util/foon:1", eapi=3)
         self.kls("dev-util/foon:1[x]", eapi=3)
         self.kls("dev-util/foon:1[x?]", eapi=3)
+        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1::dar", eapi=3)
 
     def test_repo_id(self):
         astr = "dev-util/bsdiff"
-        c = FakePkg("%s-1" % astr, repo=FakeRepo(repoid="gentoo-x86A_"))
+        c = FakePkg("%s-1" % astr, repo=FakeRepo(repoid="gentoo-x86A_"), slot="0")
         self.assertTrue(self.kls("%s" % astr).match(c))
         self.assertTrue(self.kls("%s::gentoo-x86A_" % astr).match(c))
+        self.assertTrue(self.kls("%s:0::gentoo-x86A_" % astr).match(c))
         self.assertFalse(self.kls("%s::gentoo2" % astr).match(c))
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1:")
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon::")
@@ -442,7 +442,7 @@ class Test_native_atom(TestCase):
         p = FakePkg('dev-util/diffball-0.7', repo=FakeRepo(repoid='gentoo'))
         self.assertTrue(self.kls('=dev-util/diffball-0.7::gentoo').match(p))
         self.assertTrue(self.kls('dev-util/diffball::gentoo').match(p))
-        self.assertFalse(self.kls('=dev-util/diffball-0.7:1:gentoo').match(
+        self.assertFalse(self.kls('=dev-util/diffball-0.7:1::gentoo').match(
             FakePkg('dev-util/diffball-0.7', slot='2')))
 
 

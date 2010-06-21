@@ -6,14 +6,14 @@ import os
 from pkgcore.test import TestCase
 from snakeoil.currying import partial
 
-from pkgcore import chksum
+from snakeoil.chksum import get_handlers
 from pkgcore.fetch import base, fetchable, errors
-from pkgcore.interfaces import data_source
+from snakeoil import data_source
 from snakeoil.test.mixins import TempDirMixin
 
 repeating_str = 'asdf'
 data = repeating_str * 4000
-handlers = chksum.get_handlers()
+handlers = get_handlers()
 
 from snakeoil.mappings import LazyValDict
 def _callback(chf):

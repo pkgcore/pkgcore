@@ -3,8 +3,8 @@
 
 import os
 from pkgcore.fs import fs
-from pkgcore.interfaces.data_source import data_source
-from pkgcore.chksum import get_chksums
+from snakeoil.data_source import data_source
+from snakeoil.chksum import get_chksums
 from pkgcore.test import TestCase
 from snakeoil.test.mixins import tempdir_decorator
 from snakeoil.osutils import pjoin, normpath

@@ -21,7 +21,6 @@ import logging
 
 from pkgcore.config import load_config, errors
 from snakeoil import formatters, demandload, fix_copy, klass
-fix_copy.inject_copy()
 import optparse
 import copy
 

@@ -3,7 +3,7 @@
 
 from pkgcore.fs.contents import contentsSet
 from pkgcore.fs import fs
-from pkgcore.interfaces import data_source
+from snakeoil import data_source
 
 from snakeoil.fileutils import AtomicWriteFile
 from snakeoil.compatibility import any
@@ -12,7 +12,7 @@ demandload(globals(),
     'os',
     'stat',
     'errno',
-    'pkgcore.chksum:get_handler',
+    'snakeoil.chksum:get_handler',
     'snakeoil.osutils:readlines_ascii',
     'pkgcore:os_data',
 )

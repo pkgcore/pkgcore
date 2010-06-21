@@ -5,7 +5,7 @@
 in memory representation of on disk eclass stacking order
 """
 
-from pkgcore.interfaces.data_source import local_source
+from snakeoil.data_source import local_source
 from pkgcore.config import ConfigHint
 
 from snakeoil.mappings import ImmutableDict

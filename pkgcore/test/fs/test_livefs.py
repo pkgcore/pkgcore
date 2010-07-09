@@ -93,6 +93,13 @@ class FsObjsTest(TempDirMixin, TestCase):
         for obj in livefs.iter_scan(path, offset=offset):
             self.check_attrs(obj, obj.location, offset=offset)
 
+        seen = []
+        for obj in livefs.iter_scan(files[0]):
+            self.check_attrs(obj, obj.location)
+            seen.append(obj.location)
+        self.assertEqual((files[0],), tuple(sorted(seen)))
+
+
     def test_relative_sym(self):
         f = os.path.join(self.dir, "relative-symlink-test")
         os.symlink("../sym1/blah", f)

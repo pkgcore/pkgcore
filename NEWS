@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fixed pkgcore.fs.livefs.iter_scan to support a path pointing to a
+  nondirectory.
+
 * fixed a validation bug in installed pkgs virtual cache staleness detection-
   this accounted for a surprisingly hefty ~25% for simple pquery invocations.
 

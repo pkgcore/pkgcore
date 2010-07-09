@@ -89,11 +89,13 @@ pkgcore_StrExactMatch_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 		if(ptr == Py_True) {				\
 			statement;					  \
 		} else if (ptr != Py_False) {	   \
-			if(PyObject_IsTrue(ptr)) {	  \
-				statement;				  \
-			} else if (PyErr_Occurred()) {  \
-				return NULL;				\
-			}							   \
+			int result = PyObject_IsTrue(ptr);	\
+			/* explicitly check for 1, since -1 can be returned */ \
+			if(1 == result) {				\
+				statement;				\
+			} else if(-1 == result) {	\
+				return NULL;			\
+			}							\
 		}								   \
 	}
 	set_bool(sensitive, flags |= CASE_SENSITIVE)

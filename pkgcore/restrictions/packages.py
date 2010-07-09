@@ -7,8 +7,9 @@ restriction classes designed for package level matching
 
 from pkgcore.restrictions import restriction, boolean
 from snakeoil.compatibility import any, is_py3k
-from snakeoil.klass import chained_getter, generic_equality
+from snakeoil.klass import generic_equality, static_attrgetter
 from snakeoil.demandload import demandload
+from operator import attrgetter
 demandload(globals(), "pkgcore.log:logger")
 
 # Backwards compatibility.
@@ -34,7 +35,7 @@ class native_PackageRestriction(object):
             raise TypeError("restriction must be of type %r" % (self.subtype,))
         sf = object.__setattr__
         sf(self, "negate", negate)
-        sf(self, "_pull_attr", chained_getter(attr))
+        sf(self, "_pull_attr", static_attrgetter(attr))
         if '.' in attr:
             # this is done purely for compatibility w/ cpy (yes we prefer
             # the cpy implementation)
@@ -73,7 +74,9 @@ class PackageRestriction_mixin(restriction.base):
             if not self.ignore_missing:
                 logger.exception("failed getting attribute %s from %s, "
                               "exception %s" % (self.attr, str(pkg), str(exc)))
-            s = self.attr.split('.')
+            s = self.attr
+            if not isinstance(s, tuple):
+                s = self.attr.split('.')
             eargs = [x for x in exc.args if isinstance(x, basestring)]
             if any(x in s for x in eargs):
                 return False

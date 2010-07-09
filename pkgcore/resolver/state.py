@@ -31,9 +31,21 @@ class plan_state(object):
         assert state_pos <= len(self.plan)
         if len(self.plan) == state_pos:
             return
-        for change in reversed(self.plan[state_pos:]):
-            change.revert(self)
-        self.plan = self.plan[:state_pos]
+
+        # track exactly how many reversions we've done-
+        # since we do a single slicing of plan, if an exception occurs
+        # before finishing we need to prune what has been finished,
+        # and just that.
+        reversion_count = 0
+        try:
+            for reversion_count, change in enumerate(
+                reversed(self.plan[state_pos:])):
+                change.revert(self)
+            reversion_count += 1
+            assert len(self.plan) - reversion_count == state_pos
+        finally:
+            if reversion_count:
+                self.plan = self.plan[:-reversion_count]
 
     def iter_ops(self, return_livefs=False):
         iterable = (x for x in self.plan if not x.internal)
@@ -41,6 +53,9 @@ class plan_state(object):
             return iterable
         return (y for y in iterable
             if not y.pkg.repo.livefs)
+
+    def __getitem__(self, slice):
+        return self.plan[slice]
 
     @property
     def current_state(self):
@@ -89,7 +104,7 @@ class add_op(base_op_state):
 class add_hardref_op(base_op_state):
 
     __slots__ = ('restriction',)
-    desc = None
+    desc = "hardref"
     internal = True
     force = True
     choices = None
@@ -109,7 +124,7 @@ class add_hardref_op(base_op_state):
 class add_backref_op(base_op_state):
 
     __slots__ = ()
-    desc = None
+    desc = "backref"
     internal = True
 
     def apply(self, plan):
@@ -148,12 +163,14 @@ class replace_op(base_op_state):
         self.old_pkg, self.old_choices = None, None
 
     def apply(self, plan):
+        revert_point = plan.current_state
         old = plan.state.get_conflicting_slot(self.pkg)
         # probably should just convert to an add...
         assert old is not None
         plan.state.remove_slotting(old)
         old_choices = plan.pkg_choices[old]
-        revert_point = plan.current_state
+        # assertion for my own sanity...
+        assert revert_point == plan.current_state
         plan._remove_pkg_blockers(old_choices)
         l = plan.state.fill_slotting(self.pkg, force=self.force)
         if l:
@@ -177,7 +194,7 @@ class replace_op(base_op_state):
         # all we have to care about is swap.
         plan.state.remove_slotting(self.pkg)
         l = plan.state.fill_slotting(self.old_pkg, force=self.force)
-        assert not l
+        assert not l, "reverting a replace op %r, got %r from slotting" % (self, l)
         del plan.pkg_choices[self.pkg]
         plan.pkg_choices[self.old_pkg] = self.old_choices
         plan.vdb_filter.remove(self.old_pkg)
@@ -189,7 +206,7 @@ class replace_op(base_op_state):
         return "replace: %s with %s%s" % (self.old_pkg, self.pkg, s)
 
     def __repr__(self):
-        return '<%s old choices=%r new choies=%r old_pkg=%r new_pkg=%r ' \
+        return '<%s old choices=%r new choices=%r old_pkg=%r new_pkg=%r ' \
             'force=%s @#%x>' % (self.__class__.__name__, self.old_choices,
             self.choices, self.old_pkg, self.pkg, self.force, id(self))
 

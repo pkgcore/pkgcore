@@ -149,3 +149,7 @@ class choice_point(object):
                 return False
             self._reset_iters()
         return True
+
+    def __str__(self):
+        return "%s: (%s, %s)" % (self.__class__.__name__,
+            self.atom, self.matches_cur)

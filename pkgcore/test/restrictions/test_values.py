@@ -123,10 +123,20 @@ class native_TestStrExactMatch(TestRestriction):
 
     def test_case_insensitive(self):
         for negated in (False, True):
+            # note that we explicitly test True/1, and False/0
+            # we test 1/0, since bool protocol is supported for those kwds-
+            # thus we verify it, more specifically we verify the cpy
+            # support.
             self.assertMatches(self.kls('package', case_sensitive=True,
                 negate=negated),
                 ['package'], ['package']*3, negated=negated)
+            self.assertMatches(self.kls('package', case_sensitive=1,
+                negate=negated),
+                ['package'], ['package']*3, negated=negated)
             self.assertMatches(self.kls('Package', case_sensitive=False,
+                 negate=negated),
+                ['package'], ['package']*3, negated=negated)
+            self.assertMatches(self.kls('Package', case_sensitive=0,
                  negate=negated),
                 ['package'], ['package']*3, negated=negated)
 

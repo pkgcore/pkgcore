@@ -85,8 +85,11 @@ def gen_obj(path, stat=None, chksum_handlers=None, real_location=None,
 
 def _internal_iter_scan(path, chksum_handlers, stat_func=os.lstat):
     dirs = collections.deque([normpath(path)])
-    yield gen_obj(dirs[0], chksum_handlers=chksum_handlers,
+    obj = gen_obj(dirs[0], chksum_handlers=chksum_handlers,
         stat_func=stat_func)
+    yield obj
+    if not isinstance(obj, fsDir):
+        return
     while dirs:
         base = dirs.popleft()
         for x in listdir(base):

@@ -185,3 +185,16 @@ class Test_fsFifo(TestCase, base):
 
 class Test_fsDir(TestCase, base):
     kls = fs.fsDir
+
+
+class Test_Modules_Funcs(TestCase):
+
+    def test_is_funcs(self):
+        # verify it intercepts the missing attr
+        self.assertFalse(fs.isdir(object()))
+        self.assertFalse(fs.isreg(object()))
+        self.assertFalse(fs.isfifo(object()))
+
+        self.assertTrue(fs.isdir(fs.fsDir('/tmp', strict=False)))
+        self.assertFalse(fs.isreg(fs.fsDir('/tmp', strict=False)))
+        self.assertTrue(fs.isreg(fs.fsFile('/tmp', strict=False)))

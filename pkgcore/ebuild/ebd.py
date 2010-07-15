@@ -251,7 +251,7 @@ class ebd(object):
 
     @_reset_env_data_source
     def _generic_phase(self, phase, userpriv, sandbox, fakeroot,
-                       extra_handlers=None):
+                       extra_handlers=None, failure_allowed=False):
         """
         @param phase: phase to execute
         @param userpriv: will we drop to
@@ -269,16 +269,18 @@ class ebd(object):
                            logging=self.logging)
             ebd.write("start_processing")
             if not ebd.generic_handler(additional_commands=extra_handlers):
-                raise format.GenericBuildError(
-                    phase + ": Failed building (False/0 return from handler)")
+                if not failure_allowed:
+                    raise format.GenericBuildError(
+                        phase + ": Failed building (False/0 return from handler)")
+                    logger.warn("executing phase %s: execution failed, ignoring" % (phase,))
 
         except Exception, e:
             ebd.shutdown_processor()
             release_ebuild_processor(ebd)
             if isinstance(e, (SystemExit, format.GenericBuildError)):
                 raise
-            raise format.GenericBuildError(
-                phase + ": Caught exception while building: %s" % e)
+            raise format.GenericBuildError("Executing phase %s: Caught exception: "
+                "%s" % (phase, e))
 
         release_ebuild_processor(ebd)
         return True
@@ -423,7 +425,8 @@ class uninstall_op(ebd, format.uninstall):
     postrm = pretty_docs(
         observer.decorate_build_method("postrm")(
             post_curry(
-            ebd._generic_phase, "postrm", False, False, False)),
+            ebd._generic_phase, "postrm", False, False, False,
+                failure_allowed=True)),
             "run the postrm phase")
 
 

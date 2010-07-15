@@ -12,6 +12,7 @@ from snakeoil.data_source import local_source
 from snakeoil.mappings import LazyFullValLoadDict
 from snakeoil.osutils import normpath, pjoin
 from snakeoil.compatibility import cmp
+from snakeoil.currying import post_curry, pretty_docs
 from snakeoil import klass
 
 
@@ -51,6 +52,7 @@ raw_init_doc = \
 @param strict: is this fully representative of the entry, or only partially
 @raise KeyError: if strict is enabled, and not all args are passed in
 """
+
 
 class fsBase(object):
 
@@ -306,18 +308,19 @@ class fsFifo(fsBase):
     def __repr__(self):
         return "fifo:%s" % self.location
 
-def mk_check(target, name):
-    def f(obj):
-        return isinstance(obj, target)
-    f.__name__ = name
-    f.__doc__ = "return True if obj is an instance of L{%s}, else False" % target.__name__
+def mk_check(name):
+    return pretty_docs(post_curry(getattr, 'is_' + name, False),
+        extradocs=("return True if obj is an instance of L{%s}, else False" % name),
+        name=("is" +name)
+        )
     return f
 
-isdir    = mk_check(fsDir, 'isdir')
-isreg    = mk_check(fsFile, 'isreg')
-issym    = mk_check(fsSymlink, 'issym')
-isfifo   = mk_check(fsFifo, 'isfifo')
-isdev    = mk_check(fsDev, 'isdev')
-isfs_obj = mk_check(fsBase, 'isfs_obj')
+isdir    = mk_check('dir')
+isreg    = mk_check('reg')
+issym    = mk_check('sym')
+isfifo   = mk_check('fifo')
+isdev    = mk_check('dev')
+isfs_obj = pretty_docs(post_curry(isinstance, fsBase), name='isfs_obj',
+    extradocs='return True if obj is an fsBase derived object')
 
 del raw_init_doc, gen_doc_additions, _fs_doc, mk_check

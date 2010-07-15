@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkgcore now ignores ebuild postrm exit status- it logs failures, but there
+  isn't really anything that can be done at that stage (everything is already
+  unmerged after all).
+
 * fixed pkgcore.fs.livefs.iter_scan to support a path pointing to a
   nondirectory.
 
@@ -29,7 +33,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 * commandline.OptionParser now does a shallow copy of all items in
   standard_options_list; this protects against class/instance level cycles
-  inherint in optparse.OptionParser's design.
+  inherent in optparse.OptionParser's design.
 
 * pkgcore.interfaces.data_source moved to snakeoil.data_source.
 

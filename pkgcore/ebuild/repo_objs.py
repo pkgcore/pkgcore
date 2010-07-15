@@ -115,7 +115,7 @@ class LocalMetadataXml(MetadataXml):
     def _parse_xml(self):
         try:
             MetadataXml._parse_xml(self, open(self._source, "rb", 32768))
-        except IOError, oe:
+        except EnvironmentError, oe:
             if oe.errno != errno.ENOENT:
                 raise
             self._maintainers = ()
@@ -190,7 +190,7 @@ class Licenses(object):
         try:
             content = listdir_files(pjoin(self._base,
                 self.licenses_dir))
-        except (OSError, IOError):
+        except EnvironmentError:
             content = ()
         return frozenset(content)
 
@@ -199,7 +199,7 @@ class Licenses(object):
         try:
             fp = pjoin(self._base, self.license_group_location)
             d = fileutils.read_dict(fp, splitter=' ')
-        except (IOError, OSError):
+        except EnvironmentError:
             return mappings.ImmutableDict()
         except fileutils.ParseError, pe:
             logger.error("failed parsing license_groups: %s", pe)
@@ -244,7 +244,7 @@ class Licenses(object):
             raise KeyError(license)
         try:
             return open(pjoin(self._base, self.licenses_dir, license)).read()
-        except (OSError, IOError):
+        except EnvironmentError:
             raise KeyError(license)
 
     def __iter__(self):

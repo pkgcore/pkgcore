@@ -11,18 +11,21 @@ __all__ = ('CopyParser', 'DigestParser', 'RegenParser', 'SyncParser')
 from pkgcore.util.commandline import convert_to_restrict, OptionParser
 from snakeoil.demandload import demandload
 demandload(globals(),
+    'os',
     'errno',
     'threading:Event',
     'threading:Thread',
     'Queue',
     'time:time,sleep',
-    'snakeoil.osutils:pjoin',
+    'snakeoil.osutils:pjoin,listdir_dirs',
     'pkgcore.repository:multiplex',
     'pkgcore.package:mutated',
     'pkgcore.fs:contents,livefs',
     'pkgcore.ebuild:atom,errors,digest',
     'pkgcore.restrictions.boolean:OrRestriction',
     'pkgcore.sync:base@sync_base',
+    'snakeoil.compatibility:any',
+    're',
 )
 
 commandline_commands = {}
@@ -328,6 +331,53 @@ def regen_main(options, out, err):
     return 0
 
 commandline_commands['regen'] = (RegenParser, regen_main)
+
+
+class PerlRebuildParser(OptionParser):
+
+    description = 'identify perl pkgs in need of a rebuild for a new perl version'
+
+    def check_values(self, values, args):
+        values, args = OptionParser.check_values(
+            self, values, args)
+
+        if not args:
+            self.error('you must specify the new perl version')
+        values.target_version = args[0]
+        path = pjoin(values.domain.root, "usr/lib/perl5", values.target_version)
+        if not os.path.exists(path):
+            self.error("version %s doesn't seem to be installed; can't find it at %r" %
+                (values.target_version, path))
+
+        return values, ()
+
+
+def perl_rebuild_main(options, out, err):
+    """Write Manifests and digests"""
+
+    base = pjoin(options.domain.root, "/usr/lib/perl5")
+    potential_perl_versions = [x.replace(".", "\.") for x in listdir_dirs(base)
+        if x.startswith("5.") and x != options.target_version]
+
+    if len(potential_perl_versions) == 1:
+        subpattern = potential_perl_versions[0]
+    else:
+        subpattern = "(?:%s)" % ("|".join(potential_perl_versions),)
+    matcher = re.compile("/usr/lib(?:64|32)?/perl5/(?:%s|vendor_perl/%s)" %
+        (subpattern, subpattern)).match
+
+    for pkg in options.domain.all_livefs_repos:
+        contents = getattr(pkg, 'contents', ())
+        if not contents:
+            continue
+        # scan just directories...
+        for fsobj in contents.iterdirs():
+            if matcher(fsobj.location):
+                out.write("%s" % (pkg.unversioned_atom,))
+                break
+
+
+commandline_commands['perl_rebuild'] = (PerlRebuildParser, perl_rebuild_main)
 
 
 class DigestParser(OptionParser):

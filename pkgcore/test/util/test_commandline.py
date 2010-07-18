@@ -148,6 +148,32 @@ class OptionsTest(TestCase):
         del values
         self.assertIdentical(None, valuesref())
 
+    def test_bool_type(self):
+        parser = helpers.mangle_parser(commandline.OptionParser())
+        parser.add_option("--testing", action='store', type='bool',
+            default=None)
+
+        for raw_val in ("n", "no", "false"):
+            for allowed in (raw_val.upper(), raw_val.lower()):
+                values, args = parser.parse_args(['--testing=' + allowed])
+                self.assertEqual(values.testing, False,
+                    msg="for --testing=%s, got %r, expected False" %
+                        (allowed, values.testing))
+
+        for raw_val in ("y", "yes", "true"):
+            for allowed in (raw_val.upper(), raw_val.lower()):
+                values, args = parser.parse_args(['--testing=' + allowed])
+                self.assertEqual(values.testing, True,
+                    msg="for --testing=%s, got %r, expected False" %
+                        (allowed, values.testing))
+
+        try:
+            parser.parse_args(["--testing=invalid"])
+        except helpers.Error, e:
+            pass
+        else:
+            self.fail("no error message thrown for --testing=invalid")
+
 
 class ModifyParser(commandline.OptionParser):
 

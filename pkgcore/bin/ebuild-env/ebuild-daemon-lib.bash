@@ -28,7 +28,7 @@ internal_inherit() {
 	listen line
 	if [ "$line" == "path" ]; then
 		listen line;
-		source "${line}" || die "failed sources inherit: ${line}"
+		source "${line}" >&2 || die "failed sources inherit: ${line}"
 	elif [ "$line" == "transfer" ]; then
 		listen line;
 		eval "$line" || die "failed evaluating eclass $x on an inherit transfer"
@@ -46,7 +46,7 @@ source_profiles() {
 	while [ "$line" != end_request ]; do
 		if [ "$line" == "path" ]; then
 			listen line;
-			source "${line}"
+			source "${line}" >&2
 		elif [ "$line" == "transfer" ]; then
 			listen line;
 			eval "$line" || die "failed evaluating profile bashrc: ${line}"

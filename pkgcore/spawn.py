@@ -17,7 +17,7 @@ import os, atexit, signal, sys
 from pkgcore.const import (
     BASH_BINARY, SANDBOX_BINARY, FAKED_PATH, LIBFAKEROOT_PATH)
 
-from snakeoil.osutils import listdir
+from snakeoil.osutils import listdir, access
 from snakeoil.mappings import ProtectedDict
 
 
@@ -329,7 +329,7 @@ def find_binary(binary, paths=None):
     """look through the PATH environment, finding the binary to execute"""
 
     if os.path.isabs(binary):
-        if not (os.path.isfile(binary) and os.access(binary, os.X_OK)):
+        if not (os.path.isfile(binary) and access(binary, os.X_OK)):
             raise CommandNotFound(binary)
         return binary
 
@@ -338,7 +338,7 @@ def find_binary(binary, paths=None):
 
     for path in paths:
         filename = "%s/%s" % (path, binary)
-        if os.access(filename, os.X_OK) and os.path.isfile(filename):
+        if access(filename, os.X_OK) and os.path.isfile(filename):
             return filename
 
     raise CommandNotFound(binary)
@@ -519,7 +519,7 @@ def is_sandbox_capable(force=False):
             return is_sandbox_capable.cached_result
         except AttributeError:
             pass
-    res = os.path.isfile(SANDBOX_BINARY) and os.access(SANDBOX_BINARY, os.X_OK)
+    res = os.path.isfile(SANDBOX_BINARY) and access(SANDBOX_BINARY, os.X_OK)
     is_sandbox_capable.cached_result = res
     return res
 

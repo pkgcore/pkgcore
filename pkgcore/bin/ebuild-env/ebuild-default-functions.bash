@@ -536,7 +536,7 @@ internal_inherit()
 		done
 	fi
 	debug-print "inherit: $1 -> $location"
-	source "$location" || die "died sourcing $location in inherit()"
+	source "$location" >&2 || die "died sourcing $location in inherit()"
 	return 0
 }
 

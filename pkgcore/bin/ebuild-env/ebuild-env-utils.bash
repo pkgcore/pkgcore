@@ -129,7 +129,7 @@ scrub_environ() {
 			> "${T}/.pre-scrubbed-env" || die "failed first step of scrubbing the env to load"
 
 		[ -s "${T}/.pre-scrubbed-env" ] || die "empty pre-scrubbed-env file.  pkgcore bug?"
-		source "${T}/.pre-scrubbed-env" || die "failed sourcing scrubbed env"
+		source "${T}/.pre-scrubbed-env" >&2 || die "failed sourcing scrubbed env"
 
 
 		# if reinstate_loaded_env_attributes exists, run it to add to the vars.

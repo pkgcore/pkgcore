@@ -247,7 +247,21 @@ def empty_config_callback(option, opt_str, value, parser):
     parser.values.empty_config = True
 
 
+def convert_bool_type(option, opt, value):
+    v = value.lower()
+    if v in ("true", "y", "yes"):
+        return True
+    elif v in ("false", "n", "no"):
+        return False
+    raise optparse.OptionValueError("option %s: invalid bool value: %r."
+        "  Valid values are %r" % (opt, value,
+        sorted(("true", "false", "y", "yes", "n", "no"))))
+
 class Option(optparse.Option):
+
+    TYPES = optparse.Option.TYPES + ('bool',)
+    TYPE_CHECKER = optparse.Option.TYPE_CHECKER.copy()
+    TYPE_CHECKER['bool'] = convert_bool_type
 
     def __init__(self, *args, **kwargs):
         self.long_help = kwargs.pop('long_help', None)
@@ -300,8 +314,10 @@ class OptionParser(optparse.OptionParser, object):
             help='print some extra info useful for pkgcore devs. You may have '
             'to set this as first argument for debugging certain '
             'configuration problems.'),
-        Option('--nocolor', action='store_true',
-            help='disable color in the output.'),
+        Option('--color', action='store', type='bool', default=True,
+            help='enable/disable color', metavar='BOOLEAN'),
+        Option('--nocolor', action='store_false', dest='color',
+            help='alias for --color=n'),
         Option('--version', action='version'),
         Option(
             '--add-config', action='callback', callback=new_config_callback,
@@ -493,10 +509,10 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
             option_parser.error("I don't know what to do with %s" %
                                 (' '.join(args),))
         else:
-            if options.nocolor:
-                formatter_factory = formatters.PlainTextFormatter
-            else:
+            if options.color:
                 formatter_factory = formatters.get_formatter
+            else:
+                formatter_factory = formatters.PlainTextFormatter
             out = formatter_factory(outfile)
             err = formatter_factory(errfile)
             if logging.root.handlers:

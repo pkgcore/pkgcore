@@ -4,6 +4,18 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* ticket #221; add --color=(n|y) support
+
+* force all sourcing to stderr; this protects against idiocy like the
+  python eclass trying to write to stdout in color during sourcing.
+
+* pmaint perl_rebuild was added; right now it just identifies what needs
+  rebuilding on perl upgrades, but down the line it'll do the rebuilds as
+  needed.
+
+* pkgcore ticket #172; rely on snakeoil.osutils.access to paper over differing
+  os.access behaviours for certain broken userlands (SunOS primarily).
+
 * pkgcore now ignores ebuild postrm exit status- it logs failures, but there
   isn't really anything that can be done at that stage (everything is already
   unmerged after all).

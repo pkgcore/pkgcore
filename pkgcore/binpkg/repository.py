@@ -19,7 +19,7 @@ from pkgcore.binpkg import repo_ops
 
 from snakeoil.currying import partial
 from snakeoil.mappings import DictMixin, StackedDict
-from snakeoil.osutils import listdir_dirs, listdir_files
+from snakeoil.osutils import listdir_dirs, listdir_files, access
 from snakeoil.osutils import join as pjoin
 from snakeoil.klass import jit_attr
 
@@ -238,7 +238,7 @@ class tree(prototype.tree):
         self.ignore_paludis_versioning = ignore_paludis_versioning
 
         # XXX rewrite this when snakeoil.osutils grows an access equivalent.
-        if not os.access(self.base, os.X_OK|os.R_OK):
+        if not access(self.base, os.X_OK|os.R_OK):
             # either it doesn't exist, or we don't have perms.
             if not os.path.exists(self.base):
                 raise errors.InitializationError(

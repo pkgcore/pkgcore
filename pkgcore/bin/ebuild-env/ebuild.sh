@@ -79,7 +79,7 @@ alias load_environ='{
 	[ -z "${TARGET_ENV}" ] && die "load_environ was invoked w/out TARGET_ENV set";
 	[ -z "${T}" ] && die "init_environ requires \$T to be set";
 	EXISTING_PATH=${PATH};
-	scrub_environ "${TARGET_ENV}";source "${T}/.scrubbed-env" || die "sourcing scrubbed env failed";
+	scrub_environ "${TARGET_ENV}";source "${T}/.scrubbed-env" >&2 || die "sourcing scrubbed env failed";
 	pkgcore_ensure_PATH "${EXISTING_PATH}";
 	unset -v EXISTING_PATH;
 }'
@@ -226,12 +226,12 @@ source_profiles() {
 		# Must unset it so that it doesn't mess up assumptions in the RCs.
 		unset IFS
 		if [ -f "${dir}/profile.bashrc" ]; then
-			source "${dir}/profile.bashrc"
+			source "${dir}/profile.bashrc" >&2
 		fi
 	done
 	restore_IFS
 	if [ -f "$PORTAGE_BASHRC" ]; then
-		source "$PORTAGE_BASHRC"
+		source "$PORTAGE_BASHRC" >&2
 	fi
 }
 
@@ -272,7 +272,7 @@ generate_initial_ebuild_environ() {
 
 	# if daemonized, it's already loaded these funcs.
 	if [ "$DAEMONIZED" != "yes" ]; then
-		source "${PKGCORE_BIN_PATH}/eapi/common.bash" || die "failed sourcing eapi/common.bash"
+		source "${PKGCORE_BIN_PATH}/eapi/common.bash" >&2 || die "failed sourcing eapi/common.bash"
 	fi
 	SANDBOX_ON="1"
 	export S=${WORKDIR}/${P}
@@ -296,7 +296,7 @@ generate_initial_ebuild_environ() {
 	# XXX: as soon as these eclasses behave, remove this.
 	export DESTTREE=/usr
 
-	source "${EBUILD}"
+	source "${EBUILD}" >&2
 	if [ "${PKGCORE_EBUILD_PHASE}" != "depend" ]; then
 		RESTRICT="${FINALIZED_RESTRICT}"
 		unset FINALIZED_RESTRICT
@@ -335,15 +335,15 @@ generate_initial_ebuild_environ() {
 	unset E_IUSE E_DEPEND E_RDEPEND E_PDEPEND
 	pkgcore_ensure_PATH "$EXISTING_PATH"
 	if [ "${PKGCORE_EBUILD_PHASE}" != "depend" ]; then
-		source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.bash" || die "failed sourcing eapi '${EAPI}'"
+		source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.bash" >&2 || die "failed sourcing eapi '${EAPI}'"
 	fi
 	dump_environ || die "dump_environ returned non zero"
 }
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.
-source "${PKGCORE_BIN_PATH}/ebuild-default-functions.bash" || die "failed sourcing ebuild-default-functions.bash"
-source "${PKGCORE_BIN_PATH}/isolated-functions.bash" || die "failed sourcing stripped down functions.bash"
-source "${PKGCORE_BIN_PATH}/ebuild-env-utils.bash" || die "failed sourcing ebuild-env-utils.bash"
+source "${PKGCORE_BIN_PATH}/ebuild-default-functions.bash" >&2 || die "failed sourcing ebuild-default-functions.bash"
+source "${PKGCORE_BIN_PATH}/isolated-functions.bash" >&2 || die "failed sourcing stripped down functions.bash"
+source "${PKGCORE_BIN_PATH}/ebuild-env-utils.bash" >&2 || die "failed sourcing ebuild-env-utils.bash"
 
 # general func to call for phase execution.  this handles necessary env loading/dumping, and executing pre/post/dyn
 # calls.

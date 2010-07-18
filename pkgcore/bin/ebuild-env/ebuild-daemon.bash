@@ -39,7 +39,7 @@ listen PKGCORE_PYTHONPATH
 [ -z "$PKGCORE_PYTHONPATH" ] && die "empty PKGCORE_PYTHONPATH, bailing"
 declare -rx PKGCORE_PYTHONPATH
 
-if ! source "${PKGCORE_BIN_PATH}/ebuild.sh" daemonize; then
+if ! source "${PKGCORE_BIN_PATH}/ebuild.sh" daemonize >&2; then
 	speak "failed"
 	die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild.sh"
 fi
@@ -66,7 +66,7 @@ speak $re
 unset x re
 
 
-if ! source "${PKGCORE_BIN_PATH}/ebuild-daemon-lib.bash"; then
+if ! source "${PKGCORE_BIN_PATH}/ebuild-daemon-lib.bash" >&2; then
 	speak failed
 	die "failed source ${PKGCORE_BIN_PATH}/ebuild-daemon-lib.bash"
 fi
@@ -79,7 +79,7 @@ DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alive com PORTAGE_LOGFILE cont"
 export QA_CONTROLLED_EXTERNALLY="yes"
 enable_qa_interceptors
 
-if ! source "${PKGCORE_BIN_PATH}/eapi/common.bash"; then
+if ! source "${PKGCORE_BIN_PATH}/eapi/common.bash" >&2; then
 	speak failed
 	die "failed sourcing ${PORTAGE_LIB}/eapi/common.bash"
 fi

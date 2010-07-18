@@ -218,7 +218,8 @@ def unmerge(out, err, vdb, tokens, options, formatter, world_set=None):
         out.write(match.cpvstr)
     out.prefix = []
 
-    repo_obs = observer.file_repo_observer(ObserverFormatter(out))
+    repo_obs = observer.file_repo_observer(ObserverFormatter(out),
+        not options.debug)
 
     if options.pretend:
         return
@@ -523,7 +524,8 @@ def main(options, out, err):
             if not formatter.ask("Do you wish to proceed?", default_answer=False):
                 return 1
             out.write()
-        repo_obs = observer.file_repo_observer(ObserverFormatter(out))
+        repo_obs = observer.file_repo_observer(ObserverFormatter(out),
+            not options.debug)
         do_unmerge(options, out, err, livefs_repos, wipes, world_set, repo_obs)
         return 0
 
@@ -563,8 +565,10 @@ def main(options, out, err):
         formatter.ask("Would you like to merge these packages?")):
         return
 
-    build_obs = observer.file_build_observer(ObserverFormatter(out))
-    repo_obs = observer.file_repo_observer(ObserverFormatter(out))
+    build_obs = observer.file_build_observer(ObserverFormatter(out),
+        not options.debug)
+    repo_obs = observer.file_repo_observer(ObserverFormatter(out),
+        not options.debug)
 
     change_count = len(changes)
 

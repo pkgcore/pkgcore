@@ -4,28 +4,6 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-* ticket #221; add --color=(n|y) support
-
-* force all sourcing to stderr; this protects against idiocy like the
-  python eclass trying to write to stdout in color during sourcing.
-
-* pmaint perl_rebuild was added; right now it just identifies what needs
-  rebuilding on perl upgrades, but down the line it'll do the rebuilds as
-  needed.
-
-* pkgcore ticket #172; rely on snakeoil.osutils.access to paper over differing
-  os.access behaviours for certain broken userlands (SunOS primarily).
-
-* pkgcore now ignores ebuild postrm exit status- it logs failures, but there
-  isn't really anything that can be done at that stage (everything is already
-  unmerged after all).
-
-* fixed pkgcore.fs.livefs.iter_scan to support a path pointing to a
-  nondirectory.
-
-* fixed a validation bug in installed pkgs virtual cache staleness detection-
-  this accounted for a surprisingly hefty ~25% for simple pquery invocations.
-
 * USE is now locked an intersection of the pkgs IUSE, with forced flags
   (things like arch, userland, prefix, etc) added on.  Mild speed up from
   dealing with a reduced set, more importantly portage switched to controlled
@@ -43,14 +21,36 @@ See ChangeLog for full commit logs; this is summarized/major changes.
   consumers will get just what they need- a 3x speed up for
   pquery --attr environment is from that internal optimization alone.
 
-* commandline.OptionParser now does a shallow copy of all items in
-  standard_options_list; this protects against class/instance level cycles
-  inherent in optparse.OptionParser's design.
-
 * pkgcore.interfaces.data_source moved to snakeoil.data_source.
 
 * pkgcore.chksum moved to snakeoil.chksum.  A compatibility shim was left in
   for pkgcore-checks, which will be removed in 0.7 of pkgcore.
+
+* pkgcore ticket #172; rely on snakeoil.osutils.access to paper over differing
+  os.access behaviours for certain broken userlands (SunOS primarily).
+
+
+pkgcore 0.5.11.8: July 17th, 2010
+
+* ticket #221; add --color=(n|y) support
+
+* pmaint perl_rebuild was added; right now it just identifies what needs
+  rebuilding on perl upgrades, but down the line it'll do the rebuilds as
+  needed.
+
+* pkgcore now ignores ebuild postrm exit status- it logs failures, but there
+  isn't really anything that can be done at that stage (everything is already
+  unmerged after all).
+
+* fixed pkgcore.fs.livefs.iter_scan to support a path pointing to a
+  nondirectory.
+
+* force all sourcing to stderr; this protects against idiocy like the
+  python eclass trying to write to stdout in color during sourcing.
+
+* commandline.OptionParser now does a shallow copy of all items in
+  standard_options_list; this protects against class/instance level cycles
+  inherent in optparse.OptionParser's design.
 
 
 pkgcore 0.5.11.7: June 20th, 2010

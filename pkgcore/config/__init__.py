@@ -17,16 +17,18 @@ class ConfigHint(object):
 
     # be aware this is used in clone
     __slots__ = (
-        "types", "positional", "required", "typename", "allow_unknowns", "doc")
+        "types", "positional", "required", "typename", "allow_unknowns",
+        "doc", "authorative")
 
     def __init__(self, types=None, positional=None, required=None, doc=None,
-                 typename=None, allow_unknowns=False):
+                 typename=None, allow_unknowns=False, authorative=False):
         self.types = types or {}
         self.positional = positional or []
         self.required = required or []
         self.typename = typename
         self.allow_unknowns = allow_unknowns
         self.doc = doc
+        self.authorative = authorative
 
     def clone(self, **kwds):
         new_kwds = {}

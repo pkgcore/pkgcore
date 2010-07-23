@@ -144,6 +144,42 @@ class ConfigTypeFromClassTest(TestCase):
         self._test_basics(Class, 'Class', two_override='bool')
         self.assertEqual('interesting', basics.ConfigType(Class).doc)
 
+    def test_object_init(self):
+        class kls(object):
+            pass
+        conf = basics.ConfigType(kls)
+        self.assertEqual(conf.types, {})
+        self.assertEqual(conf.required, ())
+
+    def test_builtin_targets(self):
+        # ensure it's a type error, rather than an attributeerror
+        # from not being able to pull func_code
+        self.assertRaises(TypeError,
+            basics.ConfigType, dict)
+
+    def test_builtin_full_override(self):
+        # check our assumptions...
+        class cls(file):
+            __slots__ = ()
+        self.assertRaises(TypeError, basics.ConfigType, cls)
+
+        raw_hint = ConfigHint(types={"filename":"str", "mode":"r",
+            "buffering":"int"}, typename='file',
+            required=['filename'], positional=['filename'])
+
+        # make sure it still tries to introspect, and throws typeerror.
+        # introspection is generally wanted- if it must be skipped, the
+        # ConfigHint must make it explicit
+        cls.pkgcore_config_type = raw_hint
+        self.assertRaises(TypeError, basics.ConfigType, cls)
+        cls.pkgcore_config_type = raw_hint.clone(authorative=True)
+        conf = basics.ConfigType(cls)
+        self.assertEqual(conf.name, 'file')
+        self.assertEqual(list(conf.required), ['filename'])
+        self.assertEqual(list(conf.positional), ['filename'])
+        self.assertEqual(sorted(conf.types), ['buffering', 'filename', 'mode'])
+
+
 
 class ConfigHintDecoratorTest(TestCase):
 

@@ -370,7 +370,7 @@ class ConfiguredTree(configured.tree):
         fetcher = self.fetcher_override
         if fetcher is None:
             fetcher = domain.fetcher
-        return buildable(pkg, self.domain_settings, pkg.repo.eclass_cache,
+        return buildable(domain, pkg, pkg.repo.eclass_cache,
                          fetcher,
                          use_override=self._get_pkg_use_for_building(pkg),
                          **kwds)

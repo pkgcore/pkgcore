@@ -58,6 +58,7 @@ class ConfigType(object):
         attr that is a L{ConfigHint} instance, in which case those
         override.
         """
+        original_func_obj = func_obj
         self.name = func_obj.__name__
         self.callable = func_obj
         self.doc = getattr(func_obj, '__doc__', None)
@@ -69,27 +70,40 @@ class ConfigType(object):
         # need without it. Most of the code in its getargs function
         # deals with tuples inside argument definitions, which we do
         # not support anyway.
-        code = getattr(func_obj, _code_attrname)
-        if code.co_argcount and code.co_varnames[0] == 'self':
-            args = code.co_varnames[1:code.co_argcount]
-        else:
-            args = code.co_varnames[:code.co_argcount]
-        varargs = bool(code.co_flags & CO_VARARGS)
-        varkw = bool(code.co_flags & CO_VARKEYWORDS)
-        defaults = func_obj.func_defaults
-        if defaults is None:
-            defaults = ()
         self.types = {}
-        # iterate through defaults backwards, so they match up to argnames
-        for i, default in enumerate(reversed(defaults)):
-            argname = args[-1 - i]
-            for typeobj, typename in [(bool, 'bool'),
+
+        varargs, args, defaults, varkw = (), (), (), ()
+        hint_overrides = getattr(self.callable, "pkgcore_config_type", None)
+        # if it's not authorative, do introspection; the getattr is to protect
+        # against the case where there is no Hint
+        if not getattr(hint_overrides, 'authorative', None):
+            try:
+                code = getattr(func_obj, _code_attrname)
+            except AttributeError:
+                if func_obj != object.__init__:
+                    raise TypeError("func %s has no %r attribute; likely a "
+                        "builtin object which can't be introspected without hints"
+                        % (original_func_obj, _code_attrname))
+            else:
+                if code.co_argcount and code.co_varnames[0] == 'self':
+                    args = code.co_varnames[1:code.co_argcount]
+                else:
+                    args = code.co_varnames[:code.co_argcount]
+                varargs = bool(code.co_flags & CO_VARARGS)
+                varkw = bool(code.co_flags & CO_VARKEYWORDS)
+                defaults = func_obj.func_defaults
+                if defaults is None:
+                    defaults = ()
+                # iterate through defaults backwards, so they match up to argnames
+                for i, default in enumerate(reversed(defaults)):
+                    argname = args[-1 - i]
+                    for typeobj, typename in [(bool, 'bool'),
                                       (tuple, 'list'),
                                       (str, 'str'),
                                       ((int, long), 'int')]:
-                if isinstance(default, typeobj):
-                    self.types[argname] = typename
-                    break
+                        if isinstance(default, typeobj):
+                            self.types[argname] = typename
+                            break
         # just [:-len(defaults)] doesn't work if there are no defaults
         self.positional = args[:len(args)-len(defaults)]
         # no defaults to determine the type from -> default to str.
@@ -99,7 +113,6 @@ class ConfigType(object):
         self.allow_unknowns = False
 
         # Process ConfigHint (if any)
-        hint_overrides = getattr(self.callable, "pkgcore_config_type", None)
         if hint_overrides is not None:
             self.types.update(hint_overrides.types)
             if hint_overrides.required:

@@ -60,6 +60,8 @@ class base(object):
     _engine_types = None
     priority = 50
 
+    pkgcore_config_type = ConfigHint(typename='trigger')
+
     @property
     def label(self):
         if self._label is not None:
@@ -249,6 +251,9 @@ class ldconfig(base):
     default_ld_path = ['usr/lib', 'usr/lib64', 'usr/lib32', 'lib',
         'lib64', 'lib32']
 
+    pkgcore_config_type = base.pkgcore_config_type.clone(
+        types={'ld_so_conf_path':'str'})
+
     def __init__(self, ld_so_conf_path="etc/ld.so.conf"):
         self.ld_so_conf_path = ld_so_conf_path.lstrip(os.path.sep)
         self.saved_mtimes = mtime_watcher()
@@ -410,6 +415,9 @@ class BaseSystemUnmergeProtection(base):
         '/usr/bin', '/usr/sbin', '/bin', '/sbin', '/lib', '/lib32', '/lib64',
         '/etc', '/var', '/home', '/root')
 
+    pkgcore_config_type = base.pkgcore_config_type.clone(types=
+        {"preserve_sequence":"list"})
+
     def __init__(self, preserve_sequence=None):
         if preserve_sequence is None:
             preserve_sequence = self._preserve_sequence
@@ -520,6 +528,8 @@ class PruneFiles(base):
     _hooks = ('pre_merge',)
     _engine_types = INSTALLING_MODES
 
+    pkgcore_config_type = None
+
     def __init__(self, sentinel_func):
         """
         @param sentinel_func: callable accepting a fsBase entry, returns
@@ -604,9 +614,10 @@ class SavePkg(base):
 
     _copy_source = 'new'
 
-    pkgcore_config_type = ConfigHint({'target_repo':'ref:repo',
-        'pristine':'bool', 'skip_if_source':'bool'}, typename='trigger',
-         required=['target_repo'])
+    pkgcore_config_type = base.pkgcore_config_type.clone(
+        types={'target_repo':'ref:repo','pristine':'bool',
+            'skip_if_source':'bool'},
+        required=['target_repo'])
 
     def __init__(self, target_repo, pristine=True, skip_if_source=True):
         if not pristine:
@@ -635,12 +646,16 @@ class SavePkg(base):
 
 class SavePkgIfInPkgset(SavePkg):
 
-    pkgcore_config_type = ConfigHint({'target_repo':'ref:repo',
-        'pristine':'bool', 'pkgset':'ref:pkgset'}, typename='trigger',
+    d = SavePkg.pkgcore_config_type.types.copy()
+    d['pkgset'] = 'ref:pkgset'
+    pkgcore_config_type = SavePkg.pkgcore_config_type.clone(types=d,
         required=['target_repo', 'pkgset'])
+    del d
 
-    def __init__(self, target_repo, pkgset, pristine=True):
-        SavePkg.__init__(self, target_repo, pristine=pristine)
+    def __init__(self, target_repo, pkgset, pristine=True,
+        skip_if_in_source=True):
+        SavePkg.__init__(self, target_repo, pristine=pristine,
+            skip_if_in_source=skip_if_in_source)
         self.pkgset = pkgset
 
     def trigger(self, engine, cset):
@@ -654,8 +669,8 @@ class SavePkgUnmerging(SavePkg):
     _engine_types = UNINSTALLING_MODES
     _copy_source = 'old'
 
-    pkgcore_config_type = ConfigHint({'target_repo':'ref:repo'},
-        typename='trigger', required=['target_repo'])
+    pkgcore_config_type = base.pkgcore_config_type.clone(
+        types={'target_repo':'ref:repo'})
 
     def __init__(self, target_repo):
         self.target_repo = target_repo
@@ -663,9 +678,9 @@ class SavePkgUnmerging(SavePkg):
 
 class SavePkgUnmergingIfInPkgset(SavePkgUnmerging):
 
-    pkgcore_config_type = ConfigHint({'target_repo':'ref:repo',
-        'pkgset':'ref:pkgset'},
-        typename='trigger', required=['target_repo', 'pkgset'])
+    pkgcore_config_type = base.pkgcore_config_type.clone(
+        types={'target_repo':'ref:repo', 'pkgset':'ref:pkgset'},
+        required=['target_repo', 'pkgset'])
 
     def __init__(self, target_repo, pkgset, pristine=True):
         SavePkgUnmerging.__init__(self, target_repo, pristine=pristine)
@@ -687,8 +702,8 @@ class BinaryDebug(base):
     default_strip_flags = ('--strip-unneeded', '-R', '.comment')
     elf_regex = '(^| )ELF +(\d+-bit )'
 
-    pkgcore_config_type = ConfigHint({'mode':'str', 'strip_binary':'str',
-        'objcopy_binary':'str'}, typename='trigger')
+    pkgcore_config_type = base.pkgcore_config_type.clone(
+        types={"strip_binary":"str", "objcopy_binary":"str"})
 
     def __init__(self, mode='split', strip_binary=None, objcopy_binary=None,
         extra_strip_flags=(), debug_storage='/usr/lib/debug/'):

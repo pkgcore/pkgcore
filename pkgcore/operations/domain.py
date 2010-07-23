@@ -64,11 +64,6 @@ class base(object):
     def customize_engine(self, engine):
         pass
 
-    def _get_format_op_args_kwds(self):
-        # XXX: temp hacking during domain refactoring.
-        return (dict(self.domain.settings),), {}
-        return (), {}
-
     def start(self, engine):
         self.me = engine
         self.underway = True
@@ -121,13 +116,9 @@ class install(base):
         self.new_pkg = pkg
         base.__init__(self, domain, repo, observer, triggers, offset)
 
-    install_get_format_op_args_kwds = base._get_format_op_args_kwds
-
     def create_op(self):
-        op_args, op_kwds = self.install_get_format_op_args_kwds()
-        op_kwds["observer"] = self.observer
         self.install_op = getattr(self.new_pkg,
-            self.format_install_op_name)(*op_args, **op_kwds)
+            self.format_install_op_name)(self.domain, self.observer)
 
     def create_repo_op(self):
         self.repo_op = self.repo.operations.install(self.new_pkg,
@@ -201,13 +192,9 @@ class uninstall(base):
         self.old_pkg = pkg
         base.__init__(self, domain, repo, observer, triggers, offset)
 
-    uninstall_get_format_op_args_kwds = base._get_format_op_args_kwds
-
     def create_op(self):
-        op_args, op_kwds = self.uninstall_get_format_op_args_kwds()
-        op_kwds["observer"] = self.observer
         self.uninstall_op = getattr(self.old_pkg,
-            self.format_uninstall_op_name)(*op_args, **op_kwds)
+            self.format_uninstall_op_name)(self.domain, self.observer)
 
     def create_repo_op(self):
         self.repo_op = self.repo.operations.uninstall(self.old_pkg,

@@ -468,7 +468,7 @@ class buildable(ebd, setup_mixin, format.build):
 
     # XXX this is unclean- should be handing in strictly what is build
     # env, rather then dumping domain settings as env.
-    def __init__(self, pkg, domain_settings, eclass_cache, fetcher,
+    def __init__(self, domain, pkg, eclass_cache, fetcher,
         observer=None, **kwargs):
 
         """
@@ -483,8 +483,9 @@ class buildable(ebd, setup_mixin, format.build):
         """
 
         use = kwargs.get("use_override", pkg.use)
+        domain_settings = domain.settings
 
-        format.build.__init__(self, observer=observer)
+        format.build.__init__(self, domain, pkg, observer)
         ebd.__init__(self, pkg, initial_env=domain_settings,
                      features=domain_settings["FEATURES"], **kwargs)
 

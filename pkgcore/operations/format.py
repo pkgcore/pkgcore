@@ -52,7 +52,8 @@ class build_base(object):
 
     __metaclass__ = ForcedDepends
 
-    def __init__(self, observer=None):
+    def __init__(self, pkg, observer):
+        self.pkg = pkg
         self.observer = observer
 
     def start(self):
@@ -72,6 +73,11 @@ class build(build_base):
         "test":"compile",
         "install":"test",
         "finalize":"install"}
+
+    def __init__(self, domain, pkg, observer):
+        self.domain = domain
+        self.pkg = pkg
+        self.observer = observer
 
     def setup(self):
         return True
@@ -122,6 +128,10 @@ class build(build_base):
 class install(build_base):
     stage_depends = {"preinst":"start", "postinst":"preinst", "finalize":"postinst"}
 
+    def __init__(self, domain, newpkg, observer):
+        build_base.__init__(self, domain, newpkg, observer)
+        self.new_pkg = newpkg
+
     def preinst(self):
         """any pre merge steps needed"""
         return True
@@ -137,6 +147,10 @@ class install(build_base):
 
 class uninstall(build_base):
     stage_depends = {"prerm":"start", "postrm":"prerm", "finalize":"postrm"}
+
+    def __init__(self, domain, oldpkg, observer):
+        build_base.__init__(self, domain, oldpkg, observer)
+        self.old_pkg = oldpkg
 
     def prerm(self):
         """any pre unmerge steps needed"""
@@ -154,10 +168,16 @@ class uninstall(build_base):
         """finalize any unmerge steps required"""
         return True
 
+
 class replace(install, uninstall):
 
     stage_depends = {"finalize":"postinst", "postinst":"postrm",
         "postrm":"prerm", "prerm":"preinst", "preinst":"start"}
+
+    def __init__(self, domain, old_pkg, new_pkg, observer):
+        build_base.__init__(self, domain, new_pkg, observer)
+        self.new_pkg = new_pkg
+        self.old_pkg = old_pkg
 
 
 class fetch(object):

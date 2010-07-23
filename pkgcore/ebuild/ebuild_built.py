@@ -100,14 +100,17 @@ class package(ebuild_src.base):
     def _update_metadata(self, pkg):
         raise NotImplementedError()
 
-    def _repo_install_op(self, *args, **kwds):
-        return self._parent._generate_format_install_op(self, *args, **kwds)
+    def _repo_install_op(self, domain, observer):
+        return self._parent._generate_format_install_op(domain, self,
+            observer)
 
-    def _repo_uninstall_op(self, *args, **kwds):
-        return self._parent._generate_format_uninstall_op(self, *args, **kwds)
+    def _repo_uninstall_op(self, domain, observer):
+        return self._parent._generate_format_uninstall_op(domain, self,
+            observer)
 
-    def _repo_replace_op(self, *args, **kwds):
-        return self._parent._generate_format_replace_op(self, *args, **kwds)
+    def _repo_replace_op(self, domain, old_pkg, observer):
+        return self._parent._generate_format_replace_op(domain, old_pkg,
+            self, observer)
 
     def _fetch_metadata(self):
         return self._parent._get_metadata(self)
@@ -144,17 +147,17 @@ def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
         # screwed, the target is in place already
         triggers.FixImageSymlinks(format_op_inst).register(engine_inst)
 
-def _generic_format_install_op(self, pkg, domain_settings, **kwds):
-    return ebd.install_op(pkg, initial_env=domain_settings,
-                          env_data_source=pkg.environment, **kwds)
+def _generic_format_install_op(self, domain, pkg, observer):
+    return ebd.install_op(pkg, initial_env=domain.settings,
+        env_data_source=pkg.environment, observer=observer)
 
-def _generic_format_uninstall_op(self, pkg, domain_settings, **kwds):
-    return ebd.uninstall_op(pkg, initial_env=domain_settings,
-                            env_data_source=pkg.environment, **kwds)
+def _generic_format_uninstall_op(self, domain, pkg, observer):
+    return ebd.uninstall_op(pkg, initial_env=domain.settings,
+        env_data_source=pkg.environment, observer=observer)
 
-def _generic_format_replace_op(self, pkg, domain_settings, **kwds):
-    return ebd.replace_op(pkg, initial_env=domain_settings,
-                          env_data_source=pkg.environment, **kwds)
+def _generic_format_replace_op(self, domain, oldpkg, newpkg, observer):
+    return ebd.replace_op(pkg, initial_env=domain.settings,
+        env_data_source=pkg.environment, observer=observer)
 
 
 class package_factory(metadata.factory):

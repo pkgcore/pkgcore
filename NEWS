@@ -4,6 +4,21 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* triggers base class now carries a ConfigHint to provide a typename.  If
+  a specific trigger cannot be specified by configuration directly, set
+  pkgcore_config_type = None to disable the hint removing it from being
+  directly configurable.
+
+  For users: this means basically all triggers are now directly usable in
+  configuration.
+
+* object inspection for configuration can now handle object.__init__ for
+  config 'class' targets; no need to define an intermediate function.
+
+* ConfigHints can now specify authorative=True to disable all introspection.
+  Mainly usedful for cpy objects, although useful if you want to limit what
+  the introspection exposes.
+
 * api's for installing pkgs has changed; now to install a pkg to a domain,
   you invoke domain.(install|uininstall|remove)_pkg.  To just modify a repo,
   access it's operations for the appropriate operation.

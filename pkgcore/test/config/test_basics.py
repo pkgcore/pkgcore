@@ -159,7 +159,10 @@ class ConfigTypeFromClassTest(TestCase):
 
     def test_builtin_full_override(self):
         # check our assumptions...
-        class cls(file):
+        # and yes, the signatures below are for file rather than
+        # dict; we need a cpy class for the test, the ConfigHint doesn't
+        # have to be accurate however
+        class cls(dict):
             __slots__ = ()
         self.assertRaises(TypeError, basics.ConfigType, cls)
 

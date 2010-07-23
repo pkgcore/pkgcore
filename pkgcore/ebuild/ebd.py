@@ -12,7 +12,6 @@ api, per phase methods for example
 
 import os, errno, shutil
 
-from pkgcore.interfaces import format
 from snakeoil import data_source
 from pkgcore.ebuild.processor import \
     request_ebuild_processor, release_ebuild_processor, \
@@ -22,10 +21,11 @@ from pkgcore.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_fakeroot_capable)
 from pkgcore.os_data import xargs
 from pkgcore.ebuild.const import eapi_capable
-from pkgcore.interfaces import observer
+from pkgcore.operations import observer, format
 from pkgcore.ebuild.ebuild_built import fake_package_factory, package
 from snakeoil.currying import post_curry, pretty_docs
-from snakeoil.osutils import ensure_dirs, normpath, join as pjoin
+from snakeoil.osutils import (ensure_dirs, normpath, join as pjoin,
+    listdir_files)
 
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -64,14 +64,14 @@ def _reset_env_data_source(method):
 class ebd(object):
 
     def __init__(self, pkg, initial_env=None, env_data_source=None,
-                 features=None, observer=None, clean=False, tmp_offset=None,
+                 features=None, observer=None, clean=True, tmp_offset=None,
                 use_override=None):
         """
         @param pkg:
             L{ebuild package instance<pkgcore.ebuild.ebuild_src.package>}
             instance this env is being setup for
         @param initial_env: initial environment to use for this ebuild
-        @param env_data_source: a L{pkgcore.interfaces.data_source} instance
+        @param env_data_source: a L{snakeoil.data_source..base} instance
             to restore the environment from- used for restoring the
             state of an ebuild processing, whether for unmerging, or
             walking phases during building
@@ -285,8 +285,11 @@ class ebd(object):
         release_ebuild_processor(ebd)
         return True
 
-    def cleanup(self, disable_observer=False):
-        if not self.clean_needed or not os.path.exists(self.builddir):
+    def cleanup(self, disable_observer=False, force=False):
+        if not force:
+            if not self.clean_needed:
+                return True
+        if not os.path.exists(self.builddir):
             return True
         if disable_observer:
             return self.do_cleanup(disable_observer=disable_observer)
@@ -326,6 +329,21 @@ class ebd(object):
         else:
             v = name.lower() in self.features
         return v
+
+    def __stage_step_callback__(self, stage):
+        try:
+            open(pjoin(self.builddir, '.%s' % (stage,)), 'w')
+        except EnvironmentError:
+            # we really don't care...
+            pass
+
+    def _reload_state(self):
+        try:
+            self.__set_stage_state__([x[1:]
+                for x in listdir_files(self.builddir) if x.startswith(".")])
+        except EnvironmentError, e:
+            if e.errno not in (errno.ENOTDIR, errno.ENOENT):
+                raise
 
 
 class setup_mixin(object):
@@ -396,6 +414,10 @@ class install_op(ebd, format.install):
     phase operations and steps for install execution
     """
 
+    def __init__(self, *args, **kwargs):
+        kwargs["clean"] = False
+        ebd.__init__(self, *args, **kwargs)
+
     preinst = pretty_docs(
         observer.decorate_build_method("preinst")(
             post_curry(
@@ -415,6 +437,7 @@ class uninstall_op(ebd, format.uninstall):
 
     def __init__(self, *args, **kwargs):
         kwargs["tmp_offset"] = "unmerge"
+        kwargs["clean"] = False
         ebd.__init__(self, *args, **kwargs)
 
     prerm = pretty_docs(

@@ -8,6 +8,7 @@ package with its metadata accessible (think 'no longer abstract')
 
 from pkgcore.ebuild import cpv
 from pkgcore.ebuild.atom import atom
+from pkgcore.package import base
 
 from snakeoil import klass, weakrefs
 
@@ -43,7 +44,7 @@ def DeriveMetadataKls(original_kls):
             @param parent_repository: parent repository this package belongs to
             @type parent_repository: L{pkgcore.repository.prototype.tree}
                 instance
-            """
+            """ % (original_kls, original_kls)
             original_kls.__init__(self, *a, **kwds)
             object.__setattr__(self, "_parent",  parent_repository)
 
@@ -54,6 +55,8 @@ def DeriveMetadataKls(original_kls):
             """
             return self._fetch_metadata()
         _get_attr["data"] = _get_data
+
+        __getattr__ = base.dynamic_getattr_dict
 
         repo = klass.alias_attr("_parent._parent_repo")
 

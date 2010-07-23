@@ -16,7 +16,7 @@ import operator
 from pkgcore.fs import contents, livefs
 from pkgcore.plugin import get_plugins
 from pkgcore.merge import errors
-from pkgcore.interfaces import observer as observer_mod
+from pkgcore.operations import observer as observer_mod
 from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
 
 from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
@@ -326,3 +326,11 @@ class MergeEngine(object):
         return engine._get_livefs_intersect_cset(engine, csets, "raw_old_cset")
 
     alias_cset = staticmethod(alias_cset)
+
+    def get_merged_cset(self, strip_offset=True):
+        cset = self.csets["install"]
+        if self.offset not in (None, '/') and strip_offset:
+            rewrite = contents.change_offset_rewriter(self.offset, '/',
+                cset)
+            cset = contents.contentsSet(cset)
+        return cset

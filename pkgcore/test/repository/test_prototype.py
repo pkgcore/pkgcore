@@ -11,7 +11,7 @@ from pkgcore.ebuild.cpv import versioned_CPV
 from pkgcore.package.mutated import MutatedPkg
 from pkgcore.repository.util import SimpleTree
 from pkgcore.repository import wrapper
-from pkgcore.interfaces.repo import operations
+from pkgcore.operations.repo import operations
 
 
 class TestPrototype(TestCase):

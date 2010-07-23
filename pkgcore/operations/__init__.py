@@ -2,5 +2,5 @@
 # License: GPL2/BSD
 
 """
-interface templates for package/repository/data source objects
+operation templates for package/repository/data source objects
 """

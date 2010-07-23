@@ -3,7 +3,7 @@
 
 from pkgcore.restrictions import packages
 from pkgcore.package.mutated import MutatedPkg
-from pkgcore.interfaces.repo import operations_proxy
+from pkgcore.operations.repo import operations_proxy
 from snakeoil.iterables import caching_iter
 from snakeoil.klass import GetAttrProxy
 from snakeoil.currying import partial

@@ -6,7 +6,7 @@ from snakeoil.currying import partial
 from snakeoil.compatibility import cmp
 from snakeoil.klass import inject_richcmp_methods_from_cmp
 from pkgcore.package.mutated import MutatedPkg
-from pkgcore.package.base import base
+from pkgcore.package.base import base, dynamic_getattr_dict
 
 def passthru(val, self):
     return val
@@ -25,6 +25,7 @@ class FakePkg(base):
 
     # disable protection.  don't want it here
     __setattr__ = object.__setattr__
+    __getattr__ = dynamic_getattr_dict
 
     def __cmp__(self, other):
         return cmp(self.ver, other.ver)

@@ -116,7 +116,7 @@ class package(ebuild_src.base):
         return "built ebuild: %s" % (self.cpvstr)
 
     def build(self, **kwargs):
-        return self.repo._generate_build_op(self)
+        return self.repo._generate_buildop(self)
 
     def add_format_triggers(self, *args, **kwds):
         return self._parent._add_format_triggers(self, *args, **kwds)

@@ -3,8 +3,7 @@
 
 import os, shutil
 
-from pkgcore.interfaces import repo as repo_interfaces
-#needed to grab the PN
+from pkgcore.operations import repo as repo_ops
 
 from pkgcore.const import VERSION
 
@@ -14,18 +13,9 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     'time',
     'pkgcore.ebuild:conditionals',
-    'pkgcore.ebuild:triggers',
     'pkgcore.log:logger',
-    'pkgcore.fs.contents:change_offset_rewriter',
     'pkgcore.vdb.contents:ContentsFile',
 )
-
-
-def _get_default_ebuild_op_args_kwds(self):
-    return (dict(self.domain_settings),), {}
-
-def _default_customize_engine(op_inst, engine):
-    triggers.customize_engine(op_inst.domain_settings, engine)
 
 
 def update_mtime(path, timestamp=None):
@@ -38,21 +28,18 @@ def update_mtime(path, timestamp=None):
         logger.error("failed updated vdb timestamp for %r: %s", path, e)
 
 
-class install(repo_interfaces.livefs_install):
+class install(repo_ops.install):
 
-    def __init__(self, domain_settings, repo, pkg, *args):
-        self.dirpath = pjoin(
-            repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
-        self.domain_settings = domain_settings
-        repo_interfaces.livefs_install.__init__(self, repo, pkg, *args)
+    def __init__(self, repo, newpkg, observer):
+        base = pjoin(repo.base, newpkg.category)
+        dirname = "%s-%s" % (newpkg.package, newpkg.fullver)
+        self.install_path = pjoin(base, dirname)
+        self.tmp_write_path = pjoin(base, '.tmp.%s' % (dirname,))
+        repo_ops.install.__init__(self, repo, newpkg, observer)
 
-    install_get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
-    customize_engine = _default_customize_engine
-
-    def merge_metadata(self, dirpath=None):
+    def add_data(self):
         # error checking?
-        if dirpath is None:
-            dirpath = self.dirpath
+        dirpath = self.tmp_write_path
         ensure_dirs(dirpath, mode=0755, minimal=True)
         update_mtime(self.repo.base)
         rewrite = self.repo._metadata_rewrites
@@ -60,12 +47,7 @@ class install(repo_interfaces.livefs_install):
             if k == "contents":
                 v = ContentsFile(pjoin(dirpath, "CONTENTS"),
                                  mutable=True, create=True)
-                # strip the offset.
-                if self.offset not in (None, '/'):
-                    v.update(change_offset_rewriter(self.offset, '/',
-                        self.me.csets["install"]))
-                else:
-                    v.update(self.me.csets["install"])
+                v.update(self.new_pkg.contents)
                 v.flush()
             elif k == "environment":
                 data = bzip2.compress(
@@ -118,95 +100,57 @@ class install(repo_interfaces.livefs_install):
             "pkgcore-%s\n" % VERSION)
         return True
 
-    def finish(self):
-        ret = repo_interfaces.livefs_install.finish(self)
+    def finalize_data(self):
+        os.rename(self.tmp_write_path, self.install_path)
         update_mtime(self.repo.base)
-        return ret
-
-
-class uninstall(repo_interfaces.livefs_uninstall):
-
-    def __init__(self, domain_settings, repo, pkg, *args):
-        self.dirpath = pjoin(
-            repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
-        self.domain_settings = domain_settings
-        repo_interfaces.livefs_uninstall.__init__(
-            self, repo, pkg, *args)
-
-    uninstall_get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
-    customize_engine = _default_customize_engine
-
-    def unmerge_metadata(self, dirpath=None):
-        if dirpath is None:
-            dirpath = self.dirpath
-        update_mtime(self.repo.base)
-        shutil.rmtree(self.dirpath)
         return True
 
-    def finish(self):
-        ret = repo_interfaces.livefs_uninstall.finish(self)
+
+class uninstall(repo_ops.uninstall):
+
+    def __init__(self, repo, pkg, observer):
+        self.remove_path = pjoin(
+            repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
+        repo_ops.uninstall.__init__(self, repo, pkg, observer)
+
+    def remove_data(self):
+        return True
+
+    def finalize_data(self):
         update_mtime(self.repo.base)
-        return ret
+        shutil.rmtree(self.remove_path)
+        update_mtime(self.repo.base)
+        return True
 
 
 # should convert these to mixins.
-class replace(repo_interfaces.livefs_replace, install, uninstall):
+class replace(repo_ops.replace, install, uninstall):
 
-    def __init__(self, domain_settings, repo, pkg, newpkg, *a):
-        self.dirpath = pjoin(
-            repo.base, pkg.category, pkg.package+"-"+pkg.fullver)
-        self.newpath = pjoin(
-            repo.base, newpkg.category, newpkg.package+"-"+newpkg.fullver)
-        self.tmpdirpath = pjoin(
-            os.path.dirname(self.dirpath),
-            ".tmp."+os.path.basename(self.dirpath))
-        self.domain_settings = domain_settings
-        repo_interfaces.livefs_replace.__init__(self, repo, pkg, newpkg, *a)
+    def __init__(self, repo, pkg, newpkg, observer):
+        uninstall.__init__(self, repo, pkg, observer)
+        install.__init__(self, repo, newpkg, observer)
 
-    _get_format_op_args_kwds = _get_default_ebuild_op_args_kwds
-    customize_engine = _default_customize_engine
+    add_data = install.add_data
+    remove_data = uninstall.remove_data
 
-    def merge_metadata(self, *a, **kw):
-        kw["dirpath"] = self.tmpdirpath
-        if os.path.exists(self.tmpdirpath):
-            shutil.rmtree(self.tmpdirpath)
-        return install.merge_metadata(self, *a, **kw)
-
-    def unmerge_metadata(self, *a, **kw):
-        ret = uninstall.unmerge_metadata(self, *a, **kw)
-        if not ret:
-            return ret
-        os.rename(self.tmpdirpath, self.newpath)
+    def finalize_data(self):
+        # XXX: should really restructure this into
+        # a rename of the unmerge dir, rename merge into it's place (for
+        # literal same fullver replacements), then wipe the unmerge
+        # that minimizes the window for races, and gets the data in place
+        # should unmerge somehow die.
+        uninstall.finalize_data(self)
+        install.finalize_data(self)
         return True
 
-    def finish(self):
-        ret = repo_interfaces.livefs_replace.finish(self)
-        update_mtime(self.repo.base)
-        return ret
 
+class operations(repo_ops.operations):
 
-class operations(repo_interfaces.operations):
+    def _cmd_install(self, pkg, observer):
+        return install(self.repo, pkg, observer)
 
-    def _add_triggers(self, existing_triggers):
-        if existing_triggers is None:
-            existing_triggers = []
-        existing_triggers.extend(self.repo.domain.get_extra_triggers())
-        return existing_triggers
+    def _cmd_uninstall(self, pkg, observer):
+        return uninstall(self.repo, pkg, observer)
 
-    def _cmd_install(self, pkg, observer, triggers=None):
-        return install(self.repo.domain_settings, self.repo.raw_vdb, pkg,
-            observer,
-            self._add_triggers(triggers),
-            self.repo.domain.root)
-
-    def _cmd_uninstall(self, pkg, observer, triggers=None):
-        return uninstall(self.repo.domain_settings, self.repo.raw_vdb, pkg,
-            observer,
-            self._add_triggers(triggers),
-            self.repo.domain.root)
-
-    def _cmd_replace(self, oldpkg, newpkg, observer, triggers=None):
-        return replace(self.repo.domain_settings, self.repo.raw_vdb,
-            oldpkg, newpkg, observer,
-            self._add_triggers(triggers),
-            self.repo.domain.root)
+    def _cmd_replace(self, oldpkg, newpkg, observer):
+        return replace(self.repo, oldpkg, newpkg, observer)

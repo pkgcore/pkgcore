@@ -8,6 +8,8 @@
 
 from pkgcore.util import commandline
 from pkgcore.ebuild import atom, errors
+from pkgcore.operations import observer
+from snakeoil.formatters import ObserverFormatter
 
 
 class OptionParser(commandline.OptionParser):
@@ -29,27 +31,35 @@ class OptionParser(commandline.OptionParser):
         values.phases = args[1:]
         return values, ()
 
+
 def main(options, out, err):
-    pkgs = options.config.get_default('domain').all_repos.match(options.atom)
+    domain = options.config.get_default('domain')
+    pkgs = domain.all_repos.match(options.atom)
     if not pkgs:
         err.write('got no matches for %s\n' % (options.atom,))
         return 1
     if len(pkgs) > 1:
         err.write('got multiple matches for %s: %s\n' % (options.atom, pkgs))
         return 1
-    # pull clean out.
-    l = list(x for x in options.phases if x != "clean")
-    clean = len(l) != len(options.phases)
-    if clean:
-        options.phases = l
     kwds = {}
+    build_obs = observer.file_build_observer(ObserverFormatter(out),
+        not options.debug)
+
+    phases = [x for x in options.phases if x != 'clean']
+    clean = (len(phases) != len(options.phases))
+
     if options.no_auto:
         kwds["ignore_deps"] = True
-        if "setup" in l:
-            options.phases.insert(0, "fetch")
-    build = pkgs[0].build(clean=clean)
-    phase_funcs = list(getattr(build, x) for x in options.phases)
-    for phase, f in zip(options.phases, phase_funcs):
+        if "setup" in phases:
+            phases.insert(0, "fetch")
+    # by default turn off startup cleans; we clean by ourselves if
+    # told to do so via an arg
+    build = domain.build_pkg(pkgs[0], build_obs, clean=False)
+    if clean:
+        build.cleanup(force=True)
+    build._reload_state()
+    phase_funcs = list(getattr(build, x) for x in phases)
+    for phase, f in zip(phases, phase_funcs):
         out.write()
         out.write('executing phase %s' % (phase,))
         f(**kwds)

@@ -10,7 +10,7 @@ from pkgcore.repository import prototype, errors
 from snakeoil.currying import partial, post_curry
 from snakeoil.iterables import iter_sort
 from snakeoil.compatibility import all, any, sorted_cmp
-from pkgcore.interfaces import repo as repo_interface
+from pkgcore.operations import repo as repo_interface
 
 
 class operations(repo_interface.operations_proxy):

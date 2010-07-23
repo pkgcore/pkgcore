@@ -14,8 +14,8 @@ from pkgcore.config import basics, ConfigHint, configurable
 from pkgcore.repository import util, syncable
 from pkgcore.sync import base
 from pkgcore.ebuild.cpv import CPV
-from pkgcore.interfaces.repo import (nonlivefs_install,
-    nonlivefs_uninstall, nonlivefs_replace, operations)
+from pkgcore.operations.repo import (install,
+    uninstall, replace, operations)
 
 
 class Options(dict):
@@ -100,10 +100,17 @@ class fake_pkg(CPV):
         CPV.__init__(self, *a, **kw)
         object.__setattr__(self, 'repo', repo)
 
-def derive_op(op, *a, **kw):
+def derive_op(name, op, *a, **kw):
+    if isinstance(name, basestring):
+        name = [name]
+    name = ['finalize_data'] + list(name)
     class new_op(op):
-        def modify_repo(*a, **kw):
+        def f(*a, **kw):
             return True
+        for x in name:
+            locals()[x] = f
+        del f, x
+
     return new_op(*a, **kw)
 
 
@@ -111,15 +118,16 @@ class fake_operations(operations):
 
     def _cmd_install(self, pkg, observer):
         self.repo.installed.append(pkg)
-        return derive_op(nonlivefs_install, self.repo, pkg, observer)
+        return derive_op('add_data', install, self.repo, pkg, observer)
 
     def _cmd_uninstall(self, pkg, observer):
         self.repo.uninstalled.append(pkg)
-        return derive_op(nonlivefs_uninstall, self.repo, pkg, observer)
+        return derive_op('remove_data', uninstall, self.repo, pkg, observer)
 
     def _cmd_replace(self, oldpkg, newpkg, observer):
         self.repo.replaced.append((oldpkg, newpkg))
-        return derive_op(nonlivefs_replace, self.repo, oldpkg, newpkg, observer)
+        return derive_op(('add_data', 'remove_data'),
+            replace, self.repo, oldpkg, newpkg, observer)
 
 
 class fake_repo(util.SimpleTree):

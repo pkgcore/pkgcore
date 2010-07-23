@@ -4,6 +4,15 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* api's for installing pkgs has changed; now to install a pkg to a domain,
+  you invoke domain.(install|uininstall|remove)_pkg.  To just modify a repo,
+  access it's operations for the appropriate operation.
+
+* pkgcore.interfaces was moved to pkgcore.operations
+
+* pkgcore.package.base derived objects no longer default to _get_attr dict
+  lookup- if you want it, set __getattr__ = dynamic_attr_dict.
+
 * USE is now locked an intersection of the pkgs IUSE, with forced flags
   (things like arch, userland, prefix, etc) added on.  Mild speed up from
   dealing with a reduced set, more importantly portage switched to controlled

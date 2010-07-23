@@ -10,7 +10,7 @@ from time import time
 from pkgcore.util import commandline, parserestrict, repo_utils
 from pkgcore.ebuild import resolver
 from pkgcore.repository import multiplex
-from pkgcore.interfaces import observer, format
+from pkgcore.operations import observer, format
 from pkgcore.pkgsets.glsa import KeyedAndRestriction
 from pkgcore.ebuild.atom import atom
 from pkgcore.merge import errors as merge_errors
@@ -242,7 +242,7 @@ def do_unmerge(options, out, err, vdb, matches, world_set, repo_obs):
     for idx, match in enumerate(matches):
         out.write("removing %i of %i: %s" % (idx + 1, len(matches), match))
         out.title("%i/%i: %s" % (idx + 1, len(matches), match))
-        op = vdb.operations.uninstall(match, observer=repo_obs)
+        op = options.domain.uninstall_pkg(match, observer=repo_obs)
         ret = op.finish()
         if not ret:
             if not options.ignore_failures:
@@ -582,7 +582,7 @@ def main(options, out, err):
             if op.desc != "remove":
                 if not options.fetchonly and options.debug:
                     out.write("Forcing a clean of workdir")
-                buildop = op.pkg.build(observer=build_obs, clean=True)
+                buildop = domain.build_pkg(op.pkg, build_obs)
                 if options.fetchonly:
                     out.write("\n%i files required-" % len(op.pkg.fetchables))
                     try:
@@ -621,18 +621,18 @@ def main(options, out, err):
                     else:
                         out.write(">>> Replacing %s with %s" % (
                             op.old_pkg.cpvstr, built_pkg.cpvstr))
-                    i = livefs_repos.operations.replace(op.old_pkg, built_pkg, observer=repo_obs)
+                    i = domain.replace_pkg(op.old_pkg, built_pkg, repo_obs)
                     reset.append('old_pkg')
                 else:
                     out.write(">>> Installing %s" % built_pkg.cpvstr)
-                    i = livefs_repos.operations.install(built_pkg, observer=repo_obs)
+                    i = domain.install_pkg(built_pkg, repo_obs)
 
                 # force this explicitly- can hold onto a helluva lot more
                 # then we would like.
                 del built_pkg
             else:
                 out.write(">>> Removing %s" % op.pkg.cpvstr)
-                i = livefs_repos.uninstall(op.pkg, observer=repo_obs)
+                i = domain.uninstall_pkg(op.pkg, repo_obs)
             try:
                 ret = i.finish()
             except merge_errors.BlockModification, e:

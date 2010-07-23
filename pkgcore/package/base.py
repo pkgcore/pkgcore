@@ -24,14 +24,6 @@ class base(object):
     def __delattr__(self, attr):
         raise AttributeError(self, attr)
 
-    def __getattr__(self, attr):
-        try:
-            val = self._get_attr[attr](self)
-            object.__setattr__(self, attr, val)
-            return val
-        except KeyError:
-            raise AttributeError(self, attr)
-
     @property
     def versioned_atom(self):
         raise NotImplementedError(self, "versioned_atom")
@@ -63,8 +55,19 @@ class wrapper(base):
     def __ne__(self, other):
         return not self == other
 
+    __getattr__ = klass.GetAttrProxy("_raw_pkg")
+
     versioned_atom = klass.alias_attr("_raw_pkg.versioned_atom")
     unversioned_atom = klass.alias_attr("_raw_pkg.unversioned_atom")
 
     def __hash__(self):
         return hash(self._raw_pkg)
+
+def dynamic_getattr_dict(self, attr):
+    try:
+        val = self._get_attr[attr](self)
+        object.__setattr__(self, attr, val)
+        return val
+    except KeyError:
+        raise AttributeError(self, attr)
+

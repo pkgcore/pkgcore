@@ -3,7 +3,7 @@
 
 import os, errno
 
-from pkgcore.interfaces import repo as repo_interfaces
+from pkgcore.operations import repo as repo_interfaces
 from pkgcore.fs import tar
 from pkgcore.binpkg import xpak
 from pkgcore.ebuild.conditionals import stringify_boolean
@@ -55,9 +55,9 @@ def generate_attr_dict(pkg, portage_compatible=True):
     return d
 
 
-class install(repo_interfaces.nonlivefs_install):
+class install(repo_interfaces.install):
 
-    def modify_repo(self):
+    def add_data(self):
         if self.observer is None:
             end = start = lambda x:None
         else:
@@ -67,6 +67,8 @@ class install(repo_interfaces.nonlivefs_install):
         final_path = discern_loc(self.repo.base, pkg, self.repo.extension)
         tmp_path = pjoin(os.path.dirname(final_path),
             ".tmp.%i.%s" % (os.getpid(), os.path.basename(final_path)))
+
+        self.tmp_path, self.final_path = tmp_path, final_path
 
         if not osutils.ensure_dirs(os.path.dirname(tmp_path), mode=0755):
             raise repo_interfaces.Failure("failed creating directory %r" %
@@ -81,7 +83,6 @@ class install(repo_interfaces.nonlivefs_install):
             end("wrote Xpak", True)
             # ok... we tagged the xpak on.
             os.chmod(tmp_path, 0644)
-            os.rename(tmp_path, final_path)
         except Exception, e:
             try:
                 os.unlink(tmp_path)
@@ -91,19 +92,26 @@ class install(repo_interfaces.nonlivefs_install):
             raise
         return True
 
+    def finalize_data(self):
+        os.rename(self.tmp_path, self.final_path)
 
-class uninstall(repo_interfaces.nonlivefs_uninstall):
 
-    def modify_repo(self):
+class uninstall(repo_interfaces.uninstall):
+
+    def remove_data(self):
+        pass
+
+    def finalize_data(self):
         os.unlink(discern_loc(self.repo.base, self.old_pkg, self.repo.extension))
         return True
 
 
-class replace(install, uninstall, repo_interfaces.nonlivefs_replace):
+class replace(install, uninstall, repo_interfaces.replace):
 
-    def modify_repo(self):
-        uninstall.modify_repo(self)
-        install.modify_repo(self)
+    def finalize_data(self):
+        # we just invoke install finalize_data, since it atomically
+        # transfers the new pkg in
+        install.finalize_data(self)
 
 
 class operations(repo_interfaces.operations):

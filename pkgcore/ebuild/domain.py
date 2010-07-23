@@ -37,6 +37,7 @@ demandload(globals(),
     'pkgcore.fs.fs:fsFile',
     're',
     'operator:itemgetter',
+    'pkgcore.ebuild.triggers:generate_triggers@ebuild_generate_triggers',
 )
 
 class MissingFile(BaseError):
@@ -106,7 +107,7 @@ class domain(pkgcore.config.domain.domain):
         # voodoo, unfortunately (so it goes)
         # break this up into chunks once it's stabilized (most of code
         # here has already, but still more to add)
-        self.triggers = triggers
+        self._triggers = triggers
         if 'CHOST' in settings and 'CBUILD' not in settings:
             settings['CBUILD'] = settings['CHOST']
         settings.setdefault('ACCEPT_LICENSE', const.ACCEPT_LICENSE)
@@ -114,6 +115,8 @@ class domain(pkgcore.config.domain.domain):
         # map out sectionname -> config manager immediately.
         repositories_collapsed = [r.collapse() for r in repositories]
         repositories = [r.instantiate() for r in repositories_collapsed]
+
+        self.fetcher = settings.pop("fetcher")
 
         self.default_licenses_manager = OverlayedLicenses(*repositories)
         vdb_collapsed = [r.collapse() for r in vdb]
@@ -302,6 +305,7 @@ class domain(pkgcore.config.domain.domain):
             profile.masked_use.iteritems())
 
         self.settings["bashrc"] = bashrc
+        self.settings = ProtectedDict(settings)
         self.repos = []
         self.vdb = []
         self.configured_named_repos = {}
@@ -321,7 +325,7 @@ class domain(pkgcore.config.domain.domain):
                             if x == "domain":
                                 pargs.append(self)
                             elif x == "settings":
-                                pargs.append(ProtectedDict(settings))
+                                pargs.append(settings)
                             elif x == "profile":
                                 pargs.append(profile)
                             else:
@@ -495,5 +499,5 @@ class domain(pkgcore.config.domain.domain):
         enabled.difference_update(new_disabled)
         return enabled
 
-    def get_extra_triggers(self):
-        return (x.instantiate() for x in self.triggers)
+    def _mk_nonconfig_triggers(self):
+        return ebuild_generate_triggers(self)

@@ -63,6 +63,7 @@ class tree(prototype.tree):
     configurables = ("domain", "settings")
     configure = None
     format_magic = "ebuild_built"
+    operations_kls = repo_ops.operations
 
     pkgcore_config_type = ConfigHint({'location': 'str',
         'cache_location': 'str', 'repo_id':'str',
@@ -221,7 +222,6 @@ class ConfiguredTree(multiplex.tree):
 
     livefs = True
     frozen_settable = False
-    operations_kls = repo_ops.operations
 
     def __init__(self, raw_vdb, domain, domain_settings):
         self.domain = domain
@@ -235,23 +235,5 @@ class ConfiguredTree(multiplex.tree):
         multiplex.tree.__init__(self, raw_vdb, self.old_style_virtuals)
 
     frozen = klass.alias_attr("raw_vdb.frozen")
-
-    def _install(self, pkg, *a, **kw):
-        # need to verify it's not in already...
-        kw['offset'] = self.domain.root
-        kw.setdefault('triggers', []).extend(self.domain.get_extra_triggers())
-        return repo_ops.install(self.domain_settings, self.raw_vdb, pkg, *a, **kw)
-
-    def _uninstall(self, pkg, *a, **kw):
-        kw['offset'] = self.domain.root
-        kw.setdefault('triggers', []).extend(self.domain.get_extra_triggers())
-        return repo_ops.uninstall(self.domain_settings, self.raw_vdb, pkg, *a, **kw)
-
-    def _replace(self, oldpkg, newpkg, *a, **kw):
-        kw['offset'] = self.domain.root
-        kw.setdefault('triggers', []).extend(self.domain.get_extra_triggers())
-        return repo_ops.replace(
-            self.domain_settings, self.raw_vdb, oldpkg, newpkg, *a, **kw)
-
 
 tree.configure = ConfiguredTree

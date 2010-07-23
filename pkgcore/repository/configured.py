@@ -7,7 +7,7 @@ wrap a repository, binding configuration to pkgs returned from the repository
 
 from pkgcore.repository import prototype
 from pkgcore.package.conditionals import make_wrapper
-from pkgcore.interfaces.repo import operations_proxy
+from pkgcore.operations.repo import operations_proxy
 from snakeoil.currying import partial
 from snakeoil.klass import GetAttrProxy
 
@@ -32,7 +32,10 @@ class tree(prototype.tree):
         self.attr_filters = frozenset(wrapped_attrs.keys() +
                                       [self.configurable])
 
-        self._klass = make_wrapper(self.configurable, self.wrapped_attrs,
+        self._klass = self._mk_kls(pkg_kls_injections)
+
+    def _mk_kls(self, pkg_kls_injections):
+        return make_wrapper(self.configurable, self.wrapped_attrs,
             kls_injections=pkg_kls_injections)
 
     def _get_pkg_kwds(self, pkg):

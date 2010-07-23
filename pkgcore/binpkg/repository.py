@@ -30,7 +30,7 @@ demandload(globals(),
     "snakeoil.data_source:local_source,data_source",
     "pkgcore.fs.contents:offset_rewriter",
     "pkgcore.repository:wrapper",
-    "pkgcore.package.mutated:MutatedPkg",
+    "pkgcore.package:base@pkg_base",
     "pkgcore.ebuild:ebd",
     "errno",
     "pkgcore.fs.tar:generate_contents",
@@ -352,13 +352,19 @@ class ConfiguredBinpkgTree(wrapper.tree):
 
     def __init__(self, repo, domain_settings):
         # rebind to ourselves basically.
-        def package_class(pkg):
-            return MutatedPkg(pkg,
-                {"build":partial(self._generate_build_op, pkg)})
+
+        class package_class(pkg_base.wrapper):
+
+            _generate_buildop = self._generate_buildop
+            __slots__ = ()
+
+            def build(self, domain, **kwargs):
+                return self._generate_buildop(domain, self._raw_pkg, **kwargs)
+
         wrapper.tree.__init__(self, repo, package_class=package_class)
         self.domain_settings = domain_settings
 
-    def _generate_build_op(self, pkg, **kwargs):
+    def _generate_buildop(self, domain, pkg, **kwargs):
         kwargs["initial_env"] = self.domain_settings
         kwargs["env_data_source"] = pkg.environment
         return ebd.binpkg_buildable(pkg, **kwargs)

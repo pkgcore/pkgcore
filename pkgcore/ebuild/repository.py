@@ -345,16 +345,14 @@ class ConfiguredTree(configured.tree):
         scope_update = {'chost': chost}
         scope_update.update((x, domain_settings.get(x.upper(), chost))
             for x in ('cbuild', 'ctarget'))
+        scope_update['build_callback'] = self._generate_buildop
 
         configured.tree.__init__(self, raw_repo, self.config_wrappables,
            pkg_kls_injections=scope_update)
         self._get_pkg_use = domain.get_package_use_unconfigured
         self._get_pkg_use_for_building = domain.get_package_use_buildable
         self.domain_settings = domain_settings
-        if fetcher is None:
-            self.fetcher = self.domain_settings["fetcher"]
-        else:
-            self.fetcher = fetcher
+        self.fetcher_override = fetcher
         self._delayed_iuse = currying.partial(make_kls(InvertedContains),
             InvertedContains)
 
@@ -366,12 +364,14 @@ class ConfiguredTree(configured.tree):
         return {
             "initial_settings": enabled,
             "unchangable_settings": self._delayed_iuse(
-                self._get_delayed_immutable, pkg, immutable),
-            "build_callback":self.generate_buildop}
+                self._get_delayed_immutable, pkg, immutable)}
 
-    def generate_buildop(self, pkg, **kwds):
+    def _generate_buildop(self, domain, pkg, **kwds):
+        fetcher = self.fetcher_override
+        if fetcher is None:
+            fetcher = domain.fetcher
         return buildable(pkg, self.domain_settings, pkg.repo.eclass_cache,
-                         self.fetcher,
+                         fetcher,
                          use_override=self._get_pkg_use_for_building(pkg),
                          **kwds)
 

@@ -421,8 +421,10 @@ execute_phases() {
 				local x
 				# if they aren't set, then holy hell ensues.  deal.
 
-				[ -z "${CCACHE_SIZE}" ] && export CCACHE_SIZE="500M"
-				ccache -M ${CCACHE_SIZE} &> /dev/null
+				if hasq ccache $FEATURES; then
+					[ -z "${CCACHE_SIZE}" ] && export CCACHE_SIZE="500M"
+					ccache -M ${CCACHE_SIZE} &> /dev/null
+				fi
 				[[ $PKGCORE_DEBUG == 2 ]] && set -x
 				init_environ
 				MUST_EXPORT_ENV="yes"

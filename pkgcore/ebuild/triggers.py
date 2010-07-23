@@ -461,7 +461,7 @@ class SFPerms(triggers.base):
         cset.update(resets)
 
 
-def register_multilib_strict_trigger(domain_settings, engine):
+def register_multilib_strict_trigger(domain_settings):
     locations = domain_settings.get("MULTILIB_STRICT_DIRS")
     exempt = domain_settings.get("MULTILIB_STRICT_EXEMPT",
         "(perl5|gcc|gcc-lib)")
@@ -480,7 +480,6 @@ def register_multilib_strict_trigger(domain_settings, engine):
         limit_pattern = limit_pattern.replace("//", "/")
     # this seems semi dodgey, specifically, that it won't catch 'em all
     trig = triggers.BlockFileType(".*%s.*" % deny_pattern, limit_pattern)
-    trig.register(engine)
     return trig
 
 
@@ -506,8 +505,9 @@ class FixImageSymlinks(triggers.base):
         cset.update(x.change_attributes(target=pjoin('/', x.target[d_len:]))
             for x in l)
 
-def customize_engine(domain_settings, engine):
-    env_update().register(engine)
+def generate_triggers(domain):
+    domain_settings = domain.settings
+    yield env_update()
 
     protect = domain_settings.get('CONFIG_PROTECT', ())
     if isinstance(protect, basestring):
@@ -516,20 +516,20 @@ def customize_engine(domain_settings, engine):
     if isinstance(protect, basestring):
         protect = protect.split()
 
-    ConfigProtectInstall(protect, mask).register(engine)
-    ConfigProtectUninstall().register(engine)
+    yield ConfigProtectInstall(protect, mask)
+    yield ConfigProtectUninstall()
 
     features = domain_settings.get("FEATURES", ())
     if "collision-protect" in features:
-        collision_protect(protect, mask).register(engine)
+        yield collision_protect(protect, mask)
 
     if "multilib-strict" in features:
-        register_multilib_strict_trigger(domain_settings, engine)
+        yield register_multilib_strict_trigger(domain_settings)
 
     if "sfperms" in features:
-        SFPerms().register(engine)
+        yield SFPerms()
 
-    install_into_symdir_protect(protect, mask).register(engine)
+    yield install_into_symdir_protect(protect, mask)
     install_mask = domain_settings.get("INSTALL_MASK", '').split()
 
     for x in ("man", "info", "doc"):
@@ -547,8 +547,8 @@ def customize_engine(domain_settings, engine):
             install_mask = install_mask[0]
         else:
             install_mask = values.OrRestriction(*install_mask)
-        triggers.PruneFiles(install_mask.match).register(engine)
+        yield triggers.PruneFiles(install_mask.match)
         # note that if this wipes all /usr/share/ entries, should
         # wipe the empty dir.
 
-    InfoRegen().register(engine)
+    yield InfoRegen()

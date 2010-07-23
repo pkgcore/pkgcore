@@ -7,7 +7,7 @@ filtering repository
 
 from pkgcore.repository import prototype, errors
 from pkgcore.restrictions.restriction import base
-from pkgcore.interfaces.repo import operations_proxy
+from pkgcore.operations.repo import operations_proxy
 from snakeoil.klass import GetAttrProxy
 # these tricks are to keep 2to3 from screwing up.
 from itertools import ifilter, ifilterfalse as filterfalse

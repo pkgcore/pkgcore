@@ -50,7 +50,6 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
 
         _wrapped_attr = attributes_to_wrap
         _configurable_name = configurable_attribute_name
-
         configurable = True
 
         locals()[configurable_attribute_name] = \
@@ -59,11 +58,9 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
         locals().update((x, property(partial(_getattr_wrapped, x)))
             for x in attributes_to_wrap)
 
-        __getattr__ = GetAttrProxy("_raw_pkg")
-
         def __init__(self, pkg_instance,
-                     initial_settings=None, disabled_settings=None, unchangable_settings=None,
-                     build_callback=None):
+                     initial_settings=None, disabled_settings=None,
+                     unchangable_settings=None):
 
             """
             @type  pkg_instance: L{pkgcore.package.metadata.package}
@@ -74,8 +71,6 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             @type  unchangable_settings: sequence
             @param unchangable_settings: settings that configurable_attribute
                 cannot be set to
-            @param build_callback: None, or a callable to be used to get a
-                L{pkgcore.interfaces.format.build_base} instance
             """
 
             if initial_settings is None:
@@ -92,7 +87,6 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             sf(self, '_disabled', disabled_settings)
             sf(self, '_reuse_pt', 0)
             sf(self, '_cached_wrapped', {})
-            sf(self, '_buildable', build_callback)
             wrapper.__init__(self, pkg_instance)
 
         def __copy__(self):
@@ -247,13 +241,14 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             self.commit()
             object.__setattr__(self, '_configurable', list(self._configurable))
 
-        def build(self, **kwds):
+        def build(self, domain, **kwds):
             if self._buildable:
-                return self._buildable(self, **kwds)
+                return self._buildable(domain, self, **kwds)
             return None
 
         # we do this last, on the offchance they're doing some *serious*
         # overrides.
+        _buildable = kls_injections.pop("build_callback", None)
         locals().update(kls_injections)
 
     return PackageWrapper

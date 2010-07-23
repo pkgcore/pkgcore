@@ -8,7 +8,7 @@ simple repository wrapping to override the package instances returned
 # icky.
 # ~harring
 from pkgcore.repository import prototype, errors
-from pkgcore.interfaces import repo
+from pkgcore.operations import repo
 from snakeoil.klass import GetAttrProxy
 from itertools import imap
 

@@ -302,11 +302,13 @@ class package_factory(metadata.factory):
         return self._update_metadata(pkg)
 
     def _update_metadata(self, pkg):
-        ebp = processor.request_ebuild_processor()
+        ebp = None
         try:
+            ebp = processor.request_ebuild_processor()
             mydata = ebp.get_keys(pkg, self._ecache)
         finally:
-            processor.release_ebuild_processor(ebp)
+            if ebp is not None:
+                processor.release_ebuild_processor(ebp)
 
         mydata["_mtime_"] = long(pkg._mtime_)
         if mydata.get("INHERITED", False):

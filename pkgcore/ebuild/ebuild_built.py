@@ -147,17 +147,14 @@ def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):
         # screwed, the target is in place already
         triggers.FixImageSymlinks(format_op_inst).register(engine_inst)
 
-def _generic_format_install_op(self, domain, pkg, observer):
-    return ebd.install_op(pkg, initial_env=domain.settings,
-        env_data_source=pkg.environment, observer=observer)
+def _generic_format_install_op(self, domain, newpkg, observer):
+    return ebd.install_op(domain, newpkg, observer)
 
-def _generic_format_uninstall_op(self, domain, pkg, observer):
-    return ebd.uninstall_op(pkg, initial_env=domain.settings,
-        env_data_source=pkg.environment, observer=observer)
+def _generic_format_uninstall_op(self, domain, oldpkg, observer):
+    return ebd.uninstall_op(domain, oldpkg, observer)
 
 def _generic_format_replace_op(self, domain, oldpkg, newpkg, observer):
-    return ebd.replace_op(pkg, initial_env=domain.settings,
-        env_data_source=pkg.environment, observer=observer)
+    return ebd.replace_op(domain, oldpkg, newpkg, observer)
 
 
 class package_factory(metadata.factory):

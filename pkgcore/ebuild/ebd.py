@@ -23,7 +23,7 @@ from pkgcore.os_data import xargs
 from pkgcore.ebuild.const import eapi_capable
 from pkgcore.operations import observer, format
 from pkgcore.ebuild.ebuild_built import fake_package_factory, package
-from snakeoil.currying import post_curry, pretty_docs
+from snakeoil.currying import post_curry, pretty_docs, alias_class_method
 from snakeoil.osutils import (ensure_dirs, normpath, join as pjoin,
     listdir_files)
 
@@ -189,8 +189,7 @@ class ebd(object):
 
     def set_op_vars(self, tmp_offset):
         # don't fool with this, without fooling with setup.
-        self.base_tmpdir = self.env["PORTAGE_TMPDIR"]
-        self.tmpdir = normpath(pjoin(self.base_tmpdir, "portage"))
+        self.tmpdir = normpath(self.domain._get_tempspace())
         if tmp_offset:
             self.tmpdir = pjoin(self.tmpdir,
                 tmp_offset.strip(os.path.sep))
@@ -414,9 +413,10 @@ class install_op(ebd, format.install):
     phase operations and steps for install execution
     """
 
-    def __init__(self, *args, **kwargs):
-        kwargs["clean"] = False
-        ebd.__init__(self, *args, **kwargs)
+    def __init__(self, domain, pkg, observer):
+        format.install.__init__(self, domain, pkg, observer)
+        ebd.__init__(self, pkg, observer=observer, initial_env=domain.settings,
+            env_data_source=pkg.environment, clean=False)
 
     preinst = pretty_docs(
         observer.decorate_build_method("preinst")(
@@ -429,16 +429,20 @@ class install_op(ebd, format.install):
             ebd._generic_phase, "postinst", False, False, False)),
             "run the postinst phase")
 
+    def add_triggers(self, domain_op, engine):
+        self.new_pkg.add_format_triggers(domain_op, self, engine)
+
 
 class uninstall_op(ebd, format.uninstall):
     """
     phase operations and steps for uninstall execution
     """
 
-    def __init__(self, *args, **kwargs):
-        kwargs["tmp_offset"] = "unmerge"
-        kwargs["clean"] = False
-        ebd.__init__(self, *args, **kwargs)
+    def __init__(self, domain, pkg, observer):
+        format.uninstall.__init__(self, domain, pkg, observer)
+        ebd.__init__(self, pkg, observer=observer, initial_env=domain.settings,
+            env_data_source=pkg.environment, clean=False,
+            tmp_offset="unmerge")
 
     prerm = pretty_docs(
         observer.decorate_build_method("prerm")(
@@ -452,10 +456,38 @@ class uninstall_op(ebd, format.uninstall):
                 failure_allowed=True)),
             "run the postrm phase")
 
+    def add_triggers(self, domain_op, engine):
+        self.old_pkg.add_format_triggers(domain_op, self, engine)
 
-class replace_op(format.replace, install_op, uninstall_op):
-    def __init__(self, *args, **kwargs):
-        ebd.__init__(self, *args, **kwargs)
+
+class replace_op(format.replace):
+
+    install_kls = staticmethod(install_op)
+    uninstall_kls = staticmethod(uninstall_op)
+
+    def __init__(self, domain, old_pkg, new_pkg, observer):
+        format.replace.__init__(self, domain, old_pkg, new_pkg, observer)
+        self.install_op = install_op(domain, new_pkg, observer)
+        self.uninstall_op = uninstall_op(domain, old_pkg, observer)
+
+    def start(self):
+        self.install_op.start()
+        self.uninstall_op.start()
+        return True
+
+    prerm = alias_class_method("uninstall_op.prerm")
+    postrm = alias_class_method("uninstall_op.postrm")
+    preinst = alias_class_method("install_op.preinst")
+    postinst = alias_class_method("install_op.postinst")
+
+    def finalize(self):
+        ret = self.uninstall_op.finish()
+        ret2 = self.install_op.finish()
+        return (ret and ret2)
+
+    def add_triggers(self, domain_op, engine):
+        self.uninstall_op.add_triggers(domain_op, engine)
+        self.install_op.add_triggers(domain_op, engine)
 
 
 class buildable(ebd, setup_mixin, format.build):

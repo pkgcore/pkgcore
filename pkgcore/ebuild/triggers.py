@@ -321,7 +321,8 @@ class preinst_contents_reset(triggers.base):
         self.format_op = format_op
 
     def trigger(self, engine, cset):
-        # wipe, and get data again.
+        # wipe, and get data again; ebuild preinst does untrackable
+        # modifications to the fs
         cset.clear()
         cs = engine.new._parent.scan_contents(self.format_op.env["D"])
         if engine.offset != '/':

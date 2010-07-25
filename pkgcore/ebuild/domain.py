@@ -31,6 +31,7 @@ from snakeoil.mappings import ProtectedDict
 from snakeoil.fileutils import iter_read_bash
 from snakeoil.currying import partial
 from snakeoil.demandload import demandload
+from snakeoil.osutils import pjoin
 demandload(globals(),
     'errno',
     'pkgcore.fs.livefs:iter_scan',
@@ -501,3 +502,9 @@ class domain(pkgcore.config.domain.domain):
 
     def _mk_nonconfig_triggers(self):
         return ebuild_generate_triggers(self)
+
+    def _get_tempspace(self):
+        path = self.settings.get("PORTAGE_TMPDIR", None)
+        if path is not None:
+            path = pjoin(path, 'portage')
+        return path

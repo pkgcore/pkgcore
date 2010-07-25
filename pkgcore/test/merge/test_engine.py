@@ -23,7 +23,7 @@ class fake_pkg(object):
         return "fake_pkg: %s" % self.label
 
 
-class Test_MergeEngine(TestCase):
+class Test_MergeEngineCsets(TestCase):
 
     simple_cset = list(fsFile(x) for x in ("/foon", "/usr/dar", "/blah"))
     simple_cset.extend(fsDir(x) for x in ("/usr", "/usr/lib"))
@@ -94,7 +94,7 @@ class Test_MergeEngine(TestCase):
         os.mkdir(pjoin(self.dir, 'usr', 'lib64'))
         os.symlink('lib64', pjoin(self.dir, 'usr', 'lib'))
         pkg = fake_pkg(src)
-        engine = self.kls.install(pkg, offset=self.dir)
+        engine = self.kls.install(self.dir, pkg, offset=self.dir)
         result = engine.csets['resolved_install']
         self.assertEqual(sorted(result.iterfiles()), sorted(trg.iterfiles()))
 
@@ -106,7 +106,7 @@ class Test_MergeEngine(TestCase):
         trg.add(fsFile("/blah/donkey"))
         trg = trg.insert_offset(self.dir)
         pkg = fake_pkg(src)
-        engine = self.kls.install(pkg, offset=self.dir)
+        engine = self.kls.install(self.dir, pkg, offset=self.dir)
         result = engine.csets['new_cset']
         self.assertEqual(sorted(result.iterfiles()), sorted(trg.iterfiles()))
     test_symlink_awareness.skip = "contentset should handle this"

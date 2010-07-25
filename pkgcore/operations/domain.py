@@ -11,7 +11,11 @@ from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger",
     "pkgcore.merge.engine:MergeEngine",
     "pkgcore.merge:errors@merge_errors",
-    "pkgcore.package.mutated:MutatedPkg"
+    "pkgcore.package.mutated:MutatedPkg",
+    "snakeoil.osutils:pjoin",
+    "os",
+    "shutil",
+    "tempfile",
     )
 
 
@@ -48,6 +52,7 @@ class base(object):
         self.triggers = triggers
         self.create_op()
         self.lock = getattr(repo, "lock")
+        self.tempspace = None
         if self.lock is None:
             self.lock = fake_lock()
 
@@ -57,6 +62,13 @@ class base(object):
     def create_repo_op(self):
         raise NotImplementedError(self, 'create_repo_op')
 
+    def create_engine(self):
+        raise NotImplementedError(self, 'create_repo_op')
+
+    def _create_tempspace(self):
+        self.tempspace = tempfile.mkdtemp(dir=self.domain._get_tempspace(),
+            prefix="merge-engine-tmp")
+
     def _add_triggers(self, engine):
         for trigger in self.triggers:
             trigger.register(engine)
@@ -64,8 +76,13 @@ class base(object):
     def customize_engine(self, engine):
         pass
 
-    def start(self, engine):
-        self.me = engine
+    def start(self):
+        """start the transaction"""
+        self._create_tempspace()
+        self.me = engine = self.create_engine()
+        self.format_op.add_triggers(self, engine)
+        self._add_triggers(engine)
+        self.customize_engine(engine)
         self.underway = True
         self.lock.acquire_write_lock()
         self.me.sanity_check()
@@ -76,11 +93,22 @@ class base(object):
         self.me.final()
         self.lock.release_write_lock()
         self.underway = False
+        self.clean_tempdir()
         return True
 
     def finalize_repo(self):
         """finalize the repository operations"""
         return self.repo_op.finish()
+
+    def clean_tempdir(self):
+        if self.tempspace:
+            try:
+                shutil.rmtree(self.tempspace)
+            except EnvironmentError, e:
+                if e.errno != errno.ENOENT:
+                    raise
+        self.tempspace = None
+        return True
 
     def _modify_repo_cache(self):
         raise NotImplementedError
@@ -89,6 +117,7 @@ class base(object):
         if getattr(self, 'underway', False):
             print "warning: %s merge was underway, but wasn't completed"
             self.lock.release_write_lock()
+        self.clean_tempdir()
 
 
 class install(base):
@@ -117,7 +146,7 @@ class install(base):
         base.__init__(self, domain, repo, observer, triggers, offset)
 
     def create_op(self):
-        self.install_op = getattr(self.new_pkg,
+        self.format_op = getattr(self.new_pkg,
             self.format_install_op_name)(self.domain, self.observer)
 
     def create_repo_op(self):
@@ -125,18 +154,13 @@ class install(base):
             self.observer)
         return True
 
-    def start(self):
-        """start the install transaction"""
-        engine = self.engine_kls(self.new_pkg, offset=self.offset,
-            observer=self.observer)
-        self.new_pkg.add_format_triggers(self, self.install_op, engine)
-        self._add_triggers(engine)
-        self.customize_engine(engine)
-        return base.start(self, engine)
+    def create_engine(self):
+        return self.engine_kls(self.tempspace, self.new_pkg,
+            offset=self.offset, observer=self.observer)
 
     def preinst(self):
         """execute any pre-transfer steps required"""
-        return self.install_op.preinst()
+        return self.format_op.preinst()
 
     def _update_new_pkg(self, cset):
         self.new_pkg = MutatedPkg(self.new_pkg,
@@ -155,13 +179,13 @@ class install(base):
 
     def postinst(self):
         """execute any post-transfer steps required"""
-        return self.install_op.postinst()
+        return self.format_op.postinst()
 
     def repo_add(self):
         return self.repo_op.add_data()
 
     def finish(self):
-        ret = self.install_op.finalize()
+        ret = self.format_op.finalize()
         if not ret:
             logger.warn("ignoring unexpected result from install finalize- "
                 "%r" % ret)
@@ -193,7 +217,7 @@ class uninstall(base):
         base.__init__(self, domain, repo, observer, triggers, offset)
 
     def create_op(self):
-        self.uninstall_op = getattr(self.old_pkg,
+        self.format_op = getattr(self.old_pkg,
             self.format_uninstall_op_name)(self.domain, self.observer)
 
     def create_repo_op(self):
@@ -201,18 +225,13 @@ class uninstall(base):
             self.observer)
         return True
 
-    def start(self):
-        """start the uninstall transaction"""
-        engine = self.engine_kls(self.old_pkg, offset=self.offset,
-            observer=self.observer)
-        self.old_pkg.add_format_triggers(self, self.uninstall_op, engine)
-        self._add_triggers(engine)
-        self.customize_engine(engine)
-        return base.start(self, engine)
+    def create_engine(self):
+        return self.engine_kls(self.tempspace, self.old_pkg,
+            offset=self.offset, observer=self.observer)
 
     def prerm(self):
         """execute any pre-removal steps required"""
-        return self.uninstall_op.prerm()
+        return self.format_op.prerm()
 
     def remove(self):
         """execute any removal steps required"""
@@ -226,14 +245,14 @@ class uninstall(base):
 
     def postrm(self):
         """execute any post-removal steps required"""
-        return self.uninstall_op.postrm()
+        return self.format_op.postrm()
 
     def repo_remove(self):
         return self.repo_op.remove_data()
 
     def finish(self):
-        ret = self.uninstall_op.finalize()
-        self.uninstall_op.cleanup(disable_observer=True)
+        ret = self.format_op.finalize()
+        self.format_op.cleanup(disable_observer=True)
         if not ret:
             logger.warn("ignoring unexpected result from uninstall finalize- "
                 "%r" % ret)
@@ -270,6 +289,7 @@ class replace(install, uninstall):
         "merge_metadata", "unmerge_metadata", "postrm", "prerm", "postinst",
         "preinst", "unmerge_metadata", "merge_metadata"]
     engine_kls = staticmethod(MergeEngine.replace)
+    format_replace_op_name = "_repo_replace_op"
 
     def __init__(self, domain, repo, oldpkg, newpkg, observer, triggers, offset):
         self.old_pkg = oldpkg
@@ -277,33 +297,24 @@ class replace(install, uninstall):
         base.__init__(self, domain, repo, observer, triggers, offset)
 
     def create_op(self):
-        install.create_op(self)
-        uninstall.create_op(self)
+        self.format_op = getattr(self.new_pkg,
+            self.format_replace_op_name)(self.domain, self.old_pkg,
+                self.observer)
+        return True
 
     def create_repo_op(self):
         self.repo_op = self.repo.operations.replace(self.old_pkg,
             self.new_pkg, self.observer)
         return True
 
-    def start(self):
-        """start the transaction"""
-        engine = self.engine_kls(self.old_pkg, self.new_pkg,
+    def create_engine(self):
+        return self.engine_kls(self.tempspace, self.old_pkg, self.new_pkg,
             offset=self.offset, observer=self.observer)
-        self.old_pkg.add_format_triggers(self, self.uninstall_op, engine)
-        self.new_pkg.add_format_triggers(self, self.install_op, engine)
-        self._add_triggers(engine)
-        self.customize_engine(engine)
-        return base.start(self, engine)
 
     def finish(self):
-        ret = self.install_op.finalize()
+        ret = self.format_op.finalize()
         if not ret:
-            logger.warn("ignoring unexpected result from install finalize- "
-                "%r" % ret)
-        ret = self.uninstall_op.finalize()
-        self.uninstall_op.cleanup(disable_observer=True)
-        if not ret:
-            logger.warn("ignoring unexpected result from uninstall finalize- "
+            logger.warn("ignoring unexpected result from replace finalize- "
                 "%r" % ret)
         return base.finish(self)
 

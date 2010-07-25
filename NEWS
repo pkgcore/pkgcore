@@ -4,6 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* new FEATURES=lafilefixer is on by default; basically folds
+  dev-util/lafilefixer functionality directly into the merger.
+  Note this version drops comments- it's about a 66% reduction in .la system
+  filespace requirements via doing so.
+
 * triggers base class now carries a ConfigHint to provide a typename.  If
   a specific trigger cannot be specified by configuration directly, set
   pkgcore_config_type = None to disable the hint removing it from being

@@ -20,7 +20,11 @@ from pkgcore.operations import observer as observer_mod
 from pkgcore.merge.const import REPLACE_MODE, INSTALL_MODE, UNINSTALL_MODE
 
 from snakeoil.mappings import LazyValDict, ImmutableDict, StackedDict
-from snakeoil import currying
+from snakeoil import currying, data_source
+from snakeoil.osutils import normpath, pjoin
+
+from snakeoil.demandload import demandload
+demandload(globals(), "tempfile:mktemp")
 
 def alias_cset(alias, engine, csets):
     """alias a cset to another"""
@@ -68,13 +72,18 @@ class MergeEngine(object):
     uninstall_csets_preserve = ["old_cset"]
     replace_csets_preserve = ["new_cset", "old_cset"]
 
+    allow_reuse = True
 
-    def __init__(self, mode, hooks, csets, preserves, observer, offset=None,
-        disable_plugins=False):
+
+    def __init__(self, mode, tempdir, hooks, csets, preserves, observer,
+        offset=None, disable_plugins=False):
         if observer is None:
             observer = observer_mod.repo_observer()
         self.observer = observer
         self.mode = mode
+        if tempdir is not None:
+            tempdir = normpath(tempdir) + '/'
+        self.tempdir = tempdir
 
         self.hooks = ImmutableDict((x, []) for x in hooks)
 
@@ -116,13 +125,17 @@ class MergeEngine(object):
             setattr(self, x, currying.partial(self.execute_hook, x))
 
     @classmethod
-    def install(cls, pkg, offset=None, observer=None, disable_plugins=False):
+    def install(cls, tempdir, pkg, offset=None, observer=None,
+        disable_plugins=False):
 
         """
         generate a MergeEngine instance configured for uninstalling a pkg
 
+        @param tempdir: tempspace for the merger to use; this space it must
+            control alone, no sharing.
         @param pkg: L{pkgcore.package.metadata.package} instance to install
         @param offset: any livefs offset to force for modifications
+        @param disable_plugins: if enabled, run just the triggers passed in
         @return: L{MergeEngine}
 
         """
@@ -135,7 +148,7 @@ class MergeEngine(object):
         if "raw_new_cset" not in csets:
             csets["raw_new_cset"] = currying.post_curry(cls.get_pkg_contents, pkg)
         o = cls(
-            INSTALL_MODE, hooks, csets, cls.install_csets_preserve,
+            INSTALL_MODE, tempdir, hooks, csets, cls.install_csets_preserve,
             observer, offset=offset, disable_plugins=disable_plugins)
 
         if o.offset != '/':
@@ -147,14 +160,18 @@ class MergeEngine(object):
         return o
 
     @classmethod
-    def uninstall(cls, pkg, offset=None, observer=None, disable_plugins=False):
+    def uninstall(cls, tempdir, pkg, offset=None, observer=None,
+        disable_plugins=False):
 
         """
         generate a MergeEngine instance configured for uninstalling a pkg
 
+        @param tempdir: tempspace for the merger to use; this space it must
+            control alone, no sharing.
         @param pkg: L{pkgcore.package.metadata.package} instance to uninstall,
             must be from a livefs vdb
         @param offset: any livefs offset to force for modifications
+        @param disable_plugins: if enabled, run just the triggers passed in
         @return: L{MergeEngine}
         """
 
@@ -166,7 +183,7 @@ class MergeEngine(object):
             csets["raw_old_cset"] = currying.post_curry(cls.get_pkg_contents,
                 pkg)
         o = cls(
-            UNINSTALL_MODE, hooks, csets, cls.uninstall_csets_preserve,
+            UNINSTALL_MODE, tempdir, hooks, csets, cls.uninstall_csets_preserve,
             observer, offset=offset, disable_plugins=disable_plugins)
 
         if o.offset != '/':
@@ -178,15 +195,19 @@ class MergeEngine(object):
         return o
 
     @classmethod
-    def replace(cls, old, new, offset=None, observer=None, disable_plugins=False):
+    def replace(cls, tempdir, old, new, offset=None, observer=None,
+        disable_plugins=False):
 
         """
         generate a MergeEngine instance configured for replacing a pkg.
 
+        @param tempdir: tempspace for the merger to use; this space it must
+            control alone, no sharing.
         @param old: L{pkgcore.package.metadata.package} instance to replace,
             must be from a livefs vdb
         @param new: L{pkgcore.package.metadata.package} instance
         @param offset: any livefs offset to force for modifications
+        @param disable_plugins: if enabled, run just the triggers passed in
         @return: L{MergeEngine}
 
         """
@@ -201,7 +222,7 @@ class MergeEngine(object):
         csets.setdefault('raw_new_cset', currying.post_curry(cls.get_pkg_contents, new))
 
         o = cls(
-            REPLACE_MODE, hooks, csets, cls.replace_csets_preserve,
+            REPLACE_MODE, tempdir, hooks, csets, cls.replace_csets_preserve,
             observer, offset=offset, disable_plugins=disable_plugins)
 
         if o.offset != '/':
@@ -334,3 +355,48 @@ class MergeEngine(object):
                 cset)
             cset = contents.contentsSet(cset)
         return cset
+
+    def get_writable_fsobj(self, fsobj, prefer_reuse=True, empty=False):
+
+#        self.tempdir = '/var/tmp/portage/x11-libs/libsexy-0.1.11-r2/'
+
+        path = source = None
+        if fsobj:
+            source = fsobj.data_source
+            if source.mutable:
+                return fsobj
+            if self.allow_reuse and prefer_reuse:
+                path = source.path
+
+                # XXX: this should be doing abspath fs intersection probably,
+                # although the paths generated are from triggers/engine- still.
+
+                if path is not None and not path.startswith(self.tempdir):
+                    # the fsobj pathway isn't in temp space; force a transfer.
+                    path = None
+
+            if path:
+                # ok, it's tempspace, and reusable.
+                obj = data_source.local_source(path, True,
+                    encoding=source.encoding)
+
+                if empty:
+                    obj.bytes_fileobj(True).truncate(0)
+                return obj
+
+        # clone it into tempspace; it's required we control the tempspace,
+        # so this function is safe in our usage.
+        path = mktemp(prefix='merge-engine-', dir=self.tempdir)
+
+        # XXX: annoying quirk of python, we don't want append mode, so 'a+'
+        # isn't viable; wr will truncate the file, so data_source uses r+.
+        # this however doesn't allow us to state "create if missing"
+        # so we create it ourselves.  Annoying, but so it goes.
+        # just touch the filepath.
+        open(path, 'w')
+        new_source = data_source.local_source(path, True,
+            encoding=getattr(fsobj, 'encoding', None))
+
+        if source and not empty:
+            data_source.transfer(source.bytes_fsobj(), new_source.bytes_fsobj(True))
+        return new_source

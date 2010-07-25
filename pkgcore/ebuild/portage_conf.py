@@ -297,6 +297,13 @@ def config_from_make_conf(location="/etc/"):
     new_config = {}
     triggers = []
 
+    def add_trigger(name, kls_path, **extra_args):
+        d = extra_args.copy()
+        d['class'] = kls_path
+        new_config[name] = basics.ConfigSectionFromStringDict(d)
+        triggers.append(name)
+
+
     # sets...
     add_sets(new_config, root, portage_base)
 
@@ -474,39 +481,30 @@ def config_from_make_conf(location="/etc/"):
                 default_repos += ('binpkg',)
 
         if 'buildpkg' in features:
-            new_config['buildpkg_trigger'] = \
-                basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
-                'class':'pkgcore.merge.triggers.SavePkg',
-                'pristine':'no'})
-            triggers.append('buildpkg_trigger')
+            add_trigger('buildpkg_trigger', 'pkgcore.merge.trigers.SavePkg',
+                pristine='no',
+                target_repo='binpkg')
         elif 'pristine-buildpkg' in features:
-            new_config['buildpkg_trigger'] = \
-                basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
-                'class':'pkgcore.merge.triggers.SavePkg', 'pristine':'yes'})
-            triggers.append('buildpkg_trigger')
+            add_trigger('buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
+                 pristine='yes',
+                target_repo='binpkg')
         elif 'buildsyspkg' in features:
-            new_config['buildpkg_system_trigger'] = \
-                basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
-                'class':'pkgcore.merge.triggers.SavePkgIfInPkgset',
-                'pkgset':'system', 'pristine':'yes'})
-            triggers.append('buildpkg_system_trigger')
+            add__trigger('buildpkg_system_trigger', 'pkgcore.merge.triggers.SavePkgIfInPkgset',
+                pristine='yes', target_repo='binpkg', pkgset='system')
         elif 'unmerge-backup' in features:
-            new_config['unmerge_backup_trigger'] = \
-                basics.ConfigSectionFromStringDict({'target_repo':'binpkg',
-                'class':'pkgcore.merge.triggers.SavePkgUnmerging'})
-            triggers.append('unmerge_backup_trigger')
+            add_trigger('unmerge_backup_trigger', 'pkgcore.merge.triggers.SavePkgUnmerging',
+                target_repo='binpkg')
 
     if 'splitdebug' in features:
-        new_config['binary_debug_trigger'] = \
-            basics.ConfigSectionFromStringDict({'mode':'split',
-                'class':'pkgcore.merge.triggers.BinaryDebug'})
-        triggers.append('binary_debug_trigger')
+        add_trigger('binary_debug_trigger', 'pkgcore.merge.triggers.BinaryDebug',
+            mode='split')
     elif 'strip' in features or 'nostrip' not in features:
-        new_config['binary_debug_trigger'] = \
-            basics.ConfigSectionFromStringDict({'mode':'strip',
-                'class':'pkgcore.merge.triggers.BinaryDebug'})
-        triggers.append('binary_debug_trigger')
+        add_trigger('binary_debug_trigger', 'pkgcore.merge.triggers.BinaryDebug',
+            mode='strip')
 
+    if '-lafilefixer' not in features:
+        add_trigger('lafilefixer_trigger',
+            'pkgcore.system.libtool.FixLibtoolArchivesTrigger')
 
     # now add the fetcher- we delay it till here to clean out the environ
     # it passes to the command.

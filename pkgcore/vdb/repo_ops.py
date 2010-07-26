@@ -51,7 +51,7 @@ class install(repo_ops.install):
                 v.flush()
             elif k == "environment":
                 data = bzip2.compress(
-                    self.new_pkg.environment.get_bytes_fileobj().read())
+                    self.new_pkg.environment.bytes_fileobj().read())
                 open(pjoin(dirpath, "environment.bz2"), "wb").write(data)
                 del data
             else:
@@ -81,7 +81,7 @@ class install(repo_ops.install):
                 "Creating an empty file")
             o = ''
         else:
-            o = o.get_bytes_fileobj().read()
+            o = o.bytes_fileobj().read()
         # XXX lil hackish accessing PF
         open(pjoin(dirpath, self.new_pkg.PF + ".ebuild"), "wb").write(o)
 

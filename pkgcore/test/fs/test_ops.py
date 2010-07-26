@@ -69,7 +69,7 @@ class TestCopyFile(VerifyMixin, TempDirMixin, TestCase):
         dest = pjoin(self.dir, "copy_test_dest")
         open(src, "w").writelines("asdf\n" for i in xrange(10))
         kwds = {"mtime":10321, "uid":os.getuid(), "gid":os.getgid(),
-                "mode":0664, "data_source":local_source(src)}
+                "mode":0664, "data":local_source(src)}
         o = fs.fsFile(dest, **kwds)
         self.assertTrue(ops.default_copyfile(o))
         self.assertEqual("asdf\n" * 10, open(dest, "r").read())

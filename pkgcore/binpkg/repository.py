@@ -68,7 +68,7 @@ class force_unpacking(triggers.base):
 
         # this rewrites the data_source to the ${D} loc.
         d = op.env["D"]
-        fi = (x.change_attributes(data_source=local_source(
+        fi = (x.change_attributes(data=local_source(
                 pjoin(d, x.location.lstrip('/'))))
                 for x in merge_cset.iterfiles())
 
@@ -357,6 +357,7 @@ class ConfiguredBinpkgTree(wrapper.tree):
         class package_class(pkg_base.wrapper):
 
             _generate_buildop = self._generate_buildop
+            built = True
             __slots__ = ()
 
             def build(self, domain, **kwargs):

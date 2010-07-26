@@ -14,12 +14,15 @@ from snakeoil.currying import partial, alias_class_method
 from snakeoil.compatibility import cmp, sorted_cmp
 
 class archive_data_source(data_source):
-    def get_text_fileobj(self, writable=False):
+
+    __slots__ = ()
+
+    def text_fileobj(self, writable=False):
         if writable:
             raise TypeError("data source %s data is immutable" % (self,))
         return self.data()
 
-    def get_bytes_fileobj(self, writable=False):
+    def bytes_fileobj(self, writable=False):
         if writable:
             raise TypeError("data source %s data is immutable" % (self,))
         return self.data()
@@ -44,7 +47,7 @@ def write_set(contents_set, filepath, compressor='bz2'):
     for x in contents_set.iterdirs(invert=True):
         t = fsobj_to_tarinfo(x)
         if t.isreg():
-            tar_fd.addfile(t, fileobj=x.data.get_bytes_fileobj())
+            tar_fd.addfile(t, fileobj=x.data.bytes_fileobj())
         else:
             tar_fd.addfile(t)
     tar_fd.close()
@@ -61,7 +64,7 @@ def archive_to_fsobj(src_tar):
                 continue
             yield fsDir(location, **d)
         elif member.isreg():
-            d["data_source"] = archive_data_source(partial(
+            d["data"] = archive_data_source(partial(
                     src_tar.extractfile, member.name))
             yield fsFile(location, **d)
         elif member.issym() or member.islnk():
@@ -135,7 +138,7 @@ def convert_archive(archive):
     raw = list(archive_to_fsobj(archive))
     # we use the data source as the unique key to get position.
     files_ordering = list(enumerate(x for x in raw if x.is_reg))
-    files_ordering = dict((x.data_source, idx) for idx, x in files_ordering)
+    files_ordering = dict((x.data, idx) for idx, x in files_ordering)
     t = contents.contentsSet(raw, mutable=True)
     del raw, archive
 
@@ -183,8 +186,8 @@ def convert_archive(archive):
             return +1
         elif x.is_reg:
             if y.is_reg:
-                return cmp(files_ordering[x.data_source],
-                    files_ordering[y.data_source])
+                return cmp(files_ordering[x.data],
+                    files_ordering[y.data])
             return +1
         elif y.is_reg:
             return -1

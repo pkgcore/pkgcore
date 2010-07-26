@@ -285,9 +285,9 @@ class domain(pkgcore.config.domain.domain):
 
         for data in self.settings.get('bashrc', ()):
             source = local_source(data)
-            # this is currently local-only so a get_path check is ok
+            # this is currently local-only so a path check is ok
             # TODO make this more general
-            if source.get_path() is None:
+            if source.path is None:
                 raise Failure(
                     'user-specified bashrc %r does not exist' % (data,))
             bashrc.append(source)

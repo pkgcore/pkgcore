@@ -106,10 +106,10 @@ class Test_fsFile(TestCase, base):
         mkobj = self.make_obj
         o = mkobj("/etc/passwd")
         raw_data = open("/etc/passwd").read()
-        self.assertEqual(o.data.get_text_fileobj().read(), raw_data)
+        self.assertEqual(o.data.text_fileobj().read(), raw_data)
         o = mkobj("/bin/this-file-should-not-exist-nor-be-read",
-            data_source=data_source(raw_data))
-        self.assertEqual(o.data.get_text_fileobj().read(), raw_data)
+            data=data_source(raw_data))
+        self.assertEqual(o.data.text_fileobj().read(), raw_data)
         keys = o.chksums.keys()
         self.assertEqual([o.chksums[x] for x in keys],
             list(get_chksums(data_source(raw_data), *keys)))
@@ -125,15 +125,15 @@ class Test_fsFile(TestCase, base):
             obj.change_attributes(location="/tpp").chksums)
         chksums1 = obj.chksums
         self.assertNotIdentical(chksums1,
-            obj.change_attributes(data_source=data_source).chksums)
+            obj.change_attributes(data=data_source).chksums)
 
         self.assertIdentical(chksums1,
-            obj.change_attributes(data_source=data_source,
+            obj.change_attributes(data=data_source,
                 chksums=obj.chksums).chksums)
 
         obj2 = self.make_obj("/etc/passwd", chksums={1:2})
         self.assertIdentical(obj2.chksums,
-            obj2.change_attributes(data_source=data_source).chksums)
+            obj2.change_attributes(data=data_source).chksums)
 
 
 class Test_fsLink(TestCase, base):

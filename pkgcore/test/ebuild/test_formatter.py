@@ -27,13 +27,13 @@ class FakeEbuildSrc(FakePkg):
 
 
 class FakeOp(object):
-    def __init__(self, package, oldpackage=None):
+    def __init__(self, package, oldpackage=None, desc='add'):
         self.pkg = package
         if oldpackage:
             self.old_pkg = oldpackage
             self.desc = 'replace'
         else:
-            self.desc = 'add'
+            self.desc = desc
 
 class BaseFormatterTest(object):
     prefix = ()
@@ -269,6 +269,12 @@ class TestPortageFormatter(BaseFormatterTest, TestCase):
         self.assertOut('[', Color('fg', 'green'), 'ebuild', Reset(),
             '  ', Color('fg', 'green'), Bold(), 'N', Reset(), '    ] ',
             Color('fg', 'green'), 'app-arch/bzip2-1.0.4', Reset())
+
+    def test_remove(self):
+        self.formatter.format(
+            FakeOp(FakeEbuildSrc('app-arch/bzip2-1.0.4'), desc='remove'))
+        self.assertOut('[', Color('fg', 'red'), 'uninstall', Reset(),
+            '    ] ', Color('fg', 'red'), 'app-arch/bzip2-1.0.4', Reset())
 
     def test_upgrade(self):
         self.formatter.format(

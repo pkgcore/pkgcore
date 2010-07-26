@@ -82,7 +82,7 @@ class MetadataXml(object):
 
     def _parse_xml(self, source=None):
         if source is None:
-            source = self._source.get_bytes_fileobj()
+            source = self._source.bytes_fileobj()
         tree = etree.parse(source)
         maintainers = []
         for x in tree.findall("maintainer"):

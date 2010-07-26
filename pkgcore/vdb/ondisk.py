@@ -29,12 +29,16 @@ demandload(globals(),
 
 class bz2_data_source(data_source.base):
 
+    # XXX might want to rebase this to data_source.data_source...
+
+    __slots__ = ("location", "mutable")
+
     def __init__(self, location, mutable=False):
         data_source.base.__init__(self)
         self.location = location
         self.mutable = mutable
 
-    def get_text_fileobj(self, writable=False):
+    def text_fileobj(self, writable=False):
         data = bzip2.decompress(readfile_bytes(self.location)).decode()
         if writable:
             if not self.mutable:
@@ -42,7 +46,7 @@ class bz2_data_source(data_source.base):
             return data_source.text_wr_StringIO(self._set_data, data)
         return data_source.text_ro_StringIO(data)
 
-    def get_bytes_fileobj(self, writable=False):
+    def bytes_fileobj(self, writable=False):
         data = bzip2.decompress(readfile_bytes(self.location))
         if writable:
             if not self.mutable:

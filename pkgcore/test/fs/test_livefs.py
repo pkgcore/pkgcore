@@ -25,17 +25,17 @@ class FsObjsTest(TempDirMixin, TestCase):
         self.assertEqual(obj.gid, st.st_gid)
         if fs.isreg(obj):
             if offset is None:
-                self.assertEqual(obj.data.get_path(), path)
+                self.assertEqual(obj.data.path, path)
             else:
-                self.assertEqual(obj.data.get_path(),
+                self.assertEqual(obj.data.path,
                     offset + path)
 
     def test_data_source(self):
         o = livefs.gen_obj("/tmp/etc/passwd", real_location="/etc/passwd")
         self.assertTrue(o.location, "/tmp/etc/passwd")
-        self.assertTrue(o.data.get_path(), "/etc/passwd")
+        self.assertTrue(o.data.path, "/etc/passwd")
         self.assertTrue(
-            o.data.get_bytes_fileobj().read(), open("/etc/passwd", "rb").read())
+            o.data.bytes_fileobj().read(), open("/etc/passwd", "rb").read())
 
     def test_gen_obj_reg(self):
         path = os.path.join(self.dir, "reg_obj")

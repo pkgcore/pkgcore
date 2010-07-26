@@ -149,23 +149,24 @@ class fsFile(fsBase):
 
     """file class"""
 
-    __slots__ = ("chksums", "data_source")
+    __slots__ = ("chksums", "data")
     __attrs__ = fsBase.__attrs__ + __slots__
     __default_attrs__ = {"mtime":0l}
 
     is_reg = True
 
-    def __init__(self, location, chksums=None, data_source=None, **kwds):
+    def __init__(self, location, chksums=None, data=None, **kwds):
         """
         @param chksums: dict of checksums, key chksum_type: val hash val.
             See L{pkgcore.chksum}.
         """
+        assert 'data_source' not in kwds
         if "mtime" in kwds:
             if not isinstance(kwds["mtime"], (float, long)):
                 kwds["mtime"] = long(kwds["mtime"])
-        if data_source is None:
-            data_source = local_source(location)
-        kwds["data_source"] = data_source
+        if data is None:
+            data = local_source(location)
+        kwds["data"] = data
 
         if chksums is None:
             # this can be problematic offhand if the file is modified
@@ -178,13 +179,13 @@ class fsFile(fsBase):
     def __repr__(self):
         return "file:%s" % self.location
 
-    data = klass.alias_attr("data_source")
+    data_source = klass.alias_attr("data")
 
     def _chksum_callback(self, chfs):
         return zip(chfs, get_chksums(self.data, *chfs))
 
     def change_attributes(self, **kwds):
-        if 'data_source' in kwds and ('chksums' not in kwds and
+        if 'data' in kwds and ('chksums' not in kwds and
             isinstance(self.chksums, _LazyChksums)):
             kwds['chksums'] = None
         return fsBase.change_attributes(self, **kwds)

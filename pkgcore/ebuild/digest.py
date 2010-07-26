@@ -31,7 +31,7 @@ def parse_digest(source, throw_errors=True):
             if isinstance(source, basestring):
                 f = open(source, "r", 32768)
             else:
-                f = source.get_text_fileobj()
+                f = source.text_fileobj()
             for line in f:
                 l = line.split()
                 if not l:
@@ -145,7 +145,7 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True,
             if isinstance(source, basestring):
                 i = f = open(source, "r", 32768)
             else:
-                i = f = source.get_text_fileobj()
+                i = f = source.text_fileobj()
             if ignore_gpg:
                 i = gpg.skip_signatures(f)
             for data in i:

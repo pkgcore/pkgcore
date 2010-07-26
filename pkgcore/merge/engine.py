@@ -358,11 +358,9 @@ class MergeEngine(object):
 
     def get_writable_fsobj(self, fsobj, prefer_reuse=True, empty=False):
 
-#        self.tempdir = '/var/tmp/portage/x11-libs/libsexy-0.1.11-r2/'
-
         path = source = None
         if fsobj:
-            source = fsobj.data_source
+            source = fsobj.data
             if source.mutable:
                 return fsobj
             if self.allow_reuse and prefer_reuse:

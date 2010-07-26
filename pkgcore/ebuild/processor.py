@@ -600,13 +600,12 @@ class EbuildProcessor(object):
             raise UnhandledCommand(
                 "inherit requires an unknown eclass, %s cannot be found" % line)
 
-        if eclass.get_path is not None:
-            value = eclass.get_path()
+        if eclass.path is not None:
             self.write("path")
-            self.write(value)
+            self.write(eclass.path)
         else:
             # XXX $10 this doesn't work.
-            value = eclass.get_text_fileobj().read()
+            value = eclass.text_fileobj().read()
             self.write("transfer")
             self.write(value)
 
@@ -693,11 +692,11 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None):
         d["PR"] = "r%i" % pkg.revision
     d["PVR"] = pkg.fullver
     if env_source_override:
-        path = env_source_override.get_path
+        path = env_source_override.path
         if path is not None:
-            d["EBUILD"] = path()
+            d["EBUILD"] = path
     else:
-        d["EBUILD"] = pkg.ebuild.get_path()
+        d["EBUILD"] = pkg.ebuild.path
     d["PATH"] = ":".join(EBUILD_ENV_PATH + d.get("PATH", "").split(":"))
     return d
 

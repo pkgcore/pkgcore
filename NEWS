@@ -4,7 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-* new FEATURES=lafilefixer is on by default; basically folds
+* extended atom syntax now allows '*' to be used w/in a string- for example
+  dev-*kde, *dev-*k*de*, etc.  This syntax is usable in user configs, and
+  from the commandline.
+
+* new FEATURES=fixlafiles is on by default; basically folds
   dev-util/lafilefixer functionality directly into the merger.
   Note this version drops comments- it's about a 66% reduction in .la system
   filespace requirements via doing so.
@@ -49,6 +53,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
   if you wish to mutate the data source.  Via making the intention explicit,
   consumers will get just what they need- a 3x speed up for
   pquery --attr environment is from that internal optimization alone.
+
+* pkgcore.fs.fsFile.data_source is deprecated; will be removed in the next
+  major version, use .data instead.
 
 * pkgcore.interfaces.data_source moved to snakeoil.data_source.
 

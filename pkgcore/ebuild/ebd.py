@@ -48,7 +48,7 @@ def _reset_env_data_source(method):
     #        if self.env_data_source is None:
     #            try:
     #                fp = self.env["PORT_ENV_FILE"]
-    #                f = self.env_data.get_text_fileobj()
+    #                f = self.env_data.text_fileobj()
     #                f.seek(0, 0)
     #                f.truncate(0)
     #                f.write(open(fp, "r").read())
@@ -223,7 +223,7 @@ class ebd(object):
             # load data first (might be a local_source), *then* right
             # if it's a src_ebuild being installed, trying to do two steps
             # stomps the local_sources data.
-            data = self.env_data_source.get_bytes_fileobj().read()
+            data = self.env_data_source.bytes_fileobj().read()
             open(fp, "wb").write(data)
             del data
 
@@ -392,8 +392,8 @@ class setup_mixin(object):
         if a is not None:
             chuck_UnhandledCommand(ebd, "bashrc request with arg"+str(a))
         for source in self.bashrc:
-            if source.get_path is not None:
-                ebd.write("path\n%s" % source.get_path())
+            if source.path is not None:
+                ebd.write("path\n%s" % source.path)
             elif source.get_data is not None:
                 raise NotImplementedError
             else:
@@ -521,7 +521,7 @@ class buildable(ebd, setup_mixin, format.build):
         ebd.__init__(self, pkg, initial_env=domain_settings,
                      features=domain_settings["FEATURES"], **kwargs)
 
-        self.env["FILESDIR"] = pjoin(os.path.dirname(pkg.ebuild.get_path()), "files")
+        self.env["FILESDIR"] = pjoin(os.path.dirname(pkg.ebuild.path), "files")
         self.eclass_cache = eclass_cache
         self.env["ECLASSDIR"] = eclass_cache.eclassdir
         self.env["PORTDIR"] = eclass_cache.portdir

@@ -32,40 +32,26 @@ class TestExtendedRestrictionGeneration(TestCase):
             msg="got %r, expected %r for %r" % (restrict, kls, token))
 
     def verify_text_glob(self, restrict, token):
-        self.assertInstance(restrict, values.StrGlobMatch, token)
-        self.assertEqual(
-            restrict.prefix, token.endswith("*"),
-            msg="testing for %r against %r: val %r" % (
-                token, restrict, restrict.prefix))
-        self.assertEqual(
-            restrict.glob, token.strip("*"),
-            msg="verifying the restriciton glob, %r %r" % (
-                restrict.glob, token))
+        self.assertInstance(restrict, values.StrRegex, token)
 
     def verify_text(self, restrict, token):
         self.assertInstance(restrict, values.StrExactMatch, token)
         self.assertEqual(restrict.exact, token)
-
-    def verify_text_containment(self, restrict, token):
-        self.assertInstance(restrict, values.ContainmentMatch, token)
-        self.assertEqual(list(restrict.vals), [token.strip("*")])
 
     def test_convert_glob(self):
         self.verify_text(parserestrict.convert_glob("diffball"), "diffball")
         for token in ("diff*", "*diff"):
             self.verify_text_glob(parserestrict.convert_glob(token), token)
 
-        for token in ("*", "**", ""):
+        for token in ("*", ""):
             i = parserestrict.convert_glob(token)
             self.assertEqual(
                 i, None,
-                msg="verifying None is returned on pointless restrictions")
+                msg="verifying None is returned on pointless restrictions,"
+                    " failed token: %r" % (token,))
 
-        for token in ("*diff*", "*b*"):
-            self.verify_text_containment(parserestrict.convert_glob(token),
-                                         token)
         self.assertRaises(
-            parserestrict.ParseError, parserestrict.convert_glob, '***')
+            parserestrict.ParseError, parserestrict.convert_glob, '**')
 
     def verify_restrict(self, restrict, attr, token):
         self.assertInstance(restrict, packages.PackageRestriction, token)

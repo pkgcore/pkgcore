@@ -52,7 +52,7 @@ class plan_state(object):
         if return_livefs:
             return iterable
         return (y for y in iterable
-            if not y.pkg.repo.livefs)
+            if not y.pkg.repo.livefs or y.desc == 'remove')
 
     def __getitem__(self, slice):
         return self.plan[slice]
@@ -142,7 +142,7 @@ class remove_op(base_op_state):
 
     def apply(self, plan):
         plan.state.remove_slotting(self.pkg)
-        plan._remove_pkg_blockers(plan.pkg_choices)
+        plan._remove_pkg_blockers(self.choices)
         del plan.pkg_choices[self.pkg]
         plan.plan.append(self)
         plan.vdb_filter.add(self.pkg)

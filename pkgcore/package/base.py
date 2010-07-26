@@ -57,6 +57,7 @@ class wrapper(base):
 
     __getattr__ = klass.GetAttrProxy("_raw_pkg")
 
+    built = klass.alias_attr("_raw_pkg.built")
     versioned_atom = klass.alias_attr("_raw_pkg.versioned_atom")
     unversioned_atom = klass.alias_attr("_raw_pkg.unversioned_atom")
 

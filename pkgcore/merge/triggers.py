@@ -596,7 +596,7 @@ class BlockFileType(base):
         bad_files = []
         # this won't play perfectly w/ binpkgs
         for x in (x for x in cset.iterfiles() if filter_re(x.location)):
-            if bad_pat(file_typer(x.data_source)):
+            if bad_pat(file_typer(x.data)):
                 engine.observer.warn("disallowed file type: %r" % x)
                 bad_files.append(x)
         if self.fatal and bad_files:
@@ -740,7 +740,7 @@ class BinaryDebug(base):
         if not quiet:
             reporter.info("stripping: %s %s" % (fs_obj, ' '.join(args)))
         ret = spawn.spawn([self.strip_binary] + args +
-            [fs_obj.data_source.path])
+            [fs_obj.data.path])
         if ret != 0:
             reporter.warn("stripping %s, type %s failed" % (fs_obj, ftype))
         # need to update chksums here...
@@ -751,7 +751,7 @@ class BinaryDebug(base):
         regex_f = re.compile(self.elf_regex).match
         observer.debug("starting binarydebug filetype scan")
         for fs_obj in cset.iterfiles():
-            ftype = file_typer(fs_obj.data_source)
+            ftype = file_typer(fs_obj.data)
             if regex_f(ftype):
                 yield fs_obj, ftype
         observer.debug("completed binarydebug scan")
@@ -784,7 +784,7 @@ class BinaryDebug(base):
             debug_loc = pjoin(debug_store, fs_obj.location.lstrip('/') + ".debug")
             if debug_loc in cset:
                 continue
-            fpath = fs_obj.data_source.path
+            fpath = fs_obj.data.path
             debug_ondisk = pjoin(os.path.dirname(fpath),
                 os.path.basename(fpath) + ".debug")
             observer.info("splitdebug'ing %s into %s" %

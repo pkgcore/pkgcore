@@ -86,7 +86,7 @@ class DataSourceRestriction(values.base):
         return string % (self.__class__.__name__, self.restriction, id(self))
 
     def match(self, value):
-        return self.restriction.match(iter(value.get_text_fileobj())) ^ self.negate
+        return self.restriction.match(iter(value.text_fileobj())) ^ self.negate
 
     __hash__ = object.__hash__
 
@@ -629,7 +629,7 @@ def stringify_attr(config, pkg, attr):
     if attr == 'keywords':
         return ' '.join(sorted(value, key=lambda x:x.lstrip("~")))
     if attr == 'environment':
-        return value.get_text_fileobj().read()
+        return value.text_fileobj().read()
     if attr == 'repo':
         return str(getattr(value, 'repo_id', 'no repo id'))
     # hackish.

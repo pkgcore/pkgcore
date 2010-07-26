@@ -7,22 +7,25 @@ This form can be used in configuration files, but in doing so portage will have
 issues with the syntax, so if you want to maintain configuration
 compatibility, limit your usage of the extended syntax to the commandline only.
 
-===============  =========================================================
-token            result
-===============  =========================================================
-*                match all
-portage          package name must be ''portage''
-dev-util/*       category must be ''dev-util''
-dev-*/*          category must start with ''dev-''
-dev-util/*       category must be ''dev-util''
-dev-*            package must start with ''dev-''
-*cgi*            package name must have ''cgi'' in it
-*x11*/X*         category must have ''x11'' in it, package must start with
-                 ''X''
-*-apps/portage*  category must end in ''-apps'', package must start with
-                 ''portage''
-=portage-1.0     match version 1.0 of any 'portage' package
-===============  =========================================================
+===============      =========================================================
+token                result
+===============      =========================================================
+*                    match all
+portage              package name must be ''portage''
+dev-util/*           category must be ''dev-util''
+dev-*/*              category must start with ''dev-''m any package name
+dev-util/*           category must be ''dev-util'', any package
+dev-*                package must start with ''dev-'', any category
+*cgi*                package name must have ''cgi'' in it
+*x11*/X*             category must have ''x11'' in it, package must start with
+                     ''X''
+*-apps/portage*      category must end in ''-apps'', package must start with
+                     ''portage''
+dev-vcs/*bzr*tools*  category must be dev-vcs, and the globbing there is like
+                     shell globbing (bzr and tools must be in the package name,
+                     and bzr must proceed tools)
+=portage-1.0         match version 1.0 of any 'portage' package
+===============      =========================================================
 
 
 Additionally, pkgcore supports additional atom extensions that are more

@@ -502,7 +502,7 @@ def config_from_make_conf(location="/etc/"):
         add_trigger('binary_debug_trigger', 'pkgcore.merge.triggers.BinaryDebug',
             mode='strip')
 
-    if '-lafilefixer' not in features:
+    if '-fixlafiles' not in features:
         add_trigger('lafilefixer_trigger',
             'pkgcore.system.libtool.FixLibtoolArchivesTrigger')
 

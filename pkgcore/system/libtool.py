@@ -122,7 +122,7 @@ class FixLibtoolArchivesTrigger(triggers.base):
         for obj in cset.iterfiles():
             if not obj.basename.endswith(".la"):
                 continue
-            handle = obj.data_source.get_text_fileobj()
+            handle = obj.data.text_fileobj()
             updated, content = rewrite_lafile(handle)
             if not updated:
                 continue
@@ -131,6 +131,6 @@ class FixLibtoolArchivesTrigger(triggers.base):
             source = engine.get_writable_fsobj(obj, empty=True)
             source.text_fileobj(True).write(content)
             # force chksums to be regenerated
-            updates.append(obj.change_attributes(data_source=source,
+            updates.append(obj.change_attributes(data=source,
                 chksums=None))
         cset.update(updates)

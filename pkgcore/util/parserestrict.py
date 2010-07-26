@@ -11,7 +11,9 @@ from pkgcore.restrictions import packages, values, util
 from pkgcore.package import errors
 from pkgcore.ebuild import atom, cpv, errors
 from snakeoil.containers import InvertedContains
+import re
 
+valid_globbing = re.compile(r"^(?:[\w+-.]+|(?<!\*)\*)+$").match
 
 class ParseError(ValueError):
     """Raised if parsing a restriction expression failed."""
@@ -32,6 +34,15 @@ def comma_separated_containment(attr):
 
 
 def convert_glob(token):
+    if token in ("*", ''):
+        return None
+    elif '*' not in token:
+        return values.StrExactMatch(token)
+    elif not valid_globbing(token):
+        raise ParseError("globs must be composed of [\w-.+], with optional "
+            "'*'- ** is disallowed however")
+    pattern = "^%s$" % (re.escape(token).replace("\*", ".*"),)
+    return values.StrRegex(pattern, match=True)
     if '*' in token[1:-1]:
         raise ParseError(
             "'*' must be specified at the end or beginning of a matching field")

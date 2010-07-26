@@ -7,7 +7,12 @@ import operator
 
 from pkgcore.config import configurable
 from snakeoil.demandload import demandload
-demandload(globals(), 'errno', 'snakeoil.compatibility:any')
+demandload(globals(),
+    'errno',
+    'snakeoil.compatibility:any',
+    'pkgcore.log:logger',
+    'snakeoil.mappings:defaultdictkey',
+    )
 
 class NoChoice(KeyboardInterrupt):
     """Raised by L{userquery} if no choice was made.
@@ -228,32 +233,28 @@ class CountingFormatter(Formatter):
 
     def __init__(self, **kwargs):
         Formatter.__init__(self, **kwargs)
-        self.package_data = {
-            'new':        0,
-            'upgrades':   0,
-            'downgrades': 0,
-            'nslots':     0,
-            'replaces':   0,
-        }
+        self.package_data = defaultdictkey(lambda x:0)
 
-    def handle_package(self, suffix):
-        self.package_data[self.mappings[suffix]] += 1
+    def visit_op(self, op_type):
+        self.package_data[op_type] += 1
 
     def end(self):
         self.out.write()
         self.out.write(
             'Total: %d packages ' % sum(self.package_data.itervalues()),
             autoline=False)
-        self.out.write(
-            '(%(new)d new, %(upgrades)d upgrades, %(downgrades)d downgrades, '
-            '%(nslots)d in new slots)' % self.package_data)
-common_mappings = {
-    'S': 'nslots',
-    'N': 'new',
-    'U': 'upgrades',
-    'D': 'downgrades',
-    'R': 'replaces',
-}
+
+        d = dict(self.package_data.iteritems())
+        s =  "(%i new, " % (d.pop("add",0),)
+        s += "%i upgrades, " % (d.pop("upgrade", 0),)
+        s += "%i downgrades, " % (d.pop("downgrade", 0),)
+        s += "%i in new slots" % (d.pop("slotted_add", 0),)
+        if d:
+            s += ", %i other ops" % (len(d),)
+        else:
+            s += ")"
+        self.out.write(s)
+
 
 class PortageFormatter(CountingFormatter):
 
@@ -262,8 +263,6 @@ class PortageFormatter(CountingFormatter):
     A Formatter designed to resemble Portage's output
     as much as much as possible.
     """
-
-    mappings = common_mappings
 
     def __init__(self, **kwargs):
         kwargs.setdefault("use_expand", set())
@@ -302,63 +301,79 @@ class PortageFormatter(CountingFormatter):
         pkg_is_bold = any(x.match(op.pkg) for x in getattr(self, 'world_list', ()))
 
         # We don't do blockers or --tree stuff yet
+        data = ['[']
+        pkg_coloring = []
         if pkg_is_bold:
-            out.write('[', out.fg('green'), out.bold, 'ebuild', out.reset, ' ')
+            pkg_coloring.append(out.bold)
+        l = []
+        if op.desc == 'remove':
+            pkg_coloring.insert(0, out.fg('red'))
+            data += pkg_coloring + ['uninstall']
+        elif getattr(op.pkg, 'built', False):
+            pkg_coloring.insert(0, out.fg('magenta'))
+            data += pkg_coloring + ['binary']
         else:
-            out.write('[', out.fg('green'), 'ebuild', out.reset, ' ')
+            pkg_coloring.insert(0, out.fg('green'))
+            data += pkg_coloring + ['ebuild']
 
+        data += [out.reset, ' ']
+
+        out.write(*data)
         # Order is important here - look at the above diagram
-        type = op.desc
+
+        op_type = op.desc
+        fetch_data = [' ']
+        if 'fetch' in op.pkg.restrict:
+            fetch_data = [out.fg('red'), out.bold, 'F', out.reset]
+
         if op.desc == "add":
             out.write(' ', out.fg('green'), out.bold, 'N', out.reset)
-            suffix = "N"
             if op.pkg.slot != '0':
                 out.write(out.fg('green'), out.bold, 'S', out.reset)
-                suffix = "S"
+                op_type = 'slotted_add'
             else:
                 out.write(' ')
-        elif op.desc == "replace" and op.pkg == op.old_pkg:
-            out.write('  ', out.fg('yellow'), out.bold, 'R', out.reset)
-            suffix = "R"
-        else:
-            out.write('   ')
-            type = 'upgrade'
-
-        if 'fetch' in op.pkg.restrict:
-            out.write(out.fg('red'), out.bold, 'F', out.reset)
-        else:
-            out.write(' ')
-        if type == 'upgrade':
-            if op.pkg.fullver != op.old_pkg.fullver:
+            out.write(*fetch_data)
+            out.write("  ")
+        elif op.desc == "replace":
+            if op.pkg == op.old_pkg:
+                out.write('  ', out.fg('yellow'), out.bold, 'R', out.reset)
+                out.write(*fetch_data)
+                out.write("  ")
+            else:
+                out.write("   ")
+                out.write(*fetch_data)
                 out.write(out.fg('cyan'), out.bold, 'U', out.reset)
-                suffix = "U"
                 if op.pkg > op.old_pkg:
                     out.write(' ')
+                    op_type = 'upgrade'
                 else:
                     out.write(out.fg('blue'), out.bold, 'D', out.reset)
-                    suffix = "D"
+                    op_type = 'downgrade'
+        elif op.desc == 'remove':
+            # This is very likely unaligned...
+            out.write('   ')
         else:
-            out.write('  ')
+            logger.warn("unformattable op type: desc(%r), %r", (op.desc, op))
+
         out.write('] ')
 
-        self.handle_package(suffix)
+        self.visit_op(op_type)
 
-        if pkg_is_bold:
-            out.write(out.fg('green'), out.bold, op.pkg.cpvstr, out.reset)
-        else:
-            out.write(out.fg('green'), op.pkg.cpvstr, out.reset)
+        out.write(*(pkg_coloring + [ op.pkg.cpvstr, out.reset]))
 
-        if type == 'upgrade':
+        if op.desc == 'replace' and op_type != 'replace':
             out.write(' ', out.fg('blue'), out.bold, '[%s]' % op.old_pkg.fullver, out.reset)
 
         # Build a list of (useflags, use_expand_dicts) tuples.
         # HACK: if we are in "replace" mode we build a list of length
         # 4, else this is a list of length 2. We then pass this to
         # format_use which can take either 2 or 4 arguments.
+        uses = ((), ())
         if op.desc == 'replace':
             uses = (self.iuse_strip(op.pkg.iuse), op.pkg.use,
                 self.iuse_strip(op.old_pkg.iuse), op.old_pkg.use)
-        else:
+        elif op.desc == 'add':
             uses = (self.iuse_strip(op.pkg.iuse), op.pkg.use)
         stuff = map(self.use_splitter, uses)
 
@@ -485,8 +500,6 @@ class PaludisFormatter(CountingFormatter):
     as much as much as possible.
     """
 
-    mappings = common_mappings
-
     def format(self, op):
         out = self.out
         origautoline = out.autoline
@@ -497,27 +510,28 @@ class PaludisFormatter(CountingFormatter):
         out.write("-%s" % op.pkg.fullver)
         out.write("::%s " % op.pkg.repo.repo_id)
         out.write(out.fg('blue'), "{:%s} " % op.pkg.slot)
+        op_type = op.desc
         if op.desc == 'add':
+            suffix = 'N'
             if op.pkg.slot != '0':
+                op_type = 'slotted_add'
                 suffix = 'S'
-            else:
-                suffix = 'N'
             out.write(out.fg('yellow'), "[%s]" % suffix)
         elif op.desc == 'replace':
             if op.pkg != op.old_pkg:
                 if op.pkg > op.old_pkg:
-                    suffix = 'U'
+                    op_type = 'upgrade'
                 else:
-                    suffix = 'D'
+                    op_type = 'downgrade'
                 out.write(out.fg('yellow'), "[%s %s]" % (
-                        suffix, op.old_pkg.fullver))
+                        op_type[0].upper(), op.old_pkg.fullver))
             else:
-                suffix = 'R'
                 out.write(out.fg('yellow'), "[R]")
         else:
             # Shouldn't reach here
-            assert False
-        self.handle_package(suffix)
+            logger.warn("unknown op type encountered: desc(%r), %r",
+                (op.desc, op))
+        self.visit_op(op_type)
 
         red = out.fg('red')
         green = out.fg('green')

@@ -39,7 +39,7 @@ def pkg_uses_default_preinst(pkg):
         default_pkg_preinst_re = re.compile(
             "(?:^|\n)pkg_preinst *\(\)\s*{\s*return;?\s*}[ \t]*(?:\n|$)")
 
-    data = pkg.environment.get_text_fileobj().read()
+    data = pkg.environment.text_fileobj().read()
     m = default_pkg_preinst_re.search(data)
 
     # second check. make sure there aren't two matches- if so, that

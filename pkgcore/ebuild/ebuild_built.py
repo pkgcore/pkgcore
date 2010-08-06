@@ -5,6 +5,8 @@
 built ebuild packages (vdb packages and binpkgs are derivatives of this)
 """
 
+__all__ = ("package", "package_factory")
+
 from pkgcore.ebuild import ebuild_src, conditionals
 from pkgcore.package import metadata
 from snakeoil.data_source import local_source

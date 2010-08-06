@@ -5,6 +5,8 @@
 core engine for livefs modifications
 """
 
+__all__ = ("alias_cset", "map_new_cset_livefs", "MergeEngine")
+
 # need better documentation...
 
 # pre merge triggers
@@ -131,12 +133,12 @@ class MergeEngine(object):
         """
         generate a MergeEngine instance configured for uninstalling a pkg
 
-        @param tempdir: tempspace for the merger to use; this space it must
+        :param tempdir: tempspace for the merger to use; this space it must
             control alone, no sharing.
-        @param pkg: L{pkgcore.package.metadata.package} instance to install
-        @param offset: any livefs offset to force for modifications
-        @param disable_plugins: if enabled, run just the triggers passed in
-        @return: L{MergeEngine}
+        :param pkg: L{pkgcore.package.metadata.package} instance to install
+        :param offset: any livefs offset to force for modifications
+        :param disable_plugins: if enabled, run just the triggers passed in
+        :return: L{MergeEngine}
 
         """
 
@@ -166,13 +168,13 @@ class MergeEngine(object):
         """
         generate a MergeEngine instance configured for uninstalling a pkg
 
-        @param tempdir: tempspace for the merger to use; this space it must
+        :param tempdir: tempspace for the merger to use; this space it must
             control alone, no sharing.
-        @param pkg: L{pkgcore.package.metadata.package} instance to uninstall,
+        :param pkg: L{pkgcore.package.metadata.package} instance to uninstall,
             must be from a livefs vdb
-        @param offset: any livefs offset to force for modifications
-        @param disable_plugins: if enabled, run just the triggers passed in
-        @return: L{MergeEngine}
+        :param offset: any livefs offset to force for modifications
+        :param disable_plugins: if enabled, run just the triggers passed in
+        :return: L{MergeEngine}
         """
 
         hooks = dict(
@@ -201,14 +203,14 @@ class MergeEngine(object):
         """
         generate a MergeEngine instance configured for replacing a pkg.
 
-        @param tempdir: tempspace for the merger to use; this space it must
+        :param tempdir: tempspace for the merger to use; this space it must
             control alone, no sharing.
-        @param old: L{pkgcore.package.metadata.package} instance to replace,
+        :param old: L{pkgcore.package.metadata.package} instance to replace,
             must be from a livefs vdb
-        @param new: L{pkgcore.package.metadata.package} instance
-        @param offset: any livefs offset to force for modifications
-        @param disable_plugins: if enabled, run just the triggers passed in
-        @return: L{MergeEngine}
+        :param new: L{pkgcore.package.metadata.package} instance
+        :param offset: any livefs offset to force for modifications
+        :param disable_plugins: if enabled, run just the triggers passed in
+        :return: L{MergeEngine}
 
         """
 
@@ -254,8 +256,8 @@ class MergeEngine(object):
 
         The cset will stay in memory until the engine finishes all steps.
 
-        @param cset_name: what to call the generated cset
-        @param func: callable to get the cset
+        :param cset_name: what to call the generated cset
+        :param func: callable to get the cset
         """
         self.add_cset(cset_name, func)
         self.preserve_csets.append(cset_name)
@@ -266,8 +268,8 @@ class MergeEngine(object):
 
         The cset will be released from memory when it's no longer used.
 
-        @param cset_name: what to call the generated cset
-        @param func: callable to get the cset
+        :param cset_name: what to call the generated cset
+        :param func: callable to get the cset
         """
         if not callable(func):
             raise TypeError("func must be a callable")
@@ -279,8 +281,8 @@ class MergeEngine(object):
         """
         register a L{pkgcore.merge.triggers.base} instance to be executed
 
-        @param hook_name: engine step to hook the trigger into
-        @param trigger: L{triggers<pkgcore.merge.triggers.base>} to add
+        :param hook_name: engine step to hook the trigger into
+        :param trigger: L{triggers<pkgcore.merge.triggers.base>} to add
         """
         if hook_name not in self.hooks:
             raise KeyError("trigger %r's hook %s isn't a known hook" %

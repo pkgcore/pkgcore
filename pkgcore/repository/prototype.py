@@ -5,6 +5,9 @@
 base repository template
 """
 
+__all__ = ("CategoryIterValLazyDict", "PackageMapping", "VersionMapping",
+    "tree")
+
 from pkgcore.ebuild.atom import atom
 from pkgcore.restrictions import values, boolean, restriction, packages
 from pkgcore.restrictions.util import collect_package_restrictions
@@ -140,7 +143,7 @@ class tree(object):
 
     def __init__(self, frozen=False):
         """
-        @keyword frozen: controls whether the repository is mutable or immutable
+        :keyword frozen: controls whether the repository is mutable or immutable
         """
 
         self.categories = CategoryIterValLazyDict(
@@ -202,14 +205,14 @@ class tree(object):
         """
         generator that yields packages match a restriction.
 
-        @type restrict : L{pkgcore.restrictions.packages.PackageRestriction}
+        :type restrict : L{pkgcore.restrictions.packages.PackageRestriction}
             instance
-        @param restrict: restriction to search via
-        @param restrict_solutions: cnf collapsed list of the restrict.
+        :param restrict: restriction to search via
+        :param restrict_solutions: cnf collapsed list of the restrict.
             Don't play with it unless you know what you're doing
-        @param sorter: callable to do sorting during searching-
+        :param sorter: callable to do sorting during searching-
             if sorting the results, use this instead of sorting externally.
-        @param yield_none: if True then itermatch will yield None for every
+        :param yield_none: if True then itermatch will yield None for every
             non-matching package. This is meant for use in combination with
             C{twisted.task.cooperate} or other async uses where itermatch
             should not wait many (wallclock) seconds between yielding

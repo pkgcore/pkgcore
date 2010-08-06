@@ -3,6 +3,8 @@
 
 from pkgcore.sync import base
 
+__all__ = ("tree_mixin",)
+
 class tree_mixin(object):
 
     def __init__(self, sync=None):

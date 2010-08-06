@@ -5,6 +5,9 @@
 repository modifications (installing, removing, replacing)
 """
 
+__all__ = ("Failure", "base", "install", "uninstall", "replace",
+    "operations", "operations_proxy")
+
 from snakeoil.dependant_methods import ForcedDepends
 from snakeoil.weakrefs import WeakRefFinalizer
 from snakeoil.demandload import demandload

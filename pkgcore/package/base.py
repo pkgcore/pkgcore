@@ -7,6 +7,8 @@ base package class; instances should derive from this.
 Right now, doesn't provide much, need to change that down the line
 """
 
+__all__ = ("base", "wrapper", "dynamic_getattr_dict")
+
 from snakeoil.compatibility import cmp
 from snakeoil import klass
 

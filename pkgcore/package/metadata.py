@@ -6,6 +6,8 @@
 package with its metadata accessible (think 'no longer abstract')
 """
 
+__all__ = ("DeriveMetadataKls", "factory", "package")
+
 from pkgcore.ebuild import cpv
 from pkgcore.ebuild.atom import atom
 from pkgcore.package import base
@@ -41,8 +43,8 @@ def DeriveMetadataKls(original_kls):
             wrapper for %s.__init__; see %s.__init__ for allowed args/kwds,
             they're passed directly to it
 
-            @param parent_repository: parent repository this package belongs to
-            @type parent_repository: L{pkgcore.repository.prototype.tree}
+            :param parent_repository: parent repository this package belongs to
+            :type parent_repository: L{pkgcore.repository.prototype.tree}
                 instance
             """ % (original_kls, original_kls)
             original_kls.__init__(self, *a, **kwds)

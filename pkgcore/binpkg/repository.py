@@ -5,6 +5,8 @@
 binpkg ebuild repository
 """
 
+__all__ = ("tree", "ConfiguredBinpkgTree", "force_unpacking")
+
 import os
 
 from pkgcore.repository import prototype, errors
@@ -224,10 +226,10 @@ class tree(prototype.tree):
     def __init__(self, location, repo_id=None, ignore_paludis_versioning=False,
         cache_version='0'):
         """
-        @param location: root of the tbz2 repository
-        @keyword repo_id: unique repository id to use; else defaults to
+        :param location: root of the tbz2 repository
+        :keyword repo_id: unique repository id to use; else defaults to
             the location
-        @keyword ignore_paludis_versioning: if False, error when -scm is seen.  If True,
+        :keyword ignore_paludis_versioning: if False, error when -scm is seen.  If True,
             silently ignore -scm ebuilds
         """
         super(tree, self).__init__()
@@ -369,6 +371,6 @@ class ConfiguredBinpkgTree(wrapper.tree):
     def _generate_buildop(self, domain, pkg, **kwargs):
         kwargs["initial_env"] = self.domain_settings
         kwargs["env_data_source"] = pkg.environment
-        return ebd.binpkg_buildable(pkg, **kwargs)
+        return ebd.binpkg_buildable(domain, pkg, **kwargs)
 
 tree.configure = ConfiguredBinpkgTree

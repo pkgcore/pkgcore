@@ -1,8 +1,11 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
+# Copyright: 2009 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
 
 """Plugin system, heavily inspired by twisted's plugin system."""
+
+__all__ = ("initialize_cache", "get_plugins", "get_plugin")
 
 # Implementation note: we have to be pretty careful about error
 # handling in here since some core functionality in pkgcore uses this
@@ -204,7 +207,7 @@ def get_plugin(key, package=plugins):
     This assumes all plugins for this key have a priority attribute.
     If any of them do not the AttributeError is not stopped.
 
-    @return: highest-priority plugin or None if no plugin available.
+    :return: highest-priority plugin or None if no plugin available.
     """
     cache = _cache.get(package)
     if cache is None:

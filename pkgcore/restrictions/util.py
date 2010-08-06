@@ -15,8 +15,8 @@ def _is_package_instance(inst):
 def collect_package_restrictions(restrict, attrs=None):
     """Collect PackageRestriction instances inside a restriction.
 
-    @param restrict: package instance to scan
-    @param attrs: None (return all package restrictions), or a sequence of
+    :param restrict: package instance to scan
+    :param attrs: None (return all package restrictions), or a sequence of
         specific attrs the package restriction must work against.
     """
     if not isinstance(restrict, (list, tuple)):

@@ -1,5 +1,7 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
+
+__all__ = ("PigeonHoledSlots",)
 
 from pkgcore.restrictions import restriction
 
@@ -18,7 +20,7 @@ class PigeonHoledSlots(object):
     def fill_slotting(self, obj, force=False):
         """Try to insert obj in.
 
-        @return: any conflicting objs (empty list if inserted successfully).
+        :return: any conflicting objs (empty list if inserted successfully).
         """
         key = obj.key
         l = [x for x in self.limiters.get(key, ()) if x.match(obj)]

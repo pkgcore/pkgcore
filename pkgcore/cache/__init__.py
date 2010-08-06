@@ -1,9 +1,11 @@
-# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
 cache subsystem, typically used for storing package metadata
 """
+
+__all__ = ("base", "bulk")
 
 from pkgcore.cache import errors
 from snakeoil.mappings import ProtectedDict, autoconvert_py3k_methods_metaclass
@@ -45,8 +47,8 @@ class base(object):
         """
         initialize the derived class; specifically, store label/keys
 
-        @param auxdbkeys: sequence of allowed keys for each cache entry
-        @param readonly: defaults to False,
+        :param auxdbkeys: sequence of allowed keys for each cache entry
+        :param readonly: defaults to False,
             controls whether the cache is mutable.
         """
         if auxdbkeys is None:

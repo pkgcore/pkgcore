@@ -1,4 +1,4 @@
-# Copyright: 2005-2009 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 # "More than one statement on a single line"
@@ -7,6 +7,8 @@
 """
 gentoo ebuild atom, should be generalized into an agnostic base
 """
+
+__all__ = ("atom", "transitive_use_atom", "generate_collapsed_restriction")
 
 import string
 from pkgcore.restrictions import values, packages, boolean
@@ -45,10 +47,10 @@ valid_slot_chars = frozenset(valid_slot_chars)
 
 def native_init(self, atom, negate_vers=False, eapi=-1):
     """
-    @param atom: string, see gentoo ebuild atom syntax
-    @keyword negate_vers: boolean controlling whether the version should be
+    :param atom: string, see gentoo ebuild atom syntax
+    :keyword negate_vers: boolean controlling whether the version should be
         inverted for restriction matching
-    @keyword eapi: string/int controlling what eapi to enforce for this atom
+    :keyword eapi: string/int controlling what eapi to enforce for this atom
     """
     sf = object.__setattr__
 

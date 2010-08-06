@@ -5,6 +5,8 @@
 per key file based backend
 """
 
+__all__ = ("database",)
+
 import os, stat, errno
 from pkgcore.cache import fs_template, errors
 from pkgcore.config import ConfigHint

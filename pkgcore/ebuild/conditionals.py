@@ -7,6 +7,8 @@ Turns a DepSet (depends, rdepends, SRC_URI, license, etc) into
 appropriate conditionals.
 """
 
+__all__ = ("DepSet", "stringify_boolean")
+
 # TODO: move exceptions elsewhere, bind them to a base exception for pkgcore
 
 from pkgcore.restrictions import packages, values, boolean
@@ -44,14 +46,14 @@ class DepSet(boolean.AndRestriction):
         allow_src_uri_file_renames=False):
 
         """
-        @param dep_str: string abiding by DepSet syntax
-        @param operators: mapping of node -> callable for special operators
+        :param dep_str: string abiding by DepSet syntax
+        :param operators: mapping of node -> callable for special operators
             in DepSet syntax
-        @param element_func: if None, element_class is used for generating
+        :param element_func: if None, element_class is used for generating
             elements, else it's used to generate elements.
             Mainly useful for when you need to curry a few args for instance
             generation, since element_class _must_ be a class
-        @param element_class: class of generated elements
+        :param element_class: class of generated elements
         """
 
         if not isinstance(element_class, type):
@@ -207,9 +209,9 @@ class DepSet(boolean.AndRestriction):
 
     def evaluate_depset(self, cond_dict, tristate_filter=None):
         """
-        @param cond_dict: container to be used for conditional collapsing,
+        :param cond_dict: container to be used for conditional collapsing,
             typically is a use list
-        @param tristate_filter: a control; if specified, must be a container
+        :param tristate_filter: a control; if specified, must be a container
             of conditionals to lock to cond_dict.
             during processing, if it's not in tristate_filter will
             automatically enable the payload

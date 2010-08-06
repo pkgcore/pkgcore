@@ -5,6 +5,8 @@
 cache backend utilities
 """
 
+__all__ = ("mirror_cache",)
+
 from pkgcore.cache import errors
 
 def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None,
@@ -12,14 +14,14 @@ def mirror_cache(valid_nodes_iterable, src_cache, trg_cache, eclass_cache=None,
     """
     make a cache backend a mirror of another
 
-    @param valid_nodes_iterable: valid keys
-    @param src_cache: L{pkgcore.cache.base} instance
+    :param valid_nodes_iterable: valid keys
+    :param src_cache: L{pkgcore.cache.base} instance
         to copy keys from
-    @param trg_cache: L{pkgcore.cache.base} instance
+    :param trg_cache: L{pkgcore.cache.base} instance
         to write keys to
-    @param eclass_cache: if doing eclass_cache translation,
+    :param eclass_cache: if doing eclass_cache translation,
         a L{pkgcore.ebuild.eclass_cache.cache} instance to use, else None
-    @param verbose_instance: either None (defaulting to L{quiet_mirroring}),
+    :param verbose_instance: either None (defaulting to L{quiet_mirroring}),
         or a L{quiet_mirroring} derivative
     """
 

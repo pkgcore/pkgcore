@@ -1,4 +1,4 @@
-# Copyright: 2009 Brian Harring <ferringb@gmail.com>
+# Copyright: 2009-2010 Brian Harring <ferringb@gmail.com>
 # Copyright: 2005 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
@@ -10,6 +10,11 @@ all callables can/may throw a
 L{configuration exception<pkgcore.config.errors.ConfigurationError>}
 """
 
+__all__ = ("ConfigType", "LazySectionRef", "LazyNamedSectionRef", "ConfigSection",
+    "DictConfigSection", "FakeIncrementalDictConfigSection", "convert_string",
+    "convert_asis", "convert_hybrid", "section_alias", "list_parser", "str_parser",
+    "bool_parser", "int_parser", "parse_config_file"
+)
 
 from pkgcore.config import errors, configurable
 from snakeoil import currying
@@ -219,10 +224,10 @@ class DictConfigSection(ConfigSection):
     def __init__(self, conversion_func, source_dict):
         """Initialize.
 
-        @type  conversion_func: callable.
-        @param conversion_func: called with a ConfigManager, a value from
+        :type conversion_func: callable.
+        :param conversion_func: called with a ConfigManager, a value from
             the dict and a type name.
-        @type  source_dict: dict with string keys and arbitrary values.
+        :type source_dict: dict with string keys and arbitrary values.
         """
         ConfigSection.__init__(self)
         self.func = conversion_func
@@ -255,10 +260,10 @@ class FakeIncrementalDictConfigSection(ConfigSection):
         func should return a single sequence for list types and in
         repr for list types.
 
-        @type  conversion_func: callable.
-        @param conversion_func: called with a ConfigManager, a value from
+        :type conversion_func: callable.
+        :param conversion_func: called with a ConfigManager, a value from
             the dict and a type name.
-        @type  source_dict: dict with string keys and arbitrary values.
+        :type source_dict: dict with string keys and arbitrary values.
         """
         ConfigSection.__init__(self)
         self.func = conversion_func

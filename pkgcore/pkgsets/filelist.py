@@ -5,6 +5,8 @@
 pkgset based around loading a list of atoms from a world file
 """
 
+__all__ = ("FileList", "WorldFile")
+
 import pkgcore.const
 from pkgcore.ebuild.atom import atom
 from pkgcore.config import ConfigHint

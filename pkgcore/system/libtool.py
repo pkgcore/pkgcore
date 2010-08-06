@@ -1,6 +1,8 @@
 # Copyright: 2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
 
+__all__ = ("UnknownData", "FixLibtoolArchivesTrigger")
+
 from snakeoil.lists import stable_unique
 from snakeoil.currying import partial, post_curry
 from snakeoil.data_source import local_source

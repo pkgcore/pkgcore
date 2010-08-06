@@ -200,7 +200,7 @@ class SQLDatabase(template.database):
         if the table definition doesn't support auto-increment columns
         for pkgid.
 
-        @return: the cpvs new pkgid
+        :return: the cpvs new pkgid
 
         note this doesn't commit the transaction.  The caller is expected to.
         """

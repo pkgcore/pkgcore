@@ -3,6 +3,7 @@
 
 """Commandline interface to L{pkgcore.ebuild.filter_env}."""
 
+__all__ = ("OptionParser", "main")
 
 import sys
 

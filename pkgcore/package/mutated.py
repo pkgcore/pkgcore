@@ -5,6 +5,8 @@
 package wrapper class to override a packages attributes
 """
 
+__all__ = ("MutatedPkg",)
+
 from pkgcore.package.base import wrapper
 
 class MutatedPkg(wrapper):
@@ -12,8 +14,8 @@ class MutatedPkg(wrapper):
 
     def __init__(self, pkg, overrides):
         """
-        @param pkg: L{pkgcore.package.metadata.package} to wrap
-        @param overrides: is an attr -> instance mapping to substitute when
+        :param pkg: L{pkgcore.package.metadata.package} to wrap
+        :param overrides: is an attr -> instance mapping to substitute when
             the attr is requested
         """
         wrapper.__init__(self, pkg)

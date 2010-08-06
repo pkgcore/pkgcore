@@ -57,10 +57,10 @@ class AlwaysBool(base):
 
     def __init__(self, node_type=None, negate=False):
         """
-        @param node_type: the restriction type the instance should be,
+        :param node_type: the restriction type the instance should be,
             typically L{pkgcore.restrictions.packages.package_type} or
             L{pkgcore.restrictions.values.value_type}
-        @param negate: boolean to return for the match
+        :param negate: boolean to return for the match
         """
         object.__setattr__(self, "negate", negate)
         object.__setattr__(self, "type", node_type)
@@ -96,7 +96,7 @@ class Negate(base):
 
     def __init__(self, restrict):
         """
-        @param restrict: L{pkgcore.restrictions.restriction.base} instance
+        :param restrict: L{pkgcore.restrictions.restriction.base} instance
             to negate
         """
         sf = object.__setattr__
@@ -121,9 +121,9 @@ class FakeType(base):
 
     def __init__(self, restrict, new_type):
         """
-        @param restrict: L{pkgcore.restrictions.restriction.base} instance
+        :param restrict: L{pkgcore.restrictions.restriction.base} instance
             to wrap
-        @param new_type: new node_type
+        :param new_type: new node_type
         """
         sf = object.__setattr__
         sf(self, "type", new_type)
@@ -145,10 +145,10 @@ class AnyMatch(base):
     def __init__(self, childrestriction, node_type, negate=False):
         """Initialize.
 
-        @type  childrestriction: restriction
-        @param childrestriction: child restriction applied to every value.
-        @type  node_type: string
-        @param node_type: type of this restriction.
+        :type childrestriction: restriction
+        :param childrestriction: child restriction applied to every value.
+        :type node_type: string
+        :param node_type: type of this restriction.
         """
         sf = object.__setattr__
         sf(self, "negate", negate)
@@ -175,12 +175,12 @@ def curry_node_type(klass, node_type, extradoc=None):
     This uses L{partial} to pass a node_type to the wrapped class,
     and extends the docstring.
 
-    @param klass: callable (usually a class) that is wrapped.
-    @param node_type: value passed as node_type.
-    @param extradoc: addition to the docstring. Defaults to
+    :param klass: callable (usually a class) that is wrapped.
+    :param node_type: value passed as node_type.
+    :param extradoc: addition to the docstring. Defaults to
         "Automatically set to %s type." % node_type
 
-    @return: a wrapped callable.
+    :return: a wrapped callable.
     """
     if extradoc is None:
         extradoc = "Automatically set to %s type." % (node_type,)

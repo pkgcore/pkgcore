@@ -163,31 +163,3 @@ class TestBulk(BaseTest):
         # write a key outside of known keys
         db["dar"] = {"foo2":"dar"}
         self.assertEqual(db["dar"].items(), [])
-
-
-#
-# XXX: disabled by harring; get_matches is old code, still semi-working,
-# but not even remotely part of the cache interface- that code needs to be
-# gutted/refactored, with the majority of it happening higher up;
-#
-# reiterating; these tests should not be enabled till restriction translation
-# is implemented, likely invalidating this code.
-#
-#    def test_get_matches(self):
-#        self.db = self.get_db()
-#        self.assertRaises(errors.InvalidRestriction,
-#                          list, self.cache.get_matches({'foo': '*'}))
-#        self.assertRaises(errors.InvalidRestriction,
-#                          list, self.cache.get_matches({'bar': '.*'}))
-#
-#        self.cache['foon'] = {'foo': 'baz'}
-#
-#        self.assertEqual(['spork'],
-#                          list(self.cache.get_matches({'foo': 'bar'})))
-#        self.assertEqual(['foon', 'spork'],
-#                          sorted(self.cache.get_matches({'foo': 'ba.'})))
-#        self.assertEqual(['foon', 'spork'],
-#                          sorted(self.cache.get_matches({})))
-#
-#        self.assertEqual(['spork'],
-#                          list(self.cache.get_matches({'foo': ('BAR', re.I)})))

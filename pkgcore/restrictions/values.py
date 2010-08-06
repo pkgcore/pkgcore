@@ -98,10 +98,10 @@ class StrRegex(base):
     def __init__(self, regex, case_sensitive=True, match=False, negate=False):
 
         """
-        @param regex: regex pattern to match
-        @param case_sensitive: should the match be case sensitive?
-        @param match: should C{re.match} be used instead of C{re.search}?
-        @param negate: should the match results be negated?
+        :param regex: regex pattern to match
+        :param case_sensitive: should the match be case sensitive?
+        :param match: should C{re.match} be used instead of C{re.search}?
+        :param negate: should the match results be negated?
         """
 
         sf = object.__setattr__
@@ -167,9 +167,9 @@ class native_StrExactMatch(object):
     def __init__(self, exact, case_sensitive=True, negate=False):
 
         """
-        @param exact: exact string to match
-        @param case_sensitive: should the match be case sensitive?
-        @param negate: should the match results be negated?
+        :param exact: exact string to match
+        :param case_sensitive: should the match be case sensitive?
+        :param negate: should the match results be negated?
         """
 
         sf = object.__setattr__
@@ -244,11 +244,11 @@ class StrGlobMatch(base):
     def __init__(self, glob, case_sensitive=True, prefix=True, negate=False):
 
         """
-        @param glob: string chunk that must be matched
-        @param case_sensitive: should the match be case sensitive?
-        @param prefix: should the glob be a prefix check for matching,
+        :param glob: string chunk that must be matched
+        :param case_sensitive: should the match be case sensitive?
+        :param prefix: should the glob be a prefix check for matching,
             or postfix matching
-        @param negate: should the match results be negated?
+        :param negate: should the match results be negated?
         """
 
         sf = object.__setattr__
@@ -312,8 +312,8 @@ class EqualityMatch(base):
     def __init__(self, data, negate=False):
 
         """
-        @param data: data to base comparison against
-        @param negate: should the results be negated?
+        :param data: data to base comparison against
+        :param negate: should the results be negated?
         """
 
         sf = object.__setattr__
@@ -349,10 +349,10 @@ class ContainmentMatch(base):
     def __init__(self, *vals, **kwds):
 
         """
-        @param vals: what values to look for during match
-        @keyword all: must all vals be present, or just one for a match
+        :param vals: what values to look for during match
+        :keyword all: must all vals be present, or just one for a match
             to succeed?
-        @keyword negate: should the match results be negated?
+        :keyword negate: should the match results be negated?
         """
 
         sf = object.__setattr__
@@ -517,11 +517,11 @@ class FlatteningRestriction(base):
     def __init__(self, dont_iter, childrestriction, negate=False):
         """Initialize.
 
-        @type  dont_iter: type or tuple of types
-        @param dont_iter: type(s) not to flatten.
+        :type dont_iter: type or tuple of types
+        :param dont_iter: type(s) not to flatten.
                           Passed to L{snakeoil.lists.iflatten_instance}.
-        @type  childrestriction: restriction
-        @param childrestriction: restriction applied to the flattened list.
+        :type childrestriction: restriction
+        :param childrestriction: restriction applied to the flattened list.
         """
         object.__setattr__(self, "negate", negate)
         object.__setattr__(self, "dont_iter", dont_iter)

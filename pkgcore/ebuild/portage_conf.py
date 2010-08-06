@@ -1,10 +1,14 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """make.conf translator.
 
 Converts portage configuration files into L{pkgcore.config} form.
 """
+
+__all__ = ("SecurityUpgradesViaProfile", "add_layman_syncers", "make_syncer",
+    "add_sets", "add_profile", "add_fetcher", "mk_simple_cache",
+    "config_from_make_conf")
 
 import os
 
@@ -41,9 +45,9 @@ def SecurityUpgradesViaProfile(ebuild_repo, vdb, profile):
     """
     generate a GLSA vuln. pkgset limited by profile
 
-    @param ebuild_repo: L{pkgcore.ebuild.repository.UnconfiguredTree} instance
-    @param vdb: L{pkgcore.repository.prototype.tree} instance that is the livefs
-    @param profile: L{pkgcore.ebuild.profiles} instance
+    :param ebuild_repo: L{pkgcore.ebuild.repository.UnconfiguredTree} instance
+    :param vdb: L{pkgcore.repository.prototype.tree} instance that is the livefs
+    :param profile: L{pkgcore.ebuild.profiles} instance
     """
     arch = profile.arch
     if arch is None:
@@ -267,7 +271,7 @@ def config_from_make_conf(location="/etc/"):
     """
     generate a config from a file location
 
-    @param location: location the portage configuration is based in,
+    :param location: location the portage configuration is based in,
         defaults to /etc
     """
 

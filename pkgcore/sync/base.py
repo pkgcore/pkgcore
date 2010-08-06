@@ -1,6 +1,13 @@
 # Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+
+__all__ = ("syncer_exception", "uri_exception", "generic_exception",
+    "missing_local_user", "missing_binary", "syncer", "ExternalSyncer",
+    "dvcs_syncer", "GenericSyncer", "DisabledSyncer",
+    "AutodetectSyncer",
+)
+
 from pkgcore.config import ConfigHint, configurable
 from snakeoil import demandload, descriptors
 demandload.demandload(globals(),
@@ -51,10 +58,10 @@ class syncer(object):
     @staticmethod
     def split_users(raw_uri):
         """
-        @param raw_uri: string uri to split users from; harring::ferringb:pass
+        :param raw_uri: string uri to split users from; harring::ferringb:pass
           for example is local user 'harring', remote 'ferringb',
           password 'pass'
-        @return: (local user, remote user, remote pass), defaults to root_uid
+        :return: (local user, remote user, remote pass), defaults to root_uid
           if no local user specified
         """
         uri = raw_uri.split("::", 1)

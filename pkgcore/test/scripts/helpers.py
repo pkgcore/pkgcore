@@ -151,9 +151,9 @@ class MainMixin(object):
         Extra arguments are parsed by the option parser.
         Keyword arguments are config sections.
 
-        @param out: list of strings produced as output on stdout.
-        @param err: list of strings produced as output on stderr.
-        @return: the L{central.ConfigManager}.
+        :param out: list of strings produced as output on stdout.
+        :param err: list of strings produced as output on stderr.
+        :return: the L{central.ConfigManager}.
         """
         options = self.parse(*args, **kwargs)
         outformatter = FakeStreamFormatter()

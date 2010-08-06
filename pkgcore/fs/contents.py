@@ -48,9 +48,9 @@ class contentsSet(object):
     def __init__(self, initial=None, mutable=True):
 
         """
-        @param initial: initial fs objs for this set
-        @type initial: sequence
-        @param mutable: controls if it modifiable after initialization
+        :param initial: initial fs objs for this set
+        :type initial: sequence
+        :param mutable: controls if it modifiable after initialization
         """
         self._dict = {}
         if initial is not None:
@@ -71,7 +71,7 @@ class contentsSet(object):
         """
         add a new fs obj to the set
 
-        @param obj: must be a derivative of L{pkgcore.fs.fs.fsBase}
+        :param obj: must be a derivative of L{pkgcore.fs.fs.fsBase}
         """
 
         if not self.mutable:
@@ -87,9 +87,9 @@ class contentsSet(object):
         """
         remove a fs obj to the set
 
-        @type obj: a derivative of L{pkgcore.fs.fs.fsBase}
+        :type obj: a derivative of L{pkgcore.fs.fs.fsBase}
             or a string location of an obj in the set.
-        @raise KeyError: if the obj isn't found
+        :raise KeyError: if the obj isn't found
         """
 
         if not self.mutable:
@@ -123,7 +123,7 @@ class contentsSet(object):
     def clear(self):
         """
         clear the set
-        @raise ttributeError: if the instance is frozen
+        :raise ttributeError: if the instance is frozen
         """
         if not self.mutable:
             # weird, but keeping with set.
@@ -269,13 +269,13 @@ class contentsSet(object):
         locals()[k].__doc__ = \
             """
             returns a list of just L{pkgcore.fs.fs.fs%s} instances
-            @param invert: if True, yield everything that isn't a
+            :param invert: if True, yield everything that isn't a
                 fs%s instance, else yields just fs%s
             """ % (s.rstrip("s"), s, s)
         locals()["iter"+k].__doc__ = \
             """
             a generator yielding just L{pkgcore.fs.fs.fs%s} instances
-            @param invert: if True, yield everything that isn't a
+            :param invert: if True, yield everything that isn't a
                 fs%s instance, else yields just fs%s
             """ % (s.rstrip("s"), s, s)
         del s
@@ -300,7 +300,7 @@ class contentsSet(object):
         """yield a stream of nodes that are fs entries contained within the
         passed in start point
 
-        @param start_point: fs filepath all yielded nodes must be w/in
+        :param start_point: fs filepath all yielded nodes must be w/in
         """
 
         if isinstance(start_point, fs.fsBase):
@@ -318,7 +318,7 @@ class contentsSet(object):
         """return a clone of this instance, w/ just the child nodes returned
         from iter_child_nodes
 
-        @param start_point: fs filepath all yielded nodes must be w/in
+        :param start_point: fs filepath all yielded nodes must be w/in
         """
         obj = self.clone(empty=True)
         obj.update(self.iter_child_nodes(start_point))

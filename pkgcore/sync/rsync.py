@@ -1,6 +1,8 @@
 # Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+__all__ = ("rsync_syncer", "rsync_timestamp_syncer",)
+
 from pkgcore.sync import base
 from pkgcore.config import ConfigHint
 from snakeoil.demandload import demandload
@@ -152,8 +154,8 @@ class rsync_timestamp_syncer(rsync_syncer):
 
     def current_timestamp(self, path=None):
         """
-        @param path: override the default path for the timestamp to read
-        @return: string of the timestamp data
+        :param path: override the default path for the timestamp to read
+        :return: string of the timestamp data
         """
         if path is None:
             path = pjoin(self.basedir, "metadata", "timestamp.chk")

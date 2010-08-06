@@ -3,6 +3,8 @@
 
 #base class
 
+__all__ = ("PackageError", "InvalidPackageName", "MetadataException", "InvalidDependency",
+    "ChksumBase", "MissingChksum", "ParseChksumError")
 
 class PackageError(ValueError):
     pass

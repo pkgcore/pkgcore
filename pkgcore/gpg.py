@@ -1,6 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+__all__ = ("skip_signatures",)
+
 msg_header = "-----BEGIN PGP SIGNED MESSAGE-----\n"
 msg_header_len = len(msg_header)
 msg_hash = 'Hash:'

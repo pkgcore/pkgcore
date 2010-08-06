@@ -5,6 +5,8 @@
 prototype fetcher class, all fetchers should derive from this
 """
 
+__all__ = ("fetcher",)
+
 import os
 from snakeoil.chksum import get_handlers, get_chksums
 from pkgcore.fetch import errors

@@ -1,9 +1,14 @@
-# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
 misc. stuff we've not found a spot for yet.
 """
+
+__all__ = ("optimize_incrementals", "incremental_expansion_license",
+    "collapsed_restrict_to_data", "non_incremental_collapsed_restrict_to_data"
+    )
+
 
 from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild.atom import atom

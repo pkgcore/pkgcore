@@ -9,6 +9,8 @@ Wraps L{pkgcore.ebuild.processor} functionality into a higher level
 api, per phase methods for example
 """
 
+__all__ = ("ebd", "setup_mixin", "install_op", "uninstall_op", "replace_op",
+    "buildable", "binpkg_buildable")
 
 import os, errno, shutil
 
@@ -67,17 +69,18 @@ class ebd(object):
                  features=None, observer=None, clean=True, tmp_offset=None,
                 use_override=None):
         """
-        @param pkg:
+        :param pkg:
             L{ebuild package instance<pkgcore.ebuild.ebuild_src.package>}
             instance this env is being setup for
-        @param initial_env: initial environment to use for this ebuild
-        @param env_data_source: a L{snakeoil.data_source..base} instance
+        :param initial_env: initial environment to use for this ebuild
+        :param env_data_source: a L{snakeoil.data_source..base} instance
             to restore the environment from- used for restoring the
             state of an ebuild processing, whether for unmerging, or
             walking phases during building
-        @param features: ebuild features, hold over from portage,
+        :param features: ebuild features, hold over from portage,
             will be broken down at some point
         """
+
 
         if use_override is not None:
             use = use_override
@@ -252,12 +255,12 @@ class ebd(object):
     def _generic_phase(self, phase, userpriv, sandbox, fakeroot,
                        extra_handlers=None, failure_allowed=False):
         """
-        @param phase: phase to execute
-        @param userpriv: will we drop to
+        :param phase: phase to execute
+        :param userpriv: will we drop to
             L{portage_uid<pkgcore.os_data.portage_uid>} and
             L{portage_gid<pkgcore.os_data.portage_gid>} access for this phase?
-        @param sandbox: should this phase be sandboxed?
-        @param fakeroot: should the phase be fakeroot'd?  Only really useful
+        :param sandbox: should this phase be sandboxed?
+        :param fakeroot: should the phase be fakeroot'd?  Only really useful
             for install phase, and is mutually exclusive with sandbox
         """
         ebd = request_ebuild_processor(userpriv=(self.userpriv and userpriv),
@@ -504,13 +507,13 @@ class buildable(ebd, setup_mixin, format.build):
         observer=None, **kwargs):
 
         """
-        @param pkg: L{pkgcore.ebuild.ebuild_src.package} instance we'll be
+        :param pkg: L{pkgcore.ebuild.ebuild_src.package} instance we'll be
             building
-        @param domain_settings: dict bled down from the domain configuration;
+        :param domain_settings: dict bled down from the domain configuration;
             basically initial env
-        @param eclass_cache: the L{eclass_cache<pkgcore.ebuild.eclass_cache>}
+        :param eclass_cache: the L{eclass_cache<pkgcore.ebuild.eclass_cache>}
             we'll be using
-        @param fetcher: a L{pkgcore.fetch.base.fetcher} instance to use to
+        :param fetcher: a L{pkgcore.fetch.base.fetcher} instance to use to
             access our required files for building
         """
 
@@ -753,7 +756,7 @@ class buildable(ebd, setup_mixin, format.build):
         install the package somewhere prior to executing clean if you
         intend on installing it.
 
-        @return: L{pkgcore.ebuild.ebuild_built.package} instance
+        :return: L{pkgcore.ebuild.ebuild_built.package} instance
         """
         return fake_package_factory(self._built_class).new_package(self.pkg,
             self.env["IMAGE"], pjoin(self.env["T"], "environment"))
@@ -764,8 +767,9 @@ class binpkg_buildable(ebd, setup_mixin, format.build):
     stage_depends = {"finalize":"setup", "setup":"start"}
     setup_is_for_src = False
 
-    def __init__(self, *args, **kwargs):
-        ebd.__init__(self, *args, **kwargs)
+    def __init__(self, domain, pkg, **kwargs):
+        format.build.__init__(self, domain, pkg, observer=kwargs.get("observer",None))
+        ebd.__init__(self, pkg, **kwargs)
         self.fetchables = ()
 
     def finalize(self):

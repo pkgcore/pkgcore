@@ -1,5 +1,18 @@
-# Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
+
+"""
+Binpkg repository operations for modification, maintenance, etc.
+
+This modules specific operation implementations- said operations are
+derivatives of :py:mod:`pkgcore.operations.repo` classes.
+
+Generally speaking you only need to dig through this module if you're
+trying to modify a binpkg repository operation- changing how it installs,
+or changing how it uninstalls, or adding a new operation (cleaning/cache regen for example).
+"""
+
+__all__ = ("install", "uninstall", "replace", "operations")
 
 import os, errno
 
@@ -8,7 +21,7 @@ from pkgcore.fs import tar
 from pkgcore.binpkg import xpak
 from pkgcore.ebuild.conditionals import stringify_boolean
 
-from snakeoil import osutils
+from snakeoil import osutils, klass
 from pkgcore.util.bzip2 import compress
 from snakeoil.osutils import join as pjoin
 from snakeoil.demandload import demandload
@@ -57,6 +70,7 @@ def generate_attr_dict(pkg, portage_compatible=True):
 
 class install(repo_interfaces.install):
 
+    @klass.steal_docs(repo_interfaces.install)
     def add_data(self):
         if self.observer is None:
             end = start = lambda x:None
@@ -98,9 +112,11 @@ class install(repo_interfaces.install):
 
 class uninstall(repo_interfaces.uninstall):
 
+    @klass.steal_docs(repo_interfaces.uninstall)
     def remove_data(self):
         pass
 
+    @klass.steal_docs(repo_interfaces.uninstall)
     def finalize_data(self):
         os.unlink(discern_loc(self.repo.base, self.old_pkg, self.repo.extension))
         return True
@@ -108,6 +124,7 @@ class uninstall(repo_interfaces.uninstall):
 
 class replace(install, uninstall, repo_interfaces.replace):
 
+    @klass.steal_docs(repo_interfaces.replace)
     def finalize_data(self):
         # we just invoke install finalize_data, since it atomically
         # transfers the new pkg in

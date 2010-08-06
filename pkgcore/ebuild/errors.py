@@ -8,6 +8,8 @@
 atom exceptions
 """
 
+__all__ = ("MalformedAtom", "InvalidVersion", "InvalidCPV", "ParseError")
+
 from pkgcore.package import errors
 
 class MalformedAtom(errors.InvalidDependency):
@@ -32,7 +34,7 @@ class InvalidCPV(errors.InvalidPackageName):
     """Raised if an invalid cpv was passed in.
 
     @ivar args: single-element tuple containing the invalid string.
-    @type args: C{tuple}
+    :type args: C{tuple}
     """
 
 

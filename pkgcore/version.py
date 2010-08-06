@@ -4,6 +4,7 @@
 
 """Version information (tied to bzr)."""
 
+__all__ = ("get_version",)
 
 from pkgcore import const
 

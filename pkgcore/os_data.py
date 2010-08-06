@@ -6,6 +6,8 @@ Avoid using- os data- root uid/gid, pkgcore uid/gid, etc.
 
 This will be killed off and bound into configuration subsystem at some point
 """
+__all__ = ("ostype", "userland", "xargs", "root_uid", "root_gid", "wheelgid", "secpass",
+    "portage_uid", "portage_gid")
 
 import os, pwd, grp
 

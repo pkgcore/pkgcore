@@ -1,4 +1,4 @@
-# Copyright: 2005-2009 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
 # Copyright: 2005-2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
@@ -7,6 +7,7 @@
 A lot of extra documentation on this is in dev-notes/config.rst.
 """
 
+__all__ = ("CollapsedConfig", "ConfigManager",)
 
 from pkgcore.config import errors, basics
 from snakeoil import mappings
@@ -62,13 +63,13 @@ class CollapsedConfig(object):
 
     """A collapsed config section.
 
-    @type type: L{basics.ConfigType}
+    :type type: L{basics.ConfigType}
     @ivar type: Our type.
-    @type config: dict
+    :type config: dict
     @ivar config: The supplied configuration values.
     @ivar debug: if True exception wrapping is disabled.
     @ivar default: True if this section is a default.
-    @type name: C{str} or C{None}
+    :type name: C{str} or C{None}
     @ivar name: our section name or C{None} for an anonymous section.
     """
 
@@ -178,13 +179,13 @@ class ConfigManager(object):
     def __init__(self, configs=(), remote_configs=(), debug=False):
         """Initialize.
 
-        @type  configs: sequence of mappings of string to ConfigSection.
-        @param configs: configuration to use.
+        :type configs: sequence of mappings of string to ConfigSection.
+        :param configs: configuration to use.
             Can define extra configs that are also loaded.
-        @type remote_configs: sequence of mappings of string to ConfigSection.
-        @param remote_configs: configuration to use.
+        :type remote_configs: sequence of mappings of string to ConfigSection.
+        :param remote_configs: configuration to use.
             Cannot define extra configs.
-        @param debug: if set to True exception wrapping is disabled.
+        :param debug: if set to True exception wrapping is disabled.
             This means things can raise other exceptions than
             ConfigurationError but tracebacks are complete.
         """

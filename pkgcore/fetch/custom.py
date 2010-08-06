@@ -5,6 +5,8 @@
 fetcher class that pulls files via executing another program to do the fetching
 """
 
+__all__ = ("MalformedCommand", "fetcher",)
+
 import os
 from pkgcore.spawn import spawn_bash, is_userpriv_capable
 from pkgcore.os_data import portage_uid, portage_gid
@@ -31,18 +33,18 @@ class fetcher(base.fetcher):
                  required_chksums=None, userpriv=True, attempts=10,
                  readonly=False, **extra_env):
         """
-        @param distdir: directory to download files to
-        @type distdir: string
-        @param command: shell command to execute to fetch a file
-        @type command: string
-        @param resume_command: if not None, command to use for resuming-
+        :param distdir: directory to download files to
+        :type distdir: string
+        :param command: shell command to execute to fetch a file
+        :type command: string
+        :param resume_command: if not None, command to use for resuming-
             if None, command is reused
-        @param required_chksums: if None, all chksums must be verified,
+        :param required_chksums: if None, all chksums must be verified,
             else only chksums listed
-        @type required_chksums: None or sequence
-        @param userpriv: depriv for fetching?
-        @param attempts: max number of attempts before failing the fetch
-        @param readonly: controls whether fetching is allowed
+        :type required_chksums: None or sequence
+        :param userpriv: depriv for fetching?
+        :param attempts: max number of attempts before failing the fetch
+        :param readonly: controls whether fetching is allowed
         """
         base.fetcher.__init__(self)
         self.distdir = distdir
@@ -84,8 +86,8 @@ class fetcher(base.fetcher):
         """
         fetch a file
 
-        @type target: L{pkgcore.fetch.fetchable} instance
-        @return: None if fetching failed,
+        :type target: L{pkgcore.fetch.fetchable} instance
+        :return: None if fetching failed,
             else on disk location of the copied file
         """
 

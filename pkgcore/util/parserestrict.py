@@ -4,6 +4,8 @@
 
 """Functions that turn a string into a restriction or raise ParseError.
 
+__all__ = ("parse_match", "ParseError",)
+
 @var parse_funcs: dict of the functions that are available.
 """
 
@@ -22,7 +24,7 @@ class ParseError(ValueError):
 def comma_separated_containment(attr):
     """Helper for parsing comma-separated strings to a ContainmentMatch.
 
-    @param attr: name of the attribute.
+    :param attr: name of the attribute.
     @returns: a parse function: takes a string of comma-separated values,
         returns a L{packages.PackageRestriction} matching packages that
         have any of those values in the attribute passed to this function.
@@ -87,9 +89,9 @@ def parse_match(text):
       - >=portage-2.1: atom syntax, package portage,
           version greater then or equal to 2.1
 
-    @param text: string to attempt to parse
-    @type text: string
-    @return: L{package restriction<pkgcore.restrictions.packages>} derivative
+    :param text: string to attempt to parse
+    :type text: string
+    :return: L{package restriction<pkgcore.restrictions.packages>} derivative
     """
 
     orig_text = text = text.strip()

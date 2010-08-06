@@ -5,6 +5,8 @@
 filtering repository
 """
 
+__all__ = ("filterTree",)
+
 from pkgcore.repository import prototype, errors
 from pkgcore.restrictions.restriction import base
 from pkgcore.operations.repo import operations_proxy
@@ -48,7 +50,7 @@ class filterTree(prototype.tree):
 
 
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
-        "@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
+        "@param", "@keyword").replace(":keyword restrict:", ":param restrict:")
 
     def __len__(self):
         count = 0

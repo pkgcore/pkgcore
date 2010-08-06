@@ -5,6 +5,8 @@
 XPAK container support
 """
 
+__all__ = ("MalformedXpak", "Xpak")
+
 from snakeoil import struct_compat as struct
 from snakeoil.mappings import OrderedDict, autoconvert_py3k_methods_metaclass
 from snakeoil import klass, compatibility
@@ -71,10 +73,10 @@ class Xpak(object):
     def write_xpak(cls, target_source, data):
         """
         write an xpak dict to disk; overwriting an xpak if it exists
-        @param target_source: string path, or
+        :param target_source: string path, or
             L{snakeoil.data_source.base} derivative
-        @param data: mapping instance to write into the xpak.
-        @return: xpak instance
+        :param data: mapping instance to write into the xpak.
+        :return: xpak instance
         """
         try:
             old_xpak = cls(target_source)

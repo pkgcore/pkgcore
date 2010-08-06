@@ -5,6 +5,9 @@
 errors fetch subsystem may throw
 """
 
+__all__ = ("base", "distdirPerms", "UnmodifiableFile", "UnknownMirror",
+    "RequiredChksumDataMissing")
+
 class base(Exception):
     pass
 

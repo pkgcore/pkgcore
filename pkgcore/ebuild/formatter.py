@@ -3,6 +3,11 @@
 
 """pmerge formatting module"""
 
+__all__ = ("NoChoice", "userquery", "Formatter", "use_expand_filter",
+    "BasicFormatter", "PkgcoreFormatter", "CountingFormatter", "PortageFormatter",
+    "PaludisFormatter", "basic_factory", "pkgcore_factory", "portage_factory",
+    "paludis_factory", "portage_verbose_factory")
+
 import operator
 
 from pkgcore.config import configurable
@@ -33,13 +38,13 @@ def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
     something special. Because it subclasses C{KeyboardInterrupt}
     the default behaviour is to abort as if the user hit ctrl+c.
 
-    @type prompt: C{basestring} or a tuple of things to pass to a formatter.
+    :type prompt: C{basestring} or a tuple of things to pass to a formatter.
         XXX this is a crummy api but I cannot think of a better one supporting
         the very common case of wanting just a string as prompt.
-    @type out: formatter.
-    @type err: formatter.
-    @type responses: mapping with C{basestring} keys and tuple values.
-    @param responses: mapping of user input to function result.
+    :type out: formatter.
+    :type err: formatter.
+    :type responses: mapping with C{basestring} keys and tuple values.
+    :param responses: mapping of user input to function result.
         The first item in the value tuple is returned, the rest is passed to
         out.
         Defaults to::
@@ -47,10 +52,10 @@ def userquery(prompt, out, err, responses=None, default_answer=None, limit=3):
             'yes': (True, out.fg('green'), 'Yes'),
             'no': (False, out.fg('red'), 'No'),
         }
-    @param default_answer: returned if there is no input
+    :param default_answer: returned if there is no input
         (user just hits enter). Defaults to True if responses is unset,
         unused otherwise.
-    @param limit: number of allowed tries.
+    :param limit: number of allowed tries.
     """
     if responses is None:
         responses = {
@@ -111,10 +116,10 @@ class use_expand_filter(object):
 
     def __init__(self, use_expand, use_expand_hidden):
         """
-        @type  use_expand: iterable of strings
-        @param use_expand: names of use-expanded variables.
-        @type  use_expand_hidden: set of strings
-        @param use_expand_hidden: names of use-expanded vars that should not
+        :type use_expand: iterable of strings
+        :param use_expand: names of use-expanded variables.
+        :type use_expand_hidden: set of strings
+        :param use_expand_hidden: names of use-expanded vars that should not
             be added to the dict.
         """
         self.expand_filters = dict((x.lower(), (x not in use_expand_hidden, x))
@@ -125,10 +130,10 @@ class use_expand_filter(object):
 
     def __call__(self, use):
         """Split USE flags up into "normal" flags and use-expanded ones.
-        @type  use: iterable of strings
-        @param use: flags that are set.
-        @rtype: sequence of strings, dict mapping a string to a list of strings
-        @return: set of normal flags and a mapping from use_expand name to
+        :type use: iterable of strings
+        :param use: flags that are set.
+        :rtype: sequence of strings, dict mapping a string to a list of strings
+        :return: set of normal flags and a mapping from use_expand name to
             value (with the use-expanded bit stripped off, so
             C{"video_cards_alsa"} becomes C{"{'video_cards': ['alsa']}"}).
         """
@@ -399,16 +404,16 @@ class PortageFormatter(CountingFormatter):
                oldchoice=None):
         """Write the current selection from a set of flags to a formatter.
 
-        @type  attr: string
-        @param attr: the name of the setting.
-        @type  selectable: set of strings
-        @param selectable: the possible values.
-        @type  choice: set of strings
-        @param choice: the chosen values.
-        @type  oldselectable: set of strings
-        @param oldselectable: the values possible in the previous version.
-        @type  oldchoice: set of strings
-        @param oldchoice: the previously chosen values.
+        :type attr: string
+        :param attr: the name of the setting.
+        :type selectable: set of strings
+        :param selectable: the possible values.
+        :type choice: set of strings
+        :param choice: the chosen values.
+        :type oldselectable: set of strings
+        :param oldselectable: the values possible in the previous version.
+        :type oldchoice: set of strings
+        :param oldchoice: the previously chosen values.
         """
         out = self.out
         red = out.fg('red')

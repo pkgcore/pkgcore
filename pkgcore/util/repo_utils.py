@@ -5,6 +5,8 @@
 misc. repository related tools
 """
 
+__all__ = ("get_raw_repos", "get_virtual_repos")
+
 from pkgcore.repository import virtual
 
 def get_raw_repos(repo):

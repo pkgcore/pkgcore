@@ -1,10 +1,11 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# Copyright: 2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2010 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
 
 """Filter a bash environment dump."""
 
+__all__ = ("run",)
 
 from snakeoil.demandload import demandload
 demandload(globals(),
@@ -20,13 +21,13 @@ def native_run(out, file_buff, vsr, fsr,
                desired_var_match, desired_func_match, global_envvar_callback=None):
     """Print a filtered environment.
 
-    @param out: file-like object to write to.
-    @param file_buff: string containing the environment to filter.
+    :param out: file-like object to write to.
+    :param file_buff: string containing the environment to filter.
         Should end in '\0'.
-    @param vsr: result of build_regex_string or C{None}, for variables.
-    @param vsr: result of build_regex_string or C{None}, for functions.
-    @param desired_var_match: boolean indicating vsr should match or not.
-    @param desired_func_match: boolean indicating fsr should match or not.
+    :param vsr: result of build_regex_string or C{None}, for variables.
+    :param vsr: result of build_regex_string or C{None}, for functions.
+    :param desired_var_match: boolean indicating vsr should match or not.
+    :param desired_func_match: boolean indicating fsr should match or not.
     """
     if fsr is None:
         func_match = None

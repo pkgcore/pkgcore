@@ -1,9 +1,12 @@
-# Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
 ebuild tree manifest/digest support
 """
+
+__all__ = ("parse_digest", "serialize_digest", "serialize_manifest",
+    "parse_manifest")
 
 from itertools import izip
 from os.path import basename, dirname, sep
@@ -70,8 +73,8 @@ def serialize_digest(handle, fetchables):
     throws KeyError if needed chksums are missing.  Requires at least md5
     and size chksums per fetchable.
 
-    @param handle: file object to write to
-    @param fetchables: list of L{pkgcore.fetch.fetchable} instances
+    :param handle: file object to write to
+    :param fetchables: list of L{pkgcore.fetch.fetchable} instances
     """
     for fetchable in iflatten_instance(fetchables, fetch.fetchable):
         d = dict(fetchable.chksums)
@@ -89,8 +92,8 @@ def serialize_manifest(pkgdir, fetchables):
     """
     Write a manifest given a pkg_instance
 
-    @param pkgdir: the location of the package dir
-    @param fetchables: the fetchables of the package
+    :param pkgdir: the location of the package dir
+    :param fetchables: the fetchables of the package
     """
     handle = open(pkgdir + '/Manifest', 'w')
     for file in (x for x in iter_scan(pkgdir) if isinstance(x, fsFile)):

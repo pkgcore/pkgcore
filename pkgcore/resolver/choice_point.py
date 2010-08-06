@@ -1,6 +1,7 @@
-# Copyright: 2006/2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+__all__ = ("choice_point",)
 
 from snakeoil.lists import iter_stable_unique
 from snakeoil import klass
@@ -43,7 +44,7 @@ class choice_point(object):
     def _internal_force_next(self):
         """
         force next pkg without triggering a reduce_atoms call
-        @return: True if pkgs remain, False if no more remain
+        :return: True if pkgs remain, False if no more remain
         """
         for self.matches_cur in self.matches:
             self._reset_iters()

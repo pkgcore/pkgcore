@@ -5,6 +5,8 @@
 simple repository wrapping to override the package instances returned
 """
 
+__all__ = ("tree",)
+
 # icky.
 # ~harring
 from pkgcore.repository import prototype, errors
@@ -20,8 +22,8 @@ class tree(prototype.tree):
 
     def __init__(self, repo, package_class):
         """
-        @param repo: L{pkgcore.repository.prototype.tree} instance to wrap
-        @param package_class: callable to yield the package instance
+        :param repo: L{pkgcore.repository.prototype.tree} instance to wrap
+        :param package_class: callable to yield the package instance
         """
         self.raw_repo = repo
         if not isinstance(self.raw_repo, prototype.tree):

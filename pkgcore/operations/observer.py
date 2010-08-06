@@ -1,6 +1,10 @@
 # Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+__all__ = ("base", "phase_observer", "file_phase_observer",
+    "build_observer", "repo_base", "repo_observer", "file_repo_observer",
+    "decorate_build_method")
+
 from snakeoil.currying import pre_curry
 
 class base(object):

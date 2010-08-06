@@ -14,6 +14,9 @@ consistent exception handling.
 See dev-notes/commandline.rst for more complete documentation.
 """
 
+__all__ = ("FormattingHandler", "Values", "Option", "OptionParser",
+    "MySystemExit", "main"
+)
 
 import sys
 import os.path
@@ -432,22 +435,22 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
     Any ConfigurationErrors raised from your function (by the config
     manager) are handled. Other exceptions are not (trigger a traceback).
 
-    @type  subcommands: mapping of string => (OptionParser class, main func)
-    @param subcommands: available commands.
+    :type subcommands: mapping of string => (OptionParser class, main func)
+    :param subcommands: available commands.
         The keys are a subcommand name or None for other/unknown/no subcommand.
         The values are tuples of OptionParser subclasses and functions called
         as main_func(config, out, err) with a L{Values} instance, two
         L{snakeoil.formatters.Formatter} instances for output (stdout)
         and errors (stderr). It should return an integer used as
         exit status or None as synonym for 0.
-    @type  args: sequence of strings
-    @param args: arguments to parse, defaulting to C{sys.argv[1:]}.
-    @type  outfile: file-like object
-    @param outfile: File to use for stdout, defaults to C{sys.stdout}.
-    @type  errfile: file-like object
-    @param errfile: File to use for stderr, defaults to C{sys.stderr}.
-    @type  script_name: string
-    @param script_name: basename of this script, defaults to the basename
+    :type args: sequence of strings
+    :param args: arguments to parse, defaulting to C{sys.argv[1:]}.
+    :type outfile: file-like object
+    :param outfile: File to use for stdout, defaults to C{sys.stdout}.
+    :type errfile: file-like object
+    :param errfile: File to use for stderr, defaults to C{sys.stderr}.
+    :type script_name: string
+    :param script_name: basename of this script, defaults to the basename
         of C{sys.argv[0]}.
     """
     exitstatus = 1

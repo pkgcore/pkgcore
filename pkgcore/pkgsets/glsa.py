@@ -5,6 +5,8 @@
 Gentoo Linux Security Advisories (GLSA) support
 """
 
+__all__ = ("KeyedAndRestriction", "GlsaDirSet", "SecurityUpgrades")
+
 import os
 
 from pkgcore.restrictions import packages, restriction, boolean, values
@@ -56,8 +58,8 @@ class GlsaDirSet(object):
 
     def __init__(self, src):
         """
-        @param src: where to get the glsa from
-        @type src: must be either full path to glsa dir, or a repo object
+        :param src: where to get the glsa from
+        :type src: must be either full path to glsa dir, or a repo object
             to pull it from
         """
 
@@ -79,7 +81,7 @@ class GlsaDirSet(object):
         """
         yield GLSA restrictions grouped by package key
 
-        @param sorter: must be either None, or a comparison function
+        :param sorter: must be either None, or a comparison function
         """
 
         if sorter is None:
@@ -197,11 +199,11 @@ def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):
     """
     generator yielding GLSA restrictions, and vulnerable pkgs from a repo.
 
-    @param glsa_src: GLSA pkgset to pull vulnerabilities from
-    @param repo: repo to scan for vulnerable packages
-    @param grouped: if grouped, combine glsa restrictions into one restriction
+    :param glsa_src: GLSA pkgset to pull vulnerabilities from
+    :param repo: repo to scan for vulnerable packages
+    :param grouped: if grouped, combine glsa restrictions into one restriction
         (thus yielding a pkg only once)
-    @param arch: arch to scan for, x86 for example
+    :param arch: arch to scan for, x86 for example
     """
 
     if grouped:

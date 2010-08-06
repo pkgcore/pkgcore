@@ -1,6 +1,9 @@
 # Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+__all__ = ("ProfileError", "ProfileNode", "EmptyRootNode", "OnDiskProfile",
+    "UserProfile", "PkgProvided", "AliasedVirtuals")
+
 import errno, os
 from itertools import chain
 
@@ -563,9 +566,9 @@ class AliasedVirtuals(virtual.tree):
 
     def __init__(self, virtuals, repo, *overrides):
         """
-        @param virtuals: dict of virtual -> providers
-        @param repo: L{pkgcore.ebuild.repository.UnconfiguredTree} parent repo
-        @keyword overrides: mapping of virtual pkgname -> matches to override defaults
+        :param virtuals: dict of virtual -> providers
+        :param repo: L{pkgcore.ebuild.repository.UnconfiguredTree} parent repo
+        :keyword overrides: mapping of virtual pkgname -> matches to override defaults
         """
         virtual.tree.__init__(self, livefs=False)
         self._original_virtuals = virtuals

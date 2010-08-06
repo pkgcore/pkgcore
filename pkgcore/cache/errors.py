@@ -5,6 +5,9 @@
 cache subsystem exceptions
 """
 
+__all__ = ("CacheError", "InitializationError", "CacheCorruption",
+    "GeneralCacheCorruption", "ReadOnly")
+
 class CacheError(Exception):
     pass
 
@@ -25,15 +28,6 @@ class GeneralCacheCorruption(CacheError):
     def __init__(self, ex):
         CacheError.__init__(self, "corruption detected: %s" % (ex,))
         self.ex = ex
-
-
-class InvalidRestriction(CacheError):
-    def __init__(self, key, restriction, exception=None):
-        if exception is None:
-            exception = ''
-        CacheError.__init__(self, "%s:%s is not valid: %s" %
-                            (key, restriction, exception))
-        self.key, self.restriction, self.ex = key, restriction, exception
 
 
 class ReadOnly(CacheError):

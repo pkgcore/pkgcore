@@ -113,8 +113,8 @@ def generate_contents(path, compressor="bz2"):
     """
     generate a contentset from a tarball
 
-    @param path: string path to location on disk
-    @param compressor: defaults to bz2; decompressor to use, see
+    :param path: string path to location on disk
+    :param compressor: defaults to bz2; decompressor to use, see
         L{known_compressors} for list of valid compressors
     """
     if compressor not in known_compressors:

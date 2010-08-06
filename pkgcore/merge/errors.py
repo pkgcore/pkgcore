@@ -5,6 +5,9 @@
 exceptions thrown by the MergeEngine
 """
 
+__all__ = ("ModificationError", "BlockModification",
+    "TriggerUnknownCset", "NonFatalModification", "TriggerWarning")
+
 class ModificationError(Exception):
 
     """Base Exception class for modification errors/warnings"""

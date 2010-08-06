@@ -1,10 +1,12 @@
-# Copyright: 2005 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
 """
 configuration subsystem
 """
+
+__all__ = ("ConfigHint", "configurable", "load_config")
 
 # keep these imports as minimal as possible; access to
 # pkgcore.config isn't uncommon, thus don't trigger till
@@ -54,10 +56,10 @@ def load_config(user_conf_file=USER_CONF_FILE,
     """
     the main entry point for any code looking to use pkgcore.
 
-    @param user_conf_file: file to attempt to load, else defaults to trying to
+    :param user_conf_file: file to attempt to load, else defaults to trying to
         load portage 2 style configs (/etc/make.conf, /etc/make.profile)
 
-    @return: L{pkgcore.config.central.ConfigManager} instance
+    :return: L{pkgcore.config.central.ConfigManager} instance
         representing the system config.
     """
 

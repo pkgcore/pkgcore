@@ -8,6 +8,9 @@
 
 """Exceptions raised by the config code."""
 
+__all__ = ("BaseError", "TypeDefinitionError", "ConfigurationError", "ParsingError",
+    "CollapseInheritOnly", "InstantiationError", "QuoteInterpretationError"
+)
 
 class BaseError(Exception):
     pass
@@ -21,7 +24,7 @@ class ConfigurationError(BaseError):
 
     """Fatal error in parsing a config section.
 
-    @type stack: sequence of strings.
+    :type stack: sequence of strings.
     @ivar stack: messages describing where this ConfigurationError originated.
         configuration-related code catching ConfigurationError that wants to
         raise its own ConfigurationError should modify (usually append to)

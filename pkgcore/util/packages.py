@@ -1,6 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+__all__ = ("get_raw_pkg", "groupby_pkg")
+
 import itertools, operator
 
 def get_raw_pkg(pkg):

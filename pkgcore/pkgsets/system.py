@@ -5,6 +5,8 @@
 system pkgset based off of profile system collapsing
 """
 
+__all__ = ("SystemSet",)
+
 # yuck. :)
 from pkgcore.config import configurable
 

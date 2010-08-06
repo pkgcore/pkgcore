@@ -1,6 +1,8 @@
 # Copyright: 2008 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+__all__ = ("file_identifier",)
+
 from pkgcore.spawn import spawn_get_output
 from snakeoil.klass import jit_attr
 

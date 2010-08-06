@@ -23,17 +23,17 @@ def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False,
     """
     generate and configure a resolver for upgrading all processed nodes.
 
-    @param vdb: list of L{pkgcore.repository.prototype.tree} instances
+    :param vdb: list of L{pkgcore.repository.prototype.tree} instances
         that represents the livefs
-    @param dbs: list of L{pkgcore.repository.prototype.tree} instances
+    :param dbs: list of L{pkgcore.repository.prototype.tree} instances
         representing sources of pkgs
-    @param verify_vdb: should we stop resolving once we hit the vdb,
+    :param verify_vdb: should we stop resolving once we hit the vdb,
         or do full resolution?
-    @param force_vdb_virtuals: old style portage virtuals (non metapkgs)
+    :param force_vdb_virtuals: old style portage virtuals (non metapkgs)
         cannot be technically sorted since their versions are from multiple
         packages bleeding through- results make no sense essentially.
         You want this option enabled if you're dealing in old style virtuals.
-    @return: L{pkgcore.resolver.plan.merge_plan} instance
+    :return: L{pkgcore.resolver.plan.merge_plan} instance
     """
 
     f = plan.merge_plan.prefer_highest_version_strategy
@@ -62,17 +62,17 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True,
     installing requests- installs highest version it can build a
     solution for, but tries to avoid building anything not needed
 
-    @param vdb: list of L{pkgcore.repository.prototype.tree} instances
+    :param vdb: list of L{pkgcore.repository.prototype.tree} instances
         that represents the livefs
-    @param dbs: list of L{pkgcore.repository.prototype.tree} instances
+    :param dbs: list of L{pkgcore.repository.prototype.tree} instances
         representing sources of pkgs
-    @param verify_vdb: should we stop resolving once we hit the vdb,
+    :param verify_vdb: should we stop resolving once we hit the vdb,
         or do full resolution?
-    @param force_vdb_virtuals: old style portage virtuals (non metapkgs)
+    :param force_vdb_virtuals: old style portage virtuals (non metapkgs)
         cannot be technically sorted since their versions are from multiple
         packages bleeding through- results make no sense essentially.
         You want this option enabled if you're dealing in old style virtuals.
-    @return: L{pkgcore.resolver.plan.merge_plan} instance
+    :return: L{pkgcore.resolver.plan.merge_plan} instance
     """
 
     # nothing fancy required for force_vdb_virtuals, we just silently ignore it.
@@ -107,9 +107,9 @@ class empty_tree_merge_plan(plan.merge_plan):
 
     def __init__(self, dbs, *args, **kwds):
         """
-        @param args: see L{pkgcore.resolver.plan.merge_plan.__init__}
+        :param args: see L{pkgcore.resolver.plan.merge_plan.__init__}
             for valid args
-        @param kwds: see L{pkgcore.resolver.plan.merge_plan.__init__}
+        :param kwds: see L{pkgcore.resolver.plan.merge_plan.__init__}
             for valid args
         """
         plan.merge_plan.__init__(self, dbs, *args, **kwds)

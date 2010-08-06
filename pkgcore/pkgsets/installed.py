@@ -1,6 +1,9 @@
 # Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+
+__all__ = ("Installed", "VersionedInstalled")
+
 import operator
 
 from pkgcore.restrictions import packages, values

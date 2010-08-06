@@ -7,7 +7,7 @@ build operation
 
 from snakeoil.dependant_methods import ForcedDepends
 
-__all__ = ('build_base', 'base', 'install', 'uninstall', 'replace', 'fetch',
+__all__ = ('build_base', 'install', 'uninstall', 'replace', 'fetch',
     'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'errors')
 
 
@@ -120,7 +120,7 @@ class build(build_base):
         "finalize"):
         o = locals()[k]
         o.__doc__ = "\n".join(x.lstrip() for x in o.__doc__.split("\n") + [
-                "@return: True on success, False on failure"])
+                ":return: True on success, False on failure"])
     del o, k
 
 

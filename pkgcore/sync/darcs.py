@@ -1,6 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+__all__ = ("darcs_syncer",)
+
 from pkgcore.sync import base
 
 class darcs_syncer(base.dvcs_syncer):

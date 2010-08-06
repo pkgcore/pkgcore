@@ -1,3 +1,3 @@
 """
-gentoo binpkg support
+gentoo binpkg support, specifically tbz2
 """

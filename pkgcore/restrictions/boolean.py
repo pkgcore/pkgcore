@@ -31,15 +31,15 @@ class base(restriction.base):
     def __init__(self, *restrictions, **kwds):
 
         """
-        @keyword node_type: type of restriction this accepts
+        :keyword node_type: type of restriction this accepts
             (L{package_type<pkgcore.restrictions.packages.package_type>} and
             L{value_type<pkgcore.restrictions.values.value_type>} being
             common types).  If set to C{None}, no instance limiting is done.
-        @type  restrictions: node_type (if that is specified)
-        @param restrictions: initial restrictions to add
-        @keyword finalize: should this instance be made immutable immediately?
+        :type restrictions: node_type (if that is specified)
+        :param restrictions: initial restrictions to add
+        :keyword finalize: should this instance be made immutable immediately?
             defaults to True
-        @keyword negate: should the logic be negated?
+        :keyword negate: should the logic be negated?
         """
 
         sf = object.__setattr__
@@ -92,7 +92,7 @@ class base(restriction.base):
         """
         add an more restriction(s)
 
-        @param new_restrictions: if node_type is enforced,
+        :param new_restrictions: if node_type is enforced,
             restrictions must be of that type.
         """
 
@@ -279,7 +279,7 @@ class AndRestriction(base):
         """
         generater yielding DNF (disjunctive normalized form) of this instance.
 
-        @param full_solution_expansion: controls whether to expand everything
+        :param full_solution_expansion: controls whether to expand everything
             (break apart atoms for example); this isn't likely what you want
         """
         if self.negate:
@@ -332,7 +332,7 @@ class AndRestriction(base):
         """
         returns solutions in CNF (conjunctive normalized form) of this instance
 
-        @param full_solution_expansion: controls whether to expand everything
+        :param full_solution_expansion: controls whether to expand everything
             (break apart atoms for example); this isn't likely what you want
         """
 
@@ -352,7 +352,7 @@ class AndRestriction(base):
         """
         returns solutions in CNF (conjunctive normalized form) of this instance
 
-        @param full_solution_expansion: controls whether to expand everything
+        :param full_solution_expansion: controls whether to expand everything
             (break apart atoms for example); this isn't likely what you want
         """
 
@@ -388,7 +388,7 @@ class OrRestriction(base):
         """
         returns alist in CNF (conjunctive normalized form) for of this instance
 
-        @param full_solution_expansion: controls whether to expand everything
+        :param full_solution_expansion: controls whether to expand everything
             (break apart atoms for example); this isn't likely what you want
         """
         if self.negate:
@@ -426,7 +426,7 @@ class OrRestriction(base):
         """
         returns a list in DNF (disjunctive normalized form) for of this instance
 
-        @param full_solution_expansion: controls whether to expand everything
+        :param full_solution_expansion: controls whether to expand everything
             (break apart atoms for example); this isn't likely what you want
         """
         if self.negate:

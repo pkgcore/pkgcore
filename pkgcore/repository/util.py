@@ -4,6 +4,8 @@
 from pkgcore.repository.prototype import tree
 from pkgcore.ebuild.cpv import versioned_CPV
 
+__all__ = ("SimpleTree",)
+
 class SimpleTree(tree):
 
     def __init__(self, cpv_dict, pkg_klass=None, livefs=False, frozen=True):

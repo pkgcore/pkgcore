@@ -23,7 +23,7 @@ class nodeps_repo(object):
 
     def __init__(self, repo):
         """
-        @param repo: repository to wrap
+        :param repo: repository to wrap
         """
         self.raw_repo = repo
 
@@ -68,9 +68,9 @@ class caching_repo(object):
 
     def __init__(self, db, strategy):
         """
-        @param db: an instance supporting the repository protocol to cache
+        :param db: an instance supporting the repository protocol to cache
           queries from.
-        @param strategy: forced sorting strategy for results.  If you don't
+        :param strategy: forced sorting strategy for results.  If you don't
           need sorting, pass in iter.
         """
         self.__db__ = db

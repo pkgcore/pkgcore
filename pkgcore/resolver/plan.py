@@ -1,5 +1,7 @@
-# Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
+
+__all__ = ("resolver_frame", "resolver_stack", "merge_plan")
 
 import operator, sys
 from itertools import chain, islice, ifilterfalse as filterfalse
@@ -338,7 +340,7 @@ class merge_plan(object):
     def add_atom(self, atom):
         """add an atom, recalculating as necessary.
 
-        @return: the last unresolvable atom stack if a solution can't be found,
+        :return: the last unresolvable atom stack if a solution can't be found,
             else returns None if the atom was successfully added.
         """
         return self.add_atoms([atom], dbs=dbs)
@@ -372,7 +374,7 @@ class merge_plan(object):
     def _rec_add_atom(self, atom, stack, dbs, mode="none", drop_cycles=False):
         """Add an atom.
 
-        @return: False on no issues (inserted succesfully),
+        :return: False on no issues (inserted succesfully),
             else a list of the stack that screwed it up.
         """
         assert hasattr(dbs, 'itermatch')
@@ -516,7 +518,7 @@ class merge_plan(object):
         internal function to discern if an atom is viable, returning
         the choicepoint/matches iter if viable.
 
-        @return: 3 possible; None (not viable), True (presolved),
+        :return: 3 possible; None (not viable), True (presolved),
           L{caching_iter} (not solved, but viable), L{choice_point}
         """
         choices = ret = None
@@ -560,9 +562,9 @@ class merge_plan(object):
 
     def check_for_cycles(self, stack, cur_frame):
         """check the current stack for cyclical issues;
-        @param stack: current stack, a L{resolver_stack} instance
-        @param cur_frame: current frame, a L{resolver_frame} instance
-        @return: True if no issues and resolution should continue, else the
+        :param stack: current stack, a L{resolver_stack} instance
+        :param cur_frame: current frame, a L{resolver_frame} instance
+        :return: True if no issues and resolution should continue, else the
             value to return after collapsing the calling frame
         """
         force_vdb = False
@@ -819,10 +821,10 @@ class merge_plan(object):
     @classmethod
     def prefer_livefs_dbs(cls, dbs, just_vdb=None):
         """
-        @param dbs: db list to walk
-        @param just_vdb: if None, no filtering; if True, just vdb, if False,
+        :param dbs: db list to walk
+        :param just_vdb: if None, no filtering; if True, just vdb, if False,
           non-vdb only
-        @return: yields repositories in requested ordering
+        :return: yields repositories in requested ordering
         """
         return chain(cls.just_livefs_dbs(dbs), cls.just_nonlivefs_dbs(dbs))
 

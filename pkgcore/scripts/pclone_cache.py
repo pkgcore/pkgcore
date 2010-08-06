@@ -5,6 +5,7 @@
 
 """Clone a repository cache."""
 
+__all__ = ("OptionParser", "main")
 
 import time
 

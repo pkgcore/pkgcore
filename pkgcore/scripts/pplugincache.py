@@ -4,6 +4,7 @@
 
 """Update the plugin cache."""
 
+__all__ = ("OptionParser", "main")
 
 from pkgcore.util import commandline
 from pkgcore import plugin

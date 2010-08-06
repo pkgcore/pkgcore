@@ -1,9 +1,12 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
 package class for buildable ebuilds
 """
+
+__all__ = ("Maintainer", "MetadataXml", "LocalMetadataXml", "Manifest",
+    "SharedPkgData", "Licenses", "OverlayedLicenses")
 
 from snakeoil.currying import post_curry
 from snakeoil.compatibility import any
@@ -28,11 +31,11 @@ class Maintainer(object):
 
     At least one of email and name is not C{None}.
 
-    @type email: C{unicode} object or C{None}
+    :type email: C{unicode} object or C{None}
     @ivar email: email address.
-    @type name: C{unicode} object or C{None}
+    :type name: C{unicode} object or C{None}
     @ivar name: full name
-    @type description: C{unicode} object or C{None}
+    :type description: C{unicode} object or C{None}
     @ivar description: description of maintainership.
     """
 

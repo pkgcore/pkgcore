@@ -1,6 +1,12 @@
 # Copyright: 2005 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+"""
+Pkgcore manager base module.
+"""
+
+__all__ = ()
+
 # XXX yes; this location sucks, but we need some way to castrate the sandbox
 # if we're ever invoked w/in it.
 import os

@@ -1,9 +1,15 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
 gentoo/ebuild specific triggers
 """
+
+__all__ = ("collapse_envd", "string_collapse_envd", "env_update",
+    "ConfigProtectInstall", "ConfigProtectUninstall", "preinst_contents_reset",
+    "collision_protect", "install_into_symdir_protect", "InfoRegen", "SFPerms",
+    "FixImageSymlinks", "generate_triggers")
+
 
 import os, errno
 from pkgcore.merge import triggers, const, errors

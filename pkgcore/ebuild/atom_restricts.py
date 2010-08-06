@@ -1,4 +1,4 @@
-# Copyright: 2005-2009 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 # "More than one statement on a single line"
@@ -7,6 +7,8 @@
 """
 atom version restrict
 """
+
+__all__ = ("VersionMatch",)
 
 from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild import cpv, errors
@@ -43,14 +45,14 @@ class VersionMatch(restriction.base):
 
     def __init__(self, operator, ver, rev=None, negate=False, **kwd):
         """
-        @param operator: version comparison to do,
+        :param operator: version comparison to do,
             valid operators are ('<', '<=', '=', '>=', '>', '~')
-        @type operator: string
-        @param ver: version to base comparison on
-        @type ver: string
-        @param rev: revision to base comparison on
-        @type rev: None (no rev), or an int
-        @param negate: should the restriction results be negated;
+        :type operator: string
+        :param ver: version to base comparison on
+        :type ver: string
+        :param rev: revision to base comparison on
+        :type rev: None (no rev), or an int
+        :param negate: should the restriction results be negated;
             currently forced to False
         """
 

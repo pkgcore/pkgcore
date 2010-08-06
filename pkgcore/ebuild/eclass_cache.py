@@ -1,9 +1,11 @@
-# Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
 in memory representation of on disk eclass stacking order
 """
+
+__all__ = ("base", "cache", "StackedCaches")
 
 from snakeoil.data_source import local_source
 from pkgcore.config import ConfigHint
@@ -40,7 +42,7 @@ class base(object):
         Given a dict as returned by get_eclass_data, walk it comparing
         it to internal eclass view.
 
-        @return: a boolean representing whether that eclass data is still
+        :return: a boolean representing whether that eclass data is still
             up to date, or not
         """
         ec = self.eclasses
@@ -83,7 +85,7 @@ class cache(base):
 
     def __init__(self, path, portdir=None):
         """
-        @param portdir: ondisk location of the tree we're working with
+        :param portdir: ondisk location of the tree we're working with
         """
         base.__init__(self, portdir=portdir, eclassdir=normpath(path))
 
@@ -120,9 +122,9 @@ class StackedCaches(base):
 
     def __init__(self, caches, **kwds):
         """
-        @param caches: L{cache} instances to stack;
+        :param caches: L{cache} instances to stack;
             ordering should be desired lookup order
-        @keyword eclassdir: override for the master eclass dir, required for
+        :keyword eclassdir: override for the master eclass dir, required for
             eapi0 and idiot eclass usage.  defaults to pulling from the first
             cache.
         """

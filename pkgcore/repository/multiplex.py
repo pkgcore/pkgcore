@@ -5,6 +5,8 @@
 repository that combines multiple repositories together
 """
 
+__all__ = ("tree", "operations")
+
 from operator import itemgetter
 from pkgcore.repository import prototype, errors
 from snakeoil.currying import partial, post_curry
@@ -58,7 +60,7 @@ class tree(prototype.tree):
 
     def __init__(self, *trees):
         """
-        @param trees: L{pkgcore.repository.prototype.tree} instances
+        :param trees: L{pkgcore.repository.prototype.tree} instances
             to combines into one
         """
         super(tree, self).__init__()
@@ -132,7 +134,7 @@ class tree(prototype.tree):
             *[repo.itermatch(restrict, **kwds) for repo in self.trees])
 
     itermatch.__doc__ = prototype.tree.itermatch.__doc__.replace(
-        "@param", "@keyword").replace("@keyword restrict:", "@param restrict:")
+        "@param", "@keyword").replace(":keyword restrict:", ":param restrict:")
 
     def __iter__(self):
         return (pkg for repo in self.trees for pkg in repo)

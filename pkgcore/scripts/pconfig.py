@@ -3,6 +3,10 @@
 
 """Configuration querying utility."""
 
+__all__ = ("get_classes", "dump_main", "classes_main", "uncollapsable_main",
+    "DescribeClassParser", "describe_class_main", "ConfigurablesParser",
+    "configurables_main", "dump_uncollapsed_main"
+)
 
 import traceback
 

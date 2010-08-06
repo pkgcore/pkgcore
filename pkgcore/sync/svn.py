@@ -1,6 +1,8 @@
 # Copyright: 2006 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
+__all__ = ("svn_syncer",)
+
 from pkgcore.sync import base
 from pkgcore.spawn import spawn_get_output
 import os

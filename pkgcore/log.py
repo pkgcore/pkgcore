@@ -6,7 +6,7 @@
 
 Currently just contains pkgcore's root logger.
 """
-
+__all__ = ("logger",)
 
 import logging
 

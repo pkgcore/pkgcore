@@ -1,5 +1,15 @@
-# Copyright: 2008-2009 Brian Harring <ferringb@gmail.com>
+# Copyright: 2008-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
+
+"""
+remote binpkg support
+
+Currently this primarily just holds the Packages cache used for remote, and local
+binpkg repositories
+"""
+
+__all__ = ("PackagesCacheV0", "PackagesCacheV1", "write_index")
+
 
 from snakeoil.mappings import ImmutableDict, StackedDict
 from snakeoil import klass
@@ -16,7 +26,8 @@ demandload(globals(), 'errno',
     'operator:itemgetter',
 )
 
-def iter_till_empty_newline(data):
+
+def _iter_till_empty_newline(data):
     for x in data:
         if not x:
             return
@@ -26,6 +37,12 @@ def iter_till_empty_newline(data):
 
 class CacheEntry(StackedDict):
 
+    """
+    customized version of StackedDict blocking pop from modifying the target
+
+    Note that this pop doesn't through KeyError if something is missing- just
+    returns None instead.  This is likely to be changed.
+    """
     def pop(self, key, default=None):
         try:
             return self[key]
@@ -46,6 +63,12 @@ if type != cache.bulk.__metaclass__:
 
 
 class PackagesCacheV0(cache.bulk):
+    """
+    Cache backend for writting binpkg Packages caches
+
+    Note this follows version 0 semantics- not the most efficient, and
+    doesn't bundle  certain useful keys like RESTRICt
+    """
 
     __metaclass__ = cache_meta
 
@@ -87,7 +110,7 @@ class PackagesCacheV0(cache.bulk):
     def read_preamble(self, handle):
         return ImmutableDict(
             (self._header_mangling_map.get(k, k), v)
-            for k,v in iter_till_empty_newline(handle))
+            for k,v in _iter_till_empty_newline(handle))
 
     def _read_data(self):
         try:
@@ -107,7 +130,7 @@ class PackagesCacheV0(cache.bulk):
         count = 0
         vkeys = self._known_keys
         while True:
-            raw_d = dict(iter_till_empty_newline(handle))
+            raw_d = dict(_iter_till_empty_newline(handle))
 
             d = dict((k, v) for k,v in raw_d.iteritems() if k in vkeys)
             if not d:
@@ -230,12 +253,18 @@ class PackagesCacheV0(cache.bulk):
 
 class PackagesCacheV1(PackagesCacheV0):
 
+    """
+    Cache backend for writting binpkg Packages caches in format version 1
+
+    See :py:class:`PackagesCacheV0` for usage information; this just writes
+    a better ondisk format
+    """
+
     inheritable = PackagesCacheV0.inheritable.union(('SLOT', 'EAPI', 'LICENSE',
         'KEYWORDS', 'USE', 'RESTRICT'))
 
     _pkg_defaults = ImmutableDict(PackagesCacheV0._pkg_defaults.items() +
         [('RESTRICT', '')])
-
 
     @classmethod
     def _assemble_pkg_dict(cls, pkg):
@@ -251,6 +280,7 @@ class PackagesCacheV1(PackagesCacheV0):
 
     version = 1
 
+
 def get_cache_kls(version):
     version = str(version)
     if version == '0':
@@ -261,6 +291,14 @@ def get_cache_kls(version):
 
 
 def write_index(filepath, repo, version=-1):
+    """
+    given a repository, serialize it's packages contents to a PackagesCache backend.
+
+    :param filepath: path to write the cache to
+    :param repo: Repository instance to serialize
+    :param version: if set, this is the format version to use.  Defaults to the
+        most recent (currently v1)
+    """
     if version == -1:
         version = 1
     try:

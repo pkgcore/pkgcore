@@ -1,9 +1,11 @@
-# Copyright: 2005-2009 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
 package class for buildable ebuilds
 """
+
+__all__ = ("base", "package", "package_factory", "virtual_ebuild")
 
 import os
 from itertools import imap
@@ -358,11 +360,11 @@ class virtual_ebuild(metadata.package):
 
     def __init__(self, parent_repository, pkg, data, cpvstr):
         """
-        @param cpvstr: cpv for the new pkg
-        @param parent_repository: actual repository that this pkg should
+        :param cpvstr: cpv for the new pkg
+        :param parent_repository: actual repository that this pkg should
             claim it belongs to
-        @param pkg: parent pkg that is generating this pkg
-        @param data: mapping of data to push to use in __getattr__ access
+        :param pkg: parent pkg that is generating this pkg
+        :param data: mapping of data to push to use in __getattr__ access
         """
         c = CPV.unversioned(cpvstr)
         if c.fullver is None:

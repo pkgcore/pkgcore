@@ -7,6 +7,8 @@ conditional attributes on a package.
 Changing them triggering regen of other attributes on the package instance.
 """
 
+__all__ = ("make_wrapper",)
+
 from operator import attrgetter
 from pkgcore.package.base import wrapper
 
@@ -29,9 +31,9 @@ def _getattr_wrapped(attr, self):
 def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
     kls_injections={}):
     """
-    @param configurable_attribute_name: attribute name to add,
+    :param configurable_attribute_name: attribute name to add,
         and that is used for evaluating attributes_to_wrap
-    @param attributes_to_wrap: mapping of attr_name:callable
+    :param attributes_to_wrap: mapping of attr_name:callable
         for revaluating the pkg_instance, using the result
         instead of the wrapped pkgs attr.
     """
@@ -63,13 +65,13 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
                      unchangable_settings=None):
 
             """
-            @type  pkg_instance: L{pkgcore.package.metadata.package}
-            @param pkg_instance: instance to wrap.
-            @type  initial_settings: sequence
-            @param initial_settings: initial configuration of the
+            :type pkg_instance: L{pkgcore.package.metadata.package}
+            :param pkg_instance: instance to wrap.
+            :type initial_settings: sequence
+            :param initial_settings: initial configuration of the
                 configurable_attribute
-            @type  unchangable_settings: sequence
-            @param unchangable_settings: settings that configurable_attribute
+            :type unchangable_settings: sequence
+            :param unchangable_settings: settings that configurable_attribute
                 cannot be set to
             """
 
@@ -100,7 +102,7 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             """
             rollback changes to the configurable attribute to an earlier point
 
-            @param point: must be an int
+            :param point: must be an int
             """
             self._configurable.rollback(point)
             # yes, nuking objs isn't necessarily required.  easier this way though.
@@ -132,8 +134,8 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             restriction return True; if not possible, reverts any changes
             it attempted
 
-            @param attr: attr to try and change
-            @param vals: L{pkgcore.restrictions.values.base} instances that
+            :param attr: attr to try and change
+            :param vals: L{pkgcore.restrictions.values.base} instances that
                 we're attempting to make match True
             """
             if attr not in self._wrapped_attr:
@@ -182,8 +184,8 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             restriction return False; if not possible, reverts any changes
             it attempted
 
-            @param attr: attr to try and change
-            @param vals: L{pkgcore.restrictions.values.base} instances that
+            :param attr: attr to try and change
+            :param vals: L{pkgcore.restrictions.values.base} instances that
                 we're attempting to make match False
             """
             if attr not in self._wrapped_attr:

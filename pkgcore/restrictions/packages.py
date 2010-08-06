@@ -26,10 +26,10 @@ class native_PackageRestriction(object):
     def __init__(self, attr, childrestriction, negate=False,
         ignore_missing=True):
         """
-        @param attr: package attribute to match against
-        @param childrestriction: a L{pkgcore.restrictions.values.base} instance
+        :param attr: package attribute to match against
+        :param childrestriction: a L{pkgcore.restrictions.values.base} instance
         to pass attr to for matching
-        @param negate: should the results be negated?
+        :param negate: should the results be negated?
         """
         if not childrestriction.type == self.subtype:
             raise TypeError("restriction must be of type %r" % (self.subtype,))
@@ -210,11 +210,11 @@ class Conditional(PackageRestriction):
 
     def __init__(self, attr, childrestriction, payload, **kwds):
         """
-        @param attr: attr to match against
-        @param childrestriction: restriction to control whether or not the
+        :param attr: attr to match against
+        :param childrestriction: restriction to control whether or not the
             payload is accessible
-        @param payload: payload data, whatever it may be.
-        @param kwds: additional args to pass to L{PackageRestriction}
+        :param payload: payload data, whatever it may be.
+        :param kwds: additional args to pass to L{PackageRestriction}
         """
         PackageRestriction.__init__(self, attr, childrestriction, **kwds)
         object.__setattr__(self, "payload", tuple(payload))

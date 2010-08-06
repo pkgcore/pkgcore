@@ -1,7 +1,9 @@
-# Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>: GPL/BSD2
+# Copyright: 2006-2010 Brian Harring <ferringb@gmail.com>
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
+# more should be doc'd...
+__all__ = ("OptionParser", "AmbiguousQuery", "NoMatches")
 
 """Mess with the resolver and vdb."""
 
@@ -165,11 +167,11 @@ def parse_atom(token, repo, return_none=False):
     AmbiguousQuery if they belong to multiple cat/pkgs, returns an
     atom otherwise.
 
-    @param token: string to convert.
-    @param repo: L{pkgcore.repository.prototype.tree} instance to search in.
-    @param return_none: indicates if no matches raises or returns C{None}
+    :param token: string to convert.
+    :param repo: L{pkgcore.repository.prototype.tree} instance to search in.
+    :param return_none: indicates if no matches raises or returns C{None}
 
-    @return: an atom or C{None}.
+    :return: an atom or C{None}.
     """
     # XXX this should be in parserestrict in some form, perhaps.
     restriction = parserestrict.parse_match(str(token))

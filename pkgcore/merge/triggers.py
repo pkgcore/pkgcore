@@ -5,12 +5,25 @@
 triggers, callables to bind to a step in a MergeEngine to affect changes
 """
 
-__all__ = [
+__all__ = (
     "base",
-    "trigger",
     "UNINSTALLING_MODES",
-    "INSTALLING_MODES"
-]
+    "INSTALLING_MODES",
+    "BaseSystemUnmergeProtection",
+    "BinaryDebug",
+    "BlockFileType",
+    "CommonDirectoryModes",
+    "PruneFiles",
+    "SavePkg",
+    "detect_world_writable",
+    "fix_gid_perms",
+    "fix_set_bits",
+    "fix_uid_perms",
+    "ldconfig",
+    "merge",
+    "unmerge",
+    "InfoRegen",
+)
 
 from pkgcore.merge import errors, const
 from pkgcore.config import ConfigHint
@@ -188,8 +201,8 @@ class mtime_watcher(object):
         set the initial state; will adjust ondisk mtimes as needed
         to avoid race potentials.
 
-        @param locations: sequence, file paths to scan
-        @param stat_func: stat'er to use.  defaults to os.stat
+        :param locations: sequence, file paths to scan
+        :param stat_func: stat'er to use.  defaults to os.stat
         """
         self.locations = locations
         mtimes = list(self._scan_mtimes(locations, stat_func))
@@ -211,10 +224,10 @@ class mtime_watcher(object):
         set the initial state; will adjust ondisk mtimes as needed
         to avoid race potentials.
 
-        @param locations: sequence, file paths to scan; uses the locations
+        :param locations: sequence, file paths to scan; uses the locations
           from the set_state invocation if not supplised.
-        @param stat_func: stat'er to use.  defaults to os.stat
-        @return: boolean, True if things have changed, False if not.
+        :param stat_func: stat'er to use.  defaults to os.stat
+        :return: boolean, True if things have changed, False if not.
         """
         if locations is None:
             locations = self.locations
@@ -228,9 +241,9 @@ class mtime_watcher(object):
         """
         generator yielding the fs objs for what has changed.
 
-        @param locations: sequence, file paths to scan; uses the locations
+        :param locations: sequence, file paths to scan; uses the locations
           from the set_state invocation if not supplised.
-        @param stat_func: stat'er to use.  defaults to os.stat
+        :param stat_func: stat'er to use.  defaults to os.stat
         """
         if locations is None:
             locations = self.locations
@@ -532,7 +545,7 @@ class PruneFiles(base):
 
     def __init__(self, sentinel_func):
         """
-        @param sentinel_func: callable accepting a fsBase entry, returns
+        :param sentinel_func: callable accepting a fsBase entry, returns
         True if the entry should be removed, False otherwise
         """
         base.__init__(self)

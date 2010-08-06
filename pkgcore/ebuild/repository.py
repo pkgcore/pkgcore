@@ -5,6 +5,8 @@
 ebuild repository, specific to gentoo ebuild trees (whether cvs or rsync)
 """
 
+__all__ = ("UnconfiguredTree", "SlavedTree", "ConfiguredTree")
+
 import os, stat
 from itertools import imap, ifilterfalse
 
@@ -67,19 +69,19 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
                  ignore_paludis_versioning=False):
 
         """
-        @param location: on disk location of the tree
-        @param cache: sequence of L{pkgcore.cache.template.database} instances
+        :param location: on disk location of the tree
+        :param cache: sequence of L{pkgcore.cache.template.database} instances
             to use for storing metadata
-        @param eclass_cache: If not None, L{pkgcore.ebuild.eclass_cache}
+        :param eclass_cache: If not None, L{pkgcore.ebuild.eclass_cache}
             instance representing the eclasses available,
             if None, generates the eclass_cache itself
-        @param default_mirrors: Either None, or sequence of mirrors to try
+        :param default_mirrors: Either None, or sequence of mirrors to try
             fetching from first, then falling back to other uri
-        @param override_repo_id: Either None, or string to force as the
+        :param override_repo_id: Either None, or string to force as the
             repository unique id
-        @param sync: Either None, or a syncer object to use for updating of this
+        :param sync: Either None, or a syncer object to use for updating of this
             repository.
-        @param ignore_paludis_versioning: If False, fail when -scm is encountred.  if True,
+        :param ignore_paludis_versioning: If False, fail when -scm is encountred.  if True,
             silently ignore -scm ebuilds.
         """
 
@@ -157,7 +159,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         """
         generate a new tree instance with the same location using new keywords.
 
-        @param kwds: see __init__ for valid values
+        :param kwds: see __init__ for valid values
         """
 
         o = self.__class__(self.location, **kwds)
@@ -325,9 +327,9 @@ class ConfiguredTree(configured.tree):
 
     def __init__(self, raw_repo, domain, domain_settings, fetcher=None):
         """
-        @param raw_repo: L{UnconfiguredTree} instance
-        @param domain_settings: environment settings to bind
-        @param fetcher: L{pkgcore.fetch.base.fetcher} instance to use
+        :param raw_repo: L{UnconfiguredTree} instance
+        :param domain_settings: environment settings to bind
+        :param fetcher: L{pkgcore.fetch.base.fetcher} instance to use
             for getting access to fetchable files
         """
 

@@ -11,6 +11,7 @@ and compression.
 Should use this module unless its absolutely critical that bz2 module be used
 """
 
+__all__ = ("compress", "decompress")
 
 from snakeoil.demandload import demandload
 demandload(globals(),

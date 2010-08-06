@@ -5,6 +5,8 @@
 functionality related to downloading files
 """
 
+__all__ = ("fetchable", "mirror", "default_mirror", "uri_list")
+
 from snakeoil.klass import generic_equality
 
 class fetchable(object):
@@ -17,10 +19,10 @@ class fetchable(object):
 
     def __init__(self, filename, uri=(), chksums=None):
         """
-        @param filename: filename...
-        @param uri: either None (no uri),
+        :param filename: filename...
+        :param uri: either None (no uri),
             or a sequence of uri where the file is available
-        @param chksums: either None (no chksum data),
+        :param chksums: either None (no chksum data),
             or a dict of chksum_type -> value for this file
         """
         self.uri = uri
@@ -51,8 +53,8 @@ class mirror(object):
 
     def __init__(self, mirrors, mirror_name):
         """
-        @param mirrors: list of hosts that comprise this mirror tier
-        @param mirror_name: name of the mirror tier
+        :param mirrors: list of hosts that comprise this mirror tier
+        :param mirror_name: name of the mirror tier
         """
 
         if not isinstance(mirrors, tuple):

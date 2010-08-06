@@ -138,13 +138,13 @@ def spawn(mycommand, env=None, opt_name=None, fd_pipes=None, returnpid=False,
 
     """wrapper around execve
 
-    @type  mycommand: list or string
-    @type  env: mapping with string keys and values
-    @param opt_name: controls what the process is named
+    :type mycommand: list or string
+    :type env: mapping with string keys and values
+    :param opt_name: controls what the process is named
         (what it would show up as under top for example)
-    @type  fd_pipes: mapping from existing fd to fd (inside the new process)
-    @param fd_pipes: controls what fd's are left open in the spawned process-
-    @param returnpid: controls whether spawn waits for the process to finish,
+    :type fd_pipes: mapping from existing fd to fd (inside the new process)
+    :param fd_pipes: controls what fd's are left open in the spawned process-
+    :param returnpid: controls whether spawn waits for the process to finish,
         or returns the pid.
     """
     if env is None:
@@ -417,7 +417,7 @@ def spawn_get_output(
 
     """Call spawn, collecting the output to fd's specified in collect_fds list.
 
-    @param spawn_type: the passed in function to call-
+    :param spawn_type: the passed in function to call-
        typically spawn_bash, spawn, spawn_sandbox, or spawn_fakeroot.
        defaults to spawn
     """
@@ -470,7 +470,7 @@ def spawn_get_output(
 def process_exit_code(retval):
     """Process a waitpid returned exit code.
 
-    @return: The exit code if it exit'd, the signal if it died from signalling.
+    :return: The exit code if it exit'd, the signal if it died from signalling.
     """
     # If it got a signal, return the signal that was sent.
     if retval & 0xff:

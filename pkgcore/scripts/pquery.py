@@ -5,8 +5,6 @@
 
 """Extract information from repositories."""
 
-
-
 from pkgcore.restrictions import packages, values, boolean, restriction
 from pkgcore.ebuild import conditionals, atom
 from pkgcore.util import (
@@ -645,9 +643,9 @@ def _default_formatter(out, node):
 def format_depends(out, node, func=_default_formatter):
     """Pretty-print a depset to a formatter.
 
-    @param out: formatter.
-    @param node: a L{conditionals.DepSet}.
-    @param func: callable taking a formatter and a depset payload.
+    :param out: formatter.
+    :param node: a L{conditionals.DepSet}.
+    :param func: callable taking a formatter and a depset payload.
         If it can format its value in a single line it should do that
         without writing a newline and return C{False}.
         If it needs multiple lines it should first write a newline, not write

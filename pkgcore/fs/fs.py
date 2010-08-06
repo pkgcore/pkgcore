@@ -27,13 +27,13 @@ __all__.extend("is%s" % x for x in ("dir", "reg", "sym", "fifo", "dev",
 # namespace at the end of the module
 
 _fs_doc = {
-    "mode":"""@keyword mode: int, the mode of this entry.  """
+    "mode":""":keyword mode: int, the mode of this entry.  """
         """required if strict is set""",
-    "mtime":"""@keyword mtime: long, the mtime of this entry.  """
+    "mtime":""":keyword mtime: long, the mtime of this entry.  """
         """required if strict is set""",
-    "uid":"""@keyword uid: int, the uid of this entry.  """
+    "uid":""":keyword uid: int, the uid of this entry.  """
         """required if strict is set""",
-    "gid":"""@keyword gid: int, the gid of this entry.  """
+    "gid":""":keyword gid: int, the gid of this entry.  """
         """required if strict is set""",
 }
 
@@ -48,9 +48,9 @@ def gen_doc_additions(init, slots):
 
 raw_init_doc = \
 """
-@param location: location (real or intended) for this entry
-@param strict: is this fully representative of the entry, or only partially
-@raise KeyError: if strict is enabled, and not all args are passed in
+:param location: location (real or intended) for this entry
+:param strict: is this fully representative of the entry, or only partially
+:raise KeyError: if strict is enabled, and not all args are passed in
 """
 
 
@@ -118,7 +118,7 @@ class fsBase(object):
         """calculate the abspath/canonicalized path for this entry, returning
         a new instance if the path differs.
 
-        @keyword cache: Either None (no cache), or a data object of path->
+        :keyword cache: Either None (no cache), or a data object of path->
           resolved.  Currently unused, but left in for forwards compatibility
         """
         new_path = realpath(self.location)
@@ -157,7 +157,7 @@ class fsFile(fsBase):
 
     def __init__(self, location, chksums=None, data=None, **kwds):
         """
-        @param chksums: dict of checksums, key chksum_type: val hash val.
+        :param chksums: dict of checksums, key chksum_type: val hash val.
             See L{pkgcore.chksum}.
         """
         assert 'data_source' not in kwds
@@ -212,7 +212,7 @@ class fsLink(fsBase):
 
     def __init__(self, location, target, **kwargs):
         """
-        @param target: string, filepath of the symlinks target
+        :param target: string, filepath of the symlinks target
         """
         kwargs["target"] = target
         fsBase.__init__(self, location, **kwargs)
@@ -294,7 +294,7 @@ class fsDev(fsBase):
 
 def get_major_minor(stat_inst):
     """get major/minor from a stat instance
-    @return: major,minor tuple of ints
+    :return: major,minor tuple of ints
     """
     return ( stat_inst.st_rdev >> 8 ) & 0xff, stat_inst.st_rdev & 0xff
 

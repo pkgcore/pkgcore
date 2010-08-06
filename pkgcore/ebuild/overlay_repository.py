@@ -5,6 +5,8 @@
 implementation of the standard PORTDIR + PORTDIR_OVERLAY repository stacking
 """
 
+__all__ = ("OverlayRepo",)
+
 from pkgcore.repository import prototype, multiplex
 from pkgcore.config import ConfigHint, errors
 from pkgcore.ebuild import repository
@@ -33,7 +35,7 @@ class OverlayRepo(prototype.tree):
 
     def __init__(self, trees, **kwds):
         """
-        @param trees: L{pkgcore.ebuild.repository.UnconfiguredTree} instances
+        :param trees: L{pkgcore.ebuild.repository.UnconfiguredTree} instances
             to combine.
         """
 

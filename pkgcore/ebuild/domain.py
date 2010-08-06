@@ -1,9 +1,11 @@
-# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
 gentoo configuration domain
 """
+
+__all__ = ("MissingFile", "Failure", "domain")
 
 # XXX doc this up better...
 

@@ -37,6 +37,8 @@ Example of the supported format (not a complete config)::
         }
 """
 
+__all__ = ("config_from_file",)
+
 # The tests for this are in test_dhcpformat.
 
 from pkgcore.config import dhcpformat, errors

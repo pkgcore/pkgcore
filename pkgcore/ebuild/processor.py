@@ -20,7 +20,7 @@ design) reduces regen time by over 40% compared to portage-2.1
 
 
 __all__ = (
-    "request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor"
+    "request_ebuild_processor", "release_ebuild_processor", "EbuildProcessor",
     "UnhandledCommand", "expected_ebuild_env")
 
 
@@ -74,13 +74,13 @@ def request_ebuild_processor(userpriv=False, sandbox=None, fakeroot=False,
     Note that fakeroot processes are B{never} reused due to the fact
     the fakeroot env becomes localized to the pkg it's handling.
 
-    @return: L{EbuildProcessor}
-    @param userpriv: should the processor be deprived to
+    :return: L{EbuildProcessor}
+    :param userpriv: should the processor be deprived to
         L{pkgcore.os_data.portage_gid} and L{pkgcore.os_data.portage_uid}?
-    @param sandbox: should the processor be sandboxed?
-    @param fakeroot: should the processor be fakerooted?  This option is
+    :param sandbox: should the processor be sandboxed?
+    :param fakeroot: should the processor be fakerooted?  This option is
         mutually exclusive to sandbox, and requires save_file to be set.
-    @param save_file: location to store fakeroot state dumps
+    :param save_file: location to store fakeroot state dumps
     """
 
     if sandbox is None:
@@ -109,8 +109,8 @@ def release_ebuild_processor(ebp):
     via this function once it's no longer in use.
     This includes fakerooted processors.
 
-    @param ebp: L{EbuildProcessor} instance
-    @return: boolean indicating release results- if the processor isn't known
+    :param ebp: L{EbuildProcessor} instance
+    :return: boolean indicating release results- if the processor isn't known
         as active, False is returned.
         If a processor isn't known as active, this means either calling
         error or an internal error.
@@ -178,9 +178,9 @@ class EbuildProcessor(object):
 
     def __init__(self, userpriv, sandbox, fakeroot, save_file):
         """
-        @param sandbox: enables a sandboxed processor
-        @param userpriv: enables a userpriv'd processor
-        @param fakeroot: enables a fakeroot'd processor-
+        :param sandbox: enables a sandboxed processor
+        :param userpriv: enables a userpriv'd processor
+        :param fakeroot: enables a fakeroot'd processor-
             this is a mutually exclusive option to sandbox, and
             requires userpriv to be enabled. Violating this will
             result in nastyness.
@@ -282,13 +282,13 @@ class EbuildProcessor(object):
         in a state where all that remains is a call start_processing
         call, then generic_handler event loop.
 
-        @param phase: phase to prep for
-        @type phase: str
-        @param env: mapping of the environment to prep the processor with
-        @param sandbox: should the sandbox be enabled?
-        @param logging: None, or a filepath to log the output from the
+        :param phase: phase to prep for
+        :type phase: str
+        :param env: mapping of the environment to prep the processor with
+        :param sandbox: should the sandbox be enabled?
+        :param logging: None, or a filepath to log the output from the
             processor to
-        @return: True for success, False for everything else
+        :return: True for success, False for everything else
         """
 
         self.write("process_ebuild %s" % phase)
@@ -320,9 +320,9 @@ class EbuildProcessor(object):
     def write(self, string, flush=True, disable_runtime_exceptions=False):
         """send something to the bash side.
 
-        @param string: string to write to the bash processor.
+        :param string: string to write to the bash processor.
             All strings written are automatically \\n terminated.
-        @param flush: boolean controlling whether the data is flushed
+        :param flush: boolean controlling whether the data is flushed
             immediately.  Disabling flush is useful when dumping large
             amounts of data.
         """
@@ -342,8 +342,8 @@ class EbuildProcessor(object):
     def expect(self, want):
         """read from the daemon, check if the returned string is expected.
 
-        @param want: string we're expecting
-        @return: boolean, was what was read == want?
+        :param want: string we're expecting
+        :return: boolean, was what was read == want?
         """
         got = self.read()
         return want == got.rstrip("\n")
@@ -365,7 +365,7 @@ class EbuildProcessor(object):
         """
         if the instance is sandboxed, print the sandbox access summary
 
-        @param move_log: location to move the sandbox log to if a failure
+        :param move_log: location to move the sandbox log to if a failure
             occured
         """
         if not os.path.exists(self.__sandbox_log):
@@ -411,8 +411,8 @@ class EbuildProcessor(object):
         (which is heaviliy inherited) speeds up regen times for
         example.
 
-        @param ec_file: filepath of eclass to preload
-        @return: boolean, True for success
+        :param ec_file: filepath of eclass to preload
+        :return: boolean, True for success
         """
         if not os.path.exists(ec_file):
             return 1
@@ -488,7 +488,7 @@ class EbuildProcessor(object):
     def set_sandbox_state(self, state):
         """
         tell the daemon whether to enable the sandbox, or disable it
-        @param state: boolean, if True enable sandbox
+        :param state: boolean, if True enable sandbox
         """
         if state:
             self.write("set_sandbox_state 1")
@@ -499,8 +499,8 @@ class EbuildProcessor(object):
         """
         transfer the ebuild's desired env (env_dict) to the running daemon
 
-        @type  env_dict: mapping with string keys and values.
-        @param env_dict: the bash env.
+        :type env_dict: mapping with string keys and values.
+        :param env_dict: the bash env.
         """
 
         self.write("start_receiving_env\n")
@@ -527,7 +527,7 @@ class EbuildProcessor(object):
 
         Relevant only when the daemon is sandbox'd,
 
-        @param logfile: filepath to log to
+        :param logfile: filepath to log to
         """
         self.write("logging %s" % logfile)
         return self.expect("logging_ack")
@@ -546,11 +546,11 @@ class EbuildProcessor(object):
         """
         request the metadata be regenerated from an ebuild
 
-        @param package_inst: L{pkgcore.ebuild.ebuild_src.package} instance
+        :param package_inst: L{pkgcore.ebuild.ebuild_src.package} instance
             to regenerate
-        @param eclass_cache: L{pkgcore.ebuild.eclass_cache} instance to use
+        :param eclass_cache: L{pkgcore.ebuild.eclass_cache} instance to use
             for eclass access
-        @return: dict when successful, None when failed
+        :return: dict when successful, None when failed
         """
 
         self.write("process_ebuild depend")
@@ -615,15 +615,15 @@ class EbuildProcessor(object):
         """
         internal event handler responding to the running processor's requests.
 
-        @type  additional_commands: mapping from string to callable.
-        @param additional_commands: Extra command handlers.
+        :type additional_commands: mapping from string to callable.
+        :param additional_commands: Extra command handlers.
             Command names cannot have spaces.
             The callable is called with the processor as first arg, and
             remaining string (None if no remaining fragment) as second arg.
             If you need to split the args to command, whitespace splitting
             falls to your func.
 
-        @raise UnhandledCommand: thrown when an unknown command is encountered.
+        :raise UnhandledCommand: thrown when an unknown command is encountered.
         """
 
         # note that self is passed in. so... we just pass in the
@@ -676,8 +676,8 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None):
     """
     setup expected ebuild vars
 
-    @param d: if None, generates a dict, else modifies a passed in mapping
-    @return: mapping
+    :param d: if None, generates a dict, else modifies a passed in mapping
+    :return: mapping
     """
     if d is None:
         d = {}

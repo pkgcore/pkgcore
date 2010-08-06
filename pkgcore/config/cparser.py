@@ -6,6 +6,8 @@
 ini based configuration format
 """
 
+__all__ = ("config_from_file",)
+
 import ConfigParser
 
 from pkgcore.config import basics, errors
@@ -20,8 +22,8 @@ def config_from_file(file_obj):
     """
     generate a config dict
 
-    @param file_obj: file protocol instance
-    @return: L{snakeoil.mappings.LazyValDict} instance
+    :param file_obj: file protocol instance
+    :return: L{snakeoil.mappings.LazyValDict} instance
     """
     cparser = CaseSensitiveConfigParser()
     try:

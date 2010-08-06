@@ -1,9 +1,11 @@
 # Copyright: 2005 Jason Stubbs <jstubbs@gentoo.org>
-# Copyright: 2005-2006 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 
 """gentoo ebuild specific base package class"""
+
+__all__ = ("CPV", "versioned_CPV", "unversioned_CPV")
 
 from itertools import izip
 from snakeoil.compatibility import all, cmp, is_py3k

@@ -5,6 +5,8 @@
 virtual repository, pkgs generated via callable
 """
 
+__all__ = ("virtual",)
+
 from pkgcore.repository import prototype
 from pkgcore.package import virtual
 
@@ -15,8 +17,8 @@ class tree(prototype.tree):
 
     def __init__(self, livefs=False):
         """
-        @param grab_virtuals_func: callable to get a package -> versions mapping
-        @param livefs: is this a livefs repository?
+        :param grab_virtuals_func: callable to get a package -> versions mapping
+        :param livefs: is this a livefs repository?
         """
         prototype.tree.__init__(self)
         self.livefs = livefs

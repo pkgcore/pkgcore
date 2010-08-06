@@ -190,10 +190,10 @@ class OldStyleVirtuals(virtual.tree):
 
     def __getattr__(self, attr):
         if attr not in ('default_providers', '_virtuals'):
-            return virtual.tree.__getattr__(self, attr)
+            return object.__getattribute__(self, attr)
         if self._load_func is not None:
             self._load_data()
-        return getattr(self, attr)
+        return object.__getattribute__(self, attr)
 
     def _get_versions(self, cp):
         return tuple(self._virtuals[cp[1]].iterkeys())

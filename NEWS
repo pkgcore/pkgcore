@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* ospkg's fork of pkgcore has been folded in; FEATURES=save-deb is the primary
+  addition.
+
 * extended atom syntax now allows '*' to be used w/in a string- for example
   dev-*kde, *dev-*k*de*, etc.  This syntax is usable in user configs, and
   from the commandline.

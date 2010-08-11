@@ -17,7 +17,7 @@ from pkgcore.const import COPY_BINARY
 from pkgcore.plugin import get_plugin
 
 from snakeoil.currying import partial
-from snakeoil.osutils import ensure_dirs, pjoin, normpath
+from snakeoil.osutils import ensure_dirs, pjoin, normpath, unlink_if_exists
 
 __all__ = [
     "merge_contents", "unmerge_contents", "default_ensure_perms",
@@ -281,11 +281,8 @@ def unmerge_contents(cset, offset=None, callback=lambda obj:None):
 
     for x in iterate(cset.iterdirs(invert=True)):
         callback(x)
-        try:
-            os.unlink(x.location)
-        except OSError, e:
-            if e.errno != errno.ENOENT:
-                raise
+        unlink_if_exists(x.location)
+
     # this is a fair sight faster then using sorted/reversed
     l = list(iterate(cset.iterdirs()))
     l.sort(reverse=True)

@@ -34,7 +34,13 @@ class MissingChksum(ChksumBase):
         self.file = filename
 
 class ParseChksumError(ChksumBase):
-    def __init__(self, filename, error):
-        ChksumBase.__init__(self, "Failed parsing %r chksum due to %s" %
-                      (filename, error))
-        self.file, self.error = filename, error
+    def __init__(self, filename, error, missing=False):
+        if missing:
+            ChksumBase.__init__(self, "Failed parsing %r chksum; data isn't available: %s" %
+                          (filename, error))
+        else:
+            ChksumBase.__init__(self, "Failed parsing %r chksum due to %s" %
+                          (filename, error))
+        self.file = filename
+        self.error = error
+        self.missing = missing

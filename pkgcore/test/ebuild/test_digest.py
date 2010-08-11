@@ -59,7 +59,7 @@ class TestDigest(TestCase):
                     digest_contents+"\nMD5 asdfasdf", throw_errors=False)))
         try:
             d = tempfile.mkdtemp()
-            self.assertRaises(MissingChksum,
+            self.assertRaises(ParseChksumError,
                 digest.parse_digest, os.path.join(d, "foo"))
         finally:
             os.rmdir(d)

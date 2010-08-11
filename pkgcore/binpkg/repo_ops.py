@@ -23,7 +23,7 @@ from pkgcore.ebuild.conditionals import stringify_boolean
 
 from snakeoil import osutils, klass
 from pkgcore.util.bzip2 import compress
-from snakeoil.osutils import join as pjoin
+from snakeoil.osutils import join as pjoin, unlink_if_exists
 from snakeoil.demandload import demandload
 demandload(globals(), "pkgcore.log:logger")
 
@@ -99,10 +99,9 @@ class install(repo_interfaces.install):
             os.chmod(tmp_path, 0644)
         except Exception, e:
             try:
-                os.unlink(tmp_path)
+                unlink_if_exists(tmp_path)
             except (IOError, OSError), e:
-                if e.errno != errno.ENOENT:
-                    logger.warn("failed removing %r: %r" % (tmp_path, e))
+                logger.warn("failed removing %r: %r" % (tmp_path, e))
             raise
         return True
 

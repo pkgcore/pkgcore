@@ -30,6 +30,7 @@ demandload(globals(),
     'pkgcore.ebuild:digest,repo_objs,atom',
     'pkgcore.ebuild:errors@ebuild_errors',
     'pkgcore.ebuild:profiles',
+    'pkgcore.package:errors@pkg_errors',
     'random:shuffle',
     'errno',
 )
@@ -258,13 +259,18 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         return repo_objs.Manifest(pjoin(self.base, category, package,
             "Manifest"), enforce_gpg=self.enable_gpg)
 
-    def _get_digests(self, pkg, force_manifest1=False):
-        manifest = pkg._shared_pkg_data.manifest
-        if manifest.version == 2 and not force_manifest1:
-            return manifest.distfiles
-        return digest.parse_digest(pjoin(
-            os.path.dirname(self._get_ebuild_path(pkg)), "files",
-            "digest-%s-%s" % (pkg.package, pkg.fullver)))
+    def _get_digests(self, pkg, force_manifest1=False, allow_missing=False):
+        try:
+            manifest = pkg._shared_pkg_data.manifest
+            if manifest.version == 2 and not force_manifest1:
+                return manifest.distfiles
+            return digest.parse_digest(pjoin(
+                os.path.dirname(self._get_ebuild_path(pkg)), "files",
+                "digest-%s-%s" % (pkg.package, pkg.fullver)))
+        except pkg_errors.ParseChksumError, e:
+            if e.missing and allow_missing:
+                return {}
+            raise
 
     def __str__(self):
         return "%s.%s: location %s" % (

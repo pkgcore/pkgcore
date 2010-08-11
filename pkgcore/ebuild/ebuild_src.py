@@ -69,16 +69,18 @@ def generate_providers(self):
         raise metadata_errors.MetadataException(self, "provide", str(p))
 
 def generate_fetchables(self):
-    chksums = self.repo._get_digests(self)
+    chksums_can_be_missing = bool(getattr(self.repo, '_allow_missing_chksums', False))
+    chksums = self.repo._get_digests(self, allow_missing=chksums_can_be_missing)
 
     mirrors = getattr(self._parent, "mirrors", {})
     default_mirrors = getattr(self._parent, "default_mirrors", None)
     common = {}
+    func = partial(create_fetchable_from_uri, self, chksums,
+        chksums_can_be_missing, mirrors, default_mirrors, common)
     try:
         d = conditionals.DepSet(
             self.data.pop("SRC_URI", ""), fetchable, operators={},
-            element_func=partial(create_fetchable_from_uri, self, chksums,
-                                 mirrors, default_mirrors, common),
+            element_func=func,
             allow_src_uri_file_renames=(self.eapi >= 2))
         for v in common.itervalues():
             v.uri.finalize()
@@ -87,8 +89,8 @@ def generate_fetchables(self):
         raise metadata_errors.MetadataException(self, "src_uri", str(p))
 
 # utility func.
-def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
-    common_files, uri, filename=None):
+def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, mirrors,
+    default_mirrors, common_files, uri, filename=None):
 
     if filename is None:
         filename = os.path.basename(uri)
@@ -96,7 +98,7 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
     preexisting = common_files.get(filename)
 
     if preexisting is None:
-        if filename not in chksums:
+        if filename not in chksums and not ignore_missing_chksums:
             raise MissingChksum(filename)
         uris = uri_list(filename)
     else:
@@ -125,7 +127,7 @@ def create_fetchable_from_uri(pkg, chksums, mirrors, default_mirrors,
                 uris.add_mirror(default_mirrors)
 
     if preexisting is None:
-        common_files[filename] = fetchable(filename, uris, chksums[filename])
+        common_files[filename] = fetchable(filename, uris, chksums.get(filename))
     return common_files[filename]
 
 def generate_eapi(self):

@@ -151,7 +151,7 @@ class test_base(TestCase):
 
     def test_fetchables(self):
         l = []
-        def f(self, cpv):
+        def f(self, cpv, allow_missing=False):
             l.append(cpv)
             return {'monkey.tgz': {}, 'boon.tgz': {}, 'foon.tar.gz': {}}
         repo = self.make_parent(_get_digests=f)

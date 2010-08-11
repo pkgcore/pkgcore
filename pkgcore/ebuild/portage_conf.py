@@ -499,6 +499,15 @@ def config_from_make_conf(location="/etc/"):
             add_trigger('unmerge_backup_trigger', 'pkgcore.merge.triggers.SavePkgUnmerging',
                 target_repo='binpkg')
 
+    if 'save-deb' in features:
+        path = conf_dict.pop("DEB_REPO_ROOT", None)
+        if path is None:
+            logger.warn("disabling save-deb; DEB_REPO_ROOT is unset")
+        else:
+            add_trigger('save_deb_trigger', 'pkgcore.ospkg.triggers.SaveDeb',
+                basepath=normpath(path), maintainer=conf_dict.pop("DEB_MAINAINER", ''),
+                platform=conf_dict.pop("DEB_ARCHITECTURE", ""))
+
     if 'splitdebug' in features:
         add_trigger('binary_debug_trigger', 'pkgcore.merge.triggers.BinaryDebug',
             mode='split')

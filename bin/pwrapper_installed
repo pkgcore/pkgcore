@@ -18,7 +18,7 @@ if __name__ == '__main__':
         sys.stderr.write('Add --debug to the commandline for a traceback.\n')
         sys.exit(1)
 
-    name = osp.basename(sys.argv[0])
+    name = osp.basename(sys.argv[0]).replace("-", "_")
     try:
         script = modules.load_module('pkgcore.scripts.%s' % (name,))
     except modules.FailedImport:

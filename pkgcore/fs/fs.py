@@ -161,9 +161,6 @@ class fsFile(fsBase):
             See L{pkgcore.chksum}.
         """
         assert 'data_source' not in kwds
-        if "mtime" in kwds:
-            if not isinstance(kwds["mtime"], (float, long)):
-                kwds["mtime"] = long(kwds["mtime"])
         if data is None:
             data = local_source(location)
         kwds["data"] = data

@@ -7,50 +7,43 @@ binpkg tar utilities
 import os, stat
 from pkgcore.fs.fs import fsFile, fsDir, fsSymlink, fsFifo, fsDev
 from pkgcore.fs import contents
-from snakeoil.data_source import data_source
+from snakeoil.data_source import invokable_data_source
 
 from snakeoil.tar import tarfile
 from snakeoil.currying import partial, alias_class_method
 from snakeoil.compatibility import cmp, sorted_cmp
 
-class archive_data_source(data_source):
-
-    __slots__ = ()
-
-    def text_fileobj(self, writable=False):
-        if writable:
-            raise TypeError("data source %s data is immutable" % (self,))
-        return self.data()
-
-    def bytes_fileobj(self, writable=False):
-        if writable:
-            raise TypeError("data source %s data is immutable" % (self,))
-        return self.data()
 
 known_compressors = {"bz2": tarfile.TarFile.bz2open,
     "gz": tarfile.TarFile.gzopen,
     None: tarfile.TarFile.open}
 
-def write_set(contents_set, filepath, compressor='bz2'):
+def write_set(contents_set, filepath, compressor='bz2', absolute_paths=False):
     if compressor not in known_compressors:
         raise ValueError("compression must be one of %r, got %r" %
             (known_compressors.keys(), compressor))
     tar_fd = known_compressors[compressor](filepath, mode="w")
+    try:
+        add_contents_to_tarfile(contents_set, tar_fd)
+    finally:
+        tar_fd.close()
 
+
+def add_contents_to_tarfile(contents_set, tar_fd, absolute_paths=False):
     # first add directories, then everything else
     # this is just a pkgcore optimization, it prefers to see the dirs first.
     dirs = contents_set.dirs()
     dirs.sort()
     for x in dirs:
-        tar_fd.addfile(fsobj_to_tarinfo(x))
+        tar_fd.addfile(fsobj_to_tarinfo(x, absolute_paths))
     del dirs
     for x in contents_set.iterdirs(invert=True):
-        t = fsobj_to_tarinfo(x)
+        t = fsobj_to_tarinfo(x, absolute_paths)
         if t.isreg():
             tar_fd.addfile(t, fileobj=x.data.bytes_fileobj())
         else:
             tar_fd.addfile(t)
-    tar_fd.close()
+
 
 def archive_to_fsobj(src_tar):
     psep = os.path.sep
@@ -64,8 +57,8 @@ def archive_to_fsobj(src_tar):
                 continue
             yield fsDir(location, **d)
         elif member.isreg():
-            d["data"] = archive_data_source(partial(
-                    src_tar.extractfile, member.name))
+            d["data"] = invokable_data_source.wrap_function(partial(
+                    src_tar.extractfile, member.name), False)
             yield fsFile(location, **d)
         elif member.issym() or member.islnk():
             yield fsSymlink(location, member.linkname, **d)
@@ -80,7 +73,7 @@ def archive_to_fsobj(src_tar):
                 "unknown type %r, %r was encounted walking tarmembers" %
                     (member, member.type))
 
-def fsobj_to_tarinfo(fsobj):
+def fsobj_to_tarinfo(fsobj, absolute_path=True):
     t = tarfile.TarInfo()
     if isinstance(fsobj, fsFile):
         t.type = tarfile.REGTYPE
@@ -100,13 +93,13 @@ def fsobj_to_tarinfo(fsobj):
         t.devmajor = fsobj.major
         t.devminor = fsobj.minor
     t.name = fsobj.location
+    if not absolute_path:
+        t.name = './%s' % (fsobj.location.lstrip("/"),)
     t.mode = fsobj.mode
     t.uid = fsobj.uid
     t.gid = fsobj.gid
     t.mtime = fsobj.mtime
     return t
-
-
 
 
 def generate_contents(path, compressor="bz2"):

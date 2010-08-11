@@ -44,6 +44,8 @@ class contentsSet(object):
 
     __metaclass__ = generic_equality
     __attr_comparison__ = ('_dict',)
+    __dict_kls__ = dict
+
 
     def __init__(self, initial=None, mutable=True):
 
@@ -52,7 +54,7 @@ class contentsSet(object):
         :type initial: sequence
         :param mutable: controls if it modifiable after initialization
         """
-        self._dict = {}
+        self._dict = self.__dict_kls__()
         if initial is not None:
             self._dict.update(check_instance(x) for x in initial)
         self.mutable = mutable
@@ -222,7 +224,9 @@ class contentsSet(object):
         del l, rem
 
     def update(self, iterable):
-        self._dict.update((x.location, x) for x in iterable)
+        d = self._dict
+        for x in iterable:
+            d[x.location] = x
 
     def iterfiles(self, invert=False):
         if invert:

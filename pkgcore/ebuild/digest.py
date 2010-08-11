@@ -23,6 +23,7 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     "pkgcore:fetch",
     "snakeoil.lists:iflatten_instance",
+    "errno",
 )
 
 def parse_digest(source, throw_errors=True):
@@ -53,10 +54,11 @@ def parse_digest(source, throw_errors=True):
                 else:
                     d2[chf] = long(l[1], 16)
                 chf_keys.add(chf)
-        except (OSError, IOError), e:
-            raise errors.MissingChksum(source)
+        except EnvironmentError, e:
+            raise errors.ParseChksumError(source, e,
+                missing=(e.errno == errno.ENOENT))
         except TypeError, e:
-            raise errors.ParseChksumError("%r" % source, e)
+            raise errors.ParseChksumError(source, e)
     finally:
         if f is not None and f.close:
             f.close()
@@ -184,8 +186,9 @@ def parse_manifest(source, throw_errors=True, ignore_gpg=True,
                     files.setdefault(line[2], []).append(
                         [long(line[3]), line[0].lower(), long(line[1], 16)])
 
-        except (OSError, IOError, TypeError), e:
-            raise errors.ParseChksumError("failed parsing %r" % source, e)
+        except EnvironmentError, e:
+            raise errors.ParseChksumError(source, e,
+                missing=(e.errno == errno.ENOENT))
     finally:
         if f is not None and f.close:
             f.close()

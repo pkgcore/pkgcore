@@ -16,7 +16,7 @@ from pkgcore.util import commandline
 from snakeoil import modules
 
 if __name__ == '__main__':
-    name = osp.basename(sys.argv[0])
+    name = osp.basename(sys.argv[0]).replace("-", "_")
     script = modules.load_module('pkgcore.scripts.%s' % (name,))
     subcommands = getattr(script, 'commandline_commands', None)
     if subcommands is None:

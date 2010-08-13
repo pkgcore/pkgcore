@@ -296,6 +296,7 @@ def config_from_make_conf(location="/etc/"):
     if not gentoo_mirrors:
         gentoo_mirrors = None
 
+    # this is flawed... it'll pick up -some-feature
     features = conf_dict.get("FEATURES", "").split()
 
     new_config = {}
@@ -341,7 +342,10 @@ def config_from_make_conf(location="/etc/"):
             'inherit-only': True,
             'eclass_cache': 'eclass stack',
             'ignore_paludis_versioning':
-                ('ignore-paludis-versioning' in features)})
+                ('ignore-paludis-versioning' in features),
+            'allow_missing_manifests':
+                ('allow-missing-manifests' in features)
+            })
 
 
     # used by PORTDIR syncer, and any layman defined syncers

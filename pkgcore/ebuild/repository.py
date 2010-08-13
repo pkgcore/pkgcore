@@ -62,12 +62,14 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
          'eclass_cache': 'ref:eclass_cache',
          'default_mirrors': 'list', 'sync': 'lazy_ref:syncer',
          'override_repo_id':'str',
-         'ignore_paludis_versioning':'bool'},
+         'ignore_paludis_versioning':'bool',
+         'allow_missing_manifests':'bool',
+        },
         typename='repo')
 
     def __init__(self, location, cache=(), eclass_cache=None,
                  default_mirrors=None, sync=None, override_repo_id=None,
-                 ignore_paludis_versioning=False):
+                 ignore_paludis_versioning=False, allow_missing_manifests=False):
 
         """
         :param location: on disk location of the tree
@@ -126,6 +128,7 @@ class UnconfiguredTree(syncable.tree_mixin, prototype.tree):
         self.default_mirrors = default_mirrors
         self.cache = cache
         self.ignore_paludis_versioning = ignore_paludis_versioning
+        self._allow_missing_chksums = allow_missing_manifests
         self.package_class = get_plugin("format." + self.format_magic)(
             self, cache, self.eclass_cache, self.mirrors, self.default_mirrors)
         self._shared_pkg_cache = WeakValCache()

@@ -28,7 +28,7 @@ regex_filter_input() {
 	done
 	regex="^(${regex})$"
 	# use egrep if possible... tis faster.
-	l=$(type -P egrep)
+	l=$(type -p egrep)
 	if [[ -n $l ]]; then
 		# use type -p; qa_interceptors may be be active.
 		"$l" -v "${regex}"
@@ -49,14 +49,18 @@ invoke_filter_env() {
 # selectively saves  the environ- specifically removes things that have been marked to not be exported.
 # dump the environ to stdout.
 dump_environ() {
-	local x
+	local x _sort
+
+	# if possible, sort the outputting of funcs/vars; this isn't required however.
+	_sort=$(type -p 2> /dev/null)
+	[ -z "${_sort}" ] && _sort=cat
 
 	# dump funcs.
-	declare -F | cut -d ' ' -f 3- | regex_filter_input ${DONT_EXPORT_FUNCS} | sort -g | while read x; do
+	declare -F | cut -d ' ' -f 3- | regex_filter_input ${DONT_EXPORT_FUNCS} | ${_sort} | while read x; do
 		declare -f "${x}" || die "failed outputting func ${x}" >&2
 	done
 
-	declare | invoke_filter_env --print-vars | regex_filter_input ${DONT_EXPORT_VARS} | sort -g | while read x; do
+	declare | invoke_filter_env --print-vars | regex_filter_input ${DONT_EXPORT_VARS} | ${_sort} | while read x; do
 		declare -p "${x}" || die "failed outputting variable ${x}" >&2
 	done
 }

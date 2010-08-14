@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pinspect distfiles_usage was added; this is primarily useful for getting
+  a repository level view of what the distfiles requirements are, what takes
+  what percentile of unique space, etc.
+
 * FEATURES=allow-missing-manifests ; does exactly as it sounds, not advised to
   use unless you know what you're doing.
 

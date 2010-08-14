@@ -238,6 +238,19 @@ class MergeEngine(object):
         o.new = new
         return o
 
+    def replace_cset(self, name, new_cset):
+        """
+        replace the cset referenced by this engine; use only if you know what you're doing
+
+        :param name: name of the cset
+        :new_cset: a contentsSet instance to use
+        """
+        if name in self.preserved_csets:
+            # yes this is evil awareness of LazyValDict internals...
+            self.preserved_csets._vals[name] = new_cset
+        else:
+            raise KeyError("attempted to replace a non preserved cset: %s" % (name,))
+
     def regenerate_csets(self):
         """
         internal function, reset non preserverd csets.

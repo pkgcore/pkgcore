@@ -30,7 +30,7 @@ demandload(globals(),
     "pkgcore.merge:engine",
     "pkgcore.fs.livefs:scan",
     "snakeoil.data_source:local_source,data_source",
-    "pkgcore.fs.contents:offset_rewriter",
+    "pkgcore.fs.contents:offset_rewriter,contentsSet",
     "pkgcore.repository:wrapper",
     "pkgcore.package:base@pkg_base",
     "pkgcore.ebuild:ebd",
@@ -81,9 +81,11 @@ class force_unpacking(triggers.base):
             # wrap the iter, iow.
             fi = offset_rewriter(engine.offset, fi)
 
+        cset = contentsSet(fi)
+
         # we *probably* should change the csets class at some point
         # since it no longer needs to be tar, but that's for another day.
-        cset.update(fi)
+        engine.replace_cset('new_cset', cset)
 
 
 def wrap_factory(klass, *args, **kwds):

@@ -124,7 +124,14 @@ def isolate_rsync_opts(options):
     retries = options.pop('PORTAGE_RSYNC_RETRIES',
         options.pop('RSYNC_RETRIES', None))
     if retries is not None:
-        base['retries'] = retries.strip()
+        try:
+            retries = int(retries)
+            if retries < 0:
+                retries = 10000
+            base['retries'] = str(retries)
+        except ValueError:
+            pass
+
     timeout = options.pop('RSYNC_TIMEOUT', None)
     if timeout is not None:
         base['timeout'] = timeout.strip()

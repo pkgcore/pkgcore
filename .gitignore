@@ -1,0 +1,6 @@
+*.pyc
+*.pyo
+pkgcore/ebuild/*.so
+pkgcore/plugins/plugincache2
+pkgcore/restrictions/*.so
+build

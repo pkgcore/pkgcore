@@ -10,8 +10,9 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     "snakeoil.iterables:caching_iter",
     "pkgcore.config:load_config",
-    "pkgcore.ebuild:atom",
+    "pkgcore.ebuild:atom,conditionals",
     "pkgcore.package:errors",
+    "pkgcore.restrictions.boolean:AndRestriction",
     "pkgcore.util.packages:get_raw_pkg",
     "sys",
     "os",
@@ -58,6 +59,11 @@ def make_atom(a):
     a = atom.atom(a, eapi=int(os.environ.get("PORTAGEQ_LIMIT_EAPI", -1)))
     # force expansion.
     a.restrictions
+    if isinstance(a, atom.transitive_use_atom):
+        # XXX: hack
+        a = conditionals.DepSet(a.restrictions, atom.atom, True)
+        a = a.evaluate_depset(os.environ.get("PORTAGEQ_LIMIT_USE", "").split())
+        a = AndRestriction(*a.restrictions)
     return a
 
 @expose_to_commandline(1, swallow_root=True)

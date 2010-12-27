@@ -7,6 +7,9 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 * add EAPI limitation to all portageq invocations, and support USE dep
   usage with has_version and friends.
 
+* handle portage's new interpretation of the sync retries variable for portage
+  configuration.
+
 * pinspect distfiles_usage was added; this is primarily useful for getting
   a repository level view of what the distfiles requirements are, what takes
   what percentile of unique space, etc.

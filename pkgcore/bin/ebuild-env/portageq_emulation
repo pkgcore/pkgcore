@@ -10,7 +10,8 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     "snakeoil.iterables:caching_iter",
     "pkgcore.config:load_config",
-    "pkgcore.ebuild.atom:atom",
+    "pkgcore.ebuild:atom",
+    "pkgcore.package:errors",
     "pkgcore.util.packages:get_raw_pkg",
     "sys",
     "os",
@@ -54,7 +55,7 @@ def envvar(domain, *keys):
 
 def make_atom(a):
 	# use environment limitation if possible;
-    a = atom(a, eapi=int(os.environ.get("PORTAGEQ_LIMIT_EAPI", -1)))
+    a = atom.atom(a, eapi=int(os.environ.get("PORTAGEQ_LIMIT_EAPI", -1)))
     # force expansion.
     a.restrictions
     return a
@@ -172,7 +173,11 @@ def main():
         print "known domains- %r" % list(load_config().domain.iterkeys())
         sys.exit(2)
 
-    s, ret = command(domain, *a[1:])
+    try:
+        s, ret = command(domain, *a[1:])
+    except errors.PackageError, e:
+        sys.stderr.write(str(e).rstrip("\n") + "\n")
+        sys.exit(-2)
     sys.stdout.write(s)
     sys.exit(ret)
 

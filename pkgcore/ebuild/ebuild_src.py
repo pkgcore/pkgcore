@@ -38,7 +38,7 @@ _eapi_limited_atom_kls = tuple(partial(atom, eapi=x) for x in
 def generate_depset(c, key, non_package_type, s, **kwds):
     try:
         if non_package_type:
-            return conditionals.DepSet(s.data.pop(key, ""), c,
+            return conditionals.DepSet.parse(s.data.pop(key, ""), c,
                 operators={"||":boolean.OrRestriction,
                 "":boolean.AndRestriction}, **kwds)
         eapi = s.eapi
@@ -49,7 +49,7 @@ def generate_depset(c, key, non_package_type, s, **kwds):
                 "unsupported eapi")
         if eapi >= 2:
             kwds['transitive_use_atoms'] = True
-        return conditionals.DepSet(s.data.pop(key, ""), c, **kwds)
+        return conditionals.DepSet.parse(s.data.pop(key, ""), c, **kwds)
     except conditionals.ParseError, p:
         raise metadata_errors.MetadataException(s, str(key), str(p))
 
@@ -61,7 +61,7 @@ def generate_providers(self):
     #, "license":self.license})
 
     try:
-        return conditionals.DepSet(
+        return conditionals.DepSet.parse(
             self.data.pop("PROVIDE", ""), virtual_ebuild, element_func=func,
             operators={"":boolean.AndRestriction})
 
@@ -78,7 +78,7 @@ def generate_fetchables(self):
     func = partial(create_fetchable_from_uri, self, chksums,
         chksums_can_be_missing, mirrors, default_mirrors, common)
     try:
-        d = conditionals.DepSet(
+        d = conditionals.DepSet.parse(
             self.data.pop("SRC_URI", ""), fetchable, operators={},
             element_func=func,
             allow_src_uri_file_renames=(self.eapi >= 2))
@@ -184,7 +184,7 @@ class base(metadata.package):
     _get_attr["description"] = lambda s:s.data.pop("DESCRIPTION", "").strip()
     _get_attr["keywords"] = lambda s:tuple(map(intern,
         s.data.pop("KEYWORDS", "").split()))
-    _get_attr["restrict"] = lambda s:conditionals.DepSet(
+    _get_attr["restrict"] = lambda s:conditionals.DepSet.parse(
         s.data.pop("RESTRICT", ''), str, operators={},
         element_func=rewrite_restrict)
     _get_attr["eapi"] = generate_eapi

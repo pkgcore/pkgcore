@@ -40,7 +40,15 @@ class DepSet(boolean.AndRestriction):
     if parse_depset is not None:
         parse_depset = staticmethod(parse_depset)
 
-    def __init__(self, dep_str, element_class, \
+    def __init__(self, restrictions, element_class, node_conds, known_conditionals=None):
+        sf = object.__setattr__
+        sf(self, '_known_conditionals', known_conditionals)
+        sf(self, 'element_class', element_class)
+        sf(self, 'restrictions', restrictions)
+        sf(self, '_node_conds', node_conds)
+
+    @classmethod
+    def parse(cls, dep_str, element_class, \
         operators=None,
         element_func=None, transitive_use_atoms=False,
         allow_src_uri_file_renames=False):
@@ -61,15 +69,13 @@ class DepSet(boolean.AndRestriction):
             raise ValueError("element_class must be a new style class")
 
         sf = object.__setattr__
-        sf(self, "_known_conditionals", None)
-        sf(self, "element_class", element_class)
         if element_func is None:
             element_func = element_class
 
-        if self.parse_depset is not None and not (allow_src_uri_file_renames):
+        if cls.parse_depset is not None and not (allow_src_uri_file_renames):
             restrictions = None
             if operators is None:
-                has_conditionals, restrictions = self.parse_depset(dep_str,
+                has_conditionals, restrictions = cls.parse_depset(dep_str,
                     element_func, boolean.AndRestriction,
                     boolean.OrRestriction)
             else:
@@ -77,22 +83,20 @@ class DepSet(boolean.AndRestriction):
                     if x not in ("", "||"):
                         break
                 else:
-                    has_conditionals, restrictions = self.parse_depset(dep_str,
+                    has_conditionals, restrictions = cls.parse_depset(dep_str,
                         element_func, operators.get(""), operators.get("||"))
 
             if restrictions is not None:
-                sf(self, "restrictions", restrictions)
                 if not has_conditionals and transitive_use_atoms:
-                    has_conditionals = self._has_transitive_use_atoms()
-                sf(self, "_node_conds", has_conditionals)
-                return
+                    has_conditionals = cls._has_transitive_use_atoms(restrictions)
+                return cls(restrictions, element_class, has_conditionals)
 
-        sf(self, "restrictions", [])
+        restrictions = []
         if operators is None:
             operators = {"||":boolean.OrRestriction, "":boolean.AndRestriction}
 
         raw_conditionals = []
-        depsets = [self.restrictions]
+        depsets = [restrictions]
 
         node_conds = False
         words = iter(dep_str.split())
@@ -197,15 +201,15 @@ class DepSet(boolean.AndRestriction):
             kls = transitive_use_atom
             # we can't rely on iter(self) here since it doesn't
             # descend through boolean restricts.
-            node_conds = self._has_transitive_use_atoms()
+            node_conds = cls._has_transitive_use_atoms(restrictions)
 
-        sf(self, "_node_conds", node_conds)
-        sf(self, "restrictions", tuple(self.restrictions))
+        return cls(tuple(restrictions), element_class, node_conds)
 
-    def _has_transitive_use_atoms(self):
+    @staticmethod
+    def _has_transitive_use_atoms(iterable):
         kls = transitive_use_atom
         ifunc = isinstance
-        return any(ifunc(x, kls) for x in iflatten_instance(self, atom))
+        return any(ifunc(x, kls) for x in iflatten_instance(iterable, atom))
 
     def evaluate_depset(self, cond_dict, tristate_filter=None):
         """
@@ -221,7 +225,7 @@ class DepSet(boolean.AndRestriction):
         if not self.has_conditionals:
             return self
 
-        flat_deps = self.__class__("", self.element_class)
+        flat_deps = self.__class__((), self.element_class, False)
 
         stack = [boolean.AndRestriction, iter(self.restrictions)]
         base_restrict = []

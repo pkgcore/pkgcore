@@ -89,7 +89,7 @@ class FakePkg(FakePkgBase):
             repo = FakeRepo(*repo)
         FakePkgBase.__init__(self, cpv, repo=factory(repo))
         object.__setattr__(self, "slot", str(slot))
-        object.__setattr__(self, "restrict", DepSet(restrict, str))
+        object.__setattr__(self, "restrict", DepSet.parse(restrict, str))
         object.__setattr__(self, "use", set(use))
         object.__setattr__(self, "iuse", set(iuse))
 

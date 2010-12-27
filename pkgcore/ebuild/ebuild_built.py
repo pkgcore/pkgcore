@@ -52,7 +52,7 @@ def pkg_uses_default_preinst(pkg):
 def wrap_inst(self, wrap, inst):
     return wrap(inst(self), self.use)
 
-_empty_fetchable = conditionals.DepSet('', ebuild_src.fetchable,
+_empty_fetchable = conditionals.DepSet.parse('', ebuild_src.fetchable,
     operators={})
 
 class package(ebuild_src.base):

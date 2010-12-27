@@ -24,7 +24,7 @@ class base(TestCase):
             kwds["element_func"] = element_func
         if operators is None:
             operators = {"":boolean.AndRestriction, "||":boolean.OrRestriction}
-        return self.kls(string, element_kls, operators=operators, **kwds)
+        return self.kls.parse(string, element_kls, operators=operators, **kwds)
 
 
 class native_DepSetParsingTest(base):

@@ -45,21 +45,6 @@ def convert_glob(token):
             "'*'- ** is disallowed however")
     pattern = "^%s$" % (re.escape(token).replace("\*", ".*"),)
     return values.StrRegex(pattern, match=True)
-    if '*' in token[1:-1]:
-        raise ParseError(
-            "'*' must be specified at the end or beginning of a matching field")
-    l = len(token)
-    if token.startswith("*") and l > 1:
-        if token.endswith("*"):
-            if l == 2:
-                return None
-            return values.ContainmentMatch(token.strip("*"))
-        return values.StrGlobMatch(token.strip("*"), prefix=False)
-    elif token.endswith("*") and l > 1:
-        return values.StrGlobMatch(token.strip("*"), prefix=True)
-    elif l <= 1:
-        return None
-    return values.StrExactMatch(token)
 
 def collect_ops(text):
     i = 0

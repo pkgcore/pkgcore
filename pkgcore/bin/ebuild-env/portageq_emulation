@@ -53,7 +53,8 @@ def envvar(domain, *keys):
         for x in keys), 0]
 
 def make_atom(a):
-    a = atom(a)
+	# use environment limitation if possible;
+    a = atom(a, eapi=int(os.environ.get("PORTAGEQ_LIMIT_EAPI", -1)))
     # force expansion.
     a.restrictions
     return a

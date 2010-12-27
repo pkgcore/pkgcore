@@ -7,7 +7,7 @@ portageq() {
 	if [[ $EBUILD_PHASE == depend ]]; then
 		die "portageq calls in depends phase is disallowed"
 	fi
-	PYTHONPATH="$PKGCORE_PYTHONPATH" \
+	PYTHONPATH="$PKGCORE_PYTHONPATH" PORTAGEQ_LIMIT_EAPI="${EAPI:--1}" \
 		"${PKGCORE_PYTHON_BINARY}" "${PKGCORE_BIN_PATH}/portageq_emulation" \
 		--domain "${PKGCORE_DOMAIN}" "$@"
 }

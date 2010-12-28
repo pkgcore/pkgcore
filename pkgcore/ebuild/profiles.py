@@ -359,6 +359,7 @@ class OnDiskProfile(object):
             for key, val in mapping.iteritems():
                 if key == atrue:
                     continue
+                # process negations first
                 for u in val[0]:
                     # is it even on?  if not, don't level it.
                     if u in global_on:
@@ -369,6 +370,7 @@ class OnDiskProfile(object):
                             # chuck the previous override.
                             s.discard(key)
 
+                # ...and now enabling
                 for u in val[1]:
                     # if it's on already, no need to set it.
                     if u not in global_on:

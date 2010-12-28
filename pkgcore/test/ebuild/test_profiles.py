@@ -258,12 +258,17 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
         for x in os.listdir(self.dir):
             shutil.rmtree(pjoin(self.dir, x))
         for idx, vals in enumerate(profiles):
-            path = pjoin(self.dir, "base%i" % idx)
+            path = pjoin(self.dir, "base%s" % vals.pop("name", idx))
             ensure_dirs(path)
+            parent = vals.pop("parent", None)
             for fname, data in vals.iteritems():
                 open(pjoin(path, fname), "w").write(data)
-            if idx:
-                open(pjoin(path, "parent"), "w").write("../base%i" % (idx -1))
+
+            if idx and not parent:
+                parent = idx - 1
+
+            if parent is not None:
+                open(pjoin(path, "parent"), "w").write("../base%s" % (parent,))
         if kwds:
             for key, val in kwds.iteritems():
                 open(pjoin(self.dir, key), "w").write(val)
@@ -448,7 +453,6 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             f2({'dev-util/bsdiff':['mmx']}))
         self.assertEqual(f(self.get_profile("base3").pkg_use),
             f2({'dev-util/diffball':['X']}))
-
 
     def test_default_env(self):
         self.mk_profiles({})

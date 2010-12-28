@@ -50,6 +50,9 @@ def load_decorator(filename, handler=iter_read_bash, fallback=(),
                 return func(self, handler(data), *args)
             except (KeyboardInterrupt, RuntimeError, SystemExit):
                 raise
+            except ProfileError:
+                # no point in wrapping/throwing..
+                raise
             except Exception, e:
                 raise ProfileError(self.path, filename, e)
         return f2

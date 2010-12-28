@@ -26,6 +26,7 @@ demandload(globals(),
     'pkgcore.ebuild:atom',
     'pkgcore.repository:util',
     'pkgcore.restrictions:packages',
+    'snakeoil.mappings:defaultdict',
 )
 
 class ProfileError(Exception):
@@ -335,8 +336,8 @@ class OnDiskProfile(object):
         stack = [getattr(x, attr) for x in self.stack]
 
         global_on = set()
-        puse_on = {}
-        puse_off = {}
+        puse_on = defaultdict(set)
+        puse_off = defaultdict(set)
         atrue = packages.AlwaysTrue
         for mapping in stack:
             # process globals (use.(mask|force) first)
@@ -361,10 +362,7 @@ class OnDiskProfile(object):
                 for u in val[0]:
                     # is it even on?  if not, don't level it.
                     if u in global_on:
-                        if u not in puse_off:
-                            puse_off[u] = set([key])
-                        else:
-                            puse_off[u].add(key)
+                        puse_off[u].add(key)
                     else:
                         s = puse_on.get(u)
                         if s is not None:
@@ -374,17 +372,14 @@ class OnDiskProfile(object):
                 for u in val[1]:
                     # if it's on already, no need to set it.
                     if u not in global_on:
-                        if u not in puse_on:
-                            puse_on[u] = set([key])
-                        else:
-                            puse_on[u].add(key)
+                        puse_on[u].add(key)
                     else:
                         s = puse_off.get(u)
                         if s is not None:
                             s.discard(key)
 
         # now we recompose it into a global on, and a stream of global trins.
-        d = {}
+        d = defaultdict(set)
         if global_on:
             d[atrue] = set(global_on)
         # reverse the mapping.
@@ -392,11 +387,7 @@ class OnDiskProfile(object):
             (("-"+k, v) for k,v in puse_off.iteritems())):
             for use, key_set in data:
                 for key in key_set:
-                    s = d.get(key)
-                    if s is None:
-                        d[key] = set([use])
-                    else:
-                        s.add(use)
+                    d[key].add(use)
         for k, v in d.iteritems():
             d[k] = tuple(v)
         return d

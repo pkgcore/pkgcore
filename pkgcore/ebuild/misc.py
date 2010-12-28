@@ -15,6 +15,22 @@ from pkgcore.ebuild.atom import atom
 
 from snakeoil.lists import iflatten_instance
 from snakeoil.klass import generic_equality
+from snakeoil.sequences import namedtuple
+
+from itertools import chain
+
+from snakeoil.currying import partial
+from snakeoil.demandload import demandload
+
+demandload(globals(),
+    'pkgcore.ebuild.atom:atom',
+    'pkgcore.restrictions:packages',
+    'snakeoil.mappings:defaultdict,ImmutableDict',
+)
+
+
+restrict_payload = namedtuple("restrict_data", ["restrict", "data"])
+chunked_data = namedtuple("chunked_data", ("key", "neg", "pos"))
 
 
 def optimize_incrementals(sequence):
@@ -225,3 +241,177 @@ class non_incremental_collapsed_restrict_to_data(collapsed_restrict_to_data):
         if len(l) == 1:
             return iter(self.defaults)
         return iflatten_instance(l)
+
+
+def _build_cp_atom_payload(sequence, restrict, payload_form=False, initial_on=None):
+
+    atrue = packages.AlwaysTrue
+
+    locked = {}
+    ldefault = locked.setdefault
+
+    l = []
+
+    if payload_form:
+        def f(r, neg, pos):
+            return restrict_payload(r,
+                tuple(chain(('-' + x for x in neg), pos)))
+    else:
+        f = chunked_data
+
+    i = reversed(sequence)
+
+    if initial_on:
+        i = chain(chunked_data(atrue, (), initial_on), i)
+
+    for data in i:
+        if data.key == atrue or data.key.is_simple:
+            for n in data.neg:
+                ldefault(n, False)
+            for p in data.pos:
+                ldefault(p, True)
+            continue
+        neg = tuple(x for x in data.neg if x not in locked)
+        pos = tuple(x for x in data.pos if x not in locked)
+        if neg or pos:
+            l.append((data.key, neg, pos))
+
+    # thus far we've done essentially a tracing for R->L, of globals,
+    # this leaves d-u/a X, =d-u/a-1 X # slipping through however,
+    # since the specific is later.  Plus it's reversed from what we want.
+    # so we rebuild, but apply the same global trick as we go.
+
+    if not locked:
+        # all is specific/non-simple, just reverse and return
+        return tuple(f(*vals) for vals in reversed(l))
+
+    new_l = [f(restrict,
+        tuple(k for k,v in locked.iteritems() if not v), #neg
+        tuple(k for k,v in locked.iteritems() if v) #pos
+        )]
+    # we exploit a few things this time around in reusing the algo from above
+    # we know there is only going to be one global (which we just added),
+    # and that everything is specific.
+
+    lget = locked.get
+
+    for key, neg, pos in reversed(l):
+        # only grab the deltas; if a + becomes a specific -
+        neg = tuple(x for x in neg if lget(x, True))
+        pos = tuple(x for x in pos if not lget(x, False))
+        if neg or pos:
+            new_l.append(f(key, neg, pos))
+
+    return tuple(new_l)
+
+
+class ChunkedDataDict(object):
+
+    def __init__(self, initial_mapping=None, freeze=False):
+        self._global_settings = []
+        self._dict = defaultdict(partial(list, self._global_settings))
+        if initial_mapping:
+            self.update_from_mapping(initial_mapping)
+        if freeze:
+            self.freeze()
+
+    def update_from_mapping(self, mapping):
+        atrue = packages.AlwaysTrue
+        global_settings = mapping.get(atrue)
+        if global_settings:
+            for val in global_settings:
+                self._add_global_item(val)
+        for key, vals in mapping.iteritems():
+            if key == atrue:
+                continue
+            self.add_specific_direct(key, *vals)
+
+    def mk_item(self, key, neg, pos):
+        return chunked_data(key, tuple(neg), tuple(pos))
+
+    def _add_global_item(self, item):
+        return self.add_global(item.neg, item.pos, restrict=item.key)
+
+    def add_global(self, disabled, enabled, restrict=None):
+        if not disabled and not enabled:
+            return
+        global_settings = self._global_settings
+        # discard current global in the mapping.
+        disabled = set(disabled)
+        enabled = set(enabled)
+        if restrict is None:
+            restrict = packages.AlwaysTrue
+        payload = self.mk_item(restrict, tuple(disabled), tuple(enabled))
+        for vals in self._dict.itervalues():
+            vals.append(payload)
+
+        self._global_settings.append(payload)
+
+
+    def add_specific_chunk(self, atom_inst, disabled, enabled):
+        self._dict[atom_inst].append(self.mk_item(atom_inst, disabled, enabled))
+
+    def add_specific_direct(self, key, *chunks):
+        self._dict[key].extend(chunks)
+
+    def freeze(self):
+        if not isinstance(self._dict, ImmutableDict):
+            self._dict = ImmutableDict((k, tuple(v))
+                for k,v in self._dict.iteritems())
+            self._global_settings = tuple(self._global_settings)
+
+    def optimize(self):
+        d = dict((atom(k), _build_cp_atom_payload(v, atom(k), False))
+            for k,v in self._dict.iteritems())
+        if isinstance(self._dict, ImmutableDict):
+            d = ImmutableDict(d)
+        if self._global_settings:
+            self._global_settings[:] = list(_build_cp_atom_payload(self._global_settings,
+                packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
+        self._dict = d
+
+    def render_to_payload(self):
+        d = PayloadDict()
+        d = dict((atom(k), _build_cp_atom_payload(v, atom(k), True))
+            for k,v in self._dict.iteritems())
+        if self._global_settings:
+            data = _build_cp_atom_payload(self._global_settings,
+                packages.AlwaysTrue, payload_form=True)
+            d[packages.AlwaysTrue] = tuple(data)
+        return d
+
+
+class PayloadDict(ChunkedDataDict):
+
+    def mk_item(self, key, neg, pos):
+        return restrict_payload(key,
+            tuple(chain(("-" + x for x in neg), pos)))
+
+    def add_global(self, payload, restrict=None):
+        neg = [x[1:] for x in payload if x[0] == '-']
+        pos = [x for x in payload if x[0] != '-']
+        ChunkedDataDict.add_global(self, neg, pos, restrict=restrict)
+
+    def _add_global_item(self, item):
+        return self.add_global(item.data, restrict=item.restrict)
+
+    def update_from_stream(self, stream):
+        if isinstance(stream, PayloadDict):
+            stream = chain(stream._global_settings, stream._dict.itervalues())
+        for item in stream:
+            if hasattr(item.restrict, 'key'):
+               self.add_specific_direct(item.restrict, item)
+            else:
+               self.add_global(item.data, restrict=item.restrict)
+
+    def render_pkg(self, pkg, pre_defaults=()):
+        items = self._dict.get(atom(pkg.key))
+        if items is None:
+            items = self._global_settings
+        s = set(pre_defaults)
+        incremental_expansion(s,
+            chain.from_iterable(item.data for item in items
+                if item.restrict.match(pkg)))
+        return s
+
+    pull_data = render_pkg

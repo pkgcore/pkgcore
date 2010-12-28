@@ -9,7 +9,8 @@ from itertools import chain
 
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const, ebuild_src
-from pkgcore.ebuild.misc import incremental_expansion
+from pkgcore.ebuild.misc import (incremental_expansion, restrict_payload,
+    _build_cp_atom_payload, chunked_data, ChunkedDataDict)
 from pkgcore.repository import virtual
 
 from snakeoil.osutils import abspath, join as pjoin, readlines_utf8
@@ -28,6 +29,7 @@ demandload(globals(),
     'pkgcore.restrictions:packages',
     'snakeoil.mappings:defaultdict',
 )
+
 
 class ProfileError(Exception):
 
@@ -154,45 +156,36 @@ class ProfileNode(object):
         d = self._load_pkg_use_mask()
         neg, pos = split_negations(data)
         if neg or pos:
-            d[packages.AlwaysTrue] = (neg, pos)
+            d[packages.AlwaysTrue] = (chunked_data(packages.AlwaysTrue, neg, pos),)
         self.masked_use = d
         return d
 
-    @load_decorator("package.use.mask")
-    def _load_pkg_use_mask(self, data):
-        d = defaultdict(lambda :([], []))
-        for line in data:
-            l = line.split()
-            a = self.eapi_atom(l[0])
-            neg, pos = d[a]
-            if len(l) == 1:
-                raise Exception("malformed line- no data: %r" % (line,))
-            for x in l[1:]:
-                if x[0] == '-':
-                    neg.append(x[1:])
-                else:
-                    pos.append(x)
-
-        d = dict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
-        self.pkg_use_mask = d
-        return d
-
-    @load_decorator("package.use")
-    def _load_pkg_use(self, data):
-        d = defaultdict(lambda :([], []))
+    def _parse_package_use(self, data):
+        d = defaultdict(list)
+        # split the data down ordered cat/pkg lines
         for line in data:
             l = line.split()
             a = self.eapi_atom(l[0])
             if len(l) == 1:
                 raise Exception("malformed line- %r" % (line,))
-            neg, pos = d[a]
-            for x in l[1:]:
-                if x[0] == '-':
-                    neg.append(x[1:])
-                else:
-                    pos.append(x)
-        d = dict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
-        self.pkg_use = d
+            d[a.key].append(chunked_data(a,
+                *split_negations(l[1:])))
+
+        return dict((k, _build_cp_atom_payload(v, atom.atom(k))) for k,v in d.iteritems())
+
+    @load_decorator("package.use")
+    def _load_pkg_use(self, data):
+        self.pkg_use = d = self._parse_package_use(data)
+        return d
+
+    @load_decorator("package.use.force")
+    def _load_pkg_use_force(self, data):
+        self.pkg_use_force = d = self._parse_package_use(data)
+        return d
+
+    @load_decorator("package.use.mask")
+    def _load_pkg_use_mask(self, data):
+        self.pkg_use_mask = d = self._parse_package_use(data)
         return d
 
     @load_decorator("use.force")
@@ -200,27 +193,8 @@ class ProfileNode(object):
         d = self._load_pkg_use_force()
         neg, pos = split_negations(data)
         if neg or pos:
-            d[packages.AlwaysTrue] = (neg, pos)
+            d[packages.AlwaysTrue] = (chunked_data(packages.AlwaysTrue, neg, pos),)
         self.forced_use = d
-        return d
-
-    @load_decorator("package.use.force")
-    def _load_pkg_use_force(self, data):
-        d = defaultdict(lambda :([], []))
-        for line in data:
-            l = line.split()
-            a = self.eapi_atom(l[0])
-            neg, pos = d[a]
-            if len(l) == 1:
-                raise Exception("malformed line- %r" % (line,))
-            for x in l[1:]:
-                if x[0] == '-':
-                    neg.append(x[1:])
-                else:
-                    pos.append(x)
-
-        d = dict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
-        self.pkg_use_force = d
         return d
 
     def _load_default_env(self):
@@ -345,65 +319,68 @@ class OnDiskProfile(object):
 
         stack = [getattr(x, attr) for x in self.stack]
 
-        global_on = set()
-        puse_on = defaultdict(set)
-        puse_off = defaultdict(set)
+        d = ChunkedDataDict()
+        for mapping in stack:
+            d.update_from_mapping(mapping)
+
+        return d.render_to_payload()
+
+        # first, collapse all chunked data down.
 
         atrue = packages.AlwaysTrue
+
+        # roughly, the algorithm below works to collapse multiple dicts down,
+        # everytime it encounters a new layer of globals, distribute it across all that's there,
+        # so that we get proper stack.
+        # note that the partial/defaultdict usage means new keys start at whatever the current
+        # global state is.  It's not obvious, but it works, and is the simplest approach.
+        # finally, note that d[atrue], if you follow the algo, gets doubled up on.
+        # thus we reset it to the last global_start once we've finished merging.
+
+        globals_start = []
+        
+        rebuild = defaultdict(partial(list, globals_start))
+
         for mapping in stack:
-            # process globals (use.(mask|force) first)
+            # first, pre-seed the globals this layer, then just extend.
             val = mapping.get(atrue)
             if val is not None:
-                # global wipes everything affecting the flag thus far.
-                global_on.difference_update(val[0])
-                for u in val[0]:
-                    puse_on.pop(u, None)
-                    puse_off.pop(u, None)
+                # found a new global setting; level it across all current
+                # settings.
+                for target in rebuild.itervalues():
+                    # note, for speed we're not filtering AlwaysTrue-
+                    # thus it's going to double up here.
+                    target.extend(val)
 
-                # this *is* right; if it's global, it stomps everything prior.
-                global_on.update(val[1])
-                for u in val[1]:
-                    puse_on.pop(u, None)
-                    puse_off.pop(u, None)
+                # we've now updated all existing settings with the new global settings,
+                # now we extend the global starting point for merging this round.
+                globals_start.extend(val)
 
-            # process less specific...
+            # merge the two; items only in the right automatically
+            # start from the global start.
             for key, val in mapping.iteritems():
-                if key == atrue:
-                    continue
-                # process negations first
-                for u in val[0]:
-                    # is it even on?  if not, don't level it.
-                    if u in global_on:
-                        puse_off[u].add(key)
-                    else:
-                        s = puse_on.get(u)
-                        if s is not None:
-                            # chuck the previous override.
-                            s.discard(key)
+                rebuild[key].extend(val)
 
-                # ...and now enabling
-                for u in val[1]:
-                    # if it's on already, no need to set it.
-                    if u not in global_on:
-                        puse_on[u].add(key)
-                    else:
-                        s = puse_off.get(u)
-                        if s is not None:
-                            s.discard(key)
 
-        # now we recompose it into a global on, and a stream of global trins.
-        d = defaultdict(set)
-        if global_on:
-            d[atrue] = set(global_on)
-        # reverse the mapping.
-        for data in (puse_on.iteritems(),
-            (("-"+k, v) for k,v in puse_off.iteritems())):
-            for use, key_set in data:
-                for key in key_set:
-                    d[key].add(use)
-        for k, v in d.iteritems():
-            d[k] = tuple(v)
-        return d
+        # finally, we pull atrue out; we rebuild it manually, and since it's
+        # values are doubled up.
+
+        rebuild.pop(atrue, None)
+
+        # rebuild, with optimizing cleanup.
+        d2 = dict((atom.atom(k), _build_cp_atom_payload(v, atom.atom(k), True)) for k,v in rebuild.iteritems())
+
+        # finally, reinject atrue/globals if it's set.
+        if globals_start:
+            global_off, global_on = set(), set()
+            for data in globals_start:
+                global_off.update(data.neg)
+                global_on.update(data.pos)
+                global_off.difference_update(data.pos)
+                global_on.difference_update(data.neg)
+            global_off = ("-" + u for u in global_off)
+            d2[atrue] = (restrict_payload(atrue, tuple(chain(global_off, global_on))),)
+        return d2
 
     def _collapse_generic(self, attr):
         s = set()

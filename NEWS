@@ -4,6 +4,12 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkgcore now properly preserves ordering when parsing profile files, so a
+  package.use.mask with:
+  """dev-util/foo X
+  =dev-util/foo-1 -X"""
+  properly results in X disabled, except for v1.
+
 * add EAPI limitation to all portageq invocations, and support USE dep
   usage with has_version and friends.
 

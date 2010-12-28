@@ -13,36 +13,6 @@ from stat import ST_MODE
 
 from snakeoil import distutils_extensions as snk_distutils
 
-
-def write_bzr_verinfo(destination):
-    log.info('generating bzr_verinfo')
-    f = open(destination, 'w')
-    try:
-        if subprocess.call(['bzr', 'version-info', '--format=python'],
-                           stdout=f):
-            raise errors.DistutilsExecError('bzr version-info failed')
-        # HACK: insert the current tag, if possible.
-        try:
-            from bzrlib import branch, errors as ebzr
-        except ImportError:
-            log.warn('cannot import bzrlib trying to determine tag')
-            return
-
-        try:
-            b = branch.Branch.open_containing(__file__)[0]
-        except ebzr.NotBranchError:
-            log.warn('not a branch (%s) trying to determine tag' % (__file__,))
-            return
-
-        if b.supports_tags():
-            tags = b.tags.get_reverse_tag_dict().get(b.last_revision())
-            if tags:
-                f.write("version_info['tags'] = %r\n" % (tags,))
-
-    finally:
-        f.close()
-
-
 class mysdist(snk_distutils.sdist):
 
     """sdist command specifying the right files and generating ChangeLog."""
@@ -53,6 +23,7 @@ class mysdist(snk_distutils.sdist):
         ]
 
     boolean_options = snk_distutils.sdist.boolean_options + ['build-docs']
+    package_namespace = 'pkgcore'
 
     negative_opt = snk_distutils.sdist.negative_opt.copy()
     negative_opt.update({'no-build-docs':'build-docs'})
@@ -84,9 +55,6 @@ class mysdist(snk_distutils.sdist):
                 env={"PYTHONPATH":":".join(my_path)}):
                 raise errors.DistutilsExecError("build_docs failed")
         self.cleanup_post_release_tree(base_dir)
-
-    def generate_bzr_verinfo(self, base_dir):
-        write_bzr_verinfo(os.path.join(base_dir, 'pkgcore', 'bzr_verinfo.py'))
 
 
 class pkgcore_build_scripts(build_scripts.build_scripts):

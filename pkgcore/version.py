@@ -1,8 +1,8 @@
-# Copyright: 2006 Marien Zwart <marienz@gentoo.org>
+# Copyright: 2010 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
 
-"""Version information (tied to bzr)."""
+"""Version information (tied to git)."""
 
 __all__ = ("get_version",)
 

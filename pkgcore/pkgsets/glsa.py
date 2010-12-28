@@ -5,7 +5,7 @@
 Gentoo Linux Security Advisories (GLSA) support
 """
 
-__all__ = ("KeyedAndRestriction", "GlsaDirSet", "SecurityUpgrades")
+__all__ = ("GlsaDirSet", "SecurityUpgrades")
 
 import os
 
@@ -23,23 +23,6 @@ demandload(globals(),
     'pkgcore.util.repo_utils:get_virtual_repos',
     'snakeoil.xml:etree',
 )
-
-
-class KeyedAndRestriction(boolean.AndRestriction):
-
-    type = packages.package_type
-
-    def __init__(self, *a, **kwds):
-        key = kwds.pop("key", None)
-        tag = kwds.pop("tag", None)
-        boolean.AndRestriction.__init__(self, *a, **kwds)
-        object.__setattr__(self, "key", key)
-        object.__setattr__(self, "tag", tag)
-
-    def __str__(self):
-        if self.tag is None:
-            return boolean.AndRestriction.__str__(self)
-        return "%s %s" % (self.tag, boolean.AndRestriction.__str__(self))
 
 
 class GlsaDirSet(object):
@@ -74,7 +57,7 @@ class GlsaDirSet(object):
 
     def __iter__(self):
         for glsa, catpkg, pkgatom, vuln in self.iter_vulnerabilities():
-            yield KeyedAndRestriction(pkgatom, vuln, key=catpkg,
+            yield packages.KeyedAndRestriction(pkgatom, vuln, key=catpkg,
                                       tag="GLSA vulnerable:")
 
     def pkg_grouped_iter(self, sorter=None):
@@ -93,7 +76,7 @@ class GlsaDirSet(object):
             pkgs.setdefault(pkg, []).append(vuln)
 
         for pkgname in sorter(pkgs):
-            yield KeyedAndRestriction(pkgatoms[pkgname],
+            yield packages.KeyedAndRestriction(pkgatoms[pkgname],
                                       packages.OrRestriction(*pkgs[pkgname]),
                                       key=pkgname)
 
@@ -156,15 +139,15 @@ class GlsaDirSet(object):
         invuln = (pkg_node.findall("unaffected"))
         if not invuln:
             # wrap it.
-            return KeyedAndRestriction(vuln, tag=tag)
+            return packages.KeyedAndRestriction(vuln, tag=tag)
         invuln_list = [self.generate_restrict_from_range(x, negate=True)
                        for x in invuln]
         invuln = [x for x in invuln_list if x not in vuln_list]
         if not invuln:
             if tag is None:
-                return KeyedAndRestriction(vuln, tag=tag)
-            return KeyedAndRestriction(vuln, tag=tag)
-        return KeyedAndRestriction(vuln, tag=tag, *invuln)
+                return packages.KeyedAndRestriction(vuln, tag=tag)
+            return packages.KeyedAndRestriction(vuln, tag=tag)
+        return packages.KeyedAndRestriction(vuln, tag=tag, *invuln)
 
     def generate_restrict_from_range(self, node, negate=False):
         op = str(node.get("range").strip())
@@ -250,5 +233,5 @@ class SecurityUpgrades(object):
         for glsa, matches in find_vulnerable_repo_pkgs(self.glsa_src, self.vdb,
                                                        grouped=True,
                                                        arch=self.arch):
-            yield KeyedAndRestriction(glsa[0], restriction.Negate(glsa[1]))
+            yield packages.KeyedAndRestriction(glsa[0], restriction.Negate(glsa[1]))
 

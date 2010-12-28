@@ -13,7 +13,6 @@ from pkgcore.util import commandline, parserestrict, repo_utils
 from pkgcore.ebuild import resolver
 from pkgcore.repository import multiplex
 from pkgcore.operations import observer, format
-from pkgcore.pkgsets.glsa import KeyedAndRestriction
 from pkgcore.ebuild.atom import atom
 from pkgcore.merge import errors as merge_errors
 from pkgcore.restrictions import packages, values
@@ -183,7 +182,7 @@ def parse_atom(token, repo, return_none=False):
     if isinstance(restriction, atom):
         # atom is guranteed to be fine, since it's cat/pkg
         return restriction
-    return KeyedAndRestriction(restriction, key=key_matches.pop())
+    return packages.KeyedAndRestriction(restriction, key=key_matches.pop())
 
 
 class Failure(ValueError):

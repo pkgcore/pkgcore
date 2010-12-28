@@ -256,5 +256,21 @@ OrRestriction = restriction.curry_node_type(boolean.OrRestriction,
 AlwaysBool = restriction.curry_node_type(restriction.AlwaysBool,
                                          restriction.package_type)
 
+class KeyedAndRestriction(boolean.AndRestriction):
+
+    type = package_type
+
+    def __init__(self, *a, **kwds):
+        key = kwds.pop("key", None)
+        tag = kwds.pop("tag", None)
+        boolean.AndRestriction.__init__(self, *a, **kwds)
+        object.__setattr__(self, "key", key)
+        object.__setattr__(self, "tag", tag)
+
+    def __str__(self):
+        if self.tag is None:
+            return boolean.AndRestriction.__str__(self)
+        return "%s %s" % (self.tag, boolean.AndRestriction.__str__(self))
+
 AlwaysTrue = AlwaysBool(negate=True)
 AlwaysFalse = AlwaysBool(negate=False)

@@ -13,7 +13,6 @@ from pkgcore.resolver import plan
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.restrictions:packages,values',
-    'pkgcore.pkgsets.glsa:KeyedAndRestriction',
 )
 
 def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False,
@@ -126,7 +125,7 @@ def generate_replace_resolver_kls(resolver_kls):
         _vdb_restriction = _vdb_restrict
 
         def add_atoms(self, restricts, **kwds):
-            restricts = [KeyedAndRestriction(self._vdb_restriction, x, key=x.key)
+            restricts = [packages.KeyedAndRestriction(self._vdb_restriction, x, key=x.key)
                 for x in restricts]
             return self.overriding_resolver_kls.add_atoms(self, restricts, **kwds)
 

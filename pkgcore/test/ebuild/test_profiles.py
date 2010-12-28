@@ -164,6 +164,10 @@ class TestProfileNode(profile_mixin, TestCase):
             bad_data='=de/bs-1:1 x\nda/bs y',
             good_data='=de/bs-1 x\nda/bs y')
 
+        self.write_file("package.use.mask", "dev-util/diffball")
+        self.assertRaises(profiles.ProfileError, getattr,
+            ProfileNode(path), 'masked_use')
+
     def test_forced_use(self):
         path = pjoin(self.dir, self.profile)
         self.assertEqual(ProfileNode(path).forced_use, {})
@@ -199,6 +203,10 @@ class TestProfileNode(profile_mixin, TestCase):
             bad_data='=de/bs-1:1 x\nda/bs y',
             good_data='=de/bs-1 x\nda/bs y')
 
+        self.write_file("package.use.force", "dev-util/diffball")
+        self.assertRaises(profiles.ProfileError, getattr,
+            ProfileNode(path), 'forced_use')
+
     def test_pkg_use(self):
         path = pjoin(self.dir, self.profile)
         self.assertEqual(ProfileNode(path).pkg_use, {})
@@ -216,6 +224,10 @@ class TestProfileNode(profile_mixin, TestCase):
         self.simple_eapi_awareness_check('package.use', 'pkg_use',
             bad_data='=de/bs-1:1 x\nda/bs y',
             good_data='=de/bs-1 x\nda/bs y')
+
+        self.write_file("package.use", "dev-util/diffball")
+        self.assertRaises(profiles.ProfileError, getattr,
+            ProfileNode(path), 'pkg_use')
 
     def test_parents(self):
         path = pjoin(self.dir, self.profile)

@@ -26,7 +26,7 @@ demandload(globals(),
     'pkgcore.ebuild:atom',
     'pkgcore.repository:util',
     'pkgcore.restrictions:packages',
-    'snakeoil.mappings:defaultdict',
+    'snakeoil.mappings:defaultdict,OrderdDict',
 )
 
 class ProfileError(Exception):
@@ -99,7 +99,6 @@ class ProfileNode(object):
                     sys.append(self.eapi_atom(line[1:]))
                 else:
                     vis.append(self.eapi_atom(line, negate_vers=True))
-
         self.system = (tuple(neg_sys), tuple(sys))
         self.visibility = (tuple(neg_vis), tuple(vis))
 
@@ -159,10 +158,12 @@ class ProfileNode(object):
     def _load_pkg_use_mask(self, data):
         d = {}
         for line in data:
-            i = iter(line.split())
-            a = self.eapi_atom(i.next())
+            l = line.split()
+            a = self.eapi_atom(l[0])
             neg, pos = d.setdefault(a, ([], []))
-            for x in i:
+            if len(l) == 1:
+                raise Exception("malformed line- no data: %r" % (line,))
+            for x in l[1:]:
                 if x[0] == '-':
                     neg.append(x[1:])
                 else:
@@ -176,10 +177,12 @@ class ProfileNode(object):
     def _load_pkg_use(self, data):
         d = {}
         for line in data:
-            i = iter(line.split())
-            a = self.eapi_atom(i.next())
+            l = line.split()
+            a = self.eapi_atom(l[0])
+            if len(l) == 1:
+                raise Exception("malformed line- %r" % (line,))
             neg, pos = d.setdefault(a, ([], []))
-            for x in i:
+            for x in l[1:]:
                 if x[0] == '-':
                     neg.append(x[1:])
                 else:
@@ -202,10 +205,12 @@ class ProfileNode(object):
     def _load_pkg_use_force(self, data):
         d = {}
         for line in data:
-            i = iter(line.split())
-            a = self.eapi_atom(i.next())
+            l = line.split()
+            a = self.eapi_atom(l[0])
             neg, pos = d.setdefault(a, ([], []))
-            for x in i:
+            if len(l) == 1:
+                raise Exception("malformed line- %r" % (line,))
+            for x in l[1:]:
                 if x[0] == '-':
                     neg.append(x[1:])
                 else:

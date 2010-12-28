@@ -258,7 +258,7 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
         for x in os.listdir(self.dir):
             shutil.rmtree(pjoin(self.dir, x))
         for idx, vals in enumerate(profiles):
-            path = pjoin(self.dir, "base%s" % vals.pop("name", idx))
+            path = pjoin(self.dir, str(vals.pop("name", idx)))
             ensure_dirs(path)
             parent = vals.pop("parent", None)
             for fname, data in vals.iteritems():
@@ -268,7 +268,7 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
                 parent = idx - 1
 
             if parent is not None:
-                open(pjoin(path, "parent"), "w").write("../base%s" % (parent,))
+                open(pjoin(path, "parent"), "w").write("../%s" % (parent,))
         if kwds:
             for key, val in kwds.iteritems():
                 open(pjoin(self.dir, key), "w").write(val)
@@ -281,9 +281,9 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             {},
             {}
         )
-        base = self.get_profile("base0")
+        base = self.get_profile("0")
         self.assertEqual([x.path for x in base.stack],
-            [self.dir, pjoin(self.dir, "base0")])
+            [self.dir, pjoin(self.dir, "0")])
         self.assertEqual(len(base.system), 0)
         self.assertEqual(len(base.masks), 0)
         self.assertEqual(base.virtuals, {})
@@ -297,12 +297,12 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             {"packages":"*dev-util/diffball\ndev-util/foo\ndev-util/foo2\n"},
             {"packages":"*dev-util/foo\n-*dev-util/diffball\n-dev-util/foo2\n"}
         )
-        p = self.get_profile("base0")
+        p = self.get_profile("0")
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/diffball")]))
         self.assertEqual(sorted(p.masks),
             sorted(atom("dev-util/foo%s" % x, negate_vers=True) for x in ['', '2']))
 
-        p = self.get_profile("base1")
+        p = self.get_profile("1")
         self.assertEqual(sorted(p.system), sorted([atom("dev-util/foo")]))
         self.assertEqual(sorted(p.masks),
             [atom("dev-util/foo", negate_vers=True)])
@@ -314,11 +314,11 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             {"package.mask":"-dev-util/confcache\ndev-util/foo"},
             **{"package.mask":"dev-util/confcache"}
         )
-        self.assertEqual(sorted(self.get_profile("base0").masks),
+        self.assertEqual(sorted(self.get_profile("0").masks),
             sorted(atom("dev-util/" + x) for x in ["confcache", "foo"]))
-        self.assertEqual(sorted(self.get_profile("base1").masks),
+        self.assertEqual(sorted(self.get_profile("1").masks),
             sorted(atom("dev-util/" + x) for x in ["confcache", "foo"]))
-        self.assertEqual(sorted(self.get_profile("base2").masks),
+        self.assertEqual(sorted(self.get_profile("2").masks),
             [atom("dev-util/foo")])
 
     def test_bashrc(self):
@@ -327,9 +327,9 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             {},
             {"profile.bashrc":""}
         )
-        self.assertEqual(len(self.get_profile("base0").bashrc), 1)
-        self.assertEqual(len(self.get_profile("base1").bashrc), 1)
-        self.assertEqual(len(self.get_profile("base2").bashrc), 2)
+        self.assertEqual(len(self.get_profile("0").bashrc), 1)
+        self.assertEqual(len(self.get_profile("1").bashrc), 1)
+        self.assertEqual(len(self.get_profile("2").bashrc), 2)
 
     def test_virtuals(self):
         self.mk_profiles(
@@ -337,28 +337,28 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             {},
             {"virtuals":"virtual/alsa\tdev-util/foo2\nvirtual/dar\tdev-util/foo2"}
         )
-        self.assertEqual(sorted(self.get_profile("base0").virtuals.iteritems()),
+        self.assertEqual(sorted(self.get_profile("0").virtuals.iteritems()),
             sorted([("alsa", atom("dev-util/foo1")), ("blah", atom("dev-util/blah"))]))
-        self.assertEqual(sorted(self.get_profile("base1").virtuals.iteritems()),
+        self.assertEqual(sorted(self.get_profile("1").virtuals.iteritems()),
             sorted([("alsa", atom("dev-util/foo1")), ("blah", atom("dev-util/blah"))]))
-        self.assertEqual(sorted(self.get_profile("base2").virtuals.iteritems()),
+        self.assertEqual(sorted(self.get_profile("2").virtuals.iteritems()),
             sorted([("alsa", atom("dev-util/foo2")), ("blah", atom("dev-util/blah")),
                 ("dar", atom("dev-util/foo2"))]))
 
     def test_masked_use(self):
         self.mk_profiles({})
-        self.assertEqual(self.get_profile("base0").masked_use, {})
+        self.assertEqual(self.get_profile("0").masked_use, {})
         self.mk_profiles(
             {"use.mask":"X\nmmx\n"},
             {},
             {"use.mask":"-X"})
 
         f = lambda d: set((k, tuple(v)) for k, v in d.iteritems())
-        self.assertEqual(f(self.get_profile("base0").masked_use),
+        self.assertEqual(f(self.get_profile("0").masked_use),
             f({packages.AlwaysTrue:('X', 'mmx')}))
-        self.assertEqual(f(self.get_profile("base1").masked_use),
+        self.assertEqual(f(self.get_profile("1").masked_use),
             f({packages.AlwaysTrue:('X', 'mmx')}))
-        self.assertEqual(f(self.get_profile("base2").masked_use),
+        self.assertEqual(f(self.get_profile("2").masked_use),
             f({packages.AlwaysTrue:['mmx']}))
 
         self.mk_profiles(
@@ -366,12 +366,12 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             {"package.use.mask": "dev-util/foo -cups"},
             {"use.mask":"-X", "package.use.mask": "dev-util/blah X"})
 
-        self.assertEqual(f(self.get_profile("base0").masked_use),
+        self.assertEqual(f(self.get_profile("0").masked_use),
             f({packages.AlwaysTrue:('X', 'mmx'),
             atom("dev-util/foo"):["cups"]}))
-        self.assertEqual(f(self.get_profile("base1").masked_use),
+        self.assertEqual(f(self.get_profile("1").masked_use),
             f({packages.AlwaysTrue:('X', 'mmx')}))
-        self.assertEqual(f(self.get_profile("base2").masked_use),
+        self.assertEqual(f(self.get_profile("2").masked_use),
             f({packages.AlwaysTrue:['mmx'],
             atom("dev-util/blah"):['X']}))
 
@@ -380,30 +380,30 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             {"use.mask":"X"},
             {"package.use.mask":"dev-util/foo -X"})
 
-        self.assertEqual(f(self.get_profile("base0").masked_use),
+        self.assertEqual(f(self.get_profile("0").masked_use),
             f({packages.AlwaysTrue:["X"],
             atom("dev-util/foo"):["-X"]}))
-        self.assertEqual(f(self.get_profile("base1").masked_use),
+        self.assertEqual(f(self.get_profile("1").masked_use),
             f({packages.AlwaysTrue:["X"]}))
-        self.assertEqual(f(self.get_profile("base2").masked_use),
+        self.assertEqual(f(self.get_profile("2").masked_use),
             f({packages.AlwaysTrue:["X"],
             atom("dev-util/foo"):["-X"]}))
 
 
     def test_forced_use(self):
         self.mk_profiles({})
-        self.assertEqual(self.get_profile("base0").forced_use, {})
+        self.assertEqual(self.get_profile("0").forced_use, {})
         self.mk_profiles(
             {"use.force":"X\nmmx\n"},
             {},
             {"use.force":"-X"})
 
         f = lambda d: set((k, tuple(v)) for k, v in d.iteritems())
-        self.assertEqual(f(self.get_profile("base0").forced_use),
+        self.assertEqual(f(self.get_profile("0").forced_use),
             f({packages.AlwaysTrue:('X', 'mmx')}))
-        self.assertEqual(f(self.get_profile("base1").forced_use),
+        self.assertEqual(f(self.get_profile("1").forced_use),
             f({packages.AlwaysTrue:('X', 'mmx')}))
-        self.assertEqual(f(self.get_profile("base2").forced_use),
+        self.assertEqual(f(self.get_profile("2").forced_use),
             f({packages.AlwaysTrue:['mmx']}))
 
         self.mk_profiles(
@@ -411,12 +411,12 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             {"package.use.force": "dev-util/foo -cups"},
             {"use.force":"-X", "package.use.force": "dev-util/blah X"})
 
-        self.assertEqual(f(self.get_profile("base0").forced_use),
+        self.assertEqual(f(self.get_profile("0").forced_use),
             f({packages.AlwaysTrue:('X', 'mmx'),
             atom("dev-util/foo"):["cups"]}))
-        self.assertEqual(f(self.get_profile("base1").forced_use),
+        self.assertEqual(f(self.get_profile("1").forced_use),
             f({packages.AlwaysTrue:('X', 'mmx')}))
-        self.assertEqual(f(self.get_profile("base2").forced_use),
+        self.assertEqual(f(self.get_profile("2").forced_use),
             f({packages.AlwaysTrue:['mmx'],
             atom("dev-util/blah"):['X']}))
 
@@ -425,18 +425,18 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             {"use.force":"X"},
             {"package.use.force":"dev-util/foo -X"})
 
-        self.assertEqual(f(self.get_profile("base0").forced_use),
+        self.assertEqual(f(self.get_profile("0").forced_use),
             f({packages.AlwaysTrue:["X"],
             atom("dev-util/foo"):["-X"]}))
-        self.assertEqual(f(self.get_profile("base1").forced_use),
+        self.assertEqual(f(self.get_profile("1").forced_use),
             f({packages.AlwaysTrue:["X"]}))
-        self.assertEqual(f(self.get_profile("base2").forced_use),
+        self.assertEqual(f(self.get_profile("2").forced_use),
             f({packages.AlwaysTrue:["X"],
             atom("dev-util/foo"):["-X"]}))
 
     def test_pkg_use(self):
         self.mk_profiles({})
-        self.assertEqual(self.get_profile("base0").pkg_use, {})
+        self.assertEqual(self.get_profile("0").pkg_use, {})
         self.mk_profiles(
             {"package.use":"dev-util/bsdiff X mmx\n"},
             {},
@@ -445,40 +445,40 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
 
         f = lambda d: set((k.key, tuple(v)) for k, v in d.iteritems())
         f2 = lambda d: set((k, tuple(v)) for k, v in d.iteritems())
-        self.assertEqual(f(self.get_profile("base0").pkg_use),
+        self.assertEqual(f(self.get_profile("0").pkg_use),
             f2({'dev-util/bsdiff':('X', 'mmx')}))
-        self.assertEqual(f(self.get_profile("base1").pkg_use),
+        self.assertEqual(f(self.get_profile("1").pkg_use),
             f2({'dev-util/bsdiff':('X', 'mmx')}))
-        self.assertEqual(f(self.get_profile("base2").pkg_use),
+        self.assertEqual(f(self.get_profile("2").pkg_use),
             f2({'dev-util/bsdiff':['mmx']}))
-        self.assertEqual(f(self.get_profile("base3").pkg_use),
+        self.assertEqual(f(self.get_profile("3").pkg_use),
             f2({'dev-util/diffball':['X']}))
 
     def test_default_env(self):
         self.mk_profiles({})
-        self.assertEqual(self.get_profile("base0").default_env, {})
+        self.assertEqual(self.get_profile("0").default_env, {})
         self.mk_profiles(
             {"make.defaults":"X=y\n"},
             {},
             {"make.defaults":"X=-y\nY=foo\n"})
-        self.assertEqual(self.get_profile('base0',
+        self.assertEqual(self.get_profile('0',
             incrementals=['X']).default_env,
            {'X':tuple('y')})
-        self.assertEqual(self.get_profile('base1',
+        self.assertEqual(self.get_profile('1',
             incrementals=['X']).default_env,
            {'X':tuple('y')})
-        self.assertEqual(self.get_profile('base2',
+        self.assertEqual(self.get_profile('2',
             incrementals=['X']).default_env,
            {'Y':'foo'})
 
     def test_provides_repo(self):
         self.mk_profiles({})
-        self.assertEqual(len(self.get_profile("base0").provides_repo), 0)
+        self.assertEqual(len(self.get_profile("0").provides_repo), 0)
 
         self.mk_profiles(
             {"package.provided":"dev-util/diffball-0.7.1"})
         self.assertEqual([x.cpvstr for x in
-            self.get_profile("base0").provides_repo],
+            self.get_profile("0").provides_repo],
             ["dev-util/diffball-0.7.1"])
 
         self.mk_profiles(
@@ -487,19 +487,19 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
                 "-dev-util/diffball-0.7.1\ndev-util/bsdiff-0.4"}
         )
         self.assertEqual([x.cpvstr for x in
-            sorted(self.get_profile("base1").provides_repo)],
+            sorted(self.get_profile("1").provides_repo)],
             ["dev-util/bsdiff-0.4"])
 
     def test_deprecated(self):
         self.mk_profiles({})
-        self.assertFalse(self.get_profile("base0").deprecated)
+        self.assertFalse(self.get_profile("0").deprecated)
         self.mk_profiles(
             {"deprecated":"replacement\nfoon\n"},
             {}
             )
-        self.assertFalse(self.get_profile("base1").deprecated)
+        self.assertFalse(self.get_profile("1").deprecated)
         self.mk_profiles(
             {},
             {"deprecated":"replacement\nfoon\n"}
             )
-        self.assertTrue(self.get_profile("base1").deprecated)
+        self.assertTrue(self.get_profile("1").deprecated)

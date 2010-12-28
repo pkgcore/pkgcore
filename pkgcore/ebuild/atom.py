@@ -404,6 +404,10 @@ class atom(boolean.AndRestriction):
             return boolean.AndRestriction.cnf_solutions(self, True)
         return [[self]]
 
+    @property
+    def is_simple(self):
+        return len(self.restrictions) == 2
+
     def __str__(self):
         if self.op == '=*':
             s = "=%s*" %  self.cpvstr
@@ -653,6 +657,8 @@ class transitive_use_atom(atom):
     __slots__ = ()
     __inst_caching__ = True
     _nontransitive_use_atom = atom
+
+    is_simple = False
 
     def _stripped_use(self):
         return str(self).split("[", 1)[0]

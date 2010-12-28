@@ -445,6 +445,17 @@ class Test_native_atom(TestCase):
         self.assertFalse(self.kls('=dev-util/diffball-0.7:1::gentoo').match(
             FakePkg('dev-util/diffball-0.7', slot='2')))
 
+    def test_unversioned(self):
+        self.assertTrue(self.kls("dev-util/diffball").is_simple)
+        self.assertFalse(self.kls("dev-util/diffball:2").is_simple)
+        self.assertFalse(self.kls("dev-util/diffball:2::gentoo").is_simple)
+        self.assertFalse(self.kls("dev-util/diffball::gentoo").is_simple)
+        self.assertFalse(self.kls("!=dev-util/diffball-1").is_simple)
+        self.assertFalse(self.kls(">dev-util/diffball-1.2").is_simple)
+        self.assertFalse(self.kls("=dev-util/diffball-1").is_simple)
+        self.assertFalse(self.kls("dev-util/diffball[x]").is_simple)
+        self.assertFalse(self.kls("dev-util/diffball[x?]").is_simple)
+
 
 class Test_cpy_atom(Test_native_atom):
 

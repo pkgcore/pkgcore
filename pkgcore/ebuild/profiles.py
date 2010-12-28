@@ -55,7 +55,7 @@ def load_decorator(filename, handler=iter_read_bash, fallback=(),
         return f2
     return f
 
-def split_negations(data, func):
+def split_negations(data, func=str):
     neg, pos = [], []
     for line in data:
         if line[0] == '-':
@@ -148,7 +148,7 @@ class ProfileNode(object):
     @load_decorator("use.mask")
     def _load_masked_use(self, data):
         d = self._load_pkg_use_mask()
-        neg, pos = split_negations(data, str)
+        neg, pos = split_negations(data)
         if neg or pos:
             d[packages.AlwaysTrue] = (neg, pos)
         self.masked_use = d
@@ -194,7 +194,7 @@ class ProfileNode(object):
     @load_decorator("use.force")
     def _load_forced_use(self, data):
         d = self._load_pkg_use_force()
-        neg, pos = split_negations(data, str)
+        neg, pos = split_negations(data)
         if neg or pos:
             d[packages.AlwaysTrue] = (neg, pos)
         self.forced_use = d

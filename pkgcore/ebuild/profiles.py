@@ -26,7 +26,7 @@ demandload(globals(),
     'pkgcore.ebuild:atom',
     'pkgcore.repository:util',
     'pkgcore.restrictions:packages',
-    'snakeoil.mappings:defaultdict,OrderdDict',
+    'snakeoil.mappings:defaultdict',
 )
 
 class ProfileError(Exception):
@@ -156,11 +156,11 @@ class ProfileNode(object):
 
     @load_decorator("package.use.mask")
     def _load_pkg_use_mask(self, data):
-        d = {}
+        d = defaultdict(lambda :([], []))
         for line in data:
             l = line.split()
             a = self.eapi_atom(l[0])
-            neg, pos = d.setdefault(a, ([], []))
+            neg, pos = d[a]
             if len(l) == 1:
                 raise Exception("malformed line- no data: %r" % (line,))
             for x in l[1:]:
@@ -168,27 +168,26 @@ class ProfileNode(object):
                     neg.append(x[1:])
                 else:
                     pos.append(x)
-        for k, v in d.iteritems():
-            d[k] = tuple(tuple(x) for x in v)
+
+        d = dict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
         self.pkg_use_mask = d
         return d
 
     @load_decorator("package.use")
     def _load_pkg_use(self, data):
-        d = {}
+        d = defaultdict(lambda :([], []))
         for line in data:
             l = line.split()
             a = self.eapi_atom(l[0])
             if len(l) == 1:
                 raise Exception("malformed line- %r" % (line,))
-            neg, pos = d.setdefault(a, ([], []))
+            neg, pos = d[a]
             for x in l[1:]:
                 if x[0] == '-':
                     neg.append(x[1:])
                 else:
                     pos.append(x)
-        for k, v in d.iteritems():
-            d[k] = tuple(tuple(x) for x in v)
+        d = dict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
         self.pkg_use = d
         return d
 
@@ -203,11 +202,11 @@ class ProfileNode(object):
 
     @load_decorator("package.use.force")
     def _load_pkg_use_force(self, data):
-        d = {}
+        d = defaultdict(lambda :([], []))
         for line in data:
             l = line.split()
             a = self.eapi_atom(l[0])
-            neg, pos = d.setdefault(a, ([], []))
+            neg, pos = d[a]
             if len(l) == 1:
                 raise Exception("malformed line- %r" % (line,))
             for x in l[1:]:
@@ -215,8 +214,8 @@ class ProfileNode(object):
                     neg.append(x[1:])
                 else:
                     pos.append(x)
-        for k, v in d.iteritems():
-            d[k] = tuple(tuple(x) for x in v)
+
+        d = dict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
         self.pkg_use_force = d
         return d
 

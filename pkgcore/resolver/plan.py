@@ -307,9 +307,9 @@ class merge_plan(object):
 
     def load_vdb_state(self):
         for pkg in self.livefs_dbs:
-            self._dprint("inserting %s from %s", (pkg, r), "vdb")
+            self._dprint("inserting %s", (pkg,), "vdb")
             ret = self.add_atom(pkg.versioned_atom, dbs=self.livefs_dbs)
-            self._dprint("insertion of %s from %s: %s", (pkg, r, ret), "vdb")
+            self._dprint("insertion of %s: %s", (pkg, ret), "vdb")
             if ret:
                 raise Exception(
                     "couldn't load vdb state, %s %s" %
@@ -343,7 +343,7 @@ class merge_plan(object):
         :return: the last unresolvable atom stack if a solution can't be found,
             else returns None if the atom was successfully added.
         """
-        return self.add_atoms([atom], dbs=dbs)
+        return self.add_atoms([atom])
 
     def _add_atom(self, atom, stack, dbs):
         ret = self._rec_add_atom(atom, stack, dbs)

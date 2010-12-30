@@ -107,7 +107,8 @@ class ProfileNode(object):
 
     @load_decorator("parent")
     def _load_parents(self, data):
-        self.parents = tuple(ProfileNode(abspath(pjoin(self.path, x)))
+        kls = getattr(self, 'parent_node_kls', self.__class__)
+        self.parents = tuple(kls(abspath(pjoin(self.path, x)))
             for x in data)
         return self.parents
 
@@ -308,12 +309,14 @@ class OnDiskProfile(object):
         'incrementals':'list'}, required=('basepath', 'profile'),
         typename='profile')
 
+    _node_kls = ProfileNode
+
     def __init__(self, basepath, profile, incrementals=const.incrementals,
         load_profile_base=True,
         incrementals_unfinalized=const.incrementals_unfinalized):
         self.basepath = basepath
         self.profile = profile
-        self.node = ProfileNode(pjoin(basepath, profile))
+        self.node = self._node_kls(pjoin(basepath, profile))
         self.incrementals = incrementals
         self.incrementals_unfinalized = frozenset(incrementals_unfinalized)
         self.load_profile_base = load_profile_base
@@ -345,6 +348,7 @@ class OnDiskProfile(object):
         global_on = set()
         puse_on = defaultdict(set)
         puse_off = defaultdict(set)
+
         atrue = packages.AlwaysTrue
         for mapping in stack:
             # process globals (use.(mask|force) first)
@@ -504,6 +508,8 @@ class OnDiskProfile(object):
 
 
 class UserProfileNode(ProfileNode):
+
+    parent_node_kls = ProfileNode
 
     def __init__(self, path, parent_path):
         self.override_path = pjoin(path, parent_path)

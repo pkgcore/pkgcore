@@ -285,8 +285,13 @@ class TestOnDiskProfile(TempDirMixin, TestCase):
             for key, val in kwds.iteritems():
                 open(pjoin(self.dir, key), "w").write(val)
 
+    # use a derivative, using the inst caching disabled ProfileNode kls
+    # from above
+    class kls(profiles.OnDiskProfile):
+        _node_kls = ProfileNode
+
     def get_profile(self, profile, **kwds):
-        return profiles.OnDiskProfile(self.dir, profile, **kwds)
+        return self.kls(self.dir, profile, **kwds)
 
     def test_stacking(self):
         self.mk_profiles(

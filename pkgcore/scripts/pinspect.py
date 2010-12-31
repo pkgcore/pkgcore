@@ -187,6 +187,7 @@ class histo_data(OptionParser):
                 self.transform_data_to_summary(data))
 
         if position > 1 and not opts.no_final_summary:
+            out.write()
             out.write(out.bold, 'summary', out.reset, ':')
             out.first_prefix.append('  ')
             print_simple_histogram(global_stats, out, self.summary_format,

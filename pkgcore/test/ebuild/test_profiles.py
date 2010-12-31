@@ -60,7 +60,7 @@ class profile_mixin(TempDirMixin):
     def _assertEqualPayload(self, given_mapping, desired_mapping, reformat_f,
         bare_kls):
         keys1, keys2 = set(given_mapping), set(desired_mapping)
-        self.assertEqual(keys1, keys2, msg="keys differ: wanted %r got %r\nfrom %r" % 
+        self.assertEqual(keys1, keys2, msg="keys differ: wanted %r got %r\nfrom %r" %
             (keys2, keys1, given_mapping))
 
         for key, desired in desired_mapping.iteritems():

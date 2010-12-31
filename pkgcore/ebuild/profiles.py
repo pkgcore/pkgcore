@@ -338,7 +338,7 @@ class OnDiskProfile(object):
         # thus we reset it to the last global_start once we've finished merging.
 
         globals_start = []
-        
+
         rebuild = defaultdict(partial(list, globals_start))
 
         for mapping in stack:

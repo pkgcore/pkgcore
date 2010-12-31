@@ -396,13 +396,25 @@ class PayloadDict(ChunkedDataDict):
         return self.add_global(item.data, restrict=item.restrict)
 
     def update_from_stream(self, stream):
-        if isinstance(stream, PayloadDict):
-            stream = chain(stream._global_settings, stream._dict.itervalues())
         for item in stream:
             if hasattr(item.restrict, 'key'):
                self.add_specific_direct(item.restrict, item)
             else:
                self.add_global(item.data, restrict=item.restrict)
+
+    def update_from_mapping(self, mapping):
+        stream = mapping.iteritems()
+
+        for key, items in stream:
+            if hasattr(key, 'key'):
+                self.add_specific_direct(key, *items)
+            else:
+                for item in items:
+                    self.add_global(item.data, restrict=item.restrict)
+
+        if isinstance(mapping, PayloadDict):
+            for item in mapping._global_settings:
+                self.add_global(item.data, restrict=item.restrict)
 
     def render_pkg(self, pkg, pre_defaults=()):
         items = self._dict.get(atom(pkg.key))

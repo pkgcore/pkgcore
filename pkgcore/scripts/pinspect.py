@@ -136,6 +136,12 @@ class histo_data(OptionParser):
         if opts.last and opts.first:
             self.error("--first and --last cannot be used together; use just one")
 
+        if not self.per_repo_summary:
+            opts.no_repo_summary = True
+
+        if not self.allow_no_detail:
+            self.no_detail = False
+
         return opts, ()
 
     def get_data(self, repo, options):

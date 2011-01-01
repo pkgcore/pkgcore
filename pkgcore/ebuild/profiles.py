@@ -153,7 +153,7 @@ class ProfileNode(object):
 
     @load_decorator("use.mask")
     def _load_masked_use(self, data):
-        d = self._load_pkg_use_mask()
+        d = self.pkg_use_mask
         neg, pos = split_negations(data)
         if neg or pos:
             d[packages.AlwaysTrue] = (chunked_data(packages.AlwaysTrue, neg, pos),)
@@ -190,7 +190,7 @@ class ProfileNode(object):
 
     @load_decorator("use.force")
     def _load_forced_use(self, data):
-        d = self._load_pkg_use_force()
+        d = self.pkg_use_force
         neg, pos = split_negations(data)
         if neg or pos:
             d[packages.AlwaysTrue] = (chunked_data(packages.AlwaysTrue, neg, pos),)

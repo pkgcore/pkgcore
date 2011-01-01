@@ -26,7 +26,7 @@ demandload(globals(),
     'pkgcore.ebuild:atom',
     'pkgcore.repository:util',
     'pkgcore.restrictions:packages',
-    'snakeoil.mappings:defaultdict',
+    'snakeoil.mappings:defaultdict,ImmutableDict',
 )
 
 class ProfileError(Exception):
@@ -125,7 +125,7 @@ class ProfileNode(object):
             if len(l) != 2:
                 raise ValueError("%r is malformated" % line)
             d[cpv.CPV.unversioned(l[0]).package] = self.eapi_atom(l[1])
-        self.virtuals = d
+        self.virtuals = ImmutableDict(d)
         return d
 
     @load_decorator("package.mask")
@@ -154,7 +154,9 @@ class ProfileNode(object):
         d = self.pkg_use_mask
         neg, pos = split_negations(data)
         if neg or pos:
-            d[packages.AlwaysTrue] = (neg, pos)
+            d = ImmutableDict(chain(d.iteritems(),
+                ((packages.AlwaysTrue, (neg, pos)),)
+                ))
         self.masked_use = d
         return d
 
@@ -173,7 +175,7 @@ class ProfileNode(object):
                 else:
                     pos.append(x)
 
-        d = dict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
+        d = ImmutableDict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
         self.pkg_use_mask = d
         return d
 
@@ -191,7 +193,7 @@ class ProfileNode(object):
                     neg.append(x[1:])
                 else:
                     pos.append(x)
-        d = dict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
+        d = ImmutableDict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
         self.pkg_use = d
         return d
 
@@ -200,7 +202,9 @@ class ProfileNode(object):
         d = self.pkg_use_force
         neg, pos = split_negations(data)
         if neg or pos:
-            d[packages.AlwaysTrue] = (neg, pos)
+            d = ImmutableDict(chain(d.iteritems(),
+                ((packages.AlwaysTrue, (neg, pos)),)
+                ))
         self.forced_use = d
         return d
 
@@ -219,7 +223,7 @@ class ProfileNode(object):
                 else:
                     pos.append(x)
 
-        d = dict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
+        d = ImmutableDict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
         self.pkg_use_force = d
         return d
 
@@ -244,7 +248,7 @@ class ProfileNode(object):
             raise
         except Exception ,e:
             raise ProfileError(self.path, "make.defaults", e)
-        self.default_env = d
+        self.default_env = ImmutableDict(d)
         return d
 
     def _load_bashrc(self):

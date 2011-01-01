@@ -323,7 +323,8 @@ class OnDiskProfile(object):
         for mapping in stack:
             d.update_from_mapping(mapping)
 
-        return d.render_to_payload()
+        d.freeze()
+        return d
 
     def _collapse_generic(self, attr):
         s = set()
@@ -401,7 +402,12 @@ class OnDiskProfile(object):
         if attr == "stack":
             self.stack = obj = self._load_stack()
         elif attr in ('forced_use', 'masked_use', 'pkg_use'):
-            obj = self._collapse_use_dict(attr)
+            obj = getattr(self, '%s_chunked' % (attr,))
+            obj = obj.render_to_payload()
+            setattr(self, attr, obj)
+        elif attr in ('forced_use_chunked', 'masked_use_chunked', 'pkg_use_chunked'):
+            # len("_chunked") == 8
+            obj = self._collapse_use_dict(attr[:-8])
             setattr(self, attr, obj)
         elif attr == 'bashrc':
             obj = self.bashrc = tuple(x.bashrc

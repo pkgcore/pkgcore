@@ -325,63 +325,6 @@ class OnDiskProfile(object):
 
         return d.render_to_payload()
 
-        # first, collapse all chunked data down.
-
-        atrue = packages.AlwaysTrue
-
-        # roughly, the algorithm below works to collapse multiple dicts down,
-        # everytime it encounters a new layer of globals, distribute it across all that's there,
-        # so that we get proper stack.
-        # note that the partial/defaultdict usage means new keys start at whatever the current
-        # global state is.  It's not obvious, but it works, and is the simplest approach.
-        # finally, note that d[atrue], if you follow the algo, gets doubled up on.
-        # thus we reset it to the last global_start once we've finished merging.
-
-        globals_start = []
-
-        rebuild = defaultdict(partial(list, globals_start))
-
-        for mapping in stack:
-            # first, pre-seed the globals this layer, then just extend.
-            val = mapping.get(atrue)
-            if val is not None:
-                # found a new global setting; level it across all current
-                # settings.
-                for target in rebuild.itervalues():
-                    # note, for speed we're not filtering AlwaysTrue-
-                    # thus it's going to double up here.
-                    target.extend(val)
-
-                # we've now updated all existing settings with the new global settings,
-                # now we extend the global starting point for merging this round.
-                globals_start.extend(val)
-
-            # merge the two; items only in the right automatically
-            # start from the global start.
-            for key, val in mapping.iteritems():
-                rebuild[key].extend(val)
-
-
-        # finally, we pull atrue out; we rebuild it manually, and since it's
-        # values are doubled up.
-
-        rebuild.pop(atrue, None)
-
-        # rebuild, with optimizing cleanup.
-        d2 = dict((atom.atom(k), _build_cp_atom_payload(v, atom.atom(k), True)) for k,v in rebuild.iteritems())
-
-        # finally, reinject atrue/globals if it's set.
-        if globals_start:
-            global_off, global_on = set(), set()
-            for data in globals_start:
-                global_off.update(data.neg)
-                global_on.update(data.pos)
-                global_off.difference_update(data.pos)
-                global_on.difference_update(data.neg)
-            global_off = ("-" + u for u in global_off)
-            d2[atrue] = (restrict_payload(atrue, tuple(chain(global_off, global_on))),)
-        return d2
-
     def _collapse_generic(self, attr):
         s = set()
         for node in self.stack:

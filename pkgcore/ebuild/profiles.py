@@ -151,17 +151,6 @@ class ProfileNode(object):
         self.deprecated = data
         return data
 
-    @load_decorator("use.mask")
-    def _load_masked_use(self, data):
-        d = self.pkg_use_mask
-        neg, pos = split_negations(data)
-        if neg or pos:
-            d = ImmutableDict(chain(d.iteritems(),
-                [(packages.AlwaysTrue, (chunked_data(packages.AlwaysTrue, neg, pos),))]
-                ))
-        self.masked_use = d
-        return d
-
     def _parse_package_use(self, data):
         d = defaultdict(list)
         # split the data down ordered cat/pkg lines
@@ -199,6 +188,17 @@ class ProfileNode(object):
                 [(packages.AlwaysTrue, (chunked_data(packages.AlwaysTrue, neg, pos),))]
                 ))
         self.forced_use = d
+        return d
+
+    @load_decorator("use.mask")
+    def _load_masked_use(self, data):
+        d = self.pkg_use_mask
+        neg, pos = split_negations(data)
+        if neg or pos:
+            d = ImmutableDict(chain(d.iteritems(),
+                [(packages.AlwaysTrue, (chunked_data(packages.AlwaysTrue, neg, pos),))]
+                ))
+        self.masked_use = d
         return d
 
     def _load_default_env(self):

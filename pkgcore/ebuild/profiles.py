@@ -27,7 +27,7 @@ demandload(globals(),
     'pkgcore.ebuild:atom',
     'pkgcore.repository:util',
     'pkgcore.restrictions:packages',
-    'snakeoil.mappings:defaultdict',
+    'snakeoil.mappings:defaultdict,ImmutableDict',
 )
 
 
@@ -127,7 +127,7 @@ class ProfileNode(object):
             if len(l) != 2:
                 raise ValueError("%r is malformated" % line)
             d[cpv.CPV.unversioned(l[0]).package] = self.eapi_atom(l[1])
-        self.virtuals = d
+        self.virtuals = ImmutableDict(d)
         return d
 
     @load_decorator("package.mask")
@@ -156,7 +156,9 @@ class ProfileNode(object):
         d = self.pkg_use_mask
         neg, pos = split_negations(data)
         if neg or pos:
-            d[packages.AlwaysTrue] = (chunked_data(packages.AlwaysTrue, neg, pos),)
+            d = ImmutableDict(chain(d.iteritems(),
+                [(packages.AlwaysTrue, (chunked_data(packages.AlwaysTrue, neg, pos),))]
+                ))
         self.masked_use = d
         return d
 
@@ -171,7 +173,7 @@ class ProfileNode(object):
             d[a.key].append(chunked_data(a,
                 *split_negations(l[1:])))
 
-        return dict((k, _build_cp_atom_payload(v, atom.atom(k))) for k,v in d.iteritems())
+        return ImmutableDict((k, _build_cp_atom_payload(v, atom.atom(k))) for k,v in d.iteritems())
 
     @load_decorator("package.use")
     def _load_pkg_use(self, data):
@@ -193,7 +195,9 @@ class ProfileNode(object):
         d = self.pkg_use_force
         neg, pos = split_negations(data)
         if neg or pos:
-            d[packages.AlwaysTrue] = (chunked_data(packages.AlwaysTrue, neg, pos),)
+            d = ImmutableDict(chain(d.iteritems(),
+                [(packages.AlwaysTrue, (chunked_data(packages.AlwaysTrue, neg, pos),))]
+                ))
         self.forced_use = d
         return d
 
@@ -218,7 +222,7 @@ class ProfileNode(object):
             raise
         except Exception ,e:
             raise ProfileError(self.path, "make.defaults", e)
-        self.default_env = d
+        self.default_env = ImmutableDict(d)
         return d
 
     def _load_bashrc(self):

@@ -6,16 +6,11 @@ import os, shutil
 from pkgcore.test import TestCase
 from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin, ensure_dirs
-from snakeoil.compatibility import all
 
 from pkgcore.ebuild import profiles, const
-from pkgcore.ebuild.misc import restrict_payload
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
-from pkgcore.restrictions import packages, restriction
-
-atrue = packages.AlwaysTrue
-chunked_data = profiles.chunked_data
+from pkgcore.restrictions import packages
 
 class ProfileNode(profiles.ProfileNode):
     # re-inherited to disable inst-caching
@@ -46,56 +41,23 @@ class profile_mixin(TempDirMixin):
             for key, val in kwds.iteritems():
                 open(pjoin(self.dir, key), "w").write(val)
 
-    def assertEqualChunks(self, given_mapping, desired_mapping):
-        def f(chunk):
-            return chunked_data(chunk.key, tuple(set(chunk.neg)), tuple(set(chunk.pos)))
-        return self._assertEqualPayload(given_mapping, desired_mapping, f, chunked_data)
-
-    def assertEqualPayload(self, given_mapping, desired_mapping):
-        def f(chunk):
-            return restrict_payload(chunk.restrict, tuple(sorted(chunk.data)))
-
-        return self._assertEqualPayload(given_mapping, desired_mapping, f, restrict_payload)
-
-    def _assertEqualPayload(self, given_mapping, desired_mapping, reformat_f,
-        bare_kls):
-        keys1, keys2 = set(given_mapping), set(desired_mapping)
-        self.assertEqual(keys1, keys2, msg="keys differ: wanted %r got %r\nfrom %r" %
-            (keys2, keys1, given_mapping))
-
-        for key, desired in desired_mapping.iteritems():
-            got = given_mapping[key]
-            # sanity check the desired data, occasionally screw this up
-            self.assertNotInstance(desired, bare_kls, msg="key %r, bad test invocation; "
-                "bare %s instead of a tuple; val %r" % (key, bare_kls.__name__, got))
-            self.assertInstance(got, tuple, msg="key %r, non tuple: %r" %
-                (key, got))
-            self.assertNotInstance(got, bare_kls, msg="key %r, bare %s, "
-                "rather than tuple: %r" % (key, bare_kls.__name__, got))
-            if not all(isinstance(x, bare_kls) for x in got):
-                self.fail("non %s instance: key %r, val %r; types %r" % (bare_kls.__name__,
-                    key, got, map(type, got)))
-            got2, desired2 = tuple(map(reformat_f, got)), tuple(map(reformat_f, desired))
-            self.assertEqual(got2, desired2, msg="key %r isn't equal; wanted %r, got %r" % (key, desired2, got2))
-
-
-
-empty = ((), ())
-
-class TestProfileNode(profile_mixin, TestCase):
-
     def setUp(self, default=True):
         TempDirMixin.setUp(self)
         if default:
             self.profile = "default"
             self.mk_profile(self.profile)
 
+
+empty = ((), ())
+
+class TestProfileNode(profile_mixin, TestCase):
+
     def write_file(self, filename, iterable, profile=None):
         if profile is None:
             profile = self.profile
         open(pjoin(self.dir, profile, filename), "w").write(iterable)
 
-    def parsing_checks(self, filename, attr, data="", line_negation=True):
+    def parsing_checks(self, filename, attr, data=""):
         path = pjoin(self.dir, self.profile)
         self.write_file(filename, data)
         getattr(ProfileNode(path), attr)
@@ -187,37 +149,6 @@ class TestProfileNode(profile_mixin, TestCase):
             ((atom("dev-util/diffball"),), ()))
         self.simple_eapi_awareness_check('package.mask', 'masks')
 
-    def _check_package_use_files(self, path, filename, attr):
-        self.write_file(filename, "dev-util/bar X")
-        self.assertEqual(getattr(ProfileNode(path), attr),
-           {"dev-util/bar":(chunked_data(atom("dev-util/bar"), (), ('X',)),)})
-        self.write_file(filename, "-dev-util/bar X")
-        self.assertRaises(profiles.ProfileError, getattr, ProfileNode(path),
-            attr)
-
-        # verify collapsing optimizations
-        self.write_file(filename, "dev-util/foo X\ndev-util/foo X")
-        self.assertEqual(getattr(ProfileNode(path), attr),
-            {"dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),)})
-
-        self.write_file(filename, "d-u/a X\n=d-u/a-1 X")
-        self.assertEqual(getattr(ProfileNode(path), attr),
-            {"d-u/a":(chunked_data(atom("d-u/a"), (), ('X',)),)})
-
-        self.write_file(filename, "d-u/a X\n=d-u/a-1 -X")
-        self.assertEqual(getattr(ProfileNode(path), attr),
-            {"d-u/a":(chunked_data(atom("d-u/a"), (), ('X',)),
-                chunked_data(atom("=d-u/a-1"), ('X',), ()),)})
-
-        self.write_file(filename, "=d-u/a-1 X\nd-u/a X")
-        self.assertEqual(getattr(ProfileNode(path), attr),
-            {"d-u/a":(chunked_data(atom("d-u/a"), (), ('X',)),)})
-
-        self.write_file(filename, "dev-util/bar -X\ndev-util/foo X")
-        self.assertEqual(getattr(ProfileNode(path), attr),
-           {"dev-util/bar":(chunked_data(atom("dev-util/bar"), ('X',), ()),),
-           "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),)})
-
     def test_masked_use(self):
         path = pjoin(self.dir, self.profile)
         self.assertEqual(ProfileNode(path).masked_use, {})
@@ -226,24 +157,29 @@ class TestProfileNode(profile_mixin, TestCase):
             os.unlink(pjoin(path, "package.use.mask"))
         self.parsing_checks("use.mask", "masked_use")
         self.write_file("use.mask", "")
-
-        self._check_package_use_files(path, "package.use.mask", 'masked_use')
-
+        self.write_file("package.use.mask", "dev-util/bar X")
+        self.assertEqual(ProfileNode(path).masked_use,
+           {atom("dev-util/bar"):((), ('X',))})
+        self.write_file("package.use.mask", "-dev-util/bar X")
+        self.assertRaises(profiles.ProfileError, getattr, ProfileNode(path),
+            "masked_use")
+        self.write_file("package.use.mask", "dev-util/bar -X\ndev-util/foo X")
+        self.assertEqual(ProfileNode(path).masked_use,
+           {atom("dev-util/bar"):(('X',), ()),
+           atom("dev-util/foo"):((), ('X',))})
         self.write_file("use.mask", "mmx")
-        self.assertEqualChunks(ProfileNode(path).masked_use,
-           {"dev-util/bar":(chunked_data(atom("dev-util/bar"), ('X',), ()),),
-           "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),),
-           atrue:(chunked_data(atrue, (),('mmx',)),),
-           })
+        self.assertEqual(ProfileNode(path).masked_use,
+           {atom("dev-util/bar"):(('X',), ()),
+           atom("dev-util/foo"):((), ('X',)),
+           packages.AlwaysTrue:((),('mmx',))})
         self.write_file("use.mask", "mmx\n-foon")
-        self.assertEqualChunks(ProfileNode(path).masked_use,
-           {"dev-util/bar":(chunked_data(atom("dev-util/bar"), ('X',), ()),),
-           "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),),
-           atrue:(chunked_data(atrue, ('foon',),('mmx',)),),
-           })
+        self.assertEqual(ProfileNode(path).masked_use,
+           {atom("dev-util/bar"):(('X',), ()),
+           atom("dev-util/foo"):((), ('X',)),
+           packages.AlwaysTrue:(('foon',),('mmx',))})
         self.write_file("package.use.mask", "")
-        self.assertEqualChunks(ProfileNode(path).masked_use,
-           {atrue:(chunked_data(atrue, ('foon',),('mmx',)),)})
+        self.assertEqual(ProfileNode(path).masked_use,
+           {packages.AlwaysTrue:(('foon',),('mmx',))})
         self.simple_eapi_awareness_check('package.use.mask', 'masked_use',
             bad_data='=de/bs-1:1 x\nda/bs y',
             good_data='=de/bs-1 x\nda/bs y')
@@ -260,25 +196,29 @@ class TestProfileNode(profile_mixin, TestCase):
             os.unlink(pjoin(path, "package.use.force"))
         self.parsing_checks("use.force", "forced_use")
         self.write_file("use.force", "")
-
-        self._check_package_use_files(path, "package.use.force", 'forced_use')
-
+        self.write_file("package.use.force", "dev-util/bar X")
+        self.assertEqual(ProfileNode(path).forced_use,
+           {atom("dev-util/bar"):((), ('X',))})
+        self.write_file("package.use.force", "-dev-util/bar X")
+        self.assertRaises(profiles.ProfileError, getattr, ProfileNode(path),
+            "forced_use")
+        self.write_file("package.use.force", "dev-util/bar -X\ndev-util/foo X")
+        self.assertEqual(ProfileNode(path).forced_use,
+           {atom("dev-util/bar"):(('X',), ()),
+           atom("dev-util/foo"):((), ('X',))})
         self.write_file("use.force", "mmx")
-        self.assertEqualChunks(ProfileNode(path).forced_use,
-           {"dev-util/bar":(chunked_data(atom("dev-util/bar"), ('X',), ()),),
-           "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),),
-           atrue:(chunked_data(atrue, (),('mmx',)),),
-           })
+        self.assertEqual(ProfileNode(path).forced_use,
+           {atom("dev-util/bar"):(('X',), ()),
+           atom("dev-util/foo"):((), ('X',)),
+           packages.AlwaysTrue:((),('mmx',))})
         self.write_file("use.force", "mmx\n-foon")
-        self.assertEqualChunks(ProfileNode(path).forced_use,
-           {"dev-util/bar":(chunked_data(atom("dev-util/bar"), ('X',), ()),),
-           "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),),
-           atrue:(chunked_data(atrue, ('foon',),('mmx',)),),
-           })
+        self.assertEqual(ProfileNode(path).forced_use,
+           {atom("dev-util/bar"):(('X',), ()),
+           atom("dev-util/foo"):((), ('X',)),
+           packages.AlwaysTrue:(('foon',),('mmx',))})
         self.write_file("package.use.force", "")
-        self.assertEqualChunks(ProfileNode(path).forced_use,
-           {atrue:(chunked_data(atrue, ('foon',),('mmx',)),)
-           })
+        self.assertEqual(ProfileNode(path).forced_use,
+           {packages.AlwaysTrue:(('foon',),('mmx',))})
         self.simple_eapi_awareness_check('package.use.force', 'forced_use',
             bad_data='=de/bs-1:1 x\nda/bs y',
             good_data='=de/bs-1 x\nda/bs y')
@@ -293,17 +233,14 @@ class TestProfileNode(profile_mixin, TestCase):
         self.parsing_checks("package.use", "pkg_use")
         self.write_file("package.use", "dev-util/bar X")
         self.assertEqual(ProfileNode(path).pkg_use,
-           {"dev-util/bar":(chunked_data(atom("dev-util/bar"), (), ('X',)),)})
+           {atom("dev-util/bar"):((), ('X',))})
         self.write_file("package.use", "-dev-util/bar X")
         self.assertRaises(profiles.ProfileError, getattr, ProfileNode(path),
             "pkg_use")
-
-        self._check_package_use_files(path, "package.use", 'pkg_use')
-
         self.write_file("package.use", "dev-util/bar -X\ndev-util/foo X")
         self.assertEqual(ProfileNode(path).pkg_use,
-           {"dev-util/bar": (chunked_data(atom("dev-util/bar"), ('X',), ()),),
-           "dev-util/foo":(chunked_data(atom("dev-util/foo"), (), ('X',)),)})
+           {atom("dev-util/bar"):(('X',), ()),
+           atom("dev-util/foo"):((), ('X',))})
         self.simple_eapi_awareness_check('package.use', 'pkg_use',
             bad_data='=de/bs-1:1 x\nda/bs y',
             good_data='=de/bs-1 x\nda/bs y')
@@ -347,7 +284,26 @@ class TestProfileNode(profile_mixin, TestCase):
         self.assertNotEqual(ProfileNode(path).bashrc, None)
 
 
-class TestOnDiskProfile(profile_mixin, TestCase):
+class TestOnDiskProfile(TempDirMixin, TestCase):
+
+    def mk_profiles(self, *profiles, **kwds):
+        for x in os.listdir(self.dir):
+            shutil.rmtree(pjoin(self.dir, x))
+        for idx, vals in enumerate(profiles):
+            path = pjoin(self.dir, str(vals.pop("name", idx)))
+            ensure_dirs(path)
+            parent = vals.pop("parent", None)
+            for fname, data in vals.iteritems():
+                open(pjoin(path, fname), "w").write(data)
+
+            if idx and not parent:
+                parent = idx - 1
+
+            if parent is not None:
+                open(pjoin(path, "parent"), "w").write("../%s" % (parent,))
+        if kwds:
+            for key, val in kwds.iteritems():
+                open(pjoin(self.dir, key), "w").write(val)
 
     # use a derivative, using the inst caching disabled ProfileNode kls
     # from above
@@ -429,129 +385,91 @@ class TestOnDiskProfile(profile_mixin, TestCase):
     def test_masked_use(self):
         self.mk_profiles({})
         self.assertEqual(self.get_profile("0").masked_use, {})
-
         self.mk_profiles(
             {"use.mask":"X\nmmx\n"},
             {},
             {"use.mask":"-X"})
 
-        self.assertEqualPayload(self.get_profile("0").masked_use,
-            {atrue:(restrict_payload(atrue, ('X', 'mmx')),)})
-        self.assertEqualPayload(self.get_profile("1").masked_use,
-            {atrue:(restrict_payload(atrue, ('X', 'mmx')),)})
-
-        self.assertEqualPayload(self.get_profile("2").masked_use,
-            {atrue:(restrict_payload(atrue, ('-X', 'mmx',)),)})
-
+        f = lambda d: set((k, tuple(v)) for k, v in d.iteritems())
+        self.assertEqual(f(self.get_profile("0").masked_use),
+            f({packages.AlwaysTrue:('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("1").masked_use),
+            f({packages.AlwaysTrue:('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("2").masked_use),
+            f({packages.AlwaysTrue:['mmx']}))
 
         self.mk_profiles(
             {"use.mask":"X\nmmx\n", "package.use.mask":"dev-util/foo cups"},
             {"package.use.mask": "dev-util/foo -cups"},
             {"use.mask":"-X", "package.use.mask": "dev-util/blah X"})
 
-        self.assertEqualPayload(self.get_profile("0").masked_use,
-            {atrue:(restrict_payload(atrue, ('X', 'mmx')),),
-            atom("dev-util/foo"):(restrict_payload(atom("dev-util/foo"), ("X", "cups", "mmx")),),
-            })
-
-        self.assertEqualPayload(self.get_profile("1").masked_use,
-            {atrue:(restrict_payload(atrue, ('X', 'mmx')),),
-            atom("dev-util/foo"):(restrict_payload(atom("dev-util/foo"), ("X", "mmx", "-cups")),),
-            })
-        self.assertEqualPayload(self.get_profile("2").masked_use,
-            {atrue:(restrict_payload(atrue, ('mmx', '-X')),),
-            atom("dev-util/foo"):(restrict_payload(atom("dev-util/foo"), ("-X", "mmx", "-cups")),),
-            atom("dev-util/blah"):(restrict_payload(atom("dev-util/blah"), ("X", "mmx",)),)
-            })
-
+        self.assertEqual(f(self.get_profile("0").masked_use),
+            f({packages.AlwaysTrue:('X', 'mmx'),
+            atom("dev-util/foo"):["cups"]}))
+        self.assertEqual(f(self.get_profile("1").masked_use),
+            f({packages.AlwaysTrue:('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("2").masked_use),
+            f({packages.AlwaysTrue:['mmx'],
+            atom("dev-util/blah"):['X']}))
 
         self.mk_profiles(
             {"use.mask":"X", "package.use.mask":"dev-util/foo -X"},
             {"use.mask":"X"},
             {"package.use.mask":"dev-util/foo -X"})
 
-        self.assertEqualPayload(self.get_profile("0").masked_use,
-            {atrue:(restrict_payload(atrue, ("X",)),),
-            atom("dev-util/foo"): (restrict_payload(atom("dev-util/foo"), ("-X",)),)
-            })
-        self.assertEqualPayload(self.get_profile("1").masked_use,
-            {atrue:(restrict_payload(atrue, ("X",)),),
-            atom("dev-util/foo"): (restrict_payload(atom("dev-util/foo"), ("X",)),)
-            })
-        self.assertEqualPayload(self.get_profile("2").masked_use,
-            {atrue:(restrict_payload(atrue, ("X")),),
-            atom("dev-util/foo"):(restrict_payload(atom("dev-util/foo"), ("-X",)),)
-            })
+        self.assertEqual(f(self.get_profile("0").masked_use),
+            f({packages.AlwaysTrue:["X"],
+            atom("dev-util/foo"):["-X"]}))
+        self.assertEqual(f(self.get_profile("1").masked_use),
+            f({packages.AlwaysTrue:["X"]}))
+        self.assertEqual(f(self.get_profile("2").masked_use),
+            f({packages.AlwaysTrue:["X"],
+            atom("dev-util/foo"):["-X"]}))
 
-        # pkgcore bug 237; per PMS, later profiles can punch wholes in the
-        # ranges applicable.
-        self.mk_profiles(
-            {"package.use.mask":"dev-util/foo X"},
-            {"package.use.mask":">=dev-util/foo-1 -X"},
-            {"package.use.mask":">=dev-util/foo-2 X"},
-            {"package.use.mask":"dev-util/foo X", "name":"collapse_p"},
-            {"package.use.mask":"dev-util/foo -X", "parent":"2", "name":"collapse_n"},
-            )
-
-        self.assertEqualPayload(self.get_profile("collapse_p").masked_use,
-            {atom("dev-util/foo"):(restrict_payload(atom("dev-util/foo"), ("X",)),)
-            })
-
-        self.assertEqualPayload(self.get_profile("collapse_n").masked_use,
-            {atom("dev-util/foo"):(restrict_payload(atom("dev-util/foo"), ("-X",)),),
-            })
 
     def test_forced_use(self):
         self.mk_profiles({})
-        self.assertEqualPayload(self.get_profile("0").forced_use, {})
+        self.assertEqual(self.get_profile("0").forced_use, {})
         self.mk_profiles(
             {"use.force":"X\nmmx\n"},
             {},
             {"use.force":"-X"})
 
-        self.assertEqualPayload(self.get_profile("0").forced_use,
-            {atrue:(restrict_payload(atrue, ('X', 'mmx')),)})
-        self.assertEqualPayload(self.get_profile("1").forced_use,
-            {atrue:(restrict_payload(atrue, ('X', 'mmx')),)})
-        self.assertEqualPayload(self.get_profile("2").forced_use,
-            {atrue:(restrict_payload(atrue, ('-X', 'mmx')),)})
+        f = lambda d: set((k, tuple(v)) for k, v in d.iteritems())
+        self.assertEqual(f(self.get_profile("0").forced_use),
+            f({packages.AlwaysTrue:('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("1").forced_use),
+            f({packages.AlwaysTrue:('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("2").forced_use),
+            f({packages.AlwaysTrue:['mmx']}))
 
         self.mk_profiles(
             {"use.force":"X\nmmx\n", "package.use.force":"dev-util/foo cups"},
             {"package.use.force": "dev-util/foo -cups"},
             {"use.force":"-X", "package.use.force": "dev-util/blah X"})
 
-        self.assertEqualPayload(self.get_profile("0").forced_use,
-            {atrue:(restrict_payload(atrue, ('X', 'mmx')),),
-            atom("dev-util/foo"):(restrict_payload(atom("dev-util/foo"), ("X", "mmx", "cups",)),),
-            })
-        self.assertEqualPayload(self.get_profile("1").forced_use,
-            {atrue:(restrict_payload(atrue, ('X', 'mmx')),),
-            atom("dev-util/foo"):(restrict_payload(atom("dev-util/foo"), ("X", "mmx", "-cups",)),),
-            })
-        self.assertEqualPayload(self.get_profile("2").forced_use,
-            {atrue:(restrict_payload(atrue, ('mmx', '-X')),),
-            atom("dev-util/foo"):(restrict_payload(atom("dev-util/foo"), ("-X", "mmx", "-cups",)),),
-            atom("dev-util/blah"):(restrict_payload(atom("dev-util/blah"), ('X', "mmx")),),
-            })
+        self.assertEqual(f(self.get_profile("0").forced_use),
+            f({packages.AlwaysTrue:('X', 'mmx'),
+            atom("dev-util/foo"):["cups"]}))
+        self.assertEqual(f(self.get_profile("1").forced_use),
+            f({packages.AlwaysTrue:('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("2").forced_use),
+            f({packages.AlwaysTrue:['mmx'],
+            atom("dev-util/blah"):['X']}))
 
         self.mk_profiles(
             {"use.force":"X", "package.use.force":"dev-util/foo -X"},
             {"use.force":"X"},
             {"package.use.force":"dev-util/foo -X"})
 
-        self.assertEqualPayload(self.get_profile("0").forced_use,
-            {atrue:(restrict_payload(atrue, ("X",)),),
-            atom("dev-util/foo"):(restrict_payload(atom("dev-util/foo"), ("-X",)),),
-            })
-        self.assertEqualPayload(self.get_profile("1").forced_use,
-            {atrue:(restrict_payload(atrue, ("X",)),),
-            atom("dev-util/foo"):(restrict_payload(atom("dev-util/foo"), ("X",)),),
-            })
-        self.assertEqualPayload(self.get_profile("2").forced_use,
-            {atrue:(restrict_payload(atrue, ("X",)),),
-            atom("dev-util/foo"):(restrict_payload(atom("dev-util/foo"), ("-X",)),),
-            })
+        self.assertEqual(f(self.get_profile("0").forced_use),
+            f({packages.AlwaysTrue:["X"],
+            atom("dev-util/foo"):["-X"]}))
+        self.assertEqual(f(self.get_profile("1").forced_use),
+            f({packages.AlwaysTrue:["X"]}))
+        self.assertEqual(f(self.get_profile("2").forced_use),
+            f({packages.AlwaysTrue:["X"],
+            atom("dev-util/foo"):["-X"]}))
 
     def test_pkg_use(self):
         self.mk_profiles({})
@@ -560,34 +478,18 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             {"package.use":"dev-util/bsdiff X mmx\n"},
             {},
             {"package.use":"dev-util/bsdiff -X\n"},
-            {"package.use":"dev-util/bsdiff -mmx\ndev-util/diffball X"},
-            {"package.use":"dev-util/bsdiff X\ndev-util/diffball -X\n"}
-            )
+            {"package.use":"dev-util/bsdiff -mmx\ndev-util/diffball X"})
 
-        self.assertEqualPayload(self.get_profile("0").pkg_use,
-            {atom('dev-util/bsdiff'):
-                (restrict_payload(atom("dev-util/bsdiff"), ('X', 'mmx')),)
-            })
-        self.assertEqualPayload(self.get_profile("1").pkg_use,
-            {atom('dev-util/bsdiff'):
-                (restrict_payload(atom("dev-util/bsdiff"), ('X', 'mmx')),)
-            })
-        self.assertEqualPayload(self.get_profile("2").pkg_use,
-            {atom('dev-util/bsdiff'):
-                (restrict_payload(atom("dev-util/bsdiff"), ('-X', 'mmx')),)
-            })
-        self.assertEqualPayload(self.get_profile("3").pkg_use,
-            {atom('dev-util/diffball'):
-                (restrict_payload(atom("dev-util/diffball"), ('X',)),),
-            atom('dev-util/bsdiff'):
-                (restrict_payload(atom("dev-util/bsdiff"), ('-X', '-mmx')),),
-            })
-        self.assertEqualPayload(self.get_profile("4").pkg_use,
-            {atom('dev-util/diffball'):
-                (restrict_payload(atom("dev-util/diffball"), ('-X',)),),
-            atom('dev-util/bsdiff'):
-                (restrict_payload(atom("dev-util/bsdiff"), ('X', '-mmx')),),
-            })
+        f = lambda d: set((k.key, tuple(v)) for k, v in d.iteritems())
+        f2 = lambda d: set((k, tuple(v)) for k, v in d.iteritems())
+        self.assertEqual(f(self.get_profile("0").pkg_use),
+            f2({'dev-util/bsdiff':('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("1").pkg_use),
+            f2({'dev-util/bsdiff':('X', 'mmx')}))
+        self.assertEqual(f(self.get_profile("2").pkg_use),
+            f2({'dev-util/bsdiff':['mmx']}))
+        self.assertEqual(f(self.get_profile("3").pkg_use),
+            f2({'dev-util/diffball':['X']}))
 
     def test_default_env(self):
         self.mk_profiles({})

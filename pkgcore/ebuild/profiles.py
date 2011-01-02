@@ -20,6 +20,7 @@ from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import partial
 from snakeoil.compatibility import next, is_py3k
 from snakeoil.demandload import demandload
+from pkgcore.ebuild.misc import split_negations
 
 demandload(globals(),
     'snakeoil.data_source:local_source',
@@ -59,17 +60,6 @@ def load_decorator(filename, handler=iter_read_bash, fallback=(),
                 raise ProfileError(self.path, filename, e)
         return f2
     return f
-
-def split_negations(data, func=str):
-    neg, pos = [], []
-    for line in data:
-        if line[0] == '-':
-            if len(line) == 1:
-                raise ValueError("'-' negation without a token")
-            neg.append(func(line[1:]))
-        else:
-            pos.append(func(line))
-    return (tuple(neg), tuple(pos))
 
 
 class ProfileNode(object):

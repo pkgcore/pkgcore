@@ -32,6 +32,16 @@ demandload(globals(),
 restrict_payload = namedtuple("restrict_data", ["restrict", "data"])
 chunked_data = namedtuple("chunked_data", ("key", "neg", "pos"))
 
+def split_negations(data, func=str):
+    neg, pos = [], []
+    for line in data:
+        if line[0] == '-':
+            if len(line) == 1:
+                raise ValueError("'-' negation without a token")
+            neg.append(func(line[1:]))
+        else:
+            pos.append(func(line))
+    return (tuple(neg), tuple(pos))
 
 def optimize_incrementals(sequence):
     # roughly the algorithm walks sequences right->left,

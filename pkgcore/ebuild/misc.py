@@ -325,6 +325,9 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False):
 
 class ChunkedDataDict(object):
 
+    __metaclass__ = generic_equality
+    __attr_comparison__ = ('_global_settings', '_dict')
+
     def __init__(self):
         self._global_settings = []
         self._dict = defaultdict(partial(list, self._global_settings))

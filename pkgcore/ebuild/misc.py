@@ -258,7 +258,7 @@ class non_incremental_collapsed_restrict_to_data(collapsed_restrict_to_data):
         return iflatten_instance(l)
 
 
-def _build_cp_atom_payload(sequence, restrict, payload_form=False, initial_on=None):
+def _build_cp_atom_payload(sequence, restrict, payload_form=False):
 
     atrue = packages.AlwaysTrue
 
@@ -274,10 +274,13 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False, initial_on=No
     else:
         f = chunked_data
 
-    i = reversed(sequence)
+    i = list(sequence)
+    if len(i) <= 1:
+        if not i:
+            return ()
+        return (f(i[0].key, i[0].neg, i[0].pos),)
 
-    if initial_on:
-        i = chain(chunked_data(atrue, (), initial_on), i)
+    i = reversed(i)
 
     for data in i:
         if data.key == atrue or getattr(data.key, 'is_simple', False):

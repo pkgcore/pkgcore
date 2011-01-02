@@ -23,8 +23,8 @@ from pkgcore.config.errors import BaseError
 from pkgcore.ebuild import const
 from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
     non_incremental_collapsed_restrict_to_data, incremental_expansion,
-    incremental_expansion_license, optimize_incrementals, PayloadDict,
-    restrict_payload)
+    incremental_expansion_license, optimize_incrementals,
+    restrict_payload, ChunkedDataDict, chunked_data, split_negations)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
 from pkgcore.util.parserestrict import parse_match
 
@@ -296,10 +296,11 @@ class domain(pkgcore.config.domain.domain):
             bashrc.append(source)
 
         # stack use stuff first, then profile.
-        self.enabled_use = PayloadDict(profile.pkg_use)
-        self.enabled_use.add_global(self.use)
-        self.enabled_use.add_global([self.arch])
-        self.enabled_use.update_from_stream(restrict_payload(k, v) for k,v in pkg_use)
+        self.enabled_use = ChunkedDataDict()
+        self.enabled_use.merge(profile.pkg_use)
+        self.enabled_use.add_bare_global(*split_negations(self.use))
+        self.enabled_use.update_from_stream(chunked_data(k, *split_negations(v)) for k,v in pkg_use)
+        self.enabled_use.add_bare_global((), (self.arch,))
         #self.enabled_use = collapsed_restrict_to_data(
         #    profile.pkg_use.iteritems(),
         #    ((packages.AlwaysTrue, self.use),
@@ -311,9 +312,11 @@ class domain(pkgcore.config.domain.domain):
         #    ((packages.AlwaysTrue, [self.arch]),))
         #self.disabled_use = collapsed_restrict_to_data(
         #    profile.masked_use.iteritems())
-        self.forced_use = PayloadDict(profile.forced_use)
-        self.forced_use.add_global([self.arch])
-        self.disabled_use = PayloadDict(profile.masked_use)
+        self.forced_use = ChunkedDataDict()
+        self.forced_use.merge(profile.forced_use)
+        self.forced_use.add_bare_global((), (self.arch,))
+        self.disabled_use = ChunkedDataDict()
+        self.disabled_use.merge(profile.masked_use)
 
         self.settings["bashrc"] = bashrc
         self.settings = ProtectedDict(settings)

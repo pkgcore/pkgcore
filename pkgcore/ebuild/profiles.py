@@ -10,7 +10,7 @@ from itertools import chain
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const, ebuild_src
 from pkgcore.ebuild.misc import (incremental_expansion, restrict_payload,
-    _build_cp_atom_payload, chunked_data, ChunkedDataDict)
+    _build_cp_atom_payload, chunked_data, ChunkedDataDict, split_negations)
 from pkgcore.repository import virtual
 
 from snakeoil.osutils import abspath, join as pjoin, readlines_utf8
@@ -20,7 +20,6 @@ from snakeoil.caching import WeakInstMeta
 from snakeoil.currying import partial
 from snakeoil.compatibility import next, is_py3k
 from snakeoil.demandload import demandload
-from pkgcore.ebuild.misc import split_negations
 
 demandload(globals(),
     'snakeoil.data_source:local_source',
@@ -154,11 +153,6 @@ class ProfileNode(object):
 
         return ImmutableDict((k, _build_cp_atom_payload(v, atom.atom(k))) for k,v in d.iteritems())
 
-    @load_decorator("package.use")
-    def _load_pkg_use(self, data):
-        self.pkg_use = d = self._parse_package_use(data)
-        return d
-
     @load_decorator("package.use.force")
     def _load_pkg_use_force(self, data):
         self.pkg_use_force = d = self._parse_package_use(data)
@@ -169,27 +163,38 @@ class ProfileNode(object):
         self.pkg_use_mask = d = self._parse_package_use(data)
         return d
 
+    @load_decorator("package.use")
+    def _load_pkg_use(self, data):
+        c = ChunkedDataDict()
+        c.update_from_stream(
+            chain.from_iterable(self._parse_package_use(data).itervalues()))
+        c.freeze()
+        self.pkg_use = c
+        return c
+
     @load_decorator("use.force")
     def _load_forced_use(self, data):
-        d = self.pkg_use_force
+        c = ChunkedDataDict()
         neg, pos = split_negations(data)
         if neg or pos:
-            d = ImmutableDict(chain(d.iteritems(),
-                [(packages.AlwaysTrue, (chunked_data(packages.AlwaysTrue, neg, pos),))]
-                ))
-        self.forced_use = d
-        return d
+            c.add_bare_global(neg, pos)
+        c.update_from_stream(
+            chain.from_iterable(self.pkg_use_force.itervalues()))
+        c.freeze()
+        self.forced_use = c
+        return c
 
     @load_decorator("use.mask")
     def _load_masked_use(self, data):
-        d = self.pkg_use_mask
+        c = ChunkedDataDict()
         neg, pos = split_negations(data)
         if neg or pos:
-            d = ImmutableDict(chain(d.iteritems(),
-                [(packages.AlwaysTrue, (chunked_data(packages.AlwaysTrue, neg, pos),))]
-                ))
-        self.masked_use = d
-        return d
+            c.add_bare_global(neg, pos)
+        c.update_from_stream(
+            chain.from_iterable(self.pkg_use_mask.itervalues()))
+        c.freeze()
+        self.masked_use = c
+        return c
 
     def _load_default_env(self):
         path = pjoin(self.path, "make.defaults")
@@ -259,9 +264,10 @@ class EmptyRootNode(ProfileNode):
 
     parents = ()
     deprecated = None
-    forced_use = masked_use = {}
+    pkg_use = masked_use = forced_use = ChunkedDataDict()
+    forced_use.freeze()
+    virtuals = pkg_use_force = pkg_use_mask = ImmutableDict()
     pkg_provided = visibility = system = ((), ())
-    virtuals = {}
 
 
 def _empty_provides_iterable(*args, **kwds):
@@ -315,9 +321,10 @@ class OnDiskProfile(object):
 
         d = ChunkedDataDict()
         for mapping in stack:
-            d.update_from_mapping(mapping)
+            d.merge(mapping)
 
-        return d.render_to_payload()
+        d.freeze()
+        return d
 
     def _collapse_generic(self, attr):
         s = set()

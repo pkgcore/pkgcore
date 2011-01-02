@@ -67,6 +67,11 @@ def optimize_incrementals(sequence):
                 yield item
                 finalized.add(item)
 
+def incremental_chunked(orig, iterables):
+    for cinst in iterables:
+        orig.difference_update(cinst.neg)
+        orig.update(cinst.pos)
+
 
 def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
     for token in iterable:
@@ -275,7 +280,7 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False, initial_on=No
         i = chain(chunked_data(atrue, (), initial_on), i)
 
     for data in i:
-        if data.key == atrue or data.key.is_simple:
+        if data.key == atrue or getattr(data.key, 'is_simple', False):
             for n in data.neg:
                 ldefault(n, False)
             for p in data.pos:
@@ -317,32 +322,24 @@ def _build_cp_atom_payload(sequence, restrict, payload_form=False, initial_on=No
 
 class ChunkedDataDict(object):
 
-    def __init__(self, initial_mapping=None, freeze=False):
+    def __init__(self):
         self._global_settings = []
         self._dict = defaultdict(partial(list, self._global_settings))
-        if initial_mapping:
-            self.update_from_mapping(initial_mapping)
-        if freeze:
-            self.freeze()
 
-    def update_from_mapping(self, mapping):
-        atrue = packages.AlwaysTrue
-        global_settings = mapping.get(atrue)
-        if global_settings:
-            for val in global_settings:
-                self._add_global_item(val)
-        for key, vals in mapping.iteritems():
-            if key == atrue:
-                continue
-            self.add_specific_direct(key, *vals)
+    @property
+    def frozen(self):
+        return isinstance(self._dict, ImmutableDict)
 
     def mk_item(self, key, neg, pos):
         return chunked_data(key, tuple(neg), tuple(pos))
 
-    def _add_global_item(self, item):
-        return self.add_global(item.neg, item.pos, restrict=item.key)
+    def add_global(self, item):
+        return self._add_global(item.neg, item.pos, restrict=item.key)
 
-    def add_global(self, disabled, enabled, restrict=None):
+    def add_bare_global(self, disabled, enabled):
+        return self._add_global(disabled, enabled)
+
+    def _add_global(self, disabled, enabled, restrict=None):
         if not disabled and not enabled:
             return
         global_settings = self._global_settings
@@ -355,14 +352,52 @@ class ChunkedDataDict(object):
         for vals in self._dict.itervalues():
             vals.append(payload)
 
-        self._global_settings.append(payload)
+        self._expand_globals([payload])
 
+    def merge(self, cdict):
+        if not isinstance(cdict, ChunkedDataDict):
+            raise TypeError("merge expects a ChunkedDataDict instance; "
+                "got type %s, %r" % (type(cdict), cdict,))
+        if isinstance(cdict, PayloadDict) and not isinstance(self, PayloadDict):
+            raise TypeError("merge expects a PayloadDataDict instance; "
+                "got type %s, %r" % (type(cdict), cdict,))
+        # straight extensions for this, rather than update_from_stream.
+        d = self._dict
+        for key, values in cdict._dict.iteritems():
+            d[key].extend(values)
 
-    def add_specific_chunk(self, atom_inst, disabled, enabled):
-        self._dict[atom_inst].append(self.mk_item(atom_inst, disabled, enabled))
+        # note the cdict we're merging has the globals layer through it already, ours
+        # however needs to have the new globals appended to all untouched keys
+        # (no need to update the merged keys- they already have that global data
+        # interlaced)
+        new_globals = cdict._global_settings
+        if new_globals:
+            updates = set(d)
+            updates.difference_update(cdict._dict)
+            for key in updates:
+                d[key].extend(new_globals)
+        self._expand_globals(new_globals)
 
-    def add_specific_direct(self, key, *chunks):
-        self._dict[key].extend(chunks)
+    def _expand_globals(self, new_globals):
+        # while a chain seems obvious here, reversed is used w/in _build_cp_atom;
+        # reversed doesn't like chain, so we just modify the list and do it this way.
+        self._global_settings.extend(new_globals)
+        self._global_settings[:] = list(
+            _build_cp_atom_payload(self._global_settings,
+                 packages.AlwaysTrue))
+
+    def add(self, cinst):
+        self.update_from_stream([cinst])
+
+    def update_from_stream(self, stream):
+        for cinst in stream:
+            if getattr(cinst.key, 'key', None) is not None:
+                # atom, or something similar.  use the key lookup.
+                # hack also... recreate the restriction; this is due to
+                # internal idiocy in ChunkedDataDict that will be fixed.
+                self._dict[cinst.key.key].append(cinst)
+            else:
+                self.add_global(cinst)
 
     def freeze(self):
         if not isinstance(self._dict, ImmutableDict):
@@ -371,14 +406,23 @@ class ChunkedDataDict(object):
             self._global_settings = tuple(self._global_settings)
 
     def optimize(self):
-        d = dict((atom(k), _build_cp_atom_payload(v, atom(k), False))
+        d_stream = ((k, _build_cp_atom_payload(v, atom(k), False))
             for k,v in self._dict.iteritems())
-        if isinstance(self._dict, ImmutableDict):
-            d = ImmutableDict(d)
-        if self._global_settings:
-            self._global_settings[:] = list(_build_cp_atom_payload(self._global_settings,
+        g_stream = (_build_cp_atom_payload(self._global_settings,
                 packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
-        self._dict = d
+
+        if self.frozen:
+            self._dict = ImmutableDict(d_stream)
+            self._global_settings = tuple(g_stream)
+        else:
+            self._dict.update(d_stream)
+            self._global_settings[:] = list(g_stream)
+
+    def render_to_dict(self):
+        d = dict(self._dict)
+        if self._global_settings:
+            d[packages.AlwaysTrue] = self._global_settings[:]
+        return d
 
     def render_to_payload(self):
         d = PayloadDict()
@@ -390,6 +434,19 @@ class ChunkedDataDict(object):
             d[packages.AlwaysTrue] = tuple(data)
         return d
 
+    def __nonzero__(self):
+        return bool(self._global_settings) or bool(self._dict)
+
+    def render_pkg(self, pkg, pre_defaults=()):
+        items = self._dict.get(pkg.key)
+        if items is None:
+            items = self._global_settings
+        s = set(pre_defaults)
+        incremental_chunked(s, (cinst for cinst in items if cinst.key.match(pkg)))
+        return s
+
+    pull_data = render_pkg
+
 
 class PayloadDict(ChunkedDataDict):
 
@@ -397,34 +454,26 @@ class PayloadDict(ChunkedDataDict):
         return restrict_payload(key,
             tuple(chain(("-" + x for x in neg), pos)))
 
-    def add_global(self, payload, restrict=None):
+    def add_bare_global(self, payload):
         neg = [x[1:] for x in payload if x[0] == '-']
         pos = [x for x in payload if x[0] != '-']
-        ChunkedDataDict.add_global(self, neg, pos, restrict=restrict)
+        ChunkedDataDict.add_bare_global(self, neg, pos)
 
-    def _add_global_item(self, item):
-        return self.add_global(item.data, restrict=item.restrict)
+    def add_global(self, pinst):
+        neg = [x[1:] for x in pinst.data if x[0] == '-']
+        pos = [x for x in pinst.data if x[0] != '-']
+        return ChunkedDataDict.add_global(self,
+            chunked_data(pinst.restrict, neg, pos))
 
     def update_from_stream(self, stream):
-        for item in stream:
-            if hasattr(item.restrict, 'key'):
-               self.add_specific_direct(item.restrict, item)
+        for pinst in stream:
+            if getattr(pinst.restrict, 'key', None) is not None:
+                # atom, or something similar.  use the key lookup.
+                # hack also... recreate the restriction; this is due to
+                # internal idiocy in ChunkedDataDict that will be fixed.
+                self._dict[pinst.restrict.key].append(pinst)
             else:
-               self.add_global(item.data, restrict=item.restrict)
-
-    def update_from_mapping(self, mapping):
-        stream = mapping.iteritems()
-
-        for key, items in stream:
-            if hasattr(key, 'key'):
-                self.add_specific_direct(key, *items)
-            else:
-                for item in items:
-                    self.add_global(item.data, restrict=item.restrict)
-
-        if isinstance(mapping, PayloadDict):
-            for item in mapping._global_settings:
-                self.add_global(item.data, restrict=item.restrict)
+                self.add_global(pinst)
 
     def render_pkg(self, pkg, pre_defaults=()):
         items = self._dict.get(atom(pkg.key))

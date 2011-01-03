@@ -183,52 +183,6 @@ dyn_unpack()
 	src_unpack
 }
 
-abort_handler()
-{
-	local msg
-	if [ "$2" != "fail" ]; then
-		msg="${EBUILD}: ${1} aborted; exiting."
-	else
-		msg="${EBUILD}: ${1} failed; exiting."
-	fi
-	echo
-	echo "$msg"
-	echo
-	eval ${3}
-	#unset signal handler
-}
-
-abort_compile()
-{
-	abort_handler "src_compile" $1
-	exit 1
-}
-
-abort_unpack()
-{
-	abort_handler "src_unpack" $1
-	exit 1
-}
-
-abort_package()
-{
-	abort_handler "dyn_package" $1
-	rm -f "${PKGDIR}"/All/${PF}.t*
-	exit 1
-}
-
-abort_test()
-{
-	abort_handler "dyn_test" $1
-	exit 1
-}
-
-abort_install()
-{
-	abort_handler "src_install" $1
-	exit 1
-}
-
 dyn_compile()
 {
 	MUST_EXPORT_ENV="yes"
@@ -264,7 +218,6 @@ dyn_compile()
 	#our libtool to create problematic .la files
 	export PWORKDIR="$WORKDIR"
 	src_compile
-	#|| abort_compile "fail"
 	if has nostrip $FEATURES $RESTRICT; then
 		touch DEBUGBUILD
 	fi
@@ -323,7 +276,6 @@ dyn_install()
 	#our libtool to create problematic .la files
 	export PWORKDIR="$WORKDIR"
 	src_install
-	#|| abort_install "fail"
 	prepall
 	cd "${D}"
 

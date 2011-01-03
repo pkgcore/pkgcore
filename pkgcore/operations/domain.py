@@ -117,7 +117,7 @@ class base(object):
 
     def __del__(self):
         if getattr(self, 'underway', False):
-            print "warning: %s merge was underway, but wasn't completed"
+            print "warning: %s merge was underway, but wasn't completed" % (self,)
             self.lock.release_write_lock()
         self.clean_tempdir()
 

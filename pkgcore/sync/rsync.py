@@ -21,7 +21,7 @@ class rsync_syncer(base.ExternalSyncer):
     default_includes = []
     default_timeout = 180
     default_opts = ["--recursive",
-        "--delete-after",
+        "--delete-delay",
         "--perms",
         "--times",
         "--force",

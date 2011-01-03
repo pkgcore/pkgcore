@@ -6,6 +6,7 @@ __all__ = ("ProfileError", "ProfileNode", "EmptyRootNode", "OnDiskProfile",
 
 import errno, os
 from itertools import chain
+from snakeoil.iterables import chain_from_iterable
 
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const, ebuild_src
@@ -167,7 +168,7 @@ class ProfileNode(object):
     def _load_pkg_use(self, data):
         c = ChunkedDataDict()
         c.update_from_stream(
-            chain.from_iterable(self._parse_package_use(data).itervalues()))
+            chain_from_iterable(self._parse_package_use(data).itervalues()))
         c.freeze()
         self.pkg_use = c
         return c
@@ -179,7 +180,7 @@ class ProfileNode(object):
         if neg or pos:
             c.add_bare_global(neg, pos)
         c.update_from_stream(
-            chain.from_iterable(self.pkg_use_force.itervalues()))
+            chain_from_iterable(self.pkg_use_force.itervalues()))
         c.freeze()
         self.forced_use = c
         return c
@@ -191,7 +192,7 @@ class ProfileNode(object):
         if neg or pos:
             c.add_bare_global(neg, pos)
         c.update_from_stream(
-            chain.from_iterable(self.pkg_use_mask.itervalues()))
+            chain_from_iterable(self.pkg_use_mask.itervalues()))
         c.freeze()
         self.masked_use = c
         return c

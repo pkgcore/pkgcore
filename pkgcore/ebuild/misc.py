@@ -25,6 +25,7 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.ebuild.atom:atom',
     'pkgcore.restrictions:packages',
+    'snakeoil.iterables:chain_from_iterable',
     'snakeoil.mappings:defaultdict,ImmutableDict',
 )
 
@@ -487,7 +488,7 @@ class PayloadDict(ChunkedDataDict):
             items = self._global_settings
         s = set(pre_defaults)
         incremental_expansion(s,
-            chain.from_iterable(item.data for item in items
+            chain_from_iterable(item.data for item in items
                 if item.restrict.match(pkg)))
         return s
 

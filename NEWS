@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* duplicate a portage workaround for emacs ebuild; specifically don't
+  regenerate infodir if the ebuild placed a .keepinfodir in the directory.
+  gentoo bug #257260.
+
 * add workaround to disable unzip during unpack going interactive during
   a failure; gentoo bug #336285.
 

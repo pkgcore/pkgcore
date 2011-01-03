@@ -366,6 +366,9 @@ class InfoRegen(base):
         if bad and engine.observer is not None:
             engine.observer.warn("bad info files: %r" % sorted(bad))
 
+    def should_skip_directory(self, basepath, files):
+        return False
+
     def regen(self, binary, basepath):
         ignores = ("dir", "dir.old")
         try:
@@ -374,6 +377,9 @@ class InfoRegen(base):
             if oe.errno == errno.ENOENT:
                 return
             raise
+
+        if self.should_skip_directory(basepath, files):
+            return
 
         # wipe old indexes.
         for x in set(ignores).intersection(files):

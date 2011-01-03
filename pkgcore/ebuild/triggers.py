@@ -26,7 +26,9 @@ from snakeoil.demandload import demandload
 demandload(globals(),
     "fnmatch",
     'pkgcore:os_data',
-    'pkgcore.merge.engine:map_new_cset_livefs')
+    'pkgcore.merge.engine:map_new_cset_livefs',
+    'snakeoil:compatibility',
+)
 
 colon_parsed = frozenset(
     ["ADA_INCLUDE_PATH",  "ADA_OBJECTS_PATH", "INFODIR", "INFOPATH",
@@ -436,6 +438,10 @@ class InfoRegen(triggers.InfoRegen):
             for y in wipes:
                 engine.hooks[x].remove(y)
         triggers.InfoRegen.register(self, engine)
+
+    def should_skip_directory(self, basepath, files):
+        return compatibility.any(x.startswith(".keepinfodir")
+            for x in files)
 
     def trigger(self, engine, *args):
         self.engine = engine

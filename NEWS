@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* handle keyboard interrupts better during compilation; no longer display
+  die tracebacks if the user intentionally stopped the compilation.
+
 * duplicate a portage workaround for emacs ebuild; specifically don't
   regenerate infodir if the ebuild placed a .keepinfodir in the directory.
   gentoo bug #257260.

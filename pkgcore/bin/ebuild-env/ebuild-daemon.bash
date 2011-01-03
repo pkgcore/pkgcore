@@ -88,27 +88,37 @@ export PORTAGE_PRELOADED_ECLASSES=''
 unset_colors
 
 
-sigint_handler() {
+ebd_sigint_handler() {
+	#set -x
 	EBD_DISABLE_DIEFUNC="asdf"
+	# silence ourselves as everything shuts down.
 	exec 2>/dev/null
 	exec 1>/dev/null
-	kill -2 $PPID
+	# supress sigpipe; if we can't tell the parent to die,
+	# it's already shutting us down.
+	trap 'exit 2' SIGPIPE
 	speak "killed"
+	trap - SIGINT
 	# this relies on the python side to *not* discard the killed
-	#exit 2
+	exit 2
 }
-trap sigint_handler SIGINT
+trap ebd_sigint_handler SIGINT
 
-sigkill_handler() {
+ebd_sigkill_handler() {
+	#set -x
 	EBD_DISABLE_DIEFUNC="asdf"
+	# silence ourselves as everything shuts down.
 	exec 2>/dev/null
 	exec 1>/dev/null
-	kill -9 $$PID
+	# supress sigpipe; if we can't tell the parent to die,
+	# it's already shutting us down.
+	trap 'exit 9' SIGPIPE
 	speak "killed"
+	trap - SIGKILL
 	exit 9
 }
 
-trap sigkill_handler SIGKILL
+trap ebd_sigkill_handler SIGKILL
 
 while [ "$alive" == "1" ]; do
 	com=''

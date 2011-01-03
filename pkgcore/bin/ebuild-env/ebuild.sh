@@ -349,6 +349,9 @@ source "${PKGCORE_BIN_PATH}/ebuild-env-utils.bash" >&2 || die "failed sourcing e
 # calls.
 execute_phases() {
 	local ret
+	trap "exit 2" SIGINT
+	trap "exit 9" SIGQUIT
+	trap 'exit 1' SIGTERM
 	for myarg in $*; do
 		PKGCORE_EBUILD_PHASE="$myarg"
 		EBUILD_PHASE="$myarg"

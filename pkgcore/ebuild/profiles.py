@@ -9,7 +9,8 @@ from itertools import chain
 
 from pkgcore.config import ConfigHint
 from pkgcore.ebuild import const, ebuild_src
-from pkgcore.ebuild.misc import incremental_expansion
+from pkgcore.ebuild.misc import (incremental_expansion, restrict_payload,
+    _build_cp_atom_payload, chunked_data, ChunkedDataDict, split_negations)
 from pkgcore.repository import virtual
 
 from snakeoil.osutils import abspath, join as pjoin, readlines_utf8
@@ -28,6 +29,7 @@ demandload(globals(),
     'pkgcore.restrictions:packages',
     'snakeoil.mappings:defaultdict,ImmutableDict',
 )
+
 
 class ProfileError(Exception):
 
@@ -57,17 +59,6 @@ def load_decorator(filename, handler=iter_read_bash, fallback=(),
                 raise ProfileError(self.path, filename, e)
         return f2
     return f
-
-def split_negations(data, func=str):
-    neg, pos = [], []
-    for line in data:
-        if line[0] == '-':
-            if len(line) == 1:
-                raise ValueError("'-' negation without a token")
-            neg.append(func(line[1:]))
-        else:
-            pos.append(func(line))
-    return (tuple(neg), tuple(pos))
 
 
 class ProfileNode(object):
@@ -149,83 +140,61 @@ class ProfileNode(object):
         self.deprecated = data
         return data
 
-    @load_decorator("use.mask")
-    def _load_masked_use(self, data):
-        d = self.pkg_use_mask
-        neg, pos = split_negations(data)
-        if neg or pos:
-            d = ImmutableDict(chain(d.iteritems(),
-                ((packages.AlwaysTrue, (neg, pos)),)
-                ))
-        self.masked_use = d
+    def _parse_package_use(self, data):
+        d = defaultdict(list)
+        # split the data down ordered cat/pkg lines
+        for line in data:
+            l = line.split()
+            a = self.eapi_atom(l[0])
+            if len(l) == 1:
+                raise Exception("malformed line- %r" % (line,))
+            d[a.key].append(chunked_data(a,
+                *split_negations(l[1:])))
+
+        return ImmutableDict((k, _build_cp_atom_payload(v, atom.atom(k))) for k,v in d.iteritems())
+
+    @load_decorator("package.use.force")
+    def _load_pkg_use_force(self, data):
+        self.pkg_use_force = d = self._parse_package_use(data)
         return d
 
     @load_decorator("package.use.mask")
     def _load_pkg_use_mask(self, data):
-        d = defaultdict(lambda :([], []))
-        for line in data:
-            l = line.split()
-            a = self.eapi_atom(l[0])
-            neg, pos = d[a]
-            if len(l) == 1:
-                raise Exception("malformed line- no data: %r" % (line,))
-            for x in l[1:]:
-                if x[0] == '-':
-                    neg.append(x[1:])
-                else:
-                    pos.append(x)
-
-        d = ImmutableDict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
-        self.pkg_use_mask = d
+        self.pkg_use_mask = d = self._parse_package_use(data)
         return d
 
     @load_decorator("package.use")
     def _load_pkg_use(self, data):
-        d = defaultdict(lambda :([], []))
-        for line in data:
-            l = line.split()
-            a = self.eapi_atom(l[0])
-            if len(l) == 1:
-                raise Exception("malformed line- %r" % (line,))
-            neg, pos = d[a]
-            for x in l[1:]:
-                if x[0] == '-':
-                    neg.append(x[1:])
-                else:
-                    pos.append(x)
-        d = ImmutableDict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
-        self.pkg_use = d
-        return d
+        c = ChunkedDataDict()
+        c.update_from_stream(
+            chain.from_iterable(self._parse_package_use(data).itervalues()))
+        c.freeze()
+        self.pkg_use = c
+        return c
 
     @load_decorator("use.force")
     def _load_forced_use(self, data):
-        d = self.pkg_use_force
+        c = ChunkedDataDict()
         neg, pos = split_negations(data)
         if neg or pos:
-            d = ImmutableDict(chain(d.iteritems(),
-                ((packages.AlwaysTrue, (neg, pos)),)
-                ))
-        self.forced_use = d
-        return d
+            c.add_bare_global(neg, pos)
+        c.update_from_stream(
+            chain.from_iterable(self.pkg_use_force.itervalues()))
+        c.freeze()
+        self.forced_use = c
+        return c
 
-    @load_decorator("package.use.force")
-    def _load_pkg_use_force(self, data):
-        d = defaultdict(lambda :([], []))
-        for line in data:
-            l = line.split()
-            a = self.eapi_atom(l[0])
-            neg, pos = d[a]
-            if len(l) == 1:
-                raise Exception("malformed line- %r" % (line,))
-            for x in l[1:]:
-                if x[0] == '-':
-                    neg.append(x[1:])
-                else:
-                    pos.append(x)
-
-        d = ImmutableDict((k, (tuple(v[0]), tuple(v[1]))) for k,v in d.iteritems())
-        self.pkg_use_force = d
-        return d
+    @load_decorator("use.mask")
+    def _load_masked_use(self, data):
+        c = ChunkedDataDict()
+        neg, pos = split_negations(data)
+        if neg or pos:
+            c.add_bare_global(neg, pos)
+        c.update_from_stream(
+            chain.from_iterable(self.pkg_use_mask.itervalues()))
+        c.freeze()
+        self.masked_use = c
+        return c
 
     def _load_default_env(self):
         path = pjoin(self.path, "make.defaults")
@@ -295,9 +264,10 @@ class EmptyRootNode(ProfileNode):
 
     parents = ()
     deprecated = None
-    forced_use = masked_use = {}
+    pkg_use = masked_use = forced_use = ChunkedDataDict()
+    forced_use.freeze()
+    virtuals = pkg_use_force = pkg_use_mask = ImmutableDict()
     pkg_provided = visibility = system = ((), ())
-    virtuals = {}
 
 
 def _empty_provides_iterable(*args, **kwds):
@@ -349,64 +319,11 @@ class OnDiskProfile(object):
 
         stack = [getattr(x, attr) for x in self.stack]
 
-        global_on = set()
-        puse_on = defaultdict(set)
-        puse_off = defaultdict(set)
-
-        atrue = packages.AlwaysTrue
+        d = ChunkedDataDict()
         for mapping in stack:
-            # process globals (use.(mask|force) first)
-            val = mapping.get(atrue)
-            if val is not None:
-                # global wipes everything affecting the flag thus far.
-                global_on.difference_update(val[0])
-                for u in val[0]:
-                    puse_on.pop(u, None)
-                    puse_off.pop(u, None)
+            d.merge(mapping)
 
-                # this *is* right; if it's global, it stomps everything prior.
-                global_on.update(val[1])
-                for u in val[1]:
-                    puse_on.pop(u, None)
-                    puse_off.pop(u, None)
-
-            # process less specific...
-            for key, val in mapping.iteritems():
-                if key == atrue:
-                    continue
-                # process negations first
-                for u in val[0]:
-                    # is it even on?  if not, don't level it.
-                    if u in global_on:
-                        puse_off[u].add(key)
-                    else:
-                        s = puse_on.get(u)
-                        if s is not None:
-                            # chuck the previous override.
-                            s.discard(key)
-
-                # ...and now enabling
-                for u in val[1]:
-                    # if it's on already, no need to set it.
-                    if u not in global_on:
-                        puse_on[u].add(key)
-                    else:
-                        s = puse_off.get(u)
-                        if s is not None:
-                            s.discard(key)
-
-        # now we recompose it into a global on, and a stream of global trins.
-        d = defaultdict(set)
-        if global_on:
-            d[atrue] = set(global_on)
-        # reverse the mapping.
-        for data in (puse_on.iteritems(),
-            (("-"+k, v) for k,v in puse_off.iteritems())):
-            for use, key_set in data:
-                for key in key_set:
-                    d[key].add(use)
-        for k, v in d.iteritems():
-            d[k] = tuple(v)
+        d.freeze()
         return d
 
     def _collapse_generic(self, attr):

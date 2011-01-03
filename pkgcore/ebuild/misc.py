@@ -15,7 +15,33 @@ from pkgcore.ebuild.atom import atom
 
 from snakeoil.lists import iflatten_instance
 from snakeoil.klass import generic_equality
+from snakeoil.sequences import namedtuple
 
+from itertools import chain
+
+from snakeoil.currying import partial
+from snakeoil.demandload import demandload
+
+demandload(globals(),
+    'pkgcore.ebuild.atom:atom',
+    'pkgcore.restrictions:packages',
+    'snakeoil.mappings:defaultdict,ImmutableDict',
+)
+
+
+restrict_payload = namedtuple("restrict_data", ["restrict", "data"])
+chunked_data = namedtuple("chunked_data", ("key", "neg", "pos"))
+
+def split_negations(data, func=str):
+    neg, pos = [], []
+    for line in data:
+        if line[0] == '-':
+            if len(line) == 1:
+                raise ValueError("'-' negation without a token")
+            neg.append(func(line[1:]))
+        else:
+            pos.append(func(line))
+    return (tuple(neg), tuple(pos))
 
 def optimize_incrementals(sequence):
     # roughly the algorithm walks sequences right->left,
@@ -40,6 +66,11 @@ def optimize_incrementals(sequence):
             if item not in finalized:
                 yield item
                 finalized.add(item)
+
+def incremental_chunked(orig, iterables):
+    for cinst in iterables:
+        orig.difference_update(cinst.neg)
+        orig.update(cinst.pos)
 
 
 def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
@@ -225,3 +256,239 @@ class non_incremental_collapsed_restrict_to_data(collapsed_restrict_to_data):
         if len(l) == 1:
             return iter(self.defaults)
         return iflatten_instance(l)
+
+
+def _build_cp_atom_payload(sequence, restrict, payload_form=False):
+
+    atrue = packages.AlwaysTrue
+
+    locked = {}
+    ldefault = locked.setdefault
+
+    l = []
+
+    if payload_form:
+        def f(r, neg, pos):
+            return restrict_payload(r,
+                tuple(chain(('-' + x for x in neg), pos)))
+    else:
+        f = chunked_data
+
+    i = list(sequence)
+    if len(i) <= 1:
+        if not i:
+            return ()
+        return (f(i[0].key, i[0].neg, i[0].pos),)
+
+    i = reversed(i)
+
+    for data in i:
+        if data.key == atrue or getattr(data.key, 'is_simple', False):
+            for n in data.neg:
+                ldefault(n, False)
+            for p in data.pos:
+                ldefault(p, True)
+            continue
+        neg = tuple(x for x in data.neg if x not in locked)
+        pos = tuple(x for x in data.pos if x not in locked)
+        if neg or pos:
+            l.append((data.key, neg, pos))
+
+    # thus far we've done essentially a tracing for R->L, of globals,
+    # this leaves d-u/a X, =d-u/a-1 X # slipping through however,
+    # since the specific is later.  Plus it's reversed from what we want.
+    # so we rebuild, but apply the same global trick as we go.
+
+    if not locked:
+        # all is specific/non-simple, just reverse and return
+        return tuple(f(*vals) for vals in reversed(l))
+
+    new_l = [f(restrict,
+        tuple(k for k,v in locked.iteritems() if not v), #neg
+        tuple(k for k,v in locked.iteritems() if v) #pos
+        )]
+    # we exploit a few things this time around in reusing the algo from above
+    # we know there is only going to be one global (which we just added),
+    # and that everything is specific.
+
+    lget = locked.get
+
+    for key, neg, pos in reversed(l):
+        # only grab the deltas; if a + becomes a specific -
+        neg = tuple(x for x in neg if lget(x, True))
+        pos = tuple(x for x in pos if not lget(x, False))
+        if neg or pos:
+            new_l.append(f(key, neg, pos))
+
+    return tuple(new_l)
+
+
+class ChunkedDataDict(object):
+
+    __metaclass__ = generic_equality
+    __attr_comparison__ = ('_global_settings', '_dict')
+
+    def __init__(self):
+        self._global_settings = []
+        self._dict = defaultdict(partial(list, self._global_settings))
+
+    @property
+    def frozen(self):
+        return isinstance(self._dict, ImmutableDict)
+
+    def mk_item(self, key, neg, pos):
+        return chunked_data(key, tuple(neg), tuple(pos))
+
+    def add_global(self, item):
+        return self._add_global(item.neg, item.pos, restrict=item.key)
+
+    def add_bare_global(self, disabled, enabled):
+        return self._add_global(disabled, enabled)
+
+    def _add_global(self, disabled, enabled, restrict=None):
+        if not disabled and not enabled:
+            return
+        global_settings = self._global_settings
+        # discard current global in the mapping.
+        disabled = set(disabled)
+        enabled = set(enabled)
+        if restrict is None:
+            restrict = packages.AlwaysTrue
+        payload = self.mk_item(restrict, tuple(disabled), tuple(enabled))
+        for vals in self._dict.itervalues():
+            vals.append(payload)
+
+        self._expand_globals([payload])
+
+    def merge(self, cdict):
+        if not isinstance(cdict, ChunkedDataDict):
+            raise TypeError("merge expects a ChunkedDataDict instance; "
+                "got type %s, %r" % (type(cdict), cdict,))
+        if isinstance(cdict, PayloadDict) and not isinstance(self, PayloadDict):
+            raise TypeError("merge expects a PayloadDataDict instance; "
+                "got type %s, %r" % (type(cdict), cdict,))
+        # straight extensions for this, rather than update_from_stream.
+        d = self._dict
+        for key, values in cdict._dict.iteritems():
+            d[key].extend(values)
+
+        # note the cdict we're merging has the globals layer through it already, ours
+        # however needs to have the new globals appended to all untouched keys
+        # (no need to update the merged keys- they already have that global data
+        # interlaced)
+        new_globals = cdict._global_settings
+        if new_globals:
+            updates = set(d)
+            updates.difference_update(cdict._dict)
+            for key in updates:
+                d[key].extend(new_globals)
+        self._expand_globals(new_globals)
+
+    def _expand_globals(self, new_globals):
+        # while a chain seems obvious here, reversed is used w/in _build_cp_atom;
+        # reversed doesn't like chain, so we just modify the list and do it this way.
+        self._global_settings.extend(new_globals)
+        self._global_settings[:] = list(
+            _build_cp_atom_payload(self._global_settings,
+                 packages.AlwaysTrue))
+
+    def add(self, cinst):
+        self.update_from_stream([cinst])
+
+    def update_from_stream(self, stream):
+        for cinst in stream:
+            if getattr(cinst.key, 'key', None) is not None:
+                # atom, or something similar.  use the key lookup.
+                # hack also... recreate the restriction; this is due to
+                # internal idiocy in ChunkedDataDict that will be fixed.
+                self._dict[cinst.key.key].append(cinst)
+            else:
+                self.add_global(cinst)
+
+    def freeze(self):
+        if not isinstance(self._dict, ImmutableDict):
+            self._dict = ImmutableDict((k, tuple(v))
+                for k,v in self._dict.iteritems())
+            self._global_settings = tuple(self._global_settings)
+
+    def optimize(self):
+        d_stream = ((k, _build_cp_atom_payload(v, atom(k), False))
+            for k,v in self._dict.iteritems())
+        g_stream = (_build_cp_atom_payload(self._global_settings,
+                packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
+
+        if self.frozen:
+            self._dict = ImmutableDict(d_stream)
+            self._global_settings = tuple(g_stream)
+        else:
+            self._dict.update(d_stream)
+            self._global_settings[:] = list(g_stream)
+
+    def render_to_dict(self):
+        d = dict(self._dict)
+        if self._global_settings:
+            d[packages.AlwaysTrue] = self._global_settings[:]
+        return d
+
+    def render_to_payload(self):
+        d = PayloadDict()
+        d = dict((atom(k), _build_cp_atom_payload(v, atom(k), True))
+            for k,v in self._dict.iteritems())
+        if self._global_settings:
+            data = _build_cp_atom_payload(self._global_settings,
+                packages.AlwaysTrue, payload_form=True)
+            d[packages.AlwaysTrue] = tuple(data)
+        return d
+
+    def __nonzero__(self):
+        return bool(self._global_settings) or bool(self._dict)
+
+    def render_pkg(self, pkg, pre_defaults=()):
+        items = self._dict.get(pkg.key)
+        if items is None:
+            items = self._global_settings
+        s = set(pre_defaults)
+        incremental_chunked(s, (cinst for cinst in items if cinst.key.match(pkg)))
+        return s
+
+    pull_data = render_pkg
+
+
+class PayloadDict(ChunkedDataDict):
+
+    def mk_item(self, key, neg, pos):
+        return restrict_payload(key,
+            tuple(chain(("-" + x for x in neg), pos)))
+
+    def add_bare_global(self, payload):
+        neg = [x[1:] for x in payload if x[0] == '-']
+        pos = [x for x in payload if x[0] != '-']
+        ChunkedDataDict.add_bare_global(self, neg, pos)
+
+    def add_global(self, pinst):
+        neg = [x[1:] for x in pinst.data if x[0] == '-']
+        pos = [x for x in pinst.data if x[0] != '-']
+        return ChunkedDataDict.add_global(self,
+            chunked_data(pinst.restrict, neg, pos))
+
+    def update_from_stream(self, stream):
+        for pinst in stream:
+            if getattr(pinst.restrict, 'key', None) is not None:
+                # atom, or something similar.  use the key lookup.
+                # hack also... recreate the restriction; this is due to
+                # internal idiocy in ChunkedDataDict that will be fixed.
+                self._dict[pinst.restrict.key].append(pinst)
+            else:
+                self.add_global(pinst)
+
+    def render_pkg(self, pkg, pre_defaults=()):
+        items = self._dict.get(atom(pkg.key))
+        if items is None:
+            items = self._global_settings
+        s = set(pre_defaults)
+        incremental_expansion(s,
+            chain.from_iterable(item.data for item in items
+                if item.restrict.match(pkg)))
+        return s
+
+    pull_data = render_pkg

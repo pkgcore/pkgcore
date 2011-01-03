@@ -23,7 +23,8 @@ from pkgcore.config.errors import BaseError
 from pkgcore.ebuild import const
 from pkgcore.ebuild.misc import (collapsed_restrict_to_data,
     non_incremental_collapsed_restrict_to_data, incremental_expansion,
-    incremental_expansion_license, optimize_incrementals)
+    incremental_expansion_license, optimize_incrementals,
+    restrict_payload, ChunkedDataDict, chunked_data, split_negations)
 from pkgcore.ebuild.repo_objs import OverlayedLicenses
 from pkgcore.util.parserestrict import parse_match
 
@@ -295,17 +296,27 @@ class domain(pkgcore.config.domain.domain):
             bashrc.append(source)
 
         # stack use stuff first, then profile.
-        self.enabled_use = collapsed_restrict_to_data(
-            profile.pkg_use.iteritems(),
-            ((packages.AlwaysTrue, self.use),
-            (packages.AlwaysTrue, [self.arch])),
-            pkg_use,
-            finalize_defaults=False)
-        self.forced_use = collapsed_restrict_to_data(
-            profile.forced_use.iteritems(),
-            ((packages.AlwaysTrue, [self.arch]),))
-        self.disabled_use = collapsed_restrict_to_data(
-            profile.masked_use.iteritems())
+        self.enabled_use = ChunkedDataDict()
+        self.enabled_use.merge(profile.pkg_use)
+        self.enabled_use.add_bare_global(*split_negations(self.use))
+        self.enabled_use.update_from_stream(chunked_data(k, *split_negations(v)) for k,v in pkg_use)
+        self.enabled_use.add_bare_global((), (self.arch,))
+        #self.enabled_use = collapsed_restrict_to_data(
+        #    profile.pkg_use.iteritems(),
+        #    ((packages.AlwaysTrue, self.use),
+        #    (packages.AlwaysTrue, [self.arch])),
+        #    pkg_use,
+        #    finalize_defaults=False)
+        #self.forced_use = collapsed_restrict_to_data(
+        #    profile.forced_use.iteritems(),
+        #    ((packages.AlwaysTrue, [self.arch]),))
+        #self.disabled_use = collapsed_restrict_to_data(
+        #    profile.masked_use.iteritems())
+        self.forced_use = ChunkedDataDict()
+        self.forced_use.merge(profile.forced_use)
+        self.forced_use.add_bare_global((), (self.arch,))
+        self.disabled_use = ChunkedDataDict()
+        self.disabled_use.merge(profile.masked_use)
 
         self.settings["bashrc"] = bashrc
         self.settings = ProtectedDict(settings)
@@ -469,16 +480,18 @@ class domain(pkgcore.config.domain.domain):
             enabled = enabled.intersection(x.lstrip("-+") for x in pkg.iuse)
 
         disabled = self.disabled_use.pull_data(pkg)
-        immutable = self.forced_use.pull_data(pkg, False)
+        immutable = self.forced_use.pull_data(pkg)
 
         if disabled:
-            if enabled is self.enabled_use.defaults:
-                enabled = set(enabled)
-            if immutable is self.forced_use.defaults:
-                immutable = set(immutable)
+            pass
+            #if enabled is self.enabled_use.defaults:
+            #    enabled = set(enabled)
+            #if immutable is self.forced_use.defaults:
+            #    immutable = set(immutable)
         elif immutable:
-            if enabled is self.enabled_use.defaults:
-                enabled = set(enabled)
+            pass
+            #if enabled is self.enabled_use.defaults:
+            #    enabled = set(enabled)
         else:
             return immutable, enabled, disabled
         enabled.update(immutable)

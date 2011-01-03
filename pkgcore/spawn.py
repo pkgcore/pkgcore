@@ -321,6 +321,14 @@ def _exec(binary, mycommand, opt_name, fd_pipes, env, gid, groups, uid, umask,
     if umask:
         os.umask(umask)
 
+    # finally, we reset the signal handlers that python screws with back to defaults.
+    # gentoo bug #309001, #289486
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
+    signal.signal(signal.SIGQUIT, signal.SIG_DFL)
+    # unneeded, but being paranoid should spawn grow a spawn_func target again.
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+
     # And switch to the new process.
     os.execve(binary, myargs, env)
 

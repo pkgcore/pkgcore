@@ -248,8 +248,10 @@ load_ebuild()
 	# Note: this next line is not the same as export RDEPEND=${RDEPEND:-${DEPEND}}
 	# That will test for unset *or* NULL ("").  We want just to set for unset...
 
-	if [ "${RDEPEND-unset}" == "unset" ]; then
-		export RDEPEND="${DEPEND}"
+	if has ${EAPI-0} 0 1 2 3; then
+		if [ "${RDEPEND-unset}" == "unset" ]; then
+			export RDEPEND="${DEPEND}"
+		fi
 	fi
 
 	#add in dependency info from eclasses

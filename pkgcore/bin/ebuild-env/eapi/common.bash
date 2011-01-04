@@ -1,6 +1,5 @@
-#!/bin/bash
-# ebuild-functions.sh; ebuild env functions, saved with the ebuild (not specific to the portage version).
-# Copyright 2004-2005 Gentoo Foundation
+# Copyright 2011 Brian Harring <ferringb@gmail.com>
+# license GPL2/BSD 3
 
 use()
 {

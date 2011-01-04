@@ -1,6 +1,5 @@
-#!/bin/bash
-# Copyright 2009-2010 Brian Harring <ferringb@gmail.com>
-
+# Copyright 2011 Brian Harring <ferringb@gmail.com>
+# license GPL2/BSD 3
 
 pkgcore_eapi2_src_configure()
 {

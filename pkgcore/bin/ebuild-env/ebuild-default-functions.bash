@@ -158,27 +158,7 @@ dyn_setup()
 
 dyn_unpack()
 {
-	local newstuff="no"
 	MUST_EXPORT_ENV="yes"
-	if [ -e "${WORKDIR}" ]; then
-		local x
-		local checkme
-		for x in ${AA}; do
-			echo ">>> Checking ${x}'s mtime..."
-			if [ "${DISTDIR}/${x}" -nt "${WORKDIR}" ]; then
-				echo ">>> ${x} has been updated; recreating WORKDIR..."
-				newstuff="yes"
-				rm -rf "${WORKDIR}"
-				break
-			fi
-		done
-		if [ "${EBUILD}" -nt "${WORKDIR}" ]; then
-			echo ">>> ${EBUILD} has been updated; recreating WORKDIR..."
-			newstuff="yes"
-			rm -rf "${WORKDIR}"
-		fi
-	fi
-
 	cd "${WORKDIR}"
 	src_unpack
 }

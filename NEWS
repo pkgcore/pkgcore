@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* added protection against bad environment dumps from other PMs for T
+  during env restoration.
+
 * removed RESTRICT=autoconfig support.
 
 * fix compatibility regression introduced in file-5.05 involving MAGIC_NONE.

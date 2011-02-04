@@ -119,6 +119,7 @@ scrub_environ() {
 		declare -r DONT_EXPORT_VARS="${DONT_EXPORT_VARS}" &> /dev/null
 		declare -r DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS}" &> /dev/null
 		declare -r SANDBOX_ON="${SANDBOX_ON}" &> /dev/null
+		declare -r T="${T}" &> /dev/null
 #		declare -rx PATH="${PATH}" &> /dev/null
 
 		readonly -f invoke_filter_env &> /dev/null

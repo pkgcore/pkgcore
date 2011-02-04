@@ -23,7 +23,12 @@ class file_identifier(object):
             import magic
         except ImportError:
             return self._fallback_file
-        obj = magic.open(magic.MAGIC_NONE)
+        if hasattr(magic, 'MAGIC_NONE'):
+            # <5.05 of file
+            magic_const = magic.MAGIC_NONE
+        else:
+            magic_const = magic.NONE
+        obj = magic.open(magic_const)
         ret = obj.load()
         if ret != 0:
             raise ValueError("non zero ret from loading magic: %s" % ret)

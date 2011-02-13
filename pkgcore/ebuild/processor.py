@@ -29,6 +29,7 @@ active_ebp_list = []
 
 import pkgcore.spawn, os, signal, errno, sys
 from pkgcore import const, os_data
+from pkgcore.ebuild import const as e_const
 
 from snakeoil.currying import post_curry, partial
 from snakeoil import klass
@@ -185,7 +186,7 @@ class EbuildProcessor(object):
         """
 
         self.lock()
-        self.ebd = const.EBUILD_DAEMON_PATH
+        self.ebd = e_const.EBUILD_DAEMON_PATH
         spawn_opts = {}
 
         if fakeroot and (sandbox or not userpriv):
@@ -237,7 +238,7 @@ class EbuildProcessor(object):
 
         # force to a neutral dir so that sandbox/fakeroot won't explode if
         # ran from a nonexistant dir
-        spawn_opts["chdir"] = const.EBD_ENV_PATH
+        spawn_opts["chdir"] = e_const.EBD_ENV_PATH
         # little trick. we force the pipes to be high up fd wise so
         # nobody stupidly hits 'em.
         max_fd = min(pkgcore.spawn.max_fd_limit, 1024)
@@ -259,7 +260,7 @@ class EbuildProcessor(object):
             raise InitializationError(
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
-        self.write(const.EBD_ENV_PATH)
+        self.write(e_const.EBD_ENV_PATH)
         # send PKGCORE_PYTHON_BINARY...
         self.write(pkgcore.spawn.find_invoking_python())
         self.write(osutils.normpath(osutils.abspath(osutils.join(
@@ -697,11 +698,11 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
 
     path = list()
     if depends:
-        path.extend(const.HOST_DEPENDS_PATHS)
+        path.extend(const.HOST_NONROOT_PATHS)
     else:
-        path.extend(const.HOST_NONDEPENDS_PATHS)
-        path.append(osutils.pjoin(const.EBUILD_HELPERS_PATH, "common"))
-        path.append(osutils.pjoin(const.EBUILD_HELPERS_PATH, str(pkg.eapi)))
+        path.extend(const.HOST_ROOT_PATHS)
+        path.append(osutils.pjoin(e_const.EBUILD_HELPERS_PATH, "common"))
+        path.append(osutils.pjoin(e_const.EBUILD_HELPERS_PATH, str(pkg.eapi)))
     path.extend(d.get("PATH", "").split(":"))
     d["PATH"] = ":".join(path)
     return d

@@ -5,6 +5,7 @@
 """
 ebuild internal constants
 """
+from os import path
 
 eapi_capable = (0, 1, 2, 3)
 unknown_eapi = 4
@@ -22,3 +23,8 @@ metadata_keys = (
     'EAPI', '_mtime_', '_eclasses_')
 
 ACCEPT_LICENSE = ()
+
+EAPI_BIN_PATH        = path.join(path.dirname(path.abspath(__file__)), "eapi-bash")
+EBUILD_DAEMON_PATH   = path.join(EAPI_BIN_PATH, "ebuild-env", "ebuild-daemon.sh")
+EBUILD_HELPERS_PATH  = path.join(EAPI_BIN_PATH, "ebuild-helpers")
+EBD_ENV_PATH         = path.join(EAPI_BIN_PATH, "ebuild-env")

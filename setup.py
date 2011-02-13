@@ -203,10 +203,10 @@ class pkgcore_build_py(snk_distutils.build_py):
     package_namespace = 'pkgcore'
 
     def _inner_run(self, py3k_rebuilds):
-        fp = os.path.join(self.build_lib, "pkgcore", "bin", "ebuild-helpers")
+        fp = os.path.join(self.build_lib, "pkgcore", "ebuild", "eapi-bash", "ebuild-helpers")
         for f in os.listdir(fp):
             self.set_chmod(os.path.join(fp, f))
-        fp = os.path.join(self.build_lib, "pkgcore", "bin", "ebuild-env")
+        fp = os.path.join(self.build_lib, "pkgcore", "ebuild", "eapi-bash", "ebuild-env")
         for f in ("ebuild.sh", "ebuild-daemon.bash"):
             self.set_chmod(os.path.join(fp, f))
 
@@ -260,11 +260,11 @@ core.setup(
     license='GPL-2',
     packages=packages,
     package_data={
-        'pkgcore':
-            ['bin/ebuild-env/%s' % (x,) for x in
+        'pkgcore.ebuild':
+            ['eapi-bash/ebuild-env/%s' % (x,) for x in
                 ['filter-env', 'portageq_emulation', '*.lib', '*.sh', 'eapi/*', '*.bash']
             ] +
-            ['bin/ebuild-helpers/%s' % (x,) for x in ("banned", "common/*")
+            ['eapi-bash/ebuild-helpers/%s' % (x,) for x in ("banned", "common/*")
             ],
         },
     ext_modules=extensions,

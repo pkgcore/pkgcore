@@ -275,7 +275,7 @@ core.setup(
                 ['filter-env', 'portageq_emulation', '*.lib', 'eapi/*', '*.bash',
                 '*.list']
             ] +
-            ['eapi-bash/helpers/%s' % (x,) for x in ("banned", "common/*")
+            ['eapi-bash/helpers/%s' % (x,) for x in ("banned", "common/*", "4/*")
             ],
         },
     ext_modules=extensions,

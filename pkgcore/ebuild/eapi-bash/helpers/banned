@@ -1,0 +1,6 @@
+#!/bin/bash
+
+my_eapi=${0%/*}
+my_eapi=${my_eapi##*/}
+die "'${0##*/}' is explicitly banned from usage in EAPI '${my_eapi}'"
+exit 1

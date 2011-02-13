@@ -28,9 +28,7 @@ inactive_ebp_list = []
 active_ebp_list = []
 
 import pkgcore.spawn, os, signal, errno, sys
-from pkgcore.const import (
-    depends_phase_path, EBUILD_DAEMON_PATH, EBUILD_ENV_PATH, EBD_ENV_PATH)
-from pkgcore.os_data import portage_uid, portage_gid
+from pkgcore import const, os_data
 
 from snakeoil.currying import post_curry, partial
 from snakeoil import klass
@@ -187,7 +185,7 @@ class EbuildProcessor(object):
         """
 
         self.lock()
-        self.ebd = EBUILD_DAEMON_PATH
+        self.ebd = const.EBUILD_DAEMON_PATH
         spawn_opts = {}
 
         if fakeroot and (sandbox or not userpriv):
@@ -200,12 +198,12 @@ class EbuildProcessor(object):
         if userpriv:
             self.__userpriv = True
             spawn_opts.update({
-                    "uid":portage_uid, "gid":portage_gid,
-                    "groups":[portage_gid], "umask":002})
+                    "uid":os_data.portage_uid, "gid":os_data.portage_gid,
+                    "groups":[os_data.portage_gid], "umask":002})
         else:
             if pkgcore.spawn.is_userpriv_capable():
-                spawn_opts.update({"gid":portage_gid,
-                                   "groups":[0, portage_gid]})
+                spawn_opts.update({"gid":os_data.portage_gid,
+                                   "groups":[0, os_data.portage_gid]})
             self.__userpriv = False
 
         # open the pipes to be used for chatting with the new daemon
@@ -239,7 +237,7 @@ class EbuildProcessor(object):
 
         # force to a neutral dir so that sandbox/fakeroot won't explode if
         # ran from a nonexistant dir
-        spawn_opts["chdir"] = EBD_ENV_PATH
+        spawn_opts["chdir"] = const.EBD_ENV_PATH
         # little trick. we force the pipes to be high up fd wise so
         # nobody stupidly hits 'em.
         max_fd = min(pkgcore.spawn.max_fd_limit, 1024)
@@ -261,7 +259,7 @@ class EbuildProcessor(object):
             raise InitializationError(
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
-        self.write(EBD_ENV_PATH)
+        self.write(const.EBD_ENV_PATH)
         # send PKGCORE_PYTHON_BINARY...
         self.write(pkgcore.spawn.find_invoking_python())
         self.write(osutils.normpath(osutils.abspath(osutils.join(
@@ -555,7 +553,7 @@ class EbuildProcessor(object):
 
         self.write("process_ebuild depend")
         e = expected_ebuild_env(package_inst)
-        e["PATH"] = depends_phase_path
+        e["PATH"] = const.depends_phase_path
         self.send_env(e)
         self.set_sandbox_state(True)
         self.write("start_processing")
@@ -697,6 +695,6 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None):
             d["EBUILD"] = path
     else:
         d["EBUILD"] = pkg.ebuild.path
-    d["PATH"] = ":".join(EBUILD_ENV_PATH + d.get("PATH", "").split(":"))
+    d["PATH"] = ":".join(const.EBUILD_ENV_PATH + d.get("PATH", "").split(":"))
     return d
 

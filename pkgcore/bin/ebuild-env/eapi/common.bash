@@ -84,16 +84,6 @@ econf()
         [ -f "${ECONF_SOURCE}/configure" ] && die "configure script isn't executable"
         die "no configure script found"
     fi
-    if ! has autoconfig $RESTRICT; then
-        if [ -e /usr/share/gnuconfig/ ]; then
-            local x
-            for x in $(find ${WORKDIR} -type f '(' -name config.guess -o -name config.sub ')' ); do
-                echo " * econf: updating ${x/${WORKDIR}\/} with /usr/share/gnuconfig/${x##*/}"
-                cp -f "/usr/share/gnuconfig/${x##*/}" "${x}"
-                chmod a+x "${x}"
-            done
-        fi
-    fi
     if [ ! -z "${CBUILD}" ]; then
         EXTRA_ECONF="--build=${CBUILD} ${EXTRA_ECONF}"
     fi

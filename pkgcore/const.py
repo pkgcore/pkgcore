@@ -23,10 +23,9 @@ BASH_BINARY          = "/bin/bash"
 COPY_BINARY          = "/bin/cp"
 PRELINK_BINARY       = "/usr/sbin/prelink"
 
-depends_phase_path   = PKGCORE_BIN_PATH+"/ebuild-env/:/bin:/usr/bin"
-EBUILD_ENV_PATH      = [PKGCORE_BIN_PATH+"/"+x for x in [
-                           "ebuild-env", "ebuild-helpers"]] \
-                     + ["/sbin", "/bin", "/usr/sbin", "/usr/bin"]
+HOST_DEPENDS_PATHS   = ("/usr/bin", "/bin")
+HOST_NONDEPENDS_PATHS= ("/usr/sbin", "/usr/bin", "/sbin", "/bin")
+EBUILD_HELPERS_PATH  = PKGCORE_BIN_PATH + "/ebuild-helpers/"
 EBD_ENV_PATH         = PKGCORE_BIN_PATH+"/ebuild-env"
 
 # XXX this is out of place

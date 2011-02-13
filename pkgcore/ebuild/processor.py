@@ -552,8 +552,7 @@ class EbuildProcessor(object):
         """
 
         self.write("process_ebuild depend")
-        e = expected_ebuild_env(package_inst)
-        e["PATH"] = const.depends_phase_path
+        e = expected_ebuild_env(package_inst, depends=True)
         self.send_env(e)
         self.set_sandbox_state(True)
         self.write("start_processing")
@@ -670,7 +669,7 @@ class EbuildProcessor(object):
             return v
 
 
-def expected_ebuild_env(pkg, d=None, env_source_override=None):
+def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
     """
     setup expected ebuild vars
 
@@ -695,6 +694,15 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None):
             d["EBUILD"] = path
     else:
         d["EBUILD"] = pkg.ebuild.path
-    d["PATH"] = ":".join(const.EBUILD_ENV_PATH + d.get("PATH", "").split(":"))
+
+    path = list()
+    if depends:
+        path.extend(const.HOST_DEPENDS_PATHS)
+    else:
+        path.extend(const.HOST_NONDEPENDS_PATHS)
+        path.append(osutils.pjoin(const.EBUILD_HELPERS_PATH, "common"))
+        path.append(osutils.pjoin(const.EBUILD_HELPERS_PATH, str(pkg.eapi)))
+    path.extend(d.get("PATH", "").split(":"))
+    d["PATH"] = ":".join(path)
     return d
 

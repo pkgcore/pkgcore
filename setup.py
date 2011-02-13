@@ -261,10 +261,10 @@ core.setup(
     packages=packages,
     package_data={
         'pkgcore':
-            ['bin/ebuild-env/%s' % x for x in
+            ['bin/ebuild-env/%s' % (x,) for x in
                 ['filter-env', 'portageq_emulation', '*.lib', '*.sh', 'eapi/*', '*.bash']
-            ] + [
-            'bin/ebuild-helpers/*',
+            ] +
+            ['bin/ebuild-helpers/%s' % (x,) for x in ("banned", "common/*")
             ],
         },
     ext_modules=extensions,

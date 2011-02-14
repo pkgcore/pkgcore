@@ -1,6 +1,6 @@
 #!/bin/bash
-# ebuild-daemon.sh; core ebuild processor handling code
-# Copyright 2004-2006 Brian Harring <ferringb@gmail.com>
+# ebuild-daemon.bash; core ebuild processor handling code
+# Copyright 2004-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
 

@@ -201,6 +201,9 @@ install.install.sub_commands.append(('pkgcore_install_man', None))
 class pkgcore_build_py(snk_distutils.build_py):
 
     package_namespace = 'pkgcore'
+    # this is to disable the older snakeoil machinery that generated bzr versions...
+    # we don't use it, primarily.
+    generate_bzr_ver = False
 
     def _recursive_chmod_files(self, base):
         for f in os.listdir(base):

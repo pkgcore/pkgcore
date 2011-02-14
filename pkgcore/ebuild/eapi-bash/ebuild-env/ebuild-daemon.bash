@@ -3,9 +3,6 @@
 # Copyright 2004-2006 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
-alias die='diefunc "$FUNCNAME" "$LINENO" "$?"'
-#alias listen='read -u 3 -t 10'
-alias assert='_pipestatus="${PIPESTATUS[*]}"; [[ "${_pipestatus// /}" -eq 0 ]] || diefunc "$FUNCNAME" "$LINENO" "$_pipestatus"'
 
 # use listen/speak for talking to the running portage instance instead of echo'ing to the fd yourself.
 # this allows us to move the open fd's w/out issues down the line.
@@ -30,8 +27,15 @@ if [ "$com" != "dude?" ]; then
 fi
 speak "dude!"
 listen PKGCORE_BIN_PATH
-[ -z "$PKGCORE_BIN_PATH" ] && die "PKGCORE_BIN_PATH=$PKGCORE_BIN_PATH , bailing"
+[ -z "$PKGCORE_BIN_PATH" ] && { speak "empty PKGCORE_BIN_PATH;"; exit 1; }
 declare -rx PKGCORE_BIN_PATH
+
+# get our die functionality now.
+if ! source "${PKGCORE_BIN_PATH}/exit-handling.bash"; then
+	speak "failed sourcing exit handling functionality"
+	exit 2;
+fi
+
 listen PKGCORE_PYTHON_BINARY
 [ -z "$PKGCORE_PYTHON_BINARY" ] && die "empty PKGCORE_PYTHON_BINARY, bailing"
 declare -rx PKGCORE_PYTHON_BINARY

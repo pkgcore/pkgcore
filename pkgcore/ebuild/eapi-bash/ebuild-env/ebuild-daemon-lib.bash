@@ -3,10 +3,6 @@
 # Copyright 2005-2010 Brian Harring <ferringb@gmail.com>
 # License BSD/GPL2
 
-alias die='diefunc "$FUNCNAME" "$LINENO" "$?"'
-#alias listen='read -u 3 -t 10'
-alias assert='_pipestatus="${PIPESTATUS[*]}"; [[ "${_pipestatus// /}" -eq 0 ]] || diefunc "$FUNCNAME" "$LINENO" "$_pipestatus"'
-
 
 # ask the python side to display sandbox complaints.
 request_sandbox_summary() {

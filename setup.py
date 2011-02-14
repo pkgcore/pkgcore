@@ -202,13 +202,18 @@ class pkgcore_build_py(snk_distutils.build_py):
 
     package_namespace = 'pkgcore'
 
+    def _recursive_chmod_files(self, base):
+        for f in os.listdir(base):
+            fp = os.path.join(base, f)
+            if os.path.isdir(fp):
+                self._recursive_chmod_files(fp)
+            elif os.path.isfile(fp):
+                self.set_chmod(fp)
+
     def _inner_run(self, py3k_rebuilds):
-        fp = os.path.join(self.build_lib, "pkgcore", "ebuild", "eapi-bash", "ebuild-helpers")
-        for f in os.listdir(fp):
-            self.set_chmod(os.path.join(fp, f))
-        fp = os.path.join(self.build_lib, "pkgcore", "ebuild", "eapi-bash", "ebuild-env")
-        for f in ("ebuild.sh", "ebuild-daemon.bash"):
-            self.set_chmod(os.path.join(fp, f))
+        base = os.path.join(self.build_lib, "pkgcore", "ebuild", "eapi-bash")
+        self._recursive_chmod_files(os.path.join(base, "helpers"))
+        self.set_chmod(os.path.join(base, "ebuild-daemon.bash"))
 
     def set_chmod(self, path):
         if self.dry_run:
@@ -261,10 +266,10 @@ core.setup(
     packages=packages,
     package_data={
         'pkgcore.ebuild':
-            ['eapi-bash/ebuild-env/%s' % (x,) for x in
-                ['filter-env', 'portageq_emulation', '*.lib', '*.sh', 'eapi/*', '*.bash']
+            ['eapi-bash/%s' % (x,) for x in
+                ['filter-env', 'portageq_emulation', '*.lib', 'eapi/*', '*.bash']
             ] +
-            ['eapi-bash/ebuild-helpers/%s' % (x,) for x in ("banned", "common/*")
+            ['eapi-bash/helpers/%s' % (x,) for x in ("banned", "common/*")
             ],
         },
     ext_modules=extensions,

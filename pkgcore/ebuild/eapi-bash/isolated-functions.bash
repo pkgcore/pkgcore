@@ -26,24 +26,6 @@ elog() {
 	return 0
 }
 
-esyslog() {
-	local pri=
-	local tag=
-
-	if [ -x /usr/bin/logger ]
-	then
-		pri="$1"
-		tag="$2"
-
-		shift 2
-		[ -z "$*" ] && return 0
-
-		/usr/bin/logger -p "${pri}" -t "${tag}" -- "$*"
-	fi
-
-	return 0
-}
-
 einfo() {
 	einfon "$*\n"
 	PKGCORE_RC_LAST_CMD="einfo"

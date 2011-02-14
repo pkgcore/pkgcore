@@ -1,0 +1,17 @@
+#!/bin/bash
+# Copyright 2011 Brian Harring <ferringb@gmail.com>
+# License: GPLv2 or bsd-3
+
+if [[ -z ${T} ]]; then
+	echo "$0: \${T} isn't defined" >&2
+	exit 2
+elif [[ -z ${2} ]]; then
+	echo "$0: takes two args, flie to install, and location to install to" >&2
+	exit 1
+fi
+
+rm -rf "${T}/${2}"
+cp "${1}" "${T}/${2}"
+
+myname=${0##*/}
+exec "do${myname#new}" "${T}/${2}"

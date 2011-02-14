@@ -1,12 +1,1 @@
-#!/bin/bash
-# Copyright 1999-2004 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
-
-if [ -z "${T}" ] || [ -z "${2}" ] ; then
-	echo "Nothing defined to do."
-	exit 1
-fi
-
-rm -rf "${T}/${2}"
-cp "${1}" "${T}/${2}"
-dosbin "${T}/${2}"
+_generic_new

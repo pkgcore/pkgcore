@@ -25,4 +25,4 @@ for x in "$@" ; do
 	fi
 done
 
-exit ${ret}
+pkgcore_helper_exit "$0" $ret

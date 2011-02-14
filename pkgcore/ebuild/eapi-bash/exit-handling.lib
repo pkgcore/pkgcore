@@ -79,3 +79,15 @@ dump_trace() {
 		echo "!!!   $(printf "%${filespacing}s" "${sourcefile}"), line $(printf "%${linespacing}s" "${lineno}"):  Called ${funcname}${args:+ ${args}}"
 	done
 }
+
+pkgcore_helper_exit() {
+	[[ $2 == 0 ]] && exit 0
+	if [[ -n ${PKGCORE_NONFATAL_HELPER} ]]; then
+		echo "WARNING: exitcode $2 from ${1##*/}" >&2
+		exit $2
+	fi
+	if [[ -z $3 ]]; then
+		die "${1##*/} returned error $2"
+	fi
+	die "${1##*/}: exitcode $2: $3"
+}

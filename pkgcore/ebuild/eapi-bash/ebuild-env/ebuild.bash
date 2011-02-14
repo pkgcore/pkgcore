@@ -25,7 +25,7 @@
 ORIG_VARS=`declare | grep -E '^[^[:space:]{}()]+=' | cut -s -d '=' -f 1`
 ORIG_FUNCS=`declare -F | cut -s -d ' ' -f 3`
 
-DONT_EXPORT_FUNCS='portageq speak'
+DONT_EXPORT_FUNCS='portageq speak assert die diefunc'
 
 DONT_EXPORT_VARS="ORIG_VARS GROUPS ORIG_FUNCS FUNCNAME DAEMONIZED CCACHE.* DISTCC.* SYNC
 (TMP)?DIR FEATURES CONFIG_PROTECT.* WORKDIR RSYNC_.* GENTOO_MIRRORS

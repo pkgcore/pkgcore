@@ -43,9 +43,9 @@ listen PKGCORE_PYTHONPATH
 [ -z "$PKGCORE_PYTHONPATH" ] && die "empty PKGCORE_PYTHONPATH, bailing"
 declare -rx PKGCORE_PYTHONPATH
 
-if ! source "${PKGCORE_BIN_PATH}/ebuild.sh" daemonize >&2; then
+if ! source "${PKGCORE_BIN_PATH}/ebuild.bash" daemonize >&2; then
 	speak "failed"
-	die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild.sh"
+	die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild.bash"
 fi
 
 if [ -n "$SANDBOX_LOG" ]; then

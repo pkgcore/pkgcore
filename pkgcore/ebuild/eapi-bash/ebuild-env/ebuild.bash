@@ -1,6 +1,6 @@
 #!/bin/bash
-# ebuild.sh; ebuild phase processing, env handling
-# Copyright 2005-2010 Brian Harring <ferringb@gmail.com>: BSD/GPL2
+# ebuild.bash; ebuild phase processing, env handling
+# Copyright 2005-2011 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # Copyright 2004-2005 Gentoo Foundation: GPL2
 
 # general phase execution path-

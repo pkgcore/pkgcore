@@ -2,5 +2,7 @@
 # Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
+source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+
 slash=/
 exec install -d ${DIROPTIONS} "${@/#${slash}/${D}${slash}}"

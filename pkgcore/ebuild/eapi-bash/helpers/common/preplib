@@ -2,6 +2,8 @@
 # Copyright 1999-2004 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
+source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+
 LIBDIR_VAR="LIBDIR_${ABI}"
 if [ -n "${ABI}" -a -n "${!LIBDIR_VAR}" ]; then
 	CONF_LIBDIR="${!LIBDIR_VAR}"

@@ -3,6 +3,8 @@
 # Copyright 2008 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # Distributed under the terms of the GNU General Public License v2
 
+source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+
 source "${PKGCORE_BIN_PATH}"/isolated-functions.lib || {
 	echo "failed sourcing isolated-functions"
 	exit -1

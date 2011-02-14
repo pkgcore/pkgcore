@@ -10,4 +10,7 @@
 #        /etc/make.globals here because emake is only called from an
 #        ebuild.
 [ "${PKGCORE_DEBUG:-0}" != "0" ] && set -x
+
+source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+
 exec ${MAKE:-make} ${MAKEOPTS} ${EXTRA_EMAKE} "$@"

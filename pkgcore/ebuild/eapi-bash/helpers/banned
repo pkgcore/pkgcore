@@ -1,4 +1,5 @@
 #!/bin/bash
+source "${PKGCORE_BIN_PATH}/exit-handling.lib"
 
 my_eapi=${0%/*}
 my_eapi=${my_eapi##*/}

@@ -175,23 +175,6 @@ umask 022
 # the sandbox is disabled by default except when overridden in the relevant stages
 export SANDBOX_ON="0"
 
-# func for beeping and delaying a defined period of time.
-sleepbeep() {
-	if [ ! "$#" -lt 3 ] || [ ! "$#" -gt 0 ]; then
-		echo "sleepbeep requires one arg- number of beeps"
-		echo "additionally, can supply a 2nd arg- interval between beeps (defaults to 0.25s"
-		die "invalid call to sleepbeep"
-	fi
-	local count=$(($1))
-	local interval="${2:-0.25}"
-	while [ $count -gt 0 ]; do
-		echo -en "\a";
-		sleep $interval &> /dev/null
-		count=$(($count - 1))
-	done
-	return 0
-}
-
 # ensure the passed in PATH has its components in $PATH
 pkgcore_ensure_PATH()
 {

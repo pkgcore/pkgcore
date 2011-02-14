@@ -356,7 +356,6 @@ dyn_preinst()
 					echo "- ${i/${IMAGE}/} is an approved suid file"
 				else
 					echo ">>> Removing sbit on non registered ${i/${IMAGE}/}"
-					sleepbeep 6
 					chmod ugo-s "${i}"
 					grep ^#${i/${IMAGE}/}$ ${sfconf} > /dev/null || {
 						# sandbox prevents us from writing directly

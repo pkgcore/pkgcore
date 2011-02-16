@@ -8,23 +8,31 @@ if [ -z "${PKGCORE_BIN_PATH}" ]; then
 	echo "PKGCORE_BIN_PATH is unset!"
 	exit -1
 fi
-source "${PKGCORE_BIN_PATH}/isolated-functions.lib" || {
-	"failed sourcing isolated-function.sh"; exit 1;
-}
 
 if [[ $# -lt 1 ]] ; then
-	echo "$0: at least one argument needed" 1>&2
-	exit 1
+	pkgcore_helper_exit 1 "at least one arguement needed"
 fi
 
 if [[ ! -d ${D}${EXEDESTTREE} ]] ; then
 	install -d "${D}${EXEDESTTREE}"
+	pkgcore_helper_check_exit $? "install of base directory failed; \${D}=${D}, \${EXEDESTTREE}=${EXEDESTTREE}"
 fi
 
+ret=0
 for x in "$@" ; do
 	if [ -L "${x}" ] ; then
-		cp "${x}" "${T}"
+		if ! cp "${x}" "${T}"; then
+			echo "warning, cp to temp space failed, skipping" >&2
+			((ret|=1))
+			continue
+		fi
+
 		mysrc="${T}"/$(/usr/bin/basename "${x}")
+		if [ $? != 0 ]]; then
+			echo "warning: basename failed for ${x}; skipping" >&2
+			((ret|=1))
+			continue
+		fi
 	elif [ -d "${x}" ] ; then
 		echo "doexe: warning, skipping directory ${x}"
 		continue
@@ -32,4 +40,7 @@ for x in "$@" ; do
 		mysrc="${x}"
 	fi
 	install ${EXEOPTIONS} "${mysrc}" "${D}${EXEDESTTREE}"
+	((ret|=$?))
 done
+
+pkgcore_helper_exit $ret

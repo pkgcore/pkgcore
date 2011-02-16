@@ -2,18 +2,19 @@
 # Copyright 2011 Brian Harring <ferringb@gmail.com>
 # License: GPLv2 or bsd-3
 
+shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
+myname=${0##*/}
 if [[ -z ${T} ]]; then
-	echo "$0: \${T} isn't defined" >&2
-	exit 2
+	pkgcore_helper_exit 2 "environment issue (ebuild commands somehow filtered the env for ${myname} call)- \${T} was empty"
 elif [[ -z ${2} ]]; then
-	echo "$0: takes two args, flie to install, and location to install to" >&2
-	exit 1
+	pkgcore_helper_exit 1 "bad invocation of '${myname}'; takes two args, file to install, new name to use"
 fi
 
 rm -rf "${T}/${2}"
 cp "${1}" "${T}/${2}"
+pkgcore_helper_check_exit $? "source '${1}' doesn't exist, or ${T}/${2} is somehow immutable"
 
-myname=${0##*/}
-exec "do${myname#new}" "${T}/${2}"
+"do${myname#new}" "${T}/${2}"
+pkgcore_helper_exit $? "failed executing do${myname#new} step of ${myname}"

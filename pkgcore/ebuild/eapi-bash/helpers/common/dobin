@@ -2,15 +2,17 @@
 # Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
+shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
 if [[ $# -lt 1 ]] ; then
-	echo "$0: at least one argument needed" 1>&2
-	exit 1
+	pkgcore_helper_exit 1 "dobin: at least one arguement needed"
 fi
 
+
 if [[ ! -d ${D}${DESTTREE}/bin ]] ; then
-	install -d "${D}${DESTTREE}/bin" || exit 2
+	install -d "${D}${DESTTREE}/bin"
+	pkgcore_helper_check_exit $? "failed installing base directory ${D}${DESTTREE}/bin; D=${D}, DESTTREE=${DESTTREE}"
 fi
 
 ret=0
@@ -25,4 +27,4 @@ for x in "$@" ; do
 	((ret+=$?))
 done
 
-exit ${ret}
+pkgcore_helper_exit ${ret}

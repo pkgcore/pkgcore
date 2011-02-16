@@ -2,6 +2,7 @@
 # Copyright 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
+shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
 if [ -z "$1" ] ; then
@@ -24,7 +25,7 @@ if [ -z "${PORTAGE_COMPRESS_SUFFIX}" ] ; then
 	case ${PORTAGE_COMPRESS} in
 		gzip)  suffix="gz";;
 		bzip2) suffix="bz2";;
-		*)     echo "prepinfo: error fixing links: please set PORTAGE_COMPRESS_SUFFIX in make.conf" 1>&2
+		*)     echo "prepinfo: error fixing links: please set PORTAGE_COMPRESS_SUFFIX in make.conf" >&2
 		       exit 1;;
 	esac
 fi
@@ -57,3 +58,5 @@ for x in `find "${z}"/ \( -type f -or -type l \) -maxdepth 1 -mindepth 1 2>/dev/
 		fi
 	fi
 done
+
+:

@@ -4,18 +4,8 @@
 
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
-if [ -z "${PKGCORE_BIN_PATH}" ]; then
-	echo "PKGCORE_BIN_PATH is unset!"
-	exit -1
-fi
-source "${PKGCORE_BIN_PATH}/isolated-functions.lib" || {
-	echo "failed sourcing isolated-functions"
-	exit -1
-}
-
 if [ $# -lt 1 ] ; then
-	echo "${0}: at least one argument needed"
-	exit 1
+	pkgcore_helper_exit 1 "at least one arguement needed"
 fi
 
 if [ "${1}" == "-r" ] ; then
@@ -24,26 +14,24 @@ if [ "${1}" == "-r" ] ; then
 else
 	DOINSRECUR=n
 fi
-[ -z "${INSDEPTH}" ] && declare -i INSDEPTH=0
-if [ ${INSDEPTH} -gt 30 ] ; then
-	echo "${0}: sanity check ... 30 directories is too much :("
-	exit 1
-fi
 
+ret=0
 if [ "${INSDESTTREE%${D}*}" == "" ]; then
-	echo "-------------------------------------------------------" 1>&2
-	echo "You should not use \${D} with helpers." 1>&2
-	echo "  --> ${INSDESTTREE}" 1>&2
-	echo "-------------------------------------------------------" 1>&2
-	#exit 1
+	pkgcore_helper_exit 2 "do not give \${D} as part of the pathways to doins"
 fi
 
-[ ! -d "${D}${INSDESTTREE}" ] && dodir "${INSDESTTREE}"
+if [ ! -d "${D}${INSDESTTREE}" ]; then
+	dodir "${INSDESTTREE}"
+	pkgcore_helper_check_exit $? "base dodir of ${INDESTTREE} failed"
+fi
 
+ret=0
 for x in "$@" ; do
 	if [ -L "$x" ] ; then
 		cp "$x" "${T}"
+		((ret|=$?))
 		mysrc="${T}/$(/usr/bin/basename "${x}")"
+		((ret|=$?))
 	elif [ -d "$x" ] ; then
 		if [ "${DOINSRECUR}" == "n" ] ; then
 			continue
@@ -53,11 +41,14 @@ for x in "$@" ; do
 		find "${x}" -mindepth 1 -maxdepth 1 -exec \
 			env \
 				INSDESTTREE="${mydir}" \
-				INSDEPTH=$((INSDEPTH+1)) \
 				doins -r {} \;
+		((ret|=$?))
 		continue
 	else
 		mysrc="${x}"
 	fi
 	install ${INSOPTIONS} "${mysrc}" "${D}${INSDESTTREE}"
+	((ret|=$?))
 done
+
+pkgcore_helper_exit ${ret}

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
-exec "${PKGCORE_PYTHON_BINARY}" "$(dirname "$0")/"_raw_dohtml "$@"
+"${PKGCORE_PYTHON_BINARY}" "$(dirname "$0")/"_raw_dohtml "$@"
+pkgcore_helper_exit $?

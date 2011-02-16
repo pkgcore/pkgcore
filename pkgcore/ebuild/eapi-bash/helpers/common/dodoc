@@ -2,6 +2,7 @@
 # Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
+shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
 if [ $# -lt 1 ] ; then
@@ -12,17 +13,19 @@ fi
 dir="${D}usr/share/doc/${PF}/${DOCDESTTREE}"
 if [ ! -d "${dir}" ] ; then
 	install -d "${dir}"
+	pkgcore_helper_check_exit $? "installation of base directory ${dir} failed"
 fi
 
 ret=0
 for x in "$@" ; do
 	if [ -s "${x}" ] ; then
 		install -m0644 "${x}" "${dir}"
+		((ret|=$?))
 		gzip -f -9 "${dir}/${x##*/}"
+		((ret|=$?))
 	elif [ ! -e "${x}" ] ; then
 		echo "dodoc: ${x} does not exist" 1>&2
-		((++ret))
+		((ret|=1))
 	fi
 done
-
-pkgcore_helper_exit "$0" $ret
+pkgcore_helper_exit "$ret"

@@ -2,22 +2,29 @@
 # Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
+shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
 mysed="s:${D}::g"
 
+ret=0
 for x in "$@" ; do
 	y="${D}${x}"
 	if [ -e "${y}" ] ; then
 		if [ -f "${y}" ] ; then
 			mysrc="${T}/${y##*/}"
 			cp "${y}" "${mysrc}"
+			((ret|=$?))
 			sed -e "${mysed}" "${mysrc}" > "${y}"
+			((ret|=$?))
 		else
-			echo "${y} is not a regular file!"
-			exit 1
+			echo "${y} is not a regular file!" >&2
+			((ret|=1))
 		fi
 	else
-		mysed="${x}"
+		echo "file '${x}' not found" >&2
+		((ret|=1))
 	fi
 done
+
+pkgcore_helper_exit ${ret}

@@ -2,14 +2,18 @@
 # Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
+shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
 if [[ $# -ne 2 ]] ; then
-	echo "$0: two arguments needed" 1>&2
-	exit 1
+	pkgcore_helper_exit 1 "two arguements needed; got $#"
 fi
 
 destdir=${2%/*}
-[[ ! -d ${D}${destdir} ]] && dodir "${destdir}"
+if [[ ! -d ${D}${destdir} ]]; then
+	dodir "${destdir}"
+	pkgcore_helper_check_exit $? "dodir invocation of ${destdir}"
+fi
 
-exec ln -snf "$1" "${D}$2"
+ln -snf "$1" "${D}$2"
+pkgcore_helper_exit $? "symlink creation of $1 -> ${D}${2} failed"

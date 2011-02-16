@@ -2,7 +2,9 @@
 # Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
+shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
-exec env LIBOPTIONS="-m0755" \
+env LIBOPTIONS="-m0755" \
 	dolib "$@"
+pkgcore_helper_exit $? "invocation of dolib failed"

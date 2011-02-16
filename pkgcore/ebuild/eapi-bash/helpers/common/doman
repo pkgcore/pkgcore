@@ -2,21 +2,17 @@
 # Copyright 1999-2006 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
+shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
 if [ -z "${PKGCORE_BIN_PATH}" ]; then
-	echo "PKGCORE_BIN_PATH is unset!"
-	exit -1
+	pkgcore_helper_exit -1 "PKGCORE_BIN_PATH is unset, can't load necessary internal libs"
+elif [[ $# -lt 1 ]] ; then
+	pkgcore_helper_exit 1 "need at least one arguement"
 fi
-source "${PKGCORE_BIN_PATH}/isolated-functions.lib" || {
-	echo "failed sourcing isolated-functions"
-	exit -1
-}
+source "${PKGCORE_BIN_PATH}/isolated-functions.lib"
+pkgcore_helper_check_exit $? "failed sourcing isolated-functions"
 
-if [[ $# -lt 1 ]] ; then
-	echo "$0: at least one argument needed" 1>&2
-	exit 1
-fi
 
 i18n=""
 
@@ -48,23 +44,23 @@ for x in "$@" ; do
 		mandir=${i18n}man${suffix:0:1}
 	fi
 
-
 	if [[ ${mandir} =~ man[0-9n](f|p|pm)?$ ]] ; then
 		if [[ -s ${x} ]] ; then
 			if [[ ! -d ${D}/usr/share/man/${mandir} ]] ; then
 				install -d "${D}/usr/share/man/${mandir}"
+				((ret|=$?))
 			fi
-
 			install -m0644 "${x}" "${D}/usr/share/man/${mandir}/${name}"
-			((ret+=$?))
+			((ret|=$?))
+
 		elif [[ ! -e ${x} ]] ; then
-			echo "doman: ${x} does not exist" 1>&2
-			((++ret))
+			echo "doman: ${x} does not exist" >&2
+			((ret|=1))
 		fi
 	else
-		echo "doman: '${x}' is probably not a man page; skipping" 1>&2
-		((++ret))
+		echo "doman: '${x}' is probably not a man page; skipping" >&2
+		((ret|=2))
 	fi
 done
 
-exit ${ret}
+pkgcore_helper_exit ${ret}

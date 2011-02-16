@@ -1,0 +1,38 @@
+# Copyright 2011 Brian Harring <ferringb@gmail.com>
+# license GPL2/BSD 3
+
+source "${PKGCORE_BIN_PATH}/"/eapi/3.lib
+
+nonfatal() {
+	PKGCORE_NONFATAL_HELPER=y "$@"
+}
+
+pkgcore_eapi4_src_install() {
+	if [ -f Makefile ] || [ -f GNUmakefile ] || [ -f makefile ]; then
+		emake DESTDIR="${D}" install
+	fi
+
+	# important; keep these as seperate statements.  we use the exit
+	# code after all.
+	local tmp_var
+
+	if tmp_var=$(declare -p DOCS 2> /dev/null); then
+		# given declare -- x= || declare -a x=, isolate the --/-a
+		tmp_var="${tmp_var#declare -}"
+		tmp_var="${tmp_var%% *}"
+		if [[ ${tmp_var/a} != ${tmp_var} ]]; then
+			dodoc "${DOCS[@]}"
+		else
+			dodoc ${DOCS}
+		fi
+	else
+		for tmp_var in README* ChangeLog AUTHORS NEWS TODO CHANGES THANKS \
+			BUGS FAQ CREDITS CHANGELOG; do
+			[[ -s ${tmp_var} ]] && dodoc "${tmp_var}"
+		done
+	fi
+}
+
+pkgcore_inject_phase_funcs pkgcore_eapi4_src_install
+
+:

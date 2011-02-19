@@ -48,7 +48,7 @@ class OptionParser(commandline.OptionParser):
         domain = values.config.get_default('domain')
         values.vdb = domain.vdb
         values.repo = multiplex_tree(*get_virtual_repos(domain.repos, False))
-        values.distdir = domain.settings['fetcher'].distdir
+        values.distdir = domain.fetcher.distdir
         restrict = commandline.convert_to_restrict(values.excludes, default=None)
         if restrict != [None]:
             values.restrict = OrRestriction(negate=True, *restrict)

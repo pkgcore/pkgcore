@@ -121,6 +121,14 @@ econf()
 
         EXTRA_ECONF="--libdir=${CONF_LIBDIR_RESULT} ${EXTRA_ECONF}"
     fi
+
+    if ! hasq "${EAPI}" 0 1 2 3; then
+        if ${ECONF_SOURCE}/configure --help 2> /dev/null | \
+            grep -q disable-dependency-tracking; then
+            set -- --disable-dependency-tracking "$@"
+        fi
+    fi
+
     local EECONF_CACHE
     echo ${ECONF_SOURCE}/configure \
         --prefix=/usr \

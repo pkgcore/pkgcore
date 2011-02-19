@@ -83,6 +83,16 @@ econf()
         [ -f "${ECONF_SOURCE}/configure" ] && die "configure script isn't executable"
         die "no configure script found"
     fi
+
+    if [[ -d /usr/share/gnuconfig ]]; then
+        local x
+        find "${WORKDIR}" -type f \( -name config.guess -o -name config.sub \) | \
+            while read x; do
+            echo "econf: replacing ${x} with /usr/share/gnuconfig/${x##*/}"
+            cp -f "/usr/share/gnuconfig/${x##*/}" "$x"
+        done
+    fi
+
     if [ ! -z "${CBUILD}" ]; then
         EXTRA_ECONF="--build=${CBUILD} ${EXTRA_ECONF}"
     fi

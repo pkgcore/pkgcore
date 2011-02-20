@@ -23,15 +23,20 @@ default_src_configure() { pkgcore_eapi2_src_configure; }
 default_src_prepare()   { pkgcore_eapi2_src_prepare; }
 
 default() {
-    if has "${EBUILD_PHASE}" nofetch unpack prepare configure compile test; then
-        if [ "${EBUILD_PHASE}" == 'nofetch' ]; then
-            default_pkg_nofetch
-        else
-            default_src_${EBUILD_PHASE}
-        fi
-    else
-        die "default is not available in ebuild phase '${EBUILD_PHASE}'"
-    fi
+	local default_type=$(type -t default_pkg_${EBUILD_PHASE})
+
+	# note we do substitution instead of direct comparison to protect against
+	# any bash misbehaviours across versions.
+	if [[ ${default_type/function} == ${default_type} ]]; then
+		default_type=$(type -t default_src_${EBUILD_PHASE})
+		if [[ ${default_type/function} == ${default_type} ]]; then
+			die "default is not available in ebuild phase '${EBUILD_PHASE}'"
+		fi
+		default_type=src
+	else
+		default_type=pkg
+	fi
+	default_${default_type}_${EBUILD_PHASE}
 }
 
 inject_phase_funcs pkgcore_eapi2 src_{configure,prepare}

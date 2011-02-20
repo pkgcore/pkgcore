@@ -170,10 +170,8 @@ has() {
 	local me=$1
 	shift
 
-	# All the TTY checks really only help out depend. Which is nice.
-	# Logging kills all this anyway. Everything becomes a pipe. --NJ
 	for x in "$@"; do
-		if [ "${x}" == "${me}" ]; then
+		if [[ ${x} == ${me} ]]; then
 			return 0
 		fi
 	done

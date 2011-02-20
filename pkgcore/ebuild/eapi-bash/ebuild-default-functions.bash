@@ -93,7 +93,7 @@ unpack()
 				assert "$myfail"
 				;;
 			*.tar.xz)
-				if hasq "$EAPI" 0 1 2; then
+				if has "$EAPI" 0 1 2; then
 					echo "xv is a supported extension in eapi3 and above only" >&2
 					continue;
 				fi
@@ -109,7 +109,7 @@ unpack()
 				bzip2 -dc "${srcdir}${x}" > ${x%.*} || die "$myfail"
 				;;
 			*.xz)
-				if hasq "$EAPI" 0 1 2; then
+				if has "$EAPI" 0 1 2; then
 					echo "xv is a supported extension in eapi3 and above only" >&2
 					continue;
 				fi
@@ -639,7 +639,7 @@ useq()
 
 	# Make sure we have this USE flag in IUSE
 	# temp disable due to PORTAGE_ARCHLIST not being exported in
-	#if ! has "${u}" ${IUSE} ${E_IUSE} && ! hasq "${u}" ${PORTAGE_ARCHLIST} selinux; then
+	#if ! has "${u}" ${IUSE} ${E_IUSE} && ! has "${u}" ${PORTAGE_ARCHLIST} selinux; then
 	#    echo "QA Notice: USE Flag '${u}' not in IUSE for ${CATEGORY}/${PF}" >&2
 	#fi
 

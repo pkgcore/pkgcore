@@ -91,14 +91,6 @@ alias init_environ='{
 
 shopt -s extdebug &> /dev/null
 
-hasv() {
-	if has "$@"; then
-		echo "${1}"
-		return 0
-	fi
-	return 1
-}
-
 #if no perms are specified, dirs/files will have decent defaults
 #(not secretive, but not stupid)
 umask 022
@@ -119,7 +111,7 @@ pkgcore_ensure_PATH()
 		for x in ${EXISTING_PATH}; do
 			# keep in mind PATH=":foon" is a valid way to say "cwd"
 			[ -z "${x}" ] && continue
-			if ! has ${x} ${PATH} && ! hasq ${x} ${adds}; then
+			if ! has ${x} ${PATH} && ! has ${x} ${adds}; then
 				adds="${adds:+${adds}:}${x}"
 			fi
 		done
@@ -350,7 +342,7 @@ execute_phases() {
 				local x
 				# if they aren't set, then holy hell ensues.  deal.
 
-				if hasq ccache $FEATURES; then
+				if has ccache $FEATURES; then
 					[ -z "${CCACHE_SIZE}" ] && export CCACHE_SIZE="500M"
 					ccache -M ${CCACHE_SIZE} &> /dev/null
 				fi

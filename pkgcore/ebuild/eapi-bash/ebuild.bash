@@ -265,19 +265,29 @@ source "${PKGCORE_BIN_PATH}/ebuild-env-utils.bash" >&2 || die "failed sourcing e
 # calls.
 execute_phases() {
 	local ret
+	local PKGCORE_MUST_EXPORT_ENV
 	trap "exit 2" SIGINT
 	trap "exit 9" SIGQUIT
 	trap 'exit 1' SIGTERM
 	for myarg in $*; do
 		PKGCORE_EBUILD_PHASE="$myarg"
 		EBUILD_PHASE="$myarg"
+
+		PKGCORE_MUST_EXPORT_ENV=yes
+
 		case $EBUILD_PHASE in
 		nofetch)
 			init_environ
 			pkg_nofetch
+			PKGCORE_MUST_EXPORT_ENV=
 			ret=1
 			;;
-		prerm|postrm|preinst|postinst|config)
+		postrm)
+			PKGCORE_MUST_EXPORT_ENV=
+			# this is a fall thru; think of it as a select chunk w/out a break
+			# we just snag these phases to turn off env saving.
+			;&
+		prerm|preinst|postinst|config)
 			export SANDBOX_ON="0"
 
 			TARGET_ENV="${T}/environment"
@@ -346,7 +356,6 @@ execute_phases() {
 				fi
 				[[ $PKGCORE_DEBUG == 2 ]] && set -x
 				init_environ
-				MUST_EXPORT_ENV="yes"
 			else
 				TARGET_ENV="${T}/environment"
 				if ! load_environ; then
@@ -357,7 +366,7 @@ execute_phases() {
 			[[ -n $PKGCORE_DEBUG ]] && set -x
 			type -p pre_pkg_setup &> /dev/null && \
 				pre_pkg_setup
-			dyn_setup
+			pkg_setup
 			ret=0;
 			type -p post_pkg_setup &> /dev/null && \
 				post_pkg_setup
@@ -366,7 +375,7 @@ execute_phases() {
 			;;
 		depend)
 			SANDBOX_ON="1"
-			MUST_EXPORT_ENV="no"
+			PKGCORE_MUST_EXPORT_ENV=
 
 			if [ -z "$QA_CONTROLLED_EXTERNALLY" ]; then
 				enable_qa_interceptors
@@ -389,9 +398,8 @@ execute_phases() {
 			;;
 		esac
 
-		if [ "${MUST_EXPORT_ENV}" == "yes" ]; then
+		if [[ -n ${PKGCORE_MUST_EXPORT_ENV} ]]; then
 			export_environ "${T}/environment"
-			MUST_EXPORT_ENV="no"
 		fi
 		[[ $PKGCORE_DEBUG -lt 4 ]] && set +x
 	done

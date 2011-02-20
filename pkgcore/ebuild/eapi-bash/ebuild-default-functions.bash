@@ -150,22 +150,14 @@ unpack()
 
 }
 
-dyn_setup()
-{
-	MUST_EXPORT_ENV="yes"
-	pkg_setup
-}
-
 dyn_unpack()
 {
-	MUST_EXPORT_ENV="yes"
 	cd "${WORKDIR}"
 	src_unpack
 }
 
 dyn_compile()
 {
-	MUST_EXPORT_ENV="yes"
 	export DESTTREE=/usr
 	export INSDESTTREE=""
 	export EXEDESTTREE=""
@@ -205,7 +197,6 @@ dyn_compile()
 
 dyn_configure()
 {
-	MUST_EXPORT_ENV="yes"
 	if [ -d "${S}" ]; then
 		cd "${S}"
 	else
@@ -216,7 +207,6 @@ dyn_configure()
 
 dyn_prepare()
 {
-	MUST_EXPORT_ENV="yes"
 	if [ -d "${S}" ]; then
 		cd "${S}"
 	else
@@ -228,7 +218,6 @@ dyn_prepare()
 dyn_test()
 {
 		echo ">>> Test phase [enabled]: ${CATEGORY}/${PF}"
-		MUST_EXPORT_ENV="yes"
 		if [ -d "${S}" ]; then
 			cd "${S}"
 		else
@@ -329,7 +318,6 @@ dyn_install()
 	echo ">>> Completed installing ${PF} into ${D}"
 	echo
 	unset dir
-	MUST_EXPORT_ENV="yes"
 }
 
 dyn_postinst()
@@ -397,7 +385,6 @@ dyn_preinst()
 			echo "!!! Unable to set SELinux security labels"
 		fi
 	fi
-	MUST_EXPORT_ENV="yes"
 }
 
 

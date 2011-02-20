@@ -337,7 +337,7 @@ docinto()
     fi
 }
 
-inject_phase_funcs()
+pkgcore_inject_phase_funcs()
 {
     local pref=$1
     shift
@@ -349,10 +349,10 @@ inject_phase_funcs()
     done
 }
 
-inject_common_phase_funcs()
+pkgcore_inject_common_phase_funcs()
 {
-    inject_phase_funcs pkgcore_common pkg_{setup,nofetch,{pre,post}{inst,rm}} src_{unpack,compile,install,test}
+    pkgcore_inject_phase_funcs pkgcore_common pkg_{setup,nofetch,{pre,post}{inst,rm}} src_{unpack,compile,install,test}
 }
 
-DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} inject_phase_funcs inject_common_phase_funcs"
+DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} pkgcore_inject_phase_funcs pkgcore_inject_common_phase_funcs"
 true

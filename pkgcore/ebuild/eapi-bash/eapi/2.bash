@@ -39,7 +39,7 @@ default() {
 	default_${default_type}_${EBUILD_PHASE}
 }
 
-inject_phase_funcs pkgcore_eapi2 src_{configure,prepare}
-inject_common_phase_funcs
+pkgcore_inject_phase_funcs pkgcore_eapi2 src_{configure,prepare}
+pkgcore_inject_common_phase_funcs
 
 true

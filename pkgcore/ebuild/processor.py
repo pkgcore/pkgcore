@@ -577,8 +577,7 @@ class EbuildProcessor(object):
         line = line.split("=", 1)
         if len(line) != 2:
             raise FinishedProcessing(True)
-        else:
-            keys_dict[line[0]] = line[1]
+        keys_dict[line[0]] = line[1]
 
     def _inherit(self, line, ecache):
         """

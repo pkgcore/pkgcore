@@ -286,7 +286,7 @@ execute_phases() {
 				ewarn "failed to load env"
 				ewarn "this installed pkg may not behave correctly"
 				ewarn
-				sleepbeep 10
+				sleep 10
 			fi
 
 			[[ -n $PKGCORE_DEBUG ]] && set -x

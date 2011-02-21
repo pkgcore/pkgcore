@@ -397,20 +397,13 @@ execute_phases() {
 
 pkgcore_dump_metadata_keys() {
 	set -f
-	[ "${DEPEND:-unset}" != "unset" ] && 		echo "key DEPEND=$(echo $DEPEND)"
-	[ "${RDEPEND:-unset}" != "unset" ] && 		echo "key RDEPEND=$(echo $RDEPEND)"
-	[ "$SLOT:-unset}" != "unset" ] && 			echo "key SLOT=$(echo $SLOT)"
-	[ "$SRC_URI:-unset}" != "unset" ] && 		echo "key SRC_URI=$(echo $SRC_URI)"
-	[ "$RESTRICT:-unset}" != "unset" ] && 		echo "key RESTRICT=$(echo $RESTRICT)"
-	[ "$HOMEPAGE:-unset}" != "unset" ] && 		echo "key HOMEPAGE=$(echo $HOMEPAGE)"
-	[ "$LICENSE:-unset}" != "unset" ] && 		echo "key LICENSE=$(echo $LICENSE)"
-	[ "$DESCRIPTION:-unset}" != "unset" ] && 	echo "key DESCRIPTION=$(echo $DESCRIPTION)"
-	[ "$KEYWORDS:-unset}" != "unset" ] && 		echo "key KEYWORDS=$(echo $KEYWORDS)"
-	[ "$INHERITED:-unset}" != "unset" ] && 		echo "key INHERITED=$(echo $INHERITED)"
-	[ "$IUSE:-unset}" != "unset" ] && 			echo "key IUSE=$(echo $IUSE)"
-	[ "$PDEPEND:-unset}" != "unset" ] && 		echo "key PDEPEND=$(echo $PDEPEND)"
-	[ "$PROVIDE:-unset}" != "unset" ] && 		echo "key PROVIDE=$(echo $PROVIDE)"
-	[ "$EAPI:-unset}" != "unset" ] &&			echo "key EAPI=$(echo $EAPI)"
+	local key
+	for key in EAPI DEPEND RDEPEND SLOT SRC_URI RESTRICT HOMEPAGE LICENSE \
+		DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE; do
+		# deref the val, if it's not empty/unset, then spit a key command to EBD
+		# after using echo to normalize whitespace (specifically removal of newlines)
+		[ "${!key:-unset}" != "unset" ] && echo "key ${key}=$(echo ${!key})"
+	done
 	set +f
 }
 

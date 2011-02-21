@@ -190,9 +190,6 @@ dyn_compile()
 	#our libtool to create problematic .la files
 	export PWORKDIR="$WORKDIR"
 	src_compile
-	if has nostrip $FEATURES $RESTRICT; then
-		touch DEBUGBUILD
-	fi
 }
 
 dyn_configure()

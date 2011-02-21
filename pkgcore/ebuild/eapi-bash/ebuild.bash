@@ -209,8 +209,6 @@ generate_initial_ebuild_environ() {
 
 	[ -z "${ERRORMSG}" ] || die "${ERRORMSG}"
 
-	has nostrip ${RESTRICT} && export DEBUGBUILD=1
-
 	#a reasonable default for $S
 	if [ "$S" = "" ]; then
 		export S=${WORKDIR}/${P}

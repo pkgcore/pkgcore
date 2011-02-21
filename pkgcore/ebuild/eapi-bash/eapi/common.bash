@@ -342,7 +342,7 @@ pkgcore_inject_phase_funcs()
     local pref=$1
     shift
     while [ -n "$1" ]; do
-        if [ "$(type -t "$1" )" != "function" ]; then
+        if ! is_function "$1"; then
             eval "${1}() { ${pref}_${1}; }";
         fi
         shift

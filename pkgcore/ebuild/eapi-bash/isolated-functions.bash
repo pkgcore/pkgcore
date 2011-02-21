@@ -178,6 +178,16 @@ has() {
 	return 1
 }
 
+is_function() {
+	[[ $(type -t "$1") == function ]]
+}
+
+run_function_if_exists() {
+	is_function "$1" && "$@"
+}
+
+
 unset_colors
 DONT_EXPORT_VARS="${DONT_EXPORT_VARS} PKGCORE_RC_.*"
+DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} run_function_if_exists is_function"
 true

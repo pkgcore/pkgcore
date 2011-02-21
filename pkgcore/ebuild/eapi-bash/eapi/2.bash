@@ -23,20 +23,13 @@ default_src_configure() { pkgcore_eapi2_src_configure; }
 default_src_prepare()   { pkgcore_eapi2_src_prepare; }
 
 default() {
-	local default_type=$(type -t default_pkg_${EBUILD_PHASE})
-
-	# note we do substitution instead of direct comparison to protect against
-	# any bash misbehaviours across versions.
-	if [[ ${default_type/function} == ${default_type} ]]; then
-		default_type=$(type -t default_src_${EBUILD_PHASE})
-		if [[ ${default_type/function} == ${default_type} ]]; then
-			die "default is not available in ebuild phase '${EBUILD_PHASE}'"
-		fi
-		default_type=src
+	if is_function default_pkg_${EBUILD_PHASE}; then
+		default_pkg_${EBUILD_PHASE}
+	elif is_function default_src_${EBUILD_PHASE}; then
+		default_src_${EBUILD_PHASE}
 	else
-		default_type=pkg
+		die "default is not available in ebuild phase '${EBUILD_PHASE}'"
 	fi
-	default_${default_type}_${EBUILD_PHASE}
 }
 
 pkgcore_inject_phase_funcs pkgcore_eapi2 src_{configure,prepare}

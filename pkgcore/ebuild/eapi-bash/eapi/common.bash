@@ -337,6 +337,57 @@ docinto()
     fi
 }
 
+pkgcore_common_pre_phase()
+{
+	if [ -d "${S}" ]; then
+		cd "${S}"
+	else
+		cd "$WORKDIR"
+	fi
+}
+
+pkgcore_default_pre_src_unpack()
+{
+	export S
+	cd "${WORKDIR}"
+}
+
+pkgcore_default_pre_src_prepare() { pkgcore_common_pre_phase; }
+pkgcore_default_pre_src_test()    { pkgcore_common_pre_phase; }
+
+pkgcore_default_pre_src_configure()
+{
+	for x in C{BUILD,HOST,TARGET,C,XX} {AS,LD,{,LIB}C{,XX}}FLAGS; do
+		[[ -z ${!x} ]] && export ${x}="${!x}"
+	done
+	# this is/was used by libtool bits to filter bad pathways out
+	# likely dead, but keep it around for the time being.
+	export PWORKDIR=${WORKDIR}
+	pkgcore_common_pre_phase
+}
+
+pkgcore_default_pre_src_compile()
+{
+	# just reuse the default_pre_src_configure; this means we don't have to care
+	# if the eapi has configure or not.
+	pkgcore_default_pre_src_configure
+
+	[[ -n ${DISTCC_DIR} ]] && addwrite "${DISTCC_DIR}"
+}
+
+pkgcore_default_pre_src_install()
+{
+	local x
+	export DESTTREE=/usr INSDESTTREE='' EXEDESTTREE='' DOCDESTTREE=''
+	export INSOPTIONS="-m0644" EXEOPTIONS="-m0755"
+	export LIBOPTIONS="-m0644" DIROPTIONS="-m0755"
+	export MOPREFIX=${PN}
+	export D
+	rm -rf "${D}"
+	mkdir "${D}"
+	pkgcore_common_pre_phase
+}
+
 pkgcore_inject_phase_funcs()
 {
     local pref=$1

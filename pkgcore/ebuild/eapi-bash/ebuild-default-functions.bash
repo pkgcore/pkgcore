@@ -150,97 +150,10 @@ unpack()
 
 }
 
-dyn_unpack()
-{
-	cd "${WORKDIR}"
-	src_unpack
-}
-
-dyn_compile()
-{
-	export DESTTREE=/usr
-	export INSDESTTREE=""
-	export EXEDESTTREE=""
-	export DOCDESTTREE=""
-	export INSOPTIONS="-m0644"
-	export EXEOPTIONS="-m0755"
-	export LIBOPTIONS="-m0644"
-	export DIROPTIONS="-m0755"
-	export MOPREFIX=${PN}
-
-	[ "${CFLAGS-unset}"      != "unset" ] && export CFLAGS
-	[ "${CXXFLAGS-unset}"    != "unset" ] && export CXXFLAGS
-	[ "${LIBCFLAGS-unset}"   != "unset" ] && export LIBCFLAGS
-	[ "${LIBCXXFLAGS-unset}" != "unset" ] && export LIBCXXFLAGS
-	[ "${LDFLAGS-unset}"     != "unset" ] && export LDFLAGS
-	[ "${ASFLAGS-unset}"     != "unset" ] && export ASFLAGS
-
-	[ ! -z "${DISTCC_DIR}" ] && addwrite "${DISTCC_DIR}"
-
-	if [ -d "${S}" ]; then
-		cd "${S}"
-	else
-		# cd to some random dir that we at least control.
-		cd "${WORKDIR}"
-	fi
-	#our custom version of libtool uses $S and $D to fix
-	#invalid paths in .la files
-	export S D
-	#some packages use an alternative to $S to build in, cause
-	#our libtool to create problematic .la files
-	export PWORKDIR="$WORKDIR"
-	src_compile
-}
-
-dyn_configure()
-{
-	if [ -d "${S}" ]; then
-		cd "${S}"
-	else
-		cd "$WORKDIR"
-	fi
-	src_configure
-}
-
-dyn_prepare()
-{
-	if [ -d "${S}" ]; then
-		cd "${S}"
-	else
-		cd "$WORKDIR"
-	fi
-	src_prepare
-}
-
-dyn_test()
-{
-		echo ">>> Test phase [enabled]: ${CATEGORY}/${PF}"
-		if [ -d "${S}" ]; then
-			cd "${S}"
-		else
-			cd "${WORKDIR}"
-		fi
-		src_test
-}
-
-
 dyn_install()
 {
-	rm -rf "${D}"
-	mkdir "${D}"
-	if [ -d "${S}" ]; then
-		cd "${S}"
-	else
-		cd "$WORKDIR"
-	fi
 	echo
 	echo ">>> Install ${PF} into ${D} category ${CATEGORY}"
-	#our custom version of libtool uses $S and $D to fix
-	#invalid paths in .la files
-	export S D
-	#some packages uses an alternative to $S to build in, cause
-	#our libtool to create problematic .la files
-	export PWORKDIR="$WORKDIR"
 	src_install
 	prepall
 	cd "${D}"
@@ -315,11 +228,6 @@ dyn_install()
 	echo ">>> Completed installing ${PF} into ${D}"
 	echo
 	unset dir
-}
-
-dyn_postinst()
-{
-	pkg_postinst
 }
 
 dyn_preinst()

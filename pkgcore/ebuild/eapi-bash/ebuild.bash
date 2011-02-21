@@ -290,6 +290,7 @@ execute_phases() {
 			fi
 
 			[[ -n $PKGCORE_DEBUG ]] && set -x
+			run_function_if_exists pkgcore_default_pre_pkg_${EBUILD_PHASE}
 			run_function_if_exists pre_pkg_${EBUILD_PHASE}
 			if is_function dyn_${EBUILD_PHASE}; then
 				dyn_${EBUILD_PHASE}
@@ -317,8 +318,13 @@ execute_phases() {
 			fi
 			[ -z "${S}" ] && die "S was null- ${S}, path=$PATH"
 			[[ -n $PKGCORE_DEBUG ]] && set -x
+			run_function_if_exists pkgcore_default_pre_src_${EBUILD_PHASE}
 			run_function_if_exists pre_src_${EBUILD_PHASE}
-			dyn_${EBUILD_PHASE}
+			if is_function dyn_${EBUILD_PHASE}; then
+				dyn_${EBUILD_PHASE}
+			else
+				src_${EBUILD_PHASE}
+			fi
 			ret=0
 			run_function_if_exists post_src_${EBUILD_PHASE}
 			[[ $PKGCORE_DEBUG -lt 2 ]] && set +x
@@ -353,6 +359,7 @@ execute_phases() {
 			fi
 
 			[[ -n $PKGCORE_DEBUG ]] && set -x
+			run_function_if_exists pkgcore_default_pre_pkg_setup
 			run_function_if_exists pre_pkg_setup
 			pkg_setup
 			ret=0;

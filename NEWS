@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* bashrc hooks now run from ${S} or ${WORKDIR}, depending on
+  PMS rules for that phase.
+
 * match the other PM's for econf; update ${WORKDIR} instances of
   config.{sub,guess} from /usr/share/gnuconfig.
 

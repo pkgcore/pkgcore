@@ -213,11 +213,6 @@ einstall()
     fi
 }
 
-pkgcore_common_pkg_setup()
-{
-    :
-}
-
 pkgcore_common_pkg_nofetch()
 {
     [ -z "${SRC_URI}" ] && return
@@ -262,31 +257,6 @@ pkgcore_common_src_test()
         echo ">>> Test phase [none]: ${CATEGORY}/${PF}"
     fi
     SANDBOX_PREDICT="${SANDBOX_PREDICT%:/}"
-}
-
-src_install()
-{
-    :
-}
-
-pkg_preinst()
-{
-    :
-}
-
-pkg_postinst()
-{
-    :
-}
-
-pkg_prerm()
-{
-    :
-}
-
-pkg_postrm()
-{
-    :
 }
 
 into()
@@ -402,7 +372,7 @@ pkgcore_inject_phase_funcs()
 
 pkgcore_inject_common_phase_funcs()
 {
-    pkgcore_inject_phase_funcs pkgcore_common pkg_{setup,nofetch,{pre,post}{inst,rm}} src_{unpack,compile,install,test}
+    pkgcore_inject_phase_funcs pkgcore_common pkg_nofetch src_{unpack,compile,test}
 }
 
 hasv() {

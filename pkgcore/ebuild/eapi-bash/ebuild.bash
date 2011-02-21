@@ -361,7 +361,7 @@ execute_phases() {
 			[[ -n $PKGCORE_DEBUG ]] && set -x
 			run_function_if_exists pkgcore_default_pre_pkg_setup
 			run_function_if_exists pre_pkg_setup
-			pkg_setup
+			run_function_if_exists pkg_setup
 			ret=0;
 			run_function_if_exists post_pkg_setup
 			[[ $PKGCORE_DEBUG -lt 2 ]] && set +x

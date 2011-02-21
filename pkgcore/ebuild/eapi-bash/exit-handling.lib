@@ -31,14 +31,21 @@ die() {
 		((linespacing < ${#lineno}))     && linespacing=${#lineno}
 	done
 
+	echo >&2
 	echo "!!! ERROR: $CATEGORY/$PF failed." >&2
 	echo "!!! die invoked from directory $(pwd)" >&2
-	dump_trace 2 ${filespacing} ${linespacing} >&2
-	echo "!!!   $(printf "%${filespacing}s" "${BASH_SOURCE[1]##*/}"), line $(printf "%${linespacing}s" "${BASH_LINENO[0]}"):  Called die" >&2
+	if [[ -z ${PKGCORE_IS_NOT_HELPER} ]]; then
+		echo "!!! was running helper: ${0##*/}"
+	else
+		dump_trace 2 ${filespacing} ${linespacing} >&2
+		echo "!!!   $(printf "%${filespacing}s" "${BASH_SOURCE[1]##*/}"), line $(printf "%${linespacing}s" "${BASH_LINENO[0]}"):  Called die" >&2
+	fi
 	echo "!!! The die message:" >&2
 	echo "!!!  ${*:-(no error message)}" >&2
-	echo "!!!" >&2
-	echo "!!! If you need support, post the topmost build error, and the call stack if relevant." >&2
+	if [[ -n ${PKGCORE_IS_NOT_HELPER} ]]; then
+		echo "!!!" >&2
+		echo "!!! If you need support, post the topmost build error, and the call stack if relevant." >&2
+	fi
 	if [[ "${EBUILD_PHASE/depend}" == "${EBUILD_PHASE}" ]] ; then
 		local x
 		for x in $EBUILD_DEATH_HOOKS; do
@@ -46,6 +53,9 @@ die() {
 		done
 	fi
 	echo >&2
+	if [[ -z ${PKGCORE_IS_NOT_HELPER} ]] && [[ -n ${PKGCORE_EBUILD_PROCESS_PID} ]]; then
+		kill -10 ${PKGCORE_EBUILD_PROCESS_PID}
+	fi
 	exit 1
 }
 
@@ -81,13 +91,24 @@ dump_trace() {
 }
 
 pkgcore_helper_exit() {
-	[[ $2 == 0 ]] && exit 0
+	[[ $1 == 0 ]] && exit 0
 	if [[ -n ${PKGCORE_NONFATAL_HELPER} ]]; then
-		echo "WARNING: exitcode $2 from ${1##*/}" >&2
-		exit $2
+		echo "WARNING: exitcode $1 from ${0##*/}" >&2
+		exit $1
 	fi
-	if [[ -z $3 ]]; then
-		die "${1##*/} returned error $2"
+	if [[ -z $2 ]]; then
+		die "returned error $1"
 	fi
-	die "${1##*/}: exitcode $2: $3"
+	die "exitcode $1: $2"
 }
+
+pkgcore_helper_died() {
+	die "got $*";
+}
+
+pkgcore_helper_check_exit() {
+	[[ $1 == 0 ]] && return
+	pkgcore_helper_exit "$@"
+}
+
+:

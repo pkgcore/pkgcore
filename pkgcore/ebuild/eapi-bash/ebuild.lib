@@ -277,9 +277,24 @@ source "${PKGCORE_BIN_PATH}/ebuild-env-utils.lib" >&2 || die "failed sourcing eb
 execute_phases() {
 	local ret
 	local PKGCORE_MUST_EXPORT_ENV
+
+	# give us pretty tracebacks.
+	shopt -s extdebug
+
 	trap "exit 2" SIGINT
 	trap "exit 9" SIGQUIT
 	trap 'exit 1' SIGTERM
+	trap 'die "a helper failed, see above"' SIGUSR1
+	declare -rx PKGCORE_EBUILD_PROCESS_PID=$BASHPID
+
+	if has ${EAPI:-0} 0 1 2 3; then
+		declare -rx PKGCORE_NONFATAL_HELPER=1
+	fi
+
+	# local scope; this keeps it from bleeding further, and keeps
+	# it from being exported- we use it to track if we're subshelled w/in the main
+	# ebd instance, or if we're in a literal child process.
+	local PKGCORE_IS_NOT_HELPER=1
 	for myarg in $*; do
 		PKGCORE_EBUILD_PHASE="$myarg"
 		EBUILD_PHASE="$myarg"

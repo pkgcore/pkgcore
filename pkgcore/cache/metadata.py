@@ -41,7 +41,7 @@ class database(flat_hash.database):
 
     auxdbkeys_order = ('DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
         'RESTRICT',  'HOMEPAGE',  'LICENSE', 'DESCRIPTION',
-        'KEYWORDS',  'INHERITED', 'IUSE', 'CDEPEND',
+        'KEYWORDS',  'INHERITED', 'IUSE', 'REQUIRED_USE',
         'PDEPEND',   'PROVIDE', 'EAPI', 'PROPERTIES',
         'DEFINED_PHASES')
 

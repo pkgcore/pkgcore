@@ -18,8 +18,8 @@ incrementals_unfinalized = ("USE",)
 
 metadata_keys = (
     'DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI', 'RESTRICT', 'HOMEPAGE', 'LICENSE',
-    'DESCRIPTION', 'KEYWORDS', 'INHERITED', 'IUSE', 'PDEPEND', 'PROVIDE',
-    'EAPI', 'PROPERTIES', 'DEFINED_PHASES', '_mtime_', '_eclasses_')
+    'DESCRIPTION', 'KEYWORDS', 'INHERITED', 'IUSE', 'REQUIRED_USE', 'PDEPEND',
+    'PROVIDE', 'EAPI', 'PROPERTIES', 'DEFINED_PHASES', '_mtime_', '_eclasses_')
 
 ACCEPT_LICENSE = ()
 

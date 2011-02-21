@@ -67,6 +67,9 @@ class EAPI(object):
 def get_eapi(magic):
     return EAPI.known_eapis.get(magic)
 
+def is_supported(magic):
+    return magic in EAPI.known_eapis
+
 
 def shorten_phase_name(func_name):
     if func_name.startswith("src_") or func_name.startswith("pkg_"):

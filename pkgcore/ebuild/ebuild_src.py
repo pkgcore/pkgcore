@@ -29,7 +29,10 @@ from snakeoil import klass
 from snakeoil.compatibility import intern
 
 from snakeoil.demandload import demandload
-demandload(globals(), "pkgcore.log:logger")
+demandload(globals(),
+    "pkgcore.log:logger",
+    "pkgcore.ebuild.eapi:get_eapi",
+)
 
 
 _eapi_limited_atom_kls = tuple(partial(atom, eapi=x) for x in
@@ -321,6 +324,30 @@ class package_factory(metadata.factory):
             del mydata["INHERITED"]
         else:
             mydata["_eclasses_"] = {}
+
+        # rewrite defined_phases as needed, since we now know the eapi.
+        eapi = get_eapi(mydata["EAPI"])
+        wipes = set(mydata)
+        if eapi is None:
+            # drop the metadata, leaving just the validation info
+            # we currently know about, and marking the eapi
+            # in a negative fashion.
+            wipes.difference_update(["_eclasses_", "EAPI", "_mtime_"])
+            mydata["EAPI"] = "-" + mydata["EAPI"]
+        else:
+            wipes.difference_update(eapi.metadata_keys)
+            if mydata["DEFINED_PHASES"] != '-':
+                phases = mydata["DEFINED_PHASES"].split()
+                d = eapi.phases_rev
+                phases = set(d.get(x) for x in phases)
+                # discard is required should we have gotten
+                # a phase that isn't actually in this eapi
+                phases.discard(None)
+                phases.difference_update(eapi.default_phases)
+                mydata["DEFINED_PHASES"] = ' '.join(sorted(phases))
+
+        for x in wipes:
+            del mydata[x]
 
         if self._cache is not None:
             for cache in self._cache:

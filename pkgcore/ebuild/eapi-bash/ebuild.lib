@@ -434,6 +434,17 @@ pkgcore_dump_metadata_keys() {
 		# after using echo to normalize whitespace (specifically removal of newlines)
 		[ "${!key:-unset}" != "unset" ] && echo "key ${key}=$(echo ${!key})"
 	done
+
+	# defined phases... fun one.
+	local phases
+	for key in pkg_{pretend,configure,info,{pre,post}{rm,inst},setup} \
+		src_{unpack,prepare,configure,compile,test,install}; do
+			is_function "${key}" && phases="${phases} ${key}"
+	done
+	# strip whitespace
+	phases=$(echo ${phases})
+	echo "key DEFINED_PHASES=${phases:--}"
+
 	set +f
 }
 

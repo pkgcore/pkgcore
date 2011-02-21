@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* write support for DEFINED_PHASES.
+
 * bashrc hooks now run from ${S} or ${WORKDIR}, depending on
   PMS rules for that phase.
 

@@ -42,7 +42,8 @@ class database(flat_hash.database):
     auxdbkeys_order = ('DEPEND', 'RDEPEND', 'SLOT', 'SRC_URI',
         'RESTRICT',  'HOMEPAGE',  'LICENSE', 'DESCRIPTION',
         'KEYWORDS',  'INHERITED', 'IUSE', 'CDEPEND',
-        'PDEPEND',   'PROVIDE', 'EAPI')
+        'PDEPEND',   'PROVIDE', 'EAPI', 'PROPERTIES',
+        'DEFINED_PHASES')
 
     # this is the old cache format, flat_list.  hardcoded, and must
     # remain that way.

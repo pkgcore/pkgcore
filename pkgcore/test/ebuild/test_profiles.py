@@ -8,7 +8,7 @@ from snakeoil.test.mixins import TempDirMixin
 from snakeoil.osutils import pjoin, ensure_dirs
 from snakeoil.compatibility import all
 
-from pkgcore.ebuild import profiles, const
+from pkgcore.ebuild import profiles
 from pkgcore.ebuild.misc import chunked_data
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
@@ -122,7 +122,7 @@ class TestProfileNode(profile_mixin, TestCase):
         self.assertEqual(ProfileNode(path).eapi, '0')
         self.write_file("eapi", "1")
         self.assertEqual(ProfileNode(path).eapi, '1')
-        self.write_file("eapi", str(const.unknown_eapi))
+        self.write_file("eapi", "some-random-eapi-adsfafa")
         self.assertRaises(profiles.ProfileError, getattr,
             ProfileNode(path), 'eapi')
 

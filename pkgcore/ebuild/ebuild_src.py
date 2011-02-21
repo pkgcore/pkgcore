@@ -137,7 +137,7 @@ def generate_eapi(self):
             return 0
         return int(d)
     except ValueError:
-        return const.unknown_eapi
+        return "unsupported"
 
 def get_slot(self):
     o = self.data.pop("SLOT", "0").strip()

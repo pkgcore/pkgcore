@@ -101,7 +101,7 @@ class test_base(TestCase):
         self.assertEqual(self.get_pkg({'EAPI': '0'}).eapi, 0)
         self.assertEqual(self.get_pkg({'EAPI': ''}).eapi, 0)
         self.assertEqual(self.get_pkg({'EAPI': 'foon'}).eapi,
-            const.unknown_eapi)
+            "unsupported")
         self.assertRaises(errors.MetadataException, getattr,
             self.get_pkg({'EAPI':0, 'DEPEND':"d/b:0"}), 'depends')
         self.assertRaises(errors.MetadataException, getattr,

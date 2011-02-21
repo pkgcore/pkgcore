@@ -215,7 +215,7 @@ einstall()
 
 pkgcore_common_pkg_setup()
 {
-    return
+    :
 }
 
 pkgcore_common_pkg_nofetch()
@@ -266,27 +266,27 @@ pkgcore_common_src_test()
 
 src_install()
 {
-    return
+    :
 }
 
 pkg_preinst()
 {
-    return
+    :
 }
 
 pkg_postinst()
 {
-    return
+    :
 }
 
 pkg_prerm()
 {
-    return
+    :
 }
 
 pkg_postrm()
 {
-    return
+    :
 }
 
 into()

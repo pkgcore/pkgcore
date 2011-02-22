@@ -198,6 +198,10 @@ class base(metadata.package):
     __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])
 
     @property
+    def eapi_obj(self):
+        return get_eapi(str(self.eapi))
+
+    @property
     def P(self):
         return "%s-%s" % (self.package, self.version)
 

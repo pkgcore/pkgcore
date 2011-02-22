@@ -10,6 +10,7 @@ demandload(globals(),
 
 eapi_optionals = mappings.ImmutableDict({
     "trust_defined_phases_cache":True,
+    "prefix_capable":True,
 })
 
 class optionals_cls(mappings.ImmutableDict):
@@ -129,7 +130,7 @@ eapi0 = EAPI("0",
     common_default_phases,
     common_metadata_keys,
     common_mandatory_metadata_keys,
-    dict(trust_defined_phases_cache=False),
+    dict(trust_defined_phases_cache=False, prefix_capable=False),
 )
 
 eapi1 = EAPI("1",
@@ -153,6 +154,7 @@ eapi3 = EAPI("3",
     eapi2.default_phases,
     eapi2.metadata_keys,
     eapi2.mandatory_keys,
-    eapi2.options,
+    combine_dicts(eapi2.options,
+        dict(prefix_capable=True)),
 )
 

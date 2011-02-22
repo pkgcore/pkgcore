@@ -118,7 +118,7 @@ class ebd(object):
         self.env["PKGCORE_EAPI"] = str(pkg.eapi)
 
         # XXX: note this is just eapi3 compatibility; not full prefix, soon..
-        if pkg.eapi not in (0,1,2):
+        if pkg.eapi_obj.options.prefix_capable:
             self.env['EROOT'] = self.env['ROOT']
             self.env['EPREFIX'] = ''
 
@@ -171,6 +171,7 @@ class ebd(object):
 
         self.pkg = pkg
         self.eapi = pkg.eapi
+        self.eapi_obj = pkg.eapi_obj
         wipes = [k for k, v in self.env.iteritems()
                  if not isinstance(v, basestring)]
         for k in wipes:
@@ -207,7 +208,7 @@ class ebd(object):
 
         # XXX: note that this is just eapi3 support, not yet prefix
         # full awareness.
-        if self.eapi not in (0,1,2):
+        if self.eapi_obj.options.prefix_capable:
             self.env["ED"] = self.env["D"]
 
     def get_env_source(self):
@@ -688,7 +689,7 @@ class buildable(ebd, setup_mixin, format.build):
         does nothing if the pkg's EAPI is less than 2 (that spec lacks a
         seperated configure phase).
         """
-        if self.eapi > 1:
+        if "configure" in self.eapi_obj.phases:
             return self._generic_phase("configure", True, True, False)
         return True
 
@@ -698,7 +699,7 @@ class buildable(ebd, setup_mixin, format.build):
 
         does nothing if the pkg's EAPI is less than 2
         """
-        if self.eapi >= 2:
+        if "prepare" in self.eapi_obj.phases:
             return self._generic_phase("prepare", True, True, False)
         return True
 

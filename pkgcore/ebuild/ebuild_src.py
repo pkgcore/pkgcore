@@ -345,7 +345,6 @@ class package_factory(metadata.factory):
                 # discard is required should we have gotten
                 # a phase that isn't actually in this eapi
                 phases.discard(None)
-                phases.difference_update(eapi.default_phases)
                 mydata["DEFINED_PHASES"] = ' '.join(sorted(phases))
 
         mydata["_mtime_"] = long(pkg._mtime_)

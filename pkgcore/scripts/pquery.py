@@ -296,7 +296,7 @@ class OptionParser(commandline.OptionParser):
         'maintainers', 'restrict', 'repo', 'alldepends', 'path', 'version',
         'revision', 'fullver', 'environment', 'keywords', 'homepage',
         'fetchables', 'eapi', 'inherited', 'chost', 'cbuild', 'ctarget',
-        'all', 'allmetadata', 'properties'))
+        'all', 'allmetadata', 'properties', 'defined_phases'))
 
     metadata_attrs = tuple(x for x in printable_attrs if not x.startswith("all")
         and x != 'environment')
@@ -620,7 +620,7 @@ def stringify_attr(config, pkg, attr):
     if value is None:
         return 'MISSING'
 
-    if attr in ('herds', 'iuse', 'maintainers', 'properties'):
+    if attr in ('herds', 'iuse', 'maintainers', 'properties', 'defined_phases'):
         return ' '.join(sorted(unicode(v) for v in value))
     if attr == 'longdescription':
         return unicode(value)

@@ -217,6 +217,8 @@ class pkgcore_build_py(snk_distutils.build_py):
         base = os.path.join(self.build_lib, "pkgcore", "ebuild", "eapi-bash")
         self._recursive_chmod_files(os.path.join(base, "helpers"))
         self.set_chmod(os.path.join(base, "ebuild-daemon.bash"))
+        self.set_chmod(os.path.join(base, "regenerate_dont_export_func_list.bash"))
+        self.set_chmod(os.path.join(base, "filter-env"))
 
     def set_chmod(self, path):
         if self.dry_run:
@@ -270,7 +272,8 @@ core.setup(
     package_data={
         'pkgcore.ebuild':
             ['eapi-bash/%s' % (x,) for x in
-                ['filter-env', 'portageq_emulation', '*.lib', 'eapi/*', '*.bash']
+                ['filter-env', 'portageq_emulation', '*.lib', 'eapi/*', '*.bash',
+                '*.list']
             ] +
             ['eapi-bash/helpers/%s' % (x,) for x in ("banned", "common/*")
             ],

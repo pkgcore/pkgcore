@@ -1,4 +1,4 @@
-# Copyright 2005-2010 Brian Harring <ferringb@gmail.com>: BSD/GPL2
+# Copyright 2005-2011 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 # this functionality is all related to saving/loading environmental dumps for ebuilds
 
 filter_env_func_filter() {

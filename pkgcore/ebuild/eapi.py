@@ -51,7 +51,7 @@ class EAPI(object):
     def atom_kls(self):
         return partial(atom.atom, eapi=int(self.magic))
 
-    def interpret_cache_defined_phases(self, sequence):
+    def interpret_cache_defined_phases(self, sequence, add_defaults=True):
         phases = set(sequence)
         if not self._trust_defined_phases_cache:
             if not phases:
@@ -60,6 +60,8 @@ class EAPI(object):
                 return frozenset(self.phases)
 
         phases.discard("-")
+        if not add_defaults:
+            return frozenset(phases)
         if phases:
             return self.default_phases | phases
         return self.default_phases

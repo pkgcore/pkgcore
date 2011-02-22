@@ -196,8 +196,8 @@ class base(metadata.package):
         s.data.pop("IUSE", "").split()))
     _get_attr["properties"] = lambda s:frozenset(imap(intern,
         s.data.pop("PROPERTIES", "").split()))
-    _get_attr["defined_phases"] = lambda s:frozenset(imap(intern,
-        s.data.pop("DEFINED_PHASES", "").split()))
+    _get_attr["defined_phases"] = lambda s:s.eapi_obj.interpret_cache_defined_phases(imap(intern,
+        s.data.pop("DEFINED_PHASES", "").split()), False)
     _get_attr["homepage"] = lambda s:s.data.pop("HOMEPAGE", "").strip()
 
     __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])

@@ -158,3 +158,9 @@ eapi3 = EAPI("3",
         dict(prefix_capable=True)),
 )
 
+eapi4 = EAPI("4",
+    combine_dicts(eapi3.phases, mk_phase_func_map("pkg_pretend")),
+    eapi3.default_phases,
+    eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
+    eapi3.mandatory_keys,
+)

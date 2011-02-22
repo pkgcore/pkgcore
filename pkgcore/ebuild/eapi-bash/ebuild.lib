@@ -78,13 +78,15 @@ alias load_environ='{
 	EXISTING_PATH=${PATH};
 	scrub_environ "${TARGET_ENV}";source "${T}/.scrubbed-env" >&2 || die "sourcing scrubbed env failed";
 	pkgcore_ensure_PATH "${EXISTING_PATH}";
-	EAPI=${PKGCORE_EAPI-${EAPI}}
+	export EAPI=${PKGCORE_EAPI-${EAPI}}
+	pkgcore_load_eapi_libs
 	unset -v EXISTING_PATH;
 }'
 
 alias init_environ='{
-    EXISTING_PATH=${PATH};
-    eval "$(generate_initial_ebuild_environ)" || die "failed loading initialized environment";
+	EXISTING_PATH=${PATH};
+	pkgcore_load_eapi_libs
+	eval "$(generate_initial_ebuild_environ)" || die "failed loading initialized environment";
 	pkgcore_ensure_PATH "${EXISTING_PATH}";
 	unset -v EXISTING_PATH;
 }'
@@ -285,7 +287,6 @@ execute_phases() {
 		case $EBUILD_PHASE in
 		nofetch)
 			init_environ
-			pkgcore_load_eapi_libs
 			pkg_nofetch
 			PKGCORE_MUST_EXPORT_ENV=
 			ret=1
@@ -307,8 +308,6 @@ execute_phases() {
 				ewarn
 				sleep 10
 			fi
-
-			pkgcore_load_eapi_libs
 
 			[[ -n $PKGCORE_DEBUG ]] && set -x
 			run_function_if_exists pkgcore_default_pre_pkg_${EBUILD_PHASE}
@@ -339,8 +338,6 @@ execute_phases() {
 				ewarn "failed to load env.  This is bad, bailing."
 				die "unable to load saved env for phase $EBUILD_PHASE, unwilling to continue"
 			fi
-
-			pkgcore_load_eapi_libs
 
 			[ -z "${S}" ] && die "S was null- ${S}, path=$PATH"
 			[[ -n $PKGCORE_DEBUG ]] && set -x
@@ -385,8 +382,6 @@ execute_phases() {
 					die "failed loading saved env; at ${T}/environment"
 				fi
 			fi
-
-			pkgcore_load_eapi_libs
 
 			[[ -n $PKGCORE_DEBUG ]] && set -x
 			run_function_if_exists pkgcore_default_pre_pkg_setup

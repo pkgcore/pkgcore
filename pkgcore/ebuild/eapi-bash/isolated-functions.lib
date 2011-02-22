@@ -179,7 +179,7 @@ has() {
 }
 
 is_function() {
-	[[ $(type -t "$1") == function ]]
+	declare -F "$1" &> /dev/null
 }
 
 run_function_if_exists() {

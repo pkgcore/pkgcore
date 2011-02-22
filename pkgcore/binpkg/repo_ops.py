@@ -107,13 +107,14 @@ class install(repo_interfaces.install):
 
     def finalize_data(self):
         os.rename(self.tmp_path, self.final_path)
+        return True
 
 
 class uninstall(repo_interfaces.uninstall):
 
     @klass.steal_docs(repo_interfaces.uninstall)
     def remove_data(self):
-        pass
+        return True
 
     @klass.steal_docs(repo_interfaces.uninstall)
     def finalize_data(self):
@@ -128,6 +129,7 @@ class replace(install, uninstall, repo_interfaces.replace):
         # we just invoke install finalize_data, since it atomically
         # transfers the new pkg in
         install.finalize_data(self)
+        return True
 
 
 class operations(repo_interfaces.operations):

@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix to buildpkg/pristine-binpkg saving.  If you're looking for
+  something to contribute to pkgcore wise, tests for this would be
+  appreciated.
+
 * Roughly a 11x speedup in metadata regeneration; basically rework
   a fix that was added to to 0.5.11 (dealing with portage induced
   breakage in env loadup from their declare usage).

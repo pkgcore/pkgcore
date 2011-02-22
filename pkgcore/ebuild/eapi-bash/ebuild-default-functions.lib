@@ -154,7 +154,11 @@ dyn_install()
 {
 	echo
 	echo ">>> Install ${PF} into ${D} category ${CATEGORY}"
-	run_function_if_exists src_install
+	if is_function src_install; then
+		src_install
+	else
+		run_function_if_exists pkgcore_default_src_install
+	fi
 	prepall
 	cd "${D}"
 
@@ -235,8 +239,11 @@ dyn_preinst()
 	# set IMAGE depending if this is a binary or compile merge
 	local IMAGE=${D}
 
-	# Make sure D is where the package expects it
-	D=${IMAGE} run_function_if_exists pkg_preinst
+	if is_function pkg_preinst; then
+		pkg_preinst
+	else
+		run_function_if_exists pkgcore_default_pkg_preinst
+	fi
 
 	# total suid control.
 	if has suidctl $FEATURES > /dev/null ; then

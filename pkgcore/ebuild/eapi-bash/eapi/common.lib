@@ -356,7 +356,7 @@ pkgcore_inject_phase_funcs()
     shift
     while [ -n "$1" ]; do
         if ! is_function "$1"; then
-            eval "${1}() { ${pref}_${1}; }";
+            eval "pkgcore_default_${1}() { ${pref}_${1}; }";
         fi
         shift
     done

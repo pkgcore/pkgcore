@@ -310,8 +310,10 @@ execute_phases() {
 			run_function_if_exists pre_pkg_${EBUILD_PHASE}
 			if is_function dyn_${EBUILD_PHASE}; then
 				dyn_${EBUILD_PHASE}
+			elif is_function pkg_${EBUILD_PHASE}; then
+				pkg_${EBUILD_PHASE}
 			else
-				run_function_if_exists pkg_${EBUILD_PHASE}
+				run_function_if_exists pkgcore_default_pkg_${EBUILD_PHASE}
 			fi
 			ret=0
 
@@ -341,8 +343,10 @@ execute_phases() {
 			run_function_if_exists pre_src_${EBUILD_PHASE}
 			if is_function dyn_${EBUILD_PHASE}; then
 				dyn_${EBUILD_PHASE}
-			else
+			elif is_function src_${EBUILD_PHASE}; then
 				src_${EBUILD_PHASE}
+			else
+				run_function_if_exists pkgcore_default_src_${EBUILD_PHASE}
 			fi
 			ret=0
 			run_function_if_exists post_src_${EBUILD_PHASE}

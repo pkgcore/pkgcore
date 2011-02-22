@@ -8,13 +8,30 @@ demandload(globals(),
     "snakeoil.currying:partial",
 )
 
+eapi_optionals = mappings.ImmutableDict({
+    "trust_defined_phases_cache":True,
+})
+
+class optionals_cls(mappings.ImmutableDict):
+
+    __getattr__ = mappings.ImmutableDict.__getitem__
+    __setattr__ = mappings.ImmutableDict.__setitem__
+    __delattr__ = mappings.ImmutableDict.__delitem__
+
+    def __setattr__(self, attr):
+        raise AttributeError("instance %r is immutable- tried setting attr %r"
+            % (self, attr))
+
+    def __delattr__(self, attr):
+        raise AttributeError("instance %r is immutable- tried deleting attr %r"
+            % (self, attr))
+
 class EAPI(object):
 
     known_eapis = weakrefs.WeakValCache()
 
     def __init__(self, magic, phases, default_phases,
-        metadata_keys, mandatory_keys,
-        trust_defined_phases_cache=True):
+        metadata_keys, mandatory_keys, optionals):
 
         sf = object.__setattr__
 
@@ -36,7 +53,9 @@ class EAPI(object):
 
         sf(self, "mandatory_keys", frozenset(mandatory_keys))
         sf(self, "metadata_keys", frozenset(metadata_keys))
-        sf(self, "_trust_defined_phases_cache", trust_defined_phases_cache)
+        d = dict(eapi_optionals)
+        d.update(optionals)
+        sf(self, 'options', optionals_cls(d))
         self.known_eapis[magic] = self
 
     def __setattr__(self, attr):
@@ -53,7 +72,7 @@ class EAPI(object):
 
     def interpret_cache_defined_phases(self, sequence, add_defaults=True):
         phases = set(sequence)
-        if not self._trust_defined_phases_cache:
+        if not self.options.trust_defined_phases_cache:
             if not phases:
                 # run them all; cache was generated
                 # by a pm that didn't support DEFINED_PHASES
@@ -110,7 +129,7 @@ eapi0 = EAPI("0",
     common_default_phases,
     common_metadata_keys,
     common_mandatory_metadata_keys,
-    trust_defined_phases_cache=False
+    dict(trust_defined_phases_cache=False),
 )
 
 eapi1 = EAPI("1",
@@ -118,7 +137,7 @@ eapi1 = EAPI("1",
     eapi0.default_phases,
     eapi0.metadata_keys,
     eapi0.mandatory_keys,
-    trust_defined_phases_cache=False
+    eapi0.options,
 )
 
 eapi2 = EAPI("2",
@@ -126,7 +145,7 @@ eapi2 = EAPI("2",
     eapi1.default_phases | frozenset(["src_prepare", "src_configure"]),
     eapi1.metadata_keys,
     eapi1.mandatory_keys,
-    trust_defined_phases_cache=False
+    eapi1.options,
 )
 
 eapi3 = EAPI("3",
@@ -134,6 +153,6 @@ eapi3 = EAPI("3",
     eapi2.default_phases,
     eapi2.metadata_keys,
     eapi2.mandatory_keys,
-    trust_defined_phases_cache=False
+    eapi2.options,
 )
 

@@ -67,6 +67,9 @@ class package(ebuild_src.base):
     tracked_attributes = tuple(tracked_attributes)
     allow_regen = False
 
+    # hack, not for consumer usage
+    _is_from_source = False
+
     built = True
 
     __slots__ = ('cbuild', 'chost', 'ctarget', 'use', 'environment', 'contents')
@@ -136,6 +139,12 @@ class package(ebuild_src.base):
     @property
     def _mtime_(self):
         raise AttributeError(self, "_mtime_")
+
+class fresh_built_package(package):
+
+    __slots__ = ()
+
+    _is_from_source = True
 
 
 def generic_format_triggers(self, pkg, op_inst, format_op_inst, engine_inst):

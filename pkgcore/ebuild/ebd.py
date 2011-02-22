@@ -24,7 +24,7 @@ from pkgcore.spawn import (
 from pkgcore.os_data import xargs
 from pkgcore.ebuild.const import eapi_capable
 from pkgcore.operations import observer, format
-from pkgcore.ebuild.ebuild_built import fake_package_factory, package
+from pkgcore.ebuild import ebuild_built
 from snakeoil.currying import post_curry, pretty_docs, alias_class_method
 from snakeoil.osutils import (ensure_dirs, normpath, join as pjoin,
     listdir_files)
@@ -430,6 +430,12 @@ class install_op(ebd, format.install):
         ebd.__init__(self, pkg, observer=observer, initial_env=domain.settings,
             env_data_source=pkg.environment, clean=False)
 
+        if self.eapi_obj.options.has_merge_type:
+            if pkg._is_from_source:
+                self.env["MERGE_TYPE"] = 'source'
+            else:
+                self.env["MERGE_TYPE"] = 'binpkg'
+
     preinst = pretty_docs(
         observer.decorate_build_method("preinst")(
             post_curry(
@@ -510,7 +516,7 @@ class buildable(ebd, setup_mixin, format.build):
     build operation
     """
 
-    _built_class = package
+    _built_class = ebuild_built.fresh_built_package
 
     # XXX this is unclean- should be handing in strictly what is build
     # env, rather then dumping domain settings as env.
@@ -572,6 +578,9 @@ class buildable(ebd, setup_mixin, format.build):
         self.fetchables = pkg.fetchables[:]
         self.env["A"] = ' '.join(set(x.filename
             for x in self.fetchables))
+
+        if self.eapi_obj.options.has_merge_type:
+            self.env["MERGE_TYPE"] = "source"
 
         if self.setup_is_for_src:
             self.init_distfiles_env()
@@ -769,7 +778,8 @@ class buildable(ebd, setup_mixin, format.build):
 
         :return: L{pkgcore.ebuild.ebuild_built.package} instance
         """
-        return fake_package_factory(self._built_class).new_package(self.pkg,
+        factory = ebuild_built.fake_package_factory(self._built_class)
+        return factory.new_package(self.pkg,
             self.env["IMAGE"], pjoin(self.env["T"], "environment"))
 
 
@@ -778,9 +788,13 @@ class binpkg_buildable(ebd, setup_mixin, format.build):
     stage_depends = {"finalize":"setup", "setup":"start"}
     setup_is_for_src = False
 
+    _built_class = ebuild_built.package
+
     def __init__(self, domain, pkg, **kwargs):
         format.build.__init__(self, domain, pkg, observer=kwargs.get("observer",None))
         ebd.__init__(self, pkg, **kwargs)
+        if self.eapi_obj.options.has_merge_type:
+            self.env["MERGE_TYPE"] = "binpkg"
         self.fetchables = ()
 
     def finalize(self):

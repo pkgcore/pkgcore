@@ -168,7 +168,7 @@ class base(metadata.package):
     tracked_attributes = (
         "depends", "rdepends", "post_rdepends", "provides", "license",
         "slot", "keywords", "eapi", "restrict", "eapi", "description", "iuse",
-        "chost", "cbuild", "ctarget", "homepage")
+        "chost", "cbuild", "ctarget", "homepage", "properties")
 
     _config_wrappables = dict((x, alias_class_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
@@ -193,6 +193,8 @@ class base(metadata.package):
     _get_attr["eapi"] = generate_eapi
     _get_attr["iuse"] = lambda s:frozenset(imap(intern,
         s.data.pop("IUSE", "").split()))
+    _get_attr["properties"] = lambda s:frozenset(imap(intern,
+        s.data.pop("PROPERTIES", "").split()))
     _get_attr["homepage"] = lambda s:s.data.pop("HOMEPAGE", "").strip()
 
     __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])

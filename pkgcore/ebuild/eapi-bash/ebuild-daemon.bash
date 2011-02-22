@@ -43,7 +43,7 @@ listen PKGCORE_PYTHONPATH
 [ -z "$PKGCORE_PYTHONPATH" ] && die "empty PKGCORE_PYTHONPATH, bailing"
 declare -rx PKGCORE_PYTHONPATH
 
-if ! source "${PKGCORE_BIN_PATH}/ebuild.lib" daemonize >&2; then
+if ! source "${PKGCORE_BIN_PATH}/ebuild.lib" >&2; then
 	speak "failed"
 	die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild.lib"
 fi

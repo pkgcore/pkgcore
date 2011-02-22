@@ -438,12 +438,10 @@ pkgcore_dump_metadata_keys() {
 }
 
 #echo, everything has been sourced.  now level the read-only's.
-if [ "$*" != "daemonize" ]; then
-	for x in ${DONT_EXPORT_FUNCS}; do
-		declare -fr "$x" || die "failed marking ${x} func reaodnly"
-	done
-	unset x
-fi
+for x in ${DONT_EXPORT_FUNCS}; do
+	declare -fr "$x" || die "failed marking ${x} func reaodnly"
+done
+unset x
 
 DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $(declare | invoke_filter_env --print-vars | regex_filter_input ${ORIG_VARS} ${DONT_EXPORT_VARS})"
 
@@ -452,26 +450,7 @@ set +f
 
 export XARGS
 set +H -h
-# if we're being src'd for our functions, do nothing.  if called directly, define a few necessary funcs.
-if [ "$*" != "daemonize" ]; then
-
-	if [ "${*/depend}" != "$*" ]; then
-		speak() {
-			echo "$*" >&4
-		}
-		declare -rf speak
-	fi
-	if [ -z "${NOCOLOR}" ]; then
-		set_colors
-	else
-		unset_colors
-	fi
-	unset x
-	execute_phases $*
-	exit 0
-else
-	DAEMONIZED="yes"
-	export DAEMONIZED
-	readonly DAEMONIZED
-fi
+DAEMONIZED="yes"
+export DAEMONIZED
+readonly DAEMONIZED
 :

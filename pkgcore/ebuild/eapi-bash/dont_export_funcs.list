@@ -61,6 +61,7 @@ invoke_filter_env
 is_function
 keepdir
 libopts
+load_ebuild
 pkgcore_common_pkg_nofetch
 pkgcore_common_pre_phase
 pkgcore_common_src_compile

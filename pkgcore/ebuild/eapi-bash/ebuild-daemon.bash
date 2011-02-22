@@ -75,9 +75,6 @@ if ! source "${PKGCORE_BIN_PATH}/ebuild-daemon.lib" >&2; then
 	die "failed source ${PKGCORE_BIN_PATH}/ebuild-daemon.lib"
 fi
 
-DONT_EXPORT_FUNCS="$(declare -F | cut -s -d ' ' -f 3)"
-DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alive com PORTAGE_LOGFILE cont"
-
 # depend's speed up.  turn on qa interceptors by default, instead of flipping them on for each depends
 # call.
 export QA_CONTROLLED_EXTERNALLY="yes"
@@ -118,6 +115,17 @@ ebd_sigkill_handler() {
 }
 
 trap ebd_sigkill_handler SIGKILL
+
+DONT_EXPORT_FUNCS="$(declare -F | cut -s -d ' ' -f 3)"
+DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alive com PORTAGE_LOGFILE cont"
+
+# finally, load the master list of pkgcore funcs. fallback to
+# regenerating it if needed.
+if [ -e "${PKGCORE_BIN_PATH}/dont_export_funcs.list" ]; then
+	DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $(<${PKGCORE_BIN_PATH}/dont_export_funcs.list)"
+else
+	DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $("${PKGCORE_BIN_PATH}/regenerate_dont_export_func_list.bash" 2> /dev/null)"
+fi
 
 while [ "$alive" == "1" ]; do
 	com=''

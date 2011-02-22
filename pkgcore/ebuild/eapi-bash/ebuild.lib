@@ -73,8 +73,8 @@ alias restore_IFS='if [ "${portage_old_IFS:-unset}" != "unset" ]; then IFS="${po
 # gentoo bug 309369; nasty alias, but it exists due to portage using declare's in env dumping.  declare statements are implicitly local.
 # as such, the sourcing statement has to be in the same scope as the invoker of load_environ for that scope to get the changes
 alias load_environ='{
-	[ -z "${TARGET_ENV}" ] && die "load_environ was invoked w/out TARGET_ENV set";
-	[ -z "${T}" ] && die "init_environ requires \$T to be set";
+	[[ -z ${TARGET_ENV} ]] && die "load_environ was invoked w/out TARGET_ENV set";
+	[[ -z ${T} ]] && die "load_environ requires \$T to be set";
 	EXISTING_PATH=${PATH};
 	scrub_environ "${TARGET_ENV}";source "${T}/.scrubbed-env" >&2 || die "sourcing scrubbed env failed";
 	pkgcore_ensure_PATH "${EXISTING_PATH}";

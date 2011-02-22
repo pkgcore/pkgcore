@@ -317,14 +317,7 @@ class package_factory(metadata.factory):
             if ebp is not None:
                 processor.release_ebuild_processor(ebp)
 
-        mydata["_mtime_"] = long(pkg._mtime_)
-        if mydata.get("INHERITED", False):
-            mydata["_eclasses_"] = self._ecache.get_eclass_data(
-                mydata["INHERITED"].split())
-            del mydata["INHERITED"]
-        else:
-            mydata["_eclasses_"] = {}
-
+        inherited = mydata.pop("INHERITED", None)
         # rewrite defined_phases as needed, since we now know the eapi.
         eapi = get_eapi(mydata["EAPI"])
         wipes = set(mydata)
@@ -345,6 +338,14 @@ class package_factory(metadata.factory):
                 phases.discard(None)
                 phases.difference_update(eapi.default_phases)
                 mydata["DEFINED_PHASES"] = ' '.join(sorted(phases))
+
+        mydata["_mtime_"] = long(pkg._mtime_)
+        if inherited:
+            mydata["_eclasses_"] = self._ecache.get_eclass_data(
+                inherited.split())
+        else:
+            mydata["_eclasses_"] = {}
+
 
         for x in wipes:
             del mydata[x]

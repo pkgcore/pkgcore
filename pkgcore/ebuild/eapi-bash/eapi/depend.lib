@@ -8,6 +8,16 @@ use()
 	:
 }
 
+use_with()
+{
+	echo "do not use use_with in global scope!"
+}
+
+use_enable()
+{
+	echo "do not use use_enable in global scope!"
+}
+
 hasq()
 {
     if has "$@"; then

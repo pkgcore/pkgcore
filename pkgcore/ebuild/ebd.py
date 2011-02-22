@@ -115,7 +115,7 @@ class ebd(object):
             self.env["PKGCORE_DEBUG"] = str(int(os.environ["PKGCORE_DEBUG"]))
 
         self.env.setdefault("ROOT", "/")
-
+        self.env["PKGCORE_EAPI"] = str(pkg.eapi)
 
         # XXX: note this is just eapi3 compatibility; not full prefix, soon..
         if pkg.eapi not in (0,1,2):

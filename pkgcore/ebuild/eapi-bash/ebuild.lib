@@ -78,6 +78,7 @@ alias load_environ='{
 	EXISTING_PATH=${PATH};
 	scrub_environ "${TARGET_ENV}";source "${T}/.scrubbed-env" >&2 || die "sourcing scrubbed env failed";
 	pkgcore_ensure_PATH "${EXISTING_PATH}";
+	EAPI=${PKGCORE_EAPI-${EAPI}}
 	unset -v EXISTING_PATH;
 }'
 
@@ -151,7 +152,8 @@ pkgcore_load_eapi_libs() {
 	# always, always, *always* use our own functionality
 	source "${PKGCORE_BIN_PATH}/eapi/depend.lib" || die "failed sourcing eapi/depend.lib"
 	source "${PKGCORE_BIN_PATH}/eapi/common.lib" || die "failed sourcing eapi/common.lib"
-	source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.lib" || die "failed loading eapi/${EAPI}.lib"
+	source "${PKGCORE_BIN_PATH}/eapi/${PKGCORE_EAPI-${EAPI}}.lib" || \
+		die "failed loading eapi/${PKGCORE_EAPI-${EAPI}}.lib"
 	# yes this is quadratic; subshell it so we don't have to worry about set -f.
 	# if a func was newly added, then add it to the filter list.
 	my_updates="$(echo $(set -f; { echo "${pkgcore_original_funcs}"; declare -F | cut -d ' ' -f3; } | LC_ALL=C sort | LC_ALL=C uniq -u))"

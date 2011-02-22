@@ -62,6 +62,7 @@ is_function
 keepdir
 libopts
 load_ebuild
+nonfatal
 pkgcore_common_pkg_nofetch
 pkgcore_common_pre_phase
 pkgcore_common_src_compile
@@ -82,7 +83,11 @@ pkgcore_default_src_unpack
 pkgcore_dump_metadata_keys
 pkgcore_eapi2_src_configure
 pkgcore_eapi2_src_prepare
+pkgcore_eapi4_src_install
 pkgcore_ensure_PATH
+pkgcore_helper_check_exit
+pkgcore_helper_died
+pkgcore_helper_exit
 pkgcore_inject_common_phase_funcs
 pkgcore_inject_phase_funcs
 pkgcore_load_eapi_libs

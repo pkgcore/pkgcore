@@ -104,14 +104,16 @@ eapi0 = EAPI("0",
     common_default_phases,
     common_metadata_keys,
     common_mandatory_metadata_keys,
-    trust_defined_phases_cache=False)
+    trust_defined_phases_cache=False
+)
 
 eapi1 = EAPI("1",
     eapi0.phases,
     eapi0.default_phases,
     eapi0.metadata_keys,
     eapi0.mandatory_keys,
-    trust_defined_phases_cache=False)
+    trust_defined_phases_cache=False
+)
 
 d = dict(eapi1.phases.iteritems())
 d.update(mk_phase_func_map(["src_prepare", "src_configure"]))
@@ -121,7 +123,8 @@ eapi2 = EAPI("2",
     eapi1.default_phases | frozenset(["src_prepare", "src_configure"]),
     eapi1.metadata_keys,
     eapi1.mandatory_keys,
-    trust_defined_phases_cache=False)
+    trust_defined_phases_cache=False
+)
 del d
 
 eapi3 = EAPI("3",
@@ -129,5 +132,6 @@ eapi3 = EAPI("3",
     eapi2.default_phases,
     eapi2.metadata_keys,
     eapi2.mandatory_keys,
-    trust_defined_phases_cache=False)
+    trust_defined_phases_cache=False
+)
 

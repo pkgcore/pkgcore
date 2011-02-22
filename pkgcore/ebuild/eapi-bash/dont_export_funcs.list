@@ -22,6 +22,7 @@ default_src_test
 default_src_unpack
 die
 diefunc
+directory_is_empty
 diropts
 disable_qa_interceptors
 docinto

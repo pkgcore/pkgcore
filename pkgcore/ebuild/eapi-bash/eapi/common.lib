@@ -309,10 +309,25 @@ docinto()
 
 pkgcore_common_pre_phase()
 {
-	if [ -d "${S}" ]; then
+	if [[ -d ${S} ]]; then
 		cd "${S}"
+	elif has ${EAPI} 0 1 2 3; then
+		cd "{$WORKDIR}"
+	elif [[ -n ${A} ]]; then
+		die "source directory '${S}' doesn't exist, but \${A} isn't empty (see S-WORKDIR-FALLBACK in PMS)"
 	else
-		cd "$WORKDIR"
+		local phase
+		# eapi4 blatant idiocy...
+		for phase in unpack prepare configure compile install; do
+			[[ ${phase} == ${EBUILD_PHASE} ]] && break
+			is_function src_${phase} || continue
+			# to reach here means that (for example), we're doing src_install, and src_compile was defined
+			# but S doesn't exist.
+			die "source directory '${S}' doesn't exist, \${A} is defined, and there was a defined " \
+				"phase function '${phase}' prior to '${EBUILD_PHASE}'; please see S-WORKDIR-FALLBACK " \
+				"in pms for the details of what is allowed for eapi4 and later"
+		done
+		cd "${WORKDIR}"
 	fi
 }
 

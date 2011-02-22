@@ -24,7 +24,7 @@ class Test_DontExportFuncsList(TestCase):
             close_fds=True)
 
         self.assertEqual(proc.wait(), 0)
-        current = set(x.strip() for x in proc.stdout.read().split())
+        current = set(x.strip().decode("ascii") for x in proc.stdout.read().split())
 
         missing = current.difference(existing)
         unneeded = existing.difference(current)

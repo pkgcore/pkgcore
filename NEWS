@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* Roughly a 11x speedup in metadata regeneration; basically rework
+  a fix that was added to to 0.5.11 (dealing with portage induced
+  breakage in env loadup from their declare usage).
+
 * write support for DEFINED_PHASES.
 
 * bashrc hooks now run from ${S} or ${WORKDIR}, depending on

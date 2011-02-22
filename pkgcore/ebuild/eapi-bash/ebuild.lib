@@ -187,12 +187,23 @@ generate_initial_ebuild_environ() {
 		source_profiles
 	fi
 
-	if [ "${PKGCORE_EBUILD_PHASE}" != "depend" ]; then
-		[ ! -z "$OCC" ] && export CC="$OCC"
-		[ ! -z "$OCXX" ] && export CXX="$OCXX"
+	load_ebuild "${EBUILD}"
 
+	if [[ ${PKGCORE_EBUILD_PHASE} != depend ]]; then
+		RESTRICT="${FINALIZED_RESTRICT}"
+		unset FINALIZED_RESTRICT
+		[[ ! -z $OCC ]] && export CC="$OCC"
+		[[ ! -z $OCXX ]] && export CXX="$OCXX"
 	fi
 
+	pkgcore_ensure_PATH "$EXISTING_PATH"
+	dump_environ || die "dump_environ returned non zero"
+}
+
+load_ebuild()
+{
+	local EBUILD="${1}"
+	shift
 	source "${PKGCORE_BIN_PATH}/eapi/depend.lib" >&2 || die "failed sourcing eapi/depend.lib"
 
 	SANDBOX_ON="1"
@@ -218,12 +229,6 @@ generate_initial_ebuild_environ() {
 	export DESTTREE=/usr
 
 	source "${EBUILD}" >&2
-	if [ "${PKGCORE_EBUILD_PHASE}" != "depend" ]; then
-		RESTRICT="${FINALIZED_RESTRICT}"
-		unset FINALIZED_RESTRICT
-	fi
-
-	[ -z "${ERRORMSG}" ] || die "${ERRORMSG}"
 
 	#a reasonable default for $S
 	if [ "$S" = "" ]; then
@@ -252,8 +257,6 @@ generate_initial_ebuild_environ() {
 	EAPI="${EAPI-0}"
 
 	unset E_IUSE E_DEPEND E_RDEPEND E_PDEPEND
-	pkgcore_ensure_PATH "$EXISTING_PATH"
-	dump_environ || die "dump_environ returned non zero"
 }
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.
@@ -400,7 +403,7 @@ execute_phases() {
 				enable_qa_interceptors
 			fi
 
-			init_environ
+			load_ebuild "${EBUILD}"
 
 			if [ -z "$QA_CONTROLLED_EXTERNALLY" ]; then
 				disable_qa_interceptors

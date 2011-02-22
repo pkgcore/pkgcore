@@ -11,6 +11,7 @@ demandload(globals(),
 eapi_optionals = mappings.ImmutableDict({
     "trust_defined_phases_cache":True,
     "prefix_capable":True,
+    "has_merge_type":False,
 })
 
 class optionals_cls(mappings.ImmutableDict):
@@ -163,4 +164,7 @@ eapi4 = EAPI("4",
     eapi3.default_phases,
     eapi3.metadata_keys | frozenset(["REQUIRED_USE"]),
     eapi3.mandatory_keys,
+    combine_dicts(eapi3.options, dict(
+        trust_defined_phases_cache=True,
+        has_merge_type=True)),
 )

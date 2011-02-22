@@ -190,4 +190,5 @@ run_function_if_exists() {
 unset_colors
 DONT_EXPORT_VARS="${DONT_EXPORT_VARS} PKGCORE_RC_.*"
 DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} run_function_if_exists is_function"
-true
+
+:

@@ -632,4 +632,5 @@ libopts()
 }
 
 DONT_EXPORT_VARS="${DONT_EXPORT_VARS} ECLASS_DEPTH"
-true
+
+:

@@ -368,4 +368,4 @@ pkgcore_inject_common_phase_funcs()
 }
 
 DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} pkgcore_inject_phase_funcs pkgcore_inject_common_phase_funcs"
-true
+:

@@ -78,10 +78,16 @@ def shorten_phase_name(func_name):
         return func_name[4:]
     return func_name
 
-def mk_phase_func_map(sequence):
+def mk_phase_func_map(*sequence):
     d = {}
     for x in sequence:
         d[shorten_phase_name(x)] = x
+    return d
+
+def combine_dicts(*sequence_of_mappings):
+    d = {}
+    for mapping in sequence_of_mappings:
+        d.update(mapping)
     return d
 
 common_default_phases = tuple(shorten_phase_name(x)
@@ -100,7 +106,7 @@ common_metadata_keys = common_mandatory_metadata_keys + (
     "DEFINED_PHASES", "PROPERTIES", "EAPI")
 
 eapi0 = EAPI("0",
-    mk_phase_func_map(common_phases),
+    mk_phase_func_map(*common_phases),
     common_default_phases,
     common_metadata_keys,
     common_mandatory_metadata_keys,
@@ -115,17 +121,13 @@ eapi1 = EAPI("1",
     trust_defined_phases_cache=False
 )
 
-d = dict(eapi1.phases.iteritems())
-d.update(mk_phase_func_map(["src_prepare", "src_configure"]))
-
 eapi2 = EAPI("2",
-    d,
+    combine_dicts(eapi1.phases, mk_phase_func_map("src_prepare", "src_configure")),
     eapi1.default_phases | frozenset(["src_prepare", "src_configure"]),
     eapi1.metadata_keys,
     eapi1.mandatory_keys,
     trust_defined_phases_cache=False
 )
-del d
 
 eapi3 = EAPI("3",
     eapi2.phases,

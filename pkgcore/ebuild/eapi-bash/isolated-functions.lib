@@ -164,16 +164,16 @@ set_colors() {
 	PKGCORE_RC_NORMAL=$'\e[0m'
 }
 
+# everything below is harring original copyright
+
 has() {
 	local x
 
-	local me=$1
+	local needle=$1
 	shift
 
 	for x in "$@"; do
-		if [[ ${x} == ${me} ]]; then
-			return 0
-		fi
+		[[ ${x} == ${needle} ]] && return 0
 	done
 	return 1
 }

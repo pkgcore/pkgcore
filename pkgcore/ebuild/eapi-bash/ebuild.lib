@@ -448,12 +448,6 @@ pkgcore_dump_metadata_keys() {
 	set +f
 }
 
-#echo, everything has been sourced.  now level the read-only's.
-for x in ${DONT_EXPORT_FUNCS}; do
-	declare -fr "$x" || die "failed marking ${x} func reaodnly"
-done
-unset x
-
 DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $(declare | invoke_filter_env --print-vars | regex_filter_input ${ORIG_VARS} ${DONT_EXPORT_VARS})"
 
 [ -z "${ORIG_FUNCS}" ] && DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $(declare -F | cut -s -d ' ' -f 3)"

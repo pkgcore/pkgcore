@@ -140,6 +140,24 @@ source_profiles() {
 	fi
 }
 
+pkgcore_load_eapi_libs() {
+	local pkgcore_original_funcs=$(declare -F | cut -d ' ' -f3)
+	local my_updates
+
+	my_f() { :; }
+	# reload depend; while it may've been loaded already, reload it so that callers can
+	# rely on this setting the env up as necessary
+	# finally, update the filters with functionality loaded from here-
+	# always, always, *always* use our own functionality
+	source "${PKGCORE_BIN_PATH}/eapi/depend.bash" || die "failed sourcing eapi/depend.bash"
+	source "${PKGCORE_BIN_PATH}/eapi/common.bash" || die "failed sourcing eapi/common.bash"
+	source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.bash" || die "failed loading eapi/${EAPI}.bash"
+	# yes this is quadratic; subshell it so we don't have to worry about set -f.
+	# if a func was newly added, then add it to the filter list.
+	my_updates="$(echo $(set -f; { echo "${pkgcore_original_funcs}"; declare -F | cut -d ' ' -f3; } | LC_ALL=C sort | LC_ALL=C uniq -u))"
+	[[ -n ${my_updates} ]] && DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} ${my_updates}"
+}
+
 # do all profile, bashrc's, and ebuild sourcing.  Should only be called in setup phase, unless the
 # env is *completely* missing, as it is occasionally for ebuilds during prerm/postrm.
 generate_initial_ebuild_environ() {
@@ -175,10 +193,8 @@ generate_initial_ebuild_environ() {
 
 	fi
 
-	# if daemonized, it's already loaded these funcs.
-	if [ "$DAEMONIZED" != "yes" ]; then
-		source "${PKGCORE_BIN_PATH}/eapi/common.bash" >&2 || die "failed sourcing eapi/common.bash"
-	fi
+	source "${PKGCORE_BIN_PATH}/eapi/depend.bash" >&2 || die "failed sourcing eapi/depend.bash"
+
 	SANDBOX_ON="1"
 	export S=${WORKDIR}/${P}
 
@@ -237,9 +253,6 @@ generate_initial_ebuild_environ() {
 
 	unset E_IUSE E_DEPEND E_RDEPEND E_PDEPEND
 	pkgcore_ensure_PATH "$EXISTING_PATH"
-	if [ "${PKGCORE_EBUILD_PHASE}" != "depend" ]; then
-		source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.bash" >&2 || die "failed sourcing eapi '${EAPI}'"
-	fi
 	dump_environ || die "dump_environ returned non zero"
 }
 
@@ -267,6 +280,7 @@ execute_phases() {
 		case $EBUILD_PHASE in
 		nofetch)
 			init_environ
+			pkgcore_load_eapi_libs
 			pkg_nofetch
 			PKGCORE_MUST_EXPORT_ENV=
 			ret=1
@@ -288,6 +302,8 @@ execute_phases() {
 				ewarn
 				sleep 10
 			fi
+
+			pkgcore_load_eapi_libs
 
 			[[ -n $PKGCORE_DEBUG ]] && set -x
 			run_function_if_exists pkgcore_default_pre_pkg_${EBUILD_PHASE}
@@ -316,6 +332,9 @@ execute_phases() {
 				ewarn "failed to load env.  This is bad, bailing."
 				die "unable to load saved env for phase $EBUILD_PHASE, unwilling to continue"
 			fi
+
+			pkgcore_load_eapi_libs
+
 			[ -z "${S}" ] && die "S was null- ${S}, path=$PATH"
 			[[ -n $PKGCORE_DEBUG ]] && set -x
 			run_function_if_exists pkgcore_default_pre_src_${EBUILD_PHASE}
@@ -357,6 +376,8 @@ execute_phases() {
 					die "failed loading saved env; at ${T}/environment"
 				fi
 			fi
+
+			pkgcore_load_eapi_libs
 
 			[[ -n $PKGCORE_DEBUG ]] && set -x
 			run_function_if_exists pkgcore_default_pre_pkg_setup

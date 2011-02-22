@@ -83,11 +83,6 @@ DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alive com PORTAGE_LOGFILE cont"
 export QA_CONTROLLED_EXTERNALLY="yes"
 enable_qa_interceptors
 
-if ! source "${PKGCORE_BIN_PATH}/eapi/common.bash" >&2; then
-	speak failed
-	die "failed sourcing ${PORTAGE_LIB}/eapi/common.bash"
-fi
-
 export PORTAGE_PRELOADED_ECLASSES=''
 unset_colors
 

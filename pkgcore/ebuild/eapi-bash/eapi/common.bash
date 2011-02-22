@@ -9,14 +9,6 @@ use()
     return 1
 }
 
-hasq()
-{
-    if has "$@"; then
-        return 0
-    fi
-    return 1
-}
-
 use_with()
 {
     if [ -z "$1" ]; then
@@ -375,13 +367,5 @@ pkgcore_inject_common_phase_funcs()
     pkgcore_inject_phase_funcs pkgcore_common pkg_nofetch src_{unpack,compile,test}
 }
 
-hasv() {
-    if ! has "$@"; then
-        return 1;
-    fi
-    echo "${1}"
-    return 0
-}
-
-DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} pkgcore_inject_phase_funcs pkgcore_inject_common_phase_funcs hasv"
+DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} pkgcore_inject_phase_funcs pkgcore_inject_common_phase_funcs"
 true

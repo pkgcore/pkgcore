@@ -26,4 +26,3 @@ ACCEPT_LICENSE = ()
 EAPI_BIN_PATH        = path.join(path.dirname(path.abspath(__file__)), "eapi-bash")
 EBUILD_DAEMON_PATH   = path.join(EAPI_BIN_PATH, "ebuild-daemon.bash")
 EBUILD_HELPERS_PATH  = path.join(EAPI_BIN_PATH, "helpers")
-EBD_ENV_PATH         = EAPI_BIN_PATH

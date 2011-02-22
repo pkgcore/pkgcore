@@ -238,7 +238,7 @@ class EbuildProcessor(object):
 
         # force to a neutral dir so that sandbox/fakeroot won't explode if
         # ran from a nonexistant dir
-        spawn_opts["chdir"] = e_const.EBD_ENV_PATH
+        spawn_opts["chdir"] = e_const.EAPI_BIN_PATH
         # little trick. we force the pipes to be high up fd wise so
         # nobody stupidly hits 'em.
         max_fd = min(pkgcore.spawn.max_fd_limit, 1024)
@@ -260,7 +260,7 @@ class EbuildProcessor(object):
             raise InitializationError(
                 "expected 'dude!' response from ebd, which wasn't received. "
                 "likely a bug")
-        self.write(e_const.EBD_ENV_PATH)
+        self.write(e_const.EAPI_BIN_PATH)
         # send PKGCORE_PYTHON_BINARY...
         self.write(pkgcore.spawn.find_invoking_python())
         self.write(osutils.normpath(osutils.abspath(osutils.join(

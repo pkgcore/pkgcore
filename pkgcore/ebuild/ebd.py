@@ -288,6 +288,14 @@ class ebd(object):
         release_ebuild_processor(ebd)
         return True
 
+    def set_is_replacing(self, *pkgs):
+        if self.eapi_obj.options.exports_replacing:
+            self.env['REPLACING_VERSIONS'] = " ".join(x.cpvstr for x in pkgs)
+
+    def set_is_being_replaced_by(self, pkg=None):
+        if self.eapi_obj.options.exports_replacing and pkg is not None:
+            self.env['REPLACED_BY_VERSION'] = pkg.cpvstr
+
     def cleanup(self, disable_observer=False, force=False):
         if not force:
             if not self.clean_needed:
@@ -472,7 +480,9 @@ class replace_op(format.replace):
     def __init__(self, domain, old_pkg, new_pkg, observer):
         format.replace.__init__(self, domain, old_pkg, new_pkg, observer)
         self.install_op = install_op(domain, new_pkg, observer)
+        self.install_op.set_is_replacing(old_pkg)
         self.uninstall_op = uninstall_op(domain, old_pkg, observer)
+        self.uninstall_op.set_is_being_replaced_by(new_pkg)
 
     def start(self):
         self.install_op.start()

@@ -1,31 +1,54 @@
 #!/bin/bash
-# Copyright 1999-2006 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD 3 clause
 
 shopt -s extdebug
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+source "${PKGCORE_BIN_PATH}/isolated-functions.lib" || die "failed loading isolated-functions.lib"
 
-if [ $# -lt 1 ] ; then
-	echo "$0: at least one argument needed" 1>&2
-	exit 1
+recursive=false
+
+if ! has "${EAPI}" 0 1 2 3; then
+	if [[ $1 == -r ]]; then
+		recursive=true
+		shift
+	fi
 fi
-
-dir="${D}usr/share/doc/${PF}/${DOCDESTTREE}"
-if [ ! -d "${dir}" ] ; then
-	install -d "${dir}"
-	pkgcore_helper_check_exit $? "installation of base directory ${dir} failed"
+if [[ $# -lt 1 ]]; then
+	pkgcore_helper_exit 1 "dodoc: at least one arguement needed"
 fi
 
 ret=0
-for x in "$@" ; do
-	if [ -s "${x}" ] ; then
-		install -m0644 "${x}" "${dir}"
-		((ret|=$?))
-		gzip -f -9 "${dir}/${x##*/}"
-		((ret|=$?))
-	elif [ ! -e "${x}" ] ; then
-		echo "dodoc: ${x} does not exist" 1>&2
-		((ret|=1))
+install_paths()
+{
+	local mydir="$1"
+	shift
+	if [[ ! -d ${mydir} ]]; then
+		if ! install -d "${mydir}"; then
+			echo "dodoc: failed installing directory '${mydir}'" >&2
+			((ret|=1))
+			return
+		fi
 	fi
-done
-pkgcore_helper_exit "$ret"
+
+	for x in "${@}"; do
+		if [[ ! -e ${x} ]]; then
+			echo "dodoc: file '${x}' doesn't exist" >&2
+			((ret|=1))
+		elif [[ -d $x ]]; then
+			$recursive || continue
+			directory_is_empty "$x" && continue
+			pushd "$x" &> /dev/null
+			install_paths "${mydir}/${x}" *
+			popd &> /dev/null
+		elif [[ -s $x ]]; then
+			install -m0644 "${x}" "${mydir}"
+			((ret|=$?))
+			gzip -f -9 "${mydir}/${x##*/}"
+			((ret|=$?))
+		fi
+	done
+}
+
+install_paths "${D}usr/share/doc/${PF}/${DOCDESTTREE}" "$@"
+pkgcore_helper_exit ${ret}

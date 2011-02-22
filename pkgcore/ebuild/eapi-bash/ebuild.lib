@@ -1,5 +1,5 @@
 #!/bin/bash
-# ebuild.bash; ebuild phase processing, env handling
+# ebuild.lib; ebuild phase processing, env handling
 # Copyright 2005-2011 Brian Harring <ferringb@gmail.com>: BSD/GPL2
 
 # general phase execution path-
@@ -149,9 +149,9 @@ pkgcore_load_eapi_libs() {
 	# rely on this setting the env up as necessary
 	# finally, update the filters with functionality loaded from here-
 	# always, always, *always* use our own functionality
-	source "${PKGCORE_BIN_PATH}/eapi/depend.bash" || die "failed sourcing eapi/depend.bash"
-	source "${PKGCORE_BIN_PATH}/eapi/common.bash" || die "failed sourcing eapi/common.bash"
-	source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.bash" || die "failed loading eapi/${EAPI}.bash"
+	source "${PKGCORE_BIN_PATH}/eapi/depend.lib" || die "failed sourcing eapi/depend.lib"
+	source "${PKGCORE_BIN_PATH}/eapi/common.lib" || die "failed sourcing eapi/common.lib"
+	source "${PKGCORE_BIN_PATH}/eapi/${EAPI}.lib" || die "failed loading eapi/${EAPI}.lib"
 	# yes this is quadratic; subshell it so we don't have to worry about set -f.
 	# if a func was newly added, then add it to the filter list.
 	my_updates="$(echo $(set -f; { echo "${pkgcore_original_funcs}"; declare -F | cut -d ' ' -f3; } | LC_ALL=C sort | LC_ALL=C uniq -u))"
@@ -193,7 +193,7 @@ generate_initial_ebuild_environ() {
 
 	fi
 
-	source "${PKGCORE_BIN_PATH}/eapi/depend.bash" >&2 || die "failed sourcing eapi/depend.bash"
+	source "${PKGCORE_BIN_PATH}/eapi/depend.lib" >&2 || die "failed sourcing eapi/depend.lib"
 
 	SANDBOX_ON="1"
 	export S=${WORKDIR}/${P}
@@ -258,10 +258,10 @@ generate_initial_ebuild_environ() {
 
 # short version.  think these should be sourced via at the daemons choice, rather then defacto.
 # note that exit-handling loads the die functions, thus the custom failure there.
-source "${PKGCORE_BIN_PATH}/exit-handling.bash" >&2 || { echo "ERROR: failed sourcing exit-handling.bash"; exit -1; }
-source "${PKGCORE_BIN_PATH}/ebuild-default-functions.bash" >&2 || die "failed sourcing ebuild-default-functions.bash"
-source "${PKGCORE_BIN_PATH}/isolated-functions.bash" >&2 || die "failed sourcing stripped down functions.bash"
-source "${PKGCORE_BIN_PATH}/ebuild-env-utils.bash" >&2 || die "failed sourcing ebuild-env-utils.bash"
+source "${PKGCORE_BIN_PATH}/exit-handling.lib" >&2 || { echo "ERROR: failed sourcing exit-handling.lib"; exit -1; }
+source "${PKGCORE_BIN_PATH}/ebuild-default-functions.lib" >&2 || die "failed sourcing ebuild-default-functions.lib"
+source "${PKGCORE_BIN_PATH}/isolated-functions.lib" >&2 || die "failed sourcing stripped down functions.lib"
+source "${PKGCORE_BIN_PATH}/ebuild-env-utils.lib" >&2 || die "failed sourcing ebuild-env-utils.lib"
 
 # general func to call for phase execution.  this handles necessary env loading/dumping, and executing pre/post/dyn
 # calls.

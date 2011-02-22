@@ -31,7 +31,7 @@ listen PKGCORE_BIN_PATH
 declare -rx PKGCORE_BIN_PATH
 
 # get our die functionality now.
-if ! source "${PKGCORE_BIN_PATH}/exit-handling.bash"; then
+if ! source "${PKGCORE_BIN_PATH}/exit-handling.lib"; then
 	speak "failed sourcing exit handling functionality"
 	exit 2;
 fi
@@ -43,9 +43,9 @@ listen PKGCORE_PYTHONPATH
 [ -z "$PKGCORE_PYTHONPATH" ] && die "empty PKGCORE_PYTHONPATH, bailing"
 declare -rx PKGCORE_PYTHONPATH
 
-if ! source "${PKGCORE_BIN_PATH}/ebuild.bash" daemonize >&2; then
+if ! source "${PKGCORE_BIN_PATH}/ebuild.lib" daemonize >&2; then
 	speak "failed"
-	die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild.bash"
+	die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild.lib"
 fi
 
 if [ -n "$SANDBOX_LOG" ]; then
@@ -70,9 +70,9 @@ speak $re
 unset x re
 
 
-if ! source "${PKGCORE_BIN_PATH}/ebuild-daemon-lib.bash" >&2; then
+if ! source "${PKGCORE_BIN_PATH}/ebuild-daemon.lib" >&2; then
 	speak failed
-	die "failed source ${PKGCORE_BIN_PATH}/ebuild-daemon-lib.bash"
+	die "failed source ${PKGCORE_BIN_PATH}/ebuild-daemon.lib"
 fi
 
 DONT_EXPORT_FUNCS="$(declare -F | cut -s -d ' ' -f 3)"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# ebuild-daemon.bash; daemon lib code.
+# ebuild-daemon.lib; daemon lib code.
 # Copyright 2005-2010 Brian Harring <ferringb@gmail.com>
 # License BSD/GPL2
 

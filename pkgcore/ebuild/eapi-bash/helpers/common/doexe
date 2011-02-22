@@ -7,7 +7,7 @@ if [ -z "${PKGCORE_BIN_PATH}" ]; then
 	echo "PKGCORE_BIN_PATH is unset!"
 	exit -1
 fi
-source "${PKGCORE_BIN_PATH}/isolated-functions.bash" || {
+source "${PKGCORE_BIN_PATH}/isolated-functions.lib" || {
 	"failed sourcing isolated-function.sh"; exit 1;
 }
 

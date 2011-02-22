@@ -302,9 +302,16 @@ execute_phases() {
 		PKGCORE_MUST_EXPORT_ENV=yes
 
 		case $EBUILD_PHASE in
-		nofetch)
+		nofetch|pretend)
 			init_environ
-			pkg_nofetch
+
+			run_function_if_exists pkgcore_default_pre_${EBUILD_PHASE}
+			run_function_if_exists pre_pkg_${EBUILD_PHASE}
+
+			pkg_${EBUILD_PHASE}
+
+			run_function_if_exists post_pkg_${EBUILD_PHASE}
+
 			PKGCORE_MUST_EXPORT_ENV=
 			ret=1
 			;;

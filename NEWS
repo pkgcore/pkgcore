@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* full rewrite of EAPI helpers adding better error info, saner code,
+  double checked against PMS and portage/paludis to ensure no oddities.
+
 * fix to buildpkg/pristine-binpkg saving.  If you're looking for
   something to contribute to pkgcore wise, tests for this would be
   appreciated.

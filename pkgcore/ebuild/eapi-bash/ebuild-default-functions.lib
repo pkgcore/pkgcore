@@ -159,7 +159,7 @@ dyn_install()
 	else
 		run_function_if_exists pkgcore_default_src_install
 	fi
-	prepall
+	"${PKGCORE_BIN_PATH}/helpers/internals/prepall"
 	cd "${D}"
 
 	if type -p scanelf > /dev/null ; then

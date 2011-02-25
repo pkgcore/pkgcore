@@ -10,5 +10,5 @@ fi
 
 rm -rf "${T}/${2}"
 check_command_or_stop cp "${1}" "${T}/${2}"
-
 invoke_script "do${myname#new}" "${T}/${2}"
+rm -f "${T}/${2}"

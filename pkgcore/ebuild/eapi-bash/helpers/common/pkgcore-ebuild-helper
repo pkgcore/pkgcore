@@ -1,0 +1,117 @@
+#!/bin/bash
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD 3 clause
+
+# protect against env screwups.
+if [[ -z ${PKGCORE_BIN_PATH} ]]; then
+	PKGCORE_BIN_PATH=$(readlink -f "${0}")
+	# and go up 3, out of helpers.
+	PKGCORE_BIN_PATH=${PKGCORE_BIN_PATH%/*}
+	PKGCORE_BIN_PATH=${PKGCORE_BIN_PATH%/*}
+	PKGCORE_BIN_PATH=${PKGCORE_BIN_PATH%/*}
+fi
+export PKGCORE_BIN_PATH
+
+source "${PKGCORE_BIN_PATH}/exit-handling.lib" || {
+	echo "failed to load exit-handling library: PKGCORE_BIN_PATH=${PKGCORE_BIN_PATH}" >&2
+	exit -127;
+}
+
+if [[ $# -lt 1 ]]; then
+	die "ebuild-helper invoked without a target helper; no args given."
+fi
+
+source "${PKGCORE_BIN_PATH}/isolated-functions.lib" || \
+	die "failed to load isolated-functions.lib"
+
+failed=false
+_helper_issues=( )
+error()
+{
+	echo "${HELPER_ERROR_PREFIX}: ${@-no message given}" >&2
+	_helper[${#_helper[@]}]="${*-no message given}"
+	failed=true
+}
+
+warn()
+{
+	echo "${HELPER_ERROR_PREFIX}: warning, ${@-no message given}" >&2
+}
+
+info()
+{
+	echo "${HELPER_ERROR_PREFIX}: $@" >&2
+}
+
+check_args()
+{
+	local tense="argument"
+	local min=$(( $1 ))
+	local max
+	[[ $min -gt 1 ]] && tense="arguments"
+	if [[ $2 == - ]]; then
+		max=${HELPER_ARG_COUNT}
+	elif [[ -z $2 ]]; then
+		max=${1}
+	fi
+	max=$(( ${max} ))
+
+	if [[ ${HELPER_ARG_COUNT} -ge ${min} ]] && [[ ${HELPER_ARG_COUNT} -le ${max} ]]; then
+		return 0;
+	fi
+	if [[ $min == $max ]]; then
+		die "${HELPER_ERROR_PREFIX}: requires exactly ${min} ${tense}, got ${HELPER_ARG_COUNT}"
+	elif [[ ${2} == - ]]; then
+		die "${HELPER_ERROR_PREFIX}: requires at least ${min} ${tense}, got ${HELPER_ARG_COUNT}"
+	else:
+		die "${HELPER_ERROR_PREFIX}: requires at least ${min} ${tense}, and at most ${max} arguments, got ${HELPER_ARG_COUNT}"
+	fi
+}
+
+check_command()
+{
+	local ret
+	"$@"
+	ret=$?
+	[[ $ret == 0 ]] && return 0
+	error "exitcode $ret from $*"
+	return $(( $ret ))
+}
+
+check_command_or_stop()
+{
+	check_command "$@"
+	pkgcore_helper_check_exit $? "$@ failed, cannot continue"
+	return 0
+}
+
+MASTER_HELPER_NAME=${1##*/}
+HELPER_ERROR_PREFIX=
+
+invoke_script()
+{
+	[[ $# == 0 ]] && die "internal error: invoke_script invoked incorrectly"
+	local HELPER_PATH="${1}"
+	local HELPER_NAME=${1##*/}
+	shift
+	local HELPER_ARG_COUNT="$#"
+	if [[ ! -e ${HELPER_PATH} ]]; then
+		# note this can daftly go find a binary...
+		HELPER_PATH=$(type -p "${HELPER_NAME}")
+		[[ -z ${HELPER_PATH} ]] && die "couldn't find implementation of ${HELPER_NAME}!?"
+	fi
+
+	local OLD_ERROR_PREFIX=${HELPER_ERROR_PREFIX}
+	local HELPER_ERROR_PREFIX="${OLD_ERROR_PREFIX:+${OLD_ERROR_PREFIX}: }${HELPER_NAME}"
+
+	source "${HELPER_PATH}"
+}
+invoke_script "$@"
+
+ret=$?
+if $failed; then
+	die "Failures encountered.  See proceeding output for details"
+elif [[ $ret != 0 ]]; then
+	die "nonzero exit: ${ret}.  See proceeding output for details"	
+fi
+exit 0

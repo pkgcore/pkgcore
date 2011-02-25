@@ -5,6 +5,7 @@
 
 check_args 2
 
+ln_option=
 [[ ${HELPER_NAME} == dosym ]] && ln_option=s
 
 check_command_or_stop dodir "${2%/*}"

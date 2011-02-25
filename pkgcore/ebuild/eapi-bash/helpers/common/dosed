@@ -1,30 +1,24 @@
-#!/bin/bash
-# Copyright 1999-2006 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
+#!/usr/bin/env pkgcore-ebuild-helper
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD 3 clause
 
-shopt -s extdebug
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+check_args 1 -
 
-mysed="s:${D}::g"
+pattern="s:${D}::g"
 
-ret=0
 for x in "$@" ; do
-	y="${D}${x}"
-	if [ -e "${y}" ] ; then
-		if [ -f "${y}" ] ; then
-			mysrc="${T}/${y##*/}"
-			cp "${y}" "${mysrc}"
-			((ret|=$?))
-			sed -e "${mysed}" "${mysrc}" > "${y}"
-			((ret|=$?))
-		else
-			echo "${y} is not a regular file!" >&2
-			((ret|=1))
-		fi
-	else
-		echo "file '${x}' not found" >&2
-		((ret|=1))
+	trg="${D}${x}"
+	if [ ! -e "${trg}" ] ; then
+		pattern="${x}"
+		continue
+	fi
+	if [[ ! -f "${trg}" ]]; then
+		error "'${trg}' is not a regular file!";
+		continue
+	fi
+	tmp_file="${T}/${trg##*/}"
+	if check_command cp "${trg}" "${tmp_file}"; then
+		check_command sed -e "${pattern}" "${tmp_file}" > "${trg}"
+		rm -f "${tmp_file}"
 	fi
 done
-
-pkgcore_helper_exit ${ret}

@@ -1,20 +1,14 @@
-#!/bin/bash
+#!/usr/bin/env pkgcore-ebuild-helper
 # Copyright 2011 Brian Harring <ferringb@gmail.com>
 # License: GPLv2 or bsd-3
 
-shopt -s extdebug
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+check_args 2
 
-myname=${0##*/}
 if [[ -z ${T} ]]; then
 	pkgcore_helper_exit 2 "environment issue (ebuild commands somehow filtered the env for ${myname} call)- \${T} was empty"
-elif [[ -z ${2} ]]; then
-	pkgcore_helper_exit 1 "bad invocation of '${myname}'; takes two args, file to install, new name to use"
 fi
 
 rm -rf "${T}/${2}"
-cp "${1}" "${T}/${2}"
-pkgcore_helper_check_exit $? "source '${1}' doesn't exist, or ${T}/${2} is somehow immutable"
+check_command_or_stop cp "${1}" "${T}/${2}"
 
-"do${myname#new}" "${T}/${2}"
-pkgcore_helper_exit $? "failed executing do${myname#new} step of ${myname}"
+invoke_script "do${myname#new}" "${T}/${2}"

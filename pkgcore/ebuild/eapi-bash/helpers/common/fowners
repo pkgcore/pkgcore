@@ -1,10 +1,9 @@
-#!/bin/bash
-# Copyright 1999-2005 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
+#!/usr/bin/env pkgcore-ebuild-helper
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD 3 clause
 
-shopt -s extdebug
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+# at least two args are required- the owner/group chunk, and the target
+check_args 2 -
 
-slash=/
-chown "${@/#${slash}/${D}${slash}}"
-pkgcore_helper_exit $?
+# pathway must be absolute.
+chown "${@/#\//${D}/}"

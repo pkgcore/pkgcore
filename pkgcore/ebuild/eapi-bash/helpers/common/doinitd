@@ -1,15 +1,8 @@
-#!/bin/bash
-# Copyright 1999-2006 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
+#!/usr/bin/env pkgcore-ebuild-helper
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD 3 clause
 
-shopt -s extdebug
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
-if [[ $# -lt 1 ]] ; then
-	pkgcore_helper_exit 1 "at least one arguement required"
-fi
+check_args 1 -
 
-env \
-EXEDESTTREE="/etc/init.d/" \
-doexe "$@"
-pkgcore_helper_exit $? "invocation of doexe failed"
+EXEDESTTREE="/etc/init.d/" invoke_script doexe "$@"

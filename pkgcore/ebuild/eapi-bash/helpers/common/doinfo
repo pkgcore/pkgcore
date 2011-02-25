@@ -1,28 +1,17 @@
-#!/bin/bash
-# Copyright 1999-2006 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
+#!/usr/bin/env pkgcore-ebuild-helper
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD 3 clause
 
-shopt -s extdebug
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
-if [ ${#} -lt 1 ] ; then
-	pkgcore_helper_exit "at least one arguement needed"
-fi
-if [ ! -d "${D}usr/share/info" ] ; then
-	install -d "${D}usr/share/info"
-	pkgcore_helper_check_exit $? "failed installing base ${D}usr/share/info"
-fi
+check_args 1 -
 
-ret=0
+check_command_or_stop install -d "${D}usr/share/info"
+
 for x in "$@" ; do
 	if [ -e "${x}" ] ; then
-		install -m0644 "${x}" "${D}usr/share/info"
-		((ret|=$?))
-		gzip -f -9 "${D}usr/share/info/${x##*/}"
-		((ret|=$?))
+		check_command install -m0644 "${x}" "${D}usr/share/info" && \
+			check_command gzip -f -9 "${D}usr/share/info/${x##*/}"
 	else
-		echo "doinfo: ${x} does not exist" >&2
-		((ret|=2))
+		error "${x} does not exist"
 	fi
 done
-pkgcore_helper_exit ${ret}

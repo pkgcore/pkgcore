@@ -108,6 +108,7 @@ pkgcore_helper_died() {
 
 pkgcore_helper_check_exit() {
 	[[ $1 == 0 ]] && return
+	shift
 	pkgcore_helper_exit "$@"
 }
 

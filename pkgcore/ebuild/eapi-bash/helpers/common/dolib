@@ -24,9 +24,7 @@ fi
 check_command_or_stop install -d "${libdir}"
 
 for x in "$@" ; do
-	if [[ ! -e ${x} ]]; then
-		error "'${x}' does not exist"
-	elif [[ -L ${x} ]] ; then
+	if [[ -L ${x} ]] ; then
 		# yes we want readlink, not readlink -f; we want the symlink content,
 		# not the resolved symlink target.
 		check_command ln -s "$(readlink "${x}")" "${libdir}/${x##*/}"

@@ -8,10 +8,6 @@ check_args 1 -
 check_command_or_stop install -d "${D}usr/share/info"
 
 for x in "$@" ; do
-	if [ -e "${x}" ] ; then
-		check_command install -m0644 "${x}" "${D}usr/share/info" && \
-			check_command gzip -f -9 "${D}usr/share/info/${x##*/}"
-	else
-		error "${x} does not exist"
-	fi
+	check_command install -m0644 "${x}" "${D}usr/share/info" && \
+		check_command gzip -f -9 "${D}usr/share/info/${x##*/}"
 done

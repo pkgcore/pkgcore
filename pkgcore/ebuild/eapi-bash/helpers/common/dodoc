@@ -1,10 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env pkgcore-ebuild-helper
 # Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD 3 clause
-
-shopt -s extdebug
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
-source "${PKGCORE_BIN_PATH}/isolated-functions.lib" || die "failed loading isolated-functions.lib"
 
 recursive=false
 
@@ -14,41 +10,32 @@ if ! has "${EAPI}" 0 1 2 3; then
 		shift
 	fi
 fi
-if [[ $# -lt 1 ]]; then
-	pkgcore_helper_exit 1 "dodoc: at least one arguement needed"
-fi
 
-ret=0
+check_args 1 -
+
 install_paths()
 {
 	local mydir="$1"
 	shift
-	if [[ ! -d ${mydir} ]]; then
-		if ! install -d "${mydir}"; then
-			echo "dodoc: failed installing directory '${mydir}'" >&2
-			((ret|=1))
-			return
-		fi
-	fi
+	check_command install -d "${mydir}" || return
 
 	for x in "${@}"; do
 		if [[ ! -e ${x} ]]; then
-			echo "dodoc: file '${x}' doesn't exist" >&2
-			((ret|=1))
+			error "file '${x}' doesn't exist"
 		elif [[ -d $x ]]; then
 			$recursive || continue
+
+			# PMS doesn't agree with this; update once portage is sorted in regard to PMS behaviour
+
 			directory_is_empty "$x" && continue
 			pushd "$x" &> /dev/null
 			install_paths "${mydir}/${x}" *
 			popd &> /dev/null
 		elif [[ -s $x ]]; then
-			install -m0644 "${x}" "${mydir}"
-			((ret|=$?))
-			gzip -f -9 "${mydir}/${x##*/}"
-			((ret|=$?))
+			check_command install -m0644 "${x}" "${mydir}"
+			check_command gzip -f -9 "${mydir}/${x##*/}"
 		fi
 	done
 }
 
 install_paths "${D}usr/share/doc/${PF}/${DOCDESTTREE}" "$@"
-pkgcore_helper_exit ${ret}

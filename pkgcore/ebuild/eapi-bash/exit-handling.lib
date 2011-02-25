@@ -35,7 +35,7 @@ die() {
 	echo "!!! ERROR: $CATEGORY/$PF failed." >&2
 	echo "!!! die invoked from directory $(pwd)" >&2
 	if [[ -z ${PKGCORE_IS_NOT_HELPER} ]]; then
-		echo "!!! was running helper: ${0##*/}"
+		echo "!!! was running helper: ${HELPER_ERROR_PREFIX}"
 	else
 		dump_trace 2 ${filespacing} ${linespacing} >&2
 		echo "!!!   $(printf "%${filespacing}s" "${BASH_SOURCE[1]##*/}"), line $(printf "%${linespacing}s" "${BASH_LINENO[0]}"):  Called die" >&2
@@ -93,7 +93,7 @@ dump_trace() {
 pkgcore_helper_exit() {
 	[[ $1 == 0 ]] && exit 0
 	if [[ -n ${PKGCORE_NONFATAL_HELPER} ]]; then
-		echo "WARNING: exitcode $1 from ${0##*/}" >&2
+		echo "WARNING: exitcode $1 from ${HELPER_ERROR_PREFIX}" >&2
 		exit $1
 	fi
 	if [[ -z $2 ]]; then
@@ -108,6 +108,7 @@ pkgcore_helper_died() {
 
 pkgcore_helper_check_exit() {
 	[[ $1 == 0 ]] && return
+	shift
 	pkgcore_helper_exit "$@"
 }
 

@@ -1,46 +1,23 @@
-#!/bin/bash
-# Copyright 1999-2006 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
+#!/usr/bin/env pkgcore-ebuild-helper
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD 3 clause
 
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
-if [ -z "${PKGCORE_BIN_PATH}" ]; then
-	echo "PKGCORE_BIN_PATH is unset!"
-	exit -1
-fi
+check_args 1 -
 
-if [[ $# -lt 1 ]] ; then
-	pkgcore_helper_exit 1 "at least one arguement needed"
-fi
+check_command_or_stop install -d "${D}${EXEDESTTREE}"
 
-if [[ ! -d ${D}${EXEDESTTREE} ]] ; then
-	install -d "${D}${EXEDESTTREE}"
-	pkgcore_helper_check_exit $? "install of base directory failed; \${D}=${D}, \${EXEDESTTREE}=${EXEDESTTREE}"
-fi
-
-ret=0
 for x in "$@" ; do
 	if [ -L "${x}" ] ; then
-		if ! cp "${x}" "${T}"; then
-			echo "warning, cp to temp space failed, skipping" >&2
-			((ret|=1))
-			continue
-		fi
-
-		mysrc="${T}"/$(/usr/bin/basename "${x}")
-		if [ $? != 0 ]]; then
-			echo "warning: basename failed for ${x}; skipping" >&2
-			((ret|=1))
-			continue
-		fi
+		check_command cp "${x}" "${T}" || continue
+		mysrc="${T}/${x##*/}"
 	elif [ -d "${x}" ] ; then
-		echo "doexe: warning, skipping directory ${x}"
+		warn "skipping directory ${x}"
 		continue
 	else
 		mysrc="${x}"
 	fi
-	install ${EXEOPTIONS} "${mysrc}" "${D}${EXEDESTTREE}"
-	((ret|=$?))
+	check_command install ${EXEOPTIONS} "${mysrc}" "${D}${EXEDESTTREE}"
+	# cleanup after ourselves...
+	[[ ${mysrc} != ${x} ]] && rm -f "${mysrc}"
 done
-
-pkgcore_helper_exit $ret

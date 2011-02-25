@@ -1,19 +1,12 @@
-#!/bin/bash
-# Copyright 1999-2007 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
+#!/usr/bin/env pkgcore-ebuild-helper
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD 3 clause
 
-shopt -s extdebug
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
-if [[ $# -ne 2 ]] ; then
-	pkgcore_helper_exit 1 "two arguements needed; $# given"
-fi
+check_args 2
 
-destdir=${2%/*}
-if [[ ! -d ${D}${destdir} ]]; then
-	dodir "${destdir}"
-	pkgcore_helper_check_exit $? "dodir invocation failed"
-fi
+ln_option=
+[[ ${HELPER_NAME} == dosym ]] && ln_option=s
 
-ln -f "${D}$1" "${D}$2"
-pkgcore_helper_exit $? "ln -f ${D}${1} to ${D}${2} failed"
+check_command_or_stop dodir "${2%/*}"
+check_command ln -${ln_option}f "${D}${1}" "${D}${2}"

@@ -1,7 +1,7 @@
-#!/bin/bash
+#!/usr/bin/env pkgcore-ebuild-helper
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD 3 clause
 
-shopt -s extdebug
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
+check_args 1 -
 
-"${PKGCORE_PYTHON_BINARY}" "$(dirname "$0")/"_raw_dohtml "$@"
-pkgcore_helper_exit $?
+"${PKGCORE_PYTHON_BINARY}" "${PKGCORE_BIN_PATH}/internals/_raw_dohtml" "$@"

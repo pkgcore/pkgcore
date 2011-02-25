@@ -1,0 +1,14 @@
+#!/usr/bin/env pkgcore-ebuild-helper
+# Copyright 2011 Brian Harring <ferringb@gmail.com>
+# License: GPLv2 or bsd-3
+
+check_args 2
+
+if [[ -z ${T} ]]; then
+	pkgcore_helper_exit 2 "environment issue (ebuild commands somehow filtered the env for ${myname} call)- \${T} was empty"
+fi
+
+rm -rf "${T}/${2}"
+check_command_or_stop cp "${1}" "${T}/${2}"
+
+invoke_script "do${myname#new}" "${T}/${2}"

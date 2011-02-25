@@ -1,54 +1,46 @@
-#!/bin/bash
-# Copyright 1999-2006 Gentoo Foundation
-# Distributed under the terms of the GNU General Public License v2
+#!/usr/bin/env pkgcore-ebuild-helper
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# License: GPL2/BSD 3 clause
 
-source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
-
-if [ $# -lt 1 ] ; then
-	pkgcore_helper_exit 1 "at least one arguement needed"
-fi
-
-if [ "${1}" == "-r" ] ; then
-	DOINSRECUR=y
+recursive=false
+if [[ ${1} == -r ]] ; then
+	recursive=true
 	shift
-else
-	DOINSRECUR=n
 fi
 
-ret=0
-if [ "${INSDESTTREE%${D}*}" == "" ]; then
+check_args 1 -
+
+if [[ "${INSDESTTREE%${D}*}" == "" ]]; then
 	pkgcore_helper_exit 2 "do not give \${D} as part of the pathways to doins"
 fi
 
-if [ ! -d "${D}${INSDESTTREE}" ]; then
-	dodir "${INSDESTTREE}"
-	pkgcore_helper_check_exit $? "base dodir of ${INDESTTREE} failed"
-fi
+install_paths()
+{
+	local mydir=$1
+	shift
+	check_command invoke_script dodir "${mydir}" || return 1
 
-ret=0
-for x in "$@" ; do
-	if [ -L "$x" ] ; then
-		cp "$x" "${T}"
-		((ret|=$?))
-		mysrc="${T}/$(/usr/bin/basename "${x}")"
-		((ret|=$?))
-	elif [ -d "$x" ] ; then
-		if [ "${DOINSRECUR}" == "n" ] ; then
+	for x in "$@"; do
+		if [ -L "$x" ] ; then
+			check_command cp "$x" "${T}" || continue
+			mysrc="${T}/${x##*/}"
+		elif [ -d "$x" ] ; then
+			$recursive || continue
+			pushd "$x" &> /dev/null
+			if directory_is_empty "${x}"; then
+				install_paths "${mydir}/${x##*/}"
+			else
+				install_paths "${mydir}/${x##*/}" "${x}"/*
+			fi
+			popd &> /dev/null
 			continue
+		else
+			mysrc="${x}"
 		fi
+		check_command install ${INSOPTIONS} "${mysrc}" "${D}${mydir}"
+		# cleanup the tempspace...
+		[[ ${mysrc} != ${x} ]] && rm -f "${mysrc}"
+	done
+}
 
-		mydir="${INSDESTTREE}/$(basename "${x}")"
-		find "${x}" -mindepth 1 -maxdepth 1 -exec \
-			env \
-				INSDESTTREE="${mydir}" \
-				doins -r {} \;
-		((ret|=$?))
-		continue
-	else
-		mysrc="${x}"
-	fi
-	install ${INSOPTIONS} "${mysrc}" "${D}${INSDESTTREE}"
-	((ret|=$?))
-done
-
-pkgcore_helper_exit ${ret}
+install_paths "${INDESTTREE}" "$@"

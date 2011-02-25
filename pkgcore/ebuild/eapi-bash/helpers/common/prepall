@@ -5,7 +5,7 @@
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }
 
 prepallman
-prepallinfo
+prepinfo
 prepallstrip
 
 # this should help to ensure that all (most?) shared libraries are executable

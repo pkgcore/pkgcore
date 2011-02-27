@@ -112,6 +112,6 @@ ret=$?
 if $failed; then
 	die "Failures encountered.  See proceeding output for details"
 elif [[ $ret != 0 ]]; then
-	die "nonzero exit: ${ret}.  See proceeding output for details"
+	die "nonzero exit from helper ${MASTER_HELPER_NAME}: exit ${ret}.  See proceeding output for details"
 fi
 exit 0

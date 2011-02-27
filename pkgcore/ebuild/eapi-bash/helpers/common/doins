@@ -42,5 +42,4 @@ install_paths()
 		[[ ${mysrc} != ${x} ]] && rm -f "${mysrc}"
 	done
 }
-
-install_paths "${INDESTTREE}" "$@"
+install_paths "${INSDESTTREE}" "$@"

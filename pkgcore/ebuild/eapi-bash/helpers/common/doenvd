@@ -5,4 +5,4 @@
 
 check_args 1 -
 
-INDESTTREE=/etc/env.d invoke_script doins "$@"
+INSDESTTREE=/etc/env.d invoke_script doins "$@"

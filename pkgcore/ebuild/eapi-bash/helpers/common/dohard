@@ -6,7 +6,12 @@
 check_args 2
 
 ln_option=
-[[ ${HELPER_NAME} == dosym ]] && ln_option=s
+src_prefix=
+if [[ ${HELPER_NAME} == dosym ]]; then
+	ln_option=s
+else
+	src_prefix="${D}"
+fi
 
 check_command_or_stop dodir "${2%/*}"
-check_command ln -${ln_option}f "${D}${1}" "${D}${2}"
+check_command ln -${ln_option}f "${src_prefix}${1}" "${D}${2}"

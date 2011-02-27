@@ -4,4 +4,4 @@
 
 check_args 1 -
 
-"${PKGCORE_PYTHON_BINARY}" "${PKGCORE_BIN_PATH}/internals/_raw_dohtml" "$@"
+check_command "${PKGCORE_PYTHON_BINARY}" "${PKGCORE_BIN_PATH}/internals/_raw_dohtml" "$@"

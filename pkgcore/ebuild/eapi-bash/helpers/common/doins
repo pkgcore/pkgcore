@@ -8,11 +8,6 @@ if [[ ${1} == -r ]] ; then
 	shift
 fi
 
-symlinks_allowed=false
-if ! has "${EAPI}" 0 1 2 3; then
-	symlinks_allowed=true
-fi
-
 check_args 1 -
 
 if [[ "${INSDESTTREE%${D}*}" == "" ]]; then
@@ -27,7 +22,7 @@ install_paths()
 
 	for x in "$@"; do
 		mysrc="${x}"
-		if ! $symlinks_allowed; then
+		if ! ${PKGCORE_DOINS_ALLOW_SYMLINKS}; then
 			if [[ -L $x ]]; then
 				check_command cp "$x" "${T}" || continue
 				mysrc="${T}/${x##*/}"

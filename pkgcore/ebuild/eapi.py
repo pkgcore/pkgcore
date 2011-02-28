@@ -12,7 +12,9 @@ eapi_optionals = mappings.ImmutableDict({
     "trust_defined_phases_cache":True,
     "prefix_capable":True,
     "has_merge_type":False,
-    "exports_replacing":False
+    "exports_replacing":False,
+    "dodoc_allow_recursive":False,
+    "doins_allow_symlinks":False,
 })
 
 class optionals_cls(mappings.ImmutableDict):
@@ -34,7 +36,7 @@ class EAPI(object):
     known_eapis = weakrefs.WeakValCache()
 
     def __init__(self, magic, phases, default_phases,
-        metadata_keys, mandatory_keys, optionals):
+        metadata_keys, mandatory_keys, optionals, ebd_env_options=None):
 
         sf = object.__setattr__
 
@@ -60,6 +62,9 @@ class EAPI(object):
         d.update(optionals)
         sf(self, 'options', optionals_cls(d))
         self.known_eapis[magic] = self
+        if ebd_env_options is None:
+            ebd_env_options = {}
+        sf(self, "ebd_env_options", mappings.ImmutableDict(ebd_env_options))
 
     def __setattr__(self, attr):
         raise AttributeError("instance %r is immutable- tried setting attr %r"
@@ -88,12 +93,18 @@ class EAPI(object):
             return self.default_phases | phases
         return self.default_phases
 
+    def get_ebd_env(self):
+        d = {}
+        for k, converter in self.ebd_env_options.iteritems():
+            d["PKGCORE_%s" % (k.upper(),)] = converter(getattr(self.options, k))
+        d["EAPI"] = str(self.magic)
+        return d
+
 def get_eapi(magic):
     return EAPI.known_eapis.get(magic)
 
 def is_supported(magic):
     return magic in EAPI.known_eapis
-
 
 def shorten_phase_name(func_name):
     if func_name.startswith("src_") or func_name.startswith("pkg_"):
@@ -112,6 +123,9 @@ def combine_dicts(*sequence_of_mappings):
         d.update(mapping)
     return d
 
+def convert_bool_to_bash_bool(val):
+    return str(bool(val)).lower()
+
 common_default_phases = tuple(shorten_phase_name(x)
     for x in ("src_unpack", "src_compile", "src_test", "pkg_nofetch"))
 
@@ -127,12 +141,18 @@ common_metadata_keys = common_mandatory_metadata_keys + (
     "DEPEND", "RDEPEND", "PDEPEND", "PROVIDE", "RESTRICT",
     "DEFINED_PHASES", "PROPERTIES", "EAPI")
 
+common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
+    ("dodoc_allow_recursive", "doins_allow_symlinks"),
+        convert_bool_to_bash_bool))
+
+
 eapi0 = EAPI("0",
     mk_phase_func_map(*common_phases),
     common_default_phases,
     common_metadata_keys,
     common_mandatory_metadata_keys,
     dict(trust_defined_phases_cache=False, prefix_capable=False),
+    ebd_env_options=common_env_optionals,
 )
 
 eapi1 = EAPI("1",
@@ -141,6 +161,7 @@ eapi1 = EAPI("1",
     eapi0.metadata_keys,
     eapi0.mandatory_keys,
     eapi0.options,
+    ebd_env_options=eapi0.ebd_env_options,
 )
 
 eapi2 = EAPI("2",
@@ -149,6 +170,7 @@ eapi2 = EAPI("2",
     eapi1.metadata_keys,
     eapi1.mandatory_keys,
     eapi1.options,
+    ebd_env_options=eapi1.ebd_env_options,
 )
 
 eapi3 = EAPI("3",
@@ -158,6 +180,7 @@ eapi3 = EAPI("3",
     eapi2.mandatory_keys,
     combine_dicts(eapi2.options,
         dict(prefix_capable=True)),
+    ebd_env_options=eapi2.ebd_env_options,
 )
 
 eapi4 = EAPI("4",
@@ -169,5 +192,8 @@ eapi4 = EAPI("4",
         trust_defined_phases_cache=True,
         has_merge_type=True,
         exports_replacing=True,
+        dodoc_allow_recursive=True,
+        doins_allow_recursive=True,
     )),
+    ebd_env_options=eapi3.ebd_env_options,
 )

@@ -122,6 +122,8 @@ class ebd(object):
             self.env['EROOT'] = self.env['ROOT']
             self.env['EPREFIX'] = ''
 
+        self.env.update(pkg.eapi_obj.get_ebd_env())
+
         self.env_data_source = env_data_source
         if env_data_source is not None and \
             not isinstance(env_data_source, data_source.base):

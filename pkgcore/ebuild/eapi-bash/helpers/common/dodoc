@@ -3,13 +3,8 @@
 # License: GPL2/BSD 3 clause
 
 recursive=false
-can_be_recursive=false
-if ! has "${EAPI}" 0 1 2 3; then
-	can_be_recursive=true
-	if [[ $1 == -r ]]; then
-		recursive=true
-		shift
-	fi
+if ${PKGCORE_DODOC_ALLOW_RECURSIVE} && [[ $1 == -r ]]; then
+	recursive=true
 fi
 
 check_args 1 -
@@ -25,7 +20,7 @@ install_paths()
 			error "file '${x}' doesn't exist"
 		elif [[ -d $x ]]; then
 			if ! $recursive; then
-				error "'$x' is a directory$($can_be_recursive && echo ", perhaps you forgot -r?")"
+				error "'$x' is a directory$($PKGCORE_DODOC_ALLOW_RECURSIVE && echo ", perhaps you forgot -r?")"
 				continue
 			fi
 

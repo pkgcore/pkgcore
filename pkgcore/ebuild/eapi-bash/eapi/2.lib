@@ -3,14 +3,12 @@
 
 pkgcore_eapi2_src_configure()
 {
-    has "${EAPI:0}" 0 1 && die "src_configure isn't available from EAPI's below 2"
     if [[ -x ${ECONF_SOURCE:-.}/configure ]] ; then
         econf
     fi
 }
 
 pkgcore_eapi2_src_prepare() {
-    has "${EAPI:0}" 0 1 && die "src_prepare isn't available from EAPI's below 2"
     :
 }
 

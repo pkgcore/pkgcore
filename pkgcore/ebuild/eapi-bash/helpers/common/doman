@@ -22,7 +22,10 @@ for x in "$@" ; do
 		suffix=${uncompressed_name##*.}
 	fi
 
-	if ${PKGCORE_DOMAN_LANGUAGE_DETECT} &&
+	if ${PKGCORE_DOMAN_LANGUAGE_OVERRIDE} && [[ -n ${i18n} ]]; then
+		name=${x##*/}
+		mandir="${i18n}man${suffix:0:1}"
+	elif ${PKGCORE_DOMAN_LANGUAGE_DETECT} &&
 		[[ $x =~ (.*)\.([a-z][a-z](_[A-Z][A-Z])?)\.(.*) ]] ; then
 		name=${BASH_REMATCH[1]##*/}.${BASH_REMATCH[4]}
 		mandir=${BASH_REMATCH[2]}/man${suffix:0:1}

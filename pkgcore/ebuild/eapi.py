@@ -16,6 +16,7 @@ eapi_optionals = mappings.ImmutableDict({
     "dodoc_allow_recursive":False,
     "doins_allow_symlinks":False,
     "doman_language_detect":False,
+    "doman_language_override":False
 })
 
 class optionals_cls(mappings.ImmutableDict):
@@ -144,7 +145,7 @@ common_metadata_keys = common_mandatory_metadata_keys + (
 
 common_env_optionals = mappings.ImmutableDict(dict.fromkeys(
     ("dodoc_allow_recursive", "doins_allow_symlinks",
-     "doman_language_detect",),
+     "doman_language_detect", "doman_language_override"),
         convert_bool_to_bash_bool))
 
 
@@ -196,6 +197,7 @@ eapi4 = EAPI("4",
         exports_replacing=True,
         dodoc_allow_recursive=True,
         doins_allow_recursive=True,
+        doman_language_override=True,
     )),
     ebd_env_options=eapi3.ebd_env_options,
 )

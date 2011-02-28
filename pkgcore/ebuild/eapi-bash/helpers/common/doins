@@ -8,6 +8,11 @@ if [[ ${1} == -r ]] ; then
 	shift
 fi
 
+symlinks_allowed=false
+if ! has "${EAPI}" 0 1 2 3; then
+	symlinks_allowed=true
+fi
+
 check_args 1 -
 
 if [[ "${INSDESTTREE%${D}*}" == "" ]]; then
@@ -21,21 +26,22 @@ install_paths()
 	check_command invoke_script dodir "${mydir}" || return 1
 
 	for x in "$@"; do
-		if [ -L "$x" ] ; then
-			check_command cp "$x" "${T}" || continue
-			mysrc="${T}/${x##*/}"
-		elif [ -d "$x" ] ; then
-			$recursive || continue
-			pushd "$x" &> /dev/null
-			if directory_is_empty "${x}"; then
-				install_paths "${mydir}/${x##*/}"
-			else
-				install_paths "${mydir}/${x##*/}" "${x}"/*
+		mysrc="${x}"
+		if ! $symlinks_allowed; then
+			if [[ -L $x ]]; then
+				check_command cp "$x" "${T}" || continue
+				mysrc="${T}/${x##*/}"
+			elif [[ -d $x ]] ; then
+				$recursive || continue
+				pushd "$x" &> /dev/null
+				if directory_is_empty "${x}"; then
+					install_paths "${mydir}/${x##*/}"
+				else
+					install_paths "${mydir}/${x##*/}" "${x}"/*
+				fi
+				popd &> /dev/null
+				continue
 			fi
-			popd &> /dev/null
-			continue
-		else
-			mysrc="${x}"
 		fi
 		check_command install ${INSOPTIONS} "${mysrc}" "${D}${mydir}"
 		# cleanup the tempspace...

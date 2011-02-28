@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# for the time being, we're ignoring controllable compression.
+
+exit 0

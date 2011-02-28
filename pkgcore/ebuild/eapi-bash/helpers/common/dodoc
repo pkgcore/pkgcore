@@ -3,8 +3,9 @@
 # License: GPL2/BSD 3 clause
 
 recursive=false
-
+can_be_recursive=false
 if ! has "${EAPI}" 0 1 2 3; then
+	can_be_recursive=true
 	if [[ $1 == -r ]]; then
 		recursive=true
 		shift
@@ -23,9 +24,10 @@ install_paths()
 		if [[ ! -e ${x} ]]; then
 			error "file '${x}' doesn't exist"
 		elif [[ -d $x ]]; then
-			$recursive || continue
-
-			# PMS doesn't agree with this; update once portage is sorted in regard to PMS behaviour
+			if ! $recursive; then
+				error "'$x' is a directory$($can_be_recursive && echo ", perhaps you forgot -r?")"
+				continue
+			fi
 
 			directory_is_empty "$x" && continue
 			pushd "$x" &> /dev/null

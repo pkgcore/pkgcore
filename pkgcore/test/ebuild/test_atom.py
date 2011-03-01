@@ -8,6 +8,7 @@ from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild import atom, errors, atom_restricts
 from pkgcore.test.misc import FakePkg, FakeRepo
 from pkgcore.restrictions.boolean import AndRestriction
+from snakeoil.currying import partial
 
 class Test_native_atom(TestCase):
 
@@ -137,51 +138,58 @@ class Test_native_atom(TestCase):
         # with ~
         self.assertRaises(errors.MalformedAtom, self.kls, "~%s-r0" % astr)
 
-    def test_use(self):
+    def check_use(self, eapi=2):
         astr = "dev-util/bsdiff"
         c = FakePkg("%s-1" % astr, use=("debug",), slot=1)
 
+        kls = partial(self.kls, eapi=eapi)
+
         # Valid chars: [a-zA-Z0-9_@+-]
-        self.kls('%s[zZaA09]' % astr)
-        self.kls('%s[x@y]' % astr)
-        self.kls('%s[x+y]' % astr)
-        self.kls('%s[x-y]' % astr)
-        self.kls('%s[x_y]' % astr)
+        kls('%s[zZaA09]' % astr)
+        kls('%s[x@y]' % astr)
+        kls('%s[x+y]' % astr)
+        kls('%s[x-y]' % astr)
+        kls('%s[x_y]' % astr)
+        kls('%s[-x_y]' % astr)
+        kls('%s[x?]' % astr)
+        kls('%s[!x?]' % astr)
+        kls('%s[x=]' % astr)
+        kls('%s[!x=]' % astr)
 
         # '.' not a valid char in use deps
-        self.assertRaises(errors.MalformedAtom, self.kls, "%s[x.y]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, "%s[x.y]" % astr)
 
         # Use deps start with an alphanumeric char (non-transitive)
-        self.assertRaises(errors.MalformedAtom, self.kls, "%s[@x]" % astr)
-        self.assertRaises(errors.MalformedAtom, self.kls, "%s[_x]" % astr)
-        self.assertRaises(errors.MalformedAtom, self.kls, "%s[+x]" % astr)
-        self.assertRaises(errors.MalformedAtom, self.kls, "%s[-@x]" % astr)
-        self.assertRaises(errors.MalformedAtom, self.kls, "%s[-_x]" % astr)
-        self.assertRaises(errors.MalformedAtom, self.kls, "%s[-+x]" % astr)
-        self.assertRaises(errors.MalformedAtom, self.kls, "%s[--x]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, "%s[@x]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, "%s[_x]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, "%s[+x]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, "%s[-@x]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, "%s[-_x]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, "%s[-+x]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, "%s[--x]" % astr)
 
-        self.assertTrue(self.kls("%s[debug]" % astr).match(c))
-        self.assertFalse(self.kls("%s[-debug]" % astr).match(c))
-        self.assertTrue(self.kls("%s[debug,-not]" % astr).match(c))
-        self.assertTrue(self.kls("%s:1[debug,-not]" % astr).match(c))
+        self.assertTrue(kls("%s[debug]" % astr).match(c))
+        self.assertFalse(kls("%s[-debug]" % astr).match(c))
+        self.assertTrue(kls("%s[debug,-not]" % astr).match(c))
+        self.assertTrue(kls("%s:1[debug,-not]" % astr).match(c))
 
-        self.assertRaises(errors.MalformedAtom, self.kls, "%s[]" % astr)
-        self.assertRaises(errors.MalformedAtom, self.kls, "%s[-]" % astr)
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[foon")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[[fo]")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x][y]")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x]:1")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x]a")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[--]")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x??]")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x=?]")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x?=]")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x==]")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[x??]")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[!=]")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[!?]")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[!!x?]")
-        self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/diffball[!-x?]")
+        self.assertRaises(errors.MalformedAtom, kls, "%s[]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, "%s[-]" % astr)
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[foon")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[[fo]")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[x][y]")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[x]:1")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[x]a")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[--]")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[x??]")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[x=?]")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[x?=]")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[x==]")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[x??]")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[!=]")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[!?]")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[!!x?]")
+        self.assertRaises(errors.MalformedAtom, kls, "dev-util/diffball[!-x?]")
 
     def test_slot(self):
         astr = "dev-util/confcache"
@@ -275,8 +283,15 @@ class Test_native_atom(TestCase):
                 "dev-util/foon%s" % postfix, eapi=1)
         self.kls("dev-util/foon:1", eapi=1)
         self.kls("dev-util/foon:12", eapi=1)
+        self.assertRaisesMsg("dev-util/foon[dar] must be invalid in EAPI 1",
+            errors.MalformedAtom,
+            self.kls, "dev-util/foon[dar]", eapi=1)
+
+    def test_eapi2(self):
+        self.check_use(eapi=2)
 
     def test_eapi3(self):
+        self.check_use(eapi=3)
         self.kls("dev-util/foon:1", eapi=3)
         self.kls("dev-util/foon:2", eapi=3)
         self.kls("!dev-util/foon:1", eapi=3)

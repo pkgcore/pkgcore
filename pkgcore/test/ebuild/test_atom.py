@@ -138,7 +138,7 @@ class Test_native_atom(TestCase):
         # with ~
         self.assertRaises(errors.MalformedAtom, self.kls, "~%s-r0" % astr)
 
-    def check_use(self, eapi=2):
+    def check_use(self, eapi=2, defaults=False):
         astr = "dev-util/bsdiff"
         c = FakePkg("%s-1" % astr, use=("debug",), slot=1)
 
@@ -155,6 +155,15 @@ class Test_native_atom(TestCase):
         kls('%s[!x?]' % astr)
         kls('%s[x=]' % astr)
         kls('%s[!x=]' % astr)
+
+        if defaults:
+            kls('%s[x(+)]' % astr)
+            kls('%s[x(-)]' % astr)
+            self.assertRaises(errors.MalformedAtom, kls, '%s[x(+-)]' % astr)
+            self.assertRaises(errors.MalformedAtom, kls, '%s[x(@)]' % astr)
+        else:
+            self.assertRaises(errors.MalformedAtom, kls, '%s[x(+)]' % astr)
+            self.assertRaises(errors.MalformedAtom, kls, '%s[x(-)]' % astr)
 
         # '.' not a valid char in use deps
         self.assertRaises(errors.MalformedAtom, kls, "%s[x.y]" % astr)
@@ -298,6 +307,9 @@ class Test_native_atom(TestCase):
         self.kls("dev-util/foon:1[x]", eapi=3)
         self.kls("dev-util/foon:1[x?]", eapi=3)
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1::dar", eapi=3)
+
+    def test_eapi4(self):
+        self.check_use(eapi=4, defaults=True)
 
     def test_repo_id(self):
         astr = "dev-util/bsdiff"

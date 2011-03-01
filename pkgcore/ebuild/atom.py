@@ -83,6 +83,11 @@ def native_init(self, atom, negate_vers=False, eapi=-1):
                 elif x[0] == '-':
                     x = x[1:]
 
+                if x[-1] == ')' and eapi not in (0, 1, 2, 3):
+                    # use defaults.
+                    if x[-3:] in ("(+)", "(-)"):
+                        x = x[:-3]
+
                 if not x:
                     raise errors.MalformedAtom(orig_atom,
                         'empty use dep detected')

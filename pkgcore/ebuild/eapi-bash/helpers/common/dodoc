@@ -29,7 +29,7 @@ install_paths()
 			install_paths "${mydir}/${x}" *
 			popd &> /dev/null
 		elif [[ -s $x ]]; then
-			check_command install -m0644 "${x}" "${mydir}"
+			check_command install -m0644 "${x}" "${mydir}" && \
 			check_command gzip -f -9 "${mydir}/${x##*/}"
 		fi
 	done

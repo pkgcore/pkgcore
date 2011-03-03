@@ -187,8 +187,8 @@ run_function_if_exists() {
 }
 
 directory_is_empty() {
-	ls "$1" &> /dev/null && return 0
-	return 1
+	ls "$1" &> /dev/null && return 1
+	return 0
 }
 
 unset_colors

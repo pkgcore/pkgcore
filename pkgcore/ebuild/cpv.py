@@ -17,25 +17,22 @@ from pkgcore.package import base
 from snakeoil.demandload import demandload, demand_compile_regexp
 demandload(globals(), "pkgcore.ebuild:atom")
 
-suffix_regexp = demand_compile_regexp(
-    globals(), 'suffix_regexp', '^(alpha|beta|rc|pre|p)(\\d*)$')
+demand_compile_regexp(globals(), 'suffix_regexp',
+    '^(alpha|beta|rc|pre|p)(\\d*)$')
 suffix_value = {"pre": -2, "p": 1, "alpha": -4, "beta": -3, "rc": -1}
 
 # while the package section looks fugly, there is a reason for it-
 # to prevent version chunks from showing up in the package
 
 
-isvalid_version_re = demand_compile_regexp(
-    globals(), 'isvalid_version_re',
+demand_compile_regexp(globals(), 'isvalid_version_re',
     "^(?:cvs\\.)?(?:\\d+)(?:\\.\\d+)*[a-z]?"
     "(?:_(p(?:re)?|beta|alpha|rc)\\d*)*$")
 
-isvalid_cat_re = demand_compile_regexp(
-    globals(), 'isvalid_cat_re',
+demand_compile_regexp(globals(), 'isvalid_cat_re',
     "^(?:[a-zA-Z0-9][-a-zA-Z0-9+._]*(?:/(?!$))?)+$")
 
-_pkg_re = demand_compile_regexp(
-    globals(), '_pkg_re',
+demand_compile_regexp(globals(), '_pkg_re',
     #empty string is fine, means a -- was encounter.
     "^[a-zA-Z0-9+_]+$")
 

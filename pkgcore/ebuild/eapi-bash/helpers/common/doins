@@ -28,13 +28,11 @@ install_paths()
 				mysrc="${T}/${x##*/}"
 			elif [[ -d $x ]] ; then
 				$recursive || continue
-				pushd "$x" &> /dev/null
 				if directory_is_empty "${x}"; then
 					install_paths "${mydir}/${x##*/}"
 				else
 					install_paths "${mydir}/${x##*/}" "${x}"/*
 				fi
-				popd &> /dev/null
 				continue
 			fi
 		fi

@@ -23,11 +23,8 @@ install_paths()
 				error "'$x' is a directory$($PKGCORE_DODOC_ALLOW_RECURSIVE && echo ", perhaps you forgot -r?")"
 				continue
 			fi
-
 			directory_is_empty "$x" && continue
-			pushd "$x" &> /dev/null
-			install_paths "${mydir}/${x}" *
-			popd &> /dev/null
+			install_paths "${mydir}/${x##*/}" "${x}"/*
 		elif [[ -s $x ]]; then
 			check_command install -m0644 "${x}" "${mydir}" && \
 			check_command gzip -f -9 "${mydir}/${x##*/}"

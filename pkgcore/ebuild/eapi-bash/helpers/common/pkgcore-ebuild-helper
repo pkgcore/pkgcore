@@ -109,6 +109,11 @@ invoke_script()
 invoke_script "$@"
 
 if $failed; then
+	if [[ -n ${PKGCORE_NONFATAL_HELPER} ]]; then
+		echo "WARNING: exitcode $1 from ${HELPER_ERROR_PREFIX}" >&2
+		# need to track the exit code here.
+		exit 1
+	fi
 	die "Failures encountered.  See proceeding output for details"
 fi
 exit 0

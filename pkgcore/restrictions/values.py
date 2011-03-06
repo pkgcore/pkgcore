@@ -378,8 +378,7 @@ class ContainmentMatch(base):
         # contents sets do), the __getitem__ is non standard.
         try:
             if self.all:
-                i = iter(val)
-                return bool(self.vals.difference(i)) == self.negate
+                return self.vals.issubset(val) != self.negate
             for x in self.vals:
                 if x in val:
                     return not self.negate

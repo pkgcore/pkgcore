@@ -12,8 +12,8 @@ __all__ = ("atom", "transitive_use_atom", "generate_collapsed_restriction")
 
 import string
 from pkgcore.restrictions import values, packages, boolean
-from pkgcore.ebuild import cpv, errors, const
-from pkgcore.ebuild.atom_restricts import VersionMatch
+from pkgcore.ebuild import cpv, errors, const, atom_restricts
+from pkgcore.ebuild import atom_restricts
 from snakeoil.compatibility import all, is_py3k, cmp
 from snakeoil.klass import (generic_equality, inject_richcmp_methods_from_cmp,
     reflective_hash)
@@ -250,7 +250,7 @@ def native__getattr__(self, attr):
             r.append(packages.PackageRestriction(
                     "fullver", values.StrGlobMatch(self.fullver)))
         else:
-            r.append(VersionMatch(self.op, self.version, self.revision,
+            r.append(atom_restricts.VersionMatch(self.op, self.version, self.revision,
                                   negate=self.negate_vers))
 
     if self.slot is not None:
@@ -264,18 +264,8 @@ def native__getattr__(self, attr):
     if self.use is not None:
         false_use = [x[1:] for x in self.use if x[0] == "-"]
         true_use = [x for x in self.use if x[0] != "-"]
-        v = []
-        if false_use:
-            v.append(values.ContainmentMatch(negate=True,
-                all=True, *false_use))
 
-        if true_use:
-            v.append(values.ContainmentMatch(all=True, *true_use))
-        if len(v) == 1:
-            v = v[0]
-        else:
-            v = values.AndRestriction(*v)
-        r.append(packages.PackageRestriction("use", v))
+        r.append(atom_restricts.StaticUseDep(false_use, true_use))
 
     r = tuple(r)
     object.__setattr__(self, attr, r)
@@ -548,12 +538,12 @@ class atom(boolean.AndRestriction):
         if self.op == '=':
             if other.op == '=*':
                 return self.fullver.startswith(other.fullver)
-            return VersionMatch(
+            return atom_restricts.VersionMatch(
                 other.op, other.version, other.revision).match(self)
         if other.op == '=':
             if self.op == '=*':
                 return other.fullver.startswith(self.fullver)
-            return VersionMatch(
+            return atom_restricts.VersionMatch(
                 self.op, self.version, self.revision).match(other)
 
         # If we are both ~ matches we match if we are identical:
@@ -585,22 +575,22 @@ class atom(boolean.AndRestriction):
             # match the other's endpoint (just checking one endpoint
             # is not enough, it would give a false positive on <=2 vs >2)
             return (
-                VersionMatch(
+                atom_restricts.VersionMatch(
                     other.op, other.version, other.revision).match(ranged) and
-                VersionMatch(
+                atom_restricts.VersionMatch(
                     ranged.op, ranged.version, ranged.revision).match(other))
 
         if other.op == '~':
             # Other definitely matches its own version. If ranged also
             # does we're done:
-            if VersionMatch(
+            if atom_restricts.VersionMatch(
                 ranged.op, ranged.version, ranged.revision).match(other):
                 return True
             # The only other case where we intersect is if ranged is a
             # > or >= on other's version and a nonzero revision. In
             # that case other will match ranged. Be careful not to
             # give a false positive for ~2 vs <2 here:
-            return ranged.op in ('>', '>=') and VersionMatch(
+            return ranged.op in ('>', '>=') and atom_restricts.VersionMatch(
                 other.op, other.version, other.revision).match(ranged)
 
         if other.op == '=*':
@@ -609,7 +599,7 @@ class atom(boolean.AndRestriction):
 
             # a glob match definitely matches its own version, so if
             # ranged does too we're done:
-            if VersionMatch(
+            if atom_restricts.VersionMatch(
                 ranged.op, ranged.version, ranged.revision).match(other):
                 return True
             if '<' in ranged.op:

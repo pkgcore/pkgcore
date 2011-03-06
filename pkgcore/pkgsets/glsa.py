@@ -18,7 +18,7 @@ from snakeoil.iterables import caching_iter
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.package:mutated',
-    'pkgcore.ebuild:cpv,atom',
+    'pkgcore.ebuild:cpv,atom,atom_restricts',
     'pkgcore.log:logger',
     'pkgcore.util.repo_utils:get_virtual_repos',
     'snakeoil.xml:etree',
@@ -166,16 +166,16 @@ class GlsaDirSet(object):
                     raise ValueError(
                         "range %s version %s is a guranteed empty set" %
                         (op, str(node.text.strip())))
-                return atom.VersionMatch("~", base.version, negate=negate)
+                return atom_restricts.VersionMatch("~", base.version, negate=negate)
             return packages.AndRestriction(
-                atom.VersionMatch("~", base.version),
-                atom.VersionMatch(restrict, base.version, rev=base.revision),
+                atom_restricts.VersionMatch("~", base.version),
+                atom_restricts.VersionMatch(restrict, base.version, rev=base.revision),
                 negate=negate)
         if glob:
             return packages.PackageRestriction("fullver",
                 values.StrGlobMatch(base.fullver))
-        return atom.VersionMatch(restrict, base.version, rev=base.revision,
-                                 negate=negate)
+        return atom_restricts.VersionMatch(restrict, base.version,
+            rev=base.revision, negate=negate)
 
 
 def find_vulnerable_repo_pkgs(glsa_src, repo, grouped=False, arch=None):

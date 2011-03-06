@@ -10,7 +10,7 @@ atom version restrict
 
 __all__ = ("VersionMatch",)
 
-from pkgcore.restrictions import packages, restriction
+from pkgcore.restrictions import packages, restriction, values
 from pkgcore.ebuild import cpv, errors
 from snakeoil.klass import generic_equality
 from snakeoil.compatibility import is_py3k
@@ -125,3 +125,26 @@ class VersionMatch(restriction.base):
 
     def __hash__(self):
         return hash((self.droprev, self.ver, self.rev, self.negate, self.vals))
+
+
+class StaticUseDep(packages.PackageRestriction):
+
+    __slots__ = ()
+    __instance_caching__ = True
+
+    def __init__(self, false_use, true_use):
+        v = []
+        if false_use:
+            v.append(values.ContainmentMatch(negate=True, all=True, *false_use))
+        if true_use:
+            v.append(values.ContainmentMatch(all=True, *true_use))
+
+        l = len(v)
+        if l == 2:
+            v = values.AndRestriction(*v)
+        elif l == 1:
+            v = v[0]
+        else:
+            v = values.AlwaysTrue
+
+        packages.PackageRestriction.__init__(self, 'use', v)

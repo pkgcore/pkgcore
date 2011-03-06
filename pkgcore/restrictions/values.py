@@ -379,12 +379,11 @@ class ContainmentMatch(base):
         try:
             if self.all:
                 return self.vals.issubset(val) != self.negate
-            for x in self.vals:
-                if x in val:
-                    return not self.negate
-            return self.negate
+            # if something intersects, then we return the inverse of negate-
+            # if negate=False, something is found, result is True
+            return self.vals.isdisjoint(val) == self.negate
         except TypeError:
-            # other way around.  rely on contains.
+            # isn't iterable, try the other way around.  rely on contains.
             if self.all:
                 for k in self.vals:
                     if k not in val:

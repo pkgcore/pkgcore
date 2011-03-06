@@ -9,6 +9,8 @@ from pkgcore.restrictions import packages, values
 from pkgcore.test import (protect_logging, TestRestriction, malleable_obj,
     quiet_logger, callback_logger)
 
+from snakeoil.mappings import AttrAccessible
+
 
 class AlwaysSelfIntersect(values.base):
     def intersect(self, other):
@@ -156,6 +158,69 @@ class cpy_PackageRestrictionTest(native_PackageRestrictionTest):
         skip = "cpython extension isn't available"
     else:
         kls = staticmethod(packages.PackageRestriction)
+
+
+class values_callback(values.base):
+
+    __slots__ = ("callback",)
+
+    def __init__(self, callback):
+        object.__setattr__(self, 'callback', callback)
+
+    def match(self, val):
+        return self.callback((None, val))
+
+    def force_True(self, pkg, attr, val):
+        return self.callback((True, pkg, attr, val))
+
+    def force_False(self, pkg, attr, val):
+        return self.callback((False, pkg, attr, val))
+
+
+class native_PackageRestrictionMultiTest(TestCase):
+
+    if packages.native_PackageRestriction is packages.PackageRestriction_base:
+        kls = packages.PackageRestrictionMulti
+    else:
+        class kls(packages.native_PackageRestrictionMulti,
+            packages.PackageRestrictionMulti_mixin):
+            __slots__ = ()
+            __inst_caching__ = packages.PackageRestrictionMulti.__inst_caching__
+
+    kls = staticmethod(kls)
+
+    def test_attr(self):
+        o = self.kls(("asdf.far", "repo"), values.AlwaysTrue)
+        self.assertEqual(o.attrs, ("asdf.far", "repo"))
+
+    def test_values(self):
+        l = []
+        def f(*args):
+            self.assertLen(args, 1)
+            l.append(args[0])
+            return True
+
+        o = self.kls(("asdf.far", "repo"), values_callback(f))
+
+        pkg = AttrAccessible()
+        o.match(pkg)
+        self.assertFalse(l)
+
+        pkg['repo'] = 1
+        o.match(pkg)
+        self.assertFalse(l)
+
+        pkg['asdf'] = AttrAccessible(far=2)
+        o.match(pkg)
+        self.assertEqual(l, [(None, [2,1],)])
+
+        l[:] = []
+        o.force_True(pkg)
+        self.assertEqual(l, [(True, pkg, ('asdf.far', 'repo'), [2,1],)])
+
+        l[:] = []
+        o.force_False(pkg)
+        self.assertEqual(l, [(False, pkg, ('asdf.far', 'repo'), [2,1],)])
 
 
 class ConditionalTest(TestCase):

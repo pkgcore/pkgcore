@@ -124,7 +124,7 @@ class PackageRestriction_mixin(restriction.base):
         If an optimized intersection cannot be determined this returns C{None}.
         """
         if (self.negate != other.negate or
-            self.attr != other.attr or
+            self.attrs != other.attrs or
             self.__class__ is not other.__class__):
             return None
         # Make the most subclassed instance do the intersecting
@@ -175,11 +175,65 @@ class PackageRestriction_mixin(restriction.base):
         return (self.attr,)
 
 
+class native_PackageRestrictionMulti(native_PackageRestriction):
+
+    __slots__ = ()
+
+    @property
+    def attrs(self):
+        return tuple('.'.join(x) for x in self._attr_split)
+
+    def _parse_attr(self, attrs):
+        object.__setattr__(self, '_pull_attr_func',
+            tuple(map(static_attrgetter, attrs)))
+        object.__setattr__(self, '_attr_split', tuple(x.split('.') for x in attrs))
+
+    def _pull_attr(self, pkg):
+        val = []
+        try:
+            for attr_func in self._pull_attr_func:
+                val.append(attr_func(pkg))
+        except (KeyboardInterrupt, RuntimeError, SystemExit):
+            raise
+        except Exception, e:
+            if self._handle_exception(pkg, e,
+                self._attr_split[len(val)]):
+                raise
+            return self.__sentinel__
+        return val
+
+
+class PackageRestrictionMulti_mixin(PackageRestriction_mixin):
+
+    __slots__ = ()
+
+    def force_False(self, pkg):
+        attrs = self._pull_attr(pkg)
+        if attrs is self.__sentinel__:
+            return not self.negate
+        if self.negate:
+            return self.restriction.force_True(pkg, self.attrs, attrs)
+        return self.restriction.force_False(pkg, self.attrs, attrs)
+
+    def force_True(self, pkg):
+        attrs = self._pull_attr(pkg)
+        if attrs is self.__sentinel__:
+            return self.negate
+        if self.negate:
+            return self.restriction.force_False(pkg, self.attrs, attrs)
+        return self.restriction.force_True(pkg, self.attrs, attrs)
+
+    @property
+    def attrs(self):
+        return tuple('.'.join(x) for x in self._attr_split)
+
+
 try:
-    from pkgcore.restrictions._restrictions import PackageRestriction as \
-        PackageRestriction_base
+    from pkgcore.restrictions._restrictions import \
+        PackageRestriction as PackageRestriction_base
 except ImportError:
     PackageRestriction_base = native_PackageRestriction
+PackageRestrictionMulti_base = native_PackageRestrictionMulti
 
 
 class PackageRestriction(PackageRestriction_base, PackageRestriction_mixin):
@@ -189,6 +243,18 @@ class PackageRestriction(PackageRestriction_base, PackageRestriction_mixin):
     if is_py3k:
         __hash__ = PackageRestriction_mixin.__hash__
         __eq__ = PackageRestriction_base.__eq__
+
+
+class PackageRestrictionMulti(PackageRestrictionMulti_base,
+    PackageRestrictionMulti_mixin):
+
+    __slots__ = ()
+    __inst_caching__ = True
+
+    if is_py3k:
+        __hash__ = PackageRestriction_mixin.__hash__
+        __eq__ = PackageRestriction_base.__eq__
+
 
 class Conditional(PackageRestriction):
 

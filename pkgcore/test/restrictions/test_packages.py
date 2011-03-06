@@ -106,7 +106,11 @@ class native_PackageRestrictionTest(TestRestriction):
         self.assertEqual(self.kls('val', values.AlwaysTrue).attr,
             'val')
         self.assertEqual(self.kls('val.dar', values.AlwaysTrue).attr,
-            ('val', 'dar'))
+            'val.dar')
+        self.assertEqual(self.kls('val', values.AlwaysTrue).attrs,
+            ('val',))
+        self.assertEqual(self.kls('val.dar', values.AlwaysTrue).attrs,
+            ('val.dar',))
 
     def test_eq(self):
         self.assertEqual(

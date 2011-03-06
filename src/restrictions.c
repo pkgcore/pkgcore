@@ -29,7 +29,6 @@ static PyObject *pkgcore_sentinel_str = NULL;
 
 //packagerestriction
 #define IGNORE_MISSING	  0x2
-#define SHALLOW_ATTR		0x4
 
 
 #define IS_NEGATED(flags) (flags & NEGATED_RESTRICT)
@@ -347,13 +346,8 @@ pkgcore_PackageRestriction_init(pkgcore_PackageRestriction *self,
 		make_bool(ignore_missing, IGNORE_MISSING);
 	}
 	#undef make_bool
-	if(NULL == index(PyString_AS_STRING(attr), '.')) {
-		flags |= SHALLOW_ATTR;
-		Py_INCREF(attr);
-	} else {
-		if(!(attr = pkgcore_PackageRestriction_breakdown_attr(attr))) {
-			return NULL;
-		}
+	if(!(attr = pkgcore_PackageRestriction_breakdown_attr(attr))) {
+		return NULL;
 	}
 	tmp = self->attr;
 	self->attr = attr;
@@ -383,18 +377,14 @@ _internal_pull_attr(pkgcore_PackageRestriction *self, PyObject *inst, PyObject *
 
 	*result = NULL;
 
-	if(self->flags & SHALLOW_ATTR) {
-		tmp = PyObject_GetAttr(inst, self->attr);
-	} else {
-		Py_INCREF(inst);
-		for(; idx < PyTuple_GET_SIZE(self->attr); idx++) {
-			tmp = PyObject_GetAttr(inst, PyTuple_GET_ITEM(self->attr, idx));
-			Py_DECREF(inst);
-			if(!tmp) {
-				break;
-			}
-			inst = tmp;
+	Py_INCREF(inst);
+	for(; idx < PyTuple_GET_SIZE(self->attr); idx++) {
+		tmp = PyObject_GetAttr(inst, PyTuple_GET_ITEM(self->attr, idx));
+		Py_DECREF(inst);
+		if(!tmp) {
+			break;
 		}
+		inst = tmp;
 	}
 
 	if (tmp) {
@@ -504,7 +494,7 @@ PyDoc_STRVAR(
 
 static PyMemberDef pkgcore_PackageRestriction_members[] = {
 	{"restriction", T_OBJECT, offsetof(pkgcore_PackageRestriction, restriction), READONLY},
-	{"attr", T_OBJECT, offsetof(pkgcore_PackageRestriction, attr), READONLY},
+	{"_attr_split", T_OBJECT, offsetof(pkgcore_PackageRestriction, attr), READONLY},
 	{NULL}
 };
 

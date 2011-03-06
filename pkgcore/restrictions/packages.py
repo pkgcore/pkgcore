@@ -17,10 +17,10 @@ package_type = restriction.package_type
 
 
 class native_PackageRestriction(object):
-    __slots__ = ('_pull_attr_func', 'attr', 'restriction', 'ignore_missing',
+    __slots__ = ('_pull_attr_func', '_attr_split', 'restriction', 'ignore_missing',
         'negate')
 
-    __attr_comparison__ = ("__class__", "negate", "attr", "restriction")
+    __attr_comparison__ = ("__class__", "negate", "_attr_split", "restriction")
     __metaclass__ = generic_equality
 
     __sentinel__ = object()
@@ -43,11 +43,7 @@ class native_PackageRestriction(object):
 
     def _parse_attr(self, attr):
         object.__setattr__(self, "_pull_attr_func", static_attrgetter(attr))
-        if '.' in attr:
-            # this is done purely for compatibility w/ cpy (yes we prefer
-            # the cpy implementation)
-            attr = tuple(attr.split('.'))
-        object.__setattr__(self, "attr", attr)
+        object.__setattr__(self, "_attr_split", attr.split('.'))
 
     def _pull_attr(self, pkg):
         try:
@@ -55,7 +51,7 @@ class native_PackageRestriction(object):
         except (KeyboardInterrupt, RuntimeError, SystemExit):
             raise
         except Exception, e:
-            if self._handle_exception(pkg, e, self.attr):
+            if self._handle_exception(pkg, e, self._attr_split):
                 raise
             return self.__sentinel__
 
@@ -81,18 +77,16 @@ class PackageRestriction_mixin(restriction.base):
     subtype = restriction.value_type
     conditional = False
 
-    def _handle_exception(self, pkg, exc, attr):
+    def _handle_exception(self, pkg, exc, attr_split):
         if isinstance(exc, AttributeError):
             if not self.ignore_missing:
                 logger.exception("failed getting attribute %s from %s, "
-                              "exception %s" % (self.attr, str(pkg), str(exc)))
-            s = attr
-            if not isinstance(s, tuple):
-                s = self.attr.split('.')
+                              "exception %s" % (attr, str(pkg), str(exc)))
+
             eargs = [x for x in exc.args if isinstance(x, basestring)]
-            if any(x in s for x in eargs):
+            if any(x in attr_split for x in eargs):
                 return False
-            elif any("'%s'" % x in y for x in s for y in eargs):
+            elif any("'%s'" % x in y for x in attr_split for y in eargs):
                 # this is fairly horrible; probably specific to cpython also.
                 # either way, does a lookup specifically for attr components
                 # in the string exception string, looking for 'attr' in the
@@ -100,7 +94,7 @@ class PackageRestriction_mixin(restriction.base):
                 # if it doesn't match, exception is thrown.
                 return False
         logger.exception("caught unexpected exception accessing %s from %s, "
-            "exception %s" % (self.attr, str(pkg), str(exc)))
+            "exception %s" % ('.'.join(attr_split), str(pkg), str(exc)))
         return True
 
     def force_False(self, pkg):
@@ -171,6 +165,14 @@ class PackageRestriction_mixin(restriction.base):
             string = '<%s attr=%r restriction=%r @%#8x>'
         return string % (
             self.__class__.__name__, self.attr, self.restriction, id(self))
+
+    @property
+    def attr(self):
+        return '.'.join(self._attr_split)
+
+    @property
+    def attrs(self):
+        return (self.attr,)
 
 
 try:

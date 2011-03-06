@@ -263,7 +263,7 @@ class Test_native_atom(TestCase):
             self.assertTrue([getattr(x, 'type', None)
                 for x in restricts], ['package'] * count)
             if repo:
-                pos = assertAttr(('repo', 'repo_id'))
+                pos = assertAttr('repo.repo_id')
             pos = assertAttr('package')
             pos = assertAttr('category')
             if ver:

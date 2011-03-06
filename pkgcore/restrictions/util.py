@@ -12,7 +12,7 @@ def _is_package_instance(inst):
     return (getattr(inst, "type", None) == packages.package_type
             and not isinstance(inst, boolean.base))
 
-def collect_package_restrictions(restrict, attrs=None):
+def collect_package_restrictions(restrict, attrs=None, invert=False):
     """Collect PackageRestriction instances inside a restriction.
 
     :param restrict: package instance to scan
@@ -30,8 +30,7 @@ def collect_package_restrictions(restrict, attrs=None):
         for r in iflatten_func(restrict, _is_package_instance):
             yield r
     else:
-        if isinstance(attrs, (list, tuple)):
-            attrs = frozenset(attrs)
+        attrs = frozenset(attrs)
         for r in iflatten_func(restrict, _is_package_instance):
-            if getattr(r, "attr", None) in attrs:
+            if invert == attrs.isdisjoint(getattr(r, 'attrs', ())):
                 yield r

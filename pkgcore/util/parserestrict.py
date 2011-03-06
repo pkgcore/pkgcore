@@ -101,7 +101,7 @@ def parse_match(text):
         try:
             r = list(util.collect_package_restrictions(
                     atom.atom("%scategory/%s" % (ops, text)).restrictions,
-                    attrs=InvertedContains(["category"])))
+                    attrs=("category",), invert=True))
         except errors.MalformedAtom, e:
             raise ParseError(str(e))
         if len(r) == 1:

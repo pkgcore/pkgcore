@@ -269,9 +269,9 @@ class tree(object):
             return self._fast_identify_candidates(restrict, sorter)
         dsolutions = [
             ([c.restriction
-              for c in collect_package_restrictions(x, ["category"])],
+              for c in collect_package_restrictions(x, ("category",))],
              [p.restriction
-              for p in collect_package_restrictions(x, ["package"])])
+              for p in collect_package_restrictions(x, ("package",))])
             for x in restrict.iter_dnf_solutions(True)]
 
         # see if any solution state isn't dependant on cat/pkg in anyway.
@@ -321,7 +321,7 @@ class tree(object):
         pkg_exact = set()
 
         for x in collect_package_restrictions(restrict,
-                                              ["category", "package"]):
+                                              ("category", "package",)):
             if x.attr == "category":
                 cat_restrict.add(x.restriction)
             elif x.attr == "package":

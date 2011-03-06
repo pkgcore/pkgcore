@@ -242,8 +242,7 @@ def native__getattr__(self, attr):
             "category", values.StrExactMatch(self.category))]
 
     if self.repo_id is not None:
-        r.insert(0, packages.PackageRestriction("repo.repo_id",
-            values.StrExactMatch(self.repo_id)))
+        r.insert(0, atom_restricts.RepositoryDep(self.repo_id))
 
     if self.fullver is not None:
         if self.op == '=*':
@@ -254,12 +253,7 @@ def native__getattr__(self, attr):
                                   negate=self.negate_vers))
 
     if self.slot is not None:
-        if len(self.slot) == 1:
-            v = values.StrExactMatch(self.slot[0])
-        else:
-            v = values.OrRestriction(*map(values.StrExactMatch,
-                self.slot))
-        r.append(packages.PackageRestriction("slot", v))
+        r.append(atom_restricts.SlotDep(*self.slot))
 
     if self.use is not None:
         false_use = [x[1:] for x in self.use if x[0] == "-"]

@@ -127,6 +127,32 @@ class VersionMatch(restriction.base):
         return hash((self.droprev, self.ver, self.rev, self.negate, self.vals))
 
 
+class SlotDep(packages.PackageRestriction):
+
+    __slots__ = ()
+    __instance_caching__ = True
+
+    def __init__(self, *slots, **kwds):
+        v = map(values.StrExactMatch, slots)
+        if len(v) == 1:
+            v = v[0]
+        else:
+            v = values.OrRestriction(*v)
+        return packages.PackageRestriction.__init__(self,
+            "slot", v, negate=kwds.get("negate", False))
+
+
+class RepositoryDep(packages.PackageRestriction):
+
+    __slots__ = ()
+    __instance_caching__ = True
+
+    def __init__(self, repo_id, negate=False):
+        packages.PackageRestriction.__init__(self,
+            "repo.repo_id",
+            values.StrExactMatch(repo_id), negate=negate)
+
+
 class StaticUseDep(packages.PackageRestriction):
 
     __slots__ = ()

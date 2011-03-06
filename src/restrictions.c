@@ -19,6 +19,7 @@ static PyObject *pkgcore_restrictions_type = NULL;
 static PyObject *pkgcore_restrictions_subtype = NULL;
 static PyObject *pkgcore_match_str = NULL;
 static PyObject *pkgcore_handle_exception_str = NULL;
+static PyObject *pkgcore_sentinel_str = NULL;
 
 // global
 #define NEGATED_RESTRICT	0x1
@@ -373,26 +374,84 @@ pkgcore_PackageRestriction_dealloc(pkgcore_PackageRestriction *self)
 	self->ob_type->tp_free((PyObject *)self);
 }
 
+static int
+_internal_pull_attr(pkgcore_PackageRestriction *self, PyObject *inst, PyObject **result)
+{
+	Py_ssize_t idx = 0;
+	PyObject *tmp = NULL;
+	PyObject *err_type = NULL, *exc = NULL, *tb = NULL;
+
+	*result = NULL;
+
+	if(self->flags & SHALLOW_ATTR) {
+		tmp = PyObject_GetAttr(inst, self->attr);
+	} else {
+		Py_INCREF(inst);
+		for(; idx < PyTuple_GET_SIZE(self->attr); idx++) {
+			tmp = PyObject_GetAttr(inst, PyTuple_GET_ITEM(self->attr, idx));
+			Py_DECREF(inst);
+			if(!tmp) {
+				break;
+			}
+			inst = tmp;
+		}
+	}
+
+	if (tmp) {
+		*result = tmp;
+		return 1;
+	}
+	PyErr_Fetch(&err_type, &exc, &tb);
+	PyErr_NormalizeException(&err_type, &exc, &tb);
+
+	if (PyErr_GivenExceptionMatches(exc, PyExc_KeyboardInterrupt) ||
+		PyErr_GivenExceptionMatches(exc, PyExc_RuntimeError) ||
+		PyErr_GivenExceptionMatches(exc, PyExc_SystemExit)) {
+
+		PyErr_Restore(err_type, exc, tb);
+		return 0;
+	}
+
+	int truth_result = -1;
+	tmp = PyObject_CallMethodObjArgs((PyObject *)self,
+		pkgcore_handle_exception_str, inst, exc, self->attr, NULL);
+
+	if (tmp) {
+		truth_result = PyObject_IsTrue(tmp);
+		Py_DECREF(tmp);
+	}
+
+	if (1 == truth_result) {
+		// exception wasn't suppressed...
+		PyErr_Restore(err_type, exc, tb);
+		return 0;
+	}
+
+	Py_DECREF(err_type);
+	Py_XDECREF(exc);
+	Py_XDECREF(tb);
+
+	// likely redundant...
+	return (0 == truth_result);
+}
+
 static PyObject *
 pkgcore_PackageRestriction_pull_attr(pkgcore_PackageRestriction *self,
 	PyObject *inst)
 {
-	Py_ssize_t idx = 0;
-	PyObject *tmp = NULL;
+	PyObject *result = NULL;
 
-	if(self->flags & SHALLOW_ATTR) {
-		return PyObject_GetAttr(inst, self->attr);
+	if(!_internal_pull_attr(self, inst, &result)) {
+		return NULL;
 	}
-	Py_INCREF(inst);
-	for(; idx < PyTuple_GET_SIZE(self->attr); idx++) {
-		tmp = PyObject_GetAttr(inst, PyTuple_GET_ITEM(self->attr, idx));
-		Py_DECREF(inst);
-		if(!tmp) {
-			return tmp;
-		}
-		inst = tmp;
-	}
-	return tmp;
+
+	// succeeded, although may have failed but silenced the failure.
+	if (result)
+		return result;
+
+	// get the sentinel, and return it.
+	assert(result == NULL);
+	return PyObject_GetAttr((PyObject *)self, pkgcore_sentinel_str);
 }
 
 static PyObject *
@@ -400,8 +459,13 @@ pkgcore_PackageRestriction_match(pkgcore_PackageRestriction *self,
 	PyObject *inst)
 {
 	PyObject *result = NULL, *attr;
-	attr = pkgcore_PackageRestriction_pull_attr(self, inst);
-	if(attr) {
+
+	if (!_internal_pull_attr(self, inst, &attr)) {
+		return NULL;
+	}
+
+	if (attr) {
+		// non sentinel returned value.
 		result = PyObject_CallMethodObjArgs(self->restriction, pkgcore_match_str,
 			attr, NULL);
 		if(result) {
@@ -427,40 +491,7 @@ pkgcore_PackageRestriction_match(pkgcore_PackageRestriction *self,
 			Py_INCREF(result);
 		}
 		Py_DECREF(attr);
-	}
-	if(!result) {
-		// must ensure it to avoid segfaults...
-		if(!PyErr_Occurred()) {
-			PyErr_SetString(PyExc_SystemError,
-				"NULL result, but no error set");
-			return NULL;
-		} else if( PyErr_ExceptionMatches(PyExc_KeyboardInterrupt) ||
-			PyErr_ExceptionMatches(PyExc_SystemError) ||
-			PyErr_ExceptionMatches(PyExc_RuntimeError)) {
-			return NULL;
-		}
-		PyObject *err_type, *err_val, *err_tb;
-		PyErr_Fetch(&err_type, &err_val, &err_tb);
-		PyErr_NormalizeException(&err_type, &err_val, &err_tb);
-		assert(err_val);
-		if(!(result = PyObject_CallMethodObjArgs((PyObject *)self,
-			pkgcore_handle_exception_str,
-			inst, err_val, NULL))) {
-			Py_XDECREF(err_type);
-			Py_XDECREF(err_val);
-			Py_XDECREF(err_tb);
-			return NULL;
-		}
-		int except_i = PyObject_IsTrue(result);
-		Py_DECREF(result);
-		if(1 == except_i) {
-			PyErr_Restore(err_type, err_val, err_tb);
-			return NULL;
-		}
-		Py_XDECREF(err_type);
-		Py_XDECREF(err_val);
-		Py_XDECREF(err_tb);
-		PyErr_Clear();
+	} else {
 		result = IS_NEGATED(self->flags) ? Py_True : Py_False;
 		Py_INCREF(result);
 	}
@@ -593,6 +624,7 @@ init_restrictions(void)
 	LOAD_STR(pkgcore_restrictions_subtype, "subtype");
 	LOAD_STR(pkgcore_match_str, "match");
 	LOAD_STR(pkgcore_handle_exception_str, "_handle_exception");
+	LOAD_STR(pkgcore_sentinel_str, "__sentinel__");
 	#undef LOAD_STR
 
 	Py_INCREF(&pkgcore_StrExactMatch_Type);

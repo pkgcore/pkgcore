@@ -17,11 +17,13 @@ package_type = restriction.package_type
 
 
 class native_PackageRestriction(object):
-    __slots__ = ('_pull_attr', 'attr', 'restriction', 'ignore_missing',
+    __slots__ = ('_pull_attr_func', 'attr', 'restriction', 'ignore_missing',
         'negate')
 
     __attr_comparison__ = ("__class__", "negate", "attr", "restriction")
     __metaclass__ = generic_equality
+
+    __sentinel__ = object()
 
     def __init__(self, attr, childrestriction, negate=False,
         ignore_missing=True):
@@ -35,30 +37,40 @@ class native_PackageRestriction(object):
             raise TypeError("restriction must be of type %r" % (self.subtype,))
         sf = object.__setattr__
         sf(self, "negate", negate)
-        sf(self, "_pull_attr", static_attrgetter(attr))
+        self._parse_attr(attr)
+        sf(self, "restriction", childrestriction)
+        sf(self, "ignore_missing", ignore_missing)
+
+    def _parse_attr(self, attr):
+        object.__setattr__(self, "_pull_attr_func", static_attrgetter(attr))
         if '.' in attr:
             # this is done purely for compatibility w/ cpy (yes we prefer
             # the cpy implementation)
             attr = tuple(attr.split('.'))
-        sf(self, "attr", attr)
-        sf(self, "restriction", childrestriction)
-        sf(self, "ignore_missing", ignore_missing)
+        object.__setattr__(self, "attr", attr)
 
-    def match(self, pkg):
+    def _pull_attr(self, pkg):
         try:
-            return self.restriction.match(self._pull_attr(pkg)) != self.negate
+            return self._pull_attr_func(pkg)
         except (KeyboardInterrupt, RuntimeError, SystemExit):
             raise
         except Exception, e:
-            if self._handle_exception(pkg, e):
+            if self._handle_exception(pkg, e, self.attr):
                 raise
+            return self.__sentinel__
+
+    def match(self, pkg):
+        attr = self._pull_attr(pkg)
+        if attr is self.__sentinel__:
             return self.negate
+        return self.restriction.match(attr) != self.negate
 
 
 class PackageRestriction_mixin(restriction.base):
     """Package data restriction."""
 
     __slots__ = ()
+    __sentinel__ = object()
 
     # Careful: some methods (__eq__, __hash__, intersect) try to work
     # for subclasses too. They will not behave as intended if a
@@ -69,12 +81,12 @@ class PackageRestriction_mixin(restriction.base):
     subtype = restriction.value_type
     conditional = False
 
-    def _handle_exception(self, pkg, exc):
+    def _handle_exception(self, pkg, exc, attr):
         if isinstance(exc, AttributeError):
             if not self.ignore_missing:
                 logger.exception("failed getting attribute %s from %s, "
                               "exception %s" % (self.attr, str(pkg), str(exc)))
-            s = self.attr
+            s = attr
             if not isinstance(s, tuple):
                 s = self.attr.split('.')
             eargs = [x for x in exc.args if isinstance(x, basestring)]
@@ -92,34 +104,20 @@ class PackageRestriction_mixin(restriction.base):
         return True
 
     def force_False(self, pkg):
-        try:
-            if self.negate:
-                return self.restriction.force_True(pkg, self.attr,
-                                                   self._pull_attr(pkg))
-            else:
-                return self.restriction.force_False(pkg, self.attr,
-                                                    self._pull_attr(pkg))
-        except (KeyboardInterrupt, RuntimeError, SystemExit):
-            raise
-        except Exception, e:
-            if self._handle_exception(pkg, e):
-                raise
+        attr = self._pull_attr(pkg)
+        if attr is self.__sentinel__:
             return not self.negate
+        if self.negate:
+            return self.restriction.force_True(pkg, self.attr, attr)
+        return self.restriction.force_False(pkg, self.attr, attr)
 
     def force_True(self, pkg):
-        try:
-            if self.negate:
-                return self.restriction.force_False(pkg, self.attr,
-                                                    self._pull_attr(pkg))
-            else:
-                return self.restriction.force_True(pkg, self.attr,
-                                                   self._pull_attr(pkg))
-        except (KeyboardInterrupt, RuntimeError, SystemExit):
-            raise
-        except Exception, e:
-            if self._handle_exception(pkg, e):
-                raise
+        attr = self._pull_attr(pkg)
+        if attr is self.__sentinel__:
             return self.negate
+        if self.negate:
+            return self.restriction.force_False(pkg, self.attr, attr)
+        return self.restriction.force_True(pkg, self.attr, attr)
 
     def __len__(self):
         if not isinstance(self.restriction, boolean.base):

@@ -308,7 +308,7 @@ class ConfigManager(object):
         # Bail if this is an inherit-only (uncollapsable) section.
         try:
             inherit_only = section.get_value(self, 'inherit-only', 'bool')
-        except KeyError:
+        except (AttributeError, KeyError):
             pass
         else:
             if inherit_only:

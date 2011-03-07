@@ -19,19 +19,11 @@ eapi_optionals = mappings.ImmutableDict({
     "doman_language_override":False
 })
 
+
 class optionals_cls(mappings.ImmutableDict):
 
-    __getattr__ = mappings.ImmutableDict.__getitem__
-    __setattr__ = mappings.ImmutableDict.__setitem__
-    __delattr__ = mappings.ImmutableDict.__delitem__
+    mappings.inject_getitem_as_getattr(locals())
 
-    def __setattr__(self, attr):
-        raise AttributeError("instance %r is immutable- tried setting attr %r"
-            % (self, attr))
-
-    def __delattr__(self, attr):
-        raise AttributeError("instance %r is immutable- tried deleting attr %r"
-            % (self, attr))
 
 class EAPI(object):
 

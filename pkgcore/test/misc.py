@@ -4,6 +4,7 @@
 # misc things useful for tests.
 
 from itertools import ifilter, imap
+from snakeoil.mappings import AttrAccessible
 from pkgcore.ebuild.ebuild_src import package
 from pkgcore.ebuild.cpv import CPV
 from pkgcore.ebuild.conditionals import DepSet
@@ -15,6 +16,10 @@ from pkgcore.restrictions.packages import AlwaysTrue
 from pkgcore import plugin
 
 default_arches = set(["x86", "ppc", "amd64", "ia64"])
+
+
+Options = AttrAccessible
+
 
 class FakePkgBase(package):
 
@@ -31,12 +36,6 @@ class FakePkgBase(package):
         package.__init__(self, shared, repo, cpv.category, cpv.package,
             cpv.fullver)
         object.__setattr__(self, "data", data)
-
-
-class Options(dict):
-    __setattr__ = dict.__setitem__
-    __getattr__ = dict.__getitem__
-    __delattr__ = dict.__delitem__
 
 
 class FakeProfile(object):

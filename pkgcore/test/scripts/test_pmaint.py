@@ -7,6 +7,7 @@ from StringIO import StringIO
 from pkgcore.test import TestCase
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.currying import partial
+from snakeoil.mappings import AttrAccessible
 
 from pkgcore.scripts import pmaint
 from pkgcore.test.scripts import helpers
@@ -18,10 +19,7 @@ from pkgcore.operations.repo import (install,
     uninstall, replace, operations)
 
 
-class Options(dict):
-    __getattr__ = dict.__getitem__
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
+Options = AttrAccessible
 
 
 class FakeSyncer(base.syncer):

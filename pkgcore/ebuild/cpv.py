@@ -394,14 +394,15 @@ native_CPV = mk_cpv_cls(_native_CPV)
 try:
     # No name in module
     # pylint: disable-msg=E0611
-    from pkgcore.ebuild._cpv import CPV as _cpy_CPV
+    from pkgcore.ebuild._cpv import CPV as cpy_CPV
+    CPV_base = cpy_CPV
     ver_cmp = cpy_ver_cmp
     cpy_builtin = True
-    cpy_CPV = CPV = mk_cpv_cls(_cpy_CPV)
+    cpy_CPV = CPV = mk_cpv_cls(cpy_CPV)
 except ImportError:
     ver_cmp = native_ver_cmp
     cpy_builtin = False
-    CPV = native_CPV
+    CPV = CPV_base = native_CPV
 
 def unversioned_CPV(*args):
     return CPV.unversioned(*args)

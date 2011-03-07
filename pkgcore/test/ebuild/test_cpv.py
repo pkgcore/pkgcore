@@ -3,6 +3,7 @@
 
 from random import shuffle
 from pkgcore.test import TestCase
+from snakeoil.test import mk_cpy_loadable_testcase
 from pkgcore.ebuild import cpv
 from snakeoil.currying import partial
 from snakeoil.compatibility import cmp
@@ -323,3 +324,7 @@ class CPY_CpvTest(native_CpvTest):
 class CPY_Cpv_OptionalArgsTest(CPY_CpvTest):
 
     testing_secondary_args = True
+
+test_cpy_used = mk_cpy_loadable_testcase('pkgcore.ebuild._cpv',
+    "pkgcore.ebuild.cpv", "CPV_base", "CPV")
+

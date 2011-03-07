@@ -4,6 +4,7 @@
 
 import cStringIO
 from pkgcore.test import TestCase
+from snakeoil.test import mk_cpy_loadable_testcase
 from pkgcore.ebuild import filter_env
 
 
@@ -253,3 +254,6 @@ class CPyFilterEnvTest(NativeFilterEnvTest):
         skip = 'cpy filter_env not available.'
     else:
         filter_env = staticmethod(filter_env.cpy_run)
+
+cpy_loaded_Test = mk_cpy_loadable_testcase("pkgcore.ebuild._filter_env",
+    "pkgcore.ebuild.filter_env", "run", "run")

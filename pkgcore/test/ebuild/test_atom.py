@@ -2,6 +2,7 @@
 # License: GPL2/BSD
 
 from snakeoil.pickling import dumps, loads
+from snakeoil.test import mk_cpy_loadable_testcase
 from snakeoil.compatibility import cmp
 from pkgcore.test import TestCase
 from pkgcore.ebuild.cpv import CPV
@@ -489,3 +490,6 @@ class Test_cpy_atom(Test_native_atom):
     kls = staticmethod(atom.atom)
     if atom.atom_overrides is atom.native_atom_overrides:
         skip = "extension isn't available"
+
+test_cpy_used = mk_cpy_loadable_testcase('pkgcore.ebuild._atom',
+    "pkgcore.ebuild.atom", "atom_overrides", "overrides")

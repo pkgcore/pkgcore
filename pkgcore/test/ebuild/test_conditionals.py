@@ -2,6 +2,7 @@
 # License: GPL2/BSD
 
 from pkgcore.test import TestCase
+from snakeoil.test import mk_cpy_loadable_testcase
 from snakeoil.compatibility import any
 from snakeoil.currying import post_curry
 from snakeoil.iterables import expandable_chain
@@ -335,3 +336,6 @@ class cpy_DepSetEvaluateTest(native_DepSetEvaluateTest):
     kls = staticmethod(conditionals.DepSet)
     if not conditionals.DepSet.parse_depset:
         skip = "extension not available"
+
+test_cpy_used = mk_cpy_loadable_testcase('pkgcore.ebuild._depset',
+    "pkgcore.ebuild.conditionals", "parse_depset", "parse_depset")

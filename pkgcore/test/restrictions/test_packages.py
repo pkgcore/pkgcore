@@ -3,6 +3,7 @@
 # License: BSD/GPL2
 
 from pkgcore.test import TestCase
+from snakeoil.test import mk_cpy_loadable_testcase
 from pkgcore import log
 from pkgcore.restrictions import packages, values
 from pkgcore.test import (protect_logging, TestRestriction, malleable_obj,
@@ -172,3 +173,6 @@ class ConditionalTest(TestCase):
         self.assertNotEqual(
             packages.Conditional('use1', v, p),
             packages.Conditional('use', v, p))
+
+test_cpy_used = mk_cpy_loadable_testcase('pkgcore.restrictions._restrictions',
+    "pkgcore.restrictions.packages", "PackageRestriction_base", "PackageRestriction")

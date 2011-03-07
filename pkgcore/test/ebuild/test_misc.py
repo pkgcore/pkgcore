@@ -2,6 +2,7 @@
 # License: GPL2/BSD
 
 from pkgcore.test import TestCase
+from snakeoil.test import mk_cpy_loadable_testcase
 from pkgcore.ebuild import misc
 from pkgcore.restrictions import packages
 
@@ -75,3 +76,6 @@ class test_CPY_incremental_expansion(test_native_incremental_expansion):
     if misc.incremental_expansion == misc.native_incremental_expansion:
         skip = "CPy extension not available"
     f = staticmethod(misc.incremental_expansion)
+
+test_cpy_used = mk_cpy_loadable_testcase('pkgcore.ebuild._misc',
+    "pkgcore.ebuild.misc", "incremental_expansion", "incremental_expansion")

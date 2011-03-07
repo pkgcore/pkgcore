@@ -50,6 +50,7 @@ Err_WrapException(PyObject *dep_str, char *tok_start,
 {
 	PyObject *type, *val, *tb;
 	PyErr_Fetch(&type, &val, &tb);
+	PyErr_NormalizeException(&type, &val, &tb);
 	if(val) {
 		_Err_SetParse(dep_str, val, tok_start, tok_end);
 	}

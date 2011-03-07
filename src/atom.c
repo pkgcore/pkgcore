@@ -339,18 +339,21 @@ parse_cpv(PyObject *atom_str, PyObject *cpv_str, PyObject *self,
 			pkgcore_atom_cpv_parse_unversioned,
 		cpv_str, NULL);
 	if(!cpv) {
-		PyObject *type, *tb;
-		PyErr_Fetch(&type, &tmp, &tb);
-		PyObject *res = PyObject_CallFunctionObjArgs(type, tmp, NULL);
-		Py_XDECREF(tmp);
-		Py_XDECREF(type);
-		Py_XDECREF(tb);
-		if(!res)
+		PyObject *type, *exc, *tb;
+		PyErr_Fetch(&type, &exc, &tb);
+		PyErr_NormalizeException(&type, &exc, &tb);
+
+		if(!exc)
 			return 1;
-		tmp = PyObject_Str(res);
+
+		tmp = PyObject_Str(exc);
+		Py_DECREF(type);
+		Py_DECREF(exc);
+		Py_XDECREF(tb);
+
 		if(!tmp)
 			return 1;
-		Py_DECREF(res);
+
 		Err_SetMalformedAtom(atom_str, PyString_AsString(tmp));
 		Py_DECREF(tmp);
 		return 1;

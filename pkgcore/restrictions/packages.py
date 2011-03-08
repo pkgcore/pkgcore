@@ -23,8 +23,6 @@ class native_PackageRestriction(object):
     __attr_comparison__ = ("__class__", "negate", "_attr_split", "restriction")
     __metaclass__ = generic_equality
 
-    __sentinel__ = object()
-
     def __init__(self, attr, childrestriction, negate=False,
         ignore_missing=True):
         """
@@ -66,6 +64,11 @@ class PackageRestriction_mixin(restriction.base):
     """Package data restriction."""
 
     __slots__ = ()
+
+    # note __sentinel__ is used purely because the codepath that use it can
+    # get executed a *lot*, and setup/tear down of exception machinery can
+    # be surprisingly costly
+
     __sentinel__ = object()
 
     # Careful: some methods (__eq__, __hash__, intersect) try to work

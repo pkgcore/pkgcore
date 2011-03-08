@@ -1114,7 +1114,7 @@ load_external_objects(void)
 	}
 
 	if(!pkgcore_atom_VersionMatch) {
-		LOAD_MODULE("pkgcore.ebuild.atom_restricts");
+		LOAD_MODULE("pkgcore.ebuild.restricts");
 		pkgcore_atom_VersionMatch = PyObject_GetAttrString(m,
 			"VersionMatch");
 		Py_DECREF(m);

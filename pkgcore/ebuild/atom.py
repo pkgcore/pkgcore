@@ -12,8 +12,7 @@ __all__ = ("atom", "transitive_use_atom", "generate_collapsed_restriction")
 
 import string
 from pkgcore.restrictions import values, packages, boolean
-from pkgcore.ebuild import cpv, errors, const, atom_restricts
-from pkgcore.ebuild import atom_restricts
+from pkgcore.ebuild import cpv, errors, const, restricts
 from snakeoil.compatibility import all, is_py3k, cmp
 from snakeoil.klass import (generic_equality, inject_richcmp_methods_from_cmp,
     reflective_hash)
@@ -242,24 +241,24 @@ def native__getattr__(self, attr):
             "category", values.StrExactMatch(self.category))]
 
     if self.repo_id is not None:
-        r.insert(0, atom_restricts.RepositoryDep(self.repo_id))
+        r.insert(0, restricts.RepositoryDep(self.repo_id))
 
     if self.fullver is not None:
         if self.op == '=*':
             r.append(packages.PackageRestriction(
                     "fullver", values.StrGlobMatch(self.fullver)))
         else:
-            r.append(atom_restricts.VersionMatch(self.op, self.version, self.revision,
+            r.append(restricts.VersionMatch(self.op, self.version, self.revision,
                                   negate=self.negate_vers))
 
     if self.slot is not None:
-        r.append(atom_restricts.SlotDep(*self.slot))
+        r.append(restricts.SlotDep(*self.slot))
 
     if self.use is not None:
         false_use = [x[1:] for x in self.use if x[0] == "-"]
         true_use = [x for x in self.use if x[0] != "-"]
 
-        r.append(atom_restricts.StaticUseDep(false_use, true_use))
+        r.append(restricts.StaticUseDep(false_use, true_use))
 
     r = tuple(r)
     object.__setattr__(self, attr, r)
@@ -532,12 +531,12 @@ class atom(boolean.AndRestriction):
         if self.op == '=':
             if other.op == '=*':
                 return self.fullver.startswith(other.fullver)
-            return atom_restricts.VersionMatch(
+            return restricts.VersionMatch(
                 other.op, other.version, other.revision).match(self)
         if other.op == '=':
             if self.op == '=*':
                 return other.fullver.startswith(self.fullver)
-            return atom_restricts.VersionMatch(
+            return restricts.VersionMatch(
                 self.op, self.version, self.revision).match(other)
 
         # If we are both ~ matches we match if we are identical:
@@ -569,22 +568,22 @@ class atom(boolean.AndRestriction):
             # match the other's endpoint (just checking one endpoint
             # is not enough, it would give a false positive on <=2 vs >2)
             return (
-                atom_restricts.VersionMatch(
+                restricts.VersionMatch(
                     other.op, other.version, other.revision).match(ranged) and
-                atom_restricts.VersionMatch(
+                restricts.VersionMatch(
                     ranged.op, ranged.version, ranged.revision).match(other))
 
         if other.op == '~':
             # Other definitely matches its own version. If ranged also
             # does we're done:
-            if atom_restricts.VersionMatch(
+            if restricts.VersionMatch(
                 ranged.op, ranged.version, ranged.revision).match(other):
                 return True
             # The only other case where we intersect is if ranged is a
             # > or >= on other's version and a nonzero revision. In
             # that case other will match ranged. Be careful not to
             # give a false positive for ~2 vs <2 here:
-            return ranged.op in ('>', '>=') and atom_restricts.VersionMatch(
+            return ranged.op in ('>', '>=') and restricts.VersionMatch(
                 other.op, other.version, other.revision).match(ranged)
 
         if other.op == '=*':
@@ -593,7 +592,7 @@ class atom(boolean.AndRestriction):
 
             # a glob match definitely matches its own version, so if
             # ranged does too we're done:
-            if atom_restricts.VersionMatch(
+            if restricts.VersionMatch(
                 ranged.op, ranged.version, ranged.revision).match(other):
                 return True
             if '<' in ranged.op:

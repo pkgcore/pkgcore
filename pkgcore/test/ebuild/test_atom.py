@@ -6,7 +6,7 @@ from snakeoil.test import mk_cpy_loadable_testcase
 from snakeoil.compatibility import cmp
 from pkgcore.test import TestCase
 from pkgcore.ebuild.cpv import CPV
-from pkgcore.ebuild import atom, errors, atom_restricts
+from pkgcore.ebuild import atom, errors, restricts
 from pkgcore.test.misc import FakePkg, FakeRepo
 from pkgcore.restrictions.boolean import AndRestriction
 from snakeoil.currying import partial
@@ -233,10 +233,10 @@ class Test_native_atom(TestCase):
 
 
         def assertAttr(attr):
-            self.assertEqual(restricts[pos].attr, attr,
+            self.assertEqual(restrictions[pos].attr, attr,
                 msg="expected attr %r at %i for ver(%s), repo(%s) use(%s), "
                     "slot(%s): got %r from %r" % (attr, pos, ver, repo, use,
-                    slot, restricts[pos].attr, restricts))
+                    slot, restrictions[pos].attr, restrictions))
             return pos + 1
 
         slot = ''
@@ -256,21 +256,21 @@ class Test_native_atom(TestCase):
                 if locals()[x]:
                     count += 1
 
-            restricts = o.restrictions
-            self.assertEqual(len(restricts), count,
+            restrictions = o.restrictions
+            self.assertEqual(len(restrictions), count,
                 msg="%r, restrictions count must be %i, got %i" %
-                    (o, count, len(restricts)))
+                    (o, count, len(restrictions)))
             self.assertTrue([getattr(x, 'type', None)
-                for x in restricts], ['package'] * count)
+                for x in restrictions], ['package'] * count)
             if repo:
                 pos = assertAttr('repo.repo_id')
             pos = assertAttr('package')
             pos = assertAttr('category')
             if ver:
-                self.assertInstance(restricts[pos], atom_restricts.VersionMatch,
+                self.assertInstance(restrictions[pos], restricts.VersionMatch,
                     msg="expected %r, got %r; repo(%s), ver(%s), use(%s) "
                         "slot(%s)" %
-                        (atom_restricts.VersionMatch, restricts[pos],
+                        (restricts.VersionMatch, restrictions[pos],
                             repo, ver, use, slot))
                 pos += 1
             if slot:

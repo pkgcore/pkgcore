@@ -18,7 +18,7 @@ from snakeoil.iterables import caching_iter
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.package:mutated',
-    'pkgcore.ebuild:cpv,atom,atom_restricts',
+    'pkgcore.ebuild:cpv,atom,restricts@atom_restricts',
     'pkgcore.log:logger',
     'pkgcore.util.repo_utils:get_virtual_repos',
     'snakeoil.xml:etree',

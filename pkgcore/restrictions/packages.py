@@ -150,10 +150,10 @@ class PackageRestriction_mixin(restriction.base):
         return self.__class__(self.attr, s, negate=self.negate)
 
     def __hash__(self):
-        return hash((self.negate, self.attr, self.restriction))
+        return hash((self.negate, self.attrs, self.restriction))
 
     def __str__(self):
-        s = "%s " % (self.attr, )
+        s = "%s " % (self.attrs, )
         if self.negate:
             s += "not "
         return s + str(self.restriction)
@@ -206,6 +206,8 @@ class native_PackageRestrictionMulti(native_PackageRestriction):
 class PackageRestrictionMulti_mixin(PackageRestriction_mixin):
 
     __slots__ = ()
+
+    attr = None
 
     def force_False(self, pkg):
         attrs = self._pull_attr(pkg)

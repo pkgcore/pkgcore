@@ -192,6 +192,7 @@ class native_PackageRestrictionMultiTest(TestCase):
     def test_attr(self):
         o = self.kls(("asdf.far", "repo"), values.AlwaysTrue)
         self.assertEqual(o.attrs, ("asdf.far", "repo"))
+        self.assertEqual(o.attr, None)
 
     def test_values(self):
         l = []

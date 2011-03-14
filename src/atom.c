@@ -25,6 +25,7 @@ static PyObject *pkgcore_atom_SlotDep = NULL;
 static PyObject *pkgcore_atom_RepositoryDep = NULL;
 static PyObject *pkgcore_atom_CategoryDep = NULL;
 static PyObject *pkgcore_atom_PackageDep = NULL;
+static PyObject *pkgcore_atom_mk_use = NULL;
 static PyObject *pkgcore_atom_PackageRestrict = NULL;
 static PyObject *pkgcore_atom_StrExactMatch = NULL;
 static PyObject *pkgcore_atom_StrGlobMatch = NULL;
@@ -752,126 +753,6 @@ make_version_restrict(PyObject *inst, PyObject *op)
 }
 
 static PyObject *
-make_use_val_restrict(PyObject *use)
-{
-	if(!PyTuple_CheckExact(use)) {
-		PyErr_SetString(PyExc_TypeError, "use must be None, or a tuple");
-		return NULL;
-	}
-	// fun one.
-	Py_ssize_t idx;
-	Py_ssize_t false_len = 0;
-	for(idx = 0; idx < PyTuple_GET_SIZE(use); idx++) {
-		if(!PyString_CheckExact(PyTuple_GET_ITEM(use, idx))) {
-			PyErr_SetString(PyExc_TypeError, "flags must be strings");
-			return NULL;
-		}
-		if('-' == *PyString_AS_STRING(PyTuple_GET_ITEM(use, idx))) {
-			false_len++;
-		}
-	}
-	if(!false_len) {
-		// easy case.
-		if(PyTuple_GET_SIZE(use) == 1) {
-			return PyObject_Call(pkgcore_atom_ContainmentMatch, use, NULL);
-		}
-		// slightly less easy.
-		PyObject *kwds = Py_BuildValue("{sO}", "all", Py_True);
-		if(kwds) {
-			PyObject *ret = PyObject_Call(pkgcore_atom_ContainmentMatch, use,
-				kwds);
-			Py_DECREF(kwds);
-			return ret;
-		}
-		return NULL;
-	}
-	// not so easy case.  need to split false use out, and make true use.
-
-	PyObject *enabled = NULL;
-	if(PyTuple_GET_SIZE(use) != false_len) {
-		enabled = PyTuple_New(PyTuple_GET_SIZE(use) - false_len);
-		if(!enabled)
-			return NULL;
-	}
-	PyObject *disabled = PyTuple_New(false_len);
-	if(!disabled) {
-		Py_XDECREF(enabled);
-		return NULL;
-	}
-	Py_ssize_t en_idx = 0, dis_idx = 0;
-	for(idx = 0; idx < PyTuple_GET_SIZE(use); idx++) {
-		PyObject *p = PyTuple_GET_ITEM(use, idx);
-		if('-' == *PyString_AS_STRING(p)) {
-			PyObject *s = PyString_FromStringAndSize(
-				PyString_AS_STRING(p) + 1, PyString_GET_SIZE(p) - 1);
-			if(!s) {
-				Py_XDECREF(enabled);
-				Py_DECREF(disabled);
-				return NULL;
-			}
-			PyTuple_SET_ITEM(disabled, dis_idx, s);
-			dis_idx++;
-		} else {
-			Py_INCREF(p);
-			PyTuple_SET_ITEM(enabled, en_idx, p);
-			en_idx++;
-		}
-	}
-	PyObject *kwds = PyDict_New();
-	if(kwds && (
-		PyDict_SetItemString(kwds, "negate", Py_True) ||
-		PyDict_SetItemString(kwds, "all", Py_True))) {
-		Py_CLEAR(kwds);
-	}
-	if(!kwds) {
-		// crappy.
-		Py_XDECREF(enabled);
-		Py_DECREF(disabled);
-		return NULL;
-	}
-	PyObject *dis_val = PyObject_Call(pkgcore_atom_ContainmentMatch, disabled,
-		kwds);
-	Py_DECREF(kwds);
-	Py_DECREF(disabled);
-	if(!dis_val) {
-		Py_DECREF(enabled);
-		return NULL;
-	}
-	PyObject *tmp;
-	if(enabled) {
-		kwds = PyDict_New();
-		if(kwds && PyDict_SetItemString(kwds, "all", Py_True)) {
-			Py_CLEAR(kwds);
-		}
-		if(!kwds) {
-			Py_DECREF(dis_val);
-			Py_DECREF(enabled);
-			return NULL;
-		}
-
-		PyObject *en_val = PyObject_Call(pkgcore_atom_ContainmentMatch,
-			enabled, kwds);
-		Py_DECREF(enabled);
-		Py_DECREF(kwds);
-		if(!en_val) {
-			Py_DECREF(dis_val);
-			return NULL;
-		}
-		tmp = PyObject_CallFunction(pkgcore_atom_ValAnd,
-			"OO", dis_val, en_val);
-		Py_DECREF(dis_val);
-		Py_DECREF(en_val);
-		if(!tmp) {
-			return NULL;
-		}
-	} else {
-		tmp = dis_val;
-	}
-	return tmp;
-}
-
-
-static PyObject *
 internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 {
 	int required = 2;
@@ -880,6 +761,8 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 	PyObject *op = NULL, *package = NULL, *category = NULL;
 	PyObject *use = NULL, *slot = NULL, *repo_id = NULL;
 	PyObject *tup = NULL, *tmp = NULL;
+	PyObject *use_restrict = NULL;
+	Py_ssize_t use_len = 0;
 
 	// prefer Py_EQ since cpythons string optimizes that case.
 	if(1 != PyObject_RichCompareBool(attr, pkgcore_atom_restrictions, Py_EQ)) {
@@ -902,8 +785,13 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 
 	if(op != pkgcore_atom_op_none)
 		required++;
-	if(use != Py_None)
-		required++;
+	if(use != Py_None) {
+		if (!(use_restrict = PyObject_CallFunctionObjArgs(pkgcore_atom_mk_use, use, NULL)))
+			goto pkgcore_atom_getattr_error;
+		if (-1 == (use_len = PyObject_Length(use_restrict)))
+			goto pkgcore_atom_getattr_error;
+		required += use_len;
+	}
 	if(slot != Py_None)
 		required++;
 	if(repo_id != Py_None)
@@ -967,16 +855,12 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 		idx++;
 	}
 	if(use != Py_None) {
-		tmp = make_use_val_restrict(use);
-		if(!tmp)
-			goto pkgcore_atom_getattr_error;
-		PyObject *tmp2 = PyObject_CallFunction(pkgcore_atom_PackageRestrict,
-			"OO", pkgcore_atom_use, tmp);
-		Py_DECREF(tmp);
-		if(!tmp2)
-			goto pkgcore_atom_getattr_error;
-		PyTuple_SET_ITEM(tup, idx, tmp2);
-		idx++;
+		Py_ssize_t x = 0;
+		for (; x < use_len; x++, idx++) {
+			if (!(tmp = PySequence_GetItem(use_restrict, x)))
+				goto pkgcore_atom_getattr_error;
+			PyTuple_SET_ITEM(tup, idx, tmp);
+		}
 	}
 	failed = 0;
 	pkgcore_atom_getattr_error:
@@ -986,6 +870,7 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 	Py_XDECREF(use);
 	Py_XDECREF(slot);
 	Py_XDECREF(repo_id);
+	Py_XDECREF(use_restrict);
 	if(failed)
 		Py_CLEAR(tup);
 	else {
@@ -1057,6 +942,7 @@ init_atom(void)
 	snakeoil_LOAD_ATTR(pkgcore_atom_CategoryDep, tmp, "CategoryDep");
 	snakeoil_LOAD_ATTR(pkgcore_atom_PackageDep, tmp, "PackageDep");
 	snakeoil_LOAD_ATTR(pkgcore_atom_RepositoryDep, tmp, "RepositoryDep");
+	snakeoil_LOAD_ATTR(pkgcore_atom_mk_use, tmp, "_parse_nontransitive_use");
 	Py_CLEAR(tmp);
 
 	snakeoil_LOAD_MODULE(tmp, "pkgcore.restrictions.values");

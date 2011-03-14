@@ -1,14 +1,14 @@
 /*
- * Copyright: 2004-2007 Brian Harring: BSD/GPL2
- * Copyright: 2005 Mike Frysinger BSD/GPL2
+ * Copyright: 2004-2011 Brian Harring
+ * Copyright: 2005 Mike Frysinger
  * Copyright: 2006 Marien Zwart
- * License: GPL2
+ * License: BSD 3 clause
  */
 
 #define PY_SSIZE_T_CLEAN
 
 #include <Python.h>
-#include <snakeoil/py24-compatibility.h>
+#include <snakeoil/common.h>
 
 PyDoc_STRVAR(
 	module_doc,
@@ -693,20 +693,17 @@ PyMODINIT_FUNC
 init_filter_env(void)
 {
 	/* External objects. */
-	PyObject *s = PyString_FromString("pkgcore.log");
-	if (!s)
-		return;
-	PyObject *log = PyImport_Import(s);
-	Py_DECREF(s);
-	if (!log)
-		return;
-	PyObject *logger = PyObject_GetAttrString(log, "logger");
-	Py_DECREF(log);
-	if (!logger)
-		return;
+
+	PyObject *logger = NULL;
+	snakeoil_LOAD_SINGLE_ATTR(logger, "pkgcore.log", "logger");
+
+	Py_CLEAR(log_debug);
+	Py_CLEAR(log_info);
+	Py_CLEAR(write_str);
+
 	log_debug = PyObject_GetAttrString(logger, "debug");
 	if (!log_debug) {
-		Py_DECREF(logger);
+		Py_CLEAR(logger);
 		return;
 	}
 	log_info = PyObject_GetAttrString(logger, "info");

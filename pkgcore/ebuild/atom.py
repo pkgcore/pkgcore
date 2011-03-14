@@ -235,10 +235,8 @@ def native__getattr__(self, attr):
     # why?  because category is more likely to collide;
     # at the time of this profiling, there were 151 categories.
     # over 11k packages however.
-    r = [packages.PackageRestriction(
-            "package", values.StrExactMatch(self.package)),
-        packages.PackageRestriction(
-            "category", values.StrExactMatch(self.category))]
+    r = [restricts.PackageDep(self.package),
+         restricts.CategoryDep(self.category)]
 
     if self.repo_id is not None:
         r.insert(0, restricts.RepositoryDep(self.repo_id))

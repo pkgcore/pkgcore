@@ -296,7 +296,7 @@ class OptionParser(commandline.OptionParser):
         'maintainers', 'restrict', 'repo', 'alldepends', 'path', 'version',
         'revision', 'fullver', 'environment', 'keywords', 'homepage',
         'fetchables', 'eapi', 'inherited', 'chost', 'cbuild', 'ctarget',
-        'all', 'allmetadata', 'properties', 'defined_phases'))
+        'all', 'allmetadata', 'properties', 'defined_phases', 'required_use'))
 
     metadata_attrs = tuple(x for x in printable_attrs if not x.startswith("all")
         and x != 'environment')

@@ -199,6 +199,7 @@ class base(metadata.package):
     _get_attr["defined_phases"] = lambda s:s.eapi_obj.interpret_cache_defined_phases(imap(intern,
         s.data.pop("DEFINED_PHASES", "").split()), False)
     _get_attr["homepage"] = lambda s:s.data.pop("HOMEPAGE", "").strip()
+    _get_attr["required_use"] = lambda s:s.data.pop("REQUIRED_USE", "").strip()
 
     __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])
 

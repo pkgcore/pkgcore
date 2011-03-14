@@ -1,6 +1,16 @@
-#include "Python.h"
+/*
+ * Copyright: 2010-2011 Brian Harring <ferringb@gmail.com>
+ * Copyright: 2008 Charlie Shepherd <masterdriverz@gmail.com>
+ * License: BSD 3 clause
+ *
+ * primarily a cpy version of incremental_expansion for speed.
+ */
 
-static PyObject *discard_str, *clear_str, *add_str;
+#include <snakeoil/common.h>
+
+static PyObject *discard_str = NULL;
+static PyObject *clear_str = NULL;
+static PyObject *add_str = NULL;
 
 
 static PyObject *
@@ -144,15 +154,9 @@ static PyMethodDef MiscMethods[] = {
 PyMODINIT_FUNC
 init_misc(void)
 {
-	PyObject *m;
-#define load_string(val, name)			\
-	name = PyString_FromString(val);	\
-	if (!name)				\
-		return			  \
-	PyString_InternInPlace(&name);
+	snakeoil_LOAD_STRING(discard_str, "discard");
+	snakeoil_LOAD_STRING(add_str, "add");
+	snakeoil_LOAD_STRING(clear_str, "clear");
 
-	load_string("discard", discard_str);
-	load_string("add", add_str);
-	load_string("clear", clear_str);
-	m = Py_InitModule("_misc", MiscMethods);
+	PyObject *m = Py_InitModule("_misc", MiscMethods);
 }

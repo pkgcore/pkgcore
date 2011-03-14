@@ -1,5 +1,5 @@
 /*
- * Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>
+ * Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
  * License: GPL2/BSD
  *
  * C version of some of pkgcore (for extra speed).
@@ -603,19 +603,11 @@ init_restrictions(void)
 	if (PyType_Ready(&pkgcore_PackageRestriction_Type) < 0)
 		return;
 
-	#define LOAD_STR(ptr, val)					  \
-	if(!(ptr)) {									\
-		if(!((ptr) = PyString_FromString(val))) {   \
-			return;								 \
-		}										   \
-	}
-
-	LOAD_STR(pkgcore_restrictions_type, "type");
-	LOAD_STR(pkgcore_restrictions_subtype, "subtype");
-	LOAD_STR(pkgcore_match_str, "match");
-	LOAD_STR(pkgcore_handle_exception_str, "_handle_exception");
-	LOAD_STR(pkgcore_sentinel_str, "__sentinel__");
-	#undef LOAD_STR
+	snakeoil_LOAD_STRING(pkgcore_restrictions_type, "type");
+	snakeoil_LOAD_STRING(pkgcore_restrictions_subtype, "subtype");
+	snakeoil_LOAD_STRING(pkgcore_match_str, "match");
+	snakeoil_LOAD_STRING(pkgcore_handle_exception_str, "_handle_exception");
+	snakeoil_LOAD_STRING(pkgcore_sentinel_str, "__sentinel__");
 
 	Py_INCREF(&pkgcore_StrExactMatch_Type);
 	if (PyModule_AddObject(

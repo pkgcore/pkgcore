@@ -37,6 +37,10 @@ static const char *walk_dollar_expansion(const char *start, const char *p,
 										 char endchar, char disable_quote);
 
 
+#ifndef Py_MEMCPY
+#define Py_MEMCPY memcpy
+#endif
+
 static PyObject *log_info = NULL;
 static PyObject *log_debug = NULL;
 static PyObject *write_str = NULL;

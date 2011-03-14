@@ -1,5 +1,5 @@
 /*
- * Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
+ * Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
  * License: GPL2/BSD
  *
  * C version of cpv class for speed.
@@ -1044,25 +1044,14 @@ static NyHeapDef pkgcore_cpv_heapdefs[] = {
 PyMODINIT_FUNC
 init_cpv(void)
 {
-	PyObject *m, *s, *errors;
+	PyObject *m;
 
 	m = Py_InitModule3("_cpv", NULL, pkgcore_cpv_documentation);
 	if (!m)
 		return;
 
-	// this may be redundant; do this so __builtins__["__import__"] is used.
-	s = PyString_FromString("pkgcore.ebuild.errors");
-	if (!s)
-		return;
-
-	errors = PyImport_Import(s);
-	Py_DECREF(s);
-	if (!errors)
-		return;
-
-	pkgcore_InvalidCPV_Exc = PyObject_GetAttrString(errors, "InvalidCPV");
-	if (!pkgcore_InvalidCPV_Exc)
-		return;
+	snakeoil_LOAD_SINGLE_ATTR(pkgcore_InvalidCPV_Exc, "pkgcore.ebuild.errors",
+		"InvalidCPV");
 
 	pkgcore_cpvType.ob_type = &PyType_Type;
 

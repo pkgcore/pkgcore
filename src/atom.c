@@ -1063,103 +1063,11 @@ PyDoc_STRVAR(
 	pkgcore_atom_documentation,
 	"cpython atom parsing functionality");
 
-static int
-load_external_objects(void)
-{
-	PyObject *s, *m = NULL;
-	#define LOAD_MODULE(char_p)			 \
-	if(!(s = PyString_FromString(char_p)))  \
-		return 1;						   \
-	m = PyImport_Import(s);				 \
-	Py_DECREF(s);						   \
-	if(!m)								  \
-		return 1;
-
-	if(!pkgcore_atom_MalformedAtom_Exc) {
-		LOAD_MODULE("pkgcore.ebuild.errors");
-		pkgcore_atom_MalformedAtom_Exc = PyObject_GetAttrString(m,
-			"MalformedAtom");
-		Py_DECREF(m);
-		if(!pkgcore_atom_MalformedAtom_Exc) {
-			return 1;
-		}
-		m = NULL;
-	}
-
-	if(!pkgcore_atom_cpv_parse_unversioned ||
-		!pkgcore_atom_cpv_parse_versioned ||
-		!pkgcore_atom_InvalidCPV_Exc) {
-		LOAD_MODULE("pkgcore.ebuild.cpv");
-	}
-
-	if(!pkgcore_atom_cpv_parse_unversioned) {
-		pkgcore_atom_cpv_parse_unversioned = PyObject_GetAttrString(m, "unversioned_CPV");
-		if(!pkgcore_atom_cpv_parse_unversioned)
-			return 1;
-	}
-
-	if(!pkgcore_atom_cpv_parse_versioned) {
-		pkgcore_atom_cpv_parse_versioned = PyObject_GetAttrString(m, "versioned_CPV");
-		if(!pkgcore_atom_cpv_parse_versioned)
-			return 1;
-	}
-
-	if(!pkgcore_atom_InvalidCPV_Exc) {
-		pkgcore_atom_InvalidCPV_Exc = PyObject_GetAttrString(m, "InvalidCPV");
-		if(!pkgcore_atom_InvalidCPV_Exc)
-			return 1;
-	}
-	if(m) {
-		Py_DECREF(m);
-	}
-
-	if(!pkgcore_atom_VersionMatch) {
-		LOAD_MODULE("pkgcore.ebuild.restricts");
-		pkgcore_atom_VersionMatch = PyObject_GetAttrString(m,
-			"VersionMatch");
-		Py_DECREF(m);
-	}
-	if(!pkgcore_atom_StrExactMatch || !pkgcore_atom_StrGlobMatch ||
-		!pkgcore_atom_ContainmentMatch || !pkgcore_atom_ValAnd) {
-		LOAD_MODULE("pkgcore.restrictions.values");
-	} else
-		m = NULL;
-
-	#define LOAD_ATTR(ptr, name)						\
-	if(!(ptr) && !									  \
-		((ptr) = PyObject_GetAttrString(m, (name)))) {  \
-		Py_DECREF(m);								   \
-		return 1;									   \
-	}
-	LOAD_ATTR(pkgcore_atom_StrExactMatch, "StrExactMatch");
-	LOAD_ATTR(pkgcore_atom_StrGlobMatch, "StrGlobMatch");
-	LOAD_ATTR(pkgcore_atom_ContainmentMatch, "ContainmentMatch");
-	LOAD_ATTR(pkgcore_atom_ValAnd, "AndRestriction");
-	LOAD_ATTR(pkgcore_atom_ValOr, "OrRestriction");
-	if(m) {
-		Py_DECREF(m);
-	}
-	if(!pkgcore_atom_PackageRestrict) {
-		LOAD_MODULE("pkgcore.restrictions.packages");
-		LOAD_ATTR(pkgcore_atom_PackageRestrict, "PackageRestriction");
-		Py_DECREF(m);
-	}
-	#undef LOAD_ATTR
-	#undef LOAD_MODULE
-	return 0;
-}
-
 
 PyMODINIT_FUNC
 init_atom(void)
 {
-	PyObject *m = Py_InitModule3("_atom", NULL, pkgcore_atom_documentation);
-	if (!m)
-		return;
-
-	// first get the exceptions we use.
-	if(load_external_objects())
-		return;
+	PyObject *tmp = NULL;
 
 	if(PyType_Ready(&pkgcore_atom_init_type) < 0)
 		return;
@@ -1170,43 +1078,58 @@ init_atom(void)
 	if(PyType_Ready(&pkgcore_atom_getattr_nondesc_type) < 0)
 		return;
 
-	#define load_string(ptr, str)				   \
-		if (!(ptr)) {							   \
-			(ptr) = PyString_FromString(str);	   \
-			if(!(ptr))							  \
-				return;							 \
-		}
+	snakeoil_LOAD_SINGLE_ATTR(pkgcore_atom_MalformedAtom_Exc, "pkgcore.ebuild.errors",
+		"MalformedAtom");
 
-	load_string(pkgcore_atom_transitive_use_atom_str, "_transitive_use_atom");
-	load_string(pkgcore_atom__class__, "__class__");
-	load_string(pkgcore_atom_cpvstr,		"cpvstr");
-	load_string(pkgcore_atom_key,		   "key");
-	load_string(pkgcore_atom_category,	  "category");
-	load_string(pkgcore_atom_package,	   "package");
-	load_string(pkgcore_atom_version,	   "version");
-	load_string(pkgcore_atom_revision,	  "revision");
-	load_string(pkgcore_atom_fullver,	   "fullver");
-	load_string(pkgcore_atom_hash,		  "_hash");
-	load_string(pkgcore_atom_use,		   "use");
-	load_string(pkgcore_atom_slot,		  "slot");
-	load_string(pkgcore_atom_repo_id,	   "repo_id");
-	load_string(pkgcore_atom_restrict_repo_id,
+	snakeoil_LOAD_MODULE(tmp, "pkgcore.ebuild.cpv");
+	snakeoil_LOAD_ATTR(pkgcore_atom_cpv_parse_unversioned, tmp, "unversioned_CPV");
+	snakeoil_LOAD_ATTR(pkgcore_atom_cpv_parse_versioned, tmp, "versioned_CPV");
+	snakeoil_LOAD_ATTR(pkgcore_atom_InvalidCPV_Exc, tmp, "InvalidCPV");
+	Py_CLEAR(tmp);
+
+	snakeoil_LOAD_SINGLE_ATTR(pkgcore_atom_VersionMatch, "pkgcore.ebuild.restricts",
+		"VersionMatch");
+
+	snakeoil_LOAD_MODULE(tmp, "pkgcore.restrictions.values");
+	snakeoil_LOAD_ATTR(pkgcore_atom_StrExactMatch, tmp, "StrExactMatch");
+	snakeoil_LOAD_ATTR(pkgcore_atom_StrGlobMatch, tmp, "StrGlobMatch");
+	snakeoil_LOAD_ATTR(pkgcore_atom_ContainmentMatch, tmp, "ContainmentMatch");
+	snakeoil_LOAD_ATTR(pkgcore_atom_ValAnd, tmp, "AndRestriction");
+	snakeoil_LOAD_ATTR(pkgcore_atom_ValOr, tmp, "OrRestriction");
+	Py_CLEAR(tmp);
+
+	snakeoil_LOAD_SINGLE_ATTR(pkgcore_atom_PackageRestrict, "pkgcore.restrictions.packages",
+		"PackageRestriction");
+
+	snakeoil_LOAD_STRING(pkgcore_atom_transitive_use_atom_str, "_transitive_use_atom");
+	snakeoil_LOAD_STRING(pkgcore_atom__class__, "__class__");
+	snakeoil_LOAD_STRING(pkgcore_atom_cpvstr,		"cpvstr");
+	snakeoil_LOAD_STRING(pkgcore_atom_key,		   "key");
+	snakeoil_LOAD_STRING(pkgcore_atom_category,	  "category");
+	snakeoil_LOAD_STRING(pkgcore_atom_package,	   "package");
+	snakeoil_LOAD_STRING(pkgcore_atom_version,	   "version");
+	snakeoil_LOAD_STRING(pkgcore_atom_revision,	  "revision");
+	snakeoil_LOAD_STRING(pkgcore_atom_fullver,	   "fullver");
+	snakeoil_LOAD_STRING(pkgcore_atom_hash,		  "_hash");
+	snakeoil_LOAD_STRING(pkgcore_atom_use,		   "use");
+	snakeoil_LOAD_STRING(pkgcore_atom_slot,		  "slot");
+	snakeoil_LOAD_STRING(pkgcore_atom_repo_id,	   "repo_id");
+	snakeoil_LOAD_STRING(pkgcore_atom_restrict_repo_id,
 											"repo.repo_id");
-	load_string(pkgcore_atom_op_glob,	   "=*");
-	load_string(pkgcore_atom_blocks,		"blocks");
-	load_string(pkgcore_atom_blocks_strongly,"blocks_strongly");
-	load_string(pkgcore_atom_op,			"op");
-	load_string(pkgcore_atom_negate_vers,   "negate_vers");
-	load_string(pkgcore_atom_restrictions,  "restrictions");
+	snakeoil_LOAD_STRING(pkgcore_atom_op_glob,	   "=*");
+	snakeoil_LOAD_STRING(pkgcore_atom_blocks,		"blocks");
+	snakeoil_LOAD_STRING(pkgcore_atom_blocks_strongly,"blocks_strongly");
+	snakeoil_LOAD_STRING(pkgcore_atom_op,			"op");
+	snakeoil_LOAD_STRING(pkgcore_atom_negate_vers,   "negate_vers");
+	snakeoil_LOAD_STRING(pkgcore_atom_restrictions,  "restrictions");
 
-	load_string(pkgcore_atom_op_ge,		 ">=");
-	load_string(pkgcore_atom_op_gt,		 ">");
-	load_string(pkgcore_atom_op_le,		 "<=");
-	load_string(pkgcore_atom_op_lt,		 "<");
-	load_string(pkgcore_atom_op_eq,		 "=");
-	load_string(pkgcore_atom_op_droprev,	"~");
-	load_string(pkgcore_atom_op_none,	   "");
-	#undef load_string
+	snakeoil_LOAD_STRING(pkgcore_atom_op_ge,		 ">=");
+	snakeoil_LOAD_STRING(pkgcore_atom_op_gt,		 ">");
+	snakeoil_LOAD_STRING(pkgcore_atom_op_le,		 "<=");
+	snakeoil_LOAD_STRING(pkgcore_atom_op_lt,		 "<");
+	snakeoil_LOAD_STRING(pkgcore_atom_op_eq,		 "=");
+	snakeoil_LOAD_STRING(pkgcore_atom_op_droprev,	"~");
+	snakeoil_LOAD_STRING(pkgcore_atom_op_none,	   "");
 
 	PyObject *d = PyDict_New();
 	if(!d)
@@ -1216,7 +1139,7 @@ init_atom(void)
 	if(!overrides)
 		return;
 
-	PyObject *tmp = PyType_GenericNew(&pkgcore_atom_init_type, NULL, NULL);
+	tmp = PyType_GenericNew(&pkgcore_atom_init_type, NULL, NULL);
 	if(!tmp)
 		return;
 	if(PyDict_SetItemString(overrides, "__init__", tmp))
@@ -1234,7 +1157,11 @@ init_atom(void)
 	if(PyDict_SetItemString(overrides, "__getattr__desc", tmp))
 		return;
 
-	PyModule_AddObject(m, "overrides", overrides);
+	PyObject *new_module = Py_InitModule3("_atom", NULL, pkgcore_atom_documentation);
+	if (!new_module)
+		return;
+
+	PyModule_AddObject(new_module, "overrides", overrides);
 
 	if (PyErr_Occurred()) {
 		Py_FatalError("can't initialize module _atom");

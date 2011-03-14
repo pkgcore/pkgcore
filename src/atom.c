@@ -111,7 +111,7 @@ reset_class(PyObject *self)
 // 1 for transitive detected (thus class switch needed)
 
 static int
-parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
+parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr, int allow_defaults)
 {
 	char *p = *p_ptr;
 	char *start = p;
@@ -152,14 +152,33 @@ parse_use_deps(PyObject *atom_str, char **p_ptr, PyObject **use_ptr)
 					"first char of a use flag must be alphanumeric");
 				return -1;
 			}
-			while(use_start <= use_end) {
-				if(!VALID_USE_CHAR(*use_start)) {
-					Err_SetMalformedAtom(atom_str,
-						"invalid char in use dep; each flag must be a-Z0-9_@-+");
-					return -1;
+			if (!allow_defaults) {
+				while(use_start <= use_end) {
+					if(!VALID_USE_CHAR(*use_start)) {
+						Err_SetMalformedAtom(atom_str,
+							"invalid char in use dep; each flag must be a-Z0-9_@-+");
+						return -1;
+					}
+					use_start++;
 				}
-				use_start++;
+			} else {
+				while(use_start <= use_end) {
+					if(!VALID_USE_CHAR(*use_start)) {
+						if (use_end - use_start == 2 &&
+							'(' == use_start[0] &&
+								('+' == use_start[1] || '-' == use_start[1]) &&
+								')' == use_start[2]) {
+							use_start += 3;
+							continue;
+						}
+						Err_SetMalformedAtom(atom_str,
+							"invalid char in use dep; each flag must be a-Z0-9_@-+ follwed by an optional (+) or (-)");
+						return -1;
+					}
+					use_start++;
+				}
 			}
+
 			if(']' == *p) {
 				break;
 			}
@@ -521,7 +540,9 @@ pkgcore_atom_init(PyObject *self, PyObject *args, PyObject *kwds)
 	}
 	if('[' == *p) {
 		p++;
-		switch (parse_use_deps(atom_str, &p, &use)) {
+		switch (parse_use_deps(atom_str, &p, &use,
+			(eapi_int != 0 && eapi_int != 1 && eapi_int != 2 && eapi_int != 3)
+			)) {
 			case -1:
 				goto pkgcore_atom_parse_error;
 				break;

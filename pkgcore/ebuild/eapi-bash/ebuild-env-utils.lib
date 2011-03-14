@@ -39,6 +39,18 @@ regex_filter_input() {
 	fi
 }
 
+escape_regex_chars() {
+	local x="$1"
+	x="${x//\+/\\+}"
+	x="${x//\./\\.}"
+	x="${x//\*/\\*}"
+	echo "${x}"
+}
+
+get_env_funcs_for_filter() {
+	echo "$(escape_regex_chars "$(declare -F | cut -s -d ' ' -f3)")"
+}
+
 invoke_filter_env() {
 	local opts
 	[[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"

@@ -40,6 +40,7 @@ einstall
 elog
 elog_base
 enable_qa_interceptors
+escape_regex_chars
 ewarn
 execute_phases
 exeinto
@@ -49,6 +50,7 @@ filter_env_func_filter
 filter_env_var_filter
 generate_initial_ebuild_environ
 get_KV
+get_env_funcs_for_filter
 has
 has_version
 hasq

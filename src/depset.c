@@ -460,7 +460,7 @@ init_depset(void)
 	snakeoil_LOAD_SINGLE_ATTR(pkgcore_depset_PkgCond,
 		"pkgcore.restrictions.packages", "Conditional");
 
-	PyObject *module;
+	PyObject *module = NULL;
 	snakeoil_LOAD_MODULE(module, "pkgcore.restrictions.boolean");
 	snakeoil_LOAD_ATTR(pkgcore_depset_PkgAnd, module, "AndRestriction");
 	snakeoil_LOAD_ATTR(pkgcore_depset_PkgOr, module, "OrRestriction");

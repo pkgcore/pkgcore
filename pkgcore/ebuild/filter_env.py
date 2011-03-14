@@ -32,7 +32,10 @@ def native_run(out, file_buff, vsr, fsr,
     if fsr is None:
         func_match = None
     else:
-        fsr = re.compile(fsr)
+        try:
+            fsr = re.compile(fsr)
+        except re.error, e:
+            raise Exception("failed compiling %r; %s" % (fsr, e))
         if desired_func_match:
             func_match = fsr.match
         else:
@@ -53,13 +56,12 @@ def native_run(out, file_buff, vsr, fsr,
         global_envvar_callback)
 
 
+cpy_run = None
 try:
     from pkgcore.ebuild._filter_env import run
-except ImportError:
-    cpy_run = None
-    run = native_run
-else:
     cpy_run = run
+except ImportError:
+    run = native_run
 
 
 def build_regex_string(tokens):

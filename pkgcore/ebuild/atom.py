@@ -1,4 +1,4 @@
-# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 # "More than one statement on a single line"
@@ -253,10 +253,7 @@ def native__getattr__(self, attr):
         r.append(restricts.SlotDep(*self.slot))
 
     if self.use is not None:
-        false_use = [x[1:] for x in self.use if x[0] == "-"]
-        true_use = [x for x in self.use if x[0] != "-"]
-
-        r.append(restricts.StaticUseDep(false_use, true_use))
+        r.extend(restricts._parse_nontransitive_use(self.use))
 
     r = tuple(r)
     object.__setattr__(self, attr, r)

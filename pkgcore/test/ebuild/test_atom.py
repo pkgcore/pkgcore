@@ -1,4 +1,4 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 from snakeoil.pickling import dumps, loads
@@ -139,9 +139,9 @@ class Test_native_atom(TestCase):
         # with ~
         self.assertRaises(errors.MalformedAtom, self.kls, "~%s-r0" % astr)
 
-    def check_use(self, eapi=2, defaults=False):
+    def check_use(self, eapi, defaults=False):
         astr = "dev-util/bsdiff"
-        c = FakePkg("%s-1" % astr, use=("debug",), slot=1)
+        c = FakePkg("%s-1" % astr, use=("debug",), iuse=("debug", "foon"), slot=1)
 
         kls = partial(self.kls, eapi=eapi)
 
@@ -162,6 +162,17 @@ class Test_native_atom(TestCase):
             kls('%s[x(-)]' % astr)
             self.assertRaises(errors.MalformedAtom, kls, '%s[x(+-)]' % astr)
             self.assertRaises(errors.MalformedAtom, kls, '%s[x(@)]' % astr)
+            self.assertTrue(kls("%s[debug(+)]" % astr).match(c))
+            self.assertTrue(kls("%s[debug(-)]" % astr).match(c))
+            self.assertTrue(kls("%s[missing(+)]" % astr).match(c))
+            self.assertFalse(kls("%s[missing(-)]" % astr).match(c))
+            self.assertTrue(kls("%s[missing(+)]" % astr).match(c))
+            self.assertTrue(kls("%s[-missing(-)]" % astr).match(c))
+            self.assertFalse(kls("%s[-missing(+)]" % astr).match(c))
+
+            self.assertTrue(kls("%s[-missing(-),debug]" % astr).match(c))
+            self.assertFalse(kls("%s[-missing(+),debug(+)]" % astr).match(c))
+            self.assertTrue(kls("%s[missing(+),debug(+)]" % astr).match(c))
         else:
             self.assertRaises(errors.MalformedAtom, kls, '%s[x(+)]' % astr)
             self.assertRaises(errors.MalformedAtom, kls, '%s[x(-)]' % astr)
@@ -298,10 +309,10 @@ class Test_native_atom(TestCase):
             self.kls, "dev-util/foon[dar]", eapi=1)
 
     def test_eapi2(self):
-        self.check_use(eapi=2)
+        self.check_use(2)
 
     def test_eapi3(self):
-        self.check_use(eapi=3)
+        self.check_use(3)
         self.kls("dev-util/foon:1", eapi=3)
         self.kls("dev-util/foon:2", eapi=3)
         self.kls("!dev-util/foon:1", eapi=3)
@@ -310,7 +321,7 @@ class Test_native_atom(TestCase):
         self.assertRaises(errors.MalformedAtom, self.kls, "dev-util/foon:1::dar", eapi=3)
 
     def test_eapi4(self):
-        self.check_use(eapi=4, defaults=True)
+        self.check_use(4, defaults=True)
 
     def test_repo_id(self):
         astr = "dev-util/bsdiff"

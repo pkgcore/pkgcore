@@ -365,9 +365,13 @@ class ContainmentMatch(base):
         sf(self, "negate", kwds.get("negate", False))
         sf(self, "_hash", hash((self.all, self.negate, self.vals)))
 
-    def match(self, val):
+    def match(self, val, _values_override=None):
+        vals = _values_override
+        if _values_override is None:
+            vals = self.vals
+
         if isinstance(val, basestring):
-            for fval in self.vals:
+            for fval in vals:
                 if fval in val:
                     return not self.negate
             return self.negate
@@ -378,26 +382,29 @@ class ContainmentMatch(base):
         # contents sets do), the __getitem__ is non standard.
         try:
             if self.all:
-                return self.vals.issubset(val) != self.negate
+                return vals.issubset(val) != self.negate
             # if something intersects, then we return the inverse of negate-
             # if negate=False, something is found, result is True
-            return self.vals.isdisjoint(val) == self.negate
+            return vals.isdisjoint(val) == self.negate
         except TypeError:
             # isn't iterable, try the other way around.  rely on contains.
             if self.all:
-                for k in self.vals:
+                for k in vals:
                     if k not in val:
                         return self.negate
                 return not self.negate
-            for k in self.vals:
+            for k in vals:
                 if k in val:
                     return not self.negate
 
-
-    def force_False(self, pkg, attr, val):
+    def force_False(self, pkg, attr, val, _values_override=None):
 
         # "More than one statement on a single line"
         # pylint: disable-msg=C0321
+
+        vals = _values_override
+        if _values_override is None:
+            vals = self.vals
 
         # XXX pretty much positive this isn't working.
         if isinstance(val, basestring) or not getattr(pkg, 'configurable',
@@ -414,39 +421,42 @@ class ContainmentMatch(base):
                 def false(r, pvals):
                     return pkg.request_disable(attr, r)
 
-                truths = [x in val for x in self.vals]
+                truths = [x in val for x in vals]
 
                 for x in boolean.iterative_quad_toggling(
-                    pkg, None, list(self.vals), 0, len(self.vals), truths,
+                    pkg, None, list(vals), 0, len(vals), truths,
                     filter, desired_false=false, desired_true=true):
                     return True
             else:
-                if pkg.request_disable(attr, *self.vals):
+                if pkg.request_disable(attr, *vals):
                     return True
             return False
 
         if not self.all:
-            if pkg.request_disable(attr, *self.vals):
+            if pkg.request_disable(attr, *vals):
                 return True
         else:
-            l = len(self.vals)
+            l = len(vals)
             def filter(truths):     return truths.count(True) < l
             def true(r, pvals):     return pkg.request_enable(attr, r)
             def false(r, pvals):    return pkg.request_disable(attr, r)
-            truths = [x in val for x in self.vals]
+            truths = [x in val for x in vals]
             for x in boolean.iterative_quad_toggling(
-                pkg, None, list(self.vals), 0, l, truths, filter,
+                pkg, None, list(vals), 0, l, truths, filter,
                 desired_false=false, desired_true=true):
                 return True
         return False
 
-
-    def force_True(self, pkg, attr, val):
+    def force_True(self, pkg, attr, val, _values_override=None):
 
         # "More than one statement on a single line"
         # pylint: disable-msg=C0321
 
         # XXX pretty much positive this isn't working.
+
+        vals = _values_override
+        if _values_override is None:
+            vals = self.vals
 
         if isinstance(val, basestring) or not getattr(pkg, 'configurable',
             False):
@@ -462,28 +472,28 @@ class ContainmentMatch(base):
                 def false(r, pvals):
                     return pkg.request_disable(attr, r)
 
-                truths = [x in val for x in self.vals]
+                truths = [x in val for x in vals]
 
                 for x in boolean.iterative_quad_toggling(
-                    pkg, None, list(self.vals), 0, len(self.vals), truths,
+                    pkg, None, list(vals), 0, len(vals), truths,
                     filter, desired_false=false, desired_true=true):
                     return True
             else:
-                if pkg.request_enable(attr, *self.vals):
+                if pkg.request_enable(attr, *vals):
                     return True
             return False
 
         # negation
         if not self.all:
-            if pkg.request_disable(attr, *self.vals):
+            if pkg.request_disable(attr, *vals):
                 return True
         else:
             def filter(truths):     return True not in truths
             def true(r, pvals):     return pkg.request_enable(attr, r)
             def false(r, pvals):    return pkg.request_disable(attr, r)
-            truths = [x in val for x in self.vals]
+            truths = [x in val for x in vals]
             for x in boolean.iterative_quad_toggling(
-                pkg, None, list(self.vals), 0, len(self.vals), truths, filter,
+                pkg, None, list(vals), 0, len(vals), truths, filter,
                 desired_false=false, desired_true=true):
                 return True
         return False

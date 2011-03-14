@@ -13,6 +13,8 @@ import operator
 
 from pkgcore.pkgsets.installed import VersionedInstalled
 from pkgcore.config import ConfigHint
+from snakeoil.compatibility import is_disjoint
+from snakeoil.currying import partial
 
 
 class EclassConsumerSet(VersionedInstalled):
@@ -28,7 +30,7 @@ class EclassConsumerSet(VersionedInstalled):
         self.eclasses = frozenset(eclasses)
 
     def __iter__(self):
-        matcher = self.eclasses.isdisjoint
+        matcher = partial(is_disjoint, self.eclasses)
         for atom in VersionedInstalled.__iter__(self):
             pkgs = self.portdir.match(atom)
             if not pkgs:

@@ -1,4 +1,4 @@
-# Copyright: 2005-2007 Brian Harring <ferringb@gmail.com
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
@@ -14,7 +14,7 @@ attr from a package instance and hand it to their wrapped restriction
 from pkgcore.restrictions import restriction, boolean, packages
 from snakeoil.klass import generic_equality, reflective_hash
 from snakeoil import demandload
-from snakeoil.compatibility import cmp
+from snakeoil.compatibility import cmp, is_disjoint
 demandload.demandload(globals(), 're', 'snakeoil:lists')
 
 # Backwards compatibility.
@@ -385,7 +385,7 @@ class ContainmentMatch(base):
                 return vals.issubset(val) != self.negate
             # if something intersects, then we return the inverse of negate-
             # if negate=False, something is found, result is True
-            return vals.isdisjoint(val) == self.negate
+            return is_disjoint(vals, val) == self.negate
         except TypeError:
             # isn't iterable, try the other way around.  rely on contains.
             if self.all:

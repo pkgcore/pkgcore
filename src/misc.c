@@ -12,11 +12,6 @@ static PyObject *discard_str = NULL;
 static PyObject *clear_str = NULL;
 static PyObject *add_str = NULL;
 
-#ifndef PySet_Check
-#define PySet_Check(ob) \
-	(Py_TYPE(ob) == &PySet_Type || \
-	PyType_IsSubtype(Py_TYPE(ob), &PySet_Type)
-#endif
 
 static PyObject *
 incremental_expansion(PyObject *self, PyObject *args, PyObject *kwargs)

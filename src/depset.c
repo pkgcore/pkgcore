@@ -1,5 +1,5 @@
 /*
- * Copyright: 2006-2007 Brian Harring <ferringb@gmail.com>
+ * Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
  * License: GPL2/BSD
  *
  * C version of some of pkgcore (for extra speed).
@@ -13,7 +13,7 @@
 #define PY_SSIZE_T_CLEAN
 
 #include <Python.h>
-#include <snakeoil/py24-compatibility.h>
+#include <snakeoil/common.h>
 #include <ctype.h>
 
 // exceptions, loaded during initialization.
@@ -450,83 +450,23 @@ PyDoc_STRVAR(
 	"cpython depset parsing functionality");
 
 
-static int
-load_external_objects(void)
-{
-	PyObject *s, *m = NULL;
-	#define LOAD_MODULE(module)		 \
-	s = PyString_FromString(module);	\
-	if(!s)							  \
-		return 1;					   \
-	m = PyImport_Import(s);			 \
-	Py_DECREF(s);					   \
-	if(!m)							  \
-		return 1;
-
-	if(!pkgcore_depset_ParseErrorExc) {
-		LOAD_MODULE("pkgcore.ebuild.errors");
-		pkgcore_depset_ParseErrorExc = PyObject_GetAttrString(m,
-			"ParseError");
-		Py_DECREF(m);
-		if(!pkgcore_depset_ParseErrorExc) {
-			return 1;
-		}
-	}
-	if(!pkgcore_depset_ValContains) {
-		LOAD_MODULE("pkgcore.restrictions.values");
-		pkgcore_depset_ValContains = PyObject_GetAttrString(m,
-			"ContainmentMatch");
-		Py_DECREF(m);
-		if(!pkgcore_depset_ValContains)
-			return 1;
-	}
-	if(!pkgcore_depset_PkgCond) {
-		LOAD_MODULE("pkgcore.restrictions.packages");
-		pkgcore_depset_PkgCond = PyObject_GetAttrString(m,
-			"Conditional");
-		Py_DECREF(m);
-		if(!pkgcore_depset_PkgCond)
-			return 1;
-	}
-
-	if(!pkgcore_depset_PkgAnd || !pkgcore_depset_PkgOr) {
-		LOAD_MODULE("pkgcore.restrictions.boolean");
-	} else
-		m = NULL;
-
-	#undef LOAD_MODULE
-
-	#define LOAD_ATTR(ptr, attr)							\
-	if(!(ptr)) {											\
-		if(!((ptr) = PyObject_GetAttrString(m, (attr)))) {  \
-			Py_DECREF(m);								   \
-			return 1;									   \
-		}												   \
-	}
-	LOAD_ATTR(pkgcore_depset_PkgAnd, "AndRestriction");
-	LOAD_ATTR(pkgcore_depset_PkgOr, "OrRestriction");
-	#undef LOAD_ATTR
-
-	Py_CLEAR(m);
-	return 0;
-}
-
-
 PyMODINIT_FUNC
 init_depset(void)
 {
-	// first get the exceptions we use.
-	if(load_external_objects())
-		/* XXX this returns *before* we called Py_InitModule3, so it
-		 * triggers a SystemError. But if we initialize the module
-		 * first python code can get at uninitialized pointers through
-		 * our exported functions, which would be worse.
-		 */
-		 return;
+	snakeoil_LOAD_SINGLE_ATTR(pkgcore_depset_ParseErrorExc,
+		"pkgcore.ebuild.errors", "ParseError");
+	snakeoil_LOAD_SINGLE_ATTR(pkgcore_depset_ValContains,
+		"pkgcore.restrictions.values", "ContainmentMatch");
+	snakeoil_LOAD_SINGLE_ATTR(pkgcore_depset_PkgCond,
+		"pkgcore.restrictions.packages", "Conditional");
+
+	PyObject *module;
+	snakeoil_LOAD_MODULE(module, "pkgcore.restrictions.boolean");
+	snakeoil_LOAD_ATTR(pkgcore_depset_PkgAnd, module, "AndRestriction");
+	snakeoil_LOAD_ATTR(pkgcore_depset_PkgOr, module, "OrRestriction");
+	Py_CLEAR(module);
 
 	if (!Py_InitModule3("_depset", pkgcore_depset_methods,
 						pkgcore_depset_documentation))
 		return;
-
-	/* Success! */
 }

@@ -21,6 +21,10 @@ static PyObject *pkgcore_atom_InvalidCPV_Exc = NULL;
 
 // restricts.
 static PyObject *pkgcore_atom_VersionMatch = NULL;
+static PyObject *pkgcore_atom_SlotDep = NULL;
+static PyObject *pkgcore_atom_RepositoryDep = NULL;
+static PyObject *pkgcore_atom_CategoryDep = NULL;
+static PyObject *pkgcore_atom_PackageDep = NULL;
 static PyObject *pkgcore_atom_PackageRestrict = NULL;
 static PyObject *pkgcore_atom_StrExactMatch = NULL;
 static PyObject *pkgcore_atom_StrGlobMatch = NULL;
@@ -747,39 +751,6 @@ make_version_restrict(PyObject *inst, PyObject *op)
 	return NULL;
 }
 
-static inline PyObject *
-make_slot_restrict(PyObject *slot)
-{
-	PyObject *tup = PyTuple_New(PyTuple_GET_SIZE(slot));
-	if(!tup)
-		return NULL;
-
-	// whee;  convert 'em, basically a map statement.
-	// use args repeatedly to avoid allocation; the callee cannot modify it
-	// (they can technically, but that's massively broken behavior).
-
-	Py_ssize_t idx;
-	for(idx=0; idx < PyTuple_GET_SIZE(slot); idx++) {
-		PyObject *s = PyTuple_GET_ITEM(slot, idx);
-		PyObject *tmp = PyObject_CallFunctionObjArgs(
-			pkgcore_atom_StrExactMatch, s, NULL);
-		if(!tmp) {
-			Py_DECREF(tup);
-			return NULL;
-		}
-		PyTuple_SET_ITEM(tup, idx, tmp);
-	}
-	PyObject *tmp = PyObject_Call(pkgcore_atom_ValOr, tup, NULL);
-	Py_DECREF(tup);
-	if(tmp) {
-		PyObject *tmp2 = PyObject_CallFunction(pkgcore_atom_PackageRestrict,
-			"OO", pkgcore_atom_slot, tmp);
-		Py_DECREF(tmp);
-		tmp = tmp2;
-	}
-	return tmp;
-}
-
 static PyObject *
 make_use_val_restrict(PyObject *use)
 {
@@ -944,21 +915,19 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 
 	int idx = 0;
 	if(repo_id != Py_None) {
-		if(!(tmp = make_simple_restrict(pkgcore_atom_restrict_repo_id,
-			repo_id, pkgcore_atom_StrExactMatch)))
+		if(!(tmp = PyObject_CallFunctionObjArgs(pkgcore_atom_RepositoryDep,
+			repo_id, NULL)))
 			goto pkgcore_atom_getattr_error;
 		PyTuple_SET_ITEM(tup, 0, tmp);
 		idx++;
 	}
 
-	if(!(tmp = make_simple_restrict(pkgcore_atom_package, package,
-		pkgcore_atom_StrExactMatch)))
+	if(!(tmp = PyObject_CallFunctionObjArgs(pkgcore_atom_PackageDep, package, NULL)))
 		goto pkgcore_atom_getattr_error;
 	PyTuple_SET_ITEM(tup, idx, tmp);
 	idx++;
 
-	if(!(tmp = make_simple_restrict(pkgcore_atom_category, category,
-		pkgcore_atom_StrExactMatch)))
+	if(!(tmp = PyObject_CallFunctionObjArgs(pkgcore_atom_CategoryDep, category, NULL)))
 		goto pkgcore_atom_getattr_error;
 	PyTuple_SET_ITEM(tup, idx, tmp);
 	idx++;
@@ -990,14 +959,9 @@ internal_pkgcore_atom_getattr(PyObject *self, PyObject *attr)
 			if(_PyTuple_Resize(&tup, PyTuple_GET_SIZE(tup) - 1))
 				goto pkgcore_atom_getattr_error;
 		} else {
-			if(1 == PyTuple_GET_SIZE(slot)) {
-				tmp = make_simple_restrict(pkgcore_atom_slot, slot,
-					pkgcore_atom_StrExactMatch);
-			} else {
-				tmp = make_slot_restrict(slot);
-			}
-			if(!tmp)
+			if (! (tmp = PyObject_CallObject(pkgcore_atom_SlotDep, slot))) {
 				goto pkgcore_atom_getattr_error;
+			}
 			PyTuple_SET_ITEM(tup, idx, tmp);
 		}
 		idx++;
@@ -1087,8 +1051,13 @@ init_atom(void)
 	snakeoil_LOAD_ATTR(pkgcore_atom_InvalidCPV_Exc, tmp, "InvalidCPV");
 	Py_CLEAR(tmp);
 
-	snakeoil_LOAD_SINGLE_ATTR(pkgcore_atom_VersionMatch, "pkgcore.ebuild.restricts",
-		"VersionMatch");
+	snakeoil_LOAD_MODULE(tmp, "pkgcore.ebuild.restricts");
+	snakeoil_LOAD_ATTR(pkgcore_atom_VersionMatch, tmp, "VersionMatch");
+	snakeoil_LOAD_ATTR(pkgcore_atom_SlotDep, tmp, "SlotDep");
+	snakeoil_LOAD_ATTR(pkgcore_atom_CategoryDep, tmp, "CategoryDep");
+	snakeoil_LOAD_ATTR(pkgcore_atom_PackageDep, tmp, "PackageDep");
+	snakeoil_LOAD_ATTR(pkgcore_atom_RepositoryDep, tmp, "RepositoryDep");
+	Py_CLEAR(tmp);
 
 	snakeoil_LOAD_MODULE(tmp, "pkgcore.restrictions.values");
 	snakeoil_LOAD_ATTR(pkgcore_atom_StrExactMatch, tmp, "StrExactMatch");

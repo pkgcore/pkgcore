@@ -29,7 +29,7 @@ const char * const version_suffixes_str[] = \
 struct suffix_ver {
 	const char *str;
 	int str_len;
-	long val;
+	int val;
 };
 
 static struct suffix_ver pkgcore_ebuild_suffixes[] = {
@@ -60,7 +60,7 @@ typedef struct {
 	PyObject *fullver;
 	PyObject *version;
 	PyObject *revision;
-	unsigned long *suffixes;
+	Py_ssize_t *suffixes;
 	long hash_val;
 	int cvs;
 } pkgcore_cpv;
@@ -249,7 +249,6 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 		char *orig_p = (char *)p;
 		unsigned int suffix_count = 0;
 		unsigned int pos;
-		unsigned new_long;
 		struct suffix_ver *sv;
 		do {
 			suffix_count++;
@@ -259,7 +258,7 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 		// trailing is 0 0
 
 		p = orig_p;
-		self->suffixes = PyObject_Malloc(sizeof(long) * (suffix_count + 1) * 2);
+		self->suffixes = PyObject_Malloc(sizeof(Py_ssize_t) * (suffix_count + 1) * 2);
 		if(NULL == self->suffixes) {
 			// wanker.
 			PyErr_NoMemory();
@@ -274,14 +273,14 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 				if(0 == strncmp(p, sv->str, sv->str_len)) {
 					self->suffixes[pos] = sv->val;
 					p += sv->str_len;
-					new_long = 0;
+					Py_ssize_t suffix_val = 0;
 					while(isdigit(*p)) {
-						new_long = (new_long * 10) + *p - '0';
+						suffix_val = (suffix_val * 10) + *p - '0';
 						p++;
 					}
 					if('\0' != *p && '_' != *p && '-'  != *p)
 						return 1;
-					self->suffixes[pos + 1] = new_long;
+					self->suffixes[pos + 1] = suffix_val;
 					break;
 				}
 			}

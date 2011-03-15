@@ -267,6 +267,15 @@ class native_CpvTest(TestCase):
             self.assertGT(vkls("da/ba-1-r10%s1" % s),
                 vkls("da/ba-1-r1%s1" % s))
 
+        self.assertGT(vkls('sys-apps/net-tools-1.60_p2010081516093'),
+            vkls('sys-apps/net-tools-1.60_p2009072801401'))
+
+        self.assertGT(vkls('sys-apps/net-tools-1.60_p20100815160931'),
+            vkls('sys-apps/net-tools-1.60_p20090728014017'))
+
+        self.assertGT(vkls('sys-apps/net-tools-1.60_p20100815160931'),
+            vkls('sys-apps/net-tools-1.60_p20090728014017-r1'))
+
         # Regression test: python does comparison slightly differently
         # if the classes do not match exactly (it prefers rich
         # comparison over __cmp__).

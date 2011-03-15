@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix a truncation error in suffix version parsing resulting in
+  _p2010081516093 being less than _p2009072801401 .
+
 * pkgcore.ebuild.restricts now contains some generally useful
   building block restrictions for any api consumers
 

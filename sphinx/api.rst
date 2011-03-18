@@ -32,7 +32,7 @@ Modules
     pkgcore.const
     pkgcore.ebuild
     pkgcore.ebuild.atom
-    pkgcore.ebuild.atom_restricts
+    pkgcore.ebuild.restricts
     pkgcore.ebuild.conditionals
     pkgcore.ebuild.const
     pkgcore.ebuild.cpv

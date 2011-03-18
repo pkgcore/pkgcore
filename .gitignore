@@ -6,3 +6,12 @@ pkgcore/restrictions/*.so
 build
 dist
 _trial_temp
+/man/*.1
+/dev-notes/*.html
+/dev-notes/*/*.html
+/dev-notes/index.rst
+/dev-notes/*/index.rst
+/doc/*.html
+/doc/index.rst
+/sphinx/_build/
+/sphinx/api/

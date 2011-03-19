@@ -3,11 +3,10 @@ export PKGCORE_BIN_PATH=$(dirname "$0")
 if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
 	exec env -i PKGCORE_PYTHON_PATH="${PKGCORE_PYTHON_PATH}" PKGCORE_CLEAN_ENV=1 /bin/bash "$0"
 fi
+
 export LC_ALL=C # avoid any potential issues of unicode sorting for whacked func names
 set -f # shell expansion can bite us in the ass during the echo below
 cd "${PKGCORE_BIN_PATH}" || { echo "!!! failed cd'ing to ${PKGCORE_BIN_PATH}" >&2; exit 1; }
-
-pkgcore_initial_funcs=$(declare -F | cut -d ' ' -f3)
 
 # force some ordering.
 
@@ -31,8 +30,9 @@ source() {
 	return 0
 }
 
-# without this var, parsing certain things can fail.
-export PKGCORE_PYTHON_BINARY=/bin/false
+# without this var, parsing certain things can fail; force tot true
+# so any code that tried accessing it thinks it succeeded
+export PKGCORE_PYTHON_BINARY=/bin/true
 
 forced_order_source="isolated-functions.lib exit-handling.lib eapi/common.lib ebuild-daemon.lib"
 
@@ -45,8 +45,6 @@ unset source_was_seen
 unset source
 
 echo >&2
-{ echo "${pkgcore_initial_funcs}"; declare -F | cut -d ' ' -f3; } | \
-sort | uniq -u | \
-while read l; do
-	[[ -n $l ]] && echo $l
-done
+declare -F | cut -d ' ' -f3 | while read l; do
+	[[ -n $l ]] && echo "$(escape_regex_chars "$l")"
+done | sort

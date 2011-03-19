@@ -55,7 +55,7 @@ invoke_filter_env() {
 	local opts
 	[[ $PKGCORE_DEBUG -ge 3 ]] && opts="$opts --debug"
 	PYTHONPATH="${PKGCORE_PYTHONPATH}" "${PKGCORE_PYTHON_BINARY}" \
-		"${PKGCORE_BIN_PATH}/filter-env" "$@"
+		"${PKGCORE_BIN_PATH}/filter-env" "$@" || die "filter-env invocation failed"
 }
 
 # selectively saves  the environ- specifically removes things that have been marked to not be exported.
@@ -164,5 +164,9 @@ scrub_environ() {
 
 		rm -f "${T}/.scrubbed-env"
 		dump_environ > ${T}/.scrubbed-env || die "dumping environment failed"
-	) || exit 1 # note no die usage here... exit instead, since we don't want another tb thrown
+	) && return
+
+	echo "die 'failed parsing the env dump'" # yep, we're injecting code into the eval.
+	exit 1
+	# note no die usage here... exit instead, since we don't want another tb thrown
 }

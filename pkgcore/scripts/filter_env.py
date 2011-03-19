@@ -32,9 +32,13 @@ class OptionParser(commandline.OptionParser):
 
     def _register_options(self):
         self.add_option(
-            '-V', '--var-match', action='store_false', default=True)
+            '-V', '--var-match', action='store_true', default=False,
+            help="Invert the filtering- instead of removing a var if it matches "
+            "remove all vars that do not match")
         self.add_option(
-            '-F', '--func-match', action='store_false', default=True)
+            '-F', '--func-match', action='store_true', default=False,
+            help="Invert the filtering- instead of removing a function if it matches "
+            "remove all functions that do not match")
         self.add_option(
             '--input', '-i', action='callback', type='string',
             callback=input_callback,
@@ -78,18 +82,6 @@ def main(options, out, err):
         logger.debug('var_match: %r, func_match: %r',
                      options.var_match, options.func_match)
 
-    if options.funcs:
-        funcs = filter_env.build_regex_string(options.funcs)
-    else:
-        funcs = None
-
-    if options.vars:
-        vars = filter_env.build_regex_string(options.vars)
-    else:
-        vars = None
-
-    file_buff = options.input.read() + '\0'
-
     stream = out.stream
     var_callback = None
     if options.print_vars:
@@ -99,7 +91,7 @@ def main(options, out, err):
         var_callback = var_matches.append
 
     # Hack: write to the stream directly.
-    filter_env.run(stream, file_buff, vars, funcs,
+    filter_env.main_run(stream, options.input.read(), options.vars, options.funcs,
                    options.var_match, options.func_match,
                    global_envvar_callback=var_callback)
 

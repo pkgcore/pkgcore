@@ -4,6 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* filter-env regex backend now uses python's re always; previously
+  if the extension was active it would use posix regex.
+
+  This resolves occasional odd failures when running native filter-env.
+
 * fix a truncation error in suffix version parsing resulting in
   _p2010081516093 being less than _p2009072801401 .
 

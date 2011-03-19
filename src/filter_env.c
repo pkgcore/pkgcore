@@ -147,28 +147,32 @@ is_envvar(const char *p, char **start, char **end)
 	}
 }
 
-// zero for doesn't match, !0 for matches.
+// zero for doesn't match, 1 for matches, -1 for error.
 static int
-regex_matches(regex_t *re, const char *buff, int desired_value)
+regex_matches(PyObject *re, const char *buff)
 {
-	INFO("match %s, desired %d", buff, desired_value);
-	regmatch_t match[1];
-	match[0].rm_so = match[0].rm_eo = -1;
+	INFO("match %s", buff);
 	assert(buff != NULL);
 	assert(re != NULL);
-	regexec(re, buff, 1, match, 0);
-/*	fprintf(stderr,"result was %i for %s, returning %i\n", match[0].rm_so,
-		buff,i);
-*/
-	INFO("got %d", match[0].rm_so);
-	return match[0].rm_so != desired_value ? 1 : 0;
+	PyObject *str = PyString_FromString(buff);
+	if (!str)
+		return -1;
+
+	PyObject *match_ret = PyObject_CallFunctionObjArgs(re, str, NULL);
+	Py_DECREF(str);
+	if(!match_ret)
+		return -1;
+
+	int result = PyObject_IsTrue(match_ret);
+	Py_DECREF(match_ret);
+	return result;
 }
 
 static const char *
 process_scope(PyObject *out, const char *start, const char *buff,
 			  const char *end,
-			  regex_t *var_re, regex_t *func_re, int desired_var_match,
-			  int desired_func_match, const char endchar, PyObject *envvar_callback)
+			  PyObject *var_matcher, PyObject *func_matcher,
+			  const char endchar, PyObject *envvar_callback)
 {
 	const char *p = NULL;
 	const char *window_start = NULL, *window_end = NULL;
@@ -222,14 +226,19 @@ process_scope(PyObject *out, const char *start, const char *buff,
 			/* output it if it doesn't match */
 
 			new_p = process_scope(
-				NULL, start, new_p, end, NULL, NULL, 0, 0, '}', NULL);
+				NULL, start, new_p, end, NULL, NULL, '}', NULL);
 			INFO("ended processing  '%s'", temp_string);
-			if (func_re != NULL && regex_matches(func_re, temp_string,
-				desired_func_match)) {
-
-				/* well, it matched.  so it gets skipped. */
-				INFO("filtering func '%s'", temp_string);
-				window_end = com_start;
+			if (func_matcher) {
+				int regex_result = regex_matches(func_matcher, temp_string);
+				if (-1 == regex_result) {
+					free(temp_string);
+					return NULL;
+				}
+				if (regex_result) {
+					/* well, it matched.  so it gets skipped. */
+					INFO("filtering func '%s'", temp_string);
+					window_end = com_start;
+				}
 			}
 
 			free(temp_string);
@@ -257,11 +266,17 @@ process_scope(PyObject *out, const char *start, const char *buff,
 
 			do_envvar_callback(envvar_callback, temp_string);
 
-			if (var_re && regex_matches(var_re, temp_string,
-				desired_var_match)) {
-				//this would be filtered.
-				INFO("filtering var '%s'", temp_string);
-				window_end = com_start;
+			if (var_matcher) {
+				int regex_result = regex_matches(var_matcher, temp_string);
+				if (-1 == regex_result) {
+					free(temp_string);
+					return NULL;
+				}
+				if (regex_result) {
+					//this would be filtered.
+					INFO("filtering var '%s'", temp_string);
+					window_end = com_start;
+				}
 			}
 
 			free(temp_string);
@@ -528,7 +543,7 @@ walk_dollar_expansion(const char *start, const char *p, const char *end,
 					  char endchar, char disable_quote)
 {
 	if ('(' == *p)
-		return process_scope(NULL, start, p + 1, end, NULL, NULL, 0, 0, ')', NULL) + 1;
+		return process_scope(NULL, start, p + 1, end, NULL, NULL, ')', NULL) + 1;
 	if ('\'' == *p && !disable_quote)
 		return walk_statement_dollared_quote_parsing(p + 1, end, '\'') + 1;
 	if ('{' != *p) {
@@ -563,21 +578,6 @@ walk_dollar_expansion(const char *start, const char *p, const char *end,
 	return p + 1;
 }
 
-/* Set a sensible exception for a failed regex compilation. */
-static void
-regex_exc(regex_t* reg, int result)
-{
-	ssize_t len = regerror(result, reg, NULL, 0);
-	char *buffer = malloc(len);
-	if (!buffer) {
-		PyErr_NoMemory();
-		return;
-	}
-	regerror(result, reg, buffer, len);
-	PyErr_SetString(PyExc_ValueError, buffer);
-	free(buffer);
-}
-
 
 PyDoc_STRVAR(
 	run_docstring,
@@ -596,68 +596,38 @@ static PyObject *
 pkgcore_filter_env_run(PyObject *self, PyObject *args, PyObject *kwargs)
 {
 	/* Arguments. */
-	PyObject *out, *desired_var_match_obj, *desired_func_match_obj, *envvar_callback=NULL;
-	const char *file_buff, *vsr, *fsr;
+	PyObject *out, *envvar_callback=NULL;
+	const char *file_buff;
+	PyObject *var_matcher, *func_matcher;
 	Py_ssize_t file_size;
 
 	char *res_p = NULL;
 
-	/* Other vars. */
-
-	regex_t vre, *pvre, fre, *pfre;
-	int result, desired_func_match, desired_var_match;
-
 	static char *kwlist[] = {"out", "file_buff", "vsr", "fsr",
-							 "desired_var_match", "desired_func_match",
 							 "global_envvar_callback", NULL};
 
-	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Os#zzOO|O", kwlist,
-									 &out, &file_buff, &file_size, &vsr, &fsr,
-									 &desired_var_match_obj,
-									 &desired_func_match_obj,
+	if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Os#OO|O", kwlist,
+									 &out, &file_buff, &file_size,
+									 &var_matcher, &func_matcher,
 									 &envvar_callback))
 		return NULL;
 
-	desired_func_match = PyObject_IsTrue(desired_func_match_obj);
-	if (desired_func_match < 0)
+	int result = PyObject_IsTrue(func_matcher);
+	if (result < 0)
 		return NULL;
-	if (desired_func_match)
-		desired_func_match = -1;
+	if (!result)
+		func_matcher = NULL;
 
-	desired_var_match = PyObject_IsTrue(desired_var_match_obj);
-	if (desired_var_match < 0)
+	result = PyObject_IsTrue(var_matcher);
+	if (result < 0)
 		return NULL;
-	if (desired_var_match)
-		desired_var_match = -1;
+	if (!result)
+		var_matcher = NULL;
 
 	if (file_buff[file_size] != '\0') {
 		PyErr_SetString(PyExc_ValueError, "file_buff should end in NULL");
 		return NULL;
 	}
-
-	if (fsr) {
-		result = regcomp(&fre, fsr, REG_EXTENDED);
-		if (result) {
-			regex_exc(&fre, result);
-			regfree(&fre);
-			return NULL;
-		}
-		pfre = &fre;
-	} else
-		pfre = NULL;
-
-	if (vsr) {
-		result = regcomp(&vre, vsr, REG_EXTENDED);
-		if (result) {
-			if (pfre)
-				regfree(pfre);
-			regex_exc(&vre, result);
-			regfree(&vre);
-			return NULL;
-		}
-		pvre = &vre;
-	} else
-		pvre = NULL;
 
 	if(envvar_callback) {
 		int true_ret = PyObject_IsTrue(envvar_callback);
@@ -670,18 +640,15 @@ pkgcore_filter_env_run(PyObject *self, PyObject *args, PyObject *kwargs)
 	}
 
 	res_p = (char *)process_scope(
-		out, file_buff, file_buff, file_buff + file_size, pvre, pfre,
-		desired_var_match, desired_func_match, '\0', envvar_callback);
+		out, file_buff, file_buff, file_buff + file_size, var_matcher, func_matcher,
+		'\0', envvar_callback);
 
 filter_env_cleanup:
 
-	if (pvre)
-		regfree(pvre);
-	if (pfre)
-		regfree(pfre);
-
 	if (!res_p) {
-		PyErr_SetString(PyExc_ValueError, "Parsing failed");
+		if (!PyErr_Occurred()) {
+			PyErr_SetString(PyExc_ValueError, "Parsing failed");
+		}
 		return NULL;
 	}
 	Py_RETURN_NONE;

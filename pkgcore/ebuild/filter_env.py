@@ -8,17 +8,16 @@
 __all__ = ("run",)
 
 from snakeoil.demandload import demandload
+
 demandload(globals(),
     're',
     'pkgcore.log:logger'
 )
 
-
 COMMAND_PARSING, SPACE_PARSING = range(2)
 
 
-def native_run(out, file_buff, vsr, fsr,
-               desired_var_match, desired_func_match, global_envvar_callback=None):
+def native_run(out, file_buff, var_match, func_match, global_envvar_callback=None):
     """Print a filtered environment.
 
     :param out: file-like object to write to.
@@ -26,31 +25,7 @@ def native_run(out, file_buff, vsr, fsr,
         Should end in '\0'.
     :param vsr: result of build_regex_string or C{None}, for variables.
     :param vsr: result of build_regex_string or C{None}, for functions.
-    :param desired_var_match: boolean indicating vsr should match or not.
-    :param desired_func_match: boolean indicating fsr should match or not.
     """
-    if fsr is None:
-        func_match = None
-    else:
-        try:
-            fsr = re.compile(fsr)
-        except re.error, e:
-            raise Exception("failed compiling %r; %s" % (fsr, e))
-        if desired_func_match:
-            func_match = fsr.match
-        else:
-            def func_match(data):
-                return fsr.match(data) is None
-
-    if vsr is None:
-        var_match = None
-    else:
-        vsr = re.compile(vsr)
-        if desired_var_match:
-            var_match = vsr.match
-        else:
-            def var_match(data):
-                return vsr.match(data) is None
 
     process_scope(out, file_buff, 0, var_match, func_match, '\0',
         global_envvar_callback)
@@ -64,28 +39,21 @@ except ImportError:
     run = native_run
 
 
-def build_regex_string(tokens):
+def build_regex_string(tokens, invert=False):
+    tokens = filter(None, tokens)
     if not tokens:
         return None
-    result = []
-    for token in tokens:
-        if not token:
-            continue
-        escaped = False
-        l = []
-        for ch in token:
-            if ch == '.' and not escaped:
-                l.append('[^= ]')
-            else:
-                l.append(ch)
-            if ch == '\\':
-                escaped = not escaped
-            else:
-                escaped = False
-        result.append(''.join(l))
-    if len(result) == 1:
-        return '^%s$' % result[0]
-    return '^(%s)$' % '|'.join(result)
+    if len(tokens) == 1:
+        s = tokens[0]
+    else:
+        s = '(?:%s)' % ('|'.join(tokens),)
+    s = '^%s$' % (s,)
+    if invert:
+        s = "(?!%s)" % (s,)
+    try:
+        return re.compile(s)
+    except re.error, e:
+        raise Exception("failed compiling %r:\n\nerror: %s" % (s, e))
 
 
 FUNC_LEN = len('function')
@@ -433,3 +401,20 @@ def walk_dollar_expansion(buff, pos, end, endchar, disable_quote=False):
         else:
             pos += 1
     return pos + 1
+
+def main_run(out_handle, data, vars_str, funcs_str, vars_is_whitelist=False, funcs_is_whitelist=False,
+    global_envvar_callback=None, _parser=None):
+
+    vars = funcs = None
+    if vars_str:
+        vars = build_regex_string(vars_str, invert=vars_is_whitelist).match
+
+    if funcs_str:
+        funcs = build_regex_string(funcs_str, invert=funcs_is_whitelist).match
+
+    data = data + '\0'
+
+    if _parser is None:
+        _parser = run
+
+    _parser(out_handle, data, vars, funcs, global_envvar_callback=global_envvar_callback)

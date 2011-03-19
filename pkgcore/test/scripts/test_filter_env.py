@@ -20,8 +20,8 @@ class CommandlineTest(TestCase, helpers.MainMixin):
             '-i', 'foo')
         options = self.parse('-Vf', 'spork,,foon', '-i', __file__)
         self.assertEqual(['spork', 'foon'], options.funcs)
-        self.assertTrue(options.func_match)
-        self.assertFalse(options.var_match)
+        self.assertFalse(options.func_match)
+        self.assertTrue(options.var_match)
 
     def test_print_vars(self):
         raise AssertionError()

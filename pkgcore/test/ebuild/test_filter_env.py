@@ -5,21 +5,22 @@
 import cStringIO
 from pkgcore.test import TestCase
 from snakeoil.test import mk_cpy_loadable_testcase
+from snakeoil.currying import partial
 from pkgcore.ebuild import filter_env
 
 
 class NativeFilterEnvTest(TestCase):
 
-    filter_env = staticmethod(filter_env.native_run)
+    filter_env = staticmethod(partial(filter_env.main_run, _parser=filter_env.native_run))
 
     def get_output(self, raw_data, funcs=None, vars=None, preserve_funcs=False,
                    preserve_vars=False, debug=False, global_envvar_callback=None):
         out = cStringIO.StringIO()
         if funcs:
-            funcs = filter_env.build_regex_string(funcs.split(','))
+            funcs = funcs.split(',')
         if vars:
-            vars = filter_env.build_regex_string(vars.split(','))
-        self.filter_env(out, raw_data, vars, funcs, not preserve_vars, not preserve_funcs,
+            vars = vars.split(',')
+        self.filter_env(out, raw_data, vars, funcs, preserve_vars, preserve_funcs,
             global_envvar_callback=global_envvar_callback)
         return out.getvalue()
 
@@ -253,7 +254,7 @@ class CPyFilterEnvTest(NativeFilterEnvTest):
     if filter_env.cpy_run is None:
         skip = 'cpy filter_env not available.'
     else:
-        filter_env = staticmethod(filter_env.cpy_run)
+        filter_env = staticmethod(partial(filter_env.main_run, _parser=filter_env.cpy_run))
 
 cpy_loaded_Test = mk_cpy_loadable_testcase("pkgcore.ebuild._filter_env",
     "pkgcore.ebuild.filter_env", "run", "run")

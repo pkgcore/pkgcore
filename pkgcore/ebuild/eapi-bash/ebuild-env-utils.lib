@@ -47,8 +47,8 @@ escape_regex_chars() {
 	echo "${x}"
 }
 
-get_env_funcs_for_filter() {
-	echo "$(escape_regex_chars "$(declare -F | cut -s -d ' ' -f3)")"
+pkgcore_get_env_funcs() {
+	declare -F | cut -s -d ' ' -f3 -s
 }
 
 invoke_filter_env() {
@@ -68,7 +68,7 @@ dump_environ() {
 	[ -z "${_sort}" ] && _sort=cat
 
 	# dump funcs.
-	declare -F | cut -d ' ' -f 3- | regex_filter_input ${DONT_EXPORT_FUNCS} | ${_sort} | while read x; do
+	pkgcore_get_env_funcs | regex_filter_input ${DONT_EXPORT_FUNCS} | ${_sort} | while read x; do
 		declare -f "${x}" || die "failed outputting func ${x}" >&2
 	done
 

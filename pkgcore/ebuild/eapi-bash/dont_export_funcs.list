@@ -50,7 +50,6 @@ filter_env_func_filter
 filter_env_var_filter
 generate_initial_ebuild_environ
 get_KV
-get_env_funcs_for_filter
 has
 has_version
 hasq
@@ -88,6 +87,7 @@ pkgcore_eapi2_src_configure
 pkgcore_eapi2_src_prepare
 pkgcore_eapi4_src_install
 pkgcore_ensure_PATH
+pkgcore_get_env_funcs
 pkgcore_helper_check_exit
 pkgcore_helper_died
 pkgcore_helper_exit

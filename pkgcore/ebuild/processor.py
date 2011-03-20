@@ -527,7 +527,6 @@ class EbuildProcessor(object):
         """
 
         self.write("start_receiving_env\n")
-        exported_keys = []
         data = []
         for x in env_dict:
             if x not in self.dont_export_vars:
@@ -536,12 +535,8 @@ class EbuildProcessor(object):
                 s = env_dict[x].replace("\\", "\\\\\\\\")
                 s = s.replace("'", "\\\\'")
                 s = s.replace("\n", "\\\n")
-                data.append("%s=$'%s'\n" % (x, s))
-                exported_keys.append(x)
-        if exported_keys:
-            data.append("export %s\n" % ' '.join(exported_keys))
-        data.append("end_receiving_env")
-        self.write(''.join(data), flush=True)
+                data.append("%s=$'%s'" % (x, s))
+        self.write("export %s\nend_receiving_env" % (' '.join(data),), flush=True)
         return self.expect("env_received")
 
     def set_logfile(self, logfile=''):

@@ -42,7 +42,7 @@ static struct suffix_ver pkgcore_ebuild_suffixes[] = {
 	{NULL, 0, 6},
 };
 
-static const unsigned long pkgcore_ebuild_default_suffixes[] = {4, 0};
+static const Py_ssize_t pkgcore_ebuild_default_suffixes[] = {4, 0};
 #define PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF 4
 #define PKGCORE_EBUILD_SUFFIX_DEFAULT_VAL 0
 
@@ -292,7 +292,7 @@ pkgcore_cpv_parse_version(pkgcore_cpv *self, char *ver_start,
 		self->suffixes[pos] = PKGCORE_EBUILD_SUFFIX_DEFAULT_SUF;
 		self->suffixes[pos + 1] = PKGCORE_EBUILD_SUFFIX_DEFAULT_VAL;
 	} else {
-		self->suffixes = (unsigned long *)pkgcore_ebuild_default_suffixes;
+		self->suffixes = (Py_ssize_t *)pkgcore_ebuild_default_suffixes;
 	}
 	if(p != ver_end)
 		return 1;

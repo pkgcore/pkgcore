@@ -132,11 +132,6 @@ pkgcore_ebd_exec_main() {
 		die "failed source ${PKGCORE_BIN_PATH}/ebuild-daemon.lib"
 	fi
 
-	# depend's speed up.  turn on qa interceptors by default, instead of flipping them on for each depends
-	# call.
-	export QA_CONTROLLED_EXTERNALLY="yes"
-	enable_qa_interceptors
-
 	unset_colors
 	declare -A PKGCORE_PRELOADED_ECLASSES
 
@@ -151,6 +146,20 @@ pkgcore_ebd_exec_main() {
 		DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $("${PKGCORE_BIN_PATH}/regenerate_dont_export_func_list.bash" 2> /dev/null)"
 	fi
 
+
+	DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} ${PORTAGE_PRELOADED_ECLASSES}"
+	for x in $DONT_EXPORT_FUNCS; do
+		is_function $x && declare -fr $x &> /dev/null
+	done
+
+	# depend's speed up.  turn on qa interceptors by default, instead of flipping them on for each depends;
+	# same for loading depends .lib
+	# important- this needs be loaded after the declare -fr so it doesn't get marked as readonly.
+	# call.
+	export QA_CONTROLLED_EXTERNALLY="yes"
+	enable_qa_interceptors
+
+	source "${PKGCORE_BIN_PATH}/eapi/depend.lib" >&2 || die "failed sourcing eapi/depend.lib"
 	pkgcore_ebd_main_loop
 	exit 0
 }
@@ -222,11 +231,6 @@ pkgcore_ebd_process_ebuild_phases() {
 	if [ -z $RC_NOCOLOR ]; then
 		set_colors
 	fi
-
-	DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} ${PORTAGE_PRELOADED_ECLASSES}"
-	for x in $DONT_EXPORT_FUNCS; do
-		declare -fr $x &> /dev/null
-	done
 
 	[[ -n $PORTAGE_TMPDIR ]] && {
 		addpredict "${PORTAGE_TMPDIR}"

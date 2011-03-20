@@ -40,6 +40,8 @@ demandload(globals(),
     'snakeoil:osutils',
 )
 
+_global_enable_eclass_preloading = False
+
 import traceback
 
 def shutdown_all_processors():
@@ -188,6 +190,8 @@ class EbuildProcessor(object):
         self.lock()
         self.ebd = e_const.EBUILD_DAEMON_PATH
         spawn_opts = {}
+
+        self._preloaded_eclasses = {}
 
         if fakeroot and (sandbox or not userpriv):
             traceback.print_stack()
@@ -402,7 +406,25 @@ class EbuildProcessor(object):
             print "exception caught when cleansing sandbox_log=%s" % str(e)
         return 1
 
-    def preload_eclasses(self, ec_file):
+    def preload_eclasses(self, cache):
+        """
+        Preload an eclass stack's eclasses into a bash functions
+
+        Avoids the cost of going to disk on inherit. Preloading eutils
+        (which is heaviliy inherited) speeds up regen times for
+        example.
+
+        :param ec_file: filepath of eclass to preload
+        :return: boolean, True for success
+        """
+        for eclass, data in cache.eclasses.iteritems():
+            fp = os.path.join(data[0], eclass) + ".eclass"
+            if data[1] != self._preloaded_eclasses.get(fp, None):
+                #print "preloadding", fp
+                if self._preload_eclass(fp):
+                    self._preloaded_eclasses[fp] = data[1]
+
+    def _preload_eclass(self, ec_file):
         """
         Preload an eclass into a bash function.
 
@@ -414,10 +436,10 @@ class EbuildProcessor(object):
         :return: boolean, True for success
         """
         if not os.path.exists(ec_file):
-            return 1
+            print "failed:",ec_file
+            return False
         self.write("preload_eclass %s" % ec_file)
         if self.expect("preload_eclass succeeded"):
-            self.preloaded_eclasses = True
             return True
         return False
 
@@ -541,7 +563,7 @@ class EbuildProcessor(object):
             except TypeError:
                 pass
 
-    def get_keys(self, package_inst, eclass_cache):
+    def get_keys(self, package_inst, eclass_cache, preload_eclasses=None):
         """
         request the metadata be regenerated from an ebuild
 
@@ -551,6 +573,11 @@ class EbuildProcessor(object):
             for eclass access
         :return: dict when successful, None when failed
         """
+
+        if preload_eclasses is None:
+            preload_eclasses = _global_enable_eclass_preloading
+        if preload_eclasses:
+            self.preload_eclasses(eclass_cache)
 
         self.write("process_ebuild depend")
         e = expected_ebuild_env(package_inst, depends=True)

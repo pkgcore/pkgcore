@@ -138,8 +138,8 @@ pkgcore_ebd_exec_main() {
 	export QA_CONTROLLED_EXTERNALLY="yes"
 	enable_qa_interceptors
 
-	export PORTAGE_PRELOADED_ECLASSES=''
 	unset_colors
+	declare -A PKGCORE_PRELOADED_ECLASSES
 
 	trap ebd_sigint_handler SIGINT
 	trap ebd_sigkill_handler SIGKILL
@@ -287,28 +287,26 @@ while [ "$alive" == "1" ]; do
 		alive="0"
 		;;
 	preload_eclass*)
-		echo "preloading eclasses into funcs." >&2
 		disable_qa_interceptors
 		success="succeeded"
 		com="${com#preload_eclass }"
 		for e in ${com}; do
 			x="${e##*/}"
 			x="${x%.eclass}"
-			echo "preloading eclass $x" >&2
 			if ! bash -n "$e"; then
 				echo "errors detected in '$e'" >&2
 				success='failed'
 				break
 			fi
-			y="$( < $e)"
-			eval "eclass_${x}_inherit() {
-				$y
+			eval "pkgcore_eclass_${x}_inherit() {
+				$( < $e )
 			}"
+	        PKGCORE_PRELOADED_ECLASSES[${x}]="pkgcore_eclass_${x}_inherit"
+	        DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} pkgcore_eclass_${x}_inherit"
 		done
 		speak "preload_eclass ${success}"
-		unset e x y success
+		unset e x success
 		enable_qa_interceptors
-		export PORTAGE_PRELOADED_ECLASSES="$PORTAGE_PRELOADED_ECLASSES ${com}"
 		;;
 	esac
 done

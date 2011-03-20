@@ -20,6 +20,10 @@ internal_inherit() {
 	if [ "$#" != "1" ]; then
 		die "internal_inherit accepts one arg, requested eclass location.  $* is a bit much"
 	fi
+	if [[ -n ${PKGCORE_PRELOADED_ECLASSES[$1]} ]]; then
+		${PKGCORE_PRELOADED_ECLASSES[$1]}
+		return
+	fi
 	speak "request_inherit $1"
 	listen line
 	if [ "$line" == "path" ]; then
@@ -27,11 +31,11 @@ internal_inherit() {
 		source "${line}" >&2 || die "failed sources inherit: ${line}"
 	elif [ "$line" == "transfer" ]; then
 		listen line;
-		eval "$line" || die "failed evaluating eclass $x on an inherit transfer"
+		eval "$line" || die "failed evaluating eclass $1 on an inherit transfer"
 	elif [ "$line" == "failed" ]; then
-		die "inherit for $x failed"
+		die "inherit for $1 failed"
 	else
-		die "unknown inherit command from pythonic side, '$line' for eclass $x"
+		die "unknown inherit command from pythonic side, '$line' for eclass $1"
 	fi
 }
 

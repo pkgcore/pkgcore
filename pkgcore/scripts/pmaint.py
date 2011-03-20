@@ -21,7 +21,7 @@ demandload(globals(),
     'pkgcore.repository:multiplex',
     'pkgcore.package:mutated',
     'pkgcore.fs:contents,livefs',
-    'pkgcore.ebuild:atom,errors,digest',
+    'pkgcore.ebuild:atom,errors,digest,processor',
     'pkgcore.restrictions.boolean:OrRestriction',
     'pkgcore.sync:base@sync_base',
     'snakeoil.compatibility:any',
@@ -237,6 +237,16 @@ class RegenParser(OptionParser):
     description = 'regenerate the metadata cache for repositories'
     usage = '%prog [options] repo [threads]'
 
+    def _register_options(self):
+        self.add_option('--disable-eclass-preloading', action='store_true',
+            default=False,
+            help="For regen operation, pkgcore internally turns on an "
+            "optimization that preloads eclasses into individual functions "
+            "thus parsing the eclass only once per EBD processor.  Disabling "
+            "this optimization via this option results in ~35% slower "
+            "regeneration. Disable it only if you suspect the optimization "
+            "is somehow causing issues.")
+
     def _check_values(self, values, args):
         if not args:
             self.error('Need a repository name.')
@@ -285,6 +295,8 @@ def regen_main(options, out, err):
     start_time = time()
     # HACK: store this here so we can assign to it from inside def passthru.
     options.count = 0
+    if not options.disable_eclass_preloading:
+        processor._global_enable_eclass_preloading = True
     if options.thread_count == 1:
         def passthru(iterable):
             for x in iterable:

@@ -8,10 +8,10 @@
 request_sandbox_summary() {
 	local line
 	speak "request_sandbox_summary ${SANDBOX_LOG}"
-	listen line
+	listen_line line
 	while [ "$line" != "end_sandbox_summary" ]; do
 		echo "$line"
-		listen line
+		listen_line line
 	done
 }
 
@@ -25,12 +25,12 @@ internal_inherit() {
 		return
 	fi
 	speak "request_inherit $1"
-	listen line
+	listen_line line
 	if [ "$line" == "path" ]; then
-		listen line;
+		listen_line line
 		source "${line}" >&2 || die "failed sources inherit: ${line}"
 	elif [ "$line" == "transfer" ]; then
-		listen line;
+		listen_line line
 		eval "$line" || die "failed evaluating eclass $1 on an inherit transfer"
 	elif [ "$line" == "failed" ]; then
 		die "inherit for $1 failed"
@@ -42,20 +42,20 @@ internal_inherit() {
 source_profiles() {
 	local line
 	speak request_profiles
-	listen line
+	listen_line line
 	while [ "$line" != end_request ]; do
 		if [ "$line" == "path" ]; then
-			listen line;
+			listen_line line
 			source "${line}" >&2
 		elif [ "$line" == "transfer" ]; then
-			listen line;
+			listen_line line
 			eval "$line" || die "failed evaluating profile bashrc: ${line}"
 		else
 			speak "failed"
 			die "unknown profile bashrc transfer mode from pythonic side, '$line'"
 		fi
 		speak "next"
-		listen line
+		listen_line line
 	done
 }
 

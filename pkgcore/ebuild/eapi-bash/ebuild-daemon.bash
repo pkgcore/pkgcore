@@ -29,7 +29,7 @@ pkgcore_pop_IFS()
 
 # use listen/speak for talking to the running portage instance instead of echo'ing to the fd yourself.
 # this allows us to move the open fd's w/out issues down the line.
-listen() {
+listen_line() {
 	if ! read -u ${EBD_READ_FD} $1; then
 		echo "coms error, read failed: backing out of daemon."
 		exit 1
@@ -76,13 +76,13 @@ ebd_sigkill_handler() {
 pkgcore_ebd_exec_main() {
 	# ensure the other side is still there.  Well, this moreso is for the python side to ensure
 	# loading up the intermediate funcs succeeded.
-	listen com
+	listen_line com
 	if [ "$com" != "dude?" ]; then
 		echo "serv init coms failed, received $com when expecting 'dude?'"
 		exit 1
 	fi
 	speak "dude!"
-	listen PKGCORE_BIN_PATH
+	listen_line PKGCORE_BIN_PATH
 	[ -z "$PKGCORE_BIN_PATH" ] && { speak "empty PKGCORE_BIN_PATH;"; exit 1; }
 
 	# get our die functionality now.
@@ -91,9 +91,9 @@ pkgcore_ebd_exec_main() {
 		exit 2;
 	fi
 
-	listen PKGCORE_PYTHON_BINARY
+	listen_line PKGCORE_PYTHON_BINARY
 	[ -z "$PKGCORE_PYTHON_BINARY" ] && die "empty PKGCORE_PYTHON_BINARY, bailing"
-	listen PKGCORE_PYTHONPATH
+	listen_line PKGCORE_PYTHONPATH
 	[ -z "$PKGCORE_PYTHONPATH" ] && die "empty PKGCORE_PYTHONPATH, bailing"
 
 	if ! source "${PKGCORE_BIN_PATH}/ebuild.lib" >&2; then
@@ -102,7 +102,7 @@ pkgcore_ebd_exec_main() {
 	fi
 
 	if [ -n "$SANDBOX_LOG" ]; then
-		listen com
+		listen_line com
 		if [ "$com" != "sandbox_log?" ]; then
 			echo "unknown com '$com'"
 			exit 1
@@ -167,9 +167,9 @@ pkgcore_ebd_process_ebuild_phases() {
 
 	while [ "$cont" == 0 ]; do
 		line=''
-		listen line
+		listen_line line
 		if [ "$line" == "start_receiving_env" ]; then
-			while listen line && [ "$line" != "end_receiving_env" ]; do #[ "$line" != "end_receiving_env" ]; do
+			while listen_line line && [ "$line" != "end_receiving_env" ]; do #[ "$line" != "end_receiving_env" ]; do
 				pkgcore_push_IFS $'\0'
 				eval ${line};
 				val=$?;
@@ -274,7 +274,7 @@ pkgcore_ebd_main_loop() {
 	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alie com phases line cont DONT_EXPORT_FUNCS"
 	while [ "$alive" == "1" ]; do
 		com=''
-		listen com
+		listen_line com
 		case $com in
 		process_ebuild*)
 			# cleanse whitespace.

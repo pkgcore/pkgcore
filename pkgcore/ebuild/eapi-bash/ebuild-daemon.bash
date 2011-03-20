@@ -112,7 +112,6 @@ pkgcore_ebd_exec_main() {
 		addwrite $SANDBOX_LOG
 	fi
 
-	alive='1'
 	re="$(readonly | cut -s -d '=' -f 1 | cut -s -d ' ' -f 3)"
 	for x in $re; do
 		if ! has $x "$DONT_EXPORT_VARS"; then
@@ -144,8 +143,6 @@ pkgcore_ebd_exec_main() {
 	trap ebd_sigint_handler SIGINT
 	trap ebd_sigkill_handler SIGKILL
 
-	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alive com PORTAGE_LOGFILE cont DONT_EXPORT_FUNCS"
-
 	# finally, load the master list of pkgcore funcs. fallback to
 	# regenerating it if needed.
 	if [ -e "${PKGCORE_BIN_PATH}/dont_export_funcs.list" ]; then
@@ -159,73 +156,76 @@ pkgcore_ebd_exec_main() {
 }
 
 pkgcore_ebd_main_loop() {
-while [ "$alive" == "1" ]; do
-	com=''
-	listen com
-	case $com in
-	process_ebuild*)
-		# cleanse whitespace.
-		phases="$(echo ${com#process_ebuild})"
-		PORTAGE_SANDBOX_PID="$PPID"
-		# note the (; forks. prevents the initialized ebd env from being polluted by ebuild calls.
-		(
-		if [ "${phases/depend/}" == "$phases" ]; then
-			disable_qa_interceptors
-		fi
-		line=''
-		cont=0
-
-		while [ "$cont" == 0 ]; do
-			line=''
-			listen line
-			if [ "$line" == "start_receiving_env" ]; then
-				while listen line && [ "$line" != "end_receiving_env" ]; do #[ "$line" != "end_receiving_env" ]; do
-					pkgcore_push_IFS $'\0'
-					eval ${line};
-					val=$?;
-					pkgcore_pop_IFS
-					if [ $val != "0" ]; then
-						echo "err, env receiving threw an error for '$line': $?" >&2
-						speak "env_receiving_failed"
-						cont=1
-						break
-					fi
-					if [ "${on:-unset}" != "unset" ]; then
-						echo "sudo = ${SUDO_COMMAND}" >&2
-						declare | grep -i sudo_command >&@
-						echo "disabling" >&2
-						unset on
-					fi
-				done
-				if [ "$cont" == "0" ]; then
-					speak "env_received"
-				fi
-			elif [ "${line:0:7}" == "logging" ]; then
-				PORTAGE_LOGFILE="$(echo ${line#logging})"
-				speak "logging_ack"
-			elif [ "${line:0:17}" == "set_sandbox_state" ]; then
-				if [ $((${line:18})) -eq 0 ]; then
-					export SANDBOX_DISABLED=1
-				else
-					export SANDBOX_DISABLED=0
-					export SANDBOX_VERBOSE="no"
-				fi
-			elif [ "${line}" == "start_processing" ]; then
-				cont=2
-			else
-				echo "received unknown com: $line" >&2
+	local com line phases alive
+	alive=1
+	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alie com phases line cont DONT_EXPORT_FUNCS"
+	while [ "$alive" == "1" ]; do
+		com=''
+		listen com
+		case $com in
+		process_ebuild*)
+			# cleanse whitespace.
+			phases="$(echo ${com#process_ebuild})"
+			PORTAGE_SANDBOX_PID="$PPID"
+			# note the (; forks. prevents the initialized ebd env from being polluted by ebuild calls.
+			(
+			if [ "${phases/depend/}" == "$phases" ]; then
+				disable_qa_interceptors
 			fi
-		done
-		if [ "$cont" != 2 ]; then
-			exit $cont
-		else
+			line=''
+			cont=0
+
+			while [ "$cont" == 0 ]; do
+				line=''
+				listen line
+				if [ "$line" == "start_receiving_env" ]; then
+					while listen line && [ "$line" != "end_receiving_env" ]; do #[ "$line" != "end_receiving_env" ]; do
+						pkgcore_push_IFS $'\0'
+						eval ${line};
+						val=$?;
+						pkgcore_pop_IFS
+						if [ $val != "0" ]; then
+							echo "err, env receiving threw an error for '$line': $?" >&2
+							speak "env_receiving_failed"
+							cont=1
+							break
+						fi
+						if [ "${on:-unset}" != "unset" ]; then
+							echo "sudo = ${SUDO_COMMAND}" >&2
+							declare | grep -i sudo_command >&@
+							echo "disabling" >&2
+							unset on
+						fi
+					done
+					if [ "$cont" == "0" ]; then
+						speak "env_received"
+					fi
+				elif [ "${line:0:7}" == "logging" ]; then
+					PORTAGE_LOGFILE="$(echo ${line#logging})"
+					speak "logging_ack"
+				elif [ "${line:0:17}" == "set_sandbox_state" ]; then
+					if [ $((${line:18})) -eq 0 ]; then
+						export SANDBOX_DISABLED=1
+					else
+						export SANDBOX_DISABLED=0
+						export SANDBOX_VERBOSE="no"
+					fi
+				elif [ "${line}" == "start_processing" ]; then
+					cont=2
+				else
+					echo "received unknown com: $line" >&2
+				fi
+			done
+			if [ "$cont" != 2 ]; then
+				exit $cont
+			fi
+
 			reset_sandbox
 			if [ -n "$SANDBOX_LOG" ]; then
 				addwrite $SANDBOX_LOG
-				if [ -n "$PORTAGE_LOGFILE" ]; then
-					addwrite "$(readlink -f "$PORTAGE_LOGFILE")"
-				fi
+				[[ -n $PORTAGE_LOGFILE ]] && addwrite "$(readlink -f "$PORTAGE_LOGFILE")"
 			fi
+
 			if [ -z $RC_NOCOLOR ]; then
 				set_colors
 			fi
@@ -234,6 +234,7 @@ while [ "$alive" == "1" ]; do
 			for x in $DONT_EXPORT_FUNCS; do
 				declare -fr $x &> /dev/null
 			done
+
 			for e in $phases; do
 				umask 0022
 				if [ -z $PORTAGE_LOGFILE ]; then
@@ -273,43 +274,40 @@ while [ "$alive" == "1" ]; do
 					exit $(($ret))
 				fi
 			done
-		fi
-		)
-		# post fork.  tell python if it succeeded or not.
-		if [ $? != 0 ]; then
-			echo "phases failed"
-			speak "phases failed"
-		else
-			speak "phases succeeded"
-		fi
-		;;
-	shutdown_daemon)
-		alive="0"
-		;;
-	preload_eclass*)
-		disable_qa_interceptors
-		success="succeeded"
-		com="${com#preload_eclass }"
-		for e in ${com}; do
-			x="${e##*/}"
-			x="${x%.eclass}"
-			if ! bash -n "$e"; then
-				echo "errors detected in '$e'" >&2
-				success='failed'
-				break
+			)
+			# post fork.  tell python if it succeeded or not.
+			if [ $? != 0 ]; then
+				echo "phases failed"
+				speak "phases failed"
+			else
+				speak "phases succeeded"
 			fi
-			eval "pkgcore_eclass_${x}_inherit() {
-				$( < $e )
-			}"
-	        PKGCORE_PRELOADED_ECLASSES[${x}]="pkgcore_eclass_${x}_inherit"
-	        DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} pkgcore_eclass_${x}_inherit"
-		done
-		speak "preload_eclass ${success}"
-		unset e x success
-		enable_qa_interceptors
-		;;
-	esac
-done
+			;;
+		shutdown_daemon)
+			alive="0"
+			;;
+		preload_eclass*)
+			success="succeeded"
+			com="${com#preload_eclass }"
+			for e in ${com}; do
+				x="${e##*/}"
+				x="${x%.eclass}"
+				if ! bash -n "$e"; then
+					echo "errors detected in '$e'" >&2
+					success='failed'
+					break
+				fi
+				eval "pkgcore_eclass_${x}_inherit() {
+					$( < $e )
+				}"
+				PKGCORE_PRELOADED_ECLASSES[${x}]="pkgcore_eclass_${x}_inherit"
+				DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} pkgcore_eclass_${x}_inherit"
+			done
+			speak "preload_eclass ${success}"
+			unset e x success
+			;;
+		esac
+	done
 }
 
 [[ -z $PKGCORE_SOURCING_FOR_REGEN_FUNCS_LIST ]] && pkgcore_ebd_exec_main

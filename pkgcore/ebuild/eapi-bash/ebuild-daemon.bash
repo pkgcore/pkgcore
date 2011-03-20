@@ -305,7 +305,7 @@ pkgcore_ebd_main_loop() {
 			for e in ${com}; do
 				x="${e##*/}"
 				x="${x%.eclass}"
-				if ! bash -n "$e"; then
+				if ! $(type -P bash) -n "$e"; then
 					echo "errors detected in '$e'" >&2
 					success='failed'
 					break

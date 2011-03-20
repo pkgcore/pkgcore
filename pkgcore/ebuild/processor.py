@@ -335,7 +335,7 @@ class EbuildProcessor(object):
             if append_newline:
                 if string != '\n':
                     string += "\n"
-            print "wrote %i: %s" % (len(string), string)
+            #print "wrote %i: %s" % (len(string), string)
             self.ebd_write.write(string)
             if flush:
                 self.ebd_write.flush()

@@ -155,6 +155,119 @@ pkgcore_ebd_exec_main() {
 	exit 0
 }
 
+pkgcore_ebd_process_ebuild_phases() {
+	# note that this is entirely subshelled; as such exit is used rather than returns
+	(
+	local phases="$@"
+	if [ "${phases/depend/}" == "$phases" ]; then
+		disable_qa_interceptors
+	fi
+	line=''
+	cont=0
+
+	while [ "$cont" == 0 ]; do
+		line=''
+		listen line
+		if [ "$line" == "start_receiving_env" ]; then
+			while listen line && [ "$line" != "end_receiving_env" ]; do #[ "$line" != "end_receiving_env" ]; do
+				pkgcore_push_IFS $'\0'
+				eval ${line};
+				val=$?;
+				pkgcore_pop_IFS
+				if [ $val != "0" ]; then
+					echo "err, env receiving threw an error for '$line': $?" >&2
+					speak "env_receiving_failed"
+					cont=1
+					break
+				fi
+				if [ "${on:-unset}" != "unset" ]; then
+					echo "sudo = ${SUDO_COMMAND}" >&2
+					declare | grep -i sudo_command >&@
+					echo "disabling" >&2
+					unset on
+				fi
+			done
+			if [ "$cont" == "0" ]; then
+				speak "env_received"
+			fi
+		elif [ "${line:0:7}" == "logging" ]; then
+			PORTAGE_LOGFILE="$(echo ${line#logging})"
+			speak "logging_ack"
+		elif [ "${line:0:17}" == "set_sandbox_state" ]; then
+			if [ $((${line:18})) -eq 0 ]; then
+				export SANDBOX_DISABLED=1
+			else
+				export SANDBOX_DISABLED=0
+				export SANDBOX_VERBOSE="no"
+			fi
+		elif [ "${line}" == "start_processing" ]; then
+			cont=2
+		else
+			echo "received unknown com: $line" >&2
+		fi
+	done
+	if [ "$cont" != 2 ]; then
+		exit $cont
+	fi
+
+	reset_sandbox
+	if [ -n "$SANDBOX_LOG" ]; then
+		addwrite $SANDBOX_LOG
+		[[ -n $PORTAGE_LOGFILE ]] && addwrite "$(readlink -f "$PORTAGE_LOGFILE")"
+	fi
+
+	if [ -z $RC_NOCOLOR ]; then
+		set_colors
+	fi
+
+	DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} ${PORTAGE_PRELOADED_ECLASSES}"
+	for x in $DONT_EXPORT_FUNCS; do
+		declare -fr $x &> /dev/null
+	done
+
+	for e in $phases; do
+		umask 0022
+		if [ -z $PORTAGE_LOGFILE ]; then
+			execute_phases ${e}
+			ret=$?
+		else
+			# why do it this way rather then the old '[ -f ${T}/.succesfull }'?
+			# simple.  this allows the actual exit code to be used, rather then just stating no .success == 1 || 0
+			# note this was
+			# execute_phases ${e] &> >(umask 0002; tee -i -a $PORTAGE_LOGFILE)
+			# less then bash v3 however hates it.  And I hate less then v3.
+			# circle of hate you see.
+			execute_phases ${e} 2>&1 | {
+				# this applies to the subshell only.
+				umask 0002
+				tee -i -a $PORTAGE_LOGFILE
+			}
+
+			ret=${PIPESTATUS[0]}
+		fi
+		# if sandbox log exists, then there were complaints from it.
+		# tell python to display the errors, then dump relevant vars for debugging.
+		if [ -n "$SANDBOX_LOG" ] && [ -e "$SANDBOX_LOG" ]; then
+			ret=1
+			echo "sandbox exists- $SANDBOX_LOG"
+			request_sandbox_summary
+			echo "SANDBOX_ON:=${SANDBOX_ON:-unset}" >&2
+			echo "SANDBOX_DISABLED:=${SANDBOX_DISABLED:-unset}" >&2
+			echo "SANDBOX_READ:=${SANDBOX_READ:-unset}" >&2
+			echo "SANDBOX_WRITE:=${SANDBOX_WRITE:-unset}" >&2
+			echo "SANDBOX_PREDICT:=${SANDBOX_PREDICT:-unset}" >&2
+			echo "SANDBOX_DEBUG:=${SANDBOX_DEBUG:-unset}" >&2
+			echo "SANDBOX_DEBUG_LOG:=${SANDBOX_DEBUG_LOG:-unset}" >&2
+			echo "SANDBOX_LOG:=${SANDBOX_LOG:-unset}" >&2
+			echo "SANDBOX_ARMED:=${SANDBOX_ARMED:-unset}" >&2
+		fi
+		if [ "$ret" != "0" ]; then
+			exit $(($ret))
+		fi
+	done
+	)
+}
+
 pkgcore_ebd_main_loop() {
 	local com line phases alive
 	alive=1
@@ -167,115 +280,8 @@ pkgcore_ebd_main_loop() {
 			# cleanse whitespace.
 			phases="$(echo ${com#process_ebuild})"
 			PORTAGE_SANDBOX_PID="$PPID"
-			# note the (; forks. prevents the initialized ebd env from being polluted by ebuild calls.
-			(
-			if [ "${phases/depend/}" == "$phases" ]; then
-				disable_qa_interceptors
-			fi
-			line=''
-			cont=0
-
-			while [ "$cont" == 0 ]; do
-				line=''
-				listen line
-				if [ "$line" == "start_receiving_env" ]; then
-					while listen line && [ "$line" != "end_receiving_env" ]; do #[ "$line" != "end_receiving_env" ]; do
-						pkgcore_push_IFS $'\0'
-						eval ${line};
-						val=$?;
-						pkgcore_pop_IFS
-						if [ $val != "0" ]; then
-							echo "err, env receiving threw an error for '$line': $?" >&2
-							speak "env_receiving_failed"
-							cont=1
-							break
-						fi
-						if [ "${on:-unset}" != "unset" ]; then
-							echo "sudo = ${SUDO_COMMAND}" >&2
-							declare | grep -i sudo_command >&@
-							echo "disabling" >&2
-							unset on
-						fi
-					done
-					if [ "$cont" == "0" ]; then
-						speak "env_received"
-					fi
-				elif [ "${line:0:7}" == "logging" ]; then
-					PORTAGE_LOGFILE="$(echo ${line#logging})"
-					speak "logging_ack"
-				elif [ "${line:0:17}" == "set_sandbox_state" ]; then
-					if [ $((${line:18})) -eq 0 ]; then
-						export SANDBOX_DISABLED=1
-					else
-						export SANDBOX_DISABLED=0
-						export SANDBOX_VERBOSE="no"
-					fi
-				elif [ "${line}" == "start_processing" ]; then
-					cont=2
-				else
-					echo "received unknown com: $line" >&2
-				fi
-			done
-			if [ "$cont" != 2 ]; then
-				exit $cont
-			fi
-
-			reset_sandbox
-			if [ -n "$SANDBOX_LOG" ]; then
-				addwrite $SANDBOX_LOG
-				[[ -n $PORTAGE_LOGFILE ]] && addwrite "$(readlink -f "$PORTAGE_LOGFILE")"
-			fi
-
-			if [ -z $RC_NOCOLOR ]; then
-				set_colors
-			fi
-
-			DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} ${PORTAGE_PRELOADED_ECLASSES}"
-			for x in $DONT_EXPORT_FUNCS; do
-				declare -fr $x &> /dev/null
-			done
-
-			for e in $phases; do
-				umask 0022
-				if [ -z $PORTAGE_LOGFILE ]; then
-					execute_phases ${e}
-					ret=$?
-				else
-					# why do it this way rather then the old '[ -f ${T}/.succesfull }'?
-					# simple.  this allows the actual exit code to be used, rather then just stating no .success == 1 || 0
-					# note this was
-					# execute_phases ${e] &> >(umask 0002; tee -i -a $PORTAGE_LOGFILE)
-					# less then bash v3 however hates it.  And I hate less then v3.
-					# circle of hate you see.
-					execute_phases ${e} 2>&1 | {
-						# this applies to the subshell only.
-						umask 0002
-						tee -i -a $PORTAGE_LOGFILE
-					}
-					ret=${PIPESTATUS[0]}
-				fi
-				# if sandbox log exists, then there were complaints from it.
-				# tell python to display the errors, then dump relevant vars for debugging.
-				if [ -n "$SANDBOX_LOG" ] && [ -e "$SANDBOX_LOG" ]; then
-					ret=1
-					echo "sandbox exists- $SANDBOX_LOG"
-					request_sandbox_summary
-					echo "SANDBOX_ON:=${SANDBOX_ON:-unset}" >&2
-					echo "SANDBOX_DISABLED:=${SANDBOX_DISABLED:-unset}" >&2
-					echo "SANDBOX_READ:=${SANDBOX_READ:-unset}" >&2
-					echo "SANDBOX_WRITE:=${SANDBOX_WRITE:-unset}" >&2
-					echo "SANDBOX_PREDICT:=${SANDBOX_PREDICT:-unset}" >&2
-					echo "SANDBOX_DEBUG:=${SANDBOX_DEBUG:-unset}" >&2
-					echo "SANDBOX_DEBUG_LOG:=${SANDBOX_DEBUG_LOG:-unset}" >&2
-					echo "SANDBOX_LOG:=${SANDBOX_LOG:-unset}" >&2
-					echo "SANDBOX_ARMED:=${SANDBOX_ARMED:-unset}" >&2
-				fi
-				if [ "$ret" != "0" ]; then
-					exit $(($ret))
-				fi
-			done
-			)
-			# post fork.  tell python if it succeeded or not.
+			pkgcore_ebd_process_ebuild_phases ${phases}
+			# tell python if it succeeded or not.
 			if [ $? != 0 ]; then
 				echo "phases failed"
 				speak "phases failed"

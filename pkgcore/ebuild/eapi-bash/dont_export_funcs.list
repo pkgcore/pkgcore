@@ -91,6 +91,7 @@ pkgcore_eapi2_src_prepare
 pkgcore_eapi4_src_install
 pkgcore_ebd_exec_main
 pkgcore_ebd_main_loop
+pkgcore_ebd_process_ebuild_phases
 pkgcore_ensure_PATH
 pkgcore_get_env_funcs
 pkgcore_helper_check_exit

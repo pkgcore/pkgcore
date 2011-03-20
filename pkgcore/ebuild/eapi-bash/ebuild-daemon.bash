@@ -3,6 +3,30 @@
 # Copyright 2004-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
+declare -a PKGCORE_SAVED_IFS
+
+pkgcore_push_IFS()
+{
+	PKGCORE_SAVED_IFS[${#PKGCORE_SAVED_IFS[@]}]="${IFS-unset}"
+	if [[ $1 == unset ]]; then
+		unset IFS
+	else
+		IFS="$1"
+	fi
+	:
+}
+
+pkgcore_pop_IFS()
+{
+	if [[ ${#PKGCORE_SAVED_IFS[@]} == 0 ]]; then
+		die "pkgcore_pop_IFS invoked with nothing on the stack..."
+	fi
+	IFS=${PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} -1 ))]}
+	[[ ${IFS} == unset ]] && unset IFS
+	unset PKGCORE_SAVED_IFS[$(( ${#PKGCORE_SAVED_IFS[@]} -1 ))]
+	:
+}
+
 # use listen/speak for talking to the running portage instance instead of echo'ing to the fd yourself.
 # this allows us to move the open fd's w/out issues down the line.
 listen() {
@@ -156,11 +180,10 @@ while [ "$alive" == "1" ]; do
 			listen line
 			if [ "$line" == "start_receiving_env" ]; then
 				while listen line && [ "$line" != "end_receiving_env" ]; do #[ "$line" != "end_receiving_env" ]; do
-					save_IFS
-					IFS=$'\0'
+					pkgcore_push_IFS $'\0'
 					eval ${line};
 					val=$?;
-					restore_IFS
+					pkgcore_pop_IFS
 					if [ $val != "0" ]; then
 						echo "err, env receiving threw an error for '$line': $?" >&2
 						speak "env_receiving_failed"

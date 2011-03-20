@@ -486,8 +486,7 @@ EXPORT_FUNCTIONS()
 # PATH
 remove_path_entry()
 {
-	save_IFS
-	IFS=":"
+	pkgcore_push_IFS ':'
 	stripped_path="${PATH}"
 	while [ -n "$1" ]; do
 		cur_path=""
@@ -499,7 +498,7 @@ remove_path_entry()
 		stripped_path="${cur_path#:*}"
 		shift
 	done
-	restore_IFS
+	pkgcore_pop_IFS
 	PATH="${stripped_path}"
 }
 

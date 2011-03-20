@@ -54,6 +54,5 @@ source_profiles() {
 		listen line
 	done
 }
-DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} $(declare -F | cut -s -d ' ' -f 3)"
 
 :

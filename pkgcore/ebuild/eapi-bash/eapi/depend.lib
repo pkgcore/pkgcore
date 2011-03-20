@@ -35,6 +35,4 @@ hasv()
     return 0
 }
 
-DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} use hasq hasv"
-
 :

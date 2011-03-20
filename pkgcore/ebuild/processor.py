@@ -320,7 +320,8 @@ class EbuildProcessor(object):
         """Is this instance going to be discarded after usage (fakerooted)?"""
         return self.__fakeroot
 
-    def write(self, string, flush=True, disable_runtime_exceptions=False):
+    def write(self, string, flush=True, disable_runtime_exceptions=False,
+        append_newline=True):
         """send something to the bash side.
 
         :param string: string to write to the bash processor.
@@ -331,10 +332,11 @@ class EbuildProcessor(object):
         """
         string = str(string)
         try:
-            if string == "\n":
-                self.ebd_write.write(string)
-            else:
-                self.ebd_write.write(string +"\n")
+            if append_newline:
+                if string != '\n':
+                    string += "\n"
+            print "wrote %i: %s" % (len(string), string)
+            self.ebd_write.write(string)
             if flush:
                 self.ebd_write.flush()
         except IOError, ie:

@@ -168,8 +168,9 @@ pkgcore_ebd_process_ebuild_phases() {
 	while [ "$cont" == 0 ]; do
 		line=''
 		listen_line line
-		if [ "$line" == "start_receiving_env" ]; then
-			while listen_line line && [ "$line" != "end_receiving_env" ]; do #[ "$line" != "end_receiving_env" ]; do
+		case "$line" in
+		start_receiving_env*)
+			while listen_line line && [ "$line" != "end_receiving_env" ]; do
 				pkgcore_push_IFS $'\0'
 				eval ${line};
 				val=$?;
@@ -180,6 +181,7 @@ pkgcore_ebd_process_ebuild_phases() {
 					cont=1
 					break
 				fi
+				# the hell?
 				if [ "${on:-unset}" != "unset" ]; then
 					echo "sudo = ${SUDO_COMMAND}" >&2
 					declare | grep -i sudo_command >&@
@@ -190,21 +192,26 @@ pkgcore_ebd_process_ebuild_phases() {
 			if [ "$cont" == "0" ]; then
 				speak "env_received"
 			fi
-		elif [ "${line:0:7}" == "logging" ]; then
+			;;
+		logging*)
 			PORTAGE_LOGFILE="$(echo ${line#logging})"
 			speak "logging_ack"
-		elif [ "${line:0:17}" == "set_sandbox_state" ]; then
+			;;
+		set_sandbox_state*)
 			if [ $((${line:18})) -eq 0 ]; then
 				export SANDBOX_DISABLED=1
 			else
 				export SANDBOX_DISABLED=0
 				export SANDBOX_VERBOSE="no"
 			fi
-		elif [ "${line}" == "start_processing" ]; then
+			;;
+		start_processing)
 			cont=2
-		else
+			;;
+		*)
 			echo "received unknown com: $line" >&2
-		fi
+			;;
+		esac
 	done
 	if [ "$cont" != 2 ]; then
 		exit $cont

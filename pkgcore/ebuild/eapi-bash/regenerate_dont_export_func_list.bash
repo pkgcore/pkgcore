@@ -5,6 +5,8 @@ if [[ -z ${PKGCORE_CLEAN_ENV} ]]; then
 fi
 
 export LC_ALL=C # avoid any potential issues of unicode sorting for whacked func names
+# export this so that scripts will behave as libs
+export PKGCORE_SOURCING_FOR_REGEN_FUNCS_LIST=1
 set -f # shell expansion can bite us in the ass during the echo below
 cd "${PKGCORE_BIN_PATH}" || { echo "!!! failed cd'ing to ${PKGCORE_BIN_PATH}" >&2; exit 1; }
 
@@ -34,7 +36,7 @@ source() {
 # so any code that tried accessing it thinks it succeeded
 export PKGCORE_PYTHON_BINARY=/bin/true
 
-forced_order_source="isolated-functions.lib exit-handling.lib eapi/common.lib ebuild-daemon.lib"
+forced_order_source="isolated-functions.lib exit-handling.lib eapi/common.lib ebuild-daemon.lib ebuild-daemon.bash"
 
 for x in ${forced_order_source} $(find . -name '*.lib' | sed -e 's:^\./::' | sort); do
 	source "${x}"

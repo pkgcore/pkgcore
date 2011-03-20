@@ -34,6 +34,7 @@ from pkgcore.ebuild import const as e_const
 from snakeoil.currying import post_curry, partial
 from snakeoil import klass
 from snakeoil.weakrefs import WeakRefFinalizer
+from snakeoil.compatibility import any
 from snakeoil.demandload import demandload
 demandload(globals(),
     'pkgcore.log:logger',
@@ -192,6 +193,7 @@ class EbuildProcessor(object):
         spawn_opts = {}
 
         self._preloaded_eclasses = {}
+        self._outstanding_expects = []
 
         if fakeroot and (sandbox or not userpriv):
             traceback.print_stack()
@@ -344,19 +346,31 @@ class EbuildProcessor(object):
                 raise RuntimeError(ie)
             raise
 
-    def expect(self, want):
+    def _consume_async_expects(self):
+        if any(x[0] for x in self._outstanding_expects):
+            self.ebd_write.flush()
+        got = [x.rstrip('\n') for x in self.readlines(len(self._outstanding_expects))]
+        ret = (got == [x[1] for x in self._outstanding_expects])
+        self._outstanding_expects = []
+        return ret
+
+    def expect(self, want, async=False, flush=False):
         """read from the daemon, check if the returned string is expected.
 
         :param want: string we're expecting
         :return: boolean, was what was read == want?
         """
-        got = self.read()
-        return want == got.rstrip("\n")
+        if async:
+            self._outstanding_expects.append((flush, want))
+            return True
+        elif not self._outstanding_expects:
+            if flush:
+                self.ebd_write.flush()
+            return want == self.read().rstrip('\n')
+        self._outstanding_expects.append((flush, want))
+        return self._consume_async_expects()
 
-    def read(self, lines=1, ignore_killed=False):
-        """
-        read data from the daemon.  Shouldn't be called except internally
-        """
+    def readlines(self, lines, ignore_killed=False):
         mydata = []
         while lines > 0:
             mydata.append(self.ebd_read.readline())
@@ -364,7 +378,13 @@ class EbuildProcessor(object):
 #                self.shutdown_processor()
                 chuck_KeyboardInterrupt()
             lines -= 1
-        return "\n".join(mydata)
+        return mydata
+
+    def read(self, lines=1, ignore_killed=False):
+        """
+        read data from the daemon.  Shouldn't be called except internally
+        """
+        return "\n".join(self.readlines(lines, ignore_killed=ignore_killed))
 
     def sandbox_summary(self, move_log=False):
         """
@@ -408,7 +428,7 @@ class EbuildProcessor(object):
             print "exception caught when cleansing sandbox_log=%s" % str(e)
         return 1
 
-    def preload_eclasses(self, cache):
+    def preload_eclasses(self, cache, async=False):
         """
         Preload an eclass stack's eclasses into a bash functions
 
@@ -423,10 +443,10 @@ class EbuildProcessor(object):
             fp = os.path.join(data[0], eclass) + ".eclass"
             if data[1] != self._preloaded_eclasses.get(fp, None):
                 #print "preloadding", fp
-                if self._preload_eclass(fp):
+                if self._preload_eclass(fp, async=async):
                     self._preloaded_eclasses[fp] = data[1]
 
-    def _preload_eclass(self, ec_file):
+    def _preload_eclass(self, ec_file, async=False):
         """
         Preload an eclass into a bash function.
 
@@ -441,7 +461,7 @@ class EbuildProcessor(object):
             print "failed:",ec_file
             return False
         self.write("preload_eclass %s" % ec_file)
-        if self.expect("preload_eclass succeeded"):
+        if self.expect("preload_eclass succeeded", async=async, flush=True):
             return True
         return False
 
@@ -518,7 +538,7 @@ class EbuildProcessor(object):
         else:
             self.write("set_sandbox_state 0")
 
-    def send_env(self, env_dict):
+    def send_env(self, env_dict, async=False):
         """
         transfer the ebuild's desired env (env_dict) to the running daemon
 
@@ -536,8 +556,8 @@ class EbuildProcessor(object):
                 s = s.replace("'", "\\\\'")
                 s = s.replace("\n", "\\\n")
                 data.append("%s=$'%s'" % (x, s))
-        self.write("export %s\nend_receiving_env" % (' '.join(data),), flush=True)
-        return self.expect("env_received")
+        self.write("export %s\nend_receiving_env" % (' '.join(data),))
+        return self.expect("env_received", async=async, flush=True)
 
     def set_logfile(self, logfile=''):
         """
@@ -574,11 +594,11 @@ class EbuildProcessor(object):
         if preload_eclasses is None:
             preload_eclasses = _global_enable_eclass_preloading
         if preload_eclasses:
-            self.preload_eclasses(eclass_cache)
+            self.preload_eclasses(eclass_cache, async=True)
 
         self.write("process_ebuild depend")
         e = expected_ebuild_env(package_inst, depends=True)
-        self.send_env(e)
+        self.send_env(e, async=True)
         self.write("start_processing")
 
         metadata_keys = {}
@@ -673,6 +693,10 @@ class EbuildProcessor(object):
         self.lock()
 
         try:
+            if self._outstanding_expects:
+                if not self._consume_async_expects():
+                    logger.error("error in daemon")
+                    raise UnhandledCommand("expects out of alignment")
             while True:
                 line = self.read().strip()
                 # split on first whitespace.

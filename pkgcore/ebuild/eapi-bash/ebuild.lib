@@ -141,7 +141,6 @@ pkgcore_load_eapi_libs() {
 	# rely on this setting the env up as necessary
 	# finally, update the filters with functionality loaded from here-
 	# always, always, *always* use our own functionality
-	source "${PKGCORE_BIN_PATH}/eapi/depend.lib" || die "failed sourcing eapi/depend.lib"
 	source "${PKGCORE_BIN_PATH}/eapi/common.lib" || die "failed sourcing eapi/common.lib"
 	source "${PKGCORE_BIN_PATH}/eapi/${PKGCORE_EAPI-${EAPI}}.lib" || \
 		die "failed loading eapi/${PKGCORE_EAPI-${EAPI}}.lib"
@@ -193,7 +192,6 @@ load_ebuild()
 {
 	local EBUILD="${1}"
 	shift
-	source "${PKGCORE_BIN_PATH}/eapi/depend.lib" >&2 || die "failed sourcing eapi/depend.lib"
 
 	SANDBOX_ON="1"
 	export S=${WORKDIR}/${P}
@@ -256,6 +254,7 @@ source "${PKGCORE_BIN_PATH}/exit-handling.lib" >&2 || { echo "ERROR: failed sour
 source "${PKGCORE_BIN_PATH}/ebuild-default-functions.lib" >&2 || die "failed sourcing ebuild-default-functions.lib"
 source "${PKGCORE_BIN_PATH}/isolated-functions.lib" >&2 || die "failed sourcing stripped down functions.lib"
 source "${PKGCORE_BIN_PATH}/ebuild-env-utils.lib" >&2 || die "failed sourcing ebuild-env-utils.lib"
+source "${PKGCORE_BIN_PATH}/eapi/depend.lib" >&2 || die "failed sourcing eapi/depend.lib"
 
 # general func to call for phase execution.  this handles necessary env loading/dumping, and executing pre/post/dyn
 # calls.

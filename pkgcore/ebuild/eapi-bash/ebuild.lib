@@ -415,7 +415,7 @@ execute_phases() {
 				disable_qa_interceptors
 			fi
 
-			speak "$(pkgcore_dump_metadata_keys)"
+			pkgcore_dump_metadata_keys
 			;;
 		*)
 			export SANDBOX_ON="1"
@@ -441,7 +441,7 @@ pkgcore_dump_metadata_keys() {
 		DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES; do
 		# deref the val, if it's not empty/unset, then spit a key command to EBD
 		# after using echo to normalize whitespace (specifically removal of newlines)
-		[ "${!key:-unset}" != "unset" ] && echo "key ${key}=$(echo ${!key})"
+		[ "${!key:-unset}" != "unset" ] && speak "key ${key}=$(echo ${!key})"
 	done
 
 	# defined phases... fun one.
@@ -450,9 +450,7 @@ pkgcore_dump_metadata_keys() {
 		src_{unpack,prepare,configure,compile,test,install}; do
 			is_function "${key}" && phases="${phases} ${key}"
 	done
-	# strip whitespace
-	phases=$(echo ${phases})
-	echo "key DEFINED_PHASES=${phases:--}"
+	speak "key DEFINED_PHASES=${phases:--}"
 
 	set +f
 }

@@ -65,7 +65,7 @@ invoke_filter_env
 is_function
 keepdir
 libopts
-listen
+listen_line
 load_ebuild
 nonfatal
 pkgcore_common_pkg_nofetch

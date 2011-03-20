@@ -4,12 +4,12 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
-* pmaint regen is now cumulatively ~15x faster then the previous release.
+* pmaint regen is now cumulatively ~18x faster then the previous release.
   This is via restoration of original metadata regeneration speeds, and
   via enabling an eclass preloading optimization.  No impact on metadata
   should be found- just far faster regeneration.
 
-* Roughly a 11x speedup in general metadata regeneration; basically rework
+* Roughly a 13x speedup in general metadata regeneration; basically rework
   a fix that was added to to 0.5.11 (dealing with portage induced
   breakage in env loadup from their declare usage).
 

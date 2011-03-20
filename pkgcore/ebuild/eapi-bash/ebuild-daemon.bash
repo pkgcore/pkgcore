@@ -168,7 +168,7 @@ pkgcore_ebd_process_ebuild_phases() {
 	# note that this is entirely subshelled; as such exit is used rather than returns
 	(
 	local phases="$@"
-	if [ "${phases/depend/}" == "$phases" ]; then
+	if [[ ${phases/depend/} == $phases ]]; then
 		disable_qa_interceptors
 	fi
 	line=''
@@ -184,21 +184,14 @@ pkgcore_ebd_process_ebuild_phases() {
 				eval ${line};
 				val=$?;
 				pkgcore_pop_IFS
-				if [ $val != "0" ]; then
+				if [[ $val != 0 ]]; then
 					echo "err, env receiving threw an error for '$line': $?" >&2
 					speak "env_receiving_failed"
 					cont=1
 					break
 				fi
-				# the hell?
-				if [ "${on:-unset}" != "unset" ]; then
-					echo "sudo = ${SUDO_COMMAND}" >&2
-					declare | grep -i sudo_command >&@
-					echo "disabling" >&2
-					unset on
-				fi
 			done
-			if [ "$cont" == "0" ]; then
+			if [[ $cont == 0 ]]; then
 				speak "env_received"
 			fi
 			;;
@@ -207,7 +200,7 @@ pkgcore_ebd_process_ebuild_phases() {
 			speak "logging_ack"
 			;;
 		set_sandbox_state*)
-			if [ $((${line:18})) -eq 0 ]; then
+			if [[ $((${line:18})) -eq 0 ]]; then
 				export SANDBOX_DISABLED=1
 			else
 				export SANDBOX_DISABLED=0
@@ -222,13 +215,13 @@ pkgcore_ebd_process_ebuild_phases() {
 			;;
 		esac
 	done
-	if [ "$cont" != 2 ]; then
+	if [[ $cont != 2 ]]; then
 		exit $cont
 	fi
 
 	[[ -n $PORTAGE_LOGFILE ]] && addwrite "$(readlink -f "$PORTAGE_LOGFILE")"
 
-	if [ -z $RC_NOCOLOR ]; then
+	if [[ -z $RC_NOCOLOR ]]; then
 		set_colors
 	fi
 
@@ -260,7 +253,7 @@ pkgcore_ebd_process_ebuild_phases() {
 		fi
 		# if sandbox log exists, then there were complaints from it.
 		# tell python to display the errors, then dump relevant vars for debugging.
-		if [ -n "$SANDBOX_LOG" ] && [ -e "$SANDBOX_LOG" ]; then
+		if [[ -n $SANDBOX_LOG ]] && [[ -e $SANDBOX_LOG ]]; then
 			ret=1
 			echo "sandbox exists- $SANDBOX_LOG"
 			request_sandbox_summary
@@ -274,7 +267,7 @@ pkgcore_ebd_process_ebuild_phases() {
 			echo "SANDBOX_LOG:=${SANDBOX_LOG:-unset}" >&2
 			echo "SANDBOX_ARMED:=${SANDBOX_ARMED:-unset}" >&2
 		fi
-		if [ "$ret" != "0" ]; then
+		if [[ $ret != 0 ]]; then
 			exit $(($ret))
 		fi
 	done
@@ -286,7 +279,7 @@ pkgcore_ebd_main_loop() {
 	alive=1
 	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alie com phases line cont DONT_EXPORT_FUNCS"
 	SANDBOX_ON=1
-	while [ "$alive" == "1" ]; do
+	while [[ $alive == 1 ]]; do
 		com=''
 		listen_line com
 		case $com in
@@ -296,8 +289,7 @@ pkgcore_ebd_main_loop() {
 			PORTAGE_SANDBOX_PID="$PPID"
 			pkgcore_ebd_process_ebuild_phases ${phases}
 			# tell python if it succeeded or not.
-			if [ $? != 0 ]; then
-				echo "phases failed"
+			if [[ $? != 0 ]]; then
 				speak "phases failed"
 			else
 				speak "phases succeeded"

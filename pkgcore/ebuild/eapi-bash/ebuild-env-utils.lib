@@ -64,7 +64,7 @@ dump_environ() {
 	local x _sort
 
 	# if possible, sort the outputting of funcs/vars; this isn't required however.
-	_sort=$(type -p 2> /dev/null)
+	_sort=$(type -p sort 2> /dev/null)
 	[ -z "${_sort}" ] && _sort=cat
 
 	# dump funcs.

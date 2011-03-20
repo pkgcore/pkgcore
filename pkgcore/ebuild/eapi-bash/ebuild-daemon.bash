@@ -217,11 +217,7 @@ pkgcore_ebd_process_ebuild_phases() {
 		exit $cont
 	fi
 
-	reset_sandbox
-	if [ -n "$SANDBOX_LOG" ]; then
-		addwrite $SANDBOX_LOG
-		[[ -n $PORTAGE_LOGFILE ]] && addwrite "$(readlink -f "$PORTAGE_LOGFILE")"
-	fi
+	[[ -n $PORTAGE_LOGFILE ]] && addwrite "$(readlink -f "$PORTAGE_LOGFILE")"
 
 	if [ -z $RC_NOCOLOR ]; then
 		set_colors
@@ -231,6 +227,12 @@ pkgcore_ebd_process_ebuild_phases() {
 	for x in $DONT_EXPORT_FUNCS; do
 		declare -fr $x &> /dev/null
 	done
+
+	[[ -n $PORTAGE_TMPDIR ]] && {
+		addpredict "${PORTAGE_TMPDIR}"
+		addwrite "${PORTAGE_TMPDIR}"
+		addread "${PORTAGE_TMPDIR}"
+	}
 
 	for e in $phases; do
 		umask 0022
@@ -279,6 +281,7 @@ pkgcore_ebd_main_loop() {
 	local com line phases alive
 	alive=1
 	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alie com phases line cont DONT_EXPORT_FUNCS"
+	SANDBOX_ON=1
 	while [ "$alive" == "1" ]; do
 		com=''
 		listen_line com

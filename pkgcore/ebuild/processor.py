@@ -584,7 +584,6 @@ class EbuildProcessor(object):
         self.write("process_ebuild depend")
         e = expected_ebuild_env(package_inst, depends=True)
         self.send_env(e)
-        self.set_sandbox_state(True)
         self.write("start_processing")
 
         metadata_keys = {}

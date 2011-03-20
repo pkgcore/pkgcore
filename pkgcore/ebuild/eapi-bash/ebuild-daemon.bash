@@ -179,21 +179,28 @@ pkgcore_ebd_process_ebuild_phases() {
 		listen_line line
 		case "$line" in
 		start_receiving_env*)
-			while listen_line line && [ "$line" != "end_receiving_env" ]; do
-				pkgcore_push_IFS $'\0'
-				eval ${line};
-				val=$?;
-				pkgcore_pop_IFS
-				if [[ $val != 0 ]]; then
-					echo "err, env receiving threw an error for '$line': $?" >&2
-					speak "env_receiving_failed"
-					cont=1
-					break
-				fi
-			done
-			if [[ $cont == 0 ]]; then
-				speak "env_received"
+			line="${line#start_receiving_env }"
+			case "$line" in
+			lines)
+				;&
+			*)
+				while listen_line line && [ "$line" != "end_receiving_env" ]; do
+					pkgcore_push_IFS $'\0'
+					eval ${line};
+					cont=$?;
+					pkgcore_pop_IFS
+					if [[ $cont != 0 ]]; then
+						echo "err, env receiving threw an error for '$line': $?" >&2
+						break
+					fi
+				done
+				;;
+			esac
+			if [[ $cont != 0 ]]; then
+				speak "env_receiving_failed"
+				exit 1
 			fi
+			speak "env_received"
 			;;
 		logging*)
 			PORTAGE_LOGFILE="$(echo ${line#logging})"

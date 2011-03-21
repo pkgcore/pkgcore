@@ -5,19 +5,21 @@
 
 
 # ask the python side to display sandbox complaints.
-request_sandbox_summary() {
+request_sandbox_summary()
+{
 	local line
 	ebd_write_line "request_sandbox_summary ${SANDBOX_LOG}"
 	ebd_read_line line
-	while [ "$line" != "end_sandbox_summary" ]; do
+	while [[ $line != end_sandbox_summary ]]; do
 		echo "$line"
 		ebd_read_line line
 	done
 }
 
-internal_inherit() {
+internal_inherit()
+{
 	local line
-	if [ "$#" != "1" ]; then
+	if [[ $# != 1 ]]; then
 		die "internal_inherit accepts one arg, requested eclass location.  $* is a bit much"
 	fi
 	if [[ -n ${PKGCORE_PRELOADED_ECLASSES[$1]} ]]; then
@@ -26,28 +28,29 @@ internal_inherit() {
 	fi
 	ebd_write_line "request_inherit $1"
 	ebd_read_line line
-	if [ "$line" == "path" ]; then
+	if [[ $line == path ]]; then
 		ebd_read_line line
 		source "${line}" >&2 || die "failed sources inherit: ${line}"
-	elif [ "$line" == "transfer" ]; then
+	elif [[ $line == transfer ]]; then
 		ebd_read_line line
 		eval "$line" || die "failed evaluating eclass $1 on an inherit transfer"
-	elif [ "$line" == "failed" ]; then
+	elif [[ $line == failed ]]; then
 		die "inherit for $1 failed"
 	else
 		die "unknown inherit command from pythonic side, '$line' for eclass $1"
 	fi
 }
 
-source_profiles() {
+source_profiles()
+{
 	local line
 	ebd_write_line request_profiles
 	ebd_read_line line
-	while [ "$line" != end_request ]; do
-		if [ "$line" == "path" ]; then
+	while [[ $line != end_request ]]; do
+		if [[ $line == path ]]; then
 			ebd_read_line line
 			source "${line}" >&2
-		elif [ "$line" == "transfer" ]; then
+		elif [[ $line == transfer ]]; then
 			ebd_read_line line
 			eval "$line" || die "failed evaluating profile bashrc: ${line}"
 		else

@@ -1,18 +1,13 @@
 Author(s)
 Brian Harring <ferringb@gmail.com>
 Marien Zwart <marienz@gentoo.org>
+
+Past Contributors:
 Markus Ullmann <jokey@gentoo.org>
 Charlie Shepherd <masterdriverz@gmail.com>
-
-Contributors
 Zac Medico <zmedico@gentoo.org>
 Jason Stubbs <jstubbs@gentoo.og>
-
-Additionally, pkgcore inherited a set of ebuild helper scripts from portage-
-primary authors listed below, copyright Gentoo Foundation
-
 Mike Frysinger <vapier@gentoo.org>
 
-
-bzr annotate/log if you're curious about the gory details of exactly who
+git annotate/log if you're curious about the gory details of exactly who
 did what.

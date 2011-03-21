@@ -7,11 +7,11 @@
 # ask the python side to display sandbox complaints.
 request_sandbox_summary() {
 	local line
-	speak "request_sandbox_summary ${SANDBOX_LOG}"
-	listen_line line
+	ebd_write_line "request_sandbox_summary ${SANDBOX_LOG}"
+	ebd_read_line line
 	while [ "$line" != "end_sandbox_summary" ]; do
 		echo "$line"
-		listen_line line
+		ebd_read_line line
 	done
 }
 
@@ -24,13 +24,13 @@ internal_inherit() {
 		${PKGCORE_PRELOADED_ECLASSES[$1]}
 		return
 	fi
-	speak "request_inherit $1"
-	listen_line line
+	ebd_write_line "request_inherit $1"
+	ebd_read_line line
 	if [ "$line" == "path" ]; then
-		listen_line line
+		ebd_read_line line
 		source "${line}" >&2 || die "failed sources inherit: ${line}"
 	elif [ "$line" == "transfer" ]; then
-		listen_line line
+		ebd_read_line line
 		eval "$line" || die "failed evaluating eclass $1 on an inherit transfer"
 	elif [ "$line" == "failed" ]; then
 		die "inherit for $1 failed"
@@ -41,21 +41,21 @@ internal_inherit() {
 
 source_profiles() {
 	local line
-	speak request_profiles
-	listen_line line
+	ebd_write_line request_profiles
+	ebd_read_line line
 	while [ "$line" != end_request ]; do
 		if [ "$line" == "path" ]; then
-			listen_line line
+			ebd_read_line line
 			source "${line}" >&2
 		elif [ "$line" == "transfer" ]; then
-			listen_line line
+			ebd_read_line line
 			eval "$line" || die "failed evaluating profile bashrc: ${line}"
 		else
-			speak "failed"
+			ebd_write_line "failed"
 			die "unknown profile bashrc transfer mode from pythonic side, '$line'"
 		fi
-		speak "next"
-		listen_line line
+		ebd_write_line "next"
+		ebd_read_line line
 	done
 }
 

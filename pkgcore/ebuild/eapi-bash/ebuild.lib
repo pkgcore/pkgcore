@@ -439,7 +439,7 @@ pkgcore_dump_metadata_keys() {
 		DESCRIPTION KEYWORDS INHERITED IUSE PDEPEND PROVIDE PROPERTIES; do
 		# deref the val, if it's not empty/unset, then spit a key command to EBD
 		# after using echo to normalize whitespace (specifically removal of newlines)
-		[ "${!key:-unset}" != "unset" ] && speak "key ${key}=$(echo ${!key})"
+		[ "${!key:-unset}" != "unset" ] && ebd_write_line "key ${key}=$(echo ${!key})"
 	done
 
 	# defined phases... fun one.
@@ -448,7 +448,7 @@ pkgcore_dump_metadata_keys() {
 		src_{unpack,prepare,configure,compile,test,install}; do
 			is_function "${key}" && phases="${phases} ${key}"
 	done
-	speak "key DEFINED_PHASES=${phases:--}"
+	ebd_write_line "key DEFINED_PHASES=${phases:--}"
 
 	set +f
 }

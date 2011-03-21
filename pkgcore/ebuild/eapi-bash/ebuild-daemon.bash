@@ -27,34 +27,43 @@ pkgcore_pop_IFS()
 	:
 }
 
-# use listen/speak for talking to the running portage instance instead of echo'ing to the fd yourself.
+# use ebd_read/ebd_write for talking to the running portage instance instead of echo'ing to the fd yourself.
 # this allows us to move the open fd's w/out issues down the line.
-listen_line() {
+ebd_read_line()
+{
 	if ! read -u ${EBD_READ_FD} $1; then
 		echo "coms error, read failed: backing out of daemon."
 		exit 1
 	fi
 }
 
-listen_size() {
+ebd_read_size()
+{
 	if ! read -u ${EBD_READ_FD} -r -N $@; then
 		echo "coms error, read failed: backing out of daemon."
 		exit 1;
 	fi
 }
 
-pkgcore_read_size() {
+ebd_read_cat_size()
+{
 	dd bs=$1 count=1 <&${EBD_READ_FD}
 }
 
-speak() {
+ebd_write_line()
+{
 	echo "$*" >&${EBD_WRITE_FD}
 }
 
-declare -rf speak
+
+for x in ebd_read_{line,{cat_,}size} ebd_write_line; do
+	declare -rf ${x}
+done
+unset x
 declare -r EBD_WRITE_FD EBD_READ_FD
 
-ebd_sigint_handler() {
+ebd_sigint_handler()
+{
 	#set -x
 	EBD_DISABLE_DIEFUNC="asdf"
 	# silence ourselves as everything shuts down.
@@ -63,13 +72,14 @@ ebd_sigint_handler() {
 	# supress sigpipe; if we can't tell the parent to die,
 	# it's already shutting us down.
 	trap 'exit 2' SIGPIPE
-	speak "killed"
+	ebd_write_line "killed"
 	trap - SIGINT
 	# this relies on the python side to *not* discard the killed
 	exit 2
 }
 
-ebd_sigkill_handler() {
+ebd_sigkill_handler()
+{
 	#set -x
 	EBD_DISABLE_DIEFUNC="asdf"
 	# silence ourselves as everything shuts down.
@@ -78,47 +88,48 @@ ebd_sigkill_handler() {
 	# supress sigpipe; if we can't tell the parent to die,
 	# it's already shutting us down.
 	trap 'exit 9' SIGPIPE
-	speak "killed"
+	ebd_write_line "killed"
 	trap - SIGKILL
 	exit 9
 }
 
 
-pkgcore_ebd_exec_main() {
+pkgcore_ebd_exec_main()
+{
 	# ensure the other side is still there.  Well, this moreso is for the python side to ensure
 	# loading up the intermediate funcs succeeded.
-	listen_line com
+	ebd_read_line com
 	if [ "$com" != "dude?" ]; then
 		echo "serv init coms failed, received $com when expecting 'dude?'"
 		exit 1
 	fi
-	speak "dude!"
-	listen_line PKGCORE_BIN_PATH
-	[ -z "$PKGCORE_BIN_PATH" ] && { speak "empty PKGCORE_BIN_PATH;"; exit 1; }
+	ebd_write_line "dude!"
+	ebd_read_line PKGCORE_BIN_PATH
+	[ -z "$PKGCORE_BIN_PATH" ] && { ebd_write_line "empty PKGCORE_BIN_PATH;"; exit 1; }
 
 	# get our die functionality now.
 	if ! source "${PKGCORE_BIN_PATH}/exit-handling.lib"; then
-		speak "failed sourcing exit handling functionality"
+		ebd_write_line "failed sourcing exit handling functionality"
 		exit 2;
 	fi
 
-	listen_line PKGCORE_PYTHON_BINARY
+	ebd_read_line PKGCORE_PYTHON_BINARY
 	[ -z "$PKGCORE_PYTHON_BINARY" ] && die "empty PKGCORE_PYTHON_BINARY, bailing"
-	listen_line PKGCORE_PYTHONPATH
+	ebd_read_line PKGCORE_PYTHONPATH
 	[ -z "$PKGCORE_PYTHONPATH" ] && die "empty PKGCORE_PYTHONPATH, bailing"
 
 	if ! source "${PKGCORE_BIN_PATH}/ebuild.lib" >&2; then
-		speak "failed"
+		ebd_write_line "failed"
 		die "failed sourcing ${PKGCORE_BIN_PATH}/ebuild.lib"
 	fi
 
 	if [ -n "$SANDBOX_LOG" ]; then
-		listen_line com
+		ebd_read_line com
 		if [ "$com" != "sandbox_log?" ]; then
 			echo "unknown com '$com'"
 			exit 1
 		fi
-		speak "$SANDBOX_LOG"
+		ebd_write_line "$SANDBOX_LOG"
 		declare -rx SANDBOX_LOG="$SANDBOX_LOG" #  #="/tmp/sandbox-${P}-${PORTAGE_SANDBOX_PID}.log"
 		addwrite $SANDBOX_LOG
 	fi
@@ -129,7 +140,7 @@ pkgcore_ebd_exec_main() {
 			DONT_EXPORT_VARS="${DONT_EXPORT_VARS} $x"
 		fi
 	done
-	speak $re
+	ebd_write_line $re
 	unset x re
 
 
@@ -139,7 +150,7 @@ pkgcore_ebd_exec_main() {
 	declare -rx PKGCORE_PYTHONPATH="${PKGCORE_PYTHONPATH}"
 
 	if ! source "${PKGCORE_BIN_PATH}/ebuild-daemon.lib" >&2; then
-		speak failed
+		ebd_write_line failed
 		die "failed source ${PKGCORE_BIN_PATH}/ebuild-daemon.lib"
 	fi
 
@@ -175,7 +186,8 @@ pkgcore_ebd_exec_main() {
 	exit 0
 }
 
-pkgcore_ebd_process_ebuild_phases() {
+pkgcore_ebd_process_ebuild_phases()
+{
 	# note that this is entirely subshelled; as such exit is used rather than returns
 	(
 	local phases="$@"
@@ -188,16 +200,16 @@ pkgcore_ebd_process_ebuild_phases() {
 	while [ "$cont" == 0 ]; do
 		line=''
 		#set -x
-		listen_line line
+		ebd_read_line line
 		case "$line" in
 		start_receiving_env*)
 			line="${line#start_receiving_env }"
 			case "$line" in
 			bytes*)
 				line="${line#bytes }"
-				listen_size ${line} line
+				ebd_read_size ${line} line
 				pkgcore_push_IFS $'\0'
-				#source <(pkgcore_read_size "${line}" <&"${EBD_READ_FD}" )
+				#source <(ebd_read_cat_size "${line}" <&"${EBD_READ_FD}" )
 				eval "$line"
 				cont=$?
 				pkgcore_pop_IFS
@@ -205,7 +217,7 @@ pkgcore_ebd_process_ebuild_phases() {
 			lines)
 				;&
 			*)
-				while listen_line line && [ "$line" != "end_receiving_env" ]; do
+				while ebd_read_line line && [ "$line" != "end_receiving_env" ]; do
 					pkgcore_push_IFS $'\0'
 					eval ${line};
 					cont=$?;
@@ -218,15 +230,15 @@ pkgcore_ebd_process_ebuild_phases() {
 				;;
 			esac
 			if [[ $cont != 0 ]]; then
-				speak "env_receiving_failed"
+				ebd_write_line "env_receiving_failed"
 				exit 1
 			fi
-			speak "env_received"
+			ebd_write_line "env_received"
 			#set +x
 			;;
 		logging*)
 			PORTAGE_LOGFILE="$(echo ${line#logging})"
-			speak "logging_ack"
+			ebd_write_line "logging_ack"
 			;;
 		set_sandbox_state*)
 			if [[ $((${line:18})) -eq 0 ]]; then
@@ -303,14 +315,15 @@ pkgcore_ebd_process_ebuild_phases() {
 	)
 }
 
-pkgcore_ebd_main_loop() {
+pkgcore_ebd_main_loop()
+{
 	local com line phases alive
 	alive=1
 	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alie com phases line cont DONT_EXPORT_FUNCS"
 	SANDBOX_ON=1
 	while [[ $alive == 1 ]]; do
 		com=''
-		listen_line com
+		ebd_read_line com
 		case $com in
 		process_ebuild*)
 			# cleanse whitespace.
@@ -319,9 +332,9 @@ pkgcore_ebd_main_loop() {
 			pkgcore_ebd_process_ebuild_phases ${phases}
 			# tell python if it succeeded or not.
 			if [[ $? != 0 ]]; then
-				speak "phases failed"
+				ebd_write_line "phases failed"
 			else
-				speak "phases succeeded"
+				ebd_write_line "phases succeeded"
 			fi
 			;;
 		shutdown_daemon)
@@ -344,7 +357,7 @@ pkgcore_ebd_main_loop() {
 				PKGCORE_PRELOADED_ECLASSES[${x}]="pkgcore_eclass_${x}_inherit"
 				DONT_EXPORT_FUNCS="${DONT_EXPORT_FUNCS} pkgcore_eclass_${x}_inherit"
 			done
-			speak "preload_eclass ${success}"
+			ebd_write_line "preload_eclass ${success}"
 			unset e x success
 			;;
 		esac

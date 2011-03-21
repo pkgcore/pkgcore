@@ -243,7 +243,7 @@ class RegenParser(OptionParser):
             help="For regen operation, pkgcore internally turns on an "
             "optimization that preloads eclasses into individual functions "
             "thus parsing the eclass only once per EBD processor.  Disabling "
-            "this optimization via this option results in ~35% slower "
+            "this optimization via this option results in ~50% slower "
             "regeneration. Disable it only if you suspect the optimization "
             "is somehow causing issues.")
 

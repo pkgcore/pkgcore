@@ -551,13 +551,18 @@ class EbuildProcessor(object):
             if x not in self.dont_export_vars:
                 if not x[0].isalpha():
                     raise KeyError(x)
-                s = env_dict[x].replace("\\", "\\\\\\\\")
-                s = s.replace("'", "\\\\'")
-                s = s.replace("\n", "\\\n")
-                data.append("%s=$'%s'" % (x, s))
+                s = env_dict[x]
+                if s.isalnum():
+                    data.append("%s=%s" % (x, s))
+                elif "'" not in s:
+                    data.append("%s='%s'" % (x, s))
+                else:
+                    data.append("%s=$'%s'" % (x, s.replace("'", "\\'")))
         data = 'export %s' % (' '.join(data),)
         self.write("start_receiving_env bytes %i\n%s" %
             (len(data), data), append_newline=False)
+        #print "finished"
+        #import pdb;pdb.set_trace()
         return self.expect("env_received", async=async, flush=True)
 
     def set_logfile(self, logfile=''):

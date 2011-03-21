@@ -37,11 +37,10 @@ listen_line() {
 }
 
 listen_size() {
-	if ! read -u ${EBD_READ_FD} -N $@; then
+	if ! read -u ${EBD_READ_FD} -r -N $@; then
 		echo "coms error, read failed: backing out of daemon."
 		exit 1;
 	fi
-
 }
 
 pkgcore_read_size() {
@@ -188,6 +187,7 @@ pkgcore_ebd_process_ebuild_phases() {
 
 	while [ "$cont" == 0 ]; do
 		line=''
+		#set -x
 		listen_line line
 		case "$line" in
 		start_receiving_env*)
@@ -222,6 +222,7 @@ pkgcore_ebd_process_ebuild_phases() {
 				exit 1
 			fi
 			speak "env_received"
+			#set +x
 			;;
 		logging*)
 			PORTAGE_LOGFILE="$(echo ${line#logging})"

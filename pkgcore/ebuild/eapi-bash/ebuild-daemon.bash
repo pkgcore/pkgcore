@@ -64,7 +64,6 @@ declare -r EBD_WRITE_FD EBD_READ_FD
 
 ebd_sigint_handler()
 {
-	#set -x
 	EBD_DISABLE_DIEFUNC="asdf"
 	# silence ourselves as everything shuts down.
 	exec 2>/dev/null
@@ -80,7 +79,6 @@ ebd_sigint_handler()
 
 ebd_sigkill_handler()
 {
-	#set -x
 	EBD_DISABLE_DIEFUNC="asdf"
 	# silence ourselves as everything shuts down.
 	exec 2>/dev/null
@@ -186,6 +184,25 @@ pkgcore_ebd_exec_main()
 	exit 0
 }
 
+ebd_process_sandbox_results()
+{
+	if [[ -z $SANDBOX_LOG ]] || [[ ! -e $SANDBOX_LOG ]]; then
+		return 0;
+	fi
+	echo "sandbox exists- $SANDBOX_LOG" >&2
+	request_sandbox_summary >&2
+	echo "SANDBOX_ON:=${SANDBOX_ON:-unset}" >&2
+	echo "SANDBOX_DISABLED:=${SANDBOX_DISABLED:-unset}" >&2
+	echo "SANDBOX_READ:=${SANDBOX_READ:-unset}" >&2
+	echo "SANDBOX_WRITE:=${SANDBOX_WRITE:-unset}" >&2
+	echo "SANDBOX_PREDICT:=${SANDBOX_PREDICT:-unset}" >&2
+	echo "SANDBOX_DEBUG:=${SANDBOX_DEBUG:-unset}" >&2
+	echo "SANDBOX_DEBUG_LOG:=${SANDBOX_DEBUG_LOG:-unset}" >&2
+	echo "SANDBOX_LOG:=${SANDBOX_LOG:-unset}" >&2
+	echo "SANDBOX_ARMED:=${SANDBOX_ARMED:-unset}" >&2
+	return 1
+}
+
 pkgcore_ebd_process_ebuild_phases()
 {
 	# note that this is entirely subshelled; as such exit is used rather than returns
@@ -201,7 +218,6 @@ pkgcore_ebd_process_ebuild_phases()
 
 	while [ "$cont" == 0 ]; do
 		line=''
-		#set -x
 		ebd_read_line line
 		case "$line" in
 		start_receiving_env*)
@@ -236,7 +252,6 @@ pkgcore_ebd_process_ebuild_phases()
 				exit 1
 			fi
 			ebd_write_line "env_received"
-			#set +x
 			;;
 		logging*)
 			PORTAGE_LOGFILE="$(echo ${line#logging})"
@@ -297,26 +312,38 @@ pkgcore_ebd_process_ebuild_phases()
 
 			ret=${PIPESTATUS[0]}
 		fi
-		# if sandbox log exists, then there were complaints from it.
-		# tell python to display the errors, then dump relevant vars for debugging.
-		if [[ -n $SANDBOX_LOG ]] && [[ -e $SANDBOX_LOG ]]; then
-			ret=1
-			echo "sandbox exists- $SANDBOX_LOG"
-			request_sandbox_summary
-			echo "SANDBOX_ON:=${SANDBOX_ON:-unset}" >&2
-			echo "SANDBOX_DISABLED:=${SANDBOX_DISABLED:-unset}" >&2
-			echo "SANDBOX_READ:=${SANDBOX_READ:-unset}" >&2
-			echo "SANDBOX_WRITE:=${SANDBOX_WRITE:-unset}" >&2
-			echo "SANDBOX_PREDICT:=${SANDBOX_PREDICT:-unset}" >&2
-			echo "SANDBOX_DEBUG:=${SANDBOX_DEBUG:-unset}" >&2
-			echo "SANDBOX_DEBUG_LOG:=${SANDBOX_DEBUG_LOG:-unset}" >&2
-			echo "SANDBOX_LOG:=${SANDBOX_LOG:-unset}" >&2
-			echo "SANDBOX_ARMED:=${SANDBOX_ARMED:-unset}" >&2
-		fi
+
 		if [[ $ret != 0 ]]; then
-			exit $(($ret))
+			ebd_process_sandbox_results
+			exit $(( $ret ))
 		fi
 	done
+	exit 0
+	)
+}
+
+ebd_process_metadata()
+{
+	local size=$1
+	local data
+	local ret
+	# protect the env.
+	(
+	ebd_read_size $1 data
+	pkgcore_push_IFS $'\0'
+	eval "$data"
+	ret=$?
+	pkgcore_pop_IFS
+	[[ $ret != 0 ]] && exit 1
+
+	if ${is_depends} && [[ -n ${PKGCORE_METADATA_PATH} ]]; then
+		export PATH="${PKGCORE_METADATA_PATH}"
+	fi
+
+	PORTAGE_SANDBOX_PID="$PPID"
+	execute_phases depend && exit 0
+	ebd_process_sandbox_results
+	exit 1
 	)
 }
 
@@ -345,7 +372,7 @@ pkgcore_ebd_main_loop()
 		shutdown_daemon)
 			alive="0"
 			;;
-		preload_eclass*)
+		preload_eclass\ *)
 			success="succeeded"
 			com="${com#preload_eclass }"
 			for e in ${com}; do
@@ -365,10 +392,21 @@ pkgcore_ebd_main_loop()
 			ebd_write_line "preload_eclass ${success}"
 			unset e x success
 			;;
-		set_metadata_path*)
+		set_metadata_path\ *)
 			line=${com#set_metadata_path }
 			ebd_read_size ${line} PKGCORE_METADATA_PATH
 			ebd_write_line "metadata_path_received"
+			;;
+		gen_metadata\ *)
+			line=${com#gen_metadata }
+			if ebd_process_metadata ${line}; then
+				ebd_write_line "phases succeeded"
+			else
+				ebd_write_line "phases failed"
+			fi
+			;;
+		*)
+			echo "received unknown com: $line" >&2
 			;;
 		esac
 	done

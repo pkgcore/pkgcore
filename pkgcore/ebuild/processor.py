@@ -617,10 +617,10 @@ class EbuildProcessor(object):
 
         self._ensure_metadata_paths(const.HOST_NONROOT_PATHS)
 
-        self.write("process_ebuild depend")
         e = expected_ebuild_env(package_inst, depends=True)
-        self.send_env(e, async=True)
-        self.write("start_processing")
+        data = self._generate_env_str(e)
+        self.write("gen_metadata %i\n%s" % (len(data), data),
+            append_newline=False)
 
         metadata_keys = {}
         val = self.generic_handler(additional_commands={

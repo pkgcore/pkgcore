@@ -546,7 +546,6 @@ class EbuildProcessor(object):
         :param env_dict: the bash env.
         """
 
-        self.write("start_receiving_env\n")
         data = []
         for x in env_dict:
             if x not in self.dont_export_vars:
@@ -556,7 +555,9 @@ class EbuildProcessor(object):
                 s = s.replace("'", "\\\\'")
                 s = s.replace("\n", "\\\n")
                 data.append("%s=$'%s'" % (x, s))
-        self.write("export %s\nend_receiving_env" % (' '.join(data),))
+        data = 'export %s' % (' '.join(data),)
+        self.write("start_receiving_env bytes %i\n%s" %
+            (len(data), data), append_newline=False)
         return self.expect("env_received", async=async, flush=True)
 
     def set_logfile(self, logfile=''):

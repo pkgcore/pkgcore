@@ -36,6 +36,18 @@ listen_line() {
 	fi
 }
 
+listen_size() {
+	if ! read -u ${EBD_READ_FD} -N $@; then
+		echo "coms error, read failed: backing out of daemon."
+		exit 1;
+	fi
+
+}
+
+pkgcore_read_size() {
+	dd bs=$1 count=1 <&${EBD_READ_FD}
+}
+
 speak() {
 	echo "$*" >&${EBD_WRITE_FD}
 }
@@ -181,6 +193,15 @@ pkgcore_ebd_process_ebuild_phases() {
 		start_receiving_env*)
 			line="${line#start_receiving_env }"
 			case "$line" in
+			bytes*)
+				line="${line#bytes }"
+				listen_size ${line} line
+				pkgcore_push_IFS $'\0'
+				#source <(pkgcore_read_size "${line}" <&"${EBD_READ_FD}" )
+				eval "$line"
+				cont=$?
+				pkgcore_pop_IFS
+				;;
 			lines)
 				;&
 			*)

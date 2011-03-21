@@ -191,7 +191,9 @@ pkgcore_ebd_process_ebuild_phases()
 	# note that this is entirely subshelled; as such exit is used rather than returns
 	(
 	local phases="$@"
+	local is_depends=true
 	if [[ ${phases/depend/} == $phases ]]; then
+		is_depends=false
 		disable_qa_interceptors
 	fi
 	line=''
@@ -249,6 +251,9 @@ pkgcore_ebd_process_ebuild_phases()
 			fi
 			;;
 		start_processing)
+			if ${is_depends} && [[ -n ${PKGCORE_METADATA_PATH} ]]; then
+				export PATH="${PKGCORE_METADATA_PATH}"
+			fi
 			cont=2
 			;;
 		*)
@@ -359,6 +364,11 @@ pkgcore_ebd_main_loop()
 			done
 			ebd_write_line "preload_eclass ${success}"
 			unset e x success
+			;;
+		set_metadata_path*)
+			line=${com#set_metadata_path }
+			ebd_read_size ${line} PKGCORE_METADATA_PATH
+			ebd_write_line "metadata_path_received"
 			;;
 		esac
 	done

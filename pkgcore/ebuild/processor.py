@@ -194,6 +194,7 @@ class EbuildProcessor(object):
 
         self._preloaded_eclasses = {}
         self._outstanding_expects = []
+        self._metadata_paths = None
 
         if fakeroot and (sandbox or not userpriv):
             traceback.print_stack()
@@ -586,6 +587,18 @@ class EbuildProcessor(object):
             except TypeError:
                 pass
 
+    def _ensure_metadata_paths(self, paths):
+        paths = tuple(paths)
+        if self._metadata_paths == paths:
+            return
+        # filter here, so that a screwy default doesn't result in resetting it
+        # every time.
+        data = ':'.join(filter(None, paths))
+        self.write("set_metadata_path %i\n%s" % (len(data), data),
+            append_newline=False)
+        if self.expect("metadata_path_received", flush=True):
+            self._metadata_paths = paths
+
     def get_keys(self, package_inst, eclass_cache, preload_eclasses=None):
         """
         request the metadata be regenerated from an ebuild
@@ -601,6 +614,8 @@ class EbuildProcessor(object):
             preload_eclasses = _global_enable_eclass_preloading
         if preload_eclasses:
             self.preload_eclasses(eclass_cache, async=True)
+
+        self._ensure_metadata_paths(const.HOST_NONROOT_PATHS)
 
         self.write("process_ebuild depend")
         e = expected_ebuild_env(package_inst, depends=True)
@@ -748,14 +763,12 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
     else:
         d["EBUILD"] = pkg.ebuild.path
 
-    path = list()
-    if depends:
-        path.extend(const.HOST_NONROOT_PATHS)
-    else:
+    if not depends:
+        path = list()
         path.extend(const.HOST_ROOT_PATHS)
         path.append(osutils.pjoin(e_const.EBUILD_HELPERS_PATH, "common"))
         path.append(osutils.pjoin(e_const.EBUILD_HELPERS_PATH, str(pkg.eapi)))
-    path.extend(d.get("PATH", "").split(":"))
-    d["PATH"] = ":".join(filter(None, path))
+        path.extend(d.get("PATH", "").split(":"))
+        d["PATH"] = ":".join(filter(None, path))
     return d
 

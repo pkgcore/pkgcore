@@ -66,6 +66,7 @@ is_function
 keepdir
 libopts
 listen_line
+listen_size
 load_ebuild
 nonfatal
 pkgcore_common_pkg_nofetch
@@ -102,6 +103,7 @@ pkgcore_inject_phase_funcs
 pkgcore_load_eapi_libs
 pkgcore_pop_IFS
 pkgcore_push_IFS
+pkgcore_read_size
 portageq
 regex_filter_input
 remove_path_entry

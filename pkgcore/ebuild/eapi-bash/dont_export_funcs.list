@@ -30,6 +30,8 @@ dump_environ
 dump_trace
 dyn_install
 dyn_preinst
+ebd_process_metadata
+ebd_process_sandbox_results
 ebd_read_cat_size
 ebd_read_line
 ebd_read_size

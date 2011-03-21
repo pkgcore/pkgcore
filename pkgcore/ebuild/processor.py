@@ -363,9 +363,9 @@ class EbuildProcessor(object):
         if async:
             self._outstanding_expects.append((flush, want))
             return True
-        elif not self._outstanding_expects:
-            if flush:
-                self.ebd_write.flush()
+        if flush:
+            self.ebd_write.flush()
+        if not self._outstanding_expects:
             return want == self.read().rstrip('\n')
         self._outstanding_expects.append((flush, want))
         return self._consume_async_expects()

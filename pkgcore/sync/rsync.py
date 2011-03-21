@@ -114,11 +114,11 @@ class rsync_syncer(base.ExternalSyncer):
         if verbosity == 0:
             opts.append("--quiet")
         if verbosity >= 1:
-            opts.append("--progress")
-        if verbosity >= 2:
             opts.append("--stats")
+        if verbosity >= 2:
+            opts.append("-v")
         elif verbosity >= 3:
-            opts.append("--verbose")
+            opts.append("-v")
 
         # zip limits to the shortest iterable.
         ret = None

@@ -22,8 +22,8 @@ Basic Usage
   packages.
 ``pmerge -uDs world``
   Update world, trying to update all encountered dependencies/packages.
-``pmerge -p dev-util/bzrtools``
-  Pretend to install bzrtools
+``pmerge -p dev-vcs/git``
+  Pretend to install git
 ``pmerge -C \<sys-kernel/gentoo-sources-2.6.19``
   Remove gentoo-sources less than 2.6.19
 ``pmerge --clean``
@@ -248,8 +248,8 @@ Pmaint
 Note: You should also refer to ``pmaint --help`` to determine which
 subcommands are available, because at some point, the subcommands for
 ``pmaint`` will be variable and dependent upon the repositories available,
-akin to how bzr's command set changes depending on what plugins you've
-enabled (the most common is bzrtools).
+akin to how git/bzr's command set changes depending on what plugins you've
+enabled.
 
 Regen
 -----

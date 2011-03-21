@@ -1,34 +1,13 @@
-====================
- Getting a bzr repo
-====================
+=========================
+ Checking the source out
+=========================
 
 If you're just installing pkgcore from a released tarball, skip this section.
 
-To get the current (development) code with history, install bazaar_
-(``emerge bzr`` on gentoo) and run::
+To get the current (development) code with history, install git_
+(``emerge git`` on gentoo) and run::
 
-  bzr branch bzr://bzr.pkgcore.org/<branch>
-
-Specifically, to get the mainline/integration branch,
-
-  bzr branch bzr://bzr.pkgcore.org/pkgcore/
-
-If you're using <bzr-1.0, or prefer to get a lightweight checkout (equivalent
-to svn/cvs checkout), run::
-
-  bzr co --lightweight http://bzr.pkgcore.org/<branch>
-
-It's strongly suggested you run at least bzr 1.0, and do a full branch-
-it's actually quicker then a lightweight checkout the majority of the time.
-
-If you need full history, and can't get bzr 1.0 or later::
-
- brz branch http://bzr.pkgcore.org/<branch>
-
-This can take well over 15 minutes (compared to 1-2 for bzr://), so upgrading
-is strongly recommended.
-
-.. _bazaar: http://bazaar-vcs.org/
+  git clone git://pkgcore.org/pkgcore
 
 ====================
  Installing pkgcore

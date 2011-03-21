@@ -538,14 +538,7 @@ class EbuildProcessor(object):
         else:
             self.write("set_sandbox_state 0")
 
-    def send_env(self, env_dict, async=False):
-        """
-        transfer the ebuild's desired env (env_dict) to the running daemon
-
-        :type env_dict: mapping with string keys and values.
-        :param env_dict: the bash env.
-        """
-
+    def _generate_env_str(self, env_dict):
         data = []
         for x in env_dict:
             if x not in self.dont_export_vars:
@@ -558,11 +551,18 @@ class EbuildProcessor(object):
                     data.append("%s='%s'" % (x, s))
                 else:
                     data.append("%s=$'%s'" % (x, s.replace("'", "\\'")))
-        data = 'export %s' % (' '.join(data),)
+        return 'export %s' % (' '.join(data),)
+
+    def send_env(self, env_dict, async=False):
+        """
+        transfer the ebuild's desired env (env_dict) to the running daemon
+
+        :type env_dict: mapping with string keys and values.
+        :param env_dict: the bash env.
+        """
+        data = self._generate_env_str(env_dict)
         self.write("start_receiving_env bytes %i\n%s" %
             (len(data), data), append_newline=False)
-        #print "finished"
-        #import pdb;pdb.set_trace()
         return self.expect("env_received", async=async, flush=True)
 
     def set_logfile(self, logfile=''):

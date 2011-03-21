@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* introduction of EAPI objects (pkgcore.ebuild.eapi) for controlling/defining
+  new eapi's, capabilities, etc.
+
 * pmaint regen is now cumulatively ~23x faster then the previous release.
   This is via restoration of original metadata regeneration speeds, and
   via enabling an eclass preloading optimization.  No impact on metadata-

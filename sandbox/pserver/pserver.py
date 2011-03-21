@@ -1,5 +1,5 @@
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# License: GPL2
+# License: GPL2/BSD
 
 
 """pkgcore XMLRPC server."""

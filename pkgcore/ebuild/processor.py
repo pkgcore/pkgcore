@@ -770,5 +770,8 @@ def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):
         path.append(osutils.pjoin(e_const.EBUILD_HELPERS_PATH, str(pkg.eapi)))
         path.extend(d.get("PATH", "").split(":"))
         d["PATH"] = ":".join(filter(None, path))
+
+    if "PKGCORE_DEBUG" in os.environ:
+        d["PKGCORE_DEBUG"] = os.environ["PKGCORE_DEBUG"]
     return d
 

@@ -132,7 +132,7 @@ def generate_eapi_obj(self):
     if not eapi_magic:
         # "" means '0' eapi
         eapi_magic = '0'
-    eapi_obj = get_eapi(str(eapi_magic))
+    eapi_obj = get_eapi(str(eapi_magic).strip())
     # this can return None... definitely the wrong thing right now
     # for an unsupported eapi.  Fix it later.
     return eapi_obj

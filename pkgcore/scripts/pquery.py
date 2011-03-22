@@ -17,6 +17,7 @@ demandload(globals(),
     're',
     'errno',
     'snakeoil.lists:iter_stable_unique',
+    'pkgcore.fs:fs@fs_module,contents@contents_module',
 )
 
 
@@ -66,6 +67,18 @@ def parse_ownsre(value):
     return packages.PackageRestriction(
         'contents', values.AnyMatch(values.GetAttrRestriction(
             'location', mk_strregex(value))))
+
+def parse_owns(value):
+    "Value is a comma delimited set of paths to search contents for"
+    # yes it would be easier to do this without using parserestrict-
+    # we use defer to using it for the sake of a common parsing
+    # exposed to the commandline however.
+    # the problem here is we don't want to trigger fs* module loadup
+    # unless needed- hence this function.
+    parser = parserestrict.comma_separated_containment('contents',
+        values_kls=contents_module.contentsSet,
+        token_kls=partial(fs_module.fsBase, strict=False))
+    return parser(value)
 
 
 class DataSourceRestriction(values.base):
@@ -207,6 +220,7 @@ def parse_expression(string):
 PARSE_FUNCS = {
     'restrict_revdep': parse_revdep,
     'description': parse_description,
+    'owns': parse_owns,
     'ownsre': parse_ownsre,
     'environment': parse_envmatch,
     'expr': parse_expression,
@@ -225,7 +239,6 @@ for _name, _attr in [
     ('herd', 'herds'),
     ('license', 'license'),
     ('hasuse', 'iuse'),
-    ('owns', 'contents'),
     ]:
     PARSE_FUNCS[_name] = parserestrict.comma_separated_containment(_attr)
 

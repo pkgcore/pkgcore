@@ -21,7 +21,7 @@ class ParseError(ValueError):
     """Raised if parsing a restriction expression failed."""
 
 
-def comma_separated_containment(attr):
+def comma_separated_containment(attr, values_kls=frozenset, token_kls=str):
     """Helper for parsing comma-separated strings to a ContainmentMatch.
 
     :param attr: name of the attribute.
@@ -30,8 +30,11 @@ def comma_separated_containment(attr):
         have any of those values in the attribute passed to this function.
     """
     def _parse(value):
-        return packages.PackageRestriction(attr, values.ContainmentMatch(*(
-                    piece.strip() for piece in value.split(','))))
+        return packages.PackageRestriction(attr,
+            values.ContainmentMatch2(
+                values_kls(token_kls(piece.strip()) for piece in value.split(','))
+            )
+        )
     return _parse
 
 

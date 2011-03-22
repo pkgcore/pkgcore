@@ -35,23 +35,17 @@ demandload(globals(),
 )
 
 
-_eapi_limited_atom_kls = tuple(partial(atom, eapi=x) for x in
-                               const.eapi_capable)
-
 def generate_depset(c, key, non_package_type, s, **kwds):
     try:
         if non_package_type:
             return conditionals.DepSet.parse(s.data.pop(key, ""), c,
                 operators={"||":boolean.OrRestriction,
                 "":boolean.AndRestriction}, **kwds)
-        eapi = s.eapi
-        try:
-            kwds['element_func'] = _eapi_limited_atom_kls[eapi]
-        except IndexError:
-            raise metadata_errors.MetadataException(s, 'eapi',
-                "unsupported eapi")
-        if eapi >= 2:
-            kwds['transitive_use_atoms'] = True
+        eapi_obj = s.eapi_obj
+        if eapi_obj is None:
+            raise metadata_errors.MetadataException(s, "eapi", "unsupported eapi")
+        kwds['element_func'] = eapi_obj.atom_kls
+        kwds['transitive_use_atoms'] = eapi_obj.options.transitive_use_atoms
         return conditionals.DepSet.parse(s.data.pop(key, ""), c, **kwds)
     except conditionals.ParseError, p:
         raise metadata_errors.MetadataException(s, str(key), str(p))
@@ -84,7 +78,7 @@ def generate_fetchables(self):
         d = conditionals.DepSet.parse(
             self.data.pop("SRC_URI", ""), fetchable, operators={},
             element_func=func,
-            allow_src_uri_file_renames=(self.eapi >= 2))
+            allow_src_uri_file_renames=self.eapi_obj.options.src_uri_renames)
         for v in common.itervalues():
             v.uri.finalize()
         return d

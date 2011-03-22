@@ -18,6 +18,7 @@ eapi_optionals = mappings.ImmutableDict({
     "doman_language_detect":False,
     "doman_language_override":False,
     "transitive_use_atoms":False,
+    "src_uri_renames":False,
 })
 
 
@@ -166,7 +167,8 @@ eapi2 = EAPI("2",
     eapi1.metadata_keys,
     eapi1.mandatory_keys,
     combine_dicts(eapi1.options,
-        dict(doman_language_detect=True, transitive_use_atoms=True)),
+        dict(doman_language_detect=True, transitive_use_atoms=True,
+        src_uri_renames=True)),
     ebd_env_options=eapi1.ebd_env_options,
 )
 

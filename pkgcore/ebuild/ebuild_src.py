@@ -133,14 +133,15 @@ def create_fetchable_from_uri(pkg, chksums, ignore_missing_chksums, mirrors,
         common_files[filename] = fetchable(filename, uris, chksums.get(filename))
     return common_files[filename]
 
-def generate_eapi(self):
-    try:
-        d = self.data.pop("EAPI", 0)
-        if d == "":
-            return 0
-        return int(d)
-    except ValueError:
-        return "unsupported"
+def generate_eapi_obj(self):
+    eapi_magic = self.data.pop("EAPI", "0")
+    if not eapi_magic:
+        # "" means '0' eapi
+        eapi_magic = '0'
+    eapi_obj = get_eapi(str(eapi_magic))
+    # this can return None... definitely the wrong thing right now
+    # for an unsupported eapi.  Fix it later.
+    return eapi_obj
 
 def get_slot(self):
     o = self.data.pop("SLOT", "0").strip()
@@ -167,7 +168,7 @@ class base(metadata.package):
 
     tracked_attributes = (
         "depends", "rdepends", "post_rdepends", "provides", "license",
-        "slot", "keywords", "eapi", "restrict", "description", "iuse",
+        "slot", "keywords", "eapi_obj", "restrict", "description", "iuse",
         "chost", "cbuild", "ctarget", "homepage", "properties",
         "defined_phases")
 
@@ -191,7 +192,7 @@ class base(metadata.package):
     _get_attr["restrict"] = lambda s:conditionals.DepSet.parse(
         s.data.pop("RESTRICT", ''), str, operators={},
         element_func=rewrite_restrict)
-    _get_attr["eapi"] = generate_eapi
+    _get_attr["eapi_obj"] = generate_eapi_obj
     _get_attr["iuse"] = lambda s:frozenset(imap(intern,
         s.data.pop("IUSE", "").split()))
     _get_attr["properties"] = lambda s:frozenset(imap(intern,
@@ -204,8 +205,11 @@ class base(metadata.package):
     __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])
 
     @property
-    def eapi_obj(self):
-        return get_eapi(str(self.eapi))
+    def eapi(self):
+        eapi_obj = self.eapi_obj
+        if eapi_obj is not None:
+            return int(eapi_obj.magic)
+        return "unsupported"
 
     @property
     def P(self):
@@ -421,3 +425,10 @@ class virtual_ebuild(metadata.package):
         return metadata.package.__getattr__(self, attr)
 
     _get_attr = package._get_attr.copy()
+
+    # we have to duplicate this here since the virtual
+    # doesn't directly derive from base
+    @property
+    def eapi(self):
+        return int(self.eapi_obj.magic)
+

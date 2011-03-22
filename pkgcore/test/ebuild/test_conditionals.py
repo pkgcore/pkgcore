@@ -199,6 +199,9 @@ class native_DepSetParsingTest(base):
             ParseError, self.gen_depset, "|| ( a b )",
             {"operators":{"":boolean.AndRestriction}})
 
+    def test_atom_interaction(self):
+        self.gen_depset("a/b[x(+)]", element_func=atom)
+
 
 class cpy_DepSetParsingTest(native_DepSetParsingTest):
 

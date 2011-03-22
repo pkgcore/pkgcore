@@ -264,15 +264,6 @@ internal_parse_depset(PyObject *dep_str, char **ptr, int *has_conditionals,
 					goto internal_parse_depset_error;
 			}
 		} else {
-			char *ptr_s = start;
-			while (ptr_s < p) {
-				if('|' == *ptr_s || ')' == *ptr_s || '(' == *ptr_s) {
-					Err_SetParse(dep_str,
-						"stray character detected in item", start ,p);
-					goto internal_parse_depset_error;
-				}
-				ptr_s++;
-			}
 			item = PyObject_CallFunction(element_func, "s#", start, p - start);
 			if(!item) {
 				Err_WrapException(dep_str, start, p);

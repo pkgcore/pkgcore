@@ -107,13 +107,11 @@ class DepSet(boolean.AndRestriction):
         k = None
         try:
             for k in words:
-                if ")" in k:
-                    if ")" != k:
-                        raise ParseError(dep_str, k)
+                if ")" == k:
                     # no elements == error. if closures don't map up,
                     # indexerror would be chucked from trying to pop
                     # the frame so that is addressed.
-                    if not depsets[-1]:
+                    if not depsets[-1] or not raw_conditionals:
                         raise ParseError(dep_str)
                     elif raw_conditionals[-1].endswith('?'):
                         node_conds = True
@@ -139,10 +137,7 @@ class DepSet(boolean.AndRestriction):
                     raw_conditionals.pop()
                     depsets.pop()
 
-                elif "(" in k:
-                    if k != "(":
-                        raise ParseError(dep_str, k)
-
+                elif "(" == k:
                     k = ''
                     # push another frame on
                     depsets.append([])

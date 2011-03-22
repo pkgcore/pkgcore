@@ -24,11 +24,12 @@ from snakeoil.demandload import demandload
 
 demandload(globals(),
     'snakeoil.data_source:local_source',
-    'pkgcore.ebuild:cpv',
-    'pkgcore.ebuild:atom',
+    'pkgcore.ebuild:cpv,atom',
+    'pkgcore.ebuild.eapi:get_eapi',
     'pkgcore.repository:util',
     'pkgcore.restrictions:packages',
     'snakeoil.mappings:defaultdict,ImmutableDict',
+    'snakeoil.klass:alias_attr',
 )
 
 
@@ -230,19 +231,18 @@ class ProfileNode(object):
         return self.bashrc
 
     @load_decorator('eapi', fallback=('0',))
-    def _load_eapi(self, data):
+    def _load_eapi_obj(self, data):
         data = [x.strip() for x in data]
         data = filter(None, data)
         if len(data) != 1:
             raise ProfileError(self.path, 'eapi', "multiple lines detected")
         elif not (data[0].isdigit() and int(data[0]) in const.eapi_capable):
             raise ProfileError(self.path, 'eapi', 'unsupported eapi: %s' % data[0])
-        self.eapi = data[0]
-        return self.eapi
+        self.eapi_obj = o = get_eapi(data[0])
+        return o
 
-    def _load_eapi_atom(self):
-        self.eapi_atom = getattr(atom.atom, 'eapi%s_atom' % self.eapi)
-        return self.eapi_atom
+    eapi = alias_attr("eapi_obj.magic")
+    eapi_atom = alias_attr("eapi_obj.atom_kls")
 
     def __getattr__(self, attr):
         if attr in ("system", "visibility"):
@@ -395,6 +395,7 @@ class OnDiskProfile(object):
             obj.match = obj.itermatch = _empty_provides_iterable
             obj.has_match = _empty_provides_has_match
         return obj
+
     def _collapse_masks(self):
         return frozenset(chain(self._collapse_generic("masks"),
             self._collapse_generic("visibility")))

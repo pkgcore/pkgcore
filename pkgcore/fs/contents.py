@@ -6,7 +6,7 @@ contents set- container of fs objects
 """
 
 from pkgcore.fs import fs
-from snakeoil.compatibility import all
+from snakeoil.compatibility import all, any
 from snakeoil.klass import generic_equality
 from snakeoil.currying import partial
 from snakeoil.demandload import demandload

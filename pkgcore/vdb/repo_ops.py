@@ -62,6 +62,10 @@ class install(repo_ops.install):
                     versionless_providers = lambda b:b.key
                     s = conditionals.stringify_boolean(v,
                         func=versionless_providers)
+                elif k == 'eapi_obj':
+                    # hackity hack.
+                    s = v.magic
+                    k = 'eapi'
                 elif not isinstance(v, basestring):
                     try:
                         s = ' '.join(v)

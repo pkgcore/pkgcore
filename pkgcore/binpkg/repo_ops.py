@@ -34,7 +34,7 @@ def discern_loc(base, pkg, extension='.tbz2'):
 
 _metadata_rewrites = {
     "depends":"DEPEND", "rdepends":"RDEPEND", "post_rdepends":"PDEPEND",
-    "use":"USE", "eapi":"EAPI", "CONTENTS":"contents", "provides":"PROVIDE"}
+    "use":"USE", "eapi_obj":"EAPI", "CONTENTS":"contents", "provides":"PROVIDE"}
 
 def generate_attr_dict(pkg, portage_compatible=True):
     d = {}
@@ -48,6 +48,8 @@ def generate_attr_dict(pkg, portage_compatible=True):
         if k == 'provides':
             versionless_provides = lambda b: b.key
             s = stringify_boolean(v, func=versionless_provides)
+        elif k == 'eapi_obj':
+            s = v.magic
         elif not isinstance(v, basestring):
             try:
                 s = ' '.join(v)

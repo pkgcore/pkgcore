@@ -7,12 +7,15 @@ from snakeoil.currying import post_curry, partial
 from pkgcore.fs import fs, contents
 from snakeoil.osutils import pjoin
 
+for x in ("File", "Dir", "Link", "Dev", "Fifo"):
+    globals()["mk_" + x.lower()] = partial(getattr(fs, "fs%s" % x),
+        strict=False)
+del x
+
 class TestContentsSet(TestCase):
 
-    for x in ("File", "Dir", "Link", "Dev", "Fifo"):
-        locals()["mk_" + x.lower()] = partial(getattr(fs, "fs%s" % x),
-            strict=False)
-    del x
+    locals().update((x, globals()[x]) for x in
+        ("mk_file", "mk_dir", "mk_link", "mk_dev", "mk_fifo"))
 
     def __init__(self, *a, **kw):
         TestCase.__init__(self, *a, **kw)
@@ -137,6 +140,7 @@ class TestContentsSet(TestCase):
             self.assertEqual((x.location, x), tuple(contents.check_instance(x)))
         self.assertRaises(TypeError, contents.check_instance, 1)
 
+
     def check_set_op(self, name, ret, source=None):
         if source is None:
             source = [[fs.fsDir("/tmp", strict=False)],
@@ -176,7 +180,7 @@ class TestContentsSet(TestCase):
         check_set_op, "symmetric_difference_update", [])
 
     fstrings = ("/a", "/b", "/c", "/d")
-    f = [fs.fsFile(x, strict=False) for x in fstrings]
+    f = map(mk_file, fstrings)
 
     test_union1 = post_curry(check_set_op, "union", ["/tmp"])
     test_union2 = post_curry(check_set_op, "union", fstrings, [f[:2], f[2:]])
@@ -187,6 +191,49 @@ class TestContentsSet(TestCase):
         check_set_op, "symmetric_difference", fstrings, [f[:2], f[2:]])
 
     del f, fstrings
+
+    def check_complex_set_op(self, name, *test_cases):
+        for required, data1, data2 in test_cases:
+            cset1 = contents.contentsSet(data1)
+            cset2 = contents.contentsSet(data2)
+            f = getattr(cset1, name)
+            got = f(cset2)
+            self.assertEqual(got, required,
+                msg="%s: expected %s, got %s\ncset1=%r\ncset2=%r" %
+                (name, required, got, cset1, cset2))
+
+    test_issubset = post_curry(
+        check_complex_set_op, "issubset",
+            (True, [mk_file("/foon")], [mk_file("/foon")]),
+            (False, [mk_file("/foon")], [mk_file("/dev")]),
+            (False, [mk_file("/dev"), mk_file("/dar")], [mk_file("/dev")]),
+            (True, [mk_file("/dev"), mk_file("/dar")],
+                [mk_file("/dev"), mk_file("/dar"), mk_file("/asdf")])
+        )
+
+
+    test_issuperset = post_curry(
+        check_complex_set_op, "issuperset",
+            (True, [mk_file("/foon")], [mk_file("/foon")]),
+            (False, [mk_file("/foon")], [mk_file("/dev")]),
+            (True, [mk_file("/dev"), mk_file("/dar")], [mk_file("/dev")]),
+            (False, [mk_file("/dev")], [mk_file("/dev"), mk_file("/dev2")])
+        )
+
+
+    test_isdisjoin = post_curry(
+        check_complex_set_op, "isdisjoint",
+            (False, [mk_file("/foon")], [mk_file("/foon")]),
+            (True, [mk_file("/foon")], [mk_file("/dev")]),
+            (False, [mk_file("/dev"), mk_file("/dar")], [mk_file("/dev")]),
+            (False, [mk_file("/dev"), mk_file("/dar")],
+                [mk_file("/dev"), mk_file("/dar"), mk_file("/asdf")]),
+            (False, [mk_file("/dev"), mk_file("/dar")],
+                [mk_file("/dev"), mk_file("/dar"), mk_file("/asdf")]),
+            (True, [mk_file("/dev"), mk_file("/dar")],
+                [mk_file("/dev2"), mk_file("/dar2"), mk_file("/asdf")]),
+        )
+
 
     def test_child_nodes(self):
         cset = contents.contentsSet

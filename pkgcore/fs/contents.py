@@ -182,10 +182,17 @@ class contentsSet(object):
     def issubset(self, other):
         if not hasattr(other, '__contains__'):
             other = set(self._convert_loc(other))
-        return all(x.location in other for x in self._dict)
+        return all(x in other for x in self._dict)
 
     def issuperset(self, other):
+        if not hasattr(other, '__contains__'):
+            other = set(self._convert_loc(other))
         return all(x in self for x in other)
+
+    def isdisjoint(self, other):
+        if not hasattr(other, '__contains__'):
+            other = set(self._convert_loc(other))
+        return not any(x in other for x in self._dict)
 
     def union(self, other):
         c = contentsSet(other)

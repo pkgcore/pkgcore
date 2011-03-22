@@ -7,7 +7,7 @@ from snakeoil.compatibility import any
 from snakeoil.currying import post_curry
 from snakeoil.iterables import expandable_chain
 from snakeoil.lists import iflatten_instance
-from pkgcore.ebuild import conditionals
+from pkgcore.ebuild import conditionals, eapi
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.errors import ParseError
 from pkgcore.restrictions import boolean, packages
@@ -102,7 +102,10 @@ class native_DepSetParsingTest(base):
             v = v2
         else:
             v = s.split()
-        self.assertEqual(list(self.flatten_restricts(func(self, s))), list(v))
+        got = list(self.flatten_restricts(func(self, s)))
+        wanted = list(v)
+        self.assertEqual(got, v, msg="given %r\nexpected %r but got %r" %
+            (s, got, wanted))
 
     def check_str(self, s, func=base.gen_depset):
         if isinstance(s, (list, tuple)):
@@ -154,10 +157,6 @@ class native_DepSetParsingTest(base):
             )
         )]):
 
-        if isinstance(x, (list, tuple)):
-            name = "'%s'" % x[0]
-        else:
-            name = "'%s'" % x
         locals()["test_parse_case%i" % (idx + 1)] = post_curry(check_depset, x)
         locals()["test_str_case%i" % (idx + 1)] = post_curry(check_str, x)
 

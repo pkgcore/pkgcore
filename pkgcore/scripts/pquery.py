@@ -9,11 +9,15 @@ from pkgcore.restrictions import packages, values, boolean, restriction
 from pkgcore.ebuild import conditionals, atom
 from pkgcore.util import (
     commandline, repo_utils, parserestrict, packages as pkgutils)
-from snakeoil.demandload import demandload
+from snakeoil.currying import partial
 from snakeoil.compatibility import any
 from snakeoil.formatters import decorate_forced_wrapping
-demandload(globals(), 're', 'snakeoil.currying:partial', 'errno',
-    'snakeoil.lists:iter_stable_unique')
+from snakeoil.demandload import demandload
+demandload(globals(),
+    're',
+    'errno',
+    'snakeoil.lists:iter_stable_unique',
+)
 
 
 # ordering here matters; pkgcore does a trick to commandline to avoid the

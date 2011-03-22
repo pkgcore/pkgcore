@@ -16,7 +16,8 @@ eapi_optionals = mappings.ImmutableDict({
     "dodoc_allow_recursive":False,
     "doins_allow_symlinks":False,
     "doman_language_detect":False,
-    "doman_language_override":False
+    "doman_language_override":False,
+    "transitive_use_atoms":False,
 })
 
 
@@ -164,7 +165,8 @@ eapi2 = EAPI("2",
     eapi1.default_phases | frozenset(["src_prepare", "src_configure"]),
     eapi1.metadata_keys,
     eapi1.mandatory_keys,
-    combine_dicts(eapi1.options, dict(doman_language_detect=True)),
+    combine_dicts(eapi1.options,
+        dict(doman_language_detect=True, transitive_use_atoms=True)),
     ebd_env_options=eapi1.ebd_env_options,
 )
 

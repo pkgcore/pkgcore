@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pkgcore.restrictions.values.ContainmentMatch is deprecated in favor of
+  ContainmentMatch2.  Update your code- by pkgcore 0.7, ContainmentMatch
+  will become ContainmentMatch2, and a shim will be left in place.
+
 * introduction of EAPI objects (pkgcore.ebuild.eapi) for controlling/defining
   new eapi's, capabilities, etc.
 

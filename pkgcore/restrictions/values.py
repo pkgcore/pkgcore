@@ -336,17 +336,21 @@ class EqualityMatch(base):
         return "EqualityMatch: =%s" % (self.data,)
 
 
-class ContainmentMatch(base):
+class ContainmentMatch2(base):
 
-    """used for an 'in' style operation, 'x86' in ['x86','~x86'] for example
+    """
+    used for an 'in' style operation, 'x86' in ['x86','~x86'] for example
     note that negation of this *does* not result in a true NAND when all is on.
+
+    Note that ContainmentMatch will be removed in favor of this class.  When that
+    occurs an alias will be left in place for compatibility.
     """
 
     __slots__ = ('_hash', 'vals', 'all', 'negate')
     __metaclass__ = hashed_base
     __inst_caching__ = True
 
-    def __init__(self, *vals, **kwds):
+    def __init__(self, vals, match_all=False, negate=False):
 
         """
         :param vals: what values to look for during match
@@ -356,13 +360,9 @@ class ContainmentMatch(base):
         """
 
         sf = object.__setattr__
-        sf(self, "all", bool(kwds.pop("all", False)))
-
-        # note that we're discarding any specialized __getitem__ on vals here.
-        # this isn't optimal, and should be special cased for known
-        # types (lists/tuples fex)
-        sf(self, "vals", frozenset(vals))
-        sf(self, "negate", kwds.get("negate", False))
+        sf(self, "all", bool(match_all))
+        sf(self, "vals", vals)
+        sf(self, "negate", bool(negate))
         sf(self, "_hash", hash((self.all, self.negate, self.vals)))
 
     def match(self, val, _values_override=None):
@@ -512,6 +512,27 @@ class ContainmentMatch(base):
         else:
             s = "contains [%s]"
         return s % ', '.join(str(x) for x in self.vals)
+
+
+class ContainmentMatch(ContainmentMatch2):
+
+    """
+    used for an 'in' style operation, 'x86' in ['x86','~x86'] for example
+    note that negation of this *does* not result in a true NAND when all is on.
+
+    Deprecated in favor of ContainmentMatch2.
+    """
+
+    __slots__ = ()
+    __inst_caching__ = True
+
+    def __init__(self, *args, **kwargs):
+        # note that we're discarding any specialized __getitem__ on vals here.
+        # this isn't optimal, and should be special cased for known
+        # types (lists/tuples fex)
+        vals = frozenset(args)
+        match_all = kwargs.pop("all", False)
+        ContainmentMatch2.__init__(self, vals, match_all=match_all, **kwargs)
 
 
 class FlatteningRestriction(base):

@@ -167,7 +167,7 @@ class base(metadata.package):
 
     tracked_attributes = (
         "depends", "rdepends", "post_rdepends", "provides", "license",
-        "slot", "keywords", "eapi", "restrict", "eapi", "description", "iuse",
+        "slot", "keywords", "eapi", "restrict", "description", "iuse",
         "chost", "cbuild", "ctarget", "homepage", "properties",
         "defined_phases")
 

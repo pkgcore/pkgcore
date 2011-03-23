@@ -46,6 +46,12 @@ class maintenance(object):
     def config(self):
         return True
 
+    def mergeable(self):
+        return True
+
+    def info(self):
+        return True
+
 
 class build_base(object):
     stage_depends = {'finish':'start'}

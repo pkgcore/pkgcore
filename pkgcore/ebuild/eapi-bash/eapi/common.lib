@@ -312,7 +312,7 @@ pkgcore_common_pre_phase()
 	if [[ -d ${S} ]]; then
 		cd "${S}"
 	elif has ${EAPI} 0 1 2 3; then
-		cd "{$WORKDIR}"
+		cd "${WORKDIR}"
 	elif [[ -n ${A} ]]; then
 		die "source directory '${S}' doesn't exist, but \${A} isn't empty (see S-WORKDIR-FALLBACK in PMS)"
 	else

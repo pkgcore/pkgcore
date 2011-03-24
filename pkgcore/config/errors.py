@@ -12,6 +12,11 @@ __all__ = ("BaseError", "TypeDefinitionError", "ConfigurationError", "ParsingErr
     "CollapseInheritOnly", "InstantiationError", "QuoteInterpretationError"
 )
 
+from snakeoil.demandload import demandload
+demandload(globals(),
+    "snakeoil.currying:pretty_docs,post_curry",
+)
+
 class BaseError(Exception):
     pass
 
@@ -54,6 +59,26 @@ class ParsingError(ConfigurationError):
 
     def __str__(self):
         return "Parsing Failed: %s\n%s" % (self.message, self.exc)
+
+    @classmethod
+    def wrap_exception(cls, message):
+        return post_curry(cls._inner_wrap_exception, message)
+
+    @classmethod
+    def _inner_wrap_exception(cls, functor, message):
+
+        def f(*args, **kwargs):
+            try:
+                return functor(*args, **kwargs)
+            except (RuntimeError, SystemExit, KeyboardInterrupt):
+                raise
+            except Exception, e:
+                if isinstance(e, BaseError):
+                    raise
+                raise cls(message=message, exception=e)
+        f.func = functor
+        f.__name__ = functor.__name__
+        return pretty_docs(f)
 
 
 class CollapseInheritOnly(ConfigurationError):

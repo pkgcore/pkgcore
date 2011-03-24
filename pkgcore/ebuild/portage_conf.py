@@ -12,7 +12,7 @@ __all__ = ("SecurityUpgradesViaProfile", "add_layman_syncers", "make_syncer",
 
 import os
 
-from pkgcore.config import basics, configurable
+from pkgcore.config import basics, configurable, errors
 from pkgcore import const
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
@@ -274,6 +274,7 @@ def mk_simple_cache(config_root, tree_loc, readonly=False,
 
 
 @configurable({'location': 'str'}, typename='configsection')
+@errors.ParsingError.wrap_exception("while loading portage configuration")
 def config_from_make_conf(location="/etc/"):
     """
     generate a config from a file location

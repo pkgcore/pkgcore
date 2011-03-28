@@ -1,15 +1,14 @@
-# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
 build operation
 """
 
-from snakeoil.dependant_methods import ForcedDepends
-
 __all__ = ('build_base', 'install', 'uninstall', 'replace', 'fetch',
     'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'errors')
 
+from snakeoil.dependant_methods import ForcedDepends
 
 def _raw_fetch(self):
     if not "files" in self.__dict__:

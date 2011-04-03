@@ -36,10 +36,11 @@ def _raw_fetch(self):
 
 class operations(base_operations):
 
-    def __init__(self, pkg, observer=None, disable_overrides=(),
+    def __init__(self, domain, pkg, observer=None, disable_overrides=(),
         enable_overrides=()):
         self.obvserver = observer
         self.pkg = pkg
+        self.domain = domain
         base_operations.__init__(self, disable_overrides, enable_overrides)
 
     def _cmd_enabled_info(self):
@@ -54,8 +55,8 @@ class operations(base_operations):
 
 class build_operations(operations):
 
-    def _cmd_enabled_build(self, domain, observer, clean=False):
-        return self._cmd_build(self.pkg, domain, observer, clean=clean)
+    def _cmd_enabled_build(self, observer=None, clean=False):
+        return self._cmd_build(observer=observer, clean=clean)
 
 
 

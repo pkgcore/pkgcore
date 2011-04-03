@@ -25,7 +25,7 @@ from snakeoil.compatibility import any, intern
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-    'pkgcore.ebuild.ebd:buildable',
+    'pkgcore.ebuild:ebd',
     'snakeoil.data_source:local_source',
     'pkgcore.ebuild:digest,repo_objs,atom',
     'pkgcore.ebuild:errors@ebuild_errors',
@@ -356,7 +356,7 @@ class ConfiguredTree(configured.tree):
         scope_update = {'chost': chost}
         scope_update.update((x, domain_settings.get(x.upper(), chost))
             for x in ('cbuild', 'ctarget'))
-        scope_update['build_callback'] = self._generate_buildop
+        scope_update['operations_callback'] = self._generate_operations
 
         configured.tree.__init__(self, raw_repo, self.config_wrappables,
            pkg_kls_injections=scope_update)
@@ -377,14 +377,13 @@ class ConfiguredTree(configured.tree):
             "unchangable_settings": self._delayed_iuse(
                 self._get_delayed_immutable, pkg, immutable)}
 
-    def _generate_buildop(self, domain, pkg, **kwds):
+    def _generate_operations(self, domain, pkg, **kwds):
         fetcher = self.fetcher_override
         if fetcher is None:
             fetcher = domain.fetcher
-        return buildable(domain, pkg, pkg.repo.eclass_cache,
-                         fetcher,
-                         use_override=self._get_pkg_use_for_building(pkg),
-                         **kwds)
+        return ebd.src_operations(domain, pkg, pkg.repo.eclass_cache, fetcher=fetcher,
+            use_override=self._get_pkg_use_for_building(pkg), **kwds)
+
 
 UnconfiguredTree.configure = ConfiguredTree
 tree = UnconfiguredTree

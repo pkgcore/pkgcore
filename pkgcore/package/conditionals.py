@@ -243,14 +243,14 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             self.commit()
             object.__setattr__(self, '_configurable', list(self._configurable))
 
-        def build(self, domain, **kwds):
-            if self._buildable:
-                return self._buildable(domain, self, **kwds)
-            return None
+        def operations(self, domain, **kwds):
+            return self._operations(domain, self, **kwds)
 
-        # we do this last, on the offchance they're doing some *serious*
-        # overrides.
-        _buildable = kls_injections.pop("build_callback", None)
+        def build(self, domain, **kwds):
+            o = self.operations(domain, observer=kwds.get("observer", None))
+            return o.build(**kwds)
+
+        _operations = kls_injections.pop("operations_callback", None)
         locals().update(kls_injections)
 
     return PackageWrapper

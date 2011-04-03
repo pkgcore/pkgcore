@@ -8,6 +8,7 @@ build operation
 __all__ = ('build_base', 'install', 'uninstall', 'replace', 'fetch',
     'empty_build_op', 'FailedDirectory', 'GenericBuildError', 'errors')
 
+from pkgcore.operations import base as base_operations
 from snakeoil.dependant_methods import ForcedDepends
 
 def _raw_fetch(self):
@@ -33,23 +34,29 @@ def _raw_fetch(self):
     return True
 
 
-class maintenance(object):
-    stage_depends = {}
+class operations(base_operations):
 
-    __metaclass__ = ForcedDepends
-
-    def __init__(self, pkg, observer=None):
+    def __init__(self, pkg, observer=None, disable_overrides=(),
+        enable_overrides=()):
         self.obvserver = observer
         self.pkg = pkg
+        base_operations.__init__(self, disable_overrides, enable_overrides)
 
-    def config(self):
-        return True
+    def _cmd_enabled_info(self):
+        return self._cmd_info()
 
-    def mergeable(self):
-        return True
+    def _cmd_enabled_mergable(self, domain):
+        return self._cmd_mergable(domain)
 
-    def info(self):
-        return True
+    def _cmd_mergable(self, domain):
+        return getattr(self.pkg, 'built', False)
+
+
+class build_operations(operations):
+
+    def _cmd_enabled_build(self, domain, observer, clean=False):
+        return self._cmd_build(self.pkg, domain, observer, clean=clean)
+
 
 
 class build_base(object):

@@ -42,11 +42,11 @@ die() {
 	fi
 	echo "!!! The die message:" >&2
 	echo "!!!  ${*:-(no error message)}" >&2
-	if [[ -n ${PKGCORE_IS_NOT_HELPER} ]]; then
-		echo "!!!" >&2
-		echo "!!! If you need support, post the topmost build error, and the call stack if relevant." >&2
-	fi
-	if [[ "${EBUILD_PHASE/depend}" == "${EBUILD_PHASE}" ]] ; then
+	if ${PKGCORE_DIE_OUTPUT_DETAILS-true} ; then
+		if [[ -n ${PKGCORE_IS_NOT_HELPER} ]]; then
+			echo "!!!" >&2
+			echo "!!! If you need support, post the topmost build error, and the call stack if relevant." >&2
+		fi
 		local x
 		for x in $EBUILD_DEATH_HOOKS; do
 			${x} "$@" >&2 1>&2

@@ -624,8 +624,7 @@ class EbuildProcessor(object):
 
         metadata_keys = {}
         val = self.generic_handler(additional_commands={
-                "request_inherit": post_curry(
-                    self.__class__._inherit, eclass_cache),
+                "request_inherit": partial(inherit_handler, eclass_cache),
                 "key": post_curry(self.__class__._receive_key, metadata_keys)})
 
         if not val:
@@ -642,33 +641,6 @@ class EbuildProcessor(object):
         if len(line) != 2:
             raise FinishedProcessing(True)
         keys_dict[line[0]] = line[1]
-
-    def _inherit(self, line, ecache):
-        """
-        Callback for implementing inherit digging into eclass_cache.
-
-        Not for normal consumption.
-        """
-        if line is None:
-            self.write("failed")
-            raise UnhandledCommand(
-                "inherit requires an eclass specified, none specified")
-
-        line = line.strip()
-        eclass = ecache.get_eclass(line)
-        if eclass is None:
-            self.write("failed")
-            raise UnhandledCommand(
-                "inherit requires an unknown eclass, %s cannot be found" % line)
-
-        if eclass.path is not None:
-            self.write("path")
-            self.write(eclass.path)
-        else:
-            # XXX $10 this doesn't work.
-            value = eclass.text_fileobj().read()
-            self.write("transfer")
-            self.write(value)
 
     # this basically handles all hijacks from the daemon, whether
     # confcache or portageq.
@@ -735,6 +707,33 @@ class EbuildProcessor(object):
             v = fp.val
             self.unlock()
             return v
+
+def inherit_handler(ecache, ebp, line):
+    """
+    Callback for implementing inherit digging into eclass_cache.
+
+    Not for normal consumption.
+    """
+    if line is None:
+        ebp.write("failed")
+        raise UnhandledCommand(
+            "inherit requires an eclass specified, none specified")
+
+    line = line.strip()
+    eclass = ecache.get_eclass(line)
+    if eclass is None:
+        ebp.write("failed")
+        raise UnhandledCommand(
+            "inherit requires an unknown eclass, %s cannot be found" % line)
+
+    if eclass.path is not None:
+        ebp.write("path")
+        ebp.write(eclass.path)
+    else:
+        # XXX $10 this doesn't work.
+        value = eclass.text_fileobj().read()
+        ebp.write("transfer")
+        ebp.write(value)
 
 
 def expected_ebuild_env(pkg, d=None, env_source_override=None, depends=False):

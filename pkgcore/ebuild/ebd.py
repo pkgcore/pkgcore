@@ -17,7 +17,8 @@ import os, errno, shutil
 from snakeoil import data_source
 from pkgcore.ebuild.processor import \
     request_ebuild_processor, release_ebuild_processor, \
-    expected_ebuild_env, chuck_UnhandledCommand
+    expected_ebuild_env, chuck_UnhandledCommand, \
+    inherit_handler
 from pkgcore.os_data import portage_gid, portage_uid
 from pkgcore.spawn import (
     spawn_bash, spawn, is_sandbox_capable, is_fakeroot_capable)
@@ -25,7 +26,7 @@ from pkgcore.os_data import xargs
 from pkgcore.ebuild.const import eapi_capable
 from pkgcore.operations import observer, format
 from pkgcore.ebuild import ebuild_built
-from snakeoil.currying import post_curry, pretty_docs, alias_class_method
+from snakeoil.currying import post_curry, pretty_docs, alias_class_method, partial
 from snakeoil.osutils import (ensure_dirs, normpath, join as pjoin,
     listdir_files)
 
@@ -267,7 +268,8 @@ class ebd(object):
         userpriv = self.userpriv and userpriv
         sandbox = self.sandbox and sandbox
         fakeroot = self.fakeroot and fakeroot
-        return run_generic_phase(phase, self.env, userpriv, sandbox, fakeroot,
+        return run_generic_phase(self.pkg, phase, self.env,
+            userpriv, sandbox, fakeroot,
             extra_handlers=extra_handlers, failure_allowed=failure_allowed)
 
     def set_is_replacing(self, *pkgs):
@@ -355,8 +357,8 @@ class setup_mixin(object):
 
         ebdp = request_ebuild_processor(userpriv=False, sandbox=False)
         if self.setup_is_for_src:
-            additional_commands["request_inherit"] = \
-                post_curry(ebdp.__class__._inherit, self.eclass_cache)
+            additional_commands["request_inherit"] = partial(inherit_handler,
+                self.eclass_cache)
             additional_commands["request_profiles"] = self._request_bashrcs
 
         try:
@@ -402,7 +404,7 @@ class setup_mixin(object):
         ebd.write("end_request")
 
 
-def run_generic_phase(phase, env, userpriv, sandbox, fakeroot,
+def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
     extra_handlers=None, failure_allowed=False, logging=None):
     """
     :param phase: phase to execute
@@ -415,6 +417,10 @@ def run_generic_phase(phase, env, userpriv, sandbox, fakeroot,
     """
     sandbox = sandbox and is_sandbox_capable()
     fakeroot = fakeroot and is_fakeroot_capable()
+
+    if env is None:
+        env = expected_ebuild_env(pkg)
+
     ebd = request_ebuild_processor(userpriv=userpriv, sandbox=sandbox,
         fakeroot=fakeroot)
     try:

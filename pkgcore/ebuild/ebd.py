@@ -819,3 +819,19 @@ class src_operations(format.build_operations):
             self._fetcher,
             use_override=self._use_override,
             clean=clean)
+
+
+class built_operations(format.build_operations):
+
+    def __init__(self, domain, pkg, fetcher=None, observer=None, initial_env=None):
+        format.build_operations.__init__(self, domain, pkg, observer=observer)
+        self._fetcher = fetcher
+        self._initial_env = initial_env
+
+    def _cmd_build(self, observer=None, clean=False):
+        if observer is None:
+            observer = self.observer
+        return binpkg_buildable(self.domain, self.pkg,
+            clean=clean,
+            initial_env=self._initial_env,
+            env_data_source=self.pkg.environment)

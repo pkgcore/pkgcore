@@ -38,7 +38,7 @@ class operations(base_operations):
 
     def __init__(self, domain, pkg, observer=None, disable_overrides=(),
         enable_overrides=()):
-        self.obvserver = observer
+        self.observer = observer
         self.pkg = pkg
         self.domain = domain
         base_operations.__init__(self, disable_overrides, enable_overrides)

@@ -30,6 +30,7 @@ class optionals_cls(mappings.ImmutableDict):
 class EAPI(object):
 
     known_eapis = weakrefs.WeakValCache()
+    __metaclass__ = klass.immutable_instance
 
     def __init__(self, magic, phases, default_phases,
         metadata_keys, mandatory_keys, optionals, ebd_env_options=None):
@@ -62,14 +63,6 @@ class EAPI(object):
             ebd_env_options = {}
         sf(self, "ebd_env_options", mappings.ImmutableDict(ebd_env_options))
 
-    def __setattr__(self, attr):
-        raise AttributeError("instance %r is immutable- tried setting attr %r"
-            % (self, attr))
-
-    def __delattr__(self, attr):
-        raise AttributeError("instance %r is immutable- tried deleting attr %r"
-            % (self, attr))
-
     @klass.jit_attr
     def atom_kls(self):
         return partial(atom.atom, eapi=int(self.magic))
@@ -95,6 +88,7 @@ class EAPI(object):
             d["PKGCORE_%s" % (k.upper(),)] = converter(getattr(self.options, k))
         d["EAPI"] = str(self.magic)
         return d
+
 
 def get_eapi(magic):
     return EAPI.known_eapis.get(magic)

@@ -66,6 +66,7 @@ class fsBase(object):
             x.endswith("fs_obj"))
 
     klass.inject_richcmp_methods_from_cmp(locals())
+    klass.inject_immutable_instance(locals())
 
     def __init__(self, location, strict=True, **d):
 
@@ -90,9 +91,6 @@ class fsBase(object):
             location = abspath(location)
         d["strict"] = False
         return self.__class__(location, **d)
-
-    def __setattr__(self, key, value):
-        raise AttributeError(key)
 
     def __getattr__(self, attr):
         # we would only get called if it doesn't exist.

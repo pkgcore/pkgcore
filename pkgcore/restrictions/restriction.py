@@ -6,7 +6,7 @@
 base restriction class
 """
 
-from snakeoil import caching
+from snakeoil import caching, klass
 from snakeoil.currying import partial, pretty_docs
 
 class base(object):
@@ -25,11 +25,7 @@ class base(object):
     __slots__ = ()
     package_matching = False
 
-    def __setattr__(self, attr, val):
-        raise TypeError(self, "is immutable")
-
-    def __delattr__(self, attr):
-        raise TypeError(self, "is immutable")
+    klass.inject_immutable_instance(locals())
 
     def match(self, *arg, **kwargs):
         raise NotImplementedError

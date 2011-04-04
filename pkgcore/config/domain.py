@@ -51,8 +51,11 @@ class domain(object):
             return self.vdb[0]
         return multiplex.tree(*self.vdb)
 
+    def get_pkg_operations(self, pkg, observer=None):
+        return pkg.operations(self, observer=observer)
+
     def build_pkg(self, pkg, observer, clean=True):
-        return pkg.operations(self, observer=observer).build(observer=observer, clean=clean)
+        return self.get_pkg_operations(pkg, observer=observer).build(observer=observer, clean=clean)
 
     def install_pkg(self, newpkg, observer):
         return domain_ops.install(self, self.all_livefs_repos, newpkg,

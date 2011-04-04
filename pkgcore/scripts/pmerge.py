@@ -541,8 +541,14 @@ def main(options, out, err):
         out.write(out.bold, ' * ', out.reset, 'debug: end all ops')
         out.write()
 
-    changes = list(x for x in resolver_inst.state.iter_ops()
-        if x.pkg.package_is_real)
+    changes = resolver_inst.state.ops(only_real=True)
+
+    build_obs = observer.file_build_observer(ObserverFormatter(out),
+        not options.debug)
+    repo_obs = observer.file_repo_observer(ObserverFormatter(out),
+        not options.debug)
+
+    changes.run_sanity_checks(domain)
 
     if options.ask or options.pretend:
         for op in changes:
@@ -565,11 +571,6 @@ def main(options, out, err):
     if (options.ask and not
         formatter.ask("Would you like to merge these packages?")):
         return
-
-    build_obs = observer.file_build_observer(ObserverFormatter(out),
-        not options.debug)
-    repo_obs = observer.file_repo_observer(ObserverFormatter(out),
-        not options.debug)
 
     change_count = len(changes)
 

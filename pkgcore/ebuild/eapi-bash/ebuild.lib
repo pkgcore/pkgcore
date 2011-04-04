@@ -260,7 +260,7 @@ source "${PKGCORE_BIN_PATH}/ebuild-env-utils.lib" >&2 || die "failed sourcing eb
 execute_phases() {
 	local ret
 	local PKGCORE_SAVE_ENV
-	local PKGCORE_MUST_EXPORT=false
+	local PKGCORE_MUST_EXPORT_ENV=false
 
 	# give us pretty tracebacks.
 	shopt -s extdebug

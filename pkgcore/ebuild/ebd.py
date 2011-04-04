@@ -266,29 +266,11 @@ class ebd(object):
         :param fakeroot: should the phase be fakeroot'd?  Only really useful
             for install phase, and is mutually exclusive with sandbox
         """
-        ebd = request_ebuild_processor(userpriv=(self.userpriv and userpriv),
-            sandbox=(self.sandbox and sandbox and is_sandbox_capable()),
-            fakeroot=(self.fakeroot and fakeroot and is_fakeroot_capable()))
-        try:
-            ebd.prep_phase(phase, self.env, sandbox=self.sandbox,
-                           logging=self.logging)
-            ebd.write("start_processing")
-            if not ebd.generic_handler(additional_commands=extra_handlers):
-                if not failure_allowed:
-                    raise format.GenericBuildError(
-                        phase + ": Failed building (False/0 return from handler)")
-                    logger.warn("executing phase %s: execution failed, ignoring" % (phase,))
-
-        except Exception, e:
-            ebd.shutdown_processor()
-            release_ebuild_processor(ebd)
-            if isinstance(e, (SystemExit, format.GenericBuildError)):
-                raise
-            raise format.GenericBuildError("Executing phase %s: Caught exception: "
-                "%s" % (phase, e))
-
-        release_ebuild_processor(ebd)
-        return True
+        userpriv = self.userpriv and userpriv
+        sandbox = self.sandbox and sandbox
+        fakeroot = self.fakeroot and fakeroot
+        return run_generic_phase(phase, self.env, userpriv, sandbox, fakeroot,
+            extra_handlers=extra_handlers, failure_allowed=failure_allowed)
 
     def set_is_replacing(self, *pkgs):
         if self.eapi_obj.options.exports_replacing:
@@ -420,6 +402,43 @@ class setup_mixin(object):
                     ebd, "bashrc transfer, didn't receive 'next' response.  "
                     "failure?")
         ebd.write("end_request")
+
+
+def run_generic_phase(phase, env, userpriv, sandbox, fakeroot,
+    extra_handlers=None, failure_allowed=False, logging=None):
+    """
+    :param phase: phase to execute
+    :param userpriv: will we drop to
+        L{portage_uid<pkgcore.os_data.portage_uid>} and
+        L{portage_gid<pkgcore.os_data.portage_gid>} access for this phase?
+    :param sandbox: should this phase be sandboxed?
+    :param fakeroot: should the phase be fakeroot'd?  Only really useful
+        for install phase, and is mutually exclusive with sandbox
+    """
+    sandbox = sandbox and is_sandbox_capable()
+    fakeroot = fakeroot and is_fakeroot_capable()
+    ebd = request_ebuild_processor(userpriv=userpriv, sandbox=sandbox,
+        fakeroot=fakeroot)
+    try:
+        ebd.prep_phase(phase, env, sandbox=sandbox,
+                       logging=logging)
+        ebd.write("start_processing")
+        if not ebd.generic_handler(additional_commands=extra_handlers):
+            if not failure_allowed:
+                raise format.GenericBuildError(
+                    phase + ": Failed building (False/0 return from handler)")
+                logger.warn("executing phase %s: execution failed, ignoring" % (phase,))
+
+    except Exception, e:
+        ebd.shutdown_processor()
+        release_ebuild_processor(ebd)
+        if isinstance(e, (SystemExit, format.GenericBuildError)):
+            raise
+        raise format.GenericBuildError("Executing phase %s: Caught exception: "
+            "%s" % (phase, e))
+
+    release_ebuild_processor(ebd)
+    return True
 
 
 class install_op(ebd, format.install):

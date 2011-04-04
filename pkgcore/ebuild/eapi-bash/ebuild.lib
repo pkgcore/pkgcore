@@ -259,7 +259,8 @@ source "${PKGCORE_BIN_PATH}/ebuild-env-utils.lib" >&2 || die "failed sourcing eb
 # calls.
 execute_phases() {
 	local ret
-	local PKGCORE_MUST_EXPORT_ENV
+	local PKGCORE_SAVE_ENV
+	local PKGCORE_MUST_EXPORT=false
 
 	# give us pretty tracebacks.
 	shopt -s extdebug
@@ -282,7 +283,7 @@ execute_phases() {
 		PKGCORE_EBUILD_PHASE="$myarg"
 		EBUILD_PHASE="$myarg"
 
-		PKGCORE_MUST_EXPORT_ENV=yes
+		PKGCORE_SAVE_ENV=true
 
 		case $EBUILD_PHASE in
 		nofetch|pretend)
@@ -295,11 +296,11 @@ execute_phases() {
 
 			run_function_if_exists post_pkg_${EBUILD_PHASE}
 
-			PKGCORE_MUST_EXPORT_ENV=
+			PKGCORE_SAVE_ENV=false
 			ret=1
 			;;
 		postrm)
-			PKGCORE_MUST_EXPORT_ENV=
+			PKGCORE_SAVE_ENV=false
 			# this is a fall thru; think of it as a select chunk w/out a break
 			# we just snag these phases to turn off env saving.
 			;&
@@ -401,7 +402,7 @@ execute_phases() {
 			;;
 		depend)
 			SANDBOX_ON="1"
-			PKGCORE_MUST_EXPORT_ENV=
+			PKGCORE_SAVE_ENV=false
 
 			if [ -z "$QA_CONTROLLED_EXTERNALLY" ]; then
 				enable_qa_interceptors
@@ -424,11 +425,13 @@ execute_phases() {
 			;;
 		esac
 
-		if [[ -n ${PKGCORE_MUST_EXPORT_ENV} ]]; then
-			export_environ "${T}/environment"
-		fi
+		${PKGCORE_SAVE_ENV} && PKGCORE_MUST_EXPORT_ENV=true
 		[[ $PKGCORE_DEBUG -lt 4 ]] && set +x
 	done
+
+	if ${PKGCORE_MUST_EXPORT_ENV}; then
+		export_environ "${T}/environment"
+	fi
 	return ${ret:-0}
 }
 

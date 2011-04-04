@@ -292,12 +292,12 @@ execute_phases() {
 			run_function_if_exists pkgcore_default_pre_${EBUILD_PHASE}
 			run_function_if_exists pre_pkg_${EBUILD_PHASE}
 
-			pkg_${EBUILD_PHASE}
+			run_function_if_exists pkg_${EBUILD_PHASE}
 
 			run_function_if_exists post_pkg_${EBUILD_PHASE}
 
 			PKGCORE_SAVE_ENV=false
-			ret=1
+			ret=0
 			;;
 		postrm)
 			PKGCORE_SAVE_ENV=false

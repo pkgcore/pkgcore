@@ -292,32 +292,30 @@ pkgcore_ebd_process_ebuild_phases()
 		addread "${PORTAGE_TMPDIR}"
 	}
 
-	for e in $phases; do
-		umask 0022
-		if [ -z $PORTAGE_LOGFILE ]; then
-			execute_phases ${e}
-			ret=$?
-		else
-			# why do it this way rather then the old '[ -f ${T}/.succesfull }'?
-			# simple.  this allows the actual exit code to be used, rather then just stating no .success == 1 || 0
-			# note this was
-			# execute_phases ${e] &> >(umask 0002; tee -i -a $PORTAGE_LOGFILE)
-			# less then bash v3 however hates it.  And I hate less then v3.
-			# circle of hate you see.
-			execute_phases ${e} 2>&1 | {
-				# this applies to the subshell only.
-				umask 0002
-				tee -i -a $PORTAGE_LOGFILE
-			}
+	umask 0022
+	if [ -z $PORTAGE_LOGFILE ]; then
+		execute_phases ${phases}
+		ret=$?
+	else
+		# why do it this way rather then the old '[ -f ${T}/.succesfull }'?
+		# simple.  this allows the actual exit code to be used, rather then just stating no .success == 1 || 0
+		# note this was
+		# execute_phases ${phases} &> >(umask 0002; tee -i -a $PORTAGE_LOGFILE)
+		# less then bash v3 however hates it.  And I hate less then v3.
+		# circle of hate you see.
+		execute_phases ${phases} 2>&1 | {
+			# this applies to the subshell only.
+			umask 0002
+			tee -i -a $PORTAGE_LOGFILE
+		}
 
-			ret=${PIPESTATUS[0]}
-		fi
+		ret=${PIPESTATUS[0]}
+	fi
 
-		if [[ $ret != 0 ]]; then
-			ebd_process_sandbox_results
-			exit $(( $ret ))
-		fi
-	done
+	if [[ $ret != 0 ]]; then
+		ebd_process_sandbox_results
+		exit $(( $ret ))
+	fi
 	exit 0
 	)
 }

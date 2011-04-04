@@ -10,13 +10,18 @@ Changing them triggering regen of other attributes on the package instance.
 __all__ = ("make_wrapper",)
 
 from operator import attrgetter
-from pkgcore.package.base import wrapper
 
 from snakeoil.containers import LimitedChangeSet, Unchangable
 from snakeoil.klass import GetAttrProxy
 from snakeoil.currying import partial
+
+from pkgcore.package.base import wrapper
+from pkgcore.operations import format
+
 from snakeoil.demandload import demandload
-demandload(globals(), "copy")
+demandload(globals(),
+    "copy",
+)
 
 
 def _getattr_wrapped(attr, self):
@@ -243,14 +248,8 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             self.commit()
             object.__setattr__(self, '_configurable', list(self._configurable))
 
-        def operations(self, domain, **kwds):
-            return self._operations(domain, self, **kwds)
-
-        def build(self, domain, **kwds):
-            o = self.operations(domain, observer=kwds.get("observer", None))
-            return o.build(**kwds)
-
-        _operations = kls_injections.pop("operations_callback", None)
+        if 'operations_callback' in kls_injections:
+            _operations = kls_injections.pop("operations_callback")
         locals().update(kls_injections)
 
     return PackageWrapper

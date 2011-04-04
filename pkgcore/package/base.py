@@ -12,11 +12,13 @@ __all__ = ("base", "wrapper", "dynamic_getattr_dict")
 from snakeoil.compatibility import cmp
 from snakeoil import klass
 
+from pkgcore.operations import format
 
 class base(object):
 
     built = False
     configurable = False
+    _opterations = format.operations
 
     __metaclass__ = klass.immutable_instance
 
@@ -30,6 +32,9 @@ class base(object):
     @property
     def unversioned_atom(self):
         raise NotImplementedError(self, "unversioned_atom")
+
+    def operations(self, domain, **kwds):
+        return self._operations(domain, self, **kwds)
 
 
 class wrapper(base):

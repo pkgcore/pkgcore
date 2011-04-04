@@ -46,11 +46,17 @@ class operations(base_operations):
     def _cmd_enabled_info(self):
         return self._cmd_info()
 
-    def _cmd_enabled_mergable(self, domain):
-        return self._cmd_mergable(domain)
+    def _cmd_enabled_mergable(self):
+        return self._cmd_mergable(self.domain)
 
     def _cmd_mergable(self, domain):
         return getattr(self.pkg, 'built', False)
+
+    def _cmd_enabled_sanity_check(self):
+        return self._cmd_sanity_check(self.domain)
+
+    def _cmd_sanity_check(self, domain):
+        return True
 
 
 class build_operations(operations):
@@ -58,6 +64,11 @@ class build_operations(operations):
     def _cmd_enabled_build(self, observer=None, clean=False):
         return self._cmd_build(observer=observer, clean=clean)
 
+    def _cmd_enabled_buildable(self, domain):
+        return self._cmd_buildable(domain)
+
+    def _cmd_buildable(self, domain):
+        return True
 
 
 class build_base(object):

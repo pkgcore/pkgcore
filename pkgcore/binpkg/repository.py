@@ -360,19 +360,16 @@ class ConfiguredBinpkgTree(wrapper.tree):
 
         class package_class(pkg_base.wrapper):
 
-            _generate_buildop = self._generate_buildop
+            _operations = self._generate_operations
             built = True
             __slots__ = ()
-
-            def build(self, domain, **kwargs):
-                return self._generate_buildop(domain, self._raw_pkg, **kwargs)
 
         wrapper.tree.__init__(self, repo, package_class=package_class)
         self.domain_settings = domain_settings
 
-    def _generate_buildop(self, domain, pkg, **kwargs):
-        kwargs["initial_env"] = self.domain_settings
-        kwargs["env_data_source"] = pkg.environment
-        return ebd.binpkg_buildable(domain, pkg, **kwargs)
+    def _generate_operations(self, domain, pkg, **kwargs):
+        pkg = pkg._raw_pkg
+        return ebd.built_operations(domain, pkg, initial_env=self.domain_settings,
+            **kwargs)
 
 tree.configure = ConfiguredBinpkgTree

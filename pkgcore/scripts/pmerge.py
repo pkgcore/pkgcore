@@ -583,7 +583,8 @@ def main(options, out, err):
             if op.desc != "remove":
                 if not options.fetchonly and options.debug:
                     out.write("Forcing a clean of workdir")
-                buildop = domain.build_pkg(op.pkg, build_obs)
+                pkg_ops = domain.get_pkg_operations(op.pkg, observer=build_obs)
+                buildop = pkg_ops.build()
                 if options.fetchonly:
                     out.write("\n%i files required-" % len(op.pkg.fetchables))
                     try:

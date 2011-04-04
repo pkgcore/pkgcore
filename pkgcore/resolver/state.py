@@ -60,12 +60,47 @@ class plan_state(object):
         return (y for y in iterable
             if not y.pkg.repo.livefs or y.desc == 'remove')
 
+    def ops(self, livefs=False, only_real=False):
+        i = self.iter_ops(livefs)
+        if only_real:
+            i = (x for x in i if x.pkg.package_is_real)
+        return ops_sequence(i)
+
     def __getitem__(self, slice):
         return self.plan[slice]
 
     @property
     def current_state(self):
         return len(self.plan)
+
+
+class ops_sequence(object):
+
+    def __init__(self, sequence, is_livefs=True):
+        self._ops = tuple(sequence)
+        self.is_livefs = is_livefs
+
+    def __getitem__(self, *args):
+        return self._ops.__getitem__(*args)
+
+    def __len__(self):
+        return len(self._ops)
+
+    def __iter__(self):
+        return iter(self._ops)
+
+    def __nonzeroo__(self):
+        return bool(self._ops)
+
+    def run_sanity_checks(self, domain, observer=None):
+        for plan_op in self:
+            if plan_op.desc == 'remove':
+                continue
+
+            pkg_ops = domain.get_pkg_operations(plan_op.pkg, observer=observer)
+            if pkg_ops.supports("sanity_check"):
+                if not pkg_ops.sanity_check():
+                    return False
 
 
 class base_op_state(object):

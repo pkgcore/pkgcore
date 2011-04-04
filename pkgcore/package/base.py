@@ -1,4 +1,4 @@
-# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -12,19 +12,16 @@ __all__ = ("base", "wrapper", "dynamic_getattr_dict")
 from snakeoil.compatibility import cmp
 from snakeoil import klass
 
+
 class base(object):
 
     built = False
     configurable = False
 
+    __metaclass__ = klass.immutable_instance
+
     __slots__ = ("__weakref__",)
     _get_attr = {}
-
-    def __setattr__(self, attr, value):
-        raise AttributeError(self, attr)
-
-    def __delattr__(self, attr):
-        raise AttributeError(self, attr)
 
     @property
     def versioned_atom(self):
@@ -32,7 +29,7 @@ class base(object):
 
     @property
     def unversioned_atom(self):
-        raise NotImplementedError(self, "versioned_atom")
+        raise NotImplementedError(self, "unversioned_atom")
 
 
 class wrapper(base):
@@ -66,6 +63,7 @@ class wrapper(base):
     def __hash__(self):
         return hash(self._raw_pkg)
 
+
 def dynamic_getattr_dict(self, attr):
     try:
         val = self._get_attr[attr](self)
@@ -73,4 +71,3 @@ def dynamic_getattr_dict(self, attr):
         return val
     except KeyError:
         raise AttributeError(self, attr)
-

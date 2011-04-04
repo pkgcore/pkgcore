@@ -548,7 +548,13 @@ def main(options, out, err):
     repo_obs = observer.file_repo_observer(ObserverFormatter(out),
         not options.debug)
 
-    changes.run_sanity_checks(domain)
+    if options.debug:
+        out.write(out.bold, " * ", out.reset, "running sanity checks")
+    if not changes.run_sanity_checks(domain):
+        out.error("sanity checks failed.  please resolve them and try again.")
+        return 1
+    if options.debug:
+        out.write(out.bold, " * ", out.reset, "finished sanity checks")
 
     if options.ask or options.pretend:
         for op in changes:

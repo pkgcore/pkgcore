@@ -101,6 +101,7 @@ class ops_sequence(object):
             if pkg_ops.supports("sanity_check"):
                 if not pkg_ops.sanity_check():
                     return False
+        return True
 
 
 class base_op_state(object):

@@ -115,7 +115,6 @@ class ebd(object):
             self.env["PKGCORE_DEBUG"] = str(int(os.environ["PKGCORE_DEBUG"]))
 
         self.env.setdefault("ROOT", "/")
-        self.env["PKGCORE_EAPI"] = str(pkg.eapi)
 
         # XXX: note this is just eapi3 compatibility; not full prefix, soon..
         if pkg.eapi_obj.options.prefix_capable:
@@ -142,7 +141,6 @@ class ebd(object):
         expected_ebuild_env(pkg, self.env, env_source_override=self.env_data_source)
 
         self.env["USE"] = ' '.join(str(x) for x in use)
-        self.env["INHERITED"] = ' '.join(pkg.data.get("_eclasses_", ()))
         self.env["SLOT"] = pkg.slot
         self.env["FINALIZED_RESTRICT"] = ' '.join(str(x) for x in pkg.restrict)
 

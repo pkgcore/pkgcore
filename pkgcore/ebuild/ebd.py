@@ -843,6 +843,20 @@ class src_operations(format.build_operations):
             use_override=self._use_override,
             clean=clean)
 
+    def _cmd_sanity_check(self, domain):
+        pkg = self.pkg
+        eapi = pkg.eapi_obj
+        if not "pretend" in eapi.phases:
+            return True
+        if eapi.options.trust_defined_phases_cache and 'pretend' not in pkg.defined_phases:
+            return True
+        commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}
+        try:
+            return run_generic_phase(pkg, "pretend", None, True, True, False,
+                extra_handlers=commands)
+        except format.GenericBuildError:
+            return False
+
 
 class built_operations(format.build_operations):
 

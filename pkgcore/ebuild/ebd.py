@@ -828,22 +828,7 @@ class binpkg_buildable(ebd, setup_mixin, format.build):
         return MutatedPkg(self.pkg, {"environment":self.get_env_source()})
 
 
-class src_operations(format.build_operations):
-
-    def __init__(self, domain, pkg, eclass_cache, fetcher=None, observer=None, use_override=None):
-        format.build_operations.__init__(self, domain, pkg, observer=observer)
-        self._fetcher = fetcher
-        self._use_override = use_override
-        self._eclass_cache = eclass_cache
-
-    def _cmd_build(self, observer=None, clean=False):
-        if observer is None:
-            observer = self.observer
-        return buildable(self.domain, self.pkg,
-            self._eclass_cache,
-            self._fetcher,
-            use_override=self._use_override,
-            clean=clean)
+class ebuild_mixin(object):
 
     def _cmd_sanity_check(self, domain):
         pkg = self.pkg
@@ -860,7 +845,26 @@ class src_operations(format.build_operations):
             return False
 
 
-class built_operations(format.build_operations):
+class src_operations(ebuild_mixin, format.build_operations):
+
+    def __init__(self, domain, pkg, eclass_cache, fetcher=None, observer=None, use_override=None):
+        format.build_operations.__init__(self, domain, pkg, observer=observer)
+        self._fetcher = fetcher
+        self._use_override = use_override
+        self._eclass_cache = eclass_cache
+
+    def _cmd_build(self, observer=None, clean=False):
+        if observer is None:
+            observer = self.observer
+        return buildable(self.domain, self.pkg,
+            self._eclass_cache,
+            self._fetcher,
+            use_override=self._use_override,
+            clean=clean)
+
+
+
+class built_operations(ebuild_mixin, format.build_operations):
 
     def __init__(self, domain, pkg, fetcher=None, observer=None, initial_env=None):
         format.build_operations.__init__(self, domain, pkg, observer=observer)

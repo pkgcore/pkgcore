@@ -19,6 +19,7 @@ eapi_optionals = mappings.ImmutableDict({
     "doman_language_override":False,
     "transitive_use_atoms":False,
     "src_uri_renames":False,
+    "has_required_use":False,
 })
 
 
@@ -188,6 +189,7 @@ eapi4 = EAPI("4",
         dodoc_allow_recursive=True,
         doins_allow_recursive=True,
         doman_language_override=True,
+        has_required_use=True,
     )),
     ebd_env_options=eapi3.ebd_env_options,
 )

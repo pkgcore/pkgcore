@@ -332,7 +332,8 @@ class ConfiguredTree(configured.tree):
     config_wrappables = dict(
         (x, currying.alias_class_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
-                  "license", "src_uri", "license", "provides", "restrict"])
+                  "license", "src_uri", "provides", "restrict",
+                  "required_use"])
 
     def __init__(self, raw_repo, domain, domain_settings, fetcher=None):
         """

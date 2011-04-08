@@ -17,7 +17,7 @@ from pkgcore.ebuild import conditionals
 from pkgcore.ebuild.atom import atom
 from pkgcore.cache import errors as cache_errors
 from pkgcore.restrictions.packages import AndRestriction
-from pkgcore.restrictions import boolean
+from pkgcore.restrictions import boolean, values
 from pkgcore.package.errors import MissingChksum
 from pkgcore.fetch.errors import UnknownMirror
 from pkgcore.fetch import fetchable, mirror, uri_list, default_mirror
@@ -49,6 +49,16 @@ def generate_depset(c, key, non_package_type, s, **kwds):
         return conditionals.DepSet.parse(s.data.pop(key, ""), c, **kwds)
     except conditionals.ParseError, p:
         raise metadata_errors.MetadataException(s, str(key), str(p))
+
+def generate_required_use(self):
+    try:
+        return conditionals.DepSet.parse(self.data.pop("REQUIRED_USE", ""),
+            values.ContainmentMatch, operators={"||":boolean.OrRestriction,
+                "":boolean.AndRestriction,
+                "^^":boolean.JustOneRestriction}
+            )
+    except conditionals.ParseError, p:
+        raise metadata_errors.MetadatException(self, "REQUIRED_USE", str(p))
 
 def generate_providers(self):
     rdep = AndRestriction(self.versioned_atom)
@@ -164,11 +174,12 @@ class base(metadata.package):
         "depends", "rdepends", "post_rdepends", "provides", "license",
         "slot", "keywords", "eapi_obj", "restrict", "description", "iuse",
         "chost", "cbuild", "ctarget", "homepage", "properties",
-        "defined_phases")
+        "required_use", "defined_phases")
 
     _config_wrappables = dict((x, alias_class_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
-                  "license", "src_uri", "license", "provides", "restrict"])
+                  "license", "src_uri", "provides", "restrict",
+                  "required_use"])
 
     _get_attr = dict(metadata.package._get_attr)
     _get_attr["provides"] = generate_providers
@@ -194,7 +205,7 @@ class base(metadata.package):
     _get_attr["defined_phases"] = lambda s:s.eapi_obj.interpret_cache_defined_phases(imap(intern,
         s.data.pop("DEFINED_PHASES", "").split()), False)
     _get_attr["homepage"] = lambda s:s.data.pop("HOMEPAGE", "").strip()
-    _get_attr["required_use"] = lambda s:s.data.pop("REQUIRED_USE", "").strip()
+    _get_attr["required_use"] = generate_required_use
 
     __slots__ = tuple(_get_attr.keys() + ["_pkg_metadata_shared"])
 

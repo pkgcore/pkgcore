@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* RESTRICT is now properly use evaluated.
+
 * pkgcore.restrictions.values.ContainmentMatch is deprecated in favor of
   ContainmentMatch2.  Update your code- by pkgcore 0.7, ContainmentMatch
   will become ContainmentMatch2, and a shim will be left in place.

@@ -50,13 +50,16 @@ def spawn_bash(mycommand, debug=False, opt_name=None, **keywords):
     """spawn the command via bash -c"""
 
     args = [BASH_BINARY, '-norc']
-    if not opt_name:
-        opt_name = os.path.basename(mycommand.split()[0])
     if debug:
         # Print commands and their arguments as they are executed.
         args.append("-x")
     args.append("-c")
-    args.append(mycommand)
+    if isinstance(mycommand, str):
+        args.append(mycommand)
+    else:
+        args.extend(mycommand)
+    if not opt_name:
+        opt_name = os.path.basename(args[2])
     return spawn(args, opt_name=opt_name, **keywords)
 
 def spawn_sandbox(mycommand, opt_name=None, **keywords):
@@ -65,9 +68,12 @@ def spawn_sandbox(mycommand, opt_name=None, **keywords):
     if not is_sandbox_capable():
         return spawn_bash(mycommand, opt_name=opt_name, **keywords)
     args = [SANDBOX_BINARY]
+    if isinstance(mycommand, str):
+        args.extend(mycommand.split())
+    else:
+        args.extend(mycommand)
     if not opt_name:
-        opt_name = os.path.basename(mycommand.split()[0])
-    args.append(mycommand)
+        opt_name = os.path.basename(args[1])
     return spawn(args, opt_name=opt_name, **keywords)
 
 _exithandlers = []

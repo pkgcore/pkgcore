@@ -197,3 +197,20 @@ class OrRestrictionTest(base, TestCase):
                     true).cnf_solutions()[0]),
             set([true, false, true]))
         self.assertEqual(self.kls().cnf_solutions(), [])
+
+
+class JustOneRestrictionTest(base, TestCase):
+
+    kls = boolean.JustOneRestriction
+
+    def test_match(self):
+        self.assertTrue(self.kls(
+                true, false, node_type='foo').match(None))
+        self.assertTrue(self.kls(
+                false, true, false, node_type='foo').match(None))
+        self.assertFalse(self.kls(
+                false, false,  node_type='foo').match(None))
+        self.assertFalse(self.kls(
+                true, false, true, node_type='foo').match(None))
+        self.assertFalse(self.kls(
+                true, true, true, node_type='foo').match(None))

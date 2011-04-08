@@ -510,3 +510,28 @@ class OrRestriction(base):
         if self.negate:
             return "not ( %s )" % " || ".join(str(x) for x in self.restrictions)
         return "( %s )" % " || ".join(str(x) for x in self.restrictions)
+
+
+class JustOneRestriction(base):
+    """Boolean XOR grouping of restrictions."""
+    __slots__ = ()
+
+    def match(self, vals):
+        if not self.restrictions:
+            return not self.negate
+
+        armed = False
+        for node in self.restrictions:
+            if node.match(vals):
+                # two matches found?
+                if armed:
+                    return self.negate
+                armed = True
+        if armed:
+            return not self.negate
+        return self.negate
+
+    def __str__(self):
+        if self.negate:
+            return "not ^^ ( %s )" % " ".join(str(x) for x in self.restrictions)
+        return "^^ ( %s )" % " ".join(str(x) for x in self.restrictions)

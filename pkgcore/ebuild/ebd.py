@@ -21,7 +21,8 @@ from pkgcore.ebuild.processor import \
     inherit_handler
 from pkgcore.os_data import portage_gid, portage_uid
 from pkgcore.spawn import (
-    spawn_bash, spawn, is_sandbox_capable, is_fakeroot_capable)
+    spawn_bash, spawn, is_sandbox_capable, is_fakeroot_capable,
+    is_userpriv_capable)
 from pkgcore.os_data import xargs
 from pkgcore.ebuild.const import eapi_capable
 from pkgcore.operations import observer, format
@@ -415,6 +416,7 @@ def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,
     :param fakeroot: should the phase be fakeroot'd?  Only really useful
         for install phase, and is mutually exclusive with sandbox
     """
+    userpriv = userpriv and is_userpriv_capable()
     sandbox = sandbox and is_sandbox_capable()
     fakeroot = fakeroot and is_fakeroot_capable()
 

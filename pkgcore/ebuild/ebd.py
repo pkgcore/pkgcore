@@ -833,8 +833,13 @@ class ebuild_mixin(object):
     def _cmd_sanity_check(self, domain):
         pkg = self.pkg
         eapi = pkg.eapi_obj
-        if not "pretend" in eapi.phases:
-            return True
+        if eapi.options.has_required_use:
+            use = pkg.use
+            for node in pkg.required_use:
+                if not node.match(use):
+                    print "REQUIRED_USE requirement weren't met\nFailed to match: %s\nfrom: %s\nfor USE: %s\npkg: %s" % \
+                        (node, pkg.required_use, " ".join(use), pkg)
+                    return False
         if eapi.options.trust_defined_phases_cache and 'pretend' not in pkg.defined_phases:
             return True
         commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}

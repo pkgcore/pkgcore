@@ -49,7 +49,7 @@ else:
 def spawn_bash(mycommand, debug=False, opt_name=None, **keywords):
     """spawn the command via bash -c"""
 
-    args = [BASH_BINARY, '-norc']
+    args = [BASH_BINARY, '--norc', '--noprofile']
     if debug:
         # Print commands and their arguments as they are executed.
         args.append("-x")

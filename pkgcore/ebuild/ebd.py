@@ -840,7 +840,10 @@ class ebuild_mixin(object):
                     print "REQUIRED_USE requirement weren't met\nFailed to match: %s\nfrom: %s\nfor USE: %s\npkg: %s" % \
                         (node, pkg.required_use, " ".join(use), pkg)
                     return False
-        if eapi.options.trust_defined_phases_cache and 'pretend' not in pkg.defined_phases:
+        if 'pretend' not in eapi.phases:
+            return True
+        elif eapi.options.trust_defined_phases_cache and \
+            'pretend' not in pkg.defined_phases:
             return True
         commands = {"request_inherit": partial(inherit_handler, self._eclass_cache)}
         try:

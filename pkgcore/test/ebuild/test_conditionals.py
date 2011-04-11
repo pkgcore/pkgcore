@@ -283,15 +283,10 @@ class cpy_DepSetConditionalsInspectionTest(
         skip = "extension not available"
 
 
-def convert_to_seq(s):
-    if isinstance(s, (list, tuple)):
-        return s
-    return [s]
-
-
 class native_DepSetEvaluateTest(base):
 
     def test_evaluation(self):
+        flag_set = list(sorted("x%i" % (x,) for x in xrange(2000)))
         for vals in (
             ("y", "x? ( y ) !x? ( z )", "x"),
             ("z", "x? ( y ) !x? ( z )"),
@@ -301,25 +296,42 @@ class native_DepSetEvaluateTest(base):
             ("a b", "a !x? ( b ) y? ( c )", "", "y"),
             ("a || ( b c )", "a || ( x? ( b ) c )", "x"),
             ("a c", "a || ( x? ( b ) c )"),
+            ("a", "a x? ( y? ( b ) )"),
             ("a b", "a b"),
             ("a/b[-c]", "a/b[c=]"),
             ("a/b[c]", "a/b[c=]", "c"),
             ("a/b", "a/b[c?]"),
             ("a/b[-c]", "a/b[!c?]"),
             ("a/b", "a/b[!c?]", "c"),
+            ("a/b[c]", "a/b[c?]", "c"),
+            # this needs to a *very* large number of attributes; what we're asserting here
+            # is that the backend doesn't use a quadratic implementation- if it does,
+            # we want to preferably blow the allowed stack depth (runtime exception, but that's fine),
+            # worst case (jython), we want to force a memory exhausation.
+            # we assert it in the tests to make sure some 'special' ebuild dev doesn't trigger
+            # it on a users machines, thus the abuse leveled here.
+            ("a/b", "a/b[!c?,%s]" % (",".join(x + "?" for x in flag_set)), "c"),
+            ("a/b", "a/b[%s]" % (",".join("%s?" % (x,) for x in flag_set)), "",
+                " ".join(flag_set)),
+            ("a/b[c,x0]", "a/b[c?,%s]" % (",".join(x + "?" for x in flag_set)), "c",
+                " ".join(flag_set[1:])),
+            ("a/b[c,%s]" % (','.join(flag_set),),
+                "a/b[c?,%s]" % (",".join(x + "?" for x in flag_set)), "c",
+                ""),
             ):
 
             result = vals[0]
             src = vals[1]
             use, tristate, kls = [], None, str
             if len(vals) > 2:
-                use = convert_to_seq(vals[2])
+                use = vals[2].split()
             if len(vals) > 3:
-                tristate = convert_to_seq(vals[3])
+                tristate = vals[3].split()
             kwds = {}
             if '/' in src:
                 kls = atom
-                if any(x[-1] in "=?" for x in src.split("]")):
+                flags = src.split("[", 1)[-1]
+                if "?" in flags or "=" in flags:
                     kwds['transitive_use_atoms'] = True
             else:
                 kls = str

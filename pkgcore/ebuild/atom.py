@@ -709,6 +709,87 @@ class transitive_use_atom(atom):
             self._recurse_transitive_use_conds(self._stripped_use(),
                 static_use, variable))
 
+    def _evaluate_depset_qa_in_place(self, flags, variable_flags, enabled, tristate):
+        # note this mutates flags
+        for flag in variable_flags:
+            conditional = flag[-1]
+            negated = flag[0] == '!'
+            if negated:
+                flag = flag[1:-1]
+            else:
+                flag = flag[:-1]
+
+            real_flag = flag
+            if flag[-1] == ')':
+                flag = flag[:-3]
+
+            if conditional == '=':
+                # if it's locked to a state, take that state; else use whatever
+                # the default state was.
+                if flag in tristate:
+                    # it's locked; take the allowed state, and force it, take that bool
+                    # and use it to decide if the target dep gets a disabled assertion.
+                    # roughly if locked to enabled: x= == x, !x= == -x
+                    # if locked to disabled: x= == -x , !x= == x
+                    if (flag in enabled) == negated:
+                        real_flag = '-' + real_flag
+            else:
+                if flag in tristate:
+                    # if the flag was on, but it was !x?, then skip it.
+                    # if the flag was off, but it was x?, then skip it.
+                    if (flag in enabled) == negated:
+                        continue
+                    # enforce the allowed state.
+                    if flag not in enabled:
+                        real_flag = '-' + real_flag
+                else:
+                    # enforce the state that gets us a flag to test on the target.
+                    # thus if !x?, we want -x, or +x; take the negation basically.
+                    if negated:
+                        real_flag = '-' + real_flag
+            flags.append(real_flag)
+
+
+    def _evaluate_depset(self, enabled, tristate_filter=None):
+        new_flags = [use for use in self.use if use[-1] not in '?=']
+        variable_flags = [use for use in self.use if use[-1] in '?=']
+
+        if tristate_filter is not None:
+            # note this updates the flags in place.
+            self._evaluate_depset_qa_in_place(new_flags, variable_flags,
+                enabled, tristate_filter)
+        else:
+            for flag in variable_flags:
+                conditional = flag[-1]
+                negated = flag[0] == '!'
+                if negated:
+                    flag = raw_flag = flag[1:-1]
+                else:
+                    flag = raw_flag = flag[:-1]
+
+                if raw_flag[-1] == ')':
+                    # use default... strip "(+)"
+                    raw_flag = raw_flag[:-3]
+
+                if conditional == '=':
+                    # given '!x=', if x is off, force x on for the target,
+                    # and vice versa.  render out a non relative - or ''.
+                    negated = ((raw_flag in enabled) == negated)
+                    if negated:
+                        flag = '-' + flag
+                else:
+                    # enforce the flag only if our state matches.  !x? and x is on, means no dep.
+                    # for !x? with -x, the assertion becomes !x; conditionally transitive basically.
+                    if (raw_flag in enabled) == negated:
+                        continue
+                    flag = "%s%s" % (negated and "-" or "", flag)
+                new_flags.append(flag)
+
+        if not new_flags:
+            return self._nontransitive_use_atom(self._stripped_use())
+        return self._nontransitive_use_atom("%s[%s]" %
+            (self._stripped_use(), ','.join(new_flags)))
+
     iter_dnf_solutions = boolean.AndRestriction.iter_dnf_solutions
     cnf_solutions = boolean.AndRestriction.cnf_solutions
 

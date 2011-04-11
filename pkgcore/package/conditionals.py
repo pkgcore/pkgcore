@@ -165,12 +165,10 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             a = getattr(self._raw_pkg, attr)
             try:
                 for x in vals:
-                    succeeded = False
                     for reqs in a.node_conds.get(x, ()):
-                        succeeded = reqs.force_True(self)
-                        if succeeded:
+                        if reqs.force_True(self):
                             break
-                    if not succeeded:
+                    else:
                         self.rollback(entry_point)
                         return False
             except Unchangable:
@@ -213,12 +211,10 @@ def make_wrapper(configurable_attribute_name, attributes_to_wrap=(),
             a = getattr(self._raw_pkg, attr)
             try:
                 for x in vals:
-                    succeeded = False
                     for reqs in a.node_conds.get(x, ()):
-                        succeeded = reqs.force_False(self)
-                        if succeeded:
+                        if reqs.force_False(self):
                             break
-                    if not succeeded:
+                    else:
                         self.rollback(entry_point)
                         return False
             except Unchangable:

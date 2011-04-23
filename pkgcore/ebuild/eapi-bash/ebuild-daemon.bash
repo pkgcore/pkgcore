@@ -209,7 +209,7 @@ pkgcore_ebd_process_ebuild_phases()
 	(
 	local phases="$@"
 	local is_depends=true
-	if [[ ${phases/depend/} == $phases ]]; then
+	if [[ ${phases/depend} == $phases ]]; then
 		is_depends=false
 		disable_qa_interceptors
 	fi

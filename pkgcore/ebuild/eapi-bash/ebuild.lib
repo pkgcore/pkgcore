@@ -149,8 +149,8 @@ pkgcore_load_eapi_libs() {
 # do all profile, bashrc's, and ebuild sourcing.  Should only be called in setup phase, unless the
 # env is *completely* missing, as it is occasionally for ebuilds during prerm/postrm.
 generate_initial_ebuild_environ() {
-	OCC="$CC"
-	OCXX="$CXX"
+	local OCC="$CC"
+	local OCXX="$CXX"
 	local EXISTING_PATH="$PATH"
 
 	if [ "${PKGCORE_EBUILD_PHASE}" == "setup" ]; then
@@ -180,8 +180,10 @@ generate_initial_ebuild_environ() {
 	if [[ ${PKGCORE_EBUILD_PHASE} != depend ]]; then
 		RESTRICT="${FINALIZED_RESTRICT}"
 		unset FINALIZED_RESTRICT
-		[[ ! -z $OCC ]] && export CC="$OCC"
-		[[ ! -z $OCXX ]] && export CXX="$OCXX"
+		unset CC CXX
+		[[ -n $OCC ]] && export CC="$OCC"
+		[[ -n $OCXX ]] && export CXX="$OCXX"
+		unset OCC OCXX
 	fi
 
 	pkgcore_ensure_PATH "$EXISTING_PATH"

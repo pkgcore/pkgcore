@@ -5,6 +5,7 @@
 recursive=false
 if ${PKGCORE_DODOC_ALLOW_RECURSIVE} && [[ $1 == -r ]]; then
 	recursive=true
+	shift
 fi
 
 check_args 1 -

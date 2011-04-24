@@ -4,6 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.6: April 24th, 2011
+
+* Due to crazy work hours and moves, this release is fairly large, and frankly
+  repeatedly delayed.  Future ones will be far more fine grained moving forward.
+
 * Fix python2.7 incompatiblity in pkgcore.ebuild.misc
 
 * It's suggested that folks use bash 4.1, primarily for regen

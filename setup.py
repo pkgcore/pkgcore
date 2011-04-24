@@ -275,7 +275,7 @@ core.setup(
                 ['filter-env', 'portageq_emulation', '*.lib', 'eapi/*', '*.bash',
                 '*.list']
             ] +
-            ['eapi-bash/helpers/%s' % (x,) for x in ("internal/*", "common/*", "4/*")
+            ['eapi-bash/helpers/%s' % (x,) for x in ("internals/*", "common/*", "4/*")
             ],
         },
     ext_modules=extensions,

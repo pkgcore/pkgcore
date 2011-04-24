@@ -61,7 +61,7 @@ class operations(base_operations):
 
 class build_operations(operations):
 
-    def _cmd_enabled_build(self, observer=None, clean=False):
+    def _cmd_enabled_build(self, observer=None, clean=True):
         return self._cmd_build(observer=observer, clean=clean)
 
     def _cmd_enabled_buildable(self, domain):

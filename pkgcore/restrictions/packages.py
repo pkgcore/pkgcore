@@ -1,4 +1,4 @@
-# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -314,6 +314,24 @@ class Conditional(PackageRestriction):
 
     def __hash__(self):
         return hash((self.attr, self.negate, self.restriction, self.payload))
+
+    def evaluate_conditionals(self, parent_cls, parent_seq, enabled, tristate_locked=None):
+        if tristate_locked is not None:
+            assert len(self.restriction.vals) == 1
+            val = list(self.restriction.vals)[0]
+            if val in tristate_locked:
+                # if val is forced true, but the check is
+                # negation ignore it
+                # if !mips != mips
+                if (val in enabled) == self.restriction.negate:
+                    return
+        elif not self.restriction.match(enabled):
+            return
+
+        if self.payload:
+            boolean.AndRestriction(*self.payload).evaluate_conditionals(parent_cls, parent_seq,
+                enabled, tristate_locked)
+
 
 
 # "Invalid name" (pylint uses the module const regexp, not the class regexp)

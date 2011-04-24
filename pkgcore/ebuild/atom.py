@@ -328,6 +328,8 @@ class atom(boolean.AndRestriction):
 
     negate = False
 
+    _evaluate_collapse = True
+
     __attr_comparison__ = ("cpvstr", "op", "blocks", "negate_vers",
         "use", "slot", "repo_id")
 
@@ -633,6 +635,8 @@ class atom(boolean.AndRestriction):
 
     del f, x
 
+    def evaluate_conditionals(self, parent_cls, parent_seq, enabled, tristate=None):
+        parent_seq.append(self)
 
 
 class transitive_use_atom(atom):
@@ -749,8 +753,7 @@ class transitive_use_atom(atom):
                         real_flag = '-' + real_flag
             flags.append(real_flag)
 
-
-    def _evaluate_depset(self, enabled, tristate_filter=None):
+    def evaluate_conditionals(self, parent_cls, parent_seq, enabled, tristate_filter=None):
         new_flags = [use for use in self.use if use[-1] not in '?=']
         variable_flags = [use for use in self.use if use[-1] in '?=']
 
@@ -786,9 +789,11 @@ class transitive_use_atom(atom):
                 new_flags.append(flag)
 
         if not new_flags:
-            return self._nontransitive_use_atom(self._stripped_use())
-        return self._nontransitive_use_atom("%s[%s]" %
-            (self._stripped_use(), ','.join(new_flags)))
+            a = self._nontransitive_use_atom(self._stripped_use())
+        else:
+            a = self._nontransitive_use_atom("%s[%s]" %
+                (self._stripped_use(), ','.join(new_flags)))
+        parent_seq.append(a)
 
     iter_dnf_solutions = boolean.AndRestriction.iter_dnf_solutions
     cnf_solutions = boolean.AndRestriction.cnf_solutions

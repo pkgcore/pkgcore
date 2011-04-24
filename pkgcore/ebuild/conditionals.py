@@ -1,4 +1,4 @@
-# Copyright: 2005-2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """DepSet parsing.
@@ -35,6 +35,9 @@ class DepSet(boolean.AndRestriction):
     type = packages.package_type
     negate = False
 
+    _evaluate_collapse = True
+
+    # do not enable instance caching w/out adjust evaluate_depset!
     __inst_caching__ = False
     parse_depset = parse_depset
     if parse_depset is not None:
@@ -220,57 +223,12 @@ class DepSet(boolean.AndRestriction):
         if not self.has_conditionals:
             return self
 
+        results = []
+        boolean.AndRestriction.evaluate_conditionals(self, self.__class__, results,
+            cond_dict, tristate_filter, force_collapse=True)
+
         flat_deps = self.__class__((), self.element_class, False)
-
-        stack = [boolean.AndRestriction, iter(self.restrictions)]
-        base_restrict = []
-        restricts = [base_restrict]
-        count = 1
-        while count:
-            for node in stack[-1]:
-                if getattr(node, 'convert_to_conditionals', None):
-                    node = node.convert_to_conditionals()
-                if isinstance(node, self.element_class):
-                    restricts[-1].append(node)
-                    continue
-                elif isinstance(node, packages.Conditional):
-                    # parsing shouldn't allow an empty node; should collapse on it's own.
-                    assert node.payload
-                    if tristate_filter is not None:
-                        assert len(node.restriction.vals) == 1
-                        val = list(node.restriction.vals)[0]
-                        if val in tristate_filter:
-                            # if val is forced true, but the check is
-                            # negation ignore it
-                            # if !mips != mips
-                            if (val in cond_dict) == node.restriction.negate:
-                                continue
-                    elif not node.restriction.match(cond_dict):
-                        continue
-                    stack += [boolean.AndRestriction, iter(node.payload)]
-                else:
-                    stack += [node.__class__,
-                              iter(node.restrictions)]
-                count += 1
-                restricts.append([])
-                break
-            else:
-                stack.pop()
-                l = len(restricts)
-                if l != 1:
-                    if restricts[-1]:
-                        # optimization to avoid uneccessary frames.
-                        if len(restricts[-1]) == 1:
-                            restricts[-2].append(restricts[-1][0])
-                        elif stack[-1] is stack[-3] is boolean.AndRestriction:
-                            restricts[-2].extend(restricts[-1])
-                        else:
-                            restricts[-2].append(stack[-1](*restricts[-1]))
-                    stack.pop()
-                count -= 1
-                restricts.pop()
-
-        object.__setattr__(flat_deps, "restrictions", tuple(base_restrict))
+        object.__setattr__(flat_deps, "restrictions", tuple(results))
         return flat_deps
 
     @staticmethod

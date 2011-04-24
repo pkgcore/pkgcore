@@ -1,4 +1,4 @@
-# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """Boolean combinations of restrictions.
@@ -21,6 +21,9 @@ class base(restriction.base):
     __metaclass__ = generic_equality
     __attr_comparison__ = ('negate', 'type', 'restrictions')
     __slots__ = ('restrictions', 'type', 'negate', '_hash')
+
+    _evaluate_collapsible = False
+    _evaluate_wipe_empty = True
 
     @cached_hash
     def __hash__(self):
@@ -155,6 +158,24 @@ class base(restriction.base):
     def __getitem__(self, key):
         return self.restrictions[key]
 
+    def evaluate_conditionals(self, parent_cls, parent_seq, enabled,
+        tristate_locked=None, force_collapse=False):
+        l = []
+        for restrict in self:
+            f = getattr(restrict, 'evaluate_conditionals', None)
+            if f is None:
+                l.append(restrict)
+            else:
+                f(self.__class__, l, enabled, tristate_locked)
+
+        if not self._evaluate_wipe_empty or l:
+            if force_collapse or \
+                (issubclass(parent_cls, self.__class__) and self._evaluate_collapsible) \
+                or len(l) <= 1:
+                parent_seq.extend(l)
+            else:
+                parent_seq.append(self.__class__(*l))
+
 
 # this beast, handles N^2 permutations.  convert to stack based.
 def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
@@ -215,6 +236,8 @@ def iterative_quad_toggling(pkg, pvals, restrictions, starting, end, truths,
 class AndRestriction(base):
     """Boolean AND grouping of restrictions.  negation is a NAND"""
     __slots__ = ()
+
+    _evaluate_collapsible = True
 
     def match(self, vals):
         for rest in self.restrictions:
@@ -378,6 +401,8 @@ class OrRestriction(base):
     """Boolean OR grouping of restrictions."""
     __slots__ = ()
 
+    _evaluate_collapsible = True
+
     def match(self, vals):
         for rest in self.restrictions:
             if rest.match(vals):
@@ -515,6 +540,9 @@ class OrRestriction(base):
 class JustOneRestriction(base):
     """Exactly one must match, or there must be no restrictions"""
     __slots__ = ()
+
+    _evaluate_collapsable = True
+    _evaluate_wipe_empty = False
 
     def match(self, vals):
         if not self.restrictions:

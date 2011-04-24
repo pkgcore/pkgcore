@@ -50,12 +50,18 @@ def generate_depset(c, key, non_package_type, s, **kwds):
     except conditionals.ParseError, p:
         raise metadata_errors.MetadataException(s, str(key), str(p))
 
+def _mk_required_use_node(data):
+  if data[0] == '!':
+    return values.ContainmentMatch(data[1:], negate=True)
+  return values.ContainmentMatch(data,)
+
 def generate_required_use(self):
     try:
         return conditionals.DepSet.parse(self.data.pop("REQUIRED_USE", ""),
             values.ContainmentMatch, operators={"||":boolean.OrRestriction,
                 "":boolean.AndRestriction,
-                "^^":boolean.JustOneRestriction}
+                "^^":boolean.JustOneRestriction},
+            element_func=_mk_required_use_node,
             )
     except conditionals.ParseError, p:
         raise metadata_errors.MetadatException(self, "REQUIRED_USE", str(p))

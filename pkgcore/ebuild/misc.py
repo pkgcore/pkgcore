@@ -23,10 +23,10 @@ from snakeoil.currying import partial
 from snakeoil.demandload import demandload
 
 demandload(globals(),
-    'pkgcore.ebuild.atom:atom',
+    'pkgcore.ebuild:atom',
     'pkgcore.restrictions:packages',
     'snakeoil.iterables:chain_from_iterable',
-    'snakeoil.mappings:defaultdict,ImmutableDict',
+    'snakeoil:mappings',
 )
 
 
@@ -162,7 +162,7 @@ class collapsed_restrict_to_data(object):
                         always.extend(data)
                         for atomlist in atom_d.itervalues():
                             atomlist.append((a, set([flag for flag in data if flag.startswith("-")])))
-                elif isinstance(a, atom):
+                elif isinstance(a, atom.atom):
                     atom_d.setdefault(a.key, []).append((a, data))
                 elif isinstance(a, packages.PackageRestriction):
                     if a.attr == "category":
@@ -331,11 +331,11 @@ class ChunkedDataDict(object):
 
     def __init__(self):
         self._global_settings = []
-        self._dict = defaultdict(partial(list, self._global_settings))
+        self._dict = mappings.defaultdict(partial(list, self._global_settings))
 
     @property
     def frozen(self):
-        return isinstance(self._dict, ImmutableDict)
+        return isinstance(self._dict, mappings.ImmutableDict)
 
     def mk_item(self, key, neg, pos):
         return chunked_data(key, tuple(neg), tuple(pos))
@@ -407,19 +407,19 @@ class ChunkedDataDict(object):
                 self.add_global(cinst)
 
     def freeze(self):
-        if not isinstance(self._dict, ImmutableDict):
-            self._dict = ImmutableDict((k, tuple(v))
+        if not isinstance(self._dict, mappings.ImmutableDict):
+            self._dict = mappings.ImmutableDict((k, tuple(v))
                 for k,v in self._dict.iteritems())
             self._global_settings = tuple(self._global_settings)
 
     def optimize(self):
-        d_stream = ((k, _build_cp_atom_payload(v, atom(k), False))
+        d_stream = ((k, _build_cp_atom_payload(v, atom.atom(k), False))
             for k,v in self._dict.iteritems())
         g_stream = (_build_cp_atom_payload(self._global_settings,
                 packages.AlwaysTrue, payload_form=isinstance(self, PayloadDict)))
 
         if self.frozen:
-            self._dict = ImmutableDict(d_stream)
+            self._dict = mappings.ImmutableDict(d_stream)
             self._global_settings = tuple(g_stream)
         else:
             self._dict.update(d_stream)
@@ -433,7 +433,7 @@ class ChunkedDataDict(object):
 
     def render_to_payload(self):
         d = PayloadDict()
-        d = dict((atom(k), _build_cp_atom_payload(v, atom(k), True))
+        d = dict((atom.atom(k), _build_cp_atom_payload(v, atom.atom(k), True))
             for k,v in self._dict.iteritems())
         if self._global_settings:
             data = _build_cp_atom_payload(self._global_settings,
@@ -483,7 +483,7 @@ class PayloadDict(ChunkedDataDict):
                 self.add_global(pinst)
 
     def render_pkg(self, pkg, pre_defaults=()):
-        items = self._dict.get(atom(pkg.key))
+        items = self._dict.get(atom.atom(pkg.key))
         if items is None:
             items = self._global_settings
         s = set(pre_defaults)

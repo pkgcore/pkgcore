@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* It's suggested that folks use bash 4.1, primarily for regen
+  speed reasons- it is not required however.
+
 * bash spawning now enforce --norc and --noprofile in full.
 
 * RESTRICT is now properly use evaluated.

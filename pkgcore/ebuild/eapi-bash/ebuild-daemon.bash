@@ -37,13 +37,27 @@ ebd_read_line()
 	fi
 }
 
-ebd_read_size()
-{
-	if ! read -u ${EBD_READ_FD} -r -N $@; then
-		echo "coms error, read failed: backing out of daemon."
-		exit 1;
-	fi
-}
+# are we running a version of bash (4.1 or so) that does -N?
+if echo 'y' | read -N 1 &> /dev/null; then
+	ebd_read_size()
+	{
+		if ! read -u ${EBD_READ_FD} -r -N $1 $2; then
+			echo "coms error, read failed: backing out of daemon."
+			exit 1;
+		fi
+	}
+
+else
+	# fallback to a *icky icky* but working alternative.
+	ebd_read_size()
+	{
+		eval "${2}=\$(dd bs=1 count=$1 <&${EBD_READ_FD} 2> /dev/null)"
+		if [[ $? != 0 ]]; then
+			echo "coms error, read failed: backing out of daemon."
+			exit 1;
+		fi
+	}
+fi
 
 ebd_read_cat_size()
 {

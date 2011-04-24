@@ -513,7 +513,7 @@ class OrRestriction(base):
 
 
 class JustOneRestriction(base):
-    """Boolean XOR grouping of restrictions."""
+    """Exactly one must match, or there must be no restrictions"""
     __slots__ = ()
 
     def match(self, vals):

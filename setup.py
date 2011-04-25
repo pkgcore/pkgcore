@@ -270,12 +270,12 @@ core.setup(
     license='GPL-2',
     packages=packages,
     package_data={
-        'pkgcore.ebuild':
-            ['eapi-bash/%s' % (x,) for x in
+        'pkgcore':
+            ['ebuild/eapi-bash/%s' % (x,) for x in
                 ['filter-env', 'portageq_emulation', '*.lib', 'eapi/*', '*.bash',
                 '*.list']
             ] +
-            ['eapi-bash/helpers/%s' % (x,) for x in ("internals/*", "common/*", "4/*")
+            ['ebuild/eapi-bash/helpers/%s' % (x,) for x in ("internals/*", "common/*", "4/*")
             ],
         },
     ext_modules=extensions,

@@ -16,7 +16,7 @@ from pkgcore.config import basics, configurable, errors
 from pkgcore import const
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
-from snakeoil.osutils import normpath, abspath, listdir_files, pjoin
+from snakeoil.osutils import normpath, abspath, listdir_files, pjoin, ensure_dirs
 from snakeoil.demandload import demandload
 demandload(globals(),
     'errno',
@@ -474,6 +474,11 @@ def config_from_make_conf(location="/etc/"):
                 ('buildpkg', 'pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):
                 logger.warn("disabling buildpkg related features since PKGDIR doesn't exist")
             pkgdir = None
+        else:
+            if not ensure_dirs(pkgdir, mode=0750, minimal=True):
+                logger.warn("disabling buildpkg related features since PKGDIR either doesn't "
+                    "exist, or lacks 0750 minimal permissions")
+                pkgdir = None
     else:
        if set(features).intersection(
            ('buildpkg', 'pristine-buildpkg', 'buildsyspkg', 'unmerge-backup')):

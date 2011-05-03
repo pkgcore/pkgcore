@@ -510,7 +510,7 @@ def config_from_make_conf(location="/etc/"):
                  pristine='yes',
                 target_repo='binpkg')
         elif 'buildsyspkg' in features:
-            add__trigger('buildpkg_system_trigger', 'pkgcore.merge.triggers.SavePkgIfInPkgset',
+            add_trigger('buildpkg_system_trigger', 'pkgcore.merge.triggers.SavePkgIfInPkgset',
                 pristine='yes', target_repo='binpkg', pkgset='system')
         elif 'unmerge-backup' in features:
             add_trigger('unmerge_backup_trigger', 'pkgcore.merge.triggers.SavePkgUnmerging',

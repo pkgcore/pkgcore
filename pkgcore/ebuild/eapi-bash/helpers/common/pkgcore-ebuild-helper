@@ -105,15 +105,16 @@ invoke_script()
 	local HELPER_ERROR_PREFIX="${OLD_ERROR_PREFIX:+${OLD_ERROR_PREFIX}: }${HELPER_NAME}"
 
 	source "${HELPER_PATH}"
+
+	if $failed; then
+		if [[ -n ${PKGCORE_NONFATAL_HELPER} ]]; then
+			echo "WARNING: nonzero exitcode from ${HELPER_ERROR_PREFIX}" >&2
+			# need to track the exit code here...
+			return 1
+		fi
+		die "Failures encountered.  See proceeding output for details"
+	fi
+	return 0
 }
 invoke_script "$@"
-
-if $failed; then
-	if [[ -n ${PKGCORE_NONFATAL_HELPER} ]]; then
-		echo "WARNING: exitcode $1 from ${HELPER_ERROR_PREFIX}" >&2
-		# need to track the exit code here.
-		exit 1
-	fi
-	die "Failures encountered.  See proceeding output for details"
-fi
-exit 0
+exit $(( $? ))

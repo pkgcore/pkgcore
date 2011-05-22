@@ -356,20 +356,20 @@ def main(options, out, err):
             return 1
         return
 
-    all_repos = domain.all_repos
-    repos = list(getattr(all_repos, 'trees', [all_repos]))
-    if options.usepkgonly or options.usepkg:
-        if options.usepkgonly:
-            repos = [
-                repo for repo in repos
-                if getattr(repo, 'format_magic', None) != 'ebuild_src']
-        else:
-            repos = [
-                repo for repo in repos
-                if getattr(repo, 'format_magic', None) == 'ebuild_built'] + [
-                repo for repo in repos
-                if getattr(repo, 'format_magic', None) != 'ebuild_built']
-        all_repos = multiplex.tree(*repos)
+
+    source_repos = domain.source_repositories
+    installed_repos = domain.installed_repositories
+
+    if options.usepkgonly:
+        source_repos = source_repos.change_repos(x for x in source_repos
+            if getattr(x, 'format_magic', None) != 'ebuild_src')
+    elif options.usepkg:
+        repo_types = [(getattr(x, 'format_magic', None) == 'ebuild_built', x)
+            for x in source_repos]
+        source_repos = source_repos.change_repos(
+            [x[1] for x in repo_types if x[0]] +
+            [x[1] for x in repo_types if not x[0]]
+        )
 
     atoms = []
     for setname in options.set:
@@ -384,7 +384,7 @@ def main(options, out, err):
 
     for token in options.targets:
         try:
-            a = parse_atom(token, all_repos, return_none=True)
+            a = parse_atom(token, source_repos.combined, return_none=True)
         except parserestrict.ParseError, e:
             out.error(str(e))
             return 1
@@ -432,8 +432,8 @@ def main(options, out, err):
             values.StrExactMatch('virtual'), negate=True)
         if atoms:
             restrict = AndRestriction(restrict, OrRestriction(*atoms))
-        for inst_pkg in livefs_repos.itermatch(restrict):
-            src_pkgs = all_repos.match(inst_pkg.versioned_atom)
+        for inst_pkg in installed_repos.itermatch(restrict):
+            src_pkgs = source_repos.match(inst_pkg.versioned_atom)
             if src_pkgs:
                 src_pkg = max(src_pkgs)
                 inst_use = set(use.lstrip("+-") for use in inst_pkg.iuse)
@@ -450,9 +450,9 @@ def main(options, out, err):
 #    hp.setrelheap()
 
     resolver_inst = resolver_kls(
-        livefs_repos, repos, verify_vdb=options.deep, nodeps=options.nodeps,
-        drop_cycles=options.ignore_cycles, force_replacement=options.replace,
-        process_built_depends=options.with_built_depends,
+        installed_repos.repositories, source_repos.repositories,
+        verify_vdb=options.deep, nodeps=options.nodeps, drop_cycles=options.ignore_cycles,
+        force_replacement=options.replace, process_built_depends=options.with_built_depends,
         **extra_kwargs)
 
     if options.preload_vdb_state:
@@ -490,14 +490,14 @@ def main(options, out, err):
             out.error("failed '%s'" % (restrict,))
             out.write('potentials:')
             match_count = 0
-            for r in repo_utils.get_raw_repos(repos):
+            for r in repo_utils.get_raw_repos(source_repos.repositories):
                 l = r.match(restrict)
                 if l:
                     out.write(
                         "repo %s: [ %s ]" % (r, ", ".join(str(x) for x in l)))
                     match_count += len(l)
             if not match_count:
-                out.write("No matches found in %s" % (repos,))
+                out.write("No matches found in %s" % (source_repos.repositories,))
             out.write()
             if not options.ignore_failures:
                 return 1
@@ -506,7 +506,7 @@ def main(options, out, err):
 
     if options.clean:
         out.write(out.bold, ' * ', out.reset, 'Packages to be removed:')
-        vset = set(livefs_repos)
+        vset = set(installed_repos.combined)
         len_vset = len(vset)
         vset.difference_update(y.pkg for y in
             resolver_inst.state.iter_ops(True))
@@ -527,7 +527,7 @@ def main(options, out, err):
             out.write()
         repo_obs = observer.file_repo_observer(ObserverFormatter(out),
             not options.debug)
-        do_unmerge(options, out, err, livefs_repos, wipes, world_set, repo_obs)
+        do_unmerge(options, out, err, installed_repos.combined, wipes, world_set, repo_obs)
         return 0
 
     if options.debug:
@@ -657,12 +657,12 @@ def main(options, out, err):
             if world_set is not None:
                 if op.desc == "remove":
                     out.write('>>> Removing %s from world file' % op.pkg.cpvstr)
-                    removal_pkg = slotatom_if_slotted(all_repos, op.pkg.versioned_atom)
+                    removal_pkg = slotatom_if_slotted(source_repos.combined, op.pkg.versioned_atom)
                     update_worldset(world_set, removal_pkg, remove=True)
                 elif not options.oneshot and any(x.match(op.pkg) for x in atoms):
                     if not options.upgrade:
                         out.write('>>> Adding %s to world file' % op.pkg.cpvstr)
-                        add_pkg = slotatom_if_slotted(all_repos, op.pkg.versioned_atom)
+                        add_pkg = slotatom_if_slotted(source_repos.combined, op.pkg.versioned_atom)
                         update_worldset(world_set, add_pkg)
 #    again... left in place for ease of debugging.
 #    except KeyboardInterrupt:

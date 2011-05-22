@@ -1,10 +1,16 @@
-# Copyright: 2006-2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
+
+__all__ = ("SimpleTree", "RepositoryGroup")
 
 from pkgcore.repository.prototype import tree
 from pkgcore.ebuild.cpv import versioned_CPV
+from snakeoil import klass, demandload
 
-__all__ = ("SimpleTree",)
+demandload.demandload(globals(),
+    "pkgcore.repository:multiplex",
+)
+
 
 class SimpleTree(tree):
 
@@ -42,3 +48,26 @@ class SimpleTree(tree):
         self.cpv_dict.setdefault(pkg.category,
             {}).setdefault(pkg.package, []).append(pkg.fullver)
         tree.notify_add_package(self, pkg)
+
+
+class RepositoryGroup(object):
+
+    def __init__(self, repositories, combined=None):
+        self.repositories = tuple(repositories)
+        if combined is None:
+            if len(self.repositories) == 1:
+                combined = self.repositories[0]
+            else:
+                combined = multiplex.tree(*self.repositories)
+        self.combined = combined
+
+    itermatch = klass.alias_attr("combined.itermatch")
+    has_match = klass.alias_attr("combined.has_match")
+    match = klass.alias_attr("combined.match")
+
+    def __iter__(self):
+        return iter(self.repositories)
+
+    @classmethod
+    def change_repos(cls, repositories):
+        return cls(repositories)

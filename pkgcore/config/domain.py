@@ -11,8 +11,11 @@ __all__ = ("domain",)
 
 from snakeoil import klass
 from snakeoil.demandload import demandload
-demandload(globals(), "pkgcore.repository:multiplex",
-    "pkgcore.operations:domain@domain_ops")
+demandload(globals(),
+    "pkgcore.repository:multiplex,util@repo_utils",
+    "pkgcore.operations:domain@domain_ops",
+
+)
 
 # yes this is basically empty. will fill it out as the base is better
 # identified.
@@ -32,24 +35,15 @@ class domain(object):
         return tuple(l)
 
     @klass.jit_attr
-    def all_repos(self):
-        """
-        return a single repository representing all repositories from
-        which pkgs can be installed from for this domain
-        """
-        if len(self.repos) == 1:
-            return self.repos[0]
-        return multiplex.tree(*self.repos)
+    def source_repositories(self):
+        return repo_utils.RepositoryGroup(self.repos)
 
     @klass.jit_attr
-    def all_livefs_repos(self):
-        """
-        return a single repository representing all repositories representing
-        what is installed for this domain.
-        """
-        if len(self.vdb) == 1:
-            return self.vdb[0]
-        return multiplex.tree(*self.vdb)
+    def installed_repositories(self):
+        return repo_utils.RepositoryGroup(self.vdb)
+
+    all_repos = klass.alias_attr("source_repositories.combined")
+    all_livefs_repos = klass.alias_attr("installed_repositories.combined")
 
     def get_pkg_operations(self, pkg, observer=None):
         return pkg.operations(self, observer=observer)

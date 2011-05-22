@@ -15,14 +15,14 @@ demandload(globals(),
     'pkgcore.restrictions:packages,values',
 )
 
-def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False,
+def upgrade_resolver(vdbs, dbs, verify_vdb=True, nodeps=False,
                      force_replacement=False,
                      resolver_cls=plan.merge_plan, **kwds):
 
     """
     generate and configure a resolver for upgrading all processed nodes.
 
-    :param vdb: list of L{pkgcore.repository.prototype.tree} instances
+    :param vdbs: list of L{pkgcore.repository.prototype.tree} instances
         that represents the livefs
     :param dbs: list of L{pkgcore.repository.prototype.tree} instances
         representing sources of pkgs
@@ -37,21 +37,19 @@ def upgrade_resolver(vdb, dbs, verify_vdb=True, nodeps=False,
 
     f = plan.merge_plan.prefer_highest_version_strategy
     # hack.
-    vdb = list(vdb.trees)
-    if not isinstance(dbs, (list, tuple)):
-        dbs = [dbs]
     if nodeps:
-        vdb = map(misc.nodeps_repo, vdb)
+        vdbs = map(misc.nodeps_repo, vdbs)
         dbs = map(misc.nodeps_repo, dbs)
     elif not verify_vdb:
-        vdb = map(misc.nodeps_repo, vdb)
+        vdbs = map(misc.nodeps_repo, vdbs)
+        dbs = list(dbs)
 
     if force_replacement:
         resolver_cls = generate_replace_resolver_kls(resolver_cls)
-    return resolver_cls(dbs + vdb, plan.pkg_sort_highest, f, **kwds)
+    return resolver_cls(dbs + vdbs, plan.pkg_sort_highest, f, **kwds)
 
 
-def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True,
+def min_install_resolver(vdbs, dbs, verify_vdb=True, force_vdb_virtuals=True,
                          force_replacement=False, resolver_cls=plan.merge_plan,
                          nodeps=False, **kwds):
     """
@@ -61,7 +59,7 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True,
     installing requests- installs highest version it can build a
     solution for, but tries to avoid building anything not needed
 
-    :param vdb: list of L{pkgcore.repository.prototype.tree} instances
+    :param vdbs: list of L{pkgcore.repository.prototype.tree} instances
         that represents the livefs
     :param dbs: list of L{pkgcore.repository.prototype.tree} instances
         representing sources of pkgs
@@ -75,18 +73,16 @@ def min_install_resolver(vdb, dbs, verify_vdb=True, force_vdb_virtuals=True,
     """
 
     # nothing fancy required for force_vdb_virtuals, we just silently ignore it.
-    vdb = list(vdb.trees)
-    if not isinstance(dbs, (list, tuple)):
-        dbs = [dbs]
     if nodeps:
-        vdb = map(misc.nodeps_repo, vdb)
+        vdbs = map(misc.nodeps_repo, vdbs)
         dbs = map(misc.nodeps_repo, dbs)
     elif not verify_vdb:
-        vdb = map(misc.nodeps_repo, vdb)
+        vdbs = map(misc.nodeps_repo, vdbs)
+        dbs = list(dbs)
 
     if force_replacement:
         resolver_cls = generate_replace_resolver_kls(resolver_cls)
-    return resolver_cls(vdb + dbs, plan.pkg_sort_highest,
+    return resolver_cls(vdbs + dbs, plan.pkg_sort_highest,
                         plan.merge_plan.prefer_reuse_strategy, **kwds)
 
 _vdb_restrict = packages.OrRestriction(

@@ -9,7 +9,7 @@ See ChangeLog for full commit logs; this is summarized/major changes.
 
 * fix exit code return for ebuild helpers throwing warnings for <EAPI4
 
-* fix typo in FEATURES=buildsyspkg
+* fix typo in FEATURES=buildsyspkg, and FEATURES=buildpkg
 
 * check to ensure pkgdir exists; if possible, create it, else turn off binpkg
   features.

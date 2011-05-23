@@ -502,7 +502,7 @@ def config_from_make_conf(location="/etc/"):
                 default_repos += ('binpkg',)
 
         if 'buildpkg' in features:
-            add_trigger('buildpkg_trigger', 'pkgcore.merge.trigers.SavePkg',
+            add_trigger('buildpkg_trigger', 'pkgcore.merge.triggers.SavePkg',
                 pristine='no',
                 target_repo='binpkg')
         elif 'pristine-buildpkg' in features:

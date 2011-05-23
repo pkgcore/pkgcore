@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix for "or_node.blocks" AttributeError, and related resolution
+  miscalculations.
+
 * fix exit code return for ebuild helpers throwing warnings for <EAPI4
 
 * fix typo in FEATURES=buildsyspkg

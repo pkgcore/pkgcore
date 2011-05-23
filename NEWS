@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix typo in FEATURES=buildsyspkg
+
 * check to ensure pkgdir exists; if possible, create it, else turn off binpkg
   features.
 

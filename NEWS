@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* pinspect pkgset learned --all option, to display all pkgsets it knows.
+
+
 pkgcore 0.6.1: May 22nd, 2011
 
 * fix for "or_node.blocks" AttributeError, and related resolution

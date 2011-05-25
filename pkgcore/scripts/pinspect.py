@@ -27,15 +27,23 @@ class pkgsets_data(OptionParser):
     usage = ('%prog pkgsets [sets-to-examine] ; if no sets specified, '
         'list the known sets')
 
+    def _register_options(self):
+        self.add_option("--all", action='store_true', default=False,
+            help="display info on all pkgsets")
+
     def _check_values(self, values, args):
         values.pkgsets = tuple(args)
+        if values.all and values.pkgsets:
+            self.error("--all cannot be specified along w/ specific pkgsets to inspect")
         return values, ()
 
     def run(self, opts, out, err):
+        if opts.all:
+            opts.pkgsets = sorted(opts.config.pkgset)
         if not opts.pkgsets:
             out.write(out.bold, 'available pkgset: ', out.reset,
                 ', '.join(repr(x) for x in
-                   sorted(opts.config.pkgset.iterkeys())))
+                   sorted(opts.config.pkgset)))
             return 0
         missing = False
         for position, set_name in enumerate(opts.pkgsets):

@@ -12,8 +12,17 @@ import sys
 
 sys.path.insert(0, osp.dirname(osp.dirname(osp.abspath(__file__))))
 
-from pkgcore.util import commandline
-from snakeoil import modules
+try:
+    from snakeoil import modules
+    from pkgcore.util import commandline
+except ImportError:
+    sys.stderr.write('Cannot import either snakeoil.modules or pkgcore.util.commandline!\n')
+    sys.stderr.write('Verify it is properly installed and/or ' \
+                'PYTHONPATH is set correctly for python version %s\n' %
+        (".".join(map(str, sys.version_info[:3])),))
+    if '--debug' in sys.argv:
+        raise
+    sys.exit(1)
 
 if __name__ == '__main__':
     name = osp.basename(sys.argv[0]).replace("-", "_")

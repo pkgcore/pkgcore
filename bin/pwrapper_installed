@@ -12,7 +12,8 @@ if __name__ == '__main__':
     except ImportError:
         sys.stderr.write('Cannot import pkgcore!\n')
         sys.stderr.write('Verify it is properly installed and/or ' \
-            'PYTHONPATH is set correctly.\n')
+            'PYTHONPATH is set correctly for python %s.\n' %
+                (".".join(map(str, sys.version_info[:3])),))
         if '--debug' in sys.argv:
             raise
         sys.stderr.write('Add --debug to the commandline for a traceback.\n')

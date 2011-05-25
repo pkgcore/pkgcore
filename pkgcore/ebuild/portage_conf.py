@@ -475,7 +475,7 @@ def config_from_make_conf(location="/etc/"):
                 logger.warn("disabling buildpkg related features since PKGDIR doesn't exist")
             pkgdir = None
         else:
-            if not ensure_dirs(pkgdir, mode=0750, minimal=True):
+            if not ensure_dirs(pkgdir, mode=0755, minimal=True):
                 logger.warn("disabling buildpkg related features since PKGDIR either doesn't "
                     "exist, or lacks 0750 minimal permissions")
                 pkgdir = None

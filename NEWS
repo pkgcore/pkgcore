@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* prefer 0755 permissions for binpkg package dir.
+
 * pinspect pkgset learned --all option, to display all pkgsets it knows.
 
 

@@ -273,6 +273,23 @@ def mk_simple_cache(config_root, tree_loc, readonly=False,
         })
 
 
+def load_make_config(vars_dict, path, allow_sourcing=False, required=True):
+    sourcing_command = None
+    if allow_sourcing:
+        sourcing_command = 'source'
+    try:
+        new_vars = read_bash_dict(path, vars_dict=vars_dict,
+            sourcing_command=sourcing_command)
+    except EnvironmentError, ie:
+        if ie.errno == errno.EACCES:
+            raise errors.PermissionDeniedError(fp, write=False)
+        if ie.errno != errno.ENOENT or required:
+            raise errors.ParsingError("parsing %r" % (fp,), exception=ie)
+        return
+    # quirk of read_bash_dict; it returns only what was mutated.
+    vars_dict.update(new_vars)
+
+
 @configurable({'location': 'str'}, typename='configsection')
 @errors.ParsingError.wrap_exception("while loading portage configuration")
 def config_from_make_conf(location="/etc/"):
@@ -293,10 +310,12 @@ def config_from_make_conf(location="/etc/"):
 
     # this isn't preserving incremental behaviour for features/use
     # unfortunately
-    conf_dict = read_bash_dict(pjoin(base_path, "make.globals"))
-    conf_dict.update(read_bash_dict(
-            pjoin(base_path, "make.conf"), vars_dict=conf_dict,
-            sourcing_command="source"))
+
+    conf_dict = {}
+    load_make_config(conf_dict, pjoin(base_path, 'make.globals'))
+    load_make_config(conf_dict, pjoin(base_path, 'make.conf'), required=False,
+        allow_sourcing=True)
+
     conf_dict.setdefault("PORTDIR", "/usr/portage")
     root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))
     gentoo_mirrors = list(

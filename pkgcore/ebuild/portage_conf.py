@@ -321,6 +321,9 @@ def config_from_make_conf(location="/etc/"):
     load_make_config(conf_dict, pjoin(base_path, 'make.globals'))
     load_make_config(conf_dict, pjoin(base_path, 'make.conf'), required=False,
         allow_sourcing=True, incrementals=True)
+    load_make_config(conf_dict, pjoin(portage_base, 'make.conf'), required=False,
+        allow_sourcing=True, incrementals=True)
+
 
     conf_dict.setdefault("PORTDIR", "/usr/portage")
     root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))

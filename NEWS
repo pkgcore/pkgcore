@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* add support for stacking /etc/portage/make.conf on top of /etc/make.conf.
+
 * add incrementalism between make.globals and make.conf to match changes
   in portage configuration parsing.  This fixes the common "I tried pkgcore
   and everything was license masked".  Breakage there owes to portage

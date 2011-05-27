@@ -9,7 +9,8 @@
 """Exceptions raised by the config code."""
 
 __all__ = ("BaseError", "TypeDefinitionError", "ConfigurationError", "ParsingError",
-    "CollapseInheritOnly", "InstantiationError", "QuoteInterpretationError"
+    "CollapseInheritOnly", "InstantiationError", "QuoteInterpretationError",
+    "PermissionError", "PermissionDeniedError",
 )
 
 from snakeoil.demandload import demandload
@@ -19,6 +20,28 @@ demandload(globals(),
 
 class BaseError(Exception):
     pass
+
+
+class PermissionError(BaseError):
+
+    def __init__(self, path, message=None):
+        self.path = path
+        self.message = message
+
+    def __str__(self):
+        s = "Permission denied to %r" % (self.path,)
+        if self.message:
+            s += "; %s." % (self.message.rstrip("."),)
+        return s
+
+
+class PermissionDeniedError(PermissionError):
+
+    def __init__(self, path, write=False):
+        if write:
+            PermissionError.__init__(self, path, message="write access required")
+        else:
+            PermissionError.__init__(self, path, message="read access required")
 
 
 class TypeDefinitionError(BaseError):

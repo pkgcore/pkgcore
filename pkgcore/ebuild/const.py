@@ -10,9 +10,10 @@ from os import path
 eapi_capable = (0, 1, 2, 3, 4)
 
 incrementals = (
-    "USE", "FEATURES", "ACCEPT_KEYWORDS", "ACCEPT_LICENSE",
-    "CONFIG_PROTECT_MASK", "CONFIG_PROTECT", "PRELINK_PATH",
-    "PRELINK_PATH_MASK")
+    "USE", "USE_EXPAND", "USE_EXPAND_HIDDEN", "FEATURES", "ACCEPT_KEYWORDS",
+    "ACCEPT_LICENSE", "CONFIG_PROTECT_MASK", "CONFIG_PROTECT", "PRELINK_PATH",
+    "PRELINK_PATH_MASK", "PROFILE_ONLY_VARIABLES",
+    )
 
 incrementals_unfinalized = ("USE",)
 

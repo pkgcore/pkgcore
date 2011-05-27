@@ -273,7 +273,8 @@ def mk_simple_cache(config_root, tree_loc, readonly=False,
         })
 
 
-def load_make_config(vars_dict, path, allow_sourcing=False, required=True):
+def load_make_config(vars_dict, path, allow_sourcing=False, required=True,
+    incrementals=False):
     sourcing_command = None
     if allow_sourcing:
         sourcing_command = 'source'
@@ -286,6 +287,11 @@ def load_make_config(vars_dict, path, allow_sourcing=False, required=True):
         if ie.errno != errno.ENOENT or required:
             raise errors.ParsingError("parsing %r" % (fp,), exception=ie)
         return
+
+    if incrementals:
+        for key in const.incrementals:
+            if key in vars_dict and key in new_vars:
+                new_vars[key] = "%s %s" % (vars_dict[key], new_vars[key])
     # quirk of read_bash_dict; it returns only what was mutated.
     vars_dict.update(new_vars)
 
@@ -314,7 +320,7 @@ def config_from_make_conf(location="/etc/"):
     conf_dict = {}
     load_make_config(conf_dict, pjoin(base_path, 'make.globals'))
     load_make_config(conf_dict, pjoin(base_path, 'make.conf'), required=False,
-        allow_sourcing=True)
+        allow_sourcing=True, incrementals=True)
 
     conf_dict.setdefault("PORTDIR", "/usr/portage")
     root = os.environ.get("ROOT", conf_dict.get("ROOT", "/"))

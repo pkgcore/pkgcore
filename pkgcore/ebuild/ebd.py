@@ -458,10 +458,15 @@ class install_op(ebd, format.install):
             env_data_source=pkg.environment, clean=False)
 
         if self.eapi_obj.options.has_merge_type:
-            if pkg._is_from_source:
-                self.env["MERGE_TYPE"] = 'source'
-            else:
-                self.env["MERGE_TYPE"] = 'binpkg'
+            key = 'MERGE_TYPE'
+        else:
+            # we still export this, just via the portage var name- if we didn't,
+            # spec or not, kernel binpkg merging would be broke.
+            key = 'EMERGE_FROM'
+        if pkg._is_from_source:
+            self.env[key] = 'source'
+        else:
+            self.env[key] = 'binary'
 
     preinst = pretty_docs(
         observer.decorate_build_method("preinst")(

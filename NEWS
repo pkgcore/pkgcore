@@ -4,12 +4,18 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* for EAPI<4, expose MERGE_TYPE info via EMERGE_FROM; do this for compatibility
+  with non-spec compliant ebuilds, and eclasses like linux-mod.  This restores
+  in particular, binpkg support for kernel packages.  Thanks to Brian De Wolf
+  for info leading to tracking this down.
+
 * add support for stacking /etc/portage/make.conf on top of /etc/make.conf.
 
 * add incrementalism between make.globals and make.conf to match changes
   in portage configuration parsing.  This fixes the common "I tried pkgcore
   and everything was license masked".  Breakage there owes to portage
-  changing make.globals; can't do much about it unfortunately.
+  changing make.globals; can't do much about it unfortunately.  Thanks to
+  Brian De Wolf for info leading to tracking this down.
 
 * prefer 0755 permissions for binpkg package dir.
 

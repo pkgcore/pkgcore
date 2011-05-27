@@ -28,4 +28,4 @@ HOST_ROOT_PATHS      = ("/usr/sbin", "/usr/bin", "/sbin", "/bin")
 LIBFAKEROOT_PATH     = "/usr/lib/libfakeroot.so"
 FAKED_PATH           = "/usr/bin/faked"
 
-VERSION              = '0.6.1'
+VERSION              = '0.6.2'

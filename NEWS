@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.6.2: May 27th, 2011
+
 * for EAPI<4, expose MERGE_TYPE info via EMERGE_FROM; do this for compatibility
   with non-spec compliant ebuilds, and eclasses like linux-mod.  This restores
   in particular, binpkg support for kernel packages.  Thanks to Brian De Wolf

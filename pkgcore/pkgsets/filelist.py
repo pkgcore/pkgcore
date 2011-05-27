@@ -7,7 +7,7 @@ pkgset based around loading a list of atoms from a world file
 
 __all__ = ("FileList", "WorldFile")
 
-import pkgcore.const
+from pkgcore.ebuild import const
 from pkgcore.ebuild.atom import atom
 from pkgcore.config import ConfigHint
 from snakeoil.klass import jit_attr
@@ -79,7 +79,7 @@ class WorldFile(FileList):
     pkgcore_config_type = ConfigHint(typename='pkgset')
     error_on_subsets = False
 
-    def __init__(self, location=pkgcore.const.WORLD_FILE,
+    def __init__(self, location=const.WORLD_FILE,
         gid=os_data.portage_gid, mode=0644):
         FileList.__init__(self, location, gid=gid, mode=mode)
 

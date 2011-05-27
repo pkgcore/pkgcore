@@ -24,9 +24,6 @@ PRELINK_BINARY       = "/usr/sbin/prelink"
 HOST_NONROOT_PATHS   = ("/usr/bin", "/bin")
 HOST_ROOT_PATHS      = ("/usr/sbin", "/usr/bin", "/sbin", "/bin")
 
-# XXX this is out of place
-WORLD_FILE           = '/var/lib/portage/world'
-
 # no longer used.
 LIBFAKEROOT_PATH     = "/usr/lib/libfakeroot.so"
 FAKED_PATH           = "/usr/bin/faked"

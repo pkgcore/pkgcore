@@ -13,7 +13,7 @@ __all__ = ("SecurityUpgradesViaProfile", "add_layman_syncers", "make_syncer",
 import os
 
 from pkgcore.config import basics, configurable, errors
-from pkgcore import const
+from pkgcore.ebuild import const
 from pkgcore.pkgsets.glsa import SecurityUpgrades
 
 from snakeoil.osutils import normpath, abspath, listdir_files, pjoin, ensure_dirs

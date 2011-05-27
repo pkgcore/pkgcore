@@ -477,7 +477,7 @@ def config_from_make_conf(location="/etc/"):
         else:
             if not ensure_dirs(pkgdir, mode=0755, minimal=True):
                 logger.warn("disabling buildpkg related features since PKGDIR either doesn't "
-                    "exist, or lacks 0750 minimal permissions")
+                    "exist, or lacks 0755 minimal permissions")
                 pkgdir = None
     else:
        if set(features).intersection(

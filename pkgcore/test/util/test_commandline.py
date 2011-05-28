@@ -16,6 +16,7 @@ from pkgcore.test.scripts import helpers
 from pkgcore.util import commandline
 from pkgcore.config import basics, central, configurable, errors
 
+from snakeoil.currying import partial
 
 # Careful: the tests should not hit a load_config() call!
 
@@ -269,7 +270,8 @@ class MainTest(TestCase):
         try:
             commandline.main(outfile=out, errfile=err, *args, **kwargs)
         except commandline.MySystemExit, e:
-            self.assertEqual(status, e.args[0])
+            self.assertEqual(status, e.args[0],
+                msg="expected status %r, got %r" % (status, e.args[0]))
             self.assertEqual(outtext, out.getvalue())
             self.assertEqual(errtext, err.getvalue())
         else:
@@ -305,21 +307,39 @@ class MainTest(TestCase):
         def main_three(options, out, err):
             pass # Intentionally undocumented.
 
-        self.assertMain(
-            1, '', '''\
-Usage: spork <command>
+        txt = '''\
+Usage: %(prog)s <command>
 
 Commands:
   one          Sub one!
   three
-  twoandahalf  Subcommand two, with a longer name and docstring.
+  twoandahalf  Subcommand two, with a longer name and docstring.%(extra)s
 
 Use --help after a subcommand for more help.
-''', {
+'''
+        self.assertMain(
+            1, '', txt % {"prog":"spork", "extra":""}, {
                 'one': (commandline.OptionParser, main_one),
                 'twoandahalf': (commandline.OptionParser, main_two),
                 'three': (commandline.OptionParser, main_three),
                 }, [], script_name='spork')
+
+        cmds = {
+                'one': (commandline.OptionParser, main_one),
+                'twoandahalf': (commandline.OptionParser, main_two),
+                'three': (commandline.OptionParser, main_three),
+                }
+        self.assertMain(1, '', txt % {"prog":"spork", "extra":""}, cmds, [],
+                script_name='spork')
+
+        cmds['xz'] = cmds.copy()
+        cmds['xz']['zyx'] = (commandline.OptionParser, main_three)
+        self.assertMain(1, '', txt % {"prog":"spork xz", "extra":"\n  zyx"}, cmds, ['xz'],
+                script_name='spork')
+
+        self.assertMain(1, '', txt % {"prog":"spork",
+            "extra":"\n  xz           subcommands related to xz"},
+            cmds, [], script_name='spork')
 
     def test_subcommand(self):
         class SubParser(commandline.OptionParser):
@@ -329,13 +349,19 @@ Use --help after a subcommand for more help.
                 values.args = args
                 values.progname = self.prog
                 return values, ()
-        def submain(options, out, err):
+        def submain(status, options, out, err, subs=('sub',)):
             self.assertEqual(options.args, ['subarg'])
-            self.assertEqual(options.progname, 'fo sub')
+            self.assertEqual(options.progname, 'fo %s' % (' '.join(subs),))
+            return status
 
         self.assertMain(
-            None, '', '',
-            {'sub': (SubParser, submain)}, ['sub', 'subarg'], script_name='fo')
+            0, '', '',
+            {'sub': (SubParser, partial(submain,0))}, ['sub', 'subarg'], script_name='fo')
+
+        self.assertMain(
+            1, '', '',
+            {'sub': {'sub2': (SubParser, partial(submain, 1, subs=('sub', 'sub2')))}},
+                ['sub', 'sub2', 'subarg'], script_name='fo')
 
     def test_configuration_error(self):
         def error_main(options, out, err):

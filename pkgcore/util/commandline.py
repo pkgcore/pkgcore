@@ -439,6 +439,10 @@ def output_subcommands(prog, subcommands, out):
         out.write('Commands:\n')
         maxlen = max(len(subcommand) for subcommand in subcommands) + 1
         for subcommand, parser_data in sorted(subcommands.iteritems()):
+            if hasattr(parser_data, 'get'):
+                out.write('  %-*s %s\n' % (maxlen, subcommand,
+                    'subcommands related to ' + subcommand))
+                continue
             try:
                 parser_class, main_func = parser_data
             except TypeError:
@@ -494,12 +498,19 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
     else:
         prog = script_name
 
+    raw_subcommands = subcommands
+
     parser_class = None
-    if args:
-        parser_class = subcommands.get(args[0], None)
-        if parser_class is not None:
-            prog = '%s %s' % (prog, args[0])
-            args = args[1:]
+    while args:
+        new_parser_class = subcommands.get(args[0], None)
+        if new_parser_class is None:
+            break
+        prog = '%s %s' % (prog, args[0])
+        args = args[1:]
+        if hasattr(new_parser_class, 'get'):
+            subcommands = new_parser_class
+        else:
+            parser_class = new_parser_class
     if parser_class is None:
         parser_class = subcommands.get(None, (None, None))
 

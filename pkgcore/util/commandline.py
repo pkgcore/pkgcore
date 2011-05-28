@@ -310,6 +310,7 @@ class OptionParser(optparse.OptionParser, object):
     description = None
     usage = None
     option_class = Option
+    arguments_allowed = False
 
     standard_option_list = optparse.OptionParser.standard_option_list + [
         Option(
@@ -398,7 +399,11 @@ class OptionParser(optparse.OptionParser, object):
     def parse_args(self, args=None, values=None):
         """Extend optparse to clear the ref values -> parser it adds."""
         try:
-            return optparse.OptionParser.parse_args(self, args, values)
+            values, args = optparse.OptionParser.parse_args(self, args, values)
+            if self.arguments_allowed:
+                values.arguments = tuple(args)
+                return values, ()
+            return values, args
         finally:
             self.values = None
 

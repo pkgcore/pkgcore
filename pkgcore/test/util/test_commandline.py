@@ -99,6 +99,20 @@ class OptionsTest(TestCase):
         else:
             self.fail('no exception raised')
 
+    def test_arguments_allowed(self):
+
+        class myparser(commandline.OptionParser):
+            pass
+
+        self.assertRaises(helpers.Error, myparser().parse_args, ["asdf"])
+
+        class myparser(commandline.OptionParser):
+            arguments_allowed = True
+        values, args = myparser().parse_args(["asdf"])
+        self.assertFalse(args)
+        self.assertEqual(list(values.arguments), ["asdf"])
+
+
     def test_copy_protections(self):
 
         class myparser(commandline.OptionParser):

@@ -356,34 +356,13 @@ class setup_mixin(object):
         if setup_phase_override is not None:
             phase_name = setup_phase_override
 
-        ebdp = request_ebuild_processor(userpriv=False, sandbox=False)
         if self.setup_is_for_src:
             additional_commands["request_inherit"] = partial(inherit_handler,
                 self.eclass_cache)
             additional_commands["request_profiles"] = self._request_bashrcs
 
-        try:
-            ebdp.prep_phase(phase_name, self.env, sandbox=self.sandbox,
-                logging=self.logging)
-            ebdp.write("start_processing")
-            if not ebdp.generic_handler(
-                additional_commands=additional_commands):
-                raise format.GenericBuildError(
-                    "setup: Failed building (False/0 return from handler)")
-
-        except Exception, e:
-            # regardless of what occured, we kill the processor.
-            ebdp.shutdown_processor()
-            release_ebuild_processor(ebdp)
-            # either we know what it is, or it's a shutdown.  re-raise
-            if isinstance(e, (SystemExit, format.GenericBuildError)):
-                raise
-            # wrap.
-            raise format.GenericBuildError(
-                "setup: Caught exception while building: " + str(e))
-
-        release_ebuild_processor(ebdp)
-        return True
+        return self._generic_phase(phase_name, False, True, False,
+            extra_handlers=additional_commands)
 
     def _request_bashrcs(self, ebd, a):
         if a is not None:

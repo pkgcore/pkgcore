@@ -233,6 +233,27 @@ class ebd(object):
             open(fp, "wb").write(data)
             del data
 
+    def _set_per_phase_env(self, phase, env):
+        self._setup_merge_type(phase, env)
+
+    def _setup_merge_type(self, phase, env):
+        # only allowed in pkg_ phases.
+
+        if not self.eapi_obj.phases.get(phase, "").startswith("pkg_") \
+            and not phase == 'setup-binpkg':
+            return
+
+        # note all pkgs have this attribute
+        is_source = getattr(self.pkg, '_is_from_source', True)
+
+        if self.eapi_obj.options.has_merge_type:
+            env["MERGE_TYPE"] = (is_source and "source") or "binary"
+        else:
+            # we still must export this, just via the portage var name w/
+            # different values.  if we didn't, spec or not, kernel binpkg
+            # merging would be broke.
+            env["EMERGE_FROM"] = (is_source and "ebuild") or "binpkg"
+
     def setup_logging(self):
         if self.logging and not ensure_dirs(os.path.dirname(self.logging),
                                             mode=02770, gid=portage_gid):
@@ -269,6 +290,7 @@ class ebd(object):
         userpriv = self.userpriv and userpriv
         sandbox = self.sandbox and sandbox
         fakeroot = self.fakeroot and fakeroot
+        self._set_per_phase_env(phase, self.env)
         return run_generic_phase(self.pkg, phase, self.env,
             userpriv, sandbox, fakeroot,
             extra_handlers=extra_handlers, failure_allowed=failure_allowed)
@@ -435,17 +457,6 @@ class install_op(ebd, format.install):
         format.install.__init__(self, domain, pkg, observer)
         ebd.__init__(self, pkg, observer=observer, initial_env=domain.settings,
             env_data_source=pkg.environment, clean=False)
-
-        if self.eapi_obj.options.has_merge_type:
-            key = 'MERGE_TYPE'
-        else:
-            # we still export this, just via the portage var name- if we didn't,
-            # spec or not, kernel binpkg merging would be broke.
-            key = 'EMERGE_FROM'
-        if pkg._is_from_source:
-            self.env[key] = 'source'
-        else:
-            self.env[key] = 'binary'
 
     preinst = pretty_docs(
         observer.decorate_build_method("preinst")(

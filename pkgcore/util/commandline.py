@@ -431,8 +431,35 @@ class MySystemExit(SystemExit):
     """Subclass of SystemExit the tests can safely catch."""
 
 
+
+def output_subcommands(prog, subcommands, out):
+    # This tries to print in a format very similar to optparse --help.
+    out.write('Usage: %s <command>\n\n' % (prog,))
+    if subcommands:
+        out.write('Commands:\n')
+        maxlen = max(len(subcommand) for subcommand in subcommands) + 1
+        for subcommand, parser_data in sorted(subcommands.iteritems()):
+            try:
+                parser_class, main_func = parser_data
+            except TypeError:
+                main_func = parser_data.run
+                parser_class = parser_data
+            doc = main_func.__doc__
+            if not doc:
+                doc = getattr(parser_class, 'description', None)
+            if doc is None:
+                out.write('  %s\n' % (subcommand,))
+            else:
+                doc = doc.split('\n', 1)[0]
+                out.write('  %-*s %s\n' % (maxlen, subcommand, doc))
+        out.write(
+            '\nUse --help after a subcommand for more help.\n')
+    else:
+        out.write("no commands available\n")
+
+
 def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
-         script_name=None):
+         script_name=None, subcommand_usage_func=output_subcommands):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
     Takes one or more combinations of option parser and main func and
@@ -484,27 +511,7 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
         pass
 
     if parser_class is None:
-        # This tries to print in a format very similar to optparse --help.
-        errfile.write('Usage: %s <command>\n\n' % (prog,))
-        if subcommands:
-            errfile.write('Commands:\n')
-            maxlen = max(len(subcommand) for subcommand in subcommands) + 1
-            for subcommand, parser_data in sorted(subcommands.iteritems()):
-                try:
-                    parser_class, main_func = parser_data
-                except TypeError:
-                    main_func = parser_data.run
-                    parser_class = parser_data
-                doc = main_func.__doc__
-                if not doc:
-                    doc = getattr(parser_class, 'description', None)
-                if doc is None:
-                    errfile.write('  %s\n' % (subcommand,))
-                else:
-                    doc = doc.split('\n', 1)[0]
-                    errfile.write('  %-*s %s\n' % (maxlen, subcommand, doc))
-            errfile.write(
-                '\nUse --help after a subcommand for more help.\n')
+        subcommand_usage_func(prog, subcommands, errfile)
         raise MySystemExit(1)
 
     options = None

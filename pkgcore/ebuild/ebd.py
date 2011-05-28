@@ -252,7 +252,7 @@ class ebd(object):
             # we still must export this, just via the portage var name w/
             # different values.  if we didn't, spec or not, kernel binpkg
             # merging would be broke.
-            env["EMERGE_FROM"] = (is_source and "ebuild") or "binpkg"
+            env["EMERGE_FROM"] = (is_source and "ebuild") or "binary"
 
     def setup_logging(self):
         if self.logging and not ensure_dirs(os.path.dirname(self.logging),

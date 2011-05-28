@@ -392,6 +392,7 @@ class OptionParser(optparse.OptionParser, object):
             if isinstance(default, basestring):
                 opt_str = option.get_opt_string()
                 defaults[option.dest] = option.check_value(opt_str, default)
+        defaults["prog_name"] = self.get_prog_name()
         return self.values_class(defaults)
 
     def parse_args(self, args=None, values=None):

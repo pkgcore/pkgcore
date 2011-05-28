@@ -302,6 +302,7 @@ class mirror_usage_data(histo_data):
 
 commandline_commands['mirror_usage'] = mirror_usage_data
 
+
 class distfiles_usage_data(histo_data):
 
     description = 'get a breakdown of total distfiles for target repositories'

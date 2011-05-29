@@ -1,25 +1,18 @@
-#!/usr/bin/python -O
-# Copyright 2006 Brian Harring <ferringb@gmail.com>
-# License: GPL2/BSD
+# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
+# License: BSD/GPL2
 
-# disable sandbox for any pyc regens
-import os
-env = os.environ["SANDBOX_ON"] = "0"
+from pkgcore.util import commandline
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "snakeoil.iterables:caching_iter",
     "pkgcore.config:load_config",
-    "pkgcore.ebuild:atom,conditionals",
-    "pkgcore.package:errors",
+    "pkgcore.ebuild:atom,conditionals,eapi",
     "pkgcore.restrictions.boolean:AndRestriction",
-    "pkgcore.util.packages:get_raw_pkg",
-    "sys",
-    "os",
+    "pkgcore.util:packages",
 )
 
 def str_pkg(pkg):
-    pkg = get_raw_pkg(pkg)
+    pkg = packages.get_raw_pkg(pkg)
     # special casing; old style virtuals come through as the original pkg.
     if pkg.package_is_real:
         return pkg.cpvstr
@@ -28,164 +21,199 @@ def str_pkg(pkg):
     # icky, but works.
     return str(pkg.rdepends).lstrip("=")
 
-def expose_to_commandline(count, **kwds):
-    def internal_f(f):
-        f.args = count
-        f.swallow_root = kwds.pop("swallow_root", False)
-        f.command_handler = True
-        return f
-    return internal_f
 
-def set_arg_count(count):
-    def internal_f(f):
-        f.args = count
-        return f
-    return internal_f
+commandline_commands = {}
 
-default_get = lambda d,k: d.settings.get(k, "")
-distdir_get = lambda d,k: d.settings["fetcher"].distdir
-envvar_getter = {"DISTDIR":distdir_get}
+class BaseCommand(commandline.OptionParser):
 
-@expose_to_commandline(-1)
-def envvar(domain, *keys):
+    required_arg_count = 0
+    has_optional_args = False
+    arguments_allowed = True
+    enable_domain_options = False
+    arg_spec = ()
+
+    def _register_options(self):
+        self.add_option("--eapi", default=None,
+            help="limit all operations to just what the given eapi supports.")
+        self.add_option("--use", default=None,
+            help="override the use flags used for transititive USE deps- "
+            "dev-lang/python[threads=] for example")
+
+    def _check_values(self, options, args):
+
+        min_arg_count = self.required_arg_count
+        arg_len = len(args)
+
+        if self.requires_root:
+            # note the _; this is to bypass the default property
+            # that loads the default domain if unspecified
+            if options._domain is None:
+                if not arg_len:
+                    self.error("not enough arguments supplied")
+                options._domain = self._handle_root_arg(options, args[0])
+                args = args[1:]
+                arg_len -= 1
+            min_arg_count -= 1
+
+        if options.eapi is not None:
+            eapi_obj = eapi.get_eapi(options.eapi)
+            if eapi_obj is None:
+                self.error("--eapi value %r isn't a known eapi" % (options.eapi,))
+            options.atom_kls = eapi_obj.atom_kls
+        else:
+            options.atom_kls = atom.atom
+
+        if options.use is not None:
+            options.use = frozenset(options.use.split())
+        else:
+            options.use = options.domain.settings.get("USE", frozenset())
+
+        if arg_len < min_arg_count or \
+            (not self.has_optional_args and arg_len > min_arg_count):
+            if self.requires_root:
+                self.error("wrong arg count; expected %i non root argument(s), got %i" %
+                    (min_arg_count, arg_len))
+            self.error("wrong arg count; requires %i, got %i" %
+                (self.required_arg_count, arg_len))
+
+        args = self.rewrite_args(options, args)
+
+        return options, args
+
+    def _handle_root_arg(self, options, path):
+        domains = list(commandline.find_domains_from_path(options.config, path))
+        if len(domains) > 1:
+            self.error("multiple domains at %r; "
+                "please use --domain option instead.\nDomains found: %s" %
+                (path, ", ".join(repr(x[0]) for x in domains)))
+        elif len(domains) != 1:
+            self.error("couldn't find any domains at %r" % (path,))
+        # return just the domain instance- the name of that pair we don't care about
+        return domains[0][1]
+
+    def rewrite_args(self, options, args):
+        arg_spec = [x for x in self.arg_spec if 'root' != x]
+        arg_spec.extend(arg_spec[-1] for x in xrange(len(args) - len(self.arg_spec) + 1))
+
+        l = []
+        for atype, arg in zip(arg_spec, args):
+            if atype == 'atom':
+                l.append(self.make_atom(options.atom_kls, options.use, arg))
+            else:
+                l.append(arg)
+        return tuple(l)
+
+    def make_atom(self, atom_kls, use, arg):
+        try:
+            a = atom_kls(arg)
+            # force expansion.
+            a.restrictions
+            if isinstance(a, atom.transitive_use_atom):
+                # XXX: hack
+                a = conditionals.DepSet(a.restrictions, atom.atom, True)
+                a = a.evaluate_depset(use)
+                a = AndRestriction(*a.restrictions)
+        except atom.MalformedAtom, e:
+            self.error("malformed argument %r: %s" % (arg, e))
+        return a
+
+
+def make_command(arg_spec, **kwds):
+    raw_arg_spec = arg_spec.split()
+    arg_spec = ["<%s>" % (x,) for x in raw_arg_spec]
+    try:
+        arg_spec[arg_spec.index("<root>")] = "[<root> | --domain DOMAIN_NAME]"
+        kwds["requires_root"] = True
+    except ValueError:
+        kwds["requires_root"] = False
+
+    kwds["arg_spec"] = tuple(raw_arg_spec)
+
+    takes_optional_args = kwds.pop("multiple_args", False)
+    if "usage" not in kwds:
+        txt = "%prog " + (" ".join(arg_spec))
+        if takes_optional_args:
+            txt += "+"
+        kwds["usage"] = txt
+
+    def internal_function(functor):
+
+        class mycommand(BaseCommand):
+            __doc__ = functor.__doc__
+            required_arg_count = len(raw_arg_spec)
+            has_optional_args = takes_optional_args
+            enable_domain_options = True
+            locals().update(kwds)
+            arg_spec = tuple(raw_arg_spec)
+
+        mycommand.__name__ = functor.__name__
+        # note that we're modifying a global scope var here.
+        # we could require globals() be passed in, but that
+        # leads to fun reference cycles
+        commandline_commands[functor.__name__] = (mycommand, functor)
+        return mycommand
+
+    return internal_function
+
+
+@make_command("variable", multiple_args=True)
+def envvar(options, out, err):
+    default_get = lambda d,k: d.settings.get(k, "")
+    distdir_get = lambda d,k: d.settings["fetcher"].distdir
+    envvar_getter = {"DISTDIR":distdir_get}
     """
     return configuration defined variables
     """
-    return ["".join("%s\n" % envvar_getter.get(x, default_get)(domain, x)
-        for x in keys), 0]
+    for x in options.arguments:
+        out.write(str(envvar_getter.get(x, default_get)(options.domain, x)))
+    return 0
 
-def make_atom(a):
-	# use environment limitation if possible;
-    a = atom.atom(a, eapi=int(os.environ.get("PORTAGEQ_LIMIT_EAPI", -1)))
-    # force expansion.
-    a.restrictions
-    if isinstance(a, atom.transitive_use_atom):
-        # XXX: hack
-        a = conditionals.DepSet(a.restrictions, atom.atom, True)
-        a = a.evaluate_depset(os.environ.get("PORTAGEQ_LIMIT_USE", "").split())
-        a = AndRestriction(*a.restrictions)
-    return a
-
-@expose_to_commandline(1, swallow_root=True)
-def has_version(domain, arg):
+@make_command("root atom", requires_root=True)
+def has_version(options, out, err):
     """
     @param domain: L{pkgcore.config.domain.domain} instance
     @param atom_str: L{pkgcore.ebuild.atom.atom} instance
     """
-    arg = make_atom(arg)
-    if caching_iter(domain.all_livefs_repos.itermatch(arg)):
-        return ['', 0]
-    return ['', 1]
+    if options.domain.all_livefs_repos.has_match(options.arguments[0]):
+        return 0
+    return 1
 
-@expose_to_commandline(-1, swallow_root=True)
-def mass_best_version(domain, *args):
+def _best_version(domain, restrict, out):
+    try:
+        p = max(domain.all_livefs_repos.itermatch(restrict))
+    except ValueError:
+        # empty sequence.
+        return ''
+    return str_pkg(p)
+
+@make_command("root atom", multiple_args=True, requires_root=True)
+def mass_best_version(options, out, err):
     """
     multiple best_version calls
     """
-    return ["".join("%s:%s\n" % (x, best_version(domain, x)[0].rstrip())
-        for x in args), 0]
+    for x in options.arguments:
+        out.write("%s:%s" %
+            (x, _best_version(options.domain, x, out).rstrip()))
+    return 0
 
-@expose_to_commandline(1, swallow_root=True)
-def best_version(domain, arg):
+@make_command("root atom", requires_root=True)
+def best_version(options, out, err):
     """
     @param domain: L{pkgcore.config.domain.domain} instance
     @param atom_str: L{pkgcore.ebuild.atom.atom} instance
     """
-    # temp hack, configured pkgs yield "configured(blah) pkg"
-    arg = make_atom(arg)
-    try:
-        p = max(domain.all_livefs_repos.itermatch(arg))
-    except ValueError:
-        # empty sequence.
-        return ['', 1]
-    return [str_pkg(get_raw_pkg(p)) + "\n", 0]
+    out.write(_best_version(options.domain, options.arguments[0], out))
+    return 0
 
-
-@expose_to_commandline(1, swallow_root=True)
-def match(domain, arg):
+@make_command("root atom", requires_root=True)
+def match(options, out, err):
     """
     @param domain: L{pkgcore.config.domain.domain} instance
     @param atom_str: L{pkgcore.ebuild.atom.atom} instance
     """
-    arg = make_atom(arg)
-    # temp hack, configured pkgs yield "configured(blah) pkg"
-    l = sorted(get_raw_pkg(x) for x in domain.all_repos.itermatch(arg))
-    if not l:
-        return ['', 1]
-    return ["".join(str_pkg(x) +"\n" for x in l), 0]
+    i = options.domain.all_livefs_repos.itermatch(options.arguments[0],
+        sorter=sorted)
+    for pkg in i:
+        out.write(str_pkg(pkg))
+    return 0
 
-
-def usage():
-    print "\nusage: command domain atom"
-    print "domain is the string name of the domain to query from; if exempted, will use the default domain"
-    print "\n=available commands=\n"
-    for k, v in globals().iteritems():
-        if not getattr(v, "command_handler", False):
-            continue
-        print k
-        print "\n".join("  "+x for x in [s.strip() for s in v.__doc__.split("\n")] if x)
-        print
-
-def main():
-    a = sys.argv[1:]
-    if "--usage" in a or "--help" in a:
-        usage()
-        sys.exit(0)
-    if not a:
-        usage()
-        sys.exit(1)
-
-    if "--domain" in a:
-        i = a.index("--domain")
-        domain = a[i+1]
-        del a[i]
-        del a[i]
-    else:
-        domain = None
-    try:
-        command = globals()[a[0]]
-        if not getattr(command, "command_handler", False):
-            raise KeyError
-    except KeyError:
-        print "%s isn't a valid command" % a[0]
-        usage()
-        sys.exit(2)
-
-    if command.swallow_root:
-        try:
-            a.pop(0)
-        except IndexError:
-            print "arg count is wrong"
-            usage()
-            sys.exit(2)
-
-    bad = False
-    if command.args == -1:
-        bad = not a
-    else:
-        bad = len(a) - 1 != command.args
-    if bad:
-        print "arg count is wrong"
-        usage()
-        sys.exit(2)
-
-    if domain is None:
-        domain = load_config().get_default("domain")
-    else:
-        domain = load_config().domain.get(domain)
-
-    if domain is None:
-        print "no default domain in your configuration, or what was specified manually wasn't found."
-        print "known domains- %r" % list(load_config().domain.iterkeys())
-        sys.exit(2)
-
-    try:
-        s, ret = command(domain, *a[1:])
-    except errors.PackageError, e:
-        sys.stderr.write(str(e).rstrip("\n") + "\n")
-        sys.exit(-2)
-    sys.stdout.write(s)
-    sys.exit(ret)
-
-if __name__ == "__main__":
-    main()

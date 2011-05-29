@@ -5,12 +5,14 @@
 
 portageq() {
 	if [[ $EBUILD_PHASE == depend ]]; then
-		die "portageq calls in depends phase is disallowed"
+		die "portageq calls in depends phase aren't allowed"
 	fi
-	PYTHONPATH="$PKGCORE_PYTHONPATH" PORTAGEQ_LIMIT_EAPI="${EAPI:--1}" \
-		PORTAGEQ_LIMIT_USE="${USE}" \
-		"${PKGCORE_PYTHON_BINARY}" "${PKGCORE_BIN_PATH}/portageq_emulation" \
-		--domain "${PKGCORE_DOMAIN}" "$@"
+	local command="$1"
+	shift
+	# suppress sandbox for the invocation; do this to avoid things like .pyc generation
+	# being snagged by the sandbox
+	SANDBOX_on=0 PYTHONPATH="$PKGCORE_PYTHONPATH" pinspect portageq "${command}" \
+	    --eapi "${EAPI:--1}" --use "${USE}" "$@"
 }
 
 has_version()

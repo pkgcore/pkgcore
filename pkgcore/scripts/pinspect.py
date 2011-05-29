@@ -6,6 +6,7 @@ __all__ = ("pkgsets_data", "histo_data", "eapi_usage_data", "license_usage_data"
 )
 
 from pkgcore.util.commandline import OptionParser
+from pkgcore.ebuild import portageq
 import os
 from snakeoil.demandload import demandload
 
@@ -355,3 +356,4 @@ class distfiles_usage_data(histo_data):
         return data[1]
 
 commandline_commands['distfiles_usage'] = distfiles_usage_data
+commandline_commands['portageq'] = portageq.commandline_commands

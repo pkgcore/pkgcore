@@ -29,6 +29,7 @@ import copy
 
 demandload.demandload(globals(),
     'snakeoil.fileutils:iter_read_bash',
+    'snakeoil:osutils',
     'pkgcore:version',
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages',
@@ -593,3 +594,13 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
         raise optparse.OptionValueError("arg %r isn't a valid atom: %s"
             % (x, e))
     return l or [default]
+
+def find_domains_from_path(config, path):
+    path = osutils.normpath(osutils.abspath(path))
+    for name, domain in config.domain.iteritems():
+        root = getattr(domain, 'root', None)
+        if root is None:
+            continue
+        root = osutils.normpath(osutils.abspath(root))
+        if root == path:
+            yield name, domain

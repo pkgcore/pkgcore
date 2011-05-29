@@ -5,7 +5,7 @@ from pkgcore.util import commandline
 
 from snakeoil.demandload import demandload
 demandload(globals(),
-    "pkgcore.config:load_config",
+    'snakeoil:osutils',
     "pkgcore.ebuild:atom,conditionals,eapi",
     "pkgcore.restrictions.boolean:AndRestriction",
     "pkgcore.util:packages",
@@ -92,6 +92,8 @@ class BaseCommand(commandline.OptionParser):
         return domains[0][1]
 
     def rewrite_args(self, options, args):
+        if not args:
+            return args
         arg_spec = [x for x in self.arg_spec if 'root' != x]
         arg_spec.extend(arg_spec[-1] for x in xrange(len(args) - len(self.arg_spec) + 1))
 
@@ -217,3 +219,35 @@ def match(options, out, err):
         out.write(str_pkg(pkg))
     return 0
 
+@make_command("root")
+def get_repositories(options, out, err):
+    l = []
+    for k, repo in options.config.repo.iteritems():
+        repo_id = getattr(repo, 'repo_id', None)
+        if repo_id is not None:
+            l.append(repo_id)
+    for x in sorted(set(l)):
+        out.write(x)
+    return 0
+
+def find_repo_by_repo_id(config, repo_id):
+    for k, repo in config.repo.iteritems():
+        if getattr(repo, 'repo_id', None) == repo_id:
+            yield repo
+
+@make_command("root repo_id")
+def get_repository_path(options, out, err):
+    for repo in find_repo_by_repo_id(options.config, options.arguments[0]):
+        if getattr(repo, 'location', None) is not None:
+            out.write(repo.location)
+        return 0
+    return 1
+
+@make_command("root repo_id")
+def get_repo_news_path(options, out, err):
+    for repo in find_repo_by_repo_id(options.config, options.arguments[0]):
+        if getattr(repo, 'location', None) is not None:
+            out.write(osutils.normpath(
+                osutils.pjoin(repo.location, 'metadata', 'news')))
+        return 0
+    return 1

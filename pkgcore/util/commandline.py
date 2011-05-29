@@ -33,6 +33,7 @@ demandload.demandload(globals(),
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages',
     'pkgcore.util:parserestrict',
+    'pkgcore.ebuild:atom',
 )
 
 
@@ -395,6 +396,24 @@ class OptionParser(optparse.OptionParser, object):
                 defaults[option.dest] = option.check_value(opt_str, default)
         defaults["prog_name"] = self.get_prog_name()
         return self.values_class(defaults)
+
+    def parse_restrict(self, arg, msg=None, eapi=None):
+        if eapi is not None:
+            return parse_atom(arg, msg, eapi=eapi, msg=msg)
+        try:
+            return parserestrict.parse_match(arg)
+        except parserestrict.ParseError, e:
+            if msg is None:
+                msg="couldn't parse restriction from %(atom)s: %(error)s"
+            self.error(msg % {"arg":arg, "err": e})
+
+    def parse_atom(self, arg, msg=None, eapi=-1):
+        try:
+            return atom.atom(arg, eapi=eapi)
+        except atom.MalformedAtom, ma:
+            if msg is None:
+                msg="couldn't parse valid atom from %(arg)s: %(error)s"
+            self.error(msg % {"arg":arg, "error":"ma"})
 
     def parse_args(self, args=None, values=None):
         """Extend optparse to clear the ref values -> parser it adds."""

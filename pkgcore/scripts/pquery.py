@@ -471,7 +471,7 @@ class OptionParser(commandline.OptionParser):
                 if '(' in arg:
                     vals.expr.append(parse_expression(arg))
                 else:
-                    vals.match.append(parserestrict.parse_match(str(arg)))
+                    vals.match.append(self.parse_restrict(str(arg)))
         except parserestrict.ParseError, e:
             self.error(str(e))
 

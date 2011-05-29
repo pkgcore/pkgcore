@@ -1,4 +1,4 @@
-# Copyright: 2009-2010 Brian Harring <ferringb@gmail.com>
+# Copyright: 2009-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 __all__ = ("pkgsets_data", "histo_data", "eapi_usage_data", "license_usage_data",

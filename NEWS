@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* expose /usr/local/* through PATH for ebulids.
+
+
 pkgcore 0.6.2: May 27th, 2011
 
 * for EAPI<4, expose MERGE_TYPE info via EMERGE_FROM; do this for compatibility

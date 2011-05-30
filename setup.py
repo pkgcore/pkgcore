@@ -268,6 +268,8 @@ core.setup(
     description='package managing framework',
     url='http://www.pkgcore.org/',
     license='GPL-2',
+    author='Brian Harring',
+    author_email='ferringb@gmail.com',
     packages=packages,
     package_data={
         'pkgcore':

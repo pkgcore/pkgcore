@@ -15,7 +15,7 @@ See dev-notes/commandline.rst for more complete documentation.
 """
 
 __all__ = ("FormattingHandler", "Values", "Option", "OptionParser",
-    "MySystemExit", "main"
+    "MySystemExit", "main",
 )
 
 import sys
@@ -23,9 +23,8 @@ import os.path
 import logging
 
 from pkgcore.config import load_config, errors
-from snakeoil import formatters, demandload, fix_copy, klass
+from snakeoil import formatters, demandload, klass
 import optparse
-import copy
 
 demandload.demandload(globals(),
     'snakeoil.fileutils:iter_read_bash',
@@ -35,6 +34,7 @@ demandload.demandload(globals(),
     'pkgcore.restrictions:packages',
     'pkgcore.util:parserestrict',
     'pkgcore.ebuild:atom',
+    'copy',
 )
 
 

@@ -145,18 +145,30 @@ class HelpFormatter(optparse.HelpFormatter):
     def format_option_strings(self, option):
         return option._short_opts + option._long_opts
 
+def process_subcommands(base, subcommands, state):
+    comp = nodes.compound()
+    for command_name, bits in sorted(subcommands.iteritems()):
+        sub_base = "%s %s" % (base, command_name)
+        comp += nodes.title(text=sub_base)
+        if hasattr(bits, 'get'):
+            comp += process_subcommands(sub_base, bits, state)
+        else:
+            if isinstance(bits, type) and issubclass(bits, optparse.OptionParser):
+                comp += generate_script(bits, state)
+            else:
+                comp += generate_script(bits[0], state)
+    return [comp]
+
 def script_options(name, arguments, options, content, lineno,
                    content_offset, block_text, state, state_machine):
     assert len(arguments) == 1
     assert not options, options
     parserclass = modules.load_attribute(arguments[0])
-    if isinstance(parserclass, dict):
-        comp = nodes.compound()
+    # some day, subcommands will change form; .get is better to rely on than
+    # assuming always a dict
+    if hasattr(parserclass, 'get'):
         base = arguments[0].split(".")[-2] # script location.
-        for command_name, bits in sorted(parserclass.iteritems()):
-            comp += nodes.title(text="%s %s" % (base, command_name))
-            comp += generate_script(bits[0], state)
-        return [comp]
+        return process_subcommands(base, parserclass, state)
     return [generate_script(parserclass, state)]
 
 
@@ -233,6 +245,7 @@ def process_man(directory, force, debug):
     for entry in os.listdir(directory):
         original = os.path.join(directory, entry)
         if entry.lower().endswith('rst'):
+            print "exmaining %s/%s" % (directory, entry)
             base = entry[:-4]
             target = os.path.join(directory, base)
             if debug:

@@ -1,5 +1,5 @@
+# Copyright: 2010-2011 Brian Harring <ferringb@gmail.com>
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
-# Copyright: 2010 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
 

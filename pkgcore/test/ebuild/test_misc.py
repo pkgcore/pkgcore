@@ -1,4 +1,4 @@
-# Copyright: 2007 Brian Harring <ferringb@gmail.com>
+# Copyright: 2007-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 from pkgcore.test import TestCase

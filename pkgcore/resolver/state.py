@@ -1,4 +1,4 @@
-# Copyright: 2006-2010 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 __all__ = ("plan_state", "base_op_state", "add_op", "add_hardref_op",

@@ -1,5 +1,5 @@
 #!/usr/bin/env pkgcore-ebuild-helper
-# Copyright 2011 Brian Harring <ferringb@gmail.com>
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # License: GPLv2 or bsd-3
 
 check_args 2

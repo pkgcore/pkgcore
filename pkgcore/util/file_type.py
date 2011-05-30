@@ -1,4 +1,4 @@
-# Copyright: 2008 Brian Harring <ferringb@gmail.com>
+# Copyright: 2008-2011 Brian Harring <ferringb@gmail.com>
 # License: BSD/GPL2
 
 __all__ = ("file_identifier",)

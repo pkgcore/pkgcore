@@ -1,3 +1,4 @@
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # Copyright: 2010 Marien Zwart <marien.zwart@gmail.com>
 # License: BSD
 

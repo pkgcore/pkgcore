@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-
-# Copyright 2007 Charlie Shepherd <masterdriverz@gmail.com>
-# License: GPL-2
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# Copyright: 2007 Charlie Shepherd <masterdriverz@gmail.com>
+# License: BSD/GPL-2
 
 import sys
 from os.path import basename

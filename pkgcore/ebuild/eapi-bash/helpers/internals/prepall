@@ -1,5 +1,6 @@
 #!/bin/bash
-# Copyright 1999-2005 Gentoo Foundation
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
+# Copyright: 1999-2005 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 
 source "${PKGCORE_BIN_PATH}/exit-handling.lib" || { echo "failed loading libs"; exit -127; }

@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* added man page for pinspect
+
 * added pmaint env-update
 
 * expose /usr/local/* through PATH for ebulids.

@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* misc env/bug fixes for EMERGE_FROM to ensure compatibility.
+
+* deploy eselect support via pinspect portageq
+
 * added man page for pinspect
 
 * added pmaint env-update

@@ -206,19 +206,27 @@ def add_sets(config, root, portage_base_dir):
         if e.errno != errno.ENOENT:
             raise
 
-
-def add_profile(config, base_path, user_profile_path=None):
+def _find_profile_link(base_path, portage_compat=False):
     make_profile = pjoin(base_path, 'make.profile')
     try:
-        profile = normpath(abspath(pjoin(
-                    base_path, os.readlink(make_profile))))
-    except OSError, oe:
+        return normpath(abspath(
+            pjoin(base_path, os.readlink(make_profile))))
+    except EnvironmentError, oe:
         if oe.errno in (errno.ENOENT, errno.EINVAL):
+            if oe.errno == errno.ENOENT:
+                if portage_compat:
+                    return None
+                profile = _find_profile_link(pjoin(base_path, 'portage'), True)
+                if profile is not None:
+                    return profile
             raise errors.InstantiationError(
                 "%s must be a symlink pointing to a real target" % (
                     make_profile,))
         raise errors.InstantiationError(
             "%s: unexpected error- %s" % (make_profile, oe.strerror))
+
+def add_profile(config, base_path, user_profile_path=None):
+    profile = _find_profile_link(base_path)
 
     psplit = list(piece for piece in profile.split(os.path.sep) if piece)
     # poor mans rindex.

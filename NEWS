@@ -4,6 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* support for /etc/portage/make.profile; Please Do Not Use it, while
+  pkgcore is forced to support it, usage of it breaks most tools and is
+  bluntly lock-in (no reason to move it- it's the same, been in the same
+  place for a decade now).  Duly warned.
+
 * misc env/bug fixes for EMERGE_FROM to ensure compatibility.
 
 * deploy eselect support via pinspect portageq

@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.6.3: May 30th, 2011
+
 * support for /etc/portage/make.profile; Please Do Not Use it, while
   pkgcore is forced to support it, usage of it breaks most tools and is
   bluntly lock-in (no reason to move it- it's the same, been in the same

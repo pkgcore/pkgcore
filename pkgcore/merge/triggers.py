@@ -254,6 +254,10 @@ class mtime_watcher(object):
                 yield x
 
 
+def update_elf_hints(root):
+    return spawn.spawn(["/sbin/ldconfig", "-r", root], fd_pipes={1:1, 2:2})
+
+
 class ldconfig(base):
 
     required_csets = ()
@@ -308,7 +312,7 @@ class ldconfig(base):
             self.regen(engine.offset)
 
     def regen(self, offset):
-        ret = spawn.spawn(["/sbin/ldconfig", "-r", offset], fd_pipes={1:1, 2:2})
+        ret = update_elf_hints(offset)
         if ret != 0:
             raise errors.TriggerWarning(self,
                 "ldconfig returned %i from execution" % ret)

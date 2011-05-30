@@ -1,4 +1,4 @@
-# Copyright: 2005-2009 Brian Harring <ferringb@gmail.com>: GPL/BSD2
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>: GPL/BSD2
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
@@ -21,7 +21,8 @@ demandload(globals(),
     'pkgcore.repository:multiplex',
     'pkgcore.package:mutated',
     'pkgcore.fs:contents,livefs',
-    'pkgcore.ebuild:atom,errors,digest,processor',
+    'pkgcore.ebuild:atom,errors,digest,processor,triggers',
+    'pkgcore.merge:triggers@merge_triggers',
     'pkgcore.restrictions.boolean:OrRestriction',
     'pkgcore.sync:base@sync_base',
     'snakeoil.compatibility:any',
@@ -390,6 +391,35 @@ def perl_rebuild_main(options, out, err):
 
 
 commandline_commands['perl_rebuild'] = (PerlRebuildParser, perl_rebuild_main)
+
+class env_update(OptionParser):
+
+    enable_domain_options = True
+
+    description = 'read env.d rebuilding etc/profile.env and etc/ld.so* files ' \
+        'for this domain'
+
+    def _register_options(self):
+        self.add_option('--skip-ldconfig', action='store_true', default=False,
+            help="do not update etc/ld.so.conf and ld.so.cache")
+
+    def _check_values(self, options, args):
+        options.root = getattr(options.domain, 'root', None)
+        if options.root is None:
+            self.error("domain used seems to be either virtual or remote- no root identified from it")
+        return options, args
+
+    def run(self, options, out, err):
+        out.write("updating env for %r..." % (options.root,))
+        triggers.perform_env_update(options.root,
+            skip_ldso_update=options.skip_ldconfig)
+        if not options.skip_ldconfig:
+            out.write("update ldso cache/elf hints for %r..." % (options.root,))
+            merge_triggers.update_elf_hints(options.root)
+        return 0
+
+
+commandline_commands['env-update'] = env_update
 
 
 class DigestParser(OptionParser):

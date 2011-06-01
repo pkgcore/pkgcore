@@ -17,6 +17,7 @@ default
 default_pkg_nofetch
 default_src_compile
 default_src_configure
+default_src_install
 default_src_prepare
 default_src_test
 default_src_unpack

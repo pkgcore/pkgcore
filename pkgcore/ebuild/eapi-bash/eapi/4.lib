@@ -7,6 +7,8 @@ nonfatal() {
 	PKGCORE_NONFATAL_HELPER=y "$@"
 }
 
+default_src_install() { pkgcore_eapi4_src_install; }
+
 pkgcore_eapi4_src_install() {
 	if [ -f Makefile ] || [ -f GNUmakefile ] || [ -f makefile ]; then
 		emake DESTDIR="${D}" install

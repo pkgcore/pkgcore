@@ -19,7 +19,7 @@ __all__ = ("Values", "Option", "OptionParser",
     "domain_callback", "config_append_callback",
     "debug_callback", "new_config_callback", "empty_config_callback",
     "convert_bool_type",
-    "optparse_main",
+    "optparse_main", "MySystemExit",
 )
 
 import sys
@@ -152,22 +152,6 @@ def domain_callback(option, opt_str, value, parser):
                     for key in parser.values.config.domain)))
 
 
-def config_append_callback(option, opt_str, value, parser, typename,
-                           typedesc=None):
-    """Like L{config_callback} but appends instead of sets."""
-    if typedesc is None:
-        typedesc = typename
-    mapping = getattr(parser.values.config, typename)
-    try:
-        result = mapping[value]
-    except KeyError:
-        raise optparse.OptionValueError(
-            '%r is not a valid %s for %s (valid values: %s)' % (
-                value, typedesc, opt_str, ', '.join(repr(key)
-                                                    for key in mapping)))
-    parser.values.ensure_value(option.dest, []).append(result)
-
-
 def debug_callback(option, opt_str, value, parser):
     """Make sure the config central uses debug mode.
 
@@ -192,6 +176,22 @@ def debug_callback(option, opt_str, value, parser):
     logging.root.setLevel(logging.DEBUG)
     for collapsed in config.collapsed_configs.itervalues():
         collapsed.debug = True
+
+
+def config_append_callback(option, opt_str, value, parser, typename,
+                           typedesc=None):
+    """Like L{config_callback} but appends instead of sets."""
+    if typedesc is None:
+        typedesc = typename
+    mapping = getattr(parser.values.config, typename)
+    try:
+        result = mapping[value]
+    except KeyError:
+        raise optparse.OptionValueError(
+            '%r is not a valid %s for %s (valid values: %s)' % (
+                value, typedesc, opt_str, ', '.join(repr(key)
+                                                    for key in mapping)))
+    parser.values.ensure_value(option.dest, []).append(result)
 
 
 def new_config_callback(option, opt_str, value, parser):
@@ -416,7 +416,7 @@ class OptionParser(optparse.OptionParser, object):
         return values, args
 
 
-class OptparseMySystemExit(SystemExit):
+class MySystemExit(SystemExit):
     """Subclass of SystemExit the tests can safely catch."""
 
 
@@ -512,7 +512,7 @@ def optparse_main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr
 
     if parser_class is None:
         subcommand_usage_func(prog, subcommands, errfile)
-        raise OptparseMySystemExit(1)
+        raise MySystemExit(1)
 
     options = None
     option_parser = parser_class(prog=prog)
@@ -551,4 +551,4 @@ def optparse_main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr
             out.title('%s failed' % (prog,))
         else:
             out.title('%s succeeded' % (prog,))
-    raise OptparseMySystemExit(exitstatus)
+    raise MySystemExit(exitstatus)

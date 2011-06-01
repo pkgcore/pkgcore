@@ -25,6 +25,7 @@ import logging
 from pkgcore.config import load_config, errors
 from snakeoil import formatters, demandload
 import optparse
+from pkgcore.util import argparse
 from pkgcore.util.commandline_optparse import *
 
 demandload.demandload(globals(),
@@ -68,8 +69,158 @@ class FormattingHandler(logging.Handler):
                 self.out.first_prefix.pop()
 
 
-class MySystemExit(SystemExit):
-    """Subclass of SystemExit the tests can safely catch."""
+def string_bool(value):
+    value = value.lower()
+    if value in ('y', 'yes', 'true'):
+        return True
+    elif value in ('n', 'no', 'false'):
+        return False
+    raise ValueError(value)
+
+
+class StoreBool(argparse._StoreAction):
+    def __init__(self,
+                option_strings,
+                dest,
+                const=None,
+                default=None,
+                required=False,
+                help=None,
+                metavar='BOOLEAN'):
+        super(StoreBool, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            const=const,
+            default=default,
+            type=self.convert_bool,
+            required=required,
+            help=help,
+            metavar=metavar)
+
+    @staticmethod
+    def convert_bool(value):
+        value = value.lower()
+        if value in ('y', 'yes', 'true'):
+            return True
+        elif value in ('n', 'no', 'false'):
+            return False
+        raise ValueError("value %r must be [y|yes|true|n|no|false]" % (value,))
+
+
+class StoreConfig(argparse._StoreAction):
+    def __init__(self,
+                option_strings,
+                dest,
+                nargs=None,
+                const=None,
+                default=None,
+                config_type=None,
+                required=False,
+                help=None,
+                metavar=None):
+
+        if type is None:
+            raise ValueError("type must specify the config type to load")
+
+        super(StoreConfig, self).__init__(
+            option_strings=option_strings,
+            dest=dest,
+            nargs=nargs,
+            const=const,
+            default=default,
+            type=str,
+            required=required,
+            help=help)
+        self.config_type = config_type
+
+    def _get_kwargs(self):
+        names = [
+            'option_strings',
+            'dest',
+            'nargs',
+            'const',
+            'default',
+            'config_type',
+            'choices',
+            'help',
+            'metavar',
+        ]
+        return [(name, getattr(self, name)) for name in names]
+
+    def _load_obj(self, sections, name):
+        try:
+            return sections[name]
+        except KeyError:
+            raise argparse.ArgumentError(self, "couldn't find %s %r" %
+                (self.config_type, name))
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        config = getattr(namespace, 'config', None)
+        if config is None:
+            raise ValueError("no config found.  Internal bug")
+        sections = getattr(config, self.config_type)
+        if isinstance(values, basestring):
+            value = self._load_obj(sections, values)
+        else:
+            value = [self._load_obj(sections, x) for x in values]
+        setattr(namespace, self.dest, value)
+
+__ns_delayed_attr__ = '__delayed_instantiation__'
+
+class Delayed(argparse.Action):
+
+    def __init__(self, option_strings, dest, target=None, priority=0, **kwds):
+        if target is None:
+            raise ValueError("target must be non None for Delayed")
+
+        self.priority = int(priority)
+        self.target = target(option_strings=option_strings, dest=dest, **kwds.copy())
+        super(Delayed, self).__init__(option_strings=option_strings[:],
+            dest=dest, nargs=kwds.get("nargs", None), required=kwds.get("required", None),
+            help=kwds.get("help", None), metavar=kwds.get("metavar", None))
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        delayed_invokes = getattr(namespace, __ns_delayed_attr__, {})
+        delayed_invokes.setdefault(self.priority, []).append(
+            (self.target, parser, values, option_string))
+        setattr(namespace, __ns_delayed_attr__, delayed_invokes)
+
+
+color_argparser = argparse.ArgumentParser()
+color_argparser.add_argument('--color', action=StoreBool,
+    help="Enable or disable color support.")
+
+
+config_argparser = argparse.ArgumentParser(add_help=True)
+config_argparser.add_argument('--config-modify', '--add-config', '--new-config', nargs=3,
+    metavar="SECTION KEY VALUE",
+    help="Modify configuration section, creating it if needed.  Takes three "
+        "arguments- the name of the section to modify, the key, and the "
+        "value.")
+config_argparser.add_argument('--config-empty', '--empty-config', action='store_true',
+    help="Do not load user/system configuration.")
+
+domain_argparser = argparse.ArgumentParser()
+domain_argparser.add_argument('--domain',
+    help="domain to use for this operation")
+
+
+class ArgumentParser(argparse.ArgumentParser):
+
+    def parse_args(self, args=None, namespace=None):
+        args = argparse.ArgumentParser.parse_args(self, args, namespace)
+
+        if not hasattr(args, __ns_delayed_attr__):
+            return args
+        sentinel = object()
+        delayed = getattr(args, __ns_delayed_attr__, sentinel)
+        if sentinel is delayed:
+            return args
+        for priority in sorted(delayed):
+            for target, parser, values, option_string in delayed[priority]:
+                target(parser, args, values, option_string)
+        delattr(args, __ns_delayed_attr__)
+        return args
 
 
 def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
@@ -104,8 +255,6 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
         return optparse_main(subcommands, args=args, outfile=outfile,
             errfile=errfile, script_name=script_name,
             _Formatter=FormattingHandler)
-
-    raise Exception("reached the unreachable")
 
     raise MySystemExit(exitstatus)
 

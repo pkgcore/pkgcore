@@ -28,11 +28,16 @@ class file_identifier(object):
             magic_const = magic.MAGIC_NONE
         else:
             magic_const = magic.NONE
-        obj = magic.open(magic_const)
-        ret = obj.load()
-        if ret != 0:
-            raise ValueError("non zero ret from loading magic: %s" % ret)
-        return obj.file
+        try:
+            obj = magic.open(magic_const)
+            ret = obj.load()
+            if ret == 0:
+                return obj.file
+        except (RuntimeError, SystemExit, KeyboardInterrupt):
+            raise
+        except Excepton:
+            pass # POS of library.
+        return self._fallback_file
 
     @staticmethod
     def _fallback_file(path):

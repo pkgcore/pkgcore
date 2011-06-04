@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* work around libmagic python bindings sucking and not always being
+  able to be used.
+
 * fix 'default' support for src_install for EAPI=4.
 
 

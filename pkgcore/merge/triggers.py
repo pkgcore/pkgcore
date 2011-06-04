@@ -73,6 +73,8 @@ class base(object):
     _engine_types = None
     priority = 50
 
+    suppress_exceptions = True
+
     pkgcore_config_type = ConfigHint(typename='trigger')
 
     @property
@@ -410,6 +412,8 @@ class merge(base):
     _engine_types = INSTALLING_MODES
     _hooks = ('merge',)
 
+    suppress_exceptions = False
+
     def trigger(self, engine, merging_cset):
         op = get_plugin('fs_ops.merge_contents')
         return op(merging_cset, callback=engine.observer.installing_fs_obj)
@@ -420,6 +424,8 @@ class unmerge(base):
     required_csets = ('uninstall',)
     _engine_types = UNINSTALLING_MODES
     _hooks = ('unmerge',)
+
+    suppress_exceptions = False
 
     def trigger(self, engine, unmerging_cset):
         op = get_plugin('fs_ops.unmerge_contents')
@@ -432,6 +438,8 @@ class BaseSystemUnmergeProtection(base):
     priority = -100
     _engine_types = UNINSTALLING_MODES
     _hooks = ('unmerge',)
+
+    suppress_exceptions = False
 
     _preserve_sequence = ('/usr', '/usr/lib', '/usr/lib64', '/usr/lib32',
         '/usr/bin', '/usr/sbin', '/bin', '/sbin', '/lib', '/lib32', '/lib64',

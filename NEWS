@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* intercept and suppress exceptions from triggers unless the trigger
+  explicitly disables it.
+
 * work around libmagic python bindings sucking and not always being
   able to be used.
 

@@ -354,6 +354,8 @@ class collision_protect(triggers.base):
     _hooks = ('sanity_check',)
     _engine_types = triggers.INSTALLING_MODES
 
+    suppress_exceptions = False
+
     def __init__(self, extra_protects=(), extra_disables=()):
         triggers.base.__init__(self)
         self.extra_protects = extra_protects
@@ -389,6 +391,7 @@ class collision_protect(triggers.base):
             raise errors.BlockModification(self,
                 "collision-protect: file(s) already exist: ( %s )" %
                 ', '.join(repr(x) for x in sorted(colliding)))
+
 
 class install_into_symdir_protect(triggers.base):
 

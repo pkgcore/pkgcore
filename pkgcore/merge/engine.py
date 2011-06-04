@@ -26,7 +26,11 @@ from snakeoil import currying, data_source
 from snakeoil.osutils import normpath, pjoin
 
 from snakeoil.demandload import demandload
-demandload(globals(), "tempfile:mktemp")
+demandload(globals(),
+    "tempfile",
+    "traceback",
+    "snakeoil:stringio",
+)
 
 def alias_cset(alias, engine, csets):
     """alias a cset to another"""
@@ -321,7 +325,27 @@ class MergeEngine(object):
                 # error checking needed here.
                 self.observer.trigger_start(hook, trigger)
                 try:
-                    trigger(self, self.csets)
+                    try:
+                        trigger(self, self.csets)
+                    except (RuntimeError, SystemExit, KeyboardInterrupt):
+                        raise
+                    except errors.BlockModification, e:
+                        self.observer.error("modification was blocked by "
+                            "trigger %r: %s" % (trigger, e))
+                        raise
+                    except errors.ModificationError, e:
+                        self.observer.error("modification error occured "
+                            "during trigger %r: %s" % (trigger,e))
+                        raise
+                    except Exception, e:
+                        if not trigger.suppress_exception:
+                            raise
+
+                        handle = stringio.text_writable()
+                        traceback.print_exc(file=handle)
+
+                        self.observer.warn("unhandled exception caught and "
+                            "suppressed:\n%s" % (handle.getvalue(),))
                 finally:
                     self.observer.trigger_end(hook, trigger)
         finally:
@@ -399,7 +423,7 @@ class MergeEngine(object):
 
         # clone it into tempspace; it's required we control the tempspace,
         # so this function is safe in our usage.
-        path = mktemp(prefix='merge-engine-', dir=self.tempdir)
+        path = tempfile.mktemp(prefix='merge-engine-', dir=self.tempdir)
 
         # XXX: annoying quirk of python, we don't want append mode, so 'a+'
         # isn't viable; wr will truncate the file, so data_source uses r+.

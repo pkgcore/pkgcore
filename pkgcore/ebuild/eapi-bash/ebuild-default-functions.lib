@@ -188,8 +188,8 @@ dyn_install()
 		if [[ -n ${f} ]] ; then
 			echo -ne '\a\n'
 			echo "QA Notice: the following files are setXid, dyn linked, and using lazy bindings"
-			echo " This combination is generally discouraged.  Try re-emerging the package:"
-			echo " LDFLAGS='-Wl,-z,now' emerge ${PN}"
+			echo " This combination is generally discouraged.  Try forcing via bashrc"
+			echo " LDFLAGS='-Wl,-z,now' for the pkg, or disable FEATURES=stricter"
 			echo "${f}"
 			echo -ne '\a\n'
 			has stricter $FEATURES && die "Aborting due to lazy bindings"

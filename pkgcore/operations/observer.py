@@ -12,6 +12,15 @@ class base(object):
     def warn(self, msg):
         pass
 
+    def error(self, msg):
+        pass
+
+    def info(self, msg):
+        pass
+
+    def debug(self, msg):
+        pass
+
 
 class phase_observer(object):
 
@@ -41,6 +50,9 @@ class file_phase_observer(phase_observer):
 
     def warn(self, msg):
         self._out.write("warning: %s\n" % msg)
+
+    def error(self, msg):
+        self._out.write("error: %s\n" % msg)
 
     def phase_end(self, phase, status):
         if not self._semiquiet:

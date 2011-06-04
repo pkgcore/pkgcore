@@ -309,13 +309,12 @@ class ldconfig(base):
             return
 
         if self.saved_mtimes.check_state(locations):
-            self.regen(engine.offset)
+            self.regen(engine)
 
-    def regen(self, offset):
-        ret = update_elf_hints(offset)
+    def regen(self, engine):
+        ret = update_elf_hints(engine.offset)
         if ret != 0:
-            raise errors.TriggerWarning(self,
-                "ldconfig returned %i from execution" % ret)
+            engine.observer.warn("ldconfig returned %i from execution" % (ret,))
 
 
 class InfoRegen(base):

@@ -10,7 +10,7 @@ __all__ = ("ModificationError", "BlockModification",
 
 class ModificationError(Exception):
 
-    """Base Exception class for modification errors/warnings"""
+    """Base Exception class for modification errors"""
 
     def __init__(self, trigger, msg):
         self.trigger = trigger
@@ -35,11 +35,3 @@ class TriggerUnknownCset(ModificationError):
         ModificationError.__init__(self, "%s: trigger %r unknown cset: %r" %
                                    (self.__class__, trigger, csets))
         self.trigger, self.csets = trigger, csets
-
-
-class NonFatalModification(Exception):
-    pass
-
-class TriggerWarning(NonFatalModification):
-    pass
-

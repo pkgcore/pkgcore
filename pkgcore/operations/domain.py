@@ -172,10 +172,7 @@ class install(base):
         """execute the actual transfer"""
         for merge_phase in (self.me.pre_merge, self.me.merge,
             self.me.post_merge):
-            try:
-                merge_phase()
-            except merge_errors.NonFatalModification, e:
-                print "warning caught: %s" % e
+            merge_phase()
         self._update_new_pkg(self.me.get_merged_cset())
         return True
 

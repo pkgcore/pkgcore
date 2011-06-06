@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.6.4: Jun 5th, 2011
+
 * intercept and suppress exceptions from triggers unless the trigger
   explicitly disables it.
 

@@ -9,9 +9,10 @@ from itertools import chain
 from snakeoil.iterables import chain_from_iterable
 
 from pkgcore.config import ConfigHint
-from pkgcore.ebuild import const, ebuild_src
+from pkgcore.ebuild import const, ebuild_src, misc
 from pkgcore.ebuild.misc import (incremental_expansion, restrict_payload,
-    _build_cp_atom_payload, chunked_data, ChunkedDataDict, split_negations)
+    _build_cp_atom_payload, chunked_data, ChunkedDataDict, split_negations,
+    IncrementalsDict)
 from pkgcore.repository import virtual
 
 from snakeoil.osutils import abspath, join as pjoin, readlines_utf8
@@ -28,7 +29,7 @@ demandload(globals(),
     'pkgcore.ebuild.eapi:get_eapi',
     'pkgcore.repository:util',
     'pkgcore.restrictions:packages',
-    'snakeoil.mappings:defaultdict,ImmutableDict',
+    'snakeoil:mappings',
     'snakeoil.klass:alias_attr',
 )
 
@@ -62,6 +63,8 @@ def load_decorator(filename, handler=iter_read_bash, fallback=(),
         return f2
     return f
 
+
+_make_incrementals_dict = partial(IncrementalsDict, const.incrementals)
 
 class ProfileNode(object):
 
@@ -118,7 +121,7 @@ class ProfileNode(object):
             if len(l) != 2:
                 raise ValueError("%r is malformated" % line)
             d[cpv.CPV.unversioned(l[0]).package] = self.eapi_atom(l[1])
-        self.virtuals = ImmutableDict(d)
+        self.virtuals = mappings.ImmutableDict(d)
         return d
 
     @load_decorator("package.mask")
@@ -143,7 +146,7 @@ class ProfileNode(object):
         return data
 
     def _parse_package_use(self, data):
-        d = defaultdict(list)
+        d = mappings.defaultdict(list)
         # split the data down ordered cat/pkg lines
         for line in data:
             l = line.split()
@@ -153,7 +156,8 @@ class ProfileNode(object):
             d[a.key].append(chunked_data(a,
                 *split_negations(l[1:])))
 
-        return ImmutableDict((k, _build_cp_atom_payload(v, atom.atom(k))) for k,v in d.iteritems())
+        return mappings.ImmutableDict((k, _build_cp_atom_payload(v, atom.atom(k)))
+            for k,v in d.iteritems())
 
     @load_decorator("package.use.force")
     def _load_pkg_use_force(self, data):
@@ -198,7 +202,19 @@ class ProfileNode(object):
         self.masked_use = c
         return c
 
+    def _load_incremental_env(self):
+        self._parse_make_defaults()
+        return self.incremental_env
+
     def _load_default_env(self):
+        self._parse_make_defaults()
+        return self.default_env
+
+    def _parse_make_defaults(self):
+        rendered = _make_incrementals_dict()
+        for parent in self.parents:
+            rendered.update(parent.default_env.iteritems())
+
         path = pjoin(self.path, "make.defaults")
         try:
             if is_py3k:
@@ -208,19 +224,20 @@ class ProfileNode(object):
         except IOError, ie:
             if ie.errno != errno.ENOENT:
                 raise ProfileError(self.path, "make.defaults", ie)
-            self.default_env = {}
-            return self.default_env
-        try:
+            d = {}
+        else:
             try:
-                d = read_bash_dict(f)
-            finally:
-                f.close()
-        except (KeyboardInterrupt, RuntimeError, SystemExit):
-            raise
-        except Exception ,e:
-            raise ProfileError(self.path, "make.defaults", e)
-        self.default_env = ImmutableDict(d)
-        return d
+                try:
+                    d = read_bash_dict(f, vars_dict=rendered)
+                finally:
+                    f.close()
+            except (KeyboardInterrupt, RuntimeError, SystemExit):
+                raise
+            except Exception ,e:
+                raise ProfileError(self.path, "make.defaults", e)
+        self.incremental_env = mappings.ImmutableDict(d)
+        rendered.update(d.iteritems())
+        self.default_env = mappings.ImmutableDict(rendered)
 
     def _load_bashrc(self):
         path = pjoin(self.path, "profile.bashrc")
@@ -267,7 +284,7 @@ class EmptyRootNode(ProfileNode):
     deprecated = None
     pkg_use = masked_use = forced_use = ChunkedDataDict()
     forced_use.freeze()
-    virtuals = pkg_use_force = pkg_use_mask = ImmutableDict()
+    virtuals = pkg_use_force = pkg_use_mask = mappings.ImmutableDict()
     pkg_provided = visibility = system = ((), ())
 
 
@@ -280,20 +297,15 @@ def _empty_provides_has_match(*args, **kwds):
 
 class OnDiskProfile(object):
 
-    pkgcore_config_type = ConfigHint({'basepath':'str', 'profile':'str',
-        'incrementals':'list'}, required=('basepath', 'profile'),
-        typename='profile')
+    pkgcore_config_type = ConfigHint({'basepath':'str', 'profile':'str'},
+        required=('basepath', 'profile'), typename='profile')
 
     _node_kls = ProfileNode
 
-    def __init__(self, basepath, profile, incrementals=const.incrementals,
-        load_profile_base=True,
-        incrementals_unfinalized=const.incrementals_unfinalized):
+    def __init__(self, basepath, profile, load_profile_base=True):
         self.basepath = basepath
         self.profile = profile
         self.node = self._node_kls(pjoin(basepath, profile))
-        self.incrementals = incrementals
-        self.incrementals_unfinalized = frozenset(incrementals_unfinalized)
         self.load_profile_base = load_profile_base
 
     @property
@@ -336,30 +348,17 @@ class OnDiskProfile(object):
         return s
 
     def _collapse_env(self):
-        d = {}
-        incrementals = self.incrementals
-        for profile in self.stack:
-            for key, val in profile.default_env.iteritems():
-                if key in incrementals:
-                    d.setdefault(key, []).extend(val.split())
+        d = dict(self.node.default_env.iteritems())
+        for incremental in const.incrementals:
+            v = d.pop(incremental, '').split()
+            if v:
+                if incremental in const.incrementals_unfinalized:
+                    d[incremental] = tuple(v)
                 else:
-                    d[key] = val
-        for incremental in incrementals:
-            if incremental not in d:
-                continue
-            val = d[incremental]
-            if not val:
-                del d[val]
-                continue
-            if incremental in self.incrementals_unfinalized:
-                d[incremental] = tuple(val)
-            else:
-                s = set()
-                incremental_expansion(s, val)
-                if s:
-                    d[incremental] = tuple(s)
-                else:
-                    del d[incremental]
+                    v = misc.render_incrementals(v)
+                    if v:
+                        d[incremental] = tuple(v)
+        d = mappings.ImmutableDict(d.iteritems())
         return d
 
     @property

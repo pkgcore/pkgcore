@@ -12,6 +12,7 @@ from pkgcore.ebuild import profiles
 from pkgcore.ebuild.misc import chunked_data
 from pkgcore.ebuild.atom import atom
 from pkgcore.ebuild.cpv import CPV
+from pkgcore.ebuild import const
 from pkgcore.restrictions import packages, restriction
 
 atrue = packages.AlwaysTrue
@@ -368,6 +369,32 @@ class TestProfileNode(profile_mixin, TestCase):
         self.write_file('make.defaults', 'y=narf\nx=${y}\n')
         self.assertEqual(ProfileNode(path).default_env,
             {'y':'narf', 'x':'narf'})
+        # ensure make.defaults can access the proceeding env.
+        child = pjoin(path, 'child')
+        os.mkdir(child)
+        self.write_file('make.defaults', 'x="${x} twice"', profile=child)
+        self.write_file('parent', '..', profile=child)
+        self.assertEqual(ProfileNode(child).default_env,
+            {'y':'narf', 'x':'narf twice'})
+
+    def test_default_env_incrementals(self):
+        self.assertIn("USE", const.incrementals)
+        profile1 = pjoin(self.dir, self.profile)
+        profile2 = pjoin(profile1, "sub")
+        profile3 = pjoin(profile2, "sub")
+        os.mkdir(profile2)
+        os.mkdir(profile3)
+        self.write_file("make.defaults", 'USE=foo', profile=profile1)
+        self.write_file("make.defaults", 'x=dar', profile=profile2)
+        self.write_file("parent", "..", profile=profile2)
+        self.write_file("make.defaults", 'USE=-foo', profile=profile3)
+        self.write_file("parent", "..", profile=profile3)
+        self.assertEqual(ProfileNode(profile1).default_env,
+            dict(USE="foo"))
+        self.assertEqual(ProfileNode(profile2).default_env,
+            dict(USE="foo", x="dar"))
+        self.assertEqual(ProfileNode(profile3).default_env,
+            dict(USE="foo -foo", x="dar"))
 
     def test_bashrc(self):
         path = pjoin(self.dir, self.profile)
@@ -621,20 +648,36 @@ class TestOnDiskProfile(profile_mixin, TestCase):
             })
 
     def test_default_env(self):
+        self.assertIn('USE', const.incrementals_unfinalized)
+        self.assertIn('USE', const.incrementals)
+        self.assertIn('USE_EXPAND', const.incrementals)
+
+        # first, verify it behaves correctly for unfinalized incrementals.
         self.mk_profiles({})
         self.assertEqual(self.get_profile("0").default_env, {})
         self.mk_profiles(
-            {"make.defaults":"X=y\n"},
+            {"make.defaults":"USE=y\n"},
             {},
-            {"make.defaults":"X=-y\nY=foo\n"})
-        self.assertEqual(self.get_profile('0',
-            incrementals=['X']).default_env,
-           {'X':tuple('y')})
-        self.assertEqual(self.get_profile('1',
-            incrementals=['X']).default_env,
-           {'X':tuple('y')})
-        self.assertEqual(self.get_profile('2',
-            incrementals=['X']).default_env,
+            {"make.defaults":"USE=-y\nY=foo\n"})
+        self.assertEqual(self.get_profile('0').default_env,
+           {"USE":tuple('y')})
+        self.assertEqual(self.get_profile('1').default_env,
+           {"USE":tuple('y')})
+        self.assertEqual(self.get_profile('2').default_env,
+           {'Y':'foo',  "USE":('y', '-y')})
+
+        # next, verify it optimizes for the finalized incrementals
+        self.mk_profiles({})
+        self.assertEqual(self.get_profile("0").default_env, {})
+        self.mk_profiles(
+            {"make.defaults":"USE_EXPAND=y\n"},
+            {},
+            {"make.defaults":"USE_EXPAND=-y\nY=foo\n"})
+        self.assertEqual(self.get_profile('0').default_env,
+           {"USE_EXPAND":tuple('y')})
+        self.assertEqual(self.get_profile('1').default_env,
+           {"USE_EXPAND":tuple('y')})
+        self.assertEqual(self.get_profile('2').default_env,
            {'Y':'foo'})
 
     def test_provides_repo(self):

@@ -160,12 +160,12 @@ def make_command(arg_spec, **kwds):
 
 @make_command("variable", multiple_args=True)
 def envvar(options, out, err):
-    default_get = lambda d,k: d.settings.get(k, "")
-    distdir_get = lambda d,k: d.settings["fetcher"].distdir
-    envvar_getter = {"DISTDIR":distdir_get}
     """
     return configuration defined variables
     """
+    default_get = lambda d,k: d.settings.get(k, "")
+    distdir_get = lambda d,k: d.settings["fetcher"].distdir
+    envvar_getter = {"DISTDIR":distdir_get}
     for x in options.arguments:
         out.write(str(envvar_getter.get(x, default_get)(options.domain, x)))
     return 0

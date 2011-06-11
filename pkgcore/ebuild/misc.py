@@ -19,7 +19,7 @@ from snakeoil.sequences import namedtuple
 
 from itertools import chain
 
-from snakeoil.currying import partial
+from snakeoil.currying import partial, alias_class_method
 from snakeoil.demandload import demandload
 
 demandload(globals(),
@@ -127,6 +127,31 @@ def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix
         else:
             seen.add(token)
     return seen
+
+
+class IncrementalsDict(mappings.DictMixin):
+
+    def __init__(self, incrementals, **kwds):
+        self._incrementals = incrementals
+        self._dict = {}
+        mappings.DictMixin.__init__(self, **kwds)
+
+    def __setitem__(self, key, value):
+        if key in self._incrementals:
+            if key in self._dict:
+                self._dict[key] += ' %s' % (value,)
+            else:
+                self._dict[key] = value
+        else:
+            self._dict[key] = value
+
+    for x in "getitem delitem len nonzero iter".split():
+        x = '__%s__' % x
+        locals()[x] = alias_class_method("_dict.%s" % x)
+    for x in "pop clear iterkeys iteritems itervalues".split():
+        locals()[x] = alias_class_method("_dict.%s" % x)
+    del x
+
 
 class collapsed_restrict_to_data(object):
 

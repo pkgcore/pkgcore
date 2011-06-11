@@ -79,3 +79,24 @@ class test_CPY_incremental_expansion(test_native_incremental_expansion):
 
 test_cpy_used = mk_cpy_loadable_testcase('pkgcore.ebuild._misc',
     "pkgcore.ebuild.misc", "incremental_expansion", "incremental_expansion")
+
+
+class TestIncrementalsDict(TestCase):
+    kls = misc.IncrementalsDict
+
+    def assertContents(self, mapping1, mapping2):
+        self.assertEqual(sorted(mapping1.iteritems()), sorted(mapping2.iteritems()))
+
+    def test_behaviour(self):
+        d = self.kls(frozenset("i1 i2".split()), a1="1", i1="1")
+        expected = {"a1":"1", "i1":"1"}
+        self.assertContents(d, expected)
+        d["a1"] = "2"
+        expected["a1"] = "2"
+        self.assertContents(d, expected)
+        d["i1"] = "2"
+        expected["i1"] = "1 2"
+        self.assertContents(d, expected)
+        del d["i1"]
+        del expected["i1"]
+        self.assertContents(d, expected)

@@ -74,6 +74,18 @@ def incremental_chunked(orig, iterables):
         orig.update(cinst.pos)
 
 
+def render_incrementals(iterable, **kwds):
+    """helper function for simple incremental_expansion calls
+
+    :param iterable: sequence of items to incrementally stack
+    :param kwargs: options to pass to incremental_expansion
+    :return: a set of the rendered results from incremental_expansion
+    """
+    s = set()
+    incremental_expansion(s, iterable, **kwds)
+    return s
+
+
 def native_incremental_expansion(orig, iterable, msg_prefix='', finalize=True):
     for token in iterable:
         if token[0] == '-':

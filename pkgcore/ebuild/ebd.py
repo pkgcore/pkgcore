@@ -39,32 +39,6 @@ demandload(globals(),
 )
 
 
-def _reset_env_data_source(method):
-    return method
-
-    # unreachable code. --charlie
-    #def store_env_data_wrapper(self, *args, **kwds):
-    #    try:
-    #        return method(self, *args, **kwds)
-    #    finally:
-    #        # note that we're *not* return'ing anything ourselves.
-    #        # we want the original val to slide back
-    #        if self.env_data_source is None:
-    #            try:
-    #                fp = self.env["PORT_ENV_FILE"]
-    #                f = self.env_data.text_fileobj()
-    #                f.seek(0, 0)
-    #                f.truncate(0)
-    #                f.write(open(fp, "r").read())
-    #                del f, fp
-    #            except (IOError, OSError), oe:
-    #                if oe.errno != errno.ENOENT:
-    #                    raise
-
-    #store_env_data_wrapper.__doc__ = method.__doc__
-    #return store_env_data_wrapper
-
-
 class ebd(object):
 
     def __init__(self, pkg, initial_env=None, env_data_source=None,
@@ -273,7 +247,6 @@ class ebd(object):
                 logger.warn("%s ( %s ) is setgid" % (self.env[k], k))
 
 
-    @_reset_env_data_source
     def _generic_phase(self, phase, userpriv, sandbox, fakeroot,
                        extra_handlers=None, failure_allowed=False):
         """
@@ -779,7 +752,6 @@ class buildable(ebd, setup_mixin, format.build):
             "run the compile phase (maps to src_compile)")
 
     @observer.decorate_build_method("install")
-    @_reset_env_data_source
     def install(self):
         """run the install phase (maps to src_install)"""
         if self.fakeroot:
@@ -788,7 +760,6 @@ class buildable(ebd, setup_mixin, format.build):
             return self._generic_phase("install", False, True, False)
 
     @observer.decorate_build_method("test")
-    @_reset_env_data_source
     def test(self):
         """run the test phase (if enabled), maps to src_test"""
         if not self.run_test:

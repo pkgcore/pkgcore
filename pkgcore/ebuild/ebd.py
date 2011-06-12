@@ -167,9 +167,7 @@ class ebd(object):
 
         self.env["XARGS"] = xargs
 
-        self.bashrc = self.env.get("bashrc", ())
-        if self.bashrc:
-            del self.env["bashrc"]
+        self.bashrc = self.env.pop("bashrc", ())
 
         self.pkg = pkg
         self.eapi = pkg.eapi

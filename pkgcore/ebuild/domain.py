@@ -292,17 +292,6 @@ class domain(pkgcore.config.domain.domain):
         self.enabled_use.add_bare_global(*split_negations(self.use))
         self.enabled_use.update_from_stream(chunked_data(k, *split_negations(v)) for k,v in pkg_use)
         self.enabled_use.add_bare_global((), (self.arch,))
-        #self.enabled_use = collapsed_restrict_to_data(
-        #    profile.pkg_use.iteritems(),
-        #    ((packages.AlwaysTrue, self.use),
-        #    (packages.AlwaysTrue, [self.arch])),
-        #    pkg_use,
-        #    finalize_defaults=False)
-        #self.forced_use = collapsed_restrict_to_data(
-        #    profile.forced_use.iteritems(),
-        #    ((packages.AlwaysTrue, [self.arch]),))
-        #self.disabled_use = collapsed_restrict_to_data(
-        #    profile.masked_use.iteritems())
         self.forced_use = ChunkedDataDict()
         self.forced_use.merge(profile.forced_use)
         self.forced_use.add_bare_global((), (self.arch,))

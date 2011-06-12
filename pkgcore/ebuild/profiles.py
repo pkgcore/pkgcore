@@ -18,7 +18,7 @@ from pkgcore.repository import virtual
 from snakeoil.osutils import abspath, join as pjoin, readlines_utf8
 from snakeoil.containers import InvertedContains
 from snakeoil.fileutils import iter_read_bash, read_bash_dict
-from snakeoil.caching import WeakInstMeta
+from snakeoil import klass, caching
 from snakeoil.currying import partial
 from snakeoil.compatibility import next, is_py3k
 from snakeoil.demandload import demandload
@@ -30,7 +30,6 @@ demandload(globals(),
     'pkgcore.repository:util',
     'pkgcore.restrictions:packages',
     'snakeoil:mappings',
-    'snakeoil.klass:alias_attr',
 )
 
 
@@ -68,7 +67,7 @@ _make_incrementals_dict = partial(IncrementalsDict, const.incrementals)
 
 class ProfileNode(object):
 
-    __metaclass__ = WeakInstMeta
+    __metaclass__ = caching.WeakInstMeta
     __inst_caching__ = True
 
     def __init__(self, path):
@@ -258,8 +257,8 @@ class ProfileNode(object):
         self.eapi_obj = o = get_eapi(data[0])
         return o
 
-    eapi = alias_attr("eapi_obj.magic")
-    eapi_atom = alias_attr("eapi_obj.atom_kls")
+    eapi = klass.alias_attr("eapi_obj.magic")
+    eapi_atom = klass.alias_attr("eapi_obj.atom_kls")
 
     def __getattr__(self, attr):
         if attr in ("system", "visibility"):
@@ -399,14 +398,16 @@ class OnDiskProfile(object):
         return frozenset(chain(self._collapse_generic("masks"),
             self._collapse_generic("visibility")))
 
+    bashrc = klass.alias_attr("bashrcs")
+
     def __getattr__(self, attr):
         if attr == "stack":
             self.stack = obj = self._load_stack()
         elif attr in ('forced_use', 'masked_use', 'pkg_use'):
             obj = self._collapse_use_dict(attr)
             setattr(self, attr, obj)
-        elif attr == 'bashrc':
-            obj = self.bashrc = tuple(x.bashrc
+        elif attr == 'bashrcs':
+            obj = self.bashrcc = tuple(x.bashrc
                 for x in self.stack if x.bashrc is not None)
         elif attr == 'system':
             obj = self.system = self._collapse_generic(attr)

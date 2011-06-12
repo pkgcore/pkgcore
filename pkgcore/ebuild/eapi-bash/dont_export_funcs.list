@@ -29,8 +29,8 @@ disable_qa_interceptors
 docinto
 dump_environ
 dump_trace
-dyn_install
-dyn_preinst
+dyn_pkg_preinst
+dyn_src_install
 ebd_process_metadata
 ebd_process_sandbox_results
 ebd_read_cat_size
@@ -108,6 +108,7 @@ pkgcore_inject_phase_funcs
 pkgcore_load_eapi_libs
 pkgcore_pop_IFS
 pkgcore_push_IFS
+pkgcore_run_ebuild_phase
 portageq
 regex_filter_input
 remove_path_entry

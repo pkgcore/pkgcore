@@ -152,7 +152,7 @@ unpack()
 
 }
 
-dyn_install()
+dyn_src_install()
 {
 	echo
 	echo ">>> Install ${PF} into ${D} category ${CATEGORY}"
@@ -236,7 +236,7 @@ dyn_install()
 	unset dir
 }
 
-dyn_preinst()
+dyn_pkg_preinst()
 {
 	# set IMAGE depending if this is a binary or compile merge
 	local IMAGE=${D}

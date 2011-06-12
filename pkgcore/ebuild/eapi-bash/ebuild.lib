@@ -238,6 +238,24 @@ source "${PKGCORE_BIN_PATH}/ebuild-default-functions.lib" >&2 || die "failed sou
 source "${PKGCORE_BIN_PATH}/isolated-functions.lib" >&2 || die "failed sourcing stripped down functions.lib"
 source "${PKGCORE_BIN_PATH}/ebuild-env-utils.lib" >&2 || die "failed sourcing ebuild-env-utils.lib"
 
+pkgcore_run_ebuild_phase()
+{
+	[[ -n $PKGCORE_DEBUG ]] && set -x
+	run_function_if_exists pkgcore_default_pre_${1}
+	run_function_if_exists pre_${1}
+	if is_function dyn_${1}; then
+		dyn_${1}
+	elif is_function ${1}; then
+		${1}
+	else
+		run_function_if_exists pkgcore_default_${1}
+	fi
+
+	run_function_if_exists post_${1}
+	run_function_if_exists pkgcore_default_post_${1}
+	[[ $PKGCORE_DEBUG -lt 2 ]] && set +x
+}
+
 # general func to call for phase execution.  this handles necessary env loading/dumping, and executing pre/post/dyn
 # calls.
 execute_phases() {
@@ -273,14 +291,8 @@ execute_phases() {
 		nofetch|pretend)
 			init_environ
 
-			run_function_if_exists pkgcore_default_pre_${EBUILD_PHASE}
-			run_function_if_exists pre_pkg_${EBUILD_PHASE}
-
 			PKGCORE_DIE_OUTPUT_DETAILS=false
-			run_function_if_exists pkg_${EBUILD_PHASE}
-
-			run_function_if_exists post_pkg_${EBUILD_PHASE}
-
+			pkgcore_run_ebuild_phase pkg_${EBUILD_PHASE}
 			PKGCORE_SAVE_ENV=false
 			ret=0
 			;;
@@ -302,20 +314,8 @@ execute_phases() {
 				sleep 10
 			fi
 
-			[[ -n $PKGCORE_DEBUG ]] && set -x
-			run_function_if_exists pkgcore_default_pre_pkg_${EBUILD_PHASE}
-			run_function_if_exists pre_pkg_${EBUILD_PHASE}
-			if is_function dyn_${EBUILD_PHASE}; then
-				dyn_${EBUILD_PHASE}
-			elif is_function pkg_${EBUILD_PHASE}; then
-				pkg_${EBUILD_PHASE}
-			else
-				run_function_if_exists pkgcore_default_pkg_${EBUILD_PHASE}
-			fi
+			pkgcore_run_ebuild_phase pkg_${EBUILD_PHASE}
 			ret=0
-
-			run_function_if_exists post_pkg_${EBUILD_PHASE}
-			[[ $PKGCORE_DEBUG -lt 2 ]] && set +x
 			;;
 		unpack|prepare|configure|compile|test|install)
 			if [ "${SANDBOX_DISABLED="0"}" == "0" ]; then
@@ -333,20 +333,9 @@ execute_phases() {
 			fi
 
 			[ -z "${S}" ] && die "S was null- ${S}, path=$PATH"
-			[[ -n $PKGCORE_DEBUG ]] && set -x
-			run_function_if_exists pkgcore_default_pre_src_${EBUILD_PHASE}
-			run_function_if_exists pre_src_${EBUILD_PHASE}
-			if is_function dyn_${EBUILD_PHASE}; then
-				dyn_${EBUILD_PHASE}
-			elif is_function src_${EBUILD_PHASE}; then
-				src_${EBUILD_PHASE}
-			else
-				run_function_if_exists pkgcore_default_src_${EBUILD_PHASE}
-			fi
+
+			pkgcore_run_ebuild_phase src_${EBUILD_PHASE}
 			ret=0
-			run_function_if_exists post_src_${EBUILD_PHASE}
-			[[ $PKGCORE_DEBUG -lt 2 ]] && set +x
-			export SANDBOX_ON="0"
 			;;
 		setup|setup-binpkg)
 			#pkg_setup needs to be out of the sandbox for tmp file creation;
@@ -354,7 +343,6 @@ execute_phases() {
 			#in /etc.  If pkg_setup is in the sandbox, both our lilo and apache ebuilds break.
 
 			EBUILD_PHASE="setup"
-			export SANDBOX_ON="0"
 
 			# binpkgs don't need to reinitialize the env.
 			if [ "$myarg"  == "setup" ]; then
@@ -376,13 +364,9 @@ execute_phases() {
 				fi
 			fi
 
-			[[ -n $PKGCORE_DEBUG ]] && set -x
-			run_function_if_exists pkgcore_default_pre_pkg_setup
-			run_function_if_exists pre_pkg_setup
-			run_function_if_exists pkg_setup
+			export SANDBOX_ON="0"
+			pkgcore_run_ebuild_phase pkg_${EBUILD_PHASE}
 			ret=0;
-			run_function_if_exists post_pkg_setup
-			[[ $PKGCORE_DEBUG -lt 2 ]] && set +x
 
 			;;
 		depend)

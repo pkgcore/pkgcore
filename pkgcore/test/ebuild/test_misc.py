@@ -94,9 +94,18 @@ class TestIncrementalsDict(TestCase):
         d["a1"] = "2"
         expected["a1"] = "2"
         self.assertContents(d, expected)
+        self.assertTrue(d)
+        self.assertEqual(sorted(d), ["a1", "i1"])
+        self.assertLen(d, 2)
         d["i1"] = "2"
         expected["i1"] = "1 2"
         self.assertContents(d, expected)
-        del d["i1"]
-        del expected["i1"]
+        del d["a1"]
+        del expected["a1"]
         self.assertContents(d, expected)
+        self.assertEqual(d['i1'], "1 2")
+        self.assertTrue(d)
+        self.assertEqual(sorted(d), ["i1"])
+        d.clear()
+        self.assertFalse(d)
+        self.assertLen(d, 0)

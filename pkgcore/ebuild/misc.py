@@ -157,10 +157,10 @@ class IncrementalsDict(mappings.DictMixin):
         else:
             self._dict[key] = value
 
-    for x in "getitem delitem len nonzero iter".split():
+    for x in "getitem delitem len iter".split():
         x = '__%s__' % x
         locals()[x] = property(instance_attrgetter("_dict.%s" % x))
-    for x in "pop clear iterkeys iteritems itervalues".split():
+    for x in "pop clear iterkeys iteritems itervalues keys items values".split():
         locals()[x] = property(instance_attrgetter("_dict.%s" % x))
     del x
 

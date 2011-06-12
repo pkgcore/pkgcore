@@ -13,8 +13,9 @@ __all__ = ("optimize_incrementals", "incremental_expansion_license",
 from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild.atom import atom
 
+from snakeoil import compatibility, mappings
 from snakeoil.lists import iflatten_instance
-from snakeoil.klass import generic_equality, instance_attrgetter
+from snakeoil.klass import generic_equality, alias_method
 from snakeoil.sequences import namedtuple
 
 from itertools import chain
@@ -26,7 +27,6 @@ demandload(globals(),
     'pkgcore.ebuild:atom',
     'pkgcore.restrictions:packages',
     'snakeoil.iterables:chain_from_iterable',
-    'snakeoil:mappings',
 )
 
 
@@ -143,6 +143,8 @@ def incremental_expansion_license(licenses, license_groups, iterable, msg_prefix
 
 class IncrementalsDict(mappings.DictMixin):
 
+    disable_py3k_rewriting = True
+
     def __init__(self, incrementals, **kwds):
         self._incrementals = incrementals
         self._dict = {}
@@ -159,10 +161,13 @@ class IncrementalsDict(mappings.DictMixin):
 
     for x in "getitem delitem len iter".split():
         x = '__%s__' % x
-        locals()[x] = property(instance_attrgetter("_dict.%s" % x))
-    for x in "pop clear iterkeys iteritems itervalues keys items values".split():
-        locals()[x] = property(instance_attrgetter("_dict.%s" % x))
-    del x
+        locals()[x] = alias_method("_dict.%s" % x)
+    s = "pop clear keys items values"
+    if compatibility.is_py3k:
+        s += " iterkeys iteritems itervalues"
+    for x in s.split():
+        locals()[x] = alias_method("_dict.%s" % x)
+    del x, s
 
 
 class collapsed_restrict_to_data(object):

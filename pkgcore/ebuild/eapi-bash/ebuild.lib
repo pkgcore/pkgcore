@@ -117,25 +117,6 @@ pkgcore_ensure_PATH()
 	export PATH
 }
 
-# walk the cascaded profile src'ing it's various bashrcs.
-# overriden by daemon normally.
-source_profiles() {
-	local dir
-	# XXX: Given the following unset, is this set needed?
-	pkgcore_push_IFS '\n'
-	for dir in ${PROFILE_PATHS}; do
-		# Must unset it so that it doesn't mess up assumptions in the RCs.
-		unset IFS
-		if [ -f "${dir}/profile.bashrc" ]; then
-			source "${dir}/profile.bashrc" >&2
-		fi
-	done
-	pkgcore_pop_IFS
-	if [ -f "$PORTAGE_BASHRC" ]; then
-		source "$PORTAGE_BASHRC" >&2
-	fi
-}
-
 pkgcore_load_eapi_libs() {
 	# reload depend; while it may've been loaded already, reload it so that callers can
 	# rely on this setting the env up as necessary

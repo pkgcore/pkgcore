@@ -363,13 +363,13 @@ class OnDiskProfile(object):
 
     @property
     def use_expand(self):
-        if "USE_EXPAND" in self.incrementals:
+        if "USE_EXPAND" in const.incrementals:
             return tuple(self.default_env.get("USE_EXPAND", ()))
         return tuple(self.default_env.get("USE_EXPAND", '').split())
 
     @property
     def use_expand_hidden(self):
-        if "USE_EXPAND_HIDDEN" in self.incrementals:
+        if "USE_EXPAND_HIDDEN" in const.incrementals:
             return tuple(self.default_env.get("USE_EXPAND_HIDDEN", ()))
         return tuple(self.default_env.get("USE_EXPAND_HIDDEN", "").split())
 

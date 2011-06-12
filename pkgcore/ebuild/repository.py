@@ -16,7 +16,7 @@ from pkgcore.config import ConfigHint
 from pkgcore.plugin import get_plugin
 
 from snakeoil.fileutils import read_dict, iter_read_bash
-from snakeoil import currying
+from snakeoil import currying, klass
 from snakeoil.osutils import listdir_files, readfile, listdir_dirs, pjoin
 from snakeoil.containers import InvertedContains
 from snakeoil.obj import make_kls
@@ -330,7 +330,7 @@ class ConfiguredTree(configured.tree):
 
     configurable = "use"
     config_wrappables = dict(
-        (x, currying.alias_class_method("evaluate_depset"))
+        (x, klass.alias_method("evaluate_depset"))
         for x in ["depends", "rdepends", "post_rdepends", "fetchables",
                   "license", "src_uri", "provides", "restrict",
                   "required_use"])

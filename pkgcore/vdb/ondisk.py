@@ -1,4 +1,4 @@
-# Copyright: 2005-2010 Brian Harring <ferringb@gmail.com>
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 __all__ = ("bz2_data_source", "tree", "ConfiguredTree")
@@ -17,7 +17,7 @@ from pkgcore.ebuild.errors import InvalidCPV
 
 from snakeoil.osutils import pjoin
 from snakeoil.mappings import IndeterminantDict
-from snakeoil.currying import partial, alias_class_method
+from snakeoil.currying import partial
 from snakeoil.osutils import listdir_dirs, readfile, readfile_bytes
 from snakeoil import klass, compatibility
 from pkgcore.util import bzip2

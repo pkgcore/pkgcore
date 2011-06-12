@@ -27,7 +27,8 @@ from pkgcore.os_data import xargs
 from pkgcore.ebuild.const import eapi_capable
 from pkgcore.operations import observer, format
 from pkgcore.ebuild import ebuild_built
-from snakeoil.currying import post_curry, pretty_docs, alias_class_method, partial
+from snakeoil.currying import post_curry, pretty_docs, partial
+from snakeoil import klass
 from snakeoil.osutils import (ensure_dirs, normpath, join as pjoin,
     listdir_files)
 
@@ -491,10 +492,10 @@ class replace_op(format.replace):
         self.uninstall_op.start()
         return True
 
-    prerm = alias_class_method("uninstall_op.prerm")
-    postrm = alias_class_method("uninstall_op.postrm")
-    preinst = alias_class_method("install_op.preinst")
-    postinst = alias_class_method("install_op.postinst")
+    prerm = klass.alias_method("uninstall_op.prerm")
+    postrm = klass.alias_method("uninstall_op.postrm")
+    preinst = klass.alias_method("install_op.preinst")
+    postinst = klass.alias_method("install_op.postinst")
 
     def finalize(self):
         ret = self.uninstall_op.finish()

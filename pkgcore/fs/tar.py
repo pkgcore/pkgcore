@@ -1,4 +1,4 @@
-# Copyright: 2006-2009 Brian Harring <ferringb@gmail.com>
+# Copyright: 2006-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
 """
@@ -10,7 +10,7 @@ from pkgcore.fs import contents
 from snakeoil.data_source import invokable_data_source
 
 from snakeoil.tar import tarfile
-from snakeoil.currying import partial, alias_class_method
+from snakeoil.currying import partial
 from snakeoil.compatibility import cmp, sorted_cmp
 
 

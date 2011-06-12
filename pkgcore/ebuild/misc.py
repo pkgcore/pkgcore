@@ -14,7 +14,7 @@ from pkgcore.restrictions import packages, restriction
 from pkgcore.ebuild.atom import atom
 
 from snakeoil.lists import iflatten_instance
-from snakeoil.klass import generic_equality
+from snakeoil.klass import generic_equality, instance_attrgetter
 from snakeoil.sequences import namedtuple
 
 from itertools import chain
@@ -159,9 +159,9 @@ class IncrementalsDict(mappings.DictMixin):
 
     for x in "getitem delitem len nonzero iter".split():
         x = '__%s__' % x
-        locals()[x] = alias_class_method("_dict.%s" % x)
+        locals()[x] = property(instance_attrgetter("_dict.%s" % x))
     for x in "pop clear iterkeys iteritems itervalues".split():
-        locals()[x] = alias_class_method("_dict.%s" % x)
+        locals()[x] = property(instance_attrgetter("_dict.%s" % x))
     del x
 
 

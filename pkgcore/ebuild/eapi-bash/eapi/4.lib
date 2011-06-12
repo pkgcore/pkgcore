@@ -35,6 +35,6 @@ pkgcore_eapi4_src_install() {
 	fi
 }
 
-pkgcore_inject_phase_funcs pkgcore_eapi4_src_install
+pkgcore_inject_phase_funcs pkgcore_eapi4 src_install
 
 :

@@ -88,6 +88,7 @@ pkgcore_default_pre_src_test
 pkgcore_default_pre_src_unpack
 pkgcore_default_src_compile
 pkgcore_default_src_configure
+pkgcore_default_src_install
 pkgcore_default_src_prepare
 pkgcore_default_src_test
 pkgcore_default_src_unpack

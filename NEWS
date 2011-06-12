@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* yet another src_install fix for EAPI=4; this time ensuring the default
+  function is available.
+
 * we now run bashrcs (profile and user) every phase to match portage
   behaviour.  If folks desire it, a patch making that optional would be
   welcome.

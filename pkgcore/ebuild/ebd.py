@@ -590,7 +590,15 @@ class buildable(ebd, setup_mixin, format.build):
                 # pjoin("/foor/bar", "/barr/foo") == "/barr/foo"
                 # and pjoin("/foo/bar",".asdf") == "/foo/bar/.asdf"
                 self.env.setdefault(s+"_DIR", pjoin(self.tmpdir, default))
-                path.insert(0, "/usr/lib/%s/bin" % s.lower())
+                # gentoo bug 355283
+                libdir = self.env.get("ABI")
+                if libdir is not None:
+                    libdir = self.env.get("LIBDIR_%s" % (libdir,))
+                    if libdir is not None:
+                        libdir = self.env.get(libdir)
+                if libdir is None:
+                    libdir = "lib"
+                path.insert(0, "/usr/%s/%s/bin" % (libdir, s.lower()))
             else:
                 for y in ("_PATH", "_DIR"):
                     if s+y in self.env:

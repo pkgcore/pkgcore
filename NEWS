@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* use ${LIBDIR_${ABI}} for ccache/distcc pathways; gentoo bug 355283.
+
 * profile interpretation of make.defaults now has access to variables
   defined by it's parents, per PMS.
 

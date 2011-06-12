@@ -248,7 +248,8 @@ class ebd(object):
 
 
     def _generic_phase(self, phase, userpriv, sandbox, fakeroot,
-                       extra_handlers=None, failure_allowed=False):
+                       extra_handlers={}, failure_allowed=False,
+                       suppress_bashrc=False):
         """
         :param phase: phase to execute
         :param userpriv: will we drop to
@@ -262,9 +263,31 @@ class ebd(object):
         sandbox = self.sandbox and sandbox
         fakeroot = self.fakeroot and fakeroot
         self._set_per_phase_env(phase, self.env)
+        extra_handlers = extra_handlers.copy()
+        if not suppress_bashrc:
+            extra_handlers.setdefault("request_bashrcs", self._request_bashrcs)
         return run_generic_phase(self.pkg, phase, self.env,
             userpriv, sandbox, fakeroot,
             extra_handlers=extra_handlers, failure_allowed=failure_allowed)
+
+    def _request_bashrcs(self, ebd, a):
+        if a is not None:
+            chuck_UnhandledCommand(ebd, "bashrc request with arg"+str(a))
+        for source in self.domain.get_package_bashrcs(self.pkg):
+            if source.path is not None:
+                ebd.write("path\n%s" % source.path)
+            elif source.get_data is not None:
+                raise NotImplementedError
+            else:
+                chuck_UnhandledCommand(
+                    ebd, "bashrc request: unable to process bashrc "
+                    "due to source '%s' due to lacking usable get_*" % (
+                        source,))
+            if not ebd.expect("next"):
+                chuck_UnhandledCommand(
+                    ebd, "bashrc transfer, didn't receive 'next' response.  "
+                    "failure?")
+        ebd.write("end_request")
 
     def set_is_replacing(self, *pkgs):
         if self.eapi_obj.options.exports_replacing:
@@ -352,29 +375,9 @@ class setup_mixin(object):
         if self.setup_is_for_src:
             additional_commands["request_inherit"] = partial(inherit_handler,
                 self.eclass_cache)
-            additional_commands["request_profiles"] = self._request_bashrcs
 
         return self._generic_phase(phase_name, False, True, False,
             extra_handlers=additional_commands)
-
-    def _request_bashrcs(self, ebd, a):
-        if a is not None:
-            chuck_UnhandledCommand(ebd, "bashrc request with arg"+str(a))
-        for source in self.bashrc:
-            if source.path is not None:
-                ebd.write("path\n%s" % source.path)
-            elif source.get_data is not None:
-                raise NotImplementedError
-            else:
-                chuck_UnhandledCommand(
-                    ebd, "bashrc request: unable to process bashrc "
-                    "due to source '%s' due to lacking usable get_*" % (
-                        source,))
-            if not ebd.expect("next"):
-                chuck_UnhandledCommand(
-                    ebd, "bashrc transfer, didn't receive 'next' response.  "
-                    "failure?")
-        ebd.write("end_request")
 
 
 def run_generic_phase(pkg, phase, env, userpriv, sandbox, fakeroot,

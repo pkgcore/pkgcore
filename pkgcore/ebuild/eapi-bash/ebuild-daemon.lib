@@ -41,10 +41,11 @@ internal_inherit()
 	fi
 }
 
-source_profiles()
+source_bashrcs()
 {
+	[[ -n $PKGCORE_SUPPRESS_BASHRCS ]] && return
 	local line
-	ebd_write_line request_profiles
+	ebd_write_line request_bashrcs
 	ebd_read_line line
 	while [[ $line != end_request ]]; do
 		if [[ $line == path ]]; then

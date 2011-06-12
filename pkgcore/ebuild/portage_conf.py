@@ -588,17 +588,17 @@ def config_from_make_conf(location="/etc/"):
             'profile': 'profile',
             'name': 'livefs domain',
             'root':root})
-    for f in (
-        "package.mask", "package.unmask", "package.keywords", "package.use",
-            "bashrc"):
-        fp = pjoin(portage_base, f)
+
+    for f in ("package.mask", "package.unmask", "package.keywords",
+            "package.use", "package.env", "env:ebuild_hook_dir", "bashrc"):
+        fp = pjoin(portage_base, f.split(":")[0])
         try:
             os.stat(fp)
         except OSError, oe:
             if oe.errno != errno.ENOENT:
                 raise
         else:
-            conf_dict[f] = fp
+            conf_dict[f.split(":")[-1]] = fp
 
     if triggers:
         conf_dict['triggers'] = tuple(triggers)

@@ -117,7 +117,7 @@ reset_sandbox
 run_function_if_exists
 scrub_environ
 set_colors
-source_profiles
+source_bashrcs
 strip_duplicate_slashes
 unpack
 unset_colors

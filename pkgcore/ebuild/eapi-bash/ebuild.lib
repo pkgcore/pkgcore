@@ -75,6 +75,7 @@ alias load_environ='{
 	pkgcore_ensure_PATH "${EXISTING_PATH}";
 	export EAPI=${PKGCORE_EAPI-${EAPI}}
 	pkgcore_load_eapi_libs
+	source_bashrcs
 	unset -v EXISTING_PATH;
 }'
 
@@ -83,6 +84,7 @@ alias init_environ='{
 	pkgcore_load_eapi_libs
 	eval "$(generate_initial_ebuild_environ)" || die "failed loading initialized environment";
 	pkgcore_ensure_PATH "${EXISTING_PATH}";
+	source_bashrcs
 	unset -v EXISTING_PATH;
 }'
 
@@ -146,14 +148,15 @@ generate_initial_ebuild_environ() {
 		fi
 
 		#restore the saved env vars.
+		PKGCORE_SUPPRESS_BASHRCS=y
 		TARGET_ENV="${T}/.temp_env"
 		if ! load_environ; then
 			#this shouldn't happen.
 			die "failed to load ${T}/.tmp_env- fs is readonly?"
 		fi
+		unset SUPRESS_BASHRCS
 
 		rm "${T}/.temp_env"
-		source_profiles
 	fi
 
 	load_ebuild "${EBUILD}"

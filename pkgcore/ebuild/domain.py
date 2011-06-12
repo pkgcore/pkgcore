@@ -10,6 +10,7 @@ __all__ = ("MissingFile", "Failure", "domain")
 # XXX doc this up better...
 
 from itertools import izip, imap
+import os.path
 
 import pkgcore.config.domain
 from pkgcore.config import ConfigHint
@@ -60,6 +61,10 @@ def package_keywords_splitter(val):
     v = val.split()
     return parse_match(v[0]), stable_unique(v[1:])
 
+def package_env_splitter(basedir, val):
+    val = val.split()
+    return parse_match(val[0]), local_source(pjoin(basedir, val[1]))
+
 
 # ow ow ow ow ow ow....
 # this manages a *lot* of crap.  so... this is fun.
@@ -91,7 +96,7 @@ class domain(pkgcore.config.domain.domain):
         _types[_thing] = 'list'
     for _thing in [
         'package.mask', 'package.keywords', 'package.license', 'package.use',
-        'package.unmask']:
+        'package.unmask', 'package.env']:
         _types[_thing] = 'list'
     for _thing in ['root', 'CHOST', 'CBUILD', 'CTARGET', 'CFLAGS', 'PATH',
         'PORTAGE_TMPDIR', 'DISTCC_PATH', 'DISTCC_DIR', 'CCACHE_DIR']:
@@ -141,7 +146,9 @@ class domain(pkgcore.config.domain.domain):
             pkg_maskers.update(r.default_visibility_limiters)
         pkg_maskers = list(pkg_maskers)
         pkg_unmaskers, pkg_keywords, pkg_license = [], [], []
-        pkg_use = []
+        pkg_use, self.bashrcs = [], []
+
+        self.ebuild_hook_dir = settings.pop("ebuild_hook_dir", None)
 
         for key, val, action in (
             ("package.mask", pkg_maskers, parse_match),
@@ -149,10 +156,16 @@ class domain(pkgcore.config.domain.domain):
             ("package.keywords", pkg_keywords, package_keywords_splitter),
             ("package.license", pkg_license, package_keywords_splitter),
             ("package.use", pkg_use, package_keywords_splitter),
+            ("package.env", self.bashrcs, package_env_splitter),
             ):
 
             for fp in settings.pop(key, ()):
                 try:
+                    if key == "package.env":
+                        base = self.ebuild_hook_dir
+                        if base is None:
+                            base = os.path.dirname(fp)
+                        action = partial(action, base)
                     for fs_obj in iter_scan(fp, follow_symlinks=True):
                         if not fs_obj.is_reg or '/.' in fs_obj.location:
                             continue
@@ -163,6 +176,7 @@ class domain(pkgcore.config.domain.domain):
                     raise Failure("failed reading '%s': %s" % (fp, e))
                 except ValueError, e:
                     raise Failure("failed reading '%s': %s" % (fp, e))
+
 
         self.name = name
         settings.setdefault("PKGCORE_DOMAIN", name)
@@ -275,16 +289,14 @@ class domain(pkgcore.config.domain.domain):
         self.root = settings["ROOT"] = root
         self.settings = settings
 
-        bashrc = list(profile.bashrc)
-
         for data in self.settings.get('bashrc', ()):
             source = local_source(data)
             # this is currently local-only so a path check is ok
             # TODO make this more general
-            if source.path is None:
+            if not os.path.exists(source.path):
                 raise Failure(
                     'user-specified bashrc %r does not exist' % (data,))
-            bashrc.append(source)
+            self.bashrcs.append((packages.AlwaysTrue, source))
 
         # stack use stuff first, then profile.
         self.enabled_use = ChunkedDataDict()
@@ -298,7 +310,6 @@ class domain(pkgcore.config.domain.domain):
         self.disabled_use = ChunkedDataDict()
         self.disabled_use.merge(profile.masked_use)
 
-        self.settings["bashrc"] = bashrc
         self.settings = ProtectedDict(settings)
         self.repos = []
         self.vdb = []
@@ -494,6 +505,22 @@ class domain(pkgcore.config.domain.domain):
         enabled.update(new_enabled)
         enabled.difference_update(new_disabled)
         return enabled
+
+    def get_package_bashrcs(self, pkg):
+        for source in self.profile.bashrcs:
+            yield source
+        for restrict, source in self.bashrcs:
+            if restrict.match(pkg):
+                yield source
+        if not self.ebuild_hook_dir:
+            return
+        # matching portage behaviour... it's whacked.
+        base = pjoin(self.ebuild_hook_dir, pkg.category)
+        for fp in (pkg.package, "%s:%s" % (pkg.package, pkg.slot),
+            getattr(pkg, "P", "nonexistant"), getattr(pkg, "PF", "nonexistant")):
+            fp = pjoin(base, fp)
+            if os.path.exists(fp):
+                yield local_source(fp)
 
     def _mk_nonconfig_triggers(self):
         return ebuild_generate_triggers(self)

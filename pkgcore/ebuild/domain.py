@@ -10,7 +10,6 @@ __all__ = ("MissingFile", "Failure", "domain")
 # XXX doc this up better...
 
 from itertools import izip, imap
-from os.path import isfile
 
 import pkgcore.config.domain
 from pkgcore.config import ConfigHint
@@ -149,23 +148,15 @@ class domain(pkgcore.config.domain.domain):
             ("package.unmask", pkg_unmaskers, parse_match),
             ("package.keywords", pkg_keywords, package_keywords_splitter),
             ("package.license", pkg_license, package_keywords_splitter),
-            ("package.use", pkg_use, package_keywords_splitter)):
+            ("package.use", pkg_use, package_keywords_splitter),
+            ):
 
             for fp in settings.pop(key, ()):
                 try:
-                    if isfile(fp):
-                        val.extend(action(x) for x in iter_read_bash(fp))
-                    else:
-                        # Ok, so it might not be a dir, but iter_scan'ing it
-                        # means we get a nice exception w/o having to set it
-                        # ourselves.
-                        for file in iter_scan(fp, follow_symlinks=True):
-                            if any(True for thing in file.location.split('/')
-                                if thing.startswith('.')):
-                                continue
-                            if not isinstance(file, fsFile):
-                                continue
-                            val.extend(action(x) for x in iter_read_bash(file.location))
+                    for fs_obj in iter_scan(fp, follow_symlinks=True):
+                        if not fs_obj.is_reg or '/.' in fs_obj.location:
+                            continue
+                        val.extend(action(x) for x in iter_read_bash(fs_obj.location))
                 except (IOError, OSError), e:
                     if e.errno == errno.ENOENT:
                         raise MissingFile(fp, key)

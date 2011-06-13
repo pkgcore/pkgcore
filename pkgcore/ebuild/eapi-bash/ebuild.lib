@@ -149,7 +149,7 @@ generate_initial_ebuild_environ() {
 		fi
 
 		#restore the saved env vars.
-		PKGCORE_SUPPRESS_BASHRCS=y
+		PKGCORE_SUPPRESS_BASHRCS=true
 		TARGET_ENV="${T}/.temp_env"
 		if ! load_environ; then
 			#this shouldn't happen.
@@ -290,9 +290,11 @@ execute_phases() {
 
 		local PKGCORE_SAVE_ENV=true
 		local PKGCORE_DIE_OUTPUT_DETAILS=true
+		local PKGCORE_SUPPRESS_BASHRCS=false
 
 		case $EBUILD_PHASE in
 		nofetch|pretend)
+			PKGCORE_SUPPRESS_BASHRCS=true
 			init_environ
 
 			PKGCORE_DIE_OUTPUT_DETAILS=false

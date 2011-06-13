@@ -43,7 +43,7 @@ internal_inherit()
 
 source_bashrcs()
 {
-	[[ -n $PKGCORE_SUPPRESS_BASHRCS ]] && return
+	${PKGCORE_SUPPRESS_BASHRCS:-false} && return
 	local line
 	ebd_write_line request_bashrcs
 	ebd_read_line line

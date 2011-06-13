@@ -168,11 +168,10 @@ set_colors() {
 # everything below is harring original copyright
 
 has() {
-	local x
-
 	local needle=$1
 	shift
 
+	local x
 	for x in "$@"; do
 		[[ ${x} == ${needle} ]] && return 0
 	done

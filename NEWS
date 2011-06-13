@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* tighten up ebuild environments variable handling- had a bleed through
+  of variable 'x' that was breaking mesa builds.
+
 * yet another src_install fix for EAPI=4; this time ensuring the default
   function is available.
 

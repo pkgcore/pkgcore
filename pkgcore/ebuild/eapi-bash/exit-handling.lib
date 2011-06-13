@@ -22,7 +22,7 @@ die() {
 		return
 	fi
 	shift 3
-	local n filespacing=0 linespacing=0
+	local n filespacing=0 linespacing=0 sourcefile lineno
 	# setup spacing to make output easier to read
 	for ((n = ${#FUNCNAME[@]} - 1; n >= 0; --n)); do
 		sourcefile=${BASH_SOURCE[${n}]} sourcefile=${sourcefile##*/}
@@ -64,21 +64,21 @@ die() {
 # whitespacing for filenames
 # whitespacing for line numbers
 dump_trace() {
-	local funcname="" sourcefile="" lineno="" n e s="yes"
 
 	declare -i strip=1
-	local filespacing=$2 linespacing=$3
 
 	if [[ -n $1 ]]; then
 		strip=$(( $1 ))
 	fi
 	echo "!!! Call stack:"
+	local filespacing=$2 linespacing=$3
+	local n p
 	for (( n = ${#FUNCNAME[@]} - 1, p = ${#BASH_ARGV[@]} ; n > $strip ; n-- )) ; do
-		funcname=${FUNCNAME[${n} - 1]}
-		sourcefile=$(basename ${BASH_SOURCE[${n}]})
-		lineno=${BASH_LINENO[${n} - 1]}
+		local funcname=${FUNCNAME[${n} - 1]}
+		local sourcefile=$(basename ${BASH_SOURCE[${n}]})
+		local lineno=${BASH_LINENO[${n} - 1]}
 		# Display function arguments
-		args=
+		local args newargs
 		if [[ -n "${BASH_ARGV[@]}" ]]; then
 			for (( j = 0 ; j < ${BASH_ARGC[${n} - 1]} ; ++j )); do
 				newarg=${BASH_ARGV[$(( p - j - 1 ))]}

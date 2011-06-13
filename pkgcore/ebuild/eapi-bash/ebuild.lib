@@ -45,7 +45,7 @@ reset_sandbox() {
 	export SANDBOX_PREDICT="${SANDBOX_PREDICT:+${SANDBOX_PREDICT}:}/proc/self/maps:/dev/console:/dev/random:${PORTAGE_TMPDIR}"
 	export SANDBOX_WRITE="${SANDBOX_WRITE:+${SANDBOX_WRITE}:}/dev/shm:${PORTAGE_TMPDIR}"
 	export SANDBOX_READ="${SANDBOX_READ:+${SANDBOX_READ}:}/dev/shm:${PORTAGE_TMPDIR}"
-	local s
+	local x
 	for x in CCACHE_DIR DISTCC_DIR D WORKDIR T; do
 		if [ -n "${!x}" ]; then
 			addread  "${!x}"
@@ -106,6 +106,7 @@ pkgcore_ensure_PATH()
 	# the passed in path, maintaining that order.
 	if [ "$EXISTING_PATH" != "$PATH" ]; then
 		pkgcore_push_IFS ':'
+		local x
 		for x in ${EXISTING_PATH}; do
 			# keep in mind PATH=":foon" is a valid way to say "cwd"
 			[ -z "${x}" ] && continue
@@ -262,7 +263,6 @@ pkgcore_run_ebuild_phase()
 # general func to call for phase execution.  this handles necessary env loading/dumping, and executing pre/post/dyn
 # calls.
 execute_phases() {
-	local ret
 	local PKGCORE_SAVE_ENV
 	local PKGCORE_MUST_EXPORT_ENV=false
 
@@ -283,12 +283,13 @@ execute_phases() {
 	# it from being exported- we use it to track if we're subshelled w/in the main
 	# ebd instance, or if we're in a literal child process.
 	local PKGCORE_IS_NOT_HELPER=1
+	local myarg ret
 	for myarg in $*; do
 		PKGCORE_EBUILD_PHASE="$myarg"
 		EBUILD_PHASE="$myarg"
 
-		PKGCORE_SAVE_ENV=true
-		PKGCORE_DIE_OUTPUT_DETAILS=true
+		local PKGCORE_SAVE_ENV=true
+		local PKGCORE_DIE_OUTPUT_DETAILS=true
 
 		case $EBUILD_PHASE in
 		nofetch|pretend)

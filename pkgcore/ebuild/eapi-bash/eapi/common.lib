@@ -32,10 +32,9 @@ use_with()
     if useq $1; then
         echo "--with-${UWORD}${UW_SUFFIX}"
         return 0
-    else
-        echo "--without-${UWORD}"
-        return 1
-    fi
+	fi
+    echo "--without-${UWORD}"
+    return 1
 }
 
 use_enable()
@@ -61,10 +60,9 @@ use_enable()
     if useq $1; then
         echo "--enable-${UWORD}${UE_SUFFIX}"
         return 0
-    else
-        echo "--disable-${UWORD}"
-        return 1
-    fi
+	fi
+	echo "--disable-${UWORD}"
+	return 1
 }
 
 econf()
@@ -85,15 +83,17 @@ econf()
         done
     fi
 
+	local FORCED_ECONF
     if [ ! -z "${CBUILD}" ]; then
-        EXTRA_ECONF="--build=${CBUILD} ${EXTRA_ECONF}"
+        FORCED_ECONF="--build=${CBUILD}"
     fi
 
     # if the profile defines a location to install libs to aside from default, pass it on.
     # if the ebuild passes in --libdir, they're responsible for the conf_libdir fun.
+
     LIBDIR_VAR="LIBDIR_${ABI}"
     if [ -n "${ABI}" -a -n "${!LIBDIR_VAR}" ]; then
-        CONF_LIBDIR="${!LIBDIR_VAR}"
+        local CONF_LIBDIR="${!LIBDIR_VAR}"
     fi
     unset LIBDIR_VAR
     if [ -n "${CONF_LIBDIR}" ] && [ "${*/--libdir}" == "$*" ]; then
@@ -113,14 +113,16 @@ econf()
  		export CONF_PREFIX
         [ "${CONF_LIBDIR:0:1}" != "/" ] && CONF_LIBDIR="/${CONF_LIBDIR}"
 
-        CONF_LIBDIR_RESULT="${CONF_PREFIX}${CONF_LIBDIR}"
+        local CONF_LIBDIR_RESULT="${CONF_PREFIX}${CONF_LIBDIR}"
         for X in 1 2 3; do
             # The escaping is weird. It will break if you escape the last one.
             CONF_LIBDIR_RESULT="${CONF_LIBDIR_RESULT//\/\///}"
         done
 
-        EXTRA_ECONF="--libdir=${CONF_LIBDIR_RESULT} ${EXTRA_ECONF}"
+        FORCED_ECONF="--libdir=${CONF_LIBDIR_RESULT} ${FORCED_ECONF}"
+        unset CONF_LIBDIR_RESULT
     fi
+
 
     if ! hasq "${EAPI}" 0 1 2 3; then
         if ${ECONF_SOURCE}/configure --help 2> /dev/null | \
@@ -138,6 +140,7 @@ econf()
         --datadir=/usr/share \
         --sysconfdir=/etc \
         --localstatedir=/var/lib \
+        ${FORCED_ECONF} \
         ${EXTRA_ECONF} \
         ${EECONF_CACHE} \
         "$@"
@@ -177,7 +180,7 @@ einstall()
 {
     # CONF_PREFIX is only set if they didn't pass in libdir above
     local LOCAL_EXTRA_EINSTALL="${EXTRA_EINSTALL}"
-    LIBDIR_VAR="LIBDIR_${ABI}"
+    local LIBDIR_VAR="LIBDIR_${ABI}"
     if [ -n "${ABI}" -a -n "${!LIBDIR_VAR}" ]; then
         CONF_LIBDIR="${!LIBDIR_VAR}"
     fi
@@ -215,17 +218,18 @@ einstall()
 
 pkgcore_common_pkg_nofetch()
 {
-    [ -z "${SRC_URI}" ] && return
+    [[ -z ${SRC_URI} ]] && return
 
     echo "!!! The following are listed in SRC_URI for ${PN}:"
-    for MYFILE in `echo ${SRC_URI}`; do
-        echo "!!!   $MYFILE"
+    local fp
+    for fp in `echo ${SRC_URI}`; do
+        echo "!!!   ${fp}"
     done
 }
 
 pkgcore_common_src_unpack()
 {
-    if [ "${A}" != "" ]; then
+    if [[ -n ${A} ]]; then
         unpack ${A}
     fi
 }

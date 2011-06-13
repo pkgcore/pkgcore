@@ -10,7 +10,6 @@ filter_env_func_filter() {
 }
 
 filter_env_var_filter() {
-	local _internal_var
 	while [ -n "$1" ]; do
 		echo -n "$1"
 		[ "$#" != 1 ] && echo -n ','
@@ -19,7 +18,6 @@ filter_env_var_filter() {
 }
 
 regex_filter_input() {
-	local l
 	local regex="${1}"
 	shift
 	while [ -n "$1" ]; do
@@ -28,7 +26,7 @@ regex_filter_input() {
 	done
 	regex="^(${regex})$"
 	# use egrep if possible... tis faster.
-	l=$(type -p egrep)
+	local l=$(type -p egrep)
 	if [[ -n $l ]]; then
 		# use type -p; qa_interceptors may be be active.
 		"$l" -v "${regex}"
@@ -79,7 +77,6 @@ dump_environ() {
 
 # dump environ to $1, optionally piping it through $2 and redirecting $2's output to $1.
 export_environ() {
-	local temp_umask
 	if [ "${1:-unset}" == "unset" ]; then
 		die "export_environ requires at least one arguement"
 	fi
@@ -90,7 +87,7 @@ export_environ() {
 	#Do it with spaces on both sides.
 
 	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} temp_umask "
-	temp_umask=`umask`
+	local temp_umask=`umask`
 	umask 0002
 
 	if [ "${2:-unset}" == "unset" ]; then

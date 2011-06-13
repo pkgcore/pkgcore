@@ -29,11 +29,11 @@ best_version()
 keepdir()
 {
 	dodir "$@"
-	local x
 	if [ "$1" == "-R" ] || [ "$1" == "-r" ]; then
 		shift
 		find "$@" -type d -printf "${D}/%p/.keep\0" | $XARGS -0 -n100 touch || die "Failed to recursive create .keep files"
 	else
+		local x
 		for x in "$@"; do
 			touch "${D}/${x}/.keep" || die "Failed to create .keep in ${D}/${x}"
 		done
@@ -154,6 +154,7 @@ unpack()
 
 dyn_src_install()
 {
+	local f
 	echo
 	echo ">>> Install ${PF} into ${D} category ${CATEGORY}"
 	if is_function src_install; then
@@ -161,6 +162,7 @@ dyn_src_install()
 	else
 		run_function_if_exists pkgcore_default_src_install
 	fi
+
 	"${PKGCORE_BIN_PATH}/helpers/internals/prepall"
 	cd "${D}"
 
@@ -240,6 +242,7 @@ dyn_pkg_preinst()
 {
 	# set IMAGE depending if this is a binary or compile merge
 	local IMAGE=${D}
+	local i
 
 	if is_function pkg_preinst; then
 		pkg_preinst
@@ -488,6 +491,7 @@ EXPORT_FUNCTIONS()
 # PATH
 remove_path_entry()
 {
+	local cur_path stripped_path p
 	pkgcore_push_IFS ':'
 	stripped_path="${PATH}"
 	while [ -n "$1" ]; do
@@ -507,7 +511,6 @@ remove_path_entry()
 QA_INTERCEPTORS="javac java-config python python-config perl grep egrep fgrep sed gcc g++ cc bash awk nawk pkg-config"
 enable_qa_interceptors()
 {
-
 	# Turn of extended glob matching so that g++ doesn't get incorrectly matched.
 	shopt -u extglob
 
@@ -535,6 +538,7 @@ enable_qa_interceptors()
 
 disable_qa_interceptors()
 {
+	local x
 	for x in $QA_INTERCEPTORS; do
 		unset -f $x
 	done
@@ -548,7 +552,6 @@ useq()
 		u="${u:1}"
 		neg=1
 	fi
-	local x
 
 	# Make sure we have this USE flag in IUSE
 	# temp disable due to PORTAGE_ARCHLIST not being exported in
@@ -556,6 +559,7 @@ useq()
 	#    echo "QA Notice: USE Flag '${u}' not in IUSE for ${CATEGORY}/${PF}" >&2
 	#fi
 
+	local x
 	for x in ${USE}; do
 		if [ "${x}" == "${u}" ]; then
 			if [ ${neg} -eq 1 ]; then
@@ -583,6 +587,7 @@ usev()
 
 insopts()
 {
+	local x
 	INSOPTIONS=""
 	for x in $*; do
 		#if we have a debug build, let's not strip anything
@@ -597,6 +602,7 @@ insopts()
 
 diropts()
 {
+	local x
 	DIROPTIONS=""
 	for x in $*; do
 		DIROPTIONS="${DIROPTIONS} $x"
@@ -606,6 +612,7 @@ diropts()
 
 exeopts()
 {
+	local x
 	EXEOPTIONS=""
 	for x in $*; do
 		#if we have a debug build, let's not strip anything
@@ -620,6 +627,7 @@ exeopts()
 
 libopts()
 {
+	local x
 	LIBOPTIONS=""
 	for x in $*; do
 		#if we have a debug build, let's not strip anything

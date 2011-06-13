@@ -142,7 +142,7 @@ pkgcore_ebd_exec_main()
 			exit 1
 		fi
 		ebd_write_line "$SANDBOX_LOG"
-		declare -rx SANDBOX_LOG="$SANDBOX_LOG" #  #="/tmp/sandbox-${P}-${PORTAGE_SANDBOX_PID}.log"
+		declare -rx SANDBOX_LOG="$SANDBOX_LOG"
 		addwrite $SANDBOX_LOG
 	fi
 
@@ -185,6 +185,7 @@ pkgcore_ebd_exec_main()
 	for x in $DONT_EXPORT_FUNCS; do
 		is_function $x && declare -fr $x &> /dev/null
 	done
+	unset x
 
 	# depend's speed up.  turn on qa interceptors by default, instead of flipping them on for each depends;
 	# same for loading depends .lib
@@ -227,11 +228,10 @@ pkgcore_ebd_process_ebuild_phases()
 		is_depends=false
 		disable_qa_interceptors
 	fi
-	line=''
-	cont=0
+	local cont=0
 
 	while [ "$cont" == 0 ]; do
-		line=''
+		local line=''
 		ebd_read_line line
 		case "$line" in
 		start_receiving_env*)
@@ -336,11 +336,13 @@ pkgcore_ebd_process_ebuild_phases()
 
 ebd_process_metadata()
 {
+	# protect the env.
+	# note the local usage is redunant in light of it, but prefer to write it this
+	# way so that if someone ever drops the (), it'll still not bleed out.
+	(
 	local size=$1
 	local data
 	local ret
-	# protect the env.
-	(
 	ebd_read_size $1 data
 	pkgcore_push_IFS $'\0'
 	eval "$data"
@@ -361,17 +363,16 @@ ebd_process_metadata()
 
 pkgcore_ebd_main_loop()
 {
-	local com line phases alive
-	alive=1
+	local line alive=1
 	DONT_EXPORT_VARS="${DONT_EXPORT_VARS} alie com phases line cont DONT_EXPORT_FUNCS"
 	SANDBOX_ON=1
 	while [[ $alive == 1 ]]; do
-		com=''
+		local com=''
 		ebd_read_line com
 		case $com in
 		process_ebuild*)
 			# cleanse whitespace.
-			phases="$(echo ${com#process_ebuild})"
+			local phases="$(echo ${com#process_ebuild})"
 			PORTAGE_SANDBOX_PID="$PPID"
 			pkgcore_ebd_process_ebuild_phases ${phases}
 			# tell python if it succeeded or not.

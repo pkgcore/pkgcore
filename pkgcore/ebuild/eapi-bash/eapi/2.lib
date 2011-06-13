@@ -3,17 +3,17 @@
 
 pkgcore_eapi2_src_configure()
 {
-    if [[ -x ${ECONF_SOURCE:-.}/configure ]] ; then
-        econf
-    fi
+	if [[ -x ${ECONF_SOURCE:-.}/configure ]] ; then
+		econf
+	fi
 }
 
 pkgcore_eapi2_src_prepare() {
-    :
+	:
 }
 
 for x in pkg_nofetch src_{unpack,compile,test}; do
-    eval "default_${x}() { pkgcore_common_${x}; }"
+	eval "default_${x}() { pkgcore_common_${x}; }"
 done
 unset x
 

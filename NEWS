@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* loosen up pebuild a bit; choose the max version if slot/repo are all the
+  same.  This allows pebuild dev-util/nano to choose 2.3.1 for example.
+
 * tighten up econf implementation; ctarget/cbuild are now forced as early
   arguments to configure to work around some misbehaviours in configure
   scripts (broken scripts, but so it goes).

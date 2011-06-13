@@ -11,6 +11,7 @@ from pkgcore.util import commandline
 from pkgcore.ebuild import atom, errors
 from pkgcore.operations import observer
 from snakeoil.formatters import ObserverFormatter
+from snakeoil.compatibility import all
 
 
 class OptionParser(commandline.OptionParser):
@@ -40,8 +41,17 @@ def main(options, out, err):
         err.write('got no matches for %s\n' % (options.atom,))
         return 1
     if len(pkgs) > 1:
-        err.write('got multiple matches for %s: %s\n' % (options.atom, pkgs))
-        return 1
+        err.write('got multiple matches for %s:' % (options.atom,))
+        if len(set((pkg.slot, pkg.repo) for pkg in pkgs)) != 1:
+            for pkg in sorted(pkgs):
+                err.write("repo %r, slot %r, %s" %
+                    (getattr(pkg.repo, 'repo_id', 'unknown'), pkg.slot, pkg.cpvstr,), prefix="  ")
+            err.write()
+            err.write("please refine your restriction to match only one slot/repo pair\n");
+            return 1
+        pkgs = [max(pkgs)]
+        err.write("choosing %r, slot %r, %s" % (getattr(pkgs[0].repo, 'repo_id', 'unknown'),
+            pkgs[0].slot, pkgs[0].cpvstr), prefix='  ')
     kwds = {}
     build_obs = observer.file_build_observer(ObserverFormatter(out),
         not options.debug)

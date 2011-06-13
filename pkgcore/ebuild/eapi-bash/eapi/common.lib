@@ -118,6 +118,7 @@ econf()
 		    # The escaping is weird. It will break if you escape the last one.
 		    CONF_LIBDIR_RESULT="${CONF_LIBDIR_RESULT//\/\///}"
 		done
+		unset X
 
 		FORCED_ECONF="--libdir=${CONF_LIBDIR_RESULT} ${FORCED_ECONF}"
 		unset CONF_LIBDIR_RESULT

@@ -78,7 +78,8 @@ dump_trace() {
 		local sourcefile=$(basename ${BASH_SOURCE[${n}]})
 		local lineno=${BASH_LINENO[${n} - 1]}
 		# Display function arguments
-		local args newargs
+		local args= newargs=
+		local j
 		if [[ -n "${BASH_ARGV[@]}" ]]; then
 			for (( j = 0 ; j < ${BASH_ARGC[${n} - 1]} ; ++j )); do
 				newarg=${BASH_ARGV[$(( p - j - 1 ))]}

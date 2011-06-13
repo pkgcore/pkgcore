@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* tighten up econf implementation; ctarget/cbuild are now forced as early
+  arguments to configure to work around some misbehaviours in configure
+  scripts (broken scripts, but so it goes).
+
 * tighten up ebuild environments variable handling- had a bleed through
   of variable 'x' that was breaking mesa builds.
 

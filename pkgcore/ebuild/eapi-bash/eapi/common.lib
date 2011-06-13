@@ -83,11 +83,6 @@ econf()
 		done
 	fi
 
-	local FORCED_ECONF
-	if [ ! -z "${CBUILD}" ]; then
-		FORCED_ECONF="--build=${CBUILD}"
-	fi
-
 	# if the profile defines a location to install libs to aside from default, pass it on.
 	# if the ebuild passes in --libdir, they're responsible for the conf_libdir fun.
 
@@ -120,7 +115,7 @@ econf()
 		done
 		unset X
 
-		FORCED_ECONF="--libdir=${CONF_LIBDIR_RESULT} ${FORCED_ECONF}"
+		set -- --libdir="${CONF_LIBDIR_RESULT}" "$@"
 		unset CONF_LIBDIR_RESULT
 	fi
 
@@ -132,31 +127,22 @@ econf()
 		fi
 	fi
 
-	local EECONF_CACHE
-	echo ${ECONF_SOURCE}/configure \
+	set -- ${ECONF_SOURCE}/configure \
 		--prefix=/usr \
+		${CBUILD:+--build=${CBUILD}} \
 		--host=${CHOST} \
+		${CTARGET:+--target=${CTARGET}} \
 		--mandir=/usr/share/man \
 		--infodir=/usr/share/info \
 		--datadir=/usr/share \
 		--sysconfdir=/etc \
 		--localstatedir=/var/lib \
-		${FORCED_ECONF} \
-		${EXTRA_ECONF} \
-		${EECONF_CACHE} \
-		"$@"
+		"$@" \
+		${EXTRA_ECONF}
 
-	if ! ${ECONF_SOURCE}/configure \
-		--prefix=/usr \
-		--host=${CHOST} \
-		--mandir=/usr/share/man \
-		--infodir=/usr/share/info \
-		--datadir=/usr/share \
-		--sysconfdir=/etc \
-		--localstatedir=/var/lib \
-		${EXTRA_ECONF} \
-		${EECONF_CACHE} \
-		"$@" ; then
+	echo "$@"
+
+	if ! "$@"; then
 
 		if [ -s config.log ]; then
 		    echo

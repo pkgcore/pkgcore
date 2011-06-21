@@ -18,7 +18,7 @@ class base(object):
 
     built = False
     configurable = False
-    _opterations = format.operations
+    _operations = format.operations
 
     __metaclass__ = klass.immutable_instance
 

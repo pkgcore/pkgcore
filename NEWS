@@ -4,6 +4,10 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* Log an error, rather than throwing an exception when binpkg cache cannot
+  be updated.  Needs refinement long term, but for average users, this is
+  preferable.
+
 * loosen up pebuild a bit; choose the max version if slot/repo are all the
   same.  This allows pebuild dev-util/nano to choose 2.3.1 for example.
 

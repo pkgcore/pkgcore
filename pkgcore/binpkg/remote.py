@@ -24,6 +24,7 @@ demandload(globals(), 'errno',
     'snakeoil.containers:RefCountingSet',
     'snakeoil.osutils:readlines',
     'operator:itemgetter',
+    'pkgcore:log',
 )
 
 
@@ -185,13 +186,20 @@ class PackagesCacheV0(cache.bulk):
         return d
 
     def _write_data(self):
-        handler = AtomicWriteFile(self._location)
+        handler = None
         try:
-            self._serialize_to_handle(self.data.items(), handler)
-            handler.close()
-        except:
-            handler.discard()
-            raise
+            try:
+                handler = AtomicWriteFile(self._location)
+                self._serialize_to_handle(self.data.items(), handler)
+                handler.close()
+            except EnvironmentError, e:
+                if e.errno != errno.EACCES:
+                    raise
+                log.logger.error("failed writing binpkg Packages cache to %r; permissions issue %s",
+                   self._location, e)
+        finally:
+            if handler is not None:
+                handler.discard()
 
     def _serialize_to_handle(self, data, handler):
         preamble = self._assemble_preamble_dict(data)

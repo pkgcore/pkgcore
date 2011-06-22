@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.6.5: Jun 22nd, 2011
+
 * Log an error, rather than throwing an exception when binpkg cache cannot
   be updated.  Needs refinement long term, but for average users, this is
   preferable.

@@ -186,12 +186,12 @@ class Delayed(argparse.Action):
         setattr(namespace, __ns_delayed_attr__, delayed_invokes)
 
 
-color_argparser = argparse.ArgumentParser()
+color_argparser = argparse.ArgumentParser(add_help=False)
 color_argparser.add_argument('--color', action=StoreBool,
     help="Enable or disable color support.")
 
 
-config_argparser = argparse.ArgumentParser(add_help=True)
+config_argparser = argparse.ArgumentParser(add_help=False)
 config_argparser.add_argument('--config-modify', '--add-config', '--new-config', nargs=3,
     metavar="SECTION KEY VALUE",
     help="Modify configuration section, creating it if needed.  Takes three "
@@ -200,9 +200,11 @@ config_argparser.add_argument('--config-modify', '--add-config', '--new-config',
 config_argparser.add_argument('--config-empty', '--empty-config', action='store_true',
     help="Do not load user/system configuration.")
 
-domain_argparser = argparse.ArgumentParser()
+domain_argparser = argparse.ArgumentParser(add_help=False)
 domain_argparser.add_argument('--domain',
     help="domain to use for this operation")
+
+default_parents = (color_argparser, config_argparser, domain_argparser)
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -222,9 +224,37 @@ class ArgumentParser(argparse.ArgumentParser):
         delattr(args, __ns_delayed_attr__)
         return args
 
+def argparse_parse(parser, args):
+    namespace = parser.parse_args(args)
+    main = getattr(namespace, 'main_func', None)
+    if main is None:
+        raise Exception("parser %r lacks a main method- internal bug.\nGot namespace %r\n"
+            % (parser, namespace))
+    return main, namespace
 
-def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
-         script_name=None):
+def convert_to_restrict(sequence, default=packages.AlwaysTrue):
+    """Convert an iterable to a list of atoms, or return the default"""
+    l = []
+    try:
+        for x in sequence:
+            l.append(parserestrict.parse_match(x))
+    except parserestrict.ParseError, e:
+        raise optparse.OptionValueError("arg %r isn't a valid atom: %s"
+            % (x, e))
+    return l or [default]
+
+def find_domains_from_path(config, path):
+    path = osutils.normpath(osutils.abspath(path))
+    for name, domain in config.domain.iteritems():
+        root = getattr(domain, 'root', None)
+        if root is None:
+            continue
+        root = osutils.normpath(osutils.abspath(root))
+        if root == path:
+            yield name, domain
+
+def main(subcommands, args=None, outfile=None, errfile=None,
+    script_name=None):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
     Takes one or more combinations of option parser and main func and
@@ -251,30 +281,40 @@ def main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
     :param script_name: basename of this script, defaults to the basename
         of C{sys.argv[0]}.
     """
-    if isinstance(subcommands, dict):
-        return optparse_main(subcommands, args=args, outfile=outfile,
-            errfile=errfile, script_name=script_name,
-            _Formatter=FormattingHandler)
+    exitstatus = 1
 
-    raise MySystemExit(exitstatus)
+    if outfile is None:
+        outfile = sys.stdout
+    if errfile is None:
+        errfile = sys.stderr
 
-def convert_to_restrict(sequence, default=packages.AlwaysTrue):
-    """Convert an iterable to a list of atoms, or return the default"""
-    l = []
     try:
-        for x in sequence:
-            l.append(parserestrict.parse_match(x))
-    except parserestrict.ParseError, e:
-        raise optparse.OptionValueError("arg %r isn't a valid atom: %s"
-            % (x, e))
-    return l or [default]
+        if isinstance(subcommands, dict):
+            main_func, options = optparse_parse(subcommands, args=args, script_name=script_name)
+        else:
+            main_func, options = argparse_parse(subcommands, args)
 
-def find_domains_from_path(config, path):
-    path = osutils.normpath(osutils.abspath(path))
-    for name, domain in config.domain.iteritems():
-        root = getattr(domain, 'root', None)
-        if root is None:
-            continue
-        root = osutils.normpath(osutils.abspath(root))
-        if root == path:
-            yield name, domain
+        if getattr(options, 'color', True):
+            formatter_factory = formatters.get_formatter
+        else:
+            formatter_factory = formatters.PlainTextFormatter
+        out = formatter_factory(outfile)
+        err = formatter_factory(errfile)
+        if logging.root.handlers:
+            # Remove the default handler.
+            logging.root.handlers.pop(0)
+        logging.root.addHandler(FormattingHandler(err))
+        exitstatus = main_func(options, out, err)
+    except errors.ConfigurationError, e:
+        if getattr(options, 'debug', False):
+            raise
+        errfile.write('Error in configuration:\n%s\n' % (e,))
+    except KeyboardInterrupt:
+        if getattr(options, 'debug', False):
+            raise
+    if out is not None:
+        if exitstatus:
+            out.title('%s failed' % (options.prog,))
+        else:
+            out.title('%s succeeded' % (options.prog,))
+    raise MySystemExit(exitstatus)

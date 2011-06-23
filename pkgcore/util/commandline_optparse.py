@@ -19,7 +19,7 @@ __all__ = ("Values", "Option", "OptionParser",
     "domain_callback", "config_append_callback",
     "debug_callback", "new_config_callback", "empty_config_callback",
     "convert_bool_type",
-    "optparse_main", "MySystemExit",
+    "optparse_parse", "MySystemExit",
 )
 
 import sys
@@ -450,9 +450,8 @@ def output_subcommands(prog, subcommands, out):
         out.write("no commands available\n")
 
 
-def optparse_main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr,
-         script_name=None, subcommand_usage_func=output_subcommands,
-         _Formatter=None):
+def optparse_parse(subcommands, args=None, script_name=None,
+    subcommand_usage_func=output_subcommands):
     """Function to use in an "if __name__ == '__main__'" block in a script.
 
     Takes one or more combinations of option parser and main func and
@@ -471,15 +470,10 @@ def optparse_main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr
         exit status or None as synonym for 0.
     :type args: sequence of strings
     :param args: arguments to parse, defaulting to C{sys.argv[1:]}.
-    :type outfile: file-like object
-    :param outfile: File to use for stdout, defaults to C{sys.stdout}.
-    :type errfile: file-like object
-    :param errfile: File to use for stderr, defaults to C{sys.stderr}.
     :type script_name: string
     :param script_name: basename of this script, defaults to the basename
         of C{sys.argv[0]}.
     """
-    exitstatus = 1
     if args is None:
         args = sys.argv[1:]
     if script_name is None:
@@ -516,39 +510,18 @@ def optparse_main(subcommands, args=None, outfile=sys.stdout, errfile=sys.stderr
 
     options = None
     option_parser = parser_class(prog=prog)
-    out = None
-    try:
-        options, args = option_parser.parse_args(args)
-        # Checked here and not in OptionParser because we want our
-        # check_values to run before the user's, not after it.
-        if args:
-            option_parser.error("I don't know what to do with %s" %
-                                (' '.join(args),))
-        else:
-            if options.color:
-                formatter_factory = formatters.get_formatter
-            else:
-                formatter_factory = formatters.PlainTextFormatter
-            out = formatter_factory(outfile)
-            err = formatter_factory(errfile)
-            if logging.root.handlers:
-                # Remove the default handler.
-                logging.root.handlers.pop(0)
-            logging.root.addHandler(_Formatter(err))
-            if main_func is None:
-                exitstatus = option_parser.run(options, out, err)
-            else:
-                exitstatus = main_func(options, out, err)
-    except errors.ConfigurationError, e:
-        if options is not None and options.debug:
-            raise
-        errfile.write('Error in configuration:\n%s\n' % (e,))
-    except KeyboardInterrupt:
-        if options is not None and options.debug:
-            raise
-    if out is not None:
-        if exitstatus:
-            out.title('%s failed' % (prog,))
-        else:
-            out.title('%s succeeded' % (prog,))
-    raise MySystemExit(exitstatus)
+    options, args = option_parser.parse_args(args)
+    # Checked here and not in OptionParser because we want our
+    # check_values to run before the user's, not after it.
+    if args:
+        option_parser.error("I don't know what to do with %s" %
+                           (' '.join(args),))
+        raise MySystemExit(1)
+    if not hasattr(options, 'prog'):
+        options.prog = prog
+    if main_func is None:
+        main_func = getattr(option_parser, 'run', None)
+        if main_func is None:
+            raise Exception("internal error; OptParser parser %s doesn't have "
+                "any specified main" % (option_parser,))
+    return main_func, options

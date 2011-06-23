@@ -1148,6 +1148,10 @@ class Namespace(_AttributeHolder):
     string representation.
     """
 
+    # pkgcore modification to suppress test complaints:
+    __hash__intentionally_disabled__ = True
+
+
     def __init__(self, **kwargs):
         for name in kwargs:
             setattr(self, name, kwargs[name])

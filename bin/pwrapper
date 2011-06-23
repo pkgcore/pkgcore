@@ -27,7 +27,9 @@ except ImportError:
 if __name__ == '__main__':
     name = osp.basename(sys.argv[0]).replace("-", "_")
     script = modules.load_module('pkgcore.scripts.%s' % (name,))
-    subcommands = getattr(script, 'commandline_commands', None)
+    subcommands = getattr(script, 'argparse_parser', None)
     if subcommands is None:
-        subcommands = {None: (script.OptionParser, script.main)}
+        subcommands = getattr(script, 'commandline_commands', None)
+        if subcommands is None:
+            subcommands = {None: (script.OptionParser, script.main)}
     commandline.main(subcommands)

@@ -5,33 +5,13 @@
 
 """Low-level ebuild operations."""
 
-__all__ = ("OptionParser", "main")
+__all__ = ("argparse_parser", "main")
 
 from pkgcore.util import commandline
 from pkgcore.ebuild import atom, errors
 from pkgcore.operations import observer
 from snakeoil.formatters import ObserverFormatter
 from snakeoil.compatibility import all
-
-
-class OptionParser(commandline.OptionParser):
-
-    description = __doc__
-    usage = '%prog [options] atom phases'
-
-    def _register_options(self):
-        self.add_option("--no-auto", action='store_true', default=False,
-            help="run just the specified phases.  may explode.")
-
-    def _check_values(self, values, args):
-        if len(args) < 2:
-            self.error('Specify an atom and at least one phase.')
-        try:
-            values.atom = atom.atom(args[0])
-        except errors.MalformedAtom, e:
-            self.error(str(e))
-        values.phases = args[1:]
-        return values, ()
 
 
 def main(options, out, err):
@@ -56,8 +36,8 @@ def main(options, out, err):
     build_obs = observer.file_build_observer(ObserverFormatter(out),
         not options.debug)
 
-    phases = [x for x in options.phases if x != 'clean']
-    clean = (len(phases) != len(options.phases))
+    phases = [x for x in options.phase if x != 'clean']
+    clean = (len(phases) != len(options.phase))
 
     if options.no_auto:
         kwds["ignore_deps"] = True
@@ -74,3 +54,13 @@ def main(options, out, err):
         out.write()
         out.write('executing phase %s' % (phase,))
         f(**kwds)
+
+argparse_parser = commandline.mk_argparser(description=__doc__)
+argparse_parser.add_argument("--no-auto", action='store_true', default=False,
+    help="run just the specified phases; it's up to the invoker to get the order right")
+argparse_parser.add_argument('atom', type=atom.atom,
+    help="atom to match a pkg to execute phases from")
+argparse_parser.add_argument('phase', nargs='+',
+    help="phases to run")
+argparse_parser.set_defaults(main_func=main)
+

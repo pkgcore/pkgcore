@@ -7,14 +7,13 @@ from pkgcore.scripts import pebuild
 from pkgcore.test.scripts import helpers
 
 
-class CommandlineTest(TestCase, helpers.MainMixin):
+class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(pebuild.OptionParser())
-    main = staticmethod(pebuild.main)
+    _argparser = pebuild.argparse_parser
 
     def test_parser(self):
-        self.assertError('Specify an atom and at least one phase.')
-        self.assertError('Specify an atom and at least one phase.', 'foo')
-        self.assertError("atom 'spork' is malformed: error spork",
+        self.assertError('too few arguments')
+        self.assertError('too few arguments', 'dev-util/diffball')
+        self.assertError("argument atom: invalid atom value: 'spork'",
                          'spork', 'unpack')
-        self.assertEqual(self.parse('foo/bar', 'baz', 'spork').phases, ['baz', 'spork'])
+        self.assertEqual(self.parse('foo/bar', 'baz', 'spork').phase, ['baz', 'spork'])

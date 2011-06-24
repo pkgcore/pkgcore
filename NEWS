@@ -4,6 +4,9 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* fix traceback in user profile support (/etc/portage/profiles).
+
+
 pkgcore 0.6.5: Jun 22nd, 2011
 
 * Log an error, rather than throwing an exception when binpkg cache cannot

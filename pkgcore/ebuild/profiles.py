@@ -451,9 +451,9 @@ class UserProfile(OnDiskProfile):
         typename='profile')
 
     def __init__(self, user_path, parent_path, parent_profile,
-        incrementals=const.incrementals, load_profiles_base=False):
+        load_profiles_base=False):
         OnDiskProfile.__init__(self, parent_path, parent_profile,
-            incrementals, load_profiles_base)
+            load_profiles_base)
         self.node = UserProfileNode(user_path, pjoin(parent_path, parent_profile))
 
 

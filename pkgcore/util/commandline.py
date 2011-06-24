@@ -23,7 +23,7 @@ import os.path
 import logging
 
 from pkgcore.config import load_config, errors
-from snakeoil import formatters, demandload
+from snakeoil import formatters, demandload, currying
 import optparse
 from pkgcore.util import argparse
 from pkgcore.util.commandline_optparse import *
@@ -165,7 +165,6 @@ class StoreConfig(argparse._StoreAction):
             value = [self._load_obj(sections, x) for x in values]
         setattr(namespace, self.dest, value)
 
-__ns_delayed_attr__ = '__delayed_instantiation__'
 
 class Delayed(argparse.Action):
 
@@ -180,49 +179,89 @@ class Delayed(argparse.Action):
             help=kwds.get("help", None), metavar=kwds.get("metavar", None))
 
     def __call__(self, parser, namespace, values, option_string=None):
-        delayed_invokes = getattr(namespace, __ns_delayed_attr__, {})
-        delayed_invokes.setdefault(self.priority, []).append(
-            (self.target, parser, values, option_string))
-        setattr(namespace, __ns_delayed_attr__, delayed_invokes)
+        setattr(namespace, self.dest, DelayedValue(
+            currying.partial(self.target, parser, namespace, values, option_string),
+            priority=self.priority))
 
 
-color_argparser = argparse.ArgumentParser(add_help=False)
-color_argparser.add_argument('--color', action=StoreBool,
-    help="Enable or disable color support.")
+class DelayedValue(object):
 
+    def __init__(self, invokable, priority, delayed_parse=True):
+        self.invokable = invokable
+        self.delayed_parse = delayed_parse
+        self.priority = priority
 
-config_argparser = argparse.ArgumentParser(add_help=False)
-config_argparser.add_argument('--config-modify', '--add-config', '--new-config', nargs=3,
-    metavar="SECTION KEY VALUE",
-    help="Modify configuration section, creating it if needed.  Takes three "
-        "arguments- the name of the section to modify, the key, and the "
-        "value.")
-config_argparser.add_argument('--config-empty', '--empty-config', action='store_true',
-    help="Do not load user/system configuration.")
-
-domain_argparser = argparse.ArgumentParser(add_help=False)
-domain_argparser.add_argument('--domain',
-    help="domain to use for this operation")
-
-default_parents = (color_argparser, config_argparser, domain_argparser)
+    def __call__(self, namespace, attr):
+        if self.delayed_parse:
+            self.invokable()
+        else:
+            self.invokable(namespace, attr)
 
 
 class ArgumentParser(argparse.ArgumentParser):
 
+    def __init__(self,
+                 prog=None,
+                 usage=None,
+                 description=None,
+                 epilog=None,
+                 version=None,
+                 parents=[],
+                 formatter_class=argparse.HelpFormatter,
+                 prefix_chars='-',
+                 fromfile_prefix_chars=None,
+                 argument_default=None,
+                 conflict_handler='error',
+                 add_help=True):
+        super(ArgumentParser, self).__init__(prog=prog, usage=usage,
+            description=description, epilog=epilog, version=version,
+            parents=parents, formatter_class=formatter_class,
+            prefix_chars=prefix_chars, fromfile_prefix_chars=fromfile_prefix_chars,
+            argument_default=argument_default, conflict_handler=conflict_handler,
+            add_help=add_help)
+
     def parse_args(self, args=None, namespace=None):
         args = argparse.ArgumentParser.parse_args(self, args, namespace)
 
-        if not hasattr(args, __ns_delayed_attr__):
-            return args
-        sentinel = object()
-        delayed = getattr(args, __ns_delayed_attr__, sentinel)
-        if sentinel is delayed:
-            return args
-        for priority in sorted(delayed):
-            for target, parser, values, option_string in delayed[priority]:
-                target(parser, args, values, option_string)
-        delattr(args, __ns_delayed_attr__)
+        # bleh.  direct access...
+        i = ((attr, val) for attr, val in args.__dict__.iteritems()
+            if isinstance(val, DelayedValue))
+        for attr, delayed in sorted(i, key=lambda val:val[1].priority):
+            delayed(args, attr)
         return args
+
+    @staticmethod
+    def _delayed_default_target(target, key, parser, values, option_string):
+        target(values, key)
+
+def store_config(values, key):
+    setattr(values, key, load_config())
+
+def mk_argparser(config=True, domain=True, color=True, debug=True, **kwds):
+    p = ArgumentParser(**kwds)
+    if debug:
+        p.add_argument('--debug', action='store_true', help="Enable debugging checks")
+    if color:
+        p.add_argument('--color', action=StoreBool,
+            help="Enable or disable color support.")
+
+    if config:
+        p.add_argument('--config-modify', '--add-config', '--new-config', nargs=3,
+            metavar="SECTION KEY VALUE",
+            help="Modify configuration section, creating it if needed.  Takes three "
+                "arguments- the name of the section to modify, the key, and the "
+                "value.")
+        p.add_argument('--config-empty', '--empty-config', action='store_true',
+            help="Do not load user/system configuration.")
+
+        p.set_defaults(config=DelayedValue(store_config, 0, False))
+
+    if domain:
+        p.add_argument('--domain',
+            help="domain to use for this operation")
+        #domain_argparser.set_defaults(domain=Delay
+    return p
+
 
 def argparse_parse(parser, args):
     namespace = parser.parse_args(args)
@@ -230,6 +269,7 @@ def argparse_parse(parser, args):
     if main is None:
         raise Exception("parser %r lacks a main method- internal bug.\nGot namespace %r\n"
             % (parser, namespace))
+    namespace.prog = parser.prog
     return main, namespace
 
 def convert_to_restrict(sequence, default=packages.AlwaysTrue):
@@ -288,9 +328,11 @@ def main(subcommands, args=None, outfile=None, errfile=None,
     if errfile is None:
         errfile = sys.stderr
 
+    options = out = None
     try:
         if isinstance(subcommands, dict):
-            main_func, options = optparse_parse(subcommands, args=args, script_name=script_name)
+            main_func, options = optparse_parse(subcommands, args=args, script_name=script_name,
+                errfile=errfile)
         else:
             main_func, options = argparse_parse(subcommands, args)
 

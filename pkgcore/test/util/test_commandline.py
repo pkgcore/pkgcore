@@ -292,10 +292,12 @@ class MainTest(TestCase):
             0, 'args: dar\n', '',
             {None:newparser}, args=['--foon', 'dar'])
 
-    def test_weird_parser(self):
+    def test_optparse_with_invalid_args(self):
         class WeirdParser(commandline.OptionParser):
             def error(self, msg):
                 """Ignore errors."""
+        # this is specifically asserting that if given a positional arg (the '1'),
+        # which isn't valid in our optparse setup, it returns exit code 1.
         self.assertMain(
             1, '', '',
             {None: (WeirdParser, main)}, ['1'])

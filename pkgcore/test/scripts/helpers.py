@@ -4,10 +4,11 @@
 
 """Helpers for testing scripts."""
 
-import difflib
-from pkgcore.config import central
+import difflib, copy
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.caching import WeakInstMeta
+from pkgcore.config import central
+from pkgcore.util import commandline
 
 
 class Exit(Exception):
@@ -145,6 +146,9 @@ class MainMixin(object):
         """Like L{assertOutAndErr} but without out."""
         return self.assertOutAndErr((), err, *args, **kwargs)
 
+    def get_main(self, options):
+        return self.main
+
     def assertOutAndErr(self, out, err, *args, **kwargs):
         """Parse options and run main.
 
@@ -158,7 +162,8 @@ class MainMixin(object):
         options = self.parse(*args, **kwargs)
         outformatter = FakeStreamFormatter()
         errformatter = FakeStreamFormatter()
-        self.main(options, outformatter, errformatter)
+        main = self.get_main(options)
+        main(options, outformatter, errformatter)
         diffs = []
         for name, strings, formatter in [('out', out, outformatter),
                                          ('err', err, errformatter)]:
@@ -174,3 +179,26 @@ class MainMixin(object):
         if diffs:
             self.fail('\n' + '\n'.join(diffs))
         return options.config
+
+
+class ArgParseMixin(MainMixin):
+
+    def parse(self, *args, **kwargs):
+        """Parse a commandline and return the Values object.
+
+        args are passed to parse_args, keyword args are used as config keys.
+        """
+        namespace = commandline.argparse.Namespace()
+        namespace.config = central.ConfigManager([kwargs], debug=True)
+        # optparse needs a list (it does make a copy, but it uses [:]
+        # to do it, which is a noop on a tuple).
+        namespace = self.parser.parse_args(list(args), namespace=namespace)
+        return namespace
+
+    @property
+    def parser(self):
+        p = copy.copy(self._argparser)
+        return mangle_parser(p)
+
+    def get_main(self, namespace):
+        return namespace.main_func

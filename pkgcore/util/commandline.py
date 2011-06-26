@@ -234,8 +234,29 @@ class ArgumentParser(argparse.ArgumentParser):
     def _delayed_default_target(target, key, parser, values, option_string):
         target(values, key)
 
-def store_config(values, key):
-    setattr(values, key, load_config())
+def _convert_config_mods(iterable):
+    d = {}
+    if iterable is None:
+        return d
+    for (section, key, value) in iterable:
+        d.setdefault(section, {})[key] = value
+    return d
+
+def store_config(namespace, attr):
+    prepend = map(_convert_config_mods,
+        [namespace.new_config, namespace.add_config])
+    # add necessary inherits for add_config
+    for key, vals in prepend[1].iteritems():
+        vals.setdefault('inherit', key)
+
+    prepend = [dict((section, basics.ConfigSectionFromStringDict(vals))
+        for section, vals in d.iteritems())
+            for d in prepend if d]
+
+    config = load_config(skip_config_files=namespace.empty_config,
+        debug=getattr(namespace, 'debug', False),
+        prepend_sources=tuple(prepend))
+    setattr(namespace, attr, config)
 
 def mk_argparser(config=True, domain=True, color=True, debug=True, **kwds):
     p = ArgumentParser(**kwds)
@@ -246,12 +267,14 @@ def mk_argparser(config=True, domain=True, color=True, debug=True, **kwds):
             help="Enable or disable color support.")
 
     if config:
-        p.add_argument('--config-modify', '--add-config', '--new-config', nargs=3,
-            metavar="SECTION KEY VALUE",
-            help="Modify configuration section, creating it if needed.  Takes three "
-                "arguments- the name of the section to modify, the key, and the "
-                "value.")
+        p.add_argument('--add-config', nargs=3, action='append',
+            metavar=("SECTION", "KEY", "VALUE"),
+            help="modify an existing configuration section.")
+        p.add_argument('--new-config', nargs=3, action='append',
+            metavar=("SECTION", "KEY", "VALUE"),
+            help="add a new configuration section.")
         p.add_argument('--config-empty', '--empty-config', action='store_true',
+            default=False, dest='empty_config',
             help="Do not load user/system configuration.")
 
         p.set_defaults(config=DelayedValue(store_config, 0, False))

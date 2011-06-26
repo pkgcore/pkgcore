@@ -25,7 +25,7 @@ def sect():
     """Just a no-op to use as configurable class."""
 
 
-class OptionsTest(TestCase):
+class OptparseOptionsTest(TestCase):
 
     def test_empty_sequence(self):
         parser = helpers.mangle_parser(commandline.OptionParser(option_list=[
@@ -163,6 +163,99 @@ class OptionsTest(TestCase):
         valuesref = weakref.ref(values)
         del values
         self.assertIdentical(None, valuesref())
+
+    def test_bool_type(self):
+        parser = helpers.mangle_parser(commandline.OptionParser())
+        parser.add_option("--testing", action='store', type='bool',
+            default=None)
+
+        for raw_val in ("n", "no", "false"):
+            for allowed in (raw_val.upper(), raw_val.lower()):
+                values, args = parser.parse_args(['--testing=' + allowed])
+                self.assertEqual(values.testing, False,
+                    msg="for --testing=%s, got %r, expected False" %
+                        (allowed, values.testing))
+
+        for raw_val in ("y", "yes", "true"):
+            for allowed in (raw_val.upper(), raw_val.lower()):
+                values, args = parser.parse_args(['--testing=' + allowed])
+                self.assertEqual(values.testing, True,
+                    msg="for --testing=%s, got %r, expected False" %
+                        (allowed, values.testing))
+
+        try:
+            parser.parse_args(["--testing=invalid"])
+        except helpers.Error, e:
+            pass
+        else:
+            self.fail("no error message thrown for --testing=invalid")
+
+
+class ArgparseOptionsTest(TestCase):
+
+    _parser_func = staticmethod(commandline.mk_argparser)
+
+    def _parser(self, **kwargs):
+        # suppress config/domain by default.
+        kwargs.setdefault("domain", False)
+        kwargs.setdefault("config", False)
+        return self._parser_func(**kwargs)
+
+    def test_debug(self):
+        namespace = self._parser().parse_args(["--debug"])
+        self.assertTrue(namespace.debug)
+        namespace = self._parser().parse_args([])
+        self.assertFalse(namespace.debug)
+
+        # ensure the option isn't there if disabled.
+        namespace = self._parser(debug=False).parse_args([])
+        self.assertFalse(hasattr(namespace, 'debug'))
+
+        # ensure debug is pushed down into config.
+        namespace = self._parser(config=True).parse_args(["--empty-config"])
+        self.assertFalse(namespace.config.debug)
+
+        namespace = self._parser(config=True).parse_args(
+            ["--empty-config", "--debug"])
+        self.assertTrue(namespace.config.debug)
+
+    def test_config_callback(self):
+        @configurable(typename='foon')
+        def test():
+            return 'foon!'
+        parser = helpers.mangle_parser(commandline.OptionParser())
+        parser.add_option('--spork', action='callback',
+                          callback=commandline.config_callback,
+                          type='string', callback_args=('foon',))
+        parser.add_option('--foon', action='callback',
+                          callback=commandline.config_callback,
+                          type='string', callback_args=('foon', 'utensil'))
+        values = parser.get_default_values()
+        values._config = central.ConfigManager([{
+                    'afoon': basics.HardCodedConfigSection({'class': test})}])
+
+        values, args = parser.parse_args(['--spork', 'afoon'], values)
+        self.assertEqual('foon!', values.spork)
+
+        try:
+            parser.parse_args(['--spork', 'nofoon'], values)
+        except helpers.Error, e:
+            self.assertEqual(
+                "'nofoon' is not a valid foon for --spork "
+                "(valid values: 'afoon')",
+                str(e))
+        else:
+            self.fail('no exception raised')
+
+        try:
+            parser.parse_args(['--foon', 'nofoon'], values)
+        except helpers.Error, e:
+            self.assertEqual(
+                "'nofoon' is not a valid utensil for --foon "
+                "(valid values: 'afoon')",
+                str(e))
+        else:
+            self.fail('no exception raised')
 
     def test_bool_type(self):
         parser = helpers.mangle_parser(commandline.OptionParser())

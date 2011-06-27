@@ -102,12 +102,7 @@ class Values(optparse.Values, object):
             for name, val in self.new_config.iteritems())
         add_config = {}
         for name, config in self.add_config.iteritems():
-            inherit = config.pop('inherit', None)
-            # XXX this will likely not be quite correctly quoted.
-            if inherit is None:
-                config['inherit'] = repr(name)
-            else:
-                config['inherit'] = '%s %r' % (inherit, name)
+            config['inherit'] = config.pop('inherit', name)
             add_config[name] = basics.ConfigSectionFromStringDict(config)
         # Triggers failures if these get mucked with after this point
         # (instead of silently ignoring).

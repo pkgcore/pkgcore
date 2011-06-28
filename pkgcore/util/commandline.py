@@ -29,6 +29,7 @@ from pkgcore.util import argparse
 from pkgcore.util.commandline_optparse import *
 
 demandload.demandload(globals(),
+    'copy@_copy',
     'snakeoil.fileutils:iter_read_bash',
     'snakeoil:osutils',
     'pkgcore:version',
@@ -76,6 +77,18 @@ def string_bool(value):
     elif value in ('n', 'no', 'false'):
         return False
     raise ValueError(value)
+
+
+class ExtendCommaDelimited(argparse._AppendAction):
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        items = _copy.copy(argparse._ensure_value(namespace, self.dest, []))
+        if not self.nargs or self.nargs < 1:
+            items.extend(filter(None, values.split(',')))
+        else:
+            for value in values:
+                items.extend(filter(None, value.split(',')))
+        setattr(namespace, self.dest, items)
 
 
 class StoreBool(argparse._StoreAction):

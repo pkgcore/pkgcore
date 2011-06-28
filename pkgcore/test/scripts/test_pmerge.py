@@ -16,16 +16,6 @@ default_formatter = basics.HardCodedConfigSection({
         })
 
 
-class fake_domain(object):
-    pkgcore_config_type = ConfigHint(typename='domain')
-    def __init__(self):
-        pass
-
-default_domain = basics.HardCodedConfigSection({
-    'class': fake_domain,
-    'default': True,
-    })
-
 class AtomParsingTest(TestCase):
 
     def test_parse_atom(self):
@@ -65,18 +55,18 @@ class CommandlineTest(TestCase, helpers.MainMixin):
                     'class': formatter.basic_factory}))
         self.assertError(
             "Using sets with -C probably isn't wise, aborting", '-Cs', 'boo',
-            default_formatter=default_formatter, default_domain=default_domain)
+            default_formatter=default_formatter, default_domain=helpers.default_domain)
         self.assertError(
             '--usepkg is redundant when --usepkgonly is used', '-Kk',
-            default_formatter=default_formatter, default_domain=default_domain)
+            default_formatter=default_formatter, default_domain=helpers.default_domain)
         self.assertError(
             "You must provide at least one atom", '--unmerge',
-            default_formatter=default_formatter, default_domain=default_domain)
+            default_formatter=default_formatter, default_domain=helpers.default_domain)
         options = self.parse('-s world', default_formatter=default_formatter,
-            default_domain=default_domain)
+            default_domain=helpers.default_domain)
         self.assertFalse(options.replace)
         options = self.parse('--clean', default_formatter=default_formatter,
-            default_domain=default_domain)
+            default_domain=helpers.default_domain)
         self.assertEqual(options.set, ['world', 'system'])
         self.assertTrue(options.deep, True)
 
@@ -88,4 +78,4 @@ class CommandlineTest(TestCase, helpers.MainMixin):
             'No default domain found, fix your configuration or pass '
             '--domain (valid domains: domain1)',
             default_formatter=default_formatter,
-            domain1=basics.HardCodedConfigSection({'class':fake_domain}))
+            domain1=basics.HardCodedConfigSection({'class':helpers.fake_domain}))

@@ -7,7 +7,7 @@
 import difflib, copy
 from snakeoil.formatters import PlainTextFormatter
 from snakeoil.caching import WeakInstMeta
-from pkgcore.config import central
+from pkgcore.config import central, basics, ConfigHint
 from pkgcore.util import commandline
 
 
@@ -42,6 +42,18 @@ def mangle_parser(parser):
     parser.exit = noexit
     parser.error = noerror
     return parser
+
+
+class fake_domain(object):
+    pkgcore_config_type = ConfigHint(typename='domain')
+    def __init__(self):
+        pass
+
+default_domain = basics.HardCodedConfigSection({
+    'class': fake_domain,
+    'default': True,
+    })
+
 
 class FormatterObject(object):
     __metaclass__ = WeakInstMeta
@@ -185,12 +197,16 @@ class MainMixin(object):
 
 class ArgParseMixin(MainMixin):
 
+    suppress_domain = False
+
     def parse(self, *args, **kwargs):
         """Parse a commandline and return the Values object.
 
         args are passed to parse_args, keyword args are used as config keys.
         """
         namespace = commandline.argparse.Namespace()
+        if kwargs.pop("suppress_domain", self.suppress_domain):
+            kwargs["default_domain"] = default_domain
         namespace.config = central.ConfigManager([kwargs], debug=True)
         # optparse needs a list (it does make a copy, but it uses [:]
         # to do it, which is a noop on a tuple).

@@ -7,10 +7,11 @@ from pkgcore import plugins
 from pkgcore.scripts import pplugincache
 from pkgcore.test.scripts import helpers
 
-class CommandlineTest(TestCase, helpers.MainMixin):
+class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(pplugincache.OptionParser())
-    main = staticmethod(pplugincache.main)
+    _argparser = pplugincache.argparse_parser
+
+    has_config = False
 
     def test_parser(self):
         self.assertEqual([plugins], self.parse().packages)

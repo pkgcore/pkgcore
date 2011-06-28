@@ -15,8 +15,7 @@ from snakeoil.compatibility import all
 
 
 def main(options, out, err):
-    domain = options.config.get_default('domain')
-    pkgs = domain.all_repos.match(options.atom)
+    pkgs = options.domain.all_repos.match(options.atom)
     if not pkgs:
         err.write('got no matches for %s\n' % (options.atom,))
         return 1
@@ -45,7 +44,7 @@ def main(options, out, err):
             phases.insert(0, "fetch")
     # by default turn off startup cleans; we clean by ourselves if
     # told to do so via an arg
-    build = domain.build_pkg(pkgs[0], build_obs, clean=False)
+    build = options.domain.build_pkg(pkgs[0], build_obs, clean=False)
     if clean:
         build.cleanup(force=True)
     build._reload_state()

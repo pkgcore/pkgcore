@@ -11,6 +11,8 @@ class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
     _argparser = pebuild.argparse_parser
 
+    suppress_domain = True
+
     def test_parser(self):
         self.assertError('too few arguments')
         self.assertError('too few arguments', 'dev-util/diffball')

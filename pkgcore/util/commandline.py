@@ -107,65 +107,6 @@ class StoreBool(argparse._StoreAction):
         raise ValueError("value %r must be [y|yes|true|n|no|false]" % (value,))
 
 
-class StoreConfig(argparse._StoreAction):
-    def __init__(self,
-                option_strings,
-                dest,
-                nargs=None,
-                const=None,
-                default=None,
-                config_type=None,
-                required=False,
-                help=None,
-                metavar=None):
-
-        if type is None:
-            raise ValueError("type must specify the config type to load")
-
-        super(StoreConfig, self).__init__(
-            option_strings=option_strings,
-            dest=dest,
-            nargs=nargs,
-            const=const,
-            default=default,
-            type=str,
-            required=required,
-            help=help)
-        self.config_type = config_type
-
-    def _get_kwargs(self):
-        names = [
-            'option_strings',
-            'dest',
-            'nargs',
-            'const',
-            'default',
-            'config_type',
-            'choices',
-            'help',
-            'metavar',
-        ]
-        return [(name, getattr(self, name)) for name in names]
-
-    def _load_obj(self, sections, name):
-        try:
-            return sections[name]
-        except KeyError:
-            raise argparse.ArgumentError(self, "couldn't find %s %r" %
-                (self.config_type, name))
-
-    def __call__(self, parser, namespace, values, option_string=None):
-        config = getattr(namespace, 'config', None)
-        if config is None:
-            raise ValueError("no config found.  Internal bug")
-        sections = getattr(config, self.config_type)
-        if isinstance(values, basestring):
-            value = self._load_obj(sections, values)
-        else:
-            value = [self._load_obj(sections, x) for x in values]
-        setattr(namespace, self.dest, value)
-
-
 class Delayed(argparse.Action):
 
     def __init__(self, option_strings, dest, target=None, priority=0, **kwds):
@@ -182,6 +123,59 @@ class Delayed(argparse.Action):
         setattr(namespace, self.dest, DelayedValue(
             currying.partial(self.target, parser, namespace, values, option_string),
             priority=self.priority))
+
+
+class StoreConfigObject(argparse._StoreAction):
+    def __init__(self,
+                *args,
+                **kwargs):
+
+        self.priority = int(kwargs.pop("priority", 20))
+        self.config_type = kwargs.pop("config_type", None)
+        if self.config_type is None or not isinstance(self.config_type, str):
+            raise ValueError("config_type must specified, and be a string")
+
+        if kwargs.pop("get_default", False):
+            kwargs["default"] = DelayedValue(currying.partial(self.store_default,
+                self.config_type), priority=self.priority, delayed_parse=False)
+
+        self.target = argparse._StoreAction(*args, **kwargs)
+
+        super(StoreConfigObject, self).__init__(*args, **kwargs)
+
+    def _load_obj(self, sections, name):
+        try:
+            return sections[name]
+        except KeyError:
+            raise argparse.ArgumentError(self, "couldn't find %s %r" %
+                (self.config_type, name))
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, self.dest, DelayedValue(
+            currying.partial(self._real_call, parser, namespace, values, option_string),
+            priority=self.priority))
+
+    def _real_call(self, parser, namespace, values, option_string=None):
+        config = getattr(namespace, 'config', None)
+        if config is None:
+            raise ValueError("no config found.  Internal bug")
+
+        sections = getattr(config, self.config_type)
+        if isinstance(values, basestring):
+            value = self._load_obj(sections, values)
+        else:
+            value = [self._load_obj(sections, x) for x in values]
+        setattr(namespace, self.dest, value)
+
+    @staticmethod
+    def store_default(config_type, namespace, attr):
+        config = getattr(namespace, 'config', None)
+        if config is None:
+            raise ValueError("no config found.  Internal bug")
+        obj = config.get_default(config_type)
+        if obj is None:
+            raise ValueError("config error: no default object of type %r found" % (config_type,))
+        setattr(namespace, attr, obj)
 
 
 class DelayedValue(object):
@@ -280,9 +274,9 @@ def mk_argparser(config=True, domain=True, color=True, debug=True, **kwds):
         p.set_defaults(config=DelayedValue(store_config, 0, False))
 
     if domain:
-        p.add_argument('--domain',
+        p.add_argument('--domain', get_default=True, config_type='domain',
+            action=StoreConfigObject,
             help="domain to use for this operation")
-        #domain_argparser.set_defaults(domain=Delay
     return p
 
 

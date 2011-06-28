@@ -198,16 +198,19 @@ class MainMixin(object):
 class ArgParseMixin(MainMixin):
 
     suppress_domain = False
+    has_config = True
 
     def parse(self, *args, **kwargs):
         """Parse a commandline and return the Values object.
 
         args are passed to parse_args, keyword args are used as config keys.
         """
-        namespace = commandline.argparse.Namespace()
-        if kwargs.pop("suppress_domain", self.suppress_domain):
-            kwargs["default_domain"] = default_domain
-        namespace.config = central.ConfigManager([kwargs], debug=True)
+        namespace = None
+        if self.has_config:
+            namespace = commandline.argparse.Namespace()
+            if kwargs.pop("suppress_domain", self.suppress_domain):
+                kwargs["default_domain"] = default_domain
+            namespace.config = central.ConfigManager([kwargs], debug=True)
         # optparse needs a list (it does make a copy, but it uses [:]
         # to do it, which is a noop on a tuple).
         namespace = self.parser.parse_args(list(args), namespace=namespace)

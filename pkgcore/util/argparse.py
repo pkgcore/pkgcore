@@ -1,4 +1,7 @@
 # Author: Steven J. Bethard <steven.bethard@gmail.com>.
+# Modified by Brian Harring <ferringb@gmail.com>
+# - modifications specifically are restoring py2.4 support
+
 
 """Command-line parsing library
 
@@ -1128,7 +1131,7 @@ class FileType(object):
         # all other arguments are used as file names
         try:
             return open(string, self._mode, self._bufsize)
-        except IOError as e:
+        except IOError, e:
             message = _("can't open '%s': %s")
             raise ArgumentTypeError(message % (string, e))
 

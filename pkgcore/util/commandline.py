@@ -233,8 +233,15 @@ class ArgumentParser(argparse.ArgumentParser):
         # bleh.  direct access...
         i = ((attr, val) for attr, val in args.__dict__.iteritems()
             if isinstance(val, DelayedValue))
-        for attr, delayed in sorted(i, key=lambda val:val[1].priority):
-            delayed(args, attr)
+        try:
+            for attr, delayed in sorted(i, key=lambda val:val[1].priority):
+                delayed(args, attr)
+        except (TypeError, ValueError), err:
+            self.error("failed loading/parsing %s: %s" % (attr, str(err)))
+        except argparse.ArgumentError:
+            err = sys.exc_info()[1]
+            self.error(str(err))
+
         return args
 
     def bind_main_func(self, functor):

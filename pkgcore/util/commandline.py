@@ -133,9 +133,9 @@ class Delayed(argparse.Action):
             help=kwds.get("help", None), metavar=kwds.get("metavar", None))
 
     def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, DelayedValue(
+        setattr(namespace, self.dest, DelayedParse(
             currying.partial(self.target, parser, namespace, values, option_string),
-            priority=self.priority))
+            self.priority))
 
 
 class StoreConfigObject(argparse._StoreAction):
@@ -150,7 +150,7 @@ class StoreConfigObject(argparse._StoreAction):
 
         if kwargs.pop("get_default", False):
             kwargs["default"] = DelayedValue(currying.partial(self.store_default,
-                self.config_type), priority=self.priority, delayed_parse=False)
+                self.config_type), self.priority)
 
         self.target = argparse._StoreAction(*args, **kwargs)
 
@@ -164,9 +164,9 @@ class StoreConfigObject(argparse._StoreAction):
                 (self.config_type, name))
 
     def __call__(self, parser, namespace, values, option_string=None):
-        setattr(namespace, self.dest, DelayedValue(
+        setattr(namespace, self.dest, DelayedParse(
             currying.partial(self._real_call, parser, namespace, values, option_string),
-            priority=self.priority))
+            self.priority))
 
     def _real_call(self, parser, namespace, values, option_string=None):
         config = getattr(namespace, 'config', None)
@@ -193,16 +193,23 @@ class StoreConfigObject(argparse._StoreAction):
 
 class DelayedValue(object):
 
-    def __init__(self, invokable, priority, delayed_parse=True):
-        self.invokable = invokable
-        self.delayed_parse = delayed_parse
+    def __init__(self, invokable, priority):
         self.priority = priority
+        if not callable(invokable):
+            raise TypeError("invokable must be callable")
+        self.invokable = invokable
 
     def __call__(self, namespace, attr):
-        if self.delayed_parse:
-            self.invokable()
-        else:
-            self.invokable(namespace, attr)
+        self.invokable(namespace, attr)
+
+
+class DelayedParse(DelayedValue):
+
+    def __init__(self, invokable, priority):
+        DelayedValue.__init__(self, invokable, priority)
+
+    def __call__(self, namespace, attr):
+        self.invokable()
 
 
 class ArgumentParser(argparse.ArgumentParser):
@@ -291,7 +298,7 @@ def mk_argparser(config=True, domain=True, color=True, debug=True, **kwds):
             default=False, dest='empty_config',
             help="Do not load user/system configuration.")
 
-        p.set_defaults(config=DelayedValue(store_config, 0, False))
+        p.set_defaults(config=DelayedValue(store_config, 0))
 
     if domain:
         p.add_argument('--domain', get_default=True, config_type='domain',

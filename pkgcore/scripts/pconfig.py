@@ -1,11 +1,14 @@
+# Copyright: 2011 Brian Harring <ferringb@gmail.com>
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
 """Configuration querying utility."""
 
-__all__ = ("get_classes", "dump_main", "classes_main", "uncollapsable_main",
-    "DescribeClassParser", "describe_class_main", "ConfigurablesParser",
-    "configurables_main", "dump_uncollapsed_main"
+__all__ = ("get_classes", "dump", "dump_main", "classes", "classes_main",
+    "uncollapsable", "uncollapsable_main",
+    "describe_class", "describe_class_main",
+    "configurables", "configurables_main",
+    "dump_uncollapsed", "dump_uncollapsed_main"
 )
 
 import traceback
@@ -13,21 +16,7 @@ import traceback
 from pkgcore.config import errors, basics
 from pkgcore.plugin import get_plugins
 from pkgcore.util import commandline
-from snakeoil import modules
-
-class DescribeClassParser(commandline.OptionParser):
-
-    """Our option parser."""
-
-    def _check_values(self, values, args):
-        if len(args) != 1:
-            self.error('need exactly one argument: class to describe.')
-        try:
-            values.describe_class = modules.load_attribute(args[0])
-        except modules.FailedImport, e:
-            self.error(str(e))
-        return values, ()
-
+from snakeoil import currying
 
 def dump_section(config, out):
     out.first_prefix.append('    ')
@@ -105,6 +94,13 @@ def get_classes(configs):
                 classes.update(get_classes((val.collapse(),)))
     return classes
 
+
+shared_options = (commandline.mk_argparser(domain=False, add_help=False),)
+argparse_parser = commandline.mk_argparser(suppress=True, parents=shared_options)
+subparsers = argparse_parser.add_subparsers(description="configuration related subcommands")
+classes = subparsers.add_parser("classes", parents=shared_options,
+    help="list all classes referenced by the config")
+@classes.bind_main_func
 def classes_main(options, out, err):
     """List all classes referenced by the config."""
     configmanager = options.config
@@ -117,6 +113,21 @@ def classes_main(options, out, err):
     for classname in sorted(get_classes(sections)):
         out.write(classname)
 
+
+describe_class = subparsers.add_parser("describe_class", parents=shared_options,
+    help="describe the arguments a class needs, how to use it in a config")
+describe_class.add_argument("target_class", action='store',
+    type=currying.partial(commandline.python_namespace_type, attribute=True),
+    help="The class to inspect and output details about")
+@describe_class.bind_main_func
+def describe_class_main(options, out, err):
+    """Describe the arguments a class needs."""
+    try:
+        type_obj = basics.ConfigType(options.target_class)
+    except errors.TypeDefinitionError:
+        err.write('Not a valid type!')
+        return 1
+    write_type(out, type_obj)
 
 def write_type(out, type_obj):
     out.write('typename is %s' % (type_obj.name,))
@@ -132,17 +143,9 @@ def write_type(out, type_obj):
             out.write(' (required)', autoline=False)
         out.write()
 
-
-def describe_class_main(options, out, err):
-    """Describe the arguments a class needs."""
-    try:
-        type_obj = basics.ConfigType(options.describe_class)
-    except errors.TypeDefinitionError:
-        err.write('Not a valid type!')
-        return 1
-    write_type(out, type_obj)
-
-
+uncollapsable = subparsers.add_parser("uncollapsable", parents=shared_options,
+    help="Show configuration objects that could not be collapsed/instantiated")
+@uncollapsable.bind_main_func
 def uncollapsable_main(options, out, err):
     """Show things that could not be collapsed."""
     config = options.config
@@ -159,28 +162,16 @@ def uncollapsable_main(options, out, err):
             out.write()
 
 
-class _TypeNameParser(commandline.OptionParser):
-
-    """Base for subcommands that take an optional type name."""
-
-    def _check_values(self, values, args):
-        if len(args) > 1:
-            self.error('pass at most one typename')
-        if args:
-            values.typename = args[0]
-        else:
-            values.typename = None
-        return values, ()
-
-
-class DumpParser(_TypeNameParser):
-    description = ('Dump the entire configuration.  The format used is similar '
+dump = subparsers.add_parser("dump", parents=shared_options,
+    help='Dump the entire configuration.  The format used is similar '
         'to the ini-like default format, but do not rely on this to always '
         'write a loadable config. There may be quoting issues.  With a '
         'typename argument only that type is dumped.')
-    usage = '%prog [options] [typename]'
-
-
+dump.add_argument("typename", nargs="?", action="store",
+    default=None,
+    help="if specified, limit output to just config directives of this type"
+        ".  If left off, all types are shown")
+@dump.bind_main_func
 def dump_main(options, out, err):
     """Dump the entire configuration."""
     config = options.config
@@ -199,11 +190,13 @@ def dump_main(options, out, err):
         out.write()
 
 
-class ConfigurablesParser(_TypeNameParser):
-    description = ('List registered configurables (may not be complete).  '
-        'With a typename argument only configurables of that type are listed.')
-
-
+configurables = subparsers.add_parser("configurables", parents=shared_options,
+    help=('List registered configurables (may not be complete).  '
+        'With a typename argument only configurables of that type are listed.'))
+configurables.add_argument("typename", nargs='?', default=None, action='store',
+    help="If specified, only output configurables of that type; else output "
+    "all configurables")
+@configurables.bind_main_func
 def configurables_main(options, out, err):
     """List registered configurables."""
     for configurable in get_plugins('configurable'):
@@ -268,7 +261,10 @@ def _dump_uncollapsed_section(config, out, err, section):
         else:
             err.error('unsupported type %r' % (kind,))
 
-
+dump_uncollapsed = subparsers.add_parser("dump-uncollapsed", parents=shared_options,
+    help="dump the configuration in a raw, uncollapsed form."
+        "Not directly usable as a configuration file, mainly used for inspection")
+@dump_uncollapsed.bind_main_func
 def dump_uncollapsed_main(options, out, err):
     """dump the configuration in a raw, uncollapsed form.
     Not directly usable as a configuration file, mainly used for inspection
@@ -293,12 +289,3 @@ def dump_uncollapsed_main(options, out, err):
             _dump_uncollapsed_section(options.config, out, err, section)
             out.write()
 
-
-commandline_commands = {
-    'dump': (DumpParser, dump_main),
-    'classes': (commandline.OptionParser, classes_main),
-    'uncollapsable': (commandline.OptionParser, uncollapsable_main),
-    'describe_class': (DescribeClassParser, describe_class_main),
-    'configurables': (ConfigurablesParser, configurables_main),
-    'dump-uncollapsed': (commandline.OptionParser, dump_uncollapsed_main),
-    }

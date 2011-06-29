@@ -37,19 +37,19 @@ def increment(inc=()):
     """Noop."""
 
 
-class DescribeClassTest(TestCase, helpers.MainMixin):
+class DescribeClassTest(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(pconfig.DescribeClassParser())
-    main = staticmethod(pconfig.describe_class_main)
+    _argparser = pconfig.describe_class
 
     def test_parser(self):
         self.assertError(
-            "Failed importing target 'pkgcore.spork': "
-            "''module' object has no attribute 'spork''", 'pkgcore.spork')
+            "argument target_class: Failed importing target 'pkgcore.spork': ''module' object has no attribute 'spork''",
+            'pkgcore.spork')
         self.assertError(
-            'need exactly one argument: class to describe.')
+            'too few arguments')
         self.assertError(
-            'need exactly one argument: class to describe.', 'a', 'b')
+            "argument target_class: Failed importing target 'pkgcore.a': ''module' object has no attribute 'a''",
+            'pkgcore.a', 'pkgcore.b')
         self.parse('pkgcore.scripts')
 
     def test_describe_class(self):
@@ -73,10 +73,9 @@ class DescribeClassTest(TestCase, helpers.MainMixin):
             'pkgcore.test.scripts.test_pconfig.broken_type')
 
 
-class ClassesTest(TestCase, helpers.MainMixin):
+class ClassesTest(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(commandline.OptionParser())
-    main = staticmethod(pconfig.classes_main)
+    _argparser = pconfig.classes
 
     def test_classes(self):
         sections = []
@@ -116,10 +115,9 @@ class ClassesTest(TestCase, helpers.MainMixin):
                             'class': pseudospork})}))
 
 
-class DumpTest(TestCase, helpers.MainMixin):
+class DumpTest(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(pconfig.DumpParser())
-    main = staticmethod(pconfig.dump_main)
+    _argparser = pconfig.dump
 
     def test_dump(self):
         self.assertOut(
@@ -218,10 +216,9 @@ class DumpTest(TestCase, helpers.MainMixin):
             )
 
 
-class UncollapsableTest(TestCase, helpers.MainMixin):
+class UncollapsableTest(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(commandline.OptionParser())
-    main = staticmethod(pconfig.uncollapsable_main)
+    _argparser = pconfig.uncollapsable
 
     def test_uncollapsable(self):
         self.assertOut(
@@ -235,14 +232,13 @@ class UncollapsableTest(TestCase, helpers.MainMixin):
             )
 
 
-class ConfigurablesTest(TestCase, helpers.MainMixin):
+class ConfigurablesTest(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(pconfig.ConfigurablesParser())
-    main = staticmethod(pconfig.configurables_main)
+    _argparser = pconfig.configurables
 
     def test_configurables(self):
         self.assertError(
-            'pass at most one typename',
+            'unrecognized arguments: bar',
             'foo', 'bar')
 
 
@@ -264,10 +260,9 @@ class WeirdSection(basics.ConfigSection):
             None, None]
 
 
-class DumpUncollapsedTest(TestCase, helpers.MainMixin):
+class DumpUncollapsedTest(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(commandline.OptionParser())
-    main = staticmethod(pconfig.dump_uncollapsed_main)
+    _argparser = pconfig.dump_uncollapsed
 
     def test_dump_uncollapsed(self):
         self.assertOut(

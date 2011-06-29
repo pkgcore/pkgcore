@@ -8,16 +8,13 @@ from pkgcore.scripts import filter_env
 from pkgcore.test.scripts import helpers
 
 
-class CommandlineTest(TestCase, helpers.MainMixin):
+class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(filter_env.OptionParser())
-    main = staticmethod(filter_env.main)
+    _argparser = filter_env.argparse_parser
 
     def test_option_parser(self):
-        self.assertError('-i cannot be specified twice',
-                         '-i', __file__, '-i', 'bar')
         self.assertError(
-            "error opening 'foo' ([Errno 2] No such file or directory: 'foo')",
+            "argument --input/-i: can't open 'foo': [Errno 2] No such file or directory: 'foo'",
             '-i', 'foo')
         options = self.parse('-Vf', 'spork,,foon', '-i', __file__)
         self.assertEqual(['spork', 'foon'], options.funcs)

@@ -4,68 +4,41 @@
 
 """Commandline interface to L{pkgcore.ebuild.filter_env}."""
 
-__all__ = ("OptionParser", "main")
+__all__ = ("argparse_parser", "main")
 
 import sys
 
 from pkgcore.util import commandline
 # ordering here matters; commandline does a trick to copy to avoid the heavy inspect load.
-import optparse
 from pkgcore.ebuild import filter_env
 from pkgcore.log import logger
 
+argparse_parser = commandline.mk_argparser(config=False, domain=False, color=False)
+argparse_parser.add_argument('-V', '--var-match', action='store_true',
+    default=False,
+    help="Invert the filtering- instead of removing a var if it matches "
+    "remove all vars that do not match")
+argparse_parser.add_argument('-F', '--func-match', action='store_true',
+    default=False,
+    help="Invert the filtering- instead of removing a function if it matches "
+    "remove all functions that do not match")
 
-def input_callback(option, opt_str, value, parser):
-    if parser.values.input is not None:
-        raise optparse.OptionValueError('-i cannot be specified twice')
-    try:
-        parser.values.input = open(value, 'r')
-    except (IOError, OSError), e:
-        raise optparse.OptionValueError('error opening %r (%s)' % (value, e))
+def stdin_default(namespace, attr):
+    if sys.stdin.isatty():
+        raise ValueError("Refusing to read from stdin since it's a TTY")
+    setattr(namespace, attr, sys.stdin)
 
+argparse_parser.add_argument('--input', '-i', action='store',
+    type=commandline.argparse.FileType(), default=commandline.DelayedValue(stdin_default, 0),
+    help='Filename to read the env from (uses stdin if omitted).')
+argparse_parser.add_argument('--funcs', '-f', action=commandline.ExtendCommaDelimited,
+    help="commad seperated list of regexes to match function names against for filtering")
+argparse_parser.add_argument('--vars', '-v', action=commandline.ExtendCommaDelimited,
+    help="commad seperated list of regexes to match variable names against for filtering")
+argparse_parser.add_argument('--print-vars', action='store_true', default=False,
+    help="print just the global scope environment variables that match")
 
-def append_comma_separated(option, opt_str, value, parser):
-    parser.values.ensure_value(option.dest, []).extend(
-        v for v in value.split(',') if v)
-
-
-class OptionParser(commandline.OptionParser):
-
-    def _register_options(self):
-        self.add_option(
-            '-V', '--var-match', action='store_true', default=False,
-            help="Invert the filtering- instead of removing a var if it matches "
-            "remove all vars that do not match")
-        self.add_option(
-            '-F', '--func-match', action='store_true', default=False,
-            help="Invert the filtering- instead of removing a function if it matches "
-            "remove all functions that do not match")
-        self.add_option(
-            '--input', '-i', action='callback', type='string',
-            callback=input_callback,
-            help='Filename to read the env from (uses stdin if omitted).')
-        self.add_option(
-            '--funcs', '-f', action='callback', type='string',
-            callback=append_comma_separated)
-        self.add_option(
-            '--vars', '-v', action='callback', type='string',
-            callback=append_comma_separated)
-        self.add_option(
-            '--print-vars', action='store_true', default=False,
-            help="print just the global scope environment variables that match")
-
-    def _check_values(self, values, args):
-        if values.input is None:
-            # Hack: use stdin if it is not a tty. No util.commandline
-            # support for this kind of thing, so mess around with sys
-            # directly.
-            if sys.stdin.isatty():
-                self.error('No input file supplied (and stdin is a tty).')
-            values.input = sys.stdin
-
-        return values, args
-
-
+@argparse_parser.bind_main_func
 def main(options, out, err):
     if options.debug:
         if options.funcs is None:

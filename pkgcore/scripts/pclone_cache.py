@@ -1,50 +1,44 @@
-# Copyright: 2005-2008 Brian Harring <ferringb@gmail.com
+# Copyright: 2005-2011 Brian Harring <ferringb@gmail.com
 # Copyright: 2006 Marien Zwart <marienz@gentoo.org>
 # License: BSD/GPL2
 
 
 """Clone a repository cache."""
 
-__all__ = ("OptionParser", "main")
+__all__ = ("argparse_parser", "main")
 
 import time
 
 from pkgcore.util import commandline
 
 
-class OptionParser(commandline.OptionParser):
+class WritableCache(commandline.StoreConfigObject):
 
-    description = __doc__
-    usage = '%prog [options] source target'
-
-    def _register_options(self):
-        self.add_option('--verbose', '-v', action='store_true',
-                        help='print keys as they are processed')
-
-    def _check_values(self, values, args):
-        if len(args) != 2:
-            self.error(
-                'Need two arguments: cache label to read from and '
-                'cache label to write to.')
-
-        config = values.config
-        try:
-            values.source = config.cache[args[0]]
-        except KeyError:
-            self.error("read cache label '%s' isn't defined." % (args[0],))
-        try:
-            values.target = config.cache[args[1]]
-        except KeyError:
-            self.error("write cache label '%s' isn't defined." % (args[1],))
-
-        if values.target.readonly:
-            self.error("can't update cache label '%s', it's marked readonly." %
-                       (args[1],))
-
-        return values, ()
+    def _real_call(self, parser, namespace, values, option_string=None):
+        commandline.StoreConfigObject._real_call(self, parser, namespace, values,
+            option_string=option_string)
+        if getattr(namespace, self.dest).readonly:
+            raise commandline.argparse.ArgumentError(option_string,
+                "cache %r isn't writable" % (values,))
 
 
+argparse_parser = commandline.mk_argparser(domain=False, description=__doc__)
+argparse_parser.add_argument("--verbose", "-v", action='store_true',
+    help="print keys as they are processed")
+argparse_parser.add_argument("source", config_type='cache',
+    action=commandline.StoreConfigObject,
+    help="source cache to copy data from")
+argparse_parser.add_argument("target", config_type='cache',
+    action=WritableCache,
+    help="target cache to update.  Must be writable.")
+
+@argparse_parser.bind_main_func
 def main(options, out, err):
+    import pdb;pdb.set_trace()
+    if options.target.readonly:
+        self.error("can't update cache label '%s', it's marked readonly." %
+        (options.target,))
+
     source, target = options.source, options.target
     if not target.autocommits:
         target.sync_rate = 1000

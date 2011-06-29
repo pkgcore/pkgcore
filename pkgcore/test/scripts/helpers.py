@@ -211,8 +211,6 @@ class ArgParseMixin(MainMixin):
             if kwargs.pop("suppress_domain", self.suppress_domain):
                 kwargs["default_domain"] = default_domain
             namespace.config = central.ConfigManager([kwargs], debug=True)
-        # optparse needs a list (it does make a copy, but it uses [:]
-        # to do it, which is a noop on a tuple).
         namespace = self.parser.parse_args(list(args), namespace=namespace)
         return namespace
 

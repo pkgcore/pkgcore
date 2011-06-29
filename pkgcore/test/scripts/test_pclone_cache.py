@@ -16,23 +16,23 @@ class Cache(object):
         self.readonly = readonly
 
 
-class CommandlineTest(TestCase, helpers.MainMixin):
+class CommandlineTest(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(pclone_cache.OptionParser())
-    main = staticmethod(pclone_cache.main)
+    _argparser = pclone_cache.argparse_parser
 
     def test_parser(self):
         self.assertError(
-            'Need two arguments: cache label to read from and '
-            'cache label to write to.', 'spork')
+            'too few arguments',
+            'spork')
         self.assertError(
-            "read cache label 'spork' isn't defined.", 'spork', 'spork2')
+            "argument source: couldn't find cache 'spork'",
+            'spork', 'spork2')
         self.assertError(
-            "write cache label 'spork2' isn't defined.",
+            "argument target: couldn't find cache 'spork2'",
             'spork', 'spork2',
             spork=basics.HardCodedConfigSection({'class': Cache}))
         self.assertError(
-            "can't update cache label 'spork2', it's marked readonly.",
+            "cache 'spork2' isn't writable",
             'spork', 'spork2',
             spork=basics.HardCodedConfigSection({'class': Cache,}),
             spork2=basics.HardCodedConfigSection({'class': Cache,}))

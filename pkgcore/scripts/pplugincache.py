@@ -11,6 +11,14 @@ from pkgcore.util import commandline
 from pkgcore import plugin, plugins
 from snakeoil import modules, lists
 
+argparse_parser = commandline.mk_argparser(config=False, domain=False, color=False,
+    description = __doc__)
+argparse_parser.add_argument("packages", nargs="*", action='store',
+    type=modules.load_module, default=[plugins],
+    help="python namespace(s) to regenerate plugins for.  If none are "
+    "specified, pkgcore.plugins is updated")
+
+@argparse_parser.bind_main_func
 def main(options, out, err):
     """Update caches."""
     if not options.packages:
@@ -20,10 +28,3 @@ def main(options, out, err):
         out.write('Updating cache for %s...' % (package.__name__,))
         plugin.initialize_cache(package)
 
-argparse_parser = commandline.mk_argparser(config=False, domain=False, color=False,
-    description = __doc__)
-argparse_parser.add_argument("packages", nargs="*", action='store',
-    type=modules.load_module, default=[plugins],
-    help="python namespace(s) to regenerate plugins for.  If none are "
-    "specified, pkgcore.plugins is updated")
-argparse_parser.set_defaults(main_func=main)

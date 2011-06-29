@@ -237,9 +237,9 @@ class ArgumentParser(argparse.ArgumentParser):
             delayed(args, attr)
         return args
 
-    @staticmethod
-    def _delayed_default_target(target, key, parser, values, option_string):
-        target(values, key)
+    def bind_main_func(self, functor):
+        self.set_defaults(main_func=functor)
+        return functor
 
 def _convert_config_mods(iterable):
     d = {}

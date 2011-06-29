@@ -14,6 +14,15 @@ from snakeoil.formatters import ObserverFormatter
 from snakeoil.compatibility import all
 
 
+argparse_parser = commandline.mk_argparser(description=__doc__)
+argparse_parser.add_argument("--no-auto", action='store_true', default=False,
+    help="run just the specified phases; it's up to the invoker to get the order right")
+argparse_parser.add_argument('atom', type=atom.atom,
+    help="atom to match a pkg to execute phases from")
+argparse_parser.add_argument('phase', nargs='+',
+    help="phases to run")
+
+@argparse_parser.bind_main_func
 def main(options, out, err):
     pkgs = options.domain.all_repos.match(options.atom)
     if not pkgs:
@@ -53,13 +62,4 @@ def main(options, out, err):
         out.write()
         out.write('executing phase %s' % (phase,))
         f(**kwds)
-
-argparse_parser = commandline.mk_argparser(description=__doc__)
-argparse_parser.add_argument("--no-auto", action='store_true', default=False,
-    help="run just the specified phases; it's up to the invoker to get the order right")
-argparse_parser.add_argument('atom', type=atom.atom,
-    help="atom to match a pkg to execute phases from")
-argparse_parser.add_argument('phase', nargs='+',
-    help="phases to run")
-argparse_parser.set_defaults(main_func=main)
 

@@ -23,7 +23,7 @@ import os.path
 import logging
 
 from pkgcore.config import load_config, errors
-from snakeoil import formatters, demandload, currying
+from snakeoil import formatters, demandload, currying, modules
 import optparse
 from pkgcore.util import argparse
 from pkgcore.util.commandline_optparse import *
@@ -210,6 +210,24 @@ class DelayedParse(DelayedValue):
 
     def __call__(self, namespace, attr):
         self.invokable()
+
+def python_namespace_type(value, module=False, attribute=False):
+    """
+    return the object from python namespace that value specifies
+
+    :param value: python namespace, snakeoil.modules for example
+    :param module: if true, the object must be a module
+    :param attribute: if true, the object must be a non-module
+    :raises ValueError: if the conditions aren't met, or import fails
+    """
+    try:
+        if module:
+            return modules.load_module(value)
+        elif attribute:
+            return modules.load_attribute(value)
+        return modules.load_any(value)
+    except modules.FailedImport, err:
+        raise argparse.ArgumentTypeError(str(err))
 
 
 class ArgumentParser(argparse.ArgumentParser):

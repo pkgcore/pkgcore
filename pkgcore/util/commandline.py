@@ -297,8 +297,11 @@ def store_config(namespace, attr):
         prepend_sources=tuple(prepend))
     setattr(namespace, attr, config)
 
-def mk_argparser(config=True, domain=True, color=True, debug=True, **kwds):
+
+def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=True, **kwds):
     p = ArgumentParser(**kwds)
+    if suppress:
+        return p
     if debug:
         p.add_argument('--debug', action='store_true', help="Enable debugging checks")
     if color:

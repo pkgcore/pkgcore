@@ -43,6 +43,9 @@ class wrapper(base):
 
     klass.inject_richcmp_methods_from_cmp(locals())
 
+    def operations(self, domain, **kwds):
+        return self._raw_pkg._operations(domain, self, **kwds)
+
     def __init__(self, raw_pkg):
         object.__setattr__(self, "_raw_pkg", raw_pkg)
 

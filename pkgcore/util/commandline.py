@@ -139,12 +139,16 @@ class Delayed(argparse.Action):
 
 
 class StoreConfigObject(argparse._StoreAction):
+
+    default_priority = 20
+
     def __init__(self,
                 *args,
                 **kwargs):
 
-        self.priority = int(kwargs.pop("priority", 20))
+        self.priority = int(kwargs.pop("priority", self.default_priority))
         self.config_type = kwargs.pop("config_type", None)
+        self.store_name = kwargs.pop("store_name", False)
         if self.config_type is None or not isinstance(self.config_type, str):
             raise ValueError("config_type must specified, and be a string")
 
@@ -158,10 +162,13 @@ class StoreConfigObject(argparse._StoreAction):
 
     def _load_obj(self, sections, name):
         try:
-            return sections[name]
+            val = sections[name]
         except KeyError:
             raise argparse.ArgumentError(self, "couldn't find %s %r" %
                 (self.config_type, name))
+        if self.store_name:
+            return name, val
+        return val
 
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, self.dest, DelayedParse(

@@ -8,7 +8,7 @@ repository maintainence
 
 __all__ = ('CopyParser', 'DigestParser', 'RegenParser', 'SyncParser')
 
-from pkgcore.util.commandline import convert_to_restrict, OptionParser
+from pkgcore.util import commandline
 from snakeoil.demandload import demandload
 demandload(globals(),
     'os',
@@ -41,7 +41,7 @@ def format_seq(seq, formatter=repr):
     return formatter(seq)
 
 
-class SyncParser(OptionParser):
+class SyncParser(commandline.OptionParser):
 
     description = 'update a local repository to match its parent'
     usage = 'pmaint sync [repo(s)]'
@@ -99,7 +99,7 @@ def sync_main(options, out, err):
 commandline_commands['sync'] = (SyncParser, sync_main)
 
 
-class CopyParser(OptionParser):
+class CopyParser(commandline.OptionParser):
 
     description = 'copy built pkg(s) into a repository'
     usage = 'pmaint copy -s source_repo -t target_repo [options] <atoms>'
@@ -154,12 +154,12 @@ class CopyParser(OptionParser):
 
         values.candidates = []
         if values.copy_missing:
-            restrict = OrRestriction(*convert_to_restrict(args))
+            restrict = OrRestriction(*commandline.convert_to_restrict(args))
             for package in values.source_repo.itermatch(restrict):
                 if not values.target_repo.match(package.versioned_atom):
                     values.candidates.append(package.versioned_atom)
         else:
-            values.candidates = convert_to_restrict(args)
+            values.candidates = commandline.convert_to_restrict(args)
 
         return values, []
 
@@ -233,7 +233,7 @@ def copy_main(options, out, err):
 commandline_commands['copy'] = (CopyParser, copy_main)
 
 
-class RegenParser(OptionParser):
+class RegenParser(commandline.OptionParser):
 
     description = 'regenerate the metadata cache for repositories'
     usage = '%prog [options] repo [threads]'
@@ -346,12 +346,12 @@ def regen_main(options, out, err):
 commandline_commands['regen'] = (RegenParser, regen_main)
 
 
-class PerlRebuildParser(OptionParser):
+class PerlRebuildParser(commandline.OptionParser):
 
     description = 'identify perl pkgs in need of a rebuild for a new perl version'
 
     def check_values(self, values, args):
-        values, args = OptionParser.check_values(
+        values, args = commandline.OptionParser.check_values(
             self, values, args)
 
         if not args:
@@ -392,7 +392,7 @@ def perl_rebuild_main(options, out, err):
 
 commandline_commands['perl_rebuild'] = (PerlRebuildParser, perl_rebuild_main)
 
-class env_update(OptionParser):
+class env_update(commandline.OptionParser):
 
     enable_domain_options = True
 
@@ -422,7 +422,7 @@ class env_update(OptionParser):
 commandline_commands['env-update'] = env_update
 
 
-class DigestParser(OptionParser):
+class DigestParser(commandline.OptionParser):
 
     description = 'generate digests for given atoms'
 
@@ -433,7 +433,7 @@ class DigestParser(OptionParser):
             "valid values are: 'manifest1', 'manifest2', 'both'")
 
     def check_values(self, values, args):
-        values, args = OptionParser.check_values(
+        values, args = commandline.OptionParser.check_values(
             self, values, args)
 
         if not args:

@@ -41,6 +41,8 @@ class base(object):
 
     default_keys = metadata_keys
 
+    frozen = klass.alias_attr('readonly')
+
     __metaclass__ = autoconvert_py3k_methods_metaclass
 
     def __init__(self, auxdbkeys=None, readonly=False):

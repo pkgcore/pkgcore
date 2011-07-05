@@ -156,6 +156,8 @@ class StoreConfigObject(argparse._StoreAction):
             kwargs["default"] = DelayedValue(currying.partial(self.store_default,
                 self.config_type), self.priority)
 
+        self.writable = kwargs.pop("writable", None)
+
         self.target = argparse._StoreAction(*args, **kwargs)
 
         super(StoreConfigObject, self).__init__(*args, **kwargs)
@@ -166,6 +168,11 @@ class StoreConfigObject(argparse._StoreAction):
         except KeyError:
             raise argparse.ArgumentError(self, "couldn't find %s %r" %
                 (self.config_type, name))
+
+        if self.writable and getattr(val, 'frozen', False):
+            raise argparse.ArgumentError(self, "%s %r is readonly" %
+                (self.config_type, name))
+
         if self.store_name:
             return name, val
         return val

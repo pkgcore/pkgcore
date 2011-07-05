@@ -13,7 +13,7 @@ class Cache(object):
     pkgcore_config_type = ConfigHint(typename='cache')
 
     def __init__(self, readonly=True):
-        self.readonly = readonly
+        self.readonly = self.frozen = readonly
 
 
 class CommandlineTest(TestCase, helpers.ArgParseMixin):
@@ -32,7 +32,7 @@ class CommandlineTest(TestCase, helpers.ArgParseMixin):
             'spork', 'spork2',
             spork=basics.HardCodedConfigSection({'class': Cache}))
         self.assertError(
-            "cache 'spork2' isn't writable",
+            "argument target: cache 'spork2' is readonly",
             'spork', 'spork2',
             spork=basics.HardCodedConfigSection({'class': Cache,}),
             spork2=basics.HardCodedConfigSection({'class': Cache,}))

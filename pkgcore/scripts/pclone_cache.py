@@ -11,17 +11,6 @@ import time
 
 from pkgcore.util import commandline
 
-
-class WritableCache(commandline.StoreConfigObject):
-
-    def _real_call(self, parser, namespace, values, option_string=None):
-        commandline.StoreConfigObject._real_call(self, parser, namespace, values,
-            option_string=option_string)
-        if getattr(namespace, self.dest).readonly:
-            raise commandline.argparse.ArgumentError(option_string,
-                "cache %r isn't writable" % (values,))
-
-
 argparse_parser = commandline.mk_argparser(domain=False, description=__doc__)
 argparse_parser.add_argument("--verbose", "-v", action='store_true',
     help="print keys as they are processed")
@@ -29,7 +18,7 @@ argparse_parser.add_argument("source", config_type='cache',
     action=commandline.StoreConfigObject,
     help="source cache to copy data from")
 argparse_parser.add_argument("target", config_type='cache',
-    action=WritableCache,
+    action=commandline.StoreConfigObject, writable=True,
     help="target cache to update.  Must be writable.")
 
 @argparse_parser.bind_main_func

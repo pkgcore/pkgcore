@@ -387,7 +387,7 @@ def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=Tru
         p.add_argument('--new-config', nargs=3, action='append',
             metavar=("SECTION", "KEY", "VALUE"),
             help="add a new configuration section.")
-        p.add_argument('--config-empty', '--empty-config', action='store_true',
+        p.add_argument('--empty-config', '--config-empty', action='store_true',
             default=False, dest='empty_config',
             help="Do not load user/system configuration.")
 

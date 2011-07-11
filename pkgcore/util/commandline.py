@@ -34,7 +34,7 @@ demandload.demandload(globals(),
     'snakeoil:osutils',
     'pkgcore:version',
     'pkgcore.config:basics',
-    'pkgcore.restrictions:packages',
+    'pkgcore.restrictions:packages,restriction',
     'pkgcore.util:parserestrict',
     'pkgcore.ebuild:atom',
 )
@@ -224,6 +224,64 @@ class DelayedParse(DelayedValue):
 
     def __call__(self, namespace, attr):
         self.invokable()
+
+
+def parse_restriction(value):
+    # this should be eliminated, and directly accessing the actual function.
+    # note it throws ValueErrors...
+    return parserestrict.parse_match(value)
+
+
+class BooleanQuery(DelayedValue):
+
+    def __init__(self, attrs, klass_type=None, priority=100):
+        if klass_type == 'and':
+            self.klass = packages.AndRestriction
+        elif klass_type == 'or':
+            self.klass = packages.OrRestriction
+        elif callable(klass_type):
+            self.klass = klass
+        else:
+            raise ValueError("klass_type either needs to be 'or', 'and', "
+                "or a callable.  Got %r" % (klass_type,))
+
+        self.priority = int(priority)
+        self.attrs = tuple(attrs)
+
+    def invokable(self, namespace, attr):
+        l = []
+        for x in self.attrs:
+            val = getattr(namespace, x, None)
+            if val is None:
+                continue
+            if isinstance(val, restriction.base):
+                l.append(val)
+            else:
+                l.extend(val)
+        if len(l) > 1:
+            val = self.klass(*val)
+        elif l:
+            val = l[0]
+        else:
+            val = None
+        setattr(namespace, attr, val)
+
+
+def make_query(parser, *args, **kwargs):
+    klass_type = kwargs.pop("klass_type", "or")
+    dest = kwargs.pop("dest", None)
+    if dest is None:
+        raise TypeError("dest must be specified via kwargs")
+    attrs = kwargs.pop("attrs", [])
+    subattr = "_%s" % (dest,)
+    kwargs["dest"] = subattr
+    kwargs.setdefault("type", parse_restriction)
+    kwargs.setdefault("metavar", dest)
+    parser.add_argument(*args, **kwargs)
+    kwargs2 = {}
+    kwargs2[dest] = BooleanQuery(list(attrs) + [subattr], klass_type=klass_type)
+    parser.set_defaults(**kwargs2)
+
 
 def python_namespace_type(value, module=False, attribute=False):
     """

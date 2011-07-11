@@ -3,36 +3,24 @@
 
 use()
 {
-	echo >&2
-	echo "ERROR: use function accessed during metadata regeneration." >&2
-	echo "ERROR: This violates PMS, and is very unlikely to actually work." >&2
-	echo "ERROR: file a bug at https://bugs.gentoo.org for ${EBUILD}.  Trace follows:" >&2
-	dump_trace 4 >&2
-	echo "ERROR: end trace"
+	echo "WARNING: 'use' function invoked by ${CATEGORY}/${PVR} during metadata regeneration." >&2
+	echo "WARNING: Please ensure upstream is aware of it and working to remove it." >&2
 	echo >&2
 	return 1
 }
 
 use_with()
 {
-	echo >&2
-	echo "ERROR: use_with function accessed during metadata regeneration." >&2
-	echo "ERROR: This violates PMS, and is very unlikely to actually work." >&2
-	echo "ERROR: file a bug at https://bugs.gentoo.org for ${EBUILD}.  Trace follows:" >&2
-	dump_trace 4 >&2
-	echo "ERROR: end trace"
+	echo "WARNING: 'use_with' function invoked by ${CATEGORY}/${PVR} during metadata regeneration." >&2
+	echo "WARNING: Please ensure upstream is aware of it and working to remove it." >&2
 	echo >&2
 	return 1
 }
 
 use_enable()
 {
-	echo >&2
-	echo "ERROR: use_enable function accessed during metadata regeneration." >&2
-	echo "ERROR: This violates PMS, and is very unlikely to actually work." >&2
-	echo "ERROR: file a bug at https://bugs.gentoo.org for ${EBUILD} please.  Trace follows:" >&2
-	dump_trace 4 >&2
-	echo "ERROR: end trace"
+	echo "WARNING: 'use_enable' function invoked by ${CATEGORY}/${PVR} during metadata regeneration." >&2
+	echo "WARNING: Please ensure upstream is aware of it and working to remove it." >&2
 	echo >&2
 	return 1
 }

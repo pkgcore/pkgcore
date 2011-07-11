@@ -4,6 +4,8 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+pkgcore 0.6.6: July 11th, 2011
+
 * make use/useq/usev extremely obnoxious towards offending devs who use them
   in global scope when they're not supposed to.  Pretty much, I'm tired of
   pkgcore being broken for being PMS compliant; as such I'm now pointing

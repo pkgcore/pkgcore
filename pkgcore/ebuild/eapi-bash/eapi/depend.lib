@@ -3,19 +3,38 @@
 
 use()
 {
-	# echo "the use function should not be used from global scope"
-	# just return true, in this context the function has no meaning
-	:
+	echo >&2
+	echo "ERROR: use function accessed during metadata regeneration." >&2
+	echo "ERROR: This violates PMS, and is very unlikely to actually work." >&2
+	echo "ERROR: file a bug at https://bugs.gentoo.org for ${EBUILD}.  Trace follows:" >&2
+	dump_trace 4 >&2
+	echo "ERROR: end trace"
+	echo >&2
+	return 1
 }
 
 use_with()
 {
-	echo "do not use use_with in global scope!"
+	echo >&2
+	echo "ERROR: use_with function accessed during metadata regeneration." >&2
+	echo "ERROR: This violates PMS, and is very unlikely to actually work." >&2
+	echo "ERROR: file a bug at https://bugs.gentoo.org for ${EBUILD}.  Trace follows:" >&2
+	dump_trace 4 >&2
+	echo "ERROR: end trace"
+	echo >&2
+	return 1
 }
 
 use_enable()
 {
-	echo "do not use use_enable in global scope!"
+	echo >&2
+	echo "ERROR: use_enable function accessed during metadata regeneration." >&2
+	echo "ERROR: This violates PMS, and is very unlikely to actually work." >&2
+	echo "ERROR: file a bug at https://bugs.gentoo.org for ${EBUILD} please.  Trace follows:" >&2
+	dump_trace 4 >&2
+	echo "ERROR: end trace"
+	echo >&2
+	return 1
 }
 
 hasq()

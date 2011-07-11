@@ -4,6 +4,11 @@ Pkgcore Release Notes
 See ChangeLog for full commit logs; this is summarized/major changes.
 
 
+* make use/useq/usev extremely obnoxious towards offending devs who use them
+  in global scope when they're not supposed to.  Pretty much, I'm tired of
+  pkgcore being broken for being PMS compliant; as such I'm now pointing
+  users loud and clear at the offenders.
+
 * fix traceback in user profile support (/etc/portage/profiles).
 
 

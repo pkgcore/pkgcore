@@ -50,15 +50,11 @@ failure_section = basics.HardCodedConfigSection({'class': SyncableRepo,
                                                  'succeed': False})
 
 
-class SyncTest(TestCase, helpers.MainMixin):
+class TestSync(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(pmaint.SyncParser())
-    main = staticmethod(pmaint.sync_main)
+    _argparser = pmaint.sync
 
     def test_parser(self):
-        self.assertError(
-            "repo 'missing' doesn't exist:\nvalid repos ['repo']",
-            'missing', repo=success_section)
         values = self.parse(repo=success_section)
         self.assertEqual(['repo'], [x[0] for x in values.repos])
         values = self.parse('repo', repo=success_section)
@@ -149,32 +145,19 @@ def make_repo_config(repo_data, livefs=False, frozen=False):
     return basics.HardCodedConfigSection({'class':repo})
 
 
-class CopyTest(TestCase, helpers.MainMixin):
+class TestCopy(TestCase, helpers.ArgParseMixin):
 
-    parser = helpers.mangle_parser(pmaint.CopyParser())
-    main = staticmethod(pmaint.copy_main)
+    _argparser = pmaint.copy
 
     def execute_main(self, *a, **kw):
         config = self.parse(*a, **kw)
         out = PlainTextFormatter(StringIO())
-        ret = self.main(config, out, out)
+        ret = config.main_func(config, out, out)
         return ret, config, out
-
-    def test_parser(self):
-        self.assertError("target_report wasn't specified- specify it either as "
-            "the last arguement, or via --target-repo")
-        self.assertError("target_report wasn't specified- specify it either as "
-            "the last arguement, or via --target-repo", "sys-apps/portage")
-        self.assertError("target repo 'sys-apps/portage' was not found, known "
-            "repos-\nNone", "--target-repo",
-                "sys-apps/portage", config=Options(repo={}))
-        self.assertError("source repo 'sys-apps/portage' was not found, known "
-            "repos-\n('dar', 'foo')", "--source-repo", "sys-apps/portage", "foo",
-                "dar", dar=make_repo_config({}), foo=make_repo_config({}))
 
     def test_normal_function(self):
         ret, config, out = self.execute_main(
-            '--target-repo', 'trg', '--source-repo', 'src',
+            'trg', '--source-repo', 'src',
             '*',
                 src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
                 trg=make_repo_config({})
@@ -188,7 +171,7 @@ class CopyTest(TestCase, helpers.MainMixin):
 
         d = {'sys-apps':{'portage':['2.1', '2.2']}}
         ret, config, out = self.execute_main(
-            '--target-repo', 'trg', '--source-repo', 'src',
+            'trg', '--source-repo', 'src',
             '=sys-apps/portage-2.1',
                 src=make_repo_config(d),
                 trg=make_repo_config(d)
@@ -202,7 +185,7 @@ class CopyTest(TestCase, helpers.MainMixin):
 
     def test_ignore_existing(self):
         ret, config, out = self.execute_main(
-            '--target-repo', 'trg', '--source-repo', 'src',
+            'trg', '--source-repo', 'src',
             '*', '--ignore-existing',
                 src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
                 trg=make_repo_config({})
@@ -215,7 +198,7 @@ class CopyTest(TestCase, helpers.MainMixin):
             msg="uninstalled should be the same as replaced; empty")
 
         ret, config, out = self.execute_main(
-            '--target-repo', 'trg', '--source-repo', 'src',
+            'trg', '--source-repo', 'src',
             '*', '--ignore-existing',
                 src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
                 trg=make_repo_config({'sys-apps':{'portage':['2.1']}})
@@ -227,20 +210,10 @@ class CopyTest(TestCase, helpers.MainMixin):
             config.target_repo.replaced,
             msg="uninstalled should be the same as replaced; empty")
 
-    def test_copy_missing(self):
-        ret, config, out = self.execute_main(
-            '--target-repo', 'trg', '--source-repo', 'src',
-            '--copy-missing',
-                src=make_repo_config({'sys-apps':{'portage':['2.1', '2.3']}}),
-                trg=make_repo_config({'sys-apps':{'portage':['2.1']}})
-            )
-        self.assertEqual(config.candidates[0].cpvstr, "sys-apps/portage-2.3")
 
+class TestRegen(TestCase, helpers.ArgParseMixin):
 
-class TestRegen(TestCase, helpers.MainMixin):
-
-    parser = helpers.mangle_parser(pmaint.RegenParser())
-    main = staticmethod(pmaint.regen_main)
+    _argparser = pmaint.regen
 
     def test_parser(self):
 
@@ -252,14 +225,9 @@ class TestRegen(TestCase, helpers.MainMixin):
             return TestSimpleTree({})
 
 
-        self.assertError('Need a repository name.')
-        self.assertError('I do not know what to do with more than 2 arguments',
-                         '1', '2', '3')
-        self.assertError('thread count needs to be at least 1', '1', '0')
-        self.assertError("repo 'spork' was not found! known repos: ", 'spork')
         options = self.parse(
-            'spork', '2', spork=basics.HardCodedConfigSection(
+            'spork', '--threads', '2', spork=basics.HardCodedConfigSection(
                 {'class': fake_repo}))
         self.assertEqual(
-            [options.repo.__class__, options.thread_count],
+            [options.repo.__class__, options.threads],
             [TestSimpleTree, 2])

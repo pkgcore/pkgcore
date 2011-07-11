@@ -6,7 +6,8 @@
 repository maintainence
 """
 
-__all__ = ('CopyParser', 'DigestParser', 'RegenParser', 'SyncParser')
+__all__ = ("sync", "sync_main", "copy", "copy_main", "regen", "regen_main",
+    "perl_rebuild", "perl_rebuild_main", "env_update", "env_update_main")
 
 from pkgcore.util import commandline
 from snakeoil.demandload import demandload
@@ -18,6 +19,7 @@ demandload(globals(),
     'Queue',
     'time:time,sleep',
     'snakeoil.osutils:pjoin,listdir_dirs',
+    'pkgcore:spawn',
     'pkgcore.repository:multiplex',
     'pkgcore.package:mutated',
     'pkgcore.fs:contents,livefs',
@@ -29,8 +31,6 @@ demandload(globals(),
     're',
 )
 
-commandline_commands = {}
-
 def format_seq(seq, formatter=repr):
     if not seq:
         seq = None
@@ -41,25 +41,28 @@ def format_seq(seq, formatter=repr):
     return formatter(seq)
 
 
-class SyncParser(commandline.OptionParser):
+shared_options = (commandline.mk_argparser(domain=False, add_help=False),)
+argparse_parser = commandline.mk_argparser(suppress=True, parents=shared_options)
+subparsers = argparse_parser.add_subparsers(description="general system maintenance")
 
-    description = 'update a local repository to match its parent'
-    usage = 'pmaint sync [repo(s)]'
 
-    def _check_values(self, values, args):
-        values.repos = []
-        if not args:
-            # skip multiplexed repos since we can't see through them.
-            values.repos = [(k,r) for (k,r) in values.config.repo.items()
-                if not hasattr(r, 'trees')]
-        else:
-            for x in args:
-                if x not in values.config.repo:
-                    self.error("repo %r doesn't exist:\nvalid repos %r" %
-                        (x, values.config.repo.keys()))
-            values.repos = [(x,values.config.repo[x]) for x in args]
-        return values, []
+# inconsistant argparse POS; needed due to nargs='*', it tries supplying the
+# default as if it was given via the commandline
+class ReposStoreConfig(commandline.StoreConfigObject):
 
+    def _real_call(self, parser, namespace, values, option_string=None):
+        if values == []:
+            values = namespace.config.repo.keys()
+        return commandline.StoreConfigObject._real_call(self, parser, namespace,
+            values, option_string=option_string)
+
+
+sync = subparsers.add_parser("sync", parents=shared_options,
+    help="synchronize a local repository with it's defined remote")
+sync.add_argument('repos', nargs='*', help="repositories to sync",
+    action=ReposStoreConfig, store_name=True,
+    config_type='repo')
+@sync.bind_main_func
 def sync_main(options, out, err):
     """Update a local repositories to match their remote parent"""
     config = options.config
@@ -96,181 +99,67 @@ def sync_main(options, out, err):
         return 1
     return 0
 
-commandline_commands['sync'] = (SyncParser, sync_main)
 
+copy = subparsers.add_parser("copy", parents=shared_options,
+    help="copy binpkgs between repositories; primarily useful for "
+    "quickpkging a livefs pkg")
+copy.add_argument('target_repo', action=commandline.StoreConfigObject,
+    config_type='repo', writable=True,
+    help="repository to add packages to")
+copy.add_argument('--source-repo', '-s', default=None,
+    action=commandline.StoreConfigObject, config_type='repo',
+    help="copy strictly from the supplied repository; else it copies from "
+    "wherever a match is found")
+commandline.make_query(copy, nargs='+', dest='query',
+    help="packages matching any of these restrictions will be selected "
+    "for copying")
+copy.add_argument('-i', '--ignore-existing', default=False, action='store_true',
+    help="if a matching pkg already exists in the target, don't update it")
 
-class CopyParser(commandline.OptionParser):
-
-    description = 'copy built pkg(s) into a repository'
-    usage = 'pmaint copy -s source_repo -t target_repo [options] <atoms>'
-
-    def _register_options(self):
-        self.add_option("-s", "--source-repo",
-            help="copy from just the specified repository; else defaults "
-                "to finding any match")
-        self.add_option("-t", "--target-repo", default=None,
-            help="repository to copy packages into; if specified, "
-                "you don't need to specify the target repo as the last arg.  "
-                "Mainly useful for xargs invocations")
-        self.add_option("--ignore-existing", "-i", default=False,
-            action='store_true',
-            help="skip existing pkgs, instead of treating it as an overwrite "
-            "error")
-        self.add_option("--copy-missing", action="store_true", default=False,
-            help="Copy packages missing in target repo from source repo")
-
-    def _check_values(self, values, args):
-        l = len(args)
-        if not values.target_repo and l < 2:
-            self.error("target_report wasn't specified- specify it either as "
-                "the last arguement, or via --target-repo")
-
-        if values.target_repo is not None:
-            target_repo = values.target_repo
-        else:
-            target_repo = args.pop(-1)
-
-        try:
-            values.target_repo = values.config.repo[target_repo]
-        except KeyError:
-            self.error("target repo %r was not found, known repos-\n%s" %
-                (target_repo, format_seq(values.config.repo.keys())))
-
-        if values.target_repo.frozen:
-            self.error("target repo %r is frozen" % target_repo)
-        ops = values.target_repo.operations
-        if not ops.supports("install") or not ops.supports("replace"):
-            self.error("target repo %r doesn't support both install and "
-                "replace operations" % target_repo)
-
-        if values.source_repo:
-            try:
-                values.source_repo = values.config.repo[values.source_repo]
-            except KeyError:
-                self.error("source repo %r was not found, known repos-\n%s" %
-                    (values.source_repo, format_seq(values.config.repo.keys())))
-        else:
-            values.source_repo = multiplex.tree(*values.config.repos.values())
-
-        values.candidates = []
-        if values.copy_missing:
-            restrict = OrRestriction(*commandline.convert_to_restrict(args))
-            for package in values.source_repo.itermatch(restrict):
-                if not values.target_repo.match(package.versioned_atom):
-                    values.candidates.append(package.versioned_atom)
-        else:
-            values.candidates = commandline.convert_to_restrict(args)
-
-        return values, []
-
-
+@copy.bind_main_func
 def copy_main(options, out, err):
     """Copy pkgs between repositories."""
 
+    src_repo = options.source_repo
+    if src_repo is None:
+        src_repo = multiplex.tree(*options.config.repo.values())
     trg_repo = options.target_repo
-    trg_repo_ops = trg_repo.operations
     src_repo = options.source_repo
 
     failures = False
 
-    for candidate in options.candidates:
-        matches = src_repo.match(candidate)
-        if not matches:
-            err.write("didn't find any matching pkgs for %r" % candidate)
-            failures = True
+    for pkg in src_repo.itermatch(options.query):
+        if options.ignore_existing and trg_repo.has_match(pkg.versioned_atom):
+            out.write("skipping %s; it exists already." % (pkg,))
             continue
 
-        for src in matches:
-            existing = trg_repo.match(src.versioned_atom)
-            args = []
-            pkg = src
-            if len(existing) > 1:
-                err.write(
-                    "skipping %r; tried to replace more then one pkg %r..." %
-                    (src, format_seq(existing)))
-                failures = True
+        out.write("copying %s... " % (pkg,))
+        if getattr(getattr(pkg, 'repo', None), 'livefs', False):
+            out.write("forcing regen of contents due to src being livefs..")
+            new_contents = contents.contentsSet(mutable=True)
+            for fsobj in pkg.contents:
+                try:
+                    new_contents.add(livefs.gen_obj(fsobj.location))
+                except OSError, oe:
+                    if oe.errno != errno.ENOENT:
+                        err.write("failed accessing fs obj %r; %r\n"
+                            "aborting this copy" %
+                            (fsobj, oe))
+                        failures = True
+                        new_contents = None
+                        break
+                    err.write("warning: dropping fs obj %r since it "
+                        "doesn't exist" % fsobj)
+            if new_contents is None:
                 continue
-            elif len(existing) == 1:
-                if options.ignore_existing:
-                    out.write("skipping %s, since %s exists already" %
-                        (src, existing[0]))
-                    continue
-                out.write("replacing %s with %s... " % (src, existing[0]))
-                op = trg_repo_ops.replace
-                args = existing
-            else:
-                out.write("copying %s... " % src)
-                op = trg_repo_ops.install
+            pkg = mutated.MutatedPkg(pkg, {'contents':new_contents})
 
-            if src.repo.livefs:
-                out.write("forcing regen of contents due to src being livefs..")
-                new_contents = contents.contentsSet(mutable=True)
-                for fsobj in src.contents:
-                    try:
-                        new_contents.add(livefs.gen_obj(fsobj.location))
-                    except OSError, oe:
-                        if oe.errno != errno.ENOENT:
-                            err.write("failed accessing fs obj %r; %r\n"
-                                "aborting this copy" %
-                                (fsobj, oe))
-                            failures = True
-                            new_contents = None
-                            break
-                        err.write("warning: dropping fs obj %r since it "
-                            "doesn't exist" % fsobj)
-                if new_contents is None:
-                    continue
-                pkg = mutated.MutatedPkg(src, {'contents':new_contents})
+        trg_repo.operations.install_or_replace(pkg).finish()
 
-            op = op(*(args + [pkg]))
-            op.finish()
-
-            out.write("completed\n")
+        out.write("completed\n")
     if failures:
         return 1
     return 0
-
-commandline_commands['copy'] = (CopyParser, copy_main)
-
-
-class RegenParser(commandline.OptionParser):
-
-    description = 'regenerate the metadata cache for repositories'
-    usage = '%prog [options] repo [threads]'
-
-    def _register_options(self):
-        self.add_option('--disable-eclass-preloading', action='store_true',
-            default=False,
-            help="For regen operation, pkgcore internally turns on an "
-            "optimization that preloads eclasses into individual functions "
-            "thus parsing the eclass only once per EBD processor.  Disabling "
-            "this optimization via this option results in ~50% slower "
-            "regeneration. Disable it only if you suspect the optimization "
-            "is somehow causing issues.")
-
-    def _check_values(self, values, args):
-        if not args:
-            self.error('Need a repository name.')
-        if len(args) > 2:
-            self.error('I do not know what to do with more than 2 arguments')
-
-        if len(args) == 2:
-            try:
-                values.thread_count = int(args[1])
-            except ValueError:
-                self.error('%r should be an integer' % (args[1],))
-            if values.thread_count <= 0:
-                self.error('thread count needs to be at least 1')
-        else:
-            values.thread_count = 1
-
-        try:
-            values.repo = values.config.repo[args[0]]
-        except KeyError:
-            self.error('repo %r was not found! known repos: %s' % (
-                    args[0], ', '.join(str(x) for x in values.config.repo)))
-
-        return values, ()
 
 
 def regen_iter(iterable, err):
@@ -291,6 +180,31 @@ def reclaim_threads(threads, err):
         except Exception, e:
             err.write("caught exception %s reclaiming thread" % (e,))
 
+def _get_default_jobs(namespace, attr):
+    # we intentionally overschedule for SMP; the main python thread
+    # isn't too busy, thus we want to keep all bash workers going.
+    val = spawn.get_proc_count()
+    if val > 1:
+        val += 1
+    setattr(namespace, attr, val)
+
+regen = subparsers.add_parser("regen", parents=shared_options,
+    help="regenerate repository caches")
+regen.add_argument("--disable-eclass-preloading", action='store_true',
+    default=False,
+    help="For regen operation, pkgcore internally turns on an "
+    "optimization that preloads eclasses into individual functions "
+    "thus parsing the eclass only once per EBD processor.  Disabling "
+    "this optimization via this option results in ~50%% slower "
+    "regeneration. Disable it only if you suspect the optimization "
+    "is somehow causing issues.")
+regen.add_argument("--threads", "-t", type=int,
+    default=commandline.DelayedValue(_get_default_jobs, 100),
+    help="number of threads to use for regeneration.  Defaults to using all "
+    "available processors")
+regen.add_argument("repo", action=commandline.StoreConfigObject,
+    config_type='repo', help="repository to regenerate caches for")
+@regen.bind_main_func
 def regen_main(options, out, err):
     """Regenerate a repository cache."""
     start_time = time()
@@ -298,14 +212,14 @@ def regen_main(options, out, err):
     options.count = 0
     if not options.disable_eclass_preloading:
         processor._global_enable_eclass_preloading = True
-    if options.thread_count == 1:
+    if options.threads == 1:
         def passthru(iterable):
             for x in iterable:
                 options.count += 1
                 yield x
         regen_iter(passthru(options.repo), err)
     else:
-        queue = Queue.Queue(options.thread_count * 2)
+        queue = Queue.Queue(options.threads * 2)
         kill = Event()
         kill.clear()
         def iter_queue(kill, qlist, timeout=0.25):
@@ -317,8 +231,8 @@ def regen_main(options, out, err):
         regen_threads = [
             Thread(
                 target=regen_iter, args=(iter_queue(kill, queue), err))
-            for x in xrange(options.thread_count)]
-        out.write('starting %d threads' % (options.thread_count,))
+            for x in xrange(options.threads)]
+        out.write('starting %d threads' % (options.threads,))
         try:
             for x in regen_threads:
                 x.start()
@@ -343,34 +257,25 @@ def regen_main(options, out, err):
         time() - start_time))
     return 0
 
-commandline_commands['regen'] = (RegenParser, regen_main)
 
-
-class PerlRebuildParser(commandline.OptionParser):
-
-    description = 'identify perl pkgs in need of a rebuild for a new perl version'
-
-    def check_values(self, values, args):
-        values, args = commandline.OptionParser.check_values(
-            self, values, args)
-
-        if not args:
-            self.error('you must specify the new perl version')
-        values.target_version = args[0]
-        path = pjoin(values.domain.root, "usr/lib/perl5", values.target_version)
-        if not os.path.exists(path):
-            self.error("version %s doesn't seem to be installed; can't find it at %r" %
-                (values.target_version, path))
-
-        return values, ()
-
-
+perl_rebuild = subparsers.add_parser("perl-rebuild",
+    parents=(commandline.mk_argparser(add_help=False),),
+    help="EXPERIMENTAL: perl-rebuild support for use after upgrading perl")
+perl_rebuild.add_argument("new_version",
+    help="the new perl version; 5.12.3 for example")
+@perl_rebuild.bind_main_func
 def perl_rebuild_main(options, out, err):
-    """Write Manifests and digests"""
+
+    path = pjoin(options.domain.root, "usr/lib/perl5",
+        options.new_version)
+    if not os.path.exists(path):
+        err.write("version %s doesn't seem to be installed; can't find it at %r" %
+            (options.new_version, path))
+        return 1
 
     base = pjoin(options.domain.root, "/usr/lib/perl5")
     potential_perl_versions = [x.replace(".", "\.") for x in listdir_dirs(base)
-        if x.startswith("5.") and x != options.target_version]
+        if x.startswith("5.") and x != options.new_version]
 
     if len(potential_perl_versions) == 1:
         subpattern = potential_perl_versions[0]
@@ -388,38 +293,27 @@ def perl_rebuild_main(options, out, err):
             if matcher(fsobj.location):
                 out.write("%s" % (pkg.unversioned_atom,))
                 break
+    return 0
 
 
-commandline_commands['perl_rebuild'] = (PerlRebuildParser, perl_rebuild_main)
+env_update = subparsers.add_parser("env-update", help="update env.d and ldconfig",
+    parents=(commandline.mk_argparser(add_help=False),))
+env_update.add_argument("--skip-ldconfig", action='store_true', default=False,
+    help="do not update etc/ldso.conf and ld.so.cache")
+@env_update.bind_main_func
+def env_update_main(options, out, err):
+    root = getattr(options.domain, 'root', None)
+    if root is None:
+        err.write("domain specified lacks a root seting; is it a virtual or rmeote domain?")
+        return 1
 
-class env_update(commandline.OptionParser):
-
-    enable_domain_options = True
-
-    description = 'read env.d rebuilding etc/profile.env and etc/ld.so* files ' \
-        'for this domain'
-
-    def _register_options(self):
-        self.add_option('--skip-ldconfig', action='store_true', default=False,
-            help="do not update etc/ld.so.conf and ld.so.cache")
-
-    def _check_values(self, options, args):
-        options.root = getattr(options.domain, 'root', None)
-        if options.root is None:
-            self.error("domain used seems to be either virtual or remote- no root identified from it")
-        return options, args
-
-    def run(self, options, out, err):
-        out.write("updating env for %r..." % (options.root,))
-        triggers.perform_env_update(options.root,
-            skip_ldso_update=options.skip_ldconfig)
-        if not options.skip_ldconfig:
-            out.write("update ldso cache/elf hints for %r..." % (options.root,))
-            merge_triggers.update_elf_hints(options.root)
-        return 0
-
-
-commandline_commands['env-update'] = env_update
+    out.write("updating env for %r..." % (root,))
+    triggers.perform_env_update(root,
+        skip_ldso_update=options.skip_ldconfig)
+    if not options.skip_ldconfig:
+        out.write("update ldso cache/elf hints for %r..." % (root,))
+        merge_triggers.update_elf_hints(root)
+    return 0
 
 
 class DigestParser(commandline.OptionParser):

@@ -74,6 +74,8 @@ class install(base):
         'finalize_data': 'add_data',
         'add_data':'start'}
 
+    description = "install"
+
     def __init__(self, repo, pkg, observer):
         base.__init__(self, repo, observer)
         self.new_pkg = pkg
@@ -97,6 +99,8 @@ class uninstall(base):
         'finalize_data': 'remove_data',
         'remove_data':'start'}
 
+    description = "uninstall"
+
     def __init__(self, repo, pkg, observer):
         base.__init__(self, repo, observer)
         self.old_pkg = pkg
@@ -117,6 +121,8 @@ class replace(install, uninstall):
         '_notify_repo_remove': 'remove_data',
         'remove_data': 'start',
         'add_data': 'start'}
+
+    description = "replace"
 
     def __init__(self, repo, oldpkg, newpkg, observer):
         # yes there is duplicate initialization here.
@@ -153,7 +159,18 @@ class operations(operations_base):
         return self._cmd_replace(oldpkg, newpkg,
             self._default_observer(observer))
 
-    for x in ("install", "uninstall", "replace"):
+    def _cmd_enabled_install_or_replace(self, newpkg, observer=None):
+        return self._cmd_install_or_replace(newpkg,
+            self._default_observer(observer))
+
+    def _cmd_install_or_replace(self, newpkg, observer=None):
+        match = self.repo.match(newpkg.versioned_atom)
+        if not match:
+            return self.install(newpkg, observer=observer)
+        assert len(match) == 1
+        return self.replace(match[0], newpkg, observer=observer)
+
+    for x in ("install", "uninstall", "replace", "install_or_replace"):
         locals()["_cmd_check_support_%s" % x] = post_curry(
             _disabled_if_frozen, x)
 

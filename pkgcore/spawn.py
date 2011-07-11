@@ -559,3 +559,20 @@ def find_invoking_python():
         except CommandNotFound:
             continue
     raise CommandNotFound('python')
+
+def get_proc_count(force=False):
+    """return the number of cpu's identified, HT or otherwise
+
+    :param force: force recalculating the value, else use the cached value
+    :return: integer of the number of processors.  If it can't be discerned, 1 is returned
+    """
+    val = getattr(get_proc_count, 'cached_result', None)
+    if val is None or force:
+        try:
+            val = len([x for x in open("/proc/cpuinfo") if ''.join(x.split()).split(":")[0] == "processor"])
+        except EnvironmentError:
+            pass
+        if not val:
+            val = 1
+        get_proc_count.cached_result = val
+    return val

@@ -148,7 +148,6 @@ class StoreConfigObject(argparse._StoreAction):
 
         self.priority = int(kwargs.pop("priority", self.default_priority))
         self.config_type = kwargs.pop("config_type", None)
-        self.store_name = kwargs.pop("store_name", False)
         if self.config_type is None or not isinstance(self.config_type, str):
             raise ValueError("config_type must specified, and be a string")
 
@@ -156,8 +155,8 @@ class StoreConfigObject(argparse._StoreAction):
             kwargs["default"] = DelayedValue(currying.partial(self.store_default,
                 self.config_type), self.priority)
 
+        self.store_name = kwargs.pop("store_name", False)
         self.writable = kwargs.pop("writable", None)
-
         self.target = argparse._StoreAction(*args, **kwargs)
 
         super(StoreConfigObject, self).__init__(*args, **kwargs)

@@ -1,11 +1,11 @@
 # Copyright: 2009-2011 Brian Harring <ferringb@gmail.com>
 # License: GPL2/BSD
 
-__all__ = ("pkgsets_data", "histo_data", "eapi_usage_data", "license_usage_data",
-    "mirror_usage_data", "eclass_usage_data", "mirror_usage_data"
+__all__ = ("pkgsets", "histo_data", "eapi_usage", "license_usage",
+    "mirror_usage", "eclass_usage", "mirror_usage"
 )
 
-from pkgcore.util.commandline import OptionParser
+from pkgcore.util import commandline
 from pkgcore.ebuild import portageq
 import os
 from snakeoil.demandload import demandload
@@ -19,55 +19,38 @@ demandload(globals(),
     'operator:attrgetter,itemgetter'
 )
 
-commandline_commands = {}
+shared = (commandline.mk_argparser(domain=False, add_help=False),)
+argparse_parser = commandline.mk_argparser(suppress=True, parents=shared)
+subparsers = argparse_parser.add_subparsers(description="report applets")
 
-class pkgsets_data(OptionParser):
-
-    #enable_domain_options = True
-    description = 'inspect pkgsets available in configuration'
-    usage = ('%prog pkgsets [sets-to-examine] ; if no sets specified, '
-        'list the known sets')
-
-    def _register_options(self):
-        self.add_option("--all", action='store_true', default=False,
-            help="display info on all pkgsets")
-
-    def _check_values(self, values, args):
-        values.pkgsets = tuple(args)
-        if values.all and values.pkgsets:
-            self.error("--all cannot be specified along w/ specific pkgsets to inspect")
-        return values, ()
-
-    def run(self, opts, out, err):
-        if opts.all:
+pkgsets = subparsers.add_parser("pkgsets", help="pkgset related introspection")
+mux = pkgsets.add_mutually_exclusive_group()
+mux.add_argument("--all", action='store_true', default=False,
+    help="display info on all pkgsets")
+mux.add_argument("pkgsets", nargs="*", metavar="pkgset", default=[],
+    action=commandline.StoreConfigObject, config_type='pkgset', store_name=True,
+    help="pkgset to inspect")
+del mux
+@pkgsets.bind_main_func
+def pkgsets_run(opts, out, err):
+    if not opts.pkgsets:
+        if not opts.all:
+            out.write(out.bold, 'available pkgset(s): ', out.reset,
+                ', '.join(repr(x) for x in sorted(opts.config.pkgset)))
+            return 0
+        else:
             opts.pkgsets = sorted(opts.config.pkgset)
-        if not opts.pkgsets:
-            out.write(out.bold, 'available pkgset: ', out.reset,
-                ', '.join(repr(x) for x in
-                   sorted(opts.config.pkgset)))
-            return 0
-        missing = False
-        for position, set_name in enumerate(opts.pkgsets):
-            pkgset = opts.get_pkgset(None, set_name)
-            if pkgset is None:
-                missing = True
-                if position:
-                    out.write()
-                out.write(out.bold, 'pkgset ', repr(set_name), out.reset,
-                    "isn't defined, skipping.")
-            else:
-                if position:
-                    out.write()
-                out.write(out.bold, 'pkgset ', repr(set_name), out.reset, ':')
-                out.first_prefix.append('  ')
-                for restrict in sorted(pkgset):
-                    out.write(restrict)
-                out.first_prefix.pop()
-        if not missing:
-            return 0
-        return 1
 
-commandline_commands['pkgset'] = pkgsets_data
+    missing = False
+    for position, (set_name, pkgset) in enumerate(opts.pkgsets):
+        if position:
+            out.write()
+        out.write(out.bold, 'pkgset ', repr(set_name), out.reset, ':')
+        out.first_prefix.append('  ')
+        for restrict in sorted(pkgset):
+            out.write(restrict)
+        out.first_prefix.pop()
+    return 0
 
 
 def print_simple_histogram(data, out, format, total, sort_by_key=False,
@@ -91,67 +74,44 @@ def print_simple_histogram(data, out, format, total, sort_by_key=False,
             'percent':"%2.2f%%" % (val/total,)})
 
 
-class histo_data(OptionParser):
+class histo_data(commandline.ArgparseCommand):
 
     per_repo_summary = None
     allow_no_detail = False
 
-    def _register_options(self):
-        self.add_option("--no-final-summary", action='store_true', default=False,
+    def bind_to_parser(self, parser):
+        mux = parser.add_mutually_exclusive_group()
+        mux.add_argument("--no-final-summary", action='store_true', default=False,
             help="disable outputting a summary of data across all repos")
 
+        parser.set_defaults(repo_summary=bool(self.per_repo_summary))
         if self.per_repo_summary:
-            self.add_option("--no-repo-summary", action='store_true', default=False,
+            mux.add_argument("--no-repo-summary", dest='repo_summary',
+                action='store_false',
                 help="disable outputting repo summaries")
 
+        parser.set_defaults(no_detail=False)
         if self.allow_no_detail:
-            self.add_option("--no-detail", action='store_true', default=False,
+            mux.add_argument("--no-detail", action='store_true', default=False,
                 help="disable outputting a detail view of all repos")
 
-        self.add_option("--sort-by-name", action='store_true', default=False,
+        parser.add_argument("--sort-by-name", action='store_true', default=False,
             help="sort output by name, rather then by frequency")
 
-        self.add_option("--first", action="store", type='int', default=0,
+        mux = parser.add_mutually_exclusive_group()
+
+        mux.add_argument("--first", action="store", type=int, default=0,
             help="show only the first N detail items")
 
-        self.add_option("--last", action="store", type='int', default=0,
+        mux.add_argument("--last", action="store", type=int, default=0,
             help="show only the last N detail items")
 
-    def _check_values(self, opts, args):
-        repo_conf = opts.config.repo
-        if args:
-            opts.repos = []
-            for repo_name in args:
-                if not repo_name in repo_conf:
-                    self.error("no repository named %r" % (repo_name,))
-                opts.repos.append((repo_name, repo_conf[repo_name]))
-        else:
-            opts.repos = sorted(repo_conf.items(), key=lambda x:x[0])
+        parser.add_argument("repos", metavar='repo', nargs='*',
+            action=commandline.StoreConfigObject, config_type='repo', store_name=True,
+            default=commandline.CONFIG_ALL_DEFAULT,
+            help="repositories to inspect")
 
-        if not self.allow_no_detail:
-            opts.no_detail = False
-
-        if not self.per_repo_summary:
-            opts.repo_summary = False
-
-        if opts.no_detail and opts.no_repo_summary and opts.no_final_summary:
-            s = '--no-final-summary '
-            if self.allow_no_detail:
-                s += 'and --no-detail '
-            if self.per_repo_summary:
-                s += 'and --no-repo-summary '
-            self.error("%s cannot be used together; pick just one" % (s,))
-
-        if opts.last and opts.first:
-            self.error("--first and --last cannot be used together; use just one")
-
-        if not self.per_repo_summary:
-            opts.no_repo_summary = True
-
-        if not self.allow_no_detail:
-            self.no_detail = False
-
-        return opts, ()
+        commandline.ArgparseCommand.bind_to_parser(self, parser)
 
     def get_data(self, repo, options):
         raise NotImplementedError()
@@ -162,7 +122,7 @@ class histo_data(OptionParser):
     def transform_data_to_summary(self, data):
         return data
 
-    def run(self, opts, out, err):
+    def __call__(self, opts, out, err):
         global_stats = {}
         position = 0
         total_pkgs = 0
@@ -189,7 +149,7 @@ class histo_data(OptionParser):
                 global_stats[key] += val
             total_pkgs += repo_total
 
-            if opts.no_repo_summary:
+            if not opts.repo_summary:
                 continue
             out.write(out.bold, 'summary', out.reset, ': ',
                 self.per_repo_summary %
@@ -205,12 +165,7 @@ class histo_data(OptionParser):
         return 0
 
 
-class eapi_usage_data(histo_data):
-
-    #enable_domain_options = True
-    description = 'get a breakdown of eapi usage for target repositories'
-    usage = ('%prog eapi_usage [repositories to look at] ; if no repositories '
-        'specified the default is to scan all')
+class eapi_usage_kls(histo_data):
 
     per_repo_format = ("eapi: %(key)r %(val)s pkgs found, %(percent)s of the "
         "repository")
@@ -226,14 +181,12 @@ class eapi_usage_data(histo_data):
             eapis[pkg.eapi] += 1
         return eapis, pos + 1
 
-commandline_commands['eapi_usage'] = eapi_usage_data
+eapi_usage = subparsers.add_parser("eapi_usage",
+    help="report of eapi usage for targeted repositories")
+eapi_usage.bind_class(eapi_usage_kls())
 
 
-class license_usage_data(histo_data):
-
-    description = 'get a breakdown of license usage for target repositories'
-    usage = ('%prog license_usage [repositories to look at] ; if no repositories '
-        'specified the default is to scan all')
+class license_usage_kls(histo_data):
 
     per_repo_format = ("license: %(key)r %(val)s pkgs found, %(percent)s of the "
         "repository")
@@ -250,14 +203,12 @@ class license_usage_data(histo_data):
                 data[license] += 1
         return data, pos + 1
 
-commandline_commands['license_usage'] = license_usage_data
+license_usage = subparsers.add_parser("license_usage",
+    help="report of license usage for targeted repositories")
+license_usage.bind_class(license_usage_kls())
 
 
-class eclass_usage_data(histo_data):
-
-    description = 'get a breakdown of eclass usage for target repositories'
-    usage = ('%prog eclass_usage [repositories to look at] ; if no '
-        'repositories are specified it defaults to scanning all')
+class eclass_usage_kls(histo_data):
 
     per_repo_format = ("eclass: %(key)r %(val)s pkgs found, %(percent)s of the "
         "repository")
@@ -273,14 +224,12 @@ class eclass_usage_data(histo_data):
                 data[eclass] += 1
         return data, pos + 1
 
-commandline_commands['eclass_usage'] = eclass_usage_data
+eclass_usage = subparsers.add_parser("eclass_usage",
+    help="report of eclass usage for targeted repositories")
+eclass_usage.bind_class(eclass_usage_kls())
 
 
-class mirror_usage_data(histo_data):
-
-    description = 'get a breakdown of mirror usage for target repositories'
-    usage = ('%prog mirror_usage [repositories to look at] ; if no '
-        'repositories are specified it defaults to scanning all')
+class mirror_usage_kls(histo_data):
 
     per_repo_format = ("mirror: %(key)r %(val)s pkgs found, %(percent)s of the "
         "repository")
@@ -301,14 +250,12 @@ class mirror_usage_data(histo_data):
                     data[mirror.mirror_name] += 1
         return data, pos + 1
 
-commandline_commands['mirror_usage'] = mirror_usage_data
+mirror_usage = subparsers.add_parser("mirror_usage",
+    help="report of SRC_URI mirror usage for targeted repositories")
+mirror_usage.bind_class(mirror_usage_kls())
 
 
-class distfiles_usage_data(histo_data):
-
-    description = 'get a breakdown of total distfiles for target repositories'
-    usage = ('%prog mirror_usage [repositories to look at] ; if no '
-        'repositories are specified it defaults to scanning all')
+class distfiles_usage_kls(histo_data):
 
     per_repo_format = ("package: %(key)r %(val)s bytes, referencing %(percent)s of the "
         "unique total")
@@ -320,11 +267,11 @@ class distfiles_usage_data(histo_data):
 
     allow_no_detail = True
 
-    def _register_options(self):
-        histo_data._register_options(self)
-        self.add_option("--include-nonmirrored", action='store_true', default=False,
+    def bind_to_parser(self, parser):
+        histo_data.bind_to_parser(self, parser)
+        parser.add_argument("--include-nonmirrored", action='store_true', default=False,
             help="if set, nonmirrored  distfiles will be included in the total")
-        self.add_option("--include-restricted", action='store_true', default=False,
+        parser.add_argument("--include-restricted", action='store_true', default=False,
             help="if set, fetch restricted distfiles will be included in the total")
 
     def get_data(self, repo, options):
@@ -355,5 +302,10 @@ class distfiles_usage_data(histo_data):
     def transform_data_to_summary(self, data):
         return data[1]
 
-commandline_commands['distfiles_usage'] = distfiles_usage_data
-commandline_commands['portageq'] = portageq.commandline_commands
+
+distfiles_usage = subparsers.add_parser("distfiles_usage",
+    help="report detailing distfiles space usage for targeted repositories")
+distfiles_usage.bind_class(distfiles_usage_kls())
+
+
+#commandline_commands['portageq'] = portageq.commandline_commands

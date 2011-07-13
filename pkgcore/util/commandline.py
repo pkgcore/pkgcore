@@ -357,6 +357,23 @@ class ArgumentParser(argparse.ArgumentParser):
         self.set_defaults(main_func=functor)
         return functor
 
+    def bind_class(self, obj):
+        if not isinstance(obj, ArgparseCommand):
+            raise ValueError("expected obj to be an instance of "
+                "ArgparseCommand; got %r" % (obj,))
+        obj.bind_to_parser(self)
+        return self
+
+
+class ArgparseCommand(object):
+
+    def bind_to_parser(self, parser):
+        parser.bind_main_func(self)
+
+    def __call__(self, namespace, out, err):
+        raise NotImplementedError(self, '__call__')
+
+
 def _convert_config_mods(iterable):
     d = {}
     if iterable is None:

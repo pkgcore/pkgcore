@@ -138,6 +138,9 @@ class Delayed(argparse.Action):
             self.priority))
 
 
+CONFIG_ALL_DEFAULT = object()
+
+
 class StoreConfigObject(argparse._StoreAction):
 
     default_priority = 20
@@ -187,7 +190,9 @@ class StoreConfigObject(argparse._StoreAction):
             raise ValueError("no config found.  Internal bug")
 
         sections = getattr(config, self.config_type)
-        if isinstance(values, basestring):
+        if values is CONFIG_ALL_DEFAULT:
+            value = [self._load_obj(sections, x) for x in sections]
+        elif isinstance(values, basestring):
             value = self._load_obj(sections, values)
         else:
             value = [self._load_obj(sections, x) for x in values]
@@ -201,6 +206,14 @@ class StoreConfigObject(argparse._StoreAction):
         obj = config.get_default(config_type)
         if obj is None:
             raise ValueError("config error: no default object of type %r found" % (config_type,))
+        setattr(namespace, attr, obj)
+
+    @staticmethod
+    def store_all_default(config_type, namespace, attr):
+        config = getattr(namespace, 'config', None)
+        if config is None:
+            raise ValueError("no config found.  Internal bug")
+        obj = [(k, v) for k, v in getattr(config, config_type).iteritems()]
         setattr(namespace, attr, obj)
 
 

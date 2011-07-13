@@ -173,7 +173,7 @@ has() {
 
 	local x
 	for x in "$@"; do
-		[[ ${x} == ${needle} ]] && return 0
+		[ "${x}" == "${needle}" ] && return 0
 	done
 	return 1
 }

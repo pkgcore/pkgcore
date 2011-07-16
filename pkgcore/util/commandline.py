@@ -217,6 +217,33 @@ class StoreConfigObject(argparse._StoreAction):
         setattr(namespace, attr, obj)
 
 
+class DomainFromPath(StoreConfigObject):
+
+    def __init__(self, *args, **kwargs):
+        kwargs['config_type'] = 'domain'
+        StoreConfigObject.__init__(self, *args, **kwargs)
+
+    def _load_obj(self, sections, requested_path):
+        targets = list(find_domains_from_path(sections, requested_path))
+        if not targets:
+            raise ValueError("couldn't find domain at path %r" % (requested_path,))
+        elif len(targets) != 1:
+            raise ValueError("multiple domains claim root %r: domains %s" %
+                (requested_path, ', '.join(repr(x[0]) for x in targets)))
+        return targets[0][1]
+
+
+def find_domains_from_path(sections, path):
+    path = osutils.normpath(osutils.abspath(path))
+    for name, domain in sections.iteritems():
+        root = getattr(domain, 'root', None)
+        if root is None:
+            continue
+        root = osutils.normpath(osutils.abspath(root))
+        if root == path:
+            yield name, domain
+
+
 class DelayedValue(object):
 
     def __init__(self, invokable, priority):
@@ -399,6 +426,11 @@ def store_config(namespace, attr):
     setattr(namespace, attr, config)
 
 
+def _mk_domain(parser):
+    parser.add_argument('--domain', get_default=True, config_type='domain',
+        action=StoreConfigObject,
+        help="domain to use for this operation")
+
 def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=True, **kwds):
     p = ArgumentParser(**kwds)
     if suppress:
@@ -423,9 +455,7 @@ def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=Tru
         p.set_defaults(config=DelayedValue(store_config, 0))
 
     if domain:
-        p.add_argument('--domain', get_default=True, config_type='domain',
-            action=StoreConfigObject,
-            help="domain to use for this operation")
+        _mk_domain(p)
     return p
 
 
@@ -449,15 +479,6 @@ def convert_to_restrict(sequence, default=packages.AlwaysTrue):
             % (x, e))
     return l or [default]
 
-def find_domains_from_path(config, path):
-    path = osutils.normpath(osutils.abspath(path))
-    for name, domain in config.domain.iteritems():
-        root = getattr(domain, 'root', None)
-        if root is None:
-            continue
-        root = osutils.normpath(osutils.abspath(root))
-        if root == path:
-            yield name, domain
 
 def main(subcommands, args=None, outfile=None, errfile=None,
     script_name=None):

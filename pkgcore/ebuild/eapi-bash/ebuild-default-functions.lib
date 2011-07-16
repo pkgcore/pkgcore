@@ -11,18 +11,20 @@ portageq() {
 	shift
 	# suppress sandbox for the invocation; do this to avoid things like .pyc generation
 	# being snagged by the sandbox
-	SANDBOX_on=0 PYTHONPATH="$PKGCORE_PYTHONPATH" pinspect portageq "${command}" \
+	local portageq_str=portageq
+	${PKGCORE_DISABLE_COMPAT-false} && portageq_str=query
+	SANDBOX_on=0 PYTHONPATH="$PKGCORE_PYTHONPATH" pinspect ${portageq_str} "${command}" \
 	    --eapi "${EAPI:--1}" --use "${USE}" "$@"
 }
 
 has_version()
 {
-	portageq 'has_version' "${ROOT}" "$1"
+	PKGCORE_DISABLE_COMPAT=true portageq 'has_version' "$1"
 }
 
 best_version()
 {
-	portageq 'best_version' "${ROOT}" "$1"
+	PKGCORE_DISABLE_COMPAT=true portageq 'best_version' "$1"
 }
 
 # adds ".keep" files so that dirs aren't auto-cleaned

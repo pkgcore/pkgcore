@@ -22,22 +22,52 @@ def str_pkg(pkg):
     return str(pkg.rdepends).lstrip("=")
 
 
-commandline_commands = {}
+def get_atom_kls(value):
+    eapi_obj = eapi.get_eapi(value)
+    if eapi_obj is None:
+        raise ValueError("eapi %s isn't known/supported" % (value,))
+    return eapi_obj.atom_kls
 
-class BaseCommand(commandline.OptionParser):
+def default_portageq_args(parser):
+    parser.add_argument("--eapi", dest='atom_kls', type=get_atom_kls,
+        default=atom.atom,
+        help="limit all operations to just what the given eapi supports.")
+    parser.add_argument("--use", default=None,
+        help="override the use flags used for transititive USE deps- "
+       "dev-lang/python[threads=] for example")
+
+
+class BaseCommand(commandline.ArgparseCommand):
 
     required_arg_count = 0
     has_optional_args = False
-    arguments_allowed = True
-    enable_domain_options = False
     arg_spec = ()
 
-    def _register_options(self):
-        self.add_option("--eapi", default=None,
-            help="limit all operations to just what the given eapi supports.")
-        self.add_option("--use", default=None,
-            help="override the use flags used for transititive USE deps- "
-            "dev-lang/python[threads=] for example")
+    def bind_to_parser(self, parser, compat=False):
+        commandline.ArgparseCommand.bind_to_parser(self, parser)
+        default_portageq_args(parser)
+        if self.requires_root:
+            if compat:
+                parser.add_argument(dest="domain", metavar="root",
+                    action=commandline.DomainFromPath,
+                    help="the domain that lives at root will be used")
+            else:
+                mux = parser.add_mutually_exclusive_group()
+                commandline._mk_domain(mux)
+                mux.add_argument('--domain-at-root',
+                    action=commandline.DomainFromPath,
+                    dest="domain", help="specify the domain to use via it's root path")
+        for token in self.arg_spec:
+            kwds = {}
+            if token[-1] in '+?*':
+                kwds["nargs"] = token[-1]
+                token = token[:-1]
+            if token == 'atom':
+                parser.add_argument('atom', help="atom to inspect",
+                    type=atom.atom, **kwds)
+            else:
+                parser.add_argument(token, help="%s to inspect" % (token,),
+                    **kwds)
 
     def _check_values(self, options, args):
 
@@ -55,26 +85,10 @@ class BaseCommand(commandline.OptionParser):
                 arg_len -= 1
             min_arg_count -= 1
 
-        if options.eapi is not None:
-            eapi_obj = eapi.get_eapi(options.eapi)
-            if eapi_obj is None:
-                self.error("--eapi value %r isn't a known eapi" % (options.eapi,))
-            options.atom_kls = eapi_obj.atom_kls
-        else:
-            options.atom_kls = atom.atom
-
         if options.use is not None:
             options.use = frozenset(options.use.split())
         else:
             options.use = options.domain.settings.get("USE", frozenset())
-
-        if arg_len < min_arg_count or \
-            (not self.has_optional_args and arg_len > min_arg_count):
-            if self.requires_root:
-                self.error("wrong arg count; expected %i non root argument(s), got %i" %
-                    (min_arg_count, arg_len))
-            self.error("wrong arg count; requires %i, got %i" %
-                (self.required_arg_count, arg_len))
 
         args = self.rewrite_args(options, args)
 
@@ -119,46 +133,32 @@ class BaseCommand(commandline.OptionParser):
             self.error("malformed argument %r: %s" % (arg, e))
         return a
 
+    @classmethod
+    def make_command(cls, arg_spec='', requires_root=True, bind=None):
 
-def make_command(arg_spec, **kwds):
-    raw_arg_spec = arg_spec.split()
-    arg_spec = ["<%s>" % (x,) for x in raw_arg_spec]
-    try:
-        arg_spec[arg_spec.index("<root>")] = "[<root> | --domain DOMAIN_NAME]"
-        kwds["requires_root"] = True
-    except ValueError:
-        kwds["requires_root"] = False
-
-    kwds["arg_spec"] = tuple(raw_arg_spec)
-
-    takes_optional_args = kwds.pop("multiple_args", False)
-    if "usage" not in kwds:
-        txt = "%prog " + (" ".join(arg_spec))
-        if takes_optional_args:
-            txt += "+"
-        kwds["usage"] = txt
-
-    def internal_function(functor):
+        kwds = dict(arg_spec=tuple(arg_spec.split()), requires_root=requires_root)
 
         class mycommand(BaseCommand):
-            __doc__ = functor.__doc__
-            required_arg_count = len(raw_arg_spec)
-            has_optional_args = takes_optional_args
-            enable_domain_options = True
             locals().update(kwds)
-            arg_spec = tuple(raw_arg_spec)
 
-        mycommand.__name__ = functor.__name__
         # note that we're modifying a global scope var here.
         # we could require globals() be passed in, but that
         # leads to fun reference cycles
-        commandline_commands[functor.__name__] = (mycommand, functor)
-        return mycommand
-
-    return internal_function
+        #commandline_commands[functor.__name__] = (mycommand, functor)
 
 
-@make_command("variable", multiple_args=True)
+        def internal_function(functor):
+            mycommand.__name__ = functor.__name__
+            mycommand.__call__ = staticmethod(functor)
+            if bind is not None:
+                bind.append(mycommand)
+            return mycommand
+
+        return internal_function
+
+commands = []
+
+@BaseCommand.make_command("variable+", bind=commands)
 def envvar(options, out, err):
     """
     return configuration defined variables
@@ -166,17 +166,17 @@ def envvar(options, out, err):
     default_get = lambda d,k: d.settings.get(k, "")
     distdir_get = lambda d,k: d.settings["fetcher"].distdir
     envvar_getter = {"DISTDIR":distdir_get}
-    for x in options.arguments:
+    for x in options.variable:
         out.write(str(envvar_getter.get(x, default_get)(options.domain, x)))
     return 0
 
-@make_command("root atom", requires_root=True)
+@BaseCommand.make_command("atom", bind=commands)
 def has_version(options, out, err):
     """
     @param domain: L{pkgcore.config.domain.domain} instance
     @param atom_str: L{pkgcore.ebuild.atom.atom} instance
     """
-    if options.domain.all_livefs_repos.has_match(options.arguments[0]):
+    if options.domain.all_livefs_repos.has_match(options.atom):
         return 0
     return 1
 
@@ -188,38 +188,38 @@ def _best_version(domain, restrict, out):
         return ''
     return str_pkg(p)
 
-@make_command("root atom", multiple_args=True, requires_root=True)
+@BaseCommand.make_command("atom+", bind=commands)
 def mass_best_version(options, out, err):
     """
     multiple best_version calls
     """
-    for x in options.arguments:
+    for x in options.atom:
         out.write("%s:%s" %
             (x, _best_version(options.domain, x, out).rstrip()))
     return 0
 
-@make_command("root atom", requires_root=True)
+@BaseCommand.make_command("atom", bind=commands)
 def best_version(options, out, err):
     """
     @param domain: L{pkgcore.config.domain.domain} instance
     @param atom_str: L{pkgcore.ebuild.atom.atom} instance
     """
-    out.write(_best_version(options.domain, options.arguments[0], out))
+    out.write(_best_version(options.domain, options.atom, out))
     return 0
 
-@make_command("root atom", requires_root=True)
+@BaseCommand.make_command("atom", bind=commands)
 def match(options, out, err):
     """
     @param domain: L{pkgcore.config.domain.domain} instance
     @param atom_str: L{pkgcore.ebuild.atom.atom} instance
     """
-    i = options.domain.all_livefs_repos.itermatch(options.arguments[0],
+    i = options.domain.all_livefs_repos.itermatch(options.atom,
         sorter=sorted)
     for pkg in i:
         out.write(str_pkg(pkg))
     return 0
 
-@make_command("root")
+@BaseCommand.make_command(bind=commands)
 def get_repositories(options, out, err):
     l = []
     for k, repo in options.config.repo.iteritems():
@@ -235,19 +235,26 @@ def find_repo_by_repo_id(config, repo_id):
         if getattr(repo, 'repo_id', None) == repo_id:
             yield repo
 
-@make_command("root repo_id")
+@BaseCommand.make_command("repo_id", bind=commands)
 def get_repository_path(options, out, err):
-    for repo in find_repo_by_repo_id(options.config, options.arguments[0]):
+    for repo in find_repo_by_repo_id(options.config, options.repo_id):
         if getattr(repo, 'location', None) is not None:
             out.write(repo.location)
         return 0
     return 1
 
-@make_command("root repo_id")
+@BaseCommand.make_command("repo_id", bind=commands)
 def get_repo_news_path(options, out, err):
-    for repo in find_repo_by_repo_id(options.config, options.arguments[0]):
+    for repo in find_repo_by_repo_id(options.config, options.repo_id):
         if getattr(repo, 'location', None) is not None:
             out.write(osutils.normpath(
                 osutils.pjoin(repo.location, 'metadata', 'news')))
         return 0
     return 1
+
+def bind_parser(parser, compat=False, name='portageq'):
+    subparsers = parser.add_subparsers(help="%s commands" % (name,))
+    for command in commands:
+        subparser = subparsers.add_parser(command.__name__,
+            help=command.__doc__)
+        command().bind_to_parser(subparser, compat=compat)

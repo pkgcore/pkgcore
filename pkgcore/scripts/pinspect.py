@@ -2,11 +2,12 @@
 # License: GPL2/BSD
 
 __all__ = ("pkgsets", "histo_data", "eapi_usage", "license_usage",
-    "mirror_usage", "eclass_usage", "mirror_usage"
+    "mirror_usage", "eclass_usage", "mirror_usage",
+    "portageq", "query",
 )
 
 from pkgcore.util import commandline
-from pkgcore.ebuild import portageq
+from pkgcore.ebuild import portageq as _portageq
 import os
 from snakeoil.demandload import demandload
 
@@ -308,4 +309,10 @@ distfiles_usage = subparsers.add_parser("distfiles_usage",
 distfiles_usage.bind_class(distfiles_usage_kls())
 
 
-#commandline_commands['portageq'] = portageq.commandline_commands
+query = subparsers.add_parser("query",
+    help="auxiliary access to ebuild/repository info via portageq akin api")
+_portageq.bind_parser(query, name='query')
+
+portageq = subparsers.add_parser("portageq",
+    help="portageq compatible interface to query commands")
+_portageq.bind_parser(portageq, compat=True)

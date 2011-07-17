@@ -32,7 +32,7 @@ demandload.demandload(globals(),
     'copy@_copy',
     'snakeoil.fileutils:iter_read_bash',
     'snakeoil:osutils',
-    'pkgcore:version',
+    'pkgcore:version@_version',
     'pkgcore.config:basics',
     'pkgcore.restrictions:packages,restriction',
     'pkgcore.util:parserestrict',
@@ -341,6 +341,25 @@ def python_namespace_type(value, module=False, attribute=False):
         raise argparse.ArgumentTypeError(str(err))
 
 
+class VersionFunc(argparse.Action):
+
+    def __init__(self, option_strings,
+        dest=argparse.SUPPRESS, default=argparse.SUPPRESS,
+        nargs=0,
+        version_func=None):
+        super(VersionFunc, self).__init__(option_strings,
+            dest=dest,
+            default=default,
+            nargs=nargs,
+            help="show program's version number and exit")
+        self.version_func = version_func
+
+    def __call__(self, parser, namespace, values, option_string=None):
+        formatter = parser._get_formatter()
+        formatter.add_text(self.version_func())
+        parser.exit(message=formatter.format_help())
+
+
 class ArgumentParser(argparse.ArgumentParser):
 
     def __init__(self,
@@ -431,10 +450,21 @@ def _mk_domain(parser):
         action=StoreConfigObject,
         help="domain to use for this operation")
 
-def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=True, **kwds):
+def mk_argparser(suppress=False, config=True, domain=True, color=True, debug=True,
+    version=True, **kwds):
+    if isinstance(version, basestring):
+        kwds["version"] = version
+        version = None
     p = ArgumentParser(**kwds)
+
     if suppress:
         return p
+
+    if version:
+        if not callable(version):
+            version = _version.get_version
+        p.add_argument('--version', action=VersionFunc,
+            version_func=version)
     if debug:
         p.add_argument('--debug', action='store_true', help="Enable debugging checks")
     if color:

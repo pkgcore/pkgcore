@@ -59,7 +59,8 @@ def generate_rst(modpath, module, handle=None):
 
 def regen_if_needed(src, out_path):
     module = load_module(src)
-    cur_time = int(os.stat(module.__file__).st_mtime)
+    cur_time = max([int(os.stat(module.__file__).st_mtime),
+        int(os.stat(__file__).st_mtime)])
     try:
         trg_time = int(os.stat(out_path).st_mtime)
     except EnvironmentError, e:

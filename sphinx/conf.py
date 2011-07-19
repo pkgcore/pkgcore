@@ -213,11 +213,17 @@ latex_documents = [
 
 # -- Options for manual page output --------------------------------------------
 
+generated_man_pages = [('pkgcore.scripts.' + s, s) for s in
+#    "filter_env pclone_cache pconfig pebuild pinspect pmaint pmerge pplugincache pquery".split()]
+    "filter_env pclone_cache pconfig pebuild pinspect pmaint pplugincache".split()]
+generated_man_pages.append(('pkgcore.scripts.filter_env', 'filter-env'))
+
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'pkgcore', u'pkgcore Documentation',
-     [u'Brian Harring, Marien Zwart'], 1)
+    ('man/%s' % x[1], x[1], u'%s Documentation' % (x[1],),
+     [u'Brian Harring', u'Marien Zwart'], 1)
+    for x in generated_man_pages
 ]
 
 

@@ -10,13 +10,14 @@ BUILDDIR      = _build
 # Internal variables.
 PAPEROPT_a4     = -D latex_paper_size=a4
 PAPEROPT_letter = -D latex_paper_size=letter
-ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(PAPEROPT_$(PAPER)) $(SPHINXOPTS) .
+MAINSPHINXOPTS   = $(PAPEROPT_$(PAPER)) $(SPHINXOPTS)
+ALLSPHINXOPTS   = -d $(BUILDDIR)/doctrees $(MAINSPHINXOPTS) .
 # note this should probably just check for sphinx.domains in sys.modules w/in the demandload instead..
 export SNAKEOIL_DEMANDLOAD_WARN = no
 export SNAKEOIL_DEMANDLOAD_PROTECTION = no
 export PYTHONPATH=../
 
-.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest generated api
+.PHONY: help clean html dirhtml singlehtml pickle json htmlhelp qthelp devhelp epub latex latexpdf text man changes linkcheck doctest generated api man
 
 help:
 	@echo "Please use \`make <target>' where <target> is one of"
@@ -38,9 +39,15 @@ help:
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
 
 clean:
-	-rm -rf $(BUILDDIR)/* api
+	-rm -rf $(BUILDDIR)/* api man
 
-generated: api
+generated: api man_rsts
+
+man_rsts:
+	@echo "autogenerating api rsts..."
+	@mkdir -p man
+	python -c "import conf;print '\n'.join('%s man/%s.rst' % x for x in conf.generated_man_pages)" \
+	| ./generate_man_rsts.py
 
 api:
 	@echo "autogenerating api rsts..."

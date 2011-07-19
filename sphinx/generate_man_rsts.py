@@ -50,7 +50,8 @@ class ManConverter(object):
 
     @staticmethod
     def _get_formatter(parser, name):
-        return argparse.RawTextHelpFormatter(name, width=1000)
+        return argparse.RawTextHelpFormatter(name, width=1000,
+            max_help_position=1000)
 
     def process_positional(self, parser, name, action_group):
         l = []

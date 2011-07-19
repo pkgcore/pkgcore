@@ -1,7 +1,9 @@
 #!/usr/bin/python
 from snakeoil.modules import load_module
-import datetime, os, errno
+import datetime, os, errno, re
 from pkgcore.util import argparse
+pjoin = os.path.join
+from snakeoil.currying import partial
 
 def _rst_header(char, text, leading=False):
     s = char * len(text)
@@ -13,92 +15,112 @@ def _indent(stream):
     for s in stream:
         yield '  ' + s
 
-def generate_usage(parser, name):
-    h = argparse.RawTextHelpFormatter(name, width=1000)
-    h.add_usage(parser.usage, parser._actions, parser._mutually_exclusive_groups)
-    text = h.format_help()
-    if text.startswith("usage:"):
-        text = text[len("usage:"):].lstrip()
-    return filter(None, text.split("\n"))
 
-def process_action_groups(parser, name):
-    l = []
-    for action_group in parser._action_groups:
-        if any(isinstance(x, argparse._SubParsersAction)
-            for x in action_group._group_actions):
-            continue
-#            assert len(action_group._group_actions) == 1
-#            l.extend(process_subparser(action_group, name))
-        h = argparse.RawTextHelpFormatter(parser, name, width=1000)
-        #h.start_section(action_group.title)
-        #h.add_text(action_group.description)
+class ManConverter(object):
+
+    def __init__(self, base_path):
+        self.base_path = base_path
+
+    positional_re = re.compile("(^|\n)([^: ]+)")
+    positional_re = partial(positional_re.sub, '\g<1>:\g<2>:')
+
+    def regen_if_needed(self, src, out_name=None):
+        if out_name is None:
+            out_name = src.rsplit(".")[-1]
+        out_name += '.rst'
+        out_path = pjoin(self.base_path, out_name)
+        module = load_module(src)
+        cur_time = int(os.stat(module.__file__).st_mtime)
+        script_time = int(os.stat(__file__).st_mtime)
+        cur_time = max([cur_time, script_time])
+        try:
+            trg_time = int(os.stat(out_path).st_mtime)
+        except EnvironmentError, e:
+            if e.errno != errno.ENOENT:
+                raise
+            trg_time = -1
+
+        if cur_time != trg_time:
+            sys.stdout.write("regenerating rst for %s\n" % (src,))
+            data = self.generate_rst(src, module)
+            open(out_path, "w").write("\n".join(data))
+
+        os.chmod(out_path, 0644)
+        os.utime(out_path, (cur_time, cur_time))
+
+    @staticmethod
+    def _get_formatter(parser, name):
+        return argparse.RawTextHelpFormatter(name, width=1000)
+
+    def process_positional(self, parser, name, action_group):
+        l = []
+        h = self._get_formatter(parser, name)
         h.add_arguments(action_group._group_actions)
-        #h.end_section()
-        data = h.format_help()
-        if not data:
-            continue
-        l.extend(_rst_header("=", action_group.title))
-        if action_group.description:
-            l.extend(action_group.description.split("\n"))
-        l.extend(data.split("\n"))
-    return l
+        data = h.format_help().strip()
+        if data:
+            l.extend(_rst_header("=", action_group.title))
+            if action_group.description:
+                l.extend(description.split("\n"))
+            l.extend(self.positional_re(data).split("\n"))
+            l.append('')
+        return l
 
-def generate_rst(python_name, module):
-    parser = module.argparse_parser
-    return process_parser(parser, python_name.rsplit(".")[-1])
+    def process_action_groups(self, parser, name):
+        l = []
+        for action_group in parser._action_groups:
+            if getattr(action_group, 'marker', '') == 'positional' or \
+                action_group.title == 'positional arguments':
+                l.extend(self.process_positional(parser, name, action_group))
+                continue
+            if any(isinstance(x, argparse._SubParsersAction)
+                for x in action_group._group_actions):
+                continue
+#               assert len(action_group._group_actions) == 1
+#                l.extend(process_subparser(action_group, name))
+            h = self._get_formatter(parser, name)
+            #h.start_section(action_group.title)
+            #h.add_text(action_group.description)
+            h.add_arguments(action_group._group_actions)
+            #h.end_section()
+            data = h.format_help()
+            if not data:
+                continue
+            l.extend(_rst_header("=", action_group.title))
+            if action_group.description:
+                l.extend(action_group.description.split("\n"))
+            l.extend(data.split("\n"))
+        return l
 
-def process_parser(parser, name, author=None, copyright=None, version=None, section=1, group=None):
-    l = _rst_header('=', name, leading=True)
+    def generate_usage(self, parser, name):
+        h = self._get_formatter(parser, name)
+        h.add_usage(parser.usage, parser._actions, parser._mutually_exclusive_groups)
+        text = h.format_help()
+        if text.startswith("usage:"):
+            text = text[len("usage:"):].lstrip()
+        return filter(None, text.split("\n"))
 
-#    description = parser.description
-#    if description is None:
-#        description = "%s command" % (name,)
-#    l.extend(_rst_header('-', description, leading=True))
-#    def _process_val(name, val):
-#        if val:
-#            l.append(":%s: %s" % (name, val))
-#    _process_val("Author", author)
-#    _process_val("Copyright", copyright)
-#    _process_val("Version", version)
-#    _process_val("Manual section", section)
-#    _process_val("Manual group", group)
-#    l.append(":Date: %s" % (datetime.datetime.now().strftime("%Y-%m-%d"),))
-#    l += ['', '']
+    def generate_rst(self, python_name, module):
+        parser = module.argparse_parser
+        return self.process_parser(parser, python_name.rsplit(".")[-1])
 
-    l.extend(_rst_header('=', "synopsis"))
-    l.extend(generate_usage(parser, name))
-    l += ['']
+    def process_parser(self, parser, name):
+        l = _rst_header('=', name, leading=True)
 
-    val = getattr(parser, 'long_description', parser.description)
-    if val:
-        l.extend(_rst_header("=", "DESCRIPTION"))
-        l += [val, '']
+        l.extend(_rst_header('=', "synopsis"))
+        l.extend(self.generate_usage(parser, name))
+        l += ['']
 
-    l.extend(process_action_groups(parser, name))
+        val = getattr(parser, 'long_description', parser.description)
+        if val:
+            l.extend(_rst_header("=", "DESCRIPTION"))
+            l += [val, '']
 
-    return l
+        l.extend(self.process_action_groups(parser, name))
 
-def regen_if_needed(src, out_path):
-    module = load_module(src)
-    cur_time = int(os.stat(module.__file__).st_mtime)
-    script_time = int(os.stat(__file__).st_mtime)
-    cur_time = max([cur_time, script_time])
-    try:
-        trg_time = int(os.stat(out_path).st_mtime)
-    except EnvironmentError, e:
-        if e.errno != errno.ENOENT:
-            raise
-        trg_time = -1
-
-    if cur_time != trg_time:
-        sys.stdout.write("regenerating rst for %s\n" % (src,))
-        data = generate_rst(src, module)
-        open(out_path, "w").write("\n".join(data))
-
-    os.chmod(out_path, 0644)
-    os.utime(out_path, (cur_time, cur_time))
+        return l
 
 if __name__ == '__main__':
     import sys
+    converter = ManConverter(sys.argv[1])
     for x in sys.stdin:
-        regen_if_needed(*x.rstrip("\n").split(" ", 1))
+        converter.regen_if_needed(*x.rstrip("\n").split())

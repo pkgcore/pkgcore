@@ -46,8 +46,8 @@ generated: api man_rsts
 man_rsts:
 	@echo "autogenerating api rsts..."
 	@mkdir -p man
-	python -c "import conf;print '\n'.join('%s man/%s.rst' % x for x in conf.generated_man_pages)" \
-	| ./generate_man_rsts.py
+	python -c "import conf;print '\n'.join(' '.join(x[:2]) for x in conf.generated_man_pages)" \
+	| ./generate_man_rsts.py man
 
 api:
 	@echo "autogenerating api rsts..."

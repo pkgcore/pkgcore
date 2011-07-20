@@ -99,7 +99,7 @@ shared_options = (commandline.mk_argparser(domain=False, add_help=False),)
 argparse_parser = commandline.mk_argparser(suppress=True, parents=shared_options)
 subparsers = argparse_parser.add_subparsers(description="configuration related subcommands")
 classes = subparsers.add_parser("classes", parents=shared_options,
-    help="list all classes referenced by the config")
+    description="list all classes referenced by the config")
 @classes.bind_main_func
 def classes_main(options, out, err):
     """List all classes referenced by the config."""
@@ -115,7 +115,7 @@ def classes_main(options, out, err):
 
 
 describe_class = subparsers.add_parser("describe_class", parents=shared_options,
-    help="describe the arguments a class needs, how to use it in a config")
+    description="describe the arguments a class needs, how to use it in a config")
 describe_class.add_argument("target_class", action='store',
     type=currying.partial(commandline.python_namespace_type, attribute=True),
     help="The class to inspect and output details about")
@@ -144,7 +144,7 @@ def write_type(out, type_obj):
         out.write()
 
 uncollapsable = subparsers.add_parser("uncollapsable", parents=shared_options,
-    help="Show configuration objects that could not be collapsed/instantiated")
+    description="Show configuration objects that could not be collapsed/instantiated")
 @uncollapsable.bind_main_func
 def uncollapsable_main(options, out, err):
     """Show things that could not be collapsed."""
@@ -163,7 +163,7 @@ def uncollapsable_main(options, out, err):
 
 
 dump = subparsers.add_parser("dump", parents=shared_options,
-    help='Dump the entire configuration.  The format used is similar '
+    description='Dump the entire configuration.  The format used is similar '
         'to the ini-like default format, but do not rely on this to always '
         'write a loadable config. There may be quoting issues.  With a '
         'typename argument only that type is dumped.')
@@ -191,7 +191,7 @@ def dump_main(options, out, err):
 
 
 configurables = subparsers.add_parser("configurables", parents=shared_options,
-    help=('List registered configurables (may not be complete).  '
+    description=('List registered configurables (may not be complete).  '
         'With a typename argument only configurables of that type are listed.'))
 configurables.add_argument("typename", nargs='?', default=None, action='store',
     help="If specified, only output configurables of that type; else output "
@@ -262,7 +262,7 @@ def _dump_uncollapsed_section(config, out, err, section):
             err.error('unsupported type %r' % (kind,))
 
 dump_uncollapsed = subparsers.add_parser("dump-uncollapsed", parents=shared_options,
-    help="dump the configuration in a raw, uncollapsed form."
+    description="dump the configuration in a raw, uncollapsed form."
         "Not directly usable as a configuration file, mainly used for inspection")
 @dump_uncollapsed.bind_main_func
 def dump_uncollapsed_main(options, out, err):

@@ -24,7 +24,7 @@ shared = (commandline.mk_argparser(domain=False, add_help=False),)
 argparse_parser = commandline.mk_argparser(suppress=True, parents=shared)
 subparsers = argparse_parser.add_subparsers(description="report applets")
 
-pkgsets = subparsers.add_parser("pkgsets", help="pkgset related introspection")
+pkgsets = subparsers.add_parser("pkgsets", description="pkgset related introspection")
 mux = pkgsets.add_mutually_exclusive_group()
 mux.add_argument("--all", action='store_true', default=False,
     help="display info on all pkgsets")
@@ -183,7 +183,7 @@ class eapi_usage_kls(histo_data):
         return eapis, pos + 1
 
 eapi_usage = subparsers.add_parser("eapi_usage",
-    help="report of eapi usage for targeted repositories")
+    description="report of eapi usage for targeted repositories")
 eapi_usage.bind_class(eapi_usage_kls())
 
 
@@ -205,7 +205,7 @@ class license_usage_kls(histo_data):
         return data, pos + 1
 
 license_usage = subparsers.add_parser("license_usage",
-    help="report of license usage for targeted repositories")
+    description="report of license usage for targeted repositories")
 license_usage.bind_class(license_usage_kls())
 
 
@@ -226,7 +226,7 @@ class eclass_usage_kls(histo_data):
         return data, pos + 1
 
 eclass_usage = subparsers.add_parser("eclass_usage",
-    help="report of eclass usage for targeted repositories")
+    description="report of eclass usage for targeted repositories")
 eclass_usage.bind_class(eclass_usage_kls())
 
 
@@ -252,7 +252,7 @@ class mirror_usage_kls(histo_data):
         return data, pos + 1
 
 mirror_usage = subparsers.add_parser("mirror_usage",
-    help="report of SRC_URI mirror usage for targeted repositories")
+    description="report of SRC_URI mirror usage for targeted repositories")
 mirror_usage.bind_class(mirror_usage_kls())
 
 
@@ -305,14 +305,14 @@ class distfiles_usage_kls(histo_data):
 
 
 distfiles_usage = subparsers.add_parser("distfiles_usage",
-    help="report detailing distfiles space usage for targeted repositories")
+    description="report detailing distfiles space usage for targeted repositories")
 distfiles_usage.bind_class(distfiles_usage_kls())
 
 
 query = subparsers.add_parser("query",
-    help="auxiliary access to ebuild/repository info via portageq akin api")
+    description="auxiliary access to ebuild/repository info via portageq akin api")
 _portageq.bind_parser(query, name='query')
 
 portageq = subparsers.add_parser("portageq",
-    help="portageq compatible interface to query commands")
+    description="portageq compatible interface to query commands")
 _portageq.bind_parser(portageq, compat=True)

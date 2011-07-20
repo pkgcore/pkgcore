@@ -42,7 +42,8 @@ def format_seq(seq, formatter=repr):
 
 
 shared_options = (commandline.mk_argparser(domain=False, add_help=False),)
-argparse_parser = commandline.mk_argparser(suppress=True, parents=shared_options)
+argparse_parser = commandline.mk_argparser(suppress=True, parents=shared_options,
+    description="commandline access to various system/repository maintenance functionality")
 subparsers = argparse_parser.add_subparsers(description="general system maintenance")
 
 
@@ -58,7 +59,7 @@ class ReposStoreConfig(commandline.StoreConfigObject):
 
 
 sync = subparsers.add_parser("sync", parents=shared_options,
-    help="synchronize a local repository with it's defined remote")
+    description="synchronize a local repository with it's defined remote")
 sync.add_argument('repos', nargs='*', help="repositories to sync",
     action=ReposStoreConfig, store_name=True,
     config_type='repo')
@@ -101,7 +102,7 @@ def sync_main(options, out, err):
 
 
 copy = subparsers.add_parser("copy", parents=shared_options,
-    help="copy binpkgs between repositories; primarily useful for "
+    description="copy binpkgs between repositories; primarily useful for "
     "quickpkging a livefs pkg")
 copy.add_argument('target_repo', action=commandline.StoreConfigObject,
     config_type='repo', writable=True,
@@ -189,7 +190,7 @@ def _get_default_jobs(namespace, attr):
     setattr(namespace, attr, val)
 
 regen = subparsers.add_parser("regen", parents=shared_options,
-    help="regenerate repository caches")
+    description="regenerate repository caches")
 regen.add_argument("--disable-eclass-preloading", action='store_true',
     default=False,
     help="For regen operation, pkgcore internally turns on an "
@@ -260,7 +261,7 @@ def regen_main(options, out, err):
 
 perl_rebuild = subparsers.add_parser("perl-rebuild",
     parents=(commandline.mk_argparser(add_help=False),),
-    help="EXPERIMENTAL: perl-rebuild support for use after upgrading perl")
+    description="EXPERIMENTAL: perl-rebuild support for use after upgrading perl")
 perl_rebuild.add_argument("new_version",
     help="the new perl version; 5.12.3 for example")
 @perl_rebuild.bind_main_func
@@ -296,7 +297,7 @@ def perl_rebuild_main(options, out, err):
     return 0
 
 
-env_update = subparsers.add_parser("env-update", help="update env.d and ldconfig",
+env_update = subparsers.add_parser("env-update", description="update env.d and ldconfig",
     parents=(commandline.mk_argparser(add_help=False),))
 env_update.add_argument("--skip-ldconfig", action='store_true', default=False,
     help="do not update etc/ldso.conf and ld.so.cache")

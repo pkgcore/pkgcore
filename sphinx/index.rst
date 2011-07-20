@@ -13,6 +13,7 @@ Contents:
 
    api
    man
+   dev-notes
 
 Indices and tables
 ==================
